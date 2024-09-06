@@ -4,7 +4,7 @@ import { throwWarning, toCamelCase, toKebabCase } from '../../utils/utils'
 import { Vec2 } from '../../math/Vec2'
 import { Vec3 } from '../../math/Vec3'
 import { Input, InputBase, InputValue } from '../../types/BindGroups'
-import { BufferElement } from './bufferElements/BufferElement'
+import { BufferElement, bytesPerRow } from './bufferElements/BufferElement'
 import { BufferArrayElement } from './bufferElements/BufferArrayElement'
 import { BufferInterleavedArrayElement } from './bufferElements/BufferInterleavedArrayElement'
 import { Buffer, BufferParams } from '../buffers/Buffer'
@@ -49,6 +49,9 @@ export interface BufferBindingBaseParams {
 export interface BufferBindingParams extends BindingParams, BufferBindingBaseParams {
   /** The binding type of the {@link BufferBinding} */
   bindingType?: BufferBindingType
+
+  /** Optional array of already created {@link BufferBinding} to add to this {@link BufferBinding}. */
+  bindings?: BufferBinding[]
 }
 
 /** All allowed {@link BufferElement | buffer elements} */
@@ -122,6 +125,7 @@ export class BufferBinding extends Binding {
     access = 'read',
     usage = [],
     struct = {},
+    bindings = [],
   }: BufferBindingParams) {
     bindingType = bindingType ?? 'uniform'
 
@@ -133,6 +137,7 @@ export class BufferBinding extends Binding {
       access,
       usage,
       struct,
+      bindings,
     }
 
     this.cacheKey += `${useStruct},${access},`
@@ -148,8 +153,11 @@ export class BufferBinding extends Binding {
 
     if (Object.keys(struct).length) {
       this.setBindings(struct)
-      this.setBufferAttributes()
+      this.setInputsAlignment()
+    }
 
+    if (Object.keys(struct).length || this.options.bindings.length) {
+      this.setBufferAttributes()
       this.setWGSLFragment()
     }
   }
@@ -220,7 +228,7 @@ export class BufferBinding extends Binding {
         }),
       })
 
-      newBufferElement.alignment = bufferElement.alignment
+      newBufferElement.alignment = JSON.parse(JSON.stringify(bufferElement.alignment))
       if (bufferElement.arrayStride) {
         newBufferElement.arrayStride = bufferElement.arrayStride
       }
@@ -228,6 +236,8 @@ export class BufferBinding extends Binding {
       newBufferElement.setView(bufferBindingCopy.arrayBuffer, bufferBindingCopy.arrayView)
       bufferBindingCopy.bufferElements.push(newBufferElement)
     })
+
+    // TODO bindings
 
     if (this.name === bufferBindingCopy.name && this.label === bufferBindingCopy.label) {
       bufferBindingCopy.wgslStructFragment = this.wgslStructFragment
@@ -291,10 +301,9 @@ export class BufferBinding extends Binding {
   }
 
   /**
-   * Set our buffer attributes:
-   * Takes all the {@link inputs} and adds them to the {@link bufferElements} array with the correct start and end offsets (padded), then fill our {@link arrayBuffer} typed array accordingly.
+   * Set the buffer alignments from {@link inputs}.
    */
-  setBufferAttributes() {
+  setInputsAlignment() {
     // early on, check if there's at least one array binding
     // If there's one and only one, put it at the end of the binding elements array, treat it as a single entry of the type, but loop on it by array.length / size to fill the alignment
     // If there's more than one, create buffer interleaved elements.
@@ -393,7 +402,7 @@ export class BufferBinding extends Binding {
         tempBufferElements.forEach((bufferElement, index) => {
           if (index === 0) {
             if (this.bufferElements.length) {
-              // if there are already buffer elements
+              // if we already have buffer elements
               // get last one end row, and start at the next row
               bufferElement.setAlignmentFromPosition({
                 row: this.bufferElements[this.bufferElements.length - 1].alignment.end.row + 1,
@@ -413,7 +422,10 @@ export class BufferBinding extends Binding {
 
         // finally, set interleaved buffer elements alignment
         interleavedBufferElements.forEach((bufferElement, index) => {
-          bufferElement.setAlignment(tempBufferElements[index].startOffset, totalStride)
+          bufferElement.setAlignment(
+            tempBufferElements[index].startOffset,
+            Math.ceil(totalStride / bytesPerRow) * bytesPerRow
+          )
         })
 
         // add to our buffer elements array
@@ -428,13 +440,57 @@ export class BufferBinding extends Binding {
         )
       }
     }
+  }
 
-    this.arrayBufferSize = this.bufferElements.length
+  /**
+   * Set our buffer attributes:
+   * Takes all the {@link inputs} and adds them to the {@link bufferElements} array with the correct start and end offsets (padded), then fill our {@link arrayBuffer} typed array accordingly.
+   */
+  setBufferAttributes() {
+    const bufferElementsArrayBufferSize = this.bufferElements.length
       ? this.bufferElements[this.bufferElements.length - 1].paddedByteCount
       : 0
 
+    this.arrayBufferSize = bufferElementsArrayBufferSize
+
+    this.options.bindings.forEach((binding) => {
+      this.arrayBufferSize += binding.arrayBufferSize
+    })
+
     this.arrayBuffer = new ArrayBuffer(this.arrayBufferSize)
-    this.arrayView = new DataView(this.arrayBuffer, 0, this.arrayBuffer.byteLength)
+    this.arrayView = new DataView(this.arrayBuffer, 0, bufferElementsArrayBufferSize)
+
+    this.options.bindings.forEach((binding, index) => {
+      let offset = bufferElementsArrayBufferSize
+
+      for (let i = 0; i < index; i++) {
+        offset += this.options.bindings[i].arrayBuffer.byteLength
+      }
+
+      const bufferElLastRow = this.bufferElements.length
+        ? this.bufferElements[this.bufferElements.length - 1].alignment.end.row + 1
+        : 0
+
+      const bindingLastRow =
+        index > 0
+          ? this.options.bindings[index - 1].bufferElements.length
+            ? this.options.bindings[index - 1].bufferElements[
+                this.options.bindings[index - 1].bufferElements.length - 1
+              ].alignment.end.row + 1
+            : 0
+          : 0
+
+      binding.bufferElements.forEach((bufferElement) => {
+        bufferElement.alignment.start.row += bufferElLastRow + bindingLastRow
+        bufferElement.alignment.end.row += bufferElLastRow + bindingLastRow
+      })
+
+      binding.arrayView = new DataView(this.arrayBuffer, offset, binding.arrayBuffer.byteLength)
+
+      for (const bufferElement of binding.bufferElements) {
+        bufferElement.setView(this.arrayBuffer, binding.arrayView)
+      }
+    })
 
     this.buffer.size = this.arrayBuffer.byteLength
 
@@ -449,11 +505,30 @@ export class BufferBinding extends Binding {
    * Set the WGSL code snippet to append to the shaders code. It consists of variable (and Struct structures if needed) declarations.
    */
   setWGSLFragment() {
-    if (!this.bufferElements.length) return
+    if (!this.bufferElements.length && !this.options.bindings.length) return
+
+    const uniqueBindings = []
+    this.options.bindings.forEach((binding) => {
+      const bindingExists = uniqueBindings.find((b) => b.name === binding.name)
+      if (!bindingExists) {
+        uniqueBindings.push({
+          name: binding.name,
+          label: binding.label,
+          count: 1,
+          wgslStructFragment: binding.wgslStructFragment,
+        })
+      } else {
+        bindingExists.count++
+      }
+    })
 
     const kebabCaseLabel = toKebabCase(this.label)
 
     if (this.useStruct) {
+      const structs = {}
+
+      structs[kebabCaseLabel] = {}
+
       const bufferElements = this.bufferElements.filter(
         (bufferElement) => !(bufferElement instanceof BufferInterleavedArrayElement)
       )
@@ -465,48 +540,70 @@ export class BufferBinding extends Binding {
         const arrayLength = this.bindingType === 'uniform' ? `, ${interleavedBufferElements[0].numElements}` : ''
 
         if (bufferElements.length) {
-          this.wgslStructFragment = `struct ${kebabCaseLabel}Element {\n\t${interleavedBufferElements
-            .map((binding) => binding.name + ': ' + binding.type.replace('array', '').replace('<', '').replace('>', ''))
-            .join(',\n\t')}
-};\n\n`
+          structs[`${kebabCaseLabel}Element`] = {}
 
-          const interleavedBufferStructDeclaration = `${this.name}Element: array<${kebabCaseLabel}Element${arrayLength}>,`
+          interleavedBufferElements.forEach((binding) => {
+            structs[`${kebabCaseLabel}Element`][binding.name] = binding.type
+              .replace('array', '')
+              .replace('<', '')
+              .replace('>', '')
+          })
 
-          this.wgslStructFragment += `struct ${kebabCaseLabel} {\n\t${bufferElements
-            .map((bufferElement) => bufferElement.name + ': ' + bufferElement.type)
-            .join(',\n\t')}
-\t${interleavedBufferStructDeclaration}
-};`
+          bufferElements.forEach((binding) => {
+            structs[kebabCaseLabel][binding.name] = binding.type
+          })
+
+          const interleavedBufferName = this.bufferElements.find((bufferElement) => bufferElement.name === 'elements')
+            ? `${this.name}Elements`
+            : 'elements'
+
+          structs[kebabCaseLabel][interleavedBufferName] = `array<${kebabCaseLabel}Element${arrayLength}>`
 
           const varType = getBindingWGSLVarType(this)
           this.wgslGroupFragment = [`${varType} ${this.name}: ${kebabCaseLabel};`]
         } else {
-          this.wgslStructFragment = `struct ${kebabCaseLabel} {\n\t${this.bufferElements
-            .map((binding) => binding.name + ': ' + binding.type.replace('array', '').replace('<', '').replace('>', ''))
-            .join(',\n\t')}
-};`
+          this.bufferElements.forEach((binding) => {
+            structs[kebabCaseLabel][binding.name] = binding.type.replace('array', '').replace('<', '').replace('>', '')
+          })
 
           const varType = getBindingWGSLVarType(this)
           this.wgslGroupFragment = [`${varType} ${this.name}: array<${kebabCaseLabel}${arrayLength}>;`]
         }
       } else {
-        this.wgslStructFragment = `struct ${kebabCaseLabel} {\n\t${this.bufferElements
-          .map((binding) => {
-            // now add array length if needed
-            const bindingType =
-              this.bindingType === 'uniform' && 'numElements' in binding
-                ? `array<${binding.type.replace('array', '').replace('<', '').replace('>', '')}, ${
-                    binding.numElements
-                  }>`
-                : binding.type
-            return binding.name + ': ' + bindingType
-          })
-          .join(',\n\t')}
-};`
+        bufferElements.forEach((binding) => {
+          const bindingType =
+            this.bindingType === 'uniform' && 'numElements' in binding
+              ? `array<${binding.type.replace('array', '').replace('<', '').replace('>', '')}, ${binding.numElements}>`
+              : binding.type
+
+          structs[kebabCaseLabel][binding.name] = bindingType
+        })
 
         const varType = getBindingWGSLVarType(this)
         this.wgslGroupFragment = [`${varType} ${this.name}: ${kebabCaseLabel};`]
       }
+
+      if (uniqueBindings.length) {
+        uniqueBindings.forEach((binding) => {
+          structs[kebabCaseLabel][binding.name] =
+            binding.count > 1 ? `array<${toKebabCase(binding.label)}>` : toKebabCase(binding.label)
+        })
+      }
+
+      const additionalBindings = uniqueBindings.length
+        ? uniqueBindings.map((binding) => binding.wgslStructFragment).join('\n\n') + '\n\n'
+        : ''
+
+      this.wgslStructFragment =
+        additionalBindings +
+        Object.keys(structs)
+          .reverse()
+          .map((struct) => {
+            return `struct ${struct} {\n\t${Object.keys(structs[struct])
+              .map((binding) => `${binding}: ${structs[struct][binding]}`)
+              .join(',\n\t')}\n};`
+          })
+          .join('\n\n')
     } else {
       this.wgslStructFragment = ''
       this.wgslGroupFragment = this.bufferElements.map((binding) => {
@@ -545,6 +642,13 @@ export class BufferBinding extends Binding {
         binding.shouldUpdate = false
       }
     }
+
+    this.options.bindings.forEach((binding) => {
+      binding.update()
+      if (binding.shouldUpdate) {
+        this.shouldUpdate = true
+      }
+    })
   }
 
   /**

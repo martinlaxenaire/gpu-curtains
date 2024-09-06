@@ -105,6 +105,11 @@ export declare class BindGroup {
      */
     addBinding(binding: BindGroupBindingElement): void;
     /**
+     * Destroy a {@link BufferBinding} buffers.
+     * @param binding - {@link BufferBinding} from which to destroy the buffers.
+     */
+    destroyBufferBinding(binding: BindGroupBufferBindingElement): void;
+    /**
      * Creates Bindings based on a list of inputs
      * @param bindingType - {@link core/bindings/Binding.Binding#bindingType | binding type}
      * @param inputs - {@link ReadOnlyInputBindings | inputs (uniform or storage)} that will be used to create the binding

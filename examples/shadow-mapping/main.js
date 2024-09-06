@@ -2,17 +2,15 @@ import {
   PlaneGeometry,
   GPUCameraRenderer,
   GPUDeviceManager,
-  RenderMaterial,
+  AmbientLight,
+  DirectionalLight,
+  getLambert,
   Mesh,
   SphereGeometry,
-  Texture,
+  Vec2,
   Vec3,
-  RenderTarget,
-  Sampler,
   Object3D,
-  Mat4,
   BoxGeometry,
-  BufferBinding,
 } from '../../dist/esm/index.mjs'
 
 // Shadow mapping
@@ -79,191 +77,68 @@ window.addEventListener('load', async () => {
 
   animate()
 
-  // LIGHT POSITION & MATRICES
-
-  const lightPosition = new Vec3(systemSize * 3, systemSize * 1.5, systemSize * 3)
-
-  const lightViewMatrix = new Mat4().makeView(
-    lightPosition,
-    new Vec3(-systemSize * 2, -systemSize * 2, -systemSize * 2),
-    new Vec3(0, 1, 0)
-  )
-
-  const lightProjectionMatrix = new Mat4().makeOrthographic({
-    left: -systemSize * 2,
-    right: systemSize * 2,
-    bottom: -systemSize * 2,
-    top: systemSize * 2,
-    near: 1,
-    far: systemSize * 30,
-  })
-
-  const lightViewProjMatrix = new Mat4().multiplyMatrices(lightProjectionMatrix, lightViewMatrix)
-
-  // create one uniform buffer that will be used by all the meshes
-  const lightBufferBinding = new BufferBinding({
-    name: 'lightning',
-    bindingType: 'uniform',
-    struct: {
-      lightViewProjectionMatrix: {
-        type: 'mat4x4f',
-        value: lightViewProjMatrix,
-      },
-      lightPosition: {
-        type: 'vec3f',
-        value: lightPosition,
-      },
-    },
-  })
-
-  // DEPTH RENDER TARGET
-
+  // LIGHTS & SHADOWS SETUP
   //const shadowMapTextureFormat = 'depth32float'
   const shadowMapTextureFormat = 'depth24plus'
-  // mandatory so we could use textureSampleCompare()
-  const shadowDepthSampleCount = 1
   const shadowMapSize = 1024
 
-  const shadowDepthTexture = new Texture(gpuCameraRenderer, {
-    label: 'Shadow depth texture',
-    name: 'shadowDepthTexture',
-    type: 'depth',
-    format: shadowMapTextureFormat,
-    sampleCount: shadowDepthSampleCount,
-    fixedSize: {
-      width: shadowMapSize,
-      height: shadowMapSize,
+  const ambientLight = new AmbientLight(gpuCameraRenderer, {
+    intensity: 0.2,
+  })
+
+  const directionalLight = new DirectionalLight(gpuCameraRenderer, {
+    position: new Vec3(systemSize * 6, systemSize * 4.5, systemSize * 6),
+    intensity: 1,
+    shadow: {
+      bias: 0.007,
+      //normalBias: 0.001,
+      depthTextureSize: new Vec2(shadowMapSize),
+      depthTextureFormat: shadowMapTextureFormat,
+      camera: {
+        left: -systemSize * 2,
+        right: systemSize * 2,
+        bottom: -systemSize * 2,
+        top: systemSize * 2,
+        near: 1,
+        far: systemSize * 30,
+      },
     },
   })
-
-  const depthTarget = new RenderTarget(gpuCameraRenderer, {
-    label: 'Shadow map render target',
-    useColorAttachments: false,
-    depthTexture: shadowDepthTexture,
-    sampleCount: shadowDepthSampleCount,
-  })
-
-  const lessCompareSampler = new Sampler(gpuCameraRenderer, {
-    label: 'Shadow sampler',
-    name: 'shadowSampler',
-    // we do not want to repeat the shadows
-    addressModeU: 'clamp-to-edge',
-    addressModeV: 'clamp-to-edge',
-    compare: 'less',
-    type: 'comparison',
-  })
-
-  const depthVs = /* wgsl */ `    
-    @vertex fn main(
-      attributes: Attributes,
-    ) -> @builtin(position) vec4<f32> {
-      return lightning.lightViewProjectionMatrix * matrices.model * vec4(attributes.position, 1.0);
-    }
-  `
-
-  const meshVs = /* wgsl */ `
-    struct VertexOutput {
-      @builtin(position) position: vec4f,
-      @location(0) normal: vec3f,
-      @location(1) shadowPos: vec3f,
-    };
-    
-    @vertex fn main(
-      attributes: Attributes,
-    ) -> VertexOutput {
-      var vsOutput: VertexOutput;
-    
-      vsOutput.position = getOutputPosition(attributes.position);
-      vsOutput.normal = getWorldNormal(attributes.normal);
-      
-      // XY is in (-1, 1) space, Z is in (0, 1) space
-      let posFromLight: vec4f = lightning.lightViewProjectionMatrix * matrices.model * vec4(attributes.position, 1.0);
-          
-      // Convert XY to (0, 1)
-      // Y is flipped because texture coords are Y-down.
-      vsOutput.shadowPos = vec3(
-        posFromLight.xy * vec2(0.5, -0.5) + vec2(0.5),
-        posFromLight.z
-      );
-      
-      return vsOutput;
-    }
-  `
 
   const meshFs = /* wgsl */ `
     struct VSOutput {
       @builtin(position) position: vec4f,
       @builtin(front_facing) frontFacing: bool,
-      @location(0) normal: vec3f,
-      @location(1) shadowPos: vec3f,
+      @location(0) uv: vec2f,
+      @location(1) normal: vec3f,
+      @location(2) worldPosition: vec3f,
+      @location(3) viewDirection: vec3f,
     };
     
-    const ambientFactor = 0.5;
+    ${getLambert({
+      receiveShadows: true,
+    })}
     
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-      // Percentage-closer filtering. Sample texels in the region
-      // to smooth the result.
-      var visibility = 0.0;
-      
-      let size = f32(textureDimensions(shadowDepthTexture).y);
-      
-      let oneOverShadowDepthTextureSize = 1.0 / size;
-      for (var y = -1; y <= 1; y++) {
-        for (var x = -1; x <= 1; x++) {
-          let offset = vec2<f32>(vec2(x, y)) * oneOverShadowDepthTextureSize;
-    
-          visibility += textureSampleCompare(
-            shadowDepthTexture,
-            shadowSampler,
-            fsInput.shadowPos.xy + offset,
-            fsInput.shadowPos.z - 0.007
-          );
-        }
-      }
-      visibility /= 9.0;
-      
-      // inverse the normals if we're using front face culling
+      // negate the normals if we're using front face culling
       let faceDirection = select(-1.0, 1.0, fsInput.frontFacing);
       
       // apply lightning and shadows
       let normal: vec3f = normalize(faceDirection * fsInput.normal);
       
-      let lambertFactor = max(dot(normalize(lightning.lightPosition), normal), 0.0);
-      let lightingFactor = min(ambientFactor + visibility * lambertFactor, 1.0);
-
-      return vec4(lightingFactor * shading.color, 1.0);
+      let worldPosition: vec3f = fsInput.worldPosition;
+      
+      var color: vec3f = shading.color;
+      
+      color = getLambert(
+        normal,
+        worldPosition,
+        color
+      );
+      
+      return vec4(color, 1.0);
     }
   `
-
-  const depthMeshes = []
-
-  // for each mesh that need to be rendered on the depth map
-  const createMeshDepthMaterial = (mesh) => {
-    const renderingOptions = { ...mesh.material.options.rendering }
-
-    // explicitly set empty output targets
-    // we just want to write to the depth texture
-    renderingOptions.targets = []
-
-    mesh.userData.depthMaterial = new RenderMaterial(gpuCameraRenderer, {
-      label: mesh.options.label + ' Depth render material',
-      ...renderingOptions,
-      shaders: {
-        vertex: {
-          code: depthVs,
-        },
-        fragment: false,
-      },
-      sampleCount: depthTarget.renderPass.options.sampleCount,
-      depthFormat: shadowMapTextureFormat,
-      bindings: [lightBufferBinding, mesh.material.getBufferBindingByName('matrices')],
-    })
-
-    // keep track of original material as well
-    mesh.userData.originalMaterial = mesh.material
-
-    depthMeshes.push(mesh)
-  }
 
   // create meshes
 
@@ -272,7 +147,7 @@ window.addEventListener('load', async () => {
 
   const blue = new Vec3(0, 1, 1)
   const pink = new Vec3(1, 0, 1)
-  const grey = new Vec3(0.35)
+  const grey = new Vec3(0.2)
 
   for (let i = 0; i < 25; i++) {
     const isCube = i % 2 === 1
@@ -280,17 +155,13 @@ window.addEventListener('load', async () => {
     const mesh = new Mesh(gpuCameraRenderer, {
       label: 'Mesh ' + i,
       geometry: isCube ? cubeGeometry : sphereGeometry,
-      textures: [shadowDepthTexture],
-      samplers: [lessCompareSampler],
       shaders: {
-        vertex: {
-          code: meshVs,
-        },
         fragment: {
           code: meshFs,
         },
       },
-      bindings: [lightBufferBinding],
+      castShadows: true,
+      receiveShadows: true,
       uniforms: {
         shading: {
           struct: {
@@ -315,37 +186,29 @@ window.addEventListener('load', async () => {
       mesh.rotation.z += rotationSpeed
     })
 
-    createMeshDepthMaterial(mesh)
-
     mesh.parent = meshesPivot
   }
 
   // create a wrapping box
   // the box will not cast shadows, but it will receive them
   // it will be drawn by culling the front faces
-  // so we need to invert its normals in the fragment shader lightning calculations
   const wrappingBox = new Mesh(gpuCameraRenderer, {
     label: 'Wrapping box',
     geometry: cubeGeometry,
     cullMode: 'front',
-    textures: [shadowDepthTexture],
-    samplers: [lessCompareSampler],
+    receiveShadows: true,
     frustumCulling: false, // always draw the walls
     shaders: {
-      vertex: {
-        code: meshVs,
-      },
       fragment: {
         code: meshFs,
       },
     },
-    bindings: [lightBufferBinding],
     uniforms: {
       shading: {
         struct: {
           color: {
             type: 'vec3f',
-            value: new Vec3(0.5),
+            value: new Vec3(0.85),
           },
         },
       },
@@ -361,44 +224,12 @@ window.addEventListener('load', async () => {
     wrappingBox.scale.y = visibleWidth.height * 0.6
   }
 
-  wrappingBox.scale.z = systemSize * 1.5
-  wrappingBox.position.z = -wrappingBox.scale.z
+  wrappingBox.scale.z = systemSize * 3
+  //wrappingBox.position.z = -wrappingBox.scale.z * 0.5
 
   setWrappingBoxScale()
 
   wrappingBox.onAfterResize(setWrappingBoxScale)
-
-  // DEPTH PASS
-
-  // add the depth pre-pass (rendered each tick before our main scene)
-  gpuCameraRenderer.onBeforeRenderScene.add((commandEncoder) => {
-    // assign depth material to meshes
-    depthMeshes.forEach((mesh) => {
-      mesh.useMaterial(mesh.userData.depthMaterial)
-    })
-
-    // reset renderer current pipeline
-    gpuCameraRenderer.pipelineManager.resetCurrentPipeline()
-
-    // begin depth pass
-    const depthPass = commandEncoder.beginRenderPass(depthTarget.renderPass.descriptor)
-
-    // render meshes with their depth material
-    depthMeshes.forEach((mesh) => {
-      if (mesh.ready) mesh.render(depthPass)
-    })
-
-    depthPass.end()
-
-    // reset depth meshes material to use the original
-    // so the scene renders them normally
-    depthMeshes.forEach((mesh) => {
-      mesh.useMaterial(mesh.userData.originalMaterial)
-    })
-
-    // reset renderer current pipeline again
-    gpuCameraRenderer.pipelineManager.resetCurrentPipeline()
-  })
 
   // DEBUG DEPTH
 
@@ -477,7 +308,8 @@ window.addEventListener('load', async () => {
     label: 'Debug depth texture',
     name: 'depthTexture',
     type: 'depth',
-    fromTexture: shadowDepthTexture,
+    //fromTexture: shadowDepthTexture,
+    fromTexture: directionalLight.shadow.depthTexture,
   })
 
   debugPlane.transformOrigin.set(-1, -1, 0)

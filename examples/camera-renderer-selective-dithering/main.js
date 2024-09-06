@@ -3,7 +3,9 @@ import {
   GPUDeviceManager,
   BoxGeometry,
   OrbitControls,
-  Object3D,
+  AmbientLight,
+  DirectionalLight,
+  getLambert,
   Mesh,
   RenderTarget,
   ShaderPass,
@@ -50,9 +52,8 @@ window.addEventListener('load', async () => {
 
   // orbit controls
   const orbitControls = new OrbitControls(gpuCameraRenderer)
-  orbitControls.zoomStep = 0.015
-  orbitControls.minZoom = systemSize * -1.5
-  orbitControls.maxZoom = systemSize * 3
+  orbitControls.zoomSpeed = 2
+  orbitControls.maxZoom = systemSize * 6
 
   // render our scene manually
   const animate = () => {
@@ -64,50 +65,44 @@ window.addEventListener('load', async () => {
 
   animate()
 
-  // we will add cubes and spheres to our scene
-  // they will use a really basic light shading
-  const meshVs = /* wgsl */ `
-    struct VertexOutput {
-      @builtin(position) position: vec4f,
-      @location(0) uv: vec2f,
-      @location(1) normal: vec3f,
-    };
-    
-    @vertex fn main(
-      attributes: Attributes,
-    ) -> VertexOutput {
-      var vsOutput: VertexOutput;
-    
-      vsOutput.position = getOutputPosition(attributes.position);
-      vsOutput.uv = attributes.uv;
-      vsOutput.normal = getWorldNormal(attributes.normal);
-      
-      return vsOutput;
-    }
-  `
+  // lights
+  const ambientLight = new AmbientLight(gpuCameraRenderer, {
+    intensity: 0.75,
+  })
 
+  const directionalLight = new DirectionalLight(gpuCameraRenderer, {
+    position: new Vec3(systemSize, systemSize * 4, 0),
+    intensity: 2,
+  })
+
+  // we will add cubes and spheres to our scene
+  // they will use a lambert shading
   const meshFs = /* wgsl */ `
     struct VSOutput {
       @builtin(position) position: vec4f,
+      @builtin(front_facing) frontFacing: bool,
       @location(0) uv: vec2f,
       @location(1) normal: vec3f,
+      @location(2) worldPosition: vec3f,
+      @location(3) viewDirection: vec3f,
     };
     
-    fn applyLightning(color: vec3f, normal: vec3f) -> vec3f {
-      var lightPos: vec3f = normalize(shading.lightPosition);
-      var light: f32 = smoothstep(0.15, 1.0, dot(normal, lightPos));
-    
-      var ambientLight: f32 = 1.0 - shading.lightStrength;
-      return color.rgb * light * shading.lightStrength + color.rgb * shading.ambientLightStrength;
-    }
+    ${getLambert()}
     
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {      
-      var color: vec4f;
-        
-      var shadedColor: vec3f = applyLightning(shading.color, fsInput.normal);
-      color = vec4(shadedColor, 1.0);
+      var color: vec3f = shading.color;
+      
+      // negate the normals if we're using front face culling
+      let faceDirection = select(-1.0, 1.0, fsInput.frontFacing);
+      let normal = normalize(faceDirection * fsInput.normal);
+      
+      let worldPosition = fsInput.worldPosition;
+      let viewDirection = normalize(fsInput.viewDirection);
+      
+      // lambert
+      color = getLambert(normal, worldPosition, color);
     
-      return color;
+      return vec4(color, 1.0);
     }
   `
 
@@ -129,10 +124,7 @@ window.addEventListener('load', async () => {
 
   const sphereColor1 = new Vec3(0, 1, 1)
   const sphereColor2 = new Vec3(1, 0, 1)
-  const cubeColor = new Vec3(0.375, 0.375, 0.375)
-  const lightPosition = new Vec3(systemSize, systemSize * 4, 0)
-  const lightStrength = 0.75
-  const ambientLightStrength = 0.75
+  const cubeColor = new Vec3(0.15)
 
   for (let i = 0; i < 50; i++) {
     const isCube = Math.random() > 0.5
@@ -141,9 +133,6 @@ window.addEventListener('load', async () => {
       geometry: isCube ? cubeGeometry : sphereGeometry,
       outputTarget: isCube ? blankRenderTarget : selectiveDitheringTarget,
       shaders: {
-        vertex: {
-          code: meshVs,
-        },
         fragment: {
           code: meshFs,
         },
@@ -154,18 +143,6 @@ window.addEventListener('load', async () => {
             color: {
               type: 'vec3f',
               value: isCube ? cubeColor : Math.random() > 0.5 ? sphereColor1 : sphereColor2,
-            },
-            lightPosition: {
-              type: 'vec3f',
-              value: lightPosition,
-            },
-            lightStrength: {
-              type: 'f32',
-              value: lightStrength,
-            },
-            ambientLightStrength: {
-              type: 'f32',
-              value: ambientLightStrength,
             },
           },
         },

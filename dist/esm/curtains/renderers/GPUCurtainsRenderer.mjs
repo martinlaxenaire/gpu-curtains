@@ -14,7 +14,8 @@ class GPUCurtainsRenderer extends GPUCameraRenderer {
     preferredFormat,
     alphaMode = "premultiplied",
     renderPass,
-    camera
+    camera,
+    lights
   }) {
     super({
       deviceManager,
@@ -25,7 +26,8 @@ class GPUCurtainsRenderer extends GPUCameraRenderer {
       preferredFormat,
       alphaMode,
       renderPass,
-      camera
+      camera,
+      lights
     });
     this.type = "GPUCurtainsRenderer";
   }

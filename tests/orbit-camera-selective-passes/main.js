@@ -50,9 +50,8 @@ window.addEventListener('load', async () => {
 
   // orbit controls
   const orbitControls = new OrbitControls(gpuCameraRenderer)
-  orbitControls.zoomStep = 0.05
-  orbitControls.minZoom = systemSize * -1.5
-  orbitControls.maxZoom = systemSize * 3
+  orbitControls.zoomSpeed = 2
+  orbitControls.maxZoom = systemSize * 6
 
   console.log(camera)
 

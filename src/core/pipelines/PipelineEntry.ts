@@ -1,6 +1,5 @@
 import { isRenderer, Renderer } from '../renderers/utils'
 import { PipelineEntryOptions, PipelineEntryParams, PipelineEntryStatus } from '../../types/PipelineEntries'
-import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { AllowedBindGroups } from '../../types/BindGroups'
 import { MaterialShadersType } from '../../types/Materials'
 

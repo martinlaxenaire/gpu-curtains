@@ -35,7 +35,7 @@ export declare class RenderMaterial extends Material {
      */
     compilePipelineEntry(): Promise<void>;
     /**
-     * Check if attributes and all bind groups are ready, create them if needed and set {@link RenderPipelineEntry} bind group buffers and compile the pipeline
+     * Check if attributes and all bind groups are ready, create them if needed, set {@link RenderPipelineEntry} bind group buffers and compile the pipeline.
      * @async
      */
     compileMaterial(): Promise<void>;
@@ -50,7 +50,16 @@ export declare class RenderMaterial extends Material {
      */
     setAttributesFromGeometry(geometry: AllowedGeometries): void;
     /**
-     * Create the bind groups if they need to be created, but first add Camera bind group if needed
+     * Get whether this {@link RenderMaterial} uses the renderer camera and lights bind group.
+     * @readonly
+     * */
+    get useCameraBindGroup(): boolean;
+    /**
+     * Create the bind groups if they need to be created, but first add camera and lights bind group if needed.
      */
     createBindGroups(): void;
+    /**
+     * Update all bind groups, except for the camera and light bind groups if present, as it is already updated by the renderer itself.
+     */
+    updateBindGroups(): void;
 }

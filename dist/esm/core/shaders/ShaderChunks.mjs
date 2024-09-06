@@ -1,7 +1,7 @@
-import get_output_position from './chunks/get_output_position.wgsl.mjs';
-import get_normals from './chunks/get_normals.wgsl.mjs';
-import get_uv_cover from './chunks/get_uv_cover.wgsl.mjs';
-import get_vertex_to_uv_coords from './chunks/get_vertex_to_uv_coords.wgsl.mjs';
+import get_output_position from './chunks/helpers/get_output_position.wgsl.mjs';
+import get_normals from './chunks/helpers/get_normals.wgsl.mjs';
+import get_uv_cover from './chunks/helpers/get_uv_cover.wgsl.mjs';
+import get_vertex_to_uv_coords from './chunks/helpers/get_vertex_to_uv_coords.wgsl.mjs';
 
 const ShaderChunks = {
   /** WGSL code chunks added to the vertex shader */

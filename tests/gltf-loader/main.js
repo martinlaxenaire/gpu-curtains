@@ -1,5 +1,6 @@
 // Goals of this test:
 // - test various capacities of the gltf loader
+
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
   const {
@@ -12,8 +13,9 @@ window.addEventListener('load', async () => {
     GLTFLoader,
     GLTFScenesManager,
     buildShaders,
-    buildPBRShaders,
-    buildIBLShaders,
+    AmbientLight,
+    PointLight,
+    DirectionalLight,
     OrbitControls,
     Vec3,
   } = await import(/* @vite-ignore */ path)
@@ -39,8 +41,19 @@ window.addEventListener('load', async () => {
     },
   })
 
+  // render it
+  const animate = () => {
+    gpuDeviceManager.render()
+    requestAnimationFrame(animate)
+  }
+
+  animate()
+
   const { camera } = gpuCameraRenderer
-  const orbitControls = new OrbitControls(gpuCameraRenderer)
+  const orbitControls = new OrbitControls({
+    camera,
+    element: container,
+  })
 
   // IBL textures
   const loadImageBitmap = async (src) => {
@@ -180,6 +193,25 @@ window.addEventListener('load', async () => {
     },
   }
 
+  let shadingModel = 'IBL' // 'IBL', 'PBR', 'Phong' or 'Lambert'
+  const lightType = 'DirectionalLight' // or 'PointLight'
+
+  const ambientLight = new AmbientLight(gpuCameraRenderer, {
+    intensity: 0, // will be updated
+  })
+
+  const light =
+    lightType === 'DirectionalLight'
+      ? new DirectionalLight(gpuCameraRenderer, {
+          position: new Vec3(), // will be updated when model changes
+          intensity: 2,
+        })
+      : new PointLight(gpuCameraRenderer, {
+          position: new Vec3(), // will be updated when model changes
+          intensity: 1,
+          range: -1,
+        })
+
   // gltf
   const gltfLoader = new GLTFLoader()
 
@@ -200,30 +232,31 @@ window.addEventListener('load', async () => {
     // center model
     node.position.sub(center)
 
-    // reset orbit controls
-    orbitControls.reset()
-
     const isSponza = url.includes('Sponza')
 
     if (isSponza) {
-      camera.position.x = 0
-      camera.position.y = center.y * 0.25 + node.position.y
-      camera.position.z = radius * 0.225
+      node.position.y = 0
       camera.fov = 75
 
-      orbitControls.zoomStep = radius * 0.00025
-      orbitControls.minZoom = radius * -0.225
+      orbitControls.reset({
+        zoomSpeed: radius * 0.025,
+        minZoom: 0,
+        maxZoom: radius * 2,
+        position: new Vec3(radius * 0.25, center.y * 0.25, 0),
+        target: new Vec3(0, center.y * 0.1, 0),
+      })
     } else {
-      camera.position.x = 0
-      camera.position.y = 0
-      camera.position.z = radius * 2.5
       camera.fov = 50
 
-      orbitControls.zoomStep = radius * 0.0025
-      orbitControls.minZoom = radius * -1
+      orbitControls.reset({
+        zoomSpeed: radius * 0.25,
+        minZoom: radius,
+        maxZoom: radius * 4,
+        position: new Vec3(0, 0, radius * 2.5),
+        target: new Vec3(),
+      })
     }
 
-    orbitControls.maxZoom = radius * 2
     camera.far = radius * 6
 
     const meshes = gltfScenesManager.addMeshes((meshDescriptor) => {
@@ -232,158 +265,57 @@ window.addEventListener('load', async () => {
       // add clamp sampler
       parameters.samplers = [...parameters.samplers, clampSampler]
 
-      // add IBL textures
-      // const iblLUTTexture = new Texture(gpuCameraRenderer, {
-      //   name: 'iblLUTTexture',
-      //   visibility: ['fragment'],
-      //   fromTexture: originalIblLUTTexture,
-      // })
-      //
-      // const envDiffuseTexture = new Texture(gpuCameraRenderer, {
-      //   name: 'envDiffuseTexture',
-      //   visibility: ['fragment'],
-      //   fromTexture: originalEnvDiffuseTexture,
-      // })
-      //
-      // const envSpecularTexture = new Texture(gpuCameraRenderer, {
-      //   name: 'envSpecularTexture',
-      //   visibility: ['fragment'],
-      //   fromTexture: originalEnvSpecularTexture,
-      // })
-
       // disable frustum culling
       parameters.frustumCulling = false
 
-      const lightPosition = new Vec3(radius * 2, radius * 2, radius)
-      const lightPositionLengthSq = lightPosition.lengthSq()
-      const lightPositionLength = lightPosition.length()
+      light.position.set(radius * 2)
 
-      // add lights
-      parameters.uniforms = {
-        ...parameters.uniforms,
-        ...{
-          ambientLight: {
-            struct: {
-              intensity: {
-                type: 'f32',
-                value: 0.03,
-              },
-              color: {
-                type: 'vec3f',
-                value: new Vec3(1),
-              },
-            },
-          },
-          pointLight: {
-            struct: {
-              position: {
-                type: 'vec3f',
-                value: lightPosition,
-              },
-              range: {
-                type: 'f32',
-                value: lightPositionLength * 3,
-              },
-              color: {
-                type: 'vec3f',
-                value: new Vec3(1),
-              },
-              intensity: {
-                type: 'f32',
-                value: lightPositionLengthSq * 3,
-              },
-            },
-          },
-        },
-      }
+      if (shadingModel === 'IBL') {
+        ambientLight.intensity = 0
+        light.intensity = 0
+      } else {
+        ambientLight.intensity = 0.1
 
-      // now the shaders
-      const additionalFragmentHead = /* wgsl */ `
-      fn rangeAttenuation(range: f32, distance: f32) -> f32 {
-        if (range <= 0.0) {
-            // Negative range means no cutoff
-            return 1.0 / pow(distance, 2.0);
+        if (light instanceof PointLight) {
+          const lightPositionLengthSq = light.position.lengthSq()
+          light.intensity = lightPositionLengthSq * 3
+        } else {
+          light.intensity = 2
         }
-        return clamp(1.0 - pow(distance / range, 4.0), 0.0, 1.0) / pow(distance, 2.0);
       }
-      `
-
-      const ambientContribution = /* wgsl */ `
-      lightContribution.ambient = ambientLight.intensity * ambientLight.color;
-      `
-
-      const lightContribution = /* wgsl */ `
-      let L: vec3f = normalize(pointLight.position - worldPosition);
-      let H: vec3f = normalize(V + L);
-      
-      let NdotL: f32 = clamp(dot(N, L), 0.0, 1.0);
-      let NdotH: f32 = clamp(dot(N, H), 0.0, 1.0);
-      let VdotH: f32 = clamp(dot(V, H), 0.0, 1.0);
-    
-      // cook-torrance brdf
-      let NDF: f32 = DistributionGGX(NdotH, roughness);
-      let G: f32 = GeometrySmith(NdotL, NdotV, roughness);
-      let F: vec3f = FresnelSchlick(VdotH, f0);
-    
-      let kD: vec3f = (vec3(1.0) - F) * (1.0 - metallic);
-    
-      let numerator: vec3f = NDF * G * F;
-      let denominator: f32 = max(4.0 * NdotV * NdotL, 0.001);
-      //let denominator = 4.0 * NdotV * NdotL + 0.0001;
-      let specular: vec3f = numerator / vec3(denominator);
-      
-      // add lights spec to alpha for reflections on transparent surfaces (glass)
-      color.a = max(color.a, max(max(specular.r, specular.g), specular.b));
-              
-      let distance: f32 = length(pointLight.position - worldPosition);
-      let attenuation: f32 = rangeAttenuation(pointLight.range, distance);
-      
-      let radiance: vec3f = pointLight.color * pointLight.intensity * attenuation;
-      
-      lightContribution.diffuse += (kD / vec3(PI)) * radiance * NdotL;
-      lightContribution.specular += specular * radiance * NdotL;
-      `
 
       // debug
       const additionalColorContribution = `
-        //color = vec4(vec3(occlusion), color.a);
+        // color = vec4(vec3(metallic), color.a);
       `
 
-      //parameters.shaders = buildShaders(meshDescriptor)
-
-      // parameters.shaders = buildPBRShaders(meshDescriptor, {
-      //   chunks: { additionalFragmentHead, ambientContribution, lightContribution },
-      // })
-
-      parameters.shaders = buildIBLShaders(meshDescriptor, {
+      parameters.shaders = buildShaders(meshDescriptor, {
+        shadingModel,
+        chunks: {
+          additionalColorContribution,
+        },
         iblParameters: {
           diffuseStrength: 1,
           specularStrength: 1,
           lutTexture: {
             texture: iblLUTTexture,
-            samplerName: 'clampSampler', // use clamp sampler
+            samplerName: 'clampSampler', // use clamp sampler for LUT texture
           },
           envDiffuseTexture: {
             texture: envDiffuseTexture,
-            // use clamp sampler for cube maps, default for equirectangular maps
-            samplerName: envDiffuseTexture.options.viewDimension === 'cube' ? 'clampSampler' : 'defaultSampler',
+            samplerName: 'clampSampler', // use clamp sampler for cube maps
           },
           envSpecularTexture: {
             texture: envSpecularTexture,
-            // use clamp sampler for cube maps, default for equirectangular maps
-            samplerName: envSpecularTexture.options.viewDimension === 'cube' ? 'clampSampler' : 'defaultSampler',
+            samplerName: 'clampSampler', // use clamp sampler for cube maps
           },
-        },
-        chunks: {
-          additionalFragmentHead,
-          // ambientContribution,
-          lightContribution,
-          additionalColorContribution,
         },
       })
     })
 
     console.log(gpuCameraRenderer, meshes)
+
+    // meshes[0].onReady(() => console.log(meshes[0].material.getShaderCode('fragment')))
   }
 
   // GUI
@@ -416,13 +348,22 @@ window.addEventListener('load', async () => {
     })
     .name('Models')
 
+  gui
+    .add({ shadingModel }, 'shadingModel', ['IBL', 'PBR', 'Phong', 'Lambert'])
+    .onChange(async (value) => {
+      if (value !== shadingModel) {
+        shadingModel = value
+
+        if (gltfScenesManager) {
+          gltfScenesManager.destroy()
+        }
+
+        gltfScenesManager = null
+
+        await loadGLTF(currentModel.url)
+      }
+    })
+    .name('Shading')
+
   await loadGLTF(currentModel.url)
-
-  // render it
-  const animate = () => {
-    gpuDeviceManager.render()
-    requestAnimationFrame(animate)
-  }
-
-  animate()
 })

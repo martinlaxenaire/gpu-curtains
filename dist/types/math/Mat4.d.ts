@@ -1,5 +1,31 @@
 import { Vec3 } from './Vec3';
 import { Quat } from './Quat';
+/** Defines the base parameters to create an orthographic projection {@link Mat4} */
+export interface OrthographicProjectionParams {
+    /** Left side of the projection near clipping plane viewport. Default to `-5`. */
+    left?: number;
+    /** Right side of the projection near clipping plane viewport. Default to `5`. */
+    right?: number;
+    /** Bottom side of the projection near clipping plane viewport. Default to `-5`. */
+    bottom?: number;
+    /** Top side of the projection near clipping plane viewport. Default to `5`. */
+    top?: number;
+    /** Projection near plane. Default to `0.1`. */
+    near?: number;
+    /** Projection far plane. Default to `50`. */
+    far?: number;
+}
+/** Defines the base parameters to create a perspective projection {@link Mat4} */
+export interface PerspectiveProjectionParams {
+    /** Perspective field of view (in radians). Default to `90`. */
+    fov?: number;
+    /** Perspective aspect ratio (width / height). Default to `1`. */
+    aspect?: number;
+    /** Projection near plane. Default to `0.1`. */
+    near?: number;
+    /** Projection far plane. Default to `150`. */
+    far?: number;
+}
 /**
  * Basic 4x4 matrix class used for matrix calculations.
  *
@@ -188,23 +214,10 @@ export declare class Mat4 {
      *  * the given the left, right, bottom, and top dimensions to -1 +1 in x, and y
      *  * and 0 to +1 in z.
      *
-     * @param parameters - parameters used to create the camera orthographic matrix.
-     * @param parameters.left - the left side of the camera near clipping plane viewport.
-     * @param parameters.right - the right side of the camera near clipping plane viewport.
-     * @param parameters.bottom - the bottom of the camera near clipping plane viewport.
-     * @param parameters.top - the top of the camera near clipping plane viewport.
-     * @param parameters.near - the camera near plane.
-     * @param parameters.far - the camera far plane.
+     * @param parameters - {@link OrthographicProjectionParams | parameters} used to create the camera orthographic matrix.
      * @returns - the camera orthographic {@link Mat4} matrix.
      */
-    makeOrthographic({ left, right, bottom, top, near, far, }: {
-        left: number;
-        right: number;
-        bottom: number;
-        top: number;
-        near: number;
-        far: number;
-    }): Mat4;
+    makeOrthographic({ left, right, bottom, top, near, far, }: OrthographicProjectionParams): Mat4;
     /**
      * Create a perspective {@link Mat4} matrix based on the parameters.
      *
@@ -212,17 +225,8 @@ export declare class Mat4 {
      * We assume a unit box extending from -1 to 1 in the x and y dimensions and
      * from -1 to 1 in the z dimension, as three.js and more generally WebGL handles it.
      *
-     * @param parameters - parameters used to create the camera perspective matrix.
-     * @param parameters.fov - the camera field of view (in radians).
-     * @param parameters.aspect - the camera aspect ratio (width / height).
-     * @param parameters.near - the camera near plane.
-     * @param parameters.far - the camera far plane.
+     * @param parameters - {@link PerspectiveProjectionParams | parameters} used to create the camera perspective matrix.
      * @returns - the camera perspective {@link Mat4} matrix.
      */
-    makePerspective({ fov, aspect, near, far }: {
-        fov: number;
-        aspect: number;
-        near: number;
-        far: number;
-    }): Mat4;
+    makePerspective({ fov, aspect, near, far }: PerspectiveProjectionParams): Mat4;
 }

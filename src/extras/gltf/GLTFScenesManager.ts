@@ -1,6 +1,6 @@
 import { CameraRenderer, isCameraRenderer } from '../../core/renderers/utils'
 import { GLTF } from '../../types/gltf/GLTF'
-import { GLTFLoader } from './GLTFLoader'
+import { GLTFLoader } from '../loaders/GLTFLoader'
 import { Sampler, SamplerParams } from '../../core/samplers/Sampler'
 import { Texture } from '../../core/textures/Texture'
 import { Object3D } from '../../core/objects3D/Object3D'
@@ -13,8 +13,6 @@ import { Mesh } from '../../core/meshes/Mesh'
 import { TypedArray, TypedArrayConstructor } from '../../core/bindings/utils'
 import { GeometryParams, VertexBufferAttribute } from '../../types/Geometries'
 import { ChildDescriptor, MeshDescriptor, PrimitiveInstances, ScenesManager } from '../../types/gltf/GLTFScenesManager'
-import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { Quat } from '../../math/Quat'
 
 // TODO limitations, example...
 // use a list like: https://github.com/warrenm/GLTFKit2?tab=readme-ov-file#status-and-conformance
@@ -501,11 +499,9 @@ export class GLTFScenesManager {
       })
     })
 
-    // now that we created all our nodes, update all the matrices
-    this.scenesManager.scenes.forEach((childScene) => {
-      childScene.node.shouldUpdateModelMatrix()
-      childScene.node.updateMatrixStack()
-    })
+    // now that we created all our nodes, update all the matrices eagerly
+    // needed to get the right bounding box
+    this.scenesManager.node.updateMatrixStack()
 
     for (const [primitive, primitiveInstance] of this.#primitiveInstances) {
       const { instances, nodes, meshDescriptor } = primitiveInstance
@@ -855,10 +851,21 @@ export class GLTFScenesManager {
    * @returns - Array of created {@link Mesh}.
    */
   addMeshes(patchMeshesParameters = (meshDescriptor: MeshDescriptor) => {}): Mesh[] {
+    // once again, update all the matrix stack eagerly
+    // because the main node or children transformations might have changed
+    this.scenesManager.node.updateMatrixStack()
+
     return this.scenesManager.meshesDescriptors.map((meshDescriptor) => {
       if (meshDescriptor.parameters.geometry) {
         // patch the parameters
         patchMeshesParameters(meshDescriptor)
+
+        const hasInstancedShadows =
+          meshDescriptor.parameters.geometry.instancesCount > 1 && meshDescriptor.parameters.castShadows
+
+        if (hasInstancedShadows) {
+          meshDescriptor.parameters.castShadows = false
+        }
 
         const mesh = new Mesh(this.renderer, {
           ...meshDescriptor.parameters,
@@ -883,15 +890,19 @@ export class GLTFScenesManager {
             mesh.storages.instances.modelMatrix.shouldUpdate = true
             mesh.storages.instances.normalMatrix.shouldUpdate = true
           }
+        }
 
-          // be sure to have fresh model matrices
-          // TODO shouldn't be needed?
-          this.renderer.onAfterRenderScene.add(
-            () => {
-              mesh.shouldUpdateModelMatrix()
-            },
-            { once: true }
-          )
+        // instanced shadows
+        if (hasInstancedShadows) {
+          const instancesBinding = mesh.material.inputsBindings.get('instances')
+
+          this.renderer.shadowCastingLights.forEach((light) => {
+            if (light.shadow.isActive) {
+              light.shadow.addShadowCastingMesh(mesh, {
+                bindings: [instancesBinding],
+              })
+            }
+          })
         }
 
         mesh.parent = meshDescriptor.parent

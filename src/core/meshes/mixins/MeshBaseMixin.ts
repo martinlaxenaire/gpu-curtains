@@ -12,8 +12,8 @@ import { Material } from '../../materials/Material'
 import { DOMElementBoundingRect } from '../../DOM/DOMElement'
 import { AllowedGeometries, RenderMaterialParams, ShaderOptions } from '../../../types/Materials'
 import { ProjectedMeshBaseClass } from './ProjectedMeshBaseMixin'
-import default_vsWgsl from '../../shaders/chunks/default_vs.wgsl'
-import default_fsWgsl from '../../shaders/chunks/default_fs.wgsl'
+import default_vsWgsl from '../../shaders/chunks/default/default_vs.wgsl'
+import default_fsWgsl from '../../shaders/chunks/default/default_fs.wgsl'
 import { RenderPass } from '../../renderPasses/RenderPass'
 
 let meshIndex = 0

@@ -98,7 +98,7 @@ export type AllowedGeometries = Geometry | IndexedGeometry;
  * Base rendering options to send to the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline}
  */
 export interface RenderMaterialBaseRenderingOptions {
-    /** Whether this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} should implicitly use the {@link core/renderers/GPUCameraRenderer.GPUCameraRenderer#cameraBindGroup | renderer camera bind group} */
+    /** Whether this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} should implicitly use the {@link core/renderers/GPUCameraRenderer.GPUCameraRenderer#cameraLightsBindGroup | renderer camera bind group} */
     useProjection: boolean;
     /** Whether this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} should be treated as transparent. Impacts the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createRenderPipeline#blend | blend property} */
     transparent: boolean;

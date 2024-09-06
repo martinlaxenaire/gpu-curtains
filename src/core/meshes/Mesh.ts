@@ -1,7 +1,6 @@
 import { CameraRenderer, isCameraRenderer } from '../renderers/utils'
 import { ProjectedObject3D } from '../objects3D/ProjectedObject3D'
 import { ProjectedMeshBaseMixin, ProjectedMeshParameters } from './mixins/ProjectedMeshBaseMixin'
-import { MeshBaseParams } from './mixins/MeshBaseMixin'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 
 /**
@@ -15,6 +14,51 @@ import { GPUCurtains } from '../../curtains/GPUCurtains'
  * ## Shaders bindings and default attributes and uniforms
  *
  * The shaders are automatically patched with the input {@link core/bindGroups/BindGroup.BindGroup | bind groups} and {@link core/bindings/BufferBinding.BufferBinding | bindings} defined in your parameters object, as well as some default attributes and uniforms (see {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | RenderPipelineEntry}).
+ *
+ * ### Default shaders
+ *
+ * If one or all shaders are missing, the library will use default ones.
+ *
+ * #### Default vertex shader:
+ *
+ * ```wgsl
+ * struct VSOutput {
+ *   @builtin(position) position: vec4f,
+ *   @location(0) uv: vec2f,
+ *   @location(1) normal: vec3f,
+ *   @location(2) worldPosition: vec3f,
+ *   @location(3) viewDirection: vec3f,
+ * };
+ *
+ * @vertex fn main(
+ *   attributes: Attributes,
+ * ) -> VSOutput {
+ *   var vsOutput: VSOutput;
+ *
+ *   vsOutput.position = getOutputPosition(attributes.position);
+ *   vsOutput.uv = attributes.uv;
+ *   vsOutput.normal = getWorldNormal(attributes.normal);
+ *   vsOutput.worldPosition = getWorldPosition(attributes.position).xyz;
+ *   vsOutput.viewDirection = camera.position - vsOutput.worldPosition;
+ *
+ *   return vsOutput;
+ * }
+ * ```
+ *
+ * #### Default fragment shader:
+ *
+ * ```wgsl
+ * struct VSOutput {
+ *   @builtin(position) position: vec4f,
+ *   @location(0) uv: vec2f,
+ *   @location(1) normal: vec3f,
+ * };
+ *
+ * @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
+ *   // normals
+ *   return vec4(normalize(fsInput.normal) * 0.5 + 0.5, 1.0);
+ * }
+ * ```
  *
  * @example
  * ```javascript
@@ -39,7 +83,7 @@ export class Mesh extends ProjectedMeshBaseMixin(ProjectedObject3D) {
   /**
    * Mesh constructor
    * @param renderer - {@link CameraRenderer} object or {@link GPUCurtains} class object used to create this {@link Mesh}
-   * @param parameters - {@link MeshBaseParams | parameters} use to create this {@link Mesh}
+   * @param parameters - {@link ProjectedMeshParameters | parameters} use to create this {@link Mesh}
    */
   constructor(renderer: CameraRenderer | GPUCurtains, parameters: ProjectedMeshParameters = {}) {
     // we could pass our curtains object OR our curtains renderer object

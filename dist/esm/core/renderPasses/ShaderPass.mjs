@@ -1,6 +1,6 @@
 import { FullscreenPlane } from '../meshes/FullscreenPlane.mjs';
 import { isRenderer } from '../renderers/utils.mjs';
-import default_pass_fsWGSl from '../shaders/chunks/default_pass_fs.wgsl.mjs';
+import default_pass_fsWGSl from '../shaders/chunks/default/default_pass_fs.wgsl.mjs';
 import { throwWarning } from '../../utils/utils.mjs';
 
 class ShaderPass extends FullscreenPlane {

@@ -1038,11 +1038,11 @@ export class GPURenderer {
   }
 
   /**
-   * Called by the {@link GPUDeviceManager#render | GPUDeviceManager render method} before the {@link GPUCommandEncoder} has been created
+   * Called by the {@link GPUDeviceManager#render | GPUDeviceManager render method} before the {@link GPUCommandEncoder} has been created. Used to update the {@link Scene} matrix stack.
    */
   onBeforeCommandEncoder() {
     if (!this.ready) return
-    // now render!
+    if (this.shouldRenderScene) this.scene?.onBeforeRender()
     this.onBeforeCommandEncoderCreation.execute()
   }
 

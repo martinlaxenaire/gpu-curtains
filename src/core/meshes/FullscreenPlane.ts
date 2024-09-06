@@ -12,6 +12,38 @@ import { BufferBindingParams } from '../bindings/BufferBinding'
  *
  * It consists of a {@link PlaneGeometry} and {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} and a few utilities method to help create {@link core/textures/DOMTexture.DOMTexture | DOMTexture} and {@link core/textures/Texture.Texture | Texture}.
  *
+ * ### Default shaders
+ *
+ * If one or all shaders are missing, the library will use default ones.
+ *
+ * #### Default vertex shader:
+ *
+ * ```wgsl
+ * struct VSOutput {
+ *   @builtin(position) position: vec4f,
+ *   @location(0) uv: vec2f,
+ * };
+ *
+ * @vertex fn main(
+ *   attributes: Attributes,
+ * ) -> VSOutput {
+ *   var vsOutput: VSOutput;
+ *
+ *   vsOutput.position = vec4f(attributes.position, 1.0);
+ *   vsOutput.uv = attributes.uv;
+ *
+ *   return vsOutput;
+ * }
+ * ```
+ *
+ * #### Default fragment shader:
+ *
+ * ```wgsl
+ * @fragment fn main() -> @location(0) vec4f {
+ *   return vec4(0.0, 0.0, 0.0, 1.0);
+ * }
+ * ```
+ *
  * @example
  * ```javascript
  * // set our main GPUCurtains instance

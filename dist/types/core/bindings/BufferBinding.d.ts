@@ -39,6 +39,8 @@ export interface BufferBindingBaseParams {
 export interface BufferBindingParams extends BindingParams, BufferBindingBaseParams {
     /** The binding type of the {@link BufferBinding} */
     bindingType?: BufferBindingType;
+    /** Optional array of already created {@link BufferBinding} to add to this {@link BufferBinding}. */
+    bindings?: BufferBinding[];
 }
 /** All allowed {@link BufferElement | buffer elements} */
 export type AllowedBufferElement = BufferElement | BufferArrayElement | BufferInterleavedArrayElement;
@@ -95,7 +97,7 @@ export declare class BufferBinding extends Binding {
      * BufferBinding constructor
      * @param parameters - {@link BufferBindingParams | parameters} used to create our BufferBindings
      */
-    constructor({ label, name, bindingType, visibility, useStruct, access, usage, struct, }: BufferBindingParams);
+    constructor({ label, name, bindingType, visibility, useStruct, access, usage, struct, bindings, }: BufferBindingParams);
     /**
      * Get {@link GPUBindGroupLayoutEntry#buffer | bind group layout entry resource}
      * @readonly
@@ -127,6 +129,10 @@ export declare class BufferBinding extends Binding {
      * @param bindings - bindings inputs
      */
     setBindings(bindings: Record<string, Input>): void;
+    /**
+     * Set the buffer alignments from {@link inputs}.
+     */
+    setInputsAlignment(): void;
     /**
      * Set our buffer attributes:
      * Takes all the {@link inputs} and adds them to the {@link bufferElements} array with the correct start and end offsets (padded), then fill our {@link arrayBuffer} typed array accordingly.

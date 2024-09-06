@@ -475,7 +475,7 @@ export class Scene extends Object3D {
    * - Set its {@link RenderPass#descriptor | renderPass descriptor} view or resolveTarget and get it at as swap chain texture
    * - Execute {@link RenderPassEntry#onBeforeRenderPass | onBeforeRenderPass} callback if specified
    * - Begin the {@link GPURenderPassEncoder | GPU render pass encoder} using our {@link RenderPass#descriptor | renderPass descriptor}
-   * - Render the single element if specified or the render pass entry {@link Stack}: draw unprojected opaque / transparent meshes first, then set the {@link core/renderers/GPUCameraRenderer.GPUCameraRenderer#cameraBindGroup | camera bind group} and draw projected opaque / transparent meshes
+   * - Render the single element if specified or the render pass entry {@link Stack}: draw unprojected opaque / transparent meshes first, then set the {@link core/renderers/GPUCameraRenderer.GPUCameraRenderer#cameraLightsBindGroup | camera and lights bind group} and draw projected opaque / transparent meshes
    * - End the {@link GPURenderPassEncoder | GPU render pass encoder}
    * - Execute {@link RenderPassEntry#onAfterRenderPass | onAfterRenderPass} callback if specified
    * - Reset {@link core/pipelines/PipelineManager.PipelineManager#currentPipelineIndex | pipeline manager current pipeline}
@@ -534,7 +534,7 @@ export class Scene extends Object3D {
   }
 
   /**
-   * Before actually rendering the scene, update matrix stack and frustum culling checks. Batching these calls greatly improve performance.
+   * Before actually rendering the scene, update matrix stack and frustum culling checks. Batching these calls greatly improve performance. Called by the {@link renderer} before rendering.
    */
   onBeforeRender() {
     // execute meshes onBeforeRender callback if needed
@@ -562,8 +562,6 @@ export class Scene extends Object3D {
    * @param commandEncoder - current {@link GPUCommandEncoder}
    */
   render(commandEncoder: GPUCommandEncoder) {
-    this.onBeforeRender()
-
     for (const computePass of this.computePassEntries) {
       const pass = commandEncoder.beginComputePass()
       computePass.render(pass)

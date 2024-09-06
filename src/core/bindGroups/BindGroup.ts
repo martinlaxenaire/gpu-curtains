@@ -189,6 +189,30 @@ export class BindGroup {
   }
 
   /**
+   * Destroy a {@link BufferBinding} buffers.
+   * @param binding - {@link BufferBinding} from which to destroy the buffers.
+   */
+  destroyBufferBinding(binding: BindGroupBufferBindingElement) {
+    if ('buffer' in binding) {
+      this.renderer.removeBuffer(binding.buffer)
+
+      binding.buffer.consumers.delete(this.uuid)
+      if (!binding.buffer.consumers.size) {
+        binding.buffer.destroy()
+      }
+    }
+
+    if ('resultBuffer' in binding) {
+      this.renderer.removeBuffer(binding.resultBuffer)
+
+      binding.resultBuffer.consumers.delete(this.uuid)
+      if (!binding.resultBuffer.consumers.size) {
+        binding.resultBuffer.destroy()
+      }
+    }
+  }
+
+  /**
    * Creates Bindings based on a list of inputs
    * @param bindingType - {@link core/bindings/Binding.Binding#bindingType | binding type}
    * @param inputs - {@link ReadOnlyInputBindings | inputs (uniform or storage)} that will be used to create the binding
@@ -490,7 +514,7 @@ export class BindGroup {
         binding.update()
 
         // now write to the GPUBuffer if needed
-        if (binding.shouldUpdate) {
+        if (binding.shouldUpdate && binding.buffer.GPUBuffer) {
           // bufferOffset is always equals to 0 in our case
           if (!binding.useStruct && binding.bufferElements.length > 1) {
             // we're in a non struct buffer binding with multiple entries
@@ -499,10 +523,10 @@ export class BindGroup {
           } else {
             this.renderer.queueWriteBuffer(binding.buffer.GPUBuffer, 0, binding.arrayBuffer)
           }
-        }
 
-        // reset update flag
-        binding.shouldUpdate = false
+          // reset update flag
+          binding.shouldUpdate = false
+        }
       }
     })
   }
@@ -613,23 +637,7 @@ export class BindGroup {
     this.renderer.removeBindGroup(this)
 
     for (const binding of this.bufferBindings) {
-      if ('buffer' in binding) {
-        this.renderer.removeBuffer(binding.buffer)
-
-        binding.buffer.consumers.delete(this.uuid)
-        if (!binding.buffer.consumers.size) {
-          binding.buffer.destroy()
-        }
-      }
-
-      if ('resultBuffer' in binding) {
-        this.renderer.removeBuffer(binding.resultBuffer)
-
-        binding.resultBuffer.consumers.delete(this.uuid)
-        if (!binding.resultBuffer.consumers.size) {
-          binding.resultBuffer.destroy()
-        }
-      }
+      this.destroyBufferBinding(binding)
     }
 
     this.bindings = []

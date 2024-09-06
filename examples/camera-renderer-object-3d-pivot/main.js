@@ -1,6 +1,9 @@
 import {
   GPUCameraRenderer,
   GPUDeviceManager,
+  AmbientLight,
+  DirectionalLight,
+  getLambert,
   Object3D,
   Mesh,
   BoxGeometry,
@@ -43,57 +46,40 @@ window.addEventListener('load', async () => {
 
   animate()
 
-  // very basic light shading
-  const meshVs = /* wgsl */ `
-    struct VertexOutput {
-      @builtin(position) position: vec4f,
-      @location(0) uv: vec2f,
-      @location(1) normal: vec3f,
-    };
-    
-    @vertex fn main(
-      attributes: Attributes,
-    ) -> VertexOutput {
-      var vsOutput: VertexOutput;
-    
-      vsOutput.position = getOutputPosition(attributes.position);
-      vsOutput.uv = attributes.uv;
-      vsOutput.normal = getWorldNormal(attributes.normal);
-      
-      return vsOutput;
-    }
-  `
+  const ambientLight = new AmbientLight(gpuCameraRenderer, {
+    intensity: 0.7,
+  })
+
+  const directionalLight = new DirectionalLight(gpuCameraRenderer, {
+    position: new Vec3(0, 10, 10),
+    intensity: 1,
+  })
 
   const meshFs = /* wgsl */ `
     struct VSOutput {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
       @location(1) normal: vec3f,
+      @location(2) worldPosition: vec3f,
     };
     
-    fn applyLightning(color: vec3f, normal: vec3f) -> vec3f {
-      var lightPos: vec3f = normalize(shading.lightPosition);
-      var light: f32 = smoothstep(0.15, 1.0, dot(normal, lightPos));
+    ${getLambert()}
     
-      var ambientLight: f32 = 1.0 - shading.lightStrength;
-      return color.rgb * light * shading.lightStrength + color.rgb * shading.ambientLightStrength;
-    }
-    
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {      
-      var color: vec4f;
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
+          
+      var color: vec3f = getLambert(
+        normalize(fsInput.normal),
+        fsInput.worldPosition,
+        shading.color,
         
-      var shadedColor: vec3f = applyLightning(shading.color, fsInput.normal);
-      color = vec4(shadedColor, 1.0);
+      );
     
-      return color;
+      return vec4(color, 1.0);
     }
   `
 
   const blue = new Vec3(0, 1, 1)
   const pink = new Vec3(1, 0, 1)
-  const lightPosition = new Vec3(0, 10, 10)
-  const lightStrength = 0.6
-  const ambientLightStrength = 0.5
 
   const nbElements = 10
   for (let i = 0; i < nbElements; i++) {
@@ -124,9 +110,6 @@ window.addEventListener('load', async () => {
       label: 'Pivot center ' + i,
       geometry: new SphereGeometry(),
       shaders: {
-        vertex: {
-          code: meshVs,
-        },
         fragment: {
           code: meshFs,
         },
@@ -137,18 +120,6 @@ window.addEventListener('load', async () => {
             color: {
               type: 'vec3f',
               value: meshColor,
-            },
-            lightPosition: {
-              type: 'vec3f',
-              value: lightPosition,
-            },
-            lightStrength: {
-              type: 'f32',
-              value: lightStrength,
-            },
-            ambientLightStrength: {
-              type: 'f32',
-              value: ambientLightStrength,
             },
           },
         },
@@ -164,9 +135,6 @@ window.addEventListener('load', async () => {
       label: 'Cube ' + i,
       geometry: new BoxGeometry(),
       shaders: {
-        vertex: {
-          code: meshVs,
-        },
         fragment: {
           code: meshFs,
         },
@@ -177,18 +145,6 @@ window.addEventListener('load', async () => {
             color: {
               type: 'vec3f',
               value: meshColor,
-            },
-            lightPosition: {
-              type: 'vec3f',
-              value: lightPosition,
-            },
-            lightStrength: {
-              type: 'f32',
-              value: lightStrength,
-            },
-            ambientLightStrength: {
-              type: 'f32',
-              value: ambientLightStrength,
             },
           },
         },
