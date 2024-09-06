@@ -190,6 +190,7 @@ window.addEventListener('load', async () => {
     },
   }
 
+  // put point lights on the torches
   const pointLightsPos = [
     new Vec3(-4.45, 1.15, -1.45),
     new Vec3(-4.45, 1.15, 1.45),
@@ -199,8 +200,6 @@ window.addEventListener('load', async () => {
 
   pointLightsPos.forEach((position) => {
     const pointLight = new PointLight(gpuCameraRenderer, {
-      //position: new Vec3(-5, 5, 0),
-      //position: new Vec3(-9, 1.7, -3.3),
       position,
       ...pointLightsSettings,
     })
@@ -216,8 +215,6 @@ window.addEventListener('load', async () => {
       pointLight.intensity = 6 + (sinusoidal(time * 0.05) + 1) * 0.5 + (Math.random() * 2 + 1)
     })
   })
-
-  console.log(pointLights)
 
   // gltf
   const gltfLoader = new GLTFLoader()
@@ -256,12 +253,6 @@ window.addEventListener('load', async () => {
       // shadows
       parameters.castShadows = true
       parameters.receiveShadows = true
-
-      // if (shadingModel === 'IBL') {
-      //   ambientLight.intensity = 0
-      // } else {
-      //   ambientLight.intensity = 1
-      // }
 
       // debug
       const additionalColorContribution = `
@@ -331,12 +322,6 @@ window.addEventListener('load', async () => {
     .onChange((value) => {
       ambientLight.color.set(value.r, value.g, value.b)
     })
-
-  // const pointLightFolder = gui.addFolder('Point light')
-  // const pointLightPosFolder = pointLightFolder.addFolder('Position')
-  // pointLightPosFolder.add(pointLight.position, 'x', -20, 20, 0.1)
-  // pointLightPosFolder.add(pointLight.position, 'y', -20, 20, 0.1)
-  // pointLightPosFolder.add(pointLight.position, 'z', -20, 20, 0.1)
 
   const directionalLightFolder = gui.addFolder('Directional light')
   directionalLightFolder.add(directionalLight, 'intensity', 0, 10, 0.01)

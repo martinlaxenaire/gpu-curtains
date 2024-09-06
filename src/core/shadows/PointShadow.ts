@@ -143,7 +143,7 @@ export class PointShadow extends Shadow {
       new Vec3(0, -1, 0),
     ]
 
-    if (camera.far === -1) {
+    if (camera.far <= 0) {
       camera.far = 150
     }
 
@@ -195,7 +195,7 @@ export class PointShadow extends Shadow {
   ) {
     if (camera) {
       this.camera.near = camera.near ?? 0.1
-      this.camera.far = camera.far !== undefined ? camera.far : this.light.range !== -1 ? this.light.range : 150
+      this.camera.far = camera.far !== undefined ? camera.far : this.light.range > 0 ? this.light.range : 150
     }
 
     super.cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender })

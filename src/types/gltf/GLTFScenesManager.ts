@@ -61,7 +61,7 @@ export interface MaterialTextureDescriptor {
  * Define a {@link MaterialTexture} describing all {@link Texture} and {@link Sampler} used by a specified material.
  */
 export interface MaterialTexture {
-  /** Material index in the {@link extras/gltf/GLTFLoader.GPUCurtainsGLTF.materials | materials array}. */
+  /** Material index in the {@link extras/loaders/GLTFLoader.GPUCurtainsGLTF.materials | materials array}. */
   material: number
   /** {@link MaterialTextureDescriptor} defining the {@link Texture} and {@link Sampler} used by the material. */
   texturesDescriptors: MaterialTextureDescriptor[]

@@ -113,7 +113,7 @@ window.addEventListener('load', async () => {
   const pointLight = new PointLight(gpuCameraRenderer, {
     position: new Vec3(0, 0.5, 0),
     color: new Vec3(1),
-    range: 15,
+    range: 0,
     intensity: 5,
   })
 
@@ -129,6 +129,8 @@ window.addEventListener('load', async () => {
   })
 
   pointLights.push(pointLight)
+
+  console.log(pointLight)
 
   // const pointLight2 = new PointLight(gpuCameraRenderer, {
   //   position: new Vec3(-5, 0.5, 0),
