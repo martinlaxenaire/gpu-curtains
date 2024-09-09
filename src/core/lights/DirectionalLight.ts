@@ -92,8 +92,9 @@ export class DirectionalLight extends Light {
       shadow = null,
     } = {} as DirectionalLightBaseParams
   ) {
-    const index = renderer.lights.filter((light) => light.constructor.name === 'DirectionalLight').length
-    super(renderer, { color, intensity, index, type: 'directionalLights' })
+    const type = 'directionalLights'
+    const index = renderer.lights.filter((light) => light.type === type).length
+    super(renderer, { color, intensity, index, type })
 
     this.options = {
       ...this.options,

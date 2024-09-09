@@ -83,8 +83,9 @@ export class PointLight extends Light {
     renderer: CameraRenderer,
     { color = new Vec3(1), intensity = 1, position = new Vec3(), range = 0, shadow = null } = {} as PointLightBaseParams
   ) {
-    const index = renderer.lights.filter((light) => light.constructor.name === 'PointLight').length
-    super(renderer, { color, intensity, index, type: 'pointLights' })
+    const type = 'pointLights'
+    const index = renderer.lights.filter((light) => light.type === type).length
+    super(renderer, { color, intensity, index, type })
 
     this.options = {
       ...this.options,

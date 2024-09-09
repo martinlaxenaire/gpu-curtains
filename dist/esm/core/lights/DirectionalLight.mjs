@@ -34,8 +34,9 @@ class DirectionalLight extends Light {
     target = new Vec3(),
     shadow = null
   } = {}) {
-    const index = renderer.lights.filter((light) => light.constructor.name === "DirectionalLight").length;
-    super(renderer, { color, intensity, index, type: "directionalLights" });
+    const type = "directionalLights";
+    const index = renderer.lights.filter((light) => light.type === type).length;
+    super(renderer, { color, intensity, index, type });
     /** @ignore */
     __privateAdd(this, _actualPosition, void 0);
     /**

@@ -28,8 +28,9 @@ class PointLight extends Light {
    * @param parameters - {@link PointLightBaseParams | parameters} used to create this {@link PointLight}.
    */
   constructor(renderer, { color = new Vec3(1), intensity = 1, position = new Vec3(), range = 0, shadow = null } = {}) {
-    const index = renderer.lights.filter((light) => light.constructor.name === "PointLight").length;
-    super(renderer, { color, intensity, index, type: "pointLights" });
+    const type = "pointLights";
+    const index = renderer.lights.filter((light) => light.type === type).length;
+    super(renderer, { color, intensity, index, type });
     /** @ignore */
     __privateAdd(this, _range, void 0);
     /** @ignore */

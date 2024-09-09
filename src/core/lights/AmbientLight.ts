@@ -23,8 +23,9 @@ export class AmbientLight extends Light {
    * @param parameters - {@link LightBaseParams | parameters} used to create this {@link AmbientLight}.
    */
   constructor(renderer: CameraRenderer, { color = new Vec3(1), intensity = 0.1 } = {} as LightBaseParams) {
-    const index = renderer.lights.filter((light) => light.constructor.name === 'AmbientLight').length
-    super(renderer, { color, intensity, index, type: 'ambientLights' })
+    const type = 'ambientLights'
+    const index = renderer.lights.filter((light) => light.type === type).length
+    super(renderer, { color, intensity, index, type })
 
     if (this.index + 1 > this.renderer.lightsBindingParams[this.type].max) {
       this.onMaxLightOverflow(this.type as LightsType)

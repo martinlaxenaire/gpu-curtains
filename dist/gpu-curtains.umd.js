@@ -6853,8 +6853,9 @@
      * @param parameters - {@link LightBaseParams | parameters} used to create this {@link AmbientLight}.
      */
     constructor(renderer, { color = new Vec3(1), intensity = 0.1 } = {}) {
-      const index = renderer.lights.filter((light) => light.constructor.name === "AmbientLight").length;
-      super(renderer, { color, intensity, index, type: "ambientLights" });
+      const type = "ambientLights";
+      const index = renderer.lights.filter((light) => light.type === type).length;
+      super(renderer, { color, intensity, index, type });
       if (this.index + 1 > this.renderer.lightsBindingParams[this.type].max) {
         this.onMaxLightOverflow(this.type);
       }
@@ -8519,8 +8520,9 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
       target = new Vec3(),
       shadow = null
     } = {}) {
-      const index = renderer.lights.filter((light) => light.constructor.name === "DirectionalLight").length;
-      super(renderer, { color, intensity, index, type: "directionalLights" });
+      const type = "directionalLights";
+      const index = renderer.lights.filter((light) => light.type === type).length;
+      super(renderer, { color, intensity, index, type });
       /** @ignore */
       __privateAdd$9(this, _actualPosition$1, void 0);
       /**
@@ -8931,8 +8933,9 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
      * @param parameters - {@link PointLightBaseParams | parameters} used to create this {@link PointLight}.
      */
     constructor(renderer, { color = new Vec3(1), intensity = 1, position = new Vec3(), range = 0, shadow = null } = {}) {
-      const index = renderer.lights.filter((light) => light.constructor.name === "PointLight").length;
-      super(renderer, { color, intensity, index, type: "pointLights" });
+      const type = "pointLights";
+      const index = renderer.lights.filter((light) => light.type === type).length;
+      super(renderer, { color, intensity, index, type });
       /** @ignore */
       __privateAdd$7(this, _range, void 0);
       /** @ignore */
