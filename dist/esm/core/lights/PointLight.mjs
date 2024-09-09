@@ -21,7 +21,6 @@ var __privateSet = (obj, member, value, setter) => {
   return value;
 };
 var _range, _actualPosition;
-let pointLightIndex = 0;
 class PointLight extends Light {
   /**
    * PointLight constructor
@@ -29,7 +28,8 @@ class PointLight extends Light {
    * @param parameters - {@link PointLightBaseParams | parameters} used to create this {@link PointLight}.
    */
   constructor(renderer, { color = new Vec3(1), intensity = 1, position = new Vec3(), range = 0, shadow = null } = {}) {
-    super(renderer, { color, intensity, index: pointLightIndex++, type: "pointLights" });
+    const index = renderer.lights.filter((light) => light.constructor.name === "PointLight").length;
+    super(renderer, { color, intensity, index, type: "pointLights" });
     /** @ignore */
     __privateAdd(this, _range, void 0);
     /** @ignore */
@@ -47,7 +47,7 @@ class PointLight extends Light {
     if (this.index + 1 > this.renderer.lightsBindingParams[this.type].max) {
       this.onMaxLightOverflow(this.type);
     }
-    this.rendererBinding.inputs.count.value = pointLightIndex;
+    this.rendererBinding.inputs.count.value = this.index + 1;
     this.rendererBinding.inputs.count.shouldUpdate = true;
     this.shadow = new PointShadow(this.renderer, {
       autoRender: false,

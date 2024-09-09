@@ -21,7 +21,6 @@ var __privateSet = (obj, member, value, setter) => {
   return value;
 };
 var _actualPosition, _direction;
-let directionalLightIndex = 0;
 class DirectionalLight extends Light {
   /**
    * DirectionalLight constructor
@@ -35,7 +34,8 @@ class DirectionalLight extends Light {
     target = new Vec3(),
     shadow = null
   } = {}) {
-    super(renderer, { color, intensity, index: directionalLightIndex++, type: "directionalLights" });
+    const index = renderer.lights.filter((light) => light.constructor.name === "DirectionalLight").length;
+    super(renderer, { color, intensity, index, type: "directionalLights" });
     /** @ignore */
     __privateAdd(this, _actualPosition, void 0);
     /**
@@ -58,7 +58,7 @@ class DirectionalLight extends Light {
     if (this.index + 1 > this.renderer.lightsBindingParams[this.type].max) {
       this.onMaxLightOverflow(this.type);
     }
-    this.rendererBinding.inputs.count.value = directionalLightIndex;
+    this.rendererBinding.inputs.count.value = this.index + 1;
     this.rendererBinding.inputs.count.shouldUpdate = true;
     this.shadow = new DirectionalShadow(this.renderer, {
       autoRender: false,

@@ -6,7 +6,7 @@ import { BindGroup } from '../bindGroups/BindGroup';
 import { Vec3 } from '../../math/Vec3';
 import { AllowedBindGroups, Input } from '../../types/BindGroups';
 import { RectBBox } from '../DOM/DOMElement';
-import { Light, LightsType, ShadowCastingLights } from '../lights/Light';
+import type { Light, LightsType, ShadowCastingLights } from '../lights/Light';
 import { WGSLVariableType } from '../bindings/utils';
 import { ShadowsType } from '../shadows/Shadow';
 /** Defines the parameters used to build the {@link BufferBinding} of each type of lights. */
@@ -33,9 +33,9 @@ export type GPUCameraRendererBindings = Record<'camera' | LightsType | ShadowsTy
 export interface GPUCameraRendererLightParams {
     /** Maximum number of {@link core/lights/AmbientLight.AmbientLight | AmbientLight} to use. Default to `2`. */
     maxAmbientLights?: LightsBindingParams['ambientLights']['max'];
-    /** Maximum number of {@link DirectionalLight} to use. Default to `5`. */
+    /** Maximum number of {@link core/lights/DirectionalLight.DirectionalLight | DirectionalLight} to use. Default to `5`. */
     maxDirectionalLights?: LightsBindingParams['directionalLights']['max'];
-    /** Maximum number of {@link PointLight} to use. Default to `5`. */
+    /** Maximum number of {@link core/lights/PointLight.PointLight | PointLight} to use. Default to `5`. */
     maxPointLights?: LightsBindingParams['pointLights']['max'];
 }
 /**
@@ -111,7 +111,7 @@ export declare class GPUCameraRenderer extends GPURenderer {
      */
     useCamera(camera: Camera): void;
     /**
-     * Update the {@link ProjectedMesh | projected meshes} sizes and positions when the {@link camera} {@link Camera#position | position} changes
+     * Update the {@link core/renderers/GPURenderer.ProjectedMesh | projected meshes} sizes and positions when the {@link camera} {@link Camera#position | position} changes
      */
     onCameraMatricesChanged(): void;
     /**
@@ -173,7 +173,7 @@ export declare class GPUCameraRenderer extends GPURenderer {
      */
     updateCameraBindings(): void;
     /**
-     * Get all objects ({@link RenderedMesh | rendered meshes} or {@link core/computePasses/ComputePass.ComputePass | compute passes}) using a given {@link AllowedBindGroups | bind group}, including {@link cameraLightsBindGroup | camera and lights bind group}.
+     * Get all objects ({@link core/renderers/GPURenderer.RenderedMesh | rendered meshes} or {@link core/computePasses/ComputePass.ComputePass | compute passes}) using a given {@link AllowedBindGroups | bind group}, including {@link cameraLightsBindGroup | camera and lights bind group}.
      * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
      * @param bindGroup - {@link AllowedBindGroups | bind group} to check
      */
