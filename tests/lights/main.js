@@ -139,6 +139,8 @@ window.addEventListener('load', async () => {
     })
   )
 
+  console.log(gpuCameraRenderer.lights)
+
   const mesh = new Mesh(gpuCameraRenderer, {
     label: 'Cube',
     geometry: new BoxGeometry(),

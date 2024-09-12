@@ -346,9 +346,23 @@ export const buildShaders = (
       additionalColorContribution: defaultAdditionalColor,
     }
   } else {
-    if (!chunks.additionalFragmentHead) chunks.additionalFragmentHead = defaultAdditionalHead
-    if (!chunks.preliminaryColorContribution) chunks.preliminaryColorContribution = defaultPreliminaryColor
-    if (!chunks.additionalColorContribution) chunks.additionalColorContribution = defaultAdditionalColor
+    if (!chunks.additionalFragmentHead) {
+      chunks.additionalFragmentHead = defaultAdditionalHead
+    } else {
+      chunks.additionalFragmentHead = defaultAdditionalHead + chunks.additionalFragmentHead
+    }
+
+    if (!chunks.preliminaryColorContribution) {
+      chunks.preliminaryColorContribution = defaultPreliminaryColor
+    } else {
+      chunks.preliminaryColorContribution = defaultPreliminaryColor + chunks.preliminaryColorContribution
+    }
+
+    if (!chunks.additionalColorContribution) {
+      chunks.additionalColorContribution = defaultAdditionalColor
+    } else {
+      chunks.additionalColorContribution = defaultAdditionalColor + chunks.additionalColorContribution
+    }
   }
 
   // TODO shininess, specularStrength, specularColor

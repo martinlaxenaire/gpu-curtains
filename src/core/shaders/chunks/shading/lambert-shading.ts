@@ -4,6 +4,7 @@ import RE_indirect_diffuse from '../helpers/lights/RE_indirect_diffuse.wgsl'
 import { applyDirectionalShadows, applyPointShadows, getPCFShadows } from './shadows'
 import constants from '../helpers/constants.wgsl'
 
+// TODO add emissive?
 /** Defines the basic parameters available for the various shading getter functions. */
 export interface GetShadingParams {
   /** Whether to add the utils functions such as constants or helper functions. Default to `true`. */

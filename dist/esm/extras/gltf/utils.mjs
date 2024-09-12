@@ -260,12 +260,21 @@ const buildShaders = (meshDescriptor, shaderParameters = {}) => {
       additionalColorContribution: defaultAdditionalColor
     };
   } else {
-    if (!chunks.additionalFragmentHead)
+    if (!chunks.additionalFragmentHead) {
       chunks.additionalFragmentHead = defaultAdditionalHead;
-    if (!chunks.preliminaryColorContribution)
+    } else {
+      chunks.additionalFragmentHead = defaultAdditionalHead + chunks.additionalFragmentHead;
+    }
+    if (!chunks.preliminaryColorContribution) {
       chunks.preliminaryColorContribution = defaultPreliminaryColor;
-    if (!chunks.additionalColorContribution)
+    } else {
+      chunks.preliminaryColorContribution = defaultPreliminaryColor + chunks.preliminaryColorContribution;
+    }
+    if (!chunks.additionalColorContribution) {
       chunks.additionalColorContribution = defaultAdditionalColor;
+    } else {
+      chunks.additionalColorContribution = defaultAdditionalColor + chunks.additionalColorContribution;
+    }
   }
   const applyLightShading = (() => {
     switch (shadingModel) {

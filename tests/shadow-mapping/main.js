@@ -46,7 +46,10 @@ window.addEventListener('load', async () => {
 
   camera.lookAt()
 
-  const orbitControls = new OrbitControls(gpuCameraRenderer)
+  const orbitControls = new OrbitControls({
+    camera: gpuCameraRenderer.camera,
+    element: gpuCameraRenderer.container,
+  })
   orbitControls.maxPolarAngle = Math.PI * 0.4875
   orbitControls.maxZoom = 20
 
@@ -69,6 +72,7 @@ window.addEventListener('load', async () => {
       bias: 0.002,
       //normalBias: 0.002,
       depthTextureSize: new Vec2(256, 256),
+      pcfSamples: 3,
     },
   })
 
@@ -80,6 +84,7 @@ window.addEventListener('load', async () => {
       //intensity: 1,
       bias: 0.002,
       //normalBias: 0.002,
+      pcfSamples: 2,
       //depthTextureSize: new Vec2(512, 512),
     },
   })
@@ -104,6 +109,7 @@ window.addEventListener('load', async () => {
       //intensity: 1,
       bias: 0.002,
       //normalBias: 0.002,
+      pcfSamples: 3,
       //depthTextureSize: new Vec2(512, 512),
     },
   })
@@ -464,6 +470,7 @@ window.addEventListener('load', async () => {
       directionalShadow.add(directionalLight.shadow, 'intensity', 0, 10, 0.01)
       directionalShadow.add(directionalLight.shadow, 'bias', 0, 0.01, 0.0001)
       directionalShadow.add(directionalLight.shadow, 'normalBias', 0, 0.01, 0.0001)
+      directionalShadow.add(directionalLight.shadow, 'pcfSamples', 1, 5, 1)
       directionalShadow.add(directionalLight.shadow.depthTextureSize, 'x', 128, 1024, 64).name('Texture width')
       directionalShadow.add(directionalLight.shadow.depthTextureSize, 'y', 128, 1024, 64).name('Texture height')
     }
@@ -491,6 +498,7 @@ window.addEventListener('load', async () => {
       pointShadow.add(pointLight.shadow, 'intensity', 0, 10, 0.01)
       pointShadow.add(pointLight.shadow, 'bias', 0, 0.01, 0.0001)
       pointShadow.add(pointLight.shadow, 'normalBias', 0, 0.01, 0.0001)
+      pointShadow.add(pointShadow.shadow, 'pcfSamples', 1, 5, 1)
       pointShadow.add(pointLight.shadow.depthTextureSize, 'x', 128, 1024, 64).name('Texture width')
       pointShadow.add(pointLight.shadow.depthTextureSize, 'y', 128, 1024, 64).name('Texture height')
     }

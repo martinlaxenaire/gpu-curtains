@@ -4,8 +4,6 @@ import { BufferBinding } from '../bindings/BufferBinding.mjs';
 import { BindGroup } from '../bindGroups/BindGroup.mjs';
 import { Vec3 } from '../../math/Vec3.mjs';
 import { throwWarning } from '../../utils/utils.mjs';
-import { DirectionalLight } from '../lights/DirectionalLight.mjs';
-import { PointLight } from '../lights/PointLight.mjs';
 import { directionalShadowStruct } from '../shadows/DirectionalShadow.mjs';
 import { pointShadowStruct } from '../shadows/PointShadow.mjs';
 
@@ -139,7 +137,7 @@ class GPUCameraRenderer extends GPURenderer {
     }
   }
   /**
-   * Update the {@link ProjectedMesh | projected meshes} sizes and positions when the {@link camera} {@link Camera#position | position} changes
+   * Update the {@link core/renderers/GPURenderer.ProjectedMesh | projected meshes} sizes and positions when the {@link camera} {@link Camera#position | position} changes
    */
   onCameraMatricesChanged() {
     this.updateCameraBindings();
@@ -326,7 +324,7 @@ class GPUCameraRenderer extends GPURenderer {
    */
   get shadowCastingLights() {
     return this.lights.filter(
-      (light) => light instanceof DirectionalLight || light instanceof PointLight
+      (light) => light.type === "directionalLights" || light.type === "pointLights"
     );
   }
   /**
@@ -416,7 +414,7 @@ class GPUCameraRenderer extends GPURenderer {
     this.shouldUpdateCameraLightsBindGroup();
   }
   /**
-   * Get all objects ({@link RenderedMesh | rendered meshes} or {@link core/computePasses/ComputePass.ComputePass | compute passes}) using a given {@link AllowedBindGroups | bind group}, including {@link cameraLightsBindGroup | camera and lights bind group}.
+   * Get all objects ({@link core/renderers/GPURenderer.RenderedMesh | rendered meshes} or {@link core/computePasses/ComputePass.ComputePass | compute passes}) using a given {@link AllowedBindGroups | bind group}, including {@link cameraLightsBindGroup | camera and lights bind group}.
    * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
    * @param bindGroup - {@link AllowedBindGroups | bind group} to check
    */

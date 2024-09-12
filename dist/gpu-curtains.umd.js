@@ -6846,7 +6846,6 @@
   _intensity$1 = new WeakMap();
   _intensityColor = new WeakMap();
 
-  let ambientLightIndex = 0;
   class AmbientLight extends Light {
     /**
      * AmbientLight constructor
@@ -6854,11 +6853,13 @@
      * @param parameters - {@link LightBaseParams | parameters} used to create this {@link AmbientLight}.
      */
     constructor(renderer, { color = new Vec3(1), intensity = 0.1 } = {}) {
-      super(renderer, { color, intensity, index: ambientLightIndex++, type: "ambientLights" });
+      const type = "ambientLights";
+      const index = renderer.lights.filter((light) => light.type === type).length;
+      super(renderer, { color, intensity, index, type });
       if (this.index + 1 > this.renderer.lightsBindingParams[this.type].max) {
         this.onMaxLightOverflow(this.type);
       }
-      this.rendererBinding.inputs.count.value = ambientLightIndex;
+      this.rendererBinding.inputs.count.value = this.index + 1;
       this.rendererBinding.inputs.count.shouldUpdate = true;
     }
     // explicitly disable all kinds of transformations
@@ -8506,7 +8507,6 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
     return value;
   };
   var _actualPosition$1, _direction;
-  let directionalLightIndex = 0;
   class DirectionalLight extends Light {
     /**
      * DirectionalLight constructor
@@ -8520,7 +8520,9 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
       target = new Vec3(),
       shadow = null
     } = {}) {
-      super(renderer, { color, intensity, index: directionalLightIndex++, type: "directionalLights" });
+      const type = "directionalLights";
+      const index = renderer.lights.filter((light) => light.type === type).length;
+      super(renderer, { color, intensity, index, type });
       /** @ignore */
       __privateAdd$9(this, _actualPosition$1, void 0);
       /**
@@ -8543,7 +8545,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
       if (this.index + 1 > this.renderer.lightsBindingParams[this.type].max) {
         this.onMaxLightOverflow(this.type);
       }
-      this.rendererBinding.inputs.count.value = directionalLightIndex;
+      this.rendererBinding.inputs.count.value = this.index + 1;
       this.rendererBinding.inputs.count.shouldUpdate = true;
       this.shadow = new DirectionalShadow(this.renderer, {
         autoRender: false,
@@ -8924,7 +8926,6 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
     return value;
   };
   var _range, _actualPosition;
-  let pointLightIndex = 0;
   class PointLight extends Light {
     /**
      * PointLight constructor
@@ -8932,7 +8933,9 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
      * @param parameters - {@link PointLightBaseParams | parameters} used to create this {@link PointLight}.
      */
     constructor(renderer, { color = new Vec3(1), intensity = 1, position = new Vec3(), range = 0, shadow = null } = {}) {
-      super(renderer, { color, intensity, index: pointLightIndex++, type: "pointLights" });
+      const type = "pointLights";
+      const index = renderer.lights.filter((light) => light.type === type).length;
+      super(renderer, { color, intensity, index, type });
       /** @ignore */
       __privateAdd$7(this, _range, void 0);
       /** @ignore */
@@ -8950,7 +8953,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
       if (this.index + 1 > this.renderer.lightsBindingParams[this.type].max) {
         this.onMaxLightOverflow(this.type);
       }
-      this.rendererBinding.inputs.count.value = pointLightIndex;
+      this.rendererBinding.inputs.count.value = this.index + 1;
       this.rendererBinding.inputs.count.shouldUpdate = true;
       this.shadow = new PointShadow(this.renderer, {
         autoRender: false,
@@ -12848,7 +12851,7 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Update the {@link ProjectedMesh | projected meshes} sizes and positions when the {@link camera} {@link Camera#position | position} changes
+     * Update the {@link core/renderers/GPURenderer.ProjectedMesh | projected meshes} sizes and positions when the {@link camera} {@link Camera#position | position} changes
      */
     onCameraMatricesChanged() {
       this.updateCameraBindings();
@@ -13035,7 +13038,7 @@ ${this.shaders.compute.head}`;
      */
     get shadowCastingLights() {
       return this.lights.filter(
-        (light) => light instanceof DirectionalLight || light instanceof PointLight
+        (light) => light.type === "directionalLights" || light.type === "pointLights"
       );
     }
     /**
@@ -13125,7 +13128,7 @@ ${this.shaders.compute.head}`;
       this.shouldUpdateCameraLightsBindGroup();
     }
     /**
-     * Get all objects ({@link RenderedMesh | rendered meshes} or {@link core/computePasses/ComputePass.ComputePass | compute passes}) using a given {@link AllowedBindGroups | bind group}, including {@link cameraLightsBindGroup | camera and lights bind group}.
+     * Get all objects ({@link core/renderers/GPURenderer.RenderedMesh | rendered meshes} or {@link core/computePasses/ComputePass.ComputePass | compute passes}) using a given {@link AllowedBindGroups | bind group}, including {@link cameraLightsBindGroup | camera and lights bind group}.
      * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
      * @param bindGroup - {@link AllowedBindGroups | bind group} to check
      */
@@ -17109,12 +17112,21 @@ fn getIBL(
         additionalColorContribution: defaultAdditionalColor
       };
     } else {
-      if (!chunks.additionalFragmentHead)
+      if (!chunks.additionalFragmentHead) {
         chunks.additionalFragmentHead = defaultAdditionalHead;
-      if (!chunks.preliminaryColorContribution)
+      } else {
+        chunks.additionalFragmentHead = defaultAdditionalHead + chunks.additionalFragmentHead;
+      }
+      if (!chunks.preliminaryColorContribution) {
         chunks.preliminaryColorContribution = defaultPreliminaryColor;
-      if (!chunks.additionalColorContribution)
+      } else {
+        chunks.preliminaryColorContribution = defaultPreliminaryColor + chunks.preliminaryColorContribution;
+      }
+      if (!chunks.additionalColorContribution) {
         chunks.additionalColorContribution = defaultAdditionalColor;
+      } else {
+        chunks.additionalColorContribution = defaultAdditionalColor + chunks.additionalColorContribution;
+      }
     }
     const applyLightShading = (() => {
       switch (shadingModel) {

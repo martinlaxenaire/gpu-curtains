@@ -3,8 +3,6 @@ import { Vec3 } from '../../math/Vec3'
 import { PointShadow, PointShadowParams } from '../shadows/PointShadow'
 import { CameraRenderer } from '../renderers/utils'
 
-let pointLightIndex = 0
-
 /**
  * Base parameters used to create a {@link PointLight}.
  */
@@ -85,7 +83,9 @@ export class PointLight extends Light {
     renderer: CameraRenderer,
     { color = new Vec3(1), intensity = 1, position = new Vec3(), range = 0, shadow = null } = {} as PointLightBaseParams
   ) {
-    super(renderer, { color, intensity, index: pointLightIndex++, type: 'pointLights' })
+    const type = 'pointLights'
+    const index = renderer.lights.filter((light) => light.type === type).length
+    super(renderer, { color, intensity, index, type })
 
     this.options = {
       ...this.options,
@@ -105,7 +105,7 @@ export class PointLight extends Light {
       this.onMaxLightOverflow(this.type as LightsType)
     }
 
-    this.rendererBinding.inputs.count.value = pointLightIndex
+    this.rendererBinding.inputs.count.value = this.index + 1
     this.rendererBinding.inputs.count.shouldUpdate = true
 
     this.shadow = new PointShadow(this.renderer, {

@@ -1,7 +1,6 @@
 import { Light } from './Light.mjs';
 import { Vec3 } from '../../math/Vec3.mjs';
 
-let ambientLightIndex = 0;
 class AmbientLight extends Light {
   /**
    * AmbientLight constructor
@@ -9,11 +8,13 @@ class AmbientLight extends Light {
    * @param parameters - {@link LightBaseParams | parameters} used to create this {@link AmbientLight}.
    */
   constructor(renderer, { color = new Vec3(1), intensity = 0.1 } = {}) {
-    super(renderer, { color, intensity, index: ambientLightIndex++, type: "ambientLights" });
+    const type = "ambientLights";
+    const index = renderer.lights.filter((light) => light.type === type).length;
+    super(renderer, { color, intensity, index, type });
     if (this.index + 1 > this.renderer.lightsBindingParams[this.type].max) {
       this.onMaxLightOverflow(this.type);
     }
-    this.rendererBinding.inputs.count.value = ambientLightIndex;
+    this.rendererBinding.inputs.count.value = this.index + 1;
     this.rendererBinding.inputs.count.shouldUpdate = true;
   }
   // explicitly disable all kinds of transformations

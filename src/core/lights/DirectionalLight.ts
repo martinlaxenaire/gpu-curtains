@@ -3,8 +3,6 @@ import { Vec3 } from '../../math/Vec3'
 import { DirectionalShadow, DirectionalShadowParams } from '../shadows/DirectionalShadow'
 import { CameraRenderer } from '../renderers/utils'
 
-let directionalLightIndex = 0
-
 /**
  * Base parameters used to create a {@link DirectionalLight}.
  */
@@ -94,7 +92,9 @@ export class DirectionalLight extends Light {
       shadow = null,
     } = {} as DirectionalLightBaseParams
   ) {
-    super(renderer, { color, intensity, index: directionalLightIndex++, type: 'directionalLights' })
+    const type = 'directionalLights'
+    const index = renderer.lights.filter((light) => light.type === type).length
+    super(renderer, { color, intensity, index, type })
 
     this.options = {
       ...this.options,
@@ -115,7 +115,7 @@ export class DirectionalLight extends Light {
       this.onMaxLightOverflow(this.type as LightsType)
     }
 
-    this.rendererBinding.inputs.count.value = directionalLightIndex
+    this.rendererBinding.inputs.count.value = this.index + 1
     this.rendererBinding.inputs.count.shouldUpdate = true
 
     this.shadow = new DirectionalShadow(this.renderer, {
