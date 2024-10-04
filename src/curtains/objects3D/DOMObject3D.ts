@@ -307,6 +307,7 @@ export class DOMObject3D extends ProjectedObject3D {
 
     if (this.matricesNeedUpdate || this.size.shouldUpdate) {
       this.updateSizeAndPosition()
+      this.matricesNeedUpdate = true
     }
 
     this.size.shouldUpdate = false
@@ -325,6 +326,7 @@ export class DOMObject3D extends ProjectedObject3D {
   updateSizeAndPosition() {
     this.setWorldSizes()
     this.applyDocumentPosition()
+    this.shouldUpdateModelMatrix()
   }
 
   /**

@@ -14568,6 +14568,7 @@ fn getIBL(
       super.shouldUpdateMatrices();
       if (this.matricesNeedUpdate || this.size.shouldUpdate) {
         this.updateSizeAndPosition();
+        this.matricesNeedUpdate = true;
       }
       this.size.shouldUpdate = false;
     }
@@ -14583,6 +14584,7 @@ fn getIBL(
     updateSizeAndPosition() {
       this.setWorldSizes();
       this.applyDocumentPosition();
+      this.shouldUpdateModelMatrix();
     }
     /**
      * Compute the {@link DOMObject3D} world position using its world position and document translation converted to world space
