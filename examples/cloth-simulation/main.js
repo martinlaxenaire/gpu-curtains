@@ -1,4 +1,13 @@
-import { BindGroup, ComputePass, GPUCurtains, Plane, PlaneGeometry, Vec2, Vec3 } from '../../dist/esm/index.mjs'
+import {
+  BindGroup,
+  ComputePass,
+  GPUCurtains,
+  Plane,
+  PlaneGeometry,
+  Vec2,
+  Vec3,
+  Raycaster,
+} from '../../dist/esm/index.mjs'
 
 // Port of https://github.com/Yuu6883/WebGPUDemo
 
@@ -641,6 +650,8 @@ window.addEventListener('load', async () => {
 
   const plane = new Plane(gpuCurtains, '#cloth', params)
 
+  const raycaster = new Raycaster(gpuCurtains)
+
   const pointer = new Vec2(Infinity)
   const velocity = new Vec2(0)
   const minVelocity = new Vec2(-100)
@@ -663,8 +674,23 @@ window.addEventListener('load', async () => {
     if (plane && computeForcesPass) {
       if (pointerTimer) clearTimeout(pointerTimer)
 
-      const pointerVertexCoords = plane.mouseToPlaneCoords(pointer)
-      computeForcesPass.uniforms.interaction.pointerPosition.value.copy(pointerVertexCoords)
+      // we could be a bit smarter here and just compute the vertex position
+      // based on the pointer position and the plane position, and convert to the [-1, 1] range
+      // but for the sake of the demo, let's use a raycaster
+      raycaster.setFromMouse(e)
+
+      const intersections = raycaster.intersectObject(plane)
+
+      if (intersections.length) {
+        const closestIntersection = intersections[0]
+        computeForcesPass.uniforms.interaction.pointerPosition.value.set(
+          closestIntersection.localPoint.x,
+          closestIntersection.localPoint.y
+        )
+      } else {
+        computeForcesPass.uniforms.interaction.pointerPosition.value.copy(Infinity)
+      }
+
       computeForcesPass.uniforms.interaction.pointerVelocity.value.set(
         velocity.x / plane.boundingRect.width,
         velocity.y / plane.boundingRect.height

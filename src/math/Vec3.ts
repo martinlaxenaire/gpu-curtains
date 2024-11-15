@@ -460,9 +460,30 @@ export class Vec3 {
    * @param quaternion - optional {@link Quat | quaternion} to use for rotation computations
    * @returns - this {@link Vec3} with the rotation applied
    */
-  applyAxisAngle(axis = new Vec3(), angle = 0, quaternion = new Quat()) {
+  applyAxisAngle(axis = new Vec3(), angle = 0, quaternion = new Quat()): Vec3 {
     // https://github.com/mrdoob/three.js/blob/master/src/math/Vector3.js#L212
     return this.applyQuat(quaternion.setFromAxisAngle(axis, angle))
+  }
+
+  /**
+   * Transforms the direction of this vector by a {@link Mat4} (the upper left 3 x 3 subset) and then normalizes the result.
+   * @param matrix - {@link Mat4} to use for transformation.
+   * @returns - this {@link Vec3} with the transformation applied.
+   */
+  transformDirection(matrix: Mat4): Vec3 {
+    // input: Mat4 affine matrix
+    // vector interpreted as a direction
+
+    const x = this.x,
+      y = this.y,
+      z = this.z
+    const e = matrix.elements
+
+    this.x = e[0] * x + e[4] * y + e[8] * z
+    this.y = e[1] * x + e[5] * y + e[9] * z
+    this.z = e[2] * x + e[6] * y + e[10] * z
+
+    return this.normalize()
   }
 
   /**

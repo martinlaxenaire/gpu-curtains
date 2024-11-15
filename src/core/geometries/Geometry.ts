@@ -331,9 +331,11 @@ export class Geometry {
    */
   getAttributeByName(name: string): VertexBufferAttribute | null {
     let attribute
-    this.vertexBuffers.forEach((vertexBuffer) => {
+
+    for (const vertexBuffer of this.vertexBuffers) {
       attribute = vertexBuffer.attributes.find((attribute) => attribute.name === name)
-    })
+      if (attribute) break // Exit once we find the matching attribute
+    }
 
     return attribute
   }

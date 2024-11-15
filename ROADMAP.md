@@ -20,11 +20,11 @@
 - Lights & Shadows
 - Shader passes
 - PingPongPlane
-- Plane raycasting
 - Basic CacheManager
 - Scroll + resize, frustum culling check
 - GPUCurtains
 - OrbitControls
+- Raycaster
 - GLTFLoader + GLTFScenesManager
 
 ## Work in progress
@@ -34,7 +34,6 @@
 ## TODO / possible improvements
 
 - Add/improve GLTFScenesManager features (sparse accessors, animations, morphing, skinning...)
-- Mesh raycasting
 - Add more lights (SpotLight...)
 - Improve typedoc documentation?
 - Use render bundles? Probably not suited to the library tho

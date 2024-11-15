@@ -587,7 +587,7 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
       sphereCenter.y = (rect.yMax + rect.yMin) / 2
 
       // get sphere radius
-      const sphereRadius = Math.max(rect.xMax - rect.xMin, rect.yMax - rect.yMin)
+      const sphereRadius = Math.max(rect.xMax - rect.xMin, rect.yMax - rect.yMin) * 0.5
 
       return {
         center: sphereCenter,
