@@ -1189,12 +1189,6 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       // no point to render if the WebGPU device is not ready
       if (!this.renderer.ready || !this.visible) return
 
-      // @ts-ignore
-      if (super.render) {
-        // @ts-ignore
-        super.render()
-      }
-
       !this.renderer.production && pass.pushDebugGroup(this.options.label)
 
       this.onRenderPass(pass)
