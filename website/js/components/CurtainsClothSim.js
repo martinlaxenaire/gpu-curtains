@@ -1,4 +1,4 @@
-import { BindGroup, ComputePass, Plane, PlaneGeometry, Vec2, Vec3 } from '../../../dist/esm/index.mjs'
+import { BindGroup, ComputePass, Plane, PlaneGeometry, Vec2, Vec3, Raycaster } from '../../../dist/esm/index.mjs'
 import { computeClothSim } from '../shaders/compute-cloth.wgsl.js'
 import { clothFs, clothVs } from '../shaders/curtains-cloth.wgsl.js'
 
@@ -42,6 +42,8 @@ export class CurtainsClothSim {
 
   init() {
     this.isActive = true
+
+    this.raycaster = new Raycaster(this.gpuCurtains)
 
     this.simulationSpeed = 2
 
@@ -386,8 +388,23 @@ export class CurtainsClothSim {
     if (this.plane && this.computeForcesPass) {
       if (this.pointerTimer) clearTimeout(this.pointerTimer)
 
-      const pointerVertexCoords = this.plane.mouseToPlaneCoords(this.pointer)
-      this.computeForcesPass.uniforms.interaction.pointerPosition.value.copy(pointerVertexCoords)
+      // we could be a bit smarter here and just compute the vertex position
+      // based on the pointer position and the plane position, and convert to the [-1, 1] range
+      // but for the sake of the demo, let's use a raycaster
+      this.raycaster.setFromMouse(e)
+
+      const intersections = this.raycaster.intersectObject(this.plane)
+
+      if (intersections.length) {
+        const closestIntersection = intersections[0]
+        this.computeForcesPass.uniforms.interaction.pointerPosition.value.set(
+          closestIntersection.localPoint.x,
+          closestIntersection.localPoint.y
+        )
+      } else {
+        this.computeForcesPass.uniforms.interaction.pointerPosition.value.copy(Infinity)
+      }
+
       this.computeForcesPass.uniforms.interaction.pointerVelocity.value.set(
         this.velocity.x / this.plane.boundingRect.width,
         this.velocity.y / this.plane.boundingRect.height

@@ -1,6 +1,5 @@
 import { PlaneGeometry, PlaneGeometryParams } from '../../core/geometries/PlaneGeometry';
 import { DOMMesh, DOMMeshBaseParams } from './DOMMesh';
-import { Vec2 } from '../../math/Vec2';
 import { GPUCurtainsRenderer } from '../renderers/GPUCurtainsRenderer';
 import { GPUCurtains } from '../GPUCurtains';
 import { DOMElementParams } from '../../core/DOM/DOMElement';
@@ -42,11 +41,4 @@ export declare class Plane extends DOMMesh {
      * @param parameters - {@link PlaneParams | parameters} used to create this {@link Plane}
      */
     constructor(renderer: GPUCurtainsRenderer | GPUCurtains, element: DOMElementParams['element'], parameters?: PlaneParams);
-    /**
-     * Take the pointer {@link Vec2 | vector} position relative to the document and returns it relative to our {@link Plane}
-     * It ranges from -1 to 1 on both axis
-     * @param mouseCoords - pointer {@link Vec2 | vector} coordinates
-     * @returns - raycasted {@link Vec2 | vector} coordinates relative to the {@link Plane}
-     */
-    mouseToPlaneCoords(mouseCoords?: Vec2): Vec2;
 }

@@ -1,5 +1,5 @@
 /// <reference types="dist" />
-import { GPURenderer } from './GPURenderer';
+import { GPURenderer, ProjectedMesh } from './GPURenderer';
 import { GPUCameraRenderer } from './GPUCameraRenderer';
 import { GPUCurtainsRenderer } from '../../curtains/renderers/GPUCurtainsRenderer';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
@@ -34,6 +34,12 @@ export declare const isCameraRenderer: (renderer: GPUCurtains | CameraRenderer |
  * @returns - the {@link GPUCurtainsRenderer} if correctly set
  */
 export declare const isCurtainsRenderer: (renderer: GPUCurtains | GPUCurtainsRenderer | undefined, type: string | null) => GPUCurtainsRenderer;
+/**
+ * Check if a given object is a {@link ProjectedMesh | projected mesh}.
+ * @param object - Object to test.
+ * @returns - Given object as a {@link ProjectedMesh | projected mesh} if the test is successful, `false` otherwise.
+ */
+export declare const isProjectedMesh: (object: object) => false | ProjectedMesh;
 /**
  * Helper to generate mips on the GPU
  * Taken from https://webgpufundamentals.org/webgpu/lessons/webgpu-importing-textures.html

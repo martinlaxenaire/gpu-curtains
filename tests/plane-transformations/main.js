@@ -1,7 +1,7 @@
 // Goal of this test is to help debug plane transformations and raycasting
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
-  const { GPUCurtains, Plane, Vec2 } = await import(/* @vite-ignore */ path)
+  const { GPUCurtains, Plane, Vec2, Raycaster } = await import(/* @vite-ignore */ path)
 
   // set up our WebGPU context and append the canvas to our wrapper
   const gpuCurtains = new GPUCurtains({
@@ -36,16 +36,13 @@ window.addEventListener('load', async () => {
     @fragment fn fsMain(fsInput: VSOutput) -> @location(0) vec4f {
       var color: vec4f = textureSample(planeTexture, defaultSampler, fsInput.uv);
       
-      var mousePosition: vec2f = getVertex2DToUVCoords(mouse.position);
-      var cursor: vec2f = fsInput.originalUv - mousePosition;
-      cursor.x = cursor.x * mouse.aspect;
-      var cursorSize: f32 = step(length(cursor), mouse.size);
+      var cursor: vec2f = fsInput.originalUv - raycasting.uv;
+      cursor.x = cursor.x * raycasting.aspect;
+      var cursorSize: f32 = step(length(cursor), raycasting.size);
       
       return mix(color, vec4(1.0), cursorSize);
     }
   `
-
-  const mousePosition = new Vec2(Infinity)
 
   const plane = new Plane(gpuCurtains, '.plane', {
     shaders: {
@@ -60,11 +57,11 @@ window.addEventListener('load', async () => {
     },
     cullMode: 'none',
     uniforms: {
-      mouse: {
+      raycasting: {
         struct: {
-          position: {
+          uv: {
             type: 'vec2f',
-            value: mousePosition,
+            value: new Vec2(Infinity),
           },
           aspect: {
             type: 'f32',
@@ -80,14 +77,10 @@ window.addEventListener('load', async () => {
   })
 
   const setMouseAspect = () => {
-    plane.uniforms.mouse.aspect.value = plane.boundingRect.width / plane.boundingRect.height
+    plane.uniforms.raycasting.aspect.value = plane.boundingRect.width / plane.boundingRect.height
   }
 
   setMouseAspect()
-
-  window.addEventListener('pointermove', (e) => {
-    mousePosition.copy(plane.mouseToPlaneCoords(new Vec2(e.clientX, e.clientY)))
-  })
 
   const planeBBox = document.createElement('div')
   planeBBox.classList.add('mesh-bounding-box')
@@ -105,12 +98,30 @@ window.addEventListener('load', async () => {
 
   console.log(plane)
 
+  const raycaster = new Raycaster(gpuCurtains)
+
+  const onMouseMove = (e) => {
+    raycaster.setFromMouse(e)
+
+    const intersections = raycaster.intersectObject(plane)
+
+    if (intersections.length) {
+      const closestIntersection = intersections[0]
+      plane.uniforms.raycasting.uv.value.copy(closestIntersection.uv)
+    } else {
+      plane.uniforms.raycasting.uv.value.set(Infinity)
+    }
+  }
+
+  window.addEventListener('mousemove', onMouseMove)
+  window.addEventListener('touchmove', onMouseMove)
+
   // GUI
   const gui = new lil.GUI({
     title: 'Plane transformations',
   })
 
-  const { camera } = gpuCurtains
+  const { camera } = gpuCurtains.renderer
 
   const perspectiveFolder = gui.addFolder('Camera')
   perspectiveFolder.add(camera, 'fov', 1, 179, 1).name('Field of view')

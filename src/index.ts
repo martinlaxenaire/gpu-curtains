@@ -67,6 +67,7 @@ export { OrbitControls } from './extras/controls/OrbitControls'
 export { BoxGeometry } from './extras/geometries/BoxGeometry'
 export { SphereGeometry } from './extras/geometries/SphereGeometry'
 export { PingPongPlane } from './extras/meshes/PingPongPlane'
+export { Raycaster } from './extras/raycaster/Raycaster'
 
 // gltf extras
 export { GLTFScenesManager } from './extras/gltf/GLTFScenesManager'

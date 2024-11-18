@@ -28,6 +28,9 @@ const isCurtainsRenderer = (renderer, type) => {
   }
   return renderer;
 };
+const isProjectedMesh = (object) => {
+  return object.constructor.name === "Mesh" || object.constructor.name === "DOMMesh" || object.constructor.name === "Plane" ? object : false;
+};
 const generateMips = /* @__PURE__ */ (() => {
   let sampler;
   let module;
@@ -146,4 +149,4 @@ const generateMips = /* @__PURE__ */ (() => {
   };
 })();
 
-export { generateMips, isCameraRenderer, isCurtainsRenderer, isRenderer };
+export { generateMips, isCameraRenderer, isCurtainsRenderer, isProjectedMesh, isRenderer };

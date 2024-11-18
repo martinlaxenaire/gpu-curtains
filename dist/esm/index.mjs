@@ -58,6 +58,7 @@ export { OrbitControls } from './extras/controls/OrbitControls.mjs';
 export { BoxGeometry } from './extras/geometries/BoxGeometry.mjs';
 export { SphereGeometry } from './extras/geometries/SphereGeometry.mjs';
 export { PingPongPlane } from './extras/meshes/PingPongPlane.mjs';
+export { Raycaster } from './extras/raycaster/Raycaster.mjs';
 export { GLTFScenesManager } from './extras/gltf/GLTFScenesManager.mjs';
 export { buildShaders, computeDiffuseFromSpecular } from './extras/gltf/utils.mjs';
 export { GLTFLoader } from './extras/loaders/GLTFLoader.mjs';

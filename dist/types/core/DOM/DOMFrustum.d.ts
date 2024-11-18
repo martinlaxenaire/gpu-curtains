@@ -1,6 +1,6 @@
 import { Box3 } from '../../math/Box3';
 import { Mat4 } from '../../math/Mat4';
-import { DOMElementBoundingRect, RectCoords } from './DOMElement';
+import { DOMElementBoundingRect, RectBBox, RectCoords } from './DOMElement';
 import { Vec3 } from '../../math/Vec3';
 /**
  * An object defining all possible {@link DOMFrustum} class instancing parameters
@@ -36,6 +36,8 @@ export declare class DOMFrustum {
     containerBoundingRect: DOMElementBoundingRect;
     /** Additional margins to add to {@link containerBoundingRect} */
     DOMFrustumMargins: RectCoords;
+    /** Computed {@link RectBBox | rectangle} in clip space/normalized device coordinates. */
+    clipSpaceBoundingRect: RectBBox;
     /** A DOM Element bounding rectangle representing the result of our {@link boundingBox} with the {@link modelViewProjectionMatrix} applied */
     projectedBoundingRect: DOMElementBoundingRect;
     /** Callback to run when the {@link projectedBoundingRect} reenters the view frustum */

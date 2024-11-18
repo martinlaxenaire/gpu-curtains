@@ -203,9 +203,11 @@ class Geometry {
    */
   getAttributeByName(name) {
     let attribute;
-    this.vertexBuffers.forEach((vertexBuffer) => {
+    for (const vertexBuffer of this.vertexBuffers) {
       attribute = vertexBuffer.attributes.find((attribute2) => attribute2.name === name);
-    });
+      if (attribute)
+        break;
+    }
     return attribute;
   }
   /**

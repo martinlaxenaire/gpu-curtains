@@ -37,6 +37,12 @@ class DOMFrustum {
     this.modelViewProjectionMatrix = modelViewProjectionMatrix;
     this.containerBoundingRect = containerBoundingRect;
     this.DOMFrustumMargins = { ...defaultDOMFrustumMargins, ...DOMFrustumMargins };
+    this.clipSpaceBoundingRect = {
+      top: 0,
+      left: 0,
+      width: 0,
+      height: 0
+    };
     this.projectedBoundingRect = {
       top: 0,
       right: 0,
@@ -82,6 +88,12 @@ class DOMFrustum {
    */
   setDocumentCoordsFromClipSpaceOBB() {
     this.computeClipSpaceOBB();
+    this.clipSpaceBoundingRect = {
+      top: this.clipSpaceOBB.max.y,
+      left: this.clipSpaceOBB.min.x,
+      width: this.clipSpaceOBB.max.x - this.clipSpaceOBB.min.x,
+      height: this.clipSpaceOBB.max.y - this.clipSpaceOBB.min.y
+    };
     const minX = (this.clipSpaceOBB.min.x + 1) * 0.5;
     const maxX = (this.clipSpaceOBB.max.x + 1) * 0.5;
     const minY = 1 - (this.clipSpaceOBB.min.y + 1) * 0.5;
@@ -103,15 +115,21 @@ class DOMFrustum {
    * @param boundingSphere - bounding sphere in clip space.
    */
   setDocumentCoordsFromClipSpaceSphere(boundingSphere = { center: new Vec3(), radius: 0 }) {
+    this.clipSpaceBoundingRect = {
+      top: boundingSphere.center.y + boundingSphere.radius,
+      left: boundingSphere.center.x - boundingSphere.radius,
+      width: boundingSphere.radius * 2,
+      height: boundingSphere.radius * 2
+    };
     const centerX = (boundingSphere.center.x + 1) * 0.5;
     const centerY = 1 - (boundingSphere.center.y + 1) * 0.5;
     const { width, height, top, left } = this.containerBoundingRect;
-    this.projectedBoundingRect.width = boundingSphere.radius * height * 0.5;
-    this.projectedBoundingRect.height = boundingSphere.radius * height * 0.5;
+    this.projectedBoundingRect.width = boundingSphere.radius * height;
+    this.projectedBoundingRect.height = boundingSphere.radius * height;
     this.projectedBoundingRect.left = centerX * width + left - this.projectedBoundingRect.width * 0.5;
-    this.projectedBoundingRect.x = centerX * width + left - this.projectedBoundingRect.width * 0.5;
+    this.projectedBoundingRect.x = this.projectedBoundingRect.left;
     this.projectedBoundingRect.top = centerY * height + top - this.projectedBoundingRect.height * 0.5;
-    this.projectedBoundingRect.y = centerY * height + top - this.projectedBoundingRect.height * 0.5;
+    this.projectedBoundingRect.y = this.projectedBoundingRect.top;
     this.projectedBoundingRect.right = this.projectedBoundingRect.left + this.projectedBoundingRect.width;
     this.projectedBoundingRect.bottom = this.projectedBoundingRect.top + this.projectedBoundingRect.height;
   }
