@@ -630,6 +630,7 @@ export class BufferBinding extends Binding {
    */
   update() {
     const inputs = Object.values(this.inputs)
+
     for (const binding of inputs) {
       const bufferElement = this.bufferElements.find((bufferEl) => bufferEl.key === binding.name)
 

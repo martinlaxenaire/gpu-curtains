@@ -57,12 +57,13 @@ window.addEventListener('load', async () => {
 
   console.time('creation time')
   let createdMeshes = 0
-  let nbMeshes = 3_000
+  let nbMeshes = 5_000
 
   const addMesh = (index) => {
     const mesh = new Mesh(gpuCameraRenderer, {
       geometry: Math.random() > 0.5 ? cubeGeometry : sphereGeometry,
       // frustumCulling: false, // you can also gain a few fps without checking for frustum
+      useRenderBundle: true,
     })
 
     mesh.position.x = Math.random() * systemSize * 2 * aspectRatio - systemSize * aspectRatio

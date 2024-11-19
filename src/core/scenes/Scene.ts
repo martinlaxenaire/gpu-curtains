@@ -9,6 +9,7 @@ import { RenderPass } from '../renderPasses/RenderPass'
 import { Texture } from '../textures/Texture'
 import { Object3D } from '../objects3D/Object3D'
 import { Vec3 } from '../../math/Vec3'
+import { RenderBundle } from '../renderPasses/RenderBundle'
 
 // used to sort transparent meshes
 const camPosA = new Vec3()
@@ -84,6 +85,8 @@ export class Scene extends Object3D {
    */
   renderPassEntries: RenderPassEntries
 
+  renderBundles: RenderBundle[]
+
   /**
    * Scene constructor
    * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Scene}
@@ -126,6 +129,8 @@ export class Scene extends Object3D {
         projected: {
           opaque: [],
           transparent: [],
+          opaqueRenderBundle: [],
+          transparentRenderBundle: [],
         },
       },
     } as RenderPassEntry)
@@ -139,6 +144,7 @@ export class Scene extends Object3D {
     if (!renderPassEntry) {
       return 0
     } else {
+      // TODO account for render bundles!
       return renderPassEntry.element
         ? renderPassEntry.element.visible
           ? 1
@@ -146,7 +152,9 @@ export class Scene extends Object3D {
         : renderPassEntry.stack.unProjected.opaque.length +
             renderPassEntry.stack.unProjected.transparent.length +
             renderPassEntry.stack.projected.opaque.length +
-            renderPassEntry.stack.projected.transparent.length
+            renderPassEntry.stack.projected.transparent.length +
+            renderPassEntry.stack.projected.opaqueRenderBundle.length +
+            renderPassEntry.stack.projected.transparentRenderBundle.length
     }
   }
 
@@ -195,6 +203,8 @@ export class Scene extends Object3D {
           projected: {
             opaque: [],
             transparent: [],
+            opaqueRenderBundle: [],
+            transparentRenderBundle: [],
           },
         },
       } as RenderPassEntry)
@@ -252,6 +262,27 @@ export class Scene extends Object3D {
 
     if ('parent' in mesh && !mesh.parent && mesh.material.options.rendering.useProjection) {
       mesh.parent = this
+    }
+
+    if (mesh.options.useRenderBundle) {
+      const descriptor = RenderBundle.getDescriptorFromMesh(mesh)
+      const descriptorJSON = JSON.stringify(descriptor)
+
+      const renderBundleStack = mesh.transparent
+        ? projectionStack.transparentRenderBundle
+        : projectionStack.opaqueRenderBundle
+
+      const exisitingRenderBundle = renderBundleStack.find(
+        (renderBundle) => JSON.stringify(renderBundle.descriptor) === descriptorJSON
+      )
+
+      if (exisitingRenderBundle) {
+        exisitingRenderBundle.addMesh(mesh)
+      } else {
+        const renderBundle = new RenderBundle(this.renderer)
+        renderBundle.createFromMesh(mesh)
+        renderBundleStack.push(renderBundle)
+      }
     }
   }
 
@@ -512,7 +543,16 @@ export class Scene extends Object3D {
       }
 
       // then draw projected meshes
-      if (renderPassEntry.stack.projected.opaque.length || renderPassEntry.stack.projected.transparent.length) {
+      if (
+        renderPassEntry.stack.projected.opaque.length ||
+        renderPassEntry.stack.projected.transparent.length ||
+        renderPassEntry.stack.projected.opaqueRenderBundle.length ||
+        renderPassEntry.stack.projected.transparentRenderBundle.length
+      ) {
+        for (const renderBundle of renderPassEntry.stack.projected.opaqueRenderBundle) {
+          renderBundle.render(pass)
+        }
+
         for (const mesh of renderPassEntry.stack.projected.opaque) {
           mesh.render(pass)
         }
