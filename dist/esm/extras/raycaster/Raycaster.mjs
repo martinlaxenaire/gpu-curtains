@@ -201,7 +201,9 @@ class Raycaster {
    */
   intersectObject(object, recursive = true, intersections = []) {
     if (!(object instanceof Object3D)) {
-      throwWarning(`${this.type}: object to test intersection again is not of type Object3D`);
+      if (!this.renderer.production) {
+        throwWarning(`${this.type}: object to test intersection again is not of type Object3D`);
+      }
       return intersections;
     }
     const mesh = isProjectedMesh(object);
@@ -258,11 +260,15 @@ intersectMesh_fn = function(mesh, intersections = []) {
     return intersections;
   const position = mesh.geometry.getAttributeByName("position");
   if (!position) {
-    throwWarning(`Raycaster: can't raycast on a mesh that has no position attribute: ${mesh.options.label}`);
+    if (!this.renderer.production) {
+      throwWarning(`Raycaster: can't raycast on a mesh that has no position attribute: ${mesh.options.label}`);
+    }
     return intersections;
   }
   if (!position.array) {
-    throwWarning(`Raycaster: can't raycast on a mesh that has no position attribute array: ${mesh.options.label}`);
+    if (!this.renderer.production) {
+      throwWarning(`Raycaster: can't raycast on a mesh that has no position attribute array: ${mesh.options.label}`);
+    }
     return intersections;
   }
   if (mesh.frustumCulling && mesh.domFrustum) {

@@ -15,6 +15,7 @@ import { ProjectedMeshBaseClass } from './ProjectedMeshBaseMixin'
 import default_vsWgsl from '../../shaders/chunks/default/default_vs.wgsl'
 import default_fsWgsl from '../../shaders/chunks/default/default_fs.wgsl'
 import { RenderPass } from '../../renderPasses/RenderPass'
+import { RenderBundle } from '../../renderPasses/RenderBundle'
 
 let meshIndex = 0
 
@@ -34,6 +35,8 @@ export interface MeshBaseRenderParams extends Omit<RenderMaterialParams, 'target
   texturesOptions?: ExternalTextureParams
   /** Optional {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createRenderPipeline#targets | targets} properties */
   targets?: Partial<GPUColorTargetState>[]
+
+  renderBundle?: RenderBundle
 }
 
 /**
@@ -47,23 +50,34 @@ export interface MeshBaseParams extends MeshBaseRenderParams {
 /**
  *  Base options used to create this Mesh
  */
-export interface MeshBaseOptions extends RenderMaterialParams {
+// export interface MeshBaseOptions extends RenderMaterialParams {
+//   /** The label of this Mesh, sent to various GPU objects for debugging purpose */
+//   label?: MeshBaseParams['label']
+//   /** Shaders to use by this Mesh {@link RenderMaterial} */
+//   shaders?: MeshBaseParams['shaders']
+//   /** Parameters used by this Mesh to create a {@link DOMTexture} */
+//   texturesOptions?: ExternalTextureParams
+//   /** {@link RenderTarget} to render this Mesh to instead of the canvas context, if any. */
+//   outputTarget?: RenderTarget | null
+//   /** Whether we should add this Mesh to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
+//   autoRender?: boolean
+//   /** Whether to compile this Mesh {@link RenderMaterial} {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} asynchronously or not */
+//   useAsyncPipeline?: boolean
+//
+//   renderBundle?: RenderBundle
+// }
+
+/**
+ *  Base options used to create this Mesh
+ */
+export interface MeshBaseOptions extends Omit<MeshBaseRenderParams, 'renderOrder' | 'visible'> {
   /** The label of this Mesh, sent to various GPU objects for debugging purpose */
   label?: MeshBaseParams['label']
-  /** Shaders to use by this Mesh {@link RenderMaterial} */
-  shaders?: MeshBaseParams['shaders']
-  /** Parameters used by this Mesh to create a {@link DOMTexture} */
-  texturesOptions?: ExternalTextureParams
-  /** {@link RenderTarget} to render this Mesh to instead of the canvas context, if any. */
-  outputTarget?: RenderTarget | null
-  /** Whether we should add this Mesh to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
-  autoRender?: boolean
-  /** Whether to compile this Mesh {@link RenderMaterial} {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} asynchronously or not */
-  useAsyncPipeline?: boolean
+  //targets?: RenderMaterialParams['targets']
 }
 
 /** @const - Default Mesh parameters to merge with user defined parameters */
-const defaultMeshBaseParams: MeshBaseParams = {
+const defaultMeshBaseParams = {
   // material
   autoRender: true,
   useProjection: false,
@@ -79,7 +93,8 @@ const defaultMeshBaseParams: MeshBaseParams = {
   renderOrder: 0,
   // textures
   texturesOptions: {},
-}
+  renderBundle: null,
+} as MeshBaseParams
 
 // based on https://stackoverflow.com/a/75673107/13354068
 // we declare first a class, and then the mixin with a return type
@@ -851,6 +866,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       delete parameters.texturesOptions
       delete parameters.outputTarget
       delete parameters.autoRender
+      delete parameters.renderBundle
 
       return parameters
     }
@@ -1145,11 +1161,15 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     onBeforeRenderPass() {
       if (!this.renderer.ready) return
 
-      this.ready = this.material && this.material.ready && this.geometry && this.geometry.ready
-
       this.setGeometry()
 
+      if (this.visible) {
+        this._onRenderCallback && this._onRenderCallback()
+      }
+
       this.material.onBeforeRender()
+
+      this.ready = this.material && this.material.ready && this.geometry && this.geometry.ready
     }
 
     /**
@@ -1158,8 +1178,6 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      */
     onRenderPass(pass: GPURenderPassEncoder) {
       if (!this.ready) return
-
-      this._onRenderCallback && this._onRenderCallback()
 
       // render ou material
       this.material.render(pass)

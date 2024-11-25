@@ -12,6 +12,7 @@ import { DOMElementBoundingRect } from '../../DOM/DOMElement';
 import { AllowedGeometries, RenderMaterialParams } from '../../../types/Materials';
 import { ProjectedMeshBaseClass } from './ProjectedMeshBaseMixin';
 import { RenderPass } from '../../renderPasses/RenderPass';
+import { RenderBundle } from '../../renderPasses/RenderBundle';
 /**
  * Base render params used to create a Mesh
  */
@@ -28,6 +29,7 @@ export interface MeshBaseRenderParams extends Omit<RenderMaterialParams, 'target
     texturesOptions?: ExternalTextureParams;
     /** Optional {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createRenderPipeline#targets | targets} properties */
     targets?: Partial<GPUColorTargetState>[];
+    renderBundle?: RenderBundle;
 }
 /**
  * Base parameters used to create a Mesh
@@ -39,19 +41,12 @@ export interface MeshBaseParams extends MeshBaseRenderParams {
 /**
  *  Base options used to create this Mesh
  */
-export interface MeshBaseOptions extends RenderMaterialParams {
+/**
+ *  Base options used to create this Mesh
+ */
+export interface MeshBaseOptions extends Omit<MeshBaseRenderParams, 'renderOrder' | 'visible'> {
     /** The label of this Mesh, sent to various GPU objects for debugging purpose */
     label?: MeshBaseParams['label'];
-    /** Shaders to use by this Mesh {@link RenderMaterial} */
-    shaders?: MeshBaseParams['shaders'];
-    /** Parameters used by this Mesh to create a {@link DOMTexture} */
-    texturesOptions?: ExternalTextureParams;
-    /** {@link RenderTarget} to render this Mesh to instead of the canvas context, if any. */
-    outputTarget?: RenderTarget | null;
-    /** Whether we should add this Mesh to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
-    autoRender?: boolean;
-    /** Whether to compile this Mesh {@link RenderMaterial} {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} asynchronously or not */
-    useAsyncPipeline?: boolean;
 }
 /**
  * This class describes the properties and methods to set up a basic Mesh, implemented in the {@link MeshBaseMixin}:

@@ -4,6 +4,7 @@ import { MeshBaseMixin } from './MeshBaseMixin.mjs';
 import default_projected_vsWgsl from '../../shaders/chunks/default/default_projected_vs.wgsl.mjs';
 import default_normal_fsWgsl from '../../shaders/chunks/default/default_normal_fs.wgsl.mjs';
 import { getPCFDirectionalShadows, getPCFShadowContribution, getPCFPointShadows, getPCFPointShadowContribution } from '../../shaders/chunks/shading/shadows.mjs';
+import { BufferBindingOffsetChild } from '../../bindings/BufferBindingOffsetChild.mjs';
 
 const defaultProjectedMeshParams = {
   // frustum culling and visibility
@@ -194,15 +195,23 @@ function ProjectedMeshBaseMixin(Base) {
             type: "mat3x3f",
             value: this.normalMatrix
           }
-          // modelViewProjection: {
-          //   type: 'mat4x4f',
-          //   value: this.modelViewProjectionMatrix,
-          // },
         }
       };
-      if (!meshParameters.uniforms)
-        meshParameters.uniforms = {};
-      meshParameters.uniforms = { matrices: matricesUniforms, ...meshParameters.uniforms };
+      if (this.options.renderBundle && this.options.renderBundle.options.useTransformationBuffer) {
+        const bundleTransformationBinding = new BufferBindingOffsetChild({
+          ...matricesUniforms,
+          name: "matrices",
+          parent: this.options.renderBundle.binding,
+          offset: this.options.renderBundle.count
+        });
+        if (!meshParameters.bindings)
+          meshParameters.bindings = [];
+        meshParameters.bindings.push(bundleTransformationBinding);
+      } else {
+        if (!meshParameters.uniforms)
+          meshParameters.uniforms = {};
+        meshParameters.uniforms = { matrices: matricesUniforms, ...meshParameters.uniforms };
+      }
       super.setMaterial(meshParameters);
     }
     /**

@@ -40,7 +40,8 @@ const defaultMeshBaseParams = {
   visible: true,
   renderOrder: 0,
   // textures
-  texturesOptions: {}
+  texturesOptions: {},
+  renderBundle: null
 };
 function MeshBaseMixin(Base) {
   var _autoRender, _a;
@@ -362,6 +363,7 @@ ${geometry.wgslStructFragment}`
       delete parameters.texturesOptions;
       delete parameters.outputTarget;
       delete parameters.autoRender;
+      delete parameters.renderBundle;
       return parameters;
     }
     /**
@@ -597,9 +599,12 @@ ${geometry.wgslStructFragment}`
     onBeforeRenderPass() {
       if (!this.renderer.ready)
         return;
-      this.ready = this.material && this.material.ready && this.geometry && this.geometry.ready;
       this.setGeometry();
+      if (this.visible) {
+        this._onRenderCallback && this._onRenderCallback();
+      }
       this.material.onBeforeRender();
+      this.ready = this.material && this.material.ready && this.geometry && this.geometry.ready;
     }
     /**
      * Render our {@link MeshBase} if the {@link RenderMaterial} is ready
@@ -608,7 +613,6 @@ ${geometry.wgslStructFragment}`
     onRenderPass(pass) {
       if (!this.ready)
         return;
-      this._onRenderCallback && this._onRenderCallback();
       this.material.render(pass);
       this.geometry.render(pass);
     }
@@ -631,9 +635,6 @@ ${geometry.wgslStructFragment}`
       this.onBeforeRenderPass();
       if (!this.renderer.ready || !this.visible)
         return;
-      if (super.render) {
-        super.render();
-      }
       !this.renderer.production && pass.pushDebugGroup(this.options.label);
       this.onRenderPass(pass);
       !this.renderer.production && pass.popDebugGroup();

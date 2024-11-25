@@ -549,7 +549,7 @@ export class Shadow {
    * Get the default depth pass fragment shader for this {@link Shadow}.
    * @returns - A {@link ShaderOptions} if a depth pass fragment shader is needed, `false` otherwise.
    */
-  getDefaultShadowDepthFs(): boolean | ShaderOptions {
+  getDefaultShadowDepthFs(): false | ShaderOptions {
     return false // we do not need to output to a fragment shader unless we do late Z writing
   }
 

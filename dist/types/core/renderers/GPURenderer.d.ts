@@ -18,6 +18,7 @@ import { Texture } from '../textures/Texture';
 import { GPUDeviceManager } from './GPUDeviceManager';
 import { FullscreenPlane } from '../meshes/FullscreenPlane';
 import { Buffer } from '../buffers/Buffer';
+import { RenderBundle } from '../renderPasses/RenderBundle';
 /**
  * Parameters used to create a {@link GPURenderer}
  */
@@ -102,6 +103,7 @@ export declare class GPURenderer {
     meshes: SceneStackedMesh[];
     /** An array containing all our created {@link Texture} */
     textures: Texture[];
+    renderBundles: RenderBundle[];
     /** Pixel ratio to use for rendering */
     pixelRatio: number;
     /** An object defining the width, height, top and left position of the canvas. Mainly used internally. If you need to get the renderer dimensions, use {@link boundingRect} instead. */

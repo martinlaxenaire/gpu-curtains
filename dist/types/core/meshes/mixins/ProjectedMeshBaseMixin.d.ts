@@ -7,7 +7,7 @@ import { RenderMaterialParams } from '../../../types/Materials';
 import { ProjectedObject3D } from '../../objects3D/ProjectedObject3D';
 import { Vec3 } from '../../../math/Vec3';
 /** Define all possible frustum culling checks. */
-export type FrustumCullingCheck = 'OBB' | 'sphere' | boolean;
+export type FrustumCullingCheck = 'OBB' | 'sphere' | false;
 /**
  * Base parameters used to create a ProjectedMesh
  */

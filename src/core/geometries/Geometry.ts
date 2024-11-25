@@ -12,6 +12,7 @@ import {
 import { Buffer } from '../buffers/Buffer'
 import { Renderer } from '../renderers/utils'
 import { TypedArrayConstructor } from '../bindings/utils'
+import { GPURenderPassTypes } from '../pipelines/PipelineManager'
 
 /**
  * Used to create a {@link Geometry} from given parameters like instances count or geometry attributes (vertices, uvs, normals).<br>
@@ -497,7 +498,7 @@ export class Geometry {
    * Set our render pass geometry vertex buffers
    * @param pass - current render pass
    */
-  setGeometryBuffers(pass: GPURenderPassEncoder) {
+  setGeometryBuffers(pass: GPURenderPassTypes) {
     this.vertexBuffers.forEach((vertexBuffer, index) => {
       pass.setVertexBuffer(index, vertexBuffer.buffer.GPUBuffer, vertexBuffer.bufferOffset, vertexBuffer.bufferSize)
     })
@@ -507,7 +508,7 @@ export class Geometry {
    * Draw our geometry
    * @param pass - current render pass
    */
-  drawGeometry(pass: GPURenderPassEncoder) {
+  drawGeometry(pass: GPURenderPassTypes) {
     pass.draw(this.verticesCount, this.instancesCount)
   }
 
@@ -515,7 +516,7 @@ export class Geometry {
    * Set our vertex buffers then draw the geometry
    * @param pass - current render pass
    */
-  render(pass: GPURenderPassEncoder) {
+  render(pass: GPURenderPassTypes) {
     if (!this.ready) return
 
     this.setGeometryBuffers(pass)

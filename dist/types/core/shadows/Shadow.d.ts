@@ -198,7 +198,7 @@ export declare class Shadow {
      * Get the default depth pass fragment shader for this {@link Shadow}.
      * @returns - A {@link ShaderOptions} if a depth pass fragment shader is needed, `false` otherwise.
      */
-    getDefaultShadowDepthFs(): boolean | ShaderOptions;
+    getDefaultShadowDepthFs(): false | ShaderOptions;
     /**
      * Patch the given {@link ProjectedMesh | mesh} material parameters to create the depth material.
      * @param mesh - original {@link ProjectedMesh | mesh} to use.

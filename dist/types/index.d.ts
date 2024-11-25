@@ -29,6 +29,7 @@ export { PipelineManager } from './core/pipelines/PipelineManager';
 export { GPUCameraRenderer } from './core/renderers/GPUCameraRenderer';
 export { GPUDeviceManager } from './core/renderers/GPUDeviceManager';
 export { GPURenderer } from './core/renderers/GPURenderer';
+export { RenderBundle } from './core/renderPasses/RenderBundle';
 export { RenderPass } from './core/renderPasses/RenderPass';
 export { RenderTarget } from './core/renderPasses/RenderTarget';
 export { ShaderPass } from './core/renderPasses/ShaderPass';

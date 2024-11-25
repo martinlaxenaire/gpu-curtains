@@ -277,6 +277,7 @@ class GPURenderer {
    * Force all our scene objects to lose context.
    */
   loseContext() {
+    this.renderBundles.forEach((bundle) => bundle.loseContext());
     this.renderedObjects.forEach((sceneObject) => sceneObject.loseContext());
   }
   /**
@@ -602,6 +603,7 @@ class GPURenderer {
     this.renderTargets = [];
     this.meshes = [];
     this.textures = [];
+    this.renderBundles = [];
   }
   /**
    * Get all this {@link GPURenderer} rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes)
@@ -782,6 +784,7 @@ class GPURenderer {
   destroy() {
     this.deviceManager.renderers = this.deviceManager.renderers.filter((renderer) => renderer.uuid !== this.uuid);
     this.domElement?.destroy();
+    this.renderBundles.forEach((bundle) => bundle.destroy());
     this.renderPass?.destroy();
     this.postProcessingPass?.destroy();
     this.renderTargets.forEach((renderTarget) => renderTarget.destroy());

@@ -22,9 +22,10 @@ import {
   getPCFPointShadows,
   getPCFShadowContribution,
 } from '../../shaders/chunks/shading/shadows'
+import { BufferBindingOffsetChild } from '../../bindings/BufferBindingOffsetChild'
 
 /** Define all possible frustum culling checks. */
-export type FrustumCullingCheck = 'OBB' | 'sphere' | boolean
+export type FrustumCullingCheck = 'OBB' | 'sphere' | false
 
 /**
  * Base parameters used to create a ProjectedMesh
@@ -425,15 +426,23 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
             type: 'mat3x3f',
             value: this.normalMatrix,
           },
-          // modelViewProjection: {
-          //   type: 'mat4x4f',
-          //   value: this.modelViewProjectionMatrix,
-          // },
         },
       }
 
-      if (!meshParameters.uniforms) meshParameters.uniforms = {}
-      meshParameters.uniforms = { matrices: matricesUniforms, ...meshParameters.uniforms }
+      if (this.options.renderBundle && this.options.renderBundle.options.useTransformationBuffer) {
+        const bundleTransformationBinding = new BufferBindingOffsetChild({
+          ...matricesUniforms,
+          name: 'matrices',
+          parent: this.options.renderBundle.binding,
+          offset: this.options.renderBundle.count,
+        })
+
+        if (!meshParameters.bindings) meshParameters.bindings = []
+        meshParameters.bindings.push(bundleTransformationBinding)
+      } else {
+        if (!meshParameters.uniforms) meshParameters.uniforms = {}
+        meshParameters.uniforms = { matrices: matricesUniforms, ...meshParameters.uniforms }
+      }
 
       super.setMaterial(meshParameters)
     }

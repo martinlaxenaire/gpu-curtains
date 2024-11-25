@@ -9,6 +9,7 @@ import { RenderTarget } from '../renderPasses/RenderTarget';
 import { RenderPass } from '../renderPasses/RenderPass';
 import { Texture } from '../textures/Texture';
 import { Object3D } from '../objects3D/Object3D';
+import { RenderBundle } from '../renderPasses/RenderBundle';
 /**
  * Meshes rendering order is dependant of their transparency setting
  */
@@ -17,6 +18,8 @@ export interface ProjectionStack {
     opaque: SceneStackedMesh[];
     /** transparent Meshes will be drawn last */
     transparent: SceneStackedMesh[];
+    opaqueBundle: RenderBundle[];
+    transparentBundle: RenderBundle[];
 }
 /** Meshes will be stacked in 2 different objects whether they are projected (use a {@link core/camera/Camera.Camera | Camera}) or not */
 export type ProjectionType = 'unProjected' | 'projected';
@@ -71,6 +74,7 @@ export declare class Scene extends Object3D {
      * - Finally all Meshes that need to be rendered to the {@link renderPassEntries} screen
      */
     renderPassEntries: RenderPassEntries;
+    renderBundles: RenderBundle[];
     /**
      * Scene constructor
      * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Scene}
@@ -125,6 +129,7 @@ export declare class Scene extends Object3D {
      * @param mesh - Mesh to remove
      */
     removeMesh(mesh: SceneStackedMesh): void;
+    removeBundle(renderBundle: RenderBundle): void;
     /**
      * Add a {@link ShaderPass} to our scene {@link renderPassEntries} screen array.
      * Before rendering the {@link ShaderPass}, we will copy the correct input texture into its {@link ShaderPass#renderTexture | renderTexture}

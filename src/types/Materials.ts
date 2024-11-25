@@ -35,8 +35,8 @@ export interface ShaderOptions {
 export interface MaterialShaders {
   /** Vertex {@link ShaderOptions | shader options} */
   vertex?: ShaderOptions
-  /** Fragment {@link ShaderOptions | shader options}. Could be set to false to only render to a depth texture. */
-  fragment?: ShaderOptions | boolean
+  /** Fragment {@link ShaderOptions | shader options}. Could be set to `false` to only render to a depth texture. */
+  fragment?: ShaderOptions | false
   /** Compute {@link ShaderOptions | shader options} */
   compute?: ShaderOptions
 }

@@ -2,6 +2,7 @@
 import { Box3 } from '../../math/Box3';
 import { GeometryBuffer, GeometryOptions, GeometryParams, VertexBuffer, VertexBufferAttribute, VertexBufferAttributeParams, VertexBufferParams } from '../../types/Geometries';
 import { Renderer } from '../renderers/utils';
+import { GPURenderPassTypes } from '../pipelines/PipelineManager';
 /**
  * Used to create a {@link Geometry} from given parameters like instances count or geometry attributes (vertices, uvs, normals).<br>
  * Holds all attributes arrays, bounding box and create as WGSL code snippet for the vertex shader input attributes.
@@ -134,17 +135,17 @@ export declare class Geometry {
      * Set our render pass geometry vertex buffers
      * @param pass - current render pass
      */
-    setGeometryBuffers(pass: GPURenderPassEncoder): void;
+    setGeometryBuffers(pass: GPURenderPassTypes): void;
     /**
      * Draw our geometry
      * @param pass - current render pass
      */
-    drawGeometry(pass: GPURenderPassEncoder): void;
+    drawGeometry(pass: GPURenderPassTypes): void;
     /**
      * Set our vertex buffers then draw the geometry
      * @param pass - current render pass
      */
-    render(pass: GPURenderPassEncoder): void;
+    render(pass: GPURenderPassTypes): void;
     /**
      * Destroy our geometry vertex buffers.
      * @param renderer - current {@link Renderer}, in case we want to remove the {@link VertexBuffer#buffer | buffers} from the cache.

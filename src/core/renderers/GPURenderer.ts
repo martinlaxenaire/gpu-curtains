@@ -20,6 +20,7 @@ import { Texture } from '../textures/Texture'
 import { GPUDeviceManager } from './GPUDeviceManager'
 import { FullscreenPlane } from '../meshes/FullscreenPlane'
 import { Buffer } from '../buffers/Buffer'
+import { RenderBundle } from '../renderPasses/RenderBundle'
 
 /**
  * Parameters used to create a {@link GPURenderer}
@@ -118,6 +119,8 @@ export class GPURenderer {
   meshes: SceneStackedMesh[]
   /** An array containing all our created {@link Texture} */
   textures: Texture[]
+
+  renderBundles: RenderBundle[]
 
   /** Pixel ratio to use for rendering */
   pixelRatio: number
@@ -472,6 +475,7 @@ export class GPURenderer {
    */
   loseContext() {
     // force all our scene objects to lose context
+    this.renderBundles.forEach((bundle) => bundle.loseContext())
     this.renderedObjects.forEach((sceneObject) => sceneObject.loseContext())
   }
 
@@ -867,6 +871,7 @@ export class GPURenderer {
     this.renderTargets = []
     this.meshes = []
     this.textures = []
+    this.renderBundles = []
   }
 
   /**
@@ -1078,6 +1083,9 @@ export class GPURenderer {
     this.deviceManager.renderers = this.deviceManager.renderers.filter((renderer) => renderer.uuid !== this.uuid)
 
     this.domElement?.destroy()
+
+    // remove/destroy render bundles
+    this.renderBundles.forEach((bundle) => bundle.destroy())
 
     // destroy render passes
     this.renderPass?.destroy()

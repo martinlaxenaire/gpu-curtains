@@ -1,6 +1,7 @@
 import { isRenderer } from '../renderers/utils.mjs';
 import { Object3D } from '../objects3D/Object3D.mjs';
 import { Vec3 } from '../../math/Vec3.mjs';
+import { throwWarning } from '../../utils/utils.mjs';
 
 const camPosA = new Vec3();
 const camPosB = new Vec3();
@@ -39,11 +40,15 @@ class Scene extends Object3D {
       stack: {
         unProjected: {
           opaque: [],
-          transparent: []
+          transparent: [],
+          opaqueBundle: [],
+          transparentBundle: []
         },
         projected: {
           opaque: [],
-          transparent: []
+          transparent: [],
+          opaqueBundle: [],
+          transparentBundle: []
         }
       }
     });
@@ -56,7 +61,7 @@ class Scene extends Object3D {
     if (!renderPassEntry) {
       return 0;
     } else {
-      return renderPassEntry.element ? renderPassEntry.element.visible ? 1 : 0 : renderPassEntry.stack.unProjected.opaque.length + renderPassEntry.stack.unProjected.transparent.length + renderPassEntry.stack.projected.opaque.length + renderPassEntry.stack.projected.transparent.length;
+      return renderPassEntry.element ? renderPassEntry.element.visible ? 1 : 0 : renderPassEntry.stack.unProjected.opaque.length + renderPassEntry.stack.unProjected.transparent.length + renderPassEntry.stack.unProjected.opaqueBundle.length + renderPassEntry.stack.unProjected.transparentBundle.length + renderPassEntry.stack.projected.opaque.length + renderPassEntry.stack.projected.transparent.length + renderPassEntry.stack.projected.opaqueBundle.length + renderPassEntry.stack.projected.transparentBundle.length;
     }
   }
   /**
@@ -97,11 +102,15 @@ class Scene extends Object3D {
         stack: {
           unProjected: {
             opaque: [],
-            transparent: []
+            transparent: [],
+            opaqueBundle: [],
+            transparentBundle: []
           },
           projected: {
             opaque: [],
-            transparent: []
+            transparent: [],
+            opaqueBundle: [],
+            transparentBundle: []
           }
         }
       });
@@ -134,12 +143,41 @@ class Scene extends Object3D {
    */
   addMesh(mesh) {
     const projectionStack = this.getMeshProjectionStack(mesh);
-    const similarMeshes = mesh.transparent ? projectionStack.transparent : projectionStack.opaque;
-    similarMeshes.push(mesh);
-    similarMeshes.sort((a, b) => {
-      return a.renderOrder - b.renderOrder || //a.material.pipelineEntry.index - b.material.pipelineEntry.index ||
-      a.index - b.index;
-    });
+    const isTransparent = !!mesh.transparent;
+    if (mesh.options.renderBundle) {
+      const { renderBundle } = mesh.options;
+      const meshProjection = mesh.material.options.rendering.useProjection ? "projected" : "unProjected";
+      if (renderBundle.options.transparent !== void 0 && renderBundle.options.transparent !== isTransparent) {
+        throwWarning(
+          `Scene: Cannot add the mesh '${mesh.options.label}' to the render bundle '${renderBundle.options.label}' because the transparency setting is not the same.`
+        );
+        mesh.options.renderBundle = null;
+      } else if (renderBundle.options.projection !== void 0 && renderBundle.options.projection !== meshProjection) {
+        throwWarning(
+          `Scene: Cannot add the mesh '${mesh.options.label}' to the render bundle '${renderBundle.options.label}' because the projection setting is not the same.`
+        );
+        mesh.options.renderBundle = null;
+      }
+      if (mesh.options.renderBundle) {
+        if (renderBundle.count === 0) {
+          renderBundle.setStack({
+            transparent: isTransparent,
+            projection: mesh.material.options.rendering.useProjection ? "projected" : "unProjected"
+          });
+          const renderBundleStack = isTransparent ? projectionStack.transparentBundle : projectionStack.opaqueBundle;
+          renderBundleStack.push(renderBundle);
+        }
+        renderBundle.addMesh(mesh);
+      }
+    }
+    if (!mesh.options.renderBundle) {
+      const similarMeshes = isTransparent ? projectionStack.transparent : projectionStack.opaque;
+      similarMeshes.push(mesh);
+      similarMeshes.sort((a, b) => {
+        return a.renderOrder - b.renderOrder || //a.material.pipelineEntry.index - b.material.pipelineEntry.index ||
+        a.index - b.index;
+      });
+    }
     if ("parent" in mesh && !mesh.parent && mesh.material.options.rendering.useProjection) {
       mesh.parent = this;
     }
@@ -150,13 +188,44 @@ class Scene extends Object3D {
    */
   removeMesh(mesh) {
     const projectionStack = this.getMeshProjectionStack(mesh);
-    if (mesh.transparent) {
+    const isTransparent = !!mesh.transparent;
+    if (mesh.options.renderBundle) {
+      if (mesh.options.renderBundle.count === 1) {
+        if (isTransparent) {
+          projectionStack.transparentBundle = projectionStack.transparentBundle.filter(
+            (renderBundle) => renderBundle.uuid !== mesh.options.renderBundle.uuid
+          );
+        } else {
+          projectionStack.opaqueBundle = projectionStack.opaqueBundle.filter(
+            (renderBundle) => renderBundle.uuid !== mesh.options.renderBundle.uuid
+          );
+        }
+      }
+      mesh.options.renderBundle.removeMesh(mesh);
+    }
+    if (isTransparent) {
       projectionStack.transparent = projectionStack.transparent.filter((m) => m.uuid !== mesh.uuid);
     } else {
       projectionStack.opaque = projectionStack.opaque.filter((m) => m.uuid !== mesh.uuid);
     }
     if ("parent" in mesh && mesh.parent && mesh.parent.object3DIndex === this.object3DIndex) {
       mesh.parent = null;
+    }
+  }
+  removeBundle(renderBundle) {
+    const renderPassEntry = this.renderPassEntries.renderTarget.find(
+      (passEntry) => passEntry.renderPass.uuid === renderBundle.options.renderPass.uuid
+    );
+    const { stack } = renderPassEntry || this.renderPassEntries.screen[0];
+    const isProjected = renderBundle.options.projection !== void 0 ? renderBundle.options.projection : "projected";
+    const projectionStack = isProjected ? stack.projected : stack.unProjected;
+    const isTransparent = renderBundle.options.transparent !== void 0 ? renderBundle.options.transparent : true;
+    if (isTransparent) {
+      projectionStack.transparentBundle = projectionStack.transparentBundle.filter(
+        (bundle) => bundle.uuid !== renderBundle.uuid
+      );
+    } else {
+      projectionStack.opaqueBundle = projectionStack.opaqueBundle.filter((bundle) => bundle.uuid !== renderBundle.uuid);
     }
   }
   /**
@@ -205,6 +274,26 @@ class Scene extends Object3D {
       stack: null
       // explicitly set to null
     };
+    console.log(shaderPass.options.renderBundle);
+    if (shaderPass.options.renderBundle) {
+      const isTransparent = !!shaderPass.transparent;
+      const { renderBundle } = shaderPass.options;
+      if (renderBundle.options.transparent !== void 0 && renderBundle.options.transparent !== isTransparent) {
+        throwWarning(
+          `Scene: Cannot add the mesh '${shaderPass.options.label}' to the render bundle '${renderBundle.options.label}' because the transparency setting is not the same.`
+        );
+        shaderPass.options.renderBundle = null;
+      }
+      if (shaderPass.options.renderBundle) {
+        if (renderBundle.count === 0) {
+          renderBundle.setStack({
+            transparent: isTransparent,
+            projection: "unProjected"
+          });
+        }
+        renderBundle.addMesh(shaderPass);
+      }
+    }
     this.renderPassEntries.screen.push(shaderPassEntry);
     this.renderPassEntries.screen.sort((a, b) => {
       const isPostProA = a.element && !a.element.outputTarget;
@@ -286,14 +375,27 @@ class Scene extends Object3D {
       return this.renderPassEntries.screen.find((entry) => entry.element?.uuid === object.uuid);
     } else {
       const entryType = object.outputTarget ? "renderTarget" : "screen";
-      return this.renderPassEntries[entryType].find((entry) => {
-        return [
-          ...entry.stack.unProjected.opaque,
-          ...entry.stack.unProjected.transparent,
-          ...entry.stack.projected.opaque,
-          ...entry.stack.projected.transparent
-        ].some((mesh) => mesh.uuid === object.uuid);
-      });
+      if (object.options.renderBundle) {
+        return this.renderPassEntries[entryType].find((entry) => {
+          return [
+            ...entry.stack.unProjected.opaqueBundle,
+            ...entry.stack.unProjected.transparentBundle,
+            ...entry.stack.projected.opaqueBundle,
+            ...entry.stack.projected.transparentBundle
+          ].some((bundle) => {
+            return bundle.meshes.get(object.uuid);
+          });
+        });
+      } else {
+        return this.renderPassEntries[entryType].find((entry) => {
+          return [
+            ...entry.stack.unProjected.opaque,
+            ...entry.stack.unProjected.transparent,
+            ...entry.stack.projected.opaque,
+            ...entry.stack.projected.transparent
+          ].some((mesh) => mesh.uuid === object.uuid);
+        });
+      }
     }
   }
   /**
@@ -332,7 +434,11 @@ class Scene extends Object3D {
       renderPassEntry.element ? `${renderPassEntry.element.options.label} render pass using ${renderPassEntry.renderPass.options.label} descriptor` : `Render stack pass using ${renderPassEntry.renderPass.options.label}${renderPassEntry.renderTexture ? " onto " + renderPassEntry.renderTexture.options.label : ""}`
     );
     if (renderPassEntry.element) {
-      renderPassEntry.element.render(pass);
+      if (renderPassEntry.element.options.renderBundle) {
+        renderPassEntry.element.options.renderBundle.render(pass);
+      } else {
+        renderPassEntry.element.render(pass);
+      }
     } else if (renderPassEntry.stack) {
       for (const mesh of renderPassEntry.stack.unProjected.opaque) {
         mesh.render(pass);
@@ -340,9 +446,15 @@ class Scene extends Object3D {
       for (const mesh of renderPassEntry.stack.unProjected.transparent) {
         mesh.render(pass);
       }
-      if (renderPassEntry.stack.projected.opaque.length || renderPassEntry.stack.projected.transparent.length) {
+      if (renderPassEntry.stack.projected.opaque.length || renderPassEntry.stack.projected.transparent.length || renderPassEntry.stack.projected.opaqueBundle.length || renderPassEntry.stack.projected.transparentBundle.length) {
+        for (const renderBundle of renderPassEntry.stack.projected.opaqueBundle) {
+          renderBundle.render(pass);
+        }
         for (const mesh of renderPassEntry.stack.projected.opaque) {
           mesh.render(pass);
+        }
+        for (const renderBundle of renderPassEntry.stack.projected.transparentBundle) {
+          renderBundle.render(pass);
         }
         this.sortTransparentMeshes(renderPassEntry.stack.projected.transparent);
         for (const mesh of renderPassEntry.stack.projected.transparent) {
