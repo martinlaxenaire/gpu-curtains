@@ -165,10 +165,11 @@ export declare class BindGroup {
      */
     get bufferBindings(): BindGroupBufferBindingElement[];
     /**
-     * Creates binding GPUBuffer with correct params
-     * @param binding - the binding element
+     * Creates binding GPUBuffer with correct params.
+     * @param binding - The binding element.
+     * @param optionalLabel - Optional label to use for the {@link GPUBuffer}.
      */
-    createBindingBuffer(binding: BindGroupBufferBindingElement): void;
+    createBindingBuffer(binding: BindGroupBufferBindingElement, optionalLabel?: any): void;
     /**
      * Fill in our entries bindGroupLayout and bindGroup arrays with the correct binding resources.
      * For buffer struct, create a GPUBuffer first if needed

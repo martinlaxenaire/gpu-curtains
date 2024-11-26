@@ -14,38 +14,36 @@ import { ProjectedMeshBaseClass } from './ProjectedMeshBaseMixin';
 import { RenderPass } from '../../renderPasses/RenderPass';
 import { RenderBundle } from '../../renderPasses/RenderBundle';
 /**
- * Base render params used to create a Mesh
+ * Base render params used to create a Mesh.
  */
 export interface MeshBaseRenderParams extends Omit<RenderMaterialParams, 'targets'> {
-    /** Whether we should add this Mesh to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
+    /** Whether we should add this Mesh to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically. */
     autoRender?: boolean;
-    /** Flag indicating whether to draw this Mesh or not */
+    /** Flag indicating whether to draw this Mesh or not. */
     visible?: boolean;
-    /** Controls the order in which this Mesh should be rendered by our {@link core/scenes/Scene.Scene | Scene} */
+    /** Controls the order in which this Mesh should be rendered by our {@link core/scenes/Scene.Scene | Scene}. */
     renderOrder?: number;
     /** Optional {@link RenderTarget} to render this Mesh to instead of the canvas context. */
     outputTarget?: RenderTarget;
-    /** Parameters used by this Mesh to create a {@link DOMTexture} */
+    /** Parameters used by this Mesh to create a {@link DOMTexture}. */
     texturesOptions?: ExternalTextureParams;
-    /** Optional {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createRenderPipeline#targets | targets} properties */
+    /** Optional {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createRenderPipeline#targets | targets} properties. */
     targets?: Partial<GPUColorTargetState>[];
+    /** Optional {@link RenderBundle} into which this Mesh should be added. */
     renderBundle?: RenderBundle;
 }
 /**
- * Base parameters used to create a Mesh
+ * Base parameters used to create a Mesh.
  */
 export interface MeshBaseParams extends MeshBaseRenderParams {
     /** Geometry to use */
     geometry?: AllowedGeometries;
 }
 /**
- *  Base options used to create this Mesh
- */
-/**
- *  Base options used to create this Mesh
+ *  Base options used to create this Mesh.
  */
 export interface MeshBaseOptions extends Omit<MeshBaseRenderParams, 'renderOrder' | 'visible'> {
-    /** The label of this Mesh, sent to various GPU objects for debugging purpose */
+    /** The label of this Mesh, sent to various GPU objects for debugging purpose. */
     label?: MeshBaseParams['label'];
 }
 /**
@@ -71,6 +69,8 @@ export declare class MeshBaseClass {
     geometry: MeshBaseParams['geometry'];
     /** {@link RenderTarget} to render this Mesh to instead of the canvas context, if any. */
     outputTarget: null | RenderTarget;
+    /** {@link RenderBundle} used to render this Mesh, if any. */
+    renderBundle: null | RenderBundle;
     /** Controls the order in which this {@link MeshBaseClass} should be rendered by our {@link core/scenes/Scene.Scene | Scene} */
     renderOrder: number;
     /** Whether this {@link MeshBaseClass} should be treated as transparent. Impacts the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} blend properties */
@@ -264,6 +264,12 @@ export declare class MeshBaseClass {
      * @param outputTarget - the RenderTarget to assign or null if we want to remove the current RenderTarget
      */
     setOutputTarget(outputTarget: RenderTarget | null): void;
+    /**
+     * Assign or remove a {@link RenderBundle} to this Mesh.
+     * @param renderBundle - the {@link RenderBundle} to assign or null if we want to remove the current {@link RenderBundle}.
+     * @param updateScene - Whether to remove and then re-add the Mesh from the {@link core/scenes/Scene.Scene | Scene} or not.
+     */
+    setRenderBundle(renderBundle?: RenderBundle | null, updateScene?: boolean): void;
     /**
      * Get the current {@link RenderMaterial} uniforms
      * @readonly

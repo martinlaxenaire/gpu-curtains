@@ -212,10 +212,10 @@ export class BindGroup {
       }
 
       if ('parent' in binding && binding.parent) {
-        this.renderer.removeBuffer(binding.parent.buffer)
-
         binding.parent.buffer.consumers.delete(this.uuid)
+
         if (!binding.parent.buffer.consumers.size) {
+          this.renderer.removeBuffer(binding.parent.buffer)
           binding.parent.buffer.destroy()
         }
       }
@@ -445,14 +445,15 @@ export class BindGroup {
   }
 
   /**
-   * Creates binding GPUBuffer with correct params
-   * @param binding - the binding element
+   * Creates binding GPUBuffer with correct params.
+   * @param binding - The binding element.
+   * @param optionalLabel - Optional label to use for the {@link GPUBuffer}.
    */
-  createBindingBuffer(binding: BindGroupBufferBindingElement) {
+  createBindingBuffer(binding: BindGroupBufferBindingElement, optionalLabel = null) {
     // [Kangz](https://github.com/Kangz) said:
     // "In general though COPY_SRC/DST is free (at least in Dawn / Chrome because we add it all the time for our own purpose)."
     binding.buffer.createBuffer(this.renderer, {
-      label: this.options.label + ': ' + binding.bindingType + ' buffer from: ' + binding.label,
+      label: optionalLabel || this.options.label + ': ' + binding.bindingType + ' buffer from: ' + binding.label,
       usage: [...(['copySrc', 'copyDst', binding.bindingType] as BufferUsageKeys[]), ...binding.options.usage],
     })
 
@@ -482,7 +483,10 @@ export class BindGroup {
         const isChildBuffer = 'parent' in binding && binding.parent
 
         if (isChildBuffer && !(binding as BufferBindingOffsetChild).parent.buffer.GPUBuffer) {
-          this.createBindingBuffer((binding as BufferBindingOffsetChild).parent)
+          this.createBindingBuffer(
+            (binding as BufferBindingOffsetChild).parent,
+            (binding as BufferBindingOffsetChild).parent.options.label
+          )
         } else if (!binding.buffer.GPUBuffer && !isChildBuffer) {
           this.createBindingBuffer(binding)
         }
@@ -630,7 +634,10 @@ export class BindGroup {
         const isChildBuffer = 'parent' in binding && binding.parent
 
         if (isChildBuffer && !(binding as BufferBindingOffsetChild).parent.buffer.GPUBuffer) {
-          this.createBindingBuffer((binding as BufferBindingOffsetChild).parent)
+          this.createBindingBuffer(
+            (binding as BufferBindingOffsetChild).parent,
+            (binding as BufferBindingOffsetChild).parent.options.label
+          )
           ;(binding as BufferBindingOffsetChild).parent.buffer.consumers.add(bindGroupCopy.uuid)
         } else if (!binding.buffer.GPUBuffer && !isChildBuffer) {
           this.createBindingBuffer(binding)

@@ -40,15 +40,11 @@ class Scene extends Object3D {
       stack: {
         unProjected: {
           opaque: [],
-          transparent: [],
-          opaqueBundle: [],
-          transparentBundle: []
+          transparent: []
         },
         projected: {
           opaque: [],
-          transparent: [],
-          opaqueBundle: [],
-          transparentBundle: []
+          transparent: []
         }
       }
     });
@@ -61,7 +57,7 @@ class Scene extends Object3D {
     if (!renderPassEntry) {
       return 0;
     } else {
-      return renderPassEntry.element ? renderPassEntry.element.visible ? 1 : 0 : renderPassEntry.stack.unProjected.opaque.length + renderPassEntry.stack.unProjected.transparent.length + renderPassEntry.stack.unProjected.opaqueBundle.length + renderPassEntry.stack.unProjected.transparentBundle.length + renderPassEntry.stack.projected.opaque.length + renderPassEntry.stack.projected.transparent.length + renderPassEntry.stack.projected.opaqueBundle.length + renderPassEntry.stack.projected.transparentBundle.length;
+      return renderPassEntry.element ? renderPassEntry.element.visible ? 1 : 0 : renderPassEntry.stack.unProjected.opaque.length + renderPassEntry.stack.unProjected.transparent.length + renderPassEntry.stack.projected.opaque.length + renderPassEntry.stack.projected.transparent.length;
     }
   }
   /**
@@ -102,15 +98,11 @@ class Scene extends Object3D {
         stack: {
           unProjected: {
             opaque: [],
-            transparent: [],
-            opaqueBundle: [],
-            transparentBundle: []
+            transparent: []
           },
           projected: {
             opaque: [],
-            transparent: [],
-            opaqueBundle: [],
-            transparentBundle: []
+            transparent: []
           }
         }
       });
@@ -137,6 +129,23 @@ class Scene extends Object3D {
     return mesh.material.options.rendering.useProjection ? stack.projected : stack.unProjected;
   }
   /**
+   * Order a {@link SceneStackedObject} array by using the {@link SceneStackedObject#renderOrder | renderOrder} or {@link SceneStackedObject#index | index} properties.
+   * @param stack - {@link SceneStackedObject} to sort, filled with {@link RenderedMesh} or {@link RenderBundle}.
+   */
+  orderStack(stack) {
+    stack.sort((a, b) => {
+      return a.renderOrder - b.renderOrder || a.index - b.index;
+    });
+  }
+  /**
+   * Test whether a {@link SceneStackedObject} is a {@link RenderBundle} or not.
+   * @param object - Object to test.
+   * @returns - Whether the {@link object} is a {@link RenderBundle} or not.
+   */
+  isStackObjectRenderBundle(object) {
+    return object.type === "RenderBundle";
+  }
+  /**
    * Add a Mesh to the correct {@link renderPassEntries | render pass entry} {@link Stack} array.
    * Meshes are then ordered by their {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#index | indexes (order of creation]}, {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#index | pipeline entry indexes} and then {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#renderOrder | renderOrder}
    * @param mesh - Mesh to add
@@ -144,88 +153,88 @@ class Scene extends Object3D {
   addMesh(mesh) {
     const projectionStack = this.getMeshProjectionStack(mesh);
     const isTransparent = !!mesh.transparent;
-    if (mesh.options.renderBundle) {
-      const { renderBundle } = mesh.options;
-      const meshProjection = mesh.material.options.rendering.useProjection ? "projected" : "unProjected";
-      if (renderBundle.options.transparent !== void 0 && renderBundle.options.transparent !== isTransparent) {
-        throwWarning(
-          `Scene: Cannot add the mesh '${mesh.options.label}' to the render bundle '${renderBundle.options.label}' because the transparency setting is not the same.`
-        );
-        mesh.options.renderBundle = null;
-      } else if (renderBundle.options.projection !== void 0 && renderBundle.options.projection !== meshProjection) {
-        throwWarning(
-          `Scene: Cannot add the mesh '${mesh.options.label}' to the render bundle '${renderBundle.options.label}' because the projection setting is not the same.`
-        );
-        mesh.options.renderBundle = null;
-      }
-      if (mesh.options.renderBundle) {
-        if (renderBundle.count === 0) {
-          renderBundle.setStack({
-            transparent: isTransparent,
-            projection: mesh.material.options.rendering.useProjection ? "projected" : "unProjected"
-          });
-          const renderBundleStack = isTransparent ? projectionStack.transparentBundle : projectionStack.opaqueBundle;
-          renderBundleStack.push(renderBundle);
+    const { useProjection } = mesh.material.options.rendering;
+    if (mesh.renderBundle) {
+      const { renderBundle } = mesh;
+      renderBundle.addMesh(mesh, mesh.outputTarget ? mesh.outputTarget.renderPass : this.renderer.renderPass);
+      if (mesh.renderBundle) {
+        if (renderBundle.meshes.size === 1) {
+          if (renderBundle.transparent === null) {
+            renderBundle.transparent = isTransparent;
+          }
+          if (renderBundle.useProjection === null) {
+            renderBundle.useProjection = useProjection;
+          }
+          this.addRenderBundle(renderBundle, projectionStack);
         }
-        renderBundle.addMesh(mesh);
       }
     }
-    if (!mesh.options.renderBundle) {
+    if (!mesh.renderBundle) {
       const similarMeshes = isTransparent ? projectionStack.transparent : projectionStack.opaque;
       similarMeshes.push(mesh);
-      similarMeshes.sort((a, b) => {
-        return a.renderOrder - b.renderOrder || //a.material.pipelineEntry.index - b.material.pipelineEntry.index ||
-        a.index - b.index;
-      });
+      this.orderStack(similarMeshes);
     }
-    if ("parent" in mesh && !mesh.parent && mesh.material.options.rendering.useProjection) {
+    if ("parent" in mesh && !mesh.parent && useProjection) {
       mesh.parent = this;
     }
   }
   /**
-   * Remove a Mesh from our {@link Scene}
-   * @param mesh - Mesh to remove
+   * Remove a Mesh from our {@link Scene}.
+   * @param mesh - Mesh to remove.
    */
   removeMesh(mesh) {
     const projectionStack = this.getMeshProjectionStack(mesh);
     const isTransparent = !!mesh.transparent;
-    if (mesh.options.renderBundle) {
-      if (mesh.options.renderBundle.count === 1) {
+    if (mesh.renderBundle) {
+      if (mesh.renderBundle.meshes.size === 1) {
         if (isTransparent) {
-          projectionStack.transparentBundle = projectionStack.transparentBundle.filter(
-            (renderBundle) => renderBundle.uuid !== mesh.options.renderBundle.uuid
+          projectionStack.transparent = projectionStack.transparent.filter(
+            (renderBundle) => renderBundle.uuid !== mesh.renderBundle.uuid
           );
         } else {
-          projectionStack.opaqueBundle = projectionStack.opaqueBundle.filter(
-            (renderBundle) => renderBundle.uuid !== mesh.options.renderBundle.uuid
+          projectionStack.opaque = projectionStack.opaque.filter(
+            (renderBundle) => renderBundle.uuid !== mesh.renderBundle.uuid
           );
         }
       }
-      mesh.options.renderBundle.removeMesh(mesh);
-    }
-    if (isTransparent) {
-      projectionStack.transparent = projectionStack.transparent.filter((m) => m.uuid !== mesh.uuid);
+      mesh.renderBundle.removeMesh(mesh, false);
     } else {
-      projectionStack.opaque = projectionStack.opaque.filter((m) => m.uuid !== mesh.uuid);
+      if (isTransparent) {
+        projectionStack.transparent = projectionStack.transparent.filter((m) => m.uuid !== mesh.uuid);
+      } else {
+        projectionStack.opaque = projectionStack.opaque.filter((m) => m.uuid !== mesh.uuid);
+      }
     }
     if ("parent" in mesh && mesh.parent && mesh.parent.object3DIndex === this.object3DIndex) {
       mesh.parent = null;
     }
   }
-  removeBundle(renderBundle) {
+  /**
+   * Add a {@link RenderBundle} to the correct {@link renderPassEntries | render pass entry} {@link Stack} array.
+   * @param renderBundle - {@link RenderBundle} to add.
+   * @param projectionStack - {@link ProjectionStack} onto which to add the {@link RenderBundle}.
+   */
+  addRenderBundle(renderBundle, projectionStack) {
+    const similarObjects = !!renderBundle.transparent ? projectionStack.transparent : projectionStack.opaque;
+    similarObjects.push(renderBundle);
+    this.orderStack(similarObjects);
+  }
+  /**
+   * Remove a {@link RenderBundle} from our {@link Scene}.
+   * @param renderBundle - {@link RenderBundle} to remove.
+   */
+  removeRenderBundle(renderBundle) {
     const renderPassEntry = this.renderPassEntries.renderTarget.find(
       (passEntry) => passEntry.renderPass.uuid === renderBundle.options.renderPass.uuid
     );
     const { stack } = renderPassEntry || this.renderPassEntries.screen[0];
-    const isProjected = renderBundle.options.projection !== void 0 ? renderBundle.options.projection : "projected";
+    const isProjected = !!renderBundle.useProjection;
     const projectionStack = isProjected ? stack.projected : stack.unProjected;
-    const isTransparent = renderBundle.options.transparent !== void 0 ? renderBundle.options.transparent : true;
+    const isTransparent = !!renderBundle.transparent;
     if (isTransparent) {
-      projectionStack.transparentBundle = projectionStack.transparentBundle.filter(
-        (bundle) => bundle.uuid !== renderBundle.uuid
-      );
+      projectionStack.transparent = projectionStack.transparent.filter((bundle) => bundle.uuid !== renderBundle.uuid);
     } else {
-      projectionStack.opaqueBundle = projectionStack.opaqueBundle.filter((bundle) => bundle.uuid !== renderBundle.uuid);
+      projectionStack.opaque = projectionStack.opaque.filter((bundle) => bundle.uuid !== renderBundle.uuid);
     }
   }
   /**
@@ -263,9 +272,10 @@ class Scene extends Object3D {
         );
       }
     } : null;
+    const outputPass = shaderPass.outputTarget ? shaderPass.outputTarget.renderPass : this.renderer.postProcessingPass;
     const shaderPassEntry = {
       // use output target or postprocessing render pass
-      renderPass: shaderPass.outputTarget ? shaderPass.outputTarget.renderPass : this.renderer.postProcessingPass,
+      renderPass: outputPass,
       // render to output target renderTexture or directly to screen
       renderTexture: shaderPass.outputTarget ? shaderPass.outputTarget.renderTexture : null,
       onBeforeRenderPass,
@@ -274,24 +284,22 @@ class Scene extends Object3D {
       stack: null
       // explicitly set to null
     };
-    console.log(shaderPass.options.renderBundle);
-    if (shaderPass.options.renderBundle) {
+    if (shaderPass.renderBundle) {
       const isTransparent = !!shaderPass.transparent;
-      const { renderBundle } = shaderPass.options;
-      if (renderBundle.options.transparent !== void 0 && renderBundle.options.transparent !== isTransparent) {
+      const { renderBundle } = shaderPass;
+      if (renderBundle.meshes.size < 1) {
+        renderBundle.addMesh(shaderPass, outputPass);
+        renderBundle.size = 1;
+      } else {
         throwWarning(
-          `Scene: Cannot add the mesh '${shaderPass.options.label}' to the render bundle '${renderBundle.options.label}' because the transparency setting is not the same.`
+          `${renderBundle.options.label} (${renderBundle.type}): Cannot add more than 1 ShaderPass to a render bundle. This ShaderPass will not be added: ${shaderPass.options.label}`
         );
-        shaderPass.options.renderBundle = null;
+        shaderPass.renderBundle = null;
       }
-      if (shaderPass.options.renderBundle) {
-        if (renderBundle.count === 0) {
-          renderBundle.setStack({
-            transparent: isTransparent,
-            projection: "unProjected"
-          });
-        }
-        renderBundle.addMesh(shaderPass);
+      if (shaderPass.renderBundle) {
+        shaderPass.renderBundle.renderOrder = shaderPass.renderOrder;
+        renderBundle.transparent = isTransparent;
+        renderBundle.useProjection = false;
       }
     }
     this.renderPassEntries.screen.push(shaderPassEntry);
@@ -318,6 +326,9 @@ class Scene extends Object3D {
    * @param shaderPass - {@link ShaderPass} to remove
    */
   removeShaderPass(shaderPass) {
+    if (shaderPass.renderBundle) {
+      shaderPass.renderBundle.meshes.delete(shaderPass.uuid);
+    }
     this.renderPassEntries.screen = this.renderPassEntries.screen.filter(
       (entry) => !entry.element || entry.element.uuid !== shaderPass.uuid
     );
@@ -348,6 +359,24 @@ class Scene extends Object3D {
       stack: null
       // explicitly set to null
     });
+    if (pingPongPlane.renderBundle) {
+      const isTransparent = !!pingPongPlane.transparent;
+      const { renderBundle } = pingPongPlane;
+      if (renderBundle.meshes.size < 1) {
+        renderBundle.addMesh(pingPongPlane, pingPongPlane.outputTarget.renderPass);
+        renderBundle.size = 1;
+      } else {
+        throwWarning(
+          `${renderBundle.options.label} (${renderBundle.type}): Cannot add more than 1 PingPongPlane to a render bundle. This PingPongPlane will not be added: ${pingPongPlane.options.label}`
+        );
+        pingPongPlane.renderBundle = null;
+      }
+      if (pingPongPlane.renderBundle) {
+        pingPongPlane.renderBundle.renderOrder = pingPongPlane.renderOrder;
+        renderBundle.transparent = isTransparent;
+        renderBundle.useProjection = false;
+      }
+    }
     this.renderPassEntries.pingPong.sort((a, b) => a.element.renderOrder - b.element.renderOrder);
   }
   /**
@@ -355,6 +384,9 @@ class Scene extends Object3D {
    * @param pingPongPlane - {@link PingPongPlane} to remove
    */
   removePingPongPlane(pingPongPlane) {
+    if (pingPongPlane.renderBundle) {
+      pingPongPlane.renderBundle.meshes.delete(pingPongPlane.uuid);
+    }
     this.renderPassEntries.pingPong = this.renderPassEntries.pingPong.filter(
       (entry) => entry.element.uuid !== pingPongPlane.uuid
     );
@@ -375,14 +407,14 @@ class Scene extends Object3D {
       return this.renderPassEntries.screen.find((entry) => entry.element?.uuid === object.uuid);
     } else {
       const entryType = object.outputTarget ? "renderTarget" : "screen";
-      if (object.options.renderBundle) {
+      if (object.renderBundle) {
         return this.renderPassEntries[entryType].find((entry) => {
           return [
-            ...entry.stack.unProjected.opaqueBundle,
-            ...entry.stack.unProjected.transparentBundle,
-            ...entry.stack.projected.opaqueBundle,
-            ...entry.stack.projected.transparentBundle
-          ].some((bundle) => {
+            ...entry.stack.unProjected.opaque,
+            ...entry.stack.unProjected.transparent,
+            ...entry.stack.projected.opaque,
+            ...entry.stack.projected.transparent
+          ].filter((object2) => object2.type === "RenderBundle").some((bundle) => {
             return bundle.meshes.get(object.uuid);
           });
         });
@@ -405,6 +437,9 @@ class Scene extends Object3D {
   sortTransparentMeshes(meshes) {
     meshes.sort((meshA, meshB) => {
       if (meshA.renderOrder !== meshB.renderOrder) {
+        return meshA.renderOrder - meshB.renderOrder;
+      }
+      if (this.isStackObjectRenderBundle(meshA) || this.isStackObjectRenderBundle(meshB)) {
         return meshA.renderOrder - meshB.renderOrder;
       }
       meshA.geometry ? posA.copy(meshA.geometry.boundingBox.center).applyMat4(meshA.worldMatrix) : meshA.worldMatrix.getTranslation(posA);
@@ -434,8 +469,8 @@ class Scene extends Object3D {
       renderPassEntry.element ? `${renderPassEntry.element.options.label} render pass using ${renderPassEntry.renderPass.options.label} descriptor` : `Render stack pass using ${renderPassEntry.renderPass.options.label}${renderPassEntry.renderTexture ? " onto " + renderPassEntry.renderTexture.options.label : ""}`
     );
     if (renderPassEntry.element) {
-      if (renderPassEntry.element.options.renderBundle) {
-        renderPassEntry.element.options.renderBundle.render(pass);
+      if (renderPassEntry.element.renderBundle) {
+        renderPassEntry.element.renderBundle.render(pass);
       } else {
         renderPassEntry.element.render(pass);
       }
@@ -446,15 +481,9 @@ class Scene extends Object3D {
       for (const mesh of renderPassEntry.stack.unProjected.transparent) {
         mesh.render(pass);
       }
-      if (renderPassEntry.stack.projected.opaque.length || renderPassEntry.stack.projected.transparent.length || renderPassEntry.stack.projected.opaqueBundle.length || renderPassEntry.stack.projected.transparentBundle.length) {
-        for (const renderBundle of renderPassEntry.stack.projected.opaqueBundle) {
-          renderBundle.render(pass);
-        }
+      if (renderPassEntry.stack.projected.opaque.length || renderPassEntry.stack.projected.transparent.length) {
         for (const mesh of renderPassEntry.stack.projected.opaque) {
           mesh.render(pass);
-        }
-        for (const renderBundle of renderPassEntry.stack.projected.transparentBundle) {
-          renderBundle.render(pass);
         }
         this.sortTransparentMeshes(renderPassEntry.stack.projected.transparent);
         for (const mesh of renderPassEntry.stack.projected.transparent) {

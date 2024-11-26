@@ -149,7 +149,7 @@ export declare class BufferBinding extends Binding {
     shouldUpdateBinding(bindingName?: string): void;
     /**
      * Executed at the beginning of a Material render call.
-     * If any of the {@link inputs} has changed, run its onBeforeUpdate callback then updates our {@link arrayBuffer} array.
+     * If any of the {@link inputs} has changed, run its `onBeforeUpdate` callback then updates our {@link arrayBuffer} array.
      * Also sets the {@link shouldUpdate} property to true so the {@link core/bindGroups/BindGroup.BindGroup | BindGroup} knows it will need to update the {@link GPUBuffer}.
      */
     update(): void;

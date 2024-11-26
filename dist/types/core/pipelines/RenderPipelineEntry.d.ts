@@ -175,6 +175,11 @@ export declare class RenderPipelineEntry extends PipelineEntry {
      */
     createShaders(): void;
     /**
+     * Get default transparency blend state.
+     * @returns - The default transparency blend state.
+     */
+    static getDefaultTransparentBlending(): GPUBlendState;
+    /**
      * Create the render pipeline {@link descriptor}
      */
     createPipelineDescriptor(): void;

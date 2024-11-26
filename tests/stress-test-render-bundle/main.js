@@ -62,7 +62,7 @@ window.addEventListener('load', async () => {
   const renderBundle = new RenderBundle(gpuCameraRenderer, {
     label: 'Stress test render bundle',
     size: nbMeshes,
-    useTransformationBuffer: true,
+    useBuffer: true,
   })
 
   const addMesh = (index) => {
@@ -102,7 +102,7 @@ window.addEventListener('load', async () => {
 
   // GUI
   const gui = new lil.GUI({
-    title: 'Stress test',
+    title: 'Render bundle stress test',
   })
 
   gui

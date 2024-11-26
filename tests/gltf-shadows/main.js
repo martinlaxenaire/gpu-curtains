@@ -11,6 +11,7 @@ window.addEventListener('load', async () => {
     Sampler,
     GLTFLoader,
     GLTFScenesManager,
+    RenderBundle,
     buildShaders,
     AmbientLight,
     DirectionalLight,
@@ -21,6 +22,12 @@ window.addEventListener('load', async () => {
     Mesh,
     PlaneGeometry,
   } = await import(/* @vite-ignore */ path)
+
+  const stats = new Stats()
+
+  stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
+  stats.dom.classList.add('stats')
+  document.body.appendChild(stats.dom)
 
   // create a device manager
   const gpuDeviceManager = new GPUDeviceManager({
@@ -46,8 +53,12 @@ window.addEventListener('load', async () => {
 
   // render it
   const animate = () => {
-    gpuDeviceManager.render()
     requestAnimationFrame(animate)
+
+    stats.begin()
+
+    gpuDeviceManager.render()
+    stats.end()
   }
 
   animate()
@@ -182,6 +193,7 @@ window.addEventListener('load', async () => {
     shadow: {
       bias: 0.001,
       pcfSamples: 2,
+      depthTextureSize: new Vec2(256),
       camera: {
         near: 0.01,
         far: 200,
@@ -220,6 +232,7 @@ window.addEventListener('load', async () => {
   const gltfLoader = new GLTFLoader()
 
   let gltfScenesManager = null
+  let renderBundle = null
 
   const loadGLTF = async () => {
     container.classList.add('loading')
@@ -233,7 +246,14 @@ window.addEventListener('load', async () => {
     const { scenesManager } = gltfScenesManager
     const { scenes, boundingBox, node } = scenesManager
     container.classList.remove('loading')
+
     console.log({ gltf, scenesManager, scenes, boundingBox })
+
+    renderBundle = new RenderBundle(gpuCameraRenderer, {
+      label: 'glTF render bundle',
+      size: scenesManager.meshesDescriptors.length,
+      useBuffer: true,
+    })
 
     const { center } = boundingBox
 
@@ -243,6 +263,9 @@ window.addEventListener('load', async () => {
 
     const meshes = gltfScenesManager.addMeshes((meshDescriptor) => {
       const { parameters } = meshDescriptor
+
+      // add render bundle
+      parameters.renderBundle = renderBundle
 
       // add clamp sampler
       parameters.samplers = [...parameters.samplers, clampSampler]
@@ -303,6 +326,10 @@ window.addEventListener('load', async () => {
     .onChange(async (value) => {
       if (value !== shadingModel) {
         shadingModel = value
+
+        if (renderBundle) {
+          renderBundle.destroy()
+        }
 
         if (gltfScenesManager) {
           gltfScenesManager.destroy()

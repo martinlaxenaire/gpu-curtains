@@ -6,6 +6,7 @@ import { DOMElementBoundingRect, RectCoords } from '../../DOM/DOMElement';
 import { RenderMaterialParams } from '../../../types/Materials';
 import { ProjectedObject3D } from '../../objects3D/ProjectedObject3D';
 import { Vec3 } from '../../../math/Vec3';
+import { RenderBundle } from '../../renderPasses/RenderBundle';
 /** Define all possible frustum culling checks. */
 export type FrustumCullingCheck = 'OBB' | 'sphere' | false;
 /**
@@ -57,6 +58,17 @@ export declare class ProjectedMeshBaseClass extends MeshBaseClass {
      * @param parameters - {@link ProjectedMeshParameters | Projected Mesh base parameters}
      */
     constructor(renderer: CameraRenderer, element: HTMLElement | null, parameters: ProjectedMeshParameters);
+    /**
+     * Assign or remove a {@link RenderBundle} to this Mesh.
+     * @param renderBundle - the {@link RenderBundle} to assign or null if we want to remove the current {@link RenderBundle}.
+     * @param updateScene - Whether to remove and then re-add the Mesh from the {@link core/scenes/Scene.Scene | Scene} or not.
+     */
+    setRenderBundle(renderBundle?: RenderBundle | null, updateScene?: boolean): void;
+    /**
+     * Reset the {@link BufferBindingOffsetChild | matrices buffer binding} parent and offset and tell its bind group to update.
+     * @param offset - New offset to use in the parent {@link RenderBundle#binding | RenderBundle binding}.
+     */
+    patchRenderBundleBinding(offset?: number): void;
     /**
      * Set default shaders if one or both of them are missing
      */

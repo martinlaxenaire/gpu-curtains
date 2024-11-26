@@ -248,7 +248,7 @@ export class Shadow {
 
   /**
    * Start or stop casting shadows.
-   * @param value
+   * @param value - New active state.
    */
   set isActive(value: boolean) {
     if (!value && this.isActive) {
@@ -501,8 +501,18 @@ export class Shadow {
 
       this.useDepthMaterials()
 
+      // we might need to update render bundles buffer bindings
+      const renderBundles = []
+
       this.meshes.forEach((mesh) => {
         mesh.setGeometry()
+
+        if (
+          mesh.options.renderBundle &&
+          !renderBundles.find((bundle) => bundle.uuid === mesh.options.renderBundle.uuid)
+        ) {
+          renderBundles.push(mesh.options.renderBundle)
+        }
       })
 
       await Promise.all(
@@ -510,6 +520,11 @@ export class Shadow {
           await depthMaterial.compileMaterial()
         })
       )
+
+      // materials are compiled, we can safely update render bundles bindings if needed
+      renderBundles.forEach((bundle) => {
+        bundle.updateBinding()
+      })
 
       this.render(true)
     }

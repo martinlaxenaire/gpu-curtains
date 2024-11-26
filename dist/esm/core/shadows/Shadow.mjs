@@ -153,7 +153,7 @@ class Shadow {
   }
   /**
    * Start or stop casting shadows.
-   * @param value
+   * @param value - New active state.
    */
   set isActive(value) {
     if (!value && this.isActive) {
@@ -363,14 +363,21 @@ class Shadow {
     if (!__privateGet(this, _autoRender)) {
       this.onPropertyChanged("isActive", 1);
       this.useDepthMaterials();
+      const renderBundles = [];
       this.meshes.forEach((mesh) => {
         mesh.setGeometry();
+        if (mesh.options.renderBundle && !renderBundles.find((bundle) => bundle.uuid === mesh.options.renderBundle.uuid)) {
+          renderBundles.push(mesh.options.renderBundle);
+        }
       });
       await Promise.all(
         [...__privateGet(this, _depthMaterials).values()].map(async (depthMaterial) => {
           await depthMaterial.compileMaterial();
         })
       );
+      renderBundles.forEach((bundle) => {
+        bundle.updateBinding();
+      });
       this.render(true);
     }
   }

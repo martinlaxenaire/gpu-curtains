@@ -91,9 +91,9 @@ class BindGroup {
         binding.buffer.destroy();
       }
       if ("parent" in binding && binding.parent) {
-        this.renderer.removeBuffer(binding.parent.buffer);
         binding.parent.buffer.consumers.delete(this.uuid);
         if (!binding.parent.buffer.consumers.size) {
+          this.renderer.removeBuffer(binding.parent.buffer);
           binding.parent.buffer.destroy();
         }
       }
@@ -277,12 +277,13 @@ class BindGroup {
     );
   }
   /**
-   * Creates binding GPUBuffer with correct params
-   * @param binding - the binding element
+   * Creates binding GPUBuffer with correct params.
+   * @param binding - The binding element.
+   * @param optionalLabel - Optional label to use for the {@link GPUBuffer}.
    */
-  createBindingBuffer(binding) {
+  createBindingBuffer(binding, optionalLabel = null) {
     binding.buffer.createBuffer(this.renderer, {
-      label: this.options.label + ": " + binding.bindingType + " buffer from: " + binding.label,
+      label: optionalLabel || this.options.label + ": " + binding.bindingType + " buffer from: " + binding.label,
       usage: [...["copySrc", "copyDst", binding.bindingType], ...binding.options.usage]
     });
     if ("resultBuffer" in binding) {
@@ -305,7 +306,10 @@ class BindGroup {
       if ("buffer" in binding) {
         const isChildBuffer = "parent" in binding && binding.parent;
         if (isChildBuffer && !binding.parent.buffer.GPUBuffer) {
-          this.createBindingBuffer(binding.parent);
+          this.createBindingBuffer(
+            binding.parent,
+            binding.parent.options.label
+          );
         } else if (!binding.buffer.GPUBuffer && !isChildBuffer) {
           this.createBindingBuffer(binding);
         }
@@ -417,7 +421,10 @@ class BindGroup {
       if ("buffer" in binding) {
         const isChildBuffer = "parent" in binding && binding.parent;
         if (isChildBuffer && !binding.parent.buffer.GPUBuffer) {
-          this.createBindingBuffer(binding.parent);
+          this.createBindingBuffer(
+            binding.parent,
+            binding.parent.options.label
+          );
           binding.parent.buffer.consumers.add(bindGroupCopy.uuid);
         } else if (!binding.buffer.GPUBuffer && !isChildBuffer) {
           this.createBindingBuffer(binding);

@@ -94,7 +94,7 @@ export declare class Shadow {
     get isActive(): boolean;
     /**
      * Start or stop casting shadows.
-     * @param value
+     * @param value - New active state.
      */
     set isActive(value: boolean);
     /**
