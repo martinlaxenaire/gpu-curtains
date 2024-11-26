@@ -363,21 +363,14 @@ class Shadow {
     if (!__privateGet(this, _autoRender)) {
       this.onPropertyChanged("isActive", 1);
       this.useDepthMaterials();
-      const renderBundles = [];
       this.meshes.forEach((mesh) => {
         mesh.setGeometry();
-        if (mesh.options.renderBundle && !renderBundles.find((bundle) => bundle.uuid === mesh.options.renderBundle.uuid)) {
-          renderBundles.push(mesh.options.renderBundle);
-        }
       });
       await Promise.all(
         [...__privateGet(this, _depthMaterials).values()].map(async (depthMaterial) => {
           await depthMaterial.compileMaterial();
         })
       );
-      renderBundles.forEach((bundle) => {
-        bundle.updateBinding();
-      });
       this.render(true);
     }
   }
@@ -386,6 +379,16 @@ class Shadow {
    * @param commandEncoder - {@link GPUCommandEncoder} to use.
    */
   renderDepthPass(commandEncoder) {
+    const renderBundles = /* @__PURE__ */ new Map();
+    this.meshes.forEach((mesh) => {
+      if (mesh.options.renderBundle) {
+        renderBundles.set(mesh.options.renderBundle.uuid, mesh.options.renderBundle);
+      }
+    });
+    renderBundles.forEach((bundle) => {
+      bundle.updateBinding();
+    });
+    renderBundles.clear();
     this.renderer.pipelineManager.resetCurrentPipeline();
     const depthPass = commandEncoder.beginRenderPass(this.depthPassTarget.renderPass.descriptor);
     this.meshes.forEach((mesh) => {

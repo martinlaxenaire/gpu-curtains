@@ -350,6 +350,8 @@ export class Scene extends Object3D {
    * @param renderBundle - {@link RenderBundle} to remove.
    */
   removeRenderBundle(renderBundle: RenderBundle) {
+    if (!renderBundle.options.renderPass) return
+
     // first get correct render pass enty and stack
     const renderPassEntry = this.renderPassEntries.renderTarget.find(
       (passEntry) => passEntry.renderPass.uuid === renderBundle.options.renderPass.uuid

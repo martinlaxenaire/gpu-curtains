@@ -501,18 +501,8 @@ export class Shadow {
 
       this.useDepthMaterials()
 
-      // we might need to update render bundles buffer bindings
-      const renderBundles = []
-
       this.meshes.forEach((mesh) => {
         mesh.setGeometry()
-
-        if (
-          mesh.options.renderBundle &&
-          !renderBundles.find((bundle) => bundle.uuid === mesh.options.renderBundle.uuid)
-        ) {
-          renderBundles.push(mesh.options.renderBundle)
-        }
       })
 
       await Promise.all(
@@ -520,11 +510,6 @@ export class Shadow {
           await depthMaterial.compileMaterial()
         })
       )
-
-      // materials are compiled, we can safely update render bundles bindings if needed
-      renderBundles.forEach((bundle) => {
-        bundle.updateBinding()
-      })
 
       this.render(true)
     }
@@ -535,6 +520,22 @@ export class Shadow {
    * @param commandEncoder - {@link GPUCommandEncoder} to use.
    */
   renderDepthPass(commandEncoder: GPUCommandEncoder) {
+    // we might need to update render bundles buffer bindings
+    const renderBundles = new Map()
+
+    this.meshes.forEach((mesh) => {
+      if (mesh.options.renderBundle) {
+        renderBundles.set(mesh.options.renderBundle.uuid, mesh.options.renderBundle)
+      }
+    })
+
+    // we can safely update render bundles bindings if needed
+    renderBundles.forEach((bundle) => {
+      bundle.updateBinding()
+    })
+
+    renderBundles.clear()
+
     // reset renderer current pipeline
     this.renderer.pipelineManager.resetCurrentPipeline()
 

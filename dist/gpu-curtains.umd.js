@@ -8778,21 +8778,14 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
       if (!__privateGet$c(this, _autoRender)) {
         this.onPropertyChanged("isActive", 1);
         this.useDepthMaterials();
-        const renderBundles = [];
         this.meshes.forEach((mesh) => {
           mesh.setGeometry();
-          if (mesh.options.renderBundle && !renderBundles.find((bundle) => bundle.uuid === mesh.options.renderBundle.uuid)) {
-            renderBundles.push(mesh.options.renderBundle);
-          }
         });
         await Promise.all(
           [...__privateGet$c(this, _depthMaterials).values()].map(async (depthMaterial) => {
             await depthMaterial.compileMaterial();
           })
         );
-        renderBundles.forEach((bundle) => {
-          bundle.updateBinding();
-        });
         this.render(true);
       }
     }
@@ -8801,6 +8794,16 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
      * @param commandEncoder - {@link GPUCommandEncoder} to use.
      */
     renderDepthPass(commandEncoder) {
+      const renderBundles = /* @__PURE__ */ new Map();
+      this.meshes.forEach((mesh) => {
+        if (mesh.options.renderBundle) {
+          renderBundles.set(mesh.options.renderBundle.uuid, mesh.options.renderBundle);
+        }
+      });
+      renderBundles.forEach((bundle) => {
+        bundle.updateBinding();
+      });
+      renderBundles.clear();
       this.renderer.pipelineManager.resetCurrentPipeline();
       const depthPass = commandEncoder.beginRenderPass(this.depthPassTarget.renderPass.descriptor);
       this.meshes.forEach((mesh) => {
@@ -11963,6 +11966,8 @@ ${this.shaders.compute.head}`;
      * @param renderBundle - {@link RenderBundle} to remove.
      */
     removeRenderBundle(renderBundle) {
+      if (!renderBundle.options.renderPass)
+        return;
       const renderPassEntry = this.renderPassEntries.renderTarget.find(
         (passEntry) => passEntry.renderPass.uuid === renderBundle.options.renderPass.uuid
       );
@@ -14138,10 +14143,6 @@ ${this.shaders.compute.head}`;
       this.meshes.delete(mesh.uuid);
       mesh.setRenderBundle(null, false);
       this.size = this.meshes.size;
-      if (this.meshes.size === 0) {
-        this.options.renderPass = null;
-        this.descriptor = null;
-      }
       if (keepMesh) {
         if (mesh.type === "ShaderPass") {
           this.renderer.scene.addShaderPass(mesh);

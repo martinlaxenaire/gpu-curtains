@@ -200,10 +200,6 @@ class RenderBundle {
     this.meshes.delete(mesh.uuid);
     mesh.setRenderBundle(null, false);
     this.size = this.meshes.size;
-    if (this.meshes.size === 0) {
-      this.options.renderPass = null;
-      this.descriptor = null;
-    }
     if (keepMesh) {
       if (mesh.type === "ShaderPass") {
         this.renderer.scene.addShaderPass(mesh);

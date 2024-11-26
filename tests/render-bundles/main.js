@@ -166,7 +166,8 @@ window.addEventListener('load', async () => {
 
   const grayscalePass = new ShaderPass(gpuCameraRenderer, {
     label: 'Grayscale shader pass',
-    inputTarget: grayscaleTarget, // we could do that directly
+    inputTarget: grayscaleTarget,
+    //renderBundle: postProRenderBundle,
     shaders: {
       fragment: {
         code: grayscaleFs,

@@ -327,12 +327,12 @@ window.addEventListener('load', async () => {
       if (value !== shadingModel) {
         shadingModel = value
 
-        if (renderBundle) {
-          renderBundle.destroy()
-        }
-
         if (gltfScenesManager) {
           gltfScenesManager.destroy()
+        }
+
+        if (renderBundle) {
+          renderBundle.destroy()
         }
 
         gltfScenesManager = null
