@@ -109,6 +109,7 @@ window.addEventListener('load', async () => {
     .add({ nbMeshes }, 'nbMeshes', 500, 20_000, 1)
     .name('Number of meshes')
     .onFinishChange((value) => {
+      // set new render bundle size
       renderBundle.size = value
 
       if (value < nbMeshes) {

@@ -77,7 +77,7 @@ export declare class RenderBundle {
      */
     set useProjection(value: boolean);
     /**
-     * Set the new {@link RenderBundle} size.
+     * Set the new {@link RenderBundle} size. Should be used before adding or removing {@link meshes} to the {@link RenderBundle} if the {@link bundle} has already been created (especially if it's using a {@link binding}).
      * @param value - New size to set.
      */
     set size(value: number);

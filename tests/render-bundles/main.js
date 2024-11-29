@@ -244,7 +244,7 @@ window.addEventListener('load', async () => {
     // })
 
     //renderBundle.destroy()
-    renderBundle.empty()
+    //renderBundle.empty()
 
     //console.log(gpuCameraRenderer.scene.getObjectRenderPassEntry(meshes[0]))
     //gpuCameraRenderer.destroy()

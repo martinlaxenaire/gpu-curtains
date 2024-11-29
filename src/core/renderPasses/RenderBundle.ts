@@ -238,7 +238,7 @@ export class RenderBundle {
   }
 
   /**
-   * Set the new {@link RenderBundle} size.
+   * Set the new {@link RenderBundle} size. Should be used before adding or removing {@link meshes} to the {@link RenderBundle} if the {@link bundle} has already been created (especially if it's using a {@link binding}).
    * @param value - New size to set.
    */
   set size(value: number) {
@@ -248,6 +248,8 @@ export class RenderBundle {
           `${this.options.label} (${this.type}): The content of a render bundle is meant to be static. You should not change its size after it has been created.`
         )
       }
+
+      this.ready = false
 
       this.#onSizeChanged(value)
 
@@ -270,6 +272,10 @@ export class RenderBundle {
    */
   set ready(value: boolean) {
     if (value && !this.ready) {
+      // set the new size
+      // can eventually resize the buffer
+      this.size = this.meshes.size
+
       // finally ready
       this.#encodeRenderCommands()
     } else if (!value && this.ready) {
@@ -307,8 +313,6 @@ export class RenderBundle {
 
     this.ready = false
     this.meshes.set(mesh.uuid, mesh)
-
-    this.size = this.meshes.size
   }
 
   /**
@@ -326,8 +330,6 @@ export class RenderBundle {
     this.meshes.delete(mesh.uuid)
 
     mesh.setRenderBundle(null, false)
-
-    this.size = this.meshes.size
   }
 
   /**
@@ -469,6 +471,8 @@ export class RenderBundle {
     this.meshes.forEach((mesh) => {
       this.removeMesh(mesh, keepMeshes)
     })
+
+    this.size = 0
   }
 
   /**
@@ -502,6 +506,8 @@ export class RenderBundle {
     this.meshes.forEach((mesh) => {
       mesh.remove()
     })
+
+    this.size = 0
 
     this.#cleanUp()
   }

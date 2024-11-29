@@ -128,7 +128,7 @@ class RenderBundle {
     __privateSet(this, _useProjection, value);
   }
   /**
-   * Set the new {@link RenderBundle} size.
+   * Set the new {@link RenderBundle} size. Should be used before adding or removing {@link meshes} to the {@link RenderBundle} if the {@link bundle} has already been created (especially if it's using a {@link binding}).
    * @param value - New size to set.
    */
   set size(value) {
@@ -138,6 +138,7 @@ class RenderBundle {
           `${this.options.label} (${this.type}): The content of a render bundle is meant to be static. You should not change its size after it has been created.`
         );
       }
+      this.ready = false;
       __privateMethod(this, _onSizeChanged, onSizeChanged_fn).call(this, value);
       this.options.size = value;
     }
@@ -156,6 +157,7 @@ class RenderBundle {
    */
   set ready(value) {
     if (value && !this.ready) {
+      this.size = this.meshes.size;
       __privateMethod(this, _encodeRenderCommands, encodeRenderCommands_fn).call(this);
     } else if (!value && this.ready) {
       this.bundle = null;
@@ -184,7 +186,6 @@ class RenderBundle {
     }
     this.ready = false;
     this.meshes.set(mesh.uuid, mesh);
-    this.size = this.meshes.size;
   }
   /**
    * Remove any {@link RenderedMesh | rendered mesh} from this {@link RenderBundle}.
@@ -199,7 +200,6 @@ class RenderBundle {
     this.ready = false;
     this.meshes.delete(mesh.uuid);
     mesh.setRenderBundle(null, false);
-    this.size = this.meshes.size;
   }
   /**
    * Remove a {@link SceneStackedMesh | scene stacked mesh} from this {@link RenderBundle}.
@@ -275,6 +275,7 @@ class RenderBundle {
     this.meshes.forEach((mesh) => {
       this.removeMesh(mesh, keepMeshes);
     });
+    this.size = 0;
   }
   /**
    * Remove the {@link RenderBundle}, i.e. destroy it while preserving the {@link SceneStackedMesh | scene stacked meshes} by re-adding them to the {@link core/scenes/Scene.Scene | Scene}.
@@ -291,6 +292,7 @@ class RenderBundle {
     this.meshes.forEach((mesh) => {
       mesh.remove();
     });
+    this.size = 0;
     __privateMethod(this, _cleanUp, cleanUp_fn).call(this);
   }
 }

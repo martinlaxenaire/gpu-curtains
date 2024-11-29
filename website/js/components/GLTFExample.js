@@ -114,6 +114,7 @@ export class GLTFExample {
       this.opacityTween.to(mesh.uniforms.global.opacity, {
         value: 1,
         duration: 1.5,
+        delay: 0.5,
       })
     })
 

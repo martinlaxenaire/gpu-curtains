@@ -14067,7 +14067,7 @@ ${this.shaders.compute.head}`;
       __privateSet$4(this, _useProjection, value);
     }
     /**
-     * Set the new {@link RenderBundle} size.
+     * Set the new {@link RenderBundle} size. Should be used before adding or removing {@link meshes} to the {@link RenderBundle} if the {@link bundle} has already been created (especially if it's using a {@link binding}).
      * @param value - New size to set.
      */
     set size(value) {
@@ -14077,6 +14077,7 @@ ${this.shaders.compute.head}`;
             `${this.options.label} (${this.type}): The content of a render bundle is meant to be static. You should not change its size after it has been created.`
           );
         }
+        this.ready = false;
         __privateMethod$3(this, _onSizeChanged, onSizeChanged_fn).call(this, value);
         this.options.size = value;
       }
@@ -14095,6 +14096,7 @@ ${this.shaders.compute.head}`;
      */
     set ready(value) {
       if (value && !this.ready) {
+        this.size = this.meshes.size;
         __privateMethod$3(this, _encodeRenderCommands, encodeRenderCommands_fn).call(this);
       } else if (!value && this.ready) {
         this.bundle = null;
@@ -14123,7 +14125,6 @@ ${this.shaders.compute.head}`;
       }
       this.ready = false;
       this.meshes.set(mesh.uuid, mesh);
-      this.size = this.meshes.size;
     }
     /**
      * Remove any {@link RenderedMesh | rendered mesh} from this {@link RenderBundle}.
@@ -14138,7 +14139,6 @@ ${this.shaders.compute.head}`;
       this.ready = false;
       this.meshes.delete(mesh.uuid);
       mesh.setRenderBundle(null, false);
-      this.size = this.meshes.size;
     }
     /**
      * Remove a {@link SceneStackedMesh | scene stacked mesh} from this {@link RenderBundle}.
@@ -14214,6 +14214,7 @@ ${this.shaders.compute.head}`;
       this.meshes.forEach((mesh) => {
         this.removeMesh(mesh, keepMeshes);
       });
+      this.size = 0;
     }
     /**
      * Remove the {@link RenderBundle}, i.e. destroy it while preserving the {@link SceneStackedMesh | scene stacked meshes} by re-adding them to the {@link core/scenes/Scene.Scene | Scene}.
@@ -14230,6 +14231,7 @@ ${this.shaders.compute.head}`;
       this.meshes.forEach((mesh) => {
         mesh.remove();
       });
+      this.size = 0;
       __privateMethod$3(this, _cleanUp, cleanUp_fn).call(this);
     }
   }
