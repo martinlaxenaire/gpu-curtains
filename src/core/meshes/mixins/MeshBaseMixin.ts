@@ -993,8 +993,8 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
 
       const texturesOptions: DOMTextureParams = { ...options, ...this.options.texturesOptions }
 
-      // do not allow external video textures if we have a render bundle
       if (this.renderBundle) {
+        // do not allow external video textures if we have a render bundle
         texturesOptions.useExternalTextures = false
       }
 
@@ -1010,6 +1010,11 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      * @param domTexture - {@link DOMTexture} to add
      */
     addDOMTexture(domTexture: DOMTexture) {
+      if (this.renderBundle) {
+        // if we create a new texture, invalidate the render bundle
+        this.renderBundle.ready = false
+      }
+
       this.material.addTexture(domTexture)
       this.onDOMTextureAdded(domTexture)
     }
@@ -1044,6 +1049,11 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      * @param texture - {@link Texture} to add
      */
     addTexture(texture: Texture) {
+      if (this.renderBundle) {
+        // if we create a new texture, invalidate the render bundle
+        this.renderBundle.ready = false
+      }
+
       this.material.addTexture(texture)
     }
 

@@ -1,7 +1,7 @@
 // Goal of this test is to help debug plane transformations and raycasting
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
-  const { GPUCurtains, Plane, Vec2, Raycaster } = await import(/* @vite-ignore */ path)
+  const { GPUCurtains, Plane, Vec2, Raycaster, RenderBundle } = await import(/* @vite-ignore */ path)
 
   // set up our WebGPU context and append the canvas to our wrapper
   const gpuCurtains = new GPUCurtains({
@@ -44,7 +44,13 @@ window.addEventListener('load', async () => {
     }
   `
 
+  const renderBundle = new RenderBundle(gpuCurtains, {
+    size: 1,
+    useBuffer: true,
+  })
+
   const plane = new Plane(gpuCurtains, '.plane', {
+    renderBundle,
     shaders: {
       vertex: {
         code: meshShader,

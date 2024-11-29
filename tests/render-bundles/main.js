@@ -65,7 +65,7 @@ window.addEventListener('load', async () => {
       label: 'Cube ' + i,
       geometry: new BoxGeometry(),
       renderBundle,
-      transparent: i % 2 === 1,
+      transparent: i > 1,
       shaders: {
         fragment: {
           code: fs,
@@ -76,7 +76,7 @@ window.addEventListener('load', async () => {
           struct: {
             opacity: {
               type: 'f32',
-              value: i % 2 === 1 ? 0.5 : 1,
+              value: i > 1 ? 0.5 : 1,
             },
           },
         },
@@ -238,11 +238,20 @@ window.addEventListener('load', async () => {
     // console.log(renderBundle)
     //meshes[1].remove()
 
-    renderBundle.remove()
+    // meshes.forEach((mesh) => {
+    //   //mesh.remove()
+    //   renderBundle.removeMesh(mesh)
+    // })
+
+    //renderBundle.destroy()
+    renderBundle.empty()
 
     //console.log(gpuCameraRenderer.scene.getObjectRenderPassEntry(meshes[0]))
     //gpuCameraRenderer.destroy()
     //console.log(gpuCameraRenderer)
+
+    //postProRenderBundle.destroy()
+    //postProPass.remove()
 
     // regularMeshes[0].setRenderBundle(renderBundle)
     // console.log(regularMeshes[0], renderBundle)

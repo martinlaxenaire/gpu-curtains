@@ -1,5 +1,5 @@
 import { isRenderer, Renderer } from '../renderers/utils'
-import { ProjectedMesh, RenderedMesh } from '../renderers/GPURenderer'
+import { FullscreenPass, ProjectedMesh, RenderedMesh, SceneStackedMesh } from '../renderers/GPURenderer'
 import { generateUUID, throwWarning } from '../../utils/utils'
 import { BufferBinding } from '../bindings/BufferBinding'
 import { BufferUsageKeys } from '../buffers/utils'
@@ -7,6 +7,7 @@ import { BufferBindingOffsetChild } from '../bindings/BufferBindingOffsetChild'
 import { RenderPass } from './RenderPass'
 import { ShaderPass } from './ShaderPass'
 import { PingPongPlane } from '../../extras/meshes/PingPongPlane'
+import { GPUCurtains } from '../../curtains/GPUCurtains'
 
 let bundleIndex = 0
 
@@ -82,11 +83,11 @@ export class RenderBundle {
 
   /**
    * RenderBundle constructor
-   * @param renderer - {@link Renderer} class object used to create this {@link RenderBundle}.
+   * @param renderer - {@link Renderer} or {@link GPUCurtains} class object used to create this {@link RenderBundle}.
    * @param parameters - {@link RenderBundleParams | parameters} use to create this {@link RenderBundle}.
    */
   constructor(
-    renderer: Renderer,
+    renderer: Renderer | GPUCurtains,
     {
       label = '',
       renderPass = null,
@@ -118,10 +119,6 @@ export class RenderBundle {
       renderPass,
       useBuffer,
       size,
-    }
-
-    if (renderPass) {
-      this.#setDescriptor()
     }
 
     this.meshes = new Map()
@@ -284,7 +281,7 @@ export class RenderBundle {
   }
 
   /**
-   * Add a {@link RenderedMesh | mesh} to this {@link RenderBundle}. Can set the {@link RenderBundleOptions#renderPass | render pass} if needed. If the {@link RenderBundleOptions#renderPass | render pass} is already set and the {@link mesh} output {@link RenderPass} does not match, it won't be added.
+   * Called by the {@link core/scenes/Scene.Scene | Scene} to eventually add a {@link RenderedMesh | mesh} to this {@link RenderBundle}. Can set the {@link RenderBundleOptions#renderPass | render pass} if needed. If the {@link RenderBundleOptions#renderPass | render pass} is already set and the {@link mesh} output {@link RenderPass} does not match, it won't be added.
    * @param mesh - {@link RenderedMesh | Mesh} to eventually add.
    * @param outputPass - The mesh output {@link RenderPass}.
    */
@@ -292,7 +289,6 @@ export class RenderBundle {
     // check for correct render pass first?
     if (!this.options.renderPass) {
       this.options.renderPass = outputPass
-      this.#setDescriptor()
     } else if (outputPass.uuid !== this.options.renderPass.uuid) {
       throwWarning(
         `${this.options.label} (${this.type}): Cannot add Mesh ${mesh.options.label} to this render bundle because the output render passes do not match.`
@@ -316,11 +312,10 @@ export class RenderBundle {
   }
 
   /**
-   * Remove a {@link mesh} from this {@link RenderBundle}.
+   * Remove any {@link RenderedMesh | rendered mesh} from this {@link RenderBundle}.
    * @param mesh - {@link RenderedMesh | Mesh} to remove.
-   * @param keepMesh - Whether to preserve the {@link mesh} in order to render it normally again. Default to `true`.
    */
-  removeMesh(mesh: RenderedMesh, keepMesh = true) {
+  removeSceneObject(mesh: RenderedMesh) {
     if (this.ready && !this.renderer.production) {
       throwWarning(
         `${this.options.label} (${this.type}): The content of a render bundle is meant to be static. You should not remove meshes from it after it has been created (mesh removed: ${mesh.options.label}).`
@@ -333,15 +328,22 @@ export class RenderBundle {
     mesh.setRenderBundle(null, false)
 
     this.size = this.meshes.size
+  }
 
-    if (keepMesh) {
-      if (mesh.type === 'ShaderPass') {
-        this.renderer.scene.addShaderPass(mesh as ShaderPass)
-      } else if (mesh.type === 'PingPongPlane') {
-        this.renderer.scene.addPingPongPlane(mesh as PingPongPlane)
-      } else {
-        this.renderer.scene.addMesh(mesh)
-      }
+  /**
+   * Remove a {@link SceneStackedMesh | scene stacked mesh} from this {@link RenderBundle}.
+   * @param mesh - {@link SceneStackedMesh | Scene stacked mesh} to remove.
+   * @param keepMesh - Whether to preserve the {@link mesh} in order to render it normally again. Default to `true`.
+   */
+  removeMesh(mesh: SceneStackedMesh, keepMesh = true) {
+    this.removeSceneObject(mesh)
+
+    if (keepMesh && mesh.type !== 'ShaderPass' && mesh.type !== 'PingPongPlane') {
+      this.renderer.scene.addMesh(mesh)
+    }
+
+    if (this.meshes.size === 0) {
+      this.renderer.scene.removeRenderBundle(this)
     }
   }
 
@@ -364,10 +366,12 @@ export class RenderBundle {
   }
 
   /**
-   * Create the {@link encoder} and {@link bundle} used by this {@link RenderBundle}.
+   * Create the {@link descriptor}, {@link encoder} and {@link bundle} used by this {@link RenderBundle}.
    * @private
    */
   #encodeRenderCommands() {
+    this.#setDescriptor()
+
     this.renderer.pipelineManager.resetCurrentPipeline()
 
     this.encoder = this.renderer.device.createRenderBundleEncoder({
@@ -435,6 +439,12 @@ export class RenderBundle {
         if (!mesh.ready) {
           isReady = false
         }
+
+        // dom textures should be ready
+        // in order to validate the render bundle
+        if ('sourcesReady' in mesh && !mesh.sourcesReady) {
+          isReady = false
+        }
       }
 
       this.ready = isReady
@@ -450,33 +460,49 @@ export class RenderBundle {
   }
 
   /**
-   * Destroy the {@link RenderBundle} but preserve the {@link meshes} and render them normally again.
+   * Empty the {@link RenderBundle}. Can eventually re-add the {@link SceneStackedMesh | scene stacked meshes} to the {@link core/scenes/Scene.Scene | Scene} in order to render them normally again.
+   * @param keepMeshes - Whether to preserve the {@link meshes} in order to render them normally again. Default to `true`.
    */
-  remove() {
-    this.destroy(true)
+  empty(keepMeshes = true) {
+    this.ready = false
+
+    this.meshes.forEach((mesh) => {
+      this.removeMesh(mesh, keepMeshes)
+    })
   }
 
   /**
-   * Remove the {@link RenderBundle} from our {@link core/scenes/Scene.Scene | Scene} and eventually destroy the {@link binding}. Can also reset all the {@link meshes} so they can be drawn normally again.
-   * @param keepMeshes - Whether to preserve the {@link meshes} in order to render them normally again.
+   * Destroy the {@link binding} buffer if needed and remove the {@link RenderBundle} from the {@link Renderer}.
+   * @private
    */
-  destroy(keepMeshes = false) {
-    this.ready = false
-    this.renderer.scene.removeRenderBundle(this)
-
-    this.meshes.forEach((mesh) => {
-      this.meshes.delete(mesh.uuid)
-
-      mesh.setRenderBundle(null, false)
-
-      if (keepMeshes) {
-        this.renderer.scene.addMesh(mesh)
-      }
-    })
-
+  #cleanUp() {
     // destroy binding
     if (this.binding) {
       this.binding.buffer.destroy()
     }
+
+    // remove from renderer
+    this.renderer.renderBundles = this.renderer.renderBundles.filter((bundle) => bundle.uuid !== this.uuid)
+  }
+
+  /**
+   * Remove the {@link RenderBundle}, i.e. destroy it while preserving the {@link SceneStackedMesh | scene stacked meshes} by re-adding them to the {@link core/scenes/Scene.Scene | Scene}.
+   */
+  remove() {
+    this.empty(true)
+    this.#cleanUp()
+  }
+
+  /**
+   * Remove the {@link RenderBundle} from our {@link core/scenes/Scene.Scene | Scene}, {@link RenderedMesh#remove | remove the meshes}, eventually destroy the {@link binding} and remove the {@link RenderBundle} from the {@link Renderer}.
+   */
+  destroy() {
+    this.ready = false
+
+    this.meshes.forEach((mesh) => {
+      mesh.remove()
+    })
+
+    this.#cleanUp()
   }
 }

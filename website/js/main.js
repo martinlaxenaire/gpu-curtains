@@ -2,6 +2,7 @@ import { GPUCurtains } from '../../dist/esm/index.mjs'
 import { CurtainsClothSim } from './components/CurtainsClothSim.js'
 import { IntroDOMMeshes } from './components/IntroDOMMeshes.js'
 import { TexturesPlanes } from './components/TexturesPlanes.js'
+import { GLTFExample } from './components/GLTFExample.js'
 import { ComputeFeature } from './components/ComputeFeature.js'
 import { ScrollObserver } from './utils/ScrollObserver.js'
 
@@ -69,9 +70,14 @@ window.addEventListener('load', async () => {
     const intro = new IntroDOMMeshes({ gpuCurtains, scrollObserver })
   }
 
+  const suzanneEl = document.querySelector('#suzanne-gltf')
+  if (suzanneEl) {
+    const gltfExample = new GLTFExample({ gpuCurtains, scrollObserver })
+  }
+
   const introPlaneEls = document.querySelectorAll('.textures-plane')
   if (introPlaneEls.length) {
-    const introPlanes = new TexturesPlanes({ gpuCurtains })
+    const introPlanes = new TexturesPlanes({ gpuCurtains, scrollObserver })
   }
 
   const computeFeatureCanvas = document.querySelector('#compute-feature-canvas')

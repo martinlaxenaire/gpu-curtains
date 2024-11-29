@@ -75,7 +75,7 @@ export declare class FullscreenPlane extends FullscreenPlane_base {
     };
     /**
      * FullscreenPlane constructor
-     * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link FullscreenPlane}
+     * @param renderer - {@link Renderer} or {@link GPUCurtains} class object used to create this {@link FullscreenPlane}
      * @param parameters - {@link MeshBaseRenderParams | parameters} use to create this {@link FullscreenPlane}
      */
     constructor(renderer: Renderer | GPUCurtains, parameters?: MeshBaseRenderParams);

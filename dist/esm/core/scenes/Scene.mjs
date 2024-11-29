@@ -186,17 +186,6 @@ class Scene extends Object3D {
     const projectionStack = this.getMeshProjectionStack(mesh);
     const isTransparent = !!mesh.transparent;
     if (mesh.renderBundle) {
-      if (mesh.renderBundle.meshes.size === 1) {
-        if (isTransparent) {
-          projectionStack.transparent = projectionStack.transparent.filter(
-            (renderBundle) => renderBundle.uuid !== mesh.renderBundle.uuid
-          );
-        } else {
-          projectionStack.opaque = projectionStack.opaque.filter(
-            (renderBundle) => renderBundle.uuid !== mesh.renderBundle.uuid
-          );
-        }
-      }
       mesh.renderBundle.removeMesh(mesh, false);
     } else {
       if (isTransparent) {
@@ -224,10 +213,8 @@ class Scene extends Object3D {
    * @param renderBundle - {@link RenderBundle} to remove.
    */
   removeRenderBundle(renderBundle) {
-    if (!renderBundle.options.renderPass)
-      return;
     const renderPassEntry = this.renderPassEntries.renderTarget.find(
-      (passEntry) => passEntry.renderPass.uuid === renderBundle.options.renderPass.uuid
+      (passEntry) => passEntry.renderPass.uuid === renderBundle.options.renderPass?.uuid
     );
     const { stack } = renderPassEntry || this.renderPassEntries.screen[0];
     const isProjected = !!renderBundle.useProjection;
@@ -329,7 +316,7 @@ class Scene extends Object3D {
    */
   removeShaderPass(shaderPass) {
     if (shaderPass.renderBundle) {
-      shaderPass.renderBundle.meshes.delete(shaderPass.uuid);
+      shaderPass.renderBundle.empty();
     }
     this.renderPassEntries.screen = this.renderPassEntries.screen.filter(
       (entry) => !entry.element || entry.element.uuid !== shaderPass.uuid
@@ -387,7 +374,7 @@ class Scene extends Object3D {
    */
   removePingPongPlane(pingPongPlane) {
     if (pingPongPlane.renderBundle) {
-      pingPongPlane.renderBundle.meshes.delete(pingPongPlane.uuid);
+      pingPongPlane.renderBundle.empty();
     }
     this.renderPassEntries.pingPong = this.renderPassEntries.pingPong.filter(
       (entry) => entry.element.uuid !== pingPongPlane.uuid

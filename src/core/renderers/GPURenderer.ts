@@ -62,8 +62,10 @@ export type ProjectedMesh = Mesh | DOMProjectedMesh
 export type SceneStackedMesh = ProjectedMesh | FullscreenPlane
 /** Anything that can be added to a {@link Scene} meshes stacks, including {@link RenderBundle} */
 export type SceneStackedObject = SceneStackedMesh | RenderBundle
+/** Any Mesh that is drawn fullscren, i.e. fullscreen quad meshes used for post processing and {@link PingPongPlane} */
+export type FullscreenPass = PingPongPlane | ShaderPass
 /** Any Mesh that can be drawn, including fullscreen quad meshes used for post processing and {@link PingPongPlane} */
-export type RenderedMesh = SceneStackedMesh | PingPongPlane | ShaderPass
+export type RenderedMesh = SceneStackedMesh | FullscreenPass
 /** Any Mesh or Compute pass */
 export type SceneObject = RenderedMesh | ComputePass
 

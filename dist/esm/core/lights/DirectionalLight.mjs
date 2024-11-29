@@ -35,6 +35,7 @@ class DirectionalLight extends Light {
     shadow = null
   } = {}) {
     const type = "directionalLights";
+    renderer = renderer && renderer.renderer || renderer;
     const index = renderer.lights.filter((light) => light.type === type).length;
     super(renderer, { color, intensity, index, type });
     /** @ignore */

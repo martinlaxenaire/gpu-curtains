@@ -186,12 +186,11 @@ class GPUCameraRenderer extends GPURenderer {
     this.lights.push(light);
   }
   /**
-   * Remove a {@link Light} from the {@link lights} array and destroy it.
+   * Remove a {@link Light} from the {@link lights} array.
    * @param light - {@link Light} to remove.
    */
   removeLight(light) {
     this.lights = this.lights.filter((l) => l.uuid !== light.uuid);
-    light.destroy();
   }
   /**
    * Set the lights {@link BufferBinding} based on the {@link lightsBindingParams}.
@@ -480,7 +479,7 @@ class GPUCameraRenderer extends GPURenderer {
    */
   destroy() {
     this.cameraLightsBindGroup?.destroy();
-    this.lights.forEach((light) => this.removeLight(light));
+    this.lights.forEach((light) => light.remove());
     super.destroy();
   }
 }

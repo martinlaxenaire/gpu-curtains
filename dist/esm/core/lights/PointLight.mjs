@@ -29,6 +29,7 @@ class PointLight extends Light {
    */
   constructor(renderer, { color = new Vec3(1), intensity = 1, position = new Vec3(), range = 0, shadow = null } = {}) {
     const type = "pointLights";
+    renderer = renderer && renderer.renderer || renderer;
     const index = renderer.lights.filter((light) => light.type === type).length;
     super(renderer, { color, intensity, index, type });
     /** @ignore */

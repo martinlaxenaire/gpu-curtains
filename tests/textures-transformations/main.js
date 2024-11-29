@@ -1,7 +1,7 @@
 // Goal of this test is to help debug texture transformations
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
-  const { GPUCurtains, Plane } = await import(/* @vite-ignore */ path)
+  const { GPUCurtains, RenderBundle, Plane } = await import(/* @vite-ignore */ path)
 
   // set our main GPUCurtains instance it will handle everything we need
   // a WebGPU device and a renderer with its scene, requestAnimationFrame, resize and scroll events...
@@ -45,8 +45,15 @@ window.addEventListener('load', async () => {
 
   const planeEls = document.querySelectorAll('.plane')
 
+  const renderBundle = new RenderBundle(gpuCurtains, {
+    label: 'Texture transformations render bundle',
+    size: planeEls.length,
+    useBuffer: true,
+  })
+
   planeEls.forEach((planeEl, index) => {
     const plane = new Plane(gpuCurtains, planeEl, {
+      renderBundle,
       shaders: {
         vertex: {
           code: vertexShader,

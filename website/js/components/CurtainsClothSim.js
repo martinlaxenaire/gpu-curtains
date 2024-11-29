@@ -351,6 +351,9 @@ export class CurtainsClothSim {
     this.plane.domElement.element.classList.add('canvas-texture-ready')
 
     this.plane
+      .onReady(() => {
+        this.isActive = this.plane.domFrustum.isIntersecting
+      })
       .onAfterResize(() => {
         writeCanvasText()
         canvasTexture.resize()

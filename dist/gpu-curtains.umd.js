@@ -6899,16 +6899,17 @@
       }
     }
     /**
-     * Remove this {@link Light} from the {@link renderer}.
+     * Remove this {@link Light} from the {@link renderer} and destroy it.
      */
     remove() {
       this.renderer.removeLight(this);
+      this.destroy();
     }
     /**
      * Destroy this {@link Light}.
      */
     destroy() {
-      this.parent = null;
+      super.destroy();
     }
   }
   _intensity$1 = new WeakMap();
@@ -6922,6 +6923,7 @@
      */
     constructor(renderer, { color = new Vec3(1), intensity = 0.1 } = {}) {
       const type = "ambientLights";
+      renderer = renderer && renderer.renderer || renderer;
       const index = renderer.lights.filter((light) => light.type === type).length;
       super(renderer, { color, intensity, index, type });
       if (this.index + 1 > this.renderer.lightsBindingParams[this.type].max) {
@@ -9129,6 +9131,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
       shadow = null
     } = {}) {
       const type = "directionalLights";
+      renderer = renderer && renderer.renderer || renderer;
       const index = renderer.lights.filter((light) => light.type === type).length;
       super(renderer, { color, intensity, index, type });
       /** @ignore */
@@ -9542,6 +9545,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
      */
     constructor(renderer, { color = new Vec3(1), intensity = 1, position = new Vec3(), range = 0, shadow = null } = {}) {
       const type = "pointLights";
+      renderer = renderer && renderer.renderer || renderer;
       const index = renderer.lights.filter((light) => light.type === type).length;
       super(renderer, { color, intensity, index, type });
       /** @ignore */
@@ -10114,6 +10118,9 @@ ${geometry.wgslStructFragment}`
        * @param domTexture - {@link DOMTexture} to add
        */
       addDOMTexture(domTexture) {
+        if (this.renderBundle) {
+          this.renderBundle.ready = false;
+        }
         this.material.addTexture(domTexture);
         this.onDOMTextureAdded(domTexture);
       }
@@ -10142,6 +10149,9 @@ ${geometry.wgslStructFragment}`
        * @param texture - {@link Texture} to add
        */
       addTexture(texture) {
+        if (this.renderBundle) {
+          this.renderBundle.ready = false;
+        }
         this.material.addTexture(texture);
       }
       /* BINDINGS */
@@ -10367,7 +10377,7 @@ ${geometry.wgslStructFragment}`
   }) {
     /**
      * FullscreenPlane constructor
-     * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link FullscreenPlane}
+     * @param renderer - {@link Renderer} or {@link GPUCurtains} class object used to create this {@link FullscreenPlane}
      * @param parameters - {@link MeshBaseRenderParams | parameters} use to create this {@link FullscreenPlane}
      */
     constructor(renderer, parameters = {}) {
@@ -11928,17 +11938,6 @@ ${this.shaders.compute.head}`;
       const projectionStack = this.getMeshProjectionStack(mesh);
       const isTransparent = !!mesh.transparent;
       if (mesh.renderBundle) {
-        if (mesh.renderBundle.meshes.size === 1) {
-          if (isTransparent) {
-            projectionStack.transparent = projectionStack.transparent.filter(
-              (renderBundle) => renderBundle.uuid !== mesh.renderBundle.uuid
-            );
-          } else {
-            projectionStack.opaque = projectionStack.opaque.filter(
-              (renderBundle) => renderBundle.uuid !== mesh.renderBundle.uuid
-            );
-          }
-        }
         mesh.renderBundle.removeMesh(mesh, false);
       } else {
         if (isTransparent) {
@@ -11966,10 +11965,8 @@ ${this.shaders.compute.head}`;
      * @param renderBundle - {@link RenderBundle} to remove.
      */
     removeRenderBundle(renderBundle) {
-      if (!renderBundle.options.renderPass)
-        return;
       const renderPassEntry = this.renderPassEntries.renderTarget.find(
-        (passEntry) => passEntry.renderPass.uuid === renderBundle.options.renderPass.uuid
+        (passEntry) => passEntry.renderPass.uuid === renderBundle.options.renderPass?.uuid
       );
       const { stack } = renderPassEntry || this.renderPassEntries.screen[0];
       const isProjected = !!renderBundle.useProjection;
@@ -12071,7 +12068,7 @@ ${this.shaders.compute.head}`;
      */
     removeShaderPass(shaderPass) {
       if (shaderPass.renderBundle) {
-        shaderPass.renderBundle.meshes.delete(shaderPass.uuid);
+        shaderPass.renderBundle.empty();
       }
       this.renderPassEntries.screen = this.renderPassEntries.screen.filter(
         (entry) => !entry.element || entry.element.uuid !== shaderPass.uuid
@@ -12129,7 +12126,7 @@ ${this.shaders.compute.head}`;
      */
     removePingPongPlane(pingPongPlane) {
       if (pingPongPlane.renderBundle) {
-        pingPongPlane.renderBundle.meshes.delete(pingPongPlane.uuid);
+        pingPongPlane.renderBundle.empty();
       }
       this.renderPassEntries.pingPong = this.renderPassEntries.pingPong.filter(
         (entry) => entry.element.uuid !== pingPongPlane.uuid
@@ -13330,12 +13327,11 @@ ${this.shaders.compute.head}`;
       this.lights.push(light);
     }
     /**
-     * Remove a {@link Light} from the {@link lights} array and destroy it.
+     * Remove a {@link Light} from the {@link lights} array.
      * @param light - {@link Light} to remove.
      */
     removeLight(light) {
       this.lights = this.lights.filter((l) => l.uuid !== light.uuid);
-      light.destroy();
     }
     /**
      * Set the lights {@link BufferBinding} based on the {@link lightsBindingParams}.
@@ -13624,7 +13620,7 @@ ${this.shaders.compute.head}`;
      */
     destroy() {
       this.cameraLightsBindGroup?.destroy();
-      this.lights.forEach((light) => this.removeLight(light));
+      this.lights.forEach((light) => light.remove());
       super.destroy();
     }
   }
@@ -13967,12 +13963,12 @@ ${this.shaders.compute.head}`;
     __accessCheck$5(obj, member, "access private method");
     return method;
   };
-  var _useProjection, _ready, _setBinding, setBinding_fn, _patchBindingOffset, patchBindingOffset_fn, _onSizeChanged, onSizeChanged_fn, _setDescriptor, setDescriptor_fn, _encodeRenderCommands, encodeRenderCommands_fn;
+  var _useProjection, _ready, _setBinding, setBinding_fn, _patchBindingOffset, patchBindingOffset_fn, _onSizeChanged, onSizeChanged_fn, _setDescriptor, setDescriptor_fn, _encodeRenderCommands, encodeRenderCommands_fn, _cleanUp, cleanUp_fn;
   let bundleIndex = 0;
   class RenderBundle {
     /**
      * RenderBundle constructor
-     * @param renderer - {@link Renderer} class object used to create this {@link RenderBundle}.
+     * @param renderer - {@link Renderer} or {@link GPUCurtains} class object used to create this {@link RenderBundle}.
      * @param parameters - {@link RenderBundleParams | parameters} use to create this {@link RenderBundle}.
      */
     constructor(renderer, {
@@ -14007,10 +14003,15 @@ ${this.shaders.compute.head}`;
        */
       __privateAdd$5(this, _setDescriptor);
       /**
-       * Create the {@link encoder} and {@link bundle} used by this {@link RenderBundle}.
+       * Create the {@link descriptor}, {@link encoder} and {@link bundle} used by this {@link RenderBundle}.
        * @private
        */
       __privateAdd$5(this, _encodeRenderCommands);
+      /**
+       * Destroy the {@link binding} buffer if needed and remove the {@link RenderBundle} from the {@link Renderer}.
+       * @private
+       */
+      __privateAdd$5(this, _cleanUp);
       /** @ignore */
       // whether this render bundle should be added to the 'projected' or 'unProjected' Scene stacks.
       __privateAdd$5(this, _useProjection, void 0);
@@ -14031,9 +14032,6 @@ ${this.shaders.compute.head}`;
         useBuffer,
         size
       };
-      if (renderPass) {
-        __privateMethod$3(this, _setDescriptor, setDescriptor_fn).call(this);
-      }
       this.meshes = /* @__PURE__ */ new Map();
       this.encoder = null;
       this.bundle = null;
@@ -14104,14 +14102,13 @@ ${this.shaders.compute.head}`;
       __privateSet$4(this, _ready, value);
     }
     /**
-     * Add a {@link RenderedMesh | mesh} to this {@link RenderBundle}. Can set the {@link RenderBundleOptions#renderPass | render pass} if needed. If the {@link RenderBundleOptions#renderPass | render pass} is already set and the {@link mesh} output {@link RenderPass} does not match, it won't be added.
+     * Called by the {@link core/scenes/Scene.Scene | Scene} to eventually add a {@link RenderedMesh | mesh} to this {@link RenderBundle}. Can set the {@link RenderBundleOptions#renderPass | render pass} if needed. If the {@link RenderBundleOptions#renderPass | render pass} is already set and the {@link mesh} output {@link RenderPass} does not match, it won't be added.
      * @param mesh - {@link RenderedMesh | Mesh} to eventually add.
      * @param outputPass - The mesh output {@link RenderPass}.
      */
     addMesh(mesh, outputPass) {
       if (!this.options.renderPass) {
         this.options.renderPass = outputPass;
-        __privateMethod$3(this, _setDescriptor, setDescriptor_fn).call(this);
       } else if (outputPass.uuid !== this.options.renderPass.uuid) {
         throwWarning(
           `${this.options.label} (${this.type}): Cannot add Mesh ${mesh.options.label} to this render bundle because the output render passes do not match.`
@@ -14129,11 +14126,10 @@ ${this.shaders.compute.head}`;
       this.size = this.meshes.size;
     }
     /**
-     * Remove a {@link mesh} from this {@link RenderBundle}.
+     * Remove any {@link RenderedMesh | rendered mesh} from this {@link RenderBundle}.
      * @param mesh - {@link RenderedMesh | Mesh} to remove.
-     * @param keepMesh - Whether to preserve the {@link mesh} in order to render it normally again. Default to `true`.
      */
-    removeMesh(mesh, keepMesh = true) {
+    removeSceneObject(mesh) {
       if (this.ready && !this.renderer.production) {
         throwWarning(
           `${this.options.label} (${this.type}): The content of a render bundle is meant to be static. You should not remove meshes from it after it has been created (mesh removed: ${mesh.options.label}).`
@@ -14143,14 +14139,19 @@ ${this.shaders.compute.head}`;
       this.meshes.delete(mesh.uuid);
       mesh.setRenderBundle(null, false);
       this.size = this.meshes.size;
-      if (keepMesh) {
-        if (mesh.type === "ShaderPass") {
-          this.renderer.scene.addShaderPass(mesh);
-        } else if (mesh.type === "PingPongPlane") {
-          this.renderer.scene.addPingPongPlane(mesh);
-        } else {
-          this.renderer.scene.addMesh(mesh);
-        }
+    }
+    /**
+     * Remove a {@link SceneStackedMesh | scene stacked mesh} from this {@link RenderBundle}.
+     * @param mesh - {@link SceneStackedMesh | Scene stacked mesh} to remove.
+     * @param keepMesh - Whether to preserve the {@link mesh} in order to render it normally again. Default to `true`.
+     */
+    removeMesh(mesh, keepMesh = true) {
+      this.removeSceneObject(mesh);
+      if (keepMesh && mesh.type !== "ShaderPass" && mesh.type !== "PingPongPlane") {
+        this.renderer.scene.addMesh(mesh);
+      }
+      if (this.meshes.size === 0) {
+        this.renderer.scene.removeRenderBundle(this);
       }
     }
     /**
@@ -14190,6 +14191,9 @@ ${this.shaders.compute.head}`;
           if (!mesh.ready) {
             isReady = false;
           }
+          if ("sourcesReady" in mesh && !mesh.sourcesReady) {
+            isReady = false;
+          }
         }
         this.ready = isReady;
       }
@@ -14202,28 +14206,31 @@ ${this.shaders.compute.head}`;
       this.ready = false;
     }
     /**
-     * Destroy the {@link RenderBundle} but preserve the {@link meshes} and render them normally again.
+     * Empty the {@link RenderBundle}. Can eventually re-add the {@link SceneStackedMesh | scene stacked meshes} to the {@link core/scenes/Scene.Scene | Scene} in order to render them normally again.
+     * @param keepMeshes - Whether to preserve the {@link meshes} in order to render them normally again. Default to `true`.
      */
-    remove() {
-      this.destroy(true);
+    empty(keepMeshes = true) {
+      this.ready = false;
+      this.meshes.forEach((mesh) => {
+        this.removeMesh(mesh, keepMeshes);
+      });
     }
     /**
-     * Remove the {@link RenderBundle} from our {@link core/scenes/Scene.Scene | Scene} and eventually destroy the {@link binding}. Can also reset all the {@link meshes} so they can be drawn normally again.
-     * @param keepMeshes - Whether to preserve the {@link meshes} in order to render them normally again.
+     * Remove the {@link RenderBundle}, i.e. destroy it while preserving the {@link SceneStackedMesh | scene stacked meshes} by re-adding them to the {@link core/scenes/Scene.Scene | Scene}.
      */
-    destroy(keepMeshes = false) {
+    remove() {
+      this.empty(true);
+      __privateMethod$3(this, _cleanUp, cleanUp_fn).call(this);
+    }
+    /**
+     * Remove the {@link RenderBundle} from our {@link core/scenes/Scene.Scene | Scene}, {@link RenderedMesh#remove | remove the meshes}, eventually destroy the {@link binding} and remove the {@link RenderBundle} from the {@link Renderer}.
+     */
+    destroy() {
       this.ready = false;
-      this.renderer.scene.removeRenderBundle(this);
       this.meshes.forEach((mesh) => {
-        this.meshes.delete(mesh.uuid);
-        mesh.setRenderBundle(null, false);
-        if (keepMeshes) {
-          this.renderer.scene.addMesh(mesh);
-        }
+        mesh.remove();
       });
-      if (this.binding) {
-        this.binding.buffer.destroy();
-      }
+      __privateMethod$3(this, _cleanUp, cleanUp_fn).call(this);
     }
   }
   _useProjection = new WeakMap();
@@ -14297,6 +14304,7 @@ ${this.shaders.compute.head}`;
   };
   _encodeRenderCommands = new WeakSet();
   encodeRenderCommands_fn = function() {
+    __privateMethod$3(this, _setDescriptor, setDescriptor_fn).call(this);
     this.renderer.pipelineManager.resetCurrentPipeline();
     this.encoder = this.renderer.device.createRenderBundleEncoder({
       ...this.descriptor,
@@ -14308,6 +14316,13 @@ ${this.shaders.compute.head}`;
     });
     this.bundle = this.encoder.finish({ label: this.options.label + " (bundle)" });
     this.renderer.pipelineManager.resetCurrentPipeline();
+  };
+  _cleanUp = new WeakSet();
+  cleanUp_fn = function() {
+    if (this.binding) {
+      this.binding.buffer.destroy();
+    }
+    this.renderer.renderBundles = this.renderer.renderBundles.filter((bundle) => bundle.uuid !== this.uuid);
   };
 
   var default_pass_fsWGSl = (

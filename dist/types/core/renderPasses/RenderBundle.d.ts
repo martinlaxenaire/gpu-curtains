@@ -1,8 +1,9 @@
 /// <reference types="dist" />
 import { Renderer } from '../renderers/utils';
-import { RenderedMesh } from '../renderers/GPURenderer';
+import { RenderedMesh, SceneStackedMesh } from '../renderers/GPURenderer';
 import { BufferBinding } from '../bindings/BufferBinding';
 import { RenderPass } from './RenderPass';
+import { GPUCurtains } from '../../curtains/GPUCurtains';
 /** Options used to create a {@link RenderBundle}. */
 export interface RenderBundleOptions {
     /** The label of the {@link RenderBundle}, sent to various GPU objects for debugging purpose. */
@@ -60,10 +61,10 @@ export declare class RenderBundle {
     meshes: Map<RenderedMesh['uuid'], RenderedMesh>;
     /**
      * RenderBundle constructor
-     * @param renderer - {@link Renderer} class object used to create this {@link RenderBundle}.
+     * @param renderer - {@link Renderer} or {@link GPUCurtains} class object used to create this {@link RenderBundle}.
      * @param parameters - {@link RenderBundleParams | parameters} use to create this {@link RenderBundle}.
      */
-    constructor(renderer: Renderer, { label, renderPass, renderOrder, transparent, visible, size, useBuffer, }?: RenderBundleParams);
+    constructor(renderer: Renderer | GPUCurtains, { label, renderPass, renderOrder, transparent, visible, size, useBuffer, }?: RenderBundleParams);
     /**
      * Get whether our {@link RenderBundle} handles {@link core/renderers/GPURenderer.ProjectedMesh | projected meshes} or not (useful to know in which {@link core/scenes/Scene.Scene | Scene} stack it has been added.
      * @readonly
@@ -92,17 +93,22 @@ export declare class RenderBundle {
      */
     set ready(value: boolean);
     /**
-     * Add a {@link RenderedMesh | mesh} to this {@link RenderBundle}. Can set the {@link RenderBundleOptions#renderPass | render pass} if needed. If the {@link RenderBundleOptions#renderPass | render pass} is already set and the {@link mesh} output {@link RenderPass} does not match, it won't be added.
+     * Called by the {@link core/scenes/Scene.Scene | Scene} to eventually add a {@link RenderedMesh | mesh} to this {@link RenderBundle}. Can set the {@link RenderBundleOptions#renderPass | render pass} if needed. If the {@link RenderBundleOptions#renderPass | render pass} is already set and the {@link mesh} output {@link RenderPass} does not match, it won't be added.
      * @param mesh - {@link RenderedMesh | Mesh} to eventually add.
      * @param outputPass - The mesh output {@link RenderPass}.
      */
     addMesh(mesh: RenderedMesh, outputPass: RenderPass): void;
     /**
-     * Remove a {@link mesh} from this {@link RenderBundle}.
+     * Remove any {@link RenderedMesh | rendered mesh} from this {@link RenderBundle}.
      * @param mesh - {@link RenderedMesh | Mesh} to remove.
+     */
+    removeSceneObject(mesh: RenderedMesh): void;
+    /**
+     * Remove a {@link SceneStackedMesh | scene stacked mesh} from this {@link RenderBundle}.
+     * @param mesh - {@link SceneStackedMesh | Scene stacked mesh} to remove.
      * @param keepMesh - Whether to preserve the {@link mesh} in order to render it normally again. Default to `true`.
      */
-    removeMesh(mesh: RenderedMesh, keepMesh?: boolean): void;
+    removeMesh(mesh: SceneStackedMesh, keepMesh?: boolean): void;
     /**
      * Update the {@link binding} buffer if needed.
      */
@@ -122,12 +128,16 @@ export declare class RenderBundle {
      */
     loseContext(): void;
     /**
-     * Destroy the {@link RenderBundle} but preserve the {@link meshes} and render them normally again.
+     * Empty the {@link RenderBundle}. Can eventually re-add the {@link SceneStackedMesh | scene stacked meshes} to the {@link core/scenes/Scene.Scene | Scene} in order to render them normally again.
+     * @param keepMeshes - Whether to preserve the {@link meshes} in order to render them normally again. Default to `true`.
+     */
+    empty(keepMeshes?: boolean): void;
+    /**
+     * Remove the {@link RenderBundle}, i.e. destroy it while preserving the {@link SceneStackedMesh | scene stacked meshes} by re-adding them to the {@link core/scenes/Scene.Scene | Scene}.
      */
     remove(): void;
     /**
-     * Remove the {@link RenderBundle} from our {@link core/scenes/Scene.Scene | Scene} and eventually destroy the {@link binding}. Can also reset all the {@link meshes} so they can be drawn normally again.
-     * @param keepMeshes - Whether to preserve the {@link meshes} in order to render them normally again.
+     * Remove the {@link RenderBundle} from our {@link core/scenes/Scene.Scene | Scene}, {@link RenderedMesh#remove | remove the meshes}, eventually destroy the {@link binding} and remove the {@link RenderBundle} from the {@link Renderer}.
      */
-    destroy(keepMeshes?: boolean): void;
+    destroy(): void;
 }

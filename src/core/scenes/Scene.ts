@@ -304,19 +304,6 @@ export class Scene extends Object3D {
     const isTransparent = !!mesh.transparent
 
     if (mesh.renderBundle) {
-      // last mesh? remove render bundle from scene
-      if (mesh.renderBundle.meshes.size === 1) {
-        if (isTransparent) {
-          projectionStack.transparent = projectionStack.transparent.filter(
-            (renderBundle) => renderBundle.uuid !== mesh.renderBundle.uuid
-          )
-        } else {
-          projectionStack.opaque = projectionStack.opaque.filter(
-            (renderBundle) => renderBundle.uuid !== mesh.renderBundle.uuid
-          )
-        }
-      }
-
       mesh.renderBundle.removeMesh(mesh, false)
     } else {
       if (isTransparent) {
@@ -350,11 +337,9 @@ export class Scene extends Object3D {
    * @param renderBundle - {@link RenderBundle} to remove.
    */
   removeRenderBundle(renderBundle: RenderBundle) {
-    if (!renderBundle.options.renderPass) return
-
     // first get correct render pass enty and stack
     const renderPassEntry = this.renderPassEntries.renderTarget.find(
-      (passEntry) => passEntry.renderPass.uuid === renderBundle.options.renderPass.uuid
+      (passEntry) => passEntry.renderPass.uuid === renderBundle.options.renderPass?.uuid
     )
 
     const { stack } = renderPassEntry || this.renderPassEntries.screen[0]
@@ -492,7 +477,7 @@ export class Scene extends Object3D {
    */
   removeShaderPass(shaderPass: ShaderPass) {
     if (shaderPass.renderBundle) {
-      shaderPass.renderBundle.meshes.delete(shaderPass.uuid)
+      shaderPass.renderBundle.empty()
     }
 
     this.renderPassEntries.screen = this.renderPassEntries.screen.filter(
@@ -562,7 +547,7 @@ export class Scene extends Object3D {
    */
   removePingPongPlane(pingPongPlane: PingPongPlane) {
     if (pingPongPlane.renderBundle) {
-      pingPongPlane.renderBundle.meshes.delete(pingPongPlane.uuid)
+      pingPongPlane.renderBundle.empty()
     }
 
     this.renderPassEntries.pingPong = this.renderPassEntries.pingPong.filter(

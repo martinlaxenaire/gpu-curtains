@@ -8,7 +8,6 @@ import { GPUCurtains } from '../GPUCurtains'
 import { DOMTexture } from '../../core/textures/DOMTexture'
 import { AllowedGeometries } from '../../types/Materials'
 import { DOMElementBoundingRect, DOMElementParams } from '../../core/DOM/DOMElement'
-import { Vec3 } from '../../math/Vec3'
 
 /**
  * Base parameters to create a {@link DOMMesh}

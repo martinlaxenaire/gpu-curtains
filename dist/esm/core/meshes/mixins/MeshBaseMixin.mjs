@@ -482,6 +482,9 @@ ${geometry.wgslStructFragment}`
      * @param domTexture - {@link DOMTexture} to add
      */
     addDOMTexture(domTexture) {
+      if (this.renderBundle) {
+        this.renderBundle.ready = false;
+      }
       this.material.addTexture(domTexture);
       this.onDOMTextureAdded(domTexture);
     }
@@ -510,6 +513,9 @@ ${geometry.wgslStructFragment}`
      * @param texture - {@link Texture} to add
      */
     addTexture(texture) {
+      if (this.renderBundle) {
+        this.renderBundle.ready = false;
+      }
       this.material.addTexture(texture);
     }
     /* BINDINGS */
