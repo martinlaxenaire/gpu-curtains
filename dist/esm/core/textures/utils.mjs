@@ -1,9 +1,11 @@
+import { WebGPUTextureUsageConstants } from '../../utils/webgpu-constants.mjs';
+
 const textureUsages = /* @__PURE__ */ new Map([
-  ["copySrc", GPUTextureUsage.COPY_SRC],
-  ["copyDst", GPUTextureUsage.COPY_DST],
-  ["renderAttachment", GPUTextureUsage.RENDER_ATTACHMENT],
-  ["storageBinding", GPUTextureUsage.STORAGE_BINDING],
-  ["textureBinding", GPUTextureUsage.TEXTURE_BINDING]
+  ["copySrc", WebGPUTextureUsageConstants.COPY_SRC],
+  ["copyDst", WebGPUTextureUsageConstants.COPY_DST],
+  ["renderAttachment", WebGPUTextureUsageConstants.RENDER_ATTACHMENT],
+  ["storageBinding", WebGPUTextureUsageConstants.STORAGE_BINDING],
+  ["textureBinding", WebGPUTextureUsageConstants.TEXTURE_BINDING]
 ]);
 const getTextureUsages = (usages = []) => {
   return usages.reduce((acc, v) => {

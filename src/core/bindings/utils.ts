@@ -1,3 +1,4 @@
+import { WebGPUShaderStageConstants } from '../../utils/webgpu-constants'
 import { BufferBinding } from './BufferBinding'
 import { TextureBinding } from './TextureBinding'
 import { MaterialShadersType } from '../../types/Materials'
@@ -6,9 +7,9 @@ import { MaterialShadersType } from '../../types/Materials'
  * Map {@link MaterialShadersType | shaders types names} with actual {@link GPUShaderStageFlags | shaders visibility bitwise flags}.
  */
 const bindingVisibilities: Map<MaterialShadersType, GPUShaderStageFlags> = new Map([
-  ['vertex', GPUShaderStage.VERTEX],
-  ['fragment', GPUShaderStage.FRAGMENT],
-  ['compute', GPUShaderStage.COMPUTE],
+  ['vertex', WebGPUShaderStageConstants.VERTEX],
+  ['fragment', WebGPUShaderStageConstants.FRAGMENT],
+  ['compute', WebGPUShaderStageConstants.COMPUTE],
 ])
 
 /**

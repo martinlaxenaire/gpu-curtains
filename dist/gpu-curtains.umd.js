@@ -181,10 +181,35 @@
     };
   })();
 
+  const WebGPUShaderStageConstants = typeof GPUShaderStage !== "undefined" ? GPUShaderStage : {
+    VERTEX: 1,
+    FRAGMENT: 2,
+    COMPUTE: 4
+  };
+  const WebGPUBufferUsageConstants = typeof GPUBufferUsage !== "undefined" ? GPUBufferUsage : {
+    MAP_READ: 1,
+    MAP_WRITE: 2,
+    COPY_SRC: 4,
+    COPY_DST: 8,
+    INDEX: 16,
+    VERTEX: 32,
+    UNIFORM: 64,
+    STORAGE: 128,
+    INDIRECT: 256,
+    QUERY_RESOLVE: 512
+  };
+  const WebGPUTextureUsageConstants = typeof GPUTextureUsage !== "undefined" ? GPUTextureUsage : {
+    COPY_SRC: 1,
+    COPY_DST: 2,
+    TEXTURE_BINDING: 4,
+    STORAGE_BINDING: 8,
+    RENDER_ATTACHMENT: 16
+  };
+
   const bindingVisibilities = /* @__PURE__ */ new Map([
-    ["vertex", GPUShaderStage.VERTEX],
-    ["fragment", GPUShaderStage.FRAGMENT],
-    ["compute", GPUShaderStage.COMPUTE]
+    ["vertex", WebGPUShaderStageConstants.VERTEX],
+    ["fragment", WebGPUShaderStageConstants.FRAGMENT],
+    ["compute", WebGPUShaderStageConstants.COMPUTE]
   ]);
   const getBindingVisibility = (visibilities = []) => {
     return visibilities.reduce((acc, v) => {
@@ -1544,16 +1569,16 @@
   }
 
   const bufferUsages = /* @__PURE__ */ new Map([
-    ["copySrc", GPUBufferUsage.COPY_SRC],
-    ["copyDst", GPUBufferUsage.COPY_DST],
-    ["index", GPUBufferUsage.INDEX],
-    ["indirect", GPUBufferUsage.INDIRECT],
-    ["mapRead", GPUBufferUsage.MAP_READ],
-    ["mapWrite", GPUBufferUsage.MAP_WRITE],
-    ["queryResolve", GPUBufferUsage.QUERY_RESOLVE],
-    ["storage", GPUBufferUsage.STORAGE],
-    ["uniform", GPUBufferUsage.UNIFORM],
-    ["vertex", GPUBufferUsage.VERTEX]
+    ["copySrc", WebGPUBufferUsageConstants.COPY_SRC],
+    ["copyDst", WebGPUBufferUsageConstants.COPY_DST],
+    ["index", WebGPUBufferUsageConstants.INDEX],
+    ["indirect", WebGPUBufferUsageConstants.INDIRECT],
+    ["mapRead", WebGPUBufferUsageConstants.MAP_READ],
+    ["mapWrite", WebGPUBufferUsageConstants.MAP_WRITE],
+    ["queryResolve", WebGPUBufferUsageConstants.QUERY_RESOLVE],
+    ["storage", WebGPUBufferUsageConstants.STORAGE],
+    ["uniform", WebGPUBufferUsageConstants.UNIFORM],
+    ["vertex", WebGPUBufferUsageConstants.VERTEX]
   ]);
   const getBufferUsages = (usages = []) => {
     return usages.reduce((acc, v) => {
@@ -3612,11 +3637,11 @@
   }
 
   const textureUsages = /* @__PURE__ */ new Map([
-    ["copySrc", GPUTextureUsage.COPY_SRC],
-    ["copyDst", GPUTextureUsage.COPY_DST],
-    ["renderAttachment", GPUTextureUsage.RENDER_ATTACHMENT],
-    ["storageBinding", GPUTextureUsage.STORAGE_BINDING],
-    ["textureBinding", GPUTextureUsage.TEXTURE_BINDING]
+    ["copySrc", WebGPUTextureUsageConstants.COPY_SRC],
+    ["copyDst", WebGPUTextureUsageConstants.COPY_DST],
+    ["renderAttachment", WebGPUTextureUsageConstants.RENDER_ATTACHMENT],
+    ["storageBinding", WebGPUTextureUsageConstants.STORAGE_BINDING],
+    ["textureBinding", WebGPUTextureUsageConstants.TEXTURE_BINDING]
   ]);
   const getTextureUsages = (usages = []) => {
     return usages.reduce((acc, v) => {

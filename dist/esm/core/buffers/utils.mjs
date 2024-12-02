@@ -1,14 +1,16 @@
+import { WebGPUBufferUsageConstants } from '../../utils/webgpu-constants.mjs';
+
 const bufferUsages = /* @__PURE__ */ new Map([
-  ["copySrc", GPUBufferUsage.COPY_SRC],
-  ["copyDst", GPUBufferUsage.COPY_DST],
-  ["index", GPUBufferUsage.INDEX],
-  ["indirect", GPUBufferUsage.INDIRECT],
-  ["mapRead", GPUBufferUsage.MAP_READ],
-  ["mapWrite", GPUBufferUsage.MAP_WRITE],
-  ["queryResolve", GPUBufferUsage.QUERY_RESOLVE],
-  ["storage", GPUBufferUsage.STORAGE],
-  ["uniform", GPUBufferUsage.UNIFORM],
-  ["vertex", GPUBufferUsage.VERTEX]
+  ["copySrc", WebGPUBufferUsageConstants.COPY_SRC],
+  ["copyDst", WebGPUBufferUsageConstants.COPY_DST],
+  ["index", WebGPUBufferUsageConstants.INDEX],
+  ["indirect", WebGPUBufferUsageConstants.INDIRECT],
+  ["mapRead", WebGPUBufferUsageConstants.MAP_READ],
+  ["mapWrite", WebGPUBufferUsageConstants.MAP_WRITE],
+  ["queryResolve", WebGPUBufferUsageConstants.QUERY_RESOLVE],
+  ["storage", WebGPUBufferUsageConstants.STORAGE],
+  ["uniform", WebGPUBufferUsageConstants.UNIFORM],
+  ["vertex", WebGPUBufferUsageConstants.VERTEX]
 ]);
 const getBufferUsages = (usages = []) => {
   return usages.reduce((acc, v) => {
