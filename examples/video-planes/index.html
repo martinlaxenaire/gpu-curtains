@@ -87,12 +87,10 @@
       function gtag() {
         dataLayer.push(arguments)
       }
-      gtag('js', new Date())
 
-      gtag('config', 'G-45554DLGL6')
-
-      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        window['ga-disable-G-45554DLGL6'] = true
+      if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+        gtag('js', new Date())
+        gtag('config', 'G-45554DLGL6')
       }
     </script>
   </body>

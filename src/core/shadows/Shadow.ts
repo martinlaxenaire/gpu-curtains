@@ -248,7 +248,7 @@ export class Shadow {
 
   /**
    * Start or stop casting shadows.
-   * @param value
+   * @param value - New active state.
    */
   set isActive(value: boolean) {
     if (!value && this.isActive) {
@@ -520,6 +520,22 @@ export class Shadow {
    * @param commandEncoder - {@link GPUCommandEncoder} to use.
    */
   renderDepthPass(commandEncoder: GPUCommandEncoder) {
+    // we might need to update render bundles buffer bindings
+    const renderBundles = new Map()
+
+    this.meshes.forEach((mesh) => {
+      if (mesh.options.renderBundle) {
+        renderBundles.set(mesh.options.renderBundle.uuid, mesh.options.renderBundle)
+      }
+    })
+
+    // we can safely update render bundles bindings if needed
+    renderBundles.forEach((bundle) => {
+      bundle.updateBinding()
+    })
+
+    renderBundles.clear()
+
     // reset renderer current pipeline
     this.renderer.pipelineManager.resetCurrentPipeline()
 
@@ -549,7 +565,7 @@ export class Shadow {
    * Get the default depth pass fragment shader for this {@link Shadow}.
    * @returns - A {@link ShaderOptions} if a depth pass fragment shader is needed, `false` otherwise.
    */
-  getDefaultShadowDepthFs(): boolean | ShaderOptions {
+  getDefaultShadowDepthFs(): false | ShaderOptions {
     return false // we do not need to output to a fragment shader unless we do late Z writing
   }
 

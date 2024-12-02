@@ -4,6 +4,7 @@ import { MeshBaseMixin } from './MeshBaseMixin.mjs';
 import default_projected_vsWgsl from '../../shaders/chunks/default/default_projected_vs.wgsl.mjs';
 import default_normal_fsWgsl from '../../shaders/chunks/default/default_normal_fs.wgsl.mjs';
 import { getPCFDirectionalShadows, getPCFShadowContribution, getPCFPointShadows, getPCFPointShadowContribution } from '../../shaders/chunks/shading/shadows.mjs';
+import { BufferBindingOffsetChild } from '../../bindings/BufferBindingOffsetChild.mjs';
 
 const defaultProjectedMeshParams = {
   // frustum culling and visibility
@@ -69,6 +70,38 @@ function ProjectedMeshBaseMixin(Base) {
         });
       }
       this.setDOMFrustum();
+    }
+    /**
+     * Assign or remove a {@link RenderBundle} to this Mesh.
+     * @param renderBundle - The {@link RenderBundle} to assign or null if we want to remove the current {@link RenderBundle}.
+     * @param updateScene - Whether to remove and then re-add the Mesh from the {@link core/scenes/Scene.Scene | Scene} or not.
+     */
+    setRenderBundle(renderBundle, updateScene = true) {
+      const bindGroup = this.material.getBindGroupByBindingName("matrices");
+      const matrices = this.material.getBufferBindingByName("matrices");
+      if (!this.renderBundle && renderBundle && renderBundle.binding) {
+        bindGroup.destroyBufferBinding(matrices);
+      } else if (this.renderBundle && !renderBundle && matrices.parent) {
+        matrices.parent = null;
+        matrices.shouldResetBindGroup = true;
+        bindGroup.createBindingBuffer(matrices);
+      }
+      super.setRenderBundle(renderBundle, updateScene);
+      if (this.renderBundle && this.renderBundle.binding) {
+        matrices.options.offset = this.renderBundle.meshes.size - 1;
+        matrices.parent = this.renderBundle.binding;
+        matrices.shouldResetBindGroup = true;
+      }
+    }
+    /**
+     * Reset the {@link BufferBindingOffsetChild | matrices buffer binding} parent and offset and tell its bind group to update.
+     * @param offset - New offset to use in the parent {@link RenderBundle#binding | RenderBundle binding}.
+     */
+    patchRenderBundleBinding(offset = 0) {
+      const matrices = this.material.getBufferBindingByName("matrices");
+      matrices.options.offset = offset;
+      matrices.parent = this.renderBundle.binding;
+      matrices.shouldResetBindGroup = true;
     }
     /* SHADERS */
     /**
@@ -178,7 +211,9 @@ function ProjectedMeshBaseMixin(Base) {
     setMaterial(meshParameters) {
       const matricesUniforms = {
         label: "Matrices",
+        name: "matrices",
         visibility: ["vertex"],
+        minOffset: this.renderer.device.limits.minUniformBufferOffsetAlignment,
         struct: {
           model: {
             type: "mat4x4f",
@@ -194,15 +229,16 @@ function ProjectedMeshBaseMixin(Base) {
             type: "mat3x3f",
             value: this.normalMatrix
           }
-          // modelViewProjection: {
-          //   type: 'mat4x4f',
-          //   value: this.modelViewProjectionMatrix,
-          // },
         }
       };
-      if (!meshParameters.uniforms)
-        meshParameters.uniforms = {};
-      meshParameters.uniforms = { matrices: matricesUniforms, ...meshParameters.uniforms };
+      if (this.options.renderBundle && this.options.renderBundle.binding) {
+        matricesUniforms.parent = this.options.renderBundle.binding;
+        matricesUniforms.offset = this.options.renderBundle.meshes.size;
+      }
+      const transformationBinding = new BufferBindingOffsetChild(matricesUniforms);
+      if (!meshParameters.bindings)
+        meshParameters.bindings = [];
+      meshParameters.bindings.unshift(transformationBinding);
       super.setMaterial(meshParameters);
     }
     /**

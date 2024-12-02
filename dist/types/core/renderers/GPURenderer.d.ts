@@ -18,6 +18,7 @@ import { Texture } from '../textures/Texture';
 import { GPUDeviceManager } from './GPUDeviceManager';
 import { FullscreenPlane } from '../meshes/FullscreenPlane';
 import { Buffer } from '../buffers/Buffer';
+import { RenderBundle } from '../renderPasses/RenderBundle';
 /**
  * Parameters used to create a {@link GPURenderer}
  */
@@ -52,8 +53,12 @@ export type DOMProjectedMesh = DOMMesh | Plane;
 export type ProjectedMesh = Mesh | DOMProjectedMesh;
 /** Any Mesh that can be drawn (including fullscreen quad meshes) and that will be put in the {@link Scene} meshes stacks */
 export type SceneStackedMesh = ProjectedMesh | FullscreenPlane;
+/** Anything that can be added to a {@link Scene} meshes stacks, including {@link RenderBundle} */
+export type SceneStackedObject = SceneStackedMesh | RenderBundle;
+/** Any Mesh that is drawn fullscren, i.e. fullscreen quad meshes used for post processing and {@link PingPongPlane} */
+export type FullscreenPass = PingPongPlane | ShaderPass;
 /** Any Mesh that can be drawn, including fullscreen quad meshes used for post processing and {@link PingPongPlane} */
-export type RenderedMesh = SceneStackedMesh | PingPongPlane | ShaderPass;
+export type RenderedMesh = SceneStackedMesh | FullscreenPass;
 /** Any Mesh or Compute pass */
 export type SceneObject = RenderedMesh | ComputePass;
 /**
@@ -102,6 +107,8 @@ export declare class GPURenderer {
     meshes: SceneStackedMesh[];
     /** An array containing all our created {@link Texture} */
     textures: Texture[];
+    /** An array containing all our created {@link RenderBundle} */
+    renderBundles: RenderBundle[];
     /** Pixel ratio to use for rendering */
     pixelRatio: number;
     /** An object defining the width, height, top and left position of the canvas. Mainly used internally. If you need to get the renderer dimensions, use {@link boundingRect} instead. */

@@ -81,7 +81,7 @@ export declare class Light extends Object3D {
      */
     onMaxLightOverflow(lightsType: LightsType): void;
     /**
-     * Remove this {@link Light} from the {@link renderer}.
+     * Remove this {@link Light} from the {@link renderer} and destroy it.
      */
     remove(): void;
     /**

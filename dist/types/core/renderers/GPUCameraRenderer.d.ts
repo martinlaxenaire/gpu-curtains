@@ -124,7 +124,7 @@ export declare class GPUCameraRenderer extends GPURenderer {
      */
     addLight(light: Light): void;
     /**
-     * Remove a {@link Light} from the {@link lights} array and destroy it.
+     * Remove a {@link Light} from the {@link lights} array.
      * @param light - {@link Light} to remove.
      */
     removeLight(light: Light): void;

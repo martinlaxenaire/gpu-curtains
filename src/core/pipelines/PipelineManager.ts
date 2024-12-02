@@ -12,6 +12,11 @@ import { BindGroup } from '../bindGroups/BindGroup'
 /** Defines all types of allowed {@link core/pipelines/PipelineEntry.PipelineEntry | PipelineEntry} class objects */
 export type AllowedPipelineEntries = RenderPipelineEntry | ComputePipelineEntry
 
+/** Defines all the types of render passes allowed. */
+export type GPURenderPassTypes = GPURenderPassEncoder | GPURenderBundleEncoder
+/** Defines all the types of passes allowed. */
+export type GPUPassTypes = GPURenderPassTypes | GPUComputePassEncoder
+
 /**
  * Used to create and keep track of both {@link ComputePipelineEntry} and {@link RenderPipelineEntry}.<br>
  * Perform checks to eventually use a cached pipeline entry instead of creating a new one.<br>
@@ -129,7 +134,7 @@ export class PipelineManager {
    * @param pass - current pass encoder
    * @param pipelineEntry - the {@link AllowedPipelineEntries | PipelineEntry} to set
    */
-  setCurrentPipeline(pass: GPURenderPassEncoder | GPUComputePassEncoder, pipelineEntry: AllowedPipelineEntries) {
+  setCurrentPipeline(pass: GPUPassTypes, pipelineEntry: AllowedPipelineEntries) {
     if (pipelineEntry.index !== this.currentPipelineIndex) {
       pass.setPipeline(pipelineEntry.pipeline as GPURenderPipeline & GPUComputePipeline)
       this.currentPipelineIndex = pipelineEntry.index
@@ -141,7 +146,7 @@ export class PipelineManager {
    * @param pass - current pass encoder.
    * @param bindGroups - array {@link core/bindGroups/BindGroup.BindGroup | bind groups} passed by the {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}.
    */
-  setActiveBindGroups(pass: GPURenderPassEncoder | GPUComputePassEncoder, bindGroups: BindGroup[]) {
+  setActiveBindGroups(pass: GPUPassTypes, bindGroups: BindGroup[]) {
     bindGroups.forEach((bindGroup, index) => {
       if (
         !this.activeBindGroups[index] ||

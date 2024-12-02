@@ -165,16 +165,17 @@ export class Light extends Object3D {
   }
 
   /**
-   * Remove this {@link Light} from the {@link renderer}.
+   * Remove this {@link Light} from the {@link renderer} and destroy it.
    */
   remove() {
     this.renderer.removeLight(this)
+    this.destroy()
   }
 
   /**
    * Destroy this {@link Light}.
    */
   destroy() {
-    this.parent = null
+    super.destroy()
   }
 }

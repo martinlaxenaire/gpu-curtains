@@ -393,6 +393,23 @@ export class RenderPipelineEntry extends PipelineEntry {
   }
 
   /**
+   * Get default transparency blend state.
+   * @returns - The default transparency blend state.
+   */
+  static getDefaultTransparentBlending(): GPUBlendState {
+    return {
+      color: {
+        srcFactor: 'src-alpha',
+        dstFactor: 'one-minus-src-alpha',
+      },
+      alpha: {
+        srcFactor: 'one',
+        dstFactor: 'one-minus-src-alpha',
+      },
+    }
+  }
+
+  /**
    * Create the render pipeline {@link descriptor}
    */
   createPipelineDescriptor() {
@@ -408,16 +425,7 @@ export class RenderPipelineEntry extends PipelineEntry {
       if (this.options.rendering.transparent) {
         this.options.rendering.targets[0].blend = this.options.rendering.targets[0].blend
           ? this.options.rendering.targets[0].blend
-          : {
-              color: {
-                srcFactor: 'src-alpha',
-                dstFactor: 'one-minus-src-alpha',
-              },
-              alpha: {
-                srcFactor: 'one',
-                dstFactor: 'one-minus-src-alpha',
-              },
-            }
+          : RenderPipelineEntry.getDefaultTransparentBlending()
       }
     } else {
       this.options.rendering.targets = []

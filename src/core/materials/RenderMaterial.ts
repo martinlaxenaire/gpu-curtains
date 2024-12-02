@@ -169,6 +169,11 @@ export class RenderMaterial extends Material {
    * @param renderingOptions - new {@link RenderMaterialRenderingOptions | rendering options} properties to be set
    */
   setRenderingOptions(renderingOptions: Partial<RenderMaterialRenderingOptions> = {}) {
+    // patch original transparent blending if it had been lost
+    if (renderingOptions.transparent && renderingOptions.targets.length && !renderingOptions.targets[0].blend) {
+      renderingOptions.targets[0].blend = RenderPipelineEntry.getDefaultTransparentBlending()
+    }
+
     const newProperties = compareRenderingOptions(renderingOptions, this.options.rendering)
 
     const oldRenderingOptions = { ...this.options.rendering }

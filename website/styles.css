@@ -21,7 +21,7 @@
   .grid {
     display: grid;
     grid-template-columns: repeat(12, [col-start] 1fr);
-    gap: 1rem;
+    gap: 1.5rem;
   }
 
   /** sections **/
@@ -41,7 +41,7 @@
   }
 
   .text-section-sub {
-    grid-column: 8 / 13;
+    grid-column: 8 / 12;
     padding-top: calc(3rem + var(--height-spacing));
     font-size: 0.85rem;
     text-align: left;
@@ -53,7 +53,7 @@
   }
 
   .text-section.inverse-text-section .text-section-sub {
-    grid-column: 1 / 6;
+    grid-column: 2 / 6;
     order: 1;
   }
 
@@ -139,7 +139,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    transition: opacity 0.5s ease-in;
+    transition: opacity 0.5s 0.5s ease-in;
     background: rgb(128, 128, 255);
     background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
   }
@@ -306,6 +306,64 @@
     aspect-ratio: 1.775;
   }
 
+  /** GLTF **/
+
+  #engine-3d-suzanne {
+    display: flex;
+    justify-content: center;
+  }
+
+  .no-curtains #engine-3d-suzanne {
+    display: none;
+  }
+
+  #suzanne-gltf {
+    width: 33%;
+    aspect-ratio: 1.38914; /* FROM SUZANNE MODEL */
+  }
+
+  #engine-3d-suzanne-helper {
+    display: flex;
+    flex-direction: column;
+    margin: 0 0 2rem 2rem;
+    font-size: 0.875rem;
+    order: 2;
+    gap: 1rem;
+  }
+
+  #engine-3d-suzanne h3 {
+    font-size: 1em;
+    order: 2;
+    opacity: 0;
+    transition: opacity 0.35s ease-in-out;
+  }
+
+  #engine-3d-suzanne-arrow {
+    order: 2;
+    display: block;
+    width: 3.5em;
+    aspect-ratio: 1.3;
+    padding-bottom: 2rem;
+    color: var(--secondary-color);
+    transform: rotate3d(0, 0, 1, 90deg);
+    opacity: 0;
+    transition: opacity 0.35s 0.175s ease-in-out;
+  }
+
+  .section.is-visible #engine-3d-suzanne-helper h3,
+  .section.is-visible #engine-3d-suzanne-arrow {
+    opacity: 1;
+  }
+
+  #engine-3d-suzanne-arrow span {
+    display: block;
+  }
+
+  #engine-3d-suzanne-arrow span svg {
+    height: auto;
+    width: 100%;
+  }
+
   /** FEATURES **/
 
   #features {
@@ -315,7 +373,7 @@
   #features-particles-helper {
     display: flex;
     font-size: 0.875rem;
-    margin: 0;
+    margin: 0 0 0 3.5rem;
   }
 
   #compute-feature-canvas {
@@ -452,7 +510,36 @@
     order: 6;
   }
 
+  /** glTF **/
+
+  #engine-3d-suzanne {
+    flex-direction: column;
+  }
+
+  #suzanne-gltf {
+    width: 75%;
+    margin: 0 auto;
+    order: 2;
+  }
+
+  #engine-3d-suzanne-helper {
+    order: 1;
+    flex-direction: row;
+  }
+
+  #engine-3d-suzanne-arrow {
+    order: 2;
+    width: 2.5em;
+    padding-bottom: 0;
+    padding-top: 0.5em;
+    transform: rotate3d(0, 0, 0, 0deg);
+  }
+
   /** features **/
+
+  #features-particles-helper {
+    margin-left: 0;
+  }
 
   #compute-feature-canvas {
     aspect-ratio: 1.5;

@@ -1,5 +1,6 @@
 import { Light, LightBaseParams } from './Light';
 import { CameraRenderer } from '../renderers/utils';
+import { GPUCurtains } from '../../curtains/GPUCurtains';
 /**
  * Create an ambient light that equally illuminates all objects in the scene.
  *
@@ -20,7 +21,7 @@ export declare class AmbientLight extends Light {
      * @param renderer - {@link CameraRenderer} used to create this {@link AmbientLight}.
      * @param parameters - {@link LightBaseParams | parameters} used to create this {@link AmbientLight}.
      */
-    constructor(renderer: CameraRenderer, { color, intensity }?: LightBaseParams);
+    constructor(renderer: CameraRenderer | GPUCurtains, { color, intensity }?: LightBaseParams);
     /** @ignore */
     applyRotation(): void;
     /** @ignore */

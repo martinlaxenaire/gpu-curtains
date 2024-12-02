@@ -1,5 +1,6 @@
 import { Material } from './Material.mjs';
 import { isRenderer } from '../renderers/utils.mjs';
+import { RenderPipelineEntry } from '../pipelines/RenderPipelineEntry.mjs';
 import { throwWarning } from '../../utils/utils.mjs';
 import { compareRenderingOptions } from './utils.mjs';
 import default_projected_vsWgsl from '../shaders/chunks/default/default_projected_vs.wgsl.mjs';
@@ -121,6 +122,9 @@ class RenderMaterial extends Material {
    * @param renderingOptions - new {@link RenderMaterialRenderingOptions | rendering options} properties to be set
    */
   setRenderingOptions(renderingOptions = {}) {
+    if (renderingOptions.transparent && renderingOptions.targets.length && !renderingOptions.targets[0].blend) {
+      renderingOptions.targets[0].blend = RenderPipelineEntry.getDefaultTransparentBlending();
+    }
     const newProperties = compareRenderingOptions(renderingOptions, this.options.rendering);
     const oldRenderingOptions = { ...this.options.rendering };
     this.options.rendering = { ...this.options.rendering, ...renderingOptions };

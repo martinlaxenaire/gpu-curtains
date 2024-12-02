@@ -6,6 +6,7 @@ import {
   AmbientLight,
   DirectionalLight,
   getPhong,
+  RenderBundle,
   Mesh,
   SphereGeometry,
   Vec3,
@@ -116,11 +117,21 @@ window.addEventListener('load', async () => {
     return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
   }
 
-  for (let i = 0; i < 35; i++) {
+  const nbMeshes = 35
+
+  const renderBundle = new RenderBundle(gpuCameraRenderer, {
+    label: 'Raycaster render bundle',
+    size: nbMeshes,
+    useBuffer: true,
+  })
+
+  for (let i = 0; i < nbMeshes; i++) {
     const isCube = Math.random() > 0.5
+
     const mesh = new Mesh(gpuCameraRenderer, {
       label: isCube ? 'Cube ' + i : 'Sphere ' + i,
       geometry: isCube ? cubeGeometry : sphereGeometry,
+      renderBundle,
       shaders: {
         fragment: {
           code: meshFs,

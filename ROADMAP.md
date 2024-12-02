@@ -20,6 +20,7 @@
 - Lights & Shadows
 - Shader passes
 - PingPongPlane
+- RenderBundle
 - Basic CacheManager
 - Scroll + resize, frustum culling check
 - GPUCurtains
@@ -36,6 +37,5 @@
 - Add/improve GLTFScenesManager features (sparse accessors, animations, morphing, skinning...)
 - Add more lights (SpotLight...)
 - Improve typedoc documentation?
-- Use render bundles? Probably not suited to the library tho
 - Use indirect draw calls?
 - More examples & tests?

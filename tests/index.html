@@ -112,6 +112,9 @@
             <a href="./raycaster/" target="_blank">Raycaster</a>
           </li>
           <li>
+            <a href="./render-bundles/" target="_blank">Render bundles</a>
+          </li>
+          <li>
             <a href="./reset-plane/" target="_blank">Reset plane HTML element</a>
           </li>
           <li>
@@ -130,6 +133,9 @@
             <a href="./stress-test-instanced/" target="_blank">Stress test instanced</a>
           </li>
           <li>
+            <a href="./stress-test-render-bundle/" target="_blank">Stress test render bundle</a>
+          </li>
+          <li>
             <a href="./textures-transformations/" target="_blank">Textures transformations</a>
           </li>
           <li>
@@ -146,12 +152,10 @@
       function gtag() {
         dataLayer.push(arguments)
       }
-      gtag('js', new Date())
 
-      gtag('config', 'G-45554DLGL6')
-
-      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        window['ga-disable-G-45554DLGL6'] = true
+      if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+        gtag('js', new Date())
+        gtag('config', 'G-45554DLGL6')
       }
     </script>
   </body>

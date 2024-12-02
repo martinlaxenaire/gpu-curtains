@@ -14,7 +14,6 @@ import { RenderMaterialParams, ShaderOptions } from '../../../types/Materials'
 import { ProjectedObject3D } from '../../objects3D/ProjectedObject3D'
 import default_projected_vsWgsl from '../../shaders/chunks/default/default_projected_vs.wgsl'
 import default_normal_fsWgsl from '../../shaders/chunks/default/default_normal_fs.wgsl'
-import { BufferBindingParams } from '../../bindings/BufferBinding'
 import { Vec3 } from '../../../math/Vec3'
 import {
   getPCFDirectionalShadows,
@@ -22,9 +21,11 @@ import {
   getPCFPointShadows,
   getPCFShadowContribution,
 } from '../../shaders/chunks/shading/shadows'
+import { BufferBindingOffsetChild, BufferBindingOffsetChildParams } from '../../bindings/BufferBindingOffsetChild'
+import { RenderBundle } from '../../renderPasses/RenderBundle'
 
 /** Define all possible frustum culling checks. */
-export type FrustumCullingCheck = 'OBB' | 'sphere' | boolean
+export type FrustumCullingCheck = 'OBB' | 'sphere' | false
 
 /**
  * Base parameters used to create a ProjectedMesh
@@ -95,6 +96,19 @@ export declare class ProjectedMeshBaseClass extends MeshBaseClass {
    * @param parameters - {@link ProjectedMeshParameters | Projected Mesh base parameters}
    */
   constructor(renderer: CameraRenderer, element: HTMLElement | null, parameters: ProjectedMeshParameters)
+
+  /**
+   * Assign or remove a {@link RenderBundle} to this Mesh.
+   * @param renderBundle - the {@link RenderBundle} to assign or null if we want to remove the current {@link RenderBundle}.
+   * @param updateScene - Whether to remove and then re-add the Mesh from the {@link core/scenes/Scene.Scene | Scene} or not.
+   */
+  setRenderBundle(renderBundle?: RenderBundle | null, updateScene?: boolean): void
+
+  /**
+   * Reset the {@link BufferBindingOffsetChild | matrices buffer binding} parent and offset and tell its bind group to update.
+   * @param offset - New offset to use in the parent {@link RenderBundle#binding | RenderBundle binding}.
+   */
+  patchRenderBundleBinding(offset?: number): void
 
   /**
    * Set default shaders if one or both of them are missing
@@ -267,6 +281,49 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
       this.setDOMFrustum()
     }
 
+    /**
+     * Assign or remove a {@link RenderBundle} to this Mesh.
+     * @param renderBundle - The {@link RenderBundle} to assign or null if we want to remove the current {@link RenderBundle}.
+     * @param updateScene - Whether to remove and then re-add the Mesh from the {@link core/scenes/Scene.Scene | Scene} or not.
+     */
+    setRenderBundle(renderBundle: RenderBundle | null, updateScene = true) {
+      const bindGroup = this.material.getBindGroupByBindingName('matrices')
+      const matrices = this.material.getBufferBindingByName('matrices') as BufferBindingOffsetChild
+
+      if (!this.renderBundle && renderBundle && renderBundle.binding) {
+        // if we did not have a render bundle, but now we have one with a buffer
+        // destroy current matrices binding
+        bindGroup.destroyBufferBinding(matrices)
+      } else if (this.renderBundle && !renderBundle && matrices.parent) {
+        // if we did have a render bundle, reset the parent and bind group
+        matrices.parent = null
+        matrices.shouldResetBindGroup = true
+        bindGroup.createBindingBuffer(matrices)
+      }
+
+      super.setRenderBundle(renderBundle, updateScene)
+
+      if (this.renderBundle && this.renderBundle.binding) {
+        matrices.options.offset = this.renderBundle.meshes.size - 1
+        matrices.parent = this.renderBundle.binding
+
+        matrices.shouldResetBindGroup = true
+      }
+    }
+
+    /**
+     * Reset the {@link BufferBindingOffsetChild | matrices buffer binding} parent and offset and tell its bind group to update.
+     * @param offset - New offset to use in the parent {@link RenderBundle#binding | RenderBundle binding}.
+     */
+    patchRenderBundleBinding(offset = 0) {
+      const matrices = this.material.getBufferBindingByName('matrices') as BufferBindingOffsetChild
+
+      matrices.options.offset = offset
+      matrices.parent = this.renderBundle.binding
+
+      matrices.shouldResetBindGroup = true
+    }
+
     /* SHADERS */
 
     /**
@@ -407,9 +464,11 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
       // add matrices uniforms
       // https://threejs.org/docs/#api/en/renderers/webgl/WebGLProgram
       // https://doc.babylonjs.com/features/featuresDeepDive/materials/shaders/introToShaders#built-in-variables
-      const matricesUniforms: BufferBindingParams = {
+      const matricesUniforms: BufferBindingOffsetChildParams = {
         label: 'Matrices',
+        name: 'matrices',
         visibility: ['vertex'],
+        minOffset: this.renderer.device.limits.minUniformBufferOffsetAlignment,
         struct: {
           model: {
             type: 'mat4x4f',
@@ -425,15 +484,17 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
             type: 'mat3x3f',
             value: this.normalMatrix,
           },
-          // modelViewProjection: {
-          //   type: 'mat4x4f',
-          //   value: this.modelViewProjectionMatrix,
-          // },
         },
       }
 
-      if (!meshParameters.uniforms) meshParameters.uniforms = {}
-      meshParameters.uniforms = { matrices: matricesUniforms, ...meshParameters.uniforms }
+      if (this.options.renderBundle && this.options.renderBundle.binding) {
+        matricesUniforms.parent = this.options.renderBundle.binding
+        matricesUniforms.offset = this.options.renderBundle.meshes.size
+      }
+
+      const transformationBinding = new BufferBindingOffsetChild(matricesUniforms)
+      if (!meshParameters.bindings) meshParameters.bindings = []
+      meshParameters.bindings.unshift(transformationBinding)
 
       super.setMaterial(meshParameters)
     }

@@ -2,6 +2,7 @@ import { Light, LightBaseParams, LightsType } from './Light'
 import { Vec3 } from '../../math/Vec3'
 import { PointShadow, PointShadowParams } from '../shadows/PointShadow'
 import { CameraRenderer } from '../renderers/utils'
+import { GPUCurtains } from '../../curtains/GPUCurtains'
 
 /**
  * Base parameters used to create a {@link PointLight}.
@@ -80,10 +81,11 @@ export class PointLight extends Light {
    * @param parameters - {@link PointLightBaseParams | parameters} used to create this {@link PointLight}.
    */
   constructor(
-    renderer: CameraRenderer,
+    renderer: CameraRenderer | GPUCurtains,
     { color = new Vec3(1), intensity = 1, position = new Vec3(), range = 0, shadow = null } = {} as PointLightBaseParams
   ) {
     const type = 'pointLights'
+    renderer = ((renderer && (renderer as GPUCurtains).renderer) || renderer) as CameraRenderer
     const index = renderer.lights.filter((light) => light.type === type).length
     super(renderer, { color, intensity, index, type })
 

@@ -153,7 +153,7 @@ class Shadow {
   }
   /**
    * Start or stop casting shadows.
-   * @param value
+   * @param value - New active state.
    */
   set isActive(value) {
     if (!value && this.isActive) {
@@ -379,6 +379,16 @@ class Shadow {
    * @param commandEncoder - {@link GPUCommandEncoder} to use.
    */
   renderDepthPass(commandEncoder) {
+    const renderBundles = /* @__PURE__ */ new Map();
+    this.meshes.forEach((mesh) => {
+      if (mesh.options.renderBundle) {
+        renderBundles.set(mesh.options.renderBundle.uuid, mesh.options.renderBundle);
+      }
+    });
+    renderBundles.forEach((bundle) => {
+      bundle.updateBinding();
+    });
+    renderBundles.clear();
     this.renderer.pipelineManager.resetCurrentPipeline();
     const depthPass = commandEncoder.beginRenderPass(this.depthPassTarget.renderPass.descriptor);
     this.meshes.forEach((mesh) => {

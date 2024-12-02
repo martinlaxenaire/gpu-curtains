@@ -2,6 +2,7 @@
 import { Geometry } from './Geometry';
 import { GeometryBuffer, GeometryParams } from '../../types/Geometries';
 import { Renderer } from '../renderers/utils';
+import { GPURenderPassTypes } from '../pipelines/PipelineManager';
 /**
  * Defines the available options to create an {@link IndexedGeometry#indexBuffer | index buffer}
  */
@@ -102,12 +103,12 @@ export declare class IndexedGeometry extends Geometry {
      * Then, set our render pass geometry index buffer
      * @param pass - current render pass
      */
-    setGeometryBuffers(pass: GPURenderPassEncoder): void;
+    setGeometryBuffers(pass: GPURenderPassTypes): void;
     /**
      * Override the parentMesh draw method to draw indexed geometry
      * @param pass - current render pass
      */
-    drawGeometry(pass: GPURenderPassEncoder): void;
+    drawGeometry(pass: GPURenderPassTypes): void;
     /**
      * Destroy our indexed geometry vertex buffers and index buffer.
      * @param renderer - current {@link Renderer}, in case we want to remove the {@link IndexBuffer#buffer | buffer} from the cache.
