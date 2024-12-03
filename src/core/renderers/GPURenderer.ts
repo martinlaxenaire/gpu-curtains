@@ -167,7 +167,7 @@ export class GPURenderer {
    */
   constructor({
     deviceManager,
-    label = 'Main renderer',
+    label,
     container,
     pixelRatio = 1,
     autoResize = true,
@@ -178,8 +178,16 @@ export class GPURenderer {
     this.type = 'GPURenderer'
     this.uuid = generateUUID()
 
-    if (!deviceManager) {
-      throwError(`GPURenderer (${label}): no device manager provided: ${deviceManager}`)
+    if (!deviceManager || deviceManager.constructor.name !== 'GPUDeviceManager') {
+      throwError(
+        label
+          ? `${label} (${this.type}): no device manager or wrong device manager provided: ${deviceManager}`
+          : `${this.type}: no device manager or wrong device manager provided: ${deviceManager}`
+      )
+    }
+
+    if (!label) {
+      label = `${this.constructor.name}${deviceManager.renderers.length}`
     }
 
     this.deviceManager = deviceManager
@@ -585,7 +593,7 @@ export class GPURenderer {
   }): Buffer | null {
     if (!srcBuffer || !srcBuffer.GPUBuffer) {
       throwWarning(
-        `${this.type} (${this.options.label}): cannot copy to buffer because the source buffer has not been provided`
+        `${this.options.label} (${this.type}): cannot copy to buffer because the source buffer has not been provided`
       )
       return null
     }
@@ -605,13 +613,13 @@ export class GPURenderer {
 
     if (srcBuffer.GPUBuffer.mapState !== 'unmapped') {
       throwWarning(
-        `${this.type} (${this.options.label}): Cannot copy from ${srcBuffer.GPUBuffer} because it is currently mapped`
+        `${this.options.label} (${this.type}): Cannot copy from ${srcBuffer.GPUBuffer} because it is currently mapped`
       )
       return
     }
     if (dstBuffer.GPUBuffer.mapState !== 'unmapped') {
       throwWarning(
-        `${this.type} (${this.options.label}): Cannot copy from ${dstBuffer.GPUBuffer} because it is currently mapped`
+        `${this.options.label} (${this.type}): Cannot copy from ${dstBuffer.GPUBuffer} because it is currently mapped`
       )
       return
     }

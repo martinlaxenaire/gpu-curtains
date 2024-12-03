@@ -71,6 +71,17 @@ function ProjectedMeshBaseMixin(Base) {
       }
       this.setDOMFrustum();
     }
+    setRenderer(renderer) {
+      super.setRenderer(renderer);
+      this.camera = this.renderer.camera;
+      if (this.options.castShadows) {
+        this.renderer.shadowCastingLights.forEach((light) => {
+          if (light.shadow.isActive) {
+            light.shadow.addShadowCastingMesh(this);
+          }
+        });
+      }
+    }
     /**
      * Assign or remove a {@link RenderBundle} to this Mesh.
      * @param renderBundle - The {@link RenderBundle} to assign or null if we want to remove the current {@link RenderBundle}.

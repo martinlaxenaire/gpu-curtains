@@ -5,6 +5,7 @@ import { Object3D } from '../objects3D/Object3D'
 import { generateUUID } from '../../utils/utils'
 import { DirectionalLight } from './DirectionalLight'
 import { PointLight } from './PointLight'
+import { GPUCurtains } from '../../curtains/GPUCurtains'
 
 /** Defines all types of lights. */
 export type LightsType = 'ambientLights' | 'directionalLights' | 'pointLights'
@@ -25,8 +26,6 @@ export interface LightBaseParams {
  * Parameters used to create a {@link Light}.
  */
 export interface LightParams extends LightBaseParams {
-  /** {@link LightsType | Type of the light}. */
-  index?: number
   /** Index of this {@link Light}, i.e. the number of time a {@link Light} of this type has been created. */
   type?: string | LightsType
 }
@@ -66,20 +65,16 @@ export class Light extends Object3D {
    * @param parameters - {@link LightParams | parameters} used to create this {@link Light}.
    */
   constructor(
-    renderer: CameraRenderer,
-    { color = new Vec3(1), intensity = 1, index = 0, type = 'lights' } = {} as LightParams
+    renderer: CameraRenderer | GPUCurtains,
+    { color = new Vec3(1), intensity = 1, type = 'lights' } = {} as LightParams
   ) {
     super()
 
     this.type = type
 
-    Object.defineProperty(this as Light, 'index', { value: index })
+    //this.index = index
 
-    renderer = isCameraRenderer(renderer, this.constructor.name)
-
-    this.renderer = renderer
-
-    this.setRendererBinding()
+    this.setRenderer(renderer)
 
     this.uuid = generateUUID()
 
@@ -95,7 +90,33 @@ export class Light extends Object3D {
     )
 
     this.intensity = intensity
+  }
 
+  /**
+   * Set or reset this light {@link CameraRenderer}.
+   * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
+   */
+  setRenderer(renderer: CameraRenderer | GPUCurtains) {
+    // if there's already a renderer, remove light
+    if (this.renderer) {
+      this.renderer.removeLight(this)
+    }
+
+    // set new renderer
+    renderer = isCameraRenderer(renderer, this.constructor.name)
+    this.renderer = renderer
+
+    this.index = this.renderer.lights.filter((light) => light.type === this.type).length
+
+    // check for overflow
+    if (this.index + 1 > this.renderer.lightsBindingParams[this.type].max) {
+      this.onMaxLightOverflow(this.type as LightsType)
+    }
+
+    // reset binding
+    this.setRendererBinding()
+
+    // add light back
     this.renderer.addLight(this)
   }
 
@@ -158,8 +179,9 @@ export class Light extends Object3D {
    * @param lightsType - {@link type} of light.
    */
   onMaxLightOverflow(lightsType: LightsType) {
+    this.renderer.onMaxLightOverflow(lightsType)
+
     if (this.rendererBinding) {
-      this.renderer.onMaxLightOverflow(lightsType)
       this.rendererBinding = this.renderer.bindings[lightsType]
     }
   }

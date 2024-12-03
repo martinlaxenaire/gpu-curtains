@@ -12,6 +12,7 @@ import { getDefaultShadowDepthVs } from '../shaders/chunks/shading/shadows'
 import { BufferBinding } from '../bindings/BufferBinding'
 import { RenderMaterialParams, ShaderOptions } from '../../types/Materials'
 import { Input } from '../../types/BindGroups'
+import { GPUCurtains } from '../../curtains/GPUCurtains'
 
 /** Defines all types of shadows. */
 export type ShadowsType = 'directionalShadows' | 'pointShadows'
@@ -133,7 +134,7 @@ export class Shadow {
    * @param parameters - {@link ShadowBaseParams | parameters} used to create this {@link Shadow}.
    */
   constructor(
-    renderer: CameraRenderer,
+    renderer: CameraRenderer | GPUCurtains,
     {
       light,
       intensity = 1,
@@ -145,11 +146,7 @@ export class Shadow {
       autoRender = true,
     } = {} as ShadowBaseParams
   ) {
-    renderer = isCameraRenderer(renderer, this.constructor.name)
-
-    this.renderer = renderer
-
-    this.rendererBinding = null
+    this.setRenderer(renderer)
 
     this.light = light
 
@@ -179,6 +176,26 @@ export class Shadow {
     this.#setParameters({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender })
 
     this.isActive = false
+  }
+
+  /**
+   * Set or reset this shadow {@link CameraRenderer}.
+   * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
+   */
+  setRenderer(renderer: CameraRenderer | GPUCurtains) {
+    renderer = isCameraRenderer(renderer, this.constructor.name)
+    this.renderer = renderer
+
+    this.setRendererBinding()
+
+    if (this.isActive) {
+      this.reset()
+    }
+  }
+
+  /** @ignore */
+  setRendererBinding() {
+    this.rendererBinding = null
   }
 
   /**
@@ -221,9 +238,6 @@ export class Shadow {
     this.#setParameters({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender })
     this.isActive = true
   }
-
-  /** @ignore */
-  setRendererBinding() {}
 
   /**
    * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link core/lights/Light.Light | lights} has been overflowed.
@@ -398,7 +412,7 @@ export class Shadow {
    */
   createDepthTexture() {
     this.depthTexture = new Texture(this.renderer, {
-      label: 'Shadow depth texture ' + this.index,
+      label: `${this.constructor.name} (index: ${this.light.index}) depth texture`,
       name: 'shadowDepthTexture' + this.index,
       type: 'depth',
       format: this.depthTextureFormat,
@@ -542,10 +556,15 @@ export class Shadow {
     // begin depth pass
     const depthPass = commandEncoder.beginRenderPass(this.depthPassTarget.renderPass.descriptor)
 
+    if (!this.renderer.production)
+      depthPass.pushDebugGroup(`${this.constructor.name} (index: ${this.index}): depth pass`)
+
     // render meshes with their depth material
     this.meshes.forEach((mesh) => {
       mesh.render(depthPass)
     })
+
+    if (!this.renderer.production) depthPass.popDebugGroup()
 
     depthPass.end()
   }
@@ -627,7 +646,7 @@ export class Shadow {
     this.#depthMaterials.set(
       mesh.uuid,
       new RenderMaterial(this.renderer, {
-        label: mesh.options.label + ' depth render material',
+        label: `${this.constructor.name} (index: ${this.index}) ${mesh.options.label} depth render material`,
         ...parameters,
       })
     )

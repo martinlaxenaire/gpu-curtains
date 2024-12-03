@@ -585,8 +585,9 @@ export class BufferBinding extends Binding {
 
       if (uniqueBindings.length) {
         uniqueBindings.forEach((binding) => {
-          structs[kebabCaseLabel][binding.name] =
-            binding.count > 1 ? `array<${toKebabCase(binding.label)}>` : toKebabCase(binding.label)
+          // unique bindings come from bindings children
+          // we assume those have to be iterable
+          structs[kebabCaseLabel][binding.name] = `array<${toKebabCase(binding.label)}>`
         })
       }
 

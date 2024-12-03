@@ -28,16 +28,7 @@ export class AmbientLight extends Light {
     { color = new Vec3(1), intensity = 0.1 } = {} as LightBaseParams
   ) {
     const type = 'ambientLights'
-    renderer = ((renderer && (renderer as GPUCurtains).renderer) || renderer) as CameraRenderer
-    const index = renderer.lights.filter((light) => light.type === type).length
-    super(renderer, { color, intensity, index, type })
-
-    if (this.index + 1 > this.renderer.lightsBindingParams[this.type].max) {
-      this.onMaxLightOverflow(this.type as LightsType)
-    }
-
-    this.rendererBinding.inputs.count.value = this.index + 1
-    this.rendererBinding.inputs.count.shouldUpdate = true
+    super(renderer, { color, intensity, type })
   }
 
   // explicitly disable all kinds of transformations

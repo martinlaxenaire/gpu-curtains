@@ -341,7 +341,7 @@ class BufferBinding extends Binding {
       }
       if (uniqueBindings.length) {
         uniqueBindings.forEach((binding) => {
-          structs[kebabCaseLabel][binding.name] = binding.count > 1 ? `array<${toKebabCase(binding.label)}>` : toKebabCase(binding.label);
+          structs[kebabCaseLabel][binding.name] = `array<${toKebabCase(binding.label)}>`;
         });
       }
       const additionalBindings = uniqueBindings.length ? uniqueBindings.map((binding) => binding.wgslStructFragment).join("\n\n") + "\n\n" : "";

@@ -106,12 +106,11 @@ export const getPCFDirectionalShadows = (renderer: CameraRenderer): string => {
     (light) => light.type === 'directionalLights'
   ) as DirectionalLight[]
 
+  const minDirectionalLights = Math.max(renderer.lightsBindingParams.directionalLights.max, 1)
+
   return /* wgsl */ `
-fn getPCFDirectionalShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
-    renderer.lightsBindingParams.directionalLights.max,
-    1
-  )}> {
-  var directionalShadowContribution: array<f32, ${Math.max(renderer.lightsBindingParams.directionalLights.max, 1)}>;
+fn getPCFDirectionalShadows(worldPosition: vec3f) -> array<f32, ${minDirectionalLights}> {
+  var directionalShadowContribution: array<f32, ${minDirectionalLights}>;
   
   var lightDirection: vec3f;
   
@@ -122,7 +121,7 @@ fn getPCFDirectionalShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
       ${
         light.shadow.isActive
           ? `directionalShadowContribution[${index}] = select( 1.0, getPCFShadowContribution(${index}, worldPosition, shadowDepthTexture${index}), directionalShadows.directionalShadowsElements[${index}].isActive > 0);`
-          : ''
+          : `directionalShadowContribution[${index}] = 1.0;`
       }`
     })
     .join('\n')}
@@ -249,12 +248,11 @@ fn getPCFPointShadowContribution(index: i32, shadowPosition: vec4f, depthCubeTex
 export const getPCFPointShadows = (renderer: CameraRenderer): string => {
   const pointLights = renderer.shadowCastingLights.filter((light) => light.type === 'pointLights') as PointLight[]
 
+  const minPointLights = Math.max(renderer.lightsBindingParams.pointLights.max, 1)
+
   return /* wgsl */ `
-fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
-    renderer.lightsBindingParams.pointLights.max,
-    1
-  )}> {
-  var pointShadowContribution: array<f32, ${Math.max(renderer.lightsBindingParams.pointLights.max, 1)}>;
+fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
+  var pointShadowContribution: array<f32, ${minPointLights}>;
   
   var lightDirection: vec3f;
   
@@ -264,8 +262,8 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
       
       ${
         light.shadow.isActive
-          ? `pointShadowContribution[${index}] = select( 1.0, getPCFPointShadowContribution(${index}, vec4(lightDirection, length(lightDirection)), pointShadowCubeDepthTexture${index}), pointShadows.pointShadowsElements[${index}].isActive > 0);`
-          : ''
+          ? `pointShadowContribution[${index}] = select( 1.0, getPCFPointShadowContribution(${index}, vec4(lightDirection, length(lightDirection)), pointShadowCubeDepthTexture${index}), pointShadows.pointShadowsElements[${index}].isActive > 0 );`
+          : `pointShadowContribution[${index}] = 1.0;`
       }`
     })
     .join('\n')}

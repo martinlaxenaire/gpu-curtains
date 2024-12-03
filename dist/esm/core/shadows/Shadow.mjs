@@ -98,9 +98,7 @@ class Shadow {
     __privateAdd(this, _depthMaterials, void 0);
     /** @ignore */
     __privateAdd(this, _depthPassTaskID, void 0);
-    renderer = isCameraRenderer(renderer, this.constructor.name);
-    this.renderer = renderer;
-    this.rendererBinding = null;
+    this.setRenderer(renderer);
     this.light = light;
     this.index = this.light.index;
     this.options = {
@@ -121,6 +119,22 @@ class Shadow {
     this.isActive = false;
   }
   /**
+   * Set or reset this shadow {@link CameraRenderer}.
+   * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
+   */
+  setRenderer(renderer) {
+    renderer = isCameraRenderer(renderer, this.constructor.name);
+    this.renderer = renderer;
+    this.setRendererBinding();
+    if (this.isActive) {
+      this.reset();
+    }
+  }
+  /** @ignore */
+  setRendererBinding() {
+    this.rendererBinding = null;
+  }
+  /**
    * Set the parameters and start casting shadows by setting the {@link isActive} setter to `true`.<br>
    * Called internally by the associated {@link core/lights/Light.Light | Light} if any shadow parameters are specified when creating it. Can also be called directly.
    * @param parameters - parameters to use for this {@link Shadow}.
@@ -128,9 +142,6 @@ class Shadow {
   cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender } = {}) {
     __privateMethod(this, _setParameters, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
     this.isActive = true;
-  }
-  /** @ignore */
-  setRendererBinding() {
   }
   /**
    * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link core/lights/Light.Light | lights} has been overflowed.
@@ -278,7 +289,7 @@ class Shadow {
    */
   createDepthTexture() {
     this.depthTexture = new Texture(this.renderer, {
-      label: "Shadow depth texture " + this.index,
+      label: `${this.constructor.name} (index: ${this.light.index}) depth texture`,
       name: "shadowDepthTexture" + this.index,
       type: "depth",
       format: this.depthTextureFormat,
@@ -391,9 +402,13 @@ class Shadow {
     renderBundles.clear();
     this.renderer.pipelineManager.resetCurrentPipeline();
     const depthPass = commandEncoder.beginRenderPass(this.depthPassTarget.renderPass.descriptor);
+    if (!this.renderer.production)
+      depthPass.pushDebugGroup(`${this.constructor.name} (index: ${this.index}): depth pass`);
     this.meshes.forEach((mesh) => {
       mesh.render(depthPass);
     });
+    if (!this.renderer.production)
+      depthPass.popDebugGroup();
     depthPass.end();
   }
   /**
@@ -458,7 +473,7 @@ class Shadow {
     __privateGet(this, _depthMaterials).set(
       mesh.uuid,
       new RenderMaterial(this.renderer, {
-        label: mesh.options.label + " depth render material",
+        label: `${this.constructor.name} (index: ${this.index}) ${mesh.options.label} depth render material`,
         ...parameters
       })
     );

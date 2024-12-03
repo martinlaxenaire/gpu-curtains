@@ -85,7 +85,6 @@ class PointShadow extends Shadow {
       ...this.options,
       camera
     };
-    this.setRendererBinding();
     this.cubeDirections = [
       new Vec3(-1, 0, 0),
       new Vec3(1, 0, 0),
@@ -160,9 +159,7 @@ class PointShadow extends Shadow {
   reset() {
     this.setRendererBinding();
     super.reset();
-    this.onPropertyChanged("cameraNear", this.camera.near);
-    this.onPropertyChanged("cameraFar", this.camera.far);
-    this.onPropertyChanged("projectionMatrix", this.camera.projectionMatrix);
+    this.updateProjectionMatrix();
     this.updateViewMatrices();
   }
   /**
@@ -217,7 +214,7 @@ class PointShadow extends Shadow {
   createDepthTexture() {
     const maxSize = Math.max(this.depthTextureSize.x, this.depthTextureSize.y);
     this.depthTexture = new Texture(this.renderer, {
-      label: "Point shadow cube depth texture " + this.index,
+      label: `${this.constructor.name} (index: ${this.index}) depth texture`,
       name: "pointShadowCubeDepthTexture" + this.index,
       type: "depth",
       format: this.depthTextureFormat,
@@ -255,9 +252,14 @@ class PointShadow extends Shadow {
       () => {
         if (!this.meshes.size)
           return;
+        this.renderer.setCameraBindGroup();
         this.useDepthMaterials();
         for (let i = 0; i < 6; i++) {
           const commandEncoder = this.renderer.device.createCommandEncoder();
+          if (!this.renderer.production)
+            commandEncoder.pushDebugGroup(
+              `${this.constructor.name} (index: ${this.index}): depth pass command encoder for face ${i}`
+            );
           this.depthPassTarget.renderPass.setRenderPassDescriptor(
             this.depthTexture.texture.createView({
               label: this.depthTexture.texture.label + " cube face view " + i,
@@ -269,6 +271,8 @@ class PointShadow extends Shadow {
           this.rendererBinding.options.bindings[this.index].inputs.face.value = i;
           this.renderer.cameraLightsBindGroup.update();
           this.renderDepthPass(commandEncoder);
+          if (!this.renderer.production)
+            commandEncoder.popDebugGroup();
           const commandBuffer = commandEncoder.finish();
           this.renderer.device.queue.submit([commandBuffer]);
         }

@@ -94,21 +94,19 @@ const getPCFDirectionalShadows = (renderer) => {
   const directionalLights = renderer.shadowCastingLights.filter(
     (light) => light.type === "directionalLights"
   );
+  const minDirectionalLights = Math.max(renderer.lightsBindingParams.directionalLights.max, 1);
   return (
     /* wgsl */
     `
-fn getPCFDirectionalShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
-      renderer.lightsBindingParams.directionalLights.max,
-      1
-    )}> {
-  var directionalShadowContribution: array<f32, ${Math.max(renderer.lightsBindingParams.directionalLights.max, 1)}>;
+fn getPCFDirectionalShadows(worldPosition: vec3f) -> array<f32, ${minDirectionalLights}> {
+  var directionalShadowContribution: array<f32, ${minDirectionalLights}>;
   
   var lightDirection: vec3f;
   
   ${directionalLights.map((light, index) => {
       return `lightDirection = worldPosition - directionalLights.elements[${index}].direction;
       
-      ${light.shadow.isActive ? `directionalShadowContribution[${index}] = select( 1.0, getPCFShadowContribution(${index}, worldPosition, shadowDepthTexture${index}), directionalShadows.directionalShadowsElements[${index}].isActive > 0);` : ""}`;
+      ${light.shadow.isActive ? `directionalShadowContribution[${index}] = select( 1.0, getPCFShadowContribution(${index}, worldPosition, shadowDepthTexture${index}), directionalShadows.directionalShadowsElements[${index}].isActive > 0);` : `directionalShadowContribution[${index}] = 1.0;`}`;
     }).join("\n")}
   
   return directionalShadowContribution;
@@ -222,21 +220,19 @@ fn getPCFPointShadowContribution(index: i32, shadowPosition: vec4f, depthCubeTex
 );
 const getPCFPointShadows = (renderer) => {
   const pointLights = renderer.shadowCastingLights.filter((light) => light.type === "pointLights");
+  const minPointLights = Math.max(renderer.lightsBindingParams.pointLights.max, 1);
   return (
     /* wgsl */
     `
-fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
-      renderer.lightsBindingParams.pointLights.max,
-      1
-    )}> {
-  var pointShadowContribution: array<f32, ${Math.max(renderer.lightsBindingParams.pointLights.max, 1)}>;
+fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
+  var pointShadowContribution: array<f32, ${minPointLights}>;
   
   var lightDirection: vec3f;
   
   ${pointLights.map((light, index) => {
       return `lightDirection = pointLights.elements[${index}].position - worldPosition;
       
-      ${light.shadow.isActive ? `pointShadowContribution[${index}] = select( 1.0, getPCFPointShadowContribution(${index}, vec4(lightDirection, length(lightDirection)), pointShadowCubeDepthTexture${index}), pointShadows.pointShadowsElements[${index}].isActive > 0);` : ""}`;
+      ${light.shadow.isActive ? `pointShadowContribution[${index}] = select( 1.0, getPCFPointShadowContribution(${index}, vec4(lightDirection, length(lightDirection)), pointShadowCubeDepthTexture${index}), pointShadows.pointShadowsElements[${index}].isActive > 0 );` : `pointShadowContribution[${index}] = 1.0;`}`;
     }).join("\n")}
   
   return pointShadowContribution;

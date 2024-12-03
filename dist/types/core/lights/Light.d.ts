@@ -4,6 +4,7 @@ import { BufferBinding } from '../bindings/BufferBinding';
 import { Object3D } from '../objects3D/Object3D';
 import { DirectionalLight } from './DirectionalLight';
 import { PointLight } from './PointLight';
+import { GPUCurtains } from '../../curtains/GPUCurtains';
 /** Defines all types of lights. */
 export type LightsType = 'ambientLights' | 'directionalLights' | 'pointLights';
 /** Defines all types of shadow casting lights. */
@@ -21,8 +22,6 @@ export interface LightBaseParams {
  * Parameters used to create a {@link Light}.
  */
 export interface LightParams extends LightBaseParams {
-    /** {@link LightsType | Type of the light}. */
-    index?: number;
     /** Index of this {@link Light}, i.e. the number of time a {@link Light} of this type has been created. */
     type?: string | LightsType;
 }
@@ -50,7 +49,12 @@ export declare class Light extends Object3D {
      * @param renderer - {@link CameraRenderer} used to create this {@link Light}.
      * @param parameters - {@link LightParams | parameters} used to create this {@link Light}.
      */
-    constructor(renderer: CameraRenderer, { color, intensity, index, type }?: LightParams);
+    constructor(renderer: CameraRenderer | GPUCurtains, { color, intensity, type }?: LightParams);
+    /**
+     * Set or reset this light {@link CameraRenderer}.
+     * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
+     */
+    setRenderer(renderer: CameraRenderer | GPUCurtains): void;
     /**
      * Set or reset this {@link Light} {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      */

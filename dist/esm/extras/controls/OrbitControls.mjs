@@ -163,7 +163,6 @@ class OrbitControls {
       throwWarning("OrbitControls: cannot initialize without a camera.");
       return;
     }
-    this.camera = camera;
     __privateMethod(this, _setBaseParams, setBaseParams_fn).call(this, {
       target,
       enableZoom,
@@ -179,14 +178,22 @@ class OrbitControls {
       enablePan,
       panSpeed
     });
+    this.element = element ?? (typeof window !== "undefined" ? window : null);
+    this.useCamera(camera);
+  }
+  /**
+   * Allow to set or reset this {@link OrbitControls#camera | OrbitControls camera}.
+   * @param camera - New {@link camera} to use.
+   */
+  useCamera(camera) {
+    this.camera = camera;
+    this.camera.position.onChange(() => {
+      this.camera.lookAt(this.target);
+    });
     __privateGet(this, _offset).copy(this.camera.position).sub(this.target);
     __privateGet(this, _spherical).radius = __privateGet(this, _offset).length();
     __privateGet(this, _spherical).theta = Math.atan2(__privateGet(this, _offset).x, __privateGet(this, _offset).z);
     __privateGet(this, _spherical).phi = Math.acos(Math.min(Math.max(__privateGet(this, _offset).y / __privateGet(this, _spherical).radius, -1), 1));
-    this.camera.position.onChange(() => {
-      this.camera.lookAt(this.target);
-    });
-    this.element = element ?? (typeof window !== "undefined" ? window : null);
     __privateMethod(this, _update, update_fn).call(this);
   }
   /**

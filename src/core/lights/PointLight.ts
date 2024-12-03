@@ -85,9 +85,7 @@ export class PointLight extends Light {
     { color = new Vec3(1), intensity = 1, position = new Vec3(), range = 0, shadow = null } = {} as PointLightBaseParams
   ) {
     const type = 'pointLights'
-    renderer = ((renderer && (renderer as GPUCurtains).renderer) || renderer) as CameraRenderer
-    const index = renderer.lights.filter((light) => light.type === type).length
-    super(renderer, { color, intensity, index, type })
+    super(renderer, { color, intensity, type })
 
     this.options = {
       ...this.options,
@@ -103,13 +101,6 @@ export class PointLight extends Light {
 
     this.parent = this.renderer.scene
 
-    if (this.index + 1 > this.renderer.lightsBindingParams[this.type].max) {
-      this.onMaxLightOverflow(this.type as LightsType)
-    }
-
-    this.rendererBinding.inputs.count.value = this.index + 1
-    this.rendererBinding.inputs.count.shouldUpdate = true
-
     this.shadow = new PointShadow(this.renderer, {
       autoRender: false, // will be set by calling cast()
       light: this,
@@ -117,6 +108,19 @@ export class PointLight extends Light {
 
     if (shadow) {
       this.shadow.cast(shadow)
+    }
+  }
+
+  /**
+   * Set or reset this {@link PointLight} {@link CameraRenderer}.
+   * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
+   */
+  setRenderer(renderer: CameraRenderer | GPUCurtains) {
+    super.setRenderer(renderer)
+
+    if (this.shadow) {
+      this.shadow.setRenderer(renderer)
+      this.shadow.updateViewMatrices(this.#actualPosition)
     }
   }
 

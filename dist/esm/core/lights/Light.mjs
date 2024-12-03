@@ -28,7 +28,7 @@ class Light extends Object3D {
    * @param renderer - {@link CameraRenderer} used to create this {@link Light}.
    * @param parameters - {@link LightParams | parameters} used to create this {@link Light}.
    */
-  constructor(renderer, { color = new Vec3(1), intensity = 1, index = 0, type = "lights" } = {}) {
+  constructor(renderer, { color = new Vec3(1), intensity = 1, type = "lights" } = {}) {
     super();
     /** @ignore */
     __privateAdd(this, _intensity, void 0);
@@ -38,10 +38,7 @@ class Light extends Object3D {
      */
     __privateAdd(this, _intensityColor, void 0);
     this.type = type;
-    Object.defineProperty(this, "index", { value: index });
-    renderer = isCameraRenderer(renderer, this.constructor.name);
-    this.renderer = renderer;
-    this.setRendererBinding();
+    this.setRenderer(renderer);
     this.uuid = generateUUID();
     this.options = {
       color,
@@ -53,6 +50,22 @@ class Light extends Object3D {
       () => this.onPropertyChanged("color", __privateGet(this, _intensityColor).copy(this.color).multiplyScalar(this.intensity))
     );
     this.intensity = intensity;
+  }
+  /**
+   * Set or reset this light {@link CameraRenderer}.
+   * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
+   */
+  setRenderer(renderer) {
+    if (this.renderer) {
+      this.renderer.removeLight(this);
+    }
+    renderer = isCameraRenderer(renderer, this.constructor.name);
+    this.renderer = renderer;
+    this.index = this.renderer.lights.filter((light) => light.type === this.type).length;
+    if (this.index + 1 > this.renderer.lightsBindingParams[this.type].max) {
+      this.onMaxLightOverflow(this.type);
+    }
+    this.setRendererBinding();
     this.renderer.addLight(this);
   }
   /**
@@ -108,8 +121,8 @@ class Light extends Object3D {
    * @param lightsType - {@link type} of light.
    */
   onMaxLightOverflow(lightsType) {
+    this.renderer.onMaxLightOverflow(lightsType);
     if (this.rendererBinding) {
-      this.renderer.onMaxLightOverflow(lightsType);
       this.rendererBinding = this.renderer.bindings[lightsType];
     }
   }

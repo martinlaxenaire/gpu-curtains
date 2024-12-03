@@ -4,6 +4,7 @@ import { Mat4, OrthographicProjectionParams } from '../../math/Mat4'
 import { Vec3 } from '../../math/Vec3'
 import { Input } from '../../types/BindGroups'
 import { DirectionalLight } from '../lights/DirectionalLight'
+import { GPUCurtains } from '../../curtains/GPUCurtains'
 
 /** Defines the orthographic shadow camera. */
 export interface OrthographicShadowCamera extends OrthographicProjectionParams {
@@ -69,7 +70,7 @@ export class DirectionalShadow extends Shadow {
    * @param parameters - {@link DirectionalShadowParams | parameters} used to create this {@link DirectionalShadow}.
    */
   constructor(
-    renderer: CameraRenderer,
+    renderer: CameraRenderer | GPUCurtains,
     {
       light,
       intensity,
@@ -105,7 +106,7 @@ export class DirectionalShadow extends Shadow {
       camera,
     }
 
-    this.setRendererBinding()
+    //this.setRendererBinding()
 
     this.camera = {
       projectionMatrix: new Mat4(),

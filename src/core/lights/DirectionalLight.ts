@@ -94,9 +94,7 @@ export class DirectionalLight extends Light {
     } = {} as DirectionalLightBaseParams
   ) {
     const type = 'directionalLights'
-    renderer = ((renderer && (renderer as GPUCurtains).renderer) || renderer) as CameraRenderer
-    const index = renderer.lights.filter((light) => light.type === type).length
-    super(renderer, { color, intensity, index, type })
+    super(renderer, { color, intensity, type })
 
     this.options = {
       ...this.options,
@@ -113,13 +111,6 @@ export class DirectionalLight extends Light {
 
     this.parent = this.renderer.scene
 
-    if (this.index + 1 > this.renderer.lightsBindingParams[this.type].max) {
-      this.onMaxLightOverflow(this.type as LightsType)
-    }
-
-    this.rendererBinding.inputs.count.value = this.index + 1
-    this.rendererBinding.inputs.count.shouldUpdate = true
-
     this.shadow = new DirectionalShadow(this.renderer, {
       autoRender: false, // will be set by calling cast()
       light: this,
@@ -128,6 +119,16 @@ export class DirectionalLight extends Light {
     if (shadow) {
       this.shadow.cast(shadow)
     }
+  }
+
+  /**
+   * Set or reset this {@link DirectionalLight} {@link CameraRenderer}.
+   * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
+   */
+  setRenderer(renderer: CameraRenderer | GPUCurtains) {
+    super.setRenderer(renderer)
+
+    this.shadow?.setRenderer(renderer)
   }
 
   /**
