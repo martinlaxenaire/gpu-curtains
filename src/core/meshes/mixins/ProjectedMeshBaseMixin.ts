@@ -98,6 +98,12 @@ export declare class ProjectedMeshBaseClass extends MeshBaseClass {
   constructor(renderer: CameraRenderer, element: HTMLElement | null, parameters: ProjectedMeshParameters)
 
   /**
+   * Set or reset this Mesh {@link renderer}.
+   * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
+   */
+  setRenderer(renderer: CameraRenderer | GPUCurtains): void
+
+  /**
    * Assign or remove a {@link RenderBundle} to this Mesh.
    * @param renderBundle - the {@link RenderBundle} to assign or null if we want to remove the current {@link RenderBundle}.
    * @param updateScene - Whether to remove and then re-add the Mesh from the {@link core/scenes/Scene.Scene | Scene} or not.
@@ -281,8 +287,13 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
       this.setDOMFrustum()
     }
 
+    /**
+     * Set or reset this Mesh {@link renderer}.
+     * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
+     */
     setRenderer(renderer: CameraRenderer | GPUCurtains) {
       super.setRenderer(renderer)
+
       // force update of new camera
       this.camera = this.renderer.camera
 

@@ -69,8 +69,8 @@ class DirectionalLight extends Light {
    * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
    */
   setRenderer(renderer) {
-    super.setRenderer(renderer);
     this.shadow?.setRenderer(renderer);
+    super.setRenderer(renderer);
   }
   /**
    * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of {@link DirectionalLight} has been overflowed.

@@ -72,6 +72,11 @@ export declare class Material {
      */
     constructor(renderer: Renderer | GPUCurtains, parameters: MaterialParams);
     /**
+     * Set or reset this {@link Material} {@link renderer}.
+     * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
+     */
+    setRenderer(renderer: Renderer | GPUCurtains): void;
+    /**
      * Check if all bind groups are ready, and create them if needed
      */
     compileMaterial(): void;

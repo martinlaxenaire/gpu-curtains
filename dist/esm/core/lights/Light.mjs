@@ -56,6 +56,7 @@ class Light extends Object3D {
    * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
    */
   setRenderer(renderer) {
+    const hasRenderer = !!this.renderer;
     if (this.renderer) {
       this.renderer.removeLight(this);
     }
@@ -65,8 +66,11 @@ class Light extends Object3D {
     if (this.index + 1 > this.renderer.lightsBindingParams[this.type].max) {
       this.onMaxLightOverflow(this.type);
     }
-    this.setRendererBinding();
     this.renderer.addLight(this);
+    this.setRendererBinding();
+    if (hasRenderer) {
+      this.reset();
+    }
   }
   /**
    * Set or reset this {@link Light} {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.

@@ -71,6 +71,10 @@ function ProjectedMeshBaseMixin(Base) {
       }
       this.setDOMFrustum();
     }
+    /**
+     * Set or reset this Mesh {@link renderer}.
+     * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
+     */
     setRenderer(renderer) {
       super.setRenderer(renderer);
       this.camera = this.renderer.camera;

@@ -523,7 +523,7 @@ export class GPUCameraRenderer extends GPURenderer {
   setCameraLightsBindGroup() {
     // now initialize bind group
     this.cameraLightsBindGroup = new BindGroup(this, {
-      label: 'Camera and lights uniform bind group',
+      label: this.options.label + ': Camera and lights uniform bind group',
       bindings: Object.keys(this.bindings)
         .map((bindingName) => this.bindings[bindingName])
         .flat(),

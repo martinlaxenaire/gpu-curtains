@@ -4962,6 +4962,14 @@
       this.setSamplers();
     }
     /**
+     * Set or reset this {@link Material} {@link renderer}.
+     * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
+     */
+    setRenderer(renderer) {
+      renderer = isRenderer(renderer, this.type);
+      this.renderer = renderer;
+    }
+    /**
      * Check if all bind groups are ready, and create them if needed
      */
     compileMaterial() {
@@ -6866,6 +6874,7 @@
      * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
      */
     setRenderer(renderer) {
+      const hasRenderer = !!this.renderer;
       if (this.renderer) {
         this.renderer.removeLight(this);
       }
@@ -6875,8 +6884,11 @@
       if (this.index + 1 > this.renderer.lightsBindingParams[this.type].max) {
         this.onMaxLightOverflow(this.type);
       }
-      this.setRendererBinding();
       this.renderer.addLight(this);
+      this.setRendererBinding();
+      if (hasRenderer) {
+        this.reset();
+      }
     }
     /**
      * Set or reset this {@link Light} {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
@@ -8059,6 +8071,20 @@ struct VSOutput {
       this.pipelineEntry = null;
     }
     /**
+     * Set or reset this {@link RenderMaterial} {@link renderer}. Will also update the renderer camera bind group if needed.
+     * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
+     */
+    setRenderer(renderer) {
+      if (this.useCameraBindGroup && this.renderer) {
+        this.renderer.cameraLightsBindGroup.consumers.delete(this.uuid);
+      }
+      super.setRenderer(renderer);
+      if (this.useCameraBindGroup) {
+        this.bindGroups[0] = this.renderer.cameraLightsBindGroup;
+        this.renderer.cameraLightsBindGroup.consumers.add(this.uuid);
+      }
+    }
+    /**
      * Set (or reset) the current {@link pipelineEntry}. Use the {@link Renderer#pipelineManager | renderer pipelineManager} to check whether we can get an already created {@link RenderPipelineEntry} from cache or if we should create a new one.
      */
     setPipelineEntry() {
@@ -8570,9 +8596,9 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
       renderer = isCameraRenderer(renderer, this.constructor.name);
       this.renderer = renderer;
       this.setRendererBinding();
-      if (this.isActive) {
-        this.reset();
-      }
+      __privateGet$c(this, _depthMaterials)?.forEach((depthMaterial) => {
+        depthMaterial.setRenderer(this.renderer);
+      });
     }
     /** @ignore */
     setRendererBinding() {
@@ -8591,13 +8617,11 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
      * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link core/lights/Light.Light | lights} has been overflowed.
      */
     reset() {
-      if (this.isActive) {
-        this.onPropertyChanged("isActive", 1);
-        this.onPropertyChanged("intensity", this.intensity);
-        this.onPropertyChanged("bias", this.bias);
-        this.onPropertyChanged("normalBias", this.normalBias);
-        this.onPropertyChanged("pcfSamples", this.pcfSamples);
-      }
+      this.onPropertyChanged("isActive", this.isActive ? 1 : 0);
+      this.onPropertyChanged("intensity", this.intensity);
+      this.onPropertyChanged("bias", this.bias);
+      this.onPropertyChanged("normalBias", this.normalBias);
+      this.onPropertyChanged("pcfSamples", this.pcfSamples);
     }
     /**
      * Get whether this {@link Shadow} is actually casting shadows.
@@ -8907,6 +8931,8 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
      * @param parameters - Optional {@link RenderMaterialParams | parameters} to use for the depth material.
      */
     addShadowCastingMesh(mesh, parameters = {}) {
+      if (this.meshes.get(mesh.uuid))
+        return;
       mesh.options.castShadows = true;
       __privateGet$c(this, _materials).set(mesh.uuid, mesh.material);
       parameters = this.patchShadowCastingMeshParams(mesh, parameters);
@@ -9206,8 +9232,8 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
      * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
      */
     setRenderer(renderer) {
-      super.setRenderer(renderer);
       this.shadow?.setRenderer(renderer);
+      super.setRenderer(renderer);
     }
     /**
      * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of {@link DirectionalLight} has been overflowed.
@@ -9416,7 +9442,6 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
       this.setRendererBinding();
       super.reset();
       this.updateProjectionMatrix();
-      this.updateViewMatrices();
     }
     /**
      * Update the {@link PointShadow#camera.projectionMatrix | camera perspective projection matrix} and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
@@ -9620,11 +9645,10 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
      * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
      */
     setRenderer(renderer) {
-      super.setRenderer(renderer);
       if (this.shadow) {
         this.shadow.setRenderer(renderer);
-        this.shadow.updateViewMatrices(__privateGet$9(this, _actualPosition));
       }
+      super.setRenderer(renderer);
     }
     /**
      * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of {@link PointLight} has been overflowed.
@@ -9874,6 +9898,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
           );
           return;
         }
+        this.material?.setRenderer(renderer);
         const oldRenderer = this.renderer;
         this.removeFromScene(true);
         this.renderer = renderer;
@@ -11053,6 +11078,10 @@ struct VSOutput {
         }
         this.setDOMFrustum();
       }
+      /**
+       * Set or reset this Mesh {@link renderer}.
+       * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
+       */
       setRenderer(renderer) {
         super.setRenderer(renderer);
         this.camera = this.renderer.camera;
@@ -13596,7 +13625,7 @@ ${this.shaders.compute.head}`;
      */
     setCameraLightsBindGroup() {
       this.cameraLightsBindGroup = new BindGroup(this, {
-        label: "Camera and lights uniform bind group",
+        label: this.options.label + ": Camera and lights uniform bind group",
         bindings: Object.keys(this.bindings).map((bindingName) => this.bindings[bindingName]).flat()
       });
       this.cameraLightsBindGroup.consumers.add(this.uuid);

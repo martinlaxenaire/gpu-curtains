@@ -72,8 +72,6 @@ export class Light extends Object3D {
 
     this.type = type
 
-    //this.index = index
-
     this.setRenderer(renderer)
 
     this.uuid = generateUUID()
@@ -97,6 +95,8 @@ export class Light extends Object3D {
    * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
    */
   setRenderer(renderer: CameraRenderer | GPUCurtains) {
+    const hasRenderer = !!this.renderer
+
     // if there's already a renderer, remove light
     if (this.renderer) {
       this.renderer.removeLight(this)
@@ -113,11 +113,15 @@ export class Light extends Object3D {
       this.onMaxLightOverflow(this.type as LightsType)
     }
 
+    // add light back
+    this.renderer.addLight(this)
+
     // reset binding
     this.setRendererBinding()
 
-    // add light back
-    this.renderer.addLight(this)
+    if (hasRenderer) {
+      this.reset()
+    }
   }
 
   /**

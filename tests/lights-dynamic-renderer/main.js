@@ -280,7 +280,7 @@ window.addEventListener('load', async () => {
 
       ambientLights.forEach((light) => light.setRenderer(renderer))
       directionalLights.forEach((light) => light.setRenderer(renderer))
-      pointLights.forEach((light) => light.setRenderer(renderer))
+      //pointLights.forEach((light) => light.setRenderer(renderer))
 
       mesh.setRenderer(renderer)
 
@@ -322,25 +322,27 @@ window.addEventListener('load', async () => {
     })
     .name('Base color')
 
-  const materialPhongFolder = materialFolder.addFolder('Phong')
-  materialPhongFolder
-    .addColor(
-      {
-        color: {
-          r: mesh.uniforms.phong.specularColor.value.x,
-          g: mesh.uniforms.phong.specularColor.value.y,
-          b: mesh.uniforms.phong.specularColor.value.z,
-        },
-      },
-      'color'
-    )
-    .onChange((value) => {
-      mesh.uniforms.phong.specularColor.value.set(value.r, value.g, value.b)
-    })
-    .name('Specular color')
+  materialShadingFolder.close()
 
-  materialPhongFolder.add(mesh.uniforms.phong.specularStrength, 'value', 0, 1, 0.1).name('Specular strength')
-  materialPhongFolder.add(mesh.uniforms.phong.shininess, 'value', 2, 64, 2).name('Shininess')
+  // const materialPhongFolder = materialFolder.addFolder('Phong')
+  // materialPhongFolder
+  //   .addColor(
+  //     {
+  //       color: {
+  //         r: mesh.uniforms.phong.specularColor.value.x,
+  //         g: mesh.uniforms.phong.specularColor.value.y,
+  //         b: mesh.uniforms.phong.specularColor.value.z,
+  //       },
+  //     },
+  //     'color'
+  //   )
+  //   .onChange((value) => {
+  //     mesh.uniforms.phong.specularColor.value.set(value.r, value.g, value.b)
+  //   })
+  //   .name('Specular color')
+  //
+  // materialPhongFolder.add(mesh.uniforms.phong.specularStrength, 'value', 0, 1, 0.1).name('Specular strength')
+  // materialPhongFolder.add(mesh.uniforms.phong.shininess, 'value', 2, 64, 2).name('Shininess')
 
   const ambientLightsFolder = gui.addFolder('Ambient lights')
   ambientLights.forEach((ambientLight, index) => {

@@ -58,11 +58,10 @@ class PointLight extends Light {
    * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
    */
   setRenderer(renderer) {
-    super.setRenderer(renderer);
     if (this.shadow) {
       this.shadow.setRenderer(renderer);
-      this.shadow.updateViewMatrices(__privateGet(this, _actualPosition));
     }
+    super.setRenderer(renderer);
   }
   /**
    * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of {@link PointLight} has been overflowed.

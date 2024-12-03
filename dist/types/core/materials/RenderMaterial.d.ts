@@ -26,6 +26,11 @@ export declare class RenderMaterial extends Material {
      */
     constructor(renderer: Renderer | GPUCurtains, parameters: RenderMaterialParams);
     /**
+     * Set or reset this {@link RenderMaterial} {@link renderer}. Will also update the renderer camera bind group if needed.
+     * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
+     */
+    setRenderer(renderer: Renderer | GPUCurtains): void;
+    /**
      * Set (or reset) the current {@link pipelineEntry}. Use the {@link Renderer#pipelineManager | renderer pipelineManager} to check whether we can get an already created {@link RenderPipelineEntry} from cache or if we should create a new one.
      */
     setPipelineEntry(): void;

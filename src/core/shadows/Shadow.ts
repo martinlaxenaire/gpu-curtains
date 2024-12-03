@@ -188,9 +188,10 @@ export class Shadow {
 
     this.setRendererBinding()
 
-    if (this.isActive) {
-      this.reset()
-    }
+    // update depth materials renderer as well
+    this.#depthMaterials?.forEach((depthMaterial) => {
+      depthMaterial.setRenderer(this.renderer)
+    })
   }
 
   /** @ignore */
@@ -243,13 +244,11 @@ export class Shadow {
    * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link core/lights/Light.Light | lights} has been overflowed.
    */
   reset() {
-    if (this.isActive) {
-      this.onPropertyChanged('isActive', 1)
-      this.onPropertyChanged('intensity', this.intensity)
-      this.onPropertyChanged('bias', this.bias)
-      this.onPropertyChanged('normalBias', this.normalBias)
-      this.onPropertyChanged('pcfSamples', this.pcfSamples)
-    }
+    this.onPropertyChanged('isActive', this.isActive ? 1 : 0)
+    this.onPropertyChanged('intensity', this.intensity)
+    this.onPropertyChanged('bias', this.bias)
+    this.onPropertyChanged('normalBias', this.normalBias)
+    this.onPropertyChanged('pcfSamples', this.pcfSamples)
   }
 
   /**
@@ -632,6 +631,9 @@ export class Shadow {
    * @param parameters - Optional {@link RenderMaterialParams | parameters} to use for the depth material.
    */
   addShadowCastingMesh(mesh: ProjectedMesh, parameters: RenderMaterialParams = {}) {
+    // already there? bail
+    if (this.meshes.get(mesh.uuid)) return
+
     mesh.options.castShadows = true
 
     this.#materials.set(mesh.uuid, mesh.material)

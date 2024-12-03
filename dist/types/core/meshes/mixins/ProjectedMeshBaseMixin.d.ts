@@ -2,6 +2,7 @@
 import { CameraRenderer } from '../../renderers/utils';
 import { DOMFrustum } from '../../DOM/DOMFrustum';
 import { MeshBaseClass, MeshBaseOptions, MeshBaseParams, MixinConstructor } from './MeshBaseMixin';
+import { GPUCurtains } from '../../../curtains/GPUCurtains';
 import { DOMElementBoundingRect, RectCoords } from '../../DOM/DOMElement';
 import { RenderMaterialParams } from '../../../types/Materials';
 import { ProjectedObject3D } from '../../objects3D/ProjectedObject3D';
@@ -58,6 +59,11 @@ export declare class ProjectedMeshBaseClass extends MeshBaseClass {
      * @param parameters - {@link ProjectedMeshParameters | Projected Mesh base parameters}
      */
     constructor(renderer: CameraRenderer, element: HTMLElement | null, parameters: ProjectedMeshParameters);
+    /**
+     * Set or reset this Mesh {@link renderer}.
+     * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
+     */
+    setRenderer(renderer: CameraRenderer | GPUCurtains): void;
     /**
      * Assign or remove a {@link RenderBundle} to this Mesh.
      * @param renderBundle - the {@link RenderBundle} to assign or null if we want to remove the current {@link RenderBundle}.

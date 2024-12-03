@@ -9,41 +9,13 @@
     <meta name="description" content="gpu-curtains lights dynamic renderer test" />
 
     <link href="../../examples/common-styles.css" rel="stylesheet" />
+    <link href="styles.css" rel="stylesheet" />
 
     <link
       rel="icon"
       type="image/png"
       href="https://raw.githubusercontent.com/martinlaxenaire/gpu-curtains/main/website/assets/favicon.png"
     />
-
-    <style>
-      #left-canvas {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 50%;
-        height: 100lvh;
-      }
-
-      #left-canvas::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        width: 1px;
-        background: white;
-        z-index: 1;
-      }
-
-      #right-canvas {
-        position: fixed;
-        top: 0;
-        left: 50%;
-        width: 50%;
-        height: 100lvh;
-      }
-    </style>
   </head>
 
   <body>

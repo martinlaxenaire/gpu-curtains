@@ -126,9 +126,9 @@ class Shadow {
     renderer = isCameraRenderer(renderer, this.constructor.name);
     this.renderer = renderer;
     this.setRendererBinding();
-    if (this.isActive) {
-      this.reset();
-    }
+    __privateGet(this, _depthMaterials)?.forEach((depthMaterial) => {
+      depthMaterial.setRenderer(this.renderer);
+    });
   }
   /** @ignore */
   setRendererBinding() {
@@ -147,13 +147,11 @@ class Shadow {
    * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link core/lights/Light.Light | lights} has been overflowed.
    */
   reset() {
-    if (this.isActive) {
-      this.onPropertyChanged("isActive", 1);
-      this.onPropertyChanged("intensity", this.intensity);
-      this.onPropertyChanged("bias", this.bias);
-      this.onPropertyChanged("normalBias", this.normalBias);
-      this.onPropertyChanged("pcfSamples", this.pcfSamples);
-    }
+    this.onPropertyChanged("isActive", this.isActive ? 1 : 0);
+    this.onPropertyChanged("intensity", this.intensity);
+    this.onPropertyChanged("bias", this.bias);
+    this.onPropertyChanged("normalBias", this.normalBias);
+    this.onPropertyChanged("pcfSamples", this.pcfSamples);
   }
   /**
    * Get whether this {@link Shadow} is actually casting shadows.
@@ -463,6 +461,8 @@ class Shadow {
    * @param parameters - Optional {@link RenderMaterialParams | parameters} to use for the depth material.
    */
   addShadowCastingMesh(mesh, parameters = {}) {
+    if (this.meshes.get(mesh.uuid))
+      return;
     mesh.options.castShadows = true;
     __privateGet(this, _materials).set(mesh.uuid, mesh.material);
     parameters = this.patchShadowCastingMeshParams(mesh, parameters);

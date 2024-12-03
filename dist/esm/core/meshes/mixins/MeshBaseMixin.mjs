@@ -188,6 +188,7 @@ function MeshBaseMixin(Base) {
         );
         return;
       }
+      this.material?.setRenderer(renderer);
       const oldRenderer = this.renderer;
       this.removeFromScene(true);
       this.renderer = renderer;

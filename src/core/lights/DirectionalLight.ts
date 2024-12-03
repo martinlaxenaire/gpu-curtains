@@ -126,9 +126,9 @@ export class DirectionalLight extends Light {
    * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
    */
   setRenderer(renderer: CameraRenderer | GPUCurtains) {
-    super.setRenderer(renderer)
-
     this.shadow?.setRenderer(renderer)
+
+    super.setRenderer(renderer)
   }
 
   /**

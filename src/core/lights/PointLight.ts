@@ -116,12 +116,11 @@ export class PointLight extends Light {
    * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
    */
   setRenderer(renderer: CameraRenderer | GPUCurtains) {
-    super.setRenderer(renderer)
-
     if (this.shadow) {
       this.shadow.setRenderer(renderer)
-      this.shadow.updateViewMatrices(this.#actualPosition)
     }
+
+    super.setRenderer(renderer)
   }
 
   /**
@@ -131,7 +130,6 @@ export class PointLight extends Light {
     super.reset()
     this.onPropertyChanged('range', this.range)
     this.setPosition()
-
     this.shadow?.reset()
   }
 

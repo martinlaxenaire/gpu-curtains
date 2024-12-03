@@ -216,8 +216,8 @@ export class PointShadow extends Shadow {
   reset() {
     this.setRendererBinding()
     super.reset()
+    // no need to update view matrices, they are handled by the parent PointLight reset call
     this.updateProjectionMatrix()
-    this.updateViewMatrices()
   }
 
   /**

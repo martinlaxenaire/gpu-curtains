@@ -160,7 +160,6 @@ class PointShadow extends Shadow {
     this.setRendererBinding();
     super.reset();
     this.updateProjectionMatrix();
-    this.updateViewMatrices();
   }
   /**
    * Update the {@link PointShadow#camera.projectionMatrix | camera perspective projection matrix} and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.

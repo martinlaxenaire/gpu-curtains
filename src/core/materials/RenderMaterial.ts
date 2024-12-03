@@ -124,6 +124,25 @@ export class RenderMaterial extends Material {
   }
 
   /**
+   * Set or reset this {@link RenderMaterial} {@link renderer}. Will also update the renderer camera bind group if needed.
+   * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
+   */
+  setRenderer(renderer: Renderer | GPUCurtains) {
+    // remove old camera bind group
+    if (this.useCameraBindGroup && this.renderer) {
+      ;(this.renderer as CameraRenderer).cameraLightsBindGroup.consumers.delete(this.uuid)
+    }
+
+    super.setRenderer(renderer)
+
+    // update new camera bind group
+    if (this.useCameraBindGroup) {
+      this.bindGroups[0] = (this.renderer as CameraRenderer).cameraLightsBindGroup
+      ;(this.renderer as CameraRenderer).cameraLightsBindGroup.consumers.add(this.uuid)
+    }
+  }
+
+  /**
    * Set (or reset) the current {@link pipelineEntry}. Use the {@link Renderer#pipelineManager | renderer pipelineManager} to check whether we can get an already created {@link RenderPipelineEntry} from cache or if we should create a new one.
    */
   setPipelineEntry() {
