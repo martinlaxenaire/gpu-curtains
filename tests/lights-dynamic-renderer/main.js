@@ -250,7 +250,7 @@ window.addEventListener('load', async () => {
         struct: {
           color: {
             type: 'vec3f',
-            value: new Vec3(0.5),
+            value: new Vec3(0.65),
           },
         },
       },
@@ -278,9 +278,10 @@ window.addEventListener('load', async () => {
       orbitControls.useCamera(renderer.camera)
       orbitControls.element = renderer.domElement.element
 
+      // you can chose which lights you'd want to update!
       ambientLights.forEach((light) => light.setRenderer(renderer))
-      directionalLights.forEach((light) => light.setRenderer(renderer))
-      //pointLights.forEach((light) => light.setRenderer(renderer))
+      //directionalLights.forEach((light) => light.setRenderer(renderer))
+      pointLights.forEach((light) => light.setRenderer(renderer))
 
       mesh.setRenderer(renderer)
 
