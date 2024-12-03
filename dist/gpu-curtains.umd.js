@@ -5704,7 +5704,7 @@
         useAsyncPipeline,
         dispatchSize
       });
-      this.addToScene();
+      this.addToScene(true);
     }
     /**
      * Get or set whether the compute pass is ready to render (the material has been successfully compiled)
@@ -5720,22 +5720,45 @@
       this._ready = value;
     }
     /**
-     * Add our compute pass to the scene and the renderer
+     * Add our {@link ComputePass} to the scene and optionally to the renderer.
+     * @param addToRenderer - whether to add this {@link ComputePass} to the {@link Renderer#computePasses | Renderer computePasses array}
      */
-    addToScene() {
-      this.renderer.computePasses.push(this);
+    addToScene(addToRenderer = false) {
+      if (addToRenderer) {
+        this.renderer.computePasses.push(this);
+      }
       if (__privateGet$f(this, _autoRender$2)) {
         this.renderer.scene.addComputePass(this);
       }
     }
     /**
-     * Remove our compute pass from the scene and the renderer
+     * Remove our {@link ComputePass} from the scene and optionally from the renderer as well.
+     * @param removeFromRenderer - whether to remove this {@link ComputePass} from the {@link Renderer#computePasses | Renderer computePasses array}.
      */
-    removeFromScene() {
+    removeFromScene(removeFromRenderer = false) {
       if (__privateGet$f(this, _autoRender$2)) {
         this.renderer.scene.removeComputePass(this);
       }
-      this.renderer.computePasses = this.renderer.computePasses.filter((computePass) => computePass.uuid !== this.uuid);
+      if (removeFromRenderer) {
+        this.renderer.computePasses = this.renderer.computePasses.filter((computePass) => computePass.uuid !== this.uuid);
+      }
+    }
+    /**
+     * Set a new {@link Renderer} for this {@link ComputePass}.
+     * @param renderer - new {@link Renderer} to set.
+     */
+    setRenderer(renderer) {
+      renderer = renderer && renderer.renderer || renderer;
+      if (!renderer || !(renderer.type === "GPURenderer" || renderer.type === "GPUCameraRenderer" || renderer.type === "GPUCurtainsRenderer")) {
+        throwWarning(
+          `${this.options.label}: Cannot set ${renderer} as a renderer because it is not of a valid Renderer type.`
+        );
+        return;
+      }
+      this.material?.setRenderer(renderer);
+      this.removeFromScene(true);
+      this.renderer = renderer;
+      this.addToScene(true);
     }
     /**
      * Create the compute pass material
@@ -5962,7 +5985,7 @@
      * Remove the ComputePass from the scene and destroy it
      */
     remove() {
-      this.removeFromScene();
+      this.removeFromScene(true);
       this.destroy();
     }
     /**
