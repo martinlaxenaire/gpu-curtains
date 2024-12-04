@@ -11,7 +11,6 @@ window.addEventListener('load', async () => {
     PointLight,
     Vec3,
     Mesh,
-    toneMappingUtils,
     getLambert,
     getPhong,
     PlaneGeometry,
@@ -31,10 +30,6 @@ window.addEventListener('load', async () => {
     deviceManager: gpuDeviceManager,
     label: 'Left renderer',
     container: document.querySelector('#left-canvas'),
-    //pixelRatio: window.devicePixelRatio,
-    // lights: {
-    //   maxPointLights: 0,
-    // },
   })
 
   // create a camera renderer
@@ -42,7 +37,6 @@ window.addEventListener('load', async () => {
     deviceManager: gpuDeviceManager,
     label: 'Right renderer',
     container: document.querySelector('#right-canvas'),
-    //pixelRatio: window.devicePixelRatio,
     lights: {
       maxPointLights: 0,
     },
@@ -61,7 +55,7 @@ window.addEventListener('load', async () => {
     element: leftRenderer.domElement.element,
   })
 
-  const fs = /* wgsl */ `
+  const litFragmentShader = ({ useLambert = true, receiveShadows = false } = {}) => /* wgsl */ `
     struct VSOutput {
       @builtin(position) position: vec4f,
       @builtin(front_facing) frontFacing: bool,
@@ -71,7 +65,7 @@ window.addEventListener('load', async () => {
       @location(3) viewDirection: vec3f,
     };
     
-    ${getLambert()}
+    ${useLambert ? getLambert({ receiveShadows }) : getPhong({ receiveShadows })}
     
 
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
@@ -84,15 +78,32 @@ window.addEventListener('load', async () => {
       let worldPosition = fsInput.worldPosition;
       let viewDirection = normalize(fsInput.viewDirection);
       
-      // lambert
-      color = getLambert(
-        normal,
-        worldPosition,
-        color
-      );
+      ${
+        useLambert
+          ? `
+          // lambert
+          color = getLambert(
+            normal,
+            worldPosition,
+            color
+          );
+        `
+          : `
+          // phong
+          color = getPhong(
+            normal,
+            worldPosition,
+            color,
+            viewDirection,
+            phong.specularColor,
+            phong.specularStrength,
+            phong.shininess
+          );
+        `
+      }
+      
       
       return vec4(color, 1.0);
-      //return vec4(linearToOutput3(color), 1.0);
     }
   `
 
@@ -140,11 +151,8 @@ window.addEventListener('load', async () => {
     geometry: new BoxGeometry(),
     castShadows: true,
     shaders: {
-      // vertex: {
-      //   code: vs,
-      // },
       fragment: {
-        code: fs,
+        code: litFragmentShader({ useLambert: false }),
       },
     },
     uniforms: {
@@ -177,54 +185,12 @@ window.addEventListener('load', async () => {
     },
   })
 
-  mesh
-    .onBeforeRender(() => {
-      mesh.rotation.x += 0.01
-      mesh.rotation.y += 0.02
-    })
-    .onReady(() => {
-      //console.log(mesh.material.getAddedShaderCode('fragment'))
-    })
+  mesh.onBeforeRender(() => {
+    mesh.rotation.x += 0.01
+    mesh.rotation.y += 0.02
+  })
 
   mesh.position.y = 2
-
-  console.log(mesh, leftRenderer)
-
-  const floorFs = /* wgsl */ `
-    struct VSOutput {
-      @builtin(position) position: vec4f,
-      @builtin(front_facing) frontFacing: bool,
-      @location(0) uv: vec2f,
-      @location(1) normal: vec3f,
-      @location(2) worldPosition: vec3f,
-      @location(3) viewDirection: vec3f,
-    };
-        
-    ${getLambert({
-      receiveShadows: true,
-    })}
-
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {      
-      // negate the normals if we're using front face culling
-      //let faceDirection = select(-1.0, 1.0, fsInput.frontFacing);
-      let faceDirection = 1.0;
-      
-      // apply lightning and shadows
-      let normal: vec3f = normalize(faceDirection * fsInput.normal);
-      
-      let worldPosition: vec3f = fsInput.worldPosition;
-      
-      var color: vec3f = shading.color;
-      
-      color = getLambert(
-        normal,
-        worldPosition,
-        color
-      );
-      
-      return vec4(color, 1.0);
-    }
-  `
 
   const planeGeometry = new PlaneGeometry()
 
@@ -238,11 +204,8 @@ window.addEventListener('load', async () => {
     frustumCulling: false, // always draw
     cullMode: 'none',
     shaders: {
-      // vertex: {
-      //   code: floorVs,
-      // },
       fragment: {
-        code: floorFs,
+        code: litFragmentShader({ useLambert: false, receiveShadows: true }),
       },
     },
     uniforms: {
@@ -250,7 +213,24 @@ window.addEventListener('load', async () => {
         struct: {
           color: {
             type: 'vec3f',
-            value: new Vec3(0.65),
+            value: new Vec3(0.7),
+          },
+        },
+      },
+      phong: {
+        visibility: ['fragment'],
+        struct: {
+          specularColor: {
+            type: 'vec3f',
+            value: new Vec3(1),
+          },
+          specularStrength: {
+            type: 'f32',
+            value: 1,
+          },
+          shininess: {
+            type: 'f32',
+            value: 32,
           },
         },
       },

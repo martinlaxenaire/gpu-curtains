@@ -74,7 +74,8 @@
             <div class="text-section-sub">
               <p>
                 <a target="_blank" href="https://github.com/martinlaxenaire/gpu-curtains/">gpu-curtains</a> is an
-                open-source WebGPU 3D engine built to help you synchronize DOM and 3D elements.<br />
+                open-source WebGPU 3D engine,
+                <strong>with extra classes built to help you synchronize DOM and 3D elements.</strong><br />
                 Use built-in geometries or define your own custom ones. The 3D objects sizes and positions are
                 automatically updated on scroll and resize.<br />
                 Its high-level API helps you <strong>focus on writing shaders</strong>.
@@ -291,7 +292,7 @@
               <div class="text-section-main">
                 <h2 class="text-section-main-title"><span>Genuine 3D engine</span></h2>
                 <p>
-                  Built on a real 3D engine that comes with lights,<br />
+                  Built on a 3D engine that comes with lights,<br />
                   shadows, glTF... DOM syncing is not mandatory!<br />
                   <strong class="primary-color">Just do what you want.</strong>
                 </p>
@@ -301,6 +302,10 @@
                   <a target="_blank" href="https://github.com/martinlaxenaire/gpu-curtains/">gpu-curtains</a> was
                   thought as a true 3D engine, with a lot of essential features: custom geometries, built-in lights and
                   shadows, material shading helpers, basic glTF support, raycasting, deferred rendering...<br />
+                  <strong
+                    >The DOM syncing classes are not part of the core, letting you use it as a regular 3D library if you
+                    need.</strong
+                  >
                 </p>
               </div>
             </div>
@@ -469,7 +474,11 @@
             </div>
 
             <div id="features-particles-helper" class="section">
-              <h3>2000 post processed instanced meshes,<br />rendered on a separate canvas</h3>
+              <h3>
+                2000 post processed instanced meshes,<br />
+                updated by a compute shader<br />
+                and rendered on a separate canvas
+              </h3>
               <span id="features-particles-arrow">
                 <span>
                   <svg width="238" height="184" viewBox="0 0 238 184" xmlns="http://www.w3.org/2000/svg">
