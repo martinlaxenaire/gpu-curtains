@@ -454,9 +454,11 @@ class Scene extends Object3D {
     const swapChainTexture = renderPassEntry.renderPass.updateView(renderPassEntry.renderTexture?.texture);
     renderPassEntry.onBeforeRenderPass && renderPassEntry.onBeforeRenderPass(commandEncoder, swapChainTexture);
     const pass = commandEncoder.beginRenderPass(renderPassEntry.renderPass.descriptor);
-    !this.renderer.production && pass.pushDebugGroup(
-      renderPassEntry.element ? `${renderPassEntry.element.options.label} render pass using ${renderPassEntry.renderPass.options.label} descriptor` : `Render stack pass using ${renderPassEntry.renderPass.options.label}${renderPassEntry.renderTexture ? " onto " + renderPassEntry.renderTexture.options.label : ""}`
-    );
+    if (!this.renderer.production) {
+      pass.pushDebugGroup(
+        renderPassEntry.element ? `${renderPassEntry.element.options.label} render pass using ${renderPassEntry.renderPass.options.label} descriptor` : `Render stack pass using ${renderPassEntry.renderPass.options.label}${renderPassEntry.renderTexture ? " onto " + renderPassEntry.renderTexture.options.label : ""}`
+      );
+    }
     if (renderPassEntry.element) {
       if (renderPassEntry.element.renderBundle) {
         renderPassEntry.element.renderBundle.render(pass);
@@ -480,7 +482,8 @@ class Scene extends Object3D {
         }
       }
     }
-    !this.renderer.production && pass.popDebugGroup();
+    if (!this.renderer.production)
+      pass.popDebugGroup();
     pass.end();
     renderPassEntry.onAfterRenderPass && renderPassEntry.onAfterRenderPass(commandEncoder, swapChainTexture);
     this.renderer.pipelineManager.resetCurrentPipeline();
@@ -509,7 +512,11 @@ class Scene extends Object3D {
   render(commandEncoder) {
     for (const computePass of this.computePassEntries) {
       const pass = commandEncoder.beginComputePass();
+      if (!this.renderer.production)
+        pass.pushDebugGroup(`${computePass.options.label}: begin compute pass`);
       computePass.render(pass);
+      if (!this.renderer.production)
+        pass.popDebugGroup();
       pass.end();
       computePass.copyBufferToResult(commandEncoder);
       this.renderer.pipelineManager.resetCurrentPipeline();

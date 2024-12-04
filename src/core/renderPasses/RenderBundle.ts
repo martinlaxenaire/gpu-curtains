@@ -380,11 +380,19 @@ export class RenderBundle {
       label: this.options.label + ' (encoder)',
     })
 
+    if (!this.renderer.production) {
+      this.encoder.pushDebugGroup(`${this.options.label}: create encoder`)
+    }
+
     // render commands
     this.meshes.forEach((mesh) => {
       mesh.material.render(this.encoder)
       mesh.geometry.render(this.encoder)
     })
+
+    if (!this.renderer.production) {
+      this.encoder.popDebugGroup()
+    }
 
     this.bundle = this.encoder.finish({ label: this.options.label + ' (bundle)' })
 
@@ -421,7 +429,17 @@ export class RenderBundle {
 
       // force pipeline resets before and after executing the bundle
       this.renderer.pipelineManager.resetCurrentPipeline()
+
+      if (!this.renderer.production) {
+        pass.pushDebugGroup(`${this.options.label}: execute bundle`)
+      }
+
       pass.executeBundles([this.bundle])
+
+      if (!this.renderer.production) {
+        pass.popDebugGroup()
+      }
+
       this.renderer.pipelineManager.resetCurrentPipeline()
 
       this.meshes.forEach((mesh) => {
