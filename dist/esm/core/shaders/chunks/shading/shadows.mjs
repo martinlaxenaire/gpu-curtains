@@ -53,40 +53,45 @@ fn getPCFShadowContribution(index: i32, worldPosition: vec3f, depthTexture: text
     shadowCoords.z
   );
   
-  // Percentage-closer filtering. Sample texels in the region
-  // to smooth the result.
   var visibility = 0.0;
-  
-  let size: vec2f = vec2f(textureDimensions(depthTexture).xy);
-  
-  let texelSize: vec2f = 1.0 / size;
-  
-  let sampleCount: i32 = directionalShadow.pcfSamples;
-  let maxSamples: f32 = f32(sampleCount) - 1.0;
-  
-  for (var x = 0; x < sampleCount; x++) {
-    for (var y = 0; y < sampleCount; y++) {
-      let offset = texelSize * vec2(
-        f32(x) - maxSamples * 0.5,
-        f32(y) - maxSamples * 0.5
-      );
-      
-      visibility += textureSampleCompare(
-        depthTexture,
-        depthComparisonSampler,
-        shadowCoords.xy + offset,
-        shadowCoords.z - directionalShadow.bias
-      );
-    }
-  }
-  visibility /= f32(sampleCount * sampleCount);
-  
-  visibility = clamp(visibility, 1.0 - clamp(directionalShadow.intensity, 0.0, 1.0), 1.0);
   
   let inFrustum: bool = shadowCoords.x >= 0.0 && shadowCoords.x <= 1.0 && shadowCoords.y >= 0.0 && shadowCoords.y <= 1.0;
   let frustumTest: bool = inFrustum && shadowCoords.z <= 1.0;
   
-  return select(1.0, visibility, frustumTest);
+  if(frustumTest) {
+    // Percentage-closer filtering. Sample texels in the region
+    // to smooth the result.
+    let size: vec2f = vec2f(textureDimensions(depthTexture).xy);
+  
+    let texelSize: vec2f = 1.0 / size;
+    
+    let sampleCount: i32 = directionalShadow.pcfSamples;
+    let maxSamples: f32 = f32(sampleCount) - 1.0;
+  
+    for (var x = 0; x < sampleCount; x++) {
+      for (var y = 0; y < sampleCount; y++) {
+        let offset = texelSize * vec2(
+          f32(x) - maxSamples * 0.5,
+          f32(y) - maxSamples * 0.5
+        );
+        
+        visibility += textureSampleCompareLevel(
+          depthTexture,
+          depthComparisonSampler,
+          shadowCoords.xy + offset,
+          shadowCoords.z - directionalShadow.bias
+        );
+      }
+    }
+    visibility /= f32(sampleCount * sampleCount);
+    
+    visibility = clamp(visibility, 1.0 - clamp(directionalShadow.intensity, 0.0, 1.0), 1.0);
+  }
+  else {
+    visibility = 1.0;
+  }
+  
+  return visibility;
 }
 `
 );
@@ -106,7 +111,17 @@ fn getPCFDirectionalShadows(worldPosition: vec3f) -> array<f32, ${minDirectional
   ${directionalLights.map((light, index) => {
       return `lightDirection = worldPosition - directionalLights.elements[${index}].direction;
       
-      ${light.shadow.isActive ? `directionalShadowContribution[${index}] = select( 1.0, getPCFShadowContribution(${index}, worldPosition, shadowDepthTexture${index}), directionalShadows.directionalShadowsElements[${index}].isActive > 0);` : `directionalShadowContribution[${index}] = 1.0;`}`;
+      ${light.shadow.isActive ? `
+      if(directionalShadows.directionalShadowsElements[${index}].isActive > 0) {
+        directionalShadowContribution[${index}] = getPCFShadowContribution(
+          ${index},
+          worldPosition,
+          shadowDepthTexture${index}
+        );
+      } else {
+        directionalShadowContribution[${index}] = 1.0;
+      }
+          ` : `directionalShadowContribution[${index}] = 1.0;`}`;
     }).join("\n")}
   
   return directionalShadowContribution;
@@ -196,7 +211,7 @@ fn getPCFPointShadowContribution(index: i32, shadowPosition: vec4f, depthCubeTex
           f32(z) - maxSamples * 0.5
         );
 
-        closestDepth = textureSampleCompare(
+        closestDepth = textureSampleCompareLevel(
           depthCubeTexture,
           depthComparisonSampler,
           shadowPosition.xyz + offset,
@@ -204,9 +219,8 @@ fn getPCFPointShadowContribution(index: i32, shadowPosition: vec4f, depthCubeTex
         );
 
         closestDepth *= cameraRange;
-        if(currentDepth <= closestDepth) {
-          visibility += 1.0;
-        }
+
+        visibility += select(0.0, 1.0, currentDepth <= closestDepth);
       }
     }
   }
@@ -228,11 +242,26 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
   var pointShadowContribution: array<f32, ${minPointLights}>;
   
   var lightDirection: vec3f;
+  var lightDistance: f32;
+  var lightColor: vec3f;
   
   ${pointLights.map((light, index) => {
       return `lightDirection = pointLights.elements[${index}].position - worldPosition;
       
-      ${light.shadow.isActive ? `pointShadowContribution[${index}] = select( 1.0, getPCFPointShadowContribution(${index}, vec4(lightDirection, length(lightDirection)), pointShadowCubeDepthTexture${index}), pointShadows.pointShadowsElements[${index}].isActive > 0 );` : `pointShadowContribution[${index}] = 1.0;`}`;
+      lightDistance = length(lightDirection);
+      lightColor = pointLights.elements[${index}].color * rangeAttenuation(pointLights.elements[${index}].range, lightDistance);
+      
+      ${light.shadow.isActive ? `
+      if(pointShadows.pointShadowsElements[${index}].isActive > 0 && length(lightColor) > 0.0001) {
+        pointShadowContribution[${index}] = getPCFPointShadowContribution(
+          ${index},
+          vec4(lightDirection, length(lightDirection)),
+          pointShadowCubeDepthTexture${index}
+        );
+      } else {
+        pointShadowContribution[${index}] = 1.0;
+      }
+            ` : `pointShadowContribution[${index}] = 1.0;`}`;
     }).join("\n")}
   
   return pointShadowContribution;
@@ -256,9 +285,7 @@ const applyDirectionalShadows = (
 const applyPointShadows = (
   /* wgsl */
   `
-    if(directLight.visible) {
-      directLight.color *= pointShadows[i];
-    }
+    directLight.color *= pointShadows[i];
 `
 );
 

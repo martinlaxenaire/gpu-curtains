@@ -20,6 +20,12 @@ window.addEventListener('load', async () => {
     getLambert,
   } = await import(/* @vite-ignore */ path)
 
+  const stats = new Stats()
+
+  stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
+  stats.dom.classList.add('stats')
+  document.body.appendChild(stats.dom)
+
   // first, we need a WebGPU device, that's what GPUDeviceManager is for
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
@@ -69,7 +75,7 @@ window.addEventListener('load', async () => {
     position: new Vec3(15, 15, 15),
     shadow: {
       //intensity: 1,
-      bias: 0.002,
+      //bias: 0.0001,
       //normalBias: 0.002,
       depthTextureSize: new Vec2(256, 256),
       pcfSamples: 3,
@@ -82,7 +88,7 @@ window.addEventListener('load', async () => {
     position: new Vec3(-15, 15, 15),
     shadow: {
       //intensity: 1,
-      bias: 0.002,
+      //bias: 0.0001,
       //normalBias: 0.002,
       pcfSamples: 2,
       //depthTextureSize: new Vec2(512, 512),
@@ -95,7 +101,7 @@ window.addEventListener('load', async () => {
     position: new Vec3(15, 15, -15),
     shadow: {
       //intensity: 1,
-      bias: 0.002,
+      //bias: 0.0001,
       //normalBias: 0.002,
       depthTextureSize: new Vec2(1024, 1024),
     },
@@ -107,7 +113,7 @@ window.addEventListener('load', async () => {
     position: new Vec3(-15, 15, -15),
     shadow: {
       //intensity: 1,
-      bias: 0.002,
+      //bias: 0.0001,
       //normalBias: 0.002,
       pcfSamples: 3,
       //depthTextureSize: new Vec2(512, 512),
@@ -162,9 +168,13 @@ window.addEventListener('load', async () => {
   let rotatePivot = true
 
   const animate = () => {
+    stats.begin()
+
     if (rotatePivot) scenePivot.rotation.y += 0.015
 
     gpuDeviceManager.render()
+
+    stats.end()
 
     requestAnimationFrame(animate)
   }
@@ -498,7 +508,7 @@ window.addEventListener('load', async () => {
       pointShadow.add(pointLight.shadow, 'intensity', 0, 10, 0.01)
       pointShadow.add(pointLight.shadow, 'bias', 0, 0.01, 0.0001)
       pointShadow.add(pointLight.shadow, 'normalBias', 0, 0.01, 0.0001)
-      pointShadow.add(pointShadow.shadow, 'pcfSamples', 1, 5, 1)
+      pointShadow.add(pointLight.shadow, 'pcfSamples', 1, 5, 1)
       pointShadow.add(pointLight.shadow.depthTextureSize, 'x', 128, 1024, 64).name('Texture width')
       pointShadow.add(pointLight.shadow.depthTextureSize, 'y', 128, 1024, 64).name('Texture height')
     }

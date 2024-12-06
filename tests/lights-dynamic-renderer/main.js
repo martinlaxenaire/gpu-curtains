@@ -43,6 +43,7 @@ window.addEventListener('load', async () => {
   })
 
   const renderers = [leftRenderer, rightRenderer]
+  console.log(renderers)
 
   renderers.forEach((renderer) => {
     renderer.camera.position.y = 7.5

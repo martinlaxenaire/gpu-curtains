@@ -172,7 +172,7 @@ window.addEventListener('load', async () => {
     shadow: {
       bias: 0.001,
       depthTextureSize: new Vec2(1500),
-      pcfSamples: 3,
+      pcfSamples: 2,
       camera: {
         left: -20,
         right: 20,
@@ -189,11 +189,11 @@ window.addEventListener('load', async () => {
   const pointLightsSettings = {
     color: new Vec3(0.85, 0.15, 0),
     intensity: 7.5,
-    range: 40,
+    range: 10,
     shadow: {
       bias: 0.001,
-      pcfSamples: 2,
-      depthTextureSize: new Vec2(256),
+      pcfSamples: 1,
+      depthTextureSize: new Vec2(512),
       camera: {
         near: 0.01,
         far: 200,
