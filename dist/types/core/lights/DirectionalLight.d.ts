@@ -75,6 +75,11 @@ export declare class DirectionalLight extends Light {
      */
     constructor(renderer: CameraRenderer | GPUCurtains, { color, intensity, position, target, shadow, }?: DirectionalLightBaseParams);
     /**
+     * Set or reset this {@link DirectionalLight} {@link CameraRenderer}.
+     * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
+     */
+    setRenderer(renderer: CameraRenderer | GPUCurtains): void;
+    /**
      * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of {@link DirectionalLight} has been overflowed.
      */
     reset(): void;

@@ -1,7 +1,7 @@
 import {
   GLTFLoader,
+  Raycaster,
   AmbientLight,
-  PointLight,
   DirectionalLight,
   GLTFScenesManager,
   buildShaders,
@@ -14,12 +14,12 @@ export class GLTFExample {
     this.gpuCurtains = gpuCurtains
     this.scrollObserver = scrollObserver
 
-    console.log(this.gpuCurtains)
-
     this.init()
   }
 
   async init() {
+    this.raycaster = new Raycaster(this.gpuCurtains)
+
     // LIGHTS
     this.ambientLight = new AmbientLight(this.gpuCurtains, {
       intensity: 0.1,
@@ -61,9 +61,7 @@ export class GLTFExample {
   }
 
   async loadGLTF() {
-    const modelUrl =
-      'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/Suzanne/glTF/Suzanne.gltf'
-    const gltf = await this.gltfLoader.loadFromUrl(modelUrl)
+    const gltf = await this.gltfLoader.loadFromUrl('./website/assets/gltf/Suzanne.gltf')
     this.gltfScenesManager = new GLTFScenesManager({ renderer: this.gpuCurtains.renderer, gltf })
     const { scenesManager } = this.gltfScenesManager
     const { node, boundingBox } = scenesManager
@@ -81,7 +79,7 @@ export class GLTFExample {
     this.parentNode.boundingBox.copy(boundingBox)
 
     // add the meshes with a really basic lightning setup
-    const meshes = this.gltfScenesManager.addMeshes((meshDescriptor) => {
+    this.meshes = this.gltfScenesManager.addMeshes((meshDescriptor) => {
       const { parameters } = meshDescriptor
 
       parameters.uniforms = {
@@ -102,6 +100,11 @@ export class GLTFExample {
         color = vec4(color.rgb * global.opacity, color.a * global.opacity);
       `
 
+      parameters.userData = {
+        isHovered: false,
+        scaleTween: null,
+      }
+
       parameters.shaders = buildShaders(meshDescriptor, {
         shadingModel: 'PBR',
         chunks: {
@@ -110,7 +113,7 @@ export class GLTFExample {
       })
     })
 
-    meshes.forEach((mesh, index) => {
+    this.meshes.forEach((mesh, index) => {
       this.opacityTween.to(mesh.uniforms.global.opacity, {
         value: 1,
         duration: 1.5,
@@ -128,10 +131,73 @@ export class GLTFExample {
         this.opacityTween.play()
       },
     })
+
+    window.addEventListener('mousemove', this.onPointerMove.bind(this))
+    window.addEventListener('touchmove', this.onPointerMove.bind(this))
+  }
+
+  onPointerMove(e) {
+    if (this.meshes && this.meshes.length) {
+      this.raycaster.setFromMouse(e)
+
+      const intersections = this.raycaster.intersectObjects(this.meshes)
+
+      if (intersections.length) {
+        const closestIntersection = intersections[0]
+
+        if (!closestIntersection.object.userData.isHovered) {
+          closestIntersection.object.userData.isHovered = true
+
+          if (closestIntersection.object.userData.scaleTween) {
+            closestIntersection.object.userData.scaleTween.kill()
+          }
+
+          closestIntersection.object.userData.scaleTween = gsap.to(closestIntersection.object.scale, {
+            x: 1.15,
+            y: 1.15,
+            z: 1.15,
+            duration: 0.5,
+            ease: 'power3.inOut',
+            onComplete: () => {
+              closestIntersection.object.userData.scaleTween = null
+            },
+          })
+        }
+      } else {
+        this.meshes.forEach((mesh) => {
+          mesh.userData.isHovered = false
+
+          if (mesh.userData.scaleTween) {
+            mesh.userData.scaleTween.kill()
+          }
+
+          mesh.userData.scaleTween = gsap.to(mesh.scale, {
+            x: 1,
+            y: 1,
+            z: 1,
+            duration: 0.5,
+            ease: 'power3.out',
+            onComplete: () => {
+              mesh.userData.scaleTween = null
+            },
+          })
+        })
+      }
+    }
   }
 
   destroy() {
+    window.removeEventListener('mousemove', this.onPointerMove.bind(this))
+    window.removeEventListener('touchmove', this.onPointerMove.bind(this))
+
     this.opacityTween.kill()
+
+    this.gltfScenesManager?.scenesManager.meshes.forEach((mesh) => {
+      if (mesh.userData.scaleTween) {
+        mesh.userData.scaleTween.kill()
+      }
+    })
+
     this.gltfScenesManager?.destroy()
 
     this.ambientLight.remove()

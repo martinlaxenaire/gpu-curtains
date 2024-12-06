@@ -282,6 +282,8 @@ export class GPUCameraRenderer extends GPURenderer {
    */
   addLight(light: Light) {
     this.lights.push(light)
+    this.bindings[light.type].inputs.count.value++
+    this.bindings[light.type].inputs.count.shouldUpdate = true
   }
 
   /**
@@ -290,6 +292,8 @@ export class GPUCameraRenderer extends GPURenderer {
    */
   removeLight(light: Light) {
     this.lights = this.lights.filter((l) => l.uuid !== light.uuid)
+    this.bindings[light.type].inputs.count.value--
+    this.bindings[light.type].inputs.count.shouldUpdate = true
   }
 
   /**
@@ -368,7 +372,7 @@ export class GPUCameraRenderer extends GPURenderer {
       .reduce((acc, binding) => {
         acc[binding.key] = {
           type: binding.type,
-          value: new Float32Array(this.lightsBindingParams[lightsType].max * binding.size),
+          value: new Float32Array(Math.max(this.lightsBindingParams[lightsType].max, 1) * binding.size),
         }
 
         return acc
@@ -396,9 +400,9 @@ export class GPUCameraRenderer extends GPURenderer {
   onMaxLightOverflow(lightsType: LightsType) {
     if (!this.production) {
       throwWarning(
-        `${this.type}: You are overflowing the current max lights count of ${
+        `${this.options.label} (${this.type}): You are overflowing the current max lights count of '${
           this.lightsBindingParams[lightsType].max
-        } for this type of lights: ${lightsType}. This should be avoided by setting a larger ${
+        }' for this type of lights: ${lightsType}. This should be avoided by setting a larger ${
           'max' + lightsType.charAt(0).toUpperCase() + lightsType.slice(1)
         } when instancing your ${this.type}.`
       )
@@ -407,7 +411,9 @@ export class GPUCameraRenderer extends GPURenderer {
     this.lightsBindingParams[lightsType].max++
 
     const oldLightBinding = this.cameraLightsBindGroup.getBindingByName(lightsType)
-    this.cameraLightsBindGroup.destroyBufferBinding(oldLightBinding as BufferBinding)
+    if (oldLightBinding) {
+      this.cameraLightsBindGroup.destroyBufferBinding(oldLightBinding as BufferBinding)
+    }
 
     this.setLightsTypeBinding(lightsType)
 
@@ -487,7 +493,7 @@ export class GPUCameraRenderer extends GPURenderer {
       name: shadowsType,
       bindingType: 'storage',
       visibility: ['vertex', 'fragment', 'compute'], // TODO needed in compute?
-      bindings: Array.from(Array(this.lightsBindingParams[lightsType].max).keys()).map((i) => {
+      bindings: Array.from(Array(Math.max(1, this.lightsBindingParams[lightsType].max)).keys()).map((i) => {
         return binding.clone({
           ...binding.options,
           // clone struct with new arrays
@@ -517,7 +523,7 @@ export class GPUCameraRenderer extends GPURenderer {
   setCameraLightsBindGroup() {
     // now initialize bind group
     this.cameraLightsBindGroup = new BindGroup(this, {
-      label: 'Camera and lights uniform bind group',
+      label: this.options.label + ': Camera and lights uniform bind group',
       bindings: Object.keys(this.bindings)
         .map((bindingName) => this.bindings[bindingName])
         .flat(),

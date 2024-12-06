@@ -9,14 +9,7 @@ class AmbientLight extends Light {
    */
   constructor(renderer, { color = new Vec3(1), intensity = 0.1 } = {}) {
     const type = "ambientLights";
-    renderer = renderer && renderer.renderer || renderer;
-    const index = renderer.lights.filter((light) => light.type === type).length;
-    super(renderer, { color, intensity, index, type });
-    if (this.index + 1 > this.renderer.lightsBindingParams[this.type].max) {
-      this.onMaxLightOverflow(this.type);
-    }
-    this.rendererBinding.inputs.count.value = this.index + 1;
-    this.rendererBinding.inputs.count.shouldUpdate = true;
+    super(renderer, { color, intensity, type });
   }
   // explicitly disable all kinds of transformations
   /** @ignore */

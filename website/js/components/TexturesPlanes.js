@@ -15,12 +15,6 @@ export class TexturesPlanes {
   init() {
     const planeEls = document.querySelectorAll('.textures-plane')
 
-    this.renderBundle = new RenderBundle(this.gpuCurtains, {
-      label: 'Textured planes render bundle',
-      size: planeEls.length,
-      useBuffer: true,
-    })
-
     const scaleIncrease = 1.5
     const scales = {
       top: 1,
@@ -32,7 +26,6 @@ export class TexturesPlanes {
     planeEls.forEach((planeEl, index) => {
       const plane = new Plane(this.gpuCurtains, planeEl, {
         heightSegments: 20,
-        renderBundle: this.renderBundle,
         transparent: true,
         shaders: {
           vertex: {
@@ -183,14 +176,12 @@ export class TexturesPlanes {
       element: document.querySelector('#textures-planes-grid'),
       keepObserving: true,
       onElVisible: () => {
-        this.renderBundle.visible = true
         this.opacityTween.restart()
       },
       onElHidden: () => {
         this.planes.forEach((plane, index) => {
           plane.uniforms.global.opacity.value = 0
         })
-        this.renderBundle.visible = false
       },
     })
   }
@@ -199,6 +190,5 @@ export class TexturesPlanes {
     this.tween?.kill()
     this.opacityTween.kill()
     this.planes.forEach((plane) => plane.remove())
-    this.renderBundle.destroy()
   }
 }

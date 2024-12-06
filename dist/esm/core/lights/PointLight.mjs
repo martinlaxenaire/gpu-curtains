@@ -29,9 +29,7 @@ class PointLight extends Light {
    */
   constructor(renderer, { color = new Vec3(1), intensity = 1, position = new Vec3(), range = 0, shadow = null } = {}) {
     const type = "pointLights";
-    renderer = renderer && renderer.renderer || renderer;
-    const index = renderer.lights.filter((light) => light.type === type).length;
-    super(renderer, { color, intensity, index, type });
+    super(renderer, { color, intensity, type });
     /** @ignore */
     __privateAdd(this, _range, void 0);
     /** @ignore */
@@ -46,11 +44,6 @@ class PointLight extends Light {
     this.position.copy(position);
     this.range = range;
     this.parent = this.renderer.scene;
-    if (this.index + 1 > this.renderer.lightsBindingParams[this.type].max) {
-      this.onMaxLightOverflow(this.type);
-    }
-    this.rendererBinding.inputs.count.value = this.index + 1;
-    this.rendererBinding.inputs.count.shouldUpdate = true;
     this.shadow = new PointShadow(this.renderer, {
       autoRender: false,
       // will be set by calling cast()
@@ -59,6 +52,16 @@ class PointLight extends Light {
     if (shadow) {
       this.shadow.cast(shadow);
     }
+  }
+  /**
+   * Set or reset this {@link PointLight} {@link CameraRenderer}.
+   * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
+   */
+  setRenderer(renderer) {
+    if (this.shadow) {
+      this.shadow.setRenderer(renderer);
+    }
+    super.setRenderer(renderer);
   }
   /**
    * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of {@link PointLight} has been overflowed.

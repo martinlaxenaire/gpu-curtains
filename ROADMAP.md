@@ -36,6 +36,8 @@
 
 - Add/improve GLTFScenesManager features (sparse accessors, animations, morphing, skinning...)
 - Add more lights (SpotLight...)
+- Better shader chunks system and/or custom preprocessor
+- Implement different lit extras RenderMaterial (i.e. RenderLambertMaterial, RenderPhongMaterial, RenderPBRMaterial, etc.)?
+- Implement indirect draw calls?
 - Improve typedoc documentation?
-- Use indirect draw calls?
 - More examples & tests?

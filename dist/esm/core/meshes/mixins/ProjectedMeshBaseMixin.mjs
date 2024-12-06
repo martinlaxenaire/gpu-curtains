@@ -72,6 +72,21 @@ function ProjectedMeshBaseMixin(Base) {
       this.setDOMFrustum();
     }
     /**
+     * Set or reset this Mesh {@link renderer}.
+     * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
+     */
+    setRenderer(renderer) {
+      super.setRenderer(renderer);
+      this.camera = this.renderer.camera;
+      if (this.options.castShadows) {
+        this.renderer.shadowCastingLights.forEach((light) => {
+          if (light.shadow.isActive) {
+            light.shadow.addShadowCastingMesh(this);
+          }
+        });
+      }
+    }
+    /**
      * Assign or remove a {@link RenderBundle} to this Mesh.
      * @param renderBundle - The {@link RenderBundle} to assign or null if we want to remove the current {@link RenderBundle}.
      * @param updateScene - Whether to remove and then re-add the Mesh from the {@link core/scenes/Scene.Scene | Scene} or not.

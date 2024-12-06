@@ -144,8 +144,6 @@ export class OrbitControls {
       return
     }
 
-    this.camera = camera
-
     // options
     this.#setBaseParams({
       target,
@@ -163,17 +161,27 @@ export class OrbitControls {
       panSpeed,
     })
 
-    // Grab initial position values
-    this.#offset.copy(this.camera.position).sub(this.target)
-    this.#spherical.radius = this.#offset.length()
-    this.#spherical.theta = Math.atan2(this.#offset.x, this.#offset.z)
-    this.#spherical.phi = Math.acos(Math.min(Math.max(this.#offset.y / this.#spherical.radius, -1), 1))
+    this.element = element ?? (typeof window !== 'undefined' ? window : null)
+
+    this.useCamera(camera)
+  }
+
+  /**
+   * Allow to set or reset this {@link OrbitControls#camera | OrbitControls camera}.
+   * @param camera - New {@link camera} to use.
+   */
+  useCamera(camera: Camera) {
+    this.camera = camera
 
     this.camera.position.onChange(() => {
       this.camera.lookAt(this.target)
     })
 
-    this.element = element ?? (typeof window !== 'undefined' ? window : null)
+    // Grab initial position values
+    this.#offset.copy(this.camera.position).sub(this.target)
+    this.#spherical.radius = this.#offset.length()
+    this.#spherical.theta = Math.atan2(this.#offset.x, this.#offset.z)
+    this.#spherical.phi = Math.acos(Math.min(Math.max(this.#offset.y / this.#spherical.radius, -1), 1))
 
     this.#update()
   }

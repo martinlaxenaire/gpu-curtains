@@ -656,6 +656,8 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
         return
       }
 
+      this.material?.setRenderer(renderer)
+
       const oldRenderer = this.renderer
       this.removeFromScene(true)
       this.renderer = renderer

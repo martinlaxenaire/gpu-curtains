@@ -35,9 +35,7 @@ class DirectionalLight extends Light {
     shadow = null
   } = {}) {
     const type = "directionalLights";
-    renderer = renderer && renderer.renderer || renderer;
-    const index = renderer.lights.filter((light) => light.type === type).length;
-    super(renderer, { color, intensity, index, type });
+    super(renderer, { color, intensity, type });
     /** @ignore */
     __privateAdd(this, _actualPosition, void 0);
     /**
@@ -57,11 +55,6 @@ class DirectionalLight extends Light {
     this.target.onChange(() => this.setDirection());
     this.position.copy(position);
     this.parent = this.renderer.scene;
-    if (this.index + 1 > this.renderer.lightsBindingParams[this.type].max) {
-      this.onMaxLightOverflow(this.type);
-    }
-    this.rendererBinding.inputs.count.value = this.index + 1;
-    this.rendererBinding.inputs.count.shouldUpdate = true;
     this.shadow = new DirectionalShadow(this.renderer, {
       autoRender: false,
       // will be set by calling cast()
@@ -70,6 +63,14 @@ class DirectionalLight extends Light {
     if (shadow) {
       this.shadow.cast(shadow);
     }
+  }
+  /**
+   * Set or reset this {@link DirectionalLight} {@link CameraRenderer}.
+   * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
+   */
+  setRenderer(renderer) {
+    this.shadow?.setRenderer(renderer);
+    super.setRenderer(renderer);
   }
   /**
    * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of {@link DirectionalLight} has been overflowed.

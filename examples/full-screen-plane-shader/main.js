@@ -1,21 +1,37 @@
-import { FullscreenPlane, GPUCurtains } from '../../dist/esm/index.mjs'
+import { GPUDeviceManager, GPURenderer, FullscreenPlane } from '../../dist/esm/index.mjs'
 
 window.addEventListener('load', async () => {
-  // set our main GPUCurtains instance it will handle everything we need
-  // a WebGPU device and a renderer with its scene, requestAnimationFrame, resize and scroll events...
-  const gpuCurtains = new GPUCurtains({
-    container: '#canvas',
+  // first, we need a WebGPU device, that's what GPUDeviceManager is for
+  const gpuDeviceManager = new GPUDeviceManager({
+    label: 'Custom device manager',
+    onError: () => {
+      // handle error at the device level
+      document.body.classList.add('no-curtains')
+    },
+  })
+
+  // we need to wait for the device to be created
+  await gpuDeviceManager.init()
+
+  // then we can create a basic renderer
+  // no need for camera or DOM syncing here
+  const gpuRenderer = new GPURenderer({
+    label: 'Basic GPU Renderer',
+    deviceManager: gpuDeviceManager, // the renderer is going to use our WebGPU device to create its context
+    container: document.querySelector('#canvas'),
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
     renderPass: {
       sampleCount: 1, // no need for MSAA here!
     },
   })
 
-  gpuCurtains.onError(() => {
-    document.body.classList.add('no-curtains')
-  })
+  // start rendering
+  const animate = () => {
+    gpuDeviceManager.render()
+    requestAnimationFrame(animate)
+  }
 
-  await gpuCurtains.setDevice()
+  animate()
 
   const shader = /* wgsl */ `
     // https://gist.github.com/munrocket/236ed5ba7e409b8bdf1ff6eca5dcdc39
@@ -99,7 +115,7 @@ window.addEventListener('load', async () => {
     }
   `
 
-  const fullscreenPlane = new FullscreenPlane(gpuCurtains, {
+  const fullscreenPlane = new FullscreenPlane(gpuRenderer, {
     label: 'Full screen plane',
     shaders: {
       fragment: {

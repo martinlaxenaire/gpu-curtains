@@ -653,7 +653,8 @@ export class Scene extends Object3D {
 
     // now begin our actual render pass
     const pass = commandEncoder.beginRenderPass(renderPassEntry.renderPass.descriptor)
-    !this.renderer.production &&
+
+    if (!this.renderer.production) {
       pass.pushDebugGroup(
         renderPassEntry.element
           ? `${renderPassEntry.element.options.label} render pass using ${renderPassEntry.renderPass.options.label} descriptor`
@@ -661,6 +662,7 @@ export class Scene extends Object3D {
               renderPassEntry.renderTexture ? ' onto ' + renderPassEntry.renderTexture.options.label : ''
             }`
       )
+    }
 
     // pass entries can have a single element or a stack
     if (renderPassEntry.element) {
@@ -694,7 +696,8 @@ export class Scene extends Object3D {
       }
     }
 
-    !this.renderer.production && pass.popDebugGroup()
+    if (!this.renderer.production) pass.popDebugGroup()
+
     pass.end()
 
     renderPassEntry.onAfterRenderPass && renderPassEntry.onAfterRenderPass(commandEncoder, swapChainTexture)
@@ -733,7 +736,13 @@ export class Scene extends Object3D {
   render(commandEncoder: GPUCommandEncoder) {
     for (const computePass of this.computePassEntries) {
       const pass = commandEncoder.beginComputePass()
+
+      if (!this.renderer.production) pass.pushDebugGroup(`${computePass.options.label}: begin compute pass`)
+
       computePass.render(pass)
+
+      if (!this.renderer.production) pass.popDebugGroup()
+
       pass.end()
 
       computePass.copyBufferToResult(commandEncoder)

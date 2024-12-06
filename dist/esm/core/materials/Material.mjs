@@ -49,6 +49,14 @@ class Material {
     this.setSamplers();
   }
   /**
+   * Set or reset this {@link Material} {@link renderer}.
+   * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
+   */
+  setRenderer(renderer) {
+    renderer = isRenderer(renderer, this.type);
+    this.renderer = renderer;
+  }
+  /**
    * Check if all bind groups are ready, and create them if needed
    */
   compileMaterial() {

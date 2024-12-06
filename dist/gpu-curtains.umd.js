@@ -2006,7 +2006,7 @@
         }
         if (uniqueBindings.length) {
           uniqueBindings.forEach((binding) => {
-            structs[kebabCaseLabel][binding.name] = binding.count > 1 ? `array<${toKebabCase(binding.label)}>` : toKebabCase(binding.label);
+            structs[kebabCaseLabel][binding.name] = `array<${toKebabCase(binding.label)}>`;
           });
         }
         const additionalBindings = uniqueBindings.length ? uniqueBindings.map((binding) => binding.wgslStructFragment).join("\n\n") + "\n\n" : "";
@@ -4962,6 +4962,14 @@
       this.setSamplers();
     }
     /**
+     * Set or reset this {@link Material} {@link renderer}.
+     * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
+     */
+    setRenderer(renderer) {
+      renderer = isRenderer(renderer, this.type);
+      this.renderer = renderer;
+    }
+    /**
      * Check if all bind groups are ready, and create them if needed
      */
     compileMaterial() {
@@ -5696,7 +5704,7 @@
         useAsyncPipeline,
         dispatchSize
       });
-      this.addToScene();
+      this.addToScene(true);
     }
     /**
      * Get or set whether the compute pass is ready to render (the material has been successfully compiled)
@@ -5712,22 +5720,45 @@
       this._ready = value;
     }
     /**
-     * Add our compute pass to the scene and the renderer
+     * Add our {@link ComputePass} to the scene and optionally to the renderer.
+     * @param addToRenderer - whether to add this {@link ComputePass} to the {@link Renderer#computePasses | Renderer computePasses array}
      */
-    addToScene() {
-      this.renderer.computePasses.push(this);
+    addToScene(addToRenderer = false) {
+      if (addToRenderer) {
+        this.renderer.computePasses.push(this);
+      }
       if (__privateGet$f(this, _autoRender$2)) {
         this.renderer.scene.addComputePass(this);
       }
     }
     /**
-     * Remove our compute pass from the scene and the renderer
+     * Remove our {@link ComputePass} from the scene and optionally from the renderer as well.
+     * @param removeFromRenderer - whether to remove this {@link ComputePass} from the {@link Renderer#computePasses | Renderer computePasses array}.
      */
-    removeFromScene() {
+    removeFromScene(removeFromRenderer = false) {
       if (__privateGet$f(this, _autoRender$2)) {
         this.renderer.scene.removeComputePass(this);
       }
-      this.renderer.computePasses = this.renderer.computePasses.filter((computePass) => computePass.uuid !== this.uuid);
+      if (removeFromRenderer) {
+        this.renderer.computePasses = this.renderer.computePasses.filter((computePass) => computePass.uuid !== this.uuid);
+      }
+    }
+    /**
+     * Set a new {@link Renderer} for this {@link ComputePass}.
+     * @param renderer - new {@link Renderer} to set.
+     */
+    setRenderer(renderer) {
+      renderer = renderer && renderer.renderer || renderer;
+      if (!renderer || !(renderer.type === "GPURenderer" || renderer.type === "GPUCameraRenderer" || renderer.type === "GPUCurtainsRenderer")) {
+        throwWarning(
+          `${this.options.label}: Cannot set ${renderer} as a renderer because it is not of a valid Renderer type.`
+        );
+        return;
+      }
+      this.material?.setRenderer(renderer);
+      this.removeFromScene(true);
+      this.renderer = renderer;
+      this.addToScene(true);
     }
     /**
      * Create the compute pass material
@@ -5954,7 +5985,7 @@
      * Remove the ComputePass from the scene and destroy it
      */
     remove() {
-      this.removeFromScene();
+      this.removeFromScene(true);
       this.destroy();
     }
     /**
@@ -6838,7 +6869,7 @@
      * @param renderer - {@link CameraRenderer} used to create this {@link Light}.
      * @param parameters - {@link LightParams | parameters} used to create this {@link Light}.
      */
-    constructor(renderer, { color = new Vec3(1), intensity = 1, index = 0, type = "lights" } = {}) {
+    constructor(renderer, { color = new Vec3(1), intensity = 1, type = "lights" } = {}) {
       super();
       /** @ignore */
       __privateAdd$f(this, _intensity$1, void 0);
@@ -6848,10 +6879,7 @@
        */
       __privateAdd$f(this, _intensityColor, void 0);
       this.type = type;
-      Object.defineProperty(this, "index", { value: index });
-      renderer = isCameraRenderer(renderer, this.constructor.name);
-      this.renderer = renderer;
-      this.setRendererBinding();
+      this.setRenderer(renderer);
       this.uuid = generateUUID();
       this.options = {
         color,
@@ -6863,7 +6891,27 @@
         () => this.onPropertyChanged("color", __privateGet$e(this, _intensityColor).copy(this.color).multiplyScalar(this.intensity))
       );
       this.intensity = intensity;
+    }
+    /**
+     * Set or reset this light {@link CameraRenderer}.
+     * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
+     */
+    setRenderer(renderer) {
+      const hasRenderer = !!this.renderer;
+      if (this.renderer) {
+        this.renderer.removeLight(this);
+      }
+      renderer = isCameraRenderer(renderer, this.constructor.name);
+      this.renderer = renderer;
+      this.index = this.renderer.lights.filter((light) => light.type === this.type).length;
+      if (this.index + 1 > this.renderer.lightsBindingParams[this.type].max) {
+        this.onMaxLightOverflow(this.type);
+      }
       this.renderer.addLight(this);
+      this.setRendererBinding();
+      if (hasRenderer) {
+        this.reset();
+      }
     }
     /**
      * Set or reset this {@link Light} {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
@@ -6918,8 +6966,8 @@
      * @param lightsType - {@link type} of light.
      */
     onMaxLightOverflow(lightsType) {
+      this.renderer.onMaxLightOverflow(lightsType);
       if (this.rendererBinding) {
-        this.renderer.onMaxLightOverflow(lightsType);
         this.rendererBinding = this.renderer.bindings[lightsType];
       }
     }
@@ -6948,14 +6996,7 @@
      */
     constructor(renderer, { color = new Vec3(1), intensity = 0.1 } = {}) {
       const type = "ambientLights";
-      renderer = renderer && renderer.renderer || renderer;
-      const index = renderer.lights.filter((light) => light.type === type).length;
-      super(renderer, { color, intensity, index, type });
-      if (this.index + 1 > this.renderer.lightsBindingParams[this.type].max) {
-        this.onMaxLightOverflow(this.type);
-      }
-      this.rendererBinding.inputs.count.value = this.index + 1;
-      this.rendererBinding.inputs.count.shouldUpdate = true;
+      super(renderer, { color, intensity, type });
     }
     // explicitly disable all kinds of transformations
     /** @ignore */
@@ -8053,6 +8094,20 @@ struct VSOutput {
       this.pipelineEntry = null;
     }
     /**
+     * Set or reset this {@link RenderMaterial} {@link renderer}. Will also update the renderer camera bind group if needed.
+     * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
+     */
+    setRenderer(renderer) {
+      if (this.useCameraBindGroup && this.renderer) {
+        this.renderer.cameraLightsBindGroup.consumers.delete(this.uuid);
+      }
+      super.setRenderer(renderer);
+      if (this.useCameraBindGroup) {
+        this.bindGroups[0] = this.renderer.cameraLightsBindGroup;
+        this.renderer.cameraLightsBindGroup.consumers.add(this.uuid);
+      }
+    }
+    /**
      * Set (or reset) the current {@link pipelineEntry}. Use the {@link Renderer#pipelineManager | renderer pipelineManager} to check whether we can get an already created {@link RenderPipelineEntry} from cache or if we should create a new one.
      */
     setPipelineEntry() {
@@ -8236,40 +8291,45 @@ fn getPCFShadowContribution(index: i32, worldPosition: vec3f, depthTexture: text
     shadowCoords.z
   );
   
-  // Percentage-closer filtering. Sample texels in the region
-  // to smooth the result.
   var visibility = 0.0;
-  
-  let size: vec2f = vec2f(textureDimensions(depthTexture).xy);
-  
-  let texelSize: vec2f = 1.0 / size;
-  
-  let sampleCount: i32 = directionalShadow.pcfSamples;
-  let maxSamples: f32 = f32(sampleCount) - 1.0;
-  
-  for (var x = 0; x < sampleCount; x++) {
-    for (var y = 0; y < sampleCount; y++) {
-      let offset = texelSize * vec2(
-        f32(x) - maxSamples * 0.5,
-        f32(y) - maxSamples * 0.5
-      );
-      
-      visibility += textureSampleCompare(
-        depthTexture,
-        depthComparisonSampler,
-        shadowCoords.xy + offset,
-        shadowCoords.z - directionalShadow.bias
-      );
-    }
-  }
-  visibility /= f32(sampleCount * sampleCount);
-  
-  visibility = clamp(visibility, 1.0 - clamp(directionalShadow.intensity, 0.0, 1.0), 1.0);
   
   let inFrustum: bool = shadowCoords.x >= 0.0 && shadowCoords.x <= 1.0 && shadowCoords.y >= 0.0 && shadowCoords.y <= 1.0;
   let frustumTest: bool = inFrustum && shadowCoords.z <= 1.0;
   
-  return select(1.0, visibility, frustumTest);
+  if(frustumTest) {
+    // Percentage-closer filtering. Sample texels in the region
+    // to smooth the result.
+    let size: vec2f = vec2f(textureDimensions(depthTexture).xy);
+  
+    let texelSize: vec2f = 1.0 / size;
+    
+    let sampleCount: i32 = directionalShadow.pcfSamples;
+    let maxSamples: f32 = f32(sampleCount) - 1.0;
+  
+    for (var x = 0; x < sampleCount; x++) {
+      for (var y = 0; y < sampleCount; y++) {
+        let offset = texelSize * vec2(
+          f32(x) - maxSamples * 0.5,
+          f32(y) - maxSamples * 0.5
+        );
+        
+        visibility += textureSampleCompareLevel(
+          depthTexture,
+          depthComparisonSampler,
+          shadowCoords.xy + offset,
+          shadowCoords.z - directionalShadow.bias
+        );
+      }
+    }
+    visibility /= f32(sampleCount * sampleCount);
+    
+    visibility = clamp(visibility, 1.0 - clamp(directionalShadow.intensity, 0.0, 1.0), 1.0);
+  }
+  else {
+    visibility = 1.0;
+  }
+  
+  return visibility;
 }
 `
   );
@@ -8277,21 +8337,29 @@ fn getPCFShadowContribution(index: i32, worldPosition: vec3f, depthTexture: text
     const directionalLights = renderer.shadowCastingLights.filter(
       (light) => light.type === "directionalLights"
     );
+    const minDirectionalLights = Math.max(renderer.lightsBindingParams.directionalLights.max, 1);
     return (
       /* wgsl */
       `
-fn getPCFDirectionalShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
-      renderer.lightsBindingParams.directionalLights.max,
-      1
-    )}> {
-  var directionalShadowContribution: array<f32, ${Math.max(renderer.lightsBindingParams.directionalLights.max, 1)}>;
+fn getPCFDirectionalShadows(worldPosition: vec3f) -> array<f32, ${minDirectionalLights}> {
+  var directionalShadowContribution: array<f32, ${minDirectionalLights}>;
   
   var lightDirection: vec3f;
   
   ${directionalLights.map((light, index) => {
       return `lightDirection = worldPosition - directionalLights.elements[${index}].direction;
       
-      ${light.shadow.isActive ? `directionalShadowContribution[${index}] = select( 1.0, getPCFShadowContribution(${index}, worldPosition, shadowDepthTexture${index}), directionalShadows.directionalShadowsElements[${index}].isActive > 0);` : ""}`;
+      ${light.shadow.isActive ? `
+      if(directionalShadows.directionalShadowsElements[${index}].isActive > 0) {
+        directionalShadowContribution[${index}] = getPCFShadowContribution(
+          ${index},
+          worldPosition,
+          shadowDepthTexture${index}
+        );
+      } else {
+        directionalShadowContribution[${index}] = 1.0;
+      }
+          ` : `directionalShadowContribution[${index}] = 1.0;`}`;
     }).join("\n")}
   
   return directionalShadowContribution;
@@ -8381,7 +8449,7 @@ fn getPCFPointShadowContribution(index: i32, shadowPosition: vec4f, depthCubeTex
           f32(z) - maxSamples * 0.5
         );
 
-        closestDepth = textureSampleCompare(
+        closestDepth = textureSampleCompareLevel(
           depthCubeTexture,
           depthComparisonSampler,
           shadowPosition.xyz + offset,
@@ -8389,9 +8457,8 @@ fn getPCFPointShadowContribution(index: i32, shadowPosition: vec4f, depthCubeTex
         );
 
         closestDepth *= cameraRange;
-        if(currentDepth <= closestDepth) {
-          visibility += 1.0;
-        }
+
+        visibility += select(0.0, 1.0, currentDepth <= closestDepth);
       }
     }
   }
@@ -8405,21 +8472,34 @@ fn getPCFPointShadowContribution(index: i32, shadowPosition: vec4f, depthCubeTex
   );
   const getPCFPointShadows = (renderer) => {
     const pointLights = renderer.shadowCastingLights.filter((light) => light.type === "pointLights");
+    const minPointLights = Math.max(renderer.lightsBindingParams.pointLights.max, 1);
     return (
       /* wgsl */
       `
-fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
-      renderer.lightsBindingParams.pointLights.max,
-      1
-    )}> {
-  var pointShadowContribution: array<f32, ${Math.max(renderer.lightsBindingParams.pointLights.max, 1)}>;
+fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
+  var pointShadowContribution: array<f32, ${minPointLights}>;
   
   var lightDirection: vec3f;
+  var lightDistance: f32;
+  var lightColor: vec3f;
   
   ${pointLights.map((light, index) => {
       return `lightDirection = pointLights.elements[${index}].position - worldPosition;
       
-      ${light.shadow.isActive ? `pointShadowContribution[${index}] = select( 1.0, getPCFPointShadowContribution(${index}, vec4(lightDirection, length(lightDirection)), pointShadowCubeDepthTexture${index}), pointShadows.pointShadowsElements[${index}].isActive > 0);` : ""}`;
+      lightDistance = length(lightDirection);
+      lightColor = pointLights.elements[${index}].color * rangeAttenuation(pointLights.elements[${index}].range, lightDistance);
+      
+      ${light.shadow.isActive ? `
+      if(pointShadows.pointShadowsElements[${index}].isActive > 0 && length(lightColor) > 0.0001) {
+        pointShadowContribution[${index}] = getPCFPointShadowContribution(
+          ${index},
+          vec4(lightDirection, length(lightDirection)),
+          pointShadowCubeDepthTexture${index}
+        );
+      } else {
+        pointShadowContribution[${index}] = 1.0;
+      }
+            ` : `pointShadowContribution[${index}] = 1.0;`}`;
     }).join("\n")}
   
   return pointShadowContribution;
@@ -8443,9 +8523,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
   const applyPointShadows = (
     /* wgsl */
     `
-    if(directLight.visible) {
-      directLight.color *= pointShadows[i];
-    }
+    directLight.color *= pointShadows[i];
 `
   );
 
@@ -8540,9 +8618,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
       __privateAdd$d(this, _depthMaterials, void 0);
       /** @ignore */
       __privateAdd$d(this, _depthPassTaskID, void 0);
-      renderer = isCameraRenderer(renderer, this.constructor.name);
-      this.renderer = renderer;
-      this.rendererBinding = null;
+      this.setRenderer(renderer);
       this.light = light;
       this.index = this.light.index;
       this.options = {
@@ -8563,6 +8639,22 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
       this.isActive = false;
     }
     /**
+     * Set or reset this shadow {@link CameraRenderer}.
+     * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
+     */
+    setRenderer(renderer) {
+      renderer = isCameraRenderer(renderer, this.constructor.name);
+      this.renderer = renderer;
+      this.setRendererBinding();
+      __privateGet$c(this, _depthMaterials)?.forEach((depthMaterial) => {
+        depthMaterial.setRenderer(this.renderer);
+      });
+    }
+    /** @ignore */
+    setRendererBinding() {
+      this.rendererBinding = null;
+    }
+    /**
      * Set the parameters and start casting shadows by setting the {@link isActive} setter to `true`.<br>
      * Called internally by the associated {@link core/lights/Light.Light | Light} if any shadow parameters are specified when creating it. Can also be called directly.
      * @param parameters - parameters to use for this {@link Shadow}.
@@ -8571,20 +8663,15 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
       __privateMethod$4(this, _setParameters, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
       this.isActive = true;
     }
-    /** @ignore */
-    setRendererBinding() {
-    }
     /**
      * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link core/lights/Light.Light | lights} has been overflowed.
      */
     reset() {
-      if (this.isActive) {
-        this.onPropertyChanged("isActive", 1);
-        this.onPropertyChanged("intensity", this.intensity);
-        this.onPropertyChanged("bias", this.bias);
-        this.onPropertyChanged("normalBias", this.normalBias);
-        this.onPropertyChanged("pcfSamples", this.pcfSamples);
-      }
+      this.onPropertyChanged("isActive", this.isActive ? 1 : 0);
+      this.onPropertyChanged("intensity", this.intensity);
+      this.onPropertyChanged("bias", this.bias);
+      this.onPropertyChanged("normalBias", this.normalBias);
+      this.onPropertyChanged("pcfSamples", this.pcfSamples);
     }
     /**
      * Get whether this {@link Shadow} is actually casting shadows.
@@ -8720,7 +8807,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
      */
     createDepthTexture() {
       this.depthTexture = new Texture(this.renderer, {
-        label: "Shadow depth texture " + this.index,
+        label: `${this.constructor.name} (index: ${this.light.index}) depth texture`,
         name: "shadowDepthTexture" + this.index,
         type: "depth",
         format: this.depthTextureFormat,
@@ -8833,9 +8920,13 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
       renderBundles.clear();
       this.renderer.pipelineManager.resetCurrentPipeline();
       const depthPass = commandEncoder.beginRenderPass(this.depthPassTarget.renderPass.descriptor);
+      if (!this.renderer.production)
+        depthPass.pushDebugGroup(`${this.constructor.name} (index: ${this.index}): depth pass`);
       this.meshes.forEach((mesh) => {
         mesh.render(depthPass);
       });
+      if (!this.renderer.production)
+        depthPass.popDebugGroup();
       depthPass.end();
     }
     /**
@@ -8890,6 +8981,8 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
      * @param parameters - Optional {@link RenderMaterialParams | parameters} to use for the depth material.
      */
     addShadowCastingMesh(mesh, parameters = {}) {
+      if (this.meshes.get(mesh.uuid))
+        return;
       mesh.options.castShadows = true;
       __privateGet$c(this, _materials).set(mesh.uuid, mesh.material);
       parameters = this.patchShadowCastingMeshParams(mesh, parameters);
@@ -8900,7 +8993,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
       __privateGet$c(this, _depthMaterials).set(
         mesh.uuid,
         new RenderMaterial(this.renderer, {
-          label: mesh.options.label + " depth render material",
+          label: `${this.constructor.name} (index: ${this.index}) ${mesh.options.label} depth render material`,
           ...parameters
         })
       );
@@ -9029,7 +9122,6 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
         ...this.options,
         camera
       };
-      this.setRendererBinding();
       this.camera = {
         projectionMatrix: new Mat4(),
         viewMatrix: new Mat4(),
@@ -9156,9 +9248,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
       shadow = null
     } = {}) {
       const type = "directionalLights";
-      renderer = renderer && renderer.renderer || renderer;
-      const index = renderer.lights.filter((light) => light.type === type).length;
-      super(renderer, { color, intensity, index, type });
+      super(renderer, { color, intensity, type });
       /** @ignore */
       __privateAdd$c(this, _actualPosition$1, void 0);
       /**
@@ -9178,11 +9268,6 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
       this.target.onChange(() => this.setDirection());
       this.position.copy(position);
       this.parent = this.renderer.scene;
-      if (this.index + 1 > this.renderer.lightsBindingParams[this.type].max) {
-        this.onMaxLightOverflow(this.type);
-      }
-      this.rendererBinding.inputs.count.value = this.index + 1;
-      this.rendererBinding.inputs.count.shouldUpdate = true;
       this.shadow = new DirectionalShadow(this.renderer, {
         autoRender: false,
         // will be set by calling cast()
@@ -9191,6 +9276,14 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
       if (shadow) {
         this.shadow.cast(shadow);
       }
+    }
+    /**
+     * Set or reset this {@link DirectionalLight} {@link CameraRenderer}.
+     * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
+     */
+    setRenderer(renderer) {
+      this.shadow?.setRenderer(renderer);
+      super.setRenderer(renderer);
     }
     /**
      * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of {@link DirectionalLight} has been overflowed.
@@ -9324,7 +9417,6 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
         ...this.options,
         camera
       };
-      this.setRendererBinding();
       this.cubeDirections = [
         new Vec3(-1, 0, 0),
         new Vec3(1, 0, 0),
@@ -9399,10 +9491,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
     reset() {
       this.setRendererBinding();
       super.reset();
-      this.onPropertyChanged("cameraNear", this.camera.near);
-      this.onPropertyChanged("cameraFar", this.camera.far);
-      this.onPropertyChanged("projectionMatrix", this.camera.projectionMatrix);
-      this.updateViewMatrices();
+      this.updateProjectionMatrix();
     }
     /**
      * Update the {@link PointShadow#camera.projectionMatrix | camera perspective projection matrix} and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
@@ -9456,7 +9545,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
     createDepthTexture() {
       const maxSize = Math.max(this.depthTextureSize.x, this.depthTextureSize.y);
       this.depthTexture = new Texture(this.renderer, {
-        label: "Point shadow cube depth texture " + this.index,
+        label: `${this.constructor.name} (index: ${this.index}) depth texture`,
         name: "pointShadowCubeDepthTexture" + this.index,
         type: "depth",
         format: this.depthTextureFormat,
@@ -9494,9 +9583,14 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
         () => {
           if (!this.meshes.size)
             return;
+          this.renderer.setCameraBindGroup();
           this.useDepthMaterials();
           for (let i = 0; i < 6; i++) {
             const commandEncoder = this.renderer.device.createCommandEncoder();
+            if (!this.renderer.production)
+              commandEncoder.pushDebugGroup(
+                `${this.constructor.name} (index: ${this.index}): depth pass command encoder for face ${i}`
+              );
             this.depthPassTarget.renderPass.setRenderPassDescriptor(
               this.depthTexture.texture.createView({
                 label: this.depthTexture.texture.label + " cube face view " + i,
@@ -9508,6 +9602,8 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
             this.rendererBinding.options.bindings[this.index].inputs.face.value = i;
             this.renderer.cameraLightsBindGroup.update();
             this.renderDepthPass(commandEncoder);
+            if (!this.renderer.production)
+              commandEncoder.popDebugGroup();
             const commandBuffer = commandEncoder.finish();
             this.renderer.device.queue.submit([commandBuffer]);
           }
@@ -9570,9 +9666,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
      */
     constructor(renderer, { color = new Vec3(1), intensity = 1, position = new Vec3(), range = 0, shadow = null } = {}) {
       const type = "pointLights";
-      renderer = renderer && renderer.renderer || renderer;
-      const index = renderer.lights.filter((light) => light.type === type).length;
-      super(renderer, { color, intensity, index, type });
+      super(renderer, { color, intensity, type });
       /** @ignore */
       __privateAdd$a(this, _range, void 0);
       /** @ignore */
@@ -9587,11 +9681,6 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
       this.position.copy(position);
       this.range = range;
       this.parent = this.renderer.scene;
-      if (this.index + 1 > this.renderer.lightsBindingParams[this.type].max) {
-        this.onMaxLightOverflow(this.type);
-      }
-      this.rendererBinding.inputs.count.value = this.index + 1;
-      this.rendererBinding.inputs.count.shouldUpdate = true;
       this.shadow = new PointShadow(this.renderer, {
         autoRender: false,
         // will be set by calling cast()
@@ -9600,6 +9689,16 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
       if (shadow) {
         this.shadow.cast(shadow);
       }
+    }
+    /**
+     * Set or reset this {@link PointLight} {@link CameraRenderer}.
+     * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
+     */
+    setRenderer(renderer) {
+      if (this.shadow) {
+        this.shadow.setRenderer(renderer);
+      }
+      super.setRenderer(renderer);
     }
     /**
      * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of {@link PointLight} has been overflowed.
@@ -9849,6 +9948,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
           );
           return;
         }
+        this.material?.setRenderer(renderer);
         const oldRenderer = this.renderer;
         this.removeFromScene(true);
         this.renderer = renderer;
@@ -11027,6 +11127,21 @@ struct VSOutput {
           });
         }
         this.setDOMFrustum();
+      }
+      /**
+       * Set or reset this Mesh {@link renderer}.
+       * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
+       */
+      setRenderer(renderer) {
+        super.setRenderer(renderer);
+        this.camera = this.renderer.camera;
+        if (this.options.castShadows) {
+          this.renderer.shadowCastingLights.forEach((light) => {
+            if (light.shadow.isActive) {
+              light.shadow.addShadowCastingMesh(this);
+            }
+          });
+        }
       }
       /**
        * Assign or remove a {@link RenderBundle} to this Mesh.
@@ -12231,9 +12346,11 @@ ${this.shaders.compute.head}`;
       const swapChainTexture = renderPassEntry.renderPass.updateView(renderPassEntry.renderTexture?.texture);
       renderPassEntry.onBeforeRenderPass && renderPassEntry.onBeforeRenderPass(commandEncoder, swapChainTexture);
       const pass = commandEncoder.beginRenderPass(renderPassEntry.renderPass.descriptor);
-      !this.renderer.production && pass.pushDebugGroup(
-        renderPassEntry.element ? `${renderPassEntry.element.options.label} render pass using ${renderPassEntry.renderPass.options.label} descriptor` : `Render stack pass using ${renderPassEntry.renderPass.options.label}${renderPassEntry.renderTexture ? " onto " + renderPassEntry.renderTexture.options.label : ""}`
-      );
+      if (!this.renderer.production) {
+        pass.pushDebugGroup(
+          renderPassEntry.element ? `${renderPassEntry.element.options.label} render pass using ${renderPassEntry.renderPass.options.label} descriptor` : `Render stack pass using ${renderPassEntry.renderPass.options.label}${renderPassEntry.renderTexture ? " onto " + renderPassEntry.renderTexture.options.label : ""}`
+        );
+      }
       if (renderPassEntry.element) {
         if (renderPassEntry.element.renderBundle) {
           renderPassEntry.element.renderBundle.render(pass);
@@ -12257,7 +12374,8 @@ ${this.shaders.compute.head}`;
           }
         }
       }
-      !this.renderer.production && pass.popDebugGroup();
+      if (!this.renderer.production)
+        pass.popDebugGroup();
       pass.end();
       renderPassEntry.onAfterRenderPass && renderPassEntry.onAfterRenderPass(commandEncoder, swapChainTexture);
       this.renderer.pipelineManager.resetCurrentPipeline();
@@ -12286,7 +12404,11 @@ ${this.shaders.compute.head}`;
     render(commandEncoder) {
       for (const computePass of this.computePassEntries) {
         const pass = commandEncoder.beginComputePass();
+        if (!this.renderer.production)
+          pass.pushDebugGroup(`${computePass.options.label}: begin compute pass`);
         computePass.render(pass);
+        if (!this.renderer.production)
+          pass.popDebugGroup();
         pass.end();
         computePass.copyBufferToResult(commandEncoder);
         this.renderer.pipelineManager.resetCurrentPipeline();
@@ -12391,7 +12513,7 @@ ${this.shaders.compute.head}`;
      */
     constructor({
       deviceManager,
-      label = "Main renderer",
+      label,
       container,
       pixelRatio = 1,
       autoResize = true,
@@ -12414,8 +12536,13 @@ ${this.shaders.compute.head}`;
       };
       this.type = "GPURenderer";
       this.uuid = generateUUID();
-      if (!deviceManager) {
-        throwError(`GPURenderer (${label}): no device manager provided: ${deviceManager}`);
+      if (!deviceManager || deviceManager.constructor.name !== "GPUDeviceManager") {
+        throwError(
+          label ? `${label} (${this.type}): no device manager or wrong device manager provided: ${deviceManager}` : `${this.type}: no device manager or wrong device manager provided: ${deviceManager}`
+        );
+      }
+      if (!label) {
+        label = `${this.constructor.name}${deviceManager.renderers.length}`;
       }
       this.deviceManager = deviceManager;
       this.deviceManager.addRenderer(this);
@@ -12739,7 +12866,7 @@ ${this.shaders.compute.head}`;
     }) {
       if (!srcBuffer || !srcBuffer.GPUBuffer) {
         throwWarning(
-          `${this.type} (${this.options.label}): cannot copy to buffer because the source buffer has not been provided`
+          `${this.options.label} (${this.type}): cannot copy to buffer because the source buffer has not been provided`
         );
         return null;
       }
@@ -12756,13 +12883,13 @@ ${this.shaders.compute.head}`;
       }
       if (srcBuffer.GPUBuffer.mapState !== "unmapped") {
         throwWarning(
-          `${this.type} (${this.options.label}): Cannot copy from ${srcBuffer.GPUBuffer} because it is currently mapped`
+          `${this.options.label} (${this.type}): Cannot copy from ${srcBuffer.GPUBuffer} because it is currently mapped`
         );
         return;
       }
       if (dstBuffer.GPUBuffer.mapState !== "unmapped") {
         throwWarning(
-          `${this.type} (${this.options.label}): Cannot copy from ${dstBuffer.GPUBuffer} because it is currently mapped`
+          `${this.options.label} (${this.type}): Cannot copy from ${dstBuffer.GPUBuffer} because it is currently mapped`
         );
         return;
       }
@@ -13350,6 +13477,8 @@ ${this.shaders.compute.head}`;
      */
     addLight(light) {
       this.lights.push(light);
+      this.bindings[light.type].inputs.count.value++;
+      this.bindings[light.type].inputs.count.shouldUpdate = true;
     }
     /**
      * Remove a {@link Light} from the {@link lights} array.
@@ -13357,6 +13486,8 @@ ${this.shaders.compute.head}`;
      */
     removeLight(light) {
       this.lights = this.lights.filter((l) => l.uuid !== light.uuid);
+      this.bindings[light.type].inputs.count.value--;
+      this.bindings[light.type].inputs.count.shouldUpdate = true;
     }
     /**
      * Set the lights {@link BufferBinding} based on the {@link lightsBindingParams}.
@@ -13429,7 +13560,7 @@ ${this.shaders.compute.head}`;
       }).reduce((acc, binding) => {
         acc[binding.key] = {
           type: binding.type,
-          value: new Float32Array(this.lightsBindingParams[lightsType].max * binding.size)
+          value: new Float32Array(Math.max(this.lightsBindingParams[lightsType].max, 1) * binding.size)
         };
         return acc;
       }, {});
@@ -13455,12 +13586,14 @@ ${this.shaders.compute.head}`;
     onMaxLightOverflow(lightsType) {
       if (!this.production) {
         throwWarning(
-          `${this.type}: You are overflowing the current max lights count of ${this.lightsBindingParams[lightsType].max} for this type of lights: ${lightsType}. This should be avoided by setting a larger ${"max" + lightsType.charAt(0).toUpperCase() + lightsType.slice(1)} when instancing your ${this.type}.`
+          `${this.options.label} (${this.type}): You are overflowing the current max lights count of '${this.lightsBindingParams[lightsType].max}' for this type of lights: ${lightsType}. This should be avoided by setting a larger ${"max" + lightsType.charAt(0).toUpperCase() + lightsType.slice(1)} when instancing your ${this.type}.`
         );
       }
       this.lightsBindingParams[lightsType].max++;
       const oldLightBinding = this.cameraLightsBindGroup.getBindingByName(lightsType);
-      this.cameraLightsBindGroup.destroyBufferBinding(oldLightBinding);
+      if (oldLightBinding) {
+        this.cameraLightsBindGroup.destroyBufferBinding(oldLightBinding);
+      }
       this.setLightsTypeBinding(lightsType);
       const lightBindingIndex = this.cameraLightsBindGroup.bindings.findIndex((binding) => binding.name === lightsType);
       this.cameraLightsBindGroup.bindings[lightBindingIndex] = this.bindings[lightsType];
@@ -13525,7 +13658,7 @@ ${this.shaders.compute.head}`;
         bindingType: "storage",
         visibility: ["vertex", "fragment", "compute"],
         // TODO needed in compute?
-        bindings: Array.from(Array(this.lightsBindingParams[lightsType].max).keys()).map((i) => {
+        bindings: Array.from(Array(Math.max(1, this.lightsBindingParams[lightsType].max)).keys()).map((i) => {
           return binding.clone({
             ...binding.options,
             // clone struct with new arrays
@@ -13549,7 +13682,7 @@ ${this.shaders.compute.head}`;
      */
     setCameraLightsBindGroup() {
       this.cameraLightsBindGroup = new BindGroup(this, {
-        label: "Camera and lights uniform bind group",
+        label: this.options.label + ": Camera and lights uniform bind group",
         bindings: Object.keys(this.bindings).map((bindingName) => this.bindings[bindingName]).flat()
       });
       this.cameraLightsBindGroup.consumers.add(this.uuid);
@@ -14203,7 +14336,13 @@ ${this.shaders.compute.head}`;
         });
         this.updateBinding();
         this.renderer.pipelineManager.resetCurrentPipeline();
+        if (!this.renderer.production) {
+          pass.pushDebugGroup(`${this.options.label}: execute bundle`);
+        }
         pass.executeBundles([this.bundle]);
+        if (!this.renderer.production) {
+          pass.popDebugGroup();
+        }
         this.renderer.pipelineManager.resetCurrentPipeline();
         this.meshes.forEach((mesh) => {
           mesh.onAfterRenderPass();
@@ -14337,10 +14476,16 @@ ${this.shaders.compute.head}`;
       ...this.descriptor,
       label: this.options.label + " (encoder)"
     });
+    if (!this.renderer.production) {
+      this.encoder.pushDebugGroup(`${this.options.label}: create encoder`);
+    }
     this.meshes.forEach((mesh) => {
       mesh.material.render(this.encoder);
       mesh.geometry.render(this.encoder);
     });
+    if (!this.renderer.production) {
+      this.encoder.popDebugGroup();
+    }
     this.bundle = this.encoder.finish({ label: this.options.label + " (bundle)" });
     this.renderer.pipelineManager.resetCurrentPipeline();
   };
@@ -16004,7 +16149,7 @@ fn getIBL(
       this.createCurtainsRenderer({
         deviceManager: this.deviceManager,
         // TODO ...this.options?
-        label: this.options.label,
+        label: this.options.label || "GPUCurtains main GPUCurtainsRenderer",
         container: this.options.container,
         pixelRatio: this.options.pixelRatio,
         autoResize: this.options.autoResize,
@@ -16442,7 +16587,6 @@ fn getIBL(
         throwWarning("OrbitControls: cannot initialize without a camera.");
         return;
       }
-      this.camera = camera;
       __privateMethod$2(this, _setBaseParams, setBaseParams_fn).call(this, {
         target,
         enableZoom,
@@ -16458,14 +16602,22 @@ fn getIBL(
         enablePan,
         panSpeed
       });
+      this.element = element ?? (typeof window !== "undefined" ? window : null);
+      this.useCamera(camera);
+    }
+    /**
+     * Allow to set or reset this {@link OrbitControls#camera | OrbitControls camera}.
+     * @param camera - New {@link camera} to use.
+     */
+    useCamera(camera) {
+      this.camera = camera;
+      this.camera.position.onChange(() => {
+        this.camera.lookAt(this.target);
+      });
       __privateGet$2(this, _offset).copy(this.camera.position).sub(this.target);
       __privateGet$2(this, _spherical).radius = __privateGet$2(this, _offset).length();
       __privateGet$2(this, _spherical).theta = Math.atan2(__privateGet$2(this, _offset).x, __privateGet$2(this, _offset).z);
       __privateGet$2(this, _spherical).phi = Math.acos(Math.min(Math.max(__privateGet$2(this, _offset).y / __privateGet$2(this, _spherical).radius, -1), 1));
-      this.camera.position.onChange(() => {
-        this.camera.lookAt(this.target);
-      });
-      this.element = element ?? (typeof window !== "undefined" ? window : null);
       __privateMethod$2(this, _update, update_fn).call(this);
     }
     /**
