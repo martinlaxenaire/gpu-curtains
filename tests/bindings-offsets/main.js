@@ -346,22 +346,32 @@ window.addEventListener('load', async () => {
     },
     childrenBindings: [
       {
-        binding: new BufferBinding({
-          label: 'Shadows element',
-          name: 'shadowsElements',
-          bindingType: 'uniform',
-          visibility: ['vertex', 'fragment'],
-          struct: shadowStruct,
-        }),
+        binding: shadowBinding,
         count: 1,
         forceArray: true,
       },
     ],
   })
 
-  console.log(globalShadowBinding)
-
   debugBindings.push(globalShadowBinding)
+
+  const lightsShadowsBinding = new BufferBinding({
+    label: 'Lights shadows',
+    name: 'lightsShadows',
+    bindingType: 'storage',
+    childrenBindings: [
+      {
+        binding: directionalLightBinding,
+        count: 1,
+      },
+      {
+        binding: shadowBinding,
+        count: 3,
+      },
+    ],
+  })
+
+  debugBindings.push(lightsShadowsBinding)
 
   const multipleChildrenBinding = new BufferBinding({
     label: 'Multiple bindings children',

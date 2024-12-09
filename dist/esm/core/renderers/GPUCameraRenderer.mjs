@@ -352,35 +352,26 @@ class GPUCameraRenderer extends GPURenderer {
     const shadowsType = type + "Shadows";
     const struct = this.shadowsBindingsStruct[type];
     const label = type.charAt(0).toUpperCase() + type.slice(1) + " shadows";
-    const binding = new BufferBinding({
-      label: label + " element",
-      name: shadowsType + "Elements",
-      bindingType: "uniform",
-      visibility: ["vertex", "fragment"],
-      struct
-    });
     this.bindings[shadowsType] = new BufferBinding({
       label,
       name: shadowsType,
       bindingType: "storage",
       visibility: ["vertex", "fragment", "compute"],
       // TODO needed in compute?
-      bindings: Array.from(Array(Math.max(1, this.lightsBindingParams[lightsType].max)).keys()).map((i) => {
-        return binding.clone({
-          ...binding.options,
-          // clone struct with new arrays
-          struct: Object.keys(struct).reduce((acc, bindingKey) => {
-            const binding2 = struct[bindingKey];
-            return {
-              ...acc,
-              [bindingKey]: {
-                type: binding2.type,
-                value: Array.isArray(binding2.value) || ArrayBuffer.isView(binding2.value) ? new binding2.value.constructor(binding2.value.length) : binding2.value
-              }
-            };
-          }, {})
-        });
-      })
+      childrenBindings: [
+        {
+          binding: new BufferBinding({
+            label: label + " element",
+            name: shadowsType + "Elements",
+            bindingType: "uniform",
+            visibility: ["vertex", "fragment"],
+            struct
+          }),
+          count: Math.max(1, this.lightsBindingParams[lightsType].max),
+          forceArray: true
+          // needs to be iterable anyway!
+        }
+      ]
     });
   }
   /* CAMERA, LIGHTS & SHADOWS BIND GROUP */

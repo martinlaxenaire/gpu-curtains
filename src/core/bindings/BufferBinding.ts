@@ -1,5 +1,11 @@
 import { Binding, BindingParams, BufferBindingMemoryAccessType, BufferBindingType } from './Binding'
-import { getBindGroupLayoutBindingType, getBindingWGSLVarType, getBufferLayout, TypedArray } from './utils'
+import {
+  getBindGroupLayoutBindingType,
+  getBindingWGSLVarType,
+  getBufferLayout,
+  TypedArray,
+  TypedArrayConstructor,
+} from './utils'
 import { throwWarning, toCamelCase, toKebabCase } from '../../utils/utils'
 import { Vec2 } from '../../math/Vec2'
 import { Vec3 } from '../../math/Vec3'
@@ -9,7 +15,9 @@ import { BufferArrayElement } from './bufferElements/BufferArrayElement'
 import { BufferInterleavedArrayElement } from './bufferElements/BufferInterleavedArrayElement'
 import { Buffer, BufferParams } from '../buffers/Buffer'
 import { WritableBufferBinding, WritableBufferBindingParams } from './WritableBufferBinding'
-import { BufferBindingOffsetChild, BufferBindingOffsetChildParams } from './BufferBindingOffsetChild'
+import { Mat3 } from '../../math/Mat3'
+import { Mat4 } from '../../math/Mat4'
+import { Quat } from '../../math/Quat'
 
 /**
  * Defines a {@link BufferBinding} input object that can set a value and run a callback function when this happens
@@ -64,6 +72,14 @@ export interface BufferBindingParams extends BindingParams, BufferBindingBasePar
 
   /** Optional array of {@link BufferBindingChildrenBinding} to add to this {@link BufferBinding} to create complex `Struct` objects containing `Struct` {@link BufferBinding} children. */
   childrenBindings?: BufferBindingChildrenBinding[]
+
+  /** The minimum {@link GPUDevice} buffer offset alignment. */
+  minOffset?: number
+  /** Optional offset of the {@link BufferBinding} in the {@link BufferBinding#parent | parent BufferBinding} (as an index - not in bytes). */
+  offset?: number
+
+  /** The optional parent {@link BufferBinding} that will actually handle the {@link GPUBuffer}. */
+  parent?: BufferBinding
 }
 
 /** All allowed {@link BufferElement | buffer elements} */
@@ -72,11 +88,13 @@ export type AllowedBufferElement = BufferElement | BufferArrayElement | BufferIn
 /**
  * Used to format {@link BufferBindingParams#struct | uniforms or storages struct inputs} and create a single typed array that will hold all those inputs values. The array needs to be correctly padded depending on every value type, so it can be safely used as a GPUBuffer input.
  *
- * It will also create WGSL Structs and variables according to the BufferBindings inputs parameters.
+ * It will also create WGSL Structs and variables according to the {@link BufferBinding} inputs parameters.
  *
  * The WGSL structs and variables declaration may vary based on the input types, especially if there's one or more arrays involved (i.e. `array<f32>`, `array<vec3f>` etc.).
  *
  * It is possible to create complex WGSL structs with children structs by using the {@link BufferBindingParams#childrenBindings | childrenBindings} parameter.
+ *
+ * A {@link BufferBinding} can also have a {@link parent | parent BufferBinding}, in which case it won't create a GPUBuffer but use its parent GPUBuffer at the right offset. Useful to create a unique {@link BufferBinding} with a single GPUBuffer to handle multiple {@link BufferBinding} and update them with a single `writeBuffer` call.
  *
  * @example
  * ```javascript
@@ -121,6 +139,16 @@ export class BufferBinding extends Binding {
   /** Data view of our {@link arrayBuffer | array buffer} */
   arrayView: DataView
 
+  /** @ignore */
+  #parent: BufferBinding | null
+
+  /** {@link DataView} inside the {@link arrayBuffer | parent arrayBuffer} if set. */
+  parentView: DataView | null
+  /** Array of view set functions to use with the various {@link bufferElements} if the {@link parent} is set. */
+  viewSetFunctions: Array<
+    DataView['setInt32'] | DataView['setUint16'] | DataView['setUint32'] | DataView['setFloat32']
+  > | null
+
   /** The {@link Buffer} holding the {@link GPUBuffer}  */
   buffer: Buffer
 
@@ -145,6 +173,9 @@ export class BufferBinding extends Binding {
     usage = [],
     struct = {},
     childrenBindings = [],
+    parent = null,
+    minOffset = 256,
+    offset = 0,
   }: BufferBindingParams) {
     bindingType = bindingType ?? 'uniform'
 
@@ -157,6 +188,9 @@ export class BufferBinding extends Binding {
       usage,
       struct,
       childrenBindings,
+      parent,
+      minOffset,
+      offset,
     }
 
     this.cacheKey += `${useStruct},${access},`
@@ -168,6 +202,7 @@ export class BufferBinding extends Binding {
 
     this.bufferElements = []
     this.inputs = {}
+
     this.buffer = new Buffer()
 
     if (Object.keys(struct).length) {
@@ -175,70 +210,15 @@ export class BufferBinding extends Binding {
       this.setInputsAlignment()
     }
 
-    this.childrenBindings = []
-    if (childrenBindings && childrenBindings.length) {
-      const childrenArray = []
-      childrenBindings
-        .sort((a, b) => {
-          // put the children bindings array in the end
-          const countA = a.count ? Math.max(a.count) : a.forceArray ? 1 : 0
-          const countB = b.count ? Math.max(b.count) : b.forceArray ? 1 : 0
-          return countA - countB
-        })
-        .forEach((child) => {
-          if ((child.count && child.count > 1) || child.forceArray) {
-            childrenArray.push(child.binding)
-          }
-        })
-
-      if (childrenArray.length > 1) {
-        // remove first array element because we are going to keep it
-        childrenArray.shift()
-
-        throwWarning(
-          `BufferBinding: "${
-            this.label
-          }" contains multiple children bindings arrays. These children bindings cannot be added to the BufferBinding: "${childrenArray
-            .map((child) => child.label)
-            .join(', ')}"`
-        )
-
-        childrenArray.forEach((removedChildBinding) => {
-          childrenBindings = childrenBindings.filter((child) => child.binding.name !== removedChildBinding.name)
-        })
-      }
-
-      // update options
-      this.options.childrenBindings = childrenBindings
-
-      childrenBindings.forEach((child) => {
-        const count = child.count ? Math.max(1, child.count) : 1
-
-        this.cacheKey += `child(count:${count}):${child.binding.cacheKey}`
-
-        if (count <= 1) {
-          this.childrenBindings = [...this.childrenBindings, child.binding]
-        } else {
-          // multiple bindings?
-          // we need to clone them with fresh arrays
-          this.childrenBindings = [
-            ...this.childrenBindings,
-            Array.from(Array(Math.max(1, child.count || 1)).keys()).map((i) => {
-              return child.binding.clone({
-                ...child.binding.options,
-                // clone struct with new arrays
-                struct: BufferBinding.cloneStruct(child.binding.options.struct),
-              })
-            }),
-          ].flat()
-        }
-      })
-    }
+    this.setChildrenBindings(childrenBindings)
 
     if (Object.keys(struct).length || this.childrenBindings.length) {
       this.setBufferAttributes()
       this.setWGSLFragment()
     }
+
+    // parent
+    this.parent = parent
   }
 
   /**
@@ -252,11 +232,11 @@ export class BufferBinding extends Binding {
       let value: InputValue
 
       if (Array.isArray(binding.value) || ArrayBuffer.isView(binding.value)) {
-        value = value = new binding.value.constructor(binding.value.length)
+        value = new (<ArrayConstructor | TypedArrayConstructor>binding.value.constructor)(binding.value.length)
       } else if (typeof binding.value === 'number') {
         value = 0
       } else {
-        value = new binding.value.constructor()
+        value = new (<typeof Vec2 | typeof Vec3 | typeof Mat3 | typeof Mat4 | typeof Quat>binding.value.constructor)()
       }
 
       return {
@@ -270,17 +250,82 @@ export class BufferBinding extends Binding {
   }
 
   /**
-   * Get {@link GPUBindGroupLayoutEntry#buffer | bind group layout entry resource}
+   * Get the {@link BufferBinding} parent if any.
+   * @readonly
+   * @returns - The {@link BufferBinding} parent if any.
+   */
+  get parent(): BufferBinding {
+    return this.#parent
+  }
+
+  /**
+   * Set the new {@link BufferBinding} parent.
+   * @param value - New {@link BufferBinding} parent to set if any.
+   */
+  set parent(value: BufferBinding | null) {
+    if (!!value) {
+      this.parentView = new DataView(value.arrayBuffer, this.offset, this.getMinOffsetSize(this.arrayBufferSize))
+
+      this.viewSetFunctions = this.bufferElements.map((bufferElement) => {
+        switch (bufferElement.bufferLayout.View) {
+          case Int32Array:
+            return this.parentView.setInt32.bind(this.parentView) as DataView['setInt32']
+          case Uint16Array:
+            return this.parentView.setUint16.bind(this.parentView) as DataView['setUint16']
+          case Uint32Array:
+            return this.parentView.setUint32.bind(this.parentView) as DataView['setUint32']
+          case Float32Array:
+          default:
+            return this.parentView.setFloat32.bind(this.parentView) as DataView['setFloat32']
+        }
+      })
+
+      if (!this.parent && this.buffer.GPUBuffer) {
+        // if it has a GPU Buffer but no parent yet, destroy the buffer
+        this.buffer.destroy()
+      }
+    } else {
+      this.parentView = null
+      this.viewSetFunctions = null
+    }
+
+    this.#parent = value
+  }
+
+  /**
+   * Round the given size value to the nearest minimum {@link GPUDevice} buffer offset alignment.
+   * @param value - Size to round.
+   */
+  getMinOffsetSize(value: number): number {
+    return Math.ceil(value / this.options.minOffset) * this.options.minOffset
+  }
+
+  /**
+   * Get this {@link BufferBinding} offset in bytes inside the {@link arrayBuffer | parent arrayBuffer}.
+   * @readonly
+   * @returns - The offset in bytes inside the {@link arrayBuffer | parent arrayBuffer}
+   */
+  get offset(): number {
+    return this.getMinOffsetSize(this.options.offset * this.getMinOffsetSize(this.arrayBufferSize))
+  }
+
+  /**
+   * Get {@link GPUBindGroupLayoutEntry#buffer | bind group layout entry resource}.
    * @readonly
    */
   get resourceLayout(): {
     /** {@link GPUBindGroupLayout | bind group layout} resource */
     buffer: GPUBufferBindingLayout
+    /** Offset in bytes in the {@link parent} buffer if set. */
+    offset?: number
+    /** Size in bytes in the {@link parent} buffer if set. */
+    size?: number
   } {
     return {
       buffer: {
         type: getBindGroupLayoutBindingType(this),
       },
+      ...(this.parent && { offset: this.offset, size: this.arrayBufferSize }),
     }
   }
 
@@ -293,29 +338,36 @@ export class BufferBinding extends Binding {
   }
 
   /**
-   * Get {@link GPUBindGroupEntry#resource | bind group resource}
+   * Get {@link GPUBindGroupEntry#resource | bind group resource}.
    * @readonly
    */
   get resource(): {
     /** {@link GPUBindGroup | bind group} resource */
     buffer: GPUBuffer | null
+    /** Offset in bytes in the {@link parent} buffer if set. */
+    offset?: number
+    /** Size in bytes in the {@link parent} buffer if set. */
+    size?: number
   } {
-    return { buffer: this.buffer.GPUBuffer }
+    return {
+      buffer: this.parent ? this.parent.buffer.GPUBuffer : this.buffer.GPUBuffer,
+      ...(this.parent && { offset: this.offset, size: this.arrayBufferSize }),
+    }
   }
 
   /**
    * Clone this {@link BufferBinding} into a new one. Allows to skip buffer layout alignment computations.
    * @param params - params to use for cloning
    */
-  clone(params = {} as BufferBindingParams | WritableBufferBindingParams | BufferBindingOffsetChildParams): this {
-    let { struct, childrenBindings, ...defaultParams } = params
+  clone(params = {} as BufferBindingParams | WritableBufferBindingParams): BufferBinding | WritableBufferBinding {
+    let { struct, childrenBindings, parent, ...defaultParams } = params
 
     // patch default params with this buffer bindings options
     const { label, name, bindingType, visibility, useStruct, access, usage } = this.options
     defaultParams = { ...{ label, name, bindingType, visibility, useStruct, access, usage }, ...defaultParams }
 
     // create an empty shell
-    const bufferBindingCopy = new (this.constructor as typeof BufferBinding)(defaultParams)
+    const bufferBindingCopy = new (<typeof BufferBinding | typeof WritableBufferBinding>this.constructor)(defaultParams)
 
     // create the reactive structs
     struct = struct || BufferBinding.cloneStruct(this.options.struct)
@@ -336,7 +388,7 @@ export class BufferBinding extends Binding {
 
     // now set the buffer elements alignment from this buffer binding
     this.bufferElements.forEach((bufferElement: BufferArrayElement) => {
-      const newBufferElement = new (bufferElement.constructor as typeof BufferArrayElement)({
+      const newBufferElement = new (<typeof BufferArrayElement>bufferElement.constructor)({
         name: bufferElement.name,
         key: bufferElement.key,
         type: bufferElement.type,
@@ -407,6 +459,10 @@ export class BufferBinding extends Binding {
       bufferBindingCopy.setWGSLFragment()
     }
 
+    if (parent) {
+      bufferBindingCopy.parent = parent
+    }
+
     // update
     bufferBindingCopy.shouldUpdate = bufferBindingCopy.arrayBufferSize > 0
 
@@ -459,6 +515,68 @@ export class BufferBinding extends Binding {
       this.inputs[bindingKey] = binding
 
       this.cacheKey += `${bindingKey},${bindings[bindingKey].type},`
+    }
+  }
+
+  /**
+   * Set this {@link BufferBinding} optional {@link childrenBindings}.
+   * @param childrenBindings - Array of {@link BufferBindingChildrenBinding} to use as {@link childrenBindings}.
+   */
+  setChildrenBindings(childrenBindings: BufferBindingChildrenBinding[]) {
+    this.childrenBindings = []
+
+    if (childrenBindings && childrenBindings.length) {
+      const childrenArray = []
+      childrenBindings
+        .sort((a, b) => {
+          // put the children bindings array in the end
+          const countA = a.count ? Math.max(a.count) : a.forceArray ? 1 : 0
+          const countB = b.count ? Math.max(b.count) : b.forceArray ? 1 : 0
+          return countA - countB
+        })
+        .forEach((child) => {
+          if ((child.count && child.count > 1) || child.forceArray) {
+            childrenArray.push(child.binding)
+          }
+        })
+
+      if (childrenArray.length > 1) {
+        // remove first array element because we are going to keep it
+        childrenArray.shift()
+
+        throwWarning(
+          `BufferBinding: "${
+            this.label
+          }" contains multiple children bindings arrays. These children bindings cannot be added to the BufferBinding: "${childrenArray
+            .map((child) => child.label)
+            .join(', ')}"`
+        )
+
+        childrenArray.forEach((removedChildBinding) => {
+          childrenBindings = childrenBindings.filter((child) => child.binding.name !== removedChildBinding.name)
+        })
+      }
+
+      // update options
+      this.options.childrenBindings = childrenBindings
+
+      childrenBindings.forEach((child) => {
+        const count = child.count ? Math.max(1, child.count) : 1
+
+        this.cacheKey += `child(count:${count}):${child.binding.cacheKey}`
+
+        // clone them with fresh arrays
+        this.childrenBindings = [
+          ...this.childrenBindings,
+          Array.from(Array(count).keys()).map((i) => {
+            return child.binding.clone({
+              ...child.binding.options,
+              // clone struct with new arrays
+              struct: BufferBinding.cloneStruct(child.binding.options.struct),
+            })
+          }),
+        ].flat()
+      })
     }
   }
 
@@ -800,6 +918,22 @@ export class BufferBinding extends Binding {
         this.shouldUpdate = true
       }
     })
+
+    if (this.shouldUpdate && this.parent && this.viewSetFunctions) {
+      let index = 0
+      this.bufferElements.forEach((bufferElement, i) => {
+        bufferElement.view.forEach((value) => {
+          this.viewSetFunctions[i](index * bufferElement.view.BYTES_PER_ELEMENT, value, true)
+          index++
+        })
+      })
+
+      this.parent.shouldUpdate = true
+
+      // reset the should update flag
+      // this binding GPU buffer is not going to be used anyway
+      this.shouldUpdate = false
+    }
   }
 
   /**

@@ -426,7 +426,10 @@ export class GPUCameraRenderer extends GPURenderer {
     if (lightsType === 'directionalLights' || lightsType === 'pointLights') {
       const shadowsType = (lightsType.replace('Lights', '') + 'Shadows') as ShadowsType
       const oldShadowsBinding = this.cameraLightsBindGroup.getBindingByName(shadowsType)
-      this.cameraLightsBindGroup.destroyBufferBinding(oldShadowsBinding as BufferBinding)
+      if (oldShadowsBinding) {
+        this.cameraLightsBindGroup.destroyBufferBinding(oldShadowsBinding as BufferBinding)
+      }
+
       this.setShadowsTypeBinding(lightsType)
 
       const shadowsBindingIndex = this.cameraLightsBindGroup.bindings.findIndex(
@@ -437,6 +440,10 @@ export class GPUCameraRenderer extends GPURenderer {
 
     this.cameraLightsBindGroup.resetEntries()
     this.cameraLightsBindGroup.createBindGroup()
+
+    if (this.lightsBindingParams[lightsType].max === 1) {
+      this.cameraLightsBindGroup.needsPipelineFlush = true
+    }
 
     this.lights.forEach((light) => {
       if (light.type === lightsType) {
@@ -619,6 +626,10 @@ export class GPUCameraRenderer extends GPURenderer {
     }
 
     super.render(commandEncoder)
+
+    if (this.cameraLightsBindGroup) {
+      this.cameraLightsBindGroup.needsPipelineFlush = false
+    }
   }
 
   /**

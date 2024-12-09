@@ -38,7 +38,7 @@ window.addEventListener('load', async () => {
     label: 'Right renderer',
     container: document.querySelector('#right-canvas'),
     lights: {
-      maxPointLights: 0,
+      maxDirectionalLights: 0,
     },
   })
 

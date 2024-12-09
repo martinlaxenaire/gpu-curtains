@@ -11,7 +11,6 @@ import { Mat4 } from '../math/Mat4';
 import { Quat } from '../math/Quat';
 import { TypedArray, WGSLVariableType } from '../core/bindings/utils';
 import { Mat3 } from '../math/Mat3';
-import { BufferBindingOffsetChild } from '../core/bindings/BufferBindingOffsetChild';
 /**
  * Defines all kind of possible input value types
  */
@@ -43,7 +42,7 @@ export type ReadWriteInputBindings = Record<string, BufferBindingParams | Writab
 /**
  * Defines a specific type of {@link core/bindings/Binding.Binding | binding} that handles an {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | array buffer} to be sent to a {@link GPUBuffer}
  */
-export type BindGroupBufferBindingElement = BufferBinding | WritableBufferBinding | BufferBindingOffsetChild;
+export type BindGroupBufferBindingElement = BufferBinding | WritableBufferBinding;
 /**
  * Defines all kind of possible textures/ samplers {@link core/bindings/Binding.Binding | Binding}
  */

@@ -320,11 +320,11 @@ class Shadow {
     if (this.rendererBinding) {
       if (value instanceof Mat4) {
         for (let i = 0; i < value.elements.length; i++) {
-          this.rendererBinding.options.bindings[this.index].inputs[propertyKey].value[i] = value.elements[i];
+          this.rendererBinding.childrenBindings[this.index].inputs[propertyKey].value[i] = value.elements[i];
         }
-        this.rendererBinding.options.bindings[this.index].inputs[propertyKey].shouldUpdate = true;
+        this.rendererBinding.childrenBindings[this.index].inputs[propertyKey].shouldUpdate = true;
       } else {
-        this.rendererBinding.options.bindings[this.index].inputs[propertyKey].value = value;
+        this.rendererBinding.childrenBindings[this.index].inputs[propertyKey].value = value;
       }
       this.renderer.shouldUpdateCameraLightsBindGroup();
     }

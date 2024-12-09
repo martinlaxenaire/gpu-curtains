@@ -21,8 +21,8 @@ import {
   getPCFPointShadows,
   getPCFShadowContribution,
 } from '../../shaders/chunks/shading/shadows'
-import { BufferBindingOffsetChild, BufferBindingOffsetChildParams } from '../../bindings/BufferBindingOffsetChild'
 import { RenderBundle } from '../../renderPasses/RenderBundle'
+import { BufferBinding, BufferBindingParams } from '../../bindings/BufferBinding'
 
 /** Define all possible frustum culling checks. */
 export type FrustumCullingCheck = 'OBB' | 'sphere' | false
@@ -111,7 +111,7 @@ export declare class ProjectedMeshBaseClass extends MeshBaseClass {
   setRenderBundle(renderBundle?: RenderBundle | null, updateScene?: boolean): void
 
   /**
-   * Reset the {@link BufferBindingOffsetChild | matrices buffer binding} parent and offset and tell its bind group to update.
+   * Reset the {@link BufferBinding | matrices buffer binding} parent and offset and tell its bind group to update.
    * @param offset - New offset to use in the parent {@link RenderBundle#binding | RenderBundle binding}.
    */
   patchRenderBundleBinding(offset?: number): void
@@ -317,7 +317,7 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
 
       const hasRenderBundle = !!this.renderBundle
       const bindGroup = this.material.getBindGroupByBindingName('matrices')
-      const matrices = this.material.getBufferBindingByName('matrices') as BufferBindingOffsetChild
+      const matrices = this.material.getBufferBindingByName('matrices') as BufferBinding
 
       if (this.renderBundle && !renderBundle && matrices.parent) {
         // if we did have a render bundle, reset the parent and bind group
@@ -343,11 +343,11 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
     }
 
     /**
-     * Reset the {@link BufferBindingOffsetChild | matrices buffer binding} parent and offset and tell its bind group to update.
+     * Reset the {@link BufferBinding | matrices buffer binding} parent and offset and tell its bind group to update.
      * @param offset - New offset to use in the parent {@link RenderBundle#binding | RenderBundle binding}.
      */
     patchRenderBundleBinding(offset = 0) {
-      const matrices = this.material.getBufferBindingByName('matrices') as BufferBindingOffsetChild
+      const matrices = this.material.getBufferBindingByName('matrices') as BufferBinding
 
       matrices.options.offset = offset
       matrices.parent = this.renderBundle.binding
@@ -495,7 +495,7 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
       // add matrices uniforms
       // https://threejs.org/docs/#api/en/renderers/webgl/WebGLProgram
       // https://doc.babylonjs.com/features/featuresDeepDive/materials/shaders/introToShaders#built-in-variables
-      const matricesUniforms: BufferBindingOffsetChildParams = {
+      const matricesUniforms: BufferBindingParams = {
         label: 'Matrices',
         name: 'matrices',
         visibility: ['vertex'],
@@ -523,7 +523,7 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
         matricesUniforms.offset = this.options.renderBundle.meshes.size
       }
 
-      const meshTransformationBinding = new BufferBindingOffsetChild(matricesUniforms)
+      const meshTransformationBinding = new BufferBinding(matricesUniforms)
 
       if (!meshParameters.bindings) meshParameters.bindings = []
       meshParameters.bindings.unshift(meshTransformationBinding)

@@ -71,7 +71,7 @@ export declare class ProjectedMeshBaseClass extends MeshBaseClass {
      */
     setRenderBundle(renderBundle?: RenderBundle | null, updateScene?: boolean): void;
     /**
-     * Reset the {@link BufferBindingOffsetChild | matrices buffer binding} parent and offset and tell its bind group to update.
+     * Reset the {@link BufferBinding | matrices buffer binding} parent and offset and tell its bind group to update.
      * @param offset - New offset to use in the parent {@link RenderBundle#binding | RenderBundle binding}.
      */
     patchRenderBundleBinding(offset?: number): void;
