@@ -41,7 +41,7 @@ window.addEventListener('load', async () => {
 
   const renderBundle = new RenderBundle(gpuCameraRenderer, {
     label: 'Basic render bundle',
-    size: nbMeshes,
+    size: nbMeshes - 1,
     useBuffer: true,
     renderOrder: 1,
     //transparent: true,
@@ -64,7 +64,7 @@ window.addEventListener('load', async () => {
     const mesh = new Mesh(gpuCameraRenderer, {
       label: 'Cube ' + i,
       geometry: new BoxGeometry(),
-      renderBundle,
+      renderBundle: i !== 1 ? renderBundle : null,
       transparent: i > 1,
       shaders: {
         fragment: {
@@ -234,7 +234,9 @@ window.addEventListener('load', async () => {
   })
 
   setTimeout(() => {
-    // renderBundle.removeMesh(meshes[1])
+    //renderBundle.removeMesh(meshes[1])
+    renderBundle.size = 4
+    meshes[1].setRenderBundle(renderBundle)
     // console.log(renderBundle)
     //meshes[1].remove()
 

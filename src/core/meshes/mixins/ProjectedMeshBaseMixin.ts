@@ -312,14 +312,14 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
      * @param updateScene - Whether to remove and then re-add the Mesh from the {@link core/scenes/Scene.Scene | Scene} or not.
      */
     setRenderBundle(renderBundle: RenderBundle | null, updateScene = true) {
+      // same render bundle? abort
+      if (this.renderBundle && renderBundle && this.renderBundle.uuid === renderBundle.uuid) return
+
+      const hasRenderBundle = !!this.renderBundle
       const bindGroup = this.material.getBindGroupByBindingName('matrices')
       const matrices = this.material.getBufferBindingByName('matrices') as BufferBindingOffsetChild
 
-      if (!this.renderBundle && renderBundle && renderBundle.binding) {
-        // if we did not have a render bundle, but now we have one with a buffer
-        // destroy current matrices binding
-        bindGroup.destroyBufferBinding(matrices)
-      } else if (this.renderBundle && !renderBundle && matrices.parent) {
+      if (this.renderBundle && !renderBundle && matrices.parent) {
         // if we did have a render bundle, reset the parent and bind group
         matrices.parent = null
         matrices.shouldResetBindGroup = true
@@ -329,6 +329,12 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
       super.setRenderBundle(renderBundle, updateScene)
 
       if (this.renderBundle && this.renderBundle.binding) {
+        // if we did not have a render bundle, but now we have one with a buffer
+        // destroy current matrices binding
+        if (hasRenderBundle) {
+          bindGroup.destroyBufferBinding(matrices)
+        }
+
         matrices.options.offset = this.renderBundle.meshes.size - 1
         matrices.parent = this.renderBundle.binding
 
@@ -517,9 +523,10 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
         matricesUniforms.offset = this.options.renderBundle.meshes.size
       }
 
-      const transformationBinding = new BufferBindingOffsetChild(matricesUniforms)
+      const meshTransformationBinding = new BufferBindingOffsetChild(matricesUniforms)
+
       if (!meshParameters.bindings) meshParameters.bindings = []
-      meshParameters.bindings.unshift(transformationBinding)
+      meshParameters.bindings.unshift(meshTransformationBinding)
 
       super.setMaterial(meshParameters)
     }

@@ -49,12 +49,12 @@ export class BufferBindingOffsetChild extends BufferBinding {
     access = 'read',
     usage = [],
     struct = {},
-    bindings = [],
+    childrenBindings = [],
     parent = null,
     minOffset = 256,
     offset = 0,
   }: BufferBindingOffsetChildParams) {
-    super({ label, name, bindingType, visibility, useStruct, access, usage, struct, bindings })
+    super({ label, name, bindingType, visibility, useStruct, access, usage, struct, childrenBindings })
 
     this.options = {
       ...this.options,
@@ -79,8 +79,6 @@ export class BufferBindingOffsetChild extends BufferBinding {
    * @param value - New {@link BufferBinding} parent to set if any.
    */
   set parent(value: BufferBinding | null) {
-    this.#parent = value
-
     if (!!value) {
       this.parentView = new DataView(value.arrayBuffer, this.offset, this.getMinOffsetSize(this.arrayBufferSize))
 
@@ -97,11 +95,17 @@ export class BufferBindingOffsetChild extends BufferBinding {
             return this.parentView.setFloat32.bind(this.parentView) as DataView['setFloat32']
         }
       })
+
+      if (!this.parent && this.buffer.GPUBuffer) {
+        // if it has a GPU Buffer but no parent yet, destroy the buffer
+        this.buffer.destroy()
+      }
     } else {
-      // TODO handle the case where this binding had a GPU buffer?
       this.parentView = null
       this.viewSetFunctions = null
     }
+
+    this.#parent = value
   }
 
   /**

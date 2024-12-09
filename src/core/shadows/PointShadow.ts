@@ -246,12 +246,12 @@ export class PointShadow extends Shadow {
       this.camera.viewMatrices[i].makeView(position, this.#tempCubeDirection, this.cubeUps[i])
 
       for (let j = 0; j < 16; j++) {
-        this.rendererBinding.options.bindings[this.index].inputs.viewMatrices.value[i * 16 + j] =
+        this.rendererBinding.childrenBindings[this.index].inputs.viewMatrices.value[i * 16 + j] =
           this.camera.viewMatrices[i].elements[j]
       }
     }
 
-    this.rendererBinding.options.bindings[this.index].inputs.viewMatrices.shouldUpdate = true
+    this.rendererBinding.childrenBindings[this.index].inputs.viewMatrices.shouldUpdate = true
   }
 
   /**
@@ -348,7 +348,7 @@ export class PointShadow extends Shadow {
           )
 
           // update face index
-          this.rendererBinding.options.bindings[this.index].inputs.face.value = i
+          this.rendererBinding.childrenBindings[this.index].inputs.face.value = i
           // again, we're not inside the main loop,
           // we need to explicitly update the renderer camera & lights bind group
           this.renderer.cameraLightsBindGroup.update()
