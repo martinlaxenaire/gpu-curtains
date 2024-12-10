@@ -85,6 +85,13 @@ export interface BufferBindingParams extends BindingParams, BufferBindingBasePar
 /** All allowed {@link BufferElement | buffer elements} */
 export type AllowedBufferElement = BufferElement | BufferArrayElement | BufferInterleavedArrayElement
 
+/** Possible data view set function to use with a {@link DataView} based on the data type. */
+export type DataViewSetFunction =
+  | DataView['setInt32']
+  | DataView['setUint16']
+  | DataView['setUint32']
+  | DataView['setFloat32']
+
 /**
  * Used to format {@link BufferBindingParams#struct | uniforms or storages struct inputs} and create a single typed array that will hold all those inputs values. The array needs to be correctly padded depending on every value type, so it can be safely used as a GPUBuffer input.
  *
@@ -144,10 +151,14 @@ export class BufferBinding extends Binding {
 
   /** {@link DataView} inside the {@link arrayBuffer | parent arrayBuffer} if set. */
   parentView: DataView | null
-  /** Array of view set functions to use with the various {@link bufferElements} if the {@link parent} is set. */
-  viewSetFunctions: Array<
-    DataView['setInt32'] | DataView['setUint16'] | DataView['setUint32'] | DataView['setFloat32']
-  > | null
+
+  /** Array of {@link AllowedBufferElement | bufferElements} and according {@link DataViewSetFunction | view set functions} to use if the {@link parent} is set. */
+  parentViewSetBufferEls: Array<{
+    /** Corresponding {@link AllowedBufferElement | bufferElement}. */
+    bufferElement: AllowedBufferElement
+    /** Corresponding {@link DataViewSetFunction | view set function}. */
+    viewSetFunction: DataViewSetFunction
+  }> | null
 
   /** The {@link Buffer} holding the {@link GPUBuffer}  */
   buffer: Buffer
@@ -266,17 +277,43 @@ export class BufferBinding extends Binding {
     if (!!value) {
       this.parentView = new DataView(value.arrayBuffer, this.offset, this.getMinOffsetSize(this.arrayBufferSize))
 
-      this.viewSetFunctions = this.bufferElements.map((bufferElement) => {
+      // get all buffer elements recursively
+      const getAllBufferElements = (binding) => {
+        const getBufferElements = (binding) => {
+          return binding.bufferElements
+        }
+
+        return [
+          ...getBufferElements(binding),
+          binding.childrenBindings.map((child) => getAllBufferElements(child)).flat(),
+        ].flat()
+      }
+
+      const bufferElements = getAllBufferElements(this)
+
+      this.parentViewSetBufferEls = bufferElements.map((bufferElement) => {
         switch (bufferElement.bufferLayout.View) {
           case Int32Array:
-            return this.parentView.setInt32.bind(this.parentView) as DataView['setInt32']
+            return {
+              bufferElement,
+              viewSetFunction: this.parentView.setInt32.bind(this.parentView) as DataView['setInt32'],
+            }
           case Uint16Array:
-            return this.parentView.setUint16.bind(this.parentView) as DataView['setUint16']
+            return {
+              bufferElement,
+              viewSetFunction: this.parentView.setUint16.bind(this.parentView) as DataView['setUint16'],
+            }
           case Uint32Array:
-            return this.parentView.setUint32.bind(this.parentView) as DataView['setUint32']
+            return {
+              bufferElement,
+              viewSetFunction: this.parentView.setUint32.bind(this.parentView) as DataView['setUint32'],
+            }
           case Float32Array:
           default:
-            return this.parentView.setFloat32.bind(this.parentView) as DataView['setFloat32']
+            return {
+              bufferElement,
+              viewSetFunction: this.parentView.setFloat32.bind(this.parentView) as DataView['setFloat32'],
+            }
         }
       })
 
@@ -286,7 +323,7 @@ export class BufferBinding extends Binding {
       }
     } else {
       this.parentView = null
-      this.viewSetFunctions = null
+      this.parentViewSetBufferEls = null
     }
 
     this.#parent = value
@@ -917,13 +954,17 @@ export class BufferBinding extends Binding {
       if (binding.shouldUpdate) {
         this.shouldUpdate = true
       }
+
+      binding.shouldUpdate = false
     })
 
-    if (this.shouldUpdate && this.parent && this.viewSetFunctions) {
+    if (this.shouldUpdate && this.parent && this.parentViewSetBufferEls) {
       let index = 0
-      this.bufferElements.forEach((bufferElement, i) => {
+
+      this.parentViewSetBufferEls.forEach((viewSetBuffer, i) => {
+        const { bufferElement, viewSetFunction } = viewSetBuffer
         bufferElement.view.forEach((value) => {
-          this.viewSetFunctions[i](index * bufferElement.view.BYTES_PER_ELEMENT, value, true)
+          viewSetFunction(index * bufferElement.view.BYTES_PER_ELEMENT, value, true)
           index++
         })
       })

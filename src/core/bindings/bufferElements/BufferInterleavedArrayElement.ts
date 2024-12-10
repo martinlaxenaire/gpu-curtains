@@ -1,12 +1,13 @@
 import { BufferArrayElement, BufferArrayElementParams } from './BufferArrayElement'
 import { InputValue } from '../../../types/BindGroups'
+import { DataViewSetFunction } from '../BufferBinding'
 
 /**
  * Used to compute alignment when dealing with arrays of Struct
  */
 export class BufferInterleavedArrayElement extends BufferArrayElement {
   /** Corresponding {@link DataView} set function based on {@link view} type */
-  viewSetFunction: DataView['setInt32'] | DataView['setUint16'] | DataView['setUint32'] | DataView['setFloat32']
+  viewSetFunction: DataViewSetFunction
 
   /**
    * BufferInterleavedArrayElement constructor

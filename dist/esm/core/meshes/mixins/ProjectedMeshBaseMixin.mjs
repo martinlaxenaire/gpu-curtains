@@ -124,7 +124,8 @@ function ProjectedMeshBaseMixin(Base) {
     }
     /* SHADERS */
     /**
-     * Set default shaders if one or both of them are missing
+     * Set default shaders if one or both of them are missing.
+     * Can also patch the fragment shader if the mesh should receive shadows.
      */
     setShaders() {
       const { shaders } = this.options;
@@ -153,6 +154,13 @@ function ProjectedMeshBaseMixin(Base) {
           };
         }
       }
+      if (this.options.receiveShadows) {
+        const hasActiveShadows = this.renderer.shadowCastingLights.find((light) => light.shadow.isActive);
+        if (hasActiveShadows && shaders.fragment && typeof shaders.fragment === "object") {
+          shaders.fragment.code = getPCFDirectionalShadows(this.renderer) + getPCFShadowContribution + getPCFPointShadows(this.renderer) + getPCFPointShadowContribution + shaders.fragment.code;
+        }
+      }
+      return shaders;
     }
     /* GEOMETRY */
     /**
@@ -203,10 +211,6 @@ function ProjectedMeshBaseMixin(Base) {
             depthSamplers.push(light.shadow.depthComparisonSampler);
           }
         });
-        const hasActiveShadows = this.renderer.shadowCastingLights.find((light) => light.shadow.isActive);
-        if (hasActiveShadows && parameters.shaders.fragment && typeof parameters.shaders.fragment === "object") {
-          parameters.shaders.fragment.code = getPCFDirectionalShadows(this.renderer) + getPCFShadowContribution + getPCFPointShadows(this.renderer) + getPCFPointShadowContribution + parameters.shaders.fragment.code;
-        }
         depthSamplers = depthSamplers.filter(
           (sampler, i, array) => array.findIndex((s) => s.uuid === sampler.uuid) === i
         );

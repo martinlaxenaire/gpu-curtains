@@ -268,7 +268,8 @@ class PointShadow extends Shadow {
             })
           );
           this.rendererBinding.childrenBindings[this.index].inputs.face.value = i;
-          this.renderer.cameraLightsBindGroup.update();
+          this.renderer.shouldUpdateCameraLightsBindGroup();
+          this.renderer.updateCameraLightsBindGroup();
           this.renderDepthPass(commandEncoder);
           if (!this.renderer.production)
             commandEncoder.popDebugGroup();

@@ -349,9 +349,11 @@ export class PointShadow extends Shadow {
 
           // update face index
           this.rendererBinding.childrenBindings[this.index].inputs.face.value = i
+
           // again, we're not inside the main loop,
           // we need to explicitly update the renderer camera & lights bind group
-          this.renderer.cameraLightsBindGroup.update()
+          this.renderer.shouldUpdateCameraLightsBindGroup()
+          this.renderer.updateCameraLightsBindGroup()
 
           this.renderDepthPass(commandEncoder)
 

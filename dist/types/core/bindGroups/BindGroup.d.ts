@@ -79,7 +79,7 @@ export declare class BindGroup {
     layoutCacheKey: string;
     /** A cache key allowing the {@link core/pipelines/PipelineManager.PipelineManager | PipelineManager} to compare {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | RenderPipelineEntry} bind groups content. */
     pipelineCacheKey: string;
-    /** Flag indicating whether we need to flush and recreate the pipeline using this {@link BindGroup} s*/
+    /** Flag indicating whether we need to flush and recreate the pipeline using this {@link BindGroup} */
     needsPipelineFlush: boolean;
     /** A Set to store this {@link BindGroup} consumers ({@link core/materials/Material.Material#uuid | Material uuid})  */
     consumers: Set<string>;

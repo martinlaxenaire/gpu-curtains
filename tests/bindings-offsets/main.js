@@ -150,11 +150,11 @@ window.addEventListener('load', async () => {
     struct: {
       position: {
         type: 'array<vec2f>',
-        value: new Float32Array(2 * 5),
+        value: new Float32Array(2 * 3),
       },
       velocity: {
         type: 'array<vec2f>',
-        value: new Float32Array(2 * 5),
+        value: new Float32Array(2 * 3),
       },
     },
   })
@@ -168,11 +168,11 @@ window.addEventListener('load', async () => {
     struct: {
       position: {
         type: 'array<vec3f>',
-        value: new Float32Array(3 * 5),
+        value: new Float32Array(3 * 3),
       },
       normal: {
         type: 'array<vec4f>',
-        value: new Float32Array(4 * 5),
+        value: new Float32Array(4 * 3),
       },
     },
   })
@@ -190,11 +190,11 @@ window.addEventListener('load', async () => {
       },
       position: {
         type: 'array<vec3f>',
-        value: new Float32Array(3 * 5),
+        value: new Float32Array(3 * 3),
       },
       normal: {
         type: 'array<vec4f>',
-        value: new Float32Array(4 * 5),
+        value: new Float32Array(4 * 3),
       },
     },
   })
@@ -234,12 +234,12 @@ window.addEventListener('load', async () => {
     struct: {
       matrix: {
         type: 'array<mat3x3f>',
-        value: new Float32Array(3 * 3 * 3),
+        value: new Float32Array(3 * 3 * 2),
       },
     },
   })
 
-  const normalMatrixArray = new Float32Array(3 * 3 * 3)
+  const normalMatrixArray = new Float32Array(3 * 3 * 2)
   for (let i = 0; i < normalMatrixArray.length; i++) {
     normalMatrixArray[i] = i
   }
@@ -250,12 +250,12 @@ window.addEventListener('load', async () => {
   //console.log('normal matrix array', normalMatrixArray, normalMatrixArrayBinding)
 
   // mat3x3f interleaved array
-  const normalsInterleavedArray = new Float32Array(3 * 3)
+  const normalsInterleavedArray = new Float32Array(3 * 2)
   for (let i = 0; i < normalsInterleavedArray.length; i++) {
     normalsInterleavedArray[i] = 99
   }
 
-  const normalMatrixInterleavedArray = new Float32Array(3 * 3 * 3)
+  const normalMatrixInterleavedArray = new Float32Array(3 * 3 * 2)
   for (let i = 0; i < normalMatrixInterleavedArray.length; i++) {
     normalMatrixInterleavedArray[i] = i
   }
@@ -359,6 +359,12 @@ window.addEventListener('load', async () => {
     label: 'Lights shadows',
     name: 'lightsShadows',
     bindingType: 'storage',
+    struct: {
+      test: {
+        type: 'f32',
+        value: 0,
+      },
+    },
     childrenBindings: [
       {
         binding: directionalLightBinding,
@@ -370,6 +376,8 @@ window.addEventListener('load', async () => {
       },
     ],
   })
+
+  console.log(lightsShadowsBinding)
 
   debugBindings.push(lightsShadowsBinding)
 

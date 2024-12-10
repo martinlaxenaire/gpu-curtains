@@ -72,47 +72,7 @@ const _BufferBinding = class _BufferBinding extends Binding {
       this.setBindings(struct);
       this.setInputsAlignment();
     }
-    this.childrenBindings = [];
-    if (childrenBindings && childrenBindings.length) {
-      const childrenArray = [];
-      childrenBindings.sort((a, b) => {
-        const countA = a.count ? Math.max(a.count) : a.forceArray ? 1 : 0;
-        const countB = b.count ? Math.max(b.count) : b.forceArray ? 1 : 0;
-        return countA - countB;
-      }).forEach((child) => {
-        if (child.count && child.count > 1 || child.forceArray) {
-          childrenArray.push(child.binding);
-        }
-      });
-      if (childrenArray.length > 1) {
-        childrenArray.shift();
-        throwWarning(
-          `BufferBinding: "${this.label}" contains multiple children bindings arrays. These children bindings cannot be added to the BufferBinding: "${childrenArray.map((child) => child.label).join(", ")}"`
-        );
-        childrenArray.forEach((removedChildBinding) => {
-          childrenBindings = childrenBindings.filter((child) => child.binding.name !== removedChildBinding.name);
-        });
-      }
-      this.options.childrenBindings = childrenBindings;
-      childrenBindings.forEach((child) => {
-        const count = child.count ? Math.max(1, child.count) : 1;
-        this.cacheKey += `child(count:${count}):${child.binding.cacheKey}`;
-        if (count <= 1) {
-          this.childrenBindings = [...this.childrenBindings, child.binding];
-        } else {
-          this.childrenBindings = [
-            ...this.childrenBindings,
-            Array.from(Array(Math.max(1, child.count || 1)).keys()).map((i) => {
-              return child.binding.clone({
-                ...child.binding.options,
-                // clone struct with new arrays
-                struct: _BufferBinding.cloneStruct(child.binding.options.struct)
-              });
-            })
-          ].flat();
-        }
-      });
-    }
+    this.setChildrenBindings(childrenBindings);
     if (Object.keys(struct).length || this.childrenBindings.length) {
       this.setBufferAttributes();
       this.setWGSLFragment();
@@ -158,17 +118,39 @@ const _BufferBinding = class _BufferBinding extends Binding {
   set parent(value) {
     if (!!value) {
       this.parentView = new DataView(value.arrayBuffer, this.offset, this.getMinOffsetSize(this.arrayBufferSize));
-      this.viewSetFunctions = this.bufferElements.map((bufferElement) => {
+      const getAllBufferElements = (binding) => {
+        const getBufferElements = (binding2) => {
+          return binding2.bufferElements;
+        };
+        return [
+          ...getBufferElements(binding),
+          binding.childrenBindings.map((child) => getAllBufferElements(child)).flat()
+        ].flat();
+      };
+      const bufferElements = getAllBufferElements(this);
+      this.parentViewSetBufferEls = bufferElements.map((bufferElement) => {
         switch (bufferElement.bufferLayout.View) {
           case Int32Array:
-            return this.parentView.setInt32.bind(this.parentView);
+            return {
+              bufferElement,
+              viewSetFunction: this.parentView.setInt32.bind(this.parentView)
+            };
           case Uint16Array:
-            return this.parentView.setUint16.bind(this.parentView);
+            return {
+              bufferElement,
+              viewSetFunction: this.parentView.setUint16.bind(this.parentView)
+            };
           case Uint32Array:
-            return this.parentView.setUint32.bind(this.parentView);
+            return {
+              bufferElement,
+              viewSetFunction: this.parentView.setUint32.bind(this.parentView)
+            };
           case Float32Array:
           default:
-            return this.parentView.setFloat32.bind(this.parentView);
+            return {
+              bufferElement,
+              viewSetFunction: this.parentView.setFloat32.bind(this.parentView)
+            };
         }
       });
       if (!this.parent && this.buffer.GPUBuffer) {
@@ -176,7 +158,7 @@ const _BufferBinding = class _BufferBinding extends Binding {
       }
     } else {
       this.parentView = null;
-      this.viewSetFunctions = null;
+      this.parentViewSetBufferEls = null;
     }
     __privateSet(this, _parent, value);
   }
@@ -339,6 +321,49 @@ const _BufferBinding = class _BufferBinding extends Binding {
       }
       this.inputs[bindingKey] = binding;
       this.cacheKey += `${bindingKey},${bindings[bindingKey].type},`;
+    }
+  }
+  /**
+   * Set this {@link BufferBinding} optional {@link childrenBindings}.
+   * @param childrenBindings - Array of {@link BufferBindingChildrenBinding} to use as {@link childrenBindings}.
+   */
+  setChildrenBindings(childrenBindings) {
+    this.childrenBindings = [];
+    if (childrenBindings && childrenBindings.length) {
+      const childrenArray = [];
+      childrenBindings.sort((a, b) => {
+        const countA = a.count ? Math.max(a.count) : a.forceArray ? 1 : 0;
+        const countB = b.count ? Math.max(b.count) : b.forceArray ? 1 : 0;
+        return countA - countB;
+      }).forEach((child) => {
+        if (child.count && child.count > 1 || child.forceArray) {
+          childrenArray.push(child.binding);
+        }
+      });
+      if (childrenArray.length > 1) {
+        childrenArray.shift();
+        throwWarning(
+          `BufferBinding: "${this.label}" contains multiple children bindings arrays. These children bindings cannot be added to the BufferBinding: "${childrenArray.map((child) => child.label).join(", ")}"`
+        );
+        childrenArray.forEach((removedChildBinding) => {
+          childrenBindings = childrenBindings.filter((child) => child.binding.name !== removedChildBinding.name);
+        });
+      }
+      this.options.childrenBindings = childrenBindings;
+      childrenBindings.forEach((child) => {
+        const count = child.count ? Math.max(1, child.count) : 1;
+        this.cacheKey += `child(count:${count}):${child.binding.cacheKey}`;
+        this.childrenBindings = [
+          ...this.childrenBindings,
+          Array.from(Array(count).keys()).map((i) => {
+            return child.binding.clone({
+              ...child.binding.options,
+              // clone struct with new arrays
+              struct: _BufferBinding.cloneStruct(child.binding.options.struct)
+            });
+          })
+        ].flat();
+      });
     }
   }
   /**
@@ -563,12 +588,14 @@ const _BufferBinding = class _BufferBinding extends Binding {
       if (binding.shouldUpdate) {
         this.shouldUpdate = true;
       }
+      binding.shouldUpdate = false;
     });
-    if (this.shouldUpdate && this.parent && this.viewSetFunctions) {
+    if (this.shouldUpdate && this.parent && this.parentViewSetBufferEls) {
       let index = 0;
-      this.bufferElements.forEach((bufferElement, i) => {
+      this.parentViewSetBufferEls.forEach((viewSetBuffer, i) => {
+        const { bufferElement, viewSetFunction } = viewSetBuffer;
         bufferElement.view.forEach((value) => {
-          this.viewSetFunctions[i](index * bufferElement.view.BYTES_PER_ELEMENT, value, true);
+          viewSetFunction(index * bufferElement.view.BYTES_PER_ELEMENT, value, true);
           index++;
         });
       });

@@ -57,7 +57,9 @@ class GPUCameraRenderer extends GPURenderer {
     __privateAdd(this, _shouldUpdateCameraLightsBindGroup, void 0);
     this.type = "GPUCameraRenderer";
     camera = { ...{ fov: 50, near: 0.1, far: 1e3 }, ...camera };
-    lights = { ...{ maxAmbientLights: 2, maxDirectionalLights: 5, maxPointLights: 5 }, ...lights };
+    if (lights !== false) {
+      lights = { ...{ maxAmbientLights: 2, maxDirectionalLights: 5, maxPointLights: 5 }, ...lights };
+    }
     this.options = {
       ...this.options,
       camera,
@@ -68,8 +70,10 @@ class GPUCameraRenderer extends GPURenderer {
     this.lights = [];
     this.setCamera(camera);
     this.setCameraBinding();
-    this.setLightsBinding();
-    this.setShadowsBinding();
+    if (this.options.lights) {
+      this.setLightsBinding();
+      this.setShadowsBinding();
+    }
     this.setCameraLightsBindGroup();
   }
   /**
@@ -200,6 +204,8 @@ class GPUCameraRenderer extends GPURenderer {
    * Set the lights {@link BufferBinding} based on the {@link lightsBindingParams}.
    */
   setLightsBinding() {
+    if (!this.options.lights)
+      return;
     this.lightsBindingParams = {
       ambientLights: {
         max: this.options.lights.maxAmbientLights,
@@ -303,16 +309,32 @@ class GPUCameraRenderer extends GPURenderer {
     }
     this.setLightsTypeBinding(lightsType);
     const lightBindingIndex = this.cameraLightsBindGroup.bindings.findIndex((binding) => binding.name === lightsType);
-    this.cameraLightsBindGroup.bindings[lightBindingIndex] = this.bindings[lightsType];
+    if (lightBindingIndex !== -1) {
+      this.cameraLightsBindGroup.bindings[lightBindingIndex] = this.bindings[lightsType];
+    } else {
+      this.bindings[lightsType].shouldResetBindGroup = true;
+      this.bindings[lightsType].shouldResetBindGroupLayout = true;
+      this.cameraLightsBindGroup.addBinding(this.bindings[lightsType]);
+      this.shouldUpdateCameraLightsBindGroup();
+    }
     if (lightsType === "directionalLights" || lightsType === "pointLights") {
       const shadowsType = lightsType.replace("Lights", "") + "Shadows";
       const oldShadowsBinding = this.cameraLightsBindGroup.getBindingByName(shadowsType);
-      this.cameraLightsBindGroup.destroyBufferBinding(oldShadowsBinding);
+      if (oldShadowsBinding) {
+        this.cameraLightsBindGroup.destroyBufferBinding(oldShadowsBinding);
+      }
       this.setShadowsTypeBinding(lightsType);
       const shadowsBindingIndex = this.cameraLightsBindGroup.bindings.findIndex(
         (binding) => binding.name === shadowsType
       );
-      this.cameraLightsBindGroup.bindings[shadowsBindingIndex] = this.bindings[shadowsType];
+      if (shadowsBindingIndex !== -1) {
+        this.cameraLightsBindGroup.bindings[shadowsBindingIndex] = this.bindings[shadowsType];
+      } else {
+        this.bindings[shadowsType].shouldResetBindGroup = true;
+        this.bindings[shadowsType].shouldResetBindGroupLayout = true;
+        this.cameraLightsBindGroup.addBinding(this.bindings[shadowsType]);
+        this.shouldUpdateCameraLightsBindGroup();
+      }
     }
     this.cameraLightsBindGroup.resetEntries();
     this.cameraLightsBindGroup.createBindGroup();
@@ -410,6 +432,15 @@ class GPUCameraRenderer extends GPURenderer {
     this.shouldUpdateCameraLightsBindGroup();
   }
   /**
+   * Update the {@link cameraLightsBindGroup | camera and lights BindGroup}.
+   */
+  updateCameraLightsBindGroup() {
+    if (this.cameraLightsBindGroup && __privateGet(this, _shouldUpdateCameraLightsBindGroup)) {
+      this.cameraLightsBindGroup.update();
+      __privateSet(this, _shouldUpdateCameraLightsBindGroup, false);
+    }
+  }
+  /**
    * Get all objects ({@link core/renderers/GPURenderer.RenderedMesh | rendered meshes} or {@link core/computePasses/ComputePass.ComputePass | compute passes}) using a given {@link AllowedBindGroups | bind group}, including {@link cameraLightsBindGroup | camera and lights bind group}.
    * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
    * @param bindGroup - {@link AllowedBindGroups | bind group} to check
@@ -465,11 +496,11 @@ class GPUCameraRenderer extends GPURenderer {
     if (!this.ready)
       return;
     this.setCameraBindGroup();
-    if (this.cameraLightsBindGroup && __privateGet(this, _shouldUpdateCameraLightsBindGroup)) {
-      this.cameraLightsBindGroup.update();
-      __privateSet(this, _shouldUpdateCameraLightsBindGroup, false);
-    }
+    this.updateCameraLightsBindGroup();
     super.render(commandEncoder);
+    if (this.cameraLightsBindGroup) {
+      this.cameraLightsBindGroup.needsPipelineFlush = false;
+    }
   }
   /**
    * Destroy our {@link GPUCameraRenderer}

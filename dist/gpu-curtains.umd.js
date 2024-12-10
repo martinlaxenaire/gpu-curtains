@@ -1737,47 +1737,7 @@
         this.setBindings(struct);
         this.setInputsAlignment();
       }
-      this.childrenBindings = [];
-      if (childrenBindings && childrenBindings.length) {
-        const childrenArray = [];
-        childrenBindings.sort((a, b) => {
-          const countA = a.count ? Math.max(a.count) : a.forceArray ? 1 : 0;
-          const countB = b.count ? Math.max(b.count) : b.forceArray ? 1 : 0;
-          return countA - countB;
-        }).forEach((child) => {
-          if (child.count && child.count > 1 || child.forceArray) {
-            childrenArray.push(child.binding);
-          }
-        });
-        if (childrenArray.length > 1) {
-          childrenArray.shift();
-          throwWarning(
-            `BufferBinding: "${this.label}" contains multiple children bindings arrays. These children bindings cannot be added to the BufferBinding: "${childrenArray.map((child) => child.label).join(", ")}"`
-          );
-          childrenArray.forEach((removedChildBinding) => {
-            childrenBindings = childrenBindings.filter((child) => child.binding.name !== removedChildBinding.name);
-          });
-        }
-        this.options.childrenBindings = childrenBindings;
-        childrenBindings.forEach((child) => {
-          const count = child.count ? Math.max(1, child.count) : 1;
-          this.cacheKey += `child(count:${count}):${child.binding.cacheKey}`;
-          if (count <= 1) {
-            this.childrenBindings = [...this.childrenBindings, child.binding];
-          } else {
-            this.childrenBindings = [
-              ...this.childrenBindings,
-              Array.from(Array(Math.max(1, child.count || 1)).keys()).map((i) => {
-                return child.binding.clone({
-                  ...child.binding.options,
-                  // clone struct with new arrays
-                  struct: _BufferBinding.cloneStruct(child.binding.options.struct)
-                });
-              })
-            ].flat();
-          }
-        });
-      }
+      this.setChildrenBindings(childrenBindings);
       if (Object.keys(struct).length || this.childrenBindings.length) {
         this.setBufferAttributes();
         this.setWGSLFragment();
@@ -1823,17 +1783,39 @@
     set parent(value) {
       if (!!value) {
         this.parentView = new DataView(value.arrayBuffer, this.offset, this.getMinOffsetSize(this.arrayBufferSize));
-        this.viewSetFunctions = this.bufferElements.map((bufferElement) => {
+        const getAllBufferElements = (binding) => {
+          const getBufferElements = (binding2) => {
+            return binding2.bufferElements;
+          };
+          return [
+            ...getBufferElements(binding),
+            binding.childrenBindings.map((child) => getAllBufferElements(child)).flat()
+          ].flat();
+        };
+        const bufferElements = getAllBufferElements(this);
+        this.parentViewSetBufferEls = bufferElements.map((bufferElement) => {
           switch (bufferElement.bufferLayout.View) {
             case Int32Array:
-              return this.parentView.setInt32.bind(this.parentView);
+              return {
+                bufferElement,
+                viewSetFunction: this.parentView.setInt32.bind(this.parentView)
+              };
             case Uint16Array:
-              return this.parentView.setUint16.bind(this.parentView);
+              return {
+                bufferElement,
+                viewSetFunction: this.parentView.setUint16.bind(this.parentView)
+              };
             case Uint32Array:
-              return this.parentView.setUint32.bind(this.parentView);
+              return {
+                bufferElement,
+                viewSetFunction: this.parentView.setUint32.bind(this.parentView)
+              };
             case Float32Array:
             default:
-              return this.parentView.setFloat32.bind(this.parentView);
+              return {
+                bufferElement,
+                viewSetFunction: this.parentView.setFloat32.bind(this.parentView)
+              };
           }
         });
         if (!this.parent && this.buffer.GPUBuffer) {
@@ -1841,7 +1823,7 @@
         }
       } else {
         this.parentView = null;
-        this.viewSetFunctions = null;
+        this.parentViewSetBufferEls = null;
       }
       __privateSet$h(this, _parent, value);
     }
@@ -2004,6 +1986,49 @@
         }
         this.inputs[bindingKey] = binding;
         this.cacheKey += `${bindingKey},${bindings[bindingKey].type},`;
+      }
+    }
+    /**
+     * Set this {@link BufferBinding} optional {@link childrenBindings}.
+     * @param childrenBindings - Array of {@link BufferBindingChildrenBinding} to use as {@link childrenBindings}.
+     */
+    setChildrenBindings(childrenBindings) {
+      this.childrenBindings = [];
+      if (childrenBindings && childrenBindings.length) {
+        const childrenArray = [];
+        childrenBindings.sort((a, b) => {
+          const countA = a.count ? Math.max(a.count) : a.forceArray ? 1 : 0;
+          const countB = b.count ? Math.max(b.count) : b.forceArray ? 1 : 0;
+          return countA - countB;
+        }).forEach((child) => {
+          if (child.count && child.count > 1 || child.forceArray) {
+            childrenArray.push(child.binding);
+          }
+        });
+        if (childrenArray.length > 1) {
+          childrenArray.shift();
+          throwWarning(
+            `BufferBinding: "${this.label}" contains multiple children bindings arrays. These children bindings cannot be added to the BufferBinding: "${childrenArray.map((child) => child.label).join(", ")}"`
+          );
+          childrenArray.forEach((removedChildBinding) => {
+            childrenBindings = childrenBindings.filter((child) => child.binding.name !== removedChildBinding.name);
+          });
+        }
+        this.options.childrenBindings = childrenBindings;
+        childrenBindings.forEach((child) => {
+          const count = child.count ? Math.max(1, child.count) : 1;
+          this.cacheKey += `child(count:${count}):${child.binding.cacheKey}`;
+          this.childrenBindings = [
+            ...this.childrenBindings,
+            Array.from(Array(count).keys()).map((i) => {
+              return child.binding.clone({
+                ...child.binding.options,
+                // clone struct with new arrays
+                struct: _BufferBinding.cloneStruct(child.binding.options.struct)
+              });
+            })
+          ].flat();
+        });
       }
     }
     /**
@@ -2228,12 +2253,14 @@
         if (binding.shouldUpdate) {
           this.shouldUpdate = true;
         }
+        binding.shouldUpdate = false;
       });
-      if (this.shouldUpdate && this.parent && this.viewSetFunctions) {
+      if (this.shouldUpdate && this.parent && this.parentViewSetBufferEls) {
         let index = 0;
-        this.bufferElements.forEach((bufferElement, i) => {
+        this.parentViewSetBufferEls.forEach((viewSetBuffer, i) => {
+          const { bufferElement, viewSetFunction } = viewSetBuffer;
           bufferElement.view.forEach((value) => {
-            this.viewSetFunctions[i](index * bufferElement.view.BYTES_PER_ELEMENT, value, true);
+            viewSetFunction(index * bufferElement.view.BYTES_PER_ELEMENT, value, true);
             index++;
           });
         });
@@ -8427,6 +8454,11 @@ New rendering options: ${JSON.stringify(
      */
     updateBindGroups() {
       const startBindGroupIndex = this.useCameraBindGroup ? 1 : 0;
+      if (this.useCameraBindGroup) {
+        if (this.bindGroups[0].needsPipelineFlush && this.pipelineEntry.ready) {
+          this.pipelineEntry.flushPipelineEntry(this.bindGroups);
+        }
+      }
       for (let i = startBindGroupIndex; i < this.bindGroups.length; i++) {
         this.updateBindGroup(this.bindGroups[i]);
       }
@@ -9797,7 +9829,8 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
               })
             );
             this.rendererBinding.childrenBindings[this.index].inputs.face.value = i;
-            this.renderer.cameraLightsBindGroup.update();
+            this.renderer.shouldUpdateCameraLightsBindGroup();
+            this.renderer.updateCameraLightsBindGroup();
             this.renderDepthPass(commandEncoder);
             if (!this.renderer.production)
               commandEncoder.popDebugGroup();
@@ -11237,7 +11270,8 @@ struct VSOutput {
       }
       /* SHADERS */
       /**
-       * Set default shaders if one or both of them are missing
+       * Set default shaders if one or both of them are missing.
+       * Can also patch the fragment shader if the mesh should receive shadows.
        */
       setShaders() {
         const { shaders } = this.options;
@@ -11266,6 +11300,13 @@ struct VSOutput {
             };
           }
         }
+        if (this.options.receiveShadows) {
+          const hasActiveShadows = this.renderer.shadowCastingLights.find((light) => light.shadow.isActive);
+          if (hasActiveShadows && shaders.fragment && typeof shaders.fragment === "object") {
+            shaders.fragment.code = getPCFDirectionalShadows(this.renderer) + getPCFShadowContribution + getPCFPointShadows(this.renderer) + getPCFPointShadowContribution + shaders.fragment.code;
+          }
+        }
+        return shaders;
       }
       /* GEOMETRY */
       /**
@@ -11316,10 +11357,6 @@ struct VSOutput {
               depthSamplers.push(light.shadow.depthComparisonSampler);
             }
           });
-          const hasActiveShadows = this.renderer.shadowCastingLights.find((light) => light.shadow.isActive);
-          if (hasActiveShadows && parameters.shaders.fragment && typeof parameters.shaders.fragment === "object") {
-            parameters.shaders.fragment.code = getPCFDirectionalShadows(this.renderer) + getPCFShadowContribution + getPCFPointShadows(this.renderer) + getPCFPointShadowContribution + parameters.shaders.fragment.code;
-          }
           depthSamplers = depthSamplers.filter(
             (sampler, i, array) => array.findIndex((s) => s.uuid === sampler.uuid) === i
           );
@@ -13410,7 +13447,9 @@ ${this.shaders.compute.head}`;
       __privateAdd$6(this, _shouldUpdateCameraLightsBindGroup, void 0);
       this.type = "GPUCameraRenderer";
       camera = { ...{ fov: 50, near: 0.1, far: 1e3 }, ...camera };
-      lights = { ...{ maxAmbientLights: 2, maxDirectionalLights: 5, maxPointLights: 5 }, ...lights };
+      if (lights !== false) {
+        lights = { ...{ maxAmbientLights: 2, maxDirectionalLights: 5, maxPointLights: 5 }, ...lights };
+      }
       this.options = {
         ...this.options,
         camera,
@@ -13421,8 +13460,10 @@ ${this.shaders.compute.head}`;
       this.lights = [];
       this.setCamera(camera);
       this.setCameraBinding();
-      this.setLightsBinding();
-      this.setShadowsBinding();
+      if (this.options.lights) {
+        this.setLightsBinding();
+        this.setShadowsBinding();
+      }
       this.setCameraLightsBindGroup();
     }
     /**
@@ -13553,6 +13594,8 @@ ${this.shaders.compute.head}`;
      * Set the lights {@link BufferBinding} based on the {@link lightsBindingParams}.
      */
     setLightsBinding() {
+      if (!this.options.lights)
+        return;
       this.lightsBindingParams = {
         ambientLights: {
           max: this.options.lights.maxAmbientLights,
@@ -13656,16 +13699,32 @@ ${this.shaders.compute.head}`;
       }
       this.setLightsTypeBinding(lightsType);
       const lightBindingIndex = this.cameraLightsBindGroup.bindings.findIndex((binding) => binding.name === lightsType);
-      this.cameraLightsBindGroup.bindings[lightBindingIndex] = this.bindings[lightsType];
+      if (lightBindingIndex !== -1) {
+        this.cameraLightsBindGroup.bindings[lightBindingIndex] = this.bindings[lightsType];
+      } else {
+        this.bindings[lightsType].shouldResetBindGroup = true;
+        this.bindings[lightsType].shouldResetBindGroupLayout = true;
+        this.cameraLightsBindGroup.addBinding(this.bindings[lightsType]);
+        this.shouldUpdateCameraLightsBindGroup();
+      }
       if (lightsType === "directionalLights" || lightsType === "pointLights") {
         const shadowsType = lightsType.replace("Lights", "") + "Shadows";
         const oldShadowsBinding = this.cameraLightsBindGroup.getBindingByName(shadowsType);
-        this.cameraLightsBindGroup.destroyBufferBinding(oldShadowsBinding);
+        if (oldShadowsBinding) {
+          this.cameraLightsBindGroup.destroyBufferBinding(oldShadowsBinding);
+        }
         this.setShadowsTypeBinding(lightsType);
         const shadowsBindingIndex = this.cameraLightsBindGroup.bindings.findIndex(
           (binding) => binding.name === shadowsType
         );
-        this.cameraLightsBindGroup.bindings[shadowsBindingIndex] = this.bindings[shadowsType];
+        if (shadowsBindingIndex !== -1) {
+          this.cameraLightsBindGroup.bindings[shadowsBindingIndex] = this.bindings[shadowsType];
+        } else {
+          this.bindings[shadowsType].shouldResetBindGroup = true;
+          this.bindings[shadowsType].shouldResetBindGroupLayout = true;
+          this.cameraLightsBindGroup.addBinding(this.bindings[shadowsType]);
+          this.shouldUpdateCameraLightsBindGroup();
+        }
       }
       this.cameraLightsBindGroup.resetEntries();
       this.cameraLightsBindGroup.createBindGroup();
@@ -13763,6 +13822,15 @@ ${this.shaders.compute.head}`;
       this.shouldUpdateCameraLightsBindGroup();
     }
     /**
+     * Update the {@link cameraLightsBindGroup | camera and lights BindGroup}.
+     */
+    updateCameraLightsBindGroup() {
+      if (this.cameraLightsBindGroup && __privateGet$5(this, _shouldUpdateCameraLightsBindGroup)) {
+        this.cameraLightsBindGroup.update();
+        __privateSet$5(this, _shouldUpdateCameraLightsBindGroup, false);
+      }
+    }
+    /**
      * Get all objects ({@link core/renderers/GPURenderer.RenderedMesh | rendered meshes} or {@link core/computePasses/ComputePass.ComputePass | compute passes}) using a given {@link AllowedBindGroups | bind group}, including {@link cameraLightsBindGroup | camera and lights bind group}.
      * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
      * @param bindGroup - {@link AllowedBindGroups | bind group} to check
@@ -13818,11 +13886,11 @@ ${this.shaders.compute.head}`;
       if (!this.ready)
         return;
       this.setCameraBindGroup();
-      if (this.cameraLightsBindGroup && __privateGet$5(this, _shouldUpdateCameraLightsBindGroup)) {
-        this.cameraLightsBindGroup.update();
-        __privateSet$5(this, _shouldUpdateCameraLightsBindGroup, false);
-      }
+      this.updateCameraLightsBindGroup();
       super.render(commandEncoder);
+      if (this.cameraLightsBindGroup) {
+        this.cameraLightsBindGroup.needsPipelineFlush = false;
+      }
     }
     /**
      * Destroy our {@link GPUCameraRenderer}

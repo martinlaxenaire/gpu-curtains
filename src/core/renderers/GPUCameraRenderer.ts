@@ -54,8 +54,8 @@ export interface GPUCameraRendererLightParams {
 export interface GPUCameraRendererParams extends GPURendererParams {
   /** An object defining {@link CameraBasePerspectiveOptions | camera perspective parameters} */
   camera?: CameraBasePerspectiveOptions
-  /** An object defining {@link GPUCameraRendererLightParams | the maximum number of light} to use when creating the {@link GPUCameraRenderer}. */
-  lights?: GPUCameraRendererLightParams
+  /** An object defining {@link GPUCameraRendererLightParams | the maximum number of light} to use when creating the {@link GPUCameraRenderer}. Can be set to `false` to avoid creating lights and shadows buffers, but note this is a permanent choice and cannot be changed later. */
+  lights?: GPUCameraRendererLightParams | false
 }
 
 /**
@@ -130,7 +130,10 @@ export class GPUCameraRenderer extends GPURenderer {
     this.type = 'GPUCameraRenderer'
 
     camera = { ...{ fov: 50, near: 0.1, far: 1000 }, ...camera }
-    lights = { ...{ maxAmbientLights: 2, maxDirectionalLights: 5, maxPointLights: 5 }, ...lights }
+
+    if (lights !== false) {
+      lights = { ...{ maxAmbientLights: 2, maxDirectionalLights: 5, maxPointLights: 5 }, ...lights }
+    }
 
     this.options = {
       ...this.options,
@@ -146,8 +149,12 @@ export class GPUCameraRenderer extends GPURenderer {
     this.setCamera(camera)
 
     this.setCameraBinding()
-    this.setLightsBinding()
-    this.setShadowsBinding()
+
+    if (this.options.lights) {
+      this.setLightsBinding()
+      this.setShadowsBinding()
+    }
+
     this.setCameraLightsBindGroup()
   }
 
@@ -300,6 +307,10 @@ export class GPUCameraRenderer extends GPURenderer {
    * Set the lights {@link BufferBinding} based on the {@link lightsBindingParams}.
    */
   setLightsBinding() {
+    if (!this.options.lights) return
+
+    // TODO we could combine lights and shadows in a single buffer using childrenBindings
+    // to improve performance by reducing writeBuffer calls
     this.lightsBindingParams = {
       ambientLights: {
         max: this.options.lights.maxAmbientLights,
@@ -419,10 +430,18 @@ export class GPUCameraRenderer extends GPURenderer {
 
     const lightBindingIndex = this.cameraLightsBindGroup.bindings.findIndex((binding) => binding.name === lightsType)
 
-    this.cameraLightsBindGroup.bindings[lightBindingIndex] = this.bindings[lightsType]
+    if (lightBindingIndex !== -1) {
+      this.cameraLightsBindGroup.bindings[lightBindingIndex] = this.bindings[lightsType]
+    } else {
+      // not used yet but could be useful
+      // if we'd decide not to create a binding if max === 0
+      this.bindings[lightsType].shouldResetBindGroup = true
+      this.bindings[lightsType].shouldResetBindGroupLayout = true
+      this.cameraLightsBindGroup.addBinding(this.bindings[lightsType])
+      this.shouldUpdateCameraLightsBindGroup()
+    }
 
     // increase shadows binding size as well
-    // TODO if the meshes shaders are already compiled, should we flush their pipelines?
     if (lightsType === 'directionalLights' || lightsType === 'pointLights') {
       const shadowsType = (lightsType.replace('Lights', '') + 'Shadows') as ShadowsType
       const oldShadowsBinding = this.cameraLightsBindGroup.getBindingByName(shadowsType)
@@ -435,15 +454,20 @@ export class GPUCameraRenderer extends GPURenderer {
       const shadowsBindingIndex = this.cameraLightsBindGroup.bindings.findIndex(
         (binding) => binding.name === shadowsType
       )
-      this.cameraLightsBindGroup.bindings[shadowsBindingIndex] = this.bindings[shadowsType]
+
+      if (shadowsBindingIndex !== -1) {
+        this.cameraLightsBindGroup.bindings[shadowsBindingIndex] = this.bindings[shadowsType]
+      } else {
+        // not used yet, same as above
+        this.bindings[shadowsType].shouldResetBindGroup = true
+        this.bindings[shadowsType].shouldResetBindGroupLayout = true
+        this.cameraLightsBindGroup.addBinding(this.bindings[shadowsType])
+        this.shouldUpdateCameraLightsBindGroup()
+      }
     }
 
     this.cameraLightsBindGroup.resetEntries()
     this.cameraLightsBindGroup.createBindGroup()
-
-    if (this.lightsBindingParams[lightsType].max === 1) {
-      this.cameraLightsBindGroup.needsPipelineFlush = true
-    }
 
     this.lights.forEach((light) => {
       if (light.type === lightsType) {
@@ -555,6 +579,16 @@ export class GPUCameraRenderer extends GPURenderer {
   }
 
   /**
+   * Update the {@link cameraLightsBindGroup | camera and lights BindGroup}.
+   */
+  updateCameraLightsBindGroup() {
+    if (this.cameraLightsBindGroup && this.#shouldUpdateCameraLightsBindGroup) {
+      this.cameraLightsBindGroup.update()
+      this.#shouldUpdateCameraLightsBindGroup = false
+    }
+  }
+
+  /**
    * Get all objects ({@link core/renderers/GPURenderer.RenderedMesh | rendered meshes} or {@link core/computePasses/ComputePass.ComputePass | compute passes}) using a given {@link AllowedBindGroups | bind group}, including {@link cameraLightsBindGroup | camera and lights bind group}.
    * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
    * @param bindGroup - {@link AllowedBindGroups | bind group} to check
@@ -620,10 +654,7 @@ export class GPUCameraRenderer extends GPURenderer {
 
     this.setCameraBindGroup()
 
-    if (this.cameraLightsBindGroup && this.#shouldUpdateCameraLightsBindGroup) {
-      this.cameraLightsBindGroup.update()
-      this.#shouldUpdateCameraLightsBindGroup = false
-    }
+    this.updateCameraLightsBindGroup()
 
     super.render(commandEncoder)
 

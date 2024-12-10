@@ -60,6 +60,8 @@ export interface BufferBindingParams extends BindingParams, BufferBindingBasePar
 }
 /** All allowed {@link BufferElement | buffer elements} */
 export type AllowedBufferElement = BufferElement | BufferArrayElement | BufferInterleavedArrayElement;
+/** Possible data view set function to use with a {@link DataView} based on the data type. */
+export type DataViewSetFunction = DataView['setInt32'] | DataView['setUint16'] | DataView['setUint32'] | DataView['setFloat32'];
 /**
  * Used to format {@link BufferBindingParams#struct | uniforms or storages struct inputs} and create a single typed array that will hold all those inputs values. The array needs to be correctly padded depending on every value type, so it can be safely used as a GPUBuffer input.
  *
@@ -112,8 +114,13 @@ export declare class BufferBinding extends Binding {
     arrayView: DataView;
     /** {@link DataView} inside the {@link arrayBuffer | parent arrayBuffer} if set. */
     parentView: DataView | null;
-    /** Array of view set functions to use with the various {@link bufferElements} if the {@link parent} is set. */
-    viewSetFunctions: Array<DataView['setInt32'] | DataView['setUint16'] | DataView['setUint32'] | DataView['setFloat32']> | null;
+    /** Array of {@link AllowedBufferElement | bufferElements} and according {@link DataViewSetFunction | view set functions} to use if the {@link parent} is set. */
+    parentViewSetBufferEls: Array<{
+        /** Corresponding {@link AllowedBufferElement | bufferElement}. */
+        bufferElement: AllowedBufferElement;
+        /** Corresponding {@link DataViewSetFunction | view set function}. */
+        viewSetFunction: DataViewSetFunction;
+    }> | null;
     /** The {@link Buffer} holding the {@link GPUBuffer}  */
     buffer: Buffer;
     /** A string to append to our shaders code describing the WGSL structure representing this {@link BufferBinding} */
@@ -193,6 +200,11 @@ export declare class BufferBinding extends Binding {
      * @param bindings - bindings inputs
      */
     setBindings(bindings: Record<string, Input>): void;
+    /**
+     * Set this {@link BufferBinding} optional {@link childrenBindings}.
+     * @param childrenBindings - Array of {@link BufferBindingChildrenBinding} to use as {@link childrenBindings}.
+     */
+    setChildrenBindings(childrenBindings: BufferBindingChildrenBinding[]): void;
     /**
      * Set the buffer alignments from {@link inputs}.
      */
