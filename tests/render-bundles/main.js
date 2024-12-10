@@ -3,16 +3,13 @@ import { RenderTarget, ShaderPass } from '../../dist/esm/index.mjs'
 
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
-  const { BoxGeometry, GPUCameraRenderer, GPUDeviceManager, RenderBundle, Mesh, ShaderPass } = await import(
+  const { BoxGeometry, GPUCameraRenderer, GPUDeviceManager, RenderBundle, Mesh, ShaderPass, Vec2 } = await import(
     /* @vite-ignore */ path
   )
 
   // create a device manager
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
-    // adapterOptions: {
-    //   compatibilityMode: true,
-    // },
   })
 
   // wait for the device to be created
@@ -234,7 +231,7 @@ window.addEventListener('load', async () => {
   })
 
   setTimeout(() => {
-    // renderBundle.removeMesh(meshes[1])
+    //renderBundle.removeMesh(meshes[1])
     // console.log(renderBundle)
     //meshes[1].remove()
 

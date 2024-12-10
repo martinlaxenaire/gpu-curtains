@@ -44,8 +44,8 @@ export interface GPUCameraRendererLightParams {
 export interface GPUCameraRendererParams extends GPURendererParams {
     /** An object defining {@link CameraBasePerspectiveOptions | camera perspective parameters} */
     camera?: CameraBasePerspectiveOptions;
-    /** An object defining {@link GPUCameraRendererLightParams | the maximum number of light} to use when creating the {@link GPUCameraRenderer}. */
-    lights?: GPUCameraRendererLightParams;
+    /** An object defining {@link GPUCameraRendererLightParams | the maximum number of light} to use when creating the {@link GPUCameraRenderer}. Can be set to `false` to avoid creating lights and shadows buffers, but note this is a permanent choice and cannot be changed later. */
+    lights?: GPUCameraRendererLightParams | false;
 }
 /**
  * This renderer is meant to render meshes projected by a {@link Camera}. It therefore creates a {@link Camera} with its associated {@link bindings} as well as lights and shadows {@link bindings} used for lighting and their associated {@link cameraLightsBindGroup | bind group}.<br>
@@ -172,6 +172,10 @@ export declare class GPUCameraRenderer extends GPURenderer {
      * Tell our {@link GPUCameraRenderer#bindings.camera | camera buffer binding} that we should update its bindings and update the bind group. Called each time the camera matrices change.
      */
     updateCameraBindings(): void;
+    /**
+     * Update the {@link cameraLightsBindGroup | camera and lights BindGroup}.
+     */
+    updateCameraLightsBindGroup(): void;
     /**
      * Get all objects ({@link core/renderers/GPURenderer.RenderedMesh | rendered meshes} or {@link core/computePasses/ComputePass.ComputePass | compute passes}) using a given {@link AllowedBindGroups | bind group}, including {@link cameraLightsBindGroup | camera and lights bind group}.
      * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.

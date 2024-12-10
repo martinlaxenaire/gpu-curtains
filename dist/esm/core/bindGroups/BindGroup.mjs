@@ -35,7 +35,7 @@ class BindGroup {
     this.consumers = /* @__PURE__ */ new Set();
     for (const binding of this.bufferBindings) {
       if ("buffer" in binding) {
-        if ("parent" in binding && binding.parent) {
+        if (binding.parent) {
           binding.parent.buffer.consumers.add(this.uuid);
         } else {
           binding.buffer.consumers.add(this.uuid);
@@ -61,7 +61,7 @@ class BindGroup {
   addBindings(bindings = []) {
     bindings.forEach((binding) => {
       if ("buffer" in binding) {
-        if ("parent" in binding && binding.parent) {
+        if (binding.parent) {
           this.renderer.deviceManager.bufferBindings.set(binding.parent.cacheKey, binding.parent);
           binding.parent.buffer.consumers.add(this.uuid);
         } else {
@@ -90,7 +90,7 @@ class BindGroup {
       if (!binding.buffer.consumers.size) {
         binding.buffer.destroy();
       }
-      if ("parent" in binding && binding.parent) {
+      if (binding.parent) {
         binding.parent.buffer.consumers.delete(this.uuid);
         if (!binding.parent.buffer.consumers.size) {
           this.renderer.removeBuffer(binding.parent.buffer);
@@ -246,7 +246,7 @@ class BindGroup {
     this.resetEntries();
     for (const binding of this.bufferBindings) {
       binding.buffer.reset();
-      if ("parent" in binding && binding.parent) {
+      if (binding.parent) {
         binding.parent.buffer.reset();
       }
       if ("resultBuffer" in binding) {
@@ -304,13 +304,9 @@ class BindGroup {
         binding.visibility = GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE;
       }
       if ("buffer" in binding) {
-        const isChildBuffer = "parent" in binding && binding.parent;
-        if (isChildBuffer && !binding.parent.buffer.GPUBuffer) {
-          this.createBindingBuffer(
-            binding.parent,
-            binding.parent.options.label
-          );
-        } else if (!binding.buffer.GPUBuffer && !isChildBuffer) {
+        if (binding.parent && !binding.parent.buffer.GPUBuffer) {
+          this.createBindingBuffer(binding.parent, binding.parent.options.label);
+        } else if (!binding.buffer.GPUBuffer && !binding.parent) {
           this.createBindingBuffer(binding);
         }
       }
@@ -419,14 +415,10 @@ class BindGroup {
     for (const binding of bindingsRef) {
       bindGroupCopy.addBinding(binding);
       if ("buffer" in binding) {
-        const isChildBuffer = "parent" in binding && binding.parent;
-        if (isChildBuffer && !binding.parent.buffer.GPUBuffer) {
-          this.createBindingBuffer(
-            binding.parent,
-            binding.parent.options.label
-          );
+        if (binding.parent && !binding.parent.buffer.GPUBuffer) {
+          this.createBindingBuffer(binding.parent, binding.parent.options.label);
           binding.parent.buffer.consumers.add(bindGroupCopy.uuid);
-        } else if (!binding.buffer.GPUBuffer && !isChildBuffer) {
+        } else if (!binding.buffer.GPUBuffer && !binding.parent) {
           this.createBindingBuffer(binding);
         }
         if ("resultBuffer" in binding) {

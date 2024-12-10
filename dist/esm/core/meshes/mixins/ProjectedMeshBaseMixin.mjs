@@ -4,7 +4,7 @@ import { MeshBaseMixin } from './MeshBaseMixin.mjs';
 import default_projected_vsWgsl from '../../shaders/chunks/default/default_projected_vs.wgsl.mjs';
 import default_normal_fsWgsl from '../../shaders/chunks/default/default_normal_fs.wgsl.mjs';
 import { getPCFDirectionalShadows, getPCFShadowContribution, getPCFPointShadows, getPCFPointShadowContribution } from '../../shaders/chunks/shading/shadows.mjs';
-import { BufferBindingOffsetChild } from '../../bindings/BufferBindingOffsetChild.mjs';
+import { BufferBinding } from '../../bindings/BufferBinding.mjs';
 
 const defaultProjectedMeshParams = {
   // frustum culling and visibility
@@ -92,24 +92,28 @@ function ProjectedMeshBaseMixin(Base) {
      * @param updateScene - Whether to remove and then re-add the Mesh from the {@link core/scenes/Scene.Scene | Scene} or not.
      */
     setRenderBundle(renderBundle, updateScene = true) {
+      if (this.renderBundle && renderBundle && this.renderBundle.uuid === renderBundle.uuid)
+        return;
+      const hasRenderBundle = !!this.renderBundle;
       const bindGroup = this.material.getBindGroupByBindingName("matrices");
       const matrices = this.material.getBufferBindingByName("matrices");
-      if (!this.renderBundle && renderBundle && renderBundle.binding) {
-        bindGroup.destroyBufferBinding(matrices);
-      } else if (this.renderBundle && !renderBundle && matrices.parent) {
+      if (this.renderBundle && !renderBundle && matrices.parent) {
         matrices.parent = null;
         matrices.shouldResetBindGroup = true;
         bindGroup.createBindingBuffer(matrices);
       }
       super.setRenderBundle(renderBundle, updateScene);
       if (this.renderBundle && this.renderBundle.binding) {
+        if (hasRenderBundle) {
+          bindGroup.destroyBufferBinding(matrices);
+        }
         matrices.options.offset = this.renderBundle.meshes.size - 1;
         matrices.parent = this.renderBundle.binding;
         matrices.shouldResetBindGroup = true;
       }
     }
     /**
-     * Reset the {@link BufferBindingOffsetChild | matrices buffer binding} parent and offset and tell its bind group to update.
+     * Reset the {@link BufferBinding | matrices buffer binding} parent and offset and tell its bind group to update.
      * @param offset - New offset to use in the parent {@link RenderBundle#binding | RenderBundle binding}.
      */
     patchRenderBundleBinding(offset = 0) {
@@ -120,7 +124,8 @@ function ProjectedMeshBaseMixin(Base) {
     }
     /* SHADERS */
     /**
-     * Set default shaders if one or both of them are missing
+     * Set default shaders if one or both of them are missing.
+     * Can also patch the fragment shader if the mesh should receive shadows.
      */
     setShaders() {
       const { shaders } = this.options;
@@ -149,6 +154,13 @@ function ProjectedMeshBaseMixin(Base) {
           };
         }
       }
+      if (this.options.receiveShadows) {
+        const hasActiveShadows = this.renderer.shadowCastingLights.find((light) => light.shadow.isActive);
+        if (hasActiveShadows && shaders.fragment && typeof shaders.fragment === "object") {
+          shaders.fragment.code = getPCFDirectionalShadows(this.renderer) + getPCFShadowContribution + getPCFPointShadows(this.renderer) + getPCFPointShadowContribution + shaders.fragment.code;
+        }
+      }
+      return shaders;
     }
     /* GEOMETRY */
     /**
@@ -199,10 +211,6 @@ function ProjectedMeshBaseMixin(Base) {
             depthSamplers.push(light.shadow.depthComparisonSampler);
           }
         });
-        const hasActiveShadows = this.renderer.shadowCastingLights.find((light) => light.shadow.isActive);
-        if (hasActiveShadows && parameters.shaders.fragment && typeof parameters.shaders.fragment === "object") {
-          parameters.shaders.fragment.code = getPCFDirectionalShadows(this.renderer) + getPCFShadowContribution + getPCFPointShadows(this.renderer) + getPCFPointShadowContribution + parameters.shaders.fragment.code;
-        }
         depthSamplers = depthSamplers.filter(
           (sampler, i, array) => array.findIndex((s) => s.uuid === sampler.uuid) === i
         );
@@ -250,10 +258,10 @@ function ProjectedMeshBaseMixin(Base) {
         matricesUniforms.parent = this.options.renderBundle.binding;
         matricesUniforms.offset = this.options.renderBundle.meshes.size;
       }
-      const transformationBinding = new BufferBindingOffsetChild(matricesUniforms);
+      const meshTransformationBinding = new BufferBinding(matricesUniforms);
       if (!meshParameters.bindings)
         meshParameters.bindings = [];
-      meshParameters.bindings.unshift(transformationBinding);
+      meshParameters.bindings.unshift(meshTransformationBinding);
       super.setMaterial(meshParameters);
     }
     /**

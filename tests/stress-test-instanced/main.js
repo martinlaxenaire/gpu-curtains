@@ -30,6 +30,7 @@ window.addEventListener('load', async () => {
       near: systemSize,
       far: systemSize * 4,
     },
+    lights: false, // disable lights and shadows buffer, we want the bare minimum
   })
 
   // render it

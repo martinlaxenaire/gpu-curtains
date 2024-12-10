@@ -2,7 +2,6 @@ import { isRenderer, Renderer } from '../renderers/utils'
 import { generateUUID, toKebabCase } from '../../utils/utils'
 import { WritableBufferBinding, WritableBufferBindingParams } from '../bindings/WritableBufferBinding'
 import { BufferBinding } from '../bindings/BufferBinding'
-import { BufferBindingOffsetChild, BufferBindingOffsetChildParams } from '../bindings/BufferBindingOffsetChild'
 import {
   AllowedBindGroups,
   BindGroupBindingElement,
@@ -96,7 +95,7 @@ export class BindGroup {
   /** A cache key allowing the {@link core/pipelines/PipelineManager.PipelineManager | PipelineManager} to compare {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | RenderPipelineEntry} bind groups content. */
   pipelineCacheKey: string
 
-  /** Flag indicating whether we need to flush and recreate the pipeline using this {@link BindGroup} s*/
+  /** Flag indicating whether we need to flush and recreate the pipeline using this {@link BindGroup} */
   needsPipelineFlush: boolean
 
   /** A Set to store this {@link BindGroup} consumers ({@link core/materials/Material.Material#uuid | Material uuid})  */
@@ -147,7 +146,7 @@ export class BindGroup {
     // add the bind group to the buffers consumers
     for (const binding of this.bufferBindings) {
       if ('buffer' in binding) {
-        if ('parent' in binding && binding.parent) {
+        if (binding.parent) {
           binding.parent.buffer.consumers.add(this.uuid)
         } else {
           binding.buffer.consumers.add(this.uuid)
@@ -177,7 +176,7 @@ export class BindGroup {
   addBindings(bindings: BindGroupBindingElement[] = []) {
     bindings.forEach((binding) => {
       if ('buffer' in binding) {
-        if ('parent' in binding && binding.parent) {
+        if (binding.parent) {
           this.renderer.deviceManager.bufferBindings.set(binding.parent.cacheKey, binding.parent)
           binding.parent.buffer.consumers.add(this.uuid)
         } else {
@@ -211,7 +210,7 @@ export class BindGroup {
         binding.buffer.destroy()
       }
 
-      if ('parent' in binding && binding.parent) {
+      if (binding.parent) {
         binding.parent.buffer.consumers.delete(this.uuid)
 
         if (!binding.parent.buffer.consumers.size) {
@@ -407,7 +406,7 @@ export class BindGroup {
     for (const binding of this.bufferBindings) {
       binding.buffer.reset()
 
-      if ('parent' in binding && binding.parent) {
+      if (binding.parent) {
         binding.parent.buffer.reset()
       }
 
@@ -480,14 +479,9 @@ export class BindGroup {
       // if it's a buffer binding, create the GPUBuffer
       if ('buffer' in binding) {
         // do not create if it has a parent but create parent instead
-        const isChildBuffer = 'parent' in binding && binding.parent
-
-        if (isChildBuffer && !(binding as BufferBindingOffsetChild).parent.buffer.GPUBuffer) {
-          this.createBindingBuffer(
-            (binding as BufferBindingOffsetChild).parent,
-            (binding as BufferBindingOffsetChild).parent.options.label
-          )
-        } else if (!binding.buffer.GPUBuffer && !isChildBuffer) {
+        if (binding.parent && !binding.parent.buffer.GPUBuffer) {
+          this.createBindingBuffer(binding.parent, binding.parent.options.label)
+        } else if (!binding.buffer.GPUBuffer && !binding.parent) {
           this.createBindingBuffer(binding)
         }
       }
@@ -631,15 +625,10 @@ export class BindGroup {
       // if it's a buffer binding without a GPUBuffer, create it now
       if ('buffer' in binding) {
         // do not create if it has a parent but create parent instead
-        const isChildBuffer = 'parent' in binding && binding.parent
-
-        if (isChildBuffer && !(binding as BufferBindingOffsetChild).parent.buffer.GPUBuffer) {
-          this.createBindingBuffer(
-            (binding as BufferBindingOffsetChild).parent,
-            (binding as BufferBindingOffsetChild).parent.options.label
-          )
-          ;(binding as BufferBindingOffsetChild).parent.buffer.consumers.add(bindGroupCopy.uuid)
-        } else if (!binding.buffer.GPUBuffer && !isChildBuffer) {
+        if (binding.parent && !binding.parent.buffer.GPUBuffer) {
+          this.createBindingBuffer(binding.parent, binding.parent.options.label)
+          binding.parent.buffer.consumers.add(bindGroupCopy.uuid)
+        } else if (!binding.buffer.GPUBuffer && !binding.parent) {
           this.createBindingBuffer(binding)
         }
 

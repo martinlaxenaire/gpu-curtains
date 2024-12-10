@@ -5,6 +5,7 @@ import { BufferElement } from './bufferElements/BufferElement';
 import { BufferArrayElement } from './bufferElements/BufferArrayElement';
 import { BufferInterleavedArrayElement } from './bufferElements/BufferInterleavedArrayElement';
 import { Buffer, BufferParams } from '../buffers/Buffer';
+import { WritableBufferBinding, WritableBufferBindingParams } from './WritableBufferBinding';
 /**
  * Defines a {@link BufferBinding} input object that can set a value and run a callback function when this happens
  */
@@ -33,21 +34,44 @@ export interface BufferBindingBaseParams {
     /** Allowed usages for the {@link BufferBinding#buffer} as an array of {@link core/buffers/utils.BufferUsageKeys | buffer usages names} */
     usage?: BufferParams['usage'];
 }
+/** Define a {@link BufferBinding} children binding entry parameters. Used to build complex WGSL `Struct` containing `Struct` children. */
+export interface BufferBindingChildrenBinding {
+    /** The {@link BufferBinding} to use. */
+    binding: BufferBinding;
+    /** The number of times to use this {@link binding}. If it is greater than `1`, the {@link binding} will be cloned with new arrays to use for values. */
+    count?: number;
+    /** Whether to force this `Struct` element to be defined as an array, even if {@link count} is lower or equal to `1`. Useful when a `Struct` element absolutely needs to be iterable. */
+    forceArray?: boolean;
+}
 /**
  * Parameters used to create a {@link BufferBinding}
  */
 export interface BufferBindingParams extends BindingParams, BufferBindingBaseParams {
     /** The binding type of the {@link BufferBinding} */
     bindingType?: BufferBindingType;
-    /** Optional array of already created {@link BufferBinding} to add to this {@link BufferBinding}. */
-    bindings?: BufferBinding[];
+    /** Optional array of {@link BufferBindingChildrenBinding} to add to this {@link BufferBinding} to create complex `Struct` objects containing `Struct` {@link BufferBinding} children. */
+    childrenBindings?: BufferBindingChildrenBinding[];
+    /** The minimum {@link GPUDevice} buffer offset alignment. */
+    minOffset?: number;
+    /** Optional offset of the {@link BufferBinding} in the {@link BufferBinding#parent | parent BufferBinding} (as an index - not in bytes). */
+    offset?: number;
+    /** The optional parent {@link BufferBinding} that will actually handle the {@link GPUBuffer}. */
+    parent?: BufferBinding;
 }
 /** All allowed {@link BufferElement | buffer elements} */
 export type AllowedBufferElement = BufferElement | BufferArrayElement | BufferInterleavedArrayElement;
+/** Possible data view set function to use with a {@link DataView} based on the data type. */
+export type DataViewSetFunction = DataView['setInt32'] | DataView['setUint16'] | DataView['setUint32'] | DataView['setFloat32'];
 /**
- * Used to format {@link BufferBindingParams#struct | uniforms or storages struct inputs} and create a single typed array that will hold all those inputs values. The array needs to be correctly padded depending on every value type, so it can be safely used as a GPUBuffer input.<br>
- * It will also create WGSL Structs and variables according to the BufferBindings inputs parameters.<br>
+ * Used to format {@link BufferBindingParams#struct | uniforms or storages struct inputs} and create a single typed array that will hold all those inputs values. The array needs to be correctly padded depending on every value type, so it can be safely used as a GPUBuffer input.
+ *
+ * It will also create WGSL Structs and variables according to the {@link BufferBinding} inputs parameters.
+ *
  * The WGSL structs and variables declaration may vary based on the input types, especially if there's one or more arrays involved (i.e. `array<f32>`, `array<vec3f>` etc.).
+ *
+ * It is possible to create complex WGSL structs with children structs by using the {@link BufferBindingParams#childrenBindings | childrenBindings} parameter.
+ *
+ * A {@link BufferBinding} can also have a {@link parent | parent BufferBinding}, in which case it won't create a GPUBuffer but use its parent GPUBuffer at the right offset. Useful to create a unique {@link BufferBinding} with a single GPUBuffer to handle multiple {@link BufferBinding} and update them with a single `writeBuffer` call.
  *
  * @example
  * ```javascript
@@ -69,12 +93,15 @@ export type AllowedBufferElement = BufferElement | BufferArrayElement | BufferIn
  * ```
  */
 export declare class BufferBinding extends Binding {
+    #private;
     /** The binding type of the {@link BufferBinding} */
     bindingType: BufferBindingType;
     /** Flag to indicate whether this {@link BufferBinding} {@link bufferElements | buffer elements} should be packed in a single structured object or if each one of them should be a separate binding. */
     useStruct: boolean;
     /** All the {@link BufferBinding} data inputs */
     inputs: Record<string, BufferBindingInput>;
+    /** Array of children {@link BufferBinding} used as struct children. */
+    childrenBindings: BufferBinding[];
     /** Flag to indicate whether one of the {@link inputs} value has changed and we need to update the GPUBuffer linked to the {@link arrayBuffer} array */
     shouldUpdate: boolean;
     /** An array describing how each corresponding {@link inputs} should be inserted into our {@link arrayView} array */
@@ -85,6 +112,15 @@ export declare class BufferBinding extends Binding {
     arrayBuffer: ArrayBuffer;
     /** Data view of our {@link arrayBuffer | array buffer} */
     arrayView: DataView;
+    /** {@link DataView} inside the {@link arrayBuffer | parent arrayBuffer} if set. */
+    parentView: DataView | null;
+    /** Array of {@link AllowedBufferElement | bufferElements} and according {@link DataViewSetFunction | view set functions} to use if the {@link parent} is set. */
+    parentViewSetBufferEls: Array<{
+        /** Corresponding {@link AllowedBufferElement | bufferElement}. */
+        bufferElement: AllowedBufferElement;
+        /** Corresponding {@link DataViewSetFunction | view set function}. */
+        viewSetFunction: DataViewSetFunction;
+    }> | null;
     /** The {@link Buffer} holding the {@link GPUBuffer}  */
     buffer: Buffer;
     /** A string to append to our shaders code describing the WGSL structure representing this {@link BufferBinding} */
@@ -97,14 +133,45 @@ export declare class BufferBinding extends Binding {
      * BufferBinding constructor
      * @param parameters - {@link BufferBindingParams | parameters} used to create our BufferBindings
      */
-    constructor({ label, name, bindingType, visibility, useStruct, access, usage, struct, bindings, }: BufferBindingParams);
+    constructor({ label, name, bindingType, visibility, useStruct, access, usage, struct, childrenBindings, parent, minOffset, offset, }: BufferBindingParams);
     /**
-     * Get {@link GPUBindGroupLayoutEntry#buffer | bind group layout entry resource}
+     * Clone a {@link BufferBindingParams#struct | struct object} width new default values.
+     * @param struct - New cloned struct object.
+     */
+    static cloneStruct(struct: Record<string, Input>): Record<string, Input>;
+    /**
+     * Get the {@link BufferBinding} parent if any.
+     * @readonly
+     * @returns - The {@link BufferBinding} parent if any.
+     */
+    get parent(): BufferBinding;
+    /**
+     * Set the new {@link BufferBinding} parent.
+     * @param value - New {@link BufferBinding} parent to set if any.
+     */
+    set parent(value: BufferBinding | null);
+    /**
+     * Round the given size value to the nearest minimum {@link GPUDevice} buffer offset alignment.
+     * @param value - Size to round.
+     */
+    getMinOffsetSize(value: number): number;
+    /**
+     * Get this {@link BufferBinding} offset in bytes inside the {@link arrayBuffer | parent arrayBuffer}.
+     * @readonly
+     * @returns - The offset in bytes inside the {@link arrayBuffer | parent arrayBuffer}
+     */
+    get offset(): number;
+    /**
+     * Get {@link GPUBindGroupLayoutEntry#buffer | bind group layout entry resource}.
      * @readonly
      */
     get resourceLayout(): {
         /** {@link GPUBindGroupLayout | bind group layout} resource */
         buffer: GPUBufferBindingLayout;
+        /** Offset in bytes in the {@link parent} buffer if set. */
+        offset?: number;
+        /** Size in bytes in the {@link parent} buffer if set. */
+        size?: number;
     };
     /**
      * Get the resource cache key
@@ -112,23 +179,32 @@ export declare class BufferBinding extends Binding {
      */
     get resourceLayoutCacheKey(): string;
     /**
-     * Get {@link GPUBindGroupEntry#resource | bind group resource}
+     * Get {@link GPUBindGroupEntry#resource | bind group resource}.
      * @readonly
      */
     get resource(): {
         /** {@link GPUBindGroup | bind group} resource */
         buffer: GPUBuffer | null;
+        /** Offset in bytes in the {@link parent} buffer if set. */
+        offset?: number;
+        /** Size in bytes in the {@link parent} buffer if set. */
+        size?: number;
     };
     /**
      * Clone this {@link BufferBinding} into a new one. Allows to skip buffer layout alignment computations.
      * @param params - params to use for cloning
      */
-    clone(params: BufferBindingParams): BufferBinding;
+    clone(params?: BufferBindingParams | WritableBufferBindingParams): BufferBinding | WritableBufferBinding;
     /**
      * Format bindings struct and set our {@link inputs}
      * @param bindings - bindings inputs
      */
     setBindings(bindings: Record<string, Input>): void;
+    /**
+     * Set this {@link BufferBinding} optional {@link childrenBindings}.
+     * @param childrenBindings - Array of {@link BufferBindingChildrenBinding} to use as {@link childrenBindings}.
+     */
+    setChildrenBindings(childrenBindings: BufferBindingChildrenBinding[]): void;
     /**
      * Set the buffer alignments from {@link inputs}.
      */

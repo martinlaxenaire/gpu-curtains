@@ -21,8 +21,8 @@ import {
   getPCFPointShadows,
   getPCFShadowContribution,
 } from '../../shaders/chunks/shading/shadows'
-import { BufferBindingOffsetChild, BufferBindingOffsetChildParams } from '../../bindings/BufferBindingOffsetChild'
 import { RenderBundle } from '../../renderPasses/RenderBundle'
+import { BufferBinding, BufferBindingParams } from '../../bindings/BufferBinding'
 
 /** Define all possible frustum culling checks. */
 export type FrustumCullingCheck = 'OBB' | 'sphere' | false
@@ -111,7 +111,7 @@ export declare class ProjectedMeshBaseClass extends MeshBaseClass {
   setRenderBundle(renderBundle?: RenderBundle | null, updateScene?: boolean): void
 
   /**
-   * Reset the {@link BufferBindingOffsetChild | matrices buffer binding} parent and offset and tell its bind group to update.
+   * Reset the {@link BufferBinding | matrices buffer binding} parent and offset and tell its bind group to update.
    * @param offset - New offset to use in the parent {@link RenderBundle#binding | RenderBundle binding}.
    */
   patchRenderBundleBinding(offset?: number): void
@@ -312,14 +312,14 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
      * @param updateScene - Whether to remove and then re-add the Mesh from the {@link core/scenes/Scene.Scene | Scene} or not.
      */
     setRenderBundle(renderBundle: RenderBundle | null, updateScene = true) {
-      const bindGroup = this.material.getBindGroupByBindingName('matrices')
-      const matrices = this.material.getBufferBindingByName('matrices') as BufferBindingOffsetChild
+      // same render bundle? abort
+      if (this.renderBundle && renderBundle && this.renderBundle.uuid === renderBundle.uuid) return
 
-      if (!this.renderBundle && renderBundle && renderBundle.binding) {
-        // if we did not have a render bundle, but now we have one with a buffer
-        // destroy current matrices binding
-        bindGroup.destroyBufferBinding(matrices)
-      } else if (this.renderBundle && !renderBundle && matrices.parent) {
+      const hasRenderBundle = !!this.renderBundle
+      const bindGroup = this.material.getBindGroupByBindingName('matrices')
+      const matrices = this.material.getBufferBindingByName('matrices') as BufferBinding
+
+      if (this.renderBundle && !renderBundle && matrices.parent) {
         // if we did have a render bundle, reset the parent and bind group
         matrices.parent = null
         matrices.shouldResetBindGroup = true
@@ -329,6 +329,12 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
       super.setRenderBundle(renderBundle, updateScene)
 
       if (this.renderBundle && this.renderBundle.binding) {
+        // if we did not have a render bundle, but now we have one with a buffer
+        // destroy current matrices binding
+        if (hasRenderBundle) {
+          bindGroup.destroyBufferBinding(matrices)
+        }
+
         matrices.options.offset = this.renderBundle.meshes.size - 1
         matrices.parent = this.renderBundle.binding
 
@@ -337,11 +343,11 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
     }
 
     /**
-     * Reset the {@link BufferBindingOffsetChild | matrices buffer binding} parent and offset and tell its bind group to update.
+     * Reset the {@link BufferBinding | matrices buffer binding} parent and offset and tell its bind group to update.
      * @param offset - New offset to use in the parent {@link RenderBundle#binding | RenderBundle binding}.
      */
     patchRenderBundleBinding(offset = 0) {
-      const matrices = this.material.getBufferBindingByName('matrices') as BufferBindingOffsetChild
+      const matrices = this.material.getBufferBindingByName('matrices') as BufferBinding
 
       matrices.options.offset = offset
       matrices.parent = this.renderBundle.binding
@@ -352,7 +358,8 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
     /* SHADERS */
 
     /**
-     * Set default shaders if one or both of them are missing
+     * Set default shaders if one or both of them are missing.
+     * Can also patch the fragment shader if the mesh should receive shadows.
      */
     setShaders() {
       const { shaders } = this.options
@@ -383,6 +390,23 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
           }
         }
       }
+
+      // add shadow receiving chunks to shaders
+      // TODO what if we change the mesh renderer?
+      if (this.options.receiveShadows) {
+        const hasActiveShadows = this.renderer.shadowCastingLights.find((light) => light.shadow.isActive)
+
+        if (hasActiveShadows && shaders.fragment && typeof shaders.fragment === 'object') {
+          shaders.fragment.code =
+            getPCFDirectionalShadows(this.renderer) +
+            getPCFShadowContribution +
+            getPCFPointShadows(this.renderer) +
+            getPCFPointShadowContribution +
+            shaders.fragment.code
+        }
+      }
+
+      return shaders
     }
 
     /* GEOMETRY */
@@ -447,19 +471,6 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
           }
         })
 
-        // add chunks to shaders
-        // TODO what if we change the mesh renderer?
-        const hasActiveShadows = this.renderer.shadowCastingLights.find((light) => light.shadow.isActive)
-
-        if (hasActiveShadows && parameters.shaders.fragment && typeof parameters.shaders.fragment === 'object') {
-          parameters.shaders.fragment.code =
-            getPCFDirectionalShadows(this.renderer) +
-            getPCFShadowContribution +
-            getPCFPointShadows(this.renderer) +
-            getPCFPointShadowContribution +
-            parameters.shaders.fragment.code
-        }
-
         // filter duplicate depth comparison samplers
         depthSamplers = depthSamplers.filter(
           (sampler, i, array) => array.findIndex((s) => s.uuid === sampler.uuid) === i
@@ -489,7 +500,7 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
       // add matrices uniforms
       // https://threejs.org/docs/#api/en/renderers/webgl/WebGLProgram
       // https://doc.babylonjs.com/features/featuresDeepDive/materials/shaders/introToShaders#built-in-variables
-      const matricesUniforms: BufferBindingOffsetChildParams = {
+      const matricesUniforms: BufferBindingParams = {
         label: 'Matrices',
         name: 'matrices',
         visibility: ['vertex'],
@@ -517,9 +528,10 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
         matricesUniforms.offset = this.options.renderBundle.meshes.size
       }
 
-      const transformationBinding = new BufferBindingOffsetChild(matricesUniforms)
+      const meshTransformationBinding = new BufferBinding(matricesUniforms)
+
       if (!meshParameters.bindings) meshParameters.bindings = []
-      meshParameters.bindings.unshift(transformationBinding)
+      meshParameters.bindings.unshift(meshTransformationBinding)
 
       super.setMaterial(meshParameters)
     }

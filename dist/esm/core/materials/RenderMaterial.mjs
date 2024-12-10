@@ -218,6 +218,11 @@ New rendering options: ${JSON.stringify(
    */
   updateBindGroups() {
     const startBindGroupIndex = this.useCameraBindGroup ? 1 : 0;
+    if (this.useCameraBindGroup) {
+      if (this.bindGroups[0].needsPipelineFlush && this.pipelineEntry.ready) {
+        this.pipelineEntry.flushPipelineEntry(this.bindGroups);
+      }
+    }
     for (let i = startBindGroupIndex; i < this.bindGroups.length; i++) {
       this.updateBindGroup(this.bindGroups[i]);
     }
