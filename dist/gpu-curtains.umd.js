@@ -1688,7 +1688,7 @@
   };
   var __privateSet$h = (obj, member, value, setter) => {
     __accessCheck$j(obj, member, "write to private field");
-    setter ? setter.call(obj, value) : member.set(obj, value);
+    member.set(obj, value);
     return value;
   };
   var _parent;
@@ -4557,7 +4557,7 @@
   };
   var __privateSet$g = (obj, member, value, setter) => {
     __accessCheck$h(obj, member, "write to private field");
-    setter ? setter.call(obj, value) : member.set(obj, value);
+    member.set(obj, value);
     return value;
   };
   var _fov, _near, _far, _pixelRatio;
@@ -4917,7 +4917,7 @@
   };
   var __privateGet$f = (obj, member, getter) => {
     __accessCheck$g(obj, member, "read from private field");
-    return getter ? getter.call(obj) : member.get(obj);
+    return member.get(obj);
   };
   var __privateAdd$g = (obj, member, value) => {
     if (member.has(obj))
@@ -4926,7 +4926,7 @@
   };
   var __privateSet$f = (obj, member, value, setter) => {
     __accessCheck$g(obj, member, "write to private field");
-    setter ? setter.call(obj, value) : member.set(obj, value);
+    member.set(obj, value);
     return value;
   };
   var _autoResize;
@@ -5836,7 +5836,7 @@
   };
   var __privateGet$e = (obj, member, getter) => {
     __accessCheck$f(obj, member, "read from private field");
-    return getter ? getter.call(obj) : member.get(obj);
+    return member.get(obj);
   };
   var __privateAdd$f = (obj, member, value) => {
     if (member.has(obj))
@@ -5845,7 +5845,7 @@
   };
   var __privateSet$e = (obj, member, value, setter) => {
     __accessCheck$f(obj, member, "write to private field");
-    setter ? setter.call(obj, value) : member.set(obj, value);
+    member.set(obj, value);
     return value;
   };
   var _autoRender$2;
@@ -7083,7 +7083,7 @@
   };
   var __privateSet$d = (obj, member, value, setter) => {
     __accessCheck$e(obj, member, "write to private field");
-    setter ? setter.call(obj, value) : member.set(obj, value);
+    member.set(obj, value);
     return value;
   };
   var _intensity$1, _intensityColor;
@@ -7530,7 +7530,7 @@
   };
   var __privateGet$c = (obj, member, getter) => {
     __accessCheck$d(obj, member, "read from private field");
-    return getter ? getter.call(obj) : member.get(obj);
+    return member.get(obj);
   };
   var __privateAdd$d = (obj, member, value) => {
     if (member.has(obj))
@@ -7539,7 +7539,7 @@
   };
   var __privateSet$c = (obj, member, value, setter) => {
     __accessCheck$d(obj, member, "write to private field");
-    setter ? setter.call(obj, value) : member.set(obj, value);
+    member.set(obj, value);
     return value;
   };
   var _autoRender$1;
@@ -8771,7 +8771,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
   };
   var __privateSet$b = (obj, member, value, setter) => {
     __accessCheck$c(obj, member, "write to private field");
-    setter ? setter.call(obj, value) : member.set(obj, value);
+    member.set(obj, value);
     return value;
   };
   var __privateMethod$4 = (obj, member, method) => {
@@ -9459,7 +9459,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
   };
   var __privateSet$a = (obj, member, value, setter) => {
     __accessCheck$b(obj, member, "write to private field");
-    setter ? setter.call(obj, value) : member.set(obj, value);
+    member.set(obj, value);
     return value;
   };
   var _actualPosition$1, _direction;
@@ -9580,7 +9580,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
   };
   var __privateSet$9 = (obj, member, value, setter) => {
     __accessCheck$a(obj, member, "write to private field");
-    setter ? setter.call(obj, value) : member.set(obj, value);
+    member.set(obj, value);
     return value;
   };
   var _tempCubeDirection;
@@ -9884,7 +9884,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
   };
   var __privateSet$8 = (obj, member, value, setter) => {
     __accessCheck$9(obj, member, "write to private field");
-    setter ? setter.call(obj, value) : member.set(obj, value);
+    member.set(obj, value);
     return value;
   };
   var _range, _actualPosition;
@@ -10011,7 +10011,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
   };
   var __privateSet$7 = (obj, member, value, setter) => {
     __accessCheck$8(obj, member, "write to private field");
-    setter ? setter.call(obj, value) : member.set(obj, value);
+    member.set(obj, value);
     return value;
   };
   let meshIndex = 0;
@@ -12540,12 +12540,12 @@ ${this.shaders.compute.head}`;
   };
   var __privateSet$6 = (obj, member, value, setter) => {
     __accessCheck$7(obj, member, "write to private field");
-    setter ? setter.call(obj, value) : member.set(obj, value);
+    member.set(obj, value);
     return value;
   };
   var __privateWrapper = (obj, member, setter, getter) => ({
     set _(value) {
-      __privateSet$6(obj, member, value, setter);
+      __privateSet$6(obj, member, value);
     },
     get _() {
       return __privateGet$6(obj, member, getter);
@@ -13403,7 +13403,7 @@ ${this.shaders.compute.head}`;
   };
   var __privateGet$5 = (obj, member, getter) => {
     __accessCheck$6(obj, member, "read from private field");
-    return getter ? getter.call(obj) : member.get(obj);
+    return member.get(obj);
   };
   var __privateAdd$6 = (obj, member, value) => {
     if (member.has(obj))
@@ -13412,7 +13412,7 @@ ${this.shaders.compute.head}`;
   };
   var __privateSet$5 = (obj, member, value, setter) => {
     __accessCheck$6(obj, member, "write to private field");
-    setter ? setter.call(obj, value) : member.set(obj, value);
+    member.set(obj, value);
     return value;
   };
   var _shouldUpdateCameraLightsBindGroup;
@@ -14233,7 +14233,7 @@ ${this.shaders.compute.head}`;
   };
   var __privateSet$4 = (obj, member, value, setter) => {
     __accessCheck$5(obj, member, "write to private field");
-    setter ? setter.call(obj, value) : member.set(obj, value);
+    member.set(obj, value);
     return value;
   };
   var __privateMethod$3 = (obj, member, method) => {
@@ -15484,7 +15484,7 @@ fn getIBL(
   };
   var __privateSet$3 = (obj, member, value, setter) => {
     __accessCheck$4(obj, member, "write to private field");
-    setter ? setter.call(obj, value) : member.set(obj, value);
+    member.set(obj, value);
     return value;
   };
   var _DOMObjectWorldPosition, _DOMObjectWorldScale, _DOMObjectDepthScaleRatio;
@@ -16560,7 +16560,7 @@ fn getIBL(
   };
   var __privateSet$2 = (obj, member, value, setter) => {
     __accessCheck$3(obj, member, "write to private field");
-    setter ? setter.call(obj, value) : member.set(obj, value);
+    member.set(obj, value);
     return value;
   };
   var __privateMethod$2 = (obj, member, method) => {
@@ -17257,7 +17257,7 @@ fn getIBL(
   };
   var __privateSet$1 = (obj, member, value, setter) => {
     __accessCheck$2(obj, member, "write to private field");
-    setter ? setter.call(obj, value) : member.set(obj, value);
+    member.set(obj, value);
     return value;
   };
   var __privateMethod$1 = (obj, member, method) => {
@@ -17586,7 +17586,7 @@ fn getIBL(
   };
   var __privateSet = (obj, member, value, setter) => {
     __accessCheck$1(obj, member, "write to private field");
-    setter ? setter.call(obj, value) : member.set(obj, value);
+    member.set(obj, value);
     return value;
   };
   var _primitiveInstances;
