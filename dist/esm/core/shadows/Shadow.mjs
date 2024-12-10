@@ -22,7 +22,7 @@ var __privateAdd = (obj, member, value) => {
 };
 var __privateSet = (obj, member, value, setter) => {
   __accessCheck(obj, member, "write to private field");
-  setter ? setter.call(obj, value) : member.set(obj, value);
+  member.set(obj, value);
   return value;
 };
 var __privateMethod = (obj, member, method) => {
