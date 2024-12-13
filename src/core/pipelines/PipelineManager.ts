@@ -2,6 +2,7 @@ import { RenderPipelineEntry } from './RenderPipelineEntry'
 import { ComputePipelineEntry } from './ComputePipelineEntry'
 import {
   PipelineEntryParams,
+  PipelineManagerPipelineEntryParams,
   PipelineManagerRenderPipelineEntryParams,
   RenderPipelineEntryParams,
 } from '../../types/PipelineEntries'
@@ -116,17 +117,52 @@ export class PipelineManager {
   }
 
   /**
-   * Check if a {@link ComputePipelineEntry} has already been created with the given {@link PipelineEntryParams | parameters}.
-   * Use it if found, else create a new one and add it to the {@link pipelineEntries} array.
+   * Checks if the provided {@link PipelineEntryParams | PipelineEntry parameters} belongs to an already created {@link ComputePipelineEntry}.
    * @param parameters - {@link PipelineEntryParams | PipelineEntry parameters}
+   * @returns - the found {@link ComputePipelineEntry}, or null if not found
+   */
+  isSameComputePipeline(parameters: PipelineEntryParams): ComputePipelineEntry | null {
+    return this.pipelineEntries
+      .filter((pipelineEntry) => pipelineEntry instanceof ComputePipelineEntry)
+      .find((pipelineEntry: ComputePipelineEntry) => {
+        const { options } = pipelineEntry
+        const { shaders, cacheKey } = parameters
+
+        const sameCacheKey = cacheKey === options.cacheKey
+
+        const sameComputeShader = this.compareShaders(shaders.compute, options.shaders.compute)
+
+        return sameCacheKey && sameComputeShader
+      }) as ComputePipelineEntry | null
+  }
+
+  /**
+   * Check if a {@link ComputePipelineEntry} has already been created with the given {@link PipelineManagerPipelineEntryParams | parameters}.
+   * Use it if found, else create a new one and add it to the {@link pipelineEntries} array.
+   * @param parameters - {@link PipelineManagerPipelineEntryParams | PipelineEntry parameters}
    * @returns - newly created {@link ComputePipelineEntry}
    */
-  createComputePipeline(parameters: PipelineEntryParams): ComputePipelineEntry {
-    const pipelineEntry = new ComputePipelineEntry(parameters)
+  createComputePipeline(parameters: PipelineManagerPipelineEntryParams): ComputePipelineEntry {
+    let cacheKey = ''
 
-    this.pipelineEntries.push(pipelineEntry)
+    parameters.bindGroups.forEach((bindGroup) => {
+      bindGroup.bindings.forEach((binding) => {
+        cacheKey += binding.name + ','
+      })
+      cacheKey += bindGroup.pipelineCacheKey
+    })
 
-    return pipelineEntry
+    const existingPipelineEntry = this.isSameComputePipeline({ ...parameters, cacheKey })
+
+    if (existingPipelineEntry) {
+      return existingPipelineEntry
+    } else {
+      const pipelineEntry = new ComputePipelineEntry({ ...parameters, cacheKey })
+
+      this.pipelineEntries.push(pipelineEntry)
+
+      return pipelineEntry
+    }
   }
 
   /**

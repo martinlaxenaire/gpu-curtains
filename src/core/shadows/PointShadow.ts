@@ -319,6 +319,10 @@ export class PointShadow extends Shadow {
    * @param once - Whether to render it only once or not.
    */
   render(once = false): number {
+    // TODO once multi-view is available,
+    // we'll be able to use a single render pass
+    // to render to all 6 faces of the cube depth map
+    // see https://kidrigger.dev/post/vulkan-render-to-cubemap-using-multiview/
     return this.renderer.onBeforeCommandEncoderCreation.add(
       () => {
         if (!this.meshes.size) return

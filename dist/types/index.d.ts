@@ -56,6 +56,7 @@ export { Quat } from './math/Quat';
 export { Vec2 } from './math/Vec2';
 export { Vec3 } from './math/Vec3';
 export { OrbitControls } from './extras/controls/OrbitControls';
+export { EnvironmentMap } from './extras/environment-map/EnvironmentMap';
 export { BoxGeometry } from './extras/geometries/BoxGeometry';
 export { SphereGeometry } from './extras/geometries/SphereGeometry';
 export { PingPongPlane } from './extras/meshes/PingPongPlane';

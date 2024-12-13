@@ -1,7 +1,7 @@
 /// <reference types="dist" />
 import { RenderPipelineEntry } from './RenderPipelineEntry';
 import { ComputePipelineEntry } from './ComputePipelineEntry';
-import { PipelineEntryParams, PipelineManagerRenderPipelineEntryParams, RenderPipelineEntryParams } from '../../types/PipelineEntries';
+import { PipelineEntryParams, PipelineManagerPipelineEntryParams, PipelineManagerRenderPipelineEntryParams, RenderPipelineEntryParams } from '../../types/PipelineEntries';
 import { ShaderOptions } from '../../types/Materials';
 import { BindGroup } from '../bindGroups/BindGroup';
 /** Defines all types of allowed {@link core/pipelines/PipelineEntry.PipelineEntry | PipelineEntry} class objects */
@@ -49,12 +49,18 @@ export declare class PipelineManager {
      */
     createRenderPipeline(parameters: PipelineManagerRenderPipelineEntryParams): RenderPipelineEntry;
     /**
-     * Check if a {@link ComputePipelineEntry} has already been created with the given {@link PipelineEntryParams | parameters}.
-     * Use it if found, else create a new one and add it to the {@link pipelineEntries} array.
+     * Checks if the provided {@link PipelineEntryParams | PipelineEntry parameters} belongs to an already created {@link ComputePipelineEntry}.
      * @param parameters - {@link PipelineEntryParams | PipelineEntry parameters}
+     * @returns - the found {@link ComputePipelineEntry}, or null if not found
+     */
+    isSameComputePipeline(parameters: PipelineEntryParams): ComputePipelineEntry | null;
+    /**
+     * Check if a {@link ComputePipelineEntry} has already been created with the given {@link PipelineManagerPipelineEntryParams | parameters}.
+     * Use it if found, else create a new one and add it to the {@link pipelineEntries} array.
+     * @param parameters - {@link PipelineManagerPipelineEntryParams | PipelineEntry parameters}
      * @returns - newly created {@link ComputePipelineEntry}
      */
-    createComputePipeline(parameters: PipelineEntryParams): ComputePipelineEntry;
+    createComputePipeline(parameters: PipelineManagerPipelineEntryParams): ComputePipelineEntry;
     /**
      * Check if the given {@link AllowedPipelineEntries | PipelineEntry} is already set, if not set it
      * @param pass - current pass encoder

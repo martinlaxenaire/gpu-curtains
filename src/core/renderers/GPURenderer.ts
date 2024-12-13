@@ -465,6 +465,8 @@ export class GPURenderer {
       // needed so we can copy textures for post processing usage
       usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST,
       //viewFormats: []
+      // TODO HDR support
+      // https://developer.chrome.com/blog/new-in-webgpu-129
     })
   }
 

@@ -17,12 +17,10 @@ fn getIBLIndirect(
   metallic: f32,
   diffuseColor: vec3f,
   f0: vec3f,
+  clampSampler: sampler,
   lutTexture: texture_2d<f32>,
-  lutSampler: sampler,
   envSpecularTexture: texture_cube<f32>,
-  envSpecularSampler: sampler,
   envDiffuseTexture: texture_cube<f32>,
-  envDiffuseSampler: sampler,
   ptr_reflectedLight: ptr<function, ReflectedLight>,
   // ptr_iblIndirect: ptr<function, IBLIndirect>
 ) {
@@ -38,7 +36,7 @@ fn getIBLIndirect(
   
   let brdf: vec3f = textureSample(
     lutTexture,
-    lutSampler,
+    clampSampler,
     brdfSamplePoint
   ).rgb;
 
@@ -51,16 +49,16 @@ fn getIBLIndirect(
   
   let specularLight: vec4f = textureSampleLevel(
     envSpecularTexture,
-    envSpecularSampler,
-    reflection,
+    clampSampler,
+    reflection * ibl.envRotation,
     lod
   );
   
   // IBL diffuse (irradiance)
   let diffuseLight: vec4f = textureSample(
     envDiffuseTexture,
-    envDiffuseSampler,
-    normal
+    clampSampler,
+    normal * ibl.envRotation
   );
   
   // product of specularFactor and specularTexture.a
@@ -97,12 +95,10 @@ fn getIBL(
   f0: vec3f,
   metallic: f32,
   roughness: f32,
+  clampSampler: sampler,
   lutTexture: texture_2d<f32>,
-  lutSampler: sampler,
   envSpecularTexture: texture_cube<f32>,
-  envSpecularSampler: sampler,
   envDiffuseTexture: texture_cube<f32>,
-  envDiffuseSampler: sampler,
   ${useOcclusion ? "occlusion: f32," : ""}
 ) -> vec3f {
   var directLight: DirectLight;
@@ -137,12 +133,10 @@ fn getIBL(
     metallic,
     diffuseColor,
     f0,
+    clampSampler,
     lutTexture,
-    lutSampler,
     envSpecularTexture,
-    envSpecularSampler,
     envDiffuseTexture,
-    envDiffuseSampler,
     &reflectedLight,
     // &iblIndirect
   );

@@ -2,13 +2,12 @@ import { MeshDescriptor } from '../../types/gltf/GLTFScenesManager'
 import { ShaderOptions } from '../../types/Materials'
 import { Texture } from '../../core/textures/Texture'
 import { Sampler } from '../../core/samplers/Sampler'
-import { ComputePass } from '../../core/computePasses/ComputePass'
-import { Renderer } from '../../core/renderers/utils'
 import { throwWarning } from '../../utils/utils'
 import { getLambert, GetShadingParams } from '../../core/shaders/chunks/shading/lambert-shading'
 import { getPhong } from '../../core/shaders/chunks/shading/phong-shading'
 import { getPBR } from '../../core/shaders/chunks/shading/pbr-shading'
 import { getIBL } from '../../core/shaders/chunks/shading/ibl-shading'
+import { EnvironmentMap } from '../environment-map/EnvironmentMap'
 
 /** Defines all kinds of shading models available. */
 export type ShadingModels = 'Lambert' | 'Phong' | 'PBR' | 'IBL'
@@ -44,12 +43,8 @@ export interface ShaderBuilderParameters {
     diffuseStrength?: number
     /** Environment specular strength. Default to `0.5`. */
     specularStrength?: number
-    /** Look Up Table texture parameters to use for IBL. */
-    lutTexture?: IBLShaderTextureParams
-    /** Environment diffuse texture parameters to use for IBL. */
-    envDiffuseTexture?: IBLShaderTextureParams
-    /** Environment specular texture parameters to use for IBL. */
-    envSpecularTexture?: IBLShaderTextureParams
+    /** {@link EnvironmentMap} to use for IBL shading. */
+    environmentMap?: EnvironmentMap
   }
 }
 
@@ -268,23 +263,19 @@ export const buildShaders = (
 
   let { chunks } = shaderParameters || {}
   const { iblParameters } = shaderParameters || {}
-  const { lutTexture, envDiffuseTexture, envSpecularTexture } = iblParameters || {}
+  const { environmentMap } = iblParameters || {}
 
-  const useIBLContribution =
-    envDiffuseTexture &&
-    envDiffuseTexture.texture &&
-    envSpecularTexture &&
-    envSpecularTexture.texture &&
-    lutTexture &&
-    lutTexture.texture
-
-  if (useIBLContribution && shadingModel === 'IBL') {
+  if (environmentMap && shadingModel === 'IBL') {
     // add lights & ibl uniforms
     meshDescriptor.parameters.uniforms = {
       ...meshDescriptor.parameters.uniforms,
       ...{
         ibl: {
           struct: {
+            envRotation: {
+              type: 'mat3x3f',
+              value: environmentMap.rotation,
+            },
             diffuseStrength: {
               type: 'f32',
               value: iblParameters?.diffuseStrength ?? 0.5,
@@ -300,18 +291,14 @@ export const buildShaders = (
 
     meshDescriptor.parameters.textures = [
       ...meshDescriptor.parameters.textures,
-      lutTexture.texture,
-      envDiffuseTexture.texture,
-      envSpecularTexture.texture,
+      environmentMap.lutTexture,
+      environmentMap.diffuseTexture,
+      environmentMap.specularTexture,
     ]
 
-    lutTexture.samplerName = lutTexture.samplerName || 'defaultSampler'
-    envDiffuseTexture.samplerName = envDiffuseTexture.samplerName || 'defaultSampler'
-    envSpecularTexture.samplerName = envSpecularTexture.samplerName || 'defaultSampler'
+    meshDescriptor.parameters.samplers = [...meshDescriptor.parameters.samplers, environmentMap.sampler]
   } else if (shadingModel === 'IBL') {
-    throwWarning(
-      'IBL shading requested but one of the LUT, environment specular or diffuse texture is missing. Defaulting to PBR shading.'
-    )
+    throwWarning('IBL shading requested but the environment map missing. Defaulting to PBR shading.')
     shadingModel = 'PBR'
   }
 
@@ -421,12 +408,10 @@ export const buildShaders = (
           f0,
           metallic,
           roughness,
-          ${lutTexture.texture.options.name},
-          ${lutTexture.samplerName},
-          ${envSpecularTexture.texture.options.name},
-          ${envSpecularTexture.samplerName},
-          ${envDiffuseTexture.texture.options.name},
-          ${envDiffuseTexture.samplerName},
+          ${environmentMap.sampler.name},
+          ${environmentMap.lutTexture.options.name},
+          ${environmentMap.specularTexture.options.name},
+          ${environmentMap.diffuseTexture.options.name},
           occlusion
         ),
         color.a
@@ -479,262 +464,4 @@ export const buildShaders = (
       entryPoint: 'main',
     },
   }
-}
-
-/**
- * Compute a diffuse cube map from a specular cube map using a {@link ComputePass} and copy the result into the diffuse texture {@link GPUTexture}.
- * @param renderer - {@link Renderer} to use.
- * @param diffuseTexture - diffuse cube map texture onto which the result of the {@link ComputePass} should be copied.
- * @param specularTexture - specular cube map texture to use as a source.
- */
-export const computeDiffuseFromSpecular = async (
-  renderer: Renderer,
-  diffuseTexture: Texture,
-  specularTexture: Texture
-) => {
-  if (specularTexture.options.viewDimension !== 'cube') {
-    throwWarning(
-      'Could not compute the diffuse texture because the specular texture is not a cube map:' +
-        specularTexture.options.viewDimension
-    )
-    return
-  }
-
-  // ported from https://github.com/KhronosGroup/glTF-Sample-Viewer/blob/9940e4b4f4a2a296351bcd35035cc518deadc298/source/shaders/ibl_filtering.frag
-  const computeDiffuseShader = `    
-    fn radicalInverse_VdC(inputBits: u32) -> f32 {
-        var bits: u32 = inputBits;
-        bits = (bits << 16u) | (bits >> 16u);
-        bits = ((bits & 0x55555555u) << 1u) | ((bits & 0xAAAAAAAAu) >> 1u);
-        bits = ((bits & 0x33333333u) << 2u) | ((bits & 0xCCCCCCCCu) >> 2u);
-        bits = ((bits & 0x0F0F0F0Fu) << 4u) | ((bits & 0xF0F0F0F0u) >> 4u);
-        bits = ((bits & 0x00FF00FFu) << 8u) | ((bits & 0xFF00FF00u) >> 8u);
-        return f32(bits) * 2.3283064365386963e-10; // / 0x100000000
-    }
-    
-    // hammersley2d describes a sequence of points in the 2d unit square [0,1)^2
-    // that can be used for quasi Monte Carlo integration
-    fn hammersley2d(i: u32, N: u32) -> vec2f {
-        return vec2(f32(i) / f32(N), radicalInverse_VdC(i));
-    }
-    
-    // TBN generates a tangent bitangent normal coordinate frame from the normal
-    // (the normal must be normalized)
-    fn generateTBN(normal: vec3f) -> mat3x3f {
-      var bitangent: vec3f = vec3(0.0, 1.0, 0.0);
-  
-      let NdotUp: f32 = dot(normal, vec3(0.0, 1.0, 0.0));
-      let epsilon: f32 = 0.0000001;
-      
-      if (1.0 - abs(NdotUp) <= epsilon) {
-        // Sampling +Y or -Y, so we need a more robust bitangent.
-        if (NdotUp > 0.0) {
-          bitangent = vec3(0.0, 0.0, 1.0);
-        }
-        else {
-          bitangent = vec3(0.0, 0.0, -1.0);
-        }
-      }
-  
-      let tangent: vec3f = normalize(cross(bitangent, normal));
-      bitangent = cross(normal, tangent);
-  
-      return mat3x3f(tangent, bitangent, normal);
-    }
-    
-    // Mipmap Filtered Samples (GPU Gems 3, 20.4)
-    // https://developer.nvidia.com/gpugems/gpugems3/part-iii-rendering/chapter-20-gpu-based-importance-sampling
-    // https://cgg.mff.cuni.cz/~jaroslav/papers/2007-sketch-fis/Final_sap_0073.pdf
-    fn computeLod(pdf: f32) -> f32 {
-      // https://cgg.mff.cuni.cz/~jaroslav/papers/2007-sketch-fis/Final_sap_0073.pdf
-      return 0.5 * log2( 6.0 * f32(params.faceSize) * f32(params.faceSize) / (f32(params.sampleCount) * pdf));
-    }
-    
-    fn transformDirection(face: u32, uv: vec2f) -> vec3f {
-      // Transform the direction based on the cubemap face
-      switch (face) {
-        case 0u {
-          // +X
-          return vec3f( 1.0,  uv.y, -uv.x);
-        }
-        case 1u {
-          // -X
-          return vec3f(-1.0,  uv.y,  uv.x);
-        }
-        case 2u {
-          // +Y
-          return vec3f( uv.x,  -1.0, uv.y);
-        }
-        case 3u {
-          // -Y
-          return vec3f( uv.x, 1.0,  -uv.y);
-        }
-        case 4u {
-          // +Z
-          return vec3f( uv.x,  uv.y,  1.0);
-        }
-        case 5u {
-          // -Z
-          return vec3f(-uv.x,  uv.y, -1.0);
-        }
-        default {
-          return vec3f(0.0, 0.0, 0.0);
-        }
-      }
-    }
-    
-    const PI = ${Math.PI};
-
-    @compute @workgroup_size(8, 8, 1) fn main(
-      @builtin(global_invocation_id) GlobalInvocationID: vec3u,
-    ) {
-      let faceSize: u32 = params.faceSize;
-      let sampleCount: u32 = params.sampleCount;
-      
-      let face: u32 = GlobalInvocationID.z;
-      let x: u32 = GlobalInvocationID.x;
-      let y: u32 = GlobalInvocationID.y;
-  
-      if (x >= faceSize || y >= faceSize) {
-          return;
-      }
-  
-      let texelSize: f32 = 1.0 / f32(faceSize);
-      let halfTexel: f32 = texelSize * 0.5;
-      
-      var uv: vec2f = vec2(
-        (f32(x) + halfTexel) * texelSize,
-        (f32(y) + halfTexel) * texelSize
-      );
-      
-      uv = uv * 2.0 - 1.0;
-  
-      let normal: vec3<f32> = transformDirection(face, uv);
-      
-      var irradiance: vec3f = vec3f(0.0, 0.0, 0.0);
-  
-      for (var i: u32 = 0; i < sampleCount; i++) {
-        // generate a quasi monte carlo point in the unit square [0.1)^2
-        let xi: vec2f = hammersley2d(i, sampleCount);
-        
-        let cosTheta: f32 = sqrt(1.0 - xi.y);
-        let sinTheta: f32 = sqrt(1.0 - cosTheta * cosTheta);
-        let phi: f32 = 2.0 * PI * xi.x;
-        let pdf: f32 = cosTheta / PI; // evaluation for solid angle, therefore drop the sinTheta
-
-        let sampleVec: vec3f = vec3f(
-            sinTheta * cos(phi),
-            sinTheta * sin(phi),
-            cosTheta
-        );
-        
-        let TBN: mat3x3f = generateTBN(normalize(normal));
-        
-        var direction: vec3f = TBN * sampleVec;
-        
-        // invert along Y axis
-        direction.y *= -1.0;
-        
-        let lod: f32 = computeLod(pdf);
-
-        // Convert sampleVec to texture coordinates of the specular env map
-        irradiance += textureSampleLevel(
-          envSpecularTexture,
-          specularSampler,
-          direction,
-          min(lod, f32(params.maxMipLevel))
-        ).rgb;
-      }
-  
-      irradiance /= f32(sampleCount);
-
-      textureStore(diffuseEnvMap, vec2(x, y), face, vec4f(irradiance, 1.0));
-    }
-  `
-
-  let diffuseStorageTexture = new Texture(renderer, {
-    label: 'Diffuse storage cubemap',
-    name: 'diffuseEnvMap',
-    format: 'rgba32float',
-    visibility: ['compute'],
-    usage: ['copySrc', 'storageBinding'],
-    type: 'storage',
-    fixedSize: {
-      width: specularTexture.size.width,
-      height: specularTexture.size.height,
-      depth: 6,
-    },
-    viewDimension: '2d-array',
-  })
-
-  const sampler = new Sampler(renderer, {
-    label: 'Compute diffuse sampler',
-    name: 'specularSampler',
-    addressModeU: 'clamp-to-edge',
-    addressModeV: 'clamp-to-edge',
-    minFilter: 'linear',
-    magFilter: 'linear',
-  })
-
-  let computeDiffusePass = new ComputePass(renderer, {
-    autoRender: false, // we're going to render only on demand
-    dispatchSize: [Math.ceil(specularTexture.size.width / 8), Math.ceil(specularTexture.size.height / 8), 6],
-    shaders: {
-      compute: {
-        code: computeDiffuseShader,
-      },
-    },
-    uniforms: {
-      params: {
-        struct: {
-          faceSize: {
-            type: 'u32',
-            value: specularTexture.size.width,
-          },
-          maxMipLevel: {
-            type: 'u32',
-            value: specularTexture.texture.mipLevelCount,
-          },
-          sampleCount: {
-            type: 'u32',
-            value: 2048,
-          },
-        },
-      },
-    },
-    samplers: [sampler],
-    textures: [specularTexture, diffuseStorageTexture],
-  })
-
-  await computeDiffusePass.material.compileMaterial()
-
-  renderer.onBeforeRenderScene.add(
-    (commandEncoder) => {
-      // run the compute pass just once
-      renderer.renderSingleComputePass(commandEncoder, computeDiffusePass)
-
-      // copy the result to our diffuse texture
-      commandEncoder.copyTextureToTexture(
-        {
-          texture: diffuseStorageTexture.texture,
-        },
-        {
-          texture: diffuseTexture.texture,
-        },
-        [diffuseTexture.texture.width, diffuseTexture.texture.height, diffuseTexture.texture.depthOrArrayLayers]
-      )
-    },
-    { once: true }
-  )
-
-  renderer.onAfterCommandEncoderSubmission.add(
-    () => {
-      // once command encoder has been submitted, free the resources
-      computeDiffusePass.destroy()
-      diffuseStorageTexture.destroy()
-      diffuseStorageTexture = null
-      computeDiffusePass = null
-    },
-    { once: true }
-  )
 }

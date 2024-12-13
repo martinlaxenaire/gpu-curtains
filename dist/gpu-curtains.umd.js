@@ -1673,21 +1673,21 @@
     }
   }
 
-  var __accessCheck$j = (obj, member, msg) => {
+  var __accessCheck$k = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet$i = (obj, member, getter) => {
-    __accessCheck$j(obj, member, "read from private field");
+    __accessCheck$k(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$j = (obj, member, value) => {
+  var __privateAdd$k = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
   var __privateSet$h = (obj, member, value, setter) => {
-    __accessCheck$j(obj, member, "write to private field");
+    __accessCheck$k(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -1714,7 +1714,7 @@
       bindingType = bindingType ?? "uniform";
       super({ label, name, bindingType, visibility });
       /** @ignore */
-      __privateAdd$j(this, _parent, void 0);
+      __privateAdd$k(this, _parent, void 0);
       this.options = {
         ...this.options,
         useStruct,
@@ -3883,15 +3883,15 @@
     return 1 + Math.log2(maxSize) | 0;
   };
 
-  var __accessCheck$i = (obj, member, msg) => {
+  var __accessCheck$j = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet$h = (obj, member, getter) => {
-    __accessCheck$i(obj, member, "read from private field");
+    __accessCheck$j(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$i = (obj, member, value) => {
+  var __privateAdd$j = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
@@ -3920,13 +3920,13 @@
     constructor(renderer, parameters = defaultDOMTextureParams) {
       super();
       /** Private {@link Vec3 | vector} used for {@link#modelMatrix} calculations, based on {@link parentMesh} {@link core/DOM/DOMElement.RectSize | size} */
-      __privateAdd$i(this, _parentRatio, new Vec3(1));
+      __privateAdd$j(this, _parentRatio, new Vec3(1));
       /** Private {@link Vec3 | vector} used for {@link modelMatrix} calculations, based on {@link size | source size} */
-      __privateAdd$i(this, _sourceRatio, new Vec3(1));
+      __privateAdd$j(this, _sourceRatio, new Vec3(1));
       /** Private {@link Vec3 | vector} used for {@link modelMatrix} calculations, based on #parentRatio and #sourceRatio */
-      __privateAdd$i(this, _coverScale, new Vec3(1));
+      __privateAdd$j(this, _coverScale, new Vec3(1));
       /** Private rotation {@link Mat4 | matrix} based on texture {@link quaternion} */
-      __privateAdd$i(this, _rotationMatrix, new Mat4());
+      __privateAdd$j(this, _rotationMatrix, new Mat4());
       // callbacks / events
       /** function assigned to the {@link onSourceLoaded} callback */
       this._onSourceLoadedCallback = () => {
@@ -4542,21 +4542,21 @@
     }
   }
 
-  var __accessCheck$h = (obj, member, msg) => {
+  var __accessCheck$i = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet$g = (obj, member, getter) => {
-    __accessCheck$h(obj, member, "read from private field");
+    __accessCheck$i(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$h = (obj, member, value) => {
+  var __privateAdd$i = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
   var __privateSet$g = (obj, member, value, setter) => {
-    __accessCheck$h(obj, member, "write to private field");
+    __accessCheck$i(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -4578,13 +4578,13 @@
     } = {}) {
       super();
       /** @ignore */
-      __privateAdd$h(this, _fov, void 0);
+      __privateAdd$i(this, _fov, void 0);
       /** @ignore */
-      __privateAdd$h(this, _near, void 0);
+      __privateAdd$i(this, _near, void 0);
       /** @ignore */
-      __privateAdd$h(this, _far, void 0);
+      __privateAdd$i(this, _far, void 0);
       /** @ignore */
-      __privateAdd$h(this, _pixelRatio, void 0);
+      __privateAdd$i(this, _pixelRatio, void 0);
       this.uuid = generateUUID();
       this.position.set(0, 0, 10);
       this.up = new Vec3(0, 1, 0);
@@ -4911,21 +4911,21 @@
     }
   }
 
-  var __accessCheck$g = (obj, member, msg) => {
+  var __accessCheck$h = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet$f = (obj, member, getter) => {
-    __accessCheck$g(obj, member, "read from private field");
+    __accessCheck$h(obj, member, "read from private field");
     return member.get(obj);
   };
-  var __privateAdd$g = (obj, member, value) => {
+  var __privateAdd$h = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
   var __privateSet$f = (obj, member, value, setter) => {
-    __accessCheck$g(obj, member, "write to private field");
+    __accessCheck$h(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -4954,7 +4954,7 @@
      */
     constructor(renderer, parameters = defaultTextureParams) {
       /** Whether this texture should be automatically resized when the {@link Renderer renderer} size changes. Default to true. */
-      __privateAdd$g(this, _autoResize, true);
+      __privateAdd$h(this, _autoResize, true);
       renderer = isRenderer(renderer, parameters.label ? parameters.label + " Texture" : "Texture");
       this.type = "Texture";
       this.renderer = renderer;
@@ -5707,18 +5707,16 @@
         dispatchSize = [Math.ceil(dispatchSize), 1, 1];
       }
       this.dispatchSize = dispatchSize;
+    }
+    /**
+     * Set (or reset) the current {@link pipelineEntry}. Use the {@link Renderer#pipelineManager | renderer pipelineManager} to check whether we can get an already created {@link ComputePipelineEntry} from cache or if we should create a new one.
+     */
+    setPipelineEntry() {
       this.pipelineEntry = this.renderer.pipelineManager.createComputePipeline({
         renderer: this.renderer,
         label: this.options.label + " compute pipeline",
         shaders: this.options.shaders,
-        useAsync: this.options.useAsyncPipeline
-      });
-    }
-    /**
-     * When all bind groups are created, add them to the {@link ComputePipelineEntry}
-     */
-    setPipelineEntryProperties() {
-      this.pipelineEntry.setPipelineEntryProperties({
+        useAsync: this.options.useAsyncPipeline,
         bindGroups: this.bindGroups
       });
     }
@@ -5737,8 +5735,10 @@
       if (this.ready)
         return;
       super.compileMaterial();
+      if (!this.pipelineEntry) {
+        this.setPipelineEntry();
+      }
       if (this.pipelineEntry && this.pipelineEntry.canCompile) {
-        this.setPipelineEntryProperties();
         await this.compilePipelineEntry();
       }
     }
@@ -5830,21 +5830,21 @@
     }
   }
 
-  var __accessCheck$f = (obj, member, msg) => {
+  var __accessCheck$g = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet$e = (obj, member, getter) => {
-    __accessCheck$f(obj, member, "read from private field");
+    __accessCheck$g(obj, member, "read from private field");
     return member.get(obj);
   };
-  var __privateAdd$f = (obj, member, value) => {
+  var __privateAdd$g = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
   var __privateSet$e = (obj, member, value, setter) => {
-    __accessCheck$f(obj, member, "write to private field");
+    __accessCheck$g(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -5861,7 +5861,7 @@
        * Whether this {@link ComputePass} should be added to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically
        * @private
        */
-      __privateAdd$f(this, _autoRender$2, true);
+      __privateAdd$g(this, _autoRender$2, true);
       // callbacks / events
       /** function assigned to the {@link onReady} callback */
       this._onReadyCallback = () => {
@@ -7068,21 +7068,21 @@
     }
   }
 
-  var __accessCheck$e = (obj, member, msg) => {
+  var __accessCheck$f = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet$d = (obj, member, getter) => {
-    __accessCheck$e(obj, member, "read from private field");
+    __accessCheck$f(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$e = (obj, member, value) => {
+  var __privateAdd$f = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
   var __privateSet$d = (obj, member, value, setter) => {
-    __accessCheck$e(obj, member, "write to private field");
+    __accessCheck$f(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -7096,12 +7096,12 @@
     constructor(renderer, { color = new Vec3(1), intensity = 1, type = "lights" } = {}) {
       super();
       /** @ignore */
-      __privateAdd$e(this, _intensity$1, void 0);
+      __privateAdd$f(this, _intensity$1, void 0);
       /**
        * A {@link Vec3} holding the {@link Light} {@link color} multiplied by its {@link intensity}.
        * @private
        */
-      __privateAdd$e(this, _intensityColor, void 0);
+      __privateAdd$f(this, _intensityColor, void 0);
       this.type = type;
       this.setRenderer(renderer);
       this.uuid = generateUUID();
@@ -7524,21 +7524,21 @@
     }
   }
 
-  var __accessCheck$d = (obj, member, msg) => {
+  var __accessCheck$e = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet$c = (obj, member, getter) => {
-    __accessCheck$d(obj, member, "read from private field");
+    __accessCheck$e(obj, member, "read from private field");
     return member.get(obj);
   };
-  var __privateAdd$d = (obj, member, value) => {
+  var __privateAdd$e = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
   var __privateSet$c = (obj, member, value, setter) => {
-    __accessCheck$d(obj, member, "write to private field");
+    __accessCheck$e(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -7551,7 +7551,7 @@
      */
     constructor(renderer, parameters = {}) {
       /** Whether we should add this {@link RenderTarget} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
-      __privateAdd$d(this, _autoRender$1, true);
+      __privateAdd$e(this, _autoRender$1, true);
       renderer = isRenderer(renderer, "RenderTarget");
       this.type = "RenderTarget";
       this.renderer = renderer;
@@ -7661,7 +7661,7 @@
     constructor(parameters) {
       this.type = "PipelineEntry";
       let { renderer } = parameters;
-      const { label, shaders, useAsync } = parameters;
+      const { label, shaders, useAsync, bindGroups, cacheKey } = parameters;
       renderer = isRenderer(renderer, label ? label + " " + this.type : this.type);
       this.renderer = renderer;
       Object.defineProperty(this, "index", { value: pipelineId++ });
@@ -7675,7 +7675,9 @@
       this.options = {
         label,
         shaders,
-        useAsync: useAsync !== void 0 ? useAsync : true
+        useAsync: useAsync !== void 0 ? useAsync : true,
+        bindGroups,
+        cacheKey
       };
     }
     /**
@@ -7691,6 +7693,14 @@
      */
     get canCompile() {
       return !this.status.compiling && !this.status.compiled && !this.status.error;
+    }
+    /**
+     * Set {@link PipelineEntry} properties (in this case the {@link bindGroups | bind groups})
+     * @param parameters - the {@link bindGroups | bind groups} to use
+     */
+    setPipelineEntryProperties(parameters) {
+      const { bindGroups } = parameters;
+      this.setPipelineEntryBindGroups(bindGroups);
     }
     /**
      * Set our {@link PipelineEntry#bindGroups | pipeline entry bind groups}
@@ -7893,8 +7903,6 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
       this.options = {
         ...this.options,
         attributes,
-        bindGroups,
-        cacheKey,
         ...renderingOptions
       };
       this.setPipelineEntryProperties({ attributes, bindGroups });
@@ -8756,26 +8764,26 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
 `
   );
 
-  var __accessCheck$c = (obj, member, msg) => {
+  var __accessCheck$d = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet$b = (obj, member, getter) => {
-    __accessCheck$c(obj, member, "read from private field");
+    __accessCheck$d(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$c = (obj, member, value) => {
+  var __privateAdd$d = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
   var __privateSet$b = (obj, member, value, setter) => {
-    __accessCheck$c(obj, member, "write to private field");
+    __accessCheck$d(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
-  var __privateMethod$4 = (obj, member, method) => {
-    __accessCheck$c(obj, member, "access private method");
+  var __privateMethod$5 = (obj, member, method) => {
+    __accessCheck$d(obj, member, "access private method");
     return method;
   };
   var _intensity, _bias, _normalBias, _pcfSamples, _isActive, _autoRender, _materials, _depthMaterials, _depthPassTaskID, _setParameters, setParameters_fn;
@@ -8822,31 +8830,31 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
        * @param parameters - parameters to use for this {@link Shadow}.
        * @private
        */
-      __privateAdd$c(this, _setParameters);
+      __privateAdd$d(this, _setParameters);
       /** @ignore */
-      __privateAdd$c(this, _intensity, void 0);
+      __privateAdd$d(this, _intensity, void 0);
       /** @ignore */
-      __privateAdd$c(this, _bias, void 0);
+      __privateAdd$d(this, _bias, void 0);
       /** @ignore */
-      __privateAdd$c(this, _normalBias, void 0);
+      __privateAdd$d(this, _normalBias, void 0);
       /** @ignore */
-      __privateAdd$c(this, _pcfSamples, void 0);
+      __privateAdd$d(this, _pcfSamples, void 0);
       /** @ignore */
-      __privateAdd$c(this, _isActive, void 0);
+      __privateAdd$d(this, _isActive, void 0);
       /** @ignore */
-      __privateAdd$c(this, _autoRender, void 0);
+      __privateAdd$d(this, _autoRender, void 0);
       /**
        * Original {@link meshes} {@link RenderMaterial | materials}.
        * @private
        */
-      __privateAdd$c(this, _materials, void 0);
+      __privateAdd$d(this, _materials, void 0);
       /**
        * Corresponding depth {@link meshes} {@link RenderMaterial | materials}.
        * @private
        */
-      __privateAdd$c(this, _depthMaterials, void 0);
+      __privateAdd$d(this, _depthMaterials, void 0);
       /** @ignore */
-      __privateAdd$c(this, _depthPassTaskID, void 0);
+      __privateAdd$d(this, _depthPassTaskID, void 0);
       this.setRenderer(renderer);
       this.light = light;
       this.index = this.light.index;
@@ -8864,7 +8872,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
       __privateSet$b(this, _materials, /* @__PURE__ */ new Map());
       __privateSet$b(this, _depthMaterials, /* @__PURE__ */ new Map());
       __privateSet$b(this, _depthPassTaskID, null);
-      __privateMethod$4(this, _setParameters, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
+      __privateMethod$5(this, _setParameters, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
       this.isActive = false;
     }
     /**
@@ -8889,7 +8897,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
      * @param parameters - parameters to use for this {@link Shadow}.
      */
     cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender } = {}) {
-      __privateMethod$4(this, _setParameters, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
+      __privateMethod$5(this, _setParameters, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
       this.isActive = true;
     }
     /**
@@ -9444,21 +9452,21 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
     }
   }
 
-  var __accessCheck$b = (obj, member, msg) => {
+  var __accessCheck$c = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet$a = (obj, member, getter) => {
-    __accessCheck$b(obj, member, "read from private field");
+    __accessCheck$c(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$b = (obj, member, value) => {
+  var __privateAdd$c = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
   var __privateSet$a = (obj, member, value, setter) => {
-    __accessCheck$b(obj, member, "write to private field");
+    __accessCheck$c(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -9479,12 +9487,12 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
       const type = "directionalLights";
       super(renderer, { color, intensity, type });
       /** @ignore */
-      __privateAdd$b(this, _actualPosition$1, void 0);
+      __privateAdd$c(this, _actualPosition$1, void 0);
       /**
        * The {@link Vec3 | direction} of the {@link DirectionalLight} is the {@link target} minus the actual {@link position}.
        * @private
        */
-      __privateAdd$b(this, _direction, void 0);
+      __privateAdd$c(this, _direction, void 0);
       this.options = {
         ...this.options,
         position,
@@ -9565,21 +9573,21 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
   _actualPosition$1 = new WeakMap();
   _direction = new WeakMap();
 
-  var __accessCheck$a = (obj, member, msg) => {
+  var __accessCheck$b = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet$9 = (obj, member, getter) => {
-    __accessCheck$a(obj, member, "read from private field");
+    __accessCheck$b(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$a = (obj, member, value) => {
+  var __privateAdd$b = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
   var __privateSet$9 = (obj, member, value, setter) => {
-    __accessCheck$a(obj, member, "write to private field");
+    __accessCheck$b(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -9641,7 +9649,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
        * {@link Vec3} used to calculate the actual current direction based on the {@link PointLight} position.
        * @private
        */
-      __privateAdd$a(this, _tempCubeDirection, void 0);
+      __privateAdd$b(this, _tempCubeDirection, void 0);
       this.options = {
         ...this.options,
         camera
@@ -9869,21 +9877,21 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
   }
   _tempCubeDirection = new WeakMap();
 
-  var __accessCheck$9 = (obj, member, msg) => {
+  var __accessCheck$a = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet$8 = (obj, member, getter) => {
-    __accessCheck$9(obj, member, "read from private field");
+    __accessCheck$a(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$9 = (obj, member, value) => {
+  var __privateAdd$a = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
   var __privateSet$8 = (obj, member, value, setter) => {
-    __accessCheck$9(obj, member, "write to private field");
+    __accessCheck$a(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -9898,9 +9906,9 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
       const type = "pointLights";
       super(renderer, { color, intensity, type });
       /** @ignore */
-      __privateAdd$9(this, _range, void 0);
+      __privateAdd$a(this, _range, void 0);
       /** @ignore */
-      __privateAdd$9(this, _actualPosition, void 0);
+      __privateAdd$a(this, _actualPosition, void 0);
       this.options = {
         ...this.options,
         position,
@@ -9996,21 +10004,21 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
   _range = new WeakMap();
   _actualPosition = new WeakMap();
 
-  var __accessCheck$8 = (obj, member, msg) => {
+  var __accessCheck$9 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet$7 = (obj, member, getter) => {
-    __accessCheck$8(obj, member, "read from private field");
+    __accessCheck$9(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$8 = (obj, member, value) => {
+  var __privateAdd$9 = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
   var __privateSet$7 = (obj, member, value, setter) => {
-    __accessCheck$8(obj, member, "write to private field");
+    __accessCheck$9(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -10054,7 +10062,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
           { ...defaultMeshBaseParams, ...params[2] }
         );
         /** Whether we should add this {@link MeshBase} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
-        __privateAdd$8(this, _autoRender, true);
+        __privateAdd$9(this, _autoRender, true);
         // callbacks / events
         /** function assigned to the {@link onReady} callback */
         this._onReadyCallback = () => {
@@ -11592,8 +11600,7 @@ struct VSOutput {
      * @param parameters - {@link PipelineEntryParams | parameters} used to create this {@link ComputePipelineEntry}
      */
     constructor(parameters) {
-      const { renderer } = parameters;
-      const { label } = parameters;
+      const { label, renderer, bindGroups } = parameters;
       const type = "ComputePipelineEntry";
       isRenderer(renderer, label ? label + " " + type : type);
       super(parameters);
@@ -11606,14 +11613,7 @@ struct VSOutput {
         }
       };
       this.descriptor = null;
-    }
-    /**
-     * Set {@link ComputePipelineEntry} properties (in this case the {@link bindGroups | bind groups})
-     * @param parameters - the {@link core/materials/ComputeMaterial.ComputeMaterial#bindGroups | bind groups} to use
-     */
-    setPipelineEntryProperties(parameters) {
-      const { bindGroups } = parameters;
-      this.setPipelineEntryBindGroups(bindGroups);
+      this.setPipelineEntryProperties({ bindGroups });
     }
     /* SHADERS */
     /**
@@ -11785,15 +11785,41 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Check if a {@link ComputePipelineEntry} has already been created with the given {@link PipelineEntryParams | parameters}.
-     * Use it if found, else create a new one and add it to the {@link pipelineEntries} array.
+     * Checks if the provided {@link PipelineEntryParams | PipelineEntry parameters} belongs to an already created {@link ComputePipelineEntry}.
      * @param parameters - {@link PipelineEntryParams | PipelineEntry parameters}
+     * @returns - the found {@link ComputePipelineEntry}, or null if not found
+     */
+    isSameComputePipeline(parameters) {
+      return this.pipelineEntries.filter((pipelineEntry) => pipelineEntry instanceof ComputePipelineEntry).find((pipelineEntry) => {
+        const { options } = pipelineEntry;
+        const { shaders, cacheKey } = parameters;
+        const sameCacheKey = cacheKey === options.cacheKey;
+        const sameComputeShader = this.compareShaders(shaders.compute, options.shaders.compute);
+        return sameCacheKey && sameComputeShader;
+      });
+    }
+    /**
+     * Check if a {@link ComputePipelineEntry} has already been created with the given {@link PipelineManagerPipelineEntryParams | parameters}.
+     * Use it if found, else create a new one and add it to the {@link pipelineEntries} array.
+     * @param parameters - {@link PipelineManagerPipelineEntryParams | PipelineEntry parameters}
      * @returns - newly created {@link ComputePipelineEntry}
      */
     createComputePipeline(parameters) {
-      const pipelineEntry = new ComputePipelineEntry(parameters);
-      this.pipelineEntries.push(pipelineEntry);
-      return pipelineEntry;
+      let cacheKey = "";
+      parameters.bindGroups.forEach((bindGroup) => {
+        bindGroup.bindings.forEach((binding) => {
+          cacheKey += binding.name + ",";
+        });
+        cacheKey += bindGroup.pipelineCacheKey;
+      });
+      const existingPipelineEntry = this.isSameComputePipeline({ ...parameters, cacheKey });
+      if (existingPipelineEntry) {
+        return existingPipelineEntry;
+      } else {
+        const pipelineEntry = new ComputePipelineEntry({ ...parameters, cacheKey });
+        this.pipelineEntries.push(pipelineEntry);
+        return pipelineEntry;
+      }
     }
     /**
      * Check if the given {@link AllowedPipelineEntries | PipelineEntry} is already set, if not set it
@@ -12525,21 +12551,21 @@ ${this.shaders.compute.head}`;
     }
   }
 
-  var __accessCheck$7 = (obj, member, msg) => {
+  var __accessCheck$8 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet$6 = (obj, member, getter) => {
-    __accessCheck$7(obj, member, "read from private field");
+    __accessCheck$8(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$7 = (obj, member, value) => {
+  var __privateAdd$8 = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
   var __privateSet$6 = (obj, member, value, setter) => {
-    __accessCheck$7(obj, member, "write to private field");
+    __accessCheck$8(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -12558,7 +12584,7 @@ ${this.shaders.compute.head}`;
      */
     constructor() {
       /** Private number to assign a unique id to each {@link TaskQueueItem | task queue item} */
-      __privateAdd$7(this, _taskCount, 0);
+      __privateAdd$8(this, _taskCount, 0);
       this.queue = [];
     }
     /**
@@ -12863,6 +12889,8 @@ ${this.shaders.compute.head}`;
         // needed so we can copy textures for post processing usage
         usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST
         //viewFormats: []
+        // TODO HDR support
+        // https://developer.chrome.com/blog/new-in-webgpu-129
       });
     }
     /**
@@ -13397,21 +13425,21 @@ ${this.shaders.compute.head}`;
     }
   }
 
-  var __accessCheck$6 = (obj, member, msg) => {
+  var __accessCheck$7 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet$5 = (obj, member, getter) => {
-    __accessCheck$6(obj, member, "read from private field");
+    __accessCheck$7(obj, member, "read from private field");
     return member.get(obj);
   };
-  var __privateAdd$6 = (obj, member, value) => {
+  var __privateAdd$7 = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
   var __privateSet$5 = (obj, member, value, setter) => {
-    __accessCheck$6(obj, member, "write to private field");
+    __accessCheck$7(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -13444,7 +13472,7 @@ ${this.shaders.compute.head}`;
         renderPass
       });
       /** @ignore */
-      __privateAdd$6(this, _shouldUpdateCameraLightsBindGroup, void 0);
+      __privateAdd$7(this, _shouldUpdateCameraLightsBindGroup, void 0);
       this.type = "GPUCameraRenderer";
       camera = { ...{ fov: 50, near: 0.1, far: 1e3 }, ...camera };
       if (lights !== false) {
@@ -14218,26 +14246,26 @@ ${this.shaders.compute.head}`;
     }
   }
 
-  var __accessCheck$5 = (obj, member, msg) => {
+  var __accessCheck$6 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet$4 = (obj, member, getter) => {
-    __accessCheck$5(obj, member, "read from private field");
+    __accessCheck$6(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$5 = (obj, member, value) => {
+  var __privateAdd$6 = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
   var __privateSet$4 = (obj, member, value, setter) => {
-    __accessCheck$5(obj, member, "write to private field");
+    __accessCheck$6(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
-  var __privateMethod$3 = (obj, member, method) => {
-    __accessCheck$5(obj, member, "access private method");
+  var __privateMethod$4 = (obj, member, method) => {
+    __accessCheck$6(obj, member, "access private method");
     return method;
   };
   var _useProjection, _ready, _setBinding, setBinding_fn, _patchBindingOffset, patchBindingOffset_fn, _onSizeChanged, onSizeChanged_fn, _setDescriptor, setDescriptor_fn, _encodeRenderCommands, encodeRenderCommands_fn, _cleanUp, cleanUp_fn;
@@ -14261,39 +14289,39 @@ ${this.shaders.compute.head}`;
        * Set the {@link binding} and patches its array and buffer size if needed.
        * @private
        */
-      __privateAdd$5(this, _setBinding);
+      __privateAdd$6(this, _setBinding);
       /**
        * Path the {@link binding} array and buffer size with the minimum {@link Renderer#device | device} buffer offset alignment.
        * @param size - new {@link binding} size to use.
        * @private
        */
-      __privateAdd$5(this, _patchBindingOffset);
+      __privateAdd$6(this, _patchBindingOffset);
       /**
        * Called each time the {@link RenderBundle} size has actually changed.
        * @param newSize - new {@link RenderBundle} size to set.
        * @private
        */
-      __privateAdd$5(this, _onSizeChanged);
+      __privateAdd$6(this, _onSizeChanged);
       /**
        * Set the {@link descriptor} based on the {@link RenderBundleOptions#renderPass | render pass}.
        * @private
        */
-      __privateAdd$5(this, _setDescriptor);
+      __privateAdd$6(this, _setDescriptor);
       /**
        * Create the {@link descriptor}, {@link encoder} and {@link bundle} used by this {@link RenderBundle}.
        * @private
        */
-      __privateAdd$5(this, _encodeRenderCommands);
+      __privateAdd$6(this, _encodeRenderCommands);
       /**
        * Destroy the {@link binding} buffer if needed and remove the {@link RenderBundle} from the {@link Renderer}.
        * @private
        */
-      __privateAdd$5(this, _cleanUp);
+      __privateAdd$6(this, _cleanUp);
       /** @ignore */
       // whether this render bundle should be added to the 'projected' or 'unProjected' Scene stacks.
-      __privateAdd$5(this, _useProjection, void 0);
+      __privateAdd$6(this, _useProjection, void 0);
       /** @ignore */
-      __privateAdd$5(this, _ready, void 0);
+      __privateAdd$6(this, _ready, void 0);
       this.type = "RenderBundle";
       renderer = isRenderer(renderer, this.type);
       this.renderer = renderer;
@@ -14317,7 +14345,7 @@ ${this.shaders.compute.head}`;
       if (this.options.useBuffer) {
         __privateSet$4(this, _useProjection, true);
         if (this.options.size !== 0) {
-          __privateMethod$3(this, _setBinding, setBinding_fn).call(this);
+          __privateMethod$4(this, _setBinding, setBinding_fn).call(this);
         } else {
           this.options.useBuffer = false;
           if (!this.renderer.production) {
@@ -14355,7 +14383,7 @@ ${this.shaders.compute.head}`;
           );
         }
         this.ready = false;
-        __privateMethod$3(this, _onSizeChanged, onSizeChanged_fn).call(this, value);
+        __privateMethod$4(this, _onSizeChanged, onSizeChanged_fn).call(this, value);
         this.options.size = value;
       }
     }
@@ -14374,7 +14402,7 @@ ${this.shaders.compute.head}`;
     set ready(value) {
       if (value && !this.ready) {
         this.size = this.meshes.size;
-        __privateMethod$3(this, _encodeRenderCommands, encodeRenderCommands_fn).call(this);
+        __privateMethod$4(this, _encodeRenderCommands, encodeRenderCommands_fn).call(this);
       } else if (!value && this.ready) {
         this.bundle = null;
       }
@@ -14504,7 +14532,7 @@ ${this.shaders.compute.head}`;
      */
     remove() {
       this.empty(true);
-      __privateMethod$3(this, _cleanUp, cleanUp_fn).call(this);
+      __privateMethod$4(this, _cleanUp, cleanUp_fn).call(this);
     }
     /**
      * Remove the {@link RenderBundle} from our {@link core/scenes/Scene.Scene | Scene}, {@link RenderedMesh#remove | remove the meshes}, eventually destroy the {@link binding} and remove the {@link RenderBundle} from the {@link Renderer}.
@@ -14515,7 +14543,7 @@ ${this.shaders.compute.head}`;
         mesh.remove();
       });
       this.size = 0;
-      __privateMethod$3(this, _cleanUp, cleanUp_fn).call(this);
+      __privateMethod$4(this, _cleanUp, cleanUp_fn).call(this);
     }
   }
   _useProjection = new WeakMap();
@@ -14540,7 +14568,7 @@ ${this.shaders.compute.head}`;
         }
       }
     });
-    __privateMethod$3(this, _patchBindingOffset, patchBindingOffset_fn).call(this, this.options.size);
+    __privateMethod$4(this, _patchBindingOffset, patchBindingOffset_fn).call(this, this.options.size);
   };
   _patchBindingOffset = new WeakSet();
   patchBindingOffset_fn = function(size) {
@@ -14554,7 +14582,7 @@ ${this.shaders.compute.head}`;
   _onSizeChanged = new WeakSet();
   onSizeChanged_fn = function(newSize) {
     if (newSize > this.options.size && this.binding) {
-      __privateMethod$3(this, _patchBindingOffset, patchBindingOffset_fn).call(this, newSize);
+      __privateMethod$4(this, _patchBindingOffset, patchBindingOffset_fn).call(this, newSize);
       if (this.binding.buffer.GPUBuffer) {
         this.binding.buffer.GPUBuffer.destroy();
         this.binding.buffer.createBuffer(this.renderer, {
@@ -14589,7 +14617,7 @@ ${this.shaders.compute.head}`;
   };
   _encodeRenderCommands = new WeakSet();
   encodeRenderCommands_fn = function() {
-    __privateMethod$3(this, _setDescriptor, setDescriptor_fn).call(this);
+    __privateMethod$4(this, _setDescriptor, setDescriptor_fn).call(this);
     this.renderer.pipelineManager.resetCurrentPipeline();
     this.encoder = this.renderer.device.createRenderBundleEncoder({
       ...this.descriptor,
@@ -15316,12 +15344,10 @@ fn getIBLIndirect(
   metallic: f32,
   diffuseColor: vec3f,
   f0: vec3f,
+  clampSampler: sampler,
   lutTexture: texture_2d<f32>,
-  lutSampler: sampler,
   envSpecularTexture: texture_cube<f32>,
-  envSpecularSampler: sampler,
   envDiffuseTexture: texture_cube<f32>,
-  envDiffuseSampler: sampler,
   ptr_reflectedLight: ptr<function, ReflectedLight>,
   // ptr_iblIndirect: ptr<function, IBLIndirect>
 ) {
@@ -15337,7 +15363,7 @@ fn getIBLIndirect(
   
   let brdf: vec3f = textureSample(
     lutTexture,
-    lutSampler,
+    clampSampler,
     brdfSamplePoint
   ).rgb;
 
@@ -15350,16 +15376,16 @@ fn getIBLIndirect(
   
   let specularLight: vec4f = textureSampleLevel(
     envSpecularTexture,
-    envSpecularSampler,
-    reflection,
+    clampSampler,
+    reflection * ibl.envRotation,
     lod
   );
   
   // IBL diffuse (irradiance)
   let diffuseLight: vec4f = textureSample(
     envDiffuseTexture,
-    envDiffuseSampler,
-    normal
+    clampSampler,
+    normal * ibl.envRotation
   );
   
   // product of specularFactor and specularTexture.a
@@ -15396,12 +15422,10 @@ fn getIBL(
   f0: vec3f,
   metallic: f32,
   roughness: f32,
+  clampSampler: sampler,
   lutTexture: texture_2d<f32>,
-  lutSampler: sampler,
   envSpecularTexture: texture_cube<f32>,
-  envSpecularSampler: sampler,
   envDiffuseTexture: texture_cube<f32>,
-  envDiffuseSampler: sampler,
   ${useOcclusion ? "occlusion: f32," : ""}
 ) -> vec3f {
   var directLight: DirectLight;
@@ -15436,12 +15460,10 @@ fn getIBL(
     metallic,
     diffuseColor,
     f0,
+    clampSampler,
     lutTexture,
-    lutSampler,
     envSpecularTexture,
-    envSpecularSampler,
     envDiffuseTexture,
-    envDiffuseSampler,
     &reflectedLight,
     // &iblIndirect
   );
@@ -15469,21 +15491,21 @@ fn getIBL(
 `
   );
 
-  var __accessCheck$4 = (obj, member, msg) => {
+  var __accessCheck$5 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet$3 = (obj, member, getter) => {
-    __accessCheck$4(obj, member, "read from private field");
+    __accessCheck$5(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$4 = (obj, member, value) => {
+  var __privateAdd$5 = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
   var __privateSet$3 = (obj, member, value, setter) => {
-    __accessCheck$4(obj, member, "write to private field");
+    __accessCheck$5(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -15498,11 +15520,11 @@ fn getIBL(
     constructor(renderer, element, parameters = {}) {
       super(renderer);
       /** Private {@link Vec3 | vector} used to keep track of the actual {@link DOMObject3DTransforms#position.world | world position} accounting the {@link DOMObject3DTransforms#position.document | additional document translation} converted into world space */
-      __privateAdd$4(this, _DOMObjectWorldPosition, new Vec3());
+      __privateAdd$5(this, _DOMObjectWorldPosition, new Vec3());
       /** Private {@link Vec3 | vector} used to keep track of the actual {@link DOMObject3D} world scale accounting the {@link DOMObject3D#size.world | DOMObject3D world size} */
-      __privateAdd$4(this, _DOMObjectWorldScale, new Vec3(1));
+      __privateAdd$5(this, _DOMObjectWorldScale, new Vec3(1));
       /** Private number representing the scale ratio of the {@link DOMObject3D} along Z axis to apply. Since it can be difficult to guess the most accurate scale along the Z axis of an object mapped to 2D coordinates, this helps with adjusting the scale along the Z axis. */
-      __privateAdd$4(this, _DOMObjectDepthScaleRatio, 1);
+      __privateAdd$5(this, _DOMObjectDepthScaleRatio, 1);
       /** Helper {@link Box3 | bounding box} used to map the 3D object onto the 2D DOM element. */
       this.boundingBox = new Box3(new Vec3(-1), new Vec3(1));
       /** function assigned to the {@link onAfterDOMElementResize} callback */
@@ -16545,26 +16567,26 @@ fn getIBL(
     }
   }
 
-  var __accessCheck$3 = (obj, member, msg) => {
+  var __accessCheck$4 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet$2 = (obj, member, getter) => {
-    __accessCheck$3(obj, member, "read from private field");
+    __accessCheck$4(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$3 = (obj, member, value) => {
+  var __privateAdd$4 = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
   var __privateSet$2 = (obj, member, value, setter) => {
-    __accessCheck$3(obj, member, "write to private field");
+    __accessCheck$4(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
-  var __privateMethod$2 = (obj, member, method) => {
-    __accessCheck$3(obj, member, "access private method");
+  var __privateMethod$3 = (obj, member, method) => {
+    __accessCheck$4(obj, member, "access private method");
     return method;
   };
   var _element, _offset, _isOrbiting, _spherical, _rotateStart, _isPaning, _panStart, _panDelta, _setBaseParams, setBaseParams_fn, _addEvents, addEvents_fn, _removeEvents, removeEvents_fn, _onMouseDown, onMouseDown_fn, _onTouchStart, onTouchStart_fn, _onMouseMove, onMouseMove_fn, _onTouchMove, onTouchMove_fn, _onMouseUp, onMouseUp_fn, _onTouchEnd, onTouchEnd_fn, _onMouseWheel, onMouseWheel_fn, _onContextMenu, onContextMenu_fn, _update, update_fn, _rotate, rotate_fn, _pan, pan_fn, _zoom, zoom_fn;
@@ -16600,113 +16622,113 @@ fn getIBL(
        * Set / reset base params
        * @ignore
        */
-      __privateAdd$3(this, _setBaseParams);
+      __privateAdd$4(this, _setBaseParams);
       /**
        * Add the event listeners.
        * @private
        */
-      __privateAdd$3(this, _addEvents);
+      __privateAdd$4(this, _addEvents);
       /**
        * Remove the event listeners.
        * @private
        */
-      __privateAdd$3(this, _removeEvents);
+      __privateAdd$4(this, _removeEvents);
       /**
        * Callback executed on mouse down event.
        * @param e - {@link MouseEvent}.
        * @private
        */
-      __privateAdd$3(this, _onMouseDown);
+      __privateAdd$4(this, _onMouseDown);
       /**
        * Callback executed on touch start event.
        * @param e - {@link TouchEvent}.
        * @private
        */
-      __privateAdd$3(this, _onTouchStart);
+      __privateAdd$4(this, _onTouchStart);
       /**
        * Callback executed on mouse move event.
        * @param e - {@link MouseEvent}.
        */
-      __privateAdd$3(this, _onMouseMove);
+      __privateAdd$4(this, _onMouseMove);
       /**
        * Callback executed on touch move event.
        * @param e - {@link TouchEvent}.
        * @private
        */
-      __privateAdd$3(this, _onTouchMove);
+      __privateAdd$4(this, _onTouchMove);
       /**
        * Callback executed on mouse up event.
        * @param e - {@link MouseEvent}.
        * @private
        */
-      __privateAdd$3(this, _onMouseUp);
+      __privateAdd$4(this, _onMouseUp);
       /**
        * Callback executed on touch end event.
        * @param e - {@link MouseEvent}.
        * @private
        */
-      __privateAdd$3(this, _onTouchEnd);
+      __privateAdd$4(this, _onTouchEnd);
       /**
        * Callback executed on wheel event.
        * @param e - {@link WheelEvent}.
        * @private
        */
-      __privateAdd$3(this, _onMouseWheel);
+      __privateAdd$4(this, _onMouseWheel);
       /**
        * Prevent context menu apparition on right click
        * @param e - {@link MouseEvent}.
        * @private
        */
-      __privateAdd$3(this, _onContextMenu);
+      __privateAdd$4(this, _onContextMenu);
       /**
        * Update the {@link camera} position based on the {@link target} and internal values.
        * @private
        */
-      __privateAdd$3(this, _update);
+      __privateAdd$4(this, _update);
       /**
        * Update the {@link camera} position based on input coordinates so it rotates around the {@link target}.
        * @param x - input coordinate along the X axis.
        * @param y - input coordinate along the Y axis.
        * @private
        */
-      __privateAdd$3(this, _rotate);
+      __privateAdd$4(this, _rotate);
       /**
        * Pan the {@link camera} position based on input coordinates by updating {@link target}.
        * @param x - input coordinate along the X axis.
        * @param y - input coordinate along the Y axis.
        * @private
        */
-      __privateAdd$3(this, _pan);
+      __privateAdd$4(this, _pan);
       /**
        * Move the {@link camera} forward or backward.
        * @param value - new value to use for zoom.
        * @private
        */
-      __privateAdd$3(this, _zoom);
+      __privateAdd$4(this, _zoom);
       /**
        * {@link HTMLElement} (or {@link Window} element) to use for event listeners.
        * @private
        */
-      __privateAdd$3(this, _element, null);
+      __privateAdd$4(this, _element, null);
       /** @ignore */
-      __privateAdd$3(this, _offset, new Vec3());
+      __privateAdd$4(this, _offset, new Vec3());
       /** @ignore */
-      __privateAdd$3(this, _isOrbiting, false);
+      __privateAdd$4(this, _isOrbiting, false);
       /** @ignore */
-      __privateAdd$3(this, _spherical, { radius: 1, phi: 0, theta: 0 });
+      __privateAdd$4(this, _spherical, { radius: 1, phi: 0, theta: 0 });
       /** @ignore */
-      __privateAdd$3(this, _rotateStart, new Vec2());
+      __privateAdd$4(this, _rotateStart, new Vec2());
       /** @ignore */
-      __privateAdd$3(this, _isPaning, false);
+      __privateAdd$4(this, _isPaning, false);
       /** @ignore */
-      __privateAdd$3(this, _panStart, new Vec2());
+      __privateAdd$4(this, _panStart, new Vec2());
       /** @ignore */
-      __privateAdd$3(this, _panDelta, new Vec3());
+      __privateAdd$4(this, _panDelta, new Vec3());
       if (!camera) {
         throwWarning("OrbitControls: cannot initialize without a camera.");
         return;
       }
-      __privateMethod$2(this, _setBaseParams, setBaseParams_fn).call(this, {
+      __privateMethod$3(this, _setBaseParams, setBaseParams_fn).call(this, {
         target,
         enableZoom,
         minZoom,
@@ -16737,7 +16759,7 @@ fn getIBL(
       __privateGet$2(this, _spherical).radius = __privateGet$2(this, _offset).length();
       __privateGet$2(this, _spherical).theta = Math.atan2(__privateGet$2(this, _offset).x, __privateGet$2(this, _offset).z);
       __privateGet$2(this, _spherical).phi = Math.acos(Math.min(Math.max(__privateGet$2(this, _offset).y / __privateGet$2(this, _spherical).radius, -1), 1));
-      __privateMethod$2(this, _update, update_fn).call(this);
+      __privateMethod$3(this, _update, update_fn).call(this);
     }
     /**
      * Reset the {@link OrbitControls} values.
@@ -16762,7 +16784,7 @@ fn getIBL(
       enablePan = this.enablePan,
       panSpeed = this.panSpeed
     } = {}) {
-      __privateMethod$2(this, _setBaseParams, setBaseParams_fn).call(this, {
+      __privateMethod$3(this, _setBaseParams, setBaseParams_fn).call(this, {
         target,
         enableZoom,
         minZoom,
@@ -16790,7 +16812,7 @@ fn getIBL(
       __privateGet$2(this, _spherical).radius = position.length();
       __privateGet$2(this, _spherical).theta = Math.atan2(position.x, position.z);
       __privateGet$2(this, _spherical).phi = Math.acos(Math.min(Math.max(position.y / __privateGet$2(this, _spherical).radius, -1), 1));
-      __privateMethod$2(this, _update, update_fn).call(this);
+      __privateMethod$3(this, _update, update_fn).call(this);
     }
     /**
      * Set the element to use for event listeners. Can remove previous event listeners first if needed.
@@ -16798,11 +16820,11 @@ fn getIBL(
      */
     set element(value) {
       if (__privateGet$2(this, _element) && (!value || __privateGet$2(this, _element) !== value)) {
-        __privateMethod$2(this, _removeEvents, removeEvents_fn).call(this);
+        __privateMethod$3(this, _removeEvents, removeEvents_fn).call(this);
       }
       __privateSet$2(this, _element, value);
       if (value) {
-        __privateMethod$2(this, _addEvents, addEvents_fn).call(this);
+        __privateMethod$3(this, _addEvents, addEvents_fn).call(this);
       }
     }
     /**
@@ -16864,25 +16886,25 @@ fn getIBL(
   };
   _addEvents = new WeakSet();
   addEvents_fn = function() {
-    __privateGet$2(this, _element).addEventListener("contextmenu", __privateMethod$2(this, _onContextMenu, onContextMenu_fn).bind(this), false);
-    __privateGet$2(this, _element).addEventListener("mousedown", __privateMethod$2(this, _onMouseDown, onMouseDown_fn).bind(this), false);
-    __privateGet$2(this, _element).addEventListener("mousemove", __privateMethod$2(this, _onMouseMove, onMouseMove_fn).bind(this), false);
-    __privateGet$2(this, _element).addEventListener("mouseup", __privateMethod$2(this, _onMouseUp, onMouseUp_fn).bind(this), false);
-    __privateGet$2(this, _element).addEventListener("touchstart", __privateMethod$2(this, _onTouchStart, onTouchStart_fn).bind(this), { passive: false });
-    __privateGet$2(this, _element).addEventListener("touchmove", __privateMethod$2(this, _onTouchMove, onTouchMove_fn).bind(this), { passive: false });
-    __privateGet$2(this, _element).addEventListener("touchend", __privateMethod$2(this, _onTouchEnd, onTouchEnd_fn).bind(this), false);
-    __privateGet$2(this, _element).addEventListener("wheel", __privateMethod$2(this, _onMouseWheel, onMouseWheel_fn).bind(this), { passive: false });
+    __privateGet$2(this, _element).addEventListener("contextmenu", __privateMethod$3(this, _onContextMenu, onContextMenu_fn).bind(this), false);
+    __privateGet$2(this, _element).addEventListener("mousedown", __privateMethod$3(this, _onMouseDown, onMouseDown_fn).bind(this), false);
+    __privateGet$2(this, _element).addEventListener("mousemove", __privateMethod$3(this, _onMouseMove, onMouseMove_fn).bind(this), false);
+    __privateGet$2(this, _element).addEventListener("mouseup", __privateMethod$3(this, _onMouseUp, onMouseUp_fn).bind(this), false);
+    __privateGet$2(this, _element).addEventListener("touchstart", __privateMethod$3(this, _onTouchStart, onTouchStart_fn).bind(this), { passive: false });
+    __privateGet$2(this, _element).addEventListener("touchmove", __privateMethod$3(this, _onTouchMove, onTouchMove_fn).bind(this), { passive: false });
+    __privateGet$2(this, _element).addEventListener("touchend", __privateMethod$3(this, _onTouchEnd, onTouchEnd_fn).bind(this), false);
+    __privateGet$2(this, _element).addEventListener("wheel", __privateMethod$3(this, _onMouseWheel, onMouseWheel_fn).bind(this), { passive: false });
   };
   _removeEvents = new WeakSet();
   removeEvents_fn = function() {
-    __privateGet$2(this, _element).removeEventListener("contextmenu", __privateMethod$2(this, _onContextMenu, onContextMenu_fn).bind(this), false);
-    __privateGet$2(this, _element).removeEventListener("mousedown", __privateMethod$2(this, _onMouseDown, onMouseDown_fn).bind(this), false);
-    __privateGet$2(this, _element).removeEventListener("mousemove", __privateMethod$2(this, _onMouseMove, onMouseMove_fn).bind(this), false);
-    __privateGet$2(this, _element).removeEventListener("mouseup", __privateMethod$2(this, _onMouseUp, onMouseUp_fn).bind(this), false);
-    __privateGet$2(this, _element).removeEventListener("touchstart", __privateMethod$2(this, _onTouchStart, onTouchStart_fn).bind(this), { passive: false });
-    __privateGet$2(this, _element).removeEventListener("touchmove", __privateMethod$2(this, _onTouchMove, onTouchMove_fn).bind(this), { passive: false });
-    __privateGet$2(this, _element).removeEventListener("touchend", __privateMethod$2(this, _onTouchEnd, onTouchEnd_fn).bind(this), false);
-    __privateGet$2(this, _element).removeEventListener("wheel", __privateMethod$2(this, _onMouseWheel, onMouseWheel_fn).bind(this), { passive: false });
+    __privateGet$2(this, _element).removeEventListener("contextmenu", __privateMethod$3(this, _onContextMenu, onContextMenu_fn).bind(this), false);
+    __privateGet$2(this, _element).removeEventListener("mousedown", __privateMethod$3(this, _onMouseDown, onMouseDown_fn).bind(this), false);
+    __privateGet$2(this, _element).removeEventListener("mousemove", __privateMethod$3(this, _onMouseMove, onMouseMove_fn).bind(this), false);
+    __privateGet$2(this, _element).removeEventListener("mouseup", __privateMethod$3(this, _onMouseUp, onMouseUp_fn).bind(this), false);
+    __privateGet$2(this, _element).removeEventListener("touchstart", __privateMethod$3(this, _onTouchStart, onTouchStart_fn).bind(this), { passive: false });
+    __privateGet$2(this, _element).removeEventListener("touchmove", __privateMethod$3(this, _onTouchMove, onTouchMove_fn).bind(this), { passive: false });
+    __privateGet$2(this, _element).removeEventListener("touchend", __privateMethod$3(this, _onTouchEnd, onTouchEnd_fn).bind(this), false);
+    __privateGet$2(this, _element).removeEventListener("wheel", __privateMethod$3(this, _onMouseWheel, onMouseWheel_fn).bind(this), { passive: false });
   };
   _onMouseDown = new WeakSet();
   onMouseDown_fn = function(e) {
@@ -16906,15 +16928,15 @@ fn getIBL(
   _onMouseMove = new WeakSet();
   onMouseMove_fn = function(e) {
     if (__privateGet$2(this, _isOrbiting) && this.enableRotate) {
-      __privateMethod$2(this, _rotate, rotate_fn).call(this, e.clientX, e.clientY);
+      __privateMethod$3(this, _rotate, rotate_fn).call(this, e.clientX, e.clientY);
     } else if (__privateGet$2(this, _isPaning) && this.enablePan) {
-      __privateMethod$2(this, _pan, pan_fn).call(this, e.clientX, e.clientY);
+      __privateMethod$3(this, _pan, pan_fn).call(this, e.clientX, e.clientY);
     }
   };
   _onTouchMove = new WeakSet();
   onTouchMove_fn = function(e) {
     if (__privateGet$2(this, _isOrbiting) && this.enableRotate) {
-      __privateMethod$2(this, _rotate, rotate_fn).call(this, e.touches[0].pageX, e.touches[0].pageY);
+      __privateMethod$3(this, _rotate, rotate_fn).call(this, e.touches[0].pageX, e.touches[0].pageY);
     }
   };
   _onMouseUp = new WeakSet();
@@ -16930,7 +16952,7 @@ fn getIBL(
   _onMouseWheel = new WeakSet();
   onMouseWheel_fn = function(e) {
     if (this.enableZoom) {
-      __privateMethod$2(this, _zoom, zoom_fn).call(this, e.deltaY);
+      __privateMethod$3(this, _zoom, zoom_fn).call(this, e.deltaY);
       e.preventDefault();
     }
   };
@@ -16955,7 +16977,7 @@ fn getIBL(
     __privateGet$2(this, _spherical).theta = Math.min(this.maxAzimuthAngle, Math.max(this.minAzimuthAngle, __privateGet$2(this, _spherical).theta));
     __privateGet$2(this, _spherical).phi = Math.min(this.maxPolarAngle, Math.max(this.minPolarAngle, __privateGet$2(this, _spherical).phi));
     __privateGet$2(this, _rotateStart).copy(tempVec2a);
-    __privateMethod$2(this, _update, update_fn).call(this);
+    __privateMethod$3(this, _update, update_fn).call(this);
   };
   _pan = new WeakSet();
   pan_fn = function(x, y) {
@@ -16983,7 +17005,7 @@ fn getIBL(
     this.target.add(__privateGet$2(this, _panDelta));
     __privateGet$2(this, _offset).copy(this.camera.position).sub(this.target);
     __privateGet$2(this, _spherical).radius = __privateGet$2(this, _offset).length();
-    __privateMethod$2(this, _update, update_fn).call(this);
+    __privateMethod$3(this, _update, update_fn).call(this);
   };
   _zoom = new WeakSet();
   zoom_fn = function(value) {
@@ -16991,7 +17013,1027 @@ fn getIBL(
       this.maxZoom,
       Math.max(this.minZoom + 1e-6, __privateGet$2(this, _spherical).radius + value * this.zoomSpeed / 100)
     );
-    __privateMethod$2(this, _update, update_fn).call(this);
+    __privateMethod$3(this, _update, update_fn).call(this);
+  };
+
+  var __accessCheck$3 = (obj, member, msg) => {
+    if (!member.has(obj))
+      throw TypeError("Cannot " + msg);
+  };
+  var __privateAdd$3 = (obj, member, value) => {
+    if (member.has(obj))
+      throw TypeError("Cannot add the same private member more than once");
+    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  };
+  var __privateMethod$2 = (obj, member, method) => {
+    __accessCheck$3(obj, member, "access private method");
+    return method;
+  };
+  var _decodeRGBE, decodeRGBE_fn, _parseHeader, parseHeader_fn, _parseSize, parseSize_fn, _readLine, readLine_fn, _parseData, parseData_fn, _parseNewRLE, parseNewRLE_fn, _swap, swap_fn, _flipX, flipX_fn, _flipY, flipY_fn;
+  class HDRLoader {
+    constructor() {
+      /**
+       * @ignore
+       */
+      __privateAdd$3(this, _decodeRGBE);
+      /**
+       * @ignore
+       */
+      __privateAdd$3(this, _parseHeader);
+      /**
+       * @ignore
+       */
+      __privateAdd$3(this, _parseSize);
+      /**
+       * @ignore
+       */
+      __privateAdd$3(this, _readLine);
+      /**
+       * @ignore
+       */
+      __privateAdd$3(this, _parseData);
+      /**
+       * @ignore
+       */
+      __privateAdd$3(this, _parseNewRLE);
+      /**
+       * @ignore
+       */
+      __privateAdd$3(this, _swap);
+      /**
+       * @ignore
+       */
+      __privateAdd$3(this, _flipX);
+      /**
+       * @ignore
+       */
+      __privateAdd$3(this, _flipY);
+    }
+    /**
+     * Load and decode RGBE-encoded data to a flat list of floating point pixel data (RGBA).
+     * @param url - The url of the .hdr file to load.
+     * @returns - The {@link HDRImageData}.
+     */
+    async loadFromUrl(url) {
+      const buffer = await (await fetch(url)).arrayBuffer();
+      return __privateMethod$2(this, _decodeRGBE, decodeRGBE_fn).call(this, new DataView(buffer));
+    }
+  }
+  _decodeRGBE = new WeakSet();
+  decodeRGBE_fn = function(data) {
+    const stream = {
+      data,
+      offset: 0
+    };
+    const header = __privateMethod$2(this, _parseHeader, parseHeader_fn).call(this, stream);
+    return {
+      width: header.width,
+      height: header.height,
+      exposure: header.exposure,
+      gamma: header.gamma,
+      data: __privateMethod$2(this, _parseData, parseData_fn).call(this, stream, header)
+    };
+  };
+  _parseHeader = new WeakSet();
+  parseHeader_fn = function(stream) {
+    let line = __privateMethod$2(this, _readLine, readLine_fn).call(this, stream);
+    const header = {
+      colorCorr: [1, 1, 1],
+      exposure: 1,
+      gamma: 1,
+      width: 0,
+      height: 0,
+      flipX: false,
+      flipY: false
+    };
+    if (line !== "#?RADIANCE" && line !== "#?RGBE")
+      throw new Error("Incorrect file format!");
+    while (line !== "") {
+      line = __privateMethod$2(this, _readLine, readLine_fn).call(this, stream);
+      const parts2 = line.split("=");
+      switch (parts2[0]) {
+        case "GAMMA":
+          header.gamma = parseFloat(parts2[1]);
+          break;
+        case "FORMAT":
+          if (parts2[1] !== "32-bit_rle_rgbe" && parts2[1] !== "32-bit_rle_xyze")
+            throw new Error("Incorrect encoding format!");
+          break;
+        case "EXPOSURE":
+          header.exposure = parseFloat(parts2[1]);
+          break;
+        case "COLORCORR":
+          header.colorCorr = parts2[1].replace(/^\s+|\s+$/g, "").split(" ").map((m) => parseFloat(m));
+          break;
+      }
+    }
+    line = __privateMethod$2(this, _readLine, readLine_fn).call(this, stream);
+    const parts = line.split(" ");
+    __privateMethod$2(this, _parseSize, parseSize_fn).call(this, parts[0], parseInt(parts[1]), header);
+    __privateMethod$2(this, _parseSize, parseSize_fn).call(this, parts[2], parseInt(parts[3]), header);
+    return header;
+  };
+  _parseSize = new WeakSet();
+  parseSize_fn = function(label, value, header) {
+    switch (label) {
+      case "+X":
+        header.width = value;
+        break;
+      case "-X":
+        header.width = value;
+        header.flipX = true;
+        console.warn("Flipping horizontal orientation not currently supported");
+        break;
+      case "-Y":
+        header.height = value;
+        header.flipY = true;
+        break;
+      case "+Y":
+        header.height = value;
+        break;
+    }
+  };
+  _readLine = new WeakSet();
+  readLine_fn = function(stream) {
+    let ch, str = "";
+    while ((ch = stream.data.getUint8(stream.offset++)) !== 10)
+      str += String.fromCharCode(ch);
+    return str;
+  };
+  _parseData = new WeakSet();
+  parseData_fn = function(stream, header) {
+    const hash = stream.data.getUint16(stream.offset);
+    let data;
+    if (hash === 514) {
+      data = __privateMethod$2(this, _parseNewRLE, parseNewRLE_fn).call(this, stream, header);
+      if (header.flipX)
+        __privateMethod$2(this, _flipX, flipX_fn).call(this, data, header);
+      if (header.flipY)
+        __privateMethod$2(this, _flipY, flipY_fn).call(this, data, header);
+    } else {
+      throw new Error("Obsolete HDR file version!");
+    }
+    return data;
+  };
+  _parseNewRLE = new WeakSet();
+  parseNewRLE_fn = function(stream, header) {
+    const { width, height, colorCorr } = header;
+    const tgt = new Float32Array(width * height * 4);
+    let i = 0;
+    let { offset, data } = stream;
+    for (let y = 0; y < height; ++y) {
+      if (data.getUint16(offset) !== 514)
+        throw new Error("Incorrect scanline start hash");
+      if (data.getUint16(offset + 2) !== width)
+        throw new Error("Scanline doesn't match picture dimension!");
+      offset += 4;
+      const numComps = width * 4;
+      const comps = [];
+      let x = 0;
+      while (x < numComps) {
+        let value = data.getUint8(offset++);
+        if (value > 128) {
+          const len = value - 128;
+          value = data.getUint8(offset++);
+          for (let rle = 0; rle < len; ++rle) {
+            comps[x++] = value;
+          }
+        } else {
+          for (let n = 0; n < value; ++n) {
+            comps[x++] = data.getUint8(offset++);
+          }
+        }
+      }
+      for (x = 0; x < width; ++x) {
+        const r = comps[x];
+        const g = comps[x + width];
+        const b = comps[x + width * 2];
+        let e = comps[x + width * 3];
+        e = e ? Math.pow(2, e - 136) : 0;
+        tgt[i++] = r * e * colorCorr[0];
+        tgt[i++] = g * e * colorCorr[1];
+        tgt[i++] = b * e * colorCorr[2];
+        tgt[i++] = e;
+      }
+    }
+    return tgt;
+  };
+  _swap = new WeakSet();
+  swap_fn = function(data, i1, i2) {
+    i1 *= 4;
+    i2 *= 4;
+    for (let i = 0; i < 4; ++i) {
+      const tmp = data[i1 + i];
+      data[i1 + i] = data[i2 + i];
+      data[i2 + i] = tmp;
+    }
+  };
+  _flipX = new WeakSet();
+  flipX_fn = function(data, header) {
+    const { width, height } = header;
+    const hw = width >> 1;
+    for (let y = 0; y < height; ++y) {
+      const b = y * width;
+      for (let x = 0; x < hw; ++x) {
+        const i1 = b + x;
+        const i2 = b + width - 1 - x;
+        __privateMethod$2(this, _swap, swap_fn).call(this, data, i1, i2);
+      }
+    }
+  };
+  _flipY = new WeakSet();
+  flipY_fn = function(data, header) {
+    const { width, height } = header;
+    const hh = height >> 1;
+    for (let y = 0; y < hh; ++y) {
+      const b1 = y * width;
+      const b2 = (height - 1 - y) * width;
+      for (let x = 0; x < width; ++x) {
+        __privateMethod$2(this, _swap, swap_fn).call(this, data, b1 + x, b2 + x);
+      }
+    }
+  };
+
+  var computeBrdfLutWgsl = (
+    /* wgsl */
+    `
+fn radicalInverse_VdC(inputBits: u32) -> f32 {
+  var bits: u32 = inputBits;
+  bits = (bits << 16u) | (bits >> 16u);
+  bits = ((bits & 0x55555555u) << 1u) | ((bits & 0xAAAAAAAAu) >> 1u);
+  bits = ((bits & 0x33333333u) << 2u) | ((bits & 0xCCCCCCCCu) >> 2u);
+  bits = ((bits & 0x0F0F0F0Fu) << 4u) | ((bits & 0xF0F0F0F0u) >> 4u);
+  bits = ((bits & 0x00FF00FFu) << 8u) | ((bits & 0xFF00FF00u) >> 8u);
+  return f32(bits) * 2.3283064365386963e-10; // / 0x100000000
+}
+
+// hammersley2d describes a sequence of points in the 2d unit square [0,1)^2
+// that can be used for quasi Monte Carlo integration
+fn hammersley2d(i: u32, N: u32) -> vec2f {
+  return vec2(f32(i) / f32(N), radicalInverse_VdC(i));
+}
+
+// GGX microfacet distribution
+struct MicrofacetDistributionSample {
+  pdf: f32,
+  cosTheta: f32,
+  sinTheta: f32,
+  phi: f32
+};
+
+fn D_GGX(NdotH: f32, roughness: f32) -> f32 {
+  let a: f32 = NdotH * roughness;
+  let k: f32 = roughness / (1.0 - NdotH * NdotH + a * a);
+  return k * k * (1.0 / ${Math.PI});
+}
+
+// https://www.cs.cornell.edu/~srm/publications/EGSR07-btdf.html
+// This implementation is based on https://bruop.github.io/ibl/,
+//  https://www.tobias-franke.eu/log/2014/03/30/notes_on_importance_sampling.html
+// and https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch20.html
+fn GGX(xi: vec2f, roughness: f32) -> MicrofacetDistributionSample {
+  var ggx: MicrofacetDistributionSample;
+
+  // evaluate sampling equations
+  let alpha: f32 = roughness * roughness;
+  ggx.cosTheta = clamp(sqrt((1.0 - xi.y) / (1.0 + (alpha * alpha - 1.0) * xi.y)), 0.0, 1.0);
+  ggx.sinTheta = sqrt(1.0 - ggx.cosTheta * ggx.cosTheta);
+  ggx.phi = 2.0 * ${Math.PI} * xi.x;
+
+  // evaluate GGX pdf (for half vector)
+  ggx.pdf = D_GGX(ggx.cosTheta, alpha);
+
+  // Apply the Jacobian to obtain a pdf that is parameterized by l
+  // see https://bruop.github.io/ibl/
+  // Typically you'd have the following:
+  // float pdf = D_GGX(NoH, roughness) * NoH / (4.0 * VoH);
+  // but since V = N => VoH == NoH
+  ggx.pdf /= 4.0;
+
+  return ggx;
+}
+
+fn Lambertian(xi: vec2f, roughness: f32) -> MicrofacetDistributionSample {
+    var lambertian: MicrofacetDistributionSample;
+
+  // Cosine weighted hemisphere sampling
+  // http://www.pbr-book.org/3ed-2018/Monte_Carlo_Integration/2D_Sampling_with_Multidimensional_Transformations.html#Cosine-WeightedHemisphereSampling
+  lambertian.cosTheta = sqrt(1.0 - xi.y);
+  lambertian.sinTheta = sqrt(xi.y); // equivalent to \`sqrt(1.0 - cosTheta*cosTheta)\`;
+  lambertian.phi = 2.0 * ${Math.PI} * xi.x;
+
+  lambertian.pdf = lambertian.cosTheta / ${Math.PI}; // evaluation for solid angle, therefore drop the sinTheta
+
+  return lambertian;
+}
+
+// TBN generates a tangent bitangent normal coordinate frame from the normal
+// (the normal must be normalized)
+fn generateTBN(normal: vec3f) -> mat3x3f {
+  var bitangent: vec3f = vec3(0.0, 1.0, 0.0);
+
+  let NdotUp: f32 = dot(normal, vec3(0.0, 1.0, 0.0));
+  let epsilon: f32 = 0.0000001;
+  
+  if (1.0 - abs(NdotUp) <= epsilon) {
+    // Sampling +Y or -Y, so we need a more robust bitangent.
+    if (NdotUp > 0.0) {
+      bitangent = vec3(0.0, 0.0, 1.0);
+    }
+    else {
+      bitangent = vec3(0.0, 0.0, -1.0);
+    }
+  }
+
+  let tangent: vec3f = normalize(cross(bitangent, normal));
+  bitangent = cross(normal, tangent);
+
+  return mat3x3f(tangent, bitangent, normal);
+}
+
+// getImportanceSample returns an importance sample direction with pdf in the .w component
+fn getImportanceSample(Xi: vec2<f32>, N: vec3f, roughness: f32) -> vec4f {
+  var importanceSample: MicrofacetDistributionSample;
+  
+  importanceSample = GGX(Xi, roughness);
+  
+   // transform the hemisphere sample to the normal coordinate frame
+  // i.e. rotate the hemisphere to the normal direction
+  let localSpaceDirection: vec3f = normalize(vec3(
+    importanceSample.sinTheta * cos(importanceSample.phi), 
+    importanceSample.sinTheta * sin(importanceSample.phi), 
+    importanceSample.cosTheta
+  ));
+  
+  let TBN: mat3x3f = generateTBN(N);
+  let direction: vec3f = TBN * localSpaceDirection;
+
+  return vec4(direction, importanceSample.pdf);
+}
+
+// From the filament docs. Geometric Shadowing function
+// https://google.github.io/filament/Filament.html#toc4.4.2
+fn V_SmithGGXCorrelated(NoV: f32, NoL: f32, roughness: f32) -> f32 {
+  let a2: f32 = pow(roughness, 4.0);
+  let GGXV: f32 = NoL * sqrt(NoV * NoV * (1.0 - a2) + a2);
+  let GGXL: f32 = NoV * sqrt(NoL * NoL * (1.0 - a2) + a2);
+  return 0.5 / (GGXV + GGXL);
+}
+
+@compute @workgroup_size(16, 16, 1)
+fn main(@builtin(global_invocation_id) global_id : vec3<u32>) {  
+  let texelSize: vec2<u32> = textureDimensions(lutStorageTexture);
+
+  let x: u32 = global_id.x;
+  let y: u32 = global_id.y;
+
+  // Check bounds
+  if (x >= texelSize.x || y >= texelSize.y) {
+     return;
+  }
+  
+  let epsilon: f32 = 1e-6;
+
+  // Compute roughness and N\xB7V from texture coordinates
+  let NdotV: f32 = max(f32(x) / f32(texelSize.x - 1), epsilon);    // Maps x-axis to N\xB7V (0.0 to 1.0)
+  let roughness: f32 = max(f32(y) / f32(texelSize.y - 1), epsilon);  // Maps y-axis to roughness (0.0 to 1.0)
+
+  // Calculate view vector and normal vector
+  let V: vec3<f32> = vec3<f32>(sqrt(1.0 - NdotV * NdotV), 0.0, NdotV);  // Normalized view vector
+  let N: vec3<f32> = vec3<f32>(0.0, 0.0, 1.0);                          // Normal is along z-axis
+
+  // Initialize integration variables
+  var A: f32 = 0.0;
+  var B: f32 = 0.0;
+  var C: f32 = 0.0;
+
+  // Monte Carlo integration to calculate A and B factors
+  let sampleCount: u32 = params.sampleCount;
+  for (var i: u32 = 0; i < sampleCount; i++) {
+    let Xi: vec2<f32> = hammersley2d(i, sampleCount);  // Importance sampling (Hammersley sequence)
+    
+    //let H: vec3<f32> = importanceSampleGGX(Xi, N, roughness);
+    let importanceSample: vec4f = getImportanceSample(Xi, N, roughness);
+    let H: vec3f = importanceSample.xyz;
+    // let pdf: f32 = importanceSample.w;
+    
+    let L: vec3<f32> = normalize(reflect(-V, H));
+    
+    let NdotL: f32 = clamp(L.z, 0.0, 1.0);
+    let NdotH: f32 = clamp(H.z, 0.0, 1.0);
+    let VdotH: f32 = clamp(dot(V, H), 0.0, 1.0);
+
+    // Ensure valid light direction
+    if (NdotL > 0.0) {     
+      // LUT for GGX distribution.
+
+      // Taken from: https://bruop.github.io/ibl
+      // Shadertoy: https://www.shadertoy.com/view/3lXXDB
+      // Terms besides V are from the GGX PDF we're dividing by.
+      let V_pdf: f32 = V_SmithGGXCorrelated(NdotV, NdotL, roughness) * VdotH * NdotL / max(NdotH, epsilon);
+      let Fc: f32 = pow(1.0 - VdotH, 5.0);
+      A += (1.0 - Fc) * V_pdf;
+      B += Fc * V_pdf;
+      C += 0.0;
+    }
+  }
+
+  // Average the integration result
+  // The PDF is simply pdf(v, h) -> NDF * <nh>.
+  // To parametrize the PDF over l, use the Jacobian transform, yielding to: pdf(v, l) -> NDF * <nh> / 4<vh>
+  // Since the BRDF divide through the PDF to be normalized, the 4 can be pulled out of the integral.
+  A = A * 4.0 / f32(sampleCount);
+  B = B * 4.0 / f32(sampleCount);
+  C = C * 4.0 * 2.0 * ${Math.PI} / f32(sampleCount);
+    
+  // Store the result in the LUT texture
+  textureStore(lutStorageTexture, vec2<u32>(x, y), vec4<f32>(A, B, C, 1.0));
+}
+`
+  );
+
+  var computeSpecularCubemapFromHdr = (
+    /* wgsl */
+    `
+// Cube face lookup vectors
+// positive and negative Y need to be inverted
+const faceVectors = array<array<vec3<f32>, 2>, 6>(
+  array<vec3<f32>, 2>(vec3<f32>(1.0, 0.0, 0.0), vec3<f32>(0.0, 1.0, 0.0)), // +X
+  array<vec3<f32>, 2>(vec3<f32>(-1.0, 0.0, 0.0), vec3<f32>(0.0, 1.0, 0.0)), // -X
+  array<vec3<f32>, 2>(vec3<f32>(0.0, -1.0, 0.0), vec3<f32>(0.0, 0.0, 1.0)),  // -Y
+  array<vec3<f32>, 2>(vec3<f32>(0.0, 1.0, 0.0), vec3<f32>(0.0, 0.0, -1.0)), // +Y
+  array<vec3<f32>, 2>(vec3<f32>(0.0, 0.0, 1.0), vec3<f32>(0.0, 1.0, 0.0)), // +Z
+  array<vec3<f32>, 2>(vec3<f32>(0.0, 0.0, -1.0), vec3<f32>(0.0, 1.0, 0.0)) // -Z
+);
+
+// Utility to calculate 3D direction for a given cube face pixel
+fn texelDirection(faceIndex : u32, u : f32, v : f32) -> vec3<f32> {
+  let forward = faceVectors[faceIndex][0];
+  let up = faceVectors[faceIndex][1];
+  let right = normalize(cross(up, forward));
+  return normalize(forward + (2.0 * u - 1.0) * right + (2.0 * v - 1.0) * up);
+}
+
+// Map 3D direction to equirectangular coordinates
+fn dirToEquirect(dir : vec3<f32>) -> vec2<f32> {
+  let phi = atan2(dir.z, dir.x);
+  let theta = asin(dir.y);
+  let u = 0.5 + 0.5 * phi / ${Math.PI};
+  let v = 0.5 - theta / ${Math.PI};
+  return vec2<f32>(u, v);
+}
+
+@compute @workgroup_size(8, 8, 1)
+fn main(@builtin(global_invocation_id) global_id : vec3<u32>) {
+  let faceSize = params.faceSize;
+  let cubeFaceIndex = global_id.z;
+  let x = global_id.x;
+  let y = global_id.y;
+
+  if (x >= faceSize || y >= faceSize || cubeFaceIndex >= 6u) {
+    return;
+  }
+
+  let u = f32(x) / f32(faceSize);
+  let v = f32(y) / f32(faceSize);
+
+  // Get the 3D direction for this cube face texel
+  let dir = texelDirection(cubeFaceIndex, u, v);
+
+  // Map to equirectangular coordinates
+  let uv = dirToEquirect(dir);        
+  
+  let hdrWidth = params.imageSize.x;
+  let hdrHeight = params.imageSize.y;
+
+  let texX = u32(clamp(uv.x * hdrWidth, 0.0, hdrWidth - 1.0));
+  let texY = u32(clamp(uv.y * hdrHeight, 0.0, hdrHeight - 1.0));
+
+  let hdrTexelIndex = texY * u32(hdrWidth) + texX;
+  
+  // Sample the equirectangular texture
+  let sampledColor = params.hdrImageData[hdrTexelIndex];
+  
+  // Correct cube face order in texture store (fix for reversed face indices)
+  textureStore(
+    specularStorageCubemap,
+    vec2<u32>(x, y),
+    cubeFaceIndex,
+    sampledColor
+  );
+}
+`
+  );
+
+  const computeDiffuseFromSpecularCubemap = (specularTexture) => (
+    /* wgsl */
+    `
+fn radicalInverse_VdC(inputBits: u32) -> f32 {
+  var bits: u32 = inputBits;
+  bits = (bits << 16u) | (bits >> 16u);
+  bits = ((bits & 0x55555555u) << 1u) | ((bits & 0xAAAAAAAAu) >> 1u);
+  bits = ((bits & 0x33333333u) << 2u) | ((bits & 0xCCCCCCCCu) >> 2u);
+  bits = ((bits & 0x0F0F0F0Fu) << 4u) | ((bits & 0xF0F0F0F0u) >> 4u);
+  bits = ((bits & 0x00FF00FFu) << 8u) | ((bits & 0xFF00FF00u) >> 8u);
+  return f32(bits) * 2.3283064365386963e-10; // / 0x100000000
+}
+
+// hammersley2d describes a sequence of points in the 2d unit square [0,1)^2
+// that can be used for quasi Monte Carlo integration
+fn hammersley2d(i: u32, N: u32) -> vec2f {
+  return vec2(f32(i) / f32(N), radicalInverse_VdC(i));
+}
+
+// TBN generates a tangent bitangent normal coordinate frame from the normal
+// (the normal must be normalized)
+fn generateTBN(normal: vec3f) -> mat3x3f {
+  var bitangent: vec3f = vec3(0.0, 1.0, 0.0);
+
+  let NdotUp: f32 = dot(normal, vec3(0.0, 1.0, 0.0));
+  let epsilon: f32 = 0.0000001;
+  
+  if (1.0 - abs(NdotUp) <= epsilon) {
+    // Sampling +Y or -Y, so we need a more robust bitangent.
+    if (NdotUp > 0.0) {
+      bitangent = vec3(0.0, 0.0, 1.0);
+    }
+    else {
+      bitangent = vec3(0.0, 0.0, -1.0);
+    }
+  }
+
+  let tangent: vec3f = normalize(cross(bitangent, normal));
+  bitangent = cross(normal, tangent);
+
+  return mat3x3f(tangent, bitangent, normal);
+}
+
+// Mipmap Filtered Samples (GPU Gems 3, 20.4)
+// https://developer.nvidia.com/gpugems/gpugems3/part-iii-rendering/chapter-20-gpu-based-importance-sampling
+// https://cgg.mff.cuni.cz/~jaroslav/papers/2007-sketch-fis/Final_sap_0073.pdf
+fn computeLod(pdf: f32) -> f32 {
+  // https://cgg.mff.cuni.cz/~jaroslav/papers/2007-sketch-fis/Final_sap_0073.pdf
+  return 0.5 * log2( 6.0 * f32(params.faceSize) * f32(params.faceSize) / (f32(params.sampleCount) * pdf));
+}
+
+fn transformDirection(face: u32, uv: vec2f) -> vec3f {
+  // Transform the direction based on the cubemap face
+  switch (face) {
+    case 0u {
+      // +X
+      return vec3f( 1.0,  uv.y, -uv.x);
+    }
+    case 1u {
+      // -X
+      return vec3f(-1.0,  uv.y,  uv.x);
+    }
+    case 2u {
+      // +Y
+      return vec3f( uv.x,  -1.0, uv.y);
+    }
+    case 3u {
+      // -Y
+      return vec3f( uv.x, 1.0,  -uv.y);
+    }
+    case 4u {
+      // +Z
+      return vec3f( uv.x,  uv.y,  1.0);
+    }
+    case 5u {
+      // -Z
+      return vec3f(-uv.x,  uv.y, -1.0);
+    }
+    default {
+      return vec3f(0.0, 0.0, 0.0);
+    }
+  }
+}
+
+const PI = ${Math.PI};
+
+@compute @workgroup_size(8, 8, 1) fn main(
+  @builtin(global_invocation_id) GlobalInvocationID: vec3u,
+) {
+  let faceSize: u32 = params.faceSize;
+  let sampleCount: u32 = params.sampleCount;
+  
+  let face: u32 = GlobalInvocationID.z;
+  let x: u32 = GlobalInvocationID.x;
+  let y: u32 = GlobalInvocationID.y;
+
+  if (x >= faceSize || y >= faceSize) {
+    return;
+  }
+
+  let texelSize: f32 = 1.0 / f32(faceSize);
+  let halfTexel: f32 = texelSize * 0.5;
+  
+  var uv: vec2f = vec2(
+    (f32(x) + halfTexel) * texelSize,
+    (f32(y) + halfTexel) * texelSize
+  );
+  
+  uv = uv * 2.0 - 1.0;
+
+  let normal: vec3<f32> = transformDirection(face, uv);
+  
+  var irradiance: vec3f = vec3f(0.0, 0.0, 0.0);
+
+  for (var i: u32 = 0; i < sampleCount; i++) {
+    // generate a quasi monte carlo point in the unit square [0.1)^2
+    let xi: vec2f = hammersley2d(i, sampleCount);
+    
+    let cosTheta: f32 = sqrt(1.0 - xi.y);
+    let sinTheta: f32 = sqrt(1.0 - cosTheta * cosTheta);
+    let phi: f32 = 2.0 * PI * xi.x;
+    let pdf: f32 = cosTheta / PI; // evaluation for solid angle, therefore drop the sinTheta
+
+    let sampleVec: vec3f = vec3f(
+      sinTheta * cos(phi),
+      sinTheta * sin(phi),
+      cosTheta
+    );
+    
+    let TBN: mat3x3f = generateTBN(normalize(normal));
+    
+    var direction: vec3f = TBN * sampleVec;
+    
+    // invert along Y axis
+    direction.y *= -1.0;
+    
+    let lod: f32 = computeLod(pdf);
+    
+    let sampleLevel = min(lod, f32(params.maxMipLevel));
+
+    // Convert sampleVec to texture coordinates of the specular env map
+    irradiance += textureSampleLevel(
+      ${specularTexture.options.name},
+      clampSampler,
+      direction,
+      sampleLevel
+    ).rgb;
+  }
+
+  irradiance /= f32(sampleCount);
+
+  textureStore(diffuseEnvMap, vec2(x, y), face, vec4f(irradiance, 1.0));
+}
+`
+  );
+
+  var __accessCheck$2 = (obj, member, msg) => {
+    if (!member.has(obj))
+      throw TypeError("Cannot " + msg);
+  };
+  var __privateAdd$2 = (obj, member, value) => {
+    if (member.has(obj))
+      throw TypeError("Cannot add the same private member more than once");
+    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  };
+  var __privateMethod$1 = (obj, member, method) => {
+    __accessCheck$2(obj, member, "access private method");
+    return method;
+  };
+  var _copyComputeStorageTextureToTexture, copyComputeStorageTextureToTexture_fn;
+  class EnvironmentMap {
+    /**
+     * {@link EnvironmentMap} constructor.
+     * @param renderer - {@link Renderer} or {@link GPUCurtains} class object used to create this {@link EnvironmentMap}.
+     * @param params - {@link EnvironmentMapParams | parameters} use to create this {@link EnvironmentMap}. Defines the various textures options.
+     */
+    constructor(renderer, params = {
+      lutTextureParams: {
+        size: 256,
+        computeSampleCount: 1024,
+        label: "Environment LUT texture",
+        name: "lutTexture",
+        format: "rgba32float"
+      },
+      diffuseTextureParams: {
+        size: 128,
+        computeSampleCount: 2048,
+        label: "Environment diffuse texture",
+        name: "diffuseTexture",
+        format: "rgba16float"
+      },
+      specularTextureParams: {
+        label: "Environment specular texture",
+        name: "specularTexture",
+        format: "rgba16float",
+        generateMips: true
+      }
+    }) {
+      /**
+       * Once the given {@link ComputePass} has written to a temporary storage {@link Texture}, copy it into our permanent {@link Texture}.
+       * @param commandEncoder - The GPU command encoder to use.
+       * @param storageTexture - Temporary storage {@link Texture} used in the {@link ComputePass}.
+       * @param texture - Permanent {@link Texture} (either the {@link lutTexture}, {@link specularTexture} or {@link diffuseTexture}) to copy onto.
+       * @private
+       */
+      __privateAdd$2(this, _copyComputeStorageTextureToTexture);
+      renderer = isRenderer(renderer, "EnvironmentMap");
+      this.renderer = renderer;
+      this.options = params;
+      this.sampler = new Sampler(this.renderer, {
+        label: "Clamp sampler",
+        name: "clampSampler",
+        magFilter: "linear",
+        minFilter: "linear",
+        mipmapFilter: "linear",
+        addressModeU: "clamp-to-edge",
+        addressModeV: "clamp-to-edge"
+      });
+      this.rotation = new Mat3(new Float32Array([0, 0, 1, 0, 1, 0, -1, 0, 0]));
+      this.hdrLoader = new HDRLoader();
+      this.computeBRDFLUTTexture();
+    }
+    /**
+     * Create the {@link lutTexture | BRDF GGX LUT texture} using the provided {@link LUTTextureParams | LUT texture options} and a {@link ComputePass} that runs once.
+     * @async
+     */
+    async computeBRDFLUTTexture() {
+      const { size, computeSampleCount, ...lutTextureParams } = this.options.lutTextureParams;
+      this.lutTexture = new Texture(this.renderer, {
+        ...lutTextureParams,
+        visibility: ["fragment"],
+        fixedSize: {
+          width: size,
+          height: size
+        },
+        autoDestroy: false
+      });
+      let lutStorageTexture = new Texture(this.renderer, {
+        label: "LUT storage texture",
+        name: "lutStorageTexture",
+        format: this.lutTexture.options.format,
+        visibility: ["compute"],
+        usage: ["copySrc", "storageBinding"],
+        type: "storage",
+        fixedSize: {
+          width: this.lutTexture.size.width,
+          height: this.lutTexture.size.height
+        }
+      });
+      let computeLUTPass = new ComputePass(this.renderer, {
+        label: "Compute LUT texture",
+        autoRender: false,
+        // we're going to render only on demand
+        dispatchSize: [Math.ceil(lutStorageTexture.size.width / 16), Math.ceil(lutStorageTexture.size.height / 16), 1],
+        shaders: {
+          compute: {
+            code: computeBrdfLutWgsl
+          }
+        },
+        uniforms: {
+          params: {
+            struct: {
+              sampleCount: {
+                type: "u32",
+                value: computeSampleCount
+              }
+            }
+          }
+        },
+        textures: [lutStorageTexture]
+      });
+      await computeLUTPass.material.compileMaterial();
+      this.renderer.onBeforeRenderScene.add(
+        (commandEncoder) => {
+          this.renderer.renderSingleComputePass(commandEncoder, computeLUTPass);
+          __privateMethod$1(this, _copyComputeStorageTextureToTexture, copyComputeStorageTextureToTexture_fn).call(this, commandEncoder, lutStorageTexture, this.lutTexture);
+        },
+        { once: true }
+      );
+      this.renderer.onAfterCommandEncoderSubmission.add(
+        () => {
+          computeLUTPass.destroy();
+          lutStorageTexture.destroy();
+          lutStorageTexture = null;
+          computeLUTPass = null;
+        },
+        { once: true }
+      );
+    }
+    /**
+     * Create the {@link specularTexture | specular cube map texture} from a loaded {@link HDRImageData} using the provided {@link SpecularTextureParams | specular texture options} and a {@link ComputePass} that runs once.
+     * @params parsedHdr - parsed {@link HDRImageData} loaded by the {@link hdrLoader}.
+     * @async
+     */
+    async computeSpecularCubemapFromHDRData(parsedHdr) {
+      let cubeStorageTexture = new Texture(this.renderer, {
+        label: "Specular storage cubemap",
+        name: "specularStorageCubemap",
+        format: this.specularTexture.options.format,
+        visibility: ["compute"],
+        usage: ["copySrc", "storageBinding"],
+        type: "storage",
+        fixedSize: {
+          width: this.specularTexture.size.width,
+          height: this.specularTexture.size.height,
+          depth: 6
+        },
+        viewDimension: "2d-array"
+      });
+      let computeCubeMapPass = new ComputePass(this.renderer, {
+        label: "Compute specular cubemap from equirectangular",
+        autoRender: false,
+        // we're going to render only on demand
+        dispatchSize: [
+          Math.ceil(this.specularTexture.size.width / 8),
+          Math.ceil(this.specularTexture.size.height / 8),
+          6
+        ],
+        shaders: {
+          compute: {
+            code: computeSpecularCubemapFromHdr
+          }
+        },
+        storages: {
+          params: {
+            struct: {
+              hdrImageData: {
+                type: "array<vec4f>",
+                value: parsedHdr.data
+              },
+              imageSize: {
+                type: "vec2f",
+                value: new Vec2(parsedHdr.width, parsedHdr.height)
+              },
+              faceSize: {
+                type: "u32",
+                value: this.specularTexture.size.width
+              }
+            }
+          }
+        },
+        textures: [cubeStorageTexture]
+      });
+      await computeCubeMapPass.material.compileMaterial();
+      const commandEncoder = this.renderer.device?.createCommandEncoder({
+        label: "Render once command encoder"
+      });
+      if (!this.renderer.production)
+        commandEncoder.pushDebugGroup("Render once command encoder");
+      this.renderer.renderSingleComputePass(commandEncoder, computeCubeMapPass);
+      __privateMethod$1(this, _copyComputeStorageTextureToTexture, copyComputeStorageTextureToTexture_fn).call(this, commandEncoder, cubeStorageTexture, this.specularTexture);
+      if (!this.renderer.production)
+        commandEncoder.popDebugGroup();
+      const commandBuffer = commandEncoder.finish();
+      this.renderer.device?.queue.submit([commandBuffer]);
+      if (this.specularTexture.texture.mipLevelCount > 1) {
+        generateMips(this.renderer.device, this.specularTexture.texture);
+      }
+      computeCubeMapPass.destroy();
+      cubeStorageTexture.destroy();
+      cubeStorageTexture = null;
+      computeCubeMapPass = null;
+    }
+    /**
+     * Compute the {@link diffuseTexture | diffuse cube map texture} from the {@link specularTexture | specular cube map texture } using the provided {@link DiffuseTextureParams | diffuse texture options} and a {@link ComputePass} that runs once.
+     */
+    async computeDiffuseFromSpecular() {
+      if (this.specularTexture.options.viewDimension !== "cube") {
+        throwWarning(
+          "Could not compute the diffuse texture because the specular texture is not a cube map:" + this.specularTexture.options.viewDimension
+        );
+        return;
+      }
+      let diffuseStorageTexture = new Texture(this.renderer, {
+        label: "Diffuse storage cubemap",
+        name: "diffuseEnvMap",
+        format: this.diffuseTexture.options.format,
+        visibility: ["compute"],
+        usage: ["copySrc", "storageBinding"],
+        type: "storage",
+        fixedSize: {
+          width: this.diffuseTexture.size.width,
+          height: this.diffuseTexture.size.height,
+          depth: 6
+        },
+        viewDimension: "2d-array"
+      });
+      let computeDiffusePass = new ComputePass(this.renderer, {
+        label: "Compute diffuse map from specular map",
+        autoRender: false,
+        // we're going to render only on demand
+        dispatchSize: [Math.ceil(this.diffuseTexture.size.width / 8), Math.ceil(this.diffuseTexture.size.height / 8), 6],
+        shaders: {
+          compute: {
+            code: computeDiffuseFromSpecularCubemap(this.specularTexture)
+          }
+        },
+        uniforms: {
+          params: {
+            struct: {
+              faceSize: {
+                type: "u32",
+                value: this.diffuseTexture.size.width
+              },
+              maxMipLevel: {
+                type: "u32",
+                value: this.specularTexture.texture.mipLevelCount
+              },
+              sampleCount: {
+                type: "u32",
+                value: this.options.diffuseTextureParams.computeSampleCount
+              }
+            }
+          }
+        },
+        samplers: [this.sampler],
+        textures: [this.specularTexture, diffuseStorageTexture]
+      });
+      await computeDiffusePass.material.compileMaterial();
+      this.renderer.onBeforeRenderScene.add(
+        (commandEncoder) => {
+          this.renderer.renderSingleComputePass(commandEncoder, computeDiffusePass);
+          __privateMethod$1(this, _copyComputeStorageTextureToTexture, copyComputeStorageTextureToTexture_fn).call(this, commandEncoder, diffuseStorageTexture, this.diffuseTexture);
+        },
+        { once: true }
+      );
+      this.renderer.onAfterCommandEncoderSubmission.add(
+        () => {
+          computeDiffusePass.destroy();
+          diffuseStorageTexture.destroy();
+          diffuseStorageTexture = null;
+          computeDiffusePass = null;
+        },
+        { once: true }
+      );
+    }
+    /**
+     * Load an HDR environment map and then generates the {@link specularTexture} and {@link diffuseTexture} using two separate {@link ComputePass}.
+     * @param url - The url of the .hdr file to load.
+     * @async
+     */
+    async loadAndComputeFromHDR(url) {
+      const parsedHdr = await this.hdrLoader.loadFromUrl(url);
+      const { width, height } = parsedHdr ? parsedHdr : { width: 1024, height: 512 };
+      const faceSize = Math.max(width / 4, height / 2);
+      const textureDefaultOptions = {
+        viewDimension: "cube",
+        autoDestroy: false
+        // keep alive when changing glTF
+      };
+      if (!this.specularTexture) {
+        this.specularTexture = new Texture(this.renderer, {
+          ...this.options.specularTextureParams,
+          ...{
+            visibility: ["fragment", "compute"],
+            fixedSize: {
+              width: faceSize,
+              height: faceSize
+            }
+          },
+          ...textureDefaultOptions
+        });
+      } else if (this.specularTexture.size.width !== faceSize || this.specularTexture.size.height !== faceSize) {
+        this.specularTexture.options.fixedSize.width = faceSize;
+        this.specularTexture.options.fixedSize.height = faceSize;
+        this.specularTexture.size.width = faceSize;
+        this.specularTexture.size.height = faceSize;
+        this.specularTexture.createTexture();
+      }
+      if (!this.diffuseTexture) {
+        const { size, computeSampleCount, ...diffuseTextureParams } = this.options.diffuseTextureParams;
+        this.diffuseTexture = new Texture(this.renderer, {
+          ...diffuseTextureParams,
+          ...{
+            visibility: ["fragment"],
+            fixedSize: {
+              width: size,
+              height: size
+            }
+          },
+          ...textureDefaultOptions
+        });
+      }
+      if (parsedHdr) {
+        this.computeSpecularCubemapFromHDRData(parsedHdr).then(() => {
+          this.computeDiffuseFromSpecular();
+        });
+      }
+    }
+    /**
+     * Destroy the {@link EnvironmentMap} and its associated textures.
+     */
+    destroy() {
+      this.lutTexture?.destroy();
+      this.diffuseTexture?.destroy();
+      this.specularTexture?.destroy();
+    }
+  }
+  _copyComputeStorageTextureToTexture = new WeakSet();
+  copyComputeStorageTextureToTexture_fn = function(commandEncoder, storageTexture, texture) {
+    commandEncoder.copyTextureToTexture(
+      {
+        texture: storageTexture.texture
+      },
+      {
+        texture: texture.texture
+      },
+      [texture.texture.width, texture.texture.height, texture.texture.depthOrArrayLayers]
+    );
   };
 
   class BoxGeometry extends IndexedGeometry {
@@ -17242,26 +18284,26 @@ fn getIBL(
     }
   }
 
-  var __accessCheck$2 = (obj, member, msg) => {
+  var __accessCheck$1 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet$1 = (obj, member, getter) => {
-    __accessCheck$2(obj, member, "read from private field");
+    __accessCheck$1(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$2 = (obj, member, value) => {
+  var __privateAdd$1 = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
   var __privateSet$1 = (obj, member, value, setter) => {
-    __accessCheck$2(obj, member, "write to private field");
+    __accessCheck$1(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
-  var __privateMethod$1 = (obj, member, method) => {
-    __accessCheck$2(obj, member, "access private method");
+  var __privateMethod = (obj, member, method) => {
+    __accessCheck$1(obj, member, "access private method");
     return method;
   };
   var _localRay, _v0, _v1, _v2, _edge1, _edge2, _uv0, _uv1, _uv2, _n0, _n1, _n2, _intersectMesh, intersectMesh_fn;
@@ -17282,31 +18324,31 @@ fn getIBL(
        * @returns - Updated {@link Intersection | intersections}.
        * @private
        */
-      __privateAdd$2(this, _intersectMesh);
+      __privateAdd$1(this, _intersectMesh);
       /** @ignore */
-      __privateAdd$2(this, _localRay, void 0);
+      __privateAdd$1(this, _localRay, void 0);
       /** @ignore */
-      __privateAdd$2(this, _v0, void 0);
+      __privateAdd$1(this, _v0, void 0);
       /** @ignore */
-      __privateAdd$2(this, _v1, void 0);
+      __privateAdd$1(this, _v1, void 0);
       /** @ignore */
-      __privateAdd$2(this, _v2, void 0);
+      __privateAdd$1(this, _v2, void 0);
       /** @ignore */
-      __privateAdd$2(this, _edge1, void 0);
+      __privateAdd$1(this, _edge1, void 0);
       /** @ignore */
-      __privateAdd$2(this, _edge2, void 0);
+      __privateAdd$1(this, _edge2, void 0);
       /** @ignore */
-      __privateAdd$2(this, _uv0, void 0);
+      __privateAdd$1(this, _uv0, void 0);
       /** @ignore */
-      __privateAdd$2(this, _uv1, void 0);
+      __privateAdd$1(this, _uv1, void 0);
       /** @ignore */
-      __privateAdd$2(this, _uv2, void 0);
+      __privateAdd$1(this, _uv2, void 0);
       /** @ignore */
-      __privateAdd$2(this, _n0, void 0);
+      __privateAdd$1(this, _n0, void 0);
       /** @ignore */
-      __privateAdd$2(this, _n1, void 0);
+      __privateAdd$1(this, _n1, void 0);
       /** @ignore */
-      __privateAdd$2(this, _n2, void 0);
+      __privateAdd$1(this, _n2, void 0);
       this.type = "Raycaster";
       renderer = isCameraRenderer(renderer, this.type);
       this.renderer = renderer;
@@ -17446,7 +18488,7 @@ fn getIBL(
       }
       const mesh = isProjectedMesh(object);
       if (mesh) {
-        __privateMethod$1(this, _intersectMesh, intersectMesh_fn).call(this, mesh, intersections);
+        __privateMethod(this, _intersectMesh, intersectMesh_fn).call(this, mesh, intersections);
       }
       if (recursive) {
         object.children.forEach((child) => {
@@ -17571,21 +18613,21 @@ fn getIBL(
     return intersections;
   };
 
-  var __accessCheck$1 = (obj, member, msg) => {
+  var __accessCheck = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet = (obj, member, getter) => {
-    __accessCheck$1(obj, member, "read from private field");
+    __accessCheck(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$1 = (obj, member, value) => {
+  var __privateAdd = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
   var __privateSet = (obj, member, value, setter) => {
-    __accessCheck$1(obj, member, "write to private field");
+    __accessCheck(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -17601,7 +18643,7 @@ fn getIBL(
      */
     constructor({ renderer, gltf }) {
       /** The {@link PrimitiveInstances} Map, to group similar {@link Mesh} by instances. */
-      __privateAdd$1(this, _primitiveInstances, void 0);
+      __privateAdd(this, _primitiveInstances, void 0);
       renderer = isCameraRenderer(renderer, "GLTFScenesManager");
       this.renderer = renderer;
       this.gltf = gltf;
@@ -18452,14 +19494,17 @@ fn getIBL(
     }
     let { chunks } = shaderParameters || {};
     const { iblParameters } = shaderParameters || {};
-    const { lutTexture, envDiffuseTexture, envSpecularTexture } = iblParameters || {};
-    const useIBLContribution = envDiffuseTexture && envDiffuseTexture.texture && envSpecularTexture && envSpecularTexture.texture && lutTexture && lutTexture.texture;
-    if (useIBLContribution && shadingModel === "IBL") {
+    const { environmentMap } = iblParameters || {};
+    if (environmentMap && shadingModel === "IBL") {
       meshDescriptor.parameters.uniforms = {
         ...meshDescriptor.parameters.uniforms,
         ...{
           ibl: {
             struct: {
+              envRotation: {
+                type: "mat3x3f",
+                value: environmentMap.rotation
+              },
               diffuseStrength: {
                 type: "f32",
                 value: iblParameters?.diffuseStrength ?? 0.5
@@ -18474,17 +19519,13 @@ fn getIBL(
       };
       meshDescriptor.parameters.textures = [
         ...meshDescriptor.parameters.textures,
-        lutTexture.texture,
-        envDiffuseTexture.texture,
-        envSpecularTexture.texture
+        environmentMap.lutTexture,
+        environmentMap.diffuseTexture,
+        environmentMap.specularTexture
       ];
-      lutTexture.samplerName = lutTexture.samplerName || "defaultSampler";
-      envDiffuseTexture.samplerName = envDiffuseTexture.samplerName || "defaultSampler";
-      envSpecularTexture.samplerName = envSpecularTexture.samplerName || "defaultSampler";
+      meshDescriptor.parameters.samplers = [...meshDescriptor.parameters.samplers, environmentMap.sampler];
     } else if (shadingModel === "IBL") {
-      throwWarning(
-        "IBL shading requested but one of the LUT, environment specular or diffuse texture is missing. Defaulting to PBR shading."
-      );
+      throwWarning("IBL shading requested but the environment map missing. Defaulting to PBR shading.");
       shadingModel = "PBR";
     }
     const shadingOptions = {
@@ -18596,12 +19637,10 @@ fn getIBL(
           f0,
           metallic,
           roughness,
-          ${lutTexture.texture.options.name},
-          ${lutTexture.samplerName},
-          ${envSpecularTexture.texture.options.name},
-          ${envSpecularTexture.samplerName},
-          ${envDiffuseTexture.texture.options.name},
-          ${envDiffuseTexture.samplerName},
+          ${environmentMap.sampler.name},
+          ${environmentMap.lutTexture.options.name},
+          ${environmentMap.specularTexture.options.name},
+          ${environmentMap.diffuseTexture.options.name},
           occlusion
         ),
         color.a
@@ -18658,241 +19697,6 @@ fn getIBL(
         entryPoint: "main"
       }
     };
-  };
-  const computeDiffuseFromSpecular = async (renderer, diffuseTexture, specularTexture) => {
-    if (specularTexture.options.viewDimension !== "cube") {
-      throwWarning(
-        "Could not compute the diffuse texture because the specular texture is not a cube map:" + specularTexture.options.viewDimension
-      );
-      return;
-    }
-    const computeDiffuseShader = `    
-    fn radicalInverse_VdC(inputBits: u32) -> f32 {
-        var bits: u32 = inputBits;
-        bits = (bits << 16u) | (bits >> 16u);
-        bits = ((bits & 0x55555555u) << 1u) | ((bits & 0xAAAAAAAAu) >> 1u);
-        bits = ((bits & 0x33333333u) << 2u) | ((bits & 0xCCCCCCCCu) >> 2u);
-        bits = ((bits & 0x0F0F0F0Fu) << 4u) | ((bits & 0xF0F0F0F0u) >> 4u);
-        bits = ((bits & 0x00FF00FFu) << 8u) | ((bits & 0xFF00FF00u) >> 8u);
-        return f32(bits) * 2.3283064365386963e-10; // / 0x100000000
-    }
-    
-    // hammersley2d describes a sequence of points in the 2d unit square [0,1)^2
-    // that can be used for quasi Monte Carlo integration
-    fn hammersley2d(i: u32, N: u32) -> vec2f {
-        return vec2(f32(i) / f32(N), radicalInverse_VdC(i));
-    }
-    
-    // TBN generates a tangent bitangent normal coordinate frame from the normal
-    // (the normal must be normalized)
-    fn generateTBN(normal: vec3f) -> mat3x3f {
-      var bitangent: vec3f = vec3(0.0, 1.0, 0.0);
-  
-      let NdotUp: f32 = dot(normal, vec3(0.0, 1.0, 0.0));
-      let epsilon: f32 = 0.0000001;
-      
-      if (1.0 - abs(NdotUp) <= epsilon) {
-        // Sampling +Y or -Y, so we need a more robust bitangent.
-        if (NdotUp > 0.0) {
-          bitangent = vec3(0.0, 0.0, 1.0);
-        }
-        else {
-          bitangent = vec3(0.0, 0.0, -1.0);
-        }
-      }
-  
-      let tangent: vec3f = normalize(cross(bitangent, normal));
-      bitangent = cross(normal, tangent);
-  
-      return mat3x3f(tangent, bitangent, normal);
-    }
-    
-    // Mipmap Filtered Samples (GPU Gems 3, 20.4)
-    // https://developer.nvidia.com/gpugems/gpugems3/part-iii-rendering/chapter-20-gpu-based-importance-sampling
-    // https://cgg.mff.cuni.cz/~jaroslav/papers/2007-sketch-fis/Final_sap_0073.pdf
-    fn computeLod(pdf: f32) -> f32 {
-      // https://cgg.mff.cuni.cz/~jaroslav/papers/2007-sketch-fis/Final_sap_0073.pdf
-      return 0.5 * log2( 6.0 * f32(params.faceSize) * f32(params.faceSize) / (f32(params.sampleCount) * pdf));
-    }
-    
-    fn transformDirection(face: u32, uv: vec2f) -> vec3f {
-      // Transform the direction based on the cubemap face
-      switch (face) {
-        case 0u {
-          // +X
-          return vec3f( 1.0,  uv.y, -uv.x);
-        }
-        case 1u {
-          // -X
-          return vec3f(-1.0,  uv.y,  uv.x);
-        }
-        case 2u {
-          // +Y
-          return vec3f( uv.x,  -1.0, uv.y);
-        }
-        case 3u {
-          // -Y
-          return vec3f( uv.x, 1.0,  -uv.y);
-        }
-        case 4u {
-          // +Z
-          return vec3f( uv.x,  uv.y,  1.0);
-        }
-        case 5u {
-          // -Z
-          return vec3f(-uv.x,  uv.y, -1.0);
-        }
-        default {
-          return vec3f(0.0, 0.0, 0.0);
-        }
-      }
-    }
-    
-    const PI = ${Math.PI};
-
-    @compute @workgroup_size(8, 8, 1) fn main(
-      @builtin(global_invocation_id) GlobalInvocationID: vec3u,
-    ) {
-      let faceSize: u32 = params.faceSize;
-      let sampleCount: u32 = params.sampleCount;
-      
-      let face: u32 = GlobalInvocationID.z;
-      let x: u32 = GlobalInvocationID.x;
-      let y: u32 = GlobalInvocationID.y;
-  
-      if (x >= faceSize || y >= faceSize) {
-          return;
-      }
-  
-      let texelSize: f32 = 1.0 / f32(faceSize);
-      let halfTexel: f32 = texelSize * 0.5;
-      
-      var uv: vec2f = vec2(
-        (f32(x) + halfTexel) * texelSize,
-        (f32(y) + halfTexel) * texelSize
-      );
-      
-      uv = uv * 2.0 - 1.0;
-  
-      let normal: vec3<f32> = transformDirection(face, uv);
-      
-      var irradiance: vec3f = vec3f(0.0, 0.0, 0.0);
-  
-      for (var i: u32 = 0; i < sampleCount; i++) {
-        // generate a quasi monte carlo point in the unit square [0.1)^2
-        let xi: vec2f = hammersley2d(i, sampleCount);
-        
-        let cosTheta: f32 = sqrt(1.0 - xi.y);
-        let sinTheta: f32 = sqrt(1.0 - cosTheta * cosTheta);
-        let phi: f32 = 2.0 * PI * xi.x;
-        let pdf: f32 = cosTheta / PI; // evaluation for solid angle, therefore drop the sinTheta
-
-        let sampleVec: vec3f = vec3f(
-            sinTheta * cos(phi),
-            sinTheta * sin(phi),
-            cosTheta
-        );
-        
-        let TBN: mat3x3f = generateTBN(normalize(normal));
-        
-        var direction: vec3f = TBN * sampleVec;
-        
-        // invert along Y axis
-        direction.y *= -1.0;
-        
-        let lod: f32 = computeLod(pdf);
-
-        // Convert sampleVec to texture coordinates of the specular env map
-        irradiance += textureSampleLevel(
-          envSpecularTexture,
-          specularSampler,
-          direction,
-          min(lod, f32(params.maxMipLevel))
-        ).rgb;
-      }
-  
-      irradiance /= f32(sampleCount);
-
-      textureStore(diffuseEnvMap, vec2(x, y), face, vec4f(irradiance, 1.0));
-    }
-  `;
-    let diffuseStorageTexture = new Texture(renderer, {
-      label: "Diffuse storage cubemap",
-      name: "diffuseEnvMap",
-      format: "rgba32float",
-      visibility: ["compute"],
-      usage: ["copySrc", "storageBinding"],
-      type: "storage",
-      fixedSize: {
-        width: specularTexture.size.width,
-        height: specularTexture.size.height,
-        depth: 6
-      },
-      viewDimension: "2d-array"
-    });
-    const sampler = new Sampler(renderer, {
-      label: "Compute diffuse sampler",
-      name: "specularSampler",
-      addressModeU: "clamp-to-edge",
-      addressModeV: "clamp-to-edge",
-      minFilter: "linear",
-      magFilter: "linear"
-    });
-    let computeDiffusePass = new ComputePass(renderer, {
-      autoRender: false,
-      // we're going to render only on demand
-      dispatchSize: [Math.ceil(specularTexture.size.width / 8), Math.ceil(specularTexture.size.height / 8), 6],
-      shaders: {
-        compute: {
-          code: computeDiffuseShader
-        }
-      },
-      uniforms: {
-        params: {
-          struct: {
-            faceSize: {
-              type: "u32",
-              value: specularTexture.size.width
-            },
-            maxMipLevel: {
-              type: "u32",
-              value: specularTexture.texture.mipLevelCount
-            },
-            sampleCount: {
-              type: "u32",
-              value: 2048
-            }
-          }
-        }
-      },
-      samplers: [sampler],
-      textures: [specularTexture, diffuseStorageTexture]
-    });
-    await computeDiffusePass.material.compileMaterial();
-    renderer.onBeforeRenderScene.add(
-      (commandEncoder) => {
-        renderer.renderSingleComputePass(commandEncoder, computeDiffusePass);
-        commandEncoder.copyTextureToTexture(
-          {
-            texture: diffuseStorageTexture.texture
-          },
-          {
-            texture: diffuseTexture.texture
-          },
-          [diffuseTexture.texture.width, diffuseTexture.texture.height, diffuseTexture.texture.depthOrArrayLayers]
-        );
-      },
-      { once: true }
-    );
-    renderer.onAfterCommandEncoderSubmission.add(
-      () => {
-        computeDiffusePass.destroy();
-        diffuseStorageTexture.destroy();
-        diffuseStorageTexture = null;
-        computeDiffusePass = null;
-      },
-      { once: true }
-    );
   };
 
   const GL = WebGLRenderingContext;
@@ -19062,320 +19866,6 @@ fn getIBL(
     }
   }
 
-  var __accessCheck = (obj, member, msg) => {
-    if (!member.has(obj))
-      throw TypeError("Cannot " + msg);
-  };
-  var __privateAdd = (obj, member, value) => {
-    if (member.has(obj))
-      throw TypeError("Cannot add the same private member more than once");
-    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  };
-  var __privateMethod = (obj, member, method) => {
-    __accessCheck(obj, member, "access private method");
-    return method;
-  };
-  var _decodeRGBE, decodeRGBE_fn, _parseHeader, parseHeader_fn, _parseSize, parseSize_fn, _readLine, readLine_fn, _parseData, parseData_fn, _parseNewRLE, parseNewRLE_fn, _swap, swap_fn, _flipX, flipX_fn, _flipY, flipY_fn;
-  class HDRLoader {
-    constructor() {
-      /**
-       * @ignore
-       */
-      __privateAdd(this, _decodeRGBE);
-      /**
-       * @ignore
-       */
-      __privateAdd(this, _parseHeader);
-      /**
-       * @ignore
-       */
-      __privateAdd(this, _parseSize);
-      /**
-       * @ignore
-       */
-      __privateAdd(this, _readLine);
-      /**
-       * @ignore
-       */
-      __privateAdd(this, _parseData);
-      /**
-       * @ignore
-       */
-      __privateAdd(this, _parseNewRLE);
-      /**
-       * @ignore
-       */
-      __privateAdd(this, _swap);
-      /**
-       * @ignore
-       */
-      __privateAdd(this, _flipX);
-      /**
-       * @ignore
-       */
-      __privateAdd(this, _flipY);
-    }
-    /**
-     * Load and decode RGBE-encoded data to a flat list of floating point pixel data (RGBA).
-     * @param url -  The url of the .hdr file to load
-     * @returns - The {@link HDRImageData}
-     */
-    async loadFromUrl(url) {
-      const buffer = await (await fetch(url)).arrayBuffer();
-      return __privateMethod(this, _decodeRGBE, decodeRGBE_fn).call(this, new DataView(buffer));
-    }
-    /**
-     * Convert an equirectangular {@link HDRImageData} to 6 {@link HDRImageData} cube map faces. Works but can display artifacts at the poles.
-     * @param parsedHdr - equirectangular {@link HDRImageData} to use.
-     * @returns - 6 {@link HDRImageData} cube map faces
-     */
-    equirectangularToCubeMap(parsedHdr) {
-      const faceSize = Math.max(parsedHdr.width / 4, parsedHdr.height / 2);
-      const faces = {
-        posX: new Float32Array(faceSize * faceSize * 4),
-        negX: new Float32Array(faceSize * faceSize * 4),
-        posY: new Float32Array(faceSize * faceSize * 4),
-        negY: new Float32Array(faceSize * faceSize * 4),
-        posZ: new Float32Array(faceSize * faceSize * 4),
-        negZ: new Float32Array(faceSize * faceSize * 4)
-      };
-      function getPixel(u, v) {
-        const x = Math.floor(u * parsedHdr.width);
-        const y = Math.floor(v * parsedHdr.height);
-        const index = (y * parsedHdr.width + x) * 4;
-        return [parsedHdr.data[index], parsedHdr.data[index + 1], parsedHdr.data[index + 2], parsedHdr.data[index + 3]];
-      }
-      function setPixel(face, x, y, pixel) {
-        const index = (y * faceSize + x) * 4;
-        faces[face][index] = pixel[0];
-        faces[face][index + 1] = pixel[1];
-        faces[face][index + 2] = pixel[2];
-        faces[face][index + 3] = pixel[3];
-      }
-      function mapDirection(face, x, y) {
-        const a = 2 * (x + 0.5) / faceSize - 1;
-        const b = 2 * (y + 0.5) / faceSize - 1;
-        switch (face) {
-          case "posX":
-            return [a, -1, -b];
-          case "negX":
-            return [-a, 1, -b];
-          case "posY":
-            return [-b, -a, 1];
-          case "negY":
-            return [b, -a, -1];
-          case "posZ":
-            return [-1, -a, -b];
-          case "negZ":
-            return [1, a, -b];
-        }
-      }
-      function directionToUV(direction) {
-        const [x, y, z] = direction;
-        const r = Math.sqrt(x * x + y * y);
-        const theta = Math.atan2(y, x);
-        const phi = Math.atan2(z, r);
-        const u = (theta + Math.PI) / (2 * Math.PI);
-        const v = (phi + Math.PI / 2) / Math.PI;
-        return [u, v];
-      }
-      for (const face in faces) {
-        for (let y = 0; y < faceSize; y++) {
-          for (let x = 0; x < faceSize; x++) {
-            const direction = mapDirection(face, x, y);
-            const [u, v] = directionToUV(direction);
-            const pixel = getPixel(u, v);
-            setPixel(face, x, y, pixel);
-          }
-        }
-      }
-      const facesData = [faces.posX, faces.negX, faces.posY, faces.negY, faces.posZ, faces.negZ];
-      return facesData.map((faceData) => {
-        return {
-          data: faceData,
-          width: faceSize,
-          height: faceSize,
-          exposure: parsedHdr.exposure,
-          gamma: parsedHdr.gamma
-        };
-      });
-    }
-  }
-  _decodeRGBE = new WeakSet();
-  decodeRGBE_fn = function(data) {
-    const stream = {
-      data,
-      offset: 0
-    };
-    const header = __privateMethod(this, _parseHeader, parseHeader_fn).call(this, stream);
-    return {
-      width: header.width,
-      height: header.height,
-      exposure: header.exposure,
-      gamma: header.gamma,
-      data: __privateMethod(this, _parseData, parseData_fn).call(this, stream, header)
-    };
-  };
-  _parseHeader = new WeakSet();
-  parseHeader_fn = function(stream) {
-    let line = __privateMethod(this, _readLine, readLine_fn).call(this, stream);
-    const header = {
-      colorCorr: [1, 1, 1],
-      exposure: 1,
-      gamma: 1,
-      width: 0,
-      height: 0,
-      flipX: false,
-      flipY: false
-    };
-    if (line !== "#?RADIANCE" && line !== "#?RGBE")
-      throw new Error("Incorrect file format!");
-    while (line !== "") {
-      line = __privateMethod(this, _readLine, readLine_fn).call(this, stream);
-      const parts2 = line.split("=");
-      switch (parts2[0]) {
-        case "GAMMA":
-          header.gamma = parseFloat(parts2[1]);
-          break;
-        case "FORMAT":
-          if (parts2[1] !== "32-bit_rle_rgbe" && parts2[1] !== "32-bit_rle_xyze")
-            throw new Error("Incorrect encoding format!");
-          break;
-        case "EXPOSURE":
-          header.exposure = parseFloat(parts2[1]);
-          break;
-        case "COLORCORR":
-          header.colorCorr = parts2[1].replace(/^\s+|\s+$/g, "").split(" ").map((m) => parseFloat(m));
-          break;
-      }
-    }
-    line = __privateMethod(this, _readLine, readLine_fn).call(this, stream);
-    const parts = line.split(" ");
-    __privateMethod(this, _parseSize, parseSize_fn).call(this, parts[0], parseInt(parts[1]), header);
-    __privateMethod(this, _parseSize, parseSize_fn).call(this, parts[2], parseInt(parts[3]), header);
-    return header;
-  };
-  _parseSize = new WeakSet();
-  parseSize_fn = function(label, value, header) {
-    switch (label) {
-      case "+X":
-        header.width = value;
-        break;
-      case "-X":
-        header.width = value;
-        header.flipX = true;
-        console.warn("Flipping horizontal orientation not currently supported");
-        break;
-      case "-Y":
-        header.height = value;
-        header.flipY = true;
-        break;
-      case "+Y":
-        header.height = value;
-        break;
-    }
-  };
-  _readLine = new WeakSet();
-  readLine_fn = function(stream) {
-    let ch, str = "";
-    while ((ch = stream.data.getUint8(stream.offset++)) !== 10)
-      str += String.fromCharCode(ch);
-    return str;
-  };
-  _parseData = new WeakSet();
-  parseData_fn = function(stream, header) {
-    const hash = stream.data.getUint16(stream.offset);
-    let data;
-    if (hash === 514) {
-      data = __privateMethod(this, _parseNewRLE, parseNewRLE_fn).call(this, stream, header);
-      if (header.flipX)
-        __privateMethod(this, _flipX, flipX_fn).call(this, data, header);
-      if (header.flipY)
-        __privateMethod(this, _flipY, flipY_fn).call(this, data, header);
-    } else {
-      throw new Error("Obsolete HDR file version!");
-    }
-    return data;
-  };
-  _parseNewRLE = new WeakSet();
-  parseNewRLE_fn = function(stream, header) {
-    const { width, height, colorCorr } = header;
-    const tgt = new Float32Array(width * height * 4);
-    let i = 0;
-    let { offset, data } = stream;
-    for (let y = 0; y < height; ++y) {
-      if (data.getUint16(offset) !== 514)
-        throw new Error("Incorrect scanline start hash");
-      if (data.getUint16(offset + 2) !== width)
-        throw new Error("Scanline doesn't match picture dimension!");
-      offset += 4;
-      const numComps = width * 4;
-      const comps = [];
-      let x = 0;
-      while (x < numComps) {
-        let value = data.getUint8(offset++);
-        if (value > 128) {
-          const len = value - 128;
-          value = data.getUint8(offset++);
-          for (let rle = 0; rle < len; ++rle) {
-            comps[x++] = value;
-          }
-        } else {
-          for (let n = 0; n < value; ++n) {
-            comps[x++] = data.getUint8(offset++);
-          }
-        }
-      }
-      for (x = 0; x < width; ++x) {
-        const r = comps[x];
-        const g = comps[x + width];
-        const b = comps[x + width * 2];
-        let e = comps[x + width * 3];
-        e = e ? Math.pow(2, e - 136) : 0;
-        tgt[i++] = r * e * colorCorr[0];
-        tgt[i++] = g * e * colorCorr[1];
-        tgt[i++] = b * e * colorCorr[2];
-        tgt[i++] = e;
-      }
-    }
-    return tgt;
-  };
-  _swap = new WeakSet();
-  swap_fn = function(data, i1, i2) {
-    i1 *= 4;
-    i2 *= 4;
-    for (let i = 0; i < 4; ++i) {
-      const tmp = data[i1 + i];
-      data[i1 + i] = data[i2 + i];
-      data[i2 + i] = tmp;
-    }
-  };
-  _flipX = new WeakSet();
-  flipX_fn = function(data, header) {
-    const { width, height } = header;
-    const hw = width >> 1;
-    for (let y = 0; y < height; ++y) {
-      const b = y * width;
-      for (let x = 0; x < hw; ++x) {
-        const i1 = b + x;
-        const i2 = b + width - 1 - x;
-        __privateMethod(this, _swap, swap_fn).call(this, data, i1, i2);
-      }
-    }
-  };
-  _flipY = new WeakSet();
-  flipY_fn = function(data, header) {
-    const { width, height } = header;
-    const hh = height >> 1;
-    for (let y = 0; y < hh; ++y) {
-      const b1 = y * width;
-      const b2 = (height - 1 - y) * width;
-      for (let x = 0; x < width; ++x) {
-        __privateMethod(this, _swap, swap_fn).call(this, data, b1 + x, b2 + x);
-      }
-    }
-  };
-
   const logSceneCommands = (renderer) => {
     const { scene } = renderer;
     if (!scene)
@@ -19483,6 +19973,7 @@ fn getIBL(
   exports.DOMObject3D = DOMObject3D;
   exports.DOMTexture = DOMTexture;
   exports.DirectionalLight = DirectionalLight;
+  exports.EnvironmentMap = EnvironmentMap;
   exports.FullscreenPlane = FullscreenPlane;
   exports.GLTFLoader = GLTFLoader;
   exports.GLTFScenesManager = GLTFScenesManager;
@@ -19528,7 +20019,6 @@ fn getIBL(
   exports.applyDirectionalShadows = applyDirectionalShadows;
   exports.applyPointShadows = applyPointShadows;
   exports.buildShaders = buildShaders;
-  exports.computeDiffuseFromSpecular = computeDiffuseFromSpecular;
   exports.getDefaultPointShadowDepthFs = getDefaultPointShadowDepthFs;
   exports.getDefaultPointShadowDepthVs = getDefaultPointShadowDepthVs;
   exports.getDefaultShadowDepthVs = getDefaultShadowDepthVs;

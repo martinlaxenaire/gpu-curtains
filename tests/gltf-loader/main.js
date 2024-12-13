@@ -7,8 +7,8 @@ window.addEventListener('load', async () => {
     GPUDeviceManager,
     GPUCameraRenderer,
     Texture,
-    computeDiffuseFromSpecular,
     HDRLoader,
+    EnvironmentMap,
     Sampler,
     GLTFLoader,
     GLTFScenesManager,
@@ -55,88 +55,24 @@ window.addEventListener('load', async () => {
     element: container,
   })
 
-  // IBL textures
-  const loadImageBitmap = async (src) => {
-    const response = await fetch(src)
-    return createImageBitmap(await response.blob())
+  const envMaps = {
+    cannon: {
+      name: 'Cannon',
+      url: '../../website/assets/hdr/cannon_1k.hdr',
+    },
+    colorfulStudio: {
+      name: 'Colorful studio',
+      url: '../../website/assets/hdr/Colorful_Studio.hdr',
+    },
   }
 
-  const iblLUTBitmap = await loadImageBitmap('./assets/lut.png')
-  // const envDiffuseBitmap = await loadImageBitmap('./assets/royal_esplanade_1k-diffuse-RGBM.png')
-  // const envSpecularBitmap = await loadImageBitmap('./assets/royal_esplanade_1k-specular-RGBM.png')
+  const currentEnvMapKey = 'cannon'
+  let currentEnvMap = envMaps[currentEnvMapKey]
 
-  const iblLUTTexture = new Texture(gpuCameraRenderer, {
-    name: 'iblLUTTexture',
-    visibility: ['fragment'],
-    format: 'rgba32float',
-    //generateMips: true,
-    fixedSize: {
-      width: iblLUTBitmap.width,
-      height: iblLUTBitmap.height,
-    },
-    flipY: true, // from a WebGL texture!
-    autoDestroy: false, // keep alive when changing glTF
-  })
+  const environmentMap = new EnvironmentMap(gpuCameraRenderer)
+  await environmentMap.loadAndComputeFromHDR(currentEnvMap.url)
 
-  iblLUTTexture.uploadSource({
-    source: iblLUTBitmap,
-  })
-
-  const hdrLoader = new HDRLoader()
-  const specularHDR = await hdrLoader.loadFromUrl('./assets/cannon_1k.hdr')
-
-  // TODO use a compute pass?
-  const specFaceData = hdrLoader.equirectangularToCubeMap(specularHDR)
-
-  const envSpecularTexture = new Texture(gpuCameraRenderer, {
-    label: 'Environment specular texture',
-    name: 'envSpecularTexture',
-    visibility: ['fragment', 'compute'],
-    format: 'rgba32float',
-    generateMips: true,
-    viewDimension: 'cube',
-    fixedSize: {
-      width: specFaceData[0].width,
-      height: specFaceData[0].height,
-    },
-    autoDestroy: false, // keep alive when changing glTF
-  })
-
-  for (let i = 0; i < specFaceData.length; i++) {
-    envSpecularTexture.uploadData({
-      data: specFaceData[i].data,
-      origin: [0, 0, i],
-      depth: 1, // explicitly set the depth to 1
-    })
-  }
-
-  // diffuse cube map computed from the specular cube map in a compute shader
-  const envDiffuseTexture = new Texture(gpuCameraRenderer, {
-    label: 'Environment diffuse texture',
-    name: 'envDiffuseTexture',
-    visibility: ['fragment'],
-    format: 'rgba32float',
-    viewDimension: 'cube',
-    fixedSize: {
-      width: specFaceData[0].width,
-      height: specFaceData[0].height,
-    },
-    autoDestroy: false, // keep alive when changing glTF
-  })
-
-  // compute diffuse texture
-  await computeDiffuseFromSpecular(gpuCameraRenderer, envDiffuseTexture, envSpecularTexture)
-
-  // finally we will need a clamp-to-edge sampler for those textures
-  const clampSampler = new Sampler(gpuCameraRenderer, {
-    label: 'Clamp sampler',
-    name: 'clampSampler',
-    magFilter: 'linear',
-    minFilter: 'linear',
-    mipmapFilter: 'linear',
-    addressModeU: 'clamp-to-edge',
-    addressModeV: 'clamp-to-edge',
-  })
+  console.log(environmentMap)
 
   const models = {
     damagedHelmet: {
@@ -262,9 +198,6 @@ window.addEventListener('load', async () => {
     const meshes = gltfScenesManager.addMeshes((meshDescriptor) => {
       const { parameters } = meshDescriptor
 
-      // add clamp sampler
-      parameters.samplers = [...parameters.samplers, clampSampler]
-
       // disable frustum culling
       parameters.frustumCulling = false
 
@@ -297,18 +230,7 @@ window.addEventListener('load', async () => {
         iblParameters: {
           diffuseStrength: 1,
           specularStrength: 1,
-          lutTexture: {
-            texture: iblLUTTexture,
-            samplerName: 'clampSampler', // use clamp sampler for LUT texture
-          },
-          envDiffuseTexture: {
-            texture: envDiffuseTexture,
-            samplerName: 'clampSampler', // use clamp sampler for cube maps
-          },
-          envSpecularTexture: {
-            texture: envSpecularTexture,
-            samplerName: 'clampSampler', // use clamp sampler for cube maps
-          },
+          environmentMap,
         },
       })
     })
@@ -347,6 +269,22 @@ window.addEventListener('load', async () => {
       }
     })
     .name('Models')
+
+  gui
+    .add(
+      { [currentEnvMap.name]: currentEnvMapKey },
+      currentEnvMap.name,
+      Object.keys(envMaps).reduce((acc, v) => {
+        return { ...acc, [envMaps[v].name]: v }
+      }, {})
+    )
+    .onChange(async (value) => {
+      if (envMaps[value].name !== currentEnvMap.name) {
+        currentEnvMap = envMaps[value]
+        await environmentMap.loadAndComputeFromHDR(envMaps[value].url)
+      }
+    })
+    .name('Environment maps')
 
   gui
     .add({ shadingModel }, 'shadingModel', ['IBL', 'PBR', 'Phong', 'Lambert'])

@@ -68,8 +68,8 @@ type DataStream = {
 export class HDRLoader {
   /**
    * Load and decode RGBE-encoded data to a flat list of floating point pixel data (RGBA).
-   * @param url -  The url of the .hdr file to load
-   * @returns - The {@link HDRImageData}
+   * @param url - The url of the .hdr file to load.
+   * @returns - The {@link HDRImageData}.
    */
   async loadFromUrl(url: string): Promise<HDRImageData> {
     const buffer = await (await fetch(url)).arrayBuffer()
@@ -306,92 +306,5 @@ export class HDRLoader {
         this.#swap(data, b1 + x, b2 + x)
       }
     }
-  }
-
-  /**
-   * Convert an equirectangular {@link HDRImageData} to 6 {@link HDRImageData} cube map faces. Works but can display artifacts at the poles.
-   * @param parsedHdr - equirectangular {@link HDRImageData} to use.
-   * @returns - 6 {@link HDRImageData} cube map faces
-   */
-  equirectangularToCubeMap(parsedHdr: HDRImageData): HDRImageData[] {
-    const faceSize = Math.max(parsedHdr.width / 4, parsedHdr.height / 2)
-
-    const faces = {
-      posX: new Float32Array(faceSize * faceSize * 4),
-      negX: new Float32Array(faceSize * faceSize * 4),
-      posY: new Float32Array(faceSize * faceSize * 4),
-      negY: new Float32Array(faceSize * faceSize * 4),
-      posZ: new Float32Array(faceSize * faceSize * 4),
-      negZ: new Float32Array(faceSize * faceSize * 4),
-    }
-
-    function getPixel(u, v) {
-      const x = Math.floor(u * parsedHdr.width)
-      const y = Math.floor(v * parsedHdr.height)
-
-      const index = (y * parsedHdr.width + x) * 4
-      return [parsedHdr.data[index], parsedHdr.data[index + 1], parsedHdr.data[index + 2], parsedHdr.data[index + 3]]
-    }
-
-    function setPixel(face, x, y, pixel) {
-      const index = (y * faceSize + x) * 4
-      faces[face][index] = pixel[0]
-      faces[face][index + 1] = pixel[1]
-      faces[face][index + 2] = pixel[2]
-      faces[face][index + 3] = pixel[3]
-    }
-
-    function mapDirection(face, x, y) {
-      const a = (2 * (x + 0.5)) / faceSize - 1
-      const b = (2 * (y + 0.5)) / faceSize - 1
-      switch (face) {
-        case 'posX':
-          return [a, -1, -b]
-        case 'negX':
-          return [-a, 1, -b]
-        case 'posY':
-          return [-b, -a, 1]
-        case 'negY':
-          return [b, -a, -1]
-        case 'posZ':
-          return [-1, -a, -b]
-        case 'negZ':
-          return [1, a, -b]
-      }
-    }
-
-    function directionToUV(direction) {
-      const [x, y, z] = direction
-      const r = Math.sqrt(x * x + y * y)
-      //const theta = mod(Math.atan2(y, x), 2 * Math.PI)
-      const theta = Math.atan2(y, x)
-      const phi = Math.atan2(z, r)
-      const u = (theta + Math.PI) / (2 * Math.PI)
-      const v = (phi + Math.PI / 2) / Math.PI
-      return [u, v]
-    }
-
-    for (const face in faces) {
-      for (let y = 0; y < faceSize; y++) {
-        for (let x = 0; x < faceSize; x++) {
-          const direction = mapDirection(face, x, y)
-          const [u, v] = directionToUV(direction)
-          const pixel = getPixel(u, v)
-          setPixel(face, x, y, pixel)
-        }
-      }
-    }
-
-    const facesData = [faces.posX, faces.negX, faces.posY, faces.negY, faces.posZ, faces.negZ]
-
-    return facesData.map((faceData) => {
-      return {
-        data: faceData,
-        width: faceSize,
-        height: faceSize,
-        exposure: parsedHdr.exposure,
-        gamma: parsedHdr.gamma,
-      }
-    })
   }
 }

@@ -1,6 +1,7 @@
 import {
   GPUDeviceManager,
   GPUCameraRenderer,
+  EnvironmentMap,
   AmbientLight,
   PointLight,
   GLTFLoader,
@@ -58,6 +59,24 @@ window.addEventListener('load', async () => {
     range: -1,
   })
 
+  // environment maps
+  const envMaps = {
+    cannon: {
+      name: 'Cannon',
+      url: '../../website/assets/hdr/cannon_1k.hdr',
+    },
+    colorfulStudio: {
+      name: 'Colorful studio',
+      url: '../../website/assets/hdr/Colorful_Studio.hdr',
+    },
+  }
+
+  const currentEnvMapKey = 'cannon'
+  let currentEnvMap = envMaps[currentEnvMapKey]
+
+  const environmentMap = new EnvironmentMap(gpuCameraRenderer)
+  await environmentMap.loadAndComputeFromHDR(currentEnvMap.url)
+
   const models = {
     damagedHelmet: {
       name: 'Damaged Helmet',
@@ -80,6 +99,8 @@ window.addEventListener('load', async () => {
       url: 'https://raw.githubusercontent.com/toji/sponza-optimized/main/Sponza.gltf',
     },
   }
+
+  let shadingModel = 'IBL' // 'IBL', 'PBR', 'Phong' or 'Lambert'
 
   // gltf
   const gltfLoader = new GLTFLoader()
@@ -134,11 +155,24 @@ window.addEventListener('load', async () => {
       parameters.frustumCulling = false
 
       pointLight.position.set(radius * 2)
-      const lightPositionLengthSq = pointLight.position.lengthSq()
-      pointLight.intensity = lightPositionLengthSq * 3
+
+      if (shadingModel === 'IBL') {
+        ambientLight.intensity = 0
+        pointLight.intensity = 0
+      } else {
+        ambientLight.intensity = 0.1
+
+        const lightPositionLengthSq = pointLight.position.lengthSq()
+        pointLight.intensity = lightPositionLengthSq * 3
+      }
 
       parameters.shaders = buildShaders(meshDescriptor, {
-        shadingModel: 'PBR', // default anyway
+        shadingModel: shadingModel,
+        iblParameters: {
+          diffuseStrength: 1,
+          specularStrength: 1,
+          environmentMap,
+        },
       })
     })
   }
@@ -172,6 +206,39 @@ window.addEventListener('load', async () => {
       }
     })
     .name('Models')
+
+  gui
+    .add(
+      { [currentEnvMap.name]: currentEnvMapKey },
+      currentEnvMap.name,
+      Object.keys(envMaps).reduce((acc, v) => {
+        return { ...acc, [envMaps[v].name]: v }
+      }, {})
+    )
+    .onChange(async (value) => {
+      if (envMaps[value].name !== currentEnvMap.name) {
+        currentEnvMap = envMaps[value]
+        await environmentMap.loadAndComputeFromHDR(envMaps[value].url)
+      }
+    })
+    .name('Environment maps')
+
+  gui
+    .add({ shadingModel }, 'shadingModel', ['IBL', 'PBR', 'Phong', 'Lambert'])
+    .onChange(async (value) => {
+      if (value !== shadingModel) {
+        shadingModel = value
+
+        if (gltfScenesManager) {
+          gltfScenesManager.destroy()
+        }
+
+        gltfScenesManager = null
+
+        await loadGLTF(currentModel.url)
+      }
+    })
+    .name('Shading')
 
   await loadGLTF(currentModel.url)
 })

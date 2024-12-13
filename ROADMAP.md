@@ -27,6 +27,7 @@
 - OrbitControls
 - Raycaster
 - GLTFLoader + GLTFScenesManager
+- HDRLoader + EnvironmentMap
 
 ## Work in progress
 
