@@ -244,7 +244,6 @@ window.addEventListener('load', async () => {
       if (envMaps[value].name !== currentEnvMap.name) {
         currentEnvMap = envMaps[value]
         await environmentMap.loadAndComputeFromHDR(envMaps[value].url)
-        console.log(gpuCameraRenderer.pipelineManager)
       }
     })
     .name('Maps')
