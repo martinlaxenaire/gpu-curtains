@@ -58,7 +58,12 @@ window.addEventListener('load', async () => {
 
   console.time('creation time')
   let createdMeshes = 0
-  let nbMeshes = 5_000
+
+  // get meshes count from url search params
+  const url = new URL(window.location)
+  const searchParams = new URLSearchParams(url.search)
+  const urlCount = searchParams.get('count') && parseInt(searchParams.get('count'))
+  let nbMeshes = urlCount || 5_000
 
   const renderBundle = new RenderBundle(gpuCameraRenderer, {
     label: 'Stress test render bundle',
