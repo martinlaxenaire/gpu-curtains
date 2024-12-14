@@ -448,22 +448,30 @@ export class EnvironmentMap {
       this.specularTexture.createTexture()
     }
 
-    if (!this.diffuseTexture) {
-      // specific diffuse texture options
-      const { size, computeSampleCount, ...diffuseTextureParams } = this.options.diffuseTextureParams
+    // specific diffuse texture options
+    const { size, computeSampleCount, ...diffuseTextureParams } = this.options.diffuseTextureParams
 
+    const diffuseSize = Math.min(size, faceSize)
+
+    if (!this.diffuseTexture) {
       // diffuse texture
       this.diffuseTexture = new Texture(this.renderer, {
         ...diffuseTextureParams,
         ...{
           visibility: ['fragment'],
           fixedSize: {
-            width: size,
-            height: size,
+            width: diffuseSize,
+            height: diffuseSize,
           },
         },
         ...textureDefaultOptions,
       } as TextureParams)
+    } else if (this.diffuseTexture.size.width !== diffuseSize || this.diffuseTexture.size.height !== diffuseSize) {
+      this.diffuseTexture.options.fixedSize.width = diffuseSize
+      this.diffuseTexture.options.fixedSize.height = diffuseSize
+      this.diffuseTexture.size.width = diffuseSize
+      this.diffuseTexture.size.height = diffuseSize
+      this.diffuseTexture.createTexture()
     }
 
     if (parsedHdr) {

@@ -17994,19 +17994,26 @@ const PI = ${Math.PI};
         this.specularTexture.size.height = faceSize;
         this.specularTexture.createTexture();
       }
+      const { size, computeSampleCount, ...diffuseTextureParams } = this.options.diffuseTextureParams;
+      const diffuseSize = Math.min(size, faceSize);
       if (!this.diffuseTexture) {
-        const { size, computeSampleCount, ...diffuseTextureParams } = this.options.diffuseTextureParams;
         this.diffuseTexture = new Texture(this.renderer, {
           ...diffuseTextureParams,
           ...{
             visibility: ["fragment"],
             fixedSize: {
-              width: size,
-              height: size
+              width: diffuseSize,
+              height: diffuseSize
             }
           },
           ...textureDefaultOptions
         });
+      } else if (this.diffuseTexture.size.width !== diffuseSize || this.diffuseTexture.size.height !== diffuseSize) {
+        this.diffuseTexture.options.fixedSize.width = diffuseSize;
+        this.diffuseTexture.options.fixedSize.height = diffuseSize;
+        this.diffuseTexture.size.width = diffuseSize;
+        this.diffuseTexture.size.height = diffuseSize;
+        this.diffuseTexture.createTexture();
       }
       if (parsedHdr) {
         this.computeSpecularCubemapFromHDRData(parsedHdr).then(() => {
