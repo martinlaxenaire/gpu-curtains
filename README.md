@@ -26,9 +26,9 @@
 
 ### DOM 2 WebGPU rendering engine
 
-gpu-curtains is a small, lightweight WebGPU rendering engine library.
+gpu-curtains is a small, lightweight 3D WebGPU rendering engine library.
 
-Although it can theoretically be used as a genuine 3D engine, its main purpose is to turn HTML elements into textured planes, allowing you to animate them via WGSL shaders.
+It can be used as a standalone 3D engine, but also includes extra classes designed to turn HTML elements into textured planes or meshes, allowing you to animate them via WGSL shaders.
 
 The project was initially conceived as a WebGPU port of [curtains.js](https://github.com/martinlaxenaire/curtainsjs). It turned out to be a complete rewrite of the library instead, but with a very similar API.
 
@@ -168,9 +168,9 @@ window.addEventListener('load', async () => {
 
 ## Limitations
 
-gpu-curtains is mostly made to create quads based on HTML elements, it may lack some common 3D engines features (even tho it is slowly evolving towards a real 3D engine).
+gpu-curtains is a slowly evolving 3D engine and may lack some common features.
 
-If you need a more robust 3D engine that could handle complex geometries or advanced rendering mechanics, then you should probably go with another library like [three.js](https://github.com/mrdoob/three.js) or [Babylon.js](https://github.com/BabylonJS).
+If you need a more robust 3D engine that could handle complex glTF or advanced lighting, shading or rendering mechanics, then you should probably go with another library like [three.js](https://github.com/mrdoob/three.js) or [Babylon.js](https://github.com/BabylonJS).
 
 ## Contributing
 

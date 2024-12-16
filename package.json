@@ -15,10 +15,11 @@
     "vite": "^5.2.14"
   },
   "name": "gpu-curtains",
-  "version": "0.8.2",
-  "description": "gpu-curtains is a WebGPU rendering engine focused on mapping 3d objects to DOM elements; It allows users to synchronize values such as position, sizing, or scale between them.",
+  "version": "0.9.0",
+  "description": "gpu-curtains is a 3D WebGPU rendering engine. It can be used as a standalone 3D engine, but also includes extra classes focused on mapping 3d objects to DOM elements; It allows users to synchronize values such as position, sizing, or scale between them.",
   "keywords": [
     "webgpu",
+    "wgsl",
     "dom",
     "html5",
     "javascript",

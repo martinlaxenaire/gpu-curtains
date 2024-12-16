@@ -29,7 +29,7 @@ window.addEventListener('load', async () => {
     },
     context: {
       format: 'rgba16float', // allow HDR output
-      toneMapping: { mode: 'extended' },
+      toneMapping: { mode: 'standard' },
     },
   })
 
@@ -60,7 +60,11 @@ window.addEventListener('load', async () => {
   let currentEnvMap = envMaps[currentEnvMapKey]
 
   const environmentMap = new EnvironmentMap(gpuCameraRenderer)
-  await environmentMap.loadAndComputeFromHDR(currentEnvMap.url)
+  await environmentMap.loadAndComputeFromHDR(currentEnvMap.url, {
+    specularTextureParams: {
+      generateMips: false,
+    },
+  })
 
   console.log(environmentMap)
 
