@@ -92,12 +92,12 @@ export class RenderMaterial extends Material {
     if (targets === undefined) {
       targets = [
         {
-          format: this.renderer.options.preferredFormat,
+          format: this.renderer.options.context.format,
         },
       ]
     }
     if (targets && targets.length && !targets[0].format) {
-      targets[0].format = this.renderer.options.preferredFormat
+      targets[0].format = this.renderer.options.context.format
     }
 
     this.options = {

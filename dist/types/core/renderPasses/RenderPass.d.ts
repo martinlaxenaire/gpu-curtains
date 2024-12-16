@@ -109,7 +109,7 @@ export declare class RenderPass {
     setDepthLoadOp(depthLoadOp?: GPULoadOp): void;
     /**
      * Set our {@link GPUColor | clear colors value}.<br>
-     * Beware that if the {@link renderer} is using {@link core/renderers/GPURenderer.GPURenderer#alphaMode | premultiplied alpha mode}, your R, G and B channels should be premultiplied by your alpha channel.
+     * Beware that if the {@link renderer} is using {@link core/renderers/GPURenderer.GPURendererContextOptions#alphaMode | premultiplied alpha mode}, your R, G and B channels should be premultiplied by your alpha channel.
      * @param clearValue - new {@link GPUColor | clear colors value} to use
      * @param colorAttachmentIndex - index of the color attachment for which to use this clear value
      */

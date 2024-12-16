@@ -1,4 +1,4 @@
-import { GPURenderer, GPURendererParams, SceneObject } from './GPURenderer'
+import { GPURenderer, GPURendererOptions, GPURendererParams, SceneObject } from './GPURenderer'
 import { Camera, CameraBasePerspectiveOptions } from '../camera/Camera'
 import { BufferBinding } from '../bindings/BufferBinding'
 import { BindGroup } from '../bindGroups/BindGroup'
@@ -48,15 +48,19 @@ export interface GPUCameraRendererLightParams {
   maxPointLights?: LightsBindingParams['pointLights']['max']
 }
 
-/**
- * Parameters used to create a {@link GPUCameraRenderer}
- */
-export interface GPUCameraRendererParams extends GPURendererParams {
+/** Extra parameters used to define the {@link Camera} and various lights options. */
+export interface GPUCameraLightsRendererParams {
   /** An object defining {@link CameraBasePerspectiveOptions | camera perspective parameters} */
   camera?: CameraBasePerspectiveOptions
   /** An object defining {@link GPUCameraRendererLightParams | the maximum number of light} to use when creating the {@link GPUCameraRenderer}. Can be set to `false` to avoid creating lights and shadows buffers, but note this is a permanent choice and cannot be changed later. */
   lights?: GPUCameraRendererLightParams | false
 }
+
+/** Parameters used to create a {@link GPUCameraRenderer}. */
+export interface GPUCameraRendererParams extends GPURendererParams, GPUCameraLightsRendererParams {}
+
+/** Options used to create a {@link GPUCameraRenderer}. */
+export interface GPUCameraRendererOptions extends GPURendererOptions, GPUCameraLightsRendererParams {}
 
 /**
  * This renderer is meant to render meshes projected by a {@link Camera}. It therefore creates a {@link Camera} with its associated {@link bindings} as well as lights and shadows {@link bindings} used for lighting and their associated {@link cameraLightsBindGroup | bind group}.<br>
@@ -95,7 +99,7 @@ export class GPUCameraRenderer extends GPURenderer {
   bindings: GPUCameraRendererBindings
 
   /** Options used to create this {@link GPUCameraRenderer}. */
-  options: GPUCameraRendererParams
+  options: GPUCameraRendererOptions
 
   /** @ignore */
   #shouldUpdateCameraLightsBindGroup: boolean
@@ -110,8 +114,7 @@ export class GPUCameraRenderer extends GPURenderer {
     container,
     pixelRatio = 1,
     autoResize = true,
-    preferredFormat,
-    alphaMode = 'premultiplied',
+    context = {},
     renderPass,
     camera = {},
     lights = {},
@@ -122,8 +125,7 @@ export class GPUCameraRenderer extends GPURenderer {
       container,
       pixelRatio,
       autoResize,
-      preferredFormat,
-      alphaMode,
+      context,
       renderPass,
     })
 

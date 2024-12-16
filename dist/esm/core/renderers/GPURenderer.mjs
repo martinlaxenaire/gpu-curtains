@@ -16,8 +16,7 @@ class GPURenderer {
     container,
     pixelRatio = 1,
     autoResize = true,
-    preferredFormat,
-    alphaMode = "premultiplied",
+    context = {},
     renderPass
   }) {
     // callbacks / events
@@ -47,20 +46,24 @@ class GPURenderer {
     this.deviceManager.addRenderer(this);
     this.shouldRender = true;
     this.shouldRenderScene = true;
+    const contextOptions = {
+      ...{
+        alphaMode: "premultiplied",
+        format: this.deviceManager.gpu?.getPreferredCanvasFormat()
+      },
+      ...context
+    };
     renderPass = { ...{ useDepth: true, sampleCount: 4, clearValue: [0, 0, 0, 0] }, ...renderPass };
-    preferredFormat = preferredFormat ?? this.deviceManager.gpu?.getPreferredCanvasFormat();
     this.options = {
       deviceManager,
       label,
       container,
       pixelRatio,
       autoResize,
-      preferredFormat,
-      alphaMode,
+      context: contextOptions,
       renderPass
     };
     this.pixelRatio = pixelRatio ?? window.devicePixelRatio ?? 1;
-    this.alphaMode = alphaMode;
     const isOffscreenCanvas = container instanceof OffscreenCanvas;
     const isContainerCanvas = isOffscreenCanvas || container instanceof HTMLCanvasElement;
     this.canvas = isContainerCanvas ? container : document.createElement("canvas");
@@ -260,13 +263,10 @@ class GPURenderer {
   configureContext() {
     this.context.configure({
       device: this.device,
-      format: this.options.preferredFormat,
-      alphaMode: this.alphaMode,
+      ...this.options.context,
       // needed so we can copy textures for post processing usage
       usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST
       //viewFormats: []
-      // TODO HDR support
-      // https://developer.chrome.com/blog/new-in-webgpu-129
     });
   }
   /**

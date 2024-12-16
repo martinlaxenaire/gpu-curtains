@@ -145,7 +145,7 @@ export class Texture {
     }
 
     if (!this.options.format) {
-      this.options.format = this.renderer.options.preferredFormat
+      this.options.format = this.renderer.options.context.format
     }
 
     // sizes

@@ -30,7 +30,7 @@ export declare class GPUCurtainsRenderer extends GPUCameraRenderer {
      * GPUCurtainsRenderer constructor
      * @param parameters - {@link GPUCameraRendererParams | parameters} used to create this {@link GPUCurtainsRenderer}
      */
-    constructor({ deviceManager, label, container, pixelRatio, autoResize, preferredFormat, alphaMode, renderPass, camera, lights, }: GPUCameraRendererParams);
+    constructor({ deviceManager, label, container, pixelRatio, autoResize, context, renderPass, camera, lights, }: GPUCameraRendererParams);
     /**
      * Add the {@link GPUCurtainsRenderer#domMeshes | domMeshes} to our tracked elements
      */

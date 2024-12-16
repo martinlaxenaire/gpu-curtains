@@ -11,8 +11,7 @@ class GPUCurtainsRenderer extends GPUCameraRenderer {
     container,
     pixelRatio = 1,
     autoResize = true,
-    preferredFormat,
-    alphaMode = "premultiplied",
+    context = {},
     renderPass,
     camera,
     lights
@@ -23,8 +22,7 @@ class GPUCurtainsRenderer extends GPUCameraRenderer {
       container,
       pixelRatio,
       autoResize,
-      preferredFormat,
-      alphaMode,
+      context,
       renderPass,
       camera,
       lights
