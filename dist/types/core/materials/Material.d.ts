@@ -1,9 +1,8 @@
-/// <reference types="dist" />
 import { Renderer } from '../renderers/utils';
 import { BindGroup } from '../bindGroups/BindGroup';
 import { TextureBindGroup } from '../bindGroups/TextureBindGroup';
 import { Sampler } from '../samplers/Sampler';
-import { AllowedPipelineEntries } from '../pipelines/PipelineManager';
+import { AllowedPipelineEntries, GPUPassTypes } from '../pipelines/PipelineManager';
 import { BufferBinding, BufferBindingInput } from '../bindings/BufferBinding';
 import { AllowedBindGroups, BindGroupBindingElement, BindGroupBufferBindingElement } from '../../types/BindGroups';
 import { DOMTexture } from '../textures/DOMTexture';
@@ -72,6 +71,11 @@ export declare class Material {
      * @param parameters - {@link types/Materials.MaterialParams | parameters} used to create our Material
      */
     constructor(renderer: Renderer | GPUCurtains, parameters: MaterialParams);
+    /**
+     * Set or reset this {@link Material} {@link renderer}.
+     * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
+     */
+    setRenderer(renderer: Renderer | GPUCurtains): void;
     /**
      * Check if all bind groups are ready, and create them if needed
      */
@@ -243,18 +247,18 @@ export declare class Material {
      * Set the current pipeline
      * @param pass - current pass encoder
      */
-    setPipeline(pass: GPURenderPassEncoder | GPUComputePassEncoder): void;
+    setPipeline(pass: GPUPassTypes): void;
     /**
      * Use the {@link Renderer#pipelineManager | renderer pipelineManager} to only set the bind groups that are not already set.
      * @param pass - current pass encoder
      */
-    setActiveBindGroups(pass: GPURenderPassEncoder | GPUComputePassEncoder): void;
+    setActiveBindGroups(pass: GPUPassTypes): void;
     /**
      * Render the material if it is ready:
      * Set the current pipeline and set the bind groups
      * @param pass - current pass encoder
      */
-    render(pass: GPURenderPassEncoder | GPUComputePassEncoder): void;
+    render(pass: GPUPassTypes): void;
     /**
      * Destroy the Material
      */

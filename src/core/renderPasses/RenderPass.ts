@@ -113,7 +113,7 @@ export class RenderPass {
         loadOp: 'clear' as GPULoadOp,
         storeOp: 'store' as GPUStoreOp,
         clearValue: [0, 0, 0, 0] as GPUColor,
-        targetFormat: this.renderer.options.preferredFormat,
+        targetFormat: this.renderer.options.context.format,
       }
 
       if (!colorAttachments.length) {
@@ -334,13 +334,13 @@ export class RenderPass {
 
   /**
    * Set our {@link GPUColor | clear colors value}.<br>
-   * Beware that if the {@link renderer} is using {@link core/renderers/GPURenderer.GPURenderer#alphaMode | premultiplied alpha mode}, your R, G and B channels should be premultiplied by your alpha channel.
+   * Beware that if the {@link renderer} is using {@link core/renderers/GPURenderer.GPURendererContextOptions#alphaMode | premultiplied alpha mode}, your R, G and B channels should be premultiplied by your alpha channel.
    * @param clearValue - new {@link GPUColor | clear colors value} to use
    * @param colorAttachmentIndex - index of the color attachment for which to use this clear value
    */
   setClearValue(clearValue: GPUColor = [0, 0, 0, 0], colorAttachmentIndex = 0) {
     if (this.options.useColorAttachments) {
-      if (this.renderer.alphaMode === 'premultiplied') {
+      if (this.renderer.options.context.alphaMode === 'premultiplied') {
         const alpha = clearValue[3]
         clearValue[0] = Math.min(clearValue[0], alpha)
         clearValue[1] = Math.min(clearValue[1], alpha)

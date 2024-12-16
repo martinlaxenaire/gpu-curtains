@@ -1,6 +1,6 @@
 import { PipelineEntry } from './PipelineEntry'
 import { ProjectedShaderChunks, ShaderChunks } from '../shaders/ShaderChunks'
-import { isRenderer, Renderer } from '../renderers/utils'
+import { isRenderer } from '../renderers/utils'
 import { throwError } from '../../utils/utils'
 import {
   PipelineEntryShaders,
@@ -8,8 +8,7 @@ import {
   RenderPipelineEntryParams,
   RenderPipelineEntryPropertiesParams,
 } from '../../types/PipelineEntries'
-import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { AllowedBindGroups, BindGroupBufferBindingElement } from '../../types/BindGroups'
+import { BindGroupBufferBindingElement } from '../../types/BindGroups'
 import { RenderMaterialAttributes, ShaderOptions } from '../../types/Materials'
 
 /**
@@ -202,8 +201,6 @@ export class RenderPipelineEntry extends PipelineEntry {
     this.options = {
       ...this.options,
       attributes,
-      bindGroups,
-      cacheKey,
       ...renderingOptions,
     }
 
@@ -393,6 +390,23 @@ export class RenderPipelineEntry extends PipelineEntry {
   }
 
   /**
+   * Get default transparency blend state.
+   * @returns - The default transparency blend state.
+   */
+  static getDefaultTransparentBlending(): GPUBlendState {
+    return {
+      color: {
+        srcFactor: 'src-alpha',
+        dstFactor: 'one-minus-src-alpha',
+      },
+      alpha: {
+        srcFactor: 'one',
+        dstFactor: 'one-minus-src-alpha',
+      },
+    }
+  }
+
+  /**
    * Create the render pipeline {@link descriptor}
    */
   createPipelineDescriptor() {
@@ -408,16 +422,7 @@ export class RenderPipelineEntry extends PipelineEntry {
       if (this.options.rendering.transparent) {
         this.options.rendering.targets[0].blend = this.options.rendering.targets[0].blend
           ? this.options.rendering.targets[0].blend
-          : {
-              color: {
-                srcFactor: 'src-alpha',
-                dstFactor: 'one-minus-src-alpha',
-              },
-              alpha: {
-                srcFactor: 'one',
-                dstFactor: 'one-minus-src-alpha',
-              },
-            }
+          : RenderPipelineEntry.getDefaultTransparentBlending()
       }
     } else {
       this.options.rendering.targets = []

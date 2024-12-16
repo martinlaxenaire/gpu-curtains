@@ -23,29 +23,6 @@ window.addEventListener('load', async () => {
 
   // ref: https://webgpufundamentals.org/webgpu/lessons/resources/wgsl-offset-computer.html#x=5d00000100f901000000000000003d8888623728a306fc320e1a9ba57547078694a9be9f86fca01fc2b96183b8019b42979f89b724d75b16a7d0ba5f05e1688c08377f9adcadac8b118c715ae49684657cbf39131e36661070f3c12b655a42f158e5add7714dbd4729a3973fef2edfb03e8759dabdeb5279ff2f0b45d47fb70575af8b3a734abecbf3ecdca99f3367a2d772ceb3b4659a28504ff11321f7227e9e5358ffdbc75a65573125707e74c84e6410a1b32e84d64e7b89923cf185c66e31f16e5489b838fb930f42f15dbbeeca544be7372401b7e7efb8288be7dc18cc48ba6edd18f2e1cc64d805f7862962ad3cd91a5a7b13ca157c51e17f8dcfe8c87398a0eabf62e1f623c49ec6ec8e7e598dc6b6d5a3ffbe2396d3
 
-  const directionalLightBinding = new BufferBinding({
-    label: 'Directional lights',
-    name: 'directionalLights',
-    bindingType: 'storage',
-    visibility: ['vertex', 'fragment', 'compute'], // TODO needed in compute?
-    struct: {
-      count: {
-        type: 'i32',
-        value: 0,
-      },
-      color: {
-        type: 'array<vec3f>',
-        value: new Float32Array(3 * 3),
-      },
-      direction: {
-        type: 'array<vec3f>',
-        value: new Float32Array(3 * 3),
-      },
-    },
-  })
-
-  debugBindings.push(directionalLightBinding)
-
   const binding1 = new BufferBinding({
     label: 'Test1',
     name: 'test1',
@@ -173,11 +150,11 @@ window.addEventListener('load', async () => {
     struct: {
       position: {
         type: 'array<vec2f>',
-        value: new Float32Array(2 * 5),
+        value: new Float32Array(2 * 3),
       },
       velocity: {
         type: 'array<vec2f>',
-        value: new Float32Array(2 * 5),
+        value: new Float32Array(2 * 3),
       },
     },
   })
@@ -191,11 +168,11 @@ window.addEventListener('load', async () => {
     struct: {
       position: {
         type: 'array<vec3f>',
-        value: new Float32Array(3 * 5),
+        value: new Float32Array(3 * 3),
       },
       normal: {
         type: 'array<vec4f>',
-        value: new Float32Array(4 * 5),
+        value: new Float32Array(4 * 3),
       },
     },
   })
@@ -213,11 +190,11 @@ window.addEventListener('load', async () => {
       },
       position: {
         type: 'array<vec3f>',
-        value: new Float32Array(3 * 5),
+        value: new Float32Array(3 * 3),
       },
       normal: {
         type: 'array<vec4f>',
-        value: new Float32Array(4 * 5),
+        value: new Float32Array(4 * 3),
       },
     },
   })
@@ -257,12 +234,12 @@ window.addEventListener('load', async () => {
     struct: {
       matrix: {
         type: 'array<mat3x3f>',
-        value: new Float32Array(3 * 3 * 3),
+        value: new Float32Array(3 * 3 * 2),
       },
     },
   })
 
-  const normalMatrixArray = new Float32Array(3 * 3 * 3)
+  const normalMatrixArray = new Float32Array(3 * 3 * 2)
   for (let i = 0; i < normalMatrixArray.length; i++) {
     normalMatrixArray[i] = i
   }
@@ -273,12 +250,12 @@ window.addEventListener('load', async () => {
   //console.log('normal matrix array', normalMatrixArray, normalMatrixArrayBinding)
 
   // mat3x3f interleaved array
-  const normalsInterleavedArray = new Float32Array(3 * 3)
+  const normalsInterleavedArray = new Float32Array(3 * 2)
   for (let i = 0; i < normalsInterleavedArray.length; i++) {
     normalsInterleavedArray[i] = 99
   }
 
-  const normalMatrixInterleavedArray = new Float32Array(3 * 3 * 3)
+  const normalMatrixInterleavedArray = new Float32Array(3 * 3 * 2)
   for (let i = 0; i < normalMatrixInterleavedArray.length; i++) {
     normalMatrixInterleavedArray[i] = i
   }
@@ -302,6 +279,132 @@ window.addEventListener('load', async () => {
   debugBindings.push(normalMatrixInterleavedArrayBinding)
   normalMatrixInterleavedArrayBinding.update()
 
+  const directionalLightBinding = new BufferBinding({
+    label: 'Directional lights',
+    name: 'directionalLights',
+    bindingType: 'storage',
+    visibility: ['vertex', 'fragment', 'compute'], // TODO needed in compute?
+    struct: {
+      count: {
+        type: 'i32',
+        value: 0,
+      },
+      color: {
+        type: 'array<vec3f>',
+        value: new Float32Array(3 * 3),
+      },
+      direction: {
+        type: 'array<vec3f>',
+        value: new Float32Array(3 * 3),
+      },
+    },
+  })
+
+  debugBindings.push(directionalLightBinding)
+
+  const shadowStruct = {
+    isActive: {
+      type: 'i32',
+      value: 0,
+    },
+    pcfSamples: {
+      type: 'i32',
+      value: 0,
+    },
+    bias: {
+      type: 'f32',
+      value: 0,
+    },
+    normalBias: {
+      type: 'f32',
+      value: 0,
+    },
+    intensity: {
+      type: 'f32',
+      value: 0,
+    },
+  }
+
+  const shadowBinding = new BufferBinding({
+    label: 'Shadows element',
+    name: 'shadowsElements',
+    bindingType: 'uniform',
+    visibility: ['vertex', 'fragment'],
+    struct: shadowStruct,
+  })
+
+  const globalShadowBinding = new BufferBinding({
+    label: 'Shadows',
+    name: 'shadows',
+    bindingType: 'storage',
+    visibility: ['vertex', 'fragment', 'compute'], // TODO needed in compute?
+    struct: {
+      count: {
+        type: 'i32',
+        value: 3,
+      },
+    },
+    childrenBindings: [
+      {
+        binding: shadowBinding,
+        count: 1,
+        forceArray: true,
+      },
+    ],
+  })
+
+  debugBindings.push(globalShadowBinding)
+
+  const lightsShadowsBinding = new BufferBinding({
+    label: 'Lights shadows',
+    name: 'lightsShadows',
+    bindingType: 'storage',
+    struct: {
+      test: {
+        type: 'f32',
+        value: 0,
+      },
+    },
+    childrenBindings: [
+      {
+        binding: directionalLightBinding,
+        count: 1,
+      },
+      {
+        binding: shadowBinding,
+        count: 3,
+      },
+    ],
+  })
+
+  console.log(lightsShadowsBinding)
+
+  debugBindings.push(lightsShadowsBinding)
+
+  const multipleChildrenBinding = new BufferBinding({
+    label: 'Multiple bindings children',
+    name: 'multipleBindingsChildren',
+    childrenBindings: [
+      {
+        binding: binding1,
+        count: 2,
+      },
+      {
+        binding: binding2,
+        //forceArray: true,
+      },
+    ],
+  })
+
+  debugBindings.push(multipleChildrenBinding)
+
+  const multipleChildrenBindingClone = multipleChildrenBinding.clone({
+    label: 'Multiple bindings children clone',
+    bindingType: 'storage',
+  })
+
+  debugBindings.push(multipleChildrenBindingClone)
+
   // ----------
   // NOW OUTPUT THE BINDINGS
   // ----------
@@ -316,167 +419,192 @@ window.addEventListener('load', async () => {
 
     let previousEndOffset = 0
 
-    const regularBufferElements = binding.bufferElements.filter((bufferElement) => !bufferElement.viewSetFunction)
+    const buildRegularBufferElements = (bufferElements) => {
+      bufferElements.forEach((bindingElement, index) => {
+        const { startOffset } = bindingElement
+        const { numElements, size } = bindingElement.bufferLayout
 
-    regularBufferElements.forEach((bindingElement, index) => {
-      const { startOffset } = bindingElement
-      const { numElements, size } = bindingElement.bufferLayout
+        // padding before
+        // now the elements themselves
+        const totalNumElements = bindingElement.numElements ?? 1
+        for (let i = 0; i < totalNumElements; i++) {
+          const arrayStride = bindingElement.arrayStride ?? 0
+          let newStartOffset = startOffset + i * arrayStride
 
-      // padding before
-      // now the elements themselves
-      const totalNumElements = bindingElement.numElements ?? 1
-      for (let i = 0; i < totalNumElements; i++) {
-        const arrayStride = bindingElement.arrayStride ?? 0
-        let newStartOffset = startOffset + i * arrayStride
+          if (previousEndOffset < newStartOffset) {
+            const offsetDiff = newStartOffset - previousEndOffset - 1
+            for (let j = 0; j < offsetDiff; j += 4) {
+              innerHTML += `<div class='binding-element pad-type col-span-${
+                offsetDiff < 4 ? offsetDiff : 4
+              } color-pad'>`
+              innerHTML += `<div class='binding-element-type'>pad</div>`
 
-        if (previousEndOffset < newStartOffset) {
-          const offsetDiff = newStartOffset - previousEndOffset - 1
-          for (let j = 0; j < offsetDiff; j += 4) {
-            innerHTML += `<div class='binding-element pad-type col-span-${offsetDiff < 4 ? offsetDiff : 4} color-pad'>`
-            innerHTML += `<div class='binding-element-type'>pad</div>`
+              innerHTML += `<div class='binding-element-slots'>`
+              for (let k = 0; k < (offsetDiff < 4 ? offsetDiff : 4); k++) {
+                innerHTML += `<div class='binding-element-slot-item'></div>`
+              }
+              innerHTML += `</div>`
+
+              innerHTML += `</div>`
+            }
+          }
+
+          // internal pad
+          let pad = 0
+
+          for (let j = 0; j < numElements; j++) {
+            if (bindingElement.bufferLayout.pad && pad >= bindingElement.bufferLayout.pad[0]) {
+              innerHTML += `<div class='binding-element pad-type col-span-4 color-pad'>`
+              innerHTML += `<div class='binding-element-type'>pad</div>`
+
+              innerHTML += `<div class='binding-element-slots'>`
+              for (let k = 0; k < 4; k++) {
+                innerHTML += `<div class='binding-element-slot-item'></div>`
+              }
+
+              innerHTML += `</div>`
+
+              innerHTML += `</div>`
+
+              pad = 0
+              continue
+            }
+
+            pad++
+
+            innerHTML += `<div class='binding-element ${bindingElement.bufferLayout.type}-type col-span-${
+              size < 4 ? size : 4
+            } color-${index % 8}'>`
+
+            const arrayIndex = bindingElement.numElements ? `[${i}]` : ''
+
+            innerHTML += `<div class='binding-element-type'>${bindingElement.name}${arrayIndex}: ${bindingElement.type
+              .replace('array', '')
+              .replace('<', '')
+              .replace('>', '')}</div>`
 
             innerHTML += `<div class='binding-element-slots'>`
-            for (let k = 0; k < (offsetDiff < 4 ? offsetDiff : 4); k++) {
-              innerHTML += `<div class='binding-element-slot-item'></div>`
+            for (let k = 0; k < size / numElements; k++) {
+              innerHTML += `<div class='binding-element-slot-item'>${bindingElement.bufferLayout.type}</div>`
             }
             innerHTML += `</div>`
 
             innerHTML += `</div>`
           }
+
+          previousEndOffset = newStartOffset + (size - 1)
         }
-
-        // internal pad
-        let pad = 0
-
-        for (let j = 0; j < numElements; j++) {
-          if (bindingElement.bufferLayout.pad && pad >= bindingElement.bufferLayout.pad[0]) {
-            innerHTML += `<div class='binding-element pad-type col-span-4 color-pad'>`
-            innerHTML += `<div class='binding-element-type'>pad</div>`
-
-            innerHTML += `<div class='binding-element-slots'>`
-            for (let k = 0; k < 4; k++) {
-              innerHTML += `<div class='binding-element-slot-item'></div>`
-            }
-
-            innerHTML += `</div>`
-
-            innerHTML += `</div>`
-
-            pad = 0
-            continue
-          }
-
-          pad++
-
-          innerHTML += `<div class='binding-element ${bindingElement.bufferLayout.type}-type col-span-${
-            size < 4 ? size : 4
-          } color-${index % 8}'>`
-
-          const arrayIndex = bindingElement.numElements ? `[${i}]` : ''
-
-          innerHTML += `<div class='binding-element-type'>${bindingElement.name}${arrayIndex}: ${bindingElement.type
-            .replace('array', '')
-            .replace('<', '')
-            .replace('>', '')}</div>`
-
-          innerHTML += `<div class='binding-element-slots'>`
-          for (let k = 0; k < size / numElements; k++) {
-            innerHTML += `<div class='binding-element-slot-item'>${bindingElement.bufferLayout.type}</div>`
-          }
-          innerHTML += `</div>`
-
-          innerHTML += `</div>`
-        }
-
-        previousEndOffset = newStartOffset + (size - 1)
-      }
-    })
-
-    const interleavedBufferElements = binding.bufferElements.filter((bufferElement) => !!bufferElement.viewSetFunction)
-
-    if (interleavedBufferElements.length) {
-      const interleavedEntries = []
-      for (let i = 0; i < interleavedBufferElements[0].numElements; i++) {
-        interleavedBufferElements.forEach((interleavedBufferElement, index) => {
-          interleavedEntries.push({
-            name: interleavedBufferElement.name,
-            type: interleavedBufferElement.bufferLayout.type,
-            size: interleavedBufferElement.bufferLayout.size,
-            numElements: interleavedBufferElement.bufferLayout.numElements,
-            pad: interleavedBufferElement.bufferLayout.pad,
-            startOffset: interleavedBufferElement.startOffset,
-            arrayStride: interleavedBufferElement.arrayStride,
-            //entries: [interleavedBufferElement.interleavedAlignment.entries[i]],
-            index: regularBufferElements.length + index,
-            loopIndex: i,
-          })
-        })
-      }
-
-      //console.log(interleavedEntries)
-
-      interleavedEntries.forEach((interleavedEntry) => {
-        const newStartOffset = interleavedEntry.startOffset + interleavedEntry.loopIndex * interleavedEntry.arrayStride
-
-        // add empty padded slots before entry if needed
-        if (previousEndOffset < newStartOffset) {
-          const offsetDiff = newStartOffset - previousEndOffset - 1
-          for (let j = 0; j < offsetDiff; j += 4) {
-            innerHTML += `<div class='binding-element pad-type col-span-${offsetDiff < 4 ? offsetDiff : 4} color-pad'>`
-            innerHTML += `<div class='binding-element-type'>pad</div>`
-
-            innerHTML += `<div class='binding-element-slots'>`
-            for (let k = 0; k < (offsetDiff < 4 ? offsetDiff : 4); k++) {
-              innerHTML += `<div class='binding-element-slot-item'></div>`
-            }
-            innerHTML += `</div>`
-
-            innerHTML += `</div>`
-          }
-        }
-
-        let pad = 0
-
-        for (let j = 0; j < interleavedEntry.numElements; j++) {
-          if (interleavedEntry.pad && pad >= interleavedEntry.pad[0]) {
-            innerHTML += `<div class='binding-element pad-type col-span-4 color-pad'>`
-            innerHTML += `<div class='binding-element-type'>pad</div>`
-
-            innerHTML += `<div class='binding-element-slots'>`
-            for (let k = 0; k < 4; k++) {
-              innerHTML += `<div class='binding-element-slot-item'></div>`
-            }
-
-            innerHTML += `</div>`
-
-            innerHTML += `</div>`
-
-            pad = 0
-            continue
-          }
-
-          pad++
-
-          innerHTML += `<div class='binding-element ${interleavedEntry.type}-type col-span-${
-            interleavedEntry.size < 4 ? interleavedEntry.size : 4
-          } color-${interleavedEntry.index % 8}'>`
-
-          innerHTML += `<div class='binding-element-type'>${interleavedEntry.name}[${
-            interleavedEntry.loopIndex + Math.floor(j / interleavedEntry.numElements)
-          }]: ${interleavedEntry.type}</div>`
-
-          innerHTML += `<div class='binding-element-slots'>`
-          for (let k = 0; k < interleavedEntry.size / interleavedEntry.numElements; k++) {
-            innerHTML += `<div class='binding-element-slot-item'>${interleavedEntry.type}</div>`
-          }
-          innerHTML += `</div>`
-
-          innerHTML += `</div>`
-        }
-
-        previousEndOffset = newStartOffset + interleavedEntry.size - 1
       })
     }
+
+    const buildInterleavedBufferElements = (interleavedBufferElements) => {
+      if (interleavedBufferElements.length) {
+        const interleavedEntries = []
+        for (let i = 0; i < interleavedBufferElements[0].numElements; i++) {
+          interleavedBufferElements.forEach((interleavedBufferElement, index) => {
+            interleavedEntries.push({
+              name: interleavedBufferElement.name,
+              type: interleavedBufferElement.bufferLayout.type,
+              size: interleavedBufferElement.bufferLayout.size,
+              numElements: interleavedBufferElement.bufferLayout.numElements,
+              pad: interleavedBufferElement.bufferLayout.pad,
+              startOffset: interleavedBufferElement.startOffset,
+              arrayStride: interleavedBufferElement.arrayStride,
+              //entries: [interleavedBufferElement.interleavedAlignment.entries[i]],
+              index: regularBufferElements.length + index,
+              loopIndex: i,
+            })
+          })
+        }
+
+        //console.log(interleavedEntries)
+
+        interleavedEntries.forEach((interleavedEntry) => {
+          const newStartOffset =
+            interleavedEntry.startOffset + interleavedEntry.loopIndex * interleavedEntry.arrayStride
+
+          // add empty padded slots before entry if needed
+          if (previousEndOffset < newStartOffset) {
+            const offsetDiff = newStartOffset - previousEndOffset - 1
+            for (let j = 0; j < offsetDiff; j += 4) {
+              innerHTML += `<div class='binding-element pad-type col-span-${
+                offsetDiff < 4 ? offsetDiff : 4
+              } color-pad'>`
+              innerHTML += `<div class='binding-element-type'>pad</div>`
+
+              innerHTML += `<div class='binding-element-slots'>`
+              for (let k = 0; k < (offsetDiff < 4 ? offsetDiff : 4); k++) {
+                innerHTML += `<div class='binding-element-slot-item'></div>`
+              }
+              innerHTML += `</div>`
+
+              innerHTML += `</div>`
+            }
+          }
+
+          let pad = 0
+
+          for (let j = 0; j < interleavedEntry.numElements; j++) {
+            if (interleavedEntry.pad && pad >= interleavedEntry.pad[0]) {
+              innerHTML += `<div class='binding-element pad-type col-span-4 color-pad'>`
+              innerHTML += `<div class='binding-element-type'>pad</div>`
+
+              innerHTML += `<div class='binding-element-slots'>`
+              for (let k = 0; k < 4; k++) {
+                innerHTML += `<div class='binding-element-slot-item'></div>`
+              }
+
+              innerHTML += `</div>`
+
+              innerHTML += `</div>`
+
+              pad = 0
+              continue
+            }
+
+            pad++
+
+            innerHTML += `<div class='binding-element ${interleavedEntry.type}-type col-span-${
+              interleavedEntry.size < 4 ? interleavedEntry.size : 4
+            } color-${interleavedEntry.index % 8}'>`
+
+            innerHTML += `<div class='binding-element-type'>${interleavedEntry.name}[${
+              interleavedEntry.loopIndex + Math.floor(j / interleavedEntry.numElements)
+            }]: ${interleavedEntry.type}</div>`
+
+            innerHTML += `<div class='binding-element-slots'>`
+            for (let k = 0; k < interleavedEntry.size / interleavedEntry.numElements; k++) {
+              innerHTML += `<div class='binding-element-slot-item'>${interleavedEntry.type}</div>`
+            }
+            innerHTML += `</div>`
+
+            innerHTML += `</div>`
+          }
+
+          previousEndOffset = newStartOffset + interleavedEntry.size - 1
+        })
+      }
+    }
+
+    const regularBufferElements = binding.bufferElements.filter((bufferElement) => !bufferElement.viewSetFunction)
+    buildRegularBufferElements(regularBufferElements)
+
+    const interleavedBufferElements = binding.bufferElements.filter((bufferElement) => !!bufferElement.viewSetFunction)
+    buildInterleavedBufferElements(interleavedBufferElements)
+
+    // now the children
+    binding.childrenBindings.forEach((childBinding) => {
+      const regularChildBufferElements = childBinding.bufferElements.filter(
+        (bufferElement) => !bufferElement.viewSetFunction
+      )
+
+      buildRegularBufferElements(regularChildBufferElements)
+
+      const interleavedChildBufferElements = childBinding.bufferElements.filter(
+        (bufferElement) => !!bufferElement.viewSetFunction
+      )
+      buildInterleavedBufferElements(interleavedChildBufferElements)
+    })
 
     const endPad = binding.arrayBufferSize - (previousEndOffset + 1)
     //console.log(binding.name, endPad, binding.arrayBufferSize, previousEndOffset)

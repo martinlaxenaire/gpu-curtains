@@ -95,7 +95,7 @@ export class BindGroup {
   /** A cache key allowing the {@link core/pipelines/PipelineManager.PipelineManager | PipelineManager} to compare {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | RenderPipelineEntry} bind groups content. */
   pipelineCacheKey: string
 
-  /** Flag indicating whether we need to flush and recreate the pipeline using this {@link BindGroup} s*/
+  /** Flag indicating whether we need to flush and recreate the pipeline using this {@link BindGroup} */
   needsPipelineFlush: boolean
 
   /** A Set to store this {@link BindGroup} consumers ({@link core/materials/Material.Material#uuid | Material uuid})  */
@@ -146,7 +146,11 @@ export class BindGroup {
     // add the bind group to the buffers consumers
     for (const binding of this.bufferBindings) {
       if ('buffer' in binding) {
-        binding.buffer.consumers.add(this.uuid)
+        if (binding.parent) {
+          binding.parent.buffer.consumers.add(this.uuid)
+        } else {
+          binding.buffer.consumers.add(this.uuid)
+        }
       }
 
       if ('resultBuffer' in binding) {
@@ -172,8 +176,13 @@ export class BindGroup {
   addBindings(bindings: BindGroupBindingElement[] = []) {
     bindings.forEach((binding) => {
       if ('buffer' in binding) {
-        this.renderer.deviceManager.bufferBindings.set(binding.cacheKey, binding)
-        binding.buffer.consumers.add(this.uuid)
+        if (binding.parent) {
+          this.renderer.deviceManager.bufferBindings.set(binding.parent.cacheKey, binding.parent)
+          binding.parent.buffer.consumers.add(this.uuid)
+        } else {
+          this.renderer.deviceManager.bufferBindings.set(binding.cacheKey, binding)
+          binding.buffer.consumers.add(this.uuid)
+        }
       }
     })
 
@@ -199,6 +208,15 @@ export class BindGroup {
       binding.buffer.consumers.delete(this.uuid)
       if (!binding.buffer.consumers.size) {
         binding.buffer.destroy()
+      }
+
+      if (binding.parent) {
+        binding.parent.buffer.consumers.delete(this.uuid)
+
+        if (!binding.parent.buffer.consumers.size) {
+          this.renderer.removeBuffer(binding.parent.buffer)
+          binding.parent.buffer.destroy()
+        }
       }
     }
 
@@ -388,6 +406,10 @@ export class BindGroup {
     for (const binding of this.bufferBindings) {
       binding.buffer.reset()
 
+      if (binding.parent) {
+        binding.parent.buffer.reset()
+      }
+
       if ('resultBuffer' in binding) {
         binding.resultBuffer.reset()
       }
@@ -422,14 +444,15 @@ export class BindGroup {
   }
 
   /**
-   * Creates binding GPUBuffer with correct params
-   * @param binding - the binding element
+   * Creates binding GPUBuffer with correct params.
+   * @param binding - The binding element.
+   * @param optionalLabel - Optional label to use for the {@link GPUBuffer}.
    */
-  createBindingBuffer(binding: BindGroupBufferBindingElement) {
+  createBindingBuffer(binding: BindGroupBufferBindingElement, optionalLabel = null) {
     // [Kangz](https://github.com/Kangz) said:
     // "In general though COPY_SRC/DST is free (at least in Dawn / Chrome because we add it all the time for our own purpose)."
     binding.buffer.createBuffer(this.renderer, {
-      label: this.options.label + ': ' + binding.bindingType + ' buffer from: ' + binding.label,
+      label: optionalLabel || this.options.label + ': ' + binding.bindingType + ' buffer from: ' + binding.label,
       usage: [...(['copySrc', 'copyDst', binding.bindingType] as BufferUsageKeys[]), ...binding.options.usage],
     })
 
@@ -455,7 +478,10 @@ export class BindGroup {
 
       // if it's a buffer binding, create the GPUBuffer
       if ('buffer' in binding) {
-        if (!binding.buffer.GPUBuffer) {
+        // do not create if it has a parent but create parent instead
+        if (binding.parent && !binding.parent.buffer.GPUBuffer) {
+          this.createBindingBuffer(binding.parent, binding.parent.options.label)
+        } else if (!binding.buffer.GPUBuffer && !binding.parent) {
           this.createBindingBuffer(binding)
         }
       }
@@ -598,11 +624,13 @@ export class BindGroup {
 
       // if it's a buffer binding without a GPUBuffer, create it now
       if ('buffer' in binding) {
-        if (!binding.buffer.GPUBuffer) {
+        // do not create if it has a parent but create parent instead
+        if (binding.parent && !binding.parent.buffer.GPUBuffer) {
+          this.createBindingBuffer(binding.parent, binding.parent.options.label)
+          binding.parent.buffer.consumers.add(bindGroupCopy.uuid)
+        } else if (!binding.buffer.GPUBuffer && !binding.parent) {
           this.createBindingBuffer(binding)
         }
-
-        binding.buffer.consumers.add(bindGroupCopy.uuid)
 
         if ('resultBuffer' in binding) {
           binding.resultBuffer.consumers.add(bindGroupCopy.uuid)

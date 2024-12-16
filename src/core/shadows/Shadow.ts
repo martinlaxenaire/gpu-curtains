@@ -12,6 +12,7 @@ import { getDefaultShadowDepthVs } from '../shaders/chunks/shading/shadows'
 import { BufferBinding } from '../bindings/BufferBinding'
 import { RenderMaterialParams, ShaderOptions } from '../../types/Materials'
 import { Input } from '../../types/BindGroups'
+import { GPUCurtains } from '../../curtains/GPUCurtains'
 
 /** Defines all types of shadows. */
 export type ShadowsType = 'directionalShadows' | 'pointShadows'
@@ -133,7 +134,7 @@ export class Shadow {
    * @param parameters - {@link ShadowBaseParams | parameters} used to create this {@link Shadow}.
    */
   constructor(
-    renderer: CameraRenderer,
+    renderer: CameraRenderer | GPUCurtains,
     {
       light,
       intensity = 1,
@@ -145,11 +146,7 @@ export class Shadow {
       autoRender = true,
     } = {} as ShadowBaseParams
   ) {
-    renderer = isCameraRenderer(renderer, this.constructor.name)
-
-    this.renderer = renderer
-
-    this.rendererBinding = null
+    this.setRenderer(renderer)
 
     this.light = light
 
@@ -179,6 +176,27 @@ export class Shadow {
     this.#setParameters({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender })
 
     this.isActive = false
+  }
+
+  /**
+   * Set or reset this shadow {@link CameraRenderer}.
+   * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
+   */
+  setRenderer(renderer: CameraRenderer | GPUCurtains) {
+    renderer = isCameraRenderer(renderer, this.constructor.name)
+    this.renderer = renderer
+
+    this.setRendererBinding()
+
+    // update depth materials renderer as well
+    this.#depthMaterials?.forEach((depthMaterial) => {
+      depthMaterial.setRenderer(this.renderer)
+    })
+  }
+
+  /** @ignore */
+  setRendererBinding() {
+    this.rendererBinding = null
   }
 
   /**
@@ -222,20 +240,15 @@ export class Shadow {
     this.isActive = true
   }
 
-  /** @ignore */
-  setRendererBinding() {}
-
   /**
    * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link core/lights/Light.Light | lights} has been overflowed.
    */
   reset() {
-    if (this.isActive) {
-      this.onPropertyChanged('isActive', 1)
-      this.onPropertyChanged('intensity', this.intensity)
-      this.onPropertyChanged('bias', this.bias)
-      this.onPropertyChanged('normalBias', this.normalBias)
-      this.onPropertyChanged('pcfSamples', this.pcfSamples)
-    }
+    this.onPropertyChanged('isActive', this.isActive ? 1 : 0)
+    this.onPropertyChanged('intensity', this.intensity)
+    this.onPropertyChanged('bias', this.bias)
+    this.onPropertyChanged('normalBias', this.normalBias)
+    this.onPropertyChanged('pcfSamples', this.pcfSamples)
   }
 
   /**
@@ -248,7 +261,7 @@ export class Shadow {
 
   /**
    * Start or stop casting shadows.
-   * @param value
+   * @param value - New active state.
    */
   set isActive(value: boolean) {
     if (!value && this.isActive) {
@@ -398,7 +411,7 @@ export class Shadow {
    */
   createDepthTexture() {
     this.depthTexture = new Texture(this.renderer, {
-      label: 'Shadow depth texture ' + this.index,
+      label: `${this.constructor.name} (index: ${this.light.index}) depth texture`,
       name: 'shadowDepthTexture' + this.index,
       type: 'depth',
       format: this.depthTextureFormat,
@@ -432,12 +445,12 @@ export class Shadow {
     if (this.rendererBinding) {
       if (value instanceof Mat4) {
         for (let i = 0; i < value.elements.length; i++) {
-          this.rendererBinding.options.bindings[this.index].inputs[propertyKey].value[i] = value.elements[i]
+          this.rendererBinding.childrenBindings[this.index].inputs[propertyKey].value[i] = value.elements[i]
         }
 
-        this.rendererBinding.options.bindings[this.index].inputs[propertyKey].shouldUpdate = true
+        this.rendererBinding.childrenBindings[this.index].inputs[propertyKey].shouldUpdate = true
       } else {
-        this.rendererBinding.options.bindings[this.index].inputs[propertyKey].value = value
+        this.rendererBinding.childrenBindings[this.index].inputs[propertyKey].value = value
       }
 
       this.renderer.shouldUpdateCameraLightsBindGroup()
@@ -520,16 +533,37 @@ export class Shadow {
    * @param commandEncoder - {@link GPUCommandEncoder} to use.
    */
   renderDepthPass(commandEncoder: GPUCommandEncoder) {
+    // we might need to update render bundles buffer bindings
+    const renderBundles = new Map()
+
+    this.meshes.forEach((mesh) => {
+      if (mesh.options.renderBundle) {
+        renderBundles.set(mesh.options.renderBundle.uuid, mesh.options.renderBundle)
+      }
+    })
+
+    // we can safely update render bundles bindings if needed
+    renderBundles.forEach((bundle) => {
+      bundle.updateBinding()
+    })
+
+    renderBundles.clear()
+
     // reset renderer current pipeline
     this.renderer.pipelineManager.resetCurrentPipeline()
 
     // begin depth pass
     const depthPass = commandEncoder.beginRenderPass(this.depthPassTarget.renderPass.descriptor)
 
+    if (!this.renderer.production)
+      depthPass.pushDebugGroup(`${this.constructor.name} (index: ${this.index}): depth pass`)
+
     // render meshes with their depth material
     this.meshes.forEach((mesh) => {
       mesh.render(depthPass)
     })
+
+    if (!this.renderer.production) depthPass.popDebugGroup()
 
     depthPass.end()
   }
@@ -549,7 +583,7 @@ export class Shadow {
    * Get the default depth pass fragment shader for this {@link Shadow}.
    * @returns - A {@link ShaderOptions} if a depth pass fragment shader is needed, `false` otherwise.
    */
-  getDefaultShadowDepthFs(): boolean | ShaderOptions {
+  getDefaultShadowDepthFs(): false | ShaderOptions {
     return false // we do not need to output to a fragment shader unless we do late Z writing
   }
 
@@ -597,6 +631,9 @@ export class Shadow {
    * @param parameters - Optional {@link RenderMaterialParams | parameters} to use for the depth material.
    */
   addShadowCastingMesh(mesh: ProjectedMesh, parameters: RenderMaterialParams = {}) {
+    // already there? bail
+    if (this.meshes.get(mesh.uuid)) return
+
     mesh.options.castShadows = true
 
     this.#materials.set(mesh.uuid, mesh.material)
@@ -611,7 +648,7 @@ export class Shadow {
     this.#depthMaterials.set(
       mesh.uuid,
       new RenderMaterial(this.renderer, {
-        label: mesh.options.label + ' depth render material',
+        label: `${this.constructor.name} (index: ${this.index}) ${mesh.options.label} depth render material`,
         ...parameters,
       })
     )

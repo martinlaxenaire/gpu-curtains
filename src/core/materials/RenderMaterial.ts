@@ -92,12 +92,12 @@ export class RenderMaterial extends Material {
     if (targets === undefined) {
       targets = [
         {
-          format: this.renderer.options.preferredFormat,
+          format: this.renderer.options.context.format,
         },
       ]
     }
     if (targets && targets.length && !targets[0].format) {
-      targets[0].format = this.renderer.options.preferredFormat
+      targets[0].format = this.renderer.options.context.format
     }
 
     this.options = {
@@ -121,6 +121,25 @@ export class RenderMaterial extends Material {
     this.attributes = null
     // will be set at render if needed
     this.pipelineEntry = null
+  }
+
+  /**
+   * Set or reset this {@link RenderMaterial} {@link renderer}. Will also update the renderer camera bind group if needed.
+   * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
+   */
+  setRenderer(renderer: Renderer | GPUCurtains) {
+    // remove old camera bind group
+    if (this.useCameraBindGroup && this.renderer) {
+      ;(this.renderer as CameraRenderer).cameraLightsBindGroup.consumers.delete(this.uuid)
+    }
+
+    super.setRenderer(renderer)
+
+    // update new camera bind group
+    if (this.useCameraBindGroup) {
+      this.bindGroups[0] = (this.renderer as CameraRenderer).cameraLightsBindGroup
+      ;(this.renderer as CameraRenderer).cameraLightsBindGroup.consumers.add(this.uuid)
+    }
   }
 
   /**
@@ -169,6 +188,11 @@ export class RenderMaterial extends Material {
    * @param renderingOptions - new {@link RenderMaterialRenderingOptions | rendering options} properties to be set
    */
   setRenderingOptions(renderingOptions: Partial<RenderMaterialRenderingOptions> = {}) {
+    // patch original transparent blending if it had been lost
+    if (renderingOptions.transparent && renderingOptions.targets.length && !renderingOptions.targets[0].blend) {
+      renderingOptions.targets[0].blend = RenderPipelineEntry.getDefaultTransparentBlending()
+    }
+
     const newProperties = compareRenderingOptions(renderingOptions, this.options.rendering)
 
     const oldRenderingOptions = { ...this.options.rendering }
@@ -265,6 +289,13 @@ export class RenderMaterial extends Material {
    */
   updateBindGroups() {
     const startBindGroupIndex = this.useCameraBindGroup ? 1 : 0
+
+    if (this.useCameraBindGroup) {
+      if (this.bindGroups[0].needsPipelineFlush && this.pipelineEntry.ready) {
+        this.pipelineEntry.flushPipelineEntry(this.bindGroups)
+      }
+    }
+
     for (let i = startBindGroupIndex; i < this.bindGroups.length; i++) {
       this.updateBindGroup(this.bindGroups[i])
     }

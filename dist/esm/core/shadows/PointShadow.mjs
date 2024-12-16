@@ -19,7 +19,7 @@ var __privateAdd = (obj, member, value) => {
 };
 var __privateSet = (obj, member, value, setter) => {
   __accessCheck(obj, member, "write to private field");
-  setter ? setter.call(obj, value) : member.set(obj, value);
+  member.set(obj, value);
   return value;
 };
 var _tempCubeDirection;
@@ -85,7 +85,6 @@ class PointShadow extends Shadow {
       ...this.options,
       camera
     };
-    this.setRendererBinding();
     this.cubeDirections = [
       new Vec3(-1, 0, 0),
       new Vec3(1, 0, 0),
@@ -160,10 +159,7 @@ class PointShadow extends Shadow {
   reset() {
     this.setRendererBinding();
     super.reset();
-    this.onPropertyChanged("cameraNear", this.camera.near);
-    this.onPropertyChanged("cameraFar", this.camera.far);
-    this.onPropertyChanged("projectionMatrix", this.camera.projectionMatrix);
-    this.updateViewMatrices();
+    this.updateProjectionMatrix();
   }
   /**
    * Update the {@link PointShadow#camera.projectionMatrix | camera perspective projection matrix} and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
@@ -188,10 +184,10 @@ class PointShadow extends Shadow {
       __privateGet(this, _tempCubeDirection).copy(this.cubeDirections[i]).add(position);
       this.camera.viewMatrices[i].makeView(position, __privateGet(this, _tempCubeDirection), this.cubeUps[i]);
       for (let j = 0; j < 16; j++) {
-        this.rendererBinding.options.bindings[this.index].inputs.viewMatrices.value[i * 16 + j] = this.camera.viewMatrices[i].elements[j];
+        this.rendererBinding.childrenBindings[this.index].inputs.viewMatrices.value[i * 16 + j] = this.camera.viewMatrices[i].elements[j];
       }
     }
-    this.rendererBinding.options.bindings[this.index].inputs.viewMatrices.shouldUpdate = true;
+    this.rendererBinding.childrenBindings[this.index].inputs.viewMatrices.shouldUpdate = true;
   }
   /**
    * Set or resize the {@link depthTexture} and eventually resize the {@link depthPassTarget} as well.
@@ -217,7 +213,7 @@ class PointShadow extends Shadow {
   createDepthTexture() {
     const maxSize = Math.max(this.depthTextureSize.x, this.depthTextureSize.y);
     this.depthTexture = new Texture(this.renderer, {
-      label: "Point shadow cube depth texture " + this.index,
+      label: `${this.constructor.name} (index: ${this.index}) depth texture`,
       name: "pointShadowCubeDepthTexture" + this.index,
       type: "depth",
       format: this.depthTextureFormat,
@@ -255,9 +251,14 @@ class PointShadow extends Shadow {
       () => {
         if (!this.meshes.size)
           return;
+        this.renderer.setCameraBindGroup();
         this.useDepthMaterials();
         for (let i = 0; i < 6; i++) {
           const commandEncoder = this.renderer.device.createCommandEncoder();
+          if (!this.renderer.production)
+            commandEncoder.pushDebugGroup(
+              `${this.constructor.name} (index: ${this.index}): depth pass command encoder for face ${i}`
+            );
           this.depthPassTarget.renderPass.setRenderPassDescriptor(
             this.depthTexture.texture.createView({
               label: this.depthTexture.texture.label + " cube face view " + i,
@@ -266,9 +267,12 @@ class PointShadow extends Shadow {
               baseArrayLayer: i
             })
           );
-          this.rendererBinding.options.bindings[this.index].inputs.face.value = i;
-          this.renderer.cameraLightsBindGroup.update();
+          this.rendererBinding.childrenBindings[this.index].inputs.face.value = i;
+          this.renderer.shouldUpdateCameraLightsBindGroup();
+          this.renderer.updateCameraLightsBindGroup();
           this.renderDepthPass(commandEncoder);
+          if (!this.renderer.production)
+            commandEncoder.popDebugGroup();
           const commandBuffer = commandEncoder.finish();
           this.renderer.device.queue.submit([commandBuffer]);
         }

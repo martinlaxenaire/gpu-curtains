@@ -1,4 +1,5 @@
 // texture bitwise flags
+import { WebGPUTextureUsageConstants } from '../../utils/webgpu-constants'
 import { TextureBindingType } from '../bindings/Binding'
 
 /**  Defines all kinds of allowed texture usages as camel case strings. */
@@ -8,11 +9,11 @@ export type TextureUsageKeys = 'copySrc' | 'copyDst' | 'renderAttachment' | 'sto
  * Map {@link TextureUsageKeys | texture usage names} with actual {@link GPUTextureUsageFlags | texture usage bitwise flags}.
  */
 const textureUsages: Map<TextureUsageKeys, GPUTextureUsageFlags> = new Map([
-  ['copySrc', GPUTextureUsage.COPY_SRC],
-  ['copyDst', GPUTextureUsage.COPY_DST],
-  ['renderAttachment', GPUTextureUsage.RENDER_ATTACHMENT],
-  ['storageBinding', GPUTextureUsage.STORAGE_BINDING],
-  ['textureBinding', GPUTextureUsage.TEXTURE_BINDING],
+  ['copySrc', WebGPUTextureUsageConstants.COPY_SRC],
+  ['copyDst', WebGPUTextureUsageConstants.COPY_DST],
+  ['renderAttachment', WebGPUTextureUsageConstants.RENDER_ATTACHMENT],
+  ['storageBinding', WebGPUTextureUsageConstants.STORAGE_BINDING],
+  ['textureBinding', WebGPUTextureUsageConstants.TEXTURE_BINDING],
 ])
 
 /**

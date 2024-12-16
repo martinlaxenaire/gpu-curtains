@@ -36,8 +36,6 @@ class RenderPipelineEntry extends PipelineEntry {
     this.options = {
       ...this.options,
       attributes,
-      bindGroups,
-      cacheKey,
       ...renderingOptions
     };
     this.setPipelineEntryProperties({ attributes, bindGroups });
@@ -196,6 +194,22 @@ ${this.shaders.full.head}`;
     }
   }
   /**
+   * Get default transparency blend state.
+   * @returns - The default transparency blend state.
+   */
+  static getDefaultTransparentBlending() {
+    return {
+      color: {
+        srcFactor: "src-alpha",
+        dstFactor: "one-minus-src-alpha"
+      },
+      alpha: {
+        srcFactor: "one",
+        dstFactor: "one-minus-src-alpha"
+      }
+    };
+  }
+  /**
    * Create the render pipeline {@link descriptor}
    */
   createPipelineDescriptor() {
@@ -204,16 +218,7 @@ ${this.shaders.full.head}`;
     let vertexLocationIndex = -1;
     if (this.options.rendering.targets.length) {
       if (this.options.rendering.transparent) {
-        this.options.rendering.targets[0].blend = this.options.rendering.targets[0].blend ? this.options.rendering.targets[0].blend : {
-          color: {
-            srcFactor: "src-alpha",
-            dstFactor: "one-minus-src-alpha"
-          },
-          alpha: {
-            srcFactor: "one",
-            dstFactor: "one-minus-src-alpha"
-          }
-        };
+        this.options.rendering.targets[0].blend = this.options.rendering.targets[0].blend ? this.options.rendering.targets[0].blend : RenderPipelineEntry.getDefaultTransparentBlending();
       }
     } else {
       this.options.rendering.targets = [];

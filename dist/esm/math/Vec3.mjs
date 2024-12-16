@@ -368,6 +368,19 @@ class Vec3 {
     return this.applyQuat(quaternion.setFromAxisAngle(axis, angle));
   }
   /**
+   * Transforms the direction of this vector by a {@link Mat4} (the upper left 3 x 3 subset) and then normalizes the result.
+   * @param matrix - {@link Mat4} to use for transformation.
+   * @returns - this {@link Vec3} with the transformation applied.
+   */
+  transformDirection(matrix) {
+    const x = this.x, y = this.y, z = this.z;
+    const e = matrix.elements;
+    this.x = e[0] * x + e[4] * y + e[8] * z;
+    this.y = e[1] * x + e[5] * y + e[9] * z;
+    this.z = e[2] * x + e[6] * y + e[10] * z;
+    return this.normalize();
+  }
+  /**
    * Project a 3D coordinate {@link Vec3} to a 2D coordinate {@link Vec3}
    * @param camera - {@link Camera} to use for projection
    * @returns - projected {@link Vec3}

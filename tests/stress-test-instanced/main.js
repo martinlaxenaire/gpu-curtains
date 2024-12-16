@@ -30,6 +30,7 @@ window.addEventListener('load', async () => {
       near: systemSize,
       far: systemSize * 4,
     },
+    lights: false, // disable lights and shadows buffer, we want the bare minimum
   })
 
   // render it
@@ -50,7 +51,12 @@ window.addEventListener('load', async () => {
   const aspectRatio = gpuCameraRenderer.boundingRect.width / gpuCameraRenderer.boundingRect.height
 
   console.time('creation time')
-  let nbMeshes = 3000
+
+  // get meshes count from url search params
+  const url = new URL(window.location)
+  const searchParams = new URLSearchParams(url.search)
+  const urlCount = searchParams.get('count') && parseInt(searchParams.get('count'))
+  let nbMeshes = urlCount || 10_000
 
   const nbCubes = Math.round(nbMeshes * 0.5)
 

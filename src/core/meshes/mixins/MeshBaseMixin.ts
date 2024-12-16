@@ -15,29 +15,32 @@ import { ProjectedMeshBaseClass } from './ProjectedMeshBaseMixin'
 import default_vsWgsl from '../../shaders/chunks/default/default_vs.wgsl'
 import default_fsWgsl from '../../shaders/chunks/default/default_fs.wgsl'
 import { RenderPass } from '../../renderPasses/RenderPass'
+import { RenderBundle } from '../../renderPasses/RenderBundle'
 
 let meshIndex = 0
 
 /**
- * Base render params used to create a Mesh
+ * Base render params used to create a Mesh.
  */
 export interface MeshBaseRenderParams extends Omit<RenderMaterialParams, 'targets'> {
-  /** Whether we should add this Mesh to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
+  /** Whether we should add this Mesh to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically. */
   autoRender?: boolean
-  /** Flag indicating whether to draw this Mesh or not */
+  /** Flag indicating whether to draw this Mesh or not. */
   visible?: boolean
-  /** Controls the order in which this Mesh should be rendered by our {@link core/scenes/Scene.Scene | Scene} */
+  /** Controls the order in which this Mesh should be rendered by our {@link core/scenes/Scene.Scene | Scene}. */
   renderOrder?: number
   /** Optional {@link RenderTarget} to render this Mesh to instead of the canvas context. */
   outputTarget?: RenderTarget
-  /** Parameters used by this Mesh to create a {@link DOMTexture} */
+  /** Parameters used by this Mesh to create a {@link DOMTexture}. */
   texturesOptions?: ExternalTextureParams
-  /** Optional {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createRenderPipeline#targets | targets} properties */
+  /** Optional {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createRenderPipeline#targets | targets} properties. */
   targets?: Partial<GPUColorTargetState>[]
+  /** Optional {@link RenderBundle} into which this Mesh should be added. */
+  renderBundle?: RenderBundle
 }
 
 /**
- * Base parameters used to create a Mesh
+ * Base parameters used to create a Mesh.
  */
 export interface MeshBaseParams extends MeshBaseRenderParams {
   /** Geometry to use */
@@ -45,25 +48,16 @@ export interface MeshBaseParams extends MeshBaseRenderParams {
 }
 
 /**
- *  Base options used to create this Mesh
+ *  Base options used to create this Mesh.
  */
-export interface MeshBaseOptions extends RenderMaterialParams {
-  /** The label of this Mesh, sent to various GPU objects for debugging purpose */
+export interface MeshBaseOptions extends Omit<MeshBaseRenderParams, 'renderOrder' | 'visible'> {
+  /** The label of this Mesh, sent to various GPU objects for debugging purpose. */
   label?: MeshBaseParams['label']
-  /** Shaders to use by this Mesh {@link RenderMaterial} */
-  shaders?: MeshBaseParams['shaders']
-  /** Parameters used by this Mesh to create a {@link DOMTexture} */
-  texturesOptions?: ExternalTextureParams
-  /** {@link RenderTarget} to render this Mesh to instead of the canvas context, if any. */
-  outputTarget?: RenderTarget | null
-  /** Whether we should add this Mesh to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
-  autoRender?: boolean
-  /** Whether to compile this Mesh {@link RenderMaterial} {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} asynchronously or not */
-  useAsyncPipeline?: boolean
+  //targets?: RenderMaterialParams['targets']
 }
 
-/** @const - Default Mesh parameters to merge with user defined parameters */
-const defaultMeshBaseParams: MeshBaseParams = {
+/** @const - Default Mesh parameters to merge with user defined parameters. */
+const defaultMeshBaseParams = {
   // material
   autoRender: true,
   useProjection: false,
@@ -79,7 +73,8 @@ const defaultMeshBaseParams: MeshBaseParams = {
   renderOrder: 0,
   // textures
   texturesOptions: {},
-}
+  renderBundle: null,
+} as MeshBaseParams
 
 // based on https://stackoverflow.com/a/75673107/13354068
 // we declare first a class, and then the mixin with a return type
@@ -109,6 +104,9 @@ export declare class MeshBaseClass {
 
   /** {@link RenderTarget} to render this Mesh to instead of the canvas context, if any. */
   outputTarget: null | RenderTarget
+
+  /** {@link RenderBundle} used to render this Mesh, if any. */
+  renderBundle: null | RenderBundle
 
   /** Controls the order in which this {@link MeshBaseClass} should be rendered by our {@link core/scenes/Scene.Scene | Scene} */
   renderOrder: number
@@ -343,6 +341,13 @@ export declare class MeshBaseClass {
   setOutputTarget(outputTarget: RenderTarget | null): void
 
   /**
+   * Assign or remove a {@link RenderBundle} to this Mesh.
+   * @param renderBundle - the {@link RenderBundle} to assign or null if we want to remove the current {@link RenderBundle}.
+   * @param updateScene - Whether to remove and then re-add the Mesh from the {@link core/scenes/Scene.Scene | Scene} or not.
+   */
+  setRenderBundle(renderBundle?: RenderBundle | null, updateScene?: boolean): void
+
+  /**
    * Get the current {@link RenderMaterial} uniforms
    * @readonly
    */
@@ -445,6 +450,9 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     /** {@link RenderTarget} to render this Mesh to, if any */
     outputTarget: null | RenderTarget
 
+    /** {@link RenderBundle} used to render this Mesh, if any. */
+    renderBundle: null | RenderBundle
+
     /** Controls the order in which this {@link MeshBase} should be rendered by our {@link core/scenes/Scene.Scene | Scene} */
     renderOrder: number
     /** Whether this {@link MeshBase} should be treated as transparent. Impacts the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} blend properties */
@@ -520,12 +528,14 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
         visible,
         renderOrder,
         outputTarget,
+        renderBundle,
         texturesOptions,
         autoRender,
         ...meshParameters
       } = parameters
 
       this.outputTarget = outputTarget ?? null
+      this.renderBundle = renderBundle ?? null
 
       // set default sample count
       meshParameters.sampleCount = !!meshParameters.sampleCount
@@ -541,6 +551,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
         label: label ?? 'Mesh ' + this.renderer.meshes.length,
         ...(shaders !== undefined ? { shaders } : {}),
         ...(outputTarget !== undefined && { outputTarget }),
+        ...(renderBundle !== undefined && { renderBundle }),
         texturesOptions,
         ...(autoRender !== undefined && { autoRender }),
         ...meshParameters,
@@ -645,6 +656,8 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
         return
       }
 
+      this.material?.setRenderer(renderer)
+
       const oldRenderer = this.renderer
       this.removeFromScene(true)
       this.renderer = renderer
@@ -663,13 +676,13 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     }
 
     /**
-     * Assign or remove a {@link RenderTarget} to this Mesh
-     * Since this manipulates the {@link core/scenes/Scene.Scene | Scene} stacks, it can be used to remove a RenderTarget as well.
-     * @param outputTarget - the RenderTarget to assign or null if we want to remove the current RenderTarget
+     * Assign or remove a {@link RenderTarget} to this Mesh.
+     * Since this manipulates the {@link core/scenes/Scene.Scene | Scene} stacks, it can be used to remove a {@link RenderTarget} as well.
+     * @param outputTarget - the {@link RenderTarget} to assign or null if we want to remove the current {@link RenderTarget}.
      */
     setOutputTarget(outputTarget: RenderTarget | null) {
       if (outputTarget && outputTarget.type !== 'RenderTarget') {
-        throwWarning(`${this.options.label ?? this.type}: outputTarget is not a RenderTarget: ${outputTarget}`)
+        throwWarning(`${this.options.label ?? this.type}: outputTarget is not a RenderTarget: ${outputTarget.type}`)
         return
       }
 
@@ -677,6 +690,22 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       this.removeFromScene()
       this.outputTarget = outputTarget
       this.addToScene()
+    }
+
+    /**
+     * Assign or remove a {@link RenderBundle} to this Mesh.
+     * @param renderBundle - the {@link RenderBundle} to assign or null if we want to remove the current {@link RenderBundle}.
+     * @param updateScene - Whether to remove and then re-add the Mesh from the {@link core/scenes/Scene.Scene | Scene} or not.
+     */
+    setRenderBundle(renderBundle: RenderBundle | null, updateScene = true) {
+      // ensure the mesh is in the correct scene stack
+      if (updateScene) {
+        this.removeFromScene()
+        this.renderBundle = renderBundle
+        this.addToScene()
+      } else {
+        this.renderBundle = renderBundle
+      }
     }
 
     /**
@@ -964,7 +993,14 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
         options.label = this.options.label + ' ' + options.name
       }
 
-      const domTexture = new DOMTexture(this.renderer, { ...options, ...this.options.texturesOptions })
+      const texturesOptions: DOMTextureParams = { ...options, ...this.options.texturesOptions }
+
+      if (this.renderBundle) {
+        // do not allow external video textures if we have a render bundle
+        texturesOptions.useExternalTextures = false
+      }
+
+      const domTexture = new DOMTexture(this.renderer, texturesOptions)
 
       this.addDOMTexture(domTexture)
 
@@ -976,6 +1012,11 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      * @param domTexture - {@link DOMTexture} to add
      */
     addDOMTexture(domTexture: DOMTexture) {
+      if (this.renderBundle) {
+        // if we create a new texture, invalidate the render bundle
+        this.renderBundle.ready = false
+      }
+
       this.material.addTexture(domTexture)
       this.onDOMTextureAdded(domTexture)
     }
@@ -1010,6 +1051,11 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      * @param texture - {@link Texture} to add
      */
     addTexture(texture: Texture) {
+      if (this.renderBundle) {
+        // if we create a new texture, invalidate the render bundle
+        this.renderBundle.ready = false
+      }
+
       this.material.addTexture(texture)
     }
 
@@ -1145,11 +1191,15 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     onBeforeRenderPass() {
       if (!this.renderer.ready) return
 
-      this.ready = this.material && this.material.ready && this.geometry && this.geometry.ready
-
       this.setGeometry()
 
+      if (this.visible) {
+        this._onRenderCallback && this._onRenderCallback()
+      }
+
       this.material.onBeforeRender()
+
+      this.ready = this.material && this.material.ready && this.geometry && this.geometry.ready
     }
 
     /**
@@ -1158,8 +1208,6 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      */
     onRenderPass(pass: GPURenderPassEncoder) {
       if (!this.ready) return
-
-      this._onRenderCallback && this._onRenderCallback()
 
       // render ou material
       this.material.render(pass)
@@ -1188,12 +1236,6 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
 
       // no point to render if the WebGPU device is not ready
       if (!this.renderer.ready || !this.visible) return
-
-      // @ts-ignore
-      if (super.render) {
-        // @ts-ignore
-        super.render()
-      }
 
       !this.renderer.production && pass.pushDebugGroup(this.options.label)
 

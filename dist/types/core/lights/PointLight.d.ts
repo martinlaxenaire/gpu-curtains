@@ -2,6 +2,7 @@ import { Light, LightBaseParams, LightsType } from './Light';
 import { Vec3 } from '../../math/Vec3';
 import { PointShadow, PointShadowParams } from '../shadows/PointShadow';
 import { CameraRenderer } from '../renderers/utils';
+import { GPUCurtains } from '../../curtains/GPUCurtains';
 /**
  * Base parameters used to create a {@link PointLight}.
  */
@@ -71,7 +72,12 @@ export declare class PointLight extends Light {
      * @param renderer - {@link CameraRenderer | CameraRenderer} used to create this {@link PointLight}.
      * @param parameters - {@link PointLightBaseParams | parameters} used to create this {@link PointLight}.
      */
-    constructor(renderer: CameraRenderer, { color, intensity, position, range, shadow }?: PointLightBaseParams);
+    constructor(renderer: CameraRenderer | GPUCurtains, { color, intensity, position, range, shadow }?: PointLightBaseParams);
+    /**
+     * Set or reset this {@link PointLight} {@link CameraRenderer}.
+     * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
+     */
+    setRenderer(renderer: CameraRenderer | GPUCurtains): void;
     /**
      * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of {@link PointLight} has been overflowed.
      */

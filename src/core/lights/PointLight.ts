@@ -2,6 +2,7 @@ import { Light, LightBaseParams, LightsType } from './Light'
 import { Vec3 } from '../../math/Vec3'
 import { PointShadow, PointShadowParams } from '../shadows/PointShadow'
 import { CameraRenderer } from '../renderers/utils'
+import { GPUCurtains } from '../../curtains/GPUCurtains'
 
 /**
  * Base parameters used to create a {@link PointLight}.
@@ -80,12 +81,11 @@ export class PointLight extends Light {
    * @param parameters - {@link PointLightBaseParams | parameters} used to create this {@link PointLight}.
    */
   constructor(
-    renderer: CameraRenderer,
+    renderer: CameraRenderer | GPUCurtains,
     { color = new Vec3(1), intensity = 1, position = new Vec3(), range = 0, shadow = null } = {} as PointLightBaseParams
   ) {
     const type = 'pointLights'
-    const index = renderer.lights.filter((light) => light.type === type).length
-    super(renderer, { color, intensity, index, type })
+    super(renderer, { color, intensity, type })
 
     this.options = {
       ...this.options,
@@ -101,13 +101,6 @@ export class PointLight extends Light {
 
     this.parent = this.renderer.scene
 
-    if (this.index + 1 > this.renderer.lightsBindingParams[this.type].max) {
-      this.onMaxLightOverflow(this.type as LightsType)
-    }
-
-    this.rendererBinding.inputs.count.value = this.index + 1
-    this.rendererBinding.inputs.count.shouldUpdate = true
-
     this.shadow = new PointShadow(this.renderer, {
       autoRender: false, // will be set by calling cast()
       light: this,
@@ -119,13 +112,24 @@ export class PointLight extends Light {
   }
 
   /**
+   * Set or reset this {@link PointLight} {@link CameraRenderer}.
+   * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
+   */
+  setRenderer(renderer: CameraRenderer | GPUCurtains) {
+    if (this.shadow) {
+      this.shadow.setRenderer(renderer)
+    }
+
+    super.setRenderer(renderer)
+  }
+
+  /**
    * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of {@link PointLight} has been overflowed.
    */
   reset() {
     super.reset()
     this.onPropertyChanged('range', this.range)
     this.setPosition()
-
     this.shadow?.reset()
   }
 

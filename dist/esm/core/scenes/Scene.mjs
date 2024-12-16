@@ -1,6 +1,7 @@
 import { isRenderer } from '../renderers/utils.mjs';
 import { Object3D } from '../objects3D/Object3D.mjs';
 import { Vec3 } from '../../math/Vec3.mjs';
+import { throwWarning } from '../../utils/utils.mjs';
 
 const camPosA = new Vec3();
 const camPosB = new Vec3();
@@ -128,35 +129,101 @@ class Scene extends Object3D {
     return mesh.material.options.rendering.useProjection ? stack.projected : stack.unProjected;
   }
   /**
+   * Order a {@link SceneStackedObject} array by using the {@link SceneStackedObject#renderOrder | renderOrder} or {@link SceneStackedObject#index | index} properties.
+   * @param stack - {@link SceneStackedObject} to sort, filled with {@link RenderedMesh} or {@link RenderBundle}.
+   */
+  orderStack(stack) {
+    stack.sort((a, b) => {
+      return a.renderOrder - b.renderOrder || a.index - b.index;
+    });
+  }
+  /**
+   * Test whether a {@link SceneStackedObject} is a {@link RenderBundle} or not.
+   * @param object - Object to test.
+   * @returns - Whether the {@link object} is a {@link RenderBundle} or not.
+   */
+  isStackObjectRenderBundle(object) {
+    return object.type === "RenderBundle";
+  }
+  /**
    * Add a Mesh to the correct {@link renderPassEntries | render pass entry} {@link Stack} array.
    * Meshes are then ordered by their {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#index | indexes (order of creation]}, {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#index | pipeline entry indexes} and then {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#renderOrder | renderOrder}
    * @param mesh - Mesh to add
    */
   addMesh(mesh) {
     const projectionStack = this.getMeshProjectionStack(mesh);
-    const similarMeshes = mesh.transparent ? projectionStack.transparent : projectionStack.opaque;
-    similarMeshes.push(mesh);
-    similarMeshes.sort((a, b) => {
-      return a.renderOrder - b.renderOrder || //a.material.pipelineEntry.index - b.material.pipelineEntry.index ||
-      a.index - b.index;
-    });
-    if ("parent" in mesh && !mesh.parent && mesh.material.options.rendering.useProjection) {
+    const isTransparent = !!mesh.transparent;
+    const { useProjection } = mesh.material.options.rendering;
+    if (mesh.renderBundle) {
+      const { renderBundle } = mesh;
+      renderBundle.addMesh(mesh, mesh.outputTarget ? mesh.outputTarget.renderPass : this.renderer.renderPass);
+      if (mesh.renderBundle) {
+        if (renderBundle.meshes.size === 1) {
+          if (renderBundle.transparent === null) {
+            renderBundle.transparent = isTransparent;
+          }
+          if (renderBundle.useProjection === null) {
+            renderBundle.useProjection = useProjection;
+          }
+          this.addRenderBundle(renderBundle, projectionStack);
+        }
+      }
+    }
+    if (!mesh.renderBundle) {
+      const similarMeshes = isTransparent ? projectionStack.transparent : projectionStack.opaque;
+      similarMeshes.push(mesh);
+      this.orderStack(similarMeshes);
+    }
+    if ("parent" in mesh && !mesh.parent && useProjection) {
       mesh.parent = this;
     }
   }
   /**
-   * Remove a Mesh from our {@link Scene}
-   * @param mesh - Mesh to remove
+   * Remove a Mesh from our {@link Scene}.
+   * @param mesh - Mesh to remove.
    */
   removeMesh(mesh) {
     const projectionStack = this.getMeshProjectionStack(mesh);
-    if (mesh.transparent) {
-      projectionStack.transparent = projectionStack.transparent.filter((m) => m.uuid !== mesh.uuid);
+    const isTransparent = !!mesh.transparent;
+    if (mesh.renderBundle) {
+      mesh.renderBundle.removeMesh(mesh, false);
     } else {
-      projectionStack.opaque = projectionStack.opaque.filter((m) => m.uuid !== mesh.uuid);
+      if (isTransparent) {
+        projectionStack.transparent = projectionStack.transparent.filter((m) => m.uuid !== mesh.uuid);
+      } else {
+        projectionStack.opaque = projectionStack.opaque.filter((m) => m.uuid !== mesh.uuid);
+      }
     }
     if ("parent" in mesh && mesh.parent && mesh.parent.object3DIndex === this.object3DIndex) {
       mesh.parent = null;
+    }
+  }
+  /**
+   * Add a {@link RenderBundle} to the correct {@link renderPassEntries | render pass entry} {@link Stack} array.
+   * @param renderBundle - {@link RenderBundle} to add.
+   * @param projectionStack - {@link ProjectionStack} onto which to add the {@link RenderBundle}.
+   */
+  addRenderBundle(renderBundle, projectionStack) {
+    const similarObjects = !!renderBundle.transparent ? projectionStack.transparent : projectionStack.opaque;
+    similarObjects.push(renderBundle);
+    this.orderStack(similarObjects);
+  }
+  /**
+   * Remove a {@link RenderBundle} from our {@link Scene}.
+   * @param renderBundle - {@link RenderBundle} to remove.
+   */
+  removeRenderBundle(renderBundle) {
+    const renderPassEntry = this.renderPassEntries.renderTarget.find(
+      (passEntry) => passEntry.renderPass.uuid === renderBundle.options.renderPass?.uuid
+    );
+    const { stack } = renderPassEntry || this.renderPassEntries.screen[0];
+    const isProjected = !!renderBundle.useProjection;
+    const projectionStack = isProjected ? stack.projected : stack.unProjected;
+    const isTransparent = !!renderBundle.transparent;
+    if (isTransparent) {
+      projectionStack.transparent = projectionStack.transparent.filter((bundle) => bundle.uuid !== renderBundle.uuid);
+    } else {
+      projectionStack.opaque = projectionStack.opaque.filter((bundle) => bundle.uuid !== renderBundle.uuid);
     }
   }
   /**
@@ -194,9 +261,10 @@ class Scene extends Object3D {
         );
       }
     } : null;
+    const outputPass = shaderPass.outputTarget ? shaderPass.outputTarget.renderPass : this.renderer.postProcessingPass;
     const shaderPassEntry = {
       // use output target or postprocessing render pass
-      renderPass: shaderPass.outputTarget ? shaderPass.outputTarget.renderPass : this.renderer.postProcessingPass,
+      renderPass: outputPass,
       // render to output target renderTexture or directly to screen
       renderTexture: shaderPass.outputTarget ? shaderPass.outputTarget.renderTexture : null,
       onBeforeRenderPass,
@@ -205,6 +273,24 @@ class Scene extends Object3D {
       stack: null
       // explicitly set to null
     };
+    if (shaderPass.renderBundle) {
+      const isTransparent = !!shaderPass.transparent;
+      const { renderBundle } = shaderPass;
+      if (renderBundle.meshes.size < 1) {
+        renderBundle.addMesh(shaderPass, outputPass);
+        renderBundle.size = 1;
+      } else {
+        throwWarning(
+          `${renderBundle.options.label} (${renderBundle.type}): Cannot add more than 1 ShaderPass to a render bundle. This ShaderPass will not be added: ${shaderPass.options.label}`
+        );
+        shaderPass.renderBundle = null;
+      }
+      if (shaderPass.renderBundle) {
+        shaderPass.renderBundle.renderOrder = shaderPass.renderOrder;
+        renderBundle.transparent = isTransparent;
+        renderBundle.useProjection = false;
+      }
+    }
     this.renderPassEntries.screen.push(shaderPassEntry);
     this.renderPassEntries.screen.sort((a, b) => {
       const isPostProA = a.element && !a.element.outputTarget;
@@ -229,6 +315,9 @@ class Scene extends Object3D {
    * @param shaderPass - {@link ShaderPass} to remove
    */
   removeShaderPass(shaderPass) {
+    if (shaderPass.renderBundle) {
+      shaderPass.renderBundle.empty();
+    }
     this.renderPassEntries.screen = this.renderPassEntries.screen.filter(
       (entry) => !entry.element || entry.element.uuid !== shaderPass.uuid
     );
@@ -259,6 +348,24 @@ class Scene extends Object3D {
       stack: null
       // explicitly set to null
     });
+    if (pingPongPlane.renderBundle) {
+      const isTransparent = !!pingPongPlane.transparent;
+      const { renderBundle } = pingPongPlane;
+      if (renderBundle.meshes.size < 1) {
+        renderBundle.addMesh(pingPongPlane, pingPongPlane.outputTarget.renderPass);
+        renderBundle.size = 1;
+      } else {
+        throwWarning(
+          `${renderBundle.options.label} (${renderBundle.type}): Cannot add more than 1 PingPongPlane to a render bundle. This PingPongPlane will not be added: ${pingPongPlane.options.label}`
+        );
+        pingPongPlane.renderBundle = null;
+      }
+      if (pingPongPlane.renderBundle) {
+        pingPongPlane.renderBundle.renderOrder = pingPongPlane.renderOrder;
+        renderBundle.transparent = isTransparent;
+        renderBundle.useProjection = false;
+      }
+    }
     this.renderPassEntries.pingPong.sort((a, b) => a.element.renderOrder - b.element.renderOrder);
   }
   /**
@@ -266,6 +373,9 @@ class Scene extends Object3D {
    * @param pingPongPlane - {@link PingPongPlane} to remove
    */
   removePingPongPlane(pingPongPlane) {
+    if (pingPongPlane.renderBundle) {
+      pingPongPlane.renderBundle.empty();
+    }
     this.renderPassEntries.pingPong = this.renderPassEntries.pingPong.filter(
       (entry) => entry.element.uuid !== pingPongPlane.uuid
     );
@@ -286,14 +396,27 @@ class Scene extends Object3D {
       return this.renderPassEntries.screen.find((entry) => entry.element?.uuid === object.uuid);
     } else {
       const entryType = object.outputTarget ? "renderTarget" : "screen";
-      return this.renderPassEntries[entryType].find((entry) => {
-        return [
-          ...entry.stack.unProjected.opaque,
-          ...entry.stack.unProjected.transparent,
-          ...entry.stack.projected.opaque,
-          ...entry.stack.projected.transparent
-        ].some((mesh) => mesh.uuid === object.uuid);
-      });
+      if (object.renderBundle) {
+        return this.renderPassEntries[entryType].find((entry) => {
+          return [
+            ...entry.stack.unProjected.opaque,
+            ...entry.stack.unProjected.transparent,
+            ...entry.stack.projected.opaque,
+            ...entry.stack.projected.transparent
+          ].filter((object2) => object2.type === "RenderBundle").some((bundle) => {
+            return bundle.meshes.get(object.uuid);
+          });
+        });
+      } else {
+        return this.renderPassEntries[entryType].find((entry) => {
+          return [
+            ...entry.stack.unProjected.opaque,
+            ...entry.stack.unProjected.transparent,
+            ...entry.stack.projected.opaque,
+            ...entry.stack.projected.transparent
+          ].some((mesh) => mesh.uuid === object.uuid);
+        });
+      }
     }
   }
   /**
@@ -303,6 +426,9 @@ class Scene extends Object3D {
   sortTransparentMeshes(meshes) {
     meshes.sort((meshA, meshB) => {
       if (meshA.renderOrder !== meshB.renderOrder) {
+        return meshA.renderOrder - meshB.renderOrder;
+      }
+      if (this.isStackObjectRenderBundle(meshA) || this.isStackObjectRenderBundle(meshB)) {
         return meshA.renderOrder - meshB.renderOrder;
       }
       meshA.geometry ? posA.copy(meshA.geometry.boundingBox.center).applyMat4(meshA.worldMatrix) : meshA.worldMatrix.getTranslation(posA);
@@ -328,11 +454,17 @@ class Scene extends Object3D {
     const swapChainTexture = renderPassEntry.renderPass.updateView(renderPassEntry.renderTexture?.texture);
     renderPassEntry.onBeforeRenderPass && renderPassEntry.onBeforeRenderPass(commandEncoder, swapChainTexture);
     const pass = commandEncoder.beginRenderPass(renderPassEntry.renderPass.descriptor);
-    !this.renderer.production && pass.pushDebugGroup(
-      renderPassEntry.element ? `${renderPassEntry.element.options.label} render pass using ${renderPassEntry.renderPass.options.label} descriptor` : `Render stack pass using ${renderPassEntry.renderPass.options.label}${renderPassEntry.renderTexture ? " onto " + renderPassEntry.renderTexture.options.label : ""}`
-    );
+    if (!this.renderer.production) {
+      pass.pushDebugGroup(
+        renderPassEntry.element ? `${renderPassEntry.element.options.label} render pass using ${renderPassEntry.renderPass.options.label} descriptor` : `Render stack pass using ${renderPassEntry.renderPass.options.label}${renderPassEntry.renderTexture ? " onto " + renderPassEntry.renderTexture.options.label : ""}`
+      );
+    }
     if (renderPassEntry.element) {
-      renderPassEntry.element.render(pass);
+      if (renderPassEntry.element.renderBundle) {
+        renderPassEntry.element.renderBundle.render(pass);
+      } else {
+        renderPassEntry.element.render(pass);
+      }
     } else if (renderPassEntry.stack) {
       for (const mesh of renderPassEntry.stack.unProjected.opaque) {
         mesh.render(pass);
@@ -350,7 +482,8 @@ class Scene extends Object3D {
         }
       }
     }
-    !this.renderer.production && pass.popDebugGroup();
+    if (!this.renderer.production)
+      pass.popDebugGroup();
     pass.end();
     renderPassEntry.onAfterRenderPass && renderPassEntry.onAfterRenderPass(commandEncoder, swapChainTexture);
     this.renderer.pipelineManager.resetCurrentPipeline();
@@ -379,7 +512,11 @@ class Scene extends Object3D {
   render(commandEncoder) {
     for (const computePass of this.computePassEntries) {
       const pass = commandEncoder.beginComputePass();
+      if (!this.renderer.production)
+        pass.pushDebugGroup(`${computePass.options.label}: begin compute pass`);
       computePass.render(pass);
+      if (!this.renderer.production)
+        pass.popDebugGroup();
       pass.end();
       computePass.copyBufferToResult(commandEncoder);
       this.renderer.pipelineManager.resetCurrentPipeline();

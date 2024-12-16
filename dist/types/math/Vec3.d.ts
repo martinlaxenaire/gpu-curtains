@@ -228,6 +228,12 @@ export declare class Vec3 {
      */
     applyAxisAngle(axis?: Vec3, angle?: number, quaternion?: Quat): Vec3;
     /**
+     * Transforms the direction of this vector by a {@link Mat4} (the upper left 3 x 3 subset) and then normalizes the result.
+     * @param matrix - {@link Mat4} to use for transformation.
+     * @returns - this {@link Vec3} with the transformation applied.
+     */
+    transformDirection(matrix: Mat4): Vec3;
+    /**
      * Project a 3D coordinate {@link Vec3} to a 2D coordinate {@link Vec3}
      * @param camera - {@link Camera} to use for projection
      * @returns - projected {@link Vec3}

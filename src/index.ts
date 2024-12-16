@@ -30,6 +30,7 @@ export { PipelineManager } from './core/pipelines/PipelineManager'
 export { GPUCameraRenderer } from './core/renderers/GPUCameraRenderer'
 export { GPUDeviceManager } from './core/renderers/GPUDeviceManager'
 export { GPURenderer } from './core/renderers/GPURenderer'
+export { RenderBundle } from './core/renderPasses/RenderBundle'
 export { RenderPass } from './core/renderPasses/RenderPass'
 export { RenderTarget } from './core/renderPasses/RenderTarget'
 export { ShaderPass } from './core/renderPasses/ShaderPass'
@@ -64,9 +65,11 @@ export { Vec3 } from './math/Vec3'
 
 // extras
 export { OrbitControls } from './extras/controls/OrbitControls'
+export { EnvironmentMap } from './extras/environment-map/EnvironmentMap'
 export { BoxGeometry } from './extras/geometries/BoxGeometry'
 export { SphereGeometry } from './extras/geometries/SphereGeometry'
 export { PingPongPlane } from './extras/meshes/PingPongPlane'
+export { Raycaster } from './extras/raycaster/Raycaster'
 
 // gltf extras
 export { GLTFScenesManager } from './extras/gltf/GLTFScenesManager'

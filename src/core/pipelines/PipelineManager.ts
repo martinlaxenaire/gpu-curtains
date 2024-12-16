@@ -2,6 +2,7 @@ import { RenderPipelineEntry } from './RenderPipelineEntry'
 import { ComputePipelineEntry } from './ComputePipelineEntry'
 import {
   PipelineEntryParams,
+  PipelineManagerPipelineEntryParams,
   PipelineManagerRenderPipelineEntryParams,
   RenderPipelineEntryParams,
 } from '../../types/PipelineEntries'
@@ -11,6 +12,11 @@ import { BindGroup } from '../bindGroups/BindGroup'
 
 /** Defines all types of allowed {@link core/pipelines/PipelineEntry.PipelineEntry | PipelineEntry} class objects */
 export type AllowedPipelineEntries = RenderPipelineEntry | ComputePipelineEntry
+
+/** Defines all the types of render passes allowed. */
+export type GPURenderPassTypes = GPURenderPassEncoder | GPURenderBundleEncoder
+/** Defines all the types of passes allowed. */
+export type GPUPassTypes = GPURenderPassTypes | GPUComputePassEncoder
 
 /**
  * Used to create and keep track of both {@link ComputePipelineEntry} and {@link RenderPipelineEntry}.<br>
@@ -111,17 +117,52 @@ export class PipelineManager {
   }
 
   /**
-   * Check if a {@link ComputePipelineEntry} has already been created with the given {@link PipelineEntryParams | parameters}.
-   * Use it if found, else create a new one and add it to the {@link pipelineEntries} array.
+   * Checks if the provided {@link PipelineEntryParams | PipelineEntry parameters} belongs to an already created {@link ComputePipelineEntry}.
    * @param parameters - {@link PipelineEntryParams | PipelineEntry parameters}
+   * @returns - the found {@link ComputePipelineEntry}, or null if not found
+   */
+  isSameComputePipeline(parameters: PipelineEntryParams): ComputePipelineEntry | null {
+    return this.pipelineEntries
+      .filter((pipelineEntry) => pipelineEntry instanceof ComputePipelineEntry)
+      .find((pipelineEntry: ComputePipelineEntry) => {
+        const { options } = pipelineEntry
+        const { shaders, cacheKey } = parameters
+
+        const sameCacheKey = cacheKey === options.cacheKey
+
+        const sameComputeShader = this.compareShaders(shaders.compute, options.shaders.compute)
+
+        return sameCacheKey && sameComputeShader
+      }) as ComputePipelineEntry | null
+  }
+
+  /**
+   * Check if a {@link ComputePipelineEntry} has already been created with the given {@link PipelineManagerPipelineEntryParams | parameters}.
+   * Use it if found, else create a new one and add it to the {@link pipelineEntries} array.
+   * @param parameters - {@link PipelineManagerPipelineEntryParams | PipelineEntry parameters}
    * @returns - newly created {@link ComputePipelineEntry}
    */
-  createComputePipeline(parameters: PipelineEntryParams): ComputePipelineEntry {
-    const pipelineEntry = new ComputePipelineEntry(parameters)
+  createComputePipeline(parameters: PipelineManagerPipelineEntryParams): ComputePipelineEntry {
+    let cacheKey = ''
 
-    this.pipelineEntries.push(pipelineEntry)
+    parameters.bindGroups.forEach((bindGroup) => {
+      bindGroup.bindings.forEach((binding) => {
+        cacheKey += binding.name + ','
+      })
+      cacheKey += bindGroup.pipelineCacheKey
+    })
 
-    return pipelineEntry
+    const existingPipelineEntry = this.isSameComputePipeline({ ...parameters, cacheKey })
+
+    if (existingPipelineEntry) {
+      return existingPipelineEntry
+    } else {
+      const pipelineEntry = new ComputePipelineEntry({ ...parameters, cacheKey })
+
+      this.pipelineEntries.push(pipelineEntry)
+
+      return pipelineEntry
+    }
   }
 
   /**
@@ -129,7 +170,7 @@ export class PipelineManager {
    * @param pass - current pass encoder
    * @param pipelineEntry - the {@link AllowedPipelineEntries | PipelineEntry} to set
    */
-  setCurrentPipeline(pass: GPURenderPassEncoder | GPUComputePassEncoder, pipelineEntry: AllowedPipelineEntries) {
+  setCurrentPipeline(pass: GPUPassTypes, pipelineEntry: AllowedPipelineEntries) {
     if (pipelineEntry.index !== this.currentPipelineIndex) {
       pass.setPipeline(pipelineEntry.pipeline as GPURenderPipeline & GPUComputePipeline)
       this.currentPipelineIndex = pipelineEntry.index
@@ -141,7 +182,7 @@ export class PipelineManager {
    * @param pass - current pass encoder.
    * @param bindGroups - array {@link core/bindGroups/BindGroup.BindGroup | bind groups} passed by the {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}.
    */
-  setActiveBindGroups(pass: GPURenderPassEncoder | GPUComputePassEncoder, bindGroups: BindGroup[]) {
+  setActiveBindGroups(pass: GPUPassTypes, bindGroups: BindGroup[]) {
     bindGroups.forEach((bindGroup, index) => {
       if (
         !this.activeBindGroups[index] ||

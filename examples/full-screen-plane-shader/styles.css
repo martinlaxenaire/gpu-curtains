@@ -1,0 +1,13 @@
+#page {
+  position: absolute;
+  inset: 0;
+}
+
+.no-curtains #page:after {
+  content: 'Oh, it looks like WebGPU is not yet supported by this browser or OS.';
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+}

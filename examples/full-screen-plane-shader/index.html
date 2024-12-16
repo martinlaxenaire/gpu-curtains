@@ -22,6 +22,7 @@
     <meta name="twitter:card" content="summary_large_image" />
 
     <link href="../common-styles.css" rel="stylesheet" />
+    <link href="styles.css" rel="stylesheet" />
 
     <link
       rel="icon"
@@ -53,12 +54,10 @@
       function gtag() {
         dataLayer.push(arguments)
       }
-      gtag('js', new Date())
 
-      gtag('config', 'G-45554DLGL6')
-
-      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        window['ga-disable-G-45554DLGL6'] = true
+      if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+        gtag('js', new Date())
+        gtag('config', 'G-45554DLGL6')
       }
     </script>
   </body>

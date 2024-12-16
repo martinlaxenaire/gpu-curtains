@@ -13,7 +13,7 @@ var __accessCheck = (obj, member, msg) => {
 };
 var __privateGet = (obj, member, getter) => {
   __accessCheck(obj, member, "read from private field");
-  return getter ? getter.call(obj) : member.get(obj);
+  return member.get(obj);
 };
 var __privateAdd = (obj, member, value) => {
   if (member.has(obj))
@@ -22,7 +22,7 @@ var __privateAdd = (obj, member, value) => {
 };
 var __privateSet = (obj, member, value, setter) => {
   __accessCheck(obj, member, "write to private field");
-  setter ? setter.call(obj, value) : member.set(obj, value);
+  member.set(obj, value);
   return value;
 };
 var _shouldUpdateCameraLightsBindGroup;
@@ -37,8 +37,7 @@ class GPUCameraRenderer extends GPURenderer {
     container,
     pixelRatio = 1,
     autoResize = true,
-    preferredFormat,
-    alphaMode = "premultiplied",
+    context = {},
     renderPass,
     camera = {},
     lights = {}
@@ -49,15 +48,16 @@ class GPUCameraRenderer extends GPURenderer {
       container,
       pixelRatio,
       autoResize,
-      preferredFormat,
-      alphaMode,
+      context,
       renderPass
     });
     /** @ignore */
     __privateAdd(this, _shouldUpdateCameraLightsBindGroup, void 0);
     this.type = "GPUCameraRenderer";
     camera = { ...{ fov: 50, near: 0.1, far: 1e3 }, ...camera };
-    lights = { ...{ maxAmbientLights: 2, maxDirectionalLights: 5, maxPointLights: 5 }, ...lights };
+    if (lights !== false) {
+      lights = { ...{ maxAmbientLights: 2, maxDirectionalLights: 5, maxPointLights: 5 }, ...lights };
+    }
     this.options = {
       ...this.options,
       camera,
@@ -68,8 +68,10 @@ class GPUCameraRenderer extends GPURenderer {
     this.lights = [];
     this.setCamera(camera);
     this.setCameraBinding();
-    this.setLightsBinding();
-    this.setShadowsBinding();
+    if (this.options.lights) {
+      this.setLightsBinding();
+      this.setShadowsBinding();
+    }
     this.setCameraLightsBindGroup();
   }
   /**
@@ -184,19 +186,24 @@ class GPUCameraRenderer extends GPURenderer {
    */
   addLight(light) {
     this.lights.push(light);
+    this.bindings[light.type].inputs.count.value++;
+    this.bindings[light.type].inputs.count.shouldUpdate = true;
   }
   /**
-   * Remove a {@link Light} from the {@link lights} array and destroy it.
+   * Remove a {@link Light} from the {@link lights} array.
    * @param light - {@link Light} to remove.
    */
   removeLight(light) {
     this.lights = this.lights.filter((l) => l.uuid !== light.uuid);
-    light.destroy();
+    this.bindings[light.type].inputs.count.value--;
+    this.bindings[light.type].inputs.count.shouldUpdate = true;
   }
   /**
    * Set the lights {@link BufferBinding} based on the {@link lightsBindingParams}.
    */
   setLightsBinding() {
+    if (!this.options.lights)
+      return;
     this.lightsBindingParams = {
       ambientLights: {
         max: this.options.lights.maxAmbientLights,
@@ -264,7 +271,7 @@ class GPUCameraRenderer extends GPURenderer {
     }).reduce((acc, binding) => {
       acc[binding.key] = {
         type: binding.type,
-        value: new Float32Array(this.lightsBindingParams[lightsType].max * binding.size)
+        value: new Float32Array(Math.max(this.lightsBindingParams[lightsType].max, 1) * binding.size)
       };
       return acc;
     }, {});
@@ -290,24 +297,42 @@ class GPUCameraRenderer extends GPURenderer {
   onMaxLightOverflow(lightsType) {
     if (!this.production) {
       throwWarning(
-        `${this.type}: You are overflowing the current max lights count of ${this.lightsBindingParams[lightsType].max} for this type of lights: ${lightsType}. This should be avoided by setting a larger ${"max" + lightsType.charAt(0).toUpperCase() + lightsType.slice(1)} when instancing your ${this.type}.`
+        `${this.options.label} (${this.type}): You are overflowing the current max lights count of '${this.lightsBindingParams[lightsType].max}' for this type of lights: ${lightsType}. This should be avoided by setting a larger ${"max" + lightsType.charAt(0).toUpperCase() + lightsType.slice(1)} when instancing your ${this.type}.`
       );
     }
     this.lightsBindingParams[lightsType].max++;
     const oldLightBinding = this.cameraLightsBindGroup.getBindingByName(lightsType);
-    this.cameraLightsBindGroup.destroyBufferBinding(oldLightBinding);
+    if (oldLightBinding) {
+      this.cameraLightsBindGroup.destroyBufferBinding(oldLightBinding);
+    }
     this.setLightsTypeBinding(lightsType);
     const lightBindingIndex = this.cameraLightsBindGroup.bindings.findIndex((binding) => binding.name === lightsType);
-    this.cameraLightsBindGroup.bindings[lightBindingIndex] = this.bindings[lightsType];
+    if (lightBindingIndex !== -1) {
+      this.cameraLightsBindGroup.bindings[lightBindingIndex] = this.bindings[lightsType];
+    } else {
+      this.bindings[lightsType].shouldResetBindGroup = true;
+      this.bindings[lightsType].shouldResetBindGroupLayout = true;
+      this.cameraLightsBindGroup.addBinding(this.bindings[lightsType]);
+      this.shouldUpdateCameraLightsBindGroup();
+    }
     if (lightsType === "directionalLights" || lightsType === "pointLights") {
       const shadowsType = lightsType.replace("Lights", "") + "Shadows";
       const oldShadowsBinding = this.cameraLightsBindGroup.getBindingByName(shadowsType);
-      this.cameraLightsBindGroup.destroyBufferBinding(oldShadowsBinding);
+      if (oldShadowsBinding) {
+        this.cameraLightsBindGroup.destroyBufferBinding(oldShadowsBinding);
+      }
       this.setShadowsTypeBinding(lightsType);
       const shadowsBindingIndex = this.cameraLightsBindGroup.bindings.findIndex(
         (binding) => binding.name === shadowsType
       );
-      this.cameraLightsBindGroup.bindings[shadowsBindingIndex] = this.bindings[shadowsType];
+      if (shadowsBindingIndex !== -1) {
+        this.cameraLightsBindGroup.bindings[shadowsBindingIndex] = this.bindings[shadowsType];
+      } else {
+        this.bindings[shadowsType].shouldResetBindGroup = true;
+        this.bindings[shadowsType].shouldResetBindGroupLayout = true;
+        this.cameraLightsBindGroup.addBinding(this.bindings[shadowsType]);
+        this.shouldUpdateCameraLightsBindGroup();
+      }
     }
     this.cameraLightsBindGroup.resetEntries();
     this.cameraLightsBindGroup.createBindGroup();
@@ -347,35 +372,26 @@ class GPUCameraRenderer extends GPURenderer {
     const shadowsType = type + "Shadows";
     const struct = this.shadowsBindingsStruct[type];
     const label = type.charAt(0).toUpperCase() + type.slice(1) + " shadows";
-    const binding = new BufferBinding({
-      label: label + " element",
-      name: shadowsType + "Elements",
-      bindingType: "uniform",
-      visibility: ["vertex", "fragment"],
-      struct
-    });
     this.bindings[shadowsType] = new BufferBinding({
       label,
       name: shadowsType,
       bindingType: "storage",
       visibility: ["vertex", "fragment", "compute"],
       // TODO needed in compute?
-      bindings: Array.from(Array(this.lightsBindingParams[lightsType].max).keys()).map((i) => {
-        return binding.clone({
-          ...binding.options,
-          // clone struct with new arrays
-          struct: Object.keys(struct).reduce((acc, bindingKey) => {
-            const binding2 = struct[bindingKey];
-            return {
-              ...acc,
-              [bindingKey]: {
-                type: binding2.type,
-                value: Array.isArray(binding2.value) || ArrayBuffer.isView(binding2.value) ? new binding2.value.constructor(binding2.value.length) : binding2.value
-              }
-            };
-          }, {})
-        });
-      })
+      childrenBindings: [
+        {
+          binding: new BufferBinding({
+            label: label + " element",
+            name: shadowsType + "Elements",
+            bindingType: "uniform",
+            visibility: ["vertex", "fragment"],
+            struct
+          }),
+          count: Math.max(1, this.lightsBindingParams[lightsType].max),
+          forceArray: true
+          // needs to be iterable anyway!
+        }
+      ]
     });
   }
   /* CAMERA, LIGHTS & SHADOWS BIND GROUP */
@@ -384,7 +400,7 @@ class GPUCameraRenderer extends GPURenderer {
    */
   setCameraLightsBindGroup() {
     this.cameraLightsBindGroup = new BindGroup(this, {
-      label: "Camera and lights uniform bind group",
+      label: this.options.label + ": Camera and lights uniform bind group",
       bindings: Object.keys(this.bindings).map((bindingName) => this.bindings[bindingName]).flat()
     });
     this.cameraLightsBindGroup.consumers.add(this.uuid);
@@ -412,6 +428,15 @@ class GPUCameraRenderer extends GPURenderer {
     this.bindings.camera?.shouldUpdateBinding("projection");
     this.bindings.camera?.shouldUpdateBinding("position");
     this.shouldUpdateCameraLightsBindGroup();
+  }
+  /**
+   * Update the {@link cameraLightsBindGroup | camera and lights BindGroup}.
+   */
+  updateCameraLightsBindGroup() {
+    if (this.cameraLightsBindGroup && __privateGet(this, _shouldUpdateCameraLightsBindGroup)) {
+      this.cameraLightsBindGroup.update();
+      __privateSet(this, _shouldUpdateCameraLightsBindGroup, false);
+    }
   }
   /**
    * Get all objects ({@link core/renderers/GPURenderer.RenderedMesh | rendered meshes} or {@link core/computePasses/ComputePass.ComputePass | compute passes}) using a given {@link AllowedBindGroups | bind group}, including {@link cameraLightsBindGroup | camera and lights bind group}.
@@ -469,18 +494,18 @@ class GPUCameraRenderer extends GPURenderer {
     if (!this.ready)
       return;
     this.setCameraBindGroup();
-    if (this.cameraLightsBindGroup && __privateGet(this, _shouldUpdateCameraLightsBindGroup)) {
-      this.cameraLightsBindGroup.update();
-      __privateSet(this, _shouldUpdateCameraLightsBindGroup, false);
-    }
+    this.updateCameraLightsBindGroup();
     super.render(commandEncoder);
+    if (this.cameraLightsBindGroup) {
+      this.cameraLightsBindGroup.needsPipelineFlush = false;
+    }
   }
   /**
    * Destroy our {@link GPUCameraRenderer}
    */
   destroy() {
     this.cameraLightsBindGroup?.destroy();
-    this.lights.forEach((light) => this.removeLight(light));
+    this.lights.forEach((light) => light.remove());
     super.destroy();
   }
 }

@@ -79,7 +79,7 @@ export declare class BindGroup {
     layoutCacheKey: string;
     /** A cache key allowing the {@link core/pipelines/PipelineManager.PipelineManager | PipelineManager} to compare {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | RenderPipelineEntry} bind groups content. */
     pipelineCacheKey: string;
-    /** Flag indicating whether we need to flush and recreate the pipeline using this {@link BindGroup} s*/
+    /** Flag indicating whether we need to flush and recreate the pipeline using this {@link BindGroup} */
     needsPipelineFlush: boolean;
     /** A Set to store this {@link BindGroup} consumers ({@link core/materials/Material.Material#uuid | Material uuid})  */
     consumers: Set<string>;
@@ -165,10 +165,11 @@ export declare class BindGroup {
      */
     get bufferBindings(): BindGroupBufferBindingElement[];
     /**
-     * Creates binding GPUBuffer with correct params
-     * @param binding - the binding element
+     * Creates binding GPUBuffer with correct params.
+     * @param binding - The binding element.
+     * @param optionalLabel - Optional label to use for the {@link GPUBuffer}.
      */
-    createBindingBuffer(binding: BindGroupBufferBindingElement): void;
+    createBindingBuffer(binding: BindGroupBufferBindingElement, optionalLabel?: any): void;
     /**
      * Fill in our entries bindGroupLayout and bindGroup arrays with the correct binding resources.
      * For buffer struct, create a GPUBuffer first if needed

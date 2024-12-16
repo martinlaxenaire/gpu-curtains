@@ -1,4 +1,4 @@
-import { BoxGeometry, DOMMesh, SphereGeometry } from '../../../dist/esm/index.mjs'
+import { RenderBundle, BoxGeometry, DOMMesh, SphereGeometry } from '../../../dist/esm/index.mjs'
 import normalsOpacityFs from '../shaders/normals-opacity-fs.wgsl.js'
 
 export class IntroDOMMeshes {
@@ -10,6 +10,15 @@ export class IntroDOMMeshes {
   }
 
   init() {
+    this.cubeEls = document.querySelectorAll('.intro-cube-mesh')
+    this.sphereEls = document.querySelectorAll('.intro-sphere-mesh')
+
+    this.renderBundle = new RenderBundle(this.gpuCurtains, {
+      label: 'DOM Meshes render bundle',
+      size: this.cubeEls.length + this.sphereEls.length,
+      useBuffer: true,
+    })
+
     this.createCubes()
     this.createSpheres()
   }
@@ -17,10 +26,10 @@ export class IntroDOMMeshes {
   createCubes() {
     this.cubeMeshes = []
 
-    const cubeEls = document.querySelectorAll('.intro-cube-mesh')
-    cubeEls.forEach((cubeEl, cubeIndex) => {
+    this.cubeEls.forEach((cubeEl, cubeIndex) => {
       const cubeMesh = new DOMMesh(this.gpuCurtains, cubeEl, {
         geometry: new BoxGeometry(),
+        renderBundle: this.renderBundle,
         shaders: {
           fragment: {
             code: normalsOpacityFs,
@@ -80,8 +89,14 @@ export class IntroDOMMeshes {
 
     this.scrollObserver.observe({
       element: parentContainer,
+      keepObserving: true,
       onElVisible: () => {
-        this.cubeTween.play()
+        this.cubeTween.restart()
+      },
+      onElHidden: () => {
+        this.cubeMeshes.forEach((cubeMesh) => {
+          cubeMesh.uniforms.global.opacity.value = 0
+        })
       },
     })
   }
@@ -89,10 +104,10 @@ export class IntroDOMMeshes {
   createSpheres() {
     this.sphereMeshes = []
 
-    const sphereEls = document.querySelectorAll('.intro-sphere-mesh')
-    sphereEls.forEach((sphereEl, sphereIndex) => {
+    this.sphereEls.forEach((sphereEl, sphereIndex) => {
       const sphereMesh = new DOMMesh(this.gpuCurtains, sphereEl, {
         geometry: new SphereGeometry(),
+        renderBundle: this.renderBundle,
         shaders: {
           fragment: {
             code: normalsOpacityFs,
@@ -158,8 +173,25 @@ export class IntroDOMMeshes {
 
     this.scrollObserver.observe({
       element: parentContainer,
+      keepObserving: true,
       onElVisible: () => {
-        this.sphereTween.play()
+        this.sphereTween.restart()
+      },
+      onElHidden: () => {
+        this.sphereMeshes.forEach((sphereMesh) => {
+          sphereMesh.uniforms.global.opacity.value = 0
+        })
+      },
+    })
+
+    this.scrollObserver.observe({
+      element: document.querySelector('#intro-meshes'),
+      keepObserving: true,
+      onElVisible: () => {
+        this.renderBundle.visible = true
+      },
+      onElHidden: () => {
+        this.renderBundle.visible = false
       },
     })
   }
@@ -177,5 +209,8 @@ export class IntroDOMMeshes {
       sphereMesh.userData.scaleTween?.kill()
       sphereMesh.remove()
     })
+
+    // destroy the render bundle as well
+    this.renderBundle.destroy()
   }
 }

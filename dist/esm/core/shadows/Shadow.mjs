@@ -22,7 +22,7 @@ var __privateAdd = (obj, member, value) => {
 };
 var __privateSet = (obj, member, value, setter) => {
   __accessCheck(obj, member, "write to private field");
-  setter ? setter.call(obj, value) : member.set(obj, value);
+  member.set(obj, value);
   return value;
 };
 var __privateMethod = (obj, member, method) => {
@@ -98,9 +98,7 @@ class Shadow {
     __privateAdd(this, _depthMaterials, void 0);
     /** @ignore */
     __privateAdd(this, _depthPassTaskID, void 0);
-    renderer = isCameraRenderer(renderer, this.constructor.name);
-    this.renderer = renderer;
-    this.rendererBinding = null;
+    this.setRenderer(renderer);
     this.light = light;
     this.index = this.light.index;
     this.options = {
@@ -121,6 +119,22 @@ class Shadow {
     this.isActive = false;
   }
   /**
+   * Set or reset this shadow {@link CameraRenderer}.
+   * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
+   */
+  setRenderer(renderer) {
+    renderer = isCameraRenderer(renderer, this.constructor.name);
+    this.renderer = renderer;
+    this.setRendererBinding();
+    __privateGet(this, _depthMaterials)?.forEach((depthMaterial) => {
+      depthMaterial.setRenderer(this.renderer);
+    });
+  }
+  /** @ignore */
+  setRendererBinding() {
+    this.rendererBinding = null;
+  }
+  /**
    * Set the parameters and start casting shadows by setting the {@link isActive} setter to `true`.<br>
    * Called internally by the associated {@link core/lights/Light.Light | Light} if any shadow parameters are specified when creating it. Can also be called directly.
    * @param parameters - parameters to use for this {@link Shadow}.
@@ -129,20 +143,15 @@ class Shadow {
     __privateMethod(this, _setParameters, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
     this.isActive = true;
   }
-  /** @ignore */
-  setRendererBinding() {
-  }
   /**
    * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link core/lights/Light.Light | lights} has been overflowed.
    */
   reset() {
-    if (this.isActive) {
-      this.onPropertyChanged("isActive", 1);
-      this.onPropertyChanged("intensity", this.intensity);
-      this.onPropertyChanged("bias", this.bias);
-      this.onPropertyChanged("normalBias", this.normalBias);
-      this.onPropertyChanged("pcfSamples", this.pcfSamples);
-    }
+    this.onPropertyChanged("isActive", this.isActive ? 1 : 0);
+    this.onPropertyChanged("intensity", this.intensity);
+    this.onPropertyChanged("bias", this.bias);
+    this.onPropertyChanged("normalBias", this.normalBias);
+    this.onPropertyChanged("pcfSamples", this.pcfSamples);
   }
   /**
    * Get whether this {@link Shadow} is actually casting shadows.
@@ -153,7 +162,7 @@ class Shadow {
   }
   /**
    * Start or stop casting shadows.
-   * @param value
+   * @param value - New active state.
    */
   set isActive(value) {
     if (!value && this.isActive) {
@@ -278,7 +287,7 @@ class Shadow {
    */
   createDepthTexture() {
     this.depthTexture = new Texture(this.renderer, {
-      label: "Shadow depth texture " + this.index,
+      label: `${this.constructor.name} (index: ${this.light.index}) depth texture`,
       name: "shadowDepthTexture" + this.index,
       type: "depth",
       format: this.depthTextureFormat,
@@ -311,11 +320,11 @@ class Shadow {
     if (this.rendererBinding) {
       if (value instanceof Mat4) {
         for (let i = 0; i < value.elements.length; i++) {
-          this.rendererBinding.options.bindings[this.index].inputs[propertyKey].value[i] = value.elements[i];
+          this.rendererBinding.childrenBindings[this.index].inputs[propertyKey].value[i] = value.elements[i];
         }
-        this.rendererBinding.options.bindings[this.index].inputs[propertyKey].shouldUpdate = true;
+        this.rendererBinding.childrenBindings[this.index].inputs[propertyKey].shouldUpdate = true;
       } else {
-        this.rendererBinding.options.bindings[this.index].inputs[propertyKey].value = value;
+        this.rendererBinding.childrenBindings[this.index].inputs[propertyKey].value = value;
       }
       this.renderer.shouldUpdateCameraLightsBindGroup();
     }
@@ -379,11 +388,25 @@ class Shadow {
    * @param commandEncoder - {@link GPUCommandEncoder} to use.
    */
   renderDepthPass(commandEncoder) {
+    const renderBundles = /* @__PURE__ */ new Map();
+    this.meshes.forEach((mesh) => {
+      if (mesh.options.renderBundle) {
+        renderBundles.set(mesh.options.renderBundle.uuid, mesh.options.renderBundle);
+      }
+    });
+    renderBundles.forEach((bundle) => {
+      bundle.updateBinding();
+    });
+    renderBundles.clear();
     this.renderer.pipelineManager.resetCurrentPipeline();
     const depthPass = commandEncoder.beginRenderPass(this.depthPassTarget.renderPass.descriptor);
+    if (!this.renderer.production)
+      depthPass.pushDebugGroup(`${this.constructor.name} (index: ${this.index}): depth pass`);
     this.meshes.forEach((mesh) => {
       mesh.render(depthPass);
     });
+    if (!this.renderer.production)
+      depthPass.popDebugGroup();
     depthPass.end();
   }
   /**
@@ -438,6 +461,8 @@ class Shadow {
    * @param parameters - Optional {@link RenderMaterialParams | parameters} to use for the depth material.
    */
   addShadowCastingMesh(mesh, parameters = {}) {
+    if (this.meshes.get(mesh.uuid))
+      return;
     mesh.options.castShadows = true;
     __privateGet(this, _materials).set(mesh.uuid, mesh.material);
     parameters = this.patchShadowCastingMeshParams(mesh, parameters);
@@ -448,7 +473,7 @@ class Shadow {
     __privateGet(this, _depthMaterials).set(
       mesh.uuid,
       new RenderMaterial(this.renderer, {
-        label: mesh.options.label + " depth render material",
+        label: `${this.constructor.name} (index: ${this.index}) ${mesh.options.label} depth render material`,
         ...parameters
       })
     );

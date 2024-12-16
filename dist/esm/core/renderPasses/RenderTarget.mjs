@@ -9,7 +9,7 @@ var __accessCheck = (obj, member, msg) => {
 };
 var __privateGet = (obj, member, getter) => {
   __accessCheck(obj, member, "read from private field");
-  return getter ? getter.call(obj) : member.get(obj);
+  return member.get(obj);
 };
 var __privateAdd = (obj, member, value) => {
   if (member.has(obj))
@@ -18,7 +18,7 @@ var __privateAdd = (obj, member, value) => {
 };
 var __privateSet = (obj, member, value, setter) => {
   __accessCheck(obj, member, "write to private field");
-  setter ? setter.call(obj, value) : member.set(obj, value);
+  member.set(obj, value);
   return value;
 };
 var _autoRender;
@@ -57,7 +57,7 @@ class RenderTarget {
       this.renderTexture = new Texture(this.renderer, {
         label: this.options.label ? `${this.options.label} Render Texture` : "Render Target render texture",
         name: "renderTexture",
-        format: colorAttachments && colorAttachments.length && colorAttachments[0].targetFormat ? colorAttachments[0].targetFormat : this.renderer.options.preferredFormat,
+        format: colorAttachments && colorAttachments.length && colorAttachments[0].targetFormat ? colorAttachments[0].targetFormat : this.renderer.options.context.format,
         ...this.options.qualityRatio !== void 0 && { qualityRatio: this.options.qualityRatio },
         usage: ["copySrc", "renderAttachment", "textureBinding"]
       });

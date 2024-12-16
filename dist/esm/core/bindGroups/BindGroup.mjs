@@ -35,7 +35,11 @@ class BindGroup {
     this.consumers = /* @__PURE__ */ new Set();
     for (const binding of this.bufferBindings) {
       if ("buffer" in binding) {
-        binding.buffer.consumers.add(this.uuid);
+        if (binding.parent) {
+          binding.parent.buffer.consumers.add(this.uuid);
+        } else {
+          binding.buffer.consumers.add(this.uuid);
+        }
       }
       if ("resultBuffer" in binding) {
         binding.resultBuffer.consumers.add(this.uuid);
@@ -57,8 +61,13 @@ class BindGroup {
   addBindings(bindings = []) {
     bindings.forEach((binding) => {
       if ("buffer" in binding) {
-        this.renderer.deviceManager.bufferBindings.set(binding.cacheKey, binding);
-        binding.buffer.consumers.add(this.uuid);
+        if (binding.parent) {
+          this.renderer.deviceManager.bufferBindings.set(binding.parent.cacheKey, binding.parent);
+          binding.parent.buffer.consumers.add(this.uuid);
+        } else {
+          this.renderer.deviceManager.bufferBindings.set(binding.cacheKey, binding);
+          binding.buffer.consumers.add(this.uuid);
+        }
       }
     });
     this.bindings = [...this.bindings, ...bindings];
@@ -80,6 +89,13 @@ class BindGroup {
       binding.buffer.consumers.delete(this.uuid);
       if (!binding.buffer.consumers.size) {
         binding.buffer.destroy();
+      }
+      if (binding.parent) {
+        binding.parent.buffer.consumers.delete(this.uuid);
+        if (!binding.parent.buffer.consumers.size) {
+          this.renderer.removeBuffer(binding.parent.buffer);
+          binding.parent.buffer.destroy();
+        }
       }
     }
     if ("resultBuffer" in binding) {
@@ -230,6 +246,9 @@ class BindGroup {
     this.resetEntries();
     for (const binding of this.bufferBindings) {
       binding.buffer.reset();
+      if (binding.parent) {
+        binding.parent.buffer.reset();
+      }
       if ("resultBuffer" in binding) {
         binding.resultBuffer.reset();
       }
@@ -258,12 +277,13 @@ class BindGroup {
     );
   }
   /**
-   * Creates binding GPUBuffer with correct params
-   * @param binding - the binding element
+   * Creates binding GPUBuffer with correct params.
+   * @param binding - The binding element.
+   * @param optionalLabel - Optional label to use for the {@link GPUBuffer}.
    */
-  createBindingBuffer(binding) {
+  createBindingBuffer(binding, optionalLabel = null) {
     binding.buffer.createBuffer(this.renderer, {
-      label: this.options.label + ": " + binding.bindingType + " buffer from: " + binding.label,
+      label: optionalLabel || this.options.label + ": " + binding.bindingType + " buffer from: " + binding.label,
       usage: [...["copySrc", "copyDst", binding.bindingType], ...binding.options.usage]
     });
     if ("resultBuffer" in binding) {
@@ -284,7 +304,9 @@ class BindGroup {
         binding.visibility = GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE;
       }
       if ("buffer" in binding) {
-        if (!binding.buffer.GPUBuffer) {
+        if (binding.parent && !binding.parent.buffer.GPUBuffer) {
+          this.createBindingBuffer(binding.parent, binding.parent.options.label);
+        } else if (!binding.buffer.GPUBuffer && !binding.parent) {
           this.createBindingBuffer(binding);
         }
       }
@@ -393,10 +415,12 @@ class BindGroup {
     for (const binding of bindingsRef) {
       bindGroupCopy.addBinding(binding);
       if ("buffer" in binding) {
-        if (!binding.buffer.GPUBuffer) {
+        if (binding.parent && !binding.parent.buffer.GPUBuffer) {
+          this.createBindingBuffer(binding.parent, binding.parent.options.label);
+          binding.parent.buffer.consumers.add(bindGroupCopy.uuid);
+        } else if (!binding.buffer.GPUBuffer && !binding.parent) {
           this.createBindingBuffer(binding);
         }
-        binding.buffer.consumers.add(bindGroupCopy.uuid);
         if ("resultBuffer" in binding) {
           binding.resultBuffer.consumers.add(bindGroupCopy.uuid);
         }

@@ -2,6 +2,7 @@ import { Light, LightBaseParams, LightsType } from './Light';
 import { Vec3 } from '../../math/Vec3';
 import { DirectionalShadow, DirectionalShadowParams } from '../shadows/DirectionalShadow';
 import { CameraRenderer } from '../renderers/utils';
+import { GPUCurtains } from '../../curtains/GPUCurtains';
 /**
  * Base parameters used to create a {@link DirectionalLight}.
  */
@@ -72,7 +73,12 @@ export declare class DirectionalLight extends Light {
      * @param renderer - {@link CameraRenderer} used to create this {@link DirectionalLight}.
      * @param parameters - {@link DirectionalLightBaseParams | parameters} used to create this {@link DirectionalLight}.
      */
-    constructor(renderer: CameraRenderer, { color, intensity, position, target, shadow, }?: DirectionalLightBaseParams);
+    constructor(renderer: CameraRenderer | GPUCurtains, { color, intensity, position, target, shadow, }?: DirectionalLightBaseParams);
+    /**
+     * Set or reset this {@link DirectionalLight} {@link CameraRenderer}.
+     * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
+     */
+    setRenderer(renderer: CameraRenderer | GPUCurtains): void;
     /**
      * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of {@link DirectionalLight} has been overflowed.
      */

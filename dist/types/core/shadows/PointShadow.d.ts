@@ -5,6 +5,7 @@ import { Vec3 } from '../../math/Vec3';
 import { PointLight } from '../lights/PointLight';
 import { Input } from '../../types/BindGroups';
 import { ShaderOptions } from '../../types/Materials';
+import { GPUCurtains } from '../../curtains/GPUCurtains';
 /** Defines the perspective shadow camera params. */
 export type PerspectiveShadowCameraParams = Omit<PerspectiveProjectionParams, 'fov' | 'aspect'>;
 /** Defines the perspective shadow camera. */
@@ -51,7 +52,7 @@ export declare class PointShadow extends Shadow {
      * @param renderer - {@link CameraRenderer} used to create this {@link PointShadow}.
      * @param parameters - {@link PointShadowParams | parameters} used to create this {@link PointShadow}.
      */
-    constructor(renderer: CameraRenderer, { light, intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender, camera, }?: PointShadowParams);
+    constructor(renderer: CameraRenderer | GPUCurtains, { light, intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender, camera, }?: PointShadowParams);
     /**
      * Set or reset this {@link PointShadow} {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      */

@@ -9,7 +9,7 @@ var __accessCheck = (obj, member, msg) => {
 };
 var __privateGet = (obj, member, getter) => {
   __accessCheck(obj, member, "read from private field");
-  return getter ? getter.call(obj) : member.get(obj);
+  return member.get(obj);
 };
 var __privateAdd = (obj, member, value) => {
   if (member.has(obj))
@@ -18,7 +18,7 @@ var __privateAdd = (obj, member, value) => {
 };
 var __privateSet = (obj, member, value, setter) => {
   __accessCheck(obj, member, "write to private field");
-  setter ? setter.call(obj, value) : member.set(obj, value);
+  member.set(obj, value);
   return value;
 };
 var _autoResize;
@@ -61,7 +61,7 @@ class Texture {
       this.options.viewDimension = parameters.fromTexture.options.viewDimension;
     }
     if (!this.options.format) {
-      this.options.format = this.renderer.options.preferredFormat;
+      this.options.format = this.renderer.options.context.format;
     }
     this.size = this.options.fixedSize ? {
       width: this.options.fixedSize.width * this.options.qualityRatio,

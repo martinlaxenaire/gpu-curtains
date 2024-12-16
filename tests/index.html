@@ -50,6 +50,7 @@
 
       <div id="tests" class="large-container">
         <h1>gpu-curtains tests</h1>
+        <p>Tests used to help debugging existing features or implementing new ones.</p>
         <ul>
           <li>
             <a href="./basic-rotating-cube/" target="_blank">Basic rotating cube</a>
@@ -70,6 +71,9 @@
             <a href="./context-lost/" target="_blank">Context lost/restored</a>
           </li>
           <li>
+            <a href="./cubemap-env/" target="_blank">Cubemap environment texture</a>
+          </li>
+          <li>
             <a href="./dynamic-materials-geometries/" target="_blank">Dynamic materials and geometries</a>
           </li>
           <li>
@@ -83,6 +87,9 @@
           </li>
           <li>
             <a href="./lights/" target="_blank">Lights</a>
+          </li>
+          <li>
+            <a href="./lights-dynamic-renderer/" target="_blank">Lights dynamic renderer</a>
           </li>
           <li>
             <a href="./multiple-canvases/" target="_blank">Multiple canvases</a>
@@ -109,6 +116,12 @@
             <a href="./plane-transformations/" target="_blank">Plane transformations</a>
           </li>
           <li>
+            <a href="./raycaster/" target="_blank">Raycaster</a>
+          </li>
+          <li>
+            <a href="./render-bundles/" target="_blank">Render bundles</a>
+          </li>
+          <li>
             <a href="./reset-plane/" target="_blank">Reset plane HTML element</a>
           </li>
           <li>
@@ -121,10 +134,13 @@
             <a href="./shadow-mapping/" target="_blank">Shadow mapping</a>
           </li>
           <li>
-            <a href="./stress-test/" target="_blank">Stress test</a>
+            <a href="./stress-test/?count=3000" target="_blank">Stress test</a>
           </li>
           <li>
-            <a href="./stress-test-instanced/" target="_blank">Stress test instanced</a>
+            <a href="./stress-test-instanced/?count=10000" target="_blank">Stress test instanced</a>
+          </li>
+          <li>
+            <a href="./stress-test-render-bundle/?count=5000" target="_blank">Stress test render bundle</a>
           </li>
           <li>
             <a href="./textures-transformations/" target="_blank">Textures transformations</a>
@@ -143,12 +159,10 @@
       function gtag() {
         dataLayer.push(arguments)
       }
-      gtag('js', new Date())
 
-      gtag('config', 'G-45554DLGL6')
-
-      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        window['ga-disable-G-45554DLGL6'] = true
+      if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+        gtag('js', new Date())
+        gtag('config', 'G-45554DLGL6')
       }
     </script>
   </body>

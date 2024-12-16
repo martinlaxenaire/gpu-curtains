@@ -8,9 +8,9 @@
 - Camera
 - Geometries
 - Materials (Material, RenderMaterial, ComputeMaterial)
-- Buffer & Bindings & BindGroups
+- Buffers & Bindings & BindGroups
 - Render + Compute Pipelines (async by default)
-- PipelineManager to cache RenderPipeline + set only needed BindGroup
+- PipelineManager to cache RenderPipelineEntry and ComputePipelineEntry + set only needed BindGroup
 - Meshes (Mesh, DOMMesh, FullscreenPlane, Plane)
 - Compute passes
 - Texture (including storage & depth) & DOMTexture classes
@@ -20,12 +20,14 @@
 - Lights & Shadows
 - Shader passes
 - PingPongPlane
-- Plane raycasting
+- RenderBundle
 - Basic CacheManager
 - Scroll + resize, frustum culling check
 - GPUCurtains
 - OrbitControls
+- Raycaster
 - GLTFLoader + GLTFScenesManager
+- HDRLoader + EnvironmentMap
 
 ## Work in progress
 
@@ -34,9 +36,10 @@
 ## TODO / possible improvements
 
 - Add/improve GLTFScenesManager features (sparse accessors, animations, morphing, skinning...)
-- Mesh raycasting
 - Add more lights (SpotLight...)
+- MSDF fonts
+- Better shader chunks system and/or custom preprocessor
+- Implement different lit extras RenderMaterial (i.e. RenderLambertMaterial, RenderPhongMaterial, RenderPBRMaterial, etc.)?
+- Implement indirect draw calls?
 - Improve typedoc documentation?
-- Use render bundles? Probably not suited to the library tho
-- Use indirect draw calls?
 - More examples & tests?

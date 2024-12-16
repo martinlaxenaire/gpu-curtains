@@ -14,7 +14,6 @@ import { RenderMaterialParams, ShaderOptions } from '../../../types/Materials'
 import { ProjectedObject3D } from '../../objects3D/ProjectedObject3D'
 import default_projected_vsWgsl from '../../shaders/chunks/default/default_projected_vs.wgsl'
 import default_normal_fsWgsl from '../../shaders/chunks/default/default_normal_fs.wgsl'
-import { BufferBindingParams } from '../../bindings/BufferBinding'
 import { Vec3 } from '../../../math/Vec3'
 import {
   getPCFDirectionalShadows,
@@ -22,9 +21,11 @@ import {
   getPCFPointShadows,
   getPCFShadowContribution,
 } from '../../shaders/chunks/shading/shadows'
+import { RenderBundle } from '../../renderPasses/RenderBundle'
+import { BufferBinding, BufferBindingParams } from '../../bindings/BufferBinding'
 
 /** Define all possible frustum culling checks. */
-export type FrustumCullingCheck = 'OBB' | 'sphere' | boolean
+export type FrustumCullingCheck = 'OBB' | 'sphere' | false
 
 /**
  * Base parameters used to create a ProjectedMesh
@@ -95,6 +96,25 @@ export declare class ProjectedMeshBaseClass extends MeshBaseClass {
    * @param parameters - {@link ProjectedMeshParameters | Projected Mesh base parameters}
    */
   constructor(renderer: CameraRenderer, element: HTMLElement | null, parameters: ProjectedMeshParameters)
+
+  /**
+   * Set or reset this Mesh {@link renderer}.
+   * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
+   */
+  setRenderer(renderer: CameraRenderer | GPUCurtains): void
+
+  /**
+   * Assign or remove a {@link RenderBundle} to this Mesh.
+   * @param renderBundle - the {@link RenderBundle} to assign or null if we want to remove the current {@link RenderBundle}.
+   * @param updateScene - Whether to remove and then re-add the Mesh from the {@link core/scenes/Scene.Scene | Scene} or not.
+   */
+  setRenderBundle(renderBundle?: RenderBundle | null, updateScene?: boolean): void
+
+  /**
+   * Reset the {@link BufferBinding | matrices buffer binding} parent and offset and tell its bind group to update.
+   * @param offset - New offset to use in the parent {@link RenderBundle#binding | RenderBundle binding}.
+   */
+  patchRenderBundleBinding(offset?: number): void
 
   /**
    * Set default shaders if one or both of them are missing
@@ -267,10 +287,79 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
       this.setDOMFrustum()
     }
 
+    /**
+     * Set or reset this Mesh {@link renderer}.
+     * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
+     */
+    setRenderer(renderer: CameraRenderer | GPUCurtains) {
+      super.setRenderer(renderer)
+
+      // force update of new camera
+      this.camera = this.renderer.camera
+
+      if (this.options.castShadows) {
+        this.renderer.shadowCastingLights.forEach((light) => {
+          if (light.shadow.isActive) {
+            light.shadow.addShadowCastingMesh(this)
+          }
+        })
+      }
+    }
+
+    /**
+     * Assign or remove a {@link RenderBundle} to this Mesh.
+     * @param renderBundle - The {@link RenderBundle} to assign or null if we want to remove the current {@link RenderBundle}.
+     * @param updateScene - Whether to remove and then re-add the Mesh from the {@link core/scenes/Scene.Scene | Scene} or not.
+     */
+    setRenderBundle(renderBundle: RenderBundle | null, updateScene = true) {
+      // same render bundle? abort
+      if (this.renderBundle && renderBundle && this.renderBundle.uuid === renderBundle.uuid) return
+
+      const hasRenderBundle = !!this.renderBundle
+      const bindGroup = this.material.getBindGroupByBindingName('matrices')
+      const matrices = this.material.getBufferBindingByName('matrices') as BufferBinding
+
+      if (this.renderBundle && !renderBundle && matrices.parent) {
+        // if we did have a render bundle, reset the parent and bind group
+        matrices.parent = null
+        matrices.shouldResetBindGroup = true
+        bindGroup.createBindingBuffer(matrices)
+      }
+
+      super.setRenderBundle(renderBundle, updateScene)
+
+      if (this.renderBundle && this.renderBundle.binding) {
+        // if we did not have a render bundle, but now we have one with a buffer
+        // destroy current matrices binding
+        if (hasRenderBundle) {
+          bindGroup.destroyBufferBinding(matrices)
+        }
+
+        matrices.options.offset = this.renderBundle.meshes.size - 1
+        matrices.parent = this.renderBundle.binding
+
+        matrices.shouldResetBindGroup = true
+      }
+    }
+
+    /**
+     * Reset the {@link BufferBinding | matrices buffer binding} parent and offset and tell its bind group to update.
+     * @param offset - New offset to use in the parent {@link RenderBundle#binding | RenderBundle binding}.
+     */
+    patchRenderBundleBinding(offset = 0) {
+      const matrices = this.material.getBufferBindingByName('matrices') as BufferBinding
+
+      matrices.options.offset = offset
+      matrices.parent = this.renderBundle.binding
+
+      matrices.shouldResetBindGroup = true
+    }
+
     /* SHADERS */
 
     /**
-     * Set default shaders if one or both of them are missing
+     * Set default shaders if one or both of them are missing.
+     * Can also patch the fragment shader if the mesh should receive shadows.
      */
     setShaders() {
       const { shaders } = this.options
@@ -301,6 +390,23 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
           }
         }
       }
+
+      // add shadow receiving chunks to shaders
+      // TODO what if we change the mesh renderer?
+      if (this.options.receiveShadows) {
+        const hasActiveShadows = this.renderer.shadowCastingLights.find((light) => light.shadow.isActive)
+
+        if (hasActiveShadows && shaders.fragment && typeof shaders.fragment === 'object') {
+          shaders.fragment.code =
+            getPCFDirectionalShadows(this.renderer) +
+            getPCFShadowContribution +
+            getPCFPointShadows(this.renderer) +
+            getPCFPointShadowContribution +
+            shaders.fragment.code
+        }
+      }
+
+      return shaders
     }
 
     /* GEOMETRY */
@@ -365,19 +471,6 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
           }
         })
 
-        // add chunks to shaders
-        // TODO what if we change the mesh renderer?
-        const hasActiveShadows = this.renderer.shadowCastingLights.find((light) => light.shadow.isActive)
-
-        if (hasActiveShadows && parameters.shaders.fragment && typeof parameters.shaders.fragment === 'object') {
-          parameters.shaders.fragment.code =
-            getPCFDirectionalShadows(this.renderer) +
-            getPCFShadowContribution +
-            getPCFPointShadows(this.renderer) +
-            getPCFPointShadowContribution +
-            parameters.shaders.fragment.code
-        }
-
         // filter duplicate depth comparison samplers
         depthSamplers = depthSamplers.filter(
           (sampler, i, array) => array.findIndex((s) => s.uuid === sampler.uuid) === i
@@ -409,7 +502,9 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
       // https://doc.babylonjs.com/features/featuresDeepDive/materials/shaders/introToShaders#built-in-variables
       const matricesUniforms: BufferBindingParams = {
         label: 'Matrices',
+        name: 'matrices',
         visibility: ['vertex'],
+        minOffset: this.renderer.device.limits.minUniformBufferOffsetAlignment,
         struct: {
           model: {
             type: 'mat4x4f',
@@ -425,15 +520,18 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
             type: 'mat3x3f',
             value: this.normalMatrix,
           },
-          // modelViewProjection: {
-          //   type: 'mat4x4f',
-          //   value: this.modelViewProjectionMatrix,
-          // },
         },
       }
 
-      if (!meshParameters.uniforms) meshParameters.uniforms = {}
-      meshParameters.uniforms = { matrices: matricesUniforms, ...meshParameters.uniforms }
+      if (this.options.renderBundle && this.options.renderBundle.binding) {
+        matricesUniforms.parent = this.options.renderBundle.binding
+        matricesUniforms.offset = this.options.renderBundle.meshes.size
+      }
+
+      const meshTransformationBinding = new BufferBinding(matricesUniforms)
+
+      if (!meshParameters.bindings) meshParameters.bindings = []
+      meshParameters.bindings.unshift(meshTransformationBinding)
 
       super.setMaterial(meshParameters)
     }
@@ -587,7 +685,7 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
       sphereCenter.y = (rect.yMax + rect.yMin) / 2
 
       // get sphere radius
-      const sphereRadius = Math.max(rect.xMax - rect.xMin, rect.yMax - rect.yMin)
+      const sphereRadius = Math.max(rect.xMax - rect.xMin, rect.yMax - rect.yMin) * 0.5
 
       return {
         center: sphereCenter,

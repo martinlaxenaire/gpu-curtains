@@ -12,12 +12,11 @@ class GPURenderer {
    */
   constructor({
     deviceManager,
-    label = "Main renderer",
+    label,
     container,
     pixelRatio = 1,
     autoResize = true,
-    preferredFormat,
-    alphaMode = "premultiplied",
+    context = {},
     renderPass
   }) {
     // callbacks / events
@@ -35,27 +34,36 @@ class GPURenderer {
     };
     this.type = "GPURenderer";
     this.uuid = generateUUID();
-    if (!deviceManager) {
-      throwError(`GPURenderer (${label}): no device manager provided: ${deviceManager}`);
+    if (!deviceManager || deviceManager.constructor.name !== "GPUDeviceManager") {
+      throwError(
+        label ? `${label} (${this.type}): no device manager or wrong device manager provided: ${deviceManager}` : `${this.type}: no device manager or wrong device manager provided: ${deviceManager}`
+      );
+    }
+    if (!label) {
+      label = `${this.constructor.name}${deviceManager.renderers.length}`;
     }
     this.deviceManager = deviceManager;
     this.deviceManager.addRenderer(this);
     this.shouldRender = true;
     this.shouldRenderScene = true;
+    const contextOptions = {
+      ...{
+        alphaMode: "premultiplied",
+        format: this.deviceManager.gpu?.getPreferredCanvasFormat()
+      },
+      ...context
+    };
     renderPass = { ...{ useDepth: true, sampleCount: 4, clearValue: [0, 0, 0, 0] }, ...renderPass };
-    preferredFormat = preferredFormat ?? this.deviceManager.gpu?.getPreferredCanvasFormat();
     this.options = {
       deviceManager,
       label,
       container,
       pixelRatio,
       autoResize,
-      preferredFormat,
-      alphaMode,
+      context: contextOptions,
       renderPass
     };
     this.pixelRatio = pixelRatio ?? window.devicePixelRatio ?? 1;
-    this.alphaMode = alphaMode;
     const isOffscreenCanvas = container instanceof OffscreenCanvas;
     const isContainerCanvas = isOffscreenCanvas || container instanceof HTMLCanvasElement;
     this.canvas = isContainerCanvas ? container : document.createElement("canvas");
@@ -255,8 +263,7 @@ class GPURenderer {
   configureContext() {
     this.context.configure({
       device: this.device,
-      format: this.options.preferredFormat,
-      alphaMode: this.alphaMode,
+      ...this.options.context,
       // needed so we can copy textures for post processing usage
       usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST
       //viewFormats: []
@@ -277,6 +284,7 @@ class GPURenderer {
    * Force all our scene objects to lose context.
    */
   loseContext() {
+    this.renderBundles.forEach((bundle) => bundle.loseContext());
     this.renderedObjects.forEach((sceneObject) => sceneObject.loseContext());
   }
   /**
@@ -359,7 +367,7 @@ class GPURenderer {
   }) {
     if (!srcBuffer || !srcBuffer.GPUBuffer) {
       throwWarning(
-        `${this.type} (${this.options.label}): cannot copy to buffer because the source buffer has not been provided`
+        `${this.options.label} (${this.type}): cannot copy to buffer because the source buffer has not been provided`
       );
       return null;
     }
@@ -376,13 +384,13 @@ class GPURenderer {
     }
     if (srcBuffer.GPUBuffer.mapState !== "unmapped") {
       throwWarning(
-        `${this.type} (${this.options.label}): Cannot copy from ${srcBuffer.GPUBuffer} because it is currently mapped`
+        `${this.options.label} (${this.type}): Cannot copy from ${srcBuffer.GPUBuffer} because it is currently mapped`
       );
       return;
     }
     if (dstBuffer.GPUBuffer.mapState !== "unmapped") {
       throwWarning(
-        `${this.type} (${this.options.label}): Cannot copy from ${dstBuffer.GPUBuffer} because it is currently mapped`
+        `${this.options.label} (${this.type}): Cannot copy from ${dstBuffer.GPUBuffer} because it is currently mapped`
       );
       return;
     }
@@ -602,6 +610,7 @@ class GPURenderer {
     this.renderTargets = [];
     this.meshes = [];
     this.textures = [];
+    this.renderBundles = [];
   }
   /**
    * Get all this {@link GPURenderer} rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes)
@@ -782,6 +791,7 @@ class GPURenderer {
   destroy() {
     this.deviceManager.renderers = this.deviceManager.renderers.filter((renderer) => renderer.uuid !== this.uuid);
     this.domElement?.destroy();
+    this.renderBundles.forEach((bundle) => bundle.destroy());
     this.renderPass?.destroy();
     this.postProcessingPass?.destroy();
     this.renderTargets.forEach((renderTarget) => renderTarget.destroy());

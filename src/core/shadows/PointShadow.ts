@@ -7,6 +7,7 @@ import { getDefaultPointShadowDepthFs, getDefaultPointShadowDepthVs } from '../s
 import { PointLight } from '../lights/PointLight'
 import { Input } from '../../types/BindGroups'
 import { ShaderOptions } from '../../types/Materials'
+import { GPUCurtains } from '../../curtains/GPUCurtains'
 
 /** Defines the perspective shadow camera params. */
 export type PerspectiveShadowCameraParams = Omit<PerspectiveProjectionParams, 'fov' | 'aspect'>
@@ -89,7 +90,7 @@ export class PointShadow extends Shadow {
    * @param parameters - {@link PointShadowParams | parameters} used to create this {@link PointShadow}.
    */
   constructor(
-    renderer: CameraRenderer,
+    renderer: CameraRenderer | GPUCurtains,
     {
       light,
       intensity,
@@ -121,7 +122,7 @@ export class PointShadow extends Shadow {
       camera,
     }
 
-    this.setRendererBinding()
+    //this.setRendererBinding()
 
     this.cubeDirections = [
       new Vec3(-1, 0, 0),
@@ -215,10 +216,8 @@ export class PointShadow extends Shadow {
   reset() {
     this.setRendererBinding()
     super.reset()
-    this.onPropertyChanged('cameraNear', this.camera.near)
-    this.onPropertyChanged('cameraFar', this.camera.far)
-    this.onPropertyChanged('projectionMatrix', this.camera.projectionMatrix)
-    this.updateViewMatrices()
+    // no need to update view matrices, they are handled by the parent PointLight reset call
+    this.updateProjectionMatrix()
   }
 
   /**
@@ -247,12 +246,12 @@ export class PointShadow extends Shadow {
       this.camera.viewMatrices[i].makeView(position, this.#tempCubeDirection, this.cubeUps[i])
 
       for (let j = 0; j < 16; j++) {
-        this.rendererBinding.options.bindings[this.index].inputs.viewMatrices.value[i * 16 + j] =
+        this.rendererBinding.childrenBindings[this.index].inputs.viewMatrices.value[i * 16 + j] =
           this.camera.viewMatrices[i].elements[j]
       }
     }
 
-    this.rendererBinding.options.bindings[this.index].inputs.viewMatrices.shouldUpdate = true
+    this.rendererBinding.childrenBindings[this.index].inputs.viewMatrices.shouldUpdate = true
   }
 
   /**
@@ -285,7 +284,7 @@ export class PointShadow extends Shadow {
   createDepthTexture() {
     const maxSize = Math.max(this.depthTextureSize.x, this.depthTextureSize.y)
     this.depthTexture = new Texture(this.renderer, {
-      label: 'Point shadow cube depth texture ' + this.index,
+      label: `${this.constructor.name} (index: ${this.index}) depth texture`,
       name: 'pointShadowCubeDepthTexture' + this.index,
       type: 'depth',
       format: this.depthTextureFormat,
@@ -320,15 +319,28 @@ export class PointShadow extends Shadow {
    * @param once - Whether to render it only once or not.
    */
   render(once = false): number {
+    // TODO once multi-view is available,
+    // we'll be able to use a single render pass
+    // to render to all 6 faces of the cube depth map
+    // see https://kidrigger.dev/post/vulkan-render-to-cubemap-using-multiview/
     return this.renderer.onBeforeCommandEncoderCreation.add(
       () => {
         if (!this.meshes.size) return
+
+        // since we're not inside the main loop,
+        // we need to be sure the renderer camera & lights bind group has been created
+        this.renderer.setCameraBindGroup()
 
         // assign depth material to meshes
         this.useDepthMaterials()
 
         for (let i = 0; i < 6; i++) {
           const commandEncoder = this.renderer.device.createCommandEncoder()
+
+          if (!this.renderer.production)
+            commandEncoder.pushDebugGroup(
+              `${this.constructor.name} (index: ${this.index}): depth pass command encoder for face ${i}`
+            )
 
           this.depthPassTarget.renderPass.setRenderPassDescriptor(
             this.depthTexture.texture.createView({
@@ -340,12 +352,16 @@ export class PointShadow extends Shadow {
           )
 
           // update face index
-          this.rendererBinding.options.bindings[this.index].inputs.face.value = i
-          // since we're not inside the main loop,
+          this.rendererBinding.childrenBindings[this.index].inputs.face.value = i
+
+          // again, we're not inside the main loop,
           // we need to explicitly update the renderer camera & lights bind group
-          this.renderer.cameraLightsBindGroup.update()
+          this.renderer.shouldUpdateCameraLightsBindGroup()
+          this.renderer.updateCameraLightsBindGroup()
 
           this.renderDepthPass(commandEncoder)
+
+          if (!this.renderer.production) commandEncoder.popDebugGroup()
 
           const commandBuffer = commandEncoder.finish()
           this.renderer.device.queue.submit([commandBuffer])

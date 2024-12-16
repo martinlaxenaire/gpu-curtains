@@ -11,6 +11,7 @@ import { PointLight } from '../lights/PointLight';
 import { BufferBinding } from '../bindings/BufferBinding';
 import { RenderMaterialParams, ShaderOptions } from '../../types/Materials';
 import { Input } from '../../types/BindGroups';
+import { GPUCurtains } from '../../curtains/GPUCurtains';
 /** Defines all types of shadows. */
 export type ShadowsType = 'directionalShadows' | 'pointShadows';
 /** @ignore */
@@ -74,15 +75,20 @@ export declare class Shadow {
      * @param renderer - {@link CameraRenderer} used to create this {@link Shadow}.
      * @param parameters - {@link ShadowBaseParams | parameters} used to create this {@link Shadow}.
      */
-    constructor(renderer: CameraRenderer, { light, intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender, }?: ShadowBaseParams);
+    constructor(renderer: CameraRenderer | GPUCurtains, { light, intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender, }?: ShadowBaseParams);
+    /**
+     * Set or reset this shadow {@link CameraRenderer}.
+     * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
+     */
+    setRenderer(renderer: CameraRenderer | GPUCurtains): void;
+    /** @ignore */
+    setRendererBinding(): void;
     /**
      * Set the parameters and start casting shadows by setting the {@link isActive} setter to `true`.<br>
      * Called internally by the associated {@link core/lights/Light.Light | Light} if any shadow parameters are specified when creating it. Can also be called directly.
      * @param parameters - parameters to use for this {@link Shadow}.
      */
     cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender }?: Omit<ShadowBaseParams, "light">): void;
-    /** @ignore */
-    setRendererBinding(): void;
     /**
      * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link core/lights/Light.Light | lights} has been overflowed.
      */
@@ -94,7 +100,7 @@ export declare class Shadow {
     get isActive(): boolean;
     /**
      * Start or stop casting shadows.
-     * @param value
+     * @param value - New active state.
      */
     set isActive(value: boolean);
     /**
@@ -198,7 +204,7 @@ export declare class Shadow {
      * Get the default depth pass fragment shader for this {@link Shadow}.
      * @returns - A {@link ShaderOptions} if a depth pass fragment shader is needed, `false` otherwise.
      */
-    getDefaultShadowDepthFs(): boolean | ShaderOptions;
+    getDefaultShadowDepthFs(): false | ShaderOptions;
     /**
      * Patch the given {@link ProjectedMesh | mesh} material parameters to create the depth material.
      * @param mesh - original {@link ProjectedMesh | mesh} to use.

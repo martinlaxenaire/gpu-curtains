@@ -81,13 +81,13 @@
         <h1>Useful gpu-curtains examples</h1>
         <p>
           Here you'll find some examples covering various usages and possibilities.<br />
-          They are ordered by difficulty, from the most basic to the most complex one.<br />
+          They are ordered by categories and difficulty, from the most basic to the most complex one.<br />
           Their source code is available on the
           <a href="https://github.com/martinlaxenaire/gpu-curtains/tree/main/examples" target="_blank"
             >repository examples directory</a
           >.
         </p>
-        <h2 class="overlay-title">Planes</h2>
+        <h2 class="overlay-title">Planes / WebGPU DOM synced quads</h2>
         <ul>
           <li>
             <a href="./basic-plane/" target="_blank">Basic plane</a>
@@ -117,6 +117,9 @@
         <h2 class="overlay-title">Meshes</h2>
         <ul>
           <li>
+            <a href="./basic-cube/" target="_blank">Basic cube</a>
+          </li>
+          <li>
             <a href="./full-screen-plane-shader/" target="_blank">FullscreenPlane shader</a>
           </li>
           <li>
@@ -130,6 +133,11 @@
           </li>
           <li>
             <a href="./cubemap/" target="_blank">Cubemap</a>
+          </li>
+          <li>
+            <a href="./raycasting-render-bundle-phong-shading/" target="_blank"
+              >Raycasting, render bundle and Phong shading</a
+            >
           </li>
         </ul>
         <h2 class="overlay-title">Post processing / render to texture</h2>
@@ -181,7 +189,7 @@
         <h2 class="overlay-title">glTF</h2>
         <ul>
           <li>
-            <a href="gltf-loader-pbr-shaders/" target="_blank">glTF loader and PBR shaders</a>
+            <a href="gltf-loader-ibl-shading/" target="_blank">glTF loader and IBL shading</a>
           </li>
           <li>
             <a href="gltf-dom-meshes/" target="_blank">DOM aligned glTF meshes</a>
@@ -217,7 +225,7 @@
     </div>
 
     <script type="module">
-      import { GPUCurtains, SphereGeometry, DOMMesh, Object3D } from '../dist/esm/index.mjs'
+      import { GPUCurtains, SphereGeometry, RenderBundle, DOMMesh, Object3D } from '../dist/esm/index.mjs'
 
       window.addEventListener('load', async () => {
         // set our main GPUCurtains instance it will handle everything we need
@@ -230,11 +238,20 @@
 
         await gpuCurtains.setDevice()
 
+        const nbSatellites = 25
+
+        const renderBundle = new RenderBundle(gpuCurtains, {
+          label: 'Satellites render bundle',
+          size: nbSatellites + 1,
+          useBuffer: true,
+        })
+
         const sphereGeometry = new SphereGeometry()
 
         const sphereMesh = new DOMMesh(gpuCurtains, '#sphere', {
           label: 'Main Sphere',
           geometry: sphereGeometry,
+          renderBundle,
           watchScroll: false,
         })
 
@@ -247,12 +264,11 @@
         updateSphereScale()
 
         // now the satellites
-        const nbSatellites = 25
-
         for (let i = 0; i < nbSatellites; i++) {
           const satelliteMesh = new DOMMesh(gpuCurtains, '#sphere', {
             label: 'Cube ' + i,
             geometry: sphereGeometry,
+            renderBundle,
             watchScroll: false,
           })
 

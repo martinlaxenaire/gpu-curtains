@@ -1,6 +1,6 @@
 /// <reference types="dist" />
 import { Renderer } from '../renderers/utils';
-import { SceneStackedMesh, RenderedMesh, ProjectedMesh } from '../renderers/GPURenderer';
+import { SceneStackedMesh, RenderedMesh, ProjectedMesh, SceneStackedObject } from '../renderers/GPURenderer';
 import { ShaderPass } from '../renderPasses/ShaderPass';
 import { PingPongPlane } from '../../extras/meshes/PingPongPlane';
 import { ComputePass } from '../computePasses/ComputePass';
@@ -9,54 +9,53 @@ import { RenderTarget } from '../renderPasses/RenderTarget';
 import { RenderPass } from '../renderPasses/RenderPass';
 import { Texture } from '../textures/Texture';
 import { Object3D } from '../objects3D/Object3D';
+import { RenderBundle } from '../renderPasses/RenderBundle';
 /**
- * Meshes rendering order is dependant of their transparency setting
+ * Meshes rendering order is dependant of their transparency setting.
  */
 export interface ProjectionStack {
-    /** opaque Meshes will be drawn first */
-    opaque: SceneStackedMesh[];
-    /** transparent Meshes will be drawn last */
-    transparent: SceneStackedMesh[];
+    /** opaque Meshes or {@link RenderBundle} will be drawn first */
+    opaque: SceneStackedObject[];
+    /** transparent Meshes or {@link RenderBundle} will be drawn last */
+    transparent: SceneStackedObject[];
 }
-/** Meshes will be stacked in 2 different objects whether they are projected (use a {@link core/camera/Camera.Camera | Camera}) or not */
+/** Meshes or render bundles will be stacked in 2 different objects whether they are projected (use a {@link core/camera/Camera.Camera | Camera}) or not. */
 export type ProjectionType = 'unProjected' | 'projected';
-/**
- * Meshes will be put into two stacks of projected/unprojected transparent and opaques meshes arrays
- */
+/** Meshes or render bundles will be put into two stacks of projected/unprojected transparent and opaques objects arrays. */
 export type Stack = Record<ProjectionType, ProjectionStack>;
 /**
- * A RenderPassEntry object is used to group Meshes based on their rendering target
+ * A RenderPassEntry object is used to group Meshes or {@link RenderBundle} based on their rendering target.
  */
 export interface RenderPassEntry {
-    /** {@link RenderPass} target used onto which render */
+    /** {@link RenderPass} target used onto which render. */
     renderPass: RenderPass;
-    /** {@link Texture} to render to if any (if not specified then this {@link RenderPassEntry} Meshes will be rendered directly to screen) */
+    /** {@link Texture} to render to if any (if not specified then this {@link RenderPassEntry} Meshes will be rendered directly to screen). */
     renderTexture: Texture | null;
-    /** Optional function to execute just before rendering the Meshes, useful for eventual texture copy */
+    /** Optional function to execute just before rendering the Meshes, useful for eventual texture copy. */
     onBeforeRenderPass: ((commandEncoder?: GPUCommandEncoder, swapChainTexture?: GPUTexture) => void) | null;
-    /** Optional function to execute just after rendering the Meshes, useful for eventual texture copy */
+    /** Optional function to execute just after rendering the Meshes, useful for eventual texture copy. */
     onAfterRenderPass: ((commandEncoder?: GPUCommandEncoder, swapChainTexture?: GPUTexture) => void) | null;
-    /** If this {@link RenderPassEntry} needs to render only one Mesh */
+    /** If this {@link RenderPassEntry} needs to render only one Mesh. */
     element: PingPongPlane | ShaderPass | null;
-    /** If this {@link RenderPassEntry} needs to render multiple Meshes, then use a {@link Stack} object */
+    /** If this {@link RenderPassEntry} needs to render multiple Meshes or {@link RenderBundle}, then use a {@link Stack} object. */
     stack: Stack | null;
 }
-/** Defines all our possible render targets */
+/** Defines all our possible render targets. */
 export type RenderPassEntriesType = 'pingPong' | 'renderTarget' | 'screen';
-/** Defines our render pass entries object */
+/** Defines our render pass entries object. */
 export type RenderPassEntries = Record<RenderPassEntriesType, RenderPassEntry[]>;
 /**
- * Used to by the {@link Renderer} render everything that needs to be rendered (compute passes and meshes) in the right order with the right pass descriptors and target textures, perform textures copy at the right time, etc.
+ * Used to by the {@link Renderer} to render everything that needs to be rendered (compute passes, meshes and/or render bundles) in the right order with the right pass descriptors and target textures, perform textures copy at the right time, etc.
  *
  * ## Render order
  *
  * - Run all the {@link ComputePass} first, sorted by their {@link ComputePass#renderOrder | renderOrder}
- * - Then render all {@link renderPassEntries} pingPong entries Meshes, sorted by their {@link PingPongPlane#renderOrder | renderOrder}
+ * - Then render all {@link renderPassEntries} pingPong entries Meshes or {@link RenderBundle}, sorted by their {@link PingPongPlane#renderOrder | renderOrder}.
  * - Then all Meshes that need to be rendered into specific {@link renderPassEntries} outputTarget entries:
- *   - First, the opaque unprojected Meshes (i.e. opaque {@link core/meshes/FullscreenPlane.FullscreenPlane | FullscreenPlane}, if any), sorted by their {@link core/meshes/FullscreenPlane.FullscreenPlane#renderOrder | renderOrder}
- *   - Then, the transparent unprojected Meshes (i.e. transparent {@link core/meshes/FullscreenPlane.FullscreenPlane | FullscreenPlane}, if any), sorted by their {@link core/meshes/FullscreenPlane.FullscreenPlane#renderOrder | renderOrder}
- *   - Then, the opaque projected Meshes (i.e. opaque {@link core/meshes/Mesh.Mesh | Mesh}, {@link curtains/meshes/DOMMesh.DOMMesh | DOMMesh} or {@link curtains/meshes/Plane.Plane | Plane}), sorted by their {@link core/meshes/Mesh.Mesh#renderOrder | renderOrder}
- *   - Finally, the transparent projected Meshes (i.e. transparent {@link core/meshes/Mesh.Mesh | Mesh}, {@link curtains/meshes/DOMMesh.DOMMesh | DOMMesh} or {@link curtains/meshes/Plane.Plane | Plane}), sorted by their Z position and then their {@link core/meshes/Mesh.Mesh#renderOrder | renderOrder}
+ *   - First, the opaque unprojected Meshes (i.e. opaque {@link core/meshes/FullscreenPlane.FullscreenPlane | FullscreenPlane}  or {@link RenderBundle}, if any), sorted by their {@link core/meshes/FullscreenPlane.FullscreenPlane#renderOrder | renderOrder}.
+ *   - Then, the transparent unprojected Meshes (i.e. transparent {@link core/meshes/FullscreenPlane.FullscreenPlane | FullscreenPlane} or {@link RenderBundle}, if any), sorted by their {@link core/meshes/FullscreenPlane.FullscreenPlane#renderOrder | renderOrder}.
+ *   - Then, the opaque projected Meshes (i.e. opaque {@link core/meshes/Mesh.Mesh | Mesh}, {@link curtains/meshes/DOMMesh.DOMMesh | DOMMesh}, {@link curtains/meshes/Plane.Plane | Plane}) or {@link RenderBundle}, sorted by their {@link core/meshes/Mesh.Mesh#renderOrder | renderOrder}.
+ *   - Finally, the transparent projected Meshes (i.e. transparent {@link core/meshes/Mesh.Mesh | Mesh}, {@link curtains/meshes/DOMMesh.DOMMesh | DOMMesh}, {@link curtains/meshes/Plane.Plane | Plane} or {@link RenderBundle}), sorted by their Z position and then their {@link core/meshes/Mesh.Mesh#renderOrder | renderOrder}.
  * - Finally all Meshes that need to be rendered directly to the {@link renderPassEntries} screen (the {@link Renderer} current texture), in the same order than above.
  */
 export declare class Scene extends Object3D {
@@ -65,10 +64,10 @@ export declare class Scene extends Object3D {
     /** Array of {@link ComputePass} to render, ordered by {@link ComputePass#renderOrder | renderOrder} */
     computePassEntries: ComputePass[];
     /**
-     * A {@link RenderPassEntries} object that will contain every Meshes that need to be drawn, put inside each one of our three entries type arrays: 'pingPong', 'outputTarget' and 'screen'.
-     * - The {@link Scene} will first render all {@link renderPassEntries} pingPong entries Meshes
-     * - Then all Meshes that need to be rendered into specific {@link renderPassEntries} outputTarget entries
-     * - Finally all Meshes that need to be rendered to the {@link renderPassEntries} screen
+     * A {@link RenderPassEntries} object that will contain every Meshes or {@link RenderBundle} that need to be drawn, put inside each one of our three entries type arrays: `pingPong`, `renderTarget` and `screen`.
+     * - The {@link Scene} will first render all {@link renderPassEntries} pingPong entries Meshes.
+     * - Then all Meshes that need to be rendered into specific {@link renderPassEntries} renderTarget entries.
+     * - Finally all Meshes that need to be rendered to the {@link renderPassEntries} screen.
      */
     renderPassEntries: RenderPassEntries;
     /**
@@ -113,7 +112,18 @@ export declare class Scene extends Object3D {
      * @param mesh - Mesh to check
      * @returns - the corresponding render pass entry {@link Stack}
      */
-    getMeshProjectionStack(mesh: SceneStackedMesh): ProjectionStack;
+    getMeshProjectionStack(mesh: RenderedMesh): ProjectionStack;
+    /**
+     * Order a {@link SceneStackedObject} array by using the {@link SceneStackedObject#renderOrder | renderOrder} or {@link SceneStackedObject#index | index} properties.
+     * @param stack - {@link SceneStackedObject} to sort, filled with {@link RenderedMesh} or {@link RenderBundle}.
+     */
+    orderStack(stack: SceneStackedObject[]): void;
+    /**
+     * Test whether a {@link SceneStackedObject} is a {@link RenderBundle} or not.
+     * @param object - Object to test.
+     * @returns - Whether the {@link object} is a {@link RenderBundle} or not.
+     */
+    isStackObjectRenderBundle(object: SceneStackedObject): object is RenderBundle;
     /**
      * Add a Mesh to the correct {@link renderPassEntries | render pass entry} {@link Stack} array.
      * Meshes are then ordered by their {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#index | indexes (order of creation]}, {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#index | pipeline entry indexes} and then {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#renderOrder | renderOrder}
@@ -121,10 +131,21 @@ export declare class Scene extends Object3D {
      */
     addMesh(mesh: SceneStackedMesh): void;
     /**
-     * Remove a Mesh from our {@link Scene}
-     * @param mesh - Mesh to remove
+     * Remove a Mesh from our {@link Scene}.
+     * @param mesh - Mesh to remove.
      */
     removeMesh(mesh: SceneStackedMesh): void;
+    /**
+     * Add a {@link RenderBundle} to the correct {@link renderPassEntries | render pass entry} {@link Stack} array.
+     * @param renderBundle - {@link RenderBundle} to add.
+     * @param projectionStack - {@link ProjectionStack} onto which to add the {@link RenderBundle}.
+     */
+    addRenderBundle(renderBundle: RenderBundle, projectionStack: ProjectionStack): void;
+    /**
+     * Remove a {@link RenderBundle} from our {@link Scene}.
+     * @param renderBundle - {@link RenderBundle} to remove.
+     */
+    removeRenderBundle(renderBundle: RenderBundle): void;
     /**
      * Add a {@link ShaderPass} to our scene {@link renderPassEntries} screen array.
      * Before rendering the {@link ShaderPass}, we will copy the correct input texture into its {@link ShaderPass#renderTexture | renderTexture}
@@ -160,7 +181,7 @@ export declare class Scene extends Object3D {
      * Sort transparent projected meshes by their render order or distance to the camera (farther meshes should be drawn first).
      * @param meshes - transparent projected meshes array to sort
      */
-    sortTransparentMeshes(meshes: ProjectedMesh[]): void;
+    sortTransparentMeshes(meshes: Array<ProjectedMesh | RenderBundle>): void;
     /**
      * Here we render a {@link RenderPassEntry}:
      * - Set its {@link RenderPass#descriptor | renderPass descriptor} view or resolveTarget and get it at as swap chain texture

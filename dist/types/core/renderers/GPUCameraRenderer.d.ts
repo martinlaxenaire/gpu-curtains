@@ -1,5 +1,5 @@
 /// <reference types="dist" />
-import { GPURenderer, GPURendererParams, SceneObject } from './GPURenderer';
+import { GPURenderer, GPURendererOptions, GPURendererParams, SceneObject } from './GPURenderer';
 import { Camera, CameraBasePerspectiveOptions } from '../camera/Camera';
 import { BufferBinding } from '../bindings/BufferBinding';
 import { BindGroup } from '../bindGroups/BindGroup';
@@ -38,14 +38,18 @@ export interface GPUCameraRendererLightParams {
     /** Maximum number of {@link core/lights/PointLight.PointLight | PointLight} to use. Default to `5`. */
     maxPointLights?: LightsBindingParams['pointLights']['max'];
 }
-/**
- * Parameters used to create a {@link GPUCameraRenderer}
- */
-export interface GPUCameraRendererParams extends GPURendererParams {
+/** Extra parameters used to define the {@link Camera} and various lights options. */
+export interface GPUCameraLightsRendererParams {
     /** An object defining {@link CameraBasePerspectiveOptions | camera perspective parameters} */
     camera?: CameraBasePerspectiveOptions;
-    /** An object defining {@link GPUCameraRendererLightParams | the maximum number of light} to use when creating the {@link GPUCameraRenderer}. */
-    lights?: GPUCameraRendererLightParams;
+    /** An object defining {@link GPUCameraRendererLightParams | the maximum number of light} to use when creating the {@link GPUCameraRenderer}. Can be set to `false` to avoid creating lights and shadows buffers, but note this is a permanent choice and cannot be changed later. */
+    lights?: GPUCameraRendererLightParams | false;
+}
+/** Parameters used to create a {@link GPUCameraRenderer}. */
+export interface GPUCameraRendererParams extends GPURendererParams, GPUCameraLightsRendererParams {
+}
+/** Options used to create a {@link GPUCameraRenderer}. */
+export interface GPUCameraRendererOptions extends GPURendererOptions, GPUCameraLightsRendererParams {
 }
 /**
  * This renderer is meant to render meshes projected by a {@link Camera}. It therefore creates a {@link Camera} with its associated {@link bindings} as well as lights and shadows {@link bindings} used for lighting and their associated {@link cameraLightsBindGroup | bind group}.<br>
@@ -83,12 +87,12 @@ export declare class GPUCameraRenderer extends GPURenderer {
     /** The bindings used by the {@link cameraLightsBindGroup | camera, lights and shadows bind group}. */
     bindings: GPUCameraRendererBindings;
     /** Options used to create this {@link GPUCameraRenderer}. */
-    options: GPUCameraRendererParams;
+    options: GPUCameraRendererOptions;
     /**
      * GPUCameraRenderer constructor
      * @param parameters - {@link GPUCameraRendererParams | parameters} used to create this {@link GPUCameraRenderer}
      */
-    constructor({ deviceManager, label, container, pixelRatio, autoResize, preferredFormat, alphaMode, renderPass, camera, lights, }: GPUCameraRendererParams);
+    constructor({ deviceManager, label, container, pixelRatio, autoResize, context, renderPass, camera, lights, }: GPUCameraRendererParams);
     /**
      * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} is lost.
      * Reset all our samplers, force all our scene objects and camera bind group to lose context.
@@ -124,7 +128,7 @@ export declare class GPUCameraRenderer extends GPURenderer {
      */
     addLight(light: Light): void;
     /**
-     * Remove a {@link Light} from the {@link lights} array and destroy it.
+     * Remove a {@link Light} from the {@link lights} array.
      * @param light - {@link Light} to remove.
      */
     removeLight(light: Light): void;
@@ -172,6 +176,10 @@ export declare class GPUCameraRenderer extends GPURenderer {
      * Tell our {@link GPUCameraRenderer#bindings.camera | camera buffer binding} that we should update its bindings and update the bind group. Called each time the camera matrices change.
      */
     updateCameraBindings(): void;
+    /**
+     * Update the {@link cameraLightsBindGroup | camera and lights BindGroup}.
+     */
+    updateCameraLightsBindGroup(): void;
     /**
      * Get all objects ({@link core/renderers/GPURenderer.RenderedMesh | rendered meshes} or {@link core/computePasses/ComputePass.ComputePass | compute passes}) using a given {@link AllowedBindGroups | bind group}, including {@link cameraLightsBindGroup | camera and lights bind group}.
      * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.

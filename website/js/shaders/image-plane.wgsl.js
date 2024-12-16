@@ -29,6 +29,7 @@ struct VSOutput {
 };
 
 @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-  return textureSample(planeTexture, defaultSampler, fsInput.uv);
+  var color = textureSample(planeTexture, defaultSampler, fsInput.uv);
+  return vec4(color.rgb, color.a * global.opacity);
 }
 `

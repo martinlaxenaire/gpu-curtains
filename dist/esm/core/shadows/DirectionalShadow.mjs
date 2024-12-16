@@ -51,7 +51,6 @@ class DirectionalShadow extends Shadow {
       ...this.options,
       camera
     };
-    this.setRendererBinding();
     this.camera = {
       projectionMatrix: new Mat4(),
       viewMatrix: new Mat4(),

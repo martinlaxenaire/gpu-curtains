@@ -1,14 +1,12 @@
 import { GPUCurtainsRenderer } from './renderers/GPUCurtainsRenderer'
 import { ScrollManager } from '../utils/ScrollManager'
 import { resizeManager } from '../utils/ResizeManager'
-import { Vec3 } from '../math/Vec3'
 import { PingPongPlane } from '../extras/meshes/PingPongPlane'
 import { ShaderPass } from '../core/renderPasses/ShaderPass'
 import { GPURenderer, GPURendererParams, SceneStackedMesh } from '../core/renderers/GPURenderer'
 import { DOMMesh } from './meshes/DOMMesh'
 import { Plane } from './meshes/Plane'
 import { ComputePass } from '../core/computePasses/ComputePass'
-import { Camera, CameraBasePerspectiveOptions } from '../core/camera/Camera'
 import { DOMElementBoundingRect, DOMElementParams, DOMPosition } from '../core/DOM/DOMElement'
 import { GPUCameraRenderer, GPUCameraRendererParams } from '../core/renderers/GPUCameraRenderer'
 import {
@@ -97,8 +95,7 @@ export class GPUCurtains {
     container,
     label,
     pixelRatio = window.devicePixelRatio ?? 1,
-    preferredFormat,
-    alphaMode = 'premultiplied',
+    context = {},
     production = false,
     adapterOptions = {},
     renderPass,
@@ -118,8 +115,7 @@ export class GPUCurtains {
       lights,
       production,
       adapterOptions,
-      preferredFormat,
-      alphaMode,
+      context,
       renderPass,
       autoRender,
       autoResize,
@@ -179,12 +175,11 @@ export class GPUCurtains {
     this.createCurtainsRenderer({
       deviceManager: this.deviceManager,
       // TODO ...this.options?
-      label: this.options.label,
+      label: this.options.label || 'GPUCurtains main GPUCurtainsRenderer',
       container: this.options.container,
       pixelRatio: this.options.pixelRatio,
       autoResize: this.options.autoResize,
-      preferredFormat: this.options.preferredFormat,
-      alphaMode: this.options.alphaMode,
+      context: this.options.context,
       renderPass: this.options.renderPass,
       camera: this.options.camera,
       lights: this.options.lights,

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+    <!-- Metas -->
+    <title>gpu-curtains | Basic cube example</title>
+    <meta name="description" content="A basic WebGPU cube with gpu-curtains" />
+
+    <meta property="og:title" content="gpu-curtains | Basic cube example" />
+    <meta property="og:type" content="article" />
+    <meta property="og:description" content="A basic WebGPU cube with gpu-curtains" />
+    <meta
+      property="og:image"
+      content="https://raw.githubusercontent.com/martinlaxenaire/gpu-curtains/main/website/assets/gpu-curtains-logo-1920-1280.jpg"
+    />
+    <meta property="og:url" content="https://martinlaxenaire.github.io/gpu-curtains/examples/basic-cube/" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link href="../common-styles.css" rel="stylesheet" />
+
+    <link
+      rel="icon"
+      type="image/png"
+      href="https://raw.githubusercontent.com/martinlaxenaire/gpu-curtains/main/website/assets/favicon.png"
+    />
+  </head>
+  <body>
+    <div id="canvas"></div>
+
+    <a
+      href="https://github.com/martinlaxenaire/gpu-curtains/blob/main/examples/basic-cube/index.html"
+      title="Show source code"
+      id="source-code-link"
+      class="primary-button"
+      target="_blank"
+      >&lt;/ &gt;</a
+    >
+
+    <script type="module">
+      import { BoxGeometry, GPUCameraRenderer, GPUDeviceManager, Mesh } from '../../dist/esm/index.mjs'
+
+      window.addEventListener('load', async () => {
+        // create a device manager
+        const gpuDeviceManager = new GPUDeviceManager({
+          label: 'Custom device manager',
+        })
+
+        // wait for the device to be created
+        await gpuDeviceManager.init()
+
+        // create a camera renderer
+        const gpuCameraRenderer = new GPUCameraRenderer({
+          deviceManager: gpuDeviceManager,
+          container: document.querySelector('#canvas'),
+        })
+
+        // render it
+        const animate = () => {
+          gpuDeviceManager.render()
+          requestAnimationFrame(animate)
+        }
+
+        animate()
+
+        const mesh = new Mesh(gpuCameraRenderer, {
+          label: 'Cube',
+          geometry: new BoxGeometry(),
+        })
+
+        mesh.onBeforeRender(() => {
+          mesh.rotation.y += 0.02
+        })
+      })
+    </script>
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-45554DLGL6"></script>
+    <script>
+      window.dataLayer = window.dataLayer || []
+      function gtag() {
+        dataLayer.push(arguments)
+      }
+
+      if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+        gtag('js', new Date())
+        gtag('config', 'G-45554DLGL6')
+      }
+    </script>
+  </body>
+</html>

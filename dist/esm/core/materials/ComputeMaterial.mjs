@@ -44,18 +44,16 @@ class ComputeMaterial extends Material {
       dispatchSize = [Math.ceil(dispatchSize), 1, 1];
     }
     this.dispatchSize = dispatchSize;
+  }
+  /**
+   * Set (or reset) the current {@link pipelineEntry}. Use the {@link Renderer#pipelineManager | renderer pipelineManager} to check whether we can get an already created {@link ComputePipelineEntry} from cache or if we should create a new one.
+   */
+  setPipelineEntry() {
     this.pipelineEntry = this.renderer.pipelineManager.createComputePipeline({
       renderer: this.renderer,
       label: this.options.label + " compute pipeline",
       shaders: this.options.shaders,
-      useAsync: this.options.useAsyncPipeline
-    });
-  }
-  /**
-   * When all bind groups are created, add them to the {@link ComputePipelineEntry}
-   */
-  setPipelineEntryProperties() {
-    this.pipelineEntry.setPipelineEntryProperties({
+      useAsync: this.options.useAsyncPipeline,
       bindGroups: this.bindGroups
     });
   }
@@ -74,8 +72,10 @@ class ComputeMaterial extends Material {
     if (this.ready)
       return;
     super.compileMaterial();
+    if (!this.pipelineEntry) {
+      this.setPipelineEntry();
+    }
     if (this.pipelineEntry && this.pipelineEntry.canCompile) {
-      this.setPipelineEntryProperties();
       await this.compilePipelineEntry();
     }
   }

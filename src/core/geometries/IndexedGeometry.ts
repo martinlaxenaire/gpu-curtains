@@ -3,6 +3,7 @@ import { GeometryBuffer, GeometryParams } from '../../types/Geometries'
 import { Buffer } from '../buffers/Buffer'
 import { Renderer } from '../renderers/utils'
 import { TypedArrayConstructor } from '../bindings/utils'
+import { GPURenderPassTypes } from '../pipelines/PipelineManager'
 
 /**
  * Defines the available options to create an {@link IndexedGeometry#indexBuffer | index buffer}
@@ -151,7 +152,7 @@ export class IndexedGeometry extends Geometry {
    * @param parameters.label - label to use for the vertex buffers.
    */
   createBuffers({ renderer, label = this.type }: { renderer: Renderer; label?: string }) {
-    if(!this.indexBuffer.buffer.GPUBuffer) {
+    if (!this.indexBuffer.buffer.GPUBuffer) {
       this.indexBuffer.buffer.createBuffer(renderer, {
         label: label + ': index buffer',
         size: this.indexBuffer.array.byteLength,
@@ -161,7 +162,6 @@ export class IndexedGeometry extends Geometry {
 
       this.uploadBuffer(renderer, this.indexBuffer)
     }
-
 
     this.indexBuffer.buffer.consumers.add(this.uuid)
 
@@ -175,7 +175,7 @@ export class IndexedGeometry extends Geometry {
    * Then, set our render pass geometry index buffer
    * @param pass - current render pass
    */
-  setGeometryBuffers(pass: GPURenderPassEncoder) {
+  setGeometryBuffers(pass: GPURenderPassTypes) {
     super.setGeometryBuffers(pass)
 
     pass.setIndexBuffer(
@@ -190,7 +190,7 @@ export class IndexedGeometry extends Geometry {
    * Override the parentMesh draw method to draw indexed geometry
    * @param pass - current render pass
    */
-  drawGeometry(pass: GPURenderPassEncoder) {
+  drawGeometry(pass: GPURenderPassTypes) {
     pass.drawIndexed(this.indexBuffer.bufferLength, this.instancesCount)
   }
 

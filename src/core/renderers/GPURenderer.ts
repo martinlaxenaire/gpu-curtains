@@ -20,9 +20,16 @@ import { Texture } from '../textures/Texture'
 import { GPUDeviceManager } from './GPUDeviceManager'
 import { FullscreenPlane } from '../meshes/FullscreenPlane'
 import { Buffer } from '../buffers/Buffer'
+import { RenderBundle } from '../renderPasses/RenderBundle'
+
+/** Options used to configure the renderer canvas context. If not specified, `format` will be set with `GPU.getPreferredCanvasFormat()` and `alphaMode` with `premultiplied`. */
+export interface GPURendererContextOptions extends Omit<GPUCanvasConfiguration, 'device' | 'usage'> {}
+
+/** Parameters used to configure the renderer canvas context. */
+export interface GPURendererContextParams extends Partial<GPURendererContextOptions> {}
 
 /**
- * Parameters used to create a {@link GPURenderer}
+ * Parameters used to create a {@link GPURenderer}.
  */
 export interface GPURendererParams {
   /** The {@link GPUDeviceManager} used to create this {@link GPURenderer} */
@@ -37,10 +44,9 @@ export interface GPURendererParams {
 
   /** Whether to auto resize the renderer each time its {@link GPURenderer#domElement} size changes or not. It is advised to set this parameter to `false` if the provided {@link container} is a {@link HTMLCanvasElement | canvas element}, and handle {@link GPURenderer#resize | resizing} by yourself. */
   autoResize?: boolean
-  /** Texture rendering {@link GPUTextureFormat | preferred format} */
-  preferredFormat?: GPUTextureFormat
-  /** Set the {@link GPUCanvasContext | context} alpha mode */
-  alphaMode?: GPUCanvasAlphaMode
+
+  /** Options used to configure this {@link GPURenderer} context. If not specified, `format` will be set with `GPU.getPreferredCanvasFormat()` and `alphaMode` with `premultiplied`. */
+  context?: GPURendererContextParams
 
   /** The {@link GPURenderer#renderPass | renderer RenderPass} parameters */
   renderPass?: {
@@ -53,14 +59,24 @@ export interface GPURendererParams {
   }
 }
 
+/** Options used to create this {@link GPURenderer}. */
+export interface GPURendererOptions extends GPURendererParams {
+  /** Patched {@link GPURendererContextOptions | context configuration options}. */
+  context: GPURendererContextOptions
+}
+
 /** Any Mesh that is bound to a DOM Element */
 export type DOMProjectedMesh = DOMMesh | Plane
 /** Any Mesh that is projected (i.e use a {@link core/camera/Camera.Camera | Camera} to compute a model view projection matrix) */
 export type ProjectedMesh = Mesh | DOMProjectedMesh
 /** Any Mesh that can be drawn (including fullscreen quad meshes) and that will be put in the {@link Scene} meshes stacks */
 export type SceneStackedMesh = ProjectedMesh | FullscreenPlane
+/** Anything that can be added to a {@link Scene} meshes stacks, including {@link RenderBundle} */
+export type SceneStackedObject = SceneStackedMesh | RenderBundle
+/** Any Mesh that is drawn fullscren, i.e. fullscreen quad meshes used for post processing and {@link PingPongPlane} */
+export type FullscreenPass = PingPongPlane | ShaderPass
 /** Any Mesh that can be drawn, including fullscreen quad meshes used for post processing and {@link PingPongPlane} */
-export type RenderedMesh = SceneStackedMesh | PingPongPlane | ShaderPass
+export type RenderedMesh = SceneStackedMesh | FullscreenPass
 /** Any Mesh or Compute pass */
 export type SceneObject = RenderedMesh | ComputePass
 
@@ -87,10 +103,10 @@ export class GPURenderer {
   /** The WebGPU {@link GPUCanvasContext | context} used */
   context: null | GPUCanvasContext
   /** Set the {@link GPUCanvasContext | context} alpha mode */
-  alphaMode?: GPUCanvasAlphaMode
+  //alphaMode?: GPUCanvasAlphaMode
 
   /** Options used to create this {@link GPURenderer} */
-  options: GPURendererParams
+  options: GPURendererOptions
 
   /** The {@link RenderPass | render pass} used to render our result to screen */
   renderPass: RenderPass
@@ -118,6 +134,8 @@ export class GPURenderer {
   meshes: SceneStackedMesh[]
   /** An array containing all our created {@link Texture} */
   textures: Texture[]
+  /** An array containing all our created {@link RenderBundle} */
+  renderBundles: RenderBundle[]
 
   /** Pixel ratio to use for rendering */
   pixelRatio: number
@@ -160,19 +178,26 @@ export class GPURenderer {
    */
   constructor({
     deviceManager,
-    label = 'Main renderer',
+    label,
     container,
     pixelRatio = 1,
     autoResize = true,
-    preferredFormat,
-    alphaMode = 'premultiplied',
+    context = {},
     renderPass,
   }: GPURendererParams) {
     this.type = 'GPURenderer'
     this.uuid = generateUUID()
 
-    if (!deviceManager) {
-      throwError(`GPURenderer (${label}): no device manager provided: ${deviceManager}`)
+    if (!deviceManager || deviceManager.constructor.name !== 'GPUDeviceManager') {
+      throwError(
+        label
+          ? `${label} (${this.type}): no device manager or wrong device manager provided: ${deviceManager}`
+          : `${this.type}: no device manager or wrong device manager provided: ${deviceManager}`
+      )
+    }
+
+    if (!label) {
+      label = `${this.constructor.name}${deviceManager.renderers.length}`
     }
 
     this.deviceManager = deviceManager
@@ -181,9 +206,17 @@ export class GPURenderer {
     this.shouldRender = true
     this.shouldRenderScene = true
 
+    // context configuration default values
+    const contextOptions = {
+      ...{
+        alphaMode: 'premultiplied' as GPUCanvasAlphaMode,
+        format: this.deviceManager.gpu?.getPreferredCanvasFormat(),
+      },
+      ...context,
+    }
+
     // render pass default values
     renderPass = { ...{ useDepth: true, sampleCount: 4, clearValue: [0, 0, 0, 0] }, ...renderPass }
-    preferredFormat = preferredFormat ?? this.deviceManager.gpu?.getPreferredCanvasFormat()
 
     this.options = {
       deviceManager,
@@ -191,13 +224,11 @@ export class GPURenderer {
       container,
       pixelRatio,
       autoResize,
-      preferredFormat,
-      alphaMode,
+      context: contextOptions,
       renderPass,
     }
 
     this.pixelRatio = pixelRatio ?? window.devicePixelRatio ?? 1
-    this.alphaMode = alphaMode
 
     // create the canvas
     const isOffscreenCanvas = container instanceof OffscreenCanvas
@@ -445,8 +476,7 @@ export class GPURenderer {
   configureContext() {
     this.context.configure({
       device: this.device,
-      format: this.options.preferredFormat,
-      alphaMode: this.alphaMode,
+      ...this.options.context,
       // needed so we can copy textures for post processing usage
       usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST,
       //viewFormats: []
@@ -472,6 +502,7 @@ export class GPURenderer {
    */
   loseContext() {
     // force all our scene objects to lose context
+    this.renderBundles.forEach((bundle) => bundle.loseContext())
     this.renderedObjects.forEach((sceneObject) => sceneObject.loseContext())
   }
 
@@ -577,7 +608,7 @@ export class GPURenderer {
   }): Buffer | null {
     if (!srcBuffer || !srcBuffer.GPUBuffer) {
       throwWarning(
-        `${this.type} (${this.options.label}): cannot copy to buffer because the source buffer has not been provided`
+        `${this.options.label} (${this.type}): cannot copy to buffer because the source buffer has not been provided`
       )
       return null
     }
@@ -597,13 +628,13 @@ export class GPURenderer {
 
     if (srcBuffer.GPUBuffer.mapState !== 'unmapped') {
       throwWarning(
-        `${this.type} (${this.options.label}): Cannot copy from ${srcBuffer.GPUBuffer} because it is currently mapped`
+        `${this.options.label} (${this.type}): Cannot copy from ${srcBuffer.GPUBuffer} because it is currently mapped`
       )
       return
     }
     if (dstBuffer.GPUBuffer.mapState !== 'unmapped') {
       throwWarning(
-        `${this.type} (${this.options.label}): Cannot copy from ${dstBuffer.GPUBuffer} because it is currently mapped`
+        `${this.options.label} (${this.type}): Cannot copy from ${dstBuffer.GPUBuffer} because it is currently mapped`
       )
       return
     }
@@ -867,6 +898,7 @@ export class GPURenderer {
     this.renderTargets = []
     this.meshes = []
     this.textures = []
+    this.renderBundles = []
   }
 
   /**
@@ -1078,6 +1110,9 @@ export class GPURenderer {
     this.deviceManager.renderers = this.deviceManager.renderers.filter((renderer) => renderer.uuid !== this.uuid)
 
     this.domElement?.destroy()
+
+    // remove/destroy render bundles
+    this.renderBundles.forEach((bundle) => bundle.destroy())
 
     // destroy render passes
     this.renderPass?.destroy()

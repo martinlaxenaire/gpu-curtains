@@ -1,5 +1,10 @@
 import { isRenderer, Renderer } from '../renderers/utils'
-import { PipelineEntryOptions, PipelineEntryParams, PipelineEntryStatus } from '../../types/PipelineEntries'
+import {
+  PipelineEntryOptions,
+  PipelineEntryParams,
+  PipelineEntryPropertiesParams,
+  PipelineEntryStatus,
+} from '../../types/PipelineEntries'
 import { AllowedBindGroups } from '../../types/BindGroups'
 import { MaterialShadersType } from '../../types/Materials'
 
@@ -39,7 +44,7 @@ export class PipelineEntry {
     this.type = 'PipelineEntry'
 
     let { renderer } = parameters
-    const { label, shaders, useAsync } = parameters
+    const { label, shaders, useAsync, bindGroups, cacheKey } = parameters
 
     renderer = isRenderer(renderer, label ? label + ' ' + this.type : this.type)
 
@@ -60,6 +65,8 @@ export class PipelineEntry {
       label,
       shaders,
       useAsync: useAsync !== undefined ? useAsync : true,
+      bindGroups,
+      cacheKey,
     }
   }
 
@@ -77,6 +84,16 @@ export class PipelineEntry {
    */
   get canCompile(): boolean {
     return !this.status.compiling && !this.status.compiled && !this.status.error
+  }
+
+  /**
+   * Set {@link PipelineEntry} properties (in this case the {@link bindGroups | bind groups})
+   * @param parameters - the {@link bindGroups | bind groups} to use
+   */
+  setPipelineEntryProperties(parameters: PipelineEntryPropertiesParams) {
+    const { bindGroups } = parameters
+
+    this.setPipelineEntryBindGroups(bindGroups)
   }
 
   /**

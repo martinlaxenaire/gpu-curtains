@@ -1,5 +1,5 @@
 import { throwError } from '../../utils/utils'
-import { GPURenderer } from './GPURenderer'
+import { GPURenderer, ProjectedMesh } from './GPURenderer'
 import { GPUCameraRenderer } from './GPUCameraRenderer'
 import { GPUCurtainsRenderer } from '../../curtains/renderers/GPUCurtainsRenderer'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
@@ -91,6 +91,19 @@ export const isCurtainsRenderer = (
   }
 
   return renderer
+}
+
+/**
+ * Check if a given object is a {@link ProjectedMesh | projected mesh}.
+ * @param object - Object to test.
+ * @returns - Given object as a {@link ProjectedMesh | projected mesh} if the test is successful, `false` otherwise.
+ */
+export const isProjectedMesh = (object: object): false | ProjectedMesh => {
+  return object.constructor.name === 'Mesh' ||
+    object.constructor.name === 'DOMMesh' ||
+    object.constructor.name === 'Plane'
+    ? (object as ProjectedMesh)
+    : false
 }
 
 /**

@@ -1,5 +1,5 @@
 import { isRenderer, Renderer } from '../renderers/utils'
-import { SceneStackedMesh, RenderedMesh, ProjectedMesh } from '../renderers/GPURenderer'
+import { SceneStackedMesh, RenderedMesh, ProjectedMesh, SceneStackedObject } from '../renderers/GPURenderer'
 import { ShaderPass } from '../renderPasses/ShaderPass'
 import { PingPongPlane } from '../../extras/meshes/PingPongPlane'
 import { ComputePass } from '../computePasses/ComputePass'
@@ -9,6 +9,8 @@ import { RenderPass } from '../renderPasses/RenderPass'
 import { Texture } from '../textures/Texture'
 import { Object3D } from '../objects3D/Object3D'
 import { Vec3 } from '../../math/Vec3'
+import { RenderBundle } from '../renderPasses/RenderBundle'
+import { throwWarning } from '../../utils/utils'
 
 // used to sort transparent meshes
 const camPosA = new Vec3()
@@ -17,58 +19,56 @@ const posA = new Vec3()
 const posB = new Vec3()
 
 /**
- * Meshes rendering order is dependant of their transparency setting
+ * Meshes rendering order is dependant of their transparency setting.
  */
 export interface ProjectionStack {
-  /** opaque Meshes will be drawn first */
-  opaque: SceneStackedMesh[]
-  /** transparent Meshes will be drawn last */
-  transparent: SceneStackedMesh[]
+  /** opaque Meshes or {@link RenderBundle} will be drawn first */
+  opaque: SceneStackedObject[]
+  /** transparent Meshes or {@link RenderBundle} will be drawn last */
+  transparent: SceneStackedObject[]
 }
 
-/** Meshes will be stacked in 2 different objects whether they are projected (use a {@link core/camera/Camera.Camera | Camera}) or not */
+/** Meshes or render bundles will be stacked in 2 different objects whether they are projected (use a {@link core/camera/Camera.Camera | Camera}) or not. */
 export type ProjectionType = 'unProjected' | 'projected'
 
-/**
- * Meshes will be put into two stacks of projected/unprojected transparent and opaques meshes arrays
- */
+/** Meshes or render bundles will be put into two stacks of projected/unprojected transparent and opaques objects arrays. */
 export type Stack = Record<ProjectionType, ProjectionStack>
 
 /**
- * A RenderPassEntry object is used to group Meshes based on their rendering target
+ * A RenderPassEntry object is used to group Meshes or {@link RenderBundle} based on their rendering target.
  */
 export interface RenderPassEntry {
-  /** {@link RenderPass} target used onto which render */
+  /** {@link RenderPass} target used onto which render. */
   renderPass: RenderPass
-  /** {@link Texture} to render to if any (if not specified then this {@link RenderPassEntry} Meshes will be rendered directly to screen) */
+  /** {@link Texture} to render to if any (if not specified then this {@link RenderPassEntry} Meshes will be rendered directly to screen). */
   renderTexture: Texture | null
-  /** Optional function to execute just before rendering the Meshes, useful for eventual texture copy */
+  /** Optional function to execute just before rendering the Meshes, useful for eventual texture copy. */
   onBeforeRenderPass: ((commandEncoder?: GPUCommandEncoder, swapChainTexture?: GPUTexture) => void) | null
-  /** Optional function to execute just after rendering the Meshes, useful for eventual texture copy */
+  /** Optional function to execute just after rendering the Meshes, useful for eventual texture copy. */
   onAfterRenderPass: ((commandEncoder?: GPUCommandEncoder, swapChainTexture?: GPUTexture) => void) | null
-  /** If this {@link RenderPassEntry} needs to render only one Mesh */
+  /** If this {@link RenderPassEntry} needs to render only one Mesh. */
   element: PingPongPlane | ShaderPass | null
-  /** If this {@link RenderPassEntry} needs to render multiple Meshes, then use a {@link Stack} object */
+  /** If this {@link RenderPassEntry} needs to render multiple Meshes or {@link RenderBundle}, then use a {@link Stack} object. */
   stack: Stack | null
 }
 
-/** Defines all our possible render targets */
+/** Defines all our possible render targets. */
 export type RenderPassEntriesType = 'pingPong' | 'renderTarget' | 'screen'
-/** Defines our render pass entries object */
+/** Defines our render pass entries object. */
 export type RenderPassEntries = Record<RenderPassEntriesType, RenderPassEntry[]>
 
 /**
- * Used to by the {@link Renderer} render everything that needs to be rendered (compute passes and meshes) in the right order with the right pass descriptors and target textures, perform textures copy at the right time, etc.
+ * Used to by the {@link Renderer} to render everything that needs to be rendered (compute passes, meshes and/or render bundles) in the right order with the right pass descriptors and target textures, perform textures copy at the right time, etc.
  *
  * ## Render order
  *
  * - Run all the {@link ComputePass} first, sorted by their {@link ComputePass#renderOrder | renderOrder}
- * - Then render all {@link renderPassEntries} pingPong entries Meshes, sorted by their {@link PingPongPlane#renderOrder | renderOrder}
+ * - Then render all {@link renderPassEntries} pingPong entries Meshes or {@link RenderBundle}, sorted by their {@link PingPongPlane#renderOrder | renderOrder}.
  * - Then all Meshes that need to be rendered into specific {@link renderPassEntries} outputTarget entries:
- *   - First, the opaque unprojected Meshes (i.e. opaque {@link core/meshes/FullscreenPlane.FullscreenPlane | FullscreenPlane}, if any), sorted by their {@link core/meshes/FullscreenPlane.FullscreenPlane#renderOrder | renderOrder}
- *   - Then, the transparent unprojected Meshes (i.e. transparent {@link core/meshes/FullscreenPlane.FullscreenPlane | FullscreenPlane}, if any), sorted by their {@link core/meshes/FullscreenPlane.FullscreenPlane#renderOrder | renderOrder}
- *   - Then, the opaque projected Meshes (i.e. opaque {@link core/meshes/Mesh.Mesh | Mesh}, {@link curtains/meshes/DOMMesh.DOMMesh | DOMMesh} or {@link curtains/meshes/Plane.Plane | Plane}), sorted by their {@link core/meshes/Mesh.Mesh#renderOrder | renderOrder}
- *   - Finally, the transparent projected Meshes (i.e. transparent {@link core/meshes/Mesh.Mesh | Mesh}, {@link curtains/meshes/DOMMesh.DOMMesh | DOMMesh} or {@link curtains/meshes/Plane.Plane | Plane}), sorted by their Z position and then their {@link core/meshes/Mesh.Mesh#renderOrder | renderOrder}
+ *   - First, the opaque unprojected Meshes (i.e. opaque {@link core/meshes/FullscreenPlane.FullscreenPlane | FullscreenPlane}  or {@link RenderBundle}, if any), sorted by their {@link core/meshes/FullscreenPlane.FullscreenPlane#renderOrder | renderOrder}.
+ *   - Then, the transparent unprojected Meshes (i.e. transparent {@link core/meshes/FullscreenPlane.FullscreenPlane | FullscreenPlane} or {@link RenderBundle}, if any), sorted by their {@link core/meshes/FullscreenPlane.FullscreenPlane#renderOrder | renderOrder}.
+ *   - Then, the opaque projected Meshes (i.e. opaque {@link core/meshes/Mesh.Mesh | Mesh}, {@link curtains/meshes/DOMMesh.DOMMesh | DOMMesh}, {@link curtains/meshes/Plane.Plane | Plane}) or {@link RenderBundle}, sorted by their {@link core/meshes/Mesh.Mesh#renderOrder | renderOrder}.
+ *   - Finally, the transparent projected Meshes (i.e. transparent {@link core/meshes/Mesh.Mesh | Mesh}, {@link curtains/meshes/DOMMesh.DOMMesh | DOMMesh}, {@link curtains/meshes/Plane.Plane | Plane} or {@link RenderBundle}), sorted by their Z position and then their {@link core/meshes/Mesh.Mesh#renderOrder | renderOrder}.
  * - Finally all Meshes that need to be rendered directly to the {@link renderPassEntries} screen (the {@link Renderer} current texture), in the same order than above.
  */
 export class Scene extends Object3D {
@@ -77,10 +77,10 @@ export class Scene extends Object3D {
   /** Array of {@link ComputePass} to render, ordered by {@link ComputePass#renderOrder | renderOrder} */
   computePassEntries: ComputePass[]
   /**
-   * A {@link RenderPassEntries} object that will contain every Meshes that need to be drawn, put inside each one of our three entries type arrays: 'pingPong', 'outputTarget' and 'screen'.
-   * - The {@link Scene} will first render all {@link renderPassEntries} pingPong entries Meshes
-   * - Then all Meshes that need to be rendered into specific {@link renderPassEntries} outputTarget entries
-   * - Finally all Meshes that need to be rendered to the {@link renderPassEntries} screen
+   * A {@link RenderPassEntries} object that will contain every Meshes or {@link RenderBundle} that need to be drawn, put inside each one of our three entries type arrays: `pingPong`, `renderTarget` and `screen`.
+   * - The {@link Scene} will first render all {@link renderPassEntries} pingPong entries Meshes.
+   * - Then all Meshes that need to be rendered into specific {@link renderPassEntries} renderTarget entries.
+   * - Finally all Meshes that need to be rendered to the {@link renderPassEntries} screen.
    */
   renderPassEntries: RenderPassEntries
 
@@ -215,7 +215,7 @@ export class Scene extends Object3D {
    * @param mesh - Mesh to check
    * @returns - the corresponding render pass entry {@link Stack}
    */
-  getMeshProjectionStack(mesh: SceneStackedMesh): ProjectionStack {
+  getMeshProjectionStack(mesh: RenderedMesh): ProjectionStack {
     // first get correct render pass enty and stack
     const renderPassEntry = mesh.outputTarget
       ? this.renderPassEntries.renderTarget.find(
@@ -229,47 +229,130 @@ export class Scene extends Object3D {
   }
 
   /**
+   * Order a {@link SceneStackedObject} array by using the {@link SceneStackedObject#renderOrder | renderOrder} or {@link SceneStackedObject#index | index} properties.
+   * @param stack - {@link SceneStackedObject} to sort, filled with {@link RenderedMesh} or {@link RenderBundle}.
+   */
+  orderStack(stack: SceneStackedObject[]) {
+    // sort by their render order or natural index
+    stack.sort((a, b) => {
+      return a.renderOrder - b.renderOrder || a.index - b.index
+    })
+  }
+
+  /**
+   * Test whether a {@link SceneStackedObject} is a {@link RenderBundle} or not.
+   * @param object - Object to test.
+   * @returns - Whether the {@link object} is a {@link RenderBundle} or not.
+   */
+  isStackObjectRenderBundle(object: SceneStackedObject): object is RenderBundle {
+    return object.type === 'RenderBundle'
+  }
+
+  /**
    * Add a Mesh to the correct {@link renderPassEntries | render pass entry} {@link Stack} array.
    * Meshes are then ordered by their {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#index | indexes (order of creation]}, {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#index | pipeline entry indexes} and then {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#renderOrder | renderOrder}
    * @param mesh - Mesh to add
    */
   addMesh(mesh: SceneStackedMesh) {
     const projectionStack = this.getMeshProjectionStack(mesh)
+    const isTransparent = !!mesh.transparent
+    const { useProjection } = mesh.material.options.rendering
 
-    // rebuild stack
-    const similarMeshes = mesh.transparent ? projectionStack.transparent : projectionStack.opaque
+    if (mesh.renderBundle) {
+      const { renderBundle } = mesh
 
-    similarMeshes.push(mesh)
+      renderBundle.addMesh(mesh, mesh.outputTarget ? mesh.outputTarget.renderPass : this.renderer.renderPass)
 
-    // sort by their render order, pipeline index or natural index
-    similarMeshes.sort((a, b) => {
-      return (
-        a.renderOrder - b.renderOrder ||
-        //a.material.pipelineEntry.index - b.material.pipelineEntry.index ||
-        a.index - b.index
-      )
-    })
+      if (mesh.renderBundle) {
+        // first mesh of the render bundle?
+        // add the render bundle to the correct stack
+        if (renderBundle.meshes.size === 1) {
+          if (renderBundle.transparent === null) {
+            renderBundle.transparent = isTransparent
+          }
 
-    if ('parent' in mesh && !mesh.parent && mesh.material.options.rendering.useProjection) {
+          // TODO is this really needed?
+          if (renderBundle.useProjection === null) {
+            renderBundle.useProjection = useProjection
+          }
+
+          this.addRenderBundle(renderBundle, projectionStack)
+        }
+      }
+    }
+
+    if (!mesh.renderBundle) {
+      // rebuild stack
+      const similarMeshes = isTransparent ? projectionStack.transparent : projectionStack.opaque
+
+      similarMeshes.push(mesh)
+
+      this.orderStack(similarMeshes)
+    }
+
+    if ('parent' in mesh && !mesh.parent && useProjection) {
       mesh.parent = this
     }
   }
 
   /**
-   * Remove a Mesh from our {@link Scene}
-   * @param mesh - Mesh to remove
+   * Remove a Mesh from our {@link Scene}.
+   * @param mesh - Mesh to remove.
    */
   removeMesh(mesh: SceneStackedMesh) {
     const projectionStack = this.getMeshProjectionStack(mesh)
+    const isTransparent = !!mesh.transparent
 
-    if (mesh.transparent) {
-      projectionStack.transparent = projectionStack.transparent.filter((m) => m.uuid !== mesh.uuid)
+    if (mesh.renderBundle) {
+      mesh.renderBundle.removeMesh(mesh, false)
     } else {
-      projectionStack.opaque = projectionStack.opaque.filter((m) => m.uuid !== mesh.uuid)
+      if (isTransparent) {
+        projectionStack.transparent = projectionStack.transparent.filter((m) => m.uuid !== mesh.uuid)
+      } else {
+        projectionStack.opaque = projectionStack.opaque.filter((m) => m.uuid !== mesh.uuid)
+      }
     }
 
     if ('parent' in mesh && mesh.parent && mesh.parent.object3DIndex === this.object3DIndex) {
       mesh.parent = null
+    }
+  }
+
+  /**
+   * Add a {@link RenderBundle} to the correct {@link renderPassEntries | render pass entry} {@link Stack} array.
+   * @param renderBundle - {@link RenderBundle} to add.
+   * @param projectionStack - {@link ProjectionStack} onto which to add the {@link RenderBundle}.
+   */
+  addRenderBundle(renderBundle: RenderBundle, projectionStack: ProjectionStack) {
+    // rebuild stack
+    const similarObjects = !!renderBundle.transparent ? projectionStack.transparent : projectionStack.opaque
+
+    similarObjects.push(renderBundle)
+
+    this.orderStack(similarObjects)
+  }
+
+  /**
+   * Remove a {@link RenderBundle} from our {@link Scene}.
+   * @param renderBundle - {@link RenderBundle} to remove.
+   */
+  removeRenderBundle(renderBundle: RenderBundle) {
+    // first get correct render pass enty and stack
+    const renderPassEntry = this.renderPassEntries.renderTarget.find(
+      (passEntry) => passEntry.renderPass.uuid === renderBundle.options.renderPass?.uuid
+    )
+
+    const { stack } = renderPassEntry || this.renderPassEntries.screen[0]
+
+    const isProjected = !!renderBundle.useProjection
+    const projectionStack = isProjected ? stack.projected : stack.unProjected
+
+    const isTransparent = !!renderBundle.transparent
+
+    if (isTransparent) {
+      projectionStack.transparent = projectionStack.transparent.filter((bundle) => bundle.uuid !== renderBundle.uuid)
+    } else {
+      projectionStack.opaque = projectionStack.opaque.filter((bundle) => bundle.uuid !== renderBundle.uuid)
     }
   }
 
@@ -324,15 +407,42 @@ export class Scene extends Object3D {
           }
         : null
 
+    const outputPass = shaderPass.outputTarget ? shaderPass.outputTarget.renderPass : this.renderer.postProcessingPass
+
     const shaderPassEntry = {
       // use output target or postprocessing render pass
-      renderPass: shaderPass.outputTarget ? shaderPass.outputTarget.renderPass : this.renderer.postProcessingPass,
+      renderPass: outputPass,
       // render to output target renderTexture or directly to screen
       renderTexture: shaderPass.outputTarget ? shaderPass.outputTarget.renderTexture : null,
       onBeforeRenderPass,
       onAfterRenderPass,
       element: shaderPass,
       stack: null, // explicitly set to null
+    }
+
+    if (shaderPass.renderBundle) {
+      const isTransparent = !!shaderPass.transparent
+      const { renderBundle } = shaderPass
+
+      if (renderBundle.meshes.size < 1) {
+        renderBundle.addMesh(shaderPass, outputPass)
+        // force render bundle size to 1
+        renderBundle.size = 1
+      } else {
+        throwWarning(
+          `${renderBundle.options.label} (${renderBundle.type}): Cannot add more than 1 ShaderPass to a render bundle. This ShaderPass will not be added: ${shaderPass.options.label}`
+        )
+
+        shaderPass.renderBundle = null
+      }
+
+      if (shaderPass.renderBundle) {
+        // add the render bundle to the correct stack
+        shaderPass.renderBundle.renderOrder = shaderPass.renderOrder
+        renderBundle.transparent = isTransparent
+
+        renderBundle.useProjection = false
+      }
     }
 
     this.renderPassEntries.screen.push(shaderPassEntry)
@@ -366,6 +476,10 @@ export class Scene extends Object3D {
    * @param shaderPass - {@link ShaderPass} to remove
    */
   removeShaderPass(shaderPass: ShaderPass) {
+    if (shaderPass.renderBundle) {
+      shaderPass.renderBundle.empty()
+    }
+
     this.renderPassEntries.screen = this.renderPassEntries.screen.filter(
       (entry) => !entry.element || entry.element.uuid !== shaderPass.uuid
     )
@@ -398,6 +512,31 @@ export class Scene extends Object3D {
       stack: null, // explicitly set to null
     } as RenderPassEntry)
 
+    if (pingPongPlane.renderBundle) {
+      const isTransparent = !!pingPongPlane.transparent
+      const { renderBundle } = pingPongPlane
+
+      if (renderBundle.meshes.size < 1) {
+        renderBundle.addMesh(pingPongPlane, pingPongPlane.outputTarget.renderPass)
+        // force render bundle size to 1
+        renderBundle.size = 1
+      } else {
+        throwWarning(
+          `${renderBundle.options.label} (${renderBundle.type}): Cannot add more than 1 PingPongPlane to a render bundle. This PingPongPlane will not be added: ${pingPongPlane.options.label}`
+        )
+
+        pingPongPlane.renderBundle = null
+      }
+
+      if (pingPongPlane.renderBundle) {
+        // add the render bundle to the correct stack
+        pingPongPlane.renderBundle.renderOrder = pingPongPlane.renderOrder
+        renderBundle.transparent = isTransparent
+
+        renderBundle.useProjection = false
+      }
+    }
+
     // sort by their render order
     this.renderPassEntries.pingPong.sort((a, b) => a.element.renderOrder - b.element.renderOrder)
   }
@@ -407,6 +546,10 @@ export class Scene extends Object3D {
    * @param pingPongPlane - {@link PingPongPlane} to remove
    */
   removePingPongPlane(pingPongPlane: PingPongPlane) {
+    if (pingPongPlane.renderBundle) {
+      pingPongPlane.renderBundle.empty()
+    }
+
     this.renderPassEntries.pingPong = this.renderPassEntries.pingPong.filter(
       (entry) => entry.element.uuid !== pingPongPlane.uuid
     )
@@ -428,14 +571,30 @@ export class Scene extends Object3D {
       return this.renderPassEntries.screen.find((entry) => entry.element?.uuid === object.uuid)
     } else {
       const entryType = (object as RenderedMesh).outputTarget ? 'renderTarget' : 'screen'
-      return this.renderPassEntries[entryType].find((entry) => {
-        return [
-          ...entry.stack.unProjected.opaque,
-          ...entry.stack.unProjected.transparent,
-          ...entry.stack.projected.opaque,
-          ...entry.stack.projected.transparent,
-        ].some((mesh) => mesh.uuid === object.uuid)
-      })
+
+      if ((object as RenderedMesh).renderBundle) {
+        return this.renderPassEntries[entryType].find((entry) => {
+          return [
+            ...entry.stack.unProjected.opaque,
+            ...entry.stack.unProjected.transparent,
+            ...entry.stack.projected.opaque,
+            ...entry.stack.projected.transparent,
+          ]
+            .filter((object) => object.type === 'RenderBundle')
+            .some((bundle: RenderBundle) => {
+              return bundle.meshes.get(object.uuid)
+            })
+        })
+      } else {
+        return this.renderPassEntries[entryType].find((entry) => {
+          return [
+            ...entry.stack.unProjected.opaque,
+            ...entry.stack.unProjected.transparent,
+            ...entry.stack.projected.opaque,
+            ...entry.stack.projected.transparent,
+          ].some((mesh) => mesh.uuid === object.uuid)
+        })
+      }
     }
   }
 
@@ -443,9 +602,13 @@ export class Scene extends Object3D {
    * Sort transparent projected meshes by their render order or distance to the camera (farther meshes should be drawn first).
    * @param meshes - transparent projected meshes array to sort
    */
-  sortTransparentMeshes(meshes: ProjectedMesh[]) {
+  sortTransparentMeshes(meshes: Array<ProjectedMesh | RenderBundle>) {
     meshes.sort((meshA, meshB) => {
       if (meshA.renderOrder !== meshB.renderOrder) {
+        return meshA.renderOrder - meshB.renderOrder
+      }
+
+      if (this.isStackObjectRenderBundle(meshA) || this.isStackObjectRenderBundle(meshB)) {
         return meshA.renderOrder - meshB.renderOrder
       }
 
@@ -490,7 +653,8 @@ export class Scene extends Object3D {
 
     // now begin our actual render pass
     const pass = commandEncoder.beginRenderPass(renderPassEntry.renderPass.descriptor)
-    !this.renderer.production &&
+
+    if (!this.renderer.production) {
       pass.pushDebugGroup(
         renderPassEntry.element
           ? `${renderPassEntry.element.options.label} render pass using ${renderPassEntry.renderPass.options.label} descriptor`
@@ -498,10 +662,15 @@ export class Scene extends Object3D {
               renderPassEntry.renderTexture ? ' onto ' + renderPassEntry.renderTexture.options.label : ''
             }`
       )
+    }
 
     // pass entries can have a single element or a stack
     if (renderPassEntry.element) {
-      renderPassEntry.element.render(pass)
+      if (renderPassEntry.element.renderBundle) {
+        renderPassEntry.element.renderBundle.render(pass)
+      } else {
+        renderPassEntry.element.render(pass)
+      }
     } else if (renderPassEntry.stack) {
       // draw unProjected regular meshes
       for (const mesh of renderPassEntry.stack.unProjected.opaque) {
@@ -513,11 +682,13 @@ export class Scene extends Object3D {
 
       // then draw projected meshes
       if (renderPassEntry.stack.projected.opaque.length || renderPassEntry.stack.projected.transparent.length) {
+        // opaque
         for (const mesh of renderPassEntry.stack.projected.opaque) {
           mesh.render(pass)
         }
 
-        this.sortTransparentMeshes(renderPassEntry.stack.projected.transparent as ProjectedMesh[])
+        // transparent
+        this.sortTransparentMeshes(renderPassEntry.stack.projected.transparent as Array<ProjectedMesh | RenderBundle>)
 
         for (const mesh of renderPassEntry.stack.projected.transparent) {
           mesh.render(pass)
@@ -525,7 +696,8 @@ export class Scene extends Object3D {
       }
     }
 
-    !this.renderer.production && pass.popDebugGroup()
+    if (!this.renderer.production) pass.popDebugGroup()
+
     pass.end()
 
     renderPassEntry.onAfterRenderPass && renderPassEntry.onAfterRenderPass(commandEncoder, swapChainTexture)
@@ -564,7 +736,13 @@ export class Scene extends Object3D {
   render(commandEncoder: GPUCommandEncoder) {
     for (const computePass of this.computePassEntries) {
       const pass = commandEncoder.beginComputePass()
+
+      if (!this.renderer.production) pass.pushDebugGroup(`${computePass.options.label}: begin compute pass`)
+
       computePass.render(pass)
+
+      if (!this.renderer.production) pass.popDebugGroup()
+
       pass.end()
 
       computePass.copyBufferToResult(commandEncoder)

@@ -1,7 +1,9 @@
+import { WebGPUShaderStageConstants } from '../../utils/webgpu-constants.mjs';
+
 const bindingVisibilities = /* @__PURE__ */ new Map([
-  ["vertex", GPUShaderStage.VERTEX],
-  ["fragment", GPUShaderStage.FRAGMENT],
-  ["compute", GPUShaderStage.COMPUTE]
+  ["vertex", WebGPUShaderStageConstants.VERTEX],
+  ["fragment", WebGPUShaderStageConstants.FRAGMENT],
+  ["compute", WebGPUShaderStageConstants.COMPUTE]
 ]);
 const getBindingVisibility = (visibilities = []) => {
   return visibilities.reduce((acc, v) => {

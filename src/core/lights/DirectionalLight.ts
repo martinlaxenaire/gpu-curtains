@@ -2,6 +2,7 @@ import { Light, LightBaseParams, LightsType } from './Light'
 import { Vec3 } from '../../math/Vec3'
 import { DirectionalShadow, DirectionalShadowParams } from '../shadows/DirectionalShadow'
 import { CameraRenderer } from '../renderers/utils'
+import { GPUCurtains } from '../../curtains/GPUCurtains'
 
 /**
  * Base parameters used to create a {@link DirectionalLight}.
@@ -83,7 +84,7 @@ export class DirectionalLight extends Light {
    * @param parameters - {@link DirectionalLightBaseParams | parameters} used to create this {@link DirectionalLight}.
    */
   constructor(
-    renderer: CameraRenderer,
+    renderer: CameraRenderer | GPUCurtains,
     {
       color = new Vec3(1),
       intensity = 1,
@@ -93,8 +94,7 @@ export class DirectionalLight extends Light {
     } = {} as DirectionalLightBaseParams
   ) {
     const type = 'directionalLights'
-    const index = renderer.lights.filter((light) => light.type === type).length
-    super(renderer, { color, intensity, index, type })
+    super(renderer, { color, intensity, type })
 
     this.options = {
       ...this.options,
@@ -111,13 +111,6 @@ export class DirectionalLight extends Light {
 
     this.parent = this.renderer.scene
 
-    if (this.index + 1 > this.renderer.lightsBindingParams[this.type].max) {
-      this.onMaxLightOverflow(this.type as LightsType)
-    }
-
-    this.rendererBinding.inputs.count.value = this.index + 1
-    this.rendererBinding.inputs.count.shouldUpdate = true
-
     this.shadow = new DirectionalShadow(this.renderer, {
       autoRender: false, // will be set by calling cast()
       light: this,
@@ -126,6 +119,16 @@ export class DirectionalLight extends Light {
     if (shadow) {
       this.shadow.cast(shadow)
     }
+  }
+
+  /**
+   * Set or reset this {@link DirectionalLight} {@link CameraRenderer}.
+   * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
+   */
+  setRenderer(renderer: CameraRenderer | GPUCurtains) {
+    this.shadow?.setRenderer(renderer)
+
+    super.setRenderer(renderer)
   }
 
   /**

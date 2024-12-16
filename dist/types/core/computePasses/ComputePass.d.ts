@@ -114,13 +114,20 @@ export declare class ComputePass {
     get ready(): boolean;
     set ready(value: boolean);
     /**
-     * Add our compute pass to the scene and the renderer
+     * Add our {@link ComputePass} to the scene and optionally to the renderer.
+     * @param addToRenderer - whether to add this {@link ComputePass} to the {@link Renderer#computePasses | Renderer computePasses array}
      */
-    addToScene(): void;
+    addToScene(addToRenderer?: boolean): void;
     /**
-     * Remove our compute pass from the scene and the renderer
+     * Remove our {@link ComputePass} from the scene and optionally from the renderer as well.
+     * @param removeFromRenderer - whether to remove this {@link ComputePass} from the {@link Renderer#computePasses | Renderer computePasses array}.
      */
-    removeFromScene(): void;
+    removeFromScene(removeFromRenderer?: boolean): void;
+    /**
+     * Set a new {@link Renderer} for this {@link ComputePass}.
+     * @param renderer - new {@link Renderer} to set.
+     */
+    setRenderer(renderer: Renderer | GPUCurtains): void;
     /**
      * Create the compute pass material
      * @param computeParameters - {@link ComputeMaterial} parameters

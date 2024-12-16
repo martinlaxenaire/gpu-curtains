@@ -1,6 +1,7 @@
 import { Light, LightBaseParams, LightsType } from './Light'
 import { Vec3 } from '../../math/Vec3'
 import { CameraRenderer } from '../renderers/utils'
+import { GPUCurtains } from '../../curtains/GPUCurtains'
 
 /**
  * Create an ambient light that equally illuminates all objects in the scene.
@@ -22,17 +23,12 @@ export class AmbientLight extends Light {
    * @param renderer - {@link CameraRenderer} used to create this {@link AmbientLight}.
    * @param parameters - {@link LightBaseParams | parameters} used to create this {@link AmbientLight}.
    */
-  constructor(renderer: CameraRenderer, { color = new Vec3(1), intensity = 0.1 } = {} as LightBaseParams) {
+  constructor(
+    renderer: CameraRenderer | GPUCurtains,
+    { color = new Vec3(1), intensity = 0.1 } = {} as LightBaseParams
+  ) {
     const type = 'ambientLights'
-    const index = renderer.lights.filter((light) => light.type === type).length
-    super(renderer, { color, intensity, index, type })
-
-    if (this.index + 1 > this.renderer.lightsBindingParams[this.type].max) {
-      this.onMaxLightOverflow(this.type as LightsType)
-    }
-
-    this.rendererBinding.inputs.count.value = this.index + 1
-    this.rendererBinding.inputs.count.shouldUpdate = true
+    super(renderer, { color, intensity, type })
   }
 
   // explicitly disable all kinds of transformations

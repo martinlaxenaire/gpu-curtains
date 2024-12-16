@@ -21,7 +21,7 @@ var __privateAdd = (obj, member, value) => {
 };
 var __privateSet = (obj, member, value, setter) => {
   __accessCheck(obj, member, "write to private field");
-  setter ? setter.call(obj, value) : member.set(obj, value);
+  member.set(obj, value);
   return value;
 };
 let meshIndex = 0;
@@ -40,7 +40,8 @@ const defaultMeshBaseParams = {
   visible: true,
   renderOrder: 0,
   // textures
-  texturesOptions: {}
+  texturesOptions: {},
+  renderBundle: null
 };
 function MeshBaseMixin(Base) {
   var _autoRender, _a;
@@ -94,11 +95,13 @@ function MeshBaseMixin(Base) {
         visible,
         renderOrder,
         outputTarget,
+        renderBundle,
         texturesOptions,
         autoRender,
         ...meshParameters
       } = parameters;
       this.outputTarget = outputTarget ?? null;
+      this.renderBundle = renderBundle ?? null;
       meshParameters.sampleCount = !!meshParameters.sampleCount ? meshParameters.sampleCount : this.outputTarget ? this.outputTarget.renderPass.options.sampleCount : this.renderer && this.renderer.renderPass ? this.renderer.renderPass.options.sampleCount : 1;
       this.options = {
         ...this.options ?? {},
@@ -106,6 +109,7 @@ function MeshBaseMixin(Base) {
         label: label ?? "Mesh " + this.renderer.meshes.length,
         ...shaders !== void 0 ? { shaders } : {},
         ...outputTarget !== void 0 && { outputTarget },
+        ...renderBundle !== void 0 && { renderBundle },
         texturesOptions,
         ...autoRender !== void 0 && { autoRender },
         ...meshParameters
@@ -184,6 +188,7 @@ function MeshBaseMixin(Base) {
         );
         return;
       }
+      this.material?.setRenderer(renderer);
       const oldRenderer = this.renderer;
       this.removeFromScene(true);
       this.renderer = renderer;
@@ -198,18 +203,32 @@ function MeshBaseMixin(Base) {
       }
     }
     /**
-     * Assign or remove a {@link RenderTarget} to this Mesh
-     * Since this manipulates the {@link core/scenes/Scene.Scene | Scene} stacks, it can be used to remove a RenderTarget as well.
-     * @param outputTarget - the RenderTarget to assign or null if we want to remove the current RenderTarget
+     * Assign or remove a {@link RenderTarget} to this Mesh.
+     * Since this manipulates the {@link core/scenes/Scene.Scene | Scene} stacks, it can be used to remove a {@link RenderTarget} as well.
+     * @param outputTarget - the {@link RenderTarget} to assign or null if we want to remove the current {@link RenderTarget}.
      */
     setOutputTarget(outputTarget) {
       if (outputTarget && outputTarget.type !== "RenderTarget") {
-        throwWarning(`${this.options.label ?? this.type}: outputTarget is not a RenderTarget: ${outputTarget}`);
+        throwWarning(`${this.options.label ?? this.type}: outputTarget is not a RenderTarget: ${outputTarget.type}`);
         return;
       }
       this.removeFromScene();
       this.outputTarget = outputTarget;
       this.addToScene();
+    }
+    /**
+     * Assign or remove a {@link RenderBundle} to this Mesh.
+     * @param renderBundle - the {@link RenderBundle} to assign or null if we want to remove the current {@link RenderBundle}.
+     * @param updateScene - Whether to remove and then re-add the Mesh from the {@link core/scenes/Scene.Scene | Scene} or not.
+     */
+    setRenderBundle(renderBundle, updateScene = true) {
+      if (updateScene) {
+        this.removeFromScene();
+        this.renderBundle = renderBundle;
+        this.addToScene();
+      } else {
+        this.renderBundle = renderBundle;
+      }
     }
     /**
      * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been lost to prepare everything for restoration.
@@ -451,7 +470,11 @@ ${geometry.wgslStructFragment}`
       if (!options.label) {
         options.label = this.options.label + " " + options.name;
       }
-      const domTexture = new DOMTexture(this.renderer, { ...options, ...this.options.texturesOptions });
+      const texturesOptions = { ...options, ...this.options.texturesOptions };
+      if (this.renderBundle) {
+        texturesOptions.useExternalTextures = false;
+      }
+      const domTexture = new DOMTexture(this.renderer, texturesOptions);
       this.addDOMTexture(domTexture);
       return domTexture;
     }
@@ -460,6 +483,9 @@ ${geometry.wgslStructFragment}`
      * @param domTexture - {@link DOMTexture} to add
      */
     addDOMTexture(domTexture) {
+      if (this.renderBundle) {
+        this.renderBundle.ready = false;
+      }
       this.material.addTexture(domTexture);
       this.onDOMTextureAdded(domTexture);
     }
@@ -488,6 +514,9 @@ ${geometry.wgslStructFragment}`
      * @param texture - {@link Texture} to add
      */
     addTexture(texture) {
+      if (this.renderBundle) {
+        this.renderBundle.ready = false;
+      }
       this.material.addTexture(texture);
     }
     /* BINDINGS */
@@ -597,9 +626,12 @@ ${geometry.wgslStructFragment}`
     onBeforeRenderPass() {
       if (!this.renderer.ready)
         return;
-      this.ready = this.material && this.material.ready && this.geometry && this.geometry.ready;
       this.setGeometry();
+      if (this.visible) {
+        this._onRenderCallback && this._onRenderCallback();
+      }
       this.material.onBeforeRender();
+      this.ready = this.material && this.material.ready && this.geometry && this.geometry.ready;
     }
     /**
      * Render our {@link MeshBase} if the {@link RenderMaterial} is ready
@@ -608,7 +640,6 @@ ${geometry.wgslStructFragment}`
     onRenderPass(pass) {
       if (!this.ready)
         return;
-      this._onRenderCallback && this._onRenderCallback();
       this.material.render(pass);
       this.geometry.render(pass);
     }
@@ -631,9 +662,6 @@ ${geometry.wgslStructFragment}`
       this.onBeforeRenderPass();
       if (!this.renderer.ready || !this.visible)
         return;
-      if (super.render) {
-        super.render();
-      }
       !this.renderer.production && pass.pushDebugGroup(this.options.label);
       this.onRenderPass(pass);
       !this.renderer.production && pass.popDebugGroup();

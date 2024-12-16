@@ -18,8 +18,15 @@ import { Texture } from '../textures/Texture';
 import { GPUDeviceManager } from './GPUDeviceManager';
 import { FullscreenPlane } from '../meshes/FullscreenPlane';
 import { Buffer } from '../buffers/Buffer';
+import { RenderBundle } from '../renderPasses/RenderBundle';
+/** Options used to configure the renderer canvas context. If not specified, `format` will be set with `GPU.getPreferredCanvasFormat()` and `alphaMode` with `premultiplied`. */
+export interface GPURendererContextOptions extends Omit<GPUCanvasConfiguration, 'device' | 'usage'> {
+}
+/** Parameters used to configure the renderer canvas context. */
+export interface GPURendererContextParams extends Partial<GPURendererContextOptions> {
+}
 /**
- * Parameters used to create a {@link GPURenderer}
+ * Parameters used to create a {@link GPURenderer}.
  */
 export interface GPURendererParams {
     /** The {@link GPUDeviceManager} used to create this {@link GPURenderer} */
@@ -32,10 +39,8 @@ export interface GPURendererParams {
     pixelRatio?: number;
     /** Whether to auto resize the renderer each time its {@link GPURenderer#domElement} size changes or not. It is advised to set this parameter to `false` if the provided {@link container} is a {@link HTMLCanvasElement | canvas element}, and handle {@link GPURenderer#resize | resizing} by yourself. */
     autoResize?: boolean;
-    /** Texture rendering {@link GPUTextureFormat | preferred format} */
-    preferredFormat?: GPUTextureFormat;
-    /** Set the {@link GPUCanvasContext | context} alpha mode */
-    alphaMode?: GPUCanvasAlphaMode;
+    /** Options used to configure this {@link GPURenderer} context. If not specified, `format` will be set with `GPU.getPreferredCanvasFormat()` and `alphaMode` with `premultiplied`. */
+    context?: GPURendererContextParams;
     /** The {@link GPURenderer#renderPass | renderer RenderPass} parameters */
     renderPass?: {
         /** Whether the {@link GPURenderer#renderPass | renderer RenderPass} should handle depth. Default to `true` */
@@ -46,14 +51,23 @@ export interface GPURendererParams {
         clearValue: GPUColor;
     };
 }
+/** Options used to create this {@link GPURenderer}. */
+export interface GPURendererOptions extends GPURendererParams {
+    /** Patched {@link GPURendererContextOptions | context configuration options}. */
+    context: GPURendererContextOptions;
+}
 /** Any Mesh that is bound to a DOM Element */
 export type DOMProjectedMesh = DOMMesh | Plane;
 /** Any Mesh that is projected (i.e use a {@link core/camera/Camera.Camera | Camera} to compute a model view projection matrix) */
 export type ProjectedMesh = Mesh | DOMProjectedMesh;
 /** Any Mesh that can be drawn (including fullscreen quad meshes) and that will be put in the {@link Scene} meshes stacks */
 export type SceneStackedMesh = ProjectedMesh | FullscreenPlane;
+/** Anything that can be added to a {@link Scene} meshes stacks, including {@link RenderBundle} */
+export type SceneStackedObject = SceneStackedMesh | RenderBundle;
+/** Any Mesh that is drawn fullscren, i.e. fullscreen quad meshes used for post processing and {@link PingPongPlane} */
+export type FullscreenPass = PingPongPlane | ShaderPass;
 /** Any Mesh that can be drawn, including fullscreen quad meshes used for post processing and {@link PingPongPlane} */
-export type RenderedMesh = SceneStackedMesh | PingPongPlane | ShaderPass;
+export type RenderedMesh = SceneStackedMesh | FullscreenPass;
 /** Any Mesh or Compute pass */
 export type SceneObject = RenderedMesh | ComputePass;
 /**
@@ -77,9 +91,8 @@ export declare class GPURenderer {
     /** The WebGPU {@link GPUCanvasContext | context} used */
     context: null | GPUCanvasContext;
     /** Set the {@link GPUCanvasContext | context} alpha mode */
-    alphaMode?: GPUCanvasAlphaMode;
     /** Options used to create this {@link GPURenderer} */
-    options: GPURendererParams;
+    options: GPURendererOptions;
     /** The {@link RenderPass | render pass} used to render our result to screen */
     renderPass: RenderPass;
     /** Additional {@link RenderPass | render pass} used by {@link ShaderPass} for compositing / post processing. Does not handle depth */
@@ -102,6 +115,8 @@ export declare class GPURenderer {
     meshes: SceneStackedMesh[];
     /** An array containing all our created {@link Texture} */
     textures: Texture[];
+    /** An array containing all our created {@link RenderBundle} */
+    renderBundles: RenderBundle[];
     /** Pixel ratio to use for rendering */
     pixelRatio: number;
     /** An object defining the width, height, top and left position of the canvas. Mainly used internally. If you need to get the renderer dimensions, use {@link boundingRect} instead. */
@@ -128,7 +143,7 @@ export declare class GPURenderer {
      * GPURenderer constructor
      * @param parameters - {@link GPURendererParams | parameters} used to create this {@link GPURenderer}
      */
-    constructor({ deviceManager, label, container, pixelRatio, autoResize, preferredFormat, alphaMode, renderPass, }: GPURendererParams);
+    constructor({ deviceManager, label, container, pixelRatio, autoResize, context, renderPass, }: GPURendererParams);
     /**
      * Set the renderer {@link RectBBox} and canvas sizes
      * @param rectBBox - the optional new {@link canvas} {@link RectBBox} to set

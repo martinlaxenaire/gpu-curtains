@@ -1,5 +1,6 @@
 import { Material } from './Material.mjs';
 import { isRenderer } from '../renderers/utils.mjs';
+import { RenderPipelineEntry } from '../pipelines/RenderPipelineEntry.mjs';
 import { throwWarning } from '../../utils/utils.mjs';
 import { compareRenderingOptions } from './utils.mjs';
 import default_projected_vsWgsl from '../shaders/chunks/default/default_projected_vs.wgsl.mjs';
@@ -53,12 +54,12 @@ class RenderMaterial extends Material {
     if (targets === void 0) {
       targets = [
         {
-          format: this.renderer.options.preferredFormat
+          format: this.renderer.options.context.format
         }
       ];
     }
     if (targets && targets.length && !targets[0].format) {
-      targets[0].format = this.renderer.options.preferredFormat;
+      targets[0].format = this.renderer.options.context.format;
     }
     this.options = {
       ...this.options,
@@ -79,6 +80,20 @@ class RenderMaterial extends Material {
     };
     this.attributes = null;
     this.pipelineEntry = null;
+  }
+  /**
+   * Set or reset this {@link RenderMaterial} {@link renderer}. Will also update the renderer camera bind group if needed.
+   * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
+   */
+  setRenderer(renderer) {
+    if (this.useCameraBindGroup && this.renderer) {
+      this.renderer.cameraLightsBindGroup.consumers.delete(this.uuid);
+    }
+    super.setRenderer(renderer);
+    if (this.useCameraBindGroup) {
+      this.bindGroups[0] = this.renderer.cameraLightsBindGroup;
+      this.renderer.cameraLightsBindGroup.consumers.add(this.uuid);
+    }
   }
   /**
    * Set (or reset) the current {@link pipelineEntry}. Use the {@link Renderer#pipelineManager | renderer pipelineManager} to check whether we can get an already created {@link RenderPipelineEntry} from cache or if we should create a new one.
@@ -121,6 +136,9 @@ class RenderMaterial extends Material {
    * @param renderingOptions - new {@link RenderMaterialRenderingOptions | rendering options} properties to be set
    */
   setRenderingOptions(renderingOptions = {}) {
+    if (renderingOptions.transparent && renderingOptions.targets.length && !renderingOptions.targets[0].blend) {
+      renderingOptions.targets[0].blend = RenderPipelineEntry.getDefaultTransparentBlending();
+    }
     const newProperties = compareRenderingOptions(renderingOptions, this.options.rendering);
     const oldRenderingOptions = { ...this.options.rendering };
     this.options.rendering = { ...this.options.rendering, ...renderingOptions };
@@ -200,6 +218,11 @@ New rendering options: ${JSON.stringify(
    */
   updateBindGroups() {
     const startBindGroupIndex = this.useCameraBindGroup ? 1 : 0;
+    if (this.useCameraBindGroup) {
+      if (this.bindGroups[0].needsPipelineFlush && this.pipelineEntry.ready) {
+        this.pipelineEntry.flushPipelineEntry(this.bindGroups);
+      }
+    }
     for (let i = startBindGroupIndex; i < this.bindGroups.length; i++) {
       this.updateBindGroup(this.bindGroups[i]);
     }
