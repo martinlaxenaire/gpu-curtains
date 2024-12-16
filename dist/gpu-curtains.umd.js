@@ -4969,7 +4969,7 @@
         this.options.viewDimension = parameters.fromTexture.options.viewDimension;
       }
       if (!this.options.format) {
-        this.options.format = this.renderer.options.preferredFormat;
+        this.options.format = this.renderer.options.context.format;
       }
       this.size = this.options.fixedSize ? {
         width: this.options.fixedSize.width * this.options.qualityRatio,
@@ -7268,7 +7268,7 @@
           loadOp: "clear",
           storeOp: "store",
           clearValue: [0, 0, 0, 0],
-          targetFormat: this.renderer.options.preferredFormat
+          targetFormat: this.renderer.options.context.format
         };
         if (!colorAttachments.length) {
           colorAttachments = [defaultColorAttachment];
@@ -7463,13 +7463,13 @@
     }
     /**
      * Set our {@link GPUColor | clear colors value}.<br>
-     * Beware that if the {@link renderer} is using {@link core/renderers/GPURenderer.GPURenderer#alphaMode | premultiplied alpha mode}, your R, G and B channels should be premultiplied by your alpha channel.
+     * Beware that if the {@link renderer} is using {@link core/renderers/GPURenderer.GPURendererContextOptions#alphaMode | premultiplied alpha mode}, your R, G and B channels should be premultiplied by your alpha channel.
      * @param clearValue - new {@link GPUColor | clear colors value} to use
      * @param colorAttachmentIndex - index of the color attachment for which to use this clear value
      */
     setClearValue(clearValue = [0, 0, 0, 0], colorAttachmentIndex = 0) {
       if (this.options.useColorAttachments) {
-        if (this.renderer.alphaMode === "premultiplied") {
+        if (this.renderer.options.context.alphaMode === "premultiplied") {
           const alpha = clearValue[3];
           clearValue[0] = Math.min(clearValue[0], alpha);
           clearValue[1] = Math.min(clearValue[1], alpha);
@@ -7578,7 +7578,7 @@
         this.renderTexture = new Texture(this.renderer, {
           label: this.options.label ? `${this.options.label} Render Texture` : "Render Target render texture",
           name: "renderTexture",
-          format: colorAttachments && colorAttachments.length && colorAttachments[0].targetFormat ? colorAttachments[0].targetFormat : this.renderer.options.preferredFormat,
+          format: colorAttachments && colorAttachments.length && colorAttachments[0].targetFormat ? colorAttachments[0].targetFormat : this.renderer.options.context.format,
           ...this.options.qualityRatio !== void 0 && { qualityRatio: this.options.qualityRatio },
           usage: ["copySrc", "renderAttachment", "textureBinding"]
         });
@@ -8298,12 +8298,12 @@ struct VSOutput {
       if (targets === void 0) {
         targets = [
           {
-            format: this.renderer.options.preferredFormat
+            format: this.renderer.options.context.format
           }
         ];
       }
       if (targets && targets.length && !targets[0].format) {
-        targets[0].format = this.renderer.options.preferredFormat;
+        targets[0].format = this.renderer.options.context.format;
       }
       this.options = {
         ...this.options,
@@ -12640,8 +12640,7 @@ ${this.shaders.compute.head}`;
       container,
       pixelRatio = 1,
       autoResize = true,
-      preferredFormat,
-      alphaMode = "premultiplied",
+      context = {},
       renderPass
     }) {
       // callbacks / events
@@ -12671,20 +12670,24 @@ ${this.shaders.compute.head}`;
       this.deviceManager.addRenderer(this);
       this.shouldRender = true;
       this.shouldRenderScene = true;
+      const contextOptions = {
+        ...{
+          alphaMode: "premultiplied",
+          format: this.deviceManager.gpu?.getPreferredCanvasFormat()
+        },
+        ...context
+      };
       renderPass = { ...{ useDepth: true, sampleCount: 4, clearValue: [0, 0, 0, 0] }, ...renderPass };
-      preferredFormat = preferredFormat ?? this.deviceManager.gpu?.getPreferredCanvasFormat();
       this.options = {
         deviceManager,
         label,
         container,
         pixelRatio,
         autoResize,
-        preferredFormat,
-        alphaMode,
+        context: contextOptions,
         renderPass
       };
       this.pixelRatio = pixelRatio ?? window.devicePixelRatio ?? 1;
-      this.alphaMode = alphaMode;
       const isOffscreenCanvas = container instanceof OffscreenCanvas;
       const isContainerCanvas = isOffscreenCanvas || container instanceof HTMLCanvasElement;
       this.canvas = isContainerCanvas ? container : document.createElement("canvas");
@@ -12884,13 +12887,10 @@ ${this.shaders.compute.head}`;
     configureContext() {
       this.context.configure({
         device: this.device,
-        format: this.options.preferredFormat,
-        alphaMode: this.alphaMode,
+        ...this.options.context,
         // needed so we can copy textures for post processing usage
         usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST
         //viewFormats: []
-        // TODO HDR support
-        // https://developer.chrome.com/blog/new-in-webgpu-129
       });
     }
     /**
@@ -13455,8 +13455,7 @@ ${this.shaders.compute.head}`;
       container,
       pixelRatio = 1,
       autoResize = true,
-      preferredFormat,
-      alphaMode = "premultiplied",
+      context = {},
       renderPass,
       camera = {},
       lights = {}
@@ -13467,8 +13466,7 @@ ${this.shaders.compute.head}`;
         container,
         pixelRatio,
         autoResize,
-        preferredFormat,
-        alphaMode,
+        context,
         renderPass
       });
       /** @ignore */
@@ -16090,8 +16088,7 @@ fn getIBL(
       container,
       pixelRatio = 1,
       autoResize = true,
-      preferredFormat,
-      alphaMode = "premultiplied",
+      context = {},
       renderPass,
       camera,
       lights
@@ -16102,8 +16099,7 @@ fn getIBL(
         container,
         pixelRatio,
         autoResize,
-        preferredFormat,
-        alphaMode,
+        context,
         renderPass,
         camera,
         lights
@@ -16206,8 +16202,7 @@ fn getIBL(
       container,
       label,
       pixelRatio = window.devicePixelRatio ?? 1,
-      preferredFormat,
-      alphaMode = "premultiplied",
+      context = {},
       production = false,
       adapterOptions = {},
       renderPass,
@@ -16239,8 +16234,7 @@ fn getIBL(
         lights,
         production,
         adapterOptions,
-        preferredFormat,
-        alphaMode,
+        context,
         renderPass,
         autoRender,
         autoResize,
@@ -16294,8 +16288,7 @@ fn getIBL(
         container: this.options.container,
         pixelRatio: this.options.pixelRatio,
         autoResize: this.options.autoResize,
-        preferredFormat: this.options.preferredFormat,
-        alphaMode: this.options.alphaMode,
+        context: this.options.context,
         renderPass: this.options.renderPass,
         camera: this.options.camera,
         lights: this.options.lights

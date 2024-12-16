@@ -37,8 +37,7 @@ class GPUCameraRenderer extends GPURenderer {
     container,
     pixelRatio = 1,
     autoResize = true,
-    preferredFormat,
-    alphaMode = "premultiplied",
+    context = {},
     renderPass,
     camera = {},
     lights = {}
@@ -49,8 +48,7 @@ class GPUCameraRenderer extends GPURenderer {
       container,
       pixelRatio,
       autoResize,
-      preferredFormat,
-      alphaMode,
+      context,
       renderPass
     });
     /** @ignore */

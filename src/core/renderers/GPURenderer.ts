@@ -22,8 +22,14 @@ import { FullscreenPlane } from '../meshes/FullscreenPlane'
 import { Buffer } from '../buffers/Buffer'
 import { RenderBundle } from '../renderPasses/RenderBundle'
 
+/** Options used to configure the renderer canvas context. If not specified, `format` will be set with `GPU.getPreferredCanvasFormat()` and `alphaMode` with `premultiplied`. */
+export interface GPURendererContextOptions extends Omit<GPUCanvasConfiguration, 'device' | 'usage'> {}
+
+/** Parameters used to configure the renderer canvas context. */
+export interface GPURendererContextParams extends Partial<GPURendererContextOptions> {}
+
 /**
- * Parameters used to create a {@link GPURenderer}
+ * Parameters used to create a {@link GPURenderer}.
  */
 export interface GPURendererParams {
   /** The {@link GPUDeviceManager} used to create this {@link GPURenderer} */
@@ -38,10 +44,9 @@ export interface GPURendererParams {
 
   /** Whether to auto resize the renderer each time its {@link GPURenderer#domElement} size changes or not. It is advised to set this parameter to `false` if the provided {@link container} is a {@link HTMLCanvasElement | canvas element}, and handle {@link GPURenderer#resize | resizing} by yourself. */
   autoResize?: boolean
-  /** Texture rendering {@link GPUTextureFormat | preferred format} */
-  preferredFormat?: GPUTextureFormat
-  /** Set the {@link GPUCanvasContext | context} alpha mode */
-  alphaMode?: GPUCanvasAlphaMode
+
+  /** Options used to configure this {@link GPURenderer} context. If not specified, `format` will be set with `GPU.getPreferredCanvasFormat()` and `alphaMode` with `premultiplied`. */
+  context?: GPURendererContextParams
 
   /** The {@link GPURenderer#renderPass | renderer RenderPass} parameters */
   renderPass?: {
@@ -52,6 +57,12 @@ export interface GPURendererParams {
     /** The {@link GPUColor | color values} to clear to before drawing the {@link GPURenderer#renderPass | renderer RenderPass}. Default to `[0, 0, 0, 0]` */
     clearValue: GPUColor
   }
+}
+
+/** Options used to create this {@link GPURenderer}. */
+export interface GPURendererOptions extends GPURendererParams {
+  /** Patched {@link GPURendererContextOptions | context configuration options}. */
+  context: GPURendererContextOptions
 }
 
 /** Any Mesh that is bound to a DOM Element */
@@ -92,10 +103,10 @@ export class GPURenderer {
   /** The WebGPU {@link GPUCanvasContext | context} used */
   context: null | GPUCanvasContext
   /** Set the {@link GPUCanvasContext | context} alpha mode */
-  alphaMode?: GPUCanvasAlphaMode
+  //alphaMode?: GPUCanvasAlphaMode
 
   /** Options used to create this {@link GPURenderer} */
-  options: GPURendererParams
+  options: GPURendererOptions
 
   /** The {@link RenderPass | render pass} used to render our result to screen */
   renderPass: RenderPass
@@ -171,8 +182,7 @@ export class GPURenderer {
     container,
     pixelRatio = 1,
     autoResize = true,
-    preferredFormat,
-    alphaMode = 'premultiplied',
+    context = {},
     renderPass,
   }: GPURendererParams) {
     this.type = 'GPURenderer'
@@ -196,9 +206,17 @@ export class GPURenderer {
     this.shouldRender = true
     this.shouldRenderScene = true
 
+    // context configuration default values
+    const contextOptions = {
+      ...{
+        alphaMode: 'premultiplied' as GPUCanvasAlphaMode,
+        format: this.deviceManager.gpu?.getPreferredCanvasFormat(),
+      },
+      ...context,
+    }
+
     // render pass default values
     renderPass = { ...{ useDepth: true, sampleCount: 4, clearValue: [0, 0, 0, 0] }, ...renderPass }
-    preferredFormat = preferredFormat ?? this.deviceManager.gpu?.getPreferredCanvasFormat()
 
     this.options = {
       deviceManager,
@@ -206,13 +224,11 @@ export class GPURenderer {
       container,
       pixelRatio,
       autoResize,
-      preferredFormat,
-      alphaMode,
+      context: contextOptions,
       renderPass,
     }
 
     this.pixelRatio = pixelRatio ?? window.devicePixelRatio ?? 1
-    this.alphaMode = alphaMode
 
     // create the canvas
     const isOffscreenCanvas = container instanceof OffscreenCanvas
@@ -460,13 +476,10 @@ export class GPURenderer {
   configureContext() {
     this.context.configure({
       device: this.device,
-      format: this.options.preferredFormat,
-      alphaMode: this.alphaMode,
+      ...this.options.context,
       // needed so we can copy textures for post processing usage
       usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST,
       //viewFormats: []
-      // TODO HDR support
-      // https://developer.chrome.com/blog/new-in-webgpu-129
     })
   }
 

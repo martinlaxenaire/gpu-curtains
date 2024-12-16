@@ -61,7 +61,7 @@ class Texture {
       this.options.viewDimension = parameters.fromTexture.options.viewDimension;
     }
     if (!this.options.format) {
-      this.options.format = this.renderer.options.preferredFormat;
+      this.options.format = this.renderer.options.context.format;
     }
     this.size = this.options.fixedSize ? {
       width: this.options.fixedSize.width * this.options.qualityRatio,

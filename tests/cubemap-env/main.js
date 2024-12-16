@@ -27,7 +27,10 @@ window.addEventListener('load', async () => {
     camera: {
       fov: 65,
     },
-    preferredFormat: 'rgba16float', // allow HDR output
+    context: {
+      format: 'rgba16float', // allow HDR output
+      toneMapping: { mode: 'extended' },
+    },
   })
 
   const { camera } = gpuCameraRenderer

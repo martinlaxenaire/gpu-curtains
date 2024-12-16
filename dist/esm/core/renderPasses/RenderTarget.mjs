@@ -57,7 +57,7 @@ class RenderTarget {
       this.renderTexture = new Texture(this.renderer, {
         label: this.options.label ? `${this.options.label} Render Texture` : "Render Target render texture",
         name: "renderTexture",
-        format: colorAttachments && colorAttachments.length && colorAttachments[0].targetFormat ? colorAttachments[0].targetFormat : this.renderer.options.preferredFormat,
+        format: colorAttachments && colorAttachments.length && colorAttachments[0].targetFormat ? colorAttachments[0].targetFormat : this.renderer.options.context.format,
         ...this.options.qualityRatio !== void 0 && { qualityRatio: this.options.qualityRatio },
         usage: ["copySrc", "renderAttachment", "textureBinding"]
       });
