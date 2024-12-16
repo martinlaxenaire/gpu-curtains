@@ -1,6 +1,6 @@
 /// <reference types="dist" />
 import { PipelineEntry } from './PipelineEntry';
-import { PipelineEntryParams, PipelineEntryPropertiesParams, PipelineEntryShaders } from '../../types/PipelineEntries';
+import { PipelineEntryParams, PipelineEntryShaders } from '../../types/PipelineEntries';
 /**
  * Used to create a {@link PipelineEntry} specifically designed to handle {@link core/materials/ComputeMaterial.ComputeMaterial | ComputeMaterial}.
  *
@@ -23,11 +23,6 @@ export declare class ComputePipelineEntry extends PipelineEntry {
      * @param parameters - {@link PipelineEntryParams | parameters} used to create this {@link ComputePipelineEntry}
      */
     constructor(parameters: PipelineEntryParams);
-    /**
-     * Set {@link ComputePipelineEntry} properties (in this case the {@link bindGroups | bind groups})
-     * @param parameters - the {@link core/materials/ComputeMaterial.ComputeMaterial#bindGroups | bind groups} to use
-     */
-    setPipelineEntryProperties(parameters: PipelineEntryPropertiesParams): void;
     /**
      * Patch the shaders by appending all the {@link bindGroups | bind groups}) WGSL code fragments to the given {@link PipelineEntryParams#shaders | parameter shader code}
      */

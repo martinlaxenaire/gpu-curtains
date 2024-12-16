@@ -36,8 +36,6 @@ class RenderPipelineEntry extends PipelineEntry {
     this.options = {
       ...this.options,
       attributes,
-      bindGroups,
-      cacheKey,
       ...renderingOptions
     };
     this.setPipelineEntryProperties({ attributes, bindGroups });

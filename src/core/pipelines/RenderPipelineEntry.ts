@@ -1,6 +1,6 @@
 import { PipelineEntry } from './PipelineEntry'
 import { ProjectedShaderChunks, ShaderChunks } from '../shaders/ShaderChunks'
-import { isRenderer, Renderer } from '../renderers/utils'
+import { isRenderer } from '../renderers/utils'
 import { throwError } from '../../utils/utils'
 import {
   PipelineEntryShaders,
@@ -8,8 +8,7 @@ import {
   RenderPipelineEntryParams,
   RenderPipelineEntryPropertiesParams,
 } from '../../types/PipelineEntries'
-import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { AllowedBindGroups, BindGroupBufferBindingElement } from '../../types/BindGroups'
+import { BindGroupBufferBindingElement } from '../../types/BindGroups'
 import { RenderMaterialAttributes, ShaderOptions } from '../../types/Materials'
 
 /**
@@ -202,8 +201,6 @@ export class RenderPipelineEntry extends PipelineEntry {
     this.options = {
       ...this.options,
       attributes,
-      bindGroups,
-      cacheKey,
       ...renderingOptions,
     }
 

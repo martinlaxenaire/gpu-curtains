@@ -35,7 +35,7 @@ import { ChildDescriptor, MeshDescriptor, ScenesManager } from '../../types/gltf
  * const gltf = await gltfLoader.loadFromUrl('path/to/model.gltf')
  *
  * // create a gltfScenesManager from the resulting 'gltf' object
- * // assuming 'renderer' is a valid camera or curtains renderer
+ * // assuming 'renderer' is a valid camera renderer or curtains instance
  * const gltfScenesManager = new GLTFScenesManager({ renderer, gltf })
  * gltfScenesManager.addMeshes()
  * ```

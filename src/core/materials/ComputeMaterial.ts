@@ -81,22 +81,17 @@ export class ComputeMaterial extends Material {
     }
 
     this.dispatchSize = dispatchSize
+  }
 
-    // eager pipeline entry creation for compute materials
-    // since we do not use cache!
+  /**
+   * Set (or reset) the current {@link pipelineEntry}. Use the {@link Renderer#pipelineManager | renderer pipelineManager} to check whether we can get an already created {@link ComputePipelineEntry} from cache or if we should create a new one.
+   */
+  setPipelineEntry() {
     this.pipelineEntry = this.renderer.pipelineManager.createComputePipeline({
       renderer: this.renderer,
       label: this.options.label + ' compute pipeline',
       shaders: this.options.shaders,
       useAsync: this.options.useAsyncPipeline,
-    })
-  }
-
-  /**
-   * When all bind groups are created, add them to the {@link ComputePipelineEntry}
-   */
-  setPipelineEntryProperties() {
-    this.pipelineEntry.setPipelineEntryProperties({
       bindGroups: this.bindGroups,
     })
   }
@@ -118,8 +113,11 @@ export class ComputeMaterial extends Material {
 
     super.compileMaterial()
 
+    if (!this.pipelineEntry) {
+      this.setPipelineEntry()
+    }
+
     if (this.pipelineEntry && this.pipelineEntry.canCompile) {
-      this.setPipelineEntryProperties()
       await this.compilePipelineEntry()
     }
   }

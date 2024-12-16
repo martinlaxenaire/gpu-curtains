@@ -30,9 +30,9 @@ export declare class ComputeMaterial extends Material {
      */
     constructor(renderer: Renderer | GPUCurtains, parameters: ComputeMaterialParams);
     /**
-     * When all bind groups are created, add them to the {@link ComputePipelineEntry}
+     * Set (or reset) the current {@link pipelineEntry}. Use the {@link Renderer#pipelineManager | renderer pipelineManager} to check whether we can get an already created {@link ComputePipelineEntry} from cache or if we should create a new one.
      */
-    setPipelineEntryProperties(): void;
+    setPipelineEntry(): void;
     /**
      * Compile the {@link ComputePipelineEntry}
      * @async

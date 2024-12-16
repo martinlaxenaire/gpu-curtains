@@ -2,7 +2,7 @@ import { MeshDescriptor } from '../../types/gltf/GLTFScenesManager';
 import { ShaderOptions } from '../../types/Materials';
 import { Texture } from '../../core/textures/Texture';
 import { Sampler } from '../../core/samplers/Sampler';
-import { Renderer } from '../../core/renderers/utils';
+import { EnvironmentMap } from '../environment-map/EnvironmentMap';
 /** Defines all kinds of shading models available. */
 export type ShadingModels = 'Lambert' | 'Phong' | 'PBR' | 'IBL';
 /**
@@ -35,12 +35,8 @@ export interface ShaderBuilderParameters {
         diffuseStrength?: number;
         /** Environment specular strength. Default to `0.5`. */
         specularStrength?: number;
-        /** Look Up Table texture parameters to use for IBL. */
-        lutTexture?: IBLShaderTextureParams;
-        /** Environment diffuse texture parameters to use for IBL. */
-        envDiffuseTexture?: IBLShaderTextureParams;
-        /** Environment specular texture parameters to use for IBL. */
-        envSpecularTexture?: IBLShaderTextureParams;
+        /** {@link EnvironmentMap} to use for IBL shading. */
+        environmentMap?: EnvironmentMap;
     };
 }
 /** Shaders returned by the shaders builder function. */
@@ -58,10 +54,3 @@ export interface BuiltShaders {
  * @returns - An object containing the shaders.
  */
 export declare const buildShaders: (meshDescriptor: MeshDescriptor, shaderParameters?: ShaderBuilderParameters) => BuiltShaders;
-/**
- * Compute a diffuse cube map from a specular cube map using a {@link ComputePass} and copy the result into the diffuse texture {@link GPUTexture}.
- * @param renderer - {@link Renderer} to use.
- * @param diffuseTexture - diffuse cube map texture onto which the result of the {@link ComputePass} should be copied.
- * @param specularTexture - specular cube map texture to use as a source.
- */
-export declare const computeDiffuseFromSpecular: (renderer: Renderer, diffuseTexture: Texture, specularTexture: Texture) => Promise<void>;

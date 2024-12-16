@@ -9,7 +9,7 @@ class PipelineEntry {
   constructor(parameters) {
     this.type = "PipelineEntry";
     let { renderer } = parameters;
-    const { label, shaders, useAsync } = parameters;
+    const { label, shaders, useAsync, bindGroups, cacheKey } = parameters;
     renderer = isRenderer(renderer, label ? label + " " + this.type : this.type);
     this.renderer = renderer;
     Object.defineProperty(this, "index", { value: pipelineId++ });
@@ -23,7 +23,9 @@ class PipelineEntry {
     this.options = {
       label,
       shaders,
-      useAsync: useAsync !== void 0 ? useAsync : true
+      useAsync: useAsync !== void 0 ? useAsync : true,
+      bindGroups,
+      cacheKey
     };
   }
   /**
@@ -39,6 +41,14 @@ class PipelineEntry {
    */
   get canCompile() {
     return !this.status.compiling && !this.status.compiled && !this.status.error;
+  }
+  /**
+   * Set {@link PipelineEntry} properties (in this case the {@link bindGroups | bind groups})
+   * @param parameters - the {@link bindGroups | bind groups} to use
+   */
+  setPipelineEntryProperties(parameters) {
+    const { bindGroups } = parameters;
+    this.setPipelineEntryBindGroups(bindGroups);
   }
   /**
    * Set our {@link PipelineEntry#bindGroups | pipeline entry bind groups}

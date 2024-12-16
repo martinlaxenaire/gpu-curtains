@@ -28,8 +28,7 @@ export class ComputePipelineEntry extends PipelineEntry {
    * @param parameters - {@link PipelineEntryParams | parameters} used to create this {@link ComputePipelineEntry}
    */
   constructor(parameters: PipelineEntryParams) {
-    const { renderer } = parameters
-    const { label } = parameters
+    const { label, renderer, bindGroups } = parameters
 
     const type = 'ComputePipelineEntry'
 
@@ -48,16 +47,8 @@ export class ComputePipelineEntry extends PipelineEntry {
     }
 
     this.descriptor = null
-  }
 
-  /**
-   * Set {@link ComputePipelineEntry} properties (in this case the {@link bindGroups | bind groups})
-   * @param parameters - the {@link core/materials/ComputeMaterial.ComputeMaterial#bindGroups | bind groups} to use
-   */
-  setPipelineEntryProperties(parameters: PipelineEntryPropertiesParams) {
-    const { bindGroups } = parameters
-
-    this.setPipelineEntryBindGroups(bindGroups)
+    this.setPipelineEntryProperties({ bindGroups })
   }
 
   /* SHADERS */

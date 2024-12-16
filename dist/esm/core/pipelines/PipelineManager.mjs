@@ -59,15 +59,41 @@ class PipelineManager {
     }
   }
   /**
-   * Check if a {@link ComputePipelineEntry} has already been created with the given {@link PipelineEntryParams | parameters}.
-   * Use it if found, else create a new one and add it to the {@link pipelineEntries} array.
+   * Checks if the provided {@link PipelineEntryParams | PipelineEntry parameters} belongs to an already created {@link ComputePipelineEntry}.
    * @param parameters - {@link PipelineEntryParams | PipelineEntry parameters}
+   * @returns - the found {@link ComputePipelineEntry}, or null if not found
+   */
+  isSameComputePipeline(parameters) {
+    return this.pipelineEntries.filter((pipelineEntry) => pipelineEntry instanceof ComputePipelineEntry).find((pipelineEntry) => {
+      const { options } = pipelineEntry;
+      const { shaders, cacheKey } = parameters;
+      const sameCacheKey = cacheKey === options.cacheKey;
+      const sameComputeShader = this.compareShaders(shaders.compute, options.shaders.compute);
+      return sameCacheKey && sameComputeShader;
+    });
+  }
+  /**
+   * Check if a {@link ComputePipelineEntry} has already been created with the given {@link PipelineManagerPipelineEntryParams | parameters}.
+   * Use it if found, else create a new one and add it to the {@link pipelineEntries} array.
+   * @param parameters - {@link PipelineManagerPipelineEntryParams | PipelineEntry parameters}
    * @returns - newly created {@link ComputePipelineEntry}
    */
   createComputePipeline(parameters) {
-    const pipelineEntry = new ComputePipelineEntry(parameters);
-    this.pipelineEntries.push(pipelineEntry);
-    return pipelineEntry;
+    let cacheKey = "";
+    parameters.bindGroups.forEach((bindGroup) => {
+      bindGroup.bindings.forEach((binding) => {
+        cacheKey += binding.name + ",";
+      });
+      cacheKey += bindGroup.pipelineCacheKey;
+    });
+    const existingPipelineEntry = this.isSameComputePipeline({ ...parameters, cacheKey });
+    if (existingPipelineEntry) {
+      return existingPipelineEntry;
+    } else {
+      const pipelineEntry = new ComputePipelineEntry({ ...parameters, cacheKey });
+      this.pipelineEntries.push(pipelineEntry);
+      return pipelineEntry;
+    }
   }
   /**
    * Check if the given {@link AllowedPipelineEntries | PipelineEntry} is already set, if not set it

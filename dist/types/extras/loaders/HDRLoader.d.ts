@@ -45,14 +45,8 @@ export declare class HDRLoader {
     #private;
     /**
      * Load and decode RGBE-encoded data to a flat list of floating point pixel data (RGBA).
-     * @param url -  The url of the .hdr file to load
-     * @returns - The {@link HDRImageData}
+     * @param url - The url of the .hdr file to load.
+     * @returns - The {@link HDRImageData}.
      */
     loadFromUrl(url: string): Promise<HDRImageData>;
-    /**
-     * Convert an equirectangular {@link HDRImageData} to 6 {@link HDRImageData} cube map faces. Works but can display artifacts at the poles.
-     * @param parsedHdr - equirectangular {@link HDRImageData} to use.
-     * @returns - 6 {@link HDRImageData} cube map faces
-     */
-    equirectangularToCubeMap(parsedHdr: HDRImageData): HDRImageData[];
 }
