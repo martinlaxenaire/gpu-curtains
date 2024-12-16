@@ -388,9 +388,19 @@ ${geometry.wgslStructFragment}`
      * @param material - new {@link RenderMaterial} to use
      */
     useMaterial(material) {
+      let currentCacheKey = null;
+      if (this.material && this.geometry) {
+        currentCacheKey = this.material.cacheKey;
+      }
       this.material = material;
+      if (this.geometry) {
+        this.material.setAttributesFromGeometry(this.geometry);
+      }
       this.transparent = this.material.options.rendering.transparent;
       this.material.options.domTextures?.filter((texture) => texture instanceof DOMTexture).forEach((texture) => this.onDOMTextureAdded(texture));
+      if (currentCacheKey && currentCacheKey !== this.material.cacheKey) {
+        this.material.setPipelineEntry();
+      }
     }
     /**
      * Patch the shaders if needed, then set the Mesh material

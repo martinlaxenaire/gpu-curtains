@@ -82,11 +82,6 @@ export interface PipelineEntryStatus {
   error: null | string
 }
 
-/**
- * Parameters used by the {core/pipelines/PipelineManager.PipelineManager | PipelineManager} to create a cache key and check whether a {@link core/pipelines/PipelineEntry.PipelineEntry | PipelineEntry} could be fetched from cache or should be created.
- */
-export interface PipelineManagerPipelineEntryParams extends Omit<PipelineEntryParams, 'cacheKey'> {}
-
 /* RENDER PIPELINES */
 
 /**
@@ -106,20 +101,12 @@ export interface RenderPipelineRenderingParams {
 }
 
 /**
- * Parameters used by the {core/pipelines/PipelineManager.PipelineManager | PipelineManager} to create a cache key and check whether a {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | RenderPipelineEntry} could be fetched from cache or should be created.
- */
-export interface PipelineManagerRenderPipelineEntryParams
-  extends Omit<PipelineEntryParams, 'cacheKey'>,
-    RenderPipelineRenderingParams,
-    Omit<RenderPipelineEntryPropertiesParams, 'bindGroups'> {}
-
-/**
  * Parameters used to create a {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | RenderPipelineEntry}
  */
-export interface RenderPipelineEntryParams extends PipelineManagerRenderPipelineEntryParams {
-  /** Cache key defining the geometry and bind groups buffer layouts, used to eventually get a {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | RenderPipelineEntry} from cache. */
-  cacheKey: string
-}
+export interface RenderPipelineEntryParams
+  extends PipelineEntryParams,
+    RenderPipelineRenderingParams,
+    Omit<RenderPipelineEntryPropertiesParams, 'bindGroups'> {}
 
 /**
  * Options used to create this {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | RenderPipelineEntry}

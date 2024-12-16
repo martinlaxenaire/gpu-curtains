@@ -86,6 +86,12 @@ export declare class Material {
      */
     get ready(): boolean;
     /**
+     * Get the {@link Material} pipeline buffers cache key based on its {@link BindGroup} cache keys.
+     * @returns - Current cache key.
+     * @readonly
+     */
+    get cacheKey(): string;
+    /**
      * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been lost to prepare everything for restoration.
      * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to render
      */

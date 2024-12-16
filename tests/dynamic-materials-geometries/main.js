@@ -182,18 +182,18 @@ window.addEventListener('load', async () => {
             array: vertices,
           },
           {
-            name: 'uv',
-            type: 'vec2f',
-            bufferFormat: 'float32x2',
-            size: 2,
-            array: uvs,
-          },
-          {
             name: 'normal',
             type: 'vec3f',
             bufferFormat: 'float32x3',
             size: 3,
             array: normals,
+          },
+          {
+            name: 'uv',
+            type: 'vec2f',
+            bufferFormat: 'float32x2',
+            size: 2,
+            array: uvs,
           },
         ],
       },
@@ -264,6 +264,7 @@ window.addEventListener('load', async () => {
     normal: mesh.material,
     checkerboard: new RenderMaterial(gpuCameraRenderer, {
       ...commonMaterialProps,
+      label: 'Checkerboard material',
       shaders: {
         fragment: {
           code: checkerboardFs,
@@ -282,6 +283,7 @@ window.addEventListener('load', async () => {
     }),
     textured: new RenderMaterial(gpuCameraRenderer, {
       ...commonMaterialProps,
+      label: 'Textured material',
       shaders: {
         fragment: {
           code: texturedFs,

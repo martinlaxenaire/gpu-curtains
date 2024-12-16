@@ -31,7 +31,7 @@ class Material {
     } = parameters;
     this.options = {
       shaders,
-      label,
+      label: label || this.constructor.name,
       useAsyncPipeline: useAsyncPipeline === void 0 ? true : useAsyncPipeline,
       ...uniforms !== void 0 && { uniforms },
       ...storages !== void 0 && { storages },
@@ -72,6 +72,21 @@ class Material {
    */
   get ready() {
     return !!(this.renderer.ready && this.pipelineEntry && this.pipelineEntry.pipeline && this.pipelineEntry.ready);
+  }
+  /**
+   * Get the {@link Material} pipeline buffers cache key based on its {@link BindGroup} cache keys.
+   * @returns - Current cache key.
+   * @readonly
+   */
+  get cacheKey() {
+    let cacheKey = "";
+    this.bindGroups.forEach((bindGroup) => {
+      bindGroup.bindings.forEach((binding) => {
+        cacheKey += binding.name + ",";
+      });
+      cacheKey += bindGroup.pipelineCacheKey;
+    });
+    return cacheKey;
   }
   /**
    * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been lost to prepare everything for restoration.

@@ -1,14 +1,11 @@
 import { RenderPipelineEntry } from './RenderPipelineEntry'
 import { ComputePipelineEntry } from './ComputePipelineEntry'
-import {
-  PipelineEntryParams,
-  PipelineManagerPipelineEntryParams,
-  PipelineManagerRenderPipelineEntryParams,
-  RenderPipelineEntryParams,
-} from '../../types/PipelineEntries'
+import { PipelineEntryParams, RenderPipelineEntryParams } from '../../types/PipelineEntries'
 import { ShaderOptions } from '../../types/Materials'
 import { compareRenderingOptions } from '../materials/utils'
 import { BindGroup } from '../bindGroups/BindGroup'
+import { RenderMaterial } from '../materials/RenderMaterial'
+import { ComputeMaterial } from '../materials/ComputeMaterial'
 
 /** Defines all types of allowed {@link core/pipelines/PipelineEntry.PipelineEntry | PipelineEntry} class objects */
 export type AllowedPipelineEntries = RenderPipelineEntry | ComputePipelineEntry
@@ -85,30 +82,35 @@ export class PipelineManager {
   /**
    * Check if a {@link RenderPipelineEntry} has already been created with the given {@link RenderPipelineEntryParams | parameters}.
    * Use it if found, else create a new one and add it to the {@link pipelineEntries} array.
-   * @param parameters - {@link RenderPipelineEntryParams | RenderPipelineEntry parameters}
-   * @returns - {@link RenderPipelineEntry}, either from cache or newly created
+   * @param material - {@link RenderMaterial} used to create the pipeline.
+   * @returns - {@link RenderPipelineEntry}, either from cache or newly created.
    */
-  createRenderPipeline(parameters: PipelineManagerRenderPipelineEntryParams): RenderPipelineEntry {
-    const { attributes, bindGroups } = parameters
-    let cacheKey = attributes.layoutCacheKey
-    bindGroups.forEach((bindGroup) => {
-      bindGroup.bindings.forEach((binding) => {
-        cacheKey += binding.name + ','
-      })
-      cacheKey += bindGroup.pipelineCacheKey
-    })
+  createRenderPipeline(material: RenderMaterial): RenderPipelineEntry {
+    const { renderer, attributes, bindGroups, cacheKey, options } = material
+    const { shaders, label, useAsyncPipeline, rendering } = options
+
+    const parameters = {
+      renderer,
+      label: label + ' render pipeline',
+      shaders,
+      useAsync: useAsyncPipeline,
+      bindGroups,
+      cacheKey,
+      rendering,
+      attributes,
+    }
 
     // render pipeline cache is based on 3 things:
     // 1. geometry and bind groups buffers layout comparison, via the cacheKey
     // 2. same rendering options via compareRenderingOptions()
     // 3. same vertex and fragment shaders code and entry points
     // see https://toji.dev/webgpu-gltf-case-study/#part-3-pipeline-caching
-    const existingPipelineEntry = this.isSameRenderPipeline({ ...parameters, cacheKey })
+    const existingPipelineEntry = this.isSameRenderPipeline(parameters)
 
     if (existingPipelineEntry) {
       return existingPipelineEntry
     } else {
-      const pipelineEntry = new RenderPipelineEntry({ ...parameters, cacheKey })
+      const pipelineEntry = new RenderPipelineEntry(parameters)
 
       this.pipelineEntries.push(pipelineEntry)
 
@@ -137,27 +139,30 @@ export class PipelineManager {
   }
 
   /**
-   * Check if a {@link ComputePipelineEntry} has already been created with the given {@link PipelineManagerPipelineEntryParams | parameters}.
+   * Check if a {@link ComputePipelineEntry} has already been created with the given {@link PipelineEntryParams | parameters}.
    * Use it if found, else create a new one and add it to the {@link pipelineEntries} array.
-   * @param parameters - {@link PipelineManagerPipelineEntryParams | PipelineEntry parameters}
+   * @param material - {@link ComputeMaterial} used to create the pipeline.
    * @returns - newly created {@link ComputePipelineEntry}
    */
-  createComputePipeline(parameters: PipelineManagerPipelineEntryParams): ComputePipelineEntry {
-    let cacheKey = ''
+  createComputePipeline(material: ComputeMaterial): ComputePipelineEntry {
+    const { renderer, bindGroups, cacheKey, options } = material
+    const { shaders, label, useAsyncPipeline } = options
 
-    parameters.bindGroups.forEach((bindGroup) => {
-      bindGroup.bindings.forEach((binding) => {
-        cacheKey += binding.name + ','
-      })
-      cacheKey += bindGroup.pipelineCacheKey
-    })
+    const parameters = {
+      renderer,
+      label: label + ' compute pipeline',
+      shaders,
+      useAsync: useAsyncPipeline,
+      bindGroups,
+      cacheKey,
+    }
 
-    const existingPipelineEntry = this.isSameComputePipeline({ ...parameters, cacheKey })
+    const existingPipelineEntry = this.isSameComputePipeline(parameters)
 
     if (existingPipelineEntry) {
       return existingPipelineEntry
     } else {
-      const pipelineEntry = new ComputePipelineEntry({ ...parameters, cacheKey })
+      const pipelineEntry = new ComputePipelineEntry(parameters)
 
       this.pipelineEntries.push(pipelineEntry)
 
