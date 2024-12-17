@@ -87,13 +87,7 @@ export class ComputeMaterial extends Material {
    * Set (or reset) the current {@link pipelineEntry}. Use the {@link Renderer#pipelineManager | renderer pipelineManager} to check whether we can get an already created {@link ComputePipelineEntry} from cache or if we should create a new one.
    */
   setPipelineEntry() {
-    this.pipelineEntry = this.renderer.pipelineManager.createComputePipeline({
-      renderer: this.renderer,
-      label: this.options.label + ' compute pipeline',
-      shaders: this.options.shaders,
-      useAsync: this.options.useAsyncPipeline,
-      bindGroups: this.bindGroups,
-    })
+    this.pipelineEntry = this.renderer.pipelineManager.createComputePipeline(this)
   }
 
   /**

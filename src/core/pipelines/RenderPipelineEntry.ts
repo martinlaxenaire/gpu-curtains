@@ -6,7 +6,6 @@ import {
   PipelineEntryShaders,
   RenderPipelineEntryOptions,
   RenderPipelineEntryParams,
-  RenderPipelineEntryPropertiesParams,
 } from '../../types/PipelineEntries'
 import { BindGroupBufferBindingElement } from '../../types/BindGroups'
 import { RenderMaterialAttributes, ShaderOptions } from '../../types/Materials'
@@ -204,19 +203,7 @@ export class RenderPipelineEntry extends PipelineEntry {
       ...renderingOptions,
     }
 
-    this.setPipelineEntryProperties({ attributes, bindGroups })
-  }
-
-  /**
-   * Set {@link RenderPipelineEntry} properties (in this case the {@link bindGroups | bind groups} and {@link attributes})
-   * @param parameters - the {@link core/materials/RenderMaterial.RenderMaterial#bindGroups | bind groups} and {@link core/materials/RenderMaterial.RenderMaterial#attributes | attributes} to use
-   */
-  setPipelineEntryProperties(parameters: RenderPipelineEntryPropertiesParams) {
-    const { attributes, bindGroups } = parameters
-
     this.attributes = attributes
-
-    this.setPipelineEntryBindGroups(bindGroups)
   }
 
   /* SHADERS */

@@ -99,15 +99,7 @@ class RenderMaterial extends Material {
    * Set (or reset) the current {@link pipelineEntry}. Use the {@link Renderer#pipelineManager | renderer pipelineManager} to check whether we can get an already created {@link RenderPipelineEntry} from cache or if we should create a new one.
    */
   setPipelineEntry() {
-    this.pipelineEntry = this.renderer.pipelineManager.createRenderPipeline({
-      renderer: this.renderer,
-      label: this.options.label + " render pipeline",
-      shaders: this.options.shaders,
-      useAsync: this.options.useAsyncPipeline,
-      rendering: this.options.rendering,
-      attributes: this.attributes,
-      bindGroups: this.bindGroups
-    });
+    this.pipelineEntry = this.renderer.pipelineManager.createRenderPipeline(this);
   }
   /**
    * Compile the {@link RenderPipelineEntry}
@@ -194,6 +186,15 @@ New rendering options: ${JSON.stringify(
       vertexBuffers: geometry.vertexBuffers,
       layoutCacheKey: geometry.layoutCacheKey
     };
+  }
+  /**
+   * Get the {@link RenderMaterial} pipeline buffers cache key based on its {@link core/bindGroups/BindGroup.BindGroup | BindGroup} cache keys and eventually {@link attributes} cache keys.
+   * @returns - Current cache key.
+   * @readonly
+   */
+  get cacheKey() {
+    let cacheKey = this.attributes?.layoutCacheKey || "";
+    return cacheKey + super.cacheKey;
   }
   /* BIND GROUPS */
   /**

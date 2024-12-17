@@ -1,9 +1,11 @@
 /// <reference types="dist" />
 import { RenderPipelineEntry } from './RenderPipelineEntry';
 import { ComputePipelineEntry } from './ComputePipelineEntry';
-import { PipelineEntryParams, PipelineManagerPipelineEntryParams, PipelineManagerRenderPipelineEntryParams, RenderPipelineEntryParams } from '../../types/PipelineEntries';
+import { PipelineEntryParams, RenderPipelineEntryParams } from '../../types/PipelineEntries';
 import { ShaderOptions } from '../../types/Materials';
 import { BindGroup } from '../bindGroups/BindGroup';
+import { RenderMaterial } from '../materials/RenderMaterial';
+import { ComputeMaterial } from '../materials/ComputeMaterial';
 /** Defines all types of allowed {@link core/pipelines/PipelineEntry.PipelineEntry | PipelineEntry} class objects */
 export type AllowedPipelineEntries = RenderPipelineEntry | ComputePipelineEntry;
 /** Defines all the types of render passes allowed. */
@@ -44,10 +46,10 @@ export declare class PipelineManager {
     /**
      * Check if a {@link RenderPipelineEntry} has already been created with the given {@link RenderPipelineEntryParams | parameters}.
      * Use it if found, else create a new one and add it to the {@link pipelineEntries} array.
-     * @param parameters - {@link RenderPipelineEntryParams | RenderPipelineEntry parameters}
-     * @returns - {@link RenderPipelineEntry}, either from cache or newly created
+     * @param material - {@link RenderMaterial} used to create the pipeline.
+     * @returns - {@link RenderPipelineEntry}, either from cache or newly created.
      */
-    createRenderPipeline(parameters: PipelineManagerRenderPipelineEntryParams): RenderPipelineEntry;
+    createRenderPipeline(material: RenderMaterial): RenderPipelineEntry;
     /**
      * Checks if the provided {@link PipelineEntryParams | PipelineEntry parameters} belongs to an already created {@link ComputePipelineEntry}.
      * @param parameters - {@link PipelineEntryParams | PipelineEntry parameters}
@@ -55,12 +57,12 @@ export declare class PipelineManager {
      */
     isSameComputePipeline(parameters: PipelineEntryParams): ComputePipelineEntry | null;
     /**
-     * Check if a {@link ComputePipelineEntry} has already been created with the given {@link PipelineManagerPipelineEntryParams | parameters}.
+     * Check if a {@link ComputePipelineEntry} has already been created with the given {@link PipelineEntryParams | parameters}.
      * Use it if found, else create a new one and add it to the {@link pipelineEntries} array.
-     * @param parameters - {@link PipelineManagerPipelineEntryParams | PipelineEntry parameters}
+     * @param material - {@link ComputeMaterial} used to create the pipeline.
      * @returns - newly created {@link ComputePipelineEntry}
      */
-    createComputePipeline(parameters: PipelineManagerPipelineEntryParams): ComputePipelineEntry;
+    createComputePipeline(material: ComputeMaterial): ComputePipelineEntry;
     /**
      * Check if the given {@link AllowedPipelineEntries | PipelineEntry} is already set, if not set it
      * @param pass - current pass encoder

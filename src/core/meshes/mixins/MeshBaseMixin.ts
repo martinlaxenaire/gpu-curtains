@@ -889,7 +889,19 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      * @param material - new {@link RenderMaterial} to use
      */
     useMaterial(material: RenderMaterial) {
+      let currentCacheKey = null
+
+      // if we already have geometry attributes linked to a material
+      // we'll need to check if everything matches
+      if (this.material && this.geometry) {
+        currentCacheKey = this.material.cacheKey
+      }
+
       this.material = material
+
+      if (this.geometry) {
+        this.material.setAttributesFromGeometry(this.geometry)
+      }
 
       // update transparent property
       this.transparent = this.material.options.rendering.transparent
@@ -898,6 +910,11 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       this.material.options.domTextures
         ?.filter((texture) => texture instanceof DOMTexture)
         .forEach((texture) => this.onDOMTextureAdded(texture))
+
+      // reset pipeline entry if cache keys differ
+      if (currentCacheKey && currentCacheKey !== this.material.cacheKey) {
+        this.material.setPipelineEntry()
+      }
     }
 
     /**

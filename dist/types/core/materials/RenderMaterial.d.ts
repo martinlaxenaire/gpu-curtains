@@ -55,6 +55,12 @@ export declare class RenderMaterial extends Material {
      */
     setAttributesFromGeometry(geometry: AllowedGeometries): void;
     /**
+     * Get the {@link RenderMaterial} pipeline buffers cache key based on its {@link core/bindGroups/BindGroup.BindGroup | BindGroup} cache keys and eventually {@link attributes} cache keys.
+     * @returns - Current cache key.
+     * @readonly
+     */
+    get cacheKey(): string;
+    /**
      * Get whether this {@link RenderMaterial} uses the renderer camera and lights bind group.
      * @readonly
      * */

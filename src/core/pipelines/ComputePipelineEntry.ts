@@ -1,9 +1,8 @@
 import { PipelineEntry } from './PipelineEntry'
-import { isRenderer, Renderer } from '../renderers/utils'
+import { isRenderer } from '../renderers/utils'
 import { throwError } from '../../utils/utils'
-import { PipelineEntryParams, PipelineEntryPropertiesParams, PipelineEntryShaders } from '../../types/PipelineEntries'
+import { PipelineEntryParams, PipelineEntryShaders } from '../../types/PipelineEntries'
 import { BindGroupBufferBindingElement } from '../../types/BindGroups'
-import { GPUCurtains } from '../../curtains/GPUCurtains'
 
 /**
  * Used to create a {@link PipelineEntry} specifically designed to handle {@link core/materials/ComputeMaterial.ComputeMaterial | ComputeMaterial}.
@@ -47,8 +46,6 @@ export class ComputePipelineEntry extends PipelineEntry {
     }
 
     this.descriptor = null
-
-    this.setPipelineEntryProperties({ bindGroups })
   }
 
   /* SHADERS */

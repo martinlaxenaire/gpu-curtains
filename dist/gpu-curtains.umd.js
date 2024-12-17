@@ -5168,7 +5168,7 @@
       } = parameters;
       this.options = {
         shaders,
-        label,
+        label: label || this.constructor.name,
         useAsyncPipeline: useAsyncPipeline === void 0 ? true : useAsyncPipeline,
         ...uniforms !== void 0 && { uniforms },
         ...storages !== void 0 && { storages },
@@ -5209,6 +5209,21 @@
      */
     get ready() {
       return !!(this.renderer.ready && this.pipelineEntry && this.pipelineEntry.pipeline && this.pipelineEntry.ready);
+    }
+    /**
+     * Get the {@link Material} pipeline buffers cache key based on its {@link BindGroup} cache keys.
+     * @returns - Current cache key.
+     * @readonly
+     */
+    get cacheKey() {
+      let cacheKey = "";
+      this.bindGroups.forEach((bindGroup) => {
+        bindGroup.bindings.forEach((binding) => {
+          cacheKey += binding.name + ",";
+        });
+        cacheKey += bindGroup.pipelineCacheKey;
+      });
+      return cacheKey;
     }
     /**
      * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been lost to prepare everything for restoration.
@@ -5712,13 +5727,7 @@
      * Set (or reset) the current {@link pipelineEntry}. Use the {@link Renderer#pipelineManager | renderer pipelineManager} to check whether we can get an already created {@link ComputePipelineEntry} from cache or if we should create a new one.
      */
     setPipelineEntry() {
-      this.pipelineEntry = this.renderer.pipelineManager.createComputePipeline({
-        renderer: this.renderer,
-        label: this.options.label + " compute pipeline",
-        shaders: this.options.shaders,
-        useAsync: this.options.useAsyncPipeline,
-        bindGroups: this.bindGroups
-      });
+      this.pipelineEntry = this.renderer.pipelineManager.createComputePipeline(this);
     }
     /**
      * Compile the {@link ComputePipelineEntry}
@@ -7679,6 +7688,7 @@
         bindGroups,
         cacheKey
       };
+      this.bindGroups = bindGroups;
     }
     /**
      * Get whether the {@link pipeline} is ready, i.e. successfully compiled
@@ -7693,21 +7703,6 @@
      */
     get canCompile() {
       return !this.status.compiling && !this.status.compiled && !this.status.error;
-    }
-    /**
-     * Set {@link PipelineEntry} properties (in this case the {@link bindGroups | bind groups})
-     * @param parameters - the {@link bindGroups | bind groups} to use
-     */
-    setPipelineEntryProperties(parameters) {
-      const { bindGroups } = parameters;
-      this.setPipelineEntryBindGroups(bindGroups);
-    }
-    /**
-     * Set our {@link PipelineEntry#bindGroups | pipeline entry bind groups}
-     * @param bindGroups - {@link core/materials/Material.Material#bindGroups | bind groups} to use with this {@link PipelineEntry}
-     */
-    setPipelineEntryBindGroups(bindGroups) {
-      this.bindGroups = bindGroups;
     }
     /* SHADERS */
     /**
@@ -7782,7 +7777,7 @@ ${formattedMessage}`);
       this.status.compiling = false;
       this.status.compiled = false;
       this.status.error = null;
-      this.setPipelineEntryBindGroups(newBindGroups);
+      this.bindGroups = newBindGroups;
       this.compilePipelineEntry();
     }
     /**
@@ -7905,16 +7900,7 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
         attributes,
         ...renderingOptions
       };
-      this.setPipelineEntryProperties({ attributes, bindGroups });
-    }
-    /**
-     * Set {@link RenderPipelineEntry} properties (in this case the {@link bindGroups | bind groups} and {@link attributes})
-     * @param parameters - the {@link core/materials/RenderMaterial.RenderMaterial#bindGroups | bind groups} and {@link core/materials/RenderMaterial.RenderMaterial#attributes | attributes} to use
-     */
-    setPipelineEntryProperties(parameters) {
-      const { attributes, bindGroups } = parameters;
       this.attributes = attributes;
-      this.setPipelineEntryBindGroups(bindGroups);
     }
     /* SHADERS */
     /**
@@ -8343,15 +8329,7 @@ struct VSOutput {
      * Set (or reset) the current {@link pipelineEntry}. Use the {@link Renderer#pipelineManager | renderer pipelineManager} to check whether we can get an already created {@link RenderPipelineEntry} from cache or if we should create a new one.
      */
     setPipelineEntry() {
-      this.pipelineEntry = this.renderer.pipelineManager.createRenderPipeline({
-        renderer: this.renderer,
-        label: this.options.label + " render pipeline",
-        shaders: this.options.shaders,
-        useAsync: this.options.useAsyncPipeline,
-        rendering: this.options.rendering,
-        attributes: this.attributes,
-        bindGroups: this.bindGroups
-      });
+      this.pipelineEntry = this.renderer.pipelineManager.createRenderPipeline(this);
     }
     /**
      * Compile the {@link RenderPipelineEntry}
@@ -8438,6 +8416,15 @@ New rendering options: ${JSON.stringify(
         vertexBuffers: geometry.vertexBuffers,
         layoutCacheKey: geometry.layoutCacheKey
       };
+    }
+    /**
+     * Get the {@link RenderMaterial} pipeline buffers cache key based on its {@link core/bindGroups/BindGroup.BindGroup | BindGroup} cache keys and eventually {@link attributes} cache keys.
+     * @returns - Current cache key.
+     * @readonly
+     */
+    get cacheKey() {
+      let cacheKey = this.attributes?.layoutCacheKey || "";
+      return cacheKey + super.cacheKey;
     }
     /* BIND GROUPS */
     /**
@@ -10386,9 +10373,19 @@ ${geometry.wgslStructFragment}`
        * @param material - new {@link RenderMaterial} to use
        */
       useMaterial(material) {
+        let currentCacheKey = null;
+        if (this.material && this.geometry) {
+          currentCacheKey = this.material.cacheKey;
+        }
         this.material = material;
+        if (this.geometry) {
+          this.material.setAttributesFromGeometry(this.geometry);
+        }
         this.transparent = this.material.options.rendering.transparent;
         this.material.options.domTextures?.filter((texture) => texture instanceof DOMTexture).forEach((texture) => this.onDOMTextureAdded(texture));
+        if (currentCacheKey && currentCacheKey !== this.material.cacheKey) {
+          this.material.setPipelineEntry();
+        }
       }
       /**
        * Patch the shaders if needed, then set the Mesh material
@@ -11613,7 +11610,6 @@ struct VSOutput {
         }
       };
       this.descriptor = null;
-      this.setPipelineEntryProperties({ bindGroups });
     }
     /* SHADERS */
     /**
@@ -11763,23 +11759,27 @@ ${this.shaders.compute.head}`;
     /**
      * Check if a {@link RenderPipelineEntry} has already been created with the given {@link RenderPipelineEntryParams | parameters}.
      * Use it if found, else create a new one and add it to the {@link pipelineEntries} array.
-     * @param parameters - {@link RenderPipelineEntryParams | RenderPipelineEntry parameters}
-     * @returns - {@link RenderPipelineEntry}, either from cache or newly created
+     * @param material - {@link RenderMaterial} used to create the pipeline.
+     * @returns - {@link RenderPipelineEntry}, either from cache or newly created.
      */
-    createRenderPipeline(parameters) {
-      const { attributes, bindGroups } = parameters;
-      let cacheKey = attributes.layoutCacheKey;
-      bindGroups.forEach((bindGroup) => {
-        bindGroup.bindings.forEach((binding) => {
-          cacheKey += binding.name + ",";
-        });
-        cacheKey += bindGroup.pipelineCacheKey;
-      });
-      const existingPipelineEntry = this.isSameRenderPipeline({ ...parameters, cacheKey });
+    createRenderPipeline(material) {
+      const { renderer, attributes, bindGroups, cacheKey, options } = material;
+      const { shaders, label, useAsyncPipeline, rendering } = options;
+      const parameters = {
+        renderer,
+        label: label + " render pipeline",
+        shaders,
+        useAsync: useAsyncPipeline,
+        bindGroups,
+        cacheKey,
+        rendering,
+        attributes
+      };
+      const existingPipelineEntry = this.isSameRenderPipeline(parameters);
       if (existingPipelineEntry) {
         return existingPipelineEntry;
       } else {
-        const pipelineEntry = new RenderPipelineEntry({ ...parameters, cacheKey });
+        const pipelineEntry = new RenderPipelineEntry(parameters);
         this.pipelineEntries.push(pipelineEntry);
         return pipelineEntry;
       }
@@ -11799,24 +11799,27 @@ ${this.shaders.compute.head}`;
       });
     }
     /**
-     * Check if a {@link ComputePipelineEntry} has already been created with the given {@link PipelineManagerPipelineEntryParams | parameters}.
+     * Check if a {@link ComputePipelineEntry} has already been created with the given {@link PipelineEntryParams | parameters}.
      * Use it if found, else create a new one and add it to the {@link pipelineEntries} array.
-     * @param parameters - {@link PipelineManagerPipelineEntryParams | PipelineEntry parameters}
+     * @param material - {@link ComputeMaterial} used to create the pipeline.
      * @returns - newly created {@link ComputePipelineEntry}
      */
-    createComputePipeline(parameters) {
-      let cacheKey = "";
-      parameters.bindGroups.forEach((bindGroup) => {
-        bindGroup.bindings.forEach((binding) => {
-          cacheKey += binding.name + ",";
-        });
-        cacheKey += bindGroup.pipelineCacheKey;
-      });
-      const existingPipelineEntry = this.isSameComputePipeline({ ...parameters, cacheKey });
+    createComputePipeline(material) {
+      const { renderer, bindGroups, cacheKey, options } = material;
+      const { shaders, label, useAsyncPipeline } = options;
+      const parameters = {
+        renderer,
+        label: label + " compute pipeline",
+        shaders,
+        useAsync: useAsyncPipeline,
+        bindGroups,
+        cacheKey
+      };
+      const existingPipelineEntry = this.isSameComputePipeline(parameters);
       if (existingPipelineEntry) {
         return existingPipelineEntry;
       } else {
-        const pipelineEntry = new ComputePipelineEntry({ ...parameters, cacheKey });
+        const pipelineEntry = new ComputePipelineEntry(parameters);
         this.pipelineEntries.push(pipelineEntry);
         return pipelineEntry;
       }

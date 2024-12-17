@@ -38,16 +38,7 @@ class RenderPipelineEntry extends PipelineEntry {
       attributes,
       ...renderingOptions
     };
-    this.setPipelineEntryProperties({ attributes, bindGroups });
-  }
-  /**
-   * Set {@link RenderPipelineEntry} properties (in this case the {@link bindGroups | bind groups} and {@link attributes})
-   * @param parameters - the {@link core/materials/RenderMaterial.RenderMaterial#bindGroups | bind groups} and {@link core/materials/RenderMaterial.RenderMaterial#attributes | attributes} to use
-   */
-  setPipelineEntryProperties(parameters) {
-    const { attributes, bindGroups } = parameters;
     this.attributes = attributes;
-    this.setPipelineEntryBindGroups(bindGroups);
   }
   /* SHADERS */
   /**

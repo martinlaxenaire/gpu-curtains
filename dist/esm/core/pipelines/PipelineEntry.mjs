@@ -27,6 +27,7 @@ class PipelineEntry {
       bindGroups,
       cacheKey
     };
+    this.bindGroups = bindGroups;
   }
   /**
    * Get whether the {@link pipeline} is ready, i.e. successfully compiled
@@ -41,21 +42,6 @@ class PipelineEntry {
    */
   get canCompile() {
     return !this.status.compiling && !this.status.compiled && !this.status.error;
-  }
-  /**
-   * Set {@link PipelineEntry} properties (in this case the {@link bindGroups | bind groups})
-   * @param parameters - the {@link bindGroups | bind groups} to use
-   */
-  setPipelineEntryProperties(parameters) {
-    const { bindGroups } = parameters;
-    this.setPipelineEntryBindGroups(bindGroups);
-  }
-  /**
-   * Set our {@link PipelineEntry#bindGroups | pipeline entry bind groups}
-   * @param bindGroups - {@link core/materials/Material.Material#bindGroups | bind groups} to use with this {@link PipelineEntry}
-   */
-  setPipelineEntryBindGroups(bindGroups) {
-    this.bindGroups = bindGroups;
   }
   /* SHADERS */
   /**
@@ -130,7 +116,7 @@ ${formattedMessage}`);
     this.status.compiling = false;
     this.status.compiled = false;
     this.status.error = null;
-    this.setPipelineEntryBindGroups(newBindGroups);
+    this.bindGroups = newBindGroups;
     this.compilePipelineEntry();
   }
   /**
