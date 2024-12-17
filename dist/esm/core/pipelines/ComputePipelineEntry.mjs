@@ -21,7 +21,6 @@ class ComputePipelineEntry extends PipelineEntry {
       }
     };
     this.descriptor = null;
-    this.setPipelineEntryProperties({ bindGroups });
   }
   /* SHADERS */
   /**

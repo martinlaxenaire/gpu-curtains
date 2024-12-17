@@ -1,6 +1,6 @@
 /// <reference types="dist" />
 import { PipelineEntry } from './PipelineEntry';
-import { PipelineEntryShaders, RenderPipelineEntryOptions, RenderPipelineEntryParams, RenderPipelineEntryPropertiesParams } from '../../types/PipelineEntries';
+import { PipelineEntryShaders, RenderPipelineEntryOptions, RenderPipelineEntryParams } from '../../types/PipelineEntries';
 import { RenderMaterialAttributes } from '../../types/Materials';
 /**
  * Used to create a {@link PipelineEntry} specifically designed to handle {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}.
@@ -156,11 +156,6 @@ export declare class RenderPipelineEntry extends PipelineEntry {
      * @param parameters - {@link RenderPipelineEntryParams | parameters} used to create this {@link RenderPipelineEntry}
      */
     constructor(parameters: RenderPipelineEntryParams);
-    /**
-     * Set {@link RenderPipelineEntry} properties (in this case the {@link bindGroups | bind groups} and {@link attributes})
-     * @param parameters - the {@link core/materials/RenderMaterial.RenderMaterial#bindGroups | bind groups} and {@link core/materials/RenderMaterial.RenderMaterial#attributes | attributes} to use
-     */
-    setPipelineEntryProperties(parameters: RenderPipelineEntryPropertiesParams): void;
     /**
      * Patch the shaders by appending all the necessary shader chunks, {@link bindGroups | bind groups}) and {@link attributes} WGSL code fragments to the given {@link types/PipelineEntries.PipelineEntryParams#shaders | parameter shader code}
      */
