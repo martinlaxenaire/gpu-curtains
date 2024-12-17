@@ -891,6 +891,8 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     useMaterial(material: RenderMaterial) {
       let currentCacheKey = null
 
+      // if we already have geometry attributes linked to a material
+      // we'll need to check if everything matches
       if (this.material && this.geometry) {
         currentCacheKey = this.material.cacheKey
       }
