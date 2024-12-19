@@ -351,13 +351,9 @@ window.addEventListener('load', async () => {
   computeCulling.onBeforeRender(() => {
     const { frustumPlanes } = gpuCameraRenderer.camera
 
-    cameraFrustumBinding.inputs.frustum.value = Float32Array.of(
-      ...frustumPlanes[0],
-      ...frustumPlanes[1],
-      ...frustumPlanes[2],
-      ...frustumPlanes[3],
-      ...frustumPlanes[4],
-      ...frustumPlanes[5]
+    // concat all frustum planes
+    cameraFrustumBinding.inputs.frustum.value = new Float32Array(
+      frustumPlanes.reduce((frustumPlane, acc) => [...frustumPlane, ...acc], [])
     )
   })
 

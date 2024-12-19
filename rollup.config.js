@@ -23,7 +23,11 @@ export default [
         format: 'umd',
         name: 'window',
         extend: true,
-        plugins: [minify()],
+        plugins: [
+          minify({
+            keepNames: true,
+          }),
+        ],
         sourcemap: true,
       },
     ],
