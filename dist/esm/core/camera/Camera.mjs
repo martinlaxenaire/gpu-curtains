@@ -303,6 +303,62 @@ class Camera extends Object3D {
       far: this.far
     });
   }
+  /**
+   * Get the current {@link Camera} frustum planes in the [left, right, top, bottom, near, far] order, based on its {@link projectionMatrix} and {@link viewMatrix}.
+   * @returns - Frustum planes as an array of 6 faces in the [left, right, top, bottom, near, far] order, made of {@link Float32Array} of length 4.
+   * @readonly
+   */
+  get frustumPlanes() {
+    const tempCamMat4 = new Mat4();
+    const tempCamVec3 = new Vec3();
+    tempCamMat4.copy(this.projectionMatrix).multiply(this.viewMatrix);
+    const { elements } = tempCamMat4;
+    const frustumPlanes = [
+      new Float32Array(4),
+      new Float32Array(4),
+      new Float32Array(4),
+      new Float32Array(4),
+      new Float32Array(4),
+      new Float32Array(4)
+    ];
+    tempCamVec3.set(elements[3] + elements[0], elements[7] + elements[4], elements[11] + elements[8]);
+    let l = tempCamVec3.length();
+    frustumPlanes[0][0] = tempCamVec3.x / l;
+    frustumPlanes[0][1] = tempCamVec3.y / l;
+    frustumPlanes[0][2] = tempCamVec3.z / l;
+    frustumPlanes[0][3] = (elements[15] + elements[12]) / l;
+    tempCamVec3.set(elements[3] - elements[0], elements[7] - elements[4], elements[11] - elements[8]);
+    l = tempCamVec3.length();
+    frustumPlanes[1][0] = tempCamVec3.x / l;
+    frustumPlanes[1][1] = tempCamVec3.y / l;
+    frustumPlanes[1][2] = tempCamVec3.z / l;
+    frustumPlanes[1][3] = (elements[15] - elements[12]) / l;
+    tempCamVec3.set(elements[3] - elements[1], elements[7] - elements[5], elements[11] - elements[9]);
+    l = tempCamVec3.length();
+    frustumPlanes[2][0] = tempCamVec3.x / l;
+    frustumPlanes[2][1] = tempCamVec3.y / l;
+    frustumPlanes[2][2] = tempCamVec3.z / l;
+    frustumPlanes[2][3] = (elements[15] - elements[13]) / l;
+    tempCamVec3.set(elements[3] + elements[1], elements[7] + elements[5], elements[11] + elements[9]);
+    l = tempCamVec3.length();
+    frustumPlanes[3][0] = tempCamVec3.x / l;
+    frustumPlanes[3][1] = tempCamVec3.y / l;
+    frustumPlanes[3][2] = tempCamVec3.z / l;
+    frustumPlanes[3][3] = (elements[15] + elements[13]) / l;
+    tempCamVec3.set(elements[2], elements[6], elements[10]);
+    l = tempCamVec3.length();
+    frustumPlanes[4][0] = tempCamVec3.x / l;
+    frustumPlanes[4][1] = tempCamVec3.y / l;
+    frustumPlanes[4][2] = tempCamVec3.z / l;
+    frustumPlanes[4][3] = elements[14] / l;
+    tempCamVec3.set(elements[3] - elements[2], elements[7] - elements[6], elements[11] - elements[10]);
+    l = tempCamVec3.length();
+    frustumPlanes[5][0] = tempCamVec3.x / l;
+    frustumPlanes[5][1] = tempCamVec3.y / l;
+    frustumPlanes[5][2] = tempCamVec3.z / l;
+    frustumPlanes[5][3] = (elements[15] - elements[14]) / l;
+    return frustumPlanes;
+  }
 }
 _fov = new WeakMap();
 _near = new WeakMap();

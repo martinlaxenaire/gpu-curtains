@@ -40,9 +40,12 @@ window.addEventListener('load', async () => {
     label: 'Basic render bundle',
     size: nbMeshes,
     useBuffer: true,
+    useIndirectDraw: true,
     renderOrder: 1,
     //transparent: true,
   })
+
+  console.log('INDIRECT DRAW RENDER BUNDLE', renderBundle)
 
   const fs = /* wgsl */ `
     struct VSOutput {
@@ -57,10 +60,12 @@ window.addEventListener('load', async () => {
     }
   `
 
+  const boxGeometry = new BoxGeometry()
+
   for (let i = 0; i < nbMeshes; i++) {
     const mesh = new Mesh(gpuCameraRenderer, {
       label: 'Cube ' + i,
-      geometry: new BoxGeometry(),
+      geometry: boxGeometry,
       renderBundle,
       transparent: i > 1,
       shaders: {

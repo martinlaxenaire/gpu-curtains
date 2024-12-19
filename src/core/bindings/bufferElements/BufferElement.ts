@@ -1,4 +1,4 @@
-import { BufferLayout, getBufferLayout, TypedArray, WGSLVariableType } from '../utils'
+import { BufferLayout, getBufferLayout, TypedArray, WGSLBaseVariableType, WGSLVariableType } from '../utils'
 import { Vec2 } from '../../../math/Vec2'
 import { Vec3 } from '../../../math/Vec3'
 import { Quat } from '../../../math/Quat'
@@ -66,8 +66,10 @@ export interface BufferElementParams {
 export class BufferElement {
   /** The name of the {@link BufferElement} */
   name: string
-  /** The WGSL variable type of the {@link BufferElement} */
+  /** The WGSL variable type of the {@link BufferElement} (stripped of `array`). */
   type: WGSLVariableType
+  /** The WGSL base variable type of the {@link BufferElement} (stripped of `array` and `atomic`). */
+  baseType: WGSLBaseVariableType
   /** The key of the {@link BufferElement} */
   key: string
 
@@ -113,8 +115,24 @@ export class BufferElement {
     this.setValue = null
   }
 
-  static getBaseType(type: string): string {
-    return type.replace('atomic', '').replace('array', '').replaceAll('<', '').replaceAll('>', '')
+  /**
+   * Get the {@link BufferElement} {@link WGSLVariableType | WGSL type}.
+   * @param type - Original type passed.
+   * @returns - The {@link BufferElement} {@link WGSLVariableType | WGSL type}.
+   */
+  static getType(type: string): WGSLVariableType {
+    return type.replace('array', '').replace('<', '').replace('>', '')
+  }
+
+  /**
+   * Get the {@link BufferElement} {@link WGSLBaseVariableType | WGSL base type}.
+   * @param type - Original type passed.
+   * @returns - The {@link BufferElement} {@link WGSLBaseVariableType | WGSL base type}.
+   */
+  static getBaseType(type: string): WGSLBaseVariableType {
+    return BufferElement.getType(
+      type.replace('atomic', '').replace('array', '').replaceAll('<', '').replaceAll('>', '')
+    )
   }
 
   /**

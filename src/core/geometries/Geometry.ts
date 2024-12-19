@@ -8,6 +8,7 @@ import {
   VertexBufferAttribute,
   VertexBufferAttributeParams,
   VertexBufferParams,
+  IndirectDrawParams,
 } from '../../types/Geometries'
 import { Buffer } from '../buffers/Buffer'
 import { Renderer } from '../renderers/utils'
@@ -65,6 +66,9 @@ export class Geometry {
   /** The universal unique id of the geometry */
   uuid: string
 
+  /** Allow to draw this {@link Geometry} with an {@link extras/buffers/IndirectBuffer.IndirectBuffer | IndirectBuffer} if set. */
+  indirectDraw: IndirectDrawParams | null
+
   /** The bounding box of the geometry, i.e. two {@link math/Vec3.Vec3 | Vec3} defining the min and max positions to wrap this geometry in a cube */
   boundingBox: Box3
 
@@ -102,6 +106,8 @@ export class Geometry {
 
     this.type = 'Geometry'
     this.uuid = generateUUID()
+
+    this.indirectDraw = null
 
     this.vertexBuffers = []
 
@@ -492,6 +498,18 @@ export class Geometry {
     }
   }
 
+  /**
+   * Set the {@link indirectDraw} parameters to draw this {@link Geometry} with an {@link extras/buffers/IndirectBuffer.IndirectBuffer | IndirectBuffer}.
+   * @param buffer - {@link Buffer} to use. Should come from an {@link extras/buffers/IndirectBuffer.IndirectBuffer | IndirectBuffer}.
+   * @param offset - offset in the {@link Buffer}.
+   */
+  useIndirectBuffer(buffer: Buffer, offset = 0) {
+    this.indirectDraw = {
+      buffer,
+      offset,
+    }
+  }
+
   /** RENDER **/
 
   /**
@@ -505,16 +523,20 @@ export class Geometry {
   }
 
   /**
-   * Draw our geometry
-   * @param pass - current render pass
+   * Draw our geometry. Can use indirect drawing if {@link indirectDraw} is set up.
+   * @param pass - current render pass.
    */
   drawGeometry(pass: GPURenderPassTypes) {
-    pass.draw(this.verticesCount, this.instancesCount)
+    if (this.indirectDraw && this.indirectDraw.buffer && this.indirectDraw.buffer.GPUBuffer) {
+      pass.drawIndirect(this.indirectDraw.buffer.GPUBuffer, this.indirectDraw.offset)
+    } else {
+      pass.draw(this.verticesCount, this.instancesCount)
+    }
   }
 
   /**
-   * Set our vertex buffers then draw the geometry
-   * @param pass - current render pass
+   * Set our vertex buffers then draw the geometry.
+   * @param pass - current render pass.
    */
   render(pass: GPURenderPassTypes) {
     if (!this.ready) return

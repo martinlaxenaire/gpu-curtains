@@ -64,6 +64,7 @@ export { Vec2 } from './math/Vec2'
 export { Vec3 } from './math/Vec3'
 
 // extras
+export { IndirectBuffer } from './extras/buffers/IndirectBuffer'
 export { OrbitControls } from './extras/controls/OrbitControls'
 export { EnvironmentMap } from './extras/environment-map/EnvironmentMap'
 export { BoxGeometry } from './extras/geometries/BoxGeometry'

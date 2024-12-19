@@ -101,11 +101,15 @@ class IndexedGeometry extends Geometry {
     );
   }
   /**
-   * Override the parentMesh draw method to draw indexed geometry
-   * @param pass - current render pass
+   * Draw our indexed geometry. Can use indirect drawing if {@link indirectDraw} is set up.
+   * @param pass - current render pass.
    */
   drawGeometry(pass) {
-    pass.drawIndexed(this.indexBuffer.bufferLength, this.instancesCount);
+    if (this.indirectDraw && this.indirectDraw.buffer && this.indirectDraw.buffer.GPUBuffer) {
+      pass.drawIndexedIndirect(this.indirectDraw.buffer.GPUBuffer, this.indirectDraw.offset);
+    } else {
+      pass.drawIndexed(this.indexBuffer.bufferLength, this.instancesCount);
+    }
   }
   /**
    * Destroy our indexed geometry vertex buffers and index buffer.

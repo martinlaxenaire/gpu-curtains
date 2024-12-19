@@ -12,6 +12,8 @@ export declare const getBindingVisibility: (visibilities?: MaterialShadersType[]
 export type TypedArray = Int8Array | Uint8Array | Uint8ClampedArray | Int16Array | Uint16Array | Int32Array | Uint32Array | Float32Array | Float64Array;
 /** Defines a typed array constructor */
 export type TypedArrayConstructor = Int8ArrayConstructor | Uint8ArrayConstructor | Int16ArrayConstructor | Uint16ArrayConstructor | Int32ArrayConstructor | Uint32ArrayConstructor | Float32ArrayConstructor | Float64ArrayConstructor;
+/** Defines the possible base WGSL variable types */
+export type WGSLBaseVariableType = string;
 /** Defines the possible WGSL variable types */
 export type WGSLVariableType = string;
 /**

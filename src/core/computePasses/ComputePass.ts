@@ -466,13 +466,13 @@ export class ComputePass {
   onBeforeRenderPass() {
     if (!this.renderer.ready) return
 
-    if (this.material && this.material.ready && !this.ready) {
-      this.ready = true
-    }
-
     this._onBeforeRenderCallback && this._onBeforeRenderCallback()
 
     this.material.onBeforeRender()
+
+    if (this.material && this.material.ready && !this.ready) {
+      this.ready = true
+    }
   }
 
   /**

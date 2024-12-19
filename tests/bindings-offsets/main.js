@@ -405,6 +405,41 @@ window.addEventListener('load', async () => {
 
   debugBindings.push(multipleChildrenBindingClone)
 
+  // atomics
+  const size = 2
+
+  const indirectArgsBinding = new BufferBinding({
+    label: 'Indirect args',
+    name: 'indirectArgs',
+    bindingType: 'storage',
+    access: 'read_write',
+    visibility: ['compute'],
+    struct: {
+      drawCount: {
+        type: 'array<u32>',
+        value: new Uint32Array(size),
+      },
+      instanceCount: {
+        type: 'array<atomic<u32>>',
+        value: new Uint32Array(size),
+      },
+      pad2: {
+        type: 'array<u32>',
+        value: new Uint32Array(size),
+      },
+      pad3: {
+        type: 'array<u32>',
+        value: new Uint32Array(size),
+      },
+      pad4: {
+        type: 'array<u32>',
+        value: new Uint32Array(size),
+      },
+    },
+  })
+
+  debugBindings.push(indirectArgsBinding)
+
   // ----------
   // NOW OUTPUT THE BINDINGS
   // ----------

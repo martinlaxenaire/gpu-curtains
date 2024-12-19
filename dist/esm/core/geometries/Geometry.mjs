@@ -22,6 +22,7 @@ class Geometry {
     this.boundingBox = new Box3();
     this.type = "Geometry";
     this.uuid = generateUUID();
+    this.indirectDraw = null;
     this.vertexBuffers = [];
     this.consumers = /* @__PURE__ */ new Set();
     this.options = {
@@ -336,6 +337,17 @@ class Geometry {
       renderer.queueWriteBuffer(buffer.buffer.GPUBuffer, 0, buffer.array);
     }
   }
+  /**
+   * Set the {@link indirectDraw} parameters to draw this {@link Geometry} with an {@link extras/buffers/IndirectBuffer.IndirectBuffer | IndirectBuffer}.
+   * @param buffer - {@link Buffer} to use. Should come from an {@link extras/buffers/IndirectBuffer.IndirectBuffer | IndirectBuffer}.
+   * @param offset - offset in the {@link Buffer}.
+   */
+  useIndirectBuffer(buffer, offset = 0) {
+    this.indirectDraw = {
+      buffer,
+      offset
+    };
+  }
   /** RENDER **/
   /**
    * Set our render pass geometry vertex buffers
@@ -347,15 +359,19 @@ class Geometry {
     });
   }
   /**
-   * Draw our geometry
-   * @param pass - current render pass
+   * Draw our geometry. Can use indirect drawing if {@link indirectDraw} is set up.
+   * @param pass - current render pass.
    */
   drawGeometry(pass) {
-    pass.draw(this.verticesCount, this.instancesCount);
+    if (this.indirectDraw && this.indirectDraw.buffer && this.indirectDraw.buffer.GPUBuffer) {
+      pass.drawIndirect(this.indirectDraw.buffer.GPUBuffer, this.indirectDraw.offset);
+    } else {
+      pass.draw(this.verticesCount, this.instancesCount);
+    }
   }
   /**
-   * Set our vertex buffers then draw the geometry
-   * @param pass - current render pass
+   * Set our vertex buffers then draw the geometry.
+   * @param pass - current render pass.
    */
   render(pass) {
     if (!this.ready)

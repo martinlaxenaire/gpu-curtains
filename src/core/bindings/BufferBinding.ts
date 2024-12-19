@@ -80,6 +80,9 @@ export interface BufferBindingParams extends BindingParams, BufferBindingBasePar
 
   /** The optional parent {@link BufferBinding} that will actually handle the {@link GPUBuffer}. */
   parent?: BufferBinding
+
+  /** Optional already existing {@link Buffer} to use instead of creating a new one. Allow to reuse an already created {@link Buffer} but with different read or visibility values, or with a different WGSL struct. */
+  buffer?: Buffer
 }
 
 /** All allowed {@link BufferElement | buffer elements} */
@@ -184,6 +187,7 @@ export class BufferBinding extends Binding {
     usage = [],
     struct = {},
     childrenBindings = [],
+    buffer = null,
     parent = null,
     minOffset = 256,
     offset = 0,
@@ -199,6 +203,7 @@ export class BufferBinding extends Binding {
       usage,
       struct,
       childrenBindings,
+      buffer,
       parent,
       minOffset,
       offset,
@@ -214,7 +219,7 @@ export class BufferBinding extends Binding {
     this.bufferElements = []
     this.inputs = {}
 
-    this.buffer = new Buffer()
+    this.buffer = this.options.buffer ?? new Buffer()
 
     if (Object.keys(struct).length) {
       this.setBindings(struct)
@@ -317,7 +322,7 @@ export class BufferBinding extends Binding {
         }
       })
 
-      if (!this.parent && this.buffer.GPUBuffer) {
+      if (!this.parent && this.buffer.GPUBuffer && !this.options.buffer) {
         // if it has a GPU Buffer but no parent yet, destroy the buffer
         this.buffer.destroy()
       }
@@ -396,10 +401,7 @@ export class BufferBinding extends Binding {
    * Clone this {@link BufferBinding} into a new one. Allows to skip buffer layout alignment computations.
    * @param params - params to use for cloning
    */
-  clone(
-    params = {} as BufferBindingParams | WritableBufferBindingParams,
-    useBuffer = false
-  ): BufferBinding | WritableBufferBinding {
+  clone(params = {} as BufferBindingParams | WritableBufferBindingParams): BufferBinding | WritableBufferBinding {
     let { struct, childrenBindings, parent, ...defaultParams } = params
 
     // patch default params with this buffer bindings options
@@ -424,7 +426,9 @@ export class BufferBinding extends Binding {
       bufferBindingCopy.arrayBuffer.byteLength
     )
 
-    bufferBindingCopy.buffer.size = bufferBindingCopy.arrayBuffer.byteLength
+    if (!bufferBindingCopy.options.buffer) {
+      bufferBindingCopy.buffer.size = bufferBindingCopy.arrayBuffer.byteLength
+    }
 
     // now set the buffer elements alignment from this buffer binding
     this.bufferElements.forEach((bufferElement: BufferArrayElement) => {
@@ -489,10 +493,6 @@ export class BufferBinding extends Binding {
           bufferElement.setView(bufferBindingCopy.arrayBuffer, binding.arrayView)
         }
       })
-    }
-
-    if (useBuffer) {
-      bufferBindingCopy.buffer = this.buffer
     }
 
     // create WGSL fragment
@@ -714,7 +714,7 @@ export class BufferBinding extends Binding {
           return new BufferElement({
             name: toCamelCase(binding.name ?? bindingKey),
             key: bindingKey,
-            type: binding.type.replace('array', '').replace('<', '').replace('>', ''),
+            type: BufferElement.getType(binding.type),
           })
         })
 
@@ -813,7 +813,9 @@ export class BufferBinding extends Binding {
       }
     })
 
-    this.buffer.size = this.arrayBuffer.byteLength
+    if (!this.options.buffer) {
+      this.buffer.size = this.arrayBuffer.byteLength
+    }
 
     for (const bufferElement of this.bufferElements) {
       bufferElement.setView(this.arrayBuffer, this.arrayView)
@@ -849,10 +851,7 @@ export class BufferBinding extends Binding {
           structs[`${kebabCaseLabel}Element`] = {}
 
           interleavedBufferElements.forEach((binding) => {
-            structs[`${kebabCaseLabel}Element`][binding.name] = binding.type
-              .replace('array', '')
-              .replace('<', '')
-              .replace('>', '')
+            structs[`${kebabCaseLabel}Element`][binding.name] = BufferElement.getType(binding.type)
           })
 
           bufferElements.forEach((binding) => {
@@ -869,7 +868,7 @@ export class BufferBinding extends Binding {
           this.wgslGroupFragment = [`${varType} ${this.name}: ${kebabCaseLabel};`]
         } else {
           this.bufferElements.forEach((binding) => {
-            structs[kebabCaseLabel][binding.name] = binding.type.replace('array', '').replace('<', '').replace('>', '')
+            structs[kebabCaseLabel][binding.name] = BufferElement.getType(binding.type)
           })
 
           const varType = getBindingWGSLVarType(this)
@@ -879,7 +878,7 @@ export class BufferBinding extends Binding {
         bufferElements.forEach((binding) => {
           const bindingType =
             this.bindingType === 'uniform' && 'numElements' in binding
-              ? `array<${binding.type.replace('array', '').replace('<', '').replace('>', '')}, ${binding.numElements}>`
+              ? `array<${BufferElement.getType(binding.type)}, ${binding.numElements}>`
               : binding.type
 
           structs[kebabCaseLabel][binding.name] = bindingType
@@ -937,6 +936,13 @@ export class BufferBinding extends Binding {
    * Also sets the {@link shouldUpdate} property to true so the {@link core/bindGroups/BindGroup.BindGroup | BindGroup} knows it will need to update the {@link GPUBuffer}.
    */
   update() {
+    // if we're using an external buffer, bail
+    // because we don't want to update it
+    if (this.options.buffer) {
+      this.shouldUpdate = false
+      return
+    }
+
     const inputs = Object.values(this.inputs)
 
     for (const binding of inputs) {

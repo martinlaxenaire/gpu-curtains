@@ -1,6 +1,7 @@
 /// <reference types="dist" />
 import { Box3 } from '../../math/Box3';
-import { GeometryBuffer, GeometryOptions, GeometryParams, VertexBuffer, VertexBufferAttribute, VertexBufferAttributeParams, VertexBufferParams } from '../../types/Geometries';
+import { GeometryBuffer, GeometryOptions, GeometryParams, VertexBuffer, VertexBufferAttribute, VertexBufferAttributeParams, VertexBufferParams, IndirectDrawParams } from '../../types/Geometries';
+import { Buffer } from '../buffers/Buffer';
 import { Renderer } from '../renderers/utils';
 import { GPURenderPassTypes } from '../pipelines/PipelineManager';
 /**
@@ -53,6 +54,8 @@ export declare class Geometry {
     type: string;
     /** The universal unique id of the geometry */
     uuid: string;
+    /** Allow to draw this {@link Geometry} with an {@link extras/buffers/IndirectBuffer.IndirectBuffer | IndirectBuffer} if set. */
+    indirectDraw: IndirectDrawParams | null;
     /** The bounding box of the geometry, i.e. two {@link math/Vec3.Vec3 | Vec3} defining the min and max positions to wrap this geometry in a cube */
     boundingBox: Box3;
     /** A string to append to our shaders code describing the WGSL structure representing this geometry attributes */
@@ -130,6 +133,12 @@ export declare class Geometry {
      * @param buffer - {@link GeometryBuffer} holding a {@link Buffer} and a typed array to upload.
      */
     uploadBuffer(renderer: Renderer, buffer: GeometryBuffer): void;
+    /**
+     * Set the {@link indirectDraw} parameters to draw this {@link Geometry} with an {@link extras/buffers/IndirectBuffer.IndirectBuffer | IndirectBuffer}.
+     * @param buffer - {@link Buffer} to use. Should come from an {@link extras/buffers/IndirectBuffer.IndirectBuffer | IndirectBuffer}.
+     * @param offset - offset in the {@link Buffer}.
+     */
+    useIndirectBuffer(buffer: Buffer, offset?: number): void;
     /** RENDER **/
     /**
      * Set our render pass geometry vertex buffers
@@ -137,13 +146,13 @@ export declare class Geometry {
      */
     setGeometryBuffers(pass: GPURenderPassTypes): void;
     /**
-     * Draw our geometry
-     * @param pass - current render pass
+     * Draw our geometry. Can use indirect drawing if {@link indirectDraw} is set up.
+     * @param pass - current render pass.
      */
     drawGeometry(pass: GPURenderPassTypes): void;
     /**
-     * Set our vertex buffers then draw the geometry
-     * @param pass - current render pass
+     * Set our vertex buffers then draw the geometry.
+     * @param pass - current render pass.
      */
     render(pass: GPURenderPassTypes): void;
     /**

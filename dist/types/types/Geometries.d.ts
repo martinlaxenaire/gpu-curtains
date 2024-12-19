@@ -80,6 +80,13 @@ export interface VertexBufferParams extends Partial<GeometryBuffer> {
     /** Array of {@link VertexBufferAttribute} to be used by this {@link VertexBuffer} */
     attributes?: VertexBufferAttributeParams[];
 }
+/** Parameters used to draw a {@link core/geometries/Geometry.Geometry | Geometry} with an {@link extras/buffers/IndirectBuffer.IndirectBuffer | IndirectBuffer}. */
+export interface IndirectDrawParams {
+    /** {@link Buffer} to use. Should come from an {@link extras/buffers/IndirectBuffer.IndirectBuffer | IndirectBuffer}. */
+    buffer: Buffer;
+    /** Offset in the {@link Buffer}. */
+    offset?: number;
+}
 /**
  * Options used to create a geometry
  */

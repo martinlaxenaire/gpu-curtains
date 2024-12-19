@@ -71,7 +71,6 @@ window.addEventListener('load', async () => {
         normalize(fsInput.normal),
         fsInput.worldPosition,
         shading.color,
-        
       );
     
       return vec4(color, 1.0);

@@ -1187,7 +1187,8 @@
       this.name = name;
       this.key = key;
       this.type = type;
-      this.bufferLayout = getBufferLayout(this.type.replace("array", "").replace("<", "").replace(">", ""));
+      this.baseType = BufferElement.getBaseType(this.type);
+      this.bufferLayout = getBufferLayout(this.baseType);
       this.alignment = {
         start: {
           row: 0,
@@ -1199,6 +1200,24 @@
         }
       };
       this.setValue = null;
+    }
+    /**
+     * Get the {@link BufferElement} {@link WGSLVariableType | WGSL type}.
+     * @param type - Original type passed.
+     * @returns - The {@link BufferElement} {@link WGSLVariableType | WGSL type}.
+     */
+    static getType(type) {
+      return type.replace("array", "").replace("<", "").replace(">", "");
+    }
+    /**
+     * Get the {@link BufferElement} {@link WGSLBaseVariableType | WGSL base type}.
+     * @param type - Original type passed.
+     * @returns - The {@link BufferElement} {@link WGSLBaseVariableType | WGSL base type}.
+     */
+    static getBaseType(type) {
+      return BufferElement.getType(
+        type.replace("atomic", "").replace("array", "").replaceAll("<", "").replaceAll(">", "")
+      );
     }
     /**
      * Get the total number of rows used by this {@link BufferElement}
@@ -1407,13 +1426,13 @@
     update(value) {
       if (!this.setValue) {
         this.setValue = ((value2) => {
-          if (this.type === "f32" || this.type === "u32" || this.type === "i32") {
+          if (this.baseType === "f32" || this.baseType === "u32" || this.baseType === "i32") {
             return this.setValueFromFloat;
-          } else if (this.type === "vec2f") {
+          } else if (this.baseType === "vec2f") {
             return this.setValueFromVec2;
-          } else if (this.type === "vec3f") {
+          } else if (this.baseType === "vec3f") {
             return this.setValueFromVec3;
-          } else if (this.type === "mat3x3f") {
+          } else if (this.baseType === "mat3x3f") {
             return value2.elements ? this.setValueFromMat3 : this.setValueFromArrayWithPad;
           } else if (value2.elements) {
             return this.setValueFromMat4OrQuat;
@@ -1673,21 +1692,21 @@
     }
   }
 
-  var __accessCheck$k = (obj, member, msg) => {
+  var __accessCheck$l = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet$i = (obj, member, getter) => {
-    __accessCheck$k(obj, member, "read from private field");
+    __accessCheck$l(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$k = (obj, member, value) => {
+  var __privateAdd$l = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
   var __privateSet$h = (obj, member, value, setter) => {
-    __accessCheck$k(obj, member, "write to private field");
+    __accessCheck$l(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -1707,6 +1726,7 @@
       usage = [],
       struct = {},
       childrenBindings = [],
+      buffer = null,
       parent = null,
       minOffset = 256,
       offset = 0
@@ -1714,7 +1734,7 @@
       bindingType = bindingType ?? "uniform";
       super({ label, name, bindingType, visibility });
       /** @ignore */
-      __privateAdd$k(this, _parent, void 0);
+      __privateAdd$l(this, _parent, void 0);
       this.options = {
         ...this.options,
         useStruct,
@@ -1722,6 +1742,7 @@
         usage,
         struct,
         childrenBindings,
+        buffer,
         parent,
         minOffset,
         offset
@@ -1732,7 +1753,7 @@
       this.useStruct = useStruct;
       this.bufferElements = [];
       this.inputs = {};
-      this.buffer = new Buffer();
+      this.buffer = this.options.buffer ?? new Buffer();
       if (Object.keys(struct).length) {
         this.setBindings(struct);
         this.setInputsAlignment();
@@ -1818,7 +1839,7 @@
               };
           }
         });
-        if (!this.parent && this.buffer.GPUBuffer) {
+        if (!this.parent && this.buffer.GPUBuffer && !this.options.buffer) {
           this.buffer.destroy();
         }
       } else {
@@ -1890,7 +1911,9 @@
         0,
         bufferBindingCopy.arrayBuffer.byteLength
       );
-      bufferBindingCopy.buffer.size = bufferBindingCopy.arrayBuffer.byteLength;
+      if (!bufferBindingCopy.options.buffer) {
+        bufferBindingCopy.buffer.size = bufferBindingCopy.arrayBuffer.byteLength;
+      }
       this.bufferElements.forEach((bufferElement) => {
         const newBufferElement = new bufferElement.constructor({
           name: bufferElement.name,
@@ -1940,12 +1963,7 @@
           }
         });
       }
-      if (this.name === bufferBindingCopy.name && this.label === bufferBindingCopy.label) {
-        bufferBindingCopy.wgslStructFragment = this.wgslStructFragment;
-        bufferBindingCopy.wgslGroupFragment = this.wgslGroupFragment;
-      } else {
-        bufferBindingCopy.setWGSLFragment();
-      }
+      bufferBindingCopy.setWGSLFragment();
       if (parent) {
         bufferBindingCopy.parent = parent;
       }
@@ -2071,7 +2089,7 @@
       if (arrayBindings.length > 1) {
         const arraySizes = arrayBindings.map((bindingKey) => {
           const binding = this.inputs[bindingKey];
-          const bufferLayout = getBufferLayout(binding.type.replace("array", "").replace("<", "").replace(">", ""));
+          const bufferLayout = getBufferLayout(BufferElement.getBaseType(binding.type));
           return Math.ceil(binding.value.length / bufferLayout.numElements);
         });
         const equalSize = arraySizes.every((size, i, array) => size === array[0]);
@@ -2090,7 +2108,7 @@
             return new BufferElement({
               name: toCamelCase(binding.name ?? bindingKey),
               key: bindingKey,
-              type: binding.type.replace("array", "").replace("<", "").replace(">", "")
+              type: BufferElement.getType(binding.type)
             });
           });
           tempBufferElements.forEach((bufferElement, index) => {
@@ -2153,7 +2171,9 @@
           bufferElement.setView(this.arrayBuffer, binding.arrayView);
         }
       });
-      this.buffer.size = this.arrayBuffer.byteLength;
+      if (!this.options.buffer) {
+        this.buffer.size = this.arrayBuffer.byteLength;
+      }
       for (const bufferElement of this.bufferElements) {
         bufferElement.setView(this.arrayBuffer, this.arrayView);
       }
@@ -2180,7 +2200,7 @@
           if (bufferElements.length) {
             structs[`${kebabCaseLabel}Element`] = {};
             interleavedBufferElements.forEach((binding) => {
-              structs[`${kebabCaseLabel}Element`][binding.name] = binding.type.replace("array", "").replace("<", "").replace(">", "");
+              structs[`${kebabCaseLabel}Element`][binding.name] = BufferElement.getType(binding.type);
             });
             bufferElements.forEach((binding) => {
               structs[kebabCaseLabel][binding.name] = binding.type;
@@ -2191,14 +2211,14 @@
             this.wgslGroupFragment = [`${varType} ${this.name}: ${kebabCaseLabel};`];
           } else {
             this.bufferElements.forEach((binding) => {
-              structs[kebabCaseLabel][binding.name] = binding.type.replace("array", "").replace("<", "").replace(">", "");
+              structs[kebabCaseLabel][binding.name] = BufferElement.getType(binding.type);
             });
             const varType = getBindingWGSLVarType(this);
             this.wgslGroupFragment = [`${varType} ${this.name}: array<${kebabCaseLabel}${arrayLength}>;`];
           }
         } else {
           bufferElements.forEach((binding) => {
-            const bindingType = this.bindingType === "uniform" && "numElements" in binding ? `array<${binding.type.replace("array", "").replace("<", "").replace(">", "")}, ${binding.numElements}>` : binding.type;
+            const bindingType = this.bindingType === "uniform" && "numElements" in binding ? `array<${BufferElement.getType(binding.type)}, ${binding.numElements}>` : binding.type;
             structs[kebabCaseLabel][binding.name] = bindingType;
           });
           const varType = getBindingWGSLVarType(this);
@@ -2238,6 +2258,10 @@
      * Also sets the {@link shouldUpdate} property to true so the {@link core/bindGroups/BindGroup.BindGroup | BindGroup} knows it will need to update the {@link GPUBuffer}.
      */
     update() {
+      if (this.options.buffer) {
+        this.shouldUpdate = false;
+        return;
+      }
       const inputs = Object.values(this.inputs);
       for (const binding of inputs) {
         const bufferElement = this.bufferElements.find((bufferEl) => bufferEl.key === binding.name);
@@ -2305,6 +2329,7 @@
       usage = [],
       struct = {},
       childrenBindings = [],
+      buffer = null,
       parent = null,
       minOffset = 256,
       offset = 0,
@@ -2322,6 +2347,7 @@
         usage,
         struct,
         childrenBindings,
+        buffer,
         parent,
         minOffset,
         offset
@@ -3883,15 +3909,15 @@
     return 1 + Math.log2(maxSize) | 0;
   };
 
-  var __accessCheck$j = (obj, member, msg) => {
+  var __accessCheck$k = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet$h = (obj, member, getter) => {
-    __accessCheck$j(obj, member, "read from private field");
+    __accessCheck$k(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$j = (obj, member, value) => {
+  var __privateAdd$k = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
@@ -3920,13 +3946,13 @@
     constructor(renderer, parameters = defaultDOMTextureParams) {
       super();
       /** Private {@link Vec3 | vector} used for {@link#modelMatrix} calculations, based on {@link parentMesh} {@link core/DOM/DOMElement.RectSize | size} */
-      __privateAdd$j(this, _parentRatio, new Vec3(1));
+      __privateAdd$k(this, _parentRatio, new Vec3(1));
       /** Private {@link Vec3 | vector} used for {@link modelMatrix} calculations, based on {@link size | source size} */
-      __privateAdd$j(this, _sourceRatio, new Vec3(1));
+      __privateAdd$k(this, _sourceRatio, new Vec3(1));
       /** Private {@link Vec3 | vector} used for {@link modelMatrix} calculations, based on #parentRatio and #sourceRatio */
-      __privateAdd$j(this, _coverScale, new Vec3(1));
+      __privateAdd$k(this, _coverScale, new Vec3(1));
       /** Private rotation {@link Mat4 | matrix} based on texture {@link quaternion} */
-      __privateAdd$j(this, _rotationMatrix, new Mat4());
+      __privateAdd$k(this, _rotationMatrix, new Mat4());
       // callbacks / events
       /** function assigned to the {@link onSourceLoaded} callback */
       this._onSourceLoadedCallback = () => {
@@ -4542,21 +4568,21 @@
     }
   }
 
-  var __accessCheck$i = (obj, member, msg) => {
+  var __accessCheck$j = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet$g = (obj, member, getter) => {
-    __accessCheck$i(obj, member, "read from private field");
+    __accessCheck$j(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$i = (obj, member, value) => {
+  var __privateAdd$j = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
   var __privateSet$g = (obj, member, value, setter) => {
-    __accessCheck$i(obj, member, "write to private field");
+    __accessCheck$j(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -4578,13 +4604,13 @@
     } = {}) {
       super();
       /** @ignore */
-      __privateAdd$i(this, _fov, void 0);
+      __privateAdd$j(this, _fov, void 0);
       /** @ignore */
-      __privateAdd$i(this, _near, void 0);
+      __privateAdd$j(this, _near, void 0);
       /** @ignore */
-      __privateAdd$i(this, _far, void 0);
+      __privateAdd$j(this, _far, void 0);
       /** @ignore */
-      __privateAdd$i(this, _pixelRatio, void 0);
+      __privateAdd$j(this, _pixelRatio, void 0);
       this.uuid = generateUUID();
       this.position.set(0, 0, 10);
       this.up = new Vec3(0, 1, 0);
@@ -4842,6 +4868,62 @@
         far: this.far
       });
     }
+    /**
+     * Get the current {@link Camera} frustum planes in the [left, right, top, bottom, near, far] order, based on its {@link projectionMatrix} and {@link viewMatrix}.
+     * @returns - Frustum planes as an array of 6 faces in the [left, right, top, bottom, near, far] order, made of {@link Float32Array} of length 4.
+     * @readonly
+     */
+    get frustumPlanes() {
+      const tempCamMat4 = new Mat4();
+      const tempCamVec3 = new Vec3();
+      tempCamMat4.copy(this.projectionMatrix).multiply(this.viewMatrix);
+      const { elements } = tempCamMat4;
+      const frustumPlanes = [
+        new Float32Array(4),
+        new Float32Array(4),
+        new Float32Array(4),
+        new Float32Array(4),
+        new Float32Array(4),
+        new Float32Array(4)
+      ];
+      tempCamVec3.set(elements[3] + elements[0], elements[7] + elements[4], elements[11] + elements[8]);
+      let l = tempCamVec3.length();
+      frustumPlanes[0][0] = tempCamVec3.x / l;
+      frustumPlanes[0][1] = tempCamVec3.y / l;
+      frustumPlanes[0][2] = tempCamVec3.z / l;
+      frustumPlanes[0][3] = (elements[15] + elements[12]) / l;
+      tempCamVec3.set(elements[3] - elements[0], elements[7] - elements[4], elements[11] - elements[8]);
+      l = tempCamVec3.length();
+      frustumPlanes[1][0] = tempCamVec3.x / l;
+      frustumPlanes[1][1] = tempCamVec3.y / l;
+      frustumPlanes[1][2] = tempCamVec3.z / l;
+      frustumPlanes[1][3] = (elements[15] - elements[12]) / l;
+      tempCamVec3.set(elements[3] - elements[1], elements[7] - elements[5], elements[11] - elements[9]);
+      l = tempCamVec3.length();
+      frustumPlanes[2][0] = tempCamVec3.x / l;
+      frustumPlanes[2][1] = tempCamVec3.y / l;
+      frustumPlanes[2][2] = tempCamVec3.z / l;
+      frustumPlanes[2][3] = (elements[15] - elements[13]) / l;
+      tempCamVec3.set(elements[3] + elements[1], elements[7] + elements[5], elements[11] + elements[9]);
+      l = tempCamVec3.length();
+      frustumPlanes[3][0] = tempCamVec3.x / l;
+      frustumPlanes[3][1] = tempCamVec3.y / l;
+      frustumPlanes[3][2] = tempCamVec3.z / l;
+      frustumPlanes[3][3] = (elements[15] + elements[13]) / l;
+      tempCamVec3.set(elements[2], elements[6], elements[10]);
+      l = tempCamVec3.length();
+      frustumPlanes[4][0] = tempCamVec3.x / l;
+      frustumPlanes[4][1] = tempCamVec3.y / l;
+      frustumPlanes[4][2] = tempCamVec3.z / l;
+      frustumPlanes[4][3] = elements[14] / l;
+      tempCamVec3.set(elements[3] - elements[2], elements[7] - elements[6], elements[11] - elements[10]);
+      l = tempCamVec3.length();
+      frustumPlanes[5][0] = tempCamVec3.x / l;
+      frustumPlanes[5][1] = tempCamVec3.y / l;
+      frustumPlanes[5][2] = tempCamVec3.z / l;
+      frustumPlanes[5][3] = (elements[15] - elements[14]) / l;
+      return frustumPlanes;
+    }
   }
   _fov = new WeakMap();
   _near = new WeakMap();
@@ -4911,21 +4993,21 @@
     }
   }
 
-  var __accessCheck$h = (obj, member, msg) => {
+  var __accessCheck$i = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet$f = (obj, member, getter) => {
-    __accessCheck$h(obj, member, "read from private field");
+    __accessCheck$i(obj, member, "read from private field");
     return member.get(obj);
   };
-  var __privateAdd$h = (obj, member, value) => {
+  var __privateAdd$i = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
   var __privateSet$f = (obj, member, value, setter) => {
-    __accessCheck$h(obj, member, "write to private field");
+    __accessCheck$i(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -4954,7 +5036,7 @@
      */
     constructor(renderer, parameters = defaultTextureParams) {
       /** Whether this texture should be automatically resized when the {@link Renderer renderer} size changes. Default to true. */
-      __privateAdd$h(this, _autoResize, true);
+      __privateAdd$i(this, _autoResize, true);
       renderer = isRenderer(renderer, parameters.label ? parameters.label + " Texture" : "Texture");
       this.type = "Texture";
       this.renderer = renderer;
@@ -5839,21 +5921,21 @@
     }
   }
 
-  var __accessCheck$g = (obj, member, msg) => {
+  var __accessCheck$h = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet$e = (obj, member, getter) => {
-    __accessCheck$g(obj, member, "read from private field");
+    __accessCheck$h(obj, member, "read from private field");
     return member.get(obj);
   };
-  var __privateAdd$g = (obj, member, value) => {
+  var __privateAdd$h = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
   var __privateSet$e = (obj, member, value, setter) => {
-    __accessCheck$g(obj, member, "write to private field");
+    __accessCheck$h(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -5870,7 +5952,7 @@
        * Whether this {@link ComputePass} should be added to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically
        * @private
        */
-      __privateAdd$g(this, _autoRender$2, true);
+      __privateAdd$h(this, _autoRender$2, true);
       // callbacks / events
       /** function assigned to the {@link onReady} callback */
       this._onReadyCallback = () => {
@@ -5900,6 +5982,7 @@
         renderOrder,
         uniforms,
         storages,
+        bindings,
         bindGroups,
         samplers,
         domTextures,
@@ -5930,6 +6013,7 @@
         shaders: this.options.shaders,
         uniforms,
         storages,
+        bindings,
         bindGroups,
         samplers,
         textures,
@@ -6157,11 +6241,11 @@
     onBeforeRenderPass() {
       if (!this.renderer.ready)
         return;
+      this._onBeforeRenderCallback && this._onBeforeRenderCallback();
+      this.material.onBeforeRender();
       if (this.material && this.material.ready && !this.ready) {
         this.ready = true;
       }
-      this._onBeforeRenderCallback && this._onBeforeRenderCallback();
-      this.material.onBeforeRender();
     }
     /**
      * Render our {@link ComputeMaterial}
@@ -6499,6 +6583,7 @@
       this.boundingBox = new Box3();
       this.type = "Geometry";
       this.uuid = generateUUID();
+      this.indirectDraw = null;
       this.vertexBuffers = [];
       this.consumers = /* @__PURE__ */ new Set();
       this.options = {
@@ -6813,6 +6898,17 @@
         renderer.queueWriteBuffer(buffer.buffer.GPUBuffer, 0, buffer.array);
       }
     }
+    /**
+     * Set the {@link indirectDraw} parameters to draw this {@link Geometry} with an {@link extras/buffers/IndirectBuffer.IndirectBuffer | IndirectBuffer}.
+     * @param buffer - {@link Buffer} to use. Should come from an {@link extras/buffers/IndirectBuffer.IndirectBuffer | IndirectBuffer}.
+     * @param offset - offset in the {@link Buffer}.
+     */
+    useIndirectBuffer(buffer, offset = 0) {
+      this.indirectDraw = {
+        buffer,
+        offset
+      };
+    }
     /** RENDER **/
     /**
      * Set our render pass geometry vertex buffers
@@ -6824,15 +6920,19 @@
       });
     }
     /**
-     * Draw our geometry
-     * @param pass - current render pass
+     * Draw our geometry. Can use indirect drawing if {@link indirectDraw} is set up.
+     * @param pass - current render pass.
      */
     drawGeometry(pass) {
-      pass.draw(this.verticesCount, this.instancesCount);
+      if (this.indirectDraw && this.indirectDraw.buffer && this.indirectDraw.buffer.GPUBuffer) {
+        pass.drawIndirect(this.indirectDraw.buffer.GPUBuffer, this.indirectDraw.offset);
+      } else {
+        pass.draw(this.verticesCount, this.instancesCount);
+      }
     }
     /**
-     * Set our vertex buffers then draw the geometry
-     * @param pass - current render pass
+     * Set our vertex buffers then draw the geometry.
+     * @param pass - current render pass.
      */
     render(pass) {
       if (!this.ready)
@@ -6958,11 +7058,15 @@
       );
     }
     /**
-     * Override the parentMesh draw method to draw indexed geometry
-     * @param pass - current render pass
+     * Draw our indexed geometry. Can use indirect drawing if {@link indirectDraw} is set up.
+     * @param pass - current render pass.
      */
     drawGeometry(pass) {
-      pass.drawIndexed(this.indexBuffer.bufferLength, this.instancesCount);
+      if (this.indirectDraw && this.indirectDraw.buffer && this.indirectDraw.buffer.GPUBuffer) {
+        pass.drawIndexedIndirect(this.indirectDraw.buffer.GPUBuffer, this.indirectDraw.offset);
+      } else {
+        pass.drawIndexed(this.indexBuffer.bufferLength, this.instancesCount);
+      }
     }
     /**
      * Destroy our indexed geometry vertex buffers and index buffer.
@@ -7077,21 +7181,21 @@
     }
   }
 
-  var __accessCheck$f = (obj, member, msg) => {
+  var __accessCheck$g = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet$d = (obj, member, getter) => {
-    __accessCheck$f(obj, member, "read from private field");
+    __accessCheck$g(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$f = (obj, member, value) => {
+  var __privateAdd$g = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
   var __privateSet$d = (obj, member, value, setter) => {
-    __accessCheck$f(obj, member, "write to private field");
+    __accessCheck$g(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -7105,12 +7209,12 @@
     constructor(renderer, { color = new Vec3(1), intensity = 1, type = "lights" } = {}) {
       super();
       /** @ignore */
-      __privateAdd$f(this, _intensity$1, void 0);
+      __privateAdd$g(this, _intensity$1, void 0);
       /**
        * A {@link Vec3} holding the {@link Light} {@link color} multiplied by its {@link intensity}.
        * @private
        */
-      __privateAdd$f(this, _intensityColor, void 0);
+      __privateAdd$g(this, _intensityColor, void 0);
       this.type = type;
       this.setRenderer(renderer);
       this.uuid = generateUUID();
@@ -7533,21 +7637,21 @@
     }
   }
 
-  var __accessCheck$e = (obj, member, msg) => {
+  var __accessCheck$f = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet$c = (obj, member, getter) => {
-    __accessCheck$e(obj, member, "read from private field");
+    __accessCheck$f(obj, member, "read from private field");
     return member.get(obj);
   };
-  var __privateAdd$e = (obj, member, value) => {
+  var __privateAdd$f = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
   var __privateSet$c = (obj, member, value, setter) => {
-    __accessCheck$e(obj, member, "write to private field");
+    __accessCheck$f(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -7560,7 +7664,7 @@
      */
     constructor(renderer, parameters = {}) {
       /** Whether we should add this {@link RenderTarget} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
-      __privateAdd$e(this, _autoRender$1, true);
+      __privateAdd$f(this, _autoRender$1, true);
       renderer = isRenderer(renderer, "RenderTarget");
       this.type = "RenderTarget";
       this.renderer = renderer;
@@ -8751,26 +8855,26 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
 `
   );
 
-  var __accessCheck$d = (obj, member, msg) => {
+  var __accessCheck$e = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet$b = (obj, member, getter) => {
-    __accessCheck$d(obj, member, "read from private field");
+    __accessCheck$e(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$d = (obj, member, value) => {
+  var __privateAdd$e = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
   var __privateSet$b = (obj, member, value, setter) => {
-    __accessCheck$d(obj, member, "write to private field");
+    __accessCheck$e(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
-  var __privateMethod$5 = (obj, member, method) => {
-    __accessCheck$d(obj, member, "access private method");
+  var __privateMethod$6 = (obj, member, method) => {
+    __accessCheck$e(obj, member, "access private method");
     return method;
   };
   var _intensity, _bias, _normalBias, _pcfSamples, _isActive, _autoRender, _materials, _depthMaterials, _depthPassTaskID, _setParameters, setParameters_fn;
@@ -8817,31 +8921,31 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
        * @param parameters - parameters to use for this {@link Shadow}.
        * @private
        */
-      __privateAdd$d(this, _setParameters);
+      __privateAdd$e(this, _setParameters);
       /** @ignore */
-      __privateAdd$d(this, _intensity, void 0);
+      __privateAdd$e(this, _intensity, void 0);
       /** @ignore */
-      __privateAdd$d(this, _bias, void 0);
+      __privateAdd$e(this, _bias, void 0);
       /** @ignore */
-      __privateAdd$d(this, _normalBias, void 0);
+      __privateAdd$e(this, _normalBias, void 0);
       /** @ignore */
-      __privateAdd$d(this, _pcfSamples, void 0);
+      __privateAdd$e(this, _pcfSamples, void 0);
       /** @ignore */
-      __privateAdd$d(this, _isActive, void 0);
+      __privateAdd$e(this, _isActive, void 0);
       /** @ignore */
-      __privateAdd$d(this, _autoRender, void 0);
+      __privateAdd$e(this, _autoRender, void 0);
       /**
        * Original {@link meshes} {@link RenderMaterial | materials}.
        * @private
        */
-      __privateAdd$d(this, _materials, void 0);
+      __privateAdd$e(this, _materials, void 0);
       /**
        * Corresponding depth {@link meshes} {@link RenderMaterial | materials}.
        * @private
        */
-      __privateAdd$d(this, _depthMaterials, void 0);
+      __privateAdd$e(this, _depthMaterials, void 0);
       /** @ignore */
-      __privateAdd$d(this, _depthPassTaskID, void 0);
+      __privateAdd$e(this, _depthPassTaskID, void 0);
       this.setRenderer(renderer);
       this.light = light;
       this.index = this.light.index;
@@ -8859,7 +8963,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
       __privateSet$b(this, _materials, /* @__PURE__ */ new Map());
       __privateSet$b(this, _depthMaterials, /* @__PURE__ */ new Map());
       __privateSet$b(this, _depthPassTaskID, null);
-      __privateMethod$5(this, _setParameters, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
+      __privateMethod$6(this, _setParameters, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
       this.isActive = false;
     }
     /**
@@ -8884,7 +8988,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
      * @param parameters - parameters to use for this {@link Shadow}.
      */
     cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender } = {}) {
-      __privateMethod$5(this, _setParameters, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
+      __privateMethod$6(this, _setParameters, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
       this.isActive = true;
     }
     /**
@@ -9439,21 +9543,21 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
     }
   }
 
-  var __accessCheck$c = (obj, member, msg) => {
+  var __accessCheck$d = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet$a = (obj, member, getter) => {
-    __accessCheck$c(obj, member, "read from private field");
+    __accessCheck$d(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$c = (obj, member, value) => {
+  var __privateAdd$d = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
   var __privateSet$a = (obj, member, value, setter) => {
-    __accessCheck$c(obj, member, "write to private field");
+    __accessCheck$d(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -9474,12 +9578,12 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
       const type = "directionalLights";
       super(renderer, { color, intensity, type });
       /** @ignore */
-      __privateAdd$c(this, _actualPosition$1, void 0);
+      __privateAdd$d(this, _actualPosition$1, void 0);
       /**
        * The {@link Vec3 | direction} of the {@link DirectionalLight} is the {@link target} minus the actual {@link position}.
        * @private
        */
-      __privateAdd$c(this, _direction, void 0);
+      __privateAdd$d(this, _direction, void 0);
       this.options = {
         ...this.options,
         position,
@@ -9560,21 +9664,21 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
   _actualPosition$1 = new WeakMap();
   _direction = new WeakMap();
 
-  var __accessCheck$b = (obj, member, msg) => {
+  var __accessCheck$c = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet$9 = (obj, member, getter) => {
-    __accessCheck$b(obj, member, "read from private field");
+    __accessCheck$c(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$b = (obj, member, value) => {
+  var __privateAdd$c = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
   var __privateSet$9 = (obj, member, value, setter) => {
-    __accessCheck$b(obj, member, "write to private field");
+    __accessCheck$c(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -9636,7 +9740,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
        * {@link Vec3} used to calculate the actual current direction based on the {@link PointLight} position.
        * @private
        */
-      __privateAdd$b(this, _tempCubeDirection, void 0);
+      __privateAdd$c(this, _tempCubeDirection, void 0);
       this.options = {
         ...this.options,
         camera
@@ -9864,21 +9968,21 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
   }
   _tempCubeDirection = new WeakMap();
 
-  var __accessCheck$a = (obj, member, msg) => {
+  var __accessCheck$b = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet$8 = (obj, member, getter) => {
-    __accessCheck$a(obj, member, "read from private field");
+    __accessCheck$b(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$a = (obj, member, value) => {
+  var __privateAdd$b = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
   var __privateSet$8 = (obj, member, value, setter) => {
-    __accessCheck$a(obj, member, "write to private field");
+    __accessCheck$b(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -9893,9 +9997,9 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
       const type = "pointLights";
       super(renderer, { color, intensity, type });
       /** @ignore */
-      __privateAdd$a(this, _range, void 0);
+      __privateAdd$b(this, _range, void 0);
       /** @ignore */
-      __privateAdd$a(this, _actualPosition, void 0);
+      __privateAdd$b(this, _actualPosition, void 0);
       this.options = {
         ...this.options,
         position,
@@ -9991,21 +10095,21 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
   _range = new WeakMap();
   _actualPosition = new WeakMap();
 
-  var __accessCheck$9 = (obj, member, msg) => {
+  var __accessCheck$a = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet$7 = (obj, member, getter) => {
-    __accessCheck$9(obj, member, "read from private field");
+    __accessCheck$a(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$9 = (obj, member, value) => {
+  var __privateAdd$a = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
   var __privateSet$7 = (obj, member, value, setter) => {
-    __accessCheck$9(obj, member, "write to private field");
+    __accessCheck$a(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -10049,7 +10153,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
           { ...defaultMeshBaseParams, ...params[2] }
         );
         /** Whether we should add this {@link MeshBase} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
-        __privateAdd$9(this, _autoRender, true);
+        __privateAdd$a(this, _autoRender, true);
         // callbacks / events
         /** function assigned to the {@link onReady} callback */
         this._onReadyCallback = () => {
@@ -12554,21 +12658,21 @@ ${this.shaders.compute.head}`;
     }
   }
 
-  var __accessCheck$8 = (obj, member, msg) => {
+  var __accessCheck$9 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet$6 = (obj, member, getter) => {
-    __accessCheck$8(obj, member, "read from private field");
+    __accessCheck$9(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$8 = (obj, member, value) => {
+  var __privateAdd$9 = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
   var __privateSet$6 = (obj, member, value, setter) => {
-    __accessCheck$8(obj, member, "write to private field");
+    __accessCheck$9(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -12587,7 +12691,7 @@ ${this.shaders.compute.head}`;
      */
     constructor() {
       /** Private number to assign a unique id to each {@link TaskQueueItem | task queue item} */
-      __privateAdd$8(this, _taskCount, 0);
+      __privateAdd$9(this, _taskCount, 0);
       this.queue = [];
     }
     /**
@@ -13428,21 +13532,21 @@ ${this.shaders.compute.head}`;
     }
   }
 
-  var __accessCheck$7 = (obj, member, msg) => {
+  var __accessCheck$8 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet$5 = (obj, member, getter) => {
-    __accessCheck$7(obj, member, "read from private field");
+    __accessCheck$8(obj, member, "read from private field");
     return member.get(obj);
   };
-  var __privateAdd$7 = (obj, member, value) => {
+  var __privateAdd$8 = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
   var __privateSet$5 = (obj, member, value, setter) => {
-    __accessCheck$7(obj, member, "write to private field");
+    __accessCheck$8(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -13473,7 +13577,7 @@ ${this.shaders.compute.head}`;
         renderPass
       });
       /** @ignore */
-      __privateAdd$7(this, _shouldUpdateCameraLightsBindGroup, void 0);
+      __privateAdd$8(this, _shouldUpdateCameraLightsBindGroup, void 0);
       this.type = "GPUCameraRenderer";
       camera = { ...{ fov: 50, near: 0.1, far: 1e3 }, ...camera };
       if (lights !== false) {
@@ -14247,6 +14351,133 @@ ${this.shaders.compute.head}`;
     }
   }
 
+  var __accessCheck$7 = (obj, member, msg) => {
+    if (!member.has(obj))
+      throw TypeError("Cannot " + msg);
+  };
+  var __privateAdd$7 = (obj, member, value) => {
+    if (member.has(obj))
+      throw TypeError("Cannot add the same private member more than once");
+    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  };
+  var __privateMethod$5 = (obj, member, method) => {
+    __accessCheck$7(obj, member, "access private method");
+    return method;
+  };
+  var _addGeometryToIndirectMappedBuffer, addGeometryToIndirectMappedBuffer_fn;
+  const indirectBufferEntrySize = 5;
+  class IndirectBuffer {
+    /**
+     * IndirectBuffer constructor.
+     * @param renderer - {@link Renderer} or {@link GPUCurtains} class object used to create this {@link IndirectBuffer}.
+     * @param parameters - {@link IndirectBufferParams | parameters} use to create this {@link IndirectBuffer}.
+     */
+    constructor(renderer, { label = "Indirect buffer", geometries = [], minEntrySize = indirectBufferEntrySize } = {}) {
+      /**
+       * Add a {@link Geometry} or {@link IndexedGeometry} attributes to the {@link buffer} mapped array buffer.
+       * @param geometry - {@link Geometry} or {@link IndexedGeometry} to add the attributes from
+       * @param mappedBuffer - The {@link buffer} mapped array buffer
+       * @param index - Index in the {@link buffer} mapped array buffer at which to add the attributes.
+       * @private
+       */
+      __privateAdd$7(this, _addGeometryToIndirectMappedBuffer);
+      this.type = "IndirectBuffer";
+      renderer = isRenderer(renderer, this.type);
+      this.renderer = renderer;
+      this.uuid = generateUUID();
+      this.options = {
+        label,
+        geometries,
+        minEntrySize
+      };
+      this.geometries = /* @__PURE__ */ new Map();
+      this.buffer = null;
+      this.addGeometries(geometries);
+    }
+    /**
+     * Get the number of unique {@link Geometry} and {@link IndexedGeometry} added to this {@link IndirectBuffer}.
+     * @returns - Number of unique {@link Geometry} and {@link IndexedGeometry} added to this {@link IndirectBuffer}.
+     * @readonly
+     */
+    get size() {
+      return this.geometries.size;
+    }
+    /**
+     * Add multiple {@link Geometry} or {@link IndexedGeometry} to this {@link IndirectBuffer}.
+     * @param geometries - Array of {@link Geometry} or {@link IndexedGeometry} to add to this {@link IndirectBuffer}.
+     */
+    addGeometries(geometries = []) {
+      geometries.forEach((geometry) => this.addGeometry(geometry));
+    }
+    /**
+     * Add a {@link Geometry} or {@link IndexedGeometry} to this {@link IndirectBuffer}.
+     * @param geometry - A {@link Geometry} or {@link IndexedGeometry} to add to this {@link IndirectBuffer}.
+     */
+    addGeometry(geometry) {
+      this.geometries.set(geometry.uuid, geometry);
+    }
+    /**
+     * Get the byte offset in the {@link buffer} at a given index.
+     * @param index - Index to get the byte offset from.
+     * @returns - Byte offset in the {@link buffer} at a given index.
+     */
+    getByteOffsetAtIndex(index = 0) {
+      return index * this.options.minEntrySize * Uint32Array.BYTES_PER_ELEMENT;
+    }
+    /**
+     * Create the {@link buffer} (or destroy it if it already exists) with the right size, create its {@link GPUBuffer} in a mapped state, add all {@link geometries} attributes to the mapped buffer and tell the {@link geometries} to use this {@link IndirectBuffer}.
+     */
+    create() {
+      const size = this.getByteOffsetAtIndex(this.geometries.size);
+      if (this.buffer) {
+        this.buffer.destroy();
+        this.buffer.options.size = size;
+      } else {
+        this.buffer = new Buffer({
+          label: this.options.label,
+          size,
+          usage: ["copyDst", "indirect", "storage"],
+          mappedAtCreation: true
+        });
+      }
+      this.buffer.consumers.add(this.uuid);
+      this.buffer.createBuffer(this.renderer);
+      const indirectMappedBuffer = new Uint32Array(this.buffer.GPUBuffer.getMappedRange());
+      let offset = 0;
+      this.geometries.forEach((geometry) => {
+        __privateMethod$5(this, _addGeometryToIndirectMappedBuffer, addGeometryToIndirectMappedBuffer_fn).call(this, geometry, indirectMappedBuffer, offset * this.options.minEntrySize);
+        geometry.useIndirectBuffer(this.buffer, this.getByteOffsetAtIndex(offset));
+        offset++;
+      });
+      this.buffer.GPUBuffer.unmap();
+    }
+    /**
+     * Destroy this {@link IndirectBuffer}. Reset all {@link geometries} {@link Geometry#indirectDraw | indirectDraw} properties and destroy the {@link Buffer}.
+     */
+    destroy() {
+      this.geometries.forEach((geometry) => geometry.indirectDraw = null);
+      this.buffer?.destroy();
+      this.buffer = null;
+      this.geometries = null;
+    }
+  }
+  _addGeometryToIndirectMappedBuffer = new WeakSet();
+  addGeometryToIndirectMappedBuffer_fn = function(geometry, mappedBuffer, index = 0) {
+    if ("indexBuffer" in geometry && geometry.indexBuffer) {
+      mappedBuffer[index] = geometry.indexBuffer.bufferLength;
+      mappedBuffer[index + 1] = geometry.instancesCount;
+      mappedBuffer[index + 2] = 0;
+      mappedBuffer[index + 3] = 0;
+      mappedBuffer[index + 4] = 0;
+    } else {
+      mappedBuffer[index] = geometry.verticesCount;
+      mappedBuffer[index + 1] = geometry.instancesCount;
+      mappedBuffer[index + 2] = 0;
+      mappedBuffer[index + 3] = 0;
+      mappedBuffer[index + 4] = 0;
+    }
+  };
+
   var __accessCheck$6 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
@@ -14284,7 +14515,8 @@ ${this.shaders.compute.head}`;
       transparent = null,
       visible = true,
       size = 0,
-      useBuffer = false
+      useBuffer = false,
+      useIndirectDraw = false
     } = {}) {
       /**
        * Set the {@link binding} and patches its array and buffer size if needed.
@@ -14336,13 +14568,18 @@ ${this.shaders.compute.head}`;
         label,
         renderPass,
         useBuffer,
-        size
+        size,
+        useIndirectDraw
       };
       this.meshes = /* @__PURE__ */ new Map();
       this.encoder = null;
       this.bundle = null;
       __privateSet$4(this, _ready, false);
       this.binding = null;
+      this.indirectBuffer = null;
+      if (this.options.useIndirectDraw) {
+        this.indirectBuffer = new IndirectBuffer(this.renderer);
+      }
       if (this.options.useBuffer) {
         __privateSet$4(this, _useProjection, true);
         if (this.options.size !== 0) {
@@ -14403,6 +14640,12 @@ ${this.shaders.compute.head}`;
     set ready(value) {
       if (value && !this.ready) {
         this.size = this.meshes.size;
+        if (this.options.useIndirectDraw) {
+          this.meshes.forEach((mesh) => {
+            this.indirectBuffer.addGeometry(mesh.geometry);
+          });
+          this.indirectBuffer.create();
+        }
         __privateMethod$4(this, _encodeRenderCommands, encodeRenderCommands_fn).call(this);
       } else if (!value && this.ready) {
         this.bundle = null;
@@ -14445,6 +14688,9 @@ ${this.shaders.compute.head}`;
       this.ready = false;
       this.meshes.delete(mesh.uuid);
       mesh.setRenderBundle(null, false);
+      if (this.options.useIndirectDraw) {
+        mesh.geometry.indirectDraw = null;
+      }
     }
     /**
      * Remove a {@link SceneStackedMesh | scene stacked mesh} from this {@link RenderBundle}.
@@ -14641,6 +14887,9 @@ ${this.shaders.compute.head}`;
   cleanUp_fn = function() {
     if (this.binding) {
       this.binding.buffer.destroy();
+    }
+    if (this.indirectBuffer) {
+      this.indirectBuffer.destroy();
     }
     this.renderer.renderBundles = this.renderer.renderBundles.filter((bundle) => bundle.uuid !== this.uuid);
   };
@@ -19988,6 +20237,7 @@ const PI = ${Math.PI};
   exports.Geometry = Geometry;
   exports.HDRLoader = HDRLoader;
   exports.IndexedGeometry = IndexedGeometry;
+  exports.IndirectBuffer = IndirectBuffer;
   exports.Mat3 = Mat3;
   exports.Mat4 = Mat4;
   exports.Material = Material;

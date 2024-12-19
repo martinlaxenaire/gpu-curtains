@@ -1,4 +1,4 @@
-import { BufferLayout, TypedArray, WGSLVariableType } from '../utils';
+import { BufferLayout, TypedArray, WGSLBaseVariableType, WGSLVariableType } from '../utils';
 import { Vec2 } from '../../../math/Vec2';
 import { Vec3 } from '../../../math/Vec3';
 import { Quat } from '../../../math/Quat';
@@ -60,8 +60,10 @@ export interface BufferElementParams {
 export declare class BufferElement {
     /** The name of the {@link BufferElement} */
     name: string;
-    /** The WGSL variable type of the {@link BufferElement} */
+    /** The WGSL variable type of the {@link BufferElement} (stripped of `array`). */
     type: WGSLVariableType;
+    /** The WGSL base variable type of the {@link BufferElement} (stripped of `array` and `atomic`). */
+    baseType: WGSLBaseVariableType;
     /** The key of the {@link BufferElement} */
     key: string;
     /** {@link BufferLayout} used to fill the {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | buffer binding array} at the right offsets */
@@ -79,6 +81,18 @@ export declare class BufferElement {
      * @param parameters - {@link BufferElementParams | parameters} used to create our {@link BufferElement}
      */
     constructor({ name, key, type }: BufferElementParams);
+    /**
+     * Get the {@link BufferElement} {@link WGSLVariableType | WGSL type}.
+     * @param type - Original type passed.
+     * @returns - The {@link BufferElement} {@link WGSLVariableType | WGSL type}.
+     */
+    static getType(type: string): WGSLVariableType;
+    /**
+     * Get the {@link BufferElement} {@link WGSLBaseVariableType | WGSL base type}.
+     * @param type - Original type passed.
+     * @returns - The {@link BufferElement} {@link WGSLBaseVariableType | WGSL base type}.
+     */
+    static getBaseType(type: string): WGSLBaseVariableType;
     /**
      * Get the total number of rows used by this {@link BufferElement}
      * @readonly

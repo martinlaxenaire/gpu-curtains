@@ -69,6 +69,7 @@ window.addEventListener('load', async () => {
     label: 'Stress test render bundle',
     size: nbMeshes,
     useBuffer: true,
+    //useIndirectDraw: true,
   })
 
   const addMesh = (index) => {
