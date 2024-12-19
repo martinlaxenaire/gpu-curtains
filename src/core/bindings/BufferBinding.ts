@@ -396,7 +396,10 @@ export class BufferBinding extends Binding {
    * Clone this {@link BufferBinding} into a new one. Allows to skip buffer layout alignment computations.
    * @param params - params to use for cloning
    */
-  clone(params = {} as BufferBindingParams | WritableBufferBindingParams): BufferBinding | WritableBufferBinding {
+  clone(
+    params = {} as BufferBindingParams | WritableBufferBindingParams,
+    useBuffer = false
+  ): BufferBinding | WritableBufferBinding {
     let { struct, childrenBindings, parent, ...defaultParams } = params
 
     // patch default params with this buffer bindings options
@@ -488,13 +491,12 @@ export class BufferBinding extends Binding {
       })
     }
 
-    // create WGSL fragment if the name or label are different
-    if (this.name === bufferBindingCopy.name && this.label === bufferBindingCopy.label) {
-      bufferBindingCopy.wgslStructFragment = this.wgslStructFragment
-      bufferBindingCopy.wgslGroupFragment = this.wgslGroupFragment
-    } else {
-      bufferBindingCopy.setWGSLFragment()
+    if (useBuffer) {
+      bufferBindingCopy.buffer = this.buffer
     }
+
+    // create WGSL fragment
+    bufferBindingCopy.setWGSLFragment()
 
     if (parent) {
       bufferBindingCopy.parent = parent
@@ -685,7 +687,8 @@ export class BufferBinding extends Binding {
       // first get the sizes of the arrays
       const arraySizes = arrayBindings.map((bindingKey) => {
         const binding = this.inputs[bindingKey]
-        const bufferLayout = getBufferLayout(binding.type.replace('array', '').replace('<', '').replace('>', ''))
+
+        const bufferLayout = getBufferLayout(BufferElement.getBaseType(binding.type))
 
         return Math.ceil((binding.value as number[] | TypedArray).length / bufferLayout.numElements)
       })

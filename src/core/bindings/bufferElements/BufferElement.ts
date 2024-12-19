@@ -94,7 +94,9 @@ export class BufferElement {
     this.key = key
     this.type = type
 
-    this.bufferLayout = getBufferLayout(this.type.replace('array', '').replace('<', '').replace('>', ''))
+    this.baseType = BufferElement.getBaseType(this.type)
+
+    this.bufferLayout = getBufferLayout(this.baseType)
 
     // set init alignment
     this.alignment = {
@@ -109,6 +111,10 @@ export class BufferElement {
     }
 
     this.setValue = null
+  }
+
+  static getBaseType(type: string): string {
+    return type.replace('atomic', '').replace('array', '').replaceAll('<', '').replaceAll('>', '')
   }
 
   /**
@@ -369,13 +375,13 @@ export class BufferElement {
   update(value: InputValue) {
     if (!this.setValue) {
       this.setValue = ((value) => {
-        if (this.type === 'f32' || this.type === 'u32' || this.type === 'i32') {
+        if (this.baseType === 'f32' || this.baseType === 'u32' || this.baseType === 'i32') {
           return this.setValueFromFloat
-        } else if (this.type === 'vec2f') {
+        } else if (this.baseType === 'vec2f') {
           return this.setValueFromVec2
-        } else if (this.type === 'vec3f') {
+        } else if (this.baseType === 'vec3f') {
           return this.setValueFromVec3
-        } else if (this.type === 'mat3x3f') {
+        } else if (this.baseType === 'mat3x3f') {
           return (value as Mat3).elements ? this.setValueFromMat3 : this.setValueFromArrayWithPad
         } else if ((value as Quat | Mat4).elements) {
           return this.setValueFromMat4OrQuat
