@@ -13,7 +13,8 @@ class BufferElement {
     this.name = name;
     this.key = key;
     this.type = type;
-    this.bufferLayout = getBufferLayout(this.type.replace("array", "").replace("<", "").replace(">", ""));
+    this.baseType = BufferElement.getBaseType(this.type);
+    this.bufferLayout = getBufferLayout(this.baseType);
     this.alignment = {
       start: {
         row: 0,
@@ -25,6 +26,24 @@ class BufferElement {
       }
     };
     this.setValue = null;
+  }
+  /**
+   * Get the {@link BufferElement} {@link WGSLVariableType | WGSL type}.
+   * @param type - Original type passed.
+   * @returns - The {@link BufferElement} {@link WGSLVariableType | WGSL type}.
+   */
+  static getType(type) {
+    return type.replace("array", "").replace("<", "").replace(">", "");
+  }
+  /**
+   * Get the {@link BufferElement} {@link WGSLBaseVariableType | WGSL base type}.
+   * @param type - Original type passed.
+   * @returns - The {@link BufferElement} {@link WGSLBaseVariableType | WGSL base type}.
+   */
+  static getBaseType(type) {
+    return BufferElement.getType(
+      type.replace("atomic", "").replace("array", "").replaceAll("<", "").replaceAll(">", "")
+    );
   }
   /**
    * Get the total number of rows used by this {@link BufferElement}
@@ -174,7 +193,7 @@ class BufferElement {
    * Set the {@link view} value from a float or an int
    * @param value - float or int to use
    */
-  setValueFromFloat(value) {
+  setValueFromNumber(value) {
     this.view[0] = value;
   }
   /**
@@ -233,8 +252,8 @@ class BufferElement {
   update(value) {
     if (!this.setValue) {
       this.setValue = ((value2) => {
-        if (this.type === "f32" || this.type === "u32" || this.type === "i32") {
-          return this.setValueFromFloat;
+        if (typeof value2 === "number") {
+          return this.setValueFromNumber;
         } else if (this.type === "vec2f") {
           return this.setValueFromVec2;
         } else if (this.type === "vec3f") {

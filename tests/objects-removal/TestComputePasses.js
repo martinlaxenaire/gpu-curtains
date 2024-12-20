@@ -193,6 +193,26 @@ export class TestComputePasses {
       },
     })
 
+    // the read/write storage buffer
+    // const particlesBufferBindingB = particlesBufferBindingA.clone({
+    //   label: 'ParticleB',
+    //   name: 'particlesB',
+    //   //bindingType: 'storage',
+    //   access: 'read_write', // we want a readable AND writable buffer!
+    //   //usage: ['vertex'], // we're going to use this buffer as a vertex buffer along default usages
+    //   //visibility: ['compute'],
+    //   // struct: {
+    //   //   position: {
+    //   //     type: 'array<vec2f>',
+    //   //     value: this.initialParticlePosition,
+    //   //   },
+    //   //   velocity: {
+    //   //     type: 'array<vec2f>',
+    //   //     value: this.initialParticleVelocity,
+    //   //   },
+    //   // },
+    // })
+
     // create a first bind group with all of that
     this.particleBindGroupA = new BindGroup(this.gpuCurtains, {
       label: 'Particle A bind group',
@@ -294,7 +314,7 @@ export class TestComputePasses {
       ],
     })
 
-    console.log(this.sphereGeometry, particlesBufferBindingA)
+    console.log(this.sphereGeometry, particlesBufferBindingA, particlesBufferBindingB)
 
     this.sphereMesh = new Mesh(this.gpuCurtains, {
       label: 'Sphere mesh',

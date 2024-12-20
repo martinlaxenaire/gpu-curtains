@@ -294,6 +294,7 @@ class GPURenderer {
    */
   restoreContext() {
     this.configureContext();
+    this.indirectBuffers.forEach((indirectBuffer) => indirectBuffer.create());
     this.textures.forEach((texture) => {
       texture.createTexture();
     });
@@ -610,7 +611,8 @@ class GPURenderer {
     this.renderTargets = [];
     this.meshes = [];
     this.textures = [];
-    this.renderBundles = [];
+    this.renderBundles = /* @__PURE__ */ new Map();
+    this.indirectBuffers = /* @__PURE__ */ new Map();
   }
   /**
    * Get all this {@link GPURenderer} rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes)
@@ -796,6 +798,7 @@ class GPURenderer {
     this.postProcessingPass?.destroy();
     this.renderTargets.forEach((renderTarget) => renderTarget.destroy());
     this.renderedObjects.forEach((sceneObject) => sceneObject.remove());
+    this.indirectBuffers.forEach((indirectBuffer) => indirectBuffer.destroy());
     this.textures.forEach((texture) => texture.destroy());
     this.context?.unconfigure();
   }

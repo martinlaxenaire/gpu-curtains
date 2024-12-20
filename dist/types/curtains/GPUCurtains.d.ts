@@ -66,6 +66,8 @@ export declare class GPUCurtains {
     _onErrorCallback: () => void;
     /** function assigned to the {@link onContextLost} callback */
     _onContextLostCallback: (info?: GPUDeviceLostInfo) => void;
+    /** function assigned to the {@link onContextLost} callback */
+    _onContextDestroyedCallback: (info?: GPUDeviceLostInfo) => void;
     /**
      * GPUCurtains constructor
      * @param parameters - {@link GPUCurtainsParams | parameters} used to create this {@link GPUCurtains}
@@ -216,6 +218,12 @@ export declare class GPUCurtains {
      * @returns - our {@link GPUCurtains}
      */
     onContextLost(callback: (info?: GPUDeviceLostInfo) => void): GPUCurtains;
+    /**
+     * Called whenever the {@link GPUDeviceManager#device | device} has been intentionally destroyed.
+     * @param callback - callback to run whenever the {@link GPUDeviceManager#device | device} has been destroyed.
+     * @returns - our {@link GPUCurtains}
+     */
+    onContextDestroyed(callback: (info?: GPUDeviceLostInfo) => void): GPUCurtains;
     /**
      * Create a requestAnimationFrame loop and run it
      */

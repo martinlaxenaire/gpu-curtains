@@ -1,10 +1,5 @@
 import { isRenderer, Renderer } from '../renderers/utils'
-import {
-  PipelineEntryOptions,
-  PipelineEntryParams,
-  PipelineEntryPropertiesParams,
-  PipelineEntryStatus,
-} from '../../types/PipelineEntries'
+import { PipelineEntryOptions, PipelineEntryParams, PipelineEntryStatus } from '../../types/PipelineEntries'
 import { AllowedBindGroups } from '../../types/BindGroups'
 import { MaterialShadersType } from '../../types/Materials'
 
@@ -68,6 +63,8 @@ export class PipelineEntry {
       bindGroups,
       cacheKey,
     }
+
+    this.bindGroups = bindGroups
   }
 
   /**
@@ -84,24 +81,6 @@ export class PipelineEntry {
    */
   get canCompile(): boolean {
     return !this.status.compiling && !this.status.compiled && !this.status.error
-  }
-
-  /**
-   * Set {@link PipelineEntry} properties (in this case the {@link bindGroups | bind groups})
-   * @param parameters - the {@link bindGroups | bind groups} to use
-   */
-  setPipelineEntryProperties(parameters: PipelineEntryPropertiesParams) {
-    const { bindGroups } = parameters
-
-    this.setPipelineEntryBindGroups(bindGroups)
-  }
-
-  /**
-   * Set our {@link PipelineEntry#bindGroups | pipeline entry bind groups}
-   * @param bindGroups - {@link core/materials/Material.Material#bindGroups | bind groups} to use with this {@link PipelineEntry}
-   */
-  setPipelineEntryBindGroups(bindGroups: AllowedBindGroups[]) {
-    this.bindGroups = bindGroups
   }
 
   /* SHADERS */
@@ -186,7 +165,7 @@ export class PipelineEntry {
     this.status.compiled = false
     this.status.error = null
 
-    this.setPipelineEntryBindGroups(newBindGroups)
+    this.bindGroups = newBindGroups
     this.compilePipelineEntry()
   }
 

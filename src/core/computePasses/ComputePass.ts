@@ -150,6 +150,7 @@ export class ComputePass {
       renderOrder,
       uniforms,
       storages,
+      bindings,
       bindGroups,
       samplers,
       domTextures,
@@ -185,6 +186,7 @@ export class ComputePass {
       shaders: this.options.shaders,
       uniforms,
       storages,
+      bindings,
       bindGroups,
       samplers,
       textures,
@@ -464,13 +466,13 @@ export class ComputePass {
   onBeforeRenderPass() {
     if (!this.renderer.ready) return
 
-    if (this.material && this.material.ready && !this.ready) {
-      this.ready = true
-    }
-
     this._onBeforeRenderCallback && this._onBeforeRenderCallback()
 
     this.material.onBeforeRender()
+
+    if (this.material && this.material.ready && !this.ready) {
+      this.ready = true
+    }
   }
 
   /**

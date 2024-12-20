@@ -182,4 +182,10 @@ export declare class Camera extends Object3D {
      * Updates the {@link Camera} {@link projectionMatrix}
      */
     updateProjectionMatrix(): void;
+    /**
+     * Get the current {@link Camera} frustum planes in the [left, right, top, bottom, near, far] order, based on its {@link projectionMatrix} and {@link viewMatrix}.
+     * @returns - Frustum planes as an array of 6 faces in the [left, right, top, bottom, near, far] order, made of {@link Float32Array} of length 4.
+     * @readonly
+     */
+    get frustumPlanes(): Array<Float32Array>;
 }

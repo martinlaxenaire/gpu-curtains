@@ -1,6 +1,7 @@
 import { isRenderer } from '../renderers/utils.mjs';
 import { generateUUID, throwWarning } from '../../utils/utils.mjs';
 import { BufferBinding } from '../bindings/BufferBinding.mjs';
+import { IndirectBuffer } from '../../extras/buffers/IndirectBuffer.mjs';
 
 var __accessCheck = (obj, member, msg) => {
   if (!member.has(obj))
@@ -33,13 +34,14 @@ class RenderBundle {
    * @param parameters - {@link RenderBundleParams | parameters} use to create this {@link RenderBundle}.
    */
   constructor(renderer, {
-    label = "",
+    label,
     renderPass = null,
     renderOrder = 0,
     transparent = null,
     visible = true,
     size = 0,
-    useBuffer = false
+    useBuffer = false,
+    useIndirectDraw = false
   } = {}) {
     /**
      * Set the {@link binding} and patches its array and buffer size if needed.
@@ -84,20 +86,26 @@ class RenderBundle {
     this.uuid = generateUUID();
     Object.defineProperty(this, "index", { value: bundleIndex++ });
     this.renderOrder = renderOrder;
-    this.renderer.renderBundles.push(this);
+    this.renderer.renderBundles.set(this.uuid, this);
     this.transparent = transparent;
     this.visible = visible;
+    label = label ?? this.type + this.index;
     this.options = {
       label,
       renderPass,
       useBuffer,
-      size
+      size,
+      useIndirectDraw
     };
     this.meshes = /* @__PURE__ */ new Map();
     this.encoder = null;
     this.bundle = null;
     __privateSet(this, _ready, false);
     this.binding = null;
+    this.indirectBuffer = null;
+    if (this.options.useIndirectDraw) {
+      this.indirectBuffer = new IndirectBuffer(this.renderer);
+    }
     if (this.options.useBuffer) {
       __privateSet(this, _useProjection, true);
       if (this.options.size !== 0) {
@@ -158,6 +166,12 @@ class RenderBundle {
   set ready(value) {
     if (value && !this.ready) {
       this.size = this.meshes.size;
+      if (this.options.useIndirectDraw) {
+        this.meshes.forEach((mesh) => {
+          this.indirectBuffer.addGeometry(mesh.geometry);
+        });
+        this.indirectBuffer.create();
+      }
       __privateMethod(this, _encodeRenderCommands, encodeRenderCommands_fn).call(this);
     } else if (!value && this.ready) {
       this.bundle = null;
@@ -200,6 +214,9 @@ class RenderBundle {
     this.ready = false;
     this.meshes.delete(mesh.uuid);
     mesh.setRenderBundle(null, false);
+    if (this.options.useIndirectDraw) {
+      mesh.geometry.indirectDraw = null;
+    }
   }
   /**
    * Remove a {@link SceneStackedMesh | scene stacked mesh} from this {@link RenderBundle}.
@@ -395,9 +412,13 @@ encodeRenderCommands_fn = function() {
 _cleanUp = new WeakSet();
 cleanUp_fn = function() {
   if (this.binding) {
+    this.renderer.removeBuffer(this.binding.buffer);
     this.binding.buffer.destroy();
   }
-  this.renderer.renderBundles = this.renderer.renderBundles.filter((bundle) => bundle.uuid !== this.uuid);
+  if (this.indirectBuffer) {
+    this.indirectBuffer.destroy();
+  }
+  this.renderer.renderBundles.delete(this.uuid);
 };
 
 export { RenderBundle };

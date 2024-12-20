@@ -105,8 +105,8 @@ export declare class IndexedGeometry extends Geometry {
      */
     setGeometryBuffers(pass: GPURenderPassTypes): void;
     /**
-     * Override the parentMesh draw method to draw indexed geometry
-     * @param pass - current render pass
+     * Draw our indexed geometry. Can use indirect drawing if {@link indirectDraw} is set up.
+     * @param pass - current render pass.
      */
     drawGeometry(pass: GPURenderPassTypes): void;
     /**

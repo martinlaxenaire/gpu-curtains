@@ -1,6 +1,6 @@
 /// <reference types="dist" />
 import { Renderer } from '../renderers/utils';
-import { PipelineEntryOptions, PipelineEntryParams, PipelineEntryPropertiesParams, PipelineEntryStatus } from '../../types/PipelineEntries';
+import { PipelineEntryOptions, PipelineEntryParams, PipelineEntryStatus } from '../../types/PipelineEntries';
 import { AllowedBindGroups } from '../../types/BindGroups';
 import { MaterialShadersType } from '../../types/Materials';
 /**
@@ -42,16 +42,6 @@ export declare class PipelineEntry {
      * @readonly
      */
     get canCompile(): boolean;
-    /**
-     * Set {@link PipelineEntry} properties (in this case the {@link bindGroups | bind groups})
-     * @param parameters - the {@link bindGroups | bind groups} to use
-     */
-    setPipelineEntryProperties(parameters: PipelineEntryPropertiesParams): void;
-    /**
-     * Set our {@link PipelineEntry#bindGroups | pipeline entry bind groups}
-     * @param bindGroups - {@link core/materials/Material.Material#bindGroups | bind groups} to use with this {@link PipelineEntry}
-     */
-    setPipelineEntryBindGroups(bindGroups: AllowedBindGroups[]): void;
     /**
      * Create a {@link GPUShaderModule}
      * @param parameters - Parameters used

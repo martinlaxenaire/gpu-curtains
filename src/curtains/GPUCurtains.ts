@@ -86,6 +86,10 @@ export class GPUCurtains {
   _onContextLostCallback: (info?: GPUDeviceLostInfo) => void = () => {
     /* allow empty callback */
   }
+  /** function assigned to the {@link onContextLost} callback */
+  _onContextDestroyedCallback: (info?: GPUDeviceLostInfo) => void = () => {
+    /* allow empty callback */
+  }
 
   /**
    * GPUCurtains constructor
@@ -240,6 +244,7 @@ export class GPUCurtains {
           this._onErrorCallback && this._onErrorCallback()
         }, 0),
       onDeviceLost: (info) => this._onContextLostCallback && this._onContextLostCallback(info),
+      onDeviceDestroyed: (info) => this._onContextDestroyedCallback && this._onContextDestroyedCallback(info),
     })
   }
 
@@ -466,6 +471,19 @@ export class GPUCurtains {
   onContextLost(callback: (info?: GPUDeviceLostInfo) => void): GPUCurtains {
     if (callback) {
       this._onContextLostCallback = callback
+    }
+
+    return this
+  }
+
+  /**
+   * Called whenever the {@link GPUDeviceManager#device | device} has been intentionally destroyed.
+   * @param callback - callback to run whenever the {@link GPUDeviceManager#device | device} has been destroyed.
+   * @returns - our {@link GPUCurtains}
+   */
+  onContextDestroyed(callback: (info?: GPUDeviceLostInfo) => void): GPUCurtains {
+    if (callback) {
+      this._onContextDestroyedCallback = callback
     }
 
     return this

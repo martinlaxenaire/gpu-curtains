@@ -14,6 +14,8 @@ class GPUDeviceManager {
     onError = () => {
     },
     onDeviceLost = (info) => {
+    },
+    onDeviceDestroyed = (info) => {
     }
   } = {}) {
     this.index = 0;
@@ -23,6 +25,7 @@ class GPUDeviceManager {
     this.adapterOptions = adapterOptions;
     this.onError = onError;
     this.onDeviceLost = onDeviceLost;
+    this.onDeviceDestroyed = onDeviceDestroyed;
     this.gpu = navigator.gpu;
     this.setPipelineManager();
     this.setDeviceObjects();
@@ -109,6 +112,8 @@ class GPUDeviceManager {
       this.loseDevice();
       if (info.reason !== "destroyed") {
         this.onDeviceLost(info);
+      } else {
+        this.onDeviceDestroyed(info);
       }
     });
   }

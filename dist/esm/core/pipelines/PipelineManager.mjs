@@ -37,23 +37,27 @@ class PipelineManager {
   /**
    * Check if a {@link RenderPipelineEntry} has already been created with the given {@link RenderPipelineEntryParams | parameters}.
    * Use it if found, else create a new one and add it to the {@link pipelineEntries} array.
-   * @param parameters - {@link RenderPipelineEntryParams | RenderPipelineEntry parameters}
-   * @returns - {@link RenderPipelineEntry}, either from cache or newly created
+   * @param material - {@link RenderMaterial} used to create the pipeline.
+   * @returns - {@link RenderPipelineEntry}, either from cache or newly created.
    */
-  createRenderPipeline(parameters) {
-    const { attributes, bindGroups } = parameters;
-    let cacheKey = attributes.layoutCacheKey;
-    bindGroups.forEach((bindGroup) => {
-      bindGroup.bindings.forEach((binding) => {
-        cacheKey += binding.name + ",";
-      });
-      cacheKey += bindGroup.pipelineCacheKey;
-    });
-    const existingPipelineEntry = this.isSameRenderPipeline({ ...parameters, cacheKey });
+  createRenderPipeline(material) {
+    const { renderer, attributes, bindGroups, cacheKey, options } = material;
+    const { shaders, label, useAsyncPipeline, rendering } = options;
+    const parameters = {
+      renderer,
+      label: label + " render pipeline",
+      shaders,
+      useAsync: useAsyncPipeline,
+      bindGroups,
+      cacheKey,
+      rendering,
+      attributes
+    };
+    const existingPipelineEntry = this.isSameRenderPipeline(parameters);
     if (existingPipelineEntry) {
       return existingPipelineEntry;
     } else {
-      const pipelineEntry = new RenderPipelineEntry({ ...parameters, cacheKey });
+      const pipelineEntry = new RenderPipelineEntry(parameters);
       this.pipelineEntries.push(pipelineEntry);
       return pipelineEntry;
     }
@@ -73,24 +77,27 @@ class PipelineManager {
     });
   }
   /**
-   * Check if a {@link ComputePipelineEntry} has already been created with the given {@link PipelineManagerPipelineEntryParams | parameters}.
+   * Check if a {@link ComputePipelineEntry} has already been created with the given {@link PipelineEntryParams | parameters}.
    * Use it if found, else create a new one and add it to the {@link pipelineEntries} array.
-   * @param parameters - {@link PipelineManagerPipelineEntryParams | PipelineEntry parameters}
+   * @param material - {@link ComputeMaterial} used to create the pipeline.
    * @returns - newly created {@link ComputePipelineEntry}
    */
-  createComputePipeline(parameters) {
-    let cacheKey = "";
-    parameters.bindGroups.forEach((bindGroup) => {
-      bindGroup.bindings.forEach((binding) => {
-        cacheKey += binding.name + ",";
-      });
-      cacheKey += bindGroup.pipelineCacheKey;
-    });
-    const existingPipelineEntry = this.isSameComputePipeline({ ...parameters, cacheKey });
+  createComputePipeline(material) {
+    const { renderer, bindGroups, cacheKey, options } = material;
+    const { shaders, label, useAsyncPipeline } = options;
+    const parameters = {
+      renderer,
+      label: label + " compute pipeline",
+      shaders,
+      useAsync: useAsyncPipeline,
+      bindGroups,
+      cacheKey
+    };
+    const existingPipelineEntry = this.isSameComputePipeline(parameters);
     if (existingPipelineEntry) {
       return existingPipelineEntry;
     } else {
-      const pipelineEntry = new ComputePipelineEntry({ ...parameters, cacheKey });
+      const pipelineEntry = new ComputePipelineEntry(parameters);
       this.pipelineEntries.push(pipelineEntry);
       return pipelineEntry;
     }

@@ -102,7 +102,7 @@ export class Material {
 
     this.options = {
       shaders,
-      label,
+      label: label || this.constructor.name,
       useAsyncPipeline: useAsyncPipeline === undefined ? true : useAsyncPipeline,
       ...(uniforms !== undefined && { uniforms }),
       ...(storages !== undefined && { storages }),
@@ -150,6 +150,23 @@ export class Material {
    */
   get ready(): boolean {
     return !!(this.renderer.ready && this.pipelineEntry && this.pipelineEntry.pipeline && this.pipelineEntry.ready)
+  }
+
+  /**
+   * Get the {@link Material} pipeline buffers cache key based on its {@link BindGroup} cache keys.
+   * @returns - Current cache key.
+   * @readonly
+   */
+  get cacheKey(): string {
+    let cacheKey = ''
+    this.bindGroups.forEach((bindGroup) => {
+      bindGroup.bindings.forEach((binding) => {
+        cacheKey += binding.name + ','
+      })
+      cacheKey += bindGroup.pipelineCacheKey
+    })
+
+    return cacheKey
   }
 
   /**

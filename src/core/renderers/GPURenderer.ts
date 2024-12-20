@@ -21,6 +21,7 @@ import { GPUDeviceManager } from './GPUDeviceManager'
 import { FullscreenPlane } from '../meshes/FullscreenPlane'
 import { Buffer } from '../buffers/Buffer'
 import { RenderBundle } from '../renderPasses/RenderBundle'
+import { IndirectBuffer } from '../../extras/buffers/IndirectBuffer'
 
 /** Options used to configure the renderer canvas context. If not specified, `format` will be set with `GPU.getPreferredCanvasFormat()` and `alphaMode` with `premultiplied`. */
 export interface GPURendererContextOptions extends Omit<GPUCanvasConfiguration, 'device' | 'usage'> {}
@@ -134,8 +135,10 @@ export class GPURenderer {
   meshes: SceneStackedMesh[]
   /** An array containing all our created {@link Texture} */
   textures: Texture[]
-  /** An array containing all our created {@link RenderBundle} */
-  renderBundles: RenderBundle[]
+  /** An {@link Map} containing all our created {@link RenderBundle} */
+  renderBundles: Map<RenderBundle['uuid'], RenderBundle>
+  /** A {@link Map} containing all our create {@link IndirectBuffer} */
+  indirectBuffers: Map<IndirectBuffer['uuid'], IndirectBuffer>
 
   /** Pixel ratio to use for rendering */
   pixelRatio: number
@@ -513,6 +516,9 @@ export class GPURenderer {
    */
   restoreContext() {
     this.configureContext()
+
+    // recreate indirect buffers
+    this.indirectBuffers.forEach((indirectBuffer) => indirectBuffer.create())
 
     // recreate all textures first
     this.textures.forEach((texture) => {
@@ -898,7 +904,8 @@ export class GPURenderer {
     this.renderTargets = []
     this.meshes = []
     this.textures = []
-    this.renderBundles = []
+    this.renderBundles = new Map()
+    this.indirectBuffers = new Map()
   }
 
   /**
@@ -1120,6 +1127,9 @@ export class GPURenderer {
 
     this.renderTargets.forEach((renderTarget) => renderTarget.destroy())
     this.renderedObjects.forEach((sceneObject) => sceneObject.remove())
+
+    // destroy indirect buffers
+    this.indirectBuffers.forEach((indirectBuffer) => indirectBuffer.destroy())
 
     this.textures.forEach((texture) => texture.destroy())
 
