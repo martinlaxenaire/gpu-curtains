@@ -21,7 +21,6 @@ export interface RenderBundleOptions {
   useBuffer: boolean
   /** Fixed size (number of meshes) of the {@link RenderBundle}. Mostly useful when using the {@link useBuffer} parameter. */
   size: number
-
   /** Whether this {@link RenderBundle} should create its own {@link IndirectBuffer} and add its {@link RenderBundle#meshes | meshes} geometries to it. Default to `false`. */
   useIndirectDraw: boolean
 }
@@ -119,7 +118,7 @@ export class RenderBundle {
   constructor(
     renderer: Renderer | GPUCurtains,
     {
-      label = '',
+      label,
       renderPass = null,
       renderOrder = 0,
       transparent = null,
@@ -140,10 +139,12 @@ export class RenderBundle {
     Object.defineProperty(this as RenderBundle, 'index', { value: bundleIndex++ })
     this.renderOrder = renderOrder
 
-    this.renderer.renderBundles.push(this)
+    this.renderer.renderBundles.set(this.uuid, this)
 
     this.transparent = transparent
     this.visible = visible
+
+    label = label ?? this.type + this.index
 
     this.options = {
       label,
@@ -556,6 +557,7 @@ export class RenderBundle {
   #cleanUp() {
     // destroy binding
     if (this.binding) {
+      this.renderer.removeBuffer(this.binding.buffer)
       this.binding.buffer.destroy()
     }
 
@@ -564,7 +566,7 @@ export class RenderBundle {
     }
 
     // remove from renderer
-    this.renderer.renderBundles = this.renderer.renderBundles.filter((bundle) => bundle.uuid !== this.uuid)
+    this.renderer.renderBundles.delete(this.uuid)
   }
 
   /**

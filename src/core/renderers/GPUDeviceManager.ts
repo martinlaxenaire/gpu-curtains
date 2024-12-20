@@ -26,8 +26,10 @@ export interface GPUDeviceManagerParams extends GPUDeviceManagerBaseParams {
   label?: string
   /** Callback to run if there's any error while trying to set up the {@link GPUAdapter | adapter} or {@link GPUDevice | device} */
   onError?: () => void
-  /** Callback to run whenever the {@link GPUDeviceManager#device | device} is lost */
+  /** Callback to run whenever the {@link GPUDeviceManager#device | device} is lost. */
   onDeviceLost?: (info?: GPUDeviceLostInfo) => void
+  /** Callback to run whenever the {@link GPUDeviceManager#device | device} has been intentionally destroyed. */
+  onDeviceDestroyed?: (info?: GPUDeviceLostInfo) => void
 }
 
 /** Optional parameters used to set up/init a {@link GPUAdapter} and {@link GPUDevice} */
@@ -89,8 +91,10 @@ export class GPUDeviceManager {
 
   /** Callback to run if there's any error while trying to set up the {@link GPUAdapter | adapter} or {@link GPUDevice | device} */
   onError: () => void
-  /** Callback to run whenever the {@link device} is lost */
+  /** Callback to run whenever the {@link device} is lost. */
   onDeviceLost: (info?: GPUDeviceLostInfo) => void
+  /** Callback to run whenever the {@link device} has been intentionally destroyed. */
+  onDeviceDestroyed: (info?: GPUDeviceLostInfo) => void
 
   /**
    * GPUDeviceManager constructor
@@ -106,6 +110,9 @@ export class GPUDeviceManager {
     onDeviceLost = (info?: GPUDeviceLostInfo) => {
       /* allow empty callbacks */
     },
+    onDeviceDestroyed = (info?: GPUDeviceLostInfo) => {
+      /* allow empty callbacks */
+    },
   }: GPUDeviceManagerParams = {}) {
     this.index = 0
     this.label = label ?? 'GPUDeviceManager instance'
@@ -116,6 +123,7 @@ export class GPUDeviceManager {
 
     this.onError = onError
     this.onDeviceLost = onDeviceLost
+    this.onDeviceDestroyed = onDeviceDestroyed
 
     this.gpu = navigator.gpu
 
@@ -217,8 +225,11 @@ export class GPUDeviceManager {
       this.loseDevice()
 
       // do not call onDeviceLost event if the device was intentionally destroyed
+      // call onDeviceDestroyed instead
       if (info.reason !== 'destroyed') {
         this.onDeviceLost(info)
+      } else {
+        this.onDeviceDestroyed(info)
       }
     })
   }

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+    <!-- Metas -->
+    <title>gpu-curtains | Render bundle and indirect drawing GPU culling</title>
+    <meta
+      name="description"
+      content="GPU frustum culling with render bundles through indirect instanced draw calls using gpu-curtains"
+    />
+
+    <meta property="og:title" content="gpu-curtains | Render bundle and indirect drawing GPU culling" />
+    <meta property="og:type" content="article" />
+    <meta
+      property="og:description"
+      content="GPU frustum culling with render bundles through indirect instanced draw calls using gpu-curtains"
+    />
+    <meta
+      property="og:image"
+      content="https://raw.githubusercontent.com/martinlaxenaire/gpu-curtains/main/website/assets/gpu-curtains-logo-1920-1280.jpg"
+    />
+    <meta
+      property="og:url"
+      content="https://martinlaxenaire.github.io/gpu-curtains/examples/render-bundle-indirect-drawing-gpu-culling/"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link href="../../examples/common-styles.css" rel="stylesheet" />
+    <link href="styles.css" rel="stylesheet" />
+
+    <link
+      rel="icon"
+      type="image/png"
+      href="https://raw.githubusercontent.com/martinlaxenaire/gpu-curtains/main/website/assets/favicon.png"
+    />
+  </head>
+
+  <body>
+    <div id="canvas"></div>
+
+    <button id="debug-camera-button" class="primary-button">Use debug camera</button>
+
+    <a
+      href="https://github.com/martinlaxenaire/gpu-curtains/blob/main/examples/render-bundle-indirect-drawing-gpu-culling/main.js"
+      title="Show source code"
+      id="source-code-link"
+      class="primary-button"
+      target="_blank"
+      >&lt;/ &gt;</a
+    >
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/16/Stats.min.js"></script>
+    <script src="main.js" type="module"></script>
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-45554DLGL6"></script>
+    <script>
+      window.dataLayer = window.dataLayer || []
+      function gtag() {
+        dataLayer.push(arguments)
+      }
+
+      if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+        gtag('js', new Date())
+        gtag('config', 'G-45554DLGL6')
+      }
+    </script>
+  </body>
+</html>

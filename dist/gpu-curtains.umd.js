@@ -6900,10 +6900,9 @@
     }
     /**
      * Set the {@link indirectDraw} parameters to draw this {@link Geometry} with an {@link extras/buffers/IndirectBuffer.IndirectBuffer | IndirectBuffer}.
-     * @param buffer - {@link Buffer} to use. Should come from an {@link extras/buffers/IndirectBuffer.IndirectBuffer | IndirectBuffer}.
-     * @param offset - offset in the {@link Buffer}.
+     * @param parameters -  {@link IndirectDrawParams | indirect draw parameters} to use for this {@link Geometry}.
      */
-    useIndirectBuffer(buffer, offset = 0) {
+    useIndirectBuffer({ buffer, offset = 0 }) {
       this.indirectDraw = {
         buffer,
         offset
@@ -13025,6 +13024,7 @@ ${this.shaders.compute.head}`;
      */
     restoreContext() {
       this.configureContext();
+      this.indirectBuffers.forEach((indirectBuffer) => indirectBuffer.create());
       this.textures.forEach((texture) => {
         texture.createTexture();
       });
@@ -13341,7 +13341,8 @@ ${this.shaders.compute.head}`;
       this.renderTargets = [];
       this.meshes = [];
       this.textures = [];
-      this.renderBundles = [];
+      this.renderBundles = /* @__PURE__ */ new Map();
+      this.indirectBuffers = /* @__PURE__ */ new Map();
     }
     /**
      * Get all this {@link GPURenderer} rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes)
@@ -13527,6 +13528,7 @@ ${this.shaders.compute.head}`;
       this.postProcessingPass?.destroy();
       this.renderTargets.forEach((renderTarget) => renderTarget.destroy());
       this.renderedObjects.forEach((sceneObject) => sceneObject.remove());
+      this.indirectBuffers.forEach((indirectBuffer) => indirectBuffer.destroy());
       this.textures.forEach((texture) => texture.destroy());
       this.context?.unconfigure();
     }
@@ -14048,6 +14050,8 @@ ${this.shaders.compute.head}`;
       onError = () => {
       },
       onDeviceLost = (info) => {
+      },
+      onDeviceDestroyed = (info) => {
       }
     } = {}) {
       this.index = 0;
@@ -14057,6 +14061,7 @@ ${this.shaders.compute.head}`;
       this.adapterOptions = adapterOptions;
       this.onError = onError;
       this.onDeviceLost = onDeviceLost;
+      this.onDeviceDestroyed = onDeviceDestroyed;
       this.gpu = navigator.gpu;
       this.setPipelineManager();
       this.setDeviceObjects();
@@ -14143,6 +14148,8 @@ ${this.shaders.compute.head}`;
         this.loseDevice();
         if (info.reason !== "destroyed") {
           this.onDeviceLost(info);
+        } else {
+          this.onDeviceDestroyed(info);
         }
       });
     }
@@ -14393,6 +14400,7 @@ ${this.shaders.compute.head}`;
       this.geometries = /* @__PURE__ */ new Map();
       this.buffer = null;
       this.addGeometries(geometries);
+      this.renderer.indirectBuffers.set(this.uuid, this);
     }
     /**
      * Get the number of unique {@link Geometry} and {@link IndexedGeometry} added to this {@link IndirectBuffer}.
@@ -14446,7 +14454,7 @@ ${this.shaders.compute.head}`;
       let offset = 0;
       this.geometries.forEach((geometry) => {
         __privateMethod$5(this, _addGeometryToIndirectMappedBuffer, addGeometryToIndirectMappedBuffer_fn).call(this, geometry, indirectMappedBuffer, offset * this.options.minEntrySize);
-        geometry.useIndirectBuffer(this.buffer, this.getByteOffsetAtIndex(offset));
+        geometry.useIndirectBuffer({ buffer: this.buffer, offset: this.getByteOffsetAtIndex(offset) });
         offset++;
       });
       this.buffer.GPUBuffer.unmap();
@@ -14455,6 +14463,8 @@ ${this.shaders.compute.head}`;
      * Destroy this {@link IndirectBuffer}. Reset all {@link geometries} {@link Geometry#indirectDraw | indirectDraw} properties and destroy the {@link Buffer}.
      */
     destroy() {
+      this.renderer.removeBuffer(this.buffer);
+      this.renderer.indirectBuffers.delete(this.uuid);
       this.geometries.forEach((geometry) => geometry.indirectDraw = null);
       this.buffer?.destroy();
       this.buffer = null;
@@ -14509,7 +14519,7 @@ ${this.shaders.compute.head}`;
      * @param parameters - {@link RenderBundleParams | parameters} use to create this {@link RenderBundle}.
      */
     constructor(renderer, {
-      label = "",
+      label,
       renderPass = null,
       renderOrder = 0,
       transparent = null,
@@ -14561,9 +14571,10 @@ ${this.shaders.compute.head}`;
       this.uuid = generateUUID();
       Object.defineProperty(this, "index", { value: bundleIndex++ });
       this.renderOrder = renderOrder;
-      this.renderer.renderBundles.push(this);
+      this.renderer.renderBundles.set(this.uuid, this);
       this.transparent = transparent;
       this.visible = visible;
+      label = label ?? this.type + this.index;
       this.options = {
         label,
         renderPass,
@@ -14886,12 +14897,13 @@ ${this.shaders.compute.head}`;
   _cleanUp = new WeakSet();
   cleanUp_fn = function() {
     if (this.binding) {
+      this.renderer.removeBuffer(this.binding.buffer);
       this.binding.buffer.destroy();
     }
     if (this.indirectBuffer) {
       this.indirectBuffer.destroy();
     }
-    this.renderer.renderBundles = this.renderer.renderBundles.filter((bundle) => bundle.uuid !== this.uuid);
+    this.renderer.renderBundles.delete(this.uuid);
   };
 
   var default_pass_fsWGSl = (
@@ -16477,6 +16489,9 @@ fn getIBL(
       /** function assigned to the {@link onContextLost} callback */
       this._onContextLostCallback = () => {
       };
+      /** function assigned to the {@link onContextLost} callback */
+      this._onContextDestroyedCallback = () => {
+      };
       this.type = "CurtainsGPU";
       this.options = {
         container,
@@ -16592,7 +16607,8 @@ fn getIBL(
         onError: () => setTimeout(() => {
           this._onErrorCallback && this._onErrorCallback();
         }, 0),
-        onDeviceLost: (info) => this._onContextLostCallback && this._onContextLostCallback(info)
+        onDeviceLost: (info) => this._onContextLostCallback && this._onContextLostCallback(info),
+        onDeviceDestroyed: (info) => this._onContextDestroyedCallback && this._onContextDestroyedCallback(info)
       });
     }
     /**
@@ -16782,6 +16798,17 @@ fn getIBL(
     onContextLost(callback) {
       if (callback) {
         this._onContextLostCallback = callback;
+      }
+      return this;
+    }
+    /**
+     * Called whenever the {@link GPUDeviceManager#device | device} has been intentionally destroyed.
+     * @param callback - callback to run whenever the {@link GPUDeviceManager#device | device} has been destroyed.
+     * @returns - our {@link GPUCurtains}
+     */
+    onContextDestroyed(callback) {
+      if (callback) {
+        this._onContextDestroyedCallback = callback;
       }
       return this;
     }

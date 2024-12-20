@@ -500,10 +500,9 @@ export class Geometry {
 
   /**
    * Set the {@link indirectDraw} parameters to draw this {@link Geometry} with an {@link extras/buffers/IndirectBuffer.IndirectBuffer | IndirectBuffer}.
-   * @param buffer - {@link Buffer} to use. Should come from an {@link extras/buffers/IndirectBuffer.IndirectBuffer | IndirectBuffer}.
-   * @param offset - offset in the {@link Buffer}.
+   * @param parameters -  {@link IndirectDrawParams | indirect draw parameters} to use for this {@link Geometry}.
    */
-  useIndirectBuffer(buffer: Buffer, offset = 0) {
+  useIndirectBuffer({ buffer, offset = 0 }: IndirectDrawParams) {
     this.indirectDraw = {
       buffer,
       offset,

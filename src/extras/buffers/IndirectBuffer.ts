@@ -87,6 +87,9 @@ export class IndirectBuffer {
     this.buffer = null
 
     this.addGeometries(geometries)
+
+    // add to renderer
+    this.renderer.indirectBuffers.set(this.uuid, this)
   }
 
   /**
@@ -150,7 +153,7 @@ export class IndirectBuffer {
     this.geometries.forEach((geometry) => {
       this.#addGeometryToIndirectMappedBuffer(geometry, indirectMappedBuffer, offset * this.options.minEntrySize)
 
-      geometry.useIndirectBuffer(this.buffer, this.getByteOffsetAtIndex(offset))
+      geometry.useIndirectBuffer({ buffer: this.buffer, offset: this.getByteOffsetAtIndex(offset) })
       offset++
     })
 
@@ -184,6 +187,10 @@ export class IndirectBuffer {
    * Destroy this {@link IndirectBuffer}. Reset all {@link geometries} {@link Geometry#indirectDraw | indirectDraw} properties and destroy the {@link Buffer}.
    */
   destroy() {
+    // remove from renderer
+    this.renderer.removeBuffer(this.buffer)
+    this.renderer.indirectBuffers.delete(this.uuid)
+
     this.geometries.forEach((geometry) => (geometry.indirectDraw = null))
     this.buffer?.destroy()
     this.buffer = null

@@ -24,8 +24,10 @@ export interface GPUDeviceManagerParams extends GPUDeviceManagerBaseParams {
     label?: string;
     /** Callback to run if there's any error while trying to set up the {@link GPUAdapter | adapter} or {@link GPUDevice | device} */
     onError?: () => void;
-    /** Callback to run whenever the {@link GPUDeviceManager#device | device} is lost */
+    /** Callback to run whenever the {@link GPUDeviceManager#device | device} is lost. */
     onDeviceLost?: (info?: GPUDeviceLostInfo) => void;
+    /** Callback to run whenever the {@link GPUDeviceManager#device | device} has been intentionally destroyed. */
+    onDeviceDestroyed?: (info?: GPUDeviceLostInfo) => void;
 }
 /** Optional parameters used to set up/init a {@link GPUAdapter} and {@link GPUDevice} */
 export interface GPUDeviceManagerSetupParams {
@@ -78,13 +80,15 @@ export declare class GPUDeviceManager {
     texturesQueue: DOMTexture[];
     /** Callback to run if there's any error while trying to set up the {@link GPUAdapter | adapter} or {@link GPUDevice | device} */
     onError: () => void;
-    /** Callback to run whenever the {@link device} is lost */
+    /** Callback to run whenever the {@link device} is lost. */
     onDeviceLost: (info?: GPUDeviceLostInfo) => void;
+    /** Callback to run whenever the {@link device} has been intentionally destroyed. */
+    onDeviceDestroyed: (info?: GPUDeviceLostInfo) => void;
     /**
      * GPUDeviceManager constructor
      * @param parameters - {@link GPUDeviceManagerParams | parameters} used to create this {@link GPUDeviceManager}
      */
-    constructor({ label, production, adapterOptions, onError, onDeviceLost, }?: GPUDeviceManagerParams);
+    constructor({ label, production, adapterOptions, onError, onDeviceLost, onDeviceDestroyed, }?: GPUDeviceManagerParams);
     /**
      * Set our {@link adapter} and {@link device} if possible.
      * @param parameters - {@link GPUAdapter} and/or {@link GPUDevice} to use if set.

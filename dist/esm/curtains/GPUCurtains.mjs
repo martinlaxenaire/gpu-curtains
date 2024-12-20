@@ -38,6 +38,9 @@ class GPUCurtains {
     /** function assigned to the {@link onContextLost} callback */
     this._onContextLostCallback = () => {
     };
+    /** function assigned to the {@link onContextLost} callback */
+    this._onContextDestroyedCallback = () => {
+    };
     this.type = "CurtainsGPU";
     this.options = {
       container,
@@ -153,7 +156,8 @@ class GPUCurtains {
       onError: () => setTimeout(() => {
         this._onErrorCallback && this._onErrorCallback();
       }, 0),
-      onDeviceLost: (info) => this._onContextLostCallback && this._onContextLostCallback(info)
+      onDeviceLost: (info) => this._onContextLostCallback && this._onContextLostCallback(info),
+      onDeviceDestroyed: (info) => this._onContextDestroyedCallback && this._onContextDestroyedCallback(info)
     });
   }
   /**
@@ -343,6 +347,17 @@ class GPUCurtains {
   onContextLost(callback) {
     if (callback) {
       this._onContextLostCallback = callback;
+    }
+    return this;
+  }
+  /**
+   * Called whenever the {@link GPUDeviceManager#device | device} has been intentionally destroyed.
+   * @param callback - callback to run whenever the {@link GPUDeviceManager#device | device} has been destroyed.
+   * @returns - our {@link GPUCurtains}
+   */
+  onContextDestroyed(callback) {
+    if (callback) {
+      this._onContextDestroyedCallback = callback;
     }
     return this;
   }

@@ -34,7 +34,7 @@ class RenderBundle {
    * @param parameters - {@link RenderBundleParams | parameters} use to create this {@link RenderBundle}.
    */
   constructor(renderer, {
-    label = "",
+    label,
     renderPass = null,
     renderOrder = 0,
     transparent = null,
@@ -86,9 +86,10 @@ class RenderBundle {
     this.uuid = generateUUID();
     Object.defineProperty(this, "index", { value: bundleIndex++ });
     this.renderOrder = renderOrder;
-    this.renderer.renderBundles.push(this);
+    this.renderer.renderBundles.set(this.uuid, this);
     this.transparent = transparent;
     this.visible = visible;
+    label = label ?? this.type + this.index;
     this.options = {
       label,
       renderPass,
@@ -411,12 +412,13 @@ encodeRenderCommands_fn = function() {
 _cleanUp = new WeakSet();
 cleanUp_fn = function() {
   if (this.binding) {
+    this.renderer.removeBuffer(this.binding.buffer);
     this.binding.buffer.destroy();
   }
   if (this.indirectBuffer) {
     this.indirectBuffer.destroy();
   }
-  this.renderer.renderBundles = this.renderer.renderBundles.filter((bundle) => bundle.uuid !== this.uuid);
+  this.renderer.renderBundles.delete(this.uuid);
 };
 
 export { RenderBundle };

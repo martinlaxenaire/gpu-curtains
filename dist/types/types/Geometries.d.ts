@@ -1,5 +1,5 @@
 /// <reference types="dist" />
-import { TypedArray, WGSLVariableType } from '../core/bindings/utils';
+import { TypedArray, WGSLBaseVariableType } from '../core/bindings/utils';
 import { Buffer } from '../core/buffers/Buffer';
 /**
  * Parameters used to create a {@link VertexBufferAttribute}
@@ -10,7 +10,7 @@ export interface VertexBufferAttributeParams {
     /** The name of the {@link VertexBufferAttribute} */
     name: string;
     /** The WGSL type of the {@link VertexBufferAttribute}, i.e. `"f32"`, `"vec2f"`, `"vec3f"`, etc. */
-    type?: WGSLVariableType;
+    type?: WGSLBaseVariableType;
     /** The buffer format of the {@link VertexBufferAttribute}, i.e. `"float32"`, `"float32x2"`, `"float32x3"`, etc. */
     bufferFormat?: GPUVertexFormat;
     /** The size of the {@link VertexBufferAttribute}. A `"f32"` is of size `1`, a `"vec2f"` of size `2`, a `"vec3f"` of size `3`, etc. */
@@ -25,7 +25,7 @@ export interface VertexBufferAttributeParams {
  */
 export interface VertexBufferAttribute extends VertexBufferAttributeParams {
     /** The WGSL type of the {@link VertexBufferAttribute}, i.e. `"f32"`, `"vec2f"`, `"vec3f"`, etc. */
-    type: WGSLVariableType;
+    type: WGSLBaseVariableType;
     /** The buffer format of the {@link VertexBufferAttribute}, i.e. `"float32"`, `"float32x2"`, `"float32x3"`, etc. */
     bufferFormat: GPUVertexFormat;
     /** The length of the {@link array} */

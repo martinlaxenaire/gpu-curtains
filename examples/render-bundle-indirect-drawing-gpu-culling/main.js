@@ -1,27 +1,55 @@
 // Port of https://github.com/toji/webgpu-bundle-culling/tree/main
-window.addEventListener('load', async () => {
-  const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
-  const {
-    BoxGeometry,
-    SphereGeometry,
-    GPUCameraRenderer,
-    GPUDeviceManager,
-    AmbientLight,
-    DirectionalLight,
-    getLambert,
-    OrbitControls,
-    RenderBundle,
-    Vec3,
-    Quat,
-    Mat4,
-    BufferBinding,
-    BindGroup,
-    ComputePass,
-    IndirectBuffer,
-    Camera,
-    Mesh,
-  } = await import(/* @vite-ignore */ path)
+//
+// The idea is to do GPU frustum culling
+// using a indirect drawing with an indirect buffer,
+// a render bundle and a compute pass.
+//
+// First we create an indirect buffer, a render bundle
+// and an indirect args buffer binding using our indirect buffer GPU buffer
+//
+// Then for each combination of material (here a simple shading color)
+// and instanced geometries, we create:
+// - instance matrices
+// - an instanced geometry that will be added to our indirect buffer
+// - a modelBinding buffer binding that will hold the instances' transformation matrices
+// - a culledInstancesBinding buffer binding that will hold the culled instanced
+// - a bindGroup made of the two previous bindings + the indirect args buffer binding
+// - finally a mesh rendered with our render bundle
+//
+// We then create a compute pass that will check the frustum culling
+// It will have as first bind group a bind group containing the camera frustum planes
+// We use a custom render function where:
+// - we bind the first bind group (camera frustum planes)
+// - for each materials/geometries combinations, we bind its bind group
+// - then dispatch work groups based on the instances count
+// - before each render, we make sure our indirect buffer instances count values are cleared
+//
+// To ensure this is properly working, we create a debug camera
+// we pass its matrices in a buffer binding to all the meshes
+// when clicking the debug button, we toggle which camera matrices we want to use
 
+import {
+  BoxGeometry,
+  SphereGeometry,
+  GPUCameraRenderer,
+  GPUDeviceManager,
+  AmbientLight,
+  DirectionalLight,
+  getLambert,
+  OrbitControls,
+  RenderBundle,
+  Vec3,
+  Quat,
+  Mat4,
+  BufferBinding,
+  BindGroup,
+  ComputePass,
+  IndirectBuffer,
+  Camera,
+  Mesh,
+} from '../../dist/esm/index.mjs'
+
+window.addEventListener('load', async () => {
   const stats = new Stats()
 
   stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
@@ -123,8 +151,6 @@ window.addEventListener('load', async () => {
     })
     .flat()
 
-  console.log(instancesDefinitions)
-
   // create our render bundle
   const renderBundle = new RenderBundle(gpuCameraRenderer, {
     label: 'GPU culling render bundle',
@@ -216,8 +242,6 @@ window.addEventListener('load', async () => {
     })
   })
 
-  console.log(instancesDefinitions)
-
   indirectBuffer.create()
 
   const indirectArgsBinding = new BufferBinding({
@@ -284,35 +308,33 @@ window.addEventListener('load', async () => {
     bindings: [cameraFrustumBinding],
   })
 
-  console.log(indirectArgsBinding)
-
   // compute culling
   const computeCullingShader = /* wgsl */ `
-      fn isVisible(instanceIndex: u32) -> bool {
-        let model = instancesModel.models[instanceIndex];
-        let pos = model * vec4(0, 0, 0, 1);
+    fn isVisible(instanceIndex: u32) -> bool {
+      let model = instancesModel.models[instanceIndex];
+      let pos = model * vec4(0, 0, 0, 1);
 
-        for (var i = 0; i < 6; i++) {
-          if (dot(cameraFrustum.frustum[i], pos) < -culled.radius * 2.0) {
-            return false;
-          }
+      for (var i = 0; i < 6; i++) {
+        if (dot(cameraFrustum.frustum[i], pos) < -culled.radius * 2.0) {
+          return false;
         }
-        return true;
       }
+      return true;
+    }
 
-      @compute @workgroup_size(64)
-      fn main(@builtin(global_invocation_id) globalId: vec3u) {
-        let instanceIndex = globalId.x;
-        if (instanceIndex >= arrayLength(&culled.instances)) {
-          return;
-        }
-        
-        if (!isVisible(instanceIndex)) { return; }
-
-        let culledIndex = atomicAdd(&indirectArgs[culled.indirectIndex].instanceCount, 1u);
-        culled.instances[culledIndex] = instanceIndex;
+    @compute @workgroup_size(64)
+    fn main(@builtin(global_invocation_id) globalId: vec3u) {
+      let instanceIndex = globalId.x;
+      if (instanceIndex >= arrayLength(&culled.instances)) {
+        return;
       }
-    `
+      
+      if (!isVisible(instanceIndex)) { return; }
+
+      let culledIndex = atomicAdd(&indirectArgs[culled.indirectIndex].instanceCount, 1u);
+      culled.instances[culledIndex] = instanceIndex;
+    }
+  `
 
   const computeCulling = new ComputePass(gpuCameraRenderer, {
     label: 'Compute frustum culling pass',
@@ -387,16 +409,16 @@ window.addEventListener('load', async () => {
           * model
           * vec4f(attributes.position, 1.0);
       }
-      
         
       vsOutput.uv = attributes.uv;
-      vsOutput.normal = normalize((camera.view * model * vec4f(attributes.normal, 0)).xyz);
+      vsOutput.normal = normalize((model * vec4f(attributes.normal, 0)).xyz);
       vsOutput.worldPosition = (model * vec4f(attributes.position, 1.0)).xyz;
       
       return vsOutput;
     }
   `
 
+  // simple lambert shading
   const fs = /* wgsl */ `
     struct VSOutput {
       @builtin(position) position: vec4f,
