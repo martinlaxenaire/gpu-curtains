@@ -46,8 +46,10 @@ export type TypedArrayConstructor =
   | Float32ArrayConstructor
   | Float64ArrayConstructor
 
+/** Defines the possible base WGSL variable types */
+export type WGSLBaseVariableType = string // TODO 'mat4x4f', 'mat3x3f', 'vec3f', 'vec2f', 'f32' etc
 /** Defines the possible WGSL variable types */
-export type WGSLVariableType = string // TODO 'mat4x4f', 'mat3x3f', 'vec3f', 'vec2f', 'f32' etc
+export type WGSLVariableType = string // TODO 'mat4x4f', 'mat3x3f', 'vec3f', 'vec2f', 'f32', 'atomic<u32>' etc
 
 /**
  * Defines a {@link BufferLayout} object used to pad our {@link GPUBuffer} arrays

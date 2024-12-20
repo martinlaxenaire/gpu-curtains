@@ -1,0 +1,11 @@
+#debug-camera-button {
+  position: absolute;
+  z-index: 1;
+  bottom: 1rem;
+  left: 1rem;
+}
+
+.stats {
+  transform-origin: 0 0;
+  transform: scale3d(2, 2, 1);
+}

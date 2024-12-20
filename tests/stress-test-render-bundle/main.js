@@ -59,16 +59,20 @@ window.addEventListener('load', async () => {
   console.time('creation time')
   let createdMeshes = 0
 
-  // get meshes count from url search params
+  // get meshes count & indirect drawing from url search params
   const url = new URL(window.location)
   const searchParams = new URLSearchParams(url.search)
+
   const urlCount = searchParams.get('count') && parseInt(searchParams.get('count'))
   let nbMeshes = urlCount || 5_000
+
+  const useIndirectDraw = searchParams.get('indirect') ?? false
 
   const renderBundle = new RenderBundle(gpuCameraRenderer, {
     label: 'Stress test render bundle',
     size: nbMeshes,
     useBuffer: true,
+    useIndirectDraw,
   })
 
   const addMesh = (index) => {

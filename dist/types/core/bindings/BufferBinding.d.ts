@@ -57,6 +57,8 @@ export interface BufferBindingParams extends BindingParams, BufferBindingBasePar
     offset?: number;
     /** The optional parent {@link BufferBinding} that will actually handle the {@link GPUBuffer}. */
     parent?: BufferBinding;
+    /** Optional already existing {@link Buffer} to use instead of creating a new one. Allow to reuse an already created {@link Buffer} but with different read or visibility values, or with a different WGSL struct. */
+    buffer?: Buffer;
 }
 /** All allowed {@link BufferElement | buffer elements} */
 export type AllowedBufferElement = BufferElement | BufferArrayElement | BufferInterleavedArrayElement;
@@ -133,7 +135,7 @@ export declare class BufferBinding extends Binding {
      * BufferBinding constructor
      * @param parameters - {@link BufferBindingParams | parameters} used to create our BufferBindings
      */
-    constructor({ label, name, bindingType, visibility, useStruct, access, usage, struct, childrenBindings, parent, minOffset, offset, }: BufferBindingParams);
+    constructor({ label, name, bindingType, visibility, useStruct, access, usage, struct, childrenBindings, buffer, parent, minOffset, offset, }: BufferBindingParams);
     /**
      * Clone a {@link BufferBindingParams#struct | struct object} width new default values.
      * @param struct - New cloned struct object.

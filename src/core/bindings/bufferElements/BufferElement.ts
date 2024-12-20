@@ -1,4 +1,4 @@
-import { BufferLayout, getBufferLayout, TypedArray, WGSLVariableType } from '../utils'
+import { BufferLayout, getBufferLayout, TypedArray, WGSLBaseVariableType, WGSLVariableType } from '../utils'
 import { Vec2 } from '../../../math/Vec2'
 import { Vec3 } from '../../../math/Vec3'
 import { Quat } from '../../../math/Quat'
@@ -66,8 +66,10 @@ export interface BufferElementParams {
 export class BufferElement {
   /** The name of the {@link BufferElement} */
   name: string
-  /** The WGSL variable type of the {@link BufferElement} */
+  /** The WGSL variable type of the {@link BufferElement} (stripped of `array`). */
   type: WGSLVariableType
+  /** The WGSL base variable type of the {@link BufferElement} (stripped of `array` and `atomic`). */
+  baseType: WGSLBaseVariableType
   /** The key of the {@link BufferElement} */
   key: string
 
@@ -94,7 +96,9 @@ export class BufferElement {
     this.key = key
     this.type = type
 
-    this.bufferLayout = getBufferLayout(this.type.replace('array', '').replace('<', '').replace('>', ''))
+    this.baseType = BufferElement.getBaseType(this.type)
+
+    this.bufferLayout = getBufferLayout(this.baseType)
 
     // set init alignment
     this.alignment = {
@@ -109,6 +113,26 @@ export class BufferElement {
     }
 
     this.setValue = null
+  }
+
+  /**
+   * Get the {@link BufferElement} {@link WGSLVariableType | WGSL type}.
+   * @param type - Original type passed.
+   * @returns - The {@link BufferElement} {@link WGSLVariableType | WGSL type}.
+   */
+  static getType(type: string): WGSLVariableType {
+    return type.replace('array', '').replace('<', '').replace('>', '')
+  }
+
+  /**
+   * Get the {@link BufferElement} {@link WGSLBaseVariableType | WGSL base type}.
+   * @param type - Original type passed.
+   * @returns - The {@link BufferElement} {@link WGSLBaseVariableType | WGSL base type}.
+   */
+  static getBaseType(type: string): WGSLBaseVariableType {
+    return BufferElement.getType(
+      type.replace('atomic', '').replace('array', '').replaceAll('<', '').replaceAll('>', '')
+    )
   }
 
   /**
@@ -369,13 +393,13 @@ export class BufferElement {
   update(value: InputValue) {
     if (!this.setValue) {
       this.setValue = ((value) => {
-        if (this.type === 'f32' || this.type === 'u32' || this.type === 'i32') {
+        if (this.baseType === 'f32' || this.baseType === 'u32' || this.baseType === 'i32') {
           return this.setValueFromFloat
-        } else if (this.type === 'vec2f') {
+        } else if (this.baseType === 'vec2f') {
           return this.setValueFromVec2
-        } else if (this.type === 'vec3f') {
+        } else if (this.baseType === 'vec3f') {
           return this.setValueFromVec3
-        } else if (this.type === 'mat3x3f') {
+        } else if (this.baseType === 'mat3x3f') {
           return (value as Mat3).elements ? this.setValueFromMat3 : this.setValueFromArrayWithPad
         } else if ((value as Quat | Mat4).elements) {
           return this.setValueFromMat4OrQuat

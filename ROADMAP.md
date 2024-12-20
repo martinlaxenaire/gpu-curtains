@@ -21,6 +21,7 @@
 - Shader passes
 - PingPongPlane
 - RenderBundle
+- IndirectBuffer (indirect drawing)
 - Basic CacheManager
 - Scroll + resize, frustum culling check
 - GPUCurtains
@@ -40,6 +41,5 @@
 - MSDF fonts
 - Better shader chunks system and/or custom preprocessor
 - Implement different lit extras RenderMaterial (i.e. RenderLambertMaterial, RenderPhongMaterial, RenderPBRMaterial, etc.)?
-- Implement indirect draw calls?
 - Improve typedoc documentation?
 - More examples & tests?

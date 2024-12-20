@@ -16,6 +16,7 @@ class WritableBufferBinding extends BufferBinding {
     usage = [],
     struct = {},
     childrenBindings = [],
+    buffer = null,
     parent = null,
     minOffset = 256,
     offset = 0,
@@ -33,6 +34,7 @@ class WritableBufferBinding extends BufferBinding {
       usage,
       struct,
       childrenBindings,
+      buffer,
       parent,
       minOffset,
       offset

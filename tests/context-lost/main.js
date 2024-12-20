@@ -1,7 +1,9 @@
 // Goal of this test is checking if device lost/restoration works
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
-  const { BoxGeometry, GPUCurtains, Mesh, Plane, ShaderPass } = await import(/* @vite-ignore */ path)
+  const { BoxGeometry, GPUCurtains, IndirectBuffer, RenderBundle, Mesh, Plane, ShaderPass } = await import(
+    /* @vite-ignore */ path
+  )
 
   // set our main GPUCurtains instance it will handle everything we need
   // a WebGPU device and a renderer with its scene, requestAnimationFrame, resize and scroll events...
@@ -14,7 +16,13 @@ window.addEventListener('load', async () => {
       console.log('gpu curtains error!')
     })
     .onContextLost((info) => {
+      // this won't be called if we intentionally destroyed the device
       console.log(info, gpuCurtains.renderer)
+      gpuCurtains.restoreContext()
+    })
+    .onContextDestroyed((info) => {
+      // this will be called when clicking the lose context button
+      console.log('CONTEXT DESTROYED, most probably by clicking the button.', info)
     })
 
   //
@@ -29,8 +37,21 @@ window.addEventListener('load', async () => {
   // now add objects to our scene
   const cubeGeometry = new BoxGeometry()
 
+  const indirectBuffer = new IndirectBuffer(gpuCurtains, {
+    geometries: [cubeGeometry],
+  })
+
+  indirectBuffer.create()
+
+  const renderBundle = new RenderBundle(gpuCurtains, {
+    size: 1,
+    useBuffer: true,
+    //useIndirectDraw: true,
+  })
+
   const mesh = new Mesh(gpuCurtains, {
     geometry: cubeGeometry,
+    renderBundle,
   })
 
   //mesh.position.z = -0.5

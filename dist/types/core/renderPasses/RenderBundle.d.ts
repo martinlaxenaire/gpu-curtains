@@ -4,16 +4,19 @@ import { RenderedMesh, SceneStackedMesh } from '../renderers/GPURenderer';
 import { BufferBinding } from '../bindings/BufferBinding';
 import { RenderPass } from './RenderPass';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
+import { IndirectBuffer } from '../../extras/buffers/IndirectBuffer';
 /** Options used to create a {@link RenderBundle}. */
 export interface RenderBundleOptions {
     /** The label of the {@link RenderBundle}, sent to various GPU objects for debugging purpose. */
     label: string;
     /** The {@link RenderPass} used to describe the {@link RenderBundle#descriptor | RenderBundle encoder descriptor}. Default to the first added mesh output target if not set (usually the {@link Renderer#renderPass | renderer main render pass} or {@link Renderer#postProcessingPass | renderer post processing pass}). */
     renderPass: RenderPass;
-    /** Whether the {@link RenderBundle} should handle all its child {@link core/renderers/GPURenderer.ProjectedMesh | meshes} transformation matrices with a single {@link GPUBuffer}. Can greatly improve performance when dealing with a lot of moving objects, but the {@link size} parameter has to be set upon creation and should not change afterwards. */
+    /** Whether the {@link RenderBundle} should handle all its child {@link core/renderers/GPURenderer.ProjectedMesh | meshes} transformation matrices with a single {@link GPUBuffer}. Can greatly improve performance when dealing with a lot of moving objects, but the {@link size} parameter has to be set upon creation and should not change afterwards. Default to `false`. */
     useBuffer: boolean;
     /** Fixed size (number of meshes) of the {@link RenderBundle}. Mostly useful when using the {@link useBuffer} parameter. */
     size: number;
+    /** Whether this {@link RenderBundle} should create its own {@link IndirectBuffer} and add its {@link RenderBundle#meshes | meshes} geometries to it. Default to `false`. */
+    useIndirectDraw: boolean;
 }
 /** Parameters used to created a {@link RenderBundle}. */
 export interface RenderBundleParams extends Partial<RenderBundleOptions> {
@@ -30,12 +33,36 @@ export interface RenderBundleParams extends Partial<RenderBundleOptions> {
  * Render bundle are a powerful tool that can significantly reduce the amount of CPU time spent issuing repeated rendered commands. In other words, it can be used to draw given set of meshes that share the same {@link RenderPass | output target} faster (up to 1.5x in some cases) and with less CPU overhead.
  *
  * The main drawback is that {@link RenderBundle} works best when the number of meshes drawn is known in advance and is not subject to change.
+ *
+ * @example
+ * ```javascript
+ * const nbMeshes = 100
+ *
+ * // assuming 'renderer' is a valid renderer or curtains instance
+ * const renderBundle = new RenderBundle(renderer, {
+ *   label: 'Custom render bundle',
+ *   size: nbMeshes,
+ *   useBuffer: true, // use a single buffer to handle all 100 meshes transformations
+ * })
+ *
+ * for (let i = 0; i < nbMeshes; i++) {
+ *   const mesh = new Mesh(renderer, {
+ *     label: 'Cube ' + i,
+ *     geometry: new BoxGeometry(),
+ *     renderBundle,
+ *   })
+ *
+ *   mesh.onBeforeRender(() => {
+ *     mesh.rotation.y += 0.02
+ *   })
+ * }
+ * ```
  */
 export declare class RenderBundle {
     #private;
     /** The type of the {@link RenderBundle}. */
     type: string;
-    /** The universal unique id of the {@link RenderBundle}. */
+    /** The universal unique id of this {@link RenderBundle}. */
     readonly uuid: string;
     /** Index of this {@link RenderBundle}, i.e. creation order. */
     readonly index: number;
@@ -49,8 +76,10 @@ export declare class RenderBundle {
     transparent: boolean | null;
     /** Whether this {@link RenderBundle} content should be drawn. */
     visible: boolean;
-    /** Optional {@link BufferBinding} created if the {@link RenderBundleParams#useBuffer | useBuffer} parameter has been set to `true` and if the {@link meshes} drawn actually have transformation matrices. This {@link BufferBinding} will act as a parent buffer, and the {@link meshes} `matrices` binding will use {core/bindings/BufferBindingOffsetChild.BufferBindingOffsetChild | BufferBindingOffsetChild} binding with the correct `offset`. */
+    /** Optional {@link BufferBinding} created if the {@link RenderBundleParams#useBuffer | useBuffer} parameter has been set to `true` and if the {@link meshes} drawn actually have transformation matrices. This {@link BufferBinding} will act as a parent buffer, and the {@link meshes} `matrices` binding will use a {@link BufferBinding} with this {@link binding} as parent and the correct `offset`. */
     binding: BufferBinding | null;
+    /** Optional internal {@link IndirectBuffer} containing all {@link meshes} unique geometries to render them using indirect drawing. */
+    indirectBuffer: IndirectBuffer | null;
     /** The {@link GPURenderBundleEncoderDescriptor} created by this {@link RenderBundle}, based on the {@link RenderPass} passed as parameters. */
     descriptor: GPURenderBundleEncoderDescriptor;
     /** The {@link GPURenderBundleEncoder} created by this {@link RenderBundle}. */
@@ -64,7 +93,7 @@ export declare class RenderBundle {
      * @param renderer - {@link Renderer} or {@link GPUCurtains} class object used to create this {@link RenderBundle}.
      * @param parameters - {@link RenderBundleParams | parameters} use to create this {@link RenderBundle}.
      */
-    constructor(renderer: Renderer | GPUCurtains, { label, renderPass, renderOrder, transparent, visible, size, useBuffer, }?: RenderBundleParams);
+    constructor(renderer: Renderer | GPUCurtains, { label, renderPass, renderOrder, transparent, visible, size, useBuffer, useIndirectDraw, }?: RenderBundleParams);
     /**
      * Get whether our {@link RenderBundle} handles {@link core/renderers/GPURenderer.ProjectedMesh | projected meshes} or not (useful to know in which {@link core/scenes/Scene.Scene | Scene} stack it has been added.
      * @readonly
