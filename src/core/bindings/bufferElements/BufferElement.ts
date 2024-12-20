@@ -322,7 +322,7 @@ export class BufferElement {
    * Set the {@link view} value from a float or an int
    * @param value - float or int to use
    */
-  setValueFromFloat(value: number) {
+  setValueFromNumber(value: number) {
     this.view[0] = value as number
   }
 
@@ -393,13 +393,13 @@ export class BufferElement {
   update(value: InputValue) {
     if (!this.setValue) {
       this.setValue = ((value) => {
-        if (this.baseType === 'f32' || this.baseType === 'u32' || this.baseType === 'i32') {
-          return this.setValueFromFloat
-        } else if (this.baseType === 'vec2f') {
+        if (typeof value === 'number') {
+          return this.setValueFromNumber
+        } else if (this.type === 'vec2f') {
           return this.setValueFromVec2
-        } else if (this.baseType === 'vec3f') {
+        } else if (this.type === 'vec3f') {
           return this.setValueFromVec3
-        } else if (this.baseType === 'mat3x3f') {
+        } else if (this.type === 'mat3x3f') {
           return (value as Mat3).elements ? this.setValueFromMat3 : this.setValueFromArrayWithPad
         } else if ((value as Quat | Mat4).elements) {
           return this.setValueFromMat4OrQuat

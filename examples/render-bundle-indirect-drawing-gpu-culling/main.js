@@ -411,7 +411,13 @@ window.addEventListener('load', async () => {
       }
         
       vsOutput.uv = attributes.uv;
-      vsOutput.normal = normalize((model * vec4f(attributes.normal, 0)).xyz);
+      
+      // since we're using uniform scale, we can just multiply the normals
+      // with the instance model matrix
+      // also, we're computing them in view space
+      // it's not correct but the result is more pleasing visually
+      vsOutput.normal = normalize((camera.view * model * vec4f(attributes.normal, 0)).xyz);
+      
       vsOutput.worldPosition = (model * vec4f(attributes.position, 1.0)).xyz;
       
       return vsOutput;

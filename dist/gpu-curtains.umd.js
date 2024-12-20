@@ -1367,7 +1367,7 @@
      * Set the {@link view} value from a float or an int
      * @param value - float or int to use
      */
-    setValueFromFloat(value) {
+    setValueFromNumber(value) {
       this.view[0] = value;
     }
     /**
@@ -1426,13 +1426,13 @@
     update(value) {
       if (!this.setValue) {
         this.setValue = ((value2) => {
-          if (this.baseType === "f32" || this.baseType === "u32" || this.baseType === "i32") {
-            return this.setValueFromFloat;
-          } else if (this.baseType === "vec2f") {
+          if (typeof value2 === "number") {
+            return this.setValueFromNumber;
+          } else if (this.type === "vec2f") {
             return this.setValueFromVec2;
-          } else if (this.baseType === "vec3f") {
+          } else if (this.type === "vec3f") {
             return this.setValueFromVec3;
-          } else if (this.baseType === "mat3x3f") {
+          } else if (this.type === "mat3x3f") {
             return value2.elements ? this.setValueFromMat3 : this.setValueFromArrayWithPad;
           } else if (value2.elements) {
             return this.setValueFromMat4OrQuat;

@@ -178,7 +178,7 @@ export declare class BufferElement {
      * Set the {@link view} value from a float or an int
      * @param value - float or int to use
      */
-    setValueFromFloat(value: number): void;
+    setValueFromNumber(value: number): void;
     /**
      * Set the {@link view} value from a {@link Vec2} or an array
      * @param value - {@link Vec2} or array to use
