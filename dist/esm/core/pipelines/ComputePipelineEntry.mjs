@@ -102,7 +102,6 @@ ${this.shaders.compute.head}`;
   }
   /**
    * Asynchronously create the compute {@link pipeline}
-   * @async
    * @returns - void promise result
    */
   async createComputePipelineAsync() {
@@ -120,7 +119,6 @@ ${this.shaders.compute.head}`;
   }
   /**
    * Call {@link PipelineEntry#compilePipelineEntry | PipelineEntry compilePipelineEntry} method, then create our compute {@link pipeline}
-   * @async
    */
   async compilePipelineEntry() {
     super.compilePipelineEntry();

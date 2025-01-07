@@ -1,22 +1,7 @@
 // Goal of this test is to help debug and visualize buffer binding alignments
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
-  const { BufferBinding, GPUDeviceManager, GPURenderer, Vec2, Vec3 } = await import(/* @vite-ignore */ path)
-
-  // set our main GPUCurtains instance it will handle everything we need
-  // a WebGPU device and a renderer with its scene, requestAnimationFrame, resize and scroll events...
-  const gpuDeviceManager = new GPUDeviceManager({
-    label: 'Test binding device manager',
-  })
-
-  // we need to wait for the device to be created
-  await gpuDeviceManager.init()
-
-  // then we can create a camera renderer
-  const gpuRenderer = new GPURenderer({
-    deviceManager: gpuDeviceManager, // the renderer is going to use our WebGPU device to create its context
-    container: document.querySelector('#canvas'),
-  })
+  const { BufferBinding, Vec2, Vec3 } = await import(/* @vite-ignore */ path)
 
   const debugBindings = []
   //debugBindings.push(gpuCurtains.renderer.cameraBinding)

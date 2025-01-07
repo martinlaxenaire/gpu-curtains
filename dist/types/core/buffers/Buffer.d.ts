@@ -17,15 +17,15 @@ export declare class Buffer {
     type: string;
     /** The universal unique id of the {@link Buffer} */
     uuid: string;
-    /** Options used to create this {@link Buffer}, also used as {@link GPUBufferDescriptor} */
+    /** Options used to create this {@link Buffer}, also used as {@link GPUDevice.createBuffer().descriptor | GPUBufferDescriptor} */
     options: GPUBufferDescriptor;
     /** The actual {@link GPUBuffer} after having been created. */
     GPUBuffer: null | GPUBuffer;
     /** A Set to store this {@link Buffer} consumers (usually {@link core/geometries/Geometry.Geometry#uuid | Geometry uuid} or {@link core/bindGroups/BindGroup.BindGroup#uuid | BindGroup uuid}) */
     consumers: Set<string>;
     /**
-     * Buffer constructor
-     * @param parameters - {@link GPUBufferDescriptor | parameters} used to create our Buffer
+     * Buffer constructors
+     * @param parameters - {@link BufferParams | parameters} used to create our Buffer
      */
     constructor({ label, size, usage, mappedAtCreation, }?: BufferParams);
     /** Reset the {@link GPUBuffer} value to `null`. */
@@ -33,13 +33,13 @@ export declare class Buffer {
     /** Allow to dynamically set the size of the {@link GPUBuffer}. */
     set size(value: number);
     /**
-     * Create a {@link GPUBuffer} based on the descriptor stored in the {@link options | Buffer options}.
+     * Create a {@link GPUBuffer} based on the descriptor stored in the {@link Buffer.options | Buffer options}.
      * @param renderer - {@link core/renderers/GPURenderer.GPURenderer | renderer} used to create the {@link GPUBuffer}.
-     * @param options - optional way to update the {@link options} previously set before creating the {@link GPUBuffer}.
+     * @param options - optional way to update the {@link Buffer.options | Buffer options} previously set before creating the {@link GPUBuffer}.
      */
     createBuffer(renderer: any, options?: BufferParams): void;
     /**
-     * Set the {@link GPUBuffer}. This allows to use a {@link Buffer} with a {@link GPUBuffer} created separately.
+     * Set the {@link Buffer.GPUBuffer | GPUBuffer}. This allows to use a {@link Buffer} with a {@link Buffer.GPUBuffer | GPUBuffer} created separately.
      * @param GPUBuffer - GPU buffer to use.
      */
     setBuffer(GPUBuffer: GPUBuffer): void;
@@ -51,7 +51,6 @@ export declare class Buffer {
     copy(buffer: Buffer, destroyPreviousBuffer?: boolean): void;
     /**
      * Map the {@link GPUBuffer} and put a copy of the data into a {@link Float32Array}.
-     * @async
      * @returns - {@link Float32Array} holding the {@link GPUBuffer} data.
      */
     mapBufferAsync(): Promise<Float32Array>;

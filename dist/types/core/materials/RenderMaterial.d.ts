@@ -26,7 +26,7 @@ export declare class RenderMaterial extends Material {
      */
     constructor(renderer: Renderer | GPUCurtains, parameters: RenderMaterialParams);
     /**
-     * Set or reset this {@link RenderMaterial} {@link renderer}. Will also update the renderer camera bind group if needed.
+     * Set or reset this {@link RenderMaterial} {@link RenderMaterial.renderer | renderer}. Will also update the renderer camera bind group if needed.
      * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
      */
     setRenderer(renderer: Renderer | GPUCurtains): void;
@@ -36,12 +36,10 @@ export declare class RenderMaterial extends Material {
     setPipelineEntry(): void;
     /**
      * Compile the {@link RenderPipelineEntry}
-     * @async
      */
     compilePipelineEntry(): Promise<void>;
     /**
      * Check if attributes and all bind groups are ready, create them if needed, set {@link RenderPipelineEntry} bind group buffers and compile the pipeline.
-     * @async
      */
     compileMaterial(): Promise<void>;
     /**

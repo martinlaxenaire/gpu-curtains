@@ -78,15 +78,15 @@ export declare class GLTFScenesManager {
      */
     static getTypedArrayConstructorFromComponentType(componentType: GLTF.AccessorComponentType): TypedArrayConstructor;
     /**
-     * Get the {@link GPUPrimitiveTopology} based on the {@link GLTF.MeshPrimitiveMode | WebGL primitive mode}.
+     * Get the {@link GPUDevice.createRenderPipeline().topology | GPUPrimitiveTopology} based on the {@link GLTF.MeshPrimitiveMode | WebGL primitive mode}.
      * @param mode - {@link GLTF.MeshPrimitiveMode | WebGL primitive mode} to use.
-     * @returns - corresponding {@link GPUPrimitiveTopology}.
+     * @returns - corresponding {@link GPUDevice.createRenderPipeline().topology | GPUPrimitiveTopology}.
      */
     static gpuPrimitiveTopologyForMode(mode: GLTF.MeshPrimitiveMode): GPUPrimitiveTopology;
     /**
-     * Get the {@link GPUAddressMode} based on the {@link GLTF.TextureWrapMode | WebGL texture wrap mode}.
+     * Get the {@link GPUDevice.createSampler().descriptor.addressModeU | GPUAddressMode} based on the {@link GLTF.TextureWrapMode | WebGL texture wrap mode}.
      * @param wrap - {@link GLTF.TextureWrapMode | WebGL texture wrap mode} to use.
-     * @returns - corresponding {@link GPUAddressMode}.
+     * @returns - corresponding {@link GPUDevice.createSampler().descriptor.addressModeU | GPUAddressMode}.
      */
     static gpuAddressModeForWrap(wrap: GLTF.TextureWrapMode): GPUAddressMode;
     /**

@@ -15,7 +15,7 @@ export type BufferUsageKeys =
   | BufferBindingType
 
 /**
- * Map {@link BufferUsageKeys | buffer usage names} with actual {@link GPUBufferUsageFlags | buffer usage bitwise flags}.
+ * Map {@link BufferUsageKeys | buffer usage names} with actual {@link !GPUBuffer.usage | GPUBufferUsageFlags}.
  */
 const bufferUsages: Map<BufferUsageKeys, GPUBufferUsageFlags> = new Map([
   ['copySrc', WebGPUBufferUsageConstants.COPY_SRC],
@@ -31,9 +31,9 @@ const bufferUsages: Map<BufferUsageKeys, GPUBufferUsageFlags> = new Map([
 ])
 
 /**
- * Get the corresponding {@link GPUBufferUsageFlags | buffer usage bitwise flags} based on an array of {@link BufferUsageKeys | buffer usage names}.
+ * Get the corresponding {@link !GPUBuffer.usage | GPUBufferUsageFlags} based on an array of {@link BufferUsageKeys | buffer usage names}.
  * @param usages - array of {@link BufferUsageKeys | buffer usage names}.
- * @returns - corresponding {@link GPUBufferUsageFlags | buffer usage bitwise flags}.
+ * @returns - corresponding {@link !GPUBuffer.usage | GPUBufferUsageFlags}.
  */
 export const getBufferUsages = (usages: BufferUsageKeys[] = []): GPUBufferUsageFlags => {
   return usages.reduce((acc, v) => {

@@ -393,12 +393,12 @@ class BindGroup {
     }
   }
   /**
-   * Clones a {@link BindGroup} from a list of {@link bindings}
-   * Useful to create a new bind group with already created buffers, but swapped
-   * @param parameters - parameters to use for cloning
-   * @param parameters.bindings - our input {@link bindings}
-   * @param [parameters.keepLayout=false] - whether we should keep original {@link bindGroupLayout} or not
-   * @returns - the cloned {@link BindGroup}
+   * Clones a {@link BindGroup} from a list of {@link BindGroup.bindings | bindings}.
+   * Useful to create a new bind group with already created buffers, but swapped.
+   * @param parameters - parameters to use for cloning.
+   * @param parameters.bindings - our input {@link BindGroup.bindings | bindings}.
+   * @param [parameters.keepLayout=false] - whether we should keep original {@link bindGroupLayout} or not.
+   * @returns - the cloned {@link BindGroup}.
    */
   clone({
     bindings = [],

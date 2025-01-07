@@ -88,8 +88,8 @@ export interface BindGroupParams extends BindGroupInputs {
  * An object used to define {@link core/bindGroups/BindGroup.BindGroup | BindGroup} entries
  */
 export interface BindGroupEntries {
-  /** {@link GPUBindGroupLayoutDescriptor | GPUBindGroupLayout descriptor} entries */
+  /** {@link GPUDevice.createBindGroupLayout().descriptor | GPUBindGroupLayoutDescriptor} entries */
   bindGroupLayout: GPUBindGroupLayoutEntry[]
-  /** {@link GPUBindGroupDescriptor | GPUBindGroup descriptor} entries */
+  /** {@link GPUDevice.createBindGroup().descriptor | GPUBindGroupDescriptor} entries */
   bindGroup: GPUBindGroupEntry[]
 }

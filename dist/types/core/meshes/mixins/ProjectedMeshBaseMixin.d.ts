@@ -60,7 +60,7 @@ export declare class ProjectedMeshBaseClass extends MeshBaseClass {
      */
     constructor(renderer: CameraRenderer, element: HTMLElement | null, parameters: ProjectedMeshParameters);
     /**
-     * Set or reset this Mesh {@link renderer}.
+     * Set or reset this Mesh {@link CameraRenderer | renderer}.
      * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
      */
     setRenderer(renderer: CameraRenderer | GPUCurtains): void;
@@ -146,7 +146,6 @@ export declare class ProjectedMeshBaseClass extends MeshBaseClass {
 }
 /**
  * Used to add the properties and methods defined in {@link ProjectedMeshBaseClass} to the {@link MeshBaseClass} and mix it with a given Base of type {@link ProjectedObject3D} or {@link curtains/objects3D/DOMObject3D.DOMObject3D | DOMObject3D}.
- * @exports
  * @param Base - the class to mix onto, should be of {@link ProjectedObject3D} or {@link curtains/objects3D/DOMObject3D.DOMObject3D | DOMObject3D} type
  * @returns - the mixed classes, creating a Projected Mesh.
  */

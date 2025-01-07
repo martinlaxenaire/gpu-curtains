@@ -53,14 +53,12 @@ class ComputeMaterial extends Material {
   }
   /**
    * Compile the {@link ComputePipelineEntry}
-   * @async
    */
   async compilePipelineEntry() {
     await this.pipelineEntry.compilePipelineEntry();
   }
   /**
    * Check if all bind groups are ready, create them if needed, set {@link ComputePipelineEntry} bind group buffers and compile the pipeline
-   * @async
    */
   async compileMaterial() {
     if (this.ready)
@@ -140,7 +138,6 @@ class ComputeMaterial extends Material {
    * @param parameters - parameters used to get the result
    * @param parameters.bindingName - {@link core/bindings/WritableBufferBinding.WritableBufferBinding#name | binding name} from which to get the result
    * @param parameters.bufferElementName - optional {@link core/bindings/bufferElements/BufferElement.BufferElement | buffer element} (i.e. struct member) name if the result needs to be restrained to only one element
-   * @async
    * @returns - the mapped content of the {@link GPUBuffer} as a {@link Float32Array}
    */
   async getComputeResult({

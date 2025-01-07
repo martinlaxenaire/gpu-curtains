@@ -97,7 +97,7 @@ export class RenderBundle {
   /** Optional internal {@link IndirectBuffer} containing all {@link meshes} unique geometries to render them using indirect drawing. */
   indirectBuffer: IndirectBuffer | null
 
-  /** The {@link GPURenderBundleEncoderDescriptor} created by this {@link RenderBundle}, based on the {@link RenderPass} passed as parameters. */
+  /** The {@link GPUDevice.createRenderBundleEncoder().descriptor | GPURenderBundleEncoderDescriptor} created by this {@link RenderBundle}, based on the {@link RenderPass} passed as parameters. */
   descriptor: GPURenderBundleEncoderDescriptor
   /** The {@link GPURenderBundleEncoder} created by this {@link RenderBundle}. */
   encoder: GPURenderBundleEncoder | null
@@ -334,7 +334,7 @@ export class RenderBundle {
   }
 
   /**
-   * Called by the {@link core/scenes/Scene.Scene | Scene} to eventually add a {@link RenderedMesh | mesh} to this {@link RenderBundle}. Can set the {@link RenderBundleOptions#renderPass | render pass} if needed. If the {@link RenderBundleOptions#renderPass | render pass} is already set and the {@link mesh} output {@link RenderPass} does not match, it won't be added.
+   * Called by the {@link core/scenes/Scene.Scene | Scene} to eventually add a {@link RenderedMesh | mesh} to this {@link RenderBundle}. Can set the {@link RenderBundleOptions#renderPass | render pass} if needed. If the {@link RenderBundleOptions#renderPass | render pass} is already set and the mesh output {@link RenderPass} does not match, it won't be added.
    * @param mesh - {@link RenderedMesh | Mesh} to eventually add.
    * @param outputPass - The mesh output {@link RenderPass}.
    */
@@ -386,7 +386,7 @@ export class RenderBundle {
   /**
    * Remove a {@link SceneStackedMesh | scene stacked mesh} from this {@link RenderBundle}.
    * @param mesh - {@link SceneStackedMesh | Scene stacked mesh} to remove.
-   * @param keepMesh - Whether to preserve the {@link mesh} in order to render it normally again. Default to `true`.
+   * @param keepMesh - Whether to preserve the mesh in order to render it normally again. Default to `true`.
    */
   removeMesh(mesh: SceneStackedMesh, keepMesh = true) {
     this.removeSceneObject(mesh)
@@ -467,7 +467,7 @@ export class RenderBundle {
   /**
    * Render the {@link RenderBundle}.
    *
-   * If it is ready, execute each {@link RenderedMesh#onBeforeRenderPass | mesh onBeforeRenderPass method}, {@link updateBinding | update the binding} if needed, execute the {@link bundle} and finally execute each {@link RenderedMesh#onAfterRenderPass | mesh onAfterRenderPass method}.
+   * If it is ready, execute each {@link core/meshes/Mesh.Mesh.onBeforeRenderPass | mesh onBeforeRenderPass method}, {@link updateBinding | update the binding} if needed, execute the {@link bundle} and finally execute each {@link core/meshes/Mesh.Mesh.onAfterRenderPass | mesh onAfterRenderPass method}.
    *
    * If not, just render its {@link meshes} as usual and check whether they are all ready and if we can therefore encode our {@link RenderBundle}.
    * @param pass - {@link GPURenderPassEncoder} to use.

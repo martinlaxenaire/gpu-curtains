@@ -61,7 +61,7 @@ export class SamplerBinding extends Binding {
   }
 
   /**
-   * Get {@link GPUBindGroupLayoutEntry#sampler | bind group layout entry resource}
+   * Get {@link GPUDevice.createBindGroupLayout().sampler | GPUBindGroupLayout entry resource}.
    * @readonly
    */
   get resourceLayout(): {
@@ -84,14 +84,14 @@ export class SamplerBinding extends Binding {
   }
 
   /**
-   * Get the {@link GPUBindGroupEntry#resource | bind group resource}
+   * Get the {@link GPUDevice.createBindGroup().entries.resource | GPUBindGroup entry resource}.
    */
   get resource(): SamplerBindingResource {
     return this.sampler
   }
 
   /**
-   * Set the {@link GPUBindGroupEntry#resource | bind group resource}
+   * Set the {@link GPUDevice.createBindGroup().entries.resource | GPUBindGroup entry resource}.
    * @param value - new bind group resource
    */
   set resource(value: SamplerBindingResource) {

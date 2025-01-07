@@ -136,7 +136,7 @@ body {
 ### Javascript
 
 ```javascript
-import { Curtains, Mesh } from 'gpu-curtains';
+import { GPUCurtains, Mesh } from 'gpu-curtains';
 
 window.addEventListener('load', async () => {
   // set our main GPUCurtains instance
@@ -171,6 +171,10 @@ window.addEventListener('load', async () => {
 gpu-curtains is a slowly evolving 3D engine and may lack some common features.
 
 If you need a more robust 3D engine that could handle complex glTF or advanced lighting, shading or rendering mechanics, then you should probably go with another library like [three.js](https://github.com/mrdoob/three.js) or [Babylon.js](https://github.com/BabylonJS).
+
+## Debugging
+
+If you need to debug your scenes, understand in which order they are rendered or inspect your textures, I strongly recommend you to have a look at [Brendan Duncan's WebGPU inspector extension](https://github.com/brendan-duncan/webgpu_inspector).
 
 ## Contributing
 

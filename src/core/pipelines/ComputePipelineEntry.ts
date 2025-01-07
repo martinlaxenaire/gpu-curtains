@@ -19,7 +19,7 @@ import { BindGroupBufferBindingElement } from '../../types/BindGroups'
 export class ComputePipelineEntry extends PipelineEntry {
   /** Shaders to use with this {@link ComputePipelineEntry} */
   shaders: PipelineEntryShaders
-  /** {@link GPUComputePipelineDescriptor | Compute pipeline descriptor} based on {@link layout} and {@link shaders} */
+  /** {@link GPUDevice.createComputePipeline().descriptor | GPUComputePipelineDescriptor} based on {@link layout} and {@link shaders} */
   descriptor: GPUComputePipelineDescriptor | null
 
   /**
@@ -143,7 +143,6 @@ export class ComputePipelineEntry extends PipelineEntry {
 
   /**
    * Asynchronously create the compute {@link pipeline}
-   * @async
    * @returns - void promise result
    */
   async createComputePipelineAsync(): Promise<void> {
@@ -162,7 +161,6 @@ export class ComputePipelineEntry extends PipelineEntry {
 
   /**
    * Call {@link PipelineEntry#compilePipelineEntry | PipelineEntry compilePipelineEntry} method, then create our compute {@link pipeline}
-   * @async
    */
   async compilePipelineEntry(): Promise<void> {
     super.compilePipelineEntry()

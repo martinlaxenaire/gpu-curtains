@@ -83,13 +83,11 @@ export declare class EnvironmentMap {
     constructor(renderer: Renderer | GPUCurtains, params?: EnvironmentMapParams);
     /**
      * Create the {@link lutTexture | BRDF GGX LUT texture} using the provided {@link LUTTextureParams | LUT texture options} and a {@link ComputePass} that runs once.
-     * @async
      */
     computeBRDFLUTTexture(): Promise<void>;
     /**
      * Create the {@link specularTexture | specular cube map texture} from a loaded {@link HDRImageData} using the provided {@link SpecularTextureParams | specular texture options} and a {@link ComputePass} that runs once.
-     * @params parsedHdr - parsed {@link HDRImageData} loaded by the {@link hdrLoader}.
-     * @async
+     * @param parsedHdr - parsed {@link HDRImageData} loaded by the {@link hdrLoader}.
      */
     computeSpecularCubemapFromHDRData(parsedHdr: HDRImageData): Promise<void>;
     /**
@@ -99,7 +97,6 @@ export declare class EnvironmentMap {
     /**
      * Load an HDR environment map and then generates the {@link specularTexture} and {@link diffuseTexture} using two separate {@link ComputePass}.
      * @param url - The url of the .hdr file to load.
-     * @async
      */
     loadAndComputeFromHDR(url: string): Promise<void>;
     /**

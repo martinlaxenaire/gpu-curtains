@@ -25,24 +25,24 @@ export declare class ResizeManager {
      */
     constructor();
     /**
-     * Set {@link shouldWatch}
-     * @param shouldWatch - whether to watch or not
+     * Set {@link ResizeManager.shouldWatch | shouldWatch}.
+     * @param shouldWatch - whether to watch or not.
      */
     useObserver(shouldWatch?: boolean): void;
     /**
-     * Track an {@link HTMLElement} size change and execute a callback function when it happens
-     * @param entry - {@link ResizeManagerEntry | entry} to watch
+     * Track an {@link HTMLElement} size change and execute a callback function when it happens.
+     * @param entry - {@link ResizeManagerEntry | entry} to watch.
      */
     observe({ element, priority, callback }: ResizeManagerEntry): void;
     /**
-     * Unobserve an {@link HTMLElement} and remove it from our {@link entries} array
-     * @param element - {@link HTMLElement} to unobserve
+     * Unobserve an {@link HTMLElement} and remove it from our {@link entries} array.
+     * @param element - {@link HTMLElement} to unobserve.
      */
     unobserve(element: DOMElement['element'] | Element): void;
     /**
-     * Destroy our {@link ResizeManager}
+     * Destroy our {@link ResizeManager}.
      */
     destroy(): void;
 }
-/** @exports @const resizeManager - {@link ResizeManager} class object */
+/** The {@link ResizeManager} instance. */
 export declare const resizeManager: ResizeManager;

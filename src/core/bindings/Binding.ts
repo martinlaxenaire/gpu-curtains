@@ -43,7 +43,7 @@ export interface BindingParams {
 /**
  * Used as a shell to build actual bindings upon, like {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}, {@link core/bindings/WritableBufferBinding.WritableBufferBinding | WritableBufferBinding}, {@link TextureBinding} and {@link SamplerBinding}.
  *
- * Ultimately the goal of a {@link Binding} element is to provide correct resources for {@link GPUBindGroupLayoutEntry} and {@link GPUBindGroupEntry}
+ * Ultimately the goal of a {@link Binding} element is to provide correct resources for {@link GPUDevice.createBindGroupLayout().descriptor.entries | GPUBindGroupLayoutEntry} and {@link GPUDevice.createBindGroup().descriptor.entries | GPUBindGroupEntry}
  *
  * ## WGSL
  *

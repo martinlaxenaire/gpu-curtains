@@ -200,8 +200,8 @@ class RenderPass {
     });
   }
   /**
-   * Set the {@link descriptor} {@link GPULoadOp | load operation}
-   * @param loadOp - new {@link GPULoadOp | load operation} to use
+   * Set the {@link descriptor} {@link GPUCommandEncoder.beginRenderPass().loadOp | load operation}
+   * @param loadOp - new {@link GPUCommandEncoder.beginRenderPass().loadOp | load operation} to use
    * @param colorAttachmentIndex - index of the color attachment for which to use this load operation
    */
   setLoadOp(loadOp = "clear", colorAttachmentIndex = 0) {
@@ -217,8 +217,8 @@ class RenderPass {
     }
   }
   /**
-   * Set the {@link descriptor} {@link GPULoadOp | depth load operation}
-   * @param depthLoadOp - new {@link GPULoadOp | depth load operation} to use
+   * Set the {@link descriptor} {@link GPUCommandEncoder.beginRenderPass().loadOp | depth load operation}
+   * @param depthLoadOp - new {@link GPUCommandEncoder.beginRenderPass().loadOp | depth load operation} to use
    */
   setDepthLoadOp(depthLoadOp = "clear") {
     this.options.depthLoadOp = depthLoadOp;
@@ -227,9 +227,9 @@ class RenderPass {
     }
   }
   /**
-   * Set our {@link GPUColor | clear colors value}.<br>
+   * Set our {@link GPUCommandEncoder.beginRenderPass().clearValue | clear colors value}.<br>
    * Beware that if the {@link renderer} is using {@link core/renderers/GPURenderer.GPURendererContextOptions#alphaMode | premultiplied alpha mode}, your R, G and B channels should be premultiplied by your alpha channel.
-   * @param clearValue - new {@link GPUColor | clear colors value} to use
+   * @param clearValue - new {@link GPUCommandEncoder.beginRenderPass().clearValue | clear colors value} to use
    * @param colorAttachmentIndex - index of the color attachment for which to use this clear value
    */
   setClearValue(clearValue = [0, 0, 0, 0], colorAttachmentIndex = 0) {
@@ -251,7 +251,7 @@ class RenderPass {
     }
   }
   /**
-   * Set the current {@link descriptor} texture {@link GPURenderPassColorAttachment#view | view} and {@link GPURenderPassColorAttachment#resolveTarget | resolveTarget} (depending on whether we're using multisampling)
+   * Set the current {@link descriptor} texture {@link GPUCommandEncoder.beginRenderPass().view | view} and {@link GPUCommandEncoder.beginRenderPass().resolveTarget | resolveTarget} (depending on whether we're using multisampling)
    * @param renderTexture - {@link GPUTexture} to use, or the {@link core/renderers/GPURenderer.GPURenderer#context | context} {@link GPUTexture | current texture} if null.
    * @returns - the {@link GPUTexture | texture} to render to.
    */

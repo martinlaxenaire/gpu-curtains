@@ -53,9 +53,8 @@ class GPUDeviceManager {
     }
   }
   /**
-   * Set our {@link adapter} if possible.
+   * Set our {@link GPUDeviceManager.adapter | adapter} if possible.
    * The adapter represents a specific GPU. Some devices have multiple GPUs.
-   * @async
    * @param adapter - {@link GPUAdapter} to use if set.
    */
   async setAdapter(adapter = null) {
@@ -79,8 +78,7 @@ class GPUDeviceManager {
     }
   }
   /**
-   * Set our {@link device}.
-   * @async
+   * Set our {@link GPUDeviceManager.device | device}.
    * @param device - {@link GPUDevice} to use if set.
    */
   async setDevice(device = null) {
@@ -138,7 +136,6 @@ class GPUDeviceManager {
   /**
    * Called when the {@link device} should be restored.
    * Restore all our renderers.
-   * @async
    * @param parameters - {@link GPUAdapter} and/or {@link GPUDevice} to use if set.
    */
   async restoreDevice({ adapter = null, device = null } = {}) {
