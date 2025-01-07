@@ -168,7 +168,7 @@ window.addEventListener('load', async () => {
 
 ## Limitations
 
-gpu-curtains is a slowly evolving 3D engine and may lack some common features.
+gpu-curtains is a slowly evolving 3D engine but may lack some common features.
 
 If you need a more robust 3D engine that could handle complex glTF or advanced lighting, shading or rendering mechanics, then you should probably go with another library like [three.js](https://github.com/mrdoob/three.js) or [Babylon.js](https://github.com/BabylonJS).
 
