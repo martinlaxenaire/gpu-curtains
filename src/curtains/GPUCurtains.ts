@@ -141,7 +141,7 @@ export class GPUCurtains {
   }
 
   /**
-   * Set the {@link container}
+   * Set the {@link GPUCurtains.container | container}.
    * @param container - {@link HTMLElement} or string representing an {@link HTMLElement} selector to use
    */
   setContainer(container: DOMElementParams['element']) {
@@ -266,7 +266,6 @@ export class GPUCurtains {
 
   /**
    * Set the {@link GPUDeviceManager} {@link GPUDeviceManager#adapter | adapter} and {@link GPUDeviceManager#device | device} if possible, then set all created {@link Renderer} contexts.
-   * @async
    * @param parameters - {@link GPUAdapter} and/or {@link GPUDevice} to use if set.
    */
   async setDevice({ adapter = null, device = null }: GPUDeviceManagerSetupParams = {}) {
@@ -275,7 +274,6 @@ export class GPUCurtains {
 
   /**
    * Restore the {@link GPUDeviceManager#adapter | adapter} and {@link GPUDeviceManager#device | device}
-   * @async
    */
   async restoreContext() {
     await this.deviceManager.restoreDevice()

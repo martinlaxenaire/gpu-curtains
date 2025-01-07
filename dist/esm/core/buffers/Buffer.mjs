@@ -3,8 +3,8 @@ import { getBufferUsages } from './utils.mjs';
 
 class Buffer {
   /**
-   * Buffer constructor
-   * @param parameters - {@link GPUBufferDescriptor | parameters} used to create our Buffer
+   * Buffer constructors
+   * @param parameters - {@link BufferParams | parameters} used to create our Buffer
    */
   constructor({
     label = "Buffer",
@@ -32,9 +32,9 @@ class Buffer {
     this.options.size = value;
   }
   /**
-   * Create a {@link GPUBuffer} based on the descriptor stored in the {@link options | Buffer options}.
+   * Create a {@link GPUBuffer} based on the descriptor stored in the {@link Buffer.options | Buffer options}.
    * @param renderer - {@link core/renderers/GPURenderer.GPURenderer | renderer} used to create the {@link GPUBuffer}.
-   * @param options - optional way to update the {@link options} previously set before creating the {@link GPUBuffer}.
+   * @param options - optional way to update the {@link Buffer.options | Buffer options} previously set before creating the {@link GPUBuffer}.
    */
   createBuffer(renderer, options = {}) {
     const { usage, ...staticOptions } = options;
@@ -46,7 +46,7 @@ class Buffer {
     this.setBuffer(renderer.createBuffer(this));
   }
   /**
-   * Set the {@link GPUBuffer}. This allows to use a {@link Buffer} with a {@link GPUBuffer} created separately.
+   * Set the {@link Buffer.GPUBuffer | GPUBuffer}. This allows to use a {@link Buffer} with a {@link Buffer.GPUBuffer | GPUBuffer} created separately.
    * @param GPUBuffer - GPU buffer to use.
    */
   setBuffer(GPUBuffer) {
@@ -67,7 +67,6 @@ class Buffer {
   }
   /**
    * Map the {@link GPUBuffer} and put a copy of the data into a {@link Float32Array}.
-   * @async
    * @returns - {@link Float32Array} holding the {@link GPUBuffer} data.
    */
   async mapBufferAsync() {

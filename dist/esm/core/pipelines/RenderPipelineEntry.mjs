@@ -278,7 +278,6 @@ ${this.shaders.full.head}`;
   }
   /**
    * Asynchronously create the render {@link pipeline}
-   * @async
    * @returns - void promise result
    */
   async createRenderPipelineAsync() {
@@ -296,7 +295,6 @@ ${this.shaders.full.head}`;
   }
   /**
    * Call {@link PipelineEntry#compilePipelineEntry | PipelineEntry compilePipelineEntry} method, then create our render {@link pipeline}
-   * @async
    */
   async compilePipelineEntry() {
     super.compilePipelineEntry();

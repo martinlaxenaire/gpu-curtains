@@ -32,7 +32,6 @@ class GLTFLoader {
    * Load a glTF from the given url.
    * @param url - url of the glTF.
    * @returns - the {@link GPUCurtainsGLTF} created.
-   * @async
    */
   async loadFromUrl(url) {
     const i = url.lastIndexOf("/");
@@ -52,7 +51,6 @@ class GLTFLoader {
    * @param baseUrl - base url from which to get all the other assets.
    * @param binaryChunk - optional binary chunks.
    * @returns - {@link gltf} base object.
-   * @async
    */
   async loadFromJsonBase(json, baseUrl, binaryChunk = null) {
     if (!baseUrl) {
@@ -122,7 +120,6 @@ class GLTFLoader {
    * @param arrayBuffer - {@link ArrayBuffer} containing the data.
    * @param baseUrl - base url from which to get all the other assets.
    * @returns - the {@link GPUCurtainsGLTF} created.
-   * @async
    */
   async loadFromBinary(arrayBuffer, baseUrl) {
     const headerView = new DataView(arrayBuffer, 0, 12);
@@ -157,7 +154,6 @@ class GLTFLoader {
    * @param baseUrl - base url from which to get all the other assets.
    * @param binaryChunk - optional binary chunks.
    * @returns - the {@link GPUCurtainsGLTF} created.
-   * @async
    */
   async loadFromJson(json, baseUrl, binaryChunk = null) {
     this.gltf = await this.loadFromJsonBase(json, baseUrl, binaryChunk);

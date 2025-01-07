@@ -111,7 +111,7 @@ export declare class Texture {
      * @param parameters.width - source width.
      * @param parameters.height - source height.
      * @param parameters.depth - source depth.
-     * @param parameters.origin - {@link GPUOrigin3D | origin} of the source copy.
+     * @param parameters.origin - {@link GPUQueue.copyExternalImageToTexture().destination.origin | GPUOrigin3D} of the source copy.
      */
     uploadSource({ source, width, height, depth, origin, colorSpace, }: {
         source: GPUImageCopyExternalImageSource;
@@ -127,7 +127,7 @@ export declare class Texture {
      * @param parameters.width - data source width.
      * @param parameters.height - data source height.
      * @param parameters.depth - data source depth.
-     * @param parameters.origin - {@link GPUOrigin3D | origin} of the data source copy.
+     * @param parameters.origin - {@link GPUQueue.copyExternalImageToTexture().destination.origin | GPUOrigin3D} of the data source copy.
      * @param parameters.data - {@link Float32Array} data to use as source.
      */
     uploadData({ width, height, depth, origin, data, }: {

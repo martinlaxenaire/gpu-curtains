@@ -352,7 +352,7 @@ export class BufferBinding extends Binding {
   }
 
   /**
-   * Get {@link GPUBindGroupLayoutEntry#buffer | bind group layout entry resource}.
+   * Get {@link GPUDevice.createBindGroupLayout().descriptor.entries.resource | GPUBindGroupLayout entry resource}.
    * @readonly
    */
   get resourceLayout(): {
@@ -380,7 +380,7 @@ export class BufferBinding extends Binding {
   }
 
   /**
-   * Get {@link GPUBindGroupEntry#resource | bind group resource}.
+   * Get {@link GPUDevice.createBindGroup().descriptor.entries.resource | GPUBindGroup entry resource}.
    * @readonly
    */
   get resource(): {
@@ -558,8 +558,8 @@ export class BufferBinding extends Binding {
   }
 
   /**
-   * Set this {@link BufferBinding} optional {@link childrenBindings}.
-   * @param childrenBindings - Array of {@link BufferBindingChildrenBinding} to use as {@link childrenBindings}.
+   * Set this {@link BufferBinding} optional {@link BufferBinding.childrenBindings | childrenBindings}.
+   * @param childrenBindings - Array of {@link BufferBindingChildrenBinding} to use as {@link BufferBinding.childrenBindings | childrenBindings}.
    */
   setChildrenBindings(childrenBindings: BufferBindingChildrenBinding[]) {
     this.childrenBindings = []

@@ -79,7 +79,6 @@ export class GLTFLoader {
    * Load a glTF from the given url.
    * @param url - url of the glTF.
    * @returns - the {@link GPUCurtainsGLTF} created.
-   * @async
    */
   async loadFromUrl(url: string): Promise<GPUCurtainsGLTF> {
     const i = url.lastIndexOf('/')
@@ -101,7 +100,6 @@ export class GLTFLoader {
    * @param baseUrl - base url from which to get all the other assets.
    * @param binaryChunk - optional binary chunks.
    * @returns - {@link gltf} base object.
-   * @async
    */
   async loadFromJsonBase(
     json: GLTF.IGLTF,
@@ -193,7 +191,6 @@ export class GLTFLoader {
    * @param arrayBuffer - {@link ArrayBuffer} containing the data.
    * @param baseUrl - base url from which to get all the other assets.
    * @returns - the {@link GPUCurtainsGLTF} created.
-   * @async
    */
   async loadFromBinary(arrayBuffer: ArrayBuffer, baseUrl: string): Promise<GPUCurtainsGLTF> {
     const headerView = new DataView(arrayBuffer, 0, 12)
@@ -234,7 +231,6 @@ export class GLTFLoader {
    * @param baseUrl - base url from which to get all the other assets.
    * @param binaryChunk - optional binary chunks.
    * @returns - the {@link GPUCurtainsGLTF} created.
-   * @async
    */
   async loadFromJson(
     json: GLTF.IGLTF,

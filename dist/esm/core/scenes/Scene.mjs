@@ -129,7 +129,7 @@ class Scene extends Object3D {
     return mesh.material.options.rendering.useProjection ? stack.projected : stack.unProjected;
   }
   /**
-   * Order a {@link SceneStackedObject} array by using the {@link SceneStackedObject#renderOrder | renderOrder} or {@link SceneStackedObject#index | index} properties.
+   * Order a {@link SceneStackedObject} array by using the {@link core/meshes/Mesh.Mesh.renderOrder | renderOrder} or {@link core/meshes/Mesh.Mesh.index | index} properties.
    * @param stack - {@link SceneStackedObject} to sort, filled with {@link RenderedMesh} or {@link RenderBundle}.
    */
   orderStack(stack) {
@@ -140,7 +140,7 @@ class Scene extends Object3D {
   /**
    * Test whether a {@link SceneStackedObject} is a {@link RenderBundle} or not.
    * @param object - Object to test.
-   * @returns - Whether the {@link object} is a {@link RenderBundle} or not.
+   * @returns - Whether the object is a {@link RenderBundle} or not.
    */
   isStackObjectRenderBundle(object) {
     return object.type === "RenderBundle";

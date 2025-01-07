@@ -155,7 +155,7 @@ export class RenderPipelineEntry extends PipelineEntry {
   shaders: PipelineEntryShaders
   /** {@link RenderMaterialAttributes | Geometry attributes} sent to the {@link RenderPipelineEntry} */
   attributes: RenderMaterialAttributes
-  /** {@link GPURenderPipelineDescriptor | Render pipeline descriptor} based on {@link layout} and {@link shaders} */
+  /** {@link GPUDevice.createRenderPipeline().descriptor | GPURenderPipelineDescriptor} based on {@link layout} and {@link shaders} */
   descriptor: GPURenderPipelineDescriptor | null
   /** Options used to create this {@link RenderPipelineEntry} */
   options: RenderPipelineEntryOptions
@@ -479,7 +479,6 @@ export class RenderPipelineEntry extends PipelineEntry {
 
   /**
    * Asynchronously create the render {@link pipeline}
-   * @async
    * @returns - void promise result
    */
   async createRenderPipelineAsync(): Promise<void> {
@@ -498,7 +497,6 @@ export class RenderPipelineEntry extends PipelineEntry {
 
   /**
    * Call {@link PipelineEntry#compilePipelineEntry | PipelineEntry compilePipelineEntry} method, then create our render {@link pipeline}
-   * @async
    */
   async compilePipelineEntry(): Promise<void> {
     super.compilePipelineEntry()

@@ -55,7 +55,7 @@ export interface GPURendererParams {
     useDepth: RenderPassParams['useDepth']
     /** The {@link GPURenderer#renderPass | renderer RenderPass} sample count (i.e. whether it should use multisampled antialiasing). Default to `4` */
     sampleCount: RenderPassParams['sampleCount']
-    /** The {@link GPUColor | color values} to clear to before drawing the {@link GPURenderer#renderPass | renderer RenderPass}. Default to `[0, 0, 0, 0]` */
+    /** The {@link GPUCommandEncoder.beginRenderPass().clearValue | color values} to clear to before drawing the {@link GPURenderer#renderPass | renderer RenderPass}. Default to `[0, 0, 0, 0]` */
     clearValue: GPUColor
   }
 }
@@ -316,7 +316,7 @@ export class GPURenderer {
   }
 
   /**
-   * Set the renderer {@link pixelRatio | pixel ratio} and {@link resize} it
+   * Set the renderer {@link GPURenderer.pixelRatio | pixel ratio} and {@link resize} it
    * @param pixelRatio - new pixel ratio to use
    */
   setPixelRatio(pixelRatio: number = 1) {
@@ -512,7 +512,6 @@ export class GPURenderer {
   /**
    * Called when the {@link GPUDeviceManager#device | device} should be restored.
    * Configure the context again, resize the {@link RenderTarget | render targets} and {@link Texture | textures}, restore our {@link renderedObjects | rendered objects} context.
-   * @async
    */
   restoreContext() {
     this.configureContext()
@@ -567,9 +566,9 @@ export class GPURenderer {
   /* BUFFERS & BINDINGS */
 
   /**
-   * Create a {@link GPUBuffer}
+   * Create a {@link !GPUBuffer}
    * @param buffer - {@link Buffer} to use for buffer creation
-   * @returns - newly created {@link GPUBuffer}
+   * @returns - newly created {@link !GPUBuffer}
    */
   createBuffer(buffer: Buffer): GPUBuffer {
     const GPUBuffer = this.deviceManager.device?.createBuffer(buffer.options)
@@ -588,8 +587,8 @@ export class GPURenderer {
   /**
    * Write to a {@link GPUBuffer}
    * @param buffer - {@link GPUBuffer} to write to
-   * @param bufferOffset - {@link GPUSize64 | buffer offset}
-   * @param data - {@link BufferSource | data} to write
+   * @param bufferOffset - {@link GPUQueue.writeBuffer().bufferOffset | buffer offset}
+   * @param data - {@link GPUQueue.writeBuffer().data | data} to write
    */
   queueWriteBuffer(buffer: GPUBuffer, bufferOffset: GPUSize64, data: BufferSource) {
     this.deviceManager.device?.queue.writeBuffer(buffer, bufferOffset, data)
@@ -695,7 +694,7 @@ export class GPURenderer {
 
   /**
    * Create a {@link GPUBindGroupLayout}
-   * @param bindGroupLayoutDescriptor - {@link GPUBindGroupLayoutDescriptor | GPU bind group layout descriptor}
+   * @param bindGroupLayoutDescriptor - {@link GPUDevice.createBindGroupLayout().descriptor | GPUBindGroupLayoutDescriptor}
    * @returns - newly created {@link GPUBindGroupLayout}
    */
   createBindGroupLayout(bindGroupLayoutDescriptor: GPUBindGroupLayoutDescriptor): GPUBindGroupLayout {
@@ -704,7 +703,7 @@ export class GPURenderer {
 
   /**
    * Create a {@link GPUBindGroup}
-   * @param bindGroupDescriptor - {@link GPUBindGroupDescriptor | GPU bind group descriptor}
+   * @param bindGroupDescriptor - {@link GPUDevice.createBindGroup().descriptor | GPUBindGroupDescriptor}
    * @returns - newly created {@link GPUBindGroup}
    */
   createBindGroup(bindGroupDescriptor: GPUBindGroupDescriptor): GPUBindGroup {
@@ -715,7 +714,7 @@ export class GPURenderer {
 
   /**
    * Create a {@link GPUShaderModule}
-   * @param shaderModuleDescriptor - {@link shaderModuleDescriptor | shader module descriptor}
+   * @param shaderModuleDescriptor - {@link GPUDevice.createShaderModule().descriptor | GPUShaderModuleDescriptor}
    * @returns - newly created {@link GPUShaderModule}
    */
   createShaderModule(shaderModuleDescriptor: GPUShaderModuleDescriptor): GPUShaderModule {
@@ -724,7 +723,7 @@ export class GPURenderer {
 
   /**
    * Create a {@link GPUPipelineLayout}
-   * @param pipelineLayoutDescriptor - {@link GPUPipelineLayoutDescriptor | GPU pipeline layout descriptor}
+   * @param pipelineLayoutDescriptor - {@link GPUDevice.createPipelineLayout().descriptor | GPUPipelineLayoutDescriptor}
    * @returns - newly created {@link GPUPipelineLayout}
    */
   createPipelineLayout(pipelineLayoutDescriptor: GPUPipelineLayoutDescriptor): GPUPipelineLayout {
@@ -733,7 +732,7 @@ export class GPURenderer {
 
   /**
    * Create a {@link GPURenderPipeline}
-   * @param pipelineDescriptor - {@link GPURenderPipelineDescriptor | GPU render pipeline descriptor}
+   * @param pipelineDescriptor - {@link GPUDevice.createRenderPipeline().descriptor | GPURenderPipelineDescriptor}
    * @returns - newly created {@link GPURenderPipeline}
    */
   createRenderPipeline(pipelineDescriptor: GPURenderPipelineDescriptor): GPURenderPipeline {
@@ -742,8 +741,7 @@ export class GPURenderer {
 
   /**
    * Asynchronously create a {@link GPURenderPipeline}
-   * @async
-   * @param pipelineDescriptor - {@link GPURenderPipelineDescriptor | GPU render pipeline descriptor}
+   * @param pipelineDescriptor - {@link GPUDevice.createRenderPipeline().descriptor | GPURenderPipelineDescriptor}
    * @returns - newly created {@link GPURenderPipeline}
    */
   async createRenderPipelineAsync(pipelineDescriptor: GPURenderPipelineDescriptor): Promise<GPURenderPipeline> {
@@ -752,7 +750,7 @@ export class GPURenderer {
 
   /**
    * Create a {@link GPUComputePipeline}
-   * @param pipelineDescriptor - {@link GPUComputePipelineDescriptor | GPU compute pipeline descriptor}
+   * @param pipelineDescriptor - {@link GPUDevice.createComputePipeline().descriptor | GPUComputePipelineDescriptor}
    * @returns - newly created {@link GPUComputePipeline}
    */
   createComputePipeline(pipelineDescriptor: GPUComputePipelineDescriptor): GPUComputePipeline {
@@ -761,8 +759,7 @@ export class GPURenderer {
 
   /**
    * Asynchronously create a {@link GPUComputePipeline}
-   * @async
-   * @param pipelineDescriptor - {@link GPUComputePipelineDescriptor | GPU compute pipeline descriptor}
+   * @param pipelineDescriptor - {@link GPUDevice.createComputePipeline().descriptor | GPUComputePipelineDescriptor}
    * @returns - newly created {@link GPUComputePipeline}
    */
   async createComputePipelineAsync(pipelineDescriptor: GPUComputePipelineDescriptor): Promise<GPUComputePipeline> {
@@ -813,7 +810,7 @@ export class GPURenderer {
 
   /**
    * Create a {@link GPUTexture}
-   * @param textureDescriptor - {@link GPUTextureDescriptor | GPU texture descriptor}
+   * @param textureDescriptor - {@link GPUDevice.createTexture().descriptor | GPUTextureDescriptor}
    * @returns - newly created {@link GPUTexture}
    */
   createTexture(textureDescriptor: GPUTextureDescriptor): GPUTexture {

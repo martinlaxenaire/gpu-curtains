@@ -27,7 +27,7 @@ export class TestPingPong {
 
   async init() {
     const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
-    const { PingPongPlane, Plane, Texture, Sampler, Vec2, logSceneCommands } = await import(/* @vite-ignore */ path)
+    const { PingPongPlane, Plane, Texture, Sampler, Vec2 } = await import(/* @vite-ignore */ path)
 
     this.mouse = new Vec2()
     this.velocity = new Vec2()
@@ -240,7 +240,6 @@ export class TestPingPong {
       ],
     })
     console.log('TEST PING PONG init', this.gpuCurtains.deviceManager)
-    logSceneCommands(this.gpuCurtains.renderer)
   }
 
   destroy() {

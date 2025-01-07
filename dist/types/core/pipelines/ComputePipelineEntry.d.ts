@@ -16,7 +16,7 @@ import { PipelineEntryParams, PipelineEntryShaders } from '../../types/PipelineE
 export declare class ComputePipelineEntry extends PipelineEntry {
     /** Shaders to use with this {@link ComputePipelineEntry} */
     shaders: PipelineEntryShaders;
-    /** {@link GPUComputePipelineDescriptor | Compute pipeline descriptor} based on {@link layout} and {@link shaders} */
+    /** {@link GPUDevice.createComputePipeline().descriptor | GPUComputePipelineDescriptor} based on {@link layout} and {@link shaders} */
     descriptor: GPUComputePipelineDescriptor | null;
     /**
      * ComputePipelineEntry constructor
@@ -41,13 +41,11 @@ export declare class ComputePipelineEntry extends PipelineEntry {
     createComputePipeline(): void;
     /**
      * Asynchronously create the compute {@link pipeline}
-     * @async
      * @returns - void promise result
      */
     createComputePipelineAsync(): Promise<void>;
     /**
      * Call {@link PipelineEntry#compilePipelineEntry | PipelineEntry compilePipelineEntry} method, then create our compute {@link pipeline}
-     * @async
      */
     compilePipelineEntry(): Promise<void>;
 }

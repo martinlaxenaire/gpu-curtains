@@ -32,5 +32,5 @@ export declare class CacheManager {
      */
     destroy(): void;
 }
-/** @exports @const cacheManager - {@link CacheManager} class object */
+/** The {@link CacheManager} instance. */
 export declare const cacheManager: CacheManager;

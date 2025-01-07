@@ -27,7 +27,7 @@ export interface MeshBaseRenderParams extends Omit<RenderMaterialParams, 'target
     outputTarget?: RenderTarget;
     /** Parameters used by this Mesh to create a {@link DOMTexture}. */
     texturesOptions?: ExternalTextureParams;
-    /** Optional {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createRenderPipeline#targets | targets} properties. */
+    /** Optional {@link GPUDevice.createRenderPipeline().targets | targets} properties. */
     targets?: Partial<GPUColorTargetState>[];
     /** Optional {@link RenderBundle} into which this Mesh should be added. */
     renderBundle?: RenderBundle;
@@ -325,15 +325,14 @@ export declare class MeshBaseClass {
 }
 /**
  * Constructor function, that creates a new instance of the given type.
- * @constructor
  * @template T - the base constructor
  * @param args - The arguments passed to the constructor.
  * @returns - An instance of the mixin.
+ * @ignore
  */
 export type MixinConstructor<T = {}> = new (...args: any[]) => T;
 /**
  * Used to mix the basic Mesh properties and methods defined in {@link MeshBaseClass} (basically, set a {@link Geometry} and a {@link RenderMaterial} and render them, add helpers to create {@link DOMTexture} and {@link Texture}) with a given Base of type {@link core/objects3D/Object3D.Object3D | Object3D}, {@link core/objects3D/ProjectedObject3D.ProjectedObject3D | ProjectedObject3D}, {@link curtains/objects3D/DOMObject3D.DOMObject3D | DOMObject3D} or an empty class.
- * @exports MeshBaseMixin
  * @param Base - the class to mix onto
  * @returns - the mixed classes, creating a basic Mesh.
  */

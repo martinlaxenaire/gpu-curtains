@@ -74,7 +74,7 @@ export declare class GPUCurtains {
      */
     constructor({ container, label, pixelRatio, context, production, adapterOptions, renderPass, camera, lights, autoRender, autoResize, watchScroll, }?: GPUCurtainsParams);
     /**
-     * Set the {@link container}
+     * Set the {@link GPUCurtains.container | container}.
      * @param container - {@link HTMLElement} or string representing an {@link HTMLElement} selector to use
      */
     setContainer(container: DOMElementParams['element']): void;
@@ -118,13 +118,11 @@ export declare class GPUCurtains {
     get renderer(): Renderer | undefined;
     /**
      * Set the {@link GPUDeviceManager} {@link GPUDeviceManager#adapter | adapter} and {@link GPUDeviceManager#device | device} if possible, then set all created {@link Renderer} contexts.
-     * @async
      * @param parameters - {@link GPUAdapter} and/or {@link GPUDevice} to use if set.
      */
     setDevice({ adapter, device }?: GPUDeviceManagerSetupParams): Promise<void>;
     /**
      * Restore the {@link GPUDeviceManager#adapter | adapter} and {@link GPUDeviceManager#device | device}
-     * @async
      */
     restoreContext(): Promise<void>;
     /**

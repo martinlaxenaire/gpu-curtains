@@ -182,8 +182,8 @@ class OrbitControls {
     this.useCamera(camera);
   }
   /**
-   * Allow to set or reset this {@link OrbitControls#camera | OrbitControls camera}.
-   * @param camera - New {@link camera} to use.
+   * Allow to set or reset this {@link OrbitControls.camera | OrbitControls camera}.
+   * @param camera - New {@link OrbitControls.camera | camera} to use.
    */
   useCamera(camera) {
     this.camera = camera;

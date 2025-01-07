@@ -15,7 +15,6 @@ import {
   Vec3,
   Mat4,
   Texture,
-  logSceneCommands,
 } from '../../dist/esm/index.mjs'
 
 // Screen Space Ambient Occlusion
@@ -824,7 +823,4 @@ window.addEventListener('load', async () => {
     toggleSSAOButton.classList.toggle('active')
     ssaoPass.uniforms.params.displaySSAOResult.value = ssaoPass.uniforms.params.displaySSAOResult.value === 0 ? 1 : 0
   })
-
-  // log the scene commands for a better understanding of what's going on
-  logSceneCommands(gpuCameraRenderer)
 })

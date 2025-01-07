@@ -110,44 +110,44 @@ export declare class Camera extends Object3D {
      */
     updateMatrixStack(): void;
     /**
-     * Get the {@link Camera} {@link fov | field of view}
+     * Get the {@link Camera} {@link Camera.fov | field of view}
      */
     get fov(): number;
     /**
-     * Set the {@link Camera} {@link fov | field of view}. Update the {@link projectionMatrix} only if the field of view actually changed
+     * Set the {@link Camera} {@link Camera.fov | field of view}. Update the {@link projectionMatrix} only if the field of view actually changed
      * @param fov - new field of view
      */
     set fov(fov: number);
     /**
-     * Get the {@link Camera} {@link near} plane value.
+     * Get the {@link Camera} {@link Camera.near | near} plane value.
      */
     get near(): number;
     /**
-     * Set the {@link Camera} {@link near} plane value. Update the {@link projectionMatrix} only if the near plane actually changed
+     * Set the {@link Camera} {@link Camera.near | near} plane value. Update the {@link projectionMatrix} only if the near plane actually changed
      * @param near - new near plane value
      */
     set near(near: number);
     /**
-     * Get / set the {@link Camera} {@link far} plane value.
+     * Get the {@link Camera} {@link Camera.far | far} plane value.
      */
     get far(): number;
     /**
-     * Set the {@link Camera} {@link far} plane value. Update {@link projectionMatrix} only if the far plane actually changed
+     * Set the {@link Camera} {@link Camera.far | far} plane value. Update {@link projectionMatrix} only if the far plane actually changed
      * @param far - new far plane value
      */
     set far(far: number);
     /**
-     * Get the {@link Camera} {@link pixelRatio} value.
+     * Get the {@link Camera} {@link Camera.pixelRatio | pixelRatio} value.
      */
     get pixelRatio(): number;
     /**
-     * Set the {@link Camera} {@link pixelRatio} value. Update the {@link CSSPerspective} only if the pixel ratio actually changed
+     * Set the {@link Camera} {@link Camera.pixelRatio | pixelRatio} value. Update the {@link CSSPerspective} only if the pixel ratio actually changed
      * @param pixelRatio - new pixel ratio value
      */
     set pixelRatio(pixelRatio: number);
     /**
-     * Set the {@link Camera} {@link width} and {@link height}. Update the {@link projectionMatrix} only if the width or height actually changed
-     * @param size - {@link width} and {@link height} values to use
+     * Set the {@link Camera} {@link RectSize.width | width} and {@link RectSize.height | height}. Update the {@link projectionMatrix} only if the width or height actually changed
+     * @param size - width and height values to use
      */
     setSize({ width, height }: RectSize): void;
     /**

@@ -66,4 +66,3 @@ export { GLTFScenesManager } from './extras/gltf/GLTFScenesManager.mjs';
 export { buildShaders } from './extras/gltf/utils.mjs';
 export { GLTFLoader } from './extras/loaders/GLTFLoader.mjs';
 export { HDRLoader } from './extras/loaders/HDRLoader.mjs';
-export { logSceneCommands } from './utils/debug.mjs';

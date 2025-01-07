@@ -7,9 +7,7 @@ export class TestComputePasses {
 
   async init() {
     const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
-    const { BindGroup, BufferBinding, ComputePass, Mesh, SphereGeometry, Vec2, logSceneCommands } = await import(
-      /* @vite-ignore */ path
-    )
+    const { BindGroup, BufferBinding, ComputePass, Mesh, SphereGeometry, Vec2 } = await import(/* @vite-ignore */ path)
 
     // number of particles instances
     this.numParticles = 2500
@@ -350,8 +348,6 @@ export class TestComputePasses {
       })
 
     console.log('TEST COMPUTE init', this.gpuCurtains.renderer)
-
-    logSceneCommands(this.gpuCurtains.renderer)
   }
 
   destroy() {

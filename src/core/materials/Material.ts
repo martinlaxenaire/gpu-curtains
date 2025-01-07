@@ -124,7 +124,7 @@ export class Material {
   }
 
   /**
-   * Set or reset this {@link Material} {@link renderer}.
+   * Set or reset this {@link Material} {@link Material.renderer | renderer}.
    * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
    */
   setRenderer(renderer: Renderer | GPUCurtains) {
@@ -626,7 +626,6 @@ export class Material {
   /**
    * Map a {@link Buffer#GPUBuffer | Buffer's GPU buffer} and put a copy of the data into a {@link Float32Array}
    * @param buffer - {@link Buffer} to use for mapping
-   * @async
    * @returns - {@link Float32Array} holding the {@link GPUBuffer} data
    */
   async getBufferResult(buffer: Buffer): Promise<Float32Array> {
@@ -636,7 +635,6 @@ export class Material {
   /**
    * Map the content of a {@link BufferBinding} {@link Buffer#GPUBuffer | GPU buffer} and put a copy of the data into a {@link Float32Array}
    * @param bindingName - The name of the {@link inputsBindings | input bindings} from which to map the {@link Buffer#GPUBuffer | GPU buffer}
-   * @async
    * @returns - {@link Float32Array} holding the {@link GPUBuffer} data
    */
   async getBufferBindingResultByBindingName(bindingName: Binding['name'] = ''): Promise<Float32Array> {

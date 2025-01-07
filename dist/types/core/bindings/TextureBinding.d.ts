@@ -40,7 +40,7 @@ export declare class TextureBinding extends Binding {
      */
     constructor({ label, name, bindingType, visibility, texture, format, access, viewDimension, multisampled, }: TextureBindingParams);
     /**
-     * Get bind group layout entry resource, either for {@link GPUBindGroupLayoutEntry#texture | texture} or {@link GPUBindGroupLayoutEntry#externalTexture | external texture}
+     * Get bind group layout entry resource, either for {@link GPUDevice.createBindGroupLayout().texture | GPUBindGroupLayout entry texture resource}, {@link GPUDevice.createBindGroupLayout().storageTexture | GPUBindGroupLayout entry storageTexture resource} or {@link GPUDevice.createBindGroupLayout().externalTexture | GPUBindGroupLayout entry externalTexture resource}.
      * @readonly
      */
     get resourceLayout(): GPUTextureBindingLayout | GPUExternalTextureBindingLayout | GPUStorageTextureBindingLayout | null;
@@ -50,11 +50,11 @@ export declare class TextureBinding extends Binding {
      */
     get resourceLayoutCacheKey(): string;
     /**
-     * Get the {@link GPUBindGroupEntry#resource | bind group resource}
+     * Get the {@link GPUDevice.createBindGroup().entries.resource | GPUBindGroup entry resource}.
      */
     get resource(): GPUExternalTexture | GPUTextureView | null;
     /**
-     * Set the {@link GPUBindGroupEntry#resource | bind group resource}
+     * Set the {@link GPUDevice.createBindGroup().entries.resource | GPUBindGroup entry resource}.
      * @param value - new bind group resource
      */
     set resource(value: TextureBindingResource);

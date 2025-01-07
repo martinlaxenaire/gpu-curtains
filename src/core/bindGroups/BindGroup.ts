@@ -30,8 +30,8 @@ import { BufferUsageKeys } from '../buffers/utils'
  *
  * ### Updating a GPUBindGroup or GPUBindGroupLayout
  *
- * Each time one of the {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createBindGroup#resource | binding resource} changes, its {@link BindGroup#bindGroup | bindGroup} will be recreated (usually, when a {@link GPUTexture} is uploaded).<br>
- * Each time one of the {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createBindGroupLayout#resource_layout_objects | binding resource layout} changes, its {@link BindGroup#bindGroupLayout | bindGroupLayout} and {@link BindGroup#bindGroup | bindGroup} will be recreated, and the {@link GPUComputePipeline} or {@link GPURenderPipeline} will be recreated as well.
+ * Each time one of the {@link GPUDevice.createBindGroup().resource | binding resource} changes, its {@link BindGroup#bindGroup | bindGroup} will be recreated (usually, when a {@link GPUTexture} is uploaded).<br>
+ * Each time one of the {@link GPUDevice.createBindGroupLayout().resource_layout_objects | binding resource layout} changes, its {@link BindGroup#bindGroupLayout | bindGroupLayout} and {@link BindGroup#bindGroup | bindGroup} will be recreated, and the {@link GPUComputePipeline} or {@link GPURenderPipeline} will be recreated as well.
  *
  * @example
  * ```javascript
@@ -593,12 +593,12 @@ export class BindGroup {
   }
 
   /**
-   * Clones a {@link BindGroup} from a list of {@link bindings}
-   * Useful to create a new bind group with already created buffers, but swapped
-   * @param parameters - parameters to use for cloning
-   * @param parameters.bindings - our input {@link bindings}
-   * @param [parameters.keepLayout=false] - whether we should keep original {@link bindGroupLayout} or not
-   * @returns - the cloned {@link BindGroup}
+   * Clones a {@link BindGroup} from a list of {@link BindGroup.bindings | bindings}.
+   * Useful to create a new bind group with already created buffers, but swapped.
+   * @param parameters - parameters to use for cloning.
+   * @param parameters.bindings - our input {@link BindGroup.bindings | bindings}.
+   * @param [parameters.keepLayout=false] - whether we should keep original {@link bindGroupLayout} or not.
+   * @returns - the cloned {@link BindGroup}.
    */
   clone({
     bindings = [],

@@ -49,5 +49,5 @@ export class CacheManager {
   }
 }
 
-/** @exports @const cacheManager - {@link CacheManager} class object */
+/** The {@link CacheManager} instance. */
 export const cacheManager = new CacheManager() as CacheManager
