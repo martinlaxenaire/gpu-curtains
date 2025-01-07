@@ -155,19 +155,7 @@ class Scene extends Object3D {
     const isTransparent = !!mesh.transparent;
     const { useProjection } = mesh.material.options.rendering;
     if (mesh.renderBundle) {
-      const { renderBundle } = mesh;
-      renderBundle.addMesh(mesh, mesh.outputTarget ? mesh.outputTarget.renderPass : this.renderer.renderPass);
-      if (mesh.renderBundle) {
-        if (renderBundle.meshes.size === 1) {
-          if (renderBundle.transparent === null) {
-            renderBundle.transparent = isTransparent;
-          }
-          if (renderBundle.useProjection === null) {
-            renderBundle.useProjection = useProjection;
-          }
-          this.addRenderBundle(renderBundle, projectionStack);
-        }
-      }
+      mesh.renderBundle.addMesh(mesh, mesh.outputTarget ? mesh.outputTarget.renderPass : this.renderer.renderPass);
     }
     if (!mesh.renderBundle) {
       const similarMeshes = isTransparent ? projectionStack.transparent : projectionStack.opaque;
@@ -274,21 +262,14 @@ class Scene extends Object3D {
       // explicitly set to null
     };
     if (shaderPass.renderBundle) {
-      const isTransparent = !!shaderPass.transparent;
       const { renderBundle } = shaderPass;
-      if (renderBundle.meshes.size < 1) {
-        renderBundle.addMesh(shaderPass, outputPass);
-        renderBundle.size = 1;
-      } else {
+      if (renderBundle.meshes.size >= 1) {
         throwWarning(
           `${renderBundle.options.label} (${renderBundle.type}): Cannot add more than 1 ShaderPass to a render bundle. This ShaderPass will not be added: ${shaderPass.options.label}`
         );
         shaderPass.renderBundle = null;
-      }
-      if (shaderPass.renderBundle) {
-        shaderPass.renderBundle.renderOrder = shaderPass.renderOrder;
-        renderBundle.transparent = isTransparent;
-        renderBundle.useProjection = false;
+      } else {
+        renderBundle.addMesh(shaderPass, outputPass);
       }
     }
     this.renderPassEntries.screen.push(shaderPassEntry);
@@ -349,21 +330,14 @@ class Scene extends Object3D {
       // explicitly set to null
     });
     if (pingPongPlane.renderBundle) {
-      const isTransparent = !!pingPongPlane.transparent;
       const { renderBundle } = pingPongPlane;
-      if (renderBundle.meshes.size < 1) {
-        renderBundle.addMesh(pingPongPlane, pingPongPlane.outputTarget.renderPass);
-        renderBundle.size = 1;
-      } else {
+      if (renderBundle.meshes.size >= 1) {
         throwWarning(
           `${renderBundle.options.label} (${renderBundle.type}): Cannot add more than 1 PingPongPlane to a render bundle. This PingPongPlane will not be added: ${pingPongPlane.options.label}`
         );
         pingPongPlane.renderBundle = null;
-      }
-      if (pingPongPlane.renderBundle) {
-        pingPongPlane.renderBundle.renderOrder = pingPongPlane.renderOrder;
-        renderBundle.transparent = isTransparent;
-        renderBundle.useProjection = false;
+      } else {
+        renderBundle.addMesh(pingPongPlane, pingPongPlane.outputTarget.renderPass);
       }
     }
     this.renderPassEntries.pingPong.sort((a, b) => a.element.renderOrder - b.element.renderOrder);

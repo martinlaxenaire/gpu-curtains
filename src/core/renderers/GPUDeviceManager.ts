@@ -7,6 +7,7 @@ import { DOMTexture } from '../textures/DOMTexture'
 import { AllowedBindGroups } from '../../types/BindGroups'
 import { Buffer } from '../buffers/Buffer'
 import { BufferBinding } from '../bindings/BufferBinding'
+import { IndirectBuffer } from '../../extras/buffers/IndirectBuffer'
 
 /**
  * Base parameters used to create a {@link GPUDeviceManager}
@@ -76,6 +77,8 @@ export class GPUDeviceManager {
   bindGroups: Map<string, AllowedBindGroups>
   /** An array containing all our created {@link GPUBuffer} */
   buffers: Map<string, Buffer>
+  /** A {@link Map} containing all our created {@link IndirectBuffer} */
+  indirectBuffers: Map<IndirectBuffer['uuid'], IndirectBuffer>
 
   /** A Map containing all our created {@link GPUBindGroupLayout} indexed by cache keys */
   bindGroupLayouts: Map<string, GPUBindGroupLayout>
@@ -278,6 +281,9 @@ export class GPUDeviceManager {
         })
       })
 
+      // recreate indirect buffers
+      this.indirectBuffers.forEach((indirectBuffer) => indirectBuffer.create())
+
       // then the renderers
       this.renderers.forEach((renderer) => renderer.restoreContext())
     }
@@ -291,6 +297,7 @@ export class GPUDeviceManager {
     this.renderers = []
     this.bindGroups = new Map()
     this.buffers = new Map()
+    this.indirectBuffers = new Map()
     this.bindGroupLayouts = new Map()
     this.bufferBindings = new Map()
     this.samplers = []
@@ -482,6 +489,8 @@ export class GPUDeviceManager {
     // now clear everything that could have been left behind
     this.bindGroups.forEach((bindGroup) => bindGroup.destroy())
     this.buffers.forEach((buffer) => buffer?.destroy())
+    // destroy indirect buffers
+    this.indirectBuffers.forEach((indirectBuffer) => indirectBuffer.destroy())
 
     this.domTextures.forEach((texture) => texture.destroy())
 

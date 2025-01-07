@@ -259,26 +259,7 @@ export class Scene extends Object3D {
     const { useProjection } = mesh.material.options.rendering
 
     if (mesh.renderBundle) {
-      const { renderBundle } = mesh
-
-      renderBundle.addMesh(mesh, mesh.outputTarget ? mesh.outputTarget.renderPass : this.renderer.renderPass)
-
-      if (mesh.renderBundle) {
-        // first mesh of the render bundle?
-        // add the render bundle to the correct stack
-        if (renderBundle.meshes.size === 1) {
-          if (renderBundle.transparent === null) {
-            renderBundle.transparent = isTransparent
-          }
-
-          // TODO is this really needed?
-          if (renderBundle.useProjection === null) {
-            renderBundle.useProjection = useProjection
-          }
-
-          this.addRenderBundle(renderBundle, projectionStack)
-        }
-      }
+      mesh.renderBundle.addMesh(mesh, mesh.outputTarget ? mesh.outputTarget.renderPass : this.renderer.renderPass)
     }
 
     if (!mesh.renderBundle) {
@@ -421,27 +402,16 @@ export class Scene extends Object3D {
     }
 
     if (shaderPass.renderBundle) {
-      const isTransparent = !!shaderPass.transparent
       const { renderBundle } = shaderPass
 
-      if (renderBundle.meshes.size < 1) {
-        renderBundle.addMesh(shaderPass, outputPass)
-        // force render bundle size to 1
-        renderBundle.size = 1
-      } else {
+      if (renderBundle.meshes.size >= 1) {
         throwWarning(
           `${renderBundle.options.label} (${renderBundle.type}): Cannot add more than 1 ShaderPass to a render bundle. This ShaderPass will not be added: ${shaderPass.options.label}`
         )
 
         shaderPass.renderBundle = null
-      }
-
-      if (shaderPass.renderBundle) {
-        // add the render bundle to the correct stack
-        shaderPass.renderBundle.renderOrder = shaderPass.renderOrder
-        renderBundle.transparent = isTransparent
-
-        renderBundle.useProjection = false
+      } else {
+        renderBundle.addMesh(shaderPass, outputPass)
       }
     }
 
@@ -513,27 +483,16 @@ export class Scene extends Object3D {
     } as RenderPassEntry)
 
     if (pingPongPlane.renderBundle) {
-      const isTransparent = !!pingPongPlane.transparent
       const { renderBundle } = pingPongPlane
 
-      if (renderBundle.meshes.size < 1) {
-        renderBundle.addMesh(pingPongPlane, pingPongPlane.outputTarget.renderPass)
-        // force render bundle size to 1
-        renderBundle.size = 1
-      } else {
+      if (renderBundle.meshes.size >= 1) {
         throwWarning(
           `${renderBundle.options.label} (${renderBundle.type}): Cannot add more than 1 PingPongPlane to a render bundle. This PingPongPlane will not be added: ${pingPongPlane.options.label}`
         )
 
         pingPongPlane.renderBundle = null
-      }
-
-      if (pingPongPlane.renderBundle) {
-        // add the render bundle to the correct stack
-        pingPongPlane.renderBundle.renderOrder = pingPongPlane.renderOrder
-        renderBundle.transparent = isTransparent
-
-        renderBundle.useProjection = false
+      } else {
+        renderBundle.addMesh(pingPongPlane, pingPongPlane.outputTarget.renderPass)
       }
     }
 

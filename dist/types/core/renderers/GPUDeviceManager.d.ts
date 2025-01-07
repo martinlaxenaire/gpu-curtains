@@ -7,6 +7,7 @@ import { DOMTexture } from '../textures/DOMTexture';
 import { AllowedBindGroups } from '../../types/BindGroups';
 import { Buffer } from '../buffers/Buffer';
 import { BufferBinding } from '../bindings/BufferBinding';
+import { IndirectBuffer } from '../../extras/buffers/IndirectBuffer';
 /**
  * Base parameters used to create a {@link GPUDeviceManager}
  */
@@ -68,6 +69,8 @@ export declare class GPUDeviceManager {
     bindGroups: Map<string, AllowedBindGroups>;
     /** An array containing all our created {@link GPUBuffer} */
     buffers: Map<string, Buffer>;
+    /** A {@link Map} containing all our created {@link IndirectBuffer} */
+    indirectBuffers: Map<IndirectBuffer['uuid'], IndirectBuffer>;
     /** A Map containing all our created {@link GPUBindGroupLayout} indexed by cache keys */
     bindGroupLayouts: Map<string, GPUBindGroupLayout>;
     /** A Map containing all our created {@link BufferBinding} indexed by cache keys */

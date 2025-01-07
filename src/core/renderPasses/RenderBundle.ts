@@ -132,14 +132,10 @@ export class RenderBundle {
 
     renderer = isRenderer(renderer, this.type)
 
-    this.renderer = renderer
-
     this.uuid = generateUUID()
 
     Object.defineProperty(this as RenderBundle, 'index', { value: bundleIndex++ })
     this.renderOrder = renderOrder
-
-    this.renderer.renderBundles.set(this.uuid, this)
 
     this.transparent = transparent
     this.visible = visible
@@ -163,6 +159,8 @@ export class RenderBundle {
     this.binding = null
     this.indirectBuffer = null
 
+    this.setRenderer(renderer)
+
     if (this.options.useIndirectDraw) {
       this.indirectBuffer = new IndirectBuffer(this.renderer)
     }
@@ -182,6 +180,67 @@ export class RenderBundle {
         }
       }
     }
+  }
+
+  /**
+   * Set the {@link RenderBundle} {@link RenderBundle.renderer | renderer} and eventually remove/add to the {@link core/scenes/Scene.Scene | Scene}.
+   * @param renderer - new {@link Renderer} to use.
+   */
+  setRenderer(renderer: Renderer) {
+    if (this.renderer) {
+      this.removeFromScene()
+      this.renderer.renderBundles.delete(this.uuid)
+    }
+
+    this.renderer = renderer
+    this.renderer.renderBundles.set(this.uuid, this)
+
+    if (this.meshes.size >= 1) {
+      this.addToScene()
+    }
+  }
+
+  /**
+   * Add our {@link RenderBundle} to the {@link core/scenes/Scene.Scene | Scene}.
+   * Once we have at least one mesh in our {@link meshes} Map, we can add the {@link RenderBundle} to the {@link core/scenes/Scene.Scene | Scene} at the right place.
+   */
+  addToScene() {
+    const firstEntry = this.meshes.entries().next()
+
+    if (firstEntry && firstEntry.value && firstEntry.value.length && firstEntry.value[1]) {
+      const mesh = firstEntry.value[1]
+
+      // first mesh of the render bundle?
+      const isTransparent = !!mesh.transparent
+
+      if (this.transparent === null) {
+        this.transparent = isTransparent
+      }
+
+      if (mesh.constructor.name !== 'ShaderPass' && mesh.constructor.name !== 'PingPongPlane') {
+        const { useProjection } = mesh.material.options.rendering
+
+        if (this.useProjection === null) {
+          this.useProjection = useProjection
+        }
+
+        // add the render bundle to the correct stack
+        const projectionStack = this.renderer.scene.getMeshProjectionStack(mesh)
+        this.renderer.scene.addRenderBundle(this, projectionStack)
+      } else {
+        // force render bundle size to 1
+        this.size = 1
+        mesh.renderOrder = this.renderOrder
+        this.useProjection = false
+      }
+    }
+  }
+
+  /**
+   * Remove our {@link RenderBundle} from the {@link core/scenes/Scene.Scene | Scene}.
+   */
+  removeFromScene() {
+    this.renderer.scene.removeRenderBundle(this)
   }
 
   /**
@@ -360,6 +419,10 @@ export class RenderBundle {
 
     this.ready = false
     this.meshes.set(mesh.uuid, mesh)
+
+    if (this.meshes.size === 1) {
+      this.addToScene()
+    }
   }
 
   /**

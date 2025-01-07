@@ -137,8 +137,6 @@ export class GPURenderer {
   textures: Texture[]
   /** An {@link Map} containing all our created {@link RenderBundle} */
   renderBundles: Map<RenderBundle['uuid'], RenderBundle>
-  /** A {@link Map} containing all our create {@link IndirectBuffer} */
-  indirectBuffers: Map<IndirectBuffer['uuid'], IndirectBuffer>
 
   /** Pixel ratio to use for rendering */
   pixelRatio: number
@@ -458,6 +456,14 @@ export class GPURenderer {
   }
 
   /**
+   * Get all the created {@link GPUDeviceManager#indirectBuffers | indirect buffers}
+   * @readonly
+   */
+  get indirectBuffers(): Map<string, IndirectBuffer> {
+    return this.deviceManager.indirectBuffers
+  }
+
+  /**
    * Get the {@link GPUDeviceManager#pipelineManager | pipeline manager}
    * @readonly
    */
@@ -515,9 +521,6 @@ export class GPURenderer {
    */
   restoreContext() {
     this.configureContext()
-
-    // recreate indirect buffers
-    this.indirectBuffers.forEach((indirectBuffer) => indirectBuffer.create())
 
     // recreate all textures first
     this.textures.forEach((texture) => {
@@ -902,7 +905,6 @@ export class GPURenderer {
     this.meshes = []
     this.textures = []
     this.renderBundles = new Map()
-    this.indirectBuffers = new Map()
   }
 
   /**
@@ -1124,9 +1126,6 @@ export class GPURenderer {
 
     this.renderTargets.forEach((renderTarget) => renderTarget.destroy())
     this.renderedObjects.forEach((sceneObject) => sceneObject.remove())
-
-    // destroy indirect buffers
-    this.indirectBuffers.forEach((indirectBuffer) => indirectBuffer.destroy())
 
     this.textures.forEach((texture) => texture.destroy())
 

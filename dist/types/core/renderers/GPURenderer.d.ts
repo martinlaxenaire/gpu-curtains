@@ -118,8 +118,6 @@ export declare class GPURenderer {
     textures: Texture[];
     /** An {@link Map} containing all our created {@link RenderBundle} */
     renderBundles: Map<RenderBundle['uuid'], RenderBundle>;
-    /** A {@link Map} containing all our create {@link IndirectBuffer} */
-    indirectBuffers: Map<IndirectBuffer['uuid'], IndirectBuffer>;
     /** Pixel ratio to use for rendering */
     pixelRatio: number;
     /** An object defining the width, height, top and left position of the canvas. Mainly used internally. If you need to get the renderer dimensions, use {@link boundingRect} instead. */
@@ -204,6 +202,11 @@ export declare class GPURenderer {
      * @readonly
      */
     get buffers(): Map<string, Buffer>;
+    /**
+     * Get all the created {@link GPUDeviceManager#indirectBuffers | indirect buffers}
+     * @readonly
+     */
+    get indirectBuffers(): Map<string, IndirectBuffer>;
     /**
      * Get the {@link GPUDeviceManager#pipelineManager | pipeline manager}
      * @readonly

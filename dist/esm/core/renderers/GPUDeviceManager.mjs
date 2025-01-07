@@ -148,6 +148,7 @@ class GPUDeviceManager {
           ...samplerOptions
         });
       });
+      this.indirectBuffers.forEach((indirectBuffer) => indirectBuffer.create());
       this.renderers.forEach((renderer) => renderer.restoreContext());
     }
   }
@@ -158,6 +159,7 @@ class GPUDeviceManager {
     this.renderers = [];
     this.bindGroups = /* @__PURE__ */ new Map();
     this.buffers = /* @__PURE__ */ new Map();
+    this.indirectBuffers = /* @__PURE__ */ new Map();
     this.bindGroupLayouts = /* @__PURE__ */ new Map();
     this.bufferBindings = /* @__PURE__ */ new Map();
     this.samplers = [];
@@ -314,6 +316,7 @@ class GPUDeviceManager {
     this.renderers.forEach((renderer) => renderer.destroy());
     this.bindGroups.forEach((bindGroup) => bindGroup.destroy());
     this.buffers.forEach((buffer) => buffer?.destroy());
+    this.indirectBuffers.forEach((indirectBuffer) => indirectBuffer.destroy());
     this.domTextures.forEach((texture) => texture.destroy());
     this.setDeviceObjects();
   }
