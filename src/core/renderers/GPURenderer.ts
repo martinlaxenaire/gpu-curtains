@@ -451,7 +451,7 @@ export class GPURenderer {
    * Get all the created {@link GPUDeviceManager#buffers | GPU buffers}
    * @readonly
    */
-  get buffers(): Map<string, Buffer> {
+  get buffers(): Map<Buffer['uuid'], Buffer> {
     return this.deviceManager.buffers
   }
 
@@ -459,7 +459,7 @@ export class GPURenderer {
    * Get all the created {@link GPUDeviceManager#indirectBuffers | indirect buffers}
    * @readonly
    */
-  get indirectBuffers(): Map<string, IndirectBuffer> {
+  get indirectBuffers(): Map<IndirectBuffer['uuid'], IndirectBuffer> {
     return this.deviceManager.indirectBuffers
   }
 

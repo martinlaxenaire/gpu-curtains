@@ -160,14 +160,6 @@ window.addEventListener('load', async () => {
   const dstResult = await compute2DNoise.material.getBufferBindingResultByBindingName('noise')
   console.log(result, dstResult)
 
-  // render
-  // const animate = () => {
-  //   deviceManager.render()
-  //   requestAnimationFrame(animate)
-  // }
-  //
-  // animate()
-  //
   // compute2DNoise.onReady(async () => {
   //   compute2DNoise.renderer.onBeforeRenderScene.add(
   //     async () => {

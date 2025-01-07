@@ -24,14 +24,6 @@ window.addEventListener('load', async () => {
 
   gpuCameraRenderer.camera.position.z = 15
 
-  // render it
-  const animate = () => {
-    gpuDeviceManager.render()
-    requestAnimationFrame(animate)
-  }
-
-  animate()
-
   const meshes = []
 
   const nbMeshes = 4

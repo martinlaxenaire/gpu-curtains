@@ -34,14 +34,6 @@ window.addEventListener('load', async () => {
     //pixelRatio: window.devicePixelRatio,
   })
 
-  // render it
-  const animate = () => {
-    gpuDeviceManager.render()
-    requestAnimationFrame(animate)
-  }
-
-  animate()
-
   const mesh = new Mesh(gpuCameraRenderer, {
     label: 'Dynamic mesh',
     geometry: new BoxGeometry(),

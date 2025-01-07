@@ -7,14 +7,6 @@ window.addEventListener('load', async () => {
 
   await deviceManager.init()
 
-  // render it
-  const animate = () => {
-    deviceManager.render()
-    requestAnimationFrame(animate)
-  }
-
-  animate()
-
   const canvasContainers = document.querySelectorAll('.canvas')
   const geometry = new BoxGeometry()
 

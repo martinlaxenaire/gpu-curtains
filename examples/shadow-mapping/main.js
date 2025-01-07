@@ -65,17 +65,11 @@ window.addEventListener('load', async () => {
   meshesPivot.parent = scene
   meshesPivot.position.z = systemSize * 0.5
 
-  // render our scene manually
-  const animate = () => {
+  // rotate pivot each frame
+  gpuDeviceManager.onBeforeRender(() => {
     meshesPivot.rotation.y -= 0.01
     camera.lookAt(cameraLookAt.lerp(lerpLookAt, 0.05))
-
-    gpuDeviceManager.render()
-
-    requestAnimationFrame(animate)
-  }
-
-  animate()
+  })
 
   // LIGHTS & SHADOWS SETUP
   //const shadowMapTextureFormat = 'depth32float'

@@ -93,16 +93,13 @@ window.addEventListener('load', async () => {
     position: new Vec3(-250, -500, 1000),
   })
 
-  // render it
-  const animate = () => {
-    stats.begin()
-    gpuDeviceManager.render()
-    stats.end()
-
-    requestAnimationFrame(animate)
-  }
-
-  animate()
+  gpuDeviceManager
+    .onBeforeRender(() => {
+      stats.begin()
+    })
+    .onAfterRender(() => {
+      stats.end()
+    })
 
   const indirectBuffer = new IndirectBuffer(gpuCameraRenderer, {
     label: 'Indirect buffer',

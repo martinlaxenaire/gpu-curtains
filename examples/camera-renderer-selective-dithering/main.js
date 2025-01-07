@@ -55,16 +55,6 @@ window.addEventListener('load', async () => {
   orbitControls.zoomSpeed = 2
   orbitControls.maxZoom = systemSize * 6
 
-  // render our scene manually
-  const animate = () => {
-    //pivot.rotation.y -= 0.01
-    gpuDeviceManager.render()
-
-    requestAnimationFrame(animate)
-  }
-
-  animate()
-
   // lights
   const ambientLight = new AmbientLight(gpuCameraRenderer, {
     intensity: 0.75,

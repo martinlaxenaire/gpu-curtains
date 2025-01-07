@@ -136,23 +136,26 @@ body {
 ### Javascript
 
 ```javascript
-import { GPUCurtains, Mesh } from 'gpu-curtains';
+import { GPUDeviceManager, GPUCameraRenderer, Mesh } from 'gpu-curtains';
 
 window.addEventListener('load', async () => {
-  // set our main GPUCurtains instance
-  // it will handle everything we need
-  // a WebGPU device and a renderer with its scene,
-  // requestAnimationFrame, resize and scroll events...
-  const gpuCurtains = new GPUCurtains({
-    container: '#canvas'
+  // first, we need a WebGPU device, that's what GPUDeviceManager is for
+  const gpuDeviceManager = new GPUDeviceManager({
+    label: 'Custom device manager',
   })
 
-  // set the GPU device
+  // we need to wait for the device to be created
   // note this is asynchronous
-  await gpuCurtains.setDevice()
+  await gpuDeviceManager.init()
+
+  // create a camera renderer
+  const gpuCameraRenderer = new GPUCameraRenderer({
+    deviceManager: gpuDeviceManager,
+    container: document.querySelector('#canvas'),
+  })
 
   // create a cube mesh
-  const mesh = new Mesh(gpuCurtains, {
+  const mesh = new Mesh(gpuCameraRenderer, {
     geometry: new BoxGeometry(),
   })
   

@@ -22,14 +22,6 @@ window.addEventListener('load', async () => {
 
   camera.position.z = 0
 
-  // render it
-  const animate = () => {
-    gpuDeviceManager.render()
-    requestAnimationFrame(animate)
-  }
-
-  animate()
-
   // Fetch the 6 separate images for negative/positive x, y, z axis of a cubeMap
   // and upload it into a GPUTexture.
   // The order of the array layers is [+X, -X, +Y, -Y, +Z, -Z]

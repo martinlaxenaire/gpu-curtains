@@ -14006,6 +14006,7 @@ ${this.shaders.compute.head}`;
       label,
       production = false,
       adapterOptions = {},
+      autoRender = true,
       onError = () => {
       },
       onDeviceLost = (info) => {
@@ -14013,6 +14014,12 @@ ${this.shaders.compute.head}`;
       onDeviceDestroyed = (info) => {
       }
     } = {}) {
+      /** function assigned to the {@link onBeforeRender} callback */
+      this._onBeforeRenderCallback = () => {
+      };
+      /** function assigned to the {@link onAfterRender} callback */
+      this._onAfterRenderCallback = () => {
+      };
       this.index = 0;
       this.label = label ?? "GPUDeviceManager instance";
       this.production = production;
@@ -14024,6 +14031,9 @@ ${this.shaders.compute.head}`;
       this.gpu = navigator.gpu;
       this.setPipelineManager();
       this.setDeviceObjects();
+      if (autoRender) {
+        this.animate();
+      }
     }
     /**
      * Set our {@link adapter} and {@link device} if possible.
@@ -14269,6 +14279,36 @@ ${this.shaders.compute.head}`;
     removeDOMTexture(texture) {
       this.domTextures = this.domTextures.filter((t) => t.uuid !== texture.uuid);
     }
+    /* RENDER */
+    /**
+     * Create a requestAnimationFrame loop and run it
+     */
+    animate() {
+      this.render();
+      this.animationFrameID = requestAnimationFrame(this.animate.bind(this));
+    }
+    /**
+     * Called each frame before rendering
+     * @param callback - callback to run at each render
+     * @returns - our {@link GPUDeviceManager}
+     */
+    onBeforeRender(callback) {
+      if (callback) {
+        this._onBeforeRenderCallback = callback;
+      }
+      return this;
+    }
+    /**
+     * Called each frame after rendering
+     * @param callback - callback to run at each render
+     * @returns - our {@link GPUDeviceManager}
+     */
+    onAfterRender(callback) {
+      if (callback) {
+        this._onAfterRenderCallback = callback;
+      }
+      return this;
+    }
     /**
      * Render everything:
      * - call all our {@link renderers} {@link core/renderers/GPURenderer.GPURenderer#onBeforeCommandEncoder | onBeforeCommandEncoder} callbacks
@@ -14282,6 +14322,7 @@ ${this.shaders.compute.head}`;
     render() {
       if (!this.ready)
         return;
+      this._onBeforeRenderCallback && this._onBeforeRenderCallback();
       for (const renderer of this.renderers) {
         if (renderer.shouldRender)
           renderer.onBeforeCommandEncoder();
@@ -14301,11 +14342,16 @@ ${this.shaders.compute.head}`;
         if (renderer.shouldRender)
           renderer.onAfterCommandEncoder();
       }
+      this._onAfterRenderCallback && this._onAfterRenderCallback();
     }
     /**
      * Destroy the {@link GPUDeviceManager} and its {@link renderers}
      */
     destroy() {
+      if (this.animationFrameID) {
+        cancelAnimationFrame(this.animationFrameID);
+      }
+      this.animationFrameID = null;
       this.device?.destroy();
       this.device = null;
       this.renderers.forEach((renderer) => renderer.destroy());
@@ -16485,9 +16531,6 @@ fn getIBL(
       watchScroll = true
     } = {}) {
       // callbacks / events
-      /** function assigned to the {@link onRender} callback */
-      this._onRenderCallback = () => {
-      };
       /** function assigned to the {@link onScroll} callback */
       this._onScrollCallback = () => {
       };
@@ -16520,9 +16563,6 @@ fn getIBL(
         this.setContainer(container);
       }
       this.initEvents();
-      if (this.options.autoRender) {
-        this.animate();
-      }
     }
     /**
      * Set the {@link GPUCurtains.container | container}.
@@ -16612,6 +16652,7 @@ fn getIBL(
         label: "GPUCurtains default device",
         production: this.options.production,
         adapterOptions: this.options.adapterOptions,
+        autoRender: this.options.autoRender,
         onError: () => setTimeout(() => {
           this._onErrorCallback && this._onErrorCallback();
         }, 0),
@@ -16764,14 +16805,21 @@ fn getIBL(
     }
     /* EVENTS */
     /**
-     * Called at each render frame
+     * Called each frame before rendering
      * @param callback - callback to run at each render
      * @returns - our {@link GPUCurtains}
      */
-    onRender(callback) {
-      if (callback) {
-        this._onRenderCallback = callback;
-      }
+    onBeforeRender(callback) {
+      this.deviceManager.onBeforeRender(callback);
+      return this;
+    }
+    /**
+     * Called each frame after rendering
+     * @param callback - callback to run at each render
+     * @returns - our {@link GPUCurtains}
+     */
+    onAfterRender(callback) {
+      this.deviceManager.onAfterRender(callback);
       return this;
     }
     /**
@@ -16819,26 +16867,15 @@ fn getIBL(
       return this;
     }
     /**
-     * Create a requestAnimationFrame loop and run it
-     */
-    animate() {
-      this.render();
-      this.animationFrameID = window.requestAnimationFrame(this.animate.bind(this));
-    }
-    /**
      * Render our {@link GPUDeviceManager}
      */
     render() {
-      this._onRenderCallback && this._onRenderCallback();
       this.deviceManager.render();
     }
     /**
      * Destroy our {@link GPUCurtains} and {@link GPUDeviceManager}
      */
     destroy() {
-      if (this.animationFrameID) {
-        window.cancelAnimationFrame(this.animationFrameID);
-      }
       this.deviceManager.destroy();
       this.scrollManager?.destroy();
       resizeManager.destroy();

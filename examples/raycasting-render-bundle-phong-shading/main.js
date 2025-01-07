@@ -18,8 +18,7 @@ window.addEventListener('load', async () => {
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
     onError: () => {
-      // handle device creation error here
-      console.log('there has been an error!')
+      document.body.classList.add('no-curtains')
     },
   })
 
@@ -52,16 +51,9 @@ window.addEventListener('load', async () => {
     visibleSize = camera.getVisibleSizeAtDepth()
   })
 
-  // render our scene manually
-  const animate = () => {
+  gpuDeviceManager.onBeforeRender(() => {
     pivot.rotation.y += 0.005
-
-    gpuDeviceManager.render()
-
-    requestAnimationFrame(animate)
-  }
-
-  animate()
+  })
 
   // lights
   const ambientLight = new AmbientLight(gpuCameraRenderer, {

@@ -11,6 +11,7 @@ class GPUDeviceManager {
     label,
     production = false,
     adapterOptions = {},
+    autoRender = true,
     onError = () => {
     },
     onDeviceLost = (info) => {
@@ -18,6 +19,12 @@ class GPUDeviceManager {
     onDeviceDestroyed = (info) => {
     }
   } = {}) {
+    /** function assigned to the {@link onBeforeRender} callback */
+    this._onBeforeRenderCallback = () => {
+    };
+    /** function assigned to the {@link onAfterRender} callback */
+    this._onAfterRenderCallback = () => {
+    };
     this.index = 0;
     this.label = label ?? "GPUDeviceManager instance";
     this.production = production;
@@ -29,6 +36,9 @@ class GPUDeviceManager {
     this.gpu = navigator.gpu;
     this.setPipelineManager();
     this.setDeviceObjects();
+    if (autoRender) {
+      this.animate();
+    }
   }
   /**
    * Set our {@link adapter} and {@link device} if possible.
@@ -274,6 +284,36 @@ class GPUDeviceManager {
   removeDOMTexture(texture) {
     this.domTextures = this.domTextures.filter((t) => t.uuid !== texture.uuid);
   }
+  /* RENDER */
+  /**
+   * Create a requestAnimationFrame loop and run it
+   */
+  animate() {
+    this.render();
+    this.animationFrameID = requestAnimationFrame(this.animate.bind(this));
+  }
+  /**
+   * Called each frame before rendering
+   * @param callback - callback to run at each render
+   * @returns - our {@link GPUDeviceManager}
+   */
+  onBeforeRender(callback) {
+    if (callback) {
+      this._onBeforeRenderCallback = callback;
+    }
+    return this;
+  }
+  /**
+   * Called each frame after rendering
+   * @param callback - callback to run at each render
+   * @returns - our {@link GPUDeviceManager}
+   */
+  onAfterRender(callback) {
+    if (callback) {
+      this._onAfterRenderCallback = callback;
+    }
+    return this;
+  }
   /**
    * Render everything:
    * - call all our {@link renderers} {@link core/renderers/GPURenderer.GPURenderer#onBeforeCommandEncoder | onBeforeCommandEncoder} callbacks
@@ -287,6 +327,7 @@ class GPUDeviceManager {
   render() {
     if (!this.ready)
       return;
+    this._onBeforeRenderCallback && this._onBeforeRenderCallback();
     for (const renderer of this.renderers) {
       if (renderer.shouldRender)
         renderer.onBeforeCommandEncoder();
@@ -306,11 +347,16 @@ class GPUDeviceManager {
       if (renderer.shouldRender)
         renderer.onAfterCommandEncoder();
     }
+    this._onAfterRenderCallback && this._onAfterRenderCallback();
   }
   /**
    * Destroy the {@link GPUDeviceManager} and its {@link renderers}
    */
   destroy() {
+    if (this.animationFrameID) {
+      cancelAnimationFrame(this.animationFrameID);
+    }
+    this.animationFrameID = null;
     this.device?.destroy();
     this.device = null;
     this.renderers.forEach((renderer) => renderer.destroy());

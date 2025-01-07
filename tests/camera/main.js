@@ -23,14 +23,6 @@ window.addEventListener('load', async () => {
     //pixelRatio: window.devicePixelRatio,
   })
 
-  // render it
-  const animate = () => {
-    gpuDeviceManager.render()
-    requestAnimationFrame(animate)
-  }
-
-  animate()
-
   const lookAt = new Vec3()
 
   const firstCamera = gpuCameraRenderer.camera

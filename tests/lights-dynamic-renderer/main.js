@@ -380,12 +380,4 @@ window.addEventListener('load', async () => {
   })
 
   pointLightsFolder.close()
-
-  // render it
-  const animate = () => {
-    gpuDeviceManager.render()
-    requestAnimationFrame(animate)
-  }
-
-  animate()
 })

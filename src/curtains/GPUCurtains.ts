@@ -21,8 +21,6 @@ import { DOMObject3D } from './objects3D/DOMObject3D'
  * Options used to create a {@link GPUCurtains}
  */
 export interface GPUCurtainsOptions extends Omit<GPUCameraRendererParams, 'deviceManager'>, GPUDeviceManagerBaseParams {
-  /** Whether {@link GPUCurtains} should create its own requestAnimationFrame loop to render or not */
-  autoRender?: boolean
   /** Whether {@link GPUCurtains} should handle all resizing by itself or not */
   autoResize?: boolean
   /** Whether {@link GPUCurtains} should listen to scroll event or not */
@@ -66,14 +64,7 @@ export class GPUCurtains {
   /** Tiny scroll event listener wrapper */
   scrollManager: ScrollManager
 
-  /** Request animation frame callback returned id if used */
-  animationFrameID: null | number
-
   // callbacks / events
-  /** function assigned to the {@link onRender} callback */
-  _onRenderCallback: () => void = () => {
-    /* allow empty callback */
-  }
   /** function assigned to the {@link onScroll} callback */
   _onScrollCallback: () => void = () => {
     /* allow empty callback */
@@ -133,11 +124,6 @@ export class GPUCurtains {
     }
 
     this.initEvents()
-
-    // only if auto render
-    if (this.options.autoRender) {
-      this.animate()
-    }
   }
 
   /**
@@ -239,6 +225,7 @@ export class GPUCurtains {
       label: 'GPUCurtains default device',
       production: this.options.production,
       adapterOptions: this.options.adapterOptions,
+      autoRender: this.options.autoRender,
       onError: () =>
         setTimeout(() => {
           this._onErrorCallback && this._onErrorCallback()
@@ -423,14 +410,23 @@ export class GPUCurtains {
   /* EVENTS */
 
   /**
-   * Called at each render frame
+   * Called each frame before rendering
    * @param callback - callback to run at each render
    * @returns - our {@link GPUCurtains}
    */
-  onRender(callback: () => void): GPUCurtains {
-    if (callback) {
-      this._onRenderCallback = callback
-    }
+  onBeforeRender(callback: () => void): GPUCurtains {
+    this.deviceManager.onBeforeRender(callback)
+
+    return this
+  }
+
+  /**
+   * Called each frame after rendering
+   * @param callback - callback to run at each render
+   * @returns - our {@link GPUCurtains}
+   */
+  onAfterRender(callback: () => void): GPUCurtains {
+    this.deviceManager.onAfterRender(callback)
 
     return this
   }
@@ -488,19 +484,9 @@ export class GPUCurtains {
   }
 
   /**
-   * Create a requestAnimationFrame loop and run it
-   */
-  animate() {
-    this.render()
-    this.animationFrameID = window.requestAnimationFrame(this.animate.bind(this))
-  }
-
-  /**
    * Render our {@link GPUDeviceManager}
    */
   render() {
-    this._onRenderCallback && this._onRenderCallback()
-
     this.deviceManager.render()
   }
 
@@ -508,10 +494,6 @@ export class GPUCurtains {
    * Destroy our {@link GPUCurtains} and {@link GPUDeviceManager}
    */
   destroy() {
-    if (this.animationFrameID) {
-      window.cancelAnimationFrame(this.animationFrameID)
-    }
-
     this.deviceManager.destroy()
     this.scrollManager?.destroy()
     resizeManager.destroy()

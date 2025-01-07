@@ -26,9 +26,6 @@ class GPUCurtains {
     watchScroll = true
   } = {}) {
     // callbacks / events
-    /** function assigned to the {@link onRender} callback */
-    this._onRenderCallback = () => {
-    };
     /** function assigned to the {@link onScroll} callback */
     this._onScrollCallback = () => {
     };
@@ -61,9 +58,6 @@ class GPUCurtains {
       this.setContainer(container);
     }
     this.initEvents();
-    if (this.options.autoRender) {
-      this.animate();
-    }
   }
   /**
    * Set the {@link GPUCurtains.container | container}.
@@ -153,6 +147,7 @@ class GPUCurtains {
       label: "GPUCurtains default device",
       production: this.options.production,
       adapterOptions: this.options.adapterOptions,
+      autoRender: this.options.autoRender,
       onError: () => setTimeout(() => {
         this._onErrorCallback && this._onErrorCallback();
       }, 0),
@@ -305,14 +300,21 @@ class GPUCurtains {
   }
   /* EVENTS */
   /**
-   * Called at each render frame
+   * Called each frame before rendering
    * @param callback - callback to run at each render
    * @returns - our {@link GPUCurtains}
    */
-  onRender(callback) {
-    if (callback) {
-      this._onRenderCallback = callback;
-    }
+  onBeforeRender(callback) {
+    this.deviceManager.onBeforeRender(callback);
+    return this;
+  }
+  /**
+   * Called each frame after rendering
+   * @param callback - callback to run at each render
+   * @returns - our {@link GPUCurtains}
+   */
+  onAfterRender(callback) {
+    this.deviceManager.onAfterRender(callback);
     return this;
   }
   /**
@@ -360,26 +362,15 @@ class GPUCurtains {
     return this;
   }
   /**
-   * Create a requestAnimationFrame loop and run it
-   */
-  animate() {
-    this.render();
-    this.animationFrameID = window.requestAnimationFrame(this.animate.bind(this));
-  }
-  /**
    * Render our {@link GPUDeviceManager}
    */
   render() {
-    this._onRenderCallback && this._onRenderCallback();
     this.deviceManager.render();
   }
   /**
    * Destroy our {@link GPUCurtains} and {@link GPUDeviceManager}
    */
   destroy() {
-    if (this.animationFrameID) {
-      window.cancelAnimationFrame(this.animationFrameID);
-    }
     this.deviceManager.destroy();
     this.scrollManager?.destroy();
     resizeManager.destroy();

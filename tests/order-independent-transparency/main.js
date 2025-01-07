@@ -53,15 +53,6 @@ window.addEventListener('load', async () => {
   const orbitControls = new OrbitControls(gpuCameraRenderer)
   orbitControls.maxZoom = 12
 
-  // render our scene manually
-  const animate = () => {
-    gpuDeviceManager.render()
-
-    requestAnimationFrame(animate)
-  }
-
-  animate()
-
   const planeGeometry = new PlaneGeometry()
 
   const planesFs = /* wgsl */ `

@@ -38,14 +38,6 @@ window.addEventListener('load', async () => {
     },
   })
 
-  // render it
-  const animate = () => {
-    gpuDeviceManager.render()
-    requestAnimationFrame(animate)
-  }
-
-  animate()
-
   const ambientLight = new AmbientLight(gpuCameraRenderer, {
     intensity: 0.7,
   })

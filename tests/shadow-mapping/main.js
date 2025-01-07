@@ -167,19 +167,15 @@ window.addEventListener('load', async () => {
 
   let rotatePivot = true
 
-  const animate = () => {
-    stats.begin()
+  gpuDeviceManager
+    .onBeforeRender(() => {
+      stats.begin()
 
-    if (rotatePivot) scenePivot.rotation.y += 0.015
-
-    gpuDeviceManager.render()
-
-    stats.end()
-
-    requestAnimationFrame(animate)
-  }
-
-  animate()
+      if (rotatePivot) scenePivot.rotation.y += 0.015
+    })
+    .onAfterRender(() => {
+      stats.end()
+    })
 
   const meshVs = /* wgsl */ `
     struct VertexOutput {

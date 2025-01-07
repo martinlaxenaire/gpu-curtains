@@ -31,14 +31,6 @@ window.addEventListener('load', async () => {
     //pixelRatio: window.devicePixelRatio,
   })
 
-  // render it
-  const animate = () => {
-    gpuDeviceManager.render()
-    requestAnimationFrame(animate)
-  }
-
-  animate()
-
   const orbitControls = new OrbitControls(gpuCameraRenderer)
 
   const fs = /* wgsl */ `
