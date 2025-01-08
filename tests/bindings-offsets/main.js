@@ -517,7 +517,7 @@ window.addEventListener('load', async () => {
       })
     }
 
-    const buildInterleavedBufferElements = (interleavedBufferElements) => {
+    const buildInterleavedBufferElements = (interleavedBufferElements, baseIndex = 0) => {
       if (interleavedBufferElements.length) {
         const interleavedEntries = []
         for (let i = 0; i < interleavedBufferElements[0].numElements; i++) {
@@ -531,7 +531,7 @@ window.addEventListener('load', async () => {
               startOffset: interleavedBufferElement.startOffset,
               arrayStride: interleavedBufferElement.arrayStride,
               //entries: [interleavedBufferElement.interleavedAlignment.entries[i]],
-              index: regularBufferElements.length + index,
+              index: baseIndex + regularBufferElements.length + index,
               loopIndex: i,
             })
           })
@@ -613,7 +613,7 @@ window.addEventListener('load', async () => {
     buildInterleavedBufferElements(interleavedBufferElements)
 
     // now the children
-    binding.childrenBindings.forEach((childBinding) => {
+    binding.childrenBindings.forEach((childBinding, i) => {
       const regularChildBufferElements = childBinding.bufferElements.filter(
         (bufferElement) => !bufferElement.viewSetFunction
       )
@@ -623,7 +623,7 @@ window.addEventListener('load', async () => {
       const interleavedChildBufferElements = childBinding.bufferElements.filter(
         (bufferElement) => !!bufferElement.viewSetFunction
       )
-      buildInterleavedBufferElements(interleavedChildBufferElements)
+      buildInterleavedBufferElements(interleavedChildBufferElements, binding.bufferElements.length)
     })
 
     const endPad = binding.arrayBufferSize - (previousEndOffset + 1)

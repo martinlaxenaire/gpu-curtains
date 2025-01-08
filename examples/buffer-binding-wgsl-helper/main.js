@@ -224,7 +224,7 @@ const interleavedArrayBinding = new BufferBinding({
       })
     }
 
-    const buildInterleavedBufferElements = (interleavedBufferElements) => {
+    const buildInterleavedBufferElements = (interleavedBufferElements, baseIndex = 0) => {
       if (interleavedBufferElements.length) {
         const interleavedEntries = []
         for (let i = 0; i < interleavedBufferElements[0].numElements; i++) {
@@ -237,7 +237,7 @@ const interleavedArrayBinding = new BufferBinding({
               pad: interleavedBufferElement.bufferLayout.pad,
               startOffset: interleavedBufferElement.startOffset,
               arrayStride: interleavedBufferElement.arrayStride,
-              index: regularBufferElements.length + index,
+              index: baseIndex + regularBufferElements.length + index,
               loopIndex: i,
             })
           })
@@ -329,7 +329,7 @@ const interleavedArrayBinding = new BufferBinding({
       const interleavedChildBufferElements = childBinding.bufferElements.filter(
         (bufferElement) => !!bufferElement.viewSetFunction
       )
-      buildInterleavedBufferElements(interleavedChildBufferElements)
+      buildInterleavedBufferElements(interleavedChildBufferElements, binding.bufferElements.length)
     })
 
     const endPad = binding.arrayBufferSize - (previousEndOffset + 1)
