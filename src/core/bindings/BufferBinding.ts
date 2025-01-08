@@ -104,6 +104,8 @@ export type DataViewSetFunction =
  *
  * It is possible to create complex WGSL structs with children structs by using the {@link BufferBindingParams#childrenBindings | childrenBindings} parameter.
  *
+ * There's a helper tool to help you understand and debug your {@link BufferBinding} WGSL declaration: [BufferBinding WGSL generation helper](https://martinlaxenaire.github.io/gpu-curtains/examples/buffer-binding-wgsl-helper/)
+ *
  * A {@link BufferBinding} can also have a {@link parent | parent BufferBinding}, in which case it won't create a GPUBuffer but use its parent GPUBuffer at the right offset. Useful to create a unique {@link BufferBinding} with a single GPUBuffer to handle multiple {@link BufferBinding} and update them with a single `writeBuffer` call.
  *
  * @example

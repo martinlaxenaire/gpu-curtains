@@ -12261,19 +12261,7 @@ ${this.shaders.compute.head}`;
       const isTransparent = !!mesh.transparent;
       const { useProjection } = mesh.material.options.rendering;
       if (mesh.renderBundle) {
-        const { renderBundle } = mesh;
-        renderBundle.addMesh(mesh, mesh.outputTarget ? mesh.outputTarget.renderPass : this.renderer.renderPass);
-        if (mesh.renderBundle) {
-          if (renderBundle.meshes.size === 1) {
-            if (renderBundle.transparent === null) {
-              renderBundle.transparent = isTransparent;
-            }
-            if (renderBundle.useProjection === null) {
-              renderBundle.useProjection = useProjection;
-            }
-            this.addRenderBundle(renderBundle, projectionStack);
-          }
-        }
+        mesh.renderBundle.addMesh(mesh, mesh.outputTarget ? mesh.outputTarget.renderPass : this.renderer.renderPass);
       }
       if (!mesh.renderBundle) {
         const similarMeshes = isTransparent ? projectionStack.transparent : projectionStack.opaque;
@@ -12380,21 +12368,14 @@ ${this.shaders.compute.head}`;
         // explicitly set to null
       };
       if (shaderPass.renderBundle) {
-        const isTransparent = !!shaderPass.transparent;
         const { renderBundle } = shaderPass;
-        if (renderBundle.meshes.size < 1) {
-          renderBundle.addMesh(shaderPass, outputPass);
-          renderBundle.size = 1;
-        } else {
+        if (renderBundle.meshes.size >= 1) {
           throwWarning(
             `${renderBundle.options.label} (${renderBundle.type}): Cannot add more than 1 ShaderPass to a render bundle. This ShaderPass will not be added: ${shaderPass.options.label}`
           );
           shaderPass.renderBundle = null;
-        }
-        if (shaderPass.renderBundle) {
-          shaderPass.renderBundle.renderOrder = shaderPass.renderOrder;
-          renderBundle.transparent = isTransparent;
-          renderBundle.useProjection = false;
+        } else {
+          renderBundle.addMesh(shaderPass, outputPass);
         }
       }
       this.renderPassEntries.screen.push(shaderPassEntry);
@@ -12455,21 +12436,14 @@ ${this.shaders.compute.head}`;
         // explicitly set to null
       });
       if (pingPongPlane.renderBundle) {
-        const isTransparent = !!pingPongPlane.transparent;
         const { renderBundle } = pingPongPlane;
-        if (renderBundle.meshes.size < 1) {
-          renderBundle.addMesh(pingPongPlane, pingPongPlane.outputTarget.renderPass);
-          renderBundle.size = 1;
-        } else {
+        if (renderBundle.meshes.size >= 1) {
           throwWarning(
             `${renderBundle.options.label} (${renderBundle.type}): Cannot add more than 1 PingPongPlane to a render bundle. This PingPongPlane will not be added: ${pingPongPlane.options.label}`
           );
           pingPongPlane.renderBundle = null;
-        }
-        if (pingPongPlane.renderBundle) {
-          pingPongPlane.renderBundle.renderOrder = pingPongPlane.renderOrder;
-          renderBundle.transparent = isTransparent;
-          renderBundle.useProjection = false;
+        } else {
+          renderBundle.addMesh(pingPongPlane, pingPongPlane.outputTarget.renderPass);
         }
       }
       this.renderPassEntries.pingPong.sort((a, b) => a.element.renderOrder - b.element.renderOrder);
@@ -12959,6 +12933,13 @@ ${this.shaders.compute.head}`;
       return this.deviceManager.buffers;
     }
     /**
+     * Get all the created {@link GPUDeviceManager#indirectBuffers | indirect buffers}
+     * @readonly
+     */
+    get indirectBuffers() {
+      return this.deviceManager.indirectBuffers;
+    }
+    /**
      * Get the {@link GPUDeviceManager#pipelineManager | pipeline manager}
      * @readonly
      */
@@ -13008,7 +12989,6 @@ ${this.shaders.compute.head}`;
      */
     restoreContext() {
       this.configureContext();
-      this.indirectBuffers.forEach((indirectBuffer) => indirectBuffer.create());
       this.textures.forEach((texture) => {
         texture.createTexture();
       });
@@ -13324,7 +13304,6 @@ ${this.shaders.compute.head}`;
       this.meshes = [];
       this.textures = [];
       this.renderBundles = /* @__PURE__ */ new Map();
-      this.indirectBuffers = /* @__PURE__ */ new Map();
     }
     /**
      * Get all this {@link GPURenderer} rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes)
@@ -13510,7 +13489,6 @@ ${this.shaders.compute.head}`;
       this.postProcessingPass?.destroy();
       this.renderTargets.forEach((renderTarget) => renderTarget.destroy());
       this.renderedObjects.forEach((sceneObject) => sceneObject.remove());
-      this.indirectBuffers.forEach((indirectBuffer) => indirectBuffer.destroy());
       this.textures.forEach((texture) => texture.destroy());
       this.context?.unconfigure();
     }
@@ -14028,6 +14006,7 @@ ${this.shaders.compute.head}`;
       label,
       production = false,
       adapterOptions = {},
+      autoRender = true,
       onError = () => {
       },
       onDeviceLost = (info) => {
@@ -14035,6 +14014,12 @@ ${this.shaders.compute.head}`;
       onDeviceDestroyed = (info) => {
       }
     } = {}) {
+      /** function assigned to the {@link onBeforeRender} callback */
+      this._onBeforeRenderCallback = () => {
+      };
+      /** function assigned to the {@link onAfterRender} callback */
+      this._onAfterRenderCallback = () => {
+      };
       this.index = 0;
       this.label = label ?? "GPUDeviceManager instance";
       this.production = production;
@@ -14046,6 +14031,9 @@ ${this.shaders.compute.head}`;
       this.gpu = navigator.gpu;
       this.setPipelineManager();
       this.setDeviceObjects();
+      if (autoRender) {
+        this.animate();
+      }
     }
     /**
      * Set our {@link adapter} and {@link device} if possible.
@@ -14165,6 +14153,7 @@ ${this.shaders.compute.head}`;
             ...samplerOptions
           });
         });
+        this.indirectBuffers.forEach((indirectBuffer) => indirectBuffer.create());
         this.renderers.forEach((renderer) => renderer.restoreContext());
       }
     }
@@ -14175,6 +14164,7 @@ ${this.shaders.compute.head}`;
       this.renderers = [];
       this.bindGroups = /* @__PURE__ */ new Map();
       this.buffers = /* @__PURE__ */ new Map();
+      this.indirectBuffers = /* @__PURE__ */ new Map();
       this.bindGroupLayouts = /* @__PURE__ */ new Map();
       this.bufferBindings = /* @__PURE__ */ new Map();
       this.samplers = [];
@@ -14289,6 +14279,36 @@ ${this.shaders.compute.head}`;
     removeDOMTexture(texture) {
       this.domTextures = this.domTextures.filter((t) => t.uuid !== texture.uuid);
     }
+    /* RENDER */
+    /**
+     * Create a requestAnimationFrame loop and run it
+     */
+    animate() {
+      this.render();
+      this.animationFrameID = requestAnimationFrame(this.animate.bind(this));
+    }
+    /**
+     * Called each frame before rendering
+     * @param callback - callback to run at each render
+     * @returns - our {@link GPUDeviceManager}
+     */
+    onBeforeRender(callback) {
+      if (callback) {
+        this._onBeforeRenderCallback = callback;
+      }
+      return this;
+    }
+    /**
+     * Called each frame after rendering
+     * @param callback - callback to run at each render
+     * @returns - our {@link GPUDeviceManager}
+     */
+    onAfterRender(callback) {
+      if (callback) {
+        this._onAfterRenderCallback = callback;
+      }
+      return this;
+    }
     /**
      * Render everything:
      * - call all our {@link renderers} {@link core/renderers/GPURenderer.GPURenderer#onBeforeCommandEncoder | onBeforeCommandEncoder} callbacks
@@ -14302,6 +14322,7 @@ ${this.shaders.compute.head}`;
     render() {
       if (!this.ready)
         return;
+      this._onBeforeRenderCallback && this._onBeforeRenderCallback();
       for (const renderer of this.renderers) {
         if (renderer.shouldRender)
           renderer.onBeforeCommandEncoder();
@@ -14321,16 +14342,22 @@ ${this.shaders.compute.head}`;
         if (renderer.shouldRender)
           renderer.onAfterCommandEncoder();
       }
+      this._onAfterRenderCallback && this._onAfterRenderCallback();
     }
     /**
      * Destroy the {@link GPUDeviceManager} and its {@link renderers}
      */
     destroy() {
+      if (this.animationFrameID) {
+        cancelAnimationFrame(this.animationFrameID);
+      }
+      this.animationFrameID = null;
       this.device?.destroy();
       this.device = null;
       this.renderers.forEach((renderer) => renderer.destroy());
       this.bindGroups.forEach((bindGroup) => bindGroup.destroy());
       this.buffers.forEach((buffer) => buffer?.destroy());
+      this.indirectBuffers.forEach((indirectBuffer) => indirectBuffer.destroy());
       this.domTextures.forEach((texture) => texture.destroy());
       this.setDeviceObjects();
     }
@@ -14545,11 +14572,9 @@ ${this.shaders.compute.head}`;
       __privateAdd$6(this, _ready, void 0);
       this.type = "RenderBundle";
       renderer = isRenderer(renderer, this.type);
-      this.renderer = renderer;
       this.uuid = generateUUID();
       Object.defineProperty(this, "index", { value: bundleIndex++ });
       this.renderOrder = renderOrder;
-      this.renderer.renderBundles.set(this.uuid, this);
       this.transparent = transparent;
       this.visible = visible;
       label = label ?? this.type + this.index;
@@ -14566,6 +14591,7 @@ ${this.shaders.compute.head}`;
       __privateSet$4(this, _ready, false);
       this.binding = null;
       this.indirectBuffer = null;
+      this.setRenderer(renderer);
       if (this.options.useIndirectDraw) {
         this.indirectBuffer = new IndirectBuffer(this.renderer);
       }
@@ -14582,6 +14608,53 @@ ${this.shaders.compute.head}`;
           }
         }
       }
+    }
+    /**
+     * Set the {@link RenderBundle} {@link RenderBundle.renderer | renderer} and eventually remove/add to the {@link core/scenes/Scene.Scene | Scene}.
+     * @param renderer - new {@link Renderer} to use.
+     */
+    setRenderer(renderer) {
+      if (this.renderer) {
+        this.removeFromScene();
+        this.renderer.renderBundles.delete(this.uuid);
+      }
+      this.renderer = renderer;
+      this.renderer.renderBundles.set(this.uuid, this);
+      if (this.meshes.size >= 1) {
+        this.addToScene();
+      }
+    }
+    /**
+     * Add our {@link RenderBundle} to the {@link core/scenes/Scene.Scene | Scene}.
+     * Once we have at least one mesh in our {@link meshes} Map, we can add the {@link RenderBundle} to the {@link core/scenes/Scene.Scene | Scene} at the right place.
+     */
+    addToScene() {
+      const firstEntry = this.meshes.entries().next();
+      if (firstEntry && firstEntry.value && firstEntry.value.length && firstEntry.value[1]) {
+        const mesh = firstEntry.value[1];
+        const isTransparent = !!mesh.transparent;
+        if (this.transparent === null) {
+          this.transparent = isTransparent;
+        }
+        if (mesh.constructor.name !== "ShaderPass" && mesh.constructor.name !== "PingPongPlane") {
+          const { useProjection } = mesh.material.options.rendering;
+          if (this.useProjection === null) {
+            this.useProjection = useProjection;
+          }
+          const projectionStack = this.renderer.scene.getMeshProjectionStack(mesh);
+          this.renderer.scene.addRenderBundle(this, projectionStack);
+        } else {
+          this.size = 1;
+          mesh.renderOrder = this.renderOrder;
+          this.useProjection = false;
+        }
+      }
+    }
+    /**
+     * Remove our {@link RenderBundle} from the {@link core/scenes/Scene.Scene | Scene}.
+     */
+    removeFromScene() {
+      this.renderer.scene.removeRenderBundle(this);
     }
     /**
      * Get whether our {@link RenderBundle} handles {@link core/renderers/GPURenderer.ProjectedMesh | projected meshes} or not (useful to know in which {@link core/scenes/Scene.Scene | Scene} stack it has been added.
@@ -14663,6 +14736,9 @@ ${this.shaders.compute.head}`;
       }
       this.ready = false;
       this.meshes.set(mesh.uuid, mesh);
+      if (this.meshes.size === 1) {
+        this.addToScene();
+      }
     }
     /**
      * Remove any {@link RenderedMesh | rendered mesh} from this {@link RenderBundle}.
@@ -16455,9 +16531,6 @@ fn getIBL(
       watchScroll = true
     } = {}) {
       // callbacks / events
-      /** function assigned to the {@link onRender} callback */
-      this._onRenderCallback = () => {
-      };
       /** function assigned to the {@link onScroll} callback */
       this._onScrollCallback = () => {
       };
@@ -16490,9 +16563,6 @@ fn getIBL(
         this.setContainer(container);
       }
       this.initEvents();
-      if (this.options.autoRender) {
-        this.animate();
-      }
     }
     /**
      * Set the {@link GPUCurtains.container | container}.
@@ -16582,6 +16652,7 @@ fn getIBL(
         label: "GPUCurtains default device",
         production: this.options.production,
         adapterOptions: this.options.adapterOptions,
+        autoRender: this.options.autoRender,
         onError: () => setTimeout(() => {
           this._onErrorCallback && this._onErrorCallback();
         }, 0),
@@ -16734,14 +16805,21 @@ fn getIBL(
     }
     /* EVENTS */
     /**
-     * Called at each render frame
+     * Called each frame before rendering
      * @param callback - callback to run at each render
      * @returns - our {@link GPUCurtains}
      */
-    onRender(callback) {
-      if (callback) {
-        this._onRenderCallback = callback;
-      }
+    onBeforeRender(callback) {
+      this.deviceManager.onBeforeRender(callback);
+      return this;
+    }
+    /**
+     * Called each frame after rendering
+     * @param callback - callback to run at each render
+     * @returns - our {@link GPUCurtains}
+     */
+    onAfterRender(callback) {
+      this.deviceManager.onAfterRender(callback);
       return this;
     }
     /**
@@ -16789,26 +16867,15 @@ fn getIBL(
       return this;
     }
     /**
-     * Create a requestAnimationFrame loop and run it
-     */
-    animate() {
-      this.render();
-      this.animationFrameID = window.requestAnimationFrame(this.animate.bind(this));
-    }
-    /**
      * Render our {@link GPUDeviceManager}
      */
     render() {
-      this._onRenderCallback && this._onRenderCallback();
       this.deviceManager.render();
     }
     /**
      * Destroy our {@link GPUCurtains} and {@link GPUDeviceManager}
      */
     destroy() {
-      if (this.animationFrameID) {
-        window.cancelAnimationFrame(this.animationFrameID);
-      }
       this.deviceManager.destroy();
       this.scrollManager?.destroy();
       resizeManager.destroy();

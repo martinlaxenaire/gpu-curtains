@@ -33,6 +33,9 @@ window.addEventListener('load', async () => {
   // first, we need a WebGPU device, that's what GPUDeviceManager is for
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
+    onError: () => {
+      document.body.classList.add('no-curtains')
+    },
   })
 
   // we need to wait for the device to be created
@@ -70,17 +73,10 @@ window.addEventListener('load', async () => {
   camera.parent = cameraPivot
   camera.position.z = systemSize.z * 2.5
 
-  // render our scene manually
-  const animate = () => {
+  gpuDeviceManager.onBeforeRender(() => {
     // rotate our camera pivot
     cameraPivot.rotation.y += 0.005
-
-    gpuDeviceManager.render()
-
-    requestAnimationFrame(animate)
-  }
-
-  animate()
+  })
 
   // ------------------------------------
   // GEOMETRY BUFFER

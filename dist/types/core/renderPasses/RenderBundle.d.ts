@@ -95,6 +95,20 @@ export declare class RenderBundle {
      */
     constructor(renderer: Renderer | GPUCurtains, { label, renderPass, renderOrder, transparent, visible, size, useBuffer, useIndirectDraw, }?: RenderBundleParams);
     /**
+     * Set the {@link RenderBundle} {@link RenderBundle.renderer | renderer} and eventually remove/add to the {@link core/scenes/Scene.Scene | Scene}.
+     * @param renderer - new {@link Renderer} to use.
+     */
+    setRenderer(renderer: Renderer): void;
+    /**
+     * Add our {@link RenderBundle} to the {@link core/scenes/Scene.Scene | Scene}.
+     * Once we have at least one mesh in our {@link meshes} Map, we can add the {@link RenderBundle} to the {@link core/scenes/Scene.Scene | Scene} at the right place.
+     */
+    addToScene(): void;
+    /**
+     * Remove our {@link RenderBundle} from the {@link core/scenes/Scene.Scene | Scene}.
+     */
+    removeFromScene(): void;
+    /**
      * Get whether our {@link RenderBundle} handles {@link core/renderers/GPURenderer.ProjectedMesh | projected meshes} or not (useful to know in which {@link core/scenes/Scene.Scene | Scene} stack it has been added.
      * @readonly
      * @returns - Whether our {@link RenderBundle} handles {@link core/renderers/GPURenderer.ProjectedMesh | projected meshes} or not.

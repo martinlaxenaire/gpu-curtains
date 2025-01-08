@@ -1,4 +1,6 @@
 import {
+  GPUDeviceManager,
+  GPUCameraRenderer,
   BindGroup,
   BufferBinding,
   ComputePass,
@@ -16,18 +18,23 @@ window.addEventListener('load', async () => {
     return (1 - amount) * start + amount * end
   }
 
-  // set our main GPUCurtains instance it will handle everything we need
-  // a WebGPU device and a renderer with its scene, requestAnimationFrame, resize and scroll events...
-  const gpuCurtains = new GPUCurtains({
-    container: '#canvas',
+  // first, we need a WebGPU device, that's what GPUDeviceManager is for
+  const gpuDeviceManager = new GPUDeviceManager({
+    label: 'Custom device manager',
+    onError: () => {
+      document.body.classList.add('no-curtains')
+    },
+  })
+
+  // we need to wait for the device to be created
+  await gpuDeviceManager.init()
+
+  // then we can create a camera renderer
+  const gpuCameraRenderer = new GPUCameraRenderer({
+    deviceManager: gpuDeviceManager, // the renderer is going to use our WebGPU device to create its context
+    container: document.querySelector('#canvas'),
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
   })
-
-  gpuCurtains.onError(() => {
-    document.body.classList.add('no-curtains')
-  })
-
-  await gpuCurtains.setDevice()
 
   // number of particles instances
   const numParticles = 2500
@@ -35,9 +42,9 @@ window.addEventListener('load', async () => {
   const particleShrinkScale = 30
 
   // camera screen ratio depends on screen size, fov and camera position
-  const cameraRatio = gpuCurtains.renderer.camera.visibleSize.height * particleShrinkScale * 0.5
+  const cameraRatio = gpuCameraRenderer.camera.visibleSize.height * particleShrinkScale * 0.5
 
-  const screenRatio = gpuCurtains.boundingRect.width / gpuCurtains.boundingRect.height
+  const screenRatio = gpuCameraRenderer.boundingRect.width / gpuCameraRenderer.boundingRect.height
   const systemSize = new Vec2(cameraRatio * screenRatio, cameraRatio)
 
   const initialParticlePosition = new Float32Array(numParticles * 2)
@@ -231,7 +238,7 @@ window.addEventListener('load', async () => {
   })
 
   // create a first bind group with all of that
-  const particleBindGroupA = new BindGroup(gpuCurtains, {
+  const particleBindGroupA = new BindGroup(gpuCameraRenderer, {
     label: 'Particle A bind group',
     bindings: [uniformsBufferBinding, particlesBufferBindingA, particlesBufferBindingB],
   })
@@ -246,7 +253,7 @@ window.addEventListener('load', async () => {
   })
 
   // the compute pass
-  const computeBoidsPass = new ComputePass(gpuCurtains, {
+  const computeBoidsPass = new ComputePass(gpuCameraRenderer, {
     label: 'Compute test',
     shaders: {
       compute: {
@@ -285,8 +292,8 @@ window.addEventListener('load', async () => {
       )
     })
     .onAfterResize(() => {
-      const cameraRatio = gpuCurtains.camera.visibleSize.height * particleShrinkScale * 0.5
-      const screenRatio = gpuCurtains.boundingRect.width / gpuCurtains.boundingRect.height
+      const cameraRatio = gpuCameraRenderer.camera.visibleSize.height * particleShrinkScale * 0.5
+      const screenRatio = gpuCameraRenderer.boundingRect.width / gpuCameraRenderer.boundingRect.height
       computeBoidsPass.uniforms.params.systemSize.value.set(cameraRatio * screenRatio, cameraRatio)
     })
 
@@ -341,7 +348,7 @@ window.addEventListener('load', async () => {
     ],
   })
 
-  const sphereMesh = new Mesh(gpuCurtains, {
+  const sphereMesh = new Mesh(gpuCameraRenderer, {
     label: 'Sphere mesh',
     geometry: sphereGeometry,
     shaders: {
@@ -374,7 +381,10 @@ window.addEventListener('load', async () => {
   const onPointerMove = (e) => {
     const { clientX, clientY } = e.targetTouches && e.targetTouches.length ? e.targetTouches[0] : e
 
-    mousePosition.set(clientX / gpuCurtains.boundingRect.width, 1 - clientY / gpuCurtains.boundingRect.height)
+    mousePosition.set(
+      clientX / gpuCameraRenderer.boundingRect.width,
+      1 - clientY / gpuCameraRenderer.boundingRect.height
+    )
 
     computeBoidsPass.uniforms.params.mousePosition.value
       .copy(mousePosition)

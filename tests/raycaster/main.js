@@ -39,14 +39,9 @@ window.addEventListener('load', async () => {
 
   let time = 0
 
-  // render it
-  const animate = () => {
-    gpuDeviceManager.render()
+  gpuDeviceManager.onAfterRender(() => {
     time++
-    requestAnimationFrame(animate)
-  }
-
-  animate()
+  })
 
   const meshes = []
   const raycastedObjects = []

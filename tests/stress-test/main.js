@@ -36,17 +36,13 @@ window.addEventListener('load', async () => {
     lights: false, // disable lights and shadows buffer, we want the bare minimum
   })
 
-  // render it
-  const animate = () => {
-    requestAnimationFrame(animate)
-
-    stats.begin()
-
-    gpuDeviceManager.render()
-    stats.end()
-  }
-
-  animate()
+  gpuDeviceManager
+    .onBeforeRender(() => {
+      stats.begin()
+    })
+    .onAfterRender(() => {
+      stats.end()
+    })
 
   const cubeGeometry = new BoxGeometry()
   const sphereGeometry = new SphereGeometry()

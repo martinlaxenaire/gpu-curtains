@@ -37,14 +37,6 @@ window.addEventListener('load', async () => {
     },
   })
 
-  // render our scene manually
-  const animate = () => {
-    gpuDeviceManager.render()
-    requestAnimationFrame(animate)
-  }
-
-  animate()
-
   gpuFrontCameraRenderer.camera.position.z = systemSize * 3
   gpuBackCameraRenderer.camera.position.z = systemSize * 3
 

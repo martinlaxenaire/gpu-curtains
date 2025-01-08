@@ -8,14 +8,6 @@ export const init = async ({ canvas, label, width, height, top = 0, left = 0, pi
 
   await deviceManager.init()
 
-  // render it
-  const animate = () => {
-    deviceManager.render()
-    requestAnimationFrame(animate)
-  }
-
-  animate()
-
   renderer = new GPUCameraRenderer({
     deviceManager,
     label,

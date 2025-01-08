@@ -32,15 +32,9 @@ window.addEventListener('load', async () => {
   gpuCameraRenderer.camera.position.z = 25
   const orbitControls = new OrbitControls(gpuCameraRenderer)
 
-  // render it
-  const animate = () => {
+  gpuDeviceManager.onBeforeRender(() => {
     pivot.rotation.y += 0.02
-
-    gpuDeviceManager.render()
-    requestAnimationFrame(animate)
-  }
-
-  animate()
+  })
 
   const boxGeometry = new BoxGeometry()
 

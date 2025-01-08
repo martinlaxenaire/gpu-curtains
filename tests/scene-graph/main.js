@@ -37,19 +37,13 @@ window.addEventListener('load', async () => {
 
   let time = 0
 
-  // render
-  const animate = () => {
+  gpuDeviceManager.onBeforeRender(() => {
     leftPivot.rotation.z += 0.02
 
     time += 0.025
     rightPivot.rotation.y += 0.01
     rightPivot.position.y = Math.cos(time) * 3
-
-    gpuDeviceManager.render()
-    requestAnimationFrame(animate)
-  }
-
-  animate()
+  })
 
   // left scene
   const centerSphere = new Mesh(gpuCameraRenderer, {

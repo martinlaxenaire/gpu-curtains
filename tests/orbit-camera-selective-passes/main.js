@@ -54,16 +54,6 @@ window.addEventListener('load', async () => {
 
   console.log(camera)
 
-  // render our scene manually
-  const animate = () => {
-    //camera.rotation.y += 0.01
-    gpuDeviceManager.render()
-
-    requestAnimationFrame(animate)
-  }
-
-  animate()
-
   // now add objects to our scene
   const cubeGeometry = new BoxGeometry()
   const sphereGeometry = new SphereGeometry()

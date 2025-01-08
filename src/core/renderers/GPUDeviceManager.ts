@@ -7,6 +7,7 @@ import { DOMTexture } from '../textures/DOMTexture'
 import { AllowedBindGroups } from '../../types/BindGroups'
 import { Buffer } from '../buffers/Buffer'
 import { BufferBinding } from '../bindings/BufferBinding'
+import { IndirectBuffer } from '../../extras/buffers/IndirectBuffer'
 
 /**
  * Base parameters used to create a {@link GPUDeviceManager}
@@ -16,6 +17,8 @@ export interface GPUDeviceManagerBaseParams {
   production?: boolean
   /** Additional options to use when requesting an {@link GPUAdapter | adapter} */
   adapterOptions?: GPURequestAdapterOptions
+  /** Whether the {@link GPUDeviceManager} should create its own requestAnimationFrame loop to render or not */
+  autoRender?: boolean
 }
 
 /**
@@ -75,7 +78,9 @@ export class GPUDeviceManager {
   /** A Map containing all our created {@link AllowedBindGroups} */
   bindGroups: Map<string, AllowedBindGroups>
   /** An array containing all our created {@link GPUBuffer} */
-  buffers: Map<string, Buffer>
+  buffers: Map<Buffer['uuid'], Buffer>
+  /** A {@link Map} containing all our created {@link IndirectBuffer} */
+  indirectBuffers: Map<IndirectBuffer['uuid'], IndirectBuffer>
 
   /** A Map containing all our created {@link GPUBindGroupLayout} indexed by cache keys */
   bindGroupLayouts: Map<string, GPUBindGroupLayout>
@@ -88,6 +93,18 @@ export class GPUDeviceManager {
   domTextures: DOMTexture[]
   /** An array to keep track of the newly uploaded {@link DOMTexture} and set their {@link DOMTexture#sourceUploaded | sourceUploaded} property */
   texturesQueue: DOMTexture[]
+
+  /** Request animation frame callback returned id if used */
+  animationFrameID: null | number
+
+  /** function assigned to the {@link onBeforeRender} callback */
+  _onBeforeRenderCallback: () => void = () => {
+    /* allow empty callback */
+  }
+  /** function assigned to the {@link onAfterRender} callback */
+  _onAfterRenderCallback: () => void = () => {
+    /* allow empty callback */
+  }
 
   /** Callback to run if there's any error while trying to set up the {@link GPUAdapter | adapter} or {@link GPUDevice | device} */
   onError: () => void
@@ -104,6 +121,7 @@ export class GPUDeviceManager {
     label,
     production = false,
     adapterOptions = {},
+    autoRender = true,
     onError = () => {
       /* allow empty callbacks */
     },
@@ -129,6 +147,10 @@ export class GPUDeviceManager {
 
     this.setPipelineManager()
     this.setDeviceObjects()
+
+    if (autoRender) {
+      this.animate()
+    }
   }
 
   /**
@@ -278,6 +300,9 @@ export class GPUDeviceManager {
         })
       })
 
+      // recreate indirect buffers
+      this.indirectBuffers.forEach((indirectBuffer) => indirectBuffer.create())
+
       // then the renderers
       this.renderers.forEach((renderer) => renderer.restoreContext())
     }
@@ -291,6 +316,7 @@ export class GPUDeviceManager {
     this.renderers = []
     this.bindGroups = new Map()
     this.buffers = new Map()
+    this.indirectBuffers = new Map()
     this.bindGroupLayouts = new Map()
     this.bufferBindings = new Map()
     this.samplers = []
@@ -423,6 +449,42 @@ export class GPUDeviceManager {
     this.domTextures = this.domTextures.filter((t) => t.uuid !== texture.uuid)
   }
 
+  /* RENDER */
+
+  /**
+   * Create a requestAnimationFrame loop and run it
+   */
+  animate() {
+    this.render()
+    this.animationFrameID = requestAnimationFrame(this.animate.bind(this))
+  }
+
+  /**
+   * Called each frame before rendering
+   * @param callback - callback to run at each render
+   * @returns - our {@link GPUDeviceManager}
+   */
+  onBeforeRender(callback: () => void): GPUDeviceManager {
+    if (callback) {
+      this._onBeforeRenderCallback = callback
+    }
+
+    return this
+  }
+
+  /**
+   * Called each frame after rendering
+   * @param callback - callback to run at each render
+   * @returns - our {@link GPUDeviceManager}
+   */
+  onAfterRender(callback: () => void): GPUDeviceManager {
+    if (callback) {
+      this._onAfterRenderCallback = callback
+    }
+
+    return this
+  }
+
   /**
    * Render everything:
    * - call all our {@link renderers} {@link core/renderers/GPURenderer.GPURenderer#onBeforeCommandEncoder | onBeforeCommandEncoder} callbacks
@@ -435,6 +497,8 @@ export class GPUDeviceManager {
    */
   render() {
     if (!this.ready) return
+
+    this._onBeforeRenderCallback && this._onBeforeRenderCallback()
 
     for (const renderer of this.renderers) {
       if (renderer.shouldRender) renderer.onBeforeCommandEncoder()
@@ -468,12 +532,20 @@ export class GPUDeviceManager {
     for (const renderer of this.renderers) {
       if (renderer.shouldRender) renderer.onAfterCommandEncoder()
     }
+
+    this._onAfterRenderCallback && this._onAfterRenderCallback()
   }
 
   /**
    * Destroy the {@link GPUDeviceManager} and its {@link renderers}
    */
   destroy() {
+    if (this.animationFrameID) {
+      cancelAnimationFrame(this.animationFrameID)
+    }
+
+    this.animationFrameID = null
+
     this.device?.destroy()
     this.device = null
 
@@ -482,6 +554,7 @@ export class GPUDeviceManager {
     // now clear everything that could have been left behind
     this.bindGroups.forEach((bindGroup) => bindGroup.destroy())
     this.buffers.forEach((buffer) => buffer?.destroy())
+    this.indirectBuffers.forEach((indirectBuffer) => indirectBuffer.destroy())
 
     this.domTextures.forEach((texture) => texture.destroy())
 

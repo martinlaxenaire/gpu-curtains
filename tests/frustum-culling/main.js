@@ -22,14 +22,6 @@ window.addEventListener('load', async () => {
     container: document.querySelector('#canvas'),
   })
 
-  // render it
-  const animate = () => {
-    gpuDeviceManager.render()
-    requestAnimationFrame(animate)
-  }
-
-  animate()
-
   gpuCameraRenderer.camera.position.z = 25
 
   const boxGeometry = new BoxGeometry()

@@ -37,14 +37,6 @@ window.addEventListener('load', async () => {
 
   camera.position.z = 0
 
-  // render it
-  const animate = () => {
-    gpuDeviceManager.render()
-    requestAnimationFrame(animate)
-  }
-
-  animate()
-
   const envMaps = {
     cannon: {
       name: 'Cannon',

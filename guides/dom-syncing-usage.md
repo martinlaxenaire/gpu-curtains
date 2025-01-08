@@ -6,6 +6,8 @@ category: Tutorials
 
 # Use gpu-curtains for DOM syncing
 
+gpu-curtains comes with a few extra classes made exclusively to help you sync 3D objects scales and positions with DOM elements.
+
 ## HTML & CSS setup
 
 ### HTML

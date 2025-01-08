@@ -58,14 +58,6 @@ const renderer = new GPUCameraRenderer({
   container: document.querySelector('#canvas'),
 })
 
-// start rendering
-const animate = () => {
-  gpuDeviceManager.render()
-  requestAnimationFrame(animate)
-}
-
-animate()
-
 // render a mesh using its normals as shading colors
 // which are gpu-curtains fallback default shaders
 const mesh = new Mesh(renderer, {
@@ -98,14 +90,6 @@ const renderer = new GPUCameraRenderer({
   deviceManager: gpuDeviceManager, // the renderer is going to use our WebGPU device to create its context
   container: document.querySelector('#canvas'),
 })
-
-// start rendering
-const animate = () => {
-  gpuDeviceManager.render()
-  requestAnimationFrame(animate)
-}
-
-animate()
 
 const vs = /* wgsl */ `
 struct VSOutput {
@@ -222,14 +206,6 @@ const renderer = new GPUCameraRenderer({
   deviceManager: gpuDeviceManager, // the renderer is going to use our WebGPU device to create its context
   container: document.querySelector('#canvas'),
 })
-
-// start rendering
-const animate = () => {
-  gpuDeviceManager.render()
-  requestAnimationFrame(animate)
-}
-
-animate()
 
 // add an ambient light
 const ambientLight = new AmbientLight(renderer, {

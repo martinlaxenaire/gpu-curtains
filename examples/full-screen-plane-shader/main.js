@@ -25,14 +25,6 @@ window.addEventListener('load', async () => {
     },
   })
 
-  // start rendering
-  const animate = () => {
-    gpuDeviceManager.render()
-    requestAnimationFrame(animate)
-  }
-
-  animate()
-
   const shader = /* wgsl */ `
     // https://gist.github.com/munrocket/236ed5ba7e409b8bdf1ff6eca5dcdc39
     // MIT License. © Stefan Gustavson, Munrocket

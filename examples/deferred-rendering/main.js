@@ -55,17 +55,10 @@ window.addEventListener('load', async () => {
 
   camera.lookAt(new Vec3(0, systemSize.y * 0.125, 0))
 
-  // render our scene manually
-  const animate = () => {
+  gpuDeviceManager.onBeforeRender(() => {
     // rotate our camera pivot
     cameraPivot.rotation.y += 0.005
-
-    gpuDeviceManager.render()
-
-    requestAnimationFrame(animate)
-  }
-
-  animate()
+  })
 
   // get sample count from url search params or default to 1
   // beware that MSAA + deferred rendering can be quite expensive!

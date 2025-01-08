@@ -1,21 +1,26 @@
-import { Geometry, GPUCurtains, Mesh, Vec3 } from '../../dist/esm/index.mjs'
+import { Geometry, GPUCameraRenderer, GPUCurtains, GPUDeviceManager, Mesh, Vec3 } from '../../dist/esm/index.mjs'
 
 window.addEventListener('load', async () => {
-  // set our main GPUCurtains instance it will handle everything we need
-  // a WebGPU device and a renderer with its scene, requestAnimationFrame, resize and scroll events...
-  const gpuCurtains = new GPUCurtains({
-    container: '#canvas',
-    pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance,
+  // first, we need a WebGPU device, that's what GPUDeviceManager is for
+  const gpuDeviceManager = new GPUDeviceManager({
+    label: 'Custom device manager',
+    onError: () => {
+      document.body.classList.add('no-curtains')
+    },
+  })
+
+  // we need to wait for the device to be created
+  await gpuDeviceManager.init()
+
+  // then we can create a camera renderer
+  const gpuCameraRenderer = new GPUCameraRenderer({
+    deviceManager: gpuDeviceManager, // the renderer is going to use our WebGPU device to create its context
+    container: document.querySelector('#canvas'),
+    pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
     camera: {
       far: 200,
     },
   })
-
-  gpuCurtains.onError(() => {
-    document.body.classList.add('no-curtains')
-  })
-
-  await gpuCurtains.setDevice()
 
   // instanced custom geometry mesh grid
   // we will basically recreate https://threejs.org/examples/?q=instanc#webgl_instancing_dynamic
@@ -200,10 +205,10 @@ window.addEventListener('load', async () => {
     },
   }
 
-  const mesh = new Mesh(gpuCurtains, params)
+  const mesh = new Mesh(gpuCameraRenderer, params)
 
   // move camera back
-  gpuCurtains.renderer.camera.position.z = 100
+  gpuCameraRenderer.camera.position.z = 100
 
   mesh.onBeforeRender(() => {
     mesh.uniforms.frames.elapsed.value++

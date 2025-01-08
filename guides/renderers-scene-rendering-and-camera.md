@@ -45,14 +45,6 @@ const gpuRenderer = new GPURenderer({
   deviceManager: gpuDeviceManager, // the renderer is going to use our WebGPU device to create its context
   container: document.querySelector('#canvas'),
 })
-
-// start rendering
-const animate = () => {
-  gpuDeviceManager.render()
-  requestAnimationFrame(animate)
-}
-
-animate()
 ```
 
 ### GPUCameraRenderer
@@ -84,14 +76,6 @@ const gpuCameraRenderer = new GPUCameraRenderer({
   deviceManager: gpuDeviceManager, // the renderer is going to use our WebGPU device to create its context
   container: document.querySelector('#canvas'),
 })
-
-// start rendering
-const animate = () => {
-  gpuDeviceManager.render()
-  requestAnimationFrame(animate)
-}
-
-animate()
 ```
 
 ### GPUCurtainsRenderer
@@ -156,14 +140,6 @@ const gpuCameraRenderer = new GPUCameraRenderer({
   lights: false // do not use lights
 })
 
-// start rendering
-const animate = () => {
-  gpuDeviceManager.render()
-  requestAnimationFrame(animate)
-}
-
-animate()
-
 // create a mesh that will be rendered just once
 const mesh = new Mesh(gpuCameraRenderer, {
   label: 'Mesh rendered once',
@@ -205,14 +181,6 @@ const gpuCameraRenderer = new GPUCameraRenderer({
     maxPointLights: 1,
   }
 })
-
-// start rendering
-const animate = () => {
-  gpuDeviceManager.render()
-  requestAnimationFrame(animate)
-}
-
-animate()
 ```
 
 #### Disable lights buffers
@@ -234,12 +202,4 @@ const gpuCameraRenderer = new GPUCameraRenderer({
   container: document.querySelector('#canvas'),
   lights: false // do not use lights
 })
-
-// start rendering
-const animate = () => {
-  gpuDeviceManager.render()
-  requestAnimationFrame(animate)
-}
-
-animate()
 ```
