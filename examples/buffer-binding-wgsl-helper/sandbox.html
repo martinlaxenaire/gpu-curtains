@@ -1,0 +1,73 @@
+<!-- frame.html -->
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Evalbox's Frame</title>
+    <script type="module">
+      import { BufferBinding, Vec2, Vec3, Mat3, Mat4, Quat } from '../../dist/esm/index.mjs'
+
+      window.addEventListener('message', function (e) {
+        const mainWindow = e.source
+
+        window.Vec2 = Vec2
+        window.Vec3 = Vec3
+        window.Mat3 = Mat3
+        window.Mat4 = Mat4
+        window.Quat = Quat
+        window.BufferBinding = BufferBinding
+
+        try {
+          const args = Function('"use strict";return ({' + e.data.content + '})')()
+          const result = new BufferBinding(args)
+
+          // stringify/parse buffer binding
+          // so we can add getter/setters that are not copied by a simple stringify
+          const JSONcopy = JSON.stringify(result)
+          const copy = JSON.parse(JSONcopy)
+          copy.bufferElements.forEach((b, i) => {
+            if (result.bufferElements[i].arrayStrideToIndex) {
+              b.arrayStrideToIndex = result.bufferElements[i].arrayStrideToIndex
+            }
+
+            if (result.bufferElements[i].constructor.name === 'BufferInterleavedArrayElement') {
+              b.viewSetFunction = true
+            }
+
+            b.byteCount = result.bufferElements[i].byteCount
+            b.endOffset = result.bufferElements[i].endOffset
+            b.endOffsetToIndex = result.bufferElements[i].endOffsetToIndex
+            b.paddedByteCount = result.bufferElements[i].paddedByteCount
+            b.rowCount = result.bufferElements[i].rowCount
+            b.startOffset = result.bufferElements[i].startOffset
+            b.startOffsetToIndex = result.bufferElements[i].startOffsetToIndex
+          })
+
+          copy.childrenBindings.forEach((c, i) => {
+            c.bufferElements.forEach((b, j) => {
+              if (result.childrenBindings[i].bufferElements[j].arrayStrideToIndex) {
+                b.arrayStrideToIndex = result.childrenBindings[i].bufferElements[j].arrayStrideToIndex
+              }
+
+              if (result.childrenBindings[i].bufferElements[j].constructor.name === 'BufferInterleavedArrayElement') {
+                b.viewSetFunction = true
+              }
+
+              b.byteCount = result.childrenBindings[i].bufferElements[j].byteCount
+              b.endOffset = result.childrenBindings[i].bufferElements[j].endOffset
+              b.endOffsetToIndex = result.childrenBindings[i].bufferElements[j].endOffsetToIndex
+              b.paddedByteCount = result.childrenBindings[i].bufferElements[j].paddedByteCount
+              b.rowCount = result.childrenBindings[i].bufferElements[j].rowCount
+              b.startOffset = result.childrenBindings[i].bufferElements[j].startOffset
+              b.startOffsetToIndex = result.childrenBindings[i].bufferElements[j].startOffsetToIndex
+            })
+          })
+
+          window[e.data.name] = result
+          mainWindow.postMessage({ source: e.data.source, name: e.data.name, result: JSON.stringify(copy) }, e.origin)
+        } catch (e) {
+          console.error(e)
+        }
+      })
+    </script>
+  </head>
+</html>

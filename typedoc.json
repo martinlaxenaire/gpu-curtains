@@ -27,6 +27,8 @@
     "Examples": "https://martinlaxenaire.github.io/gpu-curtains/examples/"
   },
   "plugin": ["typedoc-plugin-mdn-links"],
+  "defaultCategory": "API",
+  "categoryOrder": ["Tutorials", "About", "API"],
   "projectDocuments": ["guides/getting-started.md", "guides/core-concepts.md"],
   "sort": ["source-order"],
   "validation": {

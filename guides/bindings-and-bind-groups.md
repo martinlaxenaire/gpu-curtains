@@ -31,6 +31,8 @@ The easiest way to pass data with gpu-curtains is to use the `textures`, `sample
 
 The {@link core/materials/ComputeMaterial.ComputeMaterial | ComputeMaterial} and {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} use this inputs under the hoods to create the corresponding bind groups and their bindings and automatically add their WGSL declarations to your shaders.
 
+There's a helper tool to help you understand and debug your {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} WGSL declaration: [BufferBinding WGSL generation helper](https://martinlaxenaire.github.io/gpu-curtains/examples/buffer-binding-wgsl-helper/)
+
 #### Uniforms and storages with gpu-curtains
 
 There are two ways to create uniform or storage buffers in gpu-curtains.

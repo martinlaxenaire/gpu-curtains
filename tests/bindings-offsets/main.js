@@ -439,7 +439,7 @@ window.addEventListener('load', async () => {
 
     let previousEndOffset = 0
 
-    const buildRegularBufferElements = (bufferElements) => {
+    const buildRegularBufferElements = (bufferElements, baseIndex = 0) => {
       bufferElements.forEach((bindingElement, index) => {
         const { startOffset } = bindingElement
         const { numElements, size } = bindingElement.bufferLayout
@@ -494,7 +494,7 @@ window.addEventListener('load', async () => {
 
             innerHTML += `<div class='binding-element ${bindingElement.bufferLayout.type}-type col-span-${
               size < 4 ? size : 4
-            } color-${index % 8}'>`
+            } color-${(baseIndex + index) % 8}'>`
 
             const arrayIndex = bindingElement.numElements ? `[${i}]` : ''
 
@@ -618,7 +618,7 @@ window.addEventListener('load', async () => {
         (bufferElement) => !bufferElement.viewSetFunction
       )
 
-      buildRegularBufferElements(regularChildBufferElements)
+      buildRegularBufferElements(regularChildBufferElements, binding.bufferElements.length)
 
       const interleavedChildBufferElements = childBinding.bufferElements.filter(
         (bufferElement) => !!bufferElement.viewSetFunction
