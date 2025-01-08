@@ -46,16 +46,10 @@ window.addEventListener('load', async () => {
   camera.position.z = systemSize * 4
   camera.transformOrigin.z = -camera.position.z
 
-  // render our scene manually
-  const animate = () => {
+  // rotate camera each frame
+  gpuDeviceManager.onBeforeRender(() => {
     camera.rotation.y += 0.01
-
-    gpuDeviceManager.render()
-
-    requestAnimationFrame(animate)
-  }
-
-  animate()
+  })
 
   // lights
   const ambientLight = new AmbientLight(gpuCameraRenderer, {

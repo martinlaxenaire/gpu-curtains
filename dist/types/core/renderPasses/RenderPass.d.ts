@@ -4,11 +4,11 @@ import { GPUCurtains } from '../../curtains/GPUCurtains';
 import { Texture } from '../textures/Texture';
 /** Define the parameters of a color attachment */
 export interface ColorAttachmentParams {
-    /** The {@link GPULoadOp | load operation} to perform while drawing this {@link RenderPass} */
+    /** The {@link GPUCommandEncoder.beginRenderPass().loadOp | load operation} to perform while drawing this {@link RenderPass} */
     loadOp?: GPULoadOp;
-    /** The {@link GPUStoreOp | store operation} to perform while drawing this {@link RenderPass} */
+    /** The {@link GPUCommandEncoder.beginRenderPass().storeOp | store operation} to perform while drawing this {@link RenderPass} */
     storeOp?: GPUStoreOp;
-    /** The {@link GPUColor | color values} to clear to before drawing this {@link RenderPass} */
+    /** The {@link GPUCommandEncoder.beginRenderPass().clearValue | color values} to clear to before drawing this {@link RenderPass} */
     clearValue?: GPUColor;
     /** Optional format of the color attachment texture */
     targetFormat: GPUTextureFormat;
@@ -33,9 +33,9 @@ export interface RenderPassParams {
     useDepth?: boolean;
     /** Whether this {@link RenderPass} should use an already created depth texture */
     depthTexture?: Texture;
-    /** The {@link GPULoadOp | depth load operation} to perform while drawing this {@link RenderPass} */
+    /** The {@link GPUCommandEncoder.beginRenderPass().loadOp | depth load operation} to perform while drawing this {@link RenderPass} */
     depthLoadOp?: GPULoadOp;
-    /** The {@link GPUStoreOp | depth store operation} to perform while drawing this {@link RenderPass} */
+    /** The {@link GPUCommandEncoder.beginRenderPass().storeOp | depth store operation} to perform while drawing this {@link RenderPass} */
     depthStoreOp?: GPUStoreOp;
     /** The depth clear value to clear to before drawing this {@link RenderPass} */
     depthClearValue?: number;
@@ -43,7 +43,7 @@ export interface RenderPassParams {
     depthFormat?: GPUTextureFormat;
 }
 /**
- * Used by {@link core/renderPasses/RenderTarget.RenderTarget | RenderTarget} and the {@link Renderer} to render to one or multiple {@link RenderPass#viewTextures | view textures} (and optionally a {@link RenderPass#depthTexture | depth texture}), using a specific {@link GPURenderPassDescriptor | render pass descriptor}.
+ * Used by {@link core/renderPasses/RenderTarget.RenderTarget | RenderTarget} and the {@link Renderer} to render to one or multiple {@link RenderPass#viewTextures | view textures} (and optionally a {@link RenderPass#depthTexture | depth texture}), using a specific {@link GPUCommandEncoder.beginRenderPass().descriptor | GPURenderPassDescriptor}.
  */
 export declare class RenderPass {
     /** {@link Renderer} used by this {@link RenderPass} */
@@ -60,7 +60,7 @@ export declare class RenderPass {
     viewTextures: Texture[];
     /** Array of {@link Texture} used for this {@link RenderPass} color attachments resolve textures */
     resolveTargets: Array<null | Texture>;
-    /** The {@link RenderPass} {@link GPURenderPassDescriptor | descriptor} */
+    /** The {@link RenderPass} {@link GPUCommandEncoder.beginRenderPass().descriptor | GPURenderPassDescriptor}. */
     descriptor: GPURenderPassDescriptor;
     /**
      * RenderPass constructor
@@ -97,25 +97,25 @@ export declare class RenderPass {
      */
     resize(): void;
     /**
-     * Set the {@link descriptor} {@link GPULoadOp | load operation}
-     * @param loadOp - new {@link GPULoadOp | load operation} to use
+     * Set the {@link descriptor} {@link GPUCommandEncoder.beginRenderPass().loadOp | load operation}
+     * @param loadOp - new {@link GPUCommandEncoder.beginRenderPass().loadOp | load operation} to use
      * @param colorAttachmentIndex - index of the color attachment for which to use this load operation
      */
     setLoadOp(loadOp?: GPULoadOp, colorAttachmentIndex?: number): void;
     /**
-     * Set the {@link descriptor} {@link GPULoadOp | depth load operation}
-     * @param depthLoadOp - new {@link GPULoadOp | depth load operation} to use
+     * Set the {@link descriptor} {@link GPUCommandEncoder.beginRenderPass().loadOp | depth load operation}
+     * @param depthLoadOp - new {@link GPUCommandEncoder.beginRenderPass().loadOp | depth load operation} to use
      */
     setDepthLoadOp(depthLoadOp?: GPULoadOp): void;
     /**
-     * Set our {@link GPUColor | clear colors value}.<br>
+     * Set our {@link GPUCommandEncoder.beginRenderPass().clearValue | clear colors value}.<br>
      * Beware that if the {@link renderer} is using {@link core/renderers/GPURenderer.GPURendererContextOptions#alphaMode | premultiplied alpha mode}, your R, G and B channels should be premultiplied by your alpha channel.
-     * @param clearValue - new {@link GPUColor | clear colors value} to use
+     * @param clearValue - new {@link GPUCommandEncoder.beginRenderPass().clearValue | clear colors value} to use
      * @param colorAttachmentIndex - index of the color attachment for which to use this clear value
      */
     setClearValue(clearValue?: GPUColor, colorAttachmentIndex?: number): void;
     /**
-     * Set the current {@link descriptor} texture {@link GPURenderPassColorAttachment#view | view} and {@link GPURenderPassColorAttachment#resolveTarget | resolveTarget} (depending on whether we're using multisampling)
+     * Set the current {@link descriptor} texture {@link GPUCommandEncoder.beginRenderPass().view | view} and {@link GPUCommandEncoder.beginRenderPass().resolveTarget | resolveTarget} (depending on whether we're using multisampling)
      * @param renderTexture - {@link GPUTexture} to use, or the {@link core/renderers/GPURenderer.GPURenderer#context | context} {@link GPUTexture | current texture} if null.
      * @returns - the {@link GPUTexture | texture} to render to.
      */

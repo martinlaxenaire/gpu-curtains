@@ -163,7 +163,6 @@ export class EnvironmentMap {
 
   /**
    * Create the {@link lutTexture | BRDF GGX LUT texture} using the provided {@link LUTTextureParams | LUT texture options} and a {@link ComputePass} that runs once.
-   * @async
    */
   async computeBRDFLUTTexture() {
     // specific lut texture options
@@ -241,8 +240,7 @@ export class EnvironmentMap {
 
   /**
    * Create the {@link specularTexture | specular cube map texture} from a loaded {@link HDRImageData} using the provided {@link SpecularTextureParams | specular texture options} and a {@link ComputePass} that runs once.
-   * @params parsedHdr - parsed {@link HDRImageData} loaded by the {@link hdrLoader}.
-   * @async
+   * @param parsedHdr - parsed {@link HDRImageData} loaded by the {@link hdrLoader}.
    */
   async computeSpecularCubemapFromHDRData(parsedHdr: HDRImageData) {
     let cubeStorageTexture = new Texture(this.renderer, {
@@ -410,7 +408,6 @@ export class EnvironmentMap {
   /**
    * Load an HDR environment map and then generates the {@link specularTexture} and {@link diffuseTexture} using two separate {@link ComputePass}.
    * @param url - The url of the .hdr file to load.
-   * @async
    */
   async loadAndComputeFromHDR(url: string) {
     const parsedHdr = await this.hdrLoader.loadFromUrl(url)

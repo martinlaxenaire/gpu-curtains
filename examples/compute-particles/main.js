@@ -1,4 +1,14 @@
-import { BindGroup, ComputePass, Geometry, GPUCurtains, OrbitControls, Mesh, Vec3 } from '../../dist/esm/index.mjs'
+import {
+  GPUDeviceManager,
+  GPUCameraRenderer,
+  BindGroup,
+  ComputePass,
+  Geometry,
+  GPUCurtains,
+  OrbitControls,
+  Mesh,
+  Vec3,
+} from '../../dist/esm/index.mjs'
 
 // inspired by https://barradeau.com/blog/?p=621
 // and https://www.clicktorelease.com/code/polygon-shredder/
@@ -202,22 +212,27 @@ window.addEventListener('load', async () => {
   //const nbParticles = 500_000
   const systemSize = new Vec3(150)
 
-  // set our main GPUCurtains instance it will handle everything we need
-  // a WebGPU device and a renderer with its scene, requestAnimationFrame, resize and scroll events...
-  const gpuCurtains = new GPUCurtains({
-    container: '#canvas',
+  // first, we need a WebGPU device, that's what GPUDeviceManager is for
+  const gpuDeviceManager = new GPUDeviceManager({
+    label: 'Custom device manager',
+    onError: () => {
+      document.body.classList.add('no-curtains')
+    },
+  })
+
+  // we need to wait for the device to be created
+  await gpuDeviceManager.init()
+
+  // then we can create a camera renderer
+  const gpuCameraRenderer = new GPUCameraRenderer({
+    deviceManager: gpuDeviceManager, // the renderer is going to use our WebGPU device to create its context
+    container: document.querySelector('#canvas'),
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
     camera: {
       near: 0.1,
       far: systemSize.z * 50,
     },
   })
-
-  gpuCurtains.onError(() => {
-    document.body.classList.add('no-curtains')
-  })
-
-  await gpuCurtains.setDevice()
 
   // The basic idea here is to place instanced points on a sphere surface
   // and then displace them with curl noise in a compute shader
@@ -226,7 +241,7 @@ window.addEventListener('load', async () => {
   // we are going to run a compute shader once instead!
 
   // first we're creating a bind group that is going to be used by both compute passes
-  const particlesBindGroup = new BindGroup(gpuCurtains.renderer, {
+  const particlesBindGroup = new BindGroup(gpuCameraRenderer, {
     label: 'Particles bind group',
     uniforms: {
       params: {
@@ -278,7 +293,7 @@ window.addEventListener('load', async () => {
   })
 
   // now the compute pass that is going to place the points on a sphere
-  const computeInitDataPass = new ComputePass(gpuCurtains, {
+  const computeInitDataPass = new ComputePass(gpuCameraRenderer, {
     label: 'Compute initial data',
     shaders: {
       compute: {
@@ -295,10 +310,10 @@ window.addEventListener('load', async () => {
   await computeInitDataPass.material.compileMaterial()
 
   // now run the compute pass just once
-  gpuCurtains.renderer.renderOnce([computeInitDataPass])
+  gpuCameraRenderer.renderOnce([computeInitDataPass])
 
   // then the compute pass that is going to displace our particles
-  const computePass = new ComputePass(gpuCurtains, {
+  const computePass = new ComputePass(gpuCameraRenderer, {
     label: 'Compute particles positions',
     shaders: {
       compute: {
@@ -320,10 +335,10 @@ window.addEventListener('load', async () => {
     })
 
   // now the render part
-  gpuCurtains.renderer.camera.position.z = systemSize.z * 3
+  gpuCameraRenderer.camera.position.z = systemSize.z * 3
 
   // orbit controls
-  const orbitControls = new OrbitControls(gpuCurtains.renderer)
+  const orbitControls = new OrbitControls(gpuCameraRenderer)
   orbitControls.zoomStep = systemSize.z * 0.002
   orbitControls.minZoom = systemSize.z * -1.5
   orbitControls.maxZoom = systemSize.z * 1.5
@@ -396,7 +411,7 @@ window.addEventListener('load', async () => {
     ],
   })
 
-  const particles = new Mesh(gpuCurtains, {
+  const particles = new Mesh(gpuCameraRenderer, {
     label: 'Particles mesh',
     geometry: particlesGeometry,
     shaders: {

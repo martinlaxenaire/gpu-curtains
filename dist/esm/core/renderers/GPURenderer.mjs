@@ -126,7 +126,7 @@ class GPURenderer {
     }
   }
   /**
-   * Set the renderer {@link pixelRatio | pixel ratio} and {@link resize} it
+   * Set the renderer {@link GPURenderer.pixelRatio | pixel ratio} and {@link resize} it
    * @param pixelRatio - new pixel ratio to use
    */
   setPixelRatio(pixelRatio = 1) {
@@ -244,6 +244,13 @@ class GPURenderer {
     return this.deviceManager.buffers;
   }
   /**
+   * Get all the created {@link GPUDeviceManager#indirectBuffers | indirect buffers}
+   * @readonly
+   */
+  get indirectBuffers() {
+    return this.deviceManager.indirectBuffers;
+  }
+  /**
    * Get the {@link GPUDeviceManager#pipelineManager | pipeline manager}
    * @readonly
    */
@@ -290,11 +297,9 @@ class GPURenderer {
   /**
    * Called when the {@link GPUDeviceManager#device | device} should be restored.
    * Configure the context again, resize the {@link RenderTarget | render targets} and {@link Texture | textures}, restore our {@link renderedObjects | rendered objects} context.
-   * @async
    */
   restoreContext() {
     this.configureContext();
-    this.indirectBuffers.forEach((indirectBuffer) => indirectBuffer.create());
     this.textures.forEach((texture) => {
       texture.createTexture();
     });
@@ -328,9 +333,9 @@ class GPURenderer {
   }
   /* BUFFERS & BINDINGS */
   /**
-   * Create a {@link GPUBuffer}
+   * Create a {@link !GPUBuffer}
    * @param buffer - {@link Buffer} to use for buffer creation
-   * @returns - newly created {@link GPUBuffer}
+   * @returns - newly created {@link !GPUBuffer}
    */
   createBuffer(buffer) {
     const GPUBuffer = this.deviceManager.device?.createBuffer(buffer.options);
@@ -347,8 +352,8 @@ class GPURenderer {
   /**
    * Write to a {@link GPUBuffer}
    * @param buffer - {@link GPUBuffer} to write to
-   * @param bufferOffset - {@link GPUSize64 | buffer offset}
-   * @param data - {@link BufferSource | data} to write
+   * @param bufferOffset - {@link GPUQueue.writeBuffer().bufferOffset | buffer offset}
+   * @param data - {@link GPUQueue.writeBuffer().data | data} to write
    */
   queueWriteBuffer(buffer, bufferOffset, data) {
     this.deviceManager.device?.queue.writeBuffer(buffer, bufferOffset, data);
@@ -434,7 +439,7 @@ class GPURenderer {
   }
   /**
    * Create a {@link GPUBindGroupLayout}
-   * @param bindGroupLayoutDescriptor - {@link GPUBindGroupLayoutDescriptor | GPU bind group layout descriptor}
+   * @param bindGroupLayoutDescriptor - {@link GPUDevice.createBindGroupLayout().descriptor | GPUBindGroupLayoutDescriptor}
    * @returns - newly created {@link GPUBindGroupLayout}
    */
   createBindGroupLayout(bindGroupLayoutDescriptor) {
@@ -442,7 +447,7 @@ class GPURenderer {
   }
   /**
    * Create a {@link GPUBindGroup}
-   * @param bindGroupDescriptor - {@link GPUBindGroupDescriptor | GPU bind group descriptor}
+   * @param bindGroupDescriptor - {@link GPUDevice.createBindGroup().descriptor | GPUBindGroupDescriptor}
    * @returns - newly created {@link GPUBindGroup}
    */
   createBindGroup(bindGroupDescriptor) {
@@ -451,7 +456,7 @@ class GPURenderer {
   /* SHADERS & PIPELINES */
   /**
    * Create a {@link GPUShaderModule}
-   * @param shaderModuleDescriptor - {@link shaderModuleDescriptor | shader module descriptor}
+   * @param shaderModuleDescriptor - {@link GPUDevice.createShaderModule().descriptor | GPUShaderModuleDescriptor}
    * @returns - newly created {@link GPUShaderModule}
    */
   createShaderModule(shaderModuleDescriptor) {
@@ -459,7 +464,7 @@ class GPURenderer {
   }
   /**
    * Create a {@link GPUPipelineLayout}
-   * @param pipelineLayoutDescriptor - {@link GPUPipelineLayoutDescriptor | GPU pipeline layout descriptor}
+   * @param pipelineLayoutDescriptor - {@link GPUDevice.createPipelineLayout().descriptor | GPUPipelineLayoutDescriptor}
    * @returns - newly created {@link GPUPipelineLayout}
    */
   createPipelineLayout(pipelineLayoutDescriptor) {
@@ -467,7 +472,7 @@ class GPURenderer {
   }
   /**
    * Create a {@link GPURenderPipeline}
-   * @param pipelineDescriptor - {@link GPURenderPipelineDescriptor | GPU render pipeline descriptor}
+   * @param pipelineDescriptor - {@link GPUDevice.createRenderPipeline().descriptor | GPURenderPipelineDescriptor}
    * @returns - newly created {@link GPURenderPipeline}
    */
   createRenderPipeline(pipelineDescriptor) {
@@ -475,8 +480,7 @@ class GPURenderer {
   }
   /**
    * Asynchronously create a {@link GPURenderPipeline}
-   * @async
-   * @param pipelineDescriptor - {@link GPURenderPipelineDescriptor | GPU render pipeline descriptor}
+   * @param pipelineDescriptor - {@link GPUDevice.createRenderPipeline().descriptor | GPURenderPipelineDescriptor}
    * @returns - newly created {@link GPURenderPipeline}
    */
   async createRenderPipelineAsync(pipelineDescriptor) {
@@ -484,7 +488,7 @@ class GPURenderer {
   }
   /**
    * Create a {@link GPUComputePipeline}
-   * @param pipelineDescriptor - {@link GPUComputePipelineDescriptor | GPU compute pipeline descriptor}
+   * @param pipelineDescriptor - {@link GPUDevice.createComputePipeline().descriptor | GPUComputePipelineDescriptor}
    * @returns - newly created {@link GPUComputePipeline}
    */
   createComputePipeline(pipelineDescriptor) {
@@ -492,8 +496,7 @@ class GPURenderer {
   }
   /**
    * Asynchronously create a {@link GPUComputePipeline}
-   * @async
-   * @param pipelineDescriptor - {@link GPUComputePipelineDescriptor | GPU compute pipeline descriptor}
+   * @param pipelineDescriptor - {@link GPUDevice.createComputePipeline().descriptor | GPUComputePipelineDescriptor}
    * @returns - newly created {@link GPUComputePipeline}
    */
   async createComputePipelineAsync(pipelineDescriptor) {
@@ -537,7 +540,7 @@ class GPURenderer {
   }
   /**
    * Create a {@link GPUTexture}
-   * @param textureDescriptor - {@link GPUTextureDescriptor | GPU texture descriptor}
+   * @param textureDescriptor - {@link GPUDevice.createTexture().descriptor | GPUTextureDescriptor}
    * @returns - newly created {@link GPUTexture}
    */
   createTexture(textureDescriptor) {
@@ -612,7 +615,6 @@ class GPURenderer {
     this.meshes = [];
     this.textures = [];
     this.renderBundles = /* @__PURE__ */ new Map();
-    this.indirectBuffers = /* @__PURE__ */ new Map();
   }
   /**
    * Get all this {@link GPURenderer} rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes)
@@ -798,7 +800,6 @@ class GPURenderer {
     this.postProcessingPass?.destroy();
     this.renderTargets.forEach((renderTarget) => renderTarget.destroy());
     this.renderedObjects.forEach((sceneObject) => sceneObject.remove());
-    this.indirectBuffers.forEach((indirectBuffer) => indirectBuffer.destroy());
     this.textures.forEach((texture) => texture.destroy());
     this.context?.unconfigure();
   }

@@ -16,8 +16,6 @@ import { DOMObject3D } from './objects3D/DOMObject3D';
  * Options used to create a {@link GPUCurtains}
  */
 export interface GPUCurtainsOptions extends Omit<GPUCameraRendererParams, 'deviceManager'>, GPUDeviceManagerBaseParams {
-    /** Whether {@link GPUCurtains} should create its own requestAnimationFrame loop to render or not */
-    autoRender?: boolean;
     /** Whether {@link GPUCurtains} should handle all resizing by itself or not */
     autoResize?: boolean;
     /** Whether {@link GPUCurtains} should listen to scroll event or not */
@@ -56,10 +54,6 @@ export declare class GPUCurtains {
     deviceManager: GPUDeviceManager;
     /** Tiny scroll event listener wrapper */
     scrollManager: ScrollManager;
-    /** Request animation frame callback returned id if used */
-    animationFrameID: null | number;
-    /** function assigned to the {@link onRender} callback */
-    _onRenderCallback: () => void;
     /** function assigned to the {@link onScroll} callback */
     _onScrollCallback: () => void;
     /** function assigned to the {@link onError} callback */
@@ -74,7 +68,7 @@ export declare class GPUCurtains {
      */
     constructor({ container, label, pixelRatio, context, production, adapterOptions, renderPass, camera, lights, autoRender, autoResize, watchScroll, }?: GPUCurtainsParams);
     /**
-     * Set the {@link container}
+     * Set the {@link GPUCurtains.container | container}.
      * @param container - {@link HTMLElement} or string representing an {@link HTMLElement} selector to use
      */
     setContainer(container: DOMElementParams['element']): void;
@@ -118,13 +112,11 @@ export declare class GPUCurtains {
     get renderer(): Renderer | undefined;
     /**
      * Set the {@link GPUDeviceManager} {@link GPUDeviceManager#adapter | adapter} and {@link GPUDeviceManager#device | device} if possible, then set all created {@link Renderer} contexts.
-     * @async
      * @param parameters - {@link GPUAdapter} and/or {@link GPUDevice} to use if set.
      */
     setDevice({ adapter, device }?: GPUDeviceManagerSetupParams): Promise<void>;
     /**
      * Restore the {@link GPUDeviceManager#adapter | adapter} and {@link GPUDeviceManager#device | device}
-     * @async
      */
     restoreContext(): Promise<void>;
     /**
@@ -195,11 +187,17 @@ export declare class GPUCurtains {
      */
     initEvents(): void;
     /**
-     * Called at each render frame
+     * Called each frame before rendering
      * @param callback - callback to run at each render
      * @returns - our {@link GPUCurtains}
      */
-    onRender(callback: () => void): GPUCurtains;
+    onBeforeRender(callback: () => void): GPUCurtains;
+    /**
+     * Called each frame after rendering
+     * @param callback - callback to run at each render
+     * @returns - our {@link GPUCurtains}
+     */
+    onAfterRender(callback: () => void): GPUCurtains;
     /**
      * Called each time the {@link ScrollManager#scroll | scrollManager scroll values} changed
      * @param callback - callback to run each time the {@link ScrollManager#scroll | scrollManager scroll values} changed
@@ -224,10 +222,6 @@ export declare class GPUCurtains {
      * @returns - our {@link GPUCurtains}
      */
     onContextDestroyed(callback: (info?: GPUDeviceLostInfo) => void): GPUCurtains;
-    /**
-     * Create a requestAnimationFrame loop and run it
-     */
-    animate(): void;
     /**
      * Render our {@link GPUDeviceManager}
      */

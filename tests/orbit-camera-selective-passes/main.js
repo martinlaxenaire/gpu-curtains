@@ -13,7 +13,6 @@ window.addEventListener('load', async () => {
     SphereGeometry,
     Vec2,
     Vec3,
-    logSceneCommands,
   } = await import(/* @vite-ignore */ path)
 
   const systemSize = 10
@@ -54,16 +53,6 @@ window.addEventListener('load', async () => {
   orbitControls.maxZoom = systemSize * 6
 
   console.log(camera)
-
-  // render our scene manually
-  const animate = () => {
-    //camera.rotation.y += 0.01
-    gpuDeviceManager.render()
-
-    requestAnimationFrame(animate)
-  }
-
-  animate()
 
   // now add objects to our scene
   const cubeGeometry = new BoxGeometry()
@@ -581,5 +570,4 @@ window.addEventListener('load', async () => {
   })
 
   console.log(gpuCameraRenderer.scene)
-  logSceneCommands(gpuCameraRenderer)
 })

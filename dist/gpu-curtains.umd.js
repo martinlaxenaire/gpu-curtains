@@ -1607,8 +1607,8 @@
 
   class Buffer {
     /**
-     * Buffer constructor
-     * @param parameters - {@link GPUBufferDescriptor | parameters} used to create our Buffer
+     * Buffer constructors
+     * @param parameters - {@link BufferParams | parameters} used to create our Buffer
      */
     constructor({
       label = "Buffer",
@@ -1636,9 +1636,9 @@
       this.options.size = value;
     }
     /**
-     * Create a {@link GPUBuffer} based on the descriptor stored in the {@link options | Buffer options}.
+     * Create a {@link GPUBuffer} based on the descriptor stored in the {@link Buffer.options | Buffer options}.
      * @param renderer - {@link core/renderers/GPURenderer.GPURenderer | renderer} used to create the {@link GPUBuffer}.
-     * @param options - optional way to update the {@link options} previously set before creating the {@link GPUBuffer}.
+     * @param options - optional way to update the {@link Buffer.options | Buffer options} previously set before creating the {@link GPUBuffer}.
      */
     createBuffer(renderer, options = {}) {
       const { usage, ...staticOptions } = options;
@@ -1650,7 +1650,7 @@
       this.setBuffer(renderer.createBuffer(this));
     }
     /**
-     * Set the {@link GPUBuffer}. This allows to use a {@link Buffer} with a {@link GPUBuffer} created separately.
+     * Set the {@link Buffer.GPUBuffer | GPUBuffer}. This allows to use a {@link Buffer} with a {@link Buffer.GPUBuffer | GPUBuffer} created separately.
      * @param GPUBuffer - GPU buffer to use.
      */
     setBuffer(GPUBuffer) {
@@ -1671,7 +1671,6 @@
     }
     /**
      * Map the {@link GPUBuffer} and put a copy of the data into a {@link Float32Array}.
-     * @async
      * @returns - {@link Float32Array} holding the {@link GPUBuffer} data.
      */
     async mapBufferAsync() {
@@ -1864,7 +1863,7 @@
       return this.getMinOffsetSize(this.options.offset * this.getMinOffsetSize(this.arrayBufferSize));
     }
     /**
-     * Get {@link GPUBindGroupLayoutEntry#buffer | bind group layout entry resource}.
+     * Get {@link GPUDevice.createBindGroupLayout().descriptor.entries.resource | GPUBindGroupLayout entry resource}.
      * @readonly
      */
     get resourceLayout() {
@@ -1883,7 +1882,7 @@
       return `buffer,${getBindGroupLayoutBindingType(this)},${this.visibility},`;
     }
     /**
-     * Get {@link GPUBindGroupEntry#resource | bind group resource}.
+     * Get {@link GPUDevice.createBindGroup().descriptor.entries.resource | GPUBindGroup entry resource}.
      * @readonly
      */
     get resource() {
@@ -2007,8 +2006,8 @@
       }
     }
     /**
-     * Set this {@link BufferBinding} optional {@link childrenBindings}.
-     * @param childrenBindings - Array of {@link BufferBindingChildrenBinding} to use as {@link childrenBindings}.
+     * Set this {@link BufferBinding} optional {@link BufferBinding.childrenBindings | childrenBindings}.
+     * @param childrenBindings - Array of {@link BufferBindingChildrenBinding} to use as {@link BufferBinding.childrenBindings | childrenBindings}.
      */
     setChildrenBindings(childrenBindings) {
       this.childrenBindings = [];
@@ -2752,12 +2751,12 @@
       }
     }
     /**
-     * Clones a {@link BindGroup} from a list of {@link bindings}
-     * Useful to create a new bind group with already created buffers, but swapped
-     * @param parameters - parameters to use for cloning
-     * @param parameters.bindings - our input {@link bindings}
-     * @param [parameters.keepLayout=false] - whether we should keep original {@link bindGroupLayout} or not
-     * @returns - the cloned {@link BindGroup}
+     * Clones a {@link BindGroup} from a list of {@link BindGroup.bindings | bindings}.
+     * Useful to create a new bind group with already created buffers, but swapped.
+     * @param parameters - parameters to use for cloning.
+     * @param parameters.bindings - our input {@link BindGroup.bindings | bindings}.
+     * @param [parameters.keepLayout=false] - whether we should keep original {@link bindGroupLayout} or not.
+     * @returns - the cloned {@link BindGroup}.
      */
     clone({
       bindings = [],
@@ -2847,7 +2846,7 @@
       this.setWGSLFragment();
     }
     /**
-     * Get bind group layout entry resource, either for {@link GPUBindGroupLayoutEntry#texture | texture} or {@link GPUBindGroupLayoutEntry#externalTexture | external texture}
+     * Get bind group layout entry resource, either for {@link GPUDevice.createBindGroupLayout().texture | GPUBindGroupLayout entry texture resource}, {@link GPUDevice.createBindGroupLayout().storageTexture | GPUBindGroupLayout entry storageTexture resource} or {@link GPUDevice.createBindGroupLayout().externalTexture | GPUBindGroupLayout entry externalTexture resource}.
      * @readonly
      */
     get resourceLayout() {
@@ -2861,13 +2860,13 @@
       return getBindGroupLayoutTextureBindingCacheKey(this);
     }
     /**
-     * Get the {@link GPUBindGroupEntry#resource | bind group resource}
+     * Get the {@link GPUDevice.createBindGroup().entries.resource | GPUBindGroup entry resource}.
      */
     get resource() {
       return this.texture instanceof GPUTexture ? this.texture.createView({ label: this.options.label + " view", dimension: this.options.viewDimension }) : this.texture instanceof GPUExternalTexture ? this.texture : null;
     }
     /**
-     * Set the {@link GPUBindGroupEntry#resource | bind group resource}
+     * Set the {@link GPUDevice.createBindGroup().entries.resource | GPUBindGroup entry resource}.
      * @param value - new bind group resource
      */
     set resource(value) {
@@ -4206,7 +4205,6 @@
     }
     /**
      * Load an {@link HTMLImageElement} from a URL and create an {@link ImageBitmap} to use as a {@link source}
-     * @async
      * @param url - URL of the image to load
      * @returns - the newly created {@link ImageBitmap}
      */
@@ -4216,8 +4214,7 @@
       return await createImageBitmap(blob, { colorSpaceConversion: "none" });
     }
     /**
-     * Load and create an {@link ImageBitmap} from a URL or {@link HTMLImageElement}, use it as a {@link source} and create the {@link GPUTexture}
-     * @async
+     * Load and create an {@link ImageBitmap} from a URL or {@link HTMLImageElement}, use it as a {@link DOMTexture.source | source} and create the {@link GPUTexture}
      * @param source - the image URL or {@link HTMLImageElement} to load
      * @returns - the newly created {@link ImageBitmap}
      */
@@ -4317,7 +4314,7 @@
       }
     }
     /**
-     * Load a {@link HTMLCanvasElement}, use it as a {@link source} and create the {@link GPUTexture}
+     * Load a {@link HTMLCanvasElement}, use it as a {@link DOMTexture.source | source} and create the {@link GPUTexture}
      * @param source - the {@link HTMLCanvasElement} to use
      */
     loadCanvas(source) {
@@ -4525,7 +4522,7 @@
       this.setWGSLFragment();
     }
     /**
-     * Get {@link GPUBindGroupLayoutEntry#sampler | bind group layout entry resource}
+     * Get {@link GPUDevice.createBindGroupLayout().sampler | GPUBindGroupLayout entry resource}.
      * @readonly
      */
     get resourceLayout() {
@@ -4544,13 +4541,13 @@
       return `sampler,${this.options.type},${this.visibility},`;
     }
     /**
-     * Get the {@link GPUBindGroupEntry#resource | bind group resource}
+     * Get the {@link GPUDevice.createBindGroup().entries.resource | GPUBindGroup entry resource}.
      */
     get resource() {
       return this.sampler;
     }
     /**
-     * Set the {@link GPUBindGroupEntry#resource | bind group resource}
+     * Set the {@link GPUDevice.createBindGroup().entries.resource | GPUBindGroup entry resource}.
      * @param value - new bind group resource
      */
     set resource(value) {
@@ -4715,13 +4712,13 @@
       }
     }
     /**
-     * Get the {@link Camera} {@link fov | field of view}
+     * Get the {@link Camera} {@link Camera.fov | field of view}
      */
     get fov() {
       return __privateGet$g(this, _fov);
     }
     /**
-     * Set the {@link Camera} {@link fov | field of view}. Update the {@link projectionMatrix} only if the field of view actually changed
+     * Set the {@link Camera} {@link Camera.fov | field of view}. Update the {@link projectionMatrix} only if the field of view actually changed
      * @param fov - new field of view
      */
     set fov(fov) {
@@ -4734,13 +4731,13 @@
       this.setCSSPerspective();
     }
     /**
-     * Get the {@link Camera} {@link near} plane value.
+     * Get the {@link Camera} {@link Camera.near | near} plane value.
      */
     get near() {
       return __privateGet$g(this, _near);
     }
     /**
-     * Set the {@link Camera} {@link near} plane value. Update the {@link projectionMatrix} only if the near plane actually changed
+     * Set the {@link Camera} {@link Camera.near | near} plane value. Update the {@link projectionMatrix} only if the near plane actually changed
      * @param near - new near plane value
      */
     set near(near) {
@@ -4751,13 +4748,13 @@
       }
     }
     /**
-     * Get / set the {@link Camera} {@link far} plane value.
+     * Get the {@link Camera} {@link Camera.far | far} plane value.
      */
     get far() {
       return __privateGet$g(this, _far);
     }
     /**
-     * Set the {@link Camera} {@link far} plane value. Update {@link projectionMatrix} only if the far plane actually changed
+     * Set the {@link Camera} {@link Camera.far | far} plane value. Update {@link projectionMatrix} only if the far plane actually changed
      * @param far - new far plane value
      */
     set far(far) {
@@ -4768,13 +4765,13 @@
       }
     }
     /**
-     * Get the {@link Camera} {@link pixelRatio} value.
+     * Get the {@link Camera} {@link Camera.pixelRatio | pixelRatio} value.
      */
     get pixelRatio() {
       return __privateGet$g(this, _pixelRatio);
     }
     /**
-     * Set the {@link Camera} {@link pixelRatio} value. Update the {@link CSSPerspective} only if the pixel ratio actually changed
+     * Set the {@link Camera} {@link Camera.pixelRatio | pixelRatio} value. Update the {@link CSSPerspective} only if the pixel ratio actually changed
      * @param pixelRatio - new pixel ratio value
      */
     set pixelRatio(pixelRatio) {
@@ -4782,8 +4779,8 @@
       this.setCSSPerspective();
     }
     /**
-     * Set the {@link Camera} {@link width} and {@link height}. Update the {@link projectionMatrix} only if the width or height actually changed
-     * @param size - {@link width} and {@link height} values to use
+     * Set the {@link Camera} {@link RectSize.width | width} and {@link RectSize.height | height}. Update the {@link projectionMatrix} only if the width or height actually changed
+     * @param size - width and height values to use
      */
     setSize({ width, height }) {
       if (width !== this.size.width || height !== this.size.height) {
@@ -4933,8 +4930,8 @@
   class Sampler {
     /**
      * Sampler constructor
-     * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Sampler}
-     * @param parameters - {@link SamplerParams | parameters} used to create this {@link Sampler}
+     * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Sampler}.
+     * @param parameters - {@link SamplerParams | parameters} used to create this {@link Sampler}.
      */
     constructor(renderer, {
       label = "Sampler",
@@ -4974,13 +4971,13 @@
       this.createBinding();
     }
     /**
-     * Set the {@link GPUSampler}
+     * Set the {@link GPUSampler}.
      */
     createSampler() {
       this.sampler = this.renderer.createSampler(this);
     }
     /**
-     * Set the {@link SamplerBinding | binding}
+     * Set the {@link SamplerBinding | binding}.
      */
     createBinding() {
       this.binding = new SamplerBinding({
@@ -5123,7 +5120,7 @@
      * @param parameters.width - source width.
      * @param parameters.height - source height.
      * @param parameters.depth - source depth.
-     * @param parameters.origin - {@link GPUOrigin3D | origin} of the source copy.
+     * @param parameters.origin - {@link GPUQueue.copyExternalImageToTexture().destination.origin | GPUOrigin3D} of the source copy.
      */
     uploadSource({
       source,
@@ -5148,7 +5145,7 @@
      * @param parameters.width - data source width.
      * @param parameters.height - data source height.
      * @param parameters.depth - data source depth.
-     * @param parameters.origin - {@link GPUOrigin3D | origin} of the data source copy.
+     * @param parameters.origin - {@link GPUQueue.copyExternalImageToTexture().destination.origin | GPUOrigin3D} of the data source copy.
      * @param parameters.data - {@link Float32Array} data to use as source.
      */
     uploadData({
@@ -5268,7 +5265,7 @@
       this.setSamplers();
     }
     /**
-     * Set or reset this {@link Material} {@link renderer}.
+     * Set or reset this {@link Material} {@link Material.renderer | renderer}.
      * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
      */
     setRenderer(renderer) {
@@ -5667,7 +5664,6 @@
     /**
      * Map a {@link Buffer#GPUBuffer | Buffer's GPU buffer} and put a copy of the data into a {@link Float32Array}
      * @param buffer - {@link Buffer} to use for mapping
-     * @async
      * @returns - {@link Float32Array} holding the {@link GPUBuffer} data
      */
     async getBufferResult(buffer) {
@@ -5676,7 +5672,6 @@
     /**
      * Map the content of a {@link BufferBinding} {@link Buffer#GPUBuffer | GPU buffer} and put a copy of the data into a {@link Float32Array}
      * @param bindingName - The name of the {@link inputsBindings | input bindings} from which to map the {@link Buffer#GPUBuffer | GPU buffer}
-     * @async
      * @returns - {@link Float32Array} holding the {@link GPUBuffer} data
      */
     async getBufferBindingResultByBindingName(bindingName = "") {
@@ -5813,14 +5808,12 @@
     }
     /**
      * Compile the {@link ComputePipelineEntry}
-     * @async
      */
     async compilePipelineEntry() {
       await this.pipelineEntry.compilePipelineEntry();
     }
     /**
      * Check if all bind groups are ready, create them if needed, set {@link ComputePipelineEntry} bind group buffers and compile the pipeline
-     * @async
      */
     async compileMaterial() {
       if (this.ready)
@@ -5900,7 +5893,6 @@
      * @param parameters - parameters used to get the result
      * @param parameters.bindingName - {@link core/bindings/WritableBufferBinding.WritableBufferBinding#name | binding name} from which to get the result
      * @param parameters.bufferElementName - optional {@link core/bindings/bufferElements/BufferElement.BufferElement | buffer element} (i.e. struct member) name if the result needs to be restrained to only one element
-     * @async
      * @returns - the mapped content of the {@link GPUBuffer} as a {@link Float32Array}
      */
     async getComputeResult({
@@ -6289,7 +6281,6 @@
      * @param parameters - parameters used to get the result
      * @param parameters.bindingName - {@link core/bindings/WritableBufferBinding.WritableBufferBinding#name | binding name} from which to get the result
      * @param parameters.bufferElementName - optional {@link core/bindings/bufferElements/BufferElement.BufferElement | buffer element} (i.e. struct member) name if the result needs to be restrained to only one element
-     * @async
      * @returns - the mapped content of the {@link GPUBuffer} as a {@link Float32Array}
      */
     async getComputeResult({
@@ -7547,8 +7538,8 @@
       });
     }
     /**
-     * Set the {@link descriptor} {@link GPULoadOp | load operation}
-     * @param loadOp - new {@link GPULoadOp | load operation} to use
+     * Set the {@link descriptor} {@link GPUCommandEncoder.beginRenderPass().loadOp | load operation}
+     * @param loadOp - new {@link GPUCommandEncoder.beginRenderPass().loadOp | load operation} to use
      * @param colorAttachmentIndex - index of the color attachment for which to use this load operation
      */
     setLoadOp(loadOp = "clear", colorAttachmentIndex = 0) {
@@ -7564,8 +7555,8 @@
       }
     }
     /**
-     * Set the {@link descriptor} {@link GPULoadOp | depth load operation}
-     * @param depthLoadOp - new {@link GPULoadOp | depth load operation} to use
+     * Set the {@link descriptor} {@link GPUCommandEncoder.beginRenderPass().loadOp | depth load operation}
+     * @param depthLoadOp - new {@link GPUCommandEncoder.beginRenderPass().loadOp | depth load operation} to use
      */
     setDepthLoadOp(depthLoadOp = "clear") {
       this.options.depthLoadOp = depthLoadOp;
@@ -7574,9 +7565,9 @@
       }
     }
     /**
-     * Set our {@link GPUColor | clear colors value}.<br>
+     * Set our {@link GPUCommandEncoder.beginRenderPass().clearValue | clear colors value}.<br>
      * Beware that if the {@link renderer} is using {@link core/renderers/GPURenderer.GPURendererContextOptions#alphaMode | premultiplied alpha mode}, your R, G and B channels should be premultiplied by your alpha channel.
-     * @param clearValue - new {@link GPUColor | clear colors value} to use
+     * @param clearValue - new {@link GPUCommandEncoder.beginRenderPass().clearValue | clear colors value} to use
      * @param colorAttachmentIndex - index of the color attachment for which to use this clear value
      */
     setClearValue(clearValue = [0, 0, 0, 0], colorAttachmentIndex = 0) {
@@ -7598,7 +7589,7 @@
       }
     }
     /**
-     * Set the current {@link descriptor} texture {@link GPURenderPassColorAttachment#view | view} and {@link GPURenderPassColorAttachment#resolveTarget | resolveTarget} (depending on whether we're using multisampling)
+     * Set the current {@link descriptor} texture {@link GPUCommandEncoder.beginRenderPass().view | view} and {@link GPUCommandEncoder.beginRenderPass().resolveTarget | resolveTarget} (depending on whether we're using multisampling)
      * @param renderTexture - {@link GPUTexture} to use, or the {@link core/renderers/GPURenderer.GPURenderer#context | context} {@link GPUTexture | current texture} if null.
      * @returns - the {@link GPUTexture | texture} to render to.
      */
@@ -8243,7 +8234,6 @@ ${this.shaders.full.head}`;
     }
     /**
      * Asynchronously create the render {@link pipeline}
-     * @async
      * @returns - void promise result
      */
     async createRenderPipelineAsync() {
@@ -8261,7 +8251,6 @@ ${this.shaders.full.head}`;
     }
     /**
      * Call {@link PipelineEntry#compilePipelineEntry | PipelineEntry compilePipelineEntry} method, then create our render {@link pipeline}
-     * @async
      */
     async compilePipelineEntry() {
       super.compilePipelineEntry();
@@ -8415,7 +8404,7 @@ struct VSOutput {
       this.pipelineEntry = null;
     }
     /**
-     * Set or reset this {@link RenderMaterial} {@link renderer}. Will also update the renderer camera bind group if needed.
+     * Set or reset this {@link RenderMaterial} {@link RenderMaterial.renderer | renderer}. Will also update the renderer camera bind group if needed.
      * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
      */
     setRenderer(renderer) {
@@ -8436,14 +8425,12 @@ struct VSOutput {
     }
     /**
      * Compile the {@link RenderPipelineEntry}
-     * @async
      */
     async compilePipelineEntry() {
       await this.pipelineEntry.compilePipelineEntry();
     }
     /**
      * Check if attributes and all bind groups are ready, create them if needed, set {@link RenderPipelineEntry} bind group buffers and compile the pipeline.
-     * @async
      */
     async compileMaterial() {
       if (this.ready)
@@ -11794,7 +11781,6 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Asynchronously create the compute {@link pipeline}
-     * @async
      * @returns - void promise result
      */
     async createComputePipelineAsync() {
@@ -11812,7 +11798,6 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Call {@link PipelineEntry#compilePipelineEntry | PipelineEntry compilePipelineEntry} method, then create our compute {@link pipeline}
-     * @async
      */
     async compilePipelineEntry() {
       super.compilePipelineEntry();
@@ -11981,15 +11966,15 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Set {@link shouldWatch}
-     * @param shouldWatch - whether to watch or not
+     * Set {@link ResizeManager.shouldWatch | shouldWatch}.
+     * @param shouldWatch - whether to watch or not.
      */
     useObserver(shouldWatch = true) {
       this.shouldWatch = shouldWatch;
     }
     /**
-     * Track an {@link HTMLElement} size change and execute a callback function when it happens
-     * @param entry - {@link ResizeManagerEntry | entry} to watch
+     * Track an {@link HTMLElement} size change and execute a callback function when it happens.
+     * @param entry - {@link ResizeManagerEntry | entry} to watch.
      */
     observe({ element, priority, callback }) {
       if (!element || !this.shouldWatch)
@@ -12003,15 +11988,15 @@ ${this.shaders.compute.head}`;
       this.entries.push(entry);
     }
     /**
-     * Unobserve an {@link HTMLElement} and remove it from our {@link entries} array
-     * @param element - {@link HTMLElement} to unobserve
+     * Unobserve an {@link HTMLElement} and remove it from our {@link entries} array.
+     * @param element - {@link HTMLElement} to unobserve.
      */
     unobserve(element) {
       this.resizeObserver?.unobserve(element);
       this.entries = this.entries.filter((e) => !e.element.isSameNode(element));
     }
     /**
-     * Destroy our {@link ResizeManager}
+     * Destroy our {@link ResizeManager}.
      */
     destroy() {
       this.resizeObserver?.disconnect();
@@ -12250,7 +12235,7 @@ ${this.shaders.compute.head}`;
       return mesh.material.options.rendering.useProjection ? stack.projected : stack.unProjected;
     }
     /**
-     * Order a {@link SceneStackedObject} array by using the {@link SceneStackedObject#renderOrder | renderOrder} or {@link SceneStackedObject#index | index} properties.
+     * Order a {@link SceneStackedObject} array by using the {@link core/meshes/Mesh.Mesh.renderOrder | renderOrder} or {@link core/meshes/Mesh.Mesh.index | index} properties.
      * @param stack - {@link SceneStackedObject} to sort, filled with {@link RenderedMesh} or {@link RenderBundle}.
      */
     orderStack(stack) {
@@ -12261,7 +12246,7 @@ ${this.shaders.compute.head}`;
     /**
      * Test whether a {@link SceneStackedObject} is a {@link RenderBundle} or not.
      * @param object - Object to test.
-     * @returns - Whether the {@link object} is a {@link RenderBundle} or not.
+     * @returns - Whether the object is a {@link RenderBundle} or not.
      */
     isStackObjectRenderBundle(object) {
       return object.type === "RenderBundle";
@@ -12276,19 +12261,7 @@ ${this.shaders.compute.head}`;
       const isTransparent = !!mesh.transparent;
       const { useProjection } = mesh.material.options.rendering;
       if (mesh.renderBundle) {
-        const { renderBundle } = mesh;
-        renderBundle.addMesh(mesh, mesh.outputTarget ? mesh.outputTarget.renderPass : this.renderer.renderPass);
-        if (mesh.renderBundle) {
-          if (renderBundle.meshes.size === 1) {
-            if (renderBundle.transparent === null) {
-              renderBundle.transparent = isTransparent;
-            }
-            if (renderBundle.useProjection === null) {
-              renderBundle.useProjection = useProjection;
-            }
-            this.addRenderBundle(renderBundle, projectionStack);
-          }
-        }
+        mesh.renderBundle.addMesh(mesh, mesh.outputTarget ? mesh.outputTarget.renderPass : this.renderer.renderPass);
       }
       if (!mesh.renderBundle) {
         const similarMeshes = isTransparent ? projectionStack.transparent : projectionStack.opaque;
@@ -12395,21 +12368,14 @@ ${this.shaders.compute.head}`;
         // explicitly set to null
       };
       if (shaderPass.renderBundle) {
-        const isTransparent = !!shaderPass.transparent;
         const { renderBundle } = shaderPass;
-        if (renderBundle.meshes.size < 1) {
-          renderBundle.addMesh(shaderPass, outputPass);
-          renderBundle.size = 1;
-        } else {
+        if (renderBundle.meshes.size >= 1) {
           throwWarning(
             `${renderBundle.options.label} (${renderBundle.type}): Cannot add more than 1 ShaderPass to a render bundle. This ShaderPass will not be added: ${shaderPass.options.label}`
           );
           shaderPass.renderBundle = null;
-        }
-        if (shaderPass.renderBundle) {
-          shaderPass.renderBundle.renderOrder = shaderPass.renderOrder;
-          renderBundle.transparent = isTransparent;
-          renderBundle.useProjection = false;
+        } else {
+          renderBundle.addMesh(shaderPass, outputPass);
         }
       }
       this.renderPassEntries.screen.push(shaderPassEntry);
@@ -12470,21 +12436,14 @@ ${this.shaders.compute.head}`;
         // explicitly set to null
       });
       if (pingPongPlane.renderBundle) {
-        const isTransparent = !!pingPongPlane.transparent;
         const { renderBundle } = pingPongPlane;
-        if (renderBundle.meshes.size < 1) {
-          renderBundle.addMesh(pingPongPlane, pingPongPlane.outputTarget.renderPass);
-          renderBundle.size = 1;
-        } else {
+        if (renderBundle.meshes.size >= 1) {
           throwWarning(
             `${renderBundle.options.label} (${renderBundle.type}): Cannot add more than 1 PingPongPlane to a render bundle. This PingPongPlane will not be added: ${pingPongPlane.options.label}`
           );
           pingPongPlane.renderBundle = null;
-        }
-        if (pingPongPlane.renderBundle) {
-          pingPongPlane.renderBundle.renderOrder = pingPongPlane.renderOrder;
-          renderBundle.transparent = isTransparent;
-          renderBundle.useProjection = false;
+        } else {
+          renderBundle.addMesh(pingPongPlane, pingPongPlane.outputTarget.renderPass);
         }
       }
       this.renderPassEntries.pingPong.sort((a, b) => a.element.renderOrder - b.element.renderOrder);
@@ -12856,7 +12815,7 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Set the renderer {@link pixelRatio | pixel ratio} and {@link resize} it
+     * Set the renderer {@link GPURenderer.pixelRatio | pixel ratio} and {@link resize} it
      * @param pixelRatio - new pixel ratio to use
      */
     setPixelRatio(pixelRatio = 1) {
@@ -12974,6 +12933,13 @@ ${this.shaders.compute.head}`;
       return this.deviceManager.buffers;
     }
     /**
+     * Get all the created {@link GPUDeviceManager#indirectBuffers | indirect buffers}
+     * @readonly
+     */
+    get indirectBuffers() {
+      return this.deviceManager.indirectBuffers;
+    }
+    /**
      * Get the {@link GPUDeviceManager#pipelineManager | pipeline manager}
      * @readonly
      */
@@ -13020,11 +12986,9 @@ ${this.shaders.compute.head}`;
     /**
      * Called when the {@link GPUDeviceManager#device | device} should be restored.
      * Configure the context again, resize the {@link RenderTarget | render targets} and {@link Texture | textures}, restore our {@link renderedObjects | rendered objects} context.
-     * @async
      */
     restoreContext() {
       this.configureContext();
-      this.indirectBuffers.forEach((indirectBuffer) => indirectBuffer.create());
       this.textures.forEach((texture) => {
         texture.createTexture();
       });
@@ -13058,9 +13022,9 @@ ${this.shaders.compute.head}`;
     }
     /* BUFFERS & BINDINGS */
     /**
-     * Create a {@link GPUBuffer}
+     * Create a {@link !GPUBuffer}
      * @param buffer - {@link Buffer} to use for buffer creation
-     * @returns - newly created {@link GPUBuffer}
+     * @returns - newly created {@link !GPUBuffer}
      */
     createBuffer(buffer) {
       const GPUBuffer = this.deviceManager.device?.createBuffer(buffer.options);
@@ -13077,8 +13041,8 @@ ${this.shaders.compute.head}`;
     /**
      * Write to a {@link GPUBuffer}
      * @param buffer - {@link GPUBuffer} to write to
-     * @param bufferOffset - {@link GPUSize64 | buffer offset}
-     * @param data - {@link BufferSource | data} to write
+     * @param bufferOffset - {@link GPUQueue.writeBuffer().bufferOffset | buffer offset}
+     * @param data - {@link GPUQueue.writeBuffer().data | data} to write
      */
     queueWriteBuffer(buffer, bufferOffset, data) {
       this.deviceManager.device?.queue.writeBuffer(buffer, bufferOffset, data);
@@ -13164,7 +13128,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Create a {@link GPUBindGroupLayout}
-     * @param bindGroupLayoutDescriptor - {@link GPUBindGroupLayoutDescriptor | GPU bind group layout descriptor}
+     * @param bindGroupLayoutDescriptor - {@link GPUDevice.createBindGroupLayout().descriptor | GPUBindGroupLayoutDescriptor}
      * @returns - newly created {@link GPUBindGroupLayout}
      */
     createBindGroupLayout(bindGroupLayoutDescriptor) {
@@ -13172,7 +13136,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Create a {@link GPUBindGroup}
-     * @param bindGroupDescriptor - {@link GPUBindGroupDescriptor | GPU bind group descriptor}
+     * @param bindGroupDescriptor - {@link GPUDevice.createBindGroup().descriptor | GPUBindGroupDescriptor}
      * @returns - newly created {@link GPUBindGroup}
      */
     createBindGroup(bindGroupDescriptor) {
@@ -13181,7 +13145,7 @@ ${this.shaders.compute.head}`;
     /* SHADERS & PIPELINES */
     /**
      * Create a {@link GPUShaderModule}
-     * @param shaderModuleDescriptor - {@link shaderModuleDescriptor | shader module descriptor}
+     * @param shaderModuleDescriptor - {@link GPUDevice.createShaderModule().descriptor | GPUShaderModuleDescriptor}
      * @returns - newly created {@link GPUShaderModule}
      */
     createShaderModule(shaderModuleDescriptor) {
@@ -13189,7 +13153,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Create a {@link GPUPipelineLayout}
-     * @param pipelineLayoutDescriptor - {@link GPUPipelineLayoutDescriptor | GPU pipeline layout descriptor}
+     * @param pipelineLayoutDescriptor - {@link GPUDevice.createPipelineLayout().descriptor | GPUPipelineLayoutDescriptor}
      * @returns - newly created {@link GPUPipelineLayout}
      */
     createPipelineLayout(pipelineLayoutDescriptor) {
@@ -13197,7 +13161,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Create a {@link GPURenderPipeline}
-     * @param pipelineDescriptor - {@link GPURenderPipelineDescriptor | GPU render pipeline descriptor}
+     * @param pipelineDescriptor - {@link GPUDevice.createRenderPipeline().descriptor | GPURenderPipelineDescriptor}
      * @returns - newly created {@link GPURenderPipeline}
      */
     createRenderPipeline(pipelineDescriptor) {
@@ -13205,8 +13169,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Asynchronously create a {@link GPURenderPipeline}
-     * @async
-     * @param pipelineDescriptor - {@link GPURenderPipelineDescriptor | GPU render pipeline descriptor}
+     * @param pipelineDescriptor - {@link GPUDevice.createRenderPipeline().descriptor | GPURenderPipelineDescriptor}
      * @returns - newly created {@link GPURenderPipeline}
      */
     async createRenderPipelineAsync(pipelineDescriptor) {
@@ -13214,7 +13177,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Create a {@link GPUComputePipeline}
-     * @param pipelineDescriptor - {@link GPUComputePipelineDescriptor | GPU compute pipeline descriptor}
+     * @param pipelineDescriptor - {@link GPUDevice.createComputePipeline().descriptor | GPUComputePipelineDescriptor}
      * @returns - newly created {@link GPUComputePipeline}
      */
     createComputePipeline(pipelineDescriptor) {
@@ -13222,8 +13185,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Asynchronously create a {@link GPUComputePipeline}
-     * @async
-     * @param pipelineDescriptor - {@link GPUComputePipelineDescriptor | GPU compute pipeline descriptor}
+     * @param pipelineDescriptor - {@link GPUDevice.createComputePipeline().descriptor | GPUComputePipelineDescriptor}
      * @returns - newly created {@link GPUComputePipeline}
      */
     async createComputePipelineAsync(pipelineDescriptor) {
@@ -13267,7 +13229,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Create a {@link GPUTexture}
-     * @param textureDescriptor - {@link GPUTextureDescriptor | GPU texture descriptor}
+     * @param textureDescriptor - {@link GPUDevice.createTexture().descriptor | GPUTextureDescriptor}
      * @returns - newly created {@link GPUTexture}
      */
     createTexture(textureDescriptor) {
@@ -13342,7 +13304,6 @@ ${this.shaders.compute.head}`;
       this.meshes = [];
       this.textures = [];
       this.renderBundles = /* @__PURE__ */ new Map();
-      this.indirectBuffers = /* @__PURE__ */ new Map();
     }
     /**
      * Get all this {@link GPURenderer} rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes)
@@ -13528,7 +13489,6 @@ ${this.shaders.compute.head}`;
       this.postProcessingPass?.destroy();
       this.renderTargets.forEach((renderTarget) => renderTarget.destroy());
       this.renderedObjects.forEach((sceneObject) => sceneObject.remove());
-      this.indirectBuffers.forEach((indirectBuffer) => indirectBuffer.destroy());
       this.textures.forEach((texture) => texture.destroy());
       this.context?.unconfigure();
     }
@@ -13612,7 +13572,6 @@ ${this.shaders.compute.head}`;
     /**
      * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored.
      * Configure the context again, resize the {@link core/renderPasses/RenderTarget.RenderTarget | render targets} and {@link core/textures/Texture.Texture | textures}, restore our {@link renderedObjects | rendered objects} context, re-write our {@link cameraLightsBindGroup | camera, lights and shadows bind group} bindings.
-     * @async
      */
     restoreContext() {
       super.restoreContext();
@@ -14047,6 +14006,7 @@ ${this.shaders.compute.head}`;
       label,
       production = false,
       adapterOptions = {},
+      autoRender = true,
       onError = () => {
       },
       onDeviceLost = (info) => {
@@ -14054,6 +14014,12 @@ ${this.shaders.compute.head}`;
       onDeviceDestroyed = (info) => {
       }
     } = {}) {
+      /** function assigned to the {@link onBeforeRender} callback */
+      this._onBeforeRenderCallback = () => {
+      };
+      /** function assigned to the {@link onAfterRender} callback */
+      this._onAfterRenderCallback = () => {
+      };
       this.index = 0;
       this.label = label ?? "GPUDeviceManager instance";
       this.production = production;
@@ -14065,6 +14031,9 @@ ${this.shaders.compute.head}`;
       this.gpu = navigator.gpu;
       this.setPipelineManager();
       this.setDeviceObjects();
+      if (autoRender) {
+        this.animate();
+      }
     }
     /**
      * Set our {@link adapter} and {@link device} if possible.
@@ -14089,9 +14058,8 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Set our {@link adapter} if possible.
+     * Set our {@link GPUDeviceManager.adapter | adapter} if possible.
      * The adapter represents a specific GPU. Some devices have multiple GPUs.
-     * @async
      * @param adapter - {@link GPUAdapter} to use if set.
      */
     async setAdapter(adapter = null) {
@@ -14115,8 +14083,7 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Set our {@link device}.
-     * @async
+     * Set our {@link GPUDeviceManager.device | device}.
      * @param device - {@link GPUDevice} to use if set.
      */
     async setDevice(device = null) {
@@ -14174,7 +14141,6 @@ ${this.shaders.compute.head}`;
     /**
      * Called when the {@link device} should be restored.
      * Restore all our renderers.
-     * @async
      * @param parameters - {@link GPUAdapter} and/or {@link GPUDevice} to use if set.
      */
     async restoreDevice({ adapter = null, device = null } = {}) {
@@ -14187,6 +14153,7 @@ ${this.shaders.compute.head}`;
             ...samplerOptions
           });
         });
+        this.indirectBuffers.forEach((indirectBuffer) => indirectBuffer.create());
         this.renderers.forEach((renderer) => renderer.restoreContext());
       }
     }
@@ -14197,6 +14164,7 @@ ${this.shaders.compute.head}`;
       this.renderers = [];
       this.bindGroups = /* @__PURE__ */ new Map();
       this.buffers = /* @__PURE__ */ new Map();
+      this.indirectBuffers = /* @__PURE__ */ new Map();
       this.bindGroupLayouts = /* @__PURE__ */ new Map();
       this.bufferBindings = /* @__PURE__ */ new Map();
       this.samplers = [];
@@ -14311,6 +14279,36 @@ ${this.shaders.compute.head}`;
     removeDOMTexture(texture) {
       this.domTextures = this.domTextures.filter((t) => t.uuid !== texture.uuid);
     }
+    /* RENDER */
+    /**
+     * Create a requestAnimationFrame loop and run it
+     */
+    animate() {
+      this.render();
+      this.animationFrameID = requestAnimationFrame(this.animate.bind(this));
+    }
+    /**
+     * Called each frame before rendering
+     * @param callback - callback to run at each render
+     * @returns - our {@link GPUDeviceManager}
+     */
+    onBeforeRender(callback) {
+      if (callback) {
+        this._onBeforeRenderCallback = callback;
+      }
+      return this;
+    }
+    /**
+     * Called each frame after rendering
+     * @param callback - callback to run at each render
+     * @returns - our {@link GPUDeviceManager}
+     */
+    onAfterRender(callback) {
+      if (callback) {
+        this._onAfterRenderCallback = callback;
+      }
+      return this;
+    }
     /**
      * Render everything:
      * - call all our {@link renderers} {@link core/renderers/GPURenderer.GPURenderer#onBeforeCommandEncoder | onBeforeCommandEncoder} callbacks
@@ -14324,6 +14322,7 @@ ${this.shaders.compute.head}`;
     render() {
       if (!this.ready)
         return;
+      this._onBeforeRenderCallback && this._onBeforeRenderCallback();
       for (const renderer of this.renderers) {
         if (renderer.shouldRender)
           renderer.onBeforeCommandEncoder();
@@ -14343,16 +14342,22 @@ ${this.shaders.compute.head}`;
         if (renderer.shouldRender)
           renderer.onAfterCommandEncoder();
       }
+      this._onAfterRenderCallback && this._onAfterRenderCallback();
     }
     /**
      * Destroy the {@link GPUDeviceManager} and its {@link renderers}
      */
     destroy() {
+      if (this.animationFrameID) {
+        cancelAnimationFrame(this.animationFrameID);
+      }
+      this.animationFrameID = null;
       this.device?.destroy();
       this.device = null;
       this.renderers.forEach((renderer) => renderer.destroy());
       this.bindGroups.forEach((bindGroup) => bindGroup.destroy());
       this.buffers.forEach((buffer) => buffer?.destroy());
+      this.indirectBuffers.forEach((indirectBuffer) => indirectBuffer.destroy());
       this.domTextures.forEach((texture) => texture.destroy());
       this.setDeviceObjects();
     }
@@ -14567,11 +14572,9 @@ ${this.shaders.compute.head}`;
       __privateAdd$6(this, _ready, void 0);
       this.type = "RenderBundle";
       renderer = isRenderer(renderer, this.type);
-      this.renderer = renderer;
       this.uuid = generateUUID();
       Object.defineProperty(this, "index", { value: bundleIndex++ });
       this.renderOrder = renderOrder;
-      this.renderer.renderBundles.set(this.uuid, this);
       this.transparent = transparent;
       this.visible = visible;
       label = label ?? this.type + this.index;
@@ -14588,6 +14591,7 @@ ${this.shaders.compute.head}`;
       __privateSet$4(this, _ready, false);
       this.binding = null;
       this.indirectBuffer = null;
+      this.setRenderer(renderer);
       if (this.options.useIndirectDraw) {
         this.indirectBuffer = new IndirectBuffer(this.renderer);
       }
@@ -14604,6 +14608,53 @@ ${this.shaders.compute.head}`;
           }
         }
       }
+    }
+    /**
+     * Set the {@link RenderBundle} {@link RenderBundle.renderer | renderer} and eventually remove/add to the {@link core/scenes/Scene.Scene | Scene}.
+     * @param renderer - new {@link Renderer} to use.
+     */
+    setRenderer(renderer) {
+      if (this.renderer) {
+        this.removeFromScene();
+        this.renderer.renderBundles.delete(this.uuid);
+      }
+      this.renderer = renderer;
+      this.renderer.renderBundles.set(this.uuid, this);
+      if (this.meshes.size >= 1) {
+        this.addToScene();
+      }
+    }
+    /**
+     * Add our {@link RenderBundle} to the {@link core/scenes/Scene.Scene | Scene}.
+     * Once we have at least one mesh in our {@link meshes} Map, we can add the {@link RenderBundle} to the {@link core/scenes/Scene.Scene | Scene} at the right place.
+     */
+    addToScene() {
+      const firstEntry = this.meshes.entries().next();
+      if (firstEntry && firstEntry.value && firstEntry.value.length && firstEntry.value[1]) {
+        const mesh = firstEntry.value[1];
+        const isTransparent = !!mesh.transparent;
+        if (this.transparent === null) {
+          this.transparent = isTransparent;
+        }
+        if (mesh.constructor.name !== "ShaderPass" && mesh.constructor.name !== "PingPongPlane") {
+          const { useProjection } = mesh.material.options.rendering;
+          if (this.useProjection === null) {
+            this.useProjection = useProjection;
+          }
+          const projectionStack = this.renderer.scene.getMeshProjectionStack(mesh);
+          this.renderer.scene.addRenderBundle(this, projectionStack);
+        } else {
+          this.size = 1;
+          mesh.renderOrder = this.renderOrder;
+          this.useProjection = false;
+        }
+      }
+    }
+    /**
+     * Remove our {@link RenderBundle} from the {@link core/scenes/Scene.Scene | Scene}.
+     */
+    removeFromScene() {
+      this.renderer.scene.removeRenderBundle(this);
     }
     /**
      * Get whether our {@link RenderBundle} handles {@link core/renderers/GPURenderer.ProjectedMesh | projected meshes} or not (useful to know in which {@link core/scenes/Scene.Scene | Scene} stack it has been added.
@@ -14664,7 +14715,7 @@ ${this.shaders.compute.head}`;
       __privateSet$4(this, _ready, value);
     }
     /**
-     * Called by the {@link core/scenes/Scene.Scene | Scene} to eventually add a {@link RenderedMesh | mesh} to this {@link RenderBundle}. Can set the {@link RenderBundleOptions#renderPass | render pass} if needed. If the {@link RenderBundleOptions#renderPass | render pass} is already set and the {@link mesh} output {@link RenderPass} does not match, it won't be added.
+     * Called by the {@link core/scenes/Scene.Scene | Scene} to eventually add a {@link RenderedMesh | mesh} to this {@link RenderBundle}. Can set the {@link RenderBundleOptions#renderPass | render pass} if needed. If the {@link RenderBundleOptions#renderPass | render pass} is already set and the mesh output {@link RenderPass} does not match, it won't be added.
      * @param mesh - {@link RenderedMesh | Mesh} to eventually add.
      * @param outputPass - The mesh output {@link RenderPass}.
      */
@@ -14685,6 +14736,9 @@ ${this.shaders.compute.head}`;
       }
       this.ready = false;
       this.meshes.set(mesh.uuid, mesh);
+      if (this.meshes.size === 1) {
+        this.addToScene();
+      }
     }
     /**
      * Remove any {@link RenderedMesh | rendered mesh} from this {@link RenderBundle}.
@@ -14706,7 +14760,7 @@ ${this.shaders.compute.head}`;
     /**
      * Remove a {@link SceneStackedMesh | scene stacked mesh} from this {@link RenderBundle}.
      * @param mesh - {@link SceneStackedMesh | Scene stacked mesh} to remove.
-     * @param keepMesh - Whether to preserve the {@link mesh} in order to render it normally again. Default to `true`.
+     * @param keepMesh - Whether to preserve the mesh in order to render it normally again. Default to `true`.
      */
     removeMesh(mesh, keepMesh = true) {
       this.removeSceneObject(mesh);
@@ -14729,7 +14783,7 @@ ${this.shaders.compute.head}`;
     /**
      * Render the {@link RenderBundle}.
      *
-     * If it is ready, execute each {@link RenderedMesh#onBeforeRenderPass | mesh onBeforeRenderPass method}, {@link updateBinding | update the binding} if needed, execute the {@link bundle} and finally execute each {@link RenderedMesh#onAfterRenderPass | mesh onAfterRenderPass method}.
+     * If it is ready, execute each {@link core/meshes/Mesh.Mesh.onBeforeRenderPass | mesh onBeforeRenderPass method}, {@link updateBinding | update the binding} if needed, execute the {@link bundle} and finally execute each {@link core/meshes/Mesh.Mesh.onAfterRenderPass | mesh onAfterRenderPass method}.
      *
      * If not, just render its {@link meshes} as usual and check whether they are all ready and if we can therefore encode our {@link RenderBundle}.
      * @param pass - {@link GPURenderPassEncoder} to use.
@@ -16477,9 +16531,6 @@ fn getIBL(
       watchScroll = true
     } = {}) {
       // callbacks / events
-      /** function assigned to the {@link onRender} callback */
-      this._onRenderCallback = () => {
-      };
       /** function assigned to the {@link onScroll} callback */
       this._onScrollCallback = () => {
       };
@@ -16512,12 +16563,9 @@ fn getIBL(
         this.setContainer(container);
       }
       this.initEvents();
-      if (this.options.autoRender) {
-        this.animate();
-      }
     }
     /**
-     * Set the {@link container}
+     * Set the {@link GPUCurtains.container | container}.
      * @param container - {@link HTMLElement} or string representing an {@link HTMLElement} selector to use
      */
     setContainer(container) {
@@ -16604,6 +16652,7 @@ fn getIBL(
         label: "GPUCurtains default device",
         production: this.options.production,
         adapterOptions: this.options.adapterOptions,
+        autoRender: this.options.autoRender,
         onError: () => setTimeout(() => {
           this._onErrorCallback && this._onErrorCallback();
         }, 0),
@@ -16627,7 +16676,6 @@ fn getIBL(
     }
     /**
      * Set the {@link GPUDeviceManager} {@link GPUDeviceManager#adapter | adapter} and {@link GPUDeviceManager#device | device} if possible, then set all created {@link Renderer} contexts.
-     * @async
      * @param parameters - {@link GPUAdapter} and/or {@link GPUDevice} to use if set.
      */
     async setDevice({ adapter = null, device = null } = {}) {
@@ -16635,7 +16683,6 @@ fn getIBL(
     }
     /**
      * Restore the {@link GPUDeviceManager#adapter | adapter} and {@link GPUDeviceManager#device | device}
-     * @async
      */
     async restoreContext() {
       await this.deviceManager.restoreDevice();
@@ -16758,14 +16805,21 @@ fn getIBL(
     }
     /* EVENTS */
     /**
-     * Called at each render frame
+     * Called each frame before rendering
      * @param callback - callback to run at each render
      * @returns - our {@link GPUCurtains}
      */
-    onRender(callback) {
-      if (callback) {
-        this._onRenderCallback = callback;
-      }
+    onBeforeRender(callback) {
+      this.deviceManager.onBeforeRender(callback);
+      return this;
+    }
+    /**
+     * Called each frame after rendering
+     * @param callback - callback to run at each render
+     * @returns - our {@link GPUCurtains}
+     */
+    onAfterRender(callback) {
+      this.deviceManager.onAfterRender(callback);
       return this;
     }
     /**
@@ -16813,26 +16867,15 @@ fn getIBL(
       return this;
     }
     /**
-     * Create a requestAnimationFrame loop and run it
-     */
-    animate() {
-      this.render();
-      this.animationFrameID = window.requestAnimationFrame(this.animate.bind(this));
-    }
-    /**
      * Render our {@link GPUDeviceManager}
      */
     render() {
-      this._onRenderCallback && this._onRenderCallback();
       this.deviceManager.render();
     }
     /**
      * Destroy our {@link GPUCurtains} and {@link GPUDeviceManager}
      */
     destroy() {
-      if (this.animationFrameID) {
-        window.cancelAnimationFrame(this.animationFrameID);
-      }
       this.deviceManager.destroy();
       this.scrollManager?.destroy();
       resizeManager.destroy();
@@ -17019,8 +17062,8 @@ fn getIBL(
       this.useCamera(camera);
     }
     /**
-     * Allow to set or reset this {@link OrbitControls#camera | OrbitControls camera}.
-     * @param camera - New {@link camera} to use.
+     * Allow to set or reset this {@link OrbitControls.camera | OrbitControls camera}.
+     * @param camera - New {@link OrbitControls.camera | camera} to use.
      */
     useCamera(camera) {
       this.camera = camera;
@@ -18021,7 +18064,6 @@ const PI = ${Math.PI};
     }
     /**
      * Create the {@link lutTexture | BRDF GGX LUT texture} using the provided {@link LUTTextureParams | LUT texture options} and a {@link ComputePass} that runs once.
-     * @async
      */
     async computeBRDFLUTTexture() {
       const { size, computeSampleCount, ...lutTextureParams } = this.options.lutTextureParams;
@@ -18088,8 +18130,7 @@ const PI = ${Math.PI};
     }
     /**
      * Create the {@link specularTexture | specular cube map texture} from a loaded {@link HDRImageData} using the provided {@link SpecularTextureParams | specular texture options} and a {@link ComputePass} that runs once.
-     * @params parsedHdr - parsed {@link HDRImageData} loaded by the {@link hdrLoader}.
-     * @async
+     * @param parsedHdr - parsed {@link HDRImageData} loaded by the {@link hdrLoader}.
      */
     async computeSpecularCubemapFromHDRData(parsedHdr) {
       let cubeStorageTexture = new Texture(this.renderer, {
@@ -18236,7 +18277,6 @@ const PI = ${Math.PI};
     /**
      * Load an HDR environment map and then generates the {@link specularTexture} and {@link diffuseTexture} using two separate {@link ComputePass}.
      * @param url - The url of the .hdr file to load.
-     * @async
      */
     async loadAndComputeFromHDR(url) {
       const parsedHdr = await this.hdrLoader.loadFromUrl(url);
@@ -19010,9 +19050,9 @@ const PI = ${Math.PI};
       }
     }
     /**
-     * Get the {@link GPUPrimitiveTopology} based on the {@link GLTF.MeshPrimitiveMode | WebGL primitive mode}.
+     * Get the {@link GPUDevice.createRenderPipeline().topology | GPUPrimitiveTopology} based on the {@link GLTF.MeshPrimitiveMode | WebGL primitive mode}.
      * @param mode - {@link GLTF.MeshPrimitiveMode | WebGL primitive mode} to use.
-     * @returns - corresponding {@link GPUPrimitiveTopology}.
+     * @returns - corresponding {@link GPUDevice.createRenderPipeline().topology | GPUPrimitiveTopology}.
      */
     static gpuPrimitiveTopologyForMode(mode) {
       switch (mode) {
@@ -19029,9 +19069,9 @@ const PI = ${Math.PI};
       }
     }
     /**
-     * Get the {@link GPUAddressMode} based on the {@link GLTF.TextureWrapMode | WebGL texture wrap mode}.
+     * Get the {@link GPUDevice.createSampler().descriptor.addressModeU | GPUAddressMode} based on the {@link GLTF.TextureWrapMode | WebGL texture wrap mode}.
      * @param wrap - {@link GLTF.TextureWrapMode | WebGL texture wrap mode} to use.
-     * @returns - corresponding {@link GPUAddressMode}.
+     * @returns - corresponding {@link GPUDevice.createSampler().descriptor.addressModeU | GPUAddressMode}.
      */
     static gpuAddressModeForWrap(wrap) {
       switch (wrap) {
@@ -20012,7 +20052,6 @@ const PI = ${Math.PI};
      * Load a glTF from the given url.
      * @param url - url of the glTF.
      * @returns - the {@link GPUCurtainsGLTF} created.
-     * @async
      */
     async loadFromUrl(url) {
       const i = url.lastIndexOf("/");
@@ -20032,7 +20071,6 @@ const PI = ${Math.PI};
      * @param baseUrl - base url from which to get all the other assets.
      * @param binaryChunk - optional binary chunks.
      * @returns - {@link gltf} base object.
-     * @async
      */
     async loadFromJsonBase(json, baseUrl, binaryChunk = null) {
       if (!baseUrl) {
@@ -20102,7 +20140,6 @@ const PI = ${Math.PI};
      * @param arrayBuffer - {@link ArrayBuffer} containing the data.
      * @param baseUrl - base url from which to get all the other assets.
      * @returns - the {@link GPUCurtainsGLTF} created.
-     * @async
      */
     async loadFromBinary(arrayBuffer, baseUrl) {
       const headerView = new DataView(arrayBuffer, 0, 12);
@@ -20137,103 +20174,12 @@ const PI = ${Math.PI};
      * @param baseUrl - base url from which to get all the other assets.
      * @param binaryChunk - optional binary chunks.
      * @returns - the {@link GPUCurtainsGLTF} created.
-     * @async
      */
     async loadFromJson(json, baseUrl, binaryChunk = null) {
       this.gltf = await this.loadFromJsonBase(json, baseUrl, binaryChunk);
       return this.gltf;
     }
   }
-
-  const logSceneCommands = (renderer) => {
-    const { scene } = renderer;
-    if (!scene)
-      return;
-    const renderCommands = [];
-    scene.computePassEntries.forEach((computePass) => {
-      renderCommands.push({
-        command: "Render ComputePass",
-        content: computePass.options.label
-      });
-      computePass.material.bindGroups.forEach((bindGroup) => {
-        bindGroup.bufferBindings.forEach((binding) => {
-          if (binding.shouldCopyResult) {
-            renderCommands.push({
-              command: `Copy buffer to buffer`,
-              source: `${binding.name} buffer`,
-              destination: `${binding.name} result buffer`
-            });
-          }
-        });
-      });
-    });
-    for (const renderPassEntryType in scene.renderPassEntries) {
-      let passDrawnCount = 0;
-      scene.renderPassEntries[renderPassEntryType].forEach((renderPassEntry) => {
-        if (!scene.getRenderPassEntryLength(renderPassEntry))
-          return;
-        const destination = !renderPassEntry.renderPass.options.useColorAttachments ? void 0 : renderPassEntry.renderPass.options.colorAttachments.length === 0 && renderPassEntry.renderPass.options.useDepth ? `${renderPassEntry.renderTexture.options.label} depth pass` : renderPassEntry.renderPass.options.colorAttachments.length > 1 ? `${renderPassEntry.renderTexture.options.label} multiple targets` : renderPassEntry.renderTexture ? `${renderPassEntry.renderTexture.options.label}` : "Context current texture";
-        let descriptor = renderPassEntry.renderPass.options.label;
-        const operations = {
-          loadOp: renderPassEntry.renderPass.options.useColorAttachments ? renderPassEntryType === "screen" && passDrawnCount > 0 ? "load" : renderPassEntry.renderPass.options.loadOp : void 0,
-          depthLoadOp: void 0,
-          sampleCount: renderPassEntry.renderPass.options.sampleCount,
-          ...renderPassEntry.renderPass.options.qualityRatio !== 1 && {
-            qualityRatio: renderPassEntry.renderPass.options.qualityRatio
-          }
-        };
-        if (renderPassEntry.renderPass.options.useDepth) {
-          operations.depthLoadOp = renderPassEntry.renderPass.options.depthLoadOp;
-        }
-        passDrawnCount++;
-        if (renderPassEntry.element) {
-          if (renderPassEntry.element.type === "ShaderPass" && !(renderPassEntry.element.inputTarget || renderPassEntry.element.outputTarget)) {
-            renderCommands.push({
-              command: `Copy texture to texture`,
-              source: destination,
-              destination: `${renderPassEntry.element.options.label} renderTexture`
-            });
-            operations.loadOp = "clear";
-          }
-          descriptor += " " + JSON.stringify(operations);
-          renderCommands.push({
-            command: `Render ${renderPassEntry.element.type}`,
-            source: renderPassEntry.element.options.label,
-            destination,
-            descriptor
-          });
-          if (renderPassEntry.element.type === "ShaderPass" && !renderPassEntry.element.outputTarget && renderPassEntry.element.options.copyOutputToRenderTexture) {
-            renderCommands.push({
-              command: `Copy texture to texture`,
-              source: destination,
-              destination: `${renderPassEntry.element.options.label} renderTexture`
-            });
-          } else if (renderPassEntry.element.type === "PingPongPlane") {
-            renderCommands.push({
-              command: `Copy texture to texture`,
-              source: destination,
-              destination: `${renderPassEntry.element.renderTexture.options.label}`
-            });
-          }
-        } else if (renderPassEntry.stack) {
-          descriptor += " " + JSON.stringify(operations);
-          for (const stackType in renderPassEntry.stack) {
-            for (const objectType in renderPassEntry.stack[stackType]) {
-              if (renderPassEntry.stack[stackType][objectType].length) {
-                renderCommands.push({
-                  command: `Render stack (${stackType} ${objectType} objects)`,
-                  source: renderPassEntry.stack[stackType][objectType],
-                  destination,
-                  descriptor
-                });
-              }
-            }
-          }
-        }
-      });
-    }
-    console.table(renderCommands);
-  };
 
   exports.AmbientLight = AmbientLight;
   exports.BindGroup = BindGroup;
@@ -20316,7 +20262,6 @@ const PI = ${Math.PI};
   exports.getPhong = getPhong;
   exports.getPhongDirect = getPhongDirect;
   exports.lambertUtils = lambertUtils;
-  exports.logSceneCommands = logSceneCommands;
   exports.pbrUtils = pbrUtils;
   exports.toneMappingUtils = toneMappingUtils;
 

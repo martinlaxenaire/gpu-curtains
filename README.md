@@ -136,23 +136,26 @@ body {
 ### Javascript
 
 ```javascript
-import { Curtains, Mesh } from 'gpu-curtains';
+import { GPUDeviceManager, GPUCameraRenderer, Mesh } from 'gpu-curtains';
 
 window.addEventListener('load', async () => {
-  // set our main GPUCurtains instance
-  // it will handle everything we need
-  // a WebGPU device and a renderer with its scene,
-  // requestAnimationFrame, resize and scroll events...
-  const gpuCurtains = new GPUCurtains({
-    container: '#canvas'
+  // first, we need a WebGPU device, that's what GPUDeviceManager is for
+  const gpuDeviceManager = new GPUDeviceManager({
+    label: 'Custom device manager',
   })
 
-  // set the GPU device
+  // we need to wait for the device to be created
   // note this is asynchronous
-  await gpuCurtains.setDevice()
+  await gpuDeviceManager.init()
+
+  // create a camera renderer
+  const gpuCameraRenderer = new GPUCameraRenderer({
+    deviceManager: gpuDeviceManager,
+    container: document.querySelector('#canvas'),
+  })
 
   // create a cube mesh
-  const mesh = new Mesh(gpuCurtains, {
+  const mesh = new Mesh(gpuCameraRenderer, {
     geometry: new BoxGeometry(),
   })
   
@@ -168,9 +171,13 @@ window.addEventListener('load', async () => {
 
 ## Limitations
 
-gpu-curtains is a slowly evolving 3D engine and may lack some common features.
+gpu-curtains is a slowly evolving 3D engine but may lack some common features.
 
 If you need a more robust 3D engine that could handle complex glTF or advanced lighting, shading or rendering mechanics, then you should probably go with another library like [three.js](https://github.com/mrdoob/three.js) or [Babylon.js](https://github.com/BabylonJS).
+
+## Debugging
+
+If you need to debug your scenes, understand in which order they are rendered or inspect your textures, I strongly recommend you to have a look at [Brendan Duncan's WebGPU inspector extension](https://github.com/brendan-duncan/webgpu_inspector).
 
 ## Contributing
 

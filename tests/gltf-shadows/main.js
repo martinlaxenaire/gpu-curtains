@@ -48,17 +48,13 @@ window.addEventListener('load', async () => {
     },
   })
 
-  // render it
-  const animate = () => {
-    requestAnimationFrame(animate)
-
-    stats.begin()
-
-    gpuDeviceManager.render()
-    stats.end()
-  }
-
-  animate()
+  gpuDeviceManager
+    .onBeforeRender(() => {
+      stats.begin()
+    })
+    .onAfterRender(() => {
+      stats.end()
+    })
 
   const { camera } = gpuCameraRenderer
   camera.position.set(7, 2.5, 0)

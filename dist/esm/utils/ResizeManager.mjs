@@ -19,15 +19,15 @@ class ResizeManager {
     }
   }
   /**
-   * Set {@link shouldWatch}
-   * @param shouldWatch - whether to watch or not
+   * Set {@link ResizeManager.shouldWatch | shouldWatch}.
+   * @param shouldWatch - whether to watch or not.
    */
   useObserver(shouldWatch = true) {
     this.shouldWatch = shouldWatch;
   }
   /**
-   * Track an {@link HTMLElement} size change and execute a callback function when it happens
-   * @param entry - {@link ResizeManagerEntry | entry} to watch
+   * Track an {@link HTMLElement} size change and execute a callback function when it happens.
+   * @param entry - {@link ResizeManagerEntry | entry} to watch.
    */
   observe({ element, priority, callback }) {
     if (!element || !this.shouldWatch)
@@ -41,15 +41,15 @@ class ResizeManager {
     this.entries.push(entry);
   }
   /**
-   * Unobserve an {@link HTMLElement} and remove it from our {@link entries} array
-   * @param element - {@link HTMLElement} to unobserve
+   * Unobserve an {@link HTMLElement} and remove it from our {@link entries} array.
+   * @param element - {@link HTMLElement} to unobserve.
    */
   unobserve(element) {
     this.resizeObserver?.unobserve(element);
     this.entries = this.entries.filter((e) => !e.element.isSameNode(element));
   }
   /**
-   * Destroy our {@link ResizeManager}
+   * Destroy our {@link ResizeManager}.
    */
   destroy() {
     this.resizeObserver?.disconnect();

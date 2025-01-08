@@ -124,7 +124,7 @@ export class RenderMaterial extends Material {
   }
 
   /**
-   * Set or reset this {@link RenderMaterial} {@link renderer}. Will also update the renderer camera bind group if needed.
+   * Set or reset this {@link RenderMaterial} {@link RenderMaterial.renderer | renderer}. Will also update the renderer camera bind group if needed.
    * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
    */
   setRenderer(renderer: Renderer | GPUCurtains) {
@@ -151,7 +151,6 @@ export class RenderMaterial extends Material {
 
   /**
    * Compile the {@link RenderPipelineEntry}
-   * @async
    */
   async compilePipelineEntry(): Promise<void> {
     await this.pipelineEntry.compilePipelineEntry()
@@ -159,7 +158,6 @@ export class RenderMaterial extends Material {
 
   /**
    * Check if attributes and all bind groups are ready, create them if needed, set {@link RenderPipelineEntry} bind group buffers and compile the pipeline.
-   * @async
    */
   async compileMaterial(): Promise<void> {
     if (this.ready) return

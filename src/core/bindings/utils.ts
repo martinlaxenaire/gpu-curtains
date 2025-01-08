@@ -4,7 +4,7 @@ import { TextureBinding } from './TextureBinding'
 import { MaterialShadersType } from '../../types/Materials'
 
 /**
- * Map {@link MaterialShadersType | shaders types names} with actual {@link GPUShaderStageFlags | shaders visibility bitwise flags}.
+ * Map {@link MaterialShadersType | shaders types names} with actual {@link GPUDevice.createBindGroupLayout().visibility | GPUShaderStageFlags}.
  */
 const bindingVisibilities: Map<MaterialShadersType, GPUShaderStageFlags> = new Map([
   ['vertex', WebGPUShaderStageConstants.VERTEX],
@@ -13,9 +13,9 @@ const bindingVisibilities: Map<MaterialShadersType, GPUShaderStageFlags> = new M
 ])
 
 /**
- * Get the corresponding {@link GPUShaderStageFlags | shaders visibility bitwise flags} based on an array of {@link MaterialShadersType | shaders types names}.
+ * Get the corresponding {@link GPUDevice.createBindGroupLayout().visibility | GPUShaderStageFlags} based on an array of {@link MaterialShadersType | shaders types names}.
  * @param visibilities - array of {@link MaterialShadersType | shaders types names}.
- * @returns - corresponding {@link GPUShaderStageFlags | shaders visibility bitwise flags}.
+ * @returns - corresponding {@link GPUDevice.createBindGroupLayout().visibility | GPUShaderStageFlags}.
  */
 export const getBindingVisibility = (visibilities: MaterialShadersType[] = []): GPUShaderStageFlags => {
   return visibilities.reduce((acc, v) => {

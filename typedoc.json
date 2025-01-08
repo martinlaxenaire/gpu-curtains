@@ -4,15 +4,32 @@
     "src/**/*.ts"
   ],
   "exclude": ["src/index.ts"],
+  "favicon": "./website/assets/favicon.png",
   "out": "docs",
-  "gaID": "G-45554DLGL6",
   "hideGenerator": true,
+  "highlightLanguages": [
+    "bash",
+    "console",
+    "css",
+    "html",
+    "javascript",
+    "json",
+    "jsonc",
+    "json5",
+    "tsx",
+    "typescript",
+    "wgsl"
+  ],
   "titleLink": "https://martinlaxenaire.github.io/gpu-curtains/",
   "navigationLinks": {
     "Repository": "https://github.com/martinlaxenaire/gpu-curtains",
     "Docs": "https://martinlaxenaire.github.io/gpu-curtains/docs/",
     "Examples": "https://martinlaxenaire.github.io/gpu-curtains/examples/"
   },
+  "plugin": ["typedoc-plugin-mdn-links"],
+  "defaultCategory": "API",
+  "categoryOrder": ["Tutorials", "About", "API"],
+  "projectDocuments": ["guides/getting-started.md", "guides/core-concepts.md"],
   "sort": ["source-order"],
   "validation": {
     "notExported": true,

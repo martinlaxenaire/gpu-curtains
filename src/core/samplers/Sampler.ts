@@ -57,8 +57,8 @@ export class Sampler {
 
   /**
    * Sampler constructor
-   * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Sampler}
-   * @param parameters - {@link SamplerParams | parameters} used to create this {@link Sampler}
+   * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Sampler}.
+   * @param parameters - {@link SamplerParams | parameters} used to create this {@link Sampler}.
    */
   constructor(
     renderer: GPUCurtains | Renderer,
@@ -109,14 +109,14 @@ export class Sampler {
   }
 
   /**
-   * Set the {@link GPUSampler}
+   * Set the {@link GPUSampler}.
    */
   createSampler() {
     this.sampler = this.renderer.createSampler(this)
   }
 
   /**
-   * Set the {@link SamplerBinding | binding}
+   * Set the {@link SamplerBinding | binding}.
    */
   createBinding() {
     this.binding = new SamplerBinding({

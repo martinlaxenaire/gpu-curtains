@@ -7,6 +7,7 @@ import { DOMTexture } from '../textures/DOMTexture';
 import { AllowedBindGroups } from '../../types/BindGroups';
 import { Buffer } from '../buffers/Buffer';
 import { BufferBinding } from '../bindings/BufferBinding';
+import { IndirectBuffer } from '../../extras/buffers/IndirectBuffer';
 /**
  * Base parameters used to create a {@link GPUDeviceManager}
  */
@@ -15,6 +16,8 @@ export interface GPUDeviceManagerBaseParams {
     production?: boolean;
     /** Additional options to use when requesting an {@link GPUAdapter | adapter} */
     adapterOptions?: GPURequestAdapterOptions;
+    /** Whether the {@link GPUDeviceManager} should create its own requestAnimationFrame loop to render or not */
+    autoRender?: boolean;
 }
 /**
  * Parameters used to create a {@link GPUDeviceManager}
@@ -67,7 +70,9 @@ export declare class GPUDeviceManager {
     /** A Map containing all our created {@link AllowedBindGroups} */
     bindGroups: Map<string, AllowedBindGroups>;
     /** An array containing all our created {@link GPUBuffer} */
-    buffers: Map<string, Buffer>;
+    buffers: Map<Buffer['uuid'], Buffer>;
+    /** A {@link Map} containing all our created {@link IndirectBuffer} */
+    indirectBuffers: Map<IndirectBuffer['uuid'], IndirectBuffer>;
     /** A Map containing all our created {@link GPUBindGroupLayout} indexed by cache keys */
     bindGroupLayouts: Map<string, GPUBindGroupLayout>;
     /** A Map containing all our created {@link BufferBinding} indexed by cache keys */
@@ -78,6 +83,12 @@ export declare class GPUDeviceManager {
     domTextures: DOMTexture[];
     /** An array to keep track of the newly uploaded {@link DOMTexture} and set their {@link DOMTexture#sourceUploaded | sourceUploaded} property */
     texturesQueue: DOMTexture[];
+    /** Request animation frame callback returned id if used */
+    animationFrameID: null | number;
+    /** function assigned to the {@link onBeforeRender} callback */
+    _onBeforeRenderCallback: () => void;
+    /** function assigned to the {@link onAfterRender} callback */
+    _onAfterRenderCallback: () => void;
     /** Callback to run if there's any error while trying to set up the {@link GPUAdapter | adapter} or {@link GPUDevice | device} */
     onError: () => void;
     /** Callback to run whenever the {@link device} is lost. */
@@ -88,7 +99,7 @@ export declare class GPUDeviceManager {
      * GPUDeviceManager constructor
      * @param parameters - {@link GPUDeviceManagerParams | parameters} used to create this {@link GPUDeviceManager}
      */
-    constructor({ label, production, adapterOptions, onError, onDeviceLost, onDeviceDestroyed, }?: GPUDeviceManagerParams);
+    constructor({ label, production, adapterOptions, autoRender, onError, onDeviceLost, onDeviceDestroyed, }?: GPUDeviceManagerParams);
     /**
      * Set our {@link adapter} and {@link device} if possible.
      * @param parameters - {@link GPUAdapter} and/or {@link GPUDevice} to use if set.
@@ -100,15 +111,13 @@ export declare class GPUDeviceManager {
      */
     init({ adapter, device }?: GPUDeviceManagerSetupParams): Promise<void>;
     /**
-     * Set our {@link adapter} if possible.
+     * Set our {@link GPUDeviceManager.adapter | adapter} if possible.
      * The adapter represents a specific GPU. Some devices have multiple GPUs.
-     * @async
      * @param adapter - {@link GPUAdapter} to use if set.
      */
     setAdapter(adapter?: GPUAdapter | null): Promise<void>;
     /**
-     * Set our {@link device}.
-     * @async
+     * Set our {@link GPUDeviceManager.device | device}.
      * @param device - {@link GPUDevice} to use if set.
      */
     setDevice(device?: GPUDevice | null): Promise<void>;
@@ -124,7 +133,6 @@ export declare class GPUDeviceManager {
     /**
      * Called when the {@link device} should be restored.
      * Restore all our renderers.
-     * @async
      * @param parameters - {@link GPUAdapter} and/or {@link GPUDevice} to use if set.
      */
     restoreDevice({ adapter, device }?: GPUDeviceManagerSetupParams): Promise<void>;
@@ -192,6 +200,22 @@ export declare class GPUDeviceManager {
      * @param texture - {@link DOMTexture} to remove
      */
     removeDOMTexture(texture: DOMTexture): void;
+    /**
+     * Create a requestAnimationFrame loop and run it
+     */
+    animate(): void;
+    /**
+     * Called each frame before rendering
+     * @param callback - callback to run at each render
+     * @returns - our {@link GPUDeviceManager}
+     */
+    onBeforeRender(callback: () => void): GPUDeviceManager;
+    /**
+     * Called each frame after rendering
+     * @param callback - callback to run at each render
+     * @returns - our {@link GPUDeviceManager}
+     */
+    onAfterRender(callback: () => void): GPUDeviceManager;
     /**
      * Render everything:
      * - call all our {@link renderers} {@link core/renderers/GPURenderer.GPURenderer#onBeforeCommandEncoder | onBeforeCommandEncoder} callbacks

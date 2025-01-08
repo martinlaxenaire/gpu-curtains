@@ -35,14 +35,14 @@ export interface MaterialShaders {
     compute?: ShaderOptions;
 }
 /**
- * Base options of a {@link core/materials/Material.Material | Material}
+ * Base options of a {@link core/materials/Material.Material | Material}.
  */
 export interface MaterialBaseOptions {
-    /** The label of the {@link core/materials/Material.Material | Material}, sent to various GPU objects for debugging purpose */
+    /** The label of the {@link core/materials/Material.Material | Material}, sent to various GPU objects for debugging purpose. */
     label: string;
-    /** Shaders to use with this {@link core/materials/Material.Material | Material} */
+    /** Shaders to use with this {@link core/materials/Material.Material | Material}. */
     shaders: MaterialShaders;
-    /** Whether to compile the {@link core/materials/Material.Material | Material} {@link GPUPipelineBase | pipeline} asynchronously or not */
+    /** Whether to compile the {@link core/materials/Material.Material | Material} {@link GPURenderPipeline} or {@link GPUComputePipeline} asynchronously or not. */
     useAsyncPipeline?: boolean;
 }
 /**
@@ -100,7 +100,7 @@ export type AllowedGeometries = Geometry | IndexedGeometry;
 export interface RenderMaterialBaseRenderingOptions {
     /** Whether this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} should implicitly use the {@link core/renderers/GPUCameraRenderer.GPUCameraRenderer#cameraLightsBindGroup | renderer camera bind group} */
     useProjection: boolean;
-    /** Whether this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} should be treated as transparent. Impacts the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createRenderPipeline#blend | blend property} */
+    /** Whether this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} should be treated as transparent. Impacts the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} {@link GPUDevice.createRenderPipeline().blend | blend property} */
     transparent: boolean;
     /** Whether this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} should write to the depth buffer */
     depth: boolean;
@@ -115,9 +115,9 @@ export interface RenderMaterialBaseRenderingOptions {
     /** The {@link core/renderPasses/RenderPass.RenderPassParams#sampleCount | sampleCount} of the {@link core/renderPasses/RenderPass.RenderPass | RenderPass} onto which we'll be drawing. Set internally. */
     sampleCount: GPUSize32;
     /**
-     * Array of one or multiple {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createRenderPipeline#targets | targets} properties.
+     * Array of one or multiple {@link GPUDevice.createRenderPipeline().targets | targets} properties.
      *
-     * Each target should be an object with the optional {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createRenderPipeline#format_2 | format}, {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createRenderPipeline#blend | blend} and {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createRenderPipeline#writemask | writeMask} properties.
+     * Each target should be an object with the optional {@link GPUDevice.createRenderPipeline().format | format}, {@link GPUDevice.createRenderPipeline().blend | blend} and {@link GPUDevice.createRenderPipeline().writemask | writeMask} properties.
      *
      * The format property will be internally patched to match the output {@link core/renderPasses/RenderPass.RenderPass | RenderPass} target (default to the renderer preferred format).
      *
@@ -126,23 +126,23 @@ export interface RenderMaterialBaseRenderingOptions {
      */
     targets: GPUColorTargetState[];
 }
-/** Rendering options to send to the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} */
+/** Rendering options to send to the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline}. */
 export interface RenderMaterialRenderingOptions extends RenderMaterialBaseRenderingOptions {
-    /** Vertices order to be used by the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} */
+    /** Vertices order to be used by the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline}. */
     verticesOrder: Geometry['verticesOrder'];
-    /** Topology to use with this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}, i.e. whether to draw triangles or points (see https://www.w3.org/TR/webgpu/#enumdef-gpuprimitivetopology) */
+    /** Topology to use with this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}, i.e. whether to draw triangles or points (see https://www.w3.org/TR/webgpu/#enumdef-gpuprimitivetopology). */
     topology: Geometry['topology'];
 }
-/** Base parameters used to create a {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} */
+/** Base parameters used to create a {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}. */
 export interface RenderMaterialBaseParams extends RenderMaterialRenderingOptions, MaterialInputBindingsParams {
 }
-/** Parameters used to create a {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} */
+/** Parameters used to create a {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}. */
 export interface RenderMaterialParams extends MaterialBaseParams, Partial<RenderMaterialBaseParams> {
 }
-/** Options used to create this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} */
+/** Options used to create this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}. */
 export interface RenderMaterialOptions extends MaterialOptions {
-    /** {@link RenderMaterialRenderingOptions | render options} to send to the {@link GPUPipelineBase | pipeline} */
+    /** {@link RenderMaterialRenderingOptions | render options} to send to the {@link GPURenderPipeline}. */
     rendering?: RenderMaterialRenderingOptions;
 }
-/** Defines all kind of textures a {@link core/materials/Material.Material | Material} can use */
+/** Defines all kind of textures a {@link core/materials/Material.Material | Material} can use. */
 export type MaterialTexture = DOMTexture | Texture;

@@ -304,7 +304,6 @@ class DOMTexture extends Object3D {
   }
   /**
    * Load an {@link HTMLImageElement} from a URL and create an {@link ImageBitmap} to use as a {@link source}
-   * @async
    * @param url - URL of the image to load
    * @returns - the newly created {@link ImageBitmap}
    */
@@ -314,8 +313,7 @@ class DOMTexture extends Object3D {
     return await createImageBitmap(blob, { colorSpaceConversion: "none" });
   }
   /**
-   * Load and create an {@link ImageBitmap} from a URL or {@link HTMLImageElement}, use it as a {@link source} and create the {@link GPUTexture}
-   * @async
+   * Load and create an {@link ImageBitmap} from a URL or {@link HTMLImageElement}, use it as a {@link DOMTexture.source | source} and create the {@link GPUTexture}
    * @param source - the image URL or {@link HTMLImageElement} to load
    * @returns - the newly created {@link ImageBitmap}
    */
@@ -415,7 +413,7 @@ class DOMTexture extends Object3D {
     }
   }
   /**
-   * Load a {@link HTMLCanvasElement}, use it as a {@link source} and create the {@link GPUTexture}
+   * Load a {@link HTMLCanvasElement}, use it as a {@link DOMTexture.source | source} and create the {@link GPUTexture}
    * @param source - the {@link HTMLCanvasElement} to use
    */
   loadCanvas(source) {

@@ -42,12 +42,13 @@
       import { BoxGeometry, GPUCameraRenderer, GPUDeviceManager, Mesh } from '../../dist/esm/index.mjs'
 
       window.addEventListener('load', async () => {
-        // create a device manager
+        // first, we need a WebGPU device, that's what GPUDeviceManager is for
         const gpuDeviceManager = new GPUDeviceManager({
           label: 'Custom device manager',
         })
 
-        // wait for the device to be created
+        // we need to wait for the device to be created
+        // note this is asynchronous
         await gpuDeviceManager.init()
 
         // create a camera renderer
@@ -55,14 +56,6 @@
           deviceManager: gpuDeviceManager,
           container: document.querySelector('#canvas'),
         })
-
-        // render it
-        const animate = () => {
-          gpuDeviceManager.render()
-          requestAnimationFrame(animate)
-        }
-
-        animate()
 
         const mesh = new Mesh(gpuCameraRenderer, {
           label: 'Cube',

@@ -1,22 +1,7 @@
 // Goal of this test is to help debug and visualize buffer binding alignments
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
-  const { BufferBinding, GPUDeviceManager, GPURenderer, Vec2, Vec3 } = await import(/* @vite-ignore */ path)
-
-  // set our main GPUCurtains instance it will handle everything we need
-  // a WebGPU device and a renderer with its scene, requestAnimationFrame, resize and scroll events...
-  const gpuDeviceManager = new GPUDeviceManager({
-    label: 'Test binding device manager',
-  })
-
-  // we need to wait for the device to be created
-  await gpuDeviceManager.init()
-
-  // then we can create a camera renderer
-  const gpuRenderer = new GPURenderer({
-    deviceManager: gpuDeviceManager, // the renderer is going to use our WebGPU device to create its context
-    container: document.querySelector('#canvas'),
-  })
+  const { BufferBinding, Vec2, Vec3 } = await import(/* @vite-ignore */ path)
 
   const debugBindings = []
   //debugBindings.push(gpuCurtains.renderer.cameraBinding)
@@ -454,7 +439,7 @@ window.addEventListener('load', async () => {
 
     let previousEndOffset = 0
 
-    const buildRegularBufferElements = (bufferElements) => {
+    const buildRegularBufferElements = (bufferElements, baseIndex = 0) => {
       bufferElements.forEach((bindingElement, index) => {
         const { startOffset } = bindingElement
         const { numElements, size } = bindingElement.bufferLayout
@@ -509,7 +494,7 @@ window.addEventListener('load', async () => {
 
             innerHTML += `<div class='binding-element ${bindingElement.bufferLayout.type}-type col-span-${
               size < 4 ? size : 4
-            } color-${index % 8}'>`
+            } color-${(baseIndex + index) % 8}'>`
 
             const arrayIndex = bindingElement.numElements ? `[${i}]` : ''
 
@@ -532,7 +517,7 @@ window.addEventListener('load', async () => {
       })
     }
 
-    const buildInterleavedBufferElements = (interleavedBufferElements) => {
+    const buildInterleavedBufferElements = (interleavedBufferElements, baseIndex = 0) => {
       if (interleavedBufferElements.length) {
         const interleavedEntries = []
         for (let i = 0; i < interleavedBufferElements[0].numElements; i++) {
@@ -546,7 +531,7 @@ window.addEventListener('load', async () => {
               startOffset: interleavedBufferElement.startOffset,
               arrayStride: interleavedBufferElement.arrayStride,
               //entries: [interleavedBufferElement.interleavedAlignment.entries[i]],
-              index: regularBufferElements.length + index,
+              index: baseIndex + regularBufferElements.length + index,
               loopIndex: i,
             })
           })
@@ -628,17 +613,17 @@ window.addEventListener('load', async () => {
     buildInterleavedBufferElements(interleavedBufferElements)
 
     // now the children
-    binding.childrenBindings.forEach((childBinding) => {
+    binding.childrenBindings.forEach((childBinding, i) => {
       const regularChildBufferElements = childBinding.bufferElements.filter(
         (bufferElement) => !bufferElement.viewSetFunction
       )
 
-      buildRegularBufferElements(regularChildBufferElements)
+      buildRegularBufferElements(regularChildBufferElements, binding.bufferElements.length)
 
       const interleavedChildBufferElements = childBinding.bufferElements.filter(
         (bufferElement) => !!bufferElement.viewSetFunction
       )
-      buildInterleavedBufferElements(interleavedChildBufferElements)
+      buildInterleavedBufferElements(interleavedChildBufferElements, binding.bufferElements.length)
     })
 
     const endPad = binding.arrayBufferSize - (previousEndOffset + 1)

@@ -35,7 +35,7 @@ class TextureBinding extends Binding {
     this.setWGSLFragment();
   }
   /**
-   * Get bind group layout entry resource, either for {@link GPUBindGroupLayoutEntry#texture | texture} or {@link GPUBindGroupLayoutEntry#externalTexture | external texture}
+   * Get bind group layout entry resource, either for {@link GPUDevice.createBindGroupLayout().texture | GPUBindGroupLayout entry texture resource}, {@link GPUDevice.createBindGroupLayout().storageTexture | GPUBindGroupLayout entry storageTexture resource} or {@link GPUDevice.createBindGroupLayout().externalTexture | GPUBindGroupLayout entry externalTexture resource}.
    * @readonly
    */
   get resourceLayout() {
@@ -49,13 +49,13 @@ class TextureBinding extends Binding {
     return getBindGroupLayoutTextureBindingCacheKey(this);
   }
   /**
-   * Get the {@link GPUBindGroupEntry#resource | bind group resource}
+   * Get the {@link GPUDevice.createBindGroup().entries.resource | GPUBindGroup entry resource}.
    */
   get resource() {
     return this.texture instanceof GPUTexture ? this.texture.createView({ label: this.options.label + " view", dimension: this.options.viewDimension }) : this.texture instanceof GPUExternalTexture ? this.texture : null;
   }
   /**
-   * Set the {@link GPUBindGroupEntry#resource | bind group resource}
+   * Set the {@link GPUDevice.createBindGroup().entries.resource | GPUBindGroup entry resource}.
    * @param value - new bind group resource
    */
   set resource(value) {

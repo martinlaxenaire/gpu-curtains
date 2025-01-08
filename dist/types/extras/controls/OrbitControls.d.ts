@@ -82,8 +82,8 @@ export declare class OrbitControls {
      */
     constructor({ camera, element, target, enableZoom, minZoom, maxZoom, zoomSpeed, enableRotate, minPolarAngle, maxPolarAngle, minAzimuthAngle, maxAzimuthAngle, rotateSpeed, enablePan, panSpeed, }: OrbitControlsParams);
     /**
-     * Allow to set or reset this {@link OrbitControls#camera | OrbitControls camera}.
-     * @param camera - New {@link camera} to use.
+     * Allow to set or reset this {@link OrbitControls.camera | OrbitControls camera}.
+     * @param camera - New {@link OrbitControls.camera | camera} to use.
      */
     useCamera(camera: Camera): void;
     /**

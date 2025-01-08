@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+    <!-- Metas -->
+    <title>gpu-curtains | BufferBinding WGSL generation helper</title>
+    <meta name="description" content="BufferBinding WGSL generation helper with gpu-curtains" />
+
+    <meta property="og:title" content="gpu-curtains | BufferBinding WGSL generation helper" />
+    <meta property="og:type" content="article" />
+    <meta property="og:description" content="BufferBinding WGSL generation helper with gpu-curtains" />
+    <meta
+      property="og:image"
+      content="https://raw.githubusercontent.com/martinlaxenaire/gpu-curtains/main/website/assets/gpu-curtains-logo-1920-1280.jpg"
+    />
+    <meta
+      property="og:url"
+      content="https://martinlaxenaire.github.io/gpu-curtains/examples/buffer-binding-wgsl-helper/"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link
+      rel="stylesheet"
+      data-name="vs/editor/editor.main"
+      href="https://cdn.jsdelivr.net/npm/monaco-editor@0.39.0/min/vs/editor/editor.main.min.css"
+    />
+    <link href="../../examples/common-styles.css" rel="stylesheet" />
+    <link href="styles.css" rel="stylesheet" />
+
+    <link
+      rel="icon"
+      type="image/png"
+      href="https://raw.githubusercontent.com/martinlaxenaire/gpu-curtains/main/website/assets/favicon.png"
+    />
+  </head>
+
+  <body>
+    <header>BufferBinding WGSL generation helper</header>
+    <div id="container">
+      <div id="editor-side" class="side">
+        <div id="editor"></div>
+        <div id="process">
+          <button id="process-button" class="primary-button">Process</button>
+        </div>
+      </div>
+      <div id="result-side" class="side">
+        <div id="result">
+          <div id="result-inner"></div>
+        </div>
+      </div>
+    </div>
+
+    <iframe sandbox="allow-scripts" id="sandboxed" src="sandbox.html"></iframe>
+
+    <script src="main.js" type="module"></script>
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-45554DLGL6"></script>
+    <script>
+      window.dataLayer = window.dataLayer || []
+      function gtag() {
+        dataLayer.push(arguments)
+      }
+
+      if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+        gtag('js', new Date())
+        gtag('config', 'G-45554DLGL6')
+      }
+    </script>
+  </body>
+</html>

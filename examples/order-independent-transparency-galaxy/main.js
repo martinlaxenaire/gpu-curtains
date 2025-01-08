@@ -101,19 +101,12 @@ window.addEventListener('load', async () => {
   window.addEventListener('mousemove', onPointerMove)
   window.addEventListener('touchmove', onPointerMove)
 
-  // render our scene manually
-  const animate = () => {
+  gpuDeviceManager.onBeforeRender(() => {
     scenePivot.rotation.y -= 0.0025
 
     camera.position.lerp(lerpCameraPosition, 0.05)
     camera.lookAt(lookAt)
-
-    gpuDeviceManager.render()
-
-    requestAnimationFrame(animate)
-  }
-
-  animate()
+  })
 
   // ------------------------------------
   // COMPUTE STARS POSITIONS

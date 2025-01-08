@@ -25,13 +25,13 @@ export interface ExternalTextureParamsBase {
  * Parameters used to copy an external image to a texture, i.e. that will be uploaded to the GPU using {@link GPUQueue#copyExternalImageToTexture | copyExternalImageToTexture}
  */
 export interface ExternalTextureParams extends ExternalTextureParamsBase {
-    /** The {@link GPUTextureFormat | texture format} to use. Default to `'rgba8unorm'`. */
+    /** The {@link GPUTexture.format | GPUTexture format} to use. Default to `'rgba8unorm'`. */
     format?: GPUTextureFormat;
     /** Solid color used by temporary texture to display while loading the source. Default to `[0, 0, 0, 255]` (solid black). */
     placeholderColor?: [number, number, number, number];
     /** Whether video textures should use {@link GPUExternalTexture} or not. Default to `true`. */
     useExternalTextures?: boolean;
-    /** The {@link GPUTextureViewDimension | texture view dimension} to use. Default to `'2d'`. */
+    /** The {@link GPUTexture.createView().dimension | GPUTexture view dimension} to use. Default to `'2d'`. */
     viewDimension?: GPUTextureViewDimension;
     /** The texture shaders visibility sent to the {@link core/bindings/TextureBinding.TextureBinding | texture binding}. Default to `'fragment'`. */
     visibility?: BindingParams['visibility'];

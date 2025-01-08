@@ -3,9 +3,9 @@ import { BufferBinding } from './BufferBinding';
 import { TextureBinding } from './TextureBinding';
 import { MaterialShadersType } from '../../types/Materials';
 /**
- * Get the corresponding {@link GPUShaderStageFlags | shaders visibility bitwise flags} based on an array of {@link MaterialShadersType | shaders types names}.
+ * Get the corresponding {@link GPUDevice.createBindGroupLayout().visibility | GPUShaderStageFlags} based on an array of {@link MaterialShadersType | shaders types names}.
  * @param visibilities - array of {@link MaterialShadersType | shaders types names}.
- * @returns - corresponding {@link GPUShaderStageFlags | shaders visibility bitwise flags}.
+ * @returns - corresponding {@link GPUDevice.createBindGroupLayout().visibility | GPUShaderStageFlags}.
  */
 export declare const getBindingVisibility: (visibilities?: MaterialShadersType[]) => GPUShaderStageFlags;
 /** Defines a typed array */

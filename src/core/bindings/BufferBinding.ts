@@ -104,6 +104,8 @@ export type DataViewSetFunction =
  *
  * It is possible to create complex WGSL structs with children structs by using the {@link BufferBindingParams#childrenBindings | childrenBindings} parameter.
  *
+ * There's a helper tool to help you understand and debug your {@link BufferBinding} WGSL declaration: [BufferBinding WGSL generation helper](https://martinlaxenaire.github.io/gpu-curtains/examples/buffer-binding-wgsl-helper/)
+ *
  * A {@link BufferBinding} can also have a {@link parent | parent BufferBinding}, in which case it won't create a GPUBuffer but use its parent GPUBuffer at the right offset. Useful to create a unique {@link BufferBinding} with a single GPUBuffer to handle multiple {@link BufferBinding} and update them with a single `writeBuffer` call.
  *
  * @example
@@ -352,7 +354,7 @@ export class BufferBinding extends Binding {
   }
 
   /**
-   * Get {@link GPUBindGroupLayoutEntry#buffer | bind group layout entry resource}.
+   * Get {@link GPUDevice.createBindGroupLayout().descriptor.entries.resource | GPUBindGroupLayout entry resource}.
    * @readonly
    */
   get resourceLayout(): {
@@ -380,7 +382,7 @@ export class BufferBinding extends Binding {
   }
 
   /**
-   * Get {@link GPUBindGroupEntry#resource | bind group resource}.
+   * Get {@link GPUDevice.createBindGroup().descriptor.entries.resource | GPUBindGroup entry resource}.
    * @readonly
    */
   get resource(): {
@@ -558,8 +560,8 @@ export class BufferBinding extends Binding {
   }
 
   /**
-   * Set this {@link BufferBinding} optional {@link childrenBindings}.
-   * @param childrenBindings - Array of {@link BufferBindingChildrenBinding} to use as {@link childrenBindings}.
+   * Set this {@link BufferBinding} optional {@link BufferBinding.childrenBindings | childrenBindings}.
+   * @param childrenBindings - Array of {@link BufferBindingChildrenBinding} to use as {@link BufferBinding.childrenBindings | childrenBindings}.
    */
   setChildrenBindings(childrenBindings: BufferBindingChildrenBinding[]) {
     this.childrenBindings = []
