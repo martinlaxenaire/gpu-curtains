@@ -12,6 +12,7 @@ import { IndexedGeometry } from '../../core/geometries/IndexedGeometry'
 import { Mesh } from '../../core/meshes/Mesh'
 import { TypedArray, TypedArrayConstructor } from '../../core/bindings/utils'
 import { GeometryParams, VertexBufferAttribute } from '../../types/Geometries'
+import { Camera } from '../../core/camera/Camera'
 import {
   ChildDescriptor,
   MeshDescriptor,
@@ -19,6 +20,7 @@ import {
   PrimitiveInstances,
   ScenesManager,
 } from '../../types/gltf/GLTFScenesManager'
+import { throwWarning } from '../../utils/utils'
 
 // TODO limitations, example...
 // use a list like: https://github.com/warrenm/GLTFKit2?tab=readme-ov-file#status-and-conformance
@@ -48,7 +50,9 @@ const _normalMatrix = new Mat4()
  * - [x] Samplers
  * - [x] Textures
  * - [ ] Animations
- * - [ ] Cameras
+ * - [x] Cameras
+ *   - [ ] OrthographicCamera
+ *   - [x] PerspectiveCamera
  * - [x] Materials
  * - [ ] Skins
  *
@@ -107,6 +111,7 @@ export class GLTFScenesManager {
       meshes: [],
       meshesDescriptors: [],
       animations: [],
+      cameras: [],
       getScenesNodes: () => {
         return this.scenesManager.scenes
           .map((scene) => {
@@ -422,7 +427,7 @@ export class GLTFScenesManager {
    * @param node - {@link GLTF.INode | GLTF Node} to use.
    */
   createNode(parent: ChildDescriptor, node: GLTF.INode, index: number) {
-    if (node.camera !== undefined) return
+    //if (node.camera !== undefined) return
 
     const child: ChildDescriptor = {
       index,
@@ -445,8 +450,6 @@ export class GLTFScenesManager {
       if (node.rotation) child.node.quaternion.setFromArray(new Float32Array(node.rotation))
     }
 
-    const mesh = this.gltf.meshes[node.mesh]
-
     if (node.children) {
       node.children.forEach((childNodeIndex) => {
         const childNode = this.gltf.nodes[childNodeIndex]
@@ -456,7 +459,9 @@ export class GLTFScenesManager {
 
     let instancesDescriptor = null
 
-    if (mesh) {
+    if (node.mesh !== undefined) {
+      const mesh = this.gltf.meshes[node.mesh]
+
       // each primitive is in fact a mesh
       mesh.primitives.forEach((primitive, i) => {
         const meshDescriptor: MeshDescriptor = {
@@ -483,6 +488,34 @@ export class GLTFScenesManager {
         instancesDescriptor.instances.push(node)
         instancesDescriptor.nodes.push(child.node)
       })
+    }
+
+    if (node.camera !== undefined) {
+      const gltfCamera = this.gltf.cameras[node.camera]
+
+      if (gltfCamera.type === 'perspective') {
+        const minSize = Math.min(this.renderer.boundingRect.width, this.renderer.boundingRect.height)
+        const width = minSize / gltfCamera.perspective.aspectRatio
+        const height = minSize * gltfCamera.perspective.aspectRatio
+        const fov = (gltfCamera.perspective.yfov * 180) / Math.PI
+
+        const camera = new Camera({
+          fov,
+          near: gltfCamera.perspective.znear,
+          far: gltfCamera.perspective.zfar,
+          width,
+          height,
+          pixelRatio: this.renderer.pixelRatio,
+        })
+
+        camera.parent = child.node
+
+        this.scenesManager.cameras.push(camera)
+      } else if (gltfCamera.type === 'orthographic') {
+        // TODO orthographic not supported for now
+        // since they're not implemented (yet?)
+        throwWarning('GLTFScenesManager: Orthographic cameras are not supported yet.')
+      }
     }
 
     // TODO animation

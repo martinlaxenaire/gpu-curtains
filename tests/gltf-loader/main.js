@@ -177,6 +177,7 @@ window.addEventListener('load', async () => {
     const { scenes, boundingBox, node } = scenesManager
     container.classList.remove('loading')
     console.log({ gltf, scenesManager, scenes, boundingBox })
+    console.log(gltfScenesManager)
 
     const { center, radius } = boundingBox
 
@@ -272,6 +273,16 @@ window.addEventListener('load', async () => {
       })
     })
 
+    // test for gltf cameras
+    // if (scenesManager.cameras.length) {
+    //   setTimeout(() => {
+    //     console.log('switching camera')
+    //     const newCamera = scenesManager.cameras[0]
+    //     gpuCameraRenderer.useCamera(newCamera)
+    //     orbitControls.useCamera(newCamera)
+    //   }, 2000)
+    // }
+
     console.log(gpuCameraRenderer, meshes)
 
     // meshes[0].onReady(() => console.log(meshes[0].material.getShaderCode('fragment')))
@@ -282,7 +293,7 @@ window.addEventListener('load', async () => {
     title: 'GLTF loader',
   })
 
-  const currentModelKey = 'boxInterleaved'
+  const currentModelKey = 'cameras'
   let currentModel = models[currentModelKey]
 
   gui

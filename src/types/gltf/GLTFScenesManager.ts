@@ -7,6 +7,7 @@ import { Object3D } from '../../core/objects3D/Object3D'
 import { Mesh } from '../../core/meshes/Mesh'
 import { Box3 } from '../../math/Box3'
 import { TypedArray } from '../../core/bindings/utils'
+import { Camera } from '../../core/camera/Camera'
 
 /**
  * Define a {@link MeshDescriptorAttribute} used to create the {@link core/geometries/Geometry.Geometry | Geometry}.
@@ -139,6 +140,8 @@ export interface ScenesManager {
   meshesDescriptors: MeshDescriptor[]
 
   animations: ScenesAnimation[]
+
+  cameras: Camera[]
   /** Utility helper to get all the {@link Object3D} created by this {@link ScenesManager} */
   getScenesNodes: () => Object3D[]
 }
