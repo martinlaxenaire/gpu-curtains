@@ -38,7 +38,7 @@ const _normalMatrix = new Mat4()
  * ## Loading Features
  *
  * - [x] Accessors
- *   - [ ] Sparse accessors
+ *   - [x] Sparse accessors
  * - [x] Buffers
  * - [x] BufferViews
  * - [x] Images
@@ -578,6 +578,9 @@ export class GLTFScenesManager {
           const _updateMatrixStack = child.node.updateMatrixStack.bind(child.node)
           child.node.updateMatrixStack = () => {
             animationNode.nodeAnimations.forEach((nodeAnimation) => {
+              // TODO add an 'animations' prop to Object3D
+              // create an AnimationClip class
+              // handle everything in there
               if (nodeAnimation.initTime === 0) {
                 nodeAnimation.initTime = performance.now()
               }
@@ -647,78 +650,37 @@ export class GLTFScenesManager {
 
         console.log(animationNode)
       }
+    }
+  }
 
-      // TODO add an 'animations' prop to Object3D
-      // create an AnimationClip class
-      // handle everything in there
+  #getSparseAccessorIndicesAndValues(
+    accessor: GLTF.IAccessor
+  ): { indices: TypedArray | null; values: TypedArray | null } | null {
+    if (!accessor.sparse) return { indices: null, values: null }
 
-      // const _updateMatrixStack = child.node.updateMatrixStack.bind(child.node)
-      // child.node.updateMatrixStack = () => {
-      //   if (nodeAnimation.initTime === 0) {
-      //     nodeAnimation.initTime = performance.now()
-      //   }
-      //
-      //   nodeAnimation.time = performance.now()
-      //   const time = (nodeAnimation.time - nodeAnimation.initTime) / 1000
-      //
-      //   const currentTime = time % commonAnimations.duration
-      //
-      //   const nextTimeIndex = nodeAnimation.input.findIndex((t) => t > currentTime)
-      //   if (nextTimeIndex === -1) return
-      //
-      //   const previousTimeIndex = nextTimeIndex - 1
-      //   if (previousTimeIndex === -1) return
-      //
-      //   const nextTime = nodeAnimation.input[nextTimeIndex]
-      //   const previousTime = nodeAnimation.input[previousTimeIndex]
-      //
-      //   const interpolatedTime = (currentTime - previousTime) / (nextTime - previousTime)
-      //
-      //   if (nodeAnimation.target.path === 'rotation') {
-      //     const previousQuat = child.node.quaternion.clone()
-      //     const nextQuat = child.node.quaternion.clone()
-      //
-      //     previousQuat.setFromArray([
-      //       nodeAnimation.output[previousTimeIndex * 4],
-      //       nodeAnimation.output[previousTimeIndex * 4 + 1],
-      //       nodeAnimation.output[previousTimeIndex * 4 + 2],
-      //       nodeAnimation.output[previousTimeIndex * 4 + 3],
-      //     ])
-      //
-      //     nextQuat.setFromArray([
-      //       nodeAnimation.output[nextTimeIndex * 4],
-      //       nodeAnimation.output[nextTimeIndex * 4 + 1],
-      //       nodeAnimation.output[nextTimeIndex * 4 + 2],
-      //       nodeAnimation.output[nextTimeIndex * 4 + 3],
-      //     ])
-      //
-      //     child.node.quaternion.copy(previousQuat).slerp(nextQuat, interpolatedTime)
-      //     child.node.shouldUpdateModelMatrix()
-      //   } else if (nodeAnimation.target.path === 'translation' || nodeAnimation.target.path === 'scale') {
-      //     const vectorName = nodeAnimation.target.path === 'translation' ? 'position' : nodeAnimation.target.path
-      //
-      //     const previousVector = child.node[vectorName].clone()
-      //     const nextVector = child.node[vectorName].clone()
-      //
-      //     previousVector.set(
-      //       nodeAnimation.output[previousTimeIndex * 3],
-      //       nodeAnimation.output[previousTimeIndex * 3 + 1],
-      //       nodeAnimation.output[previousTimeIndex * 3 + 2]
-      //     )
-      //     nextVector.set(
-      //       nodeAnimation.output[nextTimeIndex * 3],
-      //       nodeAnimation.output[nextTimeIndex * 3 + 1],
-      //       nodeAnimation.output[nextTimeIndex * 3 + 2]
-      //     )
-      //
-      //     child.node[vectorName].copy(previousVector).lerp(nextVector, interpolatedTime)
-      //     console.log('should update model matrix', child.node.matricesNeedUpdate)
-      //   } else if (nodeAnimation.target.path === 'weights') {
-      //     // TODO
-      //   }
-      //
-      //   _updateMatrixStack()
-      // }
+    const accessorConstructor = GLTFScenesManager.getTypedArrayConstructorFromComponentType(accessor.componentType)
+    const attrSize = GLTFScenesManager.getVertexAttributeParamsFromType(accessor.type).size
+
+    const sparseIndicesConstructor = GLTFScenesManager.getTypedArrayConstructorFromComponentType(
+      accessor.sparse.indices.componentType
+    )
+    const sparseIndicesBufferView = this.gltf.bufferViews[accessor.sparse.indices.bufferView]
+    const sparseIndices = new sparseIndicesConstructor(
+      this.gltf.arrayBuffers[sparseIndicesBufferView.buffer],
+      accessor.byteOffset + sparseIndicesBufferView.byteOffset,
+      accessor.sparse.count
+    )
+
+    const sparseValuesBufferView = this.gltf.bufferViews[accessor.sparse.values.bufferView]
+    const sparseValues = new accessorConstructor(
+      this.gltf.arrayBuffers[sparseValuesBufferView.buffer],
+      accessor.byteOffset + sparseValuesBufferView.byteOffset,
+      accessor.sparse.count * attrSize
+    )
+
+    return {
+      indices: sparseIndices,
+      values: sparseValues,
     }
   }
 
@@ -772,14 +734,28 @@ export class GLTFScenesManager {
 
       const attributeParams = GLTFScenesManager.getVertexAttributeParamsFromType(accessor.type)
 
+      const array = new constructor(
+        this.gltf.arrayBuffers[bufferView.buffer],
+        accessor.byteOffset + bufferView.byteOffset,
+        accessor.count * attributeParams.size
+      )
+
+      // sparse accessor?
+      // patch the array with sparse values
+      if (accessor.sparse) {
+        const { indices, values } = this.#getSparseAccessorIndicesAndValues(accessor)
+
+        for (let i = 0; i < indices.length; i++) {
+          for (let j = 0; j < attributeParams.size; j++) {
+            array[indices[i] * attributeParams.size + j] = values[i * attributeParams.size + j]
+          }
+        }
+      }
+
       const attribute = {
         name,
         ...attributeParams,
-        array: new constructor(
-          this.gltf.arrayBuffers[bufferView.buffer],
-          accessor.byteOffset + bufferView.byteOffset,
-          accessor.count * attributeParams.size
-        ),
+        array,
       }
 
       defaultAttributes.push(attribute)
@@ -828,19 +804,27 @@ export class GLTFScenesManager {
 
           const attrSize = GLTFScenesManager.getVertexAttributeParamsFromType(accessor.type).size
 
+          // get eventual sparse
+          const { indices, values } = this.#getSparseAccessorIndicesAndValues(accessor)
+
           for (let i = 0; i < accessor.count; i++) {
             const startOffset =
               accessor.byteOffset / Float32Array.BYTES_PER_ELEMENT + (i * totalStride) / Float32Array.BYTES_PER_ELEMENT
 
-            interleavedArray
-              .subarray(startOffset, startOffset + attrSize)
-              .set(
-                new Float32Array(
-                  this.gltf.arrayBuffers[bufferView.buffer],
-                  bufferView.byteOffset + accessor.byteOffset + i * mainBufferStrides[accessor.bufferView],
-                  attrSize
-                )
-              )
+            const subarray = new Float32Array(
+              this.gltf.arrayBuffers[bufferView.buffer],
+              bufferView.byteOffset + accessor.byteOffset + i * mainBufferStrides[accessor.bufferView],
+              attrSize
+            )
+
+            // patch with sparse values if needed
+            if (indices && values && indices.includes(i)) {
+              for (let j = 0; i < attrSize; j++) {
+                subarray[j] = values[i * attrSize + j]
+              }
+            }
+
+            interleavedArray.subarray(startOffset, startOffset + attrSize).set(subarray)
           }
         })
       } else {
@@ -851,6 +835,28 @@ export class GLTFScenesManager {
           interleavedBufferView.byteOffset,
           (Math.ceil(interleavedBufferView.byteLength / 4) * 4) / Float32Array.BYTES_PER_ELEMENT
         )
+
+        // check for sparse!
+        let stride = 0
+        Object.values(primitive.attributes).forEach((accessorIndex: number, index) => {
+          const accessor = this.gltf.accessors[accessorIndex]
+          const attrSize = GLTFScenesManager.getVertexAttributeParamsFromType(accessor.type).size
+
+          // get eventual sparse
+          const { indices, values } = this.#getSparseAccessorIndicesAndValues(accessor)
+
+          if (indices && values) {
+            // patch interleaved array with sparse values
+            for (let i = 0; i < indices.length; i++) {
+              for (let j = 0; j < attrSize; j++) {
+                const arrayStride = stride + attrSize * i
+                interleavedArray[arrayStride + indices[i] * attrSize + j] = values[i * attrSize + j]
+              }
+            }
+          }
+
+          stride += attrSize
+        })
       }
     } else {
       // not interleaved?

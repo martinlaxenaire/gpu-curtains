@@ -132,6 +132,16 @@ window.addEventListener('load', async () => {
       name: 'Interpolation Test',
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/InterpolationTest/glTF/InterpolationTest.gltf',
     },
+    // sparse accessors
+    simpleSparseAccessor: {
+      name: 'Simple Sparse Accessor',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/SimpleSparseAccessor/glTF/SimpleSparseAccessor.gltf',
+    },
+    // interleaved data
+    boxInterleaved: {
+      name: 'Box Interleaved',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/BoxInterleaved/glTF/BoxInterleaved.gltf',
+    },
   }
 
   let shadingModel = 'IBL' // 'IBL', 'PBR', 'Phong' or 'Lambert'
@@ -272,7 +282,7 @@ window.addEventListener('load', async () => {
     title: 'GLTF loader',
   })
 
-  const currentModelKey = 'boxAnimated'
+  const currentModelKey = 'boxInterleaved'
   let currentModel = models[currentModelKey]
 
   gui
