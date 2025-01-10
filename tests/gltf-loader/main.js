@@ -119,6 +119,19 @@ window.addEventListener('load', async () => {
       name: 'Sponza (optimized / interleaved)',
       url: 'https://raw.githubusercontent.com/toji/sponza-optimized/main/Sponza.gltf',
     },
+    // animations
+    animatedCube: {
+      name: 'Animated Cube',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/AnimatedCube/glTF/AnimatedCube.gltf',
+    },
+    boxAnimated: {
+      name: 'Box Animated',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/BoxAnimated/glTF/BoxAnimated.gltf',
+    },
+    interpolationTest: {
+      name: 'Interpolation Test',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/InterpolationTest/glTF/InterpolationTest.gltf',
+    },
   }
 
   let shadingModel = 'IBL' // 'IBL', 'PBR', 'Phong' or 'Lambert'
@@ -165,6 +178,7 @@ window.addEventListener('load', async () => {
     if (isSponza) {
       node.position.y = 0
       camera.fov = 75
+      camera.far = radius * 6
 
       orbitControls.reset({
         zoomSpeed: radius * 0.025,
@@ -173,8 +187,31 @@ window.addEventListener('load', async () => {
         position: new Vec3(radius * 0.25, center.y * 0.25, 0),
         target: new Vec3(0, center.y * 0.1, 0),
       })
+    } else if (url.includes('Animated')) {
+      camera.fov = 50
+      camera.far = radius * 20
+
+      orbitControls.reset({
+        zoomSpeed: radius * 0.25,
+        minZoom: radius,
+        maxZoom: radius * 10,
+        position: new Vec3(0, 0, radius * 5),
+        target: new Vec3(),
+      })
+    } else if (url.includes('Interpolated')) {
+      camera.fov = 50
+      camera.far = radius * 200
+
+      orbitControls.reset({
+        zoomSpeed: radius * 0.25,
+        minZoom: radius,
+        maxZoom: radius * 4,
+        position: new Vec3(0, 0, radius * 10),
+        target: center,
+      })
     } else {
       camera.fov = 50
+      camera.far = radius * 6
 
       orbitControls.reset({
         zoomSpeed: radius * 0.25,
@@ -184,8 +221,6 @@ window.addEventListener('load', async () => {
         target: new Vec3(),
       })
     }
-
-    camera.far = radius * 6
 
     const meshes = gltfScenesManager.addMeshes((meshDescriptor) => {
       const { parameters } = meshDescriptor
@@ -237,7 +272,7 @@ window.addEventListener('load', async () => {
     title: 'GLTF loader',
   })
 
-  const currentModelKey = 'damagedHelmet'
+  const currentModelKey = 'boxAnimated'
   let currentModel = models[currentModelKey]
 
   gui

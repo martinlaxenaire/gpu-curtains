@@ -74,7 +74,7 @@ export class Quat {
    * @returns - this {@link Quat} after copy
    */
   copy(quaternion: Quat = new Quat()): Quat {
-    this.elements = quaternion.elements
+    this.elements.set(quaternion.elements)
     this.axisOrder = quaternion.axisOrder
 
     return this
@@ -228,6 +228,99 @@ export class Quat {
       this.elements[1] = (m23 + m32) / s
       this.elements[2] = 0.25 * s
     }
+
+    return this
+  }
+
+  lengthSq() {
+    return (
+      this.elements[0] * this.elements[0] +
+      this.elements[1] * this.elements[1] +
+      this.elements[2] * this.elements[2] +
+      this.elements[3] * this.elements[3]
+    )
+  }
+
+  length() {
+    return Math.sqrt(this.lengthSq())
+  }
+
+  normalize() {
+    let l = this.length()
+
+    if (l === 0) {
+      this.elements[0] = 0
+      this.elements[1] = 0
+      this.elements[2] = 0
+      this.elements[3] = 1
+    } else {
+      l = 1 / l
+
+      this.elements[0] = this.elements[0] * l
+      this.elements[1] = this.elements[1] * l
+      this.elements[2] = this.elements[2] * l
+      this.elements[3] = this.elements[3] * l
+    }
+
+    return this
+  }
+
+  slerp(qb = new Quat(), t = 0) {
+    if (t === 0) return this
+    if (t === 1) return this.copy(qb)
+
+    const x = this.elements[0],
+      y = this.elements[1],
+      z = this.elements[2],
+      w = this.elements[3]
+
+    // http://www.euclideanspace.com/maths/algebra/realNormedAlgebra/quaternions/slerp/
+
+    let cosHalfTheta = w * qb.elements[3] + x * qb.elements[0] + y * qb.elements[1] + z * qb.elements[2]
+
+    if (cosHalfTheta < 0) {
+      this.elements[3] = -qb.elements[3]
+      this.elements[0] = -qb.elements[0]
+      this.elements[1] = -qb.elements[1]
+      this.elements[2] = -qb.elements[2]
+
+      cosHalfTheta = -cosHalfTheta
+    } else {
+      this.copy(qb)
+    }
+
+    if (cosHalfTheta >= 1.0) {
+      this.elements[3] = w
+      this.elements[0] = x
+      this.elements[1] = y
+      this.elements[2] = z
+
+      return this
+    }
+
+    const sqrSinHalfTheta = 1.0 - cosHalfTheta * cosHalfTheta
+
+    if (sqrSinHalfTheta <= Number.EPSILON) {
+      const s = 1 - t
+      this.elements[3] = s * w + t * this.elements[3]
+      this.elements[0] = s * x + t * this.elements[0]
+      this.elements[1] = s * y + t * this.elements[1]
+      this.elements[2] = s * z + t * this.elements[2]
+
+      this.normalize()
+
+      return this
+    }
+
+    const sinHalfTheta = Math.sqrt(sqrSinHalfTheta)
+    const halfTheta = Math.atan2(sinHalfTheta, cosHalfTheta)
+    const ratioA = Math.sin((1 - t) * halfTheta) / sinHalfTheta,
+      ratioB = Math.sin(t * halfTheta) / sinHalfTheta
+
+    this.elements[3] = w * ratioA + this.elements[3] * ratioB
+    this.elements[0] = x * ratioA + this.elements[0] * ratioB
+    this.elements[1] = y * ratioA + this.elements[1] * ratioB
+    this.elements[2] = z * ratioA + this.elements[2] * ratioB
 
     return this
   }

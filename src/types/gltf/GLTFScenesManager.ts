@@ -6,6 +6,7 @@ import { ProjectedMeshParameters } from '../../core/meshes/mixins/ProjectedMeshB
 import { Object3D } from '../../core/objects3D/Object3D'
 import { Mesh } from '../../core/meshes/Mesh'
 import { Box3 } from '../../math/Box3'
+import { TypedArray } from '../../core/bindings/utils'
 
 /**
  * Define a {@link MeshDescriptorAttribute} used to create the {@link core/geometries/Geometry.Geometry | Geometry}.
@@ -75,7 +76,7 @@ export interface PrimitiveInstanceDescriptor {
   instances: GLTF.INode[]
   /** Array of {@link Object3D} corresponding to the {@link instances}. */
   nodes: Object3D[]
-  /** Unique {@link MeshDescriptor} used to create the instances {@link Mesh}. */
+  /** Unique {@link MeshDescriptor} used to create the instanced {@link Mesh}. */
   meshDescriptor: MeshDescriptor
 }
 
@@ -88,12 +89,34 @@ export type PrimitiveInstances = Map<GLTF.IMeshPrimitive, PrimitiveInstanceDescr
  * Define a {@link ChildDescriptor}.
  */
 export interface ChildDescriptor {
+  index?: number
   /** Optional name if available in the {@link GLTF} json. */
   name?: string
   /** {@link Object3D} describing the transformations of this child. */
   node: Object3D
   /** Optional children of this child. */
   children: ChildDescriptor[]
+}
+
+export interface SingleNodeAnimation {
+  animationIndex: number
+  initTime: number
+  time: number
+  sampler: GLTF.IAnimationSampler
+  target: GLTF.IAnimationChannelTarget
+  input: TypedArray | null
+  output: TypedArray | null
+}
+
+export interface NodeAnimations {
+  nodeIndex: number
+  nodeAnimations: SingleNodeAnimation[]
+}
+
+export interface ScenesAnimation {
+  duration: number
+  name?: string
+  nodes: NodeAnimations[]
 }
 
 /**
@@ -114,6 +137,8 @@ export interface ScenesManager {
   meshes: Mesh[]
   /** Array of {@link MeshDescriptor} used to create the {@link meshes}. */
   meshesDescriptors: MeshDescriptor[]
+
+  animations: ScenesAnimation[]
   /** Utility helper to get all the {@link Object3D} created by this {@link ScenesManager} */
   getScenesNodes: () => Object3D[]
 }

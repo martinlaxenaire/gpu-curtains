@@ -12,7 +12,13 @@ import { IndexedGeometry } from '../../core/geometries/IndexedGeometry'
 import { Mesh } from '../../core/meshes/Mesh'
 import { TypedArray, TypedArrayConstructor } from '../../core/bindings/utils'
 import { GeometryParams, VertexBufferAttribute } from '../../types/Geometries'
-import { ChildDescriptor, MeshDescriptor, PrimitiveInstances, ScenesManager } from '../../types/gltf/GLTFScenesManager'
+import {
+  ChildDescriptor,
+  MeshDescriptor,
+  PrimitiveInstanceDescriptor,
+  PrimitiveInstances,
+  ScenesManager,
+} from '../../types/gltf/GLTFScenesManager'
 
 // TODO limitations, example...
 // use a list like: https://github.com/warrenm/GLTFKit2?tab=readme-ov-file#status-and-conformance
@@ -100,6 +106,7 @@ export class GLTFScenesManager {
       scenes: [],
       meshes: [],
       meshesDescriptors: [],
+      animations: [],
       getScenesNodes: () => {
         return this.scenesManager.scenes
           .map((scene) => {
@@ -414,10 +421,11 @@ export class GLTFScenesManager {
    * @param parent - parent {@link ChildDescriptor} to use.
    * @param node - {@link GLTF.INode | GLTF Node} to use.
    */
-  createNode(parent: ChildDescriptor, node: GLTF.INode) {
+  createNode(parent: ChildDescriptor, node: GLTF.INode, index: number) {
     if (node.camera !== undefined) return
 
     const child: ChildDescriptor = {
+      index,
       name: node.name,
       node: new Object3D(),
       children: [],
@@ -442,24 +450,26 @@ export class GLTFScenesManager {
     if (node.children) {
       node.children.forEach((childNodeIndex) => {
         const childNode = this.gltf.nodes[childNodeIndex]
-        this.createNode(child, childNode)
+        this.createNode(child, childNode, childNodeIndex)
       })
     }
 
+    let instancesDescriptor = null
+
     if (mesh) {
       // each primitive is in fact a mesh
-      mesh.primitives.forEach((primitive, index) => {
+      mesh.primitives.forEach((primitive, i) => {
         const meshDescriptor: MeshDescriptor = {
           parent: child.node,
           attributes: [],
           textures: [],
           parameters: {
-            label: mesh.name ? mesh.name + ' ' + index : 'glTF mesh ' + index,
+            label: mesh.name ? mesh.name + ' ' + i : 'glTF mesh ' + i,
           },
           nodes: [],
         }
 
-        let instancesDescriptor = this.#primitiveInstances.get(primitive)
+        instancesDescriptor = this.#primitiveInstances.get(primitive)
         if (!instancesDescriptor) {
           instancesDescriptor = {
             instances: [], // instances
@@ -473,6 +483,569 @@ export class GLTFScenesManager {
         instancesDescriptor.instances.push(node)
         instancesDescriptor.nodes.push(child.node)
       })
+    }
+
+    // TODO animation
+    if (this.gltf.animations) {
+      const nodeAnimations = []
+
+      this.gltf.animations.forEach((animation, i) => {
+        if (!this.scenesManager.animations[i]) {
+          this.scenesManager.animations[i] = {
+            duration: 0,
+            name: animation.name || 'Animation ' + i,
+            nodes: [],
+          }
+        }
+
+        const channels = animation.channels.filter((channel) => channel.target.node === index)
+
+        if (channels && channels.length) {
+          let animationNode = this.scenesManager.animations[i].nodes.find((node) => node.nodeIndex === index)
+          if (!animationNode) {
+            animationNode = {
+              nodeIndex: index,
+              nodeAnimations: [],
+            }
+
+            this.scenesManager.animations[i].nodes.push(animationNode)
+          }
+
+          channels.forEach((channel) => {
+            const nodeAnimation = {
+              animationIndex: i,
+              initTime: 0,
+              time: 0,
+              sampler: animation.samplers[channel.sampler],
+              target: channel.target,
+              input: null,
+              output: null,
+            }
+
+            nodeAnimations.push(nodeAnimation)
+            animationNode.nodeAnimations.push(nodeAnimation)
+          })
+        }
+      })
+
+      if (nodeAnimations.length) {
+        nodeAnimations.forEach((nodeAnimation) => {
+          const { sampler } = nodeAnimation
+          const inputAccessor = this.gltf.accessors[sampler.input]
+          const inputBufferView = this.gltf.bufferViews[inputAccessor.bufferView]
+
+          const inputTypedArrayConstructor = GLTFScenesManager.getTypedArrayConstructorFromComponentType(
+            inputAccessor.componentType
+          )
+
+          const outputAccessor = this.gltf.accessors[sampler.output]
+          const outputBufferView = this.gltf.bufferViews[outputAccessor.bufferView]
+          const outputTypedArrayConstructor = GLTFScenesManager.getTypedArrayConstructorFromComponentType(
+            outputAccessor.componentType
+          )
+
+          nodeAnimation.input = new inputTypedArrayConstructor(
+            this.gltf.arrayBuffers[inputBufferView.buffer],
+            inputAccessor.byteOffset + inputBufferView.byteOffset,
+            inputAccessor.count * GLTFScenesManager.getVertexAttributeParamsFromType(inputAccessor.type).size
+          )
+          nodeAnimation.output = new outputTypedArrayConstructor(
+            this.gltf.arrayBuffers[outputBufferView.buffer],
+            outputAccessor.byteOffset + outputBufferView.byteOffset,
+            outputAccessor.count * GLTFScenesManager.getVertexAttributeParamsFromType(outputAccessor.type).size
+          )
+
+          // set max duration
+          const commonAnimations = this.scenesManager.animations[nodeAnimation.animationIndex]
+          commonAnimations.duration = Math.max(
+            commonAnimations.duration,
+            nodeAnimation.input[nodeAnimation.input.length - 1]
+          )
+        })
+      }
+
+      let animationNode = null
+      const commonAnimations = this.scenesManager.animations.find((animation) => {
+        return animation.nodes.find((node) => node.nodeIndex === index)
+      })
+
+      console.log(commonAnimations)
+
+      if (commonAnimations) {
+        animationNode = commonAnimations.nodes.find((node) => node.nodeIndex === index)
+
+        if (animationNode) {
+          const _updateMatrixStack = child.node.updateMatrixStack.bind(child.node)
+          child.node.updateMatrixStack = () => {
+            animationNode.nodeAnimations.forEach((nodeAnimation) => {
+              if (nodeAnimation.initTime === 0) {
+                nodeAnimation.initTime = performance.now()
+              }
+
+              nodeAnimation.time = performance.now()
+              const time = (nodeAnimation.time - nodeAnimation.initTime) / 1000
+
+              const currentTime = time % commonAnimations.duration
+
+              const nextTimeIndex = nodeAnimation.input.findIndex((t) => t > currentTime)
+              if (nextTimeIndex === -1) return
+
+              const previousTimeIndex = nextTimeIndex - 1
+              if (previousTimeIndex === -1) return
+
+              const nextTime = nodeAnimation.input[nextTimeIndex]
+              const previousTime = nodeAnimation.input[previousTimeIndex]
+
+              const interpolatedTime = (currentTime - previousTime) / (nextTime - previousTime)
+
+              if (nodeAnimation.target.path === 'rotation') {
+                const previousQuat = child.node.quaternion.clone()
+                const nextQuat = child.node.quaternion.clone()
+
+                previousQuat.setFromArray([
+                  nodeAnimation.output[previousTimeIndex * 4],
+                  nodeAnimation.output[previousTimeIndex * 4 + 1],
+                  nodeAnimation.output[previousTimeIndex * 4 + 2],
+                  nodeAnimation.output[previousTimeIndex * 4 + 3],
+                ])
+
+                nextQuat.setFromArray([
+                  nodeAnimation.output[nextTimeIndex * 4],
+                  nodeAnimation.output[nextTimeIndex * 4 + 1],
+                  nodeAnimation.output[nextTimeIndex * 4 + 2],
+                  nodeAnimation.output[nextTimeIndex * 4 + 3],
+                ])
+
+                child.node.quaternion.copy(previousQuat).slerp(nextQuat, interpolatedTime)
+                child.node.shouldUpdateModelMatrix()
+              } else if (nodeAnimation.target.path === 'translation' || nodeAnimation.target.path === 'scale') {
+                const vectorName = nodeAnimation.target.path === 'translation' ? 'position' : nodeAnimation.target.path
+
+                const previousVector = child.node[vectorName].clone()
+                const nextVector = child.node[vectorName].clone()
+
+                previousVector.set(
+                  nodeAnimation.output[previousTimeIndex * 3],
+                  nodeAnimation.output[previousTimeIndex * 3 + 1],
+                  nodeAnimation.output[previousTimeIndex * 3 + 2]
+                )
+                nextVector.set(
+                  nodeAnimation.output[nextTimeIndex * 3],
+                  nodeAnimation.output[nextTimeIndex * 3 + 1],
+                  nodeAnimation.output[nextTimeIndex * 3 + 2]
+                )
+
+                child.node[vectorName].copy(previousVector).lerp(nextVector, interpolatedTime)
+              } else if (nodeAnimation.target.path === 'weights') {
+                // TODO
+              }
+            })
+
+            _updateMatrixStack()
+          }
+        }
+
+        console.log(animationNode)
+      }
+
+      // TODO add an 'animations' prop to Object3D
+      // create an AnimationClip class
+      // handle everything in there
+
+      // const _updateMatrixStack = child.node.updateMatrixStack.bind(child.node)
+      // child.node.updateMatrixStack = () => {
+      //   if (nodeAnimation.initTime === 0) {
+      //     nodeAnimation.initTime = performance.now()
+      //   }
+      //
+      //   nodeAnimation.time = performance.now()
+      //   const time = (nodeAnimation.time - nodeAnimation.initTime) / 1000
+      //
+      //   const currentTime = time % commonAnimations.duration
+      //
+      //   const nextTimeIndex = nodeAnimation.input.findIndex((t) => t > currentTime)
+      //   if (nextTimeIndex === -1) return
+      //
+      //   const previousTimeIndex = nextTimeIndex - 1
+      //   if (previousTimeIndex === -1) return
+      //
+      //   const nextTime = nodeAnimation.input[nextTimeIndex]
+      //   const previousTime = nodeAnimation.input[previousTimeIndex]
+      //
+      //   const interpolatedTime = (currentTime - previousTime) / (nextTime - previousTime)
+      //
+      //   if (nodeAnimation.target.path === 'rotation') {
+      //     const previousQuat = child.node.quaternion.clone()
+      //     const nextQuat = child.node.quaternion.clone()
+      //
+      //     previousQuat.setFromArray([
+      //       nodeAnimation.output[previousTimeIndex * 4],
+      //       nodeAnimation.output[previousTimeIndex * 4 + 1],
+      //       nodeAnimation.output[previousTimeIndex * 4 + 2],
+      //       nodeAnimation.output[previousTimeIndex * 4 + 3],
+      //     ])
+      //
+      //     nextQuat.setFromArray([
+      //       nodeAnimation.output[nextTimeIndex * 4],
+      //       nodeAnimation.output[nextTimeIndex * 4 + 1],
+      //       nodeAnimation.output[nextTimeIndex * 4 + 2],
+      //       nodeAnimation.output[nextTimeIndex * 4 + 3],
+      //     ])
+      //
+      //     child.node.quaternion.copy(previousQuat).slerp(nextQuat, interpolatedTime)
+      //     child.node.shouldUpdateModelMatrix()
+      //   } else if (nodeAnimation.target.path === 'translation' || nodeAnimation.target.path === 'scale') {
+      //     const vectorName = nodeAnimation.target.path === 'translation' ? 'position' : nodeAnimation.target.path
+      //
+      //     const previousVector = child.node[vectorName].clone()
+      //     const nextVector = child.node[vectorName].clone()
+      //
+      //     previousVector.set(
+      //       nodeAnimation.output[previousTimeIndex * 3],
+      //       nodeAnimation.output[previousTimeIndex * 3 + 1],
+      //       nodeAnimation.output[previousTimeIndex * 3 + 2]
+      //     )
+      //     nextVector.set(
+      //       nodeAnimation.output[nextTimeIndex * 3],
+      //       nodeAnimation.output[nextTimeIndex * 3 + 1],
+      //       nodeAnimation.output[nextTimeIndex * 3 + 2]
+      //     )
+      //
+      //     child.node[vectorName].copy(previousVector).lerp(nextVector, interpolatedTime)
+      //     console.log('should update model matrix', child.node.matricesNeedUpdate)
+      //   } else if (nodeAnimation.target.path === 'weights') {
+      //     // TODO
+      //   }
+      //
+      //   _updateMatrixStack()
+      // }
+    }
+  }
+
+  createGeometry(primitive: GLTF.IMeshPrimitive, primitiveInstance: PrimitiveInstanceDescriptor) {
+    const { instances, meshDescriptor } = primitiveInstance
+
+    const geometryBBox = new Box3()
+
+    // TODO should we pass an already created buffer to the geometry main vertex and index buffers if possible?
+    // and use bufferOffset and bufferSize parameters
+    // if the accessors byteOffset is large enough,
+    // it means we have an array that is not interleaved (with each vertexBuffer attributes bufferOffset = 0)
+    // but we can deal with the actual offset in the geometry setVertexBuffer call!
+    // see https://toji.dev/webgpu-gltf-case-study/#handling-large-attribute-offsets
+
+    const defaultAttributes = []
+
+    // check whether the buffer view is already interleaved
+    let interleavedArray = null
+    let interleavedBufferView = null
+    let maxByteOffset = 0
+
+    // prepare default attributes
+    for (const [attribName, accessorIndex] of Object.entries(primitive.attributes)) {
+      const accessor = this.gltf.accessors[accessorIndex as number]
+
+      const constructor = GLTFScenesManager.getTypedArrayConstructorFromComponentType(accessor.componentType)
+
+      const bufferView = this.gltf.bufferViews[accessor.bufferView]
+
+      // clean attributes names
+      const name =
+        attribName === 'TEXCOORD_0' ? 'uv' : attribName.replace('_', '').replace('TEXCOORD', 'uv').toLowerCase()
+
+      const byteStride = bufferView.byteStride || 0
+      const accessorByteOffset = accessor.byteOffset || 0
+      if (byteStride && accessorByteOffset && accessorByteOffset < byteStride) {
+        maxByteOffset = Math.max(accessorByteOffset, maxByteOffset)
+      } else {
+        maxByteOffset = 0
+      }
+
+      // custom bbox
+      // glTF specs says: "vertex position attribute accessors MUST have accessor.min and accessor.max defined"
+      if (name === 'position') {
+        geometryBBox.min.min(new Vec3(accessor.min[0], accessor.min[1], accessor.min[2]))
+        geometryBBox.max.max(new Vec3(accessor.max[0], accessor.max[1], accessor.max[2]))
+
+        interleavedBufferView = bufferView
+      }
+
+      const attributeParams = GLTFScenesManager.getVertexAttributeParamsFromType(accessor.type)
+
+      const attribute = {
+        name,
+        ...attributeParams,
+        array: new constructor(
+          this.gltf.arrayBuffers[bufferView.buffer],
+          accessor.byteOffset + bufferView.byteOffset,
+          accessor.count * attributeParams.size
+        ),
+      }
+
+      defaultAttributes.push(attribute)
+
+      meshDescriptor.attributes.push({
+        name: attribute.name,
+        type: attribute.type,
+      })
+    }
+
+    if (maxByteOffset > 0) {
+      // check they are all really interleaved
+      const accessorsBufferViews = Object.values(primitive.attributes).map(
+        (accessorIndex) => this.gltf.accessors[accessorIndex as number].bufferView
+      )
+
+      if (!accessorsBufferViews.every((val) => val === accessorsBufferViews[0])) {
+        // we're not that lucky since we have interleaved values coming from different positions of our main buffer
+        // we'll have to rebuild an interleaved array ourselves
+        let totalStride = 0
+        const mainBufferStrides = {}
+        const arrayLength = Object.values(primitive.attributes).reduce((acc: number, accessorIndex: number): number => {
+          const accessor = this.gltf.accessors[accessorIndex]
+
+          const attrSize = GLTFScenesManager.getVertexAttributeParamsFromType(accessor.type).size
+
+          if (!mainBufferStrides[accessor.bufferView]) {
+            mainBufferStrides[accessor.bufferView] = 0
+          }
+
+          mainBufferStrides[accessor.bufferView] = Math.max(
+            mainBufferStrides[accessor.bufferView],
+            accessor.byteOffset + attrSize * Float32Array.BYTES_PER_ELEMENT
+          )
+
+          totalStride += attrSize * Float32Array.BYTES_PER_ELEMENT
+
+          return acc + accessor.count * attrSize
+        }, 0) as number
+
+        interleavedArray = new Float32Array(Math.ceil(arrayLength / 4) * 4)
+
+        Object.values(primitive.attributes).forEach((accessorIndex: number) => {
+          const accessor = this.gltf.accessors[accessorIndex]
+          const bufferView = this.gltf.bufferViews[accessor.bufferView]
+
+          const attrSize = GLTFScenesManager.getVertexAttributeParamsFromType(accessor.type).size
+
+          for (let i = 0; i < accessor.count; i++) {
+            const startOffset =
+              accessor.byteOffset / Float32Array.BYTES_PER_ELEMENT + (i * totalStride) / Float32Array.BYTES_PER_ELEMENT
+
+            interleavedArray
+              .subarray(startOffset, startOffset + attrSize)
+              .set(
+                new Float32Array(
+                  this.gltf.arrayBuffers[bufferView.buffer],
+                  bufferView.byteOffset + accessor.byteOffset + i * mainBufferStrides[accessor.bufferView],
+                  attrSize
+                )
+              )
+          }
+        })
+      } else {
+        // we're lucky to have an interleaved array!
+        // we won't have to compute our geometry!
+        interleavedArray = new Float32Array(
+          this.gltf.arrayBuffers[interleavedBufferView.buffer],
+          interleavedBufferView.byteOffset,
+          (Math.ceil(interleavedBufferView.byteLength / 4) * 4) / Float32Array.BYTES_PER_ELEMENT
+        )
+      }
+    } else {
+      // not interleaved?
+      // let's try to reorder the attributes so we might benefit from pipeline cache
+      const attribOrder = ['position', 'uv', 'normal']
+
+      defaultAttributes.sort((a, b) => {
+        let aIndex = attribOrder.findIndex((attrName) => attrName === a.name)
+        aIndex = aIndex === -1 ? Infinity : aIndex
+
+        let bIndex = attribOrder.findIndex((attrName) => attrName === b.name)
+        bIndex = bIndex === -1 ? Infinity : bIndex
+
+        return aIndex - bIndex
+      })
+    }
+
+    const geometryAttributes: GeometryParams = {
+      instancesCount: instances.length,
+      topology: GLTFScenesManager.gpuPrimitiveTopologyForMode(primitive.mode),
+      vertexBuffers: [
+        {
+          name: 'attributes',
+          stepMode: 'vertex', // explicitly set the stepMode even if not mandatory
+          attributes: defaultAttributes,
+          ...(interleavedArray && { array: interleavedArray }), // interleaved array!
+        },
+      ],
+    }
+
+    const isIndexedGeometry = 'indices' in primitive
+    const GeometryConstructor = isIndexedGeometry ? IndexedGeometry : Geometry
+
+    meshDescriptor.parameters.geometry = new GeometryConstructor(geometryAttributes)
+    //meshDescriptor.parameters.geometry.boundingBox.copy(geometryBBox)
+    meshDescriptor.parameters.geometry.boundingBox = geometryBBox
+
+    if (isIndexedGeometry) {
+      const accessor = this.gltf.accessors[primitive.indices]
+      const bufferView = this.gltf.bufferViews[accessor.bufferView]
+
+      const constructor = GLTFScenesManager.getTypedArrayConstructorFromComponentType(accessor.componentType) as
+        | Uint32ArrayConstructor
+        | Uint16ArrayConstructor
+
+      const arrayOffset = accessor.byteOffset + bufferView.byteOffset
+      const arrayBuffer = this.gltf.arrayBuffers[bufferView.buffer]
+      const arrayLength = Math.ceil(accessor.count / 4) * 4
+
+      // do not allow Uint8Array arrays
+      const array =
+        constructor.name === 'Uint8Array'
+          ? Uint16Array.from(new constructor(arrayBuffer, arrayOffset, arrayLength))
+          : new constructor(arrayBuffer, arrayOffset, arrayLength)
+
+      ;(meshDescriptor.parameters.geometry as IndexedGeometry).setIndexBuffer({
+        bufferFormat: constructor.name === 'Uint32Array' ? 'uint32' : 'uint16',
+        array,
+      })
+    }
+  }
+
+  createMaterial(primitive: GLTF.IMeshPrimitive, primitiveInstance: PrimitiveInstanceDescriptor) {
+    const { instances, nodes, meshDescriptor } = primitiveInstance
+
+    const instancesCount = instances.length
+
+    const materialTextures = this.scenesManager.materialsTextures[primitive.material]
+
+    meshDescriptor.parameters.samplers = []
+    meshDescriptor.parameters.textures = []
+
+    materialTextures?.texturesDescriptors.forEach((t) => {
+      meshDescriptor.textures.push({
+        texture: t.texture.options.name,
+        sampler: t.sampler.name,
+        texCoordAttributeName: t.texCoordAttributeName,
+      })
+
+      const samplerExists = meshDescriptor.parameters.samplers.find((s) => s.uuid === t.sampler.uuid)
+
+      if (!samplerExists) {
+        meshDescriptor.parameters.samplers.push(t.sampler)
+      }
+
+      meshDescriptor.parameters.textures.push(t.texture)
+    })
+
+    const material = (this.gltf.materials && this.gltf.materials[primitive.material]) || {}
+
+    meshDescriptor.parameters.cullMode = material.doubleSided ? 'none' : 'back'
+
+    // transparency
+    if (material.alphaMode === 'BLEND' || (material.extensions && material.extensions.KHR_materials_transmission)) {
+      meshDescriptor.parameters.transparent = true
+      meshDescriptor.parameters.targets = [
+        {
+          blend: {
+            color: {
+              srcFactor: 'src-alpha',
+              dstFactor: 'one-minus-src-alpha',
+            },
+            alpha: {
+              // This just prevents the canvas from having alpha "holes" in it.
+              srcFactor: 'one',
+              dstFactor: 'one',
+            },
+          },
+        },
+      ]
+    }
+
+    // uniforms
+    const materialUniformStruct = {
+      baseColorFactor: {
+        type: 'vec4f',
+        value: material.pbrMetallicRoughness?.baseColorFactor || [1, 1, 1, 1],
+      },
+      alphaCutoff: {
+        type: 'f32',
+        value: material.alphaCutoff !== undefined ? material.alphaCutoff : material.alphaMode === 'MASK' ? 0.5 : 0,
+      },
+      metallicFactor: {
+        type: 'f32',
+        value:
+          material.pbrMetallicRoughness?.metallicFactor === undefined
+            ? 1
+            : material.pbrMetallicRoughness.metallicFactor,
+      },
+      roughnessFactor: {
+        type: 'f32',
+        value:
+          material.pbrMetallicRoughness?.roughnessFactor === undefined
+            ? 1
+            : material.pbrMetallicRoughness.roughnessFactor,
+      },
+      normalMapScale: {
+        type: 'f32',
+        value: material.normalTexture?.scale === undefined ? 1 : material.normalTexture.scale,
+      },
+      occlusionStrength: {
+        type: 'f32',
+        value: material.occlusionTexture?.strength === undefined ? 1 : material.occlusionTexture.strength,
+      },
+      emissiveFactor: {
+        type: 'vec3f',
+        value: material.emissiveFactor !== undefined ? material.emissiveFactor : [1, 1, 1],
+      },
+    }
+
+    if (Object.keys(materialUniformStruct).length) {
+      meshDescriptor.parameters.uniforms = {
+        material: {
+          visibility: ['vertex', 'fragment'],
+          struct: materialUniformStruct,
+        },
+      }
+    }
+
+    // instances matrices storage
+    if (instancesCount > 1) {
+      const worldMatrices = new Float32Array(instancesCount * 16)
+      const normalMatrices = new Float32Array(instancesCount * 16)
+
+      for (let i = 0; i < instancesCount; ++i) {
+        worldMatrices.set(nodes[i].worldMatrix.elements, i * 16)
+
+        _normalMatrix.copy(nodes[i].worldMatrix).invert().transpose()
+        normalMatrices.set(_normalMatrix.elements, i * 16)
+      }
+
+      meshDescriptor.parameters.storages = {
+        instances: {
+          visibility: ['vertex', 'fragment'],
+          struct: {
+            modelMatrix: {
+              type: 'array<mat4x4f>',
+              value: worldMatrices,
+            },
+            normalMatrix: {
+              type: 'array<mat4x4f>',
+              value: normalMatrices,
+            },
+          },
+        },
+      }
+    }
+
+    // computed transformed bbox
+    for (let i = 0; i < nodes.length; i++) {
+      const tempBbox = meshDescriptor.parameters.geometry.boundingBox.clone()
+      const transformedBbox = tempBbox.applyMat4(meshDescriptor.nodes[i].worldMatrix)
+
+      this.scenesManager.boundingBox.min.min(transformedBbox.min)
+      this.scenesManager.boundingBox.max.max(transformedBbox.max)
     }
   }
 
@@ -495,7 +1068,7 @@ export class GLTFScenesManager {
 
       childScene.nodes.forEach((nodeIndex) => {
         const node = this.gltf.nodes[nodeIndex]
-        this.createNode(sceneDescriptor, node)
+        this.createNode(sceneDescriptor, node, nodeIndex)
       })
     })
 
@@ -504,344 +1077,22 @@ export class GLTFScenesManager {
     this.scenesManager.node.updateMatrixStack()
 
     for (const [primitive, primitiveInstance] of this.#primitiveInstances) {
-      const { instances, nodes, meshDescriptor } = primitiveInstance
-
-      const instancesCount = instances.length
+      const { nodes, meshDescriptor } = primitiveInstance
 
       meshDescriptor.nodes = nodes
-
       this.scenesManager.meshesDescriptors.push(meshDescriptor)
 
       // ------------------------------------
       // GEOMETRY
       // ------------------------------------
 
-      const geometryBBox = new Box3()
-
-      // TODO should we pass an already created buffer to the geometry main vertex and index buffers if possible?
-      // and use bufferOffset and bufferSize parameters
-      // if the accessors byteOffset is large enough,
-      // it means we have an array that is not interleaved (with each vertexBuffer attributes bufferOffset = 0)
-      // but we can deal with the actual offset in the geometry setVertexBuffer call!
-      // see https://toji.dev/webgpu-gltf-case-study/#handling-large-attribute-offsets
-
-      const defaultAttributes = []
-
-      // check whether the buffer view is already interleaved
-      let interleavedArray = null
-      let interleavedBufferView = null
-      let maxByteOffset = 0
-
-      // prepare default attributes
-      for (const [attribName, accessorIndex] of Object.entries(primitive.attributes)) {
-        const accessor = this.gltf.accessors[accessorIndex as number]
-
-        const constructor = GLTFScenesManager.getTypedArrayConstructorFromComponentType(accessor.componentType)
-
-        const bufferView = this.gltf.bufferViews[accessor.bufferView]
-
-        // clean attributes names
-        const name =
-          attribName === 'TEXCOORD_0' ? 'uv' : attribName.replace('_', '').replace('TEXCOORD', 'uv').toLowerCase()
-
-        const byteStride = bufferView.byteStride || 0
-        const accessorByteOffset = accessor.byteOffset || 0
-        if (byteStride && accessorByteOffset && accessorByteOffset < byteStride) {
-          maxByteOffset = Math.max(accessorByteOffset, maxByteOffset)
-        } else {
-          maxByteOffset = 0
-        }
-
-        // custom bbox
-        // glTF specs says: "vertex position attribute accessors MUST have accessor.min and accessor.max defined"
-        if (name === 'position') {
-          geometryBBox.min.min(new Vec3(accessor.min[0], accessor.min[1], accessor.min[2]))
-          geometryBBox.max.max(new Vec3(accessor.max[0], accessor.max[1], accessor.max[2]))
-
-          interleavedBufferView = bufferView
-        }
-
-        const attributeParams = GLTFScenesManager.getVertexAttributeParamsFromType(accessor.type)
-
-        const attribute = {
-          name,
-          ...attributeParams,
-          array: new constructor(
-            this.gltf.arrayBuffers[bufferView.buffer],
-            accessor.byteOffset + bufferView.byteOffset,
-            accessor.count * attributeParams.size
-          ),
-        }
-
-        defaultAttributes.push(attribute)
-        meshDescriptor.attributes.push({
-          name: attribute.name,
-          type: attribute.type,
-        })
-      }
-
-      if (maxByteOffset > 0) {
-        // check they are all really interleaved
-        const accessorsBufferViews = Object.values(primitive.attributes).map(
-          (accessorIndex) => this.gltf.accessors[accessorIndex as number].bufferView
-        )
-
-        if (!accessorsBufferViews.every((val) => val === accessorsBufferViews[0])) {
-          // we're not that lucky since we have interleaved values coming from different positions of our main buffer
-          // we'll have to rebuild an interleaved array ourselves
-          let totalStride = 0
-          const mainBufferStrides = {}
-          const arrayLength = Object.values(primitive.attributes).reduce(
-            (acc: number, accessorIndex: number): number => {
-              const accessor = this.gltf.accessors[accessorIndex]
-
-              const attrSize = GLTFScenesManager.getVertexAttributeParamsFromType(accessor.type).size
-
-              if (!mainBufferStrides[accessor.bufferView]) {
-                mainBufferStrides[accessor.bufferView] = 0
-              }
-
-              mainBufferStrides[accessor.bufferView] = Math.max(
-                mainBufferStrides[accessor.bufferView],
-                accessor.byteOffset + attrSize * Float32Array.BYTES_PER_ELEMENT
-              )
-
-              totalStride += attrSize * Float32Array.BYTES_PER_ELEMENT
-
-              return acc + accessor.count * attrSize
-            },
-            0
-          ) as number
-
-          interleavedArray = new Float32Array(Math.ceil(arrayLength / 4) * 4)
-
-          Object.values(primitive.attributes).forEach((accessorIndex: number) => {
-            const accessor = this.gltf.accessors[accessorIndex]
-            const bufferView = this.gltf.bufferViews[accessor.bufferView]
-
-            const attrSize = GLTFScenesManager.getVertexAttributeParamsFromType(accessor.type).size
-
-            for (let i = 0; i < accessor.count; i++) {
-              const startOffset =
-                accessor.byteOffset / Float32Array.BYTES_PER_ELEMENT +
-                (i * totalStride) / Float32Array.BYTES_PER_ELEMENT
-
-              interleavedArray
-                .subarray(startOffset, startOffset + attrSize)
-                .set(
-                  new Float32Array(
-                    this.gltf.arrayBuffers[bufferView.buffer],
-                    bufferView.byteOffset + accessor.byteOffset + i * mainBufferStrides[accessor.bufferView],
-                    attrSize
-                  )
-                )
-            }
-          })
-        } else {
-          // we're lucky to have an interleaved array!
-          // we won't have to compute our geometry!
-          interleavedArray = new Float32Array(
-            this.gltf.arrayBuffers[interleavedBufferView.buffer],
-            interleavedBufferView.byteOffset,
-            (Math.ceil(interleavedBufferView.byteLength / 4) * 4) / Float32Array.BYTES_PER_ELEMENT
-          )
-        }
-      } else {
-        // not interleaved?
-        // let's try to reorder the attributes so we might benefit from pipeline cache
-        const attribOrder = ['position', 'uv', 'normal']
-
-        defaultAttributes.sort((a, b) => {
-          let aIndex = attribOrder.findIndex((attrName) => attrName === a.name)
-          aIndex = aIndex === -1 ? Infinity : aIndex
-
-          let bIndex = attribOrder.findIndex((attrName) => attrName === b.name)
-          bIndex = bIndex === -1 ? Infinity : bIndex
-
-          return aIndex - bIndex
-        })
-      }
-
-      const geometryAttributes: GeometryParams = {
-        instancesCount,
-        topology: GLTFScenesManager.gpuPrimitiveTopologyForMode(primitive.mode),
-        vertexBuffers: [
-          {
-            name: 'attributes',
-            stepMode: 'vertex', // explicitly set the stepMode even if not mandatory
-            attributes: defaultAttributes,
-            ...(interleavedArray && { array: interleavedArray }), // interleaved array!
-          },
-        ],
-      }
-
-      const isIndexedGeometry = 'indices' in primitive
-      const GeometryConstructor = isIndexedGeometry ? IndexedGeometry : Geometry
-
-      meshDescriptor.parameters.geometry = new GeometryConstructor(geometryAttributes)
-      //meshDescriptor.parameters.geometry.boundingBox.copy(geometryBBox)
-      meshDescriptor.parameters.geometry.boundingBox = geometryBBox
-
-      if (isIndexedGeometry) {
-        const accessor = this.gltf.accessors[primitive.indices]
-        const bufferView = this.gltf.bufferViews[accessor.bufferView]
-
-        const constructor = GLTFScenesManager.getTypedArrayConstructorFromComponentType(accessor.componentType) as
-          | Uint32ArrayConstructor
-          | Uint16ArrayConstructor
-
-        const arrayOffset = accessor.byteOffset + bufferView.byteOffset
-        const arrayBuffer = this.gltf.arrayBuffers[bufferView.buffer]
-        const arrayLength = Math.min(
-          (arrayBuffer.byteLength - arrayOffset) / constructor.BYTES_PER_ELEMENT,
-          Math.ceil(accessor.count / 4) * 4
-        )
-
-        // do not allow Uint8Array arrays
-        const array =
-          constructor.name === 'Uint8Array'
-            ? Uint16Array.from(new constructor(arrayBuffer, arrayOffset, arrayLength))
-            : new constructor(arrayBuffer, arrayOffset, arrayLength)
-
-        ;(meshDescriptor.parameters.geometry as IndexedGeometry).setIndexBuffer({
-          bufferFormat: constructor.name === 'Uint32Array' ? 'uint32' : 'uint16',
-          array,
-        })
-      }
+      this.createGeometry(primitive, primitiveInstance)
 
       // ------------------------------------
       // MATERIAL
       // ------------------------------------
 
-      const materialTextures = this.scenesManager.materialsTextures[primitive.material]
-
-      meshDescriptor.parameters.samplers = []
-      meshDescriptor.parameters.textures = []
-
-      materialTextures?.texturesDescriptors.forEach((t) => {
-        meshDescriptor.textures.push({
-          texture: t.texture.options.name,
-          sampler: t.sampler.name,
-          texCoordAttributeName: t.texCoordAttributeName,
-        })
-
-        const samplerExists = meshDescriptor.parameters.samplers.find((s) => s.uuid === t.sampler.uuid)
-
-        if (!samplerExists) {
-          meshDescriptor.parameters.samplers.push(t.sampler)
-        }
-
-        meshDescriptor.parameters.textures.push(t.texture)
-      })
-
-      const material = (this.gltf.materials && this.gltf.materials[primitive.material]) || {}
-
-      meshDescriptor.parameters.cullMode = material.doubleSided ? 'none' : 'back'
-
-      // transparency
-      if (material.alphaMode === 'BLEND' || (material.extensions && material.extensions.KHR_materials_transmission)) {
-        meshDescriptor.parameters.transparent = true
-        meshDescriptor.parameters.targets = [
-          {
-            blend: {
-              color: {
-                srcFactor: 'src-alpha',
-                dstFactor: 'one-minus-src-alpha',
-              },
-              alpha: {
-                // This just prevents the canvas from having alpha "holes" in it.
-                srcFactor: 'one',
-                dstFactor: 'one',
-              },
-            },
-          },
-        ]
-      }
-
-      // uniforms
-      const materialUniformStruct = {
-        baseColorFactor: {
-          type: 'vec4f',
-          value: material.pbrMetallicRoughness?.baseColorFactor || [1, 1, 1, 1],
-        },
-        alphaCutoff: {
-          type: 'f32',
-          value: material.alphaCutoff !== undefined ? material.alphaCutoff : material.alphaMode === 'MASK' ? 0.5 : 0,
-        },
-        metallicFactor: {
-          type: 'f32',
-          value:
-            material.pbrMetallicRoughness?.metallicFactor === undefined
-              ? 1
-              : material.pbrMetallicRoughness.metallicFactor,
-        },
-        roughnessFactor: {
-          type: 'f32',
-          value:
-            material.pbrMetallicRoughness?.roughnessFactor === undefined
-              ? 1
-              : material.pbrMetallicRoughness.roughnessFactor,
-        },
-        normalMapScale: {
-          type: 'f32',
-          value: material.normalTexture?.scale === undefined ? 1 : material.normalTexture.scale,
-        },
-        occlusionStrength: {
-          type: 'f32',
-          value: material.occlusionTexture?.strength === undefined ? 1 : material.occlusionTexture.strength,
-        },
-        emissiveFactor: {
-          type: 'vec3f',
-          value: material.emissiveFactor !== undefined ? material.emissiveFactor : [1, 1, 1],
-        },
-      }
-
-      if (Object.keys(materialUniformStruct).length) {
-        meshDescriptor.parameters.uniforms = {
-          material: {
-            visibility: ['vertex', 'fragment'],
-            struct: materialUniformStruct,
-          },
-        }
-      }
-
-      // instances matrices storage
-      if (instancesCount > 1) {
-        const worldMatrices = new Float32Array(instancesCount * 16)
-        const normalMatrices = new Float32Array(instancesCount * 16)
-
-        for (let i = 0; i < instancesCount; ++i) {
-          worldMatrices.set(nodes[i].worldMatrix.elements, i * 16)
-
-          _normalMatrix.copy(nodes[i].worldMatrix).invert().transpose()
-          normalMatrices.set(_normalMatrix.elements, i * 16)
-        }
-
-        meshDescriptor.parameters.storages = {
-          instances: {
-            visibility: ['vertex', 'fragment'],
-            struct: {
-              modelMatrix: {
-                type: 'array<mat4x4f>',
-                value: worldMatrices,
-              },
-              normalMatrix: {
-                type: 'array<mat4x4f>',
-                value: normalMatrices,
-              },
-            },
-          },
-        }
-      }
-
-      // computed transformed bbox
-      for (let i = 0; i < nodes.length; i++) {
-        const tempBbox = geometryBBox.clone()
-        const transformedBbox = tempBbox.applyMat4(meshDescriptor.nodes[i].worldMatrix)
-
-        this.scenesManager.boundingBox.min.min(transformedBbox.min)
-        this.scenesManager.boundingBox.max.max(transformedBbox.max)
-      }
+      this.createMaterial(primitive, primitiveInstance)
     }
   }
 
@@ -873,22 +1124,33 @@ export class GLTFScenesManager {
 
         if (meshDescriptor.nodes.length > 1) {
           // if we're dealing with instances
-          // we must patch the mesh updateWorldMatrix method
+          // we must patch the mesh updateMatrixStack method
           // in order to update the instanceMatrix binding each time the mesh world matrix change
 
-          const _updateWorldMatrix = mesh.updateWorldMatrix.bind(mesh)
-          mesh.updateWorldMatrix = () => {
-            _updateWorldMatrix()
+          const _updateMatrixStack = mesh.updateMatrixStack.bind(mesh)
+          mesh.updateMatrixStack = () => {
+            _updateMatrixStack()
+
+            // should we update instances?
+            let updateInstances = mesh.matricesNeedUpdate
 
             meshDescriptor.nodes.forEach((node, i) => {
-              ;(mesh.storages.instances.modelMatrix.value as TypedArray).set(node.worldMatrix.elements, i * 16)
+              if (node.matricesNeedUpdate) {
+                updateInstances = true
+              }
 
-              _normalMatrix.copy(node.worldMatrix).invert().transpose()
-              ;(mesh.storages.instances.normalMatrix.value as TypedArray).set(_normalMatrix.elements, i * 16)
+              if (updateInstances) {
+                ;(mesh.storages.instances.modelMatrix.value as TypedArray).set(node.worldMatrix.elements, i * 16)
+
+                _normalMatrix.copy(node.worldMatrix).invert().transpose()
+                ;(mesh.storages.instances.normalMatrix.value as TypedArray).set(_normalMatrix.elements, i * 16)
+              }
             })
 
-            mesh.storages.instances.modelMatrix.shouldUpdate = true
-            mesh.storages.instances.normalMatrix.shouldUpdate = true
+            if (updateInstances) {
+              mesh.storages.instances.modelMatrix.shouldUpdate = true
+              mesh.storages.instances.normalMatrix.shouldUpdate = true
+            }
           }
         }
 
