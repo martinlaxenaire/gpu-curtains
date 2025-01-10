@@ -58,12 +58,13 @@ const _normalMatrix = new Mat4()
  *   - Interpolation
  *     - [x] Step
  *     - [x] Linear
- *     - [ ] CubicSpline
+ *     - [x] CubicSpline
  * - [x] Cameras
  *   - [ ] OrthographicCamera
  *   - [x] PerspectiveCamera
  * - [x] Materials
  * - [ ] Skins
+ * - [ ] Morph targets
  *
  * @example
  * ```javascript
@@ -436,8 +437,6 @@ export class GLTFScenesManager {
    * @param node - {@link GLTF.INode | GLTF Node} to use.
    */
   createNode(parent: ChildDescriptor, node: GLTF.INode, index: number) {
-    //if (node.camera !== undefined) return
-
     const child: ChildDescriptor = {
       index,
       name: node.name,
@@ -611,7 +610,7 @@ export class GLTFScenesManager {
         return animation.nodes.find((node) => node.nodeIndex === index)
       })
 
-      //console.log(commonAnimations)
+      // console.log(commonAnimations)
 
       if (commonAnimations) {
         animationNode = commonAnimations.nodes.find((node) => node.nodeIndex === index)
@@ -642,48 +641,181 @@ export class GLTFScenesManager {
               const previousTime = nodeAnimation.input[previousTimeIndex]
 
               const interpolatedTime = (currentTime - previousTime) / (nextTime - previousTime)
+              const deltaTime = nextTime - previousTime
+
+              // TODO
+              const getCubicSplineComponentValue = (
+                t,
+                prevComponentValue,
+                nextComponentValue,
+                prevOutputTangentValue,
+                nextInputTangentValue
+              ) => {
+                const t2 = t * t
+                const t3 = t2 * t
+
+                return (
+                  (2 * t3 - 3 * t2 + 1) * prevComponentValue +
+                  (t3 - 2 * t2 + t) * prevOutputTangentValue +
+                  (-2 * t3 + 3 * t2) * nextComponentValue +
+                  (t3 - t2) * nextInputTangentValue
+                )
+              }
 
               if (nodeAnimation.target.path === 'rotation') {
+                const prevIndex =
+                  nodeAnimation.sampler.interpolation === 'CUBICSPLINE'
+                    ? previousTimeIndex * 12 + 4
+                    : previousTimeIndex * 4
+
+                const nextIndex =
+                  nodeAnimation.sampler.interpolation === 'CUBICSPLINE' ? nextTimeIndex * 12 + 4 : nextTimeIndex * 4
+
                 child.node.quaternion.setFromArray([
-                  nodeAnimation.output[previousTimeIndex * 4],
-                  nodeAnimation.output[previousTimeIndex * 4 + 1],
-                  nodeAnimation.output[previousTimeIndex * 4 + 2],
-                  nodeAnimation.output[previousTimeIndex * 4 + 3],
+                  nodeAnimation.output[prevIndex],
+                  nodeAnimation.output[prevIndex + 1],
+                  nodeAnimation.output[prevIndex + 2],
+                  nodeAnimation.output[prevIndex + 3],
                 ])
 
-                if (nodeAnimation.sampler.interpolation === 'LINEAR') {
+                if (
+                  nodeAnimation.sampler.interpolation === 'LINEAR' ||
+                  nodeAnimation.sampler.interpolation === 'CUBICSPLINE'
+                ) {
                   const nextQuat = child.node.quaternion.clone()
 
                   nextQuat.setFromArray([
-                    nodeAnimation.output[nextTimeIndex * 4],
-                    nodeAnimation.output[nextTimeIndex * 4 + 1],
-                    nodeAnimation.output[nextTimeIndex * 4 + 2],
-                    nodeAnimation.output[nextTimeIndex * 4 + 3],
+                    nodeAnimation.output[nextIndex],
+                    nodeAnimation.output[nextIndex + 1],
+                    nodeAnimation.output[nextIndex + 2],
+                    nodeAnimation.output[nextIndex + 3],
                   ])
 
-                  child.node.quaternion.slerp(nextQuat, interpolatedTime)
+                  if (nodeAnimation.sampler.interpolation === 'CUBICSPLINE') {
+                    // get previous output tangent
+                    const previousOutputTangent = [
+                      nodeAnimation.output[prevIndex + 4],
+                      nodeAnimation.output[prevIndex + 5],
+                      nodeAnimation.output[prevIndex + 6],
+                      nodeAnimation.output[prevIndex + 7],
+                    ]
+
+                    const nextInputTangent = [
+                      nodeAnimation.output[nextIndex - 4],
+                      nodeAnimation.output[nextIndex - 3],
+                      nodeAnimation.output[nextIndex - 2],
+                      nodeAnimation.output[nextIndex - 1],
+                    ]
+
+                    const cubicValue = [
+                      getCubicSplineComponentValue(
+                        interpolatedTime,
+                        child.node.quaternion.elements[0],
+                        nextQuat.elements[0],
+                        deltaTime * previousOutputTangent[0],
+                        deltaTime * nextInputTangent[0]
+                      ),
+                      getCubicSplineComponentValue(
+                        interpolatedTime,
+                        child.node.quaternion.elements[1],
+                        nextQuat.elements[1],
+                        deltaTime * previousOutputTangent[1],
+                        deltaTime * nextInputTangent[1]
+                      ),
+                      getCubicSplineComponentValue(
+                        interpolatedTime,
+                        child.node.quaternion.elements[2],
+                        nextQuat.elements[2],
+                        deltaTime * previousOutputTangent[2],
+                        deltaTime * nextInputTangent[2]
+                      ),
+                      getCubicSplineComponentValue(
+                        interpolatedTime,
+                        child.node.quaternion.elements[3],
+                        nextQuat.elements[3],
+                        deltaTime * previousOutputTangent[3],
+                        deltaTime * nextInputTangent[3]
+                      ),
+                    ]
+
+                    child.node.quaternion.setFromArray(cubicValue).normalize()
+                  } else {
+                    child.node.quaternion.slerp(nextQuat, interpolatedTime)
+                  }
                 }
 
                 child.node.shouldUpdateModelMatrix()
               } else if (nodeAnimation.target.path === 'translation' || nodeAnimation.target.path === 'scale') {
                 const vectorName = nodeAnimation.target.path === 'translation' ? 'position' : nodeAnimation.target.path
 
+                const prevIndex =
+                  nodeAnimation.sampler.interpolation === 'CUBICSPLINE'
+                    ? previousTimeIndex * 9 + 3
+                    : previousTimeIndex * 3
+
+                const nextIndex =
+                  nodeAnimation.sampler.interpolation === 'CUBICSPLINE' ? nextTimeIndex * 9 + 3 : nextTimeIndex * 3
+
                 child.node[vectorName].set(
-                  nodeAnimation.output[previousTimeIndex * 3],
-                  nodeAnimation.output[previousTimeIndex * 3 + 1],
-                  nodeAnimation.output[previousTimeIndex * 3 + 2]
+                  nodeAnimation.output[prevIndex],
+                  nodeAnimation.output[prevIndex + 1],
+                  nodeAnimation.output[prevIndex + 2]
                 )
 
-                if (nodeAnimation.sampler.interpolation === 'LINEAR') {
+                if (
+                  nodeAnimation.sampler.interpolation === 'LINEAR' ||
+                  nodeAnimation.sampler.interpolation === 'CUBICSPLINE'
+                ) {
                   const nextVector = child.node[vectorName].clone()
 
                   nextVector.set(
-                    nodeAnimation.output[nextTimeIndex * 3],
-                    nodeAnimation.output[nextTimeIndex * 3 + 1],
-                    nodeAnimation.output[nextTimeIndex * 3 + 2]
+                    nodeAnimation.output[nextIndex],
+                    nodeAnimation.output[nextIndex + 1],
+                    nodeAnimation.output[nextIndex + 2]
                   )
 
-                  child.node[vectorName].lerp(nextVector, interpolatedTime)
+                  if (nodeAnimation.sampler.interpolation === 'CUBICSPLINE') {
+                    // get previous output tangent
+                    const previousOutputTangent = [
+                      nodeAnimation.output[prevIndex + 3],
+                      nodeAnimation.output[prevIndex + 4],
+                      nodeAnimation.output[prevIndex + 5],
+                    ]
+
+                    const nextInputTangent = [
+                      nodeAnimation.output[nextIndex - 3],
+                      nodeAnimation.output[nextIndex - 2],
+                      nodeAnimation.output[nextIndex - 1],
+                    ]
+
+                    const cubicValue = [
+                      getCubicSplineComponentValue(
+                        interpolatedTime,
+                        child.node[vectorName].x,
+                        nextVector.x,
+                        deltaTime * previousOutputTangent[0],
+                        deltaTime * nextInputTangent[0]
+                      ),
+                      getCubicSplineComponentValue(
+                        interpolatedTime,
+                        child.node[vectorName].y,
+                        nextVector.y,
+                        deltaTime * previousOutputTangent[1],
+                        deltaTime * nextInputTangent[1]
+                      ),
+                      getCubicSplineComponentValue(
+                        interpolatedTime,
+                        child.node[vectorName].z,
+                        nextVector.z,
+                        deltaTime * previousOutputTangent[2],
+                        deltaTime * nextInputTangent[2]
+                      ),
+                    ]
+
+                    child.node[vectorName].set(cubicValue[0], cubicValue[1], cubicValue[2])
+                  } else {
+                    child.node[vectorName].lerp(nextVector, interpolatedTime)
+                  }
                 }
               } else if (nodeAnimation.target.path === 'weights') {
                 // TODO
@@ -694,7 +826,7 @@ export class GLTFScenesManager {
           }
         }
 
-        //console.log(animationNode)
+        // console.log(animationNode)
       }
     }
   }
@@ -844,14 +976,12 @@ export class GLTFScenesManager {
     }
 
     if (maxByteOffset > 0) {
-      console.log('INTERLEAVED')
       // check they are all really interleaved
       const accessorsBufferViews = primitiveAttributesValues.map(
         (accessorIndex) => this.gltf.accessors[accessorIndex as number].bufferView
       )
 
       if (!accessorsBufferViews.every((val) => val === accessorsBufferViews[0])) {
-        console.log('REBUILD INTERLEAVED :(')
         // we're not that lucky since we have interleaved values coming from different positions of our main buffer
         // we'll have to rebuild an interleaved array ourselves
         let totalStride = 0
@@ -938,7 +1068,6 @@ export class GLTFScenesManager {
         })
       }
     } else {
-      console.log('NOT INTERLEAVED')
       // not interleaved?
       // let's try to reorder the attributes so we might benefit from pipeline cache
       const attribOrder = ['position', 'uv', 'normal']
@@ -1210,8 +1339,7 @@ export class GLTFScenesManager {
         if (meshDescriptor.nodes.length > 1) {
           // if we're dealing with instances
           // we must patch the mesh updateMatrixStack method
-          // in order to update the instanceMatrix binding each time the mesh world matrix change
-
+          // in order to update the instanceMatrix binding
           const _updateMatrixStack = mesh.updateMatrixStack.bind(mesh)
           mesh.updateMatrixStack = () => {
             _updateMatrixStack()
