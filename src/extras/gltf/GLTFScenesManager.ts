@@ -49,7 +49,16 @@ const _normalMatrix = new Mat4()
  * - [x] Primitives
  * - [x] Samplers
  * - [x] Textures
- * - [ ] Animations
+ * - [x] Animations
+ *   - Paths
+ *     - [x] Translation
+ *     - [x] Rotation
+ *     - [x] Scale
+ *     - [ ] Weights
+ *   - Interpolation
+ *     - [x] Step
+ *     - [x] Linear
+ *     - [ ] CubicSpline
  * - [x] Cameras
  *   - [ ] OrthographicCamera
  *   - [x] PerspectiveCamera
@@ -602,7 +611,7 @@ export class GLTFScenesManager {
         return animation.nodes.find((node) => node.nodeIndex === index)
       })
 
-      console.log(commonAnimations)
+      //console.log(commonAnimations)
 
       if (commonAnimations) {
         animationNode = commonAnimations.nodes.find((node) => node.nodeIndex === index)
@@ -635,43 +644,47 @@ export class GLTFScenesManager {
               const interpolatedTime = (currentTime - previousTime) / (nextTime - previousTime)
 
               if (nodeAnimation.target.path === 'rotation') {
-                const previousQuat = child.node.quaternion.clone()
-                const nextQuat = child.node.quaternion.clone()
-
-                previousQuat.setFromArray([
+                child.node.quaternion.setFromArray([
                   nodeAnimation.output[previousTimeIndex * 4],
                   nodeAnimation.output[previousTimeIndex * 4 + 1],
                   nodeAnimation.output[previousTimeIndex * 4 + 2],
                   nodeAnimation.output[previousTimeIndex * 4 + 3],
                 ])
 
-                nextQuat.setFromArray([
-                  nodeAnimation.output[nextTimeIndex * 4],
-                  nodeAnimation.output[nextTimeIndex * 4 + 1],
-                  nodeAnimation.output[nextTimeIndex * 4 + 2],
-                  nodeAnimation.output[nextTimeIndex * 4 + 3],
-                ])
+                if (nodeAnimation.sampler.interpolation === 'LINEAR') {
+                  const nextQuat = child.node.quaternion.clone()
 
-                child.node.quaternion.copy(previousQuat).slerp(nextQuat, interpolatedTime)
+                  nextQuat.setFromArray([
+                    nodeAnimation.output[nextTimeIndex * 4],
+                    nodeAnimation.output[nextTimeIndex * 4 + 1],
+                    nodeAnimation.output[nextTimeIndex * 4 + 2],
+                    nodeAnimation.output[nextTimeIndex * 4 + 3],
+                  ])
+
+                  child.node.quaternion.slerp(nextQuat, interpolatedTime)
+                }
+
                 child.node.shouldUpdateModelMatrix()
               } else if (nodeAnimation.target.path === 'translation' || nodeAnimation.target.path === 'scale') {
                 const vectorName = nodeAnimation.target.path === 'translation' ? 'position' : nodeAnimation.target.path
 
-                const previousVector = child.node[vectorName].clone()
-                const nextVector = child.node[vectorName].clone()
-
-                previousVector.set(
+                child.node[vectorName].set(
                   nodeAnimation.output[previousTimeIndex * 3],
                   nodeAnimation.output[previousTimeIndex * 3 + 1],
                   nodeAnimation.output[previousTimeIndex * 3 + 2]
                 )
-                nextVector.set(
-                  nodeAnimation.output[nextTimeIndex * 3],
-                  nodeAnimation.output[nextTimeIndex * 3 + 1],
-                  nodeAnimation.output[nextTimeIndex * 3 + 2]
-                )
 
-                child.node[vectorName].copy(previousVector).lerp(nextVector, interpolatedTime)
+                if (nodeAnimation.sampler.interpolation === 'LINEAR') {
+                  const nextVector = child.node[vectorName].clone()
+
+                  nextVector.set(
+                    nodeAnimation.output[nextTimeIndex * 3],
+                    nodeAnimation.output[nextTimeIndex * 3 + 1],
+                    nodeAnimation.output[nextTimeIndex * 3 + 2]
+                  )
+
+                  child.node[vectorName].lerp(nextVector, interpolatedTime)
+                }
               } else if (nodeAnimation.target.path === 'weights') {
                 // TODO
               }
@@ -681,7 +694,7 @@ export class GLTFScenesManager {
           }
         }
 
-        console.log(animationNode)
+        //console.log(animationNode)
       }
     }
   }
@@ -737,7 +750,13 @@ export class GLTFScenesManager {
     let maxByteOffset = 0
 
     // prepare default attributes
-    for (const [attribName, accessorIndex] of Object.entries(primitive.attributes)) {
+    // first sort them by accessor indices
+    const primitiveAttributes = Object.entries(primitive.attributes)
+    primitiveAttributes.sort((a, b) => a[1] - b[1])
+    const primitiveAttributesValues = Object.values(primitive.attributes)
+    primitiveAttributesValues.sort((a, b) => a - b)
+
+    for (const [attribName, accessorIndex] of primitiveAttributes) {
       const accessor = this.gltf.accessors[accessorIndex as number]
 
       const constructor = GLTFScenesManager.getTypedArrayConstructorFromComponentType(accessor.componentType)
@@ -748,9 +767,13 @@ export class GLTFScenesManager {
       const name =
         attribName === 'TEXCOORD_0' ? 'uv' : attribName.replace('_', '').replace('TEXCOORD', 'uv').toLowerCase()
 
-      const byteStride = bufferView.byteStride || 0
-      const accessorByteOffset = accessor.byteOffset || 0
-      if (byteStride && accessorByteOffset && accessorByteOffset < byteStride) {
+      const byteStride = bufferView.byteStride
+      const accessorByteOffset = accessor.byteOffset
+
+      const isInterleaved =
+        byteStride !== undefined && accessorByteOffset !== undefined && accessorByteOffset < byteStride
+
+      if (isInterleaved) {
         maxByteOffset = Math.max(accessorByteOffset, maxByteOffset)
       } else {
         maxByteOffset = 0
@@ -767,11 +790,32 @@ export class GLTFScenesManager {
 
       const attributeParams = GLTFScenesManager.getVertexAttributeParamsFromType(accessor.type)
 
-      const array = new constructor(
-        this.gltf.arrayBuffers[bufferView.buffer],
-        accessor.byteOffset + bufferView.byteOffset,
-        accessor.count * attributeParams.size
-      )
+      // will hold our attribute data
+      let array
+
+      if (isInterleaved) {
+        const parentArray = new constructor(
+          this.gltf.arrayBuffers[bufferView.buffer],
+          0,
+          bufferView.byteLength / constructor.BYTES_PER_ELEMENT
+        )
+
+        array = new constructor(accessor.count * attributeParams.size)
+
+        const arrayStride = accessorByteOffset / constructor.BYTES_PER_ELEMENT
+        for (let i = 0; i < accessor.count; i++) {
+          for (let j = 0; j < attributeParams.size; j++) {
+            array[i * attributeParams.size + j] =
+              parentArray[arrayStride + attributeParams.size * i + attributeParams.size * i + j]
+          }
+        }
+      } else {
+        array = new constructor(
+          this.gltf.arrayBuffers[bufferView.buffer],
+          accessor.byteOffset + bufferView.byteOffset,
+          accessor.count * attributeParams.size
+        )
+      }
 
       // sparse accessor?
       // patch the array with sparse values
@@ -800,17 +844,19 @@ export class GLTFScenesManager {
     }
 
     if (maxByteOffset > 0) {
+      console.log('INTERLEAVED')
       // check they are all really interleaved
-      const accessorsBufferViews = Object.values(primitive.attributes).map(
+      const accessorsBufferViews = primitiveAttributesValues.map(
         (accessorIndex) => this.gltf.accessors[accessorIndex as number].bufferView
       )
 
       if (!accessorsBufferViews.every((val) => val === accessorsBufferViews[0])) {
+        console.log('REBUILD INTERLEAVED :(')
         // we're not that lucky since we have interleaved values coming from different positions of our main buffer
         // we'll have to rebuild an interleaved array ourselves
         let totalStride = 0
         const mainBufferStrides = {}
-        const arrayLength = Object.values(primitive.attributes).reduce((acc: number, accessorIndex: number): number => {
+        const arrayLength = primitiveAttributesValues.reduce((acc: number, accessorIndex: number): number => {
           const accessor = this.gltf.accessors[accessorIndex]
 
           const attrSize = GLTFScenesManager.getVertexAttributeParamsFromType(accessor.type).size
@@ -831,7 +877,7 @@ export class GLTFScenesManager {
 
         interleavedArray = new Float32Array(Math.ceil(arrayLength / 4) * 4)
 
-        Object.values(primitive.attributes).forEach((accessorIndex: number) => {
+        primitiveAttributesValues.forEach((accessorIndex: number) => {
           const accessor = this.gltf.accessors[accessorIndex]
           const bufferView = this.gltf.bufferViews[accessor.bufferView]
 
@@ -871,7 +917,7 @@ export class GLTFScenesManager {
 
         // check for sparse!
         let stride = 0
-        Object.values(primitive.attributes).forEach((accessorIndex: number, index) => {
+        primitiveAttributesValues.forEach((accessorIndex: number) => {
           const accessor = this.gltf.accessors[accessorIndex]
           const attrSize = GLTFScenesManager.getVertexAttributeParamsFromType(accessor.type).size
 
@@ -892,6 +938,7 @@ export class GLTFScenesManager {
         })
       }
     } else {
+      console.log('NOT INTERLEAVED')
       // not interleaved?
       // let's try to reorder the attributes so we might benefit from pipeline cache
       const attribOrder = ['position', 'uv', 'normal']
@@ -924,7 +971,6 @@ export class GLTFScenesManager {
     const GeometryConstructor = isIndexedGeometry ? IndexedGeometry : Geometry
 
     meshDescriptor.parameters.geometry = new GeometryConstructor(geometryAttributes)
-    //meshDescriptor.parameters.geometry.boundingBox.copy(geometryBBox)
     meshDescriptor.parameters.geometry.boundingBox = geometryBBox
 
     if (isIndexedGeometry) {
