@@ -142,6 +142,11 @@ window.addEventListener('load', async () => {
       name: 'Box Interleaved',
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/BoxInterleaved/glTF/BoxInterleaved.gltf',
     },
+    // morph targets
+    animatedMorphCube: {
+      name: 'Animated Morph Cube',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/AnimatedMorphCube/glTF/AnimatedMorphCube.gltf',
+    },
   }
 
   let shadingModel = 'IBL' // 'IBL', 'PBR', 'Phong' or 'Lambert'
@@ -285,7 +290,7 @@ window.addEventListener('load', async () => {
 
     console.log(gpuCameraRenderer, meshes)
 
-    // meshes[0].onReady(() => console.log(meshes[0].material.getShaderCode('fragment')))
+    meshes[0].onReady(() => console.log(meshes[0].material.getShaderCode('vertex')))
   }
 
   // GUI
@@ -293,7 +298,7 @@ window.addEventListener('load', async () => {
     title: 'GLTF loader',
   })
 
-  const currentModelKey = 'interpolationTest'
+  const currentModelKey = 'animatedMorphCube'
   let currentModel = models[currentModelKey]
 
   gui
@@ -353,120 +358,3 @@ window.addEventListener('load', async () => {
 
   await loadGLTF(currentModel.url)
 })
-
-/*
-buggy:
-position: {
-    "0": -1,
-    "1": 1,
-    "2": 1,
-    "3": -1,
-    "4": 0,
-    "5": 0,
-    "6": -1,
-    "7": -1,
-    "8": -1,
-    "9": -1,
-    "10": 0,
-    "11": 0,
-    "12": -1,
-    "13": -1,
-    "14": 1,
-    "15": -1,
-    "16": 0,
-    "17": 0,
-    "18": -1,
-    "19": 1,
-    "20": -1,
-    "21": -1,
-    "22": 0,
-    "23": 0,
-    "24": -1,
-    "25": 1,
-    "26": -1,
-    "27": 0,
-    "28": 0,
-    "29": -1,
-    "30": 1,
-    "31": -1,
-    "32": -1,
-    "33": 0,
-    "34": 0,
-    "35": -1,
-    "36": -1,
-    "37": -1,
-    "38": -1,
-    "39": 0,
-    "40": 0,
-    "41": -1,
-    "42": 1,
-    "43": 1,
-    "44": -1,
-    "45": 0,
-    "46": 0,
-    "47": -1,
-    "48": 1,
-    "49": 1,
-    "50": -1,
-    "51": 1,
-    "52": 0,
-    "53": 0,
-    "54": 1,
-    "55": -1,
-    "56": 1,
-    "57": 1,
-    "58": 0,
-    "59": 0,
-    "60": 1,
-    "61": -1,
-    "62": -1,
-    "63": 1,
-    "64": 0,
-    "65": 0,
-    "66": 1,
-    "67": 1,
-    "68": 1,
-    "69": 1,
-    "70": 0,
-    "71": 0
-}
-
-indices: {
-    "0": 0,
-    "1": 1,
-    "2": 2,
-    "3": 0,
-    "4": 3,
-    "5": 1,
-    "6": 4,
-    "7": 5,
-    "8": 6,
-    "9": 4,
-    "10": 7,
-    "11": 5,
-    "12": 8,
-    "13": 9,
-    "14": 10,
-    "15": 8,
-    "16": 11,
-    "17": 9,
-    "18": 12,
-    "19": 13,
-    "20": 14,
-    "21": 12,
-    "22": 15,
-    "23": 13,
-    "24": 16,
-    "25": 17,
-    "26": 18,
-    "27": 16,
-    "28": 19,
-    "29": 17,
-    "30": 20,
-    "31": 21,
-    "32": 22,
-    "33": 20,
-    "34": 23,
-    "35": 21
-}
- */

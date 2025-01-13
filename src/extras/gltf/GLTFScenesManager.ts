@@ -21,6 +21,7 @@ import {
   ScenesManager,
 } from '../../types/gltf/GLTFScenesManager'
 import { throwWarning } from '../../utils/utils'
+import { BufferBinding } from '../../core/bindings/BufferBinding'
 
 // TODO limitations, example...
 // use a list like: https://github.com/warrenm/GLTFKit2?tab=readme-ov-file#status-and-conformance
@@ -122,6 +123,7 @@ export class GLTFScenesManager {
       meshesDescriptors: [],
       animations: [],
       cameras: [],
+      morphTargets: [],
       getScenesNodes: () => {
         return this.scenesManager.scenes
           .map((scene) => {
@@ -545,6 +547,7 @@ export class GLTFScenesManager {
           let animationNode = this.scenesManager.animations[i].nodes.find((node) => node.nodeIndex === index)
           if (!animationNode) {
             animationNode = {
+              node: child.node,
               nodeIndex: index,
               nodeAnimations: [],
             }
@@ -555,12 +558,13 @@ export class GLTFScenesManager {
           channels.forEach((channel) => {
             const nodeAnimation = {
               animationIndex: i,
-              initTime: 0,
+              startTime: 0,
               time: 0,
               sampler: animation.samplers[channel.sampler],
               target: channel.target,
               input: null,
               output: null,
+              ...(channel.target.path === 'weights' && { currentWeights: [] }),
             }
 
             nodeAnimations.push(nodeAnimation)
@@ -590,11 +594,20 @@ export class GLTFScenesManager {
             inputAccessor.byteOffset + inputBufferView.byteOffset,
             inputAccessor.count * GLTFScenesManager.getVertexAttributeParamsFromType(inputAccessor.type).size
           )
+
           nodeAnimation.output = new outputTypedArrayConstructor(
             this.gltf.arrayBuffers[outputBufferView.buffer],
             outputAccessor.byteOffset + outputBufferView.byteOffset,
             outputAccessor.count * GLTFScenesManager.getVertexAttributeParamsFromType(outputAccessor.type).size
           )
+
+          // fill current weights
+          if (nodeAnimation.target.path === 'weights') {
+            const nbWeights = outputAccessor.count / inputAccessor.count
+            for (let i = 0; i < nbWeights; i++) {
+              nodeAnimation.currentWeights.push(nodeAnimation.output[i])
+            }
+          }
 
           // set max duration
           const commonAnimations = this.scenesManager.animations[nodeAnimation.animationIndex]
@@ -622,12 +635,12 @@ export class GLTFScenesManager {
               // TODO add an 'animations' prop to Object3D
               // create an AnimationClip class
               // handle everything in there
-              if (nodeAnimation.initTime === 0) {
-                nodeAnimation.initTime = performance.now()
+              if (nodeAnimation.startTime === 0) {
+                nodeAnimation.startTime = performance.now()
               }
 
               nodeAnimation.time = performance.now()
-              const time = (nodeAnimation.time - nodeAnimation.initTime) / 1000
+              const time = (nodeAnimation.time - nodeAnimation.startTime) / 1000
 
               const currentTime = time % commonAnimations.duration
 
@@ -643,7 +656,7 @@ export class GLTFScenesManager {
               const interpolatedTime = (currentTime - previousTime) / (nextTime - previousTime)
               const deltaTime = nextTime - previousTime
 
-              // TODO
+              // TODO move elsewhere
               const getCubicSplineComponentValue = (
                 t,
                 prevComponentValue,
@@ -819,6 +832,28 @@ export class GLTFScenesManager {
                 }
               } else if (nodeAnimation.target.path === 'weights') {
                 // TODO
+                const prevIndex =
+                  nodeAnimation.sampler.interpolation === 'CUBICSPLINE'
+                    ? previousTimeIndex * (nodeAnimation.currentWeights.length * 3) +
+                      nodeAnimation.currentWeights.length
+                    : previousTimeIndex * nodeAnimation.currentWeights.length
+
+                const nextIndex =
+                  nodeAnimation.sampler.interpolation === 'CUBICSPLINE'
+                    ? nextTimeIndex * (nodeAnimation.currentWeights.length * 3) + nodeAnimation.currentWeights.length
+                    : nextTimeIndex * nodeAnimation.currentWeights.length
+
+                const morphTargetsBindings = this.scenesManager.morphTargets.filter((binding) =>
+                  binding.name.includes('morphTarget')
+                )
+
+                for (let i = 0; i < nodeAnimation.currentWeights.length; i++) {
+                  nodeAnimation.currentWeights[i] = nodeAnimation.output[prevIndex + i]
+
+                  if (morphTargetsBindings && morphTargetsBindings[i]) {
+                    morphTargetsBindings[i].inputs.weight.value = nodeAnimation.currentWeights[i]
+                  }
+                }
               }
             })
 
@@ -862,20 +897,7 @@ export class GLTFScenesManager {
     }
   }
 
-  createGeometry(primitive: GLTF.IMeshPrimitive, primitiveInstance: PrimitiveInstanceDescriptor) {
-    const { instances, meshDescriptor } = primitiveInstance
-
-    const geometryBBox = new Box3()
-
-    // TODO should we pass an already created buffer to the geometry main vertex and index buffers if possible?
-    // and use bufferOffset and bufferSize parameters
-    // if the accessors byteOffset is large enough,
-    // it means we have an array that is not interleaved (with each vertexBuffer attributes bufferOffset = 0)
-    // but we can deal with the actual offset in the geometry setVertexBuffer call!
-    // see https://toji.dev/webgpu-gltf-case-study/#handling-large-attribute-offsets
-
-    const defaultAttributes = []
-
+  #createAttributesFromPrimitive(primitive, attributes, geometryBBox = null): TypedArray | null {
     // check whether the buffer view is already interleaved
     let interleavedArray = null
     let interleavedBufferView = null
@@ -883,15 +905,17 @@ export class GLTFScenesManager {
 
     // prepare default attributes
     // first sort them by accessor indices
-    const primitiveAttributes = Object.entries(primitive.attributes)
+    const primitiveAttributes = Object.entries(primitive)
     primitiveAttributes.sort((a, b) => a[1] - b[1])
-    const primitiveAttributesValues = Object.values(primitive.attributes)
+    const primitiveAttributesValues = Object.values(primitive)
     primitiveAttributesValues.sort((a, b) => a - b)
 
     for (const [attribName, accessorIndex] of primitiveAttributes) {
       const accessor = this.gltf.accessors[accessorIndex as number]
 
-      const constructor = GLTFScenesManager.getTypedArrayConstructorFromComponentType(accessor.componentType)
+      const constructor = accessor.componentType
+        ? GLTFScenesManager.getTypedArrayConstructorFromComponentType(accessor.componentType)
+        : Float32Array
 
       const bufferView = this.gltf.bufferViews[accessor.bufferView]
 
@@ -913,7 +937,7 @@ export class GLTFScenesManager {
 
       // custom bbox
       // glTF specs says: "vertex position attribute accessors MUST have accessor.min and accessor.max defined"
-      if (name === 'position') {
+      if (name === 'position' && geometryBBox) {
         geometryBBox.min.min(new Vec3(accessor.min[0], accessor.min[1], accessor.min[2]))
         geometryBBox.max.max(new Vec3(accessor.max[0], accessor.max[1], accessor.max[2]))
 
@@ -967,12 +991,7 @@ export class GLTFScenesManager {
         array,
       }
 
-      defaultAttributes.push(attribute)
-
-      meshDescriptor.attributes.push({
-        name: attribute.name,
-        type: attribute.type,
-      })
+      attributes.push(attribute)
     }
 
     if (maxByteOffset > 0) {
@@ -1072,7 +1091,7 @@ export class GLTFScenesManager {
       // let's try to reorder the attributes so we might benefit from pipeline cache
       const attribOrder = ['position', 'uv', 'normal']
 
-      defaultAttributes.sort((a, b) => {
+      attributes.sort((a, b) => {
         let aIndex = attribOrder.findIndex((attrName) => attrName === a.name)
         aIndex = aIndex === -1 ? Infinity : aIndex
 
@@ -1081,6 +1100,94 @@ export class GLTFScenesManager {
 
         return aIndex - bIndex
       })
+    }
+
+    return interleavedArray
+  }
+
+  createGeometry(primitive: GLTF.IMeshPrimitive, primitiveInstance: PrimitiveInstanceDescriptor) {
+    const { instances, meshDescriptor } = primitiveInstance
+
+    const geometryBBox = new Box3()
+
+    // TODO should we pass an already created buffer to the geometry main vertex and index buffers if possible?
+    // and use bufferOffset and bufferSize parameters
+    // if the accessors byteOffset is large enough,
+    // it means we have an array that is not interleaved (with each vertexBuffer attributes bufferOffset = 0)
+    // but we can deal with the actual offset in the geometry setVertexBuffer call!
+    // see https://toji.dev/webgpu-gltf-case-study/#handling-large-attribute-offsets
+
+    const defaultAttributes = []
+
+    const interleavedArray = this.#createAttributesFromPrimitive(primitive.attributes, defaultAttributes, geometryBBox)
+
+    defaultAttributes.forEach((attribute) => {
+      meshDescriptor.attributes.push({
+        name: attribute.name,
+        type: attribute.type,
+      })
+    })
+
+    if (primitive.targets) {
+      const bindings = []
+
+      const weights = new Array(primitive.targets.length)
+
+      let nodeAnimations
+      for (const animation of this.scenesManager.animations) {
+        const node = animation.nodes.find((node) => node.node.object3DIndex === meshDescriptor.parent.object3DIndex)
+
+        if (node) {
+          nodeAnimations = node.nodeAnimations
+          break
+        }
+      }
+
+      nodeAnimations = nodeAnimations.find((nodeAnimation) => nodeAnimation.target.path === 'weights')
+
+      console.log(meshDescriptor.parent.object3DIndex, nodeAnimations)
+
+      primitive.targets.forEach((target, index) => {
+        const targetAttributes = []
+        this.#createAttributesFromPrimitive(target, targetAttributes)
+
+        const struct = targetAttributes.reduce(
+          (acc, attribute) => {
+            return (acc = {
+              ...acc,
+              ...{
+                [attribute.name]: {
+                  type: `array<${attribute.type}>`,
+                  value: attribute.array,
+                },
+              },
+            })
+          },
+          {
+            weight: {
+              type: 'f32',
+              value: nodeAnimations ? nodeAnimations.currentWeights[index] : 0, // TODO use value from animation
+            },
+          }
+        )
+
+        const targetBinding = new BufferBinding({
+          label: 'Morph target ' + index,
+          name: 'morphTarget' + index,
+          bindingType: 'storage',
+          visibility: ['vertex'],
+          struct,
+        })
+
+        bindings.push(targetBinding)
+      })
+
+      if (!meshDescriptor.parameters.bindings) {
+        meshDescriptor.parameters.bindings = []
+      }
+
+      meshDescriptor.parameters.bindings = [...meshDescriptor.parameters.bindings, ...bindings]
+      this.scenesManager.morphTargets = [...this.scenesManager.morphTargets, ...bindings]
     }
 
     const geometryAttributes: GeometryParams = {

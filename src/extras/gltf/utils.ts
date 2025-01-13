@@ -8,6 +8,7 @@ import { getPhong } from '../../core/shaders/chunks/shading/phong-shading'
 import { getPBR } from '../../core/shaders/chunks/shading/pbr-shading'
 import { getIBL } from '../../core/shaders/chunks/shading/ibl-shading'
 import { EnvironmentMap } from '../environment-map/EnvironmentMap'
+import { BufferElement } from '../../core/bindings/bufferElements/BufferElement'
 
 /** Defines all kinds of shading models available. */
 export type ShadingModels = 'Lambert' | 'Phong' | 'PBR' | 'IBL'
@@ -82,31 +83,37 @@ export const buildShaders = (
     })
     .join('\n\t')
 
+  const declareAttributes = meshDescriptor.attributes
+    .map((attribute) => {
+      return /* wgsl */ `var ${attribute.name} = attributes.${attribute.name};`
+    })
+    .join('\n\t')
+
+  const hasNormal = facultativeAttributes.find((attr) => attr.name === 'normal')
+
   let outputPositions = /* wgsl */ `
-    let worldPos = matrices.model * vec4(attributes.position, 1.0);
+    let worldPos = matrices.model * vec4(position, 1.0);
     vsOutput.position = camera.projection * camera.view * worldPos;
     vsOutput.worldPosition = worldPos.xyz / worldPos.w;
     vsOutput.viewDirection = camera.position - vsOutput.worldPosition.xyz;
   `
-  let outputNormal = facultativeAttributes.find((attr) => attr.name === 'normal')
-    ? 'vsOutput.normal = getWorldNormal(attributes.normal);'
-    : ''
+  let outputNormal = hasNormal ? 'vsOutput.normal = getWorldNormal(normal);' : ''
 
   if (meshDescriptor.parameters.storages && meshDescriptor.parameters.storages.instances) {
     outputPositions = /* wgsl */ `
-      let worldPos: vec4f = instances[attributes.instanceIndex].modelMatrix * vec4f(attributes.position, 1.0);
+      let worldPos: vec4f = instances[attributes.instanceIndex].modelMatrix * vec4f(position, 1.0);
       vsOutput.position = camera.projection * camera.view * worldPos;
       vsOutput.worldPosition = worldPos.xyz;
       vsOutput.viewDirection = camera.position - vsOutput.worldPosition;
       `
 
-    outputNormal = `vsOutput.normal = normalize((instances[attributes.instanceIndex].normalMatrix * vec4(attributes.normal, 0.0)).xyz);`
+    outputNormal = `vsOutput.normal = normalize((instances[attributes.instanceIndex].normalMatrix * vec4(normal, 0.0)).xyz);`
   }
 
   const outputAttributes = facultativeAttributes
     .filter((attr) => attr.name !== 'normal')
     .map((attribute) => {
-      return `vsOutput.${attribute.name} = attributes.${attribute.name};`
+      return `vsOutput.${attribute.name} = ${attribute.name};`
     })
     .join('\n\t')
 
@@ -127,10 +134,34 @@ export const buildShaders = (
       `
 
     outputNormalMap = `
-        vsOutput.tangent = normalize(matrices.model * attributes.tangent);
-        vsOutput.bitangent = cross(vsOutput.normal, vsOutput.tangent.xyz) * attributes.tangent.w;
+        vsOutput.tangent = normalize(matrices.model * tangent);
+        vsOutput.bitangent = cross(vsOutput.normal, vsOutput.tangent.xyz) * tangent.w;
       `
   }
+
+  // morph targets
+  let morphTargets = ''
+  const morphTargetsBindings = meshDescriptor.parameters.bindings.filter((binding) =>
+    binding.name.includes('morphTarget')
+  )
+
+  morphTargetsBindings.forEach((binding) => {
+    Object.values(binding.inputs)
+      .filter((input) => input.name !== 'weight')
+      .forEach((input) => {
+        const bindingType = BufferElement.getType(input.type)
+        const attributeType = meshDescriptor.attributes.find((attribute) => attribute.name === input.name).type
+
+        if (bindingType === attributeType) {
+          morphTargets += `${input.name} += ${binding.name}.weight * ${binding.name}.elements[attributes.vertexIndex].${input.name};\n\t`
+        } else {
+          // TODO other cases?!
+          if (bindingType === 'vec3f' && attributeType === 'vec4f') {
+            morphTargets += `${input.name} += ${binding.name}.weight * vec4(${binding.name}.elements[attributes.vertexIndex].${input.name}, 0.0);\n\t`
+          }
+        }
+      })
+  })
 
   const vertexOutput = /*wgsl */ `
     struct VSOutput {
@@ -150,6 +181,10 @@ export const buildShaders = (
       attributes: Attributes,
     ) -> VSOutput {
       var vsOutput: VSOutput;
+      
+      ${declareAttributes}
+      
+      ${morphTargets}
     
       ${outputPositions}
       ${outputNormal}

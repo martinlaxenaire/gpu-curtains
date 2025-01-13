@@ -8,6 +8,7 @@ import { Mesh } from '../../core/meshes/Mesh'
 import { Box3 } from '../../math/Box3'
 import { TypedArray } from '../../core/bindings/utils'
 import { Camera } from '../../core/camera/Camera'
+import { BufferBinding } from '../../core/bindings/BufferBinding'
 
 /**
  * Define a {@link MeshDescriptorAttribute} used to create the {@link core/geometries/Geometry.Geometry | Geometry}.
@@ -101,15 +102,17 @@ export interface ChildDescriptor {
 
 export interface SingleNodeAnimation {
   animationIndex: number
-  initTime: number
+  startTime: number
   time: number
   sampler: GLTF.IAnimationSampler
   target: GLTF.IAnimationChannelTarget
   input: TypedArray | null
   output: TypedArray | null
+  currentWeights?: number[]
 }
 
 export interface NodeAnimations {
+  node: Object3D
   nodeIndex: number
   nodeAnimations: SingleNodeAnimation[]
 }
@@ -142,6 +145,8 @@ export interface ScenesManager {
   animations: ScenesAnimation[]
 
   cameras: Camera[]
+
+  morphTargets: BufferBinding[]
   /** Utility helper to get all the {@link Object3D} created by this {@link ScenesManager} */
   getScenesNodes: () => Object3D[]
 }
