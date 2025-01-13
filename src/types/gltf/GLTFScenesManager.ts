@@ -9,6 +9,7 @@ import { Box3 } from '../../math/Box3'
 import { TypedArray } from '../../core/bindings/utils'
 import { Camera } from '../../core/camera/Camera'
 import { BufferBinding } from '../../core/bindings/BufferBinding'
+import { TargetsAnimationsManager } from '../../extras/animations/TargetsAnimationsManager'
 
 /**
  * Define a {@link MeshDescriptorAttribute} used to create the {@link core/geometries/Geometry.Geometry | Geometry}.
@@ -100,29 +101,6 @@ export interface ChildDescriptor {
   children: ChildDescriptor[]
 }
 
-export interface SingleNodeAnimation {
-  animationIndex: number
-  startTime: number
-  time: number
-  sampler: GLTF.IAnimationSampler
-  target: GLTF.IAnimationChannelTarget
-  input: TypedArray | null
-  output: TypedArray | null
-  currentWeights?: number[]
-}
-
-export interface NodeAnimations {
-  node: Object3D
-  nodeIndex: number
-  nodeAnimations: SingleNodeAnimation[]
-}
-
-export interface ScenesAnimation {
-  duration: number
-  name?: string
-  nodes: NodeAnimations[]
-}
-
 /**
  * Define the {@link ScenesManager}.
  */
@@ -142,11 +120,11 @@ export interface ScenesManager {
   /** Array of {@link MeshDescriptor} used to create the {@link meshes}. */
   meshesDescriptors: MeshDescriptor[]
 
-  animations: ScenesAnimation[]
+  animations: TargetsAnimationsManager[]
 
   cameras: Camera[]
 
-  morphTargets: BufferBinding[]
+  //morphTargets: BufferBinding[]
   /** Utility helper to get all the {@link Object3D} created by this {@link ScenesManager} */
   getScenesNodes: () => Object3D[]
 }

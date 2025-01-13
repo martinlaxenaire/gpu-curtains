@@ -141,9 +141,9 @@ export const buildShaders = (
 
   // morph targets
   let morphTargets = ''
-  const morphTargetsBindings = meshDescriptor.parameters.bindings.filter((binding) =>
-    binding.name.includes('morphTarget')
-  )
+  const morphTargetsBindings = meshDescriptor.parameters.bindings
+    ? meshDescriptor.parameters.bindings.filter((binding) => binding.name.includes('morphTarget'))
+    : []
 
   morphTargetsBindings.forEach((binding) => {
     Object.values(binding.inputs)

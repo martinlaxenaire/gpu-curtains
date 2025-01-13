@@ -22,6 +22,8 @@ import {
 } from '../../types/gltf/GLTFScenesManager'
 import { throwWarning } from '../../utils/utils'
 import { BufferBinding } from '../../core/bindings/BufferBinding'
+import { KeyframesAnimation } from '../animations/KeyframesAnimation'
+import { TargetsAnimationsManager } from '../animations/TargetsAnimationsManager'
 
 // TODO limitations, example...
 // use a list like: https://github.com/warrenm/GLTFKit2?tab=readme-ov-file#status-and-conformance
@@ -65,7 +67,7 @@ const _normalMatrix = new Mat4()
  *   - [x] PerspectiveCamera
  * - [x] Materials
  * - [ ] Skins
- * - [ ] Morph targets
+ * - [x] Morph targets
  *
  * @example
  * ```javascript
@@ -123,7 +125,7 @@ export class GLTFScenesManager {
       meshesDescriptors: [],
       animations: [],
       cameras: [],
-      morphTargets: [],
+      //morphTargets: [],
       getScenesNodes: () => {
         return this.scenesManager.scenes
           .map((scene) => {
@@ -135,6 +137,7 @@ export class GLTFScenesManager {
 
     this.createSamplers()
     this.createMaterialTextures()
+    this.createAnimations()
     this.createScenes()
   }
 
@@ -169,6 +172,24 @@ export class GLTFScenesManager {
           type: 'vec4f',
           bufferFormat: 'float32x4',
           size: 4,
+        }
+      case 'MAT2':
+        return {
+          type: 'mat2x2f',
+          bufferFormat: 'float32x2', // not used
+          size: 6,
+        }
+      case 'MAT3':
+        return {
+          type: 'mat3x3f',
+          bufferFormat: 'float32x3', // not used
+          size: 9,
+        }
+      case 'MAT4':
+        return {
+          type: 'mat4x4f',
+          bufferFormat: 'float32x4', // not used
+          size: 16,
         }
       case 'SCALAR':
       default: // treat default as f32
@@ -237,6 +258,12 @@ export class GLTFScenesManager {
       default:
         return 'repeat'
     }
+  }
+
+  createAnimations() {
+    this.gltf.animations.forEach(() => {
+      this.scenesManager.animations.push(new TargetsAnimationsManager())
+    })
   }
 
   /**
@@ -528,341 +555,58 @@ export class GLTFScenesManager {
       }
     }
 
-    // TODO animation
     if (this.gltf.animations) {
-      const nodeAnimations = []
-
-      this.gltf.animations.forEach((animation, i) => {
-        if (!this.scenesManager.animations[i]) {
-          this.scenesManager.animations[i] = {
-            duration: 0,
-            name: animation.name || 'Animation ' + i,
-            nodes: [],
-          }
-        }
+      this.scenesManager.animations.forEach((targetsAnimation, i) => {
+        const animation = this.gltf.animations[i]
 
         const channels = animation.channels.filter((channel) => channel.target.node === index)
 
         if (channels && channels.length) {
-          let animationNode = this.scenesManager.animations[i].nodes.find((node) => node.nodeIndex === index)
-          if (!animationNode) {
-            animationNode = {
-              node: child.node,
-              nodeIndex: index,
-              nodeAnimations: [],
-            }
-
-            this.scenesManager.animations[i].nodes.push(animationNode)
-          }
+          targetsAnimation.addTarget(child.node)
 
           channels.forEach((channel) => {
-            const nodeAnimation = {
-              animationIndex: i,
-              startTime: 0,
-              time: 0,
-              sampler: animation.samplers[channel.sampler],
-              target: channel.target,
-              input: null,
-              output: null,
-              ...(channel.target.path === 'weights' && { currentWeights: [] }),
-            }
+            const sampler = animation.samplers[channel.sampler]
+            const path = channel.target.path
 
-            nodeAnimations.push(nodeAnimation)
-            animationNode.nodeAnimations.push(nodeAnimation)
+            const inputAccessor = this.gltf.accessors[sampler.input]
+            const inputBufferView = this.gltf.bufferViews[inputAccessor.bufferView]
+
+            const inputTypedArrayConstructor = GLTFScenesManager.getTypedArrayConstructorFromComponentType(
+              inputAccessor.componentType
+            )
+
+            const outputAccessor = this.gltf.accessors[sampler.output]
+            const outputBufferView = this.gltf.bufferViews[outputAccessor.bufferView]
+            const outputTypedArrayConstructor = GLTFScenesManager.getTypedArrayConstructorFromComponentType(
+              outputAccessor.componentType
+            )
+
+            const keyframes = new inputTypedArrayConstructor(
+              this.gltf.arrayBuffers[inputBufferView.buffer],
+              inputAccessor.byteOffset + inputBufferView.byteOffset,
+              inputAccessor.count * GLTFScenesManager.getVertexAttributeParamsFromType(inputAccessor.type).size
+            )
+
+            const values = new outputTypedArrayConstructor(
+              this.gltf.arrayBuffers[outputBufferView.buffer],
+              outputAccessor.byteOffset + outputBufferView.byteOffset,
+              outputAccessor.count * GLTFScenesManager.getVertexAttributeParamsFromType(outputAccessor.type).size
+            )
+
+            const keyframesAnimation = new KeyframesAnimation({
+              name: animation.name
+                ? `${animation.name} ${channel.target.path} animation`
+                : `Animation ${i} ${channel.target.path} animation`,
+              keyframes,
+              values,
+              path,
+              interpolation: sampler.interpolation,
+            })
+
+            targetsAnimation.addTargetAnimation(child.node, keyframesAnimation)
           })
         }
       })
-
-      if (nodeAnimations.length) {
-        nodeAnimations.forEach((nodeAnimation) => {
-          const { sampler } = nodeAnimation
-          const inputAccessor = this.gltf.accessors[sampler.input]
-          const inputBufferView = this.gltf.bufferViews[inputAccessor.bufferView]
-
-          const inputTypedArrayConstructor = GLTFScenesManager.getTypedArrayConstructorFromComponentType(
-            inputAccessor.componentType
-          )
-
-          const outputAccessor = this.gltf.accessors[sampler.output]
-          const outputBufferView = this.gltf.bufferViews[outputAccessor.bufferView]
-          const outputTypedArrayConstructor = GLTFScenesManager.getTypedArrayConstructorFromComponentType(
-            outputAccessor.componentType
-          )
-
-          nodeAnimation.input = new inputTypedArrayConstructor(
-            this.gltf.arrayBuffers[inputBufferView.buffer],
-            inputAccessor.byteOffset + inputBufferView.byteOffset,
-            inputAccessor.count * GLTFScenesManager.getVertexAttributeParamsFromType(inputAccessor.type).size
-          )
-
-          nodeAnimation.output = new outputTypedArrayConstructor(
-            this.gltf.arrayBuffers[outputBufferView.buffer],
-            outputAccessor.byteOffset + outputBufferView.byteOffset,
-            outputAccessor.count * GLTFScenesManager.getVertexAttributeParamsFromType(outputAccessor.type).size
-          )
-
-          // fill current weights
-          if (nodeAnimation.target.path === 'weights') {
-            const nbWeights = outputAccessor.count / inputAccessor.count
-            for (let i = 0; i < nbWeights; i++) {
-              nodeAnimation.currentWeights.push(nodeAnimation.output[i])
-            }
-          }
-
-          // set max duration
-          const commonAnimations = this.scenesManager.animations[nodeAnimation.animationIndex]
-          commonAnimations.duration = Math.max(
-            commonAnimations.duration,
-            nodeAnimation.input[nodeAnimation.input.length - 1]
-          )
-        })
-      }
-
-      let animationNode = null
-      const commonAnimations = this.scenesManager.animations.find((animation) => {
-        return animation.nodes.find((node) => node.nodeIndex === index)
-      })
-
-      // console.log(commonAnimations)
-
-      if (commonAnimations) {
-        animationNode = commonAnimations.nodes.find((node) => node.nodeIndex === index)
-
-        if (animationNode) {
-          const _updateMatrixStack = child.node.updateMatrixStack.bind(child.node)
-          child.node.updateMatrixStack = () => {
-            animationNode.nodeAnimations.forEach((nodeAnimation) => {
-              // TODO add an 'animations' prop to Object3D
-              // create an AnimationClip class
-              // handle everything in there
-              if (nodeAnimation.startTime === 0) {
-                nodeAnimation.startTime = performance.now()
-              }
-
-              nodeAnimation.time = performance.now()
-              const time = (nodeAnimation.time - nodeAnimation.startTime) / 1000
-
-              const currentTime = time % commonAnimations.duration
-
-              const nextTimeIndex = nodeAnimation.input.findIndex((t) => t > currentTime)
-              if (nextTimeIndex === -1) return
-
-              const previousTimeIndex = nextTimeIndex - 1
-              if (previousTimeIndex === -1) return
-
-              const nextTime = nodeAnimation.input[nextTimeIndex]
-              const previousTime = nodeAnimation.input[previousTimeIndex]
-
-              const interpolatedTime = (currentTime - previousTime) / (nextTime - previousTime)
-              const deltaTime = nextTime - previousTime
-
-              // TODO move elsewhere
-              const getCubicSplineComponentValue = (
-                t,
-                prevComponentValue,
-                nextComponentValue,
-                prevOutputTangentValue,
-                nextInputTangentValue
-              ) => {
-                const t2 = t * t
-                const t3 = t2 * t
-
-                return (
-                  (2 * t3 - 3 * t2 + 1) * prevComponentValue +
-                  (t3 - 2 * t2 + t) * prevOutputTangentValue +
-                  (-2 * t3 + 3 * t2) * nextComponentValue +
-                  (t3 - t2) * nextInputTangentValue
-                )
-              }
-
-              if (nodeAnimation.target.path === 'rotation') {
-                const prevIndex =
-                  nodeAnimation.sampler.interpolation === 'CUBICSPLINE'
-                    ? previousTimeIndex * 12 + 4
-                    : previousTimeIndex * 4
-
-                const nextIndex =
-                  nodeAnimation.sampler.interpolation === 'CUBICSPLINE' ? nextTimeIndex * 12 + 4 : nextTimeIndex * 4
-
-                child.node.quaternion.setFromArray([
-                  nodeAnimation.output[prevIndex],
-                  nodeAnimation.output[prevIndex + 1],
-                  nodeAnimation.output[prevIndex + 2],
-                  nodeAnimation.output[prevIndex + 3],
-                ])
-
-                if (
-                  nodeAnimation.sampler.interpolation === 'LINEAR' ||
-                  nodeAnimation.sampler.interpolation === 'CUBICSPLINE'
-                ) {
-                  const nextQuat = child.node.quaternion.clone()
-
-                  nextQuat.setFromArray([
-                    nodeAnimation.output[nextIndex],
-                    nodeAnimation.output[nextIndex + 1],
-                    nodeAnimation.output[nextIndex + 2],
-                    nodeAnimation.output[nextIndex + 3],
-                  ])
-
-                  if (nodeAnimation.sampler.interpolation === 'CUBICSPLINE') {
-                    // get previous output tangent
-                    const previousOutputTangent = [
-                      nodeAnimation.output[prevIndex + 4],
-                      nodeAnimation.output[prevIndex + 5],
-                      nodeAnimation.output[prevIndex + 6],
-                      nodeAnimation.output[prevIndex + 7],
-                    ]
-
-                    const nextInputTangent = [
-                      nodeAnimation.output[nextIndex - 4],
-                      nodeAnimation.output[nextIndex - 3],
-                      nodeAnimation.output[nextIndex - 2],
-                      nodeAnimation.output[nextIndex - 1],
-                    ]
-
-                    const cubicValue = [
-                      getCubicSplineComponentValue(
-                        interpolatedTime,
-                        child.node.quaternion.elements[0],
-                        nextQuat.elements[0],
-                        deltaTime * previousOutputTangent[0],
-                        deltaTime * nextInputTangent[0]
-                      ),
-                      getCubicSplineComponentValue(
-                        interpolatedTime,
-                        child.node.quaternion.elements[1],
-                        nextQuat.elements[1],
-                        deltaTime * previousOutputTangent[1],
-                        deltaTime * nextInputTangent[1]
-                      ),
-                      getCubicSplineComponentValue(
-                        interpolatedTime,
-                        child.node.quaternion.elements[2],
-                        nextQuat.elements[2],
-                        deltaTime * previousOutputTangent[2],
-                        deltaTime * nextInputTangent[2]
-                      ),
-                      getCubicSplineComponentValue(
-                        interpolatedTime,
-                        child.node.quaternion.elements[3],
-                        nextQuat.elements[3],
-                        deltaTime * previousOutputTangent[3],
-                        deltaTime * nextInputTangent[3]
-                      ),
-                    ]
-
-                    child.node.quaternion.setFromArray(cubicValue).normalize()
-                  } else {
-                    child.node.quaternion.slerp(nextQuat, interpolatedTime)
-                  }
-                }
-
-                child.node.shouldUpdateModelMatrix()
-              } else if (nodeAnimation.target.path === 'translation' || nodeAnimation.target.path === 'scale') {
-                const vectorName = nodeAnimation.target.path === 'translation' ? 'position' : nodeAnimation.target.path
-
-                const prevIndex =
-                  nodeAnimation.sampler.interpolation === 'CUBICSPLINE'
-                    ? previousTimeIndex * 9 + 3
-                    : previousTimeIndex * 3
-
-                const nextIndex =
-                  nodeAnimation.sampler.interpolation === 'CUBICSPLINE' ? nextTimeIndex * 9 + 3 : nextTimeIndex * 3
-
-                child.node[vectorName].set(
-                  nodeAnimation.output[prevIndex],
-                  nodeAnimation.output[prevIndex + 1],
-                  nodeAnimation.output[prevIndex + 2]
-                )
-
-                if (
-                  nodeAnimation.sampler.interpolation === 'LINEAR' ||
-                  nodeAnimation.sampler.interpolation === 'CUBICSPLINE'
-                ) {
-                  const nextVector = child.node[vectorName].clone()
-
-                  nextVector.set(
-                    nodeAnimation.output[nextIndex],
-                    nodeAnimation.output[nextIndex + 1],
-                    nodeAnimation.output[nextIndex + 2]
-                  )
-
-                  if (nodeAnimation.sampler.interpolation === 'CUBICSPLINE') {
-                    // get previous output tangent
-                    const previousOutputTangent = [
-                      nodeAnimation.output[prevIndex + 3],
-                      nodeAnimation.output[prevIndex + 4],
-                      nodeAnimation.output[prevIndex + 5],
-                    ]
-
-                    const nextInputTangent = [
-                      nodeAnimation.output[nextIndex - 3],
-                      nodeAnimation.output[nextIndex - 2],
-                      nodeAnimation.output[nextIndex - 1],
-                    ]
-
-                    const cubicValue = [
-                      getCubicSplineComponentValue(
-                        interpolatedTime,
-                        child.node[vectorName].x,
-                        nextVector.x,
-                        deltaTime * previousOutputTangent[0],
-                        deltaTime * nextInputTangent[0]
-                      ),
-                      getCubicSplineComponentValue(
-                        interpolatedTime,
-                        child.node[vectorName].y,
-                        nextVector.y,
-                        deltaTime * previousOutputTangent[1],
-                        deltaTime * nextInputTangent[1]
-                      ),
-                      getCubicSplineComponentValue(
-                        interpolatedTime,
-                        child.node[vectorName].z,
-                        nextVector.z,
-                        deltaTime * previousOutputTangent[2],
-                        deltaTime * nextInputTangent[2]
-                      ),
-                    ]
-
-                    child.node[vectorName].set(cubicValue[0], cubicValue[1], cubicValue[2])
-                  } else {
-                    child.node[vectorName].lerp(nextVector, interpolatedTime)
-                  }
-                }
-              } else if (nodeAnimation.target.path === 'weights') {
-                // TODO
-                const prevIndex =
-                  nodeAnimation.sampler.interpolation === 'CUBICSPLINE'
-                    ? previousTimeIndex * (nodeAnimation.currentWeights.length * 3) +
-                      nodeAnimation.currentWeights.length
-                    : previousTimeIndex * nodeAnimation.currentWeights.length
-
-                const nextIndex =
-                  nodeAnimation.sampler.interpolation === 'CUBICSPLINE'
-                    ? nextTimeIndex * (nodeAnimation.currentWeights.length * 3) + nodeAnimation.currentWeights.length
-                    : nextTimeIndex * nodeAnimation.currentWeights.length
-
-                const morphTargetsBindings = this.scenesManager.morphTargets.filter((binding) =>
-                  binding.name.includes('morphTarget')
-                )
-
-                for (let i = 0; i < nodeAnimation.currentWeights.length; i++) {
-                  nodeAnimation.currentWeights[i] = nodeAnimation.output[prevIndex + i]
-
-                  if (morphTargetsBindings && morphTargetsBindings[i]) {
-                    morphTargetsBindings[i].inputs.weight.value = nodeAnimation.currentWeights[i]
-                  }
-                }
-              }
-            })
-
-            _updateMatrixStack()
-          }
-        }
-
-        // console.log(animationNode)
-      }
     }
   }
 
@@ -949,7 +693,7 @@ export class GLTFScenesManager {
       // will hold our attribute data
       let array
 
-      if (isInterleaved) {
+      if (maxByteOffset > 0) {
         const parentArray = new constructor(
           this.gltf.arrayBuffers[bufferView.buffer],
           0,
@@ -1128,24 +872,20 @@ export class GLTFScenesManager {
       })
     })
 
+    const meshIndex = instances[0].mesh
+
+    // morph targets
     if (primitive.targets) {
       const bindings = []
 
-      const weights = new Array(primitive.targets.length)
+      const weights = this.gltf.meshes[meshIndex].weights
 
-      let nodeAnimations
+      let weightAnimation
       for (const animation of this.scenesManager.animations) {
-        const node = animation.nodes.find((node) => node.node.object3DIndex === meshDescriptor.parent.object3DIndex)
+        weightAnimation = animation.getAnimationsByObject3DAndPath(meshDescriptor.parent, 'weights')
 
-        if (node) {
-          nodeAnimations = node.nodeAnimations
-          break
-        }
+        if (weightAnimation) break
       }
-
-      nodeAnimations = nodeAnimations.find((nodeAnimation) => nodeAnimation.target.path === 'weights')
-
-      console.log(meshDescriptor.parent.object3DIndex, nodeAnimations)
 
       primitive.targets.forEach((target, index) => {
         const targetAttributes = []
@@ -1166,7 +906,7 @@ export class GLTFScenesManager {
           {
             weight: {
               type: 'f32',
-              value: nodeAnimations ? nodeAnimations.currentWeights[index] : 0, // TODO use value from animation
+              value: weights && weights.length ? weights[index] : 0,
             },
           }
         )
@@ -1179,6 +919,11 @@ export class GLTFScenesManager {
           struct,
         })
 
+        if (weightAnimation) {
+          weightAnimation.addWeightBindingInput(targetBinding.inputs.weight)
+          // TODO default value
+        }
+
         bindings.push(targetBinding)
       })
 
@@ -1187,7 +932,28 @@ export class GLTFScenesManager {
       }
 
       meshDescriptor.parameters.bindings = [...meshDescriptor.parameters.bindings, ...bindings]
-      this.scenesManager.morphTargets = [...this.scenesManager.morphTargets, ...bindings]
+      //this.scenesManager.morphTargets = [...this.scenesManager.morphTargets, ...bindings]
+    }
+
+    if (this.gltf.skins) {
+      const skin = this.gltf.skins[meshIndex]
+
+      if (skin) {
+        const matricesAccessor = this.gltf.accessors[skin.inverseBindMatrices]
+        const matricesBufferView = this.gltf.bufferViews[matricesAccessor.bufferView]
+
+        const matricesTypedArrayConstructor = GLTFScenesManager.getTypedArrayConstructorFromComponentType(
+          matricesAccessor.componentType
+        )
+
+        const matrices = new matricesTypedArrayConstructor(
+          this.gltf.arrayBuffers[matricesBufferView.buffer],
+          matricesAccessor.byteOffset + matricesBufferView.byteOffset,
+          matricesAccessor.count * GLTFScenesManager.getVertexAttributeParamsFromType(matricesAccessor.type).size
+        )
+
+        console.log(skin, matrices, matricesAccessor, matricesBufferView)
+      }
     }
 
     const geometryAttributes: GeometryParams = {

@@ -147,6 +147,11 @@ window.addEventListener('load', async () => {
       name: 'Animated Morph Cube',
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/AnimatedMorphCube/glTF/AnimatedMorphCube.gltf',
     },
+    // skins
+    simpleSkin: {
+      name: 'Simple Skin',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/SimpleSkin/glTF/SimpleSkin.gltf',
+    },
   }
 
   let shadingModel = 'IBL' // 'IBL', 'PBR', 'Phong' or 'Lambert'
@@ -278,6 +283,10 @@ window.addEventListener('load', async () => {
       })
     })
 
+    if (scenesManager.animations.length) {
+      scenesManager.animations.forEach((animation) => animation.playAll())
+    }
+
     // test for gltf cameras
     // if (scenesManager.cameras.length) {
     //   setTimeout(() => {
@@ -298,7 +307,7 @@ window.addEventListener('load', async () => {
     title: 'GLTF loader',
   })
 
-  const currentModelKey = 'animatedMorphCube'
+  const currentModelKey = 'simpleSkin'
   let currentModel = models[currentModelKey]
 
   gui
