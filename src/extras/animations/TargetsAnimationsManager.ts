@@ -7,14 +7,15 @@ export interface Target {
 }
 
 export class TargetsAnimationsManager {
+  name: string
   targets: Target[]
-  //animations: KeyframesAnimation[]
 
+  startTime: number
+  currentTime: number
   duration: number
 
-  constructor({ targets = [] } = {}) {
-    //this.target = target
-    //this.animations = []
+  constructor({ name = '', targets = [] } = {}) {
+    this.name = name
     this.targets = []
     this.duration = 0
 
@@ -23,21 +24,15 @@ export class TargetsAnimationsManager {
     }
   }
 
-  addTarget(object: Object3D) {
+  addTarget(object: Object3D): Target {
     const target = {
       object,
       animations: [],
     }
+
     this.targets.push(target)
 
-    // now patch target update matrix method
-    const _updateMatrixStack = target.object.updateMatrixStack.bind(target.object)
-
-    target.object.updateMatrixStack = () => {
-      target.animations.forEach((animation) => animation.update(target.object))
-
-      _updateMatrixStack()
-    }
+    return target
   }
 
   addTargets(objects: Object3D[]) {
@@ -47,10 +42,14 @@ export class TargetsAnimationsManager {
   addTargetAnimation(object: Object3D, animation: KeyframesAnimation) {
     this.duration = Math.max(this.duration, animation.duration)
 
-    const target = this.getTargetByObject3D(object)
-    if (target) {
-      target.animations.push(animation)
+    let target = this.getTargetByObject3D(object)
+
+    if (!target) {
+      target = this.addTarget(object)
     }
+
+    target.animations.push(animation)
+    object.animations = [...object.animations, animation]
 
     this.targets.forEach((target) => {
       target.animations.forEach((animation) => (animation.duration = this.duration))
@@ -71,7 +70,13 @@ export class TargetsAnimationsManager {
     }
   }
 
+  reset() {
+    this.startTime = 0
+    this.currentTime = 0
+  }
+
   playAll() {
+    this.startTime = performance.now()
     this.targets.forEach((target) => target.animations.forEach((animation) => animation.play()))
   }
 
@@ -81,5 +86,6 @@ export class TargetsAnimationsManager {
 
   stopAll() {
     this.targets.forEach((target) => target.animations.forEach((animation) => animation.stop()))
+    this.reset()
   }
 }

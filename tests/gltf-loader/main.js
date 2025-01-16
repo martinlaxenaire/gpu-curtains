@@ -119,6 +119,16 @@ window.addEventListener('load', async () => {
       name: 'Sponza (optimized / interleaved)',
       url: 'https://raw.githubusercontent.com/toji/sponza-optimized/main/Sponza.gltf',
     },
+    // sparse accessors
+    simpleSparseAccessor: {
+      name: 'Simple Sparse Accessor',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/SimpleSparseAccessor/glTF/SimpleSparseAccessor.gltf',
+    },
+    // interleaved data
+    boxInterleaved: {
+      name: 'Box Interleaved',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/BoxInterleaved/glTF/BoxInterleaved.gltf',
+    },
     // animations
     animatedCube: {
       name: 'Animated Cube',
@@ -132,16 +142,6 @@ window.addEventListener('load', async () => {
       name: 'Interpolation Test',
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/InterpolationTest/glTF/InterpolationTest.gltf',
     },
-    // sparse accessors
-    simpleSparseAccessor: {
-      name: 'Simple Sparse Accessor',
-      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/SimpleSparseAccessor/glTF/SimpleSparseAccessor.gltf',
-    },
-    // interleaved data
-    boxInterleaved: {
-      name: 'Box Interleaved',
-      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/BoxInterleaved/glTF/BoxInterleaved.gltf',
-    },
     // morph targets
     animatedMorphCube: {
       name: 'Animated Morph Cube',
@@ -151,6 +151,14 @@ window.addEventListener('load', async () => {
     simpleSkin: {
       name: 'Simple Skin',
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/SimpleSkin/glTF/SimpleSkin.gltf',
+    },
+    riggedSimple: {
+      name: 'Rigged Simple', // TODO not centered in scene?
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/RiggedSimple/glTF/RiggedSimple.gltf',
+    },
+    fox: {
+      name: 'Fox',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/Fox/glTF/Fox.gltf',
     },
   }
 
@@ -284,7 +292,12 @@ window.addEventListener('load', async () => {
     })
 
     if (scenesManager.animations.length) {
-      scenesManager.animations.forEach((animation) => animation.playAll())
+      console.log(scenesManager.animations)
+      if (gltf.skins && gltf.skins.length) {
+        scenesManager.animations[1].playAll()
+      } else {
+        scenesManager.animations.forEach((animation) => animation.playAll())
+      }
     }
 
     // test for gltf cameras
@@ -307,7 +320,7 @@ window.addEventListener('load', async () => {
     title: 'GLTF loader',
   })
 
-  const currentModelKey = 'simpleSkin'
+  const currentModelKey = 'fox'
   let currentModel = models[currentModelKey]
 
   gui

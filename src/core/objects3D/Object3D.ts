@@ -1,6 +1,7 @@
 import { Vec3 } from '../../math/Vec3'
 import { Quat } from '../../math/Quat'
 import { Mat4 } from '../../math/Mat4'
+import { KeyframesAnimation } from '../../extras/animations/KeyframesAnimation'
 
 let objectIndex = 0
 const tempMatrix = new Mat4()
@@ -69,6 +70,8 @@ export class Object3D {
   /** Whether at least one of this {@link Object3D} matrix needs an update. */
   matricesNeedUpdate: boolean
 
+  animations: KeyframesAnimation[]
+
   /**
    * Object3D constructor
    */
@@ -77,6 +80,8 @@ export class Object3D {
     this.children = []
 
     this.matricesNeedUpdate = false
+
+    this.animations = []
 
     Object.defineProperty(this as Object3D, 'object3DIndex', { value: objectIndex++ })
 
@@ -369,6 +374,8 @@ export class Object3D {
    * Check at each render whether we should update our matrices, and update them if needed
    */
   updateMatrixStack() {
+    this.animations.forEach((animation) => animation.update(this))
+
     this.shouldUpdateMatrices()
 
     if (this.matricesNeedUpdate) {
@@ -383,6 +390,12 @@ export class Object3D {
     for (let i = 0, l = this.children.length; i < l; i++) {
       this.children[i].updateMatrixStack()
     }
+
+    this.animations.forEach((animation) => {
+      if (animation.onAfterUpdate) {
+        animation.onAfterUpdate()
+      }
+    })
   }
 
   /**
@@ -392,6 +405,8 @@ export class Object3D {
     for (let i = 0, l = this.children.length; i < l; i++) {
       if (this.children[i]) this.children[i].parent = null
     }
+
+    this.animations = []
 
     this.parent = null
   }

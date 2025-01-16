@@ -7,9 +7,9 @@ import { Object3D } from '../../core/objects3D/Object3D'
 
 export interface KeyframesAnimationParams {
   name?: string
-  keyframes: TypedArray
-  values: TypedArray
-  path: GLTF.AnimationChannelTargetPath
+  keyframes?: TypedArray
+  values?: TypedArray
+  path?: GLTF.AnimationChannelTargetPath
   interpolation?: GLTF.AnimationSamplerInterpolation
 }
 
@@ -26,28 +26,23 @@ const tempQuat = new Quat()
 export class KeyframesAnimation {
   name: string
 
-  keyframes: TypedArray
-  values: TypedArray
+  keyframes: TypedArray | null
+  values: TypedArray | null
 
   startTime: number
   currentTime: number
-  deltaTime: number
   duration: number
 
-  path: GLTF.AnimationChannelTargetPath
+  path: GLTF.AnimationChannelTargetPath | null
   interpolation: GLTF.AnimationSamplerInterpolation
 
   weightsBindingInputs: BufferBindingInput[]
 
+  onAfterUpdate: () => void | null // used for skins
+
   #isPlaying: boolean
 
-  constructor({
-    name = '',
-    keyframes = new Float32Array(1),
-    values = new Float32Array(1),
-    path,
-    interpolation = 'LINEAR',
-  } = {}) {
+  constructor({ name = '', keyframes = null, values = null, path = null, interpolation = 'LINEAR' } = {}) {
     this.name = name
     this.keyframes = keyframes
     this.values = values
@@ -56,12 +51,13 @@ export class KeyframesAnimation {
     this.interpolation = interpolation
 
     this.weightsBindingInputs = []
+    this.onAfterUpdate = null
 
     this.#isPlaying = false
 
     this.reset()
 
-    this.duration = this.keyframes[this.keyframes.length - 1]
+    this.duration = this.keyframes ? this.keyframes[this.keyframes.length - 1] : 0
   }
 
   addWeightBindingInput(input: BufferBindingInput) {
@@ -71,7 +67,6 @@ export class KeyframesAnimation {
   reset() {
     this.startTime = 0
     this.currentTime = 0
-    this.deltaTime = 0
   }
 
   play() {
@@ -110,8 +105,8 @@ export class KeyframesAnimation {
     return this.interpolation === 'CUBICSPLINE' ? index * 3 * size + size : index * size
   }
 
-  update(target: Object3D, binding: BufferBindingInput = null) {
-    if (!this.#isPlaying) return
+  update(target: Object3D) {
+    if (!this.#isPlaying || !this.keyframes || !this.values) return
 
     this.currentTime = performance.now()
 
@@ -204,6 +199,7 @@ export class KeyframesAnimation {
         }
       }
 
+      // update model matrix since we modified the quaternion
       target.shouldUpdateModelMatrix()
     } else if (this.path === 'translation' || this.path === 'scale') {
       const vectorName = this.path === 'translation' ? 'position' : this.path

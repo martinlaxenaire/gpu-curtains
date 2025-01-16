@@ -81,7 +81,7 @@ export const buildShaders = (
     .map((attribute, index) => {
       return `@location(${index}) ${attribute.name}: ${attribute.type},`
     })
-    .join('\n\t')
+    .join('\n\t\t')
 
   const declareAttributes = meshDescriptor.attributes
     .map((attribute) => {
@@ -90,25 +90,6 @@ export const buildShaders = (
     .join('\n\t')
 
   const hasNormal = facultativeAttributes.find((attr) => attr.name === 'normal')
-
-  let outputPositions = /* wgsl */ `
-    let worldPos = matrices.model * vec4(position, 1.0);
-    vsOutput.position = camera.projection * camera.view * worldPos;
-    vsOutput.worldPosition = worldPos.xyz / worldPos.w;
-    vsOutput.viewDirection = camera.position - vsOutput.worldPosition.xyz;
-  `
-  let outputNormal = hasNormal ? 'vsOutput.normal = getWorldNormal(normal);' : ''
-
-  if (meshDescriptor.parameters.storages && meshDescriptor.parameters.storages.instances) {
-    outputPositions = /* wgsl */ `
-      let worldPos: vec4f = instances[attributes.instanceIndex].modelMatrix * vec4f(position, 1.0);
-      vsOutput.position = camera.projection * camera.view * worldPos;
-      vsOutput.worldPosition = worldPos.xyz;
-      vsOutput.viewDirection = camera.position - vsOutput.worldPosition;
-      `
-
-    outputNormal = `vsOutput.normal = normalize((instances[attributes.instanceIndex].normalMatrix * vec4(normal, 0.0)).xyz);`
-  }
 
   const outputAttributes = facultativeAttributes
     .filter((attr) => attr.name !== 'normal')
@@ -119,9 +100,9 @@ export const buildShaders = (
 
   let vertexOutputContent = `
       @builtin(position) position: vec4f,
+      ${structAttributes}
       @location(${facultativeAttributes.length}) viewDirection: vec3f,
       @location(${facultativeAttributes.length + 1}) worldPosition: vec3f,
-      ${structAttributes}
   `
 
   let outputNormalMap = ''
@@ -144,6 +125,46 @@ export const buildShaders = (
   const morphTargetsBindings = meshDescriptor.parameters.bindings
     ? meshDescriptor.parameters.bindings.filter((binding) => binding.name.includes('morphTarget'))
     : []
+
+  // skins
+  let skinTransformations = ''
+  const skinJoints = facultativeAttributes.filter((attr) => attr.name.includes('joints'))
+  const skinWeights = facultativeAttributes.filter((attr) => attr.name.includes('weights'))
+  const skinBindings = meshDescriptor.parameters.bindings
+    ? meshDescriptor.parameters.bindings.filter((binding) => binding.name.includes('skin'))
+    : []
+
+  const hasSkin = skinJoints.length && skinWeights.length && skinBindings.length
+
+  if (hasSkin) {
+    skinJoints.forEach((skinJoint, index) => {
+      skinTransformations += /* wgsl */ `let skinMatrix${index} = 
+        ${skinWeights[index].name}.x * skin${index}.joints[u32(${skinJoint.name}.x)].matrix +
+        ${skinWeights[index].name}.y * skin${index}.joints[u32(${skinJoint.name}.y)].matrix +
+        ${skinWeights[index].name}.z * skin${index}.joints[u32(${skinJoint.name}.z)].matrix +
+        ${skinWeights[index].name}.w * skin${index}.joints[u32(${skinJoint.name}.w)].matrix;
+      
+      worldPos = skinMatrix${index} * worldPos;`
+    })
+  }
+
+  let outputPositions = /* wgsl */ `worldPos = matrices.model * worldPos;
+      vsOutput.position = camera.projection * camera.view * worldPos;
+      vsOutput.worldPosition = worldPos.xyz / worldPos.w;
+      vsOutput.viewDirection = camera.position - vsOutput.worldPosition.xyz;
+  `
+  let outputNormal = hasNormal ? 'vsOutput.normal = getWorldNormal(normal);' : ''
+
+  if (meshDescriptor.parameters.storages && meshDescriptor.parameters.storages.instances) {
+    outputPositions = /* wgsl */ `
+      worldPos = instances[attributes.instanceIndex].modelMatrix * worldPos;
+      vsOutput.position = camera.projection * camera.view * worldPos;
+      vsOutput.worldPosition = worldPos.xyz;
+      vsOutput.viewDirection = camera.position - vsOutput.worldPosition;
+      `
+
+    outputNormal = `vsOutput.normal = normalize((instances[attributes.instanceIndex].normalMatrix * vec4(normal, 0.0)).xyz);`
+  }
 
   morphTargetsBindings.forEach((binding) => {
     Object.values(binding.inputs)
@@ -183,13 +204,13 @@ export const buildShaders = (
       var vsOutput: VSOutput;
       
       ${declareAttributes}
-      
       ${morphTargets}
-    
+      var worldPos: vec4f = vec4(position, 1.0);
+      ${skinTransformations}
+      
       ${outputPositions}
       ${outputNormal}
       ${outputAttributes}
-      
       ${outputNormalMap}
 
       return vsOutput;

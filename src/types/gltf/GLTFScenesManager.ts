@@ -107,6 +107,8 @@ export interface ChildDescriptor {
 export interface ScenesManager {
   /** {@link Object3D} used as a parent for all {@link scenes} nodes. */
   node: Object3D
+
+  nodes: Map<number, Object3D>
   /** Final computed {@link Box3 | bounding box} of the scenes. */
   boundingBox: Box3
   /** Array of {@link Sampler} used by this {@link ScenesManager}. */
@@ -123,8 +125,4 @@ export interface ScenesManager {
   animations: TargetsAnimationsManager[]
 
   cameras: Camera[]
-
-  //morphTargets: BufferBinding[]
-  /** Utility helper to get all the {@link Object3D} created by this {@link ScenesManager} */
-  getScenesNodes: () => Object3D[]
 }
