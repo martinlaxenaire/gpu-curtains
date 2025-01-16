@@ -276,6 +276,7 @@ window.addEventListener('load', async () => {
       // debug
       const additionalColorContribution = `
         // color = vec4(vec3(metallic), color.a);
+        //color = vec4(normalize(normal) * 0.5 + 0.5, 1.0);
       `
 
       parameters.shaders = buildShaders(meshDescriptor, {
@@ -294,7 +295,7 @@ window.addEventListener('load', async () => {
     if (scenesManager.animations.length) {
       console.log(scenesManager.animations)
       if (gltf.skins && gltf.skins.length) {
-        scenesManager.animations[1].playAll()
+        scenesManager.animations[0].playAll()
       } else {
         scenesManager.animations.forEach((animation) => animation.playAll())
       }

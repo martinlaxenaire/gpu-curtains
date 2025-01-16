@@ -106,7 +106,7 @@ export class KeyframesAnimation {
   }
 
   update(target: Object3D) {
-    if (!this.#isPlaying || !this.keyframes || !this.values) return
+    if (!this.#isPlaying || !this.keyframes || !this.values || !this.path) return
 
     this.currentTime = performance.now()
 

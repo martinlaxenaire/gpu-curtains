@@ -11,7 +11,7 @@ import { Geometry } from '../../core/geometries/Geometry'
 import { IndexedGeometry } from '../../core/geometries/IndexedGeometry'
 import { Mesh } from '../../core/meshes/Mesh'
 import { TypedArray, TypedArrayConstructor } from '../../core/bindings/utils'
-import { GeometryParams, VertexBufferAttribute } from '../../types/Geometries'
+import { GeometryParams, VertexBufferAttribute, VertexBufferAttributeParams } from '../../types/Geometries'
 import { Camera } from '../../core/camera/Camera'
 import {
   ChildDescriptor,
@@ -629,7 +629,10 @@ export class GLTFScenesManager {
     }
   }
 
-  #createAttributesFromPrimitive(primitive, attributes, geometryBBox = null): TypedArray | null {
+  #parsePrimitiveProperty(
+    primitiveProperty: GLTF.IMeshPrimitive['attributes'] | GLTF.IMeshPrimitive['targets'],
+    attributes: VertexBufferAttributeParams[]
+  ): TypedArray | null {
     // check whether the buffer view is already interleaved
     let interleavedArray = null
     let interleavedBufferView = null
@@ -637,9 +640,9 @@ export class GLTFScenesManager {
 
     // prepare default attributes
     // first sort them by accessor indices
-    const primitiveAttributes = Object.entries(primitive)
+    const primitiveAttributes = Object.entries(primitiveProperty)
     primitiveAttributes.sort((a, b) => a[1] - b[1])
-    const primitiveAttributesValues = Object.values(primitive)
+    const primitiveAttributesValues = Object.values(primitiveProperty)
     primitiveAttributesValues.sort((a, b) => a - b)
 
     for (const [attribName, accessorIndex] of primitiveAttributes) {
@@ -667,12 +670,9 @@ export class GLTFScenesManager {
         maxByteOffset = 0
       }
 
-      // custom bbox
-      // glTF specs says: "vertex position attribute accessors MUST have accessor.min and accessor.max defined"
-      if (name === 'position' && geometryBBox) {
-        geometryBBox.min.min(new Vec3(accessor.min[0], accessor.min[1], accessor.min[2]))
-        geometryBBox.max.max(new Vec3(accessor.max[0], accessor.max[1], accessor.max[2]))
-
+      if (name === 'position') {
+        // this feels quite conservative
+        // what about targets for example?
         interleavedBufferView = bufferView
       }
 
@@ -858,12 +858,115 @@ export class GLTFScenesManager {
           stride += attrSize
         })
       }
-    } else {
+    }
+
+    return interleavedArray
+  }
+
+  createGeometry(primitive: GLTF.IMeshPrimitive, primitiveInstance: PrimitiveInstanceDescriptor) {
+    const { instances, meshDescriptor } = primitiveInstance
+
+    // set geometry bounding box
+    const geometryBBox = new Box3()
+
+    for (const [attribName, accessorIndex] of Object.entries(primitive.attributes)) {
+      if (attribName === 'POSITION') {
+        const accessor = this.gltf.accessors[accessorIndex as number]
+
+        // custom bbox
+        // glTF specs says: "vertex position attribute accessors MUST have accessor.min and accessor.max defined"
+        if (geometryBBox) {
+          geometryBBox.min.min(new Vec3(accessor.min[0], accessor.min[1], accessor.min[2]))
+          geometryBBox.max.max(new Vec3(accessor.max[0], accessor.max[1], accessor.max[2]))
+        }
+      }
+    }
+
+    // TODO should we pass an already created buffer to the geometry main vertex and index buffers if possible?
+    // and use bufferOffset and bufferSize parameters
+    // if the accessors byteOffset is large enough,
+    // it means we have an array that is not interleaved (with each vertexBuffer attributes bufferOffset = 0)
+    // but we can deal with the actual offset in the geometry setVertexBuffer call!
+    // see https://toji.dev/webgpu-gltf-case-study/#handling-large-attribute-offsets
+
+    let defaultAttributes = []
+
+    let interleavedArray = this.#parsePrimitiveProperty(primitive.attributes, defaultAttributes)
+
+    const hasNormal = defaultAttributes.find((attribute) => attribute.name === 'normal')
+
+    if (!hasNormal) {
+      // specs say "When normals are not specified, client implementations MUST calculate flat normals and the provided tangents (if present) MUST be ignored."
+      // compute flat normal
+      // from https://gist.github.com/donmccurdy/34a60951796cf703c8f6a9e1cd4bbe58
+      const positionAttribute = defaultAttributes.find((attribute) => attribute.name === 'position')
+      const vertex1 = new Vec3()
+      const vertex2 = new Vec3()
+      const vertex3 = new Vec3()
+      const temp1 = new Vec3()
+      const temp2 = new Vec3()
+      const normal = new Vec3()
+
+      const computeNormal = () => {
+        temp1.copy(vertex2).sub(vertex1)
+        temp2.copy(vertex3).sub(vertex1)
+        normal
+          .set(
+            temp1.y * temp2.z - temp1.z * temp2.y,
+            temp1.z * temp2.x - temp1.x * temp2.z,
+            temp1.x * temp2.y - temp1.y * temp2.x
+          )
+          .normalize()
+      }
+
+      const posLength = positionAttribute.array.length
+      const normalArray = new Float32Array(posLength)
+
+      for (let i = 0; i < posLength; i += positionAttribute.size * 3) {
+        vertex1.set(positionAttribute.array[i], positionAttribute.array[i + 1], positionAttribute.array[i + 2])
+        vertex2.set(positionAttribute.array[i + 3], positionAttribute.array[i + 4], positionAttribute.array[i + 5])
+        vertex3.set(positionAttribute.array[i + 6], positionAttribute.array[i + 7], positionAttribute.array[i + 8])
+
+        computeNormal()
+
+        normalArray[i] = normal.x
+        normalArray[i + 1] = normal.y
+        normalArray[i + 2] = normal.z
+
+        normalArray[i + 3] = normal.x
+        normalArray[i + 4] = normal.y
+        normalArray[i + 5] = normal.z
+
+        normalArray[i + 6] = normal.x
+        normalArray[i + 7] = normal.y
+        normalArray[i + 8] = normal.z
+      }
+
+      const normalAttribute = {
+        name: 'normal',
+        type: 'vec3f',
+        bufferFormat: 'float32x3',
+        size: 3,
+        array: normalArray,
+      }
+
+      // add to the attributes
+      defaultAttributes.push(normalAttribute)
+
+      // remove existing tangent if any
+      defaultAttributes = defaultAttributes.filter((attr) => attr.name !== 'tangent')
+
+      // if we had an interleavedArray then we'd have to rebuilt it with normals
+      // the Geometry is going to do that for us
+      interleavedArray = null
+    }
+
+    if (!interleavedArray) {
       // not interleaved?
       // let's try to reorder the attributes so we might benefit from pipeline cache
       const attribOrder = ['position', 'uv', 'normal']
 
-      attributes.sort((a, b) => {
+      defaultAttributes.sort((a, b) => {
         let aIndex = attribOrder.findIndex((attrName) => attrName === a.name)
         aIndex = aIndex === -1 ? Infinity : aIndex
 
@@ -874,215 +977,12 @@ export class GLTFScenesManager {
       })
     }
 
-    return interleavedArray
-  }
-
-  createGeometry(primitive: GLTF.IMeshPrimitive, primitiveInstance: PrimitiveInstanceDescriptor) {
-    const { instances, meshDescriptor } = primitiveInstance
-
-    const geometryBBox = new Box3()
-
-    // TODO should we pass an already created buffer to the geometry main vertex and index buffers if possible?
-    // and use bufferOffset and bufferSize parameters
-    // if the accessors byteOffset is large enough,
-    // it means we have an array that is not interleaved (with each vertexBuffer attributes bufferOffset = 0)
-    // but we can deal with the actual offset in the geometry setVertexBuffer call!
-    // see https://toji.dev/webgpu-gltf-case-study/#handling-large-attribute-offsets
-
-    const defaultAttributes = []
-
-    const interleavedArray = this.#createAttributesFromPrimitive(primitive.attributes, defaultAttributes, geometryBBox)
-
     defaultAttributes.forEach((attribute) => {
       meshDescriptor.attributes.push({
         name: attribute.name,
         type: attribute.type,
       })
     })
-
-    const meshIndex = instances[0].mesh
-
-    // morph targets
-    if (primitive.targets) {
-      const bindings = []
-
-      const weights = this.gltf.meshes[meshIndex].weights
-
-      let weightAnimation
-      for (const animation of this.scenesManager.animations) {
-        weightAnimation = animation.getAnimationsByObject3DAndPath(meshDescriptor.parent, 'weights')
-
-        if (weightAnimation) break
-      }
-
-      primitive.targets.forEach((target, index) => {
-        const targetAttributes = []
-        this.#createAttributesFromPrimitive(target, targetAttributes)
-
-        const struct = targetAttributes.reduce(
-          (acc, attribute) => {
-            return (acc = {
-              ...acc,
-              ...{
-                [attribute.name]: {
-                  type: `array<${attribute.type}>`,
-                  value: attribute.array,
-                },
-              },
-            })
-          },
-          {
-            weight: {
-              type: 'f32',
-              value: weights && weights.length ? weights[index] : 0,
-            },
-          }
-        )
-
-        const targetBinding = new BufferBinding({
-          label: 'Morph target ' + index,
-          name: 'morphTarget' + index,
-          bindingType: 'storage',
-          visibility: ['vertex'],
-          struct,
-        })
-
-        if (weightAnimation) {
-          weightAnimation.addWeightBindingInput(targetBinding.inputs.weight)
-        }
-
-        bindings.push(targetBinding)
-      })
-
-      if (!meshDescriptor.parameters.bindings) {
-        meshDescriptor.parameters.bindings = []
-      }
-
-      meshDescriptor.parameters.bindings = [...meshDescriptor.parameters.bindings, ...bindings]
-    }
-
-    if (this.gltf.skins) {
-      const skin = this.gltf.skins[meshIndex]
-
-      if (skin) {
-        let matrices
-        if (skin.inverseBindMatrices) {
-          const matricesAccessor = this.gltf.accessors[skin.inverseBindMatrices]
-          const matricesBufferView = this.gltf.bufferViews[matricesAccessor.bufferView]
-
-          const matricesTypedArrayConstructor = GLTFScenesManager.getTypedArrayConstructorFromComponentType(
-            matricesAccessor.componentType
-          )
-
-          matrices = new matricesTypedArrayConstructor(
-            this.gltf.arrayBuffers[matricesBufferView.buffer],
-            matricesAccessor.byteOffset + matricesBufferView.byteOffset,
-            matricesAccessor.count * GLTFScenesManager.getVertexAttributeParamsFromType(matricesAccessor.type).size
-          )
-        } else {
-          matrices = new Float32Array(16 * skin.joints.length)
-          // fill with identity matrices
-          for (let i = 0; i < skin.joints.length * 16; i += 16) {
-            matrices[i] = 1
-            matrices[i + 5] = 1
-            matrices[i + 10] = 1
-            matrices[i + 15] = 1
-          }
-        }
-
-        const skinBinding = new BufferBinding({
-          label: 'Skin ' + meshIndex,
-          name: 'skin' + meshIndex,
-          bindingType: 'storage',
-          visibility: ['vertex'],
-          childrenBindings: [
-            {
-              binding: new BufferBinding({
-                label: 'Joints',
-                name: 'joints',
-                bindingType: 'storage',
-                visibility: ['vertex'],
-                struct: {
-                  matrix: {
-                    type: 'mat4x4f',
-                    value: new Float32Array(16),
-                  },
-                },
-              }),
-              count: skin.joints.length,
-              forceArray: true, // needs to be always iterable
-            },
-          ],
-        })
-
-        // set default matrices values
-        for (let i = 0; i < skin.joints.length; i++) {
-          for (let j = 0; j < 16; j++) {
-            skinBinding.childrenBindings[i].inputs.matrix.value[j] = matrices[i * 16 + j]
-          }
-
-          skinBinding.childrenBindings[i].inputs.matrix.shouldUpdate = true
-        }
-
-        if (!meshDescriptor.parameters.bindings) {
-          meshDescriptor.parameters.bindings = []
-        }
-
-        meshDescriptor.parameters.bindings = [...meshDescriptor.parameters.bindings, skinBinding]
-
-        const jointsTargets = skin.joints.map((joint) => this.scenesManager.nodes.get(joint))
-
-        //console.log(jointsTargets, skinBinding)
-
-        for (const animation of this.scenesManager.animations) {
-          jointsTargets.forEach((object, jointIndex) => {
-            const parentNodeIndex = this.gltf.nodes.findIndex(
-              (node) => node.mesh !== undefined && node.skin !== undefined && node.mesh === meshIndex
-            )
-            const parentNode = this.scenesManager.nodes.get(parentNodeIndex)
-
-            const inverseBindMatrix = new Mat4().setFromArray(matrices as Float32Array, jointIndex * 16)
-
-            // from https://github.com/KhronosGroup/glTF-Sample-Renderer/blob/63b7c128266cfd86bbd3f25caf8b3db3fe854015/source/gltf/skin.js#L88
-            const jointMatrix = new Mat4()
-
-            const updateJointMatrix = () => {
-              jointMatrix.multiplyMatrices(object.worldMatrix, inverseBindMatrix)
-              jointMatrix.multiplyMatrices(parentNode.worldMatrix.getInverse(), jointMatrix)
-
-              for (let i = 0; i < 16; i++) {
-                skinBinding.childrenBindings[jointIndex].inputs.matrix.value[i] = jointMatrix.elements[i]
-              }
-
-              skinBinding.childrenBindings[jointIndex].inputs.matrix.shouldUpdate = true
-            }
-
-            const animationTarget = animation.getTargetByObject3D(object)
-
-            if (animationTarget) {
-              animationTarget.animations.forEach((animation) => {
-                animation.onAfterUpdate = updateJointMatrix
-              })
-            } else {
-              // this joint does not have an animation
-              // but this does not mean we don't have to update its joints!
-
-              // add an empty animation with just an onAfterCallback
-              const node = this.gltf.nodes[jointIndex]
-              const animName = node.name ? `${node.name} empty animation` : `empty animation ${jointIndex}`
-
-              const emptyAnimation = new KeyframesAnimation({
-                name: animation.name ? `${animation.name} ${animName}` : `Animation ${animName}`,
-              })
-
-              emptyAnimation.onAfterUpdate = updateJointMatrix
-
-              animation.addTargetAnimation(object, emptyAnimation)
-            }
-          })
-        }
-      }
-    }
 
     const geometryAttributes: GeometryParams = {
       instancesCount: instances.length,
@@ -1133,6 +1033,203 @@ export class GLTFScenesManager {
 
     const instancesCount = instances.length
 
+    const meshIndex = instances[0].mesh
+
+    // morph targets
+    if (primitive.targets) {
+      const bindings = []
+
+      const weights = this.gltf.meshes[meshIndex].weights
+
+      let weightAnimation
+      for (const animation of this.scenesManager.animations) {
+        weightAnimation = animation.getAnimationsByObject3DAndPath(meshDescriptor.parent, 'weights')
+
+        if (weightAnimation) break
+      }
+
+      primitive.targets.forEach((target, index) => {
+        const targetAttributes = []
+        this.#parsePrimitiveProperty(target, targetAttributes)
+
+        const struct = targetAttributes.reduce(
+          (acc, attribute) => {
+            return (acc = {
+              ...acc,
+              ...{
+                [attribute.name]: {
+                  type: `array<${attribute.type}>`,
+                  value: attribute.array,
+                },
+              },
+            })
+          },
+          {
+            weight: {
+              type: 'f32',
+              value: weights && weights.length ? weights[index] : 0,
+            },
+          }
+        )
+
+        const targetBinding = new BufferBinding({
+          label: 'Morph target ' + index,
+          name: 'morphTarget' + index,
+          bindingType: 'storage',
+          visibility: ['vertex'],
+          struct,
+        })
+
+        if (weightAnimation) {
+          weightAnimation.addWeightBindingInput(targetBinding.inputs.weight)
+        }
+
+        bindings.push(targetBinding)
+      })
+
+      if (!meshDescriptor.parameters.bindings) {
+        meshDescriptor.parameters.bindings = []
+      }
+
+      meshDescriptor.parameters.bindings = [...meshDescriptor.parameters.bindings, ...bindings]
+    }
+
+    // skins
+    if (this.gltf.skins) {
+      const skin = this.gltf.skins[meshIndex]
+
+      if (skin) {
+        let matrices
+        if (skin.inverseBindMatrices) {
+          const matricesAccessor = this.gltf.accessors[skin.inverseBindMatrices]
+          const matricesBufferView = this.gltf.bufferViews[matricesAccessor.bufferView]
+
+          const matricesTypedArrayConstructor = GLTFScenesManager.getTypedArrayConstructorFromComponentType(
+            matricesAccessor.componentType
+          )
+
+          matrices = new matricesTypedArrayConstructor(
+            this.gltf.arrayBuffers[matricesBufferView.buffer],
+            matricesAccessor.byteOffset + matricesBufferView.byteOffset,
+            matricesAccessor.count * GLTFScenesManager.getVertexAttributeParamsFromType(matricesAccessor.type).size
+          )
+        } else {
+          matrices = new Float32Array(16 * skin.joints.length)
+          // fill with identity matrices
+          for (let i = 0; i < skin.joints.length * 16; i += 16) {
+            matrices[i] = 1
+            matrices[i + 5] = 1
+            matrices[i + 10] = 1
+            matrices[i + 15] = 1
+          }
+        }
+
+        const skinBinding = new BufferBinding({
+          label: 'Skin ' + meshIndex,
+          name: 'skin' + meshIndex,
+          bindingType: 'storage',
+          visibility: ['vertex'],
+          childrenBindings: [
+            {
+              binding: new BufferBinding({
+                label: 'Joints',
+                name: 'joints',
+                bindingType: 'storage',
+                visibility: ['vertex'],
+                struct: {
+                  jointMatrix: {
+                    type: 'mat4x4f',
+                    value: new Float32Array(16),
+                  },
+                  normalMatrix: {
+                    type: 'mat4x4f',
+                    value: new Float32Array(16),
+                  },
+                },
+              }),
+              count: skin.joints.length,
+              forceArray: true, // needs to be always iterable
+            },
+          ],
+        })
+
+        // set default matrices values
+        for (let i = 0; i < skin.joints.length; i++) {
+          for (let j = 0; j < 16; j++) {
+            skinBinding.childrenBindings[i].inputs.jointMatrix.value[j] = matrices[i * 16 + j]
+            skinBinding.childrenBindings[i].inputs.normalMatrix.value[j] = matrices[i * 16 + j]
+          }
+
+          skinBinding.childrenBindings[i].inputs.jointMatrix.shouldUpdate = true
+          skinBinding.childrenBindings[i].inputs.normalMatrix.shouldUpdate = true
+        }
+
+        if (!meshDescriptor.parameters.bindings) {
+          meshDescriptor.parameters.bindings = []
+        }
+
+        meshDescriptor.parameters.bindings = [...meshDescriptor.parameters.bindings, skinBinding]
+
+        const jointsTargets = skin.joints.map((joint) => this.scenesManager.nodes.get(joint))
+
+        //console.log(jointsTargets, skinBinding)
+
+        for (const animation of this.scenesManager.animations) {
+          jointsTargets.forEach((object, jointIndex) => {
+            const parentNodeIndex = this.gltf.nodes.findIndex(
+              (node) => node.mesh !== undefined && node.skin !== undefined && node.mesh === meshIndex
+            )
+            const parentNode = this.scenesManager.nodes.get(parentNodeIndex)
+
+            const inverseBindMatrix = new Mat4().setFromArray(matrices as Float32Array, jointIndex * 16)
+
+            // from https://github.com/KhronosGroup/glTF-Sample-Renderer/blob/63b7c128266cfd86bbd3f25caf8b3db3fe854015/source/gltf/skin.js#L88
+            const jointMatrix = new Mat4()
+            const normalMatrix = new Mat4()
+
+            const updateJointMatrix = () => {
+              jointMatrix.multiplyMatrices(object.worldMatrix, inverseBindMatrix)
+              jointMatrix.multiplyMatrices(parentNode.worldMatrix.getInverse(), jointMatrix)
+
+              normalMatrix.copy(jointMatrix).invert().transpose()
+
+              for (let i = 0; i < 16; i++) {
+                skinBinding.childrenBindings[jointIndex].inputs.jointMatrix.value[i] = jointMatrix.elements[i]
+                skinBinding.childrenBindings[jointIndex].inputs.normalMatrix.value[i] = normalMatrix.elements[i]
+              }
+
+              skinBinding.childrenBindings[jointIndex].inputs.jointMatrix.shouldUpdate = true
+              skinBinding.childrenBindings[jointIndex].inputs.normalMatrix.shouldUpdate = true
+            }
+
+            const animationTarget = animation.getTargetByObject3D(object)
+
+            if (animationTarget) {
+              animationTarget.animations.forEach((animation) => {
+                animation.onAfterUpdate = updateJointMatrix
+              })
+            } else {
+              // this joint does not have an animation
+              // but this does not mean we don't have to update its joints!
+
+              // add an empty animation with just an onAfterCallback
+              const node = this.gltf.nodes[jointIndex]
+              const animName = node.name ? `${node.name} empty animation` : `empty animation ${jointIndex}`
+
+              const emptyAnimation = new KeyframesAnimation({
+                name: animation.name ? `${animation.name} ${animName}` : `Animation ${animName}`,
+              })
+
+              emptyAnimation.onAfterUpdate = updateJointMatrix
+
+              animation.addTargetAnimation(object, emptyAnimation)
+            }
+          })
+        }
+      }
+    }
+
+    // textures and samplers
     const materialTextures = this.scenesManager.materialsTextures[primitive.material]
 
     meshDescriptor.parameters.samplers = []

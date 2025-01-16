@@ -89,8 +89,6 @@ export const buildShaders = (
     })
     .join('\n\t')
 
-  const hasNormal = facultativeAttributes.find((attr) => attr.name === 'normal')
-
   const outputAttributes = facultativeAttributes
     .filter((attr) => attr.name !== 'normal')
     .map((attribute) => {
@@ -98,6 +96,7 @@ export const buildShaders = (
     })
     .join('\n\t')
 
+  // VERTEX
   let vertexOutputContent = `
       @builtin(position) position: vec4f,
       ${structAttributes}
@@ -138,32 +137,50 @@ export const buildShaders = (
 
   if (hasSkin) {
     skinJoints.forEach((skinJoint, index) => {
-      skinTransformations += /* wgsl */ `let skinMatrix${index} = 
-        ${skinWeights[index].name}.x * skin${index}.joints[u32(${skinJoint.name}.x)].matrix +
-        ${skinWeights[index].name}.y * skin${index}.joints[u32(${skinJoint.name}.y)].matrix +
-        ${skinWeights[index].name}.z * skin${index}.joints[u32(${skinJoint.name}.z)].matrix +
-        ${skinWeights[index].name}.w * skin${index}.joints[u32(${skinJoint.name}.w)].matrix;
+      skinTransformations += /* wgsl */ `let skinMatrix${index}: mat4x4f = 
+        ${skinWeights[index].name}.x * skin${index}.joints[u32(${skinJoint.name}.x)].jointMatrix +
+        ${skinWeights[index].name}.y * skin${index}.joints[u32(${skinJoint.name}.y)].jointMatrix +
+        ${skinWeights[index].name}.z * skin${index}.joints[u32(${skinJoint.name}.z)].jointMatrix +
+        ${skinWeights[index].name}.w * skin${index}.joints[u32(${skinJoint.name}.w)].jointMatrix;
       
-      worldPos = skinMatrix${index} * worldPos;`
+      worldPos = skinMatrix${index} * worldPos;
+      
+      // normal
+      let skinNormalMatrix${index}: mat4x4f = 
+        ${skinWeights[index].name}.x * skin${index}.joints[u32(${skinJoint.name}.x)].normalMatrix +
+        ${skinWeights[index].name}.y * skin${index}.joints[u32(${skinJoint.name}.y)].normalMatrix +
+        ${skinWeights[index].name}.z * skin${index}.joints[u32(${skinJoint.name}.z)].normalMatrix +
+        ${skinWeights[index].name}.w * skin${index}.joints[u32(${skinJoint.name}.w)].normalMatrix;
+        
+      let skinNormalMatrix${index}_3: mat3x3f = mat3x3f(
+        vec3(skinNormalMatrix${index}[0].xyz),
+        vec3(skinNormalMatrix${index}[1].xyz),
+        vec3(skinNormalMatrix${index}[2].xyz)
+      );
+        
+      normal = skinNormalMatrix${index}_3 * normal;
+      normal = normalize(normal);
+      `
     })
   }
 
   let outputPositions = /* wgsl */ `worldPos = matrices.model * worldPos;
-      vsOutput.position = camera.projection * camera.view * worldPos;
       vsOutput.worldPosition = worldPos.xyz / worldPos.w;
+      vsOutput.position = camera.projection * camera.view * worldPos;
       vsOutput.viewDirection = camera.position - vsOutput.worldPosition.xyz;
   `
-  let outputNormal = hasNormal ? 'vsOutput.normal = getWorldNormal(normal);' : ''
+  let outputNormal = hasSkin ? 'vsOutput.normal = normalize(normal);' : 'vsOutput.normal = getWorldNormal(normal);'
 
   if (meshDescriptor.parameters.storages && meshDescriptor.parameters.storages.instances) {
-    outputPositions = /* wgsl */ `
-      worldPos = instances[attributes.instanceIndex].modelMatrix * worldPos;
+    outputPositions = /* wgsl */ `worldPos = instances[attributes.instanceIndex].modelMatrix * worldPos;
+      vsOutput.worldPosition = worldPos.xyz / worldPos.w;
       vsOutput.position = camera.projection * camera.view * worldPos;
-      vsOutput.worldPosition = worldPos.xyz;
       vsOutput.viewDirection = camera.position - vsOutput.worldPosition;
       `
 
-    outputNormal = `vsOutput.normal = normalize((instances[attributes.instanceIndex].normalMatrix * vec4(normal, 0.0)).xyz);`
+    outputNormal = hasSkin
+      ? 'vsOutput.normal = normalize(normal);'
+      : `vsOutput.normal = normalize((instances[attributes.instanceIndex].normalMatrix * vec4(normal, 0.0)).xyz);`
   }
 
   morphTargetsBindings.forEach((binding) => {
@@ -205,7 +222,9 @@ export const buildShaders = (
       
       ${declareAttributes}
       ${morphTargets}
+      
       var worldPos: vec4f = vec4(position, 1.0);
+      
       ${skinTransformations}
       
       ${outputPositions}
@@ -217,9 +236,7 @@ export const buildShaders = (
     }
   `
 
-  // not a PBR material for now, as it does not use roughness/metalness
-  // we might want to implement it later
-  // see https://github.com/oframe/ogl/blob/master/examples/load-gltf.html#L133
+  // FRAGMENT
   const initColor = /* wgsl */ 'var color: vec4f = vec4();'
   const returnColor = /* wgsl */ `
       return color;
@@ -250,22 +267,20 @@ export const buildShaders = (
 
   // normal map
 
-  let normalMap = meshDescriptor.attributes.find((attribute) => attribute.name === 'normal')
-    ? /* wgsl */ `
+  let normalMap = /* wgsl */ `
       let faceDirection = select(-1.0, 1.0, fsInput.frontFacing);
-      let geometryNormal: vec3f = normalize(faceDirection * fsInput.normal);
+      let geometryNormal: vec3f = faceDirection * normal;
     `
-    : /* wgsl */ `let geometryNormal: vec3f = normalize(vec3(0.0, 0.0, 1.0));`
 
   if (useNormalMap) {
     normalMap += /* wgsl */ `
       let tbn = mat3x3<f32>(normalize(fsInput.tangent.xyz), normalize(fsInput.bitangent), geometryNormal);
       let normalMap = textureSample(normalTexture, ${normalTexture.sampler}, fsInput.${normalTexture.texCoordAttributeName}).rgb;
-      let normal = normalize(tbn * (2.0 * normalMap - vec3(material.normalMapScale, material.normalMapScale, 1.0)));
+      normal = normalize(tbn * (2.0 * normalMap - vec3(material.normalMapScale, material.normalMapScale, 1.0)));
     `
   } else {
     normalMap += /* wgsl */ `
-      let normal = geometryNormal;
+      normal = geometryNormal;
     `
   }
 
@@ -490,7 +505,8 @@ export const buildShaders = (
       
       let worldPosition: vec3f = fsInput.worldPosition;
       let viewDirection: vec3f = fsInput.viewDirection;
-
+      var normal: vec3f = normalize(fsInput.normal);
+      
       ${normalMap}
       ${metallicRoughness}  
       
