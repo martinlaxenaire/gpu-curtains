@@ -658,7 +658,7 @@
      * @returns - this {@link Quat} after copy
      */
     copy(quaternion = new Quat()) {
-      this.elements = quaternion.elements;
+      this.elements.set(quaternion.elements);
       this.axisOrder = quaternion.axisOrder;
       return this;
     }
@@ -771,6 +771,88 @@
         this.elements[1] = (m23 + m32) / s;
         this.elements[2] = 0.25 * s;
       }
+      return this;
+    }
+    /**
+     * Get the square length of this {@link Quat}.
+     * @returns - square length of this {@link Quat}.
+     */
+    lengthSq() {
+      return this.elements[0] * this.elements[0] + this.elements[1] * this.elements[1] + this.elements[2] * this.elements[2] + this.elements[3] * this.elements[3];
+    }
+    /**
+     * Get the length of this {@link Quat}.
+     * @returns - length of this {@link Quat}.
+     */
+    length() {
+      return Math.sqrt(this.lengthSq());
+    }
+    /**
+     * Normalize this {@link Quat}.
+     * @returns - normalized {@link Quat}.
+     */
+    normalize() {
+      let l = this.length();
+      if (l === 0) {
+        this.elements[0] = 0;
+        this.elements[1] = 0;
+        this.elements[2] = 0;
+        this.elements[3] = 1;
+      } else {
+        l = 1 / l;
+        this.elements[0] = this.elements[0] * l;
+        this.elements[1] = this.elements[1] * l;
+        this.elements[2] = this.elements[2] * l;
+        this.elements[3] = this.elements[3] * l;
+      }
+      return this;
+    }
+    /**
+     * Calculate the spherical linear interpolation of this {@link Quat} by given {@link Quat} and alpha, where alpha is the percent distance.
+     * @param quat - {@link Quat} to interpolate towards.
+     * @param alpha - spherical interpolation factor in the [0, 1] interval.
+     * @returns - this {@link Quat} after spherical linear interpolation.
+     */
+    slerp(quat = new Quat(), alpha = 0) {
+      if (alpha === 0)
+        return this;
+      if (alpha === 1)
+        return this.copy(quat);
+      const x = this.elements[0], y = this.elements[1], z = this.elements[2], w = this.elements[3];
+      let cosHalfTheta = w * quat.elements[3] + x * quat.elements[0] + y * quat.elements[1] + z * quat.elements[2];
+      if (cosHalfTheta < 0) {
+        this.elements[3] = -quat.elements[3];
+        this.elements[0] = -quat.elements[0];
+        this.elements[1] = -quat.elements[1];
+        this.elements[2] = -quat.elements[2];
+        cosHalfTheta = -cosHalfTheta;
+      } else {
+        this.copy(quat);
+      }
+      if (cosHalfTheta >= 1) {
+        this.elements[3] = w;
+        this.elements[0] = x;
+        this.elements[1] = y;
+        this.elements[2] = z;
+        return this;
+      }
+      const sqrSinHalfTheta = 1 - cosHalfTheta * cosHalfTheta;
+      if (sqrSinHalfTheta <= Number.EPSILON) {
+        const s = 1 - alpha;
+        this.elements[3] = s * w + alpha * this.elements[3];
+        this.elements[0] = s * x + alpha * this.elements[0];
+        this.elements[1] = s * y + alpha * this.elements[1];
+        this.elements[2] = s * z + alpha * this.elements[2];
+        this.normalize();
+        return this;
+      }
+      const sinHalfTheta = Math.sqrt(sqrSinHalfTheta);
+      const halfTheta = Math.atan2(sinHalfTheta, cosHalfTheta);
+      const ratioA = Math.sin((1 - alpha) * halfTheta) / sinHalfTheta, ratioB = Math.sin(alpha * halfTheta) / sinHalfTheta;
+      this.elements[3] = w * ratioA + this.elements[3] * ratioB;
+      this.elements[0] = x * ratioA + this.elements[0] * ratioB;
+      this.elements[1] = y * ratioA + this.elements[1] * ratioB;
+      this.elements[2] = z * ratioA + this.elements[2] * ratioB;
       return this;
     }
   }
@@ -1123,13 +1205,12 @@
     applyQuat(quaternion = new Quat()) {
       const x = this.x, y = this.y, z = this.z;
       const qx = quaternion.elements[0], qy = quaternion.elements[1], qz = quaternion.elements[2], qw = quaternion.elements[3];
-      const ix = qw * x + qy * z - qz * y;
-      const iy = qw * y + qz * x - qx * z;
-      const iz = qw * z + qx * y - qy * x;
-      const iw = -qx * x - qy * y - qz * z;
-      this.x = ix * qw + iw * -qx + iy * -qz - iz * -qy;
-      this.y = iy * qw + iw * -qy + iz * -qx - ix * -qz;
-      this.z = iz * qw + iw * -qz + ix * -qy - iy * -qx;
+      const tx = 2 * (qy * z - qz * y);
+      const ty = 2 * (qz * x - qx * z);
+      const tz = 2 * (qx * y - qy * x);
+      this.x = x + qw * tx + qy * tz - qz * ty;
+      this.y = y + qw * ty + qz * tx - qx * tz;
+      this.z = z + qw * tz + qx * ty - qy * tx;
       return this;
     }
     /**
@@ -1691,21 +1772,21 @@
     }
   }
 
-  var __accessCheck$l = (obj, member, msg) => {
+  var __accessCheck$m = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$i = (obj, member, getter) => {
-    __accessCheck$l(obj, member, "read from private field");
+  var __privateGet$j = (obj, member, getter) => {
+    __accessCheck$m(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$l = (obj, member, value) => {
+  var __privateAdd$m = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$h = (obj, member, value, setter) => {
-    __accessCheck$l(obj, member, "write to private field");
+  var __privateSet$i = (obj, member, value, setter) => {
+    __accessCheck$m(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -1733,7 +1814,7 @@
       bindingType = bindingType ?? "uniform";
       super({ label, name, bindingType, visibility });
       /** @ignore */
-      __privateAdd$l(this, _parent, void 0);
+      __privateAdd$m(this, _parent, void 0);
       this.options = {
         ...this.options,
         useStruct,
@@ -1794,7 +1875,7 @@
      * @returns - The {@link BufferBinding} parent if any.
      */
     get parent() {
-      return __privateGet$i(this, _parent);
+      return __privateGet$j(this, _parent);
     }
     /**
      * Set the new {@link BufferBinding} parent.
@@ -1845,7 +1926,7 @@
         this.parentView = null;
         this.parentViewSetBufferEls = null;
       }
-      __privateSet$h(this, _parent, value);
+      __privateSet$i(this, _parent, value);
     }
     /**
      * Round the given size value to the nearest minimum {@link GPUDevice} buffer offset alignment.
@@ -3021,6 +3102,7 @@
     /**
      * Sets the {@link Mat4} values from an array
      * @param array - array to use
+     * @param offset - offset in the array to use
      * @returns - this {@link Mat4} after being set
      */
     // prettier-ignore
@@ -3041,9 +3123,9 @@
       0,
       0,
       1
-    ])) {
+    ]), offset = 0) {
       for (let i = 0; i < this.elements.length; i++) {
-        this.elements[i] = array[i];
+        this.elements[i] = array[i + offset];
       }
       return this;
     }
@@ -3736,6 +3818,7 @@
      */
     applyRotation() {
       this.quaternion.setFromVec3(this.rotation);
+      console.log("apply rotation");
       this.shouldUpdateModelMatrix();
     }
     /**
@@ -3908,15 +3991,15 @@
     return 1 + Math.log2(maxSize) | 0;
   };
 
-  var __accessCheck$k = (obj, member, msg) => {
+  var __accessCheck$l = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$h = (obj, member, getter) => {
-    __accessCheck$k(obj, member, "read from private field");
+  var __privateGet$i = (obj, member, getter) => {
+    __accessCheck$l(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$k = (obj, member, value) => {
+  var __privateAdd$l = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
@@ -3945,13 +4028,13 @@
     constructor(renderer, parameters = defaultDOMTextureParams) {
       super();
       /** Private {@link Vec3 | vector} used for {@link#modelMatrix} calculations, based on {@link parentMesh} {@link core/DOM/DOMElement.RectSize | size} */
-      __privateAdd$k(this, _parentRatio, new Vec3(1));
+      __privateAdd$l(this, _parentRatio, new Vec3(1));
       /** Private {@link Vec3 | vector} used for {@link modelMatrix} calculations, based on {@link size | source size} */
-      __privateAdd$k(this, _sourceRatio, new Vec3(1));
+      __privateAdd$l(this, _sourceRatio, new Vec3(1));
       /** Private {@link Vec3 | vector} used for {@link modelMatrix} calculations, based on #parentRatio and #sourceRatio */
-      __privateAdd$k(this, _coverScale, new Vec3(1));
+      __privateAdd$l(this, _coverScale, new Vec3(1));
       /** Private rotation {@link Mat4 | matrix} based on texture {@link quaternion} */
-      __privateAdd$k(this, _rotationMatrix, new Mat4());
+      __privateAdd$l(this, _rotationMatrix, new Mat4());
       // callbacks / events
       /** function assigned to the {@link onSourceLoaded} callback */
       this._onSourceLoadedCallback = () => {
@@ -4088,16 +4171,16 @@
       const parentRatio = parentWidth / parentHeight;
       const sourceRatio = this.size.width / this.size.height;
       if (parentWidth > parentHeight) {
-        __privateGet$h(this, _parentRatio).set(parentRatio, 1, 1);
-        __privateGet$h(this, _sourceRatio).set(1 / sourceRatio, 1, 1);
+        __privateGet$i(this, _parentRatio).set(parentRatio, 1, 1);
+        __privateGet$i(this, _sourceRatio).set(1 / sourceRatio, 1, 1);
       } else {
-        __privateGet$h(this, _parentRatio).set(1, 1 / parentRatio, 1);
-        __privateGet$h(this, _sourceRatio).set(1, sourceRatio, 1);
+        __privateGet$i(this, _parentRatio).set(1, 1 / parentRatio, 1);
+        __privateGet$i(this, _sourceRatio).set(1, sourceRatio, 1);
       }
-      const coverRatio = parentRatio > sourceRatio !== parentWidth > parentHeight ? 1 : parentWidth > parentHeight ? __privateGet$h(this, _parentRatio).x * __privateGet$h(this, _sourceRatio).x : __privateGet$h(this, _sourceRatio).y * __privateGet$h(this, _parentRatio).y;
-      __privateGet$h(this, _coverScale).set(1 / (coverRatio * this.scale.x), 1 / (coverRatio * this.scale.y), 1);
-      __privateGet$h(this, _rotationMatrix).rotateFromQuaternion(this.quaternion);
-      this.modelMatrix.identity().premultiplyTranslate(this.transformOrigin.clone().multiplyScalar(-1)).premultiplyScale(__privateGet$h(this, _coverScale)).premultiplyScale(__privateGet$h(this, _parentRatio)).premultiply(__privateGet$h(this, _rotationMatrix)).premultiplyScale(__privateGet$h(this, _sourceRatio)).premultiplyTranslate(this.transformOrigin).translate(this.position);
+      const coverRatio = parentRatio > sourceRatio !== parentWidth > parentHeight ? 1 : parentWidth > parentHeight ? __privateGet$i(this, _parentRatio).x * __privateGet$i(this, _sourceRatio).x : __privateGet$i(this, _sourceRatio).y * __privateGet$i(this, _parentRatio).y;
+      __privateGet$i(this, _coverScale).set(1 / (coverRatio * this.scale.x), 1 / (coverRatio * this.scale.y), 1);
+      __privateGet$i(this, _rotationMatrix).rotateFromQuaternion(this.quaternion);
+      this.modelMatrix.identity().premultiplyTranslate(this.transformOrigin.clone().multiplyScalar(-1)).premultiplyScale(__privateGet$i(this, _coverScale)).premultiplyScale(__privateGet$i(this, _parentRatio)).premultiply(__privateGet$i(this, _rotationMatrix)).premultiplyScale(__privateGet$i(this, _sourceRatio)).premultiplyTranslate(this.transformOrigin).translate(this.position);
     }
     /**
      * If our {@link modelMatrix} has been updated, tell the {@link textureMatrix | texture matrix binding} to update as well
@@ -4565,21 +4648,21 @@
     }
   }
 
-  var __accessCheck$j = (obj, member, msg) => {
+  var __accessCheck$k = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$g = (obj, member, getter) => {
-    __accessCheck$j(obj, member, "read from private field");
+  var __privateGet$h = (obj, member, getter) => {
+    __accessCheck$k(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$j = (obj, member, value) => {
+  var __privateAdd$k = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$g = (obj, member, value, setter) => {
-    __accessCheck$j(obj, member, "write to private field");
+  var __privateSet$h = (obj, member, value, setter) => {
+    __accessCheck$k(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -4601,13 +4684,13 @@
     } = {}) {
       super();
       /** @ignore */
-      __privateAdd$j(this, _fov, void 0);
+      __privateAdd$k(this, _fov, void 0);
       /** @ignore */
-      __privateAdd$j(this, _near, void 0);
+      __privateAdd$k(this, _near, void 0);
       /** @ignore */
-      __privateAdd$j(this, _far, void 0);
+      __privateAdd$k(this, _far, void 0);
       /** @ignore */
-      __privateAdd$j(this, _pixelRatio, void 0);
+      __privateAdd$k(this, _pixelRatio, void 0);
       this.uuid = generateUUID();
       this.position.set(0, 0, 10);
       this.up = new Vec3(0, 1, 0);
@@ -4715,7 +4798,7 @@
      * Get the {@link Camera} {@link Camera.fov | field of view}
      */
     get fov() {
-      return __privateGet$g(this, _fov);
+      return __privateGet$h(this, _fov);
     }
     /**
      * Set the {@link Camera} {@link Camera.fov | field of view}. Update the {@link projectionMatrix} only if the field of view actually changed
@@ -4724,7 +4807,7 @@
     set fov(fov) {
       fov = Math.max(1, Math.min(fov ?? this.fov, 179));
       if (fov !== this.fov) {
-        __privateSet$g(this, _fov, fov);
+        __privateSet$h(this, _fov, fov);
         this.shouldUpdateProjectionMatrices();
       }
       this.setVisibleSize();
@@ -4734,16 +4817,16 @@
      * Get the {@link Camera} {@link Camera.near | near} plane value.
      */
     get near() {
-      return __privateGet$g(this, _near);
+      return __privateGet$h(this, _near);
     }
     /**
      * Set the {@link Camera} {@link Camera.near | near} plane value. Update the {@link projectionMatrix} only if the near plane actually changed
      * @param near - new near plane value
      */
     set near(near) {
-      near = Math.max(near ?? this.near, 0.01);
+      near = Math.max(near ?? this.near, 1e-4);
       if (near !== this.near) {
-        __privateSet$g(this, _near, near);
+        __privateSet$h(this, _near, near);
         this.shouldUpdateProjectionMatrices();
       }
     }
@@ -4751,7 +4834,7 @@
      * Get the {@link Camera} {@link Camera.far | far} plane value.
      */
     get far() {
-      return __privateGet$g(this, _far);
+      return __privateGet$h(this, _far);
     }
     /**
      * Set the {@link Camera} {@link Camera.far | far} plane value. Update {@link projectionMatrix} only if the far plane actually changed
@@ -4760,7 +4843,7 @@
     set far(far) {
       far = Math.max(far ?? this.far, this.near + 1);
       if (far !== this.far) {
-        __privateSet$g(this, _far, far);
+        __privateSet$h(this, _far, far);
         this.shouldUpdateProjectionMatrices();
       }
     }
@@ -4768,14 +4851,14 @@
      * Get the {@link Camera} {@link Camera.pixelRatio | pixelRatio} value.
      */
     get pixelRatio() {
-      return __privateGet$g(this, _pixelRatio);
+      return __privateGet$h(this, _pixelRatio);
     }
     /**
      * Set the {@link Camera} {@link Camera.pixelRatio | pixelRatio} value. Update the {@link CSSPerspective} only if the pixel ratio actually changed
      * @param pixelRatio - new pixel ratio value
      */
     set pixelRatio(pixelRatio) {
-      __privateSet$g(this, _pixelRatio, pixelRatio ?? this.pixelRatio);
+      __privateSet$h(this, _pixelRatio, pixelRatio ?? this.pixelRatio);
       this.setCSSPerspective();
     }
     /**
@@ -4990,21 +5073,21 @@
     }
   }
 
-  var __accessCheck$i = (obj, member, msg) => {
+  var __accessCheck$j = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$f = (obj, member, getter) => {
-    __accessCheck$i(obj, member, "read from private field");
+  var __privateGet$g = (obj, member, getter) => {
+    __accessCheck$j(obj, member, "read from private field");
     return member.get(obj);
   };
-  var __privateAdd$i = (obj, member, value) => {
+  var __privateAdd$j = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$f = (obj, member, value, setter) => {
-    __accessCheck$i(obj, member, "write to private field");
+  var __privateSet$g = (obj, member, value, setter) => {
+    __accessCheck$j(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -5033,7 +5116,7 @@
      */
     constructor(renderer, parameters = defaultTextureParams) {
       /** Whether this texture should be automatically resized when the {@link Renderer renderer} size changes. Default to true. */
-      __privateAdd$i(this, _autoResize, true);
+      __privateAdd$j(this, _autoResize, true);
       renderer = isRenderer(renderer, parameters.label ? parameters.label + " Texture" : "Texture");
       this.type = "Texture";
       this.renderer = renderer;
@@ -5060,7 +5143,7 @@
         depth: this.options.viewDimension.indexOf("cube") !== -1 ? 6 : 1
       };
       if (this.options.fixedSize) {
-        __privateSet$f(this, _autoResize, false);
+        __privateSet$g(this, _autoResize, false);
       }
       this.setBindings();
       this.renderer.addTexture(this);
@@ -5194,7 +5277,7 @@
      * @param size - the optional new {@link TextureSize | size} to set
      */
     resize(size = null) {
-      if (!__privateGet$f(this, _autoResize))
+      if (!__privateGet$g(this, _autoResize))
         return;
       if (!size) {
         size = {
@@ -5913,21 +5996,21 @@
     }
   }
 
-  var __accessCheck$h = (obj, member, msg) => {
+  var __accessCheck$i = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$e = (obj, member, getter) => {
-    __accessCheck$h(obj, member, "read from private field");
+  var __privateGet$f = (obj, member, getter) => {
+    __accessCheck$i(obj, member, "read from private field");
     return member.get(obj);
   };
-  var __privateAdd$h = (obj, member, value) => {
+  var __privateAdd$i = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$e = (obj, member, value, setter) => {
-    __accessCheck$h(obj, member, "write to private field");
+  var __privateSet$f = (obj, member, value, setter) => {
+    __accessCheck$i(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -5944,7 +6027,7 @@
        * Whether this {@link ComputePass} should be added to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically
        * @private
        */
-      __privateAdd$h(this, _autoRender$2, true);
+      __privateAdd$i(this, _autoRender$2, true);
       // callbacks / events
       /** function assigned to the {@link onReady} callback */
       this._onReadyCallback = () => {
@@ -5996,7 +6079,7 @@
       };
       this.renderOrder = renderOrder ?? 0;
       if (autoRender !== void 0) {
-        __privateSet$e(this, _autoRender$2, autoRender);
+        __privateSet$f(this, _autoRender$2, autoRender);
       }
       this.userData = {};
       this.ready = false;
@@ -6036,7 +6119,7 @@
       if (addToRenderer) {
         this.renderer.computePasses.push(this);
       }
-      if (__privateGet$e(this, _autoRender$2)) {
+      if (__privateGet$f(this, _autoRender$2)) {
         this.renderer.scene.addComputePass(this);
       }
     }
@@ -6045,7 +6128,7 @@
      * @param removeFromRenderer - whether to remove this {@link ComputePass} from the {@link Renderer#computePasses | Renderer computePasses array}.
      */
     removeFromScene(removeFromRenderer = false) {
-      if (__privateGet$e(this, _autoRender$2)) {
+      if (__privateGet$f(this, _autoRender$2)) {
         this.renderer.scene.removeComputePass(this);
       }
       if (removeFromRenderer) {
@@ -7171,21 +7254,21 @@
     }
   }
 
-  var __accessCheck$g = (obj, member, msg) => {
+  var __accessCheck$h = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$d = (obj, member, getter) => {
-    __accessCheck$g(obj, member, "read from private field");
+  var __privateGet$e = (obj, member, getter) => {
+    __accessCheck$h(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$g = (obj, member, value) => {
+  var __privateAdd$h = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$d = (obj, member, value, setter) => {
-    __accessCheck$g(obj, member, "write to private field");
+  var __privateSet$e = (obj, member, value, setter) => {
+    __accessCheck$h(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -7199,12 +7282,12 @@
     constructor(renderer, { color = new Vec3(1), intensity = 1, type = "lights" } = {}) {
       super();
       /** @ignore */
-      __privateAdd$g(this, _intensity$1, void 0);
+      __privateAdd$h(this, _intensity$1, void 0);
       /**
        * A {@link Vec3} holding the {@link Light} {@link color} multiplied by its {@link intensity}.
        * @private
        */
-      __privateAdd$g(this, _intensityColor, void 0);
+      __privateAdd$h(this, _intensityColor, void 0);
       this.type = type;
       this.setRenderer(renderer);
       this.uuid = generateUUID();
@@ -7213,9 +7296,9 @@
         intensity
       };
       this.color = color;
-      __privateSet$d(this, _intensityColor, this.color.clone());
+      __privateSet$e(this, _intensityColor, this.color.clone());
       this.color.onChange(
-        () => this.onPropertyChanged("color", __privateGet$d(this, _intensityColor).copy(this.color).multiplyScalar(this.intensity))
+        () => this.onPropertyChanged("color", __privateGet$e(this, _intensityColor).copy(this.color).multiplyScalar(this.intensity))
       );
       this.intensity = intensity;
     }
@@ -7253,22 +7336,22 @@
      */
     reset() {
       this.setRendererBinding();
-      this.onPropertyChanged("color", __privateGet$d(this, _intensityColor).copy(this.color).multiplyScalar(this.intensity));
+      this.onPropertyChanged("color", __privateGet$e(this, _intensityColor).copy(this.color).multiplyScalar(this.intensity));
     }
     /**
      * Get this {@link Light} intensity.
      * @returns - The {@link Light} intensity.
      */
     get intensity() {
-      return __privateGet$d(this, _intensity$1);
+      return __privateGet$e(this, _intensity$1);
     }
     /**
      * Set this {@link Light} intensity and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      * @param value - The new {@link Light} intensity.
      */
     set intensity(value) {
-      __privateSet$d(this, _intensity$1, value);
-      this.onPropertyChanged("color", __privateGet$d(this, _intensityColor).copy(this.color).multiplyScalar(this.intensity));
+      __privateSet$e(this, _intensity$1, value);
+      this.onPropertyChanged("color", __privateGet$e(this, _intensityColor).copy(this.color).multiplyScalar(this.intensity));
     }
     /**
      * Update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} input value and tell the {@link CameraRenderer#cameraLightsBindGroup | renderer camera, lights and shadows} bind group to update.
@@ -7627,21 +7710,21 @@
     }
   }
 
-  var __accessCheck$f = (obj, member, msg) => {
+  var __accessCheck$g = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$c = (obj, member, getter) => {
-    __accessCheck$f(obj, member, "read from private field");
+  var __privateGet$d = (obj, member, getter) => {
+    __accessCheck$g(obj, member, "read from private field");
     return member.get(obj);
   };
-  var __privateAdd$f = (obj, member, value) => {
+  var __privateAdd$g = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$c = (obj, member, value, setter) => {
-    __accessCheck$f(obj, member, "write to private field");
+  var __privateSet$d = (obj, member, value, setter) => {
+    __accessCheck$g(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -7654,7 +7737,7 @@
      */
     constructor(renderer, parameters = {}) {
       /** Whether we should add this {@link RenderTarget} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
-      __privateAdd$f(this, _autoRender$1, true);
+      __privateAdd$g(this, _autoRender$1, true);
       renderer = isRenderer(renderer, "RenderTarget");
       this.type = "RenderTarget";
       this.renderer = renderer;
@@ -7669,7 +7752,7 @@
         autoRender: autoRender === void 0 ? true : autoRender
       };
       if (autoRender !== void 0) {
-        __privateSet$c(this, _autoRender$1, autoRender);
+        __privateSet$d(this, _autoRender$1, autoRender);
       }
       this.renderPass = new RenderPass(this.renderer, {
         label: this.options.label ? `${this.options.label} Render Pass` : "Render Target Render Pass",
@@ -7705,7 +7788,7 @@
      */
     addToScene() {
       this.renderer.renderTargets.push(this);
-      if (__privateGet$c(this, _autoRender$1)) {
+      if (__privateGet$d(this, _autoRender$1)) {
         this.renderer.scene.addRenderTarget(this);
       }
     }
@@ -7713,7 +7796,7 @@
      * Remove the {@link RenderTarget} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
      */
     removeFromScene() {
-      if (__privateGet$c(this, _autoRender$1)) {
+      if (__privateGet$d(this, _autoRender$1)) {
         this.renderer.scene.removeRenderTarget(this);
       }
       this.renderer.renderTargets = this.renderer.renderTargets.filter((renderTarget) => renderTarget.uuid !== this.uuid);
@@ -8294,7 +8377,8 @@ struct VSOutput {
   vsOutput.position = getOutputPosition(attributes.position);
   vsOutput.uv = attributes.uv;
   vsOutput.normal = getWorldNormal(attributes.normal);
-  vsOutput.worldPosition = getWorldPosition(attributes.position).xyz;
+  let worldPosition: vec4f = getWorldPosition(attributes.position);
+  vsOutput.worldPosition = worldPosition.xyz / worldPosition.w;
   vsOutput.viewDirection = camera.position - vsOutput.worldPosition;
   
   return vsOutput;
@@ -8841,26 +8925,26 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
 `
   );
 
-  var __accessCheck$e = (obj, member, msg) => {
+  var __accessCheck$f = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$b = (obj, member, getter) => {
-    __accessCheck$e(obj, member, "read from private field");
+  var __privateGet$c = (obj, member, getter) => {
+    __accessCheck$f(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$e = (obj, member, value) => {
+  var __privateAdd$f = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$b = (obj, member, value, setter) => {
-    __accessCheck$e(obj, member, "write to private field");
+  var __privateSet$c = (obj, member, value, setter) => {
+    __accessCheck$f(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
-  var __privateMethod$6 = (obj, member, method) => {
-    __accessCheck$e(obj, member, "access private method");
+  var __privateMethod$7 = (obj, member, method) => {
+    __accessCheck$f(obj, member, "access private method");
     return method;
   };
   var _intensity, _bias, _normalBias, _pcfSamples, _isActive, _autoRender, _materials, _depthMaterials, _depthPassTaskID, _setParameters, setParameters_fn;
@@ -8907,31 +8991,31 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
        * @param parameters - parameters to use for this {@link Shadow}.
        * @private
        */
-      __privateAdd$e(this, _setParameters);
+      __privateAdd$f(this, _setParameters);
       /** @ignore */
-      __privateAdd$e(this, _intensity, void 0);
+      __privateAdd$f(this, _intensity, void 0);
       /** @ignore */
-      __privateAdd$e(this, _bias, void 0);
+      __privateAdd$f(this, _bias, void 0);
       /** @ignore */
-      __privateAdd$e(this, _normalBias, void 0);
+      __privateAdd$f(this, _normalBias, void 0);
       /** @ignore */
-      __privateAdd$e(this, _pcfSamples, void 0);
+      __privateAdd$f(this, _pcfSamples, void 0);
       /** @ignore */
-      __privateAdd$e(this, _isActive, void 0);
+      __privateAdd$f(this, _isActive, void 0);
       /** @ignore */
-      __privateAdd$e(this, _autoRender, void 0);
+      __privateAdd$f(this, _autoRender, void 0);
       /**
        * Original {@link meshes} {@link RenderMaterial | materials}.
        * @private
        */
-      __privateAdd$e(this, _materials, void 0);
+      __privateAdd$f(this, _materials, void 0);
       /**
        * Corresponding depth {@link meshes} {@link RenderMaterial | materials}.
        * @private
        */
-      __privateAdd$e(this, _depthMaterials, void 0);
+      __privateAdd$f(this, _depthMaterials, void 0);
       /** @ignore */
-      __privateAdd$e(this, _depthPassTaskID, void 0);
+      __privateAdd$f(this, _depthPassTaskID, void 0);
       this.setRenderer(renderer);
       this.light = light;
       this.index = this.light.index;
@@ -8946,10 +9030,10 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
       };
       this.sampleCount = 1;
       this.meshes = /* @__PURE__ */ new Map();
-      __privateSet$b(this, _materials, /* @__PURE__ */ new Map());
-      __privateSet$b(this, _depthMaterials, /* @__PURE__ */ new Map());
-      __privateSet$b(this, _depthPassTaskID, null);
-      __privateMethod$6(this, _setParameters, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
+      __privateSet$c(this, _materials, /* @__PURE__ */ new Map());
+      __privateSet$c(this, _depthMaterials, /* @__PURE__ */ new Map());
+      __privateSet$c(this, _depthPassTaskID, null);
+      __privateMethod$7(this, _setParameters, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
       this.isActive = false;
     }
     /**
@@ -8960,7 +9044,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
       renderer = isCameraRenderer(renderer, this.constructor.name);
       this.renderer = renderer;
       this.setRendererBinding();
-      __privateGet$b(this, _depthMaterials)?.forEach((depthMaterial) => {
+      __privateGet$c(this, _depthMaterials)?.forEach((depthMaterial) => {
         depthMaterial.setRenderer(this.renderer);
       });
     }
@@ -8974,7 +9058,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
      * @param parameters - parameters to use for this {@link Shadow}.
      */
     cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender } = {}) {
-      __privateMethod$6(this, _setParameters, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
+      __privateMethod$7(this, _setParameters, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
       this.isActive = true;
     }
     /**
@@ -8992,7 +9076,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
      * @returns - Whether this {@link Shadow} is actually casting shadows.
      */
     get isActive() {
-      return __privateGet$b(this, _isActive);
+      return __privateGet$c(this, _isActive);
     }
     /**
      * Start or stop casting shadows.
@@ -9004,21 +9088,21 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
       } else if (value && !this.isActive) {
         this.init();
       }
-      __privateSet$b(this, _isActive, value);
+      __privateSet$c(this, _isActive, value);
     }
     /**
      * Get this {@link Shadow} intensity.
      * @returns - The {@link Shadow} intensity.
      */
     get intensity() {
-      return __privateGet$b(this, _intensity);
+      return __privateGet$c(this, _intensity);
     }
     /**
      * Set this {@link Shadow} intensity and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      * @param value - The new {@link Shadow} intensity.
      */
     set intensity(value) {
-      __privateSet$b(this, _intensity, value);
+      __privateSet$c(this, _intensity, value);
       this.onPropertyChanged("intensity", this.intensity);
     }
     /**
@@ -9026,14 +9110,14 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
      * @returns - The {@link Shadow} bias.
      */
     get bias() {
-      return __privateGet$b(this, _bias);
+      return __privateGet$c(this, _bias);
     }
     /**
      * Set this {@link Shadow} bias and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      * @param value - The new {@link Shadow} bias.
      */
     set bias(value) {
-      __privateSet$b(this, _bias, value);
+      __privateSet$c(this, _bias, value);
       this.onPropertyChanged("bias", this.bias);
     }
     /**
@@ -9041,14 +9125,14 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
      * @returns - The {@link Shadow} normal bias.
      */
     get normalBias() {
-      return __privateGet$b(this, _normalBias);
+      return __privateGet$c(this, _normalBias);
     }
     /**
      * Set this {@link Shadow} normal bias and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      * @param value - The new {@link Shadow} normal bias.
      */
     set normalBias(value) {
-      __privateSet$b(this, _normalBias, value);
+      __privateSet$c(this, _normalBias, value);
       this.onPropertyChanged("normalBias", this.normalBias);
     }
     /**
@@ -9056,14 +9140,14 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
      * @returns - The {@link Shadow} PCF samples count.
      */
     get pcfSamples() {
-      return __privateGet$b(this, _pcfSamples);
+      return __privateGet$c(this, _pcfSamples);
     }
     /**
      * Set this {@link Shadow} PCF samples count and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      * @param value - The new {@link Shadow} PCF samples count.
      */
     set pcfSamples(value) {
-      __privateSet$b(this, _pcfSamples, Math.max(1, Math.ceil(value)));
+      __privateSet$c(this, _pcfSamples, Math.max(1, Math.ceil(value)));
       this.onPropertyChanged("pcfSamples", this.pcfSamples);
     }
     /**
@@ -9088,7 +9172,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
       if (!this.depthPassTarget) {
         this.createDepthPassTarget();
       }
-      if (__privateGet$b(this, _depthPassTaskID) === null && __privateGet$b(this, _autoRender)) {
+      if (__privateGet$c(this, _depthPassTaskID) === null && __privateGet$c(this, _autoRender)) {
         this.setDepthPass();
         this.onPropertyChanged("isActive", 1);
       }
@@ -9167,7 +9251,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
      * Start the depth pass.
      */
     setDepthPass() {
-      __privateSet$b(this, _depthPassTaskID, this.render());
+      __privateSet$c(this, _depthPassTaskID, this.render());
     }
     /**
      * Remove the depth pass from its {@link utils/TasksQueueManager.TasksQueueManager | task queue manager}.
@@ -9203,14 +9287,14 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
      * Render the shadow map only once. Useful with static scenes if autoRender has been set to `false` to only take one snapshot of the shadow map.
      */
     async renderOnce() {
-      if (!__privateGet$b(this, _autoRender)) {
+      if (!__privateGet$c(this, _autoRender)) {
         this.onPropertyChanged("isActive", 1);
         this.useDepthMaterials();
         this.meshes.forEach((mesh) => {
           mesh.setGeometry();
         });
         await Promise.all(
-          [...__privateGet$b(this, _depthMaterials).values()].map(async (depthMaterial) => {
+          [...__privateGet$c(this, _depthMaterials).values()].map(async (depthMaterial) => {
             await depthMaterial.compileMaterial();
           })
         );
@@ -9298,13 +9382,13 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
       if (this.meshes.get(mesh.uuid))
         return;
       mesh.options.castShadows = true;
-      __privateGet$b(this, _materials).set(mesh.uuid, mesh.material);
+      __privateGet$c(this, _materials).set(mesh.uuid, mesh.material);
       parameters = this.patchShadowCastingMeshParams(mesh, parameters);
-      if (__privateGet$b(this, _depthMaterials).get(mesh.uuid)) {
-        __privateGet$b(this, _depthMaterials).get(mesh.uuid).destroy();
-        __privateGet$b(this, _depthMaterials).delete(mesh.uuid);
+      if (__privateGet$c(this, _depthMaterials).get(mesh.uuid)) {
+        __privateGet$c(this, _depthMaterials).get(mesh.uuid).destroy();
+        __privateGet$c(this, _depthMaterials).delete(mesh.uuid);
       }
-      __privateGet$b(this, _depthMaterials).set(
+      __privateGet$c(this, _depthMaterials).set(
         mesh.uuid,
         new RenderMaterial(this.renderer, {
           label: `${this.constructor.name} (index: ${this.index}) ${mesh.options.label} depth render material`,
@@ -9318,7 +9402,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
      */
     useDepthMaterials() {
       this.meshes.forEach((mesh) => {
-        mesh.useMaterial(__privateGet$b(this, _depthMaterials).get(mesh.uuid));
+        mesh.useMaterial(__privateGet$c(this, _depthMaterials).get(mesh.uuid));
       });
     }
     /**
@@ -9326,7 +9410,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
      */
     useOriginalMaterials() {
       this.meshes.forEach((mesh) => {
-        mesh.useMaterial(__privateGet$b(this, _materials).get(mesh.uuid));
+        mesh.useMaterial(__privateGet$c(this, _materials).get(mesh.uuid));
       });
     }
     /**
@@ -9334,10 +9418,10 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
      * @param mesh - {@link ProjectedMesh | mesh} to remove.
      */
     removeMesh(mesh) {
-      const depthMaterial = __privateGet$b(this, _depthMaterials).get(mesh.uuid);
+      const depthMaterial = __privateGet$c(this, _depthMaterials).get(mesh.uuid);
       if (depthMaterial) {
         depthMaterial.destroy();
-        __privateGet$b(this, _depthMaterials).delete(mesh.uuid);
+        __privateGet$c(this, _depthMaterials).delete(mesh.uuid);
       }
       this.meshes.delete(mesh.uuid);
     }
@@ -9346,13 +9430,13 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
      */
     destroy() {
       this.onPropertyChanged("isActive", 0);
-      if (__privateGet$b(this, _depthPassTaskID) !== null) {
-        this.removeDepthPass(__privateGet$b(this, _depthPassTaskID));
-        __privateSet$b(this, _depthPassTaskID, null);
+      if (__privateGet$c(this, _depthPassTaskID) !== null) {
+        this.removeDepthPass(__privateGet$c(this, _depthPassTaskID));
+        __privateSet$c(this, _depthPassTaskID, null);
       }
       this.meshes.forEach((mesh) => this.removeMesh(mesh));
-      __privateSet$b(this, _materials, /* @__PURE__ */ new Map());
-      __privateSet$b(this, _depthMaterials, /* @__PURE__ */ new Map());
+      __privateSet$c(this, _materials, /* @__PURE__ */ new Map());
+      __privateSet$c(this, _depthMaterials, /* @__PURE__ */ new Map());
       this.meshes = /* @__PURE__ */ new Map();
       this.depthPassTarget?.destroy();
       this.depthTexture?.destroy();
@@ -9384,7 +9468,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
     this.depthTextureSize = depthTextureSize;
     this.depthTextureSize.onChange(() => this.onDepthTextureSizeChanged());
     this.depthTextureFormat = depthTextureFormat;
-    __privateSet$b(this, _autoRender, autoRender);
+    __privateSet$c(this, _autoRender, autoRender);
   };
 
   const directionalShadowStruct = {
@@ -9529,21 +9613,21 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
     }
   }
 
-  var __accessCheck$d = (obj, member, msg) => {
+  var __accessCheck$e = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$a = (obj, member, getter) => {
-    __accessCheck$d(obj, member, "read from private field");
+  var __privateGet$b = (obj, member, getter) => {
+    __accessCheck$e(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$d = (obj, member, value) => {
+  var __privateAdd$e = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$a = (obj, member, value, setter) => {
-    __accessCheck$d(obj, member, "write to private field");
+  var __privateSet$b = (obj, member, value, setter) => {
+    __accessCheck$e(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -9564,20 +9648,20 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
       const type = "directionalLights";
       super(renderer, { color, intensity, type });
       /** @ignore */
-      __privateAdd$d(this, _actualPosition$1, void 0);
+      __privateAdd$e(this, _actualPosition$1, void 0);
       /**
        * The {@link Vec3 | direction} of the {@link DirectionalLight} is the {@link target} minus the actual {@link position}.
        * @private
        */
-      __privateAdd$d(this, _direction, void 0);
+      __privateAdd$e(this, _direction, void 0);
       this.options = {
         ...this.options,
         position,
         target,
         shadow
       };
-      __privateSet$a(this, _direction, new Vec3());
-      __privateSet$a(this, _actualPosition$1, new Vec3());
+      __privateSet$b(this, _direction, new Vec3());
+      __privateSet$b(this, _actualPosition$1, new Vec3());
       this.target = target;
       this.target.onChange(() => this.setDirection());
       this.position.copy(position);
@@ -9611,9 +9695,9 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
      * Set the {@link DirectionalLight} direction based on the {@link target} and the {@link worldMatrix} translation and update the {@link DirectionalShadow} view matrix.
      */
     setDirection() {
-      __privateGet$a(this, _direction).copy(this.target).sub(this.worldMatrix.getTranslation(__privateGet$a(this, _actualPosition$1)));
-      this.onPropertyChanged("direction", __privateGet$a(this, _direction));
-      this.shadow?.updateViewMatrix(__privateGet$a(this, _actualPosition$1), this.target);
+      __privateGet$b(this, _direction).copy(this.target).sub(this.worldMatrix.getTranslation(__privateGet$b(this, _actualPosition$1)));
+      this.onPropertyChanged("direction", __privateGet$b(this, _direction));
+      this.shadow?.updateViewMatrix(__privateGet$b(this, _actualPosition$1), this.target);
     }
     // explicitly disable scale and transform origin transformations
     /** @ignore */
@@ -9650,21 +9734,21 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
   _actualPosition$1 = new WeakMap();
   _direction = new WeakMap();
 
-  var __accessCheck$c = (obj, member, msg) => {
+  var __accessCheck$d = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$9 = (obj, member, getter) => {
-    __accessCheck$c(obj, member, "read from private field");
+  var __privateGet$a = (obj, member, getter) => {
+    __accessCheck$d(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$c = (obj, member, value) => {
+  var __privateAdd$d = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$9 = (obj, member, value, setter) => {
-    __accessCheck$c(obj, member, "write to private field");
+  var __privateSet$a = (obj, member, value, setter) => {
+    __accessCheck$d(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -9726,7 +9810,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
        * {@link Vec3} used to calculate the actual current direction based on the {@link PointLight} position.
        * @private
        */
-      __privateAdd$c(this, _tempCubeDirection, void 0);
+      __privateAdd$d(this, _tempCubeDirection, void 0);
       this.options = {
         ...this.options,
         camera
@@ -9739,7 +9823,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
         new Vec3(0, 0, -1),
         new Vec3(0, 0, 1)
       ];
-      __privateSet$9(this, _tempCubeDirection, new Vec3());
+      __privateSet$a(this, _tempCubeDirection, new Vec3());
       this.cubeUps = [
         new Vec3(0, -1, 0),
         new Vec3(0, -1, 0),
@@ -9827,8 +9911,8 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
      */
     updateViewMatrices(position = new Vec3()) {
       for (let i = 0; i < 6; i++) {
-        __privateGet$9(this, _tempCubeDirection).copy(this.cubeDirections[i]).add(position);
-        this.camera.viewMatrices[i].makeView(position, __privateGet$9(this, _tempCubeDirection), this.cubeUps[i]);
+        __privateGet$a(this, _tempCubeDirection).copy(this.cubeDirections[i]).add(position);
+        this.camera.viewMatrices[i].makeView(position, __privateGet$a(this, _tempCubeDirection), this.cubeUps[i]);
         for (let j = 0; j < 16; j++) {
           this.rendererBinding.childrenBindings[this.index].inputs.viewMatrices.value[i * 16 + j] = this.camera.viewMatrices[i].elements[j];
         }
@@ -9954,21 +10038,21 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
   }
   _tempCubeDirection = new WeakMap();
 
-  var __accessCheck$b = (obj, member, msg) => {
+  var __accessCheck$c = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$8 = (obj, member, getter) => {
-    __accessCheck$b(obj, member, "read from private field");
+  var __privateGet$9 = (obj, member, getter) => {
+    __accessCheck$c(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$b = (obj, member, value) => {
+  var __privateAdd$c = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$8 = (obj, member, value, setter) => {
-    __accessCheck$b(obj, member, "write to private field");
+  var __privateSet$9 = (obj, member, value, setter) => {
+    __accessCheck$c(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -9983,16 +10067,16 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
       const type = "pointLights";
       super(renderer, { color, intensity, type });
       /** @ignore */
-      __privateAdd$b(this, _range, void 0);
+      __privateAdd$c(this, _range, void 0);
       /** @ignore */
-      __privateAdd$b(this, _actualPosition, void 0);
+      __privateAdd$c(this, _actualPosition, void 0);
       this.options = {
         ...this.options,
         position,
         range,
         shadow
       };
-      __privateSet$8(this, _actualPosition, new Vec3());
+      __privateSet$9(this, _actualPosition, new Vec3());
       this.position.copy(position);
       this.range = range;
       this.parent = this.renderer.scene;
@@ -10029,22 +10113,22 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
      * @returns - The {@link PointLight} range.
      */
     get range() {
-      return __privateGet$8(this, _range);
+      return __privateGet$9(this, _range);
     }
     /**
      * Set this {@link PointLight} range and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      * @param value - The new {@link PointLight} range.
      */
     set range(value) {
-      __privateSet$8(this, _range, value);
+      __privateSet$9(this, _range, value);
       this.onPropertyChanged("range", this.range);
     }
     /**
      * Set the {@link PointLight} position based on the {@link worldMatrix} translation and update the {@link PointShadow} view matrices.
      */
     setPosition() {
-      this.onPropertyChanged("position", this.worldMatrix.getTranslation(__privateGet$8(this, _actualPosition)));
-      this.shadow?.updateViewMatrices(__privateGet$8(this, _actualPosition));
+      this.onPropertyChanged("position", this.worldMatrix.getTranslation(__privateGet$9(this, _actualPosition)));
+      this.shadow?.updateViewMatrices(__privateGet$9(this, _actualPosition));
     }
     // explicitly disable scale and transform origin transformations
     /** @ignore */
@@ -10081,21 +10165,21 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
   _range = new WeakMap();
   _actualPosition = new WeakMap();
 
-  var __accessCheck$a = (obj, member, msg) => {
+  var __accessCheck$b = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$7 = (obj, member, getter) => {
-    __accessCheck$a(obj, member, "read from private field");
+  var __privateGet$8 = (obj, member, getter) => {
+    __accessCheck$b(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$a = (obj, member, value) => {
+  var __privateAdd$b = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$7 = (obj, member, value, setter) => {
-    __accessCheck$a(obj, member, "write to private field");
+  var __privateSet$8 = (obj, member, value, setter) => {
+    __accessCheck$b(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -10139,7 +10223,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
           { ...defaultMeshBaseParams, ...params[2] }
         );
         /** Whether we should add this {@link MeshBase} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
-        __privateAdd$a(this, _autoRender, true);
+        __privateAdd$b(this, _autoRender, true);
         // callbacks / events
         /** function assigned to the {@link onReady} callback */
         this._onReadyCallback = () => {
@@ -10190,7 +10274,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
           ...meshParameters
         };
         if (autoRender !== void 0) {
-          __privateSet$7(this, _autoRender, autoRender);
+          __privateSet$8(this, _autoRender, autoRender);
         }
         this.visible = visible;
         this.renderOrder = renderOrder;
@@ -10210,7 +10294,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
        * @readonly
        */
       get autoRender() {
-        return __privateGet$7(this, _autoRender);
+        return __privateGet$8(this, _autoRender);
       }
       /**
        * Get/set whether a Mesh is ready or not
@@ -10235,7 +10319,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
           this.renderer.meshes.push(this);
         }
         this.setRenderingOptionsForRenderPass(this.outputTarget ? this.outputTarget.renderPass : this.renderer.renderPass);
-        if (__privateGet$7(this, _autoRender)) {
+        if (__privateGet$8(this, _autoRender)) {
           this.renderer.scene.addMesh(this);
         }
       }
@@ -10244,7 +10328,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
        * @param removeFromRenderer - whether to remove this Mesh from the {@link Renderer#meshes | Renderer meshes array}
        */
       removeFromScene(removeFromRenderer = false) {
-        if (__privateGet$7(this, _autoRender)) {
+        if (__privateGet$8(this, _autoRender)) {
           this.renderer.scene.removeMesh(this);
         }
         if (removeFromRenderer) {
@@ -12575,7 +12659,9 @@ ${this.shaders.compute.head}`;
       for (let i = 0, l = this.renderer.meshes.length; i < l; i++) {
         this.renderer.meshes[i].onBeforeRenderScene();
       }
+      this.renderer.animations.forEach((targetsAnimation) => targetsAnimation.update());
       this.updateMatrixStack();
+      this.renderer.animations.forEach((targetsAnimation) => targetsAnimation.onAfterUpdate());
       for (const mesh of this.renderer.meshes) {
         if ("checkFrustumCulling" in mesh && mesh.visible) {
           mesh.checkFrustumCulling();
@@ -12616,30 +12702,30 @@ ${this.shaders.compute.head}`;
     }
   }
 
-  var __accessCheck$9 = (obj, member, msg) => {
+  var __accessCheck$a = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$6 = (obj, member, getter) => {
-    __accessCheck$9(obj, member, "read from private field");
+  var __privateGet$7 = (obj, member, getter) => {
+    __accessCheck$a(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$9 = (obj, member, value) => {
+  var __privateAdd$a = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$6 = (obj, member, value, setter) => {
-    __accessCheck$9(obj, member, "write to private field");
+  var __privateSet$7 = (obj, member, value, setter) => {
+    __accessCheck$a(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
   var __privateWrapper = (obj, member, setter, getter) => ({
     set _(value) {
-      __privateSet$6(obj, member, value);
+      __privateSet$7(obj, member, value);
     },
     get _() {
-      return __privateGet$6(obj, member, getter);
+      return __privateGet$7(obj, member, getter);
     }
   });
   var _taskCount;
@@ -12649,7 +12735,7 @@ ${this.shaders.compute.head}`;
      */
     constructor() {
       /** Private number to assign a unique id to each {@link TaskQueueItem | task queue item} */
-      __privateAdd$9(this, _taskCount, 0);
+      __privateAdd$a(this, _taskCount, 0);
       this.queue = [];
     }
     /**
@@ -12664,7 +12750,7 @@ ${this.shaders.compute.head}`;
         callback,
         order,
         once,
-        id: __privateGet$6(this, _taskCount)
+        id: __privateGet$7(this, _taskCount)
       };
       __privateWrapper(this, _taskCount)._++;
       this.queue.push(task);
@@ -13304,6 +13390,7 @@ ${this.shaders.compute.head}`;
       this.meshes = [];
       this.textures = [];
       this.renderBundles = /* @__PURE__ */ new Map();
+      this.animations = /* @__PURE__ */ new Map();
     }
     /**
      * Get all this {@link GPURenderer} rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes)
@@ -13485,6 +13572,7 @@ ${this.shaders.compute.head}`;
       this.deviceManager.renderers = this.deviceManager.renderers.filter((renderer) => renderer.uuid !== this.uuid);
       this.domElement?.destroy();
       this.renderBundles.forEach((bundle) => bundle.destroy());
+      this.animations = /* @__PURE__ */ new Map();
       this.renderPass?.destroy();
       this.postProcessingPass?.destroy();
       this.renderTargets.forEach((renderTarget) => renderTarget.destroy());
@@ -13494,21 +13582,21 @@ ${this.shaders.compute.head}`;
     }
   }
 
-  var __accessCheck$8 = (obj, member, msg) => {
+  var __accessCheck$9 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$5 = (obj, member, getter) => {
-    __accessCheck$8(obj, member, "read from private field");
+  var __privateGet$6 = (obj, member, getter) => {
+    __accessCheck$9(obj, member, "read from private field");
     return member.get(obj);
   };
-  var __privateAdd$8 = (obj, member, value) => {
+  var __privateAdd$9 = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$5 = (obj, member, value, setter) => {
-    __accessCheck$8(obj, member, "write to private field");
+  var __privateSet$6 = (obj, member, value, setter) => {
+    __accessCheck$9(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -13539,7 +13627,7 @@ ${this.shaders.compute.head}`;
         renderPass
       });
       /** @ignore */
-      __privateAdd$8(this, _shouldUpdateCameraLightsBindGroup, void 0);
+      __privateAdd$9(this, _shouldUpdateCameraLightsBindGroup, void 0);
       this.type = "GPUCameraRenderer";
       camera = { ...{ fov: 50, near: 0.1, far: 1e3 }, ...camera };
       if (lights !== false) {
@@ -13551,7 +13639,7 @@ ${this.shaders.compute.head}`;
         lights
       };
       this.bindings = {};
-      __privateSet$5(this, _shouldUpdateCameraLightsBindGroup, true);
+      __privateSet$6(this, _shouldUpdateCameraLightsBindGroup, true);
       this.lights = [];
       this.setCamera(camera);
       this.setCameraBinding();
@@ -13904,7 +13992,7 @@ ${this.shaders.compute.head}`;
      * Tell our  {@link cameraLightsBindGroup | camera, lights and shadows bind group} to update.
      */
     shouldUpdateCameraLightsBindGroup() {
-      __privateSet$5(this, _shouldUpdateCameraLightsBindGroup, true);
+      __privateSet$6(this, _shouldUpdateCameraLightsBindGroup, true);
     }
     /**
      * Tell our {@link GPUCameraRenderer#bindings.camera | camera buffer binding} that we should update its bindings and update the bind group. Called each time the camera matrices change.
@@ -13919,9 +14007,9 @@ ${this.shaders.compute.head}`;
      * Update the {@link cameraLightsBindGroup | camera and lights BindGroup}.
      */
     updateCameraLightsBindGroup() {
-      if (this.cameraLightsBindGroup && __privateGet$5(this, _shouldUpdateCameraLightsBindGroup)) {
+      if (this.cameraLightsBindGroup && __privateGet$6(this, _shouldUpdateCameraLightsBindGroup)) {
         this.cameraLightsBindGroup.update();
-        __privateSet$5(this, _shouldUpdateCameraLightsBindGroup, false);
+        __privateSet$6(this, _shouldUpdateCameraLightsBindGroup, false);
       }
     }
     /**
@@ -14363,17 +14451,17 @@ ${this.shaders.compute.head}`;
     }
   }
 
-  var __accessCheck$7 = (obj, member, msg) => {
+  var __accessCheck$8 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateAdd$7 = (obj, member, value) => {
+  var __privateAdd$8 = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateMethod$5 = (obj, member, method) => {
-    __accessCheck$7(obj, member, "access private method");
+  var __privateMethod$6 = (obj, member, method) => {
+    __accessCheck$8(obj, member, "access private method");
     return method;
   };
   var _addGeometryToIndirectMappedBuffer, addGeometryToIndirectMappedBuffer_fn;
@@ -14382,7 +14470,7 @@ ${this.shaders.compute.head}`;
     /**
      * IndirectBuffer constructor.
      * @param renderer - {@link Renderer} or {@link GPUCurtains} class object used to create this {@link IndirectBuffer}.
-     * @param parameters - {@link IndirectBufferParams | parameters} use to create this {@link IndirectBuffer}.
+     * @param parameters - {@link IndirectBufferParams | parameters} used to create this {@link IndirectBuffer}.
      */
     constructor(renderer, { label = "Indirect buffer", geometries = [], minEntrySize = indirectBufferEntrySize } = {}) {
       /**
@@ -14392,7 +14480,7 @@ ${this.shaders.compute.head}`;
        * @param index - Index in the {@link buffer} mapped array buffer at which to add the attributes.
        * @private
        */
-      __privateAdd$7(this, _addGeometryToIndirectMappedBuffer);
+      __privateAdd$8(this, _addGeometryToIndirectMappedBuffer);
       this.type = "IndirectBuffer";
       renderer = isRenderer(renderer, this.type);
       this.renderer = renderer;
@@ -14458,7 +14546,7 @@ ${this.shaders.compute.head}`;
       const indirectMappedBuffer = new Uint32Array(this.buffer.GPUBuffer.getMappedRange());
       let offset = 0;
       this.geometries.forEach((geometry) => {
-        __privateMethod$5(this, _addGeometryToIndirectMappedBuffer, addGeometryToIndirectMappedBuffer_fn).call(this, geometry, indirectMappedBuffer, offset * this.options.minEntrySize);
+        __privateMethod$6(this, _addGeometryToIndirectMappedBuffer, addGeometryToIndirectMappedBuffer_fn).call(this, geometry, indirectMappedBuffer, offset * this.options.minEntrySize);
         geometry.useIndirectBuffer({ buffer: this.buffer, offset: this.getByteOffsetAtIndex(offset) });
         offset++;
       });
@@ -14493,26 +14581,26 @@ ${this.shaders.compute.head}`;
     }
   };
 
-  var __accessCheck$6 = (obj, member, msg) => {
+  var __accessCheck$7 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$4 = (obj, member, getter) => {
-    __accessCheck$6(obj, member, "read from private field");
+  var __privateGet$5 = (obj, member, getter) => {
+    __accessCheck$7(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$6 = (obj, member, value) => {
+  var __privateAdd$7 = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$4 = (obj, member, value, setter) => {
-    __accessCheck$6(obj, member, "write to private field");
+  var __privateSet$5 = (obj, member, value, setter) => {
+    __accessCheck$7(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
-  var __privateMethod$4 = (obj, member, method) => {
-    __accessCheck$6(obj, member, "access private method");
+  var __privateMethod$5 = (obj, member, method) => {
+    __accessCheck$7(obj, member, "access private method");
     return method;
   };
   var _useProjection, _ready, _setBinding, setBinding_fn, _patchBindingOffset, patchBindingOffset_fn, _onSizeChanged, onSizeChanged_fn, _setDescriptor, setDescriptor_fn, _encodeRenderCommands, encodeRenderCommands_fn, _cleanUp, cleanUp_fn;
@@ -14537,39 +14625,39 @@ ${this.shaders.compute.head}`;
        * Set the {@link binding} and patches its array and buffer size if needed.
        * @private
        */
-      __privateAdd$6(this, _setBinding);
+      __privateAdd$7(this, _setBinding);
       /**
        * Path the {@link binding} array and buffer size with the minimum {@link Renderer#device | device} buffer offset alignment.
        * @param size - new {@link binding} size to use.
        * @private
        */
-      __privateAdd$6(this, _patchBindingOffset);
+      __privateAdd$7(this, _patchBindingOffset);
       /**
        * Called each time the {@link RenderBundle} size has actually changed.
        * @param newSize - new {@link RenderBundle} size to set.
        * @private
        */
-      __privateAdd$6(this, _onSizeChanged);
+      __privateAdd$7(this, _onSizeChanged);
       /**
        * Set the {@link descriptor} based on the {@link RenderBundleOptions#renderPass | render pass}.
        * @private
        */
-      __privateAdd$6(this, _setDescriptor);
+      __privateAdd$7(this, _setDescriptor);
       /**
        * Create the {@link descriptor}, {@link encoder} and {@link bundle} used by this {@link RenderBundle}.
        * @private
        */
-      __privateAdd$6(this, _encodeRenderCommands);
+      __privateAdd$7(this, _encodeRenderCommands);
       /**
        * Destroy the {@link binding} buffer if needed and remove the {@link RenderBundle} from the {@link Renderer}.
        * @private
        */
-      __privateAdd$6(this, _cleanUp);
+      __privateAdd$7(this, _cleanUp);
       /** @ignore */
       // whether this render bundle should be added to the 'projected' or 'unProjected' Scene stacks.
-      __privateAdd$6(this, _useProjection, void 0);
+      __privateAdd$7(this, _useProjection, void 0);
       /** @ignore */
-      __privateAdd$6(this, _ready, void 0);
+      __privateAdd$7(this, _ready, void 0);
       this.type = "RenderBundle";
       renderer = isRenderer(renderer, this.type);
       this.uuid = generateUUID();
@@ -14588,7 +14676,7 @@ ${this.shaders.compute.head}`;
       this.meshes = /* @__PURE__ */ new Map();
       this.encoder = null;
       this.bundle = null;
-      __privateSet$4(this, _ready, false);
+      __privateSet$5(this, _ready, false);
       this.binding = null;
       this.indirectBuffer = null;
       this.setRenderer(renderer);
@@ -14596,9 +14684,9 @@ ${this.shaders.compute.head}`;
         this.indirectBuffer = new IndirectBuffer(this.renderer);
       }
       if (this.options.useBuffer) {
-        __privateSet$4(this, _useProjection, true);
+        __privateSet$5(this, _useProjection, true);
         if (this.options.size !== 0) {
-          __privateMethod$4(this, _setBinding, setBinding_fn).call(this);
+          __privateMethod$5(this, _setBinding, setBinding_fn).call(this);
         } else {
           this.options.useBuffer = false;
           if (!this.renderer.production) {
@@ -14662,14 +14750,14 @@ ${this.shaders.compute.head}`;
      * @returns - Whether our {@link RenderBundle} handles {@link core/renderers/GPURenderer.ProjectedMesh | projected meshes} or not.
      */
     get useProjection() {
-      return __privateGet$4(this, _useProjection);
+      return __privateGet$5(this, _useProjection);
     }
     /**
      * Set whether our {@link RenderBundle} handles {@link core/renderers/GPURenderer.ProjectedMesh | projected meshes} or not.
      * @param value - New projection value.
      */
     set useProjection(value) {
-      __privateSet$4(this, _useProjection, value);
+      __privateSet$5(this, _useProjection, value);
     }
     /**
      * Set the new {@link RenderBundle} size. Should be used before adding or removing {@link meshes} to the {@link RenderBundle} if the {@link bundle} has already been created (especially if it's using a {@link binding}).
@@ -14683,7 +14771,7 @@ ${this.shaders.compute.head}`;
           );
         }
         this.ready = false;
-        __privateMethod$4(this, _onSizeChanged, onSizeChanged_fn).call(this, value);
+        __privateMethod$5(this, _onSizeChanged, onSizeChanged_fn).call(this, value);
         this.options.size = value;
       }
     }
@@ -14693,7 +14781,7 @@ ${this.shaders.compute.head}`;
      * @returns - Whether our {@link RenderBundle} is ready.
      */
     get ready() {
-      return __privateGet$4(this, _ready);
+      return __privateGet$5(this, _ready);
     }
     /**
      * Set whether our {@link RenderBundle} is ready and encode it if needed.
@@ -14708,11 +14796,11 @@ ${this.shaders.compute.head}`;
           });
           this.indirectBuffer.create();
         }
-        __privateMethod$4(this, _encodeRenderCommands, encodeRenderCommands_fn).call(this);
+        __privateMethod$5(this, _encodeRenderCommands, encodeRenderCommands_fn).call(this);
       } else if (!value && this.ready) {
         this.bundle = null;
       }
-      __privateSet$4(this, _ready, value);
+      __privateSet$5(this, _ready, value);
     }
     /**
      * Called by the {@link core/scenes/Scene.Scene | Scene} to eventually add a {@link RenderedMesh | mesh} to this {@link RenderBundle}. Can set the {@link RenderBundleOptions#renderPass | render pass} if needed. If the {@link RenderBundleOptions#renderPass | render pass} is already set and the mesh output {@link RenderPass} does not match, it won't be added.
@@ -14844,7 +14932,7 @@ ${this.shaders.compute.head}`;
      */
     remove() {
       this.empty(true);
-      __privateMethod$4(this, _cleanUp, cleanUp_fn).call(this);
+      __privateMethod$5(this, _cleanUp, cleanUp_fn).call(this);
     }
     /**
      * Remove the {@link RenderBundle} from our {@link core/scenes/Scene.Scene | Scene}, {@link RenderedMesh#remove | remove the meshes}, eventually destroy the {@link binding} and remove the {@link RenderBundle} from the {@link Renderer}.
@@ -14855,7 +14943,7 @@ ${this.shaders.compute.head}`;
         mesh.remove();
       });
       this.size = 0;
-      __privateMethod$4(this, _cleanUp, cleanUp_fn).call(this);
+      __privateMethod$5(this, _cleanUp, cleanUp_fn).call(this);
     }
   }
   _useProjection = new WeakMap();
@@ -14880,7 +14968,7 @@ ${this.shaders.compute.head}`;
         }
       }
     });
-    __privateMethod$4(this, _patchBindingOffset, patchBindingOffset_fn).call(this, this.options.size);
+    __privateMethod$5(this, _patchBindingOffset, patchBindingOffset_fn).call(this, this.options.size);
   };
   _patchBindingOffset = new WeakSet();
   patchBindingOffset_fn = function(size) {
@@ -14894,7 +14982,7 @@ ${this.shaders.compute.head}`;
   _onSizeChanged = new WeakSet();
   onSizeChanged_fn = function(newSize) {
     if (newSize > this.options.size && this.binding) {
-      __privateMethod$4(this, _patchBindingOffset, patchBindingOffset_fn).call(this, newSize);
+      __privateMethod$5(this, _patchBindingOffset, patchBindingOffset_fn).call(this, newSize);
       if (this.binding.buffer.GPUBuffer) {
         this.binding.buffer.GPUBuffer.destroy();
         this.binding.buffer.createBuffer(this.renderer, {
@@ -14929,7 +15017,7 @@ ${this.shaders.compute.head}`;
   };
   _encodeRenderCommands = new WeakSet();
   encodeRenderCommands_fn = function() {
-    __privateMethod$4(this, _setDescriptor, setDescriptor_fn).call(this);
+    __privateMethod$5(this, _setDescriptor, setDescriptor_fn).call(this);
     this.renderer.pipelineManager.resetCurrentPipeline();
     this.encoder = this.renderer.device.createRenderBundleEncoder({
       ...this.descriptor,
@@ -15807,21 +15895,21 @@ fn getIBL(
 `
   );
 
-  var __accessCheck$5 = (obj, member, msg) => {
+  var __accessCheck$6 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$3 = (obj, member, getter) => {
-    __accessCheck$5(obj, member, "read from private field");
+  var __privateGet$4 = (obj, member, getter) => {
+    __accessCheck$6(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$5 = (obj, member, value) => {
+  var __privateAdd$6 = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$3 = (obj, member, value, setter) => {
-    __accessCheck$5(obj, member, "write to private field");
+  var __privateSet$4 = (obj, member, value, setter) => {
+    __accessCheck$6(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -15836,11 +15924,11 @@ fn getIBL(
     constructor(renderer, element, parameters = {}) {
       super(renderer);
       /** Private {@link Vec3 | vector} used to keep track of the actual {@link DOMObject3DTransforms#position.world | world position} accounting the {@link DOMObject3DTransforms#position.document | additional document translation} converted into world space */
-      __privateAdd$5(this, _DOMObjectWorldPosition, new Vec3());
+      __privateAdd$6(this, _DOMObjectWorldPosition, new Vec3());
       /** Private {@link Vec3 | vector} used to keep track of the actual {@link DOMObject3D} world scale accounting the {@link DOMObject3D#size.world | DOMObject3D world size} */
-      __privateAdd$5(this, _DOMObjectWorldScale, new Vec3(1));
+      __privateAdd$6(this, _DOMObjectWorldScale, new Vec3(1));
       /** Private number representing the scale ratio of the {@link DOMObject3D} along Z axis to apply. Since it can be difficult to guess the most accurate scale along the Z axis of an object mapped to 2D coordinates, this helps with adjusting the scale along the Z axis. */
-      __privateAdd$5(this, _DOMObjectDepthScaleRatio, 1);
+      __privateAdd$6(this, _DOMObjectDepthScaleRatio, 1);
       /** Helper {@link Box3 | bounding box} used to map the 3D object onto the 2D DOM element. */
       this.boundingBox = new Box3(new Vec3(-1), new Vec3(1));
       /** function assigned to the {@link onAfterDOMElementResize} callback */
@@ -15957,7 +16045,7 @@ fn getIBL(
      * @readonly
      */
     get DOMObjectWorldScale() {
-      return __privateGet$3(this, _DOMObjectWorldScale).clone();
+      return __privateGet$4(this, _DOMObjectWorldScale).clone();
     }
     /**
      * Get the {@link DOMObject3D} scale in world space (accounting for {@link scale})
@@ -15971,7 +16059,7 @@ fn getIBL(
      * @readonly
      */
     get worldPosition() {
-      return __privateGet$3(this, _DOMObjectWorldPosition).clone();
+      return __privateGet$4(this, _DOMObjectWorldPosition).clone();
     }
     /**
      * Get the {@link DOMObject3D} transform origin relative to the {@link DOMObject3D}
@@ -16033,7 +16121,7 @@ fn getIBL(
       if (!this.documentPosition.equals(worldPosition)) {
         worldPosition = this.documentToWorldSpace(this.documentPosition);
       }
-      __privateGet$3(this, _DOMObjectWorldPosition).set(
+      __privateGet$4(this, _DOMObjectWorldPosition).set(
         this.position.x + this.size.scaledWorld.position.x + worldPosition.x,
         this.position.y + this.size.scaledWorld.position.y + worldPosition.y,
         this.position.z + this.size.scaledWorld.position.z + this.documentPosition.z / this.camera.CSSPerspective
@@ -16054,7 +16142,7 @@ fn getIBL(
      */
     updateModelMatrix() {
       this.modelMatrix.composeFromOrigin(
-        __privateGet$3(this, _DOMObjectWorldPosition),
+        __privateGet$4(this, _DOMObjectWorldPosition),
         this.quaternion,
         this.scale,
         this.worldTransformOrigin
@@ -16122,10 +16210,10 @@ fn getIBL(
      * Set the {@link worldScale} accounting for scaled world size and {@link DOMObjectDepthScaleRatio}
      */
     setWorldScale() {
-      __privateGet$3(this, _DOMObjectWorldScale).set(
+      __privateGet$4(this, _DOMObjectWorldScale).set(
         this.size.scaledWorld.size.x,
         this.size.scaledWorld.size.y,
-        this.size.scaledWorld.size.z * __privateGet$3(this, _DOMObjectDepthScaleRatio)
+        this.size.scaledWorld.size.z * __privateGet$4(this, _DOMObjectDepthScaleRatio)
       );
       this.shouldUpdateMatrixStack();
     }
@@ -16134,7 +16222,7 @@ fn getIBL(
      * @param value - depth scale ratio value to use
      */
     set DOMObjectDepthScaleRatio(value) {
-      __privateSet$3(this, _DOMObjectDepthScaleRatio, value);
+      __privateSet$4(this, _DOMObjectDepthScaleRatio, value);
       this.setWorldScale();
     }
     /**
@@ -16143,10 +16231,10 @@ fn getIBL(
     setWorldTransformOrigin() {
       this.transforms.origin.world = new Vec3(
         (this.transformOrigin.x * 2 - 1) * // between -1 and 1
-        __privateGet$3(this, _DOMObjectWorldScale).x,
+        __privateGet$4(this, _DOMObjectWorldScale).x,
         -(this.transformOrigin.y * 2 - 1) * // between -1 and 1
-        __privateGet$3(this, _DOMObjectWorldScale).y,
-        this.transformOrigin.z * __privateGet$3(this, _DOMObjectWorldScale).z
+        __privateGet$4(this, _DOMObjectWorldScale).y,
+        this.transformOrigin.z * __privateGet$4(this, _DOMObjectWorldScale).z
       );
       this.shouldUpdateMatrixStack();
     }
@@ -16882,32 +16970,32 @@ fn getIBL(
     }
   }
 
-  var __accessCheck$4 = (obj, member, msg) => {
+  var __accessCheck$5 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$2 = (obj, member, getter) => {
-    __accessCheck$4(obj, member, "read from private field");
+  var __privateGet$3 = (obj, member, getter) => {
+    __accessCheck$5(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$4 = (obj, member, value) => {
+  var __privateAdd$5 = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$2 = (obj, member, value, setter) => {
-    __accessCheck$4(obj, member, "write to private field");
+  var __privateSet$3 = (obj, member, value, setter) => {
+    __accessCheck$5(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
-  var __privateMethod$3 = (obj, member, method) => {
-    __accessCheck$4(obj, member, "access private method");
+  var __privateMethod$4 = (obj, member, method) => {
+    __accessCheck$5(obj, member, "access private method");
     return method;
   };
   var _element, _offset, _isOrbiting, _spherical, _rotateStart, _isPaning, _panStart, _panDelta, _setBaseParams, setBaseParams_fn, _addEvents, addEvents_fn, _removeEvents, removeEvents_fn, _onMouseDown, onMouseDown_fn, _onTouchStart, onTouchStart_fn, _onMouseMove, onMouseMove_fn, _onTouchMove, onTouchMove_fn, _onMouseUp, onMouseUp_fn, _onTouchEnd, onTouchEnd_fn, _onMouseWheel, onMouseWheel_fn, _onContextMenu, onContextMenu_fn, _update, update_fn, _rotate, rotate_fn, _pan, pan_fn, _zoom, zoom_fn;
   const tempVec2a = new Vec2();
   const tempVec2b = new Vec2();
-  const tempVec3 = new Vec3();
+  const tempVec3$1 = new Vec3();
   class OrbitControls {
     /**
        * OrbitControls constructor
@@ -16937,113 +17025,113 @@ fn getIBL(
        * Set / reset base params
        * @ignore
        */
-      __privateAdd$4(this, _setBaseParams);
+      __privateAdd$5(this, _setBaseParams);
       /**
        * Add the event listeners.
        * @private
        */
-      __privateAdd$4(this, _addEvents);
+      __privateAdd$5(this, _addEvents);
       /**
        * Remove the event listeners.
        * @private
        */
-      __privateAdd$4(this, _removeEvents);
+      __privateAdd$5(this, _removeEvents);
       /**
        * Callback executed on mouse down event.
        * @param e - {@link MouseEvent}.
        * @private
        */
-      __privateAdd$4(this, _onMouseDown);
+      __privateAdd$5(this, _onMouseDown);
       /**
        * Callback executed on touch start event.
        * @param e - {@link TouchEvent}.
        * @private
        */
-      __privateAdd$4(this, _onTouchStart);
+      __privateAdd$5(this, _onTouchStart);
       /**
        * Callback executed on mouse move event.
        * @param e - {@link MouseEvent}.
        */
-      __privateAdd$4(this, _onMouseMove);
+      __privateAdd$5(this, _onMouseMove);
       /**
        * Callback executed on touch move event.
        * @param e - {@link TouchEvent}.
        * @private
        */
-      __privateAdd$4(this, _onTouchMove);
+      __privateAdd$5(this, _onTouchMove);
       /**
        * Callback executed on mouse up event.
        * @param e - {@link MouseEvent}.
        * @private
        */
-      __privateAdd$4(this, _onMouseUp);
+      __privateAdd$5(this, _onMouseUp);
       /**
        * Callback executed on touch end event.
        * @param e - {@link MouseEvent}.
        * @private
        */
-      __privateAdd$4(this, _onTouchEnd);
+      __privateAdd$5(this, _onTouchEnd);
       /**
        * Callback executed on wheel event.
        * @param e - {@link WheelEvent}.
        * @private
        */
-      __privateAdd$4(this, _onMouseWheel);
+      __privateAdd$5(this, _onMouseWheel);
       /**
        * Prevent context menu apparition on right click
        * @param e - {@link MouseEvent}.
        * @private
        */
-      __privateAdd$4(this, _onContextMenu);
+      __privateAdd$5(this, _onContextMenu);
       /**
        * Update the {@link camera} position based on the {@link target} and internal values.
        * @private
        */
-      __privateAdd$4(this, _update);
+      __privateAdd$5(this, _update);
       /**
        * Update the {@link camera} position based on input coordinates so it rotates around the {@link target}.
        * @param x - input coordinate along the X axis.
        * @param y - input coordinate along the Y axis.
        * @private
        */
-      __privateAdd$4(this, _rotate);
+      __privateAdd$5(this, _rotate);
       /**
        * Pan the {@link camera} position based on input coordinates by updating {@link target}.
        * @param x - input coordinate along the X axis.
        * @param y - input coordinate along the Y axis.
        * @private
        */
-      __privateAdd$4(this, _pan);
+      __privateAdd$5(this, _pan);
       /**
        * Move the {@link camera} forward or backward.
        * @param value - new value to use for zoom.
        * @private
        */
-      __privateAdd$4(this, _zoom);
+      __privateAdd$5(this, _zoom);
       /**
        * {@link HTMLElement} (or {@link Window} element) to use for event listeners.
        * @private
        */
-      __privateAdd$4(this, _element, null);
+      __privateAdd$5(this, _element, null);
       /** @ignore */
-      __privateAdd$4(this, _offset, new Vec3());
+      __privateAdd$5(this, _offset, new Vec3());
       /** @ignore */
-      __privateAdd$4(this, _isOrbiting, false);
+      __privateAdd$5(this, _isOrbiting, false);
       /** @ignore */
-      __privateAdd$4(this, _spherical, { radius: 1, phi: 0, theta: 0 });
+      __privateAdd$5(this, _spherical, { radius: 1, phi: 0, theta: 0 });
       /** @ignore */
-      __privateAdd$4(this, _rotateStart, new Vec2());
+      __privateAdd$5(this, _rotateStart, new Vec2());
       /** @ignore */
-      __privateAdd$4(this, _isPaning, false);
+      __privateAdd$5(this, _isPaning, false);
       /** @ignore */
-      __privateAdd$4(this, _panStart, new Vec2());
+      __privateAdd$5(this, _panStart, new Vec2());
       /** @ignore */
-      __privateAdd$4(this, _panDelta, new Vec3());
+      __privateAdd$5(this, _panDelta, new Vec3());
       if (!camera) {
         throwWarning("OrbitControls: cannot initialize without a camera.");
         return;
       }
-      __privateMethod$3(this, _setBaseParams, setBaseParams_fn).call(this, {
+      __privateMethod$4(this, _setBaseParams, setBaseParams_fn).call(this, {
         target,
         enableZoom,
         minZoom,
@@ -17070,11 +17158,11 @@ fn getIBL(
       this.camera.position.onChange(() => {
         this.camera.lookAt(this.target);
       });
-      __privateGet$2(this, _offset).copy(this.camera.position).sub(this.target);
-      __privateGet$2(this, _spherical).radius = __privateGet$2(this, _offset).length();
-      __privateGet$2(this, _spherical).theta = Math.atan2(__privateGet$2(this, _offset).x, __privateGet$2(this, _offset).z);
-      __privateGet$2(this, _spherical).phi = Math.acos(Math.min(Math.max(__privateGet$2(this, _offset).y / __privateGet$2(this, _spherical).radius, -1), 1));
-      __privateMethod$3(this, _update, update_fn).call(this);
+      __privateGet$3(this, _offset).copy(this.camera.position).sub(this.target);
+      __privateGet$3(this, _spherical).radius = __privateGet$3(this, _offset).length();
+      __privateGet$3(this, _spherical).theta = Math.atan2(__privateGet$3(this, _offset).x, __privateGet$3(this, _offset).z);
+      __privateGet$3(this, _spherical).phi = Math.acos(Math.min(Math.max(__privateGet$3(this, _offset).y / __privateGet$3(this, _spherical).radius, -1), 1));
+      __privateMethod$4(this, _update, update_fn).call(this);
     }
     /**
      * Reset the {@link OrbitControls} values.
@@ -17099,7 +17187,7 @@ fn getIBL(
       enablePan = this.enablePan,
       panSpeed = this.panSpeed
     } = {}) {
-      __privateMethod$3(this, _setBaseParams, setBaseParams_fn).call(this, {
+      __privateMethod$4(this, _setBaseParams, setBaseParams_fn).call(this, {
         target,
         enableZoom,
         minZoom,
@@ -17124,22 +17212,22 @@ fn getIBL(
      */
     updatePosition(position = new Vec3()) {
       position.sub(this.target);
-      __privateGet$2(this, _spherical).radius = position.length();
-      __privateGet$2(this, _spherical).theta = Math.atan2(position.x, position.z);
-      __privateGet$2(this, _spherical).phi = Math.acos(Math.min(Math.max(position.y / __privateGet$2(this, _spherical).radius, -1), 1));
-      __privateMethod$3(this, _update, update_fn).call(this);
+      __privateGet$3(this, _spherical).radius = position.length();
+      __privateGet$3(this, _spherical).theta = Math.atan2(position.x, position.z);
+      __privateGet$3(this, _spherical).phi = Math.acos(Math.min(Math.max(position.y / __privateGet$3(this, _spherical).radius, -1), 1));
+      __privateMethod$4(this, _update, update_fn).call(this);
     }
     /**
      * Set the element to use for event listeners. Can remove previous event listeners first if needed.
      * @param value - {@link HTMLElement} (or {@link Window} element) to use.
      */
     set element(value) {
-      if (__privateGet$2(this, _element) && (!value || __privateGet$2(this, _element) !== value)) {
-        __privateMethod$3(this, _removeEvents, removeEvents_fn).call(this);
+      if (__privateGet$3(this, _element) && (!value || __privateGet$3(this, _element) !== value)) {
+        __privateMethod$4(this, _removeEvents, removeEvents_fn).call(this);
       }
-      __privateSet$2(this, _element, value);
+      __privateSet$3(this, _element, value);
       if (value) {
-        __privateMethod$3(this, _addEvents, addEvents_fn).call(this);
+        __privateMethod$4(this, _addEvents, addEvents_fn).call(this);
       }
     }
     /**
@@ -17147,7 +17235,7 @@ fn getIBL(
      * @returns - {@link HTMLElement} (or {@link Window} element) used.
      */
     get element() {
-      return __privateGet$2(this, _element);
+      return __privateGet$3(this, _element);
     }
     /**
      * Destroy the {@link OrbitControls}.
@@ -17201,34 +17289,34 @@ fn getIBL(
   };
   _addEvents = new WeakSet();
   addEvents_fn = function() {
-    __privateGet$2(this, _element).addEventListener("contextmenu", __privateMethod$3(this, _onContextMenu, onContextMenu_fn).bind(this), false);
-    __privateGet$2(this, _element).addEventListener("mousedown", __privateMethod$3(this, _onMouseDown, onMouseDown_fn).bind(this), false);
-    __privateGet$2(this, _element).addEventListener("mousemove", __privateMethod$3(this, _onMouseMove, onMouseMove_fn).bind(this), false);
-    __privateGet$2(this, _element).addEventListener("mouseup", __privateMethod$3(this, _onMouseUp, onMouseUp_fn).bind(this), false);
-    __privateGet$2(this, _element).addEventListener("touchstart", __privateMethod$3(this, _onTouchStart, onTouchStart_fn).bind(this), { passive: false });
-    __privateGet$2(this, _element).addEventListener("touchmove", __privateMethod$3(this, _onTouchMove, onTouchMove_fn).bind(this), { passive: false });
-    __privateGet$2(this, _element).addEventListener("touchend", __privateMethod$3(this, _onTouchEnd, onTouchEnd_fn).bind(this), false);
-    __privateGet$2(this, _element).addEventListener("wheel", __privateMethod$3(this, _onMouseWheel, onMouseWheel_fn).bind(this), { passive: false });
+    __privateGet$3(this, _element).addEventListener("contextmenu", __privateMethod$4(this, _onContextMenu, onContextMenu_fn).bind(this), false);
+    __privateGet$3(this, _element).addEventListener("mousedown", __privateMethod$4(this, _onMouseDown, onMouseDown_fn).bind(this), false);
+    __privateGet$3(this, _element).addEventListener("mousemove", __privateMethod$4(this, _onMouseMove, onMouseMove_fn).bind(this), false);
+    __privateGet$3(this, _element).addEventListener("mouseup", __privateMethod$4(this, _onMouseUp, onMouseUp_fn).bind(this), false);
+    __privateGet$3(this, _element).addEventListener("touchstart", __privateMethod$4(this, _onTouchStart, onTouchStart_fn).bind(this), { passive: false });
+    __privateGet$3(this, _element).addEventListener("touchmove", __privateMethod$4(this, _onTouchMove, onTouchMove_fn).bind(this), { passive: false });
+    __privateGet$3(this, _element).addEventListener("touchend", __privateMethod$4(this, _onTouchEnd, onTouchEnd_fn).bind(this), false);
+    __privateGet$3(this, _element).addEventListener("wheel", __privateMethod$4(this, _onMouseWheel, onMouseWheel_fn).bind(this), { passive: false });
   };
   _removeEvents = new WeakSet();
   removeEvents_fn = function() {
-    __privateGet$2(this, _element).removeEventListener("contextmenu", __privateMethod$3(this, _onContextMenu, onContextMenu_fn).bind(this), false);
-    __privateGet$2(this, _element).removeEventListener("mousedown", __privateMethod$3(this, _onMouseDown, onMouseDown_fn).bind(this), false);
-    __privateGet$2(this, _element).removeEventListener("mousemove", __privateMethod$3(this, _onMouseMove, onMouseMove_fn).bind(this), false);
-    __privateGet$2(this, _element).removeEventListener("mouseup", __privateMethod$3(this, _onMouseUp, onMouseUp_fn).bind(this), false);
-    __privateGet$2(this, _element).removeEventListener("touchstart", __privateMethod$3(this, _onTouchStart, onTouchStart_fn).bind(this), { passive: false });
-    __privateGet$2(this, _element).removeEventListener("touchmove", __privateMethod$3(this, _onTouchMove, onTouchMove_fn).bind(this), { passive: false });
-    __privateGet$2(this, _element).removeEventListener("touchend", __privateMethod$3(this, _onTouchEnd, onTouchEnd_fn).bind(this), false);
-    __privateGet$2(this, _element).removeEventListener("wheel", __privateMethod$3(this, _onMouseWheel, onMouseWheel_fn).bind(this), { passive: false });
+    __privateGet$3(this, _element).removeEventListener("contextmenu", __privateMethod$4(this, _onContextMenu, onContextMenu_fn).bind(this), false);
+    __privateGet$3(this, _element).removeEventListener("mousedown", __privateMethod$4(this, _onMouseDown, onMouseDown_fn).bind(this), false);
+    __privateGet$3(this, _element).removeEventListener("mousemove", __privateMethod$4(this, _onMouseMove, onMouseMove_fn).bind(this), false);
+    __privateGet$3(this, _element).removeEventListener("mouseup", __privateMethod$4(this, _onMouseUp, onMouseUp_fn).bind(this), false);
+    __privateGet$3(this, _element).removeEventListener("touchstart", __privateMethod$4(this, _onTouchStart, onTouchStart_fn).bind(this), { passive: false });
+    __privateGet$3(this, _element).removeEventListener("touchmove", __privateMethod$4(this, _onTouchMove, onTouchMove_fn).bind(this), { passive: false });
+    __privateGet$3(this, _element).removeEventListener("touchend", __privateMethod$4(this, _onTouchEnd, onTouchEnd_fn).bind(this), false);
+    __privateGet$3(this, _element).removeEventListener("wheel", __privateMethod$4(this, _onMouseWheel, onMouseWheel_fn).bind(this), { passive: false });
   };
   _onMouseDown = new WeakSet();
   onMouseDown_fn = function(e) {
     if (e.button === 0 && this.enableRotate) {
-      __privateSet$2(this, _isOrbiting, true);
-      __privateGet$2(this, _rotateStart).set(e.clientX, e.clientY);
+      __privateSet$3(this, _isOrbiting, true);
+      __privateGet$3(this, _rotateStart).set(e.clientX, e.clientY);
     } else if (e.button === 2 && this.enablePan) {
-      __privateSet$2(this, _isPaning, true);
-      __privateGet$2(this, _panStart).set(e.clientX, e.clientY);
+      __privateSet$3(this, _isPaning, true);
+      __privateGet$3(this, _panStart).set(e.clientX, e.clientY);
     }
     e.stopPropagation();
     e.preventDefault();
@@ -17236,38 +17324,38 @@ fn getIBL(
   _onTouchStart = new WeakSet();
   onTouchStart_fn = function(e) {
     if (e.touches.length === 1 && this.enableRotate) {
-      __privateSet$2(this, _isOrbiting, true);
-      __privateGet$2(this, _rotateStart).set(e.touches[0].pageX, e.touches[0].pageY);
+      __privateSet$3(this, _isOrbiting, true);
+      __privateGet$3(this, _rotateStart).set(e.touches[0].pageX, e.touches[0].pageY);
     }
   };
   _onMouseMove = new WeakSet();
   onMouseMove_fn = function(e) {
-    if (__privateGet$2(this, _isOrbiting) && this.enableRotate) {
-      __privateMethod$3(this, _rotate, rotate_fn).call(this, e.clientX, e.clientY);
-    } else if (__privateGet$2(this, _isPaning) && this.enablePan) {
-      __privateMethod$3(this, _pan, pan_fn).call(this, e.clientX, e.clientY);
+    if (__privateGet$3(this, _isOrbiting) && this.enableRotate) {
+      __privateMethod$4(this, _rotate, rotate_fn).call(this, e.clientX, e.clientY);
+    } else if (__privateGet$3(this, _isPaning) && this.enablePan) {
+      __privateMethod$4(this, _pan, pan_fn).call(this, e.clientX, e.clientY);
     }
   };
   _onTouchMove = new WeakSet();
   onTouchMove_fn = function(e) {
-    if (__privateGet$2(this, _isOrbiting) && this.enableRotate) {
-      __privateMethod$3(this, _rotate, rotate_fn).call(this, e.touches[0].pageX, e.touches[0].pageY);
+    if (__privateGet$3(this, _isOrbiting) && this.enableRotate) {
+      __privateMethod$4(this, _rotate, rotate_fn).call(this, e.touches[0].pageX, e.touches[0].pageY);
     }
   };
   _onMouseUp = new WeakSet();
   onMouseUp_fn = function(e) {
-    __privateSet$2(this, _isOrbiting, false);
-    __privateSet$2(this, _isPaning, false);
+    __privateSet$3(this, _isOrbiting, false);
+    __privateSet$3(this, _isPaning, false);
   };
   _onTouchEnd = new WeakSet();
   onTouchEnd_fn = function(e) {
-    __privateSet$2(this, _isOrbiting, false);
-    __privateSet$2(this, _isPaning, false);
+    __privateSet$3(this, _isOrbiting, false);
+    __privateSet$3(this, _isPaning, false);
   };
   _onMouseWheel = new WeakSet();
   onMouseWheel_fn = function(e) {
     if (this.enableZoom) {
-      __privateMethod$3(this, _zoom, zoom_fn).call(this, e.deltaY);
+      __privateMethod$4(this, _zoom, zoom_fn).call(this, e.deltaY);
       e.preventDefault();
     }
   };
@@ -17277,71 +17365,71 @@ fn getIBL(
   };
   _update = new WeakSet();
   update_fn = function() {
-    const sinPhiRadius = __privateGet$2(this, _spherical).radius * Math.sin(Math.max(1e-6, __privateGet$2(this, _spherical).phi));
-    __privateGet$2(this, _offset).x = sinPhiRadius * Math.sin(__privateGet$2(this, _spherical).theta);
-    __privateGet$2(this, _offset).y = __privateGet$2(this, _spherical).radius * Math.cos(__privateGet$2(this, _spherical).phi);
-    __privateGet$2(this, _offset).z = sinPhiRadius * Math.cos(__privateGet$2(this, _spherical).theta);
-    this.camera.position.copy(this.target).add(__privateGet$2(this, _offset));
+    const sinPhiRadius = __privateGet$3(this, _spherical).radius * Math.sin(Math.max(1e-6, __privateGet$3(this, _spherical).phi));
+    __privateGet$3(this, _offset).x = sinPhiRadius * Math.sin(__privateGet$3(this, _spherical).theta);
+    __privateGet$3(this, _offset).y = __privateGet$3(this, _spherical).radius * Math.cos(__privateGet$3(this, _spherical).phi);
+    __privateGet$3(this, _offset).z = sinPhiRadius * Math.cos(__privateGet$3(this, _spherical).theta);
+    this.camera.position.copy(this.target).add(__privateGet$3(this, _offset));
   };
   _rotate = new WeakSet();
   rotate_fn = function(x, y) {
     tempVec2a.set(x, y);
-    tempVec2b.copy(tempVec2a).sub(__privateGet$2(this, _rotateStart)).multiplyScalar(this.rotateSpeed);
-    __privateGet$2(this, _spherical).theta -= 2 * Math.PI * tempVec2b.x / this.camera.size.height;
-    __privateGet$2(this, _spherical).phi -= 2 * Math.PI * tempVec2b.y / this.camera.size.height;
-    __privateGet$2(this, _spherical).theta = Math.min(this.maxAzimuthAngle, Math.max(this.minAzimuthAngle, __privateGet$2(this, _spherical).theta));
-    __privateGet$2(this, _spherical).phi = Math.min(this.maxPolarAngle, Math.max(this.minPolarAngle, __privateGet$2(this, _spherical).phi));
-    __privateGet$2(this, _rotateStart).copy(tempVec2a);
-    __privateMethod$3(this, _update, update_fn).call(this);
+    tempVec2b.copy(tempVec2a).sub(__privateGet$3(this, _rotateStart)).multiplyScalar(this.rotateSpeed);
+    __privateGet$3(this, _spherical).theta -= 2 * Math.PI * tempVec2b.x / this.camera.size.height;
+    __privateGet$3(this, _spherical).phi -= 2 * Math.PI * tempVec2b.y / this.camera.size.height;
+    __privateGet$3(this, _spherical).theta = Math.min(this.maxAzimuthAngle, Math.max(this.minAzimuthAngle, __privateGet$3(this, _spherical).theta));
+    __privateGet$3(this, _spherical).phi = Math.min(this.maxPolarAngle, Math.max(this.minPolarAngle, __privateGet$3(this, _spherical).phi));
+    __privateGet$3(this, _rotateStart).copy(tempVec2a);
+    __privateMethod$4(this, _update, update_fn).call(this);
   };
   _pan = new WeakSet();
   pan_fn = function(x, y) {
     tempVec2a.set(x, y);
-    tempVec2b.copy(tempVec2a).sub(__privateGet$2(this, _panStart)).multiplyScalar(this.panSpeed);
-    __privateGet$2(this, _panDelta).set(0);
-    tempVec3.copy(this.camera.position).sub(this.target);
-    let targetDistance = tempVec3.length();
+    tempVec2b.copy(tempVec2a).sub(__privateGet$3(this, _panStart)).multiplyScalar(this.panSpeed);
+    __privateGet$3(this, _panDelta).set(0);
+    tempVec3$1.copy(this.camera.position).sub(this.target);
+    let targetDistance = tempVec3$1.length();
     targetDistance *= Math.tan(this.camera.fov / 2 * Math.PI / 180);
-    tempVec3.set(
+    tempVec3$1.set(
       this.camera.modelMatrix.elements[0],
       this.camera.modelMatrix.elements[1],
       this.camera.modelMatrix.elements[2]
     );
-    tempVec3.multiplyScalar(-(2 * tempVec2b.x * targetDistance) / this.camera.size.height);
-    __privateGet$2(this, _panDelta).add(tempVec3);
-    tempVec3.set(
+    tempVec3$1.multiplyScalar(-(2 * tempVec2b.x * targetDistance) / this.camera.size.height);
+    __privateGet$3(this, _panDelta).add(tempVec3$1);
+    tempVec3$1.set(
       this.camera.modelMatrix.elements[4],
       this.camera.modelMatrix.elements[5],
       this.camera.modelMatrix.elements[6]
     );
-    tempVec3.multiplyScalar(2 * tempVec2b.y * targetDistance / this.camera.size.height);
-    __privateGet$2(this, _panDelta).add(tempVec3);
-    __privateGet$2(this, _panStart).copy(tempVec2a);
-    this.target.add(__privateGet$2(this, _panDelta));
-    __privateGet$2(this, _offset).copy(this.camera.position).sub(this.target);
-    __privateGet$2(this, _spherical).radius = __privateGet$2(this, _offset).length();
-    __privateMethod$3(this, _update, update_fn).call(this);
+    tempVec3$1.multiplyScalar(2 * tempVec2b.y * targetDistance / this.camera.size.height);
+    __privateGet$3(this, _panDelta).add(tempVec3$1);
+    __privateGet$3(this, _panStart).copy(tempVec2a);
+    this.target.add(__privateGet$3(this, _panDelta));
+    __privateGet$3(this, _offset).copy(this.camera.position).sub(this.target);
+    __privateGet$3(this, _spherical).radius = __privateGet$3(this, _offset).length();
+    __privateMethod$4(this, _update, update_fn).call(this);
   };
   _zoom = new WeakSet();
   zoom_fn = function(value) {
-    __privateGet$2(this, _spherical).radius = Math.min(
+    __privateGet$3(this, _spherical).radius = Math.min(
       this.maxZoom,
-      Math.max(this.minZoom + 1e-6, __privateGet$2(this, _spherical).radius + value * this.zoomSpeed / 100)
+      Math.max(this.minZoom + 1e-6, __privateGet$3(this, _spherical).radius + value * this.zoomSpeed / 100)
     );
-    __privateMethod$3(this, _update, update_fn).call(this);
+    __privateMethod$4(this, _update, update_fn).call(this);
   };
 
-  var __accessCheck$3 = (obj, member, msg) => {
+  var __accessCheck$4 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateAdd$3 = (obj, member, value) => {
+  var __privateAdd$4 = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateMethod$2 = (obj, member, method) => {
-    __accessCheck$3(obj, member, "access private method");
+  var __privateMethod$3 = (obj, member, method) => {
+    __accessCheck$4(obj, member, "access private method");
     return method;
   };
   var _decodeRGBE, decodeRGBE_fn, _parseHeader, parseHeader_fn, _parseSize, parseSize_fn, _readLine, readLine_fn, _parseData, parseData_fn, _parseNewRLE, parseNewRLE_fn, _swap, swap_fn, _flipX, flipX_fn, _flipY, flipY_fn;
@@ -17350,39 +17438,39 @@ fn getIBL(
       /**
        * @ignore
        */
-      __privateAdd$3(this, _decodeRGBE);
+      __privateAdd$4(this, _decodeRGBE);
       /**
        * @ignore
        */
-      __privateAdd$3(this, _parseHeader);
+      __privateAdd$4(this, _parseHeader);
       /**
        * @ignore
        */
-      __privateAdd$3(this, _parseSize);
+      __privateAdd$4(this, _parseSize);
       /**
        * @ignore
        */
-      __privateAdd$3(this, _readLine);
+      __privateAdd$4(this, _readLine);
       /**
        * @ignore
        */
-      __privateAdd$3(this, _parseData);
+      __privateAdd$4(this, _parseData);
       /**
        * @ignore
        */
-      __privateAdd$3(this, _parseNewRLE);
+      __privateAdd$4(this, _parseNewRLE);
       /**
        * @ignore
        */
-      __privateAdd$3(this, _swap);
+      __privateAdd$4(this, _swap);
       /**
        * @ignore
        */
-      __privateAdd$3(this, _flipX);
+      __privateAdd$4(this, _flipX);
       /**
        * @ignore
        */
-      __privateAdd$3(this, _flipY);
+      __privateAdd$4(this, _flipY);
     }
     /**
      * Load and decode RGBE-encoded data to a flat list of floating point pixel data (RGBA).
@@ -17391,7 +17479,7 @@ fn getIBL(
      */
     async loadFromUrl(url) {
       const buffer = await (await fetch(url)).arrayBuffer();
-      return __privateMethod$2(this, _decodeRGBE, decodeRGBE_fn).call(this, new DataView(buffer));
+      return __privateMethod$3(this, _decodeRGBE, decodeRGBE_fn).call(this, new DataView(buffer));
     }
   }
   _decodeRGBE = new WeakSet();
@@ -17400,18 +17488,18 @@ fn getIBL(
       data,
       offset: 0
     };
-    const header = __privateMethod$2(this, _parseHeader, parseHeader_fn).call(this, stream);
+    const header = __privateMethod$3(this, _parseHeader, parseHeader_fn).call(this, stream);
     return {
       width: header.width,
       height: header.height,
       exposure: header.exposure,
       gamma: header.gamma,
-      data: __privateMethod$2(this, _parseData, parseData_fn).call(this, stream, header)
+      data: __privateMethod$3(this, _parseData, parseData_fn).call(this, stream, header)
     };
   };
   _parseHeader = new WeakSet();
   parseHeader_fn = function(stream) {
-    let line = __privateMethod$2(this, _readLine, readLine_fn).call(this, stream);
+    let line = __privateMethod$3(this, _readLine, readLine_fn).call(this, stream);
     const header = {
       colorCorr: [1, 1, 1],
       exposure: 1,
@@ -17424,7 +17512,7 @@ fn getIBL(
     if (line !== "#?RADIANCE" && line !== "#?RGBE")
       throw new Error("Incorrect file format!");
     while (line !== "") {
-      line = __privateMethod$2(this, _readLine, readLine_fn).call(this, stream);
+      line = __privateMethod$3(this, _readLine, readLine_fn).call(this, stream);
       const parts2 = line.split("=");
       switch (parts2[0]) {
         case "GAMMA":
@@ -17442,10 +17530,10 @@ fn getIBL(
           break;
       }
     }
-    line = __privateMethod$2(this, _readLine, readLine_fn).call(this, stream);
+    line = __privateMethod$3(this, _readLine, readLine_fn).call(this, stream);
     const parts = line.split(" ");
-    __privateMethod$2(this, _parseSize, parseSize_fn).call(this, parts[0], parseInt(parts[1]), header);
-    __privateMethod$2(this, _parseSize, parseSize_fn).call(this, parts[2], parseInt(parts[3]), header);
+    __privateMethod$3(this, _parseSize, parseSize_fn).call(this, parts[0], parseInt(parts[1]), header);
+    __privateMethod$3(this, _parseSize, parseSize_fn).call(this, parts[2], parseInt(parts[3]), header);
     return header;
   };
   _parseSize = new WeakSet();
@@ -17480,11 +17568,11 @@ fn getIBL(
     const hash = stream.data.getUint16(stream.offset);
     let data;
     if (hash === 514) {
-      data = __privateMethod$2(this, _parseNewRLE, parseNewRLE_fn).call(this, stream, header);
+      data = __privateMethod$3(this, _parseNewRLE, parseNewRLE_fn).call(this, stream, header);
       if (header.flipX)
-        __privateMethod$2(this, _flipX, flipX_fn).call(this, data, header);
+        __privateMethod$3(this, _flipX, flipX_fn).call(this, data, header);
       if (header.flipY)
-        __privateMethod$2(this, _flipY, flipY_fn).call(this, data, header);
+        __privateMethod$3(this, _flipY, flipY_fn).call(this, data, header);
     } else {
       throw new Error("Obsolete HDR file version!");
     }
@@ -17552,7 +17640,7 @@ fn getIBL(
       for (let x = 0; x < hw; ++x) {
         const i1 = b + x;
         const i2 = b + width - 1 - x;
-        __privateMethod$2(this, _swap, swap_fn).call(this, data, i1, i2);
+        __privateMethod$3(this, _swap, swap_fn).call(this, data, i1, i2);
       }
     }
   };
@@ -17564,7 +17652,7 @@ fn getIBL(
       const b1 = y * width;
       const b2 = (height - 1 - y) * width;
       for (let x = 0; x < width; ++x) {
-        __privateMethod$2(this, _swap, swap_fn).call(this, data, b1 + x, b2 + x);
+        __privateMethod$3(this, _swap, swap_fn).call(this, data, b1 + x, b2 + x);
       }
     }
   };
@@ -17996,17 +18084,17 @@ const PI = ${Math.PI};
 `
   );
 
-  var __accessCheck$2 = (obj, member, msg) => {
+  var __accessCheck$3 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateAdd$2 = (obj, member, value) => {
+  var __privateAdd$3 = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateMethod$1 = (obj, member, method) => {
-    __accessCheck$2(obj, member, "access private method");
+  var __privateMethod$2 = (obj, member, method) => {
+    __accessCheck$3(obj, member, "access private method");
     return method;
   };
   var _copyComputeStorageTextureToTexture, copyComputeStorageTextureToTexture_fn;
@@ -18045,7 +18133,7 @@ const PI = ${Math.PI};
        * @param texture - Permanent {@link Texture} (either the {@link lutTexture}, {@link specularTexture} or {@link diffuseTexture}) to copy onto.
        * @private
        */
-      __privateAdd$2(this, _copyComputeStorageTextureToTexture);
+      __privateAdd$3(this, _copyComputeStorageTextureToTexture);
       renderer = isRenderer(renderer, "EnvironmentMap");
       this.renderer = renderer;
       this.options = params;
@@ -18114,7 +18202,7 @@ const PI = ${Math.PI};
       this.renderer.onBeforeRenderScene.add(
         (commandEncoder) => {
           this.renderer.renderSingleComputePass(commandEncoder, computeLUTPass);
-          __privateMethod$1(this, _copyComputeStorageTextureToTexture, copyComputeStorageTextureToTexture_fn).call(this, commandEncoder, lutStorageTexture, this.lutTexture);
+          __privateMethod$2(this, _copyComputeStorageTextureToTexture, copyComputeStorageTextureToTexture_fn).call(this, commandEncoder, lutStorageTexture, this.lutTexture);
         },
         { once: true }
       );
@@ -18188,7 +18276,7 @@ const PI = ${Math.PI};
       if (!this.renderer.production)
         commandEncoder.pushDebugGroup("Render once command encoder");
       this.renderer.renderSingleComputePass(commandEncoder, computeCubeMapPass);
-      __privateMethod$1(this, _copyComputeStorageTextureToTexture, copyComputeStorageTextureToTexture_fn).call(this, commandEncoder, cubeStorageTexture, this.specularTexture);
+      __privateMethod$2(this, _copyComputeStorageTextureToTexture, copyComputeStorageTextureToTexture_fn).call(this, commandEncoder, cubeStorageTexture, this.specularTexture);
       if (!this.renderer.production)
         commandEncoder.popDebugGroup();
       const commandBuffer = commandEncoder.finish();
@@ -18260,7 +18348,7 @@ const PI = ${Math.PI};
       this.renderer.onBeforeRenderScene.add(
         (commandEncoder) => {
           this.renderer.renderSingleComputePass(commandEncoder, computeDiffusePass);
-          __privateMethod$1(this, _copyComputeStorageTextureToTexture, copyComputeStorageTextureToTexture_fn).call(this, commandEncoder, diffuseStorageTexture, this.diffuseTexture);
+          __privateMethod$2(this, _copyComputeStorageTextureToTexture, copyComputeStorageTextureToTexture_fn).call(this, commandEncoder, diffuseStorageTexture, this.diffuseTexture);
         },
         { once: true }
       );
@@ -18603,26 +18691,26 @@ const PI = ${Math.PI};
     }
   }
 
-  var __accessCheck$1 = (obj, member, msg) => {
+  var __accessCheck$2 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$1 = (obj, member, getter) => {
-    __accessCheck$1(obj, member, "read from private field");
+  var __privateGet$2 = (obj, member, getter) => {
+    __accessCheck$2(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$1 = (obj, member, value) => {
+  var __privateAdd$2 = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$1 = (obj, member, value, setter) => {
-    __accessCheck$1(obj, member, "write to private field");
+  var __privateSet$2 = (obj, member, value, setter) => {
+    __accessCheck$2(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
-  var __privateMethod = (obj, member, method) => {
-    __accessCheck$1(obj, member, "access private method");
+  var __privateMethod$1 = (obj, member, method) => {
+    __accessCheck$2(obj, member, "access private method");
     return method;
   };
   var _localRay, _v0, _v1, _v2, _edge1, _edge2, _uv0, _uv1, _uv2, _n0, _n1, _n2, _intersectMesh, intersectMesh_fn;
@@ -18643,31 +18731,31 @@ const PI = ${Math.PI};
        * @returns - Updated {@link Intersection | intersections}.
        * @private
        */
-      __privateAdd$1(this, _intersectMesh);
+      __privateAdd$2(this, _intersectMesh);
       /** @ignore */
-      __privateAdd$1(this, _localRay, void 0);
+      __privateAdd$2(this, _localRay, void 0);
       /** @ignore */
-      __privateAdd$1(this, _v0, void 0);
+      __privateAdd$2(this, _v0, void 0);
       /** @ignore */
-      __privateAdd$1(this, _v1, void 0);
+      __privateAdd$2(this, _v1, void 0);
       /** @ignore */
-      __privateAdd$1(this, _v2, void 0);
+      __privateAdd$2(this, _v2, void 0);
       /** @ignore */
-      __privateAdd$1(this, _edge1, void 0);
+      __privateAdd$2(this, _edge1, void 0);
       /** @ignore */
-      __privateAdd$1(this, _edge2, void 0);
+      __privateAdd$2(this, _edge2, void 0);
       /** @ignore */
-      __privateAdd$1(this, _uv0, void 0);
+      __privateAdd$2(this, _uv0, void 0);
       /** @ignore */
-      __privateAdd$1(this, _uv1, void 0);
+      __privateAdd$2(this, _uv1, void 0);
       /** @ignore */
-      __privateAdd$1(this, _uv2, void 0);
+      __privateAdd$2(this, _uv2, void 0);
       /** @ignore */
-      __privateAdd$1(this, _n0, void 0);
+      __privateAdd$2(this, _n0, void 0);
       /** @ignore */
-      __privateAdd$1(this, _n1, void 0);
+      __privateAdd$2(this, _n1, void 0);
       /** @ignore */
-      __privateAdd$1(this, _n2, void 0);
+      __privateAdd$2(this, _n2, void 0);
       this.type = "Raycaster";
       renderer = isCameraRenderer(renderer, this.type);
       this.renderer = renderer;
@@ -18677,21 +18765,21 @@ const PI = ${Math.PI};
         origin: new Vec3(),
         direction: new Vec3()
       };
-      __privateSet$1(this, _localRay, {
+      __privateSet$2(this, _localRay, {
         origin: this.ray.origin.clone(),
         direction: this.ray.direction.clone()
       });
-      __privateSet$1(this, _v0, new Vec3());
-      __privateSet$1(this, _v1, new Vec3());
-      __privateSet$1(this, _v2, new Vec3());
-      __privateSet$1(this, _edge1, new Vec3());
-      __privateSet$1(this, _edge2, new Vec3());
-      __privateSet$1(this, _uv0, new Vec2());
-      __privateSet$1(this, _uv1, new Vec2());
-      __privateSet$1(this, _uv2, new Vec2());
-      __privateSet$1(this, _n0, new Vec3());
-      __privateSet$1(this, _n1, new Vec3());
-      __privateSet$1(this, _n2, new Vec3());
+      __privateSet$2(this, _v0, new Vec3());
+      __privateSet$2(this, _v1, new Vec3());
+      __privateSet$2(this, _v2, new Vec3());
+      __privateSet$2(this, _edge1, new Vec3());
+      __privateSet$2(this, _edge2, new Vec3());
+      __privateSet$2(this, _uv0, new Vec2());
+      __privateSet$2(this, _uv1, new Vec2());
+      __privateSet$2(this, _uv2, new Vec2());
+      __privateSet$2(this, _n0, new Vec3());
+      __privateSet$2(this, _n1, new Vec3());
+      __privateSet$2(this, _n2, new Vec3());
     }
     /**
      * Set the {@link pointer} normalized device coordinates values (in the [-1, 1] range) based on a mouse/pointer/touch event and the {@link CameraRenderer#boundingRect | renderer bounding rectangle}. Useful if the canvas has a fixed position for example, but you might need to directly use {@link setFromNDCCoords} if not.
@@ -18730,22 +18818,22 @@ const PI = ${Math.PI};
       const EPSILON = 1e-6;
       const h = new Vec3();
       const q = new Vec3();
-      h.crossVectors(__privateGet$1(this, _localRay).direction, __privateGet$1(this, _edge2));
-      const a = __privateGet$1(this, _edge1).dot(h);
+      h.crossVectors(__privateGet$2(this, _localRay).direction, __privateGet$2(this, _edge2));
+      const a = __privateGet$2(this, _edge1).dot(h);
       if (Math.abs(a) < EPSILON)
         return false;
       const f = 1 / a;
-      const s = __privateGet$1(this, _localRay).origin.clone().sub(__privateGet$1(this, _v0));
+      const s = __privateGet$2(this, _localRay).origin.clone().sub(__privateGet$2(this, _v0));
       const u = f * s.dot(h);
       if (u < 0 || u > 1)
         return false;
-      q.crossVectors(s, __privateGet$1(this, _edge1));
-      const v = f * __privateGet$1(this, _localRay).direction.dot(q);
+      q.crossVectors(s, __privateGet$2(this, _edge1));
+      const v = f * __privateGet$2(this, _localRay).direction.dot(q);
       if (v < 0 || u + v > 1)
         return false;
-      const t = f * __privateGet$1(this, _edge2).dot(q);
+      const t = f * __privateGet$2(this, _edge2).dot(q);
       if (t > EPSILON) {
-        intersectionPoint.copy(__privateGet$1(this, _localRay).origin).add(__privateGet$1(this, _localRay).direction.clone().multiplyScalar(t));
+        intersectionPoint.copy(__privateGet$2(this, _localRay).origin).add(__privateGet$2(this, _localRay).direction.clone().multiplyScalar(t));
         return true;
       }
       return false;
@@ -18756,12 +18844,12 @@ const PI = ${Math.PI};
      * @returns - {@link Vec3} barycentric contributions.
      */
     getBarycentricCoordinates(intersectionPoint) {
-      const v0p = intersectionPoint.clone().sub(__privateGet$1(this, _v0));
-      const d00 = __privateGet$1(this, _edge1).dot(__privateGet$1(this, _edge1));
-      const d01 = __privateGet$1(this, _edge1).dot(__privateGet$1(this, _edge2));
-      const d11 = __privateGet$1(this, _edge2).dot(__privateGet$1(this, _edge2));
-      const d20 = v0p.dot(__privateGet$1(this, _edge1));
-      const d21 = v0p.dot(__privateGet$1(this, _edge2));
+      const v0p = intersectionPoint.clone().sub(__privateGet$2(this, _v0));
+      const d00 = __privateGet$2(this, _edge1).dot(__privateGet$2(this, _edge1));
+      const d01 = __privateGet$2(this, _edge1).dot(__privateGet$2(this, _edge2));
+      const d11 = __privateGet$2(this, _edge2).dot(__privateGet$2(this, _edge2));
+      const d20 = v0p.dot(__privateGet$2(this, _edge1));
+      const d21 = v0p.dot(__privateGet$2(this, _edge2));
       const denom = d00 * d11 - d01 * d01;
       const barycentric = new Vec3(0, (d11 * d20 - d01 * d21) / denom, (d00 * d21 - d01 * d20) / denom);
       barycentric.x = 1 - barycentric.y - barycentric.z;
@@ -18772,7 +18860,7 @@ const PI = ${Math.PI};
      * @returns - {@link Vec3} normal.
      */
     getTriangleNormal() {
-      return new Vec3().crossVectors(__privateGet$1(this, _edge1), __privateGet$1(this, _edge2)).normalize();
+      return new Vec3().crossVectors(__privateGet$2(this, _edge1), __privateGet$2(this, _edge2)).normalize();
     }
     /**
      * Set our input vector with the desired attribute value at the given offset defined by our triangleIndex, offset and whether we're using and indexed geometry or not.
@@ -18807,7 +18895,7 @@ const PI = ${Math.PI};
       }
       const mesh = isProjectedMesh(object);
       if (mesh) {
-        __privateMethod(this, _intersectMesh, intersectMesh_fn).call(this, mesh, intersections);
+        __privateMethod$1(this, _intersectMesh, intersectMesh_fn).call(this, mesh, intersections);
       }
       if (recursive) {
         object.children.forEach((child) => {
@@ -18879,21 +18967,21 @@ const PI = ${Math.PI};
       }
     }
     const inverseModelMatrix = mesh.worldMatrix.getInverse();
-    __privateGet$1(this, _localRay).origin.copy(this.ray.origin).applyMat4(inverseModelMatrix);
-    __privateGet$1(this, _localRay).direction.copy(this.ray.direction).transformDirection(inverseModelMatrix);
+    __privateGet$2(this, _localRay).origin.copy(this.ray.origin).applyMat4(inverseModelMatrix);
+    __privateGet$2(this, _localRay).direction.copy(this.ray.direction).transformDirection(inverseModelMatrix);
     const uv = mesh.geometry.getAttributeByName("uv");
     const normal = mesh.geometry.getAttributeByName("normal");
     const indices = mesh.geometry.indexBuffer?.array;
     const triangleCount = indices ? indices.length / 3 : position.array.length / 9;
     for (let i = 0; i < triangleCount; i++) {
-      this.setAttributeVectorAtIndex(i, 0, indices, position, __privateGet$1(this, _v0));
-      this.setAttributeVectorAtIndex(i, 1, indices, position, __privateGet$1(this, _v1));
-      this.setAttributeVectorAtIndex(i, 2, indices, position, __privateGet$1(this, _v2));
-      __privateGet$1(this, _edge1).copy(__privateGet$1(this, _v1)).sub(__privateGet$1(this, _v0));
-      __privateGet$1(this, _edge2).copy(__privateGet$1(this, _v2)).sub(__privateGet$1(this, _v0));
+      this.setAttributeVectorAtIndex(i, 0, indices, position, __privateGet$2(this, _v0));
+      this.setAttributeVectorAtIndex(i, 1, indices, position, __privateGet$2(this, _v1));
+      this.setAttributeVectorAtIndex(i, 2, indices, position, __privateGet$2(this, _v2));
+      __privateGet$2(this, _edge1).copy(__privateGet$2(this, _v1)).sub(__privateGet$2(this, _v0));
+      __privateGet$2(this, _edge2).copy(__privateGet$2(this, _v2)).sub(__privateGet$2(this, _v0));
       if (mesh.material.options.rendering.cullMode !== "none") {
         const computedNormal = this.getTriangleNormal();
-        const faceDirection = computedNormal.dot(__privateGet$1(this, _localRay).direction);
+        const faceDirection = computedNormal.dot(__privateGet$2(this, _localRay).direction);
         if (faceDirection > 0 && mesh.material.options.rendering.cullMode === "back") {
           continue;
         } else if (faceDirection < 0 && mesh.material.options.rendering.cullMode === "front") {
@@ -18911,26 +18999,444 @@ const PI = ${Math.PI};
           distance,
           localPoint: intersectionPoint,
           point,
-          triangle: [__privateGet$1(this, _v0).clone(), __privateGet$1(this, _v1).clone(), __privateGet$1(this, _v2).clone()],
+          triangle: [__privateGet$2(this, _v0).clone(), __privateGet$2(this, _v1).clone(), __privateGet$2(this, _v2).clone()],
           triangleIndex: i
         };
         if (uv && uv.array && uv.array.length) {
-          this.setAttributeVectorAtIndex(i, 0, indices, uv, __privateGet$1(this, _uv0));
-          this.setAttributeVectorAtIndex(i, 1, indices, uv, __privateGet$1(this, _uv1));
-          this.setAttributeVectorAtIndex(i, 2, indices, uv, __privateGet$1(this, _uv2));
-          intersection.uv = __privateGet$1(this, _uv0).clone().multiplyScalar(barycentric.x).add(__privateGet$1(this, _uv1).clone().multiplyScalar(barycentric.y)).add(__privateGet$1(this, _uv2).clone().multiplyScalar(barycentric.z));
+          this.setAttributeVectorAtIndex(i, 0, indices, uv, __privateGet$2(this, _uv0));
+          this.setAttributeVectorAtIndex(i, 1, indices, uv, __privateGet$2(this, _uv1));
+          this.setAttributeVectorAtIndex(i, 2, indices, uv, __privateGet$2(this, _uv2));
+          intersection.uv = __privateGet$2(this, _uv0).clone().multiplyScalar(barycentric.x).add(__privateGet$2(this, _uv1).clone().multiplyScalar(barycentric.y)).add(__privateGet$2(this, _uv2).clone().multiplyScalar(barycentric.z));
         }
         if (normal && normal.array && normal.array.length) {
-          this.setAttributeVectorAtIndex(i, 0, indices, normal, __privateGet$1(this, _n0));
-          this.setAttributeVectorAtIndex(i, 1, indices, normal, __privateGet$1(this, _n1));
-          this.setAttributeVectorAtIndex(i, 2, indices, normal, __privateGet$1(this, _n2));
-          intersection.normal = __privateGet$1(this, _n0).clone().multiplyScalar(barycentric.x).add(__privateGet$1(this, _n1).clone().multiplyScalar(barycentric.y)).add(__privateGet$1(this, _n2).clone().multiplyScalar(barycentric.z));
+          this.setAttributeVectorAtIndex(i, 0, indices, normal, __privateGet$2(this, _n0));
+          this.setAttributeVectorAtIndex(i, 1, indices, normal, __privateGet$2(this, _n1));
+          this.setAttributeVectorAtIndex(i, 2, indices, normal, __privateGet$2(this, _n2));
+          intersection.normal = __privateGet$2(this, _n0).clone().multiplyScalar(barycentric.x).add(__privateGet$2(this, _n1).clone().multiplyScalar(barycentric.y)).add(__privateGet$2(this, _n2).clone().multiplyScalar(barycentric.z));
         }
         intersections.push(intersection);
       }
     }
     return intersections;
   };
+
+  const tempVec3 = new Vec3();
+  const tempQuat = new Quat();
+  class KeyframesAnimation {
+    // used for skins
+    /**
+     * KeyframesAnimation constructor
+     * @param parameters - {@link KeyframesAnimationParams | Parameters} used to create this {@link KeyframesAnimation}.
+     */
+    constructor({
+      label = "",
+      keyframes = null,
+      values = null,
+      path = null,
+      interpolation = "LINEAR"
+    } = {}) {
+      this.label = label;
+      this.keyframes = keyframes;
+      this.values = values;
+      this.path = path;
+      this.interpolation = interpolation;
+      this.weightsBindingInputs = [];
+      this.onAfterUpdate = null;
+      this.duration = this.keyframes ? this.keyframes[this.keyframes.length - 1] : 0;
+    }
+    /**
+     * Add a weight {@link BufferBindingInput} to the {@link weightsBindingInputs} array.
+     * @param input - Weight {@link BufferBindingInput}.
+     */
+    addWeightBindingInput(input) {
+      this.weightsBindingInputs.push(input);
+    }
+    /**
+     * Get a cubic spline interpolation value.
+     * @param t - Current time value to use in the [0, 1] range.
+     * @param prevComponentValue - Previous value to use for interpolation.
+     * @param nextComponentValue - Next value to use for interpolation.
+     * @param prevOutputTangentValue - Previous output tangent value to use for interpolation.
+     * @param nextInputTangentValue - Previous output tangent value to use for interpolation.
+     */
+    getCubicSplineComponentValue(t, prevComponentValue, nextComponentValue, prevOutputTangentValue, nextInputTangentValue) {
+      const t2 = t * t;
+      const t3 = t2 * t;
+      return (2 * t3 - 3 * t2 + 1) * prevComponentValue + (t3 - 2 * t2 + t) * prevOutputTangentValue + (-2 * t3 + 3 * t2) * nextComponentValue + (t3 - t2) * nextInputTangentValue;
+    }
+    /**
+     * Get the index from which to return a value from the {@link values} array based on an index in the {@link keyframes} array and the size of the component to animate.
+     * @param index - Index in the {@link keyframes} array to use.
+     * @param size - Size of the component to animate in the {@link values} array.
+     */
+    getIndexFromInterpolation(index = 0, size = 1) {
+      return this.interpolation === "CUBICSPLINE" ? index * 3 * size + size : index * size;
+    }
+    /**
+     * Update an {@link Object3D} transformation property or eventually the {@link weightsBindingInputs} based on the current time given, the {@link path} and {@link interpolation} used and the {@link keyframes} and {@link values}.
+     * @param target - {@link Object3D} to update.
+     * @param currentTime - Current time in seconds.
+     */
+    update(target, currentTime = 0) {
+      if (!this.keyframes || !this.values || !this.path)
+        return;
+      const nextTimeIndex = this.keyframes.findIndex((t) => t >= currentTime);
+      if (nextTimeIndex === -1)
+        return;
+      const previousTimeIndex = nextTimeIndex - 1;
+      if (previousTimeIndex === -1)
+        return;
+      const nextTime = this.keyframes[nextTimeIndex];
+      const previousTime = this.keyframes[previousTimeIndex];
+      const interpolatedTime = (currentTime - previousTime) / (nextTime - previousTime);
+      const deltaTime = nextTime - previousTime;
+      if (this.path === "rotation") {
+        const prevIndex = this.getIndexFromInterpolation(previousTimeIndex, 4);
+        const nextIndex = this.getIndexFromInterpolation(nextTimeIndex, 4);
+        target.quaternion.setFromArray([
+          this.values[prevIndex],
+          this.values[prevIndex + 1],
+          this.values[prevIndex + 2],
+          this.values[prevIndex + 3]
+        ]);
+        if (this.interpolation === "LINEAR" || this.interpolation === "CUBICSPLINE") {
+          tempQuat.setFromArray([
+            this.values[nextIndex],
+            this.values[nextIndex + 1],
+            this.values[nextIndex + 2],
+            this.values[nextIndex + 3]
+          ]);
+          if (this.interpolation === "CUBICSPLINE") {
+            const previousOutputTangent = [
+              this.values[prevIndex + 4],
+              this.values[prevIndex + 5],
+              this.values[prevIndex + 6],
+              this.values[prevIndex + 7]
+            ];
+            const nextInputTangent = [
+              this.values[nextIndex - 4],
+              this.values[nextIndex - 3],
+              this.values[nextIndex - 2],
+              this.values[nextIndex - 1]
+            ];
+            const cubicValue = [
+              this.getCubicSplineComponentValue(
+                interpolatedTime,
+                target.quaternion.elements[0],
+                tempQuat.elements[0],
+                deltaTime * previousOutputTangent[0],
+                deltaTime * nextInputTangent[0]
+              ),
+              this.getCubicSplineComponentValue(
+                interpolatedTime,
+                target.quaternion.elements[1],
+                tempQuat.elements[1],
+                deltaTime * previousOutputTangent[1],
+                deltaTime * nextInputTangent[1]
+              ),
+              this.getCubicSplineComponentValue(
+                interpolatedTime,
+                target.quaternion.elements[2],
+                tempQuat.elements[2],
+                deltaTime * previousOutputTangent[2],
+                deltaTime * nextInputTangent[2]
+              ),
+              this.getCubicSplineComponentValue(
+                interpolatedTime,
+                target.quaternion.elements[3],
+                tempQuat.elements[3],
+                deltaTime * previousOutputTangent[3],
+                deltaTime * nextInputTangent[3]
+              )
+            ];
+            target.quaternion.setFromArray(cubicValue).normalize();
+          } else {
+            target.quaternion.slerp(tempQuat, interpolatedTime);
+          }
+        }
+        target.shouldUpdateModelMatrix();
+      } else if (this.path === "translation" || this.path === "scale") {
+        const vectorName = this.path === "translation" ? "position" : this.path;
+        const prevIndex = this.getIndexFromInterpolation(previousTimeIndex, 3);
+        const nextIndex = this.getIndexFromInterpolation(nextTimeIndex, 3);
+        target[vectorName].set(this.values[prevIndex], this.values[prevIndex + 1], this.values[prevIndex + 2]);
+        if (this.interpolation === "LINEAR" || this.interpolation === "CUBICSPLINE") {
+          tempVec3.set(this.values[nextIndex], this.values[nextIndex + 1], this.values[nextIndex + 2]);
+          if (this.interpolation === "CUBICSPLINE") {
+            const previousOutputTangent = [
+              this.values[prevIndex + 3],
+              this.values[prevIndex + 4],
+              this.values[prevIndex + 5]
+            ];
+            const nextInputTangent = [this.values[nextIndex - 3], this.values[nextIndex - 2], this.values[nextIndex - 1]];
+            const cubicValue = [
+              this.getCubicSplineComponentValue(
+                interpolatedTime,
+                target[vectorName].x,
+                tempVec3.x,
+                deltaTime * previousOutputTangent[0],
+                deltaTime * nextInputTangent[0]
+              ),
+              this.getCubicSplineComponentValue(
+                interpolatedTime,
+                target[vectorName].y,
+                tempVec3.y,
+                deltaTime * previousOutputTangent[1],
+                deltaTime * nextInputTangent[1]
+              ),
+              this.getCubicSplineComponentValue(
+                interpolatedTime,
+                target[vectorName].z,
+                tempVec3.z,
+                deltaTime * previousOutputTangent[2],
+                deltaTime * nextInputTangent[2]
+              )
+            ];
+            target[vectorName].set(cubicValue[0], cubicValue[1], cubicValue[2]);
+          } else {
+            target[vectorName].lerp(tempVec3, interpolatedTime);
+          }
+        }
+      } else if (this.path === "weights") {
+        const prevIndex = this.getIndexFromInterpolation(previousTimeIndex, this.weightsBindingInputs.length);
+        const nextIndex = this.getIndexFromInterpolation(nextTimeIndex, this.weightsBindingInputs.length);
+        for (let i = 0; i < this.weightsBindingInputs.length; i++) {
+          const value = this.values[prevIndex + i];
+          this.weightsBindingInputs[i].value = value;
+          if (this.interpolation === "LINEAR") {
+            const nextValue = this.values[nextIndex + i];
+            this.weightsBindingInputs[i].value += (nextValue - value) * interpolatedTime;
+          } else if (this.interpolation === "CUBICSPLINE") {
+            const nextValue = this.values[nextIndex + i];
+            const previousOutputTangent = this.values[prevIndex + i + 1];
+            const nextInputTangent = this.values[nextIndex + i - 1];
+            this.weightsBindingInputs[i].value = this.getCubicSplineComponentValue(
+              interpolatedTime,
+              value,
+              nextValue,
+              deltaTime * previousOutputTangent[0],
+              deltaTime * nextInputTangent[0]
+            );
+          }
+        }
+      }
+    }
+  }
+
+  var __accessCheck$1 = (obj, member, msg) => {
+    if (!member.has(obj))
+      throw TypeError("Cannot " + msg);
+  };
+  var __privateGet$1 = (obj, member, getter) => {
+    __accessCheck$1(obj, member, "read from private field");
+    return getter ? getter.call(obj) : member.get(obj);
+  };
+  var __privateAdd$1 = (obj, member, value) => {
+    if (member.has(obj))
+      throw TypeError("Cannot add the same private member more than once");
+    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  };
+  var __privateSet$1 = (obj, member, value, setter) => {
+    __accessCheck$1(obj, member, "write to private field");
+    member.set(obj, value);
+    return value;
+  };
+  var _startTime, _currentTime, _deltaTime, _count, _maxCount;
+  class TargetsAnimationsManager {
+    /**
+     * TargetsAnimationsManager constructor
+     * @param renderer - {@link Renderer} or {@link GPUCurtains} class object used to create this {@link TargetsAnimationsManager}.
+     * @param parameters - {@link TargetsAnimationsManagerParams | parameters} used to create this {@link TargetsAnimationsManager}.
+     */
+    constructor(renderer, { label = "", targets = [] } = {}) {
+      // inner time values
+      /** @ignore */
+      __privateAdd$1(this, _startTime, void 0);
+      /** @ignore */
+      __privateAdd$1(this, _currentTime, void 0);
+      /** @ignore */
+      __privateAdd$1(this, _deltaTime, void 0);
+      /** @ignore */
+      __privateAdd$1(this, _count, void 0);
+      /** @ignore */
+      __privateAdd$1(this, _maxCount, void 0);
+      this.uuid = generateUUID();
+      this.setRenderer(renderer);
+      this.label = label;
+      this.targets = [];
+      this.duration = 0;
+      this.timeScale = 1;
+      __privateSet$1(this, _startTime, performance.now());
+      __privateSet$1(this, _currentTime, performance.now());
+      __privateSet$1(this, _deltaTime, 0);
+      __privateSet$1(this, _count, 0);
+      __privateSet$1(this, _count, 0);
+      __privateSet$1(this, _maxCount, Infinity);
+      this.isPlaying = false;
+      if (targets && targets.length) {
+        this.targets = [...this.targets, ...targets];
+      }
+    }
+    /**
+     * Set the current {@link TargetsAnimationsManager.renderer | renderer} to use with this {@link TargetsAnimationsManager}. Can be set to `null` to detach from the current {@link TargetsAnimationsManager.renderer | renderer}.
+     * @param renderer
+     */
+    setRenderer(renderer) {
+      if (this.renderer) {
+        this.renderer.animations.delete(this.uuid);
+      }
+      if (renderer) {
+        renderer = isRenderer(renderer, "TargetsAnimationsManager");
+        this.renderer = renderer;
+        this.renderer.animations.set(this.uuid, this);
+      }
+    }
+    /**
+     * Add a new {@link Target} to the {@link targets} array based on an {@link Object3D}.
+     * @param object - {@link Object3D} to use for the {@link Target}.
+     */
+    addTarget(object) {
+      const target = {
+        object,
+        animations: []
+      };
+      this.targets.push(target);
+      return target;
+    }
+    /**
+     * Add new {@link Target | targets} to the {@link targets} array based on an array of {@link Object3D}.
+     * @param objects - array of {@link Object3D} to use for the {@link Target | targets}.
+     */
+    addTargets(objects) {
+      objects.forEach((object) => this.addTarget(object));
+    }
+    /**
+     * Add a {@link KeyframesAnimation} to a {@link Target#animations | target animations} array based on an {@link Object3D}.
+     * @param object - {@link Object3D} to use for the {@link Target}.
+     * @param animation - {@link KeyframesAnimation} to add.
+     */
+    addTargetAnimation(object, animation) {
+      this.duration = Math.max(this.duration, animation.duration);
+      let target = this.getTargetByObject3D(object);
+      if (!target) {
+        target = this.addTarget(object);
+      }
+      target.animations.push(animation);
+    }
+    /**
+     * Get a {@link Target} from the {@link targets} array based on an {@link Object3D}.
+     * @param object - {@link Object3D} to use to find the {@link Target}.
+     * @returns - {@link Target} found if any.
+     */
+    getTargetByObject3D(object) {
+      return this.targets.find((target) => target.object.object3DIndex === object.object3DIndex);
+    }
+    /**
+     * Get the first animation from the {@link targets} array that matches the {@link Object3D} and {@link KeyframesAnimation#path | path} given.
+     * @param object - {@link Object3D} to use to find the {@link KeyframesAnimation}.
+     * @param path - {@link KeyframesAnimation#path | path} to use to find the {@link KeyframesAnimation}.
+     * @returns - {@link KeyframesAnimation} found if any.
+     */
+    getAnimationByObject3DAndPath(object, path) {
+      const target = this.getTargetByObject3D(object);
+      if (target) {
+        return target.animations.find((animation) => animation.path === path);
+      } else {
+        return null;
+      }
+    }
+    /**
+     * Play or resume the {@link TargetsAnimationsManager}.
+     */
+    play() {
+      this.isPlaying = true;
+    }
+    /**
+     * Play the {@link TargetsAnimationsManager} once.
+     */
+    playOnce() {
+      __privateSet$1(this, _maxCount, 1);
+      this.play();
+    }
+    /**
+     * Pause the {@link TargetsAnimationsManager}.
+     */
+    pause() {
+      this.isPlaying = false;
+      __privateSet$1(this, _startTime, 0);
+    }
+    /**
+     * Stop the {@link TargetsAnimationsManager} and reset all the animations values to last keyframe.
+     */
+    stop() {
+      this.isPlaying = false;
+      __privateSet$1(this, _count, 0);
+      this.targets.forEach(
+        (target) => target.animations.forEach(
+          (animation) => animation.update(target.object, Math.min(animation.duration, this.duration))
+        )
+      );
+      this.renderer.onAfterRenderScene.add(
+        () => {
+          this.targets.forEach((target) => {
+            target.animations.forEach((animation) => {
+              if (animation.onAfterUpdate)
+                animation.onAfterUpdate();
+            });
+          });
+        },
+        {
+          once: true
+        }
+      );
+    }
+    /**
+     * {@link stop | Stop} the {@link TargetsAnimationsManager} at the end of the next animation loop.
+     */
+    stopAtEndOfLoop() {
+      __privateSet$1(this, _maxCount, __privateGet$1(this, _count) + 1);
+    }
+    /**
+     * Update all the {@link targets} animations.
+     */
+    update() {
+      if (!this.isPlaying)
+        return;
+      if (__privateGet$1(this, _startTime) === 0) {
+        __privateSet$1(this, _startTime, performance.now() - __privateGet$1(this, _deltaTime));
+      }
+      __privateSet$1(this, _currentTime, performance.now());
+      __privateSet$1(this, _deltaTime, __privateGet$1(this, _currentTime) - __privateGet$1(this, _startTime));
+      const time = __privateGet$1(this, _deltaTime) * this.timeScale / 1e3;
+      const currentTime = time % this.duration;
+      __privateSet$1(this, _count, Math.floor(time / this.duration));
+      if (__privateGet$1(this, _count) >= __privateGet$1(this, _maxCount)) {
+        this.stop();
+        return;
+      }
+      this.targets.forEach(
+        (target) => target.animations.forEach((animation) => animation.update(target.object, currentTime))
+      );
+    }
+    /**
+     * Call all the {@link targets} animations {@link KeyframesAnimation#onAfterUpdate | onAfterUpdate} callbacks.
+     */
+    onAfterUpdate() {
+      if (!this.isPlaying)
+        return;
+      this.targets.forEach(
+        (target) => target.animations.forEach((animation) => {
+          if (animation.onAfterUpdate)
+            animation.onAfterUpdate();
+        })
+      );
+    }
+  }
+  _startTime = new WeakMap();
+  _currentTime = new WeakMap();
+  _deltaTime = new WeakMap();
+  _count = new WeakMap();
+  _maxCount = new WeakMap();
 
   var __accessCheck = (obj, member, msg) => {
     if (!member.has(obj))
@@ -18950,7 +19456,11 @@ const PI = ${Math.PI};
     member.set(obj, value);
     return value;
   };
-  var _primitiveInstances;
+  var __privateMethod = (obj, member, method) => {
+    __accessCheck(obj, member, "access private method");
+    return method;
+  };
+  var _primitiveInstances, _getSparseAccessorIndicesAndValues, getSparseAccessorIndicesAndValues_fn, _parsePrimitiveProperty, parsePrimitiveProperty_fn;
   const GL$1 = WebGLRenderingContext;
   const _normalMatrix = new Mat4();
   const _GLTFScenesManager = class _GLTFScenesManager {
@@ -18961,36 +19471,37 @@ const PI = ${Math.PI};
      * @param parameters.gltf - The {@link GLTFLoader.gltf | gltf} object used.
      */
     constructor({ renderer, gltf }) {
+      __privateAdd(this, _getSparseAccessorIndicesAndValues);
+      /**
+       * Parse a {@link GLTF.IMeshPrimitive | glTF primitive} and create typed arrays from the given {@link gltf} accessors, bufferViews and buffers.
+       * @param primitiveProperty- Primitive property to parse, can either be `attributes` or `targets`.
+       * @param attributes - An empty {@link VertexBufferAttributeParams} array to fill with parsed values.
+       * @returns - Interleaved attributes {@link TypedArray} if any.
+       * @private
+       */
+      __privateAdd(this, _parsePrimitiveProperty);
       /** The {@link PrimitiveInstances} Map, to group similar {@link Mesh} by instances. */
       __privateAdd(this, _primitiveInstances, void 0);
       renderer = isCameraRenderer(renderer, "GLTFScenesManager");
       this.renderer = renderer;
       this.gltf = gltf;
       __privateSet(this, _primitiveInstances, /* @__PURE__ */ new Map());
-      const traverseChildren = (child) => {
-        return [
-          child.node,
-          ...child.children?.map((c) => {
-            return [...traverseChildren(c)];
-          }).flat()
-        ].flat();
-      };
       this.scenesManager = {
         node: new Object3D(),
+        nodes: /* @__PURE__ */ new Map(),
         boundingBox: new Box3(),
         samplers: [],
         materialsTextures: [],
         scenes: [],
         meshes: [],
         meshesDescriptors: [],
-        getScenesNodes: () => {
-          return this.scenesManager.scenes.map((scene) => {
-            return traverseChildren(scene);
-          }).flat();
-        }
+        animations: [],
+        cameras: [],
+        skins: []
       };
       this.createSamplers();
       this.createMaterialTextures();
+      this.createAnimations();
       this.createScenes();
     }
     /**
@@ -19017,6 +19528,27 @@ const PI = ${Math.PI};
             type: "vec4f",
             bufferFormat: "float32x4",
             size: 4
+          };
+        case "MAT2":
+          return {
+            type: "mat2x2f",
+            bufferFormat: "float32x2",
+            // not used
+            size: 6
+          };
+        case "MAT3":
+          return {
+            type: "mat3x3f",
+            bufferFormat: "float32x3",
+            // not used
+            size: 9
+          };
+        case "MAT4":
+          return {
+            type: "mat4x4f",
+            bufferFormat: "float32x4",
+            // not used
+            size: 16
           };
         case "SCALAR":
         default:
@@ -19082,6 +19614,18 @@ const PI = ${Math.PI};
         default:
           return "repeat";
       }
+    }
+    /**
+     * Create the {@link scenesManager} {@link TargetsAnimationsManager} if any animation is present in the {@link gltf}.
+     */
+    createAnimations() {
+      this.gltf.animations?.forEach((animation, index) => {
+        this.scenesManager.animations.push(
+          new TargetsAnimationsManager(this.renderer, {
+            label: animation.name ?? "Animation " + index
+          })
+        );
+      });
     }
     /**
      * Create the {@link Sampler} and add them to the {@link ScenesManager.samplers | scenesManager samplers array}.
@@ -19243,18 +19787,19 @@ const PI = ${Math.PI};
       }
     }
     /**
-     * Create a {@link ChildDescriptor} from a parent {@link ChildDescriptor} and a {@link GLTF.INode | GLTF Node}
+     * Create a {@link ChildDescriptor} from a parent {@link ChildDescriptor} and a {@link GLTF.INode | glTF Node}
      * @param parent - parent {@link ChildDescriptor} to use.
-     * @param node - {@link GLTF.INode | GLTF Node} to use.
+     * @param node - {@link GLTF.INode | glTF Node} to use.
+     * @param index - Index of the {@link GLTF.INode | glTF Node} to use.
      */
-    createNode(parent, node) {
-      if (node.camera !== void 0)
-        return;
+    createNode(parent, node, index) {
       const child = {
+        index,
         name: node.name,
         node: new Object3D(),
         children: []
       };
+      this.scenesManager.nodes.set(index, child.node);
       parent.children.push(child);
       child.node.parent = parent.node;
       if (node.matrix) {
@@ -19268,25 +19813,26 @@ const PI = ${Math.PI};
         if (node.rotation)
           child.node.quaternion.setFromArray(new Float32Array(node.rotation));
       }
-      const mesh = this.gltf.meshes[node.mesh];
       if (node.children) {
         node.children.forEach((childNodeIndex) => {
           const childNode = this.gltf.nodes[childNodeIndex];
-          this.createNode(child, childNode);
+          this.createNode(child, childNode, childNodeIndex);
         });
       }
-      if (mesh) {
-        mesh.primitives.forEach((primitive, index) => {
+      let instancesDescriptor = null;
+      if (node.mesh !== void 0) {
+        const mesh = this.gltf.meshes[node.mesh];
+        mesh.primitives.forEach((primitive, i) => {
           const meshDescriptor = {
             parent: child.node,
             attributes: [],
             textures: [],
             parameters: {
-              label: mesh.name ? mesh.name + " " + index : "glTF mesh " + index
+              label: mesh.name ? mesh.name + " " + i : "glTF mesh " + i
             },
             nodes: []
           };
-          let instancesDescriptor = __privateGet(this, _primitiveInstances).get(primitive);
+          instancesDescriptor = __privateGet(this, _primitiveInstances).get(primitive);
           if (!instancesDescriptor) {
             instancesDescriptor = {
               instances: [],
@@ -19300,6 +19846,496 @@ const PI = ${Math.PI};
           instancesDescriptor.instances.push(node);
           instancesDescriptor.nodes.push(child.node);
         });
+      }
+      if (node.camera !== void 0) {
+        const gltfCamera = this.gltf.cameras[node.camera];
+        if (gltfCamera.type === "perspective") {
+          const minSize = Math.min(this.renderer.boundingRect.width, this.renderer.boundingRect.height);
+          const width = minSize / gltfCamera.perspective.aspectRatio;
+          const height = minSize * gltfCamera.perspective.aspectRatio;
+          const fov = gltfCamera.perspective.yfov * 180 / Math.PI;
+          const camera = new Camera({
+            fov,
+            near: gltfCamera.perspective.znear,
+            far: gltfCamera.perspective.zfar,
+            width,
+            height,
+            pixelRatio: this.renderer.pixelRatio
+          });
+          camera.parent = child.node;
+          this.scenesManager.cameras.push(camera);
+        } else if (gltfCamera.type === "orthographic") {
+          throwWarning("GLTFScenesManager: Orthographic cameras are not supported yet.");
+        }
+      }
+      if (this.gltf.animations) {
+        this.scenesManager.animations.forEach((targetsAnimation, i) => {
+          const animation = this.gltf.animations[i];
+          const channels = animation.channels.filter((channel) => channel.target.node === index);
+          if (channels && channels.length) {
+            targetsAnimation.addTarget(child.node);
+            channels.forEach((channel) => {
+              const sampler = animation.samplers[channel.sampler];
+              const path = channel.target.path;
+              const inputAccessor = this.gltf.accessors[sampler.input];
+              const inputBufferView = this.gltf.bufferViews[inputAccessor.bufferView];
+              const inputTypedArrayConstructor = _GLTFScenesManager.getTypedArrayConstructorFromComponentType(
+                inputAccessor.componentType
+              );
+              const outputAccessor = this.gltf.accessors[sampler.output];
+              const outputBufferView = this.gltf.bufferViews[outputAccessor.bufferView];
+              const outputTypedArrayConstructor = _GLTFScenesManager.getTypedArrayConstructorFromComponentType(
+                outputAccessor.componentType
+              );
+              const keyframes = new inputTypedArrayConstructor(
+                this.gltf.arrayBuffers[inputBufferView.buffer],
+                inputAccessor.byteOffset + inputBufferView.byteOffset,
+                inputAccessor.count * _GLTFScenesManager.getVertexAttributeParamsFromType(inputAccessor.type).size
+              );
+              const values = new outputTypedArrayConstructor(
+                this.gltf.arrayBuffers[outputBufferView.buffer],
+                outputAccessor.byteOffset + outputBufferView.byteOffset,
+                outputAccessor.count * _GLTFScenesManager.getVertexAttributeParamsFromType(outputAccessor.type).size
+              );
+              const animName = node.name ? `${node.name} animation` : `${channel.target.path} animation ${index}`;
+              const keyframesAnimation = new KeyframesAnimation({
+                label: animation.name ? `${animation.name} ${animName}` : `Animation ${i} ${animName}`,
+                keyframes,
+                values,
+                path,
+                interpolation: sampler.interpolation
+              });
+              targetsAnimation.addTargetAnimation(child.node, keyframesAnimation);
+            });
+          }
+        });
+      }
+    }
+    /**
+     * Create the mesh {@link Geometry} based on the given {@link gltf} primitive and {@link PrimitiveInstanceDescriptor}.
+     * @param primitive - {@link gltf} primitive to use to create the {@link Geometry}.
+     * @param primitiveInstance - {@link PrimitiveInstanceDescriptor} to use to create the {@link Geometry}.
+     */
+    createGeometry(primitive, primitiveInstance) {
+      const { instances, meshDescriptor } = primitiveInstance;
+      const geometryBBox = new Box3();
+      for (const [attribName, accessorIndex] of Object.entries(primitive.attributes)) {
+        if (attribName === "POSITION") {
+          const accessor = this.gltf.accessors[accessorIndex];
+          if (geometryBBox) {
+            geometryBBox.min.min(new Vec3(accessor.min[0], accessor.min[1], accessor.min[2]));
+            geometryBBox.max.max(new Vec3(accessor.max[0], accessor.max[1], accessor.max[2]));
+          }
+        }
+      }
+      let defaultAttributes = [];
+      let interleavedArray = __privateMethod(this, _parsePrimitiveProperty, parsePrimitiveProperty_fn).call(this, primitive.attributes, defaultAttributes);
+      const isIndexedGeometry = "indices" in primitive;
+      let indicesArray = null;
+      let indicesConstructor = null;
+      if (isIndexedGeometry) {
+        const accessor = this.gltf.accessors[primitive.indices];
+        const bufferView = this.gltf.bufferViews[accessor.bufferView];
+        indicesConstructor = _GLTFScenesManager.getTypedArrayConstructorFromComponentType(accessor.componentType);
+        const arrayOffset = accessor.byteOffset + bufferView.byteOffset;
+        const arrayBuffer = this.gltf.arrayBuffers[bufferView.buffer];
+        const arrayLength = Math.ceil(accessor.count / indicesConstructor.BYTES_PER_ELEMENT) * indicesConstructor.BYTES_PER_ELEMENT;
+        indicesArray = indicesConstructor.name === "Uint8Array" ? Uint16Array.from(new indicesConstructor(arrayBuffer, arrayOffset, arrayLength)) : new indicesConstructor(arrayBuffer, arrayOffset, arrayLength);
+      }
+      const hasNormal = defaultAttributes.find((attribute) => attribute.name === "normal");
+      if (!hasNormal) {
+        const positionAttribute = defaultAttributes.find((attribute) => attribute.name === "position");
+        const vertex1 = new Vec3();
+        const vertex2 = new Vec3();
+        const vertex3 = new Vec3();
+        const edge1 = new Vec3();
+        const edge2 = new Vec3();
+        const normal = new Vec3();
+        const computeNormal = () => {
+          edge1.copy(vertex2).sub(vertex1);
+          edge2.copy(vertex3).sub(vertex1);
+          normal.crossVectors(edge1, edge2).normalize();
+        };
+        const posLength = positionAttribute.array.length;
+        const normalArray = new Float32Array(posLength);
+        if (!indicesArray) {
+          for (let i = 0; i < posLength; i += positionAttribute.size * 3) {
+            vertex1.set(positionAttribute.array[i], positionAttribute.array[i + 1], positionAttribute.array[i + 2]);
+            vertex2.set(positionAttribute.array[i + 3], positionAttribute.array[i + 4], positionAttribute.array[i + 5]);
+            vertex3.set(positionAttribute.array[i + 6], positionAttribute.array[i + 7], positionAttribute.array[i + 8]);
+            computeNormal();
+            for (let j = 0; j < 3; j++) {
+              normalArray[i + j * 3] = normal.x;
+              normalArray[i + 1 + j * 3] = normal.y;
+              normalArray[i + 2 + j * 3] = normal.z;
+            }
+          }
+        } else {
+          const nbIndices = indicesArray.length;
+          for (let i = 0; i < nbIndices; i += positionAttribute.size * 3) {
+            const i0 = indicesArray[i] * 3;
+            const i1 = indicesArray[i + 1] * 3;
+            const i2 = indicesArray[i + 2] * 3;
+            vertex1.set(positionAttribute.array[i0], positionAttribute.array[i0 + 1], positionAttribute.array[i0 + 2]);
+            vertex2.set(positionAttribute.array[i1], positionAttribute.array[i1 + 1], positionAttribute.array[i1 + 2]);
+            vertex3.set(positionAttribute.array[i2], positionAttribute.array[i2 + 1], positionAttribute.array[i2 + 2]);
+            computeNormal();
+            for (let j = 0; j < 3; j++) {
+              normalArray[indicesArray[i + j] * 3] = normal.x;
+              normalArray[indicesArray[i + j] * 3 + 1] = normal.y;
+              normalArray[indicesArray[i + j] * 3 + 2] = normal.z;
+            }
+          }
+        }
+        const normalAttribute = {
+          name: "normal",
+          type: "vec3f",
+          bufferFormat: "float32x3",
+          size: 3,
+          array: normalArray
+        };
+        defaultAttributes.push(normalAttribute);
+        defaultAttributes = defaultAttributes.filter((attr) => attr.name !== "tangent");
+        interleavedArray = null;
+      }
+      if (!interleavedArray) {
+        const attribOrder = ["position", "uv", "normal"];
+        defaultAttributes.sort((a, b) => {
+          let aIndex = attribOrder.findIndex((attrName) => attrName === a.name);
+          aIndex = aIndex === -1 ? Infinity : aIndex;
+          let bIndex = attribOrder.findIndex((attrName) => attrName === b.name);
+          bIndex = bIndex === -1 ? Infinity : bIndex;
+          return aIndex - bIndex;
+        });
+      }
+      defaultAttributes.forEach((attribute) => {
+        meshDescriptor.attributes.push({
+          name: attribute.name,
+          type: attribute.type
+        });
+      });
+      const geometryAttributes = {
+        instancesCount: instances.length,
+        topology: _GLTFScenesManager.gpuPrimitiveTopologyForMode(primitive.mode),
+        vertexBuffers: [
+          {
+            name: "attributes",
+            stepMode: "vertex",
+            // explicitly set the stepMode even if not mandatory
+            attributes: defaultAttributes,
+            ...interleavedArray && { array: interleavedArray }
+            // interleaved array!
+          }
+        ]
+      };
+      const GeometryConstructor = isIndexedGeometry ? IndexedGeometry : Geometry;
+      meshDescriptor.parameters.geometry = new GeometryConstructor(geometryAttributes);
+      meshDescriptor.parameters.geometry.boundingBox = geometryBBox;
+      if (isIndexedGeometry && indicesConstructor && indicesArray) {
+        meshDescriptor.parameters.geometry.setIndexBuffer({
+          bufferFormat: indicesConstructor.name === "Uint32Array" ? "uint32" : "uint16",
+          array: indicesArray
+        });
+      }
+    }
+    /**
+     * Create the {@link SkinDefinition | skins definitions} for each {@link gltf} skins.
+     */
+    createSkins() {
+      if (this.gltf.skins) {
+        this.gltf.skins.forEach((skin, skinIndex) => {
+          const skinnedMeshNode = this.gltf.nodes.find(
+            (node) => node.skin !== void 0 && node.mesh !== void 0 && node.skin === skinIndex
+          );
+          const meshIndex = skinnedMeshNode.mesh;
+          let matrices;
+          if (skin.inverseBindMatrices) {
+            const matricesAccessor = this.gltf.accessors[skin.inverseBindMatrices];
+            const matricesBufferView = this.gltf.bufferViews[matricesAccessor.bufferView];
+            const matricesTypedArrayConstructor = _GLTFScenesManager.getTypedArrayConstructorFromComponentType(
+              matricesAccessor.componentType
+            );
+            matrices = new matricesTypedArrayConstructor(
+              this.gltf.arrayBuffers[matricesBufferView.buffer],
+              matricesAccessor.byteOffset + matricesBufferView.byteOffset,
+              matricesAccessor.count * _GLTFScenesManager.getVertexAttributeParamsFromType(matricesAccessor.type).size
+            );
+          } else {
+            matrices = new Float32Array(16 * skin.joints.length);
+            for (let i = 0; i < skin.joints.length * 16; i += 16) {
+              matrices[i] = 1;
+              matrices[i + 5] = 1;
+              matrices[i + 10] = 1;
+              matrices[i + 15] = 1;
+            }
+          }
+          const binding = new BufferBinding({
+            label: "Skin " + meshIndex,
+            name: "skin" + meshIndex,
+            bindingType: "storage",
+            visibility: ["vertex"],
+            childrenBindings: [
+              {
+                binding: new BufferBinding({
+                  label: "Joints",
+                  name: "joints",
+                  bindingType: "storage",
+                  visibility: ["vertex"],
+                  struct: {
+                    jointMatrix: {
+                      type: "mat4x4f",
+                      value: new Float32Array(16)
+                    },
+                    normalMatrix: {
+                      type: "mat4x4f",
+                      value: new Float32Array(16)
+                    }
+                  }
+                }),
+                count: skin.joints.length,
+                forceArray: true
+                // needs to be always iterable
+              }
+            ]
+          });
+          for (let i = 0; i < skin.joints.length; i++) {
+            for (let j = 0; j < 16; j++) {
+              binding.childrenBindings[i].inputs.jointMatrix.value[j] = matrices[i * 16 + j];
+              binding.childrenBindings[i].inputs.normalMatrix.value[j] = matrices[i * 16 + j];
+            }
+            binding.childrenBindings[i].inputs.jointMatrix.shouldUpdate = true;
+            binding.childrenBindings[i].inputs.normalMatrix.shouldUpdate = true;
+          }
+          const joints = skin.joints.map((joint) => this.scenesManager.nodes.get(joint));
+          const jointMatrix = new Mat4();
+          const normalMatrix = new Mat4();
+          const parentNodeIndex = this.gltf.nodes.findIndex(
+            (node) => node.mesh !== void 0 && node.skin !== void 0 && node.mesh === meshIndex
+          );
+          if (parentNodeIndex !== -1) {
+            const parentNode = this.scenesManager.nodes.get(parentNodeIndex);
+            const parentInverseWorldMatrix = new Mat4();
+            const _updateMatrixStack = parentNode.updateMatrixStack.bind(parentNode);
+            parentNode.updateMatrixStack = () => {
+              _updateMatrixStack();
+              parentInverseWorldMatrix.copy(parentNode.worldMatrix).invert();
+            };
+            for (const animation of this.scenesManager.animations) {
+              joints.forEach((object, jointIndex) => {
+                const updateJointMatrix = () => {
+                  if (animation.isPlaying) {
+                    jointMatrix.setFromArray(matrices, jointIndex * 16).premultiply(object.worldMatrix).premultiply(parentInverseWorldMatrix);
+                  } else {
+                    jointMatrix.identity();
+                  }
+                  normalMatrix.copy(jointMatrix).invert().transpose();
+                  for (let i = 0; i < 16; i++) {
+                    binding.childrenBindings[jointIndex].inputs.jointMatrix.value[i] = jointMatrix.elements[i];
+                    binding.childrenBindings[jointIndex].inputs.normalMatrix.value[i] = normalMatrix.elements[i];
+                  }
+                  binding.childrenBindings[jointIndex].inputs.jointMatrix.shouldUpdate = true;
+                  binding.childrenBindings[jointIndex].inputs.normalMatrix.shouldUpdate = true;
+                };
+                const animationTarget = animation.getTargetByObject3D(object);
+                if (animationTarget) {
+                  animationTarget.animations.forEach((animation2) => {
+                    animation2.onAfterUpdate = updateJointMatrix;
+                  });
+                } else {
+                  const node = this.gltf.nodes[jointIndex];
+                  const animName = node.name ? `${node.name} empty animation` : `empty animation ${jointIndex}`;
+                  const emptyAnimation = new KeyframesAnimation({
+                    label: animation.label ? `${animation.label} ${animName}` : `Animation ${animName}`
+                  });
+                  emptyAnimation.onAfterUpdate = updateJointMatrix;
+                  animation.addTargetAnimation(object, emptyAnimation);
+                }
+              });
+            }
+            this.scenesManager.skins.push({
+              parentNode,
+              joints,
+              inverseBindMatrices: matrices,
+              jointMatrix,
+              normalMatrix,
+              parentInverseWorldMatrix,
+              binding
+            });
+          }
+        });
+      }
+    }
+    /**
+     * Create the mesh material parameters based on the given {@link gltf} primitive and {@link PrimitiveInstanceDescriptor}.
+     * @param primitive - {@link gltf} primitive to use to create the material parameters.
+     * @param primitiveInstance - {@link PrimitiveInstanceDescriptor} to use to create the material parameters.
+     */
+    createMaterial(primitive, primitiveInstance) {
+      const { instances, nodes, meshDescriptor } = primitiveInstance;
+      const instancesCount = instances.length;
+      const meshIndex = instances[0].mesh;
+      if (primitive.targets) {
+        const bindings = [];
+        const weights = this.gltf.meshes[meshIndex].weights;
+        let weightAnimation;
+        for (const animation of this.scenesManager.animations) {
+          weightAnimation = animation.getAnimationByObject3DAndPath(meshDescriptor.parent, "weights");
+          if (weightAnimation)
+            break;
+        }
+        primitive.targets.forEach((target, index) => {
+          const targetAttributes = [];
+          __privateMethod(this, _parsePrimitiveProperty, parsePrimitiveProperty_fn).call(this, target, targetAttributes);
+          const struct = targetAttributes.reduce(
+            (acc, attribute) => {
+              return acc = {
+                ...acc,
+                ...{
+                  [attribute.name]: {
+                    type: `array<${attribute.type}>`,
+                    value: attribute.array
+                  }
+                }
+              };
+            },
+            {
+              weight: {
+                type: "f32",
+                value: weights && weights.length ? weights[index] : 0
+              }
+            }
+          );
+          const targetBinding = new BufferBinding({
+            label: "Morph target " + index,
+            name: "morphTarget" + index,
+            bindingType: "storage",
+            visibility: ["vertex"],
+            struct
+          });
+          if (weightAnimation) {
+            weightAnimation.addWeightBindingInput(targetBinding.inputs.weight);
+          }
+          bindings.push(targetBinding);
+        });
+        if (!meshDescriptor.parameters.bindings) {
+          meshDescriptor.parameters.bindings = [];
+        }
+        meshDescriptor.parameters.bindings = [...meshDescriptor.parameters.bindings, ...bindings];
+      }
+      if (this.gltf.skins) {
+        this.gltf.skins.forEach((skin, skinIndex) => {
+          const node = instances[0];
+          if (node.skin !== void 0 && node.skin === skinIndex) {
+            const skinDef = this.scenesManager.skins[skinIndex];
+            if (!meshDescriptor.parameters.bindings) {
+              meshDescriptor.parameters.bindings = [];
+            }
+            meshDescriptor.parameters.bindings = [...meshDescriptor.parameters.bindings, skinDef.binding];
+          }
+        });
+      }
+      const materialTextures = this.scenesManager.materialsTextures[primitive.material];
+      meshDescriptor.parameters.samplers = [];
+      meshDescriptor.parameters.textures = [];
+      materialTextures?.texturesDescriptors.forEach((t) => {
+        meshDescriptor.textures.push({
+          texture: t.texture.options.name,
+          sampler: t.sampler.name,
+          texCoordAttributeName: t.texCoordAttributeName
+        });
+        const samplerExists = meshDescriptor.parameters.samplers.find((s) => s.uuid === t.sampler.uuid);
+        if (!samplerExists) {
+          meshDescriptor.parameters.samplers.push(t.sampler);
+        }
+        meshDescriptor.parameters.textures.push(t.texture);
+      });
+      const material = this.gltf.materials && this.gltf.materials[primitive.material] || {};
+      meshDescriptor.parameters.cullMode = material.doubleSided ? "none" : "back";
+      if (material.alphaMode === "BLEND" || material.extensions && material.extensions.KHR_materials_transmission) {
+        meshDescriptor.parameters.transparent = true;
+        meshDescriptor.parameters.targets = [
+          {
+            blend: {
+              color: {
+                srcFactor: "src-alpha",
+                dstFactor: "one-minus-src-alpha"
+              },
+              alpha: {
+                // This just prevents the canvas from having alpha "holes" in it.
+                srcFactor: "one",
+                dstFactor: "one"
+              }
+            }
+          }
+        ];
+      }
+      const materialUniformStruct = {
+        baseColorFactor: {
+          type: "vec4f",
+          value: material.pbrMetallicRoughness?.baseColorFactor || [1, 1, 1, 1]
+        },
+        alphaCutoff: {
+          type: "f32",
+          value: material.alphaCutoff !== void 0 ? material.alphaCutoff : material.alphaMode === "MASK" ? 0.5 : 0
+        },
+        metallicFactor: {
+          type: "f32",
+          value: material.pbrMetallicRoughness?.metallicFactor === void 0 ? 1 : material.pbrMetallicRoughness.metallicFactor
+        },
+        roughnessFactor: {
+          type: "f32",
+          value: material.pbrMetallicRoughness?.roughnessFactor === void 0 ? 1 : material.pbrMetallicRoughness.roughnessFactor
+        },
+        normalMapScale: {
+          type: "f32",
+          value: material.normalTexture?.scale === void 0 ? 1 : material.normalTexture.scale
+        },
+        occlusionStrength: {
+          type: "f32",
+          value: material.occlusionTexture?.strength === void 0 ? 1 : material.occlusionTexture.strength
+        },
+        emissiveFactor: {
+          type: "vec3f",
+          value: material.emissiveFactor !== void 0 ? material.emissiveFactor : [1, 1, 1]
+        }
+      };
+      if (Object.keys(materialUniformStruct).length) {
+        meshDescriptor.parameters.uniforms = {
+          material: {
+            visibility: ["vertex", "fragment"],
+            struct: materialUniformStruct
+          }
+        };
+      }
+      if (instancesCount > 1) {
+        const worldMatrices = new Float32Array(instancesCount * 16);
+        const normalMatrices = new Float32Array(instancesCount * 16);
+        for (let i = 0; i < instancesCount; ++i) {
+          worldMatrices.set(nodes[i].worldMatrix.elements, i * 16);
+          _normalMatrix.copy(nodes[i].worldMatrix).invert().transpose();
+          normalMatrices.set(_normalMatrix.elements, i * 16);
+        }
+        meshDescriptor.parameters.storages = {
+          instances: {
+            visibility: ["vertex", "fragment"],
+            struct: {
+              modelMatrix: {
+                type: "array<mat4x4f>",
+                value: worldMatrices
+              },
+              normalMatrix: {
+                type: "array<mat4x4f>",
+                value: normalMatrices
+              }
+            }
+          }
+        };
+      }
+      for (let i = 0; i < nodes.length; i++) {
+        const tempBbox = meshDescriptor.parameters.geometry.boundingBox.clone();
+        const transformedBbox = tempBbox.applyMat4(meshDescriptor.nodes[i].worldMatrix);
+        this.scenesManager.boundingBox.min.min(transformedBbox.min);
+        this.scenesManager.boundingBox.max.max(transformedBbox.max);
       }
     }
     /**
@@ -19317,246 +20353,17 @@ const PI = ${Math.PI};
         this.scenesManager.scenes.push(sceneDescriptor);
         childScene.nodes.forEach((nodeIndex) => {
           const node = this.gltf.nodes[nodeIndex];
-          this.createNode(sceneDescriptor, node);
+          this.createNode(sceneDescriptor, node, nodeIndex);
         });
       });
       this.scenesManager.node.updateMatrixStack();
+      this.createSkins();
       for (const [primitive, primitiveInstance] of __privateGet(this, _primitiveInstances)) {
-        const { instances, nodes, meshDescriptor } = primitiveInstance;
-        const instancesCount = instances.length;
+        const { nodes, meshDescriptor } = primitiveInstance;
         meshDescriptor.nodes = nodes;
         this.scenesManager.meshesDescriptors.push(meshDescriptor);
-        const geometryBBox = new Box3();
-        const defaultAttributes = [];
-        let interleavedArray = null;
-        let interleavedBufferView = null;
-        let maxByteOffset = 0;
-        for (const [attribName, accessorIndex] of Object.entries(primitive.attributes)) {
-          const accessor = this.gltf.accessors[accessorIndex];
-          const constructor = _GLTFScenesManager.getTypedArrayConstructorFromComponentType(accessor.componentType);
-          const bufferView = this.gltf.bufferViews[accessor.bufferView];
-          const name = attribName === "TEXCOORD_0" ? "uv" : attribName.replace("_", "").replace("TEXCOORD", "uv").toLowerCase();
-          const byteStride = bufferView.byteStride || 0;
-          const accessorByteOffset = accessor.byteOffset || 0;
-          if (byteStride && accessorByteOffset && accessorByteOffset < byteStride) {
-            maxByteOffset = Math.max(accessorByteOffset, maxByteOffset);
-          } else {
-            maxByteOffset = 0;
-          }
-          if (name === "position") {
-            geometryBBox.min.min(new Vec3(accessor.min[0], accessor.min[1], accessor.min[2]));
-            geometryBBox.max.max(new Vec3(accessor.max[0], accessor.max[1], accessor.max[2]));
-            interleavedBufferView = bufferView;
-          }
-          const attributeParams = _GLTFScenesManager.getVertexAttributeParamsFromType(accessor.type);
-          const attribute = {
-            name,
-            ...attributeParams,
-            array: new constructor(
-              this.gltf.arrayBuffers[bufferView.buffer],
-              accessor.byteOffset + bufferView.byteOffset,
-              accessor.count * attributeParams.size
-            )
-          };
-          defaultAttributes.push(attribute);
-          meshDescriptor.attributes.push({
-            name: attribute.name,
-            type: attribute.type
-          });
-        }
-        if (maxByteOffset > 0) {
-          const accessorsBufferViews = Object.values(primitive.attributes).map(
-            (accessorIndex) => this.gltf.accessors[accessorIndex].bufferView
-          );
-          if (!accessorsBufferViews.every((val) => val === accessorsBufferViews[0])) {
-            let totalStride = 0;
-            const mainBufferStrides = {};
-            const arrayLength = Object.values(primitive.attributes).reduce(
-              (acc, accessorIndex) => {
-                const accessor = this.gltf.accessors[accessorIndex];
-                const attrSize = _GLTFScenesManager.getVertexAttributeParamsFromType(accessor.type).size;
-                if (!mainBufferStrides[accessor.bufferView]) {
-                  mainBufferStrides[accessor.bufferView] = 0;
-                }
-                mainBufferStrides[accessor.bufferView] = Math.max(
-                  mainBufferStrides[accessor.bufferView],
-                  accessor.byteOffset + attrSize * Float32Array.BYTES_PER_ELEMENT
-                );
-                totalStride += attrSize * Float32Array.BYTES_PER_ELEMENT;
-                return acc + accessor.count * attrSize;
-              },
-              0
-            );
-            interleavedArray = new Float32Array(Math.ceil(arrayLength / 4) * 4);
-            Object.values(primitive.attributes).forEach((accessorIndex) => {
-              const accessor = this.gltf.accessors[accessorIndex];
-              const bufferView = this.gltf.bufferViews[accessor.bufferView];
-              const attrSize = _GLTFScenesManager.getVertexAttributeParamsFromType(accessor.type).size;
-              for (let i = 0; i < accessor.count; i++) {
-                const startOffset = accessor.byteOffset / Float32Array.BYTES_PER_ELEMENT + i * totalStride / Float32Array.BYTES_PER_ELEMENT;
-                interleavedArray.subarray(startOffset, startOffset + attrSize).set(
-                  new Float32Array(
-                    this.gltf.arrayBuffers[bufferView.buffer],
-                    bufferView.byteOffset + accessor.byteOffset + i * mainBufferStrides[accessor.bufferView],
-                    attrSize
-                  )
-                );
-              }
-            });
-          } else {
-            interleavedArray = new Float32Array(
-              this.gltf.arrayBuffers[interleavedBufferView.buffer],
-              interleavedBufferView.byteOffset,
-              Math.ceil(interleavedBufferView.byteLength / 4) * 4 / Float32Array.BYTES_PER_ELEMENT
-            );
-          }
-        } else {
-          const attribOrder = ["position", "uv", "normal"];
-          defaultAttributes.sort((a, b) => {
-            let aIndex = attribOrder.findIndex((attrName) => attrName === a.name);
-            aIndex = aIndex === -1 ? Infinity : aIndex;
-            let bIndex = attribOrder.findIndex((attrName) => attrName === b.name);
-            bIndex = bIndex === -1 ? Infinity : bIndex;
-            return aIndex - bIndex;
-          });
-        }
-        const geometryAttributes = {
-          instancesCount,
-          topology: _GLTFScenesManager.gpuPrimitiveTopologyForMode(primitive.mode),
-          vertexBuffers: [
-            {
-              name: "attributes",
-              stepMode: "vertex",
-              // explicitly set the stepMode even if not mandatory
-              attributes: defaultAttributes,
-              ...interleavedArray && { array: interleavedArray }
-              // interleaved array!
-            }
-          ]
-        };
-        const isIndexedGeometry = "indices" in primitive;
-        const GeometryConstructor = isIndexedGeometry ? IndexedGeometry : Geometry;
-        meshDescriptor.parameters.geometry = new GeometryConstructor(geometryAttributes);
-        meshDescriptor.parameters.geometry.boundingBox = geometryBBox;
-        if (isIndexedGeometry) {
-          const accessor = this.gltf.accessors[primitive.indices];
-          const bufferView = this.gltf.bufferViews[accessor.bufferView];
-          const constructor = _GLTFScenesManager.getTypedArrayConstructorFromComponentType(accessor.componentType);
-          const arrayOffset = accessor.byteOffset + bufferView.byteOffset;
-          const arrayBuffer = this.gltf.arrayBuffers[bufferView.buffer];
-          const arrayLength = Math.min(
-            (arrayBuffer.byteLength - arrayOffset) / constructor.BYTES_PER_ELEMENT,
-            Math.ceil(accessor.count / 4) * 4
-          );
-          const array = constructor.name === "Uint8Array" ? Uint16Array.from(new constructor(arrayBuffer, arrayOffset, arrayLength)) : new constructor(arrayBuffer, arrayOffset, arrayLength);
-          meshDescriptor.parameters.geometry.setIndexBuffer({
-            bufferFormat: constructor.name === "Uint32Array" ? "uint32" : "uint16",
-            array
-          });
-        }
-        const materialTextures = this.scenesManager.materialsTextures[primitive.material];
-        meshDescriptor.parameters.samplers = [];
-        meshDescriptor.parameters.textures = [];
-        materialTextures?.texturesDescriptors.forEach((t) => {
-          meshDescriptor.textures.push({
-            texture: t.texture.options.name,
-            sampler: t.sampler.name,
-            texCoordAttributeName: t.texCoordAttributeName
-          });
-          const samplerExists = meshDescriptor.parameters.samplers.find((s) => s.uuid === t.sampler.uuid);
-          if (!samplerExists) {
-            meshDescriptor.parameters.samplers.push(t.sampler);
-          }
-          meshDescriptor.parameters.textures.push(t.texture);
-        });
-        const material = this.gltf.materials && this.gltf.materials[primitive.material] || {};
-        meshDescriptor.parameters.cullMode = material.doubleSided ? "none" : "back";
-        if (material.alphaMode === "BLEND" || material.extensions && material.extensions.KHR_materials_transmission) {
-          meshDescriptor.parameters.transparent = true;
-          meshDescriptor.parameters.targets = [
-            {
-              blend: {
-                color: {
-                  srcFactor: "src-alpha",
-                  dstFactor: "one-minus-src-alpha"
-                },
-                alpha: {
-                  // This just prevents the canvas from having alpha "holes" in it.
-                  srcFactor: "one",
-                  dstFactor: "one"
-                }
-              }
-            }
-          ];
-        }
-        const materialUniformStruct = {
-          baseColorFactor: {
-            type: "vec4f",
-            value: material.pbrMetallicRoughness?.baseColorFactor || [1, 1, 1, 1]
-          },
-          alphaCutoff: {
-            type: "f32",
-            value: material.alphaCutoff !== void 0 ? material.alphaCutoff : material.alphaMode === "MASK" ? 0.5 : 0
-          },
-          metallicFactor: {
-            type: "f32",
-            value: material.pbrMetallicRoughness?.metallicFactor === void 0 ? 1 : material.pbrMetallicRoughness.metallicFactor
-          },
-          roughnessFactor: {
-            type: "f32",
-            value: material.pbrMetallicRoughness?.roughnessFactor === void 0 ? 1 : material.pbrMetallicRoughness.roughnessFactor
-          },
-          normalMapScale: {
-            type: "f32",
-            value: material.normalTexture?.scale === void 0 ? 1 : material.normalTexture.scale
-          },
-          occlusionStrength: {
-            type: "f32",
-            value: material.occlusionTexture?.strength === void 0 ? 1 : material.occlusionTexture.strength
-          },
-          emissiveFactor: {
-            type: "vec3f",
-            value: material.emissiveFactor !== void 0 ? material.emissiveFactor : [1, 1, 1]
-          }
-        };
-        if (Object.keys(materialUniformStruct).length) {
-          meshDescriptor.parameters.uniforms = {
-            material: {
-              visibility: ["vertex", "fragment"],
-              struct: materialUniformStruct
-            }
-          };
-        }
-        if (instancesCount > 1) {
-          const worldMatrices = new Float32Array(instancesCount * 16);
-          const normalMatrices = new Float32Array(instancesCount * 16);
-          for (let i = 0; i < instancesCount; ++i) {
-            worldMatrices.set(nodes[i].worldMatrix.elements, i * 16);
-            _normalMatrix.copy(nodes[i].worldMatrix).invert().transpose();
-            normalMatrices.set(_normalMatrix.elements, i * 16);
-          }
-          meshDescriptor.parameters.storages = {
-            instances: {
-              visibility: ["vertex", "fragment"],
-              struct: {
-                modelMatrix: {
-                  type: "array<mat4x4f>",
-                  value: worldMatrices
-                },
-                normalMatrix: {
-                  type: "array<mat4x4f>",
-                  value: normalMatrices
-                }
-              }
-            }
-          };
-        }
-        for (let i = 0; i < nodes.length; i++) {
-          const tempBbox = geometryBBox.clone();
-          const transformedBbox = tempBbox.applyMat4(meshDescriptor.nodes[i].worldMatrix);
-          this.scenesManager.boundingBox.min.min(transformedBbox.min);
-          this.scenesManager.boundingBox.max.max(transformedBbox.max);
-        }
+        this.createGeometry(primitive, primitiveInstance);
+        this.createMaterial(primitive, primitiveInstance);
       }
     }
     /**
@@ -19578,16 +20385,24 @@ const PI = ${Math.PI};
             ...meshDescriptor.parameters
           });
           if (meshDescriptor.nodes.length > 1) {
-            const _updateWorldMatrix = mesh.updateWorldMatrix.bind(mesh);
-            mesh.updateWorldMatrix = () => {
-              _updateWorldMatrix();
+            const _updateMatrixStack = mesh.updateMatrixStack.bind(mesh);
+            mesh.updateMatrixStack = () => {
+              _updateMatrixStack();
+              let updateInstances = mesh.matricesNeedUpdate;
               meshDescriptor.nodes.forEach((node, i) => {
-                mesh.storages.instances.modelMatrix.value.set(node.worldMatrix.elements, i * 16);
-                _normalMatrix.copy(node.worldMatrix).invert().transpose();
-                mesh.storages.instances.normalMatrix.value.set(_normalMatrix.elements, i * 16);
+                if (node.matricesNeedUpdate) {
+                  updateInstances = true;
+                }
+                if (updateInstances) {
+                  mesh.storages.instances.modelMatrix.value.set(node.worldMatrix.elements, i * 16);
+                  _normalMatrix.copy(node.worldMatrix).invert().transpose();
+                  mesh.storages.instances.normalMatrix.value.set(_normalMatrix.elements, i * 16);
+                }
               });
-              mesh.storages.instances.modelMatrix.shouldUpdate = true;
-              mesh.storages.instances.normalMatrix.shouldUpdate = true;
+              if (updateInstances) {
+                mesh.storages.instances.modelMatrix.shouldUpdate = true;
+                mesh.storages.instances.normalMatrix.shouldUpdate = true;
+              }
             };
           }
           if (hasInstancedShadows) {
@@ -19612,14 +20427,204 @@ const PI = ${Math.PI};
     destroy() {
       this.scenesManager.meshes.forEach((mesh) => mesh.remove());
       this.scenesManager.meshes = [];
-      const nodes = this.scenesManager.getScenesNodes();
-      nodes.forEach((node) => {
+      this.scenesManager.nodes.forEach((node) => {
         node.destroy();
       });
+      this.scenesManager.scenes.forEach((scene) => {
+        scene.node.destroy();
+      });
+      this.scenesManager.animations.forEach((animation) => animation.setRenderer(null));
       this.scenesManager.node.destroy();
     }
   };
   _primitiveInstances = new WeakMap();
+  _getSparseAccessorIndicesAndValues = new WeakSet();
+  getSparseAccessorIndicesAndValues_fn = function(accessor) {
+    if (!accessor.sparse)
+      return { indices: null, values: null };
+    const accessorConstructor = _GLTFScenesManager.getTypedArrayConstructorFromComponentType(accessor.componentType);
+    const attrSize = _GLTFScenesManager.getVertexAttributeParamsFromType(accessor.type).size;
+    const sparseIndicesConstructor = _GLTFScenesManager.getTypedArrayConstructorFromComponentType(
+      accessor.sparse.indices.componentType
+    );
+    const sparseIndicesBufferView = this.gltf.bufferViews[accessor.sparse.indices.bufferView];
+    const sparseIndices = new sparseIndicesConstructor(
+      this.gltf.arrayBuffers[sparseIndicesBufferView.buffer],
+      accessor.byteOffset + sparseIndicesBufferView.byteOffset,
+      accessor.sparse.count
+    );
+    const sparseValuesBufferView = this.gltf.bufferViews[accessor.sparse.values.bufferView];
+    const sparseValues = new accessorConstructor(
+      this.gltf.arrayBuffers[sparseValuesBufferView.buffer],
+      accessor.byteOffset + sparseValuesBufferView.byteOffset,
+      accessor.sparse.count * attrSize
+    );
+    return {
+      indices: sparseIndices,
+      values: sparseValues
+    };
+  };
+  _parsePrimitiveProperty = new WeakSet();
+  parsePrimitiveProperty_fn = function(primitiveProperty, attributes) {
+    let interleavedArray = null;
+    let interleavedBufferView = null;
+    let maxByteOffset = 0;
+    const primitiveAttributes = Object.entries(primitiveProperty);
+    primitiveAttributes.sort((a, b) => a[1] - b[1]);
+    const primitiveAttributesValues = Object.values(primitiveProperty);
+    primitiveAttributesValues.sort((a, b) => a - b);
+    for (const [attribName, accessorIndex] of primitiveAttributes) {
+      const name = attribName === "TEXCOORD_0" ? "uv" : attribName.replace("_", "").replace("TEXCOORD", "uv").toLowerCase();
+      const accessor = this.gltf.accessors[accessorIndex];
+      const constructor = accessor.componentType ? _GLTFScenesManager.getTypedArrayConstructorFromComponentType(accessor.componentType) : Float32Array;
+      const bufferView = this.gltf.bufferViews[accessor.bufferView];
+      const byteStride = bufferView.byteStride;
+      const accessorByteOffset = accessor.byteOffset;
+      const isInterleaved = byteStride !== void 0 && accessorByteOffset !== void 0 && accessorByteOffset < byteStride;
+      if (isInterleaved) {
+        maxByteOffset = Math.max(accessorByteOffset, maxByteOffset);
+      } else {
+        maxByteOffset = 0;
+      }
+      if (name === "position") {
+        interleavedBufferView = bufferView;
+      }
+      const attributeParams = _GLTFScenesManager.getVertexAttributeParamsFromType(accessor.type);
+      const { size } = attributeParams;
+      let array;
+      if (maxByteOffset > 0) {
+        const parentArray = new constructor(
+          this.gltf.arrayBuffers[bufferView.buffer],
+          0,
+          bufferView.byteLength / constructor.BYTES_PER_ELEMENT
+        );
+        array = new constructor(accessor.count * size);
+        const arrayStride = accessorByteOffset / constructor.BYTES_PER_ELEMENT;
+        for (let i = 0; i < accessor.count; i++) {
+          for (let j = 0; j < size; j++) {
+            array[i * size + j] = parentArray[arrayStride + size * i + size * i + j];
+          }
+        }
+      } else {
+        if (bufferView.byteStride && bufferView.byteStride > constructor.BYTES_PER_ELEMENT * size) {
+          const dataView = new DataView(
+            this.gltf.arrayBuffers[bufferView.buffer],
+            bufferView.byteOffset + accessor.byteOffset
+          );
+          array = new constructor(accessor.count * size);
+          for (let i = 0; i < accessor.count; i++) {
+            const baseOffset = i * bufferView.byteStride;
+            for (let j = 0; j < size; j++) {
+              array[i * size + j] = dataView.getUint16(baseOffset + j * constructor.BYTES_PER_ELEMENT, true);
+            }
+          }
+        } else {
+          array = new constructor(
+            this.gltf.arrayBuffers[bufferView.buffer],
+            accessor.byteOffset + bufferView.byteOffset,
+            accessor.count * size
+          );
+        }
+      }
+      if (accessor.sparse) {
+        const { indices, values } = __privateMethod(this, _getSparseAccessorIndicesAndValues, getSparseAccessorIndicesAndValues_fn).call(this, accessor);
+        for (let i = 0; i < indices.length; i++) {
+          for (let j = 0; j < size; j++) {
+            array[indices[i] * size + j] = values[i * size + j];
+          }
+        }
+      }
+      if (name.includes("weights")) {
+        for (let i = 0; i < accessor.count * size; i += size) {
+          const x = array[i];
+          const y = array[i + 1];
+          const z = array[i + 2];
+          const w = array[i + 3];
+          let len = Math.abs(x) + Math.abs(y) + Math.abs(z) + Math.abs(w);
+          if (len > 0) {
+            len = 1 / Math.sqrt(len);
+          } else {
+            len = 1;
+          }
+          array[i] *= len;
+          array[i + 1] *= len;
+          array[i + 2] *= len;
+          array[i + 3] *= len;
+        }
+      }
+      const attribute = {
+        name,
+        ...attributeParams,
+        array
+      };
+      attributes.push(attribute);
+    }
+    if (maxByteOffset > 0) {
+      const accessorsBufferViews = primitiveAttributesValues.map(
+        (accessorIndex) => this.gltf.accessors[accessorIndex].bufferView
+      );
+      if (!accessorsBufferViews.every((val) => val === accessorsBufferViews[0])) {
+        let totalStride = 0;
+        const mainBufferStrides = {};
+        const arrayLength = primitiveAttributesValues.reduce((acc, accessorIndex) => {
+          const accessor = this.gltf.accessors[accessorIndex];
+          const attrSize = _GLTFScenesManager.getVertexAttributeParamsFromType(accessor.type).size;
+          if (!mainBufferStrides[accessor.bufferView]) {
+            mainBufferStrides[accessor.bufferView] = 0;
+          }
+          mainBufferStrides[accessor.bufferView] = Math.max(
+            mainBufferStrides[accessor.bufferView],
+            accessor.byteOffset + attrSize * Float32Array.BYTES_PER_ELEMENT
+          );
+          totalStride += attrSize * Float32Array.BYTES_PER_ELEMENT;
+          return acc + accessor.count * attrSize;
+        }, 0);
+        interleavedArray = new Float32Array(Math.ceil(arrayLength / 4) * 4);
+        primitiveAttributesValues.forEach((accessorIndex) => {
+          const accessor = this.gltf.accessors[accessorIndex];
+          const bufferView = this.gltf.bufferViews[accessor.bufferView];
+          const attrSize = _GLTFScenesManager.getVertexAttributeParamsFromType(accessor.type).size;
+          const { indices, values } = __privateMethod(this, _getSparseAccessorIndicesAndValues, getSparseAccessorIndicesAndValues_fn).call(this, accessor);
+          for (let i = 0; i < accessor.count; i++) {
+            const startOffset = accessor.byteOffset / Float32Array.BYTES_PER_ELEMENT + i * totalStride / Float32Array.BYTES_PER_ELEMENT;
+            const subarray = new Float32Array(
+              this.gltf.arrayBuffers[bufferView.buffer],
+              bufferView.byteOffset + accessor.byteOffset + i * mainBufferStrides[accessor.bufferView],
+              attrSize
+            );
+            if (indices && values && indices.includes(i)) {
+              for (let j = 0; i < attrSize; j++) {
+                subarray[j] = values[i * attrSize + j];
+              }
+            }
+            interleavedArray.subarray(startOffset, startOffset + attrSize).set(subarray);
+          }
+        });
+      } else {
+        interleavedArray = new Float32Array(
+          this.gltf.arrayBuffers[interleavedBufferView.buffer],
+          interleavedBufferView.byteOffset,
+          Math.ceil(interleavedBufferView.byteLength / 4) * 4 / Float32Array.BYTES_PER_ELEMENT
+        );
+        let stride = 0;
+        primitiveAttributesValues.forEach((accessorIndex) => {
+          const accessor = this.gltf.accessors[accessorIndex];
+          const attrSize = _GLTFScenesManager.getVertexAttributeParamsFromType(accessor.type).size;
+          const { indices, values } = __privateMethod(this, _getSparseAccessorIndicesAndValues, getSparseAccessorIndicesAndValues_fn).call(this, accessor);
+          if (indices && values) {
+            for (let i = 0; i < indices.length; i++) {
+              for (let j = 0; j < attrSize; j++) {
+                const arrayStride = stride + attrSize * i;
+                interleavedArray[arrayStride + indices[i] * attrSize + j] = values[i * attrSize + j];
+              }
+            }
+          }
+          stride += attrSize;
+        });
+      }
+    }
+    return interleavedArray;
+  };
   let GLTFScenesManager = _GLTFScenesManager;
 
   const buildShaders = (meshDescriptor, shaderParameters = {}) => {
@@ -19631,35 +20636,21 @@ const PI = ${Math.PI};
     const facultativeAttributes = meshDescriptor.attributes.filter((attribute) => attribute.name !== "position");
     const structAttributes = facultativeAttributes.map((attribute, index) => {
       return `@location(${index}) ${attribute.name}: ${attribute.type},`;
+    }).join("\n		");
+    const declareAttributes = meshDescriptor.attributes.map((attribute) => {
+      return (
+        /* wgsl */
+        `var ${attribute.name} = attributes.${attribute.name};`
+      );
     }).join("\n	");
-    let outputPositions = (
-      /* wgsl */
-      `
-    let worldPos = matrices.model * vec4(attributes.position, 1.0);
-    vsOutput.position = camera.projection * camera.view * worldPos;
-    vsOutput.worldPosition = worldPos.xyz / worldPos.w;
-    vsOutput.viewDirection = camera.position - vsOutput.worldPosition.xyz;
-  `
-    );
-    let outputNormal = facultativeAttributes.find((attr) => attr.name === "normal") ? "vsOutput.normal = getWorldNormal(attributes.normal);" : "";
-    if (meshDescriptor.parameters.storages && meshDescriptor.parameters.storages.instances) {
-      outputPositions = /* wgsl */
-      `
-      let worldPos: vec4f = instances[attributes.instanceIndex].modelMatrix * vec4f(attributes.position, 1.0);
-      vsOutput.position = camera.projection * camera.view * worldPos;
-      vsOutput.worldPosition = worldPos.xyz;
-      vsOutput.viewDirection = camera.position - vsOutput.worldPosition;
-      `;
-      outputNormal = `vsOutput.normal = normalize((instances[attributes.instanceIndex].normalMatrix * vec4(attributes.normal, 0.0)).xyz);`;
-    }
     const outputAttributes = facultativeAttributes.filter((attr) => attr.name !== "normal").map((attribute) => {
-      return `vsOutput.${attribute.name} = attributes.${attribute.name};`;
+      return `vsOutput.${attribute.name} = ${attribute.name};`;
     }).join("\n	");
     let vertexOutputContent = `
       @builtin(position) position: vec4f,
+      ${structAttributes}
       @location(${facultativeAttributes.length}) viewDirection: vec3f,
       @location(${facultativeAttributes.length + 1}) worldPosition: vec3f,
-      ${structAttributes}
   `;
     let outputNormalMap = "";
     const tangentAttribute = facultativeAttributes.find((attr) => attr.name === "tangent");
@@ -19669,10 +20660,79 @@ const PI = ${Math.PI};
       @location(${facultativeAttributes.length + 2}) bitangent: vec3f,
       `;
       outputNormalMap = `
-        vsOutput.tangent = normalize(matrices.model * attributes.tangent);
-        vsOutput.bitangent = cross(vsOutput.normal, vsOutput.tangent.xyz) * attributes.tangent.w;
+        vsOutput.tangent = normalize(matrices.model * tangent);
+        vsOutput.bitangent = cross(vsOutput.normal, vsOutput.tangent.xyz) * tangent.w;
       `;
     }
+    let morphTargets = "";
+    const morphTargetsBindings = meshDescriptor.parameters.bindings ? meshDescriptor.parameters.bindings.filter((binding) => binding.name.includes("morphTarget")) : [];
+    let skinTransformations = "";
+    const skinJoints = facultativeAttributes.filter((attr) => attr.name.includes("joints"));
+    const skinWeights = facultativeAttributes.filter((attr) => attr.name.includes("weights"));
+    const skinBindings = meshDescriptor.parameters.bindings ? meshDescriptor.parameters.bindings.filter((binding) => binding.name.includes("skin")) : [];
+    const hasSkin = skinJoints.length && skinWeights.length && skinBindings.length;
+    if (hasSkin) {
+      skinJoints.forEach((skinJoint, index) => {
+        skinTransformations += /* wgsl */
+        `let skinMatrix${index}: mat4x4f = 
+        ${skinWeights[index].name}.x * skin${index}.joints[u32(${skinJoint.name}.x)].jointMatrix +
+        ${skinWeights[index].name}.y * skin${index}.joints[u32(${skinJoint.name}.y)].jointMatrix +
+        ${skinWeights[index].name}.z * skin${index}.joints[u32(${skinJoint.name}.z)].jointMatrix +
+        ${skinWeights[index].name}.w * skin${index}.joints[u32(${skinJoint.name}.w)].jointMatrix;
+      
+      worldPos = skinMatrix${index} * worldPos;
+      
+      // normal
+      let skinNormalMatrix${index}: mat4x4f = 
+        ${skinWeights[index].name}.x * skin${index}.joints[u32(${skinJoint.name}.x)].normalMatrix +
+        ${skinWeights[index].name}.y * skin${index}.joints[u32(${skinJoint.name}.y)].normalMatrix +
+        ${skinWeights[index].name}.z * skin${index}.joints[u32(${skinJoint.name}.z)].normalMatrix +
+        ${skinWeights[index].name}.w * skin${index}.joints[u32(${skinJoint.name}.w)].normalMatrix;
+        
+      let skinNormalMatrix${index}_3: mat3x3f = mat3x3f(
+        vec3(skinNormalMatrix${index}[0].xyz),
+        vec3(skinNormalMatrix${index}[1].xyz),
+        vec3(skinNormalMatrix${index}[2].xyz)
+      );
+        
+      normal = skinNormalMatrix${index}_3 * normal;
+      normal = normalize(normal);
+      `;
+      });
+    }
+    let outputPositions = (
+      /* wgsl */
+      `worldPos = matrices.model * worldPos;
+      vsOutput.worldPosition = worldPos.xyz / worldPos.w;
+      vsOutput.position = camera.projection * camera.view * worldPos;
+      vsOutput.viewDirection = camera.position - vsOutput.worldPosition.xyz;
+  `
+    );
+    let outputNormal = hasSkin ? "vsOutput.normal = normalize(normal);" : "vsOutput.normal = getWorldNormal(normal);";
+    if (meshDescriptor.parameters.storages && meshDescriptor.parameters.storages.instances) {
+      outputPositions = /* wgsl */
+      `worldPos = instances[attributes.instanceIndex].modelMatrix * worldPos;
+      vsOutput.worldPosition = worldPos.xyz / worldPos.w;
+      vsOutput.position = camera.projection * camera.view * worldPos;
+      vsOutput.viewDirection = camera.position - vsOutput.worldPosition;
+      `;
+      outputNormal = hasSkin ? "vsOutput.normal = normalize(normal);" : `vsOutput.normal = normalize((instances[attributes.instanceIndex].normalMatrix * vec4(normal, 0.0)).xyz);`;
+    }
+    morphTargetsBindings.forEach((binding) => {
+      Object.values(binding.inputs).filter((input) => input.name !== "weight").forEach((input) => {
+        const bindingType = BufferElement.getType(input.type);
+        const attributeType = meshDescriptor.attributes.find((attribute) => attribute.name === input.name).type;
+        if (bindingType === attributeType) {
+          morphTargets += `${input.name} += ${binding.name}.weight * ${binding.name}.elements[attributes.vertexIndex].${input.name};
+	`;
+        } else {
+          if (bindingType === "vec3f" && attributeType === "vec4f") {
+            morphTargets += `${input.name} += ${binding.name}.weight * vec4(${binding.name}.elements[attributes.vertexIndex].${input.name}, 0.0);
+	`;
+          }
+        }
+      });
+    });
     const vertexOutput = (
       /*wgsl */
       `
@@ -19697,11 +20757,17 @@ const PI = ${Math.PI};
       attributes: Attributes,
     ) -> VSOutput {
       var vsOutput: VSOutput;
-    
+      
+      ${declareAttributes}
+      ${morphTargets}
+      
+      var worldPos: vec4f = vec4(position, 1.0);
+      
+      ${skinTransformations}
+      
       ${outputPositions}
       ${outputNormal}
       ${outputAttributes}
-      
       ${outputNormalMap}
 
       return vsOutput;
@@ -19737,27 +20803,39 @@ const PI = ${Math.PI};
     `
       color = baseColor;
   `;
-    let normalMap = meshDescriptor.attributes.find((attribute) => attribute.name === "normal") ? (
+    let normalMap = (
       /* wgsl */
       `
       let faceDirection = select(-1.0, 1.0, fsInput.frontFacing);
-      let geometryNormal: vec3f = normalize(faceDirection * fsInput.normal);
+      let geometryNormal: vec3f = faceDirection * normal;
     `
-    ) : (
-      /* wgsl */
-      `let geometryNormal: vec3f = normalize(vec3(0.0, 0.0, 1.0));`
     );
     if (useNormalMap) {
       normalMap += /* wgsl */
       `
-      let tbn = mat3x3<f32>(normalize(fsInput.tangent.xyz), normalize(fsInput.bitangent), geometryNormal);
+      let tbn = mat3x3f(normalize(fsInput.tangent.xyz), normalize(fsInput.bitangent), geometryNormal);
       let normalMap = textureSample(normalTexture, ${normalTexture.sampler}, fsInput.${normalTexture.texCoordAttributeName}).rgb;
-      let normal = normalize(tbn * (2.0 * normalMap - vec3(material.normalMapScale, material.normalMapScale, 1.0)));
+      normal = normalize(tbn * (2.0 * normalMap - vec3(material.normalMapScale, material.normalMapScale, 1.0)));
+    `;
+    } else if (normalTexture) {
+      normalMap += /* wgsl */
+      `
+      let Q1: vec3f = dpdx(worldPosition);
+      let Q2: vec3f = dpdy(worldPosition);
+      let st1: vec2f = dpdx(fsInput.${normalTexture.texCoordAttributeName});
+      let st2: vec2f = dpdy(fsInput.${normalTexture.texCoordAttributeName});
+      
+      let T: vec3f = normalize(Q1 * st2.y - Q2 * st1.y);
+      let B: vec3f = normalize(-Q1 * st2.x + Q2 * st1.x);
+      
+      let tbn = mat3x3f(T, B, geometryNormal);
+      let normalMap = textureSample(normalTexture, ${normalTexture.sampler}, fsInput.${normalTexture.texCoordAttributeName}).rgb;
+      normal = normalize(tbn * (2.0 * normalMap - vec3(material.normalMapScale, material.normalMapScale, 1.0)));
     `;
     } else {
       normalMap += /* wgsl */
       `
-      let normal = geometryNormal;
+      normal = geometryNormal;
     `;
     }
     let metallicRoughness = (
@@ -19986,7 +21064,8 @@ const PI = ${Math.PI};
       
       let worldPosition: vec3f = fsInput.worldPosition;
       let viewDirection: vec3f = fsInput.viewDirection;
-
+      var normal: vec3f = normalize(fsInput.normal);
+      
       ${normalMap}
       ${metallicRoughness}  
       
@@ -20211,6 +21290,7 @@ const PI = ${Math.PI};
   exports.HDRLoader = HDRLoader;
   exports.IndexedGeometry = IndexedGeometry;
   exports.IndirectBuffer = IndirectBuffer;
+  exports.KeyframesAnimation = KeyframesAnimation;
   exports.Mat3 = Mat3;
   exports.Mat4 = Mat4;
   exports.Material = Material;
@@ -20236,6 +21316,7 @@ const PI = ${Math.PI};
   exports.Scene = Scene;
   exports.ShaderPass = ShaderPass;
   exports.SphereGeometry = SphereGeometry;
+  exports.TargetsAnimationsManager = TargetsAnimationsManager;
   exports.Texture = Texture;
   exports.TextureBindGroup = TextureBindGroup;
   exports.TextureBinding = TextureBinding;

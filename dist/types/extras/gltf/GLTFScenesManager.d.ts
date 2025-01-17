@@ -6,7 +6,7 @@ import { Texture } from '../../core/textures/Texture';
 import { Mesh } from '../../core/meshes/Mesh';
 import { TypedArrayConstructor } from '../../core/bindings/utils';
 import { VertexBufferAttribute } from '../../types/Geometries';
-import { ChildDescriptor, MeshDescriptor, ScenesManager } from '../../types/gltf/GLTFScenesManager';
+import { ChildDescriptor, MeshDescriptor, PrimitiveInstanceDescriptor, ScenesManager } from '../../types/gltf/GLTFScenesManager';
 /**
  * Used to create a {@link GLTFScenesManager} from a given {@link GLTFLoader.gltf | gltf} object.
  *
@@ -15,19 +15,33 @@ import { ChildDescriptor, MeshDescriptor, ScenesManager } from '../../types/gltf
  * ## Loading Features
  *
  * - [x] Accessors
- *   - [ ] Sparse accessors
+ *   - [x] Sparse accessors
  * - [x] Buffers
  * - [x] BufferViews
  * - [x] Images
  * - [x] Meshes
  * - [x] Nodes
  * - [x] Primitives
+ *   - [x] Compute flat normals if normal attributes is missing
+ *   - [x] Compute tangent space in fragment shader if tangent attributes is missing and a normal map is used (would be better/faster with [MikkTSpace](http://www.mikktspace.com/))
  * - [x] Samplers
  * - [x] Textures
- * - [ ] Animations
- * - [ ] Cameras
+ * - [x] Animations
+ *   - Paths
+ *     - [x] Translation
+ *     - [x] Rotation
+ *     - [x] Scale
+ *     - [x] Weights
+ *   - Interpolation
+ *     - [x] Step
+ *     - [x] Linear
+ *     - [x] CubicSpline
+ * - [x] Cameras
+ *   - [ ] OrthographicCamera
+ *   - [x] PerspectiveCamera
  * - [x] Materials
- * - [ ] Skins
+ * - [x] Skins
+ * - [x] Morph targets
  *
  * @example
  * ```javascript
@@ -90,6 +104,10 @@ export declare class GLTFScenesManager {
      */
     static gpuAddressModeForWrap(wrap: GLTF.TextureWrapMode): GPUAddressMode;
     /**
+     * Create the {@link scenesManager} {@link TargetsAnimationsManager} if any animation is present in the {@link gltf}.
+     */
+    createAnimations(): void;
+    /**
      * Create the {@link Sampler} and add them to the {@link ScenesManager.samplers | scenesManager samplers array}.
      */
     createSamplers(): void;
@@ -106,11 +124,28 @@ export declare class GLTFScenesManager {
      */
     createMaterialTextures(): void;
     /**
-     * Create a {@link ChildDescriptor} from a parent {@link ChildDescriptor} and a {@link GLTF.INode | GLTF Node}
+     * Create a {@link ChildDescriptor} from a parent {@link ChildDescriptor} and a {@link GLTF.INode | glTF Node}
      * @param parent - parent {@link ChildDescriptor} to use.
-     * @param node - {@link GLTF.INode | GLTF Node} to use.
+     * @param node - {@link GLTF.INode | glTF Node} to use.
+     * @param index - Index of the {@link GLTF.INode | glTF Node} to use.
      */
-    createNode(parent: ChildDescriptor, node: GLTF.INode): void;
+    createNode(parent: ChildDescriptor, node: GLTF.INode, index: number): void;
+    /**
+     * Create the mesh {@link Geometry} based on the given {@link gltf} primitive and {@link PrimitiveInstanceDescriptor}.
+     * @param primitive - {@link gltf} primitive to use to create the {@link Geometry}.
+     * @param primitiveInstance - {@link PrimitiveInstanceDescriptor} to use to create the {@link Geometry}.
+     */
+    createGeometry(primitive: GLTF.IMeshPrimitive, primitiveInstance: PrimitiveInstanceDescriptor): void;
+    /**
+     * Create the {@link SkinDefinition | skins definitions} for each {@link gltf} skins.
+     */
+    createSkins(): void;
+    /**
+     * Create the mesh material parameters based on the given {@link gltf} primitive and {@link PrimitiveInstanceDescriptor}.
+     * @param primitive - {@link gltf} primitive to use to create the material parameters.
+     * @param primitiveInstance - {@link PrimitiveInstanceDescriptor} to use to create the material parameters.
+     */
+    createMaterial(primitive: GLTF.IMeshPrimitive, primitiveInstance: PrimitiveInstanceDescriptor): void;
     /**
      * Create the {@link ScenesManager#scenes | ScenesManager scenes} based on the {@link gltf} object.
      */

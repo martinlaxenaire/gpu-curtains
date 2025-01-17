@@ -9,6 +9,7 @@ import { getPBR } from '../../core/shaders/chunks/shading/pbr-shading'
 import { getIBL } from '../../core/shaders/chunks/shading/ibl-shading'
 import { EnvironmentMap } from '../environment-map/EnvironmentMap'
 import { BufferElement } from '../../core/bindings/bufferElements/BufferElement'
+import { BufferBinding } from '../../core/bindings/BufferBinding'
 
 /** Defines all kinds of shading models available. */
 export type ShadingModels = 'Lambert' | 'Phong' | 'PBR' | 'IBL'
@@ -122,7 +123,7 @@ export const buildShaders = (
   // morph targets
   let morphTargets = ''
   const morphTargetsBindings = meshDescriptor.parameters.bindings
-    ? meshDescriptor.parameters.bindings.filter((binding) => binding.name.includes('morphTarget'))
+    ? (meshDescriptor.parameters.bindings.filter((binding) => binding.name.includes('morphTarget')) as BufferBinding[])
     : []
 
   // skins
@@ -274,7 +275,21 @@ export const buildShaders = (
 
   if (useNormalMap) {
     normalMap += /* wgsl */ `
-      let tbn = mat3x3<f32>(normalize(fsInput.tangent.xyz), normalize(fsInput.bitangent), geometryNormal);
+      let tbn = mat3x3f(normalize(fsInput.tangent.xyz), normalize(fsInput.bitangent), geometryNormal);
+      let normalMap = textureSample(normalTexture, ${normalTexture.sampler}, fsInput.${normalTexture.texCoordAttributeName}).rgb;
+      normal = normalize(tbn * (2.0 * normalMap - vec3(material.normalMapScale, material.normalMapScale, 1.0)));
+    `
+  } else if (normalTexture) {
+    normalMap += /* wgsl */ `
+      let Q1: vec3f = dpdx(worldPosition);
+      let Q2: vec3f = dpdy(worldPosition);
+      let st1: vec2f = dpdx(fsInput.${normalTexture.texCoordAttributeName});
+      let st2: vec2f = dpdy(fsInput.${normalTexture.texCoordAttributeName});
+      
+      let T: vec3f = normalize(Q1 * st2.y - Q2 * st1.y);
+      let B: vec3f = normalize(-Q1 * st2.x + Q2 * st1.x);
+      
+      let tbn = mat3x3f(T, B, geometryNormal);
       let normalMap = textureSample(normalTexture, ${normalTexture.sampler}, fsInput.${normalTexture.texCoordAttributeName}).rgb;
       normal = normalize(tbn * (2.0 * normalMap - vec3(material.normalMapScale, material.normalMapScale, 1.0)));
     `

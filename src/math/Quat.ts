@@ -232,6 +232,10 @@ export class Quat {
     return this
   }
 
+  /**
+   * Get the square length of this {@link Quat}.
+   * @returns - square length of this {@link Quat}.
+   */
   lengthSq() {
     return (
       this.elements[0] * this.elements[0] +
@@ -241,10 +245,18 @@ export class Quat {
     )
   }
 
+  /**
+   * Get the length of this {@link Quat}.
+   * @returns - length of this {@link Quat}.
+   */
   length() {
     return Math.sqrt(this.lengthSq())
   }
 
+  /**
+   * Normalize this {@link Quat}.
+   * @returns - normalized {@link Quat}.
+   */
   normalize() {
     let l = this.length()
 
@@ -265,9 +277,15 @@ export class Quat {
     return this
   }
 
-  slerp(qb = new Quat(), t = 0) {
-    if (t === 0) return this
-    if (t === 1) return this.copy(qb)
+  /**
+   * Calculate the spherical linear interpolation of this {@link Quat} by given {@link Quat} and alpha, where alpha is the percent distance.
+   * @param quat - {@link Quat} to interpolate towards.
+   * @param alpha - spherical interpolation factor in the [0, 1] interval.
+   * @returns - this {@link Quat} after spherical linear interpolation.
+   */
+  slerp(quat = new Quat(), alpha = 0) {
+    if (alpha === 0) return this
+    if (alpha === 1) return this.copy(quat)
 
     const x = this.elements[0],
       y = this.elements[1],
@@ -276,17 +294,17 @@ export class Quat {
 
     // http://www.euclideanspace.com/maths/algebra/realNormedAlgebra/quaternions/slerp/
 
-    let cosHalfTheta = w * qb.elements[3] + x * qb.elements[0] + y * qb.elements[1] + z * qb.elements[2]
+    let cosHalfTheta = w * quat.elements[3] + x * quat.elements[0] + y * quat.elements[1] + z * quat.elements[2]
 
     if (cosHalfTheta < 0) {
-      this.elements[3] = -qb.elements[3]
-      this.elements[0] = -qb.elements[0]
-      this.elements[1] = -qb.elements[1]
-      this.elements[2] = -qb.elements[2]
+      this.elements[3] = -quat.elements[3]
+      this.elements[0] = -quat.elements[0]
+      this.elements[1] = -quat.elements[1]
+      this.elements[2] = -quat.elements[2]
 
       cosHalfTheta = -cosHalfTheta
     } else {
-      this.copy(qb)
+      this.copy(quat)
     }
 
     if (cosHalfTheta >= 1.0) {
@@ -301,11 +319,11 @@ export class Quat {
     const sqrSinHalfTheta = 1.0 - cosHalfTheta * cosHalfTheta
 
     if (sqrSinHalfTheta <= Number.EPSILON) {
-      const s = 1 - t
-      this.elements[3] = s * w + t * this.elements[3]
-      this.elements[0] = s * x + t * this.elements[0]
-      this.elements[1] = s * y + t * this.elements[1]
-      this.elements[2] = s * z + t * this.elements[2]
+      const s = 1 - alpha
+      this.elements[3] = s * w + alpha * this.elements[3]
+      this.elements[0] = s * x + alpha * this.elements[0]
+      this.elements[1] = s * y + alpha * this.elements[1]
+      this.elements[2] = s * z + alpha * this.elements[2]
 
       this.normalize()
 
@@ -314,8 +332,8 @@ export class Quat {
 
     const sinHalfTheta = Math.sqrt(sqrSinHalfTheta)
     const halfTheta = Math.atan2(sinHalfTheta, cosHalfTheta)
-    const ratioA = Math.sin((1 - t) * halfTheta) / sinHalfTheta,
-      ratioB = Math.sin(t * halfTheta) / sinHalfTheta
+    const ratioA = Math.sin((1 - alpha) * halfTheta) / sinHalfTheta,
+      ratioB = Math.sin(alpha * halfTheta) / sinHalfTheta
 
     this.elements[3] = w * ratioA + this.elements[3] * ratioB
     this.elements[0] = x * ratioA + this.elements[0] * ratioB

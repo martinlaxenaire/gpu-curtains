@@ -615,6 +615,7 @@ class GPURenderer {
     this.meshes = [];
     this.textures = [];
     this.renderBundles = /* @__PURE__ */ new Map();
+    this.animations = /* @__PURE__ */ new Map();
   }
   /**
    * Get all this {@link GPURenderer} rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes)
@@ -796,6 +797,7 @@ class GPURenderer {
     this.deviceManager.renderers = this.deviceManager.renderers.filter((renderer) => renderer.uuid !== this.uuid);
     this.domElement?.destroy();
     this.renderBundles.forEach((bundle) => bundle.destroy());
+    this.animations = /* @__PURE__ */ new Map();
     this.renderPass?.destroy();
     this.postProcessingPass?.destroy();
     this.renderTargets.forEach((renderTarget) => renderTarget.destroy());

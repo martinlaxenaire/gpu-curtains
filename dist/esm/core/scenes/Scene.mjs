@@ -469,7 +469,9 @@ class Scene extends Object3D {
     for (let i = 0, l = this.renderer.meshes.length; i < l; i++) {
       this.renderer.meshes[i].onBeforeRenderScene();
     }
+    this.renderer.animations.forEach((targetsAnimation) => targetsAnimation.update());
     this.updateMatrixStack();
+    this.renderer.animations.forEach((targetsAnimation) => targetsAnimation.onAfterUpdate());
     for (const mesh of this.renderer.meshes) {
       if ("checkFrustumCulling" in mesh && mesh.visible) {
         mesh.checkFrustumCulling();

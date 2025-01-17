@@ -20,6 +20,7 @@ import { FullscreenPlane } from '../meshes/FullscreenPlane';
 import { Buffer } from '../buffers/Buffer';
 import { RenderBundle } from '../renderPasses/RenderBundle';
 import { IndirectBuffer } from '../../extras/buffers/IndirectBuffer';
+import { TargetsAnimationsManager } from '../../extras/animations/TargetsAnimationsManager';
 /** Options used to configure the renderer canvas context. If not specified, `format` will be set with `GPU.getPreferredCanvasFormat()` and `alphaMode` with `premultiplied`. */
 export interface GPURendererContextOptions extends Omit<GPUCanvasConfiguration, 'device' | 'usage'> {
 }
@@ -91,7 +92,6 @@ export declare class GPURenderer {
     canvas: HTMLCanvasElement;
     /** The WebGPU {@link GPUCanvasContext | context} used */
     context: null | GPUCanvasContext;
-    /** Set the {@link GPUCanvasContext | context} alpha mode */
     /** Options used to create this {@link GPURenderer} */
     options: GPURendererOptions;
     /** The {@link RenderPass | render pass} used to render our result to screen */
@@ -116,8 +116,10 @@ export declare class GPURenderer {
     meshes: SceneStackedMesh[];
     /** An array containing all our created {@link Texture} */
     textures: Texture[];
-    /** An {@link Map} containing all our created {@link RenderBundle} */
+    /** A {@link Map} containing all the {@link RenderBundle} handled by this renderer. */
     renderBundles: Map<RenderBundle['uuid'], RenderBundle>;
+    /** A {@link Map} containing all the {@link TargetsAnimationsManager} handled by this renderer. */
+    animations: Map<TargetsAnimationsManager['uuid'], TargetsAnimationsManager>;
     /** Pixel ratio to use for rendering */
     pixelRatio: number;
     /** An object defining the width, height, top and left position of the canvas. Mainly used internally. If you need to get the renderer dimensions, use {@link boundingRect} instead. */

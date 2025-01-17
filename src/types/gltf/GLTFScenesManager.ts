@@ -10,6 +10,7 @@ import { TypedArray } from '../../core/bindings/utils'
 import { Camera } from '../../core/camera/Camera'
 import { BufferBinding } from '../../core/bindings/BufferBinding'
 import { TargetsAnimationsManager } from '../../extras/animations/TargetsAnimationsManager'
+import { Mat4 } from '../../math/Mat4'
 
 /**
  * Define a {@link MeshDescriptorAttribute} used to create the {@link core/geometries/Geometry.Geometry | Geometry}.
@@ -92,6 +93,7 @@ export type PrimitiveInstances = Map<GLTF.IMeshPrimitive, PrimitiveInstanceDescr
  * Define a {@link ChildDescriptor}.
  */
 export interface ChildDescriptor {
+  /** Index of the {@link GLTF.INode | glTF Node} used by this child. */
   index?: number
   /** Optional name if available in the {@link GLTF} json. */
   name?: string
@@ -102,12 +104,32 @@ export interface ChildDescriptor {
 }
 
 /**
+ * Define a {@link SkinDefinition} used to handle skin animations.
+ */
+export interface SkinDefinition {
+  /** The parent {@link Object3D} used to calculate joint matrices. */
+  parentNode: Object3D
+  /** An array of joint {@link Object3D}. */
+  joints: Object3D[]
+  /** A {@link Float32Array} containing all the skin inverse bind matrices. */
+  inverseBindMatrices: Float32Array
+  /** A {@link Mat4} that will handle our joint matrix. */
+  jointMatrix: Mat4
+  /** A {@link Mat4} that will handle our joint normal matrix. */
+  normalMatrix: Mat4
+  /** A {@link Mat4} that will handle the parent {@link Object3D} inverse world matrix. */
+  parentInverseWorldMatrix: Mat4
+  /** The storage {@link BufferBinding} used to send the matrices to the shaders. */
+  binding: BufferBinding
+}
+
+/**
  * Define the {@link ScenesManager}.
  */
 export interface ScenesManager {
   /** {@link Object3D} used as a parent for all {@link scenes} nodes. */
   node: Object3D
-
+  /** A {@link Map} of all the nodes {@link Object3D} created by the {@link ScenesManager}. */
   nodes: Map<number, Object3D>
   /** Final computed {@link Box3 | bounding box} of the scenes. */
   boundingBox: Box3
@@ -121,8 +143,10 @@ export interface ScenesManager {
   meshes: Mesh[]
   /** Array of {@link MeshDescriptor} used to create the {@link meshes}. */
   meshesDescriptors: MeshDescriptor[]
-
+  /** Array of {@link TargetsAnimationsManager} used by this {@link ScenesManager}. */
   animations: TargetsAnimationsManager[]
-
+  /** Array of available created {@link Camera}. */
   cameras: Camera[]
+  /** Array of {@link SkinDefinition} used by this {@link ScenesManager}. */
+  skins: SkinDefinition[]
 }

@@ -36,7 +36,7 @@ window.addEventListener('load', async () => {
     container,
     pixelRatio: Math.min(1, window.devicePixelRatio),
     camera: {
-      near: 0.001,
+      near: 0.1,
       far: 2000,
     },
   })
@@ -160,6 +160,14 @@ window.addEventListener('load', async () => {
       name: 'Fox',
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/Fox/glTF/Fox.gltf',
     },
+    brainStem: {
+      name: 'Brain Stem',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/BrainStem/glTF/BrainStem.gltf',
+    },
+    skinD: {
+      name: 'SkinD',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Asset-Generator/main/Output/Positive/Animation_Skin/Animation_Skin_09.gltf',
+    },
   }
 
   let shadingModel = 'IBL' // 'IBL', 'PBR', 'Phong' or 'Lambert'
@@ -181,6 +189,40 @@ window.addEventListener('load', async () => {
           range: -1,
         })
 
+  // GUI
+  const gui = new lil.GUI({
+    title: 'GLTF loader',
+  })
+
+  const currentModelKey = 'skinD'
+  let currentModel = models[currentModelKey]
+
+  const modelField = gui
+    .add(
+      { [currentModel.name]: currentModelKey },
+      currentModel.name,
+      Object.keys(models).reduce((acc, v) => {
+        return { ...acc, [models[v].name]: v }
+      }, {})
+    )
+    .name('Models')
+
+  const envMapField = gui
+    .add(
+      { [currentEnvMap.name]: currentEnvMapKey },
+      currentEnvMap.name,
+      Object.keys(envMaps).reduce((acc, v) => {
+        return { ...acc, [envMaps[v].name]: v }
+      }, {})
+    )
+    .name('Environment maps')
+
+  const shadingField = gui.add({ shadingModel }, 'shadingModel', ['IBL', 'PBR', 'Phong', 'Lambert']).name('Shading')
+
+  const animationsFolder = gui.addFolder('Animations')
+
+  let animationsFields = []
+
   // gltf
   const gltfLoader = new GLTFLoader()
 
@@ -195,7 +237,6 @@ window.addEventListener('load', async () => {
     const { scenes, boundingBox, node } = scenesManager
     container.classList.remove('loading')
     console.log({ gltf, scenesManager, scenes, boundingBox })
-    console.log(gltfScenesManager)
 
     const { center, radius } = boundingBox
 
@@ -216,31 +257,10 @@ window.addEventListener('load', async () => {
         position: new Vec3(radius * 0.25, center.y * 0.25, 0),
         target: new Vec3(0, center.y * 0.1, 0),
       })
-    } else if (url.includes('Animated')) {
-      camera.fov = 50
-      camera.far = radius * 20
-
-      orbitControls.reset({
-        zoomSpeed: radius * 0.25,
-        minZoom: radius,
-        maxZoom: radius * 10,
-        position: new Vec3(0, 0, radius * 5),
-        target: new Vec3(),
-      })
-    } else if (url.includes('Interpolated')) {
-      camera.fov = 50
-      camera.far = radius * 200
-
-      orbitControls.reset({
-        zoomSpeed: radius * 0.25,
-        minZoom: radius,
-        maxZoom: radius * 4,
-        position: new Vec3(0, 0, radius * 10),
-        target: center,
-      })
     } else {
       camera.fov = 50
       camera.far = radius * 6
+      camera.near = radius * 0.01
 
       orbitControls.reset({
         zoomSpeed: radius * 0.25,
@@ -294,11 +314,48 @@ window.addEventListener('load', async () => {
 
     if (scenesManager.animations.length) {
       console.log(scenesManager.animations)
-      if (gltf.skins && gltf.skins.length) {
-        scenesManager.animations[0].playAll()
+      const hasSkins = gltf.skins && gltf.skins.length
+      if (hasSkins) {
+        scenesManager.animations[0].play()
+
+        // setTimeout(() => {
+        //   scenesManager.animations[0].stopAtEndOfLoop()
+        // }, 4500)
+
+        // setTimeout(() => {
+        //   scenesManager.animations[0].pause()
+        //
+        //   setTimeout(() => {
+        //     scenesManager.animations[0].play()
+        //   }, 2500)
+        // }, 1800)
       } else {
-        scenesManager.animations.forEach((animation) => animation.playAll())
+        scenesManager.animations.forEach((animation) => animation.play())
       }
+
+      scenesManager.animations.forEach((animation, id) => {
+        const animationField = animationsFolder
+          .add(animation, 'isPlaying')
+          .name(animation.label)
+          .onChange((value) => {
+            if (value) {
+              if (hasSkins) {
+                scenesManager.animations.forEach((a, aId) => {
+                  if (aId !== id) {
+                    a.stop()
+                  }
+                })
+              }
+
+              animation.play()
+            } else {
+              animation.stop()
+            }
+          })
+          .listen()
+
+        animationsFields.push(animationField)
+      })
     }
 
     // test for gltf cameras
@@ -313,25 +370,12 @@ window.addEventListener('load', async () => {
 
     console.log(gpuCameraRenderer, meshes)
 
-    meshes[0].onReady(() => console.log(meshes[0].material.getShaderCode('vertex')))
+    // meshes[0].onReady(() => console.log(meshes[0].material.getShaderCode('vertex')))
   }
 
-  // GUI
-  const gui = new lil.GUI({
-    title: 'GLTF loader',
-  })
+  // GUI updates
 
-  const currentModelKey = 'fox'
-  let currentModel = models[currentModelKey]
-
-  gui
-    .add(
-      { [currentModel.name]: currentModelKey },
-      currentModel.name,
-      Object.keys(models).reduce((acc, v) => {
-        return { ...acc, [models[v].name]: v }
-      }, {})
-    )
+  modelField
     .onChange(async (value) => {
       if (models[value].name !== currentModel.name) {
         if (gltfScenesManager) {
@@ -340,20 +384,19 @@ window.addEventListener('load', async () => {
 
         gltfScenesManager = null
 
+        if (animationsFields.length) {
+          animationsFields.forEach((animationField) => animationField.destroy())
+        }
+
+        animationsFields = []
+
         currentModel = models[value]
         await loadGLTF(currentModel.url)
       }
     })
     .name('Models')
 
-  gui
-    .add(
-      { [currentEnvMap.name]: currentEnvMapKey },
-      currentEnvMap.name,
-      Object.keys(envMaps).reduce((acc, v) => {
-        return { ...acc, [envMaps[v].name]: v }
-      }, {})
-    )
+  envMapField
     .onChange(async (value) => {
       if (envMaps[value].name !== currentEnvMap.name) {
         currentEnvMap = envMaps[value]
@@ -362,8 +405,7 @@ window.addEventListener('load', async () => {
     })
     .name('Environment maps')
 
-  gui
-    .add({ shadingModel }, 'shadingModel', ['IBL', 'PBR', 'Phong', 'Lambert'])
+  shadingField
     .onChange(async (value) => {
       if (value !== shadingModel) {
         shadingModel = value

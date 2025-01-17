@@ -3,6 +3,7 @@ import { getLambert } from '../../core/shaders/chunks/shading/lambert-shading.mj
 import { getPhong } from '../../core/shaders/chunks/shading/phong-shading.mjs';
 import { getPBR } from '../../core/shaders/chunks/shading/pbr-shading.mjs';
 import { getIBL } from '../../core/shaders/chunks/shading/ibl-shading.mjs';
+import { BufferElement } from '../../core/bindings/bufferElements/BufferElement.mjs';
 
 const buildShaders = (meshDescriptor, shaderParameters = {}) => {
   const baseColorTexture = meshDescriptor.textures.find((t) => t.texture === "baseColorTexture");
@@ -13,35 +14,21 @@ const buildShaders = (meshDescriptor, shaderParameters = {}) => {
   const facultativeAttributes = meshDescriptor.attributes.filter((attribute) => attribute.name !== "position");
   const structAttributes = facultativeAttributes.map((attribute, index) => {
     return `@location(${index}) ${attribute.name}: ${attribute.type},`;
+  }).join("\n		");
+  const declareAttributes = meshDescriptor.attributes.map((attribute) => {
+    return (
+      /* wgsl */
+      `var ${attribute.name} = attributes.${attribute.name};`
+    );
   }).join("\n	");
-  let outputPositions = (
-    /* wgsl */
-    `
-    let worldPos = matrices.model * vec4(attributes.position, 1.0);
-    vsOutput.position = camera.projection * camera.view * worldPos;
-    vsOutput.worldPosition = worldPos.xyz / worldPos.w;
-    vsOutput.viewDirection = camera.position - vsOutput.worldPosition.xyz;
-  `
-  );
-  let outputNormal = facultativeAttributes.find((attr) => attr.name === "normal") ? "vsOutput.normal = getWorldNormal(attributes.normal);" : "";
-  if (meshDescriptor.parameters.storages && meshDescriptor.parameters.storages.instances) {
-    outputPositions = /* wgsl */
-    `
-      let worldPos: vec4f = instances[attributes.instanceIndex].modelMatrix * vec4f(attributes.position, 1.0);
-      vsOutput.position = camera.projection * camera.view * worldPos;
-      vsOutput.worldPosition = worldPos.xyz;
-      vsOutput.viewDirection = camera.position - vsOutput.worldPosition;
-      `;
-    outputNormal = `vsOutput.normal = normalize((instances[attributes.instanceIndex].normalMatrix * vec4(attributes.normal, 0.0)).xyz);`;
-  }
   const outputAttributes = facultativeAttributes.filter((attr) => attr.name !== "normal").map((attribute) => {
-    return `vsOutput.${attribute.name} = attributes.${attribute.name};`;
+    return `vsOutput.${attribute.name} = ${attribute.name};`;
   }).join("\n	");
   let vertexOutputContent = `
       @builtin(position) position: vec4f,
+      ${structAttributes}
       @location(${facultativeAttributes.length}) viewDirection: vec3f,
       @location(${facultativeAttributes.length + 1}) worldPosition: vec3f,
-      ${structAttributes}
   `;
   let outputNormalMap = "";
   const tangentAttribute = facultativeAttributes.find((attr) => attr.name === "tangent");
@@ -51,10 +38,79 @@ const buildShaders = (meshDescriptor, shaderParameters = {}) => {
       @location(${facultativeAttributes.length + 2}) bitangent: vec3f,
       `;
     outputNormalMap = `
-        vsOutput.tangent = normalize(matrices.model * attributes.tangent);
-        vsOutput.bitangent = cross(vsOutput.normal, vsOutput.tangent.xyz) * attributes.tangent.w;
+        vsOutput.tangent = normalize(matrices.model * tangent);
+        vsOutput.bitangent = cross(vsOutput.normal, vsOutput.tangent.xyz) * tangent.w;
       `;
   }
+  let morphTargets = "";
+  const morphTargetsBindings = meshDescriptor.parameters.bindings ? meshDescriptor.parameters.bindings.filter((binding) => binding.name.includes("morphTarget")) : [];
+  let skinTransformations = "";
+  const skinJoints = facultativeAttributes.filter((attr) => attr.name.includes("joints"));
+  const skinWeights = facultativeAttributes.filter((attr) => attr.name.includes("weights"));
+  const skinBindings = meshDescriptor.parameters.bindings ? meshDescriptor.parameters.bindings.filter((binding) => binding.name.includes("skin")) : [];
+  const hasSkin = skinJoints.length && skinWeights.length && skinBindings.length;
+  if (hasSkin) {
+    skinJoints.forEach((skinJoint, index) => {
+      skinTransformations += /* wgsl */
+      `let skinMatrix${index}: mat4x4f = 
+        ${skinWeights[index].name}.x * skin${index}.joints[u32(${skinJoint.name}.x)].jointMatrix +
+        ${skinWeights[index].name}.y * skin${index}.joints[u32(${skinJoint.name}.y)].jointMatrix +
+        ${skinWeights[index].name}.z * skin${index}.joints[u32(${skinJoint.name}.z)].jointMatrix +
+        ${skinWeights[index].name}.w * skin${index}.joints[u32(${skinJoint.name}.w)].jointMatrix;
+      
+      worldPos = skinMatrix${index} * worldPos;
+      
+      // normal
+      let skinNormalMatrix${index}: mat4x4f = 
+        ${skinWeights[index].name}.x * skin${index}.joints[u32(${skinJoint.name}.x)].normalMatrix +
+        ${skinWeights[index].name}.y * skin${index}.joints[u32(${skinJoint.name}.y)].normalMatrix +
+        ${skinWeights[index].name}.z * skin${index}.joints[u32(${skinJoint.name}.z)].normalMatrix +
+        ${skinWeights[index].name}.w * skin${index}.joints[u32(${skinJoint.name}.w)].normalMatrix;
+        
+      let skinNormalMatrix${index}_3: mat3x3f = mat3x3f(
+        vec3(skinNormalMatrix${index}[0].xyz),
+        vec3(skinNormalMatrix${index}[1].xyz),
+        vec3(skinNormalMatrix${index}[2].xyz)
+      );
+        
+      normal = skinNormalMatrix${index}_3 * normal;
+      normal = normalize(normal);
+      `;
+    });
+  }
+  let outputPositions = (
+    /* wgsl */
+    `worldPos = matrices.model * worldPos;
+      vsOutput.worldPosition = worldPos.xyz / worldPos.w;
+      vsOutput.position = camera.projection * camera.view * worldPos;
+      vsOutput.viewDirection = camera.position - vsOutput.worldPosition.xyz;
+  `
+  );
+  let outputNormal = hasSkin ? "vsOutput.normal = normalize(normal);" : "vsOutput.normal = getWorldNormal(normal);";
+  if (meshDescriptor.parameters.storages && meshDescriptor.parameters.storages.instances) {
+    outputPositions = /* wgsl */
+    `worldPos = instances[attributes.instanceIndex].modelMatrix * worldPos;
+      vsOutput.worldPosition = worldPos.xyz / worldPos.w;
+      vsOutput.position = camera.projection * camera.view * worldPos;
+      vsOutput.viewDirection = camera.position - vsOutput.worldPosition;
+      `;
+    outputNormal = hasSkin ? "vsOutput.normal = normalize(normal);" : `vsOutput.normal = normalize((instances[attributes.instanceIndex].normalMatrix * vec4(normal, 0.0)).xyz);`;
+  }
+  morphTargetsBindings.forEach((binding) => {
+    Object.values(binding.inputs).filter((input) => input.name !== "weight").forEach((input) => {
+      const bindingType = BufferElement.getType(input.type);
+      const attributeType = meshDescriptor.attributes.find((attribute) => attribute.name === input.name).type;
+      if (bindingType === attributeType) {
+        morphTargets += `${input.name} += ${binding.name}.weight * ${binding.name}.elements[attributes.vertexIndex].${input.name};
+	`;
+      } else {
+        if (bindingType === "vec3f" && attributeType === "vec4f") {
+          morphTargets += `${input.name} += ${binding.name}.weight * vec4(${binding.name}.elements[attributes.vertexIndex].${input.name}, 0.0);
+	`;
+        }
+      }
+    });
+  });
   const vertexOutput = (
     /*wgsl */
     `
@@ -79,11 +135,17 @@ const buildShaders = (meshDescriptor, shaderParameters = {}) => {
       attributes: Attributes,
     ) -> VSOutput {
       var vsOutput: VSOutput;
-    
+      
+      ${declareAttributes}
+      ${morphTargets}
+      
+      var worldPos: vec4f = vec4(position, 1.0);
+      
+      ${skinTransformations}
+      
       ${outputPositions}
       ${outputNormal}
       ${outputAttributes}
-      
       ${outputNormalMap}
 
       return vsOutput;
@@ -119,27 +181,39 @@ const buildShaders = (meshDescriptor, shaderParameters = {}) => {
   `
       color = baseColor;
   `;
-  let normalMap = meshDescriptor.attributes.find((attribute) => attribute.name === "normal") ? (
+  let normalMap = (
     /* wgsl */
     `
       let faceDirection = select(-1.0, 1.0, fsInput.frontFacing);
-      let geometryNormal: vec3f = normalize(faceDirection * fsInput.normal);
+      let geometryNormal: vec3f = faceDirection * normal;
     `
-  ) : (
-    /* wgsl */
-    `let geometryNormal: vec3f = normalize(vec3(0.0, 0.0, 1.0));`
   );
   if (useNormalMap) {
     normalMap += /* wgsl */
     `
-      let tbn = mat3x3<f32>(normalize(fsInput.tangent.xyz), normalize(fsInput.bitangent), geometryNormal);
+      let tbn = mat3x3f(normalize(fsInput.tangent.xyz), normalize(fsInput.bitangent), geometryNormal);
       let normalMap = textureSample(normalTexture, ${normalTexture.sampler}, fsInput.${normalTexture.texCoordAttributeName}).rgb;
-      let normal = normalize(tbn * (2.0 * normalMap - vec3(material.normalMapScale, material.normalMapScale, 1.0)));
+      normal = normalize(tbn * (2.0 * normalMap - vec3(material.normalMapScale, material.normalMapScale, 1.0)));
+    `;
+  } else if (normalTexture) {
+    normalMap += /* wgsl */
+    `
+      let Q1: vec3f = dpdx(worldPosition);
+      let Q2: vec3f = dpdy(worldPosition);
+      let st1: vec2f = dpdx(fsInput.${normalTexture.texCoordAttributeName});
+      let st2: vec2f = dpdy(fsInput.${normalTexture.texCoordAttributeName});
+      
+      let T: vec3f = normalize(Q1 * st2.y - Q2 * st1.y);
+      let B: vec3f = normalize(-Q1 * st2.x + Q2 * st1.x);
+      
+      let tbn = mat3x3f(T, B, geometryNormal);
+      let normalMap = textureSample(normalTexture, ${normalTexture.sampler}, fsInput.${normalTexture.texCoordAttributeName}).rgb;
+      normal = normalize(tbn * (2.0 * normalMap - vec3(material.normalMapScale, material.normalMapScale, 1.0)));
     `;
   } else {
     normalMap += /* wgsl */
     `
-      let normal = geometryNormal;
+      normal = geometryNormal;
     `;
   }
   let metallicRoughness = (
@@ -368,7 +442,8 @@ const buildShaders = (meshDescriptor, shaderParameters = {}) => {
       
       let worldPosition: vec3f = fsInput.worldPosition;
       let viewDirection: vec3f = fsInput.viewDirection;
-
+      var normal: vec3f = normalize(fsInput.normal);
+      
       ${normalMap}
       ${metallicRoughness}  
       
