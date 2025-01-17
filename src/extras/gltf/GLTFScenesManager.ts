@@ -978,13 +978,17 @@ export class GLTFScenesManager {
         }
       } else {
         const nbIndices = indicesArray.length
-        for (let i = 0; i < nbIndices; i += positionAttribute.size * 3) {
+        for (let i = 0; i < nbIndices; i += 3) {
           const i0 = indicesArray[i] * 3
           const i1 = indicesArray[i + 1] * 3
           const i2 = indicesArray[i + 2] * 3
 
+          // avoid to access non existing values if we padded our indices array
+          if (posLength < i0 + 2) continue
           vertex1.set(positionAttribute.array[i0], positionAttribute.array[i0 + 1], positionAttribute.array[i0 + 2])
+          if (posLength < i1 + 2) continue
           vertex2.set(positionAttribute.array[i1], positionAttribute.array[i1 + 1], positionAttribute.array[i1 + 2])
+          if (posLength < i2 + 2) continue
           vertex3.set(positionAttribute.array[i2], positionAttribute.array[i2 + 1], positionAttribute.array[i2 + 2])
 
           computeNormal()
@@ -1166,57 +1170,77 @@ export class GLTFScenesManager {
             parentInverseWorldMatrix.copy(parentNode.worldMatrix).invert()
           }
 
-          for (const animation of this.scenesManager.animations) {
-            joints.forEach((object, jointIndex) => {
-              // from https://github.com/KhronosGroup/glTF-Sample-Renderer/blob/63b7c128266cfd86bbd3f25caf8b3db3fe854015/source/gltf/skin.js#L88
-              const updateJointMatrix = () => {
-                if (animation.isPlaying) {
-                  // same as
-                  // jointMatrix.multiplyMatrices(object.worldMatrix, new Mat4().setFromArray(matrices as Float32Array, jointIndex * 16))
-                  // jointMatrix.multiplyMatrices(parentInverseWorldMatrix, jointMatrix)
-                  jointMatrix
-                    .setFromArray(matrices as Float32Array, jointIndex * 16)
-                    .premultiply(object.worldMatrix)
-                    .premultiply(parentInverseWorldMatrix)
+          if (this.scenesManager.animations.length) {
+            for (const animation of this.scenesManager.animations) {
+              joints.forEach((object, jointIndex) => {
+                // from https://github.com/KhronosGroup/glTF-Sample-Renderer/blob/63b7c128266cfd86bbd3f25caf8b3db3fe854015/source/gltf/skin.js#L88
+                const updateJointMatrix = () => {
+                  if (animation.isPlaying) {
+                    // same as
+                    // jointMatrix.multiplyMatrices(object.worldMatrix, new Mat4().setFromArray(matrices as Float32Array, jointIndex * 16))
+                    // jointMatrix.multiplyMatrices(parentInverseWorldMatrix, jointMatrix)
+                    jointMatrix
+                      .setFromArray(matrices as Float32Array, jointIndex * 16)
+                      .premultiply(object.worldMatrix)
+                      .premultiply(parentInverseWorldMatrix)
+                  } else {
+                    // if the animation is not playing
+                    // reset the joint matrices to display default model
+                    jointMatrix.identity()
+                  }
+
+                  normalMatrix.copy(jointMatrix).invert().transpose()
+
+                  for (let i = 0; i < 16; i++) {
+                    binding.childrenBindings[jointIndex].inputs.jointMatrix.value[i] = jointMatrix.elements[i]
+                    binding.childrenBindings[jointIndex].inputs.normalMatrix.value[i] = normalMatrix.elements[i]
+                  }
+
+                  binding.childrenBindings[jointIndex].inputs.jointMatrix.shouldUpdate = true
+                  binding.childrenBindings[jointIndex].inputs.normalMatrix.shouldUpdate = true
+                }
+
+                const animationTarget = animation.getTargetByObject3D(object)
+
+                if (animationTarget) {
+                  animationTarget.animations.forEach((animation) => {
+                    animation.onAfterUpdate = updateJointMatrix
+                  })
                 } else {
-                  // if the animation is not playing
-                  // reset the joint matrices to display default model
-                  jointMatrix.identity()
+                  // this joint does not have an animation
+                  // but this does not mean we don't have to update its matrices!
+
+                  // add an empty animation with just an onAfterCallback
+                  const node = this.gltf.nodes[jointIndex]
+                  const animName = node.name ? `${node.name} empty animation` : `empty animation ${jointIndex}`
+
+                  const emptyAnimation = new KeyframesAnimation({
+                    label: animation.label ? `${animation.label} ${animName}` : `Animation ${animName}`,
+                  })
+
+                  emptyAnimation.onAfterUpdate = updateJointMatrix
+
+                  animation.addTargetAnimation(object, emptyAnimation)
                 }
+              })
+            }
+          } else {
+            // no animations? weird, but set the joint matrices once anyway
+            joints.forEach((object, jointIndex) => {
+              jointMatrix
+                .setFromArray(matrices as Float32Array, jointIndex * 16)
+                .premultiply(object.worldMatrix)
+                .premultiply(parentInverseWorldMatrix)
 
-                normalMatrix.copy(jointMatrix).invert().transpose()
+              normalMatrix.copy(jointMatrix).invert().transpose()
 
-                for (let i = 0; i < 16; i++) {
-                  binding.childrenBindings[jointIndex].inputs.jointMatrix.value[i] = jointMatrix.elements[i]
-                  binding.childrenBindings[jointIndex].inputs.normalMatrix.value[i] = normalMatrix.elements[i]
-                }
-
-                binding.childrenBindings[jointIndex].inputs.jointMatrix.shouldUpdate = true
-                binding.childrenBindings[jointIndex].inputs.normalMatrix.shouldUpdate = true
+              for (let i = 0; i < 16; i++) {
+                binding.childrenBindings[jointIndex].inputs.jointMatrix.value[i] = jointMatrix.elements[i]
+                binding.childrenBindings[jointIndex].inputs.normalMatrix.value[i] = normalMatrix.elements[i]
               }
 
-              const animationTarget = animation.getTargetByObject3D(object)
-
-              if (animationTarget) {
-                animationTarget.animations.forEach((animation) => {
-                  animation.onAfterUpdate = updateJointMatrix
-                })
-              } else {
-                // this joint does not have an animation
-                // but this does not mean we don't have to update its matrices!
-
-                // add an empty animation with just an onAfterCallback
-                const node = this.gltf.nodes[jointIndex]
-                const animName = node.name ? `${node.name} empty animation` : `empty animation ${jointIndex}`
-
-                const emptyAnimation = new KeyframesAnimation({
-                  label: animation.label ? `${animation.label} ${animName}` : `Animation ${animName}`,
-                })
-
-                emptyAnimation.onAfterUpdate = updateJointMatrix
-
-                animation.addTargetAnimation(object, emptyAnimation)
-              }
+              binding.childrenBindings[jointIndex].inputs.jointMatrix.shouldUpdate = true
+              binding.childrenBindings[jointIndex].inputs.normalMatrix.shouldUpdate = true
             })
           }
 

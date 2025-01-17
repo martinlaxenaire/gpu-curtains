@@ -19972,12 +19972,18 @@ const PI = ${Math.PI};
           }
         } else {
           const nbIndices = indicesArray.length;
-          for (let i = 0; i < nbIndices; i += positionAttribute.size * 3) {
+          for (let i = 0; i < nbIndices; i += 3) {
             const i0 = indicesArray[i] * 3;
             const i1 = indicesArray[i + 1] * 3;
             const i2 = indicesArray[i + 2] * 3;
+            if (posLength < i0 + 2)
+              continue;
             vertex1.set(positionAttribute.array[i0], positionAttribute.array[i0 + 1], positionAttribute.array[i0 + 2]);
+            if (posLength < i1 + 2)
+              continue;
             vertex2.set(positionAttribute.array[i1], positionAttribute.array[i1 + 1], positionAttribute.array[i1 + 2]);
+            if (posLength < i2 + 2)
+              continue;
             vertex3.set(positionAttribute.array[i2], positionAttribute.array[i2 + 1], positionAttribute.array[i2 + 2]);
             computeNormal();
             for (let j = 0; j < 3; j++) {
@@ -20120,36 +20126,49 @@ const PI = ${Math.PI};
               _updateMatrixStack();
               parentInverseWorldMatrix.copy(parentNode.worldMatrix).invert();
             };
-            for (const animation of this.scenesManager.animations) {
-              joints.forEach((object, jointIndex) => {
-                const updateJointMatrix = () => {
-                  if (animation.isPlaying) {
-                    jointMatrix.setFromArray(matrices, jointIndex * 16).premultiply(object.worldMatrix).premultiply(parentInverseWorldMatrix);
+            if (this.scenesManager.animations.length) {
+              for (const animation of this.scenesManager.animations) {
+                joints.forEach((object, jointIndex) => {
+                  const updateJointMatrix = () => {
+                    if (animation.isPlaying) {
+                      jointMatrix.setFromArray(matrices, jointIndex * 16).premultiply(object.worldMatrix).premultiply(parentInverseWorldMatrix);
+                    } else {
+                      jointMatrix.identity();
+                    }
+                    normalMatrix.copy(jointMatrix).invert().transpose();
+                    for (let i = 0; i < 16; i++) {
+                      binding.childrenBindings[jointIndex].inputs.jointMatrix.value[i] = jointMatrix.elements[i];
+                      binding.childrenBindings[jointIndex].inputs.normalMatrix.value[i] = normalMatrix.elements[i];
+                    }
+                    binding.childrenBindings[jointIndex].inputs.jointMatrix.shouldUpdate = true;
+                    binding.childrenBindings[jointIndex].inputs.normalMatrix.shouldUpdate = true;
+                  };
+                  const animationTarget = animation.getTargetByObject3D(object);
+                  if (animationTarget) {
+                    animationTarget.animations.forEach((animation2) => {
+                      animation2.onAfterUpdate = updateJointMatrix;
+                    });
                   } else {
-                    jointMatrix.identity();
+                    const node = this.gltf.nodes[jointIndex];
+                    const animName = node.name ? `${node.name} empty animation` : `empty animation ${jointIndex}`;
+                    const emptyAnimation = new KeyframesAnimation({
+                      label: animation.label ? `${animation.label} ${animName}` : `Animation ${animName}`
+                    });
+                    emptyAnimation.onAfterUpdate = updateJointMatrix;
+                    animation.addTargetAnimation(object, emptyAnimation);
                   }
-                  normalMatrix.copy(jointMatrix).invert().transpose();
-                  for (let i = 0; i < 16; i++) {
-                    binding.childrenBindings[jointIndex].inputs.jointMatrix.value[i] = jointMatrix.elements[i];
-                    binding.childrenBindings[jointIndex].inputs.normalMatrix.value[i] = normalMatrix.elements[i];
-                  }
-                  binding.childrenBindings[jointIndex].inputs.jointMatrix.shouldUpdate = true;
-                  binding.childrenBindings[jointIndex].inputs.normalMatrix.shouldUpdate = true;
-                };
-                const animationTarget = animation.getTargetByObject3D(object);
-                if (animationTarget) {
-                  animationTarget.animations.forEach((animation2) => {
-                    animation2.onAfterUpdate = updateJointMatrix;
-                  });
-                } else {
-                  const node = this.gltf.nodes[jointIndex];
-                  const animName = node.name ? `${node.name} empty animation` : `empty animation ${jointIndex}`;
-                  const emptyAnimation = new KeyframesAnimation({
-                    label: animation.label ? `${animation.label} ${animName}` : `Animation ${animName}`
-                  });
-                  emptyAnimation.onAfterUpdate = updateJointMatrix;
-                  animation.addTargetAnimation(object, emptyAnimation);
+                });
+              }
+            } else {
+              joints.forEach((object, jointIndex) => {
+                jointMatrix.setFromArray(matrices, jointIndex * 16).premultiply(object.worldMatrix).premultiply(parentInverseWorldMatrix);
+                normalMatrix.copy(jointMatrix).invert().transpose();
+                for (let i = 0; i < 16; i++) {
+                  binding.childrenBindings[jointIndex].inputs.jointMatrix.value[i] = jointMatrix.elements[i];
+                  binding.childrenBindings[jointIndex].inputs.normalMatrix.value[i] = normalMatrix.elements[i];
                 }
+                binding.childrenBindings[jointIndex].inputs.jointMatrix.shouldUpdate = true;
+                binding.childrenBindings[jointIndex].inputs.normalMatrix.shouldUpdate = true;
               });
             }
             this.scenesManager.skins.push({

@@ -166,7 +166,7 @@ window.addEventListener('load', async () => {
     },
     skinD: {
       name: 'SkinD',
-      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Asset-Generator/main/Output/Positive/Animation_Skin/Animation_Skin_09.gltf',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Asset-Generator/main/Output/Positive/Animation_Skin/Animation_Skin_08.gltf',
     },
   }
 
@@ -296,7 +296,7 @@ window.addEventListener('load', async () => {
       // debug
       const additionalColorContribution = `
         // color = vec4(vec3(metallic), color.a);
-        //color = vec4(normalize(normal) * 0.5 + 0.5, 1.0);
+        // color = vec4(normalize(normal) * 0.5 + 0.5, 1.0);
       `
 
       parameters.shaders = buildShaders(meshDescriptor, {
