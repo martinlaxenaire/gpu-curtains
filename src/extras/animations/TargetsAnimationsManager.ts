@@ -54,6 +54,11 @@ export class TargetsAnimationsManager {
   /** Whether the current {@link TargetsAnimationsManager} animations are playing or not. */
   isPlaying: boolean
 
+  /** Array of all children animations input accessor indices defined in the glTF, used to keep different {@link TargetsAnimationsManager} in sync. */
+  inputIndices: number[]
+  /** Map of other {@link TargetsAnimationsManager} using the exact same inputs and that should be synced together. */
+  siblings: Map<TargetsAnimationsManager['uuid'], TargetsAnimationsManager>
+
   /**
    * TargetsAnimationsManager constructor
    * @param renderer - {@link Renderer} or {@link GPUCurtains} class object used to create this {@link TargetsAnimationsManager}.
@@ -61,6 +66,7 @@ export class TargetsAnimationsManager {
    */
   constructor(renderer: Renderer | GPUCurtains, { label = '', targets = [] } = {} as TargetsAnimationsManagerParams) {
     this.uuid = generateUUID()
+    this.inputIndices = []
 
     this.setRenderer(renderer)
 
@@ -78,6 +84,8 @@ export class TargetsAnimationsManager {
     this.#maxCount = Infinity
     this.isPlaying = false
 
+    this.siblings = new Map()
+
     if (targets && targets.length) {
       this.targets = [...this.targets, ...targets]
     }
@@ -90,12 +98,17 @@ export class TargetsAnimationsManager {
   setRenderer(renderer: Renderer | GPUCurtains | null) {
     if (this.renderer) {
       this.renderer.animations.delete(this.uuid)
+      this.renderer.animations.forEach((animation) => animation.siblings.delete(this.uuid))
     }
 
     if (renderer) {
       renderer = isRenderer(renderer, 'TargetsAnimationsManager')
       this.renderer = renderer
       this.renderer.animations.set(this.uuid, this)
+
+      if (this.inputIndices.length) {
+        this.#setSiblings()
+      }
     }
   }
 
@@ -137,6 +150,34 @@ export class TargetsAnimationsManager {
     }
 
     target.animations.push(animation)
+
+    // check for siblings
+    if (animation.inputIndex !== null && !this.inputIndices.includes(animation.inputIndex)) {
+      this.inputIndices.push(animation.inputIndex)
+    }
+
+    this.#setSiblings()
+  }
+
+  /**
+   * Set the {@link TargetsAnimationsManager} siblings by comparing {@link inputIndices} arrays.
+   * @private
+   */
+  #setSiblings() {
+    this.siblings = new Map()
+
+    this.renderer.animations.forEach((animation) => {
+      if (
+        animation.uuid !== this.uuid &&
+        JSON.stringify(animation.inputIndices) === JSON.stringify(this.inputIndices)
+      ) {
+        // this is mutual
+        this.siblings.set(animation.uuid, animation)
+        animation.siblings.set(this.uuid, this)
+      } else {
+        animation.siblings.delete(this.uuid)
+      }
+    })
   }
 
   /**
@@ -185,7 +226,7 @@ export class TargetsAnimationsManager {
   pause() {
     this.isPlaying = false
     // reset start time so we could know we'll be coming back from a pause
-    this.#startTime = 0
+    this.#startTime = -1
   }
 
   /**
@@ -194,6 +235,12 @@ export class TargetsAnimationsManager {
   stop() {
     this.isPlaying = false
     this.#count = 0
+
+    // if no siblings, no need to sync
+    // reset start time
+    if (!this.siblings.size) {
+      this.#startTime = 0
+    }
 
     // force reset all animations to end frame
     this.targets.forEach((target) =>
@@ -230,9 +277,12 @@ export class TargetsAnimationsManager {
   update() {
     if (!this.isPlaying) return
 
-    if (this.#startTime === 0) {
+    if (this.#startTime === -1) {
       // we're coming back from a pause
       this.#startTime = performance.now() - this.#deltaTime
+    } else if (this.#startTime === 0) {
+      // we're coming back from a pause
+      this.#startTime = performance.now()
     }
 
     this.#currentTime = performance.now()

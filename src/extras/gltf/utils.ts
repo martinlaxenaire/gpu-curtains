@@ -10,6 +10,7 @@ import { getIBL } from '../../core/shaders/chunks/shading/ibl-shading'
 import { EnvironmentMap } from '../environment-map/EnvironmentMap'
 import { BufferElement } from '../../core/bindings/bufferElements/BufferElement'
 import { BufferBinding } from '../../core/bindings/BufferBinding'
+import { getFullVertexOutput } from '../../core/shaders/chunks/vertex/get_vertex_output'
 
 /** Defines all kinds of shading models available. */
 export type ShadingModels = 'Lambert' | 'Phong' | 'PBR' | 'IBL'
@@ -80,29 +81,17 @@ export const buildShaders = (
 
   const structAttributes = facultativeAttributes
     .map((attribute, index) => {
-      return `@location(${index}) ${attribute.name}: ${attribute.type},`
+      return `
+  @location(${index}) ${attribute.name}: ${attribute.type},`
     })
-    .join('\n\t\t')
-
-  const declareAttributes = meshDescriptor.attributes
-    .map((attribute) => {
-      return /* wgsl */ `var ${attribute.name} = attributes.${attribute.name};`
-    })
-    .join('\n\t')
-
-  const outputAttributes = facultativeAttributes
-    .filter((attr) => attr.name !== 'normal')
-    .map((attribute) => {
-      return `vsOutput.${attribute.name} = ${attribute.name};`
-    })
-    .join('\n\t')
+    .join('')
 
   // VERTEX
   let vertexOutputContent = `
-      @builtin(position) position: vec4f,
-      ${structAttributes}
-      @location(${facultativeAttributes.length}) viewDirection: vec3f,
-      @location(${facultativeAttributes.length + 1}) worldPosition: vec3f,
+  @builtin(position) position: vec4f,
+  ${structAttributes}
+  @location(${facultativeAttributes.length}) viewDirection: vec3f,
+  @location(${facultativeAttributes.length + 1}) worldPosition: vec3f,
   `
 
   let outputNormalMap = ''
@@ -111,131 +100,44 @@ export const buildShaders = (
 
   if (useNormalMap) {
     vertexOutputContent += `
-      @location(${facultativeAttributes.length + 2}) bitangent: vec3f,
+  @location(${facultativeAttributes.length + 2}) bitangent: vec3f,
       `
 
     outputNormalMap = `
-        vsOutput.tangent = normalize(matrices.model * tangent);
-        vsOutput.bitangent = cross(vsOutput.normal, vsOutput.tangent.xyz) * tangent.w;
+  vsOutput.bitangent = cross(vsOutput.normal, vsOutput.tangent.xyz) * vsOutput.tangent.w;
       `
   }
 
-  // morph targets
-  let morphTargets = ''
-  const morphTargetsBindings = meshDescriptor.parameters.bindings
-    ? (meshDescriptor.parameters.bindings.filter((binding) => binding.name.includes('morphTarget')) as BufferBinding[])
-    : []
-
-  // skins
-  let skinTransformations = ''
-  const skinJoints = facultativeAttributes.filter((attr) => attr.name.includes('joints'))
-  const skinWeights = facultativeAttributes.filter((attr) => attr.name.includes('weights'))
-  const skinBindings = meshDescriptor.parameters.bindings
-    ? meshDescriptor.parameters.bindings.filter((binding) => binding.name.includes('skin'))
-    : []
-
-  const hasSkin = skinJoints.length && skinWeights.length && skinBindings.length
-
-  if (hasSkin) {
-    skinJoints.forEach((skinJoint, index) => {
-      skinTransformations += /* wgsl */ `let skinMatrix${index}: mat4x4f = 
-        ${skinWeights[index].name}.x * skin${index}.joints[u32(${skinJoint.name}.x)].jointMatrix +
-        ${skinWeights[index].name}.y * skin${index}.joints[u32(${skinJoint.name}.y)].jointMatrix +
-        ${skinWeights[index].name}.z * skin${index}.joints[u32(${skinJoint.name}.z)].jointMatrix +
-        ${skinWeights[index].name}.w * skin${index}.joints[u32(${skinJoint.name}.w)].jointMatrix;
-      
-      worldPos = skinMatrix${index} * worldPos;
-      
-      // normal
-      let skinNormalMatrix${index}: mat4x4f = 
-        ${skinWeights[index].name}.x * skin${index}.joints[u32(${skinJoint.name}.x)].normalMatrix +
-        ${skinWeights[index].name}.y * skin${index}.joints[u32(${skinJoint.name}.y)].normalMatrix +
-        ${skinWeights[index].name}.z * skin${index}.joints[u32(${skinJoint.name}.z)].normalMatrix +
-        ${skinWeights[index].name}.w * skin${index}.joints[u32(${skinJoint.name}.w)].normalMatrix;
-        
-      let skinNormalMatrix${index}_3: mat3x3f = mat3x3f(
-        vec3(skinNormalMatrix${index}[0].xyz),
-        vec3(skinNormalMatrix${index}[1].xyz),
-        vec3(skinNormalMatrix${index}[2].xyz)
-      );
-        
-      normal = skinNormalMatrix${index}_3 * normal;
-      normal = normalize(normal);
-      `
-    })
-  }
-
-  let outputPositions = /* wgsl */ `worldPos = matrices.model * worldPos;
-      vsOutput.worldPosition = worldPos.xyz / worldPos.w;
-      vsOutput.position = camera.projection * camera.view * worldPos;
-      vsOutput.viewDirection = camera.position - vsOutput.worldPosition.xyz;
-  `
-  let outputNormal = hasSkin ? 'vsOutput.normal = normalize(normal);' : 'vsOutput.normal = getWorldNormal(normal);'
-
-  if (meshDescriptor.parameters.storages && meshDescriptor.parameters.storages.instances) {
-    outputPositions = /* wgsl */ `worldPos = instances[attributes.instanceIndex].modelMatrix * worldPos;
-      vsOutput.worldPosition = worldPos.xyz / worldPos.w;
-      vsOutput.position = camera.projection * camera.view * worldPos;
-      vsOutput.viewDirection = camera.position - vsOutput.worldPosition;
-      `
-
-    outputNormal = hasSkin
-      ? 'vsOutput.normal = normalize(normal);'
-      : `vsOutput.normal = normalize((instances[attributes.instanceIndex].normalMatrix * vec4(normal, 0.0)).xyz);`
-  }
-
-  morphTargetsBindings.forEach((binding) => {
-    Object.values(binding.inputs)
-      .filter((input) => input.name !== 'weight')
-      .forEach((input) => {
-        const bindingType = BufferElement.getType(input.type)
-        const attributeType = meshDescriptor.attributes.find((attribute) => attribute.name === input.name).type
-
-        if (bindingType === attributeType) {
-          morphTargets += `${input.name} += ${binding.name}.weight * ${binding.name}.elements[attributes.vertexIndex].${input.name};\n\t`
-        } else {
-          // TODO other cases?!
-          if (bindingType === 'vec3f' && attributeType === 'vec4f') {
-            morphTargets += `${input.name} += ${binding.name}.weight * vec4(${binding.name}.elements[attributes.vertexIndex].${input.name}, 0.0);\n\t`
-          }
-        }
-      })
+  const fullVertexOutput = getFullVertexOutput({
+    bindings: meshDescriptor.parameters.bindings as BufferBinding[],
+    geometry: meshDescriptor.parameters.geometry,
   })
 
   const vertexOutput = /*wgsl */ `
-    struct VSOutput {
-      ${vertexOutputContent}
-    };`
+struct VSOutput {
+  ${vertexOutputContent}
+};`
 
   const fragmentInput = /*wgsl */ `
-    struct VSOutput {
-      @builtin(front_facing) frontFacing: bool,
-      ${vertexOutputContent}
-    };`
+struct VSOutput {
+  @builtin(front_facing) frontFacing: bool,
+  ${vertexOutputContent}
+};`
 
   const vs = /* wgsl */ `
-    ${vertexOutput}
-    
-    @vertex fn main(
-      attributes: Attributes,
-    ) -> VSOutput {
-      var vsOutput: VSOutput;
-      
-      ${declareAttributes}
-      ${morphTargets}
-      
-      var worldPos: vec4f = vec4(position, 1.0);
-      
-      ${skinTransformations}
-      
-      ${outputPositions}
-      ${outputNormal}
-      ${outputAttributes}
-      ${outputNormalMap}
+${vertexOutput}
 
-      return vsOutput;
-    }
-  `
+@vertex fn main(
+  attributes: Attributes,
+) -> VSOutput {
+  var vsOutput: VSOutput;
+    
+  ${fullVertexOutput}
+  ${outputNormalMap}
+
+  return vsOutput;
+}
+`
 
   // FRAGMENT
   const initColor = /* wgsl */ 'var color: vec4f = vec4();'

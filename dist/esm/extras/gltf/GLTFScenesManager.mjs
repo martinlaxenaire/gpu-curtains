@@ -476,6 +476,7 @@ const _GLTFScenesManager = class _GLTFScenesManager {
             const animName = node.name ? `${node.name} animation` : `${channel.target.path} animation ${index}`;
             const keyframesAnimation = new KeyframesAnimation({
               label: animation.name ? `${animation.name} ${animName}` : `Animation ${i} ${animName}`,
+              inputIndex: sampler.input,
               keyframes,
               values,
               path,
@@ -486,6 +487,28 @@ const _GLTFScenesManager = class _GLTFScenesManager {
         }
       });
     }
+  }
+  /**
+   * Get a clean attribute name based on a glTF attribute name.
+   * @param gltfAttributeName - glTF attribute name.
+   * @returns - Attribute name conform to our expectations.
+   */
+  static getCleanAttributeName(gltfAttributeName) {
+    return gltfAttributeName === "TEXCOORD_0" ? "uv" : gltfAttributeName.replace("_", "").replace("TEXCOORD", "uv").toLowerCase();
+  }
+  /**
+   * Sort an array of {@link VertexBufferAttributeParams} by an array of attribute names.
+   * @param attributesNames - array of attribute names to use for sorting.
+   * @param attributes - {@link VertexBufferAttributeParams} array to sort.
+   */
+  sortAttributesByNames(attributesNames, attributes) {
+    attributes.sort((a, b) => {
+      let aIndex = attributesNames.findIndex((attrName) => attrName === a.name);
+      aIndex = aIndex === -1 ? Infinity : aIndex;
+      let bIndex = attributesNames.findIndex((attrName) => attrName === b.name);
+      bIndex = bIndex === -1 ? Infinity : bIndex;
+      return aIndex - bIndex;
+    });
   }
   /**
    * Create the mesh {@link Geometry} based on the given {@link gltf} primitive and {@link PrimitiveInstanceDescriptor}.
@@ -581,14 +604,7 @@ const _GLTFScenesManager = class _GLTFScenesManager {
       interleavedArray = null;
     }
     if (!interleavedArray) {
-      const attribOrder = ["position", "uv", "normal"];
-      defaultAttributes.sort((a, b) => {
-        let aIndex = attribOrder.findIndex((attrName) => attrName === a.name);
-        aIndex = aIndex === -1 ? Infinity : aIndex;
-        let bIndex = attribOrder.findIndex((attrName) => attrName === b.name);
-        bIndex = bIndex === -1 ? Infinity : bIndex;
-        return aIndex - bIndex;
-      });
+      this.sortAttributesByNames(["position", "uv", "normal"], defaultAttributes);
     }
     defaultAttributes.forEach((attribute) => {
       meshDescriptor.attributes.push({
@@ -652,14 +668,14 @@ const _GLTFScenesManager = class _GLTFScenesManager {
           }
         }
         const binding = new BufferBinding({
-          label: "Skin " + meshIndex,
-          name: "skin" + meshIndex,
+          label: "Skin " + skinIndex,
+          name: "skin" + skinIndex,
           bindingType: "storage",
           visibility: ["vertex"],
           childrenBindings: [
             {
               binding: new BufferBinding({
-                label: "Joints",
+                label: "Joints " + skinIndex,
                 name: "joints",
                 bindingType: "storage",
                 visibility: ["vertex"],
@@ -697,9 +713,9 @@ const _GLTFScenesManager = class _GLTFScenesManager {
         if (parentNodeIndex !== -1) {
           const parentNode = this.scenesManager.nodes.get(parentNodeIndex);
           const parentInverseWorldMatrix = new Mat4();
-          const _updateMatrixStack = parentNode.updateMatrixStack.bind(parentNode);
-          parentNode.updateMatrixStack = () => {
-            _updateMatrixStack();
+          const _updateWorldMatrix = parentNode.updateWorldMatrix.bind(parentNode);
+          parentNode.updateWorldMatrix = () => {
+            _updateWorldMatrix();
             parentInverseWorldMatrix.copy(parentNode.worldMatrix).invert();
           };
           if (this.scenesManager.animations.length) {
@@ -719,20 +735,13 @@ const _GLTFScenesManager = class _GLTFScenesManager {
                   binding.childrenBindings[jointIndex].inputs.jointMatrix.shouldUpdate = true;
                   binding.childrenBindings[jointIndex].inputs.normalMatrix.shouldUpdate = true;
                 };
-                const animationTarget = animation.getTargetByObject3D(object);
-                if (animationTarget) {
-                  animationTarget.animations.forEach((animation2) => {
-                    animation2.onAfterUpdate = updateJointMatrix;
-                  });
-                } else {
-                  const node = this.gltf.nodes[jointIndex];
-                  const animName = node.name ? `${node.name} empty animation` : `empty animation ${jointIndex}`;
-                  const emptyAnimation = new KeyframesAnimation({
-                    label: animation.label ? `${animation.label} ${animName}` : `Animation ${animName}`
-                  });
-                  emptyAnimation.onAfterUpdate = updateJointMatrix;
-                  animation.addTargetAnimation(object, emptyAnimation);
-                }
+                const node = this.gltf.nodes[jointIndex];
+                const animName = node.name ? `${node.name} skin animation` : `skin animation ${jointIndex}`;
+                const emptyAnimation = new KeyframesAnimation({
+                  label: animation.label ? `${animation.label} ${animName}` : `Animation ${animName}`
+                });
+                emptyAnimation.onAfterUpdate = updateJointMatrix;
+                animation.addTargetAnimation(object, emptyAnimation);
               });
             }
           } else {
@@ -819,14 +828,25 @@ const _GLTFScenesManager = class _GLTFScenesManager {
     }
     if (this.gltf.skins) {
       this.gltf.skins.forEach((skin, skinIndex) => {
-        const node = instances[0];
-        if (node.skin !== void 0 && node.skin === skinIndex) {
-          const skinDef = this.scenesManager.skins[skinIndex];
-          if (!meshDescriptor.parameters.bindings) {
-            meshDescriptor.parameters.bindings = [];
-          }
-          meshDescriptor.parameters.bindings = [...meshDescriptor.parameters.bindings, skinDef.binding];
+        if (!meshDescriptor.parameters.bindings) {
+          meshDescriptor.parameters.bindings = [];
         }
+        instances.forEach((node, instanceIndex) => {
+          if (node.skin !== void 0 && node.skin === skinIndex) {
+            const skinDef = this.scenesManager.skins[skinIndex];
+            meshDescriptor.parameters.bindings = [...meshDescriptor.parameters.bindings, skinDef.binding];
+            if (instanceIndex > 0) {
+              const tempBbox = meshDescriptor.parameters.geometry.boundingBox.clone();
+              const tempMat4 = new Mat4();
+              skinDef.joints.forEach((object, jointIndex) => {
+                tempMat4.setFromArray(skinDef.inverseBindMatrices, jointIndex * 16);
+                const transformedBbox = tempBbox.applyMat4(tempMat4).applyMat4(object.worldMatrix);
+                this.scenesManager.boundingBox.min.min(transformedBbox.min);
+                this.scenesManager.boundingBox.max.max(transformedBbox.max);
+              });
+            }
+          }
+        });
       });
     }
     const materialTextures = this.scenesManager.materialsTextures[primitive.material];
@@ -932,6 +952,7 @@ const _GLTFScenesManager = class _GLTFScenesManager {
       this.scenesManager.boundingBox.min.min(transformedBbox.min);
       this.scenesManager.boundingBox.max.max(transformedBbox.max);
     }
+    this.scenesManager.boundingBox.max.max(new Vec3(1e-3));
   }
   /**
    * Create the {@link ScenesManager#scenes | ScenesManager scenes} based on the {@link gltf} object.
@@ -972,13 +993,10 @@ const _GLTFScenesManager = class _GLTFScenesManager {
     return this.scenesManager.meshesDescriptors.map((meshDescriptor) => {
       if (meshDescriptor.parameters.geometry) {
         patchMeshesParameters(meshDescriptor);
-        const hasInstancedShadows = meshDescriptor.parameters.geometry.instancesCount > 1 && meshDescriptor.parameters.castShadows;
-        if (hasInstancedShadows) {
-          meshDescriptor.parameters.castShadows = false;
-        }
         const mesh = new Mesh(this.renderer, {
           ...meshDescriptor.parameters
         });
+        mesh.parent = meshDescriptor.parent;
         if (meshDescriptor.nodes.length > 1) {
           const _updateMatrixStack = mesh.updateMatrixStack.bind(mesh);
           mesh.updateMatrixStack = () => {
@@ -1000,17 +1018,6 @@ const _GLTFScenesManager = class _GLTFScenesManager {
             }
           };
         }
-        if (hasInstancedShadows) {
-          const instancesBinding = mesh.material.inputsBindings.get("instances");
-          this.renderer.shadowCastingLights.forEach((light) => {
-            if (light.shadow.isActive) {
-              light.shadow.addShadowCastingMesh(mesh, {
-                bindings: [instancesBinding]
-              });
-            }
-          });
-        }
-        mesh.parent = meshDescriptor.parent;
         this.scenesManager.meshes.push(mesh);
         return mesh;
       }
@@ -1069,7 +1076,7 @@ parsePrimitiveProperty_fn = function(primitiveProperty, attributes) {
   const primitiveAttributesValues = Object.values(primitiveProperty);
   primitiveAttributesValues.sort((a, b) => a - b);
   for (const [attribName, accessorIndex] of primitiveAttributes) {
-    const name = attribName === "TEXCOORD_0" ? "uv" : attribName.replace("_", "").replace("TEXCOORD", "uv").toLowerCase();
+    const name = _GLTFScenesManager.getCleanAttributeName(attribName);
     const accessor = this.gltf.accessors[accessorIndex];
     const constructor = accessor.componentType ? _GLTFScenesManager.getTypedArrayConstructorFromComponentType(accessor.componentType) : Float32Array;
     const bufferView = this.gltf.bufferViews[accessor.bufferView];
@@ -1195,6 +1202,10 @@ parsePrimitiveProperty_fn = function(primitiveProperty, attributes) {
           interleavedArray.subarray(startOffset, startOffset + attrSize).set(subarray);
         }
       });
+      const cleanAttributeNames = Object.entries(primitiveProperty).map(
+        (prop) => _GLTFScenesManager.getCleanAttributeName(prop[0])
+      );
+      this.sortAttributesByNames(cleanAttributeNames, attributes);
     } else {
       interleavedArray = new Float32Array(
         this.gltf.arrayBuffers[interleavedBufferView.buffer],
@@ -1216,6 +1227,15 @@ parsePrimitiveProperty_fn = function(primitiveProperty, attributes) {
         }
         stride += attrSize;
       });
+      const primitivePropertiesSortedByByteOffset = Object.entries(primitiveProperty).sort((a, b) => {
+        const accessorAByteOffset = this.gltf.accessors[a[1]].byteOffset;
+        const accessorBByteOffset = this.gltf.accessors[b[1]].byteOffset;
+        return accessorAByteOffset - accessorBByteOffset;
+      });
+      const accessorNameOrder = primitivePropertiesSortedByByteOffset.map(
+        (property) => _GLTFScenesManager.getCleanAttributeName(property[0])
+      );
+      this.sortAttributesByNames(accessorNameOrder, attributes);
     }
   }
   return interleavedArray;

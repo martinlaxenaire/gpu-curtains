@@ -133,7 +133,6 @@ class Object3D {
    */
   applyRotation() {
     this.quaternion.setFromVec3(this.rotation);
-    console.log("apply rotation");
     this.shouldUpdateModelMatrix();
   }
   /**

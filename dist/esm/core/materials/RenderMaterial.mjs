@@ -217,7 +217,7 @@ New rendering options: ${JSON.stringify(
    */
   updateBindGroups() {
     const startBindGroupIndex = this.useCameraBindGroup ? 1 : 0;
-    if (this.useCameraBindGroup) {
+    if (this.useCameraBindGroup && this.bindGroups.length) {
       if (this.bindGroups[0].needsPipelineFlush && this.pipelineEntry.ready) {
         this.pipelineEntry.flushPipelineEntry(this.bindGroups);
       }

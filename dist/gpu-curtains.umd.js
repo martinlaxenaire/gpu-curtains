@@ -3818,7 +3818,6 @@
      */
     applyRotation() {
       this.quaternion.setFromVec3(this.rotation);
-      console.log("apply rotation");
       this.shouldUpdateModelMatrix();
     }
     /**
@@ -8623,7 +8622,7 @@ New rendering options: ${JSON.stringify(
      */
     updateBindGroups() {
       const startBindGroupIndex = this.useCameraBindGroup ? 1 : 0;
-      if (this.useCameraBindGroup) {
+      if (this.useCameraBindGroup && this.bindGroups.length) {
         if (this.bindGroups[0].needsPipelineFlush && this.pipelineEntry.ready) {
           this.pipelineEntry.flushPipelineEntry(this.bindGroups);
         }
@@ -8634,26 +8633,144 @@ New rendering options: ${JSON.stringify(
     }
   }
 
-  const getPositionAndNormal = (hasInstances = false) => {
-    if (hasInstances) {
-      return (
-        /* wgsl */
-        `
-  var worldPosition: vec4f = instances[attributes.instanceIndex].modelMatrix * vec4f(attributes.position, 1.0);
-  let normal = (instances[attributes.instanceIndex].normalMatrix * vec4(attributes.normal, 0.0)).xyz;
+  const getVertexPositionNormal = ({ bindings = [], geometry }) => {
+    let output = "";
+    output += geometry.vertexBuffers.map(
+      (vertexBuffer) => vertexBuffer.attributes.map((attribute) => {
+        return (
+          /* wgsl */
+          `
+  var ${attribute.name} = attributes.${attribute.name};`
+        );
+      }).join("")
+    ).join("\n");
+    const hasInstances = geometry.instancesCount > 1;
+    const skinJoints = geometry.vertexBuffers.length && geometry.vertexBuffers[0].attributes.filter((attr) => attr.name.includes("joints"));
+    const skinWeights = geometry.vertexBuffers.length && geometry.vertexBuffers[0].attributes.filter((attr) => attr.name.includes("weights"));
+    const skinBindings = bindings.filter((binding) => binding.name.includes("skin"));
+    const morphTargetsBindings = bindings.filter((binding) => binding.name.includes("morphTarget"));
+    morphTargetsBindings.forEach((binding) => {
+      Object.values(binding.inputs).filter((input) => input.name !== "weight").forEach((input) => {
+        const bindingType = BufferElement.getType(input.type);
+        const attributeType = geometry.vertexBuffers.length && geometry.vertexBuffers[0].attributes.find((attribute) => attribute.name === input.name).type;
+        if (bindingType === attributeType) {
+          output += `${input.name} += ${binding.name}.weight * ${binding.name}.elements[attributes.vertexIndex].${input.name};
+	`;
+        } else {
+          if (bindingType === "vec3f" && attributeType === "vec4f") {
+            output += `${input.name} += ${binding.name}.weight * vec4(${binding.name}.elements[attributes.vertexIndex].${input.name}, 0.0);
+	`;
+          }
+        }
+      });
+    });
+    output += /* wgsl */
     `
-      );
-    } else {
-      return (
-        /* wgsl */
+  var worldPosition: vec4f = vec4(position, 1.0);
+  `;
+    const hasSkin = skinJoints.length && skinWeights.length && skinBindings.length;
+    if (hasSkin) {
+      output += hasInstances ? `
+  var instancesWorldPosition = array<vec4f, ${geometry.instancesCount}>();
+  var instancesNormal = array<vec3f, ${geometry.instancesCount}>();
+      ` : "";
+      output += `
+  let skinJoints: vec4f = ${skinJoints.map((skinJoint) => skinJoint.name).join(" + ")};`;
+      output += `
+  var skinWeights: vec4f = ${skinWeights.map((skinWeight) => skinWeight.name).join(" + ")};
+  
+  let skinWeightsSum = dot(skinWeights, vec4(1.0));
+  if(skinWeightsSum > 0.0) {
+    skinWeights = skinWeights / skinWeightsSum;
+  }
+    `;
+      skinBindings.forEach((binding, bindingIndex) => {
+        output += /* wgsl */
         `
-  var worldPosition: vec4f = matrices.model * vec4(attributes.position, 1.0);
-  let normal = getWorldNormal(attributes.normal);
-    `
-      );
+  ${hasInstances ? "// instancing with different skins: joints calculations for skin " + bindingIndex + "\n" : ""}
+  // position
+  let skinMatrix_${bindingIndex}: mat4x4f = 
+    skinWeights.x * ${binding.name}.joints[u32(skinJoints.x)].jointMatrix +
+    skinWeights.y * ${binding.name}.joints[u32(skinJoints.y)].jointMatrix +
+    skinWeights.z * ${binding.name}.joints[u32(skinJoints.z)].jointMatrix +
+    skinWeights.w * ${binding.name}.joints[u32(skinJoints.w)].jointMatrix;
+      
+  ${hasInstances ? "instancesWorldPosition[" + bindingIndex + "] = skinMatrix_" + bindingIndex + " * worldPosition;" : "worldPosition = skinMatrix_" + bindingIndex + " * worldPosition;"}
+      
+  // normal
+  let skinNormalMatrix_${bindingIndex}: mat4x4f = 
+    skinWeights.x * ${binding.name}.joints[u32(skinJoints.x)].normalMatrix +
+    skinWeights.y * ${binding.name}.joints[u32(skinJoints.y)].normalMatrix +
+    skinWeights.z * ${binding.name}.joints[u32(skinJoints.z)].normalMatrix +
+    skinWeights.w * ${binding.name}.joints[u32(skinJoints.w)].normalMatrix;
+    
+  let skinNormalMatrix_${bindingIndex}_3: mat3x3f = mat3x3f(
+    vec3(skinNormalMatrix_${bindingIndex}[0].xyz),
+    vec3(skinNormalMatrix_${bindingIndex}[1].xyz),
+    vec3(skinNormalMatrix_${bindingIndex}[2].xyz)
+  );
+      
+  ${hasInstances ? "instancesNormal[" + bindingIndex + "] = skinNormalMatrix_" + bindingIndex + "_3 * normal;" : "normal = skinNormalMatrix_" + bindingIndex + "_3 * normal;"}
+      `;
+      });
     }
+    output += /* wgsl */
+    `
+  var modelMatrix: mat4x4f;
+  `;
+    if (hasInstances) {
+      if (hasSkin) {
+        output += /* wgsl */
+        `
+  worldPosition = instancesWorldPosition[attributes.instanceIndex];
+  normal = instancesNormal[attributes.instanceIndex];
+      `;
+      }
+      output += /* wgsl */
+      `
+  modelMatrix = instances[attributes.instanceIndex].modelMatrix;
+  worldPosition = modelMatrix * worldPosition;
+  normal = normalize((instances[attributes.instanceIndex].normalMatrix * vec4(normalize(normal), 0.0)).xyz);
+    `;
+    } else {
+      output += /* wgsl */
+      `
+  modelMatrix = matrices.model;
+  worldPosition = modelMatrix * worldPosition;
+  normal = getWorldNormal(normal);
+    `;
+    }
+    return output;
   };
-  const getDefaultShadowDepthVs = (lightIndex = 0, hasInstances = false) => (
+  const getFullVertexOutput = ({ bindings = [], geometry }) => {
+    let output = getVertexPositionNormal({ bindings, geometry });
+    output += /* wgsl */
+    `
+  vsOutput.position = camera.projection * camera.view * worldPosition;
+  vsOutput.normal = normal;
+  vsOutput.worldPosition = worldPosition.xyz / worldPosition.w;
+  vsOutput.viewDirection = camera.position - vsOutput.worldPosition;
+  `;
+    const tangentAttribute = geometry.getAttributeByName("tangent");
+    if (tangentAttribute) {
+      output += /* wgsl */
+      `
+  vsOutput.tangent = normalize(modelMatrix * tangent);
+    `;
+    }
+    output += geometry.vertexBuffers.map(
+      (vertexBuffer) => vertexBuffer.attributes.filter((attr) => attr.name !== "normal" && attr.name !== "position" && attr.name !== "tangent").map((attribute) => {
+        return (
+          /* wgsl */
+          `
+  vsOutput.${attribute.name} = ${attribute.name};`
+        );
+      }).join("")
+    ).join("\n");
+    return output;
+  };
+
+  const getDefaultShadowDepthVs = (lightIndex = 0, { bindings = [], geometry }) => (
     /* wgsl */
     `
 @vertex fn main(
@@ -8661,14 +8778,15 @@ New rendering options: ${JSON.stringify(
 ) -> @builtin(position) vec4f {  
   let directionalShadow: DirectionalShadowsElement = directionalShadows.directionalShadowsElements[${lightIndex}];
   
-  ${getPositionAndNormal(hasInstances)}
+  ${getVertexPositionNormal({ bindings, geometry })}
   
-  let lightDirection: vec3f = normalize(worldPosition.xyz - directionalLights.elements[${lightIndex}].direction);
+  let worldPos = worldPosition.xyz / worldPosition.w;
+  let lightDirection: vec3f = normalize(worldPos - directionalLights.elements[${lightIndex}].direction);
   let NdotL: f32 = dot(normalize(normal), lightDirection);
   let sinNdotL = sqrt(1.0 - NdotL * NdotL);
   let normalBias: f32 = directionalShadow.normalBias * sinNdotL;
   
-  worldPosition = vec4(worldPosition.xyz - normal * normalBias, worldPosition.w);
+  worldPosition = vec4(worldPos - normal * normalBias, 1.0);
   
   return directionalShadow.projectionMatrix * directionalShadow.viewMatrix * worldPosition;
 }`
@@ -8765,7 +8883,7 @@ fn getPCFDirectionalShadows(worldPosition: vec3f) -> array<f32, ${minDirectional
 `
     );
   };
-  const getDefaultPointShadowDepthVs = (lightIndex = 0, hasInstances = false) => (
+  const getDefaultPointShadowDepthVs = (lightIndex = 0, { bindings = [], geometry }) => (
     /* wgsl */
     `
 struct PointShadowVSOutput {
@@ -8778,21 +8896,23 @@ struct PointShadowVSOutput {
 ) -> PointShadowVSOutput {  
   var pointShadowVSOutput: PointShadowVSOutput;
   
-  ${getPositionAndNormal(hasInstances)}
+  ${getVertexPositionNormal({ bindings, geometry })}
+  
+  let worldPos = worldPosition.xyz / worldPosition.w;
   
   let pointShadow: PointShadowsElement = pointShadows.pointShadowsElements[${lightIndex}];
   
-  let lightDirection: vec3f = normalize(pointLights.elements[${lightIndex}].position - worldPosition.xyz);
+  let lightDirection: vec3f = normalize(pointLights.elements[${lightIndex}].position - worldPos);
   let NdotL: f32 = dot(normalize(normal), lightDirection);
   let sinNdotL = sqrt(1.0 - NdotL * NdotL);
   let normalBias: f32 = pointShadow.normalBias * sinNdotL;
   
-  worldPosition = vec4(worldPosition.xyz - normal * normalBias, worldPosition.w);
+  worldPosition = vec4(worldPos - normal * normalBias, 1.0);
     
-  var position: vec4f = pointShadow.projectionMatrix * pointShadow.viewMatrices[pointShadow.face] * worldPosition;
+  var shadowPosition: vec4f = pointShadow.projectionMatrix * pointShadow.viewMatrices[pointShadow.face] * worldPosition;
 
-  pointShadowVSOutput.position = position;
-  pointShadowVSOutput.worldPosition = worldPosition.xyz;
+  pointShadowVSOutput.position = shadowPosition;
+  pointShadowVSOutput.worldPosition = worldPos;
 
   return pointShadowVSOutput;
 }`
@@ -8943,7 +9063,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
     member.set(obj, value);
     return value;
   };
-  var __privateMethod$7 = (obj, member, method) => {
+  var __privateMethod$8 = (obj, member, method) => {
     __accessCheck$f(obj, member, "access private method");
     return method;
   };
@@ -9033,7 +9153,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
       __privateSet$c(this, _materials, /* @__PURE__ */ new Map());
       __privateSet$c(this, _depthMaterials, /* @__PURE__ */ new Map());
       __privateSet$c(this, _depthPassTaskID, null);
-      __privateMethod$7(this, _setParameters, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
+      __privateMethod$8(this, _setParameters, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
       this.isActive = false;
     }
     /**
@@ -9058,7 +9178,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
      * @param parameters - parameters to use for this {@link Shadow}.
      */
     cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender } = {}) {
-      __privateMethod$7(this, _setParameters, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
+      __privateMethod$8(this, _setParameters, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
       this.isActive = true;
     }
     /**
@@ -9331,10 +9451,10 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
      * Get the default depth pass vertex shader for this {@link Shadow}.
      * @returns - Depth pass vertex shader.
      */
-    getDefaultShadowDepthVs(hasInstances = false) {
+    getDefaultShadowDepthVs({ bindings = [], geometry }) {
       return {
         /** Returned code. */
-        code: getDefaultShadowDepthVs(this.index, hasInstances)
+        code: getDefaultShadowDepthVs(this.index, { bindings, geometry })
       };
     }
     /**
@@ -9355,15 +9475,24 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
       parameters.targets = [];
       parameters.sampleCount = this.sampleCount;
       parameters.depthFormat = this.depthTextureFormat;
-      if (parameters.bindings) {
-        parameters.bindings = [mesh.material.getBufferBindingByName("matrices"), ...parameters.bindings];
-      } else {
-        parameters.bindings = [mesh.material.getBufferBindingByName("matrices")];
+      const bindings = [mesh.material.getBufferBindingByName("matrices")];
+      mesh.material.inputsBindings.forEach((binding) => {
+        if (binding.name.includes("skin") || binding.name.includes("morphTarget")) {
+          bindings.push(binding);
+        }
+      });
+      const instancesBinding = mesh.material.getBufferBindingByName("instances");
+      if (instancesBinding) {
+        bindings.push(instancesBinding);
       }
-      const hasInstances = mesh.material.inputsBindings.get("instances") && mesh.geometry.instancesCount > 1;
+      if (parameters.bindings) {
+        parameters.bindings = [...bindings, ...parameters.bindings];
+      } else {
+        parameters.bindings = [...bindings];
+      }
       if (!parameters.shaders) {
         parameters.shaders = {
-          vertex: this.getDefaultShadowDepthVs(hasInstances),
+          vertex: this.getDefaultShadowDepthVs({ bindings, geometry: mesh.geometry }),
           fragment: this.getDefaultShadowDepthFs()
         };
       }
@@ -10019,10 +10148,10 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
      * Get the default depth pass vertex shader for this {@link PointShadow}.
      * @returns - Depth pass vertex shader.
      */
-    getDefaultShadowDepthVs(hasInstances = false) {
+    getDefaultShadowDepthVs({ bindings = [], geometry }) {
       return {
         /** Returned code. */
-        code: getDefaultPointShadowDepthVs(this.index, hasInstances)
+        code: getDefaultPointShadowDepthVs(this.index, { bindings, geometry })
       };
     }
     /**
@@ -10548,8 +10677,12 @@ ${geometry.wgslStructFragment}`
        */
       useMaterial(material) {
         let currentCacheKey = null;
-        if (this.material && this.geometry) {
-          currentCacheKey = this.material.cacheKey;
+        let isDepthMaterialSwitch = false;
+        if (this.material) {
+          isDepthMaterialSwitch = this.material.options.label.includes("depth render material") || material.options.label.includes("depth render material");
+          if (this.geometry) {
+            currentCacheKey = this.material.cacheKey;
+          }
         }
         this.material = material;
         if (this.geometry) {
@@ -10557,7 +10690,7 @@ ${geometry.wgslStructFragment}`
         }
         this.transparent = this.material.options.rendering.transparent;
         this.material.options.domTextures?.filter((texture) => texture instanceof DOMTexture).forEach((texture) => this.onDOMTextureAdded(texture));
-        if (currentCacheKey && currentCacheKey !== this.material.cacheKey) {
+        if (currentCacheKey && currentCacheKey !== this.material.cacheKey && !isDepthMaterialSwitch) {
           this.material.setPipelineEntry();
         }
       }
@@ -14460,7 +14593,7 @@ ${this.shaders.compute.head}`;
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateMethod$6 = (obj, member, method) => {
+  var __privateMethod$7 = (obj, member, method) => {
     __accessCheck$8(obj, member, "access private method");
     return method;
   };
@@ -14546,7 +14679,7 @@ ${this.shaders.compute.head}`;
       const indirectMappedBuffer = new Uint32Array(this.buffer.GPUBuffer.getMappedRange());
       let offset = 0;
       this.geometries.forEach((geometry) => {
-        __privateMethod$6(this, _addGeometryToIndirectMappedBuffer, addGeometryToIndirectMappedBuffer_fn).call(this, geometry, indirectMappedBuffer, offset * this.options.minEntrySize);
+        __privateMethod$7(this, _addGeometryToIndirectMappedBuffer, addGeometryToIndirectMappedBuffer_fn).call(this, geometry, indirectMappedBuffer, offset * this.options.minEntrySize);
         geometry.useIndirectBuffer({ buffer: this.buffer, offset: this.getByteOffsetAtIndex(offset) });
         offset++;
       });
@@ -14599,7 +14732,7 @@ ${this.shaders.compute.head}`;
     member.set(obj, value);
     return value;
   };
-  var __privateMethod$5 = (obj, member, method) => {
+  var __privateMethod$6 = (obj, member, method) => {
     __accessCheck$7(obj, member, "access private method");
     return method;
   };
@@ -14686,7 +14819,7 @@ ${this.shaders.compute.head}`;
       if (this.options.useBuffer) {
         __privateSet$5(this, _useProjection, true);
         if (this.options.size !== 0) {
-          __privateMethod$5(this, _setBinding, setBinding_fn).call(this);
+          __privateMethod$6(this, _setBinding, setBinding_fn).call(this);
         } else {
           this.options.useBuffer = false;
           if (!this.renderer.production) {
@@ -14771,7 +14904,7 @@ ${this.shaders.compute.head}`;
           );
         }
         this.ready = false;
-        __privateMethod$5(this, _onSizeChanged, onSizeChanged_fn).call(this, value);
+        __privateMethod$6(this, _onSizeChanged, onSizeChanged_fn).call(this, value);
         this.options.size = value;
       }
     }
@@ -14796,7 +14929,7 @@ ${this.shaders.compute.head}`;
           });
           this.indirectBuffer.create();
         }
-        __privateMethod$5(this, _encodeRenderCommands, encodeRenderCommands_fn).call(this);
+        __privateMethod$6(this, _encodeRenderCommands, encodeRenderCommands_fn).call(this);
       } else if (!value && this.ready) {
         this.bundle = null;
       }
@@ -14932,7 +15065,7 @@ ${this.shaders.compute.head}`;
      */
     remove() {
       this.empty(true);
-      __privateMethod$5(this, _cleanUp, cleanUp_fn).call(this);
+      __privateMethod$6(this, _cleanUp, cleanUp_fn).call(this);
     }
     /**
      * Remove the {@link RenderBundle} from our {@link core/scenes/Scene.Scene | Scene}, {@link RenderedMesh#remove | remove the meshes}, eventually destroy the {@link binding} and remove the {@link RenderBundle} from the {@link Renderer}.
@@ -14943,7 +15076,7 @@ ${this.shaders.compute.head}`;
         mesh.remove();
       });
       this.size = 0;
-      __privateMethod$5(this, _cleanUp, cleanUp_fn).call(this);
+      __privateMethod$6(this, _cleanUp, cleanUp_fn).call(this);
     }
   }
   _useProjection = new WeakMap();
@@ -14968,7 +15101,7 @@ ${this.shaders.compute.head}`;
         }
       }
     });
-    __privateMethod$5(this, _patchBindingOffset, patchBindingOffset_fn).call(this, this.options.size);
+    __privateMethod$6(this, _patchBindingOffset, patchBindingOffset_fn).call(this, this.options.size);
   };
   _patchBindingOffset = new WeakSet();
   patchBindingOffset_fn = function(size) {
@@ -14982,7 +15115,7 @@ ${this.shaders.compute.head}`;
   _onSizeChanged = new WeakSet();
   onSizeChanged_fn = function(newSize) {
     if (newSize > this.options.size && this.binding) {
-      __privateMethod$5(this, _patchBindingOffset, patchBindingOffset_fn).call(this, newSize);
+      __privateMethod$6(this, _patchBindingOffset, patchBindingOffset_fn).call(this, newSize);
       if (this.binding.buffer.GPUBuffer) {
         this.binding.buffer.GPUBuffer.destroy();
         this.binding.buffer.createBuffer(this.renderer, {
@@ -15017,7 +15150,7 @@ ${this.shaders.compute.head}`;
   };
   _encodeRenderCommands = new WeakSet();
   encodeRenderCommands_fn = function() {
-    __privateMethod$5(this, _setDescriptor, setDescriptor_fn).call(this);
+    __privateMethod$6(this, _setDescriptor, setDescriptor_fn).call(this);
     this.renderer.pipelineManager.resetCurrentPipeline();
     this.encoder = this.renderer.device.createRenderBundleEncoder({
       ...this.descriptor,
@@ -16988,7 +17121,7 @@ fn getIBL(
     member.set(obj, value);
     return value;
   };
-  var __privateMethod$4 = (obj, member, method) => {
+  var __privateMethod$5 = (obj, member, method) => {
     __accessCheck$5(obj, member, "access private method");
     return method;
   };
@@ -17131,7 +17264,7 @@ fn getIBL(
         throwWarning("OrbitControls: cannot initialize without a camera.");
         return;
       }
-      __privateMethod$4(this, _setBaseParams, setBaseParams_fn).call(this, {
+      __privateMethod$5(this, _setBaseParams, setBaseParams_fn).call(this, {
         target,
         enableZoom,
         minZoom,
@@ -17162,7 +17295,7 @@ fn getIBL(
       __privateGet$3(this, _spherical).radius = __privateGet$3(this, _offset).length();
       __privateGet$3(this, _spherical).theta = Math.atan2(__privateGet$3(this, _offset).x, __privateGet$3(this, _offset).z);
       __privateGet$3(this, _spherical).phi = Math.acos(Math.min(Math.max(__privateGet$3(this, _offset).y / __privateGet$3(this, _spherical).radius, -1), 1));
-      __privateMethod$4(this, _update, update_fn).call(this);
+      __privateMethod$5(this, _update, update_fn).call(this);
     }
     /**
      * Reset the {@link OrbitControls} values.
@@ -17187,7 +17320,7 @@ fn getIBL(
       enablePan = this.enablePan,
       panSpeed = this.panSpeed
     } = {}) {
-      __privateMethod$4(this, _setBaseParams, setBaseParams_fn).call(this, {
+      __privateMethod$5(this, _setBaseParams, setBaseParams_fn).call(this, {
         target,
         enableZoom,
         minZoom,
@@ -17215,7 +17348,7 @@ fn getIBL(
       __privateGet$3(this, _spherical).radius = position.length();
       __privateGet$3(this, _spherical).theta = Math.atan2(position.x, position.z);
       __privateGet$3(this, _spherical).phi = Math.acos(Math.min(Math.max(position.y / __privateGet$3(this, _spherical).radius, -1), 1));
-      __privateMethod$4(this, _update, update_fn).call(this);
+      __privateMethod$5(this, _update, update_fn).call(this);
     }
     /**
      * Set the element to use for event listeners. Can remove previous event listeners first if needed.
@@ -17223,11 +17356,11 @@ fn getIBL(
      */
     set element(value) {
       if (__privateGet$3(this, _element) && (!value || __privateGet$3(this, _element) !== value)) {
-        __privateMethod$4(this, _removeEvents, removeEvents_fn).call(this);
+        __privateMethod$5(this, _removeEvents, removeEvents_fn).call(this);
       }
       __privateSet$3(this, _element, value);
       if (value) {
-        __privateMethod$4(this, _addEvents, addEvents_fn).call(this);
+        __privateMethod$5(this, _addEvents, addEvents_fn).call(this);
       }
     }
     /**
@@ -17289,25 +17422,25 @@ fn getIBL(
   };
   _addEvents = new WeakSet();
   addEvents_fn = function() {
-    __privateGet$3(this, _element).addEventListener("contextmenu", __privateMethod$4(this, _onContextMenu, onContextMenu_fn).bind(this), false);
-    __privateGet$3(this, _element).addEventListener("mousedown", __privateMethod$4(this, _onMouseDown, onMouseDown_fn).bind(this), false);
-    __privateGet$3(this, _element).addEventListener("mousemove", __privateMethod$4(this, _onMouseMove, onMouseMove_fn).bind(this), false);
-    __privateGet$3(this, _element).addEventListener("mouseup", __privateMethod$4(this, _onMouseUp, onMouseUp_fn).bind(this), false);
-    __privateGet$3(this, _element).addEventListener("touchstart", __privateMethod$4(this, _onTouchStart, onTouchStart_fn).bind(this), { passive: false });
-    __privateGet$3(this, _element).addEventListener("touchmove", __privateMethod$4(this, _onTouchMove, onTouchMove_fn).bind(this), { passive: false });
-    __privateGet$3(this, _element).addEventListener("touchend", __privateMethod$4(this, _onTouchEnd, onTouchEnd_fn).bind(this), false);
-    __privateGet$3(this, _element).addEventListener("wheel", __privateMethod$4(this, _onMouseWheel, onMouseWheel_fn).bind(this), { passive: false });
+    __privateGet$3(this, _element).addEventListener("contextmenu", __privateMethod$5(this, _onContextMenu, onContextMenu_fn).bind(this), false);
+    __privateGet$3(this, _element).addEventListener("mousedown", __privateMethod$5(this, _onMouseDown, onMouseDown_fn).bind(this), false);
+    __privateGet$3(this, _element).addEventListener("mousemove", __privateMethod$5(this, _onMouseMove, onMouseMove_fn).bind(this), false);
+    __privateGet$3(this, _element).addEventListener("mouseup", __privateMethod$5(this, _onMouseUp, onMouseUp_fn).bind(this), false);
+    __privateGet$3(this, _element).addEventListener("touchstart", __privateMethod$5(this, _onTouchStart, onTouchStart_fn).bind(this), { passive: false });
+    __privateGet$3(this, _element).addEventListener("touchmove", __privateMethod$5(this, _onTouchMove, onTouchMove_fn).bind(this), { passive: false });
+    __privateGet$3(this, _element).addEventListener("touchend", __privateMethod$5(this, _onTouchEnd, onTouchEnd_fn).bind(this), false);
+    __privateGet$3(this, _element).addEventListener("wheel", __privateMethod$5(this, _onMouseWheel, onMouseWheel_fn).bind(this), { passive: false });
   };
   _removeEvents = new WeakSet();
   removeEvents_fn = function() {
-    __privateGet$3(this, _element).removeEventListener("contextmenu", __privateMethod$4(this, _onContextMenu, onContextMenu_fn).bind(this), false);
-    __privateGet$3(this, _element).removeEventListener("mousedown", __privateMethod$4(this, _onMouseDown, onMouseDown_fn).bind(this), false);
-    __privateGet$3(this, _element).removeEventListener("mousemove", __privateMethod$4(this, _onMouseMove, onMouseMove_fn).bind(this), false);
-    __privateGet$3(this, _element).removeEventListener("mouseup", __privateMethod$4(this, _onMouseUp, onMouseUp_fn).bind(this), false);
-    __privateGet$3(this, _element).removeEventListener("touchstart", __privateMethod$4(this, _onTouchStart, onTouchStart_fn).bind(this), { passive: false });
-    __privateGet$3(this, _element).removeEventListener("touchmove", __privateMethod$4(this, _onTouchMove, onTouchMove_fn).bind(this), { passive: false });
-    __privateGet$3(this, _element).removeEventListener("touchend", __privateMethod$4(this, _onTouchEnd, onTouchEnd_fn).bind(this), false);
-    __privateGet$3(this, _element).removeEventListener("wheel", __privateMethod$4(this, _onMouseWheel, onMouseWheel_fn).bind(this), { passive: false });
+    __privateGet$3(this, _element).removeEventListener("contextmenu", __privateMethod$5(this, _onContextMenu, onContextMenu_fn).bind(this), false);
+    __privateGet$3(this, _element).removeEventListener("mousedown", __privateMethod$5(this, _onMouseDown, onMouseDown_fn).bind(this), false);
+    __privateGet$3(this, _element).removeEventListener("mousemove", __privateMethod$5(this, _onMouseMove, onMouseMove_fn).bind(this), false);
+    __privateGet$3(this, _element).removeEventListener("mouseup", __privateMethod$5(this, _onMouseUp, onMouseUp_fn).bind(this), false);
+    __privateGet$3(this, _element).removeEventListener("touchstart", __privateMethod$5(this, _onTouchStart, onTouchStart_fn).bind(this), { passive: false });
+    __privateGet$3(this, _element).removeEventListener("touchmove", __privateMethod$5(this, _onTouchMove, onTouchMove_fn).bind(this), { passive: false });
+    __privateGet$3(this, _element).removeEventListener("touchend", __privateMethod$5(this, _onTouchEnd, onTouchEnd_fn).bind(this), false);
+    __privateGet$3(this, _element).removeEventListener("wheel", __privateMethod$5(this, _onMouseWheel, onMouseWheel_fn).bind(this), { passive: false });
   };
   _onMouseDown = new WeakSet();
   onMouseDown_fn = function(e) {
@@ -17331,15 +17464,15 @@ fn getIBL(
   _onMouseMove = new WeakSet();
   onMouseMove_fn = function(e) {
     if (__privateGet$3(this, _isOrbiting) && this.enableRotate) {
-      __privateMethod$4(this, _rotate, rotate_fn).call(this, e.clientX, e.clientY);
+      __privateMethod$5(this, _rotate, rotate_fn).call(this, e.clientX, e.clientY);
     } else if (__privateGet$3(this, _isPaning) && this.enablePan) {
-      __privateMethod$4(this, _pan, pan_fn).call(this, e.clientX, e.clientY);
+      __privateMethod$5(this, _pan, pan_fn).call(this, e.clientX, e.clientY);
     }
   };
   _onTouchMove = new WeakSet();
   onTouchMove_fn = function(e) {
     if (__privateGet$3(this, _isOrbiting) && this.enableRotate) {
-      __privateMethod$4(this, _rotate, rotate_fn).call(this, e.touches[0].pageX, e.touches[0].pageY);
+      __privateMethod$5(this, _rotate, rotate_fn).call(this, e.touches[0].pageX, e.touches[0].pageY);
     }
   };
   _onMouseUp = new WeakSet();
@@ -17355,7 +17488,7 @@ fn getIBL(
   _onMouseWheel = new WeakSet();
   onMouseWheel_fn = function(e) {
     if (this.enableZoom) {
-      __privateMethod$4(this, _zoom, zoom_fn).call(this, e.deltaY);
+      __privateMethod$5(this, _zoom, zoom_fn).call(this, e.deltaY);
       e.preventDefault();
     }
   };
@@ -17380,7 +17513,7 @@ fn getIBL(
     __privateGet$3(this, _spherical).theta = Math.min(this.maxAzimuthAngle, Math.max(this.minAzimuthAngle, __privateGet$3(this, _spherical).theta));
     __privateGet$3(this, _spherical).phi = Math.min(this.maxPolarAngle, Math.max(this.minPolarAngle, __privateGet$3(this, _spherical).phi));
     __privateGet$3(this, _rotateStart).copy(tempVec2a);
-    __privateMethod$4(this, _update, update_fn).call(this);
+    __privateMethod$5(this, _update, update_fn).call(this);
   };
   _pan = new WeakSet();
   pan_fn = function(x, y) {
@@ -17408,7 +17541,7 @@ fn getIBL(
     this.target.add(__privateGet$3(this, _panDelta));
     __privateGet$3(this, _offset).copy(this.camera.position).sub(this.target);
     __privateGet$3(this, _spherical).radius = __privateGet$3(this, _offset).length();
-    __privateMethod$4(this, _update, update_fn).call(this);
+    __privateMethod$5(this, _update, update_fn).call(this);
   };
   _zoom = new WeakSet();
   zoom_fn = function(value) {
@@ -17416,7 +17549,7 @@ fn getIBL(
       this.maxZoom,
       Math.max(this.minZoom + 1e-6, __privateGet$3(this, _spherical).radius + value * this.zoomSpeed / 100)
     );
-    __privateMethod$4(this, _update, update_fn).call(this);
+    __privateMethod$5(this, _update, update_fn).call(this);
   };
 
   var __accessCheck$4 = (obj, member, msg) => {
@@ -17428,7 +17561,7 @@ fn getIBL(
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateMethod$3 = (obj, member, method) => {
+  var __privateMethod$4 = (obj, member, method) => {
     __accessCheck$4(obj, member, "access private method");
     return method;
   };
@@ -17479,7 +17612,7 @@ fn getIBL(
      */
     async loadFromUrl(url) {
       const buffer = await (await fetch(url)).arrayBuffer();
-      return __privateMethod$3(this, _decodeRGBE, decodeRGBE_fn).call(this, new DataView(buffer));
+      return __privateMethod$4(this, _decodeRGBE, decodeRGBE_fn).call(this, new DataView(buffer));
     }
   }
   _decodeRGBE = new WeakSet();
@@ -17488,18 +17621,18 @@ fn getIBL(
       data,
       offset: 0
     };
-    const header = __privateMethod$3(this, _parseHeader, parseHeader_fn).call(this, stream);
+    const header = __privateMethod$4(this, _parseHeader, parseHeader_fn).call(this, stream);
     return {
       width: header.width,
       height: header.height,
       exposure: header.exposure,
       gamma: header.gamma,
-      data: __privateMethod$3(this, _parseData, parseData_fn).call(this, stream, header)
+      data: __privateMethod$4(this, _parseData, parseData_fn).call(this, stream, header)
     };
   };
   _parseHeader = new WeakSet();
   parseHeader_fn = function(stream) {
-    let line = __privateMethod$3(this, _readLine, readLine_fn).call(this, stream);
+    let line = __privateMethod$4(this, _readLine, readLine_fn).call(this, stream);
     const header = {
       colorCorr: [1, 1, 1],
       exposure: 1,
@@ -17512,7 +17645,7 @@ fn getIBL(
     if (line !== "#?RADIANCE" && line !== "#?RGBE")
       throw new Error("Incorrect file format!");
     while (line !== "") {
-      line = __privateMethod$3(this, _readLine, readLine_fn).call(this, stream);
+      line = __privateMethod$4(this, _readLine, readLine_fn).call(this, stream);
       const parts2 = line.split("=");
       switch (parts2[0]) {
         case "GAMMA":
@@ -17530,10 +17663,10 @@ fn getIBL(
           break;
       }
     }
-    line = __privateMethod$3(this, _readLine, readLine_fn).call(this, stream);
+    line = __privateMethod$4(this, _readLine, readLine_fn).call(this, stream);
     const parts = line.split(" ");
-    __privateMethod$3(this, _parseSize, parseSize_fn).call(this, parts[0], parseInt(parts[1]), header);
-    __privateMethod$3(this, _parseSize, parseSize_fn).call(this, parts[2], parseInt(parts[3]), header);
+    __privateMethod$4(this, _parseSize, parseSize_fn).call(this, parts[0], parseInt(parts[1]), header);
+    __privateMethod$4(this, _parseSize, parseSize_fn).call(this, parts[2], parseInt(parts[3]), header);
     return header;
   };
   _parseSize = new WeakSet();
@@ -17568,11 +17701,11 @@ fn getIBL(
     const hash = stream.data.getUint16(stream.offset);
     let data;
     if (hash === 514) {
-      data = __privateMethod$3(this, _parseNewRLE, parseNewRLE_fn).call(this, stream, header);
+      data = __privateMethod$4(this, _parseNewRLE, parseNewRLE_fn).call(this, stream, header);
       if (header.flipX)
-        __privateMethod$3(this, _flipX, flipX_fn).call(this, data, header);
+        __privateMethod$4(this, _flipX, flipX_fn).call(this, data, header);
       if (header.flipY)
-        __privateMethod$3(this, _flipY, flipY_fn).call(this, data, header);
+        __privateMethod$4(this, _flipY, flipY_fn).call(this, data, header);
     } else {
       throw new Error("Obsolete HDR file version!");
     }
@@ -17640,7 +17773,7 @@ fn getIBL(
       for (let x = 0; x < hw; ++x) {
         const i1 = b + x;
         const i2 = b + width - 1 - x;
-        __privateMethod$3(this, _swap, swap_fn).call(this, data, i1, i2);
+        __privateMethod$4(this, _swap, swap_fn).call(this, data, i1, i2);
       }
     }
   };
@@ -17652,7 +17785,7 @@ fn getIBL(
       const b1 = y * width;
       const b2 = (height - 1 - y) * width;
       for (let x = 0; x < width; ++x) {
-        __privateMethod$3(this, _swap, swap_fn).call(this, data, b1 + x, b2 + x);
+        __privateMethod$4(this, _swap, swap_fn).call(this, data, b1 + x, b2 + x);
       }
     }
   };
@@ -18093,7 +18226,7 @@ const PI = ${Math.PI};
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateMethod$2 = (obj, member, method) => {
+  var __privateMethod$3 = (obj, member, method) => {
     __accessCheck$3(obj, member, "access private method");
     return method;
   };
@@ -18202,7 +18335,7 @@ const PI = ${Math.PI};
       this.renderer.onBeforeRenderScene.add(
         (commandEncoder) => {
           this.renderer.renderSingleComputePass(commandEncoder, computeLUTPass);
-          __privateMethod$2(this, _copyComputeStorageTextureToTexture, copyComputeStorageTextureToTexture_fn).call(this, commandEncoder, lutStorageTexture, this.lutTexture);
+          __privateMethod$3(this, _copyComputeStorageTextureToTexture, copyComputeStorageTextureToTexture_fn).call(this, commandEncoder, lutStorageTexture, this.lutTexture);
         },
         { once: true }
       );
@@ -18276,7 +18409,7 @@ const PI = ${Math.PI};
       if (!this.renderer.production)
         commandEncoder.pushDebugGroup("Render once command encoder");
       this.renderer.renderSingleComputePass(commandEncoder, computeCubeMapPass);
-      __privateMethod$2(this, _copyComputeStorageTextureToTexture, copyComputeStorageTextureToTexture_fn).call(this, commandEncoder, cubeStorageTexture, this.specularTexture);
+      __privateMethod$3(this, _copyComputeStorageTextureToTexture, copyComputeStorageTextureToTexture_fn).call(this, commandEncoder, cubeStorageTexture, this.specularTexture);
       if (!this.renderer.production)
         commandEncoder.popDebugGroup();
       const commandBuffer = commandEncoder.finish();
@@ -18348,7 +18481,7 @@ const PI = ${Math.PI};
       this.renderer.onBeforeRenderScene.add(
         (commandEncoder) => {
           this.renderer.renderSingleComputePass(commandEncoder, computeDiffusePass);
-          __privateMethod$2(this, _copyComputeStorageTextureToTexture, copyComputeStorageTextureToTexture_fn).call(this, commandEncoder, diffuseStorageTexture, this.diffuseTexture);
+          __privateMethod$3(this, _copyComputeStorageTextureToTexture, copyComputeStorageTextureToTexture_fn).call(this, commandEncoder, diffuseStorageTexture, this.diffuseTexture);
         },
         { once: true }
       );
@@ -18709,7 +18842,7 @@ const PI = ${Math.PI};
     member.set(obj, value);
     return value;
   };
-  var __privateMethod$1 = (obj, member, method) => {
+  var __privateMethod$2 = (obj, member, method) => {
     __accessCheck$2(obj, member, "access private method");
     return method;
   };
@@ -18895,7 +19028,7 @@ const PI = ${Math.PI};
       }
       const mesh = isProjectedMesh(object);
       if (mesh) {
-        __privateMethod$1(this, _intersectMesh, intersectMesh_fn).call(this, mesh, intersections);
+        __privateMethod$2(this, _intersectMesh, intersectMesh_fn).call(this, mesh, intersections);
       }
       if (recursive) {
         object.children.forEach((child) => {
@@ -19030,6 +19163,7 @@ const PI = ${Math.PI};
      */
     constructor({
       label = "",
+      inputIndex = null,
       keyframes = null,
       values = null,
       path = null,
@@ -19040,6 +19174,7 @@ const PI = ${Math.PI};
       this.values = values;
       this.path = path;
       this.interpolation = interpolation;
+      this.inputIndex = inputIndex;
       this.weightsBindingInputs = [];
       this.onAfterUpdate = null;
       this.duration = this.keyframes ? this.keyframes[this.keyframes.length - 1] : 0;
@@ -19241,7 +19376,11 @@ const PI = ${Math.PI};
     member.set(obj, value);
     return value;
   };
-  var _startTime, _currentTime, _deltaTime, _count, _maxCount;
+  var __privateMethod$1 = (obj, member, method) => {
+    __accessCheck$1(obj, member, "access private method");
+    return method;
+  };
+  var _startTime, _currentTime, _deltaTime, _count, _maxCount, _setSiblings, setSiblings_fn;
   class TargetsAnimationsManager {
     /**
      * TargetsAnimationsManager constructor
@@ -19249,6 +19388,11 @@ const PI = ${Math.PI};
      * @param parameters - {@link TargetsAnimationsManagerParams | parameters} used to create this {@link TargetsAnimationsManager}.
      */
     constructor(renderer, { label = "", targets = [] } = {}) {
+      /**
+       * Set the {@link TargetsAnimationsManager} siblings by comparing {@link inputIndices} arrays.
+       * @private
+       */
+      __privateAdd$1(this, _setSiblings);
       // inner time values
       /** @ignore */
       __privateAdd$1(this, _startTime, void 0);
@@ -19261,6 +19405,7 @@ const PI = ${Math.PI};
       /** @ignore */
       __privateAdd$1(this, _maxCount, void 0);
       this.uuid = generateUUID();
+      this.inputIndices = [];
       this.setRenderer(renderer);
       this.label = label;
       this.targets = [];
@@ -19273,6 +19418,7 @@ const PI = ${Math.PI};
       __privateSet$1(this, _count, 0);
       __privateSet$1(this, _maxCount, Infinity);
       this.isPlaying = false;
+      this.siblings = /* @__PURE__ */ new Map();
       if (targets && targets.length) {
         this.targets = [...this.targets, ...targets];
       }
@@ -19284,11 +19430,15 @@ const PI = ${Math.PI};
     setRenderer(renderer) {
       if (this.renderer) {
         this.renderer.animations.delete(this.uuid);
+        this.renderer.animations.forEach((animation) => animation.siblings.delete(this.uuid));
       }
       if (renderer) {
         renderer = isRenderer(renderer, "TargetsAnimationsManager");
         this.renderer = renderer;
         this.renderer.animations.set(this.uuid, this);
+        if (this.inputIndices.length) {
+          __privateMethod$1(this, _setSiblings, setSiblings_fn).call(this);
+        }
       }
     }
     /**
@@ -19322,6 +19472,10 @@ const PI = ${Math.PI};
         target = this.addTarget(object);
       }
       target.animations.push(animation);
+      if (animation.inputIndex !== null && !this.inputIndices.includes(animation.inputIndex)) {
+        this.inputIndices.push(animation.inputIndex);
+      }
+      __privateMethod$1(this, _setSiblings, setSiblings_fn).call(this);
     }
     /**
      * Get a {@link Target} from the {@link targets} array based on an {@link Object3D}.
@@ -19363,7 +19517,7 @@ const PI = ${Math.PI};
      */
     pause() {
       this.isPlaying = false;
-      __privateSet$1(this, _startTime, 0);
+      __privateSet$1(this, _startTime, -1);
     }
     /**
      * Stop the {@link TargetsAnimationsManager} and reset all the animations values to last keyframe.
@@ -19371,6 +19525,9 @@ const PI = ${Math.PI};
     stop() {
       this.isPlaying = false;
       __privateSet$1(this, _count, 0);
+      if (!this.siblings.size) {
+        __privateSet$1(this, _startTime, 0);
+      }
       this.targets.forEach(
         (target) => target.animations.forEach(
           (animation) => animation.update(target.object, Math.min(animation.duration, this.duration))
@@ -19402,8 +19559,10 @@ const PI = ${Math.PI};
     update() {
       if (!this.isPlaying)
         return;
-      if (__privateGet$1(this, _startTime) === 0) {
+      if (__privateGet$1(this, _startTime) === -1) {
         __privateSet$1(this, _startTime, performance.now() - __privateGet$1(this, _deltaTime));
+      } else if (__privateGet$1(this, _startTime) === 0) {
+        __privateSet$1(this, _startTime, performance.now());
       }
       __privateSet$1(this, _currentTime, performance.now());
       __privateSet$1(this, _deltaTime, __privateGet$1(this, _currentTime) - __privateGet$1(this, _startTime));
@@ -19437,6 +19596,18 @@ const PI = ${Math.PI};
   _deltaTime = new WeakMap();
   _count = new WeakMap();
   _maxCount = new WeakMap();
+  _setSiblings = new WeakSet();
+  setSiblings_fn = function() {
+    this.siblings = /* @__PURE__ */ new Map();
+    this.renderer.animations.forEach((animation) => {
+      if (animation.uuid !== this.uuid && JSON.stringify(animation.inputIndices) === JSON.stringify(this.inputIndices)) {
+        this.siblings.set(animation.uuid, animation);
+        animation.siblings.set(this.uuid, this);
+      } else {
+        animation.siblings.delete(this.uuid);
+      }
+    });
+  };
 
   var __accessCheck = (obj, member, msg) => {
     if (!member.has(obj))
@@ -19900,6 +20071,7 @@ const PI = ${Math.PI};
               const animName = node.name ? `${node.name} animation` : `${channel.target.path} animation ${index}`;
               const keyframesAnimation = new KeyframesAnimation({
                 label: animation.name ? `${animation.name} ${animName}` : `Animation ${i} ${animName}`,
+                inputIndex: sampler.input,
                 keyframes,
                 values,
                 path,
@@ -19910,6 +20082,28 @@ const PI = ${Math.PI};
           }
         });
       }
+    }
+    /**
+     * Get a clean attribute name based on a glTF attribute name.
+     * @param gltfAttributeName - glTF attribute name.
+     * @returns - Attribute name conform to our expectations.
+     */
+    static getCleanAttributeName(gltfAttributeName) {
+      return gltfAttributeName === "TEXCOORD_0" ? "uv" : gltfAttributeName.replace("_", "").replace("TEXCOORD", "uv").toLowerCase();
+    }
+    /**
+     * Sort an array of {@link VertexBufferAttributeParams} by an array of attribute names.
+     * @param attributesNames - array of attribute names to use for sorting.
+     * @param attributes - {@link VertexBufferAttributeParams} array to sort.
+     */
+    sortAttributesByNames(attributesNames, attributes) {
+      attributes.sort((a, b) => {
+        let aIndex = attributesNames.findIndex((attrName) => attrName === a.name);
+        aIndex = aIndex === -1 ? Infinity : aIndex;
+        let bIndex = attributesNames.findIndex((attrName) => attrName === b.name);
+        bIndex = bIndex === -1 ? Infinity : bIndex;
+        return aIndex - bIndex;
+      });
     }
     /**
      * Create the mesh {@link Geometry} based on the given {@link gltf} primitive and {@link PrimitiveInstanceDescriptor}.
@@ -20005,14 +20199,7 @@ const PI = ${Math.PI};
         interleavedArray = null;
       }
       if (!interleavedArray) {
-        const attribOrder = ["position", "uv", "normal"];
-        defaultAttributes.sort((a, b) => {
-          let aIndex = attribOrder.findIndex((attrName) => attrName === a.name);
-          aIndex = aIndex === -1 ? Infinity : aIndex;
-          let bIndex = attribOrder.findIndex((attrName) => attrName === b.name);
-          bIndex = bIndex === -1 ? Infinity : bIndex;
-          return aIndex - bIndex;
-        });
+        this.sortAttributesByNames(["position", "uv", "normal"], defaultAttributes);
       }
       defaultAttributes.forEach((attribute) => {
         meshDescriptor.attributes.push({
@@ -20076,14 +20263,14 @@ const PI = ${Math.PI};
             }
           }
           const binding = new BufferBinding({
-            label: "Skin " + meshIndex,
-            name: "skin" + meshIndex,
+            label: "Skin " + skinIndex,
+            name: "skin" + skinIndex,
             bindingType: "storage",
             visibility: ["vertex"],
             childrenBindings: [
               {
                 binding: new BufferBinding({
-                  label: "Joints",
+                  label: "Joints " + skinIndex,
                   name: "joints",
                   bindingType: "storage",
                   visibility: ["vertex"],
@@ -20121,9 +20308,9 @@ const PI = ${Math.PI};
           if (parentNodeIndex !== -1) {
             const parentNode = this.scenesManager.nodes.get(parentNodeIndex);
             const parentInverseWorldMatrix = new Mat4();
-            const _updateMatrixStack = parentNode.updateMatrixStack.bind(parentNode);
-            parentNode.updateMatrixStack = () => {
-              _updateMatrixStack();
+            const _updateWorldMatrix = parentNode.updateWorldMatrix.bind(parentNode);
+            parentNode.updateWorldMatrix = () => {
+              _updateWorldMatrix();
               parentInverseWorldMatrix.copy(parentNode.worldMatrix).invert();
             };
             if (this.scenesManager.animations.length) {
@@ -20143,20 +20330,13 @@ const PI = ${Math.PI};
                     binding.childrenBindings[jointIndex].inputs.jointMatrix.shouldUpdate = true;
                     binding.childrenBindings[jointIndex].inputs.normalMatrix.shouldUpdate = true;
                   };
-                  const animationTarget = animation.getTargetByObject3D(object);
-                  if (animationTarget) {
-                    animationTarget.animations.forEach((animation2) => {
-                      animation2.onAfterUpdate = updateJointMatrix;
-                    });
-                  } else {
-                    const node = this.gltf.nodes[jointIndex];
-                    const animName = node.name ? `${node.name} empty animation` : `empty animation ${jointIndex}`;
-                    const emptyAnimation = new KeyframesAnimation({
-                      label: animation.label ? `${animation.label} ${animName}` : `Animation ${animName}`
-                    });
-                    emptyAnimation.onAfterUpdate = updateJointMatrix;
-                    animation.addTargetAnimation(object, emptyAnimation);
-                  }
+                  const node = this.gltf.nodes[jointIndex];
+                  const animName = node.name ? `${node.name} skin animation` : `skin animation ${jointIndex}`;
+                  const emptyAnimation = new KeyframesAnimation({
+                    label: animation.label ? `${animation.label} ${animName}` : `Animation ${animName}`
+                  });
+                  emptyAnimation.onAfterUpdate = updateJointMatrix;
+                  animation.addTargetAnimation(object, emptyAnimation);
                 });
               }
             } else {
@@ -20243,14 +20423,25 @@ const PI = ${Math.PI};
       }
       if (this.gltf.skins) {
         this.gltf.skins.forEach((skin, skinIndex) => {
-          const node = instances[0];
-          if (node.skin !== void 0 && node.skin === skinIndex) {
-            const skinDef = this.scenesManager.skins[skinIndex];
-            if (!meshDescriptor.parameters.bindings) {
-              meshDescriptor.parameters.bindings = [];
-            }
-            meshDescriptor.parameters.bindings = [...meshDescriptor.parameters.bindings, skinDef.binding];
+          if (!meshDescriptor.parameters.bindings) {
+            meshDescriptor.parameters.bindings = [];
           }
+          instances.forEach((node, instanceIndex) => {
+            if (node.skin !== void 0 && node.skin === skinIndex) {
+              const skinDef = this.scenesManager.skins[skinIndex];
+              meshDescriptor.parameters.bindings = [...meshDescriptor.parameters.bindings, skinDef.binding];
+              if (instanceIndex > 0) {
+                const tempBbox = meshDescriptor.parameters.geometry.boundingBox.clone();
+                const tempMat4 = new Mat4();
+                skinDef.joints.forEach((object, jointIndex) => {
+                  tempMat4.setFromArray(skinDef.inverseBindMatrices, jointIndex * 16);
+                  const transformedBbox = tempBbox.applyMat4(tempMat4).applyMat4(object.worldMatrix);
+                  this.scenesManager.boundingBox.min.min(transformedBbox.min);
+                  this.scenesManager.boundingBox.max.max(transformedBbox.max);
+                });
+              }
+            }
+          });
         });
       }
       const materialTextures = this.scenesManager.materialsTextures[primitive.material];
@@ -20356,6 +20547,7 @@ const PI = ${Math.PI};
         this.scenesManager.boundingBox.min.min(transformedBbox.min);
         this.scenesManager.boundingBox.max.max(transformedBbox.max);
       }
+      this.scenesManager.boundingBox.max.max(new Vec3(1e-3));
     }
     /**
      * Create the {@link ScenesManager#scenes | ScenesManager scenes} based on the {@link gltf} object.
@@ -20396,13 +20588,10 @@ const PI = ${Math.PI};
       return this.scenesManager.meshesDescriptors.map((meshDescriptor) => {
         if (meshDescriptor.parameters.geometry) {
           patchMeshesParameters(meshDescriptor);
-          const hasInstancedShadows = meshDescriptor.parameters.geometry.instancesCount > 1 && meshDescriptor.parameters.castShadows;
-          if (hasInstancedShadows) {
-            meshDescriptor.parameters.castShadows = false;
-          }
           const mesh = new Mesh(this.renderer, {
             ...meshDescriptor.parameters
           });
+          mesh.parent = meshDescriptor.parent;
           if (meshDescriptor.nodes.length > 1) {
             const _updateMatrixStack = mesh.updateMatrixStack.bind(mesh);
             mesh.updateMatrixStack = () => {
@@ -20424,17 +20613,6 @@ const PI = ${Math.PI};
               }
             };
           }
-          if (hasInstancedShadows) {
-            const instancesBinding = mesh.material.inputsBindings.get("instances");
-            this.renderer.shadowCastingLights.forEach((light) => {
-              if (light.shadow.isActive) {
-                light.shadow.addShadowCastingMesh(mesh, {
-                  bindings: [instancesBinding]
-                });
-              }
-            });
-          }
-          mesh.parent = meshDescriptor.parent;
           this.scenesManager.meshes.push(mesh);
           return mesh;
         }
@@ -20493,7 +20671,7 @@ const PI = ${Math.PI};
     const primitiveAttributesValues = Object.values(primitiveProperty);
     primitiveAttributesValues.sort((a, b) => a - b);
     for (const [attribName, accessorIndex] of primitiveAttributes) {
-      const name = attribName === "TEXCOORD_0" ? "uv" : attribName.replace("_", "").replace("TEXCOORD", "uv").toLowerCase();
+      const name = _GLTFScenesManager.getCleanAttributeName(attribName);
       const accessor = this.gltf.accessors[accessorIndex];
       const constructor = accessor.componentType ? _GLTFScenesManager.getTypedArrayConstructorFromComponentType(accessor.componentType) : Float32Array;
       const bufferView = this.gltf.bufferViews[accessor.bufferView];
@@ -20619,6 +20797,10 @@ const PI = ${Math.PI};
             interleavedArray.subarray(startOffset, startOffset + attrSize).set(subarray);
           }
         });
+        const cleanAttributeNames = Object.entries(primitiveProperty).map(
+          (prop) => _GLTFScenesManager.getCleanAttributeName(prop[0])
+        );
+        this.sortAttributesByNames(cleanAttributeNames, attributes);
       } else {
         interleavedArray = new Float32Array(
           this.gltf.arrayBuffers[interleavedBufferView.buffer],
@@ -20640,6 +20822,15 @@ const PI = ${Math.PI};
           }
           stride += attrSize;
         });
+        const primitivePropertiesSortedByByteOffset = Object.entries(primitiveProperty).sort((a, b) => {
+          const accessorAByteOffset = this.gltf.accessors[a[1]].byteOffset;
+          const accessorBByteOffset = this.gltf.accessors[b[1]].byteOffset;
+          return accessorAByteOffset - accessorBByteOffset;
+        });
+        const accessorNameOrder = primitivePropertiesSortedByByteOffset.map(
+          (property) => _GLTFScenesManager.getCleanAttributeName(property[0])
+        );
+        this.sortAttributesByNames(accessorNameOrder, attributes);
       }
     }
     return interleavedArray;
@@ -20654,89 +20845,91 @@ const PI = ${Math.PI};
     const metallicRoughnessTexture = meshDescriptor.textures.find((t) => t.texture === "metallicRoughnessTexture");
     const facultativeAttributes = meshDescriptor.attributes.filter((attribute) => attribute.name !== "position");
     const structAttributes = facultativeAttributes.map((attribute, index) => {
-      return `@location(${index}) ${attribute.name}: ${attribute.type},`;
-    }).join("\n		");
-    const declareAttributes = meshDescriptor.attributes.map((attribute) => {
+      return `
+  @location(${index}) ${attribute.name}: ${attribute.type},`;
+    }).join("");
+    meshDescriptor.attributes.map((attribute) => {
       return (
         /* wgsl */
         `var ${attribute.name} = attributes.${attribute.name};`
       );
     }).join("\n	");
-    const outputAttributes = facultativeAttributes.filter((attr) => attr.name !== "normal").map((attribute) => {
+    facultativeAttributes.filter((attr) => attr.name !== "normal").map((attribute) => {
       return `vsOutput.${attribute.name} = ${attribute.name};`;
     }).join("\n	");
+    const useInstancing = !!(meshDescriptor.parameters.storages && meshDescriptor.parameters.storages.instances);
     let vertexOutputContent = `
-      @builtin(position) position: vec4f,
-      ${structAttributes}
-      @location(${facultativeAttributes.length}) viewDirection: vec3f,
-      @location(${facultativeAttributes.length + 1}) worldPosition: vec3f,
+  @builtin(position) position: vec4f,
+  ${structAttributes}
+  @location(${facultativeAttributes.length}) viewDirection: vec3f,
+  @location(${facultativeAttributes.length + 1}) worldPosition: vec3f,
   `;
     let outputNormalMap = "";
     const tangentAttribute = facultativeAttributes.find((attr) => attr.name === "tangent");
     const useNormalMap = !!(normalTexture && tangentAttribute);
     if (useNormalMap) {
       vertexOutputContent += `
-      @location(${facultativeAttributes.length + 2}) bitangent: vec3f,
+  @location(${facultativeAttributes.length + 2}) bitangent: vec3f,
       `;
       outputNormalMap = `
-        vsOutput.tangent = normalize(matrices.model * tangent);
-        vsOutput.bitangent = cross(vsOutput.normal, vsOutput.tangent.xyz) * tangent.w;
+  vsOutput.bitangent = cross(vsOutput.normal, vsOutput.tangent.xyz) * vsOutput.tangent.w;
       `;
     }
-    let morphTargets = "";
-    const morphTargetsBindings = meshDescriptor.parameters.bindings ? meshDescriptor.parameters.bindings.filter((binding) => binding.name.includes("morphTarget")) : [];
     let skinTransformations = "";
     const skinJoints = facultativeAttributes.filter((attr) => attr.name.includes("joints"));
     const skinWeights = facultativeAttributes.filter((attr) => attr.name.includes("weights"));
     const skinBindings = meshDescriptor.parameters.bindings ? meshDescriptor.parameters.bindings.filter((binding) => binding.name.includes("skin")) : [];
     const hasSkin = skinJoints.length && skinWeights.length && skinBindings.length;
     if (hasSkin) {
-      skinJoints.forEach((skinJoint, index) => {
-        skinTransformations += /* wgsl */
-        `let skinMatrix${index}: mat4x4f = 
-        ${skinWeights[index].name}.x * skin${index}.joints[u32(${skinJoint.name}.x)].jointMatrix +
-        ${skinWeights[index].name}.y * skin${index}.joints[u32(${skinJoint.name}.y)].jointMatrix +
-        ${skinWeights[index].name}.z * skin${index}.joints[u32(${skinJoint.name}.z)].jointMatrix +
-        ${skinWeights[index].name}.w * skin${index}.joints[u32(${skinJoint.name}.w)].jointMatrix;
+      skinTransformations = useInstancing ? `
+      var instancesWorldPos = array<vec4f, ${meshDescriptor.parameters.geometry.instancesCount}>();
+      var instancesNormal = array<vec3f, ${meshDescriptor.parameters.geometry.instancesCount}>();
+      ` : "";
+      skinTransformations += `
+      let skinJoints: vec4f = ${skinJoints.map((skinJoint) => skinJoint.name).join(" + ")};`;
+      skinTransformations += `
+      var skinWeights: vec4f = ${skinWeights.map((skinWeight) => skinWeight.name).join(" + ")};
       
-      worldPos = skinMatrix${index} * worldPos;
+      let skinWeightsSum = dot(skinWeights, vec4(1.0));
+      if(skinWeightsSum > 0.0) {
+        skinWeights = skinWeights / skinWeightsSum;
+      }
+    `;
+      skinBindings.forEach((binding, bindingIndex) => {
+        skinTransformations += /* wgsl */
+        `
+      ${useInstancing ? "// instancing with different skins: joints calculations for skin " + bindingIndex + "\n" : ""}
+      // position
+      let skinMatrix_${bindingIndex}: mat4x4f = 
+        skinWeights.x * ${binding.name}.joints[u32(skinJoints.x)].jointMatrix +
+        skinWeights.y * ${binding.name}.joints[u32(skinJoints.y)].jointMatrix +
+        skinWeights.z * ${binding.name}.joints[u32(skinJoints.z)].jointMatrix +
+        skinWeights.w * ${binding.name}.joints[u32(skinJoints.w)].jointMatrix;
+      
+      ${useInstancing ? "instancesWorldPos[" + bindingIndex + "] = skinMatrix_" + bindingIndex + " * worldPos;" : "worldPos = skinMatrix_" + bindingIndex + " * worldPos;"}
       
       // normal
-      let skinNormalMatrix${index}: mat4x4f = 
-        ${skinWeights[index].name}.x * skin${index}.joints[u32(${skinJoint.name}.x)].normalMatrix +
-        ${skinWeights[index].name}.y * skin${index}.joints[u32(${skinJoint.name}.y)].normalMatrix +
-        ${skinWeights[index].name}.z * skin${index}.joints[u32(${skinJoint.name}.z)].normalMatrix +
-        ${skinWeights[index].name}.w * skin${index}.joints[u32(${skinJoint.name}.w)].normalMatrix;
+      let skinNormalMatrix_${bindingIndex}: mat4x4f = 
+        skinWeights.x * ${binding.name}.joints[u32(skinJoints.x)].normalMatrix +
+        skinWeights.y * ${binding.name}.joints[u32(skinJoints.y)].normalMatrix +
+        skinWeights.z * ${binding.name}.joints[u32(skinJoints.z)].normalMatrix +
+        skinWeights.w * ${binding.name}.joints[u32(skinJoints.w)].normalMatrix;
         
-      let skinNormalMatrix${index}_3: mat3x3f = mat3x3f(
-        vec3(skinNormalMatrix${index}[0].xyz),
-        vec3(skinNormalMatrix${index}[1].xyz),
-        vec3(skinNormalMatrix${index}[2].xyz)
+      let skinNormalMatrix_${bindingIndex}_3: mat3x3f = mat3x3f(
+        vec3(skinNormalMatrix_${bindingIndex}[0].xyz),
+        vec3(skinNormalMatrix_${bindingIndex}[1].xyz),
+        vec3(skinNormalMatrix_${bindingIndex}[2].xyz)
       );
-        
-      normal = skinNormalMatrix${index}_3 * normal;
-      normal = normalize(normal);
+      
+      ${useInstancing ? "instancesNormal[" + bindingIndex + "] = skinNormalMatrix_" + bindingIndex + "_3 * normal;" : "normal = skinNormalMatrix_" + bindingIndex + "_3 * normal;"}
       `;
       });
+      skinTransformations += `
+      normal = normalize(${useInstancing ? "instancesNormal[attributes.instanceIndex]" : "normal"});
+    `;
     }
-    let outputPositions = (
-      /* wgsl */
-      `worldPos = matrices.model * worldPos;
-      vsOutput.worldPosition = worldPos.xyz / worldPos.w;
-      vsOutput.position = camera.projection * camera.view * worldPos;
-      vsOutput.viewDirection = camera.position - vsOutput.worldPosition.xyz;
-  `
-    );
-    let outputNormal = hasSkin ? "vsOutput.normal = normalize(normal);" : "vsOutput.normal = getWorldNormal(normal);";
-    if (meshDescriptor.parameters.storages && meshDescriptor.parameters.storages.instances) {
-      outputPositions = /* wgsl */
-      `worldPos = instances[attributes.instanceIndex].modelMatrix * worldPos;
-      vsOutput.worldPosition = worldPos.xyz / worldPos.w;
-      vsOutput.position = camera.projection * camera.view * worldPos;
-      vsOutput.viewDirection = camera.position - vsOutput.worldPosition;
-      `;
-      outputNormal = hasSkin ? "vsOutput.normal = normalize(normal);" : `vsOutput.normal = normalize((instances[attributes.instanceIndex].normalMatrix * vec4(normal, 0.0)).xyz);`;
-    }
+    let morphTargets = "";
+    const morphTargetsBindings = meshDescriptor.parameters.bindings ? meshDescriptor.parameters.bindings.filter((binding) => binding.name.includes("morphTarget")) : [];
     morphTargetsBindings.forEach((binding) => {
       Object.values(binding.inputs).filter((input) => input.name !== "weight").forEach((input) => {
         const bindingType = BufferElement.getType(input.type);
@@ -20752,45 +20945,41 @@ const PI = ${Math.PI};
         }
       });
     });
+    const fullVertexOutput = getFullVertexOutput({
+      bindings: meshDescriptor.parameters.bindings,
+      geometry: meshDescriptor.parameters.geometry
+    });
     const vertexOutput = (
       /*wgsl */
       `
-    struct VSOutput {
-      ${vertexOutputContent}
-    };`
+struct VSOutput {
+  ${vertexOutputContent}
+};`
     );
     const fragmentInput = (
       /*wgsl */
       `
-    struct VSOutput {
-      @builtin(front_facing) frontFacing: bool,
-      ${vertexOutputContent}
-    };`
+struct VSOutput {
+  @builtin(front_facing) frontFacing: bool,
+  ${vertexOutputContent}
+};`
     );
     const vs = (
       /* wgsl */
       `
-    ${vertexOutput}
-    
-    @vertex fn main(
-      attributes: Attributes,
-    ) -> VSOutput {
-      var vsOutput: VSOutput;
-      
-      ${declareAttributes}
-      ${morphTargets}
-      
-      var worldPos: vec4f = vec4(position, 1.0);
-      
-      ${skinTransformations}
-      
-      ${outputPositions}
-      ${outputNormal}
-      ${outputAttributes}
-      ${outputNormalMap}
+${vertexOutput}
 
-      return vsOutput;
-    }
+@vertex fn main(
+  attributes: Attributes,
+) -> VSOutput {
+  var vsOutput: VSOutput;
+    
+  ${fullVertexOutput}
+  
+  ${outputNormalMap}
+
+  return vsOutput;
+}
   `
     );
     const initColor = (

@@ -13,6 +13,8 @@ import { BufferBinding } from '../bindings/BufferBinding'
 import { RenderMaterialParams, ShaderOptions } from '../../types/Materials'
 import { Input } from '../../types/BindGroups'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
+import { Geometry } from '../geometries/Geometry'
+import { VertexShaderInputParams } from '../shaders/chunks/vertex/get_vertex_output'
 
 /** Defines all types of shadows. */
 export type ShadowsType = 'directionalShadows' | 'pointShadows'
@@ -570,12 +572,13 @@ export class Shadow {
 
   /**
    * Get the default depth pass vertex shader for this {@link Shadow}.
+   * parameters - {@link VertexShaderInputParams} used to compute the output `worldPosition` and `normal` vectors.
    * @returns - Depth pass vertex shader.
    */
-  getDefaultShadowDepthVs(hasInstances = false): ShaderOptions {
+  getDefaultShadowDepthVs({ bindings = [], geometry }: VertexShaderInputParams): ShaderOptions {
     return {
       /** Returned code. */
-      code: getDefaultShadowDepthVs(this.index, hasInstances),
+      code: getDefaultShadowDepthVs(this.index, { bindings, geometry }),
     }
   }
 
@@ -603,17 +606,31 @@ export class Shadow {
     parameters.sampleCount = this.sampleCount
     parameters.depthFormat = this.depthTextureFormat
 
-    if (parameters.bindings) {
-      parameters.bindings = [mesh.material.getBufferBindingByName('matrices'), ...parameters.bindings]
-    } else {
-      parameters.bindings = [mesh.material.getBufferBindingByName('matrices')]
+    // add matrices
+    const bindings: BufferBinding[] = [mesh.material.getBufferBindingByName('matrices')]
+
+    // eventually add skins and morph targets
+    mesh.material.inputsBindings.forEach((binding) => {
+      if (binding.name.includes('skin') || binding.name.includes('morphTarget')) {
+        bindings.push(binding as BufferBinding)
+      }
+    })
+
+    // eventually add instances as well
+    const instancesBinding = mesh.material.getBufferBindingByName('instances')
+    if (instancesBinding) {
+      bindings.push(instancesBinding)
     }
 
-    const hasInstances = mesh.material.inputsBindings.get('instances') && mesh.geometry.instancesCount > 1
+    if (parameters.bindings) {
+      parameters.bindings = [...bindings, ...parameters.bindings]
+    } else {
+      parameters.bindings = [...bindings]
+    }
 
     if (!parameters.shaders) {
       parameters.shaders = {
-        vertex: this.getDefaultShadowDepthVs(hasInstances),
+        vertex: this.getDefaultShadowDepthVs({ bindings, geometry: mesh.geometry }),
         fragment: this.getDefaultShadowDepthFs(),
       }
     }

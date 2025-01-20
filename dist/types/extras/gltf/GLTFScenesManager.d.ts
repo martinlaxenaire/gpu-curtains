@@ -5,7 +5,7 @@ import { GLTFLoader } from '../loaders/GLTFLoader';
 import { Texture } from '../../core/textures/Texture';
 import { Mesh } from '../../core/meshes/Mesh';
 import { TypedArrayConstructor } from '../../core/bindings/utils';
-import { VertexBufferAttribute } from '../../types/Geometries';
+import { VertexBufferAttribute, VertexBufferAttributeParams } from '../../types/Geometries';
 import { ChildDescriptor, MeshDescriptor, PrimitiveInstanceDescriptor, ScenesManager } from '../../types/gltf/GLTFScenesManager';
 /**
  * Used to create a {@link GLTFScenesManager} from a given {@link GLTFLoader.gltf | gltf} object.
@@ -42,6 +42,7 @@ import { ChildDescriptor, MeshDescriptor, PrimitiveInstanceDescriptor, ScenesMan
  * - [x] Materials
  * - [x] Skins
  * - [x] Morph targets
+ * - [ ] Extensions
  *
  * @example
  * ```javascript
@@ -130,6 +131,18 @@ export declare class GLTFScenesManager {
      * @param index - Index of the {@link GLTF.INode | glTF Node} to use.
      */
     createNode(parent: ChildDescriptor, node: GLTF.INode, index: number): void;
+    /**
+     * Get a clean attribute name based on a glTF attribute name.
+     * @param gltfAttributeName - glTF attribute name.
+     * @returns - Attribute name conform to our expectations.
+     */
+    static getCleanAttributeName(gltfAttributeName: string): string;
+    /**
+     * Sort an array of {@link VertexBufferAttributeParams} by an array of attribute names.
+     * @param attributesNames - array of attribute names to use for sorting.
+     * @param attributes - {@link VertexBufferAttributeParams} array to sort.
+     */
+    sortAttributesByNames(attributesNames: string[], attributes: VertexBufferAttributeParams[]): void;
     /**
      * Create the mesh {@link Geometry} based on the given {@link gltf} primitive and {@link PrimitiveInstanceDescriptor}.
      * @param primitive - {@link gltf} primitive to use to create the {@link Geometry}.

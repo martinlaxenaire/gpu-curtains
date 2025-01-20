@@ -42,6 +42,8 @@ window.addEventListener('load', async () => {
   })
 
   const { camera } = gpuCameraRenderer
+  const defaultCamera = camera
+
   const orbitControls = new OrbitControls({
     camera,
     element: container,
@@ -63,8 +65,6 @@ window.addEventListener('load', async () => {
 
   const environmentMap = new EnvironmentMap(gpuCameraRenderer)
   await environmentMap.loadAndComputeFromHDR(currentEnvMap.url)
-
-  console.log(environmentMap)
 
   const models = {
     damagedHelmet: {
@@ -147,6 +147,10 @@ window.addEventListener('load', async () => {
       name: 'Animated Morph Cube',
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/AnimatedMorphCube/glTF/AnimatedMorphCube.gltf',
     },
+    morphsPrimitivesTest: {
+      name: 'Morphs Primitives Test',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/MorphPrimitivesTest/glTF/MorphPrimitivesTest.gltf',
+    },
     // skins
     simpleSkin: {
       name: 'Simple Skin',
@@ -166,7 +170,7 @@ window.addEventListener('load', async () => {
     },
     skinD: {
       name: 'SkinD',
-      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Asset-Generator/main/Output/Positive/Animation_Skin/Animation_Skin_08.gltf',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Asset-Generator/main/Output/Positive/Animation_Skin/Animation_Skin_11.gltf',
     },
   }
 
@@ -194,7 +198,8 @@ window.addEventListener('load', async () => {
     title: 'GLTF loader',
   })
 
-  const currentModelKey = 'skinD'
+  //const currentModelKey = 'damagedHelmet'
+  const currentModelKey = 'interpolationTest'
   let currentModel = models[currentModelKey]
 
   const modelField = gui
@@ -219,9 +224,16 @@ window.addEventListener('load', async () => {
 
   const shadingField = gui.add({ shadingModel }, 'shadingModel', ['IBL', 'PBR', 'Phong', 'Lambert']).name('Shading')
 
+  const camerasFolder = gui.addFolder('Cameras')
+
   const animationsFolder = gui.addFolder('Animations')
 
   let animationsFields = []
+
+  const useCamera = (camera) => {
+    gpuCameraRenderer.useCamera(camera)
+    orbitControls.useCamera(camera)
+  }
 
   // gltf
   const gltfLoader = new GLTFLoader()
@@ -312,23 +324,11 @@ window.addEventListener('load', async () => {
       })
     })
 
+    // animations
     if (scenesManager.animations.length) {
-      console.log(scenesManager.animations)
       const hasSkins = gltf.skins && gltf.skins.length
       if (hasSkins) {
         scenesManager.animations[0].play()
-
-        // setTimeout(() => {
-        //   scenesManager.animations[0].stopAtEndOfLoop()
-        // }, 4500)
-
-        // setTimeout(() => {
-        //   scenesManager.animations[0].pause()
-        //
-        //   setTimeout(() => {
-        //     scenesManager.animations[0].play()
-        //   }, 2500)
-        // }, 1800)
       } else {
         scenesManager.animations.forEach((animation) => animation.play())
       }
@@ -358,19 +358,27 @@ window.addEventListener('load', async () => {
       })
     }
 
-    // test for gltf cameras
-    // if (scenesManager.cameras.length) {
-    //   setTimeout(() => {
-    //     console.log('switching camera')
-    //     const newCamera = scenesManager.cameras[0]
-    //     gpuCameraRenderer.useCamera(newCamera)
-    //     orbitControls.useCamera(newCamera)
-    //   }, 2000)
-    // }
+    // cameras
+    camerasFolder.children.forEach((child) => child.destroy())
+
+    const availableCameras = {}
+    availableCameras['Default camera'] = defaultCamera
+    if (scenesManager.cameras.length) {
+      scenesManager.cameras.forEach((gltfCamera, index) => {
+        availableCameras['Camera ' + index] = gltfCamera
+      })
+    }
+
+    camerasFolder
+      .add({ ['camera']: 'Default camera' }, 'camera', availableCameras)
+      .onChange((value) => {
+        useCamera(value)
+      })
+      .name('Active camera')
 
     console.log(gpuCameraRenderer, meshes)
 
-    // meshes[0].onReady(() => console.log(meshes[0].material.getShaderCode('vertex')))
+    meshes[0].onReady(() => console.log(meshes[0].material.getShaderCode('vertex')))
   }
 
   // GUI updates
@@ -391,6 +399,9 @@ window.addEventListener('load', async () => {
         animationsFields = []
 
         currentModel = models[value]
+
+        useCamera(defaultCamera)
+
         await loadGLTF(currentModel.url)
       }
     })

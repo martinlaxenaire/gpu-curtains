@@ -289,10 +289,10 @@ class PointShadow extends Shadow {
    * Get the default depth pass vertex shader for this {@link PointShadow}.
    * @returns - Depth pass vertex shader.
    */
-  getDefaultShadowDepthVs(hasInstances = false) {
+  getDefaultShadowDepthVs({ bindings = [], geometry }) {
     return {
       /** Returned code. */
-      code: getDefaultPointShadowDepthVs(this.index, hasInstances)
+      code: getDefaultPointShadowDepthVs(this.index, { bindings, geometry })
     };
   }
   /**

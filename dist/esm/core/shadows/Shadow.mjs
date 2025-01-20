@@ -413,10 +413,10 @@ class Shadow {
    * Get the default depth pass vertex shader for this {@link Shadow}.
    * @returns - Depth pass vertex shader.
    */
-  getDefaultShadowDepthVs(hasInstances = false) {
+  getDefaultShadowDepthVs({ bindings = [], geometry }) {
     return {
       /** Returned code. */
-      code: getDefaultShadowDepthVs(this.index, hasInstances)
+      code: getDefaultShadowDepthVs(this.index, { bindings, geometry })
     };
   }
   /**
@@ -437,15 +437,24 @@ class Shadow {
     parameters.targets = [];
     parameters.sampleCount = this.sampleCount;
     parameters.depthFormat = this.depthTextureFormat;
-    if (parameters.bindings) {
-      parameters.bindings = [mesh.material.getBufferBindingByName("matrices"), ...parameters.bindings];
-    } else {
-      parameters.bindings = [mesh.material.getBufferBindingByName("matrices")];
+    const bindings = [mesh.material.getBufferBindingByName("matrices")];
+    mesh.material.inputsBindings.forEach((binding) => {
+      if (binding.name.includes("skin") || binding.name.includes("morphTarget")) {
+        bindings.push(binding);
+      }
+    });
+    const instancesBinding = mesh.material.getBufferBindingByName("instances");
+    if (instancesBinding) {
+      bindings.push(instancesBinding);
     }
-    const hasInstances = mesh.material.inputsBindings.get("instances") && mesh.geometry.instancesCount > 1;
+    if (parameters.bindings) {
+      parameters.bindings = [...bindings, ...parameters.bindings];
+    } else {
+      parameters.bindings = [...bindings];
+    }
     if (!parameters.shaders) {
       parameters.shaders = {
-        vertex: this.getDefaultShadowDepthVs(hasInstances),
+        vertex: this.getDefaultShadowDepthVs({ bindings, geometry: mesh.geometry }),
         fragment: this.getDefaultShadowDepthFs()
       };
     }

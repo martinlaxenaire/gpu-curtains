@@ -13,6 +13,8 @@ const tempQuat = new Quat()
 export interface KeyframesAnimationParams {
   /** Optional label of the {@link KeyframesAnimation}. */
   label?: string
+  /** Optional input accessor index defined in the glTF, used to keep different {@link extras/animations/TargetsAnimationsManager.TargetsAnimationsManager | TargetsAnimationsManager} in sync if they're using the same input. */
+  inputIndex?: number
   /** Keyframes {@link Float32Array} of the {@link KeyframesAnimation}. Could be omitted when used for a skin joint matrices animation. */
   keyframes?: TypedArray
   /** Values {@link Float32Array} of the {@link KeyframesAnimation} to use for animation, mapped to the {@link keyframes} array. Could be omitted when used for a skin joint matrices animation. */
@@ -31,6 +33,9 @@ export interface KeyframesAnimationParams {
 export class KeyframesAnimation {
   /** Optional label of the {@link KeyframesAnimation}. */
   label: string
+
+  /** Optional input accessor index defined in the glTF, used to keep different {@link extras/animations/TargetsAnimationsManager.TargetsAnimationsManager | TargetsAnimationsManager} in sync if they're using the same input. */
+  inputIndex: number | null
 
   /** Keyframes {@link Float32Array} of the {@link KeyframesAnimation}. Could be omitted when used for a skin joint matrices animation. */
   keyframes: TypedArray | null
@@ -58,6 +63,7 @@ export class KeyframesAnimation {
   constructor(
     {
       label = '',
+      inputIndex = null,
       keyframes = null,
       values = null,
       path = null,
@@ -70,6 +76,8 @@ export class KeyframesAnimation {
 
     this.path = path
     this.interpolation = interpolation
+
+    this.inputIndex = inputIndex
 
     this.weightsBindingInputs = []
     this.onAfterUpdate = null

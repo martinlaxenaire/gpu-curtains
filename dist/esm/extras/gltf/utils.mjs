@@ -4,6 +4,7 @@ import { getPhong } from '../../core/shaders/chunks/shading/phong-shading.mjs';
 import { getPBR } from '../../core/shaders/chunks/shading/pbr-shading.mjs';
 import { getIBL } from '../../core/shaders/chunks/shading/ibl-shading.mjs';
 import { BufferElement } from '../../core/bindings/bufferElements/BufferElement.mjs';
+import { getFullVertexOutput } from '../../core/shaders/chunks/vertex/get_vertex_output.mjs';
 
 const buildShaders = (meshDescriptor, shaderParameters = {}) => {
   const baseColorTexture = meshDescriptor.textures.find((t) => t.texture === "baseColorTexture");
@@ -13,89 +14,91 @@ const buildShaders = (meshDescriptor, shaderParameters = {}) => {
   const metallicRoughnessTexture = meshDescriptor.textures.find((t) => t.texture === "metallicRoughnessTexture");
   const facultativeAttributes = meshDescriptor.attributes.filter((attribute) => attribute.name !== "position");
   const structAttributes = facultativeAttributes.map((attribute, index) => {
-    return `@location(${index}) ${attribute.name}: ${attribute.type},`;
-  }).join("\n		");
-  const declareAttributes = meshDescriptor.attributes.map((attribute) => {
+    return `
+  @location(${index}) ${attribute.name}: ${attribute.type},`;
+  }).join("");
+  meshDescriptor.attributes.map((attribute) => {
     return (
       /* wgsl */
       `var ${attribute.name} = attributes.${attribute.name};`
     );
   }).join("\n	");
-  const outputAttributes = facultativeAttributes.filter((attr) => attr.name !== "normal").map((attribute) => {
+  facultativeAttributes.filter((attr) => attr.name !== "normal").map((attribute) => {
     return `vsOutput.${attribute.name} = ${attribute.name};`;
   }).join("\n	");
+  const useInstancing = !!(meshDescriptor.parameters.storages && meshDescriptor.parameters.storages.instances);
   let vertexOutputContent = `
-      @builtin(position) position: vec4f,
-      ${structAttributes}
-      @location(${facultativeAttributes.length}) viewDirection: vec3f,
-      @location(${facultativeAttributes.length + 1}) worldPosition: vec3f,
+  @builtin(position) position: vec4f,
+  ${structAttributes}
+  @location(${facultativeAttributes.length}) viewDirection: vec3f,
+  @location(${facultativeAttributes.length + 1}) worldPosition: vec3f,
   `;
   let outputNormalMap = "";
   const tangentAttribute = facultativeAttributes.find((attr) => attr.name === "tangent");
   const useNormalMap = !!(normalTexture && tangentAttribute);
   if (useNormalMap) {
     vertexOutputContent += `
-      @location(${facultativeAttributes.length + 2}) bitangent: vec3f,
+  @location(${facultativeAttributes.length + 2}) bitangent: vec3f,
       `;
     outputNormalMap = `
-        vsOutput.tangent = normalize(matrices.model * tangent);
-        vsOutput.bitangent = cross(vsOutput.normal, vsOutput.tangent.xyz) * tangent.w;
+  vsOutput.bitangent = cross(vsOutput.normal, vsOutput.tangent.xyz) * vsOutput.tangent.w;
       `;
   }
-  let morphTargets = "";
-  const morphTargetsBindings = meshDescriptor.parameters.bindings ? meshDescriptor.parameters.bindings.filter((binding) => binding.name.includes("morphTarget")) : [];
   let skinTransformations = "";
   const skinJoints = facultativeAttributes.filter((attr) => attr.name.includes("joints"));
   const skinWeights = facultativeAttributes.filter((attr) => attr.name.includes("weights"));
   const skinBindings = meshDescriptor.parameters.bindings ? meshDescriptor.parameters.bindings.filter((binding) => binding.name.includes("skin")) : [];
   const hasSkin = skinJoints.length && skinWeights.length && skinBindings.length;
   if (hasSkin) {
-    skinJoints.forEach((skinJoint, index) => {
-      skinTransformations += /* wgsl */
-      `let skinMatrix${index}: mat4x4f = 
-        ${skinWeights[index].name}.x * skin${index}.joints[u32(${skinJoint.name}.x)].jointMatrix +
-        ${skinWeights[index].name}.y * skin${index}.joints[u32(${skinJoint.name}.y)].jointMatrix +
-        ${skinWeights[index].name}.z * skin${index}.joints[u32(${skinJoint.name}.z)].jointMatrix +
-        ${skinWeights[index].name}.w * skin${index}.joints[u32(${skinJoint.name}.w)].jointMatrix;
+    skinTransformations = useInstancing ? `
+      var instancesWorldPos = array<vec4f, ${meshDescriptor.parameters.geometry.instancesCount}>();
+      var instancesNormal = array<vec3f, ${meshDescriptor.parameters.geometry.instancesCount}>();
+      ` : "";
+    skinTransformations += `
+      let skinJoints: vec4f = ${skinJoints.map((skinJoint) => skinJoint.name).join(" + ")};`;
+    skinTransformations += `
+      var skinWeights: vec4f = ${skinWeights.map((skinWeight) => skinWeight.name).join(" + ")};
       
-      worldPos = skinMatrix${index} * worldPos;
+      let skinWeightsSum = dot(skinWeights, vec4(1.0));
+      if(skinWeightsSum > 0.0) {
+        skinWeights = skinWeights / skinWeightsSum;
+      }
+    `;
+    skinBindings.forEach((binding, bindingIndex) => {
+      skinTransformations += /* wgsl */
+      `
+      ${useInstancing ? "// instancing with different skins: joints calculations for skin " + bindingIndex + "\n" : ""}
+      // position
+      let skinMatrix_${bindingIndex}: mat4x4f = 
+        skinWeights.x * ${binding.name}.joints[u32(skinJoints.x)].jointMatrix +
+        skinWeights.y * ${binding.name}.joints[u32(skinJoints.y)].jointMatrix +
+        skinWeights.z * ${binding.name}.joints[u32(skinJoints.z)].jointMatrix +
+        skinWeights.w * ${binding.name}.joints[u32(skinJoints.w)].jointMatrix;
+      
+      ${useInstancing ? "instancesWorldPos[" + bindingIndex + "] = skinMatrix_" + bindingIndex + " * worldPos;" : "worldPos = skinMatrix_" + bindingIndex + " * worldPos;"}
       
       // normal
-      let skinNormalMatrix${index}: mat4x4f = 
-        ${skinWeights[index].name}.x * skin${index}.joints[u32(${skinJoint.name}.x)].normalMatrix +
-        ${skinWeights[index].name}.y * skin${index}.joints[u32(${skinJoint.name}.y)].normalMatrix +
-        ${skinWeights[index].name}.z * skin${index}.joints[u32(${skinJoint.name}.z)].normalMatrix +
-        ${skinWeights[index].name}.w * skin${index}.joints[u32(${skinJoint.name}.w)].normalMatrix;
+      let skinNormalMatrix_${bindingIndex}: mat4x4f = 
+        skinWeights.x * ${binding.name}.joints[u32(skinJoints.x)].normalMatrix +
+        skinWeights.y * ${binding.name}.joints[u32(skinJoints.y)].normalMatrix +
+        skinWeights.z * ${binding.name}.joints[u32(skinJoints.z)].normalMatrix +
+        skinWeights.w * ${binding.name}.joints[u32(skinJoints.w)].normalMatrix;
         
-      let skinNormalMatrix${index}_3: mat3x3f = mat3x3f(
-        vec3(skinNormalMatrix${index}[0].xyz),
-        vec3(skinNormalMatrix${index}[1].xyz),
-        vec3(skinNormalMatrix${index}[2].xyz)
+      let skinNormalMatrix_${bindingIndex}_3: mat3x3f = mat3x3f(
+        vec3(skinNormalMatrix_${bindingIndex}[0].xyz),
+        vec3(skinNormalMatrix_${bindingIndex}[1].xyz),
+        vec3(skinNormalMatrix_${bindingIndex}[2].xyz)
       );
-        
-      normal = skinNormalMatrix${index}_3 * normal;
-      normal = normalize(normal);
+      
+      ${useInstancing ? "instancesNormal[" + bindingIndex + "] = skinNormalMatrix_" + bindingIndex + "_3 * normal;" : "normal = skinNormalMatrix_" + bindingIndex + "_3 * normal;"}
       `;
     });
+    skinTransformations += `
+      normal = normalize(${useInstancing ? "instancesNormal[attributes.instanceIndex]" : "normal"});
+    `;
   }
-  let outputPositions = (
-    /* wgsl */
-    `worldPos = matrices.model * worldPos;
-      vsOutput.worldPosition = worldPos.xyz / worldPos.w;
-      vsOutput.position = camera.projection * camera.view * worldPos;
-      vsOutput.viewDirection = camera.position - vsOutput.worldPosition.xyz;
-  `
-  );
-  let outputNormal = hasSkin ? "vsOutput.normal = normalize(normal);" : "vsOutput.normal = getWorldNormal(normal);";
-  if (meshDescriptor.parameters.storages && meshDescriptor.parameters.storages.instances) {
-    outputPositions = /* wgsl */
-    `worldPos = instances[attributes.instanceIndex].modelMatrix * worldPos;
-      vsOutput.worldPosition = worldPos.xyz / worldPos.w;
-      vsOutput.position = camera.projection * camera.view * worldPos;
-      vsOutput.viewDirection = camera.position - vsOutput.worldPosition;
-      `;
-    outputNormal = hasSkin ? "vsOutput.normal = normalize(normal);" : `vsOutput.normal = normalize((instances[attributes.instanceIndex].normalMatrix * vec4(normal, 0.0)).xyz);`;
-  }
+  let morphTargets = "";
+  const morphTargetsBindings = meshDescriptor.parameters.bindings ? meshDescriptor.parameters.bindings.filter((binding) => binding.name.includes("morphTarget")) : [];
   morphTargetsBindings.forEach((binding) => {
     Object.values(binding.inputs).filter((input) => input.name !== "weight").forEach((input) => {
       const bindingType = BufferElement.getType(input.type);
@@ -111,45 +114,41 @@ const buildShaders = (meshDescriptor, shaderParameters = {}) => {
       }
     });
   });
+  const fullVertexOutput = getFullVertexOutput({
+    bindings: meshDescriptor.parameters.bindings,
+    geometry: meshDescriptor.parameters.geometry
+  });
   const vertexOutput = (
     /*wgsl */
     `
-    struct VSOutput {
-      ${vertexOutputContent}
-    };`
+struct VSOutput {
+  ${vertexOutputContent}
+};`
   );
   const fragmentInput = (
     /*wgsl */
     `
-    struct VSOutput {
-      @builtin(front_facing) frontFacing: bool,
-      ${vertexOutputContent}
-    };`
+struct VSOutput {
+  @builtin(front_facing) frontFacing: bool,
+  ${vertexOutputContent}
+};`
   );
   const vs = (
     /* wgsl */
     `
-    ${vertexOutput}
-    
-    @vertex fn main(
-      attributes: Attributes,
-    ) -> VSOutput {
-      var vsOutput: VSOutput;
-      
-      ${declareAttributes}
-      ${morphTargets}
-      
-      var worldPos: vec4f = vec4(position, 1.0);
-      
-      ${skinTransformations}
-      
-      ${outputPositions}
-      ${outputNormal}
-      ${outputAttributes}
-      ${outputNormalMap}
+${vertexOutput}
 
-      return vsOutput;
-    }
+@vertex fn main(
+  attributes: Attributes,
+) -> VSOutput {
+  var vsOutput: VSOutput;
+    
+  ${fullVertexOutput}
+  
+  ${outputNormalMap}
+
+  return vsOutput;
+}
   `
   );
   const initColor = (

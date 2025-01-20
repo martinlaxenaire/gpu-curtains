@@ -16,8 +16,6 @@ window.addEventListener('load', async () => {
     OrbitControls,
     Vec3,
     Vec2,
-    Mesh,
-    PlaneGeometry,
   } = await import(/* @vite-ignore */ path)
 
   const stats = new Stats()
@@ -347,104 +345,5 @@ window.addEventListener('load', async () => {
     .add(directionalLight.shadow.camera, 'far', 20, 500, 1)
     .onChange(async () => await directionalLight.shadow.renderOnce())
 
-  const shadowMapFolder = shadowFolder.addFolder('Debug')
-  const showShadowMap = shadowMapFolder.add({ isDebug }, 'isDebug').name('Show shadow map')
-
   await loadGLTF()
-
-  // DEBUG DEPTH
-
-  const debugDepthVs = /* wgsl */ `
-    struct VSOutput {
-      @builtin(position) position: vec4f,
-      @location(0) uv: vec2f,
-    };
-
-    @vertex fn main(
-      attributes: Attributes,
-    ) -> VSOutput {
-      var vsOutput: VSOutput;
-
-      // just use the world matrix here, do not take the projection into account
-      vsOutput.position = matrices.model * vec4(attributes.position, 1.0);
-      vsOutput.uv = attributes.uv;
-      
-      return vsOutput;
-    }
-  `
-
-  const debugDepthFs = /* wgsl */ `
-    struct VSOutput {
-      @builtin(position) position: vec4f,
-      @location(0) uv: vec2f,
-    };
-
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {          
-      
-      let rawDepth = textureSampleLevel(
-        depthTexture,
-        defaultSampler,
-        fsInput.uv,
-        0
-      );
-      
-      // remap depth into something a bit more visible
-      let depth = (1.0 - rawDepth);
-      
-      var color: vec4f = vec4(vec3(pow(depth, 5.0)), 1.0);
-
-      return color;
-    }
-  `
-
-  const scale = new Vec3(0.25, 0.25 * (gpuCameraRenderer.boundingRect.width / gpuCameraRenderer.boundingRect.height), 1)
-
-  const debugPlane = new Mesh(gpuCameraRenderer, {
-    label: 'Debug depth plane',
-    geometry: new PlaneGeometry(),
-    depthWriteEnabled: false,
-    frustumCulling: false,
-    visible: false,
-    renderOrder: 10,
-    shaders: {
-      vertex: {
-        code: debugDepthVs,
-      },
-      fragment: {
-        code: debugDepthFs,
-      },
-    },
-    uniforms: {
-      params: {
-        struct: {
-          scale: {
-            type: 'vec3f',
-            value: scale,
-          },
-        },
-      },
-    },
-  })
-
-  const depthTexture = debugPlane.createTexture({
-    label: 'Debug depth texture',
-    name: 'depthTexture',
-    type: 'depth',
-    //fromTexture: shadowDepthTexture,
-    fromTexture: directionalLight.shadow.depthTexture,
-  })
-
-  debugPlane.transformOrigin.set(-1, -1, 0)
-
-  debugPlane.scale.copy(scale)
-
-  debugPlane.onAfterResize(() => {
-    scale.set(0.25, 0.25 * (gpuCameraRenderer.boundingRect.width / gpuCameraRenderer.boundingRect.height), 1)
-    debugPlane.scale.copy(scale)
-  })
-
-  showShadowMap.onChange((value) => {
-    isDebug = value
-    debugPlane.visible = isDebug
-  })
 })

@@ -6,6 +6,7 @@ import { Texture } from '../../core/textures/Texture'
 import { Object3D } from '../../core/objects3D/Object3D'
 import { Box3 } from '../../math/Box3'
 import { Vec3 } from '../../math/Vec3'
+import { Mat3 } from '../../math/Mat3'
 import { Mat4 } from '../../math/Mat4'
 import { Geometry } from '../../core/geometries/Geometry'
 import { IndexedGeometry } from '../../core/geometries/IndexedGeometry'
@@ -71,6 +72,7 @@ const _normalMatrix = new Mat4()
  * - [x] Materials
  * - [x] Skins
  * - [x] Morph targets
+ * - [ ] Extensions
  *
  * @example
  * ```javascript
@@ -593,6 +595,7 @@ export class GLTFScenesManager {
 
             const keyframesAnimation = new KeyframesAnimation({
               label: animation.name ? `${animation.name} ${animName}` : `Animation ${i} ${animName}`,
+              inputIndex: sampler.input,
               keyframes,
               values,
               path,
@@ -638,6 +641,34 @@ export class GLTFScenesManager {
   }
 
   /**
+   * Get a clean attribute name based on a glTF attribute name.
+   * @param gltfAttributeName - glTF attribute name.
+   * @returns - Attribute name conform to our expectations.
+   */
+  static getCleanAttributeName(gltfAttributeName: string): string {
+    return gltfAttributeName === 'TEXCOORD_0'
+      ? 'uv'
+      : gltfAttributeName.replace('_', '').replace('TEXCOORD', 'uv').toLowerCase()
+  }
+
+  /**
+   * Sort an array of {@link VertexBufferAttributeParams} by an array of attribute names.
+   * @param attributesNames - array of attribute names to use for sorting.
+   * @param attributes - {@link VertexBufferAttributeParams} array to sort.
+   */
+  sortAttributesByNames(attributesNames: string[], attributes: VertexBufferAttributeParams[]) {
+    attributes.sort((a, b) => {
+      let aIndex = attributesNames.findIndex((attrName) => attrName === a.name)
+      aIndex = aIndex === -1 ? Infinity : aIndex
+
+      let bIndex = attributesNames.findIndex((attrName) => attrName === b.name)
+      bIndex = bIndex === -1 ? Infinity : bIndex
+
+      return aIndex - bIndex
+    })
+  }
+
+  /**
    * Parse a {@link GLTF.IMeshPrimitive | glTF primitive} and create typed arrays from the given {@link gltf} accessors, bufferViews and buffers.
    * @param primitiveProperty- Primitive property to parse, can either be `attributes` or `targets`.
    * @param attributes - An empty {@link VertexBufferAttributeParams} array to fill with parsed values.
@@ -662,8 +693,7 @@ export class GLTFScenesManager {
 
     for (const [attribName, accessorIndex] of primitiveAttributes) {
       // clean attributes names
-      const name =
-        attribName === 'TEXCOORD_0' ? 'uv' : attribName.replace('_', '').replace('TEXCOORD', 'uv').toLowerCase()
+      const name = GLTFScenesManager.getCleanAttributeName(attribName)
 
       const accessor = this.gltf.accessors[accessorIndex as number]
 
@@ -790,6 +820,7 @@ export class GLTFScenesManager {
       if (!accessorsBufferViews.every((val) => val === accessorsBufferViews[0])) {
         // we're not that lucky since we have interleaved values coming from different positions of our main buffer
         // we'll have to rebuild an interleaved array ourselves
+        // see https://github.com/toji/sponza-optimized/issues/1
         let totalStride = 0
         const mainBufferStrides = {}
         const arrayLength = primitiveAttributesValues.reduce((acc: number, accessorIndex: number): number => {
@@ -842,6 +873,13 @@ export class GLTFScenesManager {
             interleavedArray.subarray(startOffset, startOffset + attrSize).set(subarray)
           }
         })
+
+        // we need to reorder the attributes
+        const cleanAttributeNames = Object.entries(primitiveProperty).map((prop) =>
+          GLTFScenesManager.getCleanAttributeName(prop[0])
+        )
+
+        this.sortAttributesByNames(cleanAttributeNames, attributes)
       } else {
         // we're lucky to have an interleaved array!
         // we won't have to compute our geometry!
@@ -872,6 +910,21 @@ export class GLTFScenesManager {
 
           stride += attrSize
         })
+
+        // now we're lucky enough to have an interleaved array
+        // but we must ensure our attributes are passed to the geometry in the right order
+        // which corresponds to the attributes accessors byte offset order
+        const primitivePropertiesSortedByByteOffset = Object.entries(primitiveProperty).sort((a, b) => {
+          const accessorAByteOffset = this.gltf.accessors[a[1]].byteOffset
+          const accessorBByteOffset = this.gltf.accessors[b[1]].byteOffset
+          return accessorAByteOffset - accessorBByteOffset
+        })
+
+        const accessorNameOrder = primitivePropertiesSortedByByteOffset.map((property) =>
+          GLTFScenesManager.getCleanAttributeName(property[0])
+        )
+
+        this.sortAttributesByNames(accessorNameOrder, attributes)
       }
     }
 
@@ -1023,17 +1076,7 @@ export class GLTFScenesManager {
     if (!interleavedArray) {
       // not interleaved?
       // let's try to reorder the attributes so we might benefit from pipeline cache
-      const attribOrder = ['position', 'uv', 'normal']
-
-      defaultAttributes.sort((a, b) => {
-        let aIndex = attribOrder.findIndex((attrName) => attrName === a.name)
-        aIndex = aIndex === -1 ? Infinity : aIndex
-
-        let bIndex = attribOrder.findIndex((attrName) => attrName === b.name)
-        bIndex = bIndex === -1 ? Infinity : bIndex
-
-        return aIndex - bIndex
-      })
+      this.sortAttributesByNames(['position', 'uv', 'normal'], defaultAttributes)
     }
 
     defaultAttributes.forEach((attribute) => {
@@ -1107,14 +1150,14 @@ export class GLTFScenesManager {
         }
 
         const binding = new BufferBinding({
-          label: 'Skin ' + meshIndex,
-          name: 'skin' + meshIndex,
+          label: 'Skin ' + skinIndex,
+          name: 'skin' + skinIndex,
           bindingType: 'storage',
           visibility: ['vertex'],
           childrenBindings: [
             {
               binding: new BufferBinding({
-                label: 'Joints',
+                label: 'Joints ' + skinIndex,
                 name: 'joints',
                 bindingType: 'storage',
                 visibility: ['vertex'],
@@ -1162,10 +1205,10 @@ export class GLTFScenesManager {
           // and update it once before updating the joint matrices
           const parentInverseWorldMatrix = new Mat4()
 
-          const _updateMatrixStack = parentNode.updateMatrixStack.bind(parentNode)
+          const _updateWorldMatrix = parentNode.updateWorldMatrix.bind(parentNode)
 
-          parentNode.updateMatrixStack = () => {
-            _updateMatrixStack()
+          parentNode.updateWorldMatrix = () => {
+            _updateWorldMatrix()
 
             parentInverseWorldMatrix.copy(parentNode.worldMatrix).invert()
           }
@@ -1200,28 +1243,18 @@ export class GLTFScenesManager {
                   binding.childrenBindings[jointIndex].inputs.normalMatrix.shouldUpdate = true
                 }
 
-                const animationTarget = animation.getTargetByObject3D(object)
+                // add an empty animation to our target with just an onAfterUpdate callback
+                // that will update the joint matrices
+                const node = this.gltf.nodes[jointIndex]
+                const animName = node.name ? `${node.name} skin animation` : `skin animation ${jointIndex}`
 
-                if (animationTarget) {
-                  animationTarget.animations.forEach((animation) => {
-                    animation.onAfterUpdate = updateJointMatrix
-                  })
-                } else {
-                  // this joint does not have an animation
-                  // but this does not mean we don't have to update its matrices!
+                const emptyAnimation = new KeyframesAnimation({
+                  label: animation.label ? `${animation.label} ${animName}` : `Animation ${animName}`,
+                })
 
-                  // add an empty animation with just an onAfterCallback
-                  const node = this.gltf.nodes[jointIndex]
-                  const animName = node.name ? `${node.name} empty animation` : `empty animation ${jointIndex}`
+                emptyAnimation.onAfterUpdate = updateJointMatrix
 
-                  const emptyAnimation = new KeyframesAnimation({
-                    label: animation.label ? `${animation.label} ${animName}` : `Animation ${animName}`,
-                  })
-
-                  emptyAnimation.onAfterUpdate = updateJointMatrix
-
-                  animation.addTargetAnimation(object, emptyAnimation)
-                }
+                animation.addTargetAnimation(object, emptyAnimation)
               })
             }
           } else {
@@ -1332,16 +1365,31 @@ export class GLTFScenesManager {
     // skins
     if (this.gltf.skins) {
       this.gltf.skins.forEach((skin, skinIndex) => {
-        const node = instances[0]
-        if (node.skin !== undefined && node.skin === skinIndex) {
-          const skinDef = this.scenesManager.skins[skinIndex]
-
-          if (!meshDescriptor.parameters.bindings) {
-            meshDescriptor.parameters.bindings = []
-          }
-
-          meshDescriptor.parameters.bindings = [...meshDescriptor.parameters.bindings, skinDef.binding]
+        if (!meshDescriptor.parameters.bindings) {
+          meshDescriptor.parameters.bindings = []
         }
+
+        instances.forEach((node, instanceIndex) => {
+          if (node.skin !== undefined && node.skin === skinIndex) {
+            const skinDef = this.scenesManager.skins[skinIndex]
+
+            meshDescriptor.parameters.bindings = [...meshDescriptor.parameters.bindings, skinDef.binding]
+
+            // TODO skinned meshes bounding box?
+            // real dirty way to get a better approximate bounding box
+            if (instanceIndex > 0) {
+              const tempBbox = meshDescriptor.parameters.geometry.boundingBox.clone()
+              const tempMat4 = new Mat4()
+              skinDef.joints.forEach((object, jointIndex) => {
+                tempMat4.setFromArray(skinDef.inverseBindMatrices, jointIndex * 16)
+
+                const transformedBbox = tempBbox.applyMat4(tempMat4).applyMat4(object.worldMatrix)
+                this.scenesManager.boundingBox.min.min(transformedBbox.min)
+                this.scenesManager.boundingBox.max.max(transformedBbox.max)
+              })
+            }
+          }
+        })
       })
     }
 
@@ -1440,31 +1488,73 @@ export class GLTFScenesManager {
 
     // instances matrices storage
     if (instancesCount > 1) {
-      const worldMatrices = new Float32Array(instancesCount * 16)
-      const normalMatrices = new Float32Array(instancesCount * 16)
+      // const worldMatrices = new Float32Array(instancesCount * 16)
+      // const normalMatrices = new Float32Array(instancesCount * 16)
+      //
+      // for (let i = 0; i < instancesCount; ++i) {
+      //   worldMatrices.set(nodes[i].worldMatrix.elements, i * 16)
+      //
+      //   _normalMatrix.copy(nodes[i].worldMatrix).invert().transpose()
+      //   normalMatrices.set(_normalMatrix.elements, i * 16)
+      // }
 
-      for (let i = 0; i < instancesCount; ++i) {
-        worldMatrices.set(nodes[i].worldMatrix.elements, i * 16)
-
-        _normalMatrix.copy(nodes[i].worldMatrix).invert().transpose()
-        normalMatrices.set(_normalMatrix.elements, i * 16)
-      }
-
-      meshDescriptor.parameters.storages = {
-        instances: {
-          visibility: ['vertex', 'fragment'],
-          struct: {
-            modelMatrix: {
-              type: 'array<mat4x4f>',
-              value: worldMatrices,
-            },
-            normalMatrix: {
-              type: 'array<mat4x4f>',
-              value: normalMatrices,
-            },
+      const instanceMatricesBinding = new BufferBinding({
+        label: 'Instance matrices',
+        name: 'matrices',
+        visibility: ['vertex', 'fragment'],
+        bindingType: 'storage',
+        struct: {
+          model: {
+            type: 'mat4x4f',
+            value: new Mat4(),
+          },
+          normal: {
+            type: 'mat3x3f',
+            value: new Mat3(),
           },
         },
+      })
+
+      const instancesBinding = new BufferBinding({
+        label: 'Instances',
+        name: 'instances',
+        visibility: ['vertex', 'fragment'],
+        bindingType: 'storage',
+        childrenBindings: [
+          {
+            binding: instanceMatricesBinding,
+            count: instancesCount,
+            forceArray: true,
+          },
+        ],
+      })
+
+      instancesBinding.childrenBindings.forEach((binding, index) => {
+        ;(binding.inputs.model.value as Mat4).copy(nodes[index].worldMatrix)
+        ;(binding.inputs.normal.value as Mat3).getNormalMatrix(binding.inputs.model.value as Mat4)
+      })
+
+      if (!meshDescriptor.parameters.bindings) {
+        meshDescriptor.parameters.bindings = []
       }
+
+      meshDescriptor.parameters.bindings.push(instancesBinding)
+
+      // meshDescriptor.parameters.storages = {
+      //   instances: {
+      //     visibility: ['vertex', 'fragment'],
+      //     struct: {
+      //       modelMatrix: {
+      //         type: 'array<mat4x4f>',
+      //         value: worldMatrices,
+      //       },
+      //       normalMatrix: {
+      //         type: 'array<mat4x4f>',
+      //         value: normalMatrices,
+      //       },
+      //     },
+      //   },
+      // }
     }
 
     // computed transformed bbox
@@ -1475,6 +1565,9 @@ export class GLTFScenesManager {
       this.scenesManager.boundingBox.min.min(transformedBbox.min)
       this.scenesManager.boundingBox.max.max(transformedBbox.max)
     }
+
+    // avoid having a bounding box max component equal to 0
+    this.scenesManager.boundingBox.max.max(new Vec3(0.001))
   }
 
   /**
@@ -1542,18 +1635,15 @@ export class GLTFScenesManager {
         // patch the parameters
         patchMeshesParameters(meshDescriptor)
 
-        const hasInstancedShadows =
-          meshDescriptor.parameters.geometry.instancesCount > 1 && meshDescriptor.parameters.castShadows
-
-        if (hasInstancedShadows) {
-          meshDescriptor.parameters.castShadows = false
-        }
-
         const mesh = new Mesh(this.renderer, {
           ...meshDescriptor.parameters,
         })
 
+        mesh.parent = meshDescriptor.parent
+
         if (meshDescriptor.nodes.length > 1) {
+          const instancesBinding = meshDescriptor.parameters.bindings.find((binding) => binding.name === 'instances')
+
           // if we're dealing with instances
           // we must patch the mesh updateMatrixStack method
           // in order to update the instanceMatrix binding
@@ -1570,34 +1660,26 @@ export class GLTFScenesManager {
               }
 
               if (updateInstances) {
-                ;(mesh.storages.instances.modelMatrix.value as TypedArray).set(node.worldMatrix.elements, i * 16)
+                // ;(mesh.storages.instances.modelMatrix.value as TypedArray).set(node.worldMatrix.elements, i * 16)
+                //
+                // _normalMatrix.copy(node.worldMatrix).invert().transpose()
+                // ;(mesh.storages.instances.normalMatrix.value as TypedArray).set(_normalMatrix.elements, i * 16)
 
-                _normalMatrix.copy(node.worldMatrix).invert().transpose()
-                ;(mesh.storages.instances.normalMatrix.value as TypedArray).set(_normalMatrix.elements, i * 16)
+                instancesBinding.childrenBindings[i].inputs.model.value.copy(node.worldMatrix)
+                instancesBinding.childrenBindings[i].inputs.model.shouldUpdate = true
+
+                instancesBinding.childrenBindings[i].inputs.normal.value.getNormalMatrix(node.worldMatrix)
+                instancesBinding.childrenBindings[i].inputs.normal.value.shouldUpdate = true
               }
             })
 
             if (updateInstances) {
-              mesh.storages.instances.modelMatrix.shouldUpdate = true
-              mesh.storages.instances.normalMatrix.shouldUpdate = true
+              // mesh.storages.instances.modelMatrix.shouldUpdate = true
+              // mesh.storages.instances.normalMatrix.shouldUpdate = true
+              //instancesBinding.shouldUpdate = true
             }
           }
         }
-
-        // instanced shadows
-        if (hasInstancedShadows) {
-          const instancesBinding = mesh.material.inputsBindings.get('instances')
-
-          this.renderer.shadowCastingLights.forEach((light) => {
-            if (light.shadow.isActive) {
-              light.shadow.addShadowCastingMesh(mesh, {
-                bindings: [instancesBinding],
-              })
-            }
-          })
-        }
-
-        mesh.parent = meshDescriptor.parent
 
         this.scenesManager.meshes.push(mesh)
 
