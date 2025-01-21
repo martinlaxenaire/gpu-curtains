@@ -94,16 +94,16 @@ export const buildShaders = (
   @location(${facultativeAttributes.length + 1}) worldPosition: vec3f,
   `
 
-  let outputNormalMap = ''
+  let outputBitangent = ''
   const tangentAttribute = facultativeAttributes.find((attr) => attr.name === 'tangent')
-  const useNormalMap = !!(normalTexture && tangentAttribute)
+  const hasTangent = !!(normalTexture && tangentAttribute)
 
-  if (useNormalMap) {
+  if (hasTangent) {
     vertexOutputContent += `
   @location(${facultativeAttributes.length + 2}) bitangent: vec3f,
       `
 
-    outputNormalMap = `
+    outputBitangent = `
   vsOutput.bitangent = cross(vsOutput.normal, vsOutput.tangent.xyz) * vsOutput.tangent.w;
       `
   }
@@ -133,7 +133,7 @@ ${vertexOutput}
   var vsOutput: VSOutput;
     
   ${fullVertexOutput}
-  ${outputNormalMap}
+  ${outputBitangent}
 
   return vsOutput;
 }
@@ -175,15 +175,14 @@ ${vertexOutput}
   var tangent: vec3f;
   var bitangent: vec3f;`
 
-  if (useNormalMap) {
-    normalMap += /* wgsl */ `
+  if (normalTexture) {
+    if (hasTangent) {
+      normalMap += /* wgsl */ `
   tangent = normalize(fsInput.tangent.xyz);
   bitangent = normalize(fsInput.bitangent);
-  let tbn = mat3x3f(tangent, bitangent, geometryNormal);
-  let normalMap = textureSample(normalTexture, ${normalTexture.sampler}, fsInput.${normalTexture.texCoordAttributeName}).rgb;
-  normal = normalize(tbn * (2.0 * normalMap - vec3(material.normalMapScale, material.normalMapScale, 1.0)));`
-  } else if (normalTexture) {
-    normalMap += /* wgsl */ `
+  `
+    } else {
+      normalMap += /* wgsl */ `
   let Q1: vec3f = dpdx(worldPosition);
   let Q2: vec3f = dpdy(worldPosition);
   let st1: vec2f = dpdx(fsInput.${normalTexture.texCoordAttributeName});
@@ -191,7 +190,10 @@ ${vertexOutput}
   
   tangent = normalize(Q1 * st2.y - Q2 * st1.y);
   bitangent = normalize(-Q1 * st2.x + Q2 * st1.x);
-  
+  `
+    }
+
+    normalMap += /* wgsl */ `
   let tbn = mat3x3f(tangent, bitangent, geometryNormal);
   let normalMap = textureSample(normalTexture, ${normalTexture.sampler}, fsInput.${normalTexture.texCoordAttributeName}).rgb;
   normal = normalize(tbn * (2.0 * normalMap - vec3(material.normalMapScale, material.normalMapScale, 1.0)));`
