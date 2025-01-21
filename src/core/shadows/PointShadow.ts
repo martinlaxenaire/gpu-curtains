@@ -8,6 +8,9 @@ import { PointLight } from '../lights/PointLight'
 import { Input } from '../../types/BindGroups'
 import { ShaderOptions } from '../../types/Materials'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
+import { Geometry } from '../geometries/Geometry'
+import { BufferBinding } from '../bindings/BufferBinding'
+import { VertexShaderInputParams } from '../shaders/chunks/vertex/get_vertex_output'
 
 /** Defines the perspective shadow camera params. */
 export type PerspectiveShadowCameraParams = Omit<PerspectiveProjectionParams, 'fov' | 'aspect'>
@@ -299,6 +302,47 @@ export class PointShadow extends Shadow {
   }
 
   /**
+   * Clear the content of the depth texture. Called whenever the {@link meshes} array is empty after having removed a mesh.
+   */
+  clearDepthTexture() {
+    if (!this.depthTexture || !this.depthTexture.texture) return
+
+    // Create a command encoder
+    const commandEncoder = this.renderer.device.createCommandEncoder()
+    !this.renderer.production &&
+      commandEncoder.pushDebugGroup(`Clear ${this.depthTexture.texture.label} command encoder`)
+
+    for (let i = 0; i < 6; i++) {
+      const view = this.depthTexture.texture.createView({
+        label: 'Clear ' + this.depthTexture.texture.label + ' cube face view',
+        dimension: '2d',
+        arrayLayerCount: 1,
+        baseArrayLayer: i,
+      })
+
+      // Define the render pass descriptor
+      const renderPassDescriptor: GPURenderPassDescriptor = {
+        colorAttachments: [],
+        depthStencilAttachment: {
+          view,
+          depthLoadOp: 'clear', // Clear the depth attachment
+          depthClearValue: 1.0, // Clear to the maximum depth (farthest possible depth)
+          depthStoreOp: 'store', // Store the cleared depth
+        },
+      }
+
+      // Begin the render pass
+      const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor)
+      // End the render pass (we don't need to draw anything, just clear)
+      passEncoder.end()
+    }
+
+    // Submit the command buffer
+    !this.renderer.production && commandEncoder.popDebugGroup()
+    this.renderer.device.queue.submit([commandEncoder.finish()])
+  }
+
+  /**
    * Remove the depth pass from its {@link utils/TasksQueueManager.TasksQueueManager | task queue manager}.
    * @param depthPassTaskID - Task queue manager ID to use for removal.
    */
@@ -383,12 +427,13 @@ export class PointShadow extends Shadow {
 
   /**
    * Get the default depth pass vertex shader for this {@link PointShadow}.
+   * parameters - {@link VertexShaderInputParams} used to compute the output `worldPosition` and `normal` vectors.
    * @returns - Depth pass vertex shader.
    */
-  getDefaultShadowDepthVs(hasInstances = false): ShaderOptions {
+  getDefaultShadowDepthVs({ bindings = [], geometry }: VertexShaderInputParams): ShaderOptions {
     return {
       /** Returned code. */
-      code: getDefaultPointShadowDepthVs(this.index, hasInstances),
+      code: getDefaultPointShadowDepthVs(this.index, { bindings, geometry }),
     }
   }
 

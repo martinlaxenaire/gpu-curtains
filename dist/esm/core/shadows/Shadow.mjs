@@ -301,6 +301,33 @@ class Shadow {
     });
   }
   /**
+   * Clear the content of the depth texture. Called whenever the {@link meshes} array is empty after having removed a mesh.
+   */
+  clearDepthTexture() {
+    if (!this.depthTexture || !this.depthTexture.texture)
+      return;
+    const commandEncoder = this.renderer.device.createCommandEncoder();
+    !this.renderer.production && commandEncoder.pushDebugGroup(`Clear ${this.depthTexture.texture.label} command encoder`);
+    const renderPassDescriptor = {
+      colorAttachments: [],
+      depthStencilAttachment: {
+        view: this.depthTexture.texture.createView({
+          label: "Clear " + this.depthTexture.texture.label + " view"
+        }),
+        depthLoadOp: "clear",
+        // Clear the depth attachment
+        depthClearValue: 1,
+        // Clear to the maximum depth (farthest possible depth)
+        depthStoreOp: "store"
+        // Store the cleared depth
+      }
+    };
+    const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
+    passEncoder.end();
+    !this.renderer.production && commandEncoder.popDebugGroup();
+    this.renderer.device.queue.submit([commandEncoder.finish()]);
+  }
+  /**
    * Create the {@link depthPassTarget}.
    */
   createDepthPassTarget() {
@@ -411,12 +438,13 @@ class Shadow {
   }
   /**
    * Get the default depth pass vertex shader for this {@link Shadow}.
+   * parameters - {@link VertexShaderInputParams} used to compute the output `worldPosition` and `normal` vectors.
    * @returns - Depth pass vertex shader.
    */
-  getDefaultShadowDepthVs(hasInstances = false) {
+  getDefaultShadowDepthVs({ bindings = [], geometry }) {
     return {
       /** Returned code. */
-      code: getDefaultShadowDepthVs(this.index, hasInstances)
+      code: getDefaultShadowDepthVs(this.index, { bindings, geometry })
     };
   }
   /**
@@ -437,15 +465,24 @@ class Shadow {
     parameters.targets = [];
     parameters.sampleCount = this.sampleCount;
     parameters.depthFormat = this.depthTextureFormat;
-    if (parameters.bindings) {
-      parameters.bindings = [mesh.material.getBufferBindingByName("matrices"), ...parameters.bindings];
-    } else {
-      parameters.bindings = [mesh.material.getBufferBindingByName("matrices")];
+    const bindings = [mesh.material.getBufferBindingByName("matrices")];
+    mesh.material.inputsBindings.forEach((binding) => {
+      if (binding.name.includes("skin") || binding.name.includes("morphTarget")) {
+        bindings.push(binding);
+      }
+    });
+    const instancesBinding = mesh.material.getBufferBindingByName("instances");
+    if (instancesBinding) {
+      bindings.push(instancesBinding);
     }
-    const hasInstances = mesh.material.inputsBindings.get("instances") && mesh.geometry.instancesCount > 1;
+    if (parameters.bindings) {
+      parameters.bindings = [...bindings, ...parameters.bindings];
+    } else {
+      parameters.bindings = [...bindings];
+    }
     if (!parameters.shaders) {
       parameters.shaders = {
-        vertex: this.getDefaultShadowDepthVs(hasInstances),
+        vertex: this.getDefaultShadowDepthVs({ bindings, geometry: mesh.geometry }),
         fragment: this.getDefaultShadowDepthFs()
       };
     }
@@ -506,6 +543,9 @@ class Shadow {
       __privateGet(this, _depthMaterials).delete(mesh.uuid);
     }
     this.meshes.delete(mesh.uuid);
+    if (this.meshes.size === 0) {
+      this.clearDepthTexture();
+    }
   }
   /**
    * Destroy the {@link Shadow}.

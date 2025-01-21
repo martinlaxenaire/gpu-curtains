@@ -79,3 +79,7 @@ export * from './extras/gltf/utils'
 // loaders
 export { GLTFLoader } from './extras/loaders/GLTFLoader'
 export { HDRLoader } from './extras/loaders/HDRLoader'
+
+// animations
+export { KeyframesAnimation } from './extras/animations/KeyframesAnimation'
+export { TargetsAnimationsManager } from './extras/animations/TargetsAnimationsManager'

@@ -432,23 +432,21 @@ export class Vec3 {
     const x = this.x,
       y = this.y,
       z = this.z
+
     const qx = quaternion.elements[0],
       qy = quaternion.elements[1],
       qz = quaternion.elements[2],
       qw = quaternion.elements[3]
 
-    // calculate quat * vector
+    // t = 2 * cross( q.xyz, v );
+    const tx = 2 * (qy * z - qz * y)
+    const ty = 2 * (qz * x - qx * z)
+    const tz = 2 * (qx * y - qy * x)
 
-    const ix = qw * x + qy * z - qz * y
-    const iy = qw * y + qz * x - qx * z
-    const iz = qw * z + qx * y - qy * x
-    const iw = -qx * x - qy * y - qz * z
-
-    // calculate result * inverse quat
-
-    this.x = ix * qw + iw * -qx + iy * -qz - iz * -qy
-    this.y = iy * qw + iw * -qy + iz * -qx - ix * -qz
-    this.z = iz * qw + iw * -qz + ix * -qy - iy * -qx
+    // v + q.w * t + cross( q.xyz, t );
+    this.x = x + qw * tx + qy * tz - qz * ty
+    this.y = y + qw * ty + qz * tx - qx * tz
+    this.z = z + qw * tz + qx * ty - qy * tx
 
     return this
   }

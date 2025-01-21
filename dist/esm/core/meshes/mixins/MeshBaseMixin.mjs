@@ -389,8 +389,12 @@ ${geometry.wgslStructFragment}`
      */
     useMaterial(material) {
       let currentCacheKey = null;
-      if (this.material && this.geometry) {
-        currentCacheKey = this.material.cacheKey;
+      let isDepthMaterialSwitch = false;
+      if (this.material) {
+        isDepthMaterialSwitch = this.material.options.label.includes("depth render material") || material.options.label.includes("depth render material");
+        if (this.geometry) {
+          currentCacheKey = this.material.cacheKey;
+        }
       }
       this.material = material;
       if (this.geometry) {
@@ -398,7 +402,7 @@ ${geometry.wgslStructFragment}`
       }
       this.transparent = this.material.options.rendering.transparent;
       this.material.options.domTextures?.filter((texture) => texture instanceof DOMTexture).forEach((texture) => this.onDOMTextureAdded(texture));
-      if (currentCacheKey && currentCacheKey !== this.material.cacheKey) {
+      if (currentCacheKey && currentCacheKey !== this.material.cacheKey && !isDepthMaterialSwitch) {
         this.material.setPipelineEntry();
       }
     }

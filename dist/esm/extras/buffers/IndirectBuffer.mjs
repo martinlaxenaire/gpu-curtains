@@ -21,7 +21,7 @@ class IndirectBuffer {
   /**
    * IndirectBuffer constructor.
    * @param renderer - {@link Renderer} or {@link GPUCurtains} class object used to create this {@link IndirectBuffer}.
-   * @param parameters - {@link IndirectBufferParams | parameters} use to create this {@link IndirectBuffer}.
+   * @param parameters - {@link IndirectBufferParams | parameters} used to create this {@link IndirectBuffer}.
    */
   constructor(renderer, { label = "Indirect buffer", geometries = [], minEntrySize = indirectBufferEntrySize } = {}) {
     /**

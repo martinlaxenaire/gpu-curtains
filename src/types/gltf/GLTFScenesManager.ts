@@ -6,6 +6,11 @@ import { ProjectedMeshParameters } from '../../core/meshes/mixins/ProjectedMeshB
 import { Object3D } from '../../core/objects3D/Object3D'
 import { Mesh } from '../../core/meshes/Mesh'
 import { Box3 } from '../../math/Box3'
+import { TypedArray } from '../../core/bindings/utils'
+import { Camera } from '../../core/camera/Camera'
+import { BufferBinding } from '../../core/bindings/BufferBinding'
+import { TargetsAnimationsManager } from '../../extras/animations/TargetsAnimationsManager'
+import { Mat4 } from '../../math/Mat4'
 
 /**
  * Define a {@link MeshDescriptorAttribute} used to create the {@link core/geometries/Geometry.Geometry | Geometry}.
@@ -75,7 +80,7 @@ export interface PrimitiveInstanceDescriptor {
   instances: GLTF.INode[]
   /** Array of {@link Object3D} corresponding to the {@link instances}. */
   nodes: Object3D[]
-  /** Unique {@link MeshDescriptor} used to create the instances {@link Mesh}. */
+  /** Unique {@link MeshDescriptor} used to create the instanced {@link Mesh}. */
   meshDescriptor: MeshDescriptor
 }
 
@@ -88,6 +93,8 @@ export type PrimitiveInstances = Map<GLTF.IMeshPrimitive, PrimitiveInstanceDescr
  * Define a {@link ChildDescriptor}.
  */
 export interface ChildDescriptor {
+  /** Index of the {@link GLTF.INode | glTF Node} used by this child. */
+  index?: number
   /** Optional name if available in the {@link GLTF} json. */
   name?: string
   /** {@link Object3D} describing the transformations of this child. */
@@ -97,11 +104,33 @@ export interface ChildDescriptor {
 }
 
 /**
+ * Define a {@link SkinDefinition} used to handle skin animations.
+ */
+export interface SkinDefinition {
+  /** The parent {@link Object3D} used to calculate joint matrices. */
+  parentNode: Object3D
+  /** An array of joint {@link Object3D}. */
+  joints: Object3D[]
+  /** A {@link Float32Array} containing all the skin inverse bind matrices. */
+  inverseBindMatrices: Float32Array
+  /** A {@link Mat4} that will handle our joint matrix. */
+  jointMatrix: Mat4
+  /** A {@link Mat4} that will handle our joint normal matrix. */
+  normalMatrix: Mat4
+  /** A {@link Mat4} that will handle the parent {@link Object3D} inverse world matrix. */
+  parentInverseWorldMatrix: Mat4
+  /** The storage {@link BufferBinding} used to send the matrices to the shaders. */
+  binding: BufferBinding
+}
+
+/**
  * Define the {@link ScenesManager}.
  */
 export interface ScenesManager {
   /** {@link Object3D} used as a parent for all {@link scenes} nodes. */
   node: Object3D
+  /** A {@link Map} of all the nodes {@link Object3D} created by the {@link ScenesManager}. */
+  nodes: Map<number, Object3D>
   /** Final computed {@link Box3 | bounding box} of the scenes. */
   boundingBox: Box3
   /** Array of {@link Sampler} used by this {@link ScenesManager}. */
@@ -114,6 +143,10 @@ export interface ScenesManager {
   meshes: Mesh[]
   /** Array of {@link MeshDescriptor} used to create the {@link meshes}. */
   meshesDescriptors: MeshDescriptor[]
-  /** Utility helper to get all the {@link Object3D} created by this {@link ScenesManager} */
-  getScenesNodes: () => Object3D[]
+  /** Array of {@link TargetsAnimationsManager} used by this {@link ScenesManager}. */
+  animations: TargetsAnimationsManager[]
+  /** Array of available created {@link Camera}. */
+  cameras: Camera[]
+  /** Array of {@link SkinDefinition} used by this {@link ScenesManager}. */
+  skins: SkinDefinition[]
 }

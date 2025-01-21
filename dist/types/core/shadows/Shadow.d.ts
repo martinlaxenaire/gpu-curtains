@@ -12,6 +12,7 @@ import { BufferBinding } from '../bindings/BufferBinding';
 import { RenderMaterialParams, ShaderOptions } from '../../types/Materials';
 import { Input } from '../../types/BindGroups';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
+import { VertexShaderInputParams } from '../shaders/chunks/vertex/get_vertex_output';
 /** Defines all types of shadows. */
 export type ShadowsType = 'directionalShadows' | 'pointShadows';
 /** @ignore */
@@ -160,6 +161,10 @@ export declare class Shadow {
      */
     createDepthTexture(): void;
     /**
+     * Clear the content of the depth texture. Called whenever the {@link meshes} array is empty after having removed a mesh.
+     */
+    clearDepthTexture(): void;
+    /**
      * Create the {@link depthPassTarget}.
      */
     createDepthPassTarget(): void;
@@ -197,9 +202,10 @@ export declare class Shadow {
     renderDepthPass(commandEncoder: GPUCommandEncoder): void;
     /**
      * Get the default depth pass vertex shader for this {@link Shadow}.
+     * parameters - {@link VertexShaderInputParams} used to compute the output `worldPosition` and `normal` vectors.
      * @returns - Depth pass vertex shader.
      */
-    getDefaultShadowDepthVs(hasInstances?: boolean): ShaderOptions;
+    getDefaultShadowDepthVs({ bindings, geometry }: VertexShaderInputParams): ShaderOptions;
     /**
      * Get the default depth pass fragment shader for this {@link Shadow}.
      * @returns - A {@link ShaderOptions} if a depth pass fragment shader is needed, `false` otherwise.

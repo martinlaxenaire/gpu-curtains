@@ -40,9 +40,10 @@ export declare class Mat3 {
     /**
      * Sets the {@link Mat3} values from an array
      * @param array - array to use
+     * @param offset - optional offset in the array to use
      * @returns - this {@link Mat3} after being set
      */
-    setFromArray(array?: Float32Array | number[]): Mat3;
+    setFromArray(array?: Float32Array | number[], offset?: number): Mat3;
     /**
      * Copy another {@link Mat3}
      * @param matrix - matrix to copy

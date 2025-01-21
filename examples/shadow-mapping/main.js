@@ -11,6 +11,7 @@ import {
   Vec3,
   Object3D,
   BoxGeometry,
+  Sampler,
 } from '../../dist/esm/index.mjs'
 
 // Shadow mapping
@@ -252,13 +253,12 @@ window.addEventListener('load', async () => {
       @location(0) uv: vec2f,
     };
 
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {          
-      
-      let rawDepth = textureSampleLevel(
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {        
+      let rawDepth = textureSampleCompare(
         depthTexture,
-        defaultSampler,
+        debugDepthSampler,
         fsInput.uv,
-        0
+        fsInput.uv.y * 0.5 + 0.5
       );
       
       // remap depth into something a bit more visible
@@ -278,6 +278,14 @@ window.addEventListener('load', async () => {
     depthWriteEnabled: false,
     frustumCulling: false,
     visible: false,
+    samplers: [
+      new Sampler(gpuCameraRenderer, {
+        label: 'Debug depth sampler',
+        name: 'debugDepthSampler',
+        type: 'comparison',
+        compare: 'less',
+      }),
+    ],
     shaders: {
       vertex: {
         code: debugDepthVs,

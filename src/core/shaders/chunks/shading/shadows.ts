@@ -1,46 +1,33 @@
 import { DirectionalLight } from '../../../lights/DirectionalLight'
 import { PointLight } from '../../../lights/PointLight'
 import { CameraRenderer } from '../../../renderers/utils'
-
-/**
- * Chunk to get the right position and normal in world space, depending on whether the mesh uses instancing or not.
- * @param hasInstances - Whether the mesh uses instancing or not.
- */
-const getPositionAndNormal = (hasInstances = false): string => {
-  if (hasInstances) {
-    return /* wgsl */ `
-  var worldPosition: vec4f = instances[attributes.instanceIndex].modelMatrix * vec4f(attributes.position, 1.0);
-  let normal = (instances[attributes.instanceIndex].normalMatrix * vec4(attributes.normal, 0.0)).xyz;
-    `
-  } else {
-    return /* wgsl */ `
-  var worldPosition: vec4f = matrices.model * vec4(attributes.position, 1.0);
-  let normal = getWorldNormal(attributes.normal);
-    `
-  }
-}
+import { getVertexPositionNormal, VertexShaderInputParams } from '../vertex/get_vertex_output'
 
 // DIRECTIONAL SHADOWS
 
 /**
  * Get default ({@link DirectionalLight}) shadow map pass vertex shader.
  * @param lightIndex - Index of the {@link DirectionalLight} for which to render the depth pass.
- * @param hasInstances - Whether the mesh uses instancing or not.
+ * @param parameters - {@link VertexShaderInputParams} used to compute the output `worldPosition` and `normal` vectors.
  */
-export const getDefaultShadowDepthVs = (lightIndex = 0, hasInstances = false): string => /* wgsl */ `
+export const getDefaultShadowDepthVs = (
+  lightIndex = 0,
+  { bindings = [], geometry }: VertexShaderInputParams
+): string => /* wgsl */ `
 @vertex fn main(
   attributes: Attributes,
 ) -> @builtin(position) vec4f {  
   let directionalShadow: DirectionalShadowsElement = directionalShadows.directionalShadowsElements[${lightIndex}];
   
-  ${getPositionAndNormal(hasInstances)}
+  ${getVertexPositionNormal({ bindings, geometry })}
   
-  let lightDirection: vec3f = normalize(worldPosition.xyz - directionalLights.elements[${lightIndex}].direction);
+  let worldPos = worldPosition.xyz / worldPosition.w;
+  let lightDirection: vec3f = normalize(worldPos - directionalLights.elements[${lightIndex}].direction);
   let NdotL: f32 = dot(normalize(normal), lightDirection);
   let sinNdotL = sqrt(1.0 - NdotL * NdotL);
   let normalBias: f32 = directionalShadow.normalBias * sinNdotL;
   
-  worldPosition = vec4(worldPosition.xyz - normal * normalBias, worldPosition.w);
+  worldPosition = vec4(worldPos - normal * normalBias, 1.0);
   
   return directionalShadow.projectionMatrix * directionalShadow.viewMatrix * worldPosition;
 }`
@@ -151,9 +138,12 @@ fn getPCFDirectionalShadows(worldPosition: vec3f) -> array<f32, ${minDirectional
 /**
  * Get {@link PointLight} shadow map pass vertex shader.
  * @param lightIndex - Index of the {@link PointLight} for which to render the depth pass.
- * @param hasInstances - Whether the mesh uses instancing or not.
+ * @param parameters - {@link VertexShaderInputParams} used to compute the output `worldPosition` and `normal` vectors.
  */
-export const getDefaultPointShadowDepthVs = (lightIndex = 0, hasInstances = false) => /* wgsl */ `
+export const getDefaultPointShadowDepthVs = (
+  lightIndex = 0,
+  { bindings = [], geometry }: VertexShaderInputParams
+) => /* wgsl */ `
 struct PointShadowVSOutput {
   @builtin(position) position: vec4f,
   @location(0) worldPosition: vec3f,
@@ -164,21 +154,23 @@ struct PointShadowVSOutput {
 ) -> PointShadowVSOutput {  
   var pointShadowVSOutput: PointShadowVSOutput;
   
-  ${getPositionAndNormal(hasInstances)}
+  ${getVertexPositionNormal({ bindings, geometry })}
+  
+  let worldPos = worldPosition.xyz / worldPosition.w;
   
   let pointShadow: PointShadowsElement = pointShadows.pointShadowsElements[${lightIndex}];
   
-  let lightDirection: vec3f = normalize(pointLights.elements[${lightIndex}].position - worldPosition.xyz);
+  let lightDirection: vec3f = normalize(pointLights.elements[${lightIndex}].position - worldPos);
   let NdotL: f32 = dot(normalize(normal), lightDirection);
   let sinNdotL = sqrt(1.0 - NdotL * NdotL);
   let normalBias: f32 = pointShadow.normalBias * sinNdotL;
   
-  worldPosition = vec4(worldPosition.xyz - normal * normalBias, worldPosition.w);
+  worldPosition = vec4(worldPos - normal * normalBias, 1.0);
     
-  var position: vec4f = pointShadow.projectionMatrix * pointShadow.viewMatrices[pointShadow.face] * worldPosition;
+  var shadowPosition: vec4f = pointShadow.projectionMatrix * pointShadow.viewMatrices[pointShadow.face] * worldPosition;
 
-  pointShadowVSOutput.position = position;
-  pointShadowVSOutput.worldPosition = worldPosition.xyz;
+  pointShadowVSOutput.position = shadowPosition;
+  pointShadowVSOutput.worldPosition = worldPos;
 
   return pointShadowVSOutput;
 }`

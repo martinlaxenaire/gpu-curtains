@@ -673,8 +673,12 @@ export class Scene extends Object3D {
       this.renderer.meshes[i].onBeforeRenderScene()
     }
 
+    this.renderer.animations.forEach((targetsAnimation) => targetsAnimation.update())
+
     // update matrices
     this.updateMatrixStack()
+
+    this.renderer.animations.forEach((targetsAnimation) => targetsAnimation.onAfterUpdate())
 
     // TODO store projected meshes only?
     // frustum culling check if needed

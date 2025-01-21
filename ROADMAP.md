@@ -36,7 +36,8 @@
 
 ## TODO / possible improvements
 
-- Add/improve GLTFScenesManager features (sparse accessors, animations, morphing, skinning...)
+- Add/improve GLTFScenesManager extensions
+- OrthographicCamera?
 - Add more lights (SpotLight...)
 - MSDF fonts
 - Better shader chunks system and/or custom preprocessor

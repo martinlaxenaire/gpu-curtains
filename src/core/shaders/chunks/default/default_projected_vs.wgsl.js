@@ -15,7 +15,8 @@ struct VSOutput {
   vsOutput.position = getOutputPosition(attributes.position);
   vsOutput.uv = attributes.uv;
   vsOutput.normal = getWorldNormal(attributes.normal);
-  vsOutput.worldPosition = getWorldPosition(attributes.position).xyz;
+  let worldPosition: vec4f = getWorldPosition(attributes.position);
+  vsOutput.worldPosition = worldPosition.xyz / worldPosition.w;
   vsOutput.viewDirection = camera.position - vsOutput.worldPosition;
   
   return vsOutput;
