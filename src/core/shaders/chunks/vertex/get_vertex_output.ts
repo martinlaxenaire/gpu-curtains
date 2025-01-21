@@ -34,13 +34,23 @@ export const getVertexPositionNormal = ({ bindings = [], geometry }: VertexShade
 
   const hasInstances = geometry.instancesCount > 1
 
-  const skinJoints =
-    geometry.vertexBuffers.length && geometry.vertexBuffers[0].attributes.filter((attr) => attr.name.includes('joints'))
-  const skinWeights =
-    geometry.vertexBuffers.length &&
-    geometry.vertexBuffers[0].attributes.filter((attr) => attr.name.includes('weights'))
-  const skinBindings = bindings.filter((binding) => binding.name.includes('skin'))
+  const skinJoints = []
+  const skinWeights = []
+  if (geometry.vertexBuffers && geometry.vertexBuffers.length) {
+    geometry.vertexBuffers.forEach((vertexBuffer) => {
+      vertexBuffer.attributes.forEach((attribute) => {
+        if (attribute.name.includes('joints')) {
+          skinJoints.push(attribute)
+        }
 
+        if (attribute.name.includes('weights')) {
+          skinWeights.push(attribute)
+        }
+      })
+    })
+  }
+
+  const skinBindings = bindings.filter((binding) => binding.name.includes('skin'))
   const morphTargetsBindings = bindings.filter((binding) => binding.name.includes('morphTarget')) as BufferBinding[]
 
   // morph targets
@@ -49,22 +59,24 @@ export const getVertexPositionNormal = ({ bindings = [], geometry }: VertexShade
 
     morphAttributes.forEach((input) => {
       const bindingType = BufferElement.getType(input.type)
-      const attributeType =
-        geometry.vertexBuffers.length &&
-        geometry.vertexBuffers[0].attributes.find((attribute) => attribute.name === input.name).type
+      const attribute = geometry.getAttributeByName(input.name)
 
-      // we could have only one attribute that's morphed
-      const attributeBindingVar =
-        morphAttributes.length === 1
-          ? `${binding.name}.${input.name}[attributes.vertexIndex]`
-          : `${binding.name}.elements[attributes.vertexIndex].${input.name}`
+      if (attribute) {
+        const attributeType = attribute.type
 
-      if (bindingType === attributeType) {
-        output += `${input.name} += ${binding.name}.weight * ${attributeBindingVar};\n\t`
-      } else {
-        // TODO other cases?!
-        if (bindingType === 'vec3f' && attributeType === 'vec4f') {
-          output += `${input.name} += ${binding.name}.weight * vec4(${attributeBindingVar}, 0.0);\n\t`
+        // we could have only one attribute that's morphed
+        const attributeBindingVar =
+          morphAttributes.length === 1
+            ? `${binding.name}.${input.name}[attributes.vertexIndex]`
+            : `${binding.name}.elements[attributes.vertexIndex].${input.name}`
+
+        if (bindingType === attributeType) {
+          output += `${input.name} += ${binding.name}.weight * ${attributeBindingVar};\n\t`
+        } else {
+          // TODO other cases?!
+          if (bindingType === 'vec3f' && attributeType === 'vec4f') {
+            output += `${input.name} += ${binding.name}.weight * vec4(${attributeBindingVar}, 0.0);\n\t`
+          }
         }
       }
     })
@@ -148,12 +160,10 @@ export const getVertexPositionNormal = ({ bindings = [], geometry }: VertexShade
     }
 
     output += /* wgsl */ `
-  //modelMatrix = instances[attributes.instanceIndex].modelMatrix;
   modelMatrix = instances.matrices[attributes.instanceIndex].model;
   worldPosition = modelMatrix * worldPosition;
   
-  //normal = normalize((instances[attributes.instanceIndex].normalMatrix * vec4(normalize(normal), 0.0)).xyz);
-  normal = normalize(instances.matrices[attributes.instanceIndex].normal * normalize(normal));
+  normal = normalize(instances.matrices[attributes.instanceIndex].normal * normal);
     `
   } else {
     output += /* wgsl */ `

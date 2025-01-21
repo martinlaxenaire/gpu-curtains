@@ -1,6 +1,5 @@
 // Goals of this test:
-// - test various capacities of the gltf loader
-
+// - test various capacities of the gltf loader (skinning, animation, shadows)
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
   const {
@@ -15,6 +14,7 @@ window.addEventListener('load', async () => {
     BoxGeometry,
     GLTFLoader,
     GLTFScenesManager,
+    Mat4,
     buildShaders,
     AmbientLight,
     DirectionalLight,
@@ -106,7 +106,8 @@ window.addEventListener('load', async () => {
     intensity: 2,
     shadow: {
       depthTextureSize: new Vec2(1024),
-      pcfSamples: 2,
+      pcfSamples: 3,
+      bias: 0.001,
     },
   })
 
@@ -145,6 +146,24 @@ window.addEventListener('load', async () => {
     ${getLambert({
       receiveShadows: true,
     })}
+    
+    // ported from https://github.com/toji/pristine-grid-webgpu
+    // grid function from Best Darn Grid article
+    fn PristineGrid(uv: vec2f, lineWidth: vec2f) -> f32 {
+      let uvDDXY = vec4f(dpdx(uv), dpdy(uv));
+      let uvDeriv = vec2f(length(uvDDXY.xz), length(uvDDXY.yw));
+      let invertLine: vec2<bool> = lineWidth > vec2f(0.5);
+      let targetWidth: vec2f = select(lineWidth, 1 - lineWidth, invertLine);
+      let drawWidth: vec2f = clamp(targetWidth, uvDeriv, vec2f(0.5));
+      let lineAA: vec2f = uvDeriv * 1.5;
+      var gridUV: vec2f = abs(fract(uv) * 2.0 - 1.0);
+      gridUV = select(1 - gridUV, gridUV, invertLine);
+      var grid2: vec2f = smoothstep(drawWidth + lineAA, drawWidth - lineAA, gridUV);
+      grid2 *= saturate(targetWidth / drawWidth);
+      grid2 = mix(grid2, targetWidth, saturate(uvDeriv * 2.0 - 1.0));
+      grid2 = select(grid2, 1.0 - grid2, invertLine);
+      return mix(grid2.x, 1.0, grid2.y);
+    }
 
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {      
       // negate the normals if we're using front face culling
@@ -155,10 +174,10 @@ window.addEventListener('load', async () => {
       
       let worldPosition: vec3f = fsInput.worldPosition;
       
-      var c: vec2f = floor(fsInput.uv * checkerboard.scale) * 0.5;
-      var checker: f32 = 2.0 * fract(c.x + c.y);
-    
-      var color: vec3f = vec3((checker + 0.25) * 0.5);
+      let pristineGrid = PristineGrid(fsInput.uv * grid.scale, grid.lineWidth);
+
+      // lerp between base and line color
+      var color: vec3f = mix(grid.baseColor, grid.lineColor, pristineGrid * grid.lineAlpha);
       
       color = getLambert(
         normal,
@@ -185,11 +204,27 @@ window.addEventListener('load', async () => {
       },
     },
     uniforms: {
-      checkerboard: {
+      grid: {
         struct: {
           scale: {
             type: 'vec2f',
-            value: new Vec2(500),
+            value: new Vec2(200),
+          },
+          baseColor: {
+            type: 'vec3f',
+            value: new Vec3(0.25),
+          },
+          lineColor: {
+            type: 'vec3f',
+            value: new Vec3(1),
+          },
+          lineWidth: {
+            type: 'vec2f',
+            value: new Vec2(0.02),
+          },
+          lineAlpha: {
+            type: 'f32',
+            value: 1,
           },
         },
       },
@@ -201,21 +236,18 @@ window.addEventListener('load', async () => {
 
   //floor.position.y = -1.5
   floor.rotation.x = -Math.PI / 2
-  floor.scale.x = 150
-  floor.scale.y = 150
+  floor.scale.x = 50
+  floor.scale.y = 50
   floor.parent = floorPivot
 
   // bounding box
   const bboxFs = /* wgsl */ `
     struct VSOutput {
       @builtin(position) position: vec4f,
-      @location(0) uv: vec2f,
-      @location(1) normal: vec3f,
     };
     
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-      // normals
-      return vec4(vec3(1.0, 0.0, 0.0), 0.25);
+      return vec4(vec3(1.0, 0.0, 0.0), 0.1);
     }
   `
 
@@ -284,8 +316,6 @@ window.addEventListener('load', async () => {
     // center model
     node.position.sub(center)
 
-    console.log(center, radius, size)
-
     camera.far = radius * 200
     camera.near = radius * 0.1
 
@@ -305,11 +335,11 @@ window.addEventListener('load', async () => {
     light.shadow.camera.left = radius * -2
 
     floorPivot.position.y = -size.y * 0.5
-    floor.scale.x = radius * 150
-    floor.scale.y = radius * 150
+    floor.scale.x = radius * 50
+    floor.scale.y = radius * 50
 
     bboxHelper.scale.copy(size.clone().multiplyScalar(0.5))
-    //bboxHelper.visible = false
+    // bboxHelper.visible = false
 
     const meshes = gltfScenesManager.addMeshes((meshDescriptor) => {
       const { parameters } = meshDescriptor

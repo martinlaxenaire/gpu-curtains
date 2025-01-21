@@ -427,6 +427,40 @@ export class Shadow {
   }
 
   /**
+   * Clear the content of the depth texture. Called whenever the {@link meshes} array is empty after having removed a mesh.
+   */
+  clearDepthTexture() {
+    if (!this.depthTexture || !this.depthTexture.texture) return
+
+    // Create a command encoder
+    const commandEncoder = this.renderer.device.createCommandEncoder()
+    !this.renderer.production &&
+      commandEncoder.pushDebugGroup(`Clear ${this.depthTexture.texture.label} command encoder`)
+
+    // Define the render pass descriptor
+    const renderPassDescriptor: GPURenderPassDescriptor = {
+      colorAttachments: [],
+      depthStencilAttachment: {
+        view: this.depthTexture.texture.createView({
+          label: 'Clear ' + this.depthTexture.texture.label + ' view',
+        }),
+        depthLoadOp: 'clear', // Clear the depth attachment
+        depthClearValue: 1.0, // Clear to the maximum depth (farthest possible depth)
+        depthStoreOp: 'store', // Store the cleared depth
+      },
+    }
+
+    // Begin the render pass
+    const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor)
+    // End the render pass (we don't need to draw anything, just clear)
+    passEncoder.end()
+
+    // Submit the command buffer
+    !this.renderer.production && commandEncoder.popDebugGroup()
+    this.renderer.device.queue.submit([commandEncoder.finish()])
+  }
+
+  /**
    * Create the {@link depthPassTarget}.
    */
   createDepthPassTarget() {
@@ -704,6 +738,10 @@ export class Shadow {
     }
 
     this.meshes.delete(mesh.uuid)
+
+    if (this.meshes.size === 0) {
+      this.clearDepthTexture()
+    }
   }
 
   /**

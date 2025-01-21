@@ -253,13 +253,12 @@ window.addEventListener('load', async () => {
       @location(0) uv: vec2f,
     };
 
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {          
-      
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {        
       let rawDepth = textureSampleCompare(
         depthTexture,
         debugDepthSampler,
         fsInput.uv,
-        0.1
+        fsInput.uv.y * 0.5 + 0.5
       );
       
       // remap depth into something a bit more visible

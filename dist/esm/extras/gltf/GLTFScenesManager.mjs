@@ -4,6 +4,7 @@ import { Texture } from '../../core/textures/Texture.mjs';
 import { Object3D } from '../../core/objects3D/Object3D.mjs';
 import { Box3 } from '../../math/Box3.mjs';
 import { Vec3 } from '../../math/Vec3.mjs';
+import { Mat3 } from '../../math/Mat3.mjs';
 import { Mat4 } from '../../math/Mat4.mjs';
 import { Geometry } from '../../core/geometries/Geometry.mjs';
 import { IndexedGeometry } from '../../core/geometries/IndexedGeometry.mjs';
@@ -38,7 +39,6 @@ var __privateMethod = (obj, member, method) => {
 };
 var _primitiveInstances, _getSparseAccessorIndicesAndValues, getSparseAccessorIndicesAndValues_fn, _parsePrimitiveProperty, parsePrimitiveProperty_fn;
 const GL = WebGLRenderingContext;
-const _normalMatrix = new Mat4();
 const _GLTFScenesManager = class _GLTFScenesManager {
   /**
    * {@link GLTFScenesManager} constructor.
@@ -47,6 +47,12 @@ const _GLTFScenesManager = class _GLTFScenesManager {
    * @param parameters.gltf - The {@link GLTFLoader.gltf | gltf} object used.
    */
   constructor({ renderer, gltf }) {
+    /**
+     * Get an accessor sparse indices values to use for replacement if any.
+     * @param accessor - {@link GLTF.IAccessor | Accessor} to check for sparse indices.
+     * @returns parameters - indices and values found as {@link TypedArray} if any.
+     * @private
+     */
     __privateAdd(this, _getSparseAccessorIndicesAndValues);
     /**
      * Parse a {@link GLTF.IMeshPrimitive | glTF primitive} and create typed arrays from the given {@link gltf} accessors, bufferViews and buffers.
@@ -397,14 +403,37 @@ const _GLTFScenesManager = class _GLTFScenesManager {
     }
     let instancesDescriptor = null;
     if (node.mesh !== void 0) {
+      let instanceAttributes = null;
+      if (node.extensions && node.extensions.EXT_mesh_gpu_instancing) {
+        const { attributes } = node.extensions.EXT_mesh_gpu_instancing;
+        instanceAttributes = {
+          count: 0,
+          nodesTransformations: {}
+        };
+        for (const attribute of Object.entries(attributes)) {
+          const accessor = this.gltf.accessors[attribute[1]];
+          const bufferView = this.gltf.bufferViews[accessor.bufferView];
+          const accessorConstructor = _GLTFScenesManager.getTypedArrayConstructorFromComponentType(
+            accessor.componentType
+          );
+          const attributeSize = _GLTFScenesManager.getVertexAttributeParamsFromType(accessor.type).size;
+          const attributeValues = new accessorConstructor(
+            this.gltf.arrayBuffers[bufferView.buffer],
+            accessor.byteOffset + bufferView.byteOffset,
+            accessor.count * attributeSize
+          );
+          instanceAttributes.count = accessor.count;
+          instanceAttributes.nodesTransformations[attribute[0].toLowerCase()] = attributeValues;
+        }
+      }
       const mesh = this.gltf.meshes[node.mesh];
-      mesh.primitives.forEach((primitive, i) => {
+      mesh.primitives.forEach((primitive, primitiveIndex) => {
         const meshDescriptor = {
           parent: child.node,
           attributes: [],
           textures: [],
           parameters: {
-            label: mesh.name ? mesh.name + " " + i : "glTF mesh " + i
+            label: mesh.name ? mesh.name + " " + primitiveIndex : "glTF mesh " + primitiveIndex
           },
           nodes: []
         };
@@ -421,6 +450,28 @@ const _GLTFScenesManager = class _GLTFScenesManager {
         }
         instancesDescriptor.instances.push(node);
         instancesDescriptor.nodes.push(child.node);
+        if (instanceAttributes && instanceAttributes.count) {
+          for (let i = 0; i < instanceAttributes.count; i++) {
+            const instanceNode = new Object3D();
+            if (instanceAttributes.nodesTransformations) {
+              const { translation, scale, rotation } = instanceAttributes.nodesTransformations;
+              if (translation) {
+                instanceNode.position.set(translation[i * 3], translation[i * 3 + 1], translation[i * 3 + 2]);
+              }
+              if (scale) {
+                instanceNode.scale.set(scale[i * 3], scale[i * 3 + 1], scale[i * 3 + 2]);
+              }
+              if (rotation) {
+                instanceNode.quaternion.setFromArray(
+                  Float32Array.from([rotation[i * 4], rotation[i * 4 + 1], rotation[i * 4 + 2], rotation[i * 4 + 3]])
+                );
+              }
+            }
+            instanceNode.parent = child.node;
+            instancesDescriptor.instances.push(node);
+            instancesDescriptor.nodes.push(instanceNode);
+          }
+        }
       });
     }
     if (node.camera !== void 0) {
@@ -923,28 +974,50 @@ const _GLTFScenesManager = class _GLTFScenesManager {
       };
     }
     if (instancesCount > 1) {
-      const worldMatrices = new Float32Array(instancesCount * 16);
-      const normalMatrices = new Float32Array(instancesCount * 16);
-      for (let i = 0; i < instancesCount; ++i) {
-        worldMatrices.set(nodes[i].worldMatrix.elements, i * 16);
-        _normalMatrix.copy(nodes[i].worldMatrix).invert().transpose();
-        normalMatrices.set(_normalMatrix.elements, i * 16);
-      }
-      meshDescriptor.parameters.storages = {
-        instances: {
-          visibility: ["vertex", "fragment"],
-          struct: {
-            modelMatrix: {
-              type: "array<mat4x4f>",
-              value: worldMatrices
-            },
-            normalMatrix: {
-              type: "array<mat4x4f>",
-              value: normalMatrices
-            }
+      const instanceMatricesBinding = new BufferBinding({
+        label: "Instance matrices",
+        name: "matrices",
+        visibility: ["vertex", "fragment"],
+        bindingType: "storage",
+        struct: {
+          model: {
+            type: "mat4x4f",
+            value: new Mat4()
+          },
+          normal: {
+            type: "mat3x3f",
+            value: new Mat3()
           }
         }
-      };
+      });
+      const instancesBinding = new BufferBinding({
+        label: "Instances",
+        name: "instances",
+        visibility: ["vertex", "fragment"],
+        bindingType: "storage",
+        childrenBindings: [
+          {
+            binding: instanceMatricesBinding,
+            count: instancesCount,
+            forceArray: true
+          }
+        ]
+      });
+      instancesBinding.childrenBindings.forEach((binding, index) => {
+        const instanceNode = nodes[index];
+        const _updateWorldMatrix = instanceNode.updateWorldMatrix.bind(instanceNode);
+        instanceNode.updateWorldMatrix = () => {
+          _updateWorldMatrix();
+          binding.inputs.model.value.copy(instanceNode.worldMatrix);
+          binding.inputs.normal.value.getNormalMatrix(instanceNode.worldMatrix);
+          binding.inputs.model.shouldUpdate = true;
+          binding.inputs.normal.shouldUpdate = true;
+        };
+      });
+      if (!meshDescriptor.parameters.bindings) {
+        meshDescriptor.parameters.bindings = [];
+      }
+      meshDescriptor.parameters.bindings.push(instancesBinding);
     }
     for (let i = 0; i < nodes.length; i++) {
       const tempBbox = meshDescriptor.parameters.geometry.boundingBox.clone();
@@ -997,27 +1070,6 @@ const _GLTFScenesManager = class _GLTFScenesManager {
           ...meshDescriptor.parameters
         });
         mesh.parent = meshDescriptor.parent;
-        if (meshDescriptor.nodes.length > 1) {
-          const _updateMatrixStack = mesh.updateMatrixStack.bind(mesh);
-          mesh.updateMatrixStack = () => {
-            _updateMatrixStack();
-            let updateInstances = mesh.matricesNeedUpdate;
-            meshDescriptor.nodes.forEach((node, i) => {
-              if (node.matricesNeedUpdate) {
-                updateInstances = true;
-              }
-              if (updateInstances) {
-                mesh.storages.instances.modelMatrix.value.set(node.worldMatrix.elements, i * 16);
-                _normalMatrix.copy(node.worldMatrix).invert().transpose();
-                mesh.storages.instances.normalMatrix.value.set(_normalMatrix.elements, i * 16);
-              }
-            });
-            if (updateInstances) {
-              mesh.storages.instances.modelMatrix.shouldUpdate = true;
-              mesh.storages.instances.normalMatrix.shouldUpdate = true;
-            }
-          };
-        }
         this.scenesManager.meshes.push(mesh);
         return mesh;
       }
@@ -1032,11 +1084,13 @@ const _GLTFScenesManager = class _GLTFScenesManager {
     this.scenesManager.nodes.forEach((node) => {
       node.destroy();
     });
+    this.scenesManager.nodes = /* @__PURE__ */ new Map();
     this.scenesManager.scenes.forEach((scene) => {
       scene.node.destroy();
     });
     this.scenesManager.animations.forEach((animation) => animation.setRenderer(null));
     this.scenesManager.node.destroy();
+    __privateSet(this, _primitiveInstances, /* @__PURE__ */ new Map());
   }
 };
 _primitiveInstances = new WeakMap();

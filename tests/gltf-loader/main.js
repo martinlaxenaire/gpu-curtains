@@ -1,15 +1,11 @@
 // Goals of this test:
 // - test various capacities of the gltf loader
-
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
   const {
     GPUDeviceManager,
     GPUCameraRenderer,
-    Texture,
-    HDRLoader,
     EnvironmentMap,
-    Sampler,
     GLTFLoader,
     GLTFScenesManager,
     buildShaders,
@@ -124,6 +120,10 @@ window.addEventListener('load', async () => {
       name: 'Simple Sparse Accessor',
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/SimpleSparseAccessor/glTF/SimpleSparseAccessor.gltf',
     },
+    simpleInstancing: {
+      name: 'Simple Instancing',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/SimpleInstancing/glTF/SimpleInstancing.gltf',
+    },
     // interleaved data
     boxInterleaved: {
       name: 'Box Interleaved',
@@ -198,8 +198,7 @@ window.addEventListener('load', async () => {
     title: 'GLTF loader',
   })
 
-  //const currentModelKey = 'damagedHelmet'
-  const currentModelKey = 'interpolationTest'
+  const currentModelKey = 'damagedHelmet'
   let currentModel = models[currentModelKey]
 
   const modelField = gui
@@ -307,7 +306,6 @@ window.addEventListener('load', async () => {
 
       // debug
       const additionalColorContribution = `
-        // color = vec4(vec3(metallic), color.a);
         // color = vec4(normalize(normal) * 0.5 + 0.5, 1.0);
       `
 
@@ -378,7 +376,7 @@ window.addEventListener('load', async () => {
 
     console.log(gpuCameraRenderer, meshes)
 
-    meshes[0].onReady(() => console.log(meshes[0].material.getShaderCode('vertex')))
+    // meshes[0].onReady(() => console.log(meshes[0].material.getShaderCode('fragment')))
   }
 
   // GUI updates

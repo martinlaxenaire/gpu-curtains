@@ -1,10 +1,9 @@
 // Goal of this test is to help debug and visualize buffer binding alignments
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
-  const { BufferBinding, Vec2, Vec3 } = await import(/* @vite-ignore */ path)
+  const { BufferBinding, Vec2, Vec3, Mat3, Mat4 } = await import(/* @vite-ignore */ path)
 
   const debugBindings = []
-  //debugBindings.push(gpuCurtains.renderer.cameraBinding)
 
   // ref: https://webgpufundamentals.org/webgpu/lessons/resources/wgsl-offset-computer.html#x=5d00000100f901000000000000003d8888623728a306fc320e1a9ba57547078694a9be9f86fca01fc2b96183b8019b42979f89b724d75b16a7d0ba5f05e1688c08377f9adcadac8b118c715ae49684657cbf39131e36661070f3c12b655a42f158e5add7714dbd4729a3973fef2edfb03e8759dabdeb5279ff2f0b45d47fb70575af8b3a734abecbf3ecdca99f3367a2d772ceb3b4659a28504ff11321f7227e9e5358ffdbc75a65573125707e74c84e6410a1b32e84d64e7b89923cf185c66e31f16e5489b838fb930f42f15dbbeeca544be7372401b7e7efb8288be7dc18cc48ba6edd18f2e1cc64d805f7862962ad3cd91a5a7b13ca157c51e17f8dcfe8c87398a0eabf62e1f623c49ec6ec8e7e598dc6b6d5a3ffbe2396d3
 
@@ -263,6 +262,41 @@ window.addEventListener('load', async () => {
 
   debugBindings.push(normalMatrixInterleavedArrayBinding)
   normalMatrixInterleavedArrayBinding.update()
+
+  const instanceMatricesBinding = new BufferBinding({
+    label: 'Instance matrices',
+    name: 'matrices',
+    visibility: ['vertex', 'fragment'],
+    bindingType: 'storage',
+    struct: {
+      model: {
+        type: 'mat4x4f',
+        value: new Mat4(),
+      },
+      normal: {
+        type: 'mat3x3f',
+        value: new Mat3(),
+      },
+    },
+  })
+
+  const instancesBinding = new BufferBinding({
+    label: 'InstancesTest',
+    name: 'instancesTest',
+    visibility: ['vertex', 'fragment'],
+    bindingType: 'storage',
+    childrenBindings: [
+      {
+        binding: instanceMatricesBinding,
+        count: 2,
+        forceArray: true,
+      },
+    ],
+  })
+
+  debugBindings.push(instancesBinding)
+  instancesBinding.update()
+  console.log(instancesBinding)
 
   const directionalLightBinding = new BufferBinding({
     label: 'Directional lights',

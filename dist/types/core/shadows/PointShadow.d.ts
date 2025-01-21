@@ -90,6 +90,10 @@ export declare class PointShadow extends Shadow {
      */
     createDepthTexture(): void;
     /**
+     * Clear the content of the depth texture. Called whenever the {@link meshes} array is empty after having removed a mesh.
+     */
+    clearDepthTexture(): void;
+    /**
      * Remove the depth pass from its {@link utils/TasksQueueManager.TasksQueueManager | task queue manager}.
      * @param depthPassTaskID - Task queue manager ID to use for removal.
      */
@@ -109,6 +113,7 @@ export declare class PointShadow extends Shadow {
     render(once?: boolean): number;
     /**
      * Get the default depth pass vertex shader for this {@link PointShadow}.
+     * parameters - {@link VertexShaderInputParams} used to compute the output `worldPosition` and `normal` vectors.
      * @returns - Depth pass vertex shader.
      */
     getDefaultShadowDepthVs({ bindings, geometry }: VertexShaderInputParams): ShaderOptions;

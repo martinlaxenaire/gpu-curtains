@@ -301,6 +301,33 @@ class Shadow {
     });
   }
   /**
+   * Clear the content of the depth texture. Called whenever the {@link meshes} array is empty after having removed a mesh.
+   */
+  clearDepthTexture() {
+    if (!this.depthTexture || !this.depthTexture.texture)
+      return;
+    const commandEncoder = this.renderer.device.createCommandEncoder();
+    !this.renderer.production && commandEncoder.pushDebugGroup(`Clear ${this.depthTexture.texture.label} command encoder`);
+    const renderPassDescriptor = {
+      colorAttachments: [],
+      depthStencilAttachment: {
+        view: this.depthTexture.texture.createView({
+          label: "Clear " + this.depthTexture.texture.label + " view"
+        }),
+        depthLoadOp: "clear",
+        // Clear the depth attachment
+        depthClearValue: 1,
+        // Clear to the maximum depth (farthest possible depth)
+        depthStoreOp: "store"
+        // Store the cleared depth
+      }
+    };
+    const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
+    passEncoder.end();
+    !this.renderer.production && commandEncoder.popDebugGroup();
+    this.renderer.device.queue.submit([commandEncoder.finish()]);
+  }
+  /**
    * Create the {@link depthPassTarget}.
    */
   createDepthPassTarget() {
@@ -411,6 +438,7 @@ class Shadow {
   }
   /**
    * Get the default depth pass vertex shader for this {@link Shadow}.
+   * parameters - {@link VertexShaderInputParams} used to compute the output `worldPosition` and `normal` vectors.
    * @returns - Depth pass vertex shader.
    */
   getDefaultShadowDepthVs({ bindings = [], geometry }) {
@@ -515,6 +543,9 @@ class Shadow {
       __privateGet(this, _depthMaterials).delete(mesh.uuid);
     }
     this.meshes.delete(mesh.uuid);
+    if (this.meshes.size === 0) {
+      this.clearDepthTexture();
+    }
   }
   /**
    * Destroy the {@link Shadow}.

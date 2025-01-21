@@ -11,7 +11,7 @@ import {
   Vec3,
 } from '../../dist/esm/index.mjs'
 
-// Basic glTF loader with PBR shaders
+// glTF loader with environment maps and IBL shaders
 window.addEventListener('load', async () => {
   // create a device manager
   const gpuDeviceManager = new GPUDeviceManager({

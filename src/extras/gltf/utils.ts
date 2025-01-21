@@ -142,8 +142,7 @@ ${vertexOutput}
   // FRAGMENT
   const initColor = /* wgsl */ 'var color: vec4f = vec4();'
   const returnColor = /* wgsl */ `
-      return color;
-  `
+  return color;`
 
   // start with the base color
   // use vertex color 0 if defined
@@ -156,92 +155,81 @@ ${vertexOutput}
 
   if (baseColorTexture) {
     baseColor = /* wgsl */ `
-      var baseColor: vec4f = textureSample(baseColorTexture, ${baseColorTexture.sampler}, fsInput.${baseColorTexture.texCoordAttributeName}) * material.baseColorFactor;
-      
-      if (baseColor.a < material.alphaCutoff) {
-        discard;
-      }
+  var baseColor: vec4f = textureSample(baseColorTexture, ${baseColorTexture.sampler}, fsInput.${baseColorTexture.texCoordAttributeName}) * material.baseColorFactor;
+  
+  if (baseColor.a < material.alphaCutoff) {
+    discard;
+  }
     `
   }
 
   baseColor += /* wgsl */ `
-      color = baseColor;
+  color = baseColor;
   `
 
   // normal map
 
   let normalMap = /* wgsl */ `
-      let faceDirection = select(-1.0, 1.0, fsInput.frontFacing);
-      let geometryNormal: vec3f = faceDirection * normal;
-    `
+  let faceDirection = select(-1.0, 1.0, fsInput.frontFacing);
+  let geometryNormal: vec3f = faceDirection * normal;`
 
   if (useNormalMap) {
     normalMap += /* wgsl */ `
-      let tbn = mat3x3f(normalize(fsInput.tangent.xyz), normalize(fsInput.bitangent), geometryNormal);
-      let normalMap = textureSample(normalTexture, ${normalTexture.sampler}, fsInput.${normalTexture.texCoordAttributeName}).rgb;
-      normal = normalize(tbn * (2.0 * normalMap - vec3(material.normalMapScale, material.normalMapScale, 1.0)));
-    `
+  let tbn = mat3x3f(normalize(fsInput.tangent.xyz), normalize(fsInput.bitangent), geometryNormal);
+  let normalMap = textureSample(normalTexture, ${normalTexture.sampler}, fsInput.${normalTexture.texCoordAttributeName}).rgb;
+  normal = normalize(tbn * (2.0 * normalMap - vec3(material.normalMapScale, material.normalMapScale, 1.0)));`
   } else if (normalTexture) {
     normalMap += /* wgsl */ `
-      let Q1: vec3f = dpdx(worldPosition);
-      let Q2: vec3f = dpdy(worldPosition);
-      let st1: vec2f = dpdx(fsInput.${normalTexture.texCoordAttributeName});
-      let st2: vec2f = dpdy(fsInput.${normalTexture.texCoordAttributeName});
-      
-      let T: vec3f = normalize(Q1 * st2.y - Q2 * st1.y);
-      let B: vec3f = normalize(-Q1 * st2.x + Q2 * st1.x);
-      
-      let tbn = mat3x3f(T, B, geometryNormal);
-      let normalMap = textureSample(normalTexture, ${normalTexture.sampler}, fsInput.${normalTexture.texCoordAttributeName}).rgb;
-      normal = normalize(tbn * (2.0 * normalMap - vec3(material.normalMapScale, material.normalMapScale, 1.0)));
-    `
+  let Q1: vec3f = dpdx(worldPosition);
+  let Q2: vec3f = dpdy(worldPosition);
+  let st1: vec2f = dpdx(fsInput.${normalTexture.texCoordAttributeName});
+  let st2: vec2f = dpdy(fsInput.${normalTexture.texCoordAttributeName});
+  
+  let T: vec3f = normalize(Q1 * st2.y - Q2 * st1.y);
+  let B: vec3f = normalize(-Q1 * st2.x + Q2 * st1.x);
+  
+  let tbn = mat3x3f(T, B, geometryNormal);
+  let normalMap = textureSample(normalTexture, ${normalTexture.sampler}, fsInput.${normalTexture.texCoordAttributeName}).rgb;
+  normal = normalize(tbn * (2.0 * normalMap - vec3(material.normalMapScale, material.normalMapScale, 1.0)));`
   } else {
     normalMap += /* wgsl */ `
-      normal = geometryNormal;
-    `
+  normal = geometryNormal;`
   }
 
   // metallic roughness
   let metallicRoughness = /*  wgsl */ `
-      var metallic = material.metallicFactor;
-      var roughness = material.roughnessFactor;
-  `
+  var metallic = material.metallicFactor;
+  var roughness = material.roughnessFactor;`
 
   if (metallicRoughnessTexture) {
     metallicRoughness += /* wgsl */ `
-      let metallicRoughness = textureSample(metallicRoughnessTexture, ${metallicRoughnessTexture.sampler}, fsInput.${metallicRoughnessTexture.texCoordAttributeName});
-      
-      metallic = clamp(metallic * metallicRoughness.b, 0.0, 1.0);
-      roughness = clamp(roughness * metallicRoughness.g, 0.0, 1.0);
-    `
+  let metallicRoughness = textureSample(metallicRoughnessTexture, ${metallicRoughnessTexture.sampler}, fsInput.${metallicRoughnessTexture.texCoordAttributeName});
+  
+  metallic = clamp(metallic * metallicRoughness.b, 0.0, 1.0);
+  roughness = clamp(roughness * metallicRoughness.g, 0.0, 1.0);
+  `
   }
 
   const f0 = /* wgsl */ `
-      let f0: vec3f = mix(vec3(0.04), color.rgb, vec3(metallic));
-  `
+  let f0: vec3f = mix(vec3(0.04), color.rgb, vec3(metallic));`
 
   // emissive and occlusion
   let emissiveOcclusion = /* wgsl */ `
-      var emissive: vec3f = vec3(0.0);
-      var occlusion: f32 = 1.0;
-  `
+  var emissive: vec3f = vec3(0.0);
+  var occlusion: f32 = 1.0;`
 
   if (emissiveTexture) {
     emissiveOcclusion += /* wgsl */ `
-      emissive = textureSample(emissiveTexture, ${emissiveTexture.sampler}, fsInput.${emissiveTexture.texCoordAttributeName}).rgb;
-      
-      emissive *= material.emissiveFactor;
-      `
+  emissive = textureSample(emissiveTexture, ${emissiveTexture.sampler}, fsInput.${emissiveTexture.texCoordAttributeName}).rgb;
+  emissive *= material.emissiveFactor;`
     if (occlusionTexture) {
       emissiveOcclusion += /* wgsl */ `
-      occlusion = textureSample(occlusionTexture, ${occlusionTexture.sampler}, fsInput.${occlusionTexture.texCoordAttributeName}).r;
-      `
+  occlusion = textureSample(occlusionTexture, ${occlusionTexture.sampler}, fsInput.${occlusionTexture.texCoordAttributeName}).r;`
     }
   }
 
   emissiveOcclusion += /* wgsl */ `
-      occlusion = 1.0 + material.occlusionStrength * (occlusion - 1.0);
-  `
+  occlusion = 1.0 + material.occlusionStrength * (occlusion - 1.0);`
 
   // Shader parameters
   let { shadingModel } = shaderParameters
@@ -346,101 +334,94 @@ ${vertexOutput}
       case 'Lambert':
       default:
         return /* wgsl */ `
-      color = vec4(
-        getLambert(
-          normal,
-          worldPosition,
-          color.rgb,
-          occlusion
-        ),
-        color.a
-      );`
+  color = vec4(
+    getLambert(
+      normal,
+      worldPosition,
+      color.rgb,
+      occlusion
+    ),
+    color.a
+  );`
       case 'Phong':
         return /* wgsl */ `
-      color = vec4(
-        getPhong(
-          normal,
-          worldPosition,
-          color.rgb,
-          viewDirection,
-          f0, // specular color
-          metallic * (1.0 - roughness) + (1.0 - metallic) * 0.04, // specular strength
-          (1.0 - roughness) * 30.0, // TODO shininess
-          occlusion
-        ),
-        color.a
-      );`
+  color = vec4(
+    getPhong(
+      normal,
+      worldPosition,
+      color.rgb,
+      viewDirection,
+      f0, // specular color
+      metallic * (1.0 - roughness) + (1.0 - metallic) * 0.04, // specular strength
+      (1.0 - roughness) * 30.0, // TODO shininess
+      occlusion
+    ),
+    color.a
+  );`
       case 'PBR':
         return /* wgsl */ `
-      color = vec4(
-        getPBR(
-          normal,
-          worldPosition,
-          color.rgb,
-          viewDirection,
-          f0,
-          metallic,
-          roughness,
-          occlusion
-        ),
-        color.a
-      );`
+  color = vec4(
+    getPBR(
+      normal,
+      worldPosition,
+      color.rgb,
+      viewDirection,
+      f0,
+      metallic,
+      roughness,
+      occlusion
+    ),
+    color.a
+  );`
       case 'IBL':
         return /* wgsl */ `
-      color = vec4(
-        getIBL(
-          normal,
-          worldPosition,
-          color.rgb,
-          viewDirection,
-          f0,
-          metallic,
-          roughness,
-          ${environmentMap.sampler.name},
-          ${environmentMap.lutTexture.options.name},
-          ${environmentMap.specularTexture.options.name},
-          ${environmentMap.diffuseTexture.options.name},
-          occlusion
-        ),
-        color.a
-      );`
+  color = vec4(
+    getIBL(
+      normal,
+      worldPosition,
+      color.rgb,
+      viewDirection,
+      f0,
+      metallic,
+      roughness,
+      ${environmentMap.sampler.name},
+      ${environmentMap.lutTexture.options.name},
+      ${environmentMap.specularTexture.options.name},
+      ${environmentMap.diffuseTexture.options.name},
+      occlusion
+    ),
+    color.a
+  );`
     }
   })()
 
   const applyEmissive = /* wgsl */ `
-    color = vec4(color.rgb + emissive, color.a);
+  color = vec4(color.rgb + emissive, color.a);
   `
 
   const fs = /* wgsl */ `  
-    ${chunks.additionalFragmentHead}
-  
-    ${fragmentInput}
-  
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {       
-      ${initColor}
-      ${baseColor}
-      
-      let worldPosition: vec3f = fsInput.worldPosition;
-      let viewDirection: vec3f = fsInput.viewDirection;
-      var normal: vec3f = normalize(fsInput.normal);
-      
-      ${normalMap}
-      ${metallicRoughness}  
-      
-      // user defined preliminary color contribution
-      ${chunks.preliminaryColorContribution}
-        
-      ${f0}
-      ${emissiveOcclusion}
-      
-      ${applyLightShading}
-      ${applyEmissive}
-      
-      // user defined additional color contribution
-      ${chunks.additionalColorContribution}
-      
-      ${returnColor}
-    }
+${chunks.additionalFragmentHead}
+
+${fragmentInput}
+
+@fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {       
+  ${initColor}
+  ${baseColor}
+  let worldPosition: vec3f = fsInput.worldPosition;
+  let viewDirection: vec3f = fsInput.viewDirection;
+  var normal: vec3f = normalize(fsInput.normal);
+  ${normalMap}
+  ${metallicRoughness}  
+  // user defined preliminary color contribution
+  ${chunks.preliminaryColorContribution}
+  ${f0}
+  ${emissiveOcclusion}
+  ${applyLightShading}
+  ${applyEmissive}
+  // user defined additional color contribution
+  ${chunks.additionalColorContribution}
+  ${returnColor}
+}
   `
 
   return {

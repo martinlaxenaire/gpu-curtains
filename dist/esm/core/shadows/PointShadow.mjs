@@ -228,6 +228,39 @@ class PointShadow extends Shadow {
     });
   }
   /**
+   * Clear the content of the depth texture. Called whenever the {@link meshes} array is empty after having removed a mesh.
+   */
+  clearDepthTexture() {
+    if (!this.depthTexture || !this.depthTexture.texture)
+      return;
+    const commandEncoder = this.renderer.device.createCommandEncoder();
+    !this.renderer.production && commandEncoder.pushDebugGroup(`Clear ${this.depthTexture.texture.label} command encoder`);
+    for (let i = 0; i < 6; i++) {
+      const view = this.depthTexture.texture.createView({
+        label: "Clear " + this.depthTexture.texture.label + " cube face view",
+        dimension: "2d",
+        arrayLayerCount: 1,
+        baseArrayLayer: i
+      });
+      const renderPassDescriptor = {
+        colorAttachments: [],
+        depthStencilAttachment: {
+          view,
+          depthLoadOp: "clear",
+          // Clear the depth attachment
+          depthClearValue: 1,
+          // Clear to the maximum depth (farthest possible depth)
+          depthStoreOp: "store"
+          // Store the cleared depth
+        }
+      };
+      const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
+      passEncoder.end();
+    }
+    !this.renderer.production && commandEncoder.popDebugGroup();
+    this.renderer.device.queue.submit([commandEncoder.finish()]);
+  }
+  /**
    * Remove the depth pass from its {@link utils/TasksQueueManager.TasksQueueManager | task queue manager}.
    * @param depthPassTaskID - Task queue manager ID to use for removal.
    */
@@ -287,6 +320,7 @@ class PointShadow extends Shadow {
   }
   /**
    * Get the default depth pass vertex shader for this {@link PointShadow}.
+   * parameters - {@link VertexShaderInputParams} used to compute the output `worldPosition` and `normal` vectors.
    * @returns - Depth pass vertex shader.
    */
   getDefaultShadowDepthVs({ bindings = [], geometry }) {

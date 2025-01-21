@@ -8645,21 +8645,38 @@ New rendering options: ${JSON.stringify(
       }).join("")
     ).join("\n");
     const hasInstances = geometry.instancesCount > 1;
-    const skinJoints = geometry.vertexBuffers.length && geometry.vertexBuffers[0].attributes.filter((attr) => attr.name.includes("joints"));
-    const skinWeights = geometry.vertexBuffers.length && geometry.vertexBuffers[0].attributes.filter((attr) => attr.name.includes("weights"));
+    const skinJoints = [];
+    const skinWeights = [];
+    if (geometry.vertexBuffers && geometry.vertexBuffers.length) {
+      geometry.vertexBuffers.forEach((vertexBuffer) => {
+        vertexBuffer.attributes.forEach((attribute) => {
+          if (attribute.name.includes("joints")) {
+            skinJoints.push(attribute);
+          }
+          if (attribute.name.includes("weights")) {
+            skinWeights.push(attribute);
+          }
+        });
+      });
+    }
     const skinBindings = bindings.filter((binding) => binding.name.includes("skin"));
     const morphTargetsBindings = bindings.filter((binding) => binding.name.includes("morphTarget"));
     morphTargetsBindings.forEach((binding) => {
-      Object.values(binding.inputs).filter((input) => input.name !== "weight").forEach((input) => {
+      const morphAttributes = Object.values(binding.inputs).filter((input) => input.name !== "weight");
+      morphAttributes.forEach((input) => {
         const bindingType = BufferElement.getType(input.type);
-        const attributeType = geometry.vertexBuffers.length && geometry.vertexBuffers[0].attributes.find((attribute) => attribute.name === input.name).type;
-        if (bindingType === attributeType) {
-          output += `${input.name} += ${binding.name}.weight * ${binding.name}.elements[attributes.vertexIndex].${input.name};
+        const attribute = geometry.getAttributeByName(input.name);
+        if (attribute) {
+          const attributeType = attribute.type;
+          const attributeBindingVar = morphAttributes.length === 1 ? `${binding.name}.${input.name}[attributes.vertexIndex]` : `${binding.name}.elements[attributes.vertexIndex].${input.name}`;
+          if (bindingType === attributeType) {
+            output += `${input.name} += ${binding.name}.weight * ${attributeBindingVar};
 	`;
-        } else {
-          if (bindingType === "vec3f" && attributeType === "vec4f") {
-            output += `${input.name} += ${binding.name}.weight * vec4(${binding.name}.elements[attributes.vertexIndex].${input.name}, 0.0);
+          } else {
+            if (bindingType === "vec3f" && attributeType === "vec4f") {
+              output += `${input.name} += ${binding.name}.weight * vec4(${attributeBindingVar}, 0.0);
 	`;
+            }
           }
         }
       });
@@ -8728,9 +8745,10 @@ New rendering options: ${JSON.stringify(
       }
       output += /* wgsl */
       `
-  modelMatrix = instances[attributes.instanceIndex].modelMatrix;
+  modelMatrix = instances.matrices[attributes.instanceIndex].model;
   worldPosition = modelMatrix * worldPosition;
-  normal = normalize((instances[attributes.instanceIndex].normalMatrix * vec4(normalize(normal), 0.0)).xyz);
+  
+  normal = normalize(instances.matrices[attributes.instanceIndex].normal * normal);
     `;
     } else {
       output += /* wgsl */
@@ -9339,6 +9357,33 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
       });
     }
     /**
+     * Clear the content of the depth texture. Called whenever the {@link meshes} array is empty after having removed a mesh.
+     */
+    clearDepthTexture() {
+      if (!this.depthTexture || !this.depthTexture.texture)
+        return;
+      const commandEncoder = this.renderer.device.createCommandEncoder();
+      !this.renderer.production && commandEncoder.pushDebugGroup(`Clear ${this.depthTexture.texture.label} command encoder`);
+      const renderPassDescriptor = {
+        colorAttachments: [],
+        depthStencilAttachment: {
+          view: this.depthTexture.texture.createView({
+            label: "Clear " + this.depthTexture.texture.label + " view"
+          }),
+          depthLoadOp: "clear",
+          // Clear the depth attachment
+          depthClearValue: 1,
+          // Clear to the maximum depth (farthest possible depth)
+          depthStoreOp: "store"
+          // Store the cleared depth
+        }
+      };
+      const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
+      passEncoder.end();
+      !this.renderer.production && commandEncoder.popDebugGroup();
+      this.renderer.device.queue.submit([commandEncoder.finish()]);
+    }
+    /**
      * Create the {@link depthPassTarget}.
      */
     createDepthPassTarget() {
@@ -9449,6 +9494,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
     }
     /**
      * Get the default depth pass vertex shader for this {@link Shadow}.
+     * parameters - {@link VertexShaderInputParams} used to compute the output `worldPosition` and `normal` vectors.
      * @returns - Depth pass vertex shader.
      */
     getDefaultShadowDepthVs({ bindings = [], geometry }) {
@@ -9553,6 +9599,9 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
         __privateGet$c(this, _depthMaterials).delete(mesh.uuid);
       }
       this.meshes.delete(mesh.uuid);
+      if (this.meshes.size === 0) {
+        this.clearDepthTexture();
+      }
     }
     /**
      * Destroy the {@link Shadow}.
@@ -10087,6 +10136,39 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
       });
     }
     /**
+     * Clear the content of the depth texture. Called whenever the {@link meshes} array is empty after having removed a mesh.
+     */
+    clearDepthTexture() {
+      if (!this.depthTexture || !this.depthTexture.texture)
+        return;
+      const commandEncoder = this.renderer.device.createCommandEncoder();
+      !this.renderer.production && commandEncoder.pushDebugGroup(`Clear ${this.depthTexture.texture.label} command encoder`);
+      for (let i = 0; i < 6; i++) {
+        const view = this.depthTexture.texture.createView({
+          label: "Clear " + this.depthTexture.texture.label + " cube face view",
+          dimension: "2d",
+          arrayLayerCount: 1,
+          baseArrayLayer: i
+        });
+        const renderPassDescriptor = {
+          colorAttachments: [],
+          depthStencilAttachment: {
+            view,
+            depthLoadOp: "clear",
+            // Clear the depth attachment
+            depthClearValue: 1,
+            // Clear to the maximum depth (farthest possible depth)
+            depthStoreOp: "store"
+            // Store the cleared depth
+          }
+        };
+        const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
+        passEncoder.end();
+      }
+      !this.renderer.production && commandEncoder.popDebugGroup();
+      this.renderer.device.queue.submit([commandEncoder.finish()]);
+    }
+    /**
      * Remove the depth pass from its {@link utils/TasksQueueManager.TasksQueueManager | task queue manager}.
      * @param depthPassTaskID - Task queue manager ID to use for removal.
      */
@@ -10146,6 +10228,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
     }
     /**
      * Get the default depth pass vertex shader for this {@link PointShadow}.
+     * parameters - {@link VertexShaderInputParams} used to compute the output `worldPosition` and `normal` vectors.
      * @returns - Depth pass vertex shader.
      */
     getDefaultShadowDepthVs({ bindings = [], geometry }) {
@@ -19633,7 +19716,6 @@ const PI = ${Math.PI};
   };
   var _primitiveInstances, _getSparseAccessorIndicesAndValues, getSparseAccessorIndicesAndValues_fn, _parsePrimitiveProperty, parsePrimitiveProperty_fn;
   const GL$1 = WebGLRenderingContext;
-  const _normalMatrix = new Mat4();
   const _GLTFScenesManager = class _GLTFScenesManager {
     /**
      * {@link GLTFScenesManager} constructor.
@@ -19642,6 +19724,12 @@ const PI = ${Math.PI};
      * @param parameters.gltf - The {@link GLTFLoader.gltf | gltf} object used.
      */
     constructor({ renderer, gltf }) {
+      /**
+       * Get an accessor sparse indices values to use for replacement if any.
+       * @param accessor - {@link GLTF.IAccessor | Accessor} to check for sparse indices.
+       * @returns parameters - indices and values found as {@link TypedArray} if any.
+       * @private
+       */
       __privateAdd(this, _getSparseAccessorIndicesAndValues);
       /**
        * Parse a {@link GLTF.IMeshPrimitive | glTF primitive} and create typed arrays from the given {@link gltf} accessors, bufferViews and buffers.
@@ -19992,14 +20080,37 @@ const PI = ${Math.PI};
       }
       let instancesDescriptor = null;
       if (node.mesh !== void 0) {
+        let instanceAttributes = null;
+        if (node.extensions && node.extensions.EXT_mesh_gpu_instancing) {
+          const { attributes } = node.extensions.EXT_mesh_gpu_instancing;
+          instanceAttributes = {
+            count: 0,
+            nodesTransformations: {}
+          };
+          for (const attribute of Object.entries(attributes)) {
+            const accessor = this.gltf.accessors[attribute[1]];
+            const bufferView = this.gltf.bufferViews[accessor.bufferView];
+            const accessorConstructor = _GLTFScenesManager.getTypedArrayConstructorFromComponentType(
+              accessor.componentType
+            );
+            const attributeSize = _GLTFScenesManager.getVertexAttributeParamsFromType(accessor.type).size;
+            const attributeValues = new accessorConstructor(
+              this.gltf.arrayBuffers[bufferView.buffer],
+              accessor.byteOffset + bufferView.byteOffset,
+              accessor.count * attributeSize
+            );
+            instanceAttributes.count = accessor.count;
+            instanceAttributes.nodesTransformations[attribute[0].toLowerCase()] = attributeValues;
+          }
+        }
         const mesh = this.gltf.meshes[node.mesh];
-        mesh.primitives.forEach((primitive, i) => {
+        mesh.primitives.forEach((primitive, primitiveIndex) => {
           const meshDescriptor = {
             parent: child.node,
             attributes: [],
             textures: [],
             parameters: {
-              label: mesh.name ? mesh.name + " " + i : "glTF mesh " + i
+              label: mesh.name ? mesh.name + " " + primitiveIndex : "glTF mesh " + primitiveIndex
             },
             nodes: []
           };
@@ -20016,6 +20127,28 @@ const PI = ${Math.PI};
           }
           instancesDescriptor.instances.push(node);
           instancesDescriptor.nodes.push(child.node);
+          if (instanceAttributes && instanceAttributes.count) {
+            for (let i = 0; i < instanceAttributes.count; i++) {
+              const instanceNode = new Object3D();
+              if (instanceAttributes.nodesTransformations) {
+                const { translation, scale, rotation } = instanceAttributes.nodesTransformations;
+                if (translation) {
+                  instanceNode.position.set(translation[i * 3], translation[i * 3 + 1], translation[i * 3 + 2]);
+                }
+                if (scale) {
+                  instanceNode.scale.set(scale[i * 3], scale[i * 3 + 1], scale[i * 3 + 2]);
+                }
+                if (rotation) {
+                  instanceNode.quaternion.setFromArray(
+                    Float32Array.from([rotation[i * 4], rotation[i * 4 + 1], rotation[i * 4 + 2], rotation[i * 4 + 3]])
+                  );
+                }
+              }
+              instanceNode.parent = child.node;
+              instancesDescriptor.instances.push(node);
+              instancesDescriptor.nodes.push(instanceNode);
+            }
+          }
         });
       }
       if (node.camera !== void 0) {
@@ -20518,28 +20651,50 @@ const PI = ${Math.PI};
         };
       }
       if (instancesCount > 1) {
-        const worldMatrices = new Float32Array(instancesCount * 16);
-        const normalMatrices = new Float32Array(instancesCount * 16);
-        for (let i = 0; i < instancesCount; ++i) {
-          worldMatrices.set(nodes[i].worldMatrix.elements, i * 16);
-          _normalMatrix.copy(nodes[i].worldMatrix).invert().transpose();
-          normalMatrices.set(_normalMatrix.elements, i * 16);
-        }
-        meshDescriptor.parameters.storages = {
-          instances: {
-            visibility: ["vertex", "fragment"],
-            struct: {
-              modelMatrix: {
-                type: "array<mat4x4f>",
-                value: worldMatrices
-              },
-              normalMatrix: {
-                type: "array<mat4x4f>",
-                value: normalMatrices
-              }
+        const instanceMatricesBinding = new BufferBinding({
+          label: "Instance matrices",
+          name: "matrices",
+          visibility: ["vertex", "fragment"],
+          bindingType: "storage",
+          struct: {
+            model: {
+              type: "mat4x4f",
+              value: new Mat4()
+            },
+            normal: {
+              type: "mat3x3f",
+              value: new Mat3()
             }
           }
-        };
+        });
+        const instancesBinding = new BufferBinding({
+          label: "Instances",
+          name: "instances",
+          visibility: ["vertex", "fragment"],
+          bindingType: "storage",
+          childrenBindings: [
+            {
+              binding: instanceMatricesBinding,
+              count: instancesCount,
+              forceArray: true
+            }
+          ]
+        });
+        instancesBinding.childrenBindings.forEach((binding, index) => {
+          const instanceNode = nodes[index];
+          const _updateWorldMatrix = instanceNode.updateWorldMatrix.bind(instanceNode);
+          instanceNode.updateWorldMatrix = () => {
+            _updateWorldMatrix();
+            binding.inputs.model.value.copy(instanceNode.worldMatrix);
+            binding.inputs.normal.value.getNormalMatrix(instanceNode.worldMatrix);
+            binding.inputs.model.shouldUpdate = true;
+            binding.inputs.normal.shouldUpdate = true;
+          };
+        });
+        if (!meshDescriptor.parameters.bindings) {
+          meshDescriptor.parameters.bindings = [];
+        }
+        meshDescriptor.parameters.bindings.push(instancesBinding);
       }
       for (let i = 0; i < nodes.length; i++) {
         const tempBbox = meshDescriptor.parameters.geometry.boundingBox.clone();
@@ -20592,27 +20747,6 @@ const PI = ${Math.PI};
             ...meshDescriptor.parameters
           });
           mesh.parent = meshDescriptor.parent;
-          if (meshDescriptor.nodes.length > 1) {
-            const _updateMatrixStack = mesh.updateMatrixStack.bind(mesh);
-            mesh.updateMatrixStack = () => {
-              _updateMatrixStack();
-              let updateInstances = mesh.matricesNeedUpdate;
-              meshDescriptor.nodes.forEach((node, i) => {
-                if (node.matricesNeedUpdate) {
-                  updateInstances = true;
-                }
-                if (updateInstances) {
-                  mesh.storages.instances.modelMatrix.value.set(node.worldMatrix.elements, i * 16);
-                  _normalMatrix.copy(node.worldMatrix).invert().transpose();
-                  mesh.storages.instances.normalMatrix.value.set(_normalMatrix.elements, i * 16);
-                }
-              });
-              if (updateInstances) {
-                mesh.storages.instances.modelMatrix.shouldUpdate = true;
-                mesh.storages.instances.normalMatrix.shouldUpdate = true;
-              }
-            };
-          }
           this.scenesManager.meshes.push(mesh);
           return mesh;
         }
@@ -20627,11 +20761,13 @@ const PI = ${Math.PI};
       this.scenesManager.nodes.forEach((node) => {
         node.destroy();
       });
+      this.scenesManager.nodes = /* @__PURE__ */ new Map();
       this.scenesManager.scenes.forEach((scene) => {
         scene.node.destroy();
       });
       this.scenesManager.animations.forEach((animation) => animation.setRenderer(null));
       this.scenesManager.node.destroy();
+      __privateSet(this, _primitiveInstances, /* @__PURE__ */ new Map());
     }
   };
   _primitiveInstances = new WeakMap();
@@ -20848,16 +20984,6 @@ const PI = ${Math.PI};
       return `
   @location(${index}) ${attribute.name}: ${attribute.type},`;
     }).join("");
-    meshDescriptor.attributes.map((attribute) => {
-      return (
-        /* wgsl */
-        `var ${attribute.name} = attributes.${attribute.name};`
-      );
-    }).join("\n	");
-    facultativeAttributes.filter((attr) => attr.name !== "normal").map((attribute) => {
-      return `vsOutput.${attribute.name} = ${attribute.name};`;
-    }).join("\n	");
-    const useInstancing = !!(meshDescriptor.parameters.storages && meshDescriptor.parameters.storages.instances);
     let vertexOutputContent = `
   @builtin(position) position: vec4f,
   ${structAttributes}
@@ -20875,76 +21001,6 @@ const PI = ${Math.PI};
   vsOutput.bitangent = cross(vsOutput.normal, vsOutput.tangent.xyz) * vsOutput.tangent.w;
       `;
     }
-    let skinTransformations = "";
-    const skinJoints = facultativeAttributes.filter((attr) => attr.name.includes("joints"));
-    const skinWeights = facultativeAttributes.filter((attr) => attr.name.includes("weights"));
-    const skinBindings = meshDescriptor.parameters.bindings ? meshDescriptor.parameters.bindings.filter((binding) => binding.name.includes("skin")) : [];
-    const hasSkin = skinJoints.length && skinWeights.length && skinBindings.length;
-    if (hasSkin) {
-      skinTransformations = useInstancing ? `
-      var instancesWorldPos = array<vec4f, ${meshDescriptor.parameters.geometry.instancesCount}>();
-      var instancesNormal = array<vec3f, ${meshDescriptor.parameters.geometry.instancesCount}>();
-      ` : "";
-      skinTransformations += `
-      let skinJoints: vec4f = ${skinJoints.map((skinJoint) => skinJoint.name).join(" + ")};`;
-      skinTransformations += `
-      var skinWeights: vec4f = ${skinWeights.map((skinWeight) => skinWeight.name).join(" + ")};
-      
-      let skinWeightsSum = dot(skinWeights, vec4(1.0));
-      if(skinWeightsSum > 0.0) {
-        skinWeights = skinWeights / skinWeightsSum;
-      }
-    `;
-      skinBindings.forEach((binding, bindingIndex) => {
-        skinTransformations += /* wgsl */
-        `
-      ${useInstancing ? "// instancing with different skins: joints calculations for skin " + bindingIndex + "\n" : ""}
-      // position
-      let skinMatrix_${bindingIndex}: mat4x4f = 
-        skinWeights.x * ${binding.name}.joints[u32(skinJoints.x)].jointMatrix +
-        skinWeights.y * ${binding.name}.joints[u32(skinJoints.y)].jointMatrix +
-        skinWeights.z * ${binding.name}.joints[u32(skinJoints.z)].jointMatrix +
-        skinWeights.w * ${binding.name}.joints[u32(skinJoints.w)].jointMatrix;
-      
-      ${useInstancing ? "instancesWorldPos[" + bindingIndex + "] = skinMatrix_" + bindingIndex + " * worldPos;" : "worldPos = skinMatrix_" + bindingIndex + " * worldPos;"}
-      
-      // normal
-      let skinNormalMatrix_${bindingIndex}: mat4x4f = 
-        skinWeights.x * ${binding.name}.joints[u32(skinJoints.x)].normalMatrix +
-        skinWeights.y * ${binding.name}.joints[u32(skinJoints.y)].normalMatrix +
-        skinWeights.z * ${binding.name}.joints[u32(skinJoints.z)].normalMatrix +
-        skinWeights.w * ${binding.name}.joints[u32(skinJoints.w)].normalMatrix;
-        
-      let skinNormalMatrix_${bindingIndex}_3: mat3x3f = mat3x3f(
-        vec3(skinNormalMatrix_${bindingIndex}[0].xyz),
-        vec3(skinNormalMatrix_${bindingIndex}[1].xyz),
-        vec3(skinNormalMatrix_${bindingIndex}[2].xyz)
-      );
-      
-      ${useInstancing ? "instancesNormal[" + bindingIndex + "] = skinNormalMatrix_" + bindingIndex + "_3 * normal;" : "normal = skinNormalMatrix_" + bindingIndex + "_3 * normal;"}
-      `;
-      });
-      skinTransformations += `
-      normal = normalize(${useInstancing ? "instancesNormal[attributes.instanceIndex]" : "normal"});
-    `;
-    }
-    let morphTargets = "";
-    const morphTargetsBindings = meshDescriptor.parameters.bindings ? meshDescriptor.parameters.bindings.filter((binding) => binding.name.includes("morphTarget")) : [];
-    morphTargetsBindings.forEach((binding) => {
-      Object.values(binding.inputs).filter((input) => input.name !== "weight").forEach((input) => {
-        const bindingType = BufferElement.getType(input.type);
-        const attributeType = meshDescriptor.attributes.find((attribute) => attribute.name === input.name).type;
-        if (bindingType === attributeType) {
-          morphTargets += `${input.name} += ${binding.name}.weight * ${binding.name}.elements[attributes.vertexIndex].${input.name};
-	`;
-        } else {
-          if (bindingType === "vec3f" && attributeType === "vec4f") {
-            morphTargets += `${input.name} += ${binding.name}.weight * vec4(${binding.name}.elements[attributes.vertexIndex].${input.name}, 0.0);
-	`;
-          }
-        }
-      });
-    });
     const fullVertexOutput = getFullVertexOutput({
       bindings: meshDescriptor.parameters.bindings,
       geometry: meshDescriptor.parameters.geometry
@@ -20975,12 +21031,11 @@ ${vertexOutput}
   var vsOutput: VSOutput;
     
   ${fullVertexOutput}
-  
   ${outputNormalMap}
 
   return vsOutput;
 }
-  `
+`
     );
     const initColor = (
       /* wgsl */
@@ -20989,8 +21044,7 @@ ${vertexOutput}
     const returnColor = (
       /* wgsl */
       `
-      return color;
-  `
+  return color;`
     );
     const vertexColor = meshDescriptor.attributes.find((attr) => attr.name === "color0");
     let baseColor = (
@@ -21000,99 +21054,88 @@ ${vertexOutput}
     if (baseColorTexture) {
       baseColor = /* wgsl */
       `
-      var baseColor: vec4f = textureSample(baseColorTexture, ${baseColorTexture.sampler}, fsInput.${baseColorTexture.texCoordAttributeName}) * material.baseColorFactor;
-      
-      if (baseColor.a < material.alphaCutoff) {
-        discard;
-      }
+  var baseColor: vec4f = textureSample(baseColorTexture, ${baseColorTexture.sampler}, fsInput.${baseColorTexture.texCoordAttributeName}) * material.baseColorFactor;
+  
+  if (baseColor.a < material.alphaCutoff) {
+    discard;
+  }
     `;
     }
     baseColor += /* wgsl */
     `
-      color = baseColor;
+  color = baseColor;
   `;
     let normalMap = (
       /* wgsl */
       `
-      let faceDirection = select(-1.0, 1.0, fsInput.frontFacing);
-      let geometryNormal: vec3f = faceDirection * normal;
-    `
+  let faceDirection = select(-1.0, 1.0, fsInput.frontFacing);
+  let geometryNormal: vec3f = faceDirection * normal;`
     );
     if (useNormalMap) {
       normalMap += /* wgsl */
       `
-      let tbn = mat3x3f(normalize(fsInput.tangent.xyz), normalize(fsInput.bitangent), geometryNormal);
-      let normalMap = textureSample(normalTexture, ${normalTexture.sampler}, fsInput.${normalTexture.texCoordAttributeName}).rgb;
-      normal = normalize(tbn * (2.0 * normalMap - vec3(material.normalMapScale, material.normalMapScale, 1.0)));
-    `;
+  let tbn = mat3x3f(normalize(fsInput.tangent.xyz), normalize(fsInput.bitangent), geometryNormal);
+  let normalMap = textureSample(normalTexture, ${normalTexture.sampler}, fsInput.${normalTexture.texCoordAttributeName}).rgb;
+  normal = normalize(tbn * (2.0 * normalMap - vec3(material.normalMapScale, material.normalMapScale, 1.0)));`;
     } else if (normalTexture) {
       normalMap += /* wgsl */
       `
-      let Q1: vec3f = dpdx(worldPosition);
-      let Q2: vec3f = dpdy(worldPosition);
-      let st1: vec2f = dpdx(fsInput.${normalTexture.texCoordAttributeName});
-      let st2: vec2f = dpdy(fsInput.${normalTexture.texCoordAttributeName});
-      
-      let T: vec3f = normalize(Q1 * st2.y - Q2 * st1.y);
-      let B: vec3f = normalize(-Q1 * st2.x + Q2 * st1.x);
-      
-      let tbn = mat3x3f(T, B, geometryNormal);
-      let normalMap = textureSample(normalTexture, ${normalTexture.sampler}, fsInput.${normalTexture.texCoordAttributeName}).rgb;
-      normal = normalize(tbn * (2.0 * normalMap - vec3(material.normalMapScale, material.normalMapScale, 1.0)));
-    `;
+  let Q1: vec3f = dpdx(worldPosition);
+  let Q2: vec3f = dpdy(worldPosition);
+  let st1: vec2f = dpdx(fsInput.${normalTexture.texCoordAttributeName});
+  let st2: vec2f = dpdy(fsInput.${normalTexture.texCoordAttributeName});
+  
+  let T: vec3f = normalize(Q1 * st2.y - Q2 * st1.y);
+  let B: vec3f = normalize(-Q1 * st2.x + Q2 * st1.x);
+  
+  let tbn = mat3x3f(T, B, geometryNormal);
+  let normalMap = textureSample(normalTexture, ${normalTexture.sampler}, fsInput.${normalTexture.texCoordAttributeName}).rgb;
+  normal = normalize(tbn * (2.0 * normalMap - vec3(material.normalMapScale, material.normalMapScale, 1.0)));`;
     } else {
       normalMap += /* wgsl */
       `
-      normal = geometryNormal;
-    `;
+  normal = geometryNormal;`;
     }
     let metallicRoughness = (
       /*  wgsl */
       `
-      var metallic = material.metallicFactor;
-      var roughness = material.roughnessFactor;
-  `
+  var metallic = material.metallicFactor;
+  var roughness = material.roughnessFactor;`
     );
     if (metallicRoughnessTexture) {
       metallicRoughness += /* wgsl */
       `
-      let metallicRoughness = textureSample(metallicRoughnessTexture, ${metallicRoughnessTexture.sampler}, fsInput.${metallicRoughnessTexture.texCoordAttributeName});
-      
-      metallic = clamp(metallic * metallicRoughness.b, 0.0, 1.0);
-      roughness = clamp(roughness * metallicRoughness.g, 0.0, 1.0);
-    `;
+  let metallicRoughness = textureSample(metallicRoughnessTexture, ${metallicRoughnessTexture.sampler}, fsInput.${metallicRoughnessTexture.texCoordAttributeName});
+  
+  metallic = clamp(metallic * metallicRoughness.b, 0.0, 1.0);
+  roughness = clamp(roughness * metallicRoughness.g, 0.0, 1.0);
+  `;
     }
     const f0 = (
       /* wgsl */
       `
-      let f0: vec3f = mix(vec3(0.04), color.rgb, vec3(metallic));
-  `
+  let f0: vec3f = mix(vec3(0.04), color.rgb, vec3(metallic));`
     );
     let emissiveOcclusion = (
       /* wgsl */
       `
-      var emissive: vec3f = vec3(0.0);
-      var occlusion: f32 = 1.0;
-  `
+  var emissive: vec3f = vec3(0.0);
+  var occlusion: f32 = 1.0;`
     );
     if (emissiveTexture) {
       emissiveOcclusion += /* wgsl */
       `
-      emissive = textureSample(emissiveTexture, ${emissiveTexture.sampler}, fsInput.${emissiveTexture.texCoordAttributeName}).rgb;
-      
-      emissive *= material.emissiveFactor;
-      `;
+  emissive = textureSample(emissiveTexture, ${emissiveTexture.sampler}, fsInput.${emissiveTexture.texCoordAttributeName}).rgb;
+  emissive *= material.emissiveFactor;`;
       if (occlusionTexture) {
         emissiveOcclusion += /* wgsl */
         `
-      occlusion = textureSample(occlusionTexture, ${occlusionTexture.sampler}, fsInput.${occlusionTexture.texCoordAttributeName}).r;
-      `;
+  occlusion = textureSample(occlusionTexture, ${occlusionTexture.sampler}, fsInput.${occlusionTexture.texCoordAttributeName}).r;`;
       }
     }
     emissiveOcclusion += /* wgsl */
     `
-      occlusion = 1.0 + material.occlusionStrength * (occlusion - 1.0);
-  `;
+  occlusion = 1.0 + material.occlusionStrength * (occlusion - 1.0);`;
     let { shadingModel } = shaderParameters;
     if (!shadingModel) {
       shadingModel = "PBR";
@@ -21183,114 +21226,107 @@ ${vertexOutput}
           return (
             /* wgsl */
             `
-      color = vec4(
-        getLambert(
-          normal,
-          worldPosition,
-          color.rgb,
-          occlusion
-        ),
-        color.a
-      );`
+  color = vec4(
+    getLambert(
+      normal,
+      worldPosition,
+      color.rgb,
+      occlusion
+    ),
+    color.a
+  );`
           );
         case "Phong":
           return (
             /* wgsl */
             `
-      color = vec4(
-        getPhong(
-          normal,
-          worldPosition,
-          color.rgb,
-          viewDirection,
-          f0, // specular color
-          metallic * (1.0 - roughness) + (1.0 - metallic) * 0.04, // specular strength
-          (1.0 - roughness) * 30.0, // TODO shininess
-          occlusion
-        ),
-        color.a
-      );`
+  color = vec4(
+    getPhong(
+      normal,
+      worldPosition,
+      color.rgb,
+      viewDirection,
+      f0, // specular color
+      metallic * (1.0 - roughness) + (1.0 - metallic) * 0.04, // specular strength
+      (1.0 - roughness) * 30.0, // TODO shininess
+      occlusion
+    ),
+    color.a
+  );`
           );
         case "PBR":
           return (
             /* wgsl */
             `
-      color = vec4(
-        getPBR(
-          normal,
-          worldPosition,
-          color.rgb,
-          viewDirection,
-          f0,
-          metallic,
-          roughness,
-          occlusion
-        ),
-        color.a
-      );`
+  color = vec4(
+    getPBR(
+      normal,
+      worldPosition,
+      color.rgb,
+      viewDirection,
+      f0,
+      metallic,
+      roughness,
+      occlusion
+    ),
+    color.a
+  );`
           );
         case "IBL":
           return (
             /* wgsl */
             `
-      color = vec4(
-        getIBL(
-          normal,
-          worldPosition,
-          color.rgb,
-          viewDirection,
-          f0,
-          metallic,
-          roughness,
-          ${environmentMap.sampler.name},
-          ${environmentMap.lutTexture.options.name},
-          ${environmentMap.specularTexture.options.name},
-          ${environmentMap.diffuseTexture.options.name},
-          occlusion
-        ),
-        color.a
-      );`
+  color = vec4(
+    getIBL(
+      normal,
+      worldPosition,
+      color.rgb,
+      viewDirection,
+      f0,
+      metallic,
+      roughness,
+      ${environmentMap.sampler.name},
+      ${environmentMap.lutTexture.options.name},
+      ${environmentMap.specularTexture.options.name},
+      ${environmentMap.diffuseTexture.options.name},
+      occlusion
+    ),
+    color.a
+  );`
           );
       }
     })();
     const applyEmissive = (
       /* wgsl */
       `
-    color = vec4(color.rgb + emissive, color.a);
+  color = vec4(color.rgb + emissive, color.a);
   `
     );
     const fs = (
       /* wgsl */
       `  
-    ${chunks.additionalFragmentHead}
-  
-    ${fragmentInput}
-  
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {       
-      ${initColor}
-      ${baseColor}
-      
-      let worldPosition: vec3f = fsInput.worldPosition;
-      let viewDirection: vec3f = fsInput.viewDirection;
-      var normal: vec3f = normalize(fsInput.normal);
-      
-      ${normalMap}
-      ${metallicRoughness}  
-      
-      // user defined preliminary color contribution
-      ${chunks.preliminaryColorContribution}
-        
-      ${f0}
-      ${emissiveOcclusion}
-      
-      ${applyLightShading}
-      ${applyEmissive}
-      
-      // user defined additional color contribution
-      ${chunks.additionalColorContribution}
-      
-      ${returnColor}
-    }
+${chunks.additionalFragmentHead}
+
+${fragmentInput}
+
+@fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {       
+  ${initColor}
+  ${baseColor}
+  let worldPosition: vec3f = fsInput.worldPosition;
+  let viewDirection: vec3f = fsInput.viewDirection;
+  var normal: vec3f = normalize(fsInput.normal);
+  ${normalMap}
+  ${metallicRoughness}  
+  // user defined preliminary color contribution
+  ${chunks.preliminaryColorContribution}
+  ${f0}
+  ${emissiveOcclusion}
+  ${applyLightShading}
+  ${applyEmissive}
+  // user defined additional color contribution
+  ${chunks.additionalColorContribution}
+  ${returnColor}
+}
   `
     );
     return {

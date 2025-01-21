@@ -161,6 +161,10 @@ export declare class Shadow {
      */
     createDepthTexture(): void;
     /**
+     * Clear the content of the depth texture. Called whenever the {@link meshes} array is empty after having removed a mesh.
+     */
+    clearDepthTexture(): void;
+    /**
      * Create the {@link depthPassTarget}.
      */
     createDepthPassTarget(): void;
@@ -198,6 +202,7 @@ export declare class Shadow {
     renderDepthPass(commandEncoder: GPUCommandEncoder): void;
     /**
      * Get the default depth pass vertex shader for this {@link Shadow}.
+     * parameters - {@link VertexShaderInputParams} used to compute the output `worldPosition` and `normal` vectors.
      * @returns - Depth pass vertex shader.
      */
     getDefaultShadowDepthVs({ bindings, geometry }: VertexShaderInputParams): ShaderOptions;
