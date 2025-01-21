@@ -171,11 +171,15 @@ ${vertexOutput}
 
   let normalMap = /* wgsl */ `
   let faceDirection = select(-1.0, 1.0, fsInput.frontFacing);
-  let geometryNormal: vec3f = faceDirection * normal;`
+  let geometryNormal: vec3f = faceDirection * normal;
+  var tangent: vec3f;
+  var bitangent: vec3f;`
 
   if (useNormalMap) {
     normalMap += /* wgsl */ `
-  let tbn = mat3x3f(normalize(fsInput.tangent.xyz), normalize(fsInput.bitangent), geometryNormal);
+  tangent = normalize(fsInput.tangent.xyz);
+  bitangent = normalize(fsInput.bitangent);
+  let tbn = mat3x3f(tangent, bitangent, geometryNormal);
   let normalMap = textureSample(normalTexture, ${normalTexture.sampler}, fsInput.${normalTexture.texCoordAttributeName}).rgb;
   normal = normalize(tbn * (2.0 * normalMap - vec3(material.normalMapScale, material.normalMapScale, 1.0)));`
   } else if (normalTexture) {
@@ -185,10 +189,10 @@ ${vertexOutput}
   let st1: vec2f = dpdx(fsInput.${normalTexture.texCoordAttributeName});
   let st2: vec2f = dpdy(fsInput.${normalTexture.texCoordAttributeName});
   
-  let T: vec3f = normalize(Q1 * st2.y - Q2 * st1.y);
-  let B: vec3f = normalize(-Q1 * st2.x + Q2 * st1.x);
+  tangent = normalize(Q1 * st2.y - Q2 * st1.y);
+  bitangent = normalize(-Q1 * st2.x + Q2 * st1.x);
   
-  let tbn = mat3x3f(T, B, geometryNormal);
+  let tbn = mat3x3f(tangent, bitangent, geometryNormal);
   let normalMap = textureSample(normalTexture, ${normalTexture.sampler}, fsInput.${normalTexture.texCoordAttributeName}).rgb;
   normal = normalize(tbn * (2.0 * normalMap - vec3(material.normalMapScale, material.normalMapScale, 1.0)));`
   } else {

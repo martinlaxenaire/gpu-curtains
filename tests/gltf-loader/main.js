@@ -223,16 +223,45 @@ window.addEventListener('load', async () => {
 
   const shadingField = gui.add({ shadingModel }, 'shadingModel', ['IBL', 'PBR', 'Phong', 'Lambert']).name('Shading')
 
+  const debugChannels = [
+    'None',
+    'Texture Coordinates 0',
+    'Texture Coordinates 1',
+    'Normal texture',
+    'Geometry Normal',
+    'Geometry Tangent',
+    'Geometry Bitangent',
+    'Shading Normal',
+    'Occlusion',
+    'Emissive',
+    'Base Color',
+    'Metallic',
+    'Roughness',
+    'F0',
+  ]
+
+  const defaultDebugChannel = 0
+
+  const debugField = gui
+    .add(
+      { ['None']: defaultDebugChannel },
+      'None',
+      debugChannels.reduce((acc, v, index) => {
+        return { ...acc, [debugChannels[index]]: index }
+      }, {})
+    )
+    .name('Debug channels')
+
   const camerasFolder = gui.addFolder('Cameras')
-
-  const animationsFolder = gui.addFolder('Animations')
-
-  let animationsFields = []
 
   const useCamera = (camera) => {
     gpuCameraRenderer.useCamera(camera)
     orbitControls.useCamera(camera)
   }
+
+  const animationsFolder = gui.addFolder('Animations')
+
+  let animationsFields = []
 
   // gltf
   const gltfLoader = new GLTFLoader()
@@ -288,6 +317,24 @@ window.addEventListener('load', async () => {
       // disable frustum culling
       parameters.frustumCulling = false
 
+      // debug
+      if (!parameters.uniforms) parameters.uniforms = {}
+
+      parameters.uniforms = {
+        ...parameters.uniforms,
+        ...{
+          debug: {
+            visibility: ['fragment'],
+            struct: {
+              channel: {
+                type: 'f32',
+                value: defaultDebugChannel,
+              },
+            },
+          },
+        },
+      }
+
       light.position.set(radius * 2)
 
       if (shadingModel === 'IBL') {
@@ -306,7 +353,45 @@ window.addEventListener('load', async () => {
 
       // debug
       const additionalColorContribution = `
-        // color = vec4(normalize(normal) * 0.5 + 0.5, 1.0);
+        if(debug.channel == 1.0) {
+          ${
+            parameters.geometry.getAttributeByName('uv')
+              ? 'color = vec4(fsInput.uv.x, fsInput.uv.y, 0.0, 1.0);'
+              : 'color = vec4(0.0, 0.0, 0.0, 1.0);'
+          }
+        } else if(debug.channel == 2.0) {
+          ${
+            parameters.geometry.getAttributeByName('uv1')
+              ? 'color = vec4(fsInput.uv.x, fsInput.uv.y, 0.0, 1.0);'
+              : 'color = vec4(0.0, 0.0, 0.0, 1.0);'
+          }
+        } else if(debug.channel == 3.0) {
+          ${
+            meshDescriptor.textures.find((t) => t.texture === 'normalTexture')
+              ? 'color = vec4(normalMap, 1.0);'
+              : 'color = vec4(0.0, 0.0, 0.0, 1.0);'
+          }
+        } else if(debug.channel == 4.0) {
+          color = vec4(geometryNormal * 0.5 + 0.5, 1.0);
+        } else if(debug.channel == 5.0) {
+          color = vec4(tangent * 0.5 + 0.5, 1.0);
+        } else if(debug.channel == 6.0) {
+          color = vec4(bitangent * 0.5 + 0.5, 1.0);
+        } else if(debug.channel == 7.0) {
+          color = vec4(normal * 0.5 + 0.5, 1.0);
+        } else if(debug.channel == 8.0) {
+          color = vec4(vec3(occlusion), 1.0);
+        } else if(debug.channel == 9.0) {
+          color = vec4(emissive, 1.0);
+        } else if(debug.channel == 10.0) {
+          color = baseColor;
+        } else if(debug.channel == 11.0) {
+          color = vec4(vec3(metallic), 1.0);
+        } else if(debug.channel == 12.0) {
+          color = vec4(vec3(roughness), 1.0);
+        } else if(debug.channel == 13.0) {
+          color = vec4(f0, 1.0);
+        }
       `
 
       parameters.shaders = buildShaders(meshDescriptor, {
@@ -429,6 +514,12 @@ window.addEventListener('load', async () => {
       }
     })
     .name('Shading')
+
+  debugField.onChange((value) => {
+    gltfScenesManager?.scenesManager?.meshes?.forEach((mesh) => {
+      mesh.uniforms.debug.channel.value = value
+    })
+  })
 
   await loadGLTF(currentModel.url)
 })

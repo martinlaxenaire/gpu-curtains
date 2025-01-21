@@ -58,6 +58,7 @@ class Mat3 {
   /**
    * Sets the {@link Mat3} values from an array
    * @param array - array to use
+   * @param offset - optional offset in the array to use
    * @returns - this {@link Mat3} after being set
    */
   // prettier-ignore
@@ -71,9 +72,9 @@ class Mat3 {
     0,
     0,
     1
-  ])) {
+  ]), offset = 0) {
     for (let i = 0; i < this.elements.length; i++) {
-      this.elements[i] = array[i];
+      this.elements[i] = array[i + offset];
     }
     return this;
   }
