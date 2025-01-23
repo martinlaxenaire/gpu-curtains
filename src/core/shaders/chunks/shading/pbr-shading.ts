@@ -46,6 +46,33 @@ fn BRDF_GGX(
   return G * D * F;
 }
 
+// Specular BTDF function
+// transmission
+fn SpecularBTDF(NdotV: f32,
+  NdotL: f32,
+  NdotH: f32,
+  VdotH: f32,
+  roughness: f32
+) -> vec3f {
+  // fixed value
+  let ior: f32 = 1.5;
+
+  // Calculate the Fresnel term for transmission
+  let F0 = vec3f((ior - 1.0) / (ior + 1.0));
+  let F = F_Schlick(VdotH, F0);
+
+  // Calculate NDF
+  let D = DistributionGGX(NdotH, roughness);
+
+  // Calculate Visibility
+  let V_GGX = GeometrySmith(NdotL, NdotV, roughness);
+
+  // Transmittance term
+  let T = (1.0 - F) * D * V_GGX;
+
+  return T;
+}
+
 fn getPBRDirect(
   normal: vec3f,
   diffuseColor: vec3f,
@@ -53,6 +80,7 @@ fn getPBRDirect(
   f0: vec3f,
   metallic: f32,
   roughness: f32,
+  transmission: f32,
   directLight: DirectLight,
   ptr_reflectedLight: ptr<function, ReflectedLight>
 ) {
@@ -68,8 +96,15 @@ fn getPBRDirect(
   let irradiance: vec3f = NdotL * directLight.color;
   let ggx: vec3f = BRDF_GGX(NdotV, NdotL, NdotH, VdotH, roughness, f0);
   
-  (*ptr_reflectedLight).directDiffuse += irradiance * BRDF_Lambert( diffuseColor );
-  (*ptr_reflectedLight).directSpecular += ggx * irradiance;
+  // Blend between reflection and transmission
+  var diffuseContribution: vec3f = BRDF_Lambert(diffuseColor);
+  
+  // Calculate the transmission component using BTDF
+  // let btdf: vec3f = SpecularBTDF(NdotV, NdotL, NdotH, VdotH, roughness) * diffuseColor;
+  // diffuseContribution = mix(diffuseContribution, btdf, transmission);
+  
+  (*ptr_reflectedLight).directDiffuse += irradiance * diffuseContribution;
+  (*ptr_reflectedLight).directSpecular += irradiance * ggx;
 }
 `
 
@@ -98,6 +133,7 @@ fn getPBR(
   f0: vec3f,
   metallic: f32,
   roughness: f32,
+  transmission: f32,
   ${useOcclusion ? 'occlusion: f32,' : ''}
 ) -> vec3f {
   var directLight: DirectLight;

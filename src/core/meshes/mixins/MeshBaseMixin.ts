@@ -31,6 +31,9 @@ export interface MeshBaseRenderParams extends Omit<RenderMaterialParams, 'target
   renderOrder?: number
   /** Optional {@link RenderTarget} to render this Mesh to instead of the canvas context. */
   outputTarget?: RenderTarget
+
+  // TODO
+  additionalOutputTargets?: RenderTarget[]
   /** Parameters used by this Mesh to create a {@link DOMTexture}. */
   texturesOptions?: ExternalTextureParams
   /** Optional {@link GPUDevice.createRenderPipeline().targets | targets} properties. */
@@ -53,7 +56,6 @@ export interface MeshBaseParams extends MeshBaseRenderParams {
 export interface MeshBaseOptions extends Omit<MeshBaseRenderParams, 'renderOrder' | 'visible'> {
   /** The label of this Mesh, sent to various GPU objects for debugging purpose. */
   label?: MeshBaseParams['label']
-  //targets?: RenderMaterialParams['targets']
 }
 
 /** @const - Default Mesh parameters to merge with user defined parameters. */
@@ -104,6 +106,9 @@ export declare class MeshBaseClass {
 
   /** {@link RenderTarget} to render this Mesh to instead of the canvas context, if any. */
   outputTarget: null | RenderTarget
+
+  // TODO
+  additionalOutputTargets?: RenderTarget[]
 
   /** {@link RenderBundle} used to render this Mesh, if any. */
   renderBundle: null | RenderBundle
@@ -449,6 +454,9 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     /** {@link RenderTarget} to render this Mesh to, if any */
     outputTarget: null | RenderTarget
 
+    // TODO
+    additionalOutputTargets: RenderTarget[]
+
     /** {@link RenderBundle} used to render this Mesh, if any. */
     renderBundle: null | RenderBundle
 
@@ -527,6 +535,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
         visible,
         renderOrder,
         outputTarget,
+        additionalOutputTargets,
         renderBundle,
         texturesOptions,
         autoRender,
@@ -535,6 +544,8 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
 
       this.outputTarget = outputTarget ?? null
       this.renderBundle = renderBundle ?? null
+
+      this.additionalOutputTargets = additionalOutputTargets || []
 
       // set default sample count
       meshParameters.sampleCount = !!meshParameters.sampleCount
@@ -616,6 +627,12 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
 
       if (this.#autoRender) {
         this.renderer.scene.addMesh(this as unknown as SceneStackedMesh)
+
+        if (this.additionalOutputTargets.length) {
+          this.additionalOutputTargets.forEach((renderTarget) => {
+            this.renderer.scene.addMeshToRenderTargetStack(this as unknown as SceneStackedMesh, renderTarget)
+          })
+        }
       }
     }
 

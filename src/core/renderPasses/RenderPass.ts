@@ -2,6 +2,7 @@ import { isRenderer, Renderer } from '../renderers/utils'
 import { generateUUID } from '../../utils/utils'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { Texture } from '../textures/Texture'
+import { TextureSize } from '../../types/Textures'
 
 /** Define the parameters of a color attachment */
 export interface ColorAttachmentParams {
@@ -27,6 +28,8 @@ export interface RenderPassParams {
 
   /** Force all the {@link RenderPass} textures size to be set to the given ratio of the {@link core/renderers/GPURenderer.GPURenderer#canvas | renderer canvas} size. Used mainly to lower the rendered definition. */
   qualityRatio?: number
+  /** Force the all the {@link RenderPass} textures to be set at given size. Used mainly to lower the rendered definition. */
+  fixedSize?: TextureSize
 
   /** Whether this {@link RenderPass} should handle a view texture */
   useColorAttachments?: boolean
@@ -88,6 +91,7 @@ export class RenderPass {
       label = 'Render Pass',
       sampleCount = 4,
       qualityRatio = 1,
+      fixedSize = null,
       // color
       useColorAttachments = true,
       renderToSwapChain = true,
@@ -129,6 +133,7 @@ export class RenderPass {
       label,
       sampleCount,
       qualityRatio,
+      fixedSize,
       // color
       useColorAttachments,
       renderToSwapChain,
@@ -173,6 +178,7 @@ export class RenderPass {
         format: this.options.depthFormat,
         sampleCount: this.options.sampleCount,
         qualityRatio: this.options.qualityRatio,
+        ...(this.options.fixedSize && { fixedSize: this.options.fixedSize }),
         type: 'depth',
         usage: ['renderAttachment', 'textureBinding'],
       })
@@ -191,6 +197,7 @@ export class RenderPass {
           format: colorAttachment.targetFormat,
           sampleCount: this.options.sampleCount,
           qualityRatio: this.options.qualityRatio,
+          ...(this.options.fixedSize && { fixedSize: this.options.fixedSize }),
           type: 'texture',
           usage: ['copySrc', 'copyDst', 'renderAttachment', 'textureBinding'],
         })

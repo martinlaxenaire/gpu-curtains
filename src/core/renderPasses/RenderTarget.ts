@@ -74,7 +74,9 @@ export class RenderTarget {
     // OR renderer render pass depth texture if sample counts match
     const depthTextureToUse = !!depthTexture
       ? depthTexture
-      : this.renderer.renderPass.options.sampleCount === (parameters.sampleCount ?? 4)
+      : this.renderer.renderPass.options.sampleCount === (parameters.sampleCount ?? 4) &&
+        (!renderPassParams.qualityRatio || renderPassParams.qualityRatio === 1) &&
+        !renderPassParams.fixedSize
       ? this.renderer.renderPass.depthTexture
       : null
 
@@ -107,6 +109,7 @@ export class RenderTarget {
             ? colorAttachments[0].targetFormat
             : this.renderer.options.context.format,
         ...(this.options.qualityRatio !== undefined && { qualityRatio: this.options.qualityRatio }),
+        ...(this.options.fixedSize !== undefined && { fixedSize: this.options.fixedSize }),
         usage: ['copySrc', 'renderAttachment', 'textureBinding'],
       })
     }

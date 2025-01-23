@@ -115,7 +115,7 @@ export const generateMips = (() => {
   let module
   const pipelineByFormat = {}
 
-  return function generateMips(device: GPUDevice, texture: GPUTexture) {
+  return function generateMips(device: GPUDevice, texture: GPUTexture, commandEncoder: GPUCommandEncoder = null) {
     if (!module) {
       module = device.createShaderModule({
         label: 'textured quad shaders for mip level generation',
@@ -177,9 +177,11 @@ export const generateMips = (() => {
     }
     const pipeline = pipelineByFormat[texture.format]
 
-    const encoder = device.createCommandEncoder({
-      label: 'Mip gen encoder',
-    })
+    const encoder =
+      commandEncoder ||
+      device.createCommandEncoder({
+        label: 'Mip gen encoder',
+      })
 
     let width = texture.width
     let height = texture.height
@@ -232,7 +234,9 @@ export const generateMips = (() => {
       ++baseMipLevel
     }
 
-    const commandBuffer = encoder.finish()
-    device.queue.submit([commandBuffer])
+    if (!commandEncoder) {
+      const commandBuffer = encoder.finish()
+      device.queue.submit([commandBuffer])
+    }
   }
 })()

@@ -502,7 +502,7 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
       const matricesUniforms: BufferBindingParams = {
         label: 'Matrices',
         name: 'matrices',
-        visibility: ['vertex'],
+        visibility: ['vertex', 'fragment'],
         minOffset: this.renderer.device.limits.minUniformBufferOffsetAlignment,
         struct: {
           model: {

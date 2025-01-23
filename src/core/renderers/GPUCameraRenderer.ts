@@ -256,7 +256,7 @@ export class GPUCameraRenderer extends GPURenderer {
     this.bindings.camera = new BufferBinding({
       label: 'Camera',
       name: 'camera',
-      visibility: ['vertex'],
+      visibility: ['vertex', 'fragment'],
       struct: {
         view: {
           // camera view matrix

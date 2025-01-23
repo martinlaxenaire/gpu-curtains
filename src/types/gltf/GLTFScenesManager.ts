@@ -11,6 +11,8 @@ import { Camera } from '../../core/camera/Camera'
 import { BufferBinding } from '../../core/bindings/BufferBinding'
 import { TargetsAnimationsManager } from '../../extras/animations/TargetsAnimationsManager'
 import { Mat4 } from '../../math/Mat4'
+import { RenderTarget } from '../../core/renderPasses/RenderTarget'
+import { ShaderPass } from '../../core/renderPasses/ShaderPass'
 
 /**
  * Define a {@link MeshDescriptorAttribute} used to create the {@link core/geometries/Geometry.Geometry | Geometry}.
@@ -149,4 +151,13 @@ export interface ScenesManager {
   cameras: Camera[]
   /** Array of {@link SkinDefinition} used by this {@link ScenesManager}. */
   skins: SkinDefinition[]
+
+  compositing: {
+    transmission?: {
+      useBlitPass: boolean
+      backgroundTarget: RenderTarget
+      backgroundOutputTexture: Texture
+      blitPass?: ShaderPass
+    }
+  }
 }

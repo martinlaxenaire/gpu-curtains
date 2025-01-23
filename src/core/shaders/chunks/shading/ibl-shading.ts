@@ -1,5 +1,6 @@
 import { getPBRDirect, pbrUtils } from './pbr-shading'
 import { toneMappingUtils } from './tone-mapping-utils'
+import { transmissionUtils } from './transmission'
 import { applyDirectionalShadows, applyPointShadows, getPCFShadows } from './shadows'
 import { GetShadingParams } from './lambert-shading'
 
@@ -9,10 +10,43 @@ import { GetShadingParams } from './lambert-shading'
 // and use them inside RE_IndirectSpecular() later to apply scattering
 // first solution seems to be more realistic for now
 export const getIBLIndirect = /* wgsl */ `
-// struct IBLIndirect {
-//   diffuse: vec3f,
-//   specular: vec3f
-// }
+struct IBLContribution {
+  directDiffuse: vec3f,
+  directSpecular: vec3f,
+  indirectDiffuse: vec3f,
+  indirectSpecular: vec3f
+}
+
+struct IBLGGXFresnel {
+  FssEss: vec3f,
+  FmsEms: vec3f
+}
+
+fn getIBLGGXFresnel(normal: vec3f, viewDirection: vec3f, roughness: f32, f0: vec3f, specularWeight: f32, clampSampler: sampler,
+  lutTexture: texture_2d<f32>) -> IBLGGXFresnel {
+    var iBLGGXFresnel: IBLGGXFresnel;
+  
+    let N: vec3f = normalize(normal);
+    let V: vec3f = normalize(viewDirection);
+    let NdotV: f32 = clamp(dot(N, V), 0.0, 1.0);
+    
+    let brdfSamplePoint: vec2f = clamp(vec2(NdotV, roughness), vec2(0.0), vec2(1.0));
+    
+    let brdf: vec3f = textureSample(
+      lutTexture,
+      clampSampler,
+      brdfSamplePoint
+    ).rgb;
+    
+    let Fr: vec3f = max(vec3(1.0 - roughness), f0) - f0;
+    let k_S: vec3f = f0 + Fr * pow(1.0 - NdotV, 5.0);
+    iBLGGXFresnel.FssEss = specularWeight * (k_S * brdf.x + brdf.y);
+    let Ems: f32 = (1.0 - (brdf.x + brdf.y));
+    let F_avg: vec3f = specularWeight * (f0 + (1.0 - f0) / 21.0);
+    iBLGGXFresnel.FmsEms = Ems * iBLGGXFresnel.FssEss * F_avg / (1.0 - F_avg * Ems);
+
+    return iBLGGXFresnel;
+}
 
 fn getIBLIndirect(
   normal: vec3f,
@@ -36,18 +70,6 @@ fn getIBLIndirect(
   
   let iblDiffuseColor: vec3f = mix(diffuseColor, vec3(0.0), vec3(metallic));
 
-  let brdfSamplePoint: vec2f = clamp(vec2(NdotV, roughness), vec2(0.0), vec2(1.0));
-  
-  let brdf: vec3f = textureSample(
-    lutTexture,
-    clampSampler,
-    brdfSamplePoint
-  ).rgb;
-
-  let Fr: vec3f = max(vec3(1.0 - roughness), f0) - f0;
-  let k_S: vec3f = f0 + Fr * pow(1.0 - NdotV, 5.0);
-  var FssEss: vec3f = k_S * brdf.x + brdf.y;
-  
   // IBL specular (radiance)
   let lod: f32 = roughness * f32(textureNumLevels(envSpecularTexture) - 1);
   
@@ -67,16 +89,13 @@ fn getIBLIndirect(
   
   // product of specularFactor and specularTexture.a
   let specularWeight: f32 = 1.0;
-        
-  FssEss = specularWeight * k_S * brdf.x + brdf.y;
   
-  let Ems: f32 = (1.0 - (brdf.x + brdf.y));
-  let F_avg: vec3f = specularWeight * (f0 + (1.0 - f0) / 21.0);
-  let FmsEms: vec3f = Ems * FssEss * F_avg / (1.0 - F_avg * Ems);
-  let k_D: vec3f = iblDiffuseColor * (1.0 - FssEss + FmsEms);
+  let iBLGGXFresnel = getIBLGGXFresnel(normal, viewDirection, roughness, f0, specularWeight, clampSampler, lutTexture);
   
-  (*ptr_reflectedLight).indirectSpecular += specularLight.rgb * FssEss * ibl.specularStrength;
-  (*ptr_reflectedLight).indirectDiffuse += (FmsEms + k_D) * diffuseLight.rgb * ibl.diffuseStrength;
+  let k_D: vec3f = iblDiffuseColor * (1.0 - iBLGGXFresnel.FssEss + iBLGGXFresnel.FmsEms);
+  
+  (*ptr_reflectedLight).indirectSpecular += specularLight.rgb * iBLGGXFresnel.FssEss * ibl.specularStrength;
+  (*ptr_reflectedLight).indirectDiffuse += (iBLGGXFresnel.FmsEms + k_D) * diffuseLight.rgb * ibl.diffuseStrength;
   
   // (*ptr_iblIndirect).diffuse = PI * diffuseLight.rgb * ibl.diffuseStrength;
   // (*ptr_iblIndirect).specular = specularLight.rgb * ibl.specularStrength;
@@ -99,22 +118,24 @@ export const getIBL = (
 ${addUtils ? pbrUtils : ''}
 ${getPBRDirect}
 ${getIBLIndirect}
+${transmissionUtils}
 ${toneMapping ? toneMappingUtils : ''}
 
-fn getIBL(
+fn getIBLContribution(
   normal: vec3f,
   worldPosition: vec3f,
-  diffuseColor: vec3f,
+  diffuseColor: vec4f,
   viewDirection: vec3f,
   f0: vec3f,
   metallic: f32,
   roughness: f32,
+  transmission: f32,
   clampSampler: sampler,
   lutTexture: texture_2d<f32>,
   envSpecularTexture: texture_cube<f32>,
   envDiffuseTexture: texture_cube<f32>,
-  ${useOcclusion ? 'occlusion: f32,' : ''}
-) -> vec3f {
+  occlusion: f32,
+) -> IBLContribution {
   var directLight: DirectLight;
   var reflectedLight: ReflectedLight;
   
@@ -124,14 +145,14 @@ fn getIBL(
   for(var i = 0; i < pointLights.count; i++) {
     getPointLightInfo(pointLights.elements[i], worldPosition, &directLight);
     ${receiveShadows ? applyPointShadows : ''}
-    getPBRDirect(normal, diffuseColor, viewDirection, f0, metallic, roughness, directLight, &reflectedLight);
+    getPBRDirect(normal, diffuseColor.rgb, viewDirection, f0, metallic, roughness, transmission, directLight, &reflectedLight);
   }
   
   // directional lights
   for(var i = 0; i < directionalLights.count; i++) {
     getDirectionalLightInfo(directionalLights.elements[i], worldPosition, &directLight);
     ${receiveShadows ? applyDirectionalShadows : ''}
-    getPBRDirect(normal, diffuseColor, viewDirection, f0, metallic, roughness, directLight, &reflectedLight);
+    getPBRDirect(normal, diffuseColor.rgb, viewDirection, f0, metallic, roughness, transmission, directLight, &reflectedLight);
   }
   
   var irradiance: vec3f = vec3(0.0);
@@ -145,7 +166,7 @@ fn getIBL(
     viewDirection,
     roughness,
     metallic,
-    diffuseColor,
+    diffuseColor.rgb,
     f0,
     clampSampler,
     lutTexture,
@@ -159,17 +180,61 @@ fn getIBL(
   // radiance += iblIndirect.specular;
   
   // ambient lights
-  RE_IndirectDiffuse(irradiance, diffuseColor, &reflectedLight);
+  RE_IndirectDiffuse(irradiance, diffuseColor.rgb, &reflectedLight);
   
   // ambient lights specular
-  // RE_IndirectSpecular(radiance, irradiance, normal, diffuseColor, viewDirection, metallic, roughness, &reflectedLight);  
+  RE_IndirectSpecular(radiance, irradiance, normal, diffuseColor.rgb, viewDirection, metallic, roughness, &reflectedLight);  
   
-  let totalDirect: vec3f = reflectedLight.directDiffuse + reflectedLight.directSpecular;
-  var totalIndirect: vec3f = reflectedLight.indirectDiffuse + reflectedLight.indirectSpecular;
+  // let totalDirect: vec3f = reflectedLight.directDiffuse + reflectedLight.directSpecular;
+  // var totalIndirect: vec3f = reflectedLight.indirectDiffuse + reflectedLight.indirectSpecular;
+  
+  var iblContribution: IBLContribution;
+  
+  iblContribution.directDiffuse = reflectedLight.directDiffuse;
+  iblContribution.indirectDiffuse = reflectedLight.indirectDiffuse;
+  iblContribution.directSpecular = reflectedLight.directSpecular;
+  iblContribution.indirectSpecular = reflectedLight.indirectSpecular;
+  
+  return iblContribution;
+}
+
+fn getIBL(
+  normal: vec3f,
+  worldPosition: vec3f,
+  diffuseColor: vec4f,
+  viewDirection: vec3f,
+  f0: vec3f,
+  metallic: f32,
+  roughness: f32,
+  transmission: f32,
+  clampSampler: sampler,
+  lutTexture: texture_2d<f32>,
+  envSpecularTexture: texture_cube<f32>,
+  envDiffuseTexture: texture_cube<f32>,
+  ${useOcclusion ? 'occlusion: f32,' : ''}
+) -> vec4f {
+  var iblContribution = getIBLContribution(
+    normal,
+    worldPosition,
+    diffuseColor,
+    viewDirection,
+    f0,
+    metallic,
+    roughness,
+    transmission,
+    clampSampler,
+    lutTexture,
+    envSpecularTexture,
+    envDiffuseTexture,
+    ${useOcclusion ? 'occlusion' : '0.0'}
+  );
+  
+  var totalIndirect = iblContribution.indirectDiffuse + iblContribution.indirectSpecular;
+  let totalDirect = iblContribution.directDiffuse + iblContribution.directSpecular;
   
   ${useOcclusion ? 'totalIndirect *= occlusion;' : ''}
   
-  var outgoingLight: vec3f = totalDirect + totalIndirect;
+  var outgoingLight: vec3f = totalIndirect + totalDirect;
   
   ${
     toneMapping === 'linear'
@@ -179,6 +244,179 @@ fn getIBL(
       : ''
   }
   
-  return outgoingLight;
+  return vec4(outgoingLight, diffuseColor.a);
+}
+
+fn getIBLTransmission(
+  normal: vec3f,
+  worldPosition: vec3f,
+  diffuseColor: vec4f,
+  viewDirection: vec3f,
+  f0: vec3f,
+  metallic: f32,
+  roughness: f32,
+  transmission: f32,
+  clampSampler: sampler,
+  lutTexture: texture_2d<f32>,
+  envSpecularTexture: texture_cube<f32>,
+  envDiffuseTexture: texture_cube<f32>,
+  ior: f32,
+  dispersion: f32,
+  thickness: f32,
+  attenuationDistance: f32,
+  attenuationColor: vec3f,
+  transmissionBackgroundTexture: texture_2d<f32>,
+  defaultSampler: sampler,
+  ${useOcclusion ? 'occlusion: f32,' : ''}
+) -> vec4f {
+  var iblContribution = getIBLContribution(
+    normal,
+    worldPosition,
+    diffuseColor,
+    viewDirection,
+    f0,
+    metallic,
+    roughness,
+    transmission,
+    clampSampler,
+    lutTexture,
+    envSpecularTexture,
+    envDiffuseTexture,
+     ${useOcclusion ? 'occlusion' : '0.0'}
+  );
+  
+  // TODO threejs is using totalDiffuse and totalSpecular instead?
+  let useThree: bool = true;
+  
+  var transmissionAlpha: f32 = 1.0;
+  var totalDiffuse: vec3f;
+  var totalSpecular: vec3f;
+  var outgoingLight: vec3f;
+  
+  if(useThree) {    
+    var specularColor: vec3f = vec3(1.0); // TODO ?
+    var specularIntensity: f32 = 1.0; // TODO
+    var specularF90: f32 = mix(specularIntensity, 1.0, metallic); // TODO?!
+    
+    specularColor = mix( min( pow2( ( ior - 1.0 ) / ( ior + 1.0 ) ) * specularColor, vec3( 1.0 ) ) * specularIntensity, diffuseColor.rgb, metallic );
+    
+    let dxy: vec3f = max( abs( dpdx( normal ) ), abs( dpdy( normal ) ) );
+    let geometryRoughness: f32 = max( max( dxy.x, dxy.y ), dxy.z );
+    var newRoughness = max( roughness, 0.0525 );
+    newRoughness += geometryRoughness;
+    newRoughness = min( roughness, 1.0 );
+    
+    var transmitted: vec4f = getIBLVolumeRefraction(
+      normal,
+      normalize(viewDirection),
+      newRoughness, 
+      diffuseColor * ( 1.0 - metallic ),
+      specularColor,
+      specularF90,
+      worldPosition,
+      matrices.model,
+      camera.view,
+      camera.projection,
+      dispersion,
+      ior,
+      thickness,
+      attenuationColor,
+      attenuationDistance,
+      transmissionBackgroundTexture,
+      defaultSampler,
+    );
+    
+    transmissionAlpha = mix( transmissionAlpha, transmitted.a, transmission );
+      
+    ${
+      useOcclusion
+        ? 'iblContribution.indirectDiffuse *= occlusion;\niblContribution.indirectSpecular *= occlusion;'
+        : ''
+    }
+    
+    totalDiffuse = iblContribution.indirectDiffuse + iblContribution.directDiffuse;
+    totalSpecular = iblContribution.indirectSpecular + iblContribution.directSpecular;
+    
+    totalDiffuse = mix(totalDiffuse, transmitted.rgb, transmission);
+    
+    outgoingLight = totalDiffuse + totalSpecular;
+  } else {
+    var f0_dielectric: vec3f = vec3(0.04);
+    var f90: vec3f = vec3(1.0);
+  
+    var transmitted: vec3f = getIBLVolumeRefraction_2(
+      normal,
+      normalize(viewDirection),
+      roughness, 
+      diffuseColor,
+      f0_dielectric,
+      f90,
+      worldPosition,
+      matrices.model,
+      camera.view,
+      camera.projection,
+      ior,
+      thickness,
+      attenuationColor,
+      attenuationDistance,
+      ior,
+      transmissionBackgroundTexture,
+      defaultSampler,
+      lutTexture,
+      clampSampler,
+    );
+    
+    ${
+      useOcclusion
+        ? 'iblContribution.indirectDiffuse *= occlusion;\niblContribution.indirectSpecular *= occlusion;'
+        : ''
+    }
+    
+    var totalDiffuse = iblContribution.indirectDiffuse + iblContribution.directDiffuse;
+    let totalSpecular = iblContribution.indirectSpecular + iblContribution.directSpecular;
+    
+    totalDiffuse = mix(totalDiffuse, transmitted.rgb, transmission);
+    
+    /*
+    
+    // transmission diffuse
+    f_diffuse = mix(f_diffuse, f_specular_transmission, materialInfo.transmissionFactor);
+    // indirect specular
+      f_specular_metal = getIBLRadianceGGX(n, v, materialInfo.perceptualRoughness);
+      f_specular_dielectric = f_specular_metal;
+      
+      // IBL BRDF from LUT
+      vec3 f_metal_fresnel_ibl = getIBLGGXFresnel(n, v, materialInfo.perceptualRoughness, baseColor.rgb, 1.0);
+      f_metal_brdf_ibl = f_metal_fresnel_ibl*f_specular_metal;
+      
+      
+      vec3 f_dielectric_fresnel_ibl = getIBLGGXFresnel(n, v, materialInfo.perceptualRoughness, materialInfo.f0_dielectric, materialInfo.specularWeight);
+      f_dielectric_brdf_ibl = mix(f_diffuse, f_specular_dielectric, f_dielectric_fresnel_ibl);
+      color = mix(f_dielectric_brdf_ibl, f_metal_brdf_ibl, materialInfo.metallic);
+    
+    */
+    
+    let specularWeight: f32 = 1.0;
+    let metalIBLGGX = getIBLGGXFresnel(normal, viewDirection, roughness, diffuseColor.rgb, specularWeight, clampSampler, lutTexture);
+    let dielectricBRDFIBL = mix(iblContribution.indirectDiffuse, iblContribution.indirectSpecular, metalIBLGGX.FssEss + metalIBLGGX.FmsEms);
+    
+    outgoingLight = mix(
+      totalDiffuse + totalSpecular,
+      iblContribution.directDiffuse + dielectricBRDFIBL + totalSpecular,
+      metallic
+    );
+  }
+  
+  
+  
+  ${
+    toneMapping === 'linear'
+      ? 'outgoingLight = linearToOutput3(outgoingLight);'
+      : toneMapping === 'khronos'
+      ? 'outgoingLight = linearTosRGB(toneMapKhronosPbrNeutral(outgoingLight));'
+      : ''
+  }
+  
+  return vec4(outgoingLight, diffuseColor.a * transmissionAlpha);
 }
 `

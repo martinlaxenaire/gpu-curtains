@@ -268,6 +268,7 @@ export class RenderBundle {
     this.binding = new BufferBinding({
       label: this.options.label + ' matrices',
       name: 'matrices',
+      visibility: ['vertex', 'fragment'],
       struct: {
         model: {
           type: 'array<mat4x4f>',

@@ -76,6 +76,10 @@ export const buildShaders = (
   const emissiveTexture = meshDescriptor.textures.find((t) => t.texture === 'emissiveTexture')
   const occlusionTexture = meshDescriptor.textures.find((t) => t.texture === 'occlusionTexture')
   const metallicRoughnessTexture = meshDescriptor.textures.find((t) => t.texture === 'metallicRoughnessTexture')
+  const transmissionTexture = meshDescriptor.textures.find((t) => t.texture === 'transmissionTexture')
+  const transmissionBackgroundTexture = meshDescriptor.textures.find(
+    (t) => t.texture === 'transmissionBackgroundTexture'
+  )
 
   const facultativeAttributes = meshDescriptor.attributes.filter((attribute) => attribute.name !== 'position')
 
@@ -216,6 +220,21 @@ ${vertexOutput}
   `
   }
 
+  let transmission = /* wgsl */ `
+  var transmission: f32 = 0.0;`
+
+  if (transmissionBackgroundTexture) {
+    transmission += /* wgsl */ `
+  transmission = material.transmissionFactor;`
+
+    if (transmissionTexture) {
+      transmission += /* wgsl */ `
+  let transmissionTexture: vec4f = textureSample(transmissionTexture, ${transmissionTexture.sampler}, fsInput.${transmissionTexture.texCoordAttributeName});
+  
+  transmission = clamp(transmission * transmissionTexture.r, 0.0, 1.0);`
+    }
+  }
+
   const f0 = /* wgsl */ `
   let f0: vec3f = mix(vec3(0.04), color.rgb, vec3(metallic));`
 
@@ -290,6 +309,11 @@ ${vertexOutput}
     useOcclusion: true,
   }
 
+  // transmission
+  if (transmissionBackgroundTexture && shadingModel === 'IBL') {
+    shadingModel = 'IBLTransmission'
+  }
+
   // user defined chunks
   const defaultAdditionalHead = (() => {
     switch (shadingModel) {
@@ -301,6 +325,7 @@ ${vertexOutput}
       case 'PBR':
         return getPBR(shadingOptions)
       case 'IBL':
+      case 'IBLTransmission':
         return getIBL(shadingOptions)
     }
   })()
@@ -375,28 +400,51 @@ ${vertexOutput}
       f0,
       metallic,
       roughness,
+      transmission,
       occlusion
     ),
     color.a
   );`
       case 'IBL':
         return /* wgsl */ `
-  color = vec4(
-    getIBL(
-      normal,
-      worldPosition,
-      color.rgb,
-      viewDirection,
-      f0,
-      metallic,
-      roughness,
-      ${environmentMap.sampler.name},
-      ${environmentMap.lutTexture.options.name},
-      ${environmentMap.specularTexture.options.name},
-      ${environmentMap.diffuseTexture.options.name},
-      occlusion
-    ),
-    color.a
+  color = getIBL(
+    normal,
+    worldPosition,
+    color,
+    viewDirection,
+    f0,
+    metallic,
+    roughness,
+    transmission,
+    ${environmentMap.sampler.name},
+    ${environmentMap.lutTexture.options.name},
+    ${environmentMap.specularTexture.options.name},
+    ${environmentMap.diffuseTexture.options.name},
+    occlusion
+  );`
+      case 'IBLTransmission':
+        return /* wgsl */ `
+  color = getIBLTransmission(
+    normal,
+    worldPosition,
+    color,
+    viewDirection,
+    f0,
+    metallic,
+    roughness,
+    transmission,
+    ${environmentMap.sampler.name},
+    ${environmentMap.lutTexture.options.name},
+    ${environmentMap.specularTexture.options.name},
+    ${environmentMap.diffuseTexture.options.name},
+    material.ior,
+    material.dispersion,
+    material.thickness,
+    material.attenuationDistance,
+    material.attenuationColor,
+    ${transmissionBackgroundTexture.texture},
+    ${transmissionBackgroundTexture.sampler},
+    occlusion
   );`
     }
   })()
@@ -421,6 +469,7 @@ ${fragmentInput}
   // user defined preliminary color contribution
   ${chunks.preliminaryColorContribution}
   ${f0}
+  ${transmission}
   ${emissiveOcclusion}
   ${applyLightShading}
   ${applyEmissive}
