@@ -307,14 +307,14 @@ export class EnvironmentMap {
     // copy the result to our diffuse texture
     this.#copyComputeStorageTextureToTexture(commandEncoder, cubeStorageTexture, this.specularTexture)
 
+    // generate mips if needed
+    if (this.specularTexture.texture.mipLevelCount > 1) {
+      this.renderer.generateMips(this.specularTexture, commandEncoder)
+    }
+
     if (!this.renderer.production) commandEncoder.popDebugGroup()
     const commandBuffer = commandEncoder.finish()
     this.renderer.device?.queue.submit([commandBuffer])
-
-    // generate mips if needed
-    if (this.specularTexture.texture.mipLevelCount > 1) {
-      generateMips(this.renderer.device, this.specularTexture.texture)
-    }
 
     computeCubeMapPass.destroy()
     cubeStorageTexture.destroy()

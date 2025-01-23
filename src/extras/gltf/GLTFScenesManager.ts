@@ -124,12 +124,11 @@ export class GLTFScenesManager {
     }
 
     // create render targets
-    console.log(this.gltf.extensionsUsed)
-
     const hasTransmission =
       this.gltf.extensionsUsed &&
       (this.gltf.extensionsUsed.includes('KHR_materials_transmission') ||
-        this.gltf.extensionsUsed.includes('KHR_materials_volume'))
+        this.gltf.extensionsUsed.includes('KHR_materials_volume') ||
+        this.gltf.extensionsUsed.includes('KHR_materials_dispersion'))
 
     if (hasTransmission) {
       // TODO we could use both
@@ -175,7 +174,7 @@ export class GLTFScenesManager {
         )
 
         // now generate mips
-        generateMips(this.renderer.device, transmissionBuffer.backgroundOutputTexture.texture, commandEncoder)
+        this.renderer.generateMips(transmissionBuffer.backgroundOutputTexture, commandEncoder)
       }
 
       if (useBlitPass) {
@@ -183,6 +182,7 @@ export class GLTFScenesManager {
           label: 'Render transmission background scene',
           inputTarget: transmissionBuffer.backgroundTarget,
           isPrePass: true,
+          depthWriteEnabled: true,
         })
       }
 
@@ -521,6 +521,8 @@ export class GLTFScenesManager {
         // extensions
         const { extensions } = material
         const transmission = (extensions && extensions.KHR_materials_transmission) || null
+        const volume = (extensions && extensions.KHR_materials_volume) || null
+
         if (transmission && transmission.transmissionTexture) {
           const index = transmission.transmissionTexture.index
           const image = this.gltf.imagesBitmaps[this.gltf.textures[index].source]
@@ -532,6 +534,20 @@ export class GLTFScenesManager {
             texture,
             sampler: this.scenesManager.samplers[samplerIndex ?? 0],
             texCoordAttributeName: getUVAttributeName(transmission.transmissionTexture),
+          })
+        }
+
+        if (volume && volume.thicknessTexture) {
+          const index = volume.thicknessTexture.index
+          const image = this.gltf.imagesBitmaps[this.gltf.textures[index].source]
+
+          const texture = this.createTexture(material, image, 'thicknessTexture')
+          const samplerIndex = this.gltf.textures.find((t) => t.source === index)?.sampler
+
+          materialTextures.texturesDescriptors.push({
+            texture,
+            sampler: this.scenesManager.samplers[samplerIndex ?? 0],
+            texCoordAttributeName: getUVAttributeName(volume.thicknessTexture),
           })
         }
       }
@@ -1545,11 +1561,18 @@ export class GLTFScenesManager {
     // extensions
     const { extensions } = material
     const transmission = (extensions && extensions.KHR_materials_transmission) || null
+    const volume = (extensions && extensions.KHR_materials_volume) || null
+    const dispersion = (extensions && extensions.KHR_materials_dispersion) || null
+    const hasTransmission = transmission || volume || dispersion
 
-    // TODO to use transmission
-    const useTransmission = this.gltf.extensionsUsed && this.gltf.extensionsUsed.includes('KHR_materials_transmission')
+    const useTransmission =
+      this.gltf.extensionsUsed &&
+      (this.gltf.extensionsUsed.includes('KHR_materials_transmission') ||
+        this.gltf.extensionsUsed.includes('KHR_materials_volume') ||
+        this.gltf.extensionsUsed.includes('KHR_materials_dispersion'))
+
     if (useTransmission) {
-      if (!transmission) {
+      if (!hasTransmission) {
         const useBlitPass =
           this.scenesManager.compositing &&
           this.scenesManager.compositing.transmission &&
@@ -1568,7 +1591,7 @@ export class GLTFScenesManager {
     // textures and samplers
     const materialTextures = this.scenesManager.materialsTextures[primitive.material]
 
-    if (transmission) {
+    if (hasTransmission) {
       // add scene background
       materialTextures.texturesDescriptors.push({
         texture: new Texture(this.renderer, {
@@ -1620,52 +1643,37 @@ export class GLTFScenesManager {
           },
         },
       ]
-    } else if (transmission) {
-      meshDescriptor.parameters.transparent = true
-      // meshDescriptor.parameters.targets = [
-      //   {
-      //     blend: {
-      //       color: {
-      //         srcFactor: 'src-alpha',
-      //         dstFactor: 'one-minus-src-alpha',
-      //       },
-      //       alpha: {
-      //         srcFactor: 'one',
-      //         dstFactor: 'one-minus-src-alpha',
-      //       },
-      //     },
-      //   },
-      // ]
     }
 
-    const transmissionUniforms = transmission
-      ? {
-          transmissionFactor: {
-            type: 'f32',
-            value: transmission.transmissionFactor !== undefined ? transmission.transmissionFactor : 0,
-          },
-          ior: {
-            type: 'f32',
-            value: 1.5,
-          },
-          dispersion: {
-            type: 'f32',
-            value: 0,
-          },
-          thickness: {
-            type: 'f32',
-            value: 0,
-          },
-          attenuationDistance: {
-            type: 'f32',
-            value: Infinity,
-          },
-          attenuationColor: {
-            type: 'vec3f',
-            value: new Vec3(1),
-          },
-        }
-      : {}
+    const transmissionUniforms = {
+      transmissionFactor: {
+        type: 'f32',
+        value: transmission && transmission.transmissionFactor !== undefined ? transmission.transmissionFactor : 0,
+      },
+      ior: {
+        type: 'f32',
+        value: 1.5,
+      },
+      dispersion: {
+        type: 'f32',
+        value: dispersion && dispersion.dispersion !== undefined ? dispersion.dispersion : 0,
+      },
+      thicknessFactor: {
+        type: 'f32',
+        value: volume && volume.thicknessFactor !== undefined ? volume.thicknessFactor : 0,
+      },
+      attenuationDistance: {
+        type: 'f32',
+        value: volume && volume.attenuationDistance !== undefined ? volume.attenuationDistance : Infinity,
+      },
+      attenuationColor: {
+        type: 'vec3f',
+        value:
+          volume && volume.attenuationColor !== undefined
+            ? new Vec3(volume.attenuationColor[0], volume.attenuationColor[1], volume.attenuationColor[2])
+            : new Vec3(1),
+      },
+    }
 
     // uniforms
     const materialUniformStruct = {
@@ -1847,32 +1855,11 @@ export class GLTFScenesManager {
         // patch the parameters
         patchMeshesParameters(meshDescriptor)
 
-        // remove output target, we'll add it to the scene ourselves
-        // const { outputTarget } = meshDescriptor.parameters
-        // const useBlitPass =
-        //   this.scenesManager.compositing &&
-        //   this.scenesManager.compositing.transmission &&
-        //   this.scenesManager.compositing.transmission.useBlitPass
-
-        // if there's a transmission output target, and we choose to render
-        // background objects twice
-        // then set output target to null, we'll add it manually just below
-        // if (!useBlitPass && outputTarget) {
-        //   meshDescriptor.parameters.outputTarget = null
-        // }
-
         const mesh = new Mesh(this.renderer, {
           ...meshDescriptor.parameters,
         })
 
         mesh.parent = meshDescriptor.parent
-
-        // if there's a transmission output target, and we choose to render
-        // background objects twice
-        // then add the mesh to the render target manually
-        // if (!useBlitPass && outputTarget) {
-        //   this.renderer.scene.addMeshToRenderTargetStack(mesh, outputTarget)
-        // }
 
         this.scenesManager.meshes.push(mesh)
 
@@ -1888,12 +1875,7 @@ export class GLTFScenesManager {
     this.scenesManager.meshes.forEach((mesh) => mesh.remove())
     this.scenesManager.meshes = []
 
-    // remove compositing
-    // for (const compositingLayer of Object.values(this.scenesManager.compositing)) {
-    //   for (const frameBuffer of Object.values(compositingLayer)) {
-    //     frameBuffer.remove()
-    //   }
-    // }
+    // remove transmission compositing
     if (this.scenesManager.compositing && this.scenesManager.compositing.transmission) {
       this.scenesManager.compositing.transmission.backgroundTarget.remove()
       this.scenesManager.compositing.transmission.blitPass?.remove()

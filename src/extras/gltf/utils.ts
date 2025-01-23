@@ -77,6 +77,7 @@ export const buildShaders = (
   const occlusionTexture = meshDescriptor.textures.find((t) => t.texture === 'occlusionTexture')
   const metallicRoughnessTexture = meshDescriptor.textures.find((t) => t.texture === 'metallicRoughnessTexture')
   const transmissionTexture = meshDescriptor.textures.find((t) => t.texture === 'transmissionTexture')
+  const thicknessTexture = meshDescriptor.textures.find((t) => t.texture === 'thicknessTexture')
   const transmissionBackgroundTexture = meshDescriptor.textures.find(
     (t) => t.texture === 'transmissionBackgroundTexture'
   )
@@ -221,17 +222,26 @@ ${vertexOutput}
   }
 
   let transmission = /* wgsl */ `
-  var transmission: f32 = 0.0;`
+  var transmission: f32 = 0.0;
+  var thickness: f32 = 0.0;`
 
   if (transmissionBackgroundTexture) {
     transmission += /* wgsl */ `
-  transmission = material.transmissionFactor;`
+  transmission = material.transmissionFactor;
+  thickness = material.thicknessFactor;`
 
     if (transmissionTexture) {
       transmission += /* wgsl */ `
-  let transmissionTexture: vec4f = textureSample(transmissionTexture, ${transmissionTexture.sampler}, fsInput.${transmissionTexture.texCoordAttributeName});
+  let transmissionSample: vec4f = textureSample(transmissionTexture, ${transmissionTexture.sampler}, fsInput.${transmissionTexture.texCoordAttributeName});
   
-  transmission = clamp(transmission * transmissionTexture.r, 0.0, 1.0);`
+  transmission = clamp(transmission * transmissionSample.r, 0.0, 1.0);`
+    }
+
+    if (thicknessTexture) {
+      transmission += /* wgsl */ `
+  let thicknessSample: vec4f = textureSample(thicknessTexture, ${thicknessTexture.sampler}, fsInput.${thicknessTexture.texCoordAttributeName});
+  
+  thickness = thickness * thicknessSample.g;`
     }
   }
 
@@ -310,8 +320,8 @@ ${vertexOutput}
   }
 
   // transmission
-  if (transmissionBackgroundTexture && shadingModel === 'IBL') {
-    shadingModel = 'IBLTransmission'
+  if (transmissionBackgroundTexture && (shadingModel === 'PBR' || shadingModel === 'IBL')) {
+    shadingModel += 'Transmission'
   }
 
   // user defined chunks
@@ -323,6 +333,7 @@ ${vertexOutput}
       case 'Phong':
         return getPhong(shadingOptions)
       case 'PBR':
+      case 'PBRTransmission':
         return getPBR(shadingOptions)
       case 'IBL':
       case 'IBLTransmission':
@@ -391,19 +402,35 @@ ${vertexOutput}
   );`
       case 'PBR':
         return /* wgsl */ `
-  color = vec4(
-    getPBR(
-      normal,
-      worldPosition,
-      color.rgb,
-      viewDirection,
-      f0,
-      metallic,
-      roughness,
-      transmission,
-      occlusion
-    ),
-    color.a
+  color = getPBR(
+    normal,
+    worldPosition,
+    color,
+    viewDirection,
+    f0,
+    metallic,
+    roughness,
+    occlusion
+  );`
+      case 'PBRTransmission':
+        return /* wgsl */ `
+  color = getPBRTransmission(
+    normal,
+    worldPosition,
+    color,
+    viewDirection,
+    f0,
+    metallic,
+    roughness,
+    transmission,
+    material.ior,
+    material.dispersion,
+    thickness,
+    material.attenuationDistance,
+    material.attenuationColor,
+    ${transmissionBackgroundTexture.texture},
+    ${transmissionBackgroundTexture.sampler},
+    occlusion
   );`
       case 'IBL':
         return /* wgsl */ `
@@ -415,7 +442,6 @@ ${vertexOutput}
     f0,
     metallic,
     roughness,
-    transmission,
     ${environmentMap.sampler.name},
     ${environmentMap.lutTexture.options.name},
     ${environmentMap.specularTexture.options.name},
@@ -439,7 +465,7 @@ ${vertexOutput}
     ${environmentMap.diffuseTexture.options.name},
     material.ior,
     material.dispersion,
-    material.thickness,
+    thickness,
     material.attenuationDistance,
     material.attenuationColor,
     ${transmissionBackgroundTexture.texture},

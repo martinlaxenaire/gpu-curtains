@@ -44,15 +44,6 @@ fn volumeAttenuation(transmissionDistance: f32, attenuationColor: vec3f, attenua
     }
 }
 
-fn applyVolumeAttenuation(radiance: vec3f, transmissionDistance: f32, attenuationColor: vec3f, attenuationDistance: f32) -> vec3f {
-    if (attenuationDistance == 0.0) {
-        return radiance;
-    } else {
-        let transmittance: vec3f = pow(attenuationColor, vec3(transmissionDistance / attenuationDistance));
-        return transmittance * radiance;
-    }
-}
-
 fn getIBLVolumeRefraction(
     n: vec3f,
     v: vec3f,
@@ -73,21 +64,55 @@ fn getIBLVolumeRefraction(
     transmissionBackgroundTexture: texture_2d<f32>,
     defaultSampler: sampler,
 ) -> vec4f {
-    // Calculate the transmission ray
-    let transmissionRay = getVolumeTransmissionRay(n, v, thickness, ior, modelMatrix);
-    let refractedRayExit = position + transmissionRay;
+    // TODO dispersion
+    var transmittedLight: vec4f;
+    var transmissionRayLength: f32;
+    var transmittance: vec3f;
+    
+    
+    if(dispersion > 0.0) {
+      let halfSpread: f32 = (ior - 1.0) * 0.025 * dispersion;
+      let iors: vec3f = vec3(ior - halfSpread, ior, ior + halfSpread);
+      
+      for(var i: i32 = 0; i < 3; i++) {
+        let transmissionRay: vec3f = getVolumeTransmissionRay(n, v, thickness, iors[i], modelMatrix);
+        transmissionRayLength = length(transmissionRay);
+        let refractedRayExit = position + transmissionRay;
 
-    // Transform to NDC space
-    let ndcPos = projMatrix * viewMatrix * vec4(refractedRayExit, 1.0);
-    var refractionCoords = ndcPos.xy / ndcPos.w;
-    refractionCoords = (refractionCoords + 1.0) / 2.0;
-    refractionCoords = vec2(refractionCoords.x, 1.0 - refractionCoords.y); // webgpu Y flip
-
-    // Sample the transmission texture
-    let transmittedLight = getTransmissionSample(refractionCoords, roughness, ior, transmissionBackgroundTexture, defaultSampler);
-
-    // Compute transmittance
-    let transmittance = diffuseColor.rgb * volumeAttenuation(length(transmissionRay), attenuationColor, attenuationDistance);
+        // Transform to NDC space
+        let ndcPos = projMatrix * viewMatrix * vec4(refractedRayExit, 1.0);
+        var refractionCoords = ndcPos.xy / ndcPos.w;
+        refractionCoords = (refractionCoords + 1.0) / 2.0;
+        refractionCoords = vec2(refractionCoords.x, 1.0 - refractionCoords.y); // webgpu Y flip
+        
+        let transmissionSample: vec4f = getTransmissionSample(refractionCoords, roughness, iors[i], transmissionBackgroundTexture, defaultSampler);
+        
+        transmittedLight[i] = transmissionSample[i];
+        transmittedLight.a += transmissionSample.a;
+        
+        // Compute transmittance
+        let diffuse: vec3f = diffuseColor.rgb;
+        transmittance[i] = diffuse[i] * volumeAttenuation(length(transmissionRay), attenuationColor, attenuationDistance)[i];
+      }
+      
+      transmittedLight.a /= 3.0;
+    } else {
+      // Calculate the transmission ray
+      let transmissionRay: vec3f = getVolumeTransmissionRay(n, v, thickness, ior, modelMatrix);
+      let refractedRayExit = position + transmissionRay;
+  
+      // Transform to NDC space
+      let ndcPos = projMatrix * viewMatrix * vec4(refractedRayExit, 1.0);
+      var refractionCoords = ndcPos.xy / ndcPos.w;
+      refractionCoords = (refractionCoords + 1.0) / 2.0;
+      refractionCoords = vec2(refractionCoords.x, 1.0 - refractionCoords.y); // webgpu Y flip
+  
+      // Sample the transmission texture
+      transmittedLight = getTransmissionSample(refractionCoords, roughness, ior, transmissionBackgroundTexture, defaultSampler);
+  
+      // Compute transmittance
+      transmittance = diffuseColor.rgb * volumeAttenuation(length(transmissionRay), attenuationColor, attenuationDistance);
+    }
 
     // Apply attenuation to transmitted light
     let attenuatedColor = transmittance * transmittedLight.rgb;
@@ -103,59 +128,5 @@ fn getIBLVolumeRefraction(
         (1.0 - F) * attenuatedColor,
         1.0 - (1.0 - transmittedLight.a) * transmittanceFactor
     );
-}
-
-fn getIBLVolumeRefraction_2(
-    n: vec3f,
-    v: vec3f,
-    roughness: f32,
-    diffuseColor: vec4f,
-    f0: vec3f,
-    f90: vec3f,
-    position: vec3f,
-    modelMatrix: mat4x4f,
-    viewMatrix: mat4x4f,
-    projMatrix: mat4x4f,
-    ior: f32,
-    thickness: f32,
-    attenuationColor: vec3f,
-    attenuationDistance: f32,
-    dispersion: f32,
-
-    transmissionBackgroundTexture: texture_2d<f32>,
-    defaultSampler: sampler,
-    lutTexture: texture_2d<f32>,
-    clampSampler: sampler,
-) -> vec3f {
-    // Calculate the transmission ray
-    let transmissionRay = getVolumeTransmissionRay(n, v, thickness, ior, modelMatrix);
-    let transmissionRayLength: f32 = length(transmissionRay);
-    
-    let refractedRayExit = position + transmissionRay;
-
-    // Transform to NDC space
-    let ndcPos = projMatrix * viewMatrix * vec4(refractedRayExit, 1.0);
-    var refractionCoords = ndcPos.xy / ndcPos.w;
-    refractionCoords = (refractionCoords + 1.0) / 2.0;
-    refractionCoords = vec2(refractionCoords.x, 1.0 - refractionCoords.y); // webgpu non Y flip
-
-    // Sample the transmission texture
-    let transmittedLight = getTransmissionSample(refractionCoords, roughness, ior, transmissionBackgroundTexture, defaultSampler);
-
-    // Compute transmittance
-    let attenuatedColor: vec3f = applyVolumeAttenuation(transmittedLight.rgb, transmissionRayLength, attenuationColor, attenuationDistance);
-    
-    let NdotV: f32 = clamp(dot(n, v), 0.0, 1.0);
-    
-    let brdfSamplePoint: vec2f = clamp(vec2(NdotV, roughness), vec2(0.0), vec2(1.0));
-    
-    let brdf: vec2f = textureSample(
-      lutTexture,
-      clampSampler,
-      brdfSamplePoint
-    ).rg;
-    
-    let specularColor: vec3f = f0 * brdf.x + f90 * brdf.y;
-    return (1.0 - specularColor) * attenuatedColor * diffuseColor.rgb;
 }
 `

@@ -16,6 +16,12 @@ window.addEventListener('load', async () => {
     Vec3,
   } = await import(/* @vite-ignore */ path)
 
+  const stats = new Stats()
+
+  stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
+  stats.dom.classList.add('stats')
+  document.body.appendChild(stats.dom)
+
   // create a device manager
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
@@ -23,6 +29,14 @@ window.addEventListener('load', async () => {
 
   // wait for the device to be created
   await gpuDeviceManager.init()
+
+  gpuDeviceManager
+    .onBeforeRender(() => {
+      stats.begin()
+    })
+    .onAfterRender(() => {
+      stats.end()
+    })
 
   const container = document.querySelector('#canvas')
 
@@ -172,10 +186,18 @@ window.addEventListener('load', async () => {
       name: 'SkinD',
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Asset-Generator/main/Output/Positive/Animation_Skin/Animation_Skin_11.gltf',
     },
-    // transmission
+    // transmission, volume & dispersion
     transmissionTest: {
       name: 'Transmission Test',
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/TransmissionTest/glTF/TransmissionTest.gltf',
+    },
+    compareVolume: {
+      name: 'Compare Volume',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/CompareVolume/glTF/CompareVolume.gltf',
+    },
+    dispersionTest: {
+      name: 'Dispersion Test',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/DispersionTest/glTF/DispersionTest.gltf',
     },
   }
 

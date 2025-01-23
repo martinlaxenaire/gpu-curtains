@@ -13,7 +13,6 @@ import { BufferBinding } from '../bindings/BufferBinding'
 import { RenderMaterialParams, ShaderOptions } from '../../types/Materials'
 import { Input } from '../../types/BindGroups'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { Geometry } from '../geometries/Geometry'
 import { VertexShaderInputParams } from '../shaders/chunks/vertex/get_vertex_output'
 
 /** Defines all types of shadows. */

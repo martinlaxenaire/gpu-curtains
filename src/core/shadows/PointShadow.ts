@@ -8,7 +8,6 @@ import { PointLight } from '../lights/PointLight'
 import { Input } from '../../types/BindGroups'
 import { ShaderOptions } from '../../types/Materials'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { Geometry } from '../geometries/Geometry'
 import { BufferBinding } from '../bindings/BufferBinding'
 import { VertexShaderInputParams } from '../shaders/chunks/vertex/get_vertex_output'
 

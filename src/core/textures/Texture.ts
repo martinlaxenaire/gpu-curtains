@@ -265,7 +265,7 @@ export class Texture {
     )
 
     if (this.texture.mipLevelCount > 1) {
-      generateMips(this.renderer.device, this.texture)
+      this.renderer.generateMips(this)
     }
   }
 
@@ -299,7 +299,7 @@ export class Texture {
     )
 
     if (this.texture.mipLevelCount > 1) {
-      generateMips(this.renderer.device, this.texture)
+      this.renderer.generateMips(this)
     }
   }
 
