@@ -36,7 +36,7 @@ class RenderTarget {
     this.renderer = renderer;
     this.uuid = generateUUID();
     const { label, colorAttachments, depthTexture, autoRender, ...renderPassParams } = parameters;
-    const depthTextureToUse = !!depthTexture ? depthTexture : this.renderer.renderPass.options.sampleCount === (parameters.sampleCount ?? 4) ? this.renderer.renderPass.depthTexture : null;
+    const depthTextureToUse = !!depthTexture ? depthTexture : this.renderer.renderPass.options.sampleCount === (parameters.sampleCount ?? 4) && (!renderPassParams.qualityRatio || renderPassParams.qualityRatio === 1) && !renderPassParams.fixedSize ? this.renderer.renderPass.depthTexture : null;
     this.options = {
       label,
       ...renderPassParams,
@@ -59,6 +59,7 @@ class RenderTarget {
         name: "renderTexture",
         format: colorAttachments && colorAttachments.length && colorAttachments[0].targetFormat ? colorAttachments[0].targetFormat : this.renderer.options.context.format,
         ...this.options.qualityRatio !== void 0 && { qualityRatio: this.options.qualityRatio },
+        ...this.options.fixedSize !== void 0 && { fixedSize: this.options.fixedSize },
         usage: ["copySrc", "renderAttachment", "textureBinding"]
       });
     }

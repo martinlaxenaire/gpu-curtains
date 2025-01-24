@@ -52,6 +52,8 @@ fn RE_IndirectSpecular(
   irradiance: vec3f,
   normal: vec3f,
   diffuseColor: vec3f,
+  specularFactor: f32,
+  specularColorFactor: vec3f,
   viewDirection: vec3f,
   metallic: f32,
   roughness: f32,
@@ -59,12 +61,8 @@ fn RE_IndirectSpecular(
 ) {
   var totalScattering: TotalScattering;
   let cosineWeightedIrradiance: vec3f = irradiance * RECIPROCAL_PI;
-  
-  let specularColor: vec3f = mix( vec3( 0.04 ), diffuseColor, metallic );
-  
-  let f90: f32 = 1.0;
-  
-  computeMultiscattering( normal, viewDirection, specularColor, f90, roughness, &totalScattering );
+    
+  computeMultiscattering( normal, viewDirection, specularColorFactor, specularFactor, roughness, &totalScattering );
   
   let totalScatter: vec3f = totalScattering.single + totalScattering.multi;
   let diffuse: vec3f = diffuseColor * ( 1.0 - max( max( totalScatter.r, totalScatter.g ), totalScatter.b ) );

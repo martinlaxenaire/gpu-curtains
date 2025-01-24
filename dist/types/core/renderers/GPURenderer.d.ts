@@ -376,6 +376,12 @@ export declare class GPURenderer {
      */
     uploadTexture(texture: DOMTexture): void;
     /**
+     * Generate mips on the GPU using our {@link GPUDeviceManager}.
+     * @param texture - {@link Texture} or {@link DOMTexture} for which to generate the mips.
+     * @param commandEncoder - optional {@link GPUCommandEncoder} to use if we're already in the middle of a command encoding process.
+     */
+    generateMips(texture: Texture | DOMTexture, commandEncoder?: GPUCommandEncoder): void;
+    /**
      * Import a {@link GPUExternalTexture}
      * @param video - {@link HTMLVideoElement} source
      * @returns - {@link GPUExternalTexture}

@@ -16,6 +16,7 @@ import default_vsWgsl from '../../shaders/chunks/default/default_vs.wgsl'
 import default_fsWgsl from '../../shaders/chunks/default/default_fs.wgsl'
 import { RenderPass } from '../../renderPasses/RenderPass'
 import { RenderBundle } from '../../renderPasses/RenderBundle'
+import { RenderPassEntry } from '../../scenes/Scene'
 
 let meshIndex = 0
 
@@ -32,8 +33,11 @@ export interface MeshBaseRenderParams extends Omit<RenderMaterialParams, 'target
   /** Optional {@link RenderTarget} to render this Mesh to instead of the canvas context. */
   outputTarget?: RenderTarget
 
-  // TODO
+  /** Additional output {@link RenderTarget} onto which render this Mesh, besides the main {@link outputTarget} or screen. Useful for some effects that might need to render the same Mesh twice or more. Beware tho that the Mesh pipeline has to exactly fit the provided {@link RenderTarget} render passes descriptors as no checks will be performed here. */
   additionalOutputTargets?: RenderTarget[]
+  /** Whether to render this Mesh into a custom {@link core/scenes/Scene.Scene | Scene} custom screen pass entry instead of the default one. */
+  useCustomScenePassEntry?: RenderPassEntry
+
   /** Parameters used by this Mesh to create a {@link DOMTexture}. */
   texturesOptions?: ExternalTextureParams
   /** Optional {@link GPUDevice.createRenderPipeline().targets | targets} properties. */
@@ -107,7 +111,7 @@ export declare class MeshBaseClass {
   /** {@link RenderTarget} to render this Mesh to instead of the canvas context, if any. */
   outputTarget: null | RenderTarget
 
-  // TODO
+  /** Additional output {@link RenderTarget} onto which render this Mesh, besides the main {@link outputTarget} or screen. Useful for some effects that might need to render the same Mesh twice or more. Beware tho that the Mesh pipeline has to exactly fit the provided {@link RenderTarget} render passes descriptors as no checks will be performed here. */
   additionalOutputTargets?: RenderTarget[]
 
   /** {@link RenderBundle} used to render this Mesh, if any. */
@@ -454,7 +458,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     /** {@link RenderTarget} to render this Mesh to, if any */
     outputTarget: null | RenderTarget
 
-    // TODO
+    /** Additional output {@link RenderTarget} onto which render this Mesh, besides the main {@link outputTarget} or screen. Useful for some effects that might need to render the same Mesh twice or more. Beware tho that the Mesh pipeline has to exactly fit the provided {@link RenderTarget} render passes descriptors as no checks will be performed here. */
     additionalOutputTargets: RenderTarget[]
 
     /** {@link RenderBundle} used to render this Mesh, if any. */
@@ -536,6 +540,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
         renderOrder,
         outputTarget,
         additionalOutputTargets,
+        useCustomScenePassEntry,
         renderBundle,
         texturesOptions,
         autoRender,
@@ -564,6 +569,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
         ...(renderBundle !== undefined && { renderBundle }),
         texturesOptions,
         ...(autoRender !== undefined && { autoRender }),
+        useCustomScenePassEntry,
         ...meshParameters,
       }
 

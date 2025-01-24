@@ -79,8 +79,39 @@ const _GLTFScenesManager = class _GLTFScenesManager {
       meshesDescriptors: [],
       animations: [],
       cameras: [],
-      skins: []
+      skins: [],
+      transmissionCompositing: null
     };
+    const hasTransmission = this.gltf.extensionsUsed && (this.gltf.extensionsUsed.includes("KHR_materials_transmission") || this.gltf.extensionsUsed.includes("KHR_materials_volume") || this.gltf.extensionsUsed.includes("KHR_materials_dispersion"));
+    if (hasTransmission) {
+      const sceneTransmissionPassEntry = this.renderer.scene.createScreenPassEntry(
+        "Transmission scene screen render pass"
+      );
+      const transmissionBuffer = {
+        backgroundOutputTexture: new Texture(this.renderer, {
+          label: "Transmission background scene render target output",
+          generateMips: true
+          // needed for roughness LOD!
+        }),
+        sceneTransmissionPassEntry
+      };
+      sceneTransmissionPassEntry.onBeforeRenderPass = (commandEncoder, swapChainTexture) => {
+        commandEncoder.copyTextureToTexture(
+          {
+            texture: swapChainTexture
+          },
+          {
+            texture: transmissionBuffer.backgroundOutputTexture.texture
+          },
+          [
+            transmissionBuffer.backgroundOutputTexture.size.width,
+            transmissionBuffer.backgroundOutputTexture.size.height
+          ]
+        );
+        this.renderer.generateMips(transmissionBuffer.backgroundOutputTexture, commandEncoder);
+      };
+      this.scenesManager.transmissionCompositing = transmissionBuffer;
+    }
     this.createSamplers();
     this.createMaterialTextures();
     this.createAnimations();
@@ -307,63 +338,59 @@ const _GLTFScenesManager = class _GLTFScenesManager {
             return "uv";
           return texture.texCoord !== 0 ? "uv" + texture.texCoord : "uv";
         };
+        const createTexture = (gltfTexture, name) => {
+          const index = gltfTexture.index;
+          const image = this.gltf.imagesBitmaps[this.gltf.textures[index].source];
+          const texture = this.createTexture(material, image, name);
+          const samplerIndex = this.gltf.textures.find((t) => t.source === index)?.sampler;
+          materialTextures.texturesDescriptors.push({
+            texture,
+            sampler: this.scenesManager.samplers[samplerIndex ?? 0],
+            texCoordAttributeName: getUVAttributeName(gltfTexture)
+          });
+        };
         this.scenesManager.materialsTextures[materialIndex] = materialTextures;
         if (material.pbrMetallicRoughness) {
           if (material.pbrMetallicRoughness.baseColorTexture && material.pbrMetallicRoughness.baseColorTexture.index !== void 0) {
-            const index = material.pbrMetallicRoughness.baseColorTexture.index;
-            const image = this.gltf.imagesBitmaps[this.gltf.textures[index].source];
-            const texture = this.createTexture(material, image, "baseColorTexture");
-            const samplerIndex = this.gltf.textures.find((t) => t.source === index)?.sampler;
-            materialTextures.texturesDescriptors.push({
-              texture,
-              sampler: this.scenesManager.samplers[samplerIndex ?? 0],
-              texCoordAttributeName: getUVAttributeName(material.pbrMetallicRoughness.baseColorTexture)
-            });
+            createTexture(material.pbrMetallicRoughness.baseColorTexture, "baseColorTexture");
           }
           if (material.pbrMetallicRoughness.metallicRoughnessTexture && material.pbrMetallicRoughness.metallicRoughnessTexture.index !== void 0) {
-            const index = material.pbrMetallicRoughness.metallicRoughnessTexture.index;
-            const image = this.gltf.imagesBitmaps[this.gltf.textures[index].source];
-            const texture = this.createTexture(material, image, "metallicRoughnessTexture");
-            const samplerIndex = this.gltf.textures.find((t) => t.source === index)?.sampler;
-            materialTextures.texturesDescriptors.push({
-              texture,
-              sampler: this.scenesManager.samplers[samplerIndex ?? 0],
-              texCoordAttributeName: getUVAttributeName(material.pbrMetallicRoughness.metallicRoughnessTexture)
-            });
+            createTexture(material.pbrMetallicRoughness.metallicRoughnessTexture, "metallicRoughnessTexture");
           }
         }
         if (material.normalTexture && material.normalTexture.index !== void 0) {
-          const index = material.normalTexture.index;
-          const image = this.gltf.imagesBitmaps[this.gltf.textures[index].source];
-          const texture = this.createTexture(material, image, "normalTexture");
-          const samplerIndex = this.gltf.textures.find((t) => t.source === index)?.sampler;
-          materialTextures.texturesDescriptors.push({
-            texture,
-            sampler: this.scenesManager.samplers[samplerIndex ?? 0],
-            texCoordAttributeName: getUVAttributeName(material.normalTexture)
-          });
+          createTexture(material.normalTexture, "normalTexture");
         }
         if (material.occlusionTexture && material.occlusionTexture.index !== void 0) {
-          const index = material.occlusionTexture.index;
-          const image = this.gltf.imagesBitmaps[this.gltf.textures[index].source];
-          const texture = this.createTexture(material, image, "occlusionTexture");
-          const samplerIndex = this.gltf.textures.find((t) => t.source === index)?.sampler;
-          materialTextures.texturesDescriptors.push({
-            texture,
-            sampler: this.scenesManager.samplers[samplerIndex ?? 0],
-            texCoordAttributeName: getUVAttributeName(material.occlusionTexture)
-          });
+          createTexture(material.occlusionTexture, "occlusionTexture");
         }
         if (material.emissiveTexture && material.emissiveTexture.index !== void 0) {
-          const index = material.emissiveTexture.index;
-          const image = this.gltf.imagesBitmaps[this.gltf.textures[index].source];
-          const texture = this.createTexture(material, image, "emissiveTexture");
-          const samplerIndex = this.gltf.textures.find((t) => t.source === index)?.sampler;
-          materialTextures.texturesDescriptors.push({
-            texture,
-            sampler: this.scenesManager.samplers[samplerIndex ?? 0],
-            texCoordAttributeName: getUVAttributeName(material.emissiveTexture)
-          });
+          createTexture(material.emissiveTexture, "emissiveTexture");
+        }
+        const { extensions } = material;
+        const transmission = extensions && extensions.KHR_materials_transmission || null;
+        const specular = extensions && extensions.KHR_materials_specular || null;
+        const volume = extensions && extensions.KHR_materials_volume || null;
+        if (transmission && transmission.transmissionTexture && transmission.transmissionTexture.index !== void 0) {
+          createTexture(transmission.transmissionTexture, "transmissionTexture");
+        }
+        if (specular && (specular.specularTexture || specular.specularColorTexture)) {
+          const { specularTexture, specularColorTexture } = specular;
+          if (specularTexture && specularColorTexture) {
+            if (specularTexture.index !== void 0 && specularColorTexture.index !== void 0 && specularTexture.index === specularColorTexture.index) {
+              createTexture(specular.specularTexture, "specularTexture");
+            } else {
+              if (specularTexture && specularTexture.index !== void 0) {
+                createTexture(specular.specularTexture, "specularFactorTexture");
+              }
+              if (specularColorTexture && specularColorTexture.index !== void 0) {
+                createTexture(specular.specularColorTexture, "specularColorTexture");
+              }
+            }
+          }
+        }
+        if (volume && volume.thicknessTexture && volume.thicknessTexture.index !== void 0) {
+          createTexture(volume.thicknessTexture, "thicknessTexture");
         }
       }
     }
@@ -900,7 +927,31 @@ const _GLTFScenesManager = class _GLTFScenesManager {
         });
       });
     }
+    const material = this.gltf.materials && this.gltf.materials[primitive.material] || {};
+    const { extensions } = material;
+    const dispersion = extensions && extensions.KHR_materials_dispersion || null;
+    const ior = extensions && extensions.KHR_materials_ior || null;
+    const transmission = extensions && extensions.KHR_materials_transmission || null;
+    const specular = extensions && extensions.KHR_materials_specular || null;
+    const volume = extensions && extensions.KHR_materials_volume || null;
+    const hasTransmission = transmission || volume || dispersion;
+    const useTransmission = this.gltf.extensionsUsed && (this.gltf.extensionsUsed.includes("KHR_materials_transmission") || this.gltf.extensionsUsed.includes("KHR_materials_volume") || this.gltf.extensionsUsed.includes("KHR_materials_dispersion"));
+    if (useTransmission && hasTransmission) {
+      meshDescriptor.parameters.useCustomScenePassEntry = this.scenesManager.transmissionCompositing.sceneTransmissionPassEntry;
+    }
     const materialTextures = this.scenesManager.materialsTextures[primitive.material];
+    if (hasTransmission) {
+      materialTextures.texturesDescriptors.push({
+        texture: new Texture(this.renderer, {
+          fromTexture: this.scenesManager.transmissionCompositing.backgroundOutputTexture,
+          name: "transmissionBackgroundTexture",
+          generateMips: true
+        }),
+        sampler: this.scenesManager.samplers[0],
+        texCoordAttributeName: "uv"
+        // whatever
+      });
+    }
     meshDescriptor.parameters.samplers = [];
     meshDescriptor.parameters.textures = [];
     materialTextures?.texturesDescriptors.forEach((t) => {
@@ -915,9 +966,8 @@ const _GLTFScenesManager = class _GLTFScenesManager {
       }
       meshDescriptor.parameters.textures.push(t.texture);
     });
-    const material = this.gltf.materials && this.gltf.materials[primitive.material] || {};
     meshDescriptor.parameters.cullMode = material.doubleSided ? "none" : "back";
-    if (material.alphaMode === "BLEND" || material.extensions && material.extensions.KHR_materials_transmission) {
+    if (material.alphaMode === "BLEND") {
       meshDescriptor.parameters.transparent = true;
       meshDescriptor.parameters.targets = [
         {
@@ -963,6 +1013,42 @@ const _GLTFScenesManager = class _GLTFScenesManager {
       emissiveFactor: {
         type: "vec3f",
         value: material.emissiveFactor !== void 0 ? material.emissiveFactor : [1, 1, 1]
+      },
+      specularFactor: {
+        type: "f32",
+        value: specular && specular.specularFactor !== void 0 ? specular.specularFactor : 1
+      },
+      specularColorFactor: {
+        type: "vec3f",
+        value: specular && specular.specularColorFactor !== void 0 ? new Vec3(
+          specular.specularColorFactor[0],
+          specular.specularColorFactor[1],
+          specular.specularColorFactor[2]
+        ) : new Vec3(1)
+      },
+      transmissionFactor: {
+        type: "f32",
+        value: transmission && transmission.transmissionFactor !== void 0 ? transmission.transmissionFactor : 0
+      },
+      ior: {
+        type: "f32",
+        value: ior && ior.ior !== void 0 ? ior.ior : 1.5
+      },
+      dispersion: {
+        type: "f32",
+        value: dispersion && dispersion.dispersion !== void 0 ? dispersion.dispersion : 0
+      },
+      thicknessFactor: {
+        type: "f32",
+        value: volume && volume.thicknessFactor !== void 0 ? volume.thicknessFactor : 0
+      },
+      attenuationDistance: {
+        type: "f32",
+        value: volume && volume.attenuationDistance !== void 0 ? volume.attenuationDistance : Infinity
+      },
+      attenuationColor: {
+        type: "vec3f",
+        value: volume && volume.attenuationColor !== void 0 ? new Vec3(volume.attenuationColor[0], volume.attenuationColor[1], volume.attenuationColor[2]) : new Vec3(1)
       }
     };
     if (Object.keys(materialUniformStruct).length) {
@@ -1081,6 +1167,9 @@ const _GLTFScenesManager = class _GLTFScenesManager {
   destroy() {
     this.scenesManager.meshes.forEach((mesh) => mesh.remove());
     this.scenesManager.meshes = [];
+    if (this.scenesManager.transmissionCompositing) {
+      this.scenesManager.transmissionCompositing.backgroundOutputTexture.destroy();
+    }
     this.scenesManager.nodes.forEach((node) => {
       node.destroy();
     });

@@ -23,7 +23,7 @@ fn BRDF_BlinnPhong(
   let VdotH: f32 = clamp(dot(viewDirection, H), 0.0, 1.0);
   let NdotV: f32 = clamp( dot(normal, viewDirection), 0.0, 1.0 );
   
-  let F: vec3f = F_Schlick(VdotH, specularColor);
+  let F: vec3f = F_Schlick(VdotH, specularColor, 1.0);
   
   let G: f32 = 0.25; // blinn phong implicit
   

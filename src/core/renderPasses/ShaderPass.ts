@@ -122,8 +122,6 @@ export class ShaderPass extends FullscreenPlane {
 
     super(renderer, parameters)
 
-    console.log(this.options)
-
     this.options = {
       ...this.options,
       copyOutputToRenderTexture: parameters.copyOutputToRenderTexture,

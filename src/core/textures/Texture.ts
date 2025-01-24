@@ -1,4 +1,4 @@
-import { generateMips, isRenderer, Renderer } from '../renderers/utils'
+import { isRenderer, Renderer } from '../renderers/utils'
 import { TextureBinding } from '../bindings/TextureBinding'
 import { BindGroupBindingElement } from '../../types/BindGroups'
 import { GPUCurtains } from '../../curtains/GPUCurtains'

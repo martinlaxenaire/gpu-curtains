@@ -43,7 +43,7 @@ window.addEventListener('load', async () => {
   await gpuCurtains.setDevice()
 
   // should be hooked on a gsap ticker instead
-  gpuCurtains.onRender(() => {
+  gpuCurtains.onBeforeRender(() => {
     lenis.raf(performance.now())
   })
 

@@ -22,15 +22,23 @@ class Scene extends Object3D {
       pingPong: [],
       /** Array of {@link RenderPassEntry} that will render to a specific {@link RenderTarget}. Each {@link RenderTarget} will be added as a distinct {@link RenderPassEntry} here */
       renderTarget: [],
-      /** Array of {@link RenderPassEntry} that will render directly to the screen. Our first entry will contain all the Meshes that do not have any {@link RenderTarget} assigned. Following entries will be created for every global {@link ShaderPass} */
-      screen: []
+      /** Array of {@link RenderPassEntry} containing {@link ShaderPass} that will render directly to the screen before rendering any other pass to the screen. Useful to perform "blit" pass before actually rendering the usual scene content. */
+      prePass: [],
+      /** Array of {@link RenderPassEntry} that will render directly to the screen. Our first and default entry will contain all the Meshes that do not have any {@link RenderTarget} assigned. You can create following entries for custom scene rendering management process. */
+      screen: [],
+      /**Array of {@link RenderPassEntry} containing post processing {@link ShaderPass} that will render directly to the screen after everything has been drawn. */
+      postProPass: []
     };
   }
   /**
-   * Set the main {@link Renderer} render pass entry.
+   * Create a new {@link RenderPassEntry} in the {@link renderPassEntries} `screen` array.
+   * @param label - Optional label to use for this {@link RenderPassEntry}.
+   * @param order - Optional order into which insert this {@link renderPassEntries} `screen` array. A positive number means at the end of the array, a negative number means at the beginning. Default to `1`.
+   * @returns - The new {@link RenderPassEntry}.
    */
-  setMainRenderPassEntry() {
-    this.renderPassEntries.screen.push({
+  createScreenPassEntry(label = "", order = 1) {
+    const screenPassEntry = {
+      label,
       renderPass: this.renderer.renderPass,
       renderTexture: null,
       onBeforeRenderPass: null,
@@ -47,7 +55,19 @@ class Scene extends Object3D {
           transparent: []
         }
       }
-    });
+    };
+    if (order >= 0) {
+      this.renderPassEntries.screen.push(screenPassEntry);
+    } else {
+      this.renderPassEntries.screen.unshift(screenPassEntry);
+    }
+    return screenPassEntry;
+  }
+  /**
+   * Set the main {@link Renderer} render pass entry.
+   */
+  setMainRenderPassEntry() {
+    this.createScreenPassEntry("Main scene screen render pass");
   }
   /**
    * Get the number of meshes a {@link RenderPassEntry | render pass entry} should draw.
@@ -89,6 +109,7 @@ class Scene extends Object3D {
   addRenderTarget(renderTarget) {
     if (!this.renderPassEntries.renderTarget.find((entry) => entry.renderPass.uuid === renderTarget.renderPass.uuid))
       this.renderPassEntries.renderTarget.push({
+        label: renderTarget.options.label,
         renderPass: renderTarget.renderPass,
         renderTexture: renderTarget.renderTexture,
         onBeforeRenderPass: null,
@@ -117,14 +138,22 @@ class Scene extends Object3D {
     );
   }
   /**
+   * Get the {@link RenderPassEntry} in the {@link renderPassEntries} `renderTarget` array (or `screen` array if no {@link RenderTarget} is passed) corresponding to the given {@link RenderTarget}.
+   * @param renderTarget - {@link RenderTarget} to use to retrieve the {@link RenderPassEntry} if any.
+   * @returns - {@link RenderPassEntry} found.
+   */
+  getRenderTargetPassEntry(renderTarget = null) {
+    return renderTarget ? this.renderPassEntries.renderTarget.find(
+      (passEntry) => passEntry.renderPass.uuid === renderTarget.renderPass.uuid
+    ) : this.renderPassEntries.screen.find((passEntry) => passEntry.renderPass.uuid === this.renderer.renderPass.uuid);
+  }
+  /**
    * Get the correct {@link renderPassEntries | render pass entry} (either {@link renderPassEntries} outputTarget or {@link renderPassEntries} screen) {@link Stack} onto which this Mesh should be added, depending on whether it's projected or not
    * @param mesh - Mesh to check
    * @returns - the corresponding render pass entry {@link Stack}
    */
   getMeshProjectionStack(mesh) {
-    const renderPassEntry = mesh.outputTarget ? this.renderPassEntries.renderTarget.find(
-      (passEntry) => passEntry.renderPass.uuid === mesh.outputTarget.renderPass.uuid
-    ) : this.renderPassEntries.screen[0];
+    const renderPassEntry = mesh.options.useCustomScenePassEntry ? mesh.options.useCustomScenePassEntry : this.getRenderTargetPassEntry(mesh.outputTarget);
     const { stack } = renderPassEntry;
     return mesh.material.options.rendering.useProjection ? stack.projected : stack.unProjected;
   }
@@ -146,18 +175,32 @@ class Scene extends Object3D {
     return object.type === "RenderBundle";
   }
   /**
+   * Add a {@link SceneStackedMesh} to the given {@link RenderTarget} corresponding {@link RenderPassEntry}.
+   * @param mesh - {@link SceneStackedMesh} to add.
+   * @param renderTarget - {@link RenderTarget} to get the {@link RenderPassEntry} from. If not set, will add to the first {@link renderPassEntries} `screen` array entry.
+   */
+  addMeshToRenderTargetStack(mesh, renderTarget = null) {
+    const renderPassEntry = this.getRenderTargetPassEntry(renderTarget);
+    const { stack } = renderPassEntry;
+    const projectionStack = mesh.material.options.rendering.useProjection ? stack.projected : stack.unProjected;
+    const isTransparent = !!mesh.transparent;
+    const similarMeshes = isTransparent ? projectionStack.transparent : projectionStack.opaque;
+    similarMeshes.push(mesh);
+    this.orderStack(similarMeshes);
+  }
+  /**
    * Add a Mesh to the correct {@link renderPassEntries | render pass entry} {@link Stack} array.
    * Meshes are then ordered by their {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#index | indexes (order of creation]}, {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#index | pipeline entry indexes} and then {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#renderOrder | renderOrder}
    * @param mesh - Mesh to add
    */
   addMesh(mesh) {
-    const projectionStack = this.getMeshProjectionStack(mesh);
-    const isTransparent = !!mesh.transparent;
-    const { useProjection } = mesh.material.options.rendering;
     if (mesh.renderBundle) {
       mesh.renderBundle.addMesh(mesh, mesh.outputTarget ? mesh.outputTarget.renderPass : this.renderer.renderPass);
     }
+    const { useProjection } = mesh.material.options.rendering;
     if (!mesh.renderBundle) {
+      const projectionStack = this.getMeshProjectionStack(mesh);
+      const isTransparent = !!mesh.transparent;
       const similarMeshes = isTransparent ? projectionStack.transparent : projectionStack.opaque;
       similarMeshes.push(mesh);
       this.orderStack(similarMeshes);
@@ -171,15 +214,18 @@ class Scene extends Object3D {
    * @param mesh - Mesh to remove.
    */
   removeMesh(mesh) {
-    const projectionStack = this.getMeshProjectionStack(mesh);
-    const isTransparent = !!mesh.transparent;
     if (mesh.renderBundle) {
       mesh.renderBundle.removeMesh(mesh, false);
     } else {
-      if (isTransparent) {
-        projectionStack.transparent = projectionStack.transparent.filter((m) => m.uuid !== mesh.uuid);
-      } else {
-        projectionStack.opaque = projectionStack.opaque.filter((m) => m.uuid !== mesh.uuid);
+      const projectionType = mesh.material.options.rendering.useProjection ? "projected" : "unProjected";
+      const isTransparent = !!mesh.transparent;
+      const transparencyType = isTransparent ? "transparent" : "opaque";
+      for (const renderPassEntries of Object.values(this.renderPassEntries)) {
+        renderPassEntries.forEach((renderPassEntry) => {
+          if (renderPassEntry.stack) {
+            renderPassEntry.stack[projectionType][transparencyType] = renderPassEntry.stack[projectionType][transparencyType].filter((m) => m.uuid !== mesh.uuid);
+          }
+        });
       }
     }
     if ("parent" in mesh && mesh.parent && mesh.parent.object3DIndex === this.object3DIndex) {
@@ -215,11 +261,11 @@ class Scene extends Object3D {
     }
   }
   /**
-   * Add a {@link ShaderPass} to our scene {@link renderPassEntries} screen array.
-   * Before rendering the {@link ShaderPass}, we will copy the correct input texture into its {@link ShaderPass#renderTexture | renderTexture}
-   * This also handles the {@link renderPassEntries} screen array entries order: We will first draw selective passes, then our main screen pass and finally global post processing passes.
+   * Add a {@link ShaderPass} to our scene {@link renderPassEntries} `prePass` or `postProPass` array.
+   * Before rendering the {@link ShaderPass}, we will copy the correct input texture into its {@link ShaderPass#renderTexture | renderTexture}.
+   * This also handles the {@link renderPassEntries} `postProPass` array entries order: We will first draw selective passes and then finally global post processing passes.
    * @see {@link https://codesandbox.io/p/sandbox/webgpu-render-to-2-textures-without-texture-copy-c4sx4s?file=%2Fsrc%2Findex.js%3A10%2C4 | minimal code example}
-   * @param shaderPass - {@link ShaderPass} to add
+   * @param shaderPass - {@link ShaderPass} to add.
    */
   addShaderPass(shaderPass) {
     const onBeforeRenderPass = shaderPass.inputTarget || shaderPass.outputTarget ? null : (commandEncoder, swapChainTexture) => {
@@ -249,8 +295,10 @@ class Scene extends Object3D {
         );
       }
     } : null;
-    const outputPass = shaderPass.outputTarget ? shaderPass.outputTarget.renderPass : this.renderer.postProcessingPass;
+    const outputPass = shaderPass.outputTarget ? shaderPass.outputTarget.renderPass : !shaderPass.options.isPrePass ? this.renderer.postProcessingPass : this.renderer.renderPass;
+    const label = shaderPass.options.isPrePass ? shaderPass.options.label + " scene pre pass" : shaderPass.options.label + " scene post processing pass";
     const shaderPassEntry = {
+      label,
       // use output target or postprocessing render pass
       renderPass: outputPass,
       // render to output target renderTexture or directly to screen
@@ -272,45 +320,59 @@ class Scene extends Object3D {
         renderBundle.addMesh(shaderPass, outputPass);
       }
     }
-    this.renderPassEntries.screen.push(shaderPassEntry);
-    this.renderPassEntries.screen.sort((a, b) => {
-      const isPostProA = a.element && !a.element.outputTarget;
-      const renderOrderA = a.element ? a.element.renderOrder : 0;
-      const indexA = a.element ? a.element.index : 0;
-      const isPostProB = b.element && !b.element.outputTarget;
-      const renderOrderB = b.element ? b.element.renderOrder : 0;
-      const indexB = b.element ? b.element.index : 0;
-      if (isPostProA && !isPostProB) {
-        return 1;
-      } else if (!isPostProA && isPostProB) {
-        return -1;
-      } else if (renderOrderA !== renderOrderB) {
-        return renderOrderA - renderOrderB;
-      } else {
-        return indexA - indexB;
-      }
-    });
+    if (!shaderPass.options.isPrePass) {
+      this.renderPassEntries.postProPass.push(shaderPassEntry);
+      this.renderPassEntries.postProPass.sort((a, b) => {
+        const isPostProA = a.element && !a.element.outputTarget;
+        const renderOrderA = a.element ? a.element.renderOrder : 0;
+        const indexA = a.element ? a.element.index : 0;
+        const isPostProB = b.element && !b.element.outputTarget;
+        const renderOrderB = b.element ? b.element.renderOrder : 0;
+        const indexB = b.element ? b.element.index : 0;
+        if (isPostProA && !isPostProB) {
+          return 1;
+        } else if (!isPostProA && isPostProB) {
+          return -1;
+        } else if (renderOrderA !== renderOrderB) {
+          return renderOrderA - renderOrderB;
+        } else {
+          return indexA - indexB;
+        }
+      });
+    } else {
+      this.renderPassEntries.prePass.push(shaderPassEntry);
+      this.renderPassEntries.prePass.sort(
+        (a, b) => a.element.renderOrder - b.element.renderOrder || a.element.index - b.element.index
+      );
+    }
   }
   /**
-   * Remove a {@link ShaderPass} from our scene {@link renderPassEntries} screen array
-   * @param shaderPass - {@link ShaderPass} to remove
+   * Remove a {@link ShaderPass} from our scene {@link renderPassEntries} `prePass` or `postProPass` array.
+   * @param shaderPass - {@link ShaderPass} to remove.
    */
   removeShaderPass(shaderPass) {
     if (shaderPass.renderBundle) {
       shaderPass.renderBundle.empty();
     }
-    this.renderPassEntries.screen = this.renderPassEntries.screen.filter(
-      (entry) => !entry.element || entry.element.uuid !== shaderPass.uuid
-    );
+    if (!shaderPass.options.isPrePass) {
+      this.renderPassEntries.postProPass = this.renderPassEntries.postProPass.filter(
+        (entry) => !entry.element || entry.element.uuid !== shaderPass.uuid
+      );
+    } else {
+      this.renderPassEntries.prePass = this.renderPassEntries.prePass.filter(
+        (entry) => !entry.element || entry.element.uuid !== shaderPass.uuid
+      );
+    }
   }
   /**
    * Add a {@link PingPongPlane} to our scene {@link renderPassEntries} pingPong array.
-   * After rendering the {@link PingPongPlane}, we will copy the context current texture into its {@link PingPongPlane#renderTexture | renderTexture} so we'll be able to use it as an input for the next pass
+   * After rendering the {@link PingPongPlane}, we will copy the context current texture into its {@link PingPongPlane#renderTexture | renderTexture} so we'll be able to use it as an input for the next pass.
    * @see {@link https://codesandbox.io/p/sandbox/webgpu-render-ping-pong-to-texture-use-in-quad-gwjx9p | minimal code example}
    * @param pingPongPlane
    */
   addPingPongPlane(pingPongPlane) {
     this.renderPassEntries.pingPong.push({
+      label: pingPongPlane.options.label + " scene pass",
       renderPass: pingPongPlane.outputTarget.renderPass,
       renderTexture: pingPongPlane.outputTarget.renderTexture,
       onBeforeRenderPass: null,
@@ -344,7 +406,7 @@ class Scene extends Object3D {
   }
   /**
    * Remove a {@link PingPongPlane} from our scene {@link renderPassEntries} pingPong array.
-   * @param pingPongPlane - {@link PingPongPlane} to remove
+   * @param pingPongPlane - {@link PingPongPlane} to remove.
    */
   removePingPongPlane(pingPongPlane) {
     if (pingPongPlane.renderBundle) {
@@ -357,7 +419,7 @@ class Scene extends Object3D {
   /**
    * Get any rendered object or {@link RenderTarget} {@link RenderPassEntry}. Useful to override a {@link RenderPassEntry#onBeforeRenderPass | RenderPassEntry onBeforeRenderPass} or {@link RenderPassEntry#onAfterRenderPass | RenderPassEntry onAfterRenderPass} default behavior.
    * @param object - The object from which we want to get the parentMesh {@link RenderPassEntry}
-   * @returns - the {@link RenderPassEntry} if found
+   * @returns - the {@link RenderPassEntry} if found.
    */
   getObjectRenderPassEntry(object) {
     if (object.type === "RenderTarget") {
@@ -395,7 +457,7 @@ class Scene extends Object3D {
   }
   /**
    * Sort transparent projected meshes by their render order or distance to the camera (farther meshes should be drawn first).
-   * @param meshes - transparent projected meshes array to sort
+   * @param meshes - transparent projected meshes array to sort.
    */
   sortTransparentMeshes(meshes) {
     meshes.sort((meshA, meshB) => {
@@ -498,13 +560,18 @@ class Scene extends Object3D {
       this.renderer.pipelineManager.resetCurrentPipeline();
     }
     for (const renderPassEntryType in this.renderPassEntries) {
+      if (renderPassEntryType === "postProPass") {
+        this.renderer.renderPass.setDepthLoadOp("clear");
+      }
       let passDrawnCount = 0;
       this.renderPassEntries[renderPassEntryType].forEach((renderPassEntry) => {
         if (!this.getRenderPassEntryLength(renderPassEntry))
           return;
-        renderPassEntry.renderPass.setLoadOp(
-          renderPassEntryType === "screen" && passDrawnCount !== 0 ? "load" : "clear"
-        );
+        const isSubesequentScreenPass = renderPassEntryType === "screen" && (passDrawnCount !== 0 || this.renderPassEntries.prePass.length);
+        const loadContent = renderPassEntryType === "postProPass" || renderPassEntryType === "prePass" && passDrawnCount !== 0 || isSubesequentScreenPass;
+        renderPassEntry.renderPass.setLoadOp(loadContent ? "load" : "clear");
+        if (isSubesequentScreenPass)
+          renderPassEntry.renderPass.setDepthLoadOp("load");
         passDrawnCount++;
         this.renderSinglePassEntry(commandEncoder, renderPassEntry);
       });

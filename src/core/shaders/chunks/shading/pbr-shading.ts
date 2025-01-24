@@ -1,7 +1,7 @@
 import { toneMappingUtils } from './tone-mapping-utils'
 import RE_indirect_specular from '../helpers/lights/RE_indirect_specular.wgsl'
 import { GetShadingParams, lambertUtils } from './lambert-shading'
-import { transmissionUtils } from './transmission'
+import transmissionUtils from '../helpers/lights/transmission_utils.wgsl'
 import { applyDirectionalShadows, applyPointShadows, getPCFShadows } from './shadows'
 
 /** Basic minimum utils needed to compute PBR shading. Extends {@link lambertUtils | utils needed for lambert shading}. */
@@ -38,12 +38,13 @@ fn BRDF_GGX(
   NdotH: f32,
   VdotH: f32,
   roughness: f32,
-  f0: vec3f
+  specularFactor: f32,
+  specularColor: vec3f
 ) -> vec3f {
   // cook-torrance brdf
   let G: f32 = GeometrySmith(NdotL, NdotV, roughness);
   let D: f32 = DistributionGGX(NdotH, roughness);
-  let F: vec3f = F_Schlick(VdotH, f0);
+  let F: vec3f = F_Schlick(VdotH, specularColor, specularFactor);
   
   return G * D * F;
 }
@@ -52,7 +53,8 @@ fn getPBRDirect(
   normal: vec3f,
   diffuseColor: vec3f,
   viewDirection: vec3f,
-  f0: vec3f,
+  specularFactor: f32,
+  specularColor: vec3f,
   metallic: f32,
   roughness: f32,
   directLight: DirectLight,
@@ -68,7 +70,7 @@ fn getPBRDirect(
   let VdotH: f32 = clamp(dot(V, H), 0.0, 1.0);
 
   let irradiance: vec3f = NdotL * directLight.color;
-  let ggx: vec3f = BRDF_GGX(NdotV, NdotL, NdotH, VdotH, roughness, f0);
+  let ggx: vec3f = BRDF_GGX(NdotV, NdotL, NdotH, VdotH, roughness, specularFactor, specularColor);
   
   let diffuseContribution: vec3f = BRDF_Lambert(diffuseColor);
   
@@ -83,8 +85,18 @@ fn getPBRDirect(
  *
  * @example
  * ```wgsl
- * var color: vec3f = vec3(1.0);
- * color = getPBR(normal, worldPosition, color, viewDirection, f0, metallic, roughness);
+ * var color: vec4f = vec4(1.0);
+ * color = getPBR(
+ *   normal,
+ *   worldPosition,
+ *   color,
+ *   viewDirection,
+ *   metallic,
+ *   roughness,
+ *   specularFactor,
+ *   specularColor,
+ *   ior,
+ * );
  * ```
  */
 export const getPBR = (
@@ -99,7 +111,8 @@ fn getPBRContribution(
   worldPosition: vec3f,
   diffuseColor: vec4f,
   viewDirection: vec3f,
-  f0: vec3f,
+  specularFactor: f32,
+  specularColor: vec3f,
   metallic: f32,
   roughness: f32,
   ${useOcclusion ? 'occlusion: f32,' : ''}
@@ -113,14 +126,14 @@ fn getPBRContribution(
   for(var i = 0; i < pointLights.count; i++) {
     getPointLightInfo(pointLights.elements[i], worldPosition, &directLight);
     ${receiveShadows ? applyPointShadows : ''}
-    getPBRDirect(normal, diffuseColor.rgb, viewDirection, f0, metallic, roughness, directLight, &reflectedLight);
+    getPBRDirect(normal, diffuseColor.rgb, viewDirection, specularFactor, specularColor, metallic, roughness, directLight, &reflectedLight);
   }
   
   // directional lights
   for(var i = 0; i < directionalLights.count; i++) {
     getDirectionalLightInfo(directionalLights.elements[i], worldPosition, &directLight);
     ${receiveShadows ? applyDirectionalShadows : ''}
-    getPBRDirect(normal, diffuseColor.rgb, viewDirection, f0, metallic, roughness, directLight, &reflectedLight);
+    getPBRDirect(normal, diffuseColor.rgb, viewDirection, specularFactor, specularColor, metallic, roughness, directLight, &reflectedLight);
   }
   
   // ambient lights
@@ -128,8 +141,8 @@ fn getPBRContribution(
   RE_IndirectDiffuse(irradiance, diffuseColor.rgb, &reflectedLight);
   
   // ambient lights specular
-  // var radiance: vec3f = vec3(0.0);
-  // RE_IndirectSpecular(radiance, irradiance, normal, diffuseColor.rgb, viewDirection, metallic, roughness, &reflectedLight);
+  var radiance: vec3f = vec3(0.0);
+  RE_IndirectSpecular(radiance, irradiance, normal, diffuseColor.rgb, specularFactor, specularColor, viewDirection, metallic, roughness, &reflectedLight);
   
   var pbrContribution: ReflectedLight;
   
@@ -146,29 +159,36 @@ fn getPBR(
   worldPosition: vec3f,
   diffuseColor: vec4f,
   viewDirection: vec3f,
-  f0: vec3f,
   metallic: f32,
   roughness: f32,
-  transmission: f32,
+  specularFactor: f32,
+  specularColorFactor: vec3f,
+  ior: f32,
   ${useOcclusion ? 'occlusion: f32,' : ''}
 ) -> vec4f {
+  let metallicDiffuseColor: vec4f = diffuseColor * ( 1.0 - metallic );
+  
+  let specularF90: f32 = mix(specularFactor, 1.0, metallic);
+  let specularColor = mix( min( pow2( ( ior - 1.0 ) / ( ior + 1.0 ) ) * specularColorFactor, vec3( 1.0 ) ) * specularFactor, diffuseColor.rgb, metallic );
+
   var pbrContribution = getPBRContribution(
     normal,
     worldPosition,
-    diffuseColor,
+    metallicDiffuseColor,
     viewDirection,
-    f0,
+    specularFactor,
+    specularColor,
     metallic,
     roughness,
     ${useOcclusion ? 'occlusion' : '0.0'}
   );
+  
+  ${useOcclusion ? 'pbrContribution.indirectDiffuse *= occlusion;' : ''}
 
-  var totalIndirect = pbrContribution.indirectDiffuse + pbrContribution.indirectSpecular;
-  let totalDirect = pbrContribution.directDiffuse + pbrContribution.directSpecular;
+  let totalDiffuse = pbrContribution.indirectDiffuse + pbrContribution.directDiffuse;
+  let totalSpecular = pbrContribution.indirectSpecular + pbrContribution.directSpecular;
   
-  ${useOcclusion ? 'totalIndirect *= occlusion;' : ''}
-  
-  var outgoingLight: vec3f = totalDirect + totalIndirect;
+  var outgoingLight: vec3f = totalDiffuse + totalSpecular;
   
   ${
     toneMapping === 'linear'
@@ -186,11 +206,12 @@ fn getPBRTransmission(
   worldPosition: vec3f,
   diffuseColor: vec4f,
   viewDirection: vec3f,
-  f0: vec3f,
   metallic: f32,
   roughness: f32,
-  transmission: f32,
+  specularFactor: f32,
+  specularColorFactor: vec3f,
   ior: f32,
+  transmission: f32,
   dispersion: f32,
   thickness: f32,
   attenuationDistance: f32,
@@ -199,27 +220,26 @@ fn getPBRTransmission(
   defaultSampler: sampler,
   ${useOcclusion ? 'occlusion: f32,' : ''}
 ) -> vec4f {
+  let metallicDiffuseColor: vec4f = diffuseColor * ( 1.0 - metallic );
+  
+  let specularF90: f32 = mix(specularFactor, 1.0, metallic);
+  let specularColor = mix( min( pow2( ( ior - 1.0 ) / ( ior + 1.0 ) ) * specularColorFactor, vec3( 1.0 ) ) * specularFactor, diffuseColor.rgb, metallic );
+
   var pbrContribution = getPBRContribution(
     normal,
     worldPosition,
-    diffuseColor,
+    metallicDiffuseColor,
     viewDirection,
-    f0,
+    specularFactor,
+    specularColor,
     metallic,
     roughness,
-    transmission,
-     ${useOcclusion ? 'occlusion' : '0.0'}
+    ${useOcclusion ? 'occlusion' : '0.0'}
   );
   
+  ${useOcclusion ? 'pbrContribution.indirectDiffuse *= occlusion;' : ''}
+  
   var transmissionAlpha: f32 = 1.0;
-  
-  var specularColor: vec3f = vec3(1.0); // TODO ?
-  var specularIntensity: f32 = 1.0; // TODO
-  var specularF90: f32 = mix(specularIntensity, 1.0, metallic); // TODO?!
-  
-  specularColor = mix( min( pow2( ( ior - 1.0 ) / ( ior + 1.0 ) ) * specularColor, vec3( 1.0 ) ) * specularIntensity, diffuseColor.rgb, metallic );
-  
-  let metallicDiffuseColor: vec4f = diffuseColor * ( 1.0 - metallic );
   
   var transmitted: vec4f = getIBLVolumeRefraction(
     normal,
@@ -242,8 +262,6 @@ fn getPBRTransmission(
   );
   
   transmissionAlpha = mix( transmissionAlpha, transmitted.a, transmission );
-    
-  ${useOcclusion ? 'pbrContribution.indirectDiffuse *= occlusion;\npbrContribution.indirectSpecular *= occlusion;' : ''}
   
   var totalDiffuse: vec3f = pbrContribution.indirectDiffuse + pbrContribution.directDiffuse;
   let totalSpecular: vec3f = pbrContribution.indirectSpecular + pbrContribution.directSpecular;
@@ -260,6 +278,6 @@ fn getPBRTransmission(
       : ''
   }
   
-  return vec4(outgoingLight, diffuseColor.a);
+  return vec4(outgoingLight, diffuseColor.a * transmissionAlpha);
 }
 `

@@ -1,4 +1,4 @@
-export const transmissionUtils = /* wgsl */ `
+export default /* wgsl */ `
 fn EnvironmentBRDF(
     normal: vec3<f32>, 
     viewDir: vec3<f32>, 
@@ -14,8 +14,8 @@ fn isinf(value: f32) -> bool {
   return value > 1.0e38 || value < -1.0e38;
 }
 
-fn getVolumeTransmissionRay(n: vec3f, v: vec3f, thickness: f32, ior: f32, modelMatrix: mat4x4f) -> vec3f {
-    let refractionVector = refract(-v, normalize(n), 1.0 / ior);
+fn getVolumeTransmissionRay(normal: vec3f, viewDirection: vec3f, thickness: f32, ior: f32, modelMatrix: mat4x4f) -> vec3f {
+    let refractionVector = refract(-viewDirection, normalize(normal), 1.0 / ior);
     let modelScale = vec3(
         length(modelMatrix[0].xyz),
         length(modelMatrix[1].xyz),
@@ -45,8 +45,8 @@ fn volumeAttenuation(transmissionDistance: f32, attenuationColor: vec3f, attenua
 }
 
 fn getIBLVolumeRefraction(
-    n: vec3f,
-    v: vec3f,
+    normal: vec3f,
+    viewDirection: vec3f,
     roughness: f32,
     diffuseColor: vec4f,
     specularColor: vec3f,
@@ -69,13 +69,12 @@ fn getIBLVolumeRefraction(
     var transmissionRayLength: f32;
     var transmittance: vec3f;
     
-    
     if(dispersion > 0.0) {
       let halfSpread: f32 = (ior - 1.0) * 0.025 * dispersion;
       let iors: vec3f = vec3(ior - halfSpread, ior, ior + halfSpread);
       
       for(var i: i32 = 0; i < 3; i++) {
-        let transmissionRay: vec3f = getVolumeTransmissionRay(n, v, thickness, iors[i], modelMatrix);
+        let transmissionRay: vec3f = getVolumeTransmissionRay(normal, viewDirection, thickness, iors[i], modelMatrix);
         transmissionRayLength = length(transmissionRay);
         let refractedRayExit = position + transmissionRay;
 
@@ -98,7 +97,7 @@ fn getIBLVolumeRefraction(
       transmittedLight.a /= 3.0;
     } else {
       // Calculate the transmission ray
-      let transmissionRay: vec3f = getVolumeTransmissionRay(n, v, thickness, ior, modelMatrix);
+      let transmissionRay: vec3f = getVolumeTransmissionRay(normal, viewDirection, thickness, ior, modelMatrix);
       let refractedRayExit = position + transmissionRay;
   
       // Transform to NDC space
@@ -118,7 +117,7 @@ fn getIBLVolumeRefraction(
     let attenuatedColor = transmittance * transmittedLight.rgb;
 
     // Compute Fresnel term using an environment BRDF
-    let F = EnvironmentBRDF(n, v, specularColor, specularF90, roughness);
+    let F = EnvironmentBRDF(normal, viewDirection, specularColor, specularF90, roughness);
 
     // Average the transmittance for a single factor
     let transmittanceFactor = (transmittance.r + transmittance.g + transmittance.b) / 3.0;

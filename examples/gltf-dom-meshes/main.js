@@ -51,7 +51,7 @@ window.addEventListener('load', async () => {
 
   parentNode.parent = gpuCurtains.renderer.scene
 
-  gpuCurtains.onRender(() => {
+  gpuCurtains.onBeforeRender(() => {
     parentNode.rotation.y += 0.02
   })
 

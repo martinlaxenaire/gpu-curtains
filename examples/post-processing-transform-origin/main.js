@@ -77,7 +77,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   await gpuCurtains.setDevice()
 
-  gpuCurtains.onRender(() => {
+  gpuCurtains.onBeforeRender(() => {
     rotationEffect = lerp(rotationEffect, 0, 0.05)
   })
 

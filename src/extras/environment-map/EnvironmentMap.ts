@@ -1,4 +1,4 @@
-import { generateMips, isRenderer, Renderer } from '../../core/renderers/utils'
+import { isRenderer, Renderer } from '../../core/renderers/utils'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { HDRImageData, HDRLoader } from '../loaders/HDRLoader'
 import { Texture, TextureParams } from '../../core/textures/Texture'
@@ -107,12 +107,12 @@ export class EnvironmentMap {
         size: 128,
         computeSampleCount: 2048,
         label: 'Environment diffuse texture',
-        name: 'diffuseTexture',
+        name: 'envDiffuseTexture',
         format: 'rgba16float',
       },
       specularTextureParams: {
         label: 'Environment specular texture',
-        name: 'specularTexture',
+        name: 'envSpecularTexture',
         format: 'rgba16float',
         generateMips: true,
       },

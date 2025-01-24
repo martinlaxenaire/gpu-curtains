@@ -95,6 +95,8 @@ function MeshBaseMixin(Base) {
         visible,
         renderOrder,
         outputTarget,
+        additionalOutputTargets,
+        useCustomScenePassEntry,
         renderBundle,
         texturesOptions,
         autoRender,
@@ -102,6 +104,7 @@ function MeshBaseMixin(Base) {
       } = parameters;
       this.outputTarget = outputTarget ?? null;
       this.renderBundle = renderBundle ?? null;
+      this.additionalOutputTargets = additionalOutputTargets || [];
       meshParameters.sampleCount = !!meshParameters.sampleCount ? meshParameters.sampleCount : this.outputTarget ? this.outputTarget.renderPass.options.sampleCount : this.renderer && this.renderer.renderPass ? this.renderer.renderPass.options.sampleCount : 1;
       this.options = {
         ...this.options ?? {},
@@ -112,6 +115,7 @@ function MeshBaseMixin(Base) {
         ...renderBundle !== void 0 && { renderBundle },
         texturesOptions,
         ...autoRender !== void 0 && { autoRender },
+        useCustomScenePassEntry,
         ...meshParameters
       };
       if (autoRender !== void 0) {
@@ -162,6 +166,11 @@ function MeshBaseMixin(Base) {
       this.setRenderingOptionsForRenderPass(this.outputTarget ? this.outputTarget.renderPass : this.renderer.renderPass);
       if (__privateGet(this, _autoRender)) {
         this.renderer.scene.addMesh(this);
+        if (this.additionalOutputTargets.length) {
+          this.additionalOutputTargets.forEach((renderTarget) => {
+            this.renderer.scene.addMeshToRenderTargetStack(this, renderTarget);
+          });
+        }
       }
     }
     /**

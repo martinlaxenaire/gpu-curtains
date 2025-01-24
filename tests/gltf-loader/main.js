@@ -14,6 +14,7 @@ window.addEventListener('load', async () => {
     DirectionalLight,
     OrbitControls,
     Vec3,
+    FullscreenPlane,
   } = await import(/* @vite-ignore */ path)
 
   const stats = new Stats()
@@ -48,6 +49,15 @@ window.addEventListener('load', async () => {
     camera: {
       near: 0.1,
       far: 2000,
+    },
+    renderPass: {
+      // since transmission need a solid background color to be blended with
+      // just clear the renderer renderPass color values to match the css background
+      colorAttachments: [
+        {
+          clearValue: [34 / 255, 34 / 255, 34 / 255, 1],
+        },
+      ],
     },
   })
 
@@ -199,6 +209,11 @@ window.addEventListener('load', async () => {
       name: 'Dispersion Test',
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/DispersionTest/glTF/DispersionTest.gltf',
     },
+    // specular
+    compareSpecular: {
+      name: 'Compare Specular',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/CompareSpecular/glTF/CompareSpecular.gltf',
+    },
   }
 
   let shadingModel = 'IBL' // 'IBL', 'PBR', 'Phong' or 'Lambert'
@@ -265,7 +280,8 @@ window.addEventListener('load', async () => {
     'Base Color',
     'Metallic',
     'Roughness',
-    'F0',
+    'Specular Intensity',
+    'Specular Color',
   ]
 
   const defaultDebugChannel = 0
@@ -431,8 +447,10 @@ window.addEventListener('load', async () => {
         } else if(debug.channel == 12.0) {
           color = vec4(vec3(roughness), 1.0);
         } else if(debug.channel == 13.0) {
-          color = vec4(f0, 1.0);
-        }        
+          color = vec4(vec3(specularFactor), 1.0);
+        } else if(debug.channel == 14.0) {
+          color = vec4(specularColorFactor, 1.0);
+        }      
       `
 
       parameters.shaders = buildShaders(meshDescriptor, {

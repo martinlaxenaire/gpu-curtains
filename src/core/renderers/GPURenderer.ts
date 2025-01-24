@@ -218,7 +218,7 @@ export class GPURenderer {
     }
 
     // render pass default values
-    renderPass = { ...{ useDepth: true, sampleCount: 4, clearValue: [0, 0, 0, 0] }, ...renderPass }
+    renderPass = { ...{ useDepth: true, sampleCount: 4 }, ...renderPass }
 
     this.options = {
       deviceManager,

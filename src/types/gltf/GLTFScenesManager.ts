@@ -6,13 +6,11 @@ import { ProjectedMeshParameters } from '../../core/meshes/mixins/ProjectedMeshB
 import { Object3D } from '../../core/objects3D/Object3D'
 import { Mesh } from '../../core/meshes/Mesh'
 import { Box3 } from '../../math/Box3'
-import { TypedArray } from '../../core/bindings/utils'
 import { Camera } from '../../core/camera/Camera'
 import { BufferBinding } from '../../core/bindings/BufferBinding'
 import { TargetsAnimationsManager } from '../../extras/animations/TargetsAnimationsManager'
 import { Mat4 } from '../../math/Mat4'
-import { RenderTarget } from '../../core/renderPasses/RenderTarget'
-import { ShaderPass } from '../../core/renderPasses/ShaderPass'
+import { RenderPassEntry } from '../../core/scenes/Scene'
 
 /**
  * Define a {@link MeshDescriptorAttribute} used to create the {@link core/geometries/Geometry.Geometry | Geometry}.
@@ -152,12 +150,11 @@ export interface ScenesManager {
   /** Array of {@link SkinDefinition} used by this {@link ScenesManager}. */
   skins: SkinDefinition[]
 
-  compositing: {
-    transmission?: {
-      useBlitPass: boolean
-      backgroundTarget: RenderTarget
-      backgroundOutputTexture: Texture
-      blitPass?: ShaderPass
-    }
+  /** If our parsed glTF contains one of the `KHR_materials_transmission`, `KHR_materials_volume` or `KHR_materials_dispersion`, we need to handle the rendering of transmissive meshes. To do so, we'll need a new screen pass {@link RenderPassEntry} and a {@link Texture} onto which we'll write the content of the non transmissive objects main buffer rendered objects. */
+  transmissionCompositing?: {
+    /** The new screen pass {@link RenderPassEntry} where we'll draw our transmissive objects. */
+    sceneTransmissionPassEntry: RenderPassEntry
+    /** The {@link Texture} holding the content of all the non transmissive objects we've already drawn onto the main screen buffer. */
+    backgroundOutputTexture: Texture
   }
 }

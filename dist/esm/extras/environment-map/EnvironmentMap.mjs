@@ -1,4 +1,4 @@
-import { isRenderer, generateMips } from '../../core/renderers/utils.mjs';
+import { isRenderer } from '../../core/renderers/utils.mjs';
 import { HDRLoader } from '../loaders/HDRLoader.mjs';
 import { Texture } from '../../core/textures/Texture.mjs';
 import { ComputePass } from '../../core/computePasses/ComputePass.mjs';
@@ -42,12 +42,12 @@ class EnvironmentMap {
       size: 128,
       computeSampleCount: 2048,
       label: "Environment diffuse texture",
-      name: "diffuseTexture",
+      name: "envDiffuseTexture",
       format: "rgba16float"
     },
     specularTextureParams: {
       label: "Environment specular texture",
-      name: "specularTexture",
+      name: "envSpecularTexture",
       format: "rgba16float",
       generateMips: true
     }
@@ -203,13 +203,13 @@ class EnvironmentMap {
       commandEncoder.pushDebugGroup("Render once command encoder");
     this.renderer.renderSingleComputePass(commandEncoder, computeCubeMapPass);
     __privateMethod(this, _copyComputeStorageTextureToTexture, copyComputeStorageTextureToTexture_fn).call(this, commandEncoder, cubeStorageTexture, this.specularTexture);
+    if (this.specularTexture.texture.mipLevelCount > 1) {
+      this.renderer.generateMips(this.specularTexture, commandEncoder);
+    }
     if (!this.renderer.production)
       commandEncoder.popDebugGroup();
     const commandBuffer = commandEncoder.finish();
     this.renderer.device?.queue.submit([commandBuffer]);
-    if (this.specularTexture.texture.mipLevelCount > 1) {
-      generateMips(this.renderer.device, this.specularTexture.texture);
-    }
     computeCubeMapPass.destroy();
     cubeStorageTexture.destroy();
     cubeStorageTexture = null;

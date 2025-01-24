@@ -1,4 +1,4 @@
-import { isRenderer, generateMips } from '../renderers/utils.mjs';
+import { isRenderer } from '../renderers/utils.mjs';
 import { TextureBinding } from '../bindings/TextureBinding.mjs';
 import { generateUUID } from '../../utils/utils.mjs';
 import { getNumMipLevels, getDefaultTextureUsage } from './utils.mjs';
@@ -149,7 +149,7 @@ class Texture {
       [width, height, depth]
     );
     if (this.texture.mipLevelCount > 1) {
-      generateMips(this.renderer.device, this.texture);
+      this.renderer.generateMips(this);
     }
   }
   /**
@@ -175,7 +175,7 @@ class Texture {
       [width, height, depth]
     );
     if (this.texture.mipLevelCount > 1) {
-      generateMips(this.renderer.device, this.texture);
+      this.renderer.generateMips(this);
     }
   }
   /**

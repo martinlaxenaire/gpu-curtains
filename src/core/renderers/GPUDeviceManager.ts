@@ -114,6 +114,8 @@ export class GPUDeviceManager {
   /** Callback to run whenever the {@link device} has been intentionally destroyed. */
   onDeviceDestroyed: (info?: GPUDeviceLostInfo) => void
 
+  /** @ignore */
+  // mips generation cache handling
   #mipsGeneration: {
     sampler: GPUSampler | null
     module: GPUShaderModule | null
@@ -158,7 +160,7 @@ export class GPUDeviceManager {
     this.#mipsGeneration = {
       sampler: null,
       module: null,
-      pipelineByFormat: {},
+      pipelineByFormat: {} as Record<GPUTextureFormat, GPURenderPipeline>,
     }
 
     if (autoRender) {

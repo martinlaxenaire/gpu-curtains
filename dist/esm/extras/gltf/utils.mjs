@@ -11,6 +11,14 @@ const buildShaders = (meshDescriptor, shaderParameters = {}) => {
   const emissiveTexture = meshDescriptor.textures.find((t) => t.texture === "emissiveTexture");
   const occlusionTexture = meshDescriptor.textures.find((t) => t.texture === "occlusionTexture");
   const metallicRoughnessTexture = meshDescriptor.textures.find((t) => t.texture === "metallicRoughnessTexture");
+  const specularTexture = meshDescriptor.textures.find((t) => t.texture === "specularTexture");
+  const specularFactorTexture = specularTexture || meshDescriptor.textures.find((t) => t.texture === "specularFactorTexture");
+  const specularColorTexture = specularTexture || meshDescriptor.textures.find((t) => t.texture === "specularColorTexture");
+  const transmissionTexture = meshDescriptor.textures.find((t) => t.texture === "transmissionTexture");
+  const thicknessTexture = meshDescriptor.textures.find((t) => t.texture === "thicknessTexture");
+  const transmissionBackgroundTexture = meshDescriptor.textures.find(
+    (t) => t.texture === "transmissionBackgroundTexture"
+  );
   const facultativeAttributes = meshDescriptor.attributes.filter((attribute) => attribute.name !== "position");
   const structAttributes = facultativeAttributes.map((attribute, index) => {
     return `
@@ -149,11 +157,58 @@ ${vertexOutput}
   roughness = clamp(roughness * metallicRoughness.g, 0.0, 1.0);
   `;
   }
-  const f0 = (
+  let specular = (
     /* wgsl */
     `
-  let f0: vec3f = mix(vec3(0.04), color.rgb, vec3(metallic));`
+  var specularFactor: f32 = material.specularFactor;
+  var specularColorFactor: vec3f = material.specularColorFactor;`
   );
+  if (specularTexture) {
+    specular += /* wgsl */
+    `
+  let specularSample: vec4f = textureSample(specularTexture, ${specularTexture.sampler}, fsInput.${specularTexture.texCoordAttributeName});
+  
+  specularFactor = specularFactor * specularSample.a;
+  specularColorFactor = specularColorFactor * specularSample.rgb;`;
+  } else {
+    if (specularFactorTexture) {
+      specular += /* wgsl */
+      `
+  let specularFactorSample: vec4f = textureSample(specularFactorTexture, ${specularFactorTexture.sampler}, fsInput.${specularFactorTexture.texCoordAttributeName});
+  
+  specularFactor = specularFactor * specularSample.a;`;
+    }
+    if (specularColorTexture) {
+      specular += /* wgsl */
+      `
+  let specularColorSample: vec4f = textureSample(specularColorTexture, ${specularColorTexture.sampler}, fsInput.${specularColorTexture.texCoordAttributeName});
+  
+  specularColorFactor = specularColorFactor * specularSample.rgb;`;
+    }
+    specular += /* wgsl */
+    `
+    specularFactor = mix(specularFactor, 1.0, metallic);`;
+  }
+  let transmission = (
+    /* wgsl */
+    `
+  var transmission: f32 = material.transmissionFactor;
+  var thickness: f32 = material.thicknessFactor;`
+  );
+  if (transmissionTexture) {
+    transmission += /* wgsl */
+    `
+  let transmissionSample: vec4f = textureSample(transmissionTexture, ${transmissionTexture.sampler}, fsInput.${transmissionTexture.texCoordAttributeName});
+  
+  transmission = clamp(transmission * transmissionSample.r, 0.0, 1.0);`;
+  }
+  if (thicknessTexture) {
+    transmission += /* wgsl */
+    `
+  let thicknessSample: vec4f = textureSample(thicknessTexture, ${thicknessTexture.sampler}, fsInput.${thicknessTexture.texCoordAttributeName});
+  
+  thickness = thickness * thicknessSample.g;`;
+  }
   let emissiveOcclusion = (
     /* wgsl */
     `
@@ -219,6 +274,9 @@ ${vertexOutput}
     receiveShadows: !!meshDescriptor.parameters.receiveShadows,
     useOcclusion: true
   };
+  if (transmissionBackgroundTexture && (shadingModel === "PBR" || shadingModel === "IBL")) {
+    shadingModel += "Transmission";
+  }
   const defaultAdditionalHead = (() => {
     switch (shadingModel) {
       case "Lambert":
@@ -227,8 +285,10 @@ ${vertexOutput}
       case "Phong":
         return getPhong(shadingOptions);
       case "PBR":
+      case "PBRTransmission":
         return getPBR(shadingOptions);
       case "IBL":
+      case "IBLTransmission":
         return getIBL(shadingOptions);
     }
   })();
@@ -284,9 +344,9 @@ ${vertexOutput}
       worldPosition,
       color.rgb,
       viewDirection,
-      f0, // specular color
-      metallic * (1.0 - roughness) + (1.0 - metallic) * 0.04, // specular strength
-      (1.0 - roughness) * 30.0, // TODO shininess
+      specularColorFactor,
+      specularFactor,
+      1.0 / max(EPSILON, roughness * roughness),
       occlusion
     ),
     color.a
@@ -296,40 +356,90 @@ ${vertexOutput}
         return (
           /* wgsl */
           `
-  color = vec4(
-    getPBR(
-      normal,
-      worldPosition,
-      color.rgb,
-      viewDirection,
-      f0,
-      metallic,
-      roughness,
-      occlusion
-    ),
-    color.a
+  color = getPBR(
+    normal,
+    worldPosition,
+    color,
+    viewDirection,
+    metallic,
+    roughness,
+    specularFactor,
+    specularColorFactor,
+    material.ior,
+    occlusion
+  );`
+        );
+      case "PBRTransmission":
+        return (
+          /* wgsl */
+          `
+  color = getPBRTransmission(
+    normal,
+    worldPosition,
+    color,
+    viewDirection,
+    metallic,
+    roughness,
+    specularFactor,
+    specularColorFactor,
+    material.ior,
+    transmission,
+    material.dispersion,
+    thickness,
+    material.attenuationDistance,
+    material.attenuationColor,
+    ${transmissionBackgroundTexture.texture},
+    ${transmissionBackgroundTexture.sampler},
+    occlusion
   );`
         );
       case "IBL":
         return (
           /* wgsl */
           `
-  color = vec4(
-    getIBL(
-      normal,
-      worldPosition,
-      color.rgb,
-      viewDirection,
-      f0,
-      metallic,
-      roughness,
-      ${environmentMap.sampler.name},
-      ${environmentMap.lutTexture.options.name},
-      ${environmentMap.specularTexture.options.name},
-      ${environmentMap.diffuseTexture.options.name},
-      occlusion
-    ),
-    color.a
+  color = getIBL(
+    normal,
+    worldPosition,
+    color,
+    viewDirection,
+    metallic,
+    roughness,
+    specularFactor,
+    specularColorFactor,
+    material.ior,
+    ${environmentMap.sampler.name},
+    ${environmentMap.lutTexture.options.name},
+    ${environmentMap.specularTexture.options.name},
+    ${environmentMap.diffuseTexture.options.name},
+    occlusion
+  );`
+        );
+      case "IBLTransmission":
+        return (
+          /* wgsl */
+          `
+  color = getIBLTransmission(
+    normal,
+    worldPosition,
+    color,
+    viewDirection,
+    metallic,
+    roughness,
+    specularFactor,
+    specularColorFactor,
+    material.ior,
+    ${environmentMap.sampler.name},
+    ${environmentMap.lutTexture.options.name},
+    ${environmentMap.specularTexture.options.name},
+    ${environmentMap.diffuseTexture.options.name},
+    transmission,
+    material.dispersion,
+    thickness,
+    material.attenuationDistance,
+    material.attenuationColor,
+    ${transmissionBackgroundTexture.texture},
+    ${transmissionBackgroundTexture.sampler},
+    occlusion
   );`
         );
     }
@@ -357,7 +467,8 @@ ${fragmentInput}
   ${metallicRoughness}  
   // user defined preliminary color contribution
   ${chunks.preliminaryColorContribution}
-  ${f0}
+  ${specular}
+  ${transmission}
   ${emissiveOcclusion}
   ${applyLightShading}
   ${applyEmissive}

@@ -63,123 +63,6 @@
   const isProjectedMesh = (object) => {
     return object.constructor.name === "Mesh" || object.constructor.name === "DOMMesh" || object.constructor.name === "Plane" ? object : false;
   };
-  const generateMips = /* @__PURE__ */ (() => {
-    let sampler;
-    let module;
-    const pipelineByFormat = {};
-    return function generateMips2(device, texture) {
-      if (!module) {
-        module = device.createShaderModule({
-          label: "textured quad shaders for mip level generation",
-          code: `
-            struct VSOutput {
-              @builtin(position) position: vec4f,
-              @location(0) texcoord: vec2f,
-            };
-
-            @vertex fn vs(
-              @builtin(vertex_index) vertexIndex : u32
-            ) -> VSOutput {
-              let pos = array(
-
-                vec2f( 0.0,  0.0),  // center
-                vec2f( 1.0,  0.0),  // right, center
-                vec2f( 0.0,  1.0),  // center, top
-
-                // 2st triangle
-                vec2f( 0.0,  1.0),  // center, top
-                vec2f( 1.0,  0.0),  // right, center
-                vec2f( 1.0,  1.0),  // right, top
-              );
-
-              var vsOutput: VSOutput;
-              let xy = pos[vertexIndex];
-              vsOutput.position = vec4f(xy * 2.0 - 1.0, 0.0, 1.0);
-              vsOutput.texcoord = vec2f(xy.x, 1.0 - xy.y);
-              return vsOutput;
-            }
-
-            @group(0) @binding(0) var ourSampler: sampler;
-            @group(0) @binding(1) var ourTexture: texture_2d<f32>;
-
-            @fragment fn fs(fsInput: VSOutput) -> @location(0) vec4f {
-              return textureSample(ourTexture, ourSampler, fsInput.texcoord);
-            }
-          `
-        });
-        sampler = device.createSampler({
-          minFilter: "linear",
-          magFilter: "linear"
-        });
-      }
-      if (!pipelineByFormat[texture.format]) {
-        pipelineByFormat[texture.format] = device.createRenderPipeline({
-          label: "Mip level generator pipeline",
-          layout: "auto",
-          vertex: {
-            module
-          },
-          fragment: {
-            module,
-            targets: [{ format: texture.format }]
-          }
-        });
-      }
-      const pipeline = pipelineByFormat[texture.format];
-      const encoder = device.createCommandEncoder({
-        label: "Mip gen encoder"
-      });
-      let width = texture.width;
-      let height = texture.height;
-      let baseMipLevel = 0;
-      while (width > 1 || height > 1) {
-        width = Math.max(1, width / 2 | 0);
-        height = Math.max(1, height / 2 | 0);
-        for (let layer = 0; layer < texture.depthOrArrayLayers; ++layer) {
-          const bindGroup = device.createBindGroup({
-            layout: pipeline.getBindGroupLayout(0),
-            entries: [
-              { binding: 0, resource: sampler },
-              {
-                binding: 1,
-                resource: texture.createView({
-                  dimension: "2d",
-                  baseMipLevel,
-                  mipLevelCount: 1,
-                  baseArrayLayer: layer,
-                  arrayLayerCount: 1
-                })
-              }
-            ]
-          });
-          const renderPassDescriptor = {
-            label: "Mip generation render pass",
-            colorAttachments: [
-              {
-                view: texture.createView({
-                  dimension: "2d",
-                  baseMipLevel: baseMipLevel + 1,
-                  mipLevelCount: 1,
-                  baseArrayLayer: layer,
-                  arrayLayerCount: 1
-                }),
-                loadOp: "clear",
-                storeOp: "store"
-              }
-            ]
-          };
-          const pass = encoder.beginRenderPass(renderPassDescriptor);
-          pass.setPipeline(pipeline);
-          pass.setBindGroup(0, bindGroup);
-          pass.draw(6);
-          pass.end();
-        }
-        ++baseMipLevel;
-      }
-      const commandBuffer = encoder.finish();
-      device.queue.submit([commandBuffer]);
-    };
-  })();
 
   const WebGPUShaderStageConstants = typeof GPUShaderStage !== "undefined" ? GPUShaderStage : {
     VERTEX: 1,
@@ -1772,21 +1655,21 @@
     }
   }
 
-  var __accessCheck$m = (obj, member, msg) => {
+  var __accessCheck$n = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$j = (obj, member, getter) => {
-    __accessCheck$m(obj, member, "read from private field");
+  var __privateGet$k = (obj, member, getter) => {
+    __accessCheck$n(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$m = (obj, member, value) => {
+  var __privateAdd$n = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$i = (obj, member, value, setter) => {
-    __accessCheck$m(obj, member, "write to private field");
+  var __privateSet$j = (obj, member, value, setter) => {
+    __accessCheck$n(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -1814,7 +1697,7 @@
       bindingType = bindingType ?? "uniform";
       super({ label, name, bindingType, visibility });
       /** @ignore */
-      __privateAdd$m(this, _parent, void 0);
+      __privateAdd$n(this, _parent, void 0);
       this.options = {
         ...this.options,
         useStruct,
@@ -1875,7 +1758,7 @@
      * @returns - The {@link BufferBinding} parent if any.
      */
     get parent() {
-      return __privateGet$j(this, _parent);
+      return __privateGet$k(this, _parent);
     }
     /**
      * Set the new {@link BufferBinding} parent.
@@ -1926,7 +1809,7 @@
         this.parentView = null;
         this.parentViewSetBufferEls = null;
       }
-      __privateSet$i(this, _parent, value);
+      __privateSet$j(this, _parent, value);
     }
     /**
      * Round the given size value to the nearest minimum {@link GPUDevice} buffer offset alignment.
@@ -3990,15 +3873,15 @@
     return 1 + Math.log2(maxSize) | 0;
   };
 
-  var __accessCheck$l = (obj, member, msg) => {
+  var __accessCheck$m = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$i = (obj, member, getter) => {
-    __accessCheck$l(obj, member, "read from private field");
+  var __privateGet$j = (obj, member, getter) => {
+    __accessCheck$m(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$l = (obj, member, value) => {
+  var __privateAdd$m = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
@@ -4027,13 +3910,13 @@
     constructor(renderer, parameters = defaultDOMTextureParams) {
       super();
       /** Private {@link Vec3 | vector} used for {@link#modelMatrix} calculations, based on {@link parentMesh} {@link core/DOM/DOMElement.RectSize | size} */
-      __privateAdd$l(this, _parentRatio, new Vec3(1));
+      __privateAdd$m(this, _parentRatio, new Vec3(1));
       /** Private {@link Vec3 | vector} used for {@link modelMatrix} calculations, based on {@link size | source size} */
-      __privateAdd$l(this, _sourceRatio, new Vec3(1));
+      __privateAdd$m(this, _sourceRatio, new Vec3(1));
       /** Private {@link Vec3 | vector} used for {@link modelMatrix} calculations, based on #parentRatio and #sourceRatio */
-      __privateAdd$l(this, _coverScale, new Vec3(1));
+      __privateAdd$m(this, _coverScale, new Vec3(1));
       /** Private rotation {@link Mat4 | matrix} based on texture {@link quaternion} */
-      __privateAdd$l(this, _rotationMatrix, new Mat4());
+      __privateAdd$m(this, _rotationMatrix, new Mat4());
       // callbacks / events
       /** function assigned to the {@link onSourceLoaded} callback */
       this._onSourceLoadedCallback = () => {
@@ -4170,16 +4053,16 @@
       const parentRatio = parentWidth / parentHeight;
       const sourceRatio = this.size.width / this.size.height;
       if (parentWidth > parentHeight) {
-        __privateGet$i(this, _parentRatio).set(parentRatio, 1, 1);
-        __privateGet$i(this, _sourceRatio).set(1 / sourceRatio, 1, 1);
+        __privateGet$j(this, _parentRatio).set(parentRatio, 1, 1);
+        __privateGet$j(this, _sourceRatio).set(1 / sourceRatio, 1, 1);
       } else {
-        __privateGet$i(this, _parentRatio).set(1, 1 / parentRatio, 1);
-        __privateGet$i(this, _sourceRatio).set(1, sourceRatio, 1);
+        __privateGet$j(this, _parentRatio).set(1, 1 / parentRatio, 1);
+        __privateGet$j(this, _sourceRatio).set(1, sourceRatio, 1);
       }
-      const coverRatio = parentRatio > sourceRatio !== parentWidth > parentHeight ? 1 : parentWidth > parentHeight ? __privateGet$i(this, _parentRatio).x * __privateGet$i(this, _sourceRatio).x : __privateGet$i(this, _sourceRatio).y * __privateGet$i(this, _parentRatio).y;
-      __privateGet$i(this, _coverScale).set(1 / (coverRatio * this.scale.x), 1 / (coverRatio * this.scale.y), 1);
-      __privateGet$i(this, _rotationMatrix).rotateFromQuaternion(this.quaternion);
-      this.modelMatrix.identity().premultiplyTranslate(this.transformOrigin.clone().multiplyScalar(-1)).premultiplyScale(__privateGet$i(this, _coverScale)).premultiplyScale(__privateGet$i(this, _parentRatio)).premultiply(__privateGet$i(this, _rotationMatrix)).premultiplyScale(__privateGet$i(this, _sourceRatio)).premultiplyTranslate(this.transformOrigin).translate(this.position);
+      const coverRatio = parentRatio > sourceRatio !== parentWidth > parentHeight ? 1 : parentWidth > parentHeight ? __privateGet$j(this, _parentRatio).x * __privateGet$j(this, _sourceRatio).x : __privateGet$j(this, _sourceRatio).y * __privateGet$j(this, _parentRatio).y;
+      __privateGet$j(this, _coverScale).set(1 / (coverRatio * this.scale.x), 1 / (coverRatio * this.scale.y), 1);
+      __privateGet$j(this, _rotationMatrix).rotateFromQuaternion(this.quaternion);
+      this.modelMatrix.identity().premultiplyTranslate(this.transformOrigin.clone().multiplyScalar(-1)).premultiplyScale(__privateGet$j(this, _coverScale)).premultiplyScale(__privateGet$j(this, _parentRatio)).premultiply(__privateGet$j(this, _rotationMatrix)).premultiplyScale(__privateGet$j(this, _sourceRatio)).premultiplyTranslate(this.transformOrigin).translate(this.position);
     }
     /**
      * If our {@link modelMatrix} has been updated, tell the {@link textureMatrix | texture matrix binding} to update as well
@@ -4647,21 +4530,21 @@
     }
   }
 
-  var __accessCheck$k = (obj, member, msg) => {
+  var __accessCheck$l = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$h = (obj, member, getter) => {
-    __accessCheck$k(obj, member, "read from private field");
+  var __privateGet$i = (obj, member, getter) => {
+    __accessCheck$l(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$k = (obj, member, value) => {
+  var __privateAdd$l = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$h = (obj, member, value, setter) => {
-    __accessCheck$k(obj, member, "write to private field");
+  var __privateSet$i = (obj, member, value, setter) => {
+    __accessCheck$l(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -4683,13 +4566,13 @@
     } = {}) {
       super();
       /** @ignore */
-      __privateAdd$k(this, _fov, void 0);
+      __privateAdd$l(this, _fov, void 0);
       /** @ignore */
-      __privateAdd$k(this, _near, void 0);
+      __privateAdd$l(this, _near, void 0);
       /** @ignore */
-      __privateAdd$k(this, _far, void 0);
+      __privateAdd$l(this, _far, void 0);
       /** @ignore */
-      __privateAdd$k(this, _pixelRatio, void 0);
+      __privateAdd$l(this, _pixelRatio, void 0);
       this.uuid = generateUUID();
       this.position.set(0, 0, 10);
       this.up = new Vec3(0, 1, 0);
@@ -4797,7 +4680,7 @@
      * Get the {@link Camera} {@link Camera.fov | field of view}
      */
     get fov() {
-      return __privateGet$h(this, _fov);
+      return __privateGet$i(this, _fov);
     }
     /**
      * Set the {@link Camera} {@link Camera.fov | field of view}. Update the {@link projectionMatrix} only if the field of view actually changed
@@ -4806,7 +4689,7 @@
     set fov(fov) {
       fov = Math.max(1, Math.min(fov ?? this.fov, 179));
       if (fov !== this.fov) {
-        __privateSet$h(this, _fov, fov);
+        __privateSet$i(this, _fov, fov);
         this.shouldUpdateProjectionMatrices();
       }
       this.setVisibleSize();
@@ -4816,7 +4699,7 @@
      * Get the {@link Camera} {@link Camera.near | near} plane value.
      */
     get near() {
-      return __privateGet$h(this, _near);
+      return __privateGet$i(this, _near);
     }
     /**
      * Set the {@link Camera} {@link Camera.near | near} plane value. Update the {@link projectionMatrix} only if the near plane actually changed
@@ -4825,7 +4708,7 @@
     set near(near) {
       near = Math.max(near ?? this.near, 1e-4);
       if (near !== this.near) {
-        __privateSet$h(this, _near, near);
+        __privateSet$i(this, _near, near);
         this.shouldUpdateProjectionMatrices();
       }
     }
@@ -4833,7 +4716,7 @@
      * Get the {@link Camera} {@link Camera.far | far} plane value.
      */
     get far() {
-      return __privateGet$h(this, _far);
+      return __privateGet$i(this, _far);
     }
     /**
      * Set the {@link Camera} {@link Camera.far | far} plane value. Update {@link projectionMatrix} only if the far plane actually changed
@@ -4842,7 +4725,7 @@
     set far(far) {
       far = Math.max(far ?? this.far, this.near + 1);
       if (far !== this.far) {
-        __privateSet$h(this, _far, far);
+        __privateSet$i(this, _far, far);
         this.shouldUpdateProjectionMatrices();
       }
     }
@@ -4850,14 +4733,14 @@
      * Get the {@link Camera} {@link Camera.pixelRatio | pixelRatio} value.
      */
     get pixelRatio() {
-      return __privateGet$h(this, _pixelRatio);
+      return __privateGet$i(this, _pixelRatio);
     }
     /**
      * Set the {@link Camera} {@link Camera.pixelRatio | pixelRatio} value. Update the {@link CSSPerspective} only if the pixel ratio actually changed
      * @param pixelRatio - new pixel ratio value
      */
     set pixelRatio(pixelRatio) {
-      __privateSet$h(this, _pixelRatio, pixelRatio ?? this.pixelRatio);
+      __privateSet$i(this, _pixelRatio, pixelRatio ?? this.pixelRatio);
       this.setCSSPerspective();
     }
     /**
@@ -5072,21 +4955,21 @@
     }
   }
 
-  var __accessCheck$j = (obj, member, msg) => {
+  var __accessCheck$k = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$g = (obj, member, getter) => {
-    __accessCheck$j(obj, member, "read from private field");
+  var __privateGet$h = (obj, member, getter) => {
+    __accessCheck$k(obj, member, "read from private field");
     return member.get(obj);
   };
-  var __privateAdd$j = (obj, member, value) => {
+  var __privateAdd$k = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$g = (obj, member, value, setter) => {
-    __accessCheck$j(obj, member, "write to private field");
+  var __privateSet$h = (obj, member, value, setter) => {
+    __accessCheck$k(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -5115,7 +4998,7 @@
      */
     constructor(renderer, parameters = defaultTextureParams) {
       /** Whether this texture should be automatically resized when the {@link Renderer renderer} size changes. Default to true. */
-      __privateAdd$j(this, _autoResize, true);
+      __privateAdd$k(this, _autoResize, true);
       renderer = isRenderer(renderer, parameters.label ? parameters.label + " Texture" : "Texture");
       this.type = "Texture";
       this.renderer = renderer;
@@ -5142,7 +5025,7 @@
         depth: this.options.viewDimension.indexOf("cube") !== -1 ? 6 : 1
       };
       if (this.options.fixedSize) {
-        __privateSet$g(this, _autoResize, false);
+        __privateSet$h(this, _autoResize, false);
       }
       this.setBindings();
       this.renderer.addTexture(this);
@@ -5218,7 +5101,7 @@
         [width, height, depth]
       );
       if (this.texture.mipLevelCount > 1) {
-        generateMips(this.renderer.device, this.texture);
+        this.renderer.generateMips(this);
       }
     }
     /**
@@ -5244,7 +5127,7 @@
         [width, height, depth]
       );
       if (this.texture.mipLevelCount > 1) {
-        generateMips(this.renderer.device, this.texture);
+        this.renderer.generateMips(this);
       }
     }
     /**
@@ -5276,7 +5159,7 @@
      * @param size - the optional new {@link TextureSize | size} to set
      */
     resize(size = null) {
-      if (!__privateGet$g(this, _autoResize))
+      if (!__privateGet$h(this, _autoResize))
         return;
       if (!size) {
         size = {
@@ -5995,21 +5878,21 @@
     }
   }
 
-  var __accessCheck$i = (obj, member, msg) => {
+  var __accessCheck$j = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$f = (obj, member, getter) => {
-    __accessCheck$i(obj, member, "read from private field");
+  var __privateGet$g = (obj, member, getter) => {
+    __accessCheck$j(obj, member, "read from private field");
     return member.get(obj);
   };
-  var __privateAdd$i = (obj, member, value) => {
+  var __privateAdd$j = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$f = (obj, member, value, setter) => {
-    __accessCheck$i(obj, member, "write to private field");
+  var __privateSet$g = (obj, member, value, setter) => {
+    __accessCheck$j(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -6026,7 +5909,7 @@
        * Whether this {@link ComputePass} should be added to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically
        * @private
        */
-      __privateAdd$i(this, _autoRender$2, true);
+      __privateAdd$j(this, _autoRender$2, true);
       // callbacks / events
       /** function assigned to the {@link onReady} callback */
       this._onReadyCallback = () => {
@@ -6078,7 +5961,7 @@
       };
       this.renderOrder = renderOrder ?? 0;
       if (autoRender !== void 0) {
-        __privateSet$f(this, _autoRender$2, autoRender);
+        __privateSet$g(this, _autoRender$2, autoRender);
       }
       this.userData = {};
       this.ready = false;
@@ -6118,7 +6001,7 @@
       if (addToRenderer) {
         this.renderer.computePasses.push(this);
       }
-      if (__privateGet$f(this, _autoRender$2)) {
+      if (__privateGet$g(this, _autoRender$2)) {
         this.renderer.scene.addComputePass(this);
       }
     }
@@ -6127,7 +6010,7 @@
      * @param removeFromRenderer - whether to remove this {@link ComputePass} from the {@link Renderer#computePasses | Renderer computePasses array}.
      */
     removeFromScene(removeFromRenderer = false) {
-      if (__privateGet$f(this, _autoRender$2)) {
+      if (__privateGet$g(this, _autoRender$2)) {
         this.renderer.scene.removeComputePass(this);
       }
       if (removeFromRenderer) {
@@ -7253,21 +7136,21 @@
     }
   }
 
-  var __accessCheck$h = (obj, member, msg) => {
+  var __accessCheck$i = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$e = (obj, member, getter) => {
-    __accessCheck$h(obj, member, "read from private field");
+  var __privateGet$f = (obj, member, getter) => {
+    __accessCheck$i(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$h = (obj, member, value) => {
+  var __privateAdd$i = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$e = (obj, member, value, setter) => {
-    __accessCheck$h(obj, member, "write to private field");
+  var __privateSet$f = (obj, member, value, setter) => {
+    __accessCheck$i(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -7281,12 +7164,12 @@
     constructor(renderer, { color = new Vec3(1), intensity = 1, type = "lights" } = {}) {
       super();
       /** @ignore */
-      __privateAdd$h(this, _intensity$1, void 0);
+      __privateAdd$i(this, _intensity$1, void 0);
       /**
        * A {@link Vec3} holding the {@link Light} {@link color} multiplied by its {@link intensity}.
        * @private
        */
-      __privateAdd$h(this, _intensityColor, void 0);
+      __privateAdd$i(this, _intensityColor, void 0);
       this.type = type;
       this.setRenderer(renderer);
       this.uuid = generateUUID();
@@ -7295,9 +7178,9 @@
         intensity
       };
       this.color = color;
-      __privateSet$e(this, _intensityColor, this.color.clone());
+      __privateSet$f(this, _intensityColor, this.color.clone());
       this.color.onChange(
-        () => this.onPropertyChanged("color", __privateGet$e(this, _intensityColor).copy(this.color).multiplyScalar(this.intensity))
+        () => this.onPropertyChanged("color", __privateGet$f(this, _intensityColor).copy(this.color).multiplyScalar(this.intensity))
       );
       this.intensity = intensity;
     }
@@ -7335,22 +7218,22 @@
      */
     reset() {
       this.setRendererBinding();
-      this.onPropertyChanged("color", __privateGet$e(this, _intensityColor).copy(this.color).multiplyScalar(this.intensity));
+      this.onPropertyChanged("color", __privateGet$f(this, _intensityColor).copy(this.color).multiplyScalar(this.intensity));
     }
     /**
      * Get this {@link Light} intensity.
      * @returns - The {@link Light} intensity.
      */
     get intensity() {
-      return __privateGet$e(this, _intensity$1);
+      return __privateGet$f(this, _intensity$1);
     }
     /**
      * Set this {@link Light} intensity and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      * @param value - The new {@link Light} intensity.
      */
     set intensity(value) {
-      __privateSet$e(this, _intensity$1, value);
-      this.onPropertyChanged("color", __privateGet$e(this, _intensityColor).copy(this.color).multiplyScalar(this.intensity));
+      __privateSet$f(this, _intensity$1, value);
+      this.onPropertyChanged("color", __privateGet$f(this, _intensityColor).copy(this.color).multiplyScalar(this.intensity));
     }
     /**
      * Update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} input value and tell the {@link CameraRenderer#cameraLightsBindGroup | renderer camera, lights and shadows} bind group to update.
@@ -7432,6 +7315,7 @@
       label = "Render Pass",
       sampleCount = 4,
       qualityRatio = 1,
+      fixedSize = null,
       // color
       useColorAttachments = true,
       renderToSwapChain = true,
@@ -7467,6 +7351,7 @@
         label,
         sampleCount,
         qualityRatio,
+        fixedSize,
         // color
         useColorAttachments,
         renderToSwapChain,
@@ -7504,6 +7389,7 @@
           format: this.options.depthFormat,
           sampleCount: this.options.sampleCount,
           qualityRatio: this.options.qualityRatio,
+          ...this.options.fixedSize && { fixedSize: this.options.fixedSize },
           type: "depth",
           usage: ["renderAttachment", "textureBinding"]
         });
@@ -7521,6 +7407,7 @@
             format: colorAttachment.targetFormat,
             sampleCount: this.options.sampleCount,
             qualityRatio: this.options.qualityRatio,
+            ...this.options.fixedSize && { fixedSize: this.options.fixedSize },
             type: "texture",
             usage: ["copySrc", "copyDst", "renderAttachment", "textureBinding"]
           })
@@ -7709,21 +7596,21 @@
     }
   }
 
-  var __accessCheck$g = (obj, member, msg) => {
+  var __accessCheck$h = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$d = (obj, member, getter) => {
-    __accessCheck$g(obj, member, "read from private field");
+  var __privateGet$e = (obj, member, getter) => {
+    __accessCheck$h(obj, member, "read from private field");
     return member.get(obj);
   };
-  var __privateAdd$g = (obj, member, value) => {
+  var __privateAdd$h = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$d = (obj, member, value, setter) => {
-    __accessCheck$g(obj, member, "write to private field");
+  var __privateSet$e = (obj, member, value, setter) => {
+    __accessCheck$h(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -7736,13 +7623,13 @@
      */
     constructor(renderer, parameters = {}) {
       /** Whether we should add this {@link RenderTarget} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
-      __privateAdd$g(this, _autoRender$1, true);
+      __privateAdd$h(this, _autoRender$1, true);
       renderer = isRenderer(renderer, "RenderTarget");
       this.type = "RenderTarget";
       this.renderer = renderer;
       this.uuid = generateUUID();
       const { label, colorAttachments, depthTexture, autoRender, ...renderPassParams } = parameters;
-      const depthTextureToUse = !!depthTexture ? depthTexture : this.renderer.renderPass.options.sampleCount === (parameters.sampleCount ?? 4) ? this.renderer.renderPass.depthTexture : null;
+      const depthTextureToUse = !!depthTexture ? depthTexture : this.renderer.renderPass.options.sampleCount === (parameters.sampleCount ?? 4) && (!renderPassParams.qualityRatio || renderPassParams.qualityRatio === 1) && !renderPassParams.fixedSize ? this.renderer.renderPass.depthTexture : null;
       this.options = {
         label,
         ...renderPassParams,
@@ -7751,7 +7638,7 @@
         autoRender: autoRender === void 0 ? true : autoRender
       };
       if (autoRender !== void 0) {
-        __privateSet$d(this, _autoRender$1, autoRender);
+        __privateSet$e(this, _autoRender$1, autoRender);
       }
       this.renderPass = new RenderPass(this.renderer, {
         label: this.options.label ? `${this.options.label} Render Pass` : "Render Target Render Pass",
@@ -7765,6 +7652,7 @@
           name: "renderTexture",
           format: colorAttachments && colorAttachments.length && colorAttachments[0].targetFormat ? colorAttachments[0].targetFormat : this.renderer.options.context.format,
           ...this.options.qualityRatio !== void 0 && { qualityRatio: this.options.qualityRatio },
+          ...this.options.fixedSize !== void 0 && { fixedSize: this.options.fixedSize },
           usage: ["copySrc", "renderAttachment", "textureBinding"]
         });
       }
@@ -7787,7 +7675,7 @@
      */
     addToScene() {
       this.renderer.renderTargets.push(this);
-      if (__privateGet$d(this, _autoRender$1)) {
+      if (__privateGet$e(this, _autoRender$1)) {
         this.renderer.scene.addRenderTarget(this);
       }
     }
@@ -7795,7 +7683,7 @@
      * Remove the {@link RenderTarget} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
      */
     removeFromScene() {
-      if (__privateGet$d(this, _autoRender$1)) {
+      if (__privateGet$e(this, _autoRender$1)) {
         this.renderer.scene.removeRenderTarget(this);
       }
       this.renderer.renderTargets = this.renderer.renderTargets.filter((renderTarget) => renderTarget.uuid !== this.uuid);
@@ -9063,26 +8951,26 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
 `
   );
 
-  var __accessCheck$f = (obj, member, msg) => {
+  var __accessCheck$g = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$c = (obj, member, getter) => {
-    __accessCheck$f(obj, member, "read from private field");
+  var __privateGet$d = (obj, member, getter) => {
+    __accessCheck$g(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$f = (obj, member, value) => {
+  var __privateAdd$g = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$c = (obj, member, value, setter) => {
-    __accessCheck$f(obj, member, "write to private field");
+  var __privateSet$d = (obj, member, value, setter) => {
+    __accessCheck$g(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
   var __privateMethod$8 = (obj, member, method) => {
-    __accessCheck$f(obj, member, "access private method");
+    __accessCheck$g(obj, member, "access private method");
     return method;
   };
   var _intensity, _bias, _normalBias, _pcfSamples, _isActive, _autoRender, _materials, _depthMaterials, _depthPassTaskID, _setParameters, setParameters_fn;
@@ -9129,31 +9017,31 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
        * @param parameters - parameters to use for this {@link Shadow}.
        * @private
        */
-      __privateAdd$f(this, _setParameters);
+      __privateAdd$g(this, _setParameters);
       /** @ignore */
-      __privateAdd$f(this, _intensity, void 0);
+      __privateAdd$g(this, _intensity, void 0);
       /** @ignore */
-      __privateAdd$f(this, _bias, void 0);
+      __privateAdd$g(this, _bias, void 0);
       /** @ignore */
-      __privateAdd$f(this, _normalBias, void 0);
+      __privateAdd$g(this, _normalBias, void 0);
       /** @ignore */
-      __privateAdd$f(this, _pcfSamples, void 0);
+      __privateAdd$g(this, _pcfSamples, void 0);
       /** @ignore */
-      __privateAdd$f(this, _isActive, void 0);
+      __privateAdd$g(this, _isActive, void 0);
       /** @ignore */
-      __privateAdd$f(this, _autoRender, void 0);
+      __privateAdd$g(this, _autoRender, void 0);
       /**
        * Original {@link meshes} {@link RenderMaterial | materials}.
        * @private
        */
-      __privateAdd$f(this, _materials, void 0);
+      __privateAdd$g(this, _materials, void 0);
       /**
        * Corresponding depth {@link meshes} {@link RenderMaterial | materials}.
        * @private
        */
-      __privateAdd$f(this, _depthMaterials, void 0);
+      __privateAdd$g(this, _depthMaterials, void 0);
       /** @ignore */
-      __privateAdd$f(this, _depthPassTaskID, void 0);
+      __privateAdd$g(this, _depthPassTaskID, void 0);
       this.setRenderer(renderer);
       this.light = light;
       this.index = this.light.index;
@@ -9168,9 +9056,9 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
       };
       this.sampleCount = 1;
       this.meshes = /* @__PURE__ */ new Map();
-      __privateSet$c(this, _materials, /* @__PURE__ */ new Map());
-      __privateSet$c(this, _depthMaterials, /* @__PURE__ */ new Map());
-      __privateSet$c(this, _depthPassTaskID, null);
+      __privateSet$d(this, _materials, /* @__PURE__ */ new Map());
+      __privateSet$d(this, _depthMaterials, /* @__PURE__ */ new Map());
+      __privateSet$d(this, _depthPassTaskID, null);
       __privateMethod$8(this, _setParameters, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
       this.isActive = false;
     }
@@ -9182,7 +9070,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
       renderer = isCameraRenderer(renderer, this.constructor.name);
       this.renderer = renderer;
       this.setRendererBinding();
-      __privateGet$c(this, _depthMaterials)?.forEach((depthMaterial) => {
+      __privateGet$d(this, _depthMaterials)?.forEach((depthMaterial) => {
         depthMaterial.setRenderer(this.renderer);
       });
     }
@@ -9214,7 +9102,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
      * @returns - Whether this {@link Shadow} is actually casting shadows.
      */
     get isActive() {
-      return __privateGet$c(this, _isActive);
+      return __privateGet$d(this, _isActive);
     }
     /**
      * Start or stop casting shadows.
@@ -9226,21 +9114,21 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
       } else if (value && !this.isActive) {
         this.init();
       }
-      __privateSet$c(this, _isActive, value);
+      __privateSet$d(this, _isActive, value);
     }
     /**
      * Get this {@link Shadow} intensity.
      * @returns - The {@link Shadow} intensity.
      */
     get intensity() {
-      return __privateGet$c(this, _intensity);
+      return __privateGet$d(this, _intensity);
     }
     /**
      * Set this {@link Shadow} intensity and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      * @param value - The new {@link Shadow} intensity.
      */
     set intensity(value) {
-      __privateSet$c(this, _intensity, value);
+      __privateSet$d(this, _intensity, value);
       this.onPropertyChanged("intensity", this.intensity);
     }
     /**
@@ -9248,14 +9136,14 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
      * @returns - The {@link Shadow} bias.
      */
     get bias() {
-      return __privateGet$c(this, _bias);
+      return __privateGet$d(this, _bias);
     }
     /**
      * Set this {@link Shadow} bias and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      * @param value - The new {@link Shadow} bias.
      */
     set bias(value) {
-      __privateSet$c(this, _bias, value);
+      __privateSet$d(this, _bias, value);
       this.onPropertyChanged("bias", this.bias);
     }
     /**
@@ -9263,14 +9151,14 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
      * @returns - The {@link Shadow} normal bias.
      */
     get normalBias() {
-      return __privateGet$c(this, _normalBias);
+      return __privateGet$d(this, _normalBias);
     }
     /**
      * Set this {@link Shadow} normal bias and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      * @param value - The new {@link Shadow} normal bias.
      */
     set normalBias(value) {
-      __privateSet$c(this, _normalBias, value);
+      __privateSet$d(this, _normalBias, value);
       this.onPropertyChanged("normalBias", this.normalBias);
     }
     /**
@@ -9278,14 +9166,14 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
      * @returns - The {@link Shadow} PCF samples count.
      */
     get pcfSamples() {
-      return __privateGet$c(this, _pcfSamples);
+      return __privateGet$d(this, _pcfSamples);
     }
     /**
      * Set this {@link Shadow} PCF samples count and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      * @param value - The new {@link Shadow} PCF samples count.
      */
     set pcfSamples(value) {
-      __privateSet$c(this, _pcfSamples, Math.max(1, Math.ceil(value)));
+      __privateSet$d(this, _pcfSamples, Math.max(1, Math.ceil(value)));
       this.onPropertyChanged("pcfSamples", this.pcfSamples);
     }
     /**
@@ -9310,7 +9198,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
       if (!this.depthPassTarget) {
         this.createDepthPassTarget();
       }
-      if (__privateGet$c(this, _depthPassTaskID) === null && __privateGet$c(this, _autoRender)) {
+      if (__privateGet$d(this, _depthPassTaskID) === null && __privateGet$d(this, _autoRender)) {
         this.setDepthPass();
         this.onPropertyChanged("isActive", 1);
       }
@@ -9416,7 +9304,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
      * Start the depth pass.
      */
     setDepthPass() {
-      __privateSet$c(this, _depthPassTaskID, this.render());
+      __privateSet$d(this, _depthPassTaskID, this.render());
     }
     /**
      * Remove the depth pass from its {@link utils/TasksQueueManager.TasksQueueManager | task queue manager}.
@@ -9452,14 +9340,14 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
      * Render the shadow map only once. Useful with static scenes if autoRender has been set to `false` to only take one snapshot of the shadow map.
      */
     async renderOnce() {
-      if (!__privateGet$c(this, _autoRender)) {
+      if (!__privateGet$d(this, _autoRender)) {
         this.onPropertyChanged("isActive", 1);
         this.useDepthMaterials();
         this.meshes.forEach((mesh) => {
           mesh.setGeometry();
         });
         await Promise.all(
-          [...__privateGet$c(this, _depthMaterials).values()].map(async (depthMaterial) => {
+          [...__privateGet$d(this, _depthMaterials).values()].map(async (depthMaterial) => {
             await depthMaterial.compileMaterial();
           })
         );
@@ -9557,13 +9445,13 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
       if (this.meshes.get(mesh.uuid))
         return;
       mesh.options.castShadows = true;
-      __privateGet$c(this, _materials).set(mesh.uuid, mesh.material);
+      __privateGet$d(this, _materials).set(mesh.uuid, mesh.material);
       parameters = this.patchShadowCastingMeshParams(mesh, parameters);
-      if (__privateGet$c(this, _depthMaterials).get(mesh.uuid)) {
-        __privateGet$c(this, _depthMaterials).get(mesh.uuid).destroy();
-        __privateGet$c(this, _depthMaterials).delete(mesh.uuid);
+      if (__privateGet$d(this, _depthMaterials).get(mesh.uuid)) {
+        __privateGet$d(this, _depthMaterials).get(mesh.uuid).destroy();
+        __privateGet$d(this, _depthMaterials).delete(mesh.uuid);
       }
-      __privateGet$c(this, _depthMaterials).set(
+      __privateGet$d(this, _depthMaterials).set(
         mesh.uuid,
         new RenderMaterial(this.renderer, {
           label: `${this.constructor.name} (index: ${this.index}) ${mesh.options.label} depth render material`,
@@ -9577,7 +9465,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
      */
     useDepthMaterials() {
       this.meshes.forEach((mesh) => {
-        mesh.useMaterial(__privateGet$c(this, _depthMaterials).get(mesh.uuid));
+        mesh.useMaterial(__privateGet$d(this, _depthMaterials).get(mesh.uuid));
       });
     }
     /**
@@ -9585,7 +9473,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
      */
     useOriginalMaterials() {
       this.meshes.forEach((mesh) => {
-        mesh.useMaterial(__privateGet$c(this, _materials).get(mesh.uuid));
+        mesh.useMaterial(__privateGet$d(this, _materials).get(mesh.uuid));
       });
     }
     /**
@@ -9593,10 +9481,10 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
      * @param mesh - {@link ProjectedMesh | mesh} to remove.
      */
     removeMesh(mesh) {
-      const depthMaterial = __privateGet$c(this, _depthMaterials).get(mesh.uuid);
+      const depthMaterial = __privateGet$d(this, _depthMaterials).get(mesh.uuid);
       if (depthMaterial) {
         depthMaterial.destroy();
-        __privateGet$c(this, _depthMaterials).delete(mesh.uuid);
+        __privateGet$d(this, _depthMaterials).delete(mesh.uuid);
       }
       this.meshes.delete(mesh.uuid);
       if (this.meshes.size === 0) {
@@ -9608,13 +9496,13 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
      */
     destroy() {
       this.onPropertyChanged("isActive", 0);
-      if (__privateGet$c(this, _depthPassTaskID) !== null) {
-        this.removeDepthPass(__privateGet$c(this, _depthPassTaskID));
-        __privateSet$c(this, _depthPassTaskID, null);
+      if (__privateGet$d(this, _depthPassTaskID) !== null) {
+        this.removeDepthPass(__privateGet$d(this, _depthPassTaskID));
+        __privateSet$d(this, _depthPassTaskID, null);
       }
       this.meshes.forEach((mesh) => this.removeMesh(mesh));
-      __privateSet$c(this, _materials, /* @__PURE__ */ new Map());
-      __privateSet$c(this, _depthMaterials, /* @__PURE__ */ new Map());
+      __privateSet$d(this, _materials, /* @__PURE__ */ new Map());
+      __privateSet$d(this, _depthMaterials, /* @__PURE__ */ new Map());
       this.meshes = /* @__PURE__ */ new Map();
       this.depthPassTarget?.destroy();
       this.depthTexture?.destroy();
@@ -9646,7 +9534,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
     this.depthTextureSize = depthTextureSize;
     this.depthTextureSize.onChange(() => this.onDepthTextureSizeChanged());
     this.depthTextureFormat = depthTextureFormat;
-    __privateSet$c(this, _autoRender, autoRender);
+    __privateSet$d(this, _autoRender, autoRender);
   };
 
   const directionalShadowStruct = {
@@ -9791,21 +9679,21 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
     }
   }
 
-  var __accessCheck$e = (obj, member, msg) => {
+  var __accessCheck$f = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$b = (obj, member, getter) => {
-    __accessCheck$e(obj, member, "read from private field");
+  var __privateGet$c = (obj, member, getter) => {
+    __accessCheck$f(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$e = (obj, member, value) => {
+  var __privateAdd$f = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$b = (obj, member, value, setter) => {
-    __accessCheck$e(obj, member, "write to private field");
+  var __privateSet$c = (obj, member, value, setter) => {
+    __accessCheck$f(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -9826,20 +9714,20 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
       const type = "directionalLights";
       super(renderer, { color, intensity, type });
       /** @ignore */
-      __privateAdd$e(this, _actualPosition$1, void 0);
+      __privateAdd$f(this, _actualPosition$1, void 0);
       /**
        * The {@link Vec3 | direction} of the {@link DirectionalLight} is the {@link target} minus the actual {@link position}.
        * @private
        */
-      __privateAdd$e(this, _direction, void 0);
+      __privateAdd$f(this, _direction, void 0);
       this.options = {
         ...this.options,
         position,
         target,
         shadow
       };
-      __privateSet$b(this, _direction, new Vec3());
-      __privateSet$b(this, _actualPosition$1, new Vec3());
+      __privateSet$c(this, _direction, new Vec3());
+      __privateSet$c(this, _actualPosition$1, new Vec3());
       this.target = target;
       this.target.onChange(() => this.setDirection());
       this.position.copy(position);
@@ -9873,9 +9761,9 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
      * Set the {@link DirectionalLight} direction based on the {@link target} and the {@link worldMatrix} translation and update the {@link DirectionalShadow} view matrix.
      */
     setDirection() {
-      __privateGet$b(this, _direction).copy(this.target).sub(this.worldMatrix.getTranslation(__privateGet$b(this, _actualPosition$1)));
-      this.onPropertyChanged("direction", __privateGet$b(this, _direction));
-      this.shadow?.updateViewMatrix(__privateGet$b(this, _actualPosition$1), this.target);
+      __privateGet$c(this, _direction).copy(this.target).sub(this.worldMatrix.getTranslation(__privateGet$c(this, _actualPosition$1)));
+      this.onPropertyChanged("direction", __privateGet$c(this, _direction));
+      this.shadow?.updateViewMatrix(__privateGet$c(this, _actualPosition$1), this.target);
     }
     // explicitly disable scale and transform origin transformations
     /** @ignore */
@@ -9912,21 +9800,21 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
   _actualPosition$1 = new WeakMap();
   _direction = new WeakMap();
 
-  var __accessCheck$d = (obj, member, msg) => {
+  var __accessCheck$e = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$a = (obj, member, getter) => {
-    __accessCheck$d(obj, member, "read from private field");
+  var __privateGet$b = (obj, member, getter) => {
+    __accessCheck$e(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$d = (obj, member, value) => {
+  var __privateAdd$e = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$a = (obj, member, value, setter) => {
-    __accessCheck$d(obj, member, "write to private field");
+  var __privateSet$b = (obj, member, value, setter) => {
+    __accessCheck$e(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -9988,7 +9876,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
        * {@link Vec3} used to calculate the actual current direction based on the {@link PointLight} position.
        * @private
        */
-      __privateAdd$d(this, _tempCubeDirection, void 0);
+      __privateAdd$e(this, _tempCubeDirection, void 0);
       this.options = {
         ...this.options,
         camera
@@ -10001,7 +9889,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
         new Vec3(0, 0, -1),
         new Vec3(0, 0, 1)
       ];
-      __privateSet$a(this, _tempCubeDirection, new Vec3());
+      __privateSet$b(this, _tempCubeDirection, new Vec3());
       this.cubeUps = [
         new Vec3(0, -1, 0),
         new Vec3(0, -1, 0),
@@ -10089,8 +9977,8 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
      */
     updateViewMatrices(position = new Vec3()) {
       for (let i = 0; i < 6; i++) {
-        __privateGet$a(this, _tempCubeDirection).copy(this.cubeDirections[i]).add(position);
-        this.camera.viewMatrices[i].makeView(position, __privateGet$a(this, _tempCubeDirection), this.cubeUps[i]);
+        __privateGet$b(this, _tempCubeDirection).copy(this.cubeDirections[i]).add(position);
+        this.camera.viewMatrices[i].makeView(position, __privateGet$b(this, _tempCubeDirection), this.cubeUps[i]);
         for (let j = 0; j < 16; j++) {
           this.rendererBinding.childrenBindings[this.index].inputs.viewMatrices.value[i * 16 + j] = this.camera.viewMatrices[i].elements[j];
         }
@@ -10250,21 +10138,21 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
   }
   _tempCubeDirection = new WeakMap();
 
-  var __accessCheck$c = (obj, member, msg) => {
+  var __accessCheck$d = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$9 = (obj, member, getter) => {
-    __accessCheck$c(obj, member, "read from private field");
+  var __privateGet$a = (obj, member, getter) => {
+    __accessCheck$d(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$c = (obj, member, value) => {
+  var __privateAdd$d = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$9 = (obj, member, value, setter) => {
-    __accessCheck$c(obj, member, "write to private field");
+  var __privateSet$a = (obj, member, value, setter) => {
+    __accessCheck$d(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -10279,16 +10167,16 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
       const type = "pointLights";
       super(renderer, { color, intensity, type });
       /** @ignore */
-      __privateAdd$c(this, _range, void 0);
+      __privateAdd$d(this, _range, void 0);
       /** @ignore */
-      __privateAdd$c(this, _actualPosition, void 0);
+      __privateAdd$d(this, _actualPosition, void 0);
       this.options = {
         ...this.options,
         position,
         range,
         shadow
       };
-      __privateSet$9(this, _actualPosition, new Vec3());
+      __privateSet$a(this, _actualPosition, new Vec3());
       this.position.copy(position);
       this.range = range;
       this.parent = this.renderer.scene;
@@ -10325,22 +10213,22 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
      * @returns - The {@link PointLight} range.
      */
     get range() {
-      return __privateGet$9(this, _range);
+      return __privateGet$a(this, _range);
     }
     /**
      * Set this {@link PointLight} range and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      * @param value - The new {@link PointLight} range.
      */
     set range(value) {
-      __privateSet$9(this, _range, value);
+      __privateSet$a(this, _range, value);
       this.onPropertyChanged("range", this.range);
     }
     /**
      * Set the {@link PointLight} position based on the {@link worldMatrix} translation and update the {@link PointShadow} view matrices.
      */
     setPosition() {
-      this.onPropertyChanged("position", this.worldMatrix.getTranslation(__privateGet$9(this, _actualPosition)));
-      this.shadow?.updateViewMatrices(__privateGet$9(this, _actualPosition));
+      this.onPropertyChanged("position", this.worldMatrix.getTranslation(__privateGet$a(this, _actualPosition)));
+      this.shadow?.updateViewMatrices(__privateGet$a(this, _actualPosition));
     }
     // explicitly disable scale and transform origin transformations
     /** @ignore */
@@ -10377,21 +10265,21 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
   _range = new WeakMap();
   _actualPosition = new WeakMap();
 
-  var __accessCheck$b = (obj, member, msg) => {
+  var __accessCheck$c = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$8 = (obj, member, getter) => {
-    __accessCheck$b(obj, member, "read from private field");
+  var __privateGet$9 = (obj, member, getter) => {
+    __accessCheck$c(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$b = (obj, member, value) => {
+  var __privateAdd$c = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$8 = (obj, member, value, setter) => {
-    __accessCheck$b(obj, member, "write to private field");
+  var __privateSet$9 = (obj, member, value, setter) => {
+    __accessCheck$c(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -10435,7 +10323,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
           { ...defaultMeshBaseParams, ...params[2] }
         );
         /** Whether we should add this {@link MeshBase} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
-        __privateAdd$b(this, _autoRender, true);
+        __privateAdd$c(this, _autoRender, true);
         // callbacks / events
         /** function assigned to the {@link onReady} callback */
         this._onReadyCallback = () => {
@@ -10466,6 +10354,8 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
           visible,
           renderOrder,
           outputTarget,
+          additionalOutputTargets,
+          useCustomScenePassEntry,
           renderBundle,
           texturesOptions,
           autoRender,
@@ -10473,6 +10363,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
         } = parameters;
         this.outputTarget = outputTarget ?? null;
         this.renderBundle = renderBundle ?? null;
+        this.additionalOutputTargets = additionalOutputTargets || [];
         meshParameters.sampleCount = !!meshParameters.sampleCount ? meshParameters.sampleCount : this.outputTarget ? this.outputTarget.renderPass.options.sampleCount : this.renderer && this.renderer.renderPass ? this.renderer.renderPass.options.sampleCount : 1;
         this.options = {
           ...this.options ?? {},
@@ -10483,10 +10374,11 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
           ...renderBundle !== void 0 && { renderBundle },
           texturesOptions,
           ...autoRender !== void 0 && { autoRender },
+          useCustomScenePassEntry,
           ...meshParameters
         };
         if (autoRender !== void 0) {
-          __privateSet$8(this, _autoRender, autoRender);
+          __privateSet$9(this, _autoRender, autoRender);
         }
         this.visible = visible;
         this.renderOrder = renderOrder;
@@ -10506,7 +10398,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
        * @readonly
        */
       get autoRender() {
-        return __privateGet$8(this, _autoRender);
+        return __privateGet$9(this, _autoRender);
       }
       /**
        * Get/set whether a Mesh is ready or not
@@ -10531,8 +10423,13 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
           this.renderer.meshes.push(this);
         }
         this.setRenderingOptionsForRenderPass(this.outputTarget ? this.outputTarget.renderPass : this.renderer.renderPass);
-        if (__privateGet$8(this, _autoRender)) {
+        if (__privateGet$9(this, _autoRender)) {
           this.renderer.scene.addMesh(this);
+          if (this.additionalOutputTargets.length) {
+            this.additionalOutputTargets.forEach((renderTarget) => {
+              this.renderer.scene.addMeshToRenderTargetStack(this, renderTarget);
+            });
+          }
         }
       }
       /**
@@ -10540,7 +10437,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
        * @param removeFromRenderer - whether to remove this Mesh from the {@link Renderer#meshes | Renderer meshes array}
        */
       removeFromScene(removeFromRenderer = false) {
-        if (__privateGet$8(this, _autoRender)) {
+        if (__privateGet$9(this, _autoRender)) {
           this.renderer.scene.removeMesh(this);
         }
         if (removeFromRenderer) {
@@ -11777,7 +11674,7 @@ struct VSOutput {
         const matricesUniforms = {
           label: "Matrices",
           name: "matrices",
-          visibility: ["vertex"],
+          visibility: ["vertex", "fragment"],
           minOffset: this.renderer.device.limits.minUniformBufferOffsetAlignment,
           struct: {
             model: {
@@ -12429,15 +12326,23 @@ ${this.shaders.compute.head}`;
         pingPong: [],
         /** Array of {@link RenderPassEntry} that will render to a specific {@link RenderTarget}. Each {@link RenderTarget} will be added as a distinct {@link RenderPassEntry} here */
         renderTarget: [],
-        /** Array of {@link RenderPassEntry} that will render directly to the screen. Our first entry will contain all the Meshes that do not have any {@link RenderTarget} assigned. Following entries will be created for every global {@link ShaderPass} */
-        screen: []
+        /** Array of {@link RenderPassEntry} containing {@link ShaderPass} that will render directly to the screen before rendering any other pass to the screen. Useful to perform "blit" pass before actually rendering the usual scene content. */
+        prePass: [],
+        /** Array of {@link RenderPassEntry} that will render directly to the screen. Our first and default entry will contain all the Meshes that do not have any {@link RenderTarget} assigned. You can create following entries for custom scene rendering management process. */
+        screen: [],
+        /**Array of {@link RenderPassEntry} containing post processing {@link ShaderPass} that will render directly to the screen after everything has been drawn. */
+        postProPass: []
       };
     }
     /**
-     * Set the main {@link Renderer} render pass entry.
+     * Create a new {@link RenderPassEntry} in the {@link renderPassEntries} `screen` array.
+     * @param label - Optional label to use for this {@link RenderPassEntry}.
+     * @param order - Optional order into which insert this {@link renderPassEntries} `screen` array. A positive number means at the end of the array, a negative number means at the beginning. Default to `1`.
+     * @returns - The new {@link RenderPassEntry}.
      */
-    setMainRenderPassEntry() {
-      this.renderPassEntries.screen.push({
+    createScreenPassEntry(label = "", order = 1) {
+      const screenPassEntry = {
+        label,
         renderPass: this.renderer.renderPass,
         renderTexture: null,
         onBeforeRenderPass: null,
@@ -12454,7 +12359,19 @@ ${this.shaders.compute.head}`;
             transparent: []
           }
         }
-      });
+      };
+      if (order >= 0) {
+        this.renderPassEntries.screen.push(screenPassEntry);
+      } else {
+        this.renderPassEntries.screen.unshift(screenPassEntry);
+      }
+      return screenPassEntry;
+    }
+    /**
+     * Set the main {@link Renderer} render pass entry.
+     */
+    setMainRenderPassEntry() {
+      this.createScreenPassEntry("Main scene screen render pass");
     }
     /**
      * Get the number of meshes a {@link RenderPassEntry | render pass entry} should draw.
@@ -12496,6 +12413,7 @@ ${this.shaders.compute.head}`;
     addRenderTarget(renderTarget) {
       if (!this.renderPassEntries.renderTarget.find((entry) => entry.renderPass.uuid === renderTarget.renderPass.uuid))
         this.renderPassEntries.renderTarget.push({
+          label: renderTarget.options.label,
           renderPass: renderTarget.renderPass,
           renderTexture: renderTarget.renderTexture,
           onBeforeRenderPass: null,
@@ -12524,14 +12442,22 @@ ${this.shaders.compute.head}`;
       );
     }
     /**
+     * Get the {@link RenderPassEntry} in the {@link renderPassEntries} `renderTarget` array (or `screen` array if no {@link RenderTarget} is passed) corresponding to the given {@link RenderTarget}.
+     * @param renderTarget - {@link RenderTarget} to use to retrieve the {@link RenderPassEntry} if any.
+     * @returns - {@link RenderPassEntry} found.
+     */
+    getRenderTargetPassEntry(renderTarget = null) {
+      return renderTarget ? this.renderPassEntries.renderTarget.find(
+        (passEntry) => passEntry.renderPass.uuid === renderTarget.renderPass.uuid
+      ) : this.renderPassEntries.screen.find((passEntry) => passEntry.renderPass.uuid === this.renderer.renderPass.uuid);
+    }
+    /**
      * Get the correct {@link renderPassEntries | render pass entry} (either {@link renderPassEntries} outputTarget or {@link renderPassEntries} screen) {@link Stack} onto which this Mesh should be added, depending on whether it's projected or not
      * @param mesh - Mesh to check
      * @returns - the corresponding render pass entry {@link Stack}
      */
     getMeshProjectionStack(mesh) {
-      const renderPassEntry = mesh.outputTarget ? this.renderPassEntries.renderTarget.find(
-        (passEntry) => passEntry.renderPass.uuid === mesh.outputTarget.renderPass.uuid
-      ) : this.renderPassEntries.screen[0];
+      const renderPassEntry = mesh.options.useCustomScenePassEntry ? mesh.options.useCustomScenePassEntry : this.getRenderTargetPassEntry(mesh.outputTarget);
       const { stack } = renderPassEntry;
       return mesh.material.options.rendering.useProjection ? stack.projected : stack.unProjected;
     }
@@ -12553,18 +12479,32 @@ ${this.shaders.compute.head}`;
       return object.type === "RenderBundle";
     }
     /**
+     * Add a {@link SceneStackedMesh} to the given {@link RenderTarget} corresponding {@link RenderPassEntry}.
+     * @param mesh - {@link SceneStackedMesh} to add.
+     * @param renderTarget - {@link RenderTarget} to get the {@link RenderPassEntry} from. If not set, will add to the first {@link renderPassEntries} `screen` array entry.
+     */
+    addMeshToRenderTargetStack(mesh, renderTarget = null) {
+      const renderPassEntry = this.getRenderTargetPassEntry(renderTarget);
+      const { stack } = renderPassEntry;
+      const projectionStack = mesh.material.options.rendering.useProjection ? stack.projected : stack.unProjected;
+      const isTransparent = !!mesh.transparent;
+      const similarMeshes = isTransparent ? projectionStack.transparent : projectionStack.opaque;
+      similarMeshes.push(mesh);
+      this.orderStack(similarMeshes);
+    }
+    /**
      * Add a Mesh to the correct {@link renderPassEntries | render pass entry} {@link Stack} array.
      * Meshes are then ordered by their {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#index | indexes (order of creation]}, {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#index | pipeline entry indexes} and then {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#renderOrder | renderOrder}
      * @param mesh - Mesh to add
      */
     addMesh(mesh) {
-      const projectionStack = this.getMeshProjectionStack(mesh);
-      const isTransparent = !!mesh.transparent;
-      const { useProjection } = mesh.material.options.rendering;
       if (mesh.renderBundle) {
         mesh.renderBundle.addMesh(mesh, mesh.outputTarget ? mesh.outputTarget.renderPass : this.renderer.renderPass);
       }
+      const { useProjection } = mesh.material.options.rendering;
       if (!mesh.renderBundle) {
+        const projectionStack = this.getMeshProjectionStack(mesh);
+        const isTransparent = !!mesh.transparent;
         const similarMeshes = isTransparent ? projectionStack.transparent : projectionStack.opaque;
         similarMeshes.push(mesh);
         this.orderStack(similarMeshes);
@@ -12578,15 +12518,18 @@ ${this.shaders.compute.head}`;
      * @param mesh - Mesh to remove.
      */
     removeMesh(mesh) {
-      const projectionStack = this.getMeshProjectionStack(mesh);
-      const isTransparent = !!mesh.transparent;
       if (mesh.renderBundle) {
         mesh.renderBundle.removeMesh(mesh, false);
       } else {
-        if (isTransparent) {
-          projectionStack.transparent = projectionStack.transparent.filter((m) => m.uuid !== mesh.uuid);
-        } else {
-          projectionStack.opaque = projectionStack.opaque.filter((m) => m.uuid !== mesh.uuid);
+        const projectionType = mesh.material.options.rendering.useProjection ? "projected" : "unProjected";
+        const isTransparent = !!mesh.transparent;
+        const transparencyType = isTransparent ? "transparent" : "opaque";
+        for (const renderPassEntries of Object.values(this.renderPassEntries)) {
+          renderPassEntries.forEach((renderPassEntry) => {
+            if (renderPassEntry.stack) {
+              renderPassEntry.stack[projectionType][transparencyType] = renderPassEntry.stack[projectionType][transparencyType].filter((m) => m.uuid !== mesh.uuid);
+            }
+          });
         }
       }
       if ("parent" in mesh && mesh.parent && mesh.parent.object3DIndex === this.object3DIndex) {
@@ -12622,11 +12565,11 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Add a {@link ShaderPass} to our scene {@link renderPassEntries} screen array.
-     * Before rendering the {@link ShaderPass}, we will copy the correct input texture into its {@link ShaderPass#renderTexture | renderTexture}
-     * This also handles the {@link renderPassEntries} screen array entries order: We will first draw selective passes, then our main screen pass and finally global post processing passes.
+     * Add a {@link ShaderPass} to our scene {@link renderPassEntries} `prePass` or `postProPass` array.
+     * Before rendering the {@link ShaderPass}, we will copy the correct input texture into its {@link ShaderPass#renderTexture | renderTexture}.
+     * This also handles the {@link renderPassEntries} `postProPass` array entries order: We will first draw selective passes and then finally global post processing passes.
      * @see {@link https://codesandbox.io/p/sandbox/webgpu-render-to-2-textures-without-texture-copy-c4sx4s?file=%2Fsrc%2Findex.js%3A10%2C4 | minimal code example}
-     * @param shaderPass - {@link ShaderPass} to add
+     * @param shaderPass - {@link ShaderPass} to add.
      */
     addShaderPass(shaderPass) {
       const onBeforeRenderPass = shaderPass.inputTarget || shaderPass.outputTarget ? null : (commandEncoder, swapChainTexture) => {
@@ -12656,8 +12599,10 @@ ${this.shaders.compute.head}`;
           );
         }
       } : null;
-      const outputPass = shaderPass.outputTarget ? shaderPass.outputTarget.renderPass : this.renderer.postProcessingPass;
+      const outputPass = shaderPass.outputTarget ? shaderPass.outputTarget.renderPass : !shaderPass.options.isPrePass ? this.renderer.postProcessingPass : this.renderer.renderPass;
+      const label = shaderPass.options.isPrePass ? shaderPass.options.label + " scene pre pass" : shaderPass.options.label + " scene post processing pass";
       const shaderPassEntry = {
+        label,
         // use output target or postprocessing render pass
         renderPass: outputPass,
         // render to output target renderTexture or directly to screen
@@ -12679,45 +12624,59 @@ ${this.shaders.compute.head}`;
           renderBundle.addMesh(shaderPass, outputPass);
         }
       }
-      this.renderPassEntries.screen.push(shaderPassEntry);
-      this.renderPassEntries.screen.sort((a, b) => {
-        const isPostProA = a.element && !a.element.outputTarget;
-        const renderOrderA = a.element ? a.element.renderOrder : 0;
-        const indexA = a.element ? a.element.index : 0;
-        const isPostProB = b.element && !b.element.outputTarget;
-        const renderOrderB = b.element ? b.element.renderOrder : 0;
-        const indexB = b.element ? b.element.index : 0;
-        if (isPostProA && !isPostProB) {
-          return 1;
-        } else if (!isPostProA && isPostProB) {
-          return -1;
-        } else if (renderOrderA !== renderOrderB) {
-          return renderOrderA - renderOrderB;
-        } else {
-          return indexA - indexB;
-        }
-      });
+      if (!shaderPass.options.isPrePass) {
+        this.renderPassEntries.postProPass.push(shaderPassEntry);
+        this.renderPassEntries.postProPass.sort((a, b) => {
+          const isPostProA = a.element && !a.element.outputTarget;
+          const renderOrderA = a.element ? a.element.renderOrder : 0;
+          const indexA = a.element ? a.element.index : 0;
+          const isPostProB = b.element && !b.element.outputTarget;
+          const renderOrderB = b.element ? b.element.renderOrder : 0;
+          const indexB = b.element ? b.element.index : 0;
+          if (isPostProA && !isPostProB) {
+            return 1;
+          } else if (!isPostProA && isPostProB) {
+            return -1;
+          } else if (renderOrderA !== renderOrderB) {
+            return renderOrderA - renderOrderB;
+          } else {
+            return indexA - indexB;
+          }
+        });
+      } else {
+        this.renderPassEntries.prePass.push(shaderPassEntry);
+        this.renderPassEntries.prePass.sort(
+          (a, b) => a.element.renderOrder - b.element.renderOrder || a.element.index - b.element.index
+        );
+      }
     }
     /**
-     * Remove a {@link ShaderPass} from our scene {@link renderPassEntries} screen array
-     * @param shaderPass - {@link ShaderPass} to remove
+     * Remove a {@link ShaderPass} from our scene {@link renderPassEntries} `prePass` or `postProPass` array.
+     * @param shaderPass - {@link ShaderPass} to remove.
      */
     removeShaderPass(shaderPass) {
       if (shaderPass.renderBundle) {
         shaderPass.renderBundle.empty();
       }
-      this.renderPassEntries.screen = this.renderPassEntries.screen.filter(
-        (entry) => !entry.element || entry.element.uuid !== shaderPass.uuid
-      );
+      if (!shaderPass.options.isPrePass) {
+        this.renderPassEntries.postProPass = this.renderPassEntries.postProPass.filter(
+          (entry) => !entry.element || entry.element.uuid !== shaderPass.uuid
+        );
+      } else {
+        this.renderPassEntries.prePass = this.renderPassEntries.prePass.filter(
+          (entry) => !entry.element || entry.element.uuid !== shaderPass.uuid
+        );
+      }
     }
     /**
      * Add a {@link PingPongPlane} to our scene {@link renderPassEntries} pingPong array.
-     * After rendering the {@link PingPongPlane}, we will copy the context current texture into its {@link PingPongPlane#renderTexture | renderTexture} so we'll be able to use it as an input for the next pass
+     * After rendering the {@link PingPongPlane}, we will copy the context current texture into its {@link PingPongPlane#renderTexture | renderTexture} so we'll be able to use it as an input for the next pass.
      * @see {@link https://codesandbox.io/p/sandbox/webgpu-render-ping-pong-to-texture-use-in-quad-gwjx9p | minimal code example}
      * @param pingPongPlane
      */
     addPingPongPlane(pingPongPlane) {
       this.renderPassEntries.pingPong.push({
+        label: pingPongPlane.options.label + " scene pass",
         renderPass: pingPongPlane.outputTarget.renderPass,
         renderTexture: pingPongPlane.outputTarget.renderTexture,
         onBeforeRenderPass: null,
@@ -12751,7 +12710,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Remove a {@link PingPongPlane} from our scene {@link renderPassEntries} pingPong array.
-     * @param pingPongPlane - {@link PingPongPlane} to remove
+     * @param pingPongPlane - {@link PingPongPlane} to remove.
      */
     removePingPongPlane(pingPongPlane) {
       if (pingPongPlane.renderBundle) {
@@ -12764,7 +12723,7 @@ ${this.shaders.compute.head}`;
     /**
      * Get any rendered object or {@link RenderTarget} {@link RenderPassEntry}. Useful to override a {@link RenderPassEntry#onBeforeRenderPass | RenderPassEntry onBeforeRenderPass} or {@link RenderPassEntry#onAfterRenderPass | RenderPassEntry onAfterRenderPass} default behavior.
      * @param object - The object from which we want to get the parentMesh {@link RenderPassEntry}
-     * @returns - the {@link RenderPassEntry} if found
+     * @returns - the {@link RenderPassEntry} if found.
      */
     getObjectRenderPassEntry(object) {
       if (object.type === "RenderTarget") {
@@ -12802,7 +12761,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Sort transparent projected meshes by their render order or distance to the camera (farther meshes should be drawn first).
-     * @param meshes - transparent projected meshes array to sort
+     * @param meshes - transparent projected meshes array to sort.
      */
     sortTransparentMeshes(meshes) {
       meshes.sort((meshA, meshB) => {
@@ -12905,13 +12864,18 @@ ${this.shaders.compute.head}`;
         this.renderer.pipelineManager.resetCurrentPipeline();
       }
       for (const renderPassEntryType in this.renderPassEntries) {
+        if (renderPassEntryType === "postProPass") {
+          this.renderer.renderPass.setDepthLoadOp("clear");
+        }
         let passDrawnCount = 0;
         this.renderPassEntries[renderPassEntryType].forEach((renderPassEntry) => {
           if (!this.getRenderPassEntryLength(renderPassEntry))
             return;
-          renderPassEntry.renderPass.setLoadOp(
-            renderPassEntryType === "screen" && passDrawnCount !== 0 ? "load" : "clear"
-          );
+          const isSubesequentScreenPass = renderPassEntryType === "screen" && (passDrawnCount !== 0 || this.renderPassEntries.prePass.length);
+          const loadContent = renderPassEntryType === "postProPass" || renderPassEntryType === "prePass" && passDrawnCount !== 0 || isSubesequentScreenPass;
+          renderPassEntry.renderPass.setLoadOp(loadContent ? "load" : "clear");
+          if (isSubesequentScreenPass)
+            renderPassEntry.renderPass.setDepthLoadOp("load");
           passDrawnCount++;
           this.renderSinglePassEntry(commandEncoder, renderPassEntry);
         });
@@ -12919,30 +12883,30 @@ ${this.shaders.compute.head}`;
     }
   }
 
-  var __accessCheck$a = (obj, member, msg) => {
+  var __accessCheck$b = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$7 = (obj, member, getter) => {
-    __accessCheck$a(obj, member, "read from private field");
+  var __privateGet$8 = (obj, member, getter) => {
+    __accessCheck$b(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$a = (obj, member, value) => {
+  var __privateAdd$b = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$7 = (obj, member, value, setter) => {
-    __accessCheck$a(obj, member, "write to private field");
+  var __privateSet$8 = (obj, member, value, setter) => {
+    __accessCheck$b(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
   var __privateWrapper = (obj, member, setter, getter) => ({
     set _(value) {
-      __privateSet$7(obj, member, value);
+      __privateSet$8(obj, member, value);
     },
     get _() {
-      return __privateGet$7(obj, member, getter);
+      return __privateGet$8(obj, member, getter);
     }
   });
   var _taskCount;
@@ -12952,7 +12916,7 @@ ${this.shaders.compute.head}`;
      */
     constructor() {
       /** Private number to assign a unique id to each {@link TaskQueueItem | task queue item} */
-      __privateAdd$a(this, _taskCount, 0);
+      __privateAdd$b(this, _taskCount, 0);
       this.queue = [];
     }
     /**
@@ -12967,7 +12931,7 @@ ${this.shaders.compute.head}`;
         callback,
         order,
         once,
-        id: __privateGet$7(this, _taskCount)
+        id: __privateGet$8(this, _taskCount)
       };
       __privateWrapper(this, _taskCount)._++;
       this.queue.push(task);
@@ -13045,7 +13009,7 @@ ${this.shaders.compute.head}`;
         },
         ...context
       };
-      renderPass = { ...{ useDepth: true, sampleCount: 4, clearValue: [0, 0, 0, 0] }, ...renderPass };
+      renderPass = { ...{ useDepth: true, sampleCount: 4 }, ...renderPass };
       this.options = {
         deviceManager,
         label,
@@ -13546,6 +13510,14 @@ ${this.shaders.compute.head}`;
       this.deviceManager.uploadTexture(texture);
     }
     /**
+     * Generate mips on the GPU using our {@link GPUDeviceManager}.
+     * @param texture - {@link Texture} or {@link DOMTexture} for which to generate the mips.
+     * @param commandEncoder - optional {@link GPUCommandEncoder} to use if we're already in the middle of a command encoding process.
+     */
+    generateMips(texture, commandEncoder = null) {
+      this.deviceManager.generateMips(texture, commandEncoder);
+    }
+    /**
      * Import a {@link GPUExternalTexture}
      * @param video - {@link HTMLVideoElement} source
      * @returns - {@link GPUExternalTexture}
@@ -13742,6 +13714,8 @@ ${this.shaders.compute.head}`;
         !this.production && commandEncoder.pushDebugGroup(`${this.type} (${this.options.label}): Force clear command encoder`);
       }
       this.renderPass.updateView();
+      this.renderPass.setLoadOp("clear");
+      this.renderPass.setDepthLoadOp("clear");
       const pass = commandEncoder.beginRenderPass(this.renderPass.descriptor);
       pass.end();
       if (!hasCommandEncoder) {
@@ -13799,21 +13773,21 @@ ${this.shaders.compute.head}`;
     }
   }
 
-  var __accessCheck$9 = (obj, member, msg) => {
+  var __accessCheck$a = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$6 = (obj, member, getter) => {
-    __accessCheck$9(obj, member, "read from private field");
+  var __privateGet$7 = (obj, member, getter) => {
+    __accessCheck$a(obj, member, "read from private field");
     return member.get(obj);
   };
-  var __privateAdd$9 = (obj, member, value) => {
+  var __privateAdd$a = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$6 = (obj, member, value, setter) => {
-    __accessCheck$9(obj, member, "write to private field");
+  var __privateSet$7 = (obj, member, value, setter) => {
+    __accessCheck$a(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -13844,7 +13818,7 @@ ${this.shaders.compute.head}`;
         renderPass
       });
       /** @ignore */
-      __privateAdd$9(this, _shouldUpdateCameraLightsBindGroup, void 0);
+      __privateAdd$a(this, _shouldUpdateCameraLightsBindGroup, void 0);
       this.type = "GPUCameraRenderer";
       camera = { ...{ fov: 50, near: 0.1, far: 1e3 }, ...camera };
       if (lights !== false) {
@@ -13856,7 +13830,7 @@ ${this.shaders.compute.head}`;
         lights
       };
       this.bindings = {};
-      __privateSet$6(this, _shouldUpdateCameraLightsBindGroup, true);
+      __privateSet$7(this, _shouldUpdateCameraLightsBindGroup, true);
       this.lights = [];
       this.setCamera(camera);
       this.setCameraBinding();
@@ -13947,7 +13921,7 @@ ${this.shaders.compute.head}`;
       this.bindings.camera = new BufferBinding({
         label: "Camera",
         name: "camera",
-        visibility: ["vertex"],
+        visibility: ["vertex", "fragment"],
         struct: {
           view: {
             // camera view matrix
@@ -14209,7 +14183,7 @@ ${this.shaders.compute.head}`;
      * Tell our  {@link cameraLightsBindGroup | camera, lights and shadows bind group} to update.
      */
     shouldUpdateCameraLightsBindGroup() {
-      __privateSet$6(this, _shouldUpdateCameraLightsBindGroup, true);
+      __privateSet$7(this, _shouldUpdateCameraLightsBindGroup, true);
     }
     /**
      * Tell our {@link GPUCameraRenderer#bindings.camera | camera buffer binding} that we should update its bindings and update the bind group. Called each time the camera matrices change.
@@ -14224,9 +14198,9 @@ ${this.shaders.compute.head}`;
      * Update the {@link cameraLightsBindGroup | camera and lights BindGroup}.
      */
     updateCameraLightsBindGroup() {
-      if (this.cameraLightsBindGroup && __privateGet$6(this, _shouldUpdateCameraLightsBindGroup)) {
+      if (this.cameraLightsBindGroup && __privateGet$7(this, _shouldUpdateCameraLightsBindGroup)) {
         this.cameraLightsBindGroup.update();
-        __privateSet$6(this, _shouldUpdateCameraLightsBindGroup, false);
+        __privateSet$7(this, _shouldUpdateCameraLightsBindGroup, false);
       }
     }
     /**
@@ -14302,6 +14276,25 @@ ${this.shaders.compute.head}`;
   }
   _shouldUpdateCameraLightsBindGroup = new WeakMap();
 
+  var __accessCheck$9 = (obj, member, msg) => {
+    if (!member.has(obj))
+      throw TypeError("Cannot " + msg);
+  };
+  var __privateGet$6 = (obj, member, getter) => {
+    __accessCheck$9(obj, member, "read from private field");
+    return getter ? getter.call(obj) : member.get(obj);
+  };
+  var __privateAdd$9 = (obj, member, value) => {
+    if (member.has(obj))
+      throw TypeError("Cannot add the same private member more than once");
+    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  };
+  var __privateSet$6 = (obj, member, value, setter) => {
+    __accessCheck$9(obj, member, "write to private field");
+    member.set(obj, value);
+    return value;
+  };
+  var _mipsGeneration;
   class GPUDeviceManager {
     /**
      * GPUDeviceManager constructor
@@ -14325,6 +14318,9 @@ ${this.shaders.compute.head}`;
       /** function assigned to the {@link onAfterRender} callback */
       this._onAfterRenderCallback = () => {
       };
+      /** @ignore */
+      // mips generation cache handling
+      __privateAdd$9(this, _mipsGeneration, void 0);
       this.index = 0;
       this.label = label ?? "GPUDeviceManager instance";
       this.production = production;
@@ -14336,6 +14332,11 @@ ${this.shaders.compute.head}`;
       this.gpu = navigator.gpu;
       this.setPipelineManager();
       this.setDeviceObjects();
+      __privateSet$6(this, _mipsGeneration, {
+        sampler: null,
+        module: null,
+        pipelineByFormat: {}
+      });
       if (autoRender) {
         this.animate();
       }
@@ -14562,7 +14563,7 @@ ${this.shaders.compute.head}`;
             { width: texture.size.width, height: texture.size.height }
           );
           if (texture.texture.mipLevelCount > 1) {
-            generateMips(this.device, texture.texture);
+            this.generateMips(texture);
           }
           this.texturesQueue.push(texture);
         } catch ({ message }) {
@@ -14575,6 +14576,128 @@ ${this.shaders.compute.head}`;
           { bytesPerRow: texture.size.width * 4 },
           { width: texture.size.width, height: texture.size.height }
         );
+      }
+    }
+    /**
+     * Mips generation helper on the GPU using our {@link device}. Caches sampler, module and pipeline (by {@link GPUTexture} formats) for faster generation.
+     * Ported from https://webgpufundamentals.org/webgpu/lessons/webgpu-importing-textures.html
+     * @param texture - {@link Texture} or {@link DOMTexture} for which to generate the mips.
+     * @param commandEncoder - optional {@link GPUCommandEncoder} to use if we're already in the middle of a command encoding process.
+     */
+    generateMips(texture, commandEncoder = null) {
+      if (!this.device)
+        return;
+      if (!__privateGet$6(this, _mipsGeneration).module) {
+        __privateGet$6(this, _mipsGeneration).module = this.device.createShaderModule({
+          label: "textured quad shaders for mip level generation",
+          code: `
+            struct VSOutput {
+              @builtin(position) position: vec4f,
+              @location(0) texcoord: vec2f,
+            };
+
+            @vertex fn vs(
+              @builtin(vertex_index) vertexIndex : u32
+            ) -> VSOutput {
+              let pos = array(
+
+                vec2f( 0.0,  0.0),  // center
+                vec2f( 1.0,  0.0),  // right, center
+                vec2f( 0.0,  1.0),  // center, top
+
+                // 2st triangle
+                vec2f( 0.0,  1.0),  // center, top
+                vec2f( 1.0,  0.0),  // right, center
+                vec2f( 1.0,  1.0),  // right, top
+              );
+
+              var vsOutput: VSOutput;
+              let xy = pos[vertexIndex];
+              vsOutput.position = vec4f(xy * 2.0 - 1.0, 0.0, 1.0);
+              vsOutput.texcoord = vec2f(xy.x, 1.0 - xy.y);
+              return vsOutput;
+            }
+
+            @group(0) @binding(0) var ourSampler: sampler;
+            @group(0) @binding(1) var ourTexture: texture_2d<f32>;
+
+            @fragment fn fs(fsInput: VSOutput) -> @location(0) vec4f {
+              return textureSample(ourTexture, ourSampler, fsInput.texcoord);
+            }
+          `
+        });
+        __privateGet$6(this, _mipsGeneration).sampler = this.device.createSampler({
+          minFilter: "linear",
+          magFilter: "linear"
+        });
+      }
+      if (!__privateGet$6(this, _mipsGeneration).pipelineByFormat[texture.texture.format]) {
+        __privateGet$6(this, _mipsGeneration).pipelineByFormat[texture.texture.format] = this.device.createRenderPipeline({
+          label: "Mip level generator pipeline",
+          layout: "auto",
+          vertex: {
+            module: __privateGet$6(this, _mipsGeneration).module
+          },
+          fragment: {
+            module: __privateGet$6(this, _mipsGeneration).module,
+            targets: [{ format: texture.texture.format }]
+          }
+        });
+      }
+      const pipeline = __privateGet$6(this, _mipsGeneration).pipelineByFormat[texture.texture.format];
+      const encoder = commandEncoder || this.device.createCommandEncoder({
+        label: "Mip gen encoder"
+      });
+      let width = texture.texture.width;
+      let height = texture.texture.height;
+      let baseMipLevel = 0;
+      while (width > 1 || height > 1) {
+        width = Math.max(1, width / 2 | 0);
+        height = Math.max(1, height / 2 | 0);
+        for (let layer = 0; layer < texture.texture.depthOrArrayLayers; ++layer) {
+          const bindGroup = this.device.createBindGroup({
+            layout: pipeline.getBindGroupLayout(0),
+            entries: [
+              { binding: 0, resource: __privateGet$6(this, _mipsGeneration).sampler },
+              {
+                binding: 1,
+                resource: texture.texture.createView({
+                  dimension: "2d",
+                  baseMipLevel,
+                  mipLevelCount: 1,
+                  baseArrayLayer: layer,
+                  arrayLayerCount: 1
+                })
+              }
+            ]
+          });
+          const renderPassDescriptor = {
+            label: "Mip generation render pass",
+            colorAttachments: [
+              {
+                view: texture.texture.createView({
+                  dimension: "2d",
+                  baseMipLevel: baseMipLevel + 1,
+                  mipLevelCount: 1,
+                  baseArrayLayer: layer,
+                  arrayLayerCount: 1
+                }),
+                loadOp: "clear",
+                storeOp: "store"
+              }
+            ]
+          };
+          const pass = encoder.beginRenderPass(renderPassDescriptor);
+          pass.setPipeline(pipeline);
+          pass.setBindGroup(0, bindGroup);
+          pass.draw(6);
+          pass.end();
+        }
+        ++baseMipLevel;
+      }
+      if (!commandEncoder) {
+        const commandBuffer = encoder.finish();
+        this.device.queue.submit([commandBuffer]);
       }
     }
     /**
@@ -14667,6 +14790,7 @@ ${this.shaders.compute.head}`;
       this.setDeviceObjects();
     }
   }
+  _mipsGeneration = new WeakMap();
 
   var __accessCheck$8 = (obj, member, msg) => {
     if (!member.has(obj))
@@ -15170,6 +15294,7 @@ ${this.shaders.compute.head}`;
     this.binding = new BufferBinding({
       label: this.options.label + " matrices",
       name: "matrices",
+      visibility: ["vertex", "fragment"],
       struct: {
         model: {
           type: "array<mat4x4f>",
@@ -15286,7 +15411,7 @@ struct VSOutput {
      */
     constructor(renderer, parameters = {}) {
       renderer = isRenderer(renderer, parameters.label ? parameters.label + " ShaderPass" : "ShaderPass");
-      parameters.depth = false;
+      parameters.isPrePass = !!parameters.isPrePass;
       const defaultBlend = {
         color: {
           srcFactor: "one",
@@ -15297,17 +15422,19 @@ struct VSOutput {
           dstFactor: "one-minus-src-alpha"
         }
       };
-      if (!parameters.targets) {
-        parameters.targets = [
-          {
-            blend: defaultBlend
-          }
-        ];
-      } else if (parameters.targets && parameters.targets.length && !parameters.targets[0].blend) {
-        parameters.targets[0].blend = defaultBlend;
+      if (!parameters.isPrePass) {
+        if (!parameters.targets) {
+          parameters.targets = [
+            {
+              blend: defaultBlend
+            }
+          ];
+        } else if (parameters.targets && parameters.targets.length && !parameters.targets[0].blend) {
+          parameters.targets[0].blend = defaultBlend;
+        }
       }
       parameters.label = parameters.label ?? "ShaderPass " + renderer.shaderPasses?.length;
-      parameters.sampleCount = !!parameters.sampleCount ? parameters.sampleCount : renderer && renderer.postProcessingPass ? renderer && renderer.postProcessingPass.options.sampleCount : 1;
+      parameters.sampleCount = !!parameters.sampleCount ? parameters.sampleCount : renderer && renderer.renderPass && parameters.isPrePass ? renderer.renderPass.options.sampleCount : renderer && renderer.postProcessingPass ? renderer && renderer.postProcessingPass.options.sampleCount : 1;
       if (!parameters.shaders) {
         parameters.shaders = {};
       }
@@ -15317,8 +15444,13 @@ struct VSOutput {
           entryPoint: "main"
         };
       }
-      parameters.depth = false;
+      parameters.depth = parameters.isPrePass;
       super(renderer, parameters);
+      this.options = {
+        ...this.options,
+        copyOutputToRenderTexture: parameters.copyOutputToRenderTexture,
+        isPrePass: parameters.isPrePass
+      };
       if (parameters.inputTarget) {
         this.setInputTarget(parameters.inputTarget);
       }
@@ -15342,6 +15474,7 @@ struct VSOutput {
     cleanupRenderMaterialParameters(parameters) {
       delete parameters.copyOutputToRenderTexture;
       delete parameters.inputTarget;
+      delete parameters.isPrePass;
       super.cleanupRenderMaterialParameters(parameters);
       return parameters;
     }
@@ -15385,7 +15518,7 @@ struct VSOutput {
         this.renderer.shaderPasses.push(this);
       }
       this.setRenderingOptionsForRenderPass(
-        this.outputTarget ? this.outputTarget.renderPass : this.renderer.postProcessingPass
+        this.outputTarget ? this.outputTarget.renderPass : this.options.isPrePass ? this.renderer.renderPass : this.renderer.postProcessingPass
       );
       if (this.autoRender) {
         this.renderer.scene.addShaderPass(this);
@@ -15460,12 +15593,8 @@ fn BRDF_Lambert(diffuseColor: vec3f) -> vec3f {
   return RECIPROCAL_PI * diffuseColor;
 }
 
-fn F_Schlick(VdotH: f32, f0: vec3f) -> vec3f {
+fn F_Schlick(VdotH: f32, f0: vec3f, f90: f32) -> vec3f {
   let fresnel: f32 = pow( 1.0 - VdotH, 5.0 );
-  
-  // TODO if specular intensity is defined
-  // it could be: mix( specularIntensity, 1.0, metallic );
-  let f90: f32 = 1.0;
   return f0 * ( 1.0 - fresnel ) + ( f90 * fresnel );
 }
 
@@ -15658,7 +15787,7 @@ fn BRDF_BlinnPhong(
   let VdotH: f32 = clamp(dot(viewDirection, H), 0.0, 1.0);
   let NdotV: f32 = clamp( dot(normal, viewDirection), 0.0, 1.0 );
   
-  let F: vec3f = F_Schlick(VdotH, specularColor);
+  let F: vec3f = F_Schlick(VdotH, specularColor, 1.0);
   
   let G: f32 = 0.25; // blinn phong implicit
   
@@ -15798,6 +15927,8 @@ fn RE_IndirectSpecular(
   irradiance: vec3f,
   normal: vec3f,
   diffuseColor: vec3f,
+  specularFactor: f32,
+  specularColorFactor: vec3f,
   viewDirection: vec3f,
   metallic: f32,
   roughness: f32,
@@ -15805,12 +15936,8 @@ fn RE_IndirectSpecular(
 ) {
   var totalScattering: TotalScattering;
   let cosineWeightedIrradiance: vec3f = irradiance * RECIPROCAL_PI;
-  
-  let specularColor: vec3f = mix( vec3( 0.04 ), diffuseColor, metallic );
-  
-  let f90: f32 = 1.0;
-  
-  computeMultiscattering( normal, viewDirection, specularColor, f90, roughness, &totalScattering );
+    
+  computeMultiscattering( normal, viewDirection, specularColorFactor, specularFactor, roughness, &totalScattering );
   
   let totalScatter: vec3f = totalScattering.single + totalScattering.multi;
   let diffuse: vec3f = diffuseColor * ( 1.0 - max( max( totalScatter.r, totalScatter.g ), totalScatter.b ) );
@@ -15823,9 +15950,145 @@ fn RE_IndirectSpecular(
 `
   );
 
+  var transmissionUtils = (
+    /* wgsl */
+    `
+fn EnvironmentBRDF(
+    normal: vec3<f32>, 
+    viewDir: vec3<f32>, 
+    specularColor: vec3<f32>, 
+    specularF90: f32, 
+    roughness: f32
+) -> vec3<f32> {
+    let fab = DFGApprox(normal, viewDir, roughness);
+    return specularColor * fab.x + specularF90 * fab.y;
+}
+
+fn isinf(value: f32) -> bool {
+  return value > 1.0e38 || value < -1.0e38;
+}
+
+fn getVolumeTransmissionRay(normal: vec3f, viewDirection: vec3f, thickness: f32, ior: f32, modelMatrix: mat4x4f) -> vec3f {
+    let refractionVector = refract(-viewDirection, normalize(normal), 1.0 / ior);
+    let modelScale = vec3(
+        length(modelMatrix[0].xyz),
+        length(modelMatrix[1].xyz),
+        length(modelMatrix[2].xyz)
+    );
+    return normalize(refractionVector) * thickness * modelScale;
+}
+
+fn applyIorToRoughness(roughness: f32, ior: f32) -> f32 {
+    return roughness * clamp(ior * 2.0 - 2.0, 0.0, 1.0);
+}
+
+fn getTransmissionSample( fragCoord: vec2f, roughness: f32, ior: f32, transmissionSceneTexture: texture_2d<f32>, sampler: sampler ) -> vec4f {
+    let transmissionSamplerSize: vec2f = vec2f(textureDimensions(transmissionSceneTexture));
+    let lod: f32 = log2( transmissionSamplerSize.x ) * applyIorToRoughness( roughness, ior );
+    return textureSampleLevel( transmissionSceneTexture, sampler, fragCoord.xy, lod );
+}
+
+fn volumeAttenuation(transmissionDistance: f32, attenuationColor: vec3f, attenuationDistance: f32) -> vec3f {
+    if (isinf(attenuationDistance)) {
+        return vec3(1.0);
+    } else {
+        let attenuationCoefficient = -log(attenuationColor) / attenuationDistance;
+        let transmittance = exp(-attenuationCoefficient * transmissionDistance);
+        return transmittance;
+    }
+}
+
+fn getIBLVolumeRefraction(
+    normal: vec3f,
+    viewDirection: vec3f,
+    roughness: f32,
+    diffuseColor: vec4f,
+    specularColor: vec3f,
+    specularF90: f32,
+    position: vec3f,
+    modelMatrix: mat4x4f,
+    viewMatrix: mat4x4f,
+    projMatrix: mat4x4f,
+    dispersion: f32,
+    ior: f32,
+    thickness: f32,
+    attenuationColor: vec3f,
+    attenuationDistance: f32,
+
+    transmissionBackgroundTexture: texture_2d<f32>,
+    defaultSampler: sampler,
+) -> vec4f {
+    // TODO dispersion
+    var transmittedLight: vec4f;
+    var transmissionRayLength: f32;
+    var transmittance: vec3f;
+    
+    if(dispersion > 0.0) {
+      let halfSpread: f32 = (ior - 1.0) * 0.025 * dispersion;
+      let iors: vec3f = vec3(ior - halfSpread, ior, ior + halfSpread);
+      
+      for(var i: i32 = 0; i < 3; i++) {
+        let transmissionRay: vec3f = getVolumeTransmissionRay(normal, viewDirection, thickness, iors[i], modelMatrix);
+        transmissionRayLength = length(transmissionRay);
+        let refractedRayExit = position + transmissionRay;
+
+        // Transform to NDC space
+        let ndcPos = projMatrix * viewMatrix * vec4(refractedRayExit, 1.0);
+        var refractionCoords = ndcPos.xy / ndcPos.w;
+        refractionCoords = (refractionCoords + 1.0) / 2.0;
+        refractionCoords = vec2(refractionCoords.x, 1.0 - refractionCoords.y); // webgpu Y flip
+        
+        let transmissionSample: vec4f = getTransmissionSample(refractionCoords, roughness, iors[i], transmissionBackgroundTexture, defaultSampler);
+        
+        transmittedLight[i] = transmissionSample[i];
+        transmittedLight.a += transmissionSample.a;
+        
+        // Compute transmittance
+        let diffuse: vec3f = diffuseColor.rgb;
+        transmittance[i] = diffuse[i] * volumeAttenuation(length(transmissionRay), attenuationColor, attenuationDistance)[i];
+      }
+      
+      transmittedLight.a /= 3.0;
+    } else {
+      // Calculate the transmission ray
+      let transmissionRay: vec3f = getVolumeTransmissionRay(normal, viewDirection, thickness, ior, modelMatrix);
+      let refractedRayExit = position + transmissionRay;
+  
+      // Transform to NDC space
+      let ndcPos = projMatrix * viewMatrix * vec4(refractedRayExit, 1.0);
+      var refractionCoords = ndcPos.xy / ndcPos.w;
+      refractionCoords = (refractionCoords + 1.0) / 2.0;
+      refractionCoords = vec2(refractionCoords.x, 1.0 - refractionCoords.y); // webgpu Y flip
+  
+      // Sample the transmission texture
+      transmittedLight = getTransmissionSample(refractionCoords, roughness, ior, transmissionBackgroundTexture, defaultSampler);
+  
+      // Compute transmittance
+      transmittance = diffuseColor.rgb * volumeAttenuation(length(transmissionRay), attenuationColor, attenuationDistance);
+    }
+
+    // Apply attenuation to transmitted light
+    let attenuatedColor = transmittance * transmittedLight.rgb;
+
+    // Compute Fresnel term using an environment BRDF
+    let F = EnvironmentBRDF(normal, viewDirection, specularColor, specularF90, roughness);
+
+    // Average the transmittance for a single factor
+    let transmittanceFactor = (transmittance.r + transmittance.g + transmittance.b) / 3.0;
+
+    // Combine results into the final color
+    return vec4(
+        (1.0 - F) * attenuatedColor,
+        1.0 - (1.0 - transmittedLight.a) * transmittanceFactor
+    );
+}
+`
+  );
+
   const pbrUtils = `
 ${lambertUtils}
 ${RE_indirect_specular}
+${transmissionUtils}
 `;
   const getPBRDirect = (
     /* wgsl */
@@ -15855,12 +16118,13 @@ fn BRDF_GGX(
   NdotH: f32,
   VdotH: f32,
   roughness: f32,
-  f0: vec3f
+  specularFactor: f32,
+  specularColor: vec3f
 ) -> vec3f {
   // cook-torrance brdf
   let G: f32 = GeometrySmith(NdotL, NdotV, roughness);
   let D: f32 = DistributionGGX(NdotH, roughness);
-  let F: vec3f = F_Schlick(VdotH, f0);
+  let F: vec3f = F_Schlick(VdotH, specularColor, specularFactor);
   
   return G * D * F;
 }
@@ -15869,7 +16133,8 @@ fn getPBRDirect(
   normal: vec3f,
   diffuseColor: vec3f,
   viewDirection: vec3f,
-  f0: vec3f,
+  specularFactor: f32,
+  specularColor: vec3f,
   metallic: f32,
   roughness: f32,
   directLight: DirectLight,
@@ -15885,10 +16150,12 @@ fn getPBRDirect(
   let VdotH: f32 = clamp(dot(V, H), 0.0, 1.0);
 
   let irradiance: vec3f = NdotL * directLight.color;
-  let ggx: vec3f = BRDF_GGX(NdotV, NdotL, NdotH, VdotH, roughness, f0);
+  let ggx: vec3f = BRDF_GGX(NdotV, NdotL, NdotH, VdotH, roughness, specularFactor, specularColor);
   
-  (*ptr_reflectedLight).directDiffuse += irradiance * BRDF_Lambert( diffuseColor );
-  (*ptr_reflectedLight).directSpecular += ggx * irradiance;
+  let diffuseContribution: vec3f = BRDF_Lambert(diffuseColor);
+  
+  (*ptr_reflectedLight).directDiffuse += irradiance * diffuseContribution;
+  (*ptr_reflectedLight).directSpecular += irradiance * ggx;
 }
 `
   );
@@ -15899,16 +16166,17 @@ ${addUtils ? pbrUtils : ""}
 ${getPBRDirect}
 ${toneMapping ? toneMappingUtils : ""}
 
-fn getPBR(
+fn getPBRContribution(
   normal: vec3f,
   worldPosition: vec3f,
-  diffuseColor: vec3f,
+  diffuseColor: vec4f,
   viewDirection: vec3f,
-  f0: vec3f,
+  specularFactor: f32,
+  specularColor: vec3f,
   metallic: f32,
   roughness: f32,
   ${useOcclusion ? "occlusion: f32," : ""}
-) -> vec3f {
+) -> ReflectedLight {
   var directLight: DirectLight;
   var reflectedLight: ReflectedLight;
   
@@ -15918,34 +16186,147 @@ fn getPBR(
   for(var i = 0; i < pointLights.count; i++) {
     getPointLightInfo(pointLights.elements[i], worldPosition, &directLight);
     ${receiveShadows ? applyPointShadows : ""}
-    getPBRDirect(normal, diffuseColor, viewDirection, f0, metallic, roughness, directLight, &reflectedLight);
+    getPBRDirect(normal, diffuseColor.rgb, viewDirection, specularFactor, specularColor, metallic, roughness, directLight, &reflectedLight);
   }
   
   // directional lights
   for(var i = 0; i < directionalLights.count; i++) {
     getDirectionalLightInfo(directionalLights.elements[i], worldPosition, &directLight);
     ${receiveShadows ? applyDirectionalShadows : ""}
-    getPBRDirect(normal, diffuseColor, viewDirection, f0, metallic, roughness, directLight, &reflectedLight);
+    getPBRDirect(normal, diffuseColor.rgb, viewDirection, specularFactor, specularColor, metallic, roughness, directLight, &reflectedLight);
   }
   
   // ambient lights
   var irradiance: vec3f = vec3(0.0);
-  RE_IndirectDiffuse(irradiance, diffuseColor, &reflectedLight);
+  RE_IndirectDiffuse(irradiance, diffuseColor.rgb, &reflectedLight);
   
   // ambient lights specular
-  // var radiance: vec3f = vec3(0.0);
-  // RE_IndirectSpecular(radiance, irradiance, normal, diffuseColor, viewDirection, metallic, roughness, &reflectedLight);
+  var radiance: vec3f = vec3(0.0);
+  RE_IndirectSpecular(radiance, irradiance, normal, diffuseColor.rgb, specularFactor, specularColor, viewDirection, metallic, roughness, &reflectedLight);
   
-  let totalDirect: vec3f = reflectedLight.directDiffuse + reflectedLight.directSpecular;
-  var totalIndirect: vec3f = reflectedLight.indirectDiffuse + reflectedLight.indirectSpecular;
+  var pbrContribution: ReflectedLight;
   
-  ${useOcclusion ? "totalIndirect *= occlusion;" : ""}
+  pbrContribution.directDiffuse = reflectedLight.directDiffuse;
+  pbrContribution.indirectDiffuse = reflectedLight.indirectDiffuse;
+  pbrContribution.directSpecular = reflectedLight.directSpecular;
+  pbrContribution.indirectSpecular = reflectedLight.indirectSpecular;
   
-  var outgoingLight: vec3f = totalDirect + totalIndirect;
+  return pbrContribution;
+}
+
+fn getPBR(
+  normal: vec3f,
+  worldPosition: vec3f,
+  diffuseColor: vec4f,
+  viewDirection: vec3f,
+  metallic: f32,
+  roughness: f32,
+  specularFactor: f32,
+  specularColorFactor: vec3f,
+  ior: f32,
+  ${useOcclusion ? "occlusion: f32," : ""}
+) -> vec4f {
+  let metallicDiffuseColor: vec4f = diffuseColor * ( 1.0 - metallic );
+  
+  let specularF90: f32 = mix(specularFactor, 1.0, metallic);
+  let specularColor = mix( min( pow2( ( ior - 1.0 ) / ( ior + 1.0 ) ) * specularColorFactor, vec3( 1.0 ) ) * specularFactor, diffuseColor.rgb, metallic );
+
+  var pbrContribution = getPBRContribution(
+    normal,
+    worldPosition,
+    metallicDiffuseColor,
+    viewDirection,
+    specularFactor,
+    specularColor,
+    metallic,
+    roughness,
+    ${useOcclusion ? "occlusion" : "0.0"}
+  );
+  
+  ${useOcclusion ? "pbrContribution.indirectDiffuse *= occlusion;" : ""}
+
+  let totalDiffuse = pbrContribution.indirectDiffuse + pbrContribution.directDiffuse;
+  let totalSpecular = pbrContribution.indirectSpecular + pbrContribution.directSpecular;
+  
+  var outgoingLight: vec3f = totalDiffuse + totalSpecular;
   
   ${toneMapping === "linear" ? "outgoingLight = linearToOutput3(outgoingLight);" : toneMapping === "khronos" ? "outgoingLight = linearTosRGB(toneMapKhronosPbrNeutral(outgoingLight));" : ""}
   
-  return outgoingLight;
+  return vec4(outgoingLight, diffuseColor.a);
+}
+
+fn getPBRTransmission(
+  normal: vec3f,
+  worldPosition: vec3f,
+  diffuseColor: vec4f,
+  viewDirection: vec3f,
+  metallic: f32,
+  roughness: f32,
+  specularFactor: f32,
+  specularColorFactor: vec3f,
+  ior: f32,
+  transmission: f32,
+  dispersion: f32,
+  thickness: f32,
+  attenuationDistance: f32,
+  attenuationColor: vec3f,
+  transmissionBackgroundTexture: texture_2d<f32>,
+  defaultSampler: sampler,
+  ${useOcclusion ? "occlusion: f32," : ""}
+) -> vec4f {
+  let metallicDiffuseColor: vec4f = diffuseColor * ( 1.0 - metallic );
+  
+  let specularF90: f32 = mix(specularFactor, 1.0, metallic);
+  let specularColor = mix( min( pow2( ( ior - 1.0 ) / ( ior + 1.0 ) ) * specularColorFactor, vec3( 1.0 ) ) * specularFactor, diffuseColor.rgb, metallic );
+
+  var pbrContribution = getPBRContribution(
+    normal,
+    worldPosition,
+    metallicDiffuseColor,
+    viewDirection,
+    specularFactor,
+    specularColor,
+    metallic,
+    roughness,
+    ${useOcclusion ? "occlusion" : "0.0"}
+  );
+  
+  ${useOcclusion ? "pbrContribution.indirectDiffuse *= occlusion;" : ""}
+  
+  var transmissionAlpha: f32 = 1.0;
+  
+  var transmitted: vec4f = getIBLVolumeRefraction(
+    normal,
+    normalize(viewDirection),
+    roughness, 
+    metallicDiffuseColor,
+    specularColor,
+    specularF90,
+    worldPosition,
+    matrices.model,
+    camera.view,
+    camera.projection,
+    dispersion,
+    ior,
+    thickness,
+    attenuationColor,
+    attenuationDistance,
+    transmissionBackgroundTexture,
+    defaultSampler,
+  );
+  
+  transmissionAlpha = mix( transmissionAlpha, transmitted.a, transmission );
+  
+  var totalDiffuse: vec3f = pbrContribution.indirectDiffuse + pbrContribution.directDiffuse;
+  let totalSpecular: vec3f = pbrContribution.indirectSpecular + pbrContribution.directSpecular;
+  
+  totalDiffuse = mix(totalDiffuse, transmitted.rgb, transmission);
+  
+  var outgoingLight: vec3f = totalDiffuse + totalSpecular;
+  
+  ${toneMapping === "linear" ? "outgoingLight = linearToOutput3(outgoingLight);" : toneMapping === "khronos" ? "outgoingLight = linearTosRGB(toneMapKhronosPbrNeutral(outgoingLight));" : ""}
+  
+  return vec4(outgoingLight, diffuseColor.a * transmissionAlpha);
 }
 `
   );
@@ -15953,10 +16334,43 @@ fn getPBR(
   const getIBLIndirect = (
     /* wgsl */
     `
-// struct IBLIndirect {
-//   diffuse: vec3f,
-//   specular: vec3f
-// }
+struct IBLContribution {
+  directDiffuse: vec3f,
+  directSpecular: vec3f,
+  indirectDiffuse: vec3f,
+  indirectSpecular: vec3f
+}
+
+struct IBLGGXFresnel {
+  FssEss: vec3f,
+  FmsEms: vec3f
+}
+
+fn getIBLGGXFresnel(normal: vec3f, viewDirection: vec3f, roughness: f32, f0: vec3f, specularWeight: f32, clampSampler: sampler,
+  lutTexture: texture_2d<f32>) -> IBLGGXFresnel {
+    var iBLGGXFresnel: IBLGGXFresnel;
+  
+    let N: vec3f = normalize(normal);
+    let V: vec3f = normalize(viewDirection);
+    let NdotV: f32 = clamp(dot(N, V), 0.0, 1.0);
+    
+    let brdfSamplePoint: vec2f = clamp(vec2(NdotV, roughness), vec2(0.0), vec2(1.0));
+    
+    let brdf: vec3f = textureSample(
+      lutTexture,
+      clampSampler,
+      brdfSamplePoint
+    ).rgb;
+    
+    let Fr: vec3f = max(vec3(1.0 - roughness), f0) - f0;
+    let k_S: vec3f = f0 + Fr * pow(1.0 - NdotV, 5.0);
+    iBLGGXFresnel.FssEss = specularWeight * (k_S * brdf.x + brdf.y);
+    let Ems: f32 = (1.0 - (brdf.x + brdf.y));
+    let F_avg: vec3f = specularWeight * (f0 + (1.0 - f0) / 21.0);
+    iBLGGXFresnel.FmsEms = Ems * iBLGGXFresnel.FssEss * F_avg / (1.0 - F_avg * Ems);
+
+    return iBLGGXFresnel;
+}
 
 fn getIBLIndirect(
   normal: vec3f,
@@ -15964,7 +16378,8 @@ fn getIBLIndirect(
   roughness: f32,
   metallic: f32,
   diffuseColor: vec3f,
-  f0: vec3f,
+  specularColor: vec3f,
+  specularFactor: f32,
   clampSampler: sampler,
   lutTexture: texture_2d<f32>,
   envSpecularTexture: texture_cube<f32>,
@@ -15980,18 +16395,6 @@ fn getIBLIndirect(
   
   let iblDiffuseColor: vec3f = mix(diffuseColor, vec3(0.0), vec3(metallic));
 
-  let brdfSamplePoint: vec2f = clamp(vec2(NdotV, roughness), vec2(0.0), vec2(1.0));
-  
-  let brdf: vec3f = textureSample(
-    lutTexture,
-    clampSampler,
-    brdfSamplePoint
-  ).rgb;
-
-  let Fr: vec3f = max(vec3(1.0 - roughness), f0) - f0;
-  let k_S: vec3f = f0 + Fr * pow(1.0 - NdotV, 5.0);
-  var FssEss: vec3f = k_S * brdf.x + brdf.y;
-  
   // IBL specular (radiance)
   let lod: f32 = roughness * f32(textureNumLevels(envSpecularTexture) - 1);
   
@@ -16009,18 +16412,12 @@ fn getIBLIndirect(
     normal * ibl.envRotation
   );
   
-  // product of specularFactor and specularTexture.a
-  let specularWeight: f32 = 1.0;
-        
-  FssEss = specularWeight * k_S * brdf.x + brdf.y;
+  let iBLGGXFresnel = getIBLGGXFresnel(normal, viewDirection, roughness, specularColor, specularFactor, clampSampler, lutTexture);
   
-  let Ems: f32 = (1.0 - (brdf.x + brdf.y));
-  let F_avg: vec3f = specularWeight * (f0 + (1.0 - f0) / 21.0);
-  let FmsEms: vec3f = Ems * FssEss * F_avg / (1.0 - F_avg * Ems);
-  let k_D: vec3f = iblDiffuseColor * (1.0 - FssEss + FmsEms);
+  let k_D: vec3f = iblDiffuseColor * (1.0 - iBLGGXFresnel.FssEss + iBLGGXFresnel.FmsEms);
   
-  (*ptr_reflectedLight).indirectSpecular += specularLight.rgb * FssEss * ibl.specularStrength;
-  (*ptr_reflectedLight).indirectDiffuse += (FmsEms + k_D) * diffuseLight.rgb * ibl.diffuseStrength;
+  (*ptr_reflectedLight).indirectSpecular += specularLight.rgb * iBLGGXFresnel.FssEss * ibl.specularStrength;
+  (*ptr_reflectedLight).indirectDiffuse += (iBLGGXFresnel.FmsEms + k_D) * diffuseLight.rgb * ibl.diffuseStrength;
   
   // (*ptr_iblIndirect).diffuse = PI * diffuseLight.rgb * ibl.diffuseStrength;
   // (*ptr_iblIndirect).specular = specularLight.rgb * ibl.specularStrength;
@@ -16035,20 +16432,21 @@ ${getPBRDirect}
 ${getIBLIndirect}
 ${toneMapping ? toneMappingUtils : ""}
 
-fn getIBL(
+fn getIBLContribution(
   normal: vec3f,
   worldPosition: vec3f,
-  diffuseColor: vec3f,
+  diffuseColor: vec4f,
   viewDirection: vec3f,
-  f0: vec3f,
   metallic: f32,
   roughness: f32,
+  specularFactor: f32,
+  specularColor: vec3f,
   clampSampler: sampler,
   lutTexture: texture_2d<f32>,
   envSpecularTexture: texture_cube<f32>,
   envDiffuseTexture: texture_cube<f32>,
-  ${useOcclusion ? "occlusion: f32," : ""}
-) -> vec3f {
+  occlusion: f32,
+) -> ReflectedLight {
   var directLight: DirectLight;
   var reflectedLight: ReflectedLight;
   
@@ -16058,29 +16456,28 @@ fn getIBL(
   for(var i = 0; i < pointLights.count; i++) {
     getPointLightInfo(pointLights.elements[i], worldPosition, &directLight);
     ${receiveShadows ? applyPointShadows : ""}
-    getPBRDirect(normal, diffuseColor, viewDirection, f0, metallic, roughness, directLight, &reflectedLight);
+    getPBRDirect(normal, diffuseColor.rgb, viewDirection, specularFactor, specularColor, metallic, roughness, directLight, &reflectedLight);
   }
   
   // directional lights
   for(var i = 0; i < directionalLights.count; i++) {
     getDirectionalLightInfo(directionalLights.elements[i], worldPosition, &directLight);
     ${receiveShadows ? applyDirectionalShadows : ""}
-    getPBRDirect(normal, diffuseColor, viewDirection, f0, metallic, roughness, directLight, &reflectedLight);
+    getPBRDirect(normal, diffuseColor.rgb, viewDirection, specularFactor, specularColor, metallic, roughness, directLight, &reflectedLight);
   }
   
   var irradiance: vec3f = vec3(0.0);
   var radiance: vec3f = vec3(0.0);
-  
-  // var iblIndirect: IBLIndirect;
-  
+    
   // IBL
   getIBLIndirect(
     normal,
     viewDirection,
     roughness,
     metallic,
-    diffuseColor,
-    f0,
+    diffuseColor.rgb,
+    specularColor,
+    specularFactor,
     clampSampler,
     lutTexture,
     envSpecularTexture,
@@ -16093,21 +16490,152 @@ fn getIBL(
   // radiance += iblIndirect.specular;
   
   // ambient lights
-  RE_IndirectDiffuse(irradiance, diffuseColor, &reflectedLight);
+  RE_IndirectDiffuse(irradiance, diffuseColor.rgb, &reflectedLight);
   
   // ambient lights specular
-  // RE_IndirectSpecular(radiance, irradiance, normal, diffuseColor, viewDirection, metallic, roughness, &reflectedLight);  
+  RE_IndirectSpecular(radiance, irradiance, normal, diffuseColor.rgb, specularFactor, specularColor, viewDirection, metallic, roughness, &reflectedLight);  
   
-  let totalDirect: vec3f = reflectedLight.directDiffuse + reflectedLight.directSpecular;
-  var totalIndirect: vec3f = reflectedLight.indirectDiffuse + reflectedLight.indirectSpecular;
+  var iblContribution: ReflectedLight;
   
-  ${useOcclusion ? "totalIndirect *= occlusion;" : ""}
+  iblContribution.directDiffuse = reflectedLight.directDiffuse;
+  iblContribution.indirectDiffuse = reflectedLight.indirectDiffuse;
+  iblContribution.directSpecular = reflectedLight.directSpecular;
+  iblContribution.indirectSpecular = reflectedLight.indirectSpecular;
   
-  var outgoingLight: vec3f = totalDirect + totalIndirect;
+  return iblContribution;
+}
+
+fn getIBL(
+  normal: vec3f,
+  worldPosition: vec3f,
+  diffuseColor: vec4f,
+  viewDirection: vec3f,
+  metallic: f32,
+  roughness: f32,
+  specularFactor: f32,
+  specularColorFactor: vec3f,
+  ior: f32,
+  clampSampler: sampler,
+  lutTexture: texture_2d<f32>,
+  envSpecularTexture: texture_cube<f32>,
+  envDiffuseTexture: texture_cube<f32>,
+  ${useOcclusion ? "occlusion: f32," : ""}
+) -> vec4f {
+  let metallicDiffuseColor: vec4f = diffuseColor * ( 1.0 - metallic );
+  
+  let specularF90: f32 = mix(specularFactor, 1.0, metallic);
+  let specularColor = mix( min( pow2( ( ior - 1.0 ) / ( ior + 1.0 ) ) * specularColorFactor, vec3( 1.0 ) ) * specularFactor, diffuseColor.rgb, metallic );
+
+  var iblContribution = getIBLContribution(
+    normal,
+    worldPosition,
+    metallicDiffuseColor,
+    viewDirection,
+    metallic,
+    roughness,
+    specularFactor,
+    specularColor,
+    clampSampler,
+    lutTexture,
+    envSpecularTexture,
+    envDiffuseTexture,
+    ${useOcclusion ? "occlusion" : "0.0"}
+  );
+  
+  // TODO computeSpecularOcclusion!
+  ${useOcclusion ? "iblContribution.indirectDiffuse *= occlusion;" : ""}
+  
+  var totalDiffuse: vec3f = iblContribution.indirectDiffuse + iblContribution.directDiffuse;
+  let totalSpecular: vec3f = iblContribution.indirectSpecular + iblContribution.directSpecular;
+  
+  var outgoingLight: vec3f = totalDiffuse + totalSpecular;
   
   ${toneMapping === "linear" ? "outgoingLight = linearToOutput3(outgoingLight);" : toneMapping === "khronos" ? "outgoingLight = linearTosRGB(toneMapKhronosPbrNeutral(outgoingLight));" : ""}
   
-  return outgoingLight;
+  return vec4(outgoingLight, diffuseColor.a);
+}
+
+fn getIBLTransmission(
+  normal: vec3f,
+  worldPosition: vec3f,
+  diffuseColor: vec4f,
+  viewDirection: vec3f,
+  metallic: f32,
+  roughness: f32,
+  specularFactor: f32,
+  specularColorFactor: vec3f,
+  ior: f32,
+  clampSampler: sampler,
+  lutTexture: texture_2d<f32>,
+  envSpecularTexture: texture_cube<f32>,
+  envDiffuseTexture: texture_cube<f32>,
+  transmission: f32,
+  dispersion: f32,
+  thickness: f32,
+  attenuationDistance: f32,
+  attenuationColor: vec3f,
+  transmissionBackgroundTexture: texture_2d<f32>,
+  defaultSampler: sampler,
+  ${useOcclusion ? "occlusion: f32," : ""}
+) -> vec4f {
+  let metallicDiffuseColor: vec4f = diffuseColor * ( 1.0 - metallic );
+  
+  let specularF90: f32 = mix(specularFactor, 1.0, metallic);
+  let specularColor = mix( min( pow2( ( ior - 1.0 ) / ( ior + 1.0 ) ) * specularColorFactor, vec3( 1.0 ) ) * specularFactor, diffuseColor.rgb, metallic );
+
+  var iblContribution = getIBLContribution(
+    normal,
+    worldPosition,
+    metallicDiffuseColor, // TODO check?
+    viewDirection,
+    metallic,
+    roughness,
+    specularFactor,
+    specularColor,
+    clampSampler,
+    lutTexture,
+    envSpecularTexture,
+    envDiffuseTexture,
+     ${useOcclusion ? "occlusion" : "0.0"}
+  );
+  
+  // TODO computeSpecularOcclusion!
+  ${useOcclusion ? "iblContribution.indirectDiffuse *= occlusion;" : ""}
+  
+  var transmissionAlpha: f32 = 1.0;
+  
+  var transmitted: vec4f = getIBLVolumeRefraction(
+    normal,
+    normalize(viewDirection),
+    roughness, 
+    metallicDiffuseColor,
+    specularColor,
+    specularF90,
+    worldPosition,
+    matrices.model,
+    camera.view,
+    camera.projection,
+    dispersion,
+    ior,
+    thickness,
+    attenuationColor,
+    attenuationDistance,
+    transmissionBackgroundTexture,
+    defaultSampler,
+  );
+  
+  transmissionAlpha = mix( transmissionAlpha, transmitted.a, transmission );
+
+  var totalDiffuse: vec3f = iblContribution.indirectDiffuse + iblContribution.directDiffuse;
+  let totalSpecular: vec3f = iblContribution.indirectSpecular + iblContribution.directSpecular;
+  
+  totalDiffuse = mix(totalDiffuse, transmitted.rgb, transmission);
+  
+  var outgoingLight: vec3f = totalDiffuse + totalSpecular;
+  
+  ${toneMapping === "linear" ? "outgoingLight = linearToOutput3(outgoingLight);" : toneMapping === "khronos" ? "outgoingLight = linearTosRGB(toneMapKhronosPbrNeutral(outgoingLight));" : ""}
+  
+  return vec4(outgoingLight, diffuseColor.a * transmissionAlpha);
 }
 `
   );
@@ -18333,12 +18861,12 @@ const PI = ${Math.PI};
         size: 128,
         computeSampleCount: 2048,
         label: "Environment diffuse texture",
-        name: "diffuseTexture",
+        name: "envDiffuseTexture",
         format: "rgba16float"
       },
       specularTextureParams: {
         label: "Environment specular texture",
-        name: "specularTexture",
+        name: "envSpecularTexture",
         format: "rgba16float",
         generateMips: true
       }
@@ -18494,13 +19022,13 @@ const PI = ${Math.PI};
         commandEncoder.pushDebugGroup("Render once command encoder");
       this.renderer.renderSingleComputePass(commandEncoder, computeCubeMapPass);
       __privateMethod$3(this, _copyComputeStorageTextureToTexture, copyComputeStorageTextureToTexture_fn).call(this, commandEncoder, cubeStorageTexture, this.specularTexture);
+      if (this.specularTexture.texture.mipLevelCount > 1) {
+        this.renderer.generateMips(this.specularTexture, commandEncoder);
+      }
       if (!this.renderer.production)
         commandEncoder.popDebugGroup();
       const commandBuffer = commandEncoder.finish();
       this.renderer.device?.queue.submit([commandBuffer]);
-      if (this.specularTexture.texture.mipLevelCount > 1) {
-        generateMips(this.renderer.device, this.specularTexture.texture);
-      }
       computeCubeMapPass.destroy();
       cubeStorageTexture.destroy();
       cubeStorageTexture = null;
@@ -19757,8 +20285,39 @@ const PI = ${Math.PI};
         meshesDescriptors: [],
         animations: [],
         cameras: [],
-        skins: []
+        skins: [],
+        transmissionCompositing: null
       };
+      const hasTransmission = this.gltf.extensionsUsed && (this.gltf.extensionsUsed.includes("KHR_materials_transmission") || this.gltf.extensionsUsed.includes("KHR_materials_volume") || this.gltf.extensionsUsed.includes("KHR_materials_dispersion"));
+      if (hasTransmission) {
+        const sceneTransmissionPassEntry = this.renderer.scene.createScreenPassEntry(
+          "Transmission scene screen render pass"
+        );
+        const transmissionBuffer = {
+          backgroundOutputTexture: new Texture(this.renderer, {
+            label: "Transmission background scene render target output",
+            generateMips: true
+            // needed for roughness LOD!
+          }),
+          sceneTransmissionPassEntry
+        };
+        sceneTransmissionPassEntry.onBeforeRenderPass = (commandEncoder, swapChainTexture) => {
+          commandEncoder.copyTextureToTexture(
+            {
+              texture: swapChainTexture
+            },
+            {
+              texture: transmissionBuffer.backgroundOutputTexture.texture
+            },
+            [
+              transmissionBuffer.backgroundOutputTexture.size.width,
+              transmissionBuffer.backgroundOutputTexture.size.height
+            ]
+          );
+          this.renderer.generateMips(transmissionBuffer.backgroundOutputTexture, commandEncoder);
+        };
+        this.scenesManager.transmissionCompositing = transmissionBuffer;
+      }
       this.createSamplers();
       this.createMaterialTextures();
       this.createAnimations();
@@ -19985,63 +20544,59 @@ const PI = ${Math.PI};
               return "uv";
             return texture.texCoord !== 0 ? "uv" + texture.texCoord : "uv";
           };
+          const createTexture = (gltfTexture, name) => {
+            const index = gltfTexture.index;
+            const image = this.gltf.imagesBitmaps[this.gltf.textures[index].source];
+            const texture = this.createTexture(material, image, name);
+            const samplerIndex = this.gltf.textures.find((t) => t.source === index)?.sampler;
+            materialTextures.texturesDescriptors.push({
+              texture,
+              sampler: this.scenesManager.samplers[samplerIndex ?? 0],
+              texCoordAttributeName: getUVAttributeName(gltfTexture)
+            });
+          };
           this.scenesManager.materialsTextures[materialIndex] = materialTextures;
           if (material.pbrMetallicRoughness) {
             if (material.pbrMetallicRoughness.baseColorTexture && material.pbrMetallicRoughness.baseColorTexture.index !== void 0) {
-              const index = material.pbrMetallicRoughness.baseColorTexture.index;
-              const image = this.gltf.imagesBitmaps[this.gltf.textures[index].source];
-              const texture = this.createTexture(material, image, "baseColorTexture");
-              const samplerIndex = this.gltf.textures.find((t) => t.source === index)?.sampler;
-              materialTextures.texturesDescriptors.push({
-                texture,
-                sampler: this.scenesManager.samplers[samplerIndex ?? 0],
-                texCoordAttributeName: getUVAttributeName(material.pbrMetallicRoughness.baseColorTexture)
-              });
+              createTexture(material.pbrMetallicRoughness.baseColorTexture, "baseColorTexture");
             }
             if (material.pbrMetallicRoughness.metallicRoughnessTexture && material.pbrMetallicRoughness.metallicRoughnessTexture.index !== void 0) {
-              const index = material.pbrMetallicRoughness.metallicRoughnessTexture.index;
-              const image = this.gltf.imagesBitmaps[this.gltf.textures[index].source];
-              const texture = this.createTexture(material, image, "metallicRoughnessTexture");
-              const samplerIndex = this.gltf.textures.find((t) => t.source === index)?.sampler;
-              materialTextures.texturesDescriptors.push({
-                texture,
-                sampler: this.scenesManager.samplers[samplerIndex ?? 0],
-                texCoordAttributeName: getUVAttributeName(material.pbrMetallicRoughness.metallicRoughnessTexture)
-              });
+              createTexture(material.pbrMetallicRoughness.metallicRoughnessTexture, "metallicRoughnessTexture");
             }
           }
           if (material.normalTexture && material.normalTexture.index !== void 0) {
-            const index = material.normalTexture.index;
-            const image = this.gltf.imagesBitmaps[this.gltf.textures[index].source];
-            const texture = this.createTexture(material, image, "normalTexture");
-            const samplerIndex = this.gltf.textures.find((t) => t.source === index)?.sampler;
-            materialTextures.texturesDescriptors.push({
-              texture,
-              sampler: this.scenesManager.samplers[samplerIndex ?? 0],
-              texCoordAttributeName: getUVAttributeName(material.normalTexture)
-            });
+            createTexture(material.normalTexture, "normalTexture");
           }
           if (material.occlusionTexture && material.occlusionTexture.index !== void 0) {
-            const index = material.occlusionTexture.index;
-            const image = this.gltf.imagesBitmaps[this.gltf.textures[index].source];
-            const texture = this.createTexture(material, image, "occlusionTexture");
-            const samplerIndex = this.gltf.textures.find((t) => t.source === index)?.sampler;
-            materialTextures.texturesDescriptors.push({
-              texture,
-              sampler: this.scenesManager.samplers[samplerIndex ?? 0],
-              texCoordAttributeName: getUVAttributeName(material.occlusionTexture)
-            });
+            createTexture(material.occlusionTexture, "occlusionTexture");
           }
           if (material.emissiveTexture && material.emissiveTexture.index !== void 0) {
-            const index = material.emissiveTexture.index;
-            const image = this.gltf.imagesBitmaps[this.gltf.textures[index].source];
-            const texture = this.createTexture(material, image, "emissiveTexture");
-            const samplerIndex = this.gltf.textures.find((t) => t.source === index)?.sampler;
-            materialTextures.texturesDescriptors.push({
-              texture,
-              sampler: this.scenesManager.samplers[samplerIndex ?? 0],
-              texCoordAttributeName: getUVAttributeName(material.emissiveTexture)
-            });
+            createTexture(material.emissiveTexture, "emissiveTexture");
+          }
+          const { extensions } = material;
+          const transmission = extensions && extensions.KHR_materials_transmission || null;
+          const specular = extensions && extensions.KHR_materials_specular || null;
+          const volume = extensions && extensions.KHR_materials_volume || null;
+          if (transmission && transmission.transmissionTexture && transmission.transmissionTexture.index !== void 0) {
+            createTexture(transmission.transmissionTexture, "transmissionTexture");
+          }
+          if (specular && (specular.specularTexture || specular.specularColorTexture)) {
+            const { specularTexture, specularColorTexture } = specular;
+            if (specularTexture && specularColorTexture) {
+              if (specularTexture.index !== void 0 && specularColorTexture.index !== void 0 && specularTexture.index === specularColorTexture.index) {
+                createTexture(specular.specularTexture, "specularTexture");
+              } else {
+                if (specularTexture && specularTexture.index !== void 0) {
+                  createTexture(specular.specularTexture, "specularFactorTexture");
+                }
+                if (specularColorTexture && specularColorTexture.index !== void 0) {
+                  createTexture(specular.specularColorTexture, "specularColorTexture");
+                }
+              }
+            }
+          }
+          if (volume && volume.thicknessTexture && volume.thicknessTexture.index !== void 0) {
+            createTexture(volume.thicknessTexture, "thicknessTexture");
           }
         }
       }
@@ -20578,7 +21133,31 @@ const PI = ${Math.PI};
           });
         });
       }
+      const material = this.gltf.materials && this.gltf.materials[primitive.material] || {};
+      const { extensions } = material;
+      const dispersion = extensions && extensions.KHR_materials_dispersion || null;
+      const ior = extensions && extensions.KHR_materials_ior || null;
+      const transmission = extensions && extensions.KHR_materials_transmission || null;
+      const specular = extensions && extensions.KHR_materials_specular || null;
+      const volume = extensions && extensions.KHR_materials_volume || null;
+      const hasTransmission = transmission || volume || dispersion;
+      const useTransmission = this.gltf.extensionsUsed && (this.gltf.extensionsUsed.includes("KHR_materials_transmission") || this.gltf.extensionsUsed.includes("KHR_materials_volume") || this.gltf.extensionsUsed.includes("KHR_materials_dispersion"));
+      if (useTransmission && hasTransmission) {
+        meshDescriptor.parameters.useCustomScenePassEntry = this.scenesManager.transmissionCompositing.sceneTransmissionPassEntry;
+      }
       const materialTextures = this.scenesManager.materialsTextures[primitive.material];
+      if (hasTransmission) {
+        materialTextures.texturesDescriptors.push({
+          texture: new Texture(this.renderer, {
+            fromTexture: this.scenesManager.transmissionCompositing.backgroundOutputTexture,
+            name: "transmissionBackgroundTexture",
+            generateMips: true
+          }),
+          sampler: this.scenesManager.samplers[0],
+          texCoordAttributeName: "uv"
+          // whatever
+        });
+      }
       meshDescriptor.parameters.samplers = [];
       meshDescriptor.parameters.textures = [];
       materialTextures?.texturesDescriptors.forEach((t) => {
@@ -20593,9 +21172,8 @@ const PI = ${Math.PI};
         }
         meshDescriptor.parameters.textures.push(t.texture);
       });
-      const material = this.gltf.materials && this.gltf.materials[primitive.material] || {};
       meshDescriptor.parameters.cullMode = material.doubleSided ? "none" : "back";
-      if (material.alphaMode === "BLEND" || material.extensions && material.extensions.KHR_materials_transmission) {
+      if (material.alphaMode === "BLEND") {
         meshDescriptor.parameters.transparent = true;
         meshDescriptor.parameters.targets = [
           {
@@ -20641,6 +21219,42 @@ const PI = ${Math.PI};
         emissiveFactor: {
           type: "vec3f",
           value: material.emissiveFactor !== void 0 ? material.emissiveFactor : [1, 1, 1]
+        },
+        specularFactor: {
+          type: "f32",
+          value: specular && specular.specularFactor !== void 0 ? specular.specularFactor : 1
+        },
+        specularColorFactor: {
+          type: "vec3f",
+          value: specular && specular.specularColorFactor !== void 0 ? new Vec3(
+            specular.specularColorFactor[0],
+            specular.specularColorFactor[1],
+            specular.specularColorFactor[2]
+          ) : new Vec3(1)
+        },
+        transmissionFactor: {
+          type: "f32",
+          value: transmission && transmission.transmissionFactor !== void 0 ? transmission.transmissionFactor : 0
+        },
+        ior: {
+          type: "f32",
+          value: ior && ior.ior !== void 0 ? ior.ior : 1.5
+        },
+        dispersion: {
+          type: "f32",
+          value: dispersion && dispersion.dispersion !== void 0 ? dispersion.dispersion : 0
+        },
+        thicknessFactor: {
+          type: "f32",
+          value: volume && volume.thicknessFactor !== void 0 ? volume.thicknessFactor : 0
+        },
+        attenuationDistance: {
+          type: "f32",
+          value: volume && volume.attenuationDistance !== void 0 ? volume.attenuationDistance : Infinity
+        },
+        attenuationColor: {
+          type: "vec3f",
+          value: volume && volume.attenuationColor !== void 0 ? new Vec3(volume.attenuationColor[0], volume.attenuationColor[1], volume.attenuationColor[2]) : new Vec3(1)
         }
       };
       if (Object.keys(materialUniformStruct).length) {
@@ -20759,6 +21373,9 @@ const PI = ${Math.PI};
     destroy() {
       this.scenesManager.meshes.forEach((mesh) => mesh.remove());
       this.scenesManager.meshes = [];
+      if (this.scenesManager.transmissionCompositing) {
+        this.scenesManager.transmissionCompositing.backgroundOutputTexture.destroy();
+      }
       this.scenesManager.nodes.forEach((node) => {
         node.destroy();
       });
@@ -20980,6 +21597,14 @@ const PI = ${Math.PI};
     const emissiveTexture = meshDescriptor.textures.find((t) => t.texture === "emissiveTexture");
     const occlusionTexture = meshDescriptor.textures.find((t) => t.texture === "occlusionTexture");
     const metallicRoughnessTexture = meshDescriptor.textures.find((t) => t.texture === "metallicRoughnessTexture");
+    const specularTexture = meshDescriptor.textures.find((t) => t.texture === "specularTexture");
+    const specularFactorTexture = specularTexture || meshDescriptor.textures.find((t) => t.texture === "specularFactorTexture");
+    const specularColorTexture = specularTexture || meshDescriptor.textures.find((t) => t.texture === "specularColorTexture");
+    const transmissionTexture = meshDescriptor.textures.find((t) => t.texture === "transmissionTexture");
+    const thicknessTexture = meshDescriptor.textures.find((t) => t.texture === "thicknessTexture");
+    const transmissionBackgroundTexture = meshDescriptor.textures.find(
+      (t) => t.texture === "transmissionBackgroundTexture"
+    );
     const facultativeAttributes = meshDescriptor.attributes.filter((attribute) => attribute.name !== "position");
     const structAttributes = facultativeAttributes.map((attribute, index) => {
       return `
@@ -21118,11 +21743,58 @@ ${vertexOutput}
   roughness = clamp(roughness * metallicRoughness.g, 0.0, 1.0);
   `;
     }
-    const f0 = (
+    let specular = (
       /* wgsl */
       `
-  let f0: vec3f = mix(vec3(0.04), color.rgb, vec3(metallic));`
+  var specularFactor: f32 = material.specularFactor;
+  var specularColorFactor: vec3f = material.specularColorFactor;`
     );
+    if (specularTexture) {
+      specular += /* wgsl */
+      `
+  let specularSample: vec4f = textureSample(specularTexture, ${specularTexture.sampler}, fsInput.${specularTexture.texCoordAttributeName});
+  
+  specularFactor = specularFactor * specularSample.a;
+  specularColorFactor = specularColorFactor * specularSample.rgb;`;
+    } else {
+      if (specularFactorTexture) {
+        specular += /* wgsl */
+        `
+  let specularFactorSample: vec4f = textureSample(specularFactorTexture, ${specularFactorTexture.sampler}, fsInput.${specularFactorTexture.texCoordAttributeName});
+  
+  specularFactor = specularFactor * specularSample.a;`;
+      }
+      if (specularColorTexture) {
+        specular += /* wgsl */
+        `
+  let specularColorSample: vec4f = textureSample(specularColorTexture, ${specularColorTexture.sampler}, fsInput.${specularColorTexture.texCoordAttributeName});
+  
+  specularColorFactor = specularColorFactor * specularSample.rgb;`;
+      }
+      specular += /* wgsl */
+      `
+    specularFactor = mix(specularFactor, 1.0, metallic);`;
+    }
+    let transmission = (
+      /* wgsl */
+      `
+  var transmission: f32 = material.transmissionFactor;
+  var thickness: f32 = material.thicknessFactor;`
+    );
+    if (transmissionTexture) {
+      transmission += /* wgsl */
+      `
+  let transmissionSample: vec4f = textureSample(transmissionTexture, ${transmissionTexture.sampler}, fsInput.${transmissionTexture.texCoordAttributeName});
+  
+  transmission = clamp(transmission * transmissionSample.r, 0.0, 1.0);`;
+    }
+    if (thicknessTexture) {
+      transmission += /* wgsl */
+      `
+  let thicknessSample: vec4f = textureSample(thicknessTexture, ${thicknessTexture.sampler}, fsInput.${thicknessTexture.texCoordAttributeName});
+  
+  thickness = thickness * thicknessSample.g;`;
+    }
     let emissiveOcclusion = (
       /* wgsl */
       `
@@ -21188,6 +21860,9 @@ ${vertexOutput}
       receiveShadows: !!meshDescriptor.parameters.receiveShadows,
       useOcclusion: true
     };
+    if (transmissionBackgroundTexture && (shadingModel === "PBR" || shadingModel === "IBL")) {
+      shadingModel += "Transmission";
+    }
     const defaultAdditionalHead = (() => {
       switch (shadingModel) {
         case "Lambert":
@@ -21196,8 +21871,10 @@ ${vertexOutput}
         case "Phong":
           return getPhong(shadingOptions);
         case "PBR":
+        case "PBRTransmission":
           return getPBR(shadingOptions);
         case "IBL":
+        case "IBLTransmission":
           return getIBL(shadingOptions);
       }
     })();
@@ -21253,9 +21930,9 @@ ${vertexOutput}
       worldPosition,
       color.rgb,
       viewDirection,
-      f0, // specular color
-      metallic * (1.0 - roughness) + (1.0 - metallic) * 0.04, // specular strength
-      (1.0 - roughness) * 30.0, // TODO shininess
+      specularColorFactor,
+      specularFactor,
+      1.0 / max(EPSILON, roughness * roughness),
       occlusion
     ),
     color.a
@@ -21265,40 +21942,90 @@ ${vertexOutput}
           return (
             /* wgsl */
             `
-  color = vec4(
-    getPBR(
-      normal,
-      worldPosition,
-      color.rgb,
-      viewDirection,
-      f0,
-      metallic,
-      roughness,
-      occlusion
-    ),
-    color.a
+  color = getPBR(
+    normal,
+    worldPosition,
+    color,
+    viewDirection,
+    metallic,
+    roughness,
+    specularFactor,
+    specularColorFactor,
+    material.ior,
+    occlusion
+  );`
+          );
+        case "PBRTransmission":
+          return (
+            /* wgsl */
+            `
+  color = getPBRTransmission(
+    normal,
+    worldPosition,
+    color,
+    viewDirection,
+    metallic,
+    roughness,
+    specularFactor,
+    specularColorFactor,
+    material.ior,
+    transmission,
+    material.dispersion,
+    thickness,
+    material.attenuationDistance,
+    material.attenuationColor,
+    ${transmissionBackgroundTexture.texture},
+    ${transmissionBackgroundTexture.sampler},
+    occlusion
   );`
           );
         case "IBL":
           return (
             /* wgsl */
             `
-  color = vec4(
-    getIBL(
-      normal,
-      worldPosition,
-      color.rgb,
-      viewDirection,
-      f0,
-      metallic,
-      roughness,
-      ${environmentMap.sampler.name},
-      ${environmentMap.lutTexture.options.name},
-      ${environmentMap.specularTexture.options.name},
-      ${environmentMap.diffuseTexture.options.name},
-      occlusion
-    ),
-    color.a
+  color = getIBL(
+    normal,
+    worldPosition,
+    color,
+    viewDirection,
+    metallic,
+    roughness,
+    specularFactor,
+    specularColorFactor,
+    material.ior,
+    ${environmentMap.sampler.name},
+    ${environmentMap.lutTexture.options.name},
+    ${environmentMap.specularTexture.options.name},
+    ${environmentMap.diffuseTexture.options.name},
+    occlusion
+  );`
+          );
+        case "IBLTransmission":
+          return (
+            /* wgsl */
+            `
+  color = getIBLTransmission(
+    normal,
+    worldPosition,
+    color,
+    viewDirection,
+    metallic,
+    roughness,
+    specularFactor,
+    specularColorFactor,
+    material.ior,
+    ${environmentMap.sampler.name},
+    ${environmentMap.lutTexture.options.name},
+    ${environmentMap.specularTexture.options.name},
+    ${environmentMap.diffuseTexture.options.name},
+    transmission,
+    material.dispersion,
+    thickness,
+    material.attenuationDistance,
+    material.attenuationColor,
+    ${transmissionBackgroundTexture.texture},
+    ${transmissionBackgroundTexture.sampler},
+    occlusion
   );`
           );
       }
@@ -21326,7 +22053,8 @@ ${fragmentInput}
   ${metallicRoughness}  
   // user defined preliminary color contribution
   ${chunks.preliminaryColorContribution}
-  ${f0}
+  ${specular}
+  ${transmission}
   ${emissiveOcclusion}
   ${applyLightShading}
   ${applyEmissive}

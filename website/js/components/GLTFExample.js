@@ -52,7 +52,7 @@ export class GLTFExample {
 
     this.parentNode.parent = this.gpuCurtains.renderer.scene
 
-    this.gpuCurtains.onRender(() => {
+    this.gpuCurtains.onBeforeRender(() => {
       this.parentNode.rotation.y += 0.01
     })
 

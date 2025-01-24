@@ -235,7 +235,7 @@ function ProjectedMeshBaseMixin(Base) {
       const matricesUniforms = {
         label: "Matrices",
         name: "matrices",
-        visibility: ["vertex"],
+        visibility: ["vertex", "fragment"],
         minOffset: this.renderer.device.limits.minUniformBufferOffsetAlignment,
         struct: {
           model: {

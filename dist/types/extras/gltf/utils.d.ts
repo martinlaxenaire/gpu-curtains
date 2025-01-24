@@ -4,7 +4,7 @@ import { Texture } from '../../core/textures/Texture';
 import { Sampler } from '../../core/samplers/Sampler';
 import { EnvironmentMap } from '../environment-map/EnvironmentMap';
 /** Defines all kinds of shading models available. */
-export type ShadingModels = 'Lambert' | 'Phong' | 'PBR' | 'IBL';
+export type ShadingModels = 'Lambert' | 'Phong' | 'PBR' | 'IBL' | 'PBRTransmission' | 'IBLTransmission';
 /**
  * Parameters to use for IBL textures.
  */

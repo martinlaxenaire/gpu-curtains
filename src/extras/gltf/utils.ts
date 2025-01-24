@@ -13,7 +13,7 @@ import { BufferBinding } from '../../core/bindings/BufferBinding'
 import { getFullVertexOutput } from '../../core/shaders/chunks/vertex/get_vertex_output'
 
 /** Defines all kinds of shading models available. */
-export type ShadingModels = 'Lambert' | 'Phong' | 'PBR' | 'IBL'
+export type ShadingModels = 'Lambert' | 'Phong' | 'PBR' | 'IBL' | 'PBRTransmission' | 'IBLTransmission'
 
 /**
  * Parameters to use for IBL textures.
@@ -76,6 +76,15 @@ export const buildShaders = (
   const emissiveTexture = meshDescriptor.textures.find((t) => t.texture === 'emissiveTexture')
   const occlusionTexture = meshDescriptor.textures.find((t) => t.texture === 'occlusionTexture')
   const metallicRoughnessTexture = meshDescriptor.textures.find((t) => t.texture === 'metallicRoughnessTexture')
+
+  // specular
+  const specularTexture = meshDescriptor.textures.find((t) => t.texture === 'specularTexture')
+  const specularFactorTexture =
+    specularTexture || meshDescriptor.textures.find((t) => t.texture === 'specularFactorTexture')
+  const specularColorTexture =
+    specularTexture || meshDescriptor.textures.find((t) => t.texture === 'specularColorTexture')
+
+  // transmission
   const transmissionTexture = meshDescriptor.textures.find((t) => t.texture === 'transmissionTexture')
   const thicknessTexture = meshDescriptor.textures.find((t) => t.texture === 'thicknessTexture')
   const transmissionBackgroundTexture = meshDescriptor.textures.find(
@@ -221,32 +230,53 @@ ${vertexOutput}
   `
   }
 
+  // specular
+  let specular = /* wgsl */ `
+  var specularFactor: f32 = material.specularFactor;
+  var specularColorFactor: vec3f = material.specularColorFactor;`
+
+  if (specularTexture) {
+    specular += /* wgsl */ `
+  let specularSample: vec4f = textureSample(specularTexture, ${specularTexture.sampler}, fsInput.${specularTexture.texCoordAttributeName});
+  
+  specularFactor = specularFactor * specularSample.a;
+  specularColorFactor = specularColorFactor * specularSample.rgb;`
+  } else {
+    if (specularFactorTexture) {
+      specular += /* wgsl */ `
+  let specularFactorSample: vec4f = textureSample(specularFactorTexture, ${specularFactorTexture.sampler}, fsInput.${specularFactorTexture.texCoordAttributeName});
+  
+  specularFactor = specularFactor * specularSample.a;`
+    }
+    if (specularColorTexture) {
+      specular += /* wgsl */ `
+  let specularColorSample: vec4f = textureSample(specularColorTexture, ${specularColorTexture.sampler}, fsInput.${specularColorTexture.texCoordAttributeName});
+  
+  specularColorFactor = specularColorFactor * specularSample.rgb;`
+    }
+
+    specular += /* wgsl */ `
+    specularFactor = mix(specularFactor, 1.0, metallic);`
+  }
+
+  // transmission
   let transmission = /* wgsl */ `
-  var transmission: f32 = 0.0;
-  var thickness: f32 = 0.0;`
+  var transmission: f32 = material.transmissionFactor;
+  var thickness: f32 = material.thicknessFactor;`
 
-  if (transmissionBackgroundTexture) {
+  if (transmissionTexture) {
     transmission += /* wgsl */ `
-  transmission = material.transmissionFactor;
-  thickness = material.thicknessFactor;`
-
-    if (transmissionTexture) {
-      transmission += /* wgsl */ `
   let transmissionSample: vec4f = textureSample(transmissionTexture, ${transmissionTexture.sampler}, fsInput.${transmissionTexture.texCoordAttributeName});
   
   transmission = clamp(transmission * transmissionSample.r, 0.0, 1.0);`
-    }
+  }
 
-    if (thicknessTexture) {
-      transmission += /* wgsl */ `
+  if (thicknessTexture) {
+    transmission += /* wgsl */ `
   let thicknessSample: vec4f = textureSample(thicknessTexture, ${thicknessTexture.sampler}, fsInput.${thicknessTexture.texCoordAttributeName});
   
   thickness = thickness * thicknessSample.g;`
-    }
   }
-
-  const f0 = /* wgsl */ `
-  let f0: vec3f = mix(vec3(0.04), color.rgb, vec3(metallic));`
 
   // emissive and occlusion
   let emissiveOcclusion = /* wgsl */ `
@@ -393,9 +423,9 @@ ${vertexOutput}
       worldPosition,
       color.rgb,
       viewDirection,
-      f0, // specular color
-      metallic * (1.0 - roughness) + (1.0 - metallic) * 0.04, // specular strength
-      (1.0 - roughness) * 30.0, // TODO shininess
+      specularColorFactor,
+      specularFactor,
+      1.0 / max(EPSILON, roughness * roughness),
       occlusion
     ),
     color.a
@@ -407,9 +437,11 @@ ${vertexOutput}
     worldPosition,
     color,
     viewDirection,
-    f0,
     metallic,
     roughness,
+    specularFactor,
+    specularColorFactor,
+    material.ior,
     occlusion
   );`
       case 'PBRTransmission':
@@ -419,11 +451,12 @@ ${vertexOutput}
     worldPosition,
     color,
     viewDirection,
-    f0,
     metallic,
     roughness,
-    transmission,
+    specularFactor,
+    specularColorFactor,
     material.ior,
+    transmission,
     material.dispersion,
     thickness,
     material.attenuationDistance,
@@ -439,9 +472,11 @@ ${vertexOutput}
     worldPosition,
     color,
     viewDirection,
-    f0,
     metallic,
     roughness,
+    specularFactor,
+    specularColorFactor,
+    material.ior,
     ${environmentMap.sampler.name},
     ${environmentMap.lutTexture.options.name},
     ${environmentMap.specularTexture.options.name},
@@ -455,15 +490,16 @@ ${vertexOutput}
     worldPosition,
     color,
     viewDirection,
-    f0,
     metallic,
     roughness,
-    transmission,
+    specularFactor,
+    specularColorFactor,
+    material.ior,
     ${environmentMap.sampler.name},
     ${environmentMap.lutTexture.options.name},
     ${environmentMap.specularTexture.options.name},
     ${environmentMap.diffuseTexture.options.name},
-    material.ior,
+    transmission,
     material.dispersion,
     thickness,
     material.attenuationDistance,
@@ -494,7 +530,7 @@ ${fragmentInput}
   ${metallicRoughness}  
   // user defined preliminary color contribution
   ${chunks.preliminaryColorContribution}
-  ${f0}
+  ${specular}
   ${transmission}
   ${emissiveOcclusion}
   ${applyLightShading}

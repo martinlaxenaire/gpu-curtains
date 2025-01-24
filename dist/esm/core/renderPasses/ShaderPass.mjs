@@ -11,7 +11,7 @@ class ShaderPass extends FullscreenPlane {
    */
   constructor(renderer, parameters = {}) {
     renderer = isRenderer(renderer, parameters.label ? parameters.label + " ShaderPass" : "ShaderPass");
-    parameters.depth = false;
+    parameters.isPrePass = !!parameters.isPrePass;
     const defaultBlend = {
       color: {
         srcFactor: "one",
@@ -22,17 +22,19 @@ class ShaderPass extends FullscreenPlane {
         dstFactor: "one-minus-src-alpha"
       }
     };
-    if (!parameters.targets) {
-      parameters.targets = [
-        {
-          blend: defaultBlend
-        }
-      ];
-    } else if (parameters.targets && parameters.targets.length && !parameters.targets[0].blend) {
-      parameters.targets[0].blend = defaultBlend;
+    if (!parameters.isPrePass) {
+      if (!parameters.targets) {
+        parameters.targets = [
+          {
+            blend: defaultBlend
+          }
+        ];
+      } else if (parameters.targets && parameters.targets.length && !parameters.targets[0].blend) {
+        parameters.targets[0].blend = defaultBlend;
+      }
     }
     parameters.label = parameters.label ?? "ShaderPass " + renderer.shaderPasses?.length;
-    parameters.sampleCount = !!parameters.sampleCount ? parameters.sampleCount : renderer && renderer.postProcessingPass ? renderer && renderer.postProcessingPass.options.sampleCount : 1;
+    parameters.sampleCount = !!parameters.sampleCount ? parameters.sampleCount : renderer && renderer.renderPass && parameters.isPrePass ? renderer.renderPass.options.sampleCount : renderer && renderer.postProcessingPass ? renderer && renderer.postProcessingPass.options.sampleCount : 1;
     if (!parameters.shaders) {
       parameters.shaders = {};
     }
@@ -42,8 +44,13 @@ class ShaderPass extends FullscreenPlane {
         entryPoint: "main"
       };
     }
-    parameters.depth = false;
+    parameters.depth = parameters.isPrePass;
     super(renderer, parameters);
+    this.options = {
+      ...this.options,
+      copyOutputToRenderTexture: parameters.copyOutputToRenderTexture,
+      isPrePass: parameters.isPrePass
+    };
     if (parameters.inputTarget) {
       this.setInputTarget(parameters.inputTarget);
     }
@@ -67,6 +74,7 @@ class ShaderPass extends FullscreenPlane {
   cleanupRenderMaterialParameters(parameters) {
     delete parameters.copyOutputToRenderTexture;
     delete parameters.inputTarget;
+    delete parameters.isPrePass;
     super.cleanupRenderMaterialParameters(parameters);
     return parameters;
   }
@@ -110,7 +118,7 @@ class ShaderPass extends FullscreenPlane {
       this.renderer.shaderPasses.push(this);
     }
     this.setRenderingOptionsForRenderPass(
-      this.outputTarget ? this.outputTarget.renderPass : this.renderer.postProcessingPass
+      this.outputTarget ? this.outputTarget.renderPass : this.options.isPrePass ? this.renderer.renderPass : this.renderer.postProcessingPass
     );
     if (this.autoRender) {
       this.renderer.scene.addShaderPass(this);
