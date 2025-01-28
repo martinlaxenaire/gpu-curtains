@@ -1,6 +1,6 @@
 import { FullscreenPlane } from '../meshes/FullscreenPlane.mjs';
 import { isRenderer } from '../renderers/utils.mjs';
-import default_pass_fsWGSl from '../shaders/chunks/default/default_pass_fs.wgsl.mjs';
+import { getDefaultShaderPassFragmentCode } from '../shaders/full/fragment/get-default-shader-pass-fragment-code.mjs';
 import { throwWarning } from '../../utils/utils.mjs';
 
 class ShaderPass extends FullscreenPlane {
@@ -40,7 +40,7 @@ class ShaderPass extends FullscreenPlane {
     }
     if (!parameters.shaders.fragment) {
       parameters.shaders.fragment = {
-        code: default_pass_fsWGSl,
+        code: getDefaultShaderPassFragmentCode,
         entryPoint: "main"
       };
     }

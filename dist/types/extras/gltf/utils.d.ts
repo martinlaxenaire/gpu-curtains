@@ -1,19 +1,6 @@
 import { MeshDescriptor } from '../../types/gltf/GLTFScenesManager';
 import { ShaderOptions } from '../../types/Materials';
-import { Texture } from '../../core/textures/Texture';
-import { Sampler } from '../../core/samplers/Sampler';
-import { EnvironmentMap } from '../environment-map/EnvironmentMap';
-/** Defines all kinds of shading models available. */
-export type ShadingModels = 'Lambert' | 'Phong' | 'PBR' | 'IBL' | 'PBRTransmission' | 'IBLTransmission';
-/**
- * Parameters to use for IBL textures.
- */
-export interface IBLShaderTextureParams {
-    /** {@link Texture} to use. */
-    texture: Texture;
-    /** {@link Sampler#name | Sampler name} to use. */
-    samplerName?: Sampler['name'];
-}
+import { FragmentShaderBaseInputParams, ShadingModels } from '../../core/shaders/full/fragment/get-fragment-code';
 /**
  * Parameters used to build the shaders
  */
@@ -30,14 +17,7 @@ export interface ShaderBuilderParameters {
         additionalColorContribution?: string;
     };
     /** Additional IBL parameters to pass as uniform and textures. */
-    iblParameters?: {
-        /** Environment diffuse strength. Default to `0.5`. */
-        diffuseStrength?: number;
-        /** Environment specular strength. Default to `0.5`. */
-        specularStrength?: number;
-        /** {@link EnvironmentMap} to use for IBL shading. */
-        environmentMap?: EnvironmentMap;
-    };
+    environmentMap?: FragmentShaderBaseInputParams['environmentMap'];
 }
 /** Shaders returned by the shaders builder function. */
 export interface BuiltShaders {

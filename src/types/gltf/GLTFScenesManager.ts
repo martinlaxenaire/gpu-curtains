@@ -11,6 +11,8 @@ import { BufferBinding } from '../../core/bindings/BufferBinding'
 import { TargetsAnimationsManager } from '../../extras/animations/TargetsAnimationsManager'
 import { Mat4 } from '../../math/Mat4'
 import { RenderPassEntry } from '../../core/scenes/Scene'
+import { ShaderTextureDescriptor } from '../../core/shaders/full/fragment/get-fragment-code'
+import { GLTFExtensionsUsed } from './GLTFExtensions'
 
 /**
  * Define a {@link MeshDescriptorAttribute} used to create the {@link core/geometries/Geometry.Geometry | Geometry}.
@@ -23,18 +25,6 @@ export interface MeshDescriptorAttribute {
 }
 
 /**
- * Define a {@link MeshDescriptorTexture} used to associate the {@link core/textures/Texture.Texture | Texture} names with the corresponding {@link Sampler} names.
- */
-export interface MeshDescriptorTexture {
-  /** Name of the {@link core/textures/Texture.Texture | Texture} to use. */
-  texture: TextureParams['name']
-  /** Name of the {@link Sampler} to use. */
-  sampler: Sampler['name']
-  /** {@link MeshDescriptorAttribute.name | Texture coordinate attribute name} to use to map this texture. */
-  texCoordAttributeName?: string
-}
-
-/**
  * Define a {@link MeshDescriptor} object, which helps creating a {@link Mesh} and its shaders based on the various properties.
  */
 export interface MeshDescriptor {
@@ -42,12 +32,11 @@ export interface MeshDescriptor {
   parameters: ProjectedMeshParameters
   /** {@link Mesh} parent {@link Object3D}. */
   parent: Object3D
-  /** {@link MeshDescriptorAttribute} defining the {@link core/geometries/Geometry.Geometry | Geometry} attributes used. Useful to build custom shaders from scratch. */
-  attributes: MeshDescriptorAttribute[]
-  /** {@link MeshDescriptorTexture} defining the available textures and corresponding sampler names. Useful to build custom shaders from scratch. */
-  textures: MeshDescriptorTexture[]
+  /** Array of {@link ShaderTextureDescriptor} defining the available textures and corresponding sampler names. Useful to build custom shaders from scratch. */
+  textures: ShaderTextureDescriptor[]
   /** All the {@link core/geometries/Geometry.Geometry | Geometry} instances {@link Object3D} nodes used to calculate the eventual instances world and normal matrices. */
   nodes: Object3D[]
+  extensionsUsed: GLTFExtensionsUsed
 }
 
 /**
@@ -156,5 +145,7 @@ export interface ScenesManager {
     sceneTransmissionPassEntry: RenderPassEntry
     /** The {@link Texture} holding the content of all the non transmissive objects we've already drawn onto the main screen buffer. */
     backgroundOutputTexture: Texture
+    /** The {@link Sampler} used to sample the background output texture. */
+    sampler: Sampler
   }
 }

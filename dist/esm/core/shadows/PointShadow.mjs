@@ -2,7 +2,8 @@ import { shadowStruct, Shadow } from './Shadow.mjs';
 import { Mat4 } from '../../math/Mat4.mjs';
 import { Vec3 } from '../../math/Vec3.mjs';
 import { Texture } from '../textures/Texture.mjs';
-import { getDefaultPointShadowDepthVs, getDefaultPointShadowDepthFs } from '../shaders/chunks/shading/shadows.mjs';
+import { getDefaultPointShadowDepthVs } from '../shaders/full/vertex/get-default-point-shadow-depth-vertex-code.mjs';
+import { getDefaultPointShadowDepthFs } from '../shaders/full/fragment/get-default-point-shadow-depth-fragment-code.mjs';
 
 var __accessCheck = (obj, member, msg) => {
   if (!member.has(obj))

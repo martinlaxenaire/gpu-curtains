@@ -35,6 +35,12 @@ export interface GLTFDispersionExtension {
   dispersion?: number
 }
 
+/** Define the `KHR_materials_emissive_strength` extension materials options. */
+export interface GLTFEmissiveStrengthExtension {
+  /** The strength adjustment to be multiplied with the material's emissive value. Default to `1.0`. */
+  emissiveStrength?: number
+}
+
 /** Define the `KHR_materials_ior` extension materials options. */
 export interface GLTFIorExtension {
   /** The index of refraction. Default to `1.5`.  */
@@ -83,12 +89,16 @@ export interface GLTFInstancingExtension {
 export type GLTFExtensionsMapping = {
   /** Define the `KHR_materials_dispersion` extension materials options. */
   KHR_materials_dispersion: GLTFDispersionExtension
+  /** Define the `KHR_materials_emissive_strength` extension materials options. */
+  KHR_materials_emissive_strength: GLTFEmissiveStrengthExtension
   /** Define the `KHR_materials_ior` extension materials options. */
   KHR_materials_ior: GLTFIorExtension
   /** Define the `KHR_materials_transmission` extension materials options. */
   KHR_materials_transmission: GLTFTransmissionExtension
   /** Define the `KHR_materials_specular` extension materials options. */
   KHR_materials_specular: GLTFSpecularExtension
+  /** Define the `KHR_materials_unlit` extension materials options. */
+  KHR_materials_unlit: Record<string, never>
   /** Define the `KHR_materials_volume` extension materials options. */
   KHR_materials_volume: GLTFVolumeExtension
   /** Define the `EXT_mesh_gpu_instancing` extension materials options. */

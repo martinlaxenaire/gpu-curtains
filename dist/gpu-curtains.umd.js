@@ -7855,7 +7855,7 @@ ${formattedMessage}`);
     }
   }
 
-  var get_output_position = (
+  const getPositionHelpers = (
     /* wgsl */
     `
 fn getWorldPosition(position: vec3f) -> vec4f {
@@ -7867,7 +7867,7 @@ fn getOutputPosition(position: vec3f) -> vec4f {
 }`
   );
 
-  var get_normals = (
+  const getNormalHelpers = (
     /* wgsl */
     `
 fn getWorldNormal(normal: vec3f) -> vec3f {
@@ -7879,7 +7879,7 @@ fn getViewNormal(normal: vec3f) -> vec3f {
 }`
   );
 
-  var get_uv_cover = (
+  const getUVCover = (
     /* wgsl */
     `
 fn getUVCover(uv: vec2f, textureMatrix: mat4x4f) -> vec2f {
@@ -7887,7 +7887,7 @@ fn getUVCover(uv: vec2f, textureMatrix: mat4x4f) -> vec2f {
 }`
   );
 
-  var get_vertex_to_uv_coords = (
+  const getVertexToUVCoords = (
     /* wgsl */
     `
 fn getVertex2DToUVCoords(vertex: vec2f) -> vec2f {
@@ -7906,24 +7906,24 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
   const ShaderChunks = {
     /** WGSL code chunks added to the vertex shader */
     vertex: {
-      /** Applies given texture matrix to given uv coordinates */
-      get_uv_cover
+      /** Applies given texture matrix (`mat4x4f`) to given uv coordinates (`vec2f`). */
+      getUVCover
     },
     /** WGSL code chunks added to the fragment shader */
     fragment: {
-      /** Applies given texture matrix to given uv coordinates */
-      get_uv_cover,
-      /** Convert vertex position to uv coordinates */
-      get_vertex_to_uv_coords
+      /** Applies given texture matrix (`mat4x4f`) to given uv coordinates (`vec2f`). */
+      getUVCover,
+      /** Convert vertex position as `vec2f` or `vec3f` to uv coordinates `vec2f`. */
+      getVertexToUVCoords
     }
   };
   const ProjectedShaderChunks = {
     /** WGSL code chunks added to the vertex shader */
     vertex: {
-      /** Get output vec4f position vector by applying model view projection matrix to vec3f attribute position vector */
-      get_output_position,
-      /** Get vec3f normals in world or view space */
-      get_normals
+      /** Get output `position` (`vec4f`) vector by applying model view projection matrix to the attribute `position` (`vec3f`) vector. */
+      getPositionHelpers,
+      /** Get `normal` (`vec3f`) in world or view space. */
+      getNormalHelpers
     },
     /** WGSL code chunks added to the fragment shader */
     fragment: {}
@@ -8245,7 +8245,7 @@ ${this.shaders.full.head}`;
     });
   };
 
-  var default_projected_vsWgsl = (
+  const getDefaultProjectedVertexCode = (
     /* wgsl */
     `
 struct VSOutput {
@@ -8272,7 +8272,7 @@ struct VSOutput {
 }`
   );
 
-  var default_vsWgsl = (
+  const getDefaultVertexCode = (
     /* wgsl */
     `
 struct VSOutput {
@@ -8292,7 +8292,7 @@ struct VSOutput {
 }`
   );
 
-  var default_fsWgsl = (
+  const getDefaultFragmentCode = (
     /* wgsl */
     `
 @fragment fn main() -> @location(0) vec4f {
@@ -8314,7 +8314,7 @@ struct VSOutput {
       }
       if (!parameters.shaders?.vertex) {
         parameters.shaders.vertex = {
-          code: parameters.useProjection ? default_projected_vsWgsl : default_vsWgsl,
+          code: parameters.useProjection ? getDefaultProjectedVertexCode : getDefaultVertexCode,
           entryPoint: "main"
         };
       }
@@ -8324,7 +8324,7 @@ struct VSOutput {
       if (parameters.shaders.fragment === void 0) {
         parameters.shaders.fragment = {
           entryPoint: "main",
-          code: default_fsWgsl
+          code: getDefaultFragmentCode
         };
       }
       super(renderer, parameters);
@@ -8521,17 +8521,46 @@ New rendering options: ${JSON.stringify(
     }
   }
 
-  const getVertexPositionNormal = ({ bindings = [], geometry }) => {
-    let output = "";
-    output += geometry.vertexBuffers.map(
+  const declareAttributesVars = ({ geometry }) => {
+    return geometry.vertexBuffers.map(
       (vertexBuffer) => vertexBuffer.attributes.map((attribute) => {
         return (
           /* wgsl */
           `
-  var ${attribute.name} = attributes.${attribute.name};`
+  var ${attribute.name}: ${attribute.type} = attributes.${attribute.name};`
         );
       }).join("")
     ).join("\n");
+  };
+
+  const getMorphTargets = ({ bindings = [], geometry }) => {
+    let morphTargets = "";
+    const morphTargetsBindings = bindings.filter((binding) => binding.name.includes("morphTarget"));
+    morphTargetsBindings.forEach((binding) => {
+      const morphAttributes = Object.values(binding.inputs).filter((input) => input.name !== "weight");
+      morphAttributes.forEach((input) => {
+        const bindingType = BufferElement.getType(input.type);
+        const attribute = geometry.getAttributeByName(input.name);
+        if (attribute) {
+          const attributeType = attribute.type;
+          const attributeBindingVar = morphAttributes.length === 1 ? `${binding.name}.${input.name}[attributes.vertexIndex]` : `${binding.name}.elements[attributes.vertexIndex].${input.name}`;
+          if (bindingType === attributeType) {
+            morphTargets += `${input.name} += ${binding.name}.weight * ${attributeBindingVar};
+	`;
+          } else {
+            if (bindingType === "vec3f" && attributeType === "vec4f") {
+              morphTargets += `${input.name} += ${binding.name}.weight * vec4(${attributeBindingVar}, 0.0);
+	`;
+            }
+          }
+        }
+      });
+    });
+    return morphTargets;
+  };
+
+  const getVertexSkinnedPositionNormal = ({ bindings = [], geometry }) => {
+    let output = "";
     const hasInstances = geometry.instancesCount > 1;
     const skinJoints = [];
     const skinWeights = [];
@@ -8548,31 +8577,6 @@ New rendering options: ${JSON.stringify(
       });
     }
     const skinBindings = bindings.filter((binding) => binding.name.includes("skin"));
-    const morphTargetsBindings = bindings.filter((binding) => binding.name.includes("morphTarget"));
-    morphTargetsBindings.forEach((binding) => {
-      const morphAttributes = Object.values(binding.inputs).filter((input) => input.name !== "weight");
-      morphAttributes.forEach((input) => {
-        const bindingType = BufferElement.getType(input.type);
-        const attribute = geometry.getAttributeByName(input.name);
-        if (attribute) {
-          const attributeType = attribute.type;
-          const attributeBindingVar = morphAttributes.length === 1 ? `${binding.name}.${input.name}[attributes.vertexIndex]` : `${binding.name}.elements[attributes.vertexIndex].${input.name}`;
-          if (bindingType === attributeType) {
-            output += `${input.name} += ${binding.name}.weight * ${attributeBindingVar};
-	`;
-          } else {
-            if (bindingType === "vec3f" && attributeType === "vec4f") {
-              output += `${input.name} += ${binding.name}.weight * vec4(${attributeBindingVar}, 0.0);
-	`;
-            }
-          }
-        }
-      });
-    });
-    output += /* wgsl */
-    `
-  var worldPosition: vec4f = vec4(position, 1.0);
-  `;
     const hasSkin = skinJoints.length && skinWeights.length && skinBindings.length;
     if (hasSkin) {
       output += hasInstances ? `
@@ -8648,31 +8652,15 @@ New rendering options: ${JSON.stringify(
     }
     return output;
   };
-  const getFullVertexOutput = ({ bindings = [], geometry }) => {
-    let output = getVertexPositionNormal({ bindings, geometry });
+
+  const getVertexPositionNormal = ({ bindings = [], geometry }) => {
+    let output = "";
+    output += getMorphTargets({ bindings, geometry });
     output += /* wgsl */
     `
-  vsOutput.position = camera.projection * camera.view * worldPosition;
-  vsOutput.normal = normal;
-  vsOutput.worldPosition = worldPosition.xyz / worldPosition.w;
-  vsOutput.viewDirection = camera.position - vsOutput.worldPosition;
+  var worldPosition: vec4f = vec4(position, 1.0);
   `;
-    const tangentAttribute = geometry.getAttributeByName("tangent");
-    if (tangentAttribute) {
-      output += /* wgsl */
-      `
-  vsOutput.tangent = normalize(modelMatrix * tangent);
-    `;
-    }
-    output += geometry.vertexBuffers.map(
-      (vertexBuffer) => vertexBuffer.attributes.filter((attr) => attr.name !== "normal" && attr.name !== "position" && attr.name !== "tangent").map((attribute) => {
-        return (
-          /* wgsl */
-          `
-  vsOutput.${attribute.name} = ${attribute.name};`
-        );
-      }).join("")
-    ).join("\n");
+    output += getVertexSkinnedPositionNormal({ bindings, geometry });
     return output;
   };
 
@@ -8684,6 +8672,7 @@ New rendering options: ${JSON.stringify(
 ) -> @builtin(position) vec4f {  
   let directionalShadow: DirectionalShadowsElement = directionalShadows.directionalShadowsElements[${lightIndex}];
   
+  ${declareAttributesVars({ geometry })}
   ${getVertexPositionNormal({ bindings, geometry })}
   
   let worldPos = worldPosition.xyz / worldPosition.w;
@@ -8696,259 +8685,6 @@ New rendering options: ${JSON.stringify(
   
   return directionalShadow.projectionMatrix * directionalShadow.viewMatrix * worldPosition;
 }`
-  );
-  const getPCFShadowContribution = (
-    /* wgsl */
-    `
-fn getPCFShadowContribution(index: i32, worldPosition: vec3f, depthTexture: texture_depth_2d) -> f32 {
-  let directionalShadow: DirectionalShadowsElement = directionalShadows.directionalShadowsElements[index];
-  
-  // get shadow coords
-  var shadowCoords: vec3f = vec3((directionalShadow.projectionMatrix * directionalShadow.viewMatrix * vec4(worldPosition, 1.0)).xyz);
-  
-  // Convert XY to (0, 1)
-  // Y is flipped because texture coords are Y-down.
-  shadowCoords = vec3(
-    shadowCoords.xy * vec2(0.5, -0.5) + vec2(0.5),
-    shadowCoords.z
-  );
-  
-  var visibility = 0.0;
-  
-  let inFrustum: bool = shadowCoords.x >= 0.0 && shadowCoords.x <= 1.0 && shadowCoords.y >= 0.0 && shadowCoords.y <= 1.0;
-  let frustumTest: bool = inFrustum && shadowCoords.z <= 1.0;
-  
-  if(frustumTest) {
-    // Percentage-closer filtering. Sample texels in the region
-    // to smooth the result.
-    let size: vec2f = vec2f(textureDimensions(depthTexture).xy);
-  
-    let texelSize: vec2f = 1.0 / size;
-    
-    let sampleCount: i32 = directionalShadow.pcfSamples;
-    let maxSamples: f32 = f32(sampleCount) - 1.0;
-  
-    for (var x = 0; x < sampleCount; x++) {
-      for (var y = 0; y < sampleCount; y++) {
-        let offset = texelSize * vec2(
-          f32(x) - maxSamples * 0.5,
-          f32(y) - maxSamples * 0.5
-        );
-        
-        visibility += textureSampleCompareLevel(
-          depthTexture,
-          depthComparisonSampler,
-          shadowCoords.xy + offset,
-          shadowCoords.z - directionalShadow.bias
-        );
-      }
-    }
-    visibility /= f32(sampleCount * sampleCount);
-    
-    visibility = clamp(visibility, 1.0 - clamp(directionalShadow.intensity, 0.0, 1.0), 1.0);
-  }
-  else {
-    visibility = 1.0;
-  }
-  
-  return visibility;
-}
-`
-  );
-  const getPCFDirectionalShadows = (renderer) => {
-    const directionalLights = renderer.shadowCastingLights.filter(
-      (light) => light.type === "directionalLights"
-    );
-    const minDirectionalLights = Math.max(renderer.lightsBindingParams.directionalLights.max, 1);
-    return (
-      /* wgsl */
-      `
-fn getPCFDirectionalShadows(worldPosition: vec3f) -> array<f32, ${minDirectionalLights}> {
-  var directionalShadowContribution: array<f32, ${minDirectionalLights}>;
-  
-  var lightDirection: vec3f;
-  
-  ${directionalLights.map((light, index) => {
-      return `lightDirection = worldPosition - directionalLights.elements[${index}].direction;
-      
-      ${light.shadow.isActive ? `
-      if(directionalShadows.directionalShadowsElements[${index}].isActive > 0) {
-        directionalShadowContribution[${index}] = getPCFShadowContribution(
-          ${index},
-          worldPosition,
-          shadowDepthTexture${index}
-        );
-      } else {
-        directionalShadowContribution[${index}] = 1.0;
-      }
-          ` : `directionalShadowContribution[${index}] = 1.0;`}`;
-    }).join("\n")}
-  
-  return directionalShadowContribution;
-}
-`
-    );
-  };
-  const getDefaultPointShadowDepthVs = (lightIndex = 0, { bindings = [], geometry }) => (
-    /* wgsl */
-    `
-struct PointShadowVSOutput {
-  @builtin(position) position: vec4f,
-  @location(0) worldPosition: vec3f,
-}
-
-@vertex fn main(
-  attributes: Attributes,
-) -> PointShadowVSOutput {  
-  var pointShadowVSOutput: PointShadowVSOutput;
-  
-  ${getVertexPositionNormal({ bindings, geometry })}
-  
-  let worldPos = worldPosition.xyz / worldPosition.w;
-  
-  let pointShadow: PointShadowsElement = pointShadows.pointShadowsElements[${lightIndex}];
-  
-  let lightDirection: vec3f = normalize(pointLights.elements[${lightIndex}].position - worldPos);
-  let NdotL: f32 = dot(normalize(normal), lightDirection);
-  let sinNdotL = sqrt(1.0 - NdotL * NdotL);
-  let normalBias: f32 = pointShadow.normalBias * sinNdotL;
-  
-  worldPosition = vec4(worldPos - normal * normalBias, 1.0);
-    
-  var shadowPosition: vec4f = pointShadow.projectionMatrix * pointShadow.viewMatrices[pointShadow.face] * worldPosition;
-
-  pointShadowVSOutput.position = shadowPosition;
-  pointShadowVSOutput.worldPosition = worldPos;
-
-  return pointShadowVSOutput;
-}`
-  );
-  const getDefaultPointShadowDepthFs = (lightIndex = 0) => (
-    /* wgsl */
-    `
-struct PointShadowVSOutput {
-  @builtin(position) position: vec4f,
-  @location(0) worldPosition: vec3f,
-}
-
-@fragment fn main(fsInput: PointShadowVSOutput) -> @builtin(frag_depth) f32 {
-  // get distance between fragment and light source
-  var lightDistance: f32 = length(fsInput.worldPosition - pointLights.elements[${lightIndex}].position);
-  
-  let pointShadow: PointShadowsElement = pointShadows.pointShadowsElements[${lightIndex}];
-  
-  // map to [0, 1] range by dividing by far plane - near plane
-  lightDistance = (lightDistance - pointShadow.cameraNear) / (pointShadow.cameraFar - pointShadow.cameraNear);
-  
-  // write this as modified depth
-  return clamp(lightDistance, 0.0, 1.0);
-}`
-  );
-  const getPCFPointShadowContribution = (
-    /* wgsl */
-    `
-fn getPCFPointShadowContribution(index: i32, shadowPosition: vec4f, depthCubeTexture: texture_depth_cube) -> f32 {
-  let pointShadow: PointShadowsElement = pointShadows.pointShadowsElements[index];
-
-  // Percentage-closer filtering. Sample texels in the region
-  // to smooth the result.
-  var visibility = 0.0;
-  var closestDepth = 0.0;
-  let currentDepth: f32 = shadowPosition.w;
-  let cameraRange: f32 = pointShadow.cameraFar - pointShadow.cameraNear;
-  let normalizedDepth: f32 = (shadowPosition.w - pointShadow.cameraNear) / cameraRange;
-
-  let maxSize: f32 = f32(max(textureDimensions(depthCubeTexture).x, textureDimensions(depthCubeTexture).y));
-
-  let texelSize: vec3f = vec3(1.0 / maxSize);
-  let sampleCount: i32 = pointShadow.pcfSamples;
-  let maxSamples: f32 = f32(sampleCount) - 1.0;
-  
-  for (var x = 0; x < sampleCount; x++) {
-    for (var y = 0; y < sampleCount; y++) {
-      for (var z = 0; z < sampleCount; z++) {
-        let offset = texelSize * vec3(
-          f32(x) - maxSamples * 0.5,
-          f32(y) - maxSamples * 0.5,
-          f32(z) - maxSamples * 0.5
-        );
-
-        closestDepth = textureSampleCompareLevel(
-          depthCubeTexture,
-          depthComparisonSampler,
-          shadowPosition.xyz + offset,
-          normalizedDepth - pointShadow.bias
-        );
-
-        closestDepth *= cameraRange;
-
-        visibility += select(0.0, 1.0, currentDepth <= closestDepth);
-      }
-    }
-  }
-  
-  visibility /= f32(sampleCount * sampleCount * sampleCount);
-  
-  visibility = clamp(visibility, 1.0 - clamp(pointShadow.intensity, 0.0, 1.0), 1.0);
-  
-  return visibility;
-}`
-  );
-  const getPCFPointShadows = (renderer) => {
-    const pointLights = renderer.shadowCastingLights.filter((light) => light.type === "pointLights");
-    const minPointLights = Math.max(renderer.lightsBindingParams.pointLights.max, 1);
-    return (
-      /* wgsl */
-      `
-fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
-  var pointShadowContribution: array<f32, ${minPointLights}>;
-  
-  var lightDirection: vec3f;
-  var lightDistance: f32;
-  var lightColor: vec3f;
-  
-  ${pointLights.map((light, index) => {
-      return `lightDirection = pointLights.elements[${index}].position - worldPosition;
-      
-      lightDistance = length(lightDirection);
-      lightColor = pointLights.elements[${index}].color * rangeAttenuation(pointLights.elements[${index}].range, lightDistance);
-      
-      ${light.shadow.isActive ? `
-      if(pointShadows.pointShadowsElements[${index}].isActive > 0 && length(lightColor) > 0.0001) {
-        pointShadowContribution[${index}] = getPCFPointShadowContribution(
-          ${index},
-          vec4(lightDirection, length(lightDirection)),
-          pointShadowCubeDepthTexture${index}
-        );
-      } else {
-        pointShadowContribution[${index}] = 1.0;
-      }
-            ` : `pointShadowContribution[${index}] = 1.0;`}`;
-    }).join("\n")}
-  
-  return pointShadowContribution;
-}
-`
-    );
-  };
-  const getPCFShadows = (
-    /* wgsl */
-    `
-  let pointShadows = getPCFPointShadows(worldPosition);
-  let directionalShadows = getPCFDirectionalShadows(worldPosition);
-`
-  );
-  const applyDirectionalShadows = (
-    /* wgsl */
-    `
-    directLight.color *= directionalShadows[i];
-`
-  );
-  const applyPointShadows = (
-    /* wgsl */
-    `
-    directLight.color *= pointShadows[i];
-`
   );
 
   var __accessCheck$g = (obj, member, msg) => {
@@ -9800,6 +9536,64 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
   _actualPosition$1 = new WeakMap();
   _direction = new WeakMap();
 
+  const getDefaultPointShadowDepthVs = (lightIndex = 0, { bindings = [], geometry }) => (
+    /* wgsl */
+    `
+struct PointShadowVSOutput {
+  @builtin(position) position: vec4f,
+  @location(0) worldPosition: vec3f,
+}
+
+@vertex fn main(
+  attributes: Attributes,
+) -> PointShadowVSOutput {  
+  var pointShadowVSOutput: PointShadowVSOutput;
+  
+  ${declareAttributesVars({ geometry })}
+  ${getVertexPositionNormal({ bindings, geometry })}
+  
+  let worldPos = worldPosition.xyz / worldPosition.w;
+  
+  let pointShadow: PointShadowsElement = pointShadows.pointShadowsElements[${lightIndex}];
+  
+  let lightDirection: vec3f = normalize(pointLights.elements[${lightIndex}].position - worldPos);
+  let NdotL: f32 = dot(normalize(normal), lightDirection);
+  let sinNdotL = sqrt(1.0 - NdotL * NdotL);
+  let normalBias: f32 = pointShadow.normalBias * sinNdotL;
+  
+  worldPosition = vec4(worldPos - normal * normalBias, 1.0);
+    
+  var shadowPosition: vec4f = pointShadow.projectionMatrix * pointShadow.viewMatrices[pointShadow.face] * worldPosition;
+
+  pointShadowVSOutput.position = shadowPosition;
+  pointShadowVSOutput.worldPosition = worldPos;
+
+  return pointShadowVSOutput;
+}`
+  );
+
+  const getDefaultPointShadowDepthFs = (lightIndex = 0) => (
+    /* wgsl */
+    `
+struct PointShadowVSOutput {
+  @builtin(position) position: vec4f,
+  @location(0) worldPosition: vec3f,
+}
+
+@fragment fn main(fsInput: PointShadowVSOutput) -> @builtin(frag_depth) f32 {
+  // get distance between fragment and light source
+  var lightDistance: f32 = length(fsInput.worldPosition - pointLights.elements[${lightIndex}].position);
+  
+  let pointShadow: PointShadowsElement = pointShadows.pointShadowsElements[${lightIndex}];
+  
+  // map to [0, 1] range by dividing by far plane - near plane
+  lightDistance = (lightDistance - pointShadow.cameraNear) / (pointShadow.cameraFar - pointShadow.cameraNear);
+  
+  // write this as modified depth
+  return clamp(lightDistance, 0.0, 1.0);
+}`
+  );
+
   var __accessCheck$e = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
@@ -10523,24 +10317,24 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
         if (!shaders) {
           this.options.shaders = {
             vertex: {
-              code: default_vsWgsl,
+              code: getDefaultVertexCode,
               entryPoint: "main"
             },
             fragment: {
-              code: default_fsWgsl,
+              code: getDefaultFragmentCode,
               entryPoint: "main"
             }
           };
         } else {
           if (!shaders.vertex || !shaders.vertex.code) {
             shaders.vertex = {
-              code: default_vsWgsl,
+              code: getDefaultVertexCode,
               entryPoint: "main"
             };
           }
           if (shaders.fragment === void 0 || shaders.fragment && !shaders.fragment.code) {
             shaders.fragment = {
-              code: default_fsWgsl,
+              code: getDefaultFragmentCode,
               entryPoint: "main"
             };
           }
@@ -11430,7 +11224,7 @@ ${geometry.wgslStructFragment}`
     }
   }
 
-  var default_normal_fsWgsl = (
+  const getDefaultNormalFragmentCode = (
     /* wgsl */
     `
 struct VSOutput {
@@ -11444,6 +11238,189 @@ struct VSOutput {
   return vec4(normalize(fsInput.normal) * 0.5 + 0.5, 1.0);
 }`
   );
+
+  const getPCFShadowContribution = (
+    /* wgsl */
+    `
+fn getPCFShadowContribution(index: i32, worldPosition: vec3f, depthTexture: texture_depth_2d) -> f32 {
+  let directionalShadow: DirectionalShadowsElement = directionalShadows.directionalShadowsElements[index];
+  
+  // get shadow coords
+  var shadowCoords: vec3f = vec3((directionalShadow.projectionMatrix * directionalShadow.viewMatrix * vec4(worldPosition, 1.0)).xyz);
+  
+  // Convert XY to (0, 1)
+  // Y is flipped because texture coords are Y-down.
+  shadowCoords = vec3(
+    shadowCoords.xy * vec2(0.5, -0.5) + vec2(0.5),
+    shadowCoords.z
+  );
+  
+  var visibility = 0.0;
+  
+  let inFrustum: bool = shadowCoords.x >= 0.0 && shadowCoords.x <= 1.0 && shadowCoords.y >= 0.0 && shadowCoords.y <= 1.0;
+  let frustumTest: bool = inFrustum && shadowCoords.z <= 1.0;
+  
+  if(frustumTest) {
+    // Percentage-closer filtering. Sample texels in the region
+    // to smooth the result.
+    let size: vec2f = vec2f(textureDimensions(depthTexture).xy);
+  
+    let texelSize: vec2f = 1.0 / size;
+    
+    let sampleCount: i32 = directionalShadow.pcfSamples;
+    let maxSamples: f32 = f32(sampleCount) - 1.0;
+  
+    for (var x = 0; x < sampleCount; x++) {
+      for (var y = 0; y < sampleCount; y++) {
+        let offset = texelSize * vec2(
+          f32(x) - maxSamples * 0.5,
+          f32(y) - maxSamples * 0.5
+        );
+        
+        visibility += textureSampleCompareLevel(
+          depthTexture,
+          depthComparisonSampler,
+          shadowCoords.xy + offset,
+          shadowCoords.z - directionalShadow.bias
+        );
+      }
+    }
+    visibility /= f32(sampleCount * sampleCount);
+    
+    visibility = clamp(visibility, 1.0 - saturate(directionalShadow.intensity), 1.0);
+  }
+  else {
+    visibility = 1.0;
+  }
+  
+  return visibility;
+}
+`
+  );
+
+  const getPCFDirectionalShadows = (renderer) => {
+    const directionalLights = renderer.shadowCastingLights.filter(
+      (light) => light.type === "directionalLights"
+    );
+    const minDirectionalLights = Math.max(renderer.lightsBindingParams.directionalLights.max, 1);
+    return (
+      /* wgsl */
+      `
+fn getPCFDirectionalShadows(worldPosition: vec3f) -> array<f32, ${minDirectionalLights}> {
+  var directionalShadowContribution: array<f32, ${minDirectionalLights}>;
+  
+  var lightDirection: vec3f;
+  
+  ${directionalLights.map((light, index) => {
+      return `lightDirection = worldPosition - directionalLights.elements[${index}].direction;
+      
+      ${light.shadow.isActive ? `
+      if(directionalShadows.directionalShadowsElements[${index}].isActive > 0) {
+        directionalShadowContribution[${index}] = getPCFShadowContribution(
+          ${index},
+          worldPosition,
+          shadowDepthTexture${index}
+        );
+      } else {
+        directionalShadowContribution[${index}] = 1.0;
+      }
+          ` : `directionalShadowContribution[${index}] = 1.0;`}`;
+    }).join("\n")}
+  
+  return directionalShadowContribution;
+}
+`
+    );
+  };
+
+  const getPCFPointShadowContribution = (
+    /* wgsl */
+    `
+fn getPCFPointShadowContribution(index: i32, shadowPosition: vec4f, depthCubeTexture: texture_depth_cube) -> f32 {
+  let pointShadow: PointShadowsElement = pointShadows.pointShadowsElements[index];
+
+  // Percentage-closer filtering. Sample texels in the region
+  // to smooth the result.
+  var visibility = 0.0;
+  var closestDepth = 0.0;
+  let currentDepth: f32 = shadowPosition.w;
+  let cameraRange: f32 = pointShadow.cameraFar - pointShadow.cameraNear;
+  let normalizedDepth: f32 = (shadowPosition.w - pointShadow.cameraNear) / cameraRange;
+
+  let maxSize: f32 = f32(max(textureDimensions(depthCubeTexture).x, textureDimensions(depthCubeTexture).y));
+
+  let texelSize: vec3f = vec3(1.0 / maxSize);
+  let sampleCount: i32 = pointShadow.pcfSamples;
+  let maxSamples: f32 = f32(sampleCount) - 1.0;
+  
+  for (var x = 0; x < sampleCount; x++) {
+    for (var y = 0; y < sampleCount; y++) {
+      for (var z = 0; z < sampleCount; z++) {
+        let offset = texelSize * vec3(
+          f32(x) - maxSamples * 0.5,
+          f32(y) - maxSamples * 0.5,
+          f32(z) - maxSamples * 0.5
+        );
+
+        closestDepth = textureSampleCompareLevel(
+          depthCubeTexture,
+          depthComparisonSampler,
+          shadowPosition.xyz + offset,
+          normalizedDepth - pointShadow.bias
+        );
+
+        closestDepth *= cameraRange;
+
+        visibility += select(0.0, 1.0, currentDepth <= closestDepth);
+      }
+    }
+  }
+  
+  visibility /= f32(sampleCount * sampleCount * sampleCount);
+  
+  visibility = clamp(visibility, 1.0 - saturate(pointShadow.intensity), 1.0);
+  
+  return visibility;
+}`
+  );
+
+  const getPCFPointShadows = (renderer) => {
+    const pointLights = renderer.shadowCastingLights.filter((light) => light.type === "pointLights");
+    const minPointLights = Math.max(renderer.lightsBindingParams.pointLights.max, 1);
+    return (
+      /* wgsl */
+      `
+fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
+  var pointShadowContribution: array<f32, ${minPointLights}>;
+  
+  var lightDirection: vec3f;
+  var lightDistance: f32;
+  var lightColor: vec3f;
+  
+  ${pointLights.map((light, index) => {
+      return `lightDirection = pointLights.elements[${index}].position - worldPosition;
+      
+      lightDistance = length(lightDirection);
+      lightColor = pointLights.elements[${index}].color * rangeAttenuation(pointLights.elements[${index}].range, lightDistance);
+      
+      ${light.shadow.isActive ? `
+      if(pointShadows.pointShadowsElements[${index}].isActive > 0 && length(lightColor) > 0.0001) {
+        pointShadowContribution[${index}] = getPCFPointShadowContribution(
+          ${index},
+          vec4(lightDirection, length(lightDirection)),
+          pointShadowCubeDepthTexture${index}
+        );
+      } else {
+        pointShadowContribution[${index}] = 1.0;
+      }
+            ` : `pointShadowContribution[${index}] = 1.0;`}`;
+    }).join("\n")}
+  
+  return pointShadowContribution;
+}
+`
+    );
+  };
 
   const defaultProjectedMeshParams = {
     // frustum culling and visibility
@@ -11571,24 +11548,24 @@ struct VSOutput {
         if (!shaders) {
           this.options.shaders = {
             vertex: {
-              code: default_projected_vsWgsl,
+              code: getDefaultProjectedVertexCode,
               entryPoint: "main"
             },
             fragment: {
-              code: default_normal_fsWgsl,
+              code: getDefaultNormalFragmentCode,
               entryPoint: "main"
             }
           };
         } else {
           if (!shaders.vertex || !shaders.vertex.code) {
             shaders.vertex = {
-              code: default_projected_vsWgsl,
+              code: getDefaultProjectedVertexCode,
               entryPoint: "main"
             };
           }
           if (shaders.fragment === void 0 || shaders.fragment && !shaders.fragment.code) {
             shaders.fragment = {
-              code: default_normal_fsWgsl,
+              code: getDefaultNormalFragmentCode,
               entryPoint: "main"
             };
           }
@@ -15390,7 +15367,7 @@ ${this.shaders.compute.head}`;
     this.renderer.renderBundles.delete(this.uuid);
   };
 
-  var default_pass_fsWGSl = (
+  const getDefaultShaderPassFragmentCode = (
     /* wgsl */
     `
 struct VSOutput {
@@ -15440,7 +15417,7 @@ struct VSOutput {
       }
       if (!parameters.shaders.fragment) {
         parameters.shaders.fragment = {
-          code: default_pass_fsWGSl,
+          code: getDefaultShaderPassFragmentCode,
           entryPoint: "main"
         };
       }
@@ -15541,32 +15518,18 @@ struct VSOutput {
     }
   }
 
-  var common = (
+  const constants = (
     /* wgsl */
     `
-fn lessThan3(a: vec3f, b: vec3f) -> vec3f {
-  return vec3f(vec3<bool>(a.x < b.x, a.y < b.y, a.z < b.z));
-}
-
-fn pow2( x: f32 ) -> f32 {
-    return x * x;
-}
-
-fn pow3( x: f32 ) -> f32 {
-    return x * x * x;
-}
-
-fn pow4( x: f32 ) -> f32 {
-    return pow2(x) * pow2(x);
-}
-`
+const PI = ${Math.PI};
+const RECIPROCAL_PI = ${1 / Math.PI};
+const RECIPROCAL_PI2 = ${0.5 / Math.PI};
+const EPSILON = 1e-6;`
   );
 
-  var light_utils = (
+  const common = (
     /* wgsl */
     `
-${common}
-
 struct ReflectedLight {
   directDiffuse: vec3f,
   directSpecular: vec3f,
@@ -15580,13 +15543,24 @@ struct DirectLight {
   visible: bool,
 }
 
-fn rangeAttenuation(range: f32, distance: f32) -> f32 {
-  var distanceFalloff: f32 = 1.0 / max( pow( distance, 2.0 ), 0.01 );
-  if ( range > 0.0 ) {
-      distanceFalloff *= pow2( clamp( 1.0 - pow4( distance / range ), 0.0, 1.0 ) );
-  }
-  
-  return distanceFalloff;
+fn lessThan3(a: vec3f, b: vec3f) -> vec3f {
+  return vec3f(vec3<bool>(a.x < b.x, a.y < b.y, a.z < b.z));
+}
+
+fn pow2( x: f32 ) -> f32 {
+  return x * x;
+}
+
+fn pow3( x: f32 ) -> f32 {
+  return x * x * x;
+}
+
+fn pow4( x: f32 ) -> f32 {
+  return pow2(x) * pow2(x);
+}
+
+fn isinf(value: f32) -> bool {
+  return value > 1.0e38 || value < -1.0e38;
 }
 
 fn BRDF_Lambert(diffuseColor: vec3f) -> vec3f {
@@ -15596,6 +15570,20 @@ fn BRDF_Lambert(diffuseColor: vec3f) -> vec3f {
 fn F_Schlick(VdotH: f32, f0: vec3f, f90: f32) -> vec3f {
   let fresnel: f32 = pow( 1.0 - VdotH, 5.0 );
   return f0 * ( 1.0 - fresnel ) + ( f90 * fresnel );
+}
+`
+  );
+
+  const getLightsInfos = (
+    /* wgsl */
+    `
+fn rangeAttenuation(range: f32, distance: f32) -> f32 {
+  var distanceFalloff: f32 = 1.0 / max( pow( distance, 2.0 ), 0.01 );
+  if ( range > 0.0 ) {
+    distanceFalloff *= pow2( saturate( 1.0 - pow4( distance / range )) );
+  }
+  
+  return distanceFalloff;
 }
 
 fn getDirectionalLightInfo(directionalLight: DirectionalLightsElement, worldPosition: vec3f, ptr_light: ptr<function, DirectLight>) {
@@ -15611,6 +15599,44 @@ fn getPointLightInfo(pointLight: PointLightsElement, worldPosition: vec3f, ptr_l
   (*ptr_light).color = pointLight.color;
   (*ptr_light).color *= rangeAttenuation(pointLight.range, lightDistance);
   (*ptr_light).visible = length((*ptr_light).color) > 0.0001;
+}
+`
+  );
+
+  const REIndirectDiffuse = (
+    /* wgsl */
+    `
+fn getIndirectDiffuse(irradiance: vec3f, diffuseColor: vec3f, ptr_reflectedLight: ptr<function, ReflectedLight>) {
+  (*ptr_reflectedLight).indirectDiffuse += irradiance * BRDF_Lambert( diffuseColor );
+}
+
+// Indirect Diffuse RenderEquations
+fn RE_IndirectDiffuse(irradiance: vec3f, diffuseColor: vec3f, ptr_reflectedLight: ptr<function, ReflectedLight>) {
+  var totalAmbientIrradiance: vec3f = irradiance;
+  
+  for(var i: i32 = 0; i < ambientLights.count; i++) {
+    totalAmbientIrradiance += ambientLights.color[i];
+  }
+  
+  getIndirectDiffuse(totalAmbientIrradiance, diffuseColor, ptr_reflectedLight);
+}
+`
+  );
+
+  const getLambertDirect = (
+    /* wgsl */
+    `
+fn getLambertDirect(
+  normal: vec3f,
+  diffuseColor: vec3f,
+  directLight: DirectLight,
+  ptr_reflectedLight: ptr<function, ReflectedLight>
+) {
+  let L = normalize(directLight.direction);
+  let NdotL = saturate(dot(normal, L));
+  
+  let irradiance: vec3f = NdotL * directLight.color;
+  (*ptr_reflectedLight).directDiffuse += irradiance * BRDF_Lambert( diffuseColor );
 }
 `
   );
@@ -15661,73 +15687,32 @@ fn toneMapKhronosPbrNeutral( color: vec3f ) -> vec3f {
 `
   );
 
-  var RE_indirect_diffuse = (
+  const getPCFShadows = (
     /* wgsl */
     `
-fn getIndirectDiffuse(irradiance: vec3f, diffuseColor: vec3f, ptr_reflectedLight: ptr<function, ReflectedLight>) {
-  (*ptr_reflectedLight).indirectDiffuse += irradiance * BRDF_Lambert( diffuseColor );
-}
-
-// Indirect Diffuse RenderEquations
-fn RE_IndirectDiffuse(irradiance: vec3f, diffuseColor: vec3f, ptr_reflectedLight: ptr<function, ReflectedLight>) {
-  var totalAmbientIrradiance: vec3f = irradiance;
-  
-  for(var i: i32 = 0; i < ambientLights.count; i++) {
-    totalAmbientIrradiance += ambientLights.color[i];
-  }
-  
-  getIndirectDiffuse(totalAmbientIrradiance, diffuseColor, ptr_reflectedLight);
-}
+  let pointShadows = getPCFPointShadows(worldPosition);
+  let directionalShadows = getPCFDirectionalShadows(worldPosition);
 `
   );
 
-  var constants = (
+  const applyDirectionalShadows = (
     /* wgsl */
     `
-const PI = ${Math.PI};
-const RECIPROCAL_PI = ${1 / Math.PI};
-const RECIPROCAL_PI2 = ${0.5 / Math.PI};
-const EPSILON = 1e-6;`
-  );
-
-  const lambertUtils = (
-    /* wgsl */
-    `
-${constants}
-${light_utils}
-${RE_indirect_diffuse}
+    directLight.color *= directionalShadows[i];
 `
   );
-  const getLambertDirect = (
+
+  const applyPointShadows = (
     /* wgsl */
     `
-fn getLambertDirect(
-  normal: vec3f,
-  diffuseColor: vec3f,
-  directLight: DirectLight,
-  ptr_reflectedLight: ptr<function, ReflectedLight>
-) {
-  let L = normalize(directLight.direction);
-  let NdotL = max(dot(normal, L), 0.0);
-  
-  let irradiance: vec3f = NdotL * directLight.color;
-  (*ptr_reflectedLight).directDiffuse += irradiance * BRDF_Lambert( diffuseColor );
-}
+    directLight.color *= pointShadows[i];
 `
   );
-  const getLambert = ({ addUtils = true, receiveShadows = false, toneMapping = "linear", useOcclusion = false } = {}) => (
-    /* wgsl */
-    `
-${addUtils ? lambertUtils : ""}
-${getLambertDirect}
-${toneMapping ? toneMappingUtils : ""}
 
-fn getLambert(
-  normal: vec3f,
-  worldPosition: vec3f,
-  diffuseColor: vec3f,
-  ${useOcclusion ? "occlusion: f32," : ""}
-) -> vec3f {
+  const getLambertShading = ({ receiveShadows = false } = {}) => {
+    return (
+      /* wgsl */
+      `
   var directLight: DirectLight;
   var reflectedLight: ReflectedLight;
   
@@ -15737,30 +15722,60 @@ fn getLambert(
   for(var i = 0; i < pointLights.count; i++) {
     getPointLightInfo(pointLights.elements[i], worldPosition, &directLight);
     ${receiveShadows ? applyPointShadows : ""}
-    getLambertDirect(normal, diffuseColor, directLight, &reflectedLight);
+    getLambertDirect(normal, outputColor.rgb, directLight, &reflectedLight);
   }
   
   // directional lights
   for(var i = 0; i < directionalLights.count; i++) {
     getDirectionalLightInfo(directionalLights.elements[i], worldPosition, &directLight);
     ${receiveShadows ? applyDirectionalShadows : ""}
-    getLambertDirect(normal, diffuseColor, directLight, &reflectedLight);
+    getLambertDirect(normal, outputColor.rgb, directLight, &reflectedLight);
   }
   
   // ambient lights
   var irradiance: vec3f = vec3(0.0);
-  RE_IndirectDiffuse(irradiance, diffuseColor, &reflectedLight);
+  RE_IndirectDiffuse(irradiance, outputColor.rgb, &reflectedLight);
   
   let totalDirect: vec3f = reflectedLight.directDiffuse + reflectedLight.directSpecular;
   var totalIndirect: vec3f = reflectedLight.indirectDiffuse + reflectedLight.indirectSpecular;
   
-  ${useOcclusion ? "totalIndirect *= occlusion;" : ""}
+  totalIndirect *= occlusion;
   
-  var outgoingLight: vec3f = totalDirect + totalIndirect;
+  var outgoingLight: vec3f = totalDirect + totalIndirect;`
+    );
+  };
+
+  const lambertUtils$1 = (
+    /* wgsl */
+    `
+${constants}
+${common}
+${getLightsInfos}
+${REIndirectDiffuse}
+`
+  );
+  const getLambert = ({ addUtils = true, receiveShadows = false, toneMapping = "Linear", useOcclusion = false } = {}) => (
+    /* wgsl */
+    `
+${addUtils ? lambertUtils$1 : ""}
+${getLambertDirect}
+${toneMapping ? toneMappingUtils : ""}
+
+fn getLambert(
+  normal: vec3f,
+  worldPosition: vec3f,
+  outputColor: vec3f,
+  ${useOcclusion ? "occlusion: f32," : ""}
+) -> vec3f {
+  ${!useOcclusion ? "let occlusion: f32 = 1.0;" : ""}
+
+  ${getLambertShading({ receiveShadows })}
   
-  ${toneMapping === "linear" ? "outgoingLight = linearToOutput3(outgoingLight);" : toneMapping === "khronos" ? "outgoingLight = linearTosRGB(toneMapKhronosPbrNeutral(outgoingLight));" : ""}
+  var color: vec3f = outgoingLight;
   
-  return outgoingLight;
+  ${toneMapping === "Linear" ? "outgoingLight = linearToOutput3(color);" : toneMapping === "Khronos" ? "outgoingLight = linearTosRGB(toneMapKhronosPbrNeutral(color));" : ""}
+  
+  return color;
 }
 `
   );
@@ -15780,12 +15795,12 @@ fn BRDF_BlinnPhong(
   directLight: DirectLight
 ) -> vec3f {
   let L = normalize(directLight.direction);
-  let NdotL = max(dot(normal, L), 0.0);
+  let NdotL = saturate(dot(normalize(normal), L));
   let H: vec3f = normalize(viewDirection + L);
   
-  let NdotH: f32 = clamp(dot(normal, H), 0.0, 1.0);
-  let VdotH: f32 = clamp(dot(viewDirection, H), 0.0, 1.0);
-  let NdotV: f32 = clamp( dot(normal, viewDirection), 0.0, 1.0 );
+  let NdotH: f32 = saturate(dot(normalize(normal), H));
+  let VdotH: f32 = saturate(dot(normalize(viewDirection), H));
+  let NdotV: f32 = saturate(dot(normalize(normal), normalize(viewDirection)));
   
   let F: vec3f = F_Schlick(VdotH, specularColor, 1.0);
   
@@ -15809,7 +15824,7 @@ fn getPhongDirect(
   ptr_reflectedLight: ptr<function, ReflectedLight>
 ) {
   let L = normalize(directLight.direction);
-  let NdotL = max(dot(normal, L), 0.0);
+  let NdotL = saturate(dot(normalize(normal), L));
   
   let irradiance: vec3f = NdotL * directLight.color;
   (*ptr_reflectedLight).directDiffuse += irradiance * BRDF_Lambert( diffuseColor );
@@ -15817,23 +15832,11 @@ fn getPhongDirect(
 }
 `
   );
-  const getPhong = ({ addUtils = true, receiveShadows = false, toneMapping = "linear", useOcclusion = false } = {}) => (
-    /* wgsl */
-    `
-${addUtils ? lambertUtils : ""}
-${getPhongDirect}
-${toneMapping ? toneMappingUtils : ""}
 
-fn getPhong(
-  normal: vec3f,
-  worldPosition: vec3f,
-  diffuseColor: vec3f,
-  viewDirection: vec3f,
-  specularColor: vec3f,
-  specularStrength: f32,
-  shininess: f32,
-  ${useOcclusion ? "occlusion: f32," : ""}
-) -> vec3f {
+  const getPhongShading = ({ receiveShadows = false } = {}) => {
+    return (
+      /* wgsl */
+      `
   var directLight: DirectLight;
   var reflectedLight: ReflectedLight;
   
@@ -15843,35 +15846,69 @@ fn getPhong(
   for(var i = 0; i < pointLights.count; i++) {  
     getPointLightInfo(pointLights.elements[i], worldPosition, &directLight);
     ${receiveShadows ? applyPointShadows : ""}
-    getPhongDirect(normal, diffuseColor, viewDirection, specularColor, specularStrength, shininess, directLight, &reflectedLight);
+    getPhongDirect(normal, outputColor.rgb, viewDirection, specularColor, specularFactor, shininess, directLight, &reflectedLight);
   }
   
   // directional lights
   for(var i = 0; i < directionalLights.count; i++) {
     getDirectionalLightInfo(directionalLights.elements[i], worldPosition, &directLight);
     ${receiveShadows ? applyDirectionalShadows : ""}
-    getPhongDirect(normal, diffuseColor, viewDirection, specularColor, specularStrength, shininess, directLight, &reflectedLight);
+    getPhongDirect(normal, outputColor.rgb, viewDirection, specularColor, specularFactor, shininess, directLight, &reflectedLight);
   }
   
   // ambient lights
   var irradiance: vec3f = vec3(0.0);
-  RE_IndirectDiffuse(irradiance, diffuseColor, &reflectedLight);
+  RE_IndirectDiffuse(irradiance, outputColor.rgb, &reflectedLight);
   
   let totalDirect: vec3f = reflectedLight.directDiffuse + reflectedLight.directSpecular;
   var totalIndirect: vec3f = reflectedLight.indirectDiffuse + reflectedLight.indirectSpecular;
   
-  ${useOcclusion ? "totalIndirect *= occlusion;" : ""}
+  totalIndirect *= occlusion;
   
-  var outgoingLight: vec3f = totalDirect + totalIndirect;
+  var outgoingLight: vec3f = totalDirect + totalIndirect;`
+    );
+  };
+
+  const lambertUtils = (
+    /* wgsl */
+    `
+${constants}
+${common}
+${getLightsInfos}
+${REIndirectDiffuse}
+`
+  );
+  const getPhong = ({ addUtils = true, receiveShadows = false, toneMapping = "Linear", useOcclusion = false } = {}) => (
+    /* wgsl */
+    `
+${addUtils ? lambertUtils : ""}
+${getPhongDirect}
+${toneMapping ? toneMappingUtils : ""}
+
+fn getPhong(
+  normal: vec3f,
+  worldPosition: vec3f,
+  outputColor: vec3f,
+  viewDirection: vec3f,
+  specularColor: vec3f,
+  specularFactor: f32,
+  shininess: f32,
+  ${useOcclusion ? "occlusion: f32," : ""}
+) -> vec3f {
+  ${!useOcclusion ? "let occlusion: f32 = 1.0;" : ""}
+
+  ${getPhongShading({ receiveShadows })}
   
-  ${toneMapping === "linear" ? "outgoingLight = linearToOutput3(outgoingLight);" : toneMapping === "khronos" ? "outgoingLight = linearTosRGB(toneMapKhronosPbrNeutral(outgoingLight));" : ""}
+  var color: vec3f = outgoingLight;
   
-  return outgoingLight;
+  ${toneMapping === "Linear" ? "outgoingLight = linearToOutput3(color);" : toneMapping === "Khronos" ? "outgoingLight = linearTosRGB(toneMapKhronosPbrNeutral(color));" : ""}
+  
+  return color;
 }
 `
   );
 
-  var RE_indirect_specular = (
+  const REIndirectSpecular = (
     /* wgsl */
     `
 fn DFGApprox(
@@ -15879,7 +15916,7 @@ fn DFGApprox(
   viewDirection: vec3f,
   roughness: f32,
 ) -> vec2f {
-  let dotNV: f32 = clamp( dot( normal, viewDirection ), 0.0, 1.0 );
+  let dotNV: f32 = saturate(dot( normal, viewDirection ));
 
 	let c0: vec4f = vec4( - 1, - 0.0275, - 0.572, 0.022 );
 	let c1: vec4f = vec4( 1, 0.0425, 1.04, - 0.04 );
@@ -15950,122 +15987,73 @@ fn RE_IndirectSpecular(
 `
   );
 
-  var transmissionUtils = (
+  const getIBLTransmission = (
     /* wgsl */
     `
-fn EnvironmentBRDF(
-    normal: vec3<f32>, 
-    viewDir: vec3<f32>, 
-    specularColor: vec3<f32>, 
-    specularF90: f32, 
-    roughness: f32
-) -> vec3<f32> {
-    let fab = DFGApprox(normal, viewDir, roughness);
-    return specularColor * fab.x + specularF90 * fab.y;
-}
-
-fn isinf(value: f32) -> bool {
-  return value > 1.0e38 || value < -1.0e38;
-}
-
-fn getVolumeTransmissionRay(normal: vec3f, viewDirection: vec3f, thickness: f32, ior: f32, modelMatrix: mat4x4f) -> vec3f {
-    let refractionVector = refract(-viewDirection, normalize(normal), 1.0 / ior);
-    let modelScale = vec3(
-        length(modelMatrix[0].xyz),
-        length(modelMatrix[1].xyz),
-        length(modelMatrix[2].xyz)
-    );
-    return normalize(refractionVector) * thickness * modelScale;
+fn getVolumeTransmissionRay(normal: vec3f, viewDirection: vec3f, thickness: f32, ior: f32, modelScale: vec3f) -> vec3f {
+  let refractionVector = refract(-viewDirection, normalize(normal), 1.0 / ior);    
+  return normalize(refractionVector) * thickness * modelScale;
 }
 
 fn applyIorToRoughness(roughness: f32, ior: f32) -> f32 {
-    return roughness * clamp(ior * 2.0 - 2.0, 0.0, 1.0);
+  return roughness * saturate(ior * 2.0 - 2.0);
 }
 
 fn getTransmissionSample( fragCoord: vec2f, roughness: f32, ior: f32, transmissionSceneTexture: texture_2d<f32>, sampler: sampler ) -> vec4f {
-    let transmissionSamplerSize: vec2f = vec2f(textureDimensions(transmissionSceneTexture));
-    let lod: f32 = log2( transmissionSamplerSize.x ) * applyIorToRoughness( roughness, ior );
-    return textureSampleLevel( transmissionSceneTexture, sampler, fragCoord.xy, lod );
+  let transmissionSamplerSize: vec2f = vec2f(textureDimensions(transmissionSceneTexture));
+  let lod: f32 = log2( transmissionSamplerSize.x ) * applyIorToRoughness( roughness, ior );
+  return textureSampleLevel( transmissionSceneTexture, sampler, fragCoord.xy, lod );
 }
 
 fn volumeAttenuation(transmissionDistance: f32, attenuationColor: vec3f, attenuationDistance: f32) -> vec3f {
-    if (isinf(attenuationDistance)) {
-        return vec3(1.0);
-    } else {
-        let attenuationCoefficient = -log(attenuationColor) / attenuationDistance;
-        let transmittance = exp(-attenuationCoefficient * transmissionDistance);
-        return transmittance;
-    }
+  if (isinf(attenuationDistance)) {
+    return vec3(1.0);
+  } else {
+    let attenuationCoefficient = -log(attenuationColor) / attenuationDistance;
+    let transmittance = exp(-attenuationCoefficient * transmissionDistance);
+    return transmittance;
+  }
 }
 
 fn getIBLVolumeRefraction(
-    normal: vec3f,
-    viewDirection: vec3f,
-    roughness: f32,
-    diffuseColor: vec4f,
-    specularColor: vec3f,
-    specularF90: f32,
-    position: vec3f,
-    modelMatrix: mat4x4f,
-    viewMatrix: mat4x4f,
-    projMatrix: mat4x4f,
-    dispersion: f32,
-    ior: f32,
-    thickness: f32,
-    attenuationColor: vec3f,
-    attenuationDistance: f32,
-
-    transmissionBackgroundTexture: texture_2d<f32>,
-    defaultSampler: sampler,
+  normal: vec3f,
+  viewDirection: vec3f,
+  roughness: f32,
+  diffuseColor: vec4f,
+  specularColor: vec3f,
+  specularF90: f32,
+  position: vec3f,
+  modelScale: vec3f,
+  viewMatrix: mat4x4f,
+  projMatrix: mat4x4f,
+  dispersion: f32,
+  ior: f32,
+  thickness: f32,
+  attenuationColor: vec3f,
+  attenuationDistance: f32,
+  transmissionBackgroundTexture: texture_2d<f32>,
+  defaultSampler: sampler,
 ) -> vec4f {
     // TODO dispersion
     var transmittedLight: vec4f;
     var transmissionRayLength: f32;
     var transmittance: vec3f;
     
-    if(dispersion > 0.0) {
-      let halfSpread: f32 = (ior - 1.0) * 0.025 * dispersion;
-      let iors: vec3f = vec3(ior - halfSpread, ior, ior + halfSpread);
-      
-      for(var i: i32 = 0; i < 3; i++) {
-        let transmissionRay: vec3f = getVolumeTransmissionRay(normal, viewDirection, thickness, iors[i], modelMatrix);
-        transmissionRayLength = length(transmissionRay);
-        let refractedRayExit = position + transmissionRay;
+    // Calculate the transmission ray
+    let transmissionRay: vec3f = getVolumeTransmissionRay(normal, viewDirection, thickness, ior, modelScale);
+    let refractedRayExit = position + transmissionRay;
 
-        // Transform to NDC space
-        let ndcPos = projMatrix * viewMatrix * vec4(refractedRayExit, 1.0);
-        var refractionCoords = ndcPos.xy / ndcPos.w;
-        refractionCoords = (refractionCoords + 1.0) / 2.0;
-        refractionCoords = vec2(refractionCoords.x, 1.0 - refractionCoords.y); // webgpu Y flip
-        
-        let transmissionSample: vec4f = getTransmissionSample(refractionCoords, roughness, iors[i], transmissionBackgroundTexture, defaultSampler);
-        
-        transmittedLight[i] = transmissionSample[i];
-        transmittedLight.a += transmissionSample.a;
-        
-        // Compute transmittance
-        let diffuse: vec3f = diffuseColor.rgb;
-        transmittance[i] = diffuse[i] * volumeAttenuation(length(transmissionRay), attenuationColor, attenuationDistance)[i];
-      }
-      
-      transmittedLight.a /= 3.0;
-    } else {
-      // Calculate the transmission ray
-      let transmissionRay: vec3f = getVolumeTransmissionRay(normal, viewDirection, thickness, ior, modelMatrix);
-      let refractedRayExit = position + transmissionRay;
-  
-      // Transform to NDC space
-      let ndcPos = projMatrix * viewMatrix * vec4(refractedRayExit, 1.0);
-      var refractionCoords = ndcPos.xy / ndcPos.w;
-      refractionCoords = (refractionCoords + 1.0) / 2.0;
-      refractionCoords = vec2(refractionCoords.x, 1.0 - refractionCoords.y); // webgpu Y flip
-  
-      // Sample the transmission texture
-      transmittedLight = getTransmissionSample(refractionCoords, roughness, ior, transmissionBackgroundTexture, defaultSampler);
-  
-      // Compute transmittance
-      transmittance = diffuseColor.rgb * volumeAttenuation(length(transmissionRay), attenuationColor, attenuationDistance);
-    }
+    // Transform to NDC space
+    let ndcPos = projMatrix * viewMatrix * vec4(refractedRayExit, 1.0);
+    var refractionCoords = ndcPos.xy / ndcPos.w;
+    refractionCoords = (refractionCoords + 1.0) / 2.0;
+    refractionCoords = vec2(refractionCoords.x, 1.0 - refractionCoords.y); // webgpu Y flip
+
+    // Sample the transmission texture
+    transmittedLight = getTransmissionSample(refractionCoords, roughness, ior, transmissionBackgroundTexture, defaultSampler);
+
+    // Compute transmittance
+    transmittance = diffuseColor.rgb * volumeAttenuation(length(transmissionRay), attenuationColor, attenuationDistance);
 
     // Apply attenuation to transmitted light
     let attenuatedColor = transmittance * transmittedLight.rgb;
@@ -16078,21 +16066,92 @@ fn getIBLVolumeRefraction(
 
     // Combine results into the final color
     return vec4(
-        (1.0 - F) * attenuatedColor,
-        1.0 - (1.0 - transmittedLight.a) * transmittanceFactor
+      (1.0 - F) * attenuatedColor,
+      1.0 - (1.0 - transmittedLight.a) * transmittanceFactor
+    );
+}
+
+fn getIBLVolumeRefractionWithDispersion(
+  normal: vec3f,
+  viewDirection: vec3f,
+  roughness: f32,
+  diffuseColor: vec4f,
+  specularColor: vec3f,
+  specularF90: f32,
+  position: vec3f,
+  modelScale: vec3f,
+  viewMatrix: mat4x4f,
+  projMatrix: mat4x4f,
+  dispersion: f32,
+  ior: f32,
+  thickness: f32,
+  attenuationColor: vec3f,
+  attenuationDistance: f32,
+  transmissionBackgroundTexture: texture_2d<f32>,
+  defaultSampler: sampler,
+) -> vec4f {
+    var transmittedLight: vec4f;
+    var transmissionRayLength: f32;
+    var transmittance: vec3f;
+    
+    let halfSpread: f32 = (ior - 1.0) * 0.025 * dispersion;
+    let iors: vec3f = vec3(ior - halfSpread, ior, ior + halfSpread);
+    
+    for(var i: i32 = 0; i < 3; i++) {
+      let transmissionRay: vec3f = getVolumeTransmissionRay(normal, viewDirection, thickness, iors[i], modelScale);
+      transmissionRayLength = length(transmissionRay);
+      let refractedRayExit = position + transmissionRay;
+
+      // Transform to NDC space
+      let ndcPos = projMatrix * viewMatrix * vec4(refractedRayExit, 1.0);
+      var refractionCoords = ndcPos.xy / ndcPos.w;
+      refractionCoords = (refractionCoords + 1.0) / 2.0;
+      refractionCoords = vec2(refractionCoords.x, 1.0 - refractionCoords.y); // webgpu Y flip
+      
+      let transmissionSample: vec4f = getTransmissionSample(refractionCoords, roughness, iors[i], transmissionBackgroundTexture, defaultSampler);
+      
+      transmittedLight[i] = transmissionSample[i];
+      transmittedLight.a += transmissionSample.a;
+      
+      // Compute transmittance
+      let diffuse: vec3f = diffuseColor.rgb;
+      transmittance[i] = diffuse[i] * volumeAttenuation(length(transmissionRay), attenuationColor, attenuationDistance)[i];
+    }
+    
+    transmittedLight.a /= 3.0;
+
+    // Apply attenuation to transmitted light
+    let attenuatedColor = transmittance * transmittedLight.rgb;
+
+    // Compute Fresnel term using an environment BRDF
+    let F = EnvironmentBRDF(normal, viewDirection, specularColor, specularF90, roughness);
+
+    // Average the transmittance for a single factor
+    let transmittanceFactor = (transmittance.r + transmittance.g + transmittance.b) / 3.0;
+
+    // Combine results into the final color
+    return vec4(
+      (1.0 - F) * attenuatedColor,
+      1.0 - (1.0 - transmittedLight.a) * transmittanceFactor
     );
 }
 `
   );
 
-  const pbrUtils = `
-${lambertUtils}
-${RE_indirect_specular}
-${transmissionUtils}
-`;
   const getPBRDirect = (
     /* wgsl */
     `
+fn EnvironmentBRDF(
+  normal: vec3<f32>, 
+  viewDir: vec3<f32>, 
+  specularColor: vec3<f32>, 
+  specularF90: f32, 
+  roughness: f32
+) -> vec3<f32> {
+  let fab = DFGApprox(normal, viewDir, roughness);
+  return specularColor * fab.x + specularF90 * fab.y;
+}
+
 fn DistributionGGX(NdotH: f32, roughness: f32) -> f32 {
   let a: f32 = pow2( roughness );
   let a2: f32 = pow2( a );
@@ -16129,6 +16188,10 @@ fn BRDF_GGX(
   return G * D * F;
 }
 
+fn computeSpecularOcclusion( NdotV: f32, occlusion: f32, roughness: f32 ) -> f32 {
+	return saturate(pow(NdotV + occlusion, exp2(- 16.0 * roughness - 1.0)) - 1.0 + occlusion);
+}
+
 fn getPBRDirect(
   normal: vec3f,
   diffuseColor: vec3f,
@@ -16144,10 +16207,10 @@ fn getPBRDirect(
   let L: vec3f = normalize(directLight.direction);
   let V: vec3f = normalize(viewDirection);
   let H: vec3f = normalize(V + L);
-  let NdotV: f32 = clamp(dot(N, V), 0.0, 1.0);
-  let NdotL: f32 = clamp(dot(N, L), 0.0, 1.0);
-  let NdotH: f32 = clamp(dot(N, H), 0.0, 1.0);
-  let VdotH: f32 = clamp(dot(V, H), 0.0, 1.0);
+  let NdotV: f32 = saturate(dot(N, V));
+  let NdotL: f32 = saturate(dot(N, L));
+  let NdotH: f32 = saturate(dot(N, H));
+  let VdotH: f32 = saturate(dot(V, H));
 
   let irradiance: vec3f = NdotL * directLight.color;
   let ggx: vec3f = BRDF_GGX(NdotV, NdotL, NdotH, VdotH, roughness, specularFactor, specularColor);
@@ -16159,60 +16222,139 @@ fn getPBRDirect(
 }
 `
   );
-  const getPBR = ({ addUtils = true, receiveShadows = false, toneMapping = "linear", useOcclusion = false } = {}) => (
-    /* wgsl */
-    `
-${addUtils ? pbrUtils : ""}
-${getPBRDirect}
-${toneMapping ? toneMappingUtils : ""}
 
-fn getPBRContribution(
-  normal: vec3f,
-  worldPosition: vec3f,
-  diffuseColor: vec4f,
-  viewDirection: vec3f,
-  specularFactor: f32,
-  specularColor: vec3f,
-  metallic: f32,
-  roughness: f32,
-  ${useOcclusion ? "occlusion: f32," : ""}
-) -> ReflectedLight {
+  const getPBRShading = ({
+    receiveShadows = false,
+    environmentMap = null,
+    transmissionBackgroundTexture = null,
+    extensionsUsed = []
+  } = {}) => {
+    const iblIndirect = !!environmentMap ? (
+      /* wgsl */
+      `
+  getIBLIndirect(
+    normal,
+    viewDirection,
+    roughness,
+    metallic,
+    metallicDiffuseColor.rgb,
+    specularColor,
+    specularFactor,
+    ${environmentMap.sampler.name},
+    ${environmentMap.lutTexture.options.name},
+    ${environmentMap.specularTexture.options.name},
+    ${environmentMap.diffuseTexture.options.name},
+    envRotation,
+    envDiffuseIntensity,
+    envSpecularIntensity,
+    &reflectedLight
+  );
+  `
+    ) : "";
+    const hasDispersion = extensionsUsed.includes("KHR_materials_dispersion");
+    const iblVolumeRefractionFunction = hasDispersion ? "getIBLVolumeRefractionWithDispersion" : "getIBLVolumeRefraction";
+    const pbrTransmission = transmissionBackgroundTexture ? (
+      /* wgsl */
+      `
+  var transmissionAlpha: f32 = 1.0;
+  
+  var transmitted: vec4f = ${iblVolumeRefractionFunction}(
+    normal,
+    normalize(viewDirection),
+    roughness, 
+    metallicDiffuseColor,
+    specularColor,
+    specularF90,
+    worldPosition,
+    fsInput.modelScale,
+    camera.view,
+    camera.projection,
+    dispersion,
+    ior,
+    thickness,
+    attenuationColor,
+    attenuationDistance,
+    ${transmissionBackgroundTexture.texture},
+    ${transmissionBackgroundTexture.sampler},
+  );
+  
+  transmissionAlpha = mix( transmissionAlpha, transmitted.a, transmission );
+  
+  totalDiffuse = mix(totalDiffuse, transmitted.rgb, transmission);
+  outputColor.a *= transmissionAlpha;`
+    ) : "";
+    return (
+      /* wgsl */
+      `
   var directLight: DirectLight;
   var reflectedLight: ReflectedLight;
   
   ${receiveShadows ? getPCFShadows : ""}
+  
+  let metallicDiffuseColor: vec4f = outputColor * ( 1.0 - metallic );
+  
+  let specularF90: f32 = mix(specularFactor, 1.0, metallic);
+  let specularColor: vec3f = mix( min( pow2( ( ior - 1.0 ) / ( ior + 1.0 ) ) * specularColorFactor, vec3( 1.0 ) ) * specularFactor, outputColor.rgb, metallic );
 
   // point lights
   for(var i = 0; i < pointLights.count; i++) {
     getPointLightInfo(pointLights.elements[i], worldPosition, &directLight);
     ${receiveShadows ? applyPointShadows : ""}
-    getPBRDirect(normal, diffuseColor.rgb, viewDirection, specularFactor, specularColor, metallic, roughness, directLight, &reflectedLight);
+    getPBRDirect(normal, metallicDiffuseColor.rgb, viewDirection, specularFactor, specularColor, metallic, roughness, directLight, &reflectedLight);
   }
   
   // directional lights
   for(var i = 0; i < directionalLights.count; i++) {
     getDirectionalLightInfo(directionalLights.elements[i], worldPosition, &directLight);
     ${receiveShadows ? applyDirectionalShadows : ""}
-    getPBRDirect(normal, diffuseColor.rgb, viewDirection, specularFactor, specularColor, metallic, roughness, directLight, &reflectedLight);
+    getPBRDirect(normal, metallicDiffuseColor.rgb, viewDirection, specularFactor, specularColor, metallic, roughness, directLight, &reflectedLight);
   }
+  
+  ${iblIndirect}
   
   // ambient lights
   var irradiance: vec3f = vec3(0.0);
-  RE_IndirectDiffuse(irradiance, diffuseColor.rgb, &reflectedLight);
+  RE_IndirectDiffuse(irradiance, metallicDiffuseColor.rgb, &reflectedLight);
   
   // ambient lights specular
   var radiance: vec3f = vec3(0.0);
-  RE_IndirectSpecular(radiance, irradiance, normal, diffuseColor.rgb, specularFactor, specularColor, viewDirection, metallic, roughness, &reflectedLight);
+  RE_IndirectSpecular(radiance, irradiance, normal, metallicDiffuseColor.rgb, specularFactor, specularColor, viewDirection, metallic, roughness, &reflectedLight);
   
-  var pbrContribution: ReflectedLight;
+  reflectedLight.indirectDiffuse *= occlusion;
   
-  pbrContribution.directDiffuse = reflectedLight.directDiffuse;
-  pbrContribution.indirectDiffuse = reflectedLight.indirectDiffuse;
-  pbrContribution.directSpecular = reflectedLight.directSpecular;
-  pbrContribution.indirectSpecular = reflectedLight.indirectSpecular;
+  let NdotV: f32 = saturate(dot(geometryNormal, normalize(viewDirection)));
+  reflectedLight.indirectSpecular *= computeSpecularOcclusion(NdotV, occlusion, roughness);
   
-  return pbrContribution;
-}
+  var totalDiffuse: vec3f = reflectedLight.indirectDiffuse + reflectedLight.directDiffuse;
+  let totalSpecular: vec3f = reflectedLight.indirectSpecular + reflectedLight.directSpecular;
+  
+  ${pbrTransmission}
+  
+  var outgoingLight: vec3f = totalDiffuse + totalSpecular;`
+    );
+  };
+
+  const pbrUtils = `
+${constants}
+${common}
+${getLightsInfos}
+${REIndirectSpecular}
+${getIBLTransmission}
+`;
+  const getPBR = ({
+    addUtils = true,
+    receiveShadows = false,
+    toneMapping = "Linear",
+    useOcclusion = false,
+    environmentMap = null,
+    transmissionBackgroundTexture = null,
+    extensionsUsed = []
+  } = {}) => (
+    /* wgsl */
+    `
+${addUtils ? pbrUtils : ""}
+${getPBRDirect}
+${toneMapping ? toneMappingUtils : ""}
 
 fn getPBR(
   normal: vec3f,
@@ -16226,416 +16368,15 @@ fn getPBR(
   ior: f32,
   ${useOcclusion ? "occlusion: f32," : ""}
 ) -> vec4f {
-  let metallicDiffuseColor: vec4f = diffuseColor * ( 1.0 - metallic );
+  ${!useOcclusion ? "let occlusion: f32 = 1.0;" : ""}
   
-  let specularF90: f32 = mix(specularFactor, 1.0, metallic);
-  let specularColor = mix( min( pow2( ( ior - 1.0 ) / ( ior + 1.0 ) ) * specularColorFactor, vec3( 1.0 ) ) * specularFactor, diffuseColor.rgb, metallic );
-
-  var pbrContribution = getPBRContribution(
-    normal,
-    worldPosition,
-    metallicDiffuseColor,
-    viewDirection,
-    specularFactor,
-    specularColor,
-    metallic,
-    roughness,
-    ${useOcclusion ? "occlusion" : "0.0"}
-  );
+  ${getPBRShading({ receiveShadows, environmentMap, transmissionBackgroundTexture, extensionsUsed })}
   
-  ${useOcclusion ? "pbrContribution.indirectDiffuse *= occlusion;" : ""}
-
-  let totalDiffuse = pbrContribution.indirectDiffuse + pbrContribution.directDiffuse;
-  let totalSpecular = pbrContribution.indirectSpecular + pbrContribution.directSpecular;
+  var outputColor: vec3f = outgoingLight;
   
-  var outgoingLight: vec3f = totalDiffuse + totalSpecular;
+  ${toneMapping === "Linear" ? "outgoingLight = linearToOutput3(outputColor);" : toneMapping === "Khronos" ? "outgoingLight = linearTosRGB(toneMapKhronosPbrNeutral(outputColor));" : ""}
   
-  ${toneMapping === "linear" ? "outgoingLight = linearToOutput3(outgoingLight);" : toneMapping === "khronos" ? "outgoingLight = linearTosRGB(toneMapKhronosPbrNeutral(outgoingLight));" : ""}
-  
-  return vec4(outgoingLight, diffuseColor.a);
-}
-
-fn getPBRTransmission(
-  normal: vec3f,
-  worldPosition: vec3f,
-  diffuseColor: vec4f,
-  viewDirection: vec3f,
-  metallic: f32,
-  roughness: f32,
-  specularFactor: f32,
-  specularColorFactor: vec3f,
-  ior: f32,
-  transmission: f32,
-  dispersion: f32,
-  thickness: f32,
-  attenuationDistance: f32,
-  attenuationColor: vec3f,
-  transmissionBackgroundTexture: texture_2d<f32>,
-  defaultSampler: sampler,
-  ${useOcclusion ? "occlusion: f32," : ""}
-) -> vec4f {
-  let metallicDiffuseColor: vec4f = diffuseColor * ( 1.0 - metallic );
-  
-  let specularF90: f32 = mix(specularFactor, 1.0, metallic);
-  let specularColor = mix( min( pow2( ( ior - 1.0 ) / ( ior + 1.0 ) ) * specularColorFactor, vec3( 1.0 ) ) * specularFactor, diffuseColor.rgb, metallic );
-
-  var pbrContribution = getPBRContribution(
-    normal,
-    worldPosition,
-    metallicDiffuseColor,
-    viewDirection,
-    specularFactor,
-    specularColor,
-    metallic,
-    roughness,
-    ${useOcclusion ? "occlusion" : "0.0"}
-  );
-  
-  ${useOcclusion ? "pbrContribution.indirectDiffuse *= occlusion;" : ""}
-  
-  var transmissionAlpha: f32 = 1.0;
-  
-  var transmitted: vec4f = getIBLVolumeRefraction(
-    normal,
-    normalize(viewDirection),
-    roughness, 
-    metallicDiffuseColor,
-    specularColor,
-    specularF90,
-    worldPosition,
-    matrices.model,
-    camera.view,
-    camera.projection,
-    dispersion,
-    ior,
-    thickness,
-    attenuationColor,
-    attenuationDistance,
-    transmissionBackgroundTexture,
-    defaultSampler,
-  );
-  
-  transmissionAlpha = mix( transmissionAlpha, transmitted.a, transmission );
-  
-  var totalDiffuse: vec3f = pbrContribution.indirectDiffuse + pbrContribution.directDiffuse;
-  let totalSpecular: vec3f = pbrContribution.indirectSpecular + pbrContribution.directSpecular;
-  
-  totalDiffuse = mix(totalDiffuse, transmitted.rgb, transmission);
-  
-  var outgoingLight: vec3f = totalDiffuse + totalSpecular;
-  
-  ${toneMapping === "linear" ? "outgoingLight = linearToOutput3(outgoingLight);" : toneMapping === "khronos" ? "outgoingLight = linearTosRGB(toneMapKhronosPbrNeutral(outgoingLight));" : ""}
-  
-  return vec4(outgoingLight, diffuseColor.a * transmissionAlpha);
-}
-`
-  );
-
-  const getIBLIndirect = (
-    /* wgsl */
-    `
-struct IBLContribution {
-  directDiffuse: vec3f,
-  directSpecular: vec3f,
-  indirectDiffuse: vec3f,
-  indirectSpecular: vec3f
-}
-
-struct IBLGGXFresnel {
-  FssEss: vec3f,
-  FmsEms: vec3f
-}
-
-fn getIBLGGXFresnel(normal: vec3f, viewDirection: vec3f, roughness: f32, f0: vec3f, specularWeight: f32, clampSampler: sampler,
-  lutTexture: texture_2d<f32>) -> IBLGGXFresnel {
-    var iBLGGXFresnel: IBLGGXFresnel;
-  
-    let N: vec3f = normalize(normal);
-    let V: vec3f = normalize(viewDirection);
-    let NdotV: f32 = clamp(dot(N, V), 0.0, 1.0);
-    
-    let brdfSamplePoint: vec2f = clamp(vec2(NdotV, roughness), vec2(0.0), vec2(1.0));
-    
-    let brdf: vec3f = textureSample(
-      lutTexture,
-      clampSampler,
-      brdfSamplePoint
-    ).rgb;
-    
-    let Fr: vec3f = max(vec3(1.0 - roughness), f0) - f0;
-    let k_S: vec3f = f0 + Fr * pow(1.0 - NdotV, 5.0);
-    iBLGGXFresnel.FssEss = specularWeight * (k_S * brdf.x + brdf.y);
-    let Ems: f32 = (1.0 - (brdf.x + brdf.y));
-    let F_avg: vec3f = specularWeight * (f0 + (1.0 - f0) / 21.0);
-    iBLGGXFresnel.FmsEms = Ems * iBLGGXFresnel.FssEss * F_avg / (1.0 - F_avg * Ems);
-
-    return iBLGGXFresnel;
-}
-
-fn getIBLIndirect(
-  normal: vec3f,
-  viewDirection: vec3f,
-  roughness: f32,
-  metallic: f32,
-  diffuseColor: vec3f,
-  specularColor: vec3f,
-  specularFactor: f32,
-  clampSampler: sampler,
-  lutTexture: texture_2d<f32>,
-  envSpecularTexture: texture_cube<f32>,
-  envDiffuseTexture: texture_cube<f32>,
-  ptr_reflectedLight: ptr<function, ReflectedLight>,
-  // ptr_iblIndirect: ptr<function, IBLIndirect>
-) {
-  let N: vec3f = normalize(normal);
-  let V: vec3f = normalize(viewDirection);
-  let NdotV: f32 = clamp(dot(N, V), 0.0, 1.0);
-  
-  let reflection: vec3f = normalize(reflect(-V, N));
-  
-  let iblDiffuseColor: vec3f = mix(diffuseColor, vec3(0.0), vec3(metallic));
-
-  // IBL specular (radiance)
-  let lod: f32 = roughness * f32(textureNumLevels(envSpecularTexture) - 1);
-  
-  let specularLight: vec4f = textureSampleLevel(
-    envSpecularTexture,
-    clampSampler,
-    reflection * ibl.envRotation,
-    lod
-  );
-  
-  // IBL diffuse (irradiance)
-  let diffuseLight: vec4f = textureSample(
-    envDiffuseTexture,
-    clampSampler,
-    normal * ibl.envRotation
-  );
-  
-  let iBLGGXFresnel = getIBLGGXFresnel(normal, viewDirection, roughness, specularColor, specularFactor, clampSampler, lutTexture);
-  
-  let k_D: vec3f = iblDiffuseColor * (1.0 - iBLGGXFresnel.FssEss + iBLGGXFresnel.FmsEms);
-  
-  (*ptr_reflectedLight).indirectSpecular += specularLight.rgb * iBLGGXFresnel.FssEss * ibl.specularStrength;
-  (*ptr_reflectedLight).indirectDiffuse += (iBLGGXFresnel.FmsEms + k_D) * diffuseLight.rgb * ibl.diffuseStrength;
-  
-  // (*ptr_iblIndirect).diffuse = PI * diffuseLight.rgb * ibl.diffuseStrength;
-  // (*ptr_iblIndirect).specular = specularLight.rgb * ibl.specularStrength;
-}
-`
-  );
-  const getIBL = ({ addUtils = true, receiveShadows = false, toneMapping = "linear", useOcclusion = false } = {}) => (
-    /* wgsl */
-    `
-${addUtils ? pbrUtils : ""}
-${getPBRDirect}
-${getIBLIndirect}
-${toneMapping ? toneMappingUtils : ""}
-
-fn getIBLContribution(
-  normal: vec3f,
-  worldPosition: vec3f,
-  diffuseColor: vec4f,
-  viewDirection: vec3f,
-  metallic: f32,
-  roughness: f32,
-  specularFactor: f32,
-  specularColor: vec3f,
-  clampSampler: sampler,
-  lutTexture: texture_2d<f32>,
-  envSpecularTexture: texture_cube<f32>,
-  envDiffuseTexture: texture_cube<f32>,
-  occlusion: f32,
-) -> ReflectedLight {
-  var directLight: DirectLight;
-  var reflectedLight: ReflectedLight;
-  
-  ${receiveShadows ? getPCFShadows : ""}
-
-  // point lights
-  for(var i = 0; i < pointLights.count; i++) {
-    getPointLightInfo(pointLights.elements[i], worldPosition, &directLight);
-    ${receiveShadows ? applyPointShadows : ""}
-    getPBRDirect(normal, diffuseColor.rgb, viewDirection, specularFactor, specularColor, metallic, roughness, directLight, &reflectedLight);
-  }
-  
-  // directional lights
-  for(var i = 0; i < directionalLights.count; i++) {
-    getDirectionalLightInfo(directionalLights.elements[i], worldPosition, &directLight);
-    ${receiveShadows ? applyDirectionalShadows : ""}
-    getPBRDirect(normal, diffuseColor.rgb, viewDirection, specularFactor, specularColor, metallic, roughness, directLight, &reflectedLight);
-  }
-  
-  var irradiance: vec3f = vec3(0.0);
-  var radiance: vec3f = vec3(0.0);
-    
-  // IBL
-  getIBLIndirect(
-    normal,
-    viewDirection,
-    roughness,
-    metallic,
-    diffuseColor.rgb,
-    specularColor,
-    specularFactor,
-    clampSampler,
-    lutTexture,
-    envSpecularTexture,
-    envDiffuseTexture,
-    &reflectedLight,
-    // &iblIndirect
-  );
-  
-  // irradiance += iblIndirect.diffuse;
-  // radiance += iblIndirect.specular;
-  
-  // ambient lights
-  RE_IndirectDiffuse(irradiance, diffuseColor.rgb, &reflectedLight);
-  
-  // ambient lights specular
-  RE_IndirectSpecular(radiance, irradiance, normal, diffuseColor.rgb, specularFactor, specularColor, viewDirection, metallic, roughness, &reflectedLight);  
-  
-  var iblContribution: ReflectedLight;
-  
-  iblContribution.directDiffuse = reflectedLight.directDiffuse;
-  iblContribution.indirectDiffuse = reflectedLight.indirectDiffuse;
-  iblContribution.directSpecular = reflectedLight.directSpecular;
-  iblContribution.indirectSpecular = reflectedLight.indirectSpecular;
-  
-  return iblContribution;
-}
-
-fn getIBL(
-  normal: vec3f,
-  worldPosition: vec3f,
-  diffuseColor: vec4f,
-  viewDirection: vec3f,
-  metallic: f32,
-  roughness: f32,
-  specularFactor: f32,
-  specularColorFactor: vec3f,
-  ior: f32,
-  clampSampler: sampler,
-  lutTexture: texture_2d<f32>,
-  envSpecularTexture: texture_cube<f32>,
-  envDiffuseTexture: texture_cube<f32>,
-  ${useOcclusion ? "occlusion: f32," : ""}
-) -> vec4f {
-  let metallicDiffuseColor: vec4f = diffuseColor * ( 1.0 - metallic );
-  
-  let specularF90: f32 = mix(specularFactor, 1.0, metallic);
-  let specularColor = mix( min( pow2( ( ior - 1.0 ) / ( ior + 1.0 ) ) * specularColorFactor, vec3( 1.0 ) ) * specularFactor, diffuseColor.rgb, metallic );
-
-  var iblContribution = getIBLContribution(
-    normal,
-    worldPosition,
-    metallicDiffuseColor,
-    viewDirection,
-    metallic,
-    roughness,
-    specularFactor,
-    specularColor,
-    clampSampler,
-    lutTexture,
-    envSpecularTexture,
-    envDiffuseTexture,
-    ${useOcclusion ? "occlusion" : "0.0"}
-  );
-  
-  // TODO computeSpecularOcclusion!
-  ${useOcclusion ? "iblContribution.indirectDiffuse *= occlusion;" : ""}
-  
-  var totalDiffuse: vec3f = iblContribution.indirectDiffuse + iblContribution.directDiffuse;
-  let totalSpecular: vec3f = iblContribution.indirectSpecular + iblContribution.directSpecular;
-  
-  var outgoingLight: vec3f = totalDiffuse + totalSpecular;
-  
-  ${toneMapping === "linear" ? "outgoingLight = linearToOutput3(outgoingLight);" : toneMapping === "khronos" ? "outgoingLight = linearTosRGB(toneMapKhronosPbrNeutral(outgoingLight));" : ""}
-  
-  return vec4(outgoingLight, diffuseColor.a);
-}
-
-fn getIBLTransmission(
-  normal: vec3f,
-  worldPosition: vec3f,
-  diffuseColor: vec4f,
-  viewDirection: vec3f,
-  metallic: f32,
-  roughness: f32,
-  specularFactor: f32,
-  specularColorFactor: vec3f,
-  ior: f32,
-  clampSampler: sampler,
-  lutTexture: texture_2d<f32>,
-  envSpecularTexture: texture_cube<f32>,
-  envDiffuseTexture: texture_cube<f32>,
-  transmission: f32,
-  dispersion: f32,
-  thickness: f32,
-  attenuationDistance: f32,
-  attenuationColor: vec3f,
-  transmissionBackgroundTexture: texture_2d<f32>,
-  defaultSampler: sampler,
-  ${useOcclusion ? "occlusion: f32," : ""}
-) -> vec4f {
-  let metallicDiffuseColor: vec4f = diffuseColor * ( 1.0 - metallic );
-  
-  let specularF90: f32 = mix(specularFactor, 1.0, metallic);
-  let specularColor = mix( min( pow2( ( ior - 1.0 ) / ( ior + 1.0 ) ) * specularColorFactor, vec3( 1.0 ) ) * specularFactor, diffuseColor.rgb, metallic );
-
-  var iblContribution = getIBLContribution(
-    normal,
-    worldPosition,
-    metallicDiffuseColor, // TODO check?
-    viewDirection,
-    metallic,
-    roughness,
-    specularFactor,
-    specularColor,
-    clampSampler,
-    lutTexture,
-    envSpecularTexture,
-    envDiffuseTexture,
-     ${useOcclusion ? "occlusion" : "0.0"}
-  );
-  
-  // TODO computeSpecularOcclusion!
-  ${useOcclusion ? "iblContribution.indirectDiffuse *= occlusion;" : ""}
-  
-  var transmissionAlpha: f32 = 1.0;
-  
-  var transmitted: vec4f = getIBLVolumeRefraction(
-    normal,
-    normalize(viewDirection),
-    roughness, 
-    metallicDiffuseColor,
-    specularColor,
-    specularF90,
-    worldPosition,
-    matrices.model,
-    camera.view,
-    camera.projection,
-    dispersion,
-    ior,
-    thickness,
-    attenuationColor,
-    attenuationDistance,
-    transmissionBackgroundTexture,
-    defaultSampler,
-  );
-  
-  transmissionAlpha = mix( transmissionAlpha, transmitted.a, transmission );
-
-  var totalDiffuse: vec3f = iblContribution.indirectDiffuse + iblContribution.directDiffuse;
-  let totalSpecular: vec3f = iblContribution.indirectSpecular + iblContribution.directSpecular;
-  
-  totalDiffuse = mix(totalDiffuse, transmitted.rgb, transmission);
-  
-  var outgoingLight: vec3f = totalDiffuse + totalSpecular;
-  
-  ${toneMapping === "linear" ? "outgoingLight = linearToOutput3(outgoingLight);" : toneMapping === "khronos" ? "outgoingLight = linearTosRGB(toneMapKhronosPbrNeutral(outgoingLight));" : ""}
-  
-  return vec4(outgoingLight, diffuseColor.a * transmissionAlpha);
+  return vec4(outputColor, diffuseColor.a);
 }
 `
   );
@@ -18402,7 +18143,7 @@ fn getIBLTransmission(
     }
   };
 
-  var computeBrdfLutWgsl = (
+  const computeBRDFLUT = (
     /* wgsl */
     `
 fn radicalInverse_VdC(inputBits: u32) -> f32 {
@@ -18600,7 +18341,7 @@ fn main(@builtin(global_invocation_id) global_id : vec3<u32>) {
 `
   );
 
-  var computeSpecularCubemapFromHdr = (
+  const computeSpecularCubemapFromHDR = (
     /* wgsl */
     `
 // Cube face lookup vectors
@@ -18849,28 +18590,7 @@ const PI = ${Math.PI};
      * @param renderer - {@link Renderer} or {@link GPUCurtains} class object used to create this {@link EnvironmentMap}.
      * @param params - {@link EnvironmentMapParams | parameters} use to create this {@link EnvironmentMap}. Defines the various textures options.
      */
-    constructor(renderer, params = {
-      lutTextureParams: {
-        size: 256,
-        computeSampleCount: 1024,
-        label: "Environment LUT texture",
-        name: "lutTexture",
-        format: "rgba32float"
-      },
-      diffuseTextureParams: {
-        size: 128,
-        computeSampleCount: 2048,
-        label: "Environment diffuse texture",
-        name: "envDiffuseTexture",
-        format: "rgba16float"
-      },
-      specularTextureParams: {
-        label: "Environment specular texture",
-        name: "envSpecularTexture",
-        format: "rgba16float",
-        generateMips: true
-      }
-    }) {
+    constructor(renderer, params = {}) {
       /**
        * Once the given {@link ComputePass} has written to a temporary storage {@link Texture}, copy it into our permanent {@link Texture}.
        * @param commandEncoder - The GPU command encoder to use.
@@ -18881,6 +18601,33 @@ const PI = ${Math.PI};
       __privateAdd$3(this, _copyComputeStorageTextureToTexture);
       renderer = isRenderer(renderer, "EnvironmentMap");
       this.renderer = renderer;
+      params = {
+        ...{
+          lutTextureParams: {
+            size: 256,
+            computeSampleCount: 1024,
+            label: "Environment LUT texture",
+            name: "lutTexture",
+            format: "rgba32float"
+          },
+          diffuseTextureParams: {
+            size: 128,
+            computeSampleCount: 2048,
+            label: "Environment diffuse texture",
+            name: "envDiffuseTexture",
+            format: "rgba16float"
+          },
+          specularTextureParams: {
+            label: "Environment specular texture",
+            name: "envSpecularTexture",
+            format: "rgba16float",
+            generateMips: true
+          },
+          diffuseIntensity: 1,
+          specularIntensity: 1
+        },
+        ...params
+      };
       this.options = params;
       this.sampler = new Sampler(this.renderer, {
         label: "Clamp sampler",
@@ -18928,7 +18675,7 @@ const PI = ${Math.PI};
         dispatchSize: [Math.ceil(lutStorageTexture.size.width / 16), Math.ceil(lutStorageTexture.size.height / 16), 1],
         shaders: {
           compute: {
-            code: computeBrdfLutWgsl
+            code: computeBRDFLUT
           }
         },
         uniforms: {
@@ -18991,7 +18738,7 @@ const PI = ${Math.PI};
         ],
         shaders: {
           compute: {
-            code: computeSpecularCubemapFromHdr
+            code: computeSpecularCubemapFromHDR
           }
         },
         storages: {
@@ -20296,8 +20043,20 @@ const PI = ${Math.PI};
         const transmissionBuffer = {
           backgroundOutputTexture: new Texture(this.renderer, {
             label: "Transmission background scene render target output",
-            generateMips: true
+            name: "transmissionBackgroundTexture",
+            generateMips: true,
             // needed for roughness LOD!
+            format: this.renderer.options.context.format,
+            autoDestroy: false
+          }),
+          sampler: new Sampler(this.renderer, {
+            label: "Clamp sampler",
+            name: "clampSampler",
+            magFilter: "linear",
+            minFilter: "linear",
+            mipmapFilter: "linear",
+            addressModeU: "clamp-to-edge",
+            addressModeV: "clamp-to-edge"
           }),
           sceneTransmissionPassEntry
         };
@@ -20663,12 +20422,12 @@ const PI = ${Math.PI};
         mesh.primitives.forEach((primitive, primitiveIndex) => {
           const meshDescriptor = {
             parent: child.node,
-            attributes: [],
             textures: [],
             parameters: {
               label: mesh.name ? mesh.name + " " + primitiveIndex : "glTF mesh " + primitiveIndex
             },
-            nodes: []
+            nodes: [],
+            extensionsUsed: []
           };
           instancesDescriptor = __privateGet(this, _primitiveInstances).get(primitive);
           if (!instancesDescriptor) {
@@ -20890,12 +20649,6 @@ const PI = ${Math.PI};
       if (!interleavedArray) {
         this.sortAttributesByNames(["position", "uv", "normal"], defaultAttributes);
       }
-      defaultAttributes.forEach((attribute) => {
-        meshDescriptor.attributes.push({
-          name: attribute.name,
-          type: attribute.type
-        });
-      });
       const geometryAttributes = {
         instancesCount: instances.length,
         topology: _GLTFScenesManager.gpuPrimitiveTopologyForMode(primitive.mode),
@@ -21135,7 +20888,17 @@ const PI = ${Math.PI};
       }
       const material = this.gltf.materials && this.gltf.materials[primitive.material] || {};
       const { extensions } = material;
+      if (extensions) {
+        for (const extension of Object.keys(extensions)) {
+          if (extension === "KHR_materials_unlit" && this.gltf.extensionsRequired && this.gltf.extensionsRequired.includes(extension)) {
+            meshDescriptor.extensionsUsed.push(extension);
+          } else {
+            meshDescriptor.extensionsUsed.push(extension);
+          }
+        }
+      }
       const dispersion = extensions && extensions.KHR_materials_dispersion || null;
+      const emissiveStrength = extensions && extensions.KHR_materials_emissive_strength || null;
       const ior = extensions && extensions.KHR_materials_ior || null;
       const transmission = extensions && extensions.KHR_materials_transmission || null;
       const specular = extensions && extensions.KHR_materials_specular || null;
@@ -21146,20 +20909,16 @@ const PI = ${Math.PI};
         meshDescriptor.parameters.useCustomScenePassEntry = this.scenesManager.transmissionCompositing.sceneTransmissionPassEntry;
       }
       const materialTextures = this.scenesManager.materialsTextures[primitive.material];
+      meshDescriptor.parameters.samplers = [];
+      meshDescriptor.parameters.textures = [];
       if (hasTransmission) {
         materialTextures.texturesDescriptors.push({
-          texture: new Texture(this.renderer, {
-            fromTexture: this.scenesManager.transmissionCompositing.backgroundOutputTexture,
-            name: "transmissionBackgroundTexture",
-            generateMips: true
-          }),
-          sampler: this.scenesManager.samplers[0],
+          texture: this.scenesManager.transmissionCompositing.backgroundOutputTexture,
+          sampler: this.scenesManager.transmissionCompositing.sampler,
           texCoordAttributeName: "uv"
           // whatever
         });
       }
-      meshDescriptor.parameters.samplers = [];
-      meshDescriptor.parameters.textures = [];
       materialTextures?.texturesDescriptors.forEach((t) => {
         meshDescriptor.textures.push({
           texture: t.texture.options.name,
@@ -21218,7 +20977,11 @@ const PI = ${Math.PI};
         },
         emissiveFactor: {
           type: "vec3f",
-          value: material.emissiveFactor !== void 0 ? material.emissiveFactor : [1, 1, 1]
+          value: material.emissiveFactor !== void 0 ? material.emissiveFactor : [0, 0, 0]
+        },
+        emissiveStrength: {
+          type: "f32",
+          value: emissiveStrength && emissiveStrength.emissiveStrength !== void 0 ? emissiveStrength.emissiveStrength : 1
         },
         specularFactor: {
           type: "f32",
@@ -21297,14 +21060,18 @@ const PI = ${Math.PI};
         });
         instancesBinding.childrenBindings.forEach((binding, index) => {
           const instanceNode = nodes[index];
-          const _updateWorldMatrix = instanceNode.updateWorldMatrix.bind(instanceNode);
-          instanceNode.updateWorldMatrix = () => {
-            _updateWorldMatrix();
+          const updateInstanceMatrices = () => {
             binding.inputs.model.value.copy(instanceNode.worldMatrix);
             binding.inputs.normal.value.getNormalMatrix(instanceNode.worldMatrix);
             binding.inputs.model.shouldUpdate = true;
             binding.inputs.normal.shouldUpdate = true;
           };
+          const _updateWorldMatrix = instanceNode.updateWorldMatrix.bind(instanceNode);
+          instanceNode.updateWorldMatrix = () => {
+            _updateWorldMatrix();
+            updateInstanceMatrices();
+          };
+          updateInstanceMatrices();
         });
         if (!meshDescriptor.parameters.bindings) {
           meshDescriptor.parameters.bindings = [];
@@ -21591,6 +21358,864 @@ const PI = ${Math.PI};
   };
   let GLTFScenesManager = _GLTFScenesManager;
 
+  const getVertexOutputStructContent = ({ geometry }) => {
+    const tangentAttribute = geometry.getAttributeByName("tangent");
+    const attributes = [];
+    if (geometry.vertexBuffers && geometry.vertexBuffers.length) {
+      geometry.vertexBuffers.forEach((vertexBuffer) => {
+        vertexBuffer.attributes.forEach((attribute) => {
+          if (attribute.name !== "position") {
+            attributes.push(attribute);
+          }
+        });
+      });
+    }
+    if (tangentAttribute) {
+      attributes.push({
+        name: "bitangent",
+        type: "vec3f"
+      });
+    }
+    const structAttributes = attributes.map((attribute, index) => {
+      return `
+  @location(${index}) ${attribute.name}: ${attribute.type},`;
+    }).join("");
+    return `
+  @builtin(position) position: vec4f,
+  ${structAttributes}
+  @location(${attributes.length}) viewDirection: vec3f,
+  @location(${attributes.length + 1}) worldPosition: vec3f,
+  @location(${attributes.length + 2}) modelScale: vec3f,`;
+  };
+
+  const getVertexOutputStruct = ({ geometry }) => {
+    return (
+      /* wgsl */
+      `
+struct VSOutput {
+  ${getVertexOutputStructContent({ geometry })}
+};`
+    );
+  };
+
+  const getVertexOutput = ({ geometry }) => {
+    let output = (
+      /* wgsl */
+      `
+  vsOutput.position = camera.projection * camera.view * worldPosition;
+  vsOutput.normal = normal;
+  vsOutput.worldPosition = worldPosition.xyz / worldPosition.w;
+  vsOutput.viewDirection = camera.position - vsOutput.worldPosition;
+  vsOutput.modelScale = vec3(
+    length(modelMatrix[0].xyz),
+    length(modelMatrix[1].xyz),
+    length(modelMatrix[2].xyz)
+  );
+  `
+    );
+    const tangentAttribute = geometry.getAttributeByName("tangent");
+    if (tangentAttribute) {
+      output += /* wgsl */
+      `
+  vsOutput.tangent = normalize(modelMatrix * tangent);
+  vsOutput.bitangent = cross(vsOutput.normal, vsOutput.tangent.xyz) * vsOutput.tangent.w;
+    `;
+    }
+    output += geometry.vertexBuffers.map(
+      (vertexBuffer) => vertexBuffer.attributes.filter((attr) => attr.name !== "normal" && attr.name !== "position" && attr.name !== "tangent").map((attribute) => {
+        return (
+          /* wgsl */
+          `
+  vsOutput.${attribute.name} = ${attribute.name};`
+        );
+      }).join("")
+    ).join("\n");
+    return output;
+  };
+
+  const getVertexCode = ({ bindings = [], geometry }) => {
+    return (
+      /* wgsl */
+      `
+${getVertexOutputStruct({ geometry })}
+  
+@vertex fn main(
+  attributes: Attributes,
+) -> VSOutput {
+  var vsOutput: VSOutput;
+    
+  ${declareAttributesVars({ geometry })}
+  ${getVertexPositionNormal({ bindings, geometry })}
+  ${getVertexOutput({ geometry })}
+
+  return vsOutput;
+}`
+    );
+  };
+
+  const getFragmentInputStruct = ({ geometry }) => {
+    return (
+      /* wgsl */
+      `
+struct FSInput {
+  @builtin(front_facing) frontFacing: bool,
+  ${getVertexOutputStructContent({ geometry })}
+};`
+    );
+  };
+
+  const declareMaterialVars = ({ environmentMap = null } = {}) => {
+    let materialVars = (
+      /* wgsl */
+      `
+  let baseColorFactor: vec4f = material.baseColorFactor;
+  let alphaCutoff: f32 = material.alphaCutoff;
+  let metallicFactor: f32 = material.metallicFactor;
+  let roughnessFactor: f32 = material.roughnessFactor;
+  let normalMapScale: f32 = material.normalMapScale;
+  let occlusionStrength: f32 = material.occlusionStrength;
+  let emissiveFactor: vec3f = material.emissiveFactor;
+  let emissiveStrength: f32 = material.emissiveStrength;
+  var specularFactor: f32 = material.specularFactor;
+  var specularColorFactor: vec3f = material.specularColorFactor;
+  let transmissionFactor: f32 = material.transmissionFactor;
+  let ior: f32 = material.ior;
+  let dispersion: f32 = material.dispersion;
+  let thicknessFactor: f32 = material.thicknessFactor;
+  let attenuationDistance: f32 = material.attenuationDistance;
+  let attenuationColor: vec3f = material.attenuationColor;
+`
+    );
+    if (!!environmentMap) {
+      materialVars += /* wgsl */
+      `
+  let envRotation: mat3x3f = material.envRotation;
+  let envDiffuseIntensity: f32 = material.envDiffuseIntensity;
+  let envSpecularIntensity: f32 = material.envSpecularIntensity;`;
+    }
+    return materialVars;
+  };
+
+  const getBaseColor = ({
+    geometry = null,
+    baseColorTexture = null
+  } = {}) => {
+    let baseColor = (
+      /* wgsl */
+      `
+  var baseColor: vec4f = baseColorFactor;
+  `
+    );
+    const colorAttributes = [];
+    if (geometry && geometry.vertexBuffers && geometry.vertexBuffers.length) {
+      geometry.vertexBuffers.forEach((vertexBuffer) => {
+        vertexBuffer.attributes.forEach((attribute) => {
+          if (attribute.name.includes("color")) {
+            colorAttributes.push(attribute);
+          }
+        });
+      });
+    }
+    colorAttributes.forEach((colorAttribute) => {
+      if (colorAttribute.type === "vec3f") {
+        baseColor += /* wgsl */
+        `
+  baseColor *= vec4(fsInput.${colorAttribute.name}, 1.0);`;
+      } else {
+        baseColor += /* wgsl */
+        `
+  baseColor *= fsInput.${colorAttribute.name};`;
+      }
+    });
+    if (baseColorTexture) {
+      baseColor += /* wgsl */
+      `
+  let baseColorSample: vec4f = textureSample(${baseColorTexture.texture}, ${baseColorTexture.sampler}, fsInput.${baseColorTexture.texCoordAttributeName});
+  baseColor *= baseColorSample;
+  `;
+    }
+    baseColor += /* wgsl */
+    `
+  if (baseColor.a < alphaCutoff) {
+    discard;
+  }
+  
+  outputColor = baseColor;
+  `;
+    return baseColor;
+  };
+
+  const getNormalTangentBitangent = ({
+    geometry = null,
+    normalTexture = null
+  } = {}) => {
+    let normalTangentBitangent = (
+      /* wgsl */
+      `
+  let faceDirection = select(-1.0, 1.0, fsInput.frontFacing);
+  let geometryNormal: vec3f = faceDirection * normal;
+  var tangent: vec3f;
+  var bitangent: vec3f;`
+    );
+    const tangentAttribute = geometry && geometry.getAttributeByName("tangent");
+    const hasTangent = !!(normalTexture && tangentAttribute);
+    if (normalTexture) {
+      if (hasTangent) {
+        normalTangentBitangent += /* wgsl */
+        `
+  tangent = normalize(fsInput.tangent.xyz);
+  bitangent = normalize(fsInput.bitangent);
+  `;
+      } else {
+        normalTangentBitangent += /* wgsl */
+        `
+  let Q1: vec3f = dpdx(worldPosition);
+  let Q2: vec3f = dpdy(worldPosition);
+  let st1: vec2f = dpdx(fsInput.${normalTexture.texCoordAttributeName});
+  let st2: vec2f = dpdy(fsInput.${normalTexture.texCoordAttributeName});
+  
+  tangent = normalize(Q1 * st2.y - Q2 * st1.y);
+  bitangent = normalize(-Q1 * st2.x + Q2 * st1.x);
+  `;
+      }
+      normalTangentBitangent += /* wgsl */
+      `
+  let tbn = mat3x3f(tangent, bitangent, geometryNormal);
+  let normalMap = textureSample(${normalTexture.texture}, ${normalTexture.sampler}, fsInput.${normalTexture.texCoordAttributeName}).rgb;
+  normal = normalize(tbn * (2.0 * normalMap - vec3(normalMapScale, normalMapScale, 1.0)));`;
+    } else {
+      normalTangentBitangent += /* wgsl */
+      `
+  normal = geometryNormal;`;
+    }
+    return normalTangentBitangent;
+  };
+
+  const getEmissiveOcclusion = ({
+    emissiveTexture = null,
+    occlusionTexture = null
+  } = {}) => {
+    let emissiveOcclusion = (
+      /* wgsl */
+      `
+  var emissive: vec3f = emissiveFactor;
+  var occlusion: f32 = 1.0;`
+    );
+    if (emissiveTexture) {
+      emissiveOcclusion += /* wgsl */
+      `
+  let emissiveSample: vec3f = textureSample(${emissiveTexture.texture}, ${emissiveTexture.sampler}, fsInput.${emissiveTexture.texCoordAttributeName}).rgb;
+  emissive *= emissiveSample;`;
+    }
+    emissiveOcclusion += /* wgsl */
+    `
+  emissive *= emissiveStrength;`;
+    if (occlusionTexture) {
+      emissiveOcclusion += /* wgsl */
+      `
+  occlusion = textureSample(${occlusionTexture.texture}, ${occlusionTexture.sampler}, fsInput.${occlusionTexture.texCoordAttributeName}).r;`;
+    }
+    emissiveOcclusion += /* wgsl */
+    `
+  occlusion = 1.0 + occlusionStrength * (occlusion - 1.0);`;
+    return emissiveOcclusion;
+  };
+
+  const getMetallicRoughness = ({
+    metallicRoughnessTexture = null
+  } = {}) => {
+    let metallicRoughness = (
+      /*  wgsl */
+      `
+  var metallic = metallicFactor;
+  var roughness = roughnessFactor;`
+    );
+    if (metallicRoughnessTexture) {
+      metallicRoughness += /* wgsl */
+      `
+  let metallicRoughness = textureSample(${metallicRoughnessTexture.texture}, ${metallicRoughnessTexture.sampler}, fsInput.${metallicRoughnessTexture.texCoordAttributeName});
+  
+  metallic = metallic * metallicRoughness.b;
+  roughness = roughness * metallicRoughness.g;
+  `;
+    }
+    metallicRoughness += /* wgsl */
+    `
+  metallic = saturate(metallic);
+  roughness = saturate(roughness);
+  `;
+    return metallicRoughness;
+  };
+
+  const applyToneMapping = ({ toneMapping = "Linear" } = {}) => {
+    return (() => {
+      switch (toneMapping) {
+        case "Linear":
+          return "outputColor = vec4(linearToOutput3(outputColor.rgb), outputColor.a);";
+        case "Khronos":
+          return "outputColor = vec4(linearTosRGB(toneMapKhronosPbrNeutral(outputColor.rgb)), outputColor.a);";
+        case false:
+        default:
+          return "";
+      }
+    })();
+  };
+
+  const getUnlitFragmentCode = ({
+    chunks = {
+      additionalFragmentHead: "",
+      preliminaryColorContribution: "",
+      additionalColorContribution: ""
+    },
+    toneMapping = "Linear",
+    geometry,
+    baseColorTexture = null
+  }) => {
+    if (!chunks) {
+      chunks = {
+        additionalFragmentHead: "",
+        preliminaryColorContribution: "",
+        additionalColorContribution: ""
+      };
+    } else {
+      if (!chunks.additionalFragmentHead) {
+        chunks.additionalFragmentHead = "";
+      }
+      if (!chunks.preliminaryColorContribution) {
+        chunks.preliminaryColorContribution = "";
+      }
+      if (!chunks.additionalColorContribution) {
+        chunks.additionalColorContribution = "";
+      }
+    }
+    return (
+      /* wgsl */
+      `  
+${chunks.additionalFragmentHead}
+
+${constants}
+${common}
+${toneMappingUtils}
+
+${getFragmentInputStruct({ geometry })}
+
+@fragment fn main(fsInput: FSInput) -> @location(0) vec4f {       
+  var outputColor: vec4f = vec4();
+  ${declareMaterialVars()}
+  ${getBaseColor({ geometry, baseColorTexture })}
+  let worldPosition: vec3f = fsInput.worldPosition;
+  let viewDirection: vec3f = fsInput.viewDirection;
+  var normal: vec3f = normalize(fsInput.normal);
+  ${getNormalTangentBitangent()}
+  ${getMetallicRoughness()}
+  ${getEmissiveOcclusion()}
+  
+  // user defined preliminary color contribution
+  ${chunks.preliminaryColorContribution}
+  
+  // user defined additional color contribution
+  ${chunks.additionalColorContribution}
+  
+  ${applyToneMapping({ toneMapping })}
+  return outputColor;
+}`
+    );
+  };
+
+  const getLambertFragmentCode = ({
+    chunks = {
+      additionalFragmentHead: "",
+      preliminaryColorContribution: "",
+      additionalColorContribution: ""
+    },
+    toneMapping = "Linear",
+    geometry,
+    receiveShadows = false,
+    baseColorTexture = null,
+    normalTexture = null,
+    emissiveTexture = null,
+    occlusionTexture = null
+  }) => {
+    if (!chunks) {
+      chunks = {
+        additionalFragmentHead: "",
+        preliminaryColorContribution: "",
+        additionalColorContribution: ""
+      };
+    } else {
+      if (!chunks.additionalFragmentHead) {
+        chunks.additionalFragmentHead = "";
+      }
+      if (!chunks.preliminaryColorContribution) {
+        chunks.preliminaryColorContribution = "";
+      }
+      if (!chunks.additionalColorContribution) {
+        chunks.additionalColorContribution = "";
+      }
+    }
+    return (
+      /* wgsl */
+      `  
+${chunks.additionalFragmentHead}
+
+${constants}
+${common}
+${getLightsInfos}
+${REIndirectDiffuse}
+${getLambertDirect}
+${toneMappingUtils}
+
+${getFragmentInputStruct({ geometry })}
+
+@fragment fn main(fsInput: FSInput) -> @location(0) vec4f {       
+  var outputColor: vec4f = vec4();
+  ${declareMaterialVars()}
+  ${getBaseColor({ geometry, baseColorTexture })}
+  let worldPosition: vec3f = fsInput.worldPosition;
+  let viewDirection: vec3f = fsInput.viewDirection;
+  var normal: vec3f = normalize(fsInput.normal);
+  ${getNormalTangentBitangent({ geometry, normalTexture })}
+  ${getMetallicRoughness()}
+  
+  // user defined preliminary color contribution
+  ${chunks.preliminaryColorContribution}
+  
+  ${getEmissiveOcclusion({ emissiveTexture, occlusionTexture })}
+  
+  // lights
+  ${getLambertShading({ receiveShadows })}
+  
+  outputColor = vec4(outgoingLight, outputColor.a);
+  outputColor = vec4(outputColor.rgb + emissive, outputColor.a);
+  
+  // user defined additional color contribution
+  ${chunks.additionalColorContribution}
+  
+  ${applyToneMapping({ toneMapping })}
+  return outputColor;
+}`
+    );
+  };
+
+  const getSpecular = ({
+    specularTexture = null,
+    specularFactorTexture = null,
+    specularColorTexture = null
+  } = {}) => {
+    let specular = "";
+    if (specularTexture) {
+      specular += /* wgsl */
+      `
+  let specularSample: vec4f = textureSample(${specularTexture.texture}, ${specularTexture.sampler}, fsInput.${specularTexture.texCoordAttributeName});
+  
+  specularFactor = specularFactor * specularSample.a;
+  specularColorFactor = specularColorFactor * specularSample.rgb;`;
+    } else {
+      if (specularFactorTexture) {
+        specular += /* wgsl */
+        `
+  let specularFactorSample: vec4f = textureSample(${specularFactorTexture.texture}, ${specularFactorTexture.sampler}, fsInput.${specularFactorTexture.texCoordAttributeName});
+  
+  specularFactor = specularFactor * specularSample.a;`;
+      }
+      if (specularColorTexture) {
+        specular += /* wgsl */
+        `
+  let specularColorSample: vec4f = textureSample(${specularColorTexture.texture}, ${specularColorTexture.sampler}, fsInput.${specularColorTexture.texCoordAttributeName});
+  
+  specularColorFactor = specularColorFactor * specularSample.rgb;`;
+      }
+      specular += /* wgsl */
+      `
+  specularFactor = mix(specularFactor, 1.0, metallic);`;
+    }
+    return specular;
+  };
+
+  const getPhongFragmentCode = ({
+    chunks = {
+      additionalFragmentHead: "",
+      preliminaryColorContribution: "",
+      additionalColorContribution: ""
+    },
+    toneMapping = "Linear",
+    geometry,
+    receiveShadows = false,
+    baseColorTexture = null,
+    normalTexture = null,
+    emissiveTexture = null,
+    occlusionTexture = null,
+    metallicRoughnessTexture = null,
+    specularTexture = null,
+    specularFactorTexture = null,
+    specularColorTexture = null
+  }) => {
+    if (!chunks) {
+      chunks = {
+        additionalFragmentHead: "",
+        preliminaryColorContribution: "",
+        additionalColorContribution: ""
+      };
+    } else {
+      if (!chunks.additionalFragmentHead) {
+        chunks.additionalFragmentHead = "";
+      }
+      if (!chunks.preliminaryColorContribution) {
+        chunks.preliminaryColorContribution = "";
+      }
+      if (!chunks.additionalColorContribution) {
+        chunks.additionalColorContribution = "";
+      }
+    }
+    return (
+      /* wgsl */
+      `  
+${chunks.additionalFragmentHead}
+
+${constants}
+${common}
+${getLightsInfos}
+${REIndirectDiffuse}
+${getPhongDirect}
+${toneMappingUtils}
+
+${getFragmentInputStruct({ geometry })}
+
+@fragment fn main(fsInput: FSInput) -> @location(0) vec4f {       
+  var outputColor: vec4f = vec4();
+  ${declareMaterialVars()}
+  ${getBaseColor({ geometry, baseColorTexture })}
+  let worldPosition: vec3f = fsInput.worldPosition;
+  let viewDirection: vec3f = fsInput.viewDirection;
+  var normal: vec3f = normalize(fsInput.normal);
+  ${getNormalTangentBitangent({ geometry, normalTexture })}
+  ${getMetallicRoughness({ metallicRoughnessTexture })}
+  
+  // user defined preliminary color contribution
+  ${chunks.preliminaryColorContribution}
+  
+  ${getSpecular({ specularTexture, specularFactorTexture, specularColorTexture })}
+  ${getEmissiveOcclusion({ emissiveTexture, occlusionTexture })}
+  
+  // lights
+  let shininess: f32 = 1.0 / max(EPSILON, roughness * roughness);
+  let specularColor: vec3f = mix( min( pow2( ( ior - 1.0 ) / ( ior + 1.0 ) ) * specularColorFactor, vec3( 1.0 ) ) * specularFactor, outputColor.rgb, metallic );
+  ${getPhongShading({ receiveShadows })}
+  
+  outputColor = vec4(outgoingLight, outputColor.a);
+  outputColor = vec4(outputColor.rgb + emissive, outputColor.a);
+  
+  // user defined additional color contribution
+  ${chunks.additionalColorContribution}
+  
+  ${applyToneMapping({ toneMapping })}
+  return outputColor;
+}`
+    );
+  };
+
+  const getIBLIndirect = (
+    /* wgsl */
+    `
+struct IBLGGXFresnel {
+  FssEss: vec3f,
+  FmsEms: vec3f
+}
+
+fn getIBLGGXFresnel(normal: vec3f, viewDirection: vec3f, roughness: f32, f0: vec3f, specularWeight: f32, clampSampler: sampler,
+  lutTexture: texture_2d<f32>) -> IBLGGXFresnel {
+    var iBLGGXFresnel: IBLGGXFresnel;
+
+    let N: vec3f = normalize(normal);
+    let V: vec3f = normalize(viewDirection);
+    let NdotV: f32 = saturate(dot(N, V));
+    
+    let brdfSamplePoint: vec2f = saturate(vec2(NdotV, roughness));
+
+    let brdf: vec3f = textureSample(
+      lutTexture,
+      clampSampler,
+      brdfSamplePoint
+    ).rgb;
+
+    let Fr: vec3f = max(vec3(1.0 - roughness), f0) - f0;
+    let k_S: vec3f = f0 + Fr * pow(1.0 - NdotV, 5.0);
+    iBLGGXFresnel.FssEss = specularWeight * (k_S * brdf.x + brdf.y);
+    let Ems: f32 = (1.0 - (brdf.x + brdf.y));
+    let F_avg: vec3f = specularWeight * (f0 + (1.0 - f0) / 21.0);
+    iBLGGXFresnel.FmsEms = Ems * iBLGGXFresnel.FssEss * F_avg / (1.0 - F_avg * Ems);
+
+    return iBLGGXFresnel;
+}
+
+fn getIBLIndirect(
+  normal: vec3f,
+  viewDirection: vec3f,
+  roughness: f32,
+  metallic: f32,
+  diffuseColor: vec3f,
+  specularColor: vec3f,
+  specularFactor: f32,
+  clampSampler: sampler,
+  lutTexture: texture_2d<f32>,
+  envSpecularTexture: texture_cube<f32>,
+  envDiffuseTexture: texture_cube<f32>,
+  envRotation: mat3x3f,
+  envDiffuseIntensity: f32,
+  envSpecularIntensity: f32,
+  ptr_reflectedLight: ptr<function, ReflectedLight>,
+  // ptr_iblIndirect: ptr<function, IBLIndirect>
+) {
+  let N: vec3f = normalize(normal);
+  let V: vec3f = normalize(viewDirection);
+  let NdotV: f32 = saturate(dot(N, V));
+
+  let reflection: vec3f = normalize(reflect(-V, N));
+
+  let iblDiffuseColor: vec3f = mix(diffuseColor, vec3(0.0), vec3(metallic));
+
+  // IBL specular (radiance)
+  let lod: f32 = roughness * f32(textureNumLevels(envSpecularTexture) - 1);
+
+  let specularLight: vec4f = textureSampleLevel(
+    envSpecularTexture,
+    clampSampler,
+    reflection * envRotation,
+    lod
+  );
+
+  // IBL diffuse (irradiance)
+  let diffuseLight: vec4f = textureSample(
+    envDiffuseTexture,
+    clampSampler,
+    normal * envRotation
+  );
+
+  let iBLGGXFresnel = getIBLGGXFresnel(normal, viewDirection, roughness, specularColor, specularFactor, clampSampler, lutTexture);
+
+  let k_D: vec3f = iblDiffuseColor * (1.0 - iBLGGXFresnel.FssEss + iBLGGXFresnel.FmsEms);
+
+  (*ptr_reflectedLight).indirectSpecular += specularLight.rgb * iBLGGXFresnel.FssEss * envSpecularIntensity;
+  (*ptr_reflectedLight).indirectDiffuse += (iBLGGXFresnel.FmsEms + k_D) * diffuseLight.rgb * envDiffuseIntensity;
+
+  // (*ptr_iblIndirect).diffuse = PI * diffuseLight.rgb * envDiffuseIntensity;
+  // (*ptr_iblIndirect).specular = specularLight.rgb * envSpecularIntensity;
+}
+`
+  );
+
+  const getTransmissionThickness = ({
+    transmissionTexture = null,
+    thicknessTexture = null
+  } = {}) => {
+    let transmissionThickness = (
+      /* wgsl */
+      `
+  var transmission: f32 = transmissionFactor;
+  var thickness: f32 = thicknessFactor;`
+    );
+    if (transmissionTexture) {
+      transmissionThickness += /* wgsl */
+      `
+  let transmissionSample: vec4f = textureSample(${transmissionTexture.texture}, ${transmissionTexture.sampler}, fsInput.${transmissionTexture.texCoordAttributeName});
+  
+  transmission = clamp(transmission * transmissionSample.r, 0.0, 1.0);`;
+    }
+    if (thicknessTexture) {
+      transmissionThickness += /* wgsl */
+      `
+  let thicknessSample: vec4f = textureSample(${thicknessTexture.texture}, ${thicknessTexture.sampler}, fsInput.${thicknessTexture.texCoordAttributeName});
+  
+  thickness = thickness * thicknessSample.g;`;
+    }
+    return transmissionThickness;
+  };
+
+  const getPBRFragmentCode = ({
+    chunks = {
+      additionalFragmentHead: "",
+      preliminaryColorContribution: "",
+      additionalColorContribution: ""
+    },
+    toneMapping = "Linear",
+    geometry,
+    extensionsUsed = [],
+    receiveShadows = false,
+    baseColorTexture = null,
+    normalTexture = null,
+    emissiveTexture = null,
+    occlusionTexture = null,
+    metallicRoughnessTexture = null,
+    specularTexture = null,
+    specularFactorTexture = null,
+    specularColorTexture = null,
+    transmissionTexture = null,
+    thicknessTexture = null,
+    transmissionBackgroundTexture = null,
+    environmentMap = null
+  }) => {
+    if (!chunks) {
+      chunks = {
+        additionalFragmentHead: "",
+        preliminaryColorContribution: "",
+        additionalColorContribution: ""
+      };
+    } else {
+      if (!chunks.additionalFragmentHead) {
+        chunks.additionalFragmentHead = "";
+      }
+      if (!chunks.preliminaryColorContribution) {
+        chunks.preliminaryColorContribution = "";
+      }
+      if (!chunks.additionalColorContribution) {
+        chunks.additionalColorContribution = "";
+      }
+    }
+    return (
+      /* wgsl */
+      `  
+${chunks.additionalFragmentHead}
+
+${constants}
+${common}
+${getLightsInfos}
+${REIndirectDiffuse}
+${REIndirectSpecular}
+${getPBRDirect}
+${getIBLIndirect}
+${getIBLTransmission}
+${toneMappingUtils}
+
+${getFragmentInputStruct({ geometry })}
+
+@fragment fn main(fsInput: FSInput) -> @location(0) vec4f {       
+  var outputColor: vec4f = vec4();
+  ${declareMaterialVars({ environmentMap })}
+  ${getBaseColor({ geometry, baseColorTexture })}
+  let worldPosition: vec3f = fsInput.worldPosition;
+  let viewDirection: vec3f = fsInput.viewDirection;
+  var normal: vec3f = normalize(fsInput.normal);
+  ${getNormalTangentBitangent({ geometry, normalTexture })}
+  ${getMetallicRoughness({ metallicRoughnessTexture })}
+  
+  // user defined preliminary color contribution
+  ${chunks.preliminaryColorContribution}
+  
+  ${getSpecular({ specularTexture, specularFactorTexture, specularColorTexture })}
+  ${getTransmissionThickness({ transmissionTexture, thicknessTexture })}
+  ${getEmissiveOcclusion({ emissiveTexture, occlusionTexture })}
+  
+  // lights
+  ${getPBRShading({ receiveShadows, environmentMap, transmissionBackgroundTexture, extensionsUsed })}
+  
+  outputColor = vec4(outgoingLight, outputColor.a);
+  outputColor = vec4(outputColor.rgb + emissive, outputColor.a);
+  
+  // user defined additional color contribution
+  ${chunks.additionalColorContribution}
+  
+  ${applyToneMapping({ toneMapping })}
+  return outputColor;
+}`
+    );
+  };
+
+  const getFragmentCode = ({
+    shadingModel = "PBR",
+    chunks = {
+      additionalFragmentHead: "",
+      preliminaryColorContribution: "",
+      additionalColorContribution: ""
+    },
+    toneMapping = "Linear",
+    geometry,
+    extensionsUsed = [],
+    receiveShadows = false,
+    baseColorTexture = null,
+    normalTexture = null,
+    emissiveTexture = null,
+    occlusionTexture = null,
+    metallicRoughnessTexture = null,
+    specularTexture = null,
+    specularFactorTexture = null,
+    specularColorTexture = null,
+    transmissionTexture = null,
+    thicknessTexture = null,
+    transmissionBackgroundTexture = null,
+    environmentMap = null
+  }) => {
+    if (!chunks) {
+      chunks = {
+        additionalFragmentHead: "",
+        preliminaryColorContribution: "",
+        additionalColorContribution: ""
+      };
+    } else {
+      if (!chunks.additionalFragmentHead) {
+        chunks.additionalFragmentHead = "";
+      }
+      if (!chunks.preliminaryColorContribution) {
+        chunks.preliminaryColorContribution = "";
+      }
+      if (!chunks.additionalColorContribution) {
+        chunks.additionalColorContribution = "";
+      }
+    }
+    return (() => {
+      switch (shadingModel) {
+        case "Unlit":
+          return getUnlitFragmentCode({ chunks, toneMapping, geometry, baseColorTexture });
+        case "Lambert":
+          return getLambertFragmentCode({
+            chunks,
+            toneMapping,
+            geometry,
+            receiveShadows,
+            baseColorTexture,
+            normalTexture,
+            emissiveTexture,
+            occlusionTexture
+          });
+        case "Phong":
+          return getPhongFragmentCode({
+            chunks,
+            toneMapping,
+            geometry,
+            receiveShadows,
+            baseColorTexture,
+            normalTexture,
+            emissiveTexture,
+            occlusionTexture,
+            metallicRoughnessTexture,
+            specularTexture,
+            specularFactorTexture,
+            specularColorTexture
+          });
+        case "PBR":
+        default:
+          return getPBRFragmentCode({
+            chunks,
+            toneMapping,
+            geometry,
+            extensionsUsed,
+            receiveShadows,
+            baseColorTexture,
+            normalTexture,
+            emissiveTexture,
+            occlusionTexture,
+            metallicRoughnessTexture,
+            specularTexture,
+            specularFactorTexture,
+            specularColorTexture,
+            transmissionTexture,
+            thicknessTexture,
+            transmissionBackgroundTexture,
+            environmentMap
+          });
+      }
+    })();
+  };
+
   const buildShaders = (meshDescriptor, shaderParameters = {}) => {
     const baseColorTexture = meshDescriptor.textures.find((t) => t.texture === "baseColorTexture");
     const normalTexture = meshDescriptor.textures.find((t) => t.texture === "normalTexture");
@@ -21605,242 +22230,31 @@ const PI = ${Math.PI};
     const transmissionBackgroundTexture = meshDescriptor.textures.find(
       (t) => t.texture === "transmissionBackgroundTexture"
     );
-    const facultativeAttributes = meshDescriptor.attributes.filter((attribute) => attribute.name !== "position");
-    const structAttributes = facultativeAttributes.map((attribute, index) => {
-      return `
-  @location(${index}) ${attribute.name}: ${attribute.type},`;
-    }).join("");
-    let vertexOutputContent = `
-  @builtin(position) position: vec4f,
-  ${structAttributes}
-  @location(${facultativeAttributes.length}) viewDirection: vec3f,
-  @location(${facultativeAttributes.length + 1}) worldPosition: vec3f,
-  `;
-    let outputBitangent = "";
-    const tangentAttribute = facultativeAttributes.find((attr) => attr.name === "tangent");
-    const hasTangent = !!(normalTexture && tangentAttribute);
-    if (hasTangent) {
-      vertexOutputContent += `
-  @location(${facultativeAttributes.length + 2}) bitangent: vec3f,
-      `;
-      outputBitangent = `
-  vsOutput.bitangent = cross(vsOutput.normal, vsOutput.tangent.xyz) * vsOutput.tangent.w;
-      `;
-    }
-    const fullVertexOutput = getFullVertexOutput({
-      bindings: meshDescriptor.parameters.bindings,
-      geometry: meshDescriptor.parameters.geometry
-    });
-    const vertexOutput = (
-      /*wgsl */
-      `
-struct VSOutput {
-  ${vertexOutputContent}
-};`
-    );
-    const fragmentInput = (
-      /*wgsl */
-      `
-struct VSOutput {
-  @builtin(front_facing) frontFacing: bool,
-  ${vertexOutputContent}
-};`
-    );
-    const vs = (
-      /* wgsl */
-      `
-${vertexOutput}
-
-@vertex fn main(
-  attributes: Attributes,
-) -> VSOutput {
-  var vsOutput: VSOutput;
-    
-  ${fullVertexOutput}
-  ${outputBitangent}
-
-  return vsOutput;
-}
-`
-    );
-    const initColor = (
-      /* wgsl */
-      "var color: vec4f = vec4();"
-    );
-    const returnColor = (
-      /* wgsl */
-      `
-  return color;`
-    );
-    const vertexColor = meshDescriptor.attributes.find((attr) => attr.name === "color0");
-    let baseColor = (
-      /* wgsl */
-      !!vertexColor ? vertexColor.type === "vec3f" ? "var baseColor: vec4f = vec4(fsInput.color0, 1.0) * material.baseColorFactor;" : "var baseColor: vec4f = fsInput.color0 * material.baseColorFactor;" : "var baseColor: vec4f = material.baseColorFactor;"
-    );
-    if (baseColorTexture) {
-      baseColor = /* wgsl */
-      `
-  var baseColor: vec4f = textureSample(baseColorTexture, ${baseColorTexture.sampler}, fsInput.${baseColorTexture.texCoordAttributeName}) * material.baseColorFactor;
-  
-  if (baseColor.a < material.alphaCutoff) {
-    discard;
-  }
-    `;
-    }
-    baseColor += /* wgsl */
-    `
-  color = baseColor;
-  `;
-    let normalMap = (
-      /* wgsl */
-      `
-  let faceDirection = select(-1.0, 1.0, fsInput.frontFacing);
-  let geometryNormal: vec3f = faceDirection * normal;
-  var tangent: vec3f;
-  var bitangent: vec3f;`
-    );
-    if (normalTexture) {
-      if (hasTangent) {
-        normalMap += /* wgsl */
-        `
-  tangent = normalize(fsInput.tangent.xyz);
-  bitangent = normalize(fsInput.bitangent);
-  `;
-      } else {
-        normalMap += /* wgsl */
-        `
-  let Q1: vec3f = dpdx(worldPosition);
-  let Q2: vec3f = dpdy(worldPosition);
-  let st1: vec2f = dpdx(fsInput.${normalTexture.texCoordAttributeName});
-  let st2: vec2f = dpdy(fsInput.${normalTexture.texCoordAttributeName});
-  
-  tangent = normalize(Q1 * st2.y - Q2 * st1.y);
-  bitangent = normalize(-Q1 * st2.x + Q2 * st1.x);
-  `;
-      }
-      normalMap += /* wgsl */
-      `
-  let tbn = mat3x3f(tangent, bitangent, geometryNormal);
-  let normalMap = textureSample(normalTexture, ${normalTexture.sampler}, fsInput.${normalTexture.texCoordAttributeName}).rgb;
-  normal = normalize(tbn * (2.0 * normalMap - vec3(material.normalMapScale, material.normalMapScale, 1.0)));`;
-    } else {
-      normalMap += /* wgsl */
-      `
-  normal = geometryNormal;`;
-    }
-    let metallicRoughness = (
-      /*  wgsl */
-      `
-  var metallic = material.metallicFactor;
-  var roughness = material.roughnessFactor;`
-    );
-    if (metallicRoughnessTexture) {
-      metallicRoughness += /* wgsl */
-      `
-  let metallicRoughness = textureSample(metallicRoughnessTexture, ${metallicRoughnessTexture.sampler}, fsInput.${metallicRoughnessTexture.texCoordAttributeName});
-  
-  metallic = clamp(metallic * metallicRoughness.b, 0.0, 1.0);
-  roughness = clamp(roughness * metallicRoughness.g, 0.0, 1.0);
-  `;
-    }
-    let specular = (
-      /* wgsl */
-      `
-  var specularFactor: f32 = material.specularFactor;
-  var specularColorFactor: vec3f = material.specularColorFactor;`
-    );
-    if (specularTexture) {
-      specular += /* wgsl */
-      `
-  let specularSample: vec4f = textureSample(specularTexture, ${specularTexture.sampler}, fsInput.${specularTexture.texCoordAttributeName});
-  
-  specularFactor = specularFactor * specularSample.a;
-  specularColorFactor = specularColorFactor * specularSample.rgb;`;
-    } else {
-      if (specularFactorTexture) {
-        specular += /* wgsl */
-        `
-  let specularFactorSample: vec4f = textureSample(specularFactorTexture, ${specularFactorTexture.sampler}, fsInput.${specularFactorTexture.texCoordAttributeName});
-  
-  specularFactor = specularFactor * specularSample.a;`;
-      }
-      if (specularColorTexture) {
-        specular += /* wgsl */
-        `
-  let specularColorSample: vec4f = textureSample(specularColorTexture, ${specularColorTexture.sampler}, fsInput.${specularColorTexture.texCoordAttributeName});
-  
-  specularColorFactor = specularColorFactor * specularSample.rgb;`;
-      }
-      specular += /* wgsl */
-      `
-    specularFactor = mix(specularFactor, 1.0, metallic);`;
-    }
-    let transmission = (
-      /* wgsl */
-      `
-  var transmission: f32 = material.transmissionFactor;
-  var thickness: f32 = material.thicknessFactor;`
-    );
-    if (transmissionTexture) {
-      transmission += /* wgsl */
-      `
-  let transmissionSample: vec4f = textureSample(transmissionTexture, ${transmissionTexture.sampler}, fsInput.${transmissionTexture.texCoordAttributeName});
-  
-  transmission = clamp(transmission * transmissionSample.r, 0.0, 1.0);`;
-    }
-    if (thicknessTexture) {
-      transmission += /* wgsl */
-      `
-  let thicknessSample: vec4f = textureSample(thicknessTexture, ${thicknessTexture.sampler}, fsInput.${thicknessTexture.texCoordAttributeName});
-  
-  thickness = thickness * thicknessSample.g;`;
-    }
-    let emissiveOcclusion = (
-      /* wgsl */
-      `
-  var emissive: vec3f = vec3(0.0);
-  var occlusion: f32 = 1.0;`
-    );
-    if (emissiveTexture) {
-      emissiveOcclusion += /* wgsl */
-      `
-  emissive = textureSample(emissiveTexture, ${emissiveTexture.sampler}, fsInput.${emissiveTexture.texCoordAttributeName}).rgb;
-  emissive *= material.emissiveFactor;`;
-      if (occlusionTexture) {
-        emissiveOcclusion += /* wgsl */
-        `
-  occlusion = textureSample(occlusionTexture, ${occlusionTexture.sampler}, fsInput.${occlusionTexture.texCoordAttributeName}).r;`;
-      }
-    }
-    emissiveOcclusion += /* wgsl */
-    `
-  occlusion = 1.0 + material.occlusionStrength * (occlusion - 1.0);`;
     let { shadingModel } = shaderParameters;
     if (!shadingModel) {
       shadingModel = "PBR";
     }
+    const isUnlit = meshDescriptor.extensionsUsed.includes("KHR_materials_unlit");
+    if (isUnlit) {
+      shadingModel = "Unlit";
+    }
     let { chunks } = shaderParameters || {};
-    const { iblParameters } = shaderParameters || {};
-    const { environmentMap } = iblParameters || {};
-    if (environmentMap && shadingModel === "IBL") {
-      meshDescriptor.parameters.uniforms = {
-        ...meshDescriptor.parameters.uniforms,
+    const { environmentMap } = shaderParameters || {};
+    if (environmentMap) {
+      meshDescriptor.parameters.uniforms.material.struct = {
+        ...meshDescriptor.parameters.uniforms.material.struct,
         ...{
-          ibl: {
-            struct: {
-              envRotation: {
-                type: "mat3x3f",
-                value: environmentMap.rotation
-              },
-              diffuseStrength: {
-                type: "f32",
-                value: iblParameters?.diffuseStrength ?? 0.5
-              },
-              specularStrength: {
-                type: "f32",
-                value: iblParameters?.specularStrength ?? 0.5
-              }
-            }
+          envRotation: {
+            type: "mat3x3f",
+            value: environmentMap.rotation
+          },
+          envDiffuseIntensity: {
+            type: "f32",
+            value: environmentMap.options.diffuseIntensity
+          },
+          envSpecularIntensity: {
+            type: "f32",
+            value: environmentMap.options.specularIntensity
           }
         }
       };
@@ -21851,219 +22265,31 @@ ${vertexOutput}
         environmentMap.specularTexture
       ];
       meshDescriptor.parameters.samplers = [...meshDescriptor.parameters.samplers, environmentMap.sampler];
-    } else if (shadingModel === "IBL") {
-      throwWarning("IBL shading requested but the environment map missing. Defaulting to PBR shading.");
-      shadingModel = "PBR";
     }
-    const shadingOptions = {
-      toneMapping: "khronos",
+    const vs = getVertexCode({
+      bindings: meshDescriptor.parameters.bindings,
+      geometry: meshDescriptor.parameters.geometry
+    });
+    const fs = getFragmentCode({
+      shadingModel,
+      chunks,
       receiveShadows: !!meshDescriptor.parameters.receiveShadows,
-      useOcclusion: true
-    };
-    if (transmissionBackgroundTexture && (shadingModel === "PBR" || shadingModel === "IBL")) {
-      shadingModel += "Transmission";
-    }
-    const defaultAdditionalHead = (() => {
-      switch (shadingModel) {
-        case "Lambert":
-        default:
-          return getLambert(shadingOptions);
-        case "Phong":
-          return getPhong(shadingOptions);
-        case "PBR":
-        case "PBRTransmission":
-          return getPBR(shadingOptions);
-        case "IBL":
-        case "IBLTransmission":
-          return getIBL(shadingOptions);
-      }
-    })();
-    const defaultPreliminaryColor = "";
-    const defaultAdditionalColor = "";
-    if (!chunks) {
-      chunks = {
-        additionalFragmentHead: defaultAdditionalHead,
-        preliminaryColorContribution: defaultPreliminaryColor,
-        additionalColorContribution: defaultAdditionalColor
-      };
-    } else {
-      if (!chunks.additionalFragmentHead) {
-        chunks.additionalFragmentHead = defaultAdditionalHead;
-      } else {
-        chunks.additionalFragmentHead = defaultAdditionalHead + chunks.additionalFragmentHead;
-      }
-      if (!chunks.preliminaryColorContribution) {
-        chunks.preliminaryColorContribution = defaultPreliminaryColor;
-      } else {
-        chunks.preliminaryColorContribution = defaultPreliminaryColor + chunks.preliminaryColorContribution;
-      }
-      if (!chunks.additionalColorContribution) {
-        chunks.additionalColorContribution = defaultAdditionalColor;
-      } else {
-        chunks.additionalColorContribution = defaultAdditionalColor + chunks.additionalColorContribution;
-      }
-    }
-    const applyLightShading = (() => {
-      switch (shadingModel) {
-        case "Lambert":
-        default:
-          return (
-            /* wgsl */
-            `
-  color = vec4(
-    getLambert(
-      normal,
-      worldPosition,
-      color.rgb,
-      occlusion
-    ),
-    color.a
-  );`
-          );
-        case "Phong":
-          return (
-            /* wgsl */
-            `
-  color = vec4(
-    getPhong(
-      normal,
-      worldPosition,
-      color.rgb,
-      viewDirection,
-      specularColorFactor,
-      specularFactor,
-      1.0 / max(EPSILON, roughness * roughness),
-      occlusion
-    ),
-    color.a
-  );`
-          );
-        case "PBR":
-          return (
-            /* wgsl */
-            `
-  color = getPBR(
-    normal,
-    worldPosition,
-    color,
-    viewDirection,
-    metallic,
-    roughness,
-    specularFactor,
-    specularColorFactor,
-    material.ior,
-    occlusion
-  );`
-          );
-        case "PBRTransmission":
-          return (
-            /* wgsl */
-            `
-  color = getPBRTransmission(
-    normal,
-    worldPosition,
-    color,
-    viewDirection,
-    metallic,
-    roughness,
-    specularFactor,
-    specularColorFactor,
-    material.ior,
-    transmission,
-    material.dispersion,
-    thickness,
-    material.attenuationDistance,
-    material.attenuationColor,
-    ${transmissionBackgroundTexture.texture},
-    ${transmissionBackgroundTexture.sampler},
-    occlusion
-  );`
-          );
-        case "IBL":
-          return (
-            /* wgsl */
-            `
-  color = getIBL(
-    normal,
-    worldPosition,
-    color,
-    viewDirection,
-    metallic,
-    roughness,
-    specularFactor,
-    specularColorFactor,
-    material.ior,
-    ${environmentMap.sampler.name},
-    ${environmentMap.lutTexture.options.name},
-    ${environmentMap.specularTexture.options.name},
-    ${environmentMap.diffuseTexture.options.name},
-    occlusion
-  );`
-          );
-        case "IBLTransmission":
-          return (
-            /* wgsl */
-            `
-  color = getIBLTransmission(
-    normal,
-    worldPosition,
-    color,
-    viewDirection,
-    metallic,
-    roughness,
-    specularFactor,
-    specularColorFactor,
-    material.ior,
-    ${environmentMap.sampler.name},
-    ${environmentMap.lutTexture.options.name},
-    ${environmentMap.specularTexture.options.name},
-    ${environmentMap.diffuseTexture.options.name},
-    transmission,
-    material.dispersion,
-    thickness,
-    material.attenuationDistance,
-    material.attenuationColor,
-    ${transmissionBackgroundTexture.texture},
-    ${transmissionBackgroundTexture.sampler},
-    occlusion
-  );`
-          );
-      }
-    })();
-    const applyEmissive = (
-      /* wgsl */
-      `
-  color = vec4(color.rgb + emissive, color.a);
-  `
-    );
-    const fs = (
-      /* wgsl */
-      `  
-${chunks.additionalFragmentHead}
-
-${fragmentInput}
-
-@fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {       
-  ${initColor}
-  ${baseColor}
-  let worldPosition: vec3f = fsInput.worldPosition;
-  let viewDirection: vec3f = fsInput.viewDirection;
-  var normal: vec3f = normalize(fsInput.normal);
-  ${normalMap}
-  ${metallicRoughness}  
-  // user defined preliminary color contribution
-  ${chunks.preliminaryColorContribution}
-  ${specular}
-  ${transmission}
-  ${emissiveOcclusion}
-  ${applyLightShading}
-  ${applyEmissive}
-  // user defined additional color contribution
-  ${chunks.additionalColorContribution}
-  ${returnColor}
-}
-  `
-    );
+      toneMapping: "Khronos",
+      geometry: meshDescriptor.parameters.geometry,
+      extensionsUsed: meshDescriptor.extensionsUsed,
+      baseColorTexture,
+      normalTexture,
+      metallicRoughnessTexture,
+      specularTexture,
+      specularFactorTexture,
+      specularColorTexture,
+      transmissionTexture,
+      thicknessTexture,
+      emissiveTexture,
+      occlusionTexture,
+      transmissionBackgroundTexture,
+      environmentMap
+    });
     return {
       vertex: {
         code: vs,
@@ -22307,22 +22533,13 @@ ${fragmentInput}
   exports.buildShaders = buildShaders;
   exports.getDefaultPointShadowDepthFs = getDefaultPointShadowDepthFs;
   exports.getDefaultPointShadowDepthVs = getDefaultPointShadowDepthVs;
-  exports.getDefaultShadowDepthVs = getDefaultShadowDepthVs;
-  exports.getIBL = getIBL;
-  exports.getIBLIndirect = getIBLIndirect;
   exports.getLambert = getLambert;
-  exports.getLambertDirect = getLambertDirect;
   exports.getPBR = getPBR;
-  exports.getPBRDirect = getPBRDirect;
   exports.getPCFDirectionalShadows = getPCFDirectionalShadows;
   exports.getPCFPointShadowContribution = getPCFPointShadowContribution;
   exports.getPCFPointShadows = getPCFPointShadows;
-  exports.getPCFShadowContribution = getPCFShadowContribution;
   exports.getPCFShadows = getPCFShadows;
   exports.getPhong = getPhong;
-  exports.getPhongDirect = getPhongDirect;
-  exports.lambertUtils = lambertUtils;
   exports.pbrUtils = pbrUtils;
-  exports.toneMappingUtils = toneMappingUtils;
 
 }));

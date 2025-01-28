@@ -6,9 +6,9 @@ import { Vec2 } from '../../math/Vec2.mjs';
 import { throwWarning } from '../../utils/utils.mjs';
 import { Sampler } from '../../core/samplers/Sampler.mjs';
 import { Mat3 } from '../../math/Mat3.mjs';
-import computeBrdfLutWgsl from '../../core/shaders/compute/compute-brdf-lut.wgsl.mjs';
-import computeSpecularCubemapFromHdr from '../../core/shaders/compute/compute-specular-cubemap-from-hdr.wgsl.mjs';
-import { computeDiffuseFromSpecularCubemap } from '../../core/shaders/compute/compute-diffuse-from-specular-cubemap.wgsl.mjs';
+import { computeBRDFLUT } from '../../core/shaders/full/compute/compute-BRDF-LUT.mjs';
+import { computeSpecularCubemapFromHDR } from '../../core/shaders/full/compute/compute-specular-cubemap-from-HDR.mjs';
+import { computeDiffuseFromSpecularCubemap } from '../../core/shaders/full/compute/compute-diffuse-from-specular-cubemap.mjs';
 
 var __accessCheck = (obj, member, msg) => {
   if (!member.has(obj))
@@ -30,28 +30,7 @@ class EnvironmentMap {
    * @param renderer - {@link Renderer} or {@link GPUCurtains} class object used to create this {@link EnvironmentMap}.
    * @param params - {@link EnvironmentMapParams | parameters} use to create this {@link EnvironmentMap}. Defines the various textures options.
    */
-  constructor(renderer, params = {
-    lutTextureParams: {
-      size: 256,
-      computeSampleCount: 1024,
-      label: "Environment LUT texture",
-      name: "lutTexture",
-      format: "rgba32float"
-    },
-    diffuseTextureParams: {
-      size: 128,
-      computeSampleCount: 2048,
-      label: "Environment diffuse texture",
-      name: "envDiffuseTexture",
-      format: "rgba16float"
-    },
-    specularTextureParams: {
-      label: "Environment specular texture",
-      name: "envSpecularTexture",
-      format: "rgba16float",
-      generateMips: true
-    }
-  }) {
+  constructor(renderer, params = {}) {
     /**
      * Once the given {@link ComputePass} has written to a temporary storage {@link Texture}, copy it into our permanent {@link Texture}.
      * @param commandEncoder - The GPU command encoder to use.
@@ -62,6 +41,33 @@ class EnvironmentMap {
     __privateAdd(this, _copyComputeStorageTextureToTexture);
     renderer = isRenderer(renderer, "EnvironmentMap");
     this.renderer = renderer;
+    params = {
+      ...{
+        lutTextureParams: {
+          size: 256,
+          computeSampleCount: 1024,
+          label: "Environment LUT texture",
+          name: "lutTexture",
+          format: "rgba32float"
+        },
+        diffuseTextureParams: {
+          size: 128,
+          computeSampleCount: 2048,
+          label: "Environment diffuse texture",
+          name: "envDiffuseTexture",
+          format: "rgba16float"
+        },
+        specularTextureParams: {
+          label: "Environment specular texture",
+          name: "envSpecularTexture",
+          format: "rgba16float",
+          generateMips: true
+        },
+        diffuseIntensity: 1,
+        specularIntensity: 1
+      },
+      ...params
+    };
     this.options = params;
     this.sampler = new Sampler(this.renderer, {
       label: "Clamp sampler",
@@ -109,7 +115,7 @@ class EnvironmentMap {
       dispatchSize: [Math.ceil(lutStorageTexture.size.width / 16), Math.ceil(lutStorageTexture.size.height / 16), 1],
       shaders: {
         compute: {
-          code: computeBrdfLutWgsl
+          code: computeBRDFLUT
         }
       },
       uniforms: {
@@ -172,7 +178,7 @@ class EnvironmentMap {
       ],
       shaders: {
         compute: {
-          code: computeSpecularCubemapFromHdr
+          code: computeSpecularCubemapFromHDR
         }
       },
       storages: {

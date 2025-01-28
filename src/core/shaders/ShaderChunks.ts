@@ -1,8 +1,8 @@
 import { RenderMaterialShadersType } from '../../types/Materials'
-import get_output_position from './chunks/helpers/get_output_position.wgsl'
-import get_normals from './chunks/helpers/get_normals.wgsl'
-import get_uv_cover from './chunks/helpers/get_uv_cover.wgsl'
-import get_vertex_to_uv_coords from './chunks/helpers/get_vertex_to_uv_coords.wgsl'
+import { getPositionHelpers } from './chunks/vertex/head/get-position-helpers'
+import { getNormalHelpers } from './chunks/vertex/head/get-normal-helpers'
+import { getUVCover } from './chunks/fragment/head/get-uv-cover-helper'
+import { getVertexToUVCoords } from './chunks/fragment/head/get-vertex-to-UV-coords-helpers'
 
 /** Defines {@link ShaderChunks} object structure */
 export type ShaderChunks = Record<RenderMaterialShadersType, Record<string, string>>
@@ -15,15 +15,15 @@ export type ProjectedShaderChunks = Record<RenderMaterialShadersType, Record<str
 export const ShaderChunks = {
   /** WGSL code chunks added to the vertex shader */
   vertex: {
-    /** Applies given texture matrix to given uv coordinates */
-    get_uv_cover,
+    /** Applies given texture matrix (`mat4x4f`) to given uv coordinates (`vec2f`). */
+    getUVCover,
   },
   /** WGSL code chunks added to the fragment shader */
   fragment: {
-    /** Applies given texture matrix to given uv coordinates */
-    get_uv_cover,
-    /** Convert vertex position to uv coordinates */
-    get_vertex_to_uv_coords,
+    /** Applies given texture matrix (`mat4x4f`) to given uv coordinates (`vec2f`). */
+    getUVCover,
+    /** Convert vertex position as `vec2f` or `vec3f` to uv coordinates `vec2f`. */
+    getVertexToUVCoords,
   },
 } as ShaderChunks
 
@@ -33,10 +33,10 @@ export const ShaderChunks = {
 export const ProjectedShaderChunks = {
   /** WGSL code chunks added to the vertex shader */
   vertex: {
-    /** Get output vec4f position vector by applying model view projection matrix to vec3f attribute position vector */
-    get_output_position,
-    /** Get vec3f normals in world or view space */
-    get_normals,
+    /** Get output `position` (`vec4f`) vector by applying model view projection matrix to the attribute `position` (`vec3f`) vector. */
+    getPositionHelpers,
+    /** Get `normal` (`vec3f`) in world or view space. */
+    getNormalHelpers,
   },
   /** WGSL code chunks added to the fragment shader */
   fragment: {},

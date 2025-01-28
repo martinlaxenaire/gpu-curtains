@@ -7,9 +7,9 @@ import { Vec2 } from '../../math/Vec2'
 import { throwWarning } from '../../utils/utils'
 import { Sampler } from '../../core/samplers/Sampler'
 import { Mat3 } from '../../math/Mat3'
-import computeBrdfLutWgsl from '../../core/shaders/compute/compute-brdf-lut.wgsl'
-import computeSpecularCubemapFromHdr from '../../core/shaders/compute/compute-specular-cubemap-from-hdr.wgsl'
-import { computeDiffuseFromSpecularCubemap } from '../../core/shaders/compute/compute-diffuse-from-specular-cubemap.wgsl'
+import { computeBRDFLUT } from '../../core/shaders/full/compute/compute-BRDF-LUT'
+import { computeSpecularCubemapFromHDR } from '../../core/shaders/full/compute/compute-specular-cubemap-from-HDR'
+import { computeDiffuseFromSpecularCubemap } from '../../core/shaders/full/compute/compute-diffuse-from-specular-cubemap'
 
 /** Define the base parameters for the {@link ComputePass} {@link Texture} writing. */
 export interface ComputePassTextureParams {
@@ -47,6 +47,10 @@ export interface EnvironmentMapOptions {
   diffuseTextureParams: DiffuseTextureParams
   /** Define the parameters used to create the specular cube map {@link Texture}. */
   specularTextureParams: SpecularTextureParams
+  /** Define the intensity of the indirect diffuse contribution to use in a PBR shader. Default to `1`. */
+  diffuseIntensity: number
+  /** Define the intensity of the indirect specular contribution to use in a PBR shader. Default to `1`. */
+  specularIntensity: number
 }
 
 /** Define the parameters used to create the {@link EnvironmentMap}. */
@@ -93,34 +97,38 @@ export class EnvironmentMap {
    * @param renderer - {@link Renderer} or {@link GPUCurtains} class object used to create this {@link EnvironmentMap}.
    * @param params - {@link EnvironmentMapParams | parameters} use to create this {@link EnvironmentMap}. Defines the various textures options.
    */
-  constructor(
-    renderer: Renderer | GPUCurtains,
-    params: EnvironmentMapParams = {
-      lutTextureParams: {
-        size: 256,
-        computeSampleCount: 1024,
-        label: 'Environment LUT texture',
-        name: 'lutTexture',
-        format: 'rgba32float',
-      },
-      diffuseTextureParams: {
-        size: 128,
-        computeSampleCount: 2048,
-        label: 'Environment diffuse texture',
-        name: 'envDiffuseTexture',
-        format: 'rgba16float',
-      },
-      specularTextureParams: {
-        label: 'Environment specular texture',
-        name: 'envSpecularTexture',
-        format: 'rgba16float',
-        generateMips: true,
-      },
-    }
-  ) {
+  constructor(renderer: Renderer | GPUCurtains, params: EnvironmentMapParams = {}) {
     renderer = isRenderer(renderer, 'EnvironmentMap')
 
     this.renderer = renderer
+
+    params = {
+      ...{
+        lutTextureParams: {
+          size: 256,
+          computeSampleCount: 1024,
+          label: 'Environment LUT texture',
+          name: 'lutTexture',
+          format: 'rgba32float',
+        },
+        diffuseTextureParams: {
+          size: 128,
+          computeSampleCount: 2048,
+          label: 'Environment diffuse texture',
+          name: 'envDiffuseTexture',
+          format: 'rgba16float',
+        },
+        specularTextureParams: {
+          label: 'Environment specular texture',
+          name: 'envSpecularTexture',
+          format: 'rgba16float',
+          generateMips: true,
+        },
+        diffuseIntensity: 1,
+        specularIntensity: 1,
+      },
+      ...params,
+    } as EnvironmentMapParams
 
     this.options = params as EnvironmentMapOptions
 
@@ -197,7 +205,7 @@ export class EnvironmentMap {
       dispatchSize: [Math.ceil(lutStorageTexture.size.width / 16), Math.ceil(lutStorageTexture.size.height / 16), 1],
       shaders: {
         compute: {
-          code: computeBrdfLutWgsl,
+          code: computeBRDFLUT,
         },
       },
       uniforms: {
@@ -268,7 +276,7 @@ export class EnvironmentMap {
       ],
       shaders: {
         compute: {
-          code: computeSpecularCubemapFromHdr,
+          code: computeSpecularCubemapFromHDR,
         },
       },
       storages: {

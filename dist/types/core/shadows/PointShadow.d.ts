@@ -6,7 +6,7 @@ import { PointLight } from '../lights/PointLight';
 import { Input } from '../../types/BindGroups';
 import { ShaderOptions } from '../../types/Materials';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
-import { VertexShaderInputParams } from '../shaders/chunks/vertex/get_vertex_output';
+import { VertexShaderInputParams } from '../shaders/full/vertex/get-vertex-code';
 /** Defines the perspective shadow camera params. */
 export type PerspectiveShadowCameraParams = Omit<PerspectiveProjectionParams, 'fov' | 'aspect'>;
 /** Defines the perspective shadow camera. */

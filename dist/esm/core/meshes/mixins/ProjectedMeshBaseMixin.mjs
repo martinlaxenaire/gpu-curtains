@@ -1,10 +1,13 @@
 import { isCameraRenderer } from '../../renderers/utils.mjs';
 import { DOMFrustum } from '../../DOM/DOMFrustum.mjs';
 import { MeshBaseMixin } from './MeshBaseMixin.mjs';
-import default_projected_vsWgsl from '../../shaders/chunks/default/default_projected_vs.wgsl.mjs';
-import default_normal_fsWgsl from '../../shaders/chunks/default/default_normal_fs.wgsl.mjs';
-import { getPCFDirectionalShadows, getPCFShadowContribution, getPCFPointShadows, getPCFPointShadowContribution } from '../../shaders/chunks/shading/shadows.mjs';
 import { BufferBinding } from '../../bindings/BufferBinding.mjs';
+import { getDefaultProjectedVertexCode } from '../../shaders/full/vertex/get-default-projected-vertex-code.mjs';
+import { getDefaultNormalFragmentCode } from '../../shaders/full/fragment/get-default-normal-fragment-code.mjs';
+import { getPCFShadowContribution } from '../../shaders/chunks/fragment/head/get-PCF-shadow-contribution.mjs';
+import { getPCFDirectionalShadows } from '../../shaders/chunks/fragment/head/get-PCF-directional-shadows.mjs';
+import { getPCFPointShadowContribution } from '../../shaders/chunks/fragment/head/get-PCF-point-shadow-contribution.mjs';
+import { getPCFPointShadows } from '../../shaders/chunks/fragment/head/get-PCF-point-shadows.mjs';
 
 const defaultProjectedMeshParams = {
   // frustum culling and visibility
@@ -132,24 +135,24 @@ function ProjectedMeshBaseMixin(Base) {
       if (!shaders) {
         this.options.shaders = {
           vertex: {
-            code: default_projected_vsWgsl,
+            code: getDefaultProjectedVertexCode,
             entryPoint: "main"
           },
           fragment: {
-            code: default_normal_fsWgsl,
+            code: getDefaultNormalFragmentCode,
             entryPoint: "main"
           }
         };
       } else {
         if (!shaders.vertex || !shaders.vertex.code) {
           shaders.vertex = {
-            code: default_projected_vsWgsl,
+            code: getDefaultProjectedVertexCode,
             entryPoint: "main"
           };
         }
         if (shaders.fragment === void 0 || shaders.fragment && !shaders.fragment.code) {
           shaders.fragment = {
-            code: default_normal_fsWgsl,
+            code: getDefaultNormalFragmentCode,
             entryPoint: "main"
           };
         }

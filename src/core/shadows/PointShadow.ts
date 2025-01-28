@@ -3,13 +3,14 @@ import { CameraRenderer } from '../renderers/utils'
 import { Mat4, PerspectiveProjectionParams } from '../../math/Mat4'
 import { Vec3 } from '../../math/Vec3'
 import { Texture } from '../textures/Texture'
-import { getDefaultPointShadowDepthFs, getDefaultPointShadowDepthVs } from '../shaders/chunks/shading/shadows'
 import { PointLight } from '../lights/PointLight'
 import { Input } from '../../types/BindGroups'
 import { ShaderOptions } from '../../types/Materials'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { BufferBinding } from '../bindings/BufferBinding'
-import { VertexShaderInputParams } from '../shaders/chunks/vertex/get_vertex_output'
+import { VertexShaderInputParams } from '../shaders/full/vertex/get-vertex-code'
+import { getDefaultPointShadowDepthVs } from '../shaders/full/vertex/get-default-point-shadow-depth-vertex-code'
+import { getDefaultPointShadowDepthFs } from '../shaders/full/fragment/get-default-point-shadow-depth-fragment-code'
 
 /** Defines the perspective shadow camera params. */
 export type PerspectiveShadowCameraParams = Omit<PerspectiveProjectionParams, 'fov' | 'aspect'>

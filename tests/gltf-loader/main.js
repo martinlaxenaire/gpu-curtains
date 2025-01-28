@@ -85,6 +85,7 @@ window.addEventListener('load', async () => {
 
   const environmentMap = new EnvironmentMap(gpuCameraRenderer)
   await environmentMap.loadAndComputeFromHDR(currentEnvMap.url)
+  let useEnvMap = true
 
   const models = {
     damagedHelmet: {
@@ -138,6 +139,11 @@ window.addEventListener('load', async () => {
     optimizedSponza: {
       name: 'Sponza (optimized / interleaved)',
       url: 'https://raw.githubusercontent.com/toji/sponza-optimized/main/Sponza.gltf',
+    },
+    // occlusion
+    compareAmbientOcclusion: {
+      name: 'Compare Ambient Occlusion',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/CompareAmbientOcclusion/glTF/CompareAmbientOcclusion.gltf',
     },
     // sparse accessors
     simpleSparseAccessor: {
@@ -209,14 +215,29 @@ window.addEventListener('load', async () => {
       name: 'Dispersion Test',
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/DispersionTest/glTF/DispersionTest.gltf',
     },
+    attenuationTest: {
+      name: 'Attenuation Test',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/AttenuationTest/glTF/AttenuationTest.gltf',
+    },
     // specular
     compareSpecular: {
       name: 'Compare Specular',
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/CompareSpecular/glTF/CompareSpecular.gltf',
     },
+    // unlit
+    unlitTest: {
+      name: 'Unlit Test',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/UnlitTest/glTF/UnlitTest.gltf',
+    },
+    // emissive strength
+    compareEmissiveStrength: {
+      name: 'Compare Emissive Strength',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/CompareEmissiveStrength/glTF/CompareEmissiveStrength.gltf',
+    },
   }
 
-  let shadingModel = 'IBL' // 'IBL', 'PBR', 'Phong' or 'Lambert'
+  //let shadingModel = 'PBR' // 'IBL', 'PBR', 'Phong' or 'Lambert'
+  let shadingModel = 'PBR' // 'IBL', 'PBR', 'Phong' or 'Lambert'
   const lightType = 'DirectionalLight' // or 'PointLight'
 
   const ambientLight = new AmbientLight(gpuCameraRenderer, {
@@ -240,8 +261,7 @@ window.addEventListener('load', async () => {
     title: 'GLTF loader',
   })
 
-  //const currentModelKey = 'damagedHelmet'
-  const currentModelKey = 'transmissionTest'
+  const currentModelKey = 'damagedHelmet'
   let currentModel = models[currentModelKey]
 
   const modelField = gui
@@ -258,13 +278,16 @@ window.addEventListener('load', async () => {
     .add(
       { [currentEnvMap.name]: currentEnvMapKey },
       currentEnvMap.name,
-      Object.keys(envMaps).reduce((acc, v) => {
-        return { ...acc, [envMaps[v].name]: v }
-      }, {})
+      Object.keys(envMaps).reduce(
+        (acc, v) => {
+          return { ...acc, [envMaps[v].name]: v }
+        },
+        { None: null }
+      )
     )
     .name('Environment maps')
 
-  const shadingField = gui.add({ shadingModel }, 'shadingModel', ['IBL', 'PBR', 'Phong', 'Lambert']).name('Shading')
+  const shadingField = gui.add({ shadingModel }, 'shadingModel', ['PBR', 'Phong', 'Lambert', 'Unlit']).name('Shading')
 
   const debugChannels = [
     'None',
@@ -368,6 +391,22 @@ window.addEventListener('load', async () => {
       })
     }
 
+    light.position.set(radius * 2, radius * 2, radius * 4)
+
+    if (useEnvMap && shadingModel === 'PBR') {
+      ambientLight.intensity = 0
+      light.intensity = 0
+    } else {
+      ambientLight.intensity = 0.2
+
+      if (light instanceof PointLight) {
+        const lightPositionLengthSq = light.position.lengthSq()
+        light.intensity = lightPositionLengthSq * 6
+      } else {
+        light.intensity = 3
+      }
+    }
+
     const meshes = gltfScenesManager.addMeshes((meshDescriptor) => {
       const { parameters } = meshDescriptor
 
@@ -392,65 +431,49 @@ window.addEventListener('load', async () => {
         },
       }
 
-      light.position.set(radius * 2)
-
-      if (shadingModel === 'IBL') {
-        ambientLight.intensity = 0
-        light.intensity = 0
-      } else {
-        ambientLight.intensity = 0.1
-
-        if (light instanceof PointLight) {
-          const lightPositionLengthSq = light.position.lengthSq()
-          light.intensity = lightPositionLengthSq * 3
-        } else {
-          light.intensity = 2
-        }
-      }
-
       // debug
       const additionalColorContribution = `
         if(debug.channel == 1.0) {
           ${
             parameters.geometry.getAttributeByName('uv')
-              ? 'color = vec4(fsInput.uv.x, fsInput.uv.y, 0.0, 1.0);'
-              : 'color = vec4(0.0, 0.0, 0.0, 1.0);'
+              ? 'outputColor = vec4(fsInput.uv.x, fsInput.uv.y, 0.0, 1.0);'
+              : 'outputColor = vec4(0.0, 0.0, 0.0, 1.0);'
           }
         } else if(debug.channel == 2.0) {
           ${
             parameters.geometry.getAttributeByName('uv1')
-              ? 'color = vec4(fsInput.uv.x, fsInput.uv.y, 0.0, 1.0);'
-              : 'color = vec4(0.0, 0.0, 0.0, 1.0);'
+              ? 'outputColor = vec4(fsInput.uv.x, fsInput.uv.y, 0.0, 1.0);'
+              : 'outputColor = vec4(0.0, 0.0, 0.0, 1.0);'
           }
         } else if(debug.channel == 3.0) {
           ${
-            meshDescriptor.textures.find((t) => t.texture === 'normalTexture')
-              ? 'color = vec4(normalMap, 1.0);'
-              : 'color = vec4(0.0, 0.0, 0.0, 1.0);'
+            meshDescriptor.textures.find((t) => t.texture === 'normalTexture') && shadingModel !== 'Unlit'
+              ? 'outputColor = vec4(normalMap, 1.0);'
+              : 'outputColor = vec4(0.0, 0.0, 0.0, 1.0);'
           }
         } else if(debug.channel == 4.0) {
-          color = vec4(geometryNormal * 0.5 + 0.5, 1.0);
+          outputColor = vec4(geometryNormal * 0.5 + 0.5, 1.0);
         } else if(debug.channel == 5.0) {
-          color = vec4(tangent * 0.5 + 0.5, 1.0);
+          outputColor = vec4(tangent * 0.5 + 0.5, 1.0);
         } else if(debug.channel == 6.0) {
-          color = vec4(bitangent * 0.5 + 0.5, 1.0);
+          outputColor = vec4(bitangent * 0.5 + 0.5, 1.0);
         } else if(debug.channel == 7.0) {
-          color = vec4(normal * 0.5 + 0.5, 1.0);
+          outputColor = vec4(normal * 0.5 + 0.5, 1.0);
         } else if(debug.channel == 8.0) {
-          color = vec4(vec3(occlusion), 1.0);
+          outputColor = vec4(vec3(occlusion), 1.0);
         } else if(debug.channel == 9.0) {
-          color = vec4(emissive, 1.0);
+          outputColor = vec4(emissive, 1.0);
         } else if(debug.channel == 10.0) {
-          color = baseColor;
+          outputColor = baseColor;
         } else if(debug.channel == 11.0) {
-          color = vec4(vec3(metallic), 1.0);
+          outputColor = vec4(vec3(metallic), 1.0);
         } else if(debug.channel == 12.0) {
-          color = vec4(vec3(roughness), 1.0);
+          outputColor = vec4(vec3(roughness), 1.0);
         } else if(debug.channel == 13.0) {
-          color = vec4(vec3(specularFactor), 1.0);
+          outputColor = vec4(vec3(specularFactor), 1.0);
         } else if(debug.channel == 14.0) {
-          color = vec4(specularColorFactor, 1.0);
-        }      
+          outputColor = vec4(specularColorFactor, 1.0);
+        }
       `
 
       parameters.shaders = buildShaders(meshDescriptor, {
@@ -458,11 +481,7 @@ window.addEventListener('load', async () => {
         chunks: {
           additionalColorContribution,
         },
-        iblParameters: {
-          diffuseStrength: 1,
-          specularStrength: 1,
-          environmentMap,
-        },
+        ...(useEnvMap && { environmentMap }),
       })
     })
 
@@ -551,9 +570,33 @@ window.addEventListener('load', async () => {
 
   envMapField
     .onChange(async (value) => {
-      if (envMaps[value].name !== currentEnvMap.name) {
-        currentEnvMap = envMaps[value]
-        await environmentMap.loadAndComputeFromHDR(envMaps[value].url)
+      if (envMaps[value]) {
+        if (envMaps[value].name !== currentEnvMap.name) {
+          currentEnvMap = envMaps[value]
+          await environmentMap.loadAndComputeFromHDR(envMaps[value].url)
+        }
+
+        if (!useEnvMap) {
+          useEnvMap = true
+
+          if (gltfScenesManager) {
+            gltfScenesManager.destroy()
+          }
+
+          gltfScenesManager = null
+
+          await loadGLTF(currentModel.url)
+        }
+      } else if (useEnvMap) {
+        useEnvMap = false
+
+        if (gltfScenesManager) {
+          gltfScenesManager.destroy()
+        }
+
+        gltfScenesManager = null
+
+        await loadGLTF(currentModel.url)
       }
     })
     .name('Environment maps')

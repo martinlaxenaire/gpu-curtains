@@ -12,9 +12,9 @@ import {
 import { RenderPipelineEntry } from '../pipelines/RenderPipelineEntry'
 import { throwWarning } from '../../utils/utils'
 import { compareRenderingOptions } from './utils'
-import default_projected_vsWgsl from '../shaders/chunks/default/default_projected_vs.wgsl'
-import default_vsWgsl from '../shaders/chunks/default/default_vs.wgsl'
-import default_fsWgsl from '../shaders/chunks/default/default_fs.wgsl'
+import { getDefaultProjectedVertexCode } from '../shaders/full/vertex/get-default-projected-vertex-code'
+import { getDefaultVertexCode } from '../shaders/full/vertex/get-default-vertex-code'
+import { getDefaultFragmentCode } from '../shaders/full/fragment/get-default-fragment-code'
 
 /**
  * Create a {@link Material} specifically built to draw the vertices of a {@link core/geometries/Geometry.Geometry | Geometry}. Internally used by all kind of Meshes.
@@ -49,7 +49,7 @@ export class RenderMaterial extends Material {
 
     if (!parameters.shaders?.vertex) {
       parameters.shaders.vertex = {
-        code: parameters.useProjection ? default_projected_vsWgsl : default_vsWgsl,
+        code: parameters.useProjection ? getDefaultProjectedVertexCode : getDefaultVertexCode,
         entryPoint: 'main',
       }
     }
@@ -61,7 +61,7 @@ export class RenderMaterial extends Material {
     if (parameters.shaders.fragment === undefined) {
       ;(parameters.shaders.fragment as ShaderOptions) = {
         entryPoint: 'main',
-        code: default_fsWgsl,
+        code: getDefaultFragmentCode,
       }
     }
 

@@ -3,9 +3,9 @@ import { isRenderer } from '../renderers/utils.mjs';
 import { RenderPipelineEntry } from '../pipelines/RenderPipelineEntry.mjs';
 import { throwWarning } from '../../utils/utils.mjs';
 import { compareRenderingOptions } from './utils.mjs';
-import default_projected_vsWgsl from '../shaders/chunks/default/default_projected_vs.wgsl.mjs';
-import default_vsWgsl from '../shaders/chunks/default/default_vs.wgsl.mjs';
-import default_fsWgsl from '../shaders/chunks/default/default_fs.wgsl.mjs';
+import { getDefaultProjectedVertexCode } from '../shaders/full/vertex/get-default-projected-vertex-code.mjs';
+import { getDefaultVertexCode } from '../shaders/full/vertex/get-default-vertex-code.mjs';
+import { getDefaultFragmentCode } from '../shaders/full/fragment/get-default-fragment-code.mjs';
 
 class RenderMaterial extends Material {
   /**
@@ -21,7 +21,7 @@ class RenderMaterial extends Material {
     }
     if (!parameters.shaders?.vertex) {
       parameters.shaders.vertex = {
-        code: parameters.useProjection ? default_projected_vsWgsl : default_vsWgsl,
+        code: parameters.useProjection ? getDefaultProjectedVertexCode : getDefaultVertexCode,
         entryPoint: "main"
       };
     }
@@ -31,7 +31,7 @@ class RenderMaterial extends Material {
     if (parameters.shaders.fragment === void 0) {
       parameters.shaders.fragment = {
         entryPoint: "main",
-        code: default_fsWgsl
+        code: getDefaultFragmentCode
       };
     }
     super(renderer, parameters);

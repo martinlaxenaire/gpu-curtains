@@ -90,8 +90,20 @@ const _GLTFScenesManager = class _GLTFScenesManager {
       const transmissionBuffer = {
         backgroundOutputTexture: new Texture(this.renderer, {
           label: "Transmission background scene render target output",
-          generateMips: true
+          name: "transmissionBackgroundTexture",
+          generateMips: true,
           // needed for roughness LOD!
+          format: this.renderer.options.context.format,
+          autoDestroy: false
+        }),
+        sampler: new Sampler(this.renderer, {
+          label: "Clamp sampler",
+          name: "clampSampler",
+          magFilter: "linear",
+          minFilter: "linear",
+          mipmapFilter: "linear",
+          addressModeU: "clamp-to-edge",
+          addressModeV: "clamp-to-edge"
         }),
         sceneTransmissionPassEntry
       };
@@ -457,12 +469,12 @@ const _GLTFScenesManager = class _GLTFScenesManager {
       mesh.primitives.forEach((primitive, primitiveIndex) => {
         const meshDescriptor = {
           parent: child.node,
-          attributes: [],
           textures: [],
           parameters: {
             label: mesh.name ? mesh.name + " " + primitiveIndex : "glTF mesh " + primitiveIndex
           },
-          nodes: []
+          nodes: [],
+          extensionsUsed: []
         };
         instancesDescriptor = __privateGet(this, _primitiveInstances).get(primitive);
         if (!instancesDescriptor) {
@@ -684,12 +696,6 @@ const _GLTFScenesManager = class _GLTFScenesManager {
     if (!interleavedArray) {
       this.sortAttributesByNames(["position", "uv", "normal"], defaultAttributes);
     }
-    defaultAttributes.forEach((attribute) => {
-      meshDescriptor.attributes.push({
-        name: attribute.name,
-        type: attribute.type
-      });
-    });
     const geometryAttributes = {
       instancesCount: instances.length,
       topology: _GLTFScenesManager.gpuPrimitiveTopologyForMode(primitive.mode),
@@ -929,7 +935,17 @@ const _GLTFScenesManager = class _GLTFScenesManager {
     }
     const material = this.gltf.materials && this.gltf.materials[primitive.material] || {};
     const { extensions } = material;
+    if (extensions) {
+      for (const extension of Object.keys(extensions)) {
+        if (extension === "KHR_materials_unlit" && this.gltf.extensionsRequired && this.gltf.extensionsRequired.includes(extension)) {
+          meshDescriptor.extensionsUsed.push(extension);
+        } else {
+          meshDescriptor.extensionsUsed.push(extension);
+        }
+      }
+    }
     const dispersion = extensions && extensions.KHR_materials_dispersion || null;
+    const emissiveStrength = extensions && extensions.KHR_materials_emissive_strength || null;
     const ior = extensions && extensions.KHR_materials_ior || null;
     const transmission = extensions && extensions.KHR_materials_transmission || null;
     const specular = extensions && extensions.KHR_materials_specular || null;
@@ -940,20 +956,16 @@ const _GLTFScenesManager = class _GLTFScenesManager {
       meshDescriptor.parameters.useCustomScenePassEntry = this.scenesManager.transmissionCompositing.sceneTransmissionPassEntry;
     }
     const materialTextures = this.scenesManager.materialsTextures[primitive.material];
+    meshDescriptor.parameters.samplers = [];
+    meshDescriptor.parameters.textures = [];
     if (hasTransmission) {
       materialTextures.texturesDescriptors.push({
-        texture: new Texture(this.renderer, {
-          fromTexture: this.scenesManager.transmissionCompositing.backgroundOutputTexture,
-          name: "transmissionBackgroundTexture",
-          generateMips: true
-        }),
-        sampler: this.scenesManager.samplers[0],
+        texture: this.scenesManager.transmissionCompositing.backgroundOutputTexture,
+        sampler: this.scenesManager.transmissionCompositing.sampler,
         texCoordAttributeName: "uv"
         // whatever
       });
     }
-    meshDescriptor.parameters.samplers = [];
-    meshDescriptor.parameters.textures = [];
     materialTextures?.texturesDescriptors.forEach((t) => {
       meshDescriptor.textures.push({
         texture: t.texture.options.name,
@@ -1012,7 +1024,11 @@ const _GLTFScenesManager = class _GLTFScenesManager {
       },
       emissiveFactor: {
         type: "vec3f",
-        value: material.emissiveFactor !== void 0 ? material.emissiveFactor : [1, 1, 1]
+        value: material.emissiveFactor !== void 0 ? material.emissiveFactor : [0, 0, 0]
+      },
+      emissiveStrength: {
+        type: "f32",
+        value: emissiveStrength && emissiveStrength.emissiveStrength !== void 0 ? emissiveStrength.emissiveStrength : 1
       },
       specularFactor: {
         type: "f32",
@@ -1091,14 +1107,18 @@ const _GLTFScenesManager = class _GLTFScenesManager {
       });
       instancesBinding.childrenBindings.forEach((binding, index) => {
         const instanceNode = nodes[index];
-        const _updateWorldMatrix = instanceNode.updateWorldMatrix.bind(instanceNode);
-        instanceNode.updateWorldMatrix = () => {
-          _updateWorldMatrix();
+        const updateInstanceMatrices = () => {
           binding.inputs.model.value.copy(instanceNode.worldMatrix);
           binding.inputs.normal.value.getNormalMatrix(instanceNode.worldMatrix);
           binding.inputs.model.shouldUpdate = true;
           binding.inputs.normal.shouldUpdate = true;
         };
+        const _updateWorldMatrix = instanceNode.updateWorldMatrix.bind(instanceNode);
+        instanceNode.updateWorldMatrix = () => {
+          _updateWorldMatrix();
+          updateInstanceMatrices();
+        };
+        updateInstanceMatrices();
       });
       if (!meshDescriptor.parameters.bindings) {
         meshDescriptor.parameters.bindings = [];

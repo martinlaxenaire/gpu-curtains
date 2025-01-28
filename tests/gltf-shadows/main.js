@@ -79,10 +79,13 @@ window.addEventListener('load', async () => {
   const currentEnvMapKey = 'cannon'
   let currentEnvMap = envMaps[currentEnvMapKey]
 
-  const environmentMap = new EnvironmentMap(gpuCameraRenderer)
+  const environmentMap = new EnvironmentMap(gpuCameraRenderer, {
+    diffuseIntensity: 0.25,
+    specularIntensity: 0.25,
+  })
   await environmentMap.loadAndComputeFromHDR(currentEnvMap.url)
 
-  let shadingModel = 'IBL' // 'IBL', 'PBR', 'Phong' or 'Lambert'
+  let shadingModel = 'PBR' // 'PBR', 'Phong' or 'Lambert'
 
   const ambientLight = new AmbientLight(gpuCameraRenderer, {
     intensity: 1,
@@ -209,11 +212,7 @@ window.addEventListener('load', async () => {
         chunks: {
           additionalColorContribution,
         },
-        iblParameters: {
-          diffuseStrength: 0.1,
-          specularStrength: 0.4,
-          environmentMap,
-        },
+        environmentMap,
       })
     })
 
@@ -249,7 +248,7 @@ window.addEventListener('load', async () => {
     .name('Environment maps')
 
   gui
-    .add({ shadingModel }, 'shadingModel', ['IBL', 'PBR', 'Phong', 'Lambert'])
+    .add({ shadingModel }, 'shadingModel', ['PBR', 'Phong', 'Lambert', 'Unlit'])
     .onChange(async (value) => {
       if (value !== shadingModel) {
         shadingModel = value

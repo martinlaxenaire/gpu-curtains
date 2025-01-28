@@ -12,17 +12,16 @@ import { GPUCurtains } from '../../../curtains/GPUCurtains'
 import { DOMElementBoundingRect, RectCoords } from '../../DOM/DOMElement'
 import { RenderMaterialParams, ShaderOptions } from '../../../types/Materials'
 import { ProjectedObject3D } from '../../objects3D/ProjectedObject3D'
-import default_projected_vsWgsl from '../../shaders/chunks/default/default_projected_vs.wgsl'
-import default_normal_fsWgsl from '../../shaders/chunks/default/default_normal_fs.wgsl'
 import { Vec3 } from '../../../math/Vec3'
-import {
-  getPCFDirectionalShadows,
-  getPCFPointShadowContribution,
-  getPCFPointShadows,
-  getPCFShadowContribution,
-} from '../../shaders/chunks/shading/shadows'
 import { RenderBundle } from '../../renderPasses/RenderBundle'
 import { BufferBinding, BufferBindingParams } from '../../bindings/BufferBinding'
+
+import { getDefaultProjectedVertexCode } from '../../shaders/full/vertex/get-default-projected-vertex-code'
+import { getDefaultNormalFragmentCode } from '../../shaders/full/fragment/get-default-normal-fragment-code'
+import { getPCFShadowContribution } from '../../shaders/chunks/fragment/head/get-PCF-shadow-contribution'
+import { getPCFDirectionalShadows } from '../../shaders/chunks/fragment/head/get-PCF-directional-shadows'
+import { getPCFPointShadowContribution } from '../../shaders/chunks/fragment/head/get-PCF-point-shadow-contribution'
+import { getPCFPointShadows } from '../../shaders/chunks/fragment/head/get-PCF-point-shadows'
 
 /** Define all possible frustum culling checks. */
 export type FrustumCullingCheck = 'OBB' | 'sphere' | false
@@ -366,25 +365,25 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
       if (!shaders) {
         this.options.shaders = {
           vertex: {
-            code: default_projected_vsWgsl,
+            code: getDefaultProjectedVertexCode,
             entryPoint: 'main',
           },
           fragment: {
-            code: default_normal_fsWgsl,
+            code: getDefaultNormalFragmentCode,
             entryPoint: 'main',
           },
         }
       } else {
         if (!shaders.vertex || !shaders.vertex.code) {
           shaders.vertex = {
-            code: default_projected_vsWgsl,
+            code: getDefaultProjectedVertexCode,
             entryPoint: 'main',
           }
         }
 
         if (shaders.fragment === undefined || (shaders.fragment && !(shaders.fragment as ShaderOptions).code)) {
           shaders.fragment = {
-            code: default_normal_fsWgsl,
+            code: getDefaultNormalFragmentCode,
             entryPoint: 'main',
           }
         }

@@ -26,6 +26,7 @@ import { throwWarning } from '../../utils/utils'
 import { BufferBinding } from '../../core/bindings/BufferBinding'
 import { KeyframesAnimation } from '../animations/KeyframesAnimation'
 import { TargetsAnimationsManager } from '../animations/TargetsAnimationsManager'
+import { GLTFExtensionsTypes } from '../../types/gltf/GLTFExtensions'
 
 // https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Constants
 // To make it easier to reference the WebGL enums that glTF uses.
@@ -74,13 +75,13 @@ const GL = WebGLRenderingContext
  * - [ ] KHR_materials_anisotropy
  * - [ ] KHR_materials_clearcoat
  * - [x] KHR_materials_dispersion
- * - [ ] KHR_materials_emissive_strength
+ * - [x] KHR_materials_emissive_strength
  * - [x] KHR_materials_ior
  * - [ ] KHR_materials_iridescence
  * - [ ] KHR_materials_sheen
- * - [ ] KHR_materials_specular
+ * - [x] KHR_materials_specular
  * - [x] KHR_materials_transmission
- * - [ ] KHR_materials_unlit
+ * - [x] KHR_materials_unlit
  * - [ ] KHR_materials_variants
  * - [x] KHR_materials_volume
  * - [ ] KHR_mesh_quantization
@@ -157,7 +158,19 @@ export class GLTFScenesManager {
       const transmissionBuffer: ScenesManager['transmissionCompositing'] = {
         backgroundOutputTexture: new Texture(this.renderer, {
           label: 'Transmission background scene render target output',
+          name: 'transmissionBackgroundTexture',
           generateMips: true, // needed for roughness LOD!
+          format: this.renderer.options.context.format,
+          autoDestroy: false,
+        }),
+        sampler: new Sampler(this.renderer, {
+          label: 'Clamp sampler',
+          name: 'clampSampler',
+          magFilter: 'linear',
+          minFilter: 'linear',
+          mipmapFilter: 'linear',
+          addressModeU: 'clamp-to-edge',
+          addressModeV: 'clamp-to-edge',
         }),
         sceneTransmissionPassEntry,
       }
@@ -595,12 +608,12 @@ export class GLTFScenesManager {
       mesh.primitives.forEach((primitive, primitiveIndex) => {
         const meshDescriptor: MeshDescriptor = {
           parent: child.node,
-          attributes: [],
           textures: [],
           parameters: {
             label: mesh.name ? mesh.name + ' ' + primitiveIndex : 'glTF mesh ' + primitiveIndex,
           },
           nodes: [],
+          extensionsUsed: [],
         }
 
         instancesDescriptor = this.#primitiveInstances.get(primitive)
@@ -1205,13 +1218,6 @@ export class GLTFScenesManager {
       this.sortAttributesByNames(['position', 'uv', 'normal'], defaultAttributes)
     }
 
-    defaultAttributes.forEach((attribute) => {
-      meshDescriptor.attributes.push({
-        name: attribute.name,
-        type: attribute.type,
-      })
-    })
-
     const geometryAttributes: GeometryParams = {
       instancesCount: instances.length,
       topology: GLTFScenesManager.gpuPrimitiveTopologyForMode(primitive.mode),
@@ -1524,7 +1530,23 @@ export class GLTFScenesManager {
 
     // extensions
     const { extensions } = material
+
+    if (extensions) {
+      for (const extension of Object.keys(extensions)) {
+        if (
+          extension === 'KHR_materials_unlit' &&
+          this.gltf.extensionsRequired &&
+          this.gltf.extensionsRequired.includes(extension)
+        ) {
+          meshDescriptor.extensionsUsed.push(extension as GLTFExtensionsTypes)
+        } else {
+          meshDescriptor.extensionsUsed.push(extension as GLTFExtensionsTypes)
+        }
+      }
+    }
+
     const dispersion = (extensions && extensions.KHR_materials_dispersion) || null
+    const emissiveStrength = (extensions && extensions.KHR_materials_emissive_strength) || null
     const ior = (extensions && extensions.KHR_materials_ior) || null
     const transmission = (extensions && extensions.KHR_materials_transmission) || null
     const specular = (extensions && extensions.KHR_materials_specular) || null
@@ -1546,21 +1568,17 @@ export class GLTFScenesManager {
     // textures and samplers
     const materialTextures = this.scenesManager.materialsTextures[primitive.material]
 
+    meshDescriptor.parameters.samplers = []
+    meshDescriptor.parameters.textures = []
+
     if (hasTransmission) {
       // add scene background
       materialTextures.texturesDescriptors.push({
-        texture: new Texture(this.renderer, {
-          fromTexture: this.scenesManager.transmissionCompositing.backgroundOutputTexture,
-          name: 'transmissionBackgroundTexture',
-          generateMips: true,
-        }),
-        sampler: this.scenesManager.samplers[0],
+        texture: this.scenesManager.transmissionCompositing.backgroundOutputTexture,
+        sampler: this.scenesManager.transmissionCompositing.sampler,
         texCoordAttributeName: 'uv', // whatever
       })
     }
-
-    meshDescriptor.parameters.samplers = []
-    meshDescriptor.parameters.textures = []
 
     materialTextures?.texturesDescriptors.forEach((t) => {
       meshDescriptor.textures.push({
@@ -1634,7 +1652,12 @@ export class GLTFScenesManager {
       },
       emissiveFactor: {
         type: 'vec3f',
-        value: material.emissiveFactor !== undefined ? material.emissiveFactor : [1, 1, 1],
+        value: material.emissiveFactor !== undefined ? material.emissiveFactor : [0, 0, 0],
+      },
+      emissiveStrength: {
+        type: 'f32',
+        value:
+          emissiveStrength && emissiveStrength.emissiveStrength !== undefined ? emissiveStrength.emissiveStrength : 1,
       },
       specularFactor: {
         type: 'f32',
@@ -1726,14 +1749,22 @@ export class GLTFScenesManager {
         // each time the instance node world matrix is updated
         // we compute and update the corresponding matrices bindings
         const instanceNode = nodes[index]
-        const _updateWorldMatrix = instanceNode.updateWorldMatrix.bind(instanceNode)
-        instanceNode.updateWorldMatrix = () => {
-          _updateWorldMatrix()
+
+        const updateInstanceMatrices = () => {
           ;(binding.inputs.model.value as Mat4).copy(instanceNode.worldMatrix)
           ;(binding.inputs.normal.value as Mat3).getNormalMatrix(instanceNode.worldMatrix)
           binding.inputs.model.shouldUpdate = true
           binding.inputs.normal.shouldUpdate = true
         }
+
+        const _updateWorldMatrix = instanceNode.updateWorldMatrix.bind(instanceNode)
+        instanceNode.updateWorldMatrix = () => {
+          _updateWorldMatrix()
+          updateInstanceMatrices()
+        }
+
+        // do right away as well
+        updateInstanceMatrices()
       })
 
       if (!meshDescriptor.parameters.bindings) {

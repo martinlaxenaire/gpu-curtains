@@ -4,7 +4,7 @@ import { RenderTarget } from './RenderTarget'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { MeshBaseOptions, MeshBaseRenderParams } from '../meshes/mixins/MeshBaseMixin'
 import { Texture } from '../textures/Texture'
-import default_pass_fsWGSl from '../shaders/chunks/default/default_pass_fs.wgsl'
+import { getDefaultShaderPassFragmentCode } from '../shaders/full/fragment/get-default-shader-pass-fragment-code'
 import { throwWarning } from '../../utils/utils'
 
 /** Base parameters used to create a {@link ShaderPass}. */
@@ -112,7 +112,7 @@ export class ShaderPass extends FullscreenPlane {
 
     if (!parameters.shaders.fragment) {
       parameters.shaders.fragment = {
-        code: default_pass_fsWGSl,
+        code: getDefaultShaderPassFragmentCode,
         entryPoint: 'main',
       }
     }

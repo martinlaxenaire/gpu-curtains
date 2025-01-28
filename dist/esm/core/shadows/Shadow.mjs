@@ -5,7 +5,7 @@ import { Texture } from '../textures/Texture.mjs';
 import { RenderTarget } from '../renderPasses/RenderTarget.mjs';
 import { Sampler } from '../samplers/Sampler.mjs';
 import { RenderMaterial } from '../materials/RenderMaterial.mjs';
-import { getDefaultShadowDepthVs } from '../shaders/chunks/shading/shadows.mjs';
+import { getDefaultShadowDepthVs } from '../shaders/full/vertex/get-default-shadow-depth-vertex-code.mjs';
 
 var __accessCheck = (obj, member, msg) => {
   if (!member.has(obj))

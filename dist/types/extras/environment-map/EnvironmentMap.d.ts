@@ -39,6 +39,10 @@ export interface EnvironmentMapOptions {
     diffuseTextureParams: DiffuseTextureParams;
     /** Define the parameters used to create the specular cube map {@link Texture}. */
     specularTextureParams: SpecularTextureParams;
+    /** Define the intensity of the indirect diffuse contribution to use in a PBR shader. Default to `1`. */
+    diffuseIntensity: number;
+    /** Define the intensity of the indirect specular contribution to use in a PBR shader. Default to `1`. */
+    specularIntensity: number;
 }
 /** Define the parameters used to create the {@link EnvironmentMap}. */
 export interface EnvironmentMapParams extends Partial<EnvironmentMapOptions> {

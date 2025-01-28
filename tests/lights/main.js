@@ -31,7 +31,10 @@ window.addEventListener('load', async () => {
     //pixelRatio: window.devicePixelRatio,
   })
 
-  const orbitControls = new OrbitControls(gpuCameraRenderer)
+  const orbitControls = new OrbitControls({
+    camera: gpuCameraRenderer.camera,
+    element: gpuCameraRenderer.canvas,
+  })
 
   const fs = /* wgsl */ `
     struct VSOutput {

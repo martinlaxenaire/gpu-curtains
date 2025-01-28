@@ -12,7 +12,7 @@ import { BufferBinding } from '../bindings/BufferBinding';
 import { RenderMaterialParams, ShaderOptions } from '../../types/Materials';
 import { Input } from '../../types/BindGroups';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
-import { VertexShaderInputParams } from '../shaders/chunks/vertex/get_vertex_output';
+import { VertexShaderInputParams } from '../shaders/full/vertex/get-vertex-code';
 /** Defines all types of shadows. */
 export type ShadowsType = 'directionalShadows' | 'pointShadows';
 /** @ignore */

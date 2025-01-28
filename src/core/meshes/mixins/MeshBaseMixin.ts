@@ -12,8 +12,8 @@ import { Material } from '../../materials/Material'
 import { DOMElementBoundingRect } from '../../DOM/DOMElement'
 import { AllowedGeometries, RenderMaterialParams, ShaderOptions } from '../../../types/Materials'
 import { ProjectedMeshBaseClass } from './ProjectedMeshBaseMixin'
-import default_vsWgsl from '../../shaders/chunks/default/default_vs.wgsl'
-import default_fsWgsl from '../../shaders/chunks/default/default_fs.wgsl'
+import { getDefaultVertexCode } from '../../shaders/full/vertex/get-default-vertex-code'
+import { getDefaultFragmentCode } from '../../shaders/full/fragment/get-default-fragment-code'
 import { RenderPass } from '../../renderPasses/RenderPass'
 import { RenderBundle } from '../../renderPasses/RenderBundle'
 import { RenderPassEntry } from '../../scenes/Scene'
@@ -764,25 +764,25 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       if (!shaders) {
         this.options.shaders = {
           vertex: {
-            code: default_vsWgsl,
+            code: getDefaultVertexCode,
             entryPoint: 'main',
           },
           fragment: {
-            code: default_fsWgsl,
+            code: getDefaultFragmentCode,
             entryPoint: 'main',
           },
         }
       } else {
         if (!shaders.vertex || !shaders.vertex.code) {
           shaders.vertex = {
-            code: default_vsWgsl,
+            code: getDefaultVertexCode,
             entryPoint: 'main',
           }
         }
 
         if (shaders.fragment === undefined || (shaders.fragment && !(shaders.fragment as ShaderOptions).code)) {
           shaders.fragment = {
-            code: default_fsWgsl,
+            code: getDefaultFragmentCode,
             entryPoint: 'main',
           }
         }

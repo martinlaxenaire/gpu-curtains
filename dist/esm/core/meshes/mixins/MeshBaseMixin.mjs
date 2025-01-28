@@ -3,8 +3,8 @@ import { isRenderer } from '../../renderers/utils.mjs';
 import { RenderMaterial } from '../../materials/RenderMaterial.mjs';
 import { DOMTexture } from '../../textures/DOMTexture.mjs';
 import { Texture } from '../../textures/Texture.mjs';
-import default_vsWgsl from '../../shaders/chunks/default/default_vs.wgsl.mjs';
-import default_fsWgsl from '../../shaders/chunks/default/default_fs.wgsl.mjs';
+import { getDefaultVertexCode } from '../../shaders/full/vertex/get-default-vertex-code.mjs';
+import { getDefaultFragmentCode } from '../../shaders/full/fragment/get-default-fragment-code.mjs';
 
 var __accessCheck = (obj, member, msg) => {
   if (!member.has(obj))
@@ -264,24 +264,24 @@ function MeshBaseMixin(Base) {
       if (!shaders) {
         this.options.shaders = {
           vertex: {
-            code: default_vsWgsl,
+            code: getDefaultVertexCode,
             entryPoint: "main"
           },
           fragment: {
-            code: default_fsWgsl,
+            code: getDefaultFragmentCode,
             entryPoint: "main"
           }
         };
       } else {
         if (!shaders.vertex || !shaders.vertex.code) {
           shaders.vertex = {
-            code: default_vsWgsl,
+            code: getDefaultVertexCode,
             entryPoint: "main"
           };
         }
         if (shaders.fragment === void 0 || shaders.fragment && !shaders.fragment.code) {
           shaders.fragment = {
-            code: default_fsWgsl,
+            code: getDefaultFragmentCode,
             entryPoint: "main"
           };
         }
