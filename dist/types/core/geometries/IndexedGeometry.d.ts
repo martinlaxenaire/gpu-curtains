@@ -78,6 +78,10 @@ export declare class IndexedGeometry extends Geometry {
      */
     restoreContext(renderer: Renderer): void;
     /**
+     * Compute {@link IndexedGeometry} flat normals in case the `normal` attribute is missing.
+     */
+    computeFlatNormals(): void;
+    /**
      * If we have less than 65.536 vertices, we should use a Uin16Array to hold our index buffer values
      * @readonly
      */

@@ -6729,6 +6729,52 @@
       return attribute;
     }
     /**
+     * Compute the normal {@link Vec3} from a triangle defined by three {@link Vec3} by computing edges {@link Vec3}.
+     * @param vertex1 - first triangle position
+     * @param vertex2 - second triangle position
+     * @param vertex3 - third triangle position
+     * @param edge1 - first edge
+     * @param edge2 - second edge
+     * @param normal - flat normal generated.
+     */
+    computeNormalFromTriangle(vertex1, vertex2, vertex3, edge1, edge2, normal) {
+      edge1.copy(vertex2).sub(vertex1);
+      edge2.copy(vertex3).sub(vertex1);
+      normal.crossVectors(edge1, edge2).normalize();
+    }
+    /**
+     * Compute {@link Geometry} flat normals in case the `normal` attribute is missing.
+     */
+    computeFlatNormals() {
+      const positionAttribute = this.getAttributeByName("position");
+      const vertex1 = new Vec3();
+      const vertex2 = new Vec3();
+      const vertex3 = new Vec3();
+      const edge1 = new Vec3();
+      const edge2 = new Vec3();
+      const normal = new Vec3();
+      const posLength = positionAttribute.array.length;
+      const normalArray = new Float32Array(posLength);
+      for (let i = 0; i < posLength; i += positionAttribute.size * 3) {
+        vertex1.set(positionAttribute.array[i], positionAttribute.array[i + 1], positionAttribute.array[i + 2]);
+        vertex2.set(positionAttribute.array[i + 3], positionAttribute.array[i + 4], positionAttribute.array[i + 5]);
+        vertex3.set(positionAttribute.array[i + 6], positionAttribute.array[i + 7], positionAttribute.array[i + 8]);
+        this.computeNormalFromTriangle(vertex1, vertex2, vertex3, edge1, edge2, normal);
+        for (let j = 0; j < 3; j++) {
+          normalArray[i + j * 3] = normal.x;
+          normalArray[i + 1 + j * 3] = normal.y;
+          normalArray[i + 2 + j * 3] = normal.z;
+        }
+      }
+      this.setAttribute({
+        name: "normal",
+        type: "vec3f",
+        bufferFormat: "float32x3",
+        size: 3,
+        array: normalArray
+      });
+    }
+    /**
      * Compute a Geometry, which means iterate through all vertex buffers and create the attributes array that will be sent as buffers.
      * Also compute the Geometry bounding box.
      */
@@ -6753,6 +6799,13 @@
             hasPositionAttribute.type = "vec3f";
             hasPositionAttribute.bufferFormat = "float32x3";
             hasPositionAttribute.size = 3;
+          }
+          const hasNormalAttribute = vertexBuffer.attributes.find(
+            (attribute) => attribute.name === "normal"
+          );
+          if (!hasNormalAttribute) {
+            this.computeFlatNormals();
+            this.setWGSLFragment();
           }
         }
         vertexBuffer.array = new Float32Array(vertexBuffer.bufferLength);
@@ -6950,6 +7003,48 @@
         this.indexBuffer.buffer.consumers.add(this.uuid);
       }
       super.restoreContext(renderer);
+    }
+    /**
+     * Compute {@link IndexedGeometry} flat normals in case the `normal` attribute is missing.
+     */
+    computeFlatNormals() {
+      const positionAttribute = this.getAttributeByName("position");
+      const vertex1 = new Vec3();
+      const vertex2 = new Vec3();
+      const vertex3 = new Vec3();
+      const edge1 = new Vec3();
+      const edge2 = new Vec3();
+      const normal = new Vec3();
+      const posLength = positionAttribute.array.length;
+      const normalArray = new Float32Array(posLength);
+      const nbIndices = this.indexBuffer.array.length;
+      for (let i = 0; i < nbIndices; i += 3) {
+        const i0 = this.indexBuffer.array[i] * 3;
+        const i1 = this.indexBuffer.array[i + 1] * 3;
+        const i2 = this.indexBuffer.array[i + 2] * 3;
+        if (posLength < i0 + 2)
+          continue;
+        vertex1.set(positionAttribute.array[i0], positionAttribute.array[i0 + 1], positionAttribute.array[i0 + 2]);
+        if (posLength < i1 + 2)
+          continue;
+        vertex2.set(positionAttribute.array[i1], positionAttribute.array[i1 + 1], positionAttribute.array[i1 + 2]);
+        if (posLength < i2 + 2)
+          continue;
+        vertex3.set(positionAttribute.array[i2], positionAttribute.array[i2 + 1], positionAttribute.array[i2 + 2]);
+        this.computeNormalFromTriangle(vertex1, vertex2, vertex3, edge1, edge2, normal);
+        for (let j = 0; j < 3; j++) {
+          normalArray[this.indexBuffer.array[i + j] * 3] = normal.x;
+          normalArray[this.indexBuffer.array[i + j] * 3 + 1] = normal.y;
+          normalArray[this.indexBuffer.array[i + j] * 3 + 2] = normal.z;
+        }
+      }
+      this.setAttribute({
+        name: "normal",
+        type: "vec3f",
+        bufferFormat: "float32x3",
+        size: 3,
+        array: normalArray
+      });
     }
     /**
      * If we have less than 65.536 vertices, we should use a Uin16Array to hold our index buffer values
@@ -21621,70 +21716,14 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         const accessor = this.gltf.accessors[primitive.indices];
         const bufferView = this.gltf.bufferViews[accessor.bufferView];
         indicesConstructor = _GLTFScenesManager.getTypedArrayConstructorFromComponentType(accessor.componentType);
+        const bytesPerElement = indicesConstructor.name === "Uint8Array" ? Uint16Array.BYTES_PER_ELEMENT : indicesConstructor.BYTES_PER_ELEMENT;
         const arrayOffset = accessor.byteOffset + bufferView.byteOffset;
         const arrayBuffer = this.gltf.arrayBuffers[bufferView.buffer];
-        const arrayLength = Math.ceil(accessor.count / indicesConstructor.BYTES_PER_ELEMENT) * indicesConstructor.BYTES_PER_ELEMENT;
+        const arrayLength = Math.ceil(accessor.count / bytesPerElement) * bytesPerElement;
         indicesArray = indicesConstructor.name === "Uint8Array" ? Uint16Array.from(new indicesConstructor(arrayBuffer, arrayOffset, arrayLength)) : new indicesConstructor(arrayBuffer, arrayOffset, arrayLength);
       }
       const hasNormal = defaultAttributes.find((attribute) => attribute.name === "normal");
       if (!hasNormal) {
-        const positionAttribute = defaultAttributes.find((attribute) => attribute.name === "position");
-        const vertex1 = new Vec3();
-        const vertex2 = new Vec3();
-        const vertex3 = new Vec3();
-        const edge1 = new Vec3();
-        const edge2 = new Vec3();
-        const normal = new Vec3();
-        const computeNormal = () => {
-          edge1.copy(vertex2).sub(vertex1);
-          edge2.copy(vertex3).sub(vertex1);
-          normal.crossVectors(edge1, edge2).normalize();
-        };
-        const posLength = positionAttribute.array.length;
-        const normalArray = new Float32Array(posLength);
-        if (!indicesArray) {
-          for (let i = 0; i < posLength; i += positionAttribute.size * 3) {
-            vertex1.set(positionAttribute.array[i], positionAttribute.array[i + 1], positionAttribute.array[i + 2]);
-            vertex2.set(positionAttribute.array[i + 3], positionAttribute.array[i + 4], positionAttribute.array[i + 5]);
-            vertex3.set(positionAttribute.array[i + 6], positionAttribute.array[i + 7], positionAttribute.array[i + 8]);
-            computeNormal();
-            for (let j = 0; j < 3; j++) {
-              normalArray[i + j * 3] = normal.x;
-              normalArray[i + 1 + j * 3] = normal.y;
-              normalArray[i + 2 + j * 3] = normal.z;
-            }
-          }
-        } else {
-          const nbIndices = indicesArray.length;
-          for (let i = 0; i < nbIndices; i += 3) {
-            const i0 = indicesArray[i] * 3;
-            const i1 = indicesArray[i + 1] * 3;
-            const i2 = indicesArray[i + 2] * 3;
-            if (posLength < i0 + 2)
-              continue;
-            vertex1.set(positionAttribute.array[i0], positionAttribute.array[i0 + 1], positionAttribute.array[i0 + 2]);
-            if (posLength < i1 + 2)
-              continue;
-            vertex2.set(positionAttribute.array[i1], positionAttribute.array[i1 + 1], positionAttribute.array[i1 + 2]);
-            if (posLength < i2 + 2)
-              continue;
-            vertex3.set(positionAttribute.array[i2], positionAttribute.array[i2 + 1], positionAttribute.array[i2 + 2]);
-            computeNormal();
-            for (let j = 0; j < 3; j++) {
-              normalArray[indicesArray[i + j] * 3] = normal.x;
-              normalArray[indicesArray[i + j] * 3 + 1] = normal.y;
-              normalArray[indicesArray[i + j] * 3 + 2] = normal.z;
-            }
-          }
-        }
-        const normalAttribute = {
-          name: "normal",
-          type: "vec3f",
-          bufferFormat: "float32x3",
-          size: 3,
-          array: normalArray
-        };
-        defaultAttributes.push(normalAttribute);
         defaultAttributes = defaultAttributes.filter((attr) => attr.name !== "tangent");
         interleavedArray = null;
       }
@@ -21707,6 +21746,9 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
       };
       const GeometryConstructor = isIndexedGeometry ? IndexedGeometry : Geometry;
       meshDescriptor.parameters.geometry = new GeometryConstructor(geometryAttributes);
+      if (!hasNormal) {
+        meshDescriptor.parameters.geometry.computeGeometry();
+      }
       meshDescriptor.parameters.geometry.boundingBox = geometryBBox;
       if (isIndexedGeometry && indicesConstructor && indicesArray) {
         meshDescriptor.parameters.geometry.setIndexBuffer({

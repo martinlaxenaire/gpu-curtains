@@ -1079,81 +1079,12 @@ export class GLTFScenesManager {
 
     if (!hasNormal) {
       // specs say "When normals are not specified, client implementations MUST calculate flat normals and the provided tangents (if present) MUST be ignored."
-      // compute flat normal
-      // from https://gist.github.com/donmccurdy/34a60951796cf703c8f6a9e1cd4bbe58
-      const positionAttribute = defaultAttributes.find((attribute) => attribute.name === 'position')
-      const vertex1 = new Vec3()
-      const vertex2 = new Vec3()
-      const vertex3 = new Vec3()
-      const edge1 = new Vec3()
-      const edge2 = new Vec3()
-      const normal = new Vec3()
-
-      const computeNormal = () => {
-        edge1.copy(vertex2).sub(vertex1)
-        edge2.copy(vertex3).sub(vertex1)
-
-        normal.crossVectors(edge1, edge2).normalize()
-      }
-
-      const posLength = positionAttribute.array.length
-      const normalArray = new Float32Array(posLength)
-
-      if (!indicesArray) {
-        for (let i = 0; i < posLength; i += positionAttribute.size * 3) {
-          vertex1.set(positionAttribute.array[i], positionAttribute.array[i + 1], positionAttribute.array[i + 2])
-          vertex2.set(positionAttribute.array[i + 3], positionAttribute.array[i + 4], positionAttribute.array[i + 5])
-          vertex3.set(positionAttribute.array[i + 6], positionAttribute.array[i + 7], positionAttribute.array[i + 8])
-
-          computeNormal()
-
-          for (let j = 0; j < 3; j++) {
-            normalArray[i + j * 3] = normal.x
-            normalArray[i + 1 + j * 3] = normal.y
-            normalArray[i + 2 + j * 3] = normal.z
-          }
-        }
-      } else {
-        const nbIndices = indicesArray.length
-        for (let i = 0; i < nbIndices; i += 3) {
-          const i0 = indicesArray[i] * 3
-          const i1 = indicesArray[i + 1] * 3
-          const i2 = indicesArray[i + 2] * 3
-
-          // avoid to access non existing values if we padded our indices array
-          if (posLength < i0 + 2) continue
-          vertex1.set(positionAttribute.array[i0], positionAttribute.array[i0 + 1], positionAttribute.array[i0 + 2])
-          if (posLength < i1 + 2) continue
-          vertex2.set(positionAttribute.array[i1], positionAttribute.array[i1 + 1], positionAttribute.array[i1 + 2])
-          if (posLength < i2 + 2) continue
-          vertex3.set(positionAttribute.array[i2], positionAttribute.array[i2 + 1], positionAttribute.array[i2 + 2])
-
-          computeNormal()
-
-          for (let j = 0; j < 3; j++) {
-            normalArray[indicesArray[i + j] * 3] = normal.x
-            normalArray[indicesArray[i + j] * 3 + 1] = normal.y
-            normalArray[indicesArray[i + j] * 3 + 2] = normal.z
-          }
-        }
-      }
-
-      const normalAttribute = {
-        name: 'normal',
-        type: 'vec3f',
-        bufferFormat: 'float32x3',
-        size: 3,
-        array: normalArray,
-      }
-
-      // add to the attributes
-      defaultAttributes.push(normalAttribute)
 
       // remove existing tangent if any
       defaultAttributes = defaultAttributes.filter((attr) => attr.name !== 'tangent')
 
       // if we had an interleavedArray then we'd have to rebuilt it with normals
-      // the Geometry is going to do that for us
+      // the Geometry is going to do that for us, while also computing flat normals
       interleavedArray = null
     }
 
@@ -1179,6 +1110,13 @@ export class GLTFScenesManager {
     const GeometryConstructor = isIndexedGeometry ? IndexedGeometry : Geometry
 
     meshDescriptor.parameters.geometry = new GeometryConstructor(geometryAttributes)
+
+    if (!hasNormal) {
+      // compute geometry right away
+      // so we have fresh attributes to send to the shaders' generation helper functions
+      meshDescriptor.parameters.geometry.computeGeometry()
+    }
+
     meshDescriptor.parameters.geometry.boundingBox = geometryBBox
 
     if (isIndexedGeometry && indicesConstructor && indicesArray) {

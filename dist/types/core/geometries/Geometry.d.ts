@@ -3,6 +3,7 @@ import { Box3 } from '../../math/Box3';
 import { GeometryBuffer, GeometryOptions, GeometryParams, VertexBuffer, VertexBufferAttribute, VertexBufferAttributeParams, VertexBufferParams, IndirectDrawParams } from '../../types/Geometries';
 import { Renderer } from '../renderers/utils';
 import { GPURenderPassTypes } from '../pipelines/PipelineManager';
+import { Vec3 } from '../../math/Vec3';
 /**
  * Used to create a {@link Geometry} from given parameters like instances count or geometry attributes (vertices, uvs, normals).<br>
  * Holds all attributes arrays, bounding box and create as WGSL code snippet for the vertex shader input attributes.
@@ -107,6 +108,20 @@ export declare class Geometry {
      * @returns - found {@link VertexBufferAttribute | attribute} or null if not found
      */
     getAttributeByName(name: string): VertexBufferAttribute | null;
+    /**
+     * Compute the normal {@link Vec3} from a triangle defined by three {@link Vec3} by computing edges {@link Vec3}.
+     * @param vertex1 - first triangle position
+     * @param vertex2 - second triangle position
+     * @param vertex3 - third triangle position
+     * @param edge1 - first edge
+     * @param edge2 - second edge
+     * @param normal - flat normal generated.
+     */
+    computeNormalFromTriangle(vertex1: Vec3, vertex2: Vec3, vertex3: Vec3, edge1: Vec3, edge2: Vec3, normal: Vec3): void;
+    /**
+     * Compute {@link Geometry} flat normals in case the `normal` attribute is missing.
+     */
+    computeFlatNormals(): void;
     /**
      * Compute a Geometry, which means iterate through all vertex buffers and create the attributes array that will be sent as buffers.
      * Also compute the Geometry bounding box.
