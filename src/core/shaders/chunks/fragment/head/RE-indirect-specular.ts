@@ -1,3 +1,4 @@
+/** WGSL functions to calculate the indirect specular contribution of lights. */
 export const REIndirectSpecular = /* wgsl */ `
 fn DFGApprox(
   normal: vec3f,

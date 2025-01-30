@@ -92,7 +92,7 @@ window.addEventListener('load', async () => {
     },
   }
 
-  let shadingModel = 'IBL' // 'IBL', 'PBR', 'Phong' or 'Lambert'
+  let shadingModel = 'PBR' // 'PBR', 'Phong' or 'Lambert'
 
   // gltf
   const gltfLoader = new GLTFLoader()
@@ -148,7 +148,7 @@ window.addEventListener('load', async () => {
 
       pointLight.position.set(radius * 2)
 
-      if (shadingModel === 'IBL') {
+      if (shadingModel === 'PBR') {
         ambientLight.intensity = 0
         pointLight.intensity = 0
       } else {
@@ -159,12 +159,8 @@ window.addEventListener('load', async () => {
       }
 
       parameters.shaders = buildShaders(meshDescriptor, {
-        shadingModel: shadingModel,
-        iblParameters: {
-          diffuseStrength: 1,
-          specularStrength: 1,
-          environmentMap,
-        },
+        shadingModel,
+        environmentMap,
       })
     })
   }
@@ -216,7 +212,7 @@ window.addEventListener('load', async () => {
     .name('Environment maps')
 
   gui
-    .add({ shadingModel }, 'shadingModel', ['IBL', 'PBR', 'Phong', 'Lambert'])
+    .add({ shadingModel }, 'shadingModel', ['PBR', 'Phong', 'Lambert'])
     .onChange(async (value) => {
       if (value !== shadingModel) {
         shadingModel = value

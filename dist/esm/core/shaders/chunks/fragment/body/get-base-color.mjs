@@ -5,7 +5,7 @@ const getBaseColor = ({
   let baseColor = (
     /* wgsl */
     `
-  var baseColor: vec4f = baseColorFactor;
+  var baseColor: vec4f = vec4(baseColorFactor, baseOpacityFactor);
   `
   );
   const colorAttributes = [];
@@ -32,7 +32,7 @@ const getBaseColor = ({
   if (baseColorTexture) {
     baseColor += /* wgsl */
     `
-  let baseColorSample: vec4f = textureSample(${baseColorTexture.texture}, ${baseColorTexture.sampler}, fsInput.${baseColorTexture.texCoordAttributeName});
+  let baseColorSample: vec4f = textureSample(${baseColorTexture.texture}, ${baseColorTexture.sampler}, ${baseColorTexture.texCoordAttributeName});
   baseColor *= baseColorSample;
   `;
   }

@@ -6,6 +6,8 @@ import { Vec3 } from '../../math/Vec3.mjs';
 import { throwWarning } from '../../utils/utils.mjs';
 import { directionalShadowStruct } from '../shadows/DirectionalShadow.mjs';
 import { pointShadowStruct } from '../shadows/PointShadow.mjs';
+import { Texture } from '../textures/Texture.mjs';
+import { Sampler } from '../samplers/Sampler.mjs';
 
 var __accessCheck = (obj, member, msg) => {
   if (!member.has(obj))
@@ -73,6 +75,17 @@ class GPUCameraRenderer extends GPURenderer {
       this.setShadowsBinding();
     }
     this.setCameraLightsBindGroup();
+    this.transmissionTarget = {
+      sampler: new Sampler(this, {
+        label: "Transmission sampler",
+        name: "transmissionSampler",
+        magFilter: "linear",
+        minFilter: "linear",
+        mipmapFilter: "linear",
+        addressModeU: "clamp-to-edge",
+        addressModeV: "clamp-to-edge"
+      })
+    };
   }
   /**
    * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} is lost.
@@ -473,6 +486,48 @@ class GPUCameraRenderer extends GPURenderer {
   setCameraPosition(position = new Vec3(0, 0, 1)) {
     this.camera.position.copy(position);
   }
+  /* TRANSMISSIVE */
+  /**
+   * Create the {@link transmissionTarget} {@link Texture} and {@link RenderPassEntry} if not already created.
+   */
+  createTransmissionTarget() {
+    if (!this.transmissionTarget.texture) {
+      this.transmissionTarget.passEntry = this.scene.createScreenPassEntry("Transmission scene screen render pass");
+      this.transmissionTarget.texture = new Texture(this, {
+        label: "Transmission background scene render target output",
+        name: "transmissionBackgroundTexture",
+        generateMips: true,
+        // needed for roughness LOD!
+        format: this.options.context.format,
+        autoDestroy: false
+      });
+      this.transmissionTarget.passEntry.onBeforeRenderPass = (commandEncoder, swapChainTexture) => {
+        commandEncoder.copyTextureToTexture(
+          {
+            texture: swapChainTexture
+          },
+          {
+            texture: this.transmissionTarget.texture.texture
+          },
+          [this.transmissionTarget.texture.size.width, this.transmissionTarget.texture.size.height]
+        );
+        this.generateMips(this.transmissionTarget.texture, commandEncoder);
+      };
+    }
+  }
+  /**
+   * Destroy the {@link transmissionTarget} {@link Texture} and {@link RenderPassEntry} if already created.
+   */
+  destroyTransmissionTarget() {
+    if (this.transmissionTarget.texture) {
+      this.transmissionTarget.texture.destroy();
+      this.scene.renderPassEntries.screen = this.scene.renderPassEntries.screen.filter(
+        (passEntry) => passEntry.label !== "Transmission scene screen render pass"
+      );
+      this.transmissionTarget.texture = null;
+      this.transmissionTarget.passEntry = null;
+    }
+  }
   /**
    * Resize our {@link GPUCameraRenderer} and resize our {@link camera} before anything else.
    * @param rectBBox - the optional new {@link canvas} {@link RectBBox} to set
@@ -505,6 +560,7 @@ class GPUCameraRenderer extends GPURenderer {
   destroy() {
     this.cameraLightsBindGroup?.destroy();
     this.lights.forEach((light) => light.remove());
+    this.destroyTransmissionTarget();
     super.destroy();
   }
 }

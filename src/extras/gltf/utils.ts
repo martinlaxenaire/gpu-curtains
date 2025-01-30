@@ -1,14 +1,14 @@
 import { MeshDescriptor } from '../../types/gltf/GLTFScenesManager'
 import { ShaderOptions } from '../../types/Materials'
-import { EnvironmentMap } from '../environment-map/EnvironmentMap'
 import { BufferBinding } from '../../core/bindings/BufferBinding'
-import { getVertexCode } from '../../core/shaders/full/vertex/get-vertex-code'
+import { getVertexShaderCode } from '../../core/shaders/full/vertex/get-vertex-shader-code'
 import {
-  getFragmentCode,
+  getFragmentShaderCode,
   FragmentShaderBaseInputParams,
-  ToneMappings,
   ShadingModels,
-} from '../../core/shaders/full/fragment/get-fragment-code'
+  ToneMappings,
+} from '../../core/shaders/full/fragment/get-fragment-shader-code'
+import { AdditionalChunks } from '../../core/shaders/default-material-helpers'
 
 /**
  * Parameters used to build the shaders
@@ -16,15 +16,10 @@ import {
 export interface ShaderBuilderParameters {
   /** Shading model to use. */
   shadingModel?: ShadingModels
-  /** Additional WGSL chunks to add to the shaders. */
-  chunks?: {
-    /** Additional WGSL chunk to add to the fragment shader head. */
-    additionalFragmentHead?: string
-    /** Preliminary modification to apply to the fragment shader `color` `vec4f` variable before applying any lightning calculations. */
-    preliminaryColorContribution?: string
-    /** Additional modification to apply to the fragment shader `color` `vec4f` variable before returning it. */
-    additionalColorContribution?: string
-  }
+  /** Additional WGSL chunks to add to the vertex shaders. */
+  vertexChunks?: AdditionalChunks
+  /** Additional WGSL chunks to add to the fragment shaders. */
+  fragmentChunks?: AdditionalChunks
   /** Additional IBL parameters to pass as uniform and textures. */
   environmentMap?: FragmentShaderBaseInputParams['environmentMap']
 }
@@ -65,9 +60,14 @@ export const buildShaders = (
   // transmission
   const transmissionTexture = meshDescriptor.textures.find((t) => t.texture === 'transmissionTexture')
   const thicknessTexture = meshDescriptor.textures.find((t) => t.texture === 'thicknessTexture')
-  const transmissionBackgroundTexture = meshDescriptor.textures.find(
-    (t) => t.texture === 'transmissionBackgroundTexture'
-  )
+  // transmission background texture created by the renderer if mesh is transmissive
+  const transmissionBackgroundTexture = meshDescriptor.parameters.transmissive
+    ? {
+        texture: 'transmissionBackgroundTexture',
+        sampler: 'transmissionSampler',
+        texCoordAttributeName: 'uv',
+      }
+    : null
 
   // Shader parameters
   let { shadingModel } = shaderParameters
@@ -81,29 +81,11 @@ export const buildShaders = (
     shadingModel = 'Unlit'
   }
 
-  let { chunks } = shaderParameters || {}
+  let { vertexChunks, fragmentChunks } = shaderParameters || {}
   const { environmentMap } = shaderParameters || {}
 
   if (environmentMap) {
-    // add env map uniforms
-    meshDescriptor.parameters.uniforms.material.struct = {
-      ...meshDescriptor.parameters.uniforms.material.struct,
-      ...{
-        envRotation: {
-          type: 'mat3x3f',
-          value: environmentMap.rotation,
-        },
-        envDiffuseIntensity: {
-          type: 'f32',
-          value: environmentMap.options.diffuseIntensity,
-        },
-        envSpecularIntensity: {
-          type: 'f32',
-          value: environmentMap.options.specularIntensity,
-        },
-      },
-    }
-
+    // add environment map textures and sampler
     meshDescriptor.parameters.textures = [
       ...meshDescriptor.parameters.textures,
       environmentMap.lutTexture,
@@ -114,17 +96,20 @@ export const buildShaders = (
     meshDescriptor.parameters.samplers = [...meshDescriptor.parameters.samplers, environmentMap.sampler]
   }
 
-  const vs = getVertexCode({
+  const vs = getVertexShaderCode({
     bindings: meshDescriptor.parameters.bindings as BufferBinding[],
     geometry: meshDescriptor.parameters.geometry,
+    chunks: vertexChunks,
   })
 
-  const fs = getFragmentCode({
+  const fs = getFragmentShaderCode({
     shadingModel,
-    chunks,
+    chunks: fragmentChunks,
     receiveShadows: !!meshDescriptor.parameters.receiveShadows,
     toneMapping: 'Khronos',
     geometry: meshDescriptor.parameters.geometry,
+    materialUniform: meshDescriptor.parameters.uniforms.material,
+    materialUniformName: 'material',
     extensionsUsed: meshDescriptor.extensionsUsed,
     baseColorTexture,
     normalTexture,

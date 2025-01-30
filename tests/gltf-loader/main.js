@@ -432,7 +432,7 @@ window.addEventListener('load', async () => {
       }
 
       // debug
-      const additionalColorContribution = `
+      const additionalContribution = `
         if(debug.channel == 1.0) {
           ${
             parameters.geometry.getAttributeByName('uv')
@@ -452,34 +452,66 @@ window.addEventListener('load', async () => {
               : 'outputColor = vec4(0.0, 0.0, 0.0, 1.0);'
           }
         } else if(debug.channel == 4.0) {
-          outputColor = vec4(geometryNormal * 0.5 + 0.5, 1.0);
+          ${
+            shadingModel !== 'Unlit'
+              ? 'outputColor = vec4(geometryNormal * 0.5 + 0.5, 1.0);'
+              : 'outputColor = vec4(normal * 0.5 + 0.5, 1.0);'
+          }
         } else if(debug.channel == 5.0) {
-          outputColor = vec4(tangent * 0.5 + 0.5, 1.0);
+          ${
+            parameters.geometry.getAttributeByName('tangent')
+              ? 'outputColor = vec4(tangent * 0.5 + 0.5, 1.0);'
+              : 'outputColor = vec4(vec3(0.0), 1.0);'
+          }
         } else if(debug.channel == 6.0) {
-          outputColor = vec4(bitangent * 0.5 + 0.5, 1.0);
+          ${
+            parameters.geometry.getAttributeByName('tangent')
+              ? 'outputColor = vec4(bitangent * 0.5 + 0.5, 1.0);'
+              : 'outputColor = vec4(vec3(0.0), 1.0);'
+          }
         } else if(debug.channel == 7.0) {
           outputColor = vec4(normal * 0.5 + 0.5, 1.0);
         } else if(debug.channel == 8.0) {
-          outputColor = vec4(vec3(occlusion), 1.0);
+          ${
+            shadingModel !== 'Unlit'
+              ? 'outputColor = vec4(vec3(occlusion), 1.0);'
+              : 'outputColor = vec4(vec3(0.0), 1.0);'
+          }
         } else if(debug.channel == 9.0) {
-          outputColor = vec4(emissive, 1.0);
+          ${shadingModel !== 'Unlit' ? 'outputColor = vec4(emissive, 1.0);' : 'outputColor = vec4(vec3(0.0), 1.0);'}
         } else if(debug.channel == 10.0) {
           outputColor = baseColor;
         } else if(debug.channel == 11.0) {
-          outputColor = vec4(vec3(metallic), 1.0);
+          ${
+            shadingModel !== 'Unlit' && shadingModel !== 'Lambert'
+              ? 'outputColor = vec4(vec3(metallic), 1.0);'
+              : 'outputColor = vec4(vec3(0.0), 1.0);'
+          }
         } else if(debug.channel == 12.0) {
-          outputColor = vec4(vec3(roughness), 1.0);
+          ${
+            shadingModel !== 'Unlit' && shadingModel !== 'Lambert'
+              ? 'outputColor = vec4(vec3(roughness), 1.0);'
+              : 'outputColor = vec4(vec3(0.0), 1.0);'
+          }
         } else if(debug.channel == 13.0) {
-          outputColor = vec4(vec3(specularFactor), 1.0);
+          ${
+            shadingModel !== 'Unlit' && shadingModel !== 'Lambert'
+              ? 'outputColor = vec4(vec3(specularFactor), 1.0);'
+              : 'outputColor = vec4(vec3(0.0), 1.0);'
+          }
         } else if(debug.channel == 14.0) {
-          outputColor = vec4(specularColorFactor, 1.0);
+          ${
+            shadingModel !== 'Unlit' && shadingModel !== 'Lambert'
+              ? 'outputColor = vec4(specularColorFactor, 1.0);'
+              : 'outputColor = vec4(vec3(0.0), 1.0);'
+          }
         }
       `
 
       parameters.shaders = buildShaders(meshDescriptor, {
         shadingModel,
-        chunks: {
-          additionalColorContribution,
+        fragmentChunks: {
+          additionalContribution,
         },
         ...(useEnvMap && { environmentMap }),
       })

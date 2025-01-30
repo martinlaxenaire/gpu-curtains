@@ -1,19 +1,10 @@
-import { constants } from '../fragment/head/constants.mjs';
-import { common } from '../fragment/head/common.mjs';
-import { getLightsInfos } from '../fragment/head/get-lights-infos.mjs';
+import { lambertUtils } from './lambert-shading.mjs';
 import { REIndirectSpecular } from '../fragment/head/RE-indirect-specular.mjs';
 import { getIBLTransmission } from '../fragment/head/get-IBL-transmission.mjs';
 import { getPBRDirect } from '../fragment/head/get-PBR-direct.mjs';
 import { toneMappingUtils } from '../fragment/head/tone-mapping-utils.mjs';
 import { getPBRShading } from '../fragment/body/get-pbr-shading.mjs';
 
-const pbrUtils = `
-${constants}
-${common}
-${getLightsInfos}
-${REIndirectSpecular}
-${getIBLTransmission}
-`;
 const getPBR = ({
   addUtils = true,
   receiveShadows = false,
@@ -25,7 +16,9 @@ const getPBR = ({
 } = {}) => (
   /* wgsl */
   `
-${addUtils ? pbrUtils : ""}
+${addUtils ? lambertUtils : ""}
+${REIndirectSpecular}
+${getIBLTransmission}
 ${getPBRDirect}
 ${toneMapping ? toneMappingUtils : ""}
 
@@ -54,4 +47,4 @@ fn getPBR(
 `
 );
 
-export { getPBR, pbrUtils };
+export { getPBR };

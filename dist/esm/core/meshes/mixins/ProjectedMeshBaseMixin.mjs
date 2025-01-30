@@ -2,7 +2,7 @@ import { isCameraRenderer } from '../../renderers/utils.mjs';
 import { DOMFrustum } from '../../DOM/DOMFrustum.mjs';
 import { MeshBaseMixin } from './MeshBaseMixin.mjs';
 import { BufferBinding } from '../../bindings/BufferBinding.mjs';
-import { getDefaultProjectedVertexCode } from '../../shaders/full/vertex/get-default-projected-vertex-code.mjs';
+import { getDefaultProjectedVertexShaderCode } from '../../shaders/full/vertex/get-default-projected-vertex-shader-code.mjs';
 import { getDefaultNormalFragmentCode } from '../../shaders/full/fragment/get-default-normal-fragment-code.mjs';
 import { getPCFShadowContribution } from '../../shaders/chunks/fragment/head/get-PCF-shadow-contribution.mjs';
 import { getPCFDirectionalShadows } from '../../shaders/chunks/fragment/head/get-PCF-directional-shadows.mjs';
@@ -19,7 +19,8 @@ const defaultProjectedMeshParams = {
     left: 0
   },
   receiveShadows: false,
-  castShadows: false
+  castShadows: false,
+  transmissive: false
 };
 function ProjectedMeshBaseMixin(Base) {
   return class ProjectedMeshBase extends MeshBaseMixin(Base) {
@@ -56,14 +57,15 @@ function ProjectedMeshBaseMixin(Base) {
       this.type = "MeshTransformed";
       renderer = isCameraRenderer(renderer, parameters.label ? parameters.label + " " + this.type : this.type);
       this.renderer = renderer;
-      const { frustumCulling, DOMFrustumMargins, receiveShadows, castShadows } = parameters;
+      const { frustumCulling, DOMFrustumMargins, receiveShadows, castShadows, transmissive } = parameters;
       this.options = {
         ...this.options ?? {},
         // merge possible lower options?
         frustumCulling,
         DOMFrustumMargins,
         receiveShadows,
-        castShadows
+        castShadows,
+        transmissive
       };
       if (this.options.castShadows) {
         this.renderer.shadowCastingLights.forEach((light) => {
@@ -135,7 +137,7 @@ function ProjectedMeshBaseMixin(Base) {
       if (!shaders) {
         this.options.shaders = {
           vertex: {
-            code: getDefaultProjectedVertexCode,
+            code: getDefaultProjectedVertexShaderCode,
             entryPoint: "main"
           },
           fragment: {
@@ -146,7 +148,7 @@ function ProjectedMeshBaseMixin(Base) {
       } else {
         if (!shaders.vertex || !shaders.vertex.code) {
           shaders.vertex = {
-            code: getDefaultProjectedVertexCode,
+            code: getDefaultProjectedVertexShaderCode,
             entryPoint: "main"
           };
         }
@@ -203,8 +205,11 @@ function ProjectedMeshBaseMixin(Base) {
      * @returns - cleaned parameters
      */
     cleanupRenderMaterialParameters(parameters) {
-      delete parameters.frustumCulling;
+      delete parameters.castShadows;
       delete parameters.DOMFrustumMargins;
+      delete parameters.frustumCulling;
+      delete parameters.receiveShadows;
+      delete parameters.transmissive;
       if (this.options.receiveShadows) {
         const depthTextures = [];
         let depthSamplers = [];
@@ -226,6 +231,19 @@ function ProjectedMeshBaseMixin(Base) {
           parameters.samplers = [...parameters.samplers, ...depthSamplers];
         } else {
           parameters.samplers = depthSamplers;
+        }
+      }
+      if (this.options.transmissive) {
+        this.renderer.createTransmissionTarget();
+        if (parameters.textures) {
+          parameters.textures = [...parameters.textures, this.renderer.transmissionTarget.texture];
+        } else {
+          parameters.textures = [this.renderer.transmissionTarget.texture];
+        }
+        if (parameters.samplers) {
+          parameters.samplers = [...parameters.samplers, this.renderer.transmissionTarget.sampler];
+        } else {
+          parameters.samplers = [this.renderer.transmissionTarget.sampler];
         }
       }
       return super.cleanupRenderMaterialParameters(parameters);

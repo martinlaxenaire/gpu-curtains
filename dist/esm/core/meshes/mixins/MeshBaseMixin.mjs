@@ -3,7 +3,7 @@ import { isRenderer } from '../../renderers/utils.mjs';
 import { RenderMaterial } from '../../materials/RenderMaterial.mjs';
 import { DOMTexture } from '../../textures/DOMTexture.mjs';
 import { Texture } from '../../textures/Texture.mjs';
-import { getDefaultVertexCode } from '../../shaders/full/vertex/get-default-vertex-code.mjs';
+import { getDefaultVertexShaderCode } from '../../shaders/full/vertex/get-default-vertex-shader-code.mjs';
 import { getDefaultFragmentCode } from '../../shaders/full/fragment/get-default-fragment-code.mjs';
 
 var __accessCheck = (obj, member, msg) => {
@@ -264,7 +264,7 @@ function MeshBaseMixin(Base) {
       if (!shaders) {
         this.options.shaders = {
           vertex: {
-            code: getDefaultVertexCode,
+            code: getDefaultVertexShaderCode,
             entryPoint: "main"
           },
           fragment: {
@@ -275,7 +275,7 @@ function MeshBaseMixin(Base) {
       } else {
         if (!shaders.vertex || !shaders.vertex.code) {
           shaders.vertex = {
-            code: getDefaultVertexCode,
+            code: getDefaultVertexShaderCode,
             entryPoint: "main"
           };
         }
@@ -387,9 +387,12 @@ ${geometry.wgslStructFragment}`
      * @returns - cleaned parameters
      */
     cleanupRenderMaterialParameters(parameters) {
-      delete parameters.texturesOptions;
-      delete parameters.outputTarget;
+      delete parameters.additionalOutputTargets;
       delete parameters.autoRender;
+      delete parameters.outputTarget;
+      delete parameters.renderBundle;
+      delete parameters.texturesOptions;
+      delete parameters.useCustomScenePassEntry;
       return parameters;
     }
     /**

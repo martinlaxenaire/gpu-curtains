@@ -1,18 +1,7 @@
-import { constants } from '../fragment/head/constants'
-import { common } from '../fragment/head/common'
-import { getLightsInfos } from '../fragment/head/get-lights-infos'
-import { REIndirectDiffuse } from '../fragment/head/RE-indirect-diffuse'
+import { GetShadingParams, lambertUtils } from './lambert-shading'
 import { getPhongDirect } from '../fragment/head/get-phong-direct'
 import { toneMappingUtils } from '../fragment/head/tone-mapping-utils'
-import { GetShadingParams } from './lambert-shading'
 import { getPhongShading } from '../fragment/body/get-phong-shading'
-
-const lambertUtils = /* wgsl */ `
-${constants}
-${common}
-${getLightsInfos}
-${REIndirectDiffuse}
-`
 
 /**
  * Shader chunk to add to the head of a fragment shader to be able to use Phong shading.

@@ -1,20 +1,8 @@
-import { constants } from '../fragment/head/constants.mjs';
-import { common } from '../fragment/head/common.mjs';
-import { getLightsInfos } from '../fragment/head/get-lights-infos.mjs';
-import { REIndirectDiffuse } from '../fragment/head/RE-indirect-diffuse.mjs';
+import { lambertUtils } from './lambert-shading.mjs';
 import { getPhongDirect } from '../fragment/head/get-phong-direct.mjs';
 import { toneMappingUtils } from '../fragment/head/tone-mapping-utils.mjs';
 import { getPhongShading } from '../fragment/body/get-phong-shading.mjs';
 
-const lambertUtils = (
-  /* wgsl */
-  `
-${constants}
-${common}
-${getLightsInfos}
-${REIndirectDiffuse}
-`
-);
 const getPhong = ({ addUtils = true, receiveShadows = false, toneMapping = "Linear", useOcclusion = false } = {}) => (
   /* wgsl */
   `

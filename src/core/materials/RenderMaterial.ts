@@ -12,8 +12,8 @@ import {
 import { RenderPipelineEntry } from '../pipelines/RenderPipelineEntry'
 import { throwWarning } from '../../utils/utils'
 import { compareRenderingOptions } from './utils'
-import { getDefaultProjectedVertexCode } from '../shaders/full/vertex/get-default-projected-vertex-code'
-import { getDefaultVertexCode } from '../shaders/full/vertex/get-default-vertex-code'
+import { getDefaultProjectedVertexShaderCode } from '../shaders/full/vertex/get-default-projected-vertex-shader-code'
+import { getDefaultVertexShaderCode } from '../shaders/full/vertex/get-default-vertex-shader-code'
 import { getDefaultFragmentCode } from '../shaders/full/fragment/get-default-fragment-code'
 
 /**
@@ -49,7 +49,7 @@ export class RenderMaterial extends Material {
 
     if (!parameters.shaders?.vertex) {
       parameters.shaders.vertex = {
-        code: parameters.useProjection ? getDefaultProjectedVertexCode : getDefaultVertexCode,
+        code: parameters.useProjection ? getDefaultProjectedVertexShaderCode : getDefaultVertexShaderCode,
         entryPoint: 'main',
       }
     }

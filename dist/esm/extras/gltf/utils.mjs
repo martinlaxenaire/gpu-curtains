@@ -1,5 +1,5 @@
-import { getVertexCode } from '../../core/shaders/full/vertex/get-vertex-code.mjs';
-import { getFragmentCode } from '../../core/shaders/full/fragment/get-fragment-code.mjs';
+import { getVertexShaderCode } from '../../core/shaders/full/vertex/get-vertex-shader-code.mjs';
+import { getFragmentShaderCode } from '../../core/shaders/full/fragment/get-fragment-shader-code.mjs';
 
 const buildShaders = (meshDescriptor, shaderParameters = {}) => {
   const baseColorTexture = meshDescriptor.textures.find((t) => t.texture === "baseColorTexture");
@@ -12,9 +12,11 @@ const buildShaders = (meshDescriptor, shaderParameters = {}) => {
   const specularColorTexture = specularTexture || meshDescriptor.textures.find((t) => t.texture === "specularColorTexture");
   const transmissionTexture = meshDescriptor.textures.find((t) => t.texture === "transmissionTexture");
   const thicknessTexture = meshDescriptor.textures.find((t) => t.texture === "thicknessTexture");
-  const transmissionBackgroundTexture = meshDescriptor.textures.find(
-    (t) => t.texture === "transmissionBackgroundTexture"
-  );
+  const transmissionBackgroundTexture = meshDescriptor.parameters.transmissive ? {
+    texture: "transmissionBackgroundTexture",
+    sampler: "transmissionSampler",
+    texCoordAttributeName: "uv"
+  } : null;
   let { shadingModel } = shaderParameters;
   if (!shadingModel) {
     shadingModel = "PBR";
@@ -23,26 +25,9 @@ const buildShaders = (meshDescriptor, shaderParameters = {}) => {
   if (isUnlit) {
     shadingModel = "Unlit";
   }
-  let { chunks } = shaderParameters || {};
+  let { vertexChunks, fragmentChunks } = shaderParameters || {};
   const { environmentMap } = shaderParameters || {};
   if (environmentMap) {
-    meshDescriptor.parameters.uniforms.material.struct = {
-      ...meshDescriptor.parameters.uniforms.material.struct,
-      ...{
-        envRotation: {
-          type: "mat3x3f",
-          value: environmentMap.rotation
-        },
-        envDiffuseIntensity: {
-          type: "f32",
-          value: environmentMap.options.diffuseIntensity
-        },
-        envSpecularIntensity: {
-          type: "f32",
-          value: environmentMap.options.specularIntensity
-        }
-      }
-    };
     meshDescriptor.parameters.textures = [
       ...meshDescriptor.parameters.textures,
       environmentMap.lutTexture,
@@ -51,16 +36,19 @@ const buildShaders = (meshDescriptor, shaderParameters = {}) => {
     ];
     meshDescriptor.parameters.samplers = [...meshDescriptor.parameters.samplers, environmentMap.sampler];
   }
-  const vs = getVertexCode({
+  const vs = getVertexShaderCode({
     bindings: meshDescriptor.parameters.bindings,
-    geometry: meshDescriptor.parameters.geometry
+    geometry: meshDescriptor.parameters.geometry,
+    chunks: vertexChunks
   });
-  const fs = getFragmentCode({
+  const fs = getFragmentShaderCode({
     shadingModel,
-    chunks,
+    chunks: fragmentChunks,
     receiveShadows: !!meshDescriptor.parameters.receiveShadows,
     toneMapping: "Khronos",
     geometry: meshDescriptor.parameters.geometry,
+    materialUniform: meshDescriptor.parameters.uniforms.material,
+    materialUniformName: "material",
     extensionsUsed: meshDescriptor.extensionsUsed,
     baseColorTexture,
     normalTexture,

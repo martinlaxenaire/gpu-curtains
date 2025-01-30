@@ -16,7 +16,7 @@ import { Vec3 } from '../../../math/Vec3'
 import { RenderBundle } from '../../renderPasses/RenderBundle'
 import { BufferBinding, BufferBindingParams } from '../../bindings/BufferBinding'
 
-import { getDefaultProjectedVertexCode } from '../../shaders/full/vertex/get-default-projected-vertex-code'
+import { getDefaultProjectedVertexShaderCode } from '../../shaders/full/vertex/get-default-projected-vertex-shader-code'
 import { getDefaultNormalFragmentCode } from '../../shaders/full/fragment/get-default-normal-fragment-code'
 import { getPCFShadowContribution } from '../../shaders/chunks/fragment/head/get-PCF-shadow-contribution'
 import { getPCFDirectionalShadows } from '../../shaders/chunks/fragment/head/get-PCF-directional-shadows'
@@ -39,6 +39,9 @@ export interface ProjectedMeshBaseParams {
   receiveShadows?: boolean
   /** Whether the mesh should cast shadows from shadow casting lights. If set to `true`, the mesh will be automatically added to all shadow maps. If you want to cast only specific shadows, see {@link core/shadows/Shadow.Shadow#addShadowCastingMesh | shadow's addShadowCastingMesh} method. Default to `false`. */
   castShadows?: boolean
+
+  /** Whether the mesh should be considered as transmissive, like glass or transparent plastic. Will be rendered after the non transmissive meshes and have the {@link CameraRenderer#transmissionTarget | camera renderer transmissionTarget} texture and sampler properties attached to it to handle transmission effect. */
+  transmissive?: boolean
 }
 
 /** Parameters used to create a ProjectedMesh */
@@ -59,6 +62,7 @@ const defaultProjectedMeshParams: ProjectedMeshBaseParams = {
   },
   receiveShadows: false,
   castShadows: false,
+  transmissive: false,
 }
 
 /** Base options used to create this ProjectedMesh */
@@ -264,7 +268,7 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
 
       this.renderer = renderer
 
-      const { frustumCulling, DOMFrustumMargins, receiveShadows, castShadows } = parameters
+      const { frustumCulling, DOMFrustumMargins, receiveShadows, castShadows, transmissive } = parameters
 
       this.options = {
         ...(this.options ?? {}), // merge possible lower options?
@@ -272,6 +276,7 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
         DOMFrustumMargins,
         receiveShadows,
         castShadows,
+        transmissive,
       }
 
       if (this.options.castShadows) {
@@ -365,7 +370,7 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
       if (!shaders) {
         this.options.shaders = {
           vertex: {
-            code: getDefaultProjectedVertexCode,
+            code: getDefaultProjectedVertexShaderCode,
             entryPoint: 'main',
           },
           fragment: {
@@ -376,7 +381,7 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
       } else {
         if (!shaders.vertex || !shaders.vertex.code) {
           shaders.vertex = {
-            code: getDefaultProjectedVertexCode,
+            code: getDefaultProjectedVertexShaderCode,
             entryPoint: 'main',
           }
         }
@@ -455,8 +460,11 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
      */
     cleanupRenderMaterialParameters(parameters: ProjectedRenderMaterialParams): MeshBaseRenderParams {
       // patch mesh parameters
-      delete parameters.frustumCulling
+      delete parameters.castShadows
       delete parameters.DOMFrustumMargins
+      delete parameters.frustumCulling
+      delete parameters.receiveShadows
+      delete parameters.transmissive
 
       if (this.options.receiveShadows) {
         const depthTextures = []
@@ -484,6 +492,23 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
           parameters.samplers = [...parameters.samplers, ...depthSamplers]
         } else {
           parameters.samplers = depthSamplers
+        }
+      }
+
+      // add transmissive texture and sampler if needed
+      if (this.options.transmissive) {
+        this.renderer.createTransmissionTarget()
+
+        if (parameters.textures) {
+          parameters.textures = [...parameters.textures, this.renderer.transmissionTarget.texture]
+        } else {
+          parameters.textures = [this.renderer.transmissionTarget.texture]
+        }
+
+        if (parameters.samplers) {
+          parameters.samplers = [...parameters.samplers, this.renderer.transmissionTarget.sampler]
+        } else {
+          parameters.samplers = [this.renderer.transmissionTarget.sampler]
         }
       }
 

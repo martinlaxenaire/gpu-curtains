@@ -1,16 +1,11 @@
 const getMetallicRoughness = ({
   metallicRoughnessTexture = null
 } = {}) => {
-  let metallicRoughness = (
-    /*  wgsl */
-    `
-  var metallic = metallicFactor;
-  var roughness = roughnessFactor;`
-  );
+  let metallicRoughness = "";
   if (metallicRoughnessTexture) {
     metallicRoughness += /* wgsl */
     `
-  let metallicRoughness = textureSample(${metallicRoughnessTexture.texture}, ${metallicRoughnessTexture.sampler}, fsInput.${metallicRoughnessTexture.texCoordAttributeName});
+  let metallicRoughness = textureSample(${metallicRoughnessTexture.texture}, ${metallicRoughnessTexture.sampler}, ${metallicRoughnessTexture.texCoordAttributeName});
   
   metallic = metallic * metallicRoughness.b;
   roughness = roughness * metallicRoughness.g;

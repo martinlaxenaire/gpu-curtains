@@ -1,4 +1,4 @@
-/** Helper function chunk appended internally and used to compute IBL indirect light contributions, based on environment diffuse and specular maps. Image Based Lightning also use {@link getPBRDirect | PBR direct light contributions}. */
+/** Helper function chunk appended internally and used to compute IBL indirect light contributions, based on environment diffuse and specular maps. */
 // we could either compute the indirect contribution directly inside getIBLIndirect()
 // or compute IBL radiance (specular) and irradiance (diffuse) factors
 // and use them inside RE_IndirectSpecular() later to apply scattering

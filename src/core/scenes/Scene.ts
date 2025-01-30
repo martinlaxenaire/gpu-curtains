@@ -11,6 +11,7 @@ import { Object3D } from '../objects3D/Object3D'
 import { Vec3 } from '../../math/Vec3'
 import { RenderBundle } from '../renderPasses/RenderBundle'
 import { throwWarning } from '../../utils/utils'
+import { GPUCameraRenderer } from '../renderers/GPUCameraRenderer'
 
 // used to sort transparent meshes
 const camPosA = new Vec3()
@@ -260,6 +261,8 @@ export class Scene extends Object3D {
     // first get correct render pass enty and stack
     const renderPassEntry = mesh.options.useCustomScenePassEntry
       ? mesh.options.useCustomScenePassEntry
+      : 'transmissive' in mesh.options && mesh.options.transmissive
+      ? (this.renderer as GPUCameraRenderer).transmissionTarget.passEntry
       : this.getRenderTargetPassEntry(mesh.outputTarget)
 
     const { stack } = renderPassEntry
@@ -363,6 +366,15 @@ export class Scene extends Object3D {
       }
     }
 
+    if ('transmissive' in mesh.options && mesh.options.transmissive) {
+      const transmissivePassEntry = (this.renderer as GPUCameraRenderer).transmissionTarget.passEntry
+      const nbTransmissiveObjects = transmissivePassEntry ? this.getRenderPassEntryLength(transmissivePassEntry) : 0
+
+      if (nbTransmissiveObjects === 0) {
+        ;(this.renderer as GPUCameraRenderer).destroyTransmissionTarget()
+      }
+    }
+
     if ('parent' in mesh && mesh.parent && mesh.parent.object3DIndex === this.object3DIndex) {
       mesh.parent = null
     }
@@ -387,22 +399,33 @@ export class Scene extends Object3D {
    * @param renderBundle - {@link RenderBundle} to remove.
    */
   removeRenderBundle(renderBundle: RenderBundle) {
+    const isProjected = !!renderBundle.useProjection
+    const projectionType = isProjected ? 'projected' : 'unProjected'
+    const isTransparent = !!renderBundle.transparent
+    const transparencyType = isTransparent ? 'transparent' : 'opaque'
+
     // first get correct render pass enty and stack
     const renderPassEntry = this.renderPassEntries.renderTarget.find(
       (passEntry) => passEntry.renderPass.uuid === renderBundle.options.renderPass?.uuid
     )
 
-    const { stack } = renderPassEntry || this.renderPassEntries.screen[0]
+    if (renderPassEntry) {
+      const { stack } = renderPassEntry
 
-    const isProjected = !!renderBundle.useProjection
-    const projectionStack = isProjected ? stack.projected : stack.unProjected
+      const projectionStack = stack[projectionType]
 
-    const isTransparent = !!renderBundle.transparent
-
-    if (isTransparent) {
-      projectionStack.transparent = projectionStack.transparent.filter((bundle) => bundle.uuid !== renderBundle.uuid)
+      projectionStack[transparencyType] = projectionStack[transparencyType].filter(
+        (bundle) => bundle.uuid !== renderBundle.uuid
+      )
     } else {
-      projectionStack.opaque = projectionStack.opaque.filter((bundle) => bundle.uuid !== renderBundle.uuid)
+      // remove from all render pass screen entries
+      this.renderPassEntries.screen.forEach((renderPassEntry) => {
+        if (renderPassEntry.stack) {
+          renderPassEntry.stack[projectionType][transparencyType] = renderPassEntry.stack[projectionType][
+            transparencyType
+          ].filter((m) => m.uuid !== renderBundle.uuid)
+        }
+      })
     }
   }
 

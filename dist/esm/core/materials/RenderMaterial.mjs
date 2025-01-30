@@ -3,8 +3,8 @@ import { isRenderer } from '../renderers/utils.mjs';
 import { RenderPipelineEntry } from '../pipelines/RenderPipelineEntry.mjs';
 import { throwWarning } from '../../utils/utils.mjs';
 import { compareRenderingOptions } from './utils.mjs';
-import { getDefaultProjectedVertexCode } from '../shaders/full/vertex/get-default-projected-vertex-code.mjs';
-import { getDefaultVertexCode } from '../shaders/full/vertex/get-default-vertex-code.mjs';
+import { getDefaultProjectedVertexShaderCode } from '../shaders/full/vertex/get-default-projected-vertex-shader-code.mjs';
+import { getDefaultVertexShaderCode } from '../shaders/full/vertex/get-default-vertex-shader-code.mjs';
 import { getDefaultFragmentCode } from '../shaders/full/fragment/get-default-fragment-code.mjs';
 
 class RenderMaterial extends Material {
@@ -21,7 +21,7 @@ class RenderMaterial extends Material {
     }
     if (!parameters.shaders?.vertex) {
       parameters.shaders.vertex = {
-        code: parameters.useProjection ? getDefaultProjectedVertexCode : getDefaultVertexCode,
+        code: parameters.useProjection ? getDefaultProjectedVertexShaderCode : getDefaultVertexShaderCode,
         entryPoint: "main"
       };
     }

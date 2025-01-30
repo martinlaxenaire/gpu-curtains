@@ -1,3 +1,4 @@
+/** Default fragment shader code that outputs mesh's normal. */
 export const getDefaultNormalFragmentCode = /* wgsl */ `
 struct VSOutput {
   @builtin(position) position: vec4f,

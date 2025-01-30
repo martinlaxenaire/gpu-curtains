@@ -1,10 +1,10 @@
-import { constants } from '../fragment/head/constants'
-import { common } from '../fragment/head/common'
+import { constants } from '../utils/constants'
+import { common } from '../utils/common'
 import { getLightsInfos } from '../fragment/head/get-lights-infos'
 import { REIndirectDiffuse } from '../fragment/head/RE-indirect-diffuse'
 import { getLambertDirect } from '../fragment/head/get-lambert-direct'
 import { toneMappingUtils } from '../fragment/head/tone-mapping-utils'
-import { ToneMappings } from '../../full/fragment/get-fragment-code'
+import { ToneMappings } from '../../full/fragment/get-fragment-shader-code'
 import { getLambertShading } from '../fragment/body/get-lambert-shading'
 
 // TODO add emissive?
@@ -20,7 +20,8 @@ export interface GetShadingParams {
   useOcclusion?: boolean
 }
 
-const lambertUtils = /* wgsl */ `
+/** Basic minimum utils needed to compute Lambert shading. */
+export const lambertUtils = /* wgsl */ `
 ${constants}
 ${common}
 ${getLightsInfos}

@@ -9,6 +9,9 @@ import { RectBBox } from '../DOM/DOMElement';
 import type { Light, LightsType, ShadowCastingLights } from '../lights/Light';
 import { WGSLVariableType } from '../bindings/utils';
 import { ShadowsType } from '../shadows/Shadow';
+import { Texture } from '../textures/Texture';
+import { Sampler } from '../samplers/Sampler';
+import { RenderPassEntry } from '../scenes/Scene';
 /** Defines the parameters used to build the {@link BufferBinding} of each type of lights. */
 export interface LightParams {
     /** Maximum number for a given type of light. */
@@ -88,6 +91,15 @@ export declare class GPUCameraRenderer extends GPURenderer {
     bindings: GPUCameraRendererBindings;
     /** Options used to create this {@link GPUCameraRenderer}. */
     options: GPUCameraRendererOptions;
+    /** If our scene contains transmissive objects, we need to handle the rendering of transmissive meshes. To do so, we'll need a new screen pass {@link RenderPassEntry} and a {@link Texture} onto which we'll write the content of the non transmissive objects main buffer rendered objects. */
+    transmissionTarget: {
+        /** The new screen pass {@link RenderPassEntry} where we'll draw our transmissive objects. */
+        passEntry?: RenderPassEntry;
+        /** The {@link Texture} holding the content of all the non transmissive objects we've already drawn onto the main screen buffer. */
+        texture?: Texture;
+        /** The {@link Sampler} used to sample the background output texture. */
+        sampler: Sampler;
+    };
     /**
      * GPUCameraRenderer constructor
      * @param parameters - {@link GPUCameraRendererParams | parameters} used to create this {@link GPUCameraRenderer}
@@ -195,6 +207,14 @@ export declare class GPUCameraRenderer extends GPURenderer {
      * @param position - new {@link Camera#position | position}
      */
     setCameraPosition(position?: Vec3): void;
+    /**
+     * Create the {@link transmissionTarget} {@link Texture} and {@link RenderPassEntry} if not already created.
+     */
+    createTransmissionTarget(): void;
+    /**
+     * Destroy the {@link transmissionTarget} {@link Texture} and {@link RenderPassEntry} if already created.
+     */
+    destroyTransmissionTarget(): void;
     /**
      * Resize our {@link GPUCameraRenderer} and resize our {@link camera} before anything else.
      * @param rectBBox - the optional new {@link canvas} {@link RectBBox} to set

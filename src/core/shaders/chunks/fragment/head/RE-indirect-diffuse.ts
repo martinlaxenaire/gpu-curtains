@@ -1,3 +1,4 @@
+/** WGSL functions to calculate the indirect diffuse contribution of lights. */
 export const REIndirectDiffuse = /* wgsl */ `
 fn getIndirectDiffuse(irradiance: vec3f, diffuseColor: vec3f, ptr_reflectedLight: ptr<function, ReflectedLight>) {
   (*ptr_reflectedLight).indirectDiffuse += irradiance * BRDF_Lambert( diffuseColor );

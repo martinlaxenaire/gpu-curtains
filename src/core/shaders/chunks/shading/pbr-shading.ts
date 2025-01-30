@@ -1,26 +1,18 @@
-import { constants } from '../fragment/head/constants'
-import { common } from '../fragment/head/common'
-import { getLightsInfos } from '../fragment/head/get-lights-infos'
+import { GetShadingParams, lambertUtils } from './lambert-shading'
 import { REIndirectSpecular } from '../fragment/head/RE-indirect-specular'
-import { GetShadingParams } from './lambert-shading'
 import { getIBLTransmission } from '../fragment/head/get-IBL-transmission'
 import { getPBRDirect } from '../fragment/head/get-PBR-direct'
 import { toneMappingUtils } from '../fragment/head/tone-mapping-utils'
 import { getPBRShading } from '../fragment/body/get-pbr-shading'
-import { FragmentShaderBaseInputParams } from '../../full/fragment/get-fragment-code'
+import { FragmentShaderBaseInputParams, ShaderTextureDescriptor } from '../../full/fragment/get-fragment-shader-code'
 
-/** Basic minimum utils needed to compute PBR shading. Extends {@link lambertUtils | utils needed for lambert shading}. */
-export const pbrUtils = `
-${constants}
-${common}
-${getLightsInfos}
-${REIndirectSpecular}
-${getIBLTransmission}
-`
-
+/** Defines the basic parameters available for the PBR shading getter function. */
 export interface GetPBRShadingParams extends GetShadingParams {
+  /** {@link extras/environmentMap/EnvironmentMap.EnvironmentMap | EnvironmentMap} to use for IBL shading. */
   environmentMap?: FragmentShaderBaseInputParams['environmentMap']
+  /** {@link ShaderTextureDescriptor | Transmission scene background texture descriptor} to use if any. */
   transmissionBackgroundTexture?: FragmentShaderBaseInputParams['transmissionBackgroundTexture']
+  /** The {@link types/gltf/GLTFExtensions.GLTFExtensionsUsed | glTF extensions} used to generate this fragment shader. */
   extensionsUsed?: FragmentShaderBaseInputParams['extensionsUsed']
 }
 
@@ -55,7 +47,9 @@ export const getPBR = (
     extensionsUsed = [],
   } = {} as GetPBRShadingParams
 ) => /* wgsl */ `
-${addUtils ? pbrUtils : ''}
+${addUtils ? lambertUtils : ''}
+${REIndirectSpecular}
+${getIBLTransmission}
 ${getPBRDirect}
 ${toneMapping ? toneMappingUtils : ''}
 

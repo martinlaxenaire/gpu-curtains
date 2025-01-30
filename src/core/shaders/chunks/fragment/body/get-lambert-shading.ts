@@ -4,7 +4,8 @@ import { applyPointShadows } from './apply-point-shadows'
 
 /**
  * Set the `outgoingLight` (`vec3f`) using Lambert shading.
- * @param receiveShadows - Whether the shading function should account for current shadows. Default to `false`.
+ * @param parameters - Parameters to use to apply Lambert shading.
+ * @param parameters.receiveShadows - Whether the shading function should account for current shadows. Default to `false`.
  * @returns - A string with Lambert shading applied to `outgoingLight`.
  */
 export const getLambertShading = ({ receiveShadows = false }: { receiveShadows?: boolean } = {}): string => {

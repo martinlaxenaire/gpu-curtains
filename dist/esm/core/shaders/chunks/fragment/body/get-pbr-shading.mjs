@@ -45,7 +45,7 @@ const getPBRShading = ({
     specularColor,
     specularF90,
     worldPosition,
-    fsInput.modelScale,
+    modelScale,
     camera.view,
     camera.projection,
     dispersion,

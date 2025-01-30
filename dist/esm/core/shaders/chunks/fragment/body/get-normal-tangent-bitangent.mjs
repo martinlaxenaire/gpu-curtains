@@ -5,21 +5,13 @@ const getNormalTangentBitangent = ({
   let normalTangentBitangent = (
     /* wgsl */
     `
-  let faceDirection = select(-1.0, 1.0, fsInput.frontFacing);
-  let geometryNormal: vec3f = faceDirection * normal;
-  var tangent: vec3f;
-  var bitangent: vec3f;`
+  let faceDirection = select(-1.0, 1.0, frontFacing);
+  let geometryNormal: vec3f = faceDirection * normal;`
   );
   const tangentAttribute = geometry && geometry.getAttributeByName("tangent");
   const hasTangent = !!(normalTexture && tangentAttribute);
   if (normalTexture) {
-    if (hasTangent) {
-      normalTangentBitangent += /* wgsl */
-      `
-  tangent = normalize(fsInput.tangent.xyz);
-  bitangent = normalize(fsInput.bitangent);
-  `;
-    } else {
+    if (!hasTangent) {
       normalTangentBitangent += /* wgsl */
       `
   let Q1: vec3f = dpdx(worldPosition);
@@ -34,7 +26,7 @@ const getNormalTangentBitangent = ({
     normalTangentBitangent += /* wgsl */
     `
   let tbn = mat3x3f(tangent, bitangent, geometryNormal);
-  let normalMap = textureSample(${normalTexture.texture}, ${normalTexture.sampler}, fsInput.${normalTexture.texCoordAttributeName}).rgb;
+  let normalMap = textureSample(${normalTexture.texture}, ${normalTexture.sampler}, ${normalTexture.texCoordAttributeName}).rgb;
   normal = normalize(tbn * (2.0 * normalMap - vec3(normalMapScale, normalMapScale, 1.0)));`;
   } else {
     normalTangentBitangent += /* wgsl */

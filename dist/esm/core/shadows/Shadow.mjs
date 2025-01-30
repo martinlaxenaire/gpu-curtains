@@ -5,7 +5,7 @@ import { Texture } from '../textures/Texture.mjs';
 import { RenderTarget } from '../renderPasses/RenderTarget.mjs';
 import { Sampler } from '../samplers/Sampler.mjs';
 import { RenderMaterial } from '../materials/RenderMaterial.mjs';
-import { getDefaultShadowDepthVs } from '../shaders/full/vertex/get-default-shadow-depth-vertex-code.mjs';
+import { getDefaultShadowDepthVs } from '../shaders/full/vertex/get-default-shadow-depth-vertex-shader-code.mjs';
 
 var __accessCheck = (obj, member, msg) => {
   if (!member.has(obj))
@@ -438,7 +438,7 @@ class Shadow {
   }
   /**
    * Get the default depth pass vertex shader for this {@link Shadow}.
-   * parameters - {@link VertexShaderInputParams} used to compute the output `worldPosition` and `normal` vectors.
+   * parameters - {@link VertexShaderInputBaseParams} used to compute the output `worldPosition` and `normal` vectors.
    * @returns - Depth pass vertex shader.
    */
   getDefaultShadowDepthVs({ bindings = [], geometry }) {

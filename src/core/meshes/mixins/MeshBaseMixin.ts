@@ -12,7 +12,7 @@ import { Material } from '../../materials/Material'
 import { DOMElementBoundingRect } from '../../DOM/DOMElement'
 import { AllowedGeometries, RenderMaterialParams, ShaderOptions } from '../../../types/Materials'
 import { ProjectedMeshBaseClass } from './ProjectedMeshBaseMixin'
-import { getDefaultVertexCode } from '../../shaders/full/vertex/get-default-vertex-code'
+import { getDefaultVertexShaderCode } from '../../shaders/full/vertex/get-default-vertex-shader-code'
 import { getDefaultFragmentCode } from '../../shaders/full/fragment/get-default-fragment-code'
 import { RenderPass } from '../../renderPasses/RenderPass'
 import { RenderBundle } from '../../renderPasses/RenderBundle'
@@ -201,12 +201,12 @@ export declare class MeshBaseClass {
   /**
    * Add a Mesh to the renderer and the {@link core/scenes/Scene.Scene | Scene}
    */
-  addToScene(addToRenderer: boolean): void
+  addToScene(addToRenderer?: boolean): void
 
   /**
    * Remove a Mesh from the renderer and the {@link core/scenes/Scene.Scene | Scene}
    */
-  removeFromScene(removeFromRenderer: boolean): void
+  removeFromScene(removeFromRenderer?: boolean): void
 
   /**
    * Set a new {@link Renderer} for this Mesh
@@ -764,7 +764,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       if (!shaders) {
         this.options.shaders = {
           vertex: {
-            code: getDefaultVertexCode,
+            code: getDefaultVertexShaderCode,
             entryPoint: 'main',
           },
           fragment: {
@@ -775,7 +775,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       } else {
         if (!shaders.vertex || !shaders.vertex.code) {
           shaders.vertex = {
-            code: getDefaultVertexCode,
+            code: getDefaultVertexShaderCode,
             entryPoint: 'main',
           }
         }
@@ -899,9 +899,12 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      */
     cleanupRenderMaterialParameters(parameters: MeshBaseRenderParams): MeshBaseRenderParams {
       // patch and set options, return mesh parameters
-      delete parameters.texturesOptions
-      delete parameters.outputTarget
+      delete parameters.additionalOutputTargets
       delete parameters.autoRender
+      delete parameters.outputTarget
+      delete parameters.renderBundle
+      delete parameters.texturesOptions
+      delete parameters.useCustomScenePassEntry
 
       return parameters
     }

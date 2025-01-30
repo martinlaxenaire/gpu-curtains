@@ -1,5 +1,5 @@
-import { constants } from '../fragment/head/constants.mjs';
-import { common } from '../fragment/head/common.mjs';
+import { constants } from '../utils/constants.mjs';
+import { common } from '../utils/common.mjs';
 import { getLightsInfos } from '../fragment/head/get-lights-infos.mjs';
 import { REIndirectDiffuse } from '../fragment/head/RE-indirect-diffuse.mjs';
 import { getLambertDirect } from '../fragment/head/get-lambert-direct.mjs';
@@ -41,4 +41,4 @@ fn getLambert(
 `
 );
 
-export { getLambert };
+export { getLambert, lambertUtils };

@@ -1,4 +1,18 @@
+/** WGSL functions to get the {@link core/lights/DirectionalLight.DirectionalLight | DirectionalLight} or {@link core/lights/PointLight.PointLight | PointLight} informations. */
 export const getLightsInfos = /* wgsl */ `
+struct ReflectedLight {
+  directDiffuse: vec3f,
+  directSpecular: vec3f,
+  indirectDiffuse: vec3f,
+  indirectSpecular: vec3f,
+}
+
+struct DirectLight {
+  color: vec3f,
+  direction: vec3f,
+  visible: bool,
+}
+
 fn rangeAttenuation(range: f32, distance: f32) -> f32 {
   var distanceFalloff: f32 = 1.0 / max( pow( distance, 2.0 ), 0.01 );
   if ( range > 0.0 ) {

@@ -1,5 +1,10 @@
-import { ToneMappings } from '../../../full/fragment/get-fragment-code'
+import { ToneMappings } from '../../../full/fragment/get-fragment-shader-code'
 
+/**
+ * Apply the corresponding tone mapping to our `outputColor` (`vec4f`).
+ * @param parameters - Parameters to use for applying tone mapping.
+ * @param parameters.toneMapping - {@link ToneMappings} to apply if any. Default to `'Linear'`.
+ */
 export const applyToneMapping = ({ toneMapping = 'Linear' }: { toneMapping?: ToneMappings } = {}) => {
   return (() => {
     switch (toneMapping) {

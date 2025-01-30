@@ -79,51 +79,8 @@ const _GLTFScenesManager = class _GLTFScenesManager {
       meshesDescriptors: [],
       animations: [],
       cameras: [],
-      skins: [],
-      transmissionCompositing: null
+      skins: []
     };
-    const hasTransmission = this.gltf.extensionsUsed && (this.gltf.extensionsUsed.includes("KHR_materials_transmission") || this.gltf.extensionsUsed.includes("KHR_materials_volume") || this.gltf.extensionsUsed.includes("KHR_materials_dispersion"));
-    if (hasTransmission) {
-      const sceneTransmissionPassEntry = this.renderer.scene.createScreenPassEntry(
-        "Transmission scene screen render pass"
-      );
-      const transmissionBuffer = {
-        backgroundOutputTexture: new Texture(this.renderer, {
-          label: "Transmission background scene render target output",
-          name: "transmissionBackgroundTexture",
-          generateMips: true,
-          // needed for roughness LOD!
-          format: this.renderer.options.context.format,
-          autoDestroy: false
-        }),
-        sampler: new Sampler(this.renderer, {
-          label: "Clamp sampler",
-          name: "clampSampler",
-          magFilter: "linear",
-          minFilter: "linear",
-          mipmapFilter: "linear",
-          addressModeU: "clamp-to-edge",
-          addressModeV: "clamp-to-edge"
-        }),
-        sceneTransmissionPassEntry
-      };
-      sceneTransmissionPassEntry.onBeforeRenderPass = (commandEncoder, swapChainTexture) => {
-        commandEncoder.copyTextureToTexture(
-          {
-            texture: swapChainTexture
-          },
-          {
-            texture: transmissionBuffer.backgroundOutputTexture.texture
-          },
-          [
-            transmissionBuffer.backgroundOutputTexture.size.width,
-            transmissionBuffer.backgroundOutputTexture.size.height
-          ]
-        );
-        this.renderer.generateMips(transmissionBuffer.backgroundOutputTexture, commandEncoder);
-      };
-      this.scenesManager.transmissionCompositing = transmissionBuffer;
-    }
     this.createSamplers();
     this.createMaterialTextures();
     this.createAnimations();
@@ -952,19 +909,11 @@ const _GLTFScenesManager = class _GLTFScenesManager {
     const volume = extensions && extensions.KHR_materials_volume || null;
     const hasTransmission = transmission || volume || dispersion;
     const useTransmission = this.gltf.extensionsUsed && (this.gltf.extensionsUsed.includes("KHR_materials_transmission") || this.gltf.extensionsUsed.includes("KHR_materials_volume") || this.gltf.extensionsUsed.includes("KHR_materials_dispersion"));
-    if (useTransmission && hasTransmission) {
-      meshDescriptor.parameters.useCustomScenePassEntry = this.scenesManager.transmissionCompositing.sceneTransmissionPassEntry;
-    }
     const materialTextures = this.scenesManager.materialsTextures[primitive.material];
     meshDescriptor.parameters.samplers = [];
     meshDescriptor.parameters.textures = [];
-    if (hasTransmission) {
-      materialTextures.texturesDescriptors.push({
-        texture: this.scenesManager.transmissionCompositing.backgroundOutputTexture,
-        sampler: this.scenesManager.transmissionCompositing.sampler,
-        texCoordAttributeName: "uv"
-        // whatever
-      });
+    if (useTransmission && hasTransmission) {
+      meshDescriptor.parameters.transmissive = true;
     }
     materialTextures?.texturesDescriptors.forEach((t) => {
       meshDescriptor.textures.push({
@@ -998,19 +947,27 @@ const _GLTFScenesManager = class _GLTFScenesManager {
       ];
     }
     const materialUniformStruct = {
-      baseColorFactor: {
-        type: "vec4f",
-        value: material.pbrMetallicRoughness?.baseColorFactor || [1, 1, 1, 1]
+      color: {
+        type: "vec3f",
+        value: material.pbrMetallicRoughness && material.pbrMetallicRoughness.baseColorFactor !== void 0 ? new Vec3(
+          material.pbrMetallicRoughness.baseColorFactor[0],
+          material.pbrMetallicRoughness.baseColorFactor[1],
+          material.pbrMetallicRoughness.baseColorFactor[2]
+        ) : new Vec3(1)
+      },
+      opacity: {
+        type: "f32",
+        value: material.pbrMetallicRoughness && material.pbrMetallicRoughness.baseColorFactor !== void 0 ? material.pbrMetallicRoughness.baseColorFactor[3] : 1
       },
       alphaCutoff: {
         type: "f32",
         value: material.alphaCutoff !== void 0 ? material.alphaCutoff : material.alphaMode === "MASK" ? 0.5 : 0
       },
-      metallicFactor: {
+      metallic: {
         type: "f32",
         value: material.pbrMetallicRoughness?.metallicFactor === void 0 ? 1 : material.pbrMetallicRoughness.metallicFactor
       },
-      roughnessFactor: {
+      roughness: {
         type: "f32",
         value: material.pbrMetallicRoughness?.roughnessFactor === void 0 ? 1 : material.pbrMetallicRoughness.roughnessFactor
       },
@@ -1018,23 +975,23 @@ const _GLTFScenesManager = class _GLTFScenesManager {
         type: "f32",
         value: material.normalTexture?.scale === void 0 ? 1 : material.normalTexture.scale
       },
-      occlusionStrength: {
+      occlusionIntensity: {
         type: "f32",
         value: material.occlusionTexture?.strength === void 0 ? 1 : material.occlusionTexture.strength
       },
-      emissiveFactor: {
+      emissiveColor: {
         type: "vec3f",
-        value: material.emissiveFactor !== void 0 ? material.emissiveFactor : [0, 0, 0]
+        value: material.emissiveFactor !== void 0 ? new Vec3(material.emissiveFactor[0], material.emissiveFactor[1], material.emissiveFactor[2]) : new Vec3(0)
       },
-      emissiveStrength: {
+      emissiveIntensity: {
         type: "f32",
         value: emissiveStrength && emissiveStrength.emissiveStrength !== void 0 ? emissiveStrength.emissiveStrength : 1
       },
-      specularFactor: {
+      specularIntensity: {
         type: "f32",
         value: specular && specular.specularFactor !== void 0 ? specular.specularFactor : 1
       },
-      specularColorFactor: {
+      specularColor: {
         type: "vec3f",
         value: specular && specular.specularColorFactor !== void 0 ? new Vec3(
           specular.specularColorFactor[0],
@@ -1042,7 +999,7 @@ const _GLTFScenesManager = class _GLTFScenesManager {
           specular.specularColorFactor[2]
         ) : new Vec3(1)
       },
-      transmissionFactor: {
+      transmission: {
         type: "f32",
         value: transmission && transmission.transmissionFactor !== void 0 ? transmission.transmissionFactor : 0
       },
@@ -1054,7 +1011,7 @@ const _GLTFScenesManager = class _GLTFScenesManager {
         type: "f32",
         value: dispersion && dispersion.dispersion !== void 0 ? dispersion.dispersion : 0
       },
-      thicknessFactor: {
+      thickness: {
         type: "f32",
         value: volume && volume.thicknessFactor !== void 0 ? volume.thicknessFactor : 0
       },
@@ -1070,7 +1027,7 @@ const _GLTFScenesManager = class _GLTFScenesManager {
     if (Object.keys(materialUniformStruct).length) {
       meshDescriptor.parameters.uniforms = {
         material: {
-          visibility: ["vertex", "fragment"],
+          visibility: ["fragment"],
           struct: materialUniformStruct
         }
       };
@@ -1187,9 +1144,6 @@ const _GLTFScenesManager = class _GLTFScenesManager {
   destroy() {
     this.scenesManager.meshes.forEach((mesh) => mesh.remove());
     this.scenesManager.meshes = [];
-    if (this.scenesManager.transmissionCompositing) {
-      this.scenesManager.transmissionCompositing.backgroundOutputTexture.destroy();
-    }
     this.scenesManager.nodes.forEach((node) => {
       node.destroy();
     });

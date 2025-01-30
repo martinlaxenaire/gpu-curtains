@@ -1,10 +1,12 @@
 import { GetShadingParams } from './lambert-shading';
-import { FragmentShaderBaseInputParams } from '../../full/fragment/get-fragment-code';
-/** Basic minimum utils needed to compute PBR shading. Extends {@link lambertUtils | utils needed for lambert shading}. */
-export declare const pbrUtils: string;
+import { FragmentShaderBaseInputParams } from '../../full/fragment/get-fragment-shader-code';
+/** Defines the basic parameters available for the PBR shading getter function. */
 export interface GetPBRShadingParams extends GetShadingParams {
+    /** {@link extras/environmentMap/EnvironmentMap.EnvironmentMap | EnvironmentMap} to use for IBL shading. */
     environmentMap?: FragmentShaderBaseInputParams['environmentMap'];
+    /** {@link ShaderTextureDescriptor | Transmission scene background texture descriptor} to use if any. */
     transmissionBackgroundTexture?: FragmentShaderBaseInputParams['transmissionBackgroundTexture'];
+    /** The {@link types/gltf/GLTFExtensions.GLTFExtensionsUsed | glTF extensions} used to generate this fragment shader. */
     extensionsUsed?: FragmentShaderBaseInputParams['extensionsUsed'];
 }
 /**

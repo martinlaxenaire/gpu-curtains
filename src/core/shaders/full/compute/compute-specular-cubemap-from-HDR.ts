@@ -1,4 +1,11 @@
+import { constants } from '../../chunks/utils/constants'
+
+/**
+ * Compute a specular cube map texture from HDR image data.
+ */
 export const computeSpecularCubemapFromHDR = /* wgsl */ `
+${constants}
+
 // Cube face lookup vectors
 // positive and negative Y need to be inverted
 const faceVectors = array<array<vec3<f32>, 2>, 6>(
@@ -22,8 +29,8 @@ fn texelDirection(faceIndex : u32, u : f32, v : f32) -> vec3<f32> {
 fn dirToEquirect(dir : vec3<f32>) -> vec2<f32> {
   let phi = atan2(dir.z, dir.x);
   let theta = asin(dir.y);
-  let u = 0.5 + 0.5 * phi / ${Math.PI};
-  let v = 0.5 - theta / ${Math.PI};
+  let u = 0.5 + 0.5 * phi / PI;
+  let v = 0.5 - theta / PI;
   return vec2<f32>(u, v);
 }
 

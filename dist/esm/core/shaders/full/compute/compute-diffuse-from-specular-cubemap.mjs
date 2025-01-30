@@ -1,45 +1,13 @@
+import { constants } from '../../chunks/utils/constants.mjs';
+import { hammersley2D } from '../../chunks/utils/hammersley-2D.mjs';
+import { generateTBN } from '../../chunks/utils/generate-TBN.mjs';
+
 const computeDiffuseFromSpecularCubemap = (specularTexture) => (
   /* wgsl */
   `
-fn radicalInverse_VdC(inputBits: u32) -> f32 {
-  var bits: u32 = inputBits;
-  bits = (bits << 16u) | (bits >> 16u);
-  bits = ((bits & 0x55555555u) << 1u) | ((bits & 0xAAAAAAAAu) >> 1u);
-  bits = ((bits & 0x33333333u) << 2u) | ((bits & 0xCCCCCCCCu) >> 2u);
-  bits = ((bits & 0x0F0F0F0Fu) << 4u) | ((bits & 0xF0F0F0F0u) >> 4u);
-  bits = ((bits & 0x00FF00FFu) << 8u) | ((bits & 0xFF00FF00u) >> 8u);
-  return f32(bits) * 2.3283064365386963e-10; // / 0x100000000
-}
-
-// hammersley2d describes a sequence of points in the 2d unit square [0,1)^2
-// that can be used for quasi Monte Carlo integration
-fn hammersley2d(i: u32, N: u32) -> vec2f {
-  return vec2(f32(i) / f32(N), radicalInverse_VdC(i));
-}
-
-// TBN generates a tangent bitangent normal coordinate frame from the normal
-// (the normal must be normalized)
-fn generateTBN(normal: vec3f) -> mat3x3f {
-  var bitangent: vec3f = vec3(0.0, 1.0, 0.0);
-
-  let NdotUp: f32 = dot(normal, vec3(0.0, 1.0, 0.0));
-  let epsilon: f32 = 0.0000001;
-  
-  if (1.0 - abs(NdotUp) <= epsilon) {
-    // Sampling +Y or -Y, so we need a more robust bitangent.
-    if (NdotUp > 0.0) {
-      bitangent = vec3(0.0, 0.0, 1.0);
-    }
-    else {
-      bitangent = vec3(0.0, 0.0, -1.0);
-    }
-  }
-
-  let tangent: vec3f = normalize(cross(bitangent, normal));
-  bitangent = cross(normal, tangent);
-
-  return mat3x3f(tangent, bitangent, normal);
-}
+${constants}
+${hammersley2D}
+${generateTBN}
 
 // Mipmap Filtered Samples (GPU Gems 3, 20.4)
 // https://developer.nvidia.com/gpugems/gpugems3/part-iii-rendering/chapter-20-gpu-based-importance-sampling
@@ -81,8 +49,6 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
     }
   }
 }
-
-const PI = ${Math.PI};
 
 @compute @workgroup_size(8, 8, 1) fn main(
   @builtin(global_invocation_id) GlobalInvocationID: vec3u,

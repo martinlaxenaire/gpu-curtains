@@ -12,7 +12,7 @@ import { BufferBinding } from '../bindings/BufferBinding';
 import { RenderMaterialParams, ShaderOptions } from '../../types/Materials';
 import { Input } from '../../types/BindGroups';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
-import { VertexShaderInputParams } from '../shaders/full/vertex/get-vertex-code';
+import { VertexShaderInputBaseParams } from '../shaders/full/vertex/get-vertex-shader-code';
 /** Defines all types of shadows. */
 export type ShadowsType = 'directionalShadows' | 'pointShadows';
 /** @ignore */
@@ -202,10 +202,10 @@ export declare class Shadow {
     renderDepthPass(commandEncoder: GPUCommandEncoder): void;
     /**
      * Get the default depth pass vertex shader for this {@link Shadow}.
-     * parameters - {@link VertexShaderInputParams} used to compute the output `worldPosition` and `normal` vectors.
+     * parameters - {@link VertexShaderInputBaseParams} used to compute the output `worldPosition` and `normal` vectors.
      * @returns - Depth pass vertex shader.
      */
-    getDefaultShadowDepthVs({ bindings, geometry }: VertexShaderInputParams): ShaderOptions;
+    getDefaultShadowDepthVs({ bindings, geometry }: VertexShaderInputBaseParams): ShaderOptions;
     /**
      * Get the default depth pass fragment shader for this {@link Shadow}.
      * @returns - A {@link ShaderOptions} if a depth pass fragment shader is needed, `false` otherwise.

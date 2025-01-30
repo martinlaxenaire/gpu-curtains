@@ -149,11 +149,11 @@ export declare class MeshBaseClass {
     /**
      * Add a Mesh to the renderer and the {@link core/scenes/Scene.Scene | Scene}
      */
-    addToScene(addToRenderer: boolean): void;
+    addToScene(addToRenderer?: boolean): void;
     /**
      * Remove a Mesh from the renderer and the {@link core/scenes/Scene.Scene | Scene}
      */
-    removeFromScene(removeFromRenderer: boolean): void;
+    removeFromScene(removeFromRenderer?: boolean): void;
     /**
      * Set a new {@link Renderer} for this Mesh
      * @param renderer - new {@link Renderer} to set

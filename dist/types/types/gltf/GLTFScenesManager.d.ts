@@ -1,5 +1,4 @@
 import { GLTF } from './GLTF';
-import { VertexBufferAttributeParams } from '../Geometries';
 import { Texture } from '../../core/textures/Texture';
 import { Sampler } from '../../core/samplers/Sampler';
 import { ProjectedMeshParameters } from '../../core/meshes/mixins/ProjectedMeshBaseMixin';
@@ -10,18 +9,8 @@ import { Camera } from '../../core/camera/Camera';
 import { BufferBinding } from '../../core/bindings/BufferBinding';
 import { TargetsAnimationsManager } from '../../extras/animations/TargetsAnimationsManager';
 import { Mat4 } from '../../math/Mat4';
-import { RenderPassEntry } from '../../core/scenes/Scene';
-import { ShaderTextureDescriptor } from '../../core/shaders/full/fragment/get-fragment-code';
+import { ShaderTextureDescriptor } from '../../core/shaders/full/fragment/get-fragment-shader-code';
 import { GLTFExtensionsUsed } from './GLTFExtensions';
-/**
- * Define a {@link MeshDescriptorAttribute} used to create the {@link core/geometries/Geometry.Geometry | Geometry}.
- */
-export interface MeshDescriptorAttribute {
-    /** Name of the attribute. */
-    name: VertexBufferAttributeParams['name'];
-    /** Type of the attibute. */
-    type: VertexBufferAttributeParams['type'];
-}
 /**
  * Define a {@link MeshDescriptor} object, which helps creating a {@link Mesh} and its shaders based on the various properties.
  */
@@ -34,6 +23,7 @@ export interface MeshDescriptor {
     textures: ShaderTextureDescriptor[];
     /** All the {@link core/geometries/Geometry.Geometry | Geometry} instances {@link Object3D} nodes used to calculate the eventual instances world and normal matrices. */
     nodes: Object3D[];
+    /** {@link GLTFExtensionsUsed} that should be used when creating the shaders. */
     extensionsUsed: GLTFExtensionsUsed;
 }
 /**
@@ -44,7 +34,7 @@ export interface MaterialTextureDescriptor {
     texture: Texture;
     /** {@link Sampler} to use. */
     sampler: Sampler;
-    /** {@link MeshDescriptorAttribute.name | Texture coordinate attribute name} to use to map this texture. */
+    /** {@link VertexBufferAttributeParams.name | Texture coordinate attribute name} to use to map this texture. */
     texCoordAttributeName?: string;
 }
 /**
@@ -129,13 +119,4 @@ export interface ScenesManager {
     cameras: Camera[];
     /** Array of {@link SkinDefinition} used by this {@link ScenesManager}. */
     skins: SkinDefinition[];
-    /** If our parsed glTF contains one of the `KHR_materials_transmission`, `KHR_materials_volume` or `KHR_materials_dispersion`, we need to handle the rendering of transmissive meshes. To do so, we'll need a new screen pass {@link RenderPassEntry} and a {@link Texture} onto which we'll write the content of the non transmissive objects main buffer rendered objects. */
-    transmissionCompositing?: {
-        /** The new screen pass {@link RenderPassEntry} where we'll draw our transmissive objects. */
-        sceneTransmissionPassEntry: RenderPassEntry;
-        /** The {@link Texture} holding the content of all the non transmissive objects we've already drawn onto the main screen buffer. */
-        backgroundOutputTexture: Texture;
-        /** The {@link Sampler} used to sample the background output texture. */
-        sampler: Sampler;
-    };
 }

@@ -1,11 +1,12 @@
 import { Geometry } from '../../../../geometries/Geometry'
-import { ShaderTextureDescriptor } from '../../../full/fragment/get-fragment-code'
+import { ShaderTextureDescriptor } from '../../../full/fragment/get-fragment-shader-code'
 
 /**
  * Get the base color from the `material` binding `baseColorFactor` value, {@link Geometry} colors attributes if any and `baseColorTexture` if any, and apply it to our `outputColor`. Can also discard fragments based on `material` binding `alphaCutoff` value.
  * {@link https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#reference-material-pbrmetallicroughness | See glTF PBR metallic roughness} definition and default values.
- * @param geometry - {@link Geometry} to use to check for colors attributes.
- * @param baseColorTexture - {@link ShaderTextureDescriptor | Base color texture descriptor} to use if any.
+ * @param parameters - Parameters to use to set the base color.
+ * @param parameters.geometry - {@link Geometry} to use to check for colors attributes.
+ * @param parameters.baseColorTexture - {@link ShaderTextureDescriptor | Base color texture descriptor} to use if any.
  * @returns - A string with base color applied to `outputColor`.
  */
 export const getBaseColor = ({
@@ -16,7 +17,7 @@ export const getBaseColor = ({
   baseColorTexture?: ShaderTextureDescriptor
 } = {}): string => {
   let baseColor = /* wgsl */ `
-  var baseColor: vec4f = baseColorFactor;
+  var baseColor: vec4f = vec4(baseColorFactor, baseOpacityFactor);
   `
 
   const colorAttributes = []
@@ -42,7 +43,7 @@ export const getBaseColor = ({
 
   if (baseColorTexture) {
     baseColor += /* wgsl */ `
-  let baseColorSample: vec4f = textureSample(${baseColorTexture.texture}, ${baseColorTexture.sampler}, fsInput.${baseColorTexture.texCoordAttributeName});
+  let baseColorSample: vec4f = textureSample(${baseColorTexture.texture}, ${baseColorTexture.sampler}, ${baseColorTexture.texCoordAttributeName});
   baseColor *= baseColorSample;
   `
   }
