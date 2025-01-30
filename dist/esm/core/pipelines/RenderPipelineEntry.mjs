@@ -1,5 +1,5 @@
 import { PipelineEntry } from './PipelineEntry.mjs';
-import { ShaderChunks, ProjectedShaderChunks } from '../shaders/ShaderChunks.mjs';
+import { shaderChunks, ProjectedShaderChunks } from '../shaders/shader-chunks.mjs';
 import { isRenderer } from '../renderers/utils.mjs';
 import { throwError } from '../../utils/utils.mjs';
 
@@ -51,18 +51,18 @@ class RenderPipelineEntry extends PipelineEntry {
     this.shaders.fragment.code = "";
     this.shaders.full.head = "";
     this.shaders.full.code = "";
-    for (const chunk in ShaderChunks.vertex) {
-      this.shaders.vertex.head = `${ShaderChunks.vertex[chunk]}
+    for (const chunk in shaderChunks.vertex) {
+      this.shaders.vertex.head = `${shaderChunks.vertex[chunk]}
 ${this.shaders.vertex.head}`;
-      this.shaders.full.head = `${ShaderChunks.vertex[chunk]}
+      this.shaders.full.head = `${shaderChunks.vertex[chunk]}
 ${this.shaders.full.head}`;
     }
     if (this.options.shaders.fragment) {
-      for (const chunk in ShaderChunks.fragment) {
-        this.shaders.fragment.head = `${ShaderChunks.fragment[chunk]}
+      for (const chunk in shaderChunks.fragment) {
+        this.shaders.fragment.head = `${shaderChunks.fragment[chunk]}
 ${this.shaders.fragment.head}`;
-        if (this.shaders.full.head.indexOf(ShaderChunks.fragment[chunk]) === -1) {
-          this.shaders.full.head = `${ShaderChunks.fragment[chunk]}
+        if (this.shaders.full.head.indexOf(shaderChunks.fragment[chunk]) === -1) {
+          this.shaders.full.head = `${shaderChunks.fragment[chunk]}
 ${this.shaders.full.head}`;
         }
       }

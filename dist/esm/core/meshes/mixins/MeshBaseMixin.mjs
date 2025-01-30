@@ -3,8 +3,8 @@ import { isRenderer } from '../../renderers/utils.mjs';
 import { RenderMaterial } from '../../materials/RenderMaterial.mjs';
 import { DOMTexture } from '../../textures/DOMTexture.mjs';
 import { Texture } from '../../textures/Texture.mjs';
-import default_vsWgsl from '../../shaders/chunks/default/default_vs.wgsl.mjs';
-import default_fsWgsl from '../../shaders/chunks/default/default_fs.wgsl.mjs';
+import { getDefaultVertexShaderCode } from '../../shaders/full/vertex/get-default-vertex-shader-code.mjs';
+import { getDefaultFragmentCode } from '../../shaders/full/fragment/get-default-fragment-code.mjs';
 
 var __accessCheck = (obj, member, msg) => {
   if (!member.has(obj))
@@ -95,6 +95,8 @@ function MeshBaseMixin(Base) {
         visible,
         renderOrder,
         outputTarget,
+        additionalOutputTargets,
+        useCustomScenePassEntry,
         renderBundle,
         texturesOptions,
         autoRender,
@@ -102,6 +104,7 @@ function MeshBaseMixin(Base) {
       } = parameters;
       this.outputTarget = outputTarget ?? null;
       this.renderBundle = renderBundle ?? null;
+      this.additionalOutputTargets = additionalOutputTargets || [];
       meshParameters.sampleCount = !!meshParameters.sampleCount ? meshParameters.sampleCount : this.outputTarget ? this.outputTarget.renderPass.options.sampleCount : this.renderer && this.renderer.renderPass ? this.renderer.renderPass.options.sampleCount : 1;
       this.options = {
         ...this.options ?? {},
@@ -112,6 +115,7 @@ function MeshBaseMixin(Base) {
         ...renderBundle !== void 0 && { renderBundle },
         texturesOptions,
         ...autoRender !== void 0 && { autoRender },
+        useCustomScenePassEntry,
         ...meshParameters
       };
       if (autoRender !== void 0) {
@@ -162,6 +166,11 @@ function MeshBaseMixin(Base) {
       this.setRenderingOptionsForRenderPass(this.outputTarget ? this.outputTarget.renderPass : this.renderer.renderPass);
       if (__privateGet(this, _autoRender)) {
         this.renderer.scene.addMesh(this);
+        if (this.additionalOutputTargets.length) {
+          this.additionalOutputTargets.forEach((renderTarget) => {
+            this.renderer.scene.addMeshToRenderTargetStack(this, renderTarget);
+          });
+        }
       }
     }
     /**
@@ -255,24 +264,24 @@ function MeshBaseMixin(Base) {
       if (!shaders) {
         this.options.shaders = {
           vertex: {
-            code: default_vsWgsl,
+            code: getDefaultVertexShaderCode,
             entryPoint: "main"
           },
           fragment: {
-            code: default_fsWgsl,
+            code: getDefaultFragmentCode,
             entryPoint: "main"
           }
         };
       } else {
         if (!shaders.vertex || !shaders.vertex.code) {
           shaders.vertex = {
-            code: default_vsWgsl,
+            code: getDefaultVertexShaderCode,
             entryPoint: "main"
           };
         }
         if (shaders.fragment === void 0 || shaders.fragment && !shaders.fragment.code) {
           shaders.fragment = {
-            code: default_fsWgsl,
+            code: getDefaultFragmentCode,
             entryPoint: "main"
           };
         }
@@ -378,9 +387,12 @@ ${geometry.wgslStructFragment}`
      * @returns - cleaned parameters
      */
     cleanupRenderMaterialParameters(parameters) {
-      delete parameters.texturesOptions;
-      delete parameters.outputTarget;
+      delete parameters.additionalOutputTargets;
       delete parameters.autoRender;
+      delete parameters.outputTarget;
+      delete parameters.renderBundle;
+      delete parameters.texturesOptions;
+      delete parameters.useCustomScenePassEntry;
       return parameters;
     }
     /**

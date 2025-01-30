@@ -8,6 +8,7 @@ import { AllowedBindGroups } from '../../types/BindGroups';
 import { Buffer } from '../buffers/Buffer';
 import { BufferBinding } from '../bindings/BufferBinding';
 import { IndirectBuffer } from '../../extras/buffers/IndirectBuffer';
+import { Texture } from '../textures/Texture';
 /**
  * Base parameters used to create a {@link GPUDeviceManager}
  */
@@ -47,6 +48,7 @@ export interface GPUDeviceManagerSetupParams {
  * The {@link GPUDeviceManager} is also responsible for creating the {@link GPUCommandBuffer}, rendering all the {@link Renderer} and then submitting the {@link GPUCommandBuffer} at each {@link GPUDeviceManager#render | render} calls.
  */
 export declare class GPUDeviceManager {
+    #private;
     /** Number of times a {@link GPUDevice} has been created */
     index: number;
     /** The label of the {@link GPUDeviceManager}, used to create the {@link GPUDevice} for debugging purpose */
@@ -195,6 +197,13 @@ export declare class GPUDeviceManager {
      * @param texture - {@link DOMTexture} class object with the {@link DOMTexture#texture | texture} to upload
      */
     uploadTexture(texture: DOMTexture): void;
+    /**
+     * Mips generation helper on the GPU using our {@link device}. Caches sampler, module and pipeline (by {@link GPUTexture} formats) for faster generation.
+     * Ported from https://webgpufundamentals.org/webgpu/lessons/webgpu-importing-textures.html
+     * @param texture - {@link Texture} or {@link DOMTexture} for which to generate the mips.
+     * @param commandEncoder - optional {@link GPUCommandEncoder} to use if we're already in the middle of a command encoding process.
+     */
+    generateMips(texture: Texture | DOMTexture, commandEncoder?: GPUCommandEncoder): void;
     /**
      * Remove a {@link DOMTexture} from our {@link domTextures} array
      * @param texture - {@link DOMTexture} to remove

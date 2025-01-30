@@ -4,18 +4,22 @@ import { RenderTarget } from './RenderTarget';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
 import { MeshBaseOptions, MeshBaseRenderParams } from '../meshes/mixins/MeshBaseMixin';
 import { Texture } from '../textures/Texture';
+/** Base parameters used to create a {@link ShaderPass}. */
+export interface ShaderPassBaseParams {
+    /** Whether the result of this {@link ShaderPass} should be copied to the {@link ShaderPass#renderTexture | renderTexture} after each render. Default to false. */
+    copyOutputToRenderTexture?: boolean;
+    /** Whether this {@link ShaderPass} should be rendered to the main buffer using the {@link Renderer#renderPass | renderer renderPass} before drawing the other objects to the main buffer. Useful for "blit" passes using the content of an {@link ShaderPass#inputTarget | inputTarget}. */
+    isPrePass?: boolean;
+}
 /**
- * Parameters used to create a {@link ShaderPass}
+ * Parameters used to create a {@link ShaderPass}.
  */
-export interface ShaderPassParams extends MeshBaseRenderParams {
+export interface ShaderPassParams extends MeshBaseRenderParams, ShaderPassBaseParams {
     /** Optional input {@link RenderTarget} to assign to the {@link ShaderPass}. Used to automatically copy the content of the given {@link RenderTarget} texture into the {@link ShaderPass#renderTexture | ShaderPass renderTexture}. */
     inputTarget?: RenderTarget;
-    /** Whether the result of this {@link ShaderPass} should be copied to the {@link ShaderPass#renderTexture | renderTexture} after each render. Default to false. */
-    copyOutputToRenderTexture?: boolean;
 }
-export interface ShaderPassOptions extends MeshBaseOptions {
-    /** Whether the result of this {@link ShaderPass} should be copied to the {@link ShaderPass#renderTexture | renderTexture} after each render. Default to false. */
-    copyOutputToRenderTexture?: boolean;
+/** Options used to create this {@link ShaderPass}. */
+export interface ShaderPassOptions extends MeshBaseOptions, ShaderPassBaseParams {
 }
 /**
  * Used to apply postprocessing, i.e. draw meshes to a {@link Texture} and then draw a {@link FullscreenPlane} using that texture as an input.

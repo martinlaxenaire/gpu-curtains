@@ -11,9 +11,11 @@ window.addEventListener('load', async () => {
     PointLight,
     Vec3,
     Mesh,
-    toneMappingUtils,
     getLambert,
     getPhong,
+    Object3D,
+    getVertexShaderCode,
+    getFragmentShaderCode,
   } = await import(/* @vite-ignore */ path)
 
   // create a device manager
@@ -31,7 +33,10 @@ window.addEventListener('load', async () => {
     //pixelRatio: window.devicePixelRatio,
   })
 
-  const orbitControls = new OrbitControls(gpuCameraRenderer)
+  const orbitControls = new OrbitControls({
+    camera: gpuCameraRenderer.camera,
+    element: gpuCameraRenderer.canvas,
+  })
 
   const fs = /* wgsl */ `
     struct VSOutput {
@@ -42,9 +47,7 @@ window.addEventListener('load', async () => {
       @location(2) worldPosition: vec3f,
       @location(3) viewDirection: vec3f,
     };
-    
-    ${toneMappingUtils}
-    
+        
     ${getPhong({
       toneMapping: false,
     })}
@@ -86,7 +89,6 @@ window.addEventListener('load', async () => {
       }
       
       return vec4(color, 1.0);
-      //return vec4(linearToOutput3(color), 1.0);
     }
   `
 
@@ -118,8 +120,9 @@ window.addEventListener('load', async () => {
   pointLights.push(
     new PointLight(gpuCameraRenderer, {
       color: new Vec3(0, 0, 1),
-      position: new Vec3(-0.7, -1.25, 2),
+      position: new Vec3(-0.7, -1.5, 3),
       range: 10,
+      intensity: 3,
     })
   )
 
@@ -133,9 +136,11 @@ window.addEventListener('load', async () => {
 
   console.log(gpuCameraRenderer.lights)
 
+  const boxGeometry = new BoxGeometry()
+
   const mesh = new Mesh(gpuCameraRenderer, {
     label: 'Cube',
-    geometry: new BoxGeometry(),
+    geometry: boxGeometry,
     shaders: {
       // vertex: {
       //   code: vs,
@@ -191,6 +196,75 @@ window.addEventListener('load', async () => {
   // mesh.rotation.y = -1
 
   console.log(mesh, gpuCameraRenderer)
+
+  // test with other builtin shaders!
+  const autoLitMeshParameters = {
+    label: 'Auto lit mesh',
+    geometry: boxGeometry,
+    uniforms: {
+      material: {
+        visibility: ['fragment'],
+        struct: {
+          color: {
+            type: 'vec3f',
+            value: new Vec3(1),
+          },
+        },
+      },
+    },
+  }
+
+  const testAutoLitMesh = new Mesh(gpuCameraRenderer, {
+    ...autoLitMeshParameters,
+    shaders: {
+      vertex: {
+        code: getVertexShaderCode({ geometry: autoLitMeshParameters.geometry }),
+      },
+      fragment: {
+        code: getFragmentShaderCode({
+          geometry: autoLitMeshParameters.geometry,
+          materialUniform: autoLitMeshParameters.uniforms.material,
+          materialUniformName: 'material',
+          shadingModel: 'Phong',
+          toneMapping: false,
+        }),
+      },
+    },
+  })
+
+  const pivot = new Object3D()
+  pivot.parent = gpuCameraRenderer.scene
+
+  testAutoLitMesh.parent = pivot
+
+  testAutoLitMesh.position.x = -3
+
+  testAutoLitMesh.onBeforeRender(() => {
+    pivot.rotation.z += 0.01
+  })
+
+  /*
+  "
+    struct VSOutput {
+      @builtin(position) position: vec4f,
+      @builtin(front_facing) frontFacing: bool,
+      @location(0) uv: vec2f,
+      @location(1) normal: vec3f,
+      @location(2) worldPosition: vec3f,
+      @location(3) viewDirection: vec3f,
+    };
+
+    undefined
+
+
+
+
+const PI = 3.141592653589793;
+const RECIPROCAL_PI = 0.3183098861837907;
+const RECIPROCAL_PI2 = 0.15915494309189535;
+const EPSILON = 1e-6;
+
+   */
 
   // GUI
   const gui = new lil.GUI({

@@ -2,22 +2,14 @@ export class TestRenderTargets {
   constructor({ gpuCurtains }) {
     this.gpuCurtains = gpuCurtains
 
-    // const renderer = new GPURenderer({
-    //   deviceManager: this.gpuCurtains.deviceManager,
-    // })
-    console.log(this.gpuCurtains.renderer.options)
-
-    this.lerp = (start = 0, end = 1, amount = 0.1) => {
-      return (1 - amount) * start + amount * end
-    }
-
     this.scrollEffect = 0
 
     this.gpuCurtains
-      .onRender(() => {
+      .onBeforeRender(() => {
         // update our scroll effect
         // increase/decrease the effect
         this.scrollEffect = this.lerp(this.scrollEffect, 0, 0.075)
+        //this.scrollEffect = 100
       })
       .onScroll(() => {
         // get scroll deltas to apply the effect on scroll
@@ -35,6 +27,10 @@ export class TestRenderTargets {
       })
 
     this.init()
+  }
+
+  lerp(start = 0, end = 1, amount = 0.1) {
+    return (1 - amount) * start + amount * end
   }
 
   async init() {
@@ -307,29 +303,30 @@ export class TestRenderTargets {
       }
   `
 
-    this.additionalPostProPass = new ShaderPass(this.gpuCurtains, {
-      shaders: {
-        fragment: {
-          code: postProShader,
-        },
-      },
-      targets: [
-        {
-          blend: {
-            color: {
-              srcFactor: 'src-alpha',
-              dstFactor: 'one-minus-src-alpha',
-            },
-            alpha: {
-              srcFactor: 'one',
-              dstFactor: 'one-minus-src-alpha',
-            },
-          },
-        },
-      ],
-    })
+    // this.additionalPostProPass = new ShaderPass(this.gpuCurtains, {
+    //   label: 'Invert colors banding post processing pass',
+    //   shaders: {
+    //     fragment: {
+    //       code: postProShader,
+    //     },
+    //   },
+    //   targets: [
+    //     {
+    //       blend: {
+    //         color: {
+    //           srcFactor: 'src-alpha',
+    //           dstFactor: 'one-minus-src-alpha',
+    //         },
+    //         alpha: {
+    //           srcFactor: 'one',
+    //           dstFactor: 'one-minus-src-alpha',
+    //         },
+    //       },
+    //     },
+    //   ],
+    // })
 
-    console.log('TEST RT init', this.gpuCurtains.renderer)
+    console.log('TEST RT init', this.gpuCurtains.renderer, this.gpuCurtains.renderer.scene)
   }
 
   destroy() {

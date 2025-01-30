@@ -6,7 +6,7 @@ import { PointLight } from '../lights/PointLight';
 import { Input } from '../../types/BindGroups';
 import { ShaderOptions } from '../../types/Materials';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
-import { VertexShaderInputParams } from '../shaders/chunks/vertex/get_vertex_output';
+import { VertexShaderInputBaseParams } from '../shaders/full/vertex/get-vertex-shader-code';
 /** Defines the perspective shadow camera params. */
 export type PerspectiveShadowCameraParams = Omit<PerspectiveProjectionParams, 'fov' | 'aspect'>;
 /** Defines the perspective shadow camera. */
@@ -113,10 +113,10 @@ export declare class PointShadow extends Shadow {
     render(once?: boolean): number;
     /**
      * Get the default depth pass vertex shader for this {@link PointShadow}.
-     * parameters - {@link VertexShaderInputParams} used to compute the output `worldPosition` and `normal` vectors.
+     * parameters - {@link VertexShaderInputBaseParams} used to compute the output `worldPosition` and `normal` vectors.
      * @returns - Depth pass vertex shader.
      */
-    getDefaultShadowDepthVs({ bindings, geometry }: VertexShaderInputParams): ShaderOptions;
+    getDefaultShadowDepthVs({ bindings, geometry }: VertexShaderInputBaseParams): ShaderOptions;
     /**
      * Get the default depth pass {@link types/Materials.ShaderOptions | fragment shader options} for this {@link PointShadow}.
      * @returns - A {@link types/Materials.ShaderOptions | ShaderOptions} with the depth pass fragment shader.

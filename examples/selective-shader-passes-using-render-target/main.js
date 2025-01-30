@@ -26,7 +26,7 @@ window.addEventListener('load', async () => {
   await gpuCurtains.setDevice()
 
   gpuCurtains
-    .onRender(() => {
+    .onBeforeRender(() => {
       // update our scroll effect
       // increase/decrease the effect
       scrollEffect = lerp(scrollEffect, 0, 0.075)

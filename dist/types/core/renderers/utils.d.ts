@@ -1,4 +1,3 @@
-/// <reference types="dist" />
 import { GPURenderer, ProjectedMesh } from './GPURenderer';
 import { GPUCameraRenderer } from './GPUCameraRenderer';
 import { GPUCurtainsRenderer } from '../../curtains/renderers/GPUCurtainsRenderer';
@@ -40,8 +39,3 @@ export declare const isCurtainsRenderer: (renderer: GPUCurtains | GPUCurtainsRen
  * @returns - Given object as a {@link ProjectedMesh | projected mesh} if the test is successful, `false` otherwise.
  */
 export declare const isProjectedMesh: (object: object) => false | ProjectedMesh;
-/**
- * Helper to generate mips on the GPU
- * Taken from https://webgpufundamentals.org/webgpu/lessons/webgpu-importing-textures.html
- */
-export declare const generateMips: (device: GPUDevice, texture: GPUTexture) => void;

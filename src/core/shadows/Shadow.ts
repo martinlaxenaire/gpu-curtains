@@ -8,13 +8,12 @@ import { ProjectedMesh } from '../renderers/GPURenderer'
 import { RenderMaterial } from '../materials/RenderMaterial'
 import { DirectionalLight } from '../lights/DirectionalLight'
 import { PointLight } from '../lights/PointLight'
-import { getDefaultShadowDepthVs } from '../shaders/chunks/shading/shadows'
+import { getDefaultShadowDepthVs } from '../shaders/full/vertex/get-default-shadow-depth-vertex-shader-code'
 import { BufferBinding } from '../bindings/BufferBinding'
 import { RenderMaterialParams, ShaderOptions } from '../../types/Materials'
 import { Input } from '../../types/BindGroups'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { Geometry } from '../geometries/Geometry'
-import { VertexShaderInputParams } from '../shaders/chunks/vertex/get_vertex_output'
+import { VertexShaderInputBaseParams } from '../shaders/full/vertex/get-vertex-shader-code'
 
 /** Defines all types of shadows. */
 export type ShadowsType = 'directionalShadows' | 'pointShadows'
@@ -606,10 +605,10 @@ export class Shadow {
 
   /**
    * Get the default depth pass vertex shader for this {@link Shadow}.
-   * parameters - {@link VertexShaderInputParams} used to compute the output `worldPosition` and `normal` vectors.
+   * parameters - {@link VertexShaderInputBaseParams} used to compute the output `worldPosition` and `normal` vectors.
    * @returns - Depth pass vertex shader.
    */
-  getDefaultShadowDepthVs({ bindings = [], geometry }: VertexShaderInputParams): ShaderOptions {
+  getDefaultShadowDepthVs({ bindings = [], geometry }: VertexShaderInputBaseParams): ShaderOptions {
     return {
       /** Returned code. */
       code: getDefaultShadowDepthVs(this.index, { bindings, geometry }),

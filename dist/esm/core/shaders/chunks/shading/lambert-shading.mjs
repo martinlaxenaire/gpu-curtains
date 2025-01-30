@@ -1,35 +1,21 @@
-import light_utils from '../helpers/lights/light_utils.wgsl.mjs';
-import { toneMappingUtils } from './tone-mapping-utils.mjs';
-import RE_indirect_diffuse from '../helpers/lights/RE_indirect_diffuse.wgsl.mjs';
-import { getPCFShadows, applyPointShadows, applyDirectionalShadows } from './shadows.mjs';
-import constants from '../helpers/constants.wgsl.mjs';
+import { constants } from '../utils/constants.mjs';
+import { common } from '../utils/common.mjs';
+import { getLightsInfos } from '../fragment/head/get-lights-infos.mjs';
+import { REIndirectDiffuse } from '../fragment/head/RE-indirect-diffuse.mjs';
+import { getLambertDirect } from '../fragment/head/get-lambert-direct.mjs';
+import { toneMappingUtils } from '../fragment/head/tone-mapping-utils.mjs';
+import { getLambertShading } from '../fragment/body/get-lambert-shading.mjs';
 
 const lambertUtils = (
   /* wgsl */
   `
 ${constants}
-${light_utils}
-${RE_indirect_diffuse}
+${common}
+${getLightsInfos}
+${REIndirectDiffuse}
 `
 );
-const getLambertDirect = (
-  /* wgsl */
-  `
-fn getLambertDirect(
-  normal: vec3f,
-  diffuseColor: vec3f,
-  directLight: DirectLight,
-  ptr_reflectedLight: ptr<function, ReflectedLight>
-) {
-  let L = normalize(directLight.direction);
-  let NdotL = max(dot(normal, L), 0.0);
-  
-  let irradiance: vec3f = NdotL * directLight.color;
-  (*ptr_reflectedLight).directDiffuse += irradiance * BRDF_Lambert( diffuseColor );
-}
-`
-);
-const getLambert = ({ addUtils = true, receiveShadows = false, toneMapping = "linear", useOcclusion = false } = {}) => (
+const getLambert = ({ addUtils = true, receiveShadows = false, toneMapping = "Linear", useOcclusion = false } = {}) => (
   /* wgsl */
   `
 ${addUtils ? lambertUtils : ""}
@@ -39,44 +25,20 @@ ${toneMapping ? toneMappingUtils : ""}
 fn getLambert(
   normal: vec3f,
   worldPosition: vec3f,
-  diffuseColor: vec3f,
+  outputColor: vec3f,
   ${useOcclusion ? "occlusion: f32," : ""}
 ) -> vec3f {
-  var directLight: DirectLight;
-  var reflectedLight: ReflectedLight;
-  
-  ${receiveShadows ? getPCFShadows : ""}
+  ${!useOcclusion ? "let occlusion: f32 = 1.0;" : ""}
 
-  // point lights
-  for(var i = 0; i < pointLights.count; i++) {
-    getPointLightInfo(pointLights.elements[i], worldPosition, &directLight);
-    ${receiveShadows ? applyPointShadows : ""}
-    getLambertDirect(normal, diffuseColor, directLight, &reflectedLight);
-  }
+  ${getLambertShading({ receiveShadows })}
   
-  // directional lights
-  for(var i = 0; i < directionalLights.count; i++) {
-    getDirectionalLightInfo(directionalLights.elements[i], worldPosition, &directLight);
-    ${receiveShadows ? applyDirectionalShadows : ""}
-    getLambertDirect(normal, diffuseColor, directLight, &reflectedLight);
-  }
+  var color: vec3f = outgoingLight;
   
-  // ambient lights
-  var irradiance: vec3f = vec3(0.0);
-  RE_IndirectDiffuse(irradiance, diffuseColor, &reflectedLight);
+  ${toneMapping === "Linear" ? "outgoingLight = linearToOutput3(color);" : toneMapping === "Khronos" ? "outgoingLight = linearTosRGB(toneMapKhronosPbrNeutral(color));" : ""}
   
-  let totalDirect: vec3f = reflectedLight.directDiffuse + reflectedLight.directSpecular;
-  var totalIndirect: vec3f = reflectedLight.indirectDiffuse + reflectedLight.indirectSpecular;
-  
-  ${useOcclusion ? "totalIndirect *= occlusion;" : ""}
-  
-  var outgoingLight: vec3f = totalDirect + totalIndirect;
-  
-  ${toneMapping === "linear" ? "outgoingLight = linearToOutput3(outgoingLight);" : toneMapping === "khronos" ? "outgoingLight = linearTosRGB(toneMapKhronosPbrNeutral(outgoingLight));" : ""}
-  
-  return outgoingLight;
+  return color;
 }
 `
 );
 
-export { getLambert, getLambertDirect, lambertUtils };
+export { getLambert, lambertUtils };

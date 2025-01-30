@@ -53,7 +53,7 @@ class GPURenderer {
       },
       ...context
     };
-    renderPass = { ...{ useDepth: true, sampleCount: 4, clearValue: [0, 0, 0, 0] }, ...renderPass };
+    renderPass = { ...{ useDepth: true, sampleCount: 4 }, ...renderPass };
     this.options = {
       deviceManager,
       label,
@@ -554,6 +554,14 @@ class GPURenderer {
     this.deviceManager.uploadTexture(texture);
   }
   /**
+   * Generate mips on the GPU using our {@link GPUDeviceManager}.
+   * @param texture - {@link Texture} or {@link DOMTexture} for which to generate the mips.
+   * @param commandEncoder - optional {@link GPUCommandEncoder} to use if we're already in the middle of a command encoding process.
+   */
+  generateMips(texture, commandEncoder = null) {
+    this.deviceManager.generateMips(texture, commandEncoder);
+  }
+  /**
    * Import a {@link GPUExternalTexture}
    * @param video - {@link HTMLVideoElement} source
    * @returns - {@link GPUExternalTexture}
@@ -750,6 +758,8 @@ class GPURenderer {
       !this.production && commandEncoder.pushDebugGroup(`${this.type} (${this.options.label}): Force clear command encoder`);
     }
     this.renderPass.updateView();
+    this.renderPass.setLoadOp("clear");
+    this.renderPass.setDepthLoadOp("clear");
     const pass = commandEncoder.beginRenderPass(this.renderPass.descriptor);
     pass.end();
     if (!hasCommandEncoder) {

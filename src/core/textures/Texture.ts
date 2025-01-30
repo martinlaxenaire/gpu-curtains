@@ -1,4 +1,4 @@
-import { generateMips, isRenderer, Renderer } from '../renderers/utils'
+import { isRenderer, Renderer } from '../renderers/utils'
 import { TextureBinding } from '../bindings/TextureBinding'
 import { BindGroupBindingElement } from '../../types/BindGroups'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
@@ -265,7 +265,7 @@ export class Texture {
     )
 
     if (this.texture.mipLevelCount > 1) {
-      generateMips(this.renderer.device, this.texture)
+      this.renderer.generateMips(this)
     }
   }
 
@@ -299,7 +299,7 @@ export class Texture {
     )
 
     if (this.texture.mipLevelCount > 1) {
-      generateMips(this.renderer.device, this.texture)
+      this.renderer.generateMips(this)
     }
   }
 

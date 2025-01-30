@@ -2,6 +2,7 @@
 import { Renderer } from '../renderers/utils';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
 import { Texture } from '../textures/Texture';
+import { TextureSize } from '../../types/Textures';
 /** Define the parameters of a color attachment */
 export interface ColorAttachmentParams {
     /** The {@link GPUCommandEncoder.beginRenderPass().loadOp | load operation} to perform while drawing this {@link RenderPass} */
@@ -23,6 +24,8 @@ export interface RenderPassParams {
     sampleCount?: GPUSize32;
     /** Force all the {@link RenderPass} textures size to be set to the given ratio of the {@link core/renderers/GPURenderer.GPURenderer#canvas | renderer canvas} size. Used mainly to lower the rendered definition. */
     qualityRatio?: number;
+    /** Force the all the {@link RenderPass} textures to be set at given size. Used mainly to lower the rendered definition. */
+    fixedSize?: TextureSize;
     /** Whether this {@link RenderPass} should handle a view texture */
     useColorAttachments?: boolean;
     /** Whether the main (first {@link colorAttachments}) view texture should use the content of the swap chain and render to it each frame */
@@ -67,7 +70,7 @@ export declare class RenderPass {
      * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link RenderPass}
      * @param parameters - {@link RenderPassParams | parameters} used to create this {@link RenderPass}
      */
-    constructor(renderer: Renderer | GPUCurtains, { label, sampleCount, qualityRatio, useColorAttachments, renderToSwapChain, colorAttachments, useDepth, depthTexture, depthLoadOp, depthStoreOp, depthClearValue, depthFormat, }?: RenderPassParams);
+    constructor(renderer: Renderer | GPUCurtains, { label, sampleCount, qualityRatio, fixedSize, useColorAttachments, renderToSwapChain, colorAttachments, useDepth, depthTexture, depthLoadOp, depthStoreOp, depthClearValue, depthFormat, }?: RenderPassParams);
     /**
      * Create and set our {@link depthTexture | depth texture}
      */

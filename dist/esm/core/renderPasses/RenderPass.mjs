@@ -12,6 +12,7 @@ class RenderPass {
     label = "Render Pass",
     sampleCount = 4,
     qualityRatio = 1,
+    fixedSize = null,
     // color
     useColorAttachments = true,
     renderToSwapChain = true,
@@ -47,6 +48,7 @@ class RenderPass {
       label,
       sampleCount,
       qualityRatio,
+      fixedSize,
       // color
       useColorAttachments,
       renderToSwapChain,
@@ -84,6 +86,7 @@ class RenderPass {
         format: this.options.depthFormat,
         sampleCount: this.options.sampleCount,
         qualityRatio: this.options.qualityRatio,
+        ...this.options.fixedSize && { fixedSize: this.options.fixedSize },
         type: "depth",
         usage: ["renderAttachment", "textureBinding"]
       });
@@ -101,6 +104,7 @@ class RenderPass {
           format: colorAttachment.targetFormat,
           sampleCount: this.options.sampleCount,
           qualityRatio: this.options.qualityRatio,
+          ...this.options.fixedSize && { fixedSize: this.options.fixedSize },
           type: "texture",
           usage: ["copySrc", "copyDst", "renderAttachment", "textureBinding"]
         })

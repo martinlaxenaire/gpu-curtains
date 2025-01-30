@@ -1,5 +1,5 @@
 import { throwError, throwWarning } from '../../utils/utils'
-import { generateMips, Renderer } from './utils'
+import { Renderer } from './utils'
 import { Sampler } from '../samplers/Sampler'
 import { PipelineManager } from '../pipelines/PipelineManager'
 import { SceneObject } from './GPURenderer'
@@ -8,6 +8,7 @@ import { AllowedBindGroups } from '../../types/BindGroups'
 import { Buffer } from '../buffers/Buffer'
 import { BufferBinding } from '../bindings/BufferBinding'
 import { IndirectBuffer } from '../../extras/buffers/IndirectBuffer'
+import { Texture } from '../textures/Texture'
 
 /**
  * Base parameters used to create a {@link GPUDeviceManager}
@@ -113,6 +114,14 @@ export class GPUDeviceManager {
   /** Callback to run whenever the {@link device} has been intentionally destroyed. */
   onDeviceDestroyed: (info?: GPUDeviceLostInfo) => void
 
+  /** @ignore */
+  // mips generation cache handling
+  #mipsGeneration: {
+    sampler: GPUSampler | null
+    module: GPUShaderModule | null
+    pipelineByFormat: Record<GPUTextureFormat, GPURenderPipeline>
+  }
+
   /**
    * GPUDeviceManager constructor
    * @param parameters - {@link GPUDeviceManagerParams | parameters} used to create this {@link GPUDeviceManager}
@@ -147,6 +156,12 @@ export class GPUDeviceManager {
 
     this.setPipelineManager()
     this.setDeviceObjects()
+
+    this.#mipsGeneration = {
+      sampler: null,
+      module: null,
+      pipelineByFormat: {} as Record<GPUTextureFormat, GPURenderPipeline>,
+    }
 
     if (autoRender) {
       this.animate()
@@ -423,7 +438,7 @@ export class GPUDeviceManager {
         )
 
         if ((texture.texture as GPUTexture).mipLevelCount > 1) {
-          generateMips(this.device, texture.texture as GPUTexture)
+          this.generateMips(texture)
         }
 
         // add to our textures queue array to track when it has been uploaded
@@ -438,6 +453,140 @@ export class GPUDeviceManager {
         { bytesPerRow: texture.size.width * 4 },
         { width: texture.size.width, height: texture.size.height }
       )
+    }
+  }
+
+  /**
+   * Mips generation helper on the GPU using our {@link device}. Caches sampler, module and pipeline (by {@link GPUTexture} formats) for faster generation.
+   * Ported from https://webgpufundamentals.org/webgpu/lessons/webgpu-importing-textures.html
+   * @param texture - {@link Texture} or {@link DOMTexture} for which to generate the mips.
+   * @param commandEncoder - optional {@link GPUCommandEncoder} to use if we're already in the middle of a command encoding process.
+   */
+  generateMips(texture: Texture | DOMTexture, commandEncoder: GPUCommandEncoder = null) {
+    if (!this.device) return
+
+    if (!this.#mipsGeneration.module) {
+      this.#mipsGeneration.module = this.device.createShaderModule({
+        label: 'textured quad shaders for mip level generation',
+        code: `
+            struct VSOutput {
+              @builtin(position) position: vec4f,
+              @location(0) texcoord: vec2f,
+            };
+
+            @vertex fn vs(
+              @builtin(vertex_index) vertexIndex : u32
+            ) -> VSOutput {
+              let pos = array(
+
+                vec2f( 0.0,  0.0),  // center
+                vec2f( 1.0,  0.0),  // right, center
+                vec2f( 0.0,  1.0),  // center, top
+
+                // 2st triangle
+                vec2f( 0.0,  1.0),  // center, top
+                vec2f( 1.0,  0.0),  // right, center
+                vec2f( 1.0,  1.0),  // right, top
+              );
+
+              var vsOutput: VSOutput;
+              let xy = pos[vertexIndex];
+              vsOutput.position = vec4f(xy * 2.0 - 1.0, 0.0, 1.0);
+              vsOutput.texcoord = vec2f(xy.x, 1.0 - xy.y);
+              return vsOutput;
+            }
+
+            @group(0) @binding(0) var ourSampler: sampler;
+            @group(0) @binding(1) var ourTexture: texture_2d<f32>;
+
+            @fragment fn fs(fsInput: VSOutput) -> @location(0) vec4f {
+              return textureSample(ourTexture, ourSampler, fsInput.texcoord);
+            }
+          `,
+      })
+
+      this.#mipsGeneration.sampler = this.device.createSampler({
+        minFilter: 'linear',
+        magFilter: 'linear',
+      })
+    }
+
+    if (!this.#mipsGeneration.pipelineByFormat[texture.texture.format]) {
+      this.#mipsGeneration.pipelineByFormat[texture.texture.format] = this.device.createRenderPipeline({
+        label: 'Mip level generator pipeline',
+        layout: 'auto',
+        vertex: {
+          module: this.#mipsGeneration.module,
+        },
+        fragment: {
+          module: this.#mipsGeneration.module,
+          targets: [{ format: texture.texture.format }],
+        },
+      })
+    }
+
+    const pipeline = this.#mipsGeneration.pipelineByFormat[texture.texture.format]
+
+    const encoder =
+      commandEncoder ||
+      this.device.createCommandEncoder({
+        label: 'Mip gen encoder',
+      })
+
+    let width = texture.texture.width
+    let height = texture.texture.height
+    let baseMipLevel = 0
+    while (width > 1 || height > 1) {
+      width = Math.max(1, (width / 2) | 0)
+      height = Math.max(1, (height / 2) | 0)
+
+      for (let layer = 0; layer < texture.texture.depthOrArrayLayers; ++layer) {
+        const bindGroup = this.device.createBindGroup({
+          layout: pipeline.getBindGroupLayout(0),
+          entries: [
+            { binding: 0, resource: this.#mipsGeneration.sampler },
+            {
+              binding: 1,
+              resource: texture.texture.createView({
+                dimension: '2d',
+                baseMipLevel,
+                mipLevelCount: 1,
+                baseArrayLayer: layer,
+                arrayLayerCount: 1,
+              }),
+            },
+          ],
+        })
+
+        const renderPassDescriptor = {
+          label: 'Mip generation render pass',
+          colorAttachments: [
+            {
+              view: texture.texture.createView({
+                dimension: '2d',
+                baseMipLevel: baseMipLevel + 1,
+                mipLevelCount: 1,
+                baseArrayLayer: layer,
+                arrayLayerCount: 1,
+              }),
+              loadOp: 'clear',
+              storeOp: 'store',
+            },
+          ],
+        }
+
+        const pass = encoder.beginRenderPass(renderPassDescriptor as GPURenderPassDescriptor)
+        pass.setPipeline(pipeline)
+        pass.setBindGroup(0, bindGroup)
+        pass.draw(6) // call our vertex shader 6 times
+        pass.end()
+      }
+      ++baseMipLevel
+    }
+
+    if (!commandEncoder) {
+      const commandBuffer = encoder.finish()
+      this.device.queue.submit([commandBuffer])
     }
   }
 

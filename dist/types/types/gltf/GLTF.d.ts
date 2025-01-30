@@ -1,3 +1,4 @@
+import { GLTFExtensionsUsed, GLTFMaterialsExtensions } from './GLTFExtensions';
 /**
  * Module for glTF 2.0 Interface
  */
@@ -29,7 +30,7 @@ export declare module GLTF {
         /**
          * Dictionary object with extension-specific objects
          */
-        extensions?: Record<string, unknown>;
+        extensions?: GLTFMaterialsExtensions;
         /**
          * Application-Specific data
          */
@@ -623,7 +624,7 @@ export declare module GLTF {
         /**
          * Names of glTF extensions used somewhere in this asset
          */
-        extensionsUsed?: string[];
+        extensionsUsed?: GLTFExtensionsUsed;
         /**
          * Names of glTF extensions required to properly load this asset
          */

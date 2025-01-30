@@ -26,9 +26,7 @@ import { throwWarning } from '../../utils/utils'
 import { BufferBinding } from '../../core/bindings/BufferBinding'
 import { KeyframesAnimation } from '../animations/KeyframesAnimation'
 import { TargetsAnimationsManager } from '../animations/TargetsAnimationsManager'
-
-// TODO limitations, example...
-// use a list like: https://github.com/warrenm/GLTFKit2?tab=readme-ov-file#status-and-conformance
+import { GLTFExtensionsTypes } from '../../types/gltf/GLTFExtensions'
 
 // https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Constants
 // To make it easier to reference the WebGL enums that glTF uses.
@@ -69,7 +67,30 @@ const GL = WebGLRenderingContext
  * - [x] Materials
  * - [x] Skins
  * - [x] Morph targets
- * - [ ] Extensions
+ *
+ * ## Extensions
+ * - [ ] KHR_animation_pointer
+ * - [ ] KHR_draco_mesh_compression
+ * - [ ] KHR_lights_punctual
+ * - [ ] KHR_materials_anisotropy
+ * - [ ] KHR_materials_clearcoat
+ * - [x] KHR_materials_dispersion
+ * - [x] KHR_materials_emissive_strength
+ * - [x] KHR_materials_ior
+ * - [ ] KHR_materials_iridescence
+ * - [ ] KHR_materials_sheen
+ * - [x] KHR_materials_specular
+ * - [x] KHR_materials_transmission
+ * - [x] KHR_materials_unlit
+ * - [ ] KHR_materials_variants
+ * - [x] KHR_materials_volume
+ * - [ ] KHR_mesh_quantization
+ * - [ ] KHR_texture_basisu
+ * - [ ] KHR_texture_transform
+ * - [ ] KHR_xmp_json_ld
+ * - [x] EXT_mesh_gpu_instancing
+ * - [ ] EXT_meshopt_compression
+ * - [ ] EXT_texture_webp
  *
  * @example
  * ```javascript
@@ -369,6 +390,20 @@ export class GLTFScenesManager {
           return texture.texCoord !== 0 ? 'uv' + texture.texCoord : 'uv'
         }
 
+        const createTexture = (gltfTexture: GLTF.ITextureInfo, name) => {
+          const index = gltfTexture.index
+          const image = this.gltf.imagesBitmaps[this.gltf.textures[index].source]
+
+          const texture = this.createTexture(material, image, name)
+          const samplerIndex = this.gltf.textures.find((t) => t.source === index)?.sampler
+
+          materialTextures.texturesDescriptors.push({
+            texture,
+            sampler: this.scenesManager.samplers[samplerIndex ?? 0],
+            texCoordAttributeName: getUVAttributeName(gltfTexture),
+          })
+        }
+
         this.scenesManager.materialsTextures[materialIndex] = materialTextures
 
         if (material.pbrMetallicRoughness) {
@@ -376,77 +411,64 @@ export class GLTFScenesManager {
             material.pbrMetallicRoughness.baseColorTexture &&
             material.pbrMetallicRoughness.baseColorTexture.index !== undefined
           ) {
-            const index = material.pbrMetallicRoughness.baseColorTexture.index
-            const image = this.gltf.imagesBitmaps[this.gltf.textures[index].source]
-
-            const texture = this.createTexture(material, image, 'baseColorTexture')
-            const samplerIndex = this.gltf.textures.find((t) => t.source === index)?.sampler
-
-            materialTextures.texturesDescriptors.push({
-              texture,
-              sampler: this.scenesManager.samplers[samplerIndex ?? 0],
-              texCoordAttributeName: getUVAttributeName(material.pbrMetallicRoughness.baseColorTexture),
-            })
+            createTexture(material.pbrMetallicRoughness.baseColorTexture, 'baseColorTexture')
           }
 
           if (
             material.pbrMetallicRoughness.metallicRoughnessTexture &&
             material.pbrMetallicRoughness.metallicRoughnessTexture.index !== undefined
           ) {
-            const index = material.pbrMetallicRoughness.metallicRoughnessTexture.index
-            const image = this.gltf.imagesBitmaps[this.gltf.textures[index].source]
-
-            const texture = this.createTexture(material, image, 'metallicRoughnessTexture')
-            const samplerIndex = this.gltf.textures.find((t) => t.source === index)?.sampler
-
-            materialTextures.texturesDescriptors.push({
-              texture,
-              sampler: this.scenesManager.samplers[samplerIndex ?? 0],
-              texCoordAttributeName: getUVAttributeName(material.pbrMetallicRoughness.metallicRoughnessTexture),
-            })
+            createTexture(material.pbrMetallicRoughness.metallicRoughnessTexture, 'metallicRoughnessTexture')
           }
         }
 
         if (material.normalTexture && material.normalTexture.index !== undefined) {
-          const index = material.normalTexture.index
-          const image = this.gltf.imagesBitmaps[this.gltf.textures[index].source]
-
-          const texture = this.createTexture(material, image, 'normalTexture')
-          const samplerIndex = this.gltf.textures.find((t) => t.source === index)?.sampler
-
-          materialTextures.texturesDescriptors.push({
-            texture,
-            sampler: this.scenesManager.samplers[samplerIndex ?? 0],
-            texCoordAttributeName: getUVAttributeName(material.normalTexture),
-          })
+          // TODO normal map scale
+          createTexture(material.normalTexture, 'normalTexture')
         }
 
         if (material.occlusionTexture && material.occlusionTexture.index !== undefined) {
-          const index = material.occlusionTexture.index
-          const image = this.gltf.imagesBitmaps[this.gltf.textures[index].source]
-
-          const texture = this.createTexture(material, image, 'occlusionTexture')
-          const samplerIndex = this.gltf.textures.find((t) => t.source === index)?.sampler
-
-          materialTextures.texturesDescriptors.push({
-            texture,
-            sampler: this.scenesManager.samplers[samplerIndex ?? 0],
-            texCoordAttributeName: getUVAttributeName(material.occlusionTexture),
-          })
+          // TODO occlusion map strength
+          createTexture(material.occlusionTexture, 'occlusionTexture')
         }
 
         if (material.emissiveTexture && material.emissiveTexture.index !== undefined) {
-          const index = material.emissiveTexture.index
-          const image = this.gltf.imagesBitmaps[this.gltf.textures[index].source]
+          createTexture(material.emissiveTexture, 'emissiveTexture')
+        }
 
-          const texture = this.createTexture(material, image, 'emissiveTexture')
-          const samplerIndex = this.gltf.textures.find((t) => t.source === index)?.sampler
+        // extensions textures
+        const { extensions } = material
+        const transmission = (extensions && extensions.KHR_materials_transmission) || null
+        const specular = (extensions && extensions.KHR_materials_specular) || null
+        const volume = (extensions && extensions.KHR_materials_volume) || null
 
-          materialTextures.texturesDescriptors.push({
-            texture,
-            sampler: this.scenesManager.samplers[samplerIndex ?? 0],
-            texCoordAttributeName: getUVAttributeName(material.emissiveTexture),
-          })
+        if (transmission && transmission.transmissionTexture && transmission.transmissionTexture.index !== undefined) {
+          createTexture(transmission.transmissionTexture, 'transmissionTexture')
+        }
+
+        if (specular && (specular.specularTexture || specular.specularColorTexture)) {
+          const { specularTexture, specularColorTexture } = specular
+          if (specularTexture && specularColorTexture) {
+            if (
+              specularTexture.index !== undefined &&
+              specularColorTexture.index !== undefined &&
+              specularTexture.index === specularColorTexture.index
+            ) {
+              createTexture(specular.specularTexture, 'specularTexture')
+            } else {
+              if (specularTexture && specularTexture.index !== undefined) {
+                createTexture(specular.specularTexture, 'specularFactorTexture')
+              }
+
+              if (specularColorTexture && specularColorTexture.index !== undefined) {
+                createTexture(specular.specularColorTexture, 'specularColorTexture')
+              }
+            }
+          }
+        }
+
+        if (volume && volume.thicknessTexture && volume.thicknessTexture.index !== undefined) {
+          createTexture(volume.thicknessTexture, 'thicknessTexture')
         }
       }
     }
@@ -495,7 +517,7 @@ export class GLTFScenesManager {
       // EXT_mesh_gpu_instancing
       let instanceAttributes = null
       if (node.extensions && node.extensions.EXT_mesh_gpu_instancing) {
-        const { attributes } = node.extensions.EXT_mesh_gpu_instancing as GLTF.IMeshPrimitive['attributes']
+        const { attributes } = node.extensions.EXT_mesh_gpu_instancing
 
         instanceAttributes = {
           count: 0,
@@ -529,12 +551,12 @@ export class GLTFScenesManager {
       mesh.primitives.forEach((primitive, primitiveIndex) => {
         const meshDescriptor: MeshDescriptor = {
           parent: child.node,
-          attributes: [],
           textures: [],
           parameters: {
             label: mesh.name ? mesh.name + ' ' + primitiveIndex : 'glTF mesh ' + primitiveIndex,
           },
           nodes: [],
+          extensionsUsed: [],
         }
 
         instancesDescriptor = this.#primitiveInstances.get(primitive)
@@ -1039,10 +1061,12 @@ export class GLTFScenesManager {
         | Uint32ArrayConstructor
         | Uint16ArrayConstructor
 
+      const bytesPerElement =
+        indicesConstructor.name === 'Uint8Array' ? Uint16Array.BYTES_PER_ELEMENT : indicesConstructor.BYTES_PER_ELEMENT
+
       const arrayOffset = accessor.byteOffset + bufferView.byteOffset
       const arrayBuffer = this.gltf.arrayBuffers[bufferView.buffer]
-      const arrayLength =
-        Math.ceil(accessor.count / indicesConstructor.BYTES_PER_ELEMENT) * indicesConstructor.BYTES_PER_ELEMENT
+      const arrayLength = Math.ceil(accessor.count / bytesPerElement) * bytesPerElement
 
       // do not allow Uint8Array arrays
       indicesArray =
@@ -1055,81 +1079,12 @@ export class GLTFScenesManager {
 
     if (!hasNormal) {
       // specs say "When normals are not specified, client implementations MUST calculate flat normals and the provided tangents (if present) MUST be ignored."
-      // compute flat normal
-      // from https://gist.github.com/donmccurdy/34a60951796cf703c8f6a9e1cd4bbe58
-      const positionAttribute = defaultAttributes.find((attribute) => attribute.name === 'position')
-      const vertex1 = new Vec3()
-      const vertex2 = new Vec3()
-      const vertex3 = new Vec3()
-      const edge1 = new Vec3()
-      const edge2 = new Vec3()
-      const normal = new Vec3()
-
-      const computeNormal = () => {
-        edge1.copy(vertex2).sub(vertex1)
-        edge2.copy(vertex3).sub(vertex1)
-
-        normal.crossVectors(edge1, edge2).normalize()
-      }
-
-      const posLength = positionAttribute.array.length
-      const normalArray = new Float32Array(posLength)
-
-      if (!indicesArray) {
-        for (let i = 0; i < posLength; i += positionAttribute.size * 3) {
-          vertex1.set(positionAttribute.array[i], positionAttribute.array[i + 1], positionAttribute.array[i + 2])
-          vertex2.set(positionAttribute.array[i + 3], positionAttribute.array[i + 4], positionAttribute.array[i + 5])
-          vertex3.set(positionAttribute.array[i + 6], positionAttribute.array[i + 7], positionAttribute.array[i + 8])
-
-          computeNormal()
-
-          for (let j = 0; j < 3; j++) {
-            normalArray[i + j * 3] = normal.x
-            normalArray[i + 1 + j * 3] = normal.y
-            normalArray[i + 2 + j * 3] = normal.z
-          }
-        }
-      } else {
-        const nbIndices = indicesArray.length
-        for (let i = 0; i < nbIndices; i += 3) {
-          const i0 = indicesArray[i] * 3
-          const i1 = indicesArray[i + 1] * 3
-          const i2 = indicesArray[i + 2] * 3
-
-          // avoid to access non existing values if we padded our indices array
-          if (posLength < i0 + 2) continue
-          vertex1.set(positionAttribute.array[i0], positionAttribute.array[i0 + 1], positionAttribute.array[i0 + 2])
-          if (posLength < i1 + 2) continue
-          vertex2.set(positionAttribute.array[i1], positionAttribute.array[i1 + 1], positionAttribute.array[i1 + 2])
-          if (posLength < i2 + 2) continue
-          vertex3.set(positionAttribute.array[i2], positionAttribute.array[i2 + 1], positionAttribute.array[i2 + 2])
-
-          computeNormal()
-
-          for (let j = 0; j < 3; j++) {
-            normalArray[indicesArray[i + j] * 3] = normal.x
-            normalArray[indicesArray[i + j] * 3 + 1] = normal.y
-            normalArray[indicesArray[i + j] * 3 + 2] = normal.z
-          }
-        }
-      }
-
-      const normalAttribute = {
-        name: 'normal',
-        type: 'vec3f',
-        bufferFormat: 'float32x3',
-        size: 3,
-        array: normalArray,
-      }
-
-      // add to the attributes
-      defaultAttributes.push(normalAttribute)
 
       // remove existing tangent if any
       defaultAttributes = defaultAttributes.filter((attr) => attr.name !== 'tangent')
 
       // if we had an interleavedArray then we'd have to rebuilt it with normals
-      // the Geometry is going to do that for us
+      // the Geometry is going to do that for us, while also computing flat normals
       interleavedArray = null
     }
 
@@ -1138,13 +1093,6 @@ export class GLTFScenesManager {
       // let's try to reorder the attributes so we might benefit from pipeline cache
       this.sortAttributesByNames(['position', 'uv', 'normal'], defaultAttributes)
     }
-
-    defaultAttributes.forEach((attribute) => {
-      meshDescriptor.attributes.push({
-        name: attribute.name,
-        type: attribute.type,
-      })
-    })
 
     const geometryAttributes: GeometryParams = {
       instancesCount: instances.length,
@@ -1162,6 +1110,13 @@ export class GLTFScenesManager {
     const GeometryConstructor = isIndexedGeometry ? IndexedGeometry : Geometry
 
     meshDescriptor.parameters.geometry = new GeometryConstructor(geometryAttributes)
+
+    if (!hasNormal) {
+      // compute geometry right away
+      // so we have fresh attributes to send to the shaders' generation helper functions
+      meshDescriptor.parameters.geometry.computeGeometry()
+    }
+
     meshDescriptor.parameters.geometry.boundingBox = geometryBBox
 
     if (isIndexedGeometry && indicesConstructor && indicesArray) {
@@ -1454,11 +1409,50 @@ export class GLTFScenesManager {
       })
     }
 
+    const material = (this.gltf.materials && this.gltf.materials[primitive.material]) || {}
+
+    // extensions
+    const { extensions } = material
+
+    if (extensions) {
+      for (const extension of Object.keys(extensions)) {
+        if (
+          extension === 'KHR_materials_unlit' &&
+          this.gltf.extensionsRequired &&
+          this.gltf.extensionsRequired.includes(extension)
+        ) {
+          meshDescriptor.extensionsUsed.push(extension as GLTFExtensionsTypes)
+        } else {
+          meshDescriptor.extensionsUsed.push(extension as GLTFExtensionsTypes)
+        }
+      }
+    }
+
+    const dispersion = (extensions && extensions.KHR_materials_dispersion) || null
+    const emissiveStrength = (extensions && extensions.KHR_materials_emissive_strength) || null
+    const ior = (extensions && extensions.KHR_materials_ior) || null
+    const transmission = (extensions && extensions.KHR_materials_transmission) || null
+    const specular = (extensions && extensions.KHR_materials_specular) || null
+    const volume = (extensions && extensions.KHR_materials_volume) || null
+
+    const hasTransmission = transmission || volume || dispersion
+
+    const useTransmission =
+      this.gltf.extensionsUsed &&
+      (this.gltf.extensionsUsed.includes('KHR_materials_transmission') ||
+        this.gltf.extensionsUsed.includes('KHR_materials_volume') ||
+        this.gltf.extensionsUsed.includes('KHR_materials_dispersion'))
+
     // textures and samplers
     const materialTextures = this.scenesManager.materialsTextures[primitive.material]
 
     meshDescriptor.parameters.samplers = []
     meshDescriptor.parameters.textures = []
+
+    if (useTransmission && hasTransmission) {
+      // add transmissive property
+      meshDescriptor.parameters.transmissive = true
+    }
 
     materialTextures?.texturesDescriptors.forEach((t) => {
       meshDescriptor.textures.push({
@@ -1476,12 +1470,10 @@ export class GLTFScenesManager {
       meshDescriptor.parameters.textures.push(t.texture)
     })
 
-    const material = (this.gltf.materials && this.gltf.materials[primitive.material]) || {}
-
     meshDescriptor.parameters.cullMode = material.doubleSided ? 'none' : 'back'
 
     // transparency
-    if (material.alphaMode === 'BLEND' || (material.extensions && material.extensions.KHR_materials_transmission)) {
+    if (material.alphaMode === 'BLEND') {
       meshDescriptor.parameters.transparent = true
       meshDescriptor.parameters.targets = [
         {
@@ -1502,22 +1494,36 @@ export class GLTFScenesManager {
 
     // uniforms
     const materialUniformStruct = {
-      baseColorFactor: {
-        type: 'vec4f',
-        value: material.pbrMetallicRoughness?.baseColorFactor || [1, 1, 1, 1],
+      color: {
+        type: 'vec3f',
+        value:
+          material.pbrMetallicRoughness && material.pbrMetallicRoughness.baseColorFactor !== undefined
+            ? new Vec3(
+                material.pbrMetallicRoughness.baseColorFactor[0],
+                material.pbrMetallicRoughness.baseColorFactor[1],
+                material.pbrMetallicRoughness.baseColorFactor[2]
+              )
+            : new Vec3(1),
+      },
+      opacity: {
+        type: 'f32',
+        value:
+          material.pbrMetallicRoughness && material.pbrMetallicRoughness.baseColorFactor !== undefined
+            ? material.pbrMetallicRoughness.baseColorFactor[3]
+            : 1,
       },
       alphaCutoff: {
         type: 'f32',
         value: material.alphaCutoff !== undefined ? material.alphaCutoff : material.alphaMode === 'MASK' ? 0.5 : 0,
       },
-      metallicFactor: {
+      metallic: {
         type: 'f32',
         value:
           material.pbrMetallicRoughness?.metallicFactor === undefined
             ? 1
             : material.pbrMetallicRoughness.metallicFactor,
       },
-      roughnessFactor: {
+      roughness: {
         type: 'f32',
         value:
           material.pbrMetallicRoughness?.roughnessFactor === undefined
@@ -1528,20 +1534,70 @@ export class GLTFScenesManager {
         type: 'f32',
         value: material.normalTexture?.scale === undefined ? 1 : material.normalTexture.scale,
       },
-      occlusionStrength: {
+      occlusionIntensity: {
         type: 'f32',
         value: material.occlusionTexture?.strength === undefined ? 1 : material.occlusionTexture.strength,
       },
-      emissiveFactor: {
+      emissiveColor: {
         type: 'vec3f',
-        value: material.emissiveFactor !== undefined ? material.emissiveFactor : [1, 1, 1],
+        value:
+          material.emissiveFactor !== undefined
+            ? new Vec3(material.emissiveFactor[0], material.emissiveFactor[1], material.emissiveFactor[2])
+            : new Vec3(0),
+      },
+      emissiveIntensity: {
+        type: 'f32',
+        value:
+          emissiveStrength && emissiveStrength.emissiveStrength !== undefined ? emissiveStrength.emissiveStrength : 1,
+      },
+      specularIntensity: {
+        type: 'f32',
+        value: specular && specular.specularFactor !== undefined ? specular.specularFactor : 1,
+      },
+      specularColor: {
+        type: 'vec3f',
+        value:
+          specular && specular.specularColorFactor !== undefined
+            ? new Vec3(
+                specular.specularColorFactor[0],
+                specular.specularColorFactor[1],
+                specular.specularColorFactor[2]
+              )
+            : new Vec3(1),
+      },
+      transmission: {
+        type: 'f32',
+        value: transmission && transmission.transmissionFactor !== undefined ? transmission.transmissionFactor : 0,
+      },
+      ior: {
+        type: 'f32',
+        value: ior && ior.ior !== undefined ? ior.ior : 1.5,
+      },
+      dispersion: {
+        type: 'f32',
+        value: dispersion && dispersion.dispersion !== undefined ? dispersion.dispersion : 0,
+      },
+      thickness: {
+        type: 'f32',
+        value: volume && volume.thicknessFactor !== undefined ? volume.thicknessFactor : 0,
+      },
+      attenuationDistance: {
+        type: 'f32',
+        value: volume && volume.attenuationDistance !== undefined ? volume.attenuationDistance : Infinity,
+      },
+      attenuationColor: {
+        type: 'vec3f',
+        value:
+          volume && volume.attenuationColor !== undefined
+            ? new Vec3(volume.attenuationColor[0], volume.attenuationColor[1], volume.attenuationColor[2])
+            : new Vec3(1),
       },
     }
 
     if (Object.keys(materialUniformStruct).length) {
       meshDescriptor.parameters.uniforms = {
         material: {
-          visibility: ['vertex', 'fragment'],
+          visibility: ['fragment'],
           struct: materialUniformStruct,
         },
       }
@@ -1584,14 +1640,22 @@ export class GLTFScenesManager {
         // each time the instance node world matrix is updated
         // we compute and update the corresponding matrices bindings
         const instanceNode = nodes[index]
-        const _updateWorldMatrix = instanceNode.updateWorldMatrix.bind(instanceNode)
-        instanceNode.updateWorldMatrix = () => {
-          _updateWorldMatrix()
+
+        const updateInstanceMatrices = () => {
           ;(binding.inputs.model.value as Mat4).copy(instanceNode.worldMatrix)
           ;(binding.inputs.normal.value as Mat3).getNormalMatrix(instanceNode.worldMatrix)
           binding.inputs.model.shouldUpdate = true
           binding.inputs.normal.shouldUpdate = true
         }
+
+        const _updateWorldMatrix = instanceNode.updateWorldMatrix.bind(instanceNode)
+        instanceNode.updateWorldMatrix = () => {
+          _updateWorldMatrix()
+          updateInstanceMatrices()
+        }
+
+        // do right away as well
+        updateInstanceMatrices()
       })
 
       if (!meshDescriptor.parameters.bindings) {

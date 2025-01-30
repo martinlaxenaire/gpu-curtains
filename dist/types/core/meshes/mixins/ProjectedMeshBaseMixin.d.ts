@@ -22,6 +22,8 @@ export interface ProjectedMeshBaseParams {
     receiveShadows?: boolean;
     /** Whether the mesh should cast shadows from shadow casting lights. If set to `true`, the mesh will be automatically added to all shadow maps. If you want to cast only specific shadows, see {@link core/shadows/Shadow.Shadow#addShadowCastingMesh | shadow's addShadowCastingMesh} method. Default to `false`. */
     castShadows?: boolean;
+    /** Whether the mesh should be considered as transmissive, like glass or transparent plastic. Will be rendered after the non transmissive meshes and have the {@link CameraRenderer#transmissionTarget | camera renderer transmissionTarget} texture and sampler properties attached to it to handle transmission effect. */
+    transmissive?: boolean;
 }
 /** Parameters used to create a ProjectedMesh */
 export interface ProjectedMeshParameters extends MeshBaseParams, ProjectedMeshBaseParams {

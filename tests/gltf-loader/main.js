@@ -14,7 +14,14 @@ window.addEventListener('load', async () => {
     DirectionalLight,
     OrbitControls,
     Vec3,
+    RenderBundle,
   } = await import(/* @vite-ignore */ path)
+
+  const stats = new Stats()
+
+  stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
+  stats.dom.classList.add('stats')
+  document.body.appendChild(stats.dom)
 
   // create a device manager
   const gpuDeviceManager = new GPUDeviceManager({
@@ -23,6 +30,14 @@ window.addEventListener('load', async () => {
 
   // wait for the device to be created
   await gpuDeviceManager.init()
+
+  gpuDeviceManager
+    .onBeforeRender(() => {
+      stats.begin()
+    })
+    .onAfterRender(() => {
+      stats.end()
+    })
 
   const container = document.querySelector('#canvas')
 
@@ -34,6 +49,15 @@ window.addEventListener('load', async () => {
     camera: {
       near: 0.1,
       far: 2000,
+    },
+    renderPass: {
+      // since transmission need a solid background color to be blended with
+      // just clear the renderer renderPass color values to match the css background
+      colorAttachments: [
+        {
+          clearValue: [34 / 255, 34 / 255, 34 / 255, 1],
+        },
+      ],
     },
   })
 
@@ -61,6 +85,7 @@ window.addEventListener('load', async () => {
 
   const environmentMap = new EnvironmentMap(gpuCameraRenderer)
   await environmentMap.loadAndComputeFromHDR(currentEnvMap.url)
+  let useEnvMap = true
 
   const models = {
     damagedHelmet: {
@@ -115,6 +140,16 @@ window.addEventListener('load', async () => {
       name: 'Sponza (optimized / interleaved)',
       url: 'https://raw.githubusercontent.com/toji/sponza-optimized/main/Sponza.gltf',
     },
+    // transparency
+    alphaBlendModeTest: {
+      name: 'Alpha Blend Mode Test',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/AlphaBlendModeTest/glTF/AlphaBlendModeTest.gltf',
+    },
+    // occlusion
+    compareAmbientOcclusion: {
+      name: 'Compare Ambient Occlusion',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/CompareAmbientOcclusion/glTF/CompareAmbientOcclusion.gltf',
+    },
     // sparse accessors
     simpleSparseAccessor: {
       name: 'Simple Sparse Accessor',
@@ -157,7 +192,7 @@ window.addEventListener('load', async () => {
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/SimpleSkin/glTF/SimpleSkin.gltf',
     },
     riggedSimple: {
-      name: 'Rigged Simple', // TODO not centered in scene?
+      name: 'Rigged Simple',
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/RiggedSimple/glTF/RiggedSimple.gltf',
     },
     fox: {
@@ -172,9 +207,42 @@ window.addEventListener('load', async () => {
       name: 'SkinD',
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Asset-Generator/main/Output/Positive/Animation_Skin/Animation_Skin_11.gltf',
     },
+    // transmission, volume & dispersion
+    transmissionTest: {
+      name: 'Transmission Test',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/TransmissionTest/glTF/TransmissionTest.gltf',
+    },
+    compareVolume: {
+      name: 'Compare Volume',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/CompareVolume/glTF/CompareVolume.gltf',
+    },
+    dispersionTest: {
+      name: 'Dispersion Test',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/DispersionTest/glTF/DispersionTest.gltf',
+    },
+    attenuationTest: {
+      name: 'Attenuation Test',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/AttenuationTest/glTF/AttenuationTest.gltf',
+    },
+    // specular
+    compareSpecular: {
+      name: 'Compare Specular',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/CompareSpecular/glTF/CompareSpecular.gltf',
+    },
+    // unlit
+    unlitTest: {
+      name: 'Unlit Test',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/UnlitTest/glTF/UnlitTest.gltf',
+    },
+    // emissive strength
+    compareEmissiveStrength: {
+      name: 'Compare Emissive Strength',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/CompareEmissiveStrength/glTF/CompareEmissiveStrength.gltf',
+    },
   }
 
-  let shadingModel = 'IBL' // 'IBL', 'PBR', 'Phong' or 'Lambert'
+  //let shadingModel = 'PBR' // 'IBL', 'PBR', 'Phong' or 'Lambert'
+  let shadingModel = 'PBR' // 'IBL', 'PBR', 'Phong' or 'Lambert'
   const lightType = 'DirectionalLight' // or 'PointLight'
 
   const ambientLight = new AmbientLight(gpuCameraRenderer, {
@@ -198,6 +266,14 @@ window.addEventListener('load', async () => {
     title: 'GLTF loader',
   })
 
+  // render bundles
+  let useRenderBundles = true
+  let regularRenderBundle = null
+  let transparentRenderBundle = null
+  let transmissiveRenderBundle = null
+
+  const renderBundlesField = gui.add({ useRenderBundles }, 'useRenderBundles').name('Use render bundles')
+
   const currentModelKey = 'damagedHelmet'
   let currentModel = models[currentModelKey]
 
@@ -215,13 +291,16 @@ window.addEventListener('load', async () => {
     .add(
       { [currentEnvMap.name]: currentEnvMapKey },
       currentEnvMap.name,
-      Object.keys(envMaps).reduce((acc, v) => {
-        return { ...acc, [envMaps[v].name]: v }
-      }, {})
+      Object.keys(envMaps).reduce(
+        (acc, v) => {
+          return { ...acc, [envMaps[v].name]: v }
+        },
+        { None: null }
+      )
     )
     .name('Environment maps')
 
-  const shadingField = gui.add({ shadingModel }, 'shadingModel', ['IBL', 'PBR', 'Phong', 'Lambert']).name('Shading')
+  const shadingField = gui.add({ shadingModel }, 'shadingModel', ['PBR', 'Phong', 'Lambert', 'Unlit']).name('Shading')
 
   const debugChannels = [
     'None',
@@ -237,7 +316,8 @@ window.addEventListener('load', async () => {
     'Base Color',
     'Metallic',
     'Roughness',
-    'F0',
+    'Specular Intensity',
+    'Specular Color',
   ]
 
   const defaultDebugChannel = 0
@@ -278,12 +358,51 @@ window.addEventListener('load', async () => {
     container.classList.remove('loading')
     console.log({ gltf, scenesManager, scenes, boundingBox })
 
+    if (useRenderBundles) {
+      const nbRegularMeshes = scenesManager.meshesDescriptors.filter(
+        (meshDescriptor) => !meshDescriptor.parameters.transmissive && !meshDescriptor.parameters.transparent
+      ).length
+
+      const nbTransparentMeshes = scenesManager.meshesDescriptors.filter(
+        (meshDescriptor) => !meshDescriptor.parameters.transmissive && meshDescriptor.parameters.transparent
+      ).length
+
+      const nbTransmissiveMeshes = scenesManager.meshesDescriptors.filter(
+        (meshDescriptor) => meshDescriptor.parameters.transmissive
+      ).length
+
+      if (nbRegularMeshes > 0) {
+        regularRenderBundle = new RenderBundle(gpuCameraRenderer, {
+          label: 'glTF non transmissive opaque render bundle',
+          size: nbRegularMeshes,
+          useBuffer: true,
+        })
+      }
+
+      if (nbTransparentMeshes > 0) {
+        transparentRenderBundle = new RenderBundle(gpuCameraRenderer, {
+          label: 'glTF non transmissive transparent render bundle',
+          size: nbTransparentMeshes,
+          useBuffer: true,
+        })
+      }
+
+      if (nbTransmissiveMeshes > 0) {
+        transmissiveRenderBundle = new RenderBundle(gpuCameraRenderer, {
+          label: 'glTF transmissive render bundle',
+          size: nbTransmissiveMeshes,
+          useBuffer: true,
+        })
+      }
+    }
+
     const { center, radius } = boundingBox
 
     // center model
     node.position.sub(center)
 
     const isSponza = url.includes('Sponza')
+    const isTransmissionTest = url.includes('TransmissionTest')
 
     if (isSponza) {
       node.position.y = 0
@@ -297,6 +416,18 @@ window.addEventListener('load', async () => {
         position: new Vec3(radius * 0.25, center.y * 0.25, 0),
         target: new Vec3(0, center.y * 0.1, 0),
       })
+    } else if (isTransmissionTest) {
+      camera.fov = 50
+      camera.far = radius * 6
+      camera.near = radius * 0.01
+
+      orbitControls.reset({
+        zoomSpeed: radius * 0.15,
+        minZoom: radius * 0.25,
+        maxZoom: radius * 4,
+        position: new Vec3(0, 0, radius * 0.75),
+        target: new Vec3(),
+      })
     } else {
       camera.fov = 50
       camera.far = radius * 6
@@ -304,11 +435,27 @@ window.addEventListener('load', async () => {
 
       orbitControls.reset({
         zoomSpeed: radius * 0.25,
-        minZoom: radius,
+        minZoom: radius * 0.5,
         maxZoom: radius * 4,
         position: new Vec3(0, 0, radius * 2.5),
         target: new Vec3(),
       })
+    }
+
+    light.position.set(radius * 2, radius * 2, radius * 4)
+
+    if (useEnvMap && shadingModel === 'PBR') {
+      ambientLight.intensity = 0
+      light.intensity = 0
+    } else {
+      ambientLight.intensity = 0.2
+
+      if (light instanceof PointLight) {
+        const lightPositionLengthSq = light.position.lengthSq()
+        light.intensity = lightPositionLengthSq * 6
+      } else {
+        light.intensity = 3
+      }
     }
 
     const meshes = gltfScenesManager.addMeshes((meshDescriptor) => {
@@ -316,6 +463,16 @@ window.addEventListener('load', async () => {
 
       // disable frustum culling
       parameters.frustumCulling = false
+
+      if (useRenderBundles) {
+        if (parameters.transmissive) {
+          parameters.renderBundle = transmissiveRenderBundle
+        } else if (parameters.transparent) {
+          parameters.renderBundle = transparentRenderBundle
+        } else {
+          parameters.renderBundle = regularRenderBundle
+        }
+      }
 
       // debug
       if (!parameters.uniforms) parameters.uniforms = {}
@@ -335,75 +492,89 @@ window.addEventListener('load', async () => {
         },
       }
 
-      light.position.set(radius * 2)
-
-      if (shadingModel === 'IBL') {
-        ambientLight.intensity = 0
-        light.intensity = 0
-      } else {
-        ambientLight.intensity = 0.1
-
-        if (light instanceof PointLight) {
-          const lightPositionLengthSq = light.position.lengthSq()
-          light.intensity = lightPositionLengthSq * 3
-        } else {
-          light.intensity = 2
-        }
-      }
-
       // debug
-      const additionalColorContribution = `
+      const additionalContribution = `
         if(debug.channel == 1.0) {
           ${
             parameters.geometry.getAttributeByName('uv')
-              ? 'color = vec4(fsInput.uv.x, fsInput.uv.y, 0.0, 1.0);'
-              : 'color = vec4(0.0, 0.0, 0.0, 1.0);'
+              ? 'outputColor = vec4(fsInput.uv.x, fsInput.uv.y, 0.0, 1.0);'
+              : 'outputColor = vec4(0.0, 0.0, 0.0, 1.0);'
           }
         } else if(debug.channel == 2.0) {
           ${
             parameters.geometry.getAttributeByName('uv1')
-              ? 'color = vec4(fsInput.uv.x, fsInput.uv.y, 0.0, 1.0);'
-              : 'color = vec4(0.0, 0.0, 0.0, 1.0);'
+              ? 'outputColor = vec4(fsInput.uv.x, fsInput.uv.y, 0.0, 1.0);'
+              : 'outputColor = vec4(0.0, 0.0, 0.0, 1.0);'
           }
         } else if(debug.channel == 3.0) {
           ${
-            meshDescriptor.textures.find((t) => t.texture === 'normalTexture')
-              ? 'color = vec4(normalMap, 1.0);'
-              : 'color = vec4(0.0, 0.0, 0.0, 1.0);'
+            meshDescriptor.textures.find((t) => t.texture === 'normalTexture') && shadingModel !== 'Unlit'
+              ? 'outputColor = vec4(normalMap, 1.0);'
+              : 'outputColor = vec4(0.0, 0.0, 0.0, 1.0);'
           }
         } else if(debug.channel == 4.0) {
-          color = vec4(geometryNormal * 0.5 + 0.5, 1.0);
+          ${
+            shadingModel !== 'Unlit'
+              ? 'outputColor = vec4(geometryNormal * 0.5 + 0.5, 1.0);'
+              : 'outputColor = vec4(normal * 0.5 + 0.5, 1.0);'
+          }
         } else if(debug.channel == 5.0) {
-          color = vec4(tangent * 0.5 + 0.5, 1.0);
+          ${
+            parameters.geometry.getAttributeByName('tangent')
+              ? 'outputColor = vec4(tangent * 0.5 + 0.5, 1.0);'
+              : 'outputColor = vec4(vec3(0.0), 1.0);'
+          }
         } else if(debug.channel == 6.0) {
-          color = vec4(bitangent * 0.5 + 0.5, 1.0);
+          ${
+            parameters.geometry.getAttributeByName('tangent')
+              ? 'outputColor = vec4(bitangent * 0.5 + 0.5, 1.0);'
+              : 'outputColor = vec4(vec3(0.0), 1.0);'
+          }
         } else if(debug.channel == 7.0) {
-          color = vec4(normal * 0.5 + 0.5, 1.0);
+          outputColor = vec4(normal * 0.5 + 0.5, 1.0);
         } else if(debug.channel == 8.0) {
-          color = vec4(vec3(occlusion), 1.0);
+          ${
+            shadingModel !== 'Unlit'
+              ? 'outputColor = vec4(vec3(occlusion), 1.0);'
+              : 'outputColor = vec4(vec3(0.0), 1.0);'
+          }
         } else if(debug.channel == 9.0) {
-          color = vec4(emissive, 1.0);
+          ${shadingModel !== 'Unlit' ? 'outputColor = vec4(emissive, 1.0);' : 'outputColor = vec4(vec3(0.0), 1.0);'}
         } else if(debug.channel == 10.0) {
-          color = baseColor;
+          outputColor = baseColor;
         } else if(debug.channel == 11.0) {
-          color = vec4(vec3(metallic), 1.0);
+          ${
+            shadingModel !== 'Unlit' && shadingModel !== 'Lambert'
+              ? 'outputColor = vec4(vec3(metallic), 1.0);'
+              : 'outputColor = vec4(vec3(0.0), 1.0);'
+          }
         } else if(debug.channel == 12.0) {
-          color = vec4(vec3(roughness), 1.0);
+          ${
+            shadingModel !== 'Unlit' && shadingModel !== 'Lambert'
+              ? 'outputColor = vec4(vec3(roughness), 1.0);'
+              : 'outputColor = vec4(vec3(0.0), 1.0);'
+          }
         } else if(debug.channel == 13.0) {
-          color = vec4(f0, 1.0);
+          ${
+            shadingModel !== 'Unlit' && shadingModel !== 'Lambert'
+              ? 'outputColor = vec4(vec3(specularFactor), 1.0);'
+              : 'outputColor = vec4(vec3(0.0), 1.0);'
+          }
+        } else if(debug.channel == 14.0) {
+          ${
+            shadingModel !== 'Unlit' && shadingModel !== 'Lambert'
+              ? 'outputColor = vec4(specularColorFactor, 1.0);'
+              : 'outputColor = vec4(vec3(0.0), 1.0);'
+          }
         }
       `
 
       parameters.shaders = buildShaders(meshDescriptor, {
         shadingModel,
-        chunks: {
-          additionalColorContribution,
+        fragmentChunks: {
+          additionalContribution,
         },
-        iblParameters: {
-          diffuseStrength: 1,
-          specularStrength: 1,
-          environmentMap,
-        },
+        ...(useEnvMap && { environmentMap }),
       })
     })
 
@@ -466,14 +637,43 @@ window.addEventListener('load', async () => {
 
   // GUI updates
 
+  const cleanUpScene = () => {
+    // render bundles
+    if (regularRenderBundle) {
+      regularRenderBundle.destroy()
+    }
+    regularRenderBundle = null
+
+    if (transparentRenderBundle) {
+      transparentRenderBundle.destroy()
+    }
+    transparentRenderBundle = null
+
+    if (transmissiveRenderBundle) {
+      transmissiveRenderBundle.destroy()
+    }
+    transmissiveRenderBundle = null
+
+    // scenes manager
+    if (gltfScenesManager) {
+      gltfScenesManager.destroy()
+    }
+
+    gltfScenesManager = null
+  }
+
+  renderBundlesField.onChange(async (value) => {
+    useRenderBundles = value
+
+    cleanUpScene()
+
+    await loadGLTF(currentModel.url)
+  })
+
   modelField
     .onChange(async (value) => {
       if (models[value].name !== currentModel.name) {
-        if (gltfScenesManager) {
-          gltfScenesManager.destroy()
-        }
-
-        gltfScenesManager = null
+        cleanUpScene()
 
         if (animationsFields.length) {
           animationsFields.forEach((animationField) => animationField.destroy())
@@ -492,9 +692,25 @@ window.addEventListener('load', async () => {
 
   envMapField
     .onChange(async (value) => {
-      if (envMaps[value].name !== currentEnvMap.name) {
-        currentEnvMap = envMaps[value]
-        await environmentMap.loadAndComputeFromHDR(envMaps[value].url)
+      if (envMaps[value]) {
+        if (envMaps[value].name !== currentEnvMap.name) {
+          currentEnvMap = envMaps[value]
+          await environmentMap.loadAndComputeFromHDR(envMaps[value].url)
+        }
+
+        if (!useEnvMap) {
+          useEnvMap = true
+
+          cleanUpScene()
+
+          await loadGLTF(currentModel.url)
+        }
+      } else if (useEnvMap) {
+        useEnvMap = false
+
+        cleanUpScene()
+
+        await loadGLTF(currentModel.url)
       }
     })
     .name('Environment maps')
@@ -504,11 +720,7 @@ window.addEventListener('load', async () => {
       if (value !== shadingModel) {
         shadingModel = value
 
-        if (gltfScenesManager) {
-          gltfScenesManager.destroy()
-        }
-
-        gltfScenesManager = null
+        cleanUpScene()
 
         await loadGLTF(currentModel.url)
       }

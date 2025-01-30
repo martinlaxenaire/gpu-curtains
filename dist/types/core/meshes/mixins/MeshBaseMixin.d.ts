@@ -13,6 +13,7 @@ import { AllowedGeometries, RenderMaterialParams } from '../../../types/Material
 import { ProjectedMeshBaseClass } from './ProjectedMeshBaseMixin';
 import { RenderPass } from '../../renderPasses/RenderPass';
 import { RenderBundle } from '../../renderPasses/RenderBundle';
+import { RenderPassEntry } from '../../scenes/Scene';
 /**
  * Base render params used to create a Mesh.
  */
@@ -25,6 +26,10 @@ export interface MeshBaseRenderParams extends Omit<RenderMaterialParams, 'target
     renderOrder?: number;
     /** Optional {@link RenderTarget} to render this Mesh to instead of the canvas context. */
     outputTarget?: RenderTarget;
+    /** Additional output {@link RenderTarget} onto which render this Mesh, besides the main {@link outputTarget} or screen. Useful for some effects that might need to render the same Mesh twice or more. Beware tho that the Mesh pipeline has to exactly fit the provided {@link RenderTarget} render passes descriptors as no checks will be performed here. */
+    additionalOutputTargets?: RenderTarget[];
+    /** Whether to render this Mesh into a custom {@link core/scenes/Scene.Scene | Scene} custom screen pass entry instead of the default one. */
+    useCustomScenePassEntry?: RenderPassEntry;
     /** Parameters used by this Mesh to create a {@link DOMTexture}. */
     texturesOptions?: ExternalTextureParams;
     /** Optional {@link GPUDevice.createRenderPipeline().targets | targets} properties. */
@@ -69,6 +74,8 @@ export declare class MeshBaseClass {
     geometry: MeshBaseParams['geometry'];
     /** {@link RenderTarget} to render this Mesh to instead of the canvas context, if any. */
     outputTarget: null | RenderTarget;
+    /** Additional output {@link RenderTarget} onto which render this Mesh, besides the main {@link outputTarget} or screen. Useful for some effects that might need to render the same Mesh twice or more. Beware tho that the Mesh pipeline has to exactly fit the provided {@link RenderTarget} render passes descriptors as no checks will be performed here. */
+    additionalOutputTargets?: RenderTarget[];
     /** {@link RenderBundle} used to render this Mesh, if any. */
     renderBundle: null | RenderBundle;
     /** Controls the order in which this {@link MeshBaseClass} should be rendered by our {@link core/scenes/Scene.Scene | Scene} */
@@ -142,11 +149,11 @@ export declare class MeshBaseClass {
     /**
      * Add a Mesh to the renderer and the {@link core/scenes/Scene.Scene | Scene}
      */
-    addToScene(addToRenderer: boolean): void;
+    addToScene(addToRenderer?: boolean): void;
     /**
      * Remove a Mesh from the renderer and the {@link core/scenes/Scene.Scene | Scene}
      */
-    removeFromScene(removeFromRenderer: boolean): void;
+    removeFromScene(removeFromRenderer?: boolean): void;
     /**
      * Set a new {@link Renderer} for this Mesh
      * @param renderer - new {@link Renderer} to set

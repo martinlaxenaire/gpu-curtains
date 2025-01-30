@@ -1,6 +1,5 @@
 import { GLTF } from './GLTF';
-import { VertexBufferAttributeParams } from '../Geometries';
-import { Texture, TextureParams } from '../../core/textures/Texture';
+import { Texture } from '../../core/textures/Texture';
 import { Sampler } from '../../core/samplers/Sampler';
 import { ProjectedMeshParameters } from '../../core/meshes/mixins/ProjectedMeshBaseMixin';
 import { Object3D } from '../../core/objects3D/Object3D';
@@ -10,26 +9,8 @@ import { Camera } from '../../core/camera/Camera';
 import { BufferBinding } from '../../core/bindings/BufferBinding';
 import { TargetsAnimationsManager } from '../../extras/animations/TargetsAnimationsManager';
 import { Mat4 } from '../../math/Mat4';
-/**
- * Define a {@link MeshDescriptorAttribute} used to create the {@link core/geometries/Geometry.Geometry | Geometry}.
- */
-export interface MeshDescriptorAttribute {
-    /** Name of the attribute. */
-    name: VertexBufferAttributeParams['name'];
-    /** Type of the attibute. */
-    type: VertexBufferAttributeParams['type'];
-}
-/**
- * Define a {@link MeshDescriptorTexture} used to associate the {@link core/textures/Texture.Texture | Texture} names with the corresponding {@link Sampler} names.
- */
-export interface MeshDescriptorTexture {
-    /** Name of the {@link core/textures/Texture.Texture | Texture} to use. */
-    texture: TextureParams['name'];
-    /** Name of the {@link Sampler} to use. */
-    sampler: Sampler['name'];
-    /** {@link MeshDescriptorAttribute.name | Texture coordinate attribute name} to use to map this texture. */
-    texCoordAttributeName?: string;
-}
+import { ShaderTextureDescriptor } from '../../core/shaders/full/fragment/get-fragment-shader-code';
+import { GLTFExtensionsUsed } from './GLTFExtensions';
 /**
  * Define a {@link MeshDescriptor} object, which helps creating a {@link Mesh} and its shaders based on the various properties.
  */
@@ -38,12 +19,12 @@ export interface MeshDescriptor {
     parameters: ProjectedMeshParameters;
     /** {@link Mesh} parent {@link Object3D}. */
     parent: Object3D;
-    /** {@link MeshDescriptorAttribute} defining the {@link core/geometries/Geometry.Geometry | Geometry} attributes used. Useful to build custom shaders from scratch. */
-    attributes: MeshDescriptorAttribute[];
-    /** {@link MeshDescriptorTexture} defining the available textures and corresponding sampler names. Useful to build custom shaders from scratch. */
-    textures: MeshDescriptorTexture[];
+    /** Array of {@link ShaderTextureDescriptor} defining the available textures and corresponding sampler names. Useful to build custom shaders from scratch. */
+    textures: ShaderTextureDescriptor[];
     /** All the {@link core/geometries/Geometry.Geometry | Geometry} instances {@link Object3D} nodes used to calculate the eventual instances world and normal matrices. */
     nodes: Object3D[];
+    /** {@link GLTFExtensionsUsed} that should be used when creating the shaders. */
+    extensionsUsed: GLTFExtensionsUsed;
 }
 /**
  * Define a {@link MaterialTextureDescriptor} used to group a {@link Texture} and its associated {@link Sampler}.
@@ -53,7 +34,7 @@ export interface MaterialTextureDescriptor {
     texture: Texture;
     /** {@link Sampler} to use. */
     sampler: Sampler;
-    /** {@link MeshDescriptorAttribute.name | Texture coordinate attribute name} to use to map this texture. */
+    /** {@link VertexBufferAttributeParams.name | Texture coordinate attribute name} to use to map this texture. */
     texCoordAttributeName?: string;
 }
 /**

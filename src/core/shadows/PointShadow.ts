@@ -3,14 +3,14 @@ import { CameraRenderer } from '../renderers/utils'
 import { Mat4, PerspectiveProjectionParams } from '../../math/Mat4'
 import { Vec3 } from '../../math/Vec3'
 import { Texture } from '../textures/Texture'
-import { getDefaultPointShadowDepthFs, getDefaultPointShadowDepthVs } from '../shaders/chunks/shading/shadows'
 import { PointLight } from '../lights/PointLight'
 import { Input } from '../../types/BindGroups'
 import { ShaderOptions } from '../../types/Materials'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { Geometry } from '../geometries/Geometry'
 import { BufferBinding } from '../bindings/BufferBinding'
-import { VertexShaderInputParams } from '../shaders/chunks/vertex/get_vertex_output'
+import { VertexShaderInputBaseParams } from '../shaders/full/vertex/get-vertex-shader-code'
+import { getDefaultPointShadowDepthVs } from '../shaders/full/vertex/get-default-point-shadow-depth-vertex-shader-code'
+import { getDefaultPointShadowDepthFs } from '../shaders/full/fragment/get-default-point-shadow-depth-fragment-code'
 
 /** Defines the perspective shadow camera params. */
 export type PerspectiveShadowCameraParams = Omit<PerspectiveProjectionParams, 'fov' | 'aspect'>
@@ -427,10 +427,10 @@ export class PointShadow extends Shadow {
 
   /**
    * Get the default depth pass vertex shader for this {@link PointShadow}.
-   * parameters - {@link VertexShaderInputParams} used to compute the output `worldPosition` and `normal` vectors.
+   * parameters - {@link VertexShaderInputBaseParams} used to compute the output `worldPosition` and `normal` vectors.
    * @returns - Depth pass vertex shader.
    */
-  getDefaultShadowDepthVs({ bindings = [], geometry }: VertexShaderInputParams): ShaderOptions {
+  getDefaultShadowDepthVs({ bindings = [], geometry }: VertexShaderInputBaseParams): ShaderOptions {
     return {
       /** Returned code. */
       code: getDefaultPointShadowDepthVs(this.index, { bindings, geometry }),

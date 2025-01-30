@@ -79,10 +79,13 @@ window.addEventListener('load', async () => {
   const currentEnvMapKey = 'cannon'
   let currentEnvMap = envMaps[currentEnvMapKey]
 
-  const environmentMap = new EnvironmentMap(gpuCameraRenderer)
+  const environmentMap = new EnvironmentMap(gpuCameraRenderer, {
+    diffuseIntensity: 0.25,
+    specularIntensity: 0.25,
+  })
   await environmentMap.loadAndComputeFromHDR(currentEnvMap.url)
 
-  let shadingModel = 'IBL' // 'IBL', 'PBR', 'Phong' or 'Lambert'
+  let shadingModel = 'PBR' // 'PBR', 'Phong' or 'Lambert'
 
   const ambientLight = new AmbientLight(gpuCameraRenderer, {
     intensity: 1,
@@ -157,6 +160,8 @@ window.addEventListener('load', async () => {
   const gltfLoader = new GLTFLoader()
 
   let gltfScenesManager = null
+
+  const useRenderBundle = true
   let renderBundle = null
 
   const loadGLTF = async () => {
@@ -174,11 +179,13 @@ window.addEventListener('load', async () => {
 
     console.log({ gltf, scenesManager, scenes, boundingBox })
 
-    renderBundle = new RenderBundle(gpuCameraRenderer, {
-      label: 'glTF render bundle',
-      size: scenesManager.meshesDescriptors.length,
-      useBuffer: true,
-    })
+    if (useRenderBundle) {
+      renderBundle = new RenderBundle(gpuCameraRenderer, {
+        label: 'glTF render bundle',
+        size: scenesManager.meshesDescriptors.length,
+        useBuffer: true,
+      })
+    }
 
     const { center } = boundingBox
 
@@ -190,10 +197,12 @@ window.addEventListener('load', async () => {
       const { parameters } = meshDescriptor
 
       // add render bundle
-      parameters.renderBundle = renderBundle
+      if (useRenderBundle) {
+        parameters.renderBundle = renderBundle
 
-      // disable frustum culling
-      parameters.frustumCulling = false
+        // disable frustum culling
+        parameters.frustumCulling = false
+      }
 
       // shadows
       parameters.castShadows = true
@@ -209,11 +218,7 @@ window.addEventListener('load', async () => {
         chunks: {
           additionalColorContribution,
         },
-        iblParameters: {
-          diffuseStrength: 0.1,
-          specularStrength: 0.4,
-          environmentMap,
-        },
+        environmentMap,
       })
     })
 
@@ -249,7 +254,7 @@ window.addEventListener('load', async () => {
     .name('Environment maps')
 
   gui
-    .add({ shadingModel }, 'shadingModel', ['IBL', 'PBR', 'Phong', 'Lambert'])
+    .add({ shadingModel }, 'shadingModel', ['PBR', 'Phong', 'Lambert', 'Unlit'])
     .onChange(async (value) => {
       if (value !== shadingModel) {
         shadingModel = value
