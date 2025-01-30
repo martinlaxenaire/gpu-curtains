@@ -1061,10 +1061,12 @@ export class GLTFScenesManager {
         | Uint32ArrayConstructor
         | Uint16ArrayConstructor
 
+      const bytesPerElement =
+        indicesConstructor.name === 'Uint8Array' ? Uint16Array.BYTES_PER_ELEMENT : indicesConstructor.BYTES_PER_ELEMENT
+
       const arrayOffset = accessor.byteOffset + bufferView.byteOffset
       const arrayBuffer = this.gltf.arrayBuffers[bufferView.buffer]
-      const arrayLength =
-        Math.ceil(accessor.count / indicesConstructor.BYTES_PER_ELEMENT) * indicesConstructor.BYTES_PER_ELEMENT
+      const arrayLength = Math.ceil(accessor.count / bytesPerElement) * bytesPerElement
 
       // do not allow Uint8Array arrays
       indicesArray =

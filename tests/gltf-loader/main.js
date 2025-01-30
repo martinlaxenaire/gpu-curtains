@@ -14,7 +14,7 @@ window.addEventListener('load', async () => {
     DirectionalLight,
     OrbitControls,
     Vec3,
-    FullscreenPlane,
+    RenderBundle,
   } = await import(/* @vite-ignore */ path)
 
   const stats = new Stats()
@@ -140,6 +140,11 @@ window.addEventListener('load', async () => {
       name: 'Sponza (optimized / interleaved)',
       url: 'https://raw.githubusercontent.com/toji/sponza-optimized/main/Sponza.gltf',
     },
+    // transparency
+    alphaBlendModeTest: {
+      name: 'Alpha Blend Mode Test',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/AlphaBlendModeTest/glTF/AlphaBlendModeTest.gltf',
+    },
     // occlusion
     compareAmbientOcclusion: {
       name: 'Compare Ambient Occlusion',
@@ -187,7 +192,7 @@ window.addEventListener('load', async () => {
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/SimpleSkin/glTF/SimpleSkin.gltf',
     },
     riggedSimple: {
-      name: 'Rigged Simple', // TODO not centered in scene?
+      name: 'Rigged Simple',
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/RiggedSimple/glTF/RiggedSimple.gltf',
     },
     fox: {
@@ -260,6 +265,14 @@ window.addEventListener('load', async () => {
   const gui = new lil.GUI({
     title: 'GLTF loader',
   })
+
+  // render bundles
+  let useRenderBundles = true
+  let regularRenderBundle = null
+  let transparentRenderBundle = null
+  let transmissiveRenderBundle = null
+
+  const renderBundlesField = gui.add({ useRenderBundles }, 'useRenderBundles').name('Use render bundles')
 
   const currentModelKey = 'damagedHelmet'
   let currentModel = models[currentModelKey]
@@ -345,6 +358,44 @@ window.addEventListener('load', async () => {
     container.classList.remove('loading')
     console.log({ gltf, scenesManager, scenes, boundingBox })
 
+    if (useRenderBundles) {
+      const nbRegularMeshes = scenesManager.meshesDescriptors.filter(
+        (meshDescriptor) => !meshDescriptor.parameters.transmissive && !meshDescriptor.parameters.transparent
+      ).length
+
+      const nbTransparentMeshes = scenesManager.meshesDescriptors.filter(
+        (meshDescriptor) => !meshDescriptor.parameters.transmissive && meshDescriptor.parameters.transparent
+      ).length
+
+      const nbTransmissiveMeshes = scenesManager.meshesDescriptors.filter(
+        (meshDescriptor) => meshDescriptor.parameters.transmissive
+      ).length
+
+      if (nbRegularMeshes > 0) {
+        regularRenderBundle = new RenderBundle(gpuCameraRenderer, {
+          label: 'glTF non transmissive opaque render bundle',
+          size: nbRegularMeshes,
+          useBuffer: true,
+        })
+      }
+
+      if (nbTransparentMeshes > 0) {
+        transparentRenderBundle = new RenderBundle(gpuCameraRenderer, {
+          label: 'glTF non transmissive transparent render bundle',
+          size: nbTransparentMeshes,
+          useBuffer: true,
+        })
+      }
+
+      if (nbTransmissiveMeshes > 0) {
+        transmissiveRenderBundle = new RenderBundle(gpuCameraRenderer, {
+          label: 'glTF transmissive render bundle',
+          size: nbTransmissiveMeshes,
+          useBuffer: true,
+        })
+      }
+    }
+
     const { center, radius } = boundingBox
 
     // center model
@@ -412,6 +463,16 @@ window.addEventListener('load', async () => {
 
       // disable frustum culling
       parameters.frustumCulling = false
+
+      if (useRenderBundles) {
+        if (parameters.transmissive) {
+          parameters.renderBundle = transmissiveRenderBundle
+        } else if (parameters.transparent) {
+          parameters.renderBundle = transparentRenderBundle
+        } else {
+          parameters.renderBundle = regularRenderBundle
+        }
+      }
 
       // debug
       if (!parameters.uniforms) parameters.uniforms = {}
@@ -576,14 +637,43 @@ window.addEventListener('load', async () => {
 
   // GUI updates
 
+  const cleanUpScene = () => {
+    // render bundles
+    if (regularRenderBundle) {
+      regularRenderBundle.destroy()
+    }
+    regularRenderBundle = null
+
+    if (transparentRenderBundle) {
+      transparentRenderBundle.destroy()
+    }
+    transparentRenderBundle = null
+
+    if (transmissiveRenderBundle) {
+      transmissiveRenderBundle.destroy()
+    }
+    transmissiveRenderBundle = null
+
+    // scenes manager
+    if (gltfScenesManager) {
+      gltfScenesManager.destroy()
+    }
+
+    gltfScenesManager = null
+  }
+
+  renderBundlesField.onChange(async (value) => {
+    useRenderBundles = value
+
+    cleanUpScene()
+
+    await loadGLTF(currentModel.url)
+  })
+
   modelField
     .onChange(async (value) => {
       if (models[value].name !== currentModel.name) {
-        if (gltfScenesManager) {
-          gltfScenesManager.destroy()
-        }
-
-        gltfScenesManager = null
+        cleanUpScene()
 
         if (animationsFields.length) {
           animationsFields.forEach((animationField) => animationField.destroy())
@@ -611,22 +701,14 @@ window.addEventListener('load', async () => {
         if (!useEnvMap) {
           useEnvMap = true
 
-          if (gltfScenesManager) {
-            gltfScenesManager.destroy()
-          }
-
-          gltfScenesManager = null
+          cleanUpScene()
 
           await loadGLTF(currentModel.url)
         }
       } else if (useEnvMap) {
         useEnvMap = false
 
-        if (gltfScenesManager) {
-          gltfScenesManager.destroy()
-        }
-
-        gltfScenesManager = null
+        cleanUpScene()
 
         await loadGLTF(currentModel.url)
       }
@@ -638,11 +720,7 @@ window.addEventListener('load', async () => {
       if (value !== shadingModel) {
         shadingModel = value
 
-        if (gltfScenesManager) {
-          gltfScenesManager.destroy()
-        }
-
-        gltfScenesManager = null
+        cleanUpScene()
 
         await loadGLTF(currentModel.url)
       }

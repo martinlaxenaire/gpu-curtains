@@ -14,8 +14,8 @@ window.addEventListener('load', async () => {
     getLambert,
     getPhong,
     Object3D,
-    getVertexCode,
-    getFragmentCode,
+    getVertexShaderCode,
+    getFragmentShaderCode,
   } = await import(/* @vite-ignore */ path)
 
   // create a device manager
@@ -218,10 +218,10 @@ window.addEventListener('load', async () => {
     ...autoLitMeshParameters,
     shaders: {
       vertex: {
-        code: getVertexCode({ geometry: autoLitMeshParameters.geometry }),
+        code: getVertexShaderCode({ geometry: autoLitMeshParameters.geometry }),
       },
       fragment: {
-        code: getFragmentCode({
+        code: getFragmentShaderCode({
           geometry: autoLitMeshParameters.geometry,
           materialUniform: autoLitMeshParameters.uniforms.material,
           materialUniformName: 'material',

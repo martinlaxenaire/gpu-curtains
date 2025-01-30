@@ -160,6 +160,8 @@ window.addEventListener('load', async () => {
   const gltfLoader = new GLTFLoader()
 
   let gltfScenesManager = null
+
+  const useRenderBundle = true
   let renderBundle = null
 
   const loadGLTF = async () => {
@@ -177,11 +179,13 @@ window.addEventListener('load', async () => {
 
     console.log({ gltf, scenesManager, scenes, boundingBox })
 
-    renderBundle = new RenderBundle(gpuCameraRenderer, {
-      label: 'glTF render bundle',
-      size: scenesManager.meshesDescriptors.length,
-      useBuffer: true,
-    })
+    if (useRenderBundle) {
+      renderBundle = new RenderBundle(gpuCameraRenderer, {
+        label: 'glTF render bundle',
+        size: scenesManager.meshesDescriptors.length,
+        useBuffer: true,
+      })
+    }
 
     const { center } = boundingBox
 
@@ -193,10 +197,12 @@ window.addEventListener('load', async () => {
       const { parameters } = meshDescriptor
 
       // add render bundle
-      parameters.renderBundle = renderBundle
+      if (useRenderBundle) {
+        parameters.renderBundle = renderBundle
 
-      // disable frustum culling
-      parameters.frustumCulling = false
+        // disable frustum culling
+        parameters.frustumCulling = false
+      }
 
       // shadows
       parameters.castShadows = true
