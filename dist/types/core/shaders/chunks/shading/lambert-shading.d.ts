@@ -18,7 +18,7 @@ export declare const lambertUtils: string;
  *
  * @example
  * ```wgsl
- * var color: vec3f = vec3(1.0);
+ * var color: vec3f = vec4(1.0);
  * color = getLambert(normal, worldPosition, color);
  * ```
  */

@@ -1,5 +1,4 @@
 import { GLTF } from './GLTF';
-import { Texture } from '../../core/textures/Texture';
 import { Sampler } from '../../core/samplers/Sampler';
 import { ProjectedMeshParameters } from '../../core/meshes/mixins/ProjectedMeshBaseMixin';
 import { Object3D } from '../../core/objects3D/Object3D';
@@ -20,22 +19,11 @@ export interface MeshDescriptor {
     /** {@link Mesh} parent {@link Object3D}. */
     parent: Object3D;
     /** Array of {@link ShaderTextureDescriptor} defining the available textures and corresponding sampler names. Useful to build custom shaders from scratch. */
-    textures: ShaderTextureDescriptor[];
+    texturesDescriptors: ShaderTextureDescriptor[];
     /** All the {@link core/geometries/Geometry.Geometry | Geometry} instances {@link Object3D} nodes used to calculate the eventual instances world and normal matrices. */
     nodes: Object3D[];
     /** {@link GLTFExtensionsUsed} that should be used when creating the shaders. */
     extensionsUsed: GLTFExtensionsUsed;
-}
-/**
- * Define a {@link MaterialTextureDescriptor} used to group a {@link Texture} and its associated {@link Sampler}.
- */
-export interface MaterialTextureDescriptor {
-    /** {@link Texture} to use. */
-    texture: Texture;
-    /** {@link Sampler} to use. */
-    sampler: Sampler;
-    /** {@link VertexBufferAttributeParams.name | Texture coordinate attribute name} to use to map this texture. */
-    texCoordAttributeName?: string;
 }
 /**
  * Define a {@link MaterialTexture} describing all {@link Texture} and {@link Sampler} used by a specified material.
@@ -43,8 +31,8 @@ export interface MaterialTextureDescriptor {
 export interface MaterialTexture {
     /** Material index in the {@link extras/loaders/GLTFLoader.GPUCurtainsGLTF.materials | materials array}. */
     material: number;
-    /** {@link MaterialTextureDescriptor} defining the {@link Texture} and {@link Sampler} used by the material. */
-    texturesDescriptors: MaterialTextureDescriptor[];
+    /** Array of {@link ShaderTextureDescriptor} defining the {@link Texture}, and eventual {@link Sampler} and UV attribute name used by the material. */
+    texturesDescriptors: ShaderTextureDescriptor[];
 }
 /**
  * Define a {@link PrimitiveInstanceDescriptor} used to group {@link core/geometries/Geometry.Geometry | Geometry} instances and transform nodes and their {@link MeshDescriptor}.

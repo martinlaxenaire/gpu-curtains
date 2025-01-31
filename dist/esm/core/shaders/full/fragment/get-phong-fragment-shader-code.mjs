@@ -63,8 +63,6 @@ ${getFragmentInputStruct({ geometry })}
   ${getEmissiveOcclusion({ emissiveTexture, occlusionTexture })}
   
   // lights
-  let shininess: f32 = 1.0 / max(EPSILON, roughness * roughness);
-  let specularColor: vec3f = mix( min( pow2( ( ior - 1.0 ) / ( ior + 1.0 ) ) * specularColorFactor, vec3( 1.0 ) ) * specularFactor, outputColor.rgb, metallic );
   ${getPhongShading({ receiveShadows })}
   
   outputColor = vec4(outgoingLight, outputColor.a);

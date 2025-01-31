@@ -51,17 +51,7 @@ export const getPbrFragmentShaderCode = ({
   chunks = patchAdditionalChunks(chunks)
 
   // patch environment map material uniforms
-  if (environmentMap) {
-    if (!materialUniform) {
-      materialUniform = {
-        struct: {},
-      }
-    }
-
-    if (!materialUniform.struct) {
-      materialUniform.struct = {}
-    }
-
+  if (environmentMap && materialUniform && materialUniform.struct) {
     materialUniform.struct = {
       ...materialUniform.struct,
       envRotation: {

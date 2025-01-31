@@ -75,17 +75,6 @@ class GPUCameraRenderer extends GPURenderer {
       this.setShadowsBinding();
     }
     this.setCameraLightsBindGroup();
-    this.transmissionTarget = {
-      sampler: new Sampler(this, {
-        label: "Transmission sampler",
-        name: "transmissionSampler",
-        magFilter: "linear",
-        minFilter: "linear",
-        mipmapFilter: "linear",
-        addressModeU: "clamp-to-edge",
-        addressModeV: "clamp-to-edge"
-      })
-    };
   }
   /**
    * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} is lost.
@@ -103,6 +92,23 @@ class GPUCameraRenderer extends GPURenderer {
     super.restoreContext();
     this.cameraLightsBindGroup?.restoreContext();
     this.updateCameraBindings();
+  }
+  /**
+   * Set our {@link renderPass | main render pass} and our {@link transmissionTarget} sampler.
+   */
+  setMainRenderPasses() {
+    super.setMainRenderPasses();
+    this.transmissionTarget = {
+      sampler: new Sampler(this, {
+        label: "Transmission sampler",
+        name: "transmissionSampler",
+        magFilter: "linear",
+        minFilter: "linear",
+        mipmapFilter: "linear",
+        addressModeU: "clamp-to-edge",
+        addressModeV: "clamp-to-edge"
+      })
+    };
   }
   /* CAMERA */
   /**
@@ -416,6 +422,9 @@ class GPUCameraRenderer extends GPURenderer {
       bindings: Object.keys(this.bindings).map((bindingName) => this.bindings[bindingName]).flat()
     });
     this.cameraLightsBindGroup.consumers.add(this.uuid);
+    if (this.device) {
+      this.setCameraBindGroup();
+    }
   }
   /**
    * Create the {@link cameraLightsBindGroup | camera, lights and shadows bind group} buffers

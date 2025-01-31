@@ -13,6 +13,7 @@ window.addEventListener('load', async () => {
     Mesh,
     getLambert,
     getPhong,
+    LitMesh,
     Object3D,
     getVertexShaderCode,
     getFragmentShaderCode,
@@ -59,7 +60,7 @@ window.addEventListener('load', async () => {
     
 
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-      var color: vec3f = shading.color;
+      var color: vec4f = vec4(shading.color, 1.0);
       
       // negate the normals if we're using front face culling
       let faceDirection = select(-1.0, 1.0, fsInput.frontFacing);
@@ -82,13 +83,13 @@ window.addEventListener('load', async () => {
           worldPosition,
           color,
           viewDirection,
+          phong.specularIntensity,
           phong.specularColor,
-          phong.specularStrength,
           phong.shininess
         );
       }
       
-      return vec4(color, 1.0);
+      return color;
     }
   `
 
@@ -120,9 +121,9 @@ window.addEventListener('load', async () => {
   pointLights.push(
     new PointLight(gpuCameraRenderer, {
       color: new Vec3(0, 0, 1),
-      position: new Vec3(-0.7, -1.5, 3),
+      position: new Vec3(-0.7, -1.75, 2.5),
       range: 10,
-      intensity: 3,
+      intensity: 5,
     })
   )
 
@@ -170,13 +171,13 @@ window.addEventListener('load', async () => {
             type: 'vec3f',
             value: new Vec3(1),
           },
-          specularStrength: {
+          specularIntensity: {
             type: 'f32',
             value: 1,
           },
           shininess: {
             type: 'f32',
-            value: 32,
+            value: 30,
           },
         },
       },
@@ -197,74 +198,33 @@ window.addEventListener('load', async () => {
 
   console.log(mesh, gpuCameraRenderer)
 
-  // test with other builtin shaders!
-  const autoLitMeshParameters = {
-    label: 'Auto lit mesh',
-    geometry: boxGeometry,
-    uniforms: {
-      material: {
-        visibility: ['fragment'],
-        struct: {
-          color: {
-            type: 'vec3f',
-            value: new Vec3(1),
-          },
-        },
-      },
-    },
-  }
-
-  const testAutoLitMesh = new Mesh(gpuCameraRenderer, {
-    ...autoLitMeshParameters,
-    shaders: {
-      vertex: {
-        code: getVertexShaderCode({ geometry: autoLitMeshParameters.geometry }),
-      },
-      fragment: {
-        code: getFragmentShaderCode({
-          geometry: autoLitMeshParameters.geometry,
-          materialUniform: autoLitMeshParameters.uniforms.material,
-          materialUniformName: 'material',
-          shadingModel: 'Phong',
-          toneMapping: false,
-        }),
-      },
-    },
-  })
-
+  // test with lit mesh
   const pivot = new Object3D()
   pivot.parent = gpuCameraRenderer.scene
 
-  testAutoLitMesh.parent = pivot
+  let litMesh
 
-  testAutoLitMesh.position.x = -3
+  const buildLitMesh = (shading = 'Phong') => {
+    litMesh = new LitMesh(gpuCameraRenderer, {
+      label: 'Lit mesh',
+      geometry: boxGeometry,
+      material: {
+        shading,
+        color: new Vec3(1),
+        toneMapping: false,
+      },
+    })
 
-  testAutoLitMesh.onBeforeRender(() => {
-    pivot.rotation.z += 0.01
-  })
+    litMesh.parent = pivot
 
-  /*
-  "
-    struct VSOutput {
-      @builtin(position) position: vec4f,
-      @builtin(front_facing) frontFacing: bool,
-      @location(0) uv: vec2f,
-      @location(1) normal: vec3f,
-      @location(2) worldPosition: vec3f,
-      @location(3) viewDirection: vec3f,
-    };
+    litMesh.position.x = -3
 
-    undefined
+    litMesh.onBeforeRender(() => {
+      pivot.rotation.z += 0.01
+    })
+  }
 
-
-
-
-const PI = 3.141592653589793;
-const RECIPROCAL_PI = 0.3183098861837907;
-const RECIPROCAL_PI2 = 0.15915494309189535;
-const EPSILON = 1e-6;
-
-   */
+  buildLitMesh()
 
   // GUI
   const gui = new lil.GUI({
@@ -286,6 +246,12 @@ const EPSILON = 1e-6;
     .name('Use lambert shading')
     .onChange((value) => {
       mesh.uniforms.shading.useLambert.value = value ? 1 : 0
+
+      if (litMesh) {
+        litMesh.remove()
+      }
+
+      buildLitMesh(value ? 'Lambert' : 'Phong')
     })
 
   materialShadingFolder
@@ -321,7 +287,7 @@ const EPSILON = 1e-6;
     })
     .name('Specular color')
 
-  materialPhongFolder.add(mesh.uniforms.phong.specularStrength, 'value', 0, 1, 0.1).name('Specular strength')
+  materialPhongFolder.add(mesh.uniforms.phong.specularIntensity, 'value', 0, 1, 0.1).name('Specular strength')
   materialPhongFolder.add(mesh.uniforms.phong.shininess, 'value', 2, 64, 2).name('Shininess')
 
   const ambientLightsFolder = gui.addFolder('Ambient lights')

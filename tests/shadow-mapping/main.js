@@ -13,6 +13,7 @@ window.addEventListener('load', async () => {
     PointLight,
     Vec2,
     Mesh,
+    LitMesh,
     SphereGeometry,
     BoxGeometry,
     Vec3,
@@ -177,112 +178,33 @@ window.addEventListener('load', async () => {
       stats.end()
     })
 
-  const meshVs = /* wgsl */ `
-    struct VertexOutput {
-      @builtin(position) position: vec4f,
-      @location(0) normal: vec3f,
-      @location(1) worldPosition: vec3f,
-    };
-    
-    @vertex fn main(
-      attributes: Attributes,
-    ) -> VertexOutput {
-      var vsOutput: VertexOutput;
-    
-      vsOutput.position = getOutputPosition(attributes.position);
-      vsOutput.normal = getWorldNormal(attributes.normal);
-      vsOutput.worldPosition = getWorldPosition(attributes.position).xyz;
-      
-      return vsOutput;
-    }
-  `
-
-  const meshFs = /* wgsl */ `
-    struct VSOutput {
-      @builtin(position) position: vec4f,
-      @builtin(front_facing) frontFacing: bool,
-      @location(0) normal: vec3f,
-      @location(1) worldPosition: vec3f,
-    };
-        
-    ${getLambert({
-      receiveShadows: true,
-    })}
-
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {      
-      // negate the normals if we're using front face culling
-      let faceDirection = select(-1.0, 1.0, fsInput.frontFacing);
-      
-      // apply lightning and shadows
-      let normal: vec3f = normalize(faceDirection * fsInput.normal);
-      
-      let worldPosition: vec3f = fsInput.worldPosition;
-      
-      var color: vec3f = shading.color;
-      
-      color = getLambert(
-        normal,
-        worldPosition,
-        color
-      );
-      
-      return vec4(color, 1.0);
-    }
-  `
+  const shadingModel = 'Lambert'
 
   // create sphere
 
   const sphereGeometry = new SphereGeometry()
 
-  const sphere = new Mesh(gpuCameraRenderer, {
+  const sphere = new LitMesh(gpuCameraRenderer, {
     label: 'Sphere',
     geometry: sphereGeometry,
     receiveShadows: true,
     castShadows: true, // could be added that way
-    shaders: {
-      vertex: {
-        code: meshVs,
-      },
-      fragment: {
-        code: meshFs,
-      },
-    },
-    uniforms: {
-      shading: {
-        struct: {
-          color: {
-            type: 'vec3f',
-            value: new Vec3(1, 0, 0),
-          },
-        },
-      },
+    material: {
+      shading: shadingModel,
+      color: new Vec3(1, 0, 0),
     },
   })
 
   sphere.position.z = 2.5
   sphere.parent = scenePivot
 
-  const cube = new Mesh(gpuCameraRenderer, {
+  const cube = new LitMesh(gpuCameraRenderer, {
     label: 'Cube',
     geometry: new BoxGeometry(),
     receiveShadows: true,
-    shaders: {
-      vertex: {
-        code: meshVs,
-      },
-      fragment: {
-        code: meshFs,
-      },
-    },
-    uniforms: {
-      shading: {
-        struct: {
-          color: {
-            type: 'vec3f',
-            value: new Vec3(0, 0, 1),
-          },
-        },
-      },
+    material: {
+      shading: shadingModel,
+      color: new Vec3(0, 0, 1),
     },
   })
 
@@ -318,28 +240,14 @@ window.addEventListener('load', async () => {
     cube.rotation.y = -scenePivot.rotation.y
   })
 
-  const cube2 = new Mesh(gpuCameraRenderer, {
+  const cube2 = new LitMesh(gpuCameraRenderer, {
     label: 'Cube 2',
     geometry: new BoxGeometry(),
     castShadows: true,
     receiveShadows: true,
-    shaders: {
-      vertex: {
-        code: meshVs,
-      },
-      fragment: {
-        code: meshFs,
-      },
-    },
-    uniforms: {
-      shading: {
-        struct: {
-          color: {
-            type: 'vec3f',
-            value: new Vec3(0, 1, 0),
-          },
-        },
-      },
+    material: {
+      shading: shadingModel,
+      color: new Vec3(0, 1, 0),
     },
   })
 
@@ -350,28 +258,14 @@ window.addEventListener('load', async () => {
     cube2.rotation.y = -scenePivot.rotation.y
   })
 
-  const sphere2 = new Mesh(gpuCameraRenderer, {
+  const sphere2 = new LitMesh(gpuCameraRenderer, {
     label: 'Sphere 2',
     geometry: sphereGeometry,
     receiveShadows: true,
     castShadows: true,
-    shaders: {
-      vertex: {
-        code: meshVs,
-      },
-      fragment: {
-        code: meshFs,
-      },
-    },
-    uniforms: {
-      shading: {
-        struct: {
-          color: {
-            type: 'vec3f',
-            value: new Vec3(1, 1, 0),
-          },
-        },
-      },
+    material: {
+      shading: shadingModel,
+      color: new Vec3(1, 1, 0),
     },
   })
 
@@ -394,29 +288,15 @@ window.addEventListener('load', async () => {
   const boxPivot = new Object3D()
   boxPivot.parent = scene
 
-  const floor = new Mesh(gpuCameraRenderer, {
+  const floor = new LitMesh(gpuCameraRenderer, {
     label: 'Floor',
     geometry: planeGeometry,
     receiveShadows: true,
     frustumCulling: false, // always draw
     cullMode: 'none',
-    shaders: {
-      vertex: {
-        code: meshVs,
-      },
-      fragment: {
-        code: meshFs,
-      },
-    },
-    uniforms: {
-      shading: {
-        struct: {
-          color: {
-            type: 'vec3f',
-            value: new Vec3(0.15),
-          },
-        },
-      },
+    material: {
+      shading: shadingModel,
+      color: new Vec3(0.15),
     },
   })
 

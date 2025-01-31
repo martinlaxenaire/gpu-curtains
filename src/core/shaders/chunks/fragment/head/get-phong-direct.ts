@@ -19,7 +19,7 @@ fn BRDF_BlinnPhong(
   let VdotH: f32 = saturate(dot(normalize(viewDirection), H));
   let NdotV: f32 = saturate(dot(normalize(normal), normalize(viewDirection)));
   
-  let F: vec3f = F_Schlick(VdotH, specularColor, 1.0);
+  let F: vec3f = F_Schlick(specularColor, 1.0, VdotH);
   
   let G: f32 = 0.25; // blinn phong implicit
   

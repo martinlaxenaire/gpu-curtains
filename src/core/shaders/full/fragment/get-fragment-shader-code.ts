@@ -1,4 +1,4 @@
-import { TextureParams } from '../../../textures/Texture'
+import { Texture, TextureParams } from '../../../textures/Texture'
 import { Sampler } from '../../../samplers/Sampler'
 import { EnvironmentMap } from '../../../../extras/environmentMap/EnvironmentMap'
 import { Geometry } from '../../../geometries/Geometry'
@@ -23,9 +23,9 @@ export type ToneMappings = 'Khronos' | 'Linear' | false
  */
 export interface ShaderTextureDescriptor {
   /** Name of the {@link core/textures/Texture.Texture | Texture} to use. */
-  texture: TextureParams['name']
+  texture: Texture
   /** Name of the {@link Sampler} to use. */
-  sampler: Sampler['name']
+  sampler?: Sampler
   /** Texture coordinate attribute name to use to map this texture. */
   texCoordAttributeName?: string
 }

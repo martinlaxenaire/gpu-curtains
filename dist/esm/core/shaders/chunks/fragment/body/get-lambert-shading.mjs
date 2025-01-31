@@ -14,6 +14,9 @@ const getLambertShading = ({ receiveShadows = false } = {}) => {
   // point lights
   for(var i = 0; i < pointLights.count; i++) {
     getPointLightInfo(pointLights.elements[i], worldPosition, &directLight);
+    if(!directLight.visible) {
+      continue;
+    }
     ${receiveShadows ? applyPointShadows : ""}
     getLambertDirect(normal, outputColor.rgb, directLight, &reflectedLight);
   }

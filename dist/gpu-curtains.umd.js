@@ -32,465 +32,6 @@
     throw new Error(error);
   };
 
-  const formatRendererError = (renderer, rendererType = "GPURenderer", type) => {
-    const error = type ? `Unable to create ${type} because the ${rendererType} is not defined: ${renderer}` : `The ${rendererType} is not defined: ${renderer}`;
-    throwError(error);
-  };
-  const isRenderer = (renderer, type) => {
-    renderer = renderer && renderer.renderer || renderer;
-    const isRenderer2 = renderer && (renderer.type === "GPURenderer" || renderer.type === "GPUCameraRenderer" || renderer.type === "GPUCurtainsRenderer");
-    if (!isRenderer2) {
-      formatRendererError(renderer, "GPURenderer", type);
-    }
-    return renderer;
-  };
-  const isCameraRenderer = (renderer, type) => {
-    renderer = renderer && renderer.renderer || renderer;
-    const isCameraRenderer2 = renderer && (renderer.type === "GPUCameraRenderer" || renderer.type === "GPUCurtainsRenderer");
-    if (!isCameraRenderer2) {
-      formatRendererError(renderer, "GPUCameraRenderer", type);
-    }
-    return renderer;
-  };
-  const isCurtainsRenderer = (renderer, type) => {
-    renderer = renderer && renderer.renderer || renderer;
-    const isCurtainsRenderer2 = renderer && renderer.type === "GPUCurtainsRenderer";
-    if (!isCurtainsRenderer2) {
-      formatRendererError(renderer, "GPUCurtainsRenderer", type);
-    }
-    return renderer;
-  };
-  const isProjectedMesh = (object) => {
-    return object.constructor.name === "Mesh" || object.constructor.name === "DOMMesh" || object.constructor.name === "Plane" ? object : false;
-  };
-
-  const WebGPUShaderStageConstants = typeof GPUShaderStage !== "undefined" ? GPUShaderStage : {
-    VERTEX: 1,
-    FRAGMENT: 2,
-    COMPUTE: 4
-  };
-  const WebGPUBufferUsageConstants = typeof GPUBufferUsage !== "undefined" ? GPUBufferUsage : {
-    MAP_READ: 1,
-    MAP_WRITE: 2,
-    COPY_SRC: 4,
-    COPY_DST: 8,
-    INDEX: 16,
-    VERTEX: 32,
-    UNIFORM: 64,
-    STORAGE: 128,
-    INDIRECT: 256,
-    QUERY_RESOLVE: 512
-  };
-  const WebGPUTextureUsageConstants = typeof GPUTextureUsage !== "undefined" ? GPUTextureUsage : {
-    COPY_SRC: 1,
-    COPY_DST: 2,
-    TEXTURE_BINDING: 4,
-    STORAGE_BINDING: 8,
-    RENDER_ATTACHMENT: 16
-  };
-
-  const bindingVisibilities = /* @__PURE__ */ new Map([
-    ["vertex", WebGPUShaderStageConstants.VERTEX],
-    ["fragment", WebGPUShaderStageConstants.FRAGMENT],
-    ["compute", WebGPUShaderStageConstants.COMPUTE]
-  ]);
-  const getBindingVisibility = (visibilities = []) => {
-    return visibilities.reduce((acc, v) => {
-      return acc | bindingVisibilities.get(v);
-    }, 0);
-  };
-  const bufferLayouts = {
-    i32: { numElements: 1, align: 4, size: 4, type: "i32", View: Int32Array },
-    u32: { numElements: 1, align: 4, size: 4, type: "u32", View: Uint32Array },
-    f32: { numElements: 1, align: 4, size: 4, type: "f32", View: Float32Array },
-    f16: { numElements: 1, align: 2, size: 2, type: "u16", View: Uint16Array },
-    vec2f: { numElements: 2, align: 8, size: 8, type: "f32", View: Float32Array },
-    vec2i: { numElements: 2, align: 8, size: 8, type: "i32", View: Int32Array },
-    vec2u: { numElements: 2, align: 8, size: 8, type: "u32", View: Uint32Array },
-    vec2h: { numElements: 2, align: 4, size: 4, type: "u16", View: Uint16Array },
-    vec3i: { numElements: 3, align: 16, size: 12, type: "i32", View: Int32Array },
-    vec3u: { numElements: 3, align: 16, size: 12, type: "u32", View: Uint32Array },
-    vec3f: { numElements: 3, align: 16, size: 12, type: "f32", View: Float32Array },
-    vec3h: { numElements: 3, align: 8, size: 6, type: "u16", View: Uint16Array },
-    vec4i: { numElements: 4, align: 16, size: 16, type: "i32", View: Int32Array },
-    vec4u: { numElements: 4, align: 16, size: 16, type: "u32", View: Uint32Array },
-    vec4f: { numElements: 4, align: 16, size: 16, type: "f32", View: Float32Array },
-    vec4h: { numElements: 4, align: 8, size: 8, type: "u16", View: Uint16Array },
-    // AlignOf(vecR)	SizeOf(array<vecR, C>)
-    mat2x2f: { numElements: 4, align: 8, size: 16, type: "f32", View: Float32Array },
-    mat2x2h: { numElements: 4, align: 4, size: 8, type: "u16", View: Uint16Array },
-    mat3x2f: { numElements: 6, align: 8, size: 24, type: "f32", View: Float32Array },
-    mat3x2h: { numElements: 6, align: 4, size: 12, type: "u16", View: Uint16Array },
-    mat4x2f: { numElements: 8, align: 8, size: 32, type: "f32", View: Float32Array },
-    mat4x2h: { numElements: 8, align: 4, size: 16, type: "u16", View: Uint16Array },
-    mat2x3f: { numElements: 8, align: 16, size: 32, pad: [3, 1], type: "f32", View: Float32Array },
-    mat2x3h: { numElements: 8, align: 8, size: 16, pad: [3, 1], type: "u16", View: Uint16Array },
-    mat3x3f: { numElements: 12, align: 16, size: 48, pad: [3, 1], type: "f32", View: Float32Array },
-    mat3x3h: { numElements: 12, align: 8, size: 24, pad: [3, 1], type: "u16", View: Uint16Array },
-    mat4x3f: { numElements: 16, align: 16, size: 64, pad: [3, 1], type: "f32", View: Float32Array },
-    mat4x3h: { numElements: 16, align: 8, size: 32, pad: [3, 1], type: "u16", View: Uint16Array },
-    mat2x4f: { numElements: 8, align: 16, size: 32, type: "f32", View: Float32Array },
-    mat2x4h: { numElements: 8, align: 8, size: 16, type: "u16", View: Uint16Array },
-    mat3x4f: { numElements: 12, align: 16, size: 48, pad: [3, 1], type: "f32", View: Float32Array },
-    mat3x4h: { numElements: 12, align: 8, size: 24, pad: [3, 1], type: "u16", View: Uint16Array },
-    mat4x4f: { numElements: 16, align: 16, size: 64, type: "f32", View: Float32Array },
-    mat4x4h: { numElements: 16, align: 8, size: 32, type: "u16", View: Uint16Array }
-  };
-  const getBufferLayout = (bufferType) => {
-    return bufferLayouts[bufferType];
-  };
-  const getBindingWGSLVarType = (binding) => {
-    return (() => {
-      switch (binding.bindingType) {
-        case "storage":
-          return `var<${binding.bindingType}, ${binding.options.access}>`;
-        case "uniform":
-        default:
-          return "var<uniform>";
-      }
-    })();
-  };
-  const getTextureBindingWGSLVarType = (binding) => {
-    if (binding.bindingType === "externalTexture") {
-      return `var ${binding.name}: texture_external;`;
-    }
-    return binding.bindingType === "storage" ? `var ${binding.name}: texture_storage_${binding.options.viewDimension.replace("-", "_")}<${binding.options.format}, ${binding.options.access}>;` : binding.bindingType === "depth" ? `var ${binding.name}: texture_depth${binding.options.multisampled ? "_multisampled" : ""}_${binding.options.viewDimension.replace("-", "_")};` : `var ${binding.name}: texture${binding.options.multisampled ? "_multisampled" : ""}_${binding.options.viewDimension.replace("-", "_")}<f32>;`;
-  };
-  const getBindGroupLayoutBindingType = (binding) => {
-    if (binding.bindingType === "storage" && binding.options.access === "read_write") {
-      return "storage";
-    } else if (binding.bindingType === "storage") {
-      return "read-only-storage";
-    } else {
-      return "uniform";
-    }
-  };
-  const getBindGroupLayoutTextureBindingType = (binding) => {
-    return (() => {
-      switch (binding.bindingType) {
-        case "externalTexture":
-          return { externalTexture: {} };
-        case "storage":
-          return {
-            storageTexture: {
-              format: binding.options.format,
-              viewDimension: binding.options.viewDimension
-            }
-          };
-        case "texture":
-          return {
-            texture: {
-              multisampled: binding.options.multisampled,
-              viewDimension: binding.options.viewDimension,
-              sampleType: binding.options.multisampled ? "unfilterable-float" : "float"
-            }
-          };
-        case "depth":
-          return {
-            texture: {
-              multisampled: binding.options.multisampled,
-              viewDimension: binding.options.viewDimension,
-              sampleType: "depth"
-            }
-          };
-        default:
-          return null;
-      }
-    })();
-  };
-  const getBindGroupLayoutTextureBindingCacheKey = (binding) => {
-    return (() => {
-      switch (binding.bindingType) {
-        case "externalTexture":
-          return `externalTexture,${binding.visibility},`;
-        case "storage":
-          return `storageTexture,${binding.options.format},${binding.options.viewDimension},${binding.visibility},`;
-        case "texture":
-          return `texture,${binding.options.multisampled},${binding.options.viewDimension},${binding.options.multisampled ? "unfilterable-float" : "float"},${binding.visibility},`;
-        case "depth":
-          return `depthTexture,${binding.options.format},${binding.options.viewDimension},${binding.visibility},`;
-        default:
-          return `${binding.visibility},`;
-      }
-    })();
-  };
-
-  class Binding {
-    /**
-     * Binding constructor
-     * @param parameters - {@link BindingParams | parameters} used to create our {@link Binding}
-     */
-    constructor({
-      label = "Uniform",
-      name = "uniform",
-      bindingType = "uniform",
-      visibility = ["vertex", "fragment", "compute"]
-    }) {
-      this.label = label;
-      this.name = toCamelCase(name);
-      this.bindingType = bindingType;
-      this.visibility = getBindingVisibility(visibility);
-      this.options = {
-        label,
-        name,
-        bindingType,
-        visibility
-      };
-      this.shouldResetBindGroup = false;
-      this.shouldResetBindGroupLayout = false;
-      this.cacheKey = `${bindingType},${this.visibility},`;
-    }
-  }
-
-  class Vec2 {
-    /**
-     * Vec2 constructor
-     * @param x - X component of our {@link Vec2}
-     * @param y - Y component of our {@link Vec2}
-     */
-    constructor(x = 0, y = x) {
-      this.type = "Vec2";
-      this._x = x;
-      this._y = y;
-    }
-    /**
-     * Get the X component of the {@link Vec2}
-     */
-    get x() {
-      return this._x;
-    }
-    /**
-     * Set the X component of the {@link Vec2}
-     * Can trigger {@link onChange} callback
-     * @param value - X component to set
-     */
-    set x(value) {
-      const changed = value !== this._x;
-      this._x = value;
-      changed && this._onChangeCallback && this._onChangeCallback();
-    }
-    /**
-     * Get the Y component of the {@link Vec2}
-     */
-    get y() {
-      return this._y;
-    }
-    /**
-     * Set the Y component of the {@link Vec2}
-     * Can trigger {@link onChange} callback
-     * @param value - Y component to set
-     */
-    set y(value) {
-      const changed = value !== this._y;
-      this._y = value;
-      changed && this._onChangeCallback && this._onChangeCallback();
-    }
-    /**
-     * Called when at least one component of the {@link Vec2} has changed
-     * @param callback - callback to run when at least one component of the {@link Vec2} has changed
-     * @returns - our {@link Vec2}
-     */
-    onChange(callback) {
-      if (callback) {
-        this._onChangeCallback = callback;
-      }
-      return this;
-    }
-    /**
-     * Set the {@link Vec2} from values
-     * @param x - new X component to set
-     * @param y - new Y component to set
-     * @returns - this {@link Vec2} after being set
-     */
-    set(x = 0, y = x) {
-      this.x = x;
-      this.y = y;
-      return this;
-    }
-    /**
-     * Add a {@link Vec2} to this {@link Vec2}
-     * @param vector - {@link Vec2} to add
-     * @returns - this {@link Vec2} after addition
-     */
-    add(vector = new Vec2()) {
-      this.x += vector.x;
-      this.y += vector.y;
-      return this;
-    }
-    /**
-     * Add a scalar to all the components of this {@link Vec2}
-     * @param value - number to add
-     * @returns - this {@link Vec2} after addition
-     */
-    addScalar(value = 0) {
-      this.x += value;
-      this.y += value;
-      return this;
-    }
-    /**
-     * Subtract a {@link Vec2} from this {@link Vec2}
-     * @param vector - {@link Vec2} to subtract
-     * @returns - this {@link Vec2} after subtraction
-     */
-    sub(vector = new Vec2()) {
-      this.x -= vector.x;
-      this.y -= vector.y;
-      return this;
-    }
-    /**
-     * Subtract a scalar to all the components of this {@link Vec2}
-     * @param value - number to subtract
-     * @returns - this {@link Vec2} after subtraction
-     */
-    subScalar(value = 0) {
-      this.x -= value;
-      this.y -= value;
-      return this;
-    }
-    /**
-     * Multiply a {@link Vec2} with this {@link Vec2}
-     * @param vector - {@link Vec2} to multiply with
-     * @returns - this {@link Vec2} after multiplication
-     */
-    multiply(vector = new Vec2(1)) {
-      this.x *= vector.x;
-      this.y *= vector.y;
-      return this;
-    }
-    /**
-     * Multiply all components of this {@link Vec2} with a scalar
-     * @param value - number to multiply with
-     * @returns - this {@link Vec2} after multiplication
-     */
-    multiplyScalar(value = 1) {
-      this.x *= value;
-      this.y *= value;
-      return this;
-    }
-    /**
-     * Divide a {@link Vec2} with this {@link Vec2}
-     * @param vector - {@link Vec2} to divide with
-     * @returns - this {@link Vec2} after division
-     */
-    divide(vector = new Vec2(1)) {
-      this.x /= vector.x;
-      this.y /= vector.y;
-      return this;
-    }
-    /**
-     * Divide all components of this {@link Vec2} with a scalar
-     * @param value - number to divide with
-     * @returns - this {@link Vec2} after division
-     */
-    divideScalar(value = 1) {
-      this.x /= value;
-      this.y /= value;
-      return this;
-    }
-    /**
-     * Copy a {@link Vec2} into this {@link Vec2}
-     * @param vector - {@link Vec2} to copy
-     * @returns - this {@link Vec2} after copy
-     */
-    copy(vector = new Vec2()) {
-      this.x = vector.x;
-      this.y = vector.y;
-      return this;
-    }
-    /**
-     * Clone this {@link Vec2}
-     * @returns - cloned {@link Vec2}
-     */
-    clone() {
-      return new Vec2(this.x, this.y);
-    }
-    /**
-     * Apply max values to this {@link Vec2} components
-     * @param vector - {@link Vec2} representing max values
-     * @returns - {@link Vec2} with max values applied
-     */
-    max(vector = new Vec2()) {
-      this.x = Math.max(this.x, vector.x);
-      this.y = Math.max(this.y, vector.y);
-      return this;
-    }
-    /**
-     * Apply min values to this {@link Vec2} components
-     * @param vector - {@link Vec2} representing min values
-     * @returns - {@link Vec2} with min values applied
-     */
-    min(vector = new Vec2()) {
-      this.x = Math.min(this.x, vector.x);
-      this.y = Math.min(this.y, vector.y);
-      return this;
-    }
-    /**
-     * Clamp this {@link Vec2} components by min and max {@link Vec2} vectors
-     * @param min - minimum {@link Vec2} components to compare with
-     * @param max - maximum {@link Vec2} components to compare with
-     * @returns - clamped {@link Vec2}
-     */
-    clamp(min = new Vec2(), max = new Vec2()) {
-      this.x = Math.max(min.x, Math.min(max.x, this.x));
-      this.y = Math.max(min.y, Math.min(max.y, this.y));
-      return this;
-    }
-    /**
-     * Check if 2 {@link Vec2} are equal
-     * @param vector - {@link Vec2} to compare
-     * @returns - whether the {@link Vec2} are equals or not
-     */
-    equals(vector = new Vec2()) {
-      return this.x === vector.x && this.y === vector.y;
-    }
-    /**
-     * Get the square length of this {@link Vec2}
-     * @returns - square length of this {@link Vec2}
-     */
-    lengthSq() {
-      return this.x * this.x + this.y * this.y;
-    }
-    /**
-     * Get the length of this {@link Vec2}
-     * @returns - length of this {@link Vec2}
-     */
-    length() {
-      return Math.sqrt(this.lengthSq());
-    }
-    /**
-     * Normalize this {@link Vec2}
-     * @returns - normalized {@link Vec2}
-     */
-    normalize() {
-      let len = this.x * this.x + this.y * this.y;
-      if (len > 0) {
-        len = 1 / Math.sqrt(len);
-      }
-      this.x *= len;
-      this.y *= len;
-      return this;
-    }
-    /**
-     * Calculate the dot product of 2 {@link Vec2}
-     * @param vector - {@link Vec2} to use for dot product
-     * @returns - dot product of the 2 {@link Vec2}
-     */
-    dot(vector = new Vec2()) {
-      return this.x * vector.x + this.y * vector.y;
-    }
-    /**
-     * Calculate the linear interpolation of this {@link Vec2} by given {@link Vec2} and alpha, where alpha is the percent distance along the line
-     * @param vector - {@link Vec2} to interpolate towards
-     * @param [alpha=1] - interpolation factor in the [0, 1] interval
-     * @returns - this {@link Vec2} after linear interpolation
-     */
-    lerp(vector = new Vec2(), alpha = 1) {
-      this.x += (vector.x - this.x) * alpha;
-      this.y += (vector.y - this.y) * alpha;
-      return this;
-    }
-  }
-
   class Quat {
     /**
      * Quat constructor
@@ -1135,6 +676,1782 @@
      */
     unproject(camera) {
       this.applyMat4(camera.projectionMatrix.getInverse()).applyMat4(camera.modelMatrix);
+      return this;
+    }
+  }
+
+  const xAxis = new Vec3();
+  const yAxis = new Vec3();
+  const zAxis = new Vec3();
+  class Mat4 {
+    // prettier-ignore
+    /**
+     * Mat4 constructor
+     * @param elements - initial array to use, default to identity matrix
+     */
+    constructor(elements = new Float32Array([
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1
+    ])) {
+      this.type = "Mat4";
+      this.elements = elements;
+    }
+    /***
+     * Sets the matrix from 16 numbers
+     *
+     * @param n11 - number
+     * @param n12 - number
+     * @param n13 - number
+     * @param n14 - number
+     * @param n21 - number
+     * @param n22 - number
+     * @param n23 - number
+     * @param n24 - number
+     * @param n31 - number
+     * @param n32 - number
+     * @param n33 - number
+     * @param n34 - number
+     * @param n41 - number
+     * @param n42 - number
+     * @param n43 - number
+     * @param n44 - number
+     *
+     * @returns - this {@link Mat4} after being set
+     */
+    set(n11, n12, n13, n14, n21, n22, n23, n24, n31, n32, n33, n34, n41, n42, n43, n44) {
+      const te = this.elements;
+      te[0] = n11;
+      te[1] = n12;
+      te[2] = n13;
+      te[3] = n14;
+      te[4] = n21;
+      te[5] = n22;
+      te[6] = n23;
+      te[7] = n24;
+      te[8] = n31;
+      te[9] = n32;
+      te[10] = n33;
+      te[11] = n34;
+      te[12] = n41;
+      te[13] = n42;
+      te[14] = n43;
+      te[15] = n44;
+      return this;
+    }
+    /**
+     * Sets the {@link Mat4} to an identity matrix
+     * @returns - this {@link Mat4} after being set
+     */
+    identity() {
+      this.set(
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      );
+      return this;
+    }
+    /**
+     * Sets the {@link Mat4} values from an array
+     * @param array - array to use
+     * @param offset - optional offset in the array to use
+     * @returns - this {@link Mat4} after being set
+     */
+    // prettier-ignore
+    setFromArray(array = new Float32Array([
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1
+    ]), offset = 0) {
+      for (let i = 0; i < this.elements.length; i++) {
+        this.elements[i] = array[i + offset];
+      }
+      return this;
+    }
+    /**
+     * Copy another {@link Mat4}
+     * @param matrix - matrix to copy
+     * @returns - this {@link Mat4} after being set
+     */
+    copy(matrix = new Mat4()) {
+      const array = matrix.elements;
+      this.elements[0] = array[0];
+      this.elements[1] = array[1];
+      this.elements[2] = array[2];
+      this.elements[3] = array[3];
+      this.elements[4] = array[4];
+      this.elements[5] = array[5];
+      this.elements[6] = array[6];
+      this.elements[7] = array[7];
+      this.elements[8] = array[8];
+      this.elements[9] = array[9];
+      this.elements[10] = array[10];
+      this.elements[11] = array[11];
+      this.elements[12] = array[12];
+      this.elements[13] = array[13];
+      this.elements[14] = array[14];
+      this.elements[15] = array[15];
+      return this;
+    }
+    /**
+     * Clone a {@link Mat4}
+     * @returns - cloned {@link Mat4}
+     */
+    clone() {
+      return new Mat4().copy(this);
+    }
+    /**
+     * Multiply this {@link Mat4} with another {@link Mat4}
+     * @param matrix - {@link Mat4} to multiply with
+     * @returns - this {@link Mat4} after multiplication
+     */
+    multiply(matrix = new Mat4()) {
+      return this.multiplyMatrices(this, matrix);
+    }
+    /**
+     * Multiply another {@link Mat4} with this {@link Mat4}
+     * @param matrix - {@link Mat4} to multiply with
+     * @returns - this {@link Mat4} after multiplication
+     */
+    premultiply(matrix = new Mat4()) {
+      return this.multiplyMatrices(matrix, this);
+    }
+    /**
+     * Multiply two {@link Mat4}
+     * @param a - first {@link Mat4}
+     * @param b - second {@link Mat4}
+     * @returns - {@link Mat4} resulting from the multiplication
+     */
+    multiplyMatrices(a = new Mat4(), b = new Mat4()) {
+      const ae = a.elements;
+      const be = b.elements;
+      const te = this.elements;
+      const a11 = ae[0], a12 = ae[4], a13 = ae[8], a14 = ae[12];
+      const a21 = ae[1], a22 = ae[5], a23 = ae[9], a24 = ae[13];
+      const a31 = ae[2], a32 = ae[6], a33 = ae[10], a34 = ae[14];
+      const a41 = ae[3], a42 = ae[7], a43 = ae[11], a44 = ae[15];
+      const b11 = be[0], b12 = be[4], b13 = be[8], b14 = be[12];
+      const b21 = be[1], b22 = be[5], b23 = be[9], b24 = be[13];
+      const b31 = be[2], b32 = be[6], b33 = be[10], b34 = be[14];
+      const b41 = be[3], b42 = be[7], b43 = be[11], b44 = be[15];
+      te[0] = a11 * b11 + a12 * b21 + a13 * b31 + a14 * b41;
+      te[4] = a11 * b12 + a12 * b22 + a13 * b32 + a14 * b42;
+      te[8] = a11 * b13 + a12 * b23 + a13 * b33 + a14 * b43;
+      te[12] = a11 * b14 + a12 * b24 + a13 * b34 + a14 * b44;
+      te[1] = a21 * b11 + a22 * b21 + a23 * b31 + a24 * b41;
+      te[5] = a21 * b12 + a22 * b22 + a23 * b32 + a24 * b42;
+      te[9] = a21 * b13 + a22 * b23 + a23 * b33 + a24 * b43;
+      te[13] = a21 * b14 + a22 * b24 + a23 * b34 + a24 * b44;
+      te[2] = a31 * b11 + a32 * b21 + a33 * b31 + a34 * b41;
+      te[6] = a31 * b12 + a32 * b22 + a33 * b32 + a34 * b42;
+      te[10] = a31 * b13 + a32 * b23 + a33 * b33 + a34 * b43;
+      te[14] = a31 * b14 + a32 * b24 + a33 * b34 + a34 * b44;
+      te[3] = a41 * b11 + a42 * b21 + a43 * b31 + a44 * b41;
+      te[7] = a41 * b12 + a42 * b22 + a43 * b32 + a44 * b42;
+      te[11] = a41 * b13 + a42 * b23 + a43 * b33 + a44 * b43;
+      te[15] = a41 * b14 + a42 * b24 + a43 * b34 + a44 * b44;
+      return this;
+    }
+    /**
+     * {@link premultiply} this {@link Mat4} by a translate matrix (i.e. translateMatrix = new Mat4().translate(vector))
+     * @param vector - translation {@link Vec3 | vector} to use
+     * @returns - this {@link Mat4} after the premultiply translate operation
+     */
+    premultiplyTranslate(vector = new Vec3()) {
+      const a11 = 1;
+      const a22 = 1;
+      const a33 = 1;
+      const a44 = 1;
+      const a14 = vector.x;
+      const a24 = vector.y;
+      const a34 = vector.z;
+      const be = this.elements;
+      const te = this.elements;
+      const b11 = be[0], b12 = be[4], b13 = be[8], b14 = be[12];
+      const b21 = be[1], b22 = be[5], b23 = be[9], b24 = be[13];
+      const b31 = be[2], b32 = be[6], b33 = be[10], b34 = be[14];
+      const b41 = be[3], b42 = be[7], b43 = be[11], b44 = be[15];
+      te[0] = a11 * b11 + a14 * b41;
+      te[4] = a11 * b12 + a14 * b42;
+      te[8] = a11 * b13 + a14 * b43;
+      te[12] = a11 * b14 + a14 * b44;
+      te[1] = a22 * b21 + a24 * b41;
+      te[5] = a22 * b22 + a24 * b42;
+      te[9] = a22 * b23 + a24 * b43;
+      te[13] = a22 * b24 + a24 * b44;
+      te[2] = a33 * b31 + a34 * b41;
+      te[6] = a33 * b32 + a34 * b42;
+      te[10] = a33 * b33 + a34 * b43;
+      te[14] = a33 * b34 + a34 * b44;
+      te[3] = a44 * b41;
+      te[7] = a44 * b42;
+      te[11] = a44 * b43;
+      te[15] = a44 * b44;
+      return this;
+    }
+    /**
+     * {@link premultiply} this {@link Mat4} by a scale matrix (i.e. translateMatrix = new Mat4().scale(vector))
+     * @param vector - scale {@link Vec3 | vector} to use
+     * @returns - this {@link Mat4} after the premultiply scale operation
+     */
+    premultiplyScale(vector = new Vec3()) {
+      const be = this.elements;
+      const te = this.elements;
+      const a11 = vector.x;
+      const a22 = vector.y;
+      const a33 = vector.z;
+      const a44 = 1;
+      const b11 = be[0], b12 = be[4], b13 = be[8], b14 = be[12];
+      const b21 = be[1], b22 = be[5], b23 = be[9], b24 = be[13];
+      const b31 = be[2], b32 = be[6], b33 = be[10], b34 = be[14];
+      const b41 = be[3], b42 = be[7], b43 = be[11], b44 = be[15];
+      te[0] = a11 * b11;
+      te[4] = a11 * b12;
+      te[8] = a11 * b13;
+      te[12] = a11 * b14;
+      te[1] = a22 * b21;
+      te[5] = a22 * b22;
+      te[9] = a22 * b23;
+      te[13] = a22 * b24;
+      te[2] = a33 * b31;
+      te[6] = a33 * b32;
+      te[10] = a33 * b33;
+      te[14] = a33 * b34;
+      te[3] = a44 * b41;
+      te[7] = a44 * b42;
+      te[11] = a44 * b43;
+      te[15] = a44 * b44;
+      return this;
+    }
+    /**
+     * Get the {@link Mat4} inverse
+     * @returns - the inverted {@link Mat4}
+     */
+    invert() {
+      const te = this.elements, n11 = te[0], n21 = te[1], n31 = te[2], n41 = te[3], n12 = te[4], n22 = te[5], n32 = te[6], n42 = te[7], n13 = te[8], n23 = te[9], n33 = te[10], n43 = te[11], n14 = te[12], n24 = te[13], n34 = te[14], n44 = te[15], t11 = n23 * n34 * n42 - n24 * n33 * n42 + n24 * n32 * n43 - n22 * n34 * n43 - n23 * n32 * n44 + n22 * n33 * n44, t12 = n14 * n33 * n42 - n13 * n34 * n42 - n14 * n32 * n43 + n12 * n34 * n43 + n13 * n32 * n44 - n12 * n33 * n44, t13 = n13 * n24 * n42 - n14 * n23 * n42 + n14 * n22 * n43 - n12 * n24 * n43 - n13 * n22 * n44 + n12 * n23 * n44, t14 = n14 * n23 * n32 - n13 * n24 * n32 - n14 * n22 * n33 + n12 * n24 * n33 + n13 * n22 * n34 - n12 * n23 * n34;
+      const det = n11 * t11 + n21 * t12 + n31 * t13 + n41 * t14;
+      if (det === 0)
+        return this.set(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+      const detInv = 1 / det;
+      te[0] = t11 * detInv;
+      te[1] = (n24 * n33 * n41 - n23 * n34 * n41 - n24 * n31 * n43 + n21 * n34 * n43 + n23 * n31 * n44 - n21 * n33 * n44) * detInv;
+      te[2] = (n22 * n34 * n41 - n24 * n32 * n41 + n24 * n31 * n42 - n21 * n34 * n42 - n22 * n31 * n44 + n21 * n32 * n44) * detInv;
+      te[3] = (n23 * n32 * n41 - n22 * n33 * n41 - n23 * n31 * n42 + n21 * n33 * n42 + n22 * n31 * n43 - n21 * n32 * n43) * detInv;
+      te[4] = t12 * detInv;
+      te[5] = (n13 * n34 * n41 - n14 * n33 * n41 + n14 * n31 * n43 - n11 * n34 * n43 - n13 * n31 * n44 + n11 * n33 * n44) * detInv;
+      te[6] = (n14 * n32 * n41 - n12 * n34 * n41 - n14 * n31 * n42 + n11 * n34 * n42 + n12 * n31 * n44 - n11 * n32 * n44) * detInv;
+      te[7] = (n12 * n33 * n41 - n13 * n32 * n41 + n13 * n31 * n42 - n11 * n33 * n42 - n12 * n31 * n43 + n11 * n32 * n43) * detInv;
+      te[8] = t13 * detInv;
+      te[9] = (n14 * n23 * n41 - n13 * n24 * n41 - n14 * n21 * n43 + n11 * n24 * n43 + n13 * n21 * n44 - n11 * n23 * n44) * detInv;
+      te[10] = (n12 * n24 * n41 - n14 * n22 * n41 + n14 * n21 * n42 - n11 * n24 * n42 - n12 * n21 * n44 + n11 * n22 * n44) * detInv;
+      te[11] = (n13 * n22 * n41 - n12 * n23 * n41 - n13 * n21 * n42 + n11 * n23 * n42 + n12 * n21 * n43 - n11 * n22 * n43) * detInv;
+      te[12] = t14 * detInv;
+      te[13] = (n13 * n24 * n31 - n14 * n23 * n31 + n14 * n21 * n33 - n11 * n24 * n33 - n13 * n21 * n34 + n11 * n23 * n34) * detInv;
+      te[14] = (n14 * n22 * n31 - n12 * n24 * n31 - n14 * n21 * n32 + n11 * n24 * n32 + n12 * n21 * n34 - n11 * n22 * n34) * detInv;
+      te[15] = (n12 * n23 * n31 - n13 * n22 * n31 + n13 * n21 * n32 - n11 * n23 * n32 - n12 * n21 * n33 + n11 * n22 * n33) * detInv;
+      return this;
+    }
+    /**
+     * Clone and invert the {@link Mat4}
+     * @returns - inverted cloned {@link Mat4}
+     */
+    getInverse() {
+      return this.clone().invert();
+    }
+    /**
+     * Transpose this {@link Mat4}
+     * @returns - the transposed {@link Mat4}
+     */
+    transpose() {
+      let t;
+      const te = this.elements;
+      t = te[1];
+      te[1] = te[4];
+      te[4] = t;
+      t = te[2];
+      te[2] = te[8];
+      te[8] = t;
+      t = te[3];
+      te[3] = te[12];
+      te[12] = t;
+      t = te[6];
+      te[6] = te[9];
+      te[9] = t;
+      t = te[7];
+      te[7] = te[13];
+      te[13] = t;
+      t = te[11];
+      te[11] = te[14];
+      te[14] = t;
+      return this;
+    }
+    /**
+     * Translate a {@link Mat4}
+     * @param vector - translation {@link Vec3 | vector} to use
+     * @returns - translated {@link Mat4}
+     */
+    translate(vector = new Vec3()) {
+      const a = this.elements;
+      a[12] = a[0] * vector.x + a[4] * vector.y + a[8] * vector.z + a[12];
+      a[13] = a[1] * vector.x + a[5] * vector.y + a[9] * vector.z + a[13];
+      a[14] = a[2] * vector.x + a[6] * vector.y + a[10] * vector.z + a[14];
+      a[15] = a[3] * vector.x + a[7] * vector.y + a[11] * vector.z + a[15];
+      return this;
+    }
+    /**
+     * Get the translation {@link Vec3} component of a {@link Mat4}
+     * @param position - {@link Vec3} to set
+     * @returns - translation {@link Vec3} component of this {@link Mat4}
+     */
+    getTranslation(position = new Vec3()) {
+      return position.set(this.elements[12], this.elements[13], this.elements[14]);
+    }
+    /**
+     * Scale a {@link Mat4}
+     * @param vector - scale {@link Vec3 | vector} to use
+     * @returns - scaled {@link Mat4}
+     */
+    scale(vector = new Vec3()) {
+      const a = this.elements;
+      a[0] *= vector.x;
+      a[1] *= vector.x;
+      a[2] *= vector.x;
+      a[3] *= vector.x;
+      a[4] *= vector.y;
+      a[5] *= vector.y;
+      a[6] *= vector.y;
+      a[7] *= vector.y;
+      a[8] *= vector.z;
+      a[9] *= vector.z;
+      a[10] *= vector.z;
+      a[11] *= vector.z;
+      return this;
+    }
+    /**
+     * Rotate a {@link Mat4} from a {@link Quat | quaternion}
+     * @param quaternion - {@link Quat | quaternion} to use
+     * @returns - rotated {@link Mat4}
+     */
+    rotateFromQuaternion(quaternion = new Quat()) {
+      const te = this.elements;
+      const x = quaternion.elements[0], y = quaternion.elements[1], z = quaternion.elements[2], w = quaternion.elements[3];
+      const x2 = x + x, y2 = y + y, z2 = z + z;
+      const xx = x * x2, xy = x * y2, xz = x * z2;
+      const yy = y * y2, yz = y * z2, zz = z * z2;
+      const wx = w * x2, wy = w * y2, wz = w * z2;
+      te[0] = 1 - (yy + zz);
+      te[4] = xy - wz;
+      te[8] = xz + wy;
+      te[1] = xy + wz;
+      te[5] = 1 - (xx + zz);
+      te[9] = yz - wx;
+      te[2] = xz - wy;
+      te[6] = yz + wx;
+      te[10] = 1 - (xx + yy);
+      return this;
+    }
+    /**
+     * Get the maximum scale of the {@link Mat4} on all axes
+     * @returns - maximum scale of the {@link Mat4}
+     */
+    getMaxScaleOnAxis() {
+      const te = this.elements;
+      const scaleXSq = te[0] * te[0] + te[1] * te[1] + te[2] * te[2];
+      const scaleYSq = te[4] * te[4] + te[5] * te[5] + te[6] * te[6];
+      const scaleZSq = te[8] * te[8] + te[9] * te[9] + te[10] * te[10];
+      return Math.sqrt(Math.max(scaleXSq, scaleYSq, scaleZSq));
+    }
+    /**
+     * Creates a {@link Mat4} from a {@link Quat | quaternion} rotation, {@link Vec3 | vector} translation and {@link Vec3 | vector} scale
+     * Equivalent for applying translation, rotation and scale matrices but much faster
+     * Source code from: http://glmatrix.net/docs/mat4.js.html
+     *
+     * @param translation - translation {@link Vec3 | vector} to use
+     * @param quaternion - {@link Quat | quaternion} to use
+     * @param scale - translation {@link Vec3 | vector} to use
+     * @returns - transformed {@link Mat4}
+     */
+    compose(translation = new Vec3(), quaternion = new Quat(), scale = new Vec3(1)) {
+      const matrix = this.elements;
+      const x = quaternion.elements[0], y = quaternion.elements[1], z = quaternion.elements[2], w = quaternion.elements[3];
+      const x2 = x + x;
+      const y2 = y + y;
+      const z2 = z + z;
+      const xx = x * x2;
+      const xy = x * y2;
+      const xz = x * z2;
+      const yy = y * y2;
+      const yz = y * z2;
+      const zz = z * z2;
+      const wx = w * x2;
+      const wy = w * y2;
+      const wz = w * z2;
+      const sx = scale.x;
+      const sy = scale.y;
+      const sz = scale.z;
+      matrix[0] = (1 - (yy + zz)) * sx;
+      matrix[1] = (xy + wz) * sx;
+      matrix[2] = (xz - wy) * sx;
+      matrix[3] = 0;
+      matrix[4] = (xy - wz) * sy;
+      matrix[5] = (1 - (xx + zz)) * sy;
+      matrix[6] = (yz + wx) * sy;
+      matrix[7] = 0;
+      matrix[8] = (xz + wy) * sz;
+      matrix[9] = (yz - wx) * sz;
+      matrix[10] = (1 - (xx + yy)) * sz;
+      matrix[11] = 0;
+      matrix[12] = translation.x;
+      matrix[13] = translation.y;
+      matrix[14] = translation.z;
+      matrix[15] = 1;
+      return this;
+    }
+    /**
+     * Creates a {@link Mat4} from a {@link Quat | quaternion} rotation, {@link Vec3 | vector} translation and {@link Vec3 | vector} scale, rotating and scaling around the given {@link Vec3 | origin vector}
+     * Equivalent for applying translation, rotation and scale matrices but much faster
+     * Source code from: http://glmatrix.net/docs/mat4.js.html
+     *
+     * @param translation - translation {@link Vec3 | vector} to use
+     * @param quaternion - {@link Quat | quaternion} to use
+     * @param scale - translation {@link Vec3 | vector} to use
+     * @param origin - origin {@link Vec3 | vector} around which to scale and rotate
+     * @returns - transformed {@link Mat4}
+     */
+    composeFromOrigin(translation = new Vec3(), quaternion = new Quat(), scale = new Vec3(1), origin = new Vec3()) {
+      const matrix = this.elements;
+      const x = quaternion.elements[0], y = quaternion.elements[1], z = quaternion.elements[2], w = quaternion.elements[3];
+      const x2 = x + x;
+      const y2 = y + y;
+      const z2 = z + z;
+      const xx = x * x2;
+      const xy = x * y2;
+      const xz = x * z2;
+      const yy = y * y2;
+      const yz = y * z2;
+      const zz = z * z2;
+      const wx = w * x2;
+      const wy = w * y2;
+      const wz = w * z2;
+      const sx = scale.x;
+      const sy = scale.y;
+      const sz = scale.z;
+      const ox = origin.x;
+      const oy = origin.y;
+      const oz = origin.z;
+      const out0 = (1 - (yy + zz)) * sx;
+      const out1 = (xy + wz) * sx;
+      const out2 = (xz - wy) * sx;
+      const out4 = (xy - wz) * sy;
+      const out5 = (1 - (xx + zz)) * sy;
+      const out6 = (yz + wx) * sy;
+      const out8 = (xz + wy) * sz;
+      const out9 = (yz - wx) * sz;
+      const out10 = (1 - (xx + yy)) * sz;
+      matrix[0] = out0;
+      matrix[1] = out1;
+      matrix[2] = out2;
+      matrix[3] = 0;
+      matrix[4] = out4;
+      matrix[5] = out5;
+      matrix[6] = out6;
+      matrix[7] = 0;
+      matrix[8] = out8;
+      matrix[9] = out9;
+      matrix[10] = out10;
+      matrix[11] = 0;
+      matrix[12] = translation.x + ox - (out0 * ox + out4 * oy + out8 * oz);
+      matrix[13] = translation.y + oy - (out1 * ox + out5 * oy + out9 * oz);
+      matrix[14] = translation.z + oz - (out2 * ox + out6 * oy + out10 * oz);
+      matrix[15] = 1;
+      return this;
+    }
+    /**
+     * Set this {@link Mat4} as a rotation matrix based on an eye, target and up {@link Vec3 | vectors}
+     * @param eye - {@link Vec3 | position vector} of the object that should be rotated
+     * @param target - {@link Vec3 | target vector} to look at
+     * @param up - up {@link Vec3 | vector}
+     * @returns - rotated {@link Mat4}
+     */
+    lookAt(eye = new Vec3(), target = new Vec3(), up = new Vec3(0, 1, 0)) {
+      const te = this.elements;
+      zAxis.copy(eye).sub(target);
+      if (zAxis.lengthSq() === 0) {
+        zAxis.z = 1;
+      }
+      zAxis.normalize();
+      xAxis.crossVectors(up, zAxis);
+      if (xAxis.lengthSq() === 0) {
+        if (Math.abs(up.z) === 1) {
+          zAxis.x += 1e-4;
+        } else {
+          zAxis.z += 1e-4;
+        }
+        zAxis.normalize();
+        xAxis.crossVectors(up, zAxis);
+      }
+      xAxis.normalize();
+      yAxis.crossVectors(zAxis, xAxis);
+      te[0] = xAxis.x;
+      te[1] = xAxis.y;
+      te[2] = xAxis.z;
+      te[3] = 0;
+      te[4] = yAxis.x;
+      te[5] = yAxis.y;
+      te[6] = yAxis.z;
+      te[7] = 0;
+      te[8] = zAxis.x;
+      te[9] = zAxis.y;
+      te[10] = zAxis.z;
+      te[11] = 0;
+      te[12] = eye.x;
+      te[13] = eye.y;
+      te[14] = eye.z;
+      te[15] = 1;
+      return this;
+    }
+    /**
+     * Compute a view {@link Mat4} matrix.
+     *
+     * This is a view matrix which transforms all other objects
+     * to be in the space of the view defined by the parameters.
+     *
+     * Equivalent to `matrix.lookAt(eye, target, up).invert()` but faster.
+     *
+     * @param eye - the position of the object.
+     * @param target - the position meant to be aimed at.
+     * @param up - a vector pointing up.
+     * @returns - the view {@link Mat4} matrix.
+     */
+    makeView(eye = new Vec3(), target = new Vec3(), up = new Vec3(0, 1, 0)) {
+      const te = this.elements;
+      zAxis.copy(eye).sub(target).normalize();
+      xAxis.crossVectors(up, zAxis).normalize();
+      yAxis.crossVectors(zAxis, xAxis).normalize();
+      te[0] = xAxis.x;
+      te[1] = yAxis.x;
+      te[2] = zAxis.x;
+      te[3] = 0;
+      te[4] = xAxis.y;
+      te[5] = yAxis.y;
+      te[6] = zAxis.y;
+      te[7] = 0;
+      te[8] = xAxis.z;
+      te[9] = yAxis.z;
+      te[10] = zAxis.z;
+      te[11] = 0;
+      te[12] = -(xAxis.x * eye.x + xAxis.y * eye.y + xAxis.z * eye.z);
+      te[13] = -(yAxis.x * eye.x + yAxis.y * eye.y + yAxis.z * eye.z);
+      te[14] = -(zAxis.x * eye.x + zAxis.y * eye.y + zAxis.z * eye.z);
+      te[15] = 1;
+      return this;
+    }
+    /**
+     * Create an orthographic {@link Mat4} matrix based on the parameters. Transforms from
+     *  * the given the left, right, bottom, and top dimensions to -1 +1 in x, and y
+     *  * and 0 to +1 in z.
+     *
+     * @param parameters - {@link OrthographicProjectionParams | parameters} used to create the camera orthographic matrix.
+     * @returns - the camera orthographic {@link Mat4} matrix.
+     */
+    makeOrthographic({
+      left = -5,
+      right = 5,
+      bottom = -5,
+      top = 5,
+      near = 0.1,
+      far = 50
+    }) {
+      const te = this.elements;
+      te[0] = 2 / (right - left);
+      te[1] = 0;
+      te[2] = 0;
+      te[3] = 0;
+      te[4] = 0;
+      te[5] = 2 / (top - bottom);
+      te[6] = 0;
+      te[7] = 0;
+      te[8] = 0;
+      te[9] = 0;
+      te[10] = 1 / (near - far);
+      te[11] = 0;
+      te[12] = (right + left) / (left - right);
+      te[13] = (top + bottom) / (bottom - top);
+      te[14] = near / (near - far);
+      te[15] = 1;
+      return this;
+    }
+    /**
+     * Create a perspective {@link Mat4} matrix based on the parameters.
+     *
+     * Note, The matrix generated sends the viewing frustum to the unit box.
+     * We assume a unit box extending from -1 to 1 in the x and y dimensions and
+     * from -1 to 1 in the z dimension, as three.js and more generally WebGL handles it.
+     *
+     * @param parameters - {@link PerspectiveProjectionParams | parameters} used to create the camera perspective matrix.
+     * @returns - the camera perspective {@link Mat4} matrix.
+     */
+    makePerspective({ fov = 90, aspect = 1, near = 0.1, far = 150 }) {
+      const top = near * Math.tan(Math.PI / 180 * 0.5 * fov);
+      const height = 2 * top;
+      const width = aspect * height;
+      const left = -0.5 * width;
+      const right = left + width;
+      const bottom = top - height;
+      const x = 2 * near / (right - left);
+      const y = 2 * near / (top - bottom);
+      const a = (right + left) / (right - left);
+      const b = (top + bottom) / (top - bottom);
+      const c = -far / (far - near);
+      const d = -far * near / (far - near);
+      this.set(
+        x,
+        0,
+        0,
+        0,
+        0,
+        y,
+        0,
+        0,
+        a,
+        b,
+        c,
+        -1,
+        0,
+        0,
+        d,
+        0
+      );
+      return this;
+    }
+  }
+
+  let objectIndex = 0;
+  const tempMatrix = new Mat4();
+  class Object3D {
+    /**
+     * Object3D constructor
+     */
+    constructor() {
+      this._parent = null;
+      this.children = [];
+      this.matricesNeedUpdate = false;
+      Object.defineProperty(this, "object3DIndex", { value: objectIndex++ });
+      this.setMatrices();
+      this.setTransforms();
+    }
+    /* PARENT */
+    /**
+     * Get the parent of this {@link Object3D} if any
+     */
+    get parent() {
+      return this._parent;
+    }
+    /**
+     * Set the parent of this {@link Object3D}
+     * @param value - new parent to set, could be an {@link Object3D} or null
+     */
+    set parent(value) {
+      if (this._parent && value && this._parent.object3DIndex === value.object3DIndex) {
+        return;
+      }
+      if (this._parent) {
+        this._parent.children = this._parent.children.filter((child) => child.object3DIndex !== this.object3DIndex);
+      }
+      if (value) {
+        this.shouldUpdateWorldMatrix();
+      }
+      this._parent = value;
+      this._parent?.children.push(this);
+    }
+    /* TRANSFORMS */
+    /**
+     * Set our transforms properties and {@link Vec3#onChange | vectors onChange} callbacks
+     */
+    setTransforms() {
+      this.transforms = {
+        origin: {
+          model: new Vec3()
+        },
+        quaternion: new Quat(),
+        rotation: new Vec3(),
+        position: {
+          world: new Vec3()
+        },
+        scale: new Vec3(1)
+      };
+      this.rotation.onChange(() => this.applyRotation());
+      this.position.onChange(() => this.applyPosition());
+      this.scale.onChange(() => this.applyScale());
+      this.transformOrigin.onChange(() => this.applyTransformOrigin());
+    }
+    /**
+     * Get our rotation {@link Vec3 | vector}
+     */
+    get rotation() {
+      return this.transforms.rotation;
+    }
+    /**
+     * Set our rotation {@link Vec3 | vector}
+     * @param value - new rotation {@link Vec3 | vector}
+     */
+    set rotation(value) {
+      this.transforms.rotation = value;
+      this.applyRotation();
+    }
+    /**
+     * Get our {@link Quat | quaternion}
+     */
+    get quaternion() {
+      return this.transforms.quaternion;
+    }
+    /**
+     * Set our {@link Quat | quaternion}
+     * @param value - new {@link Quat | quaternion}
+     */
+    set quaternion(value) {
+      this.transforms.quaternion = value;
+    }
+    /**
+     * Get our position {@link Vec3 | vector}
+     */
+    get position() {
+      return this.transforms.position.world;
+    }
+    /**
+     * Set our position {@link Vec3 | vector}
+     * @param value - new position {@link Vec3 | vector}
+     */
+    set position(value) {
+      this.transforms.position.world = value;
+    }
+    /**
+     * Get our scale {@link Vec3 | vector}
+     */
+    get scale() {
+      return this.transforms.scale;
+    }
+    /**
+     * Set our scale {@link Vec3 | vector}
+     * @param value - new scale {@link Vec3 | vector}
+     */
+    set scale(value) {
+      this.transforms.scale = value;
+      this.applyScale();
+    }
+    /**
+     * Get our transform origin {@link Vec3 | vector}
+     */
+    get transformOrigin() {
+      return this.transforms.origin.model;
+    }
+    /**
+     * Set our transform origin {@link Vec3 | vector}
+     * @param value - new transform origin {@link Vec3 | vector}
+     */
+    set transformOrigin(value) {
+      this.transforms.origin.model = value;
+    }
+    /**
+     * Apply our rotation and tell our {@link modelMatrix | model matrix} to update
+     */
+    applyRotation() {
+      this.quaternion.setFromVec3(this.rotation);
+      this.shouldUpdateModelMatrix();
+    }
+    /**
+     * Tell our {@link modelMatrix | model matrix} to update
+     */
+    applyPosition() {
+      this.shouldUpdateModelMatrix();
+    }
+    /**
+     * Tell our {@link modelMatrix | model matrix} to update
+     */
+    applyScale() {
+      this.shouldUpdateModelMatrix();
+    }
+    /**
+     * Tell our {@link modelMatrix | model matrix} to update
+     */
+    applyTransformOrigin() {
+      this.shouldUpdateModelMatrix();
+    }
+    /* MATRICES */
+    /**
+     * Set our {@link modelMatrix | model matrix} and {@link worldMatrix | world matrix}
+     */
+    setMatrices() {
+      this.matrices = {
+        model: {
+          matrix: new Mat4(),
+          shouldUpdate: true,
+          onUpdate: () => this.updateModelMatrix()
+        },
+        world: {
+          matrix: new Mat4(),
+          shouldUpdate: true,
+          onUpdate: () => this.updateWorldMatrix()
+        }
+      };
+    }
+    /**
+     * Get our {@link Mat4 | model matrix}
+     */
+    get modelMatrix() {
+      return this.matrices.model.matrix;
+    }
+    /**
+     * Set our {@link Mat4 | model matrix}
+     * @param value - new {@link Mat4 | model matrix}
+     */
+    set modelMatrix(value) {
+      this.matrices.model.matrix = value;
+      this.shouldUpdateModelMatrix();
+    }
+    /**
+     * Set our {@link modelMatrix | model matrix} shouldUpdate flag to true (tell it to update)
+     */
+    shouldUpdateModelMatrix() {
+      this.matrices.model.shouldUpdate = true;
+      this.shouldUpdateWorldMatrix();
+    }
+    /**
+     * Get our {@link Mat4 | world matrix}
+     */
+    get worldMatrix() {
+      return this.matrices.world.matrix;
+    }
+    /**
+     * Set our {@link Mat4 | world matrix}
+     * @param value - new {@link Mat4 | world matrix}
+     */
+    set worldMatrix(value) {
+      this.matrices.world.matrix = value;
+      this.shouldUpdateWorldMatrix();
+    }
+    /**
+     * Set our {@link worldMatrix | world matrix} shouldUpdate flag to true (tell it to update)
+     */
+    shouldUpdateWorldMatrix() {
+      this.matrices.world.shouldUpdate = true;
+    }
+    /**
+     * Rotate this {@link Object3D} so it looks at the {@link Vec3 | target}
+     * @param target - {@link Vec3 | target} to look at
+     * @param position - {@link Vec3 | postion} from which to look at
+     */
+    lookAt(target = new Vec3(), position = this.position, up = new Vec3(0, 1, 0)) {
+      const rotationMatrix = tempMatrix.lookAt(target, position, up);
+      this.quaternion.setFromRotationMatrix(rotationMatrix);
+      this.shouldUpdateModelMatrix();
+    }
+    /**
+     * Update our {@link modelMatrix | model matrix}
+     */
+    updateModelMatrix() {
+      this.modelMatrix = this.modelMatrix.composeFromOrigin(
+        this.position,
+        this.quaternion,
+        this.scale,
+        this.transformOrigin
+      );
+      this.shouldUpdateWorldMatrix();
+    }
+    /**
+     * Update our {@link worldMatrix | model matrix}
+     */
+    updateWorldMatrix() {
+      if (!this.parent) {
+        this.worldMatrix.copy(this.modelMatrix);
+      } else {
+        this.worldMatrix.multiplyMatrices(this.parent.worldMatrix, this.modelMatrix);
+      }
+      for (let i = 0, l = this.children.length; i < l; i++) {
+        this.children[i].shouldUpdateWorldMatrix();
+      }
+    }
+    /**
+     * Check whether at least one of the matrix should be updated
+     */
+    shouldUpdateMatrices() {
+      this.matricesNeedUpdate = !!Object.values(this.matrices).find((matrix) => matrix.shouldUpdate);
+    }
+    /**
+     * Check at each render whether we should update our matrices, and update them if needed
+     */
+    updateMatrixStack() {
+      this.shouldUpdateMatrices();
+      if (this.matricesNeedUpdate) {
+        for (const matrixName in this.matrices) {
+          if (this.matrices[matrixName].shouldUpdate) {
+            this.matrices[matrixName].onUpdate();
+            this.matrices[matrixName].shouldUpdate = false;
+          }
+        }
+      }
+      for (let i = 0, l = this.children.length; i < l; i++) {
+        this.children[i].updateMatrixStack();
+      }
+    }
+    /**
+     * Destroy this {@link Object3D}. Removes its parent and set its children free.
+     */
+    destroy() {
+      for (let i = 0, l = this.children.length; i < l; i++) {
+        if (this.children[i])
+          this.children[i].parent = null;
+      }
+      this.parent = null;
+    }
+  }
+
+  class Mat3 {
+    // prettier-ignore
+    /**
+     * Mat3 constructor
+     * @param elements - initial array to use, default to identity matrix
+     */
+    constructor(elements = new Float32Array([
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1
+    ])) {
+      this.type = "Mat3";
+      this.elements = elements;
+    }
+    /**
+     * Sets the matrix from 9 numbers
+     *
+     * @param n11 - number
+     * @param n12 - number
+     * @param n13 - number
+     * @param n21 - number
+     * @param n22 - number
+     * @param n23 - number
+     * @param n31 - number
+     * @param n32 - number
+     * @param n33 - number
+     * @returns - this {@link Mat3} after being set
+     */
+    set(n11, n12, n13, n21, n22, n23, n31, n32, n33) {
+      const te = this.elements;
+      te[0] = n11;
+      te[1] = n21;
+      te[2] = n31;
+      te[3] = n12;
+      te[4] = n22;
+      te[5] = n32;
+      te[6] = n13;
+      te[7] = n23;
+      te[8] = n33;
+      return this;
+    }
+    /**
+     * Sets the {@link Mat3} to an identity matrix
+     * @returns - this {@link Mat3} after being set
+     */
+    identity() {
+      this.set(1, 0, 0, 0, 1, 0, 0, 0, 1);
+      return this;
+    }
+    /**
+     * Sets the {@link Mat3} values from an array
+     * @param array - array to use
+     * @param offset - optional offset in the array to use
+     * @returns - this {@link Mat3} after being set
+     */
+    // prettier-ignore
+    setFromArray(array = new Float32Array([
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1
+    ]), offset = 0) {
+      for (let i = 0; i < this.elements.length; i++) {
+        this.elements[i] = array[i + offset];
+      }
+      return this;
+    }
+    /**
+     * Copy another {@link Mat3}
+     * @param matrix - matrix to copy
+     * @returns - this {@link Mat3} after being set
+     */
+    copy(matrix = new Mat3()) {
+      const array = matrix.elements;
+      this.elements[0] = array[0];
+      this.elements[1] = array[1];
+      this.elements[2] = array[2];
+      this.elements[3] = array[3];
+      this.elements[4] = array[4];
+      this.elements[5] = array[5];
+      this.elements[6] = array[6];
+      this.elements[7] = array[7];
+      this.elements[8] = array[8];
+      return this;
+    }
+    /**
+     * Clone a {@link Mat3}
+     * @returns - cloned {@link Mat3}
+     */
+    clone() {
+      return new Mat3().copy(this);
+    }
+    /**
+     * Set a {@link Mat3} from a {@link Mat4}.
+     * @param matrix - {@link Mat4} to use.
+     * @returns - this {@link Mat3} after being set.
+     */
+    setFromMat4(matrix = new Mat4()) {
+      const me = matrix.elements;
+      this.set(me[0], me[4], me[8], me[1], me[5], me[9], me[2], me[6], me[10]);
+      return this;
+    }
+    /**
+     * Multiply this {@link Mat3} with another {@link Mat3}
+     * @param matrix - {@link Mat3} to multiply with
+     * @returns - this {@link Mat3} after multiplication
+     */
+    multiply(matrix = new Mat3()) {
+      return this.multiplyMatrices(this, matrix);
+    }
+    /**
+     * Multiply another {@link Mat3} with this {@link Mat3}
+     * @param matrix - {@link Mat3} to multiply with
+     * @returns - this {@link Mat3} after multiplication
+     */
+    premultiply(matrix = new Mat3()) {
+      return this.multiplyMatrices(matrix, this);
+    }
+    /**
+     * Multiply two {@link Mat3}
+     * @param a - first {@link Mat3}
+     * @param b - second {@link Mat3}
+     * @returns - {@link Mat3} resulting from the multiplication
+     */
+    multiplyMatrices(a = new Mat3(), b = new Mat3()) {
+      const ae = a.elements;
+      const be = b.elements;
+      const te = this.elements;
+      const a11 = ae[0], a12 = ae[3], a13 = ae[6];
+      const a21 = ae[1], a22 = ae[4], a23 = ae[7];
+      const a31 = ae[2], a32 = ae[5], a33 = ae[8];
+      const b11 = be[0], b12 = be[3], b13 = be[6];
+      const b21 = be[1], b22 = be[4], b23 = be[7];
+      const b31 = be[2], b32 = be[5], b33 = be[8];
+      te[0] = a11 * b11 + a12 * b21 + a13 * b31;
+      te[3] = a11 * b12 + a12 * b22 + a13 * b32;
+      te[6] = a11 * b13 + a12 * b23 + a13 * b33;
+      te[1] = a21 * b11 + a22 * b21 + a23 * b31;
+      te[4] = a21 * b12 + a22 * b22 + a23 * b32;
+      te[7] = a21 * b13 + a22 * b23 + a23 * b33;
+      te[2] = a31 * b11 + a32 * b21 + a33 * b31;
+      te[5] = a31 * b12 + a32 * b22 + a33 * b32;
+      te[8] = a31 * b13 + a32 * b23 + a33 * b33;
+      return this;
+    }
+    /**
+     * Invert this {@link Mat3}.
+     * @returns - this {@link Mat3} after being inverted
+     */
+    invert() {
+      const te = this.elements, n11 = te[0], n21 = te[1], n31 = te[2], n12 = te[3], n22 = te[4], n32 = te[5], n13 = te[6], n23 = te[7], n33 = te[8], t11 = n33 * n22 - n32 * n23, t12 = n32 * n13 - n33 * n12, t13 = n23 * n12 - n22 * n13, det = n11 * t11 + n21 * t12 + n31 * t13;
+      if (det === 0)
+        return this.set(0, 0, 0, 0, 0, 0, 0, 0, 0);
+      const detInv = 1 / det;
+      te[0] = t11 * detInv;
+      te[1] = (n31 * n23 - n33 * n21) * detInv;
+      te[2] = (n32 * n21 - n31 * n22) * detInv;
+      te[3] = t12 * detInv;
+      te[4] = (n33 * n11 - n31 * n13) * detInv;
+      te[5] = (n31 * n12 - n32 * n11) * detInv;
+      te[6] = t13 * detInv;
+      te[7] = (n21 * n13 - n23 * n11) * detInv;
+      te[8] = (n22 * n11 - n21 * n12) * detInv;
+      return this;
+    }
+    /**
+     * Transpose this {@link Mat3}.
+     * @returns - this {@link Mat3} after being transposed
+     */
+    transpose() {
+      let tmp;
+      const m = this.elements;
+      tmp = m[1];
+      m[1] = m[3];
+      m[3] = tmp;
+      tmp = m[2];
+      m[2] = m[6];
+      m[6] = tmp;
+      tmp = m[5];
+      m[5] = m[7];
+      m[7] = tmp;
+      return this;
+    }
+    /**
+     * Compute a normal {@link Mat3} matrix from a {@link Mat4} transformation matrix.
+     * @param matrix - {@link Mat4} transformation matrix
+     * @returns - this {@link Mat3} after being inverted and transposed
+     */
+    getNormalMatrix(matrix = new Mat4()) {
+      return this.setFromMat4(matrix).invert().transpose();
+    }
+  }
+
+  class ProjectedObject3D extends Object3D {
+    /**
+     * ProjectedObject3D constructor
+     * @param renderer - {@link CameraRenderer} object or {@link GPUCurtains} class object used to create this {@link ProjectedObject3D}
+     */
+    constructor(renderer) {
+      super();
+      renderer = isCameraRenderer(renderer, "ProjectedObject3D");
+      this.camera = renderer.camera;
+    }
+    /**
+     * Tell our projection matrix stack to update
+     */
+    applyPosition() {
+      super.applyPosition();
+      this.shouldUpdateProjectionMatrixStack();
+    }
+    /**
+     * Tell our projection matrix stack to update
+     */
+    applyRotation() {
+      super.applyRotation();
+      this.shouldUpdateProjectionMatrixStack();
+    }
+    /**
+     * Tell our projection matrix stack to update
+     */
+    applyScale() {
+      super.applyScale();
+      this.shouldUpdateProjectionMatrixStack();
+    }
+    /**
+     * Tell our projection matrix stack to update
+     */
+    applyTransformOrigin() {
+      super.applyTransformOrigin();
+      this.shouldUpdateProjectionMatrixStack();
+    }
+    /**
+     * Set our transform and projection matrices
+     */
+    setMatrices() {
+      super.setMatrices();
+      this.matrices = {
+        ...this.matrices,
+        modelView: {
+          matrix: new Mat4(),
+          shouldUpdate: true,
+          onUpdate: () => {
+            this.modelViewMatrix.multiplyMatrices(this.viewMatrix, this.worldMatrix);
+          }
+        },
+        modelViewProjection: {
+          matrix: new Mat4(),
+          shouldUpdate: true,
+          onUpdate: () => {
+            this.modelViewProjectionMatrix.multiplyMatrices(this.projectionMatrix, this.modelViewMatrix);
+          }
+        },
+        normal: {
+          matrix: new Mat3(),
+          shouldUpdate: true,
+          onUpdate: () => {
+            this.normalMatrix.getNormalMatrix(this.worldMatrix);
+          }
+        }
+      };
+    }
+    /**
+     * Get our {@link modelViewMatrix | model view matrix}
+     */
+    get modelViewMatrix() {
+      return this.matrices.modelView.matrix;
+    }
+    /**
+     * Set our {@link modelViewMatrix | model view matrix}
+     * @param value - new {@link modelViewMatrix | model view matrix}
+     */
+    set modelViewMatrix(value) {
+      this.matrices.modelView.matrix = value;
+      this.matrices.modelView.shouldUpdate = true;
+    }
+    /**
+     * Get our {@link Camera#viewMatrix | camera view matrix}
+     * @readonly
+     */
+    get viewMatrix() {
+      return this.camera.viewMatrix;
+    }
+    /**
+     * Get our {@link Camera#projectionMatrix | camera projection matrix}
+     * @readonly
+     */
+    get projectionMatrix() {
+      return this.camera.projectionMatrix;
+    }
+    /**
+     * Get our {@link modelViewProjectionMatrix | model view projection matrix}
+     */
+    get modelViewProjectionMatrix() {
+      return this.matrices.modelViewProjection.matrix;
+    }
+    /**
+     * Set our {@link modelViewProjectionMatrix | model view projection matrix}
+     * @param value - new {@link modelViewProjectionMatrix | model view projection matrix}s
+     */
+    set modelViewProjectionMatrix(value) {
+      this.matrices.modelViewProjection.matrix = value;
+      this.matrices.modelViewProjection.shouldUpdate = true;
+    }
+    /**
+     * Get our {@link normalMatrix | normal matrix}
+     */
+    get normalMatrix() {
+      return this.matrices.normal.matrix;
+    }
+    /**
+     * Set our {@link normalMatrix | normal matrix}
+     * @param value - new {@link normalMatrix | normal matrix}
+     */
+    set normalMatrix(value) {
+      this.matrices.normal.matrix = value;
+      this.matrices.normal.shouldUpdate = true;
+    }
+    /**
+     * Set our projection matrices shouldUpdate flags to true (tell them to update)
+     */
+    shouldUpdateProjectionMatrixStack() {
+      this.matrices.modelView.shouldUpdate = true;
+      this.matrices.modelViewProjection.shouldUpdate = true;
+    }
+    /**
+     * When the world matrix update, tell our projection matrix to update as well
+     */
+    shouldUpdateWorldMatrix() {
+      super.shouldUpdateWorldMatrix();
+      this.shouldUpdateProjectionMatrixStack();
+      this.matrices.normal.shouldUpdate = true;
+    }
+    /**
+     * Tell all our matrices to update
+     */
+    shouldUpdateMatrixStack() {
+      this.shouldUpdateModelMatrix();
+      this.shouldUpdateProjectionMatrixStack();
+    }
+  }
+
+  const formatRendererError = (renderer, rendererType = "GPURenderer", type) => {
+    const error = type ? `Unable to create ${type} because the ${rendererType} is not defined: ${renderer}` : `The ${rendererType} is not defined: ${renderer}`;
+    throwError(error);
+  };
+  const isRenderer = (renderer, type) => {
+    renderer = renderer && renderer.renderer || renderer;
+    const isRenderer2 = renderer && (renderer.type === "GPURenderer" || renderer.type === "GPUCameraRenderer" || renderer.type === "GPUCurtainsRenderer");
+    if (!isRenderer2) {
+      formatRendererError(renderer, "GPURenderer", type);
+    }
+    return renderer;
+  };
+  const isCameraRenderer = (renderer, type) => {
+    renderer = renderer && renderer.renderer || renderer;
+    const isCameraRenderer2 = renderer && (renderer.type === "GPUCameraRenderer" || renderer.type === "GPUCurtainsRenderer");
+    if (!isCameraRenderer2) {
+      formatRendererError(renderer, "GPUCameraRenderer", type);
+    }
+    return renderer;
+  };
+  const isCurtainsRenderer = (renderer, type) => {
+    renderer = renderer && renderer.renderer || renderer;
+    const isCurtainsRenderer2 = renderer && renderer.type === "GPUCurtainsRenderer";
+    if (!isCurtainsRenderer2) {
+      formatRendererError(renderer, "GPUCurtainsRenderer", type);
+    }
+    return renderer;
+  };
+  const isProjectedMesh = (object) => {
+    return "geometry" in object && "material" in object && object instanceof ProjectedObject3D ? object : false;
+  };
+
+  const WebGPUShaderStageConstants = typeof GPUShaderStage !== "undefined" ? GPUShaderStage : {
+    VERTEX: 1,
+    FRAGMENT: 2,
+    COMPUTE: 4
+  };
+  const WebGPUBufferUsageConstants = typeof GPUBufferUsage !== "undefined" ? GPUBufferUsage : {
+    MAP_READ: 1,
+    MAP_WRITE: 2,
+    COPY_SRC: 4,
+    COPY_DST: 8,
+    INDEX: 16,
+    VERTEX: 32,
+    UNIFORM: 64,
+    STORAGE: 128,
+    INDIRECT: 256,
+    QUERY_RESOLVE: 512
+  };
+  const WebGPUTextureUsageConstants = typeof GPUTextureUsage !== "undefined" ? GPUTextureUsage : {
+    COPY_SRC: 1,
+    COPY_DST: 2,
+    TEXTURE_BINDING: 4,
+    STORAGE_BINDING: 8,
+    RENDER_ATTACHMENT: 16
+  };
+
+  const bindingVisibilities = /* @__PURE__ */ new Map([
+    ["vertex", WebGPUShaderStageConstants.VERTEX],
+    ["fragment", WebGPUShaderStageConstants.FRAGMENT],
+    ["compute", WebGPUShaderStageConstants.COMPUTE]
+  ]);
+  const getBindingVisibility = (visibilities = []) => {
+    return visibilities.reduce((acc, v) => {
+      return acc | bindingVisibilities.get(v);
+    }, 0);
+  };
+  const bufferLayouts = {
+    i32: { numElements: 1, align: 4, size: 4, type: "i32", View: Int32Array },
+    u32: { numElements: 1, align: 4, size: 4, type: "u32", View: Uint32Array },
+    f32: { numElements: 1, align: 4, size: 4, type: "f32", View: Float32Array },
+    f16: { numElements: 1, align: 2, size: 2, type: "u16", View: Uint16Array },
+    vec2f: { numElements: 2, align: 8, size: 8, type: "f32", View: Float32Array },
+    vec2i: { numElements: 2, align: 8, size: 8, type: "i32", View: Int32Array },
+    vec2u: { numElements: 2, align: 8, size: 8, type: "u32", View: Uint32Array },
+    vec2h: { numElements: 2, align: 4, size: 4, type: "u16", View: Uint16Array },
+    vec3i: { numElements: 3, align: 16, size: 12, type: "i32", View: Int32Array },
+    vec3u: { numElements: 3, align: 16, size: 12, type: "u32", View: Uint32Array },
+    vec3f: { numElements: 3, align: 16, size: 12, type: "f32", View: Float32Array },
+    vec3h: { numElements: 3, align: 8, size: 6, type: "u16", View: Uint16Array },
+    vec4i: { numElements: 4, align: 16, size: 16, type: "i32", View: Int32Array },
+    vec4u: { numElements: 4, align: 16, size: 16, type: "u32", View: Uint32Array },
+    vec4f: { numElements: 4, align: 16, size: 16, type: "f32", View: Float32Array },
+    vec4h: { numElements: 4, align: 8, size: 8, type: "u16", View: Uint16Array },
+    // AlignOf(vecR)	SizeOf(array<vecR, C>)
+    mat2x2f: { numElements: 4, align: 8, size: 16, type: "f32", View: Float32Array },
+    mat2x2h: { numElements: 4, align: 4, size: 8, type: "u16", View: Uint16Array },
+    mat3x2f: { numElements: 6, align: 8, size: 24, type: "f32", View: Float32Array },
+    mat3x2h: { numElements: 6, align: 4, size: 12, type: "u16", View: Uint16Array },
+    mat4x2f: { numElements: 8, align: 8, size: 32, type: "f32", View: Float32Array },
+    mat4x2h: { numElements: 8, align: 4, size: 16, type: "u16", View: Uint16Array },
+    mat2x3f: { numElements: 8, align: 16, size: 32, pad: [3, 1], type: "f32", View: Float32Array },
+    mat2x3h: { numElements: 8, align: 8, size: 16, pad: [3, 1], type: "u16", View: Uint16Array },
+    mat3x3f: { numElements: 12, align: 16, size: 48, pad: [3, 1], type: "f32", View: Float32Array },
+    mat3x3h: { numElements: 12, align: 8, size: 24, pad: [3, 1], type: "u16", View: Uint16Array },
+    mat4x3f: { numElements: 16, align: 16, size: 64, pad: [3, 1], type: "f32", View: Float32Array },
+    mat4x3h: { numElements: 16, align: 8, size: 32, pad: [3, 1], type: "u16", View: Uint16Array },
+    mat2x4f: { numElements: 8, align: 16, size: 32, type: "f32", View: Float32Array },
+    mat2x4h: { numElements: 8, align: 8, size: 16, type: "u16", View: Uint16Array },
+    mat3x4f: { numElements: 12, align: 16, size: 48, pad: [3, 1], type: "f32", View: Float32Array },
+    mat3x4h: { numElements: 12, align: 8, size: 24, pad: [3, 1], type: "u16", View: Uint16Array },
+    mat4x4f: { numElements: 16, align: 16, size: 64, type: "f32", View: Float32Array },
+    mat4x4h: { numElements: 16, align: 8, size: 32, type: "u16", View: Uint16Array }
+  };
+  const getBufferLayout = (bufferType) => {
+    return bufferLayouts[bufferType];
+  };
+  const getBindingWGSLVarType = (binding) => {
+    return (() => {
+      switch (binding.bindingType) {
+        case "storage":
+          return `var<${binding.bindingType}, ${binding.options.access}>`;
+        case "uniform":
+        default:
+          return "var<uniform>";
+      }
+    })();
+  };
+  const getTextureBindingWGSLVarType = (binding) => {
+    if (binding.bindingType === "externalTexture") {
+      return `var ${binding.name}: texture_external;`;
+    }
+    return binding.bindingType === "storage" ? `var ${binding.name}: texture_storage_${binding.options.viewDimension.replace("-", "_")}<${binding.options.format}, ${binding.options.access}>;` : binding.bindingType === "depth" ? `var ${binding.name}: texture_depth${binding.options.multisampled ? "_multisampled" : ""}_${binding.options.viewDimension.replace("-", "_")};` : `var ${binding.name}: texture${binding.options.multisampled ? "_multisampled" : ""}_${binding.options.viewDimension.replace("-", "_")}<f32>;`;
+  };
+  const getBindGroupLayoutBindingType = (binding) => {
+    if (binding.bindingType === "storage" && binding.options.access === "read_write") {
+      return "storage";
+    } else if (binding.bindingType === "storage") {
+      return "read-only-storage";
+    } else {
+      return "uniform";
+    }
+  };
+  const getBindGroupLayoutTextureBindingType = (binding) => {
+    return (() => {
+      switch (binding.bindingType) {
+        case "externalTexture":
+          return { externalTexture: {} };
+        case "storage":
+          return {
+            storageTexture: {
+              format: binding.options.format,
+              viewDimension: binding.options.viewDimension
+            }
+          };
+        case "texture":
+          return {
+            texture: {
+              multisampled: binding.options.multisampled,
+              viewDimension: binding.options.viewDimension,
+              sampleType: binding.options.multisampled ? "unfilterable-float" : "float"
+            }
+          };
+        case "depth":
+          return {
+            texture: {
+              multisampled: binding.options.multisampled,
+              viewDimension: binding.options.viewDimension,
+              sampleType: "depth"
+            }
+          };
+        default:
+          return null;
+      }
+    })();
+  };
+  const getBindGroupLayoutTextureBindingCacheKey = (binding) => {
+    return (() => {
+      switch (binding.bindingType) {
+        case "externalTexture":
+          return `externalTexture,${binding.visibility},`;
+        case "storage":
+          return `storageTexture,${binding.options.format},${binding.options.viewDimension},${binding.visibility},`;
+        case "texture":
+          return `texture,${binding.options.multisampled},${binding.options.viewDimension},${binding.options.multisampled ? "unfilterable-float" : "float"},${binding.visibility},`;
+        case "depth":
+          return `depthTexture,${binding.options.format},${binding.options.viewDimension},${binding.visibility},`;
+        default:
+          return `${binding.visibility},`;
+      }
+    })();
+  };
+
+  class Binding {
+    /**
+     * Binding constructor
+     * @param parameters - {@link BindingParams | parameters} used to create our {@link Binding}
+     */
+    constructor({
+      label = "Uniform",
+      name = "uniform",
+      bindingType = "uniform",
+      visibility = ["vertex", "fragment", "compute"]
+    }) {
+      this.label = label;
+      this.name = toCamelCase(name);
+      this.bindingType = bindingType;
+      this.visibility = getBindingVisibility(visibility);
+      this.options = {
+        label,
+        name,
+        bindingType,
+        visibility
+      };
+      this.shouldResetBindGroup = false;
+      this.shouldResetBindGroupLayout = false;
+      this.cacheKey = `${bindingType},${this.visibility},`;
+    }
+  }
+
+  class Vec2 {
+    /**
+     * Vec2 constructor
+     * @param x - X component of our {@link Vec2}
+     * @param y - Y component of our {@link Vec2}
+     */
+    constructor(x = 0, y = x) {
+      this.type = "Vec2";
+      this._x = x;
+      this._y = y;
+    }
+    /**
+     * Get the X component of the {@link Vec2}
+     */
+    get x() {
+      return this._x;
+    }
+    /**
+     * Set the X component of the {@link Vec2}
+     * Can trigger {@link onChange} callback
+     * @param value - X component to set
+     */
+    set x(value) {
+      const changed = value !== this._x;
+      this._x = value;
+      changed && this._onChangeCallback && this._onChangeCallback();
+    }
+    /**
+     * Get the Y component of the {@link Vec2}
+     */
+    get y() {
+      return this._y;
+    }
+    /**
+     * Set the Y component of the {@link Vec2}
+     * Can trigger {@link onChange} callback
+     * @param value - Y component to set
+     */
+    set y(value) {
+      const changed = value !== this._y;
+      this._y = value;
+      changed && this._onChangeCallback && this._onChangeCallback();
+    }
+    /**
+     * Called when at least one component of the {@link Vec2} has changed
+     * @param callback - callback to run when at least one component of the {@link Vec2} has changed
+     * @returns - our {@link Vec2}
+     */
+    onChange(callback) {
+      if (callback) {
+        this._onChangeCallback = callback;
+      }
+      return this;
+    }
+    /**
+     * Set the {@link Vec2} from values
+     * @param x - new X component to set
+     * @param y - new Y component to set
+     * @returns - this {@link Vec2} after being set
+     */
+    set(x = 0, y = x) {
+      this.x = x;
+      this.y = y;
+      return this;
+    }
+    /**
+     * Add a {@link Vec2} to this {@link Vec2}
+     * @param vector - {@link Vec2} to add
+     * @returns - this {@link Vec2} after addition
+     */
+    add(vector = new Vec2()) {
+      this.x += vector.x;
+      this.y += vector.y;
+      return this;
+    }
+    /**
+     * Add a scalar to all the components of this {@link Vec2}
+     * @param value - number to add
+     * @returns - this {@link Vec2} after addition
+     */
+    addScalar(value = 0) {
+      this.x += value;
+      this.y += value;
+      return this;
+    }
+    /**
+     * Subtract a {@link Vec2} from this {@link Vec2}
+     * @param vector - {@link Vec2} to subtract
+     * @returns - this {@link Vec2} after subtraction
+     */
+    sub(vector = new Vec2()) {
+      this.x -= vector.x;
+      this.y -= vector.y;
+      return this;
+    }
+    /**
+     * Subtract a scalar to all the components of this {@link Vec2}
+     * @param value - number to subtract
+     * @returns - this {@link Vec2} after subtraction
+     */
+    subScalar(value = 0) {
+      this.x -= value;
+      this.y -= value;
+      return this;
+    }
+    /**
+     * Multiply a {@link Vec2} with this {@link Vec2}
+     * @param vector - {@link Vec2} to multiply with
+     * @returns - this {@link Vec2} after multiplication
+     */
+    multiply(vector = new Vec2(1)) {
+      this.x *= vector.x;
+      this.y *= vector.y;
+      return this;
+    }
+    /**
+     * Multiply all components of this {@link Vec2} with a scalar
+     * @param value - number to multiply with
+     * @returns - this {@link Vec2} after multiplication
+     */
+    multiplyScalar(value = 1) {
+      this.x *= value;
+      this.y *= value;
+      return this;
+    }
+    /**
+     * Divide a {@link Vec2} with this {@link Vec2}
+     * @param vector - {@link Vec2} to divide with
+     * @returns - this {@link Vec2} after division
+     */
+    divide(vector = new Vec2(1)) {
+      this.x /= vector.x;
+      this.y /= vector.y;
+      return this;
+    }
+    /**
+     * Divide all components of this {@link Vec2} with a scalar
+     * @param value - number to divide with
+     * @returns - this {@link Vec2} after division
+     */
+    divideScalar(value = 1) {
+      this.x /= value;
+      this.y /= value;
+      return this;
+    }
+    /**
+     * Copy a {@link Vec2} into this {@link Vec2}
+     * @param vector - {@link Vec2} to copy
+     * @returns - this {@link Vec2} after copy
+     */
+    copy(vector = new Vec2()) {
+      this.x = vector.x;
+      this.y = vector.y;
+      return this;
+    }
+    /**
+     * Clone this {@link Vec2}
+     * @returns - cloned {@link Vec2}
+     */
+    clone() {
+      return new Vec2(this.x, this.y);
+    }
+    /**
+     * Apply max values to this {@link Vec2} components
+     * @param vector - {@link Vec2} representing max values
+     * @returns - {@link Vec2} with max values applied
+     */
+    max(vector = new Vec2()) {
+      this.x = Math.max(this.x, vector.x);
+      this.y = Math.max(this.y, vector.y);
+      return this;
+    }
+    /**
+     * Apply min values to this {@link Vec2} components
+     * @param vector - {@link Vec2} representing min values
+     * @returns - {@link Vec2} with min values applied
+     */
+    min(vector = new Vec2()) {
+      this.x = Math.min(this.x, vector.x);
+      this.y = Math.min(this.y, vector.y);
+      return this;
+    }
+    /**
+     * Clamp this {@link Vec2} components by min and max {@link Vec2} vectors
+     * @param min - minimum {@link Vec2} components to compare with
+     * @param max - maximum {@link Vec2} components to compare with
+     * @returns - clamped {@link Vec2}
+     */
+    clamp(min = new Vec2(), max = new Vec2()) {
+      this.x = Math.max(min.x, Math.min(max.x, this.x));
+      this.y = Math.max(min.y, Math.min(max.y, this.y));
+      return this;
+    }
+    /**
+     * Check if 2 {@link Vec2} are equal
+     * @param vector - {@link Vec2} to compare
+     * @returns - whether the {@link Vec2} are equals or not
+     */
+    equals(vector = new Vec2()) {
+      return this.x === vector.x && this.y === vector.y;
+    }
+    /**
+     * Get the square length of this {@link Vec2}
+     * @returns - square length of this {@link Vec2}
+     */
+    lengthSq() {
+      return this.x * this.x + this.y * this.y;
+    }
+    /**
+     * Get the length of this {@link Vec2}
+     * @returns - length of this {@link Vec2}
+     */
+    length() {
+      return Math.sqrt(this.lengthSq());
+    }
+    /**
+     * Normalize this {@link Vec2}
+     * @returns - normalized {@link Vec2}
+     */
+    normalize() {
+      let len = this.x * this.x + this.y * this.y;
+      if (len > 0) {
+        len = 1 / Math.sqrt(len);
+      }
+      this.x *= len;
+      this.y *= len;
+      return this;
+    }
+    /**
+     * Calculate the dot product of 2 {@link Vec2}
+     * @param vector - {@link Vec2} to use for dot product
+     * @returns - dot product of the 2 {@link Vec2}
+     */
+    dot(vector = new Vec2()) {
+      return this.x * vector.x + this.y * vector.y;
+    }
+    /**
+     * Calculate the linear interpolation of this {@link Vec2} by given {@link Vec2} and alpha, where alpha is the percent distance along the line
+     * @param vector - {@link Vec2} to interpolate towards
+     * @param [alpha=1] - interpolation factor in the [0, 1] interval
+     * @returns - this {@link Vec2} after linear interpolation
+     */
+    lerp(vector = new Vec2(), alpha = 1) {
+      this.x += (vector.x - this.x) * alpha;
+      this.y += (vector.y - this.y) * alpha;
       return this;
     }
   }
@@ -2882,971 +4199,6 @@
      */
     setWGSLFragment() {
       this.wgslGroupFragment = [`${getTextureBindingWGSLVarType(this)}`];
-    }
-  }
-
-  const xAxis = new Vec3();
-  const yAxis = new Vec3();
-  const zAxis = new Vec3();
-  class Mat4 {
-    // prettier-ignore
-    /**
-     * Mat4 constructor
-     * @param elements - initial array to use, default to identity matrix
-     */
-    constructor(elements = new Float32Array([
-      1,
-      0,
-      0,
-      0,
-      0,
-      1,
-      0,
-      0,
-      0,
-      0,
-      1,
-      0,
-      0,
-      0,
-      0,
-      1
-    ])) {
-      this.type = "Mat4";
-      this.elements = elements;
-    }
-    /***
-     * Sets the matrix from 16 numbers
-     *
-     * @param n11 - number
-     * @param n12 - number
-     * @param n13 - number
-     * @param n14 - number
-     * @param n21 - number
-     * @param n22 - number
-     * @param n23 - number
-     * @param n24 - number
-     * @param n31 - number
-     * @param n32 - number
-     * @param n33 - number
-     * @param n34 - number
-     * @param n41 - number
-     * @param n42 - number
-     * @param n43 - number
-     * @param n44 - number
-     *
-     * @returns - this {@link Mat4} after being set
-     */
-    set(n11, n12, n13, n14, n21, n22, n23, n24, n31, n32, n33, n34, n41, n42, n43, n44) {
-      const te = this.elements;
-      te[0] = n11;
-      te[1] = n12;
-      te[2] = n13;
-      te[3] = n14;
-      te[4] = n21;
-      te[5] = n22;
-      te[6] = n23;
-      te[7] = n24;
-      te[8] = n31;
-      te[9] = n32;
-      te[10] = n33;
-      te[11] = n34;
-      te[12] = n41;
-      te[13] = n42;
-      te[14] = n43;
-      te[15] = n44;
-      return this;
-    }
-    /**
-     * Sets the {@link Mat4} to an identity matrix
-     * @returns - this {@link Mat4} after being set
-     */
-    identity() {
-      this.set(
-        1,
-        0,
-        0,
-        0,
-        0,
-        1,
-        0,
-        0,
-        0,
-        0,
-        1,
-        0,
-        0,
-        0,
-        0,
-        1
-      );
-      return this;
-    }
-    /**
-     * Sets the {@link Mat4} values from an array
-     * @param array - array to use
-     * @param offset - optional offset in the array to use
-     * @returns - this {@link Mat4} after being set
-     */
-    // prettier-ignore
-    setFromArray(array = new Float32Array([
-      1,
-      0,
-      0,
-      0,
-      0,
-      1,
-      0,
-      0,
-      0,
-      0,
-      1,
-      0,
-      0,
-      0,
-      0,
-      1
-    ]), offset = 0) {
-      for (let i = 0; i < this.elements.length; i++) {
-        this.elements[i] = array[i + offset];
-      }
-      return this;
-    }
-    /**
-     * Copy another {@link Mat4}
-     * @param matrix - matrix to copy
-     * @returns - this {@link Mat4} after being set
-     */
-    copy(matrix = new Mat4()) {
-      const array = matrix.elements;
-      this.elements[0] = array[0];
-      this.elements[1] = array[1];
-      this.elements[2] = array[2];
-      this.elements[3] = array[3];
-      this.elements[4] = array[4];
-      this.elements[5] = array[5];
-      this.elements[6] = array[6];
-      this.elements[7] = array[7];
-      this.elements[8] = array[8];
-      this.elements[9] = array[9];
-      this.elements[10] = array[10];
-      this.elements[11] = array[11];
-      this.elements[12] = array[12];
-      this.elements[13] = array[13];
-      this.elements[14] = array[14];
-      this.elements[15] = array[15];
-      return this;
-    }
-    /**
-     * Clone a {@link Mat4}
-     * @returns - cloned {@link Mat4}
-     */
-    clone() {
-      return new Mat4().copy(this);
-    }
-    /**
-     * Multiply this {@link Mat4} with another {@link Mat4}
-     * @param matrix - {@link Mat4} to multiply with
-     * @returns - this {@link Mat4} after multiplication
-     */
-    multiply(matrix = new Mat4()) {
-      return this.multiplyMatrices(this, matrix);
-    }
-    /**
-     * Multiply another {@link Mat4} with this {@link Mat4}
-     * @param matrix - {@link Mat4} to multiply with
-     * @returns - this {@link Mat4} after multiplication
-     */
-    premultiply(matrix = new Mat4()) {
-      return this.multiplyMatrices(matrix, this);
-    }
-    /**
-     * Multiply two {@link Mat4}
-     * @param a - first {@link Mat4}
-     * @param b - second {@link Mat4}
-     * @returns - {@link Mat4} resulting from the multiplication
-     */
-    multiplyMatrices(a = new Mat4(), b = new Mat4()) {
-      const ae = a.elements;
-      const be = b.elements;
-      const te = this.elements;
-      const a11 = ae[0], a12 = ae[4], a13 = ae[8], a14 = ae[12];
-      const a21 = ae[1], a22 = ae[5], a23 = ae[9], a24 = ae[13];
-      const a31 = ae[2], a32 = ae[6], a33 = ae[10], a34 = ae[14];
-      const a41 = ae[3], a42 = ae[7], a43 = ae[11], a44 = ae[15];
-      const b11 = be[0], b12 = be[4], b13 = be[8], b14 = be[12];
-      const b21 = be[1], b22 = be[5], b23 = be[9], b24 = be[13];
-      const b31 = be[2], b32 = be[6], b33 = be[10], b34 = be[14];
-      const b41 = be[3], b42 = be[7], b43 = be[11], b44 = be[15];
-      te[0] = a11 * b11 + a12 * b21 + a13 * b31 + a14 * b41;
-      te[4] = a11 * b12 + a12 * b22 + a13 * b32 + a14 * b42;
-      te[8] = a11 * b13 + a12 * b23 + a13 * b33 + a14 * b43;
-      te[12] = a11 * b14 + a12 * b24 + a13 * b34 + a14 * b44;
-      te[1] = a21 * b11 + a22 * b21 + a23 * b31 + a24 * b41;
-      te[5] = a21 * b12 + a22 * b22 + a23 * b32 + a24 * b42;
-      te[9] = a21 * b13 + a22 * b23 + a23 * b33 + a24 * b43;
-      te[13] = a21 * b14 + a22 * b24 + a23 * b34 + a24 * b44;
-      te[2] = a31 * b11 + a32 * b21 + a33 * b31 + a34 * b41;
-      te[6] = a31 * b12 + a32 * b22 + a33 * b32 + a34 * b42;
-      te[10] = a31 * b13 + a32 * b23 + a33 * b33 + a34 * b43;
-      te[14] = a31 * b14 + a32 * b24 + a33 * b34 + a34 * b44;
-      te[3] = a41 * b11 + a42 * b21 + a43 * b31 + a44 * b41;
-      te[7] = a41 * b12 + a42 * b22 + a43 * b32 + a44 * b42;
-      te[11] = a41 * b13 + a42 * b23 + a43 * b33 + a44 * b43;
-      te[15] = a41 * b14 + a42 * b24 + a43 * b34 + a44 * b44;
-      return this;
-    }
-    /**
-     * {@link premultiply} this {@link Mat4} by a translate matrix (i.e. translateMatrix = new Mat4().translate(vector))
-     * @param vector - translation {@link Vec3 | vector} to use
-     * @returns - this {@link Mat4} after the premultiply translate operation
-     */
-    premultiplyTranslate(vector = new Vec3()) {
-      const a11 = 1;
-      const a22 = 1;
-      const a33 = 1;
-      const a44 = 1;
-      const a14 = vector.x;
-      const a24 = vector.y;
-      const a34 = vector.z;
-      const be = this.elements;
-      const te = this.elements;
-      const b11 = be[0], b12 = be[4], b13 = be[8], b14 = be[12];
-      const b21 = be[1], b22 = be[5], b23 = be[9], b24 = be[13];
-      const b31 = be[2], b32 = be[6], b33 = be[10], b34 = be[14];
-      const b41 = be[3], b42 = be[7], b43 = be[11], b44 = be[15];
-      te[0] = a11 * b11 + a14 * b41;
-      te[4] = a11 * b12 + a14 * b42;
-      te[8] = a11 * b13 + a14 * b43;
-      te[12] = a11 * b14 + a14 * b44;
-      te[1] = a22 * b21 + a24 * b41;
-      te[5] = a22 * b22 + a24 * b42;
-      te[9] = a22 * b23 + a24 * b43;
-      te[13] = a22 * b24 + a24 * b44;
-      te[2] = a33 * b31 + a34 * b41;
-      te[6] = a33 * b32 + a34 * b42;
-      te[10] = a33 * b33 + a34 * b43;
-      te[14] = a33 * b34 + a34 * b44;
-      te[3] = a44 * b41;
-      te[7] = a44 * b42;
-      te[11] = a44 * b43;
-      te[15] = a44 * b44;
-      return this;
-    }
-    /**
-     * {@link premultiply} this {@link Mat4} by a scale matrix (i.e. translateMatrix = new Mat4().scale(vector))
-     * @param vector - scale {@link Vec3 | vector} to use
-     * @returns - this {@link Mat4} after the premultiply scale operation
-     */
-    premultiplyScale(vector = new Vec3()) {
-      const be = this.elements;
-      const te = this.elements;
-      const a11 = vector.x;
-      const a22 = vector.y;
-      const a33 = vector.z;
-      const a44 = 1;
-      const b11 = be[0], b12 = be[4], b13 = be[8], b14 = be[12];
-      const b21 = be[1], b22 = be[5], b23 = be[9], b24 = be[13];
-      const b31 = be[2], b32 = be[6], b33 = be[10], b34 = be[14];
-      const b41 = be[3], b42 = be[7], b43 = be[11], b44 = be[15];
-      te[0] = a11 * b11;
-      te[4] = a11 * b12;
-      te[8] = a11 * b13;
-      te[12] = a11 * b14;
-      te[1] = a22 * b21;
-      te[5] = a22 * b22;
-      te[9] = a22 * b23;
-      te[13] = a22 * b24;
-      te[2] = a33 * b31;
-      te[6] = a33 * b32;
-      te[10] = a33 * b33;
-      te[14] = a33 * b34;
-      te[3] = a44 * b41;
-      te[7] = a44 * b42;
-      te[11] = a44 * b43;
-      te[15] = a44 * b44;
-      return this;
-    }
-    /**
-     * Get the {@link Mat4} inverse
-     * @returns - the inverted {@link Mat4}
-     */
-    invert() {
-      const te = this.elements, n11 = te[0], n21 = te[1], n31 = te[2], n41 = te[3], n12 = te[4], n22 = te[5], n32 = te[6], n42 = te[7], n13 = te[8], n23 = te[9], n33 = te[10], n43 = te[11], n14 = te[12], n24 = te[13], n34 = te[14], n44 = te[15], t11 = n23 * n34 * n42 - n24 * n33 * n42 + n24 * n32 * n43 - n22 * n34 * n43 - n23 * n32 * n44 + n22 * n33 * n44, t12 = n14 * n33 * n42 - n13 * n34 * n42 - n14 * n32 * n43 + n12 * n34 * n43 + n13 * n32 * n44 - n12 * n33 * n44, t13 = n13 * n24 * n42 - n14 * n23 * n42 + n14 * n22 * n43 - n12 * n24 * n43 - n13 * n22 * n44 + n12 * n23 * n44, t14 = n14 * n23 * n32 - n13 * n24 * n32 - n14 * n22 * n33 + n12 * n24 * n33 + n13 * n22 * n34 - n12 * n23 * n34;
-      const det = n11 * t11 + n21 * t12 + n31 * t13 + n41 * t14;
-      if (det === 0)
-        return this.set(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-      const detInv = 1 / det;
-      te[0] = t11 * detInv;
-      te[1] = (n24 * n33 * n41 - n23 * n34 * n41 - n24 * n31 * n43 + n21 * n34 * n43 + n23 * n31 * n44 - n21 * n33 * n44) * detInv;
-      te[2] = (n22 * n34 * n41 - n24 * n32 * n41 + n24 * n31 * n42 - n21 * n34 * n42 - n22 * n31 * n44 + n21 * n32 * n44) * detInv;
-      te[3] = (n23 * n32 * n41 - n22 * n33 * n41 - n23 * n31 * n42 + n21 * n33 * n42 + n22 * n31 * n43 - n21 * n32 * n43) * detInv;
-      te[4] = t12 * detInv;
-      te[5] = (n13 * n34 * n41 - n14 * n33 * n41 + n14 * n31 * n43 - n11 * n34 * n43 - n13 * n31 * n44 + n11 * n33 * n44) * detInv;
-      te[6] = (n14 * n32 * n41 - n12 * n34 * n41 - n14 * n31 * n42 + n11 * n34 * n42 + n12 * n31 * n44 - n11 * n32 * n44) * detInv;
-      te[7] = (n12 * n33 * n41 - n13 * n32 * n41 + n13 * n31 * n42 - n11 * n33 * n42 - n12 * n31 * n43 + n11 * n32 * n43) * detInv;
-      te[8] = t13 * detInv;
-      te[9] = (n14 * n23 * n41 - n13 * n24 * n41 - n14 * n21 * n43 + n11 * n24 * n43 + n13 * n21 * n44 - n11 * n23 * n44) * detInv;
-      te[10] = (n12 * n24 * n41 - n14 * n22 * n41 + n14 * n21 * n42 - n11 * n24 * n42 - n12 * n21 * n44 + n11 * n22 * n44) * detInv;
-      te[11] = (n13 * n22 * n41 - n12 * n23 * n41 - n13 * n21 * n42 + n11 * n23 * n42 + n12 * n21 * n43 - n11 * n22 * n43) * detInv;
-      te[12] = t14 * detInv;
-      te[13] = (n13 * n24 * n31 - n14 * n23 * n31 + n14 * n21 * n33 - n11 * n24 * n33 - n13 * n21 * n34 + n11 * n23 * n34) * detInv;
-      te[14] = (n14 * n22 * n31 - n12 * n24 * n31 - n14 * n21 * n32 + n11 * n24 * n32 + n12 * n21 * n34 - n11 * n22 * n34) * detInv;
-      te[15] = (n12 * n23 * n31 - n13 * n22 * n31 + n13 * n21 * n32 - n11 * n23 * n32 - n12 * n21 * n33 + n11 * n22 * n33) * detInv;
-      return this;
-    }
-    /**
-     * Clone and invert the {@link Mat4}
-     * @returns - inverted cloned {@link Mat4}
-     */
-    getInverse() {
-      return this.clone().invert();
-    }
-    /**
-     * Transpose this {@link Mat4}
-     * @returns - the transposed {@link Mat4}
-     */
-    transpose() {
-      let t;
-      const te = this.elements;
-      t = te[1];
-      te[1] = te[4];
-      te[4] = t;
-      t = te[2];
-      te[2] = te[8];
-      te[8] = t;
-      t = te[3];
-      te[3] = te[12];
-      te[12] = t;
-      t = te[6];
-      te[6] = te[9];
-      te[9] = t;
-      t = te[7];
-      te[7] = te[13];
-      te[13] = t;
-      t = te[11];
-      te[11] = te[14];
-      te[14] = t;
-      return this;
-    }
-    /**
-     * Translate a {@link Mat4}
-     * @param vector - translation {@link Vec3 | vector} to use
-     * @returns - translated {@link Mat4}
-     */
-    translate(vector = new Vec3()) {
-      const a = this.elements;
-      a[12] = a[0] * vector.x + a[4] * vector.y + a[8] * vector.z + a[12];
-      a[13] = a[1] * vector.x + a[5] * vector.y + a[9] * vector.z + a[13];
-      a[14] = a[2] * vector.x + a[6] * vector.y + a[10] * vector.z + a[14];
-      a[15] = a[3] * vector.x + a[7] * vector.y + a[11] * vector.z + a[15];
-      return this;
-    }
-    /**
-     * Get the translation {@link Vec3} component of a {@link Mat4}
-     * @param position - {@link Vec3} to set
-     * @returns - translation {@link Vec3} component of this {@link Mat4}
-     */
-    getTranslation(position = new Vec3()) {
-      return position.set(this.elements[12], this.elements[13], this.elements[14]);
-    }
-    /**
-     * Scale a {@link Mat4}
-     * @param vector - scale {@link Vec3 | vector} to use
-     * @returns - scaled {@link Mat4}
-     */
-    scale(vector = new Vec3()) {
-      const a = this.elements;
-      a[0] *= vector.x;
-      a[1] *= vector.x;
-      a[2] *= vector.x;
-      a[3] *= vector.x;
-      a[4] *= vector.y;
-      a[5] *= vector.y;
-      a[6] *= vector.y;
-      a[7] *= vector.y;
-      a[8] *= vector.z;
-      a[9] *= vector.z;
-      a[10] *= vector.z;
-      a[11] *= vector.z;
-      return this;
-    }
-    /**
-     * Rotate a {@link Mat4} from a {@link Quat | quaternion}
-     * @param quaternion - {@link Quat | quaternion} to use
-     * @returns - rotated {@link Mat4}
-     */
-    rotateFromQuaternion(quaternion = new Quat()) {
-      const te = this.elements;
-      const x = quaternion.elements[0], y = quaternion.elements[1], z = quaternion.elements[2], w = quaternion.elements[3];
-      const x2 = x + x, y2 = y + y, z2 = z + z;
-      const xx = x * x2, xy = x * y2, xz = x * z2;
-      const yy = y * y2, yz = y * z2, zz = z * z2;
-      const wx = w * x2, wy = w * y2, wz = w * z2;
-      te[0] = 1 - (yy + zz);
-      te[4] = xy - wz;
-      te[8] = xz + wy;
-      te[1] = xy + wz;
-      te[5] = 1 - (xx + zz);
-      te[9] = yz - wx;
-      te[2] = xz - wy;
-      te[6] = yz + wx;
-      te[10] = 1 - (xx + yy);
-      return this;
-    }
-    /**
-     * Get the maximum scale of the {@link Mat4} on all axes
-     * @returns - maximum scale of the {@link Mat4}
-     */
-    getMaxScaleOnAxis() {
-      const te = this.elements;
-      const scaleXSq = te[0] * te[0] + te[1] * te[1] + te[2] * te[2];
-      const scaleYSq = te[4] * te[4] + te[5] * te[5] + te[6] * te[6];
-      const scaleZSq = te[8] * te[8] + te[9] * te[9] + te[10] * te[10];
-      return Math.sqrt(Math.max(scaleXSq, scaleYSq, scaleZSq));
-    }
-    /**
-     * Creates a {@link Mat4} from a {@link Quat | quaternion} rotation, {@link Vec3 | vector} translation and {@link Vec3 | vector} scale
-     * Equivalent for applying translation, rotation and scale matrices but much faster
-     * Source code from: http://glmatrix.net/docs/mat4.js.html
-     *
-     * @param translation - translation {@link Vec3 | vector} to use
-     * @param quaternion - {@link Quat | quaternion} to use
-     * @param scale - translation {@link Vec3 | vector} to use
-     * @returns - transformed {@link Mat4}
-     */
-    compose(translation = new Vec3(), quaternion = new Quat(), scale = new Vec3(1)) {
-      const matrix = this.elements;
-      const x = quaternion.elements[0], y = quaternion.elements[1], z = quaternion.elements[2], w = quaternion.elements[3];
-      const x2 = x + x;
-      const y2 = y + y;
-      const z2 = z + z;
-      const xx = x * x2;
-      const xy = x * y2;
-      const xz = x * z2;
-      const yy = y * y2;
-      const yz = y * z2;
-      const zz = z * z2;
-      const wx = w * x2;
-      const wy = w * y2;
-      const wz = w * z2;
-      const sx = scale.x;
-      const sy = scale.y;
-      const sz = scale.z;
-      matrix[0] = (1 - (yy + zz)) * sx;
-      matrix[1] = (xy + wz) * sx;
-      matrix[2] = (xz - wy) * sx;
-      matrix[3] = 0;
-      matrix[4] = (xy - wz) * sy;
-      matrix[5] = (1 - (xx + zz)) * sy;
-      matrix[6] = (yz + wx) * sy;
-      matrix[7] = 0;
-      matrix[8] = (xz + wy) * sz;
-      matrix[9] = (yz - wx) * sz;
-      matrix[10] = (1 - (xx + yy)) * sz;
-      matrix[11] = 0;
-      matrix[12] = translation.x;
-      matrix[13] = translation.y;
-      matrix[14] = translation.z;
-      matrix[15] = 1;
-      return this;
-    }
-    /**
-     * Creates a {@link Mat4} from a {@link Quat | quaternion} rotation, {@link Vec3 | vector} translation and {@link Vec3 | vector} scale, rotating and scaling around the given {@link Vec3 | origin vector}
-     * Equivalent for applying translation, rotation and scale matrices but much faster
-     * Source code from: http://glmatrix.net/docs/mat4.js.html
-     *
-     * @param translation - translation {@link Vec3 | vector} to use
-     * @param quaternion - {@link Quat | quaternion} to use
-     * @param scale - translation {@link Vec3 | vector} to use
-     * @param origin - origin {@link Vec3 | vector} around which to scale and rotate
-     * @returns - transformed {@link Mat4}
-     */
-    composeFromOrigin(translation = new Vec3(), quaternion = new Quat(), scale = new Vec3(1), origin = new Vec3()) {
-      const matrix = this.elements;
-      const x = quaternion.elements[0], y = quaternion.elements[1], z = quaternion.elements[2], w = quaternion.elements[3];
-      const x2 = x + x;
-      const y2 = y + y;
-      const z2 = z + z;
-      const xx = x * x2;
-      const xy = x * y2;
-      const xz = x * z2;
-      const yy = y * y2;
-      const yz = y * z2;
-      const zz = z * z2;
-      const wx = w * x2;
-      const wy = w * y2;
-      const wz = w * z2;
-      const sx = scale.x;
-      const sy = scale.y;
-      const sz = scale.z;
-      const ox = origin.x;
-      const oy = origin.y;
-      const oz = origin.z;
-      const out0 = (1 - (yy + zz)) * sx;
-      const out1 = (xy + wz) * sx;
-      const out2 = (xz - wy) * sx;
-      const out4 = (xy - wz) * sy;
-      const out5 = (1 - (xx + zz)) * sy;
-      const out6 = (yz + wx) * sy;
-      const out8 = (xz + wy) * sz;
-      const out9 = (yz - wx) * sz;
-      const out10 = (1 - (xx + yy)) * sz;
-      matrix[0] = out0;
-      matrix[1] = out1;
-      matrix[2] = out2;
-      matrix[3] = 0;
-      matrix[4] = out4;
-      matrix[5] = out5;
-      matrix[6] = out6;
-      matrix[7] = 0;
-      matrix[8] = out8;
-      matrix[9] = out9;
-      matrix[10] = out10;
-      matrix[11] = 0;
-      matrix[12] = translation.x + ox - (out0 * ox + out4 * oy + out8 * oz);
-      matrix[13] = translation.y + oy - (out1 * ox + out5 * oy + out9 * oz);
-      matrix[14] = translation.z + oz - (out2 * ox + out6 * oy + out10 * oz);
-      matrix[15] = 1;
-      return this;
-    }
-    /**
-     * Set this {@link Mat4} as a rotation matrix based on an eye, target and up {@link Vec3 | vectors}
-     * @param eye - {@link Vec3 | position vector} of the object that should be rotated
-     * @param target - {@link Vec3 | target vector} to look at
-     * @param up - up {@link Vec3 | vector}
-     * @returns - rotated {@link Mat4}
-     */
-    lookAt(eye = new Vec3(), target = new Vec3(), up = new Vec3(0, 1, 0)) {
-      const te = this.elements;
-      zAxis.copy(eye).sub(target);
-      if (zAxis.lengthSq() === 0) {
-        zAxis.z = 1;
-      }
-      zAxis.normalize();
-      xAxis.crossVectors(up, zAxis);
-      if (xAxis.lengthSq() === 0) {
-        if (Math.abs(up.z) === 1) {
-          zAxis.x += 1e-4;
-        } else {
-          zAxis.z += 1e-4;
-        }
-        zAxis.normalize();
-        xAxis.crossVectors(up, zAxis);
-      }
-      xAxis.normalize();
-      yAxis.crossVectors(zAxis, xAxis);
-      te[0] = xAxis.x;
-      te[1] = xAxis.y;
-      te[2] = xAxis.z;
-      te[3] = 0;
-      te[4] = yAxis.x;
-      te[5] = yAxis.y;
-      te[6] = yAxis.z;
-      te[7] = 0;
-      te[8] = zAxis.x;
-      te[9] = zAxis.y;
-      te[10] = zAxis.z;
-      te[11] = 0;
-      te[12] = eye.x;
-      te[13] = eye.y;
-      te[14] = eye.z;
-      te[15] = 1;
-      return this;
-    }
-    /**
-     * Compute a view {@link Mat4} matrix.
-     *
-     * This is a view matrix which transforms all other objects
-     * to be in the space of the view defined by the parameters.
-     *
-     * Equivalent to `matrix.lookAt(eye, target, up).invert()` but faster.
-     *
-     * @param eye - the position of the object.
-     * @param target - the position meant to be aimed at.
-     * @param up - a vector pointing up.
-     * @returns - the view {@link Mat4} matrix.
-     */
-    makeView(eye = new Vec3(), target = new Vec3(), up = new Vec3(0, 1, 0)) {
-      const te = this.elements;
-      zAxis.copy(eye).sub(target).normalize();
-      xAxis.crossVectors(up, zAxis).normalize();
-      yAxis.crossVectors(zAxis, xAxis).normalize();
-      te[0] = xAxis.x;
-      te[1] = yAxis.x;
-      te[2] = zAxis.x;
-      te[3] = 0;
-      te[4] = xAxis.y;
-      te[5] = yAxis.y;
-      te[6] = zAxis.y;
-      te[7] = 0;
-      te[8] = xAxis.z;
-      te[9] = yAxis.z;
-      te[10] = zAxis.z;
-      te[11] = 0;
-      te[12] = -(xAxis.x * eye.x + xAxis.y * eye.y + xAxis.z * eye.z);
-      te[13] = -(yAxis.x * eye.x + yAxis.y * eye.y + yAxis.z * eye.z);
-      te[14] = -(zAxis.x * eye.x + zAxis.y * eye.y + zAxis.z * eye.z);
-      te[15] = 1;
-      return this;
-    }
-    /**
-     * Create an orthographic {@link Mat4} matrix based on the parameters. Transforms from
-     *  * the given the left, right, bottom, and top dimensions to -1 +1 in x, and y
-     *  * and 0 to +1 in z.
-     *
-     * @param parameters - {@link OrthographicProjectionParams | parameters} used to create the camera orthographic matrix.
-     * @returns - the camera orthographic {@link Mat4} matrix.
-     */
-    makeOrthographic({
-      left = -5,
-      right = 5,
-      bottom = -5,
-      top = 5,
-      near = 0.1,
-      far = 50
-    }) {
-      const te = this.elements;
-      te[0] = 2 / (right - left);
-      te[1] = 0;
-      te[2] = 0;
-      te[3] = 0;
-      te[4] = 0;
-      te[5] = 2 / (top - bottom);
-      te[6] = 0;
-      te[7] = 0;
-      te[8] = 0;
-      te[9] = 0;
-      te[10] = 1 / (near - far);
-      te[11] = 0;
-      te[12] = (right + left) / (left - right);
-      te[13] = (top + bottom) / (bottom - top);
-      te[14] = near / (near - far);
-      te[15] = 1;
-      return this;
-    }
-    /**
-     * Create a perspective {@link Mat4} matrix based on the parameters.
-     *
-     * Note, The matrix generated sends the viewing frustum to the unit box.
-     * We assume a unit box extending from -1 to 1 in the x and y dimensions and
-     * from -1 to 1 in the z dimension, as three.js and more generally WebGL handles it.
-     *
-     * @param parameters - {@link PerspectiveProjectionParams | parameters} used to create the camera perspective matrix.
-     * @returns - the camera perspective {@link Mat4} matrix.
-     */
-    makePerspective({ fov = 90, aspect = 1, near = 0.1, far = 150 }) {
-      const top = near * Math.tan(Math.PI / 180 * 0.5 * fov);
-      const height = 2 * top;
-      const width = aspect * height;
-      const left = -0.5 * width;
-      const right = left + width;
-      const bottom = top - height;
-      const x = 2 * near / (right - left);
-      const y = 2 * near / (top - bottom);
-      const a = (right + left) / (right - left);
-      const b = (top + bottom) / (top - bottom);
-      const c = -far / (far - near);
-      const d = -far * near / (far - near);
-      this.set(
-        x,
-        0,
-        0,
-        0,
-        0,
-        y,
-        0,
-        0,
-        a,
-        b,
-        c,
-        -1,
-        0,
-        0,
-        d,
-        0
-      );
-      return this;
-    }
-  }
-
-  let objectIndex = 0;
-  const tempMatrix = new Mat4();
-  class Object3D {
-    /**
-     * Object3D constructor
-     */
-    constructor() {
-      this._parent = null;
-      this.children = [];
-      this.matricesNeedUpdate = false;
-      Object.defineProperty(this, "object3DIndex", { value: objectIndex++ });
-      this.setMatrices();
-      this.setTransforms();
-    }
-    /* PARENT */
-    /**
-     * Get the parent of this {@link Object3D} if any
-     */
-    get parent() {
-      return this._parent;
-    }
-    /**
-     * Set the parent of this {@link Object3D}
-     * @param value - new parent to set, could be an {@link Object3D} or null
-     */
-    set parent(value) {
-      if (this._parent && value && this._parent.object3DIndex === value.object3DIndex) {
-        return;
-      }
-      if (this._parent) {
-        this._parent.children = this._parent.children.filter((child) => child.object3DIndex !== this.object3DIndex);
-      }
-      if (value) {
-        this.shouldUpdateWorldMatrix();
-      }
-      this._parent = value;
-      this._parent?.children.push(this);
-    }
-    /* TRANSFORMS */
-    /**
-     * Set our transforms properties and {@link Vec3#onChange | vectors onChange} callbacks
-     */
-    setTransforms() {
-      this.transforms = {
-        origin: {
-          model: new Vec3()
-        },
-        quaternion: new Quat(),
-        rotation: new Vec3(),
-        position: {
-          world: new Vec3()
-        },
-        scale: new Vec3(1)
-      };
-      this.rotation.onChange(() => this.applyRotation());
-      this.position.onChange(() => this.applyPosition());
-      this.scale.onChange(() => this.applyScale());
-      this.transformOrigin.onChange(() => this.applyTransformOrigin());
-    }
-    /**
-     * Get our rotation {@link Vec3 | vector}
-     */
-    get rotation() {
-      return this.transforms.rotation;
-    }
-    /**
-     * Set our rotation {@link Vec3 | vector}
-     * @param value - new rotation {@link Vec3 | vector}
-     */
-    set rotation(value) {
-      this.transforms.rotation = value;
-      this.applyRotation();
-    }
-    /**
-     * Get our {@link Quat | quaternion}
-     */
-    get quaternion() {
-      return this.transforms.quaternion;
-    }
-    /**
-     * Set our {@link Quat | quaternion}
-     * @param value - new {@link Quat | quaternion}
-     */
-    set quaternion(value) {
-      this.transforms.quaternion = value;
-    }
-    /**
-     * Get our position {@link Vec3 | vector}
-     */
-    get position() {
-      return this.transforms.position.world;
-    }
-    /**
-     * Set our position {@link Vec3 | vector}
-     * @param value - new position {@link Vec3 | vector}
-     */
-    set position(value) {
-      this.transforms.position.world = value;
-    }
-    /**
-     * Get our scale {@link Vec3 | vector}
-     */
-    get scale() {
-      return this.transforms.scale;
-    }
-    /**
-     * Set our scale {@link Vec3 | vector}
-     * @param value - new scale {@link Vec3 | vector}
-     */
-    set scale(value) {
-      this.transforms.scale = value;
-      this.applyScale();
-    }
-    /**
-     * Get our transform origin {@link Vec3 | vector}
-     */
-    get transformOrigin() {
-      return this.transforms.origin.model;
-    }
-    /**
-     * Set our transform origin {@link Vec3 | vector}
-     * @param value - new transform origin {@link Vec3 | vector}
-     */
-    set transformOrigin(value) {
-      this.transforms.origin.model = value;
-    }
-    /**
-     * Apply our rotation and tell our {@link modelMatrix | model matrix} to update
-     */
-    applyRotation() {
-      this.quaternion.setFromVec3(this.rotation);
-      this.shouldUpdateModelMatrix();
-    }
-    /**
-     * Tell our {@link modelMatrix | model matrix} to update
-     */
-    applyPosition() {
-      this.shouldUpdateModelMatrix();
-    }
-    /**
-     * Tell our {@link modelMatrix | model matrix} to update
-     */
-    applyScale() {
-      this.shouldUpdateModelMatrix();
-    }
-    /**
-     * Tell our {@link modelMatrix | model matrix} to update
-     */
-    applyTransformOrigin() {
-      this.shouldUpdateModelMatrix();
-    }
-    /* MATRICES */
-    /**
-     * Set our {@link modelMatrix | model matrix} and {@link worldMatrix | world matrix}
-     */
-    setMatrices() {
-      this.matrices = {
-        model: {
-          matrix: new Mat4(),
-          shouldUpdate: true,
-          onUpdate: () => this.updateModelMatrix()
-        },
-        world: {
-          matrix: new Mat4(),
-          shouldUpdate: true,
-          onUpdate: () => this.updateWorldMatrix()
-        }
-      };
-    }
-    /**
-     * Get our {@link Mat4 | model matrix}
-     */
-    get modelMatrix() {
-      return this.matrices.model.matrix;
-    }
-    /**
-     * Set our {@link Mat4 | model matrix}
-     * @param value - new {@link Mat4 | model matrix}
-     */
-    set modelMatrix(value) {
-      this.matrices.model.matrix = value;
-      this.shouldUpdateModelMatrix();
-    }
-    /**
-     * Set our {@link modelMatrix | model matrix} shouldUpdate flag to true (tell it to update)
-     */
-    shouldUpdateModelMatrix() {
-      this.matrices.model.shouldUpdate = true;
-      this.shouldUpdateWorldMatrix();
-    }
-    /**
-     * Get our {@link Mat4 | world matrix}
-     */
-    get worldMatrix() {
-      return this.matrices.world.matrix;
-    }
-    /**
-     * Set our {@link Mat4 | world matrix}
-     * @param value - new {@link Mat4 | world matrix}
-     */
-    set worldMatrix(value) {
-      this.matrices.world.matrix = value;
-      this.shouldUpdateWorldMatrix();
-    }
-    /**
-     * Set our {@link worldMatrix | world matrix} shouldUpdate flag to true (tell it to update)
-     */
-    shouldUpdateWorldMatrix() {
-      this.matrices.world.shouldUpdate = true;
-    }
-    /**
-     * Rotate this {@link Object3D} so it looks at the {@link Vec3 | target}
-     * @param target - {@link Vec3 | target} to look at
-     * @param position - {@link Vec3 | postion} from which to look at
-     */
-    lookAt(target = new Vec3(), position = this.position, up = new Vec3(0, 1, 0)) {
-      const rotationMatrix = tempMatrix.lookAt(target, position, up);
-      this.quaternion.setFromRotationMatrix(rotationMatrix);
-      this.shouldUpdateModelMatrix();
-    }
-    /**
-     * Update our {@link modelMatrix | model matrix}
-     */
-    updateModelMatrix() {
-      this.modelMatrix = this.modelMatrix.composeFromOrigin(
-        this.position,
-        this.quaternion,
-        this.scale,
-        this.transformOrigin
-      );
-      this.shouldUpdateWorldMatrix();
-    }
-    /**
-     * Update our {@link worldMatrix | model matrix}
-     */
-    updateWorldMatrix() {
-      if (!this.parent) {
-        this.worldMatrix.copy(this.modelMatrix);
-      } else {
-        this.worldMatrix.multiplyMatrices(this.parent.worldMatrix, this.modelMatrix);
-      }
-      for (let i = 0, l = this.children.length; i < l; i++) {
-        this.children[i].shouldUpdateWorldMatrix();
-      }
-    }
-    /**
-     * Check whether at least one of the matrix should be updated
-     */
-    shouldUpdateMatrices() {
-      this.matricesNeedUpdate = !!Object.values(this.matrices).find((matrix) => matrix.shouldUpdate);
-    }
-    /**
-     * Check at each render whether we should update our matrices, and update them if needed
-     */
-    updateMatrixStack() {
-      this.shouldUpdateMatrices();
-      if (this.matricesNeedUpdate) {
-        for (const matrixName in this.matrices) {
-          if (this.matrices[matrixName].shouldUpdate) {
-            this.matrices[matrixName].onUpdate();
-            this.matrices[matrixName].shouldUpdate = false;
-          }
-        }
-      }
-      for (let i = 0, l = this.children.length; i < l; i++) {
-        this.children[i].updateMatrixStack();
-      }
-    }
-    /**
-     * Destroy this {@link Object3D}. Removes its parent and set its children free.
-     */
-    destroy() {
-      for (let i = 0, l = this.children.length; i < l; i++) {
-        if (this.children[i])
-          this.children[i].parent = null;
-      }
-      this.parent = null;
     }
   }
 
@@ -10973,358 +11325,6 @@ ${geometry.wgslStructFragment}`
     }
   }
 
-  class Mat3 {
-    // prettier-ignore
-    /**
-     * Mat3 constructor
-     * @param elements - initial array to use, default to identity matrix
-     */
-    constructor(elements = new Float32Array([
-      1,
-      0,
-      0,
-      0,
-      1,
-      0,
-      0,
-      0,
-      1
-    ])) {
-      this.type = "Mat3";
-      this.elements = elements;
-    }
-    /**
-     * Sets the matrix from 9 numbers
-     *
-     * @param n11 - number
-     * @param n12 - number
-     * @param n13 - number
-     * @param n21 - number
-     * @param n22 - number
-     * @param n23 - number
-     * @param n31 - number
-     * @param n32 - number
-     * @param n33 - number
-     * @returns - this {@link Mat3} after being set
-     */
-    set(n11, n12, n13, n21, n22, n23, n31, n32, n33) {
-      const te = this.elements;
-      te[0] = n11;
-      te[1] = n21;
-      te[2] = n31;
-      te[3] = n12;
-      te[4] = n22;
-      te[5] = n32;
-      te[6] = n13;
-      te[7] = n23;
-      te[8] = n33;
-      return this;
-    }
-    /**
-     * Sets the {@link Mat3} to an identity matrix
-     * @returns - this {@link Mat3} after being set
-     */
-    identity() {
-      this.set(1, 0, 0, 0, 1, 0, 0, 0, 1);
-      return this;
-    }
-    /**
-     * Sets the {@link Mat3} values from an array
-     * @param array - array to use
-     * @param offset - optional offset in the array to use
-     * @returns - this {@link Mat3} after being set
-     */
-    // prettier-ignore
-    setFromArray(array = new Float32Array([
-      1,
-      0,
-      0,
-      0,
-      1,
-      0,
-      0,
-      0,
-      1
-    ]), offset = 0) {
-      for (let i = 0; i < this.elements.length; i++) {
-        this.elements[i] = array[i + offset];
-      }
-      return this;
-    }
-    /**
-     * Copy another {@link Mat3}
-     * @param matrix - matrix to copy
-     * @returns - this {@link Mat3} after being set
-     */
-    copy(matrix = new Mat3()) {
-      const array = matrix.elements;
-      this.elements[0] = array[0];
-      this.elements[1] = array[1];
-      this.elements[2] = array[2];
-      this.elements[3] = array[3];
-      this.elements[4] = array[4];
-      this.elements[5] = array[5];
-      this.elements[6] = array[6];
-      this.elements[7] = array[7];
-      this.elements[8] = array[8];
-      return this;
-    }
-    /**
-     * Clone a {@link Mat3}
-     * @returns - cloned {@link Mat3}
-     */
-    clone() {
-      return new Mat3().copy(this);
-    }
-    /**
-     * Set a {@link Mat3} from a {@link Mat4}.
-     * @param matrix - {@link Mat4} to use.
-     * @returns - this {@link Mat3} after being set.
-     */
-    setFromMat4(matrix = new Mat4()) {
-      const me = matrix.elements;
-      this.set(me[0], me[4], me[8], me[1], me[5], me[9], me[2], me[6], me[10]);
-      return this;
-    }
-    /**
-     * Multiply this {@link Mat3} with another {@link Mat3}
-     * @param matrix - {@link Mat3} to multiply with
-     * @returns - this {@link Mat3} after multiplication
-     */
-    multiply(matrix = new Mat3()) {
-      return this.multiplyMatrices(this, matrix);
-    }
-    /**
-     * Multiply another {@link Mat3} with this {@link Mat3}
-     * @param matrix - {@link Mat3} to multiply with
-     * @returns - this {@link Mat3} after multiplication
-     */
-    premultiply(matrix = new Mat3()) {
-      return this.multiplyMatrices(matrix, this);
-    }
-    /**
-     * Multiply two {@link Mat3}
-     * @param a - first {@link Mat3}
-     * @param b - second {@link Mat3}
-     * @returns - {@link Mat3} resulting from the multiplication
-     */
-    multiplyMatrices(a = new Mat3(), b = new Mat3()) {
-      const ae = a.elements;
-      const be = b.elements;
-      const te = this.elements;
-      const a11 = ae[0], a12 = ae[3], a13 = ae[6];
-      const a21 = ae[1], a22 = ae[4], a23 = ae[7];
-      const a31 = ae[2], a32 = ae[5], a33 = ae[8];
-      const b11 = be[0], b12 = be[3], b13 = be[6];
-      const b21 = be[1], b22 = be[4], b23 = be[7];
-      const b31 = be[2], b32 = be[5], b33 = be[8];
-      te[0] = a11 * b11 + a12 * b21 + a13 * b31;
-      te[3] = a11 * b12 + a12 * b22 + a13 * b32;
-      te[6] = a11 * b13 + a12 * b23 + a13 * b33;
-      te[1] = a21 * b11 + a22 * b21 + a23 * b31;
-      te[4] = a21 * b12 + a22 * b22 + a23 * b32;
-      te[7] = a21 * b13 + a22 * b23 + a23 * b33;
-      te[2] = a31 * b11 + a32 * b21 + a33 * b31;
-      te[5] = a31 * b12 + a32 * b22 + a33 * b32;
-      te[8] = a31 * b13 + a32 * b23 + a33 * b33;
-      return this;
-    }
-    /**
-     * Invert this {@link Mat3}.
-     * @returns - this {@link Mat3} after being inverted
-     */
-    invert() {
-      const te = this.elements, n11 = te[0], n21 = te[1], n31 = te[2], n12 = te[3], n22 = te[4], n32 = te[5], n13 = te[6], n23 = te[7], n33 = te[8], t11 = n33 * n22 - n32 * n23, t12 = n32 * n13 - n33 * n12, t13 = n23 * n12 - n22 * n13, det = n11 * t11 + n21 * t12 + n31 * t13;
-      if (det === 0)
-        return this.set(0, 0, 0, 0, 0, 0, 0, 0, 0);
-      const detInv = 1 / det;
-      te[0] = t11 * detInv;
-      te[1] = (n31 * n23 - n33 * n21) * detInv;
-      te[2] = (n32 * n21 - n31 * n22) * detInv;
-      te[3] = t12 * detInv;
-      te[4] = (n33 * n11 - n31 * n13) * detInv;
-      te[5] = (n31 * n12 - n32 * n11) * detInv;
-      te[6] = t13 * detInv;
-      te[7] = (n21 * n13 - n23 * n11) * detInv;
-      te[8] = (n22 * n11 - n21 * n12) * detInv;
-      return this;
-    }
-    /**
-     * Transpose this {@link Mat3}.
-     * @returns - this {@link Mat3} after being transposed
-     */
-    transpose() {
-      let tmp;
-      const m = this.elements;
-      tmp = m[1];
-      m[1] = m[3];
-      m[3] = tmp;
-      tmp = m[2];
-      m[2] = m[6];
-      m[6] = tmp;
-      tmp = m[5];
-      m[5] = m[7];
-      m[7] = tmp;
-      return this;
-    }
-    /**
-     * Compute a normal {@link Mat3} matrix from a {@link Mat4} transformation matrix.
-     * @param matrix - {@link Mat4} transformation matrix
-     * @returns - this {@link Mat3} after being inverted and transposed
-     */
-    getNormalMatrix(matrix = new Mat4()) {
-      return this.setFromMat4(matrix).invert().transpose();
-    }
-  }
-
-  class ProjectedObject3D extends Object3D {
-    /**
-     * ProjectedObject3D constructor
-     * @param renderer - {@link CameraRenderer} object or {@link GPUCurtains} class object used to create this {@link ProjectedObject3D}
-     */
-    constructor(renderer) {
-      super();
-      renderer = isCameraRenderer(renderer, "ProjectedObject3D");
-      this.camera = renderer.camera;
-    }
-    /**
-     * Tell our projection matrix stack to update
-     */
-    applyPosition() {
-      super.applyPosition();
-      this.shouldUpdateProjectionMatrixStack();
-    }
-    /**
-     * Tell our projection matrix stack to update
-     */
-    applyRotation() {
-      super.applyRotation();
-      this.shouldUpdateProjectionMatrixStack();
-    }
-    /**
-     * Tell our projection matrix stack to update
-     */
-    applyScale() {
-      super.applyScale();
-      this.shouldUpdateProjectionMatrixStack();
-    }
-    /**
-     * Tell our projection matrix stack to update
-     */
-    applyTransformOrigin() {
-      super.applyTransformOrigin();
-      this.shouldUpdateProjectionMatrixStack();
-    }
-    /**
-     * Set our transform and projection matrices
-     */
-    setMatrices() {
-      super.setMatrices();
-      this.matrices = {
-        ...this.matrices,
-        modelView: {
-          matrix: new Mat4(),
-          shouldUpdate: true,
-          onUpdate: () => {
-            this.modelViewMatrix.multiplyMatrices(this.viewMatrix, this.worldMatrix);
-          }
-        },
-        modelViewProjection: {
-          matrix: new Mat4(),
-          shouldUpdate: true,
-          onUpdate: () => {
-            this.modelViewProjectionMatrix.multiplyMatrices(this.projectionMatrix, this.modelViewMatrix);
-          }
-        },
-        normal: {
-          matrix: new Mat3(),
-          shouldUpdate: true,
-          onUpdate: () => {
-            this.normalMatrix.getNormalMatrix(this.worldMatrix);
-          }
-        }
-      };
-    }
-    /**
-     * Get our {@link modelViewMatrix | model view matrix}
-     */
-    get modelViewMatrix() {
-      return this.matrices.modelView.matrix;
-    }
-    /**
-     * Set our {@link modelViewMatrix | model view matrix}
-     * @param value - new {@link modelViewMatrix | model view matrix}
-     */
-    set modelViewMatrix(value) {
-      this.matrices.modelView.matrix = value;
-      this.matrices.modelView.shouldUpdate = true;
-    }
-    /**
-     * Get our {@link Camera#viewMatrix | camera view matrix}
-     * @readonly
-     */
-    get viewMatrix() {
-      return this.camera.viewMatrix;
-    }
-    /**
-     * Get our {@link Camera#projectionMatrix | camera projection matrix}
-     * @readonly
-     */
-    get projectionMatrix() {
-      return this.camera.projectionMatrix;
-    }
-    /**
-     * Get our {@link modelViewProjectionMatrix | model view projection matrix}
-     */
-    get modelViewProjectionMatrix() {
-      return this.matrices.modelViewProjection.matrix;
-    }
-    /**
-     * Set our {@link modelViewProjectionMatrix | model view projection matrix}
-     * @param value - new {@link modelViewProjectionMatrix | model view projection matrix}s
-     */
-    set modelViewProjectionMatrix(value) {
-      this.matrices.modelViewProjection.matrix = value;
-      this.matrices.modelViewProjection.shouldUpdate = true;
-    }
-    /**
-     * Get our {@link normalMatrix | normal matrix}
-     */
-    get normalMatrix() {
-      return this.matrices.normal.matrix;
-    }
-    /**
-     * Set our {@link normalMatrix | normal matrix}
-     * @param value - new {@link normalMatrix | normal matrix}
-     */
-    set normalMatrix(value) {
-      this.matrices.normal.matrix = value;
-      this.matrices.normal.shouldUpdate = true;
-    }
-    /**
-     * Set our projection matrices shouldUpdate flags to true (tell them to update)
-     */
-    shouldUpdateProjectionMatrixStack() {
-      this.matrices.modelView.shouldUpdate = true;
-      this.matrices.modelViewProjection.shouldUpdate = true;
-    }
-    /**
-     * When the world matrix update, tell our projection matrix to update as well
-     */
-    shouldUpdateWorldMatrix() {
-      super.shouldUpdateWorldMatrix();
-      this.shouldUpdateProjectionMatrixStack();
-      this.matrices.normal.shouldUpdate = true;
-    }
-    /**
-     * Tell all our matrices to update
-     */
-    shouldUpdateMatrixStack() {
-      this.shouldUpdateModelMatrix();
-      this.shouldUpdateProjectionMatrixStack();
-    }
-  }
-
   const getDefaultNormalFragmentCode = (
     /* wgsl */
     `
@@ -11965,8 +11965,8 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
   class Mesh extends ProjectedMeshBaseMixin(ProjectedObject3D) {
     /**
      * Mesh constructor
-     * @param renderer - {@link CameraRenderer} object or {@link GPUCurtains} class object used to create this {@link Mesh}
-     * @param parameters - {@link ProjectedMeshParameters | parameters} use to create this {@link Mesh}
+     * @param renderer - {@link CameraRenderer} object or {@link GPUCurtains} class object used to create this {@link Mesh}.
+     * @param parameters - {@link ProjectedMeshParameters | parameters} use to create this {@link Mesh}.
      */
     constructor(renderer, parameters = {}) {
       renderer = isCameraRenderer(renderer, parameters.label ? parameters.label + " Mesh" : "Mesh");
@@ -13214,6 +13214,7 @@ ${this.shaders.compute.head}`;
      * Resize all tracked objects ({@link Texture | textures}, {@link RenderPass | render passes}, {@link RenderTarget | render targets}, {@link ComputePass | compute passes} and meshes).
      */
     resizeObjects() {
+      this.renderBundles.forEach((renderBundle) => renderBundle.resize());
       this.textures.forEach((texture) => {
         texture.resize();
       });
@@ -13950,17 +13951,6 @@ ${this.shaders.compute.head}`;
         this.setShadowsBinding();
       }
       this.setCameraLightsBindGroup();
-      this.transmissionTarget = {
-        sampler: new Sampler(this, {
-          label: "Transmission sampler",
-          name: "transmissionSampler",
-          magFilter: "linear",
-          minFilter: "linear",
-          mipmapFilter: "linear",
-          addressModeU: "clamp-to-edge",
-          addressModeV: "clamp-to-edge"
-        })
-      };
     }
     /**
      * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} is lost.
@@ -13978,6 +13968,23 @@ ${this.shaders.compute.head}`;
       super.restoreContext();
       this.cameraLightsBindGroup?.restoreContext();
       this.updateCameraBindings();
+    }
+    /**
+     * Set our {@link renderPass | main render pass} and our {@link transmissionTarget} sampler.
+     */
+    setMainRenderPasses() {
+      super.setMainRenderPasses();
+      this.transmissionTarget = {
+        sampler: new Sampler(this, {
+          label: "Transmission sampler",
+          name: "transmissionSampler",
+          magFilter: "linear",
+          minFilter: "linear",
+          mipmapFilter: "linear",
+          addressModeU: "clamp-to-edge",
+          addressModeV: "clamp-to-edge"
+        })
+      };
     }
     /* CAMERA */
     /**
@@ -14291,6 +14298,9 @@ ${this.shaders.compute.head}`;
         bindings: Object.keys(this.bindings).map((bindingName) => this.bindings[bindingName]).flat()
       });
       this.cameraLightsBindGroup.consumers.add(this.uuid);
+      if (this.device) {
+        this.setCameraBindGroup();
+      }
     }
     /**
      * Create the {@link cameraLightsBindGroup | camera, lights and shadows bind group} buffers
@@ -15375,6 +15385,18 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
+     * If one of the {@link meshes} is using a {@link core/textures/Texture.Texture | Texture} dependent of the {@link renderer}, invalidate the {@link RenderBundle} in order to resize the {@link core/textures/Texture.Texture | Texture}.
+     */
+    resize() {
+      for (const [_uuid, mesh] of this.meshes) {
+        const hasRenderTexture = mesh.textures.find((texture) => !texture.options.fixedSize);
+        if (hasRenderTexture) {
+          this.ready = false;
+          break;
+        }
+      }
+    }
+    /**
      * Render the {@link RenderBundle}.
      *
      * If it is ready, execute each {@link core/meshes/Mesh.Mesh.onBeforeRenderPass | mesh onBeforeRenderPass method}, {@link updateBinding | update the binding} if needed, execute the {@link bundle} and finally execute each {@link core/meshes/Mesh.Mesh.onAfterRenderPass | mesh onAfterRenderPass method}.
@@ -15742,8 +15764,8 @@ fn BRDF_Lambert(diffuseColor: vec3f) -> vec3f {
   return RECIPROCAL_PI * diffuseColor;
 }
 
-fn F_Schlick(VdotH: f32, f0: vec3f, f90: f32) -> vec3f {
-  let fresnel: f32 = pow( 1.0 - VdotH, 5.0 );
+fn F_Schlick(f0: vec3f, f90: f32, VdotH: f32) -> vec3f {
+  let fresnel: f32 = exp2( ( - 5.55473 * VdotH - 6.98316 ) * VdotH );
   return f0 * ( 1.0 - fresnel ) + ( f90 * fresnel );
 }
 `
@@ -15786,7 +15808,7 @@ fn getPointLightInfo(pointLight: PointLightsElement, worldPosition: vec3f, ptr_l
   let lightDistance: f32 = length(lightDirection);
   (*ptr_light).color = pointLight.color;
   (*ptr_light).color *= rangeAttenuation(pointLight.range, lightDistance);
-  (*ptr_light).visible = length((*ptr_light).color) > 0.0001;
+  (*ptr_light).visible = length((*ptr_light).color) > 0.01;
 }
 `
   );
@@ -15909,6 +15931,9 @@ fn toneMapKhronosPbrNeutral( color: vec3f ) -> vec3f {
   // point lights
   for(var i = 0; i < pointLights.count; i++) {
     getPointLightInfo(pointLights.elements[i], worldPosition, &directLight);
+    if(!directLight.visible) {
+      continue;
+    }
     ${receiveShadows ? applyPointShadows : ""}
     getLambertDirect(normal, outputColor.rgb, directLight, &reflectedLight);
   }
@@ -15952,18 +15977,16 @@ ${toneMapping ? toneMappingUtils : ""}
 fn getLambert(
   normal: vec3f,
   worldPosition: vec3f,
-  outputColor: vec3f,
+  outputColor: vec4f,
   ${useOcclusion ? "occlusion: f32," : ""}
-) -> vec3f {
+) -> vec4f {
   ${!useOcclusion ? "let occlusion: f32 = 1.0;" : ""}
 
   ${getLambertShading({ receiveShadows })}
   
-  var color: vec3f = outgoingLight;
-  
-  ${toneMapping === "Linear" ? "outgoingLight = linearToOutput3(color);" : toneMapping === "Khronos" ? "outgoingLight = linearTosRGB(toneMapKhronosPbrNeutral(color));" : ""}
-  
-  return color;
+  ${toneMapping === "Linear" ? "outgoingLight = linearToOutput3(outgoingLight);" : toneMapping === "Khronos" ? "outgoingLight = linearTosRGB(toneMapKhronosPbrNeutral(outgoingLight));" : ""}
+    
+  return vec4(outgoingLight, outputColor.a);
 }
 `
   );
@@ -15990,7 +16013,7 @@ fn BRDF_BlinnPhong(
   let VdotH: f32 = saturate(dot(normalize(viewDirection), H));
   let NdotV: f32 = saturate(dot(normalize(normal), normalize(viewDirection)));
   
-  let F: vec3f = F_Schlick(VdotH, specularColor, 1.0);
+  let F: vec3f = F_Schlick(specularColor, 1.0, VdotH);
   
   let G: f32 = 0.25; // blinn phong implicit
   
@@ -16033,15 +16056,18 @@ fn getPhongDirect(
   // point lights
   for(var i = 0; i < pointLights.count; i++) {  
     getPointLightInfo(pointLights.elements[i], worldPosition, &directLight);
+    if(!directLight.visible) {
+      continue;
+    }
     ${receiveShadows ? applyPointShadows : ""}
-    getPhongDirect(normal, outputColor.rgb, viewDirection, specularColor, specularFactor, shininess, directLight, &reflectedLight);
+    getPhongDirect(normal, outputColor.rgb, viewDirection, specularColor, specularIntensity, shininess, directLight, &reflectedLight);
   }
   
   // directional lights
   for(var i = 0; i < directionalLights.count; i++) {
     getDirectionalLightInfo(directionalLights.elements[i], worldPosition, &directLight);
     ${receiveShadows ? applyDirectionalShadows : ""}
-    getPhongDirect(normal, outputColor.rgb, viewDirection, specularColor, specularFactor, shininess, directLight, &reflectedLight);
+    getPhongDirect(normal, outputColor.rgb, viewDirection, specularColor, specularIntensity, shininess, directLight, &reflectedLight);
   }
   
   // ambient lights
@@ -16067,22 +16093,20 @@ ${toneMapping ? toneMappingUtils : ""}
 fn getPhong(
   normal: vec3f,
   worldPosition: vec3f,
-  outputColor: vec3f,
+  outputColor: vec4f,
   viewDirection: vec3f,
+  specularIntensity: f32,
   specularColor: vec3f,
-  specularFactor: f32,
   shininess: f32,
   ${useOcclusion ? "occlusion: f32," : ""}
-) -> vec3f {
+) -> vec4f {
   ${!useOcclusion ? "let occlusion: f32 = 1.0;" : ""}
 
   ${getPhongShading({ receiveShadows })}
   
-  var color: vec3f = outgoingLight;
+  ${toneMapping === "Linear" ? "outgoingLight = linearToOutput3(outgoingLight);" : toneMapping === "Khronos" ? "outgoingLight = linearTosRGB(toneMapKhronosPbrNeutral(outgoingLight));" : ""}
   
-  ${toneMapping === "Linear" ? "outgoingLight = linearToOutput3(color);" : toneMapping === "Khronos" ? "outgoingLight = linearTosRGB(toneMapKhronosPbrNeutral(color));" : ""}
-  
-  return color;
+  return vec4(outgoingLight, outputColor.a);;
 }
 `
   );
@@ -16351,7 +16375,7 @@ fn BRDF_GGX(
   // cook-torrance brdf
   let G: f32 = GeometrySmith(NdotL, NdotV, roughness);
   let D: f32 = DistributionGGX(NdotH, roughness);
-  let F: vec3f = F_Schlick(VdotH, specularColor, specularFactor);
+  let F: vec3f = F_Schlick(specularColor, specularFactor, VdotH);
   
   return G * D * F;
 }
@@ -16409,23 +16433,21 @@ fn getPBRDirect(
 `
   );
 
-  const getPBRShading = ({
-    receiveShadows = false,
-    environmentMap = null,
-    transmissionBackgroundTexture = null,
-    extensionsUsed = []
-  } = {}) => {
-    const iblIndirect = !!environmentMap ? (
-      /* wgsl */
+  const getIBLIndirect$1 = ({
+    environmentMap = null
+  }) => {
+    let iblIndirect = "";
+    if (environmentMap) {
+      iblIndirect += /* wgs */
       `
   getIBLIndirect(
     normal,
     viewDirection,
     roughness,
     metallic,
-    metallicDiffuseColor.rgb,
+    baseDiffuseColor.rgb,
     specularColor,
-    specularFactor,
+    specularIntensity,
     ${environmentMap.sampler.name},
     ${environmentMap.lutTexture.options.name},
     ${environmentMap.specularTexture.options.name},
@@ -16434,12 +16456,18 @@ fn getPBRDirect(
     envDiffuseIntensity,
     envSpecularIntensity,
     &reflectedLight
-  );
-  `
-    ) : "";
+  );`;
+    }
+    return iblIndirect;
+  };
+
+  const getIBLVolumeRefraction = ({
+    transmissionBackgroundTexture = null,
+    extensionsUsed = []
+  }) => {
     const hasDispersion = extensionsUsed.includes("KHR_materials_dispersion");
     const iblVolumeRefractionFunction = hasDispersion ? "getIBLVolumeRefractionWithDispersion" : "getIBLVolumeRefraction";
-    const pbrTransmission = transmissionBackgroundTexture ? (
+    return transmissionBackgroundTexture ? (
       /* wgsl */
       `
   var transmissionAlpha: f32 = 1.0;
@@ -16448,7 +16476,7 @@ fn getPBRDirect(
     normal,
     normalize(viewDirection),
     roughness, 
-    metallicDiffuseColor,
+    baseDiffuseColor,
     specularColor,
     specularF90,
     worldPosition,
@@ -16460,8 +16488,8 @@ fn getPBRDirect(
     thickness,
     attenuationColor,
     attenuationDistance,
-    ${transmissionBackgroundTexture.texture},
-    ${transmissionBackgroundTexture.sampler},
+    ${transmissionBackgroundTexture.texture.options.name},
+    ${transmissionBackgroundTexture.sampler.name},
   );
   
   transmissionAlpha = mix( transmissionAlpha, transmitted.a, transmission );
@@ -16469,6 +16497,14 @@ fn getPBRDirect(
   totalDiffuse = mix(totalDiffuse, transmitted.rgb, transmission);
   outputColor.a *= transmissionAlpha;`
     ) : "";
+  };
+
+  const getPBRShading = ({
+    receiveShadows = false,
+    environmentMap = null,
+    transmissionBackgroundTexture = null,
+    extensionsUsed = []
+  } = {}) => {
     return (
       /* wgsl */
       `
@@ -16477,34 +16513,37 @@ fn getPBRDirect(
   
   ${receiveShadows ? getPCFShadows : ""}
   
-  let metallicDiffuseColor: vec4f = outputColor * ( 1.0 - metallic );
+  let baseDiffuseColor: vec4f = outputColor * ( 1.0 - metallic );
   
-  let specularF90: f32 = mix(specularFactor, 1.0, metallic);
-  let specularColor: vec3f = mix( min( pow2( ( ior - 1.0 ) / ( ior + 1.0 ) ) * specularColorFactor, vec3( 1.0 ) ) * specularFactor, outputColor.rgb, metallic );
+  let specularF90: f32 = mix(specularIntensity, 1.0, metallic);
+  specularColor = mix( min( pow2( ( ior - 1.0 ) / ( ior + 1.0 ) ) * specularColor, vec3( 1.0 ) ) * specularIntensity, outputColor.rgb, metallic );
 
   // point lights
   for(var i = 0; i < pointLights.count; i++) {
     getPointLightInfo(pointLights.elements[i], worldPosition, &directLight);
+    if(!directLight.visible) {
+      continue;
+    }
     ${receiveShadows ? applyPointShadows : ""}
-    getPBRDirect(normal, metallicDiffuseColor.rgb, viewDirection, specularFactor, specularColor, metallic, roughness, directLight, &reflectedLight);
+    getPBRDirect(normal, baseDiffuseColor.rgb, viewDirection, specularF90, specularColor, metallic, roughness, directLight, &reflectedLight);
   }
   
   // directional lights
   for(var i = 0; i < directionalLights.count; i++) {
     getDirectionalLightInfo(directionalLights.elements[i], worldPosition, &directLight);
     ${receiveShadows ? applyDirectionalShadows : ""}
-    getPBRDirect(normal, metallicDiffuseColor.rgb, viewDirection, specularFactor, specularColor, metallic, roughness, directLight, &reflectedLight);
+    getPBRDirect(normal, baseDiffuseColor.rgb, viewDirection, specularF90, specularColor, metallic, roughness, directLight, &reflectedLight);
   }
   
-  ${iblIndirect}
+  ${getIBLIndirect$1({ environmentMap })}
   
   // ambient lights
   var irradiance: vec3f = vec3(0.0);
-  RE_IndirectDiffuse(irradiance, metallicDiffuseColor.rgb, &reflectedLight);
+  RE_IndirectDiffuse(irradiance, baseDiffuseColor.rgb, &reflectedLight);
   
   // ambient lights specular
   var radiance: vec3f = vec3(0.0);
-  RE_IndirectSpecular(radiance, irradiance, normal, metallicDiffuseColor.rgb, specularFactor, specularColor, viewDirection, metallic, roughness, &reflectedLight);
+  RE_IndirectSpecular(radiance, irradiance, normal, baseDiffuseColor.rgb, specularF90, specularColor, viewDirection, metallic, roughness, &reflectedLight);
   
   reflectedLight.indirectDiffuse *= occlusion;
   
@@ -16514,7 +16553,7 @@ fn getPBRDirect(
   var totalDiffuse: vec3f = reflectedLight.indirectDiffuse + reflectedLight.directDiffuse;
   let totalSpecular: vec3f = reflectedLight.indirectSpecular + reflectedLight.directSpecular;
   
-  ${pbrTransmission}
+  ${getIBLVolumeRefraction({ transmissionBackgroundTexture, extensionsUsed })}
   
   var outgoingLight: vec3f = totalDiffuse + totalSpecular;`
     );
@@ -16540,24 +16579,27 @@ ${toneMapping ? toneMappingUtils : ""}
 fn getPBR(
   normal: vec3f,
   worldPosition: vec3f,
-  diffuseColor: vec4f,
+  outputColor: vec4f,
   viewDirection: vec3f,
   metallic: f32,
   roughness: f32,
-  specularFactor: f32,
-  specularColorFactor: vec3f,
+  specularIntensity: f32,
+  specularColor: vec3f,
   ior: f32,
+  transmission: f32,
+  dispersion: f32,
+  thickness: f32,
+  attenuationDistance: f32,
+  attenuationColor: vec3f,
   ${useOcclusion ? "occlusion: f32," : ""}
 ) -> vec4f {
   ${!useOcclusion ? "let occlusion: f32 = 1.0;" : ""}
   
   ${getPBRShading({ receiveShadows, environmentMap, transmissionBackgroundTexture, extensionsUsed })}
   
-  var outputColor: vec3f = outgoingLight;
-  
-  ${toneMapping === "Linear" ? "outgoingLight = linearToOutput3(outputColor);" : toneMapping === "Khronos" ? "outgoingLight = linearTosRGB(toneMapKhronosPbrNeutral(outputColor));" : ""}
-  
-  return vec4(outputColor, diffuseColor.a);
+  ${toneMapping === "Linear" ? "outgoingLight = linearToOutput3(outgoingLight);" : toneMapping === "Khronos" ? "outgoingLight = linearTosRGB(toneMapKhronosPbrNeutral(outgoingLight));" : ""}
+    
+  return vec4(outgoingLight, outputColor.a);
 }
 `
   );
@@ -16853,20 +16895,20 @@ struct FSInput {
       if (materialStruct.specularIntensity) {
         materialVars += /* wgsl */
         `
-  var specularFactor: f32 = ${materialUniformName}.specularIntensity;`;
+  var specularIntensity: f32 = ${materialUniformName}.specularIntensity;`;
       } else {
         materialVars += /* wgsl */
         `
-  var specularFactor: f32 = 1.0;`;
+  var specularIntensity: f32 = 1.0;`;
       }
       if (materialStruct.specularColor) {
         materialVars += /* wgsl */
         `
-  var specularColorFactor: vec3f = ${materialUniformName}.specularColor;`;
+  var specularColor: vec3f = ${materialUniformName}.specularColor;`;
       } else {
         materialVars += /* wgsl */
         `
-  var specularColorFactor: vec3f = vec3(1.0);`;
+  var specularColor: vec3f = vec3(1.0);`;
       }
       if (materialStruct.ior) {
         materialVars += /* wgsl */
@@ -16876,6 +16918,19 @@ struct FSInput {
         materialVars += /* wgsl */
         `
   var ior: f32 = 1.5;`;
+      }
+      if (shadingModel === "Phong" && materialStruct.shininess) {
+        materialVars += /* wgsl */
+        `
+  var shininess: f32 = ${materialUniformName}.shininess;`;
+      } else {
+        materialVars += /* wgsl */
+        `
+  // arbitrary computation of shininess from roughness and metallic
+  var Ns: f32 = (1.0 / max(EPSILON, roughness * roughness));  // Convert roughness to shininess
+  Ns *= (1.0 - 0.5 * metallic);  // Reduce shininess for metals
+  var shininess: f32 = clamp(Ns * 60.0, 1.0, 256.0);  // Clamp to avoid extreme values
+  shininess = 60.0;`;
       }
     }
     if (shadingModel === "PBR") {
@@ -16991,7 +17046,7 @@ struct FSInput {
     if (baseColorTexture) {
       baseColor += /* wgsl */
       `
-  let baseColorSample: vec4f = textureSample(${baseColorTexture.texture}, ${baseColorTexture.sampler}, ${baseColorTexture.texCoordAttributeName});
+  let baseColorSample: vec4f = textureSample(${baseColorTexture.texture.options.name}, ${baseColorTexture.sampler?.name ?? "defaultSampler"}, ${baseColorTexture.texCoordAttributeName ?? "uv"});
   baseColor *= baseColorSample;
   `;
     }
@@ -17075,19 +17130,40 @@ ${getFragmentInputStruct({ geometry })}
       if (!hasTangent) {
         normalTangentBitangent += /* wgsl */
         `
+  // TODO decide whether we're computing tangent and bitangent
+  // with normal or with derivatives
+  /*
   let Q1: vec3f = dpdx(worldPosition);
   let Q2: vec3f = dpdy(worldPosition);
-  let st1: vec2f = dpdx(fsInput.${normalTexture.texCoordAttributeName});
-  let st2: vec2f = dpdy(fsInput.${normalTexture.texCoordAttributeName});
+  let st1: vec2f = dpdx(fsInput.${normalTexture.texCoordAttributeName ?? "uv"});
+  let st2: vec2f = dpdy(fsInput.${normalTexture.texCoordAttributeName ?? "uv"});
   
   tangent = normalize(Q1 * st2.y - Q2 * st1.y);
   bitangent = normalize(-Q1 * st2.x + Q2 * st1.x);
+  */
+  
+  bitangent = vec3(0.0, 1.0, 0.0);
+
+  let NdotUp: f32 = dot(normal, vec3(0.0, 1.0, 0.0));
+  
+  if (1.0 - abs(NdotUp) <= EPSILON) {
+    // Sampling +Y or -Y, so we need a more robust bitangent.
+    if (NdotUp > 0.0) {
+      bitangent = vec3(0.0, 0.0, 1.0);
+    }
+    else {
+      bitangent = vec3(0.0, 0.0, -1.0);
+    }
+  }
+
+  tangent = normalize(cross(bitangent, normal));
+  bitangent = cross(normal, tangent);
   `;
       }
       normalTangentBitangent += /* wgsl */
       `
   let tbn = mat3x3f(tangent, bitangent, geometryNormal);
-  let normalMap = textureSample(${normalTexture.texture}, ${normalTexture.sampler}, ${normalTexture.texCoordAttributeName}).rgb;
+  let normalMap = textureSample(${normalTexture.texture.options.name}, ${normalTexture.sampler?.name ?? "defaultSampler"}, ${normalTexture.texCoordAttributeName ?? "uv"}).rgb;
   normal = normalize(tbn * (2.0 * normalMap - vec3(normalMapScale, normalMapScale, 1.0)));`;
     } else {
       normalTangentBitangent += /* wgsl */
@@ -17109,7 +17185,7 @@ ${getFragmentInputStruct({ geometry })}
     if (emissiveTexture) {
       emissiveOcclusion += /* wgsl */
       `
-  let emissiveSample: vec3f = textureSample(${emissiveTexture.texture}, ${emissiveTexture.sampler}, ${emissiveTexture.texCoordAttributeName}).rgb;
+  let emissiveSample: vec3f = textureSample(${emissiveTexture.texture.options.name}, ${emissiveTexture.sampler?.name ?? "defaultSampler"}, ${emissiveTexture.texCoordAttributeName ?? "uv"}).rgb;
   emissive *= emissiveSample;`;
     }
     emissiveOcclusion += /* wgsl */
@@ -17118,7 +17194,7 @@ ${getFragmentInputStruct({ geometry })}
     if (occlusionTexture) {
       emissiveOcclusion += /* wgsl */
       `
-  occlusion = textureSample(${occlusionTexture.texture}, ${occlusionTexture.sampler}, ${occlusionTexture.texCoordAttributeName}).r;`;
+  occlusion = textureSample(${occlusionTexture.texture.options.name}, ${occlusionTexture.sampler?.name ?? "defaultSampler"}, ${occlusionTexture.texCoordAttributeName ?? "uv"}).r;`;
     }
     emissiveOcclusion += /* wgsl */
     `
@@ -17188,7 +17264,7 @@ ${getFragmentInputStruct({ geometry })}
     if (metallicRoughnessTexture) {
       metallicRoughness += /* wgsl */
       `
-  let metallicRoughness = textureSample(${metallicRoughnessTexture.texture}, ${metallicRoughnessTexture.sampler}, ${metallicRoughnessTexture.texCoordAttributeName});
+  let metallicRoughness = textureSample(${metallicRoughnessTexture.texture.options.name}, ${metallicRoughnessTexture.sampler?.name ?? "defaultSampler"}, ${metallicRoughnessTexture.texCoordAttributeName ?? "uv"});
   
   metallic = metallic * metallicRoughness.b;
   roughness = roughness * metallicRoughness.g;
@@ -17197,7 +17273,7 @@ ${getFragmentInputStruct({ geometry })}
     metallicRoughness += /* wgsl */
     `
   metallic = saturate(metallic);
-  roughness = saturate(roughness);
+  roughness = clamp(roughness, 0.0525, 1.0);
   `;
     return metallicRoughness;
   };
@@ -17211,28 +17287,25 @@ ${getFragmentInputStruct({ geometry })}
     if (specularTexture) {
       specular += /* wgsl */
       `
-  let specularSample: vec4f = textureSample(${specularTexture.texture}, ${specularTexture.sampler}, ${specularTexture.texCoordAttributeName});
+  let specularSample: vec4f = textureSample(${specularTexture.texture.options.name}, ${specularTexture.sampler?.name ?? "defaultSampler"}, ${specularTexture.texCoordAttributeName ?? "uv"});
   
-  specularFactor = specularFactor * specularSample.a;
-  specularColorFactor = specularColorFactor * specularSample.rgb;`;
+  specularIntensity = specularIntensity * specularSample.a;
+  specularColor = specularColor * specularSample.rgb;`;
     } else {
       if (specularFactorTexture) {
         specular += /* wgsl */
         `
-  let specularFactorSample: vec4f = textureSample(${specularFactorTexture.texture}, ${specularFactorTexture.sampler}, ${specularFactorTexture.texCoordAttributeName});
+  let specularFactorSample: vec4f = textureSample(${specularFactorTexture.texture.options.name}, ${specularFactorTexture.sampler?.name ?? "defaultSampler"}, ${specularFactorTexture.texCoordAttributeName ?? "uv"});
   
-  specularFactor = specularFactor * specularSample.a;`;
+  specularIntensity = specularIntensity * specularSample.a;`;
       }
       if (specularColorTexture) {
         specular += /* wgsl */
         `
-  let specularColorSample: vec4f = textureSample(${specularColorTexture.texture}, ${specularColorTexture.sampler}, ${specularColorTexture.texCoordAttributeName});
+  let specularColorSample: vec4f = textureSample(${specularColorTexture.texture.options.name}, ${specularColorTexture.sampler?.name ?? "defaultSampler"}, ${specularColorTexture.texCoordAttributeName ?? "uv"});
   
-  specularColorFactor = specularColorFactor * specularSample.rgb;`;
+  specularColor = specularColor * specularSample.rgb;`;
       }
-      specular += /* wgsl */
-      `
-  specularFactor = mix(specularFactor, 1.0, metallic);`;
     }
     return specular;
   };
@@ -17284,8 +17357,6 @@ ${getFragmentInputStruct({ geometry })}
   ${getEmissiveOcclusion({ emissiveTexture, occlusionTexture })}
   
   // lights
-  let shininess: f32 = 1.0 / max(EPSILON, roughness * roughness);
-  let specularColor: vec3f = mix( min( pow2( ( ior - 1.0 ) / ( ior + 1.0 ) ) * specularColorFactor, vec3( 1.0 ) ) * specularFactor, outputColor.rgb, metallic );
   ${getPhongShading({ receiveShadows })}
   
   outputColor = vec4(outgoingLight, outputColor.a);
@@ -17350,7 +17421,6 @@ fn getIBLIndirect(
   envDiffuseIntensity: f32,
   envSpecularIntensity: f32,
   ptr_reflectedLight: ptr<function, ReflectedLight>,
-  // ptr_iblIndirect: ptr<function, IBLIndirect>
 ) {
   let N: vec3f = normalize(normal);
   let V: vec3f = normalize(viewDirection);
@@ -17383,9 +17453,6 @@ fn getIBLIndirect(
 
   (*ptr_reflectedLight).indirectSpecular += specularLight.rgb * iBLGGXFresnel.FssEss * envSpecularIntensity;
   (*ptr_reflectedLight).indirectDiffuse += (iBLGGXFresnel.FmsEms + k_D) * diffuseLight.rgb * envDiffuseIntensity;
-
-  // (*ptr_iblIndirect).diffuse = PI * diffuseLight.rgb * envDiffuseIntensity;
-  // (*ptr_iblIndirect).specular = specularLight.rgb * envSpecularIntensity;
 }
 `
   );
@@ -17398,14 +17465,14 @@ fn getIBLIndirect(
     if (transmissionTexture) {
       transmissionThickness += /* wgsl */
       `
-  let transmissionSample: vec4f = textureSample(${transmissionTexture.texture}, ${transmissionTexture.sampler}, ${transmissionTexture.texCoordAttributeName});
+  let transmissionSample: vec4f = textureSample(${transmissionTexture.texture.options.name}, ${transmissionTexture.sampler?.name ?? "defaultSampler"}, ${transmissionTexture.texCoordAttributeName ?? "uv"});
   
   transmission = clamp(transmission * transmissionSample.r, 0.0, 1.0);`;
     }
     if (thicknessTexture) {
       transmissionThickness += /* wgsl */
       `
-  let thicknessSample: vec4f = textureSample(${thicknessTexture.texture}, ${thicknessTexture.sampler}, ${thicknessTexture.texCoordAttributeName});
+  let thicknessSample: vec4f = textureSample(${thicknessTexture.texture.options.name}, ${thicknessTexture.sampler?.name ?? "defaultSampler"}, ${thicknessTexture.texCoordAttributeName ?? "uv"});
   
   thickness *= thicknessSample.g;`;
     }
@@ -17434,15 +17501,7 @@ fn getIBLIndirect(
     environmentMap = null
   }) => {
     chunks = patchAdditionalChunks(chunks);
-    if (environmentMap) {
-      if (!materialUniform) {
-        materialUniform = {
-          struct: {}
-        };
-      }
-      if (!materialUniform.struct) {
-        materialUniform.struct = {};
-      }
+    if (environmentMap && materialUniform && materialUniform.struct) {
       materialUniform.struct = {
         ...materialUniform.struct,
         envRotation: {
@@ -18352,7 +18411,7 @@ ${getFragmentInputStruct({ geometry })}
       if (container) {
         this.setContainer(container);
       }
-      this.initEvents();
+      this.initScroll();
     }
     /**
      * Set the {@link GPUCurtains.container | container}.
@@ -18585,14 +18644,6 @@ ${getFragmentInputStruct({ geometry })}
     get scrollValues() {
       return this.scrollManager.scroll;
     }
-    /* EVENT LISTENERS */
-    /**
-     * Set the resize and scroll event listeners
-     */
-    initEvents() {
-      resizeManager.useObserver(this.options.autoResize);
-      this.initScroll();
-    }
     /* EVENTS */
     /**
      * Called each frame before rendering
@@ -18668,7 +18719,6 @@ ${getFragmentInputStruct({ geometry })}
     destroy() {
       this.deviceManager.destroy();
       this.scrollManager?.destroy();
-      resizeManager.destroy();
     }
   }
 
@@ -20297,6 +20347,240 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
     }
   }
 
+  class LitMesh extends Mesh {
+    /**
+     * LitMesh constructor
+     * @param renderer - {@link CameraRenderer} object or {@link GPUCurtains} class object used to create this {@link LitMesh}.
+     * @param parameters - {@link LitMeshParameters} used to create this {@link LitMesh}.
+     */
+    constructor(renderer, parameters = {}) {
+      renderer = isCameraRenderer(renderer, "LitMesh");
+      const { material, ...defaultParams } = parameters;
+      const {
+        shading,
+        vertexChunks,
+        fragmentChunks,
+        toneMapping,
+        // material uniform values
+        color,
+        opacity,
+        alphaCutoff,
+        metallic,
+        roughness,
+        normalMapScale,
+        occlusionIntensity,
+        emissiveIntensity,
+        emissiveColor,
+        specularIntensity,
+        specularColor,
+        shininess,
+        transmission,
+        ior,
+        dispersion,
+        thickness,
+        attenuationDistance,
+        attenuationColor,
+        // texture descriptors
+        baseColorTexture,
+        normalTexture,
+        emissiveTexture,
+        occlusionTexture,
+        metallicRoughnessTexture,
+        specularTexture,
+        specularFactorTexture,
+        specularColorTexture,
+        transmissionTexture,
+        thicknessTexture,
+        environmentMap
+      } = material;
+      const vs = getVertexShaderCode({
+        bindings: defaultParams.bindings,
+        geometry: defaultParams.geometry,
+        chunks: vertexChunks
+      });
+      const materialUniform = {
+        visibility: ["fragment"],
+        struct: {
+          color: {
+            type: "vec3f",
+            value: color !== void 0 ? color : new Vec3(1)
+          },
+          opacity: {
+            type: "f32",
+            value: opacity !== void 0 ? opacity : 1
+          },
+          alphaCutoff: {
+            type: "f32",
+            value: alphaCutoff !== void 0 ? alphaCutoff : 0.5
+          },
+          metallic: {
+            type: "f32",
+            value: metallic !== void 0 ? metallic : 1
+          },
+          roughness: {
+            type: "f32",
+            value: roughness !== void 0 ? roughness : 1
+          },
+          normalMapScale: {
+            type: "f32",
+            value: normalMapScale !== void 0 ? normalMapScale : 1
+          },
+          occlusionIntensity: {
+            type: "f32",
+            value: occlusionIntensity !== void 0 ? occlusionIntensity : 1
+          },
+          emissiveIntensity: {
+            type: "f32",
+            value: emissiveIntensity !== void 0 ? emissiveIntensity : 1
+          },
+          emissiveColor: {
+            type: "vec3f",
+            value: emissiveColor !== void 0 ? emissiveColor : new Vec3()
+          },
+          specularIntensity: {
+            type: "f32",
+            value: specularIntensity !== void 0 ? specularIntensity : 1
+          },
+          specularColor: {
+            type: "vec3f",
+            value: specularColor !== void 0 ? specularColor : new Vec3(1)
+          },
+          ...shading === "Phong" && {
+            shininess: {
+              type: "f32",
+              value: shininess !== void 0 ? shininess : 30
+            }
+          },
+          transmission: {
+            type: "f32",
+            value: transmission !== void 0 ? transmission : 0
+          },
+          ior: {
+            type: "f32",
+            value: ior !== void 0 ? ior : 1.5
+          },
+          dispersion: {
+            type: "f32",
+            value: dispersion !== void 0 ? dispersion : 0
+          },
+          thickness: {
+            type: "f32",
+            value: thickness !== void 0 ? thickness : 0
+          },
+          attenuationDistance: {
+            type: "f32",
+            value: attenuationDistance !== void 0 ? attenuationDistance : Infinity
+          },
+          attenuationColor: {
+            type: "vec3f",
+            value: attenuationColor !== void 0 ? attenuationColor : new Vec3(1)
+          }
+        }
+      };
+      if (defaultParams.uniforms) {
+        defaultParams.uniforms = {
+          ...defaultParams.uniforms,
+          ...{
+            material: materialUniform
+          }
+        };
+      } else {
+        defaultParams.uniforms = {
+          material: materialUniform
+        };
+      }
+      if (!defaultParams.textures) {
+        defaultParams.textures = [];
+      }
+      if (!defaultParams.samplers) {
+        defaultParams.samplers = [];
+      }
+      [
+        baseColorTexture,
+        normalTexture,
+        emissiveTexture,
+        occlusionTexture,
+        metallicRoughnessTexture,
+        specularTexture,
+        specularFactorTexture,
+        specularColorTexture,
+        transmissionTexture,
+        thicknessTexture
+      ].filter(Boolean).forEach((textureDescriptor) => {
+        if (textureDescriptor.sampler) {
+          const samplerExists = defaultParams.samplers.find((s) => s.uuid === textureDescriptor.sampler.uuid);
+          if (!samplerExists) {
+            defaultParams.samplers.push(textureDescriptor.sampler);
+          }
+        }
+        defaultParams.textures.push(textureDescriptor.texture);
+      });
+      if (environmentMap && (shading === "PBR" || !shading)) {
+        if (!defaultParams.textures) {
+          defaultParams.textures = [];
+        }
+        defaultParams.textures = [
+          ...defaultParams.textures,
+          environmentMap.lutTexture,
+          environmentMap.diffuseTexture,
+          environmentMap.specularTexture
+        ];
+        if (!defaultParams.samplers) {
+          defaultParams.samplers = [];
+        }
+        defaultParams.samplers = [...defaultParams.samplers, environmentMap.sampler];
+      }
+      let transmissionBackgroundTexture = null;
+      if (parameters.transmissive) {
+        renderer.createTransmissionTarget();
+        transmissionBackgroundTexture = {
+          texture: renderer.transmissionTarget.texture,
+          sampler: renderer.transmissionTarget.sampler
+        };
+      }
+      const extensionsUsed = [];
+      if (dispersion) {
+        extensionsUsed.push("KHR_materials_dispersion");
+      }
+      const hasNormal = defaultParams.geometry && defaultParams.geometry.getAttributeByName("normal");
+      if (defaultParams.geometry && !hasNormal) {
+        defaultParams.geometry.computeGeometry();
+      }
+      const fs = getFragmentShaderCode({
+        shadingModel: shading,
+        chunks: fragmentChunks,
+        extensionsUsed,
+        receiveShadows: defaultParams.receiveShadows,
+        toneMapping,
+        geometry: defaultParams.geometry,
+        materialUniform,
+        baseColorTexture,
+        normalTexture,
+        metallicRoughnessTexture,
+        specularTexture,
+        specularFactorTexture,
+        specularColorTexture,
+        transmissionTexture,
+        thicknessTexture,
+        emissiveTexture,
+        occlusionTexture,
+        transmissionBackgroundTexture,
+        environmentMap
+      });
+      const shaders = {
+        vertex: {
+          code: vs,
+          entryPoint: "main"
+        },
+        fragment: {
+          code: fs,
+          entryPoint: "main"
+        }
+      };
+      super(renderer, { ...defaultParams, ...{ shaders } });
+    }
+  }
+
   class PingPongPlane extends FullscreenPlane {
     /**
      * PingPongPlane constructor
@@ -21400,9 +21684,14 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         switch (name) {
           case "baseColorTexture":
           case "emissiveTexture":
+          case "specularTexture":
+          case "specularColorTexture":
             return "bgra8unorm-srgb";
           case "occlusionTexture":
+          case "transmissionTexture":
             return "r8unorm";
+          case "thicknessTexture":
+            return "rg8unorm";
           default:
             return "bgra8unorm";
         }
@@ -21559,7 +21848,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         mesh.primitives.forEach((primitive, primitiveIndex) => {
           const meshDescriptor = {
             parent: child.node,
-            textures: [],
+            texturesDescriptors: [],
             parameters: {
               label: mesh.name ? mesh.name + " " + primitiveIndex : "glTF mesh " + primitiveIndex
             },
@@ -21746,16 +22035,16 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
       };
       const GeometryConstructor = isIndexedGeometry ? IndexedGeometry : Geometry;
       meshDescriptor.parameters.geometry = new GeometryConstructor(geometryAttributes);
-      if (!hasNormal) {
-        meshDescriptor.parameters.geometry.computeGeometry();
-      }
-      meshDescriptor.parameters.geometry.boundingBox = geometryBBox;
       if (isIndexedGeometry && indicesConstructor && indicesArray) {
         meshDescriptor.parameters.geometry.setIndexBuffer({
           bufferFormat: indicesConstructor.name === "Uint32Array" ? "uint32" : "uint16",
           array: indicesArray
         });
       }
+      if (!hasNormal) {
+        meshDescriptor.parameters.geometry.computeGeometry();
+      }
+      meshDescriptor.parameters.geometry.boundingBox = geometryBBox;
     }
     /**
      * Create the {@link SkinDefinition | skins definitions} for each {@link gltf} skins.
@@ -21995,18 +22284,14 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
       if (useTransmission && hasTransmission) {
         meshDescriptor.parameters.transmissive = true;
       }
-      materialTextures?.texturesDescriptors.forEach((t) => {
-        meshDescriptor.textures.push({
-          texture: t.texture.options.name,
-          sampler: t.sampler.name,
-          texCoordAttributeName: t.texCoordAttributeName
+      meshDescriptor.texturesDescriptors = materialTextures?.texturesDescriptors || [];
+      if (useTransmission && hasTransmission) {
+        this.renderer.createTransmissionTarget();
+        meshDescriptor.texturesDescriptors.push({
+          texture: this.renderer.transmissionTarget.texture,
+          sampler: this.renderer.transmissionTarget.sampler
         });
-        const samplerExists = meshDescriptor.parameters.samplers.find((s) => s.uuid === t.sampler.uuid);
-        if (!samplerExists) {
-          meshDescriptor.parameters.samplers.push(t.sampler);
-        }
-        meshDescriptor.parameters.textures.push(t.texture);
-      });
+      }
       meshDescriptor.parameters.cullMode = material.doubleSided ? "none" : "back";
       if (material.alphaMode === "BLEND") {
         meshDescriptor.parameters.transparent = true;
@@ -22059,13 +22344,13 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
           type: "f32",
           value: material.occlusionTexture?.strength === void 0 ? 1 : material.occlusionTexture.strength
         },
-        emissiveColor: {
-          type: "vec3f",
-          value: material.emissiveFactor !== void 0 ? new Vec3(material.emissiveFactor[0], material.emissiveFactor[1], material.emissiveFactor[2]) : new Vec3(0)
-        },
         emissiveIntensity: {
           type: "f32",
           value: emissiveStrength && emissiveStrength.emissiveStrength !== void 0 ? emissiveStrength.emissiveStrength : 1
+        },
+        emissiveColor: {
+          type: "vec3f",
+          value: material.emissiveFactor !== void 0 ? new Vec3(material.emissiveFactor[0], material.emissiveFactor[1], material.emissiveFactor[2]) : new Vec3(0)
         },
         specularIntensity: {
           type: "f32",
@@ -22440,21 +22725,6 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
   let GLTFScenesManager = _GLTFScenesManager;
 
   const buildShaders = (meshDescriptor, shaderParameters = {}) => {
-    const baseColorTexture = meshDescriptor.textures.find((t) => t.texture === "baseColorTexture");
-    const normalTexture = meshDescriptor.textures.find((t) => t.texture === "normalTexture");
-    const emissiveTexture = meshDescriptor.textures.find((t) => t.texture === "emissiveTexture");
-    const occlusionTexture = meshDescriptor.textures.find((t) => t.texture === "occlusionTexture");
-    const metallicRoughnessTexture = meshDescriptor.textures.find((t) => t.texture === "metallicRoughnessTexture");
-    const specularTexture = meshDescriptor.textures.find((t) => t.texture === "specularTexture");
-    const specularFactorTexture = specularTexture || meshDescriptor.textures.find((t) => t.texture === "specularFactorTexture");
-    const specularColorTexture = specularTexture || meshDescriptor.textures.find((t) => t.texture === "specularColorTexture");
-    const transmissionTexture = meshDescriptor.textures.find((t) => t.texture === "transmissionTexture");
-    const thicknessTexture = meshDescriptor.textures.find((t) => t.texture === "thicknessTexture");
-    const transmissionBackgroundTexture = meshDescriptor.parameters.transmissive ? {
-      texture: "transmissionBackgroundTexture",
-      sampler: "transmissionSampler",
-      texCoordAttributeName: "uv"
-    } : null;
     let { shadingModel } = shaderParameters;
     if (!shadingModel) {
       shadingModel = "PBR";
@@ -22462,6 +22732,44 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
     const isUnlit = meshDescriptor.extensionsUsed.includes("KHR_materials_unlit");
     if (isUnlit) {
       shadingModel = "Unlit";
+    }
+    const baseColorTexture = meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === "baseColorTexture");
+    const normalTexture = meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === "normalTexture");
+    const emissiveTexture = meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === "emissiveTexture");
+    const occlusionTexture = meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === "occlusionTexture");
+    const metallicRoughnessTexture = meshDescriptor.texturesDescriptors.find(
+      (t) => t.texture.options.name === "metallicRoughnessTexture"
+    );
+    const specularTexture = meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === "specularTexture");
+    const specularFactorTexture = specularTexture || meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === "specularFactorTexture");
+    const specularColorTexture = specularTexture || meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === "specularColorTexture");
+    const transmissionTexture = meshDescriptor.texturesDescriptors.find(
+      (t) => t.texture.options.name === "transmissionTexture"
+    );
+    const thicknessTexture = meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === "thicknessTexture");
+    const transmissionBackgroundTexture = meshDescriptor.texturesDescriptors.find(
+      (t) => t.texture.options.name === "transmissionBackgroundTexture"
+    );
+    if (!meshDescriptor.parameters.textures) {
+      meshDescriptor.parameters.textures = [];
+    }
+    if (!meshDescriptor.parameters.samplers) {
+      meshDescriptor.parameters.samplers = [];
+    }
+    if (shadingModel !== "Unlit") {
+      meshDescriptor.texturesDescriptors.forEach((textureDescriptor) => {
+        const samplerExists = meshDescriptor.parameters.samplers.find((s) => s.uuid === textureDescriptor.sampler.uuid);
+        if (!samplerExists) {
+          meshDescriptor.parameters.samplers.push(textureDescriptor.sampler);
+        }
+        meshDescriptor.parameters.textures.push(textureDescriptor.texture);
+      });
+    } else if (baseColorTexture) {
+      const samplerExists = meshDescriptor.parameters.samplers.find((s) => s.uuid === baseColorTexture.sampler.uuid);
+      if (!samplerExists) {
+        meshDescriptor.parameters.samplers.push(baseColorTexture.sampler);
+      }
+      meshDescriptor.parameters.textures.push(baseColorTexture.texture);
     }
     let { vertexChunks, fragmentChunks } = shaderParameters || {};
     const { environmentMap } = shaderParameters || {};
@@ -22707,6 +23015,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
   exports.IndexedGeometry = IndexedGeometry;
   exports.IndirectBuffer = IndirectBuffer;
   exports.KeyframesAnimation = KeyframesAnimation;
+  exports.LitMesh = LitMesh;
   exports.Mat3 = Mat3;
   exports.Mat4 = Mat4;
   exports.Material = Material;

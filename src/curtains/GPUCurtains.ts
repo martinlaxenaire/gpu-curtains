@@ -1,6 +1,5 @@
 import { GPUCurtainsRenderer } from './renderers/GPUCurtainsRenderer'
 import { ScrollManager } from '../utils/ScrollManager'
-import { resizeManager } from '../utils/ResizeManager'
 import { PingPongPlane } from '../extras/meshes/PingPongPlane'
 import { ShaderPass } from '../core/renderPasses/ShaderPass'
 import { GPURenderer, GPURendererParams, SceneStackedMesh } from '../core/renderers/GPURenderer'
@@ -123,7 +122,7 @@ export class GPUCurtains {
       this.setContainer(container)
     }
 
-    this.initEvents()
+    this.initScroll()
   }
 
   /**
@@ -396,17 +395,6 @@ export class GPUCurtains {
     return this.scrollManager.scroll
   }
 
-  /* EVENT LISTENERS */
-
-  /**
-   * Set the resize and scroll event listeners
-   */
-  initEvents() {
-    resizeManager.useObserver(this.options.autoResize)
-
-    this.initScroll()
-  }
-
   /* EVENTS */
 
   /**
@@ -496,6 +484,5 @@ export class GPUCurtains {
   destroy() {
     this.deviceManager.destroy()
     this.scrollManager?.destroy()
-    resizeManager.destroy()
   }
 }

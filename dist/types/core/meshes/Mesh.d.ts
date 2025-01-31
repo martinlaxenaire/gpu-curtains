@@ -82,8 +82,8 @@ declare const Mesh_base: import("./mixins/MeshBaseMixin").MixinConstructor<impor
 export declare class Mesh extends Mesh_base {
     /**
      * Mesh constructor
-     * @param renderer - {@link CameraRenderer} object or {@link GPUCurtains} class object used to create this {@link Mesh}
-     * @param parameters - {@link ProjectedMeshParameters | parameters} use to create this {@link Mesh}
+     * @param renderer - {@link CameraRenderer} object or {@link GPUCurtains} class object used to create this {@link Mesh}.
+     * @param parameters - {@link ProjectedMeshParameters | parameters} use to create this {@link Mesh}.
      */
     constructor(renderer: CameraRenderer | GPUCurtains, parameters?: ProjectedMeshParameters);
 }

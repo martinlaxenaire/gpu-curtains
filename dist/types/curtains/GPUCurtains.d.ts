@@ -183,10 +183,6 @@ export declare class GPUCurtains {
      */
     get scrollValues(): DOMPosition;
     /**
-     * Set the resize and scroll event listeners
-     */
-    initEvents(): void;
-    /**
      * Called each frame before rendering
      * @param callback - callback to run at each render
      * @returns - our {@link GPUCurtains}

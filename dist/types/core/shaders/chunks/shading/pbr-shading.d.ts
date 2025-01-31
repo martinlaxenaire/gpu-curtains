@@ -16,6 +16,17 @@ export interface GetPBRShadingParams extends GetShadingParams {
  * @example
  * ```wgsl
  * var color: vec4f = vec4(1.0);
+ * let specularColor: vec3f = vec3(1.0);
+ * let specularIntensity: f32 = 1.0;
+ * let metallic: f32 = 0.5;
+ * let roughness: f32 = 0.5;
+ * let ior: f32 = 1.5;
+ * let transmission: f32 = 0.0;
+ * let dispersion: f32 = 0.0;
+ * let thickness: f32 = 0.0;
+ * let attenuationDistance: f32 = 1.0e38;
+ * let attenuationColor: vec3f = vec3(1.0);
+ *
  * color = getPBR(
  *   normal,
  *   worldPosition,
@@ -23,9 +34,14 @@ export interface GetPBRShadingParams extends GetShadingParams {
  *   viewDirection,
  *   metallic,
  *   roughness,
- *   specularFactor,
+ *   specularIntensity,
  *   specularColor,
  *   ior,
+ *   transmission,
+ *   dispersion,
+ *   thickness,
+ *   attenuationDistance,
+ *   attenuationColor,
  * );
  * ```
  */

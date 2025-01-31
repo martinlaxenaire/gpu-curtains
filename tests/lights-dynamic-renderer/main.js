@@ -10,9 +10,7 @@ window.addEventListener('load', async () => {
     DirectionalLight,
     PointLight,
     Vec3,
-    Mesh,
-    getLambert,
-    getPhong,
+    LitMesh,
     PlaneGeometry,
     Object3D,
   } = await import(/* @vite-ignore */ path)
@@ -57,63 +55,15 @@ window.addEventListener('load', async () => {
     element: leftRenderer.domElement.element,
   })
 
-  const litFragmentShader = ({ useLambert = true, receiveShadows = false } = {}) => /* wgsl */ `
-    struct VSOutput {
-      @builtin(position) position: vec4f,
-      @builtin(front_facing) frontFacing: bool,
-      @location(0) uv: vec2f,
-      @location(1) normal: vec3f,
-      @location(2) worldPosition: vec3f,
-      @location(3) viewDirection: vec3f,
-    };
-    
-    ${useLambert ? getLambert({ receiveShadows }) : getPhong({ receiveShadows })}
-    
-
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-      var color: vec3f = shading.color;
-      
-      // negate the normals if we're using front face culling
-      let faceDirection = select(-1.0, 1.0, fsInput.frontFacing);
-      let normal = normalize(faceDirection * fsInput.normal);
-      
-      let worldPosition = fsInput.worldPosition;
-      let viewDirection = normalize(fsInput.viewDirection);
-      
-      ${
-        useLambert
-          ? `
-          // lambert
-          color = getLambert(
-            normal,
-            worldPosition,
-            color
-          );
-        `
-          : `
-          // phong
-          color = getPhong(
-            normal,
-            worldPosition,
-            color,
-            viewDirection,
-            phong.specularColor,
-            phong.specularStrength,
-            phong.shininess
-          );
-        `
-      }
-      
-      
-      return vec4(color, 1.0);
-    }
-  `
-
   const ambientLights = []
   const directionalLights = []
   const pointLights = []
 
-  ambientLights.push(new AmbientLight(leftRenderer))
+  ambientLights.push(
+    new AmbientLight(leftRenderer, {
+      intensity: 0.1,
+    })
+  )
 
   directionalLights.push(
     new DirectionalLight(leftRenderer, {
@@ -148,48 +98,22 @@ window.addEventListener('load', async () => {
 
   console.log(leftRenderer.lights)
 
-  const mesh = new Mesh(leftRenderer, {
+  const mesh = new LitMesh(leftRenderer, {
     label: 'Cube',
     geometry: new BoxGeometry(),
     castShadows: true,
-    shaders: {
-      fragment: {
-        code: litFragmentShader({ useLambert: false }),
-      },
-    },
-    uniforms: {
-      shading: {
-        visibility: ['fragment'],
-        struct: {
-          color: {
-            type: 'vec3f',
-            value: new Vec3(1),
-          },
-        },
-      },
-      phong: {
-        visibility: ['fragment'],
-        struct: {
-          specularColor: {
-            type: 'vec3f',
-            value: new Vec3(1),
-          },
-          specularStrength: {
-            type: 'f32',
-            value: 1,
-          },
-          shininess: {
-            type: 'f32',
-            value: 32,
-          },
-        },
-      },
+    material: {
+      shading: 'Phong',
+      color: new Vec3(1),
+      specularColor: new Vec3(1),
+      specularIntensity: 10,
+      shininess: 64,
     },
   })
 
   mesh.onBeforeRender(() => {
-    mesh.rotation.x += 0.01
-    mesh.rotation.y += 0.02
+    // mesh.rotation.x += 0.01
+    // mesh.rotation.y += 0.02
   })
 
   mesh.position.y = 2
@@ -199,43 +123,18 @@ window.addEventListener('load', async () => {
   const boxPivot = new Object3D()
   boxPivot.parent = leftRenderer.scene
 
-  const floor = new Mesh(leftRenderer, {
+  const floor = new LitMesh(leftRenderer, {
     label: 'Floor',
     geometry: planeGeometry,
     receiveShadows: true,
     frustumCulling: false, // always draw
     cullMode: 'none',
-    shaders: {
-      fragment: {
-        code: litFragmentShader({ useLambert: false, receiveShadows: true }),
-      },
-    },
-    uniforms: {
-      shading: {
-        struct: {
-          color: {
-            type: 'vec3f',
-            value: new Vec3(0.7),
-          },
-        },
-      },
-      phong: {
-        visibility: ['fragment'],
-        struct: {
-          specularColor: {
-            type: 'vec3f',
-            value: new Vec3(1),
-          },
-          specularStrength: {
-            type: 'f32',
-            value: 1,
-          },
-          shininess: {
-            type: 'f32',
-            value: 32,
-          },
-        },
-      },
+    material: {
+      shading: 'Phong',
+      color: new Vec3(0.7),
+      specularColor: new Vec3(1),
+      specularIntensity: 1,
+      shininess: 32,
     },
   })
 
@@ -272,40 +171,72 @@ window.addEventListener('load', async () => {
     })
     .name('Active renderer')
 
-  const materialFolder = gui.addFolder('Material')
-  const materialShadingFolder = materialFolder.addFolder('Shading')
+  const materialFolder = gui.addFolder('Materials')
+  const cubeFolder = materialFolder.addFolder('Cube')
 
-  // materialShadingFolder
-  //   .add({ materials }, 'material', materials)
-  //   .name('Material')
-  //   .onChange((value) => {
-  //     mesh.useMaterial(value)
-  //   })
-
-  // materialShadingFolder
-  //   .add({ useLambert: !!mesh.uniforms.shading.useLambert.value }, 'useLambert', [false, true])
-  //   .name('Use lambert shading')
-  //   .onChange((value) => {
-  //     mesh.uniforms.shading.useLambert.value = value ? 1 : 0
-  //   })
-
-  materialShadingFolder
+  cubeFolder
     .addColor(
       {
         color: {
-          r: mesh.uniforms.shading.color.value.x,
-          g: mesh.uniforms.shading.color.value.y,
-          b: mesh.uniforms.shading.color.value.z,
+          r: mesh.uniforms.material.color.value.x,
+          g: mesh.uniforms.material.color.value.y,
+          b: mesh.uniforms.material.color.value.z,
         },
       },
       'color'
     )
     .onChange((value) => {
-      mesh.uniforms.shading.color.value.set(value.r, value.g, value.b)
+      mesh.uniforms.material.color.value.set(value.r, value.g, value.b)
     })
-    .name('Base color')
+    .name('Color')
 
-  materialShadingFolder.close()
+  cubeFolder
+    .addColor(
+      {
+        specularColor: {
+          r: mesh.uniforms.material.specularColor.value.x,
+          g: mesh.uniforms.material.specularColor.value.y,
+          b: mesh.uniforms.material.specularColor.value.z,
+        },
+      },
+      'specularColor'
+    )
+    .onChange((value) => {
+      mesh.uniforms.material.specularColor.value.set(value.r, value.g, value.b)
+    })
+    .name('Specular color')
+
+  cubeFolder
+    .add(
+      {
+        specularIntensity: mesh.uniforms.material.specularIntensity.value,
+      },
+      'specularIntensity',
+      0,
+      10,
+      0.1
+    )
+    .onChange((value) => {
+      mesh.uniforms.material.specularIntensity.value = value
+    })
+    .name('Specular intensity')
+
+  cubeFolder
+    .add(
+      {
+        shininess: mesh.uniforms.material.shininess.value,
+      },
+      'shininess',
+      1,
+      150,
+      1
+    )
+    .onChange((value) => {
+      mesh.uniforms.material.shininess.value = value
+    })
+    .name('Shininess')
+
+  //materialShadingFolder.close()
 
   // const materialPhongFolder = materialFolder.addFolder('Phong')
   // materialPhongFolder

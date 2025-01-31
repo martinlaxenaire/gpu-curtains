@@ -339,13 +339,19 @@ export class GLTFScenesManager {
    * @returns - newly created {@link Texture}.
    */
   createTexture(material: GLTF.IMaterial, image: ImageBitmap, name: string): Texture {
+    // TODO check for all textures!
     const format = (() => {
       switch (name) {
         case 'baseColorTexture':
         case 'emissiveTexture':
+        case 'specularTexture':
+        case 'specularColorTexture':
           return 'bgra8unorm-srgb'
         case 'occlusionTexture':
+        case 'transmissionTexture':
           return 'r8unorm'
+        case 'thicknessTexture':
+          return 'rg8unorm'
         default:
           return 'bgra8unorm'
       }
@@ -551,7 +557,7 @@ export class GLTFScenesManager {
       mesh.primitives.forEach((primitive, primitiveIndex) => {
         const meshDescriptor: MeshDescriptor = {
           parent: child.node,
-          textures: [],
+          texturesDescriptors: [],
           parameters: {
             label: mesh.name ? mesh.name + ' ' + primitiveIndex : 'glTF mesh ' + primitiveIndex,
           },
@@ -1111,6 +1117,13 @@ export class GLTFScenesManager {
 
     meshDescriptor.parameters.geometry = new GeometryConstructor(geometryAttributes)
 
+    if (isIndexedGeometry && indicesConstructor && indicesArray) {
+      ;(meshDescriptor.parameters.geometry as IndexedGeometry).setIndexBuffer({
+        bufferFormat: indicesConstructor.name === 'Uint32Array' ? 'uint32' : 'uint16',
+        array: indicesArray,
+      })
+    }
+
     if (!hasNormal) {
       // compute geometry right away
       // so we have fresh attributes to send to the shaders' generation helper functions
@@ -1118,13 +1131,6 @@ export class GLTFScenesManager {
     }
 
     meshDescriptor.parameters.geometry.boundingBox = geometryBBox
-
-    if (isIndexedGeometry && indicesConstructor && indicesArray) {
-      ;(meshDescriptor.parameters.geometry as IndexedGeometry).setIndexBuffer({
-        bufferFormat: indicesConstructor.name === 'Uint32Array' ? 'uint32' : 'uint16',
-        array: indicesArray,
-      })
-    }
   }
 
   /**
@@ -1454,21 +1460,16 @@ export class GLTFScenesManager {
       meshDescriptor.parameters.transmissive = true
     }
 
-    materialTextures?.texturesDescriptors.forEach((t) => {
-      meshDescriptor.textures.push({
-        texture: t.texture.options.name,
-        sampler: t.sampler.name,
-        texCoordAttributeName: t.texCoordAttributeName,
+    meshDescriptor.texturesDescriptors = materialTextures?.texturesDescriptors || []
+
+    if (useTransmission && hasTransmission) {
+      this.renderer.createTransmissionTarget()
+
+      meshDescriptor.texturesDescriptors.push({
+        texture: this.renderer.transmissionTarget.texture,
+        sampler: this.renderer.transmissionTarget.sampler,
       })
-
-      const samplerExists = meshDescriptor.parameters.samplers.find((s) => s.uuid === t.sampler.uuid)
-
-      if (!samplerExists) {
-        meshDescriptor.parameters.samplers.push(t.sampler)
-      }
-
-      meshDescriptor.parameters.textures.push(t.texture)
-    })
+    }
 
     meshDescriptor.parameters.cullMode = material.doubleSided ? 'none' : 'back'
 
@@ -1538,17 +1539,17 @@ export class GLTFScenesManager {
         type: 'f32',
         value: material.occlusionTexture?.strength === undefined ? 1 : material.occlusionTexture.strength,
       },
+      emissiveIntensity: {
+        type: 'f32',
+        value:
+          emissiveStrength && emissiveStrength.emissiveStrength !== undefined ? emissiveStrength.emissiveStrength : 1,
+      },
       emissiveColor: {
         type: 'vec3f',
         value:
           material.emissiveFactor !== undefined
             ? new Vec3(material.emissiveFactor[0], material.emissiveFactor[1], material.emissiveFactor[2])
             : new Vec3(0),
-      },
-      emissiveIntensity: {
-        type: 'f32',
-        value:
-          emissiveStrength && emissiveStrength.emissiveStrength !== undefined ? emissiveStrength.emissiveStrength : 1,
       },
       specularIntensity: {
         type: 'f32',

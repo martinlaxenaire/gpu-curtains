@@ -116,6 +116,10 @@ export declare class GPUCameraRenderer extends GPURenderer {
      */
     restoreContext(): void;
     /**
+     * Set our {@link renderPass | main render pass} and our {@link transmissionTarget} sampler.
+     */
+    setMainRenderPasses(): void;
+    /**
      * Set the {@link camera}
      * @param cameraParameters - {@link CameraBasePerspectiveOptions | parameters} used to create the {@link camera}
      */

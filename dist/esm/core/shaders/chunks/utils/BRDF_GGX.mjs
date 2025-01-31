@@ -32,7 +32,7 @@ fn BRDF_GGX(
   // cook-torrance brdf
   let G: f32 = GeometrySmith(NdotL, NdotV, roughness);
   let D: f32 = DistributionGGX(NdotH, roughness);
-  let F: vec3f = F_Schlick(VdotH, specularColor, specularFactor);
+  let F: vec3f = F_Schlick(specularColor, specularFactor, VdotH);
   
   return G * D * F;
 }

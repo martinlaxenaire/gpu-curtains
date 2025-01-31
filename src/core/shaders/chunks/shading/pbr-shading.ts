@@ -23,6 +23,17 @@ export interface GetPBRShadingParams extends GetShadingParams {
  * @example
  * ```wgsl
  * var color: vec4f = vec4(1.0);
+ * let specularColor: vec3f = vec3(1.0);
+ * let specularIntensity: f32 = 1.0;
+ * let metallic: f32 = 0.5;
+ * let roughness: f32 = 0.5;
+ * let ior: f32 = 1.5;
+ * let transmission: f32 = 0.0;
+ * let dispersion: f32 = 0.0;
+ * let thickness: f32 = 0.0;
+ * let attenuationDistance: f32 = 1.0e38;
+ * let attenuationColor: vec3f = vec3(1.0);
+ *
  * color = getPBR(
  *   normal,
  *   worldPosition,
@@ -30,9 +41,14 @@ export interface GetPBRShadingParams extends GetShadingParams {
  *   viewDirection,
  *   metallic,
  *   roughness,
- *   specularFactor,
+ *   specularIntensity,
  *   specularColor,
  *   ior,
+ *   transmission,
+ *   dispersion,
+ *   thickness,
+ *   attenuationDistance,
+ *   attenuationColor,
  * );
  * ```
  */
@@ -56,29 +72,32 @@ ${toneMapping ? toneMappingUtils : ''}
 fn getPBR(
   normal: vec3f,
   worldPosition: vec3f,
-  diffuseColor: vec4f,
+  outputColor: vec4f,
   viewDirection: vec3f,
   metallic: f32,
   roughness: f32,
-  specularFactor: f32,
-  specularColorFactor: vec3f,
+  specularIntensity: f32,
+  specularColor: vec3f,
   ior: f32,
+  transmission: f32,
+  dispersion: f32,
+  thickness: f32,
+  attenuationDistance: f32,
+  attenuationColor: vec3f,
   ${useOcclusion ? 'occlusion: f32,' : ''}
 ) -> vec4f {
   ${!useOcclusion ? 'let occlusion: f32 = 1.0;' : ''}
   
   ${getPBRShading({ receiveShadows, environmentMap, transmissionBackgroundTexture, extensionsUsed })}
   
-  var outputColor: vec3f = outgoingLight;
-  
   ${
     toneMapping === 'Linear'
-      ? 'outgoingLight = linearToOutput3(outputColor);'
+      ? 'outgoingLight = linearToOutput3(outgoingLight);'
       : toneMapping === 'Khronos'
-      ? 'outgoingLight = linearTosRGB(toneMapKhronosPbrNeutral(outputColor));'
+      ? 'outgoingLight = linearTosRGB(toneMapKhronosPbrNeutral(outgoingLight));'
       : ''
   }
-  
-  return vec4(outputColor, diffuseColor.a);
+    
+  return vec4(outgoingLight, outputColor.a);
 }
 `

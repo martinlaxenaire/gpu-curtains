@@ -28,7 +28,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   await gpuCurtains.setDevice()
 
   gpuCurtains
-    .onRender(() => {
+    .onBeforeRender(() => {
       // update our planes deformation
       // increase/decrease the effect
       scrollEffect = lerp(scrollEffect, 0, 0.075)

@@ -3,6 +3,7 @@ import { GPURenderer, ProjectedMesh } from './GPURenderer'
 import { GPUCameraRenderer } from './GPUCameraRenderer'
 import { GPUCurtainsRenderer } from '../../curtains/renderers/GPUCurtainsRenderer'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
+import { ProjectedObject3D } from '../objects3D/ProjectedObject3D'
 
 /**
  * A Renderer could be either a {@link GPURenderer}, a {@link GPUCameraRenderer} or a {@link GPUCurtainsRenderer}
@@ -99,9 +100,7 @@ export const isCurtainsRenderer = (
  * @returns - Given object as a {@link ProjectedMesh | projected mesh} if the test is successful, `false` otherwise.
  */
 export const isProjectedMesh = (object: object): false | ProjectedMesh => {
-  return object.constructor.name === 'Mesh' ||
-    object.constructor.name === 'DOMMesh' ||
-    object.constructor.name === 'Plane'
+  return 'geometry' in object && 'material' in object && object instanceof ProjectedObject3D
     ? (object as ProjectedMesh)
     : false
 }

@@ -529,6 +529,19 @@ export class RenderBundle {
   }
 
   /**
+   * If one of the {@link meshes} is using a {@link core/textures/Texture.Texture | Texture} dependent of the {@link renderer}, invalidate the {@link RenderBundle} in order to resize the {@link core/textures/Texture.Texture | Texture}.
+   */
+  resize() {
+    for (const [_uuid, mesh] of this.meshes) {
+      const hasRenderTexture = mesh.textures.find((texture) => !texture.options.fixedSize)
+      if (hasRenderTexture) {
+        this.ready = false
+        break
+      }
+    }
+  }
+
+  /**
    * Render the {@link RenderBundle}.
    *
    * If it is ready, execute each {@link core/meshes/Mesh.Mesh.onBeforeRenderPass | mesh onBeforeRenderPass method}, {@link updateBinding | update the binding} if needed, execute the {@link bundle} and finally execute each {@link core/meshes/Mesh.Mesh.onAfterRenderPass | mesh onAfterRenderPass method}.

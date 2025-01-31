@@ -63,6 +63,7 @@ export { OrbitControls } from './extras/controls/OrbitControls.mjs';
 export { EnvironmentMap } from './extras/environmentMap/EnvironmentMap.mjs';
 export { BoxGeometry } from './extras/geometries/BoxGeometry.mjs';
 export { SphereGeometry } from './extras/geometries/SphereGeometry.mjs';
+export { LitMesh } from './extras/meshes/LitMesh.mjs';
 export { PingPongPlane } from './extras/meshes/PingPongPlane.mjs';
 export { Raycaster } from './extras/raycaster/Raycaster.mjs';
 export { GLTFScenesManager } from './extras/gltf/GLTFScenesManager.mjs';

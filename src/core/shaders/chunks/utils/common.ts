@@ -24,8 +24,8 @@ fn BRDF_Lambert(diffuseColor: vec3f) -> vec3f {
   return RECIPROCAL_PI * diffuseColor;
 }
 
-fn F_Schlick(VdotH: f32, f0: vec3f, f90: f32) -> vec3f {
-  let fresnel: f32 = pow( 1.0 - VdotH, 5.0 );
+fn F_Schlick(f0: vec3f, f90: f32, VdotH: f32) -> vec3f {
+  let fresnel: f32 = exp2( ( - 5.55473 * VdotH - 6.98316 ) * VdotH );
   return f0 * ( 1.0 - fresnel ) + ( f90 * fresnel );
 }
 `

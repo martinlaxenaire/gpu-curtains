@@ -1,0 +1,31 @@
+.stats {
+  transform-origin: 0 0;
+  transform: scale3d(2, 2, 1);
+}
+
+#canvas::after {
+  content: 'Loading';
+  position: fixed;
+  z-index: 1;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  pointer-events: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.35s;
+}
+
+#canvas.loading::after {
+  opacity: 1;
+}
+
+#credits {
+  position: absolute;
+  left: 1rem;
+  bottom: 1rem;
+  font-size: 0.75rem;
+}

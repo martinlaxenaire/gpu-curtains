@@ -267,9 +267,14 @@ const _GLTFScenesManager = class _GLTFScenesManager {
       switch (name) {
         case "baseColorTexture":
         case "emissiveTexture":
+        case "specularTexture":
+        case "specularColorTexture":
           return "bgra8unorm-srgb";
         case "occlusionTexture":
+        case "transmissionTexture":
           return "r8unorm";
+        case "thicknessTexture":
+          return "rg8unorm";
         default:
           return "bgra8unorm";
       }
@@ -426,7 +431,7 @@ const _GLTFScenesManager = class _GLTFScenesManager {
       mesh.primitives.forEach((primitive, primitiveIndex) => {
         const meshDescriptor = {
           parent: child.node,
-          textures: [],
+          texturesDescriptors: [],
           parameters: {
             label: mesh.name ? mesh.name + " " + primitiveIndex : "glTF mesh " + primitiveIndex
           },
@@ -613,16 +618,16 @@ const _GLTFScenesManager = class _GLTFScenesManager {
     };
     const GeometryConstructor = isIndexedGeometry ? IndexedGeometry : Geometry;
     meshDescriptor.parameters.geometry = new GeometryConstructor(geometryAttributes);
-    if (!hasNormal) {
-      meshDescriptor.parameters.geometry.computeGeometry();
-    }
-    meshDescriptor.parameters.geometry.boundingBox = geometryBBox;
     if (isIndexedGeometry && indicesConstructor && indicesArray) {
       meshDescriptor.parameters.geometry.setIndexBuffer({
         bufferFormat: indicesConstructor.name === "Uint32Array" ? "uint32" : "uint16",
         array: indicesArray
       });
     }
+    if (!hasNormal) {
+      meshDescriptor.parameters.geometry.computeGeometry();
+    }
+    meshDescriptor.parameters.geometry.boundingBox = geometryBBox;
   }
   /**
    * Create the {@link SkinDefinition | skins definitions} for each {@link gltf} skins.
@@ -862,18 +867,14 @@ const _GLTFScenesManager = class _GLTFScenesManager {
     if (useTransmission && hasTransmission) {
       meshDescriptor.parameters.transmissive = true;
     }
-    materialTextures?.texturesDescriptors.forEach((t) => {
-      meshDescriptor.textures.push({
-        texture: t.texture.options.name,
-        sampler: t.sampler.name,
-        texCoordAttributeName: t.texCoordAttributeName
+    meshDescriptor.texturesDescriptors = materialTextures?.texturesDescriptors || [];
+    if (useTransmission && hasTransmission) {
+      this.renderer.createTransmissionTarget();
+      meshDescriptor.texturesDescriptors.push({
+        texture: this.renderer.transmissionTarget.texture,
+        sampler: this.renderer.transmissionTarget.sampler
       });
-      const samplerExists = meshDescriptor.parameters.samplers.find((s) => s.uuid === t.sampler.uuid);
-      if (!samplerExists) {
-        meshDescriptor.parameters.samplers.push(t.sampler);
-      }
-      meshDescriptor.parameters.textures.push(t.texture);
-    });
+    }
     meshDescriptor.parameters.cullMode = material.doubleSided ? "none" : "back";
     if (material.alphaMode === "BLEND") {
       meshDescriptor.parameters.transparent = true;
@@ -926,13 +927,13 @@ const _GLTFScenesManager = class _GLTFScenesManager {
         type: "f32",
         value: material.occlusionTexture?.strength === void 0 ? 1 : material.occlusionTexture.strength
       },
-      emissiveColor: {
-        type: "vec3f",
-        value: material.emissiveFactor !== void 0 ? new Vec3(material.emissiveFactor[0], material.emissiveFactor[1], material.emissiveFactor[2]) : new Vec3(0)
-      },
       emissiveIntensity: {
         type: "f32",
         value: emissiveStrength && emissiveStrength.emissiveStrength !== void 0 ? emissiveStrength.emissiveStrength : 1
+      },
+      emissiveColor: {
+        type: "vec3f",
+        value: material.emissiveFactor !== void 0 ? new Vec3(material.emissiveFactor[0], material.emissiveFactor[1], material.emissiveFactor[2]) : new Vec3(0)
       },
       specularIntensity: {
         type: "f32",

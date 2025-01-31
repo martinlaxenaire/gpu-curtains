@@ -42,15 +42,7 @@ const getPbrFragmentShaderCode = ({
   environmentMap = null
 }) => {
   chunks = patchAdditionalChunks(chunks);
-  if (environmentMap) {
-    if (!materialUniform) {
-      materialUniform = {
-        struct: {}
-      };
-    }
-    if (!materialUniform.struct) {
-      materialUniform.struct = {};
-    }
+  if (environmentMap && materialUniform && materialUniform.struct) {
     materialUniform.struct = {
       ...materialUniform.struct,
       envRotation: {

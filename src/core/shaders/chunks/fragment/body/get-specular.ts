@@ -21,26 +21,29 @@ export const getSpecular = ({
 
   if (specularTexture) {
     specular += /* wgsl */ `
-  let specularSample: vec4f = textureSample(${specularTexture.texture}, ${specularTexture.sampler}, ${specularTexture.texCoordAttributeName});
+  let specularSample: vec4f = textureSample(${specularTexture.texture.options.name}, ${
+      specularTexture.sampler?.name ?? 'defaultSampler'
+    }, ${specularTexture.texCoordAttributeName ?? 'uv'});
   
-  specularFactor = specularFactor * specularSample.a;
-  specularColorFactor = specularColorFactor * specularSample.rgb;`
+  specularIntensity = specularIntensity * specularSample.a;
+  specularColor = specularColor * specularSample.rgb;`
   } else {
     if (specularFactorTexture) {
       specular += /* wgsl */ `
-  let specularFactorSample: vec4f = textureSample(${specularFactorTexture.texture}, ${specularFactorTexture.sampler}, ${specularFactorTexture.texCoordAttributeName});
+  let specularFactorSample: vec4f = textureSample(${specularFactorTexture.texture.options.name}, ${
+        specularFactorTexture.sampler?.name ?? 'defaultSampler'
+      }, ${specularFactorTexture.texCoordAttributeName ?? 'uv'});
   
-  specularFactor = specularFactor * specularSample.a;`
+  specularIntensity = specularIntensity * specularSample.a;`
     }
     if (specularColorTexture) {
       specular += /* wgsl */ `
-  let specularColorSample: vec4f = textureSample(${specularColorTexture.texture}, ${specularColorTexture.sampler}, ${specularColorTexture.texCoordAttributeName});
+  let specularColorSample: vec4f = textureSample(${specularColorTexture.texture.options.name}, ${
+        specularColorTexture.sampler?.name ?? 'defaultSampler'
+      }, ${specularColorTexture.texCoordAttributeName ?? 'uv'});
   
-  specularColorFactor = specularColorFactor * specularSample.rgb;`
+  specularColor = specularColor * specularSample.rgb;`
     }
-
-    specular += /* wgsl */ `
-  specularFactor = mix(specularFactor, 1.0, metallic);`
   }
 
   return specular

@@ -341,7 +341,10 @@ export class GPURenderer {
    * Resize all tracked objects ({@link Texture | textures}, {@link RenderPass | render passes}, {@link RenderTarget | render targets}, {@link ComputePass | compute passes} and meshes).
    */
   resizeObjects() {
-    // resize textures first
+    // invalidate render bundles first if needed
+    this.renderBundles.forEach((renderBundle) => renderBundle.resize())
+
+    // then resize textures
     this.textures.forEach((texture) => {
       texture.resize()
     })

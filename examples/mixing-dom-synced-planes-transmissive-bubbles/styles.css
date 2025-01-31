@@ -1,0 +1,27 @@
+@media screen {
+  /*** content ***/
+  #page {
+    padding: 2.25rem 0;
+  }
+
+  .plane {
+    width: 75%;
+    aspect-ratio: 20 / 10;
+    margin: 7rem 0;
+  }
+
+  .plane:nth-child(odd) {
+    margin-left: 25%;
+  }
+}
+
+@media screen and (orientation: portrait) {
+  .plane {
+    width: 100%;
+    margin: 7rem auto;
+  }
+
+  .plane:nth-child(odd) {
+    margin-left: auto;
+  }
+}

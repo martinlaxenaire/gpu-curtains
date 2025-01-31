@@ -3,11 +3,9 @@ import {
   GPUCameraRenderer,
   Vec2,
   EnvironmentMap,
-  getLambert,
   Object3D,
-  Mesh,
+  LitMesh,
   PlaneGeometry,
-  BoxGeometry,
   GLTFLoader,
   GLTFScenesManager,
   buildShaders,
@@ -100,41 +98,16 @@ window.addEventListener('load', async () => {
   })
 
   // floor
-  const meshVs = /* wgsl */ `
-    struct VertexOutput {
-      @builtin(position) position: vec4f,
-      @location(0) normal: vec3f,
-      @location(1) worldPosition: vec3f,
-      @location(2) uv: vec2f,
-    };
-    
-    @vertex fn main(
-      attributes: Attributes,
-    ) -> VertexOutput {
-      var vsOutput: VertexOutput;
-    
-      vsOutput.position = getOutputPosition(attributes.position);
-      vsOutput.normal = getWorldNormal(attributes.normal);
-      vsOutput.worldPosition = getWorldPosition(attributes.position).xyz;
-      vsOutput.uv = attributes.uv;
-      
-      return vsOutput;
-    }
-  `
-
-  const meshFs = /* wgsl */ `
-    struct VSOutput {
-      @builtin(position) position: vec4f,
-      @builtin(front_facing) frontFacing: bool,
-      @location(0) normal: vec3f,
-      @location(1) worldPosition: vec3f,
-      @location(2) uv: vec2f,
-    };
-        
-    ${getLambert({
-      receiveShadows: true,
-    })}
-    
+  const floor = new LitMesh(gpuCameraRenderer, {
+    label: 'Floor',
+    geometry: new PlaneGeometry(),
+    frustumCulling: false, // always draw the floor
+    receiveShadows: true,
+    cullMode: 'none',
+    material: {
+      shading: 'Lambert',
+      fragmentChunks: {
+        additionalHead: `
     // ported from https://github.com/toji/pristine-grid-webgpu
     // grid function from Best Darn Grid article
     fn PristineGrid(uv: vec2f, lineWidth: vec2f) -> f32 {
@@ -152,43 +125,14 @@ window.addEventListener('load', async () => {
       grid2 = select(grid2, 1.0 - grid2, invertLine);
       return mix(grid2.x, 1.0, grid2.y);
     }
-
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {      
-      // negate the normals if we're using front face culling
-      let faceDirection = select(-1.0, 1.0, fsInput.frontFacing);
-      
-      // apply lightning and shadows
-      let normal: vec3f = normalize(faceDirection * fsInput.normal);
-      
-      let worldPosition: vec3f = fsInput.worldPosition;
-      
-      let pristineGrid = PristineGrid(fsInput.uv * grid.scale, grid.lineWidth);
+        `,
+        preliminaryContribution: `
+        let pristineGrid = PristineGrid(fsInput.uv * grid.scale, grid.lineWidth);
 
       // lerp between base and line color
       var color: vec3f = mix(grid.baseColor, grid.lineColor, pristineGrid * grid.lineAlpha);
-      
-      color = getLambert(
-        normal,
-        worldPosition,
-        color
-      );
-      
-      return vec4(color, 1.0);
-    }
-  `
-
-  const floor = new Mesh(gpuCameraRenderer, {
-    label: 'Floor',
-    geometry: new PlaneGeometry(),
-    frustumCulling: false, // always draw the floor
-    receiveShadows: true,
-    cullMode: 'none',
-    shaders: {
-      vertex: {
-        code: meshVs,
-      },
-      fragment: {
-        code: meshFs,
+      outputColor = vec4(color, outputColor.a);
+        `,
       },
     },
     uniforms: {

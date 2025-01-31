@@ -14,15 +14,18 @@ const getPhongShading = ({ receiveShadows = false } = {}) => {
   // point lights
   for(var i = 0; i < pointLights.count; i++) {  
     getPointLightInfo(pointLights.elements[i], worldPosition, &directLight);
+    if(!directLight.visible) {
+      continue;
+    }
     ${receiveShadows ? applyPointShadows : ""}
-    getPhongDirect(normal, outputColor.rgb, viewDirection, specularColor, specularFactor, shininess, directLight, &reflectedLight);
+    getPhongDirect(normal, outputColor.rgb, viewDirection, specularColor, specularIntensity, shininess, directLight, &reflectedLight);
   }
   
   // directional lights
   for(var i = 0; i < directionalLights.count; i++) {
     getDirectionalLightInfo(directionalLights.elements[i], worldPosition, &directLight);
     ${receiveShadows ? applyDirectionalShadows : ""}
-    getPhongDirect(normal, outputColor.rgb, viewDirection, specularColor, specularFactor, shininess, directLight, &reflectedLight);
+    getPhongDirect(normal, outputColor.rgb, viewDirection, specularColor, specularIntensity, shininess, directLight, &reflectedLight);
   }
   
   // ambient lights
