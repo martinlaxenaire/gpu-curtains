@@ -812,6 +812,10 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
         }
 
         this.geometry.consumers.delete(this.uuid)
+
+        if (this.options.renderBundle) {
+          this.options.renderBundle.ready = false
+        }
       }
 
       this.geometry = geometry
