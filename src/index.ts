@@ -41,6 +41,10 @@ export { DOMTexture } from './core/textures/DOMTexture'
 export { DOMElement } from './core/DOM/DOMElement'
 
 // shading
+export * from './core/shaders/chunks/utils/constants'
+export * from './core/shaders/chunks/utils/common'
+export * from './core/shaders/chunks/utils/tone-mapping-utils'
+
 export * from './core/shaders/chunks/shading/lambert-shading'
 export * from './core/shaders/chunks/shading/phong-shading'
 export * from './core/shaders/chunks/shading/pbr-shading'

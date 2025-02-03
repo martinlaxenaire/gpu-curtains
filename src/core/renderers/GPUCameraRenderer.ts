@@ -684,18 +684,7 @@ export class GPUCameraRenderer extends GPURenderer {
       this.transmissionTarget.passEntry.onBeforeRenderPass = (commandEncoder, swapChainTexture) => {
         // Copy background scene texture to the output, because the output texture needs mips
         // and we can't have mips on a rendered texture
-        commandEncoder.copyTextureToTexture(
-          {
-            texture: swapChainTexture,
-          },
-          {
-            texture: this.transmissionTarget.texture.texture,
-          },
-          [this.transmissionTarget.texture.size.width, this.transmissionTarget.texture.size.height]
-        )
-
-        // now generate mips
-        this.generateMips(this.transmissionTarget.texture, commandEncoder)
+        this.copyGPUTextureToTexture(swapChainTexture, this.transmissionTarget.texture, commandEncoder)
       }
     }
   }

@@ -1,9 +1,9 @@
 import { PhongFragmentShaderInputParams } from './get-fragment-shader-code'
 import { constants } from '../../chunks/utils/constants'
 import { common } from '../../chunks/utils/common'
+import { toneMappingUtils } from '../../chunks/utils/tone-mapping-utils'
 import { getLightsInfos } from '../../chunks/fragment/head/get-lights-infos'
 import { REIndirectDiffuse } from '../../chunks/fragment/head/RE-indirect-diffuse'
-import { toneMappingUtils } from '../../chunks/fragment/head/tone-mapping-utils'
 import { getPhongDirect } from '../../chunks/fragment/head/get-phong-direct'
 import { getPhongShading } from '../../chunks/fragment/body/get-phong-shading'
 import { getFragmentInputStruct } from '../../chunks/fragment/head/get-fragment-input-struct'
@@ -46,10 +46,10 @@ ${chunks.additionalHead}
 
 ${constants}
 ${common}
+${toneMappingUtils}
 ${getLightsInfos}
 ${REIndirectDiffuse}
 ${getPhongDirect}
-${toneMappingUtils}
 
 ${getFragmentInputStruct({ geometry })}
 

@@ -1,10 +1,10 @@
 import { LambertFragmentShaderInputParams } from './get-fragment-shader-code'
 import { constants } from '../../chunks/utils/constants'
 import { common } from '../../chunks/utils/common'
+import { toneMappingUtils } from '../../chunks/utils/tone-mapping-utils'
 import { getLightsInfos } from '../../chunks/fragment/head/get-lights-infos'
 import { REIndirectDiffuse } from '../../chunks/fragment/head/RE-indirect-diffuse'
 import { getLambertDirect } from '../../chunks/fragment/head/get-lambert-direct'
-import { toneMappingUtils } from '../../chunks/fragment/head/tone-mapping-utils'
 import { getLambertShading } from '../../chunks/fragment/body/get-lambert-shading'
 import { applyToneMapping } from '../../chunks/fragment/body/apply-tone-mapping'
 import { getFragmentInputStruct } from '../../chunks/fragment/head/get-fragment-input-struct'
@@ -40,10 +40,10 @@ ${chunks.additionalHead}
 
 ${constants}
 ${common}
+${toneMappingUtils}
 ${getLightsInfos}
 ${REIndirectDiffuse}
 ${getLambertDirect}
-${toneMappingUtils}
 
 ${getFragmentInputStruct({ geometry })}
 

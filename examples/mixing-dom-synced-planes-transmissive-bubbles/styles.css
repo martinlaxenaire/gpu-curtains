@@ -1,7 +1,16 @@
 @media screen {
   /*** content ***/
+
   #page {
     padding: 2.25rem 0;
+  }
+
+  h1 {
+    margin-bottom: 0;
+  }
+
+  #planes {
+    padding-top: 0;
   }
 
   .plane {

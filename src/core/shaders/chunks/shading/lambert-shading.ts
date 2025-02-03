@@ -1,9 +1,9 @@
 import { constants } from '../utils/constants'
 import { common } from '../utils/common'
+import { toneMappingUtils } from '../utils/tone-mapping-utils'
 import { getLightsInfos } from '../fragment/head/get-lights-infos'
 import { REIndirectDiffuse } from '../fragment/head/RE-indirect-diffuse'
 import { getLambertDirect } from '../fragment/head/get-lambert-direct'
-import { toneMappingUtils } from '../fragment/head/tone-mapping-utils'
 import { ToneMappings } from '../../full/fragment/get-fragment-shader-code'
 import { getLambertShading } from '../fragment/body/get-lambert-shading'
 

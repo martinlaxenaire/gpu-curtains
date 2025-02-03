@@ -1,6 +1,6 @@
+import { toneMappingUtils } from '../utils/tone-mapping-utils'
 import { GetShadingParams, lambertUtils } from './lambert-shading'
 import { getPhongDirect } from '../fragment/head/get-phong-direct'
-import { toneMappingUtils } from '../fragment/head/tone-mapping-utils'
 import { getPhongShading } from '../fragment/body/get-phong-shading'
 
 /**

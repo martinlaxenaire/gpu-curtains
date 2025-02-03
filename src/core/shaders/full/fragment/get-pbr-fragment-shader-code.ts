@@ -1,9 +1,9 @@
 import { FragmentShaderInputParams } from './get-fragment-shader-code'
 import { constants } from '../../chunks/utils/constants'
 import { common } from '../../chunks/utils/common'
+import { toneMappingUtils } from '../../chunks/utils/tone-mapping-utils'
 import { getLightsInfos } from '../../chunks/fragment/head/get-lights-infos'
 import { REIndirectDiffuse } from '../../chunks/fragment/head/RE-indirect-diffuse'
-import { toneMappingUtils } from '../../chunks/fragment/head/tone-mapping-utils'
 import { REIndirectSpecular } from '../../chunks/fragment/head/RE-indirect-specular'
 import { getPBRDirect } from '../../chunks/fragment/head/get-PBR-direct'
 import { getIBLIndirect } from '../../chunks/fragment/head/get-IBL-indirect'
@@ -74,13 +74,13 @@ ${chunks.additionalHead}
 
 ${constants}
 ${common}
+${toneMappingUtils}
 ${getLightsInfos}
 ${REIndirectDiffuse}
 ${REIndirectSpecular}
 ${getPBRDirect}
 ${getIBLIndirect}
 ${getIBLTransmission}
-${toneMappingUtils}
 
 ${getFragmentInputStruct({ geometry })}
 

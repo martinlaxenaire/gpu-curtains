@@ -66,6 +66,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   // environment map
   const environmentMap = new EnvironmentMap(gpuCurtains, {
     diffuseIntensity: 0.5,
+    specularIntensity: 0.5,
   })
 
   await environmentMap.loadAndComputeFromHDR('../../website/assets/hdr/Colorful_Studio.hdr')
@@ -177,10 +178,12 @@ window.addEventListener('DOMContentLoaded', async () => {
       renderBundle: transmissiveBundle,
       material: {
         shading: 'PBR',
-        metallic: 0,
+        toneMapping: 'Khronos',
+        metallic: 0.01, // if we'd set it to 0, we'd lose specular on transparent background
         roughness: 0,
+        //specularColor: new Vec3(0.1),
         transmission: 1,
-        thickness: 0.5,
+        thickness: 0.25,
         dispersion: 5,
         ior: 1.5,
         environmentMap,
@@ -221,8 +224,9 @@ window.addEventListener('DOMContentLoaded', async () => {
       bubble.position.x =
         bubble.userData.initialPosition.x + Math.cos(bubble.userData.time * bubble.userData.speed.x) * 1.25
 
-      if (bubble.position.y >= bubble.userData.availableSize.height * 0.5 + bubble.scale.y * 2) {
-        bubble.position.y = bubble.userData.availableSize.height * -0.5 - bubble.scale.y * 2
+      if (bubble.position.y >= bubble.userData.availableSize.height * 0.5 + bubble.scale.y * 1.5) {
+        bubble.position.y = bubble.userData.availableSize.height * -0.5 - bubble.scale.y * 1.5
+        bubble.userData.initialPosition.x = (Math.random() - 0.5) * bubble.userData.availableSize.width
       }
     })
   }

@@ -1,3 +1,5 @@
+// TODO we could use a skybox instead
+// see https://webgpufundamentals.org/webgpu/lessons/webgpu-skybox.html
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
   const {
@@ -9,6 +11,8 @@ window.addEventListener('load', async () => {
     Vec2,
     Vec3,
     EnvironmentMap,
+    constants,
+    common,
     toneMappingUtils,
   } = await import(/* @vite-ignore */ path)
 
@@ -87,28 +91,14 @@ window.addEventListener('load', async () => {
       @location(0) direction: vec3f,
     };
     
-    fn lessThan3(a: vec3f, b: vec3f) -> vec3f {
-      return vec3f(vec3<bool>(a.x < b.x, a.y < b.y, a.z < b.z));
-    }
-    
-    fn pow2( x: f32 ) -> f32 {
-        return x * x;
-    }
-    
-    fn pow3( x: f32 ) -> f32 {
-        return x * x * x;
-    }
-    
-    fn pow4( x: f32 ) -> f32 {
-        return pow2(x) * pow2(x);
-    }
-  
+    ${constants}
+    ${common}
     ${toneMappingUtils}
 
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var color: vec4f = select(
-        textureSample(specularTexture, clampSampler, fsInput.direction),
-        textureSample(diffuseTexture, clampSampler, fsInput.direction),
+        textureSample(${environmentMap.specularTexture.options.name}, clampSampler, fsInput.direction),
+        textureSample(${environmentMap.diffuseTexture.options.name}, clampSampler, fsInput.direction),
         params.useDiffuse > 0.0
       );
       

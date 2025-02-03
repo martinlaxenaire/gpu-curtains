@@ -17,12 +17,12 @@ import { Renderer } from '../core/renderers/utils'
 import { DOMObject3D } from './objects3D/DOMObject3D'
 
 /**
- * Options used to create a {@link GPUCurtains}
+ * Options used to create a {@link GPUCurtains}.
  */
 export interface GPUCurtainsOptions extends Omit<GPUCameraRendererParams, 'deviceManager'>, GPUDeviceManagerBaseParams {
-  /** Whether {@link GPUCurtains} should handle all resizing by itself or not */
+  /** Whether the {@link Renderer | renderers} created by this {@link GPUCurtains} instance should handle resizing by themselves or not. */
   autoResize?: boolean
-  /** Whether {@link GPUCurtains} should listen to scroll event or not */
+  /** Whether this {@link GPUCurtains} instance should listen to scroll event or not. */
   watchScroll?: boolean
 }
 

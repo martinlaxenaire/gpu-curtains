@@ -1,8 +1,8 @@
 import { GetShadingParams, lambertUtils } from './lambert-shading'
+import { toneMappingUtils } from '../utils/tone-mapping-utils'
 import { REIndirectSpecular } from '../fragment/head/RE-indirect-specular'
 import { getIBLTransmission } from '../fragment/head/get-IBL-transmission'
 import { getPBRDirect } from '../fragment/head/get-PBR-direct'
-import { toneMappingUtils } from '../fragment/head/tone-mapping-utils'
 import { getPBRShading } from '../fragment/body/get-pbr-shading'
 import { FragmentShaderBaseInputParams, ShaderTextureDescriptor } from '../../full/fragment/get-fragment-shader-code'
 
