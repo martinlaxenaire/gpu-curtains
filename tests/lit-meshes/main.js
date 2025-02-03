@@ -47,15 +47,15 @@ window.addEventListener('load', async () => {
     deviceManager: gpuDeviceManager,
     container,
     pixelRatio: Math.min(1, window.devicePixelRatio),
-    renderPass: {
-      // since transmission need a solid background color to be blended with
-      // just clear the renderer renderPass color values to match the css background
-      colorAttachments: [
-        {
-          clearValue: [34 / 255, 34 / 255, 34 / 255, 1],
-        },
-      ],
-    },
+    // renderPass: {
+    //   // since transmission need a solid background color to be blended with
+    //   // just clear the renderer renderPass color values to match the css background
+    //   colorAttachments: [
+    //     {
+    //       clearValue: [34 / 255, 34 / 255, 34 / 255, 1],
+    //     },
+    //   ],
+    // },
   })
 
   const { camera, scene } = gpuCameraRenderer
@@ -176,7 +176,7 @@ window.addEventListener('load', async () => {
 
   volumePivot.position.y = -spacing * 0.875
 
-  const meshes = []
+  let meshes = []
 
   const buildMeshes = () => {
     const hasBaseColorTexture = useBaseColorTexture && baseColorTexture
@@ -379,9 +379,9 @@ window.addEventListener('load', async () => {
       volumeSphere.parent = volumePivot
 
       meshes.push(volumeSphere)
-
-      console.log(volumeSphere.material)
     }
+
+    console.log(meshes)
   }
 
   buildMeshes()
@@ -443,6 +443,8 @@ window.addEventListener('load', async () => {
 
       meshes.forEach((mesh) => mesh.remove())
 
+      meshes = []
+
       buildMeshes()
     })
 
@@ -453,6 +455,8 @@ window.addEventListener('load', async () => {
       useNormalTexture = value
 
       meshes.forEach((mesh) => mesh.remove())
+
+      meshes = []
 
       buildMeshes()
     })

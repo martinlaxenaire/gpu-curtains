@@ -63,7 +63,7 @@ export const getNormalTangentBitangent = ({
   let normalMap = textureSample(${normalTexture.texture.options.name}, ${
       normalTexture.sampler?.name ?? 'defaultSampler'
     }, ${normalTexture.texCoordAttributeName ?? 'uv'}).rgb;
-  normal = normalize(tbn * (2.0 * normalMap - vec3(normalMapScale, normalMapScale, 1.0)));`
+  normal = normalize(tbn * (2.0 * normalMap - vec3(vec2(normalScale), 1.0)));`
   } else {
     normalTangentBitangent += /* wgsl */ `
   normal = geometryNormal;`

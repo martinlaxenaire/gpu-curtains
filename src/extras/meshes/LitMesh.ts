@@ -7,10 +7,12 @@ import {
   getFragmentShaderCode,
   ShadingModels,
 } from '../../core/shaders/full/fragment/get-fragment-shader-code'
+import { Vec2 } from '../../math/Vec2'
 import { Vec3 } from '../../math/Vec3'
 import { AdditionalChunks } from '../../core/shaders/default-material-helpers'
 import { getVertexShaderCode } from '../../core/shaders/full/vertex/get-vertex-shader-code'
 import { BufferBinding, BufferBindingParams } from '../../core/bindings/BufferBinding'
+import { Input } from '../../types/BindGroups'
 
 /** Defines the material parameters of a {@link LitMesh}. */
 export interface LitMeshMaterialParams
@@ -40,8 +42,8 @@ export interface LitMeshMaterialParams
   metallic?: number
   /** The roughness factor of the {@link LitMesh}. Default to `1`. */
   roughness?: number
-  /** The scalar parameter applied to each normal vector of the normal texture if any. Default to `1`. */
-  normalMapScale?: number
+  /** How much the normal map affects the material normal texture if any. Typical ranges are [0-1]. Default to `new Vec2(1)`. */
+  normalScale?: Vec2
   /** A scalar multiplier controlling the amount of occlusion applied to the occlusion texture if any. Default to `1`. */
   occlusionIntensity?: number
   /** Emissive intensity to apply to the emissive color of the {@link LitMesh}. Default to `1`. */
@@ -136,7 +138,7 @@ export class LitMesh extends Mesh {
       alphaCutoff,
       metallic,
       roughness,
-      normalMapScale,
+      normalScale,
       occlusionIntensity,
       emissiveIntensity,
       emissiveColor,
@@ -169,86 +171,122 @@ export class LitMesh extends Mesh {
       chunks: vertexChunks,
     })
 
+    // build material uniform based on shading model
+    // basic struct (unlit)
+    const baseUniformStruct: Record<string, Input> = {
+      color: {
+        type: 'vec3f',
+        value: color !== undefined ? color : new Vec3(1),
+      },
+      opacity: {
+        type: 'f32',
+        value: opacity !== undefined ? opacity : 1,
+      },
+      alphaCutoff: {
+        type: 'f32',
+        value: alphaCutoff !== undefined ? alphaCutoff : 0.5,
+      },
+    }
+
+    // diffuse struct (lambert)
+    const diffuseUniformStruct: Record<string, Input> = {
+      ...baseUniformStruct,
+      normalScale: {
+        type: 'vec2f',
+        value: normalScale !== undefined ? normalScale : new Vec2(1),
+      },
+      occlusionIntensity: {
+        type: 'f32',
+        value: occlusionIntensity !== undefined ? occlusionIntensity : 1,
+      },
+      emissiveIntensity: {
+        type: 'f32',
+        value: emissiveIntensity !== undefined ? emissiveIntensity : 1,
+      },
+      emissiveColor: {
+        type: 'vec3f',
+        value: emissiveColor !== undefined ? emissiveColor : new Vec3(),
+      },
+    }
+
+    // specular struct
+    const specularUniformStruct: Record<string, Input> = {
+      ...diffuseUniformStruct,
+      specularIntensity: {
+        type: 'f32',
+        value: specularIntensity !== undefined ? specularIntensity : 1,
+      },
+      specularColor: {
+        type: 'vec3f',
+        value: specularColor !== undefined ? specularColor : new Vec3(1),
+      },
+    }
+
+    // phong struct
+    const phongUniformStruct: Record<string, Input> = {
+      ...specularUniformStruct,
+      shininess: {
+        type: 'f32',
+        value: shininess !== undefined ? shininess : 30,
+      },
+    }
+
+    // PBR struct
+    const pbrUniformStruct: Record<string, Input> = {
+      ...specularUniformStruct,
+      metallic: {
+        type: 'f32',
+        value: metallic !== undefined ? metallic : 1,
+      },
+      roughness: {
+        type: 'f32',
+        value: roughness !== undefined ? roughness : 1,
+      },
+      transmission: {
+        type: 'f32',
+        value: transmission !== undefined ? transmission : 0,
+      },
+      ior: {
+        type: 'f32',
+        value: ior !== undefined ? ior : 1.5,
+      },
+      dispersion: {
+        type: 'f32',
+        value: dispersion !== undefined ? dispersion : 0,
+      },
+      thickness: {
+        type: 'f32',
+        value: thickness !== undefined ? thickness : 0,
+      },
+      attenuationDistance: {
+        type: 'f32',
+        value: attenuationDistance !== undefined ? attenuationDistance : Infinity,
+      },
+      attenuationColor: {
+        type: 'vec3f',
+        value: attenuationColor !== undefined ? attenuationColor : new Vec3(1),
+      },
+    }
+
+    const materialStruct = (() => {
+      switch (shading) {
+        case 'Unlit':
+          return baseUniformStruct
+        case 'Lambert':
+          return diffuseUniformStruct
+        case 'Phong':
+          return phongUniformStruct
+        case 'PBR':
+        default:
+          return pbrUniformStruct
+      }
+    })()
+
     // note that we do not need to add the env map params
     // they will be added by the shader builder
     const materialUniform: BufferBindingParams = {
       visibility: ['fragment'],
-      struct: {
-        color: {
-          type: 'vec3f',
-          value: color !== undefined ? color : new Vec3(1),
-        },
-        opacity: {
-          type: 'f32',
-          value: opacity !== undefined ? opacity : 1,
-        },
-        alphaCutoff: {
-          type: 'f32',
-          value: alphaCutoff !== undefined ? alphaCutoff : 0.5,
-        },
-        metallic: {
-          type: 'f32',
-          value: metallic !== undefined ? metallic : 1,
-        },
-        roughness: {
-          type: 'f32',
-          value: roughness !== undefined ? roughness : 1,
-        },
-        normalMapScale: {
-          type: 'f32',
-          value: normalMapScale !== undefined ? normalMapScale : 1,
-        },
-        occlusionIntensity: {
-          type: 'f32',
-          value: occlusionIntensity !== undefined ? occlusionIntensity : 1,
-        },
-        emissiveIntensity: {
-          type: 'f32',
-          value: emissiveIntensity !== undefined ? emissiveIntensity : 1,
-        },
-        emissiveColor: {
-          type: 'vec3f',
-          value: emissiveColor !== undefined ? emissiveColor : new Vec3(),
-        },
-        specularIntensity: {
-          type: 'f32',
-          value: specularIntensity !== undefined ? specularIntensity : 1,
-        },
-        specularColor: {
-          type: 'vec3f',
-          value: specularColor !== undefined ? specularColor : new Vec3(1),
-        },
-        ...(shading === 'Phong' && {
-          shininess: {
-            type: 'f32',
-            value: shininess !== undefined ? shininess : 30,
-          },
-        }),
-        transmission: {
-          type: 'f32',
-          value: transmission !== undefined ? transmission : 0,
-        },
-        ior: {
-          type: 'f32',
-          value: ior !== undefined ? ior : 1.5,
-        },
-        dispersion: {
-          type: 'f32',
-          value: dispersion !== undefined ? dispersion : 0,
-        },
-        thickness: {
-          type: 'f32',
-          value: thickness !== undefined ? thickness : 0,
-        },
-        attenuationDistance: {
-          type: 'f32',
-          value: attenuationDistance !== undefined ? attenuationDistance : Infinity,
-        },
-        attenuationColor: {
-          type: 'vec3f',
-          value: attenuationColor !== undefined ? attenuationColor : new Vec3(1),
-        },
-      },
+      struct: materialStruct,
     }
 
     if (defaultParams.uniforms) {
@@ -273,30 +311,47 @@ export class LitMesh extends Mesh {
       defaultParams.samplers = []
     }
 
-    ;[
-      baseColorTexture,
-      normalTexture,
-      emissiveTexture,
-      occlusionTexture,
+    // base textures (unlit)
+    const baseTextures = [baseColorTexture]
+    // diffuse textures (lambert)
+    const diffuseTextures = [...baseTextures, normalTexture, emissiveTexture, occlusionTexture]
+    // specular textures (phong)
+    // adding metallic roughness texture in phong because from glTF assets we'd need it to compute the shininess
+    const specularTextures = [
+      ...diffuseTextures,
       metallicRoughnessTexture,
       specularTexture,
       specularFactorTexture,
       specularColorTexture,
-      transmissionTexture,
-      thicknessTexture,
     ]
-      .filter(Boolean)
-      .forEach((textureDescriptor) => {
-        if (textureDescriptor.sampler) {
-          const samplerExists = defaultParams.samplers.find((s) => s.uuid === textureDescriptor.sampler.uuid)
+    // PBR textures
+    const pbrTextures = [...specularTextures, transmissionTexture, thicknessTexture]
 
-          if (!samplerExists) {
-            defaultParams.samplers.push(textureDescriptor.sampler)
-          }
+    const materialTextures = (() => {
+      switch (shading) {
+        case 'Unlit':
+          return baseTextures
+        case 'Lambert':
+          return diffuseTextures
+        case 'Phong':
+          return specularTextures
+        case 'PBR':
+        default:
+          return pbrTextures
+      }
+    })()
+
+    materialTextures.filter(Boolean).forEach((textureDescriptor) => {
+      if (textureDescriptor.sampler) {
+        const samplerExists = defaultParams.samplers.find((s) => s.uuid === textureDescriptor.sampler.uuid)
+
+        if (!samplerExists) {
+          defaultParams.samplers.push(textureDescriptor.sampler)
         }
+      }
 
-        defaultParams.textures.push(textureDescriptor.texture)
-      })
+      defaultParams.textures.push(textureDescriptor.texture)
+    })
 
     // env map
     if (environmentMap && (shading === 'PBR' || !shading)) {

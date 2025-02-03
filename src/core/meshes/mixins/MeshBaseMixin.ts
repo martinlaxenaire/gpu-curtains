@@ -928,6 +928,10 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
         if (this.geometry) {
           currentCacheKey = this.material.cacheKey
         }
+
+        if (this.options.renderBundle) {
+          this.options.renderBundle.ready = false
+        }
       }
 
       this.material = material

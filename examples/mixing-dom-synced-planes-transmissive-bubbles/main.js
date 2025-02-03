@@ -181,7 +181,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         toneMapping: 'Khronos',
         metallic: 0.01, // if we'd set it to 0, we'd lose specular on transparent background
         roughness: 0,
-        //specularColor: new Vec3(0.1),
+        specularColor: new Vec3(0.1),
         transmission: 1,
         thickness: 0.25,
         dispersion: 5,
@@ -211,7 +211,6 @@ window.addEventListener('DOMContentLoaded', async () => {
         bubble.userData.depthPosition
       )
 
-      bubble.position.x = bubble.userData.initialPosition.x
       bubble.position.y = bubble.userData.initialPosition.y
     }
 
@@ -225,11 +224,11 @@ window.addEventListener('DOMContentLoaded', async () => {
         bubble.userData.initialPosition.x + Math.cos(bubble.userData.time * bubble.userData.speed.x) * 1.25
 
       if (bubble.position.y >= bubble.userData.availableSize.height * 0.5 + bubble.scale.y * 1.5) {
+        // reset the bubble
+        bubble.scale.set(Math.random() + 1)
         bubble.position.y = bubble.userData.availableSize.height * -0.5 - bubble.scale.y * 1.5
         bubble.userData.initialPosition.x = (Math.random() - 0.5) * bubble.userData.availableSize.width
       }
     })
   }
-
-  console.log(gpuCurtains)
 })
