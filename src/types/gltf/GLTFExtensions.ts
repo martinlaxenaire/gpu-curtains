@@ -31,6 +31,30 @@ export type GLTFExtensionsUsed = Array<GLTFExtensionsTypes>
 
 /* TOP LEVEL EXTENSIONS */
 
+/** Define the `KHR_lights_punctual` extension top level options. */
+export interface GLTFLightsPunctual {
+  /** Array of available lights. */
+  lights?: Array<{
+    /** Name of the light. Default to `''`. */
+    name?: string
+    /** RGB value for the light's color in linear space. Default to `[1, 1, 1]`. */
+    color?: [number, number, number]
+    /** Brightness of the light. The units that this is defined in depend on the type of light. `point` and `spot` lights use luminous intensity in candela (lm/sr) while `directional` lights use illuminance in lux (lm/m2). Default to `1`. */
+    intensity?: number
+    /** Declares the type of the light. */
+    type: 'directional' | 'point' | 'spot'
+    /** Hint defining a distance cutoff at which the light's intensity may be considered to have reached zero. Supported only for `point` and `spot` lights. Must be > 0. When undefined, range is assumed to be infinite. */
+    range?: number
+    /** When a light's type is `spot`, this property on the light is required. */
+    spot?: {
+      /** Angle, in radians, from centre of spotlight where falloff begins. Must be greater than or equal to `0` and less than `outerConeAngle`. Default to `0`. */
+      innerConeAngle?: number
+      /** Angle, in radians, from centre of spotlight where falloff ends. Must be greater than `innerConeAngle` and less than or equal to `PI / 2.0`. Default to `PI / 4.0`. */
+      outerConeAngle?: number
+    }
+  }>
+}
+
 /** Define the `KHR_materials_variants` extension top level options. */
 export interface GLTFVariants {
   /** Array of available variants names. */
@@ -39,6 +63,8 @@ export interface GLTFVariants {
 
 /** Base mapping for all potential top level GLTF extensions types. */
 export type GLTFExtensionsMapping = {
+  /** Define the `KHR_lights_punctual` extension options. */
+  KHR_lights_punctual: GLTFLightsPunctual
   /** Define the `KHR_materials_variants` extension options. */
   KHR_materials_variants: GLTFVariants
 }
@@ -51,6 +77,12 @@ export type GLTFExtensions = Pick<GLTFExtensionsMapping, ExtensionKeys>
 
 /* NODE EXTENSIONS */
 
+/** Define the `KHR_lights_punctual` extension nodes options. */
+export interface GLTFLightsPunctualExtension {
+  /** Index into the {@link GLTFExtensions} lights array representing the light to use. */
+  light: number
+}
+
 /** Define the `EXT_mesh_gpu_instancing` extension nodes options. */
 export interface GLTFMeshGPUInstancingExtension {
   /** contains accessor ids for the `TRANSLATION`, `ROTATION`, and `SCALE` attribute buffers, all of which are optional. */
@@ -59,6 +91,8 @@ export interface GLTFMeshGPUInstancingExtension {
 
 /** Base mapping for all potential nodes GLTF extensions types. */
 export type GLTFNodesExtensionsMapping = {
+  /** Define the `KHR_lights_punctual` extension node options. */
+  KHR_lights_punctual: GLTFLightsPunctualExtension
   /** Define the `EXT_mesh_gpu_instancing` extension node options. */
   EXT_mesh_gpu_instancing: GLTFMeshGPUInstancingExtension
 }

@@ -12,6 +12,7 @@ import { ShaderTextureDescriptor } from '../../core/shaders/full/fragment/get-fr
 import { GLTFExtensionsUsed } from './GLTFExtensions';
 import { RenderMaterialParams } from '../Materials';
 import { RenderMaterial } from '../../core/materials/RenderMaterial';
+import { Light } from '../../core/lights/Light';
 /** Parameters parsed from a {@link GLTF.IMaterial | glTF material} entry. */
 export interface MeshDescriptorMaterialParams {
     /** Optional label of the {@link RenderMaterial} to build. */
@@ -138,4 +139,6 @@ export interface ScenesManager {
     cameras: Camera[];
     /** Array of {@link SkinDefinition} used by this {@link ScenesManager}. */
     skins: SkinDefinition[];
+    /** Array of predefined {@link Light} used by this {@link ScenesManager}. */
+    lights: Light[];
 }

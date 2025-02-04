@@ -46,7 +46,7 @@ import { ChildDescriptor, MeshDescriptor, MeshDescriptorMaterialParams, Primitiv
  * ## Extensions
  * - [ ] KHR_animation_pointer
  * - [ ] KHR_draco_mesh_compression
- * - [ ] KHR_lights_punctual
+ * - [x] KHR_lights_punctual (partial support - SpotLight not yet implemented)
  * - [ ] KHR_materials_anisotropy
  * - [ ] KHR_materials_clearcoat
  * - [x] KHR_materials_dispersion
@@ -131,6 +131,10 @@ export declare class GLTFScenesManager {
      * Create the {@link scenesManager} {@link TargetsAnimationsManager} if any animation is present in the {@link gltf}.
      */
     createAnimations(): void;
+    /**
+     * Create the {@link ScenesManager.lights | lights} defined by the `KHR_lights_punctual` extension if any.
+     */
+    createLights(): void;
     /**
      * Create the {@link Sampler} and add them to the {@link ScenesManager.samplers | scenesManager samplers array}.
      */

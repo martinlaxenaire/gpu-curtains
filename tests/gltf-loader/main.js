@@ -248,6 +248,15 @@ window.addEventListener('load', async () => {
       name: 'Dragon Attenuation',
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/DragonAttenuation/glTF/DragonAttenuation.gltf',
     },
+    // lights
+    directionalLight: {
+      name: 'Directional Light',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/DirectionalLight/glTF/DirectionalLight.gltf',
+    },
+    lightsPunctualLamp: {
+      name: 'Lights Punctual Lamp',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/LightsPunctualLamp/glTF/LightsPunctualLamp.gltf',
+    },
   }
 
   let shadingModel = 'PBR' // 'PBR', 'Phong' or 'Lambert'
@@ -460,11 +469,16 @@ window.addEventListener('load', async () => {
     } else {
       ambientLight.intensity = 0.2
 
-      if (light instanceof PointLight) {
-        const lightPositionLengthSq = light.position.lengthSq()
-        light.intensity = lightPositionLengthSq * 6
+      if (scenesManager.lights.length) {
+        // already lit by the scenes manager lights
+        light.intensity = 0
       } else {
-        light.intensity = 3
+        if (light instanceof PointLight) {
+          const lightPositionLengthSq = light.position.lengthSq()
+          light.intensity = lightPositionLengthSq * 6
+        } else {
+          light.intensity = 3
+        }
       }
     }
 

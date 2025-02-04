@@ -31,6 +31,8 @@ import { GLTFExtensionsTypes } from '../../types/gltf/GLTFExtensions'
 import { Vec2 } from '../../math/Vec2'
 import { RenderMaterial } from '../../core/materials/RenderMaterial'
 import { ProjectedMeshParameters } from '../../core/meshes/mixins/ProjectedMeshBaseMixin'
+import { DirectionalLight } from '../../core/lights/DirectionalLight'
+import { PointLight } from '../../core/lights/PointLight'
 
 // https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Constants
 // To make it easier to reference the WebGL enums that glTF uses.
@@ -75,7 +77,7 @@ const GL = WebGLRenderingContext
  * ## Extensions
  * - [ ] KHR_animation_pointer
  * - [ ] KHR_draco_mesh_compression
- * - [ ] KHR_lights_punctual
+ * - [x] KHR_lights_punctual (partial support - SpotLight not yet implemented)
  * - [ ] KHR_materials_anisotropy
  * - [ ] KHR_materials_clearcoat
  * - [x] KHR_materials_dispersion
@@ -144,11 +146,13 @@ export class GLTFScenesManager {
       animations: [],
       cameras: [],
       skins: [],
+      lights: [],
     }
 
     this.createSamplers()
     this.createMaterialTextures()
     this.createMaterialsParams()
+    this.createLights()
     this.createAnimations()
     this.createScenes()
   }
@@ -283,6 +287,34 @@ export class GLTFScenesManager {
         })
       )
     })
+  }
+
+  /**
+   * Create the {@link ScenesManager.lights | lights} defined by the `KHR_lights_punctual` extension if any.
+   */
+  createLights() {
+    if (this.gltf.extensions && this.gltf.extensions['KHR_lights_punctual']) {
+      let lightIndex = 0
+      for (const light of this.gltf.extensions['KHR_lights_punctual'].lights) {
+        lightIndex++
+
+        if (light.type === 'spot') {
+          throwWarning('GLTFScenesManager: Spot lights are not supported yet.')
+          continue
+        } else if (light.type === 'directional') {
+          this.scenesManager.lights[lightIndex - 1] = new DirectionalLight(this.renderer, {
+            color: light.color !== undefined ? new Vec3(light.color[0], light.color[1], light.color[2]) : new Vec3(1),
+            intensity: light.intensity !== undefined ? light.intensity : 1,
+          })
+        } else if (light.type === 'point') {
+          this.scenesManager.lights[lightIndex - 1] = new PointLight(this.renderer, {
+            color: light.color !== undefined ? new Vec3(light.color[0], light.color[1], light.color[2]) : new Vec3(1),
+            intensity: light.intensity !== undefined ? light.intensity : 1,
+            range: light.range !== undefined ? light.range : 0,
+          })
+        }
+      }
+    }
   }
 
   /**
@@ -788,6 +820,16 @@ export class GLTFScenesManager {
           }
         }
       })
+    }
+
+    // lights
+    if (node.extensions && node.extensions.KHR_lights_punctual) {
+      const light = this.scenesManager.lights[node.extensions.KHR_lights_punctual.light]
+      if (light.type === 'directionalLights') {
+        light.position.set(0, 0, 1e9)
+      }
+
+      light.parent = child.node
     }
 
     if (node.camera !== undefined) {
@@ -1917,6 +1959,8 @@ export class GLTFScenesManager {
    * Destroy the current {@link ScenesManager} by removing all created {@link ScenesManager#meshes | meshes} and destroying all the {@link Object3D} nodes.
    */
   destroy() {
+    this.scenesManager.lights.filter(Boolean).forEach((light) => light.remove())
+
     this.scenesManager.meshes.forEach((mesh) => mesh.remove())
     this.scenesManager.meshes = []
 
