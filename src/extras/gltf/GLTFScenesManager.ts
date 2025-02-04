@@ -420,6 +420,8 @@ export class GLTFScenesManager {
   createMaterialTextures() {
     this.scenesManager.materialsTextures = []
 
+    const createdTextures: Array<{ index: number; texture: Texture }> = []
+
     if (this.gltf.materials) {
       for (const [materialIndex, material] of Object.entries(this.gltf.materials)) {
         // TODO handle custom/additional UV attributes
@@ -436,15 +438,41 @@ export class GLTFScenesManager {
 
         const createTexture = (gltfTexture: GLTF.ITextureInfo, name) => {
           const index = gltfTexture.index
+          const samplerIndex = this.gltf.textures.find((t) => t.source === index)?.sampler
+          const sampler = this.scenesManager.samplers[samplerIndex ?? 0]
+          const texCoordAttributeName = getUVAttributeName(gltfTexture)
+
+          const hasTexture = createdTextures.find((createdTexture) => createdTexture.index === index)
+
+          if (hasTexture) {
+            materialTextures.texturesDescriptors.push({
+              texture: new Texture(this.renderer, {
+                label: material.name ? material.name + ': ' + name : name,
+                name,
+                visibility: ['fragment'],
+                generateMips: true, // generate mips by default
+                fromTexture: hasTexture.texture,
+              }),
+              sampler,
+              texCoordAttributeName,
+            })
+
+            return
+          }
+
           const image = this.gltf.imagesBitmaps[this.gltf.textures[index].source]
 
           const texture = this.createTexture(material, image, name)
-          const samplerIndex = this.gltf.textures.find((t) => t.source === index)?.sampler
 
           materialTextures.texturesDescriptors.push({
             texture,
-            sampler: this.scenesManager.samplers[samplerIndex ?? 0],
-            texCoordAttributeName: getUVAttributeName(gltfTexture),
+            sampler,
+            texCoordAttributeName,
+          })
+
+          createdTextures.push({
+            index,
+            texture,
           })
         }
 
@@ -467,12 +495,10 @@ export class GLTFScenesManager {
         }
 
         if (material.normalTexture && material.normalTexture.index !== undefined) {
-          // TODO normal map scale
           createTexture(material.normalTexture, 'normalTexture')
         }
 
         if (material.occlusionTexture && material.occlusionTexture.index !== undefined) {
-          // TODO occlusion map strength
           createTexture(material.occlusionTexture, 'occlusionTexture')
         }
 
