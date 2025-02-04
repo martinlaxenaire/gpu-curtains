@@ -23,7 +23,7 @@ const getLambertShading = ({ receiveShadows = false } = {}) => {
   
   // directional lights
   for(var i = 0; i < directionalLights.count; i++) {
-    getDirectionalLightInfo(directionalLights.elements[i], worldPosition, &directLight);
+    getDirectionalLightInfo(directionalLights.elements[i], &directLight);
     ${receiveShadows ? applyDirectionalShadows : ""}
     getLambertDirect(normal, outputColor.rgb, directLight, &reflectedLight);
   }

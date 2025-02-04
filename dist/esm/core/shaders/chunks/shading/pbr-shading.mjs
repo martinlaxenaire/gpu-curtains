@@ -3,7 +3,7 @@ import { toneMappingUtils } from '../utils/tone-mapping-utils.mjs';
 import { REIndirectSpecular } from '../fragment/head/RE-indirect-specular.mjs';
 import { getIBLTransmission } from '../fragment/head/get-IBL-transmission.mjs';
 import { getPBRDirect } from '../fragment/head/get-PBR-direct.mjs';
-import { getPBRShading } from '../fragment/body/get-pbr-shading.mjs';
+import { getPBRShading } from '../fragment/body/get-PBR-shading.mjs';
 
 const getPBR = ({
   addUtils = true,

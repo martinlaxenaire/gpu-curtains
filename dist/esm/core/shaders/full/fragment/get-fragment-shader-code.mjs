@@ -1,7 +1,7 @@
 import { getUnlitFragmentShaderCode } from './get-unlit-fragment-shader-code.mjs';
 import { getLambertFragmentShaderCode } from './get-lambert-fragment-shader-code.mjs';
 import { getPhongFragmentShaderCode } from './get-phong-fragment-shader-code.mjs';
-import { getPbrFragmentShaderCode } from './get-pbr-fragment-shader-code.mjs';
+import { getPBRFragmentShaderCode } from './get-PBR-fragment-shader-code.mjs';
 
 const getFragmentShaderCode = ({
   shadingModel = "PBR",
@@ -68,7 +68,7 @@ const getFragmentShaderCode = ({
         });
       case "PBR":
       default:
-        return getPbrFragmentShaderCode({
+        return getPBRFragmentShaderCode({
           chunks,
           toneMapping,
           geometry,

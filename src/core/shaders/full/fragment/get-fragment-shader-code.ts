@@ -8,7 +8,7 @@ import { GLTFExtensionsUsed } from '../../../../types/gltf/GLTFExtensions'
 import { getUnlitFragmentShaderCode } from './get-unlit-fragment-shader-code'
 import { getLambertFragmentShaderCode } from './get-lambert-fragment-shader-code'
 import { getPhongFragmentShaderCode } from './get-phong-fragment-shader-code'
-import { getPbrFragmentShaderCode } from './get-pbr-fragment-shader-code'
+import { getPBRFragmentShaderCode } from './get-PBR-fragment-shader-code'
 import { AdditionalChunks } from '../../default-material-helpers'
 import { BufferBindingBaseParams } from '../../../bindings/BufferBinding'
 
@@ -159,7 +159,7 @@ export const getFragmentShaderCode = ({
         })
       case 'PBR':
       default:
-        return getPbrFragmentShaderCode({
+        return getPBRFragmentShaderCode({
           chunks,
           toneMapping,
           geometry,

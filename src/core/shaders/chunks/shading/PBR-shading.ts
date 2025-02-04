@@ -3,7 +3,7 @@ import { toneMappingUtils } from '../utils/tone-mapping-utils'
 import { REIndirectSpecular } from '../fragment/head/RE-indirect-specular'
 import { getIBLTransmission } from '../fragment/head/get-IBL-transmission'
 import { getPBRDirect } from '../fragment/head/get-PBR-direct'
-import { getPBRShading } from '../fragment/body/get-pbr-shading'
+import { getPBRShading } from '../fragment/body/get-PBR-shading'
 import { FragmentShaderBaseInputParams, ShaderTextureDescriptor } from '../../full/fragment/get-fragment-shader-code'
 
 /** Defines the basic parameters available for the PBR shading getter function. */

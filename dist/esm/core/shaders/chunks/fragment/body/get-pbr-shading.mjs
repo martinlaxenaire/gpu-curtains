@@ -35,7 +35,7 @@ const getPBRShading = ({
   
   // directional lights
   for(var i = 0; i < directionalLights.count; i++) {
-    getDirectionalLightInfo(directionalLights.elements[i], worldPosition, &directLight);
+    getDirectionalLightInfo(directionalLights.elements[i], &directLight);
     ${receiveShadows ? applyDirectionalShadows : ""}
     getPBRDirect(normal, baseDiffuseColor.rgb, viewDirection, specularF90, specularColor, metallic, roughness, directLight, &reflectedLight);
   }

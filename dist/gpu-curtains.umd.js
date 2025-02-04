@@ -15860,9 +15860,9 @@ fn rangeAttenuation(range: f32, distance: f32) -> f32 {
   return distanceFalloff;
 }
 
-fn getDirectionalLightInfo(directionalLight: DirectionalLightsElement, worldPosition: vec3f, ptr_light: ptr<function, DirectLight>) {
+fn getDirectionalLightInfo(directionalLight: DirectionalLightsElement, ptr_light: ptr<function, DirectLight>) {
   (*ptr_light).color = directionalLight.color;
-  (*ptr_light).direction = worldPosition - directionalLight.direction;
+  (*ptr_light).direction = -directionalLight.direction;
   (*ptr_light).visible = true;
 }
 
@@ -15958,7 +15958,7 @@ fn getLambertDirect(
   
   // directional lights
   for(var i = 0; i < directionalLights.count; i++) {
-    getDirectionalLightInfo(directionalLights.elements[i], worldPosition, &directLight);
+    getDirectionalLightInfo(directionalLights.elements[i], &directLight);
     ${receiveShadows ? applyDirectionalShadows : ""}
     getLambertDirect(normal, outputColor.rgb, directLight, &reflectedLight);
   }
@@ -16083,7 +16083,7 @@ fn getPhongDirect(
   
   // directional lights
   for(var i = 0; i < directionalLights.count; i++) {
-    getDirectionalLightInfo(directionalLights.elements[i], worldPosition, &directLight);
+    getDirectionalLightInfo(directionalLights.elements[i], &directLight);
     ${receiveShadows ? applyDirectionalShadows : ""}
     getPhongDirect(normal, outputColor.rgb, viewDirection, specularColor, specularIntensity, shininess, directLight, &reflectedLight);
   }
@@ -16548,7 +16548,7 @@ fn getPBRDirect(
   
   // directional lights
   for(var i = 0; i < directionalLights.count; i++) {
-    getDirectionalLightInfo(directionalLights.elements[i], worldPosition, &directLight);
+    getDirectionalLightInfo(directionalLights.elements[i], &directLight);
     ${receiveShadows ? applyDirectionalShadows : ""}
     getPBRDirect(normal, baseDiffuseColor.rgb, viewDirection, specularF90, specularColor, metallic, roughness, directLight, &reflectedLight);
   }
@@ -17497,7 +17497,7 @@ fn getIBLIndirect(
     return transmissionThickness;
   };
 
-  const getPbrFragmentShaderCode = ({
+  const getPBRFragmentShaderCode = ({
     chunks = null,
     toneMapping = "Linear",
     geometry,
@@ -17649,7 +17649,7 @@ ${getFragmentInputStruct({ geometry })}
           });
         case "PBR":
         default:
-          return getPbrFragmentShaderCode({
+          return getPBRFragmentShaderCode({
             chunks,
             toneMapping,
             geometry,
@@ -22117,8 +22117,9 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
       }
       if (node.extensions && node.extensions.KHR_lights_punctual) {
         const light = this.scenesManager.lights[node.extensions.KHR_lights_punctual.light];
-        if (light.type === "directionalLights") {
-          light.position.set(0, 0, 1e9);
+        light.position.set(0, 0, 0);
+        if (light instanceof DirectionalLight) {
+          light.target.set(0, 0, -1);
         }
         light.parent = child.node;
       }
@@ -23284,7 +23285,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
   exports.getLambert = getLambert;
   exports.getLambertFragmentShaderCode = getLambertFragmentShaderCode;
   exports.getPBR = getPBR;
-  exports.getPbrFragmentShaderCode = getPbrFragmentShaderCode;
+  exports.getPBRFragmentShaderCode = getPBRFragmentShaderCode;
   exports.getPhong = getPhong;
   exports.getPhongFragmentShaderCode = getPhongFragmentShaderCode;
   exports.getUnlitFragmentShaderCode = getUnlitFragmentShaderCode;

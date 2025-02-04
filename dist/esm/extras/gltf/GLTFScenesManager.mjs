@@ -649,8 +649,9 @@ const _GLTFScenesManager = class _GLTFScenesManager {
     }
     if (node.extensions && node.extensions.KHR_lights_punctual) {
       const light = this.scenesManager.lights[node.extensions.KHR_lights_punctual.light];
-      if (light.type === "directionalLights") {
-        light.position.set(0, 0, 1e9);
+      light.position.set(0, 0, 0);
+      if (light instanceof DirectionalLight) {
+        light.target.set(0, 0, -1);
       }
       light.parent = child.node;
     }

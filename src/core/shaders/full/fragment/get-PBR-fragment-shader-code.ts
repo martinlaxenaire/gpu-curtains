@@ -8,7 +8,7 @@ import { REIndirectSpecular } from '../../chunks/fragment/head/RE-indirect-specu
 import { getPBRDirect } from '../../chunks/fragment/head/get-PBR-direct'
 import { getIBLIndirect } from '../../chunks/fragment/head/get-IBL-indirect'
 import { getIBLTransmission } from '../../chunks/fragment/head/get-IBL-transmission'
-import { getPBRShading } from '../../chunks/fragment/body/get-pbr-shading'
+import { getPBRShading } from '../../chunks/fragment/body/get-PBR-shading'
 import { getFragmentInputStruct } from '../../chunks/fragment/head/get-fragment-input-struct'
 import { declareAttributesVars } from '../../chunks/fragment/body/declare-attributes-vars'
 import { declareMaterialVars } from '../../chunks/fragment/body/declare-material-vars'
@@ -26,7 +26,7 @@ import { patchAdditionalChunks } from '../../default-material-helpers'
  * @param parameters - {@link FragmentShaderInputParams} used to build the PBR fragment shader.
  * @returns - The PBR fragment shader generated based on the provided parameters.
  */
-export const getPbrFragmentShaderCode = ({
+export const getPBRFragmentShaderCode = ({
   chunks = null,
   toneMapping = 'Linear',
   geometry,

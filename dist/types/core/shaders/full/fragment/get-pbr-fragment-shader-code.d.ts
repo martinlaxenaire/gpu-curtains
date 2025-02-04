@@ -4,4 +4,4 @@ import { FragmentShaderInputParams } from './get-fragment-shader-code';
  * @param parameters - {@link FragmentShaderInputParams} used to build the PBR fragment shader.
  * @returns - The PBR fragment shader generated based on the provided parameters.
  */
-export declare const getPbrFragmentShaderCode: ({ chunks, toneMapping, geometry, materialUniform, materialUniformName, extensionsUsed, receiveShadows, baseColorTexture, normalTexture, emissiveTexture, occlusionTexture, metallicRoughnessTexture, specularTexture, specularFactorTexture, specularColorTexture, transmissionTexture, thicknessTexture, transmissionBackgroundTexture, environmentMap, }: FragmentShaderInputParams) => string;
+export declare const getPBRFragmentShaderCode: ({ chunks, toneMapping, geometry, materialUniform, materialUniformName, extensionsUsed, receiveShadows, baseColorTexture, normalTexture, emissiveTexture, occlusionTexture, metallicRoughnessTexture, specularTexture, specularFactorTexture, specularColorTexture, transmissionTexture, thicknessTexture, transmissionBackgroundTexture, environmentMap, }: FragmentShaderInputParams) => string;

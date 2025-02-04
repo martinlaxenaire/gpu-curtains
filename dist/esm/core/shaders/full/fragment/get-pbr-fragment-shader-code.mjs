@@ -7,7 +7,7 @@ import { REIndirectSpecular } from '../../chunks/fragment/head/RE-indirect-specu
 import { getPBRDirect } from '../../chunks/fragment/head/get-PBR-direct.mjs';
 import { getIBLIndirect } from '../../chunks/fragment/head/get-IBL-indirect.mjs';
 import { getIBLTransmission } from '../../chunks/fragment/head/get-IBL-transmission.mjs';
-import { getPBRShading } from '../../chunks/fragment/body/get-pbr-shading.mjs';
+import { getPBRShading } from '../../chunks/fragment/body/get-PBR-shading.mjs';
 import { getFragmentInputStruct } from '../../chunks/fragment/head/get-fragment-input-struct.mjs';
 import { declareAttributesVars } from '../../chunks/fragment/body/declare-attributes-vars.mjs';
 import { declareMaterialVars } from '../../chunks/fragment/body/declare-material-vars.mjs';
@@ -20,7 +20,7 @@ import { getEmissiveOcclusion } from '../../chunks/fragment/body/get-emissive-oc
 import { applyToneMapping } from '../../chunks/fragment/body/apply-tone-mapping.mjs';
 import { patchAdditionalChunks } from '../../default-material-helpers.mjs';
 
-const getPbrFragmentShaderCode = ({
+const getPBRFragmentShaderCode = ({
   chunks = null,
   toneMapping = "Linear",
   geometry,
@@ -107,4 +107,4 @@ ${getFragmentInputStruct({ geometry })}
   );
 };
 
-export { getPbrFragmentShaderCode };
+export { getPBRFragmentShaderCode };

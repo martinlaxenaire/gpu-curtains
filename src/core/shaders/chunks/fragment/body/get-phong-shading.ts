@@ -27,7 +27,7 @@ export const getPhongShading = ({ receiveShadows = false }: { receiveShadows?: b
   
   // directional lights
   for(var i = 0; i < directionalLights.count; i++) {
-    getDirectionalLightInfo(directionalLights.elements[i], worldPosition, &directLight);
+    getDirectionalLightInfo(directionalLights.elements[i], &directLight);
     ${receiveShadows ? applyDirectionalShadows : ''}
     getPhongDirect(normal, outputColor.rgb, viewDirection, specularColor, specularIntensity, shininess, directLight, &reflectedLight);
   }
