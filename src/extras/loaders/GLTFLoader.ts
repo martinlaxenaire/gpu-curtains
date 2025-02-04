@@ -169,7 +169,9 @@ export class GLTFLoader {
       const image = json.images[index]
       if (image.uri) {
         pendingImages[index] = fetch(GLTFLoader.resolveUri(image.uri, baseUrl)).then(async (response) => {
-          return createImageBitmap(await response.blob())
+          return createImageBitmap(await response.blob(), {
+            colorSpaceConversion: 'none',
+          })
         })
       } else {
         const bufferView = json.bufferViews[image.bufferView]
@@ -177,7 +179,9 @@ export class GLTFLoader {
           const blob = new Blob([new Uint8Array(buffer, bufferView.byteOffset, bufferView.byteLength)], {
             type: image.mimeType,
           })
-          return createImageBitmap(blob)
+          return createImageBitmap(blob, {
+            colorSpaceConversion: 'none',
+          })
         })
       }
     }

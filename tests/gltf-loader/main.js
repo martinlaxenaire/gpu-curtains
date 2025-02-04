@@ -164,6 +164,11 @@ window.addEventListener('load', async () => {
       name: 'Box Interleaved',
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/BoxInterleaved/glTF/BoxInterleaved.gltf',
     },
+    // texture encoding
+    textureEncodingTest: {
+      name: 'Texture Encoding Test',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/TextureEncodingTest/glTF/TextureEncodingTest.gltf',
+    },
     // animations
     animatedCube: {
       name: 'Animated Cube',
