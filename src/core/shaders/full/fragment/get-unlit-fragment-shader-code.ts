@@ -1,7 +1,7 @@
 import { UnlitFragmentShaderInputParams } from './get-fragment-shader-code'
 import { constants } from '../../chunks/utils/constants'
 import { common } from '../../chunks/utils/common'
-import { toneMappingUtils } from '../../chunks/fragment/head/tone-mapping-utils'
+import { toneMappingUtils } from '../../chunks/utils/tone-mapping-utils'
 import { getFragmentInputStruct } from '../../chunks/fragment/head/get-fragment-input-struct'
 import { declareAttributesVars } from '../../chunks/fragment/body/declare-attributes-vars'
 import { declareMaterialVars } from '../../chunks/fragment/body/declare-material-vars'

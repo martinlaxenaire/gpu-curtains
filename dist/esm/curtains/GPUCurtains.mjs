@@ -1,6 +1,5 @@
 import { GPUCurtainsRenderer } from './renderers/GPUCurtainsRenderer.mjs';
 import { ScrollManager } from '../utils/ScrollManager.mjs';
-import { resizeManager } from '../utils/ResizeManager.mjs';
 import { GPURenderer } from '../core/renderers/GPURenderer.mjs';
 import { Plane } from './meshes/Plane.mjs';
 import { GPUCameraRenderer } from '../core/renderers/GPUCameraRenderer.mjs';
@@ -57,7 +56,7 @@ class GPUCurtains {
     if (container) {
       this.setContainer(container);
     }
-    this.initEvents();
+    this.initScroll();
   }
   /**
    * Set the {@link GPUCurtains.container | container}.
@@ -290,14 +289,6 @@ class GPUCurtains {
   get scrollValues() {
     return this.scrollManager.scroll;
   }
-  /* EVENT LISTENERS */
-  /**
-   * Set the resize and scroll event listeners
-   */
-  initEvents() {
-    resizeManager.useObserver(this.options.autoResize);
-    this.initScroll();
-  }
   /* EVENTS */
   /**
    * Called each frame before rendering
@@ -373,7 +364,6 @@ class GPUCurtains {
   destroy() {
     this.deviceManager.destroy();
     this.scrollManager?.destroy();
-    resizeManager.destroy();
   }
 }
 

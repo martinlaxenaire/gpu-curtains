@@ -812,6 +812,10 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
         }
 
         this.geometry.consumers.delete(this.uuid)
+
+        if (this.options.renderBundle) {
+          this.options.renderBundle.ready = false
+        }
       }
 
       this.geometry = geometry
@@ -928,6 +932,10 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
         if (this.geometry) {
           currentCacheKey = this.material.cacheKey
         }
+
+        if (this.options.renderBundle && !isDepthMaterialSwitch) {
+          this.options.renderBundle.ready = false
+        }
       }
 
       this.material = material
@@ -944,9 +952,13 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
         ?.filter((texture) => texture instanceof DOMTexture)
         .forEach((texture) => this.onDOMTextureAdded(texture))
 
-      // reset pipeline entry if cache keys differ
+      // compile material and/or reset pipeline entry if cache keys differ
       if (currentCacheKey && currentCacheKey !== this.material.cacheKey && !isDepthMaterialSwitch) {
-        this.material.setPipelineEntry()
+        if (this.material.ready) {
+          this.material.setPipelineEntry()
+        } else {
+          this.material.compileMaterial()
+        }
       }
     }
 

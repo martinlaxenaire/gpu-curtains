@@ -10,9 +10,39 @@ import { Camera } from '../../core/camera/Camera'
 import { BufferBinding } from '../../core/bindings/BufferBinding'
 import { TargetsAnimationsManager } from '../../extras/animations/TargetsAnimationsManager'
 import { Mat4 } from '../../math/Mat4'
-import { RenderPassEntry } from '../../core/scenes/Scene'
 import { ShaderTextureDescriptor } from '../../core/shaders/full/fragment/get-fragment-shader-code'
 import { GLTFExtensionsUsed } from './GLTFExtensions'
+import { RenderMaterialParams } from '../Materials'
+import { RenderMaterial } from '../../core/materials/RenderMaterial'
+import { Geometry } from '../../core/geometries/Geometry'
+import { Light } from '../../core/lights/Light'
+
+/** Parameters parsed from a {@link GLTF.IMaterial | glTF material} entry. */
+export interface MeshDescriptorMaterialParams {
+  /** Optional label of the {@link RenderMaterial} to build. */
+  label?: RenderMaterialParams['label']
+  /** Optional bindings used by the {@link RenderMaterial}. */
+  bindings?: RenderMaterialParams['bindings']
+  /** Uniforms used by the {@link RenderMaterial}, containing at least the material uniform used for shading. */
+  uniforms?: RenderMaterialParams['uniforms']
+  /** Optional cull mode used by the {@link RenderMaterial}. */
+  cullMode?: RenderMaterialParams['cullMode']
+  /** Whether the {@link RenderMaterial} should handle transparency. */
+  transparent?: RenderMaterialParams['transparent']
+  /** Optional targets used by the {@link RenderMaterial}, set alongside the `transparent` parameter. */
+  targets?: ProjectedMeshParameters['targets']
+  /** Optional textures used by the {@link RenderMaterial}. */
+  textures?: RenderMaterialParams['textures']
+  /** Optional samplers used by the {@link RenderMaterial}. */
+  samplers?: RenderMaterialParams['samplers']
+  /** Shaders that will be internally built to use by the {@link RenderMaterial}. */
+  shaders?: RenderMaterialParams['shaders']
+}
+
+// export interface MeshDescriptorParams extends MeshDescriptorMaterialParams {
+//   geometry?: Geometry
+//   transmissive?: boolean
+// }
 
 /**
  * Define a {@link MeshDescriptor} object, which helps creating a {@link Mesh} and its shaders based on the various properties.
@@ -23,23 +53,17 @@ export interface MeshDescriptor {
   /** {@link Mesh} parent {@link Object3D}. */
   parent: Object3D
   /** Array of {@link ShaderTextureDescriptor} defining the available textures and corresponding sampler names. Useful to build custom shaders from scratch. */
-  textures: ShaderTextureDescriptor[]
+  texturesDescriptors: ShaderTextureDescriptor[]
   /** All the {@link core/geometries/Geometry.Geometry | Geometry} instances {@link Object3D} nodes used to calculate the eventual instances world and normal matrices. */
   nodes: Object3D[]
   /** {@link GLTFExtensionsUsed} that should be used when creating the shaders. */
   extensionsUsed: GLTFExtensionsUsed
-}
-
-/**
- * Define a {@link MaterialTextureDescriptor} used to group a {@link Texture} and its associated {@link Sampler}.
- */
-export interface MaterialTextureDescriptor {
-  /** {@link Texture} to use. */
-  texture: Texture
-  /** {@link Sampler} to use. */
-  sampler: Sampler
-  /** {@link VertexBufferAttributeParams.name | Texture coordinate attribute name} to use to map this texture. */
-  texCoordAttributeName?: string
+  /** Name of the {@link MeshDescriptor} variant. Default to `Default`. */
+  variantName?: string
+  /** Optional alternate {@link Map} of {@link MeshDescriptor} variants using variant names. */
+  alternateDescriptors?: Map<string, MeshDescriptor>
+  /** Optional alternate {@link Map} of {@link RenderMaterial} variants using variant names. */
+  alternateMaterials?: Map<string, RenderMaterial>
 }
 
 /**
@@ -48,8 +72,8 @@ export interface MaterialTextureDescriptor {
 export interface MaterialTexture {
   /** Material index in the {@link extras/loaders/GLTFLoader.GPUCurtainsGLTF.materials | materials array}. */
   material: number
-  /** {@link MaterialTextureDescriptor} defining the {@link Texture} and {@link Sampler} used by the material. */
-  texturesDescriptors: MaterialTextureDescriptor[]
+  /** Array of {@link ShaderTextureDescriptor} defining the {@link Texture}, and eventual {@link Sampler} and UV attribute name used by the material. */
+  texturesDescriptors: ShaderTextureDescriptor[]
 }
 
 /**
@@ -117,6 +141,8 @@ export interface ScenesManager {
   samplers: Sampler[]
   /** Array of {@link MaterialTexture} describing the material, {@link Texture} and {@link Sampler} relationship. */
   materialsTextures: MaterialTexture[]
+  /** Array of {@link MeshDescriptorMaterialParams} created from the {@link GLTF.IMaterial | glTF materials}. */
+  materialsParams: MeshDescriptorMaterialParams[]
   /** Array of scenes as {@link ChildDescriptor}. */
   scenes: ChildDescriptor[]
   /** Array of created {@link Mesh} to render this {@link ScenesManager} scene. */
@@ -129,4 +155,6 @@ export interface ScenesManager {
   cameras: Camera[]
   /** Array of {@link SkinDefinition} used by this {@link ScenesManager}. */
   skins: SkinDefinition[]
+  /** Array of predefined {@link Light} used by this {@link ScenesManager}. */
+  lights: Light[]
 }

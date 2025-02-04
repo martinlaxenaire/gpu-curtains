@@ -51,7 +51,6 @@ fn getIBLIndirect(
   envDiffuseIntensity: f32,
   envSpecularIntensity: f32,
   ptr_reflectedLight: ptr<function, ReflectedLight>,
-  // ptr_iblIndirect: ptr<function, IBLIndirect>
 ) {
   let N: vec3f = normalize(normal);
   let V: vec3f = normalize(viewDirection);
@@ -84,8 +83,5 @@ fn getIBLIndirect(
 
   (*ptr_reflectedLight).indirectSpecular += specularLight.rgb * iBLGGXFresnel.FssEss * envSpecularIntensity;
   (*ptr_reflectedLight).indirectDiffuse += (iBLGGXFresnel.FmsEms + k_D) * diffuseLight.rgb * envDiffuseIntensity;
-
-  // (*ptr_iblIndirect).diffuse = PI * diffuseLight.rgb * envDiffuseIntensity;
-  // (*ptr_iblIndirect).specular = specularLight.rgb * envSpecularIntensity;
 }
 `

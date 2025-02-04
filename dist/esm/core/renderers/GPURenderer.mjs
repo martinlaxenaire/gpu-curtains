@@ -26,7 +26,7 @@ class GPURenderer {
     /** function assigned to the {@link onAfterRender} callback */
     this._onAfterRenderCallback = (commandEncoder) => {
     };
-    /** function assigned to the {@link resizeObjects} callback */
+    /** function assigned to the {@link onResize} callback */
     this._onResizeCallback = () => {
     };
     /** function assigned to the {@link onAfterResize} callback */
@@ -147,6 +147,7 @@ class GPURenderer {
    * Resize all tracked objects ({@link Texture | textures}, {@link RenderPass | render passes}, {@link RenderTarget | render targets}, {@link ComputePass | compute passes} and meshes).
    */
   resizeObjects() {
+    this.renderBundles.forEach((renderBundle) => renderBundle.resize());
     this.textures.forEach((texture) => {
       texture.resize();
     });
@@ -570,6 +571,44 @@ class GPURenderer {
     return this.deviceManager.device?.importExternalTexture({ source: video });
   }
   /**
+   * Copy a {@link GPUTexture} to a {@link Texture} using a {@link GPUCommandEncoder}. Automatically generate mips after copy if the {@link Texture} needs it.
+   * @param gpuTexture - {@link GPUTexture} source to copy from.
+   * @param texture - {@link Texture} destination to copy onto.
+   * @param commandEncoder - {@link GPUCommandEncoder} to use for copy operation.
+   */
+  copyGPUTextureToTexture(gpuTexture, texture, commandEncoder) {
+    commandEncoder.copyTextureToTexture(
+      {
+        texture: gpuTexture
+      },
+      {
+        texture: texture.texture
+      },
+      [gpuTexture.width, gpuTexture.height, gpuTexture.depthOrArrayLayers]
+    );
+    if (texture.options.generateMips) {
+      this.generateMips(texture, commandEncoder);
+    }
+  }
+  /**
+   * Copy a {@link Texture} to a {@link GPUTexture} using a {@link GPUCommandEncoder}.
+   * @param texture - {@link Texture} source to copy from.
+   * @param gpuTexture - {@link GPUTexture} destination to copy onto.
+   * @param commandEncoder - {@link GPUCommandEncoder} to use for copy operation.
+   */
+  copyTextureToGPUTexture(texture, gpuTexture, commandEncoder) {
+    commandEncoder.copyTextureToTexture(
+      {
+        texture: texture.texture
+      },
+      {
+        texture: gpuTexture
+      },
+      [gpuTexture.width, gpuTexture.height, gpuTexture.depthOrArrayLayers]
+    );
+  }
+  /* SAMPLERS */
+  /**
    * Check if a {@link Sampler} has already been created with the same {@link Sampler#options | parameters}.
    * Use it if found, else create a new one and add it to the {@link GPUDeviceManager#samplers | samplers array}.
    * @param sampler - {@link Sampler} to create
@@ -703,15 +742,18 @@ class GPURenderer {
   }
   /* RENDER */
   /**
-   * Render a single {@link ComputePass}
-   * @param commandEncoder - current {@link GPUCommandEncoder}
-   * @param computePass - {@link ComputePass}
+   * Render a single {@link ComputePass}.
+   * @param commandEncoder - current {@link GPUCommandEncoder} to use.
+   * @param computePass - {@link ComputePass} to run.
+   * @param copyBuffer - Whether to copy all writable binding buffers that need it.
    */
-  renderSingleComputePass(commandEncoder, computePass) {
+  renderSingleComputePass(commandEncoder, computePass, copyBuffer = true) {
     const pass = commandEncoder.beginComputePass();
     computePass.render(pass);
     pass.end();
-    computePass.copyBufferToResult(commandEncoder);
+    if (copyBuffer) {
+      computePass.copyBufferToResult(commandEncoder);
+    }
   }
   /**
    * Render a single {@link RenderedMesh | Mesh}

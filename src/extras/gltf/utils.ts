@@ -6,7 +6,6 @@ import {
   getFragmentShaderCode,
   FragmentShaderBaseInputParams,
   ShadingModels,
-  ToneMappings,
 } from '../../core/shaders/full/fragment/get-fragment-shader-code'
 import { AdditionalChunks } from '../../core/shaders/default-material-helpers'
 
@@ -16,9 +15,9 @@ import { AdditionalChunks } from '../../core/shaders/default-material-helpers'
 export interface ShaderBuilderParameters {
   /** Shading model to use. */
   shadingModel?: ShadingModels
-  /** Additional WGSL chunks to add to the vertex shaders. */
+  /** {@link AdditionalChunks | Additional WGSL chunks} to add to the vertex shaders. */
   vertexChunks?: AdditionalChunks
-  /** Additional WGSL chunks to add to the fragment shaders. */
+  /** {@link AdditionalChunks | Additional WGSL chunks} to add to the fragment shaders. */
   fragmentChunks?: AdditionalChunks
   /** Additional IBL parameters to pass as uniform and textures. */
   environmentMap?: FragmentShaderBaseInputParams['environmentMap']
@@ -43,32 +42,6 @@ export const buildShaders = (
   meshDescriptor: MeshDescriptor,
   shaderParameters = {} as ShaderBuilderParameters
 ): BuiltShaders => {
-  // textures check
-  const baseColorTexture = meshDescriptor.textures.find((t) => t.texture === 'baseColorTexture')
-  const normalTexture = meshDescriptor.textures.find((t) => t.texture === 'normalTexture')
-  const emissiveTexture = meshDescriptor.textures.find((t) => t.texture === 'emissiveTexture')
-  const occlusionTexture = meshDescriptor.textures.find((t) => t.texture === 'occlusionTexture')
-  const metallicRoughnessTexture = meshDescriptor.textures.find((t) => t.texture === 'metallicRoughnessTexture')
-
-  // specular
-  const specularTexture = meshDescriptor.textures.find((t) => t.texture === 'specularTexture')
-  const specularFactorTexture =
-    specularTexture || meshDescriptor.textures.find((t) => t.texture === 'specularFactorTexture')
-  const specularColorTexture =
-    specularTexture || meshDescriptor.textures.find((t) => t.texture === 'specularColorTexture')
-
-  // transmission
-  const transmissionTexture = meshDescriptor.textures.find((t) => t.texture === 'transmissionTexture')
-  const thicknessTexture = meshDescriptor.textures.find((t) => t.texture === 'thicknessTexture')
-  // transmission background texture created by the renderer if mesh is transmissive
-  const transmissionBackgroundTexture = meshDescriptor.parameters.transmissive
-    ? {
-        texture: 'transmissionBackgroundTexture',
-        sampler: 'transmissionSampler',
-        texCoordAttributeName: 'uv',
-      }
-    : null
-
   // Shader parameters
   let { shadingModel } = shaderParameters
   if (!shadingModel) {
@@ -79,6 +52,63 @@ export const buildShaders = (
 
   if (isUnlit) {
     shadingModel = 'Unlit'
+  }
+
+  // textures check
+  const baseColorTexture = meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === 'baseColorTexture')
+  const normalTexture = meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === 'normalTexture')
+  const emissiveTexture = meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === 'emissiveTexture')
+  const occlusionTexture = meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === 'occlusionTexture')
+  const metallicRoughnessTexture = meshDescriptor.texturesDescriptors.find(
+    (t) => t.texture.options.name === 'metallicRoughnessTexture'
+  )
+
+  // specular
+  const specularTexture = meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === 'specularTexture')
+  const specularFactorTexture =
+    specularTexture ||
+    meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === 'specularFactorTexture')
+  const specularColorTexture =
+    specularTexture || meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === 'specularColorTexture')
+
+  // transmission
+  const transmissionTexture = meshDescriptor.texturesDescriptors.find(
+    (t) => t.texture.options.name === 'transmissionTexture'
+  )
+  const thicknessTexture = meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === 'thicknessTexture')
+
+  // transmission background texture created by the renderer if mesh is transmissive
+  const transmissionBackgroundTexture = meshDescriptor.texturesDescriptors.find(
+    (t) => t.texture.options.name === 'transmissionBackgroundTexture'
+  )
+
+  // add samplers and textures to parameters
+  if (!meshDescriptor.parameters.textures) {
+    meshDescriptor.parameters.textures = []
+  }
+
+  if (!meshDescriptor.parameters.samplers) {
+    meshDescriptor.parameters.samplers = []
+  }
+
+  if (shadingModel !== 'Unlit') {
+    meshDescriptor.texturesDescriptors.forEach((textureDescriptor) => {
+      const samplerExists = meshDescriptor.parameters.samplers.find((s) => s.uuid === textureDescriptor.sampler.uuid)
+
+      if (!samplerExists) {
+        meshDescriptor.parameters.samplers.push(textureDescriptor.sampler)
+      }
+
+      meshDescriptor.parameters.textures.push(textureDescriptor.texture)
+    })
+  } else if (baseColorTexture) {
+    const samplerExists = meshDescriptor.parameters.samplers.find((s) => s.uuid === baseColorTexture.sampler.uuid)
+
+    if (!samplerExists) {
+      meshDescriptor.parameters.samplers.push(baseColorTexture.sampler)
+    }
+
+    meshDescriptor.parameters.textures.push(baseColorTexture.texture)
   }
 
   let { vertexChunks, fragmentChunks } = shaderParameters || {}
@@ -123,6 +153,36 @@ export const buildShaders = (
     occlusionTexture,
     transmissionBackgroundTexture,
     environmentMap,
+  })
+
+  // create alternate descriptors shaders
+  meshDescriptor.alternateDescriptors?.forEach((descriptor) => {
+    // add eventual additional uniforms
+    descriptor.parameters.uniforms = { ...meshDescriptor.parameters.uniforms, ...descriptor.parameters.uniforms }
+
+    // add eventual additional storages
+    if (meshDescriptor.parameters.storages) {
+      descriptor.parameters.storages = meshDescriptor.parameters.storages
+    }
+
+    // add eventual additional bindings
+    if (meshDescriptor.parameters.bindings) {
+      if (!descriptor.parameters.bindings) descriptor.parameters.bindings = []
+
+      meshDescriptor.parameters.bindings.forEach((binding) => {
+        const hasBinding = descriptor.parameters.bindings.find((b) => b.name === binding.name)
+        if (!hasBinding) {
+          descriptor.parameters.bindings.push(binding)
+        }
+      })
+    }
+
+    // add eventual bind groups
+    if (meshDescriptor.parameters.bindGroups) {
+      descriptor.parameters.bindGroups = meshDescriptor.parameters.bindGroups
+    }
+
+    descriptor.parameters.shaders = buildShaders(descriptor, shaderParameters)
   })
 
   return {

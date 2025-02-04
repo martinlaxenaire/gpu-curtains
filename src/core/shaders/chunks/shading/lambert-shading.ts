@@ -1,9 +1,9 @@
 import { constants } from '../utils/constants'
 import { common } from '../utils/common'
+import { toneMappingUtils } from '../utils/tone-mapping-utils'
 import { getLightsInfos } from '../fragment/head/get-lights-infos'
 import { REIndirectDiffuse } from '../fragment/head/RE-indirect-diffuse'
 import { getLambertDirect } from '../fragment/head/get-lambert-direct'
-import { toneMappingUtils } from '../fragment/head/tone-mapping-utils'
 import { ToneMappings } from '../../full/fragment/get-fragment-shader-code'
 import { getLambertShading } from '../fragment/body/get-lambert-shading'
 
@@ -34,7 +34,7 @@ ${REIndirectDiffuse}
  *
  * @example
  * ```wgsl
- * var color: vec3f = vec3(1.0);
+ * var color: vec3f = vec4(1.0);
  * color = getLambert(normal, worldPosition, color);
  * ```
  */
@@ -48,23 +48,21 @@ ${toneMapping ? toneMappingUtils : ''}
 fn getLambert(
   normal: vec3f,
   worldPosition: vec3f,
-  outputColor: vec3f,
+  outputColor: vec4f,
   ${useOcclusion ? 'occlusion: f32,' : ''}
-) -> vec3f {
+) -> vec4f {
   ${!useOcclusion ? 'let occlusion: f32 = 1.0;' : ''}
 
   ${getLambertShading({ receiveShadows })}
   
-  var color: vec3f = outgoingLight;
-  
   ${
     toneMapping === 'Linear'
-      ? 'outgoingLight = linearToOutput3(color);'
+      ? 'outgoingLight = linearToOutput3(outgoingLight);'
       : toneMapping === 'Khronos'
-      ? 'outgoingLight = linearTosRGB(toneMapKhronosPbrNeutral(color));'
+      ? 'outgoingLight = linearTosRGB(toneMapKhronosPbrNeutral(outgoingLight));'
       : ''
   }
-  
-  return color;
+    
+  return vec4(outgoingLight, outputColor.a);
 }
 `

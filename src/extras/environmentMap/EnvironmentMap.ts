@@ -85,6 +85,9 @@ export class EnvironmentMap {
   // TODO use a Vec3 and compute the Mat3 from it?
   rotation: Mat3
 
+  /** BRDF GGX LUT storage {@link Texture} used in the compute shader. */
+  #lutStorageTexture: Texture
+
   /** BRDF GGX LUT {@link Texture} used for IBL shading. */
   lutTexture: Texture | null
   /** Diffuse environment cube map {@link Texture}. */
@@ -151,22 +154,39 @@ export class EnvironmentMap {
   }
 
   /**
-   * Once the given {@link ComputePass} has written to a temporary storage {@link Texture}, copy it into our permanent {@link Texture}.
-   * @param commandEncoder - The GPU command encoder to use.
-   * @param storageTexture - Temporary storage {@link Texture} used in the {@link ComputePass}.
-   * @param texture - Permanent {@link Texture} (either the {@link lutTexture}, {@link specularTexture} or {@link diffuseTexture}) to copy onto.
+   * Run a {@link ComputePass} once by creating a {@link GPUCommandEncoder} and execute the pass.
+   * @param parameters - Parameters used to run the compute pass.
+   * @param parameters.computePass - {@link ComputePass} to run.
+   * @param parameters.label - Optional label for the {@link GPUCommandEncoder}.
+   * @param parameters.onAfterCompute - Optional callback to run just after the pass has been executed. Useful for eventual texture copies.
    * @private
    */
-  #copyComputeStorageTextureToTexture(commandEncoder: GPUCommandEncoder, storageTexture: Texture, texture: Texture) {
-    commandEncoder.copyTextureToTexture(
-      {
-        texture: storageTexture.texture,
-      },
-      {
-        texture: texture.texture,
-      },
-      [texture.texture.width, texture.texture.height, texture.texture.depthOrArrayLayers]
-    )
+  #runComputePass({
+    computePass,
+    label = '',
+    onAfterCompute = (commandEncoder) => {},
+  }: {
+    /** {@link ComputePass} to run. */
+    computePass: ComputePass
+    /** Optional label for the {@link GPUCommandEncoder}. */
+    label?: string
+    /** Optional callback to run just after the pass has been executed. Useful for eventual texture copies. */
+    onAfterCompute?: (commandEncoder: GPUCommandEncoder) => void
+  }) {
+    const commandEncoder = this.renderer.device?.createCommandEncoder({
+      label,
+    })
+    !this.renderer.production && commandEncoder.pushDebugGroup(label)
+
+    this.renderer.renderSingleComputePass(commandEncoder, computePass, false)
+
+    onAfterCompute(commandEncoder)
+
+    !this.renderer.production && commandEncoder.popDebugGroup()
+    const commandBuffer = commandEncoder.finish()
+    this.renderer.device?.queue.submit([commandBuffer])
+
+    this.renderer.pipelineManager.resetCurrentPipeline()
   }
 
   /**
@@ -176,6 +196,20 @@ export class EnvironmentMap {
     // specific lut texture options
     const { size, computeSampleCount, ...lutTextureParams } = this.options.lutTextureParams
 
+    this.#lutStorageTexture = new Texture(this.renderer, {
+      label: 'LUT storage texture',
+      name: 'lutStorageTexture',
+      format: lutTextureParams.format,
+      visibility: ['compute', 'fragment'],
+      usage: ['copySrc', 'storageBinding', 'textureBinding'],
+      type: 'storage',
+      fixedSize: {
+        width: size,
+        height: size,
+      },
+      autoDestroy: false,
+    })
+
     this.lutTexture = new Texture(this.renderer, {
       ...lutTextureParams,
       visibility: ['fragment'],
@@ -184,25 +218,17 @@ export class EnvironmentMap {
         height: size,
       },
       autoDestroy: false,
-    })
-
-    let lutStorageTexture = new Texture(this.renderer, {
-      label: 'LUT storage texture',
-      name: 'lutStorageTexture',
-      format: this.lutTexture.options.format,
-      visibility: ['compute'],
-      usage: ['copySrc', 'storageBinding'],
-      type: 'storage',
-      fixedSize: {
-        width: this.lutTexture.size.width,
-        height: this.lutTexture.size.height,
-      },
+      fromTexture: this.#lutStorageTexture,
     })
 
     let computeLUTPass = new ComputePass(this.renderer, {
       label: 'Compute LUT texture',
       autoRender: false, // we're going to render only on demand
-      dispatchSize: [Math.ceil(lutStorageTexture.size.width / 16), Math.ceil(lutStorageTexture.size.height / 16), 1],
+      dispatchSize: [
+        Math.ceil(this.#lutStorageTexture.size.width / 16),
+        Math.ceil(this.#lutStorageTexture.size.height / 16),
+        1,
+      ],
       shaders: {
         compute: {
           code: computeBRDFLUT,
@@ -218,32 +244,16 @@ export class EnvironmentMap {
           },
         },
       },
-      textures: [lutStorageTexture],
+      textures: [this.#lutStorageTexture],
     })
 
     await computeLUTPass.material.compileMaterial()
 
-    this.renderer.onBeforeRenderScene.add(
-      (commandEncoder) => {
-        // run the compute pass just once
-        this.renderer.renderSingleComputePass(commandEncoder, computeLUTPass)
+    this.#runComputePass({ computePass: computeLUTPass, label: 'Compute LUT texture command encoder' })
 
-        // copy the result to our LUT texture
-        this.#copyComputeStorageTextureToTexture(commandEncoder, lutStorageTexture, this.lutTexture)
-      },
-      { once: true }
-    )
-
-    this.renderer.onAfterCommandEncoderSubmission.add(
-      () => {
-        // once command encoder has been submitted, free the resources
-        computeLUTPass.destroy()
-        lutStorageTexture.destroy()
-        lutStorageTexture = null
-        computeLUTPass = null
-      },
-      { once: true }
-    )
+    // once command encoder has been submitted, free the resources
+    computeLUTPass.destroy()
+    computeLUTPass = null
   }
 
   /**
@@ -304,26 +314,16 @@ export class EnvironmentMap {
 
     // do it right now
     // before computing the diffuse texture
-    const commandEncoder = this.renderer.device?.createCommandEncoder({
-      label: 'Render once command encoder',
+    this.#runComputePass({
+      computePass: computeCubeMapPass,
+      label: 'Compute specular cube map command encoder',
+      onAfterCompute: (commandEncoder) => {
+        // copy the result to our specular texture
+        this.renderer.copyGPUTextureToTexture(cubeStorageTexture.texture, this.specularTexture, commandEncoder)
+      },
     })
 
-    if (!this.renderer.production) commandEncoder.pushDebugGroup('Render once command encoder')
-
-    this.renderer.renderSingleComputePass(commandEncoder, computeCubeMapPass)
-
-    // copy the result to our diffuse texture
-    this.#copyComputeStorageTextureToTexture(commandEncoder, cubeStorageTexture, this.specularTexture)
-
-    // generate mips if needed
-    if (this.specularTexture.texture.mipLevelCount > 1) {
-      this.renderer.generateMips(this.specularTexture, commandEncoder)
-    }
-
-    if (!this.renderer.production) commandEncoder.popDebugGroup()
-    const commandBuffer = commandEncoder.finish()
-    this.renderer.device?.queue.submit([commandBuffer])
-
+    // once command encoder has been submitted, free the resources
     computeCubeMapPass.destroy()
     cubeStorageTexture.destroy()
     cubeStorageTexture = null
@@ -390,27 +390,20 @@ export class EnvironmentMap {
 
     await computeDiffusePass.material.compileMaterial()
 
-    this.renderer.onBeforeRenderScene.add(
-      (commandEncoder) => {
-        // run the compute pass just once
-        this.renderer.renderSingleComputePass(commandEncoder, computeDiffusePass)
-
+    this.#runComputePass({
+      computePass: computeDiffusePass,
+      label: 'Compute diffuse cube map from specular cube map command encoder',
+      onAfterCompute: (commandEncoder) => {
         // copy the result to our diffuse texture
-        this.#copyComputeStorageTextureToTexture(commandEncoder, diffuseStorageTexture, this.diffuseTexture)
+        this.renderer.copyGPUTextureToTexture(diffuseStorageTexture.texture, this.diffuseTexture, commandEncoder)
       },
-      { once: true }
-    )
+    })
 
-    this.renderer.onAfterCommandEncoderSubmission.add(
-      () => {
-        // once command encoder has been submitted, free the resources
-        computeDiffusePass.destroy()
-        diffuseStorageTexture.destroy()
-        diffuseStorageTexture = null
-        computeDiffusePass = null
-      },
-      { once: true }
-    )
+    // once command encoder has been submitted, free the resources
+    computeDiffusePass.destroy()
+    diffuseStorageTexture.destroy()
+    diffuseStorageTexture = null
+    computeDiffusePass = null
   }
 
   /**
@@ -493,5 +486,8 @@ export class EnvironmentMap {
     this.lutTexture?.destroy()
     this.diffuseTexture?.destroy()
     this.specularTexture?.destroy()
+
+    // destroy LUT storage texture
+    this.#lutStorageTexture.destroy()
   }
 }

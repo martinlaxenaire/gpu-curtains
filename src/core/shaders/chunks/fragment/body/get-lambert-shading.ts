@@ -18,13 +18,16 @@ export const getLambertShading = ({ receiveShadows = false }: { receiveShadows?:
   // point lights
   for(var i = 0; i < pointLights.count; i++) {
     getPointLightInfo(pointLights.elements[i], worldPosition, &directLight);
+    if(!directLight.visible) {
+      continue;
+    }
     ${receiveShadows ? applyPointShadows : ''}
     getLambertDirect(normal, outputColor.rgb, directLight, &reflectedLight);
   }
   
   // directional lights
   for(var i = 0; i < directionalLights.count; i++) {
-    getDirectionalLightInfo(directionalLights.elements[i], worldPosition, &directLight);
+    getDirectionalLightInfo(directionalLights.elements[i], &directLight);
     ${receiveShadows ? applyDirectionalShadows : ''}
     getLambertDirect(normal, outputColor.rgb, directLight, &reflectedLight);
   }

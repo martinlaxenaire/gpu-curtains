@@ -446,15 +446,7 @@ export class Scene extends Object3D {
             // we don't need to do that if it has an inputTarget
             // because in this case its renderTexture is already a copy of the render target content
             if (shaderPass.renderTexture && swapChainTexture) {
-              commandEncoder.copyTextureToTexture(
-                {
-                  texture: swapChainTexture,
-                },
-                {
-                  texture: shaderPass.renderTexture.texture,
-                },
-                [shaderPass.renderTexture.size.width, shaderPass.renderTexture.size.height]
-              )
+              this.renderer.copyGPUTextureToTexture(swapChainTexture, shaderPass.renderTexture, commandEncoder)
             }
 
             // if we want to post process the whole scene, clear render pass content
@@ -467,15 +459,7 @@ export class Scene extends Object3D {
             // if we rendered to the screen,
             // copy the context current texture result back into the shaderPass renderTexture
             if (shaderPass.renderTexture && swapChainTexture) {
-              commandEncoder.copyTextureToTexture(
-                {
-                  texture: swapChainTexture,
-                },
-                {
-                  texture: shaderPass.renderTexture.texture,
-                },
-                [shaderPass.renderTexture.size.width, shaderPass.renderTexture.size.height]
-              )
+              this.renderer.copyGPUTextureToTexture(swapChainTexture, shaderPass.renderTexture, commandEncoder)
             }
           }
         : null
@@ -584,15 +568,7 @@ export class Scene extends Object3D {
       onBeforeRenderPass: null,
       onAfterRenderPass: (commandEncoder, swapChainTexture) => {
         // Copy the rendering results from the swapChainTexture into our |pingPongPlane texture|.
-        commandEncoder.copyTextureToTexture(
-          {
-            texture: swapChainTexture,
-          },
-          {
-            texture: pingPongPlane.renderTexture.texture,
-          },
-          [pingPongPlane.renderTexture.size.width, pingPongPlane.renderTexture.size.height]
-        )
+        this.renderer.copyGPUTextureToTexture(swapChainTexture, pingPongPlane.renderTexture, commandEncoder)
       },
       element: pingPongPlane,
       stack: null, // explicitly set to null

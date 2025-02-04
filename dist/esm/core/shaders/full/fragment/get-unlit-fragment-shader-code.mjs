@@ -1,6 +1,6 @@
 import { constants } from '../../chunks/utils/constants.mjs';
 import { common } from '../../chunks/utils/common.mjs';
-import { toneMappingUtils } from '../../chunks/fragment/head/tone-mapping-utils.mjs';
+import { toneMappingUtils } from '../../chunks/utils/tone-mapping-utils.mjs';
 import { getFragmentInputStruct } from '../../chunks/fragment/head/get-fragment-input-struct.mjs';
 import { declareAttributesVars } from '../../chunks/fragment/body/declare-attributes-vars.mjs';
 import { declareMaterialVars } from '../../chunks/fragment/body/declare-material-vars.mjs';

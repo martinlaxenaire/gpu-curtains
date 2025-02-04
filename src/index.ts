@@ -41,16 +41,20 @@ export { DOMTexture } from './core/textures/DOMTexture'
 export { DOMElement } from './core/DOM/DOMElement'
 
 // shading
+export * from './core/shaders/chunks/utils/constants'
+export * from './core/shaders/chunks/utils/common'
+export * from './core/shaders/chunks/utils/tone-mapping-utils'
+
 export * from './core/shaders/chunks/shading/lambert-shading'
 export * from './core/shaders/chunks/shading/phong-shading'
-export * from './core/shaders/chunks/shading/pbr-shading'
+export * from './core/shaders/chunks/shading/PBR-shading'
 
 export * from './core/shaders/full/vertex/get-vertex-shader-code'
 export * from './core/shaders/full/fragment/get-fragment-shader-code'
 export * from './core/shaders/full/fragment/get-unlit-fragment-shader-code'
 export * from './core/shaders/full/fragment/get-lambert-fragment-shader-code'
 export * from './core/shaders/full/fragment/get-phong-fragment-shader-code'
-export * from './core/shaders/full/fragment/get-pbr-fragment-shader-code'
+export * from './core/shaders/full/fragment/get-PBR-fragment-shader-code'
 
 // curtains
 export { DOMMesh } from './curtains/meshes/DOMMesh'
@@ -73,6 +77,7 @@ export { OrbitControls } from './extras/controls/OrbitControls'
 export { EnvironmentMap } from './extras/environmentMap/EnvironmentMap'
 export { BoxGeometry } from './extras/geometries/BoxGeometry'
 export { SphereGeometry } from './extras/geometries/SphereGeometry'
+export { LitMesh } from './extras/meshes/LitMesh'
 export { PingPongPlane } from './extras/meshes/PingPongPlane'
 export { Raycaster } from './extras/raycaster/Raycaster'
 

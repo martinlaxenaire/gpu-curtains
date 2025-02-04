@@ -315,6 +315,9 @@ ${geometry.wgslStructFragment}`
           this.material.setPipelineEntry();
         }
         this.geometry.consumers.delete(this.uuid);
+        if (this.options.renderBundle) {
+          this.options.renderBundle.ready = false;
+        }
       }
       this.geometry = geometry;
       this.geometry.consumers.add(this.uuid);
@@ -407,6 +410,9 @@ ${geometry.wgslStructFragment}`
         if (this.geometry) {
           currentCacheKey = this.material.cacheKey;
         }
+        if (this.options.renderBundle && !isDepthMaterialSwitch) {
+          this.options.renderBundle.ready = false;
+        }
       }
       this.material = material;
       if (this.geometry) {
@@ -415,7 +421,11 @@ ${geometry.wgslStructFragment}`
       this.transparent = this.material.options.rendering.transparent;
       this.material.options.domTextures?.filter((texture) => texture instanceof DOMTexture).forEach((texture) => this.onDOMTextureAdded(texture));
       if (currentCacheKey && currentCacheKey !== this.material.cacheKey && !isDepthMaterialSwitch) {
-        this.material.setPipelineEntry();
+        if (this.material.ready) {
+          this.material.setPipelineEntry();
+        } else {
+          this.material.compileMaterial();
+        }
       }
     }
     /**

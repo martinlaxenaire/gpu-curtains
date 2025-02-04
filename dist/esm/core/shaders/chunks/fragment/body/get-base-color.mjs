@@ -32,7 +32,7 @@ const getBaseColor = ({
   if (baseColorTexture) {
     baseColor += /* wgsl */
     `
-  let baseColorSample: vec4f = textureSample(${baseColorTexture.texture}, ${baseColorTexture.sampler}, ${baseColorTexture.texCoordAttributeName});
+  let baseColorSample: vec4f = textureSample(${baseColorTexture.texture.options.name}, ${baseColorTexture.sampler?.name ?? "defaultSampler"}, ${baseColorTexture.texCoordAttributeName ?? "uv"});
   baseColor *= baseColorSample;
   `;
   }

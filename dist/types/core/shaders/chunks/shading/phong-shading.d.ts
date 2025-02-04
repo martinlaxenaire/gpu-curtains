@@ -5,11 +5,12 @@ import { GetShadingParams } from './lambert-shading';
  *
  * @example
  * ```wgsl
- * var color: vec3f = vec3(1.0);
+ * var color: vec4f = vec3(1.0);
  * let specularColor: vec3f = vec3(1.0);
- * let specularStrength: f32 = 1.0;
- * let shininess: f32 = 32.0;
- * color = getPhong(normal, worldPosition, color, viewDirection, specularColor, specularStrength, shininess);
+ * let specularIntensity: f32 = 1.0;
+ * let shininess: f32 = 30.0;
+ *
+ * color = getPhong(normal, worldPosition, color, viewDirection, specularIntensity, specularColor, shininess);
  * ```
  */
 export declare const getPhong: ({ addUtils, receiveShadows, toneMapping, useOcclusion }?: GetShadingParams) => string;

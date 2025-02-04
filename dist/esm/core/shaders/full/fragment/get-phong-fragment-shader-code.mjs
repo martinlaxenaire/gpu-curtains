@@ -1,8 +1,8 @@
 import { constants } from '../../chunks/utils/constants.mjs';
 import { common } from '../../chunks/utils/common.mjs';
+import { toneMappingUtils } from '../../chunks/utils/tone-mapping-utils.mjs';
 import { getLightsInfos } from '../../chunks/fragment/head/get-lights-infos.mjs';
 import { REIndirectDiffuse } from '../../chunks/fragment/head/RE-indirect-diffuse.mjs';
-import { toneMappingUtils } from '../../chunks/fragment/head/tone-mapping-utils.mjs';
 import { getPhongDirect } from '../../chunks/fragment/head/get-phong-direct.mjs';
 import { getPhongShading } from '../../chunks/fragment/body/get-phong-shading.mjs';
 import { getFragmentInputStruct } from '../../chunks/fragment/head/get-fragment-input-struct.mjs';
@@ -40,10 +40,10 @@ ${chunks.additionalHead}
 
 ${constants}
 ${common}
+${toneMappingUtils}
 ${getLightsInfos}
 ${REIndirectDiffuse}
 ${getPhongDirect}
-${toneMappingUtils}
 
 ${getFragmentInputStruct({ geometry })}
 
@@ -63,8 +63,6 @@ ${getFragmentInputStruct({ geometry })}
   ${getEmissiveOcclusion({ emissiveTexture, occlusionTexture })}
   
   // lights
-  let shininess: f32 = 1.0 / max(EPSILON, roughness * roughness);
-  let specularColor: vec3f = mix( min( pow2( ( ior - 1.0 ) / ( ior + 1.0 ) ) * specularColorFactor, vec3( 1.0 ) ) * specularFactor, outputColor.rgb, metallic );
   ${getPhongShading({ receiveShadows })}
   
   outputColor = vec4(outgoingLight, outputColor.a);

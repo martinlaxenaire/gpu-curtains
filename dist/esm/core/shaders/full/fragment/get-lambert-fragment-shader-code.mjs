@@ -1,9 +1,9 @@
 import { constants } from '../../chunks/utils/constants.mjs';
 import { common } from '../../chunks/utils/common.mjs';
+import { toneMappingUtils } from '../../chunks/utils/tone-mapping-utils.mjs';
 import { getLightsInfos } from '../../chunks/fragment/head/get-lights-infos.mjs';
 import { REIndirectDiffuse } from '../../chunks/fragment/head/RE-indirect-diffuse.mjs';
 import { getLambertDirect } from '../../chunks/fragment/head/get-lambert-direct.mjs';
-import { toneMappingUtils } from '../../chunks/fragment/head/tone-mapping-utils.mjs';
 import { getLambertShading } from '../../chunks/fragment/body/get-lambert-shading.mjs';
 import { applyToneMapping } from '../../chunks/fragment/body/apply-tone-mapping.mjs';
 import { getFragmentInputStruct } from '../../chunks/fragment/head/get-fragment-input-struct.mjs';
@@ -34,10 +34,10 @@ ${chunks.additionalHead}
 
 ${constants}
 ${common}
+${toneMappingUtils}
 ${getLightsInfos}
 ${REIndirectDiffuse}
 ${getLambertDirect}
-${toneMappingUtils}
 
 ${getFragmentInputStruct({ geometry })}
 

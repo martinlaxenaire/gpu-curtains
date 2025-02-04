@@ -5,7 +5,7 @@ const getMetallicRoughness = ({
   if (metallicRoughnessTexture) {
     metallicRoughness += /* wgsl */
     `
-  let metallicRoughness = textureSample(${metallicRoughnessTexture.texture}, ${metallicRoughnessTexture.sampler}, ${metallicRoughnessTexture.texCoordAttributeName});
+  let metallicRoughness = textureSample(${metallicRoughnessTexture.texture.options.name}, ${metallicRoughnessTexture.sampler?.name ?? "defaultSampler"}, ${metallicRoughnessTexture.texCoordAttributeName ?? "uv"});
   
   metallic = metallic * metallicRoughness.b;
   roughness = roughness * metallicRoughness.g;
@@ -14,7 +14,7 @@ const getMetallicRoughness = ({
   metallicRoughness += /* wgsl */
   `
   metallic = saturate(metallic);
-  roughness = saturate(roughness);
+  roughness = clamp(roughness, 0.0525, 1.0);
   `;
   return metallicRoughness;
 };

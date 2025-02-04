@@ -171,18 +171,6 @@ export class GPUCameraRenderer extends GPURenderer {
     }
 
     this.setCameraLightsBindGroup()
-
-    this.transmissionTarget = {
-      sampler: new Sampler(this, {
-        label: 'Transmission sampler',
-        name: 'transmissionSampler',
-        magFilter: 'linear',
-        minFilter: 'linear',
-        mipmapFilter: 'linear',
-        addressModeU: 'clamp-to-edge',
-        addressModeV: 'clamp-to-edge',
-      }),
-    }
   }
 
   /**
@@ -203,6 +191,25 @@ export class GPUCameraRenderer extends GPURenderer {
     super.restoreContext()
     this.cameraLightsBindGroup?.restoreContext()
     this.updateCameraBindings()
+  }
+
+  /**
+   * Set our {@link renderPass | main render pass} and our {@link transmissionTarget} sampler.
+   */
+  setMainRenderPasses() {
+    super.setMainRenderPasses()
+
+    this.transmissionTarget = {
+      sampler: new Sampler(this, {
+        label: 'Transmission sampler',
+        name: 'transmissionSampler',
+        magFilter: 'linear',
+        minFilter: 'linear',
+        mipmapFilter: 'linear',
+        addressModeU: 'clamp-to-edge',
+        addressModeV: 'clamp-to-edge',
+      }),
+    }
   }
 
   /* CAMERA */
@@ -573,6 +580,11 @@ export class GPUCameraRenderer extends GPURenderer {
     })
 
     this.cameraLightsBindGroup.consumers.add(this.uuid)
+
+    // create eagerly
+    if (this.device) {
+      this.setCameraBindGroup()
+    }
   }
 
   /**
@@ -672,18 +684,7 @@ export class GPUCameraRenderer extends GPURenderer {
       this.transmissionTarget.passEntry.onBeforeRenderPass = (commandEncoder, swapChainTexture) => {
         // Copy background scene texture to the output, because the output texture needs mips
         // and we can't have mips on a rendered texture
-        commandEncoder.copyTextureToTexture(
-          {
-            texture: swapChainTexture,
-          },
-          {
-            texture: this.transmissionTarget.texture.texture,
-          },
-          [this.transmissionTarget.texture.size.width, this.transmissionTarget.texture.size.height]
-        )
-
-        // now generate mips
-        this.generateMips(this.transmissionTarget.texture, commandEncoder)
+        this.copyGPUTextureToTexture(swapChainTexture, this.transmissionTarget.texture, commandEncoder)
       }
     }
   }

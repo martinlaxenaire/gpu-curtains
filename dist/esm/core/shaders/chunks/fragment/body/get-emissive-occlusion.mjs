@@ -10,7 +10,7 @@ const getEmissiveOcclusion = ({
   if (emissiveTexture) {
     emissiveOcclusion += /* wgsl */
     `
-  let emissiveSample: vec3f = textureSample(${emissiveTexture.texture}, ${emissiveTexture.sampler}, ${emissiveTexture.texCoordAttributeName}).rgb;
+  let emissiveSample: vec3f = textureSample(${emissiveTexture.texture.options.name}, ${emissiveTexture.sampler?.name ?? "defaultSampler"}, ${emissiveTexture.texCoordAttributeName ?? "uv"}).rgb;
   emissive *= emissiveSample;`;
   }
   emissiveOcclusion += /* wgsl */
@@ -19,7 +19,7 @@ const getEmissiveOcclusion = ({
   if (occlusionTexture) {
     emissiveOcclusion += /* wgsl */
     `
-  occlusion = textureSample(${occlusionTexture.texture}, ${occlusionTexture.sampler}, ${occlusionTexture.texCoordAttributeName}).r;`;
+  occlusion = textureSample(${occlusionTexture.texture.options.name}, ${occlusionTexture.sampler?.name ?? "defaultSampler"}, ${occlusionTexture.texCoordAttributeName ?? "uv"}).r;`;
   }
   emissiveOcclusion += /* wgsl */
   `

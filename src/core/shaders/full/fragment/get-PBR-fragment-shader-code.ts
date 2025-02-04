@@ -1,14 +1,14 @@
 import { FragmentShaderInputParams } from './get-fragment-shader-code'
 import { constants } from '../../chunks/utils/constants'
 import { common } from '../../chunks/utils/common'
+import { toneMappingUtils } from '../../chunks/utils/tone-mapping-utils'
 import { getLightsInfos } from '../../chunks/fragment/head/get-lights-infos'
 import { REIndirectDiffuse } from '../../chunks/fragment/head/RE-indirect-diffuse'
-import { toneMappingUtils } from '../../chunks/fragment/head/tone-mapping-utils'
 import { REIndirectSpecular } from '../../chunks/fragment/head/RE-indirect-specular'
 import { getPBRDirect } from '../../chunks/fragment/head/get-PBR-direct'
 import { getIBLIndirect } from '../../chunks/fragment/head/get-IBL-indirect'
 import { getIBLTransmission } from '../../chunks/fragment/head/get-IBL-transmission'
-import { getPBRShading } from '../../chunks/fragment/body/get-pbr-shading'
+import { getPBRShading } from '../../chunks/fragment/body/get-PBR-shading'
 import { getFragmentInputStruct } from '../../chunks/fragment/head/get-fragment-input-struct'
 import { declareAttributesVars } from '../../chunks/fragment/body/declare-attributes-vars'
 import { declareMaterialVars } from '../../chunks/fragment/body/declare-material-vars'
@@ -26,7 +26,7 @@ import { patchAdditionalChunks } from '../../default-material-helpers'
  * @param parameters - {@link FragmentShaderInputParams} used to build the PBR fragment shader.
  * @returns - The PBR fragment shader generated based on the provided parameters.
  */
-export const getPbrFragmentShaderCode = ({
+export const getPBRFragmentShaderCode = ({
   chunks = null,
   toneMapping = 'Linear',
   geometry,
@@ -51,17 +51,7 @@ export const getPbrFragmentShaderCode = ({
   chunks = patchAdditionalChunks(chunks)
 
   // patch environment map material uniforms
-  if (environmentMap) {
-    if (!materialUniform) {
-      materialUniform = {
-        struct: {},
-      }
-    }
-
-    if (!materialUniform.struct) {
-      materialUniform.struct = {}
-    }
-
+  if (environmentMap && materialUniform && materialUniform.struct) {
     materialUniform.struct = {
       ...materialUniform.struct,
       envRotation: {
@@ -84,13 +74,13 @@ ${chunks.additionalHead}
 
 ${constants}
 ${common}
+${toneMappingUtils}
 ${getLightsInfos}
 ${REIndirectDiffuse}
 ${REIndirectSpecular}
 ${getPBRDirect}
 ${getIBLIndirect}
 ${getIBLTransmission}
-${toneMappingUtils}
 
 ${getFragmentInputStruct({ geometry })}
 

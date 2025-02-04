@@ -54,12 +54,12 @@ export const declareMaterialVars = ({
   }
 
   if (shadingModel !== 'Unlit') {
-    if (materialStruct.normalMapScale) {
+    if (materialStruct.normalScale) {
       materialVars += /* wgsl */ `
-  var normalMapScale: f32 = ${materialUniformName}.normalMapScale;`
+  var normalScale: vec2f = ${materialUniformName}.normalScale;`
     } else {
       materialVars += /* wgsl */ `
-  var normalMapScale: f32 = 1.0;`
+  var normalScale: vec2f = vec2(1.0);`
     }
 
     if (materialStruct.occlusionIntensity) {
@@ -106,18 +106,18 @@ export const declareMaterialVars = ({
 
     if (materialStruct.specularIntensity) {
       materialVars += /* wgsl */ `
-  var specularFactor: f32 = ${materialUniformName}.specularIntensity;`
+  var specularIntensity: f32 = ${materialUniformName}.specularIntensity;`
     } else {
       materialVars += /* wgsl */ `
-  var specularFactor: f32 = 1.0;`
+  var specularIntensity: f32 = 1.0;`
     }
 
     if (materialStruct.specularColor) {
       materialVars += /* wgsl */ `
-  var specularColorFactor: vec3f = ${materialUniformName}.specularColor;`
+  var specularColor: vec3f = ${materialUniformName}.specularColor;`
     } else {
       materialVars += /* wgsl */ `
-  var specularColorFactor: vec3f = vec3(1.0);`
+  var specularColor: vec3f = vec3(1.0);`
     }
 
     if (materialStruct.ior) {
@@ -126,6 +126,18 @@ export const declareMaterialVars = ({
     } else {
       materialVars += /* wgsl */ `
   var ior: f32 = 1.5;`
+    }
+
+    if (shadingModel === 'Phong' && materialStruct.shininess) {
+      materialVars += /* wgsl */ `
+  var shininess: f32 = ${materialUniformName}.shininess;`
+    } else {
+      materialVars += /* wgsl */ `
+  // arbitrary computation of shininess from roughness and metallic
+  var Ns: f32 = (1.0 / max(EPSILON, roughness * roughness));  // Convert roughness to shininess
+  Ns *= (1.0 - 0.5 * metallic);  // Reduce shininess for metals
+  var shininess: f32 = clamp(Ns * 60.0, 1.0, 256.0);  // Clamp to avoid extreme values
+  shininess = 60.0;`
     }
   }
 

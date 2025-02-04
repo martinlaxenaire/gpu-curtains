@@ -370,6 +370,7 @@ window.addEventListener('load', async () => {
       RE_IndirectDiffuse(irradiance, albedo, &reflectedLight);
     
       result = reflectedLight.indirectDiffuse + reflectedLight.directDiffuse + reflectedLight.directSpecular;
+      
     
       return vec4(linearToOutput3(result), 1.0);
     }

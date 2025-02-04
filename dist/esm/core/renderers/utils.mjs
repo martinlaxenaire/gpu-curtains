@@ -1,4 +1,5 @@
 import { throwError } from '../../utils/utils.mjs';
+import { Object3D } from '../objects3D/Object3D.mjs';
 
 const formatRendererError = (renderer, rendererType = "GPURenderer", type) => {
   const error = type ? `Unable to create ${type} because the ${rendererType} is not defined: ${renderer}` : `The ${rendererType} is not defined: ${renderer}`;
@@ -29,7 +30,7 @@ const isCurtainsRenderer = (renderer, type) => {
   return renderer;
 };
 const isProjectedMesh = (object) => {
-  return object.constructor.name === "Mesh" || object.constructor.name === "DOMMesh" || object.constructor.name === "Plane" ? object : false;
+  return "geometry" in object && "material" in object && object instanceof Object3D ? object : false;
 };
 
 export { isCameraRenderer, isCurtainsRenderer, isProjectedMesh, isRenderer };

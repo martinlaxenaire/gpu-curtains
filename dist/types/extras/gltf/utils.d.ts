@@ -8,9 +8,9 @@ import { AdditionalChunks } from '../../core/shaders/default-material-helpers';
 export interface ShaderBuilderParameters {
     /** Shading model to use. */
     shadingModel?: ShadingModels;
-    /** Additional WGSL chunks to add to the vertex shaders. */
+    /** {@link AdditionalChunks | Additional WGSL chunks} to add to the vertex shaders. */
     vertexChunks?: AdditionalChunks;
-    /** Additional WGSL chunks to add to the fragment shaders. */
+    /** {@link AdditionalChunks | Additional WGSL chunks} to add to the fragment shaders. */
     fragmentChunks?: AdditionalChunks;
     /** Additional IBL parameters to pass as uniform and textures. */
     environmentMap?: FragmentShaderBaseInputParams['environmentMap'];

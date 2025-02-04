@@ -1,6 +1,6 @@
+import { toneMappingUtils } from '../utils/tone-mapping-utils'
 import { GetShadingParams, lambertUtils } from './lambert-shading'
 import { getPhongDirect } from '../fragment/head/get-phong-direct'
-import { toneMappingUtils } from '../fragment/head/tone-mapping-utils'
 import { getPhongShading } from '../fragment/body/get-phong-shading'
 
 /**
@@ -9,11 +9,12 @@ import { getPhongShading } from '../fragment/body/get-phong-shading'
  *
  * @example
  * ```wgsl
- * var color: vec3f = vec3(1.0);
+ * var color: vec4f = vec3(1.0);
  * let specularColor: vec3f = vec3(1.0);
- * let specularStrength: f32 = 1.0;
- * let shininess: f32 = 32.0;
- * color = getPhong(normal, worldPosition, color, viewDirection, specularColor, specularStrength, shininess);
+ * let specularIntensity: f32 = 1.0;
+ * let shininess: f32 = 30.0;
+ *
+ * color = getPhong(normal, worldPosition, color, viewDirection, specularIntensity, specularColor, shininess);
  * ```
  */
 export const getPhong = (
@@ -26,27 +27,25 @@ ${toneMapping ? toneMappingUtils : ''}
 fn getPhong(
   normal: vec3f,
   worldPosition: vec3f,
-  outputColor: vec3f,
+  outputColor: vec4f,
   viewDirection: vec3f,
+  specularIntensity: f32,
   specularColor: vec3f,
-  specularFactor: f32,
   shininess: f32,
   ${useOcclusion ? 'occlusion: f32,' : ''}
-) -> vec3f {
+) -> vec4f {
   ${!useOcclusion ? 'let occlusion: f32 = 1.0;' : ''}
 
   ${getPhongShading({ receiveShadows })}
   
-  var color: vec3f = outgoingLight;
-  
   ${
     toneMapping === 'Linear'
-      ? 'outgoingLight = linearToOutput3(color);'
+      ? 'outgoingLight = linearToOutput3(outgoingLight);'
       : toneMapping === 'Khronos'
-      ? 'outgoingLight = linearTosRGB(toneMapKhronosPbrNeutral(color));'
+      ? 'outgoingLight = linearTosRGB(toneMapKhronosPbrNeutral(outgoingLight));'
       : ''
   }
   
-  return color;
+  return vec4(outgoingLight, outputColor.a);;
 }
 `

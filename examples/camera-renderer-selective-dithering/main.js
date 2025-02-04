@@ -7,6 +7,7 @@ import {
   DirectionalLight,
   getLambert,
   Mesh,
+  LitMesh,
   RenderTarget,
   ShaderPass,
   SphereGeometry,
@@ -57,7 +58,7 @@ window.addEventListener('load', async () => {
 
   // lights
   const ambientLight = new AmbientLight(gpuCameraRenderer, {
-    intensity: 0.75,
+    intensity: 0.3,
   })
 
   const directionalLight = new DirectionalLight(gpuCameraRenderer, {
@@ -67,34 +68,6 @@ window.addEventListener('load', async () => {
 
   // we will add cubes and spheres to our scene
   // they will use a lambert shading
-  const meshFs = /* wgsl */ `
-    struct VSOutput {
-      @builtin(position) position: vec4f,
-      @builtin(front_facing) frontFacing: bool,
-      @location(0) uv: vec2f,
-      @location(1) normal: vec3f,
-      @location(2) worldPosition: vec3f,
-      @location(3) viewDirection: vec3f,
-    };
-    
-    ${getLambert()}
-    
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {      
-      var color: vec3f = shading.color;
-      
-      // negate the normals if we're using front face culling
-      let faceDirection = select(-1.0, 1.0, fsInput.frontFacing);
-      let normal = normalize(faceDirection * fsInput.normal);
-      
-      let worldPosition = fsInput.worldPosition;
-      let viewDirection = normalize(fsInput.viewDirection);
-      
-      // lambert
-      color = getLambert(normal, worldPosition, color);
-    
-      return vec4(color, 1.0);
-    }
-  `
 
   // the cubes will be rendered in a 'blank' render target pass
   // that will just render them as is
@@ -114,34 +87,28 @@ window.addEventListener('load', async () => {
 
   const sphereColor1 = new Vec3(0, 1, 1)
   const sphereColor2 = new Vec3(1, 0, 1)
-  const cubeColor = new Vec3(0.15)
+  const cubeColor = new Vec3(0.35)
 
   for (let i = 0; i < 50; i++) {
     const isCube = Math.random() > 0.5
-    const mesh = new Mesh(gpuCameraRenderer, {
+
+    const mesh = new LitMesh(gpuCameraRenderer, {
       label: isCube ? 'Cube ' + i : 'Sphere ' + i,
       geometry: isCube ? cubeGeometry : sphereGeometry,
       outputTarget: isCube ? blankRenderTarget : selectiveDitheringTarget,
-      shaders: {
-        fragment: {
-          code: meshFs,
-        },
-      },
-      uniforms: {
-        shading: {
-          struct: {
-            color: {
-              type: 'vec3f',
-              value: isCube ? cubeColor : Math.random() > 0.5 ? sphereColor1 : sphereColor2,
-            },
-          },
-        },
+      material: {
+        shading: 'Lambert',
+        color: isCube ? cubeColor : Math.random() > 0.5 ? sphereColor1 : sphereColor2,
       },
     })
 
     mesh.position.x = Math.random() * systemSize * 2 - systemSize
     mesh.position.y = Math.random() * systemSize * 2 - systemSize
     mesh.position.z = Math.random() * systemSize * 2 - systemSize
+
+    if (!isCube) {
+      mesh.scale.set(1.25)
+    }
 
     const rotationSpeed = Math.random() * 0.025
 

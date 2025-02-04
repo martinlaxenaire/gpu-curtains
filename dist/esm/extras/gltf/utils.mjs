@@ -2,21 +2,6 @@ import { getVertexShaderCode } from '../../core/shaders/full/vertex/get-vertex-s
 import { getFragmentShaderCode } from '../../core/shaders/full/fragment/get-fragment-shader-code.mjs';
 
 const buildShaders = (meshDescriptor, shaderParameters = {}) => {
-  const baseColorTexture = meshDescriptor.textures.find((t) => t.texture === "baseColorTexture");
-  const normalTexture = meshDescriptor.textures.find((t) => t.texture === "normalTexture");
-  const emissiveTexture = meshDescriptor.textures.find((t) => t.texture === "emissiveTexture");
-  const occlusionTexture = meshDescriptor.textures.find((t) => t.texture === "occlusionTexture");
-  const metallicRoughnessTexture = meshDescriptor.textures.find((t) => t.texture === "metallicRoughnessTexture");
-  const specularTexture = meshDescriptor.textures.find((t) => t.texture === "specularTexture");
-  const specularFactorTexture = specularTexture || meshDescriptor.textures.find((t) => t.texture === "specularFactorTexture");
-  const specularColorTexture = specularTexture || meshDescriptor.textures.find((t) => t.texture === "specularColorTexture");
-  const transmissionTexture = meshDescriptor.textures.find((t) => t.texture === "transmissionTexture");
-  const thicknessTexture = meshDescriptor.textures.find((t) => t.texture === "thicknessTexture");
-  const transmissionBackgroundTexture = meshDescriptor.parameters.transmissive ? {
-    texture: "transmissionBackgroundTexture",
-    sampler: "transmissionSampler",
-    texCoordAttributeName: "uv"
-  } : null;
   let { shadingModel } = shaderParameters;
   if (!shadingModel) {
     shadingModel = "PBR";
@@ -24,6 +9,44 @@ const buildShaders = (meshDescriptor, shaderParameters = {}) => {
   const isUnlit = meshDescriptor.extensionsUsed.includes("KHR_materials_unlit");
   if (isUnlit) {
     shadingModel = "Unlit";
+  }
+  const baseColorTexture = meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === "baseColorTexture");
+  const normalTexture = meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === "normalTexture");
+  const emissiveTexture = meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === "emissiveTexture");
+  const occlusionTexture = meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === "occlusionTexture");
+  const metallicRoughnessTexture = meshDescriptor.texturesDescriptors.find(
+    (t) => t.texture.options.name === "metallicRoughnessTexture"
+  );
+  const specularTexture = meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === "specularTexture");
+  const specularFactorTexture = specularTexture || meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === "specularFactorTexture");
+  const specularColorTexture = specularTexture || meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === "specularColorTexture");
+  const transmissionTexture = meshDescriptor.texturesDescriptors.find(
+    (t) => t.texture.options.name === "transmissionTexture"
+  );
+  const thicknessTexture = meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === "thicknessTexture");
+  const transmissionBackgroundTexture = meshDescriptor.texturesDescriptors.find(
+    (t) => t.texture.options.name === "transmissionBackgroundTexture"
+  );
+  if (!meshDescriptor.parameters.textures) {
+    meshDescriptor.parameters.textures = [];
+  }
+  if (!meshDescriptor.parameters.samplers) {
+    meshDescriptor.parameters.samplers = [];
+  }
+  if (shadingModel !== "Unlit") {
+    meshDescriptor.texturesDescriptors.forEach((textureDescriptor) => {
+      const samplerExists = meshDescriptor.parameters.samplers.find((s) => s.uuid === textureDescriptor.sampler.uuid);
+      if (!samplerExists) {
+        meshDescriptor.parameters.samplers.push(textureDescriptor.sampler);
+      }
+      meshDescriptor.parameters.textures.push(textureDescriptor.texture);
+    });
+  } else if (baseColorTexture) {
+    const samplerExists = meshDescriptor.parameters.samplers.find((s) => s.uuid === baseColorTexture.sampler.uuid);
+    if (!samplerExists) {
+      meshDescriptor.parameters.samplers.push(baseColorTexture.sampler);
+    }
+    meshDescriptor.parameters.textures.push(baseColorTexture.texture);
   }
   let { vertexChunks, fragmentChunks } = shaderParameters || {};
   const { environmentMap } = shaderParameters || {};
@@ -62,6 +85,26 @@ const buildShaders = (meshDescriptor, shaderParameters = {}) => {
     occlusionTexture,
     transmissionBackgroundTexture,
     environmentMap
+  });
+  meshDescriptor.alternateDescriptors?.forEach((descriptor) => {
+    descriptor.parameters.uniforms = { ...meshDescriptor.parameters.uniforms, ...descriptor.parameters.uniforms };
+    if (meshDescriptor.parameters.storages) {
+      descriptor.parameters.storages = meshDescriptor.parameters.storages;
+    }
+    if (meshDescriptor.parameters.bindings) {
+      if (!descriptor.parameters.bindings)
+        descriptor.parameters.bindings = [];
+      meshDescriptor.parameters.bindings.forEach((binding) => {
+        const hasBinding = descriptor.parameters.bindings.find((b) => b.name === binding.name);
+        if (!hasBinding) {
+          descriptor.parameters.bindings.push(binding);
+        }
+      });
+    }
+    if (meshDescriptor.parameters.bindGroups) {
+      descriptor.parameters.bindGroups = meshDescriptor.parameters.bindGroups;
+    }
+    descriptor.parameters.shaders = buildShaders(descriptor, shaderParameters);
   });
   return {
     vertex: {

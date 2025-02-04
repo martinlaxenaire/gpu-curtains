@@ -6,7 +6,7 @@ import { Texture } from '../../core/textures/Texture';
 import { Mesh } from '../../core/meshes/Mesh';
 import { TypedArrayConstructor } from '../../core/bindings/utils';
 import { VertexBufferAttribute, VertexBufferAttributeParams } from '../../types/Geometries';
-import { ChildDescriptor, MeshDescriptor, PrimitiveInstanceDescriptor, ScenesManager } from '../../types/gltf/GLTFScenesManager';
+import { ChildDescriptor, MeshDescriptor, MeshDescriptorMaterialParams, PrimitiveInstanceDescriptor, ScenesManager } from '../../types/gltf/GLTFScenesManager';
 /**
  * Used to create a {@link GLTFScenesManager} from a given {@link GLTFLoader.gltf | gltf} object.
  *
@@ -46,7 +46,7 @@ import { ChildDescriptor, MeshDescriptor, PrimitiveInstanceDescriptor, ScenesMan
  * ## Extensions
  * - [ ] KHR_animation_pointer
  * - [ ] KHR_draco_mesh_compression
- * - [ ] KHR_lights_punctual
+ * - [x] KHR_lights_punctual (partial support - SpotLight not yet implemented)
  * - [ ] KHR_materials_anisotropy
  * - [ ] KHR_materials_clearcoat
  * - [x] KHR_materials_dispersion
@@ -57,7 +57,7 @@ import { ChildDescriptor, MeshDescriptor, PrimitiveInstanceDescriptor, ScenesMan
  * - [x] KHR_materials_specular
  * - [x] KHR_materials_transmission
  * - [x] KHR_materials_unlit
- * - [ ] KHR_materials_variants
+ * - [x] KHR_materials_variants
  * - [x] KHR_materials_volume
  * - [ ] KHR_mesh_quantization
  * - [ ] KHR_texture_basisu
@@ -132,6 +132,10 @@ export declare class GLTFScenesManager {
      */
     createAnimations(): void;
     /**
+     * Create the {@link ScenesManager.lights | lights} defined by the `KHR_lights_punctual` extension if any.
+     */
+    createLights(): void;
+    /**
      * Create the {@link Sampler} and add them to the {@link ScenesManager.samplers | scenesManager samplers array}.
      */
     createSamplers(): void;
@@ -147,6 +151,17 @@ export declare class GLTFScenesManager {
      * Create the {ScenesManager.materialsTextures | scenesManager materialsTextures array} and each associated {@link types/gltf/GLTFScenesManager.MaterialTexture | MaterialTexture} and their respective {@link Texture}.
      */
     createMaterialTextures(): void;
+    /**
+     * Get the {@link MeshDescriptorMaterialParams} for a given {@link GLTF.IMeshPrimitive.material | glTF primitive material index}.
+     * @param materialIndex - {@link GLTF.IMeshPrimitive.material | glTF primitive material index}.
+     * @param label - Optional label to use for the {@link RenderMaterial} created.
+     * @returns - Created {@link MeshDescriptorMaterialParams}.
+     */
+    getMaterialBaseParameters(materialIndex: GLTF.IMeshPrimitive['material'], label?: string): MeshDescriptorMaterialParams;
+    /**
+     * Create all the {@link MeshDescriptorMaterialParams} from the {@link GLTF.IMaterial | glTF materials}.
+     */
+    createMaterialsParams(): void;
     /**
      * Create a {@link ChildDescriptor} from a parent {@link ChildDescriptor} and a {@link GLTF.INode | glTF Node}
      * @param parent - parent {@link ChildDescriptor} to use.

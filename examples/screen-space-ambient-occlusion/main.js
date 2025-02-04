@@ -758,12 +758,12 @@ window.addEventListener('load', async () => {
         gBufferAlbedoTexture,
         vec2<i32>(floor(fsInput.position.xy)),
         0
-      ).rgb;
+      );
       
       let color = getLambert(normal, position, albedo, blurredOcclusion.r);
       
       return select(
-        vec4(color, 1.0),
+        color,
         vec4(blurredOcclusion.rgb, 1.0),
         bool(params.displaySSAOResult)
       );
