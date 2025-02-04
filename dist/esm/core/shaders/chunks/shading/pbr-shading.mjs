@@ -1,8 +1,8 @@
 import { lambertUtils } from './lambert-shading.mjs';
+import { toneMappingUtils } from '../utils/tone-mapping-utils.mjs';
 import { REIndirectSpecular } from '../fragment/head/RE-indirect-specular.mjs';
 import { getIBLTransmission } from '../fragment/head/get-IBL-transmission.mjs';
 import { getPBRDirect } from '../fragment/head/get-PBR-direct.mjs';
-import { toneMappingUtils } from '../fragment/head/tone-mapping-utils.mjs';
 import { getPBRShading } from '../fragment/body/get-pbr-shading.mjs';
 
 const getPBR = ({

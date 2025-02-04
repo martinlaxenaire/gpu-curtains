@@ -1645,358 +1645,6 @@
     }
   }
 
-  class Mat3 {
-    // prettier-ignore
-    /**
-     * Mat3 constructor
-     * @param elements - initial array to use, default to identity matrix
-     */
-    constructor(elements = new Float32Array([
-      1,
-      0,
-      0,
-      0,
-      1,
-      0,
-      0,
-      0,
-      1
-    ])) {
-      this.type = "Mat3";
-      this.elements = elements;
-    }
-    /**
-     * Sets the matrix from 9 numbers
-     *
-     * @param n11 - number
-     * @param n12 - number
-     * @param n13 - number
-     * @param n21 - number
-     * @param n22 - number
-     * @param n23 - number
-     * @param n31 - number
-     * @param n32 - number
-     * @param n33 - number
-     * @returns - this {@link Mat3} after being set
-     */
-    set(n11, n12, n13, n21, n22, n23, n31, n32, n33) {
-      const te = this.elements;
-      te[0] = n11;
-      te[1] = n21;
-      te[2] = n31;
-      te[3] = n12;
-      te[4] = n22;
-      te[5] = n32;
-      te[6] = n13;
-      te[7] = n23;
-      te[8] = n33;
-      return this;
-    }
-    /**
-     * Sets the {@link Mat3} to an identity matrix
-     * @returns - this {@link Mat3} after being set
-     */
-    identity() {
-      this.set(1, 0, 0, 0, 1, 0, 0, 0, 1);
-      return this;
-    }
-    /**
-     * Sets the {@link Mat3} values from an array
-     * @param array - array to use
-     * @param offset - optional offset in the array to use
-     * @returns - this {@link Mat3} after being set
-     */
-    // prettier-ignore
-    setFromArray(array = new Float32Array([
-      1,
-      0,
-      0,
-      0,
-      1,
-      0,
-      0,
-      0,
-      1
-    ]), offset = 0) {
-      for (let i = 0; i < this.elements.length; i++) {
-        this.elements[i] = array[i + offset];
-      }
-      return this;
-    }
-    /**
-     * Copy another {@link Mat3}
-     * @param matrix - matrix to copy
-     * @returns - this {@link Mat3} after being set
-     */
-    copy(matrix = new Mat3()) {
-      const array = matrix.elements;
-      this.elements[0] = array[0];
-      this.elements[1] = array[1];
-      this.elements[2] = array[2];
-      this.elements[3] = array[3];
-      this.elements[4] = array[4];
-      this.elements[5] = array[5];
-      this.elements[6] = array[6];
-      this.elements[7] = array[7];
-      this.elements[8] = array[8];
-      return this;
-    }
-    /**
-     * Clone a {@link Mat3}
-     * @returns - cloned {@link Mat3}
-     */
-    clone() {
-      return new Mat3().copy(this);
-    }
-    /**
-     * Set a {@link Mat3} from a {@link Mat4}.
-     * @param matrix - {@link Mat4} to use.
-     * @returns - this {@link Mat3} after being set.
-     */
-    setFromMat4(matrix = new Mat4()) {
-      const me = matrix.elements;
-      this.set(me[0], me[4], me[8], me[1], me[5], me[9], me[2], me[6], me[10]);
-      return this;
-    }
-    /**
-     * Multiply this {@link Mat3} with another {@link Mat3}
-     * @param matrix - {@link Mat3} to multiply with
-     * @returns - this {@link Mat3} after multiplication
-     */
-    multiply(matrix = new Mat3()) {
-      return this.multiplyMatrices(this, matrix);
-    }
-    /**
-     * Multiply another {@link Mat3} with this {@link Mat3}
-     * @param matrix - {@link Mat3} to multiply with
-     * @returns - this {@link Mat3} after multiplication
-     */
-    premultiply(matrix = new Mat3()) {
-      return this.multiplyMatrices(matrix, this);
-    }
-    /**
-     * Multiply two {@link Mat3}
-     * @param a - first {@link Mat3}
-     * @param b - second {@link Mat3}
-     * @returns - {@link Mat3} resulting from the multiplication
-     */
-    multiplyMatrices(a = new Mat3(), b = new Mat3()) {
-      const ae = a.elements;
-      const be = b.elements;
-      const te = this.elements;
-      const a11 = ae[0], a12 = ae[3], a13 = ae[6];
-      const a21 = ae[1], a22 = ae[4], a23 = ae[7];
-      const a31 = ae[2], a32 = ae[5], a33 = ae[8];
-      const b11 = be[0], b12 = be[3], b13 = be[6];
-      const b21 = be[1], b22 = be[4], b23 = be[7];
-      const b31 = be[2], b32 = be[5], b33 = be[8];
-      te[0] = a11 * b11 + a12 * b21 + a13 * b31;
-      te[3] = a11 * b12 + a12 * b22 + a13 * b32;
-      te[6] = a11 * b13 + a12 * b23 + a13 * b33;
-      te[1] = a21 * b11 + a22 * b21 + a23 * b31;
-      te[4] = a21 * b12 + a22 * b22 + a23 * b32;
-      te[7] = a21 * b13 + a22 * b23 + a23 * b33;
-      te[2] = a31 * b11 + a32 * b21 + a33 * b31;
-      te[5] = a31 * b12 + a32 * b22 + a33 * b32;
-      te[8] = a31 * b13 + a32 * b23 + a33 * b33;
-      return this;
-    }
-    /**
-     * Invert this {@link Mat3}.
-     * @returns - this {@link Mat3} after being inverted
-     */
-    invert() {
-      const te = this.elements, n11 = te[0], n21 = te[1], n31 = te[2], n12 = te[3], n22 = te[4], n32 = te[5], n13 = te[6], n23 = te[7], n33 = te[8], t11 = n33 * n22 - n32 * n23, t12 = n32 * n13 - n33 * n12, t13 = n23 * n12 - n22 * n13, det = n11 * t11 + n21 * t12 + n31 * t13;
-      if (det === 0)
-        return this.set(0, 0, 0, 0, 0, 0, 0, 0, 0);
-      const detInv = 1 / det;
-      te[0] = t11 * detInv;
-      te[1] = (n31 * n23 - n33 * n21) * detInv;
-      te[2] = (n32 * n21 - n31 * n22) * detInv;
-      te[3] = t12 * detInv;
-      te[4] = (n33 * n11 - n31 * n13) * detInv;
-      te[5] = (n31 * n12 - n32 * n11) * detInv;
-      te[6] = t13 * detInv;
-      te[7] = (n21 * n13 - n23 * n11) * detInv;
-      te[8] = (n22 * n11 - n21 * n12) * detInv;
-      return this;
-    }
-    /**
-     * Transpose this {@link Mat3}.
-     * @returns - this {@link Mat3} after being transposed
-     */
-    transpose() {
-      let tmp;
-      const m = this.elements;
-      tmp = m[1];
-      m[1] = m[3];
-      m[3] = tmp;
-      tmp = m[2];
-      m[2] = m[6];
-      m[6] = tmp;
-      tmp = m[5];
-      m[5] = m[7];
-      m[7] = tmp;
-      return this;
-    }
-    /**
-     * Compute a normal {@link Mat3} matrix from a {@link Mat4} transformation matrix.
-     * @param matrix - {@link Mat4} transformation matrix
-     * @returns - this {@link Mat3} after being inverted and transposed
-     */
-    getNormalMatrix(matrix = new Mat4()) {
-      return this.setFromMat4(matrix).invert().transpose();
-    }
-  }
-
-  class ProjectedObject3D extends Object3D {
-    /**
-     * ProjectedObject3D constructor
-     * @param renderer - {@link CameraRenderer} object or {@link GPUCurtains} class object used to create this {@link ProjectedObject3D}
-     */
-    constructor(renderer) {
-      super();
-      renderer = isCameraRenderer(renderer, "ProjectedObject3D");
-      this.camera = renderer.camera;
-    }
-    /**
-     * Tell our projection matrix stack to update
-     */
-    applyPosition() {
-      super.applyPosition();
-      this.shouldUpdateProjectionMatrixStack();
-    }
-    /**
-     * Tell our projection matrix stack to update
-     */
-    applyRotation() {
-      super.applyRotation();
-      this.shouldUpdateProjectionMatrixStack();
-    }
-    /**
-     * Tell our projection matrix stack to update
-     */
-    applyScale() {
-      super.applyScale();
-      this.shouldUpdateProjectionMatrixStack();
-    }
-    /**
-     * Tell our projection matrix stack to update
-     */
-    applyTransformOrigin() {
-      super.applyTransformOrigin();
-      this.shouldUpdateProjectionMatrixStack();
-    }
-    /**
-     * Set our transform and projection matrices
-     */
-    setMatrices() {
-      super.setMatrices();
-      this.matrices = {
-        ...this.matrices,
-        modelView: {
-          matrix: new Mat4(),
-          shouldUpdate: true,
-          onUpdate: () => {
-            this.modelViewMatrix.multiplyMatrices(this.viewMatrix, this.worldMatrix);
-          }
-        },
-        modelViewProjection: {
-          matrix: new Mat4(),
-          shouldUpdate: true,
-          onUpdate: () => {
-            this.modelViewProjectionMatrix.multiplyMatrices(this.projectionMatrix, this.modelViewMatrix);
-          }
-        },
-        normal: {
-          matrix: new Mat3(),
-          shouldUpdate: true,
-          onUpdate: () => {
-            this.normalMatrix.getNormalMatrix(this.worldMatrix);
-          }
-        }
-      };
-    }
-    /**
-     * Get our {@link modelViewMatrix | model view matrix}
-     */
-    get modelViewMatrix() {
-      return this.matrices.modelView.matrix;
-    }
-    /**
-     * Set our {@link modelViewMatrix | model view matrix}
-     * @param value - new {@link modelViewMatrix | model view matrix}
-     */
-    set modelViewMatrix(value) {
-      this.matrices.modelView.matrix = value;
-      this.matrices.modelView.shouldUpdate = true;
-    }
-    /**
-     * Get our {@link Camera#viewMatrix | camera view matrix}
-     * @readonly
-     */
-    get viewMatrix() {
-      return this.camera.viewMatrix;
-    }
-    /**
-     * Get our {@link Camera#projectionMatrix | camera projection matrix}
-     * @readonly
-     */
-    get projectionMatrix() {
-      return this.camera.projectionMatrix;
-    }
-    /**
-     * Get our {@link modelViewProjectionMatrix | model view projection matrix}
-     */
-    get modelViewProjectionMatrix() {
-      return this.matrices.modelViewProjection.matrix;
-    }
-    /**
-     * Set our {@link modelViewProjectionMatrix | model view projection matrix}
-     * @param value - new {@link modelViewProjectionMatrix | model view projection matrix}s
-     */
-    set modelViewProjectionMatrix(value) {
-      this.matrices.modelViewProjection.matrix = value;
-      this.matrices.modelViewProjection.shouldUpdate = true;
-    }
-    /**
-     * Get our {@link normalMatrix | normal matrix}
-     */
-    get normalMatrix() {
-      return this.matrices.normal.matrix;
-    }
-    /**
-     * Set our {@link normalMatrix | normal matrix}
-     * @param value - new {@link normalMatrix | normal matrix}
-     */
-    set normalMatrix(value) {
-      this.matrices.normal.matrix = value;
-      this.matrices.normal.shouldUpdate = true;
-    }
-    /**
-     * Set our projection matrices shouldUpdate flags to true (tell them to update)
-     */
-    shouldUpdateProjectionMatrixStack() {
-      this.matrices.modelView.shouldUpdate = true;
-      this.matrices.modelViewProjection.shouldUpdate = true;
-    }
-    /**
-     * When the world matrix update, tell our projection matrix to update as well
-     */
-    shouldUpdateWorldMatrix() {
-      super.shouldUpdateWorldMatrix();
-      this.shouldUpdateProjectionMatrixStack();
-      this.matrices.normal.shouldUpdate = true;
-    }
-    /**
-     * Tell all our matrices to update
-     */
-    shouldUpdateMatrixStack() {
-      this.shouldUpdateModelMatrix();
-      this.shouldUpdateProjectionMatrixStack();
-    }
-  }
-
   const formatRendererError = (renderer, rendererType = "GPURenderer", type) => {
     const error = type ? `Unable to create ${type} because the ${rendererType} is not defined: ${renderer}` : `The ${rendererType} is not defined: ${renderer}`;
     throwError(error);
@@ -2026,7 +1674,7 @@
     return renderer;
   };
   const isProjectedMesh = (object) => {
-    return "geometry" in object && "material" in object && object instanceof ProjectedObject3D ? object : false;
+    return "geometry" in object && "material" in object && object instanceof Object3D ? object : false;
   };
 
   const WebGPUShaderStageConstants = typeof GPUShaderStage !== "undefined" ? GPUShaderStage : {
@@ -2976,7 +2624,7 @@
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$k = (obj, member, getter) => {
+  var __privateGet$l = (obj, member, getter) => {
     __accessCheck$n(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
@@ -2985,7 +2633,7 @@
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$j = (obj, member, value, setter) => {
+  var __privateSet$k = (obj, member, value, setter) => {
     __accessCheck$n(obj, member, "write to private field");
     member.set(obj, value);
     return value;
@@ -3075,7 +2723,7 @@
      * @returns - The {@link BufferBinding} parent if any.
      */
     get parent() {
-      return __privateGet$k(this, _parent);
+      return __privateGet$l(this, _parent);
     }
     /**
      * Set the new {@link BufferBinding} parent.
@@ -3126,7 +2774,7 @@
         this.parentView = null;
         this.parentViewSetBufferEls = null;
       }
-      __privateSet$j(this, _parent, value);
+      __privateSet$k(this, _parent, value);
     }
     /**
      * Round the given size value to the nearest minimum {@link GPUDevice} buffer offset alignment.
@@ -4229,7 +3877,7 @@
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$j = (obj, member, getter) => {
+  var __privateGet$k = (obj, member, getter) => {
     __accessCheck$m(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
@@ -4405,16 +4053,16 @@
       const parentRatio = parentWidth / parentHeight;
       const sourceRatio = this.size.width / this.size.height;
       if (parentWidth > parentHeight) {
-        __privateGet$j(this, _parentRatio).set(parentRatio, 1, 1);
-        __privateGet$j(this, _sourceRatio).set(1 / sourceRatio, 1, 1);
+        __privateGet$k(this, _parentRatio).set(parentRatio, 1, 1);
+        __privateGet$k(this, _sourceRatio).set(1 / sourceRatio, 1, 1);
       } else {
-        __privateGet$j(this, _parentRatio).set(1, 1 / parentRatio, 1);
-        __privateGet$j(this, _sourceRatio).set(1, sourceRatio, 1);
+        __privateGet$k(this, _parentRatio).set(1, 1 / parentRatio, 1);
+        __privateGet$k(this, _sourceRatio).set(1, sourceRatio, 1);
       }
-      const coverRatio = parentRatio > sourceRatio !== parentWidth > parentHeight ? 1 : parentWidth > parentHeight ? __privateGet$j(this, _parentRatio).x * __privateGet$j(this, _sourceRatio).x : __privateGet$j(this, _sourceRatio).y * __privateGet$j(this, _parentRatio).y;
-      __privateGet$j(this, _coverScale).set(1 / (coverRatio * this.scale.x), 1 / (coverRatio * this.scale.y), 1);
-      __privateGet$j(this, _rotationMatrix).rotateFromQuaternion(this.quaternion);
-      this.modelMatrix.identity().premultiplyTranslate(this.transformOrigin.clone().multiplyScalar(-1)).premultiplyScale(__privateGet$j(this, _coverScale)).premultiplyScale(__privateGet$j(this, _parentRatio)).premultiply(__privateGet$j(this, _rotationMatrix)).premultiplyScale(__privateGet$j(this, _sourceRatio)).premultiplyTranslate(this.transformOrigin).translate(this.position);
+      const coverRatio = parentRatio > sourceRatio !== parentWidth > parentHeight ? 1 : parentWidth > parentHeight ? __privateGet$k(this, _parentRatio).x * __privateGet$k(this, _sourceRatio).x : __privateGet$k(this, _sourceRatio).y * __privateGet$k(this, _parentRatio).y;
+      __privateGet$k(this, _coverScale).set(1 / (coverRatio * this.scale.x), 1 / (coverRatio * this.scale.y), 1);
+      __privateGet$k(this, _rotationMatrix).rotateFromQuaternion(this.quaternion);
+      this.modelMatrix.identity().premultiplyTranslate(this.transformOrigin.clone().multiplyScalar(-1)).premultiplyScale(__privateGet$k(this, _coverScale)).premultiplyScale(__privateGet$k(this, _parentRatio)).premultiply(__privateGet$k(this, _rotationMatrix)).premultiplyScale(__privateGet$k(this, _sourceRatio)).premultiplyTranslate(this.transformOrigin).translate(this.position);
     }
     /**
      * If our {@link modelMatrix} has been updated, tell the {@link textureMatrix | texture matrix binding} to update as well
@@ -4886,7 +4534,7 @@
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$i = (obj, member, getter) => {
+  var __privateGet$j = (obj, member, getter) => {
     __accessCheck$l(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
@@ -4895,7 +4543,7 @@
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$i = (obj, member, value, setter) => {
+  var __privateSet$j = (obj, member, value, setter) => {
     __accessCheck$l(obj, member, "write to private field");
     member.set(obj, value);
     return value;
@@ -5032,7 +4680,7 @@
      * Get the {@link Camera} {@link Camera.fov | field of view}
      */
     get fov() {
-      return __privateGet$i(this, _fov);
+      return __privateGet$j(this, _fov);
     }
     /**
      * Set the {@link Camera} {@link Camera.fov | field of view}. Update the {@link projectionMatrix} only if the field of view actually changed
@@ -5041,7 +4689,7 @@
     set fov(fov) {
       fov = Math.max(1, Math.min(fov ?? this.fov, 179));
       if (fov !== this.fov) {
-        __privateSet$i(this, _fov, fov);
+        __privateSet$j(this, _fov, fov);
         this.shouldUpdateProjectionMatrices();
       }
       this.setVisibleSize();
@@ -5051,7 +4699,7 @@
      * Get the {@link Camera} {@link Camera.near | near} plane value.
      */
     get near() {
-      return __privateGet$i(this, _near);
+      return __privateGet$j(this, _near);
     }
     /**
      * Set the {@link Camera} {@link Camera.near | near} plane value. Update the {@link projectionMatrix} only if the near plane actually changed
@@ -5060,7 +4708,7 @@
     set near(near) {
       near = Math.max(near ?? this.near, 1e-4);
       if (near !== this.near) {
-        __privateSet$i(this, _near, near);
+        __privateSet$j(this, _near, near);
         this.shouldUpdateProjectionMatrices();
       }
     }
@@ -5068,7 +4716,7 @@
      * Get the {@link Camera} {@link Camera.far | far} plane value.
      */
     get far() {
-      return __privateGet$i(this, _far);
+      return __privateGet$j(this, _far);
     }
     /**
      * Set the {@link Camera} {@link Camera.far | far} plane value. Update {@link projectionMatrix} only if the far plane actually changed
@@ -5077,7 +4725,7 @@
     set far(far) {
       far = Math.max(far ?? this.far, this.near + 1);
       if (far !== this.far) {
-        __privateSet$i(this, _far, far);
+        __privateSet$j(this, _far, far);
         this.shouldUpdateProjectionMatrices();
       }
     }
@@ -5085,14 +4733,14 @@
      * Get the {@link Camera} {@link Camera.pixelRatio | pixelRatio} value.
      */
     get pixelRatio() {
-      return __privateGet$i(this, _pixelRatio);
+      return __privateGet$j(this, _pixelRatio);
     }
     /**
      * Set the {@link Camera} {@link Camera.pixelRatio | pixelRatio} value. Update the {@link CSSPerspective} only if the pixel ratio actually changed
      * @param pixelRatio - new pixel ratio value
      */
     set pixelRatio(pixelRatio) {
-      __privateSet$i(this, _pixelRatio, pixelRatio ?? this.pixelRatio);
+      __privateSet$j(this, _pixelRatio, pixelRatio ?? this.pixelRatio);
       this.setCSSPerspective();
     }
     /**
@@ -5311,7 +4959,7 @@
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$h = (obj, member, getter) => {
+  var __privateGet$i = (obj, member, getter) => {
     __accessCheck$k(obj, member, "read from private field");
     return member.get(obj);
   };
@@ -5320,7 +4968,7 @@
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$h = (obj, member, value, setter) => {
+  var __privateSet$i = (obj, member, value, setter) => {
     __accessCheck$k(obj, member, "write to private field");
     member.set(obj, value);
     return value;
@@ -5377,7 +5025,7 @@
         depth: this.options.viewDimension.indexOf("cube") !== -1 ? 6 : 1
       };
       if (this.options.fixedSize) {
-        __privateSet$h(this, _autoResize, false);
+        __privateSet$i(this, _autoResize, false);
       }
       this.setBindings();
       this.renderer.addTexture(this);
@@ -5511,7 +5159,7 @@
      * @param size - the optional new {@link TextureSize | size} to set
      */
     resize(size = null) {
-      if (!__privateGet$h(this, _autoResize))
+      if (!__privateGet$i(this, _autoResize))
         return;
       if (!size) {
         size = {
@@ -6122,6 +5770,9 @@
      */
     setPipelineEntry() {
       this.pipelineEntry = this.renderer.pipelineManager.createComputePipeline(this);
+      if (this.bindGroups.length !== this.pipelineEntry.bindGroups.length) {
+        this.createBindGroups();
+      }
     }
     /**
      * Compile the {@link ComputePipelineEntry}
@@ -6234,7 +5885,7 @@
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$g = (obj, member, getter) => {
+  var __privateGet$h = (obj, member, getter) => {
     __accessCheck$j(obj, member, "read from private field");
     return member.get(obj);
   };
@@ -6243,7 +5894,7 @@
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$g = (obj, member, value, setter) => {
+  var __privateSet$h = (obj, member, value, setter) => {
     __accessCheck$j(obj, member, "write to private field");
     member.set(obj, value);
     return value;
@@ -6313,7 +5964,7 @@
       };
       this.renderOrder = renderOrder ?? 0;
       if (autoRender !== void 0) {
-        __privateSet$g(this, _autoRender$2, autoRender);
+        __privateSet$h(this, _autoRender$2, autoRender);
       }
       this.userData = {};
       this.ready = false;
@@ -6353,7 +6004,7 @@
       if (addToRenderer) {
         this.renderer.computePasses.push(this);
       }
-      if (__privateGet$g(this, _autoRender$2)) {
+      if (__privateGet$h(this, _autoRender$2)) {
         this.renderer.scene.addComputePass(this);
       }
     }
@@ -6362,7 +6013,7 @@
      * @param removeFromRenderer - whether to remove this {@link ComputePass} from the {@link Renderer#computePasses | Renderer computePasses array}.
      */
     removeFromScene(removeFromRenderer = false) {
-      if (__privateGet$g(this, _autoRender$2)) {
+      if (__privateGet$h(this, _autoRender$2)) {
         this.renderer.scene.removeComputePass(this);
       }
       if (removeFromRenderer) {
@@ -7587,7 +7238,7 @@
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$f = (obj, member, getter) => {
+  var __privateGet$g = (obj, member, getter) => {
     __accessCheck$i(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
@@ -7596,7 +7247,7 @@
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$f = (obj, member, value, setter) => {
+  var __privateSet$g = (obj, member, value, setter) => {
     __accessCheck$i(obj, member, "write to private field");
     member.set(obj, value);
     return value;
@@ -7625,9 +7276,9 @@
         intensity
       };
       this.color = color;
-      __privateSet$f(this, _intensityColor, this.color.clone());
+      __privateSet$g(this, _intensityColor, this.color.clone());
       this.color.onChange(
-        () => this.onPropertyChanged("color", __privateGet$f(this, _intensityColor).copy(this.color).multiplyScalar(this.intensity))
+        () => this.onPropertyChanged("color", __privateGet$g(this, _intensityColor).copy(this.color).multiplyScalar(this.intensity))
       );
       this.intensity = intensity;
     }
@@ -7665,22 +7316,22 @@
      */
     reset() {
       this.setRendererBinding();
-      this.onPropertyChanged("color", __privateGet$f(this, _intensityColor).copy(this.color).multiplyScalar(this.intensity));
+      this.onPropertyChanged("color", __privateGet$g(this, _intensityColor).copy(this.color).multiplyScalar(this.intensity));
     }
     /**
      * Get this {@link Light} intensity.
      * @returns - The {@link Light} intensity.
      */
     get intensity() {
-      return __privateGet$f(this, _intensity$1);
+      return __privateGet$g(this, _intensity$1);
     }
     /**
      * Set this {@link Light} intensity and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      * @param value - The new {@link Light} intensity.
      */
     set intensity(value) {
-      __privateSet$f(this, _intensity$1, value);
-      this.onPropertyChanged("color", __privateGet$f(this, _intensityColor).copy(this.color).multiplyScalar(this.intensity));
+      __privateSet$g(this, _intensity$1, value);
+      this.onPropertyChanged("color", __privateGet$g(this, _intensityColor).copy(this.color).multiplyScalar(this.intensity));
     }
     /**
      * Update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} input value and tell the {@link CameraRenderer#cameraLightsBindGroup | renderer camera, lights and shadows} bind group to update.
@@ -8047,7 +7698,7 @@
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$e = (obj, member, getter) => {
+  var __privateGet$f = (obj, member, getter) => {
     __accessCheck$h(obj, member, "read from private field");
     return member.get(obj);
   };
@@ -8056,7 +7707,7 @@
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$e = (obj, member, value, setter) => {
+  var __privateSet$f = (obj, member, value, setter) => {
     __accessCheck$h(obj, member, "write to private field");
     member.set(obj, value);
     return value;
@@ -8085,7 +7736,7 @@
         autoRender: autoRender === void 0 ? true : autoRender
       };
       if (autoRender !== void 0) {
-        __privateSet$e(this, _autoRender$1, autoRender);
+        __privateSet$f(this, _autoRender$1, autoRender);
       }
       this.renderPass = new RenderPass(this.renderer, {
         label: this.options.label ? `${this.options.label} Render Pass` : "Render Target Render Pass",
@@ -8122,7 +7773,7 @@
      */
     addToScene() {
       this.renderer.renderTargets.push(this);
-      if (__privateGet$e(this, _autoRender$1)) {
+      if (__privateGet$f(this, _autoRender$1)) {
         this.renderer.scene.addRenderTarget(this);
       }
     }
@@ -8130,7 +7781,7 @@
      * Remove the {@link RenderTarget} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
      */
     removeFromScene() {
-      if (__privateGet$e(this, _autoRender$1)) {
+      if (__privateGet$f(this, _autoRender$1)) {
         this.renderer.scene.removeRenderTarget(this);
       }
       this.renderer.renderTargets = this.renderer.renderTargets.filter((renderTarget) => renderTarget.uuid !== this.uuid);
@@ -8840,6 +8491,9 @@ struct VSOutput {
      */
     setPipelineEntry() {
       this.pipelineEntry = this.renderer.pipelineManager.createRenderPipeline(this);
+      if (this.bindGroups.length !== this.pipelineEntry.bindGroups.length) {
+        this.createBindGroups();
+      }
     }
     /**
      * Compile the {@link RenderPipelineEntry}
@@ -8951,6 +8605,7 @@ New rendering options: ${JSON.stringify(
         this.renderer.cameraLightsBindGroup.consumers.add(this.uuid);
       }
       super.createBindGroups();
+      console.log(this.options.label, this.bindGroups);
     }
     /**
      * Update all bind groups, except for the camera and light bind groups if present, as it is already updated by the renderer itself.
@@ -9141,7 +8796,7 @@ New rendering options: ${JSON.stringify(
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$d = (obj, member, getter) => {
+  var __privateGet$e = (obj, member, getter) => {
     __accessCheck$g(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
@@ -9150,7 +8805,7 @@ New rendering options: ${JSON.stringify(
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$d = (obj, member, value, setter) => {
+  var __privateSet$e = (obj, member, value, setter) => {
     __accessCheck$g(obj, member, "write to private field");
     member.set(obj, value);
     return value;
@@ -9242,9 +8897,9 @@ New rendering options: ${JSON.stringify(
       };
       this.sampleCount = 1;
       this.meshes = /* @__PURE__ */ new Map();
-      __privateSet$d(this, _materials, /* @__PURE__ */ new Map());
-      __privateSet$d(this, _depthMaterials, /* @__PURE__ */ new Map());
-      __privateSet$d(this, _depthPassTaskID, null);
+      __privateSet$e(this, _materials, /* @__PURE__ */ new Map());
+      __privateSet$e(this, _depthMaterials, /* @__PURE__ */ new Map());
+      __privateSet$e(this, _depthPassTaskID, null);
       __privateMethod$8(this, _setParameters, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
       this.isActive = false;
     }
@@ -9256,7 +8911,7 @@ New rendering options: ${JSON.stringify(
       renderer = isCameraRenderer(renderer, this.constructor.name);
       this.renderer = renderer;
       this.setRendererBinding();
-      __privateGet$d(this, _depthMaterials)?.forEach((depthMaterial) => {
+      __privateGet$e(this, _depthMaterials)?.forEach((depthMaterial) => {
         depthMaterial.setRenderer(this.renderer);
       });
     }
@@ -9288,7 +8943,7 @@ New rendering options: ${JSON.stringify(
      * @returns - Whether this {@link Shadow} is actually casting shadows.
      */
     get isActive() {
-      return __privateGet$d(this, _isActive);
+      return __privateGet$e(this, _isActive);
     }
     /**
      * Start or stop casting shadows.
@@ -9300,21 +8955,21 @@ New rendering options: ${JSON.stringify(
       } else if (value && !this.isActive) {
         this.init();
       }
-      __privateSet$d(this, _isActive, value);
+      __privateSet$e(this, _isActive, value);
     }
     /**
      * Get this {@link Shadow} intensity.
      * @returns - The {@link Shadow} intensity.
      */
     get intensity() {
-      return __privateGet$d(this, _intensity);
+      return __privateGet$e(this, _intensity);
     }
     /**
      * Set this {@link Shadow} intensity and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      * @param value - The new {@link Shadow} intensity.
      */
     set intensity(value) {
-      __privateSet$d(this, _intensity, value);
+      __privateSet$e(this, _intensity, value);
       this.onPropertyChanged("intensity", this.intensity);
     }
     /**
@@ -9322,14 +8977,14 @@ New rendering options: ${JSON.stringify(
      * @returns - The {@link Shadow} bias.
      */
     get bias() {
-      return __privateGet$d(this, _bias);
+      return __privateGet$e(this, _bias);
     }
     /**
      * Set this {@link Shadow} bias and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      * @param value - The new {@link Shadow} bias.
      */
     set bias(value) {
-      __privateSet$d(this, _bias, value);
+      __privateSet$e(this, _bias, value);
       this.onPropertyChanged("bias", this.bias);
     }
     /**
@@ -9337,14 +8992,14 @@ New rendering options: ${JSON.stringify(
      * @returns - The {@link Shadow} normal bias.
      */
     get normalBias() {
-      return __privateGet$d(this, _normalBias);
+      return __privateGet$e(this, _normalBias);
     }
     /**
      * Set this {@link Shadow} normal bias and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      * @param value - The new {@link Shadow} normal bias.
      */
     set normalBias(value) {
-      __privateSet$d(this, _normalBias, value);
+      __privateSet$e(this, _normalBias, value);
       this.onPropertyChanged("normalBias", this.normalBias);
     }
     /**
@@ -9352,14 +9007,14 @@ New rendering options: ${JSON.stringify(
      * @returns - The {@link Shadow} PCF samples count.
      */
     get pcfSamples() {
-      return __privateGet$d(this, _pcfSamples);
+      return __privateGet$e(this, _pcfSamples);
     }
     /**
      * Set this {@link Shadow} PCF samples count and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      * @param value - The new {@link Shadow} PCF samples count.
      */
     set pcfSamples(value) {
-      __privateSet$d(this, _pcfSamples, Math.max(1, Math.ceil(value)));
+      __privateSet$e(this, _pcfSamples, Math.max(1, Math.ceil(value)));
       this.onPropertyChanged("pcfSamples", this.pcfSamples);
     }
     /**
@@ -9384,7 +9039,7 @@ New rendering options: ${JSON.stringify(
       if (!this.depthPassTarget) {
         this.createDepthPassTarget();
       }
-      if (__privateGet$d(this, _depthPassTaskID) === null && __privateGet$d(this, _autoRender)) {
+      if (__privateGet$e(this, _depthPassTaskID) === null && __privateGet$e(this, _autoRender)) {
         this.setDepthPass();
         this.onPropertyChanged("isActive", 1);
       }
@@ -9490,7 +9145,7 @@ New rendering options: ${JSON.stringify(
      * Start the depth pass.
      */
     setDepthPass() {
-      __privateSet$d(this, _depthPassTaskID, this.render());
+      __privateSet$e(this, _depthPassTaskID, this.render());
     }
     /**
      * Remove the depth pass from its {@link utils/TasksQueueManager.TasksQueueManager | task queue manager}.
@@ -9526,14 +9181,14 @@ New rendering options: ${JSON.stringify(
      * Render the shadow map only once. Useful with static scenes if autoRender has been set to `false` to only take one snapshot of the shadow map.
      */
     async renderOnce() {
-      if (!__privateGet$d(this, _autoRender)) {
+      if (!__privateGet$e(this, _autoRender)) {
         this.onPropertyChanged("isActive", 1);
         this.useDepthMaterials();
         this.meshes.forEach((mesh) => {
           mesh.setGeometry();
         });
         await Promise.all(
-          [...__privateGet$d(this, _depthMaterials).values()].map(async (depthMaterial) => {
+          [...__privateGet$e(this, _depthMaterials).values()].map(async (depthMaterial) => {
             await depthMaterial.compileMaterial();
           })
         );
@@ -9631,13 +9286,13 @@ New rendering options: ${JSON.stringify(
       if (this.meshes.get(mesh.uuid))
         return;
       mesh.options.castShadows = true;
-      __privateGet$d(this, _materials).set(mesh.uuid, mesh.material);
+      __privateGet$e(this, _materials).set(mesh.uuid, mesh.material);
       parameters = this.patchShadowCastingMeshParams(mesh, parameters);
-      if (__privateGet$d(this, _depthMaterials).get(mesh.uuid)) {
-        __privateGet$d(this, _depthMaterials).get(mesh.uuid).destroy();
-        __privateGet$d(this, _depthMaterials).delete(mesh.uuid);
+      if (__privateGet$e(this, _depthMaterials).get(mesh.uuid)) {
+        __privateGet$e(this, _depthMaterials).get(mesh.uuid).destroy();
+        __privateGet$e(this, _depthMaterials).delete(mesh.uuid);
       }
-      __privateGet$d(this, _depthMaterials).set(
+      __privateGet$e(this, _depthMaterials).set(
         mesh.uuid,
         new RenderMaterial(this.renderer, {
           label: `${this.constructor.name} (index: ${this.index}) ${mesh.options.label} depth render material`,
@@ -9651,7 +9306,7 @@ New rendering options: ${JSON.stringify(
      */
     useDepthMaterials() {
       this.meshes.forEach((mesh) => {
-        mesh.useMaterial(__privateGet$d(this, _depthMaterials).get(mesh.uuid));
+        mesh.useMaterial(__privateGet$e(this, _depthMaterials).get(mesh.uuid));
       });
     }
     /**
@@ -9659,7 +9314,7 @@ New rendering options: ${JSON.stringify(
      */
     useOriginalMaterials() {
       this.meshes.forEach((mesh) => {
-        mesh.useMaterial(__privateGet$d(this, _materials).get(mesh.uuid));
+        mesh.useMaterial(__privateGet$e(this, _materials).get(mesh.uuid));
       });
     }
     /**
@@ -9667,10 +9322,10 @@ New rendering options: ${JSON.stringify(
      * @param mesh - {@link ProjectedMesh | mesh} to remove.
      */
     removeMesh(mesh) {
-      const depthMaterial = __privateGet$d(this, _depthMaterials).get(mesh.uuid);
+      const depthMaterial = __privateGet$e(this, _depthMaterials).get(mesh.uuid);
       if (depthMaterial) {
         depthMaterial.destroy();
-        __privateGet$d(this, _depthMaterials).delete(mesh.uuid);
+        __privateGet$e(this, _depthMaterials).delete(mesh.uuid);
       }
       this.meshes.delete(mesh.uuid);
       if (this.meshes.size === 0) {
@@ -9682,13 +9337,13 @@ New rendering options: ${JSON.stringify(
      */
     destroy() {
       this.onPropertyChanged("isActive", 0);
-      if (__privateGet$d(this, _depthPassTaskID) !== null) {
-        this.removeDepthPass(__privateGet$d(this, _depthPassTaskID));
-        __privateSet$d(this, _depthPassTaskID, null);
+      if (__privateGet$e(this, _depthPassTaskID) !== null) {
+        this.removeDepthPass(__privateGet$e(this, _depthPassTaskID));
+        __privateSet$e(this, _depthPassTaskID, null);
       }
       this.meshes.forEach((mesh) => this.removeMesh(mesh));
-      __privateSet$d(this, _materials, /* @__PURE__ */ new Map());
-      __privateSet$d(this, _depthMaterials, /* @__PURE__ */ new Map());
+      __privateSet$e(this, _materials, /* @__PURE__ */ new Map());
+      __privateSet$e(this, _depthMaterials, /* @__PURE__ */ new Map());
       this.meshes = /* @__PURE__ */ new Map();
       this.depthPassTarget?.destroy();
       this.depthTexture?.destroy();
@@ -9720,7 +9375,7 @@ New rendering options: ${JSON.stringify(
     this.depthTextureSize = depthTextureSize;
     this.depthTextureSize.onChange(() => this.onDepthTextureSizeChanged());
     this.depthTextureFormat = depthTextureFormat;
-    __privateSet$d(this, _autoRender, autoRender);
+    __privateSet$e(this, _autoRender, autoRender);
   };
 
   const directionalShadowStruct = {
@@ -9869,7 +9524,7 @@ New rendering options: ${JSON.stringify(
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$c = (obj, member, getter) => {
+  var __privateGet$d = (obj, member, getter) => {
     __accessCheck$f(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
@@ -9878,7 +9533,7 @@ New rendering options: ${JSON.stringify(
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$c = (obj, member, value, setter) => {
+  var __privateSet$d = (obj, member, value, setter) => {
     __accessCheck$f(obj, member, "write to private field");
     member.set(obj, value);
     return value;
@@ -9912,8 +9567,8 @@ New rendering options: ${JSON.stringify(
         target,
         shadow
       };
-      __privateSet$c(this, _direction, new Vec3());
-      __privateSet$c(this, _actualPosition$1, new Vec3());
+      __privateSet$d(this, _direction, new Vec3());
+      __privateSet$d(this, _actualPosition$1, new Vec3());
       this.target = target;
       this.target.onChange(() => this.setDirection());
       this.position.copy(position);
@@ -9947,9 +9602,9 @@ New rendering options: ${JSON.stringify(
      * Set the {@link DirectionalLight} direction based on the {@link target} and the {@link worldMatrix} translation and update the {@link DirectionalShadow} view matrix.
      */
     setDirection() {
-      __privateGet$c(this, _direction).copy(this.target).sub(this.worldMatrix.getTranslation(__privateGet$c(this, _actualPosition$1)));
-      this.onPropertyChanged("direction", __privateGet$c(this, _direction));
-      this.shadow?.updateViewMatrix(__privateGet$c(this, _actualPosition$1), this.target);
+      __privateGet$d(this, _direction).copy(this.target).sub(this.worldMatrix.getTranslation(__privateGet$d(this, _actualPosition$1)));
+      this.onPropertyChanged("direction", __privateGet$d(this, _direction));
+      this.shadow?.updateViewMatrix(__privateGet$d(this, _actualPosition$1), this.target);
     }
     // explicitly disable scale and transform origin transformations
     /** @ignore */
@@ -10048,7 +9703,7 @@ struct PointShadowVSOutput {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$b = (obj, member, getter) => {
+  var __privateGet$c = (obj, member, getter) => {
     __accessCheck$e(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
@@ -10057,7 +9712,7 @@ struct PointShadowVSOutput {
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$b = (obj, member, value, setter) => {
+  var __privateSet$c = (obj, member, value, setter) => {
     __accessCheck$e(obj, member, "write to private field");
     member.set(obj, value);
     return value;
@@ -10133,7 +9788,7 @@ struct PointShadowVSOutput {
         new Vec3(0, 0, -1),
         new Vec3(0, 0, 1)
       ];
-      __privateSet$b(this, _tempCubeDirection, new Vec3());
+      __privateSet$c(this, _tempCubeDirection, new Vec3());
       this.cubeUps = [
         new Vec3(0, -1, 0),
         new Vec3(0, -1, 0),
@@ -10221,8 +9876,8 @@ struct PointShadowVSOutput {
      */
     updateViewMatrices(position = new Vec3()) {
       for (let i = 0; i < 6; i++) {
-        __privateGet$b(this, _tempCubeDirection).copy(this.cubeDirections[i]).add(position);
-        this.camera.viewMatrices[i].makeView(position, __privateGet$b(this, _tempCubeDirection), this.cubeUps[i]);
+        __privateGet$c(this, _tempCubeDirection).copy(this.cubeDirections[i]).add(position);
+        this.camera.viewMatrices[i].makeView(position, __privateGet$c(this, _tempCubeDirection), this.cubeUps[i]);
         for (let j = 0; j < 16; j++) {
           this.rendererBinding.childrenBindings[this.index].inputs.viewMatrices.value[i * 16 + j] = this.camera.viewMatrices[i].elements[j];
         }
@@ -10386,7 +10041,7 @@ struct PointShadowVSOutput {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$a = (obj, member, getter) => {
+  var __privateGet$b = (obj, member, getter) => {
     __accessCheck$d(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
@@ -10395,7 +10050,7 @@ struct PointShadowVSOutput {
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$a = (obj, member, value, setter) => {
+  var __privateSet$b = (obj, member, value, setter) => {
     __accessCheck$d(obj, member, "write to private field");
     member.set(obj, value);
     return value;
@@ -10420,7 +10075,7 @@ struct PointShadowVSOutput {
         range,
         shadow
       };
-      __privateSet$a(this, _actualPosition, new Vec3());
+      __privateSet$b(this, _actualPosition, new Vec3());
       this.position.copy(position);
       this.range = range;
       this.parent = this.renderer.scene;
@@ -10457,22 +10112,22 @@ struct PointShadowVSOutput {
      * @returns - The {@link PointLight} range.
      */
     get range() {
-      return __privateGet$a(this, _range);
+      return __privateGet$b(this, _range);
     }
     /**
      * Set this {@link PointLight} range and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      * @param value - The new {@link PointLight} range.
      */
     set range(value) {
-      __privateSet$a(this, _range, value);
+      __privateSet$b(this, _range, value);
       this.onPropertyChanged("range", this.range);
     }
     /**
      * Set the {@link PointLight} position based on the {@link worldMatrix} translation and update the {@link PointShadow} view matrices.
      */
     setPosition() {
-      this.onPropertyChanged("position", this.worldMatrix.getTranslation(__privateGet$a(this, _actualPosition)));
-      this.shadow?.updateViewMatrices(__privateGet$a(this, _actualPosition));
+      this.onPropertyChanged("position", this.worldMatrix.getTranslation(__privateGet$b(this, _actualPosition)));
+      this.shadow?.updateViewMatrices(__privateGet$b(this, _actualPosition));
     }
     // explicitly disable scale and transform origin transformations
     /** @ignore */
@@ -10513,7 +10168,7 @@ struct PointShadowVSOutput {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$9 = (obj, member, getter) => {
+  var __privateGet$a = (obj, member, getter) => {
     __accessCheck$c(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
@@ -10522,7 +10177,7 @@ struct PointShadowVSOutput {
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$9 = (obj, member, value, setter) => {
+  var __privateSet$a = (obj, member, value, setter) => {
     __accessCheck$c(obj, member, "write to private field");
     member.set(obj, value);
     return value;
@@ -10622,7 +10277,7 @@ struct PointShadowVSOutput {
           ...meshParameters
         };
         if (autoRender !== void 0) {
-          __privateSet$9(this, _autoRender, autoRender);
+          __privateSet$a(this, _autoRender, autoRender);
         }
         this.visible = visible;
         this.renderOrder = renderOrder;
@@ -10642,7 +10297,7 @@ struct PointShadowVSOutput {
        * @readonly
        */
       get autoRender() {
-        return __privateGet$9(this, _autoRender);
+        return __privateGet$a(this, _autoRender);
       }
       /**
        * Get/set whether a Mesh is ready or not
@@ -10667,7 +10322,7 @@ struct PointShadowVSOutput {
           this.renderer.meshes.push(this);
         }
         this.setRenderingOptionsForRenderPass(this.outputTarget ? this.outputTarget.renderPass : this.renderer.renderPass);
-        if (__privateGet$9(this, _autoRender)) {
+        if (__privateGet$a(this, _autoRender)) {
           this.renderer.scene.addMesh(this);
           if (this.additionalOutputTargets.length) {
             this.additionalOutputTargets.forEach((renderTarget) => {
@@ -10681,7 +10336,7 @@ struct PointShadowVSOutput {
        * @param removeFromRenderer - whether to remove this Mesh from the {@link Renderer#meshes | Renderer meshes array}
        */
       removeFromScene(removeFromRenderer = false) {
-        if (__privateGet$9(this, _autoRender)) {
+        if (__privateGet$a(this, _autoRender)) {
           this.renderer.scene.removeMesh(this);
         }
         if (removeFromRenderer) {
@@ -10818,6 +10473,9 @@ ${geometry.wgslStructFragment}`
             this.material.setPipelineEntry();
           }
           this.geometry.consumers.delete(this.uuid);
+          if (this.options.renderBundle) {
+            this.options.renderBundle.ready = false;
+          }
         }
         this.geometry = geometry;
         this.geometry.consumers.add(this.uuid);
@@ -10909,6 +10567,9 @@ ${geometry.wgslStructFragment}`
           isDepthMaterialSwitch = this.material.options.label.includes("depth render material") || material.options.label.includes("depth render material");
           if (this.geometry) {
             currentCacheKey = this.material.cacheKey;
+          }
+          if (this.options.renderBundle) {
+            this.options.renderBundle.ready = false;
           }
         }
         this.material = material;
@@ -11322,6 +10983,358 @@ ${geometry.wgslStructFragment}`
         (mouseCoords.x - this.size.document.left) / this.size.document.width * 2 - 1,
         1 - (mouseCoords.y - this.size.document.top) / this.size.document.height * 2
       );
+    }
+  }
+
+  class Mat3 {
+    // prettier-ignore
+    /**
+     * Mat3 constructor
+     * @param elements - initial array to use, default to identity matrix
+     */
+    constructor(elements = new Float32Array([
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1
+    ])) {
+      this.type = "Mat3";
+      this.elements = elements;
+    }
+    /**
+     * Sets the matrix from 9 numbers
+     *
+     * @param n11 - number
+     * @param n12 - number
+     * @param n13 - number
+     * @param n21 - number
+     * @param n22 - number
+     * @param n23 - number
+     * @param n31 - number
+     * @param n32 - number
+     * @param n33 - number
+     * @returns - this {@link Mat3} after being set
+     */
+    set(n11, n12, n13, n21, n22, n23, n31, n32, n33) {
+      const te = this.elements;
+      te[0] = n11;
+      te[1] = n21;
+      te[2] = n31;
+      te[3] = n12;
+      te[4] = n22;
+      te[5] = n32;
+      te[6] = n13;
+      te[7] = n23;
+      te[8] = n33;
+      return this;
+    }
+    /**
+     * Sets the {@link Mat3} to an identity matrix
+     * @returns - this {@link Mat3} after being set
+     */
+    identity() {
+      this.set(1, 0, 0, 0, 1, 0, 0, 0, 1);
+      return this;
+    }
+    /**
+     * Sets the {@link Mat3} values from an array
+     * @param array - array to use
+     * @param offset - optional offset in the array to use
+     * @returns - this {@link Mat3} after being set
+     */
+    // prettier-ignore
+    setFromArray(array = new Float32Array([
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1
+    ]), offset = 0) {
+      for (let i = 0; i < this.elements.length; i++) {
+        this.elements[i] = array[i + offset];
+      }
+      return this;
+    }
+    /**
+     * Copy another {@link Mat3}
+     * @param matrix - matrix to copy
+     * @returns - this {@link Mat3} after being set
+     */
+    copy(matrix = new Mat3()) {
+      const array = matrix.elements;
+      this.elements[0] = array[0];
+      this.elements[1] = array[1];
+      this.elements[2] = array[2];
+      this.elements[3] = array[3];
+      this.elements[4] = array[4];
+      this.elements[5] = array[5];
+      this.elements[6] = array[6];
+      this.elements[7] = array[7];
+      this.elements[8] = array[8];
+      return this;
+    }
+    /**
+     * Clone a {@link Mat3}
+     * @returns - cloned {@link Mat3}
+     */
+    clone() {
+      return new Mat3().copy(this);
+    }
+    /**
+     * Set a {@link Mat3} from a {@link Mat4}.
+     * @param matrix - {@link Mat4} to use.
+     * @returns - this {@link Mat3} after being set.
+     */
+    setFromMat4(matrix = new Mat4()) {
+      const me = matrix.elements;
+      this.set(me[0], me[4], me[8], me[1], me[5], me[9], me[2], me[6], me[10]);
+      return this;
+    }
+    /**
+     * Multiply this {@link Mat3} with another {@link Mat3}
+     * @param matrix - {@link Mat3} to multiply with
+     * @returns - this {@link Mat3} after multiplication
+     */
+    multiply(matrix = new Mat3()) {
+      return this.multiplyMatrices(this, matrix);
+    }
+    /**
+     * Multiply another {@link Mat3} with this {@link Mat3}
+     * @param matrix - {@link Mat3} to multiply with
+     * @returns - this {@link Mat3} after multiplication
+     */
+    premultiply(matrix = new Mat3()) {
+      return this.multiplyMatrices(matrix, this);
+    }
+    /**
+     * Multiply two {@link Mat3}
+     * @param a - first {@link Mat3}
+     * @param b - second {@link Mat3}
+     * @returns - {@link Mat3} resulting from the multiplication
+     */
+    multiplyMatrices(a = new Mat3(), b = new Mat3()) {
+      const ae = a.elements;
+      const be = b.elements;
+      const te = this.elements;
+      const a11 = ae[0], a12 = ae[3], a13 = ae[6];
+      const a21 = ae[1], a22 = ae[4], a23 = ae[7];
+      const a31 = ae[2], a32 = ae[5], a33 = ae[8];
+      const b11 = be[0], b12 = be[3], b13 = be[6];
+      const b21 = be[1], b22 = be[4], b23 = be[7];
+      const b31 = be[2], b32 = be[5], b33 = be[8];
+      te[0] = a11 * b11 + a12 * b21 + a13 * b31;
+      te[3] = a11 * b12 + a12 * b22 + a13 * b32;
+      te[6] = a11 * b13 + a12 * b23 + a13 * b33;
+      te[1] = a21 * b11 + a22 * b21 + a23 * b31;
+      te[4] = a21 * b12 + a22 * b22 + a23 * b32;
+      te[7] = a21 * b13 + a22 * b23 + a23 * b33;
+      te[2] = a31 * b11 + a32 * b21 + a33 * b31;
+      te[5] = a31 * b12 + a32 * b22 + a33 * b32;
+      te[8] = a31 * b13 + a32 * b23 + a33 * b33;
+      return this;
+    }
+    /**
+     * Invert this {@link Mat3}.
+     * @returns - this {@link Mat3} after being inverted
+     */
+    invert() {
+      const te = this.elements, n11 = te[0], n21 = te[1], n31 = te[2], n12 = te[3], n22 = te[4], n32 = te[5], n13 = te[6], n23 = te[7], n33 = te[8], t11 = n33 * n22 - n32 * n23, t12 = n32 * n13 - n33 * n12, t13 = n23 * n12 - n22 * n13, det = n11 * t11 + n21 * t12 + n31 * t13;
+      if (det === 0)
+        return this.set(0, 0, 0, 0, 0, 0, 0, 0, 0);
+      const detInv = 1 / det;
+      te[0] = t11 * detInv;
+      te[1] = (n31 * n23 - n33 * n21) * detInv;
+      te[2] = (n32 * n21 - n31 * n22) * detInv;
+      te[3] = t12 * detInv;
+      te[4] = (n33 * n11 - n31 * n13) * detInv;
+      te[5] = (n31 * n12 - n32 * n11) * detInv;
+      te[6] = t13 * detInv;
+      te[7] = (n21 * n13 - n23 * n11) * detInv;
+      te[8] = (n22 * n11 - n21 * n12) * detInv;
+      return this;
+    }
+    /**
+     * Transpose this {@link Mat3}.
+     * @returns - this {@link Mat3} after being transposed
+     */
+    transpose() {
+      let tmp;
+      const m = this.elements;
+      tmp = m[1];
+      m[1] = m[3];
+      m[3] = tmp;
+      tmp = m[2];
+      m[2] = m[6];
+      m[6] = tmp;
+      tmp = m[5];
+      m[5] = m[7];
+      m[7] = tmp;
+      return this;
+    }
+    /**
+     * Compute a normal {@link Mat3} matrix from a {@link Mat4} transformation matrix.
+     * @param matrix - {@link Mat4} transformation matrix
+     * @returns - this {@link Mat3} after being inverted and transposed
+     */
+    getNormalMatrix(matrix = new Mat4()) {
+      return this.setFromMat4(matrix).invert().transpose();
+    }
+  }
+
+  class ProjectedObject3D extends Object3D {
+    /**
+     * ProjectedObject3D constructor
+     * @param renderer - {@link CameraRenderer} object or {@link GPUCurtains} class object used to create this {@link ProjectedObject3D}
+     */
+    constructor(renderer) {
+      super();
+      renderer = isCameraRenderer(renderer, "ProjectedObject3D");
+      this.camera = renderer.camera;
+    }
+    /**
+     * Tell our projection matrix stack to update
+     */
+    applyPosition() {
+      super.applyPosition();
+      this.shouldUpdateProjectionMatrixStack();
+    }
+    /**
+     * Tell our projection matrix stack to update
+     */
+    applyRotation() {
+      super.applyRotation();
+      this.shouldUpdateProjectionMatrixStack();
+    }
+    /**
+     * Tell our projection matrix stack to update
+     */
+    applyScale() {
+      super.applyScale();
+      this.shouldUpdateProjectionMatrixStack();
+    }
+    /**
+     * Tell our projection matrix stack to update
+     */
+    applyTransformOrigin() {
+      super.applyTransformOrigin();
+      this.shouldUpdateProjectionMatrixStack();
+    }
+    /**
+     * Set our transform and projection matrices
+     */
+    setMatrices() {
+      super.setMatrices();
+      this.matrices = {
+        ...this.matrices,
+        modelView: {
+          matrix: new Mat4(),
+          shouldUpdate: true,
+          onUpdate: () => {
+            this.modelViewMatrix.multiplyMatrices(this.viewMatrix, this.worldMatrix);
+          }
+        },
+        modelViewProjection: {
+          matrix: new Mat4(),
+          shouldUpdate: true,
+          onUpdate: () => {
+            this.modelViewProjectionMatrix.multiplyMatrices(this.projectionMatrix, this.modelViewMatrix);
+          }
+        },
+        normal: {
+          matrix: new Mat3(),
+          shouldUpdate: true,
+          onUpdate: () => {
+            this.normalMatrix.getNormalMatrix(this.worldMatrix);
+          }
+        }
+      };
+    }
+    /**
+     * Get our {@link modelViewMatrix | model view matrix}
+     */
+    get modelViewMatrix() {
+      return this.matrices.modelView.matrix;
+    }
+    /**
+     * Set our {@link modelViewMatrix | model view matrix}
+     * @param value - new {@link modelViewMatrix | model view matrix}
+     */
+    set modelViewMatrix(value) {
+      this.matrices.modelView.matrix = value;
+      this.matrices.modelView.shouldUpdate = true;
+    }
+    /**
+     * Get our {@link Camera#viewMatrix | camera view matrix}
+     * @readonly
+     */
+    get viewMatrix() {
+      return this.camera.viewMatrix;
+    }
+    /**
+     * Get our {@link Camera#projectionMatrix | camera projection matrix}
+     * @readonly
+     */
+    get projectionMatrix() {
+      return this.camera.projectionMatrix;
+    }
+    /**
+     * Get our {@link modelViewProjectionMatrix | model view projection matrix}
+     */
+    get modelViewProjectionMatrix() {
+      return this.matrices.modelViewProjection.matrix;
+    }
+    /**
+     * Set our {@link modelViewProjectionMatrix | model view projection matrix}
+     * @param value - new {@link modelViewProjectionMatrix | model view projection matrix}s
+     */
+    set modelViewProjectionMatrix(value) {
+      this.matrices.modelViewProjection.matrix = value;
+      this.matrices.modelViewProjection.shouldUpdate = true;
+    }
+    /**
+     * Get our {@link normalMatrix | normal matrix}
+     */
+    get normalMatrix() {
+      return this.matrices.normal.matrix;
+    }
+    /**
+     * Set our {@link normalMatrix | normal matrix}
+     * @param value - new {@link normalMatrix | normal matrix}
+     */
+    set normalMatrix(value) {
+      this.matrices.normal.matrix = value;
+      this.matrices.normal.shouldUpdate = true;
+    }
+    /**
+     * Set our projection matrices shouldUpdate flags to true (tell them to update)
+     */
+    shouldUpdateProjectionMatrixStack() {
+      this.matrices.modelView.shouldUpdate = true;
+      this.matrices.modelViewProjection.shouldUpdate = true;
+    }
+    /**
+     * When the world matrix update, tell our projection matrix to update as well
+     */
+    shouldUpdateWorldMatrix() {
+      super.shouldUpdateWorldMatrix();
+      this.shouldUpdateProjectionMatrixStack();
+      this.matrices.normal.shouldUpdate = true;
+    }
+    /**
+     * Tell all our matrices to update
+     */
+    shouldUpdateMatrixStack() {
+      this.shouldUpdateModelMatrix();
+      this.shouldUpdateProjectionMatrixStack();
     }
   }
 
@@ -12685,29 +12698,13 @@ ${this.shaders.compute.head}`;
     addShaderPass(shaderPass) {
       const onBeforeRenderPass = shaderPass.inputTarget || shaderPass.outputTarget ? null : (commandEncoder, swapChainTexture) => {
         if (shaderPass.renderTexture && swapChainTexture) {
-          commandEncoder.copyTextureToTexture(
-            {
-              texture: swapChainTexture
-            },
-            {
-              texture: shaderPass.renderTexture.texture
-            },
-            [shaderPass.renderTexture.size.width, shaderPass.renderTexture.size.height]
-          );
+          this.renderer.copyGPUTextureToTexture(swapChainTexture, shaderPass.renderTexture, commandEncoder);
         }
         this.renderer.postProcessingPass.setLoadOp("clear");
       };
       const onAfterRenderPass = !shaderPass.outputTarget && shaderPass.options.copyOutputToRenderTexture ? (commandEncoder, swapChainTexture) => {
         if (shaderPass.renderTexture && swapChainTexture) {
-          commandEncoder.copyTextureToTexture(
-            {
-              texture: swapChainTexture
-            },
-            {
-              texture: shaderPass.renderTexture.texture
-            },
-            [shaderPass.renderTexture.size.width, shaderPass.renderTexture.size.height]
-          );
+          this.renderer.copyGPUTextureToTexture(swapChainTexture, shaderPass.renderTexture, commandEncoder);
         }
       } : null;
       const outputPass = shaderPass.outputTarget ? shaderPass.outputTarget.renderPass : !shaderPass.options.isPrePass ? this.renderer.postProcessingPass : this.renderer.renderPass;
@@ -12792,15 +12789,7 @@ ${this.shaders.compute.head}`;
         renderTexture: pingPongPlane.outputTarget.renderTexture,
         onBeforeRenderPass: null,
         onAfterRenderPass: (commandEncoder, swapChainTexture) => {
-          commandEncoder.copyTextureToTexture(
-            {
-              texture: swapChainTexture
-            },
-            {
-              texture: pingPongPlane.renderTexture.texture
-            },
-            [pingPongPlane.renderTexture.size.width, pingPongPlane.renderTexture.size.height]
-          );
+          this.renderer.copyGPUTextureToTexture(swapChainTexture, pingPongPlane.renderTexture, commandEncoder);
         },
         element: pingPongPlane,
         stack: null
@@ -12998,7 +12987,7 @@ ${this.shaders.compute.head}`;
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$8 = (obj, member, getter) => {
+  var __privateGet$9 = (obj, member, getter) => {
     __accessCheck$b(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
@@ -13007,17 +12996,17 @@ ${this.shaders.compute.head}`;
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$8 = (obj, member, value, setter) => {
+  var __privateSet$9 = (obj, member, value, setter) => {
     __accessCheck$b(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
   var __privateWrapper = (obj, member, setter, getter) => ({
     set _(value) {
-      __privateSet$8(obj, member, value);
+      __privateSet$9(obj, member, value);
     },
     get _() {
-      return __privateGet$8(obj, member, getter);
+      return __privateGet$9(obj, member, getter);
     }
   });
   var _taskCount;
@@ -13042,7 +13031,7 @@ ${this.shaders.compute.head}`;
         callback,
         order,
         once,
-        id: __privateGet$8(this, _taskCount)
+        id: __privateGet$9(this, _taskCount)
       };
       __privateWrapper(this, _taskCount)._++;
       this.queue.push(task);
@@ -13093,7 +13082,7 @@ ${this.shaders.compute.head}`;
       /** function assigned to the {@link onAfterRender} callback */
       this._onAfterRenderCallback = (commandEncoder) => {
       };
-      /** function assigned to the {@link resizeObjects} callback */
+      /** function assigned to the {@link onResize} callback */
       this._onResizeCallback = () => {
       };
       /** function assigned to the {@link onAfterResize} callback */
@@ -13638,6 +13627,44 @@ ${this.shaders.compute.head}`;
       return this.deviceManager.device?.importExternalTexture({ source: video });
     }
     /**
+     * Copy a {@link GPUTexture} to a {@link Texture} using a {@link GPUCommandEncoder}. Automatically generate mips after copy if the {@link Texture} needs it.
+     * @param gpuTexture - {@link GPUTexture} source to copy from.
+     * @param texture - {@link Texture} destination to copy onto.
+     * @param commandEncoder - {@link GPUCommandEncoder} to use for copy operation.
+     */
+    copyGPUTextureToTexture(gpuTexture, texture, commandEncoder) {
+      commandEncoder.copyTextureToTexture(
+        {
+          texture: gpuTexture
+        },
+        {
+          texture: texture.texture
+        },
+        [gpuTexture.width, gpuTexture.height, gpuTexture.depthOrArrayLayers]
+      );
+      if (texture.options.generateMips) {
+        this.generateMips(texture, commandEncoder);
+      }
+    }
+    /**
+     * Copy a {@link Texture} to a {@link GPUTexture} using a {@link GPUCommandEncoder}.
+     * @param texture - {@link Texture} source to copy from.
+     * @param gpuTexture - {@link GPUTexture} destination to copy onto.
+     * @param commandEncoder - {@link GPUCommandEncoder} to use for copy operation.
+     */
+    copyTextureToGPUTexture(texture, gpuTexture, commandEncoder) {
+      commandEncoder.copyTextureToTexture(
+        {
+          texture: texture.texture
+        },
+        {
+          texture: gpuTexture
+        },
+        [gpuTexture.width, gpuTexture.height, gpuTexture.depthOrArrayLayers]
+      );
+    }
+    /* SAMPLERS */
+    /**
      * Check if a {@link Sampler} has already been created with the same {@link Sampler#options | parameters}.
      * Use it if found, else create a new one and add it to the {@link GPUDeviceManager#samplers | samplers array}.
      * @param sampler - {@link Sampler} to create
@@ -13771,15 +13798,18 @@ ${this.shaders.compute.head}`;
     }
     /* RENDER */
     /**
-     * Render a single {@link ComputePass}
-     * @param commandEncoder - current {@link GPUCommandEncoder}
-     * @param computePass - {@link ComputePass}
+     * Render a single {@link ComputePass}.
+     * @param commandEncoder - current {@link GPUCommandEncoder} to use.
+     * @param computePass - {@link ComputePass} to run.
+     * @param copyBuffer - Whether to copy all writable binding buffers that need it.
      */
-    renderSingleComputePass(commandEncoder, computePass) {
+    renderSingleComputePass(commandEncoder, computePass, copyBuffer = true) {
       const pass = commandEncoder.beginComputePass();
       computePass.render(pass);
       pass.end();
-      computePass.copyBufferToResult(commandEncoder);
+      if (copyBuffer) {
+        computePass.copyBufferToResult(commandEncoder);
+      }
     }
     /**
      * Render a single {@link RenderedMesh | Mesh}
@@ -13889,7 +13919,7 @@ ${this.shaders.compute.head}`;
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$7 = (obj, member, getter) => {
+  var __privateGet$8 = (obj, member, getter) => {
     __accessCheck$a(obj, member, "read from private field");
     return member.get(obj);
   };
@@ -13898,7 +13928,7 @@ ${this.shaders.compute.head}`;
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$7 = (obj, member, value, setter) => {
+  var __privateSet$8 = (obj, member, value, setter) => {
     __accessCheck$a(obj, member, "write to private field");
     member.set(obj, value);
     return value;
@@ -13942,7 +13972,7 @@ ${this.shaders.compute.head}`;
         lights
       };
       this.bindings = {};
-      __privateSet$7(this, _shouldUpdateCameraLightsBindGroup, true);
+      __privateSet$8(this, _shouldUpdateCameraLightsBindGroup, true);
       this.lights = [];
       this.setCamera(camera);
       this.setCameraBinding();
@@ -14315,7 +14345,7 @@ ${this.shaders.compute.head}`;
      * Tell our  {@link cameraLightsBindGroup | camera, lights and shadows bind group} to update.
      */
     shouldUpdateCameraLightsBindGroup() {
-      __privateSet$7(this, _shouldUpdateCameraLightsBindGroup, true);
+      __privateSet$8(this, _shouldUpdateCameraLightsBindGroup, true);
     }
     /**
      * Tell our {@link GPUCameraRenderer#bindings.camera | camera buffer binding} that we should update its bindings and update the bind group. Called each time the camera matrices change.
@@ -14330,9 +14360,9 @@ ${this.shaders.compute.head}`;
      * Update the {@link cameraLightsBindGroup | camera and lights BindGroup}.
      */
     updateCameraLightsBindGroup() {
-      if (this.cameraLightsBindGroup && __privateGet$7(this, _shouldUpdateCameraLightsBindGroup)) {
+      if (this.cameraLightsBindGroup && __privateGet$8(this, _shouldUpdateCameraLightsBindGroup)) {
         this.cameraLightsBindGroup.update();
-        __privateSet$7(this, _shouldUpdateCameraLightsBindGroup, false);
+        __privateSet$8(this, _shouldUpdateCameraLightsBindGroup, false);
       }
     }
     /**
@@ -14387,16 +14417,7 @@ ${this.shaders.compute.head}`;
           autoDestroy: false
         });
         this.transmissionTarget.passEntry.onBeforeRenderPass = (commandEncoder, swapChainTexture) => {
-          commandEncoder.copyTextureToTexture(
-            {
-              texture: swapChainTexture
-            },
-            {
-              texture: this.transmissionTarget.texture.texture
-            },
-            [this.transmissionTarget.texture.size.width, this.transmissionTarget.texture.size.height]
-          );
-          this.generateMips(this.transmissionTarget.texture, commandEncoder);
+          this.copyGPUTextureToTexture(swapChainTexture, this.transmissionTarget.texture, commandEncoder);
         };
       }
     }
@@ -14455,7 +14476,7 @@ ${this.shaders.compute.head}`;
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$6 = (obj, member, getter) => {
+  var __privateGet$7 = (obj, member, getter) => {
     __accessCheck$9(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
@@ -14464,7 +14485,7 @@ ${this.shaders.compute.head}`;
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$6 = (obj, member, value, setter) => {
+  var __privateSet$7 = (obj, member, value, setter) => {
     __accessCheck$9(obj, member, "write to private field");
     member.set(obj, value);
     return value;
@@ -14473,7 +14494,7 @@ ${this.shaders.compute.head}`;
   class GPUDeviceManager {
     /**
      * GPUDeviceManager constructor
-     * @param parameters - {@link GPUDeviceManagerParams | parameters} used to create this {@link GPUDeviceManager}
+     * @param parameters - {@link GPUDeviceManagerParams | parameters} used to create this {@link GPUDeviceManager}.
      */
     constructor({
       label,
@@ -14487,10 +14508,10 @@ ${this.shaders.compute.head}`;
       onDeviceDestroyed = (info) => {
       }
     } = {}) {
-      /** function assigned to the {@link onBeforeRender} callback */
+      /** function assigned to the {@link onBeforeRender} callback. */
       this._onBeforeRenderCallback = () => {
       };
-      /** function assigned to the {@link onAfterRender} callback */
+      /** function assigned to the {@link onAfterRender} callback. */
       this._onAfterRenderCallback = () => {
       };
       /** @ignore */
@@ -14507,7 +14528,7 @@ ${this.shaders.compute.head}`;
       this.gpu = navigator.gpu;
       this.setPipelineManager();
       this.setDeviceObjects();
-      __privateSet$6(this, _mipsGeneration, {
+      __privateSet$7(this, _mipsGeneration, {
         sampler: null,
         module: null,
         pipelineByFormat: {}
@@ -14525,7 +14546,7 @@ ${this.shaders.compute.head}`;
       await this.setDevice(device);
     }
     /**
-     * Set up our {@link adapter} and {@link device} and all the already created {@link renderers} contexts
+     * Set up our {@link adapter} and {@link device} and all the already created {@link renderers} contexts.
      * @param parameters - {@link GPUAdapter} and/or {@link GPUDevice} to use if set.
      */
     async init({ adapter = null, device = null } = {}) {
@@ -14602,14 +14623,14 @@ ${this.shaders.compute.head}`;
       });
     }
     /**
-     * Set our {@link pipelineManager | pipeline manager}
+     * Set our {@link pipelineManager | pipeline manager}.
      */
     setPipelineManager() {
       this.pipelineManager = new PipelineManager();
     }
     /**
      * Called when the {@link device} is lost.
-     * Reset all our renderers
+     * Reset all our renderers.
      */
     loseDevice() {
       this.ready = false;
@@ -14639,7 +14660,7 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Set all objects arrays that we'll keep track of
+     * Set all objects arrays that we'll keep track of.
      */
     setDeviceObjects() {
       this.renderers = [];
@@ -14653,78 +14674,78 @@ ${this.shaders.compute.head}`;
       this.texturesQueue = [];
     }
     /**
-     * Add a {@link Renderer} to our {@link renderers} array
-     * @param renderer - {@link Renderer} to add
+     * Add a {@link Renderer} to our {@link renderers} array.
+     * @param renderer - {@link Renderer} to add.
      */
     addRenderer(renderer) {
       this.renderers.push(renderer);
     }
     /**
-     * Remove a {@link Renderer} from our {@link renderers} array
-     * @param renderer - {@link Renderer} to remove
+     * Remove a {@link Renderer} from our {@link renderers} array.
+     * @param renderer - {@link Renderer} to remove.
      */
     removeRenderer(renderer) {
       this.renderers = this.renderers.filter((r) => r.uuid !== renderer.uuid);
     }
     /**
-     * Get all the rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes) created by this {@link GPUDeviceManager}
+     * Get all the rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes) created by this {@link GPUDeviceManager}.
      * @readonly
      */
     get deviceRenderedObjects() {
       return this.renderers.map((renderer) => renderer.renderedObjects).flat();
     }
     /**
-     * Add a {@link AllowedBindGroups | bind group} to our {@link bindGroups | bind groups array}
-     * @param bindGroup - {@link AllowedBindGroups | bind group} to add
+     * Add a {@link AllowedBindGroups | bind group} to our {@link bindGroups | bind groups array}.
+     * @param bindGroup - {@link AllowedBindGroups | bind group} to add.
      */
     addBindGroup(bindGroup) {
       this.bindGroups.set(bindGroup.uuid, bindGroup);
     }
     /**
-     * Remove a {@link AllowedBindGroups | bind group} from our {@link bindGroups | bind groups array}
-     * @param bindGroup - {@link AllowedBindGroups | bind group} to remove
+     * Remove a {@link AllowedBindGroups | bind group} from our {@link bindGroups | bind groups array}.
+     * @param bindGroup - {@link AllowedBindGroups | bind group} to remove.
      */
     removeBindGroup(bindGroup) {
       this.bindGroups.delete(bindGroup.uuid);
     }
     /**
-     * Add a {@link GPUBuffer} to our our {@link buffers} array
-     * @param buffer - {@link Buffer} to add
+     * Add a {@link GPUBuffer} to our our {@link buffers} array.
+     * @param buffer - {@link Buffer} to add.
      */
     addBuffer(buffer) {
       this.buffers.set(buffer.uuid, buffer);
     }
     /**
-     * Remove a {@link Buffer} from our {@link buffers} Map
-     * @param buffer - {@link Buffer} to remove
+     * Remove a {@link Buffer} from our {@link buffers} Map.
+     * @param buffer - {@link Buffer} to remove.
      */
     removeBuffer(buffer) {
       this.buffers.delete(buffer?.uuid);
     }
     /**
-     * Add a {@link Sampler} to our {@link samplers} array
-     * @param sampler - {@link Sampler} to add
+     * Add a {@link Sampler} to our {@link samplers} array.
+     * @param sampler - {@link Sampler} to add.
      */
     addSampler(sampler) {
       this.samplers.push(sampler);
     }
     /**
-     * Remove a {@link Sampler} from our {@link samplers} array
-     * @param sampler - {@link Sampler} to remove
+     * Remove a {@link Sampler} from our {@link samplers} array.
+     * @param sampler - {@link Sampler} to remove.
      */
     removeSampler(sampler) {
       this.samplers = this.samplers.filter((s) => s.uuid !== sampler.uuid);
     }
     /**
-     * Add a {@link DOMTexture} to our {@link domTextures} array
-     * @param texture - {@link DOMTexture} to add
+     * Add a {@link DOMTexture} to our {@link domTextures} array.
+     * @param texture - {@link DOMTexture} to add.
      */
     addDOMTexture(texture) {
       this.domTextures.push(texture);
     }
     /**
-     * Upload a {@link DOMTexture#texture | texture} to the GPU
-     * @param texture - {@link DOMTexture} class object with the {@link DOMTexture#texture | texture} to upload
+     * Upload a {@link DOMTexture#texture | texture} to the GPU.
+     * @param texture - {@link DOMTexture} class object with the {@link DOMTexture#texture | texture} to upload.
      */
     uploadTexture(texture) {
       if (texture.source) {
@@ -14762,8 +14783,8 @@ ${this.shaders.compute.head}`;
     generateMips(texture, commandEncoder = null) {
       if (!this.device)
         return;
-      if (!__privateGet$6(this, _mipsGeneration).module) {
-        __privateGet$6(this, _mipsGeneration).module = this.device.createShaderModule({
+      if (!__privateGet$7(this, _mipsGeneration).module) {
+        __privateGet$7(this, _mipsGeneration).module = this.device.createShaderModule({
           label: "textured quad shaders for mip level generation",
           code: `
             struct VSOutput {
@@ -14801,25 +14822,25 @@ ${this.shaders.compute.head}`;
             }
           `
         });
-        __privateGet$6(this, _mipsGeneration).sampler = this.device.createSampler({
+        __privateGet$7(this, _mipsGeneration).sampler = this.device.createSampler({
           minFilter: "linear",
           magFilter: "linear"
         });
       }
-      if (!__privateGet$6(this, _mipsGeneration).pipelineByFormat[texture.texture.format]) {
-        __privateGet$6(this, _mipsGeneration).pipelineByFormat[texture.texture.format] = this.device.createRenderPipeline({
+      if (!__privateGet$7(this, _mipsGeneration).pipelineByFormat[texture.texture.format]) {
+        __privateGet$7(this, _mipsGeneration).pipelineByFormat[texture.texture.format] = this.device.createRenderPipeline({
           label: "Mip level generator pipeline",
           layout: "auto",
           vertex: {
-            module: __privateGet$6(this, _mipsGeneration).module
+            module: __privateGet$7(this, _mipsGeneration).module
           },
           fragment: {
-            module: __privateGet$6(this, _mipsGeneration).module,
+            module: __privateGet$7(this, _mipsGeneration).module,
             targets: [{ format: texture.texture.format }]
           }
         });
       }
-      const pipeline = __privateGet$6(this, _mipsGeneration).pipelineByFormat[texture.texture.format];
+      const pipeline = __privateGet$7(this, _mipsGeneration).pipelineByFormat[texture.texture.format];
       const encoder = commandEncoder || this.device.createCommandEncoder({
         label: "Mip gen encoder"
       });
@@ -14833,7 +14854,7 @@ ${this.shaders.compute.head}`;
           const bindGroup = this.device.createBindGroup({
             layout: pipeline.getBindGroupLayout(0),
             entries: [
-              { binding: 0, resource: __privateGet$6(this, _mipsGeneration).sampler },
+              { binding: 0, resource: __privateGet$7(this, _mipsGeneration).sampler },
               {
                 binding: 1,
                 resource: texture.texture.createView({
@@ -14876,24 +14897,24 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Remove a {@link DOMTexture} from our {@link domTextures} array
-     * @param texture - {@link DOMTexture} to remove
+     * Remove a {@link DOMTexture} from our {@link domTextures} array.
+     * @param texture - {@link DOMTexture} to remove.
      */
     removeDOMTexture(texture) {
       this.domTextures = this.domTextures.filter((t) => t.uuid !== texture.uuid);
     }
     /* RENDER */
     /**
-     * Create a requestAnimationFrame loop and run it
+     * Create a requestAnimationFrame loop and run it.
      */
     animate() {
       this.render();
       this.animationFrameID = requestAnimationFrame(this.animate.bind(this));
     }
     /**
-     * Called each frame before rendering
-     * @param callback - callback to run at each render
-     * @returns - our {@link GPUDeviceManager}
+     * Called each frame before rendering.
+     * @param callback - callback to run at each render.
+     * @returns - our {@link GPUDeviceManager}.
      */
     onBeforeRender(callback) {
       if (callback) {
@@ -14902,9 +14923,9 @@ ${this.shaders.compute.head}`;
       return this;
     }
     /**
-     * Called each frame after rendering
-     * @param callback - callback to run at each render
-     * @returns - our {@link GPUDeviceManager}
+     * Called each frame after rendering.
+     * @param callback - callback to run at each render.
+     * @returns - our {@link GPUDeviceManager}.
      */
     onAfterRender(callback) {
       if (callback) {
@@ -14914,13 +14935,13 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Render everything:
-     * - call all our {@link renderers} {@link core/renderers/GPURenderer.GPURenderer#onBeforeCommandEncoder | onBeforeCommandEncoder} callbacks
-     * - create a {@link GPUCommandEncoder}
-     * - render all our {@link renderers}
-     * - submit our {@link GPUCommandBuffer}
-     * - upload {@link DOMTexture#texture | DOMTexture textures} that do not have a parentMesh
-     * - empty our {@link texturesQueue} array
-     * - call all our {@link renderers} {@link core/renderers/GPURenderer.GPURenderer#onAfterCommandEncoder | onAfterCommandEncoder} callbacks
+     * - call all our {@link renderers} {@link core/renderers/GPURenderer.GPURenderer#onBeforeCommandEncoder | onBeforeCommandEncoder} callbacks.
+     * - create a {@link GPUCommandEncoder}.
+     * - render all our {@link renderers}.
+     * - submit our {@link GPUCommandBuffer}.
+     * - upload {@link DOMTexture#texture | DOMTexture textures} that do not have a parentMesh.
+     * - empty our {@link texturesQueue} array.
+     * - call all our {@link renderers} {@link core/renderers/GPURenderer.GPURenderer#onAfterCommandEncoder | onAfterCommandEncoder} callbacks.
      */
     render() {
       if (!this.ready)
@@ -14948,7 +14969,7 @@ ${this.shaders.compute.head}`;
       this._onAfterRenderCallback && this._onAfterRenderCallback();
     }
     /**
-     * Destroy the {@link GPUDeviceManager} and its {@link renderers}
+     * Destroy the {@link GPUDeviceManager} and its {@link renderers}.
      */
     destroy() {
       if (this.animationFrameID) {
@@ -15101,7 +15122,7 @@ ${this.shaders.compute.head}`;
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$5 = (obj, member, getter) => {
+  var __privateGet$6 = (obj, member, getter) => {
     __accessCheck$7(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
@@ -15110,7 +15131,7 @@ ${this.shaders.compute.head}`;
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$5 = (obj, member, value, setter) => {
+  var __privateSet$6 = (obj, member, value, setter) => {
     __accessCheck$7(obj, member, "write to private field");
     member.set(obj, value);
     return value;
@@ -15192,7 +15213,7 @@ ${this.shaders.compute.head}`;
       this.meshes = /* @__PURE__ */ new Map();
       this.encoder = null;
       this.bundle = null;
-      __privateSet$5(this, _ready, false);
+      __privateSet$6(this, _ready, false);
       this.binding = null;
       this.indirectBuffer = null;
       this.setRenderer(renderer);
@@ -15200,7 +15221,7 @@ ${this.shaders.compute.head}`;
         this.indirectBuffer = new IndirectBuffer(this.renderer);
       }
       if (this.options.useBuffer) {
-        __privateSet$5(this, _useProjection, true);
+        __privateSet$6(this, _useProjection, true);
         if (this.options.size !== 0) {
           __privateMethod$6(this, _setBinding, setBinding_fn).call(this);
         } else {
@@ -15266,14 +15287,14 @@ ${this.shaders.compute.head}`;
      * @returns - Whether our {@link RenderBundle} handles {@link core/renderers/GPURenderer.ProjectedMesh | projected meshes} or not.
      */
     get useProjection() {
-      return __privateGet$5(this, _useProjection);
+      return __privateGet$6(this, _useProjection);
     }
     /**
      * Set whether our {@link RenderBundle} handles {@link core/renderers/GPURenderer.ProjectedMesh | projected meshes} or not.
      * @param value - New projection value.
      */
     set useProjection(value) {
-      __privateSet$5(this, _useProjection, value);
+      __privateSet$6(this, _useProjection, value);
     }
     /**
      * Set the new {@link RenderBundle} size. Should be used before adding or removing {@link meshes} to the {@link RenderBundle} if the {@link bundle} has already been created (especially if it's using a {@link binding}).
@@ -15297,7 +15318,7 @@ ${this.shaders.compute.head}`;
      * @returns - Whether our {@link RenderBundle} is ready.
      */
     get ready() {
-      return __privateGet$5(this, _ready);
+      return __privateGet$6(this, _ready);
     }
     /**
      * Set whether our {@link RenderBundle} is ready and encode it if needed.
@@ -15316,7 +15337,7 @@ ${this.shaders.compute.head}`;
       } else if (!value && this.ready) {
         this.bundle = null;
       }
-      __privateSet$5(this, _ready, value);
+      __privateSet$6(this, _ready, value);
     }
     /**
      * Called by the {@link core/scenes/Scene.Scene | Scene} to eventually add a {@link RenderedMesh | mesh} to this {@link RenderBundle}. Can set the {@link RenderBundleOptions#renderPass | render pass} if needed. If the {@link RenderBundleOptions#renderPass | render pass} is already set and the mesh output {@link RenderPass} does not match, it won't be added.
@@ -15771,6 +15792,52 @@ fn F_Schlick(f0: vec3f, f90: f32, VdotH: f32) -> vec3f {
 `
   );
 
+  const toneMappingUtils = (
+    /* wgsl */
+    `
+fn linearToOutput3(value: vec3f) -> vec3f {
+  return vec3( mix( pow( value.rgb, vec3( 0.41666 ) ) * 1.055 - vec3( 0.055 ), value.rgb * 12.92, vec3( lessThan3( value.rgb, vec3( 0.0031308 ) ) ) ) );
+}
+
+fn linearToOutput4(value: vec4f) -> vec4f {
+  return vec4( linearToOutput3(value.rgb), value.a );
+}
+
+// linear <-> sRGB conversions
+fn linearTosRGB(linear: vec3f) -> vec3f {
+  if (all(linear <= vec3(0.0031308))) {
+    return linear * 12.92;
+  }
+  return (pow(abs(linear), vec3(1.0/2.4)) * 1.055) - vec3(0.055);
+}
+
+fn sRGBToLinear(srgb: vec3f) -> vec3f {
+  if (all(srgb <= vec3(0.04045))) {
+    return srgb / vec3(12.92);
+  }
+  return pow((srgb + vec3(0.055)) / vec3(1.055), vec3(2.4));
+}
+
+fn toneMapKhronosPbrNeutral( color: vec3f ) -> vec3f {
+  var toneMapColor = color; 
+  const startCompression: f32 = 0.8 - 0.04;
+  const desaturation: f32 = 0.15;
+  var x: f32 = min(toneMapColor.r, min(toneMapColor.g, toneMapColor.b));
+  var offset: f32 = select(0.04, x - 6.25 * x * x, x < 0.08);
+  toneMapColor = toneMapColor - offset;
+  var peak: f32 = max(toneMapColor.r, max(toneMapColor.g, toneMapColor.b));
+  if (peak < startCompression) {
+    return toneMapColor;
+  }
+  const d: f32 = 1. - startCompression;
+  let newPeak: f32 = 1. - d * d / (peak + d - startCompression);
+  toneMapColor *= newPeak / peak;
+  let g: f32 = 1. - 1. / (desaturation * (peak - newPeak) + 1.);
+  return mix(toneMapColor, newPeak * vec3(1, 1, 1), g);
+}
+`
+  );
+
   const getLightsInfos = (
     /* wgsl */
     `
@@ -15847,52 +15914,6 @@ fn getLambertDirect(
   
   let irradiance: vec3f = NdotL * directLight.color;
   (*ptr_reflectedLight).directDiffuse += irradiance * BRDF_Lambert( diffuseColor );
-}
-`
-  );
-
-  const toneMappingUtils = (
-    /* wgsl */
-    `
-fn linearToOutput3(value: vec3f) -> vec3f {
-  return vec3( mix( pow( value.rgb, vec3( 0.41666 ) ) * 1.055 - vec3( 0.055 ), value.rgb * 12.92, vec3( lessThan3( value.rgb, vec3( 0.0031308 ) ) ) ) );
-}
-
-fn linearToOutput4(value: vec4f) -> vec4f {
-  return vec4( linearToOutput3(value.rgb), value.a );
-}
-
-// linear <-> sRGB conversions
-fn linearTosRGB(linear: vec3f) -> vec3f {
-  if (all(linear <= vec3(0.0031308))) {
-    return linear * 12.92;
-  }
-  return (pow(abs(linear), vec3(1.0/2.4)) * 1.055) - vec3(0.055);
-}
-
-fn sRGBToLinear(srgb: vec3f) -> vec3f {
-  if (all(srgb <= vec3(0.04045))) {
-    return srgb / vec3(12.92);
-  }
-  return pow((srgb + vec3(0.055)) / vec3(1.055), vec3(2.4));
-}
-
-fn toneMapKhronosPbrNeutral( color: vec3f ) -> vec3f {
-  var toneMapColor = color; 
-  const startCompression: f32 = 0.8 - 0.04;
-  const desaturation: f32 = 0.15;
-  var x: f32 = min(toneMapColor.r, min(toneMapColor.g, toneMapColor.b));
-  var offset: f32 = select(0.04, x - 6.25 * x * x, x < 0.08);
-  toneMapColor = toneMapColor - offset;
-  var peak: f32 = max(toneMapColor.r, max(toneMapColor.g, toneMapColor.b));
-  if (peak < startCompression) {
-    return toneMapColor;
-  }
-  const d: f32 = 1. - startCompression;
-  let newPeak: f32 = 1. - d * d / (peak + d - startCompression);
-  toneMapColor *= newPeak / peak;
-  let g: f32 = 1. - 1. / (desaturation * (peak - newPeak) + 1.);
-  return mix(toneMapColor, newPeak * vec3(1, 1, 1), g);
 }
 `
   );
@@ -16836,14 +16857,14 @@ struct FSInput {
   var alphaCutoff: f32 = 0.0;`;
     }
     if (shadingModel !== "Unlit") {
-      if (materialStruct.normalMapScale) {
+      if (materialStruct.normalScale) {
         materialVars += /* wgsl */
         `
-  var normalMapScale: f32 = ${materialUniformName}.normalMapScale;`;
+  var normalScale: vec2f = ${materialUniformName}.normalScale;`;
       } else {
         materialVars += /* wgsl */
         `
-  var normalMapScale: f32 = 1.0;`;
+  var normalScale: vec2f = vec2(1.0);`;
       }
       if (materialStruct.occlusionIntensity) {
         materialVars += /* wgsl */
@@ -17164,7 +17185,7 @@ ${getFragmentInputStruct({ geometry })}
       `
   let tbn = mat3x3f(tangent, bitangent, geometryNormal);
   let normalMap = textureSample(${normalTexture.texture.options.name}, ${normalTexture.sampler?.name ?? "defaultSampler"}, ${normalTexture.texCoordAttributeName ?? "uv"}).rgb;
-  normal = normalize(tbn * (2.0 * normalMap - vec3(normalMapScale, normalMapScale, 1.0)));`;
+  normal = normalize(tbn * (2.0 * normalMap - vec3(vec2(normalScale), 1.0)));`;
     } else {
       normalTangentBitangent += /* wgsl */
       `
@@ -17222,10 +17243,10 @@ ${chunks.additionalHead}
 
 ${constants}
 ${common}
+${toneMappingUtils}
 ${getLightsInfos}
 ${REIndirectDiffuse}
 ${getLambertDirect}
-${toneMappingUtils}
 
 ${getFragmentInputStruct({ geometry })}
 
@@ -17334,10 +17355,10 @@ ${chunks.additionalHead}
 
 ${constants}
 ${common}
+${toneMappingUtils}
 ${getLightsInfos}
 ${REIndirectDiffuse}
 ${getPhongDirect}
-${toneMappingUtils}
 
 ${getFragmentInputStruct({ geometry })}
 
@@ -17525,13 +17546,13 @@ ${chunks.additionalHead}
 
 ${constants}
 ${common}
+${toneMappingUtils}
 ${getLightsInfos}
 ${REIndirectDiffuse}
 ${REIndirectSpecular}
 ${getPBRDirect}
 ${getIBLIndirect}
 ${getIBLTransmission}
-${toneMappingUtils}
 
 ${getFragmentInputStruct({ geometry })}
 
@@ -17660,7 +17681,7 @@ ${getFragmentInputStruct({ geometry })}
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$4 = (obj, member, getter) => {
+  var __privateGet$5 = (obj, member, getter) => {
     __accessCheck$6(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
@@ -17669,7 +17690,7 @@ ${getFragmentInputStruct({ geometry })}
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$4 = (obj, member, value, setter) => {
+  var __privateSet$5 = (obj, member, value, setter) => {
     __accessCheck$6(obj, member, "write to private field");
     member.set(obj, value);
     return value;
@@ -17806,7 +17827,7 @@ ${getFragmentInputStruct({ geometry })}
      * @readonly
      */
     get DOMObjectWorldScale() {
-      return __privateGet$4(this, _DOMObjectWorldScale).clone();
+      return __privateGet$5(this, _DOMObjectWorldScale).clone();
     }
     /**
      * Get the {@link DOMObject3D} scale in world space (accounting for {@link scale})
@@ -17820,7 +17841,7 @@ ${getFragmentInputStruct({ geometry })}
      * @readonly
      */
     get worldPosition() {
-      return __privateGet$4(this, _DOMObjectWorldPosition).clone();
+      return __privateGet$5(this, _DOMObjectWorldPosition).clone();
     }
     /**
      * Get the {@link DOMObject3D} transform origin relative to the {@link DOMObject3D}
@@ -17882,7 +17903,7 @@ ${getFragmentInputStruct({ geometry })}
       if (!this.documentPosition.equals(worldPosition)) {
         worldPosition = this.documentToWorldSpace(this.documentPosition);
       }
-      __privateGet$4(this, _DOMObjectWorldPosition).set(
+      __privateGet$5(this, _DOMObjectWorldPosition).set(
         this.position.x + this.size.scaledWorld.position.x + worldPosition.x,
         this.position.y + this.size.scaledWorld.position.y + worldPosition.y,
         this.position.z + this.size.scaledWorld.position.z + this.documentPosition.z / this.camera.CSSPerspective
@@ -17903,7 +17924,7 @@ ${getFragmentInputStruct({ geometry })}
      */
     updateModelMatrix() {
       this.modelMatrix.composeFromOrigin(
-        __privateGet$4(this, _DOMObjectWorldPosition),
+        __privateGet$5(this, _DOMObjectWorldPosition),
         this.quaternion,
         this.scale,
         this.worldTransformOrigin
@@ -17971,10 +17992,10 @@ ${getFragmentInputStruct({ geometry })}
      * Set the {@link worldScale} accounting for scaled world size and {@link DOMObjectDepthScaleRatio}
      */
     setWorldScale() {
-      __privateGet$4(this, _DOMObjectWorldScale).set(
+      __privateGet$5(this, _DOMObjectWorldScale).set(
         this.size.scaledWorld.size.x,
         this.size.scaledWorld.size.y,
-        this.size.scaledWorld.size.z * __privateGet$4(this, _DOMObjectDepthScaleRatio)
+        this.size.scaledWorld.size.z * __privateGet$5(this, _DOMObjectDepthScaleRatio)
       );
       this.shouldUpdateMatrixStack();
     }
@@ -17983,7 +18004,7 @@ ${getFragmentInputStruct({ geometry })}
      * @param value - depth scale ratio value to use
      */
     set DOMObjectDepthScaleRatio(value) {
-      __privateSet$4(this, _DOMObjectDepthScaleRatio, value);
+      __privateSet$5(this, _DOMObjectDepthScaleRatio, value);
       this.setWorldScale();
     }
     /**
@@ -17992,10 +18013,10 @@ ${getFragmentInputStruct({ geometry })}
     setWorldTransformOrigin() {
       this.transforms.origin.world = new Vec3(
         (this.transformOrigin.x * 2 - 1) * // between -1 and 1
-        __privateGet$4(this, _DOMObjectWorldScale).x,
+        __privateGet$5(this, _DOMObjectWorldScale).x,
         -(this.transformOrigin.y * 2 - 1) * // between -1 and 1
-        __privateGet$4(this, _DOMObjectWorldScale).y,
-        this.transformOrigin.z * __privateGet$4(this, _DOMObjectWorldScale).z
+        __privateGet$5(this, _DOMObjectWorldScale).y,
+        this.transformOrigin.z * __privateGet$5(this, _DOMObjectWorldScale).z
       );
       this.shouldUpdateMatrixStack();
     }
@@ -18726,7 +18747,7 @@ ${getFragmentInputStruct({ geometry })}
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$3 = (obj, member, getter) => {
+  var __privateGet$4 = (obj, member, getter) => {
     __accessCheck$5(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
@@ -18735,7 +18756,7 @@ ${getFragmentInputStruct({ geometry })}
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$3 = (obj, member, value, setter) => {
+  var __privateSet$4 = (obj, member, value, setter) => {
     __accessCheck$5(obj, member, "write to private field");
     member.set(obj, value);
     return value;
@@ -18910,10 +18931,10 @@ ${getFragmentInputStruct({ geometry })}
       this.camera.position.onChange(() => {
         this.camera.lookAt(this.target);
       });
-      __privateGet$3(this, _offset).copy(this.camera.position).sub(this.target);
-      __privateGet$3(this, _spherical).radius = __privateGet$3(this, _offset).length();
-      __privateGet$3(this, _spherical).theta = Math.atan2(__privateGet$3(this, _offset).x, __privateGet$3(this, _offset).z);
-      __privateGet$3(this, _spherical).phi = Math.acos(Math.min(Math.max(__privateGet$3(this, _offset).y / __privateGet$3(this, _spherical).radius, -1), 1));
+      __privateGet$4(this, _offset).copy(this.camera.position).sub(this.target);
+      __privateGet$4(this, _spherical).radius = __privateGet$4(this, _offset).length();
+      __privateGet$4(this, _spherical).theta = Math.atan2(__privateGet$4(this, _offset).x, __privateGet$4(this, _offset).z);
+      __privateGet$4(this, _spherical).phi = Math.acos(Math.min(Math.max(__privateGet$4(this, _offset).y / __privateGet$4(this, _spherical).radius, -1), 1));
       __privateMethod$5(this, _update, update_fn).call(this);
     }
     /**
@@ -18964,9 +18985,9 @@ ${getFragmentInputStruct({ geometry })}
      */
     updatePosition(position = new Vec3()) {
       position.sub(this.target);
-      __privateGet$3(this, _spherical).radius = position.length();
-      __privateGet$3(this, _spherical).theta = Math.atan2(position.x, position.z);
-      __privateGet$3(this, _spherical).phi = Math.acos(Math.min(Math.max(position.y / __privateGet$3(this, _spherical).radius, -1), 1));
+      __privateGet$4(this, _spherical).radius = position.length();
+      __privateGet$4(this, _spherical).theta = Math.atan2(position.x, position.z);
+      __privateGet$4(this, _spherical).phi = Math.acos(Math.min(Math.max(position.y / __privateGet$4(this, _spherical).radius, -1), 1));
       __privateMethod$5(this, _update, update_fn).call(this);
     }
     /**
@@ -18974,10 +18995,10 @@ ${getFragmentInputStruct({ geometry })}
      * @param value - {@link HTMLElement} (or {@link Window} element) to use.
      */
     set element(value) {
-      if (__privateGet$3(this, _element) && (!value || __privateGet$3(this, _element) !== value)) {
+      if (__privateGet$4(this, _element) && (!value || __privateGet$4(this, _element) !== value)) {
         __privateMethod$5(this, _removeEvents, removeEvents_fn).call(this);
       }
-      __privateSet$3(this, _element, value);
+      __privateSet$4(this, _element, value);
       if (value) {
         __privateMethod$5(this, _addEvents, addEvents_fn).call(this);
       }
@@ -18987,7 +19008,7 @@ ${getFragmentInputStruct({ geometry })}
      * @returns - {@link HTMLElement} (or {@link Window} element) used.
      */
     get element() {
-      return __privateGet$3(this, _element);
+      return __privateGet$4(this, _element);
     }
     /**
      * Destroy the {@link OrbitControls}.
@@ -19041,34 +19062,34 @@ ${getFragmentInputStruct({ geometry })}
   };
   _addEvents = new WeakSet();
   addEvents_fn = function() {
-    __privateGet$3(this, _element).addEventListener("contextmenu", __privateMethod$5(this, _onContextMenu, onContextMenu_fn).bind(this), false);
-    __privateGet$3(this, _element).addEventListener("mousedown", __privateMethod$5(this, _onMouseDown, onMouseDown_fn).bind(this), false);
-    __privateGet$3(this, _element).addEventListener("mousemove", __privateMethod$5(this, _onMouseMove, onMouseMove_fn).bind(this), false);
-    __privateGet$3(this, _element).addEventListener("mouseup", __privateMethod$5(this, _onMouseUp, onMouseUp_fn).bind(this), false);
-    __privateGet$3(this, _element).addEventListener("touchstart", __privateMethod$5(this, _onTouchStart, onTouchStart_fn).bind(this), { passive: false });
-    __privateGet$3(this, _element).addEventListener("touchmove", __privateMethod$5(this, _onTouchMove, onTouchMove_fn).bind(this), { passive: false });
-    __privateGet$3(this, _element).addEventListener("touchend", __privateMethod$5(this, _onTouchEnd, onTouchEnd_fn).bind(this), false);
-    __privateGet$3(this, _element).addEventListener("wheel", __privateMethod$5(this, _onMouseWheel, onMouseWheel_fn).bind(this), { passive: false });
+    __privateGet$4(this, _element).addEventListener("contextmenu", __privateMethod$5(this, _onContextMenu, onContextMenu_fn).bind(this), false);
+    __privateGet$4(this, _element).addEventListener("mousedown", __privateMethod$5(this, _onMouseDown, onMouseDown_fn).bind(this), false);
+    __privateGet$4(this, _element).addEventListener("mousemove", __privateMethod$5(this, _onMouseMove, onMouseMove_fn).bind(this), false);
+    __privateGet$4(this, _element).addEventListener("mouseup", __privateMethod$5(this, _onMouseUp, onMouseUp_fn).bind(this), false);
+    __privateGet$4(this, _element).addEventListener("touchstart", __privateMethod$5(this, _onTouchStart, onTouchStart_fn).bind(this), { passive: false });
+    __privateGet$4(this, _element).addEventListener("touchmove", __privateMethod$5(this, _onTouchMove, onTouchMove_fn).bind(this), { passive: false });
+    __privateGet$4(this, _element).addEventListener("touchend", __privateMethod$5(this, _onTouchEnd, onTouchEnd_fn).bind(this), false);
+    __privateGet$4(this, _element).addEventListener("wheel", __privateMethod$5(this, _onMouseWheel, onMouseWheel_fn).bind(this), { passive: false });
   };
   _removeEvents = new WeakSet();
   removeEvents_fn = function() {
-    __privateGet$3(this, _element).removeEventListener("contextmenu", __privateMethod$5(this, _onContextMenu, onContextMenu_fn).bind(this), false);
-    __privateGet$3(this, _element).removeEventListener("mousedown", __privateMethod$5(this, _onMouseDown, onMouseDown_fn).bind(this), false);
-    __privateGet$3(this, _element).removeEventListener("mousemove", __privateMethod$5(this, _onMouseMove, onMouseMove_fn).bind(this), false);
-    __privateGet$3(this, _element).removeEventListener("mouseup", __privateMethod$5(this, _onMouseUp, onMouseUp_fn).bind(this), false);
-    __privateGet$3(this, _element).removeEventListener("touchstart", __privateMethod$5(this, _onTouchStart, onTouchStart_fn).bind(this), { passive: false });
-    __privateGet$3(this, _element).removeEventListener("touchmove", __privateMethod$5(this, _onTouchMove, onTouchMove_fn).bind(this), { passive: false });
-    __privateGet$3(this, _element).removeEventListener("touchend", __privateMethod$5(this, _onTouchEnd, onTouchEnd_fn).bind(this), false);
-    __privateGet$3(this, _element).removeEventListener("wheel", __privateMethod$5(this, _onMouseWheel, onMouseWheel_fn).bind(this), { passive: false });
+    __privateGet$4(this, _element).removeEventListener("contextmenu", __privateMethod$5(this, _onContextMenu, onContextMenu_fn).bind(this), false);
+    __privateGet$4(this, _element).removeEventListener("mousedown", __privateMethod$5(this, _onMouseDown, onMouseDown_fn).bind(this), false);
+    __privateGet$4(this, _element).removeEventListener("mousemove", __privateMethod$5(this, _onMouseMove, onMouseMove_fn).bind(this), false);
+    __privateGet$4(this, _element).removeEventListener("mouseup", __privateMethod$5(this, _onMouseUp, onMouseUp_fn).bind(this), false);
+    __privateGet$4(this, _element).removeEventListener("touchstart", __privateMethod$5(this, _onTouchStart, onTouchStart_fn).bind(this), { passive: false });
+    __privateGet$4(this, _element).removeEventListener("touchmove", __privateMethod$5(this, _onTouchMove, onTouchMove_fn).bind(this), { passive: false });
+    __privateGet$4(this, _element).removeEventListener("touchend", __privateMethod$5(this, _onTouchEnd, onTouchEnd_fn).bind(this), false);
+    __privateGet$4(this, _element).removeEventListener("wheel", __privateMethod$5(this, _onMouseWheel, onMouseWheel_fn).bind(this), { passive: false });
   };
   _onMouseDown = new WeakSet();
   onMouseDown_fn = function(e) {
     if (e.button === 0 && this.enableRotate) {
-      __privateSet$3(this, _isOrbiting, true);
-      __privateGet$3(this, _rotateStart).set(e.clientX, e.clientY);
+      __privateSet$4(this, _isOrbiting, true);
+      __privateGet$4(this, _rotateStart).set(e.clientX, e.clientY);
     } else if (e.button === 2 && this.enablePan) {
-      __privateSet$3(this, _isPaning, true);
-      __privateGet$3(this, _panStart).set(e.clientX, e.clientY);
+      __privateSet$4(this, _isPaning, true);
+      __privateGet$4(this, _panStart).set(e.clientX, e.clientY);
     }
     e.stopPropagation();
     e.preventDefault();
@@ -19076,33 +19097,33 @@ ${getFragmentInputStruct({ geometry })}
   _onTouchStart = new WeakSet();
   onTouchStart_fn = function(e) {
     if (e.touches.length === 1 && this.enableRotate) {
-      __privateSet$3(this, _isOrbiting, true);
-      __privateGet$3(this, _rotateStart).set(e.touches[0].pageX, e.touches[0].pageY);
+      __privateSet$4(this, _isOrbiting, true);
+      __privateGet$4(this, _rotateStart).set(e.touches[0].pageX, e.touches[0].pageY);
     }
   };
   _onMouseMove = new WeakSet();
   onMouseMove_fn = function(e) {
-    if (__privateGet$3(this, _isOrbiting) && this.enableRotate) {
+    if (__privateGet$4(this, _isOrbiting) && this.enableRotate) {
       __privateMethod$5(this, _rotate, rotate_fn).call(this, e.clientX, e.clientY);
-    } else if (__privateGet$3(this, _isPaning) && this.enablePan) {
+    } else if (__privateGet$4(this, _isPaning) && this.enablePan) {
       __privateMethod$5(this, _pan, pan_fn).call(this, e.clientX, e.clientY);
     }
   };
   _onTouchMove = new WeakSet();
   onTouchMove_fn = function(e) {
-    if (__privateGet$3(this, _isOrbiting) && this.enableRotate) {
+    if (__privateGet$4(this, _isOrbiting) && this.enableRotate) {
       __privateMethod$5(this, _rotate, rotate_fn).call(this, e.touches[0].pageX, e.touches[0].pageY);
     }
   };
   _onMouseUp = new WeakSet();
   onMouseUp_fn = function(e) {
-    __privateSet$3(this, _isOrbiting, false);
-    __privateSet$3(this, _isPaning, false);
+    __privateSet$4(this, _isOrbiting, false);
+    __privateSet$4(this, _isPaning, false);
   };
   _onTouchEnd = new WeakSet();
   onTouchEnd_fn = function(e) {
-    __privateSet$3(this, _isOrbiting, false);
-    __privateSet$3(this, _isPaning, false);
+    __privateSet$4(this, _isOrbiting, false);
+    __privateSet$4(this, _isPaning, false);
   };
   _onMouseWheel = new WeakSet();
   onMouseWheel_fn = function(e) {
@@ -19117,28 +19138,28 @@ ${getFragmentInputStruct({ geometry })}
   };
   _update = new WeakSet();
   update_fn = function() {
-    const sinPhiRadius = __privateGet$3(this, _spherical).radius * Math.sin(Math.max(1e-6, __privateGet$3(this, _spherical).phi));
-    __privateGet$3(this, _offset).x = sinPhiRadius * Math.sin(__privateGet$3(this, _spherical).theta);
-    __privateGet$3(this, _offset).y = __privateGet$3(this, _spherical).radius * Math.cos(__privateGet$3(this, _spherical).phi);
-    __privateGet$3(this, _offset).z = sinPhiRadius * Math.cos(__privateGet$3(this, _spherical).theta);
-    this.camera.position.copy(this.target).add(__privateGet$3(this, _offset));
+    const sinPhiRadius = __privateGet$4(this, _spherical).radius * Math.sin(Math.max(1e-6, __privateGet$4(this, _spherical).phi));
+    __privateGet$4(this, _offset).x = sinPhiRadius * Math.sin(__privateGet$4(this, _spherical).theta);
+    __privateGet$4(this, _offset).y = __privateGet$4(this, _spherical).radius * Math.cos(__privateGet$4(this, _spherical).phi);
+    __privateGet$4(this, _offset).z = sinPhiRadius * Math.cos(__privateGet$4(this, _spherical).theta);
+    this.camera.position.copy(this.target).add(__privateGet$4(this, _offset));
   };
   _rotate = new WeakSet();
   rotate_fn = function(x, y) {
     tempVec2a.set(x, y);
-    tempVec2b.copy(tempVec2a).sub(__privateGet$3(this, _rotateStart)).multiplyScalar(this.rotateSpeed);
-    __privateGet$3(this, _spherical).theta -= 2 * Math.PI * tempVec2b.x / this.camera.size.height;
-    __privateGet$3(this, _spherical).phi -= 2 * Math.PI * tempVec2b.y / this.camera.size.height;
-    __privateGet$3(this, _spherical).theta = Math.min(this.maxAzimuthAngle, Math.max(this.minAzimuthAngle, __privateGet$3(this, _spherical).theta));
-    __privateGet$3(this, _spherical).phi = Math.min(this.maxPolarAngle, Math.max(this.minPolarAngle, __privateGet$3(this, _spherical).phi));
-    __privateGet$3(this, _rotateStart).copy(tempVec2a);
+    tempVec2b.copy(tempVec2a).sub(__privateGet$4(this, _rotateStart)).multiplyScalar(this.rotateSpeed);
+    __privateGet$4(this, _spherical).theta -= 2 * Math.PI * tempVec2b.x / this.camera.size.height;
+    __privateGet$4(this, _spherical).phi -= 2 * Math.PI * tempVec2b.y / this.camera.size.height;
+    __privateGet$4(this, _spherical).theta = Math.min(this.maxAzimuthAngle, Math.max(this.minAzimuthAngle, __privateGet$4(this, _spherical).theta));
+    __privateGet$4(this, _spherical).phi = Math.min(this.maxPolarAngle, Math.max(this.minPolarAngle, __privateGet$4(this, _spherical).phi));
+    __privateGet$4(this, _rotateStart).copy(tempVec2a);
     __privateMethod$5(this, _update, update_fn).call(this);
   };
   _pan = new WeakSet();
   pan_fn = function(x, y) {
     tempVec2a.set(x, y);
-    tempVec2b.copy(tempVec2a).sub(__privateGet$3(this, _panStart)).multiplyScalar(this.panSpeed);
-    __privateGet$3(this, _panDelta).set(0);
+    tempVec2b.copy(tempVec2a).sub(__privateGet$4(this, _panStart)).multiplyScalar(this.panSpeed);
+    __privateGet$4(this, _panDelta).set(0);
     tempVec3$1.copy(this.camera.position).sub(this.target);
     let targetDistance = tempVec3$1.length();
     targetDistance *= Math.tan(this.camera.fov / 2 * Math.PI / 180);
@@ -19148,25 +19169,25 @@ ${getFragmentInputStruct({ geometry })}
       this.camera.modelMatrix.elements[2]
     );
     tempVec3$1.multiplyScalar(-(2 * tempVec2b.x * targetDistance) / this.camera.size.height);
-    __privateGet$3(this, _panDelta).add(tempVec3$1);
+    __privateGet$4(this, _panDelta).add(tempVec3$1);
     tempVec3$1.set(
       this.camera.modelMatrix.elements[4],
       this.camera.modelMatrix.elements[5],
       this.camera.modelMatrix.elements[6]
     );
     tempVec3$1.multiplyScalar(2 * tempVec2b.y * targetDistance / this.camera.size.height);
-    __privateGet$3(this, _panDelta).add(tempVec3$1);
-    __privateGet$3(this, _panStart).copy(tempVec2a);
-    this.target.add(__privateGet$3(this, _panDelta));
-    __privateGet$3(this, _offset).copy(this.camera.position).sub(this.target);
-    __privateGet$3(this, _spherical).radius = __privateGet$3(this, _offset).length();
+    __privateGet$4(this, _panDelta).add(tempVec3$1);
+    __privateGet$4(this, _panStart).copy(tempVec2a);
+    this.target.add(__privateGet$4(this, _panDelta));
+    __privateGet$4(this, _offset).copy(this.camera.position).sub(this.target);
+    __privateGet$4(this, _spherical).radius = __privateGet$4(this, _offset).length();
     __privateMethod$5(this, _update, update_fn).call(this);
   };
   _zoom = new WeakSet();
   zoom_fn = function(value) {
-    __privateGet$3(this, _spherical).radius = Math.min(
+    __privateGet$4(this, _spherical).radius = Math.min(
       this.maxZoom,
-      Math.max(this.minZoom + 1e-6, __privateGet$3(this, _spherical).radius + value * this.zoomSpeed / 100)
+      Math.max(this.minZoom + 1e-6, __privateGet$4(this, _spherical).radius + value * this.zoomSpeed / 100)
     );
     __privateMethod$5(this, _update, update_fn).call(this);
   };
@@ -19804,16 +19825,25 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
+  var __privateGet$3 = (obj, member, getter) => {
+    __accessCheck$3(obj, member, "read from private field");
+    return getter ? getter.call(obj) : member.get(obj);
+  };
   var __privateAdd$3 = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
+  var __privateSet$3 = (obj, member, value, setter) => {
+    __accessCheck$3(obj, member, "write to private field");
+    member.set(obj, value);
+    return value;
+  };
   var __privateMethod$3 = (obj, member, method) => {
     __accessCheck$3(obj, member, "access private method");
     return method;
   };
-  var _copyComputeStorageTextureToTexture, copyComputeStorageTextureToTexture_fn;
+  var _lutStorageTexture, _runComputePass, runComputePass_fn;
   class EnvironmentMap {
     /**
      * {@link EnvironmentMap} constructor.
@@ -19822,13 +19852,16 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
      */
     constructor(renderer, params = {}) {
       /**
-       * Once the given {@link ComputePass} has written to a temporary storage {@link Texture}, copy it into our permanent {@link Texture}.
-       * @param commandEncoder - The GPU command encoder to use.
-       * @param storageTexture - Temporary storage {@link Texture} used in the {@link ComputePass}.
-       * @param texture - Permanent {@link Texture} (either the {@link lutTexture}, {@link specularTexture} or {@link diffuseTexture}) to copy onto.
+       * Run a {@link ComputePass} once by creating a {@link GPUCommandEncoder} and execute the pass.
+       * @param parameters - Parameters used to run the compute pass.
+       * @param parameters.computePass - {@link ComputePass} to run.
+       * @param parameters.label - Optional label for the {@link GPUCommandEncoder}.
+       * @param parameters.onAfterCompute - Optional callback to run just after the pass has been executed. Useful for eventual texture copies.
        * @private
        */
-      __privateAdd$3(this, _copyComputeStorageTextureToTexture);
+      __privateAdd$3(this, _runComputePass);
+      /** BRDF GGX LUT storage {@link Texture} used in the compute shader. */
+      __privateAdd$3(this, _lutStorageTexture, void 0);
       renderer = isRenderer(renderer, "EnvironmentMap");
       this.renderer = renderer;
       params = {
@@ -19877,6 +19910,19 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
      */
     async computeBRDFLUTTexture() {
       const { size, computeSampleCount, ...lutTextureParams } = this.options.lutTextureParams;
+      __privateSet$3(this, _lutStorageTexture, new Texture(this.renderer, {
+        label: "LUT storage texture",
+        name: "lutStorageTexture",
+        format: lutTextureParams.format,
+        visibility: ["compute", "fragment"],
+        usage: ["copySrc", "storageBinding", "textureBinding"],
+        type: "storage",
+        fixedSize: {
+          width: size,
+          height: size
+        },
+        autoDestroy: false
+      }));
       this.lutTexture = new Texture(this.renderer, {
         ...lutTextureParams,
         visibility: ["fragment"],
@@ -19884,25 +19930,18 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
           width: size,
           height: size
         },
-        autoDestroy: false
-      });
-      let lutStorageTexture = new Texture(this.renderer, {
-        label: "LUT storage texture",
-        name: "lutStorageTexture",
-        format: this.lutTexture.options.format,
-        visibility: ["compute"],
-        usage: ["copySrc", "storageBinding"],
-        type: "storage",
-        fixedSize: {
-          width: this.lutTexture.size.width,
-          height: this.lutTexture.size.height
-        }
+        autoDestroy: false,
+        fromTexture: __privateGet$3(this, _lutStorageTexture)
       });
       let computeLUTPass = new ComputePass(this.renderer, {
         label: "Compute LUT texture",
         autoRender: false,
         // we're going to render only on demand
-        dispatchSize: [Math.ceil(lutStorageTexture.size.width / 16), Math.ceil(lutStorageTexture.size.height / 16), 1],
+        dispatchSize: [
+          Math.ceil(__privateGet$3(this, _lutStorageTexture).size.width / 16),
+          Math.ceil(__privateGet$3(this, _lutStorageTexture).size.height / 16),
+          1
+        ],
         shaders: {
           compute: {
             code: computeBRDFLUT
@@ -19918,25 +19957,12 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
             }
           }
         },
-        textures: [lutStorageTexture]
+        textures: [__privateGet$3(this, _lutStorageTexture)]
       });
       await computeLUTPass.material.compileMaterial();
-      this.renderer.onBeforeRenderScene.add(
-        (commandEncoder) => {
-          this.renderer.renderSingleComputePass(commandEncoder, computeLUTPass);
-          __privateMethod$3(this, _copyComputeStorageTextureToTexture, copyComputeStorageTextureToTexture_fn).call(this, commandEncoder, lutStorageTexture, this.lutTexture);
-        },
-        { once: true }
-      );
-      this.renderer.onAfterCommandEncoderSubmission.add(
-        () => {
-          computeLUTPass.destroy();
-          lutStorageTexture.destroy();
-          lutStorageTexture = null;
-          computeLUTPass = null;
-        },
-        { once: true }
-      );
+      __privateMethod$3(this, _runComputePass, runComputePass_fn).call(this, { computePass: computeLUTPass, label: "Compute LUT texture command encoder" });
+      computeLUTPass.destroy();
+      computeLUTPass = null;
     }
     /**
      * Create the {@link specularTexture | specular cube map texture} from a loaded {@link HDRImageData} using the provided {@link SpecularTextureParams | specular texture options} and a {@link ComputePass} that runs once.
@@ -19992,20 +20018,13 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         textures: [cubeStorageTexture]
       });
       await computeCubeMapPass.material.compileMaterial();
-      const commandEncoder = this.renderer.device?.createCommandEncoder({
-        label: "Render once command encoder"
+      __privateMethod$3(this, _runComputePass, runComputePass_fn).call(this, {
+        computePass: computeCubeMapPass,
+        label: "Compute specular cube map command encoder",
+        onAfterCompute: (commandEncoder) => {
+          this.renderer.copyGPUTextureToTexture(cubeStorageTexture.texture, this.specularTexture, commandEncoder);
+        }
       });
-      if (!this.renderer.production)
-        commandEncoder.pushDebugGroup("Render once command encoder");
-      this.renderer.renderSingleComputePass(commandEncoder, computeCubeMapPass);
-      __privateMethod$3(this, _copyComputeStorageTextureToTexture, copyComputeStorageTextureToTexture_fn).call(this, commandEncoder, cubeStorageTexture, this.specularTexture);
-      if (this.specularTexture.texture.mipLevelCount > 1) {
-        this.renderer.generateMips(this.specularTexture, commandEncoder);
-      }
-      if (!this.renderer.production)
-        commandEncoder.popDebugGroup();
-      const commandBuffer = commandEncoder.finish();
-      this.renderer.device?.queue.submit([commandBuffer]);
       computeCubeMapPass.destroy();
       cubeStorageTexture.destroy();
       cubeStorageTexture = null;
@@ -20067,22 +20086,17 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         textures: [this.specularTexture, diffuseStorageTexture]
       });
       await computeDiffusePass.material.compileMaterial();
-      this.renderer.onBeforeRenderScene.add(
-        (commandEncoder) => {
-          this.renderer.renderSingleComputePass(commandEncoder, computeDiffusePass);
-          __privateMethod$3(this, _copyComputeStorageTextureToTexture, copyComputeStorageTextureToTexture_fn).call(this, commandEncoder, diffuseStorageTexture, this.diffuseTexture);
-        },
-        { once: true }
-      );
-      this.renderer.onAfterCommandEncoderSubmission.add(
-        () => {
-          computeDiffusePass.destroy();
-          diffuseStorageTexture.destroy();
-          diffuseStorageTexture = null;
-          computeDiffusePass = null;
-        },
-        { once: true }
-      );
+      __privateMethod$3(this, _runComputePass, runComputePass_fn).call(this, {
+        computePass: computeDiffusePass,
+        label: "Compute diffuse cube map from specular cube map command encoder",
+        onAfterCompute: (commandEncoder) => {
+          this.renderer.copyGPUTextureToTexture(diffuseStorageTexture.texture, this.diffuseTexture, commandEncoder);
+        }
+      });
+      computeDiffusePass.destroy();
+      diffuseStorageTexture.destroy();
+      diffuseStorageTexture = null;
+      computeDiffusePass = null;
     }
     /**
      * Load an HDR environment map and then generates the {@link specularTexture} and {@link diffuseTexture} using two separate {@link ComputePass}.
@@ -20150,19 +20164,27 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
       this.lutTexture?.destroy();
       this.diffuseTexture?.destroy();
       this.specularTexture?.destroy();
+      __privateGet$3(this, _lutStorageTexture).destroy();
     }
   }
-  _copyComputeStorageTextureToTexture = new WeakSet();
-  copyComputeStorageTextureToTexture_fn = function(commandEncoder, storageTexture, texture) {
-    commandEncoder.copyTextureToTexture(
-      {
-        texture: storageTexture.texture
-      },
-      {
-        texture: texture.texture
-      },
-      [texture.texture.width, texture.texture.height, texture.texture.depthOrArrayLayers]
-    );
+  _lutStorageTexture = new WeakMap();
+  _runComputePass = new WeakSet();
+  runComputePass_fn = function({
+    computePass,
+    label = "",
+    onAfterCompute = (commandEncoder) => {
+    }
+  }) {
+    const commandEncoder = this.renderer.device?.createCommandEncoder({
+      label
+    });
+    !this.renderer.production && commandEncoder.pushDebugGroup(label);
+    this.renderer.renderSingleComputePass(commandEncoder, computePass, false);
+    onAfterCompute(commandEncoder);
+    !this.renderer.production && commandEncoder.popDebugGroup();
+    const commandBuffer = commandEncoder.finish();
+    this.renderer.device?.queue.submit([commandBuffer]);
+    this.renderer.pipelineManager.resetCurrentPipeline();
   };
 
   class BoxGeometry extends IndexedGeometry {
@@ -20367,7 +20389,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         alphaCutoff,
         metallic,
         roughness,
-        normalMapScale,
+        normalScale,
         occlusionIntensity,
         emissiveIntensity,
         emissiveColor,
@@ -20398,84 +20420,108 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         geometry: defaultParams.geometry,
         chunks: vertexChunks
       });
+      const baseUniformStruct = {
+        color: {
+          type: "vec3f",
+          value: color !== void 0 ? color : new Vec3(1)
+        },
+        opacity: {
+          type: "f32",
+          value: opacity !== void 0 ? opacity : 1
+        },
+        alphaCutoff: {
+          type: "f32",
+          value: alphaCutoff !== void 0 ? alphaCutoff : 0.5
+        }
+      };
+      const diffuseUniformStruct = {
+        ...baseUniformStruct,
+        normalScale: {
+          type: "vec2f",
+          value: normalScale !== void 0 ? normalScale : new Vec2(1)
+        },
+        occlusionIntensity: {
+          type: "f32",
+          value: occlusionIntensity !== void 0 ? occlusionIntensity : 1
+        },
+        emissiveIntensity: {
+          type: "f32",
+          value: emissiveIntensity !== void 0 ? emissiveIntensity : 1
+        },
+        emissiveColor: {
+          type: "vec3f",
+          value: emissiveColor !== void 0 ? emissiveColor : new Vec3()
+        }
+      };
+      const specularUniformStruct = {
+        ...diffuseUniformStruct,
+        specularIntensity: {
+          type: "f32",
+          value: specularIntensity !== void 0 ? specularIntensity : 1
+        },
+        specularColor: {
+          type: "vec3f",
+          value: specularColor !== void 0 ? specularColor : new Vec3(1)
+        }
+      };
+      const phongUniformStruct = {
+        ...specularUniformStruct,
+        shininess: {
+          type: "f32",
+          value: shininess !== void 0 ? shininess : 30
+        }
+      };
+      const pbrUniformStruct = {
+        ...specularUniformStruct,
+        metallic: {
+          type: "f32",
+          value: metallic !== void 0 ? metallic : 1
+        },
+        roughness: {
+          type: "f32",
+          value: roughness !== void 0 ? roughness : 1
+        },
+        transmission: {
+          type: "f32",
+          value: transmission !== void 0 ? transmission : 0
+        },
+        ior: {
+          type: "f32",
+          value: ior !== void 0 ? ior : 1.5
+        },
+        dispersion: {
+          type: "f32",
+          value: dispersion !== void 0 ? dispersion : 0
+        },
+        thickness: {
+          type: "f32",
+          value: thickness !== void 0 ? thickness : 0
+        },
+        attenuationDistance: {
+          type: "f32",
+          value: attenuationDistance !== void 0 ? attenuationDistance : Infinity
+        },
+        attenuationColor: {
+          type: "vec3f",
+          value: attenuationColor !== void 0 ? attenuationColor : new Vec3(1)
+        }
+      };
+      const materialStruct = (() => {
+        switch (shading) {
+          case "Unlit":
+            return baseUniformStruct;
+          case "Lambert":
+            return diffuseUniformStruct;
+          case "Phong":
+            return phongUniformStruct;
+          case "PBR":
+          default:
+            return pbrUniformStruct;
+        }
+      })();
       const materialUniform = {
         visibility: ["fragment"],
-        struct: {
-          color: {
-            type: "vec3f",
-            value: color !== void 0 ? color : new Vec3(1)
-          },
-          opacity: {
-            type: "f32",
-            value: opacity !== void 0 ? opacity : 1
-          },
-          alphaCutoff: {
-            type: "f32",
-            value: alphaCutoff !== void 0 ? alphaCutoff : 0.5
-          },
-          metallic: {
-            type: "f32",
-            value: metallic !== void 0 ? metallic : 1
-          },
-          roughness: {
-            type: "f32",
-            value: roughness !== void 0 ? roughness : 1
-          },
-          normalMapScale: {
-            type: "f32",
-            value: normalMapScale !== void 0 ? normalMapScale : 1
-          },
-          occlusionIntensity: {
-            type: "f32",
-            value: occlusionIntensity !== void 0 ? occlusionIntensity : 1
-          },
-          emissiveIntensity: {
-            type: "f32",
-            value: emissiveIntensity !== void 0 ? emissiveIntensity : 1
-          },
-          emissiveColor: {
-            type: "vec3f",
-            value: emissiveColor !== void 0 ? emissiveColor : new Vec3()
-          },
-          specularIntensity: {
-            type: "f32",
-            value: specularIntensity !== void 0 ? specularIntensity : 1
-          },
-          specularColor: {
-            type: "vec3f",
-            value: specularColor !== void 0 ? specularColor : new Vec3(1)
-          },
-          ...shading === "Phong" && {
-            shininess: {
-              type: "f32",
-              value: shininess !== void 0 ? shininess : 30
-            }
-          },
-          transmission: {
-            type: "f32",
-            value: transmission !== void 0 ? transmission : 0
-          },
-          ior: {
-            type: "f32",
-            value: ior !== void 0 ? ior : 1.5
-          },
-          dispersion: {
-            type: "f32",
-            value: dispersion !== void 0 ? dispersion : 0
-          },
-          thickness: {
-            type: "f32",
-            value: thickness !== void 0 ? thickness : 0
-          },
-          attenuationDistance: {
-            type: "f32",
-            value: attenuationDistance !== void 0 ? attenuationDistance : Infinity
-          },
-          attenuationColor: {
-            type: "vec3f",
-            value: attenuationColor !== void 0 ? attenuationColor : new Vec3(1)
-          }
-        }
+        struct: materialStruct
       };
       if (defaultParams.uniforms) {
         defaultParams.uniforms = {
@@ -20495,18 +20541,30 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
       if (!defaultParams.samplers) {
         defaultParams.samplers = [];
       }
-      [
-        baseColorTexture,
-        normalTexture,
-        emissiveTexture,
-        occlusionTexture,
+      const baseTextures = [baseColorTexture];
+      const diffuseTextures = [...baseTextures, normalTexture, emissiveTexture, occlusionTexture];
+      const specularTextures = [
+        ...diffuseTextures,
         metallicRoughnessTexture,
         specularTexture,
         specularFactorTexture,
-        specularColorTexture,
-        transmissionTexture,
-        thicknessTexture
-      ].filter(Boolean).forEach((textureDescriptor) => {
+        specularColorTexture
+      ];
+      const pbrTextures = [...specularTextures, transmissionTexture, thicknessTexture];
+      const materialTextures = (() => {
+        switch (shading) {
+          case "Unlit":
+            return baseTextures;
+          case "Lambert":
+            return diffuseTextures;
+          case "Phong":
+            return specularTextures;
+          case "PBR":
+          default:
+            return pbrTextures;
+        }
+      })();
+      materialTextures.filter(Boolean).forEach((textureDescriptor) => {
         if (textureDescriptor.sampler) {
           const samplerExists = defaultParams.samplers.find((s) => s.uuid === textureDescriptor.sampler.uuid);
           if (!samplerExists) {
@@ -21491,6 +21549,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         boundingBox: new Box3(),
         samplers: [],
         materialsTextures: [],
+        materialsParams: [],
         scenes: [],
         meshes: [],
         meshesDescriptors: [],
@@ -21500,6 +21559,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
       };
       this.createSamplers();
       this.createMaterialTextures();
+      this.createMaterialsParams();
       this.createAnimations();
       this.createScenes();
     }
@@ -21686,14 +21746,14 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
           case "emissiveTexture":
           case "specularTexture":
           case "specularColorTexture":
-            return "bgra8unorm-srgb";
+            return "rgba8unorm-srgb";
           case "occlusionTexture":
           case "transmissionTexture":
             return "r8unorm";
           case "thicknessTexture":
             return "rg8unorm";
           default:
-            return "bgra8unorm";
+            return "rgba8unorm";
         }
       })();
       const texture = new Texture(this.renderer, {
@@ -21787,6 +21847,140 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
       }
     }
     /**
+     * Get the {@link MeshDescriptorMaterialParams} for a given {@link GLTF.IMeshPrimitive.material | glTF primitive material index}.
+     * @param materialIndex - {@link GLTF.IMeshPrimitive.material | glTF primitive material index}.
+     * @param label - Optional label to use for the {@link RenderMaterial} created.
+     * @returns - Created {@link MeshDescriptorMaterialParams}.
+     */
+    getMaterialBaseParameters(materialIndex, label = null) {
+      const materialParams = {
+        uniforms: {}
+      };
+      const material = this.gltf.materials && this.gltf.materials[materialIndex] || {};
+      if (label) {
+        materialParams.label = label + (material.name ? " " + material.name : "");
+      } else if (material.name) {
+        materialParams.label = material.name;
+      }
+      const { extensions } = material;
+      const dispersion = extensions && extensions.KHR_materials_dispersion || null;
+      const emissiveStrength = extensions && extensions.KHR_materials_emissive_strength || null;
+      const ior = extensions && extensions.KHR_materials_ior || null;
+      const transmission = extensions && extensions.KHR_materials_transmission || null;
+      const specular = extensions && extensions.KHR_materials_specular || null;
+      const volume = extensions && extensions.KHR_materials_volume || null;
+      const materialUniformStruct = {
+        color: {
+          type: "vec3f",
+          value: material.pbrMetallicRoughness && material.pbrMetallicRoughness.baseColorFactor !== void 0 ? new Vec3(
+            material.pbrMetallicRoughness.baseColorFactor[0],
+            material.pbrMetallicRoughness.baseColorFactor[1],
+            material.pbrMetallicRoughness.baseColorFactor[2]
+          ) : new Vec3(1)
+        },
+        opacity: {
+          type: "f32",
+          value: material.pbrMetallicRoughness && material.pbrMetallicRoughness.baseColorFactor !== void 0 ? material.pbrMetallicRoughness.baseColorFactor[3] : 1
+        },
+        alphaCutoff: {
+          type: "f32",
+          value: material.alphaCutoff !== void 0 ? material.alphaCutoff : material.alphaMode === "MASK" ? 0.5 : 0
+        },
+        metallic: {
+          type: "f32",
+          value: material.pbrMetallicRoughness?.metallicFactor === void 0 ? 1 : material.pbrMetallicRoughness.metallicFactor
+        },
+        roughness: {
+          type: "f32",
+          value: material.pbrMetallicRoughness?.roughnessFactor === void 0 ? 1 : material.pbrMetallicRoughness.roughnessFactor
+        },
+        normalScale: {
+          type: "vec2f",
+          value: material.normalTexture?.scale === void 0 ? new Vec2(1) : new Vec2(material.normalTexture.scale)
+        },
+        occlusionIntensity: {
+          type: "f32",
+          value: material.occlusionTexture?.strength === void 0 ? 1 : material.occlusionTexture.strength
+        },
+        emissiveIntensity: {
+          type: "f32",
+          value: emissiveStrength && emissiveStrength.emissiveStrength !== void 0 ? emissiveStrength.emissiveStrength : 1
+        },
+        emissiveColor: {
+          type: "vec3f",
+          value: material.emissiveFactor !== void 0 ? new Vec3(material.emissiveFactor[0], material.emissiveFactor[1], material.emissiveFactor[2]) : new Vec3(0)
+        },
+        specularIntensity: {
+          type: "f32",
+          value: specular && specular.specularFactor !== void 0 ? specular.specularFactor : 1
+        },
+        specularColor: {
+          type: "vec3f",
+          value: specular && specular.specularColorFactor !== void 0 ? new Vec3(
+            specular.specularColorFactor[0],
+            specular.specularColorFactor[1],
+            specular.specularColorFactor[2]
+          ) : new Vec3(1)
+        },
+        transmission: {
+          type: "f32",
+          value: transmission && transmission.transmissionFactor !== void 0 ? transmission.transmissionFactor : 0
+        },
+        ior: {
+          type: "f32",
+          value: ior && ior.ior !== void 0 ? ior.ior : 1.5
+        },
+        dispersion: {
+          type: "f32",
+          value: dispersion && dispersion.dispersion !== void 0 ? dispersion.dispersion : 0
+        },
+        thickness: {
+          type: "f32",
+          value: volume && volume.thicknessFactor !== void 0 ? volume.thicknessFactor : 0
+        },
+        attenuationDistance: {
+          type: "f32",
+          value: volume && volume.attenuationDistance !== void 0 ? volume.attenuationDistance : Infinity
+        },
+        attenuationColor: {
+          type: "vec3f",
+          value: volume && volume.attenuationColor !== void 0 ? new Vec3(volume.attenuationColor[0], volume.attenuationColor[1], volume.attenuationColor[2]) : new Vec3(1)
+        }
+      };
+      materialParams.uniforms.material = {
+        visibility: ["fragment"],
+        struct: materialUniformStruct
+      };
+      materialParams.cullMode = material.doubleSided ? "none" : "back";
+      if (material.alphaMode === "BLEND") {
+        materialParams.transparent = true;
+        materialParams.targets = [
+          {
+            blend: {
+              color: {
+                srcFactor: "src-alpha",
+                dstFactor: "one-minus-src-alpha"
+              },
+              alpha: {
+                // This just prevents the canvas from having alpha "holes" in it.
+                srcFactor: "one",
+                dstFactor: "one"
+              }
+            }
+          }
+        ];
+      }
+      return materialParams;
+    }
+    /**
+     * Create all the {@link MeshDescriptorMaterialParams} from the {@link GLTF.IMaterial | glTF materials}.
+     */
+    createMaterialsParams() {
+      this.gltf.materials?.forEach((material, index) => {
+        this.scenesManager.materialsParams.push(this.getMaterialBaseParameters(index));
+      });
+    }
+    /**
      * Create a {@link ChildDescriptor} from a parent {@link ChildDescriptor} and a {@link GLTF.INode | glTF Node}
      * @param parent - parent {@link ChildDescriptor} to use.
      * @param node - {@link GLTF.INode | glTF Node} to use.
@@ -21849,11 +22043,15 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
           const meshDescriptor = {
             parent: child.node,
             texturesDescriptors: [],
+            variantName: "Default",
             parameters: {
+              //uniforms: {},
               label: mesh.name ? mesh.name + " " + primitiveIndex : "glTF mesh " + primitiveIndex
             },
             nodes: [],
-            extensionsUsed: []
+            extensionsUsed: [],
+            alternateDescriptors: /* @__PURE__ */ new Map(),
+            alternateMaterials: /* @__PURE__ */ new Map()
           };
           instancesDescriptor = __privateGet(this, _primitiveInstances).get(primitive);
           if (!instancesDescriptor) {
@@ -22259,6 +22457,10 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
           });
         });
       }
+      const defaultMaterialParams = this.scenesManager.materialsParams[primitive.material];
+      const materialTextures = this.scenesManager.materialsTextures[primitive.material];
+      meshDescriptor.texturesDescriptors = materialTextures?.texturesDescriptors || [];
+      meshDescriptor.parameters = { ...meshDescriptor.parameters, ...defaultMaterialParams };
       const material = this.gltf.materials && this.gltf.materials[primitive.material] || {};
       const { extensions } = material;
       if (extensions) {
@@ -22271,131 +22473,21 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         }
       }
       const dispersion = extensions && extensions.KHR_materials_dispersion || null;
-      const emissiveStrength = extensions && extensions.KHR_materials_emissive_strength || null;
-      const ior = extensions && extensions.KHR_materials_ior || null;
       const transmission = extensions && extensions.KHR_materials_transmission || null;
-      const specular = extensions && extensions.KHR_materials_specular || null;
       const volume = extensions && extensions.KHR_materials_volume || null;
       const hasTransmission = transmission || volume || dispersion;
       const useTransmission = this.gltf.extensionsUsed && (this.gltf.extensionsUsed.includes("KHR_materials_transmission") || this.gltf.extensionsUsed.includes("KHR_materials_volume") || this.gltf.extensionsUsed.includes("KHR_materials_dispersion"));
-      const materialTextures = this.scenesManager.materialsTextures[primitive.material];
       meshDescriptor.parameters.samplers = [];
       meshDescriptor.parameters.textures = [];
       if (useTransmission && hasTransmission) {
         meshDescriptor.parameters.transmissive = true;
       }
-      meshDescriptor.texturesDescriptors = materialTextures?.texturesDescriptors || [];
       if (useTransmission && hasTransmission) {
         this.renderer.createTransmissionTarget();
         meshDescriptor.texturesDescriptors.push({
           texture: this.renderer.transmissionTarget.texture,
           sampler: this.renderer.transmissionTarget.sampler
         });
-      }
-      meshDescriptor.parameters.cullMode = material.doubleSided ? "none" : "back";
-      if (material.alphaMode === "BLEND") {
-        meshDescriptor.parameters.transparent = true;
-        meshDescriptor.parameters.targets = [
-          {
-            blend: {
-              color: {
-                srcFactor: "src-alpha",
-                dstFactor: "one-minus-src-alpha"
-              },
-              alpha: {
-                // This just prevents the canvas from having alpha "holes" in it.
-                srcFactor: "one",
-                dstFactor: "one"
-              }
-            }
-          }
-        ];
-      }
-      const materialUniformStruct = {
-        color: {
-          type: "vec3f",
-          value: material.pbrMetallicRoughness && material.pbrMetallicRoughness.baseColorFactor !== void 0 ? new Vec3(
-            material.pbrMetallicRoughness.baseColorFactor[0],
-            material.pbrMetallicRoughness.baseColorFactor[1],
-            material.pbrMetallicRoughness.baseColorFactor[2]
-          ) : new Vec3(1)
-        },
-        opacity: {
-          type: "f32",
-          value: material.pbrMetallicRoughness && material.pbrMetallicRoughness.baseColorFactor !== void 0 ? material.pbrMetallicRoughness.baseColorFactor[3] : 1
-        },
-        alphaCutoff: {
-          type: "f32",
-          value: material.alphaCutoff !== void 0 ? material.alphaCutoff : material.alphaMode === "MASK" ? 0.5 : 0
-        },
-        metallic: {
-          type: "f32",
-          value: material.pbrMetallicRoughness?.metallicFactor === void 0 ? 1 : material.pbrMetallicRoughness.metallicFactor
-        },
-        roughness: {
-          type: "f32",
-          value: material.pbrMetallicRoughness?.roughnessFactor === void 0 ? 1 : material.pbrMetallicRoughness.roughnessFactor
-        },
-        normalMapScale: {
-          type: "f32",
-          value: material.normalTexture?.scale === void 0 ? 1 : material.normalTexture.scale
-        },
-        occlusionIntensity: {
-          type: "f32",
-          value: material.occlusionTexture?.strength === void 0 ? 1 : material.occlusionTexture.strength
-        },
-        emissiveIntensity: {
-          type: "f32",
-          value: emissiveStrength && emissiveStrength.emissiveStrength !== void 0 ? emissiveStrength.emissiveStrength : 1
-        },
-        emissiveColor: {
-          type: "vec3f",
-          value: material.emissiveFactor !== void 0 ? new Vec3(material.emissiveFactor[0], material.emissiveFactor[1], material.emissiveFactor[2]) : new Vec3(0)
-        },
-        specularIntensity: {
-          type: "f32",
-          value: specular && specular.specularFactor !== void 0 ? specular.specularFactor : 1
-        },
-        specularColor: {
-          type: "vec3f",
-          value: specular && specular.specularColorFactor !== void 0 ? new Vec3(
-            specular.specularColorFactor[0],
-            specular.specularColorFactor[1],
-            specular.specularColorFactor[2]
-          ) : new Vec3(1)
-        },
-        transmission: {
-          type: "f32",
-          value: transmission && transmission.transmissionFactor !== void 0 ? transmission.transmissionFactor : 0
-        },
-        ior: {
-          type: "f32",
-          value: ior && ior.ior !== void 0 ? ior.ior : 1.5
-        },
-        dispersion: {
-          type: "f32",
-          value: dispersion && dispersion.dispersion !== void 0 ? dispersion.dispersion : 0
-        },
-        thickness: {
-          type: "f32",
-          value: volume && volume.thicknessFactor !== void 0 ? volume.thicknessFactor : 0
-        },
-        attenuationDistance: {
-          type: "f32",
-          value: volume && volume.attenuationDistance !== void 0 ? volume.attenuationDistance : Infinity
-        },
-        attenuationColor: {
-          type: "vec3f",
-          value: volume && volume.attenuationColor !== void 0 ? new Vec3(volume.attenuationColor[0], volume.attenuationColor[1], volume.attenuationColor[2]) : new Vec3(1)
-        }
-      };
-      if (Object.keys(materialUniformStruct).length) {
-        meshDescriptor.parameters.uniforms = {
-          material: {
-            visibility: ["fragment"],
-            struct: materialUniformStruct
-          }
-        };
       }
       if (instancesCount > 1) {
         const instanceMatricesBinding = new BufferBinding({
@@ -22454,6 +22546,57 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         this.scenesManager.boundingBox.max.max(transformedBbox.max);
       }
       this.scenesManager.boundingBox.max.max(new Vec3(1e-3));
+      if (primitive.extensions) {
+        if (primitive.extensions["KHR_materials_variants"] && this.gltf.extensionsUsed && this.gltf.extensionsUsed.includes("KHR_materials_variants")) {
+          meshDescriptor.extensionsUsed.push("KHR_materials_variants");
+          this.gltf.extensions["KHR_materials_variants"].variants.forEach((variant, index) => {
+            const variantMaterial = primitive.extensions["KHR_materials_variants"].mappings.find(
+              (mapping) => mapping.variants && mapping.variants.includes(index)
+            );
+            if (variantMaterial) {
+              const gltfVariantMaterial = this.gltf.materials[variantMaterial.material];
+              const variantMaterialParams = this.scenesManager.materialsParams[variantMaterial.material];
+              const materialTextures2 = this.scenesManager.materialsTextures[variantMaterial.material];
+              const texturesDescriptors = materialTextures2?.texturesDescriptors || [];
+              if (useTransmission && hasTransmission) {
+                texturesDescriptors.push({
+                  texture: this.renderer.transmissionTarget.texture,
+                  sampler: this.renderer.transmissionTarget.sampler
+                });
+              }
+              const extensions2 = { gltfVariantMaterial };
+              const extensionsUsed = [];
+              if (extensions2) {
+                for (const extension of Object.keys(extensions2)) {
+                  if (extension === "KHR_materials_unlit" && this.gltf.extensionsRequired && this.gltf.extensionsRequired.includes(extension)) {
+                    extensionsUsed.push(extension);
+                  } else {
+                    extensionsUsed.push(extension);
+                  }
+                }
+              }
+              const variantDescriptor = {
+                variantName: variant.name,
+                parent: meshDescriptor.parent,
+                nodes: meshDescriptor.nodes,
+                extensionsUsed: [...meshDescriptor.extensionsUsed, ...extensionsUsed],
+                texturesDescriptors,
+                parameters: {
+                  geometry: meshDescriptor.parameters.geometry,
+                  label: variant.name + " " + variantMaterialParams.label,
+                  transmissive: !!meshDescriptor.parameters.transmissive,
+                  bindings: meshDescriptor.parameters.bindings ?? [],
+                  uniforms: variantMaterialParams.uniforms,
+                  transparent: !!variantMaterialParams.transparent,
+                  cullMode: variantMaterialParams.cullMode,
+                  ...variantMaterialParams.targets && { targets: variantMaterialParams.targets }
+                }
+              };
+              meshDescriptor.alternateDescriptors.set(variant.name, variantDescriptor);
+            }
+          });
+        }
+      }
     }
     /**
      * Create the {@link ScenesManager#scenes | ScenesManager scenes} based on the {@link gltf} object.
@@ -22497,6 +22640,36 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
           const mesh = new Mesh(this.renderer, {
             ...meshDescriptor.parameters
           });
+          meshDescriptor.alternateMaterials.set("Default", mesh.material);
+          meshDescriptor.alternateDescriptors.forEach((descriptor) => {
+            const matricesBindings = mesh.material.getBufferBindingByName("matrices");
+            descriptor.parameters.bindings = [matricesBindings, ...descriptor.parameters.bindings];
+            const {
+              label,
+              shaders,
+              uniforms,
+              bindings,
+              samplers,
+              textures,
+              targets,
+              transparent
+            } = descriptor.parameters;
+            const alternateMaterial = new RenderMaterial(this.renderer, {
+              ...JSON.parse(JSON.stringify(mesh.material.options.rendering)),
+              // use default cloned mesh rendering options
+              label,
+              shaders,
+              uniforms,
+              bindings,
+              ...samplers && { samplers },
+              ...textures && { textures },
+              ...targets && { targets },
+              transparent: !!transparent,
+              verticesOrder: meshDescriptor.parameters.geometry.verticesOrder,
+              topology: meshDescriptor.parameters.geometry.topology
+            });
+            meshDescriptor.alternateMaterials.set(descriptor.variantName, alternateMaterial);
+          });
           mesh.parent = meshDescriptor.parent;
           this.scenesManager.meshes.push(mesh);
           return mesh;
@@ -22509,6 +22682,9 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
     destroy() {
       this.scenesManager.meshes.forEach((mesh) => mesh.remove());
       this.scenesManager.meshes = [];
+      this.scenesManager.meshesDescriptors.forEach((descriptor) => {
+        descriptor.alternateMaterials.forEach((material) => material.destroy());
+      });
       this.scenesManager.nodes.forEach((node) => {
         node.destroy();
       });
@@ -22809,6 +22985,10 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
       transmissionBackgroundTexture,
       environmentMap
     });
+    meshDescriptor.alternateDescriptors?.forEach((descriptor) => {
+      descriptor.parameters.uniforms = { ...meshDescriptor.parameters.uniforms, ...descriptor.parameters.uniforms };
+      descriptor.parameters.shaders = buildShaders(descriptor, shaderParameters);
+    });
     return {
       vertex: {
         code: vs,
@@ -23049,6 +23229,8 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
   exports.Vec3 = Vec3;
   exports.WritableBufferBinding = WritableBufferBinding;
   exports.buildShaders = buildShaders;
+  exports.common = common;
+  exports.constants = constants;
   exports.getFragmentShaderCode = getFragmentShaderCode;
   exports.getLambert = getLambert;
   exports.getLambertFragmentShaderCode = getLambertFragmentShaderCode;
@@ -23059,5 +23241,6 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
   exports.getUnlitFragmentShaderCode = getUnlitFragmentShaderCode;
   exports.getVertexShaderCode = getVertexShaderCode;
   exports.lambertUtils = lambertUtils;
+  exports.toneMappingUtils = toneMappingUtils;
 
 }));

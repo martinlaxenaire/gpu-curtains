@@ -165,7 +165,7 @@ export class GPURenderer {
   _onAfterRenderCallback = (commandEncoder: GPUCommandEncoder) => {
     /* allow empty callback */
   }
-  /** function assigned to the {@link resizeObjects} callback */
+  /** function assigned to the {@link onResize} callback */
   _onResizeCallback: () => void = () => {
     /* allow empty callback */
   }

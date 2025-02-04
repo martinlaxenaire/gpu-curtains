@@ -157,7 +157,12 @@ export interface RenderMaterialRenderingOptions extends RenderMaterialBaseRender
 }
 
 /** Base parameters used to create a {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}. */
-export interface RenderMaterialBaseParams extends RenderMaterialRenderingOptions, MaterialInputBindingsParams {}
+export interface RenderMaterialBaseParams
+  extends Omit<RenderMaterialRenderingOptions, 'targets'>,
+    MaterialInputBindingsParams {
+  /** Optional array of one or multiple {@link GPUDevice.createRenderPipeline().targets | targets} properties. Format property will be patched internally. */
+  targets?: Partial<GPUColorTargetState>[]
+}
 
 /** Parameters used to create a {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}. */
 export interface RenderMaterialParams extends MaterialBaseParams, Partial<RenderMaterialBaseParams> {}

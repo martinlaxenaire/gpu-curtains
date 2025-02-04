@@ -17,6 +17,7 @@ import { Camera } from '../../core/camera/Camera'
 import {
   ChildDescriptor,
   MeshDescriptor,
+  MeshDescriptorMaterialParams,
   PrimitiveInstanceDescriptor,
   PrimitiveInstances,
   ScenesManager,
@@ -27,6 +28,9 @@ import { BufferBinding } from '../../core/bindings/BufferBinding'
 import { KeyframesAnimation } from '../animations/KeyframesAnimation'
 import { TargetsAnimationsManager } from '../animations/TargetsAnimationsManager'
 import { GLTFExtensionsTypes } from '../../types/gltf/GLTFExtensions'
+import { Vec2 } from '../../math/Vec2'
+import { RenderMaterial } from '../../core/materials/RenderMaterial'
+import { ProjectedMeshParameters } from '../../core/meshes/mixins/ProjectedMeshBaseMixin'
 
 // https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Constants
 // To make it easier to reference the WebGL enums that glTF uses.
@@ -82,7 +86,7 @@ const GL = WebGLRenderingContext
  * - [x] KHR_materials_specular
  * - [x] KHR_materials_transmission
  * - [x] KHR_materials_unlit
- * - [ ] KHR_materials_variants
+ * - [x] KHR_materials_variants
  * - [x] KHR_materials_volume
  * - [ ] KHR_mesh_quantization
  * - [ ] KHR_texture_basisu
@@ -133,6 +137,7 @@ export class GLTFScenesManager {
       boundingBox: new Box3(),
       samplers: [],
       materialsTextures: [],
+      materialsParams: [],
       scenes: [],
       meshes: [],
       meshesDescriptors: [],
@@ -143,6 +148,7 @@ export class GLTFScenesManager {
 
     this.createSamplers()
     this.createMaterialTextures()
+    this.createMaterialsParams()
     this.createAnimations()
     this.createScenes()
   }
@@ -346,14 +352,14 @@ export class GLTFScenesManager {
         case 'emissiveTexture':
         case 'specularTexture':
         case 'specularColorTexture':
-          return 'bgra8unorm-srgb'
+          return 'rgba8unorm-srgb'
         case 'occlusionTexture':
         case 'transmissionTexture':
           return 'r8unorm'
         case 'thicknessTexture':
           return 'rg8unorm'
         default:
-          return 'bgra8unorm'
+          return 'rgba8unorm'
       }
     })()
 
@@ -481,6 +487,179 @@ export class GLTFScenesManager {
   }
 
   /**
+   * Get the {@link MeshDescriptorMaterialParams} for a given {@link GLTF.IMeshPrimitive.material | glTF primitive material index}.
+   * @param materialIndex - {@link GLTF.IMeshPrimitive.material | glTF primitive material index}.
+   * @param label - Optional label to use for the {@link RenderMaterial} created.
+   * @returns - Created {@link MeshDescriptorMaterialParams}.
+   */
+  getMaterialBaseParameters(
+    materialIndex: GLTF.IMeshPrimitive['material'],
+    label: string = null
+  ): MeshDescriptorMaterialParams {
+    const materialParams: MeshDescriptorMaterialParams = {
+      uniforms: {},
+    }
+
+    const material = (this.gltf.materials && this.gltf.materials[materialIndex]) || {}
+
+    if (label) {
+      materialParams.label = label + (material.name ? ' ' + material.name : '')
+    } else if (material.name) {
+      materialParams.label = material.name
+    }
+
+    // extensions
+    const { extensions } = material
+
+    const dispersion = (extensions && extensions.KHR_materials_dispersion) || null
+    const emissiveStrength = (extensions && extensions.KHR_materials_emissive_strength) || null
+    const ior = (extensions && extensions.KHR_materials_ior) || null
+    const transmission = (extensions && extensions.KHR_materials_transmission) || null
+    const specular = (extensions && extensions.KHR_materials_specular) || null
+    const volume = (extensions && extensions.KHR_materials_volume) || null
+
+    // uniforms
+    const materialUniformStruct = {
+      color: {
+        type: 'vec3f',
+        value:
+          material.pbrMetallicRoughness && material.pbrMetallicRoughness.baseColorFactor !== undefined
+            ? new Vec3(
+                material.pbrMetallicRoughness.baseColorFactor[0],
+                material.pbrMetallicRoughness.baseColorFactor[1],
+                material.pbrMetallicRoughness.baseColorFactor[2]
+              )
+            : new Vec3(1),
+      },
+      opacity: {
+        type: 'f32',
+        value:
+          material.pbrMetallicRoughness && material.pbrMetallicRoughness.baseColorFactor !== undefined
+            ? material.pbrMetallicRoughness.baseColorFactor[3]
+            : 1,
+      },
+      alphaCutoff: {
+        type: 'f32',
+        value: material.alphaCutoff !== undefined ? material.alphaCutoff : material.alphaMode === 'MASK' ? 0.5 : 0,
+      },
+      metallic: {
+        type: 'f32',
+        value:
+          material.pbrMetallicRoughness?.metallicFactor === undefined
+            ? 1
+            : material.pbrMetallicRoughness.metallicFactor,
+      },
+      roughness: {
+        type: 'f32',
+        value:
+          material.pbrMetallicRoughness?.roughnessFactor === undefined
+            ? 1
+            : material.pbrMetallicRoughness.roughnessFactor,
+      },
+      normalScale: {
+        type: 'vec2f',
+        value: material.normalTexture?.scale === undefined ? new Vec2(1) : new Vec2(material.normalTexture.scale),
+      },
+      occlusionIntensity: {
+        type: 'f32',
+        value: material.occlusionTexture?.strength === undefined ? 1 : material.occlusionTexture.strength,
+      },
+      emissiveIntensity: {
+        type: 'f32',
+        value:
+          emissiveStrength && emissiveStrength.emissiveStrength !== undefined ? emissiveStrength.emissiveStrength : 1,
+      },
+      emissiveColor: {
+        type: 'vec3f',
+        value:
+          material.emissiveFactor !== undefined
+            ? new Vec3(material.emissiveFactor[0], material.emissiveFactor[1], material.emissiveFactor[2])
+            : new Vec3(0),
+      },
+      specularIntensity: {
+        type: 'f32',
+        value: specular && specular.specularFactor !== undefined ? specular.specularFactor : 1,
+      },
+      specularColor: {
+        type: 'vec3f',
+        value:
+          specular && specular.specularColorFactor !== undefined
+            ? new Vec3(
+                specular.specularColorFactor[0],
+                specular.specularColorFactor[1],
+                specular.specularColorFactor[2]
+              )
+            : new Vec3(1),
+      },
+      transmission: {
+        type: 'f32',
+        value: transmission && transmission.transmissionFactor !== undefined ? transmission.transmissionFactor : 0,
+      },
+      ior: {
+        type: 'f32',
+        value: ior && ior.ior !== undefined ? ior.ior : 1.5,
+      },
+      dispersion: {
+        type: 'f32',
+        value: dispersion && dispersion.dispersion !== undefined ? dispersion.dispersion : 0,
+      },
+      thickness: {
+        type: 'f32',
+        value: volume && volume.thicknessFactor !== undefined ? volume.thicknessFactor : 0,
+      },
+      attenuationDistance: {
+        type: 'f32',
+        value: volume && volume.attenuationDistance !== undefined ? volume.attenuationDistance : Infinity,
+      },
+      attenuationColor: {
+        type: 'vec3f',
+        value:
+          volume && volume.attenuationColor !== undefined
+            ? new Vec3(volume.attenuationColor[0], volume.attenuationColor[1], volume.attenuationColor[2])
+            : new Vec3(1),
+      },
+    }
+
+    materialParams.uniforms.material = {
+      visibility: ['fragment'],
+      struct: materialUniformStruct,
+    }
+
+    materialParams.cullMode = material.doubleSided ? 'none' : 'back'
+
+    // transparency
+    if (material.alphaMode === 'BLEND') {
+      materialParams.transparent = true
+      materialParams.targets = [
+        {
+          blend: {
+            color: {
+              srcFactor: 'src-alpha',
+              dstFactor: 'one-minus-src-alpha',
+            },
+            alpha: {
+              // This just prevents the canvas from having alpha "holes" in it.
+              srcFactor: 'one',
+              dstFactor: 'one',
+            },
+          },
+        },
+      ]
+    }
+
+    return materialParams
+  }
+
+  /**
+   * Create all the {@link MeshDescriptorMaterialParams} from the {@link GLTF.IMaterial | glTF materials}.
+   */
+  createMaterialsParams() {
+    this.gltf.materials?.forEach((material, index) => {
+      this.scenesManager.materialsParams.push(this.getMaterialBaseParameters(index))
+    })
+  }
+
+  /**
    * Create a {@link ChildDescriptor} from a parent {@link ChildDescriptor} and a {@link GLTF.INode | glTF Node}
    * @param parent - parent {@link ChildDescriptor} to use.
    * @param node - {@link GLTF.INode | glTF Node} to use.
@@ -558,11 +737,15 @@ export class GLTFScenesManager {
         const meshDescriptor: MeshDescriptor = {
           parent: child.node,
           texturesDescriptors: [],
+          variantName: 'Default',
           parameters: {
+            //uniforms: {},
             label: mesh.name ? mesh.name + ' ' + primitiveIndex : 'glTF mesh ' + primitiveIndex,
           },
           nodes: [],
           extensionsUsed: [],
+          alternateDescriptors: new Map(),
+          alternateMaterials: new Map(),
         }
 
         instancesDescriptor = this.#primitiveInstances.get(primitive)
@@ -1415,6 +1598,12 @@ export class GLTFScenesManager {
       })
     }
 
+    const defaultMaterialParams = this.scenesManager.materialsParams[primitive.material]
+
+    const materialTextures = this.scenesManager.materialsTextures[primitive.material]
+    meshDescriptor.texturesDescriptors = materialTextures?.texturesDescriptors || []
+    meshDescriptor.parameters = { ...meshDescriptor.parameters, ...defaultMaterialParams }
+
     const material = (this.gltf.materials && this.gltf.materials[primitive.material]) || {}
 
     // extensions
@@ -1434,13 +1623,12 @@ export class GLTFScenesManager {
       }
     }
 
+    // transmissive
     const dispersion = (extensions && extensions.KHR_materials_dispersion) || null
-    const emissiveStrength = (extensions && extensions.KHR_materials_emissive_strength) || null
-    const ior = (extensions && extensions.KHR_materials_ior) || null
     const transmission = (extensions && extensions.KHR_materials_transmission) || null
-    const specular = (extensions && extensions.KHR_materials_specular) || null
     const volume = (extensions && extensions.KHR_materials_volume) || null
 
+    // transmissive case
     const hasTransmission = transmission || volume || dispersion
 
     const useTransmission =
@@ -1448,9 +1636,6 @@ export class GLTFScenesManager {
       (this.gltf.extensionsUsed.includes('KHR_materials_transmission') ||
         this.gltf.extensionsUsed.includes('KHR_materials_volume') ||
         this.gltf.extensionsUsed.includes('KHR_materials_dispersion'))
-
-    // textures and samplers
-    const materialTextures = this.scenesManager.materialsTextures[primitive.material]
 
     meshDescriptor.parameters.samplers = []
     meshDescriptor.parameters.textures = []
@@ -1460,8 +1645,6 @@ export class GLTFScenesManager {
       meshDescriptor.parameters.transmissive = true
     }
 
-    meshDescriptor.texturesDescriptors = materialTextures?.texturesDescriptors || []
-
     if (useTransmission && hasTransmission) {
       this.renderer.createTransmissionTarget()
 
@@ -1469,139 +1652,6 @@ export class GLTFScenesManager {
         texture: this.renderer.transmissionTarget.texture,
         sampler: this.renderer.transmissionTarget.sampler,
       })
-    }
-
-    meshDescriptor.parameters.cullMode = material.doubleSided ? 'none' : 'back'
-
-    // transparency
-    if (material.alphaMode === 'BLEND') {
-      meshDescriptor.parameters.transparent = true
-      meshDescriptor.parameters.targets = [
-        {
-          blend: {
-            color: {
-              srcFactor: 'src-alpha',
-              dstFactor: 'one-minus-src-alpha',
-            },
-            alpha: {
-              // This just prevents the canvas from having alpha "holes" in it.
-              srcFactor: 'one',
-              dstFactor: 'one',
-            },
-          },
-        },
-      ]
-    }
-
-    // uniforms
-    const materialUniformStruct = {
-      color: {
-        type: 'vec3f',
-        value:
-          material.pbrMetallicRoughness && material.pbrMetallicRoughness.baseColorFactor !== undefined
-            ? new Vec3(
-                material.pbrMetallicRoughness.baseColorFactor[0],
-                material.pbrMetallicRoughness.baseColorFactor[1],
-                material.pbrMetallicRoughness.baseColorFactor[2]
-              )
-            : new Vec3(1),
-      },
-      opacity: {
-        type: 'f32',
-        value:
-          material.pbrMetallicRoughness && material.pbrMetallicRoughness.baseColorFactor !== undefined
-            ? material.pbrMetallicRoughness.baseColorFactor[3]
-            : 1,
-      },
-      alphaCutoff: {
-        type: 'f32',
-        value: material.alphaCutoff !== undefined ? material.alphaCutoff : material.alphaMode === 'MASK' ? 0.5 : 0,
-      },
-      metallic: {
-        type: 'f32',
-        value:
-          material.pbrMetallicRoughness?.metallicFactor === undefined
-            ? 1
-            : material.pbrMetallicRoughness.metallicFactor,
-      },
-      roughness: {
-        type: 'f32',
-        value:
-          material.pbrMetallicRoughness?.roughnessFactor === undefined
-            ? 1
-            : material.pbrMetallicRoughness.roughnessFactor,
-      },
-      normalMapScale: {
-        type: 'f32',
-        value: material.normalTexture?.scale === undefined ? 1 : material.normalTexture.scale,
-      },
-      occlusionIntensity: {
-        type: 'f32',
-        value: material.occlusionTexture?.strength === undefined ? 1 : material.occlusionTexture.strength,
-      },
-      emissiveIntensity: {
-        type: 'f32',
-        value:
-          emissiveStrength && emissiveStrength.emissiveStrength !== undefined ? emissiveStrength.emissiveStrength : 1,
-      },
-      emissiveColor: {
-        type: 'vec3f',
-        value:
-          material.emissiveFactor !== undefined
-            ? new Vec3(material.emissiveFactor[0], material.emissiveFactor[1], material.emissiveFactor[2])
-            : new Vec3(0),
-      },
-      specularIntensity: {
-        type: 'f32',
-        value: specular && specular.specularFactor !== undefined ? specular.specularFactor : 1,
-      },
-      specularColor: {
-        type: 'vec3f',
-        value:
-          specular && specular.specularColorFactor !== undefined
-            ? new Vec3(
-                specular.specularColorFactor[0],
-                specular.specularColorFactor[1],
-                specular.specularColorFactor[2]
-              )
-            : new Vec3(1),
-      },
-      transmission: {
-        type: 'f32',
-        value: transmission && transmission.transmissionFactor !== undefined ? transmission.transmissionFactor : 0,
-      },
-      ior: {
-        type: 'f32',
-        value: ior && ior.ior !== undefined ? ior.ior : 1.5,
-      },
-      dispersion: {
-        type: 'f32',
-        value: dispersion && dispersion.dispersion !== undefined ? dispersion.dispersion : 0,
-      },
-      thickness: {
-        type: 'f32',
-        value: volume && volume.thicknessFactor !== undefined ? volume.thicknessFactor : 0,
-      },
-      attenuationDistance: {
-        type: 'f32',
-        value: volume && volume.attenuationDistance !== undefined ? volume.attenuationDistance : Infinity,
-      },
-      attenuationColor: {
-        type: 'vec3f',
-        value:
-          volume && volume.attenuationColor !== undefined
-            ? new Vec3(volume.attenuationColor[0], volume.attenuationColor[1], volume.attenuationColor[2])
-            : new Vec3(1),
-      },
-    }
-
-    if (Object.keys(materialUniformStruct).length) {
-      meshDescriptor.parameters.uniforms = {
-        material: {
-          visibility: ['fragment'],
-          struct: materialUniformStruct,
-        },
-      }
     }
 
     // instances matrices storage
@@ -1677,6 +1727,77 @@ export class GLTFScenesManager {
 
     // avoid having a bounding box max component equal to 0
     this.scenesManager.boundingBox.max.max(new Vec3(0.001))
+
+    // variants
+    if (primitive.extensions) {
+      if (
+        primitive.extensions['KHR_materials_variants'] &&
+        this.gltf.extensionsUsed &&
+        this.gltf.extensionsUsed.includes('KHR_materials_variants')
+      ) {
+        meshDescriptor.extensionsUsed.push('KHR_materials_variants')
+
+        this.gltf.extensions['KHR_materials_variants'].variants.forEach((variant, index) => {
+          const variantMaterial = primitive.extensions['KHR_materials_variants'].mappings.find(
+            (mapping) => mapping.variants && mapping.variants.includes(index)
+          )
+
+          if (variantMaterial) {
+            const gltfVariantMaterial = this.gltf.materials[variantMaterial.material]
+            const variantMaterialParams = this.scenesManager.materialsParams[variantMaterial.material]
+
+            const materialTextures = this.scenesManager.materialsTextures[variantMaterial.material]
+            const texturesDescriptors = materialTextures?.texturesDescriptors || []
+
+            if (useTransmission && hasTransmission) {
+              texturesDescriptors.push({
+                texture: this.renderer.transmissionTarget.texture,
+                sampler: this.renderer.transmissionTarget.sampler,
+              })
+            }
+
+            const extensions = { gltfVariantMaterial }
+            const extensionsUsed = []
+
+            if (extensions) {
+              for (const extension of Object.keys(extensions)) {
+                if (
+                  extension === 'KHR_materials_unlit' &&
+                  this.gltf.extensionsRequired &&
+                  this.gltf.extensionsRequired.includes(extension)
+                ) {
+                  extensionsUsed.push(extension as GLTFExtensionsTypes)
+                } else {
+                  extensionsUsed.push(extension as GLTFExtensionsTypes)
+                }
+              }
+            }
+
+            // create a new descriptor based on current meshDescriptor
+            // and variant material params
+            const variantDescriptor: MeshDescriptor = {
+              variantName: variant.name,
+              parent: meshDescriptor.parent,
+              nodes: meshDescriptor.nodes,
+              extensionsUsed: [...meshDescriptor.extensionsUsed, ...extensionsUsed],
+              texturesDescriptors,
+              parameters: {
+                geometry: meshDescriptor.parameters.geometry,
+                label: variant.name + ' ' + variantMaterialParams.label,
+                transmissive: !!meshDescriptor.parameters.transmissive,
+                bindings: meshDescriptor.parameters.bindings ?? [],
+                uniforms: variantMaterialParams.uniforms,
+                transparent: !!variantMaterialParams.transparent,
+                cullMode: variantMaterialParams.cullMode,
+                ...(variantMaterialParams.targets && { targets: variantMaterialParams.targets }),
+              } as ProjectedMeshParameters,
+            }
+
+            meshDescriptor.alternateDescriptors.set(variant.name, variantDescriptor)
+          }
+        })
+      }
+    }
   }
 
   /**
@@ -1748,6 +1869,41 @@ export class GLTFScenesManager {
           ...meshDescriptor.parameters,
         })
 
+        meshDescriptor.alternateMaterials.set('Default', mesh.material)
+
+        // variants
+        meshDescriptor.alternateDescriptors.forEach((descriptor) => {
+          const matricesBindings = mesh.material.getBufferBindingByName('matrices')
+          descriptor.parameters.bindings = [matricesBindings, ...descriptor.parameters.bindings]
+
+          const {
+            label,
+            shaders,
+            uniforms,
+            bindings,
+            samplers,
+            textures,
+            targets,
+            transparent,
+          }: MeshDescriptorMaterialParams = descriptor.parameters
+
+          const alternateMaterial = new RenderMaterial(this.renderer, {
+            ...JSON.parse(JSON.stringify(mesh.material.options.rendering)), // use default cloned mesh rendering options
+            label,
+            shaders,
+            uniforms,
+            bindings,
+            ...(samplers && { samplers }),
+            ...(textures && { textures }),
+            ...(targets && { targets }),
+            transparent: !!transparent,
+            verticesOrder: meshDescriptor.parameters.geometry.verticesOrder,
+            topology: meshDescriptor.parameters.geometry.topology,
+          })
+
+          meshDescriptor.alternateMaterials.set(descriptor.variantName, alternateMaterial)
+        })
+
         mesh.parent = meshDescriptor.parent
 
         this.scenesManager.meshes.push(mesh)
@@ -1763,6 +1919,11 @@ export class GLTFScenesManager {
   destroy() {
     this.scenesManager.meshes.forEach((mesh) => mesh.remove())
     this.scenesManager.meshes = []
+
+    // remove material variants
+    this.scenesManager.meshesDescriptors.forEach((descriptor) => {
+      descriptor.alternateMaterials.forEach((material) => material.destroy())
+    })
 
     // destroy all Object3D created
     this.scenesManager.nodes.forEach((node) => {

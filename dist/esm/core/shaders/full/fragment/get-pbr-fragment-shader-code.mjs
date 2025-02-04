@@ -1,8 +1,8 @@
 import { constants } from '../../chunks/utils/constants.mjs';
 import { common } from '../../chunks/utils/common.mjs';
+import { toneMappingUtils } from '../../chunks/utils/tone-mapping-utils.mjs';
 import { getLightsInfos } from '../../chunks/fragment/head/get-lights-infos.mjs';
 import { REIndirectDiffuse } from '../../chunks/fragment/head/RE-indirect-diffuse.mjs';
-import { toneMappingUtils } from '../../chunks/fragment/head/tone-mapping-utils.mjs';
 import { REIndirectSpecular } from '../../chunks/fragment/head/RE-indirect-specular.mjs';
 import { getPBRDirect } from '../../chunks/fragment/head/get-PBR-direct.mjs';
 import { getIBLIndirect } from '../../chunks/fragment/head/get-IBL-indirect.mjs';
@@ -66,13 +66,13 @@ ${chunks.additionalHead}
 
 ${constants}
 ${common}
+${toneMappingUtils}
 ${getLightsInfos}
 ${REIndirectDiffuse}
 ${REIndirectSpecular}
 ${getPBRDirect}
 ${getIBLIndirect}
 ${getIBLTransmission}
-${toneMappingUtils}
 
 ${getFragmentInputStruct({ geometry })}
 

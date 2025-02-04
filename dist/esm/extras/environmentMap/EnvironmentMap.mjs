@@ -14,16 +14,25 @@ var __accessCheck = (obj, member, msg) => {
   if (!member.has(obj))
     throw TypeError("Cannot " + msg);
 };
+var __privateGet = (obj, member, getter) => {
+  __accessCheck(obj, member, "read from private field");
+  return getter ? getter.call(obj) : member.get(obj);
+};
 var __privateAdd = (obj, member, value) => {
   if (member.has(obj))
     throw TypeError("Cannot add the same private member more than once");
   member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
 };
+var __privateSet = (obj, member, value, setter) => {
+  __accessCheck(obj, member, "write to private field");
+  member.set(obj, value);
+  return value;
+};
 var __privateMethod = (obj, member, method) => {
   __accessCheck(obj, member, "access private method");
   return method;
 };
-var _copyComputeStorageTextureToTexture, copyComputeStorageTextureToTexture_fn;
+var _lutStorageTexture, _runComputePass, runComputePass_fn;
 class EnvironmentMap {
   /**
    * {@link EnvironmentMap} constructor.
@@ -32,13 +41,16 @@ class EnvironmentMap {
    */
   constructor(renderer, params = {}) {
     /**
-     * Once the given {@link ComputePass} has written to a temporary storage {@link Texture}, copy it into our permanent {@link Texture}.
-     * @param commandEncoder - The GPU command encoder to use.
-     * @param storageTexture - Temporary storage {@link Texture} used in the {@link ComputePass}.
-     * @param texture - Permanent {@link Texture} (either the {@link lutTexture}, {@link specularTexture} or {@link diffuseTexture}) to copy onto.
+     * Run a {@link ComputePass} once by creating a {@link GPUCommandEncoder} and execute the pass.
+     * @param parameters - Parameters used to run the compute pass.
+     * @param parameters.computePass - {@link ComputePass} to run.
+     * @param parameters.label - Optional label for the {@link GPUCommandEncoder}.
+     * @param parameters.onAfterCompute - Optional callback to run just after the pass has been executed. Useful for eventual texture copies.
      * @private
      */
-    __privateAdd(this, _copyComputeStorageTextureToTexture);
+    __privateAdd(this, _runComputePass);
+    /** BRDF GGX LUT storage {@link Texture} used in the compute shader. */
+    __privateAdd(this, _lutStorageTexture, void 0);
     renderer = isRenderer(renderer, "EnvironmentMap");
     this.renderer = renderer;
     params = {
@@ -87,6 +99,19 @@ class EnvironmentMap {
    */
   async computeBRDFLUTTexture() {
     const { size, computeSampleCount, ...lutTextureParams } = this.options.lutTextureParams;
+    __privateSet(this, _lutStorageTexture, new Texture(this.renderer, {
+      label: "LUT storage texture",
+      name: "lutStorageTexture",
+      format: lutTextureParams.format,
+      visibility: ["compute", "fragment"],
+      usage: ["copySrc", "storageBinding", "textureBinding"],
+      type: "storage",
+      fixedSize: {
+        width: size,
+        height: size
+      },
+      autoDestroy: false
+    }));
     this.lutTexture = new Texture(this.renderer, {
       ...lutTextureParams,
       visibility: ["fragment"],
@@ -94,25 +119,18 @@ class EnvironmentMap {
         width: size,
         height: size
       },
-      autoDestroy: false
-    });
-    let lutStorageTexture = new Texture(this.renderer, {
-      label: "LUT storage texture",
-      name: "lutStorageTexture",
-      format: this.lutTexture.options.format,
-      visibility: ["compute"],
-      usage: ["copySrc", "storageBinding"],
-      type: "storage",
-      fixedSize: {
-        width: this.lutTexture.size.width,
-        height: this.lutTexture.size.height
-      }
+      autoDestroy: false,
+      fromTexture: __privateGet(this, _lutStorageTexture)
     });
     let computeLUTPass = new ComputePass(this.renderer, {
       label: "Compute LUT texture",
       autoRender: false,
       // we're going to render only on demand
-      dispatchSize: [Math.ceil(lutStorageTexture.size.width / 16), Math.ceil(lutStorageTexture.size.height / 16), 1],
+      dispatchSize: [
+        Math.ceil(__privateGet(this, _lutStorageTexture).size.width / 16),
+        Math.ceil(__privateGet(this, _lutStorageTexture).size.height / 16),
+        1
+      ],
       shaders: {
         compute: {
           code: computeBRDFLUT
@@ -128,25 +146,12 @@ class EnvironmentMap {
           }
         }
       },
-      textures: [lutStorageTexture]
+      textures: [__privateGet(this, _lutStorageTexture)]
     });
     await computeLUTPass.material.compileMaterial();
-    this.renderer.onBeforeRenderScene.add(
-      (commandEncoder) => {
-        this.renderer.renderSingleComputePass(commandEncoder, computeLUTPass);
-        __privateMethod(this, _copyComputeStorageTextureToTexture, copyComputeStorageTextureToTexture_fn).call(this, commandEncoder, lutStorageTexture, this.lutTexture);
-      },
-      { once: true }
-    );
-    this.renderer.onAfterCommandEncoderSubmission.add(
-      () => {
-        computeLUTPass.destroy();
-        lutStorageTexture.destroy();
-        lutStorageTexture = null;
-        computeLUTPass = null;
-      },
-      { once: true }
-    );
+    __privateMethod(this, _runComputePass, runComputePass_fn).call(this, { computePass: computeLUTPass, label: "Compute LUT texture command encoder" });
+    computeLUTPass.destroy();
+    computeLUTPass = null;
   }
   /**
    * Create the {@link specularTexture | specular cube map texture} from a loaded {@link HDRImageData} using the provided {@link SpecularTextureParams | specular texture options} and a {@link ComputePass} that runs once.
@@ -202,20 +207,13 @@ class EnvironmentMap {
       textures: [cubeStorageTexture]
     });
     await computeCubeMapPass.material.compileMaterial();
-    const commandEncoder = this.renderer.device?.createCommandEncoder({
-      label: "Render once command encoder"
+    __privateMethod(this, _runComputePass, runComputePass_fn).call(this, {
+      computePass: computeCubeMapPass,
+      label: "Compute specular cube map command encoder",
+      onAfterCompute: (commandEncoder) => {
+        this.renderer.copyGPUTextureToTexture(cubeStorageTexture.texture, this.specularTexture, commandEncoder);
+      }
     });
-    if (!this.renderer.production)
-      commandEncoder.pushDebugGroup("Render once command encoder");
-    this.renderer.renderSingleComputePass(commandEncoder, computeCubeMapPass);
-    __privateMethod(this, _copyComputeStorageTextureToTexture, copyComputeStorageTextureToTexture_fn).call(this, commandEncoder, cubeStorageTexture, this.specularTexture);
-    if (this.specularTexture.texture.mipLevelCount > 1) {
-      this.renderer.generateMips(this.specularTexture, commandEncoder);
-    }
-    if (!this.renderer.production)
-      commandEncoder.popDebugGroup();
-    const commandBuffer = commandEncoder.finish();
-    this.renderer.device?.queue.submit([commandBuffer]);
     computeCubeMapPass.destroy();
     cubeStorageTexture.destroy();
     cubeStorageTexture = null;
@@ -277,22 +275,17 @@ class EnvironmentMap {
       textures: [this.specularTexture, diffuseStorageTexture]
     });
     await computeDiffusePass.material.compileMaterial();
-    this.renderer.onBeforeRenderScene.add(
-      (commandEncoder) => {
-        this.renderer.renderSingleComputePass(commandEncoder, computeDiffusePass);
-        __privateMethod(this, _copyComputeStorageTextureToTexture, copyComputeStorageTextureToTexture_fn).call(this, commandEncoder, diffuseStorageTexture, this.diffuseTexture);
-      },
-      { once: true }
-    );
-    this.renderer.onAfterCommandEncoderSubmission.add(
-      () => {
-        computeDiffusePass.destroy();
-        diffuseStorageTexture.destroy();
-        diffuseStorageTexture = null;
-        computeDiffusePass = null;
-      },
-      { once: true }
-    );
+    __privateMethod(this, _runComputePass, runComputePass_fn).call(this, {
+      computePass: computeDiffusePass,
+      label: "Compute diffuse cube map from specular cube map command encoder",
+      onAfterCompute: (commandEncoder) => {
+        this.renderer.copyGPUTextureToTexture(diffuseStorageTexture.texture, this.diffuseTexture, commandEncoder);
+      }
+    });
+    computeDiffusePass.destroy();
+    diffuseStorageTexture.destroy();
+    diffuseStorageTexture = null;
+    computeDiffusePass = null;
   }
   /**
    * Load an HDR environment map and then generates the {@link specularTexture} and {@link diffuseTexture} using two separate {@link ComputePass}.
@@ -360,19 +353,27 @@ class EnvironmentMap {
     this.lutTexture?.destroy();
     this.diffuseTexture?.destroy();
     this.specularTexture?.destroy();
+    __privateGet(this, _lutStorageTexture).destroy();
   }
 }
-_copyComputeStorageTextureToTexture = new WeakSet();
-copyComputeStorageTextureToTexture_fn = function(commandEncoder, storageTexture, texture) {
-  commandEncoder.copyTextureToTexture(
-    {
-      texture: storageTexture.texture
-    },
-    {
-      texture: texture.texture
-    },
-    [texture.texture.width, texture.texture.height, texture.texture.depthOrArrayLayers]
-  );
+_lutStorageTexture = new WeakMap();
+_runComputePass = new WeakSet();
+runComputePass_fn = function({
+  computePass,
+  label = "",
+  onAfterCompute = (commandEncoder) => {
+  }
+}) {
+  const commandEncoder = this.renderer.device?.createCommandEncoder({
+    label
+  });
+  !this.renderer.production && commandEncoder.pushDebugGroup(label);
+  this.renderer.renderSingleComputePass(commandEncoder, computePass, false);
+  onAfterCompute(commandEncoder);
+  !this.renderer.production && commandEncoder.popDebugGroup();
+  const commandBuffer = commandEncoder.finish();
+  this.renderer.device?.queue.submit([commandBuffer]);
+  this.renderer.pipelineManager.resetCurrentPipeline();
 };
 
 export { EnvironmentMap };

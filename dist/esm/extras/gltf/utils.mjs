@@ -86,6 +86,10 @@ const buildShaders = (meshDescriptor, shaderParameters = {}) => {
     transmissionBackgroundTexture,
     environmentMap
   });
+  meshDescriptor.alternateDescriptors?.forEach((descriptor) => {
+    descriptor.parameters.uniforms = { ...meshDescriptor.parameters.uniforms, ...descriptor.parameters.uniforms };
+    descriptor.parameters.shaders = buildShaders(descriptor, shaderParameters);
+  });
   return {
     vertex: {
       code: vs,

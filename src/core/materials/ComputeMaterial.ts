@@ -88,6 +88,10 @@ export class ComputeMaterial extends Material {
    */
   setPipelineEntry() {
     this.pipelineEntry = this.renderer.pipelineManager.createComputePipeline(this)
+    // we might have gotten a pipeline entry from cache but skipped bind group creations
+    if (this.bindGroups.length !== this.pipelineEntry.bindGroups.length) {
+      this.createBindGroups()
+    }
   }
 
   /**

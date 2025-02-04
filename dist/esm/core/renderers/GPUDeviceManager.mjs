@@ -23,7 +23,7 @@ var _mipsGeneration;
 class GPUDeviceManager {
   /**
    * GPUDeviceManager constructor
-   * @param parameters - {@link GPUDeviceManagerParams | parameters} used to create this {@link GPUDeviceManager}
+   * @param parameters - {@link GPUDeviceManagerParams | parameters} used to create this {@link GPUDeviceManager}.
    */
   constructor({
     label,
@@ -37,10 +37,10 @@ class GPUDeviceManager {
     onDeviceDestroyed = (info) => {
     }
   } = {}) {
-    /** function assigned to the {@link onBeforeRender} callback */
+    /** function assigned to the {@link onBeforeRender} callback. */
     this._onBeforeRenderCallback = () => {
     };
-    /** function assigned to the {@link onAfterRender} callback */
+    /** function assigned to the {@link onAfterRender} callback. */
     this._onAfterRenderCallback = () => {
     };
     /** @ignore */
@@ -75,7 +75,7 @@ class GPUDeviceManager {
     await this.setDevice(device);
   }
   /**
-   * Set up our {@link adapter} and {@link device} and all the already created {@link renderers} contexts
+   * Set up our {@link adapter} and {@link device} and all the already created {@link renderers} contexts.
    * @param parameters - {@link GPUAdapter} and/or {@link GPUDevice} to use if set.
    */
   async init({ adapter = null, device = null } = {}) {
@@ -152,14 +152,14 @@ class GPUDeviceManager {
     });
   }
   /**
-   * Set our {@link pipelineManager | pipeline manager}
+   * Set our {@link pipelineManager | pipeline manager}.
    */
   setPipelineManager() {
     this.pipelineManager = new PipelineManager();
   }
   /**
    * Called when the {@link device} is lost.
-   * Reset all our renderers
+   * Reset all our renderers.
    */
   loseDevice() {
     this.ready = false;
@@ -189,7 +189,7 @@ class GPUDeviceManager {
     }
   }
   /**
-   * Set all objects arrays that we'll keep track of
+   * Set all objects arrays that we'll keep track of.
    */
   setDeviceObjects() {
     this.renderers = [];
@@ -203,78 +203,78 @@ class GPUDeviceManager {
     this.texturesQueue = [];
   }
   /**
-   * Add a {@link Renderer} to our {@link renderers} array
-   * @param renderer - {@link Renderer} to add
+   * Add a {@link Renderer} to our {@link renderers} array.
+   * @param renderer - {@link Renderer} to add.
    */
   addRenderer(renderer) {
     this.renderers.push(renderer);
   }
   /**
-   * Remove a {@link Renderer} from our {@link renderers} array
-   * @param renderer - {@link Renderer} to remove
+   * Remove a {@link Renderer} from our {@link renderers} array.
+   * @param renderer - {@link Renderer} to remove.
    */
   removeRenderer(renderer) {
     this.renderers = this.renderers.filter((r) => r.uuid !== renderer.uuid);
   }
   /**
-   * Get all the rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes) created by this {@link GPUDeviceManager}
+   * Get all the rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes) created by this {@link GPUDeviceManager}.
    * @readonly
    */
   get deviceRenderedObjects() {
     return this.renderers.map((renderer) => renderer.renderedObjects).flat();
   }
   /**
-   * Add a {@link AllowedBindGroups | bind group} to our {@link bindGroups | bind groups array}
-   * @param bindGroup - {@link AllowedBindGroups | bind group} to add
+   * Add a {@link AllowedBindGroups | bind group} to our {@link bindGroups | bind groups array}.
+   * @param bindGroup - {@link AllowedBindGroups | bind group} to add.
    */
   addBindGroup(bindGroup) {
     this.bindGroups.set(bindGroup.uuid, bindGroup);
   }
   /**
-   * Remove a {@link AllowedBindGroups | bind group} from our {@link bindGroups | bind groups array}
-   * @param bindGroup - {@link AllowedBindGroups | bind group} to remove
+   * Remove a {@link AllowedBindGroups | bind group} from our {@link bindGroups | bind groups array}.
+   * @param bindGroup - {@link AllowedBindGroups | bind group} to remove.
    */
   removeBindGroup(bindGroup) {
     this.bindGroups.delete(bindGroup.uuid);
   }
   /**
-   * Add a {@link GPUBuffer} to our our {@link buffers} array
-   * @param buffer - {@link Buffer} to add
+   * Add a {@link GPUBuffer} to our our {@link buffers} array.
+   * @param buffer - {@link Buffer} to add.
    */
   addBuffer(buffer) {
     this.buffers.set(buffer.uuid, buffer);
   }
   /**
-   * Remove a {@link Buffer} from our {@link buffers} Map
-   * @param buffer - {@link Buffer} to remove
+   * Remove a {@link Buffer} from our {@link buffers} Map.
+   * @param buffer - {@link Buffer} to remove.
    */
   removeBuffer(buffer) {
     this.buffers.delete(buffer?.uuid);
   }
   /**
-   * Add a {@link Sampler} to our {@link samplers} array
-   * @param sampler - {@link Sampler} to add
+   * Add a {@link Sampler} to our {@link samplers} array.
+   * @param sampler - {@link Sampler} to add.
    */
   addSampler(sampler) {
     this.samplers.push(sampler);
   }
   /**
-   * Remove a {@link Sampler} from our {@link samplers} array
-   * @param sampler - {@link Sampler} to remove
+   * Remove a {@link Sampler} from our {@link samplers} array.
+   * @param sampler - {@link Sampler} to remove.
    */
   removeSampler(sampler) {
     this.samplers = this.samplers.filter((s) => s.uuid !== sampler.uuid);
   }
   /**
-   * Add a {@link DOMTexture} to our {@link domTextures} array
-   * @param texture - {@link DOMTexture} to add
+   * Add a {@link DOMTexture} to our {@link domTextures} array.
+   * @param texture - {@link DOMTexture} to add.
    */
   addDOMTexture(texture) {
     this.domTextures.push(texture);
   }
   /**
-   * Upload a {@link DOMTexture#texture | texture} to the GPU
-   * @param texture - {@link DOMTexture} class object with the {@link DOMTexture#texture | texture} to upload
+   * Upload a {@link DOMTexture#texture | texture} to the GPU.
+   * @param texture - {@link DOMTexture} class object with the {@link DOMTexture#texture | texture} to upload.
    */
   uploadTexture(texture) {
     if (texture.source) {
@@ -426,24 +426,24 @@ class GPUDeviceManager {
     }
   }
   /**
-   * Remove a {@link DOMTexture} from our {@link domTextures} array
-   * @param texture - {@link DOMTexture} to remove
+   * Remove a {@link DOMTexture} from our {@link domTextures} array.
+   * @param texture - {@link DOMTexture} to remove.
    */
   removeDOMTexture(texture) {
     this.domTextures = this.domTextures.filter((t) => t.uuid !== texture.uuid);
   }
   /* RENDER */
   /**
-   * Create a requestAnimationFrame loop and run it
+   * Create a requestAnimationFrame loop and run it.
    */
   animate() {
     this.render();
     this.animationFrameID = requestAnimationFrame(this.animate.bind(this));
   }
   /**
-   * Called each frame before rendering
-   * @param callback - callback to run at each render
-   * @returns - our {@link GPUDeviceManager}
+   * Called each frame before rendering.
+   * @param callback - callback to run at each render.
+   * @returns - our {@link GPUDeviceManager}.
    */
   onBeforeRender(callback) {
     if (callback) {
@@ -452,9 +452,9 @@ class GPUDeviceManager {
     return this;
   }
   /**
-   * Called each frame after rendering
-   * @param callback - callback to run at each render
-   * @returns - our {@link GPUDeviceManager}
+   * Called each frame after rendering.
+   * @param callback - callback to run at each render.
+   * @returns - our {@link GPUDeviceManager}.
    */
   onAfterRender(callback) {
     if (callback) {
@@ -464,13 +464,13 @@ class GPUDeviceManager {
   }
   /**
    * Render everything:
-   * - call all our {@link renderers} {@link core/renderers/GPURenderer.GPURenderer#onBeforeCommandEncoder | onBeforeCommandEncoder} callbacks
-   * - create a {@link GPUCommandEncoder}
-   * - render all our {@link renderers}
-   * - submit our {@link GPUCommandBuffer}
-   * - upload {@link DOMTexture#texture | DOMTexture textures} that do not have a parentMesh
-   * - empty our {@link texturesQueue} array
-   * - call all our {@link renderers} {@link core/renderers/GPURenderer.GPURenderer#onAfterCommandEncoder | onAfterCommandEncoder} callbacks
+   * - call all our {@link renderers} {@link core/renderers/GPURenderer.GPURenderer#onBeforeCommandEncoder | onBeforeCommandEncoder} callbacks.
+   * - create a {@link GPUCommandEncoder}.
+   * - render all our {@link renderers}.
+   * - submit our {@link GPUCommandBuffer}.
+   * - upload {@link DOMTexture#texture | DOMTexture textures} that do not have a parentMesh.
+   * - empty our {@link texturesQueue} array.
+   * - call all our {@link renderers} {@link core/renderers/GPURenderer.GPURenderer#onAfterCommandEncoder | onAfterCommandEncoder} callbacks.
    */
   render() {
     if (!this.ready)
@@ -498,7 +498,7 @@ class GPUDeviceManager {
     this._onAfterRenderCallback && this._onAfterRenderCallback();
   }
   /**
-   * Destroy the {@link GPUDeviceManager} and its {@link renderers}
+   * Destroy the {@link GPUDeviceManager} and its {@link renderers}.
    */
   destroy() {
     if (this.animationFrameID) {

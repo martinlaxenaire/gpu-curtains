@@ -511,16 +511,7 @@ class GPUCameraRenderer extends GPURenderer {
         autoDestroy: false
       });
       this.transmissionTarget.passEntry.onBeforeRenderPass = (commandEncoder, swapChainTexture) => {
-        commandEncoder.copyTextureToTexture(
-          {
-            texture: swapChainTexture
-          },
-          {
-            texture: this.transmissionTarget.texture.texture
-          },
-          [this.transmissionTarget.texture.size.width, this.transmissionTarget.texture.size.height]
-        );
-        this.generateMips(this.transmissionTarget.texture, commandEncoder);
+        this.copyGPUTextureToTexture(swapChainTexture, this.transmissionTarget.texture, commandEncoder);
       };
     }
   }

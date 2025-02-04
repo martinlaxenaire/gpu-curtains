@@ -138,7 +138,7 @@ export declare class GPURenderer {
     _onBeforeRenderCallback: (commandEncoder: GPUCommandEncoder) => void;
     /** function assigned to the {@link onAfterRender} callback */
     _onAfterRenderCallback: (commandEncoder: GPUCommandEncoder) => void;
-    /** function assigned to the {@link resizeObjects} callback */
+    /** function assigned to the {@link onResize} callback */
     _onResizeCallback: () => void;
     /** function assigned to the {@link onAfterResize} callback */
     _onAfterResizeCallback: () => void;
@@ -388,6 +388,20 @@ export declare class GPURenderer {
      */
     importExternalTexture(video: HTMLVideoElement): GPUExternalTexture;
     /**
+     * Copy a {@link GPUTexture} to a {@link Texture} using a {@link GPUCommandEncoder}. Automatically generate mips after copy if the {@link Texture} needs it.
+     * @param gpuTexture - {@link GPUTexture} source to copy from.
+     * @param texture - {@link Texture} destination to copy onto.
+     * @param commandEncoder - {@link GPUCommandEncoder} to use for copy operation.
+     */
+    copyGPUTextureToTexture(gpuTexture: GPUTexture, texture: Texture, commandEncoder: GPUCommandEncoder): void;
+    /**
+     * Copy a {@link Texture} to a {@link GPUTexture} using a {@link GPUCommandEncoder}.
+     * @param texture - {@link Texture} source to copy from.
+     * @param gpuTexture - {@link GPUTexture} destination to copy onto.
+     * @param commandEncoder - {@link GPUCommandEncoder} to use for copy operation.
+     */
+    copyTextureToGPUTexture(texture: Texture, gpuTexture: GPUTexture, commandEncoder: GPUCommandEncoder): void;
+    /**
      * Check if a {@link Sampler} has already been created with the same {@link Sampler#options | parameters}.
      * Use it if found, else create a new one and add it to the {@link GPUDeviceManager#samplers | samplers array}.
      * @param sampler - {@link Sampler} to create
@@ -453,11 +467,12 @@ export declare class GPURenderer {
      */
     onAfterResize(callback: (commandEncoder?: GPUCommandEncoder) => void): this;
     /**
-     * Render a single {@link ComputePass}
-     * @param commandEncoder - current {@link GPUCommandEncoder}
-     * @param computePass - {@link ComputePass}
+     * Render a single {@link ComputePass}.
+     * @param commandEncoder - current {@link GPUCommandEncoder} to use.
+     * @param computePass - {@link ComputePass} to run.
+     * @param copyBuffer - Whether to copy all writable binding buffers that need it.
      */
-    renderSingleComputePass(commandEncoder: GPUCommandEncoder, computePass: ComputePass): void;
+    renderSingleComputePass(commandEncoder: GPUCommandEncoder, computePass: ComputePass, copyBuffer?: boolean): void;
     /**
      * Render a single {@link RenderedMesh | Mesh}
      * @param commandEncoder - current {@link GPUCommandEncoder}

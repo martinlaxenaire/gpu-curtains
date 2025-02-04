@@ -3,6 +3,7 @@ import { CameraRenderer } from '../../core/renderers/utils';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
 import { ProjectedMeshParameters } from '../../core/meshes/mixins/ProjectedMeshBaseMixin';
 import { FragmentShaderBaseInputParams, ShadingModels } from '../../core/shaders/full/fragment/get-fragment-shader-code';
+import { Vec2 } from '../../math/Vec2';
 import { Vec3 } from '../../math/Vec3';
 import { AdditionalChunks } from '../../core/shaders/default-material-helpers';
 /** Defines the material parameters of a {@link LitMesh}. */
@@ -23,8 +24,8 @@ export interface LitMeshMaterialParams extends Omit<FragmentShaderBaseInputParam
     metallic?: number;
     /** The roughness factor of the {@link LitMesh}. Default to `1`. */
     roughness?: number;
-    /** The scalar parameter applied to each normal vector of the normal texture if any. Default to `1`. */
-    normalMapScale?: number;
+    /** How much the normal map affects the material normal texture if any. Typical ranges are [0-1]. Default to `new Vec2(1)`. */
+    normalScale?: Vec2;
     /** A scalar multiplier controlling the amount of occlusion applied to the occlusion texture if any. Default to `1`. */
     occlusionIntensity?: number;
     /** Emissive intensity to apply to the emissive color of the {@link LitMesh}. Default to `1`. */

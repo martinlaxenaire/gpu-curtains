@@ -1,6 +1,6 @@
+import { toneMappingUtils } from '../utils/tone-mapping-utils.mjs';
 import { lambertUtils } from './lambert-shading.mjs';
 import { getPhongDirect } from '../fragment/head/get-phong-direct.mjs';
-import { toneMappingUtils } from '../fragment/head/tone-mapping-utils.mjs';
 import { getPhongShading } from '../fragment/body/get-phong-shading.mjs';
 
 const getPhong = ({ addUtils = true, receiveShadows = false, toneMapping = "Linear", useOcclusion = false } = {}) => (

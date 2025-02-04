@@ -34,14 +34,14 @@ const declareMaterialVars = ({
   var alphaCutoff: f32 = 0.0;`;
   }
   if (shadingModel !== "Unlit") {
-    if (materialStruct.normalMapScale) {
+    if (materialStruct.normalScale) {
       materialVars += /* wgsl */
       `
-  var normalMapScale: f32 = ${materialUniformName}.normalMapScale;`;
+  var normalScale: vec2f = ${materialUniformName}.normalScale;`;
     } else {
       materialVars += /* wgsl */
       `
-  var normalMapScale: f32 = 1.0;`;
+  var normalScale: vec2f = vec2(1.0);`;
     }
     if (materialStruct.occlusionIntensity) {
       materialVars += /* wgsl */

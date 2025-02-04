@@ -315,6 +315,9 @@ ${geometry.wgslStructFragment}`
           this.material.setPipelineEntry();
         }
         this.geometry.consumers.delete(this.uuid);
+        if (this.options.renderBundle) {
+          this.options.renderBundle.ready = false;
+        }
       }
       this.geometry = geometry;
       this.geometry.consumers.add(this.uuid);
@@ -406,6 +409,9 @@ ${geometry.wgslStructFragment}`
         isDepthMaterialSwitch = this.material.options.label.includes("depth render material") || material.options.label.includes("depth render material");
         if (this.geometry) {
           currentCacheKey = this.material.cacheKey;
+        }
+        if (this.options.renderBundle) {
+          this.options.renderBundle.ready = false;
         }
       }
       this.material = material;

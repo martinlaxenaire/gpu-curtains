@@ -155,10 +155,10 @@ export class EnvironmentMap {
 
   /**
    * Run a {@link ComputePass} once by creating a {@link GPUCommandEncoder} and execute the pass.
-   * @parameters - Parameters used to run the compute pass.
-   * @param computePass - {@link ComputePass} to run.
-   * @param label - Optional label for the {@link GPUCommandEncoder}.
-   * @param onAfterCompute - Optional callback to run just after the pass has been executed. Useful for eventual texture copies.
+   * @param parameters - Parameters used to run the compute pass.
+   * @param parameters.computePass - {@link ComputePass} to run.
+   * @param parameters.label - Optional label for the {@link GPUCommandEncoder}.
+   * @param parameters.onAfterCompute - Optional callback to run just after the pass has been executed. Useful for eventual texture copies.
    * @private
    */
   #runComputePass({

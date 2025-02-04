@@ -1,12 +1,15 @@
 import { GLTF } from '../../types/gltf/GLTF';
+import { GLTFExtensions } from '../../types/gltf/GLTFExtensions';
 /**
  * Defined the structure of the parsed result from the glTF json object.
  */
-export interface GPUCurtainsGLTF extends GLTF.IGLTF {
+export interface GPUCurtainsGLTF extends Omit<GLTF.IGLTF, 'extensions'> {
     /** Array of {@link ArrayBuffer} used by the glTF. */
     arrayBuffers: ArrayBuffer[];
     /** Array of created {@link ImageBitmap}. */
     imagesBitmaps: ImageBitmap[];
+    /** Top level extensions definitions. */
+    extensions?: GLTFExtensions;
 }
 /**
  * Basic glTF loader class.

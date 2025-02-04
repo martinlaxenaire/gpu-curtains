@@ -1,9 +1,9 @@
 import { constants } from '../utils/constants.mjs';
 import { common } from '../utils/common.mjs';
+import { toneMappingUtils } from '../utils/tone-mapping-utils.mjs';
 import { getLightsInfos } from '../fragment/head/get-lights-infos.mjs';
 import { REIndirectDiffuse } from '../fragment/head/RE-indirect-diffuse.mjs';
 import { getLambertDirect } from '../fragment/head/get-lambert-direct.mjs';
-import { toneMappingUtils } from '../fragment/head/tone-mapping-utils.mjs';
 import { getLambertShading } from '../fragment/body/get-lambert-shading.mjs';
 
 const lambertUtils = (

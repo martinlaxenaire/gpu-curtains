@@ -239,10 +239,18 @@ window.addEventListener('load', async () => {
       name: 'Compare Emissive Strength',
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/CompareEmissiveStrength/glTF/CompareEmissiveStrength.gltf',
     },
+    // materials variants
+    materialsVariantsShoe: {
+      name: 'Materials Variants Shoe',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/MaterialsVariantsShoe/glTF/MaterialsVariantsShoe.gltf',
+    },
+    dragonAttenuation: {
+      name: 'Dragon Attenuation',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/DragonAttenuation/glTF/DragonAttenuation.gltf',
+    },
   }
 
-  //let shadingModel = 'PBR' // 'IBL', 'PBR', 'Phong' or 'Lambert'
-  let shadingModel = 'PBR' // 'IBL', 'PBR', 'Phong' or 'Lambert'
+  let shadingModel = 'PBR' // 'PBR', 'Phong' or 'Lambert'
   const lightType = 'DirectionalLight' // or 'PointLight'
 
   const ambientLight = new AmbientLight(gpuCameraRenderer, {
@@ -274,7 +282,8 @@ window.addEventListener('load', async () => {
 
   const renderBundlesField = gui.add({ useRenderBundles }, 'useRenderBundles').name('Use render bundles')
 
-  const currentModelKey = 'damagedHelmet'
+  //const currentModelKey = 'damagedHelmet'
+  const currentModelKey = 'materialsVariantsShoe'
   let currentModel = models[currentModelKey]
 
   const modelField = gui
@@ -342,6 +351,9 @@ window.addEventListener('load', async () => {
   const animationsFolder = gui.addFolder('Animations')
 
   let animationsFields = []
+
+  let materialsFolder
+  let variantsFolder = gui.addFolder('Variants')
 
   // gltf
   const gltfLoader = new GLTFLoader()
@@ -492,6 +504,8 @@ window.addEventListener('load', async () => {
         },
       }
 
+      const isUnlit = shadingModel === 'Unlit' || meshDescriptor.extensionsUsed.includes('KHR_materials_unlit')
+
       // debug
       const additionalContribution = `
         if(debug.channel == 1.0) {
@@ -508,66 +522,59 @@ window.addEventListener('load', async () => {
           }
         } else if(debug.channel == 3.0) {
           ${
-            meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === 'normalTexture') &&
-            shadingModel !== 'Unlit'
+            meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === 'normalTexture') && !isUnlit
               ? 'outputColor = vec4(normalMap, 1.0);'
               : 'outputColor = vec4(0.0, 0.0, 0.0, 1.0);'
           }
         } else if(debug.channel == 4.0) {
           ${
-            shadingModel !== 'Unlit'
+            !isUnlit
               ? 'outputColor = vec4(geometryNormal * 0.5 + 0.5, 1.0);'
               : 'outputColor = vec4(normal * 0.5 + 0.5, 1.0);'
           }
         } else if(debug.channel == 5.0) {
           ${
             parameters.geometry.getAttributeByName('tangent') ||
-            (meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === 'normalTexture') &&
-              shadingModel !== 'Unlit')
+            (meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === 'normalTexture') && !isUnlit)
               ? 'outputColor = vec4(tangent * 0.5 + 0.5, 1.0);'
               : 'outputColor = vec4(vec3(0.0), 1.0);'
           }
         } else if(debug.channel == 6.0) {
           ${
             parameters.geometry.getAttributeByName('tangent') ||
-            (meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === 'normalTexture') &&
-              shadingModel !== 'Unlit')
+            (meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === 'normalTexture') && !isUnlit)
               ? 'outputColor = vec4(bitangent * 0.5 + 0.5, 1.0);'
               : 'outputColor = vec4(vec3(0.0), 1.0);'
           }
         } else if(debug.channel == 7.0) {
           outputColor = vec4(normal * 0.5 + 0.5, 1.0);
         } else if(debug.channel == 8.0) {
-          ${
-            shadingModel !== 'Unlit'
-              ? 'outputColor = vec4(vec3(occlusion), 1.0);'
-              : 'outputColor = vec4(vec3(0.0), 1.0);'
-          }
+          ${!isUnlit ? 'outputColor = vec4(vec3(occlusion), 1.0);' : 'outputColor = vec4(vec3(0.0), 1.0);'}
         } else if(debug.channel == 9.0) {
-          ${shadingModel !== 'Unlit' ? 'outputColor = vec4(emissive, 1.0);' : 'outputColor = vec4(vec3(0.0), 1.0);'}
+          ${!isUnlit ? 'outputColor = vec4(emissive, 1.0);' : 'outputColor = vec4(vec3(0.0), 1.0);'}
         } else if(debug.channel == 10.0) {
           outputColor = baseColor;
         } else if(debug.channel == 11.0) {
           ${
-            shadingModel !== 'Unlit' && shadingModel !== 'Lambert'
+            !isUnlit && shadingModel !== 'Lambert'
               ? 'outputColor = vec4(vec3(metallic), 1.0);'
               : 'outputColor = vec4(vec3(0.0), 1.0);'
           }
         } else if(debug.channel == 12.0) {
           ${
-            shadingModel !== 'Unlit' && shadingModel !== 'Lambert'
+            !isUnlit && shadingModel !== 'Lambert'
               ? 'outputColor = vec4(vec3(roughness), 1.0);'
               : 'outputColor = vec4(vec3(0.0), 1.0);'
           }
         } else if(debug.channel == 13.0) {
           ${
-            shadingModel !== 'Unlit' && shadingModel !== 'Lambert'
+            !isUnlit && shadingModel !== 'Lambert'
               ? 'outputColor = vec4(vec3(specularIntensity), 1.0);'
               : 'outputColor = vec4(vec3(0.0), 1.0);'
           }
         } else if(debug.channel == 14.0) {
           ${
-            shadingModel !== 'Unlit' && shadingModel !== 'Lambert'
+            !isUnlit && shadingModel !== 'Lambert'
               ? 'outputColor = vec4(specularColor, 1.0);'
               : 'outputColor = vec4(vec3(0.0), 1.0);'
           }
@@ -580,6 +587,27 @@ window.addEventListener('load', async () => {
           additionalContribution,
         },
         ...(useEnvMap && { environmentMap }),
+      })
+    })
+
+    // variants
+    variantsFolder.children.forEach((child) => child.destroy())
+
+    let availableVariants = []
+    if (
+      gltf.extensions &&
+      gltf.extensions['KHR_materials_variants'] &&
+      gltf.extensions['KHR_materials_variants'].variants
+    ) {
+      availableVariants = gltf.extensions['KHR_materials_variants'].variants.map((variant) => variant.name)
+    }
+
+    variantsFolder.add({ variants: 'Default' }, 'variants', ['Default', ...availableVariants]).onChange((value) => {
+      scenesManager.meshesDescriptors.forEach((meshDescriptor, index) => {
+        const alternateMaterial = meshDescriptor.alternateMaterials.get(value)
+        if (alternateMaterial) {
+          meshes[index].useMaterial(alternateMaterial)
+        }
       })
     })
 
