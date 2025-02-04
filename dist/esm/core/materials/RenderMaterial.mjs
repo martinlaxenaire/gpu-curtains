@@ -100,9 +100,6 @@ class RenderMaterial extends Material {
    */
   setPipelineEntry() {
     this.pipelineEntry = this.renderer.pipelineManager.createRenderPipeline(this);
-    if (this.bindGroups.length !== this.pipelineEntry.bindGroups.length) {
-      this.createBindGroups();
-    }
   }
   /**
    * Compile the {@link RenderPipelineEntry}
@@ -214,7 +211,6 @@ New rendering options: ${JSON.stringify(
       this.renderer.cameraLightsBindGroup.consumers.add(this.uuid);
     }
     super.createBindGroups();
-    console.log(this.options.label, this.bindGroups);
   }
   /**
    * Update all bind groups, except for the camera and light bind groups if present, as it is already updated by the renderer itself.

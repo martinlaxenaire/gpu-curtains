@@ -421,7 +421,11 @@ ${geometry.wgslStructFragment}`
       this.transparent = this.material.options.rendering.transparent;
       this.material.options.domTextures?.filter((texture) => texture instanceof DOMTexture).forEach((texture) => this.onDOMTextureAdded(texture));
       if (currentCacheKey && currentCacheKey !== this.material.cacheKey && !isDepthMaterialSwitch) {
-        this.material.setPipelineEntry();
+        if (this.material.ready) {
+          this.material.setPipelineEntry();
+        } else {
+          this.material.compileMaterial();
+        }
       }
     }
     /**

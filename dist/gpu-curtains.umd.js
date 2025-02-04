@@ -5770,9 +5770,6 @@
      */
     setPipelineEntry() {
       this.pipelineEntry = this.renderer.pipelineManager.createComputePipeline(this);
-      if (this.bindGroups.length !== this.pipelineEntry.bindGroups.length) {
-        this.createBindGroups();
-      }
     }
     /**
      * Compile the {@link ComputePipelineEntry}
@@ -8491,9 +8488,6 @@ struct VSOutput {
      */
     setPipelineEntry() {
       this.pipelineEntry = this.renderer.pipelineManager.createRenderPipeline(this);
-      if (this.bindGroups.length !== this.pipelineEntry.bindGroups.length) {
-        this.createBindGroups();
-      }
     }
     /**
      * Compile the {@link RenderPipelineEntry}
@@ -8605,7 +8599,6 @@ New rendering options: ${JSON.stringify(
         this.renderer.cameraLightsBindGroup.consumers.add(this.uuid);
       }
       super.createBindGroups();
-      console.log(this.options.label, this.bindGroups);
     }
     /**
      * Update all bind groups, except for the camera and light bind groups if present, as it is already updated by the renderer itself.
@@ -10579,7 +10572,11 @@ ${geometry.wgslStructFragment}`
         this.transparent = this.material.options.rendering.transparent;
         this.material.options.domTextures?.filter((texture) => texture instanceof DOMTexture).forEach((texture) => this.onDOMTextureAdded(texture));
         if (currentCacheKey && currentCacheKey !== this.material.cacheKey && !isDepthMaterialSwitch) {
-          this.material.setPipelineEntry();
+          if (this.material.ready) {
+            this.material.setPipelineEntry();
+          } else {
+            this.material.compileMaterial();
+          }
         }
       }
       /**
@@ -22987,6 +22984,22 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
     });
     meshDescriptor.alternateDescriptors?.forEach((descriptor) => {
       descriptor.parameters.uniforms = { ...meshDescriptor.parameters.uniforms, ...descriptor.parameters.uniforms };
+      if (meshDescriptor.parameters.storages) {
+        descriptor.parameters.storages = meshDescriptor.parameters.storages;
+      }
+      if (meshDescriptor.parameters.bindings) {
+        if (!descriptor.parameters.bindings)
+          descriptor.parameters.bindings = [];
+        meshDescriptor.parameters.bindings.forEach((binding) => {
+          const hasBinding = descriptor.parameters.bindings.find((b) => b.name === binding.name);
+          if (!hasBinding) {
+            descriptor.parameters.bindings.push(binding);
+          }
+        });
+      }
+      if (meshDescriptor.parameters.bindGroups) {
+        descriptor.parameters.bindGroups = meshDescriptor.parameters.bindGroups;
+      }
       descriptor.parameters.shaders = buildShaders(descriptor, shaderParameters);
     });
     return {

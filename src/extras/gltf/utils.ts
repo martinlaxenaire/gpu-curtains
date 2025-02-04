@@ -157,7 +157,31 @@ export const buildShaders = (
 
   // create alternate descriptors shaders
   meshDescriptor.alternateDescriptors?.forEach((descriptor) => {
+    // add eventual additional uniforms
     descriptor.parameters.uniforms = { ...meshDescriptor.parameters.uniforms, ...descriptor.parameters.uniforms }
+
+    // add eventual additional storages
+    if (meshDescriptor.parameters.storages) {
+      descriptor.parameters.storages = meshDescriptor.parameters.storages
+    }
+
+    // add eventual additional bindings
+    if (meshDescriptor.parameters.bindings) {
+      if (!descriptor.parameters.bindings) descriptor.parameters.bindings = []
+
+      meshDescriptor.parameters.bindings.forEach((binding) => {
+        const hasBinding = descriptor.parameters.bindings.find((b) => b.name === binding.name)
+        if (!hasBinding) {
+          descriptor.parameters.bindings.push(binding)
+        }
+      })
+    }
+
+    // add eventual bind groups
+    if (meshDescriptor.parameters.bindGroups) {
+      descriptor.parameters.bindGroups = meshDescriptor.parameters.bindGroups
+    }
+
     descriptor.parameters.shaders = buildShaders(descriptor, shaderParameters)
   })
 

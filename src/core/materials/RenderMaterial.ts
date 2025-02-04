@@ -147,10 +147,6 @@ export class RenderMaterial extends Material {
    */
   setPipelineEntry() {
     this.pipelineEntry = this.renderer.pipelineManager.createRenderPipeline(this)
-    // we might have gotten a pipeline entry from cache but skipped bind group creations
-    if (this.bindGroups.length !== this.pipelineEntry.bindGroups.length) {
-      this.createBindGroups()
-    }
   }
 
   /**
@@ -286,8 +282,6 @@ export class RenderMaterial extends Material {
     }
 
     super.createBindGroups()
-
-    console.log(this.options.label, this.bindGroups)
   }
 
   /**

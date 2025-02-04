@@ -282,8 +282,7 @@ window.addEventListener('load', async () => {
 
   const renderBundlesField = gui.add({ useRenderBundles }, 'useRenderBundles').name('Use render bundles')
 
-  //const currentModelKey = 'damagedHelmet'
-  const currentModelKey = 'materialsVariantsShoe'
+  const currentModelKey = 'damagedHelmet'
   let currentModel = models[currentModelKey]
 
   const modelField = gui
@@ -352,7 +351,6 @@ window.addEventListener('load', async () => {
 
   let animationsFields = []
 
-  let materialsFolder
   let variantsFolder = gui.addFolder('Variants')
 
   // gltf
@@ -603,6 +601,8 @@ window.addEventListener('load', async () => {
     }
 
     variantsFolder.add({ variants: 'Default' }, 'variants', ['Default', ...availableVariants]).onChange((value) => {
+      debugField.reset()
+
       scenesManager.meshesDescriptors.forEach((meshDescriptor, index) => {
         const alternateMaterial = meshDescriptor.alternateMaterials.get(value)
         if (alternateMaterial) {

@@ -952,9 +952,13 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
         ?.filter((texture) => texture instanceof DOMTexture)
         .forEach((texture) => this.onDOMTextureAdded(texture))
 
-      // reset pipeline entry if cache keys differ
+      // compile material and/or reset pipeline entry if cache keys differ
       if (currentCacheKey && currentCacheKey !== this.material.cacheKey && !isDepthMaterialSwitch) {
-        this.material.setPipelineEntry()
+        if (this.material.ready) {
+          this.material.setPipelineEntry()
+        } else {
+          this.material.compileMaterial()
+        }
       }
     }
 

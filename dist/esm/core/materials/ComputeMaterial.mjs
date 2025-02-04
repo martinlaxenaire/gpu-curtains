@@ -50,9 +50,6 @@ class ComputeMaterial extends Material {
    */
   setPipelineEntry() {
     this.pipelineEntry = this.renderer.pipelineManager.createComputePipeline(this);
-    if (this.bindGroups.length !== this.pipelineEntry.bindGroups.length) {
-      this.createBindGroups();
-    }
   }
   /**
    * Compile the {@link ComputePipelineEntry}

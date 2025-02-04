@@ -88,6 +88,22 @@ const buildShaders = (meshDescriptor, shaderParameters = {}) => {
   });
   meshDescriptor.alternateDescriptors?.forEach((descriptor) => {
     descriptor.parameters.uniforms = { ...meshDescriptor.parameters.uniforms, ...descriptor.parameters.uniforms };
+    if (meshDescriptor.parameters.storages) {
+      descriptor.parameters.storages = meshDescriptor.parameters.storages;
+    }
+    if (meshDescriptor.parameters.bindings) {
+      if (!descriptor.parameters.bindings)
+        descriptor.parameters.bindings = [];
+      meshDescriptor.parameters.bindings.forEach((binding) => {
+        const hasBinding = descriptor.parameters.bindings.find((b) => b.name === binding.name);
+        if (!hasBinding) {
+          descriptor.parameters.bindings.push(binding);
+        }
+      });
+    }
+    if (meshDescriptor.parameters.bindGroups) {
+      descriptor.parameters.bindGroups = meshDescriptor.parameters.bindGroups;
+    }
     descriptor.parameters.shaders = buildShaders(descriptor, shaderParameters);
   });
   return {
