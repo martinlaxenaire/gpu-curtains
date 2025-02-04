@@ -356,11 +356,11 @@ window.addEventListener('load', async () => {
     orbitControls.useCamera(camera)
   }
 
+  let variantsFolder = gui.addFolder('Variants')
+
   const animationsFolder = gui.addFolder('Animations')
 
   let animationsFields = []
-
-  let variantsFolder = gui.addFolder('Variants')
 
   // gltf
   const gltfLoader = new GLTFLoader()
@@ -614,16 +614,19 @@ window.addEventListener('load', async () => {
       availableVariants = gltf.extensions['KHR_materials_variants'].variants.map((variant) => variant.name)
     }
 
-    variantsFolder.add({ variants: 'Default' }, 'variants', ['Default', ...availableVariants]).onChange((value) => {
-      debugField.reset()
+    variantsFolder
+      .add({ variants: 'Default' }, 'variants', ['Default', ...availableVariants])
+      .name('Active variant')
+      .onChange((value) => {
+        debugField.reset()
 
-      scenesManager.meshesDescriptors.forEach((meshDescriptor, index) => {
-        const alternateMaterial = meshDescriptor.alternateMaterials.get(value)
-        if (alternateMaterial) {
-          meshes[index].useMaterial(alternateMaterial)
-        }
+        scenesManager.meshesDescriptors.forEach((meshDescriptor, index) => {
+          const alternateMaterial = meshDescriptor.alternateMaterials.get(value)
+          if (alternateMaterial) {
+            meshes[index].useMaterial(alternateMaterial)
+          }
+        })
       })
-    })
 
     // animations
     if (scenesManager.animations.length) {
