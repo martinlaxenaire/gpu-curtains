@@ -10561,7 +10561,7 @@ ${geometry.wgslStructFragment}`
           if (this.geometry) {
             currentCacheKey = this.material.cacheKey;
           }
-          if (this.options.renderBundle) {
+          if (this.options.renderBundle && !isDepthMaterialSwitch) {
             this.options.renderBundle.ready = false;
           }
         }

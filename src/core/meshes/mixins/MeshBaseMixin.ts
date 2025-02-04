@@ -933,7 +933,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
           currentCacheKey = this.material.cacheKey
         }
 
-        if (this.options.renderBundle) {
+        if (this.options.renderBundle && !isDepthMaterialSwitch) {
           this.options.renderBundle.ready = false
         }
       }
