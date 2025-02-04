@@ -29,7 +29,72 @@ export type GLTFExtensionsTypes =
 /** Array of all available glTF extensions. */
 export type GLTFExtensionsUsed = Array<GLTFExtensionsTypes>
 
-/* DISPERSION */
+/* TOP LEVEL EXTENSIONS */
+
+/** Define the `KHR_materials_variants` extension top level options. */
+export interface GLTFVariants {
+  /** Array of available variants names. */
+  variants?: Array<Record<'name', string>>
+}
+
+/** Base mapping for all potential top level GLTF extensions types. */
+export type GLTFExtensionsMapping = {
+  /** Define the `KHR_materials_variants` extension options. */
+  KHR_materials_variants: GLTFVariants
+}
+
+/** Extract keys from GLTFExtensionsTypes that are present in GLTFExtensionsMapping. */
+export type ExtensionKeys = Extract<keyof GLTFExtensionsMapping, GLTFExtensionsTypes>
+
+/**  All the glTF top level extensions properties. */
+export type GLTFExtensions = Pick<GLTFExtensionsMapping, ExtensionKeys>
+
+/* NODE EXTENSIONS */
+
+/** Define the `EXT_mesh_gpu_instancing` extension nodes options. */
+export interface GLTFMeshGPUInstancingExtension {
+  /** contains accessor ids for the `TRANSLATION`, `ROTATION`, and `SCALE` attribute buffers, all of which are optional. */
+  attributes?: GLTF.IMeshPrimitive['attributes']
+}
+
+/** Base mapping for all potential nodes GLTF extensions types. */
+export type GLTFNodesExtensionsMapping = {
+  /** Define the `EXT_mesh_gpu_instancing` extension node options. */
+  EXT_mesh_gpu_instancing: GLTFMeshGPUInstancingExtension
+}
+
+/** Extract keys from GLTFExtensionsTypes that are present in GLTFNodesExtensionsMapping. */
+export type NodesExtensionKeys = Extract<keyof GLTFNodesExtensionsMapping, GLTFExtensionsTypes>
+
+/**  All the glTF nodes extensions properties. */
+export type GLTFNodesExtensions = Pick<GLTFNodesExtensionsMapping, NodesExtensionKeys>
+
+/* PRIMITIVE EXTENSIONS */
+
+/** Define the `KHR_materials_variants` extension primitives options. */
+export interface GLTFMaterialsVariants {
+  /** Defines the mappings between the registered material variants in the glTF extension declared at top level and a {@link GLTF.IMeshPrimitive.material | glTF material index}. */
+  mappings?: Array<{
+    /** {@link GLTF.IMeshPrimitive.material | glTF material index} to use for the variants. */
+    material?: GLTF.IMeshPrimitive['material']
+    /** Variants indices fom the glTF extension declared at top level. */
+    variants?: number[]
+  }>
+}
+
+/** Base mapping for all potential primitives GLTF extensions types. */
+export type GLTFPrimitivesExtensionsMapping = {
+  /** Define the `KHR_materials_variants` extension primitives options. */
+  KHR_materials_variants: GLTFMaterialsVariants
+}
+
+/** Extract keys from GLTFExtensionsTypes that are present in GLTFPrimitivesExtensionsMapping. */
+export type PrimitivesExtensionKeys = Extract<keyof GLTFPrimitivesExtensionsMapping, GLTFExtensionsTypes>
+
+/**  All the glTF primitives extensions properties. */
+export type GLTFPrimitivesExtensions = Pick<GLTFPrimitivesExtensionsMapping, PrimitivesExtensionKeys>
+
+/* MATERIALS EXTENSIONS */
 
 /** Define the `KHR_materials_dispersion` extension materials options. */
 export interface GLTFMaterialsDispersionExtension {
@@ -37,23 +102,17 @@ export interface GLTFMaterialsDispersionExtension {
   dispersion?: number
 }
 
-/* EMISSIVE STRENGTH */
-
 /** Define the `KHR_materials_emissive_strength` extension materials options. */
 export interface GLTFMaterialsEmissiveStrengthExtension {
   /** The strength adjustment to be multiplied with the material's emissive value. Default to `1.0`. */
   emissiveStrength?: number
 }
 
-/* IOR */
-
 /** Define the `KHR_materials_ior` extension materials options. */
 export interface GLTFMaterialsIorExtension {
   /** The index of refraction. Default to `1.5`.  */
   ior?: number
 }
-
-/* SPECULAR */
 
 /** Define the `KHR_materials_specular` extension materials options. */
 export interface GLTFMaterialsSpecularExtension {
@@ -67,8 +126,6 @@ export interface GLTFMaterialsSpecularExtension {
   specularColorTexture?: GLTF.ITextureInfo
 }
 
-/* TRANSMISSION */
-
 /** Define the `KHR_materials_transmission` extension materials options. */
 export interface GLTFMaterialsTransmissionExtension {
   /** The base percentage of light that is transmitted through the surface. Default to `0`. */
@@ -76,27 +133,6 @@ export interface GLTFMaterialsTransmissionExtension {
   /** A texture that defines the transmission percentage of the surface, stored in the `R` channel. This will be multiplied by `transmissionFactor`. */
   transmissionTexture?: GLTF.ITextureInfo
 }
-
-/* VARIANTS */
-
-/** Define the `KHR_materials_variants` extension top level options. */
-export interface GLTFVariants {
-  /** Array of available variants names. */
-  variants?: Array<Record<'name', string>>
-}
-
-/** Define the `KHR_materials_variants` extension materials options. */
-export interface GLTFMaterialsVariants {
-  /** Defines the mappings between the registered material variants in the glTF extension declared at top level and a {@link GLTF.IMeshPrimitive.material | glTF material index}. */
-  mappings?: Array<{
-    /** {@link GLTF.IMeshPrimitive.material | glTF material index} to use for the variants. */
-    material?: GLTF.IMeshPrimitive['material']
-    /** Variants indices fom the glTF extension declared at top level. */
-    variants?: number[]
-  }>
-}
-
-/* VOLUME */
 
 /** Define the `KHR_materials_volume` extension materials options. */
 export interface GLTFMaterialsVolumeExtension {
@@ -110,30 +146,6 @@ export interface GLTFMaterialsVolumeExtension {
   attenuationColor?: [number, number, number]
 }
 
-/* INSTANCING */
-
-/** Define the `EXT_mesh_gpu_instancing` extension materials options. */
-export interface GLTFMeshGPUInstancingExtension {
-  /** contains accessor ids for the `TRANSLATION`, `ROTATION`, and `SCALE` attribute buffers, all of which are optional. */
-  attributes?: GLTF.IMeshPrimitive['attributes']
-}
-
-/* TOP LEVEL EXTENSIONS */
-
-/** Base mapping for all potential top level GLTF extensions types. */
-export type GLTFExtensionsMapping = {
-  /** Define the `KHR_materials_variants` extension options. */
-  KHR_materials_variants: GLTFVariants
-}
-
-/** Extract keys from GLTFExtensionsTypes that are present in GLTFMaterialsExtensionsMapping. */
-export type ExtensionKeys = Extract<keyof GLTFExtensionsMapping, GLTFExtensionsTypes>
-
-/**  All the glTF materials extensions properties. */
-export type GLTFExtensions = Pick<GLTFExtensionsMapping, ExtensionKeys>
-
-/* MATERIALS EXTENSIONS */
-
 /** Base mapping for all potential GLTF materials extensions types. */
 export type GLTFMaterialsExtensionsMapping = {
   /** Define the `KHR_materials_dispersion` extension materials options. */
@@ -142,8 +154,6 @@ export type GLTFMaterialsExtensionsMapping = {
   KHR_materials_emissive_strength: GLTFMaterialsEmissiveStrengthExtension
   /** Define the `KHR_materials_ior` extension materials options. */
   KHR_materials_ior: GLTFMaterialsIorExtension
-  /** Define the `KHR_materials_variants` extension materials options. */
-  KHR_materials_variants: GLTFMaterialsVariants
   /** Define the `KHR_materials_transmission` extension materials options. */
   KHR_materials_transmission: GLTFMaterialsTransmissionExtension
   /** Define the `KHR_materials_specular` extension materials options. */
@@ -152,8 +162,6 @@ export type GLTFMaterialsExtensionsMapping = {
   KHR_materials_unlit: Record<string, never>
   /** Define the `KHR_materials_volume` extension materials options. */
   KHR_materials_volume: GLTFMaterialsVolumeExtension
-  /** Define the `EXT_mesh_gpu_instancing` extension materials options. */
-  EXT_mesh_gpu_instancing: GLTFMeshGPUInstancingExtension
 }
 
 /** Extract keys from GLTFExtensionsTypes that are present in GLTFMaterialsExtensionsMapping. */
