@@ -77,7 +77,7 @@ class DOMTexture extends Object3D {
       height: 1,
       depth: 1
     };
-    this.textureMatrix = new BufferBinding({
+    this.transformBinding = new BufferBinding({
       label: this.options.label + ": model matrix",
       name: this.options.name + "Matrix",
       useStruct: false,
@@ -88,7 +88,7 @@ class DOMTexture extends Object3D {
         }
       }
     });
-    this.renderer.deviceManager.bufferBindings.set(this.textureMatrix.cacheKey, this.textureMatrix);
+    this.renderer.deviceManager.bufferBindings.set(this.transformBinding.cacheKey, this.transformBinding);
     this.setBindings();
     this._parentMesh = null;
     this.sourceLoaded = false;
@@ -110,7 +110,7 @@ class DOMTexture extends Object3D {
         texture: this.options.sourceType === "externalVideo" ? this.externalTexture : this.texture,
         viewDimension: this.options.viewDimension
       }),
-      this.textureMatrix
+      this.transformBinding
     ];
   }
   /**
@@ -204,7 +204,7 @@ class DOMTexture extends Object3D {
   updateMatrixStack() {
     super.updateMatrixStack();
     if (this.matricesNeedUpdate) {
-      this.textureMatrix.shouldUpdateBinding(this.options.name + "Matrix");
+      this.transformBinding.shouldUpdateBinding(this.options.name + "Matrix");
     }
   }
   /**
@@ -458,7 +458,7 @@ class DOMTexture extends Object3D {
    */
   render() {
     this.updateMatrixStack();
-    this.textureMatrix.update();
+    this.transformBinding.update();
     if (this.options.sourceType === "externalVideo") {
       this.shouldUpdate = true;
     }

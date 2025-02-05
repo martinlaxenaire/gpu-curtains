@@ -47,7 +47,7 @@ export const getBaseColor = ({
 
     if (baseColorTexture.texture.options.useTransform) {
       baseColor += /* wgsl */ `
-  baseColorUV = (${baseColorTexture.texture.options.name}Matrix * vec3(baseColorUV, 1.0)).xy;`
+  baseColorUV = (texturesMatrices.${baseColorTexture.texture.options.name}.matrix * vec3(baseColorUV, 1.0)).xy;`
     }
 
     baseColor += /* wgsl */ `

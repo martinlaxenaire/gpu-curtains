@@ -74,8 +74,8 @@ export class DOMTexture extends Object3D {
   options: DOMTextureOptions
 
   /** A {@link BufferBinding | buffer binding} that will hold the texture model matrix */
-  textureMatrix: BufferBinding
-  /** The bindings used by this {@link DOMTexture}, i.e. its {@link textureMatrix} and its {@link TextureBinding | GPU texture binding} */
+  transformBinding: BufferBinding
+  /** The bindings used by this {@link DOMTexture}, i.e. its {@link transformBinding} and its {@link TextureBinding | GPU texture binding} */
   bindings: BindGroupBindingElement[]
 
   /** {@link DOMTexture} parentMesh if any */
@@ -150,19 +150,18 @@ export class DOMTexture extends Object3D {
     }
 
     // we will always declare a texture matrix
-    this.textureMatrix = new BufferBinding({
-      label: this.options.label + ': model matrix',
-      name: this.options.name + 'Matrix',
-      useStruct: false,
+    this.transformBinding = new BufferBinding({
+      label: this.options.label,
+      name: this.options.name,
       struct: {
-        [this.options.name + 'Matrix']: {
+        matrix: {
           type: 'mat4x4f',
           value: this.modelMatrix,
         },
       },
     })
 
-    this.renderer.deviceManager.bufferBindings.set(this.textureMatrix.cacheKey, this.textureMatrix)
+    this.renderer.deviceManager.bufferBindings.set(this.transformBinding.cacheKey, this.transformBinding)
 
     this.setBindings()
 
@@ -189,7 +188,6 @@ export class DOMTexture extends Object3D {
         texture: this.options.sourceType === 'externalVideo' ? this.externalTexture : this.texture,
         viewDimension: this.options.viewDimension,
       }),
-      this.textureMatrix,
     ]
   }
 
@@ -333,13 +331,14 @@ export class DOMTexture extends Object3D {
   }
 
   /**
-   * If our {@link modelMatrix} has been updated, tell the {@link textureMatrix | texture matrix binding} to update as well
+   * If our {@link modelMatrix} has been updated, tell the {@link transformBinding | texture matrix binding} to update as well
    */
   updateMatrixStack() {
     super.updateMatrixStack()
 
     if (this.matricesNeedUpdate) {
-      this.textureMatrix.shouldUpdateBinding(this.options.name + 'Matrix')
+      this.transformBinding.inputs.matrix.shouldUpdate = true
+      console.log('should update transform binding', this.transformBinding.inputs)
     }
   }
 
@@ -677,7 +676,7 @@ export class DOMTexture extends Object3D {
     this.updateMatrixStack()
 
     // update uniforms values
-    this.textureMatrix.update()
+    //this.transformBinding.update()
 
     // since external texture are destroyed as soon as JavaScript returns to the browser
     // we need to update it at every tick, even if it hasn't changed

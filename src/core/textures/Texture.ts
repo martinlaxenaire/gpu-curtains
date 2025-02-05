@@ -200,11 +200,11 @@ export class Texture {
 
     if (this.options.useTransform) {
       this.transformBinding = new BufferBinding({
-        label: this.options.label + ': model matrix',
-        name: this.options.name + 'Matrix',
-        useStruct: false,
+        label: this.options.label,
+        name: this.options.name,
+        //useStruct: false,
         struct: {
-          [this.options.name + 'Matrix']: {
+          matrix: {
             type: 'mat3x3f',
             value: this.modelMatrix,
           },
@@ -213,7 +213,7 @@ export class Texture {
 
       this.updateModelMatrix()
 
-      this.bindings.push(this.transformBinding)
+      //this.bindings.push(this.transformBinding)
     }
 
     // texture
@@ -367,7 +367,7 @@ export class Texture {
     origin = [0, 0, 0],
     colorSpace = 'srgb',
   }: {
-    source: GPUImageCopyExternalImageSource
+    source: GPUCopyExternalImageSource
     width?: number
     height?: number
     depth?: number
@@ -375,7 +375,7 @@ export class Texture {
     colorSpace?: PredefinedColorSpace
   }) {
     this.renderer.device.queue.copyExternalImageToTexture(
-      { source: source, flipY: this.options.flipY },
+      { source, flipY: this.options.flipY },
       { texture: this.texture, premultipliedAlpha: this.options.premultipliedAlpha, origin, colorSpace },
       [width, height, depth]
     )

@@ -542,11 +542,6 @@ export class Material {
       this.domTextures.push(texture)
     } else if (texture instanceof Texture) {
       this.textures.push(texture)
-
-      // update texture transformation binding if needed
-      if (texture.options.useTransform) {
-        texture.transformBinding.shouldUpdate = true
-      }
     }
 
     // is it used in our shaders?

@@ -5,6 +5,7 @@ import { DOMTexture } from '../textures/DOMTexture'
 import { Sampler } from '../samplers/Sampler'
 import { BindGroupParams } from '../../types/BindGroups'
 import { MaterialTexture } from '../../types/Materials'
+import { BufferBinding } from '../bindings/BufferBinding'
 
 /**
  * An object defining all possible {@link TextureBindGroup} class instancing parameters
@@ -63,6 +64,9 @@ export interface TextureBindGroupParams extends BindGroupParams {
  * ```
  */
 export class TextureBindGroup extends BindGroup {
+  #texturesWithMatrices: MaterialTexture[]
+  texturesMatricesBinding: BufferBinding | null
+
   /**
    * TextureBindGroup constructor
    * @param  renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object
@@ -100,6 +104,8 @@ export class TextureBindGroup extends BindGroup {
     }
 
     this.type = type
+
+    this.texturesMatricesBinding = null
   }
 
   /**
@@ -150,6 +156,54 @@ export class TextureBindGroup extends BindGroup {
     )
   }
 
+  setTexturesMatricesBinding() {
+    this.#texturesWithMatrices = this.textures.filter((texture) => !!texture.transformBinding)
+
+    const texturesBindings = this.#texturesWithMatrices.map((texture) => {
+      return texture.transformBinding
+    })
+
+    if (texturesBindings.length) {
+      // random label name to avoid duplicates
+      const label = 'Textures matrices ' + Math.floor(Math.random() * 9999)
+      const baseName = 'texturesMatrices'
+      const name = this.index > 1 ? `${baseName}${this.index}` : baseName
+
+      this.texturesMatricesBinding = new BufferBinding({
+        label,
+        name,
+        childrenBindings: texturesBindings.map((textureBinding) => {
+          return {
+            binding: textureBinding,
+            count: 1,
+            forceArray: false,
+          }
+        }),
+      })
+
+      // force texture matrices binding to use original bindings values
+      // since they have been actually cloned
+      this.texturesMatricesBinding.childrenBindings.forEach((childrenBinding, i) => {
+        childrenBinding.inputs.matrix.value = texturesBindings[i].inputs.matrix.value
+        // force update for init
+        texturesBindings[i].inputs.matrix.shouldUpdate = true
+      })
+
+      this.texturesMatricesBinding.buffer.consumers.add(this.uuid)
+
+      const hasMatricesBinding = this.bindings.find((binding) => binding.name === baseName)
+
+      if (!hasMatricesBinding) {
+        this.addBinding(this.texturesMatricesBinding)
+      }
+    }
+  }
+
+  createBindGroup() {
+    this.setTexturesMatricesBinding()
+    super.createBindGroup()
+  }
+
   /**
    * Update the {@link TextureBindGroup#textures | bind group textures}:
    * - Check if they need to copy their source texture
@@ -167,6 +221,16 @@ export class TextureBindGroup extends BindGroup {
           texture.uploadVideoTexture()
         }
       }
+    }
+
+    if (this.texturesMatricesBinding) {
+      this.#texturesWithMatrices.forEach((texture, i) => {
+        this.texturesMatricesBinding.childrenBindings[i].inputs.matrix.shouldUpdate =
+          !!texture.transformBinding.inputs.matrix.shouldUpdate
+
+        // reset original flag
+        texture.transformBinding.inputs.matrix.shouldUpdate = false
+      })
     }
   }
 

@@ -430,9 +430,9 @@ export class GPUDeviceManager {
       try {
         this.device?.queue.copyExternalImageToTexture(
           {
-            source: texture.source as GPUImageCopyExternalImageSource,
+            source: texture.source as GPUCopyExternalImageSource,
             flipY: texture.options.flipY,
-          } as GPUImageCopyExternalImage,
+          } as GPUCopyExternalImageSourceInfo,
           { texture: texture.texture as GPUTexture, premultipliedAlpha: texture.options.premultipliedAlpha },
           { width: texture.size.width, height: texture.size.height }
         )

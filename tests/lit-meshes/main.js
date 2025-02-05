@@ -232,6 +232,10 @@ window.addEventListener('load', async () => {
 
     meshes.push(lambertSphere)
 
+    if (hasBaseColorTexture) {
+      lambertSphere.onReady(() => console.log(lambertSphere.material.getShaderCode('fragment')))
+    }
+
     // phong
     const phongSphere = new LitMesh(gpuCameraRenderer, {
       label: 'Phong sphere',
@@ -429,6 +433,7 @@ window.addEventListener('load', async () => {
       height: normalImage.height,
     },
     autoDestroy: false,
+    useTransform: true,
   })
 
   normalTexture.uploadSource({ source: normalImage })
