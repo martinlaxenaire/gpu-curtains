@@ -270,4 +270,28 @@ export class Mat3 {
   getNormalMatrix(matrix: Mat4 = new Mat4()): Mat3 {
     return this.setFromMat4(matrix).invert().transpose()
   }
+
+  /**
+   * Set a transformation matrix from translation, scale and center 2D coordinates and a rotation. Useful to compute UV transformation matrices.
+   * @param tx - translation along X axis.
+   * @param ty - translation along Y axis.
+   * @param sx - Scale along X axis.
+   * @param sy - Scale along Y axis.
+   * @param rotation - Rotation in radians.
+   * @param cx - Center of the transformation along X axis.
+   * @param cy - Center of the transformation along Y axis.
+   */
+  setUVTransform(tx = 0, ty = 0, sx = 1, sy = 1, rotation = 0, cx = 0, cy = 0): Mat3 {
+    const c = Math.cos(rotation)
+    const s = Math.sin(rotation)
+
+    // prettier-ignore
+    this.set(
+      sx * c, sx * s, - sx * ( c * cx + s * cy ) + cx + tx,
+      - sy * s, sy * c, - sy * ( - s * cx + c * cy ) + cy + ty,
+      0, 0, 1
+    );
+
+    return this
+  }
 }

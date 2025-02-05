@@ -1,7 +1,10 @@
 import { isRenderer } from '../renderers/utils.mjs';
 import { TextureBinding } from '../bindings/TextureBinding.mjs';
-import { generateUUID } from '../../utils/utils.mjs';
+import { generateUUID, throwWarning } from '../../utils/utils.mjs';
 import { getNumMipLevels, getDefaultTextureUsage } from './utils.mjs';
+import { Vec2 } from '../../math/Vec2.mjs';
+import { Mat3 } from '../../math/Mat3.mjs';
+import { BufferBinding } from '../bindings/BufferBinding.mjs';
 
 var __accessCheck = (obj, member, msg) => {
   if (!member.has(obj))
@@ -9,7 +12,7 @@ var __accessCheck = (obj, member, msg) => {
 };
 var __privateGet = (obj, member, getter) => {
   __accessCheck(obj, member, "read from private field");
-  return member.get(obj);
+  return getter ? getter.call(obj) : member.get(obj);
 };
 var __privateAdd = (obj, member, value) => {
   if (member.has(obj))
@@ -21,7 +24,7 @@ var __privateSet = (obj, member, value, setter) => {
   member.set(obj, value);
   return value;
 };
-var _autoResize;
+var _autoResize, _rotation;
 const defaultTextureParams = {
   label: "Texture",
   name: "renderTexture",
@@ -36,17 +39,21 @@ const defaultTextureParams = {
   generateMips: false,
   flipY: false,
   premultipliedAlpha: false,
-  autoDestroy: true
+  autoDestroy: true,
+  // texture transform
+  useTransform: false
 };
 class Texture {
   /**
    * Texture constructor
-   * @param renderer - {@link Renderer | renderer} object or {@link GPUCurtains} class object used to create this {@link Texture}
-   * @param parameters - {@link TextureParams | parameters} used to create this {@link Texture}
+   * @param renderer - {@link Renderer | renderer} object or {@link GPUCurtains} class object used to create this {@link Texture}.
+   * @param parameters - {@link TextureParams | parameters} used to create this {@link Texture}.
    */
   constructor(renderer, parameters = defaultTextureParams) {
     /** Whether this texture should be automatically resized when the {@link Renderer renderer} size changes. Default to true. */
     __privateAdd(this, _autoResize, true);
+    /** Rotation to apply to the {@link Texture} if {@link TextureBaseParams#useTransform | useTransform} parameter has been set to `true`. */
+    __privateAdd(this, _rotation, void 0);
     renderer = isRenderer(renderer, parameters.label ? parameters.label + " Texture" : "Texture");
     this.type = "Texture";
     this.renderer = renderer;
@@ -75,13 +82,95 @@ class Texture {
     if (this.options.fixedSize) {
       __privateSet(this, _autoResize, false);
     }
+    __privateSet(this, _rotation, 0);
+    this.offset = new Vec2().onChange(() => this.updateModelMatrix());
+    this.scale = new Vec2(1).onChange(() => this.updateModelMatrix());
+    this.transformOrigin = new Vec2().onChange(() => this.updateModelMatrix());
+    this.modelMatrix = new Mat3();
+    this.transformBinding = null;
     this.setBindings();
+    if (this.options.useTransform) {
+      this.transformBinding = new BufferBinding({
+        label: this.options.label + ": model matrix",
+        name: this.options.name + "Matrix",
+        useStruct: false,
+        struct: {
+          [this.options.name + "Matrix"]: {
+            type: "mat3x3f",
+            value: this.modelMatrix
+          }
+        }
+      });
+      this.updateModelMatrix();
+      this.bindings.push(this.transformBinding);
+    }
     this.renderer.addTexture(this);
     this.createTexture();
   }
+  /* TRANSFORM */
   /**
-   * Copy another {@link Texture} into this {@link Texture}
-   * @param texture - {@link Texture} to copy
+   * Get the actual {@link rotation} value.
+   * @returns - the actual {@link rotation} value.
+   */
+  get rotation() {
+    return __privateGet(this, _rotation);
+  }
+  /**
+   * Set the actual {@link rotation} value and update the {@link modelMatrix}.
+   * @param value - new {@link rotation} value to use.
+   */
+  set rotation(value) {
+    __privateSet(this, _rotation, value);
+    this.updateModelMatrix();
+  }
+  /**
+   * Update the {@link modelMatrix} using the {@link offset}, {@link rotation}, {@link scale} and {@link transformOrigin} and tell the {@link transformBinding} to update, only if {@link TextureBaseParams#useTransform | useTransform} parameter has been set to `true`.
+   */
+  updateModelMatrix() {
+    if (this.options.useTransform) {
+      this.modelMatrix.setUVTransform(
+        this.offset.x,
+        this.offset.y,
+        this.scale.x,
+        this.scale.y,
+        this.rotation,
+        this.transformOrigin.x,
+        this.transformOrigin.y
+      );
+      this.transformBinding.shouldUpdate = true;
+    } else {
+      throwWarning(
+        `Texture: Cannot update ${this.options.name} transformation since its useTransform property has been set to false. You should set it to true when creating the Texture.`
+      );
+    }
+  }
+  /**
+   * Set our {@link Texture#bindings | bindings}.
+   */
+  setBindings() {
+    this.bindings = [
+      new TextureBinding({
+        label: this.options.label + ": " + this.options.name + " texture",
+        name: this.options.name,
+        bindingType: this.options.type,
+        visibility: this.options.visibility,
+        texture: this.texture,
+        format: this.options.format,
+        viewDimension: this.options.viewDimension,
+        multisampled: this.options.sampleCount > 1
+      })
+    ];
+  }
+  /**
+   * Get our {@link TextureBinding | texture binding}.
+   * @readonly
+   */
+  get textureBinding() {
+    return this.bindings[0];
+  }
+  /**
+   * Copy another {@link Texture} into this {@link Texture}.
+   * @param texture - {@link Texture} to copy.
    */
   copy(texture) {
     this.options.fromTexture = texture;
@@ -89,7 +178,7 @@ class Texture {
   }
   /**
    * Copy a {@link GPUTexture} directly into this {@link Texture}. Mainly used for depth textures.
-   * @param texture - {@link GPUTexture} to copy
+   * @param texture - {@link GPUTexture} to copy.
    */
   copyGPUTexture(texture) {
     this.size = {
@@ -105,7 +194,7 @@ class Texture {
     this.textureBinding.resource = this.texture;
   }
   /**
-   * Create the {@link GPUTexture | texture} (or copy it from source) and update the {@link TextureBinding#resource | binding resource}
+   * Create the {@link GPUTexture | texture} (or copy it from source) and update the {@link TextureBinding#resource | binding resource}.
    */
   createTexture() {
     if (!this.size.width || !this.size.height)
@@ -179,32 +268,8 @@ class Texture {
     }
   }
   /**
-   * Set our {@link Texture#bindings | bindings}
-   */
-  setBindings() {
-    this.bindings = [
-      new TextureBinding({
-        label: this.options.label + ": " + this.options.name + " texture",
-        name: this.options.name,
-        bindingType: this.options.type,
-        visibility: this.options.visibility,
-        texture: this.texture,
-        format: this.options.format,
-        viewDimension: this.options.viewDimension,
-        multisampled: this.options.sampleCount > 1
-      })
-    ];
-  }
-  /**
-   * Get our {@link TextureBinding | texture binding}
-   * @readonly
-   */
-  get textureBinding() {
-    return this.bindings[0];
-  }
-  /**
-   * Resize our {@link Texture}, which means recreate it/copy it again and tell the {@link core/bindGroups/TextureBindGroup.TextureBindGroup | texture bind group} to update
-   * @param size - the optional new {@link TextureSize | size} to set
+   * Resize our {@link Texture}, which means recreate it/copy it again and tell the {@link core/bindGroups/TextureBindGroup.TextureBindGroup | texture bind group} to update.
+   * @param size - the optional new {@link TextureSize | size} to set.
    */
   resize(size = null) {
     if (!__privateGet(this, _autoResize))
@@ -223,7 +288,7 @@ class Texture {
     this.createTexture();
   }
   /**
-   * Destroy our {@link Texture}
+   * Destroy our {@link Texture}.
    */
   destroy() {
     this.renderer.removeTexture(this);
@@ -234,5 +299,6 @@ class Texture {
   }
 }
 _autoResize = new WeakMap();
+_rotation = new WeakMap();
 
 export { Texture };

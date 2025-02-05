@@ -96,4 +96,15 @@ export declare class Mat3 {
      * @returns - this {@link Mat3} after being inverted and transposed
      */
     getNormalMatrix(matrix?: Mat4): Mat3;
+    /**
+     * Set a transformation matrix from translation, scale and center 2D coordinates and a rotation. Useful to compute UV transformation matrices.
+     * @param tx - translation along X axis.
+     * @param ty - translation along Y axis.
+     * @param sx - Scale along X axis.
+     * @param sy - Scale along Y axis.
+     * @param rotation - Rotation in radians.
+     * @param cx - Center of the transformation along X axis.
+     * @param cy - Center of the transformation along Y axis.
+     */
+    setUVTransform(tx?: number, ty?: number, sx?: number, sy?: number, rotation?: number, cx?: number, cy?: number): Mat3;
 }

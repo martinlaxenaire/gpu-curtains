@@ -168,16 +168,57 @@ export class GLTFLoader {
     for (let index = 0; index < json.images?.length || 0; ++index) {
       const image = json.images[index]
       if (image.uri) {
-        pendingImages[index] = fetch(GLTFLoader.resolveUri(image.uri, baseUrl)).then(async (response) => {
-          return createImageBitmap(await response.blob())
-        })
+        if (image.uri.includes('.webp')) {
+          pendingImages[index] = new Promise((resolve, reject) => {
+            const img = new Image()
+            img.crossOrigin = 'anonymous' // Ensure CORS is handled properly if needed
+
+            img.onload = () => {
+              createImageBitmap(img, { colorSpaceConversion: 'none' }).then(resolve).catch(reject)
+            }
+
+            img.onerror = reject
+            img.src = GLTFLoader.resolveUri(image.uri, baseUrl)
+          })
+        } else {
+          pendingImages[index] = fetch(GLTFLoader.resolveUri(image.uri, baseUrl)).then(async (response) => {
+            return createImageBitmap(await response.blob(), {
+              colorSpaceConversion: 'none',
+            })
+          })
+        }
       } else {
         const bufferView = json.bufferViews[image.bufferView]
         pendingImages[index] = pendingBuffers[bufferView.buffer].then((buffer) => {
           const blob = new Blob([new Uint8Array(buffer, bufferView.byteOffset, bufferView.byteLength)], {
             type: image.mimeType,
           })
-          return createImageBitmap(blob)
+
+          if (image.mimeType === 'image/webp') {
+            return new Promise((resolve, reject) => {
+              const img = new Image()
+              img.crossOrigin = 'anonymous' // Ensure CORS is handled properly if needed
+              img.src = URL.createObjectURL(blob) // Create an object URL for the blob
+
+              img.onload = () => {
+                createImageBitmap(img, { colorSpaceConversion: 'none' })
+                  .then((bitmap) => {
+                    URL.revokeObjectURL(img.src) // Cleanup the object URL
+                    resolve(bitmap)
+                  })
+                  .catch(reject)
+              }
+
+              img.onerror = (err) => {
+                URL.revokeObjectURL(img.src) // Cleanup on error
+                reject(err)
+              }
+            })
+          } else {
+            return createImageBitmap(blob, {
+              colorSpaceConversion: 'none',
+            })
+          }
         })
       }
     }

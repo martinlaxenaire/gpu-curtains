@@ -145,10 +145,20 @@ window.addEventListener('load', async () => {
       name: 'Alpha Blend Mode Test',
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/AlphaBlendModeTest/glTF/AlphaBlendModeTest.gltf',
     },
+    // base color
+    compareBaseColor: {
+      name: 'Compare Base Color',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/CompareBaseColor/glTF/CompareBaseColor.gltf',
+    },
     // occlusion
     compareAmbientOcclusion: {
       name: 'Compare Ambient Occlusion',
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/CompareAmbientOcclusion/glTF/CompareAmbientOcclusion.gltf',
+    },
+    // normal texture
+    compareNormal: {
+      name: 'Compare Normal',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/CompareNormal/glTF/CompareNormal.gltf',
     },
     // sparse accessors
     simpleSparseAccessor: {
@@ -163,6 +173,11 @@ window.addEventListener('load', async () => {
     boxInterleaved: {
       name: 'Box Interleaved',
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/BoxInterleaved/glTF/BoxInterleaved.gltf',
+    },
+    // texture encoding
+    textureEncodingTest: {
+      name: 'Texture Encoding Test',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/TextureEncodingTest/glTF/TextureEncodingTest.gltf',
     },
     // animations
     animatedCube: {
@@ -256,6 +271,11 @@ window.addEventListener('load', async () => {
     lightsPunctualLamp: {
       name: 'Lights Punctual Lamp',
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/LightsPunctualLamp/glTF/LightsPunctualLamp.gltf',
+    },
+    // texture transform
+    sheenWoodLeatherSofa: {
+      name: 'Sheen Wood Leather Sofa',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/SheenWoodLeatherSofa/glTF/SheenWoodLeatherSofa.gltf',
     },
   }
 

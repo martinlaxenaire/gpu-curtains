@@ -43,9 +43,17 @@ export const getBaseColor = ({
 
   if (baseColorTexture) {
     baseColor += /* wgsl */ `
+  var baseColorUV: vec2f = ${baseColorTexture.texCoordAttributeName ?? 'uv'};`
+
+    if (baseColorTexture.texture.options.useTransform) {
+      baseColor += /* wgsl */ `
+  baseColorUV = (${baseColorTexture.texture.options.name}Matrix * vec3(baseColorUV, 1.0)).xy;`
+    }
+
+    baseColor += /* wgsl */ `
   let baseColorSample: vec4f = textureSample(${baseColorTexture.texture.options.name}, ${
       baseColorTexture.sampler?.name ?? 'defaultSampler'
-    }, ${baseColorTexture.texCoordAttributeName ?? 'uv'});
+    }, baseColorUV);
   baseColor *= baseColorSample;
   `
   }

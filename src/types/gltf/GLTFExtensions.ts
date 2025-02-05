@@ -128,6 +128,52 @@ export type PrimitivesExtensionKeys = Extract<keyof GLTFPrimitivesExtensionsMapp
 /**  All the glTF primitives extensions properties. */
 export type GLTFPrimitivesExtensions = Pick<GLTFPrimitivesExtensionsMapping, PrimitivesExtensionKeys>
 
+/* TEXTURES EXTENSIONS */
+
+/** Define the `EXT_texture_webp` extension textures options. */
+export interface GLTFTextureWebP {
+  /** Specifies a source property that contains the index of the WebP image object. */
+  source: number
+}
+
+/** Base mapping for all potential textures GLTF extensions types. */
+export type GLTFTexturesExtensionsMapping = {
+  /** Define the `EXT_texture_webp` extension textures options. */
+  EXT_texture_webp: GLTFTextureWebP
+}
+
+/** Extract keys from GLTFExtensionsTypes that are present in GLTFTexturesExtensions. */
+export type TexturesExtensionKeys = Extract<keyof GLTFTexturesExtensionsMapping, GLTFExtensionsTypes>
+
+/**  All the glTF textures extensions properties. */
+export type GLTFTexturesExtensions = Pick<GLTFTexturesExtensionsMapping, TexturesExtensionKeys>
+
+/* TEXTURES INFOS EXTENSIONS */
+
+/** Define the `KHR_texture_transform` extension textures infos options. */
+export interface GLTFTextureTransform {
+  /** The offset of the UV coordinate origin as a factor of the texture dimensions. Default to `[0.0, 0.0]`. */
+  offset?: [number, number]
+  /** Rotate the UVs by this many radians counter-clockwise around the origin. This is equivalent to a similar rotation of the image clockwise. Default to `0`. */
+  rotation?: number
+  /** The scale factor applied to the components of the UV coordinates. Default to `[1.0, 1.0]`. */
+  scale?: [number, number]
+  /** Overrides the textureInfo texCoord value if supplied, and if this extension is supported. */
+  texCoord?: number
+}
+
+/** Base mapping for all potential textures infos GLTF extensions types. */
+export type GLTFTexturesInfosExtensionsMapping = {
+  /** Define the `KHR_texture_transform` extension textures infos options. */
+  KHR_texture_transform: GLTFTextureTransform
+}
+
+/** Extract keys from GLTFExtensionsTypes that are present in GLTFTexturesInfosExtensionsMapping. */
+export type TexturesInfosExtensionKeys = Extract<keyof GLTFTexturesInfosExtensionsMapping, GLTFExtensionsTypes>
+
+/**  All the glTF textures infos extensions properties. */
+export type GLTFTexturesInfosExtensions = Pick<GLTFTexturesInfosExtensionsMapping, TexturesInfosExtensionKeys>
+
 /* MATERIALS EXTENSIONS */
 
 /** Define the `KHR_materials_dispersion` extension materials options. */

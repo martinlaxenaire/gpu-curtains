@@ -404,7 +404,10 @@ window.addEventListener('load', async () => {
       height: baseColorImage.height,
     },
     autoDestroy: false,
+    useTransform: true,
   })
+
+  baseColorTexture.scale.set(2, 1)
 
   baseColorTexture.uploadSource({ source: baseColorImage })
 

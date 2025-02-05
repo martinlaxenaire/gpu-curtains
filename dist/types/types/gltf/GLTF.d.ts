@@ -1,4 +1,4 @@
-import { GLTFExtensionsUsed, GLTFMaterialsExtensions, GLTFNodesExtensions, GLTFPrimitivesExtensions } from './GLTFExtensions';
+import { GLTFExtensionsUsed, GLTFMaterialsExtensions, GLTFNodesExtensions, GLTFPrimitivesExtensions, GLTFTexturesExtensions, GLTFTexturesInfosExtensions } from './GLTFExtensions';
 /**
  * Module for glTF 2.0 Interface
  */
@@ -590,6 +590,10 @@ export declare module GLTF {
          * The index of the image used by this texture
          */
         source?: number;
+        /**
+         * Dictionary object with texture extension-specific objects
+         */
+        extensions?: GLTFTexturesExtensions;
     }
     /**
      * Reference to a texture
@@ -603,6 +607,10 @@ export declare module GLTF {
          * The set index of texture's TEXCOORD attribute used for texture coordinate mapping
          */
         texCoord?: number;
+        /**
+         * Dictionary object with texture infos extension-specific objects
+         */
+        extensions?: GLTFTexturesInfosExtensions;
     }
     /**
      * The root object for a glTF asset

@@ -61,11 +61,11 @@ import { ChildDescriptor, MeshDescriptor, MeshDescriptorMaterialParams, Primitiv
  * - [x] KHR_materials_volume
  * - [ ] KHR_mesh_quantization
  * - [ ] KHR_texture_basisu
- * - [ ] KHR_texture_transform
+ * - [x] KHR_texture_transform
  * - [ ] KHR_xmp_json_ld
  * - [x] EXT_mesh_gpu_instancing
  * - [ ] EXT_meshopt_compression
- * - [ ] EXT_texture_webp
+ * - [x] EXT_texture_webp
  *
  * @example
  * ```javascript
@@ -144,9 +144,10 @@ export declare class GLTFScenesManager {
      * @param material - material using that texture.
      * @param image - image source of the texture.
      * @param name - name of the texture.
+     * @param useTransform - Whether the {@link Texture} should handle transformations.
      * @returns - newly created {@link Texture}.
      */
-    createTexture(material: GLTF.IMaterial, image: ImageBitmap, name: string): Texture;
+    createTexture(material: GLTF.IMaterial, image: ImageBitmap, name: string, useTransform?: boolean): Texture;
     /**
      * Create the {ScenesManager.materialsTextures | scenesManager materialsTextures array} and each associated {@link types/gltf/GLTFScenesManager.MaterialTexture | MaterialTexture} and their respective {@link Texture}.
      */

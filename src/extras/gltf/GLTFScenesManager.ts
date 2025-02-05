@@ -92,11 +92,11 @@ const GL = WebGLRenderingContext
  * - [x] KHR_materials_volume
  * - [ ] KHR_mesh_quantization
  * - [ ] KHR_texture_basisu
- * - [ ] KHR_texture_transform
+ * - [x] KHR_texture_transform
  * - [ ] KHR_xmp_json_ld
  * - [x] EXT_mesh_gpu_instancing
  * - [ ] EXT_meshopt_compression
- * - [ ] EXT_texture_webp
+ * - [x] EXT_texture_webp
  *
  * @example
  * ```javascript
@@ -374,9 +374,10 @@ export class GLTFScenesManager {
    * @param material - material using that texture.
    * @param image - image source of the texture.
    * @param name - name of the texture.
+   * @param useTransform - Whether the {@link Texture} should handle transformations.
    * @returns - newly created {@link Texture}.
    */
-  createTexture(material: GLTF.IMaterial, image: ImageBitmap, name: string): Texture {
+  createTexture(material: GLTF.IMaterial, image: ImageBitmap, name: string, useTransform = false): Texture {
     // TODO check for all textures!
     const format = (() => {
       switch (name) {
@@ -405,6 +406,7 @@ export class GLTFScenesManager {
         width: image.width,
         height: image.height,
       },
+      useTransform,
     })
 
     texture.uploadSource({
@@ -420,6 +422,8 @@ export class GLTFScenesManager {
   createMaterialTextures() {
     this.scenesManager.materialsTextures = []
 
+    const createdTextures: Array<{ index: number; texture: Texture }> = []
+
     if (this.gltf.materials) {
       for (const [materialIndex, material] of Object.entries(this.gltf.materials)) {
         // TODO handle custom/additional UV attributes
@@ -434,17 +438,80 @@ export class GLTFScenesManager {
           return texture.texCoord !== 0 ? 'uv' + texture.texCoord : 'uv'
         }
 
-        const createTexture = (gltfTexture: GLTF.ITextureInfo, name) => {
-          const index = gltfTexture.index
-          const image = this.gltf.imagesBitmaps[this.gltf.textures[index].source]
+        const createTexture = (gltfTextureInfo: GLTF.ITextureInfo, name) => {
+          const index = gltfTextureInfo.index
+          const gltfTexture = this.gltf.textures[index]
+          const source =
+            gltfTexture.extensions && gltfTexture.extensions['EXT_texture_webp']
+              ? gltfTexture.extensions['EXT_texture_webp'].source
+              : gltfTexture.source
 
-          const texture = this.createTexture(material, image, name)
-          const samplerIndex = this.gltf.textures.find((t) => t.source === index)?.sampler
+          const samplerIndex = this.gltf.textures.find((t) => {
+            const src =
+              t.extensions && t.extensions['EXT_texture_webp'] ? t.extensions['EXT_texture_webp'].source : t.source
+            return src === index
+          })?.sampler
+
+          const sampler = this.scenesManager.samplers[samplerIndex ?? 0]
+
+          const textureTransform = gltfTextureInfo.extensions && gltfTextureInfo.extensions['KHR_texture_transform']
+
+          const texCoordAttributeName = getUVAttributeName(
+            textureTransform && textureTransform.texCoord !== undefined ? textureTransform : gltfTextureInfo
+          )
+
+          const hasTexture = createdTextures.find((createdTexture) => createdTexture.index === index)
+
+          if (hasTexture) {
+            const reusedTexture = new Texture(this.renderer, {
+              label: material.name ? material.name + ': ' + name : name,
+              name,
+              visibility: ['fragment'],
+              generateMips: true, // generate mips by default
+              fromTexture: hasTexture.texture,
+              ...(textureTransform && { useTransform: true }),
+            })
+
+            if (textureTransform) {
+              const { offset, rotation, scale, texCoord } = textureTransform
+
+              if (offset !== undefined) reusedTexture.offset.set(offset[0], offset[1])
+              if (rotation !== undefined) reusedTexture.rotation = rotation
+              if (scale !== undefined) reusedTexture.scale.set(scale[0], scale[1])
+            }
+
+            materialTextures.texturesDescriptors.push({
+              texture: reusedTexture,
+              sampler,
+              texCoordAttributeName,
+            })
+
+            return
+          }
+
+          const image = this.gltf.imagesBitmaps[source]
+
+          const texture = this.createTexture(material, image, name, !!textureTransform)
+
+          if (textureTransform) {
+            console.log(textureTransform, texture)
+
+            const { offset, rotation, scale, texCoord } = textureTransform
+
+            if (offset !== undefined) texture.offset.set(offset[0], offset[1])
+            if (rotation !== undefined) texture.rotation = rotation
+            if (scale !== undefined) texture.scale.set(scale[0], scale[1])
+          }
 
           materialTextures.texturesDescriptors.push({
             texture,
-            sampler: this.scenesManager.samplers[samplerIndex ?? 0],
-            texCoordAttributeName: getUVAttributeName(gltfTexture),
+            sampler,
+            texCoordAttributeName,
+          })
+
+          createdTextures.push({
+            index,
+            texture,
           })
         }
 
@@ -467,12 +534,10 @@ export class GLTFScenesManager {
         }
 
         if (material.normalTexture && material.normalTexture.index !== undefined) {
-          // TODO normal map scale
           createTexture(material.normalTexture, 'normalTexture')
         }
 
         if (material.occlusionTexture && material.occlusionTexture.index !== undefined) {
-          // TODO occlusion map strength
           createTexture(material.occlusionTexture, 'occlusionTexture')
         }
 
