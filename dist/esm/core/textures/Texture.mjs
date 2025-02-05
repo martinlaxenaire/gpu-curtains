@@ -101,6 +101,7 @@ class Texture {
           }
         }
       });
+      this.updateModelMatrix();
       this.bindings.push(this.transformBinding);
     }
     this.renderer.addTexture(this);

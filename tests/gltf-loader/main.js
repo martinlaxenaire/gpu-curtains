@@ -145,10 +145,20 @@ window.addEventListener('load', async () => {
       name: 'Alpha Blend Mode Test',
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/AlphaBlendModeTest/glTF/AlphaBlendModeTest.gltf',
     },
+    // base color
+    compareBaseColor: {
+      name: 'Compare Base Color',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/CompareBaseColor/glTF/CompareBaseColor.gltf',
+    },
     // occlusion
     compareAmbientOcclusion: {
       name: 'Compare Ambient Occlusion',
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/CompareAmbientOcclusion/glTF/CompareAmbientOcclusion.gltf',
+    },
+    // normal texture
+    compareNormal: {
+      name: 'Compare Normal',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/CompareNormal/glTF/CompareNormal.gltf',
     },
     // sparse accessors
     simpleSparseAccessor: {

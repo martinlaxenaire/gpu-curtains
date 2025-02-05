@@ -5280,6 +5280,7 @@
             }
           }
         });
+        this.updateModelMatrix();
         this.bindings.push(this.transformBinding);
       }
       this.renderer.addTexture(this);
@@ -5864,6 +5865,9 @@
         this.domTextures.push(texture);
       } else if (texture instanceof Texture) {
         this.textures.push(texture);
+        if (texture.options.useTransform) {
+          texture.transformBinding.shouldUpdate = true;
+        }
       }
       if (this.options.shaders.vertex && this.options.shaders.vertex.code.indexOf(texture.options.name) !== -1 || this.options.shaders.fragment && this.options.shaders.fragment.code.indexOf(texture.options.name) !== -1 || this.options.shaders.compute && this.options.shaders.compute.code.indexOf(texture.options.name) !== -1) {
         this.texturesBindGroup.addTexture(texture);
