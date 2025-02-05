@@ -4955,13 +4955,243 @@
     }
   }
 
+  class Mat3 {
+    // prettier-ignore
+    /**
+     * Mat3 constructor
+     * @param elements - initial array to use, default to identity matrix
+     */
+    constructor(elements = new Float32Array([
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1
+    ])) {
+      this.type = "Mat3";
+      this.elements = elements;
+    }
+    /**
+     * Sets the matrix from 9 numbers
+     *
+     * @param n11 - number
+     * @param n12 - number
+     * @param n13 - number
+     * @param n21 - number
+     * @param n22 - number
+     * @param n23 - number
+     * @param n31 - number
+     * @param n32 - number
+     * @param n33 - number
+     * @returns - this {@link Mat3} after being set
+     */
+    set(n11, n12, n13, n21, n22, n23, n31, n32, n33) {
+      const te = this.elements;
+      te[0] = n11;
+      te[1] = n21;
+      te[2] = n31;
+      te[3] = n12;
+      te[4] = n22;
+      te[5] = n32;
+      te[6] = n13;
+      te[7] = n23;
+      te[8] = n33;
+      return this;
+    }
+    /**
+     * Sets the {@link Mat3} to an identity matrix
+     * @returns - this {@link Mat3} after being set
+     */
+    identity() {
+      this.set(1, 0, 0, 0, 1, 0, 0, 0, 1);
+      return this;
+    }
+    /**
+     * Sets the {@link Mat3} values from an array
+     * @param array - array to use
+     * @param offset - optional offset in the array to use
+     * @returns - this {@link Mat3} after being set
+     */
+    // prettier-ignore
+    setFromArray(array = new Float32Array([
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1
+    ]), offset = 0) {
+      for (let i = 0; i < this.elements.length; i++) {
+        this.elements[i] = array[i + offset];
+      }
+      return this;
+    }
+    /**
+     * Copy another {@link Mat3}
+     * @param matrix - matrix to copy
+     * @returns - this {@link Mat3} after being set
+     */
+    copy(matrix = new Mat3()) {
+      const array = matrix.elements;
+      this.elements[0] = array[0];
+      this.elements[1] = array[1];
+      this.elements[2] = array[2];
+      this.elements[3] = array[3];
+      this.elements[4] = array[4];
+      this.elements[5] = array[5];
+      this.elements[6] = array[6];
+      this.elements[7] = array[7];
+      this.elements[8] = array[8];
+      return this;
+    }
+    /**
+     * Clone a {@link Mat3}
+     * @returns - cloned {@link Mat3}
+     */
+    clone() {
+      return new Mat3().copy(this);
+    }
+    /**
+     * Set a {@link Mat3} from a {@link Mat4}.
+     * @param matrix - {@link Mat4} to use.
+     * @returns - this {@link Mat3} after being set.
+     */
+    setFromMat4(matrix = new Mat4()) {
+      const me = matrix.elements;
+      this.set(me[0], me[4], me[8], me[1], me[5], me[9], me[2], me[6], me[10]);
+      return this;
+    }
+    /**
+     * Multiply this {@link Mat3} with another {@link Mat3}
+     * @param matrix - {@link Mat3} to multiply with
+     * @returns - this {@link Mat3} after multiplication
+     */
+    multiply(matrix = new Mat3()) {
+      return this.multiplyMatrices(this, matrix);
+    }
+    /**
+     * Multiply another {@link Mat3} with this {@link Mat3}
+     * @param matrix - {@link Mat3} to multiply with
+     * @returns - this {@link Mat3} after multiplication
+     */
+    premultiply(matrix = new Mat3()) {
+      return this.multiplyMatrices(matrix, this);
+    }
+    /**
+     * Multiply two {@link Mat3}
+     * @param a - first {@link Mat3}
+     * @param b - second {@link Mat3}
+     * @returns - {@link Mat3} resulting from the multiplication
+     */
+    multiplyMatrices(a = new Mat3(), b = new Mat3()) {
+      const ae = a.elements;
+      const be = b.elements;
+      const te = this.elements;
+      const a11 = ae[0], a12 = ae[3], a13 = ae[6];
+      const a21 = ae[1], a22 = ae[4], a23 = ae[7];
+      const a31 = ae[2], a32 = ae[5], a33 = ae[8];
+      const b11 = be[0], b12 = be[3], b13 = be[6];
+      const b21 = be[1], b22 = be[4], b23 = be[7];
+      const b31 = be[2], b32 = be[5], b33 = be[8];
+      te[0] = a11 * b11 + a12 * b21 + a13 * b31;
+      te[3] = a11 * b12 + a12 * b22 + a13 * b32;
+      te[6] = a11 * b13 + a12 * b23 + a13 * b33;
+      te[1] = a21 * b11 + a22 * b21 + a23 * b31;
+      te[4] = a21 * b12 + a22 * b22 + a23 * b32;
+      te[7] = a21 * b13 + a22 * b23 + a23 * b33;
+      te[2] = a31 * b11 + a32 * b21 + a33 * b31;
+      te[5] = a31 * b12 + a32 * b22 + a33 * b32;
+      te[8] = a31 * b13 + a32 * b23 + a33 * b33;
+      return this;
+    }
+    /**
+     * Invert this {@link Mat3}.
+     * @returns - this {@link Mat3} after being inverted
+     */
+    invert() {
+      const te = this.elements, n11 = te[0], n21 = te[1], n31 = te[2], n12 = te[3], n22 = te[4], n32 = te[5], n13 = te[6], n23 = te[7], n33 = te[8], t11 = n33 * n22 - n32 * n23, t12 = n32 * n13 - n33 * n12, t13 = n23 * n12 - n22 * n13, det = n11 * t11 + n21 * t12 + n31 * t13;
+      if (det === 0)
+        return this.set(0, 0, 0, 0, 0, 0, 0, 0, 0);
+      const detInv = 1 / det;
+      te[0] = t11 * detInv;
+      te[1] = (n31 * n23 - n33 * n21) * detInv;
+      te[2] = (n32 * n21 - n31 * n22) * detInv;
+      te[3] = t12 * detInv;
+      te[4] = (n33 * n11 - n31 * n13) * detInv;
+      te[5] = (n31 * n12 - n32 * n11) * detInv;
+      te[6] = t13 * detInv;
+      te[7] = (n21 * n13 - n23 * n11) * detInv;
+      te[8] = (n22 * n11 - n21 * n12) * detInv;
+      return this;
+    }
+    /**
+     * Transpose this {@link Mat3}.
+     * @returns - this {@link Mat3} after being transposed
+     */
+    transpose() {
+      let tmp;
+      const m = this.elements;
+      tmp = m[1];
+      m[1] = m[3];
+      m[3] = tmp;
+      tmp = m[2];
+      m[2] = m[6];
+      m[6] = tmp;
+      tmp = m[5];
+      m[5] = m[7];
+      m[7] = tmp;
+      return this;
+    }
+    /**
+     * Compute a normal {@link Mat3} matrix from a {@link Mat4} transformation matrix.
+     * @param matrix - {@link Mat4} transformation matrix
+     * @returns - this {@link Mat3} after being inverted and transposed
+     */
+    getNormalMatrix(matrix = new Mat4()) {
+      return this.setFromMat4(matrix).invert().transpose();
+    }
+    /**
+     * Set a transformation matrix from translation, scale and center 2D coordinates and a rotation. Useful to compute UV transformation matrices.
+     * @param tx - translation along X axis.
+     * @param ty - translation along Y axis.
+     * @param sx - Scale along X axis.
+     * @param sy - Scale along Y axis.
+     * @param rotation - Rotation in radians.
+     * @param cx - Center of the transformation along X axis.
+     * @param cy - Center of the transformation along Y axis.
+     */
+    setUVTransform(tx = 0, ty = 0, sx = 1, sy = 1, rotation = 0, cx = 0, cy = 0) {
+      const c = Math.cos(rotation);
+      const s = Math.sin(rotation);
+      this.set(
+        sx * c,
+        sx * s,
+        -sx * (c * cx + s * cy) + cx + tx,
+        -sy * s,
+        sy * c,
+        -sy * (-s * cx + c * cy) + cy + ty,
+        0,
+        0,
+        1
+      );
+      return this;
+    }
+  }
+
   var __accessCheck$k = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet$i = (obj, member, getter) => {
     __accessCheck$k(obj, member, "read from private field");
-    return member.get(obj);
+    return getter ? getter.call(obj) : member.get(obj);
   };
   var __privateAdd$k = (obj, member, value) => {
     if (member.has(obj))
@@ -4973,7 +5203,7 @@
     member.set(obj, value);
     return value;
   };
-  var _autoResize;
+  var _autoResize, _rotation;
   const defaultTextureParams = {
     label: "Texture",
     name: "renderTexture",
@@ -4988,17 +5218,21 @@
     generateMips: false,
     flipY: false,
     premultipliedAlpha: false,
-    autoDestroy: true
+    autoDestroy: true,
+    // texture transform
+    useTransform: false
   };
   class Texture {
     /**
      * Texture constructor
-     * @param renderer - {@link Renderer | renderer} object or {@link GPUCurtains} class object used to create this {@link Texture}
-     * @param parameters - {@link TextureParams | parameters} used to create this {@link Texture}
+     * @param renderer - {@link Renderer | renderer} object or {@link GPUCurtains} class object used to create this {@link Texture}.
+     * @param parameters - {@link TextureParams | parameters} used to create this {@link Texture}.
      */
     constructor(renderer, parameters = defaultTextureParams) {
       /** Whether this texture should be automatically resized when the {@link Renderer renderer} size changes. Default to true. */
       __privateAdd$k(this, _autoResize, true);
+      /** Rotation to apply to the {@link Texture} if {@link TextureBaseParams#useTransform | useTransform} parameter has been set to `true`. */
+      __privateAdd$k(this, _rotation, void 0);
       renderer = isRenderer(renderer, parameters.label ? parameters.label + " Texture" : "Texture");
       this.type = "Texture";
       this.renderer = renderer;
@@ -5027,13 +5261,94 @@
       if (this.options.fixedSize) {
         __privateSet$i(this, _autoResize, false);
       }
+      __privateSet$i(this, _rotation, 0);
+      this.offset = new Vec2().onChange(() => this.updateModelMatrix());
+      this.scale = new Vec2(1).onChange(() => this.updateModelMatrix());
+      this.transformOrigin = new Vec2().onChange(() => this.updateModelMatrix());
+      this.modelMatrix = new Mat3();
+      this.transformBinding = null;
       this.setBindings();
+      if (this.options.useTransform) {
+        this.transformBinding = new BufferBinding({
+          label: this.options.label + ": model matrix",
+          name: this.options.name + "Matrix",
+          useStruct: false,
+          struct: {
+            [this.options.name + "Matrix"]: {
+              type: "mat3x3f",
+              value: this.modelMatrix
+            }
+          }
+        });
+        this.bindings.push(this.transformBinding);
+      }
       this.renderer.addTexture(this);
       this.createTexture();
     }
+    /* TRANSFORM */
     /**
-     * Copy another {@link Texture} into this {@link Texture}
-     * @param texture - {@link Texture} to copy
+     * Get the actual {@link rotation} value.
+     * @returns - the actual {@link rotation} value.
+     */
+    get rotation() {
+      return __privateGet$i(this, _rotation);
+    }
+    /**
+     * Set the actual {@link rotation} value and update the {@link modelMatrix}.
+     * @param value - new {@link rotation} value to use.
+     */
+    set rotation(value) {
+      __privateSet$i(this, _rotation, value);
+      this.updateModelMatrix();
+    }
+    /**
+     * Update the {@link modelMatrix} using the {@link offset}, {@link rotation}, {@link scale} and {@link transformOrigin} and tell the {@link transformBinding} to update, only if {@link TextureBaseParams#useTransform | useTransform} parameter has been set to `true`.
+     */
+    updateModelMatrix() {
+      if (this.options.useTransform) {
+        this.modelMatrix.setUVTransform(
+          this.offset.x,
+          this.offset.y,
+          this.scale.x,
+          this.scale.y,
+          this.rotation,
+          this.transformOrigin.x,
+          this.transformOrigin.y
+        );
+        this.transformBinding.shouldUpdate = true;
+      } else {
+        throwWarning(
+          `Texture: Cannot update ${this.options.name} transformation since its useTransform property has been set to false. You should set it to true when creating the Texture.`
+        );
+      }
+    }
+    /**
+     * Set our {@link Texture#bindings | bindings}.
+     */
+    setBindings() {
+      this.bindings = [
+        new TextureBinding({
+          label: this.options.label + ": " + this.options.name + " texture",
+          name: this.options.name,
+          bindingType: this.options.type,
+          visibility: this.options.visibility,
+          texture: this.texture,
+          format: this.options.format,
+          viewDimension: this.options.viewDimension,
+          multisampled: this.options.sampleCount > 1
+        })
+      ];
+    }
+    /**
+     * Get our {@link TextureBinding | texture binding}.
+     * @readonly
+     */
+    get textureBinding() {
+      return this.bindings[0];
+    }
+    /**
+     * Copy another {@link Texture} into this {@link Texture}.
+     * @param texture - {@link Texture} to copy.
      */
     copy(texture) {
       this.options.fromTexture = texture;
@@ -5041,7 +5356,7 @@
     }
     /**
      * Copy a {@link GPUTexture} directly into this {@link Texture}. Mainly used for depth textures.
-     * @param texture - {@link GPUTexture} to copy
+     * @param texture - {@link GPUTexture} to copy.
      */
     copyGPUTexture(texture) {
       this.size = {
@@ -5057,7 +5372,7 @@
       this.textureBinding.resource = this.texture;
     }
     /**
-     * Create the {@link GPUTexture | texture} (or copy it from source) and update the {@link TextureBinding#resource | binding resource}
+     * Create the {@link GPUTexture | texture} (or copy it from source) and update the {@link TextureBinding#resource | binding resource}.
      */
     createTexture() {
       if (!this.size.width || !this.size.height)
@@ -5131,32 +5446,8 @@
       }
     }
     /**
-     * Set our {@link Texture#bindings | bindings}
-     */
-    setBindings() {
-      this.bindings = [
-        new TextureBinding({
-          label: this.options.label + ": " + this.options.name + " texture",
-          name: this.options.name,
-          bindingType: this.options.type,
-          visibility: this.options.visibility,
-          texture: this.texture,
-          format: this.options.format,
-          viewDimension: this.options.viewDimension,
-          multisampled: this.options.sampleCount > 1
-        })
-      ];
-    }
-    /**
-     * Get our {@link TextureBinding | texture binding}
-     * @readonly
-     */
-    get textureBinding() {
-      return this.bindings[0];
-    }
-    /**
-     * Resize our {@link Texture}, which means recreate it/copy it again and tell the {@link core/bindGroups/TextureBindGroup.TextureBindGroup | texture bind group} to update
-     * @param size - the optional new {@link TextureSize | size} to set
+     * Resize our {@link Texture}, which means recreate it/copy it again and tell the {@link core/bindGroups/TextureBindGroup.TextureBindGroup | texture bind group} to update.
+     * @param size - the optional new {@link TextureSize | size} to set.
      */
     resize(size = null) {
       if (!__privateGet$i(this, _autoResize))
@@ -5175,7 +5466,7 @@
       this.createTexture();
     }
     /**
-     * Destroy our {@link Texture}
+     * Destroy our {@link Texture}.
      */
     destroy() {
       this.renderer.removeTexture(this);
@@ -5186,6 +5477,7 @@
     }
   }
   _autoResize = new WeakMap();
+  _rotation = new WeakMap();
 
   class Material {
     /**
@@ -10980,210 +11272,6 @@ ${geometry.wgslStructFragment}`
         (mouseCoords.x - this.size.document.left) / this.size.document.width * 2 - 1,
         1 - (mouseCoords.y - this.size.document.top) / this.size.document.height * 2
       );
-    }
-  }
-
-  class Mat3 {
-    // prettier-ignore
-    /**
-     * Mat3 constructor
-     * @param elements - initial array to use, default to identity matrix
-     */
-    constructor(elements = new Float32Array([
-      1,
-      0,
-      0,
-      0,
-      1,
-      0,
-      0,
-      0,
-      1
-    ])) {
-      this.type = "Mat3";
-      this.elements = elements;
-    }
-    /**
-     * Sets the matrix from 9 numbers
-     *
-     * @param n11 - number
-     * @param n12 - number
-     * @param n13 - number
-     * @param n21 - number
-     * @param n22 - number
-     * @param n23 - number
-     * @param n31 - number
-     * @param n32 - number
-     * @param n33 - number
-     * @returns - this {@link Mat3} after being set
-     */
-    set(n11, n12, n13, n21, n22, n23, n31, n32, n33) {
-      const te = this.elements;
-      te[0] = n11;
-      te[1] = n21;
-      te[2] = n31;
-      te[3] = n12;
-      te[4] = n22;
-      te[5] = n32;
-      te[6] = n13;
-      te[7] = n23;
-      te[8] = n33;
-      return this;
-    }
-    /**
-     * Sets the {@link Mat3} to an identity matrix
-     * @returns - this {@link Mat3} after being set
-     */
-    identity() {
-      this.set(1, 0, 0, 0, 1, 0, 0, 0, 1);
-      return this;
-    }
-    /**
-     * Sets the {@link Mat3} values from an array
-     * @param array - array to use
-     * @param offset - optional offset in the array to use
-     * @returns - this {@link Mat3} after being set
-     */
-    // prettier-ignore
-    setFromArray(array = new Float32Array([
-      1,
-      0,
-      0,
-      0,
-      1,
-      0,
-      0,
-      0,
-      1
-    ]), offset = 0) {
-      for (let i = 0; i < this.elements.length; i++) {
-        this.elements[i] = array[i + offset];
-      }
-      return this;
-    }
-    /**
-     * Copy another {@link Mat3}
-     * @param matrix - matrix to copy
-     * @returns - this {@link Mat3} after being set
-     */
-    copy(matrix = new Mat3()) {
-      const array = matrix.elements;
-      this.elements[0] = array[0];
-      this.elements[1] = array[1];
-      this.elements[2] = array[2];
-      this.elements[3] = array[3];
-      this.elements[4] = array[4];
-      this.elements[5] = array[5];
-      this.elements[6] = array[6];
-      this.elements[7] = array[7];
-      this.elements[8] = array[8];
-      return this;
-    }
-    /**
-     * Clone a {@link Mat3}
-     * @returns - cloned {@link Mat3}
-     */
-    clone() {
-      return new Mat3().copy(this);
-    }
-    /**
-     * Set a {@link Mat3} from a {@link Mat4}.
-     * @param matrix - {@link Mat4} to use.
-     * @returns - this {@link Mat3} after being set.
-     */
-    setFromMat4(matrix = new Mat4()) {
-      const me = matrix.elements;
-      this.set(me[0], me[4], me[8], me[1], me[5], me[9], me[2], me[6], me[10]);
-      return this;
-    }
-    /**
-     * Multiply this {@link Mat3} with another {@link Mat3}
-     * @param matrix - {@link Mat3} to multiply with
-     * @returns - this {@link Mat3} after multiplication
-     */
-    multiply(matrix = new Mat3()) {
-      return this.multiplyMatrices(this, matrix);
-    }
-    /**
-     * Multiply another {@link Mat3} with this {@link Mat3}
-     * @param matrix - {@link Mat3} to multiply with
-     * @returns - this {@link Mat3} after multiplication
-     */
-    premultiply(matrix = new Mat3()) {
-      return this.multiplyMatrices(matrix, this);
-    }
-    /**
-     * Multiply two {@link Mat3}
-     * @param a - first {@link Mat3}
-     * @param b - second {@link Mat3}
-     * @returns - {@link Mat3} resulting from the multiplication
-     */
-    multiplyMatrices(a = new Mat3(), b = new Mat3()) {
-      const ae = a.elements;
-      const be = b.elements;
-      const te = this.elements;
-      const a11 = ae[0], a12 = ae[3], a13 = ae[6];
-      const a21 = ae[1], a22 = ae[4], a23 = ae[7];
-      const a31 = ae[2], a32 = ae[5], a33 = ae[8];
-      const b11 = be[0], b12 = be[3], b13 = be[6];
-      const b21 = be[1], b22 = be[4], b23 = be[7];
-      const b31 = be[2], b32 = be[5], b33 = be[8];
-      te[0] = a11 * b11 + a12 * b21 + a13 * b31;
-      te[3] = a11 * b12 + a12 * b22 + a13 * b32;
-      te[6] = a11 * b13 + a12 * b23 + a13 * b33;
-      te[1] = a21 * b11 + a22 * b21 + a23 * b31;
-      te[4] = a21 * b12 + a22 * b22 + a23 * b32;
-      te[7] = a21 * b13 + a22 * b23 + a23 * b33;
-      te[2] = a31 * b11 + a32 * b21 + a33 * b31;
-      te[5] = a31 * b12 + a32 * b22 + a33 * b32;
-      te[8] = a31 * b13 + a32 * b23 + a33 * b33;
-      return this;
-    }
-    /**
-     * Invert this {@link Mat3}.
-     * @returns - this {@link Mat3} after being inverted
-     */
-    invert() {
-      const te = this.elements, n11 = te[0], n21 = te[1], n31 = te[2], n12 = te[3], n22 = te[4], n32 = te[5], n13 = te[6], n23 = te[7], n33 = te[8], t11 = n33 * n22 - n32 * n23, t12 = n32 * n13 - n33 * n12, t13 = n23 * n12 - n22 * n13, det = n11 * t11 + n21 * t12 + n31 * t13;
-      if (det === 0)
-        return this.set(0, 0, 0, 0, 0, 0, 0, 0, 0);
-      const detInv = 1 / det;
-      te[0] = t11 * detInv;
-      te[1] = (n31 * n23 - n33 * n21) * detInv;
-      te[2] = (n32 * n21 - n31 * n22) * detInv;
-      te[3] = t12 * detInv;
-      te[4] = (n33 * n11 - n31 * n13) * detInv;
-      te[5] = (n31 * n12 - n32 * n11) * detInv;
-      te[6] = t13 * detInv;
-      te[7] = (n21 * n13 - n23 * n11) * detInv;
-      te[8] = (n22 * n11 - n21 * n12) * detInv;
-      return this;
-    }
-    /**
-     * Transpose this {@link Mat3}.
-     * @returns - this {@link Mat3} after being transposed
-     */
-    transpose() {
-      let tmp;
-      const m = this.elements;
-      tmp = m[1];
-      m[1] = m[3];
-      m[3] = tmp;
-      tmp = m[2];
-      m[2] = m[6];
-      m[6] = tmp;
-      tmp = m[5];
-      m[5] = m[7];
-      m[7] = tmp;
-      return this;
-    }
-    /**
-     * Compute a normal {@link Mat3} matrix from a {@link Mat4} transformation matrix.
-     * @param matrix - {@link Mat4} transformation matrix
-     * @returns - this {@link Mat3} after being inverted and transposed
-     */
-    getNormalMatrix(matrix = new Mat4()) {
-      return this.setFromMat4(matrix).invert().transpose();
     }
   }
 
@@ -17064,7 +17152,15 @@ struct FSInput {
     if (baseColorTexture) {
       baseColor += /* wgsl */
       `
-  let baseColorSample: vec4f = textureSample(${baseColorTexture.texture.options.name}, ${baseColorTexture.sampler?.name ?? "defaultSampler"}, ${baseColorTexture.texCoordAttributeName ?? "uv"});
+  var baseColorUV: vec2f = ${baseColorTexture.texCoordAttributeName ?? "uv"};`;
+      if (baseColorTexture.texture.options.useTransform) {
+        baseColor += /* wgsl */
+        `
+  baseColorUV = (${baseColorTexture.texture.options.name}Matrix * vec3(baseColorUV, 1.0)).xy;`;
+      }
+      baseColor += /* wgsl */
+      `
+  let baseColorSample: vec4f = textureSample(${baseColorTexture.texture.options.name}, ${baseColorTexture.sampler?.name ?? "defaultSampler"}, baseColorUV);
   baseColor *= baseColorSample;
   `;
     }
@@ -17145,6 +17241,14 @@ ${getFragmentInputStruct({ geometry })}
     const tangentAttribute = geometry && geometry.getAttributeByName("tangent");
     const hasTangent = !!(normalTexture && tangentAttribute);
     if (normalTexture) {
+      normalTangentBitangent += /* wgsl */
+      `
+  var normalUV: vec2f = ${normalTexture.texCoordAttributeName ?? "uv"};`;
+      if (normalTexture.texture.options.useTransform) {
+        normalTangentBitangent += /* wgsl */
+        `
+  normalUV = (${normalTexture.texture.options.name}Matrix * vec3(normalUV, 1.0)).xy;`;
+      }
       if (!hasTangent) {
         normalTangentBitangent += /* wgsl */
         `
@@ -17153,8 +17257,8 @@ ${getFragmentInputStruct({ geometry })}
   /*
   let Q1: vec3f = dpdx(worldPosition);
   let Q2: vec3f = dpdy(worldPosition);
-  let st1: vec2f = dpdx(fsInput.${normalTexture.texCoordAttributeName ?? "uv"});
-  let st2: vec2f = dpdy(fsInput.${normalTexture.texCoordAttributeName ?? "uv"});
+  let st1: vec2f = dpdx(normalUV);
+  let st2: vec2f = dpdy(normalUV);
   
   tangent = normalize(Q1 * st2.y - Q2 * st1.y);
   bitangent = normalize(-Q1 * st2.x + Q2 * st1.x);
@@ -17181,7 +17285,7 @@ ${getFragmentInputStruct({ geometry })}
       normalTangentBitangent += /* wgsl */
       `
   let tbn = mat3x3f(tangent, bitangent, geometryNormal);
-  let normalMap = textureSample(${normalTexture.texture.options.name}, ${normalTexture.sampler?.name ?? "defaultSampler"}, ${normalTexture.texCoordAttributeName ?? "uv"}).rgb;
+  let normalMap = textureSample(${normalTexture.texture.options.name}, ${normalTexture.sampler?.name ?? "defaultSampler"}, normalUV).rgb;
   normal = normalize(tbn * (2.0 * normalMap - vec3(vec2(normalScale), 1.0)));`;
     } else {
       normalTangentBitangent += /* wgsl */
@@ -17203,7 +17307,15 @@ ${getFragmentInputStruct({ geometry })}
     if (emissiveTexture) {
       emissiveOcclusion += /* wgsl */
       `
-  let emissiveSample: vec3f = textureSample(${emissiveTexture.texture.options.name}, ${emissiveTexture.sampler?.name ?? "defaultSampler"}, ${emissiveTexture.texCoordAttributeName ?? "uv"}).rgb;
+  var emissiveUV: vec2f = ${emissiveTexture.texCoordAttributeName ?? "uv"};`;
+      if (emissiveTexture.texture.options.useTransform) {
+        emissiveOcclusion += /* wgsl */
+        `
+  emissiveUV = (${emissiveTexture.texture.options.name}Matrix * vec3(emissiveUV, 1.0)).xy;`;
+      }
+      emissiveOcclusion += /* wgsl */
+      `
+  let emissiveSample: vec3f = textureSample(${emissiveTexture.texture.options.name}, ${emissiveTexture.sampler?.name ?? "defaultSampler"}, emissiveUV).rgb;
   emissive *= emissiveSample;`;
     }
     emissiveOcclusion += /* wgsl */
@@ -17212,7 +17324,15 @@ ${getFragmentInputStruct({ geometry })}
     if (occlusionTexture) {
       emissiveOcclusion += /* wgsl */
       `
-  occlusion = textureSample(${occlusionTexture.texture.options.name}, ${occlusionTexture.sampler?.name ?? "defaultSampler"}, ${occlusionTexture.texCoordAttributeName ?? "uv"}).r;`;
+  var occlusionUV: vec2f = ${occlusionTexture.texCoordAttributeName ?? "uv"};`;
+      if (occlusionTexture.texture.options.useTransform) {
+        emissiveOcclusion += /* wgsl */
+        `
+  occlusionUV = (${occlusionTexture.texture.options.name}Matrix * vec3(occlusionUV, 1.0)).xy;`;
+      }
+      emissiveOcclusion += /* wgsl */
+      `
+  occlusion = textureSample(${occlusionTexture.texture.options.name}, ${occlusionTexture.sampler?.name ?? "defaultSampler"}, occlusionUV).r;`;
     }
     emissiveOcclusion += /* wgsl */
     `
@@ -17282,7 +17402,15 @@ ${getFragmentInputStruct({ geometry })}
     if (metallicRoughnessTexture) {
       metallicRoughness += /* wgsl */
       `
-  let metallicRoughness = textureSample(${metallicRoughnessTexture.texture.options.name}, ${metallicRoughnessTexture.sampler?.name ?? "defaultSampler"}, ${metallicRoughnessTexture.texCoordAttributeName ?? "uv"});
+  var metallicRoughnessUV: vec2f = ${metallicRoughnessTexture.texCoordAttributeName ?? "uv"};`;
+      if (metallicRoughnessTexture.texture.options.useTransform) {
+        metallicRoughness += /* wgsl */
+        `
+  metallicRoughnessUV = (${metallicRoughnessTexture.texture.options.name}Matrix * vec3(metallicRoughnessUV, 1.0)).xy;`;
+      }
+      metallicRoughness += /* wgsl */
+      `
+  let metallicRoughness = textureSample(${metallicRoughnessTexture.texture.options.name}, ${metallicRoughnessTexture.sampler?.name ?? "defaultSampler"}, metallicRoughnessUV);
   
   metallic = metallic * metallicRoughness.b;
   roughness = roughness * metallicRoughness.g;
@@ -17305,7 +17433,15 @@ ${getFragmentInputStruct({ geometry })}
     if (specularTexture) {
       specular += /* wgsl */
       `
-  let specularSample: vec4f = textureSample(${specularTexture.texture.options.name}, ${specularTexture.sampler?.name ?? "defaultSampler"}, ${specularTexture.texCoordAttributeName ?? "uv"});
+  var specularUV: vec2f = ${specularTexture.texCoordAttributeName ?? "uv"};`;
+      if (specularTexture.texture.options.useTransform) {
+        specular += /* wgsl */
+        `
+  specularUV = (${specularTexture.texture.options.name}Matrix * vec3(specularUV, 1.0)).xy;`;
+      }
+      specular += /* wgsl */
+      `
+  let specularSample: vec4f = textureSample(${specularTexture.texture.options.name}, ${specularTexture.sampler?.name ?? "defaultSampler"}, specularUV);
   
   specularIntensity = specularIntensity * specularSample.a;
   specularColor = specularColor * specularSample.rgb;`;
@@ -17313,14 +17449,30 @@ ${getFragmentInputStruct({ geometry })}
       if (specularFactorTexture) {
         specular += /* wgsl */
         `
-  let specularFactorSample: vec4f = textureSample(${specularFactorTexture.texture.options.name}, ${specularFactorTexture.sampler?.name ?? "defaultSampler"}, ${specularFactorTexture.texCoordAttributeName ?? "uv"});
+  var specularFactorUV: vec2f = ${specularFactorTexture.texCoordAttributeName ?? "uv"};`;
+        if (specularFactorTexture.texture.options.useTransform) {
+          specular += /* wgsl */
+          `
+  specularFactorUV = (${specularFactorTexture.texture.options.name}Matrix * vec3(specularFactorUV, 1.0)).xy;`;
+        }
+        specular += /* wgsl */
+        `
+  let specularFactorSample: vec4f = textureSample(${specularFactorTexture.texture.options.name}, ${specularFactorTexture.sampler?.name ?? "defaultSampler"}, specularFactorUV);
   
   specularIntensity = specularIntensity * specularSample.a;`;
       }
       if (specularColorTexture) {
         specular += /* wgsl */
         `
-  let specularColorSample: vec4f = textureSample(${specularColorTexture.texture.options.name}, ${specularColorTexture.sampler?.name ?? "defaultSampler"}, ${specularColorTexture.texCoordAttributeName ?? "uv"});
+  var specularColorUV: vec2f = ${specularColorTexture.texCoordAttributeName ?? "uv"};`;
+        if (specularColorTexture.texture.options.useTransform) {
+          specular += /* wgsl */
+          `
+  specularColorUV = (${specularColorTexture.texture.options.name}Matrix * vec3(specularColorUV, 1.0)).xy;`;
+        }
+        specular += /* wgsl */
+        `
+  let specularColorSample: vec4f = textureSample(${specularColorTexture.texture.options.name}, ${specularColorTexture.sampler?.name ?? "defaultSampler"}, specularColorUV);
   
   specularColor = specularColor * specularSample.rgb;`;
       }
@@ -17483,14 +17635,30 @@ fn getIBLIndirect(
     if (transmissionTexture) {
       transmissionThickness += /* wgsl */
       `
-  let transmissionSample: vec4f = textureSample(${transmissionTexture.texture.options.name}, ${transmissionTexture.sampler?.name ?? "defaultSampler"}, ${transmissionTexture.texCoordAttributeName ?? "uv"});
+  var transmissionUV: vec2f = ${transmissionTexture.texCoordAttributeName ?? "uv"};`;
+      if (transmissionTexture.texture.options.useTransform) {
+        transmissionThickness += /* wgsl */
+        `
+  transmissionUV = (${transmissionTexture.texture.options.name}Matrix * vec3(transmissionUV, 1.0)).xy;`;
+      }
+      transmissionThickness += /* wgsl */
+      `
+  let transmissionSample: vec4f = textureSample(${transmissionTexture.texture.options.name}, ${transmissionTexture.sampler?.name ?? "defaultSampler"}, transmissionUV);
   
   transmission = clamp(transmission * transmissionSample.r, 0.0, 1.0);`;
     }
     if (thicknessTexture) {
       transmissionThickness += /* wgsl */
       `
-  let thicknessSample: vec4f = textureSample(${thicknessTexture.texture.options.name}, ${thicknessTexture.sampler?.name ?? "defaultSampler"}, ${thicknessTexture.texCoordAttributeName ?? "uv"});
+  var thicknessUV: vec2f = ${thicknessTexture.texCoordAttributeName ?? "uv"};`;
+      if (thicknessTexture.texture.options.useTransform) {
+        transmissionThickness += /* wgsl */
+        `
+  thicknessUV = (${thicknessTexture.texture.options.name}Matrix * vec3(thicknessUV, 1.0)).xy;`;
+      }
+      transmissionThickness += /* wgsl */
+      `
+  let thicknessSample: vec4f = textureSample(${thicknessTexture.texture.options.name}, ${thicknessTexture.sampler?.name ?? "defaultSampler"}, thicknessUV);
   
   thickness *= thicknessSample.g;`;
     }
@@ -21762,9 +21930,10 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
      * @param material - material using that texture.
      * @param image - image source of the texture.
      * @param name - name of the texture.
+     * @param useTransform - Whether the {@link Texture} should handle transformations.
      * @returns - newly created {@link Texture}.
      */
-    createTexture(material, image, name) {
+    createTexture(material, image, name, useTransform = false) {
       const format = (() => {
         switch (name) {
           case "baseColorTexture":
@@ -21791,7 +21960,8 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         fixedSize: {
           width: image.width,
           height: image.height
-        }
+        },
+        useTransform
       });
       texture.uploadSource({
         source: image
@@ -21803,6 +21973,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
      */
     createMaterialTextures() {
       this.scenesManager.materialsTextures = [];
+      const createdTextures = [];
       if (this.gltf.materials) {
         for (const [materialIndex, material] of Object.entries(this.gltf.materials)) {
           const materialTextures = {
@@ -21814,15 +21985,66 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
               return "uv";
             return texture.texCoord !== 0 ? "uv" + texture.texCoord : "uv";
           };
-          const createTexture = (gltfTexture, name) => {
-            const index = gltfTexture.index;
-            const image = this.gltf.imagesBitmaps[this.gltf.textures[index].source];
-            const texture = this.createTexture(material, image, name);
-            const samplerIndex = this.gltf.textures.find((t) => t.source === index)?.sampler;
+          const createTexture = (gltfTextureInfo, name) => {
+            const index = gltfTextureInfo.index;
+            const gltfTexture = this.gltf.textures[index];
+            const source = gltfTexture.extensions && gltfTexture.extensions["EXT_texture_webp"] ? gltfTexture.extensions["EXT_texture_webp"].source : gltfTexture.source;
+            const samplerIndex = this.gltf.textures.find((t) => {
+              const src = t.extensions && t.extensions["EXT_texture_webp"] ? t.extensions["EXT_texture_webp"].source : t.source;
+              return src === index;
+            })?.sampler;
+            const sampler = this.scenesManager.samplers[samplerIndex ?? 0];
+            const textureTransform = gltfTextureInfo.extensions && gltfTextureInfo.extensions["KHR_texture_transform"];
+            const texCoordAttributeName = getUVAttributeName(
+              textureTransform && textureTransform.texCoord !== void 0 ? textureTransform : gltfTextureInfo
+            );
+            const hasTexture = createdTextures.find((createdTexture) => createdTexture.index === index);
+            if (hasTexture) {
+              const reusedTexture = new Texture(this.renderer, {
+                label: material.name ? material.name + ": " + name : name,
+                name,
+                visibility: ["fragment"],
+                generateMips: true,
+                // generate mips by default
+                fromTexture: hasTexture.texture,
+                ...textureTransform && { useTransform: true }
+              });
+              if (textureTransform) {
+                const { offset, rotation, scale, texCoord } = textureTransform;
+                if (offset !== void 0)
+                  reusedTexture.offset.set(offset[0], offset[1]);
+                if (rotation !== void 0)
+                  reusedTexture.rotation = rotation;
+                if (scale !== void 0)
+                  reusedTexture.scale.set(scale[0], scale[1]);
+              }
+              materialTextures.texturesDescriptors.push({
+                texture: reusedTexture,
+                sampler,
+                texCoordAttributeName
+              });
+              return;
+            }
+            const image = this.gltf.imagesBitmaps[source];
+            const texture = this.createTexture(material, image, name, !!textureTransform);
+            if (textureTransform) {
+              console.log(textureTransform, texture);
+              const { offset, rotation, scale, texCoord } = textureTransform;
+              if (offset !== void 0)
+                texture.offset.set(offset[0], offset[1]);
+              if (rotation !== void 0)
+                texture.rotation = rotation;
+              if (scale !== void 0)
+                texture.scale.set(scale[0], scale[1]);
+            }
             materialTextures.texturesDescriptors.push({
               texture,
-              sampler: this.scenesManager.samplers[samplerIndex ?? 0],
-              texCoordAttributeName: getUVAttributeName(gltfTexture)
+              sampler,
+              texCoordAttributeName
+            });
+            createdTextures.push({
+              index,
+              texture
             });
           };
           this.scenesManager.materialsTextures[materialIndex] = materialTextures;
@@ -23149,16 +23371,50 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
       for (let index = 0; index < json.images?.length || 0; ++index) {
         const image = json.images[index];
         if (image.uri) {
-          pendingImages[index] = fetch(GLTFLoader.resolveUri(image.uri, baseUrl)).then(async (response) => {
-            return createImageBitmap(await response.blob());
-          });
+          if (image.uri.includes(".webp")) {
+            pendingImages[index] = new Promise((resolve, reject) => {
+              const img = new Image();
+              img.crossOrigin = "anonymous";
+              img.onload = () => {
+                createImageBitmap(img, { colorSpaceConversion: "none" }).then(resolve).catch(reject);
+              };
+              img.onerror = reject;
+              img.src = GLTFLoader.resolveUri(image.uri, baseUrl);
+            });
+          } else {
+            pendingImages[index] = fetch(GLTFLoader.resolveUri(image.uri, baseUrl)).then(async (response) => {
+              return createImageBitmap(await response.blob(), {
+                colorSpaceConversion: "none"
+              });
+            });
+          }
         } else {
           const bufferView = json.bufferViews[image.bufferView];
           pendingImages[index] = pendingBuffers[bufferView.buffer].then((buffer) => {
             const blob = new Blob([new Uint8Array(buffer, bufferView.byteOffset, bufferView.byteLength)], {
               type: image.mimeType
             });
-            return createImageBitmap(blob);
+            if (image.mimeType === "image/webp") {
+              return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = "anonymous";
+                img.src = URL.createObjectURL(blob);
+                img.onload = () => {
+                  createImageBitmap(img, { colorSpaceConversion: "none" }).then((bitmap) => {
+                    URL.revokeObjectURL(img.src);
+                    resolve(bitmap);
+                  }).catch(reject);
+                };
+                img.onerror = (err) => {
+                  URL.revokeObjectURL(img.src);
+                  reject(err);
+                };
+              });
+            } else {
+              return createImageBitmap(blob, {
+                colorSpaceConversion: "none"
+              });
+            }
           });
         }
       }

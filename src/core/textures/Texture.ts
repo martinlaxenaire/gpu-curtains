@@ -3,18 +3,21 @@ import { TextureBinding } from '../bindings/TextureBinding'
 import { BindGroupBindingElement } from '../../types/BindGroups'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { BindingMemoryAccessType, BindingParams, TextureBindingType } from '../bindings/Binding'
-import { generateUUID } from '../../utils/utils'
+import { generateUUID, throwWarning } from '../../utils/utils'
 import { DOMTexture } from './DOMTexture'
 import { ExternalTextureParamsBase, TextureSize } from '../../types/Textures'
 import { getDefaultTextureUsage, getNumMipLevels, TextureUsageKeys } from './utils'
+import { Vec2 } from '../../math/Vec2'
+import { Mat3 } from '../../math/Mat3'
+import { BufferBinding } from '../bindings/BufferBinding'
 
 /**
- * Base parameters used to create a {@link Texture}
+ * Base parameters used to create a {@link Texture}.
  */
 export interface TextureBaseParams extends ExternalTextureParamsBase {
-  /** The label of the {@link Texture}, used to create various GPU objects for debugging purpose */
+  /** The label of the {@link Texture}, used to create various GPU objects for debugging purpose. */
   label?: string
-  /** Name of the {@link Texture} to use in the {@link TextureBinding | texture binding} */
+  /** Name of the {@link Texture} to use in the {@link TextureBinding | texture binding}. */
   name?: string
 
   /** Optional fixed size of the {@link Texture#texture | texture}. If set, the {@link Texture} will never be resized and always keep that size. */
@@ -23,34 +26,37 @@ export interface TextureBaseParams extends ExternalTextureParamsBase {
   /** Force the texture size to be set to the given ratio of the {@link core/renderers/GPURenderer.GPURenderer#canvas | renderer canvas} size or {@link fixedSize}. Used mainly to shrink render target texture definition. */
   qualityRatio?: number
 
-  /** Whether to use this {@link Texture} as a regular, storage or depth texture */
+  /** Whether to use this {@link Texture} as a regular, storage or depth texture. */
   type?: TextureBindingType
-  /** Optional format of the {@link Texture#texture | texture}, mainly used for storage textures */
+  /** Optional format of the {@link Texture#texture | texture}, mainly used for storage textures. */
   format?: GPUTextureFormat
-  /** Optional texture binding memory access type, mainly used for storage textures */
+  /** Optional texture binding memory access type, mainly used for storage textures. */
   access?: BindingMemoryAccessType
-  /** Optional {@link Texture#texture | texture} view dimension to use */
+  /** Optional {@link Texture#texture | texture} view dimension to use. */
   viewDimension?: GPUTextureViewDimension
-  /** Sample count of the {@link Texture#texture | texture}, used for multisampling */
+  /** Sample count of the {@link Texture#texture | texture}, used for multisampling. */
   sampleCount?: GPUSize32
-  /** The {@link Texture} shaders visibility sent to the {@link Texture#textureBinding | texture binding} */
+  /** The {@link Texture} shaders visibility sent to the {@link Texture#textureBinding | texture binding}. */
   visibility?: BindingParams['visibility']
-  /** Allowed usages for the {@link Texture#texture | GPU texture} as an array of {@link TextureUsageKeys | texture usages names} */
+  /** Allowed usages for the {@link Texture#texture | GPU texture} as an array of {@link TextureUsageKeys | texture usages names}. */
   usage?: TextureUsageKeys[]
 
   /** Whether any {@link core/materials/Material.Material | Material} using this {@link Texture} should automatically destroy it upon destruction. Default to `true`. */
   autoDestroy?: boolean
+
+  /** Whether to use a transformation {@link Mat3} to use in the shaders for UV transformations. If set to `true`, will create a {@link BufferBinding} accessible in the shaders with the name `${texture.options.name}Matrix`. */
+  useTransform?: boolean
 }
 
 /**
- * Parameters used to create a {@link Texture}
+ * Parameters used to create a {@link Texture}.
  */
 export interface TextureParams extends TextureBaseParams {
-  /** Optional texture to use as a copy source input. Could be a {@link Texture} or {@link DOMTexture} */
+  /** Optional texture to use as a copy source input. Could be a {@link Texture} or {@link DOMTexture}. */
   fromTexture?: Texture | DOMTexture | null
 }
 
-/** @const - default {@link Texture} parameters */
+/** @const - default {@link Texture} parameters. */
 const defaultTextureParams: TextureParams = {
   label: 'Texture',
   name: 'renderTexture', // default to 'renderTexture' for render target usage
@@ -65,6 +71,8 @@ const defaultTextureParams: TextureParams = {
   flipY: false,
   premultipliedAlpha: false,
   autoDestroy: true,
+  // texture transform
+  useTransform: false,
 }
 
 /**
@@ -93,32 +101,45 @@ const defaultTextureParams: TextureParams = {
  * ```
  */
 export class Texture {
-  /** {@link Renderer | renderer} used by this {@link Texture} */
+  /** {@link Renderer | renderer} used by this {@link Texture}. */
   renderer: Renderer
-  /** The type of the {@link Texture} */
+  /** The type of the {@link Texture}. */
   type: string
-  /** The universal unique id of this {@link Texture} */
+  /** The universal unique id of this {@link Texture}. */
   readonly uuid: string
 
-  /** The {@link GPUTexture} used */
+  /** The {@link GPUTexture} used. */
   texture: GPUTexture
 
-  /** Size of the {@link Texture#texture | texture} source, usually our {@link Renderer#canvas | renderer canvas} size */
+  /** Size of the {@link Texture#texture | texture} source, usually our {@link Renderer#canvas | renderer canvas} size. */
   size: TextureSize
 
-  /** Options used to create this {@link Texture} */
+  /** Options used to create this {@link Texture}. */
   options: TextureParams
 
-  /** Array of {@link core/bindings/Binding.Binding | bindings} that will actually only hold one {@link TextureBinding | texture binding} */
+  /** Array of {@link core/bindings/Binding.Binding | bindings} that will actually only hold one {@link TextureBinding | texture binding}. */
   bindings: BindGroupBindingElement[]
 
   /** Whether this texture should be automatically resized when the {@link Renderer renderer} size changes. Default to true. */
   #autoResize = true
 
+  /** {@link Vec2} offset to apply to the {@link Texture} if {@link TextureBaseParams#useTransform | useTransform} parameter has been set to `true`. */
+  offset: Vec2
+  /** Rotation to apply to the {@link Texture} if {@link TextureBaseParams#useTransform | useTransform} parameter has been set to `true`. */
+  #rotation: number
+  /** {@link Vec2} scale to apply to the {@link Texture} if {@link TextureBaseParams#useTransform | useTransform} parameter has been set to `true`. */
+  scale: Vec2
+  /** {@link Vec2} transformation origin to use when applying the transformations to the {@link Texture} if {@link TextureBaseParams#useTransform | useTransform} parameter has been set to `true`. A value of (0.5, 0.5) corresponds to the center of the texture. Default is (0, 0), the upper left. */
+  transformOrigin: Vec2
+  /** {@link Mat3} transformation matrix to apply to the {@link Texture} if {@link TextureBaseParams#useTransform | useTransform} parameter has been set to `true`. */
+  modelMatrix: Mat3
+  /** {@link BufferBinding} to send the transformation matrix to the shaders if {@link TextureBaseParams#useTransform | useTransform} parameter has been set to `true`. */
+  transformBinding?: BufferBinding | null
+
   /**
    * Texture constructor
-   * @param renderer - {@link Renderer | renderer} object or {@link GPUCurtains} class object used to create this {@link Texture}
-   * @param parameters - {@link TextureParams | parameters} used to create this {@link Texture}
+   * @param renderer - {@link Renderer | renderer} object or {@link GPUCurtains} class object used to create this {@link Texture}.
+   * @param parameters - {@link TextureParams | parameters} used to create this {@link Texture}.
    */
   constructor(renderer: Renderer | GPUCurtains, parameters = defaultTextureParams) {
     renderer = isRenderer(renderer, parameters.label ? parameters.label + ' Texture' : 'Texture')
@@ -165,17 +186,110 @@ export class Texture {
       this.#autoResize = false
     }
 
+    // transform
+    this.#rotation = 0
+    this.offset = new Vec2().onChange(() => this.updateModelMatrix())
+    this.scale = new Vec2(1).onChange(() => this.updateModelMatrix())
+    this.transformOrigin = new Vec2().onChange(() => this.updateModelMatrix())
+
+    this.modelMatrix = new Mat3()
+    this.transformBinding = null
+
     // struct
     this.setBindings()
+
+    if (this.options.useTransform) {
+      this.transformBinding = new BufferBinding({
+        label: this.options.label + ': model matrix',
+        name: this.options.name + 'Matrix',
+        useStruct: false,
+        struct: {
+          [this.options.name + 'Matrix']: {
+            type: 'mat3x3f',
+            value: this.modelMatrix,
+          },
+        },
+      })
+
+      this.bindings.push(this.transformBinding)
+    }
 
     // texture
     this.renderer.addTexture(this)
     this.createTexture()
   }
 
+  /* TRANSFORM */
+
   /**
-   * Copy another {@link Texture} into this {@link Texture}
-   * @param texture - {@link Texture} to copy
+   * Get the actual {@link rotation} value.
+   * @returns - the actual {@link rotation} value.
+   */
+  get rotation(): number {
+    return this.#rotation
+  }
+
+  /**
+   * Set the actual {@link rotation} value and update the {@link modelMatrix}.
+   * @param value - new {@link rotation} value to use.
+   */
+  set rotation(value: number) {
+    this.#rotation = value
+    this.updateModelMatrix()
+  }
+
+  /**
+   * Update the {@link modelMatrix} using the {@link offset}, {@link rotation}, {@link scale} and {@link transformOrigin} and tell the {@link transformBinding} to update, only if {@link TextureBaseParams#useTransform | useTransform} parameter has been set to `true`.
+   */
+  updateModelMatrix() {
+    if (this.options.useTransform) {
+      this.modelMatrix.setUVTransform(
+        this.offset.x,
+        this.offset.y,
+        this.scale.x,
+        this.scale.y,
+        this.rotation,
+        this.transformOrigin.x,
+        this.transformOrigin.y
+      )
+
+      this.transformBinding.shouldUpdate = true
+    } else {
+      throwWarning(
+        `Texture: Cannot update ${this.options.name} transformation since its useTransform property has been set to false. You should set it to true when creating the Texture.`
+      )
+    }
+  }
+
+  /**
+   * Set our {@link Texture#bindings | bindings}.
+   */
+  setBindings() {
+    this.bindings = [
+      new TextureBinding({
+        label: this.options.label + ': ' + this.options.name + ' texture',
+        name: this.options.name,
+        bindingType: this.options.type,
+        visibility: this.options.visibility,
+        texture: this.texture,
+        format: this.options.format,
+        viewDimension: this.options.viewDimension,
+        multisampled: this.options.sampleCount > 1,
+      }),
+    ]
+  }
+
+  /**
+   * Get our {@link TextureBinding | texture binding}.
+   * @readonly
+   */
+  get textureBinding(): TextureBinding {
+    return this.bindings[0] as TextureBinding
+  }
+
+  /**
+   * Copy another {@link Texture} into this {@link Texture}.
+   * @param texture - {@link Texture} to copy.
    */
   copy(texture: Texture | DOMTexture) {
     this.options.fromTexture = texture
@@ -184,7 +298,7 @@ export class Texture {
 
   /**
    * Copy a {@link GPUTexture} directly into this {@link Texture}. Mainly used for depth textures.
-   * @param texture - {@link GPUTexture} to copy
+   * @param texture - {@link GPUTexture} to copy.
    */
   copyGPUTexture(texture: GPUTexture) {
     this.size = {
@@ -205,7 +319,7 @@ export class Texture {
   }
 
   /**
-   * Create the {@link GPUTexture | texture} (or copy it from source) and update the {@link TextureBinding#resource | binding resource}
+   * Create the {@link GPUTexture | texture} (or copy it from source) and update the {@link TextureBinding#resource | binding resource}.
    */
   createTexture() {
     if (!this.size.width || !this.size.height) return
@@ -304,34 +418,8 @@ export class Texture {
   }
 
   /**
-   * Set our {@link Texture#bindings | bindings}
-   */
-  setBindings() {
-    this.bindings = [
-      new TextureBinding({
-        label: this.options.label + ': ' + this.options.name + ' texture',
-        name: this.options.name,
-        bindingType: this.options.type,
-        visibility: this.options.visibility,
-        texture: this.texture,
-        format: this.options.format,
-        viewDimension: this.options.viewDimension,
-        multisampled: this.options.sampleCount > 1,
-      }),
-    ]
-  }
-
-  /**
-   * Get our {@link TextureBinding | texture binding}
-   * @readonly
-   */
-  get textureBinding(): TextureBinding {
-    return this.bindings[0] as TextureBinding
-  }
-
-  /**
-   * Resize our {@link Texture}, which means recreate it/copy it again and tell the {@link core/bindGroups/TextureBindGroup.TextureBindGroup | texture bind group} to update
-   * @param size - the optional new {@link TextureSize | size} to set
+   * Resize our {@link Texture}, which means recreate it/copy it again and tell the {@link core/bindGroups/TextureBindGroup.TextureBindGroup | texture bind group} to update.
+   * @param size - the optional new {@link TextureSize | size} to set.
    */
   resize(size: TextureSize | null = null) {
     if (!this.#autoResize) return
@@ -354,7 +442,7 @@ export class Texture {
   }
 
   /**
-   * Destroy our {@link Texture}
+   * Destroy our {@link Texture}.
    */
   destroy() {
     this.renderer.removeTexture(this)

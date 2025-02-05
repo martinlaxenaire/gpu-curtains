@@ -262,6 +262,11 @@ window.addEventListener('load', async () => {
       name: 'Lights Punctual Lamp',
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/LightsPunctualLamp/glTF/LightsPunctualLamp.gltf',
     },
+    // texture transform
+    sheenWoodLeatherSofa: {
+      name: 'Sheen Wood Leather Sofa',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/SheenWoodLeatherSofa/glTF/SheenWoodLeatherSofa.gltf',
+    },
   }
 
   let shadingModel = 'PBR' // 'PBR', 'Phong' or 'Lambert'

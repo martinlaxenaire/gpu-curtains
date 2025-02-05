@@ -25,6 +25,14 @@ export const getNormalTangentBitangent = ({
   const hasTangent = !!(normalTexture && tangentAttribute)
 
   if (normalTexture) {
+    normalTangentBitangent += /* wgsl */ `
+  var normalUV: vec2f = ${normalTexture.texCoordAttributeName ?? 'uv'};`
+
+    if (normalTexture.texture.options.useTransform) {
+      normalTangentBitangent += /* wgsl */ `
+  normalUV = (${normalTexture.texture.options.name}Matrix * vec3(normalUV, 1.0)).xy;`
+    }
+
     if (!hasTangent) {
       normalTangentBitangent += /* wgsl */ `
   // TODO decide whether we're computing tangent and bitangent
@@ -32,8 +40,8 @@ export const getNormalTangentBitangent = ({
   /*
   let Q1: vec3f = dpdx(worldPosition);
   let Q2: vec3f = dpdy(worldPosition);
-  let st1: vec2f = dpdx(fsInput.${normalTexture.texCoordAttributeName ?? 'uv'});
-  let st2: vec2f = dpdy(fsInput.${normalTexture.texCoordAttributeName ?? 'uv'});
+  let st1: vec2f = dpdx(normalUV);
+  let st2: vec2f = dpdy(normalUV);
   
   tangent = normalize(Q1 * st2.y - Q2 * st1.y);
   bitangent = normalize(-Q1 * st2.x + Q2 * st1.x);
@@ -62,7 +70,7 @@ export const getNormalTangentBitangent = ({
   let tbn = mat3x3f(tangent, bitangent, geometryNormal);
   let normalMap = textureSample(${normalTexture.texture.options.name}, ${
       normalTexture.sampler?.name ?? 'defaultSampler'
-    }, ${normalTexture.texCoordAttributeName ?? 'uv'}).rgb;
+    }, normalUV).rgb;
   normal = normalize(tbn * (2.0 * normalMap - vec3(vec2(normalScale), 1.0)));`
   } else {
     normalTangentBitangent += /* wgsl */ `
