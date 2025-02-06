@@ -463,6 +463,8 @@ export class BindGroup {
         usage: ['copyDst', 'mapRead'],
       })
     }
+
+    this.renderer.deviceManager.bufferBindings.set(binding.cacheKey, binding)
   }
 
   /**

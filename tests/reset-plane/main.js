@@ -61,4 +61,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     plane.resetDOMElement(isFirst ? '#second-plane' : '#first-plane')
     isFirst = !isFirst
   })
+
+  console.log(gpuCurtains.deviceManager)
 })

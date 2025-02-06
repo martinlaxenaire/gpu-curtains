@@ -161,7 +161,7 @@ export class DOMTexture extends Object3D {
       },
     })
 
-    this.renderer.deviceManager.bufferBindings.set(this.transformBinding.cacheKey, this.transformBinding)
+    //this.renderer.deviceManager.bufferBindings.set(this.transformBinding.cacheKey, this.transformBinding)
 
     this.setBindings()
 
@@ -338,7 +338,6 @@ export class DOMTexture extends Object3D {
 
     if (this.matricesNeedUpdate) {
       this.transformBinding.inputs.matrix.shouldUpdate = true
-      console.log('should update transform binding', this.transformBinding.inputs)
     }
   }
 
