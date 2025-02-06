@@ -1,0 +1,15 @@
+@media screen {
+  .meshes-container {
+    display: flex;
+    margin: 2.5rem 0;
+  }
+
+  .meshes-container .mesh {
+    flex-basis: calc(100% / 3);
+    margin: 0 7.5%;
+    aspect-ratio: 1;
+  }
+}
+
+@media screen and (orientation: portrait) {
+}

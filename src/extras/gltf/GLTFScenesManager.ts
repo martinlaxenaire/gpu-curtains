@@ -3,6 +3,7 @@ import { GLTF } from '../../types/gltf/GLTF'
 import { GLTFLoader } from '../loaders/GLTFLoader'
 import { Sampler, SamplerParams } from '../../core/samplers/Sampler'
 import { Texture } from '../../core/textures/Texture'
+import { MediaTexture } from '../../core/textures/MediaTexture'
 import { Object3D } from '../../core/objects3D/Object3D'
 import { Box3 } from '../../math/Box3'
 import { Vec3 } from '../../math/Vec3'
@@ -370,14 +371,14 @@ export class GLTFScenesManager {
   }
 
   /**
-   * Create a {@link Texture} based on the options.
+   * Create a {@link MediaTexture} based on the options.
    * @param material - material using that texture.
    * @param image - image source of the texture.
    * @param name - name of the texture.
-   * @param useTransform - Whether the {@link Texture} should handle transformations.
-   * @returns - newly created {@link Texture}.
+   * @param useTransform - Whether the {@link MediaTexture} should handle transformations.
+   * @returns - newly created {@link MediaTexture}.
    */
-  createTexture(material: GLTF.IMaterial, image: ImageBitmap, name: string, useTransform = false): Texture {
+  createTexture(material: GLTF.IMaterial, image: ImageBitmap, name: string, useTransform = false): MediaTexture {
     // TODO check for all textures!
     const format = (() => {
       switch (name) {
@@ -396,7 +397,7 @@ export class GLTFScenesManager {
       }
     })()
 
-    const texture = new Texture(this.renderer, {
+    const texture = new MediaTexture(this.renderer, {
       label: material.name ? material.name + ': ' + name : name,
       name,
       format,
@@ -409,9 +410,7 @@ export class GLTFScenesManager {
       useTransform,
     })
 
-    texture.uploadSource({
-      source: image,
-    })
+    texture.useImageBitmap(image)
 
     return texture
   }
@@ -463,7 +462,7 @@ export class GLTFScenesManager {
           const hasTexture = createdTextures.find((createdTexture) => createdTexture.index === index)
 
           if (hasTexture) {
-            const reusedTexture = new Texture(this.renderer, {
+            const reusedTexture = new MediaTexture(this.renderer, {
               label: material.name ? material.name + ': ' + name : name,
               name,
               visibility: ['fragment'],

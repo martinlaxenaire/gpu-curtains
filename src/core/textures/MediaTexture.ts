@@ -1,43 +1,50 @@
-import { Texture, TextureOptions, TextureParams } from './Texture'
+import { Texture, TextureParams } from './Texture'
 import { isRenderer, Renderer } from '../renderers/utils'
 import { TextureSize, TextureSource, TextureSourceType } from '../../types/Textures'
-import { BindGroupBindingElement } from '../../types/BindGroups'
 import { Vec2 } from '../../math/Vec2'
 import { Mat3 } from '../../math/Mat3'
 import { BufferBinding } from '../bindings/BufferBinding'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { generateUUID, throwWarning } from '../../utils/utils'
+import { throwWarning } from '../../utils/utils'
 import { TextureBinding } from '../bindings/TextureBinding'
-import { DOMTexture } from './DOMTexture'
-import { getDefaultTextureUsage, getNumMipLevels } from './utils'
+import { getDefaultMediaTextureUsage, getNumMipLevels } from './utils'
+import { BindingMemoryAccessType, TextureBindingType } from '../bindings/Binding'
 
-/**
- * Options used to create this {@link Texture}.
- */
-export interface MediaTextureOptions extends TextureParams {
+/** Parameters used to create a {@link MediaTexture}. */
+export interface MediaTextureParams
+  extends Omit<TextureParams, 'sampleCount' | 'type' | 'access' | 'qualityRatio' | 'aspect'> {
+  /** Whether to use a transformation {@link Mat3} to use in the shaders for UV transformations. If set to `true`, will create a {@link BufferBinding} accessible in the shaders with the name `${texture.options.name}Matrix`. */
+  useTransform?: boolean
+  /** Solid color used by temporary texture to display while loading the source. Default to `[0, 0, 0, 255]` (solid black). */
+  placeholderColor?: [number, number, number, number]
+  /** Whether video textures should use {@link GPUExternalTexture} or not. Default to `true`. */
+  useExternalTextures?: boolean
+}
+
+/** Options used to create this {@link MediaTexture}. */
+export interface MediaTextureOptions extends TextureParams, MediaTextureParams {
   /** {@link Texture} sources. */
-  sources: Array<TextureSource | string> // for image url
+  sources: Array<TextureSource | string> // for image urls
   /** {@link Texture} sources type. */
   sourcesTypes: TextureSourceType[]
 }
 
 /** @const - default {@link MediaTexture} parameters. */
-const defaultMediaTextureParams: TextureParams = {
+const defaultMediaTextureParams: MediaTextureParams = {
   label: 'Texture',
-  name: 'renderTexture', // default to 'renderTexture' for render target usage
-  type: 'texture',
-  access: 'write',
+  name: 'texture',
+  useExternalTextures: true,
   fromTexture: null,
   viewDimension: '2d',
-  sampleCount: 1,
-  qualityRatio: 1,
   // copy external texture options
   generateMips: false,
   flipY: false,
   premultipliedAlpha: false,
+  colorSpace: 'srgb',
   autoDestroy: true,
   // texture transform
   useTransform: false,
+  placeholderColor: [0, 0, 0, 255], // default to black
 }
 
 export class MediaTexture extends Texture {
@@ -45,13 +52,30 @@ export class MediaTexture extends Texture {
   externalTexture: null | GPUExternalTexture
 
   /** The {@link MediaTexture} {@link TextureSource | sources} to use if any. */
-  sources: TextureSource[]
+  sources: Array<{
+    /** Original {@link TextureSource} to use. */
+    source: TextureSource
+    /** Whether the source has been loaded. */
+    sourceLoaded: boolean
+    /** Whether the source has been uploaded to the GPU. */
+    sourceUploaded: boolean
+    /** Whether we should update the {@link texture} for this source. */
+    shouldUpdate: boolean
+  }>
 
   /** Size of the {@link MediaTexture#texture | texture} source, usually our {@link sources} first element size (since for cube maps, all sources must have the same size). */
   size: TextureSize
 
+  /** Whether the sources have been loaded. */
+  #sourcesLoaded: boolean
+  /** Whether the sources have been uploaded to the GPU, handled by the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#texturesQueue | GPUDeviceManager texturesQueue array}. */
+  #sourcesUploaded: boolean
+
   /** Options used to create this {@link MediaTexture}. */
   options: MediaTextureOptions
+
+  /** Array of {@link HTMLVideoElement.requestVideoFrameCallback | requestVideoFrameCallback} returned ids if used. */
+  videoFrameCallbackIds: Map<number, null | number>
 
   /** {@link Vec2} offset to apply to the {@link Texture} if {@link TextureBaseParams#useTransform | useTransform} parameter has been set to `true`. */
   offset: Vec2
@@ -66,63 +90,67 @@ export class MediaTexture extends Texture {
   /** {@link BufferBinding} to send the transformation matrix to the shaders if {@link TextureBaseParams#useTransform | useTransform} parameter has been set to `true`. */
   transformBinding?: BufferBinding | null
 
+  // callbacks / events
+  /** function assigned to the {@link onSourceLoaded} callback */
+  _onSourceLoadedCallback = (source: TextureSource) => {
+    /* allow empty callback */
+  }
+
+  /** function assigned to the {@link onAllSourcesLoaded} callback */
+  _onAllSourcesLoadedCallback = () => {
+    /* allow empty callback */
+  }
+
+  /** function assigned to the {@link onSourceUploaded} callback */
+  _onSourceUploadedCallback = (source: TextureSource) => {
+    /* allow empty callback */
+  }
+
+  /** function assigned to the {@link onAllSourceUploaded} callback */
+  _onAllSourcesUploadedCallback = () => {
+    /* allow empty callback */
+  }
+
   /**
    * Texture constructor
    * @param renderer - {@link Renderer | renderer} object or {@link GPUCurtains} class object used to create this {@link Texture}.
    * @param parameters - {@link TextureParams | parameters} used to create this {@link Texture}.
    */
   constructor(renderer: Renderer | GPUCurtains, parameters = defaultMediaTextureParams) {
-    renderer = isRenderer(renderer, parameters.label ? parameters.label + ' Texture' : 'Texture')
+    renderer = isRenderer(renderer, parameters.label ? parameters.label + ' MediaTexture' : 'MediaTexture')
 
-    this.type = 'Texture'
+    const params = { ...defaultMediaTextureParams, ...parameters }
 
-    this.renderer = renderer
+    const { useTransform, placeholderColor, useExternalTextures, ...baseTextureParams } = params
 
-    this.uuid = generateUUID()
+    super(renderer, {
+      ...baseTextureParams,
+      ...{
+        sampleCount: 1,
+        type: 'texture' as TextureBindingType,
+        access: 'write' as BindingMemoryAccessType,
+        qualityRatio: 1,
+        aspect: 'all',
+        fixedSize: { width: parameters.fixedSize?.width ?? 1, height: parameters.fixedSize?.height ?? 1 },
+      },
+    })
+
+    this.type = 'MediaTexture'
 
     this.options = {
-      ...defaultMediaTextureParams,
-      ...parameters,
+      ...this.options,
+      useTransform,
+      placeholderColor,
+      useExternalTextures: !!useExternalTextures,
       ...{
         sources: [],
         sourcesTypes: [],
       },
     }
 
-    if (
-      this.options.format === 'rgba32float' &&
-      !(this.renderer.deviceManager.adapter as GPUAdapter).features.has('float32-filterable')
-    ) {
-      this.options.format = 'rgba16float'
-    }
-
-    if (parameters.fromTexture) {
-      this.options.format = parameters.fromTexture.texture.format
-      this.options.sampleCount = parameters.fromTexture.texture.sampleCount
-      this.options.viewDimension = parameters.fromTexture.options.viewDimension
+    if (parameters.fromTexture && parameters.fromTexture instanceof MediaTexture) {
       this.options.sources = parameters.fromTexture.options.sources
       this.options.sourcesTypes = parameters.fromTexture.options.sourcesTypes
-    }
-
-    if (!this.options.format) {
-      this.options.format = this.renderer.options.context.format
-    }
-
-    // sizes
-    this.size = this.options.fixedSize
-      ? {
-          width: this.options.fixedSize.width * this.options.qualityRatio,
-          height: this.options.fixedSize.height * this.options.qualityRatio,
-          depth: this.options.fixedSize.depth ?? this.options.viewDimension.indexOf('cube') !== -1 ? 6 : 1,
-        }
-      : {
-          width: Math.floor(this.renderer.canvas.width * this.options.qualityRatio),
-          height: Math.floor(this.renderer.canvas.height * this.options.qualityRatio),
-          depth: this.options.viewDimension.indexOf('cube') !== -1 ? 6 : 1,
-        }
-
-    if (this.options.fixedSize) {
-      this.#autoResize = false
     }
 
     // transform
@@ -133,9 +161,6 @@ export class MediaTexture extends Texture {
 
     this.modelMatrix = new Mat3()
     this.transformBinding = null
-
-    // struct
-    this.setBindings()
 
     if (this.options.useTransform) {
       this.transformBinding = new BufferBinding({
@@ -152,13 +177,52 @@ export class MediaTexture extends Texture {
       this.updateModelMatrix()
     }
 
-    // texture
-    this.renderer.addTexture(this)
-
     this.externalTexture = null
     this.sources = []
+    this.videoFrameCallbackIds = new Map()
 
-    this.createTexture()
+    this.sourcesLoaded = false
+    this.sourcesUploaded = false
+
+    // upload placeholder texture
+    this.renderer.uploadTexture(this)
+  }
+
+  /**
+   * Get whether all our {@link sources} have been loaded.
+   */
+  get sourcesLoaded(): boolean {
+    return this.#sourcesLoaded
+  }
+
+  /**
+   * Set whether all our {@link sources} have been loaded.
+   * @param value - boolean flag indicating if all the {@link sources} have been loaded.
+   */
+  set sourcesLoaded(value: boolean) {
+    if (value && !this.sourcesLoaded) {
+      this._onAllSourcesLoadedCallback && this._onAllSourcesLoadedCallback()
+    }
+
+    this.#sourcesLoaded = value
+  }
+
+  /**
+   * Get whether all our {@link sources} have been uploaded.
+   */
+  get sourcesUploaded(): boolean {
+    return this.#sourcesUploaded
+  }
+
+  /**
+   * Set whether all our {@link sources} have been uploaded.
+   * @param value - boolean flag indicating if all the {@link sources} have been uploaded
+   */
+  set sourcesUploaded(value: boolean) {
+    if (value && !this.sourcesUploaded) {
+      this._onAllSourcesUploadedCallback && this._onAllSourcesUploadedCallback()
+    }
+    this.#sourcesUploaded = value
   }
 
   /* TRANSFORM */
@@ -225,32 +289,31 @@ export class MediaTexture extends Texture {
    * Copy another {@link Texture} into this {@link Texture}.
    * @param texture - {@link Texture} to copy.
    */
-  copy(texture: Texture | DOMTexture) {
-    this.options.fromTexture = texture
-    this.createTexture()
-  }
+  // copy(texture: Texture | DOMTexture) {
+  //   this.options.fromTexture = texture
+  //   this.createTexture()
+  // }
 
   /**
    * Copy a {@link GPUTexture} directly into this {@link Texture}. Mainly used for depth textures.
    * @param texture - {@link GPUTexture} to copy.
    */
-  copyGPUTexture(texture: GPUTexture) {
-    this.size = {
-      width: texture.width,
-      height: texture.height,
-      depth: texture.depthOrArrayLayers,
-    }
-
-    this.options.format = texture.format
-    this.options.sampleCount = texture.sampleCount
-
-    this.texture = texture
-
-    this.textureBinding.setFormat(this.options.format)
-    this.textureBinding.setMultisampled(false)
-
-    this.textureBinding.resource = this.texture
-  }
+  // copyGPUTexture(texture: GPUTexture) {
+  //   this.size = {
+  //     width: texture.width,
+  //     height: texture.height,
+  //     depth: texture.depthOrArrayLayers,
+  //   }
+  //
+  //   this.options.format = texture.format
+  //
+  //   this.texture = texture
+  //
+  //   this.textureBinding.setFormat(this.options.format)
+  //   this.textureBinding.setMultisampled(false)
+  //
+  //   this.textureBinding.resource = this.texture
+  // }
 
   /**
    * Create the {@link GPUTexture | texture} (or copy it from source) and update the {@link TextureBinding#resource | binding resource}.
@@ -270,10 +333,19 @@ export class MediaTexture extends Texture {
       size: [this.size.width, this.size.height, this.size.depth ?? 1],
       dimensions: this.options.viewDimension,
       sampleCount: this.options.sampleCount,
-      usage: getDefaultTextureUsage(this.options.usage, this.options.type),
+      usage: getDefaultMediaTextureUsage(this.options.usage),
     } as GPUTextureDescriptor
 
-    if (!this.options.sourcesTypes.includes('externalVideo')) {
+    if (!this.options.sources) {
+      options.mipLevelCount = 1
+
+      this.texture?.destroy()
+
+      this.texture = this.renderer.createTexture(options)
+
+      // update texture binding
+      this.textureBinding.resource = this.texture
+    } else if (!this.options.sourcesTypes.includes('externalVideo')) {
       options.mipLevelCount = this.options.generateMips
         ? getNumMipLevels(this.size.width, this.size.height, this.size.depth ?? 1)
         : 1
@@ -285,99 +357,48 @@ export class MediaTexture extends Texture {
       // update texture binding
       this.textureBinding.resource = this.texture
     }
-
-    this.shouldUpdate = true
   }
 
   /* SOURCES */
 
   /**
-   * Set the {@link size} based on the {@link source}
+   * Import a {@link GPUExternalTexture} from the {@link Renderer}, update the {@link textureBinding} and its {@link core/bindGroups/TextureBindGroup.TextureBindGroup | bind group}
+   */
+  uploadVideoTexture() {
+    const source = this.sources[0]
+
+    if (source && source.source) {
+      this.externalTexture = this.renderer.importExternalTexture(source.source as HTMLVideoElement)
+      this.textureBinding.resource = this.externalTexture
+      this.textureBinding.setBindingType('externalTexture')
+      source.shouldUpdate = false
+      source.sourceUploaded = true
+    }
+  }
+
+  /**
+   * Set the {@link size} based on the first available loaded {@link sources}.
    */
   setSourceSize() {
-    this.options.fixedSize.width =
-      (this.sources[0] as HTMLImageElement).naturalWidth ||
-      (this.sources[0] as HTMLCanvasElement).width ||
-      (this.sources[0] as HTMLVideoElement).videoWidth
+    // find the first source that is loaded and apply its size
+    const source = this.sources.filter(Boolean).find((source) => !!source.sourceLoaded)
 
-    this.options.fixedSize.height =
-      (this.sources[0] as HTMLImageElement).naturalHeight ||
-      (this.sources[0] as HTMLCanvasElement).height ||
-      (this.sources[0] as HTMLVideoElement).videoHeight
+    this.options.fixedSize.width = Math.max(
+      1,
+      (source.source as HTMLImageElement).naturalWidth ||
+        (source.source as HTMLCanvasElement).width ||
+        (source.source as HTMLVideoElement).videoWidth
+    )
+
+    this.options.fixedSize.height = Math.max(
+      1,
+      (source.source as HTMLImageElement).naturalHeight ||
+        (source.source as HTMLCanvasElement).height ||
+        (source.source as HTMLVideoElement).videoHeight
+    )
 
     this.size.width = this.options.fixedSize.width
     this.size.height = this.options.fixedSize.height
-
-    this.#autoResize = false
-  }
-
-  /**
-   * Upload a source to the GPU and use it for our {@link texture}.
-   * @param parameters - parameters used to upload the source.
-   * @param parameters.source - source to use for our {@link texture}.
-   * @param parameters.width - source width.
-   * @param parameters.height - source height.
-   * @param parameters.depth - source depth.
-   * @param parameters.origin - {@link GPUQueue.copyExternalImageToTexture().destination.origin | GPUOrigin3D} of the source copy.
-   */
-  uploadSource({
-    source,
-    width = this.size.width,
-    height = this.size.height,
-    depth = this.size.depth,
-    origin = [0, 0, 0],
-    colorSpace = 'srgb',
-  }: {
-    source: GPUCopyExternalImageSource
-    width?: number
-    height?: number
-    depth?: number
-    origin?: GPUOrigin3D
-    colorSpace?: PredefinedColorSpace
-  }) {
-    this.renderer.device.queue.copyExternalImageToTexture(
-      { source, flipY: this.options.flipY },
-      { texture: this.texture, premultipliedAlpha: this.options.premultipliedAlpha, origin, colorSpace },
-      [width, height, depth]
-    )
-
-    if (this.texture.mipLevelCount > 1) {
-      this.renderer.generateMips(this)
-    }
-  }
-
-  /**
-   * Use data as the {@link texture} source and upload it to the GPU.
-   * @param parameters - parameters used to upload the source.
-   * @param parameters.width - data source width.
-   * @param parameters.height - data source height.
-   * @param parameters.depth - data source depth.
-   * @param parameters.origin - {@link GPUQueue.copyExternalImageToTexture().destination.origin | GPUOrigin3D} of the data source copy.
-   * @param parameters.data - {@link Float32Array} data to use as source.
-   */
-  uploadData({
-    width = this.size.width,
-    height = this.size.height,
-    depth = this.size.depth,
-    origin = [0, 0, 0],
-    data = new Float32Array(width * height * 4),
-  }: {
-    width?: number
-    height?: number
-    depth?: number
-    origin?: GPUOrigin3D
-    data?: Float32Array
-  }) {
-    this.renderer.device.queue.writeTexture(
-      { texture: this.texture, origin },
-      data,
-      { bytesPerRow: width * data.BYTES_PER_ELEMENT * 4, rowsPerImage: height },
-      [width, height, depth]
-    )
-
-    if (this.texture.mipLevelCount > 1) {
-      this.renderer.generateMips(this)
-    }
   }
 
   /**
@@ -386,17 +407,33 @@ export class MediaTexture extends Texture {
    * @returns - the newly created {@link ImageBitmap}.
    */
   async loadImageBitmap(url: string): Promise<ImageBitmap> {
-    const res = await fetch(url)
-    const blob = await res.blob()
-    return await createImageBitmap(blob, { colorSpaceConversion: 'none' })
+    if (url.includes('.webp')) {
+      return new Promise((resolve, reject) => {
+        const img = new Image()
+        img.crossOrigin = 'anonymous' // Ensure CORS is handled properly if needed
+
+        img.onload = () => {
+          createImageBitmap(img, { colorSpaceConversion: 'none' }).then(resolve).catch(reject)
+        }
+
+        img.onerror = reject
+        img.src = url
+      }) as Promise<ImageBitmap>
+    } else {
+      const res = await fetch(url)
+      const blob = await res.blob()
+      return await createImageBitmap(blob, { colorSpaceConversion: 'none' })
+    }
   }
 
   /**
    * Load and create an {@link ImageBitmap} from a URL or {@link HTMLImageElement}, use it as a {@link Texture.sources | source} and create the {@link GPUTexture}.
    * @param source - the image URL or {@link HTMLImageElement} to load.
    */
-  async loadImage(source: string | HTMLImageElement): Promise<void> {
+  async loadImage(source: string | HTMLImageElement) {
     const url = typeof source === 'string' ? source : source.getAttribute('src')
+
+    const sourceIndex = this.options.sources.length
 
     if (this.size.depth > 1) {
       this.options.sources.push(url)
@@ -412,22 +449,46 @@ export class MediaTexture extends Texture {
       return
     }
 
-    this.sourceLoaded = false
-    this.sourceUploaded = false
-
     const loadedSource = await this.loadImageBitmap(url)
+
+    this.useImageBitmap(loadedSource, sourceIndex)
+  }
+
+  /**
+   * Use an already loaded {@link ImageBitmap} as a {@link sources}.
+   * @param imageBitmap - {@link ImageBitmap} to use.
+   * @param sourceIndex - Index at which to insert the source in the {@link sources} array in case of cube map.
+   */
+  useImageBitmap(imageBitmap: ImageBitmap, sourceIndex = 0) {
     if (this.size.depth > 1) {
-      this.sources.push(loadedSource)
+      this.sources[sourceIndex] = {
+        source: imageBitmap,
+        sourceLoaded: true,
+        sourceUploaded: false,
+        shouldUpdate: true,
+      }
     } else {
-      this.sources = [loadedSource]
+      this.sources = [
+        {
+          source: imageBitmap,
+          sourceLoaded: true,
+          sourceUploaded: false,
+          shouldUpdate: true,
+        },
+      ]
     }
 
     this.setSourceSize()
+    this.#setSourceLoaded(imageBitmap)
+  }
 
-    this.sourceLoaded = this.sources.length === this.size.depth
-
-    if (this.sourceLoaded) {
-      this.createTexture()
+  /**
+   * Load and create images using {@link loadImage} from an array of images sources as strings or {@link HTMLImageElement}. Useful for cube maps.
+   * @param sources - Array of images sources as strings or {@link HTMLImageElement} to load.
+   */
+  async loadImages(sources: Array<string | HTMLImageElement>) {
+    for (let i = 0; i < this.size.depth; i++) {
+      this.loadImage(sources[i])
     }
   }
 
@@ -441,9 +502,9 @@ export class MediaTexture extends Texture {
    * Set our {@link shouldUpdate} flag to true at each new video frame.
    */
   onVideoFrameCallback(sourceIndex = 0) {
-    if (this.videoFrameCallbackIds.length >= sourceIndex) {
-      this.shouldUpdate = true
-      ;(this.sources[sourceIndex] as HTMLVideoElement).requestVideoFrameCallback(
+    if (this.videoFrameCallbackIds.get(sourceIndex)) {
+      this.sources[sourceIndex].shouldUpdate = true
+      ;(this.sources[sourceIndex].source as HTMLVideoElement).requestVideoFrameCallback(
         this.onVideoFrameCallback.bind(this, sourceIndex)
       )
     }
@@ -454,66 +515,63 @@ export class MediaTexture extends Texture {
    * Set the {@link HTMLVideoElement} as a {@link source} and create the {@link GPUTexture} or {@link GPUExternalTexture}.
    * @param video - the newly loaded {@link HTMLVideoElement}.
    */
-  onVideoLoaded(video: HTMLVideoElement) {
-    if (!this.sourceLoaded) {
-      if (this.size.depth > 1) {
-        this.sources.push(video)
-      } else {
-        this.sources = [video]
-      }
-
+  onVideoLoaded(video: HTMLVideoElement, sourceIndex = 0) {
+    if (!this.sources[sourceIndex].sourceLoaded) {
+      this.sources[sourceIndex].sourceLoaded = true
       this.setSourceSize()
-      //this.resize()
 
-      if (this.options.useExternalTextures) {
-        if (this.size.depth > 1) {
-          this.options.sourcesTypes.push('externalVideo')
-        } else {
-          this.options.sourcesTypes = ['externalVideo']
-        }
-
+      if (this.options.sourcesTypes[sourceIndex] === 'externalVideo') {
         // texture binding will be set when uploading external texture
         // meanwhile, destroy previous texture
         this.texture?.destroy()
-      } else {
-        if (this.size.depth > 1) {
-          this.options.sourcesTypes.push('video')
-        } else {
-          this.options.sourcesTypes = ['video']
-        }
-        //this.createTexture()
       }
 
       if ('requestVideoFrameCallback' in HTMLVideoElement.prototype) {
-        this.videoFrameCallbackIds.push(
-          (video as HTMLVideoElement).requestVideoFrameCallback(
-            this.onVideoFrameCallback.bind(this, this.sources.length - 1)
-          )
+        const videoFrameCallbackId = (this.sources[sourceIndex].source as HTMLVideoElement).requestVideoFrameCallback(
+          this.onVideoFrameCallback.bind(this, sourceIndex)
         )
+
+        this.videoFrameCallbackIds.set(sourceIndex, videoFrameCallbackId)
       }
 
-      this.sourceLoaded = this.size.depth === this.sources.length
-
-      if (this.sourceLoaded && !this.options.useExternalTextures) {
-        this.createTexture()
-      }
+      this.#setSourceLoaded(video)
     }
   }
 
   /**
-   * Get whether the {@link source} is a video
-   * @readonly
+   * Get whether the provided source is a video.
+   * @param source - {@link TextureSource} to check.
+   * @returns - Whether the source is a video or not.
    */
-  isVideoSource(sourceIndex): boolean {
-    return (
-      this.sources.length >= sourceIndex &&
-      (this.options.sourcesTypes[sourceIndex] === 'video' || this.options.sourcesTypes[sourceIndex] === 'externalVideo')
-    )
+  isVideoSource(source: TextureSource): source is HTMLVideoElement {
+    return source instanceof HTMLVideoElement
   }
 
   /**
-   * Load a video from a URL or {@link HTMLVideoElement} and register {@link onVideoLoaded} callback
-   * @param source - the video URL or {@link HTMLVideoElement} to load
+   * Get whether the provided video source is ready to be played.
+   * @param source - {@link TextureSource} to check.
+   * @returns - Whether the video source is ready to be played.
+   */
+  isVideoSourceReady(source: TextureSource): boolean {
+    if (!this.isVideoSource(source)) return false
+
+    return source.readyState >= source.HAVE_CURRENT_DATA
+  }
+
+  /**
+   * Get whether the provided video source is ready to be uploaded.
+   * @param source - {@link TextureSource} to check.
+   * @returns - Whether the video source is ready to be uploaded.
+   */
+  shouldUpdateVideoSource(source: TextureSource): boolean {
+    if (!this.isVideoSource(source)) return false
+
+    return this.isVideoSourceReady(source) && !source.paused
+  }
+
+  /**
+   * Load a video from a URL or {@link HTMLVideoElement} and register {@link onVideoLoaded} callback.
+   * @param source - the video URL or {@link HTMLVideoElement} to load.
    */
   loadVideo(source: string | HTMLVideoElement) {
     let video
@@ -532,21 +590,40 @@ export class MediaTexture extends Texture {
     video.setAttribute('playsinline', '')
 
     if (this.size.depth > 1) {
+      const sourceIndex = this.options.sources.length
+
       this.options.sources.push(video.src)
+
+      // cannot use external video textures on a cube map
+      this.options.sourcesTypes.push('video')
+
+      this.sources[sourceIndex] = {
+        source: video,
+        sourceLoaded: false,
+        sourceUploaded: false,
+        shouldUpdate: false,
+      }
     } else {
       this.options.sources = [video.src]
-    }
+      this.options.sourcesTypes = [this.options.useExternalTextures ? 'externalVideo' : 'video']
 
-    this.sourceLoaded = false
-    this.sourceUploaded = false
+      this.sources = [
+        {
+          source: video,
+          sourceLoaded: false,
+          sourceUploaded: false,
+          shouldUpdate: false,
+        },
+      ]
+    }
 
     // If the video is in the cache of the browser,
     // the 'canplaythrough' event might have been triggered
     // before we registered the event handler.
     if (video.readyState >= video.HAVE_ENOUGH_DATA) {
-      this.onVideoLoaded(video)
+      this.onVideoLoaded(video, this.sources.length - 1)
     } else {
-      video.addEventListener('canplaythrough', this.onVideoLoaded.bind(this, video), {
+      video.addEventListener('canplaythrough', this.onVideoLoaded.bind(this, video, this.sources.length - 1), {
         once: true,
       })
     }
@@ -555,5 +632,203 @@ export class MediaTexture extends Texture {
     if (isNaN(video.duration)) {
       video.load()
     }
+  }
+
+  /**
+   * Load and create videos using {@link loadVideo} from an array of videos sources as strings or {@link HTMLVideoElement}. Useful for cube maps.
+   * @param sources - Array of images sources as strings or {@link HTMLVideoElement} to load.
+   */
+  loadVideos(sources: Array<string | HTMLVideoElement>) {
+    for (let i = 0; i < this.size.depth; i++) {
+      this.loadVideo(sources[i])
+    }
+  }
+
+  /**
+   * Load a {@link HTMLCanvasElement} and use it as one of our {@link sources}.
+   * @param source - the {@link HTMLCanvasElement} to use.
+   */
+  loadCanvas(source: HTMLCanvasElement) {
+    if (this.size.depth > 1) {
+      const sourceIndex = this.options.sources.length
+      this.options.sources.push(source)
+      this.options.sourcesTypes.push('canvas')
+
+      this.sources[sourceIndex] = {
+        source: source,
+        sourceLoaded: true,
+        sourceUploaded: false,
+        shouldUpdate: true,
+      }
+    } else {
+      this.options.sources = [source]
+      this.options.sourcesTypes = ['canvas']
+      this.sources = [
+        {
+          source: source,
+          sourceLoaded: true,
+          sourceUploaded: false,
+          shouldUpdate: true,
+        },
+      ]
+    }
+
+    this.setSourceSize()
+
+    this.#setSourceLoaded(source)
+  }
+
+  /**
+   * Load an array of {@link HTMLCanvasElement} using {@link loadCanvas} . Useful for cube maps.
+   * @param sources - Array of {@link HTMLCanvasElement} to load.
+   */
+  loadCanvases(sources: HTMLCanvasElement[]) {
+    for (let i = 0; i < this.size.depth; i++) {
+      this.loadCanvas(sources[i])
+    }
+  }
+
+  /* EVENTS */
+
+  /**
+   * Called each time a source has been loaded.
+   * @param source - {@link TextureSource} that has just been loaded.
+   * @private
+   */
+  #setSourceLoaded(source: TextureSource) {
+    this._onSourceLoadedCallback && this._onSourceLoadedCallback(source)
+
+    const nbSourcesLoaded = this.sources.filter((source) => source.sourceLoaded)?.length || 0
+
+    if (nbSourcesLoaded === this.size.depth) {
+      this.sourcesLoaded = true
+    }
+  }
+
+  setSourceUploaded(sourceIndex = 0) {
+    this.sources[sourceIndex].sourceUploaded = true
+    this._onSourceUploadedCallback && this._onSourceUploadedCallback(this.sources[sourceIndex].source)
+
+    const nbSourcesUploaded = this.sources.filter((source) => source.sourceUploaded)?.length || 0
+
+    if (nbSourcesUploaded === this.size.depth) {
+      this.sourcesUploaded = true
+    }
+  }
+
+  /**
+   * Callback to run when one of the {@link sources#source | source} has been loaded.
+   * @param callback - callback to run when one of the {@link sources#source | source} has been loaded.
+   * @returns - our {@link MediaTexture}
+   */
+  onSourceLoaded(callback: (source: TextureSource) => void): this {
+    if (callback) {
+      this._onSourceLoadedCallback = callback
+    }
+
+    return this
+  }
+
+  /**
+   * Callback to run when all of the {@link sources#source | source} have been loaded.
+   * @param callback - callback to run when all of the {@link sources#source | sources} have been loaded.
+   * @returns - our {@link MediaTexture}
+   */
+  onAllSourcesLoaded(callback: () => void): this {
+    if (callback) {
+      this._onAllSourcesLoadedCallback = callback
+    }
+
+    return this
+  }
+
+  /**
+   * Callback to run when one of the {@link sources#source} has been uploaded to the GPU.
+   * @param callback - callback to run when one of the {@link sources#source | source} has been uploaded to the GPU.
+   * @returns - our {@link MediaTexture}.
+   */
+  onSourceUploaded(callback: (source: TextureSource) => void): this {
+    if (callback) {
+      this._onSourceUploadedCallback = callback
+    }
+
+    return this
+  }
+
+  /**
+   * Callback to run when all of the {@link sources#source | source} have been uploaded to the GPU.
+   * @param callback - callback to run when all of the {@link sources#source | sources} been uploaded to the GPU.
+   * @returns - our {@link MediaTexture}
+   */
+  onAllSourcesUploaded(callback: () => void): this {
+    if (callback) {
+      this._onAllSourcesUploadedCallback = callback
+    }
+
+    return this
+  }
+
+  /* RENDER */
+
+  /**
+   * Render a {@link MediaTexture} by uploading the {@link texture} if needed.
+   * */
+  render() {
+    this.sources.forEach((source, sourceIndex) => {
+      const sourceType = this.options.sourcesTypes[sourceIndex]
+
+      // since external texture are destroyed as soon as JavaScript returns to the browser
+      // we need to update it at every tick, even if it hasn't changed
+      // to ensure we're not sending a stale / destroyed texture
+      // anyway, external texture are cached so it is fined to call importExternalTexture at each tick
+      if (sourceType === 'externalVideo' && this.isVideoSourceReady(source.source)) {
+        source.shouldUpdate = true
+      }
+
+      // if no videoFrameCallback check if the video is actually really playing
+      if (
+        this.isVideoSource(source.source) &&
+        !this.videoFrameCallbackIds.size &&
+        this.shouldUpdateVideoSource(source.source)
+      ) {
+        source.shouldUpdate = true
+      }
+
+      // upload texture if needed
+      if (source.shouldUpdate && sourceType !== 'externalVideo') {
+        // if the size is not matching, this means we need to recreate the texture
+        if (this.size.width !== this.texture.width || this.size.height !== this.texture.height) {
+          this.createTexture()
+        }
+
+        this.renderer.uploadTexture(this, sourceIndex)
+        source.shouldUpdate = false
+      }
+    })
+  }
+
+  /**
+   * Destroy the {@link MediaTexture}.
+   */
+  destroy() {
+    if (this.videoFrameCallbackIds.size) {
+      for (const [sourceIndex, id] of this.videoFrameCallbackIds) {
+        ;(this.sources[sourceIndex].source as HTMLVideoElement).cancelVideoFrameCallback(id)
+      }
+    }
+
+    this.sources.forEach((source) => {
+      if (this.isVideoSource(source.source)) {
+        ;(source.source as HTMLVideoElement).removeEventListener(
+          'canplaythrough',
+          this.onVideoLoaded.bind(this, source.source),
+          {
+            once: true,
+          } as AddEventListenerOptions & EventListenerOptions
+        )
+      }
+    })
+
+    super.destroy()
   }
 }

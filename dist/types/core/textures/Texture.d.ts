@@ -7,9 +7,7 @@ import { BindingMemoryAccessType, BindingParams, TextureBindingType } from '../b
 import { DOMTexture } from './DOMTexture';
 import { ExternalTextureParamsBase, TextureSize } from '../../types/Textures';
 import { TextureUsageKeys } from './utils';
-import { Vec2 } from '../../math/Vec2';
-import { Mat3 } from '../../math/Mat3';
-import { BufferBinding } from '../bindings/BufferBinding';
+import { MediaTexture } from './MediaTexture';
 /**
  * Base parameters used to create a {@link Texture}.
  */
@@ -36,17 +34,17 @@ export interface TextureBaseParams extends ExternalTextureParamsBase {
     visibility?: BindingParams['visibility'];
     /** Allowed usages for the {@link Texture#texture | GPU texture} as an array of {@link TextureUsageKeys | texture usages names}. */
     usage?: TextureUsageKeys[];
+    aspect?: GPUTextureAspect;
+    colorSpace?: PredefinedColorSpace;
     /** Whether any {@link core/materials/Material.Material | Material} using this {@link Texture} should automatically destroy it upon destruction. Default to `true`. */
     autoDestroy?: boolean;
-    /** Whether to use a transformation {@link Mat3} to use in the shaders for UV transformations. If set to `true`, will create a {@link BufferBinding} accessible in the shaders with the name `${texture.options.name}Matrix`. */
-    useTransform?: boolean;
 }
 /**
  * Parameters used to create a {@link Texture}.
  */
 export interface TextureParams extends TextureBaseParams {
     /** Optional texture to use as a copy source input. Could be a {@link Texture} or {@link DOMTexture}. */
-    fromTexture?: Texture | DOMTexture | null;
+    fromTexture?: Texture | MediaTexture | DOMTexture | null;
 }
 /**
  * This is the main class used to create and handle {@link GPUTexture | textures} that can be used with {@link core/computePasses/ComputePass.ComputePass | ComputePass} and/or {@link core/meshes/Mesh.Mesh | Mesh}. Also used as copy source/destination for {@link core/renderPasses/RenderPass.RenderPass | RenderPass} and {@link core/renderPasses/RenderTarget.RenderTarget | RenderTarget}.
@@ -89,36 +87,12 @@ export declare class Texture {
     options: TextureParams;
     /** Array of {@link core/bindings/Binding.Binding | bindings} that will actually only hold one {@link TextureBinding | texture binding}. */
     bindings: BindGroupBindingElement[];
-    /** {@link Vec2} offset to apply to the {@link Texture} if {@link TextureBaseParams#useTransform | useTransform} parameter has been set to `true`. */
-    offset: Vec2;
-    /** {@link Vec2} scale to apply to the {@link Texture} if {@link TextureBaseParams#useTransform | useTransform} parameter has been set to `true`. */
-    scale: Vec2;
-    /** {@link Vec2} transformation origin to use when applying the transformations to the {@link Texture} if {@link TextureBaseParams#useTransform | useTransform} parameter has been set to `true`. A value of (0.5, 0.5) corresponds to the center of the texture. Default is (0, 0), the upper left. */
-    transformOrigin: Vec2;
-    /** {@link Mat3} transformation matrix to apply to the {@link Texture} if {@link TextureBaseParams#useTransform | useTransform} parameter has been set to `true`. */
-    modelMatrix: Mat3;
-    /** {@link BufferBinding} to send the transformation matrix to the shaders if {@link TextureBaseParams#useTransform | useTransform} parameter has been set to `true`. */
-    transformBinding?: BufferBinding | null;
     /**
      * Texture constructor
      * @param renderer - {@link Renderer | renderer} object or {@link GPUCurtains} class object used to create this {@link Texture}.
      * @param parameters - {@link TextureParams | parameters} used to create this {@link Texture}.
      */
     constructor(renderer: Renderer | GPUCurtains, parameters?: TextureParams);
-    /**
-     * Get the actual {@link rotation} value.
-     * @returns - the actual {@link rotation} value.
-     */
-    get rotation(): number;
-    /**
-     * Set the actual {@link rotation} value and update the {@link modelMatrix}.
-     * @param value - new {@link rotation} value to use.
-     */
-    set rotation(value: number);
-    /**
-     * Update the {@link modelMatrix} using the {@link offset}, {@link rotation}, {@link scale} and {@link transformOrigin} and tell the {@link transformBinding} to update, only if {@link TextureBaseParams#useTransform | useTransform} parameter has been set to `true`.
-     */
-    updateModelMatrix(): void;
     /**
      * Set our {@link Texture#bindings | bindings}.
      */
@@ -132,7 +106,7 @@ export declare class Texture {
      * Copy another {@link Texture} into this {@link Texture}.
      * @param texture - {@link Texture} to copy.
      */
-    copy(texture: Texture | DOMTexture): void;
+    copy(texture: Texture | MediaTexture | DOMTexture): void;
     /**
      * Copy a {@link GPUTexture} directly into this {@link Texture}. Mainly used for depth textures.
      * @param texture - {@link GPUTexture} to copy.
@@ -152,7 +126,7 @@ export declare class Texture {
      * @param parameters.origin - {@link GPUQueue.copyExternalImageToTexture().destination.origin | GPUOrigin3D} of the source copy.
      */
     uploadSource({ source, width, height, depth, origin, colorSpace, }: {
-        source: GPUImageCopyExternalImageSource;
+        source: GPUCopyExternalImageSource;
         width?: number;
         height?: number;
         depth?: number;

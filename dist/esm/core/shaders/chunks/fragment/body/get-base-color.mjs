@@ -33,10 +33,10 @@ const getBaseColor = ({
     baseColor += /* wgsl */
     `
   var baseColorUV: vec2f = ${baseColorTexture.texCoordAttributeName ?? "uv"};`;
-    if (baseColorTexture.texture.options.useTransform) {
+    if ("useTransform" in baseColorTexture.texture.options && baseColorTexture.texture.options.useTransform) {
       baseColor += /* wgsl */
       `
-  baseColorUV = (${baseColorTexture.texture.options.name}Matrix * vec3(baseColorUV, 1.0)).xy;`;
+  baseColorUV = (texturesMatrices.${baseColorTexture.texture.options.name}.matrix * vec3(baseColorUV, 1.0)).xy;`;
     }
     baseColor += /* wgsl */
     `

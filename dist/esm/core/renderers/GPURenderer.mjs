@@ -548,11 +548,12 @@ class GPURenderer {
     return this.deviceManager.device?.createTexture(textureDescriptor);
   }
   /**
-   * Upload a {@linkDOMTexture#texture | texture} to the GPU
-   * @param texture - {@link DOMTexture} class object with the {@link DOMTexture#texture | texture} to upload
+   * Upload a {@link MediaTexture#texture | texture} or {@link DOMTexture#texture | texture} to the GPU.
+   * @param texture - {@link MediaTexture} or {@link DOMTexture} containing the {@link GPUTexture} to upload.
+   * @param sourceIndex - Index of the source to upload (for cube maps). Default to `0`.
    */
-  uploadTexture(texture) {
-    this.deviceManager.uploadTexture(texture);
+  uploadTexture(texture, sourceIndex = 0) {
+    this.deviceManager.uploadTexture(texture, sourceIndex);
   }
   /**
    * Generate mips on the GPU using our {@link GPUDeviceManager}.

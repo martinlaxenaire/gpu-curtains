@@ -1,7 +1,28 @@
 import { BindGroup } from './BindGroup.mjs';
 import { isRenderer } from '../renderers/utils.mjs';
 import { DOMTexture } from '../textures/DOMTexture.mjs';
+import { BufferBinding } from '../bindings/BufferBinding.mjs';
+import { MediaTexture } from '../textures/MediaTexture.mjs';
 
+var __accessCheck = (obj, member, msg) => {
+  if (!member.has(obj))
+    throw TypeError("Cannot " + msg);
+};
+var __privateGet = (obj, member, getter) => {
+  __accessCheck(obj, member, "read from private field");
+  return getter ? getter.call(obj) : member.get(obj);
+};
+var __privateAdd = (obj, member, value) => {
+  if (member.has(obj))
+    throw TypeError("Cannot add the same private member more than once");
+  member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+};
+var __privateSet = (obj, member, value, setter) => {
+  __accessCheck(obj, member, "write to private field");
+  member.set(obj, value);
+  return value;
+};
+var _texturesWithMatrices;
 class TextureBindGroup extends BindGroup {
   /**
    * TextureBindGroup constructor
@@ -12,6 +33,7 @@ class TextureBindGroup extends BindGroup {
     const type = "TextureBindGroup";
     renderer = isRenderer(renderer, type);
     super(renderer, { label, index, bindings, uniforms, storages });
+    __privateAdd(this, _texturesWithMatrices, void 0);
     this.options = {
       ...this.options,
       // will be filled after
@@ -29,6 +51,7 @@ class TextureBindGroup extends BindGroup {
       }
     }
     this.type = type;
+    this.texturesMatricesBinding = null;
   }
   /**
    * Adds a texture to the textures array and the struct
@@ -68,6 +91,43 @@ class TextureBindGroup extends BindGroup {
   get shouldCreateBindGroup() {
     return !this.bindGroup && !!this.bindings.length && !this.textures.find((texture) => !(texture.texture || texture.externalTexture)) && !this.samplers.find((sampler) => !sampler.sampler);
   }
+  setTexturesMatricesBinding() {
+    __privateSet(this, _texturesWithMatrices, this.textures.filter(
+      (texture) => (texture instanceof MediaTexture || texture instanceof DOMTexture) && !!texture.transformBinding
+    ));
+    const texturesBindings = __privateGet(this, _texturesWithMatrices).map((texture) => {
+      return texture.transformBinding;
+    });
+    if (texturesBindings.length) {
+      const label = "Textures matrices " + Math.floor(Math.random() * 9999);
+      const baseName = "texturesMatrices";
+      const name = this.index > 1 ? `${baseName}${this.index}` : baseName;
+      this.texturesMatricesBinding = new BufferBinding({
+        label,
+        name,
+        childrenBindings: texturesBindings.map((textureBinding) => {
+          return {
+            binding: textureBinding,
+            count: 1,
+            forceArray: false
+          };
+        })
+      });
+      this.texturesMatricesBinding.childrenBindings.forEach((childrenBinding, i) => {
+        childrenBinding.inputs.matrix.value = texturesBindings[i].inputs.matrix.value;
+        texturesBindings[i].inputs.matrix.shouldUpdate = true;
+      });
+      this.texturesMatricesBinding.buffer.consumers.add(this.uuid);
+      const hasMatricesBinding = this.bindings.find((binding) => binding.name === baseName);
+      if (!hasMatricesBinding) {
+        this.addBinding(this.texturesMatricesBinding);
+      }
+    }
+  }
+  createBindGroup() {
+    this.setTexturesMatricesBinding();
+    super.createBindGroup();
+  }
   /**
    * Update the {@link TextureBindGroup#textures | bind group textures}:
    * - Check if they need to copy their source texture
@@ -83,6 +143,18 @@ class TextureBindGroup extends BindGroup {
           texture.uploadVideoTexture();
         }
       }
+      if (texture instanceof MediaTexture) {
+        const firstSource = texture.sources.length && texture.sources[0];
+        if (firstSource && firstSource.shouldUpdate && texture.options.sourcesTypes[0] && texture.options.sourcesTypes[0] === "externalVideo") {
+          texture.uploadVideoTexture();
+        }
+      }
+    }
+    if (this.texturesMatricesBinding) {
+      __privateGet(this, _texturesWithMatrices).forEach((texture, i) => {
+        this.texturesMatricesBinding.childrenBindings[i].inputs.matrix.shouldUpdate = !!texture.transformBinding.inputs.matrix.shouldUpdate;
+        texture.transformBinding.inputs.matrix.shouldUpdate = false;
+      });
     }
   }
   /**
@@ -101,5 +173,6 @@ class TextureBindGroup extends BindGroup {
     this.options.samplers = [];
   }
 }
+_texturesWithMatrices = new WeakMap();
 
 export { TextureBindGroup };

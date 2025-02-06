@@ -28,7 +28,7 @@ export const getNormalTangentBitangent = ({
     normalTangentBitangent += /* wgsl */ `
   var normalUV: vec2f = ${normalTexture.texCoordAttributeName ?? 'uv'};`
 
-    if (normalTexture.texture.options.useTransform) {
+    if ('useTransform' in normalTexture.texture.options && normalTexture.texture.options.useTransform) {
       normalTangentBitangent += /* wgsl */ `
   normalUV = (texturesMatrices.${normalTexture.texture.options.name}.matrix * vec3(normalUV, 1.0)).xy;`
     }

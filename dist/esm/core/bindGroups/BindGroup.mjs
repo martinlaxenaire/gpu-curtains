@@ -293,6 +293,7 @@ class BindGroup {
         usage: ["copyDst", "mapRead"]
       });
     }
+    this.renderer.deviceManager.bufferBindings.set(binding.cacheKey, binding);
   }
   /**
    * Fill in our entries bindGroupLayout and bindGroup arrays with the correct binding resources.

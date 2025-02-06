@@ -1,4 +1,5 @@
 import { Texture } from '../../../textures/Texture';
+import { MediaTexture } from '../../../textures/MediaTexture';
 import { Sampler } from '../../../samplers/Sampler';
 import { EnvironmentMap } from '../../../../extras/environmentMap/EnvironmentMap';
 import { Geometry } from '../../../geometries/Geometry';
@@ -13,8 +14,8 @@ export type ToneMappings = 'Khronos' | 'Linear' | false;
  * Define a {@link ShaderTextureDescriptor} used to associate the {@link core/textures/Texture.Texture | Texture} names with the corresponding {@link Sampler} and UV names.
  */
 export interface ShaderTextureDescriptor {
-    /** Name of the {@link core/textures/Texture.Texture | Texture} to use. */
-    texture: Texture;
+    /** Name of the {@link Texture} or {@link MediaTexture} to use. */
+    texture: Texture | MediaTexture;
     /** Name of the {@link Sampler} to use. */
     sampler?: Sampler;
     /** Texture coordinate attribute name to use to map this texture. */

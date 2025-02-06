@@ -9,6 +9,7 @@ import { Buffer } from '../buffers/Buffer';
 import { BufferBinding } from '../bindings/BufferBinding';
 import { IndirectBuffer } from '../../extras/buffers/IndirectBuffer';
 import { Texture } from '../textures/Texture';
+import { MediaTexture } from '../textures/MediaTexture';
 /**
  * Base parameters used to create a {@link GPUDeviceManager}.
  */
@@ -84,7 +85,10 @@ export declare class GPUDeviceManager {
     /** An array containing all our created {@link DOMTexture}. */
     domTextures: DOMTexture[];
     /** An array to keep track of the newly uploaded {@link DOMTexture} and set their {@link DOMTexture#sourceUploaded | sourceUploaded} property. */
-    texturesQueue: DOMTexture[];
+    texturesQueue: Array<{
+        sourceIndex: number;
+        texture: MediaTexture | DOMTexture;
+    }>;
     /** Request animation frame callback returned id if used. */
     animationFrameID: null | number;
     /** function assigned to the {@link onBeforeRender} callback. */
@@ -193,10 +197,18 @@ export declare class GPUDeviceManager {
      */
     addDOMTexture(texture: DOMTexture): void;
     /**
-     * Upload a {@link DOMTexture#texture | texture} to the GPU.
-     * @param texture - {@link DOMTexture} class object with the {@link DOMTexture#texture | texture} to upload.
+     * Copy an external image to the GPU.
+     * @param source - {@link GPUCopyExternalImageSourceInfo} to use.
+     * @param destination - {@link GPUCopyExternalImageDestInfo} to use.
+     * @param copySize - {@link GPUExtent3DStrict} to use.
      */
-    uploadTexture(texture: DOMTexture): void;
+    copyExternalImageToTexture(source: GPUCopyExternalImageSourceInfo, destination: GPUCopyExternalImageDestInfo, copySize: GPUExtent3DStrict): void;
+    /**
+     * Upload a {@link MediaTexture#texture | texture} or {@link DOMTexture#texture | texture} to the GPU.
+     * @param texture - {@link MediaTexture} or {@link DOMTexture} containing the {@link GPUTexture} to upload.
+     * @param sourceIndex - Index of the source to upload (for cube maps). Default to `0`.
+     */
+    uploadTexture(texture: MediaTexture | DOMTexture, sourceIndex?: number): void;
     /**
      * Mips generation helper on the GPU using our {@link device}. Caches sampler, module and pipeline (by {@link GPUTexture} formats) for faster generation.
      * Ported from https://webgpufundamentals.org/webgpu/lessons/webgpu-importing-textures.html

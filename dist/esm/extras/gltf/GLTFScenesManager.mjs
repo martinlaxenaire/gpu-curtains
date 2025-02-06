@@ -1,6 +1,6 @@
 import { isCameraRenderer } from '../../core/renderers/utils.mjs';
 import { Sampler } from '../../core/samplers/Sampler.mjs';
-import { Texture } from '../../core/textures/Texture.mjs';
+import { MediaTexture } from '../../core/textures/MediaTexture.mjs';
 import { Object3D } from '../../core/objects3D/Object3D.mjs';
 import { Box3 } from '../../math/Box3.mjs';
 import { Vec3 } from '../../math/Vec3.mjs';
@@ -290,12 +290,12 @@ const _GLTFScenesManager = class _GLTFScenesManager {
     }
   }
   /**
-   * Create a {@link Texture} based on the options.
+   * Create a {@link MediaTexture} based on the options.
    * @param material - material using that texture.
    * @param image - image source of the texture.
    * @param name - name of the texture.
-   * @param useTransform - Whether the {@link Texture} should handle transformations.
-   * @returns - newly created {@link Texture}.
+   * @param useTransform - Whether the {@link MediaTexture} should handle transformations.
+   * @returns - newly created {@link MediaTexture}.
    */
   createTexture(material, image, name, useTransform = false) {
     const format = (() => {
@@ -314,7 +314,7 @@ const _GLTFScenesManager = class _GLTFScenesManager {
           return "rgba8unorm";
       }
     })();
-    const texture = new Texture(this.renderer, {
+    const texture = new MediaTexture(this.renderer, {
       label: material.name ? material.name + ": " + name : name,
       name,
       format,
@@ -364,7 +364,7 @@ const _GLTFScenesManager = class _GLTFScenesManager {
           );
           const hasTexture = createdTextures.find((createdTexture) => createdTexture.index === index);
           if (hasTexture) {
-            const reusedTexture = new Texture(this.renderer, {
+            const reusedTexture = new MediaTexture(this.renderer, {
               label: material.name ? material.name + ": " + name : name,
               name,
               visibility: ["fragment"],

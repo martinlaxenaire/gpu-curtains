@@ -78,17 +78,15 @@ class DOMTexture extends Object3D {
       depth: 1
     };
     this.transformBinding = new BufferBinding({
-      label: this.options.label + ": model matrix",
-      name: this.options.name + "Matrix",
-      useStruct: false,
+      label: this.options.label,
+      name: this.options.name,
       struct: {
-        [this.options.name + "Matrix"]: {
+        matrix: {
           type: "mat4x4f",
           value: this.modelMatrix
         }
       }
     });
-    this.renderer.deviceManager.bufferBindings.set(this.transformBinding.cacheKey, this.transformBinding);
     this.setBindings();
     this._parentMesh = null;
     this.sourceLoaded = false;
@@ -109,8 +107,7 @@ class DOMTexture extends Object3D {
         visibility: this.options.visibility,
         texture: this.options.sourceType === "externalVideo" ? this.externalTexture : this.texture,
         viewDimension: this.options.viewDimension
-      }),
-      this.transformBinding
+      })
     ];
   }
   /**
@@ -199,12 +196,12 @@ class DOMTexture extends Object3D {
     this.modelMatrix.identity().premultiplyTranslate(this.transformOrigin.clone().multiplyScalar(-1)).premultiplyScale(__privateGet(this, _coverScale)).premultiplyScale(__privateGet(this, _parentRatio)).premultiply(__privateGet(this, _rotationMatrix)).premultiplyScale(__privateGet(this, _sourceRatio)).premultiplyTranslate(this.transformOrigin).translate(this.position);
   }
   /**
-   * If our {@link modelMatrix} has been updated, tell the {@link textureMatrix | texture matrix binding} to update as well
+   * If our {@link modelMatrix} has been updated, tell the {@link transformBinding | texture matrix binding} to update as well
    */
   updateMatrixStack() {
     super.updateMatrixStack();
     if (this.matricesNeedUpdate) {
-      this.transformBinding.shouldUpdateBinding(this.options.name + "Matrix");
+      this.transformBinding.inputs.matrix.shouldUpdate = true;
     }
   }
   /**
@@ -458,7 +455,6 @@ class DOMTexture extends Object3D {
    */
   render() {
     this.updateMatrixStack();
-    this.transformBinding.update();
     if (this.options.sourceType === "externalVideo") {
       this.shouldUpdate = true;
     }

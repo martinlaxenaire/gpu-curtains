@@ -6,6 +6,7 @@ import { Texture } from '../core/textures/Texture';
 import { Sampler } from '../core/samplers/Sampler';
 import { Geometry } from '../core/geometries/Geometry';
 import { IndexedGeometry } from '../core/geometries/IndexedGeometry';
+import { MediaTexture } from '../core/textures/MediaTexture';
 /** Shaders types that can be used by a {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} */
 export type RenderMaterialShadersType = 'vertex' | 'fragment';
 /** Shaders types that can be used by a {@link core/materials/ComputeMaterial.ComputeMaterial | ComputeMaterial} */
@@ -147,4 +148,4 @@ export interface RenderMaterialOptions extends MaterialOptions {
     rendering?: RenderMaterialRenderingOptions;
 }
 /** Defines all kind of textures a {@link core/materials/Material.Material | Material} can use. */
-export type MaterialTexture = DOMTexture | Texture;
+export type MaterialTexture = DOMTexture | MediaTexture | Texture;

@@ -20,7 +20,7 @@ export const getTransmissionThickness = ({
     transmissionThickness += /* wgsl */ `
   var transmissionUV: vec2f = ${transmissionTexture.texCoordAttributeName ?? 'uv'};`
 
-    if (transmissionTexture.texture.options.useTransform) {
+    if ('useTransform' in transmissionTexture.texture.options && transmissionTexture.texture.options.useTransform) {
       transmissionThickness += /* wgsl */ `
   transmissionUV = (${transmissionTexture.texture.options.name}Matrix * vec3(transmissionUV, 1.0)).xy;`
     }
@@ -37,7 +37,7 @@ export const getTransmissionThickness = ({
     transmissionThickness += /* wgsl */ `
   var thicknessUV: vec2f = ${thicknessTexture.texCoordAttributeName ?? 'uv'};`
 
-    if (thicknessTexture.texture.options.useTransform) {
+    if ('useTransform' in thicknessTexture.texture.options && thicknessTexture.texture.options.useTransform) {
       transmissionThickness += /* wgsl */ `
   thicknessUV = (${thicknessTexture.texture.options.name}Matrix * vec3(thicknessUV, 1.0)).xy;`
     }

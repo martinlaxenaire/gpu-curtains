@@ -51,8 +51,8 @@ export declare class DOMTexture extends Object3D {
     /** Options used to create this {@link DOMTexture} */
     options: DOMTextureOptions;
     /** A {@link BufferBinding | buffer binding} that will hold the texture model matrix */
-    textureMatrix: BufferBinding;
-    /** The bindings used by this {@link DOMTexture}, i.e. its {@link textureMatrix} and its {@link TextureBinding | GPU texture binding} */
+    transformBinding: BufferBinding;
+    /** The bindings used by this {@link DOMTexture}, i.e. its {@link transformBinding} and its {@link TextureBinding | GPU texture binding} */
     bindings: BindGroupBindingElement[];
     /** {@link DOMTexture} parentMesh if any */
     private _parentMesh;
@@ -119,7 +119,7 @@ export declare class DOMTexture extends Object3D {
      */
     updateModelMatrix(): void;
     /**
-     * If our {@link modelMatrix} has been updated, tell the {@link textureMatrix | texture matrix binding} to update as well
+     * If our {@link modelMatrix} has been updated, tell the {@link transformBinding | texture matrix binding} to update as well
      */
     updateMatrixStack(): void;
     /**

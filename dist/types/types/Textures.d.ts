@@ -55,7 +55,7 @@ export interface DOMTextureParams extends DOMTextureBaseParams {
     fromTexture?: DOMTexture | null;
 }
 /** Allowed {@link DOMTexture} source to use */
-export type TextureSource = GPUImageCopyExternalImageSource | null;
+export type TextureSource = GPUCopyExternalImageSource | null;
 /** Allowed {@link DOMTexture} source type to use */
 export type TextureSourceType = 'image' | 'canvas' | 'video' | 'externalVideo' | null;
 /**

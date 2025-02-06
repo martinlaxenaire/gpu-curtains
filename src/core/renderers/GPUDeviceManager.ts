@@ -9,6 +9,7 @@ import { Buffer } from '../buffers/Buffer'
 import { BufferBinding } from '../bindings/BufferBinding'
 import { IndirectBuffer } from '../../extras/buffers/IndirectBuffer'
 import { Texture } from '../textures/Texture'
+import { MediaTexture } from '../textures/MediaTexture'
 
 /**
  * Base parameters used to create a {@link GPUDeviceManager}.
@@ -93,7 +94,10 @@ export class GPUDeviceManager {
   /** An array containing all our created {@link DOMTexture}. */
   domTextures: DOMTexture[]
   /** An array to keep track of the newly uploaded {@link DOMTexture} and set their {@link DOMTexture#sourceUploaded | sourceUploaded} property. */
-  texturesQueue: DOMTexture[]
+  texturesQueue: Array<{
+    sourceIndex: number
+    texture: MediaTexture | DOMTexture
+  }>
 
   /** Request animation frame callback returned id if used. */
   animationFrameID: null | number
@@ -422,18 +426,39 @@ export class GPUDeviceManager {
   }
 
   /**
-   * Upload a {@link DOMTexture#texture | texture} to the GPU.
-   * @param texture - {@link DOMTexture} class object with the {@link DOMTexture#texture | texture} to upload.
+   * Copy an external image to the GPU.
+   * @param source - {@link GPUCopyExternalImageSourceInfo} to use.
+   * @param destination - {@link GPUCopyExternalImageDestInfo} to use.
+   * @param copySize - {@link GPUExtent3DStrict} to use.
    */
-  uploadTexture(texture: DOMTexture) {
-    if (texture.source) {
+  copyExternalImageToTexture(
+    source: GPUCopyExternalImageSourceInfo,
+    destination: GPUCopyExternalImageDestInfo,
+    copySize: GPUExtent3DStrict
+  ) {
+    this.device?.queue.copyExternalImageToTexture(source, destination, copySize)
+  }
+
+  /**
+   * Upload a {@link MediaTexture#texture | texture} or {@link DOMTexture#texture | texture} to the GPU.
+   * @param texture - {@link MediaTexture} or {@link DOMTexture} containing the {@link GPUTexture} to upload.
+   * @param sourceIndex - Index of the source to upload (for cube maps). Default to `0`.
+   */
+  uploadTexture(texture: MediaTexture | DOMTexture, sourceIndex = 0) {
+    if ('source' in texture && texture.source) {
       try {
-        this.device?.queue.copyExternalImageToTexture(
+        this.copyExternalImageToTexture(
           {
             source: texture.source as GPUCopyExternalImageSource,
             flipY: texture.options.flipY,
           } as GPUCopyExternalImageSourceInfo,
-          { texture: texture.texture as GPUTexture, premultipliedAlpha: texture.options.premultipliedAlpha },
+          {
+            texture: texture.texture as GPUTexture,
+            premultipliedAlpha: texture.options.premultipliedAlpha,
+            aspect: 'all',
+            colorSpace: 'srgb',
+            origin: [0, 0, sourceIndex],
+          },
           { width: texture.size.width, height: texture.size.height }
         )
 
@@ -442,17 +467,56 @@ export class GPUDeviceManager {
         }
 
         // add to our textures queue array to track when it has been uploaded
-        this.texturesQueue.push(texture)
+        this.texturesQueue.push({
+          sourceIndex,
+          texture,
+        })
       } catch ({ message }) {
         throwError(`GPUDeviceManager: could not upload texture: ${texture.options.name} because: ${message}`)
       }
-    } else {
-      this.device?.queue.writeTexture(
-        { texture: texture.texture as GPUTexture },
-        new Uint8Array(texture.options.placeholderColor),
-        { bytesPerRow: texture.size.width * 4 },
-        { width: texture.size.width, height: texture.size.height }
+    } else if ('sources' in texture && texture.sources.length) {
+      if (texture.size.width === 0)
+        console.log(
+          texture.size.width,
+          texture.size.height,
+          texture.options.label,
+          texture.sources[sourceIndex].source,
+          texture.size,
+          texture.options.fixedSize
+        )
+      this.device?.queue.copyExternalImageToTexture(
+        {
+          source: texture.sources[sourceIndex].source as GPUCopyExternalImageSource,
+          flipY: texture.options.flipY,
+        } as GPUCopyExternalImageSourceInfo,
+        {
+          texture: texture.texture as GPUTexture,
+          premultipliedAlpha: texture.options.premultipliedAlpha,
+          aspect: texture.options.aspect,
+          colorSpace: texture.options.colorSpace,
+          origin: [0, 0, sourceIndex],
+        },
+        { width: texture.size.width, height: texture.size.height, depthOrArrayLayers: 1 }
       )
+
+      if ((texture.texture as GPUTexture).mipLevelCount > 1) {
+        this.generateMips(texture)
+      }
+
+      // add to our textures queue array to track when it has been uploaded
+      this.texturesQueue.push({
+        sourceIndex,
+        texture,
+      })
+    } else {
+      for (let i = 0; i < texture.size.depth; i++) {
+        this.device?.queue.writeTexture(
+          { texture: texture.texture as GPUTexture, origin: [0, 0, i] },
+          new Uint8Array(texture.options.placeholderColor),
+          { bytesPerRow: texture.size.width * 4 },
+          { width: 1, height: 1, depthOrArrayLayers: 1 }
+        )
+      }
     }
   }
 
@@ -675,7 +739,11 @@ export class GPUDeviceManager {
     // as [Kai Ninomiya](https://github.com/kainino0x) stated:
     // "Anything you submit() after the copyExternalImageToTexture() is guaranteed to see the result of that call."
     for (const texture of this.texturesQueue) {
-      texture.sourceUploaded = true
+      if ('sourceUploaded' in texture.texture) {
+        texture.texture.sourceUploaded = true
+      } else {
+        ;(texture.texture as MediaTexture).setSourceUploaded(texture.sourceIndex)
+      }
     }
 
     // clear texture queue

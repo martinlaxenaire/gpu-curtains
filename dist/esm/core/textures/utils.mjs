@@ -18,9 +18,12 @@ const getDefaultTextureUsage = (usages = [], textureType) => {
   }
   return textureType !== "storage" ? GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT : GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST;
 };
+const getDefaultMediaTextureUsage = (usages = []) => {
+  return getDefaultTextureUsage(usages, "texture");
+};
 const getNumMipLevels = (...sizes) => {
   const maxSize = Math.max(...sizes);
   return 1 + Math.log2(maxSize) | 0;
 };
 
-export { getDefaultTextureUsage, getNumMipLevels, getTextureUsages };
+export { getDefaultMediaTextureUsage, getDefaultTextureUsage, getNumMipLevels, getTextureUsages };

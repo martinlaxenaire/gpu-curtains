@@ -273,34 +273,77 @@ class GPUDeviceManager {
     this.domTextures.push(texture);
   }
   /**
-   * Upload a {@link DOMTexture#texture | texture} to the GPU.
-   * @param texture - {@link DOMTexture} class object with the {@link DOMTexture#texture | texture} to upload.
+   * Copy an external image to the GPU.
+   * @param source - {@link GPUCopyExternalImageSourceInfo} to use.
+   * @param destination - {@link GPUCopyExternalImageDestInfo} to use.
+   * @param copySize - {@link GPUExtent3DStrict} to use.
    */
-  uploadTexture(texture) {
-    if (texture.source) {
+  copyExternalImageToTexture(source, destination, copySize) {
+    this.device?.queue.copyExternalImageToTexture(source, destination, copySize);
+  }
+  /**
+   * Upload a {@link MediaTexture#texture | texture} or {@link DOMTexture#texture | texture} to the GPU.
+   * @param texture - {@link MediaTexture} or {@link DOMTexture} containing the {@link GPUTexture} to upload.
+   * @param sourceIndex - Index of the source to upload (for cube maps). Default to `0`.
+   */
+  uploadTexture(texture, sourceIndex = 0) {
+    if ("source" in texture && texture.source) {
       try {
-        this.device?.queue.copyExternalImageToTexture(
+        this.copyExternalImageToTexture(
           {
             source: texture.source,
             flipY: texture.options.flipY
           },
-          { texture: texture.texture, premultipliedAlpha: texture.options.premultipliedAlpha },
+          {
+            texture: texture.texture,
+            premultipliedAlpha: texture.options.premultipliedAlpha,
+            aspect: "all",
+            colorSpace: "srgb",
+            origin: [0, 0, sourceIndex]
+          },
           { width: texture.size.width, height: texture.size.height }
         );
         if (texture.texture.mipLevelCount > 1) {
           this.generateMips(texture);
         }
-        this.texturesQueue.push(texture);
+        this.texturesQueue.push({
+          sourceIndex,
+          texture
+        });
       } catch ({ message }) {
         throwError(`GPUDeviceManager: could not upload texture: ${texture.options.name} because: ${message}`);
       }
-    } else {
-      this.device?.queue.writeTexture(
-        { texture: texture.texture },
-        new Uint8Array(texture.options.placeholderColor),
-        { bytesPerRow: texture.size.width * 4 },
-        { width: texture.size.width, height: texture.size.height }
+    } else if ("sources" in texture && texture.sources.length) {
+      this.device?.queue.copyExternalImageToTexture(
+        {
+          source: texture.sources[sourceIndex].source,
+          flipY: texture.options.flipY
+        },
+        {
+          texture: texture.texture,
+          premultipliedAlpha: texture.options.premultipliedAlpha,
+          aspect: texture.options.aspect,
+          colorSpace: texture.options.colorSpace,
+          origin: [0, 0, sourceIndex]
+        },
+        { width: texture.size.width, height: texture.size.height, depthOrArrayLayers: 1 }
       );
+      if (texture.texture.mipLevelCount > 1) {
+        this.generateMips(texture);
+      }
+      this.texturesQueue.push({
+        sourceIndex,
+        texture
+      });
+    } else {
+      for (let i = 0; i < texture.size.depth; i++) {
+        this.device?.queue.writeTexture(
+          { texture: texture.texture, origin: [0, 0, i] },
+          new Uint8Array(texture.options.placeholderColor),
+          { bytesPerRow: texture.size.width * 4 },
+          { width: texture.size.width, height: texture.size.height, depthOrArrayLayers: 1 }
+        );
+      }
     }
   }
   /**
@@ -488,7 +531,11 @@ class GPUDeviceManager {
     this.device?.queue.submit([commandBuffer]);
     this.domTextures.filter((texture) => !texture.parentMesh && texture.sourceLoaded && !texture.sourceUploaded).forEach((texture) => this.uploadTexture(texture));
     for (const texture of this.texturesQueue) {
-      texture.sourceUploaded = true;
+      if ("sourceUploaded" in texture.texture) {
+        texture.texture.sourceUploaded = true;
+      } else {
+        texture.texture.sources[texture.sourceIndex].sourceUploaded = true;
+      }
     }
     this.texturesQueue = [];
     for (const renderer of this.renderers) {

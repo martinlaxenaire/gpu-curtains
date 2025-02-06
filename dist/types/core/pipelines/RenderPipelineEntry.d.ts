@@ -1,11 +1,7 @@
 /// <reference types="dist" />
-import { PipelineEntry } from './PipelineEntry'
-import {
-  PipelineEntryShaders,
-  RenderPipelineEntryOptions,
-  RenderPipelineEntryParams,
-} from '../../types/PipelineEntries'
-import { RenderMaterialAttributes } from '../../types/Materials'
+import { PipelineEntry } from './PipelineEntry';
+import { PipelineEntryShaders, RenderPipelineEntryOptions, RenderPipelineEntryParams } from '../../types/PipelineEntries';
+import { RenderMaterialAttributes } from '../../types/Materials';
 /**
  * Used to create a {@link PipelineEntry} specifically designed to handle {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}.
  *
@@ -90,8 +86,8 @@ import { RenderMaterialAttributes } from '../../types/Materials'
  * To help you compute scaled UV based on a texture matrix, this function is always added to both vertex and fragment shaders:
  *
  * ```wgsl
- * fn getUVCover(uv: vec2f, transformBinding: mat4x4f) -> vec2f {
- *   return (transformBinding * vec4f(uv, 0.0, 1.0)).xy;
+ * fn getUVCover(uv: vec2f, textureMatrix: mat4x4f) -> vec2f {
+ *   return (textureMatrix * vec4f(uv, 0.0, 1.0)).xy;
  * }
  * ```
  *
@@ -147,52 +143,52 @@ import { RenderMaterialAttributes } from '../../types/Materials'
  * ```
  */
 export declare class RenderPipelineEntry extends PipelineEntry {
-  /** Shaders to use with this {@link RenderPipelineEntry} */
-  shaders: PipelineEntryShaders
-  /** {@link RenderMaterialAttributes | Geometry attributes} sent to the {@link RenderPipelineEntry} */
-  attributes: RenderMaterialAttributes
-  /** {@link GPUDevice.createRenderPipeline().descriptor | GPURenderPipelineDescriptor} based on {@link layout} and {@link shaders} */
-  descriptor: GPURenderPipelineDescriptor | null
-  /** Options used to create this {@link RenderPipelineEntry} */
-  options: RenderPipelineEntryOptions
-  /**
-   * RenderPipelineEntry constructor
-   * @param parameters - {@link RenderPipelineEntryParams | parameters} used to create this {@link RenderPipelineEntry}
-   */
-  constructor(parameters: RenderPipelineEntryParams)
-  /**
-   * Patch the shaders by appending all the necessary shader chunks, {@link bindGroups | bind groups}) and {@link attributes} WGSL code fragments to the given {@link types/PipelineEntries.PipelineEntryParams#shaders | parameter shader code}
-   */
-  patchShaders(): void
-  /**
-   * Get whether the shaders modules have been created
-   * @readonly
-   */
-  get shadersModulesReady(): boolean
-  /**
-   * Create the {@link shaders}: patch them and create the {@link GPUShaderModule}
-   */
-  createShaders(): void
-  /**
-   * Get default transparency blend state.
-   * @returns - The default transparency blend state.
-   */
-  static getDefaultTransparentBlending(): GPUBlendState
-  /**
-   * Create the render pipeline {@link descriptor}
-   */
-  createPipelineDescriptor(): void
-  /**
-   * Create the render {@link pipeline}
-   */
-  createRenderPipeline(): void
-  /**
-   * Asynchronously create the render {@link pipeline}
-   * @returns - void promise result
-   */
-  createRenderPipelineAsync(): Promise<void>
-  /**
-   * Call {@link PipelineEntry#compilePipelineEntry | PipelineEntry compilePipelineEntry} method, then create our render {@link pipeline}
-   */
-  compilePipelineEntry(): Promise<void>
+    /** Shaders to use with this {@link RenderPipelineEntry} */
+    shaders: PipelineEntryShaders;
+    /** {@link RenderMaterialAttributes | Geometry attributes} sent to the {@link RenderPipelineEntry} */
+    attributes: RenderMaterialAttributes;
+    /** {@link GPUDevice.createRenderPipeline().descriptor | GPURenderPipelineDescriptor} based on {@link layout} and {@link shaders} */
+    descriptor: GPURenderPipelineDescriptor | null;
+    /** Options used to create this {@link RenderPipelineEntry} */
+    options: RenderPipelineEntryOptions;
+    /**
+     * RenderPipelineEntry constructor
+     * @param parameters - {@link RenderPipelineEntryParams | parameters} used to create this {@link RenderPipelineEntry}
+     */
+    constructor(parameters: RenderPipelineEntryParams);
+    /**
+     * Patch the shaders by appending all the necessary shader chunks, {@link bindGroups | bind groups}) and {@link attributes} WGSL code fragments to the given {@link types/PipelineEntries.PipelineEntryParams#shaders | parameter shader code}
+     */
+    patchShaders(): void;
+    /**
+     * Get whether the shaders modules have been created
+     * @readonly
+     */
+    get shadersModulesReady(): boolean;
+    /**
+     * Create the {@link shaders}: patch them and create the {@link GPUShaderModule}
+     */
+    createShaders(): void;
+    /**
+     * Get default transparency blend state.
+     * @returns - The default transparency blend state.
+     */
+    static getDefaultTransparentBlending(): GPUBlendState;
+    /**
+     * Create the render pipeline {@link descriptor}
+     */
+    createPipelineDescriptor(): void;
+    /**
+     * Create the render {@link pipeline}
+     */
+    createRenderPipeline(): void;
+    /**
+     * Asynchronously create the render {@link pipeline}
+     * @returns - void promise result
+     */
+    createRenderPipelineAsync(): Promise<void>;
+    /**
+     * Call {@link PipelineEntry#compilePipelineEntry | PipelineEntry compilePipelineEntry} method, then create our render {@link pipeline}
+     */
+    compilePipelineEntry(): Promise<void>;
 }

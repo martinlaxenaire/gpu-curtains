@@ -13,6 +13,7 @@ import { Binding } from '../bindings/Binding'
 import { generateUUID } from '../../utils/utils'
 import { BufferElement } from '../bindings/bufferElements/BufferElement'
 import { Buffer } from '../buffers/Buffer'
+import { MediaTexture } from '../textures/MediaTexture'
 
 /**
  * Used as a base to create a {@link Material}.<br>
@@ -693,6 +694,12 @@ export class Material {
     // first what needs to be done for all textures
     for (const texture of this.domTextures) {
       texture.render()
+    }
+
+    for (const texture of this.textures) {
+      if (texture instanceof MediaTexture) {
+        texture.render()
+      }
     }
 
     // update bind groups

@@ -8,7 +8,7 @@ const getSpecular = ({
     specular += /* wgsl */
     `
   var specularUV: vec2f = ${specularTexture.texCoordAttributeName ?? "uv"};`;
-    if (specularTexture.texture.options.useTransform) {
+    if ("useTransform" in specularTexture.texture.options && specularTexture.texture.options.useTransform) {
       specular += /* wgsl */
       `
   specularUV = (${specularTexture.texture.options.name}Matrix * vec3(specularUV, 1.0)).xy;`;
@@ -24,7 +24,7 @@ const getSpecular = ({
       specular += /* wgsl */
       `
   var specularFactorUV: vec2f = ${specularFactorTexture.texCoordAttributeName ?? "uv"};`;
-      if (specularFactorTexture.texture.options.useTransform) {
+      if ("useTransform" in specularFactorTexture.texture.options && specularFactorTexture.texture.options.useTransform) {
         specular += /* wgsl */
         `
   specularFactorUV = (${specularFactorTexture.texture.options.name}Matrix * vec3(specularFactorUV, 1.0)).xy;`;
@@ -39,7 +39,7 @@ const getSpecular = ({
       specular += /* wgsl */
       `
   var specularColorUV: vec2f = ${specularColorTexture.texCoordAttributeName ?? "uv"};`;
-      if (specularColorTexture.texture.options.useTransform) {
+      if ("useTransform" in specularColorTexture.texture.options && specularColorTexture.texture.options.useTransform) {
         specular += /* wgsl */
         `
   specularColorUV = (${specularColorTexture.texture.options.name}Matrix * vec3(specularColorUV, 1.0)).xy;`;

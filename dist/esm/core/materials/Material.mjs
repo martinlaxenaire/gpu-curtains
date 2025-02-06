@@ -5,6 +5,7 @@ import { Sampler } from '../samplers/Sampler.mjs';
 import { DOMTexture } from '../textures/DOMTexture.mjs';
 import { Texture } from '../textures/Texture.mjs';
 import { generateUUID } from '../../utils/utils.mjs';
+import { MediaTexture } from '../textures/MediaTexture.mjs';
 
 class Material {
   /**
@@ -391,9 +392,6 @@ class Material {
       this.domTextures.push(texture);
     } else if (texture instanceof Texture) {
       this.textures.push(texture);
-      if (texture.options.useTransform) {
-        texture.transformBinding.shouldUpdate = true;
-      }
     }
     if (this.options.shaders.vertex && this.options.shaders.vertex.code.indexOf(texture.options.name) !== -1 || this.options.shaders.fragment && this.options.shaders.fragment.code.indexOf(texture.options.name) !== -1 || this.options.shaders.compute && this.options.shaders.compute.code.indexOf(texture.options.name) !== -1) {
       this.texturesBindGroup.addTexture(texture);
@@ -506,6 +504,11 @@ class Material {
     this.compileMaterial();
     for (const texture of this.domTextures) {
       texture.render();
+    }
+    for (const texture of this.textures) {
+      if (texture instanceof MediaTexture) {
+        texture.render();
+      }
     }
     this.updateBindGroups();
   }

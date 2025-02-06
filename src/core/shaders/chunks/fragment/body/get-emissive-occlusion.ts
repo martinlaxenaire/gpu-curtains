@@ -21,7 +21,7 @@ export const getEmissiveOcclusion = ({
     emissiveOcclusion += /* wgsl */ `
   var emissiveUV: vec2f = ${emissiveTexture.texCoordAttributeName ?? 'uv'};`
 
-    if (emissiveTexture.texture.options.useTransform) {
+    if ('useTransform' in emissiveTexture.texture.options && emissiveTexture.texture.options.useTransform) {
       emissiveOcclusion += /* wgsl */ `
   emissiveUV = (${emissiveTexture.texture.options.name}Matrix * vec3(emissiveUV, 1.0)).xy;`
     }
@@ -40,7 +40,7 @@ export const getEmissiveOcclusion = ({
     emissiveOcclusion += /* wgsl */ `
   var occlusionUV: vec2f = ${occlusionTexture.texCoordAttributeName ?? 'uv'};`
 
-    if (occlusionTexture.texture.options.useTransform) {
+    if ('useTransform' in occlusionTexture.texture.options && occlusionTexture.texture.options.useTransform) {
       emissiveOcclusion += /* wgsl */ `
   occlusionUV = (${occlusionTexture.texture.options.name}Matrix * vec3(occlusionUV, 1.0)).xy;`
     }

@@ -674,9 +674,6 @@ export class DOMTexture extends Object3D {
     // update our model matrix if needed
     this.updateMatrixStack()
 
-    // update uniforms values
-    //this.transformBinding.update()
-
     // since external texture are destroyed as soon as JavaScript returns to the browser
     // we need to update it at every tick, even if it hasn't changed
     // to ensure we're not sending a stale / destroyed texture

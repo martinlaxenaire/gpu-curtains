@@ -5,6 +5,7 @@ import { Texture } from '../core/textures/Texture'
 import { Sampler } from '../core/samplers/Sampler'
 import { Geometry } from '../core/geometries/Geometry'
 import { IndexedGeometry } from '../core/geometries/IndexedGeometry'
+import { MediaTexture } from '../core/textures/MediaTexture'
 
 /* MATERIAL */
 
@@ -174,4 +175,4 @@ export interface RenderMaterialOptions extends MaterialOptions {
 }
 
 /** Defines all kind of textures a {@link core/materials/Material.Material | Material} can use. */
-export type MaterialTexture = DOMTexture | Texture
+export type MaterialTexture = DOMTexture | MediaTexture | Texture

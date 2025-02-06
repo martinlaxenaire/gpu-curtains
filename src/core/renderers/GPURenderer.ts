@@ -23,6 +23,7 @@ import { Buffer } from '../buffers/Buffer'
 import { RenderBundle } from '../renderPasses/RenderBundle'
 import { IndirectBuffer } from '../../extras/buffers/IndirectBuffer'
 import { TargetsAnimationsManager } from '../../extras/animations/TargetsAnimationsManager'
+import { MediaTexture } from '../textures/MediaTexture'
 
 /** Options used to configure the renderer canvas context. If not specified, `format` will be set with `GPU.getPreferredCanvasFormat()` and `alphaMode` with `premultiplied`. */
 export interface GPURendererContextOptions extends Omit<GPUCanvasConfiguration, 'device' | 'usage'> {}
@@ -825,11 +826,12 @@ export class GPURenderer {
   }
 
   /**
-   * Upload a {@linkDOMTexture#texture | texture} to the GPU
-   * @param texture - {@link DOMTexture} class object with the {@link DOMTexture#texture | texture} to upload
+   * Upload a {@link MediaTexture#texture | texture} or {@link DOMTexture#texture | texture} to the GPU.
+   * @param texture - {@link MediaTexture} or {@link DOMTexture} containing the {@link GPUTexture} to upload.
+   * @param sourceIndex - Index of the source to upload (for cube maps). Default to `0`.
    */
-  uploadTexture(texture: DOMTexture) {
-    this.deviceManager.uploadTexture(texture)
+  uploadTexture(texture: MediaTexture | DOMTexture, sourceIndex = 0) {
+    this.deviceManager.uploadTexture(texture, sourceIndex)
   }
 
   /**

@@ -2,7 +2,7 @@
 import { CameraRenderer } from '../../core/renderers/utils';
 import { GLTF } from '../../types/gltf/GLTF';
 import { GLTFLoader } from '../loaders/GLTFLoader';
-import { Texture } from '../../core/textures/Texture';
+import { MediaTexture } from '../../core/textures/MediaTexture';
 import { Mesh } from '../../core/meshes/Mesh';
 import { TypedArrayConstructor } from '../../core/bindings/utils';
 import { VertexBufferAttribute, VertexBufferAttributeParams } from '../../types/Geometries';
@@ -140,14 +140,14 @@ export declare class GLTFScenesManager {
      */
     createSamplers(): void;
     /**
-     * Create a {@link Texture} based on the options.
+     * Create a {@link MediaTexture} based on the options.
      * @param material - material using that texture.
      * @param image - image source of the texture.
      * @param name - name of the texture.
-     * @param useTransform - Whether the {@link Texture} should handle transformations.
-     * @returns - newly created {@link Texture}.
+     * @param useTransform - Whether the {@link MediaTexture} should handle transformations.
+     * @returns - newly created {@link MediaTexture}.
      */
-    createTexture(material: GLTF.IMaterial, image: ImageBitmap, name: string, useTransform?: boolean): Texture;
+    createTexture(material: GLTF.IMaterial, image: ImageBitmap, name: string, useTransform?: boolean): MediaTexture;
     /**
      * Create the {ScenesManager.materialsTextures | scenesManager materialsTextures array} and each associated {@link types/gltf/GLTFScenesManager.MaterialTexture | MaterialTexture} and their respective {@link Texture}.
      */

@@ -36,6 +36,7 @@ export { ShaderPass } from './core/renderPasses/ShaderPass';
 export { Sampler } from './core/samplers/Sampler';
 export { Scene } from './core/scenes/Scene';
 export { Texture } from './core/textures/Texture';
+export { MediaTexture } from './core/textures/MediaTexture';
 export { DOMTexture } from './core/textures/DOMTexture';
 export { DOMElement } from './core/DOM/DOMElement';
 export * from './core/shaders/chunks/utils/constants';

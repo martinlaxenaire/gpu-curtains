@@ -6,6 +6,7 @@ import { Sampler } from '../samplers/Sampler'
 import { BindGroupParams } from '../../types/BindGroups'
 import { MaterialTexture } from '../../types/Materials'
 import { BufferBinding } from '../bindings/BufferBinding'
+import { MediaTexture } from '../textures/MediaTexture'
 
 /**
  * An object defining all possible {@link TextureBindGroup} class instancing parameters
@@ -64,7 +65,7 @@ export interface TextureBindGroupParams extends BindGroupParams {
  * ```
  */
 export class TextureBindGroup extends BindGroup {
-  #texturesWithMatrices: MaterialTexture[]
+  #texturesWithMatrices: Array<MediaTexture | DOMTexture>
   texturesMatricesBinding: BufferBinding | null
 
   /**
@@ -157,7 +158,9 @@ export class TextureBindGroup extends BindGroup {
   }
 
   setTexturesMatricesBinding() {
-    this.#texturesWithMatrices = this.textures.filter((texture) => !!texture.transformBinding)
+    this.#texturesWithMatrices = this.textures.filter(
+      (texture) => (texture instanceof MediaTexture || texture instanceof DOMTexture) && !!texture.transformBinding
+    ) as Array<MediaTexture | DOMTexture>
 
     const texturesBindings = this.#texturesWithMatrices.map((texture) => {
       return texture.transformBinding
@@ -218,6 +221,22 @@ export class TextureBindGroup extends BindGroup {
         }
 
         if (texture.shouldUpdate && texture.options.sourceType && texture.options.sourceType === 'externalVideo') {
+          texture.uploadVideoTexture()
+        }
+      }
+
+      if (texture instanceof MediaTexture) {
+        if (texture.options.fromTexture && texture.options.fromTexture.sourcesUploaded && !texture.sourcesUploaded) {
+          texture.copy(texture.options.fromTexture)
+        }
+
+        const firstSource = texture.sources.length && texture.sources[0]
+        if (
+          firstSource &&
+          firstSource.shouldUpdate &&
+          texture.options.sourcesTypes[0] &&
+          texture.options.sourcesTypes[0] === 'externalVideo'
+        ) {
           texture.uploadVideoTexture()
         }
       }

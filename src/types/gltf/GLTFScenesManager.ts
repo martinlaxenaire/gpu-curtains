@@ -1,5 +1,4 @@
 import { GLTF } from './GLTF'
-import { VertexBufferAttributeParams } from '../Geometries'
 import { Texture } from '../../core/textures/Texture'
 import { Sampler } from '../../core/samplers/Sampler'
 import { ProjectedMeshParameters } from '../../core/meshes/mixins/ProjectedMeshBaseMixin'
@@ -38,11 +37,6 @@ export interface MeshDescriptorMaterialParams {
   /** Shaders that will be internally built to use by the {@link RenderMaterial}. */
   shaders?: RenderMaterialParams['shaders']
 }
-
-// export interface MeshDescriptorParams extends MeshDescriptorMaterialParams {
-//   geometry?: Geometry
-//   transmissive?: boolean
-// }
 
 /**
  * Define a {@link MeshDescriptor} object, which helps creating a {@link Mesh} and its shaders based on the various properties.

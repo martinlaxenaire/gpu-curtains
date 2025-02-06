@@ -4,6 +4,7 @@ import { GPUCurtains } from '../../curtains/GPUCurtains';
 import { Sampler } from '../samplers/Sampler';
 import { BindGroupParams } from '../../types/BindGroups';
 import { MaterialTexture } from '../../types/Materials';
+import { BufferBinding } from '../bindings/BufferBinding';
 /**
  * An object defining all possible {@link TextureBindGroup} class instancing parameters
  */
@@ -60,6 +61,8 @@ export interface TextureBindGroupParams extends BindGroupParams {
  * ```
  */
 export declare class TextureBindGroup extends BindGroup {
+    #private;
+    texturesMatricesBinding: BufferBinding | null;
     /**
      * TextureBindGroup constructor
      * @param  renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object
@@ -92,6 +95,8 @@ export declare class TextureBindGroup extends BindGroup {
      * @readonly
      */
     get shouldCreateBindGroup(): boolean;
+    setTexturesMatricesBinding(): void;
+    createBindGroup(): void;
     /**
      * Update the {@link TextureBindGroup#textures | bind group textures}:
      * - Check if they need to copy their source texture
