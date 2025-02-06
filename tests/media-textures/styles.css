@@ -4,9 +4,12 @@
     margin: 2.5rem 0;
   }
 
-  .meshes-container .mesh {
+  .meshes-container .mesh-container {
     flex-basis: calc(100% / 3);
     margin: 0 7.5%;
+  }
+
+  .mesh {
     aspect-ratio: 1;
   }
 }

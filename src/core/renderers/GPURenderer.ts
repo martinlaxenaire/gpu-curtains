@@ -134,7 +134,7 @@ export class GPURenderer {
   /** An array containing all our created {@link SceneStackedMesh | meshes} */
   meshes: SceneStackedMesh[]
   /** An array containing all our created {@link Texture} */
-  textures: Texture[]
+  textures: Array<Texture | MediaTexture>
   /** A {@link Map} containing all the {@link RenderBundle} handled by this renderer. */
   renderBundles: Map<RenderBundle['uuid'], RenderBundle>
   /** A {@link Map} containing all the {@link TargetsAnimationsManager} handled by this renderer. */
@@ -844,17 +844,18 @@ export class GPURenderer {
   }
 
   /**
-   * Import a {@link GPUExternalTexture}
-   * @param video - {@link HTMLVideoElement} source
-   * @returns - {@link GPUExternalTexture}
+   * Import a {@link GPUExternalTexture}.
+   * @param video - {@link HTMLVideoElement} source.
+   * @param label - Optional label of the texture.
+   * @returns - {@link GPUExternalTexture}.
    */
-  importExternalTexture(video: HTMLVideoElement): GPUExternalTexture {
+  importExternalTexture(video: HTMLVideoElement, label = ''): GPUExternalTexture {
     // TODO WebCodecs may be the way to go when time comes!
     // https://developer.chrome.com/blog/new-in-webgpu-113/#use-webcodecs-videoframe-source-in-importexternaltexture
-    // see onVideoFrameCallback method in DOMTexture class
+    // see onVideoFrameCallback method in MediaTexture class
     // const videoFrame = new VideoFrame(video)
     // return this.deviceManager.device?.importExternalTexture({ source: videoFrame })
-    return this.deviceManager.device?.importExternalTexture({ source: video })
+    return this.deviceManager.device?.importExternalTexture({ label, source: video })
   }
 
   /**

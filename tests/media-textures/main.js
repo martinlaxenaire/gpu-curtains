@@ -68,8 +68,6 @@ window.addEventListener('load', async () => {
     }
   `
 
-  const planesEls = document.querySelectorAll('.plane')
-
   const images = [
     'https://picsum.photos/1024/1024?random=1',
     'https://picsum.photos/1024/1024?random=2',
@@ -84,12 +82,15 @@ window.addEventListener('load', async () => {
     'https://static.vecteezy.com/system/resources/previews/054/892/911/mp4/loop-colorful-loght-in-motion-video.mp4',
   ]
 
+  const planesEls = document.querySelectorAll('.plane')
+
   planesEls.forEach((planeEl, i) => {
     const texture = new MediaTexture(gpuCurtains, {
       label: 'Mesh texture ' + i,
       name: 'meshTexture',
       useTransform: true,
       useExternalTextures: i > 1,
+      cache: false,
     })
 
     if (i === 0) {
@@ -126,6 +127,35 @@ window.addEventListener('load', async () => {
       },
       textures: [texture],
     })
+  })
+
+  const planesCachedEls = document.querySelectorAll('.plane-cached')
+
+  planesCachedEls.forEach((planeEl, i) => {
+    setTimeout(() => {
+      const texture = new MediaTexture(gpuCurtains, {
+        label: 'Mesh texture ' + i,
+        name: 'meshTexture',
+        useTransform: true,
+      })
+
+      texture.loadImage(images[5])
+
+      const plane = new Plane(gpuCurtains, planeEl, {
+        label: 'Plane cached ' + i,
+        shaders: {
+          vertex: {
+            code: meshVs,
+            entryPoint: 'main',
+          },
+          fragment: {
+            code: meshFs,
+            entryPoint: 'main',
+          },
+        },
+        textures: [texture],
+      })
+    }, i * 1000)
   })
 
   // CUBE MAPS
@@ -172,36 +202,37 @@ window.addEventListener('load', async () => {
       viewDimension: 'cube',
       useTransform: false,
       placeholderColor: [238, 101, 87, 255],
-      useExternalTextures: false,
-      //useExternalTextures: i > 1,
+      //useExternalTextures: false,
+      cache: false,
     })
 
-    if (index <= 1) {
+    const canvas = document.createElement('canvas')
+    canvas.width = 1024
+    canvas.height = 1024
+
+    const ctx = canvas.getContext('2d')
+
+    ctx.fillStyle = 'red'
+    ctx.fillRect(0, 0, 1024, 1024)
+
+    if (index === 0) {
       texture.loadImages(images)
+    } else if (index === 1) {
+      texture.loadImages([images[0], images[1], images[2], images[3], images[4]])
+      texture.loadCanvas(canvas)
     } else {
-      const canvas = document.createElement('canvas')
-      canvas.width = 1024
-      canvas.height = 1024
-
-      const ctx = canvas.getContext('2d')
-
-      ctx.fillStyle = 'red'
-      ctx.fillRect(0, 0, 1024, 1024)
-
       texture.loadVideo(videos[0])
       texture.loadImage(images[0])
       texture.loadImage(images[1])
+      texture.loadCanvas(canvas)
       texture.loadImage(images[2])
       texture.loadImage(images[3])
-      texture.loadCanvas(canvas)
 
       texture.onSourceLoaded((source) => {
         if (source instanceof HTMLVideoElement) {
           source.play()
         }
       })
-
-      console.log('cubemap specual', texture)
     }
 
     texture.onAllSourcesLoaded(() => {

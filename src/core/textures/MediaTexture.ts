@@ -9,6 +9,7 @@ import { throwWarning } from '../../utils/utils'
 import { TextureBinding } from '../bindings/TextureBinding'
 import { getDefaultMediaTextureUsage, getNumMipLevels } from './utils'
 import { BindingMemoryAccessType, TextureBindingType } from '../bindings/Binding'
+import { DOMTexture } from './DOMTexture'
 
 /** Parameters used to create a {@link MediaTexture}. */
 export interface MediaTextureParams
@@ -19,6 +20,8 @@ export interface MediaTextureParams
   placeholderColor?: [number, number, number, number]
   /** Whether video textures should use {@link GPUExternalTexture} or not. Default to `true`. */
   useExternalTextures?: boolean
+  /** Whether to keep the {@link DOMTexture#texture | texture} in the {@link core/renderers/GPURenderer.GPURenderer | renderer} cache when a {@link core/materials/Material.Material | Material} tries to destroy it. Default to `true`. */
+  cache?: boolean
 }
 
 /** Options used to create this {@link MediaTexture}. */
@@ -45,6 +48,7 @@ const defaultMediaTextureParams: MediaTextureParams = {
   // texture transform
   useTransform: false,
   placeholderColor: [0, 0, 0, 255], // default to black
+  cache: true,
 }
 
 export class MediaTexture extends Texture {
@@ -121,7 +125,7 @@ export class MediaTexture extends Texture {
 
     const params = { ...defaultMediaTextureParams, ...parameters }
 
-    const { useTransform, placeholderColor, useExternalTextures, ...baseTextureParams } = params
+    const { useTransform, placeholderColor, useExternalTextures, cache, ...baseTextureParams } = params
 
     super(renderer, {
       ...baseTextureParams,
@@ -141,6 +145,7 @@ export class MediaTexture extends Texture {
       ...this.options,
       useTransform,
       placeholderColor,
+      cache,
       useExternalTextures: !!useExternalTextures,
       ...{
         sources: [],
@@ -289,31 +294,16 @@ export class MediaTexture extends Texture {
    * Copy another {@link Texture} into this {@link Texture}.
    * @param texture - {@link Texture} to copy.
    */
-  // copy(texture: Texture | DOMTexture) {
-  //   this.options.fromTexture = texture
-  //   this.createTexture()
-  // }
+  copy(texture: Texture | MediaTexture | DOMTexture) {
+    if (texture instanceof MediaTexture) {
+      this.options.fixedSize = texture.options.fixedSize
+      this.sources = texture.sources
+      this.options.sources = texture.options.sources
+      this.options.sourcesTypes = texture.options.sourcesTypes
+    }
 
-  /**
-   * Copy a {@link GPUTexture} directly into this {@link Texture}. Mainly used for depth textures.
-   * @param texture - {@link GPUTexture} to copy.
-   */
-  // copyGPUTexture(texture: GPUTexture) {
-  //   this.size = {
-  //     width: texture.width,
-  //     height: texture.height,
-  //     depth: texture.depthOrArrayLayers,
-  //   }
-  //
-  //   this.options.format = texture.format
-  //
-  //   this.texture = texture
-  //
-  //   this.textureBinding.setFormat(this.options.format)
-  //   this.textureBinding.setMultisampled(false)
-  //
-  //   this.textureBinding.resource = this.texture
-  // }
+    super.copy(texture)
+  }
 
   /**
    * Create the {@link GPUTexture | texture} (or copy it from source) and update the {@link TextureBinding#resource | binding resource}.
@@ -368,7 +358,7 @@ export class MediaTexture extends Texture {
     const source = this.sources[0]
 
     if (source && source.source) {
-      this.externalTexture = this.renderer.importExternalTexture(source.source as HTMLVideoElement)
+      this.externalTexture = this.renderer.importExternalTexture(source.source as HTMLVideoElement, this.options.label)
       this.textureBinding.resource = this.externalTexture
       this.textureBinding.setBindingType('externalTexture')
       source.shouldUpdate = false
@@ -443,10 +433,22 @@ export class MediaTexture extends Texture {
       this.options.sourcesTypes = ['image']
     }
 
-    const cachedTexture = this.renderer.domTextures.find((t) => t.options.source === url)
-    if (cachedTexture && cachedTexture.texture && cachedTexture.sourceUploaded) {
-      this.copy(cachedTexture)
-      return
+    if (this.options.cache) {
+      const cachedTexture = this.renderer.textures
+        .filter((t) => t instanceof MediaTexture && t.uuid !== this.uuid)
+        .find((t: MediaTexture) => {
+          const sourceIndex = t.options.sources.findIndex((source) => source === url)
+
+          if (sourceIndex === -1) return null
+
+          return t.sources[sourceIndex]?.sourceLoaded && t.texture && t.size.depth === this.size.depth
+        })
+
+      if (cachedTexture) {
+        console.log(cachedTexture, url, this.options.label)
+        this.copy(cachedTexture)
+        return
+      }
     }
 
     const loadedSource = await this.loadImageBitmap(url)
@@ -487,7 +489,7 @@ export class MediaTexture extends Texture {
    * @param sources - Array of images sources as strings or {@link HTMLImageElement} to load.
    */
   async loadImages(sources: Array<string | HTMLImageElement>) {
-    for (let i = 0; i < this.size.depth; i++) {
+    for (let i = 0; i < Math.min(this.size.depth, sources.length); i++) {
       this.loadImage(sources[i])
     }
   }
@@ -639,7 +641,7 @@ export class MediaTexture extends Texture {
    * @param sources - Array of images sources as strings or {@link HTMLVideoElement} to load.
    */
   loadVideos(sources: Array<string | HTMLVideoElement>) {
-    for (let i = 0; i < this.size.depth; i++) {
+    for (let i = 0; i < Math.min(this.size.depth, sources.length); i++) {
       this.loadVideo(sources[i])
     }
   }
@@ -683,7 +685,7 @@ export class MediaTexture extends Texture {
    * @param sources - Array of {@link HTMLCanvasElement} to load.
    */
   loadCanvases(sources: HTMLCanvasElement[]) {
-    for (let i = 0; i < this.size.depth; i++) {
+    for (let i = 0; i < Math.min(this.size.depth, sources.length); i++) {
       this.loadCanvas(sources[i])
     }
   }
