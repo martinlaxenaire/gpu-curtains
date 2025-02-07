@@ -158,6 +158,7 @@ window.addEventListener('load', async () => {
       transparent: true,
       instancesCount: 150,
       depthWriteEnabled: false, // do not test depth so kinetic planes can be stacked
+      depth: false,
       shaders: {
         vertex: {
           code: planeVs,

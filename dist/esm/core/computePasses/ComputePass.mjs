@@ -2,7 +2,7 @@ import { isRenderer } from '../renderers/utils.mjs';
 import { generateUUID, throwWarning } from '../../utils/utils.mjs';
 import { ComputeMaterial } from '../materials/ComputeMaterial.mjs';
 import { Texture } from '../textures/Texture.mjs';
-import { DOMTexture } from '../textures/DOMTexture.mjs';
+import { MediaTexture } from '../textures/MediaTexture.mjs';
 
 var __accessCheck = (obj, member, msg) => {
   if (!member.has(obj))
@@ -27,29 +27,29 @@ let computePassIndex = 0;
 class ComputePass {
   /**
    * ComputePass constructor
-   * @param renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object
-   * @param parameters - {@link ComputePassParams | parameters} used to create our {@link ComputePass}
+   * @param renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object.
+   * @param parameters - {@link ComputePassParams | parameters} used to create our {@link ComputePass}.
    */
   constructor(renderer, parameters = {}) {
     /**
-     * Whether this {@link ComputePass} should be added to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically
+     * Whether this {@link ComputePass} should be added to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically.
      * @private
      */
     __privateAdd(this, _autoRender, true);
     // callbacks / events
-    /** function assigned to the {@link onReady} callback */
+    /** function assigned to the {@link onReady} callback. */
     this._onReadyCallback = () => {
     };
-    /** function assigned to the {@link onBeforeRender} callback */
+    /** function assigned to the {@link onBeforeRender} callback. */
     this._onBeforeRenderCallback = () => {
     };
-    /** function assigned to the {@link onRender} callback */
+    /** function assigned to the {@link onRender} callback. */
     this._onRenderCallback = () => {
     };
-    /** function assigned to the {@link onAfterRender} callback */
+    /** function assigned to the {@link onAfterRender} callback. */
     this._onAfterRenderCallback = () => {
     };
-    /** function assigned to the {@link onAfterResize} callback */
+    /** function assigned to the {@link onAfterResize} callback. */
     this._onAfterResizeCallback = () => {
     };
     const type = "ComputePass";
@@ -68,7 +68,6 @@ class ComputePass {
       bindings,
       bindGroups,
       samplers,
-      domTextures,
       textures,
       autoRender,
       useAsyncPipeline,
@@ -100,7 +99,6 @@ class ComputePass {
       bindGroups,
       samplers,
       textures,
-      domTextures,
       useAsyncPipeline,
       dispatchSize
     });
@@ -189,13 +187,6 @@ class ComputePass {
   }
   /* TEXTURES */
   /**
-   * Get our {@link ComputeMaterial#domTextures | ComputeMaterial domTextures array}
-   * @readonly
-   */
-  get domTextures() {
-    return this.material?.domTextures || [];
-  }
-  /**
    * Get our {@link ComputeMaterial#textures | ComputeMaterial textures array}
    * @readonly
    */
@@ -203,50 +194,50 @@ class ComputePass {
     return this.material?.textures || [];
   }
   /**
-   * Create a new {@link DOMTexture}
-   * @param options - {@link DOMTextureParams | DOMTexture parameters}
-   * @returns - newly created {@link DOMTexture}
+   * Create a new {@link MediaTexture}.
+   * @param options - {@link MediaTextureParams | MediaTexture parameters}.
+   * @returns - newly created {@link MediaTexture}.
    */
-  createDOMTexture(options) {
+  createMediaTexture(options) {
     if (!options.name) {
-      options.name = "texture" + (this.textures.length + this.domTextures.length);
+      options.name = "texture" + this.textures.length;
     }
     if (!options.label) {
       options.label = this.options.label + " " + options.name;
     }
-    const domTexture = new DOMTexture(this.renderer, { ...options, ...this.options.texturesOptions });
-    this.addTexture(domTexture);
-    return domTexture;
+    const texture = new MediaTexture(this.renderer, { ...options, ...this.options.texturesOptions });
+    this.addTexture(texture);
+    return texture;
   }
   /**
-   * Create a new {@link Texture}
-   * @param  options - {@link TextureParams | Texture parameters}
-   * @returns - newly created {@link Texture}
+   * Create a new {@link Texture}.
+   * @param  options - {@link TextureParams | Texture parameters}.
+   * @returns - newly created {@link Texture}.
    */
   createTexture(options) {
     if (!options.name) {
-      options.name = "texture" + (this.textures.length + this.domTextures.length);
+      options.name = "texture" + this.textures.length;
     }
     const texture = new Texture(this.renderer, options);
     this.addTexture(texture);
     return texture;
   }
   /**
-   * Add a {@link Texture} or {@link DOMTexture}
-   * @param texture - {@link Texture} to add
+   * Add a {@link Texture} or {@link MediaTexture}.
+   * @param texture - {@link Texture} to add.
    */
   addTexture(texture) {
     this.material.addTexture(texture);
   }
   /**
-   * Get our {@link ComputeMaterial#uniforms | ComputeMaterial uniforms}
+   * Get our {@link ComputeMaterial#uniforms | ComputeMaterial uniforms}.
    * @readonly
    */
   get uniforms() {
     return this.material?.uniforms;
   }
   /**
-   * Get our {@link ComputeMaterial#storages | ComputeMaterial storages}
+   * Get our {@link ComputeMaterial#storages | ComputeMaterial storages}.
    * @readonly
    */
   get storages() {

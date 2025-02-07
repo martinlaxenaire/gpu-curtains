@@ -62,5 +62,5 @@ window.addEventListener('DOMContentLoaded', async () => {
     isFirst = !isFirst
   })
 
-  console.log(gpuCurtains.deviceManager)
+  console.log(gpuCurtains.renderer, plane, plane.domTextures[0])
 })

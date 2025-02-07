@@ -32,7 +32,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       var vsOutput : VSOutput;
       
       vsOutput.position = getOutputPosition(attributes.position);
-      vsOutput.uv = getUVCover(attributes.uv, meshTextureMatrix);
+      vsOutput.uv = getUVCover(attributes.uv, texturesMatrices.meshTexture.matrix);
       vsOutput.normal = attributes.normal;
       
       return vsOutput;
@@ -85,7 +85,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       ],
       texturesOptions: {
         // random placeholder color between pink and blue
-        placeholderColor: Math.random() > 0.5 ? [255, 0, 255, 1] : [0, 255, 255, 1],
+        placeholderColor: Math.random() > 0.5 ? [255, 0, 255, 255] : [255, 255, 0, 255],
         generateMips: true,
       },
     })

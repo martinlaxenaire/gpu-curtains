@@ -1,11 +1,14 @@
 import { getVertexOutputStructContent } from './get-vertex-output-struct-content.mjs';
 
-const getVertexOutputStruct = ({ geometry }) => {
+const getVertexOutputStruct = ({
+  geometry,
+  additionalVaryings = []
+}) => {
   return (
     /* wgsl */
     `
 struct VSOutput {
-  ${getVertexOutputStructContent({ geometry })}
+  ${getVertexOutputStructContent({ geometry, additionalVaryings })}
 };`
   );
 };

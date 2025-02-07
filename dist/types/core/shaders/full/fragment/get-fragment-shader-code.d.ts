@@ -6,6 +6,7 @@ import { Geometry } from '../../../geometries/Geometry';
 import { GLTFExtensionsUsed } from '../../../../types/gltf/GLTFExtensions';
 import { AdditionalChunks } from '../../default-material-helpers';
 import { BufferBindingBaseParams } from '../../../bindings/BufferBinding';
+import { VertexShaderInputParams } from '../vertex/get-vertex-shader-code';
 /** Defines all kinds of shading models available. */
 export type ShadingModels = 'Unlit' | 'Lambert' | 'Phong' | 'PBR';
 /** Defines all kinds of tone mappings available. */
@@ -35,6 +36,8 @@ export interface UnlitFragmentShaderInputParams {
     toneMapping?: ToneMappings;
     /** {@link ShaderTextureDescriptor | Base color texture descriptor} to use if any. */
     baseColorTexture?: ShaderTextureDescriptor;
+    /** Optional additional {@link VertexShaderInputParams.additionalVaryings | varyings} to pass from the vertex shader to the fragment shader. */
+    additionalVaryings?: VertexShaderInputParams['additionalVaryings'];
 }
 /** Parameters used to build an unlit fragment shader. */
 export interface LambertFragmentShaderInputParams extends UnlitFragmentShaderInputParams {
@@ -80,4 +83,4 @@ export interface FragmentShaderInputParams extends FragmentShaderBaseInputParams
  * @param parameters - {@link FragmentShaderInputParams} used to build the fragment shader.
  * @returns - The fragment shader generated based on the provided parameters.
  */
-export declare const getFragmentShaderCode: ({ shadingModel, chunks, toneMapping, geometry, materialUniform, materialUniformName, extensionsUsed, receiveShadows, baseColorTexture, normalTexture, emissiveTexture, occlusionTexture, metallicRoughnessTexture, specularTexture, specularFactorTexture, specularColorTexture, transmissionTexture, thicknessTexture, transmissionBackgroundTexture, environmentMap, }: FragmentShaderInputParams) => string;
+export declare const getFragmentShaderCode: ({ shadingModel, chunks, toneMapping, geometry, additionalVaryings, materialUniform, materialUniformName, extensionsUsed, receiveShadows, baseColorTexture, normalTexture, emissiveTexture, occlusionTexture, metallicRoughnessTexture, specularTexture, specularFactorTexture, specularColorTexture, transmissionTexture, thicknessTexture, transmissionBackgroundTexture, environmentMap, }: FragmentShaderInputParams) => string;

@@ -4,14 +4,19 @@ import { getVertexTransformedPositionNormal } from '../../chunks/vertex/body/get
 import { declareAttributesVars } from '../../chunks/vertex/body/declare-attributes-vars.mjs';
 import { patchAdditionalChunks } from '../../default-material-helpers.mjs';
 
-const getVertexShaderCode = ({ bindings = [], geometry, chunks = null }) => {
+const getVertexShaderCode = ({
+  bindings = [],
+  geometry,
+  chunks = null,
+  additionalVaryings = []
+}) => {
   chunks = patchAdditionalChunks(chunks);
   return (
     /* wgsl */
     `
 ${chunks.additionalHead}
   
-${getVertexOutputStruct({ geometry })}
+${getVertexOutputStruct({ geometry, additionalVaryings })}
   
 @vertex fn main(
   attributes: Attributes,
@@ -25,10 +30,12 @@ ${getVertexOutputStruct({ geometry })}
   
   ${getVertexTransformedPositionNormal({ bindings, geometry })}
   
-  // user defined additional contribution
-  ${chunks.additionalContribution}
+  
   
   ${getVertexOutput({ geometry })}
+  
+  // user defined additional contribution
+  ${chunks.additionalContribution}
 
   return vsOutput;
 }`

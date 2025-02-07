@@ -12,6 +12,7 @@ import { getPhongFragmentShaderCode } from './get-phong-fragment-shader-code'
 import { getPBRFragmentShaderCode } from './get-PBR-fragment-shader-code'
 import { AdditionalChunks } from '../../default-material-helpers'
 import { BufferBindingBaseParams } from '../../../bindings/BufferBinding'
+import { VertexShaderInputParams } from '../vertex/get-vertex-shader-code'
 
 /** Defines all kinds of shading models available. */
 export type ShadingModels = 'Unlit' | 'Lambert' | 'Phong' | 'PBR'
@@ -45,6 +46,8 @@ export interface UnlitFragmentShaderInputParams {
   toneMapping?: ToneMappings
   /** {@link ShaderTextureDescriptor | Base color texture descriptor} to use if any. */
   baseColorTexture?: ShaderTextureDescriptor
+  /** Optional additional {@link VertexShaderInputParams.additionalVaryings | varyings} to pass from the vertex shader to the fragment shader. */
+  additionalVaryings?: VertexShaderInputParams['additionalVaryings']
 }
 
 /** Parameters used to build an unlit fragment shader. */
@@ -100,6 +103,7 @@ export const getFragmentShaderCode = ({
   chunks = null,
   toneMapping = 'Linear',
   geometry,
+  additionalVaryings = [],
   materialUniform = null,
   materialUniformName = 'material',
   extensionsUsed = [],
@@ -124,6 +128,7 @@ export const getFragmentShaderCode = ({
           chunks,
           toneMapping,
           geometry,
+          additionalVaryings,
           materialUniform,
           materialUniformName,
           baseColorTexture,
@@ -133,6 +138,7 @@ export const getFragmentShaderCode = ({
           chunks,
           toneMapping,
           geometry,
+          additionalVaryings,
           materialUniform,
           materialUniformName,
           receiveShadows,
@@ -146,6 +152,7 @@ export const getFragmentShaderCode = ({
           chunks,
           toneMapping,
           geometry,
+          additionalVaryings,
           materialUniform,
           materialUniformName,
           receiveShadows,
@@ -164,6 +171,7 @@ export const getFragmentShaderCode = ({
           chunks,
           toneMapping,
           geometry,
+          additionalVaryings,
           materialUniform,
           materialUniformName,
           extensionsUsed,

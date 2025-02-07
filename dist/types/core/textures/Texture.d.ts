@@ -3,69 +3,49 @@ import { Renderer } from '../renderers/utils';
 import { TextureBinding } from '../bindings/TextureBinding';
 import { BindGroupBindingElement } from '../../types/BindGroups';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
-import { BindingMemoryAccessType, BindingParams, TextureBindingType } from '../bindings/Binding';
-import { DOMTexture } from './DOMTexture';
-import { ExternalTextureParamsBase, TextureSize } from '../../types/Textures';
-import { TextureUsageKeys } from './utils';
+import { BindingMemoryAccessType, TextureBindingType } from '../bindings/Binding';
+import { DOMTexture } from '../../curtains/textures/DOMTexture';
 import { MediaTexture } from './MediaTexture';
-/**
- * Base parameters used to create a {@link Texture}.
- */
-export interface TextureBaseParams extends ExternalTextureParamsBase {
+import { ExternalTextureParamsBase, TextureSize, TextureVisibility } from '../../types/Textures';
+import { TextureUsageKeys } from './utils';
+/** Base parameters used to create a {@link Texture}. */
+export interface TextureBaseParams extends ExternalTextureParamsBase, TextureVisibility {
     /** The label of the {@link Texture}, used to create various GPU objects for debugging purpose. */
     label?: string;
     /** Name of the {@link Texture} to use in the {@link TextureBinding | texture binding}. */
     name?: string;
     /** Optional fixed size of the {@link Texture#texture | texture}. If set, the {@link Texture} will never be resized and always keep that size. */
     fixedSize?: TextureSize;
+    /** Allowed usages for the {@link Texture#texture | GPU texture} as an array of {@link TextureUsageKeys | texture usages names}. */
+    usage?: TextureUsageKeys[];
+    /** Whether any {@link core/materials/Material.Material | Material} using this {@link Texture} should automatically destroy it upon destruction. Default to `true`. */
+    autoDestroy?: boolean;
+    /** Optional texture to use as a copy source input. Could be a {@link Texture} or {@link DOMTexture}. */
+    fromTexture?: Texture | MediaTexture | DOMTexture | null;
+}
+/** Parameters used to create a {@link Texture}. */
+export interface TextureParams extends TextureBaseParams {
     /** Force the texture size to be set to the given ratio of the {@link core/renderers/GPURenderer.GPURenderer#canvas | renderer canvas} size or {@link fixedSize}. Used mainly to shrink render target texture definition. */
     qualityRatio?: number;
     /** Whether to use this {@link Texture} as a regular, storage or depth texture. */
     type?: TextureBindingType;
-    /** Optional format of the {@link Texture#texture | texture}, mainly used for storage textures. */
-    format?: GPUTextureFormat;
     /** Optional texture binding memory access type, mainly used for storage textures. */
     access?: BindingMemoryAccessType;
-    /** Optional {@link Texture#texture | texture} view dimension to use. */
-    viewDimension?: GPUTextureViewDimension;
     /** Sample count of the {@link Texture#texture | texture}, used for multisampling. */
     sampleCount?: GPUSize32;
-    /** The {@link Texture} shaders visibility sent to the {@link Texture#textureBinding | texture binding}. */
-    visibility?: BindingParams['visibility'];
-    /** Allowed usages for the {@link Texture#texture | GPU texture} as an array of {@link TextureUsageKeys | texture usages names}. */
-    usage?: TextureUsageKeys[];
-    aspect?: GPUTextureAspect;
-    colorSpace?: PredefinedColorSpace;
-    /** Whether any {@link core/materials/Material.Material | Material} using this {@link Texture} should automatically destroy it upon destruction. Default to `true`. */
-    autoDestroy?: boolean;
-}
-/**
- * Parameters used to create a {@link Texture}.
- */
-export interface TextureParams extends TextureBaseParams {
-    /** Optional texture to use as a copy source input. Could be a {@link Texture} or {@link DOMTexture}. */
-    fromTexture?: Texture | MediaTexture | DOMTexture | null;
 }
 /**
  * This is the main class used to create and handle {@link GPUTexture | textures} that can be used with {@link core/computePasses/ComputePass.ComputePass | ComputePass} and/or {@link core/meshes/Mesh.Mesh | Mesh}. Also used as copy source/destination for {@link core/renderPasses/RenderPass.RenderPass | RenderPass} and {@link core/renderPasses/RenderTarget.RenderTarget | RenderTarget}.
  *
- * Basically useful for any kind of textures: for external sources (however in some cases, {@link core/textures/DOMTexture.DOMTexture | DOMTexture} might be preferred), depth, storages or to copy anything outputted to the screen at one point or another.
+ * Mostly useful to handle depth and storages textures or to copy anything outputted to the screen at one point or another. It can handle basic data or image bitmap upload, but for external sources textures (like images, videos or canvases) you should use the {@link MediaTexture} class instead.
  *
  * Will create a {@link GPUTexture} and its associated {@link TextureBinding}.
  *
  * @example
  * ```javascript
- * // set our main GPUCurtains instance
- * const gpuCurtains = new GPUCurtains({
- *   container: '#canvas' // selector of our WebGPU canvas container
- * })
- *
- * // set the GPU device
- * // note this is asynchronous
- * await gpuCurtains.setDevice()
- *
  * // create a texture
- * const texture = new Texture(gpuCurtains, {
+ * // assuming 'renderer' is a valid GPURenderer
+ * const texture = new Texture(renderer, {
  *   label: 'My texture',
  *   name: 'myTexture',
  * })

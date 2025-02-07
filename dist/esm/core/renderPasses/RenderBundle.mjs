@@ -2,6 +2,7 @@ import { isRenderer } from '../renderers/utils.mjs';
 import { generateUUID, throwWarning } from '../../utils/utils.mjs';
 import { BufferBinding } from '../bindings/BufferBinding.mjs';
 import { IndirectBuffer } from '../../extras/buffers/IndirectBuffer.mjs';
+import { MediaTexture } from '../textures/MediaTexture.mjs';
 
 var __accessCheck = (obj, member, msg) => {
   if (!member.has(obj))
@@ -335,9 +336,13 @@ class RenderBundle {
         mesh.render(pass);
         if (!mesh.ready) {
           isReady = false;
+          break;
         }
-        if ("sourcesReady" in mesh && !mesh.sourcesReady) {
-          isReady = false;
+        for (const texture of mesh.textures) {
+          if (texture instanceof MediaTexture && !texture.sourcesUploaded) {
+            isReady = false;
+            break;
+          }
         }
       }
       this.ready = isReady;

@@ -26,6 +26,7 @@ export const getPhongFragmentShaderCode = ({
   chunks = null,
   toneMapping = 'Linear',
   geometry,
+  additionalVaryings = [],
   materialUniform = null,
   materialUniformName = 'material',
   receiveShadows = false,
@@ -51,12 +52,12 @@ ${getLightsInfos}
 ${REIndirectDiffuse}
 ${getPhongDirect}
 
-${getFragmentInputStruct({ geometry })}
+${getFragmentInputStruct({ geometry, additionalVaryings })}
 
 @fragment fn main(fsInput: FSInput) -> @location(0) vec4f {       
   var outputColor: vec4f = vec4();
   
-  ${declareAttributesVars({ geometry })}
+  ${declareAttributesVars({ geometry, additionalVaryings })}
   ${declareMaterialVars({ materialUniform, materialUniformName, shadingModel: 'Phong' })}
   ${getBaseColor({ geometry, baseColorTexture })}
   

@@ -1,7 +1,7 @@
 // Goal of this test is to help debug any issue due to scroll or resize
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
-  const { BoxGeometry, DOMMesh, Plane, GPUCurtains, Sampler, MediaTexture } = await import(/* @vite-ignore */ path)
+  const { BoxGeometry, DOMMesh, Plane, GPUCurtains, MediaTexture, RenderBundle } = await import(/* @vite-ignore */ path)
 
   // set our main GPUCurtains instance it will handle everything we need
   // a WebGPU device and a renderer with its scene, requestAnimationFrame, resize and scroll events...
@@ -33,7 +33,7 @@ window.addEventListener('load', async () => {
       var vsOutput : VSOutput;
       
       vsOutput.position = getOutputPosition(attributes.position);
-      vsOutput.uv = (texturesMatrices.meshTexture.matrix * vec3(attributes.uv, 1.0)).xy;
+      vsOutput.uv = getUVCover(attributes.uv, texturesMatrices.meshTexture.matrix);
       vsOutput.normal = attributes.normal;
       
       return vsOutput;
@@ -109,7 +109,7 @@ window.addEventListener('load', async () => {
         // }, 2000)
       })
 
-      console.log(texture)
+      // console.log(texture)
     }
 
     const plane = new Plane(gpuCurtains, planeEl, {
@@ -127,35 +127,6 @@ window.addEventListener('load', async () => {
       },
       textures: [texture],
     })
-  })
-
-  const planesCachedEls = document.querySelectorAll('.plane-cached')
-
-  planesCachedEls.forEach((planeEl, i) => {
-    setTimeout(() => {
-      const texture = new MediaTexture(gpuCurtains, {
-        label: 'Mesh texture ' + i,
-        name: 'meshTexture',
-        useTransform: true,
-      })
-
-      texture.loadImage(images[5])
-
-      const plane = new Plane(gpuCurtains, planeEl, {
-        label: 'Plane cached ' + i,
-        shaders: {
-          vertex: {
-            code: meshVs,
-            entryPoint: 'main',
-          },
-          fragment: {
-            code: meshFs,
-            entryPoint: 'main',
-          },
-        },
-        textures: [texture],
-      })
-    }, i * 1000)
   })
 
   // CUBE MAPS
@@ -201,7 +172,7 @@ window.addEventListener('load', async () => {
       name: 'cubeMapTexture',
       viewDimension: 'cube',
       useTransform: false,
-      placeholderColor: [238, 101, 87, 255],
+      placeholderColor: Math.random() > 0.5 ? [255, 0, 255, 255] : [255, 255, 0, 255],
       //useExternalTextures: false,
       cache: false,
     })
@@ -235,13 +206,13 @@ window.addEventListener('load', async () => {
       })
     }
 
-    texture.onAllSourcesLoaded(() => {
-      console.log('all sources loaded!', texture.options.label)
-    })
+    // texture.onAllSourcesLoaded(() => {
+    //   console.log('all sources loaded!', texture.options.label)
+    // })
 
-    if (index === 0) {
-      console.log(texture)
-    }
+    // if (index === 0) {
+    //   console.log(texture)
+    // }
 
     const cubeMesh = new DOMMesh(gpuCurtains, cubeEl, {
       label: 'Cube ' + index,
@@ -279,4 +250,80 @@ window.addEventListener('load', async () => {
     // do it right away
     updateCubeScaleAndPosition()
   })
+
+  const planesCachedEls = document.querySelectorAll('.plane-cached')
+
+  planesCachedEls.forEach((planeEl, i) => {
+    setTimeout(() => {
+      const texture = new MediaTexture(gpuCurtains, {
+        label: 'Mesh texture ' + i,
+        name: 'meshTexture',
+        useTransform: true,
+      })
+
+      texture.loadImage(images[5])
+
+      const plane = new Plane(gpuCurtains, planeEl, {
+        label: 'Plane cached ' + i,
+        shaders: {
+          vertex: {
+            code: meshVs,
+            entryPoint: 'main',
+          },
+          fragment: {
+            code: meshFs,
+            entryPoint: 'main',
+          },
+        },
+        textures: [texture],
+      })
+    }, i * 1000)
+  })
+
+  const planesBundleEls = document.querySelectorAll('.plane-bundle')
+
+  const renderBundle = new RenderBundle(gpuCurtains, {
+    label: 'Media textures render bundle',
+    size: planesBundleEls.length,
+    useBuffer: true,
+  })
+
+  planesBundleEls.forEach((planeEl, i) => {
+    const texture = new MediaTexture(gpuCurtains, {
+      label: 'Mesh texture ' + i,
+      name: 'meshTexture',
+      useTransform: true,
+      cache: false, // force loading
+    })
+
+    texture.loadImage(images[i])
+
+    const plane = new Plane(gpuCurtains, planeEl, {
+      label: 'Plane bundled ' + i,
+      renderBundle,
+      shaders: {
+        vertex: {
+          code: meshVs,
+          entryPoint: 'main',
+        },
+        fragment: {
+          code: meshFs,
+          entryPoint: 'main',
+        },
+      },
+      textures: [texture],
+    })
+  })
+
+  const lonelyTexture = new MediaTexture(gpuCurtains, {
+    label: 'Lonely texture',
+    name: 'meshTexture',
+    viewDimension: 'cube',
+  })
+    .onSourceLoaded((source) => console.log('lonely texture loaded this source', source))
+    .onAllSourcesLoaded(() => console.log('lonely texture loaded all its sources'))
+    .onSourceUploaded((source) => console.log('lonely texture UPLOADED this source', source))
+    .onAllSourcesUploaded(() => console.log('lonely texture UPLOADED all its sources'))
+
+  lonelyTexture.loadImages(images)
 })

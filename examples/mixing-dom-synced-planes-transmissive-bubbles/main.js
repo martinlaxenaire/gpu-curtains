@@ -84,7 +84,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       var vsOutput: VSOutput;
 
       vsOutput.position = getOutputPosition(attributes.position);
-      vsOutput.uv = getUVCover(attributes.uv, planeTextureMatrix);
+      vsOutput.uv = getUVCover(attributes.uv, texturesMatrices.planeTexture.matrix);
     
       return vsOutput;
     }

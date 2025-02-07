@@ -1,4 +1,5 @@
 import { Mat4 } from './Mat4.mjs';
+import { Vec2 } from './Vec2.mjs';
 
 class Mat3 {
   // prettier-ignore
@@ -226,6 +227,81 @@ class Mat3 {
       0,
       1
     );
+    return this;
+  }
+  /**
+   * Rotate this {@link Mat3} by a given angle, counterclockwise.
+   * @param theta - Angle to rotate.
+   * @returns - this {@link Mat3} after rotation.
+   */
+  rotateByAngle(theta = 0) {
+    const c = Math.cos(theta);
+    const s = Math.sin(theta);
+    this.set(c, -s, 0, s, c, 0, 0, 0, 1);
+    return this;
+  }
+  /**
+   * {@link premultiply} this {@link Mat3} by a translate matrix (i.e. translateMatrix = new Mat3().translate(vector)).
+   * @param vector - translation {@link Vec2} to use.
+   * @returns - this {@link Mat3} after the premultiply translate operation.
+   */
+  premultiplyTranslate(vector = new Vec2()) {
+    const a11 = 1, a22 = 1, a33 = 1;
+    const a13 = vector.x, a23 = vector.y;
+    const be = this.elements;
+    const te = this.elements;
+    const b11 = be[0], b12 = be[3], b13 = be[6];
+    const b21 = be[1], b22 = be[4], b23 = be[7];
+    const b31 = be[2], b32 = be[5], b33 = be[8];
+    te[0] = a11 * b11 + a13 * b31;
+    te[3] = a11 * b12 + a13 * b32;
+    te[6] = a11 * b13 + a13 * b33;
+    te[1] = a22 * b21 + a23 * b31;
+    te[4] = a22 * b22 + a23 * b32;
+    te[7] = a22 * b23 + a23 * b33;
+    te[2] = a33 * b31;
+    te[5] = a33 * b32;
+    te[8] = a33 * b33;
+    return this;
+  }
+  /**
+   * {@link premultiply} this {@link Mat3} by a scale matrix (i.e. translateMatrix = new Mat3().scale(vector)).
+   * @param vector - scale {@link Vec2} to use.
+   * @returns - this {@link Mat3} after the premultiply scale operation.
+   */
+  premultiplyScale(vector = new Vec2()) {
+    const a11 = vector.x, a22 = vector.y, a33 = 1;
+    const be = this.elements;
+    const te = this.elements;
+    const b11 = be[0], b12 = be[3], b13 = be[6];
+    const b21 = be[1], b22 = be[4], b23 = be[7];
+    const b31 = be[2], b32 = be[5], b33 = be[8];
+    te[0] = a11 * b11;
+    te[3] = a11 * b12;
+    te[6] = a11 * b13;
+    te[1] = a22 * b21;
+    te[4] = a22 * b22;
+    te[7] = a22 * b23;
+    te[2] = a33 * b31;
+    te[5] = a33 * b32;
+    te[8] = a33 * b33;
+    return this;
+  }
+  /**
+   * Translate a {@link Mat3}.
+   * @param vector - translation {@link Vec2} to use.
+   * @returns - translated {@link Mat3}.
+   */
+  translate(vector = new Vec2()) {
+    const tx = vector.x, ty = vector.y;
+    const be = this.elements;
+    const te = this.elements;
+    const b11 = be[0], b12 = be[3], b13 = be[6];
+    const b21 = be[1], b22 = be[4], b23 = be[7];
+    const b31 = be[2], b32 = be[5], b33 = be[8];
+    te[6] = b11 * tx + b12 * ty + b13;
+    te[7] = b21 * tx + b22 * ty + b23;
+    te[8] = b31 * tx + b32 * ty + b33;
     return this;
   }
 }

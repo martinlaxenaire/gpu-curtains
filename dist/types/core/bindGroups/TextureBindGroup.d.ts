@@ -62,53 +62,62 @@ export interface TextureBindGroupParams extends BindGroupParams {
  */
 export declare class TextureBindGroup extends BindGroup {
     #private;
+    /**
+     * A {@link BufferBinding} with all the {@link MediaTexture#modelMatrix | MediaTexture modelMatrix} if any.
+     */
     texturesMatricesBinding: BufferBinding | null;
     /**
      * TextureBindGroup constructor
-     * @param  renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object
-     * @param parameters - {@link TextureBindGroupParams | parameters} used to create our {@link TextureBindGroup}
+     * @param  renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object.
+     * @param parameters - {@link TextureBindGroupParams | parameters} used to create our {@link TextureBindGroup}.
      */
     constructor(renderer: Renderer | GPUCurtains, { label, index, bindings, uniforms, storages, textures, samplers }?: TextureBindGroupParams);
     /**
-     * Adds a texture to the textures array and the struct
-     * @param texture - texture to add
+     * Adds a texture to the {@link textures} array and {@link bindings}.
+     * @param texture - texture to add.
      */
     addTexture(texture: MaterialTexture): void;
     /**
-     * Get the current textures array
+     * Get the current {@link textures} array.
      * @readonly
      */
     get textures(): MaterialTexture[];
     /**
-     * Adds a sampler to the samplers array and the struct
+     * Adds a sampler to the {@link samplers} array and {@link bindings}.
      * @param sampler
      */
     addSampler(sampler: Sampler): void;
     /**
-     * Get the current samplers array
+     * Get the current {@link samplers} array.
      * @readonly
      */
     get samplers(): Sampler[];
     /**
-     * Get whether the GPU bind group is ready to be created
-     * It can be created if it has {@link BindGroup#bindings} and has not been created yet and all GPU textures and samplers are created
+     * Get whether the GPU bind group is ready to be created.
+     * It can be created if it has {@link BindGroup#bindings} and has not been created yet and all {@link GPUTexture} and {@link GPUSampler} are created.
      * @readonly
      */
     get shouldCreateBindGroup(): boolean;
+    /**
+     * Set the {@link texturesMatricesBinding} if needed.
+     */
     setTexturesMatricesBinding(): void;
+    /**
+     * Create the {@link texturesMatricesBinding} and {@link bindGroup}.
+     */
     createBindGroup(): void;
     /**
      * Update the {@link TextureBindGroup#textures | bind group textures}:
-     * - Check if they need to copy their source texture
-     * - Upload video texture if needed
+     * - Check if they need to copy their source texture.
+     * - Upload video texture if needed.
      */
     updateTextures(): void;
     /**
-     * Update the {@link TextureBindGroup}, which means update its {@link TextureBindGroup#textures | textures}, then update its {@link TextureBindGroup#bufferBindings | buffer bindings} and finally {@link TextureBindGroup#resetBindGroup | reset it} if needed
+     * Update the {@link TextureBindGroup}, which means update its {@link TextureBindGroup#textures | textures}, then update its {@link TextureBindGroup#bufferBindings | buffer bindings} and finally {@link TextureBindGroup#resetBindGroup | reset it} if needed.
      */
     update(): void;
     /**
-     * Destroy our {@link TextureBindGroup}
+     * Destroy our {@link TextureBindGroup}.
      */
     destroy(): void;
 }

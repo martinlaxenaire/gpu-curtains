@@ -33,7 +33,7 @@ window.addEventListener('load', async () => {
       var vsOutput : VSOutput;
       
       vsOutput.position = getOutputPosition(attributes.position);
-      vsOutput.uv = getUVCover(attributes.uv, meshTextureMatrix);
+      vsOutput.uv = getUVCover(attributes.uv, texturesMatrices.meshTexture.matrix);
       vsOutput.normal = attributes.normal;
       
       return vsOutput;

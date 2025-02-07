@@ -1,4 +1,7 @@
-const declareAttributesVars = ({ geometry }) => {
+const declareAttributesVars = ({
+  geometry,
+  additionalVaryings = []
+}) => {
   let attributeVars = (
     /* wgsl */
     `
@@ -53,6 +56,10 @@ const declareAttributesVars = ({ geometry }) => {
   let viewDirection: vec3f = fsInput.viewDirection;
   let modelScale: vec3f = fsInput.modelScale;
   `;
+  attributeVars += additionalVaryings.map((attribute) => {
+    return `
+  var ${attribute.name}: ${attribute.type} = fsInput.${attribute.name};`;
+  }).join("");
   return attributeVars;
 };
 

@@ -310,15 +310,6 @@ function ProjectedMeshBaseMixin(Base) {
       super.resize(boundingRect);
     }
     /**
-     * Apply scale and resize textures
-     */
-    applyScale() {
-      super.applyScale();
-      for (const texture of this.domTextures) {
-        texture.resize();
-      }
-    }
-    /**
      * Get our {@link DOMFrustum} projected bounding rectangle
      * @readonly
      */

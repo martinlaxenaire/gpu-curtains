@@ -5,7 +5,7 @@ import { MeshBaseRenderParams } from '../../core/meshes/mixins/MeshBaseMixin'
 import { throwWarning } from '../../utils/utils'
 import { GPUCurtainsRenderer } from '../renderers/GPUCurtainsRenderer'
 import { GPUCurtains } from '../GPUCurtains'
-import { DOMTexture } from '../../core/textures/DOMTexture'
+import { DOMTexture, DOMTextureParams } from '../textures/DOMTexture'
 import { AllowedGeometries } from '../../types/Materials'
 import { DOMElementBoundingRect, DOMElementParams } from '../../core/DOM/DOMElement'
 
@@ -17,6 +17,8 @@ export interface DOMMeshBaseParams extends MeshBaseRenderParams {
   autoloadSources?: boolean
   /** Whether to automatically update the {@link DOMMesh} position on scroll */
   watchScroll?: boolean
+  /** Array of already created {@link DOMTexture} to add to this {@link DOMMesh}. */
+  domTextures: DOMTexture[]
 }
 
 /**
@@ -31,6 +33,7 @@ export interface DOMMeshParams extends DOMMeshBaseParams {
 const defaultDOMMeshParams = {
   autoloadSources: true,
   watchScroll: true,
+  domTextures: [],
 } as DOMMeshBaseParams
 
 /**
@@ -63,6 +66,8 @@ export class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
   autoloadSources: boolean
   /** Whether all the sources have been successfully loaded */
   _sourcesReady: boolean
+  /** Array of {@link DOMTexture} handled by this {@link DOMMesh}. */
+  domTextures: DOMTexture[]
 
   // callbacks / events
   /** function assigned to the {@link onLoading} callback */
@@ -81,15 +86,27 @@ export class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
     element: DOMElementParams['element'],
     parameters: DOMMeshParams
   ) {
-    super(renderer, element, { ...defaultDOMMeshParams, ...parameters })
-
     parameters = { ...defaultDOMMeshParams, ...parameters }
+    const { autoloadSources, watchScroll, domTextures, ...projectedMeshParams } = parameters
+
+    // if (!projectedMeshParams.textures) {
+    //   projectedMeshParams.textures = []
+    // }
+    //
+    // projectedMeshParams.textures = [...projectedMeshParams.textures, ...domTextures]
+
+    super(renderer, element, parameters)
 
     isCurtainsRenderer(renderer, parameters.label ? parameters.label + ' DOMMesh' : 'DOMMesh')
 
     this.type = 'DOMMesh'
 
-    const { autoloadSources } = parameters
+    this.domTextures = []
+
+    domTextures.forEach((texture) => {
+      this.addTexture(texture)
+      this.onDOMTextureAdded(texture)
+    })
 
     this.autoloadSources = autoloadSources
 
@@ -98,7 +115,7 @@ export class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
   }
 
   /**
-   * Get/set whether our {@link material} and {@link geometry} are ready
+   * Get/set whether our {@link material} and {@link geometry} are ready.
    * @readonly
    */
   get ready(): boolean {
@@ -114,7 +131,7 @@ export class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
   }
 
   /**
-   * Get/set whether all the initial {@link DOMMesh} sources have been successfully loaded
+   * Get/set whether all the initial {@link DOMMesh} sources have been successfully loaded.
    * @readonly
    */
   get sourcesReady(): boolean {
@@ -131,7 +148,7 @@ export class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
 
   /**
    * Add a {@link DOMMesh} to the {@link core/scenes/Scene.Scene | Scene} and optionally to the renderer.
-   * @param addToRenderer - whether to add this {@link DOMMesh} to the {@link GPUCurtainsRenderer#meshes | renderer meshes array} and {@link GPUCurtainsRenderer#domMeshes | renderer domMeshes array}
+   * @param addToRenderer - whether to add this {@link DOMMesh} to the {@link GPUCurtainsRenderer#meshes | renderer meshes array} and {@link GPUCurtainsRenderer#domMeshes | renderer domMeshes array}.
    */
   addToScene(addToRenderer = false) {
     super.addToScene(addToRenderer)
@@ -143,7 +160,7 @@ export class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
 
   /**
    * Remove a {@link DOMMesh} from the {@link core/scenes/Scene.Scene | Scene} and optionally from the renderer as well.
-   * @param removeFromRenderer - whether to remove this {@link DOMMesh} from the {@link GPUCurtainsRenderer#meshes | renderer meshes array} and {@link GPUCurtainsRenderer#domMeshes | renderer domMeshes array}
+   * @param removeFromRenderer - whether to remove this {@link DOMMesh} from the {@link GPUCurtainsRenderer#meshes | renderer meshes array} and {@link GPUCurtainsRenderer#domMeshes | renderer domMeshes array}.
    */
   removeFromScene(removeFromRenderer = false) {
     super.removeFromScene(removeFromRenderer)
@@ -156,7 +173,74 @@ export class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
   }
 
   /**
-   * Load initial {@link DOMMesh} sources if needed and create associated {@link DOMTexture}
+   * Resize the {@link textures} and {@link domTextures}.
+   */
+  resizeTextures() {
+    super.resizeTextures()
+    this.domTextures?.forEach((texture) => {
+      texture.resize()
+    })
+  }
+
+  /**
+   * Apply scale and update {@link DOMTexture#modelMatrix | DOMTexture modelMatrix}.
+   */
+  applyScale() {
+    super.applyScale()
+
+    // resize textures on scale change!
+    this.domTextures?.forEach((texture) => {
+      texture.updateModelMatrix()
+    })
+  }
+
+  /* DOM TEXTURES */
+
+  /**
+   * Create a new {@link DOMTexture}.
+   * @param options - {@link DOMTextureParams | DOMTexture parameters}.
+   * @returns - newly created {@link DOMTexture}.
+   */
+  createDOMTexture(options: DOMTextureParams): DOMTexture {
+    const defaultName = 'texture' + this.textures.length
+
+    if (!options.label) {
+      options.label = this.options.label + ' ' + (options.name ?? defaultName)
+    }
+
+    if (!options.name) {
+      options.name = defaultName
+    }
+
+    const { viewDimension, useTransform, ...domTextureParams } = this.options.texturesOptions
+
+    const texturesOptions: DOMTextureParams = { ...options, ...domTextureParams }
+
+    if (this.renderBundle) {
+      // do not allow external video textures if we have a render bundle
+      texturesOptions.useExternalTextures = false
+    }
+
+    const domTexture = new DOMTexture(this.renderer, texturesOptions)
+
+    this.addTexture(domTexture)
+    this.onDOMTextureAdded(domTexture)
+
+    return domTexture
+  }
+
+  /**
+   * Callback run when a new {@link DOMTexture} has been added.
+   * @param domTexture - newly created DOMTexture.
+   */
+  onDOMTextureAdded(domTexture: DOMTexture) {
+    domTexture.mesh = this
+
+    this.domTextures.push(domTexture)
+  }
+
+  /**
+   * Load initial {@link DOMMesh} sources if needed and create associated {@link DOMTexture}.
    */
   setInitSources() {
     let loaderSize = 0
@@ -190,7 +274,7 @@ export class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
             name: image.getAttribute('data-texture-name') ?? 'texture' + this.domTextures.length,
           })
 
-          texture.onSourceUploaded(() => onSourceUploaded(texture)).loadImage(image.src)
+          texture.onAllSourcesUploaded(() => onSourceUploaded(texture)).loadImage(image.src)
         })
       }
 
@@ -201,7 +285,7 @@ export class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
             name: video.getAttribute('data-texture-name') ?? 'texture' + this.domTextures.length,
           })
 
-          texture.onSourceUploaded(() => onSourceUploaded(texture)).loadVideo(video)
+          texture.onAllSourcesUploaded(() => onSourceUploaded(texture)).loadVideo(video)
         })
       }
 
@@ -212,7 +296,7 @@ export class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
             name: canvas.getAttribute('data-texture-name') ?? 'texture' + this.domTextures.length,
           })
 
-          texture.onSourceUploaded(() => onSourceUploaded(texture)).loadCanvas(canvas)
+          texture.onAllSourcesUploaded(() => onSourceUploaded(texture)).loadCanvas(canvas)
         })
       }
     } else {
@@ -221,12 +305,13 @@ export class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
   }
 
   /**
-   * Reset/change the {@link domElement | DOM Element}
-   * @param element - new {@link HTMLElement} or string representing an {@link HTMLElement} selector to use
+   * Reset/change the {@link domElement | DOM Element}.
+   * @param element - new {@link HTMLElement} or string representing an {@link HTMLElement} selector to use.
    */
   resetDOMElement(element: string | HTMLElement) {
     if (!!element) {
       super.resetDOMElement(element)
+      this.domTextures.forEach((texture) => texture.resize())
     } else if (!element && !this.renderer.production) {
       throwWarning(
         `${this.options.label}: You are trying to reset a ${this.type} with a HTML element that does not exist. The old HTML element will be kept instead.`
@@ -235,7 +320,7 @@ export class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
   }
 
   /**
-   * Get our {@link DOMMesh#domElement | DOM Element} {@link core/DOM/DOMElement.DOMElement#boundingRect | bounding rectangle} accounting for current {@link core/renderers/GPURenderer.GPURenderer#pixelRatio | renderer pixel ratio}
+   * Get our {@link DOMMesh#domElement | DOM Element} {@link core/DOM/DOMElement.DOMElement#boundingRect | bounding rectangle} accounting for current {@link core/renderers/GPURenderer.GPURenderer#pixelRatio | renderer pixel ratio}.
    */
   get pixelRatioBoundingRect(): DOMElementBoundingRect {
     const devicePixelRatio = window.devicePixelRatio ?? 1
@@ -257,7 +342,7 @@ export class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
   }
 
   /**
-   * Compute the Mesh geometry if needed
+   * Compute the Mesh geometry if needed.
    */
   computeGeometry() {
     super.computeGeometry()
@@ -267,9 +352,9 @@ export class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
   /* EVENTS */
 
   /**
-   * Called each time one of the initial sources associated {@link DOMTexture#texture | GPU texture} has been uploaded to the GPU
-   * @param callback - callback to call each time a {@link DOMTexture#texture | GPU texture} has been uploaded to the GPU
-   * @returns - our {@link DOMMesh}
+   * Called each time one of the initial sources associated {@link DOMTexture#texture | GPU texture} has been uploaded to the GPU.
+   * @param callback - callback to call each time a {@link DOMTexture#texture | GPU texture} has been uploaded to the GPU.
+   * @returns - our {@link DOMMesh}.
    */
   onLoading(callback: (texture: DOMTexture) => void): DOMMesh {
     if (callback) {

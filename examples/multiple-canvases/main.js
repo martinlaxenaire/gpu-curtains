@@ -49,7 +49,7 @@ window.addEventListener('load', async () => {
   await gpuCurtains.setDevice()
 
   gpuCurtains
-    .onRender(() => {
+    .onBeforeRender(() => {
       // update our planes deformation
       // increase/decrease the effect
       scrollEffect = lerp(scrollEffect, 0, 0.1)
@@ -95,7 +95,7 @@ window.addEventListener('load', async () => {
       transformed.z += planeDeformation;
 
       vsOutput.position = getOutputPosition(transformed);
-      vsOutput.uv = getUVCover(attributes.uv, planeTextureMatrix);
+      vsOutput.uv = getUVCover(attributes.uv, texturesMatrices.planeTexture.matrix);
     
       return vsOutput;
     }

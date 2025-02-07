@@ -588,18 +588,6 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
     }
 
     /**
-     * Apply scale and resize textures
-     */
-    applyScale() {
-      super.applyScale()
-
-      // resize textures on scale change!
-      for (const texture of this.domTextures) {
-        texture.resize()
-      }
-    }
-
-    /**
      * Get our {@link DOMFrustum} projected bounding rectangle
      * @readonly
      */

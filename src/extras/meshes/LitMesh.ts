@@ -10,7 +10,7 @@ import {
 import { Vec2 } from '../../math/Vec2'
 import { Vec3 } from '../../math/Vec3'
 import { AdditionalChunks } from '../../core/shaders/default-material-helpers'
-import { getVertexShaderCode } from '../../core/shaders/full/vertex/get-vertex-shader-code'
+import { getVertexShaderCode, VertexShaderInputParams } from '../../core/shaders/full/vertex/get-vertex-shader-code'
 import { BufferBinding, BufferBindingParams } from '../../core/bindings/BufferBinding'
 import { Input } from '../../types/BindGroups'
 
@@ -129,6 +129,7 @@ export class LitMesh extends Mesh {
 
     const {
       shading,
+      additionalVaryings,
       vertexChunks,
       fragmentChunks,
       toneMapping,
@@ -169,6 +170,7 @@ export class LitMesh extends Mesh {
       bindings: defaultParams.bindings as BufferBinding[],
       geometry: defaultParams.geometry,
       chunks: vertexChunks,
+      additionalVaryings,
     })
 
     // build material uniform based on shading model
@@ -406,6 +408,7 @@ export class LitMesh extends Mesh {
       receiveShadows: defaultParams.receiveShadows,
       toneMapping,
       geometry: defaultParams.geometry,
+      additionalVaryings,
       materialUniform,
       baseColorTexture,
       normalTexture,

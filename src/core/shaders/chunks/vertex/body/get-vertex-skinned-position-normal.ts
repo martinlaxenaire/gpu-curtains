@@ -8,7 +8,7 @@ import { VertexShaderInputBaseParams } from '../../../full/vertex/get-vertex-sha
 export const getVertexSkinnedPositionNormal = ({ bindings = [], geometry }: VertexShaderInputBaseParams): string => {
   let output = ''
 
-  const hasInstances = geometry.instancesCount > 1
+  const hasInstances = geometry.instancesCount > 1 && bindings.find((binding) => binding.name === 'instances')
 
   const skinJoints = []
   const skinWeights = []

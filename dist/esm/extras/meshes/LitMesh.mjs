@@ -16,6 +16,7 @@ class LitMesh extends Mesh {
     const { material, ...defaultParams } = parameters;
     const {
       shading,
+      additionalVaryings,
       vertexChunks,
       fragmentChunks,
       toneMapping,
@@ -54,7 +55,8 @@ class LitMesh extends Mesh {
     const vs = getVertexShaderCode({
       bindings: defaultParams.bindings,
       geometry: defaultParams.geometry,
-      chunks: vertexChunks
+      chunks: vertexChunks,
+      additionalVaryings
     });
     const baseUniformStruct = {
       color: {
@@ -247,6 +249,7 @@ class LitMesh extends Mesh {
       receiveShadows: defaultParams.receiveShadows,
       toneMapping,
       geometry: defaultParams.geometry,
+      additionalVaryings,
       materialUniform,
       baseColorTexture,
       normalTexture,

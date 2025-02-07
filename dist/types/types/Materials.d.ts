@@ -1,7 +1,6 @@
 /// <reference types="dist" />
 import { AllowedBindGroups, BindGroupInputs } from './BindGroups';
 import { BindGroup } from '../core/bindGroups/BindGroup';
-import { DOMTexture } from '../core/textures/DOMTexture';
 import { Texture } from '../core/textures/Texture';
 import { Sampler } from '../core/samplers/Sampler';
 import { Geometry } from '../core/geometries/Geometry';
@@ -16,25 +15,27 @@ export type MaterialShadersType = RenderMaterialShadersType | ComputeMaterialSha
 /** All shaders types, plus a 'full' type used to retrieve a complete shader code, i.e. 'vertex' + 'fragment' into one */
 export type FullShadersType = 'full' | MaterialShadersType;
 /**
- * Options used to create a shader
+ * Options used to create a shader.
  */
 export interface ShaderOptions {
-    /** The shader WGSL code */
+    /** The shader WGSL code. */
     code: string;
-    /** The shader main function entry point */
+    /** The shader main function entry point. */
     entryPoint?: string;
 }
 /**
- * Defines all possible {@link ShaderOptions | shader options} entries of a {@link core/materials/Material.Material | Material}
+ * Defines all possible {@link ShaderOptions | shader options} entries of a {@link core/materials/Material.Material | Material}.
  */
 export interface MaterialShaders {
-    /** Vertex {@link ShaderOptions | shader options} */
+    /** Vertex {@link ShaderOptions | shader options}. */
     vertex?: ShaderOptions;
     /** Fragment {@link ShaderOptions | shader options}. Could be set to `false` to only render to a depth texture. */
     fragment?: ShaderOptions | false;
-    /** Compute {@link ShaderOptions | shader options} */
+    /** Compute {@link ShaderOptions | shader options}. */
     compute?: ShaderOptions;
 }
+/** Defines all kind of textures a {@link core/materials/Material.Material | Material} can use. */
+export type MaterialTexture = MediaTexture | Texture;
 /**
  * Base options of a {@link core/materials/Material.Material | Material}.
  */
@@ -47,24 +48,22 @@ export interface MaterialBaseOptions {
     useAsyncPipeline?: boolean;
 }
 /**
- * Base parameters used to create a {@link core/materials/Material.Material | Material}
+ * Base parameters used to create a {@link core/materials/Material.Material | Material}.
  */
 export interface MaterialBaseParams extends Partial<MaterialBaseOptions> {
 }
-/** Array of all allowed bind groups */
+/** Array of all allowed bind groups. */
 export type MaterialBindGroups = AllowedBindGroups[];
 /**
- * Inputs (i.e. data provided by the user) parameters used to create a {@link core/materials/Material.Material | Material}
+ * Inputs (i.e. data provided by the user) parameters used to create a {@link core/materials/Material.Material | Material}.
  */
 export interface MaterialInputBindingsParams extends BindGroupInputs {
-    /** Array of already created {@link core/bindGroups/BindGroup.BindGroup | bind groups} to be used by this {@link core/materials/Material.Material | Material} */
+    /** Array of already created {@link core/bindGroups/BindGroup.BindGroup | bind groups} to be used by this {@link core/materials/Material.Material | Material}. */
     bindGroups?: BindGroup[];
-    /** Array of already created {@link core/samplers/Sampler.Sampler | samplers} to be used by this {@link core/materials/Material.Material | Material} */
+    /** Array of already created {@link core/samplers/Sampler.Sampler | samplers} to be used by this {@link core/materials/Material.Material | Material}. */
     samplers?: Sampler[];
-    /** Array of already created {@link Texture} to be used by this {@link core/materials/Material.Material | Material} */
-    textures?: Texture[];
-    /** Array of already created {@link DOMTexture} to be used by this {@link core/materials/Material.Material | Material} */
-    domTextures?: DOMTexture[];
+    /** Array of already created {@link Texture} or {@link MediaTexture} to be used by this {@link core/materials/Material.Material | Material}. */
+    textures?: MaterialTexture[];
 }
 /** Parameters used to create a {@link core/materials/Material.Material | Material} */
 export interface MaterialParams extends MaterialBaseParams, MaterialInputBindingsParams {
@@ -147,5 +146,3 @@ export interface RenderMaterialOptions extends MaterialOptions {
     /** {@link RenderMaterialRenderingOptions | render options} to send to the {@link GPURenderPipeline}. */
     rendering?: RenderMaterialRenderingOptions;
 }
-/** Defines all kind of textures a {@link core/materials/Material.Material | Material} can use. */
-export type MaterialTexture = DOMTexture | MediaTexture | Texture;

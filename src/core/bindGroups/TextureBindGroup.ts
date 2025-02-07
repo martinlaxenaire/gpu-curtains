@@ -1,7 +1,7 @@
 import { BindGroup } from './BindGroup'
 import { isRenderer, Renderer } from '../renderers/utils'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { DOMTexture } from '../textures/DOMTexture'
+import { DOMTexture } from '../../curtains/textures/DOMTexture'
 import { Sampler } from '../samplers/Sampler'
 import { BindGroupParams } from '../../types/BindGroups'
 import { MaterialTexture } from '../../types/Materials'
@@ -65,13 +65,20 @@ export interface TextureBindGroupParams extends BindGroupParams {
  * ```
  */
 export class TextureBindGroup extends BindGroup {
-  #texturesWithMatrices: Array<MediaTexture | DOMTexture>
+  /**
+   * Array containing all the {@link MediaTexture} that handle a transformation {@link MediaTexture#modelMatrix | modelMatrix}.
+   * @private
+   */
+  #transformedTextures: MediaTexture[]
+  /**
+   * A {@link BufferBinding} with all the {@link MediaTexture#modelMatrix | MediaTexture modelMatrix} if any.
+   */
   texturesMatricesBinding: BufferBinding | null
 
   /**
    * TextureBindGroup constructor
-   * @param  renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object
-   * @param parameters - {@link TextureBindGroupParams | parameters} used to create our {@link TextureBindGroup}
+   * @param  renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object.
+   * @param parameters - {@link TextureBindGroupParams | parameters} used to create our {@link TextureBindGroup}.
    */
   constructor(
     renderer: Renderer | GPUCurtains,
@@ -110,8 +117,8 @@ export class TextureBindGroup extends BindGroup {
   }
 
   /**
-   * Adds a texture to the textures array and the struct
-   * @param texture - texture to add
+   * Adds a texture to the {@link textures} array and {@link bindings}.
+   * @param texture - texture to add.
    */
   addTexture(texture: MaterialTexture) {
     this.textures.push(texture)
@@ -119,7 +126,7 @@ export class TextureBindGroup extends BindGroup {
   }
 
   /**
-   * Get the current textures array
+   * Get the current {@link textures} array.
    * @readonly
    */
   get textures(): MaterialTexture[] {
@@ -127,7 +134,7 @@ export class TextureBindGroup extends BindGroup {
   }
 
   /**
-   * Adds a sampler to the samplers array and the struct
+   * Adds a sampler to the {@link samplers} array and {@link bindings}.
    * @param sampler
    */
   addSampler(sampler: Sampler) {
@@ -136,7 +143,7 @@ export class TextureBindGroup extends BindGroup {
   }
 
   /**
-   * Get the current samplers array
+   * Get the current {@link samplers} array.
    * @readonly
    */
   get samplers(): Sampler[] {
@@ -144,8 +151,8 @@ export class TextureBindGroup extends BindGroup {
   }
 
   /**
-   * Get whether the GPU bind group is ready to be created
-   * It can be created if it has {@link BindGroup#bindings} and has not been created yet and all GPU textures and samplers are created
+   * Get whether the GPU bind group is ready to be created.
+   * It can be created if it has {@link BindGroup#bindings} and has not been created yet and all {@link GPUTexture} and {@link GPUSampler} are created.
    * @readonly
    */
   get shouldCreateBindGroup(): boolean {
@@ -157,20 +164,21 @@ export class TextureBindGroup extends BindGroup {
     )
   }
 
+  /**
+   * Set the {@link texturesMatricesBinding} if needed.
+   */
   setTexturesMatricesBinding() {
-    this.#texturesWithMatrices = this.textures.filter(
+    this.#transformedTextures = this.textures.filter(
       (texture) => (texture instanceof MediaTexture || texture instanceof DOMTexture) && !!texture.transformBinding
     ) as Array<MediaTexture | DOMTexture>
 
-    const texturesBindings = this.#texturesWithMatrices.map((texture) => {
+    const texturesBindings = this.#transformedTextures.map((texture) => {
       return texture.transformBinding
     })
 
     if (texturesBindings.length) {
-      // random label name to avoid duplicates
-      const label = 'Textures matrices ' + Math.floor(Math.random() * 9999)
-      const baseName = 'texturesMatrices'
-      const name = this.index > 1 ? `${baseName}${this.index}` : baseName
+      const label = 'Textures matrices'
+      const name = 'texturesMatrices'
 
       this.texturesMatricesBinding = new BufferBinding({
         label,
@@ -194,7 +202,7 @@ export class TextureBindGroup extends BindGroup {
 
       this.texturesMatricesBinding.buffer.consumers.add(this.uuid)
 
-      const hasMatricesBinding = this.bindings.find((binding) => binding.name === baseName)
+      const hasMatricesBinding = this.bindings.find((binding) => binding.name === name)
 
       if (!hasMatricesBinding) {
         this.addBinding(this.texturesMatricesBinding)
@@ -202,6 +210,9 @@ export class TextureBindGroup extends BindGroup {
     }
   }
 
+  /**
+   * Create the {@link texturesMatricesBinding} and {@link bindGroup}.
+   */
   createBindGroup() {
     this.setTexturesMatricesBinding()
     super.createBindGroup()
@@ -209,24 +220,19 @@ export class TextureBindGroup extends BindGroup {
 
   /**
    * Update the {@link TextureBindGroup#textures | bind group textures}:
-   * - Check if they need to copy their source texture
-   * - Upload video texture if needed
+   * - Check if they need to copy their source texture.
+   * - Upload video texture if needed.
    */
   updateTextures() {
     for (const texture of this.textures) {
       // copy textures that need it on first init, but only when original texture is ready
-      if (texture instanceof DOMTexture) {
-        if (texture.options.fromTexture && texture.options.fromTexture.sourceUploaded && !texture.sourceUploaded) {
-          texture.copy(texture.options.fromTexture)
-        }
-
-        if (texture.shouldUpdate && texture.options.sourceType && texture.options.sourceType === 'externalVideo') {
-          texture.uploadVideoTexture()
-        }
-      }
-
       if (texture instanceof MediaTexture) {
-        if (texture.options.fromTexture && texture.options.fromTexture.sourcesUploaded && !texture.sourcesUploaded) {
+        if (
+          texture.options.fromTexture &&
+          texture.options.fromTexture instanceof MediaTexture &&
+          texture.options.fromTexture.sourcesUploaded &&
+          !texture.sourcesUploaded
+        ) {
           texture.copy(texture.options.fromTexture)
         }
 
@@ -243,18 +249,26 @@ export class TextureBindGroup extends BindGroup {
     }
 
     if (this.texturesMatricesBinding) {
-      this.#texturesWithMatrices.forEach((texture, i) => {
+      this.#transformedTextures.forEach((texture, i) => {
         this.texturesMatricesBinding.childrenBindings[i].inputs.matrix.shouldUpdate =
           !!texture.transformBinding.inputs.matrix.shouldUpdate
 
         // reset original flag
-        texture.transformBinding.inputs.matrix.shouldUpdate = false
+        // TODO reset it at end of render
+        if (texture.transformBinding.inputs.matrix.shouldUpdate) {
+          this.renderer.onAfterCommandEncoderSubmission.add(
+            () => {
+              texture.transformBinding.inputs.matrix.shouldUpdate = false
+            },
+            { once: true }
+          )
+        }
       })
     }
   }
 
   /**
-   * Update the {@link TextureBindGroup}, which means update its {@link TextureBindGroup#textures | textures}, then update its {@link TextureBindGroup#bufferBindings | buffer bindings} and finally {@link TextureBindGroup#resetBindGroup | reset it} if needed
+   * Update the {@link TextureBindGroup}, which means update its {@link TextureBindGroup#textures | textures}, then update its {@link TextureBindGroup#bufferBindings | buffer bindings} and finally {@link TextureBindGroup#resetBindGroup | reset it} if needed.
    */
   update() {
     this.updateTextures()
@@ -262,7 +276,7 @@ export class TextureBindGroup extends BindGroup {
   }
 
   /**
-   * Destroy our {@link TextureBindGroup}
+   * Destroy our {@link TextureBindGroup}.
    */
   destroy() {
     super.destroy()

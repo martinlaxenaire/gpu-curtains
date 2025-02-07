@@ -38,7 +38,6 @@ export { Sampler } from './core/samplers/Sampler'
 export { Scene } from './core/scenes/Scene'
 export { Texture } from './core/textures/Texture'
 export { MediaTexture } from './core/textures/MediaTexture'
-export { DOMTexture } from './core/textures/DOMTexture'
 export { DOMElement } from './core/DOM/DOMElement'
 
 // shading
@@ -62,6 +61,7 @@ export { DOMMesh } from './curtains/meshes/DOMMesh'
 export { Plane } from './curtains/meshes/Plane'
 export { DOMObject3D } from './curtains/objects3D/DOMObject3D'
 export { GPUCurtainsRenderer } from './curtains/renderers/GPUCurtainsRenderer'
+export { DOMTexture } from './curtains/textures/DOMTexture'
 export { GPUCurtains } from './curtains/GPUCurtains'
 
 // math

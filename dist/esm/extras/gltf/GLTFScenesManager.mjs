@@ -327,9 +327,7 @@ const _GLTFScenesManager = class _GLTFScenesManager {
       },
       useTransform
     });
-    texture.uploadSource({
-      source: image
-    });
+    texture.useImageBitmap(image);
     return texture;
   }
   /**

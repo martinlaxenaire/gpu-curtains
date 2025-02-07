@@ -66,9 +66,9 @@ export class TexturesPlanes {
 
       plane.onLoading((texture) => {
         texture.transformOrigin.y = index < 3 ? 0 : 1
-        texture.scale.set(scaleIncrease, scaleIncrease, 1)
+        texture.scale.set(scaleIncrease, scaleIncrease)
 
-        if (texture.isVideoSource) {
+        if (texture.isVideoSource(texture.source)) {
           texture.source.play()
         }
       })
@@ -94,7 +94,7 @@ export class TexturesPlanes {
               plane.scale.y = scales.bottom
               plane.uniforms.deformation.strength.value = scales.bottom - 1
 
-              plane.domTextures[0].scale.set(scaleIncrease / scales.bottom, scaleIncrease / scales.bottom, 1)
+              plane.domTextures[0].scale.set(scaleIncrease / scales.bottom, scaleIncrease / scales.bottom)
             }
           })
         },
@@ -113,7 +113,7 @@ export class TexturesPlanes {
               plane.scale.y = scales.bottom
               plane.uniforms.deformation.strength.value = scales.bottom - 1
 
-              plane.domTextures[0].scale.set(scaleIncrease / scales.bottom, scaleIncrease / scales.bottom, 1)
+              plane.domTextures[0].scale.set(scaleIncrease / scales.bottom, scaleIncrease / scales.bottom)
             }
           })
         },
@@ -129,7 +129,7 @@ export class TexturesPlanes {
               plane.scale.y = scales.top
               plane.uniforms.deformation.strength.value = scales.top - 1
 
-              plane.domTextures[0].scale.set(scaleIncrease / scales.top, scaleIncrease / scales.top, 1)
+              plane.domTextures[0].scale.set(scaleIncrease / scales.top, scaleIncrease / scales.top)
             } else {
               plane.scale.y = scales.bottom
               plane.uniforms.deformation.strength.value = scales.bottom - 1
@@ -148,7 +148,7 @@ export class TexturesPlanes {
               plane.scale.y = scales.top
               plane.uniforms.deformation.strength.value = scales.top - 1
 
-              plane.domTextures[0].scale.set(scaleIncrease / scales.top, scaleIncrease / scales.top, 1)
+              plane.domTextures[0].scale.set(scaleIncrease / scales.top, scaleIncrease / scales.top)
             } else {
               plane.scale.y = scales.bottom
               plane.uniforms.deformation.strength.value = scales.bottom - 1

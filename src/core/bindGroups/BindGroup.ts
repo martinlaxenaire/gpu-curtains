@@ -68,26 +68,26 @@ import { BufferUsageKeys } from '../buffers/utils'
  * ```
  */
 export class BindGroup {
-  /** The type of the {@link BindGroup} */
+  /** The type of the {@link BindGroup}. */
   type: string
-  /** The universal unique id of the {@link BindGroup} */
+  /** The universal unique id of the {@link BindGroup}. */
   uuid: string
-  /** The {@link Renderer} used */
+  /** The {@link Renderer} used. */
   renderer: Renderer
-  /** Options used to create this {@link BindGroup} */
+  /** Options used to create this {@link BindGroup}. */
   options: TextureBindGroupParams
-  /** Index of this {@link BindGroup}, used to link struct in the shaders */
+  /** Index of this {@link BindGroup}, used to link struct in the shaders. */
   index: number
 
-  /** List of {@link BindGroupBindingElement | bindings} (buffers, texture, etc.) handled by this {@link BindGroup} */
+  /** List of {@link BindGroupBindingElement | bindings} (buffers, texture, etc.) handled by this {@link BindGroup}. */
   bindings: BindGroupBindingElement[]
 
-  /** Our {@link BindGroup} {@link BindGroupEntries | entries} objects */
+  /** Our {@link BindGroup} {@link BindGroupEntries | entries} objects. */
   entries: BindGroupEntries
 
-  /** Our {@link BindGroup}{@link GPUBindGroupLayout} */
+  /** Our {@link BindGroup}{@link GPUBindGroupLayout}. */
   bindGroupLayout: null | GPUBindGroupLayout
-  /** Our {@link BindGroup} {@link GPUBindGroup} */
+  /** Our {@link BindGroup} {@link GPUBindGroup}. */
   bindGroup: null | GPUBindGroup
 
   /** A cache key allowing to get / set {@link GPUBindGroupLayout} from the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#bindGroupLayouts | device manager map cache}. */
@@ -95,16 +95,16 @@ export class BindGroup {
   /** A cache key allowing the {@link core/pipelines/PipelineManager.PipelineManager | PipelineManager} to compare {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | RenderPipelineEntry} bind groups content. */
   pipelineCacheKey: string
 
-  /** Flag indicating whether we need to flush and recreate the pipeline using this {@link BindGroup} */
+  /** Flag indicating whether we need to flush and recreate the pipeline using this {@link BindGroup}. */
   needsPipelineFlush: boolean
 
-  /** A Set to store this {@link BindGroup} consumers ({@link core/materials/Material.Material#uuid | Material uuid})  */
+  /** A Set to store this {@link BindGroup} consumers ({@link core/materials/Material.Material#uuid | Material uuid}).  */
   consumers: Set<string>
 
   /**
    * BindGroup constructor
-   * @param renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object
-   * @param parameters - {@link BindGroupParams | parameters} used to create our {@link BindGroup}
+   * @param renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object.
+   * @param parameters - {@link BindGroupParams | parameters} used to create our {@link BindGroup}.
    */
   constructor(
     renderer: Renderer | GPUCurtains,
@@ -162,16 +162,16 @@ export class BindGroup {
   }
 
   /**
-   * Sets our {@link BindGroup#index | bind group index}
-   * @param index - {@link BindGroup#index | bind group index} to set
+   * Sets our {@link BindGroup#index | bind group index}.
+   * @param index - {@link BindGroup#index | bind group index} to set.
    */
   setIndex(index: number) {
     this.index = index
   }
 
   /**
-   * Adds an array of already created {@link bindings} (buffers, texture, etc.) to the {@link bindings} array
-   * @param bindings - {@link bindings} to add
+   * Adds an array of already created {@link bindings} (buffers, texture, etc.) to the {@link bindings} array.
+   * @param bindings - {@link bindings} to add.
    */
   addBindings(bindings: BindGroupBindingElement[] = []) {
     bindings.forEach((binding) => {
@@ -190,8 +190,8 @@ export class BindGroup {
   }
 
   /**
-   * Adds an already created {@link bindings} (buffers, texture, etc.) to the {@link bindings} array
-   * @param binding - binding to add
+   * Adds an already created {@link bindings} (buffers, texture, etc.) to the {@link bindings} array.
+   * @param binding - binding to add.
    */
   addBinding(binding: BindGroupBindingElement) {
     this.bindings.push(binding)
@@ -231,10 +231,10 @@ export class BindGroup {
   }
 
   /**
-   * Creates Bindings based on a list of inputs
-   * @param bindingType - {@link core/bindings/Binding.Binding#bindingType | binding type}
-   * @param inputs - {@link ReadOnlyInputBindings | inputs (uniform or storage)} that will be used to create the binding
-   * @returns - a {@link bindings} array
+   * Creates Bindings based on a list of inputs.
+   * @param bindingType - {@link core/bindings/Binding.Binding#bindingType | binding type}.
+   * @param inputs - {@link ReadOnlyInputBindings | inputs (uniform or storage)} that will be used to create the binding.
+   * @returns - A {@link bindings} array.
    */
   createInputBindings(
     bindingType: BufferBindingType = 'uniform',
@@ -305,7 +305,7 @@ export class BindGroup {
   }
 
   /**
-   * Create and adds {@link bindings} based on inputs provided upon creation
+   * Create and adds {@link bindings} based on inputs provided upon creation.
    */
   setInputBindings() {
     this.addBindings([
@@ -315,8 +315,8 @@ export class BindGroup {
   }
 
   /**
-   * Get whether the GPU bind group is ready to be created
-   * It can be created if it has {@link bindings} and has not been created yet
+   * Get whether the GPU bind group is ready to be created.
+   * It can be created if it has {@link bindings} and has not been created yet.
    * @readonly
    */
   get shouldCreateBindGroup(): boolean {
@@ -324,7 +324,7 @@ export class BindGroup {
   }
 
   /**
-   * Reset our {@link BindGroup} {@link entries}
+   * Reset our {@link BindGroup} {@link entries}.
    */
   resetEntries() {
     this.entries = {
@@ -334,7 +334,7 @@ export class BindGroup {
   }
 
   /**
-   * Create the GPU buffers, {@link bindings}, {@link entries}, {@link bindGroupLayout} and {@link bindGroup}
+   * Create the GPU buffers, {@link bindings}, {@link entries}, {@link bindGroupLayout} and {@link bindGroup}.
    */
   createBindGroup() {
     this.fillEntries()
@@ -343,7 +343,7 @@ export class BindGroup {
   }
 
   /**
-   * Reset the {@link BindGroup#entries.bindGroup | bindGroup entries}, recreates them and then recreate the {@link BindGroup#bindGroup | GPU bind group}
+   * Reset the {@link BindGroup#entries.bindGroup | bindGroup entries}, recreates them and then recreate the {@link BindGroup#bindGroup | GPU bind group}.
    */
   resetBindGroup() {
     this.entries.bindGroup = []

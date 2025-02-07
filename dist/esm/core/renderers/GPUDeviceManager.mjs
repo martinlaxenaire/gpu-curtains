@@ -199,7 +199,6 @@ class GPUDeviceManager {
     this.bindGroupLayouts = /* @__PURE__ */ new Map();
     this.bufferBindings = /* @__PURE__ */ new Map();
     this.samplers = [];
-    this.domTextures = [];
     this.texturesQueue = [];
   }
   /**
@@ -266,13 +265,6 @@ class GPUDeviceManager {
     this.samplers = this.samplers.filter((s) => s.uuid !== sampler.uuid);
   }
   /**
-   * Add a {@link DOMTexture} to our {@link domTextures} array.
-   * @param texture - {@link DOMTexture} to add.
-   */
-  addDOMTexture(texture) {
-    this.domTextures.push(texture);
-  }
-  /**
    * Copy an external image to the GPU.
    * @param source - {@link GPUCopyExternalImageSourceInfo} to use.
    * @param destination - {@link GPUCopyExternalImageDestInfo} to use.
@@ -287,21 +279,21 @@ class GPUDeviceManager {
    * @param sourceIndex - Index of the source to upload (for cube maps). Default to `0`.
    */
   uploadTexture(texture, sourceIndex = 0) {
-    if ("source" in texture && texture.source) {
+    if ("sources" in texture && texture.sources.length) {
       try {
-        this.copyExternalImageToTexture(
+        this.device?.queue.copyExternalImageToTexture(
           {
-            source: texture.source,
+            source: texture.sources[sourceIndex].source,
             flipY: texture.options.flipY
           },
           {
             texture: texture.texture,
             premultipliedAlpha: texture.options.premultipliedAlpha,
-            aspect: "all",
-            colorSpace: "srgb",
+            aspect: texture.options.aspect,
+            colorSpace: texture.options.colorSpace,
             origin: [0, 0, sourceIndex]
           },
-          { width: texture.size.width, height: texture.size.height }
+          { width: texture.size.width, height: texture.size.height, depthOrArrayLayers: 1 }
         );
         if (texture.texture.mipLevelCount > 1) {
           this.generateMips(texture);
@@ -313,35 +305,13 @@ class GPUDeviceManager {
       } catch ({ message }) {
         throwError(`GPUDeviceManager: could not upload texture: ${texture.options.name} because: ${message}`);
       }
-    } else if ("sources" in texture && texture.sources.length) {
-      this.device?.queue.copyExternalImageToTexture(
-        {
-          source: texture.sources[sourceIndex].source,
-          flipY: texture.options.flipY
-        },
-        {
-          texture: texture.texture,
-          premultipliedAlpha: texture.options.premultipliedAlpha,
-          aspect: texture.options.aspect,
-          colorSpace: texture.options.colorSpace,
-          origin: [0, 0, sourceIndex]
-        },
-        { width: texture.size.width, height: texture.size.height, depthOrArrayLayers: 1 }
-      );
-      if (texture.texture.mipLevelCount > 1) {
-        this.generateMips(texture);
-      }
-      this.texturesQueue.push({
-        sourceIndex,
-        texture
-      });
     } else {
       for (let i = 0; i < texture.size.depth; i++) {
         this.device?.queue.writeTexture(
           { texture: texture.texture, origin: [0, 0, i] },
           new Uint8Array(texture.options.placeholderColor),
           { bytesPerRow: texture.size.width * 4 },
-          { width: texture.size.width, height: texture.size.height, depthOrArrayLayers: 1 }
+          { width: 1, height: 1, depthOrArrayLayers: 1 }
         );
       }
     }
@@ -468,13 +438,6 @@ class GPUDeviceManager {
       this.device.queue.submit([commandBuffer]);
     }
   }
-  /**
-   * Remove a {@link DOMTexture} from our {@link domTextures} array.
-   * @param texture - {@link DOMTexture} to remove.
-   */
-  removeDOMTexture(texture) {
-    this.domTextures = this.domTextures.filter((t) => t.uuid !== texture.uuid);
-  }
   /* RENDER */
   /**
    * Create a requestAnimationFrame loop and run it.
@@ -529,13 +492,8 @@ class GPUDeviceManager {
     !this.production && commandEncoder.popDebugGroup();
     const commandBuffer = commandEncoder.finish();
     this.device?.queue.submit([commandBuffer]);
-    this.domTextures.filter((texture) => !texture.parentMesh && texture.sourceLoaded && !texture.sourceUploaded).forEach((texture) => this.uploadTexture(texture));
     for (const texture of this.texturesQueue) {
-      if ("sourceUploaded" in texture.texture) {
-        texture.texture.sourceUploaded = true;
-      } else {
-        texture.texture.sources[texture.sourceIndex].sourceUploaded = true;
-      }
+      texture.texture.setSourceUploaded(texture.sourceIndex);
     }
     this.texturesQueue = [];
     for (const renderer of this.renderers) {
@@ -558,7 +516,6 @@ class GPUDeviceManager {
     this.bindGroups.forEach((bindGroup) => bindGroup.destroy());
     this.buffers.forEach((buffer) => buffer?.destroy());
     this.indirectBuffers.forEach((indirectBuffer) => indirectBuffer.destroy());
-    this.domTextures.forEach((texture) => texture.destroy());
     this.setDeviceObjects();
   }
 }

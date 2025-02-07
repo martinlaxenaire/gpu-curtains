@@ -1,6 +1,6 @@
-import { Texture, TextureParams } from './Texture'
+import { Texture, TextureBaseParams, TextureParams } from './Texture'
 import { isRenderer, Renderer } from '../renderers/utils'
-import { TextureSize, TextureSource, TextureSourceType } from '../../types/Textures'
+import { MediaTextureBaseParams, TextureSize, TextureSource, TextureSourceType } from '../../types/Textures'
 import { Vec2 } from '../../math/Vec2'
 import { Mat3 } from '../../math/Mat3'
 import { BufferBinding } from '../bindings/BufferBinding'
@@ -9,20 +9,10 @@ import { throwWarning } from '../../utils/utils'
 import { TextureBinding } from '../bindings/TextureBinding'
 import { getDefaultMediaTextureUsage, getNumMipLevels } from './utils'
 import { BindingMemoryAccessType, TextureBindingType } from '../bindings/Binding'
-import { DOMTexture } from './DOMTexture'
+import { DOMTexture } from '../../curtains/textures/DOMTexture'
 
 /** Parameters used to create a {@link MediaTexture}. */
-export interface MediaTextureParams
-  extends Omit<TextureParams, 'sampleCount' | 'type' | 'access' | 'qualityRatio' | 'aspect'> {
-  /** Whether to use a transformation {@link Mat3} to use in the shaders for UV transformations. If set to `true`, will create a {@link BufferBinding} accessible in the shaders with the name `${texture.options.name}Matrix`. */
-  useTransform?: boolean
-  /** Solid color used by temporary texture to display while loading the source. Default to `[0, 0, 0, 255]` (solid black). */
-  placeholderColor?: [number, number, number, number]
-  /** Whether video textures should use {@link GPUExternalTexture} or not. Default to `true`. */
-  useExternalTextures?: boolean
-  /** Whether to keep the {@link DOMTexture#texture | texture} in the {@link core/renderers/GPURenderer.GPURenderer | renderer} cache when a {@link core/materials/Material.Material | Material} tries to destroy it. Default to `true`. */
-  cache?: boolean
-}
+export interface MediaTextureParams extends TextureBaseParams, MediaTextureBaseParams {}
 
 /** Options used to create this {@link MediaTexture}. */
 export interface MediaTextureOptions extends TextureParams, MediaTextureParams {
@@ -30,6 +20,18 @@ export interface MediaTextureOptions extends TextureParams, MediaTextureParams {
   sources: Array<TextureSource | string> // for image urls
   /** {@link Texture} sources type. */
   sourcesTypes: TextureSourceType[]
+}
+
+/** Define a {@link MediaTexture} source. */
+export interface MediaTextureSource {
+  /** Original {@link TextureSource} to use. */
+  source: TextureSource
+  /** Whether we should update the {@link GPUTexture} for this source. */
+  shouldUpdate: boolean
+  /** Whether the source has been loaded. */
+  sourceLoaded: boolean
+  /** Whether the source has been uploaded to the GPU. */
+  sourceUploaded: boolean
 }
 
 /** @const - default {@link MediaTexture} parameters. */
@@ -47,25 +49,59 @@ const defaultMediaTextureParams: MediaTextureParams = {
   autoDestroy: true,
   // texture transform
   useTransform: false,
-  placeholderColor: [0, 0, 0, 255], // default to black
+  placeholderColor: [0, 0, 0, 255], // default to solid black
   cache: true,
 }
 
+/**
+ * This class extends the {@link Texture} class specifically to handle external sources such as images, videos or canvases. It can be used with {@link core/computePasses/ComputePass.ComputePass | ComputePass} and/or any kind of {@link core/meshes/Mesh.Mesh | Mesh}.
+ *
+ * Can also handle texture transformations using a {@link Mat3} if the {@link MediaTextureParams#useTransform | useTransform parameter} has been set to `true` upon creation.
+ *
+ * If you use transformations, the {@link modelMatrix} will be available in the shaders using `texturesMatrices.${texture.options.name}.matrix`.
+ *
+ * The library provide a convenient helpers in the shaders to help you compute the transformed UV:
+ *
+ * ```wgsl
+ * // assuming 'uv' is a valid vec2f containing the original UV and the texture name is 'meshTexture'
+ * uv = getUVCover(uv, texturesMatrices.meshTexture.matrix);
+ * ```
+ *
+ * @example
+ * ```javascript
+ * // assuming 'renderer' is a valid GPURenderer
+ *
+ * // create a simple media texture
+ * const mediaTexture = new MediaTexture(renderer, {
+ *   label: 'Media texture',
+ *   name: 'mediaTexture',
+ * })
+ *
+ * mediaTexture.loadImage('path/to/image.jpg')
+ *
+ * // create a cube map texture
+ * const cubeMapTexture = new MediaTexture(renderer, {
+ *   label: 'Cube map texture',
+ *   name: 'cubeMapTexture',
+ *   viewDimension: 'cube',
+ * })
+ *
+ * cubeMapTexture.loadImages([
+ *   'path/to/positive-x.jpg',
+ *   'path/to/negative-x.jpg',
+ *   'path/to/positive-y.jpg',
+ *   'path/to/negative-y.jpg',
+ *   'path/to/positive-z.jpg',
+ *   'path/to/negative-z.jpg',
+ * ])
+ * ```
+ */
 export class MediaTexture extends Texture {
   /** The {@link GPUExternalTexture} used if any. */
   externalTexture: null | GPUExternalTexture
 
-  /** The {@link MediaTexture} {@link TextureSource | sources} to use if any. */
-  sources: Array<{
-    /** Original {@link TextureSource} to use. */
-    source: TextureSource
-    /** Whether the source has been loaded. */
-    sourceLoaded: boolean
-    /** Whether the source has been uploaded to the GPU. */
-    sourceUploaded: boolean
-    /** Whether we should update the {@link texture} for this source. */
-    shouldUpdate: boolean
-  }>
+  /** The {@link MediaTexture} sources to use if any. */
+  sources: MediaTextureSource[]
 
   /** Size of the {@link MediaTexture#texture | texture} source, usually our {@link sources} first element size (since for cube maps, all sources must have the same size). */
   size: TextureSize
@@ -81,17 +117,17 @@ export class MediaTexture extends Texture {
   /** Array of {@link HTMLVideoElement.requestVideoFrameCallback | requestVideoFrameCallback} returned ids if used. */
   videoFrameCallbackIds: Map<number, null | number>
 
-  /** {@link Vec2} offset to apply to the {@link Texture} if {@link TextureBaseParams#useTransform | useTransform} parameter has been set to `true`. */
+  /** {@link Vec2} offset to apply to the {@link Texture} if {@link MediaTextureParams#useTransform | useTransform} parameter has been set to `true`. */
   offset: Vec2
-  /** Rotation to apply to the {@link Texture} if {@link TextureBaseParams#useTransform | useTransform} parameter has been set to `true`. */
+  /** Rotation to apply to the {@link Texture} if {@link MediaTextureParams#useTransform | useTransform} parameter has been set to `true`. */
   #rotation: number
-  /** {@link Vec2} scale to apply to the {@link Texture} if {@link TextureBaseParams#useTransform | useTransform} parameter has been set to `true`. */
+  /** {@link Vec2} scale to apply to the {@link Texture} if {@link MediaTextureParams#useTransform | useTransform} parameter has been set to `true`. */
   scale: Vec2
-  /** {@link Vec2} transformation origin to use when applying the transformations to the {@link Texture} if {@link TextureBaseParams#useTransform | useTransform} parameter has been set to `true`. A value of (0.5, 0.5) corresponds to the center of the texture. Default is (0, 0), the upper left. */
+  /** {@link Vec2} transformation origin to use when applying the transformations to the {@link Texture} if {@link MediaTextureParams#useTransform | useTransform} parameter has been set to `true`. A value of (0.5, 0.5) corresponds to the center of the texture. Default is (0, 0), the upper left. */
   transformOrigin: Vec2
-  /** {@link Mat3} transformation matrix to apply to the {@link Texture} if {@link TextureBaseParams#useTransform | useTransform} parameter has been set to `true`. */
+  /** {@link Mat3} transformation matrix to apply to the {@link Texture} if {@link MediaTextureParams#useTransform | useTransform} parameter has been set to `true`. */
   modelMatrix: Mat3
-  /** {@link BufferBinding} to send the transformation matrix to the shaders if {@link TextureBaseParams#useTransform | useTransform} parameter has been set to `true`. */
+  /** {@link BufferBinding} to send the transformation matrix to the shaders if {@link MediaTextureParams#useTransform | useTransform} parameter has been set to `true`. */
   transformBinding?: BufferBinding | null
 
   // callbacks / events
@@ -110,7 +146,7 @@ export class MediaTexture extends Texture {
     /* allow empty callback */
   }
 
-  /** function assigned to the {@link onAllSourceUploaded} callback */
+  /** function assigned to the {@link onAllSourcesUploaded} callback */
   _onAllSourcesUploadedCallback = () => {
     /* allow empty callback */
   }
@@ -135,6 +171,7 @@ export class MediaTexture extends Texture {
         access: 'write' as BindingMemoryAccessType,
         qualityRatio: 1,
         aspect: 'all',
+        // force fixed size to disable texture destroy on resize
         fixedSize: { width: parameters.fixedSize?.width ?? 1, height: parameters.fixedSize?.height ?? 1 },
       },
     })
@@ -156,6 +193,7 @@ export class MediaTexture extends Texture {
     if (parameters.fromTexture && parameters.fromTexture instanceof MediaTexture) {
       this.options.sources = parameters.fromTexture.options.sources
       this.options.sourcesTypes = parameters.fromTexture.options.sourcesTypes
+      this.sources = parameters.fromTexture.sources
     }
 
     // transform
@@ -250,7 +288,7 @@ export class MediaTexture extends Texture {
   }
 
   /**
-   * Update the {@link modelMatrix} using the {@link offset}, {@link rotation}, {@link scale} and {@link transformOrigin} and tell the {@link transformBinding} to update, only if {@link TextureBaseParams#useTransform | useTransform} parameter has been set to `true`.
+   * Update the {@link modelMatrix} using the {@link offset}, {@link rotation}, {@link scale} and {@link transformOrigin} and tell the {@link transformBinding} to update, only if {@link MediaTextureParams#useTransform | useTransform} parameter has been set to `true`.
    */
   updateModelMatrix() {
     if (this.options.useTransform) {
@@ -295,11 +333,31 @@ export class MediaTexture extends Texture {
    * @param texture - {@link Texture} to copy.
    */
   copy(texture: Texture | MediaTexture | DOMTexture) {
+    if (this.size.depth !== texture.size.depth) {
+      throwWarning(
+        `${this.options.label}: cannot copy a ${texture.options.label} because the depth sizes differ: ${this.size.depth} vs ${texture.size.depth}.`
+      )
+      return
+    }
+
     if (texture instanceof MediaTexture) {
+      if (this.options.sourcesTypes[0] === 'externalVideo' && texture.options.sourcesTypes[0] !== 'externalVideo') {
+        throwWarning(`${this.options.label}: cannot copy a GPUTexture to a GPUExternalTexture`)
+        return
+      } else if (
+        this.options.sourcesTypes[0] !== 'externalVideo' &&
+        texture.options.sourcesTypes[0] === 'externalVideo'
+      ) {
+        throwWarning(`${this.options.label}: cannot copy a GPUExternalTexture to a GPUTexture`)
+        return
+      }
+
       this.options.fixedSize = texture.options.fixedSize
       this.sources = texture.sources
       this.options.sources = texture.options.sources
       this.options.sourcesTypes = texture.options.sourcesTypes
+      this.sourcesLoaded = texture.sourcesLoaded
+      this.sourcesUploaded = texture.sourcesUploaded
     }
 
     super.copy(texture)
@@ -311,8 +369,13 @@ export class MediaTexture extends Texture {
   createTexture() {
     if (!this.size.width || !this.size.height) return
 
-    if (this.options.fromTexture) {
-      // copy the GPU texture
+    // copy the GPU texture only if
+    // - it's not a MediaTexture
+    // - it's a MediaTexture and sources have been uploaded
+    if (
+      this.options.fromTexture &&
+      (!(this.options.fromTexture instanceof MediaTexture) || this.options.fromTexture.sourcesUploaded)
+    ) {
       this.copyGPUTexture(this.options.fromTexture.texture)
       return
     }
@@ -362,7 +425,7 @@ export class MediaTexture extends Texture {
       this.textureBinding.resource = this.externalTexture
       this.textureBinding.setBindingType('externalTexture')
       source.shouldUpdate = false
-      source.sourceUploaded = true
+      this.setSourceUploaded(0)
     }
   }
 
@@ -392,7 +455,7 @@ export class MediaTexture extends Texture {
   }
 
   /**
-   * Load an {@link HTMLImageElement} from a URL and create an {@link ImageBitmap} to use as a {@link source}.
+   * Load an {@link HTMLImageElement} from a URL and create an {@link ImageBitmap} to use as a {@link MediaTextureSource.source | source}.
    * @param url - URL of the image to load.
    * @returns - the newly created {@link ImageBitmap}.
    */
@@ -417,7 +480,7 @@ export class MediaTexture extends Texture {
   }
 
   /**
-   * Load and create an {@link ImageBitmap} from a URL or {@link HTMLImageElement}, use it as a {@link Texture.sources | source} and create the {@link GPUTexture}.
+   * Load and create an {@link ImageBitmap} from a URL or {@link HTMLImageElement}, use it as a {@link MediaTextureSource.source | source} and create the {@link GPUTexture}.
    * @param source - the image URL or {@link HTMLImageElement} to load.
    */
   async loadImage(source: string | HTMLImageElement) {
@@ -445,7 +508,6 @@ export class MediaTexture extends Texture {
         })
 
       if (cachedTexture) {
-        console.log(cachedTexture, url, this.options.label)
         this.copy(cachedTexture)
         return
       }
@@ -501,7 +563,7 @@ export class MediaTexture extends Texture {
   // WebCodecs may be the way to go when time comes!
   // https://developer.chrome.com/blog/new-in-webgpu-113/#use-webcodecs-videoframe-source-in-importexternaltexture
   /**
-   * Set our {@link shouldUpdate} flag to true at each new video frame.
+   * Set our {@link MediaTextureSource.shouldUpdate | source shouldUpdate} flag to true at each new video frame.
    */
   onVideoFrameCallback(sourceIndex = 0) {
     if (this.videoFrameCallbackIds.get(sourceIndex)) {
@@ -514,12 +576,15 @@ export class MediaTexture extends Texture {
 
   /**
    * Callback to run when a {@link HTMLVideoElement} has loaded (when it has enough data to play).
-   * Set the {@link HTMLVideoElement} as a {@link source} and create the {@link GPUTexture} or {@link GPUExternalTexture}.
+   * Set the {@link HTMLVideoElement} as a {@link MediaTextureSource.source} and create the {@link GPUTexture} or {@link GPUExternalTexture}.
    * @param video - the newly loaded {@link HTMLVideoElement}.
+   * @param sourceIndex - Index of the {@link HTMLVideoElement} in the {@link sources} array.
    */
   onVideoLoaded(video: HTMLVideoElement, sourceIndex = 0) {
     if (!this.sources[sourceIndex].sourceLoaded) {
       this.sources[sourceIndex].sourceLoaded = true
+      // update at least first frame
+      this.sources[sourceIndex].shouldUpdate = true
       this.setSourceSize()
 
       if (this.options.sourcesTypes[sourceIndex] === 'externalVideo') {
@@ -707,6 +772,10 @@ export class MediaTexture extends Texture {
     }
   }
 
+  /**
+   * Set the {@link MediaTextureSource.sourceUploaded | sourceUploaded} flag to true for the {@link MediaTextureSource.source | source} at a given index in our {@link sources} array. If all {@link sources} have been uploaded, set our {@link sourcesUploaded} flag to true.
+   * @param sourceIndex - Index of the {@link MediaTextureSource.source | source} in the {@link sources} array.
+   */
   setSourceUploaded(sourceIndex = 0) {
     this.sources[sourceIndex].sourceUploaded = true
     this._onSourceUploadedCallback && this._onSourceUploadedCallback(this.sources[sourceIndex].source)
@@ -719,8 +788,8 @@ export class MediaTexture extends Texture {
   }
 
   /**
-   * Callback to run when one of the {@link sources#source | source} has been loaded.
-   * @param callback - callback to run when one of the {@link sources#source | source} has been loaded.
+   * Callback to run when one of the {@link MediaTextureSource.source | source} has been loaded.
+   * @param callback - callback to run when one of the {@link MediaTextureSource.source | source} has been loaded.
    * @returns - our {@link MediaTexture}
    */
   onSourceLoaded(callback: (source: TextureSource) => void): this {
@@ -732,8 +801,8 @@ export class MediaTexture extends Texture {
   }
 
   /**
-   * Callback to run when all of the {@link sources#source | source} have been loaded.
-   * @param callback - callback to run when all of the {@link sources#source | sources} have been loaded.
+   * Callback to run when all of the {@link MediaTextureSource.source | source} have been loaded.
+   * @param callback - callback to run when all of the {@link MediaTextureSource.source | sources} have been loaded.
    * @returns - our {@link MediaTexture}
    */
   onAllSourcesLoaded(callback: () => void): this {
@@ -745,8 +814,8 @@ export class MediaTexture extends Texture {
   }
 
   /**
-   * Callback to run when one of the {@link sources#source} has been uploaded to the GPU.
-   * @param callback - callback to run when one of the {@link sources#source | source} has been uploaded to the GPU.
+   * Callback to run when one of the {@link MediaTextureSource.source} has been uploaded to the GPU.
+   * @param callback - callback to run when one of the {@link MediaTextureSource.source | source} has been uploaded to the GPU.
    * @returns - our {@link MediaTexture}.
    */
   onSourceUploaded(callback: (source: TextureSource) => void): this {
@@ -758,9 +827,9 @@ export class MediaTexture extends Texture {
   }
 
   /**
-   * Callback to run when all of the {@link sources#source | source} have been uploaded to the GPU.
-   * @param callback - callback to run when all of the {@link sources#source | sources} been uploaded to the GPU.
-   * @returns - our {@link MediaTexture}
+   * Callback to run when all of the {@link MediaTextureSource.source | source} have been uploaded to the GPU.
+   * @param callback - callback to run when all of the {@link MediaTextureSource.source | sources} been uploaded to the GPU.
+   * @returns - our {@link MediaTexture}.
    */
   onAllSourcesUploaded(callback: () => void): this {
     if (callback) {
@@ -773,10 +842,10 @@ export class MediaTexture extends Texture {
   /* RENDER */
 
   /**
-   * Render a {@link MediaTexture} by uploading the {@link texture} if needed.
+   * Update a {@link MediaTexture} by uploading the {@link texture} if needed.
    * */
-  render() {
-    this.sources.forEach((source, sourceIndex) => {
+  update() {
+    this.sources?.forEach((source, sourceIndex) => {
       const sourceType = this.options.sourcesTypes[sourceIndex]
 
       // since external texture are destroyed as soon as JavaScript returns to the browser

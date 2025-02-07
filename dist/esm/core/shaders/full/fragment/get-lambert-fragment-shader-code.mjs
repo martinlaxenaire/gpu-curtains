@@ -18,6 +18,7 @@ const getLambertFragmentShaderCode = ({
   chunks = null,
   toneMapping = "Linear",
   geometry,
+  additionalVaryings = [],
   materialUniform = null,
   materialUniformName = "material",
   receiveShadows = false,
@@ -39,12 +40,12 @@ ${getLightsInfos}
 ${REIndirectDiffuse}
 ${getLambertDirect}
 
-${getFragmentInputStruct({ geometry })}
+${getFragmentInputStruct({ geometry, additionalVaryings })}
 
 @fragment fn main(fsInput: FSInput) -> @location(0) vec4f {
   var outputColor: vec4f = vec4();
   
-  ${declareAttributesVars({ geometry })}
+  ${declareAttributesVars({ geometry, additionalVaryings })}
   ${declareMaterialVars({ materialUniform, materialUniformName, shadingModel: "Lambert" })}
   ${getBaseColor({ geometry, baseColorTexture })}
   

@@ -1,6 +1,6 @@
 const getVertexSkinnedPositionNormal = ({ bindings = [], geometry }) => {
   let output = "";
-  const hasInstances = geometry.instancesCount > 1;
+  const hasInstances = geometry.instancesCount > 1 && bindings.find((binding) => binding.name === "instances");
   const skinJoints = [];
   const skinWeights = [];
   if (geometry.vertexBuffers && geometry.vertexBuffers.length) {

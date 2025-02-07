@@ -3,7 +3,7 @@ import { Renderer } from './utils';
 import { Sampler } from '../samplers/Sampler';
 import { PipelineManager } from '../pipelines/PipelineManager';
 import { SceneObject } from './GPURenderer';
-import { DOMTexture } from '../textures/DOMTexture';
+import { DOMTexture } from '../../curtains/textures/DOMTexture';
 import { AllowedBindGroups } from '../../types/BindGroups';
 import { Buffer } from '../buffers/Buffer';
 import { BufferBinding } from '../bindings/BufferBinding';
@@ -82,12 +82,12 @@ export declare class GPUDeviceManager {
     bufferBindings: Map<string, BufferBinding>;
     /** An array containing all our created {@link Sampler}. */
     samplers: Sampler[];
-    /** An array containing all our created {@link DOMTexture}. */
-    domTextures: DOMTexture[];
-    /** An array to keep track of the newly uploaded {@link DOMTexture} and set their {@link DOMTexture#sourceUploaded | sourceUploaded} property. */
+    /** An array to keep track of the newly uploaded {@link MediaTexture} and set their {@link core/textures/MediaTexture.MediaTextureSource.sourceUploaded | sourceUploaded} property. */
     texturesQueue: Array<{
+        /** Index of the {@link core/textures/MediaTexture.MediaTextureSource | source} in the {@link MediaTexture#sources} array. */
         sourceIndex: number;
-        texture: MediaTexture | DOMTexture;
+        /** {@link MediaTexture} to handle. */
+        texture: MediaTexture;
     }>;
     /** Request animation frame callback returned id if used. */
     animationFrameID: null | number;
@@ -192,11 +192,6 @@ export declare class GPUDeviceManager {
      */
     removeSampler(sampler: Sampler): void;
     /**
-     * Add a {@link DOMTexture} to our {@link domTextures} array.
-     * @param texture - {@link DOMTexture} to add.
-     */
-    addDOMTexture(texture: DOMTexture): void;
-    /**
      * Copy an external image to the GPU.
      * @param source - {@link GPUCopyExternalImageSourceInfo} to use.
      * @param destination - {@link GPUCopyExternalImageDestInfo} to use.
@@ -216,11 +211,6 @@ export declare class GPUDeviceManager {
      * @param commandEncoder - optional {@link GPUCommandEncoder} to use if we're already in the middle of a command encoding process.
      */
     generateMips(texture: Texture | DOMTexture, commandEncoder?: GPUCommandEncoder): void;
-    /**
-     * Remove a {@link DOMTexture} from our {@link domTextures} array.
-     * @param texture - {@link DOMTexture} to remove.
-     */
-    removeDOMTexture(texture: DOMTexture): void;
     /**
      * Create a requestAnimationFrame loop and run it.
      */

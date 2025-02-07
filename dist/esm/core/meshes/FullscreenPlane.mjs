@@ -8,8 +8,8 @@ class FullscreenPlane extends MeshBaseMixin(class {
 }) {
   /**
    * FullscreenPlane constructor
-   * @param renderer - {@link Renderer} or {@link GPUCurtains} class object used to create this {@link FullscreenPlane}
-   * @param parameters - {@link MeshBaseRenderParams | parameters} use to create this {@link FullscreenPlane}
+   * @param renderer - {@link Renderer} or {@link GPUCurtains} class object used to create this {@link FullscreenPlane}.
+   * @param parameters - {@link MeshBaseRenderParams | parameters} use to create this {@link FullscreenPlane}.
    */
   constructor(renderer, parameters = {}) {
     renderer = isRenderer(renderer, parameters.label ? parameters.label + " FullscreenQuadMesh" : "FullscreenQuadMesh");
@@ -41,18 +41,18 @@ class FullscreenPlane extends MeshBaseMixin(class {
     this.type = "FullscreenQuadMesh";
   }
   /**
-   * Resize our {@link FullscreenPlane}
-   * @param boundingRect - the new bounding rectangle
+   * Resize our {@link FullscreenPlane}.
+   * @param boundingRect - the new bounding rectangle.
    */
   resize(boundingRect = null) {
     this.size.document = boundingRect ?? this.renderer.boundingRect;
     super.resize(boundingRect);
   }
   /**
-   * Take the pointer {@link Vec2 | vector} position relative to the document and returns it relative to our {@link FullscreenPlane}
-   * It ranges from -1 to 1 on both axis
-   * @param mouseCoords - pointer {@link Vec2 | vector} coordinates
-   * @returns - the mapped {@link Vec2 | vector} coordinates in the [-1, 1] range
+   * Take the pointer {@link Vec2} position relative to the document and returns it relative to our {@link FullscreenPlane}.
+   * It ranges from -1 to 1 on both axis.
+   * @param mouseCoords - pointer {@link Vec2} coordinates.
+   * @returns - the mapped {@link Vec2} coordinates in the [-1, 1] range.
    */
   mouseToPlaneCoords(mouseCoords = new Vec2()) {
     return new Vec2(
