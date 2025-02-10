@@ -1,9 +1,10 @@
-import { ShaderTextureDescriptor, FragmentShaderBaseInputParams } from '../../../full/fragment/get-fragment-shader-code'
+import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code'
 import { getPCFShadows } from './get-PCF-shadows'
 import { applyDirectionalShadows } from './apply-directional-shadows'
 import { applyPointShadows } from './apply-point-shadows'
 import { getIBLIndirect } from './get-IBL-indirect'
 import { getIBLVolumeRefraction } from './get-IBL-volume-refraction'
+import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh'
 
 /**
  * Set the `outgoingLight` (`vec3f`) using PBR shading.
@@ -21,9 +22,9 @@ export const getPBRShading = ({
   extensionsUsed = [],
 }: {
   receiveShadows?: boolean
-  environmentMap?: FragmentShaderBaseInputParams['environmentMap']
+  environmentMap?: PBRFragmentShaderInputParams['environmentMap']
   transmissionBackgroundTexture?: ShaderTextureDescriptor
-  extensionsUsed?: FragmentShaderBaseInputParams['extensionsUsed']
+  extensionsUsed?: PBRFragmentShaderInputParams['extensionsUsed']
 } = {}): string => {
   return /* wgsl */ `
   var directLight: DirectLight;

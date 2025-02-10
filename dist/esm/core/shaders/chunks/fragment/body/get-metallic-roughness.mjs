@@ -6,7 +6,7 @@ const getMetallicRoughness = ({
     metallicRoughness += /* wgsl */
     `
   var metallicRoughnessUV: vec2f = ${metallicRoughnessTexture.texCoordAttributeName ?? "uv"};`;
-    if (metallicRoughnessTexture.texture.options.useTransform) {
+    if ("useTransform" in metallicRoughnessTexture.texture.options && metallicRoughnessTexture.texture.options.useTransform) {
       metallicRoughness += /* wgsl */
       `
   metallicRoughnessUV = (${metallicRoughnessTexture.texture.options.name}Matrix * vec3(metallicRoughnessUV, 1.0)).xy;`;

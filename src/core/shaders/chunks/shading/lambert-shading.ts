@@ -4,8 +4,9 @@ import { toneMappingUtils } from '../utils/tone-mapping-utils'
 import { getLightsInfos } from '../fragment/head/get-lights-infos'
 import { REIndirectDiffuse } from '../fragment/head/RE-indirect-diffuse'
 import { getLambertDirect } from '../fragment/head/get-lambert-direct'
-import { ToneMappings } from '../../full/fragment/get-fragment-shader-code'
 import { getLambertShading } from '../fragment/body/get-lambert-shading'
+import { applyToneMapping } from '../fragment/body/apply-tone-mapping'
+import { ToneMappings } from '../../../../extras/meshes/LitMesh'
 
 // TODO add emissive?
 /** Defines the basic parameters available for the various shading getter functions. */
@@ -14,8 +15,8 @@ export interface GetShadingParams {
   addUtils?: boolean
   /** Whether the shading function should account for current shadows. Default to `false`. */
   receiveShadows?: boolean
-  /** Whether the shading function should apply tone mapping to the resulting color and if so, which one. Default to `'Linear'`. */
-  toneMapping?: ToneMappings | boolean
+  /** Whether the shading function should apply tone mapping to the resulting color and if so, which one. Default to `'Khronos'`. */
+  toneMapping?: ToneMappings
   /** Whether ambient occlusion should be accounted when calculating the shading. Default to `false`. If set to `true`, a float `f32` ambient occlusion value should be passed as the last shading function parameter. */
   useOcclusion?: boolean
 }
@@ -26,6 +27,7 @@ ${constants}
 ${common}
 ${getLightsInfos}
 ${REIndirectDiffuse}
+${toneMappingUtils}
 `
 
 /**
@@ -39,30 +41,27 @@ ${REIndirectDiffuse}
  * ```
  */
 export const getLambert = (
-  { addUtils = true, receiveShadows = false, toneMapping = 'Linear', useOcclusion = false } = {} as GetShadingParams
+  { addUtils = true, receiveShadows = false, toneMapping, useOcclusion = false } = {} as GetShadingParams
 ) => /* wgsl */ `
 ${addUtils ? lambertUtils : ''}
 ${getLambertDirect}
-${toneMapping ? toneMappingUtils : ''}
 
 fn getLambert(
   normal: vec3f,
   worldPosition: vec3f,
-  outputColor: vec4f,
+  color: vec4f,
   ${useOcclusion ? 'occlusion: f32,' : ''}
 ) -> vec4f {
   ${!useOcclusion ? 'let occlusion: f32 = 1.0;' : ''}
+  
+  var outputColor: vec4f = color;
 
   ${getLambertShading({ receiveShadows })}
   
-  ${
-    toneMapping === 'Linear'
-      ? 'outgoingLight = linearToOutput3(outgoingLight);'
-      : toneMapping === 'Khronos'
-      ? 'outgoingLight = linearTosRGB(toneMapKhronosPbrNeutral(outgoingLight));'
-      : ''
-  }
+  outputColor = vec4(outgoingLight, outputColor.a);
+  
+  ${applyToneMapping({ toneMapping })}
     
-  return vec4(outgoingLight, outputColor.a);
+  return outputColor;
 }
 `

@@ -1,7 +1,7 @@
 import { Vec3 } from '../../math/Vec3'
 import { BindGroupInputs } from '../../types/BindGroups'
-import { ShadingModels } from './full/fragment/get-fragment-shader-code'
 import { Mat3 } from '../../math/Mat3'
+import { ShadingModels } from '../../extras/meshes/LitMesh'
 
 // chunks
 /** Additional WGSL chunks to add to the shaders. */
@@ -16,7 +16,7 @@ export interface AdditionalChunks {
   preliminaryContribution?: string
   /** Additional modification to apply to the shader.
    *
-   * For the vertex shader, it is called after having applied morph, skinning and matrices calculations and before outputting the result.
+   * For the vertex shader, it is called after having declared the outputted result and can therefore be used to update the outputted result.
    *
    * For the fragment shader, it is called after having applied the lighting calculations and before applying tone mapping if any. */
   additionalContribution?: string

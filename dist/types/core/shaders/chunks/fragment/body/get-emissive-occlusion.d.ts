@@ -1,4 +1,4 @@
-import { ShaderTextureDescriptor } from '../../../full/fragment/get-fragment-shader-code';
+import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh';
 /**
  * Set the `emissive` (`vec3f`) and `occlusion` (`f32`) values to use in our shader.
  * @param parameters - Parameters to use to set the emissive and occlusion values.

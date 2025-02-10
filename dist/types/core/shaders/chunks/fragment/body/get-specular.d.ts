@@ -1,4 +1,4 @@
-import { ShaderTextureDescriptor } from '../../../full/fragment/get-fragment-shader-code';
+import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh';
 /**
  * Set the `specularFactor` (`f32`) and `specularColorFactor` (`vec3f`) values from the material specular variables and eventual specular textures.
  * @param parameters - Parameters used to set the `specularFactor` (`f32`) and `specularColorFactor` (`vec3f`) values.

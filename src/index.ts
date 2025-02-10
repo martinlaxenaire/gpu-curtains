@@ -37,7 +37,7 @@ export { ShaderPass } from './core/renderPasses/ShaderPass'
 export { Sampler } from './core/samplers/Sampler'
 export { Scene } from './core/scenes/Scene'
 export { Texture } from './core/textures/Texture'
-export { DOMTexture } from './core/textures/DOMTexture'
+export { MediaTexture } from './core/textures/MediaTexture'
 export { DOMElement } from './core/DOM/DOMElement'
 
 // shading
@@ -61,6 +61,7 @@ export { DOMMesh } from './curtains/meshes/DOMMesh'
 export { Plane } from './curtains/meshes/Plane'
 export { DOMObject3D } from './curtains/objects3D/DOMObject3D'
 export { GPUCurtainsRenderer } from './curtains/renderers/GPUCurtainsRenderer'
+export { DOMTexture } from './curtains/textures/DOMTexture'
 export { GPUCurtains } from './curtains/GPUCurtains'
 
 // math
@@ -70,6 +71,7 @@ export { Mat4 } from './math/Mat4'
 export { Quat } from './math/Quat'
 export { Vec2 } from './math/Vec2'
 export { Vec3 } from './math/Vec3'
+export * from './math/color-utils'
 
 // extras
 export { IndirectBuffer } from './extras/buffers/IndirectBuffer'
@@ -83,7 +85,6 @@ export { Raycaster } from './extras/raycaster/Raycaster'
 
 // gltf extras
 export { GLTFScenesManager } from './extras/gltf/GLTFScenesManager'
-export * from './extras/gltf/utils'
 
 // loaders
 export { GLTFLoader } from './extras/loaders/GLTFLoader'

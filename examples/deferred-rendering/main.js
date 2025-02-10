@@ -84,7 +84,7 @@ window.addEventListener('load', async () => {
       {
         loadOp: 'clear',
         clearValue: [0, 0, 0, 0],
-        targetFormat: 'bgra8unorm', // albedo
+        targetFormat: 'bgra8unorm-srgb', // albedo
       },
       {
         loadOp: 'clear',
@@ -372,7 +372,7 @@ window.addEventListener('load', async () => {
       result = reflectedLight.indirectDiffuse + reflectedLight.directDiffuse + reflectedLight.directSpecular;
       
     
-      return vec4(linearToOutput3(result), 1.0);
+      return vec4(linearTosRGB(result), 1.0);
     }
   `
 

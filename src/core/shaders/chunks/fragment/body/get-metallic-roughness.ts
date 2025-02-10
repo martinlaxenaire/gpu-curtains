@@ -1,4 +1,4 @@
-import { ShaderTextureDescriptor } from '../../../full/fragment/get-fragment-shader-code'
+import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh'
 
 /**
  * Set the `metallic` (`f32`) and `roughness` (`f32`) values using the `material` binding `metallicFactor`, `roughnessFactor` values and the metallic roughness texture if any.
@@ -17,7 +17,10 @@ export const getMetallicRoughness = ({
     metallicRoughness += /* wgsl */ `
   var metallicRoughnessUV: vec2f = ${metallicRoughnessTexture.texCoordAttributeName ?? 'uv'};`
 
-    if (metallicRoughnessTexture.texture.options.useTransform) {
+    if (
+      'useTransform' in metallicRoughnessTexture.texture.options &&
+      metallicRoughnessTexture.texture.options.useTransform
+    ) {
       metallicRoughness += /* wgsl */ `
   metallicRoughnessUV = (${metallicRoughnessTexture.texture.options.name}Matrix * vec3(metallicRoughnessUV, 1.0)).xy;`
     }

@@ -4,6 +4,7 @@ import { getFragmentShaderCode } from '../../core/shaders/full/fragment/get-frag
 import { Vec2 } from '../../math/Vec2.mjs';
 import { Vec3 } from '../../math/Vec3.mjs';
 import { getVertexShaderCode } from '../../core/shaders/full/vertex/get-vertex-shader-code.mjs';
+import { sRGBToLinear } from '../../math/color-utils.mjs';
 
 class LitMesh extends Mesh {
   /**
@@ -14,8 +15,13 @@ class LitMesh extends Mesh {
   constructor(renderer, parameters = {}) {
     renderer = isCameraRenderer(renderer, "LitMesh");
     const { material, ...defaultParams } = parameters;
+    let { colorSpace } = material;
+    if (!colorSpace) {
+      colorSpace = "srgb";
+    }
     const {
       shading,
+      additionalVaryings,
       vertexChunks,
       fragmentChunks,
       toneMapping,
@@ -51,15 +57,173 @@ class LitMesh extends Mesh {
       thicknessTexture,
       environmentMap
     } = material;
-    const vs = getVertexShaderCode({
+    const materialUniform = LitMesh.getMaterialUniform({
+      shading,
+      colorSpace,
+      color,
+      opacity,
+      alphaCutoff,
+      metallic,
+      roughness,
+      normalScale,
+      occlusionIntensity,
+      emissiveIntensity,
+      emissiveColor,
+      specularIntensity,
+      specularColor,
+      shininess,
+      transmission,
+      ior,
+      dispersion,
+      thickness,
+      attenuationDistance,
+      attenuationColor,
+      environmentMap
+    });
+    if (defaultParams.uniforms) {
+      defaultParams.uniforms = {
+        ...defaultParams.uniforms,
+        ...{
+          material: materialUniform
+        }
+      };
+    } else {
+      defaultParams.uniforms = {
+        material: materialUniform
+      };
+    }
+    if (!defaultParams.textures) {
+      defaultParams.textures = [];
+    }
+    if (!defaultParams.samplers) {
+      defaultParams.samplers = [];
+    }
+    const materialTextures = LitMesh.getMaterialTexturesDescriptors({
+      shading,
+      baseColorTexture,
+      normalTexture,
+      emissiveTexture,
+      occlusionTexture,
+      metallicRoughnessTexture,
+      specularTexture,
+      specularFactorTexture,
+      specularColorTexture,
+      transmissionTexture,
+      thicknessTexture
+    });
+    materialTextures.forEach((textureDescriptor) => {
+      if (textureDescriptor.sampler) {
+        const samplerExists = defaultParams.samplers.find((s) => s.uuid === textureDescriptor.sampler.uuid);
+        if (!samplerExists) {
+          defaultParams.samplers.push(textureDescriptor.sampler);
+        }
+      }
+      defaultParams.textures.push(textureDescriptor.texture);
+    });
+    if (environmentMap && (shading === "PBR" || !shading)) {
+      if (!defaultParams.textures) {
+        defaultParams.textures = [];
+      }
+      defaultParams.textures = [
+        ...defaultParams.textures,
+        environmentMap.lutTexture,
+        environmentMap.diffuseTexture,
+        environmentMap.specularTexture
+      ];
+      if (!defaultParams.samplers) {
+        defaultParams.samplers = [];
+      }
+      defaultParams.samplers = [...defaultParams.samplers, environmentMap.sampler];
+    }
+    let transmissionBackgroundTexture = null;
+    if (parameters.transmissive) {
+      renderer.createTransmissionTarget();
+      transmissionBackgroundTexture = {
+        texture: renderer.transmissionTarget.texture,
+        sampler: renderer.transmissionTarget.sampler
+      };
+    }
+    const extensionsUsed = [];
+    if (dispersion) {
+      extensionsUsed.push("KHR_materials_dispersion");
+    }
+    const hasNormal = defaultParams.geometry && defaultParams.geometry.getAttributeByName("normal");
+    if (defaultParams.geometry && !hasNormal) {
+      defaultParams.geometry.computeGeometry();
+    }
+    const vs = LitMesh.getVertexShaderCode({
       bindings: defaultParams.bindings,
       geometry: defaultParams.geometry,
-      chunks: vertexChunks
+      chunks: vertexChunks,
+      additionalVaryings
     });
+    const fs = LitMesh.getFragmentShaderCode({
+      shadingModel: shading,
+      chunks: fragmentChunks,
+      extensionsUsed,
+      receiveShadows: defaultParams.receiveShadows,
+      toneMapping,
+      geometry: defaultParams.geometry,
+      additionalVaryings,
+      materialUniform,
+      baseColorTexture,
+      normalTexture,
+      metallicRoughnessTexture,
+      specularTexture,
+      specularFactorTexture,
+      specularColorTexture,
+      transmissionTexture,
+      thicknessTexture,
+      emissiveTexture,
+      occlusionTexture,
+      transmissionBackgroundTexture,
+      environmentMap
+    });
+    const shaders = {
+      vertex: {
+        code: vs,
+        entryPoint: "main"
+      },
+      fragment: {
+        code: fs,
+        entryPoint: "main"
+      }
+    };
+    super(renderer, { ...defaultParams, ...{ shaders } });
+  }
+  /**
+   * Get the material {@link BufferBindingParams} to build the material uniform.
+   * @param parameters - {@link GetLitMeshMaterialUniform} parameters.
+   * @returns - Material uniform {@link BufferBindingParams}.
+   */
+  static getMaterialUniform(parameters) {
+    const {
+      shading,
+      colorSpace,
+      color,
+      opacity,
+      alphaCutoff,
+      metallic,
+      roughness,
+      normalScale,
+      occlusionIntensity,
+      emissiveIntensity,
+      emissiveColor,
+      specularIntensity,
+      specularColor,
+      shininess,
+      transmission,
+      ior,
+      dispersion,
+      thickness,
+      attenuationDistance,
+      attenuationColor,
+      environmentMap
+    } = parameters;
     const baseUniformStruct = {
       color: {
         type: "vec3f",
-        value: color !== void 0 ? color : new Vec3(1)
+        value: color !== void 0 ? colorSpace === "srgb" ? sRGBToLinear(color.clone()) : color.clone() : new Vec3(1)
       },
       opacity: {
         type: "f32",
@@ -86,7 +250,7 @@ class LitMesh extends Mesh {
       },
       emissiveColor: {
         type: "vec3f",
-        value: emissiveColor !== void 0 ? emissiveColor : new Vec3()
+        value: emissiveColor !== void 0 ? colorSpace === "srgb" ? sRGBToLinear(emissiveColor.clone()) : emissiveColor.clone() : new Vec3()
       }
     };
     const specularUniformStruct = {
@@ -97,7 +261,7 @@ class LitMesh extends Mesh {
       },
       specularColor: {
         type: "vec3f",
-        value: specularColor !== void 0 ? specularColor : new Vec3(1)
+        value: specularColor !== void 0 ? colorSpace === "srgb" ? sRGBToLinear(specularColor.clone()) : specularColor.clone() : new Vec3(1)
       }
     };
     const phongUniformStruct = {
@@ -139,7 +303,21 @@ class LitMesh extends Mesh {
       },
       attenuationColor: {
         type: "vec3f",
-        value: attenuationColor !== void 0 ? attenuationColor : new Vec3(1)
+        value: attenuationColor !== void 0 ? colorSpace === "srgb" ? sRGBToLinear(attenuationColor.clone()) : attenuationColor.clone() : new Vec3(1)
+      },
+      ...environmentMap && {
+        envRotation: {
+          type: "mat3x3f",
+          value: environmentMap.rotation
+        },
+        envDiffuseIntensity: {
+          type: "f32",
+          value: environmentMap.options.diffuseIntensity
+        },
+        envSpecularIntensity: {
+          type: "f32",
+          value: environmentMap.options.specularIntensity
+        }
       }
     };
     const materialStruct = (() => {
@@ -155,28 +333,30 @@ class LitMesh extends Mesh {
           return pbrUniformStruct;
       }
     })();
-    const materialUniform = {
+    return {
       visibility: ["fragment"],
       struct: materialStruct
     };
-    if (defaultParams.uniforms) {
-      defaultParams.uniforms = {
-        ...defaultParams.uniforms,
-        ...{
-          material: materialUniform
-        }
-      };
-    } else {
-      defaultParams.uniforms = {
-        material: materialUniform
-      };
-    }
-    if (!defaultParams.textures) {
-      defaultParams.textures = [];
-    }
-    if (!defaultParams.samplers) {
-      defaultParams.samplers = [];
-    }
+  }
+  /**
+   * Get all the material {@link ShaderTextureDescriptor} as an array.
+   * @param parameters - {@link GetMaterialTexturesDescriptors} parameters.
+   * @returns - Array of {@link ShaderTextureDescriptor} to use.
+   */
+  static getMaterialTexturesDescriptors(parameters) {
+    const {
+      shading,
+      baseColorTexture,
+      normalTexture,
+      emissiveTexture,
+      occlusionTexture,
+      metallicRoughnessTexture,
+      specularTexture,
+      specularFactorTexture,
+      specularColorTexture,
+      transmissionTexture,
+      thicknessTexture
+    } = parameters;
     const baseTextures = [baseColorTexture];
     const diffuseTextures = [...baseTextures, normalTexture, emissiveTexture, occlusionTexture];
     const specularTextures = [
@@ -200,78 +380,23 @@ class LitMesh extends Mesh {
           return pbrTextures;
       }
     })();
-    materialTextures.filter(Boolean).forEach((textureDescriptor) => {
-      if (textureDescriptor.sampler) {
-        const samplerExists = defaultParams.samplers.find((s) => s.uuid === textureDescriptor.sampler.uuid);
-        if (!samplerExists) {
-          defaultParams.samplers.push(textureDescriptor.sampler);
-        }
-      }
-      defaultParams.textures.push(textureDescriptor.texture);
-    });
-    if (environmentMap && (shading === "PBR" || !shading)) {
-      if (!defaultParams.textures) {
-        defaultParams.textures = [];
-      }
-      defaultParams.textures = [
-        ...defaultParams.textures,
-        environmentMap.lutTexture,
-        environmentMap.diffuseTexture,
-        environmentMap.specularTexture
-      ];
-      if (!defaultParams.samplers) {
-        defaultParams.samplers = [];
-      }
-      defaultParams.samplers = [...defaultParams.samplers, environmentMap.sampler];
-    }
-    let transmissionBackgroundTexture = null;
-    if (parameters.transmissive) {
-      renderer.createTransmissionTarget();
-      transmissionBackgroundTexture = {
-        texture: renderer.transmissionTarget.texture,
-        sampler: renderer.transmissionTarget.sampler
-      };
-    }
-    const extensionsUsed = [];
-    if (dispersion) {
-      extensionsUsed.push("KHR_materials_dispersion");
-    }
-    const hasNormal = defaultParams.geometry && defaultParams.geometry.getAttributeByName("normal");
-    if (defaultParams.geometry && !hasNormal) {
-      defaultParams.geometry.computeGeometry();
-    }
-    const fs = getFragmentShaderCode({
-      shadingModel: shading,
-      chunks: fragmentChunks,
-      extensionsUsed,
-      receiveShadows: defaultParams.receiveShadows,
-      toneMapping,
-      geometry: defaultParams.geometry,
-      materialUniform,
-      baseColorTexture,
-      normalTexture,
-      metallicRoughnessTexture,
-      specularTexture,
-      specularFactorTexture,
-      specularColorTexture,
-      transmissionTexture,
-      thicknessTexture,
-      emissiveTexture,
-      occlusionTexture,
-      transmissionBackgroundTexture,
-      environmentMap
-    });
-    const shaders = {
-      vertex: {
-        code: vs,
-        entryPoint: "main"
-      },
-      fragment: {
-        code: fs,
-        entryPoint: "main"
-      }
-    };
-    super(renderer, { ...defaultParams, ...{ shaders } });
+    return materialTextures.filter(Boolean);
+  }
+  /**
+   * Generate the {@link LitMesh} vertex shader code.
+   * @param parameters - {@link VertexShaderInputParams} used to generate the vertex shader code.
+   * @returns - The vertex shader generated based on the provided parameters.
+   */
+  static getVertexShaderCode(parameters) {
+    return getVertexShaderCode(parameters);
+  }
+  /**
+   * Generate the {@link LitMesh} fragment shader.
+   * @param parameters - {@link FragmentShaderInputParams} used to build the fragment shader.
+   * @returns - The fragment shader generated based on the provided parameters.
+   */
+  static getFragmentShaderCode(parameters) {
+    return getFragmentShaderCode(parameters);
   }
 }
 

@@ -3,12 +3,13 @@ import { Renderer } from './utils';
 import { Sampler } from '../samplers/Sampler';
 import { PipelineManager } from '../pipelines/PipelineManager';
 import { SceneObject } from './GPURenderer';
-import { DOMTexture } from '../textures/DOMTexture';
+import { DOMTexture } from '../../curtains/textures/DOMTexture';
 import { AllowedBindGroups } from '../../types/BindGroups';
 import { Buffer } from '../buffers/Buffer';
 import { BufferBinding } from '../bindings/BufferBinding';
 import { IndirectBuffer } from '../../extras/buffers/IndirectBuffer';
 import { Texture } from '../textures/Texture';
+import { MediaTexture } from '../textures/MediaTexture';
 /**
  * Base parameters used to create a {@link GPUDeviceManager}.
  */
@@ -81,10 +82,13 @@ export declare class GPUDeviceManager {
     bufferBindings: Map<string, BufferBinding>;
     /** An array containing all our created {@link Sampler}. */
     samplers: Sampler[];
-    /** An array containing all our created {@link DOMTexture}. */
-    domTextures: DOMTexture[];
-    /** An array to keep track of the newly uploaded {@link DOMTexture} and set their {@link DOMTexture#sourceUploaded | sourceUploaded} property. */
-    texturesQueue: DOMTexture[];
+    /** An array to keep track of the newly uploaded {@link MediaTexture} and set their {@link core/textures/MediaTexture.MediaTextureSource.sourceUploaded | sourceUploaded} property. */
+    texturesQueue: Array<{
+        /** Index of the {@link core/textures/MediaTexture.MediaTextureSource | source} in the {@link MediaTexture#sources} array. */
+        sourceIndex: number;
+        /** {@link MediaTexture} to handle. */
+        texture: MediaTexture;
+    }>;
     /** Request animation frame callback returned id if used. */
     animationFrameID: null | number;
     /** function assigned to the {@link onBeforeRender} callback. */
@@ -188,15 +192,18 @@ export declare class GPUDeviceManager {
      */
     removeSampler(sampler: Sampler): void;
     /**
-     * Add a {@link DOMTexture} to our {@link domTextures} array.
-     * @param texture - {@link DOMTexture} to add.
+     * Copy an external image to the GPU.
+     * @param source - {@link GPUCopyExternalImageSourceInfo} to use.
+     * @param destination - {@link GPUCopyExternalImageDestInfo} to use.
+     * @param copySize - {@link GPUExtent3DStrict} to use.
      */
-    addDOMTexture(texture: DOMTexture): void;
+    copyExternalImageToTexture(source: GPUCopyExternalImageSourceInfo, destination: GPUCopyExternalImageDestInfo, copySize: GPUExtent3DStrict): void;
     /**
-     * Upload a {@link DOMTexture#texture | texture} to the GPU.
-     * @param texture - {@link DOMTexture} class object with the {@link DOMTexture#texture | texture} to upload.
+     * Upload a {@link MediaTexture#texture | texture} or {@link DOMTexture#texture | texture} to the GPU.
+     * @param texture - {@link MediaTexture} or {@link DOMTexture} containing the {@link GPUTexture} to upload.
+     * @param sourceIndex - Index of the source to upload (for cube maps). Default to `0`.
      */
-    uploadTexture(texture: DOMTexture): void;
+    uploadTexture(texture: MediaTexture | DOMTexture, sourceIndex?: number): void;
     /**
      * Mips generation helper on the GPU using our {@link device}. Caches sampler, module and pipeline (by {@link GPUTexture} formats) for faster generation.
      * Ported from https://webgpufundamentals.org/webgpu/lessons/webgpu-importing-textures.html
@@ -204,11 +211,6 @@ export declare class GPUDeviceManager {
      * @param commandEncoder - optional {@link GPUCommandEncoder} to use if we're already in the middle of a command encoding process.
      */
     generateMips(texture: Texture | DOMTexture, commandEncoder?: GPUCommandEncoder): void;
-    /**
-     * Remove a {@link DOMTexture} from our {@link domTextures} array.
-     * @param texture - {@link DOMTexture} to remove.
-     */
-    removeDOMTexture(texture: DOMTexture): void;
     /**
      * Create a requestAnimationFrame loop and run it.
      */

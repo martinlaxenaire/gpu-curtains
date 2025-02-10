@@ -86,8 +86,8 @@ import { RenderMaterialAttributes } from '../../types/Materials';
  * To help you compute scaled UV based on a texture matrix, this function is always added to both vertex and fragment shaders:
  *
  * ```wgsl
- * fn getUVCover(uv: vec2f, textureMatrix: mat4x4f) -> vec2f {
- *   return (textureMatrix * vec4f(uv, 0.0, 1.0)).xy;
+ * fn getUVCover(uv: vec2f, textureMatrix: mat3x3f) -> vec2f {
+ *   return (textureMatrix * vec4f(uv, 1.0)).xy;
  * }
  * ```
  *

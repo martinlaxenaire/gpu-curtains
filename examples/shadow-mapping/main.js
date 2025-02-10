@@ -82,7 +82,7 @@ window.addEventListener('load', async () => {
 
   const directionalLight = new DirectionalLight(gpuCameraRenderer, {
     position: new Vec3(systemSize * 6, systemSize * 4.5, systemSize * 6),
-    intensity: 1,
+    intensity: 1.25,
     shadow: {
       bias: 0.007,
       //normalBias: 0.001,
@@ -106,7 +106,7 @@ window.addEventListener('load', async () => {
 
   const blue = new Vec3(0, 1, 1)
   const pink = new Vec3(1, 0, 1)
-  const grey = new Vec3(0.2)
+  const grey = new Vec3(0.5)
 
   for (let i = 0; i < 25; i++) {
     const isCube = i % 2 === 1

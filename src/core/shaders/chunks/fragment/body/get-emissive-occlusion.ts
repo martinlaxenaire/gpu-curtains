@@ -1,4 +1,4 @@
-import { ShaderTextureDescriptor } from '../../../full/fragment/get-fragment-shader-code'
+import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh'
 
 /**
  * Set the `emissive` (`vec3f`) and `occlusion` (`f32`) values to use in our shader.
@@ -21,9 +21,9 @@ export const getEmissiveOcclusion = ({
     emissiveOcclusion += /* wgsl */ `
   var emissiveUV: vec2f = ${emissiveTexture.texCoordAttributeName ?? 'uv'};`
 
-    if (emissiveTexture.texture.options.useTransform) {
+    if ('useTransform' in emissiveTexture.texture.options && emissiveTexture.texture.options.useTransform) {
       emissiveOcclusion += /* wgsl */ `
-  emissiveUV = (${emissiveTexture.texture.options.name}Matrix * vec3(emissiveUV, 1.0)).xy;`
+  emissiveUV = (texturesMatrices.${emissiveTexture.texture.options.name}.matrix * vec3(emissiveUV, 1.0)).xy;`
     }
 
     emissiveOcclusion += /* wgsl */ `
@@ -40,7 +40,7 @@ export const getEmissiveOcclusion = ({
     emissiveOcclusion += /* wgsl */ `
   var occlusionUV: vec2f = ${occlusionTexture.texCoordAttributeName ?? 'uv'};`
 
-    if (occlusionTexture.texture.options.useTransform) {
+    if ('useTransform' in occlusionTexture.texture.options && occlusionTexture.texture.options.useTransform) {
       emissiveOcclusion += /* wgsl */ `
   occlusionUV = (${occlusionTexture.texture.options.name}Matrix * vec3(occlusionUV, 1.0)).xy;`
     }

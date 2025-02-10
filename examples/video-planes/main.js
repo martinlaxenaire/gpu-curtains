@@ -33,7 +33,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       var normalizeXPos: f32 = (attributes.position.x + 0.5) * 0.5;
   
       // notice how the "uniforms" struct name matches our bindings object name property
-      var time: f32 = frames.elapsed * 0.0375;
+      var time: f32 = frames.elapsed * 0.015;
   
       var waveSinusoid: f32 = sin(3.141595 * nbWaves * normalizeXPos - time);
   
@@ -44,7 +44,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       );
   
       vsOutput.position = getOutputPosition(transformed);
-      vsOutput.uv = getUVCover(attributes.uv, videoTextureMatrix);
+      vsOutput.uv = getUVCover(attributes.uv, texturesMatrices.videoTexture.matrix);
   
       return vsOutput;
     }

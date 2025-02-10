@@ -15,7 +15,7 @@ window.addEventListener('load', async () => {
     SphereGeometry,
     LitMesh,
     Object3D,
-    Texture,
+    MediaTexture,
   } = await import(/* @vite-ignore */ path)
 
   const stats = new Stats()
@@ -88,23 +88,13 @@ window.addEventListener('load', async () => {
   await environmentMap.loadAndComputeFromHDR(currentEnvMap.url)
 
   const ambientLight = new AmbientLight(gpuCameraRenderer, {
-    intensity: 0.1, // will be updated
+    intensity: 0.1,
   })
 
-  const light1 = new DirectionalLight(gpuCameraRenderer, {
+  const light = new DirectionalLight(gpuCameraRenderer, {
     position: new Vec3(100, 100, 150), // will be updated when model changes
     intensity: 3,
   })
-
-  // const light2 = new DirectionalLight(gpuCameraRenderer, {
-  //   position: new Vec3(100, 200, 100), // will be updated when model changes
-  //   intensity: 3,
-  // })
-
-  // const light3 = new DirectionalLight(gpuCameraRenderer, {
-  //   position: new Vec3(-100, -200, -100), // will be updated when model changes
-  //   intensity: 3,
-  // })
 
   // background checked
   const floorFs = `
@@ -231,6 +221,10 @@ window.addEventListener('load', async () => {
     lambertSphere.parent = nonTransmissivePivot
 
     meshes.push(lambertSphere)
+
+    // if (hasBaseColorTexture) {
+    //   lambertSphere.onReady(() => console.log(lambertSphere.material.getShaderCode('fragment')))
+    // }
 
     // phong
     const phongSphere = new LitMesh(gpuCameraRenderer, {
@@ -389,49 +383,52 @@ window.addEventListener('load', async () => {
   const baseColorTextureUrl =
     'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/CompareBaseColor/glTF/Compare_Basecolor_img1.png'
 
-  const baseColorRes = await fetch(baseColorTextureUrl)
-  const baseColorBlob = await baseColorRes.blob()
-  const baseColorImage = await createImageBitmap(baseColorBlob, { colorSpaceConversion: 'none' })
+  // const baseColorRes = await fetch(baseColorTextureUrl)
+  // const baseColorBlob = await baseColorRes.blob()
+  // const baseColorImage = await createImageBitmap(baseColorBlob, { colorSpaceConversion: 'none' })
 
-  baseColorTexture = new Texture(gpuCameraRenderer, {
+  baseColorTexture = new MediaTexture(gpuCameraRenderer, {
     label: 'Base color texture',
     name: 'baseColorTexture',
-    format: 'bgra8unorm-srgb',
+    format: 'rgba8unorm-srgb',
     visibility: ['fragment'],
     generateMips: true, // generate mips by default
-    fixedSize: {
-      width: baseColorImage.width,
-      height: baseColorImage.height,
-    },
+    // fixedSize: {
+    //   width: baseColorImage.width,
+    //   height: baseColorImage.height,
+    // },
     autoDestroy: false,
     useTransform: true,
   })
 
   baseColorTexture.scale.set(2, 1)
 
-  baseColorTexture.uploadSource({ source: baseColorImage })
+  //baseColorTexture.uploadSource({ source: baseColorImage })
+  baseColorTexture.loadImage(baseColorTextureUrl)
 
   const normalTextureUrl =
     'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/CompareNormal/glTF/Compare_Normal_img0.jpg'
 
-  const normalRes = await fetch(normalTextureUrl)
-  const normalBlob = await normalRes.blob()
-  const normalImage = await createImageBitmap(normalBlob, { colorSpaceConversion: 'none' })
+  // const normalRes = await fetch(normalTextureUrl)
+  // const normalBlob = await normalRes.blob()
+  // const normalImage = await createImageBitmap(normalBlob, { colorSpaceConversion: 'none' })
 
-  normalTexture = new Texture(gpuCameraRenderer, {
+  normalTexture = new MediaTexture(gpuCameraRenderer, {
     label: 'Normal texture',
     name: 'normalTexture',
-    format: 'bgra8unorm',
+    format: 'rgba8unorm',
     visibility: ['fragment'],
     generateMips: true, // generate mips by default
-    fixedSize: {
-      width: normalImage.width,
-      height: normalImage.height,
-    },
+    // fixedSize: {
+    //   width: normalImage.width,
+    //   height: normalImage.height,
+    // },
     autoDestroy: false,
+    useTransform: true,
   })
 
-  normalTexture.uploadSource({ source: normalImage })
+  //normalTexture.uploadSource({ source: normalImage })
+  normalTexture.loadImage(normalTextureUrl)
 
   // GUI
   const gui = new lil.GUI({

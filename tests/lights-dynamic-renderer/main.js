@@ -69,7 +69,7 @@ window.addEventListener('load', async () => {
     new DirectionalLight(leftRenderer, {
       color: new Vec3(1, 0, 0),
       position: new Vec3(10),
-      intensity: 0.5,
+      intensity: 0.25,
       shadow: {
         intensity: 1,
       },
@@ -106,7 +106,7 @@ window.addEventListener('load', async () => {
       shading: 'Phong',
       color: new Vec3(1),
       specularColor: new Vec3(1),
-      specularIntensity: 10,
+      specularIntensity: 1,
       shininess: 64,
     },
   })

@@ -1,4 +1,5 @@
-import { FragmentShaderBaseInputParams, ShaderTextureDescriptor } from '../../../full/fragment/get-fragment-shader-code'
+import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code'
+import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh'
 
 /**
  * Apply transmission volume refraction to `totalDiffuse` light component if applicable.
@@ -12,7 +13,7 @@ export const getIBLVolumeRefraction = ({
   extensionsUsed = [],
 }: {
   transmissionBackgroundTexture?: ShaderTextureDescriptor
-  extensionsUsed?: FragmentShaderBaseInputParams['extensionsUsed']
+  extensionsUsed?: PBRFragmentShaderInputParams['extensionsUsed']
 }): string => {
   const hasDispersion = extensionsUsed.includes('KHR_materials_dispersion')
   const iblVolumeRefractionFunction = hasDispersion ? 'getIBLVolumeRefractionWithDispersion' : 'getIBLVolumeRefraction'

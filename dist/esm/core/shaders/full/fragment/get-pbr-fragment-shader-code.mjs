@@ -22,8 +22,9 @@ import { patchAdditionalChunks } from '../../default-material-helpers.mjs';
 
 const getPBRFragmentShaderCode = ({
   chunks = null,
-  toneMapping = "Linear",
+  toneMapping = "Khronos",
   geometry,
+  additionalVaryings = [],
   materialUniform = null,
   materialUniformName = "material",
   extensionsUsed = [],
@@ -42,23 +43,6 @@ const getPBRFragmentShaderCode = ({
   environmentMap = null
 }) => {
   chunks = patchAdditionalChunks(chunks);
-  if (environmentMap && materialUniform && materialUniform.struct) {
-    materialUniform.struct = {
-      ...materialUniform.struct,
-      envRotation: {
-        type: "mat3x3f",
-        value: environmentMap.rotation
-      },
-      envDiffuseIntensity: {
-        type: "f32",
-        value: environmentMap.options.diffuseIntensity
-      },
-      envSpecularIntensity: {
-        type: "f32",
-        value: environmentMap.options.specularIntensity
-      }
-    };
-  }
   return (
     /* wgsl */
     `  
@@ -74,12 +58,12 @@ ${getPBRDirect}
 ${getIBLIndirect}
 ${getIBLTransmission}
 
-${getFragmentInputStruct({ geometry })}
+${getFragmentInputStruct({ geometry, additionalVaryings })}
 
 @fragment fn main(fsInput: FSInput) -> @location(0) vec4f {
   var outputColor: vec4f = vec4();
   
-  ${declareAttributesVars({ geometry })}
+  ${declareAttributesVars({ geometry, additionalVaryings })}
   ${declareMaterialVars({ materialUniform, materialUniformName, shadingModel: "PBR", environmentMap })}
   ${getBaseColor({ geometry, baseColorTexture })}
   

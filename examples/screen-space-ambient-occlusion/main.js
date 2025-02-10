@@ -106,7 +106,7 @@ window.addEventListener('load', async () => {
       {
         loadOp: 'clear',
         clearValue: [0, 0, 0, 0],
-        targetFormat: 'bgra8unorm', // albedo
+        targetFormat: 'bgra8unorm-srgb', // albedo
       },
       {
         loadOp: 'clear',
@@ -170,7 +170,7 @@ window.addEventListener('load', async () => {
   // now add objects to our scene
   const blue = new Vec3(0, 1, 1)
   const pink = new Vec3(1, 0, 1)
-  const grey = new Vec3(0.6)
+  const grey = new Vec3(0.7)
 
   const cubeGeometry = new BoxGeometry()
   const nbCubes = 100

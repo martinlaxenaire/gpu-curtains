@@ -5,6 +5,7 @@ import { declareAttributesVars } from '../../chunks/vertex/body/declare-attribut
 import { BufferBinding } from '../../../bindings/BufferBinding'
 import { Geometry } from '../../../geometries/Geometry'
 import { AdditionalChunks, patchAdditionalChunks } from '../../default-material-helpers'
+import { VertexBufferAttribute } from '../../../../types/Geometries'
 
 /** Defines the base parameters used to create the vertex shader. */
 export interface VertexShaderInputBaseParams {
@@ -18,6 +19,13 @@ export interface VertexShaderInputBaseParams {
 export interface VertexShaderInputParams extends VertexShaderInputBaseParams {
   /** Additional WGSL chunks to add to the shader. */
   chunks?: AdditionalChunks
+  /** Optional additional varyings to pass from the vertex shader to the fragment shader. */
+  additionalVaryings?: Array<{
+    /** {@link VertexBufferAttribute.type | type} of the varying. */
+    type: VertexBufferAttribute['type']
+    /** {@link VertexBufferAttribute.name | name} of the varying. */
+    name: VertexBufferAttribute['name']
+  }>
 }
 
 /**
@@ -25,14 +33,19 @@ export interface VertexShaderInputParams extends VertexShaderInputBaseParams {
  * @param parameters - {@link VertexShaderInputParams} used to generate the vertex shader code.
  * @returns - The vertex shader generated based on the provided parameters.
  */
-export const getVertexShaderCode = ({ bindings = [], geometry, chunks = null }: VertexShaderInputParams): string => {
+export const getVertexShaderCode = ({
+  bindings = [],
+  geometry,
+  chunks = null,
+  additionalVaryings = [],
+}: VertexShaderInputParams): string => {
   // patch chunks
   chunks = patchAdditionalChunks(chunks)
 
   return /* wgsl */ `
 ${chunks.additionalHead}
   
-${getVertexOutputStruct({ geometry })}
+${getVertexOutputStruct({ geometry, additionalVaryings })}
   
 @vertex fn main(
   attributes: Attributes,
@@ -46,10 +59,12 @@ ${getVertexOutputStruct({ geometry })}
   
   ${getVertexTransformedPositionNormal({ bindings, geometry })}
   
-  // user defined additional contribution
-  ${chunks.additionalContribution}
+  
   
   ${getVertexOutput({ geometry })}
+  
+  // user defined additional contribution
+  ${chunks.additionalContribution}
 
   return vsOutput;
 }`

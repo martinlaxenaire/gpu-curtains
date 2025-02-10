@@ -161,26 +161,26 @@ class Mat4 {
     return new Mat4().copy(this);
   }
   /**
-   * Multiply this {@link Mat4} with another {@link Mat4}
-   * @param matrix - {@link Mat4} to multiply with
-   * @returns - this {@link Mat4} after multiplication
+   * Multiply this {@link Mat4} with another {@link Mat4}.
+   * @param matrix - {@link Mat4} to multiply with.
+   * @returns - this {@link Mat4} after multiplication.
    */
   multiply(matrix = new Mat4()) {
     return this.multiplyMatrices(this, matrix);
   }
   /**
-   * Multiply another {@link Mat4} with this {@link Mat4}
-   * @param matrix - {@link Mat4} to multiply with
-   * @returns - this {@link Mat4} after multiplication
+   * Multiply another {@link Mat4} with this {@link Mat4}.
+   * @param matrix - {@link Mat4} to multiply with.
+   * @returns - this {@link Mat4} after multiplication.
    */
   premultiply(matrix = new Mat4()) {
     return this.multiplyMatrices(matrix, this);
   }
   /**
-   * Multiply two {@link Mat4}
-   * @param a - first {@link Mat4}
-   * @param b - second {@link Mat4}
-   * @returns - {@link Mat4} resulting from the multiplication
+   * Multiply two {@link Mat4}.
+   * @param a - first {@link Mat4}.
+   * @param b - second {@link Mat4}.
+   * @returns - {@link Mat4} resulting from the multiplication.
    */
   multiplyMatrices(a = new Mat4(), b = new Mat4()) {
     const ae = a.elements;
@@ -213,9 +213,9 @@ class Mat4 {
     return this;
   }
   /**
-   * {@link premultiply} this {@link Mat4} by a translate matrix (i.e. translateMatrix = new Mat4().translate(vector))
-   * @param vector - translation {@link Vec3 | vector} to use
-   * @returns - this {@link Mat4} after the premultiply translate operation
+   * {@link premultiply} this {@link Mat4} by a translate matrix (i.e. translateMatrix = new Mat4().translate(vector)).
+   * @param vector - translation {@link Vec3} to use.
+   * @returns - this {@link Mat4} after the premultiply translate operation.
    */
   premultiplyTranslate(vector = new Vec3()) {
     const a11 = 1;
@@ -250,9 +250,9 @@ class Mat4 {
     return this;
   }
   /**
-   * {@link premultiply} this {@link Mat4} by a scale matrix (i.e. translateMatrix = new Mat4().scale(vector))
-   * @param vector - scale {@link Vec3 | vector} to use
-   * @returns - this {@link Mat4} after the premultiply scale operation
+   * {@link premultiply} this {@link Mat4} by a scale matrix (i.e. translateMatrix = new Mat4().scale(vector)).
+   * @param vector - scale {@link Vec3 | vector} to use.
+   * @returns - this {@link Mat4} after the premultiply scale operation.
    */
   premultiplyScale(vector = new Vec3()) {
     const be = this.elements;
@@ -346,9 +346,9 @@ class Mat4 {
     return this;
   }
   /**
-   * Translate a {@link Mat4}
-   * @param vector - translation {@link Vec3 | vector} to use
-   * @returns - translated {@link Mat4}
+   * Translate a {@link Mat4}.
+   * @param vector - translation {@link Vec3} to use.
+   * @returns - translated {@link Mat4}.
    */
   translate(vector = new Vec3()) {
     const a = this.elements;

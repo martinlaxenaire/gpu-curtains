@@ -434,13 +434,13 @@ window.addEventListener('load', async () => {
     
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
           
-      var color: vec3f = getLambert(
+      var color: vec4f = getLambert(
         normalize(fsInput.normal),
         fsInput.worldPosition,
-        shading.color,
+        vec4(shading.color, 1.0),
       );
     
-      return vec4(color, 1.0);
+      return color;
     }
   `
 

@@ -4,7 +4,6 @@ import {
   AmbientLight,
   DirectionalLight,
   GLTFScenesManager,
-  buildShaders,
   DOMMesh,
   DOMObject3D,
   Vec3,
@@ -131,7 +130,7 @@ window.addEventListener('load', async () => {
     const meshes = gltfScenesManager.addMeshes((meshDescriptor) => {
       const { parameters } = meshDescriptor
 
-      parameters.shaders = buildShaders(meshDescriptor, { shadingModel: 'Phong' })
+      parameters.material.shading = 'Phong'
     })
   }
 

@@ -1,4 +1,7 @@
-const getVertexOutputStructContent = ({ geometry }) => {
+const getVertexOutputStructContent = ({
+  geometry,
+  additionalVaryings = []
+}) => {
   const tangentAttribute = geometry.getAttributeByName("tangent");
   const attributes = [];
   if (geometry.vertexBuffers && geometry.vertexBuffers.length) {
@@ -20,12 +23,17 @@ const getVertexOutputStructContent = ({ geometry }) => {
     return `
   @location(${index}) ${attribute.name}: ${attribute.type},`;
   }).join("");
+  const additionalVaryingsOutput = additionalVaryings.map((attribute, index) => {
+    return `
+  @location(${attributes.length + 3 + index}) ${attribute.name}: ${attribute.type},`;
+  }).join("");
   return `
   @builtin(position) position: vec4f,
   ${structAttributes}
   @location(${attributes.length}) viewDirection: vec3f,
   @location(${attributes.length + 1}) worldPosition: vec3f,
-  @location(${attributes.length + 2}) modelScale: vec3f,`;
+  @location(${attributes.length + 2}) modelScale: vec3f,
+  ${additionalVaryingsOutput}`;
 };
 
 export { getVertexOutputStructContent };

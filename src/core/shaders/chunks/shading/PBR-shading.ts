@@ -1,19 +1,20 @@
 import { GetShadingParams, lambertUtils } from './lambert-shading'
-import { toneMappingUtils } from '../utils/tone-mapping-utils'
 import { REIndirectSpecular } from '../fragment/head/RE-indirect-specular'
 import { getIBLTransmission } from '../fragment/head/get-IBL-transmission'
 import { getPBRDirect } from '../fragment/head/get-PBR-direct'
 import { getPBRShading } from '../fragment/body/get-PBR-shading'
-import { FragmentShaderBaseInputParams, ShaderTextureDescriptor } from '../../full/fragment/get-fragment-shader-code'
+import { PBRFragmentShaderInputParams } from '../../full/fragment/get-fragment-shader-code'
+import { applyToneMapping } from '../fragment/body/apply-tone-mapping'
+import { ShaderTextureDescriptor } from '../../../../extras/meshes/LitMesh'
 
 /** Defines the basic parameters available for the PBR shading getter function. */
 export interface GetPBRShadingParams extends GetShadingParams {
   /** {@link extras/environmentMap/EnvironmentMap.EnvironmentMap | EnvironmentMap} to use for IBL shading. */
-  environmentMap?: FragmentShaderBaseInputParams['environmentMap']
+  environmentMap?: PBRFragmentShaderInputParams['environmentMap']
   /** {@link ShaderTextureDescriptor | Transmission scene background texture descriptor} to use if any. */
-  transmissionBackgroundTexture?: FragmentShaderBaseInputParams['transmissionBackgroundTexture']
+  transmissionBackgroundTexture?: PBRFragmentShaderInputParams['transmissionBackgroundTexture']
   /** The {@link types/gltf/GLTFExtensions.GLTFExtensionsUsed | glTF extensions} used to generate this fragment shader. */
-  extensionsUsed?: FragmentShaderBaseInputParams['extensionsUsed']
+  extensionsUsed?: PBRFragmentShaderInputParams['extensionsUsed']
 }
 
 /**
@@ -56,7 +57,7 @@ export const getPBR = (
   {
     addUtils = true,
     receiveShadows = false,
-    toneMapping = 'Linear',
+    toneMapping,
     useOcclusion = false,
     environmentMap = null,
     transmissionBackgroundTexture = null,
@@ -67,12 +68,11 @@ ${addUtils ? lambertUtils : ''}
 ${REIndirectSpecular}
 ${getIBLTransmission}
 ${getPBRDirect}
-${toneMapping ? toneMappingUtils : ''}
 
 fn getPBR(
   normal: vec3f,
   worldPosition: vec3f,
-  outputColor: vec4f,
+  color: vec4f,
   viewDirection: vec3f,
   metallic: f32,
   roughness: f32,
@@ -88,16 +88,14 @@ fn getPBR(
 ) -> vec4f {
   ${!useOcclusion ? 'let occlusion: f32 = 1.0;' : ''}
   
+  var outputColor: vec4f = color;
+  
   ${getPBRShading({ receiveShadows, environmentMap, transmissionBackgroundTexture, extensionsUsed })}
   
-  ${
-    toneMapping === 'Linear'
-      ? 'outgoingLight = linearToOutput3(outgoingLight);'
-      : toneMapping === 'Khronos'
-      ? 'outgoingLight = linearTosRGB(toneMapKhronosPbrNeutral(outgoingLight));'
-      : ''
-  }
+  outputColor = vec4(outgoingLight, outputColor.a);
+  
+  ${applyToneMapping({ toneMapping })}
     
-  return vec4(outgoingLight, outputColor.a);
+  return outputColor;
 }
 `

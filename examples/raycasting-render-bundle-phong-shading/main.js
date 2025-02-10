@@ -56,7 +56,7 @@ window.addEventListener('load', async () => {
 
   // lights
   const ambientLight = new AmbientLight(gpuCameraRenderer, {
-    intensity: 0.3,
+    intensity: 0.1,
   })
 
   const directionalLight = new DirectionalLight(gpuCameraRenderer, {
@@ -105,7 +105,7 @@ window.addEventListener('load', async () => {
         },
         color: pink.clone().lerp(blue, easeInOutCubic(Math.random())),
         specularStrength: 0.25,
-        shininess: 32,
+        shininess: 40,
       },
       uniforms: {
         raycasting: {

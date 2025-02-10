@@ -10,7 +10,7 @@ import { BufferBindingParams } from '../bindings/BufferBinding'
 /**
  * Create a 1x1 quad (or plane) covering the full viewport, useful for postprocessing or background effects.
  *
- * It consists of a {@link PlaneGeometry} and {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} and a few utilities method to help create {@link core/textures/DOMTexture.DOMTexture | DOMTexture} and {@link core/textures/Texture.Texture | Texture}.
+ * It consists of a {@link PlaneGeometry} and {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} and a few utilities method to help create {@link core/textures/MediaTexture.MediaTexture | MediaTexture} and {@link core/textures/Texture.Texture | Texture}.
  *
  * ### Default shaders
  *
@@ -67,18 +67,18 @@ import { BufferBindingParams } from '../bindings/BufferBinding'
  * ```
  */
 export class FullscreenPlane extends MeshBaseMixin(class {}) {
-  /** The type of the {@link FullscreenPlane} */
+  /** The type of the {@link FullscreenPlane}. */
   type: string
-  /** Object defining the  {@link FullscreenPlane} size */
+  /** Object defining the  {@link FullscreenPlane} size. */
   size: {
-    /** document HTML size */
+    /** document HTML size. */
     document: RectBBox
   }
 
   /**
    * FullscreenPlane constructor
-   * @param renderer - {@link Renderer} or {@link GPUCurtains} class object used to create this {@link FullscreenPlane}
-   * @param parameters - {@link MeshBaseRenderParams | parameters} use to create this {@link FullscreenPlane}
+   * @param renderer - {@link Renderer} or {@link GPUCurtains} class object used to create this {@link FullscreenPlane}.
+   * @param parameters - {@link MeshBaseRenderParams | parameters} use to create this {@link FullscreenPlane}.
    */
   constructor(renderer: Renderer | GPUCurtains, parameters = {} as MeshBaseRenderParams) {
     renderer = isRenderer(renderer, parameters.label ? parameters.label + ' FullscreenQuadMesh' : 'FullscreenQuadMesh')
@@ -123,8 +123,8 @@ export class FullscreenPlane extends MeshBaseMixin(class {}) {
   }
 
   /**
-   * Resize our {@link FullscreenPlane}
-   * @param boundingRect - the new bounding rectangle
+   * Resize our {@link FullscreenPlane}.
+   * @param boundingRect - the new bounding rectangle.
    */
   resize(boundingRect: DOMElementBoundingRect | null = null) {
     this.size.document = boundingRect ?? this.renderer.boundingRect
@@ -133,10 +133,10 @@ export class FullscreenPlane extends MeshBaseMixin(class {}) {
   }
 
   /**
-   * Take the pointer {@link Vec2 | vector} position relative to the document and returns it relative to our {@link FullscreenPlane}
-   * It ranges from -1 to 1 on both axis
-   * @param mouseCoords - pointer {@link Vec2 | vector} coordinates
-   * @returns - the mapped {@link Vec2 | vector} coordinates in the [-1, 1] range
+   * Take the pointer {@link Vec2} position relative to the document and returns it relative to our {@link FullscreenPlane}.
+   * It ranges from -1 to 1 on both axis.
+   * @param mouseCoords - pointer {@link Vec2} coordinates.
+   * @returns - the mapped {@link Vec2} coordinates in the [-1, 1] range.
    */
   mouseToPlaneCoords(mouseCoords: Vec2 = new Vec2()): Vec2 {
     // mouse position conversion from document to plane space

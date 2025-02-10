@@ -1,4 +1,5 @@
-import { ShaderTextureDescriptor, FragmentShaderBaseInputParams } from '../../../full/fragment/get-fragment-shader-code';
+import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code';
+import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh';
 /**
  * Set the `outgoingLight` (`vec3f`) using PBR shading.
  * @param parameters - Parameters to use to apply PBR shading.
@@ -10,7 +11,7 @@ import { ShaderTextureDescriptor, FragmentShaderBaseInputParams } from '../../..
  */
 export declare const getPBRShading: ({ receiveShadows, environmentMap, transmissionBackgroundTexture, extensionsUsed, }?: {
     receiveShadows?: boolean;
-    environmentMap?: FragmentShaderBaseInputParams['environmentMap'];
+    environmentMap?: PBRFragmentShaderInputParams['environmentMap'];
     transmissionBackgroundTexture?: ShaderTextureDescriptor;
-    extensionsUsed?: FragmentShaderBaseInputParams['extensionsUsed'];
+    extensionsUsed?: PBRFragmentShaderInputParams['extensionsUsed'];
 }) => string;

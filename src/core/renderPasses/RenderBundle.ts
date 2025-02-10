@@ -8,6 +8,7 @@ import { ShaderPass } from './ShaderPass'
 import { PingPongPlane } from '../../extras/meshes/PingPongPlane'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { IndirectBuffer } from '../../extras/buffers/IndirectBuffer'
+import { MediaTexture } from '../textures/MediaTexture'
 
 let bundleIndex = 0
 
@@ -590,12 +591,16 @@ export class RenderBundle {
 
         if (!mesh.ready) {
           isReady = false
+          break
         }
 
-        // dom textures should be ready
+        // media textures should be ready
         // in order to validate the render bundle
-        if ('sourcesReady' in mesh && !mesh.sourcesReady) {
-          isReady = false
+        for (const texture of mesh.textures) {
+          if (texture instanceof MediaTexture && !texture.sourcesUploaded) {
+            isReady = false
+            break
+          }
         }
 
         index++

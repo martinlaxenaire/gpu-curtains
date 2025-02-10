@@ -5,10 +5,10 @@ import { Sampler } from '../samplers/Sampler'
 import { AllowedPipelineEntries, GPUPassTypes } from '../pipelines/PipelineManager'
 import { BufferBinding, BufferBindingInput } from '../bindings/BufferBinding'
 import { AllowedBindGroups, BindGroupBindingElement, BindGroupBufferBindingElement } from '../../types/BindGroups'
-import { DOMTexture } from '../textures/DOMTexture'
-import { FullShadersType, MaterialOptions, MaterialParams, ShaderOptions } from '../../types/Materials'
-import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { Texture } from '../textures/Texture'
+import { MediaTexture } from '../textures/MediaTexture'
+import { FullShadersType, MaterialOptions, MaterialParams, MaterialTexture, ShaderOptions } from '../../types/Materials'
+import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { Binding } from '../bindings/Binding'
 import { generateUUID } from '../../utils/utils'
 import { BufferElement } from '../bindings/bufferElements/BufferElement'
@@ -31,52 +31,50 @@ import { Buffer } from '../buffers/Buffer'
  * Note that this class is not intended to be used as is, but as a base for {@link core/materials/ComputeMaterial.ComputeMaterial | ComputeMaterial} and {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} classes.
  */
 export class Material {
-  /** The type of the {@link Material} */
+  /** The type of the {@link Material}. */
   type: string
-  /** The universal unique id of the {@link Material} */
+  /** The universal unique id of the {@link Material}. */
   uuid: string
-  /** The {@link Renderer} used */
+  /** The {@link Renderer} used. */
   renderer: Renderer
-  /** Options used to create this {@link Material} */
+  /** Options used to create this {@link Material}. */
   options: MaterialOptions
 
-  /** Pipeline entry used by this {@link Material} */
+  /** Pipeline entry used by this {@link Material}. */
   pipelineEntry: AllowedPipelineEntries
 
   /**
-   * Array of {@link BindGroup | bind groups} used by this {@link Material}
+   * Array of {@link BindGroup | bind groups} used by this {@link Material}.
    * This array respects a specific order:
-   * 1. The {@link texturesBindGroup | textures bind groups}
-   * 2. The {@link BindGroup | bind group} created using {@link types/BindGroups.BindGroupInputs#uniforms | uniforms} and {@link types/BindGroups.BindGroupInputs#storages | storages} parameters if any
-   * 3. Additional {@link MaterialParams#bindGroups | bind groups} parameters if any
+   * 1. The {@link texturesBindGroup | textures bind groups}.
+   * 2. The {@link BindGroup | bind group} created using {@link types/BindGroups.BindGroupInputs#uniforms | uniforms} and {@link types/BindGroups.BindGroupInputs#storages | storages} parameters if any.
+   * 3. Additional {@link MaterialParams#bindGroups | bind groups} parameters if any.
    */
   bindGroups: AllowedBindGroups[]
-  /** Array of {@link TextureBindGroup | texture bind groups} used by this {@link Material} */
+  /** Array of {@link TextureBindGroup | texture bind groups} used by this {@link Material}. */
   texturesBindGroups: TextureBindGroup[]
-  /** Array of {@link BindGroup | bind groups} created using the {@link types/BindGroups.BindGroupInputs#uniforms | uniforms} and {@link types/BindGroups.BindGroupInputs#storages | storages} parameters when instancing this {@link Material} */
+  /** Array of {@link BindGroup | bind groups} created using the {@link types/BindGroups.BindGroupInputs#uniforms | uniforms} and {@link types/BindGroups.BindGroupInputs#storages | storages} parameters when instancing this {@link Material}. */
   inputsBindGroups: BindGroup[]
-  /** Array of {@link BindGroup | cloned bind groups} created by this {@link Material} */
+  /** Array of {@link BindGroup | cloned bind groups} created by this {@link Material}. */
   clonedBindGroups: AllowedBindGroups[]
 
-  /** Object containing all uniforms inputs handled by this {@link Material} */
+  /** Object containing all uniforms inputs handled by this {@link Material}. */
   uniforms: Record<string, Record<string, BufferBindingInput>>
-  /** Object containing all read only or read/write storages inputs handled by this {@link Material} */
+  /** Object containing all read only or read/write storages inputs handled by this {@link Material}. */
   storages: Record<string, Record<string, BufferBindingInput>>
 
-  /** Map of {@link Binding | bindings} created using the {@link types/BindGroups.BindGroupInputs#uniforms | uniforms} and {@link types/BindGroups.BindGroupInputs#storages | storages} parameters when instancing this {@link Material} */
+  /** Map of {@link Binding | bindings} created using the {@link types/BindGroups.BindGroupInputs#uniforms | uniforms} and {@link types/BindGroups.BindGroupInputs#storages | storages} parameters when instancing this {@link Material}. */
   inputsBindings: Map<string, BindGroupBindingElement>
 
-  /** Array of {@link DOMTexture} handled by this {@link Material} */
-  domTextures: DOMTexture[]
-  /** Array of {@link Texture} handled by this {@link Material} */
-  textures: Texture[]
-  /** Array of {@link Sampler} handled by this {@link Material} */
+  /** Array of {@link Texture} or {@link MediaTexture} handled by this {@link Material}. */
+  textures: MaterialTexture[]
+  /** Array of {@link Sampler} handled by this {@link Material}. */
   samplers: Sampler[]
 
   /**
    * Material constructor
-   * @param renderer - our renderer class object
-   * @param parameters - {@link types/Materials.MaterialParams | parameters} used to create our Material
+   * @param renderer - our renderer class object.
+   * @param parameters - {@link types/Materials.MaterialParams | parameters} used to create our Material.
    */
   constructor(renderer: Renderer | GPUCurtains, parameters: MaterialParams) {
     this.type = 'Material'
@@ -87,18 +85,8 @@ export class Material {
 
     this.uuid = generateUUID()
 
-    const {
-      shaders,
-      label,
-      useAsyncPipeline,
-      uniforms,
-      storages,
-      bindings,
-      bindGroups,
-      samplers,
-      textures,
-      domTextures,
-    } = parameters
+    const { shaders, label, useAsyncPipeline, uniforms, storages, bindings, bindGroups, samplers, textures } =
+      parameters
 
     this.options = {
       shaders,
@@ -110,7 +98,6 @@ export class Material {
       ...(bindGroups !== undefined && { bindGroups }),
       ...(samplers !== undefined && { samplers }),
       ...(textures !== undefined && { textures }),
-      ...(domTextures !== undefined && { domTextures }),
     }
 
     this.bindGroups = []
@@ -175,13 +162,12 @@ export class Material {
    */
   loseContext() {
     // start with the textures
-    for (const texture of this.domTextures) {
-      texture.texture = null
-      texture.sourceUploaded = false
-    }
-
     for (const texture of this.textures) {
       texture.texture = null
+      if (texture instanceof MediaTexture) {
+        texture.sources.forEach((source) => (source.sourceUploaded = false))
+        texture.sourcesUploaded = false
+      }
     }
 
     // then bind groups and struct
@@ -205,12 +191,17 @@ export class Material {
     }
 
     // recreate the textures and resize them
-    for (const texture of this.domTextures) {
-      texture.createTexture()
-      texture.resize()
-    }
-
     for (const texture of this.textures) {
+      if (texture instanceof MediaTexture) {
+        // TODO needed?
+        //texture.createTexture()
+        texture.sources.forEach((source) => {
+          if (source.sourceLoaded) {
+            source.shouldUpdate = true
+          }
+        })
+      }
+
       texture.resize(texture.size)
     }
 
@@ -362,9 +353,7 @@ export class Material {
 
         // also add the textures?
         for (const texture of bindGroup.textures) {
-          if (texture instanceof DOMTexture && !this.domTextures.find((t) => t.uuid === texture.uuid)) {
-            this.domTextures.push(texture)
-          } else if (texture instanceof Texture && !this.textures.find((t) => t.uuid === texture.uuid)) {
+          if (!this.textures.find((t) => t.uuid !== texture.uuid)) {
             this.textures.push(texture)
           }
         }
@@ -514,7 +503,6 @@ export class Material {
    * Prepare our textures array and set the {@link TextureBindGroup}
    */
   setTextures() {
-    this.domTextures = []
     this.textures = []
     this.texturesBindGroups.push(
       new TextureBindGroup(this.renderer, {
@@ -523,10 +511,6 @@ export class Material {
     )
 
     this.texturesBindGroup.consumers.add(this.uuid)
-
-    this.options.domTextures?.forEach((texture) => {
-      this.addTexture(texture)
-    })
 
     this.options.textures?.forEach((texture) => {
       this.addTexture(texture)
@@ -537,17 +521,8 @@ export class Material {
    * Add a texture to our array, and add it to the textures bind group only if used in the shaders (avoid binding useless data)
    * @param texture - texture to add
    */
-  addTexture(texture: DOMTexture | Texture) {
-    if (texture instanceof DOMTexture) {
-      this.domTextures.push(texture)
-    } else if (texture instanceof Texture) {
-      this.textures.push(texture)
-
-      // update texture transformation binding if needed
-      if (texture.options.useTransform) {
-        texture.transformBinding.shouldUpdate = true
-      }
-    }
+  addTexture(texture: MaterialTexture) {
+    this.textures.push(texture)
 
     // is it used in our shaders?
     if (
@@ -561,12 +536,12 @@ export class Material {
   }
 
   /**
-   * Destroy a {@link DOMTexture} or {@link Texture}, only if it is not used by another object or cached.
-   * @param texture - {@link DOMTexture} or {@link Texture} to eventually destroy
+   * Destroy a {@link MediaTexture} or {@link Texture}, only if it is not used by another object or cached.
+   * @param texture - {@link MediaTexture} or {@link Texture} to eventually destroy
    */
-  destroyTexture(texture: DOMTexture | Texture) {
+  destroyTexture(texture: MaterialTexture) {
     // do not destroy a texture that must stay in cache
-    if ((texture as DOMTexture).options.cache) return
+    if ((texture as MediaTexture).options.cache) return
     if (!(texture as Texture).options.autoDestroy) return
 
     // check if this texture is used by another object before actually destroying it
@@ -584,9 +559,7 @@ export class Material {
    * Destroy all the Material textures
    */
   destroyTextures() {
-    this.domTextures?.forEach((texture) => this.destroyTexture(texture))
     this.textures?.forEach((texture) => this.destroyTexture(texture))
-    this.domTextures = []
     this.textures = []
   }
 
@@ -687,18 +660,12 @@ export class Material {
 
   /**
    * Called before rendering the Material.
-   * First, check if we need to create our bind groups or pipeline
-   * Then render the {@link domTextures}
-   * Finally updates all the {@link bindGroups | bind groups}
+   * First, check if we need to create our bind groups or pipeline.
+   * Finally updates all the {@link bindGroups | bind groups}.
    */
   onBeforeRender() {
     // set our material if needed
     this.compileMaterial()
-
-    // first what needs to be done for all textures
-    for (const texture of this.domTextures) {
-      texture.render()
-    }
 
     // update bind groups
     this.updateBindGroups()

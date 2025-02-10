@@ -38,12 +38,12 @@ window.addEventListener('load', async () => {
   })
 
   const ambientLight = new AmbientLight(gpuCameraRenderer, {
-    intensity: 0.3,
+    intensity: 0.1,
   })
 
   const directionalLight = new DirectionalLight(gpuCameraRenderer, {
     position: new Vec3(0, 10, 10),
-    intensity: 1,
+    intensity: 0.75,
   })
 
   const blue = new Vec3(0, 1, 1)

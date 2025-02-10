@@ -1,5 +1,4 @@
 import { GLTF } from './GLTF'
-import { VertexBufferAttributeParams } from '../Geometries'
 import { Texture } from '../../core/textures/Texture'
 import { Sampler } from '../../core/samplers/Sampler'
 import { ProjectedMeshParameters } from '../../core/meshes/mixins/ProjectedMeshBaseMixin'
@@ -10,7 +9,13 @@ import { Camera } from '../../core/camera/Camera'
 import { BufferBinding } from '../../core/bindings/BufferBinding'
 import { TargetsAnimationsManager } from '../../extras/animations/TargetsAnimationsManager'
 import { Mat4 } from '../../math/Mat4'
-import { ShaderTextureDescriptor } from '../../core/shaders/full/fragment/get-fragment-shader-code'
+import {
+  LitMesh,
+  LitMeshMaterialParams,
+  LitMeshMaterialUniformParams,
+  LitMeshParameters,
+  ShaderTextureDescriptor,
+} from '../../extras/meshes/LitMesh'
 import { GLTFExtensionsUsed } from './GLTFExtensions'
 import { RenderMaterialParams } from '../Materials'
 import { RenderMaterial } from '../../core/materials/RenderMaterial'
@@ -23,34 +28,25 @@ export interface MeshDescriptorMaterialParams {
   label?: RenderMaterialParams['label']
   /** Optional bindings used by the {@link RenderMaterial}. */
   bindings?: RenderMaterialParams['bindings']
-  /** Uniforms used by the {@link RenderMaterial}, containing at least the material uniform used for shading. */
-  uniforms?: RenderMaterialParams['uniforms']
   /** Optional cull mode used by the {@link RenderMaterial}. */
   cullMode?: RenderMaterialParams['cullMode']
   /** Whether the {@link RenderMaterial} should handle transparency. */
   transparent?: RenderMaterialParams['transparent']
   /** Optional targets used by the {@link RenderMaterial}, set alongside the `transparent` parameter. */
   targets?: ProjectedMeshParameters['targets']
-  /** Optional textures used by the {@link RenderMaterial}. */
-  textures?: RenderMaterialParams['textures']
-  /** Optional samplers used by the {@link RenderMaterial}. */
-  samplers?: RenderMaterialParams['samplers']
-  /** Shaders that will be internally built to use by the {@link RenderMaterial}. */
-  shaders?: RenderMaterialParams['shaders']
+  /** Specific {@link LitMeshMaterialParams} used to build the {@link LitMesh} material. */
+  material?: LitMeshMaterialParams
 }
 
-// export interface MeshDescriptorParams extends MeshDescriptorMaterialParams {
-//   geometry?: Geometry
-//   transmissive?: boolean
-// }
-
 /**
- * Define a {@link MeshDescriptor} object, which helps creating a {@link Mesh} and its shaders based on the various properties.
+ * Define a {@link MeshDescriptor} object, which helps creating a {@link LitMesh} and its shaders based on the various properties.
  */
 export interface MeshDescriptor {
-  /** {@link ProjectedMeshParameters} used to create the {@link Mesh}. */
-  parameters: ProjectedMeshParameters
-  /** {@link Mesh} parent {@link Object3D}. */
+  /** {@link ProjectedMeshParameters} used to create the {@link LitMesh}. */
+  //parameters: ProjectedMeshParameters
+  parameters: LitMeshParameters
+
+  /** {@link LitMesh} parent {@link Object3D}. */
   parent: Object3D
   /** Array of {@link ShaderTextureDescriptor} defining the available textures and corresponding sampler names. Useful to build custom shaders from scratch. */
   texturesDescriptors: ShaderTextureDescriptor[]
@@ -84,7 +80,7 @@ export interface PrimitiveInstanceDescriptor {
   instances: GLTF.INode[]
   /** Array of {@link Object3D} corresponding to the {@link instances}. */
   nodes: Object3D[]
-  /** Unique {@link MeshDescriptor} used to create the instanced {@link Mesh}. */
+  /** Unique {@link MeshDescriptor} used to create the instanced {@link LitMesh}. */
   meshDescriptor: MeshDescriptor
 }
 
@@ -145,8 +141,8 @@ export interface ScenesManager {
   materialsParams: MeshDescriptorMaterialParams[]
   /** Array of scenes as {@link ChildDescriptor}. */
   scenes: ChildDescriptor[]
-  /** Array of created {@link Mesh} to render this {@link ScenesManager} scene. */
-  meshes: Mesh[]
+  /** Array of created {@link LitMesh} to render this {@link ScenesManager} scene. */
+  meshes: LitMesh[]
   /** Array of {@link MeshDescriptor} used to create the {@link meshes}. */
   meshesDescriptors: MeshDescriptor[]
   /** Array of {@link TargetsAnimationsManager} used by this {@link ScenesManager}. */

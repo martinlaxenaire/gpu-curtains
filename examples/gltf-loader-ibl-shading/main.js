@@ -6,7 +6,6 @@ import {
   PointLight,
   GLTFLoader,
   GLTFScenesManager,
-  buildShaders,
   OrbitControls,
   Vec3,
 } from '../../dist/esm/index.mjs'
@@ -158,10 +157,8 @@ window.addEventListener('load', async () => {
         pointLight.intensity = lightPositionLengthSq * 3
       }
 
-      parameters.shaders = buildShaders(meshDescriptor, {
-        shadingModel,
-        environmentMap,
-      })
+      parameters.material.shading = shadingModel
+      parameters.material.environmentMap = environmentMap
     })
   }
 

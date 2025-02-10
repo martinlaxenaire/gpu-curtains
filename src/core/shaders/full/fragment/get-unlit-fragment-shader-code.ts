@@ -16,8 +16,9 @@ import { patchAdditionalChunks } from '../../default-material-helpers'
  */
 export const getUnlitFragmentShaderCode = ({
   chunks = null,
-  toneMapping = 'Linear',
+  toneMapping = 'Khronos',
   geometry,
+  additionalVaryings = [],
   materialUniform = null,
   materialUniformName = 'material',
   baseColorTexture = null,
@@ -32,12 +33,12 @@ ${constants}
 ${common}
 ${toneMappingUtils}
 
-${getFragmentInputStruct({ geometry })}
+${getFragmentInputStruct({ geometry, additionalVaryings })}
 
 @fragment fn main(fsInput: FSInput) -> @location(0) vec4f {       
   var outputColor: vec4f = vec4();
   
-  ${declareAttributesVars({ geometry })}
+  ${declareAttributesVars({ geometry, additionalVaryings })}
   ${declareMaterialVars({ materialUniform, materialUniformName, shadingModel: 'Unlit' })}
   ${getBaseColor({ geometry, baseColorTexture })}
   

@@ -10,7 +10,7 @@ export interface AdditionalChunks {
     preliminaryContribution?: string;
     /** Additional modification to apply to the shader.
      *
-     * For the vertex shader, it is called after having applied morph, skinning and matrices calculations and before outputting the result.
+     * For the vertex shader, it is called after having declared the outputted result and can therefore be used to update the outputted result.
      *
      * For the fragment shader, it is called after having applied the lighting calculations and before applying tone mapping if any. */
     additionalContribution?: string;

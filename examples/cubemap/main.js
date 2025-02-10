@@ -1,4 +1,12 @@
-import { GPUDeviceManager, GPUCameraRenderer, BoxGeometry, Texture, Mesh, Vec2, Vec3 } from '../../dist/esm/index.mjs'
+import {
+  GPUDeviceManager,
+  GPUCameraRenderer,
+  BoxGeometry,
+  MediaTexture,
+  Mesh,
+  Vec2,
+  Vec3,
+} from '../../dist/esm/index.mjs'
 
 window.addEventListener('load', async () => {
   // create a device manager
@@ -22,45 +30,23 @@ window.addEventListener('load', async () => {
 
   camera.position.z = 0
 
-  // Fetch the 6 separate images for negative/positive x, y, z axis of a cubeMap
+  const cubeMapTexture = new MediaTexture(gpuCameraRenderer, {
+    name: 'cubeMapTexture',
+    viewDimension: 'cube',
+    visibility: ['fragment'],
+  })
+
+  // Fetch the 6 separate images for negative/positive x, y, z axis of a cube map
   // and upload it into a GPUTexture.
   // The order of the array layers is [+X, -X, +Y, -Y, +Z, -Z]
-  const imgSrcs = [
+  cubeMapTexture.loadImages([
     './assets/posx.jpg',
     './assets/negx.jpg',
     './assets/posy.jpg',
     './assets/negy.jpg',
     './assets/posz.jpg',
     './assets/negz.jpg',
-  ]
-
-  const promises = imgSrcs.map(async (src) => {
-    const response = await fetch(src)
-    return createImageBitmap(await response.blob())
-  })
-
-  const imageBitmaps = await Promise.all(promises)
-
-  const cubeMapTexture = new Texture(gpuCameraRenderer, {
-    name: 'cubeMapTexture',
-    viewDimension: 'cube',
-    visibility: ['fragment'],
-    fixedSize: {
-      width: imageBitmaps[0].width,
-      height: imageBitmaps[0].height,
-    },
-  })
-
-  for (let i = 0; i < imageBitmaps.length; i++) {
-    const imageBitmap = imageBitmaps[i]
-    cubeMapTexture.uploadSource({
-      source: imageBitmap,
-      width: imageBitmap.width,
-      height: imageBitmap.height,
-      depth: 1, // explicitly set the depth to 1
-      origin: [0, 0, i],
-    })
-  }
+  ])
 
   // now add objects to our scene
   const cubeGeometry = new BoxGeometry()

@@ -94,7 +94,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       transformed.z -= instanceIndex * abs(scroll.strength) * 0.1;
 
       vsOutput.position = getOutputPosition(transformed);
-      vsOutput.uv = getUVCover(attributes.uv, planeTextureMatrix);
+      vsOutput.uv = getUVCover(attributes.uv, texturesMatrices.planeTexture.matrix);
       vsOutput.instanceIndex = instanceIndex;
     
       return vsOutput;

@@ -1,5 +1,5 @@
 import { Geometry } from '../../../../geometries/Geometry';
-import { ShaderTextureDescriptor } from '../../../full/fragment/get-fragment-shader-code';
+import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh';
 /**
  * Set the `normal` (`vec3f`), `geometryNormal` (`vec3f`), and eventually `tangent` (`vec3f`) and `bitangent` (`vec3f`) values if a normal texture is set.
  *

@@ -1,10 +1,10 @@
 import { generateUUID, throwWarning } from '../../../utils/utils.mjs';
 import { isRenderer } from '../../renderers/utils.mjs';
 import { RenderMaterial } from '../../materials/RenderMaterial.mjs';
-import { DOMTexture } from '../../textures/DOMTexture.mjs';
 import { Texture } from '../../textures/Texture.mjs';
 import { getDefaultVertexShaderCode } from '../../shaders/full/vertex/get-default-vertex-shader-code.mjs';
 import { getDefaultFragmentCode } from '../../shaders/full/fragment/get-default-fragment-code.mjs';
+import { MediaTexture } from '../../textures/MediaTexture.mjs';
 
 var __accessCheck = (obj, member, msg) => {
   if (!member.has(obj))
@@ -419,7 +419,6 @@ ${geometry.wgslStructFragment}`
         this.material.setAttributesFromGeometry(this.geometry);
       }
       this.transparent = this.material.options.rendering.transparent;
-      this.material.options.domTextures?.filter((texture) => texture instanceof DOMTexture).forEach((texture) => this.onDOMTextureAdded(texture));
       if (currentCacheKey && currentCacheKey !== this.material.cacheKey && !isDepthMaterialSwitch) {
         if (this.material.ready) {
           this.material.setPipelineEntry();
@@ -481,27 +480,20 @@ ${geometry.wgslStructFragment}`
     }
     /* TEXTURES */
     /**
-     * Get our {@link RenderMaterial#domTextures | RenderMaterial domTextures array}
-     * @readonly
-     */
-    get domTextures() {
-      return this.material?.domTextures || [];
-    }
-    /**
-     * Get our {@link RenderMaterial#textures | RenderMaterial textures array}
+     * Get our {@link RenderMaterial#textures | RenderMaterial textures array}.
      * @readonly
      */
     get textures() {
       return this.material?.textures || [];
     }
     /**
-     * Create a new {@link DOMTexture}
-     * @param options - {@link DOMTextureParams | DOMTexture parameters}
-     * @returns - newly created {@link DOMTexture}
+     * Create a new {@link MediaTexture}.
+     * @param options - {@link MediaTextureParams | MediaTexture parameters}.
+     * @returns - newly created {@link MediaTexture}.
      */
-    createDOMTexture(options) {
+    createMediaTexture(options) {
       if (!options.name) {
-        options.name = "texture" + (this.textures.length + this.domTextures.length);
+        options.name = "texture" + this.textures.length;
       }
       if (!options.label) {
         options.label = this.options.label + " " + options.name;
@@ -510,27 +502,9 @@ ${geometry.wgslStructFragment}`
       if (this.renderBundle) {
         texturesOptions.useExternalTextures = false;
       }
-      const domTexture = new DOMTexture(this.renderer, texturesOptions);
-      this.addDOMTexture(domTexture);
-      return domTexture;
-    }
-    /**
-     * Add a {@link DOMTexture}
-     * @param domTexture - {@link DOMTexture} to add
-     */
-    addDOMTexture(domTexture) {
-      if (this.renderBundle) {
-        this.renderBundle.ready = false;
-      }
-      this.material.addTexture(domTexture);
-      this.onDOMTextureAdded(domTexture);
-    }
-    /**
-     * Callback run when a new {@link DOMTexture} has been added
-     * @param domTexture - newly created DOMTexture
-     */
-    onDOMTextureAdded(domTexture) {
-      domTexture.parentMesh = this;
+      const mediaTexture = new MediaTexture(this.renderer, texturesOptions);
+      this.addTexture(mediaTexture);
+      return mediaTexture;
     }
     /**
      * Create a new {@link Texture}
@@ -539,15 +513,15 @@ ${geometry.wgslStructFragment}`
      */
     createTexture(options) {
       if (!options.name) {
-        options.name = "texture" + (this.textures.length + this.domTextures.length);
+        options.name = "texture" + this.textures.length;
       }
       const texture = new Texture(this.renderer, options);
       this.addTexture(texture);
       return texture;
     }
     /**
-     * Add a {@link Texture}
-     * @param texture - {@link Texture} to add
+     * Add a {@link Texture} or {@link MediaTexture}.
+     * @param texture - {@link Texture} or {@link MediaTexture} to add.
      */
     addTexture(texture) {
       if (this.renderBundle) {
@@ -572,22 +546,25 @@ ${geometry.wgslStructFragment}`
     }
     /* RESIZE */
     /**
-     * Resize the Mesh's textures
-     * @param boundingRect
+     * Resize the Mesh.
+     * @param boundingRect - optional new {@link DOMElementBoundingRect} to use.
      */
     resize(boundingRect) {
       if (super.resize) {
         super.resize(boundingRect);
       }
+      this.resizeTextures();
+      this._onAfterResizeCallback && this._onAfterResizeCallback();
+    }
+    /**
+     * Resize the {@link textures}.
+     */
+    resizeTextures() {
       this.textures?.forEach((texture) => {
         if (texture.options.fromTexture) {
           texture.copy(texture.options.fromTexture);
         }
       });
-      this.domTextures?.forEach((texture) => {
-        texture.resize();
-      });
-      this._onAfterResizeCallback && this._onAfterResizeCallback();
     }
     /* EVENTS */
     /**

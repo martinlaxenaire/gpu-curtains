@@ -166,7 +166,7 @@ export class TestPingPong {
       
         // used for the flow map texture
         vsOutput.uv = attributes.uv;
-        vsOutput.displacedUv = getUVCover(attributes.uv, displacedTextureMatrix);
+        vsOutput.displacedUv = getUVCover(attributes.uv, texturesMatrices.displacedTexture.matrix);
       
         return vsOutput;
       }

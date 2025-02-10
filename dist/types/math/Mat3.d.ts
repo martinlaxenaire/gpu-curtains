@@ -1,4 +1,5 @@
 import { Mat4 } from './Mat4';
+import { Vec2 } from './Vec2';
 /**
  * Basic 3x3 matrix class used for matrix calculations.
  *
@@ -107,4 +108,28 @@ export declare class Mat3 {
      * @param cy - Center of the transformation along Y axis.
      */
     setUVTransform(tx?: number, ty?: number, sx?: number, sy?: number, rotation?: number, cx?: number, cy?: number): Mat3;
+    /**
+     * Rotate this {@link Mat3} by a given angle, counterclockwise.
+     * @param theta - Angle to rotate.
+     * @returns - this {@link Mat3} after rotation.
+     */
+    rotateByAngle(theta?: number): Mat3;
+    /**
+     * {@link premultiply} this {@link Mat3} by a translate matrix (i.e. translateMatrix = new Mat3().translate(vector)).
+     * @param vector - translation {@link Vec2} to use.
+     * @returns - this {@link Mat3} after the premultiply translate operation.
+     */
+    premultiplyTranslate(vector?: Vec2): Mat3;
+    /**
+     * {@link premultiply} this {@link Mat3} by a scale matrix (i.e. translateMatrix = new Mat3().scale(vector)).
+     * @param vector - scale {@link Vec2} to use.
+     * @returns - this {@link Mat3} after the premultiply scale operation.
+     */
+    premultiplyScale(vector?: Vec2): Mat3;
+    /**
+     * Translate a {@link Mat3}.
+     * @param vector - translation {@link Vec2} to use.
+     * @returns - translated {@link Mat3}.
+     */
+    translate(vector?: Vec2): Mat3;
 }

@@ -1,4 +1,4 @@
-import { FragmentShaderInputParams } from './get-fragment-shader-code'
+import { PBRFragmentShaderInputParams } from './get-fragment-shader-code'
 import { constants } from '../../chunks/utils/constants'
 import { common } from '../../chunks/utils/common'
 import { toneMappingUtils } from '../../chunks/utils/tone-mapping-utils'
@@ -23,13 +23,14 @@ import { patchAdditionalChunks } from '../../default-material-helpers'
 
 /**
  * Build a PBR fragment shader using the provided options.
- * @param parameters - {@link FragmentShaderInputParams} used to build the PBR fragment shader.
+ * @param parameters - {@link PBRFragmentShaderInputParams} used to build the PBR fragment shader.
  * @returns - The PBR fragment shader generated based on the provided parameters.
  */
 export const getPBRFragmentShaderCode = ({
   chunks = null,
-  toneMapping = 'Linear',
+  toneMapping = 'Khronos',
   geometry,
+  additionalVaryings = [],
   materialUniform = null,
   materialUniformName = 'material',
   extensionsUsed = [],
@@ -46,28 +47,9 @@ export const getPBRFragmentShaderCode = ({
   thicknessTexture = null,
   transmissionBackgroundTexture = null,
   environmentMap = null,
-}: FragmentShaderInputParams): string => {
+}: PBRFragmentShaderInputParams): string => {
   // patch chunks
   chunks = patchAdditionalChunks(chunks)
-
-  // patch environment map material uniforms
-  if (environmentMap && materialUniform && materialUniform.struct) {
-    materialUniform.struct = {
-      ...materialUniform.struct,
-      envRotation: {
-        type: 'mat3x3f',
-        value: environmentMap.rotation,
-      },
-      envDiffuseIntensity: {
-        type: 'f32',
-        value: environmentMap.options.diffuseIntensity,
-      },
-      envSpecularIntensity: {
-        type: 'f32',
-        value: environmentMap.options.specularIntensity,
-      },
-    }
-  }
 
   return /* wgsl */ `  
 ${chunks.additionalHead}
@@ -82,12 +64,12 @@ ${getPBRDirect}
 ${getIBLIndirect}
 ${getIBLTransmission}
 
-${getFragmentInputStruct({ geometry })}
+${getFragmentInputStruct({ geometry, additionalVaryings })}
 
 @fragment fn main(fsInput: FSInput) -> @location(0) vec4f {
   var outputColor: vec4f = vec4();
   
-  ${declareAttributesVars({ geometry })}
+  ${declareAttributesVars({ geometry, additionalVaryings })}
   ${declareMaterialVars({ materialUniform, materialUniformName, shadingModel: 'PBR', environmentMap })}
   ${getBaseColor({ geometry, baseColorTexture })}
   

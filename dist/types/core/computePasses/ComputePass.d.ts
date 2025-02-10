@@ -4,27 +4,27 @@ import { ComputeMaterial } from '../materials/ComputeMaterial';
 import { ComputeMaterialParams, MaterialParams, MaterialShaders } from '../../types/Materials';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
 import { Texture, TextureParams } from '../textures/Texture';
-import { DOMTexture } from '../textures/DOMTexture';
-import { ExternalTextureParams, DOMTextureParams } from '../../types/Textures';
-/** Defines {@link ComputePass} options */
+import { SceneObjectTextureOptions } from '../../types/Textures';
+import { MediaTexture, MediaTextureParams } from '../textures/MediaTexture';
+/** Defines {@link ComputePass} options. */
 export interface ComputePassOptions {
-    /** The label of the {@link ComputePass} */
+    /** The label of the {@link ComputePass}. */
     label: string;
-    /** Controls the order in which this {@link ComputePass} should be rendered by our {@link core/scenes/Scene.Scene | Scene} */
+    /** Controls the order in which this {@link ComputePass} should be rendered by our {@link core/scenes/Scene.Scene | Scene}. */
     renderOrder?: number;
-    /** Whether the {@link ComputePass} should be added to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
+    /** Whether the {@link ComputePass} should be added to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically. */
     autoRender?: boolean;
-    /** Compute shader passed to the {@link ComputePass} following the {@link types/Materials.ShaderOptions | shader object} notation */
+    /** Compute shader passed to the {@link ComputePass} following the {@link types/Materials.ShaderOptions | shader object} notation. */
     shaders: MaterialShaders;
-    /** whether the {@link core/pipelines/ComputePipelineEntry.ComputePipelineEntry#pipeline | compute pipeline} should be compiled asynchronously */
+    /** whether the {@link core/pipelines/ComputePipelineEntry.ComputePipelineEntry#pipeline | compute pipeline} should be compiled asynchronously. */
     useAsyncPipeline?: boolean;
-    /** Parameters used by this {@link ComputePass} to create a {@link DOMTexture} */
-    texturesOptions?: ExternalTextureParams;
-    /** Default {@link ComputeMaterial} work group dispatch size to use with this {@link ComputePass} */
+    /** Parameters used by this {@link ComputePass} to create a {@link MediaTexture}. */
+    texturesOptions?: SceneObjectTextureOptions;
+    /** Default {@link ComputeMaterial} work group dispatch size to use with this {@link ComputePass}. */
     dispatchSize?: number | number[];
 }
 /**
- * An object defining all possible {@link ComputePass} class instancing parameters
+ * An object defining all possible {@link ComputePass} class instancing parameters.
  */
 export interface ComputePassParams extends Partial<ComputePassOptions>, MaterialParams {
 }
@@ -73,38 +73,38 @@ export interface ComputePassParams extends Partial<ComputePassOptions>, Material
  */
 export declare class ComputePass {
     #private;
-    /** The type of the {@link ComputePass} */
+    /** The type of the {@link ComputePass}. */
     type: string;
-    /** The universal unique id of the {@link ComputePass} */
+    /** The universal unique id of the {@link ComputePass}. */
     uuid: string;
-    /** The index of the {@link ComputePass}, incremented each time a new one is instanced */
+    /** The index of the {@link ComputePass}, incremented each time a new one is instanced. */
     index: number;
-    /** The {@link Renderer} used */
+    /** The {@link Renderer} used. */
     renderer: Renderer;
-    /** Controls the order in which this {@link ComputePass} should be rendered by our {@link core/scenes/Scene.Scene | Scene} */
+    /** Controls the order in which this {@link ComputePass} should be rendered by our {@link core/scenes/Scene.Scene | Scene}. */
     renderOrder: number;
-    /** Options used to create this {@link ComputePass} */
+    /** Options used to create this {@link ComputePass}. */
     options: ComputePassOptions;
-    /** {@link ComputeMaterial} used by this {@link ComputePass} */
+    /** {@link ComputeMaterial} used by this {@link ComputePass}. */
     material: ComputeMaterial;
-    /** Flag indicating whether this {@link ComputePass} is ready to be rendered */
+    /** Flag indicating whether this {@link ComputePass} is ready to be rendered. */
     _ready: boolean;
-    /** Empty object to store any additional data or custom properties into your {@link ComputePass} */
+    /** Empty object to store any additional data or custom properties into your {@link ComputePass}. */
     userData: Record<string, unknown>;
-    /** function assigned to the {@link onReady} callback */
+    /** function assigned to the {@link onReady} callback. */
     _onReadyCallback: () => void;
-    /** function assigned to the {@link onBeforeRender} callback */
+    /** function assigned to the {@link onBeforeRender} callback. */
     _onBeforeRenderCallback: () => void;
-    /** function assigned to the {@link onRender} callback */
+    /** function assigned to the {@link onRender} callback. */
     _onRenderCallback: () => void;
-    /** function assigned to the {@link onAfterRender} callback */
+    /** function assigned to the {@link onAfterRender} callback. */
     _onAfterRenderCallback: () => void;
-    /** function assigned to the {@link onAfterResize} callback */
+    /** function assigned to the {@link onAfterResize} callback. */
     _onAfterResizeCallback: () => void;
     /**
      * ComputePass constructor
-     * @param renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object
-     * @param parameters - {@link ComputePassParams | parameters} used to create our {@link ComputePass}
+     * @param renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object.
+     * @param parameters - {@link ComputePassParams | parameters} used to create our {@link ComputePass}.
      */
     constructor(renderer: Renderer | GPUCurtains, parameters?: ComputePassParams);
     /**
@@ -148,39 +148,34 @@ export declare class ComputePass {
      */
     restoreContext(): void;
     /**
-     * Get our {@link ComputeMaterial#domTextures | ComputeMaterial domTextures array}
-     * @readonly
-     */
-    get domTextures(): DOMTexture[];
-    /**
      * Get our {@link ComputeMaterial#textures | ComputeMaterial textures array}
      * @readonly
      */
     get textures(): Texture[];
     /**
-     * Create a new {@link DOMTexture}
-     * @param options - {@link DOMTextureParams | DOMTexture parameters}
-     * @returns - newly created {@link DOMTexture}
+     * Create a new {@link MediaTexture}.
+     * @param options - {@link MediaTextureParams | MediaTexture parameters}.
+     * @returns - newly created {@link MediaTexture}.
      */
-    createDOMTexture(options: DOMTextureParams): DOMTexture;
+    createMediaTexture(options: MediaTextureParams): MediaTexture;
     /**
-     * Create a new {@link Texture}
-     * @param  options - {@link TextureParams | Texture parameters}
-     * @returns - newly created {@link Texture}
+     * Create a new {@link Texture}.
+     * @param  options - {@link TextureParams | Texture parameters}.
+     * @returns - newly created {@link Texture}.
      */
     createTexture(options: TextureParams): Texture;
     /**
-     * Add a {@link Texture} or {@link DOMTexture}
-     * @param texture - {@link Texture} to add
+     * Add a {@link Texture} or {@link MediaTexture}.
+     * @param texture - {@link Texture} to add.
      */
-    addTexture(texture: Texture | DOMTexture): void;
+    addTexture(texture: Texture | MediaTexture): void;
     /**
-     * Get our {@link ComputeMaterial#uniforms | ComputeMaterial uniforms}
+     * Get our {@link ComputeMaterial#uniforms | ComputeMaterial uniforms}.
      * @readonly
      */
     get uniforms(): ComputeMaterial['uniforms'];
     /**
-     * Get our {@link ComputeMaterial#storages | ComputeMaterial storages}
+     * Get our {@link ComputeMaterial#storages | ComputeMaterial storages}.
      * @readonly
      */
     get storages(): ComputeMaterial['storages'];

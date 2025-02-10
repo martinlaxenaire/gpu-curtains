@@ -102,7 +102,7 @@
             var normalizeXPos: f32 = (attributes.position.x + 0.5) * 0.5;
 
             // notice how the "uniforms" struct name matches our bindings object name property
-            var time: f32 = frames.elapsed * 0.0375;
+            var time: f32 = frames.elapsed * 0.015;
 
             var waveSinusoid: f32 = sin(3.141595 * nbWaves * normalizeXPos - time);
 
@@ -115,13 +115,14 @@
             // the library automatically also append utility functions to the shaders
             // 'getOutputPosition' is used to compute the actual vertices positions based on the model view projection matrix
             // this is actually what it does:
-            // vsOutput.position = matrices.modelViewProjection * vec4f(transformed, 1.0);
+            // vsOutput.position = camera.projection * matrices.modelView * vec4f(transformed, 1.0);
             vsOutput.position = getOutputPosition(transformed);
 
-            // 'getUVCover' is used to compute a texture UV based on UV attributes and texture matrix
+            // textures matrices are available via 'texturesMatrices.TEXTURE_NAME.matrix'
+            // 'getUVCover' is used to compute a texture UV based on UV attributes and the texture matrix
             // this is actually what it does:
-            // vsOutput.uv = (texture0Matrix * vec4f(attributes.uv, 0.0, 1.0)).xy;
-            vsOutput.uv = getUVCover(attributes.uv, texture0Matrix);
+            // vsOutput.uv = (texturesMatrices.texture0.matrix * vec3f(attributes.uv, 1.0)).xy;
+            vsOutput.uv = getUVCover(attributes.uv, texturesMatrices.texture0.matrix);
 
             return vsOutput;
           }

@@ -2,7 +2,7 @@ import { DOMObject3D } from '../objects3D/DOMObject3D';
 import { MeshBaseRenderParams } from '../../core/meshes/mixins/MeshBaseMixin';
 import { GPUCurtainsRenderer } from '../renderers/GPUCurtainsRenderer';
 import { GPUCurtains } from '../GPUCurtains';
-import { DOMTexture } from '../../core/textures/DOMTexture';
+import { DOMTexture, DOMTextureParams } from '../textures/DOMTexture';
 import { AllowedGeometries } from '../../types/Materials';
 import { DOMElementBoundingRect, DOMElementParams } from '../../core/DOM/DOMElement';
 /**
@@ -13,6 +13,8 @@ export interface DOMMeshBaseParams extends MeshBaseRenderParams {
     autoloadSources?: boolean;
     /** Whether to automatically update the {@link DOMMesh} position on scroll */
     watchScroll?: boolean;
+    /** Array of already created {@link DOMTexture} to add to this {@link DOMMesh}. */
+    domTextures: DOMTexture[];
 }
 /**
  * Parameters to create a {@link DOMMesh}
@@ -52,6 +54,8 @@ export declare class DOMMesh extends DOMMesh_base {
     autoloadSources: boolean;
     /** Whether all the sources have been successfully loaded */
     _sourcesReady: boolean;
+    /** Array of {@link DOMTexture} handled by this {@link DOMMesh}. */
+    domTextures: DOMTexture[];
     /** function assigned to the {@link onLoading} callback */
     _onLoadingCallback: (texture: DOMTexture) => void;
     /**
@@ -62,48 +66,67 @@ export declare class DOMMesh extends DOMMesh_base {
      */
     constructor(renderer: GPUCurtainsRenderer | GPUCurtains, element: DOMElementParams['element'], parameters: DOMMeshParams);
     /**
-     * Get/set whether our {@link material} and {@link geometry} are ready
+     * Get/set whether our {@link material} and {@link geometry} are ready.
      * @readonly
      */
     get ready(): boolean;
     set ready(value: boolean);
     /**
-     * Get/set whether all the initial {@link DOMMesh} sources have been successfully loaded
+     * Get/set whether all the initial {@link DOMMesh} sources have been successfully loaded.
      * @readonly
      */
     get sourcesReady(): boolean;
     set sourcesReady(value: boolean);
     /**
      * Add a {@link DOMMesh} to the {@link core/scenes/Scene.Scene | Scene} and optionally to the renderer.
-     * @param addToRenderer - whether to add this {@link DOMMesh} to the {@link GPUCurtainsRenderer#meshes | renderer meshes array} and {@link GPUCurtainsRenderer#domMeshes | renderer domMeshes array}
+     * @param addToRenderer - whether to add this {@link DOMMesh} to the {@link GPUCurtainsRenderer#meshes | renderer meshes array} and {@link GPUCurtainsRenderer#domMeshes | renderer domMeshes array}.
      */
     addToScene(addToRenderer?: boolean): void;
     /**
      * Remove a {@link DOMMesh} from the {@link core/scenes/Scene.Scene | Scene} and optionally from the renderer as well.
-     * @param removeFromRenderer - whether to remove this {@link DOMMesh} from the {@link GPUCurtainsRenderer#meshes | renderer meshes array} and {@link GPUCurtainsRenderer#domMeshes | renderer domMeshes array}
+     * @param removeFromRenderer - whether to remove this {@link DOMMesh} from the {@link GPUCurtainsRenderer#meshes | renderer meshes array} and {@link GPUCurtainsRenderer#domMeshes | renderer domMeshes array}.
      */
     removeFromScene(removeFromRenderer?: boolean): void;
     /**
-     * Load initial {@link DOMMesh} sources if needed and create associated {@link DOMTexture}
+     * Resize the {@link textures} and {@link domTextures}.
+     */
+    resizeTextures(): void;
+    /**
+     * Apply scale and update {@link DOMTexture#modelMatrix | DOMTexture modelMatrix}.
+     */
+    applyScale(): void;
+    /**
+     * Create a new {@link DOMTexture}.
+     * @param options - {@link DOMTextureParams | DOMTexture parameters}.
+     * @returns - newly created {@link DOMTexture}.
+     */
+    createDOMTexture(options: DOMTextureParams): DOMTexture;
+    /**
+     * Callback run when a new {@link DOMTexture} has been added.
+     * @param domTexture - newly created DOMTexture.
+     */
+    onDOMTextureAdded(domTexture: DOMTexture): void;
+    /**
+     * Load initial {@link DOMMesh} sources if needed and create associated {@link DOMTexture}.
      */
     setInitSources(): void;
     /**
-     * Reset/change the {@link domElement | DOM Element}
-     * @param element - new {@link HTMLElement} or string representing an {@link HTMLElement} selector to use
+     * Reset/change the {@link domElement | DOM Element}.
+     * @param element - new {@link HTMLElement} or string representing an {@link HTMLElement} selector to use.
      */
     resetDOMElement(element: string | HTMLElement): void;
     /**
-     * Get our {@link DOMMesh#domElement | DOM Element} {@link core/DOM/DOMElement.DOMElement#boundingRect | bounding rectangle} accounting for current {@link core/renderers/GPURenderer.GPURenderer#pixelRatio | renderer pixel ratio}
+     * Get our {@link DOMMesh#domElement | DOM Element} {@link core/DOM/DOMElement.DOMElement#boundingRect | bounding rectangle} accounting for current {@link core/renderers/GPURenderer.GPURenderer#pixelRatio | renderer pixel ratio}.
      */
     get pixelRatioBoundingRect(): DOMElementBoundingRect;
     /**
-     * Compute the Mesh geometry if needed
+     * Compute the Mesh geometry if needed.
      */
     computeGeometry(): void;
     /**
-     * Called each time one of the initial sources associated {@link DOMTexture#texture | GPU texture} has been uploaded to the GPU
-     * @param callback - callback to call each time a {@link DOMTexture#texture | GPU texture} has been uploaded to the GPU
-     * @returns - our {@link DOMMesh}
+     * Called each time one of the initial sources associated {@link DOMTexture#texture | GPU texture} has been uploaded to the GPU.
+     * @param callback - callback to call each time a {@link DOMTexture#texture | GPU texture} has been uploaded to the GPU.
+     * @returns - our {@link DOMMesh}.
      */
     onLoading(callback: (texture: DOMTexture) => void): DOMMesh;
 }

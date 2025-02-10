@@ -8,7 +8,6 @@ import {
   PlaneGeometry,
   GLTFLoader,
   GLTFScenesManager,
-  buildShaders,
   AmbientLight,
   DirectionalLight,
   OrbitControls,
@@ -257,10 +256,8 @@ window.addEventListener('load', async () => {
       parameters.castShadows = true
       parameters.receiveShadows = true
 
-      parameters.shaders = buildShaders(meshDescriptor, {
-        shadingModel,
-        environmentMap,
-      })
+      parameters.material.shading = shadingModel
+      parameters.material.environmentMap = environmentMap
     })
 
     if (scenesManager.animations.length) {
