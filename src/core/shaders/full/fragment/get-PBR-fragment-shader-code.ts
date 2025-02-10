@@ -1,4 +1,4 @@
-import { FragmentShaderInputParams } from './get-fragment-shader-code'
+import { PBRFragmentShaderInputParams } from './get-fragment-shader-code'
 import { constants } from '../../chunks/utils/constants'
 import { common } from '../../chunks/utils/common'
 import { toneMappingUtils } from '../../chunks/utils/tone-mapping-utils'
@@ -23,12 +23,12 @@ import { patchAdditionalChunks } from '../../default-material-helpers'
 
 /**
  * Build a PBR fragment shader using the provided options.
- * @param parameters - {@link FragmentShaderInputParams} used to build the PBR fragment shader.
+ * @param parameters - {@link PBRFragmentShaderInputParams} used to build the PBR fragment shader.
  * @returns - The PBR fragment shader generated based on the provided parameters.
  */
 export const getPBRFragmentShaderCode = ({
   chunks = null,
-  toneMapping = 'Linear',
+  toneMapping = 'Khronos',
   geometry,
   additionalVaryings = [],
   materialUniform = null,
@@ -47,7 +47,7 @@ export const getPBRFragmentShaderCode = ({
   thicknessTexture = null,
   transmissionBackgroundTexture = null,
   environmentMap = null,
-}: FragmentShaderInputParams): string => {
+}: PBRFragmentShaderInputParams): string => {
   // patch chunks
   chunks = patchAdditionalChunks(chunks)
 

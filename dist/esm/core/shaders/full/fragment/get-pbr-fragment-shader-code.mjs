@@ -22,7 +22,7 @@ import { patchAdditionalChunks } from '../../default-material-helpers.mjs';
 
 const getPBRFragmentShaderCode = ({
   chunks = null,
-  toneMapping = "Linear",
+  toneMapping = "Khronos",
   geometry,
   additionalVaryings = [],
   materialUniform = null,

@@ -1,4 +1,4 @@
-import { FragmentShaderBaseInputParams, ShaderTextureDescriptor } from '../../../full/fragment/get-fragment-shader-code';
+import { PBRFragmentShaderInputParams, ShaderTextureDescriptor } from '../../../full/fragment/get-fragment-shader-code';
 /**
  * Apply transmission volume refraction to `totalDiffuse` light component if applicable.
  * @param parameters - Parameters to use to apply transmission volume refraction.
@@ -8,5 +8,5 @@ import { FragmentShaderBaseInputParams, ShaderTextureDescriptor } from '../../..
  */
 export declare const getIBLVolumeRefraction: ({ transmissionBackgroundTexture, extensionsUsed, }: {
     transmissionBackgroundTexture?: ShaderTextureDescriptor;
-    extensionsUsed?: FragmentShaderBaseInputParams['extensionsUsed'];
+    extensionsUsed?: PBRFragmentShaderInputParams['extensionsUsed'];
 }) => string;

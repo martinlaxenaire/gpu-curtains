@@ -3,8 +3,9 @@ import { CameraRenderer, isCameraRenderer } from '../../core/renderers/utils'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { ProjectedMeshParameters } from '../../core/meshes/mixins/ProjectedMeshBaseMixin'
 import {
-  FragmentShaderBaseInputParams,
+  FragmentShaderInputParams,
   getFragmentShaderCode,
+  PBRFragmentShaderInputParams,
   ShadingModels,
 } from '../../core/shaders/full/fragment/get-fragment-shader-code'
 import { Vec2 } from '../../math/Vec2'
@@ -13,25 +14,11 @@ import { AdditionalChunks } from '../../core/shaders/default-material-helpers'
 import { getVertexShaderCode, VertexShaderInputParams } from '../../core/shaders/full/vertex/get-vertex-shader-code'
 import { BufferBinding, BufferBindingParams } from '../../core/bindings/BufferBinding'
 import { Input } from '../../types/BindGroups'
+import { sRGBToLinear } from '../../math/color-utils'
+import { Geometry } from '../../core/geometries/Geometry'
 
-/** Defines the material parameters of a {@link LitMesh}. */
-export interface LitMeshMaterialParams
-  extends Omit<
-    FragmentShaderBaseInputParams,
-    | 'chunks'
-    | 'geometry'
-    | 'receiveShadows'
-    | 'extensionsUsed'
-    | 'materialUniform'
-    | 'materialUniformName'
-    | 'transmissionBackgroundTexture'
-  > {
-  /** {@link ShadingModels} to use for lighting. Default to `PBR`. */
-  shading?: ShadingModels
-  /** {@link AdditionalChunks | Additional WGSL chunks} to add to the vertex shaders. */
-  vertexChunks?: AdditionalChunks
-  /** {@link AdditionalChunks | Additional WGSL chunks} to add to the fragment shaders. */
-  fragmentChunks?: AdditionalChunks
+/** Define the material uniform parameters. */
+export interface LitMeshMaterialUniformParams {
   /** Base color of the {@link LitMesh} as a {@link Vec3}. Default to `new Vec3(1)`. */
   color?: Vec3
   /** Opacity of the {@link LitMesh}. If different than `1`, consider setting the `transparent` parameter to `true`. Default to `1`.  */
@@ -68,6 +55,27 @@ export interface LitMeshMaterialParams
   attenuationDistance?: number
   /** The color as a {@link Vec3} that white light turns into due to absorption when reaching the attenuation distance. Only applicable is `transmissive` parameter is set to `true`. Default to `new Vec3(1)`. */
   attenuationColor?: Vec3
+}
+
+/** Define the material parameters of a {@link LitMesh}. */
+export interface LitMeshMaterialParams
+  extends Omit<
+      PBRFragmentShaderInputParams,
+      | 'chunks'
+      | 'geometry'
+      | 'receiveShadows'
+      | 'extensionsUsed'
+      | 'materialUniform'
+      | 'materialUniformName'
+      | 'transmissionBackgroundTexture'
+    >,
+    LitMeshMaterialUniformParams {
+  /** {@link ShadingModels} to use for lighting. Default to `PBR`. */
+  shading?: ShadingModels
+  /** {@link AdditionalChunks | Additional WGSL chunks} to add to the vertex shaders. */
+  vertexChunks?: AdditionalChunks
+  /** {@link AdditionalChunks | Additional WGSL chunks} to add to the fragment shaders. */
+  fragmentChunks?: AdditionalChunks
 }
 
 /** Parameters used to create a {@link LitMesh}. */
@@ -166,19 +174,12 @@ export class LitMesh extends Mesh {
       environmentMap,
     } = material
 
-    const vs = getVertexShaderCode({
-      bindings: defaultParams.bindings as BufferBinding[],
-      geometry: defaultParams.geometry,
-      chunks: vertexChunks,
-      additionalVaryings,
-    })
-
     // build material uniform based on shading model
     // basic struct (unlit)
     const baseUniformStruct: Record<string, Input> = {
       color: {
         type: 'vec3f',
-        value: color !== undefined ? color : new Vec3(1),
+        value: color !== undefined ? sRGBToLinear(color.clone()) : new Vec3(1),
       },
       opacity: {
         type: 'f32',
@@ -207,7 +208,7 @@ export class LitMesh extends Mesh {
       },
       emissiveColor: {
         type: 'vec3f',
-        value: emissiveColor !== undefined ? emissiveColor : new Vec3(),
+        value: emissiveColor !== undefined ? sRGBToLinear(emissiveColor.clone()) : new Vec3(),
       },
     }
 
@@ -220,7 +221,7 @@ export class LitMesh extends Mesh {
       },
       specularColor: {
         type: 'vec3f',
-        value: specularColor !== undefined ? specularColor : new Vec3(1),
+        value: specularColor !== undefined ? sRGBToLinear(specularColor.clone()) : new Vec3(1),
       },
     }
 
@@ -266,7 +267,7 @@ export class LitMesh extends Mesh {
       },
       attenuationColor: {
         type: 'vec3f',
-        value: attenuationColor !== undefined ? attenuationColor : new Vec3(1),
+        value: attenuationColor !== undefined ? sRGBToLinear(attenuationColor.clone()) : new Vec3(1),
       },
     }
 
@@ -401,7 +402,15 @@ export class LitMesh extends Mesh {
       defaultParams.geometry.computeGeometry()
     }
 
-    const fs = getFragmentShaderCode({
+    // shaders
+    const vs = LitMesh.getVertexShaderCode({
+      bindings: defaultParams.bindings as BufferBinding[],
+      geometry: defaultParams.geometry,
+      chunks: vertexChunks,
+      additionalVaryings,
+    })
+
+    const fs = LitMesh.getFragmentShaderCode({
       shadingModel: shading,
       chunks: fragmentChunks,
       extensionsUsed,
@@ -436,5 +445,23 @@ export class LitMesh extends Mesh {
     }
 
     super(renderer, { ...defaultParams, ...{ shaders } })
+  }
+
+  /**
+   * Generate the {@link LitMesh} vertex shader code.
+   * @param parameters - {@link VertexShaderInputParams} used to generate the vertex shader code.
+   * @returns - The vertex shader generated based on the provided parameters.
+   */
+  static getVertexShaderCode(parameters: VertexShaderInputParams): string {
+    return getVertexShaderCode(parameters)
+  }
+
+  /**
+   * Generate the {@link LitMesh} fragment shader.
+   * @param parameters - {@link FragmentShaderInputParams} used to build the fragment shader.
+   * @returns - The fragment shader generated based on the provided parameters.
+   */
+  static getFragmentShaderCode(parameters: FragmentShaderInputParams): string {
+    return getFragmentShaderCode(parameters)
   }
 }

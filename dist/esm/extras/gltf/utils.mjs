@@ -10,6 +10,14 @@ const buildShaders = (meshDescriptor, shaderParameters = {}) => {
   if (isUnlit) {
     shadingModel = "Unlit";
   }
+  let { toneMapping } = shaderParameters;
+  if (!toneMapping) {
+    toneMapping = "Khronos";
+  }
+  let { additionalVaryings } = shaderParameters;
+  if (!additionalVaryings) {
+    additionalVaryings = [];
+  }
   const baseColorTexture = meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === "baseColorTexture");
   const normalTexture = meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === "normalTexture");
   const emissiveTexture = meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === "emissiveTexture");
@@ -62,14 +70,16 @@ const buildShaders = (meshDescriptor, shaderParameters = {}) => {
   const vs = getVertexShaderCode({
     bindings: meshDescriptor.parameters.bindings,
     geometry: meshDescriptor.parameters.geometry,
+    additionalVaryings,
     chunks: vertexChunks
   });
   const fs = getFragmentShaderCode({
     shadingModel,
     chunks: fragmentChunks,
     receiveShadows: !!meshDescriptor.parameters.receiveShadows,
-    toneMapping: "Khronos",
+    toneMapping,
     geometry: meshDescriptor.parameters.geometry,
+    additionalVaryings,
     materialUniform: meshDescriptor.parameters.uniforms.material,
     materialUniformName: "material",
     extensionsUsed: meshDescriptor.extensionsUsed,

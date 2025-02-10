@@ -16,7 +16,7 @@ import { patchAdditionalChunks } from '../../default-material-helpers.mjs';
 
 const getLambertFragmentShaderCode = ({
   chunks = null,
-  toneMapping = "Linear",
+  toneMapping = "Khronos",
   geometry,
   additionalVaryings = [],
   materialUniform = null,

@@ -1,4 +1,4 @@
-import { FragmentShaderBaseInputParams } from '../../../full/fragment/get-fragment-shader-code';
+import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code';
 /**
  * Get the environment map indirect lighting contribution.
  * @param parameters - Parameters to use to apply PBR shading.
@@ -6,5 +6,5 @@ import { FragmentShaderBaseInputParams } from '../../../full/fragment/get-fragme
  * @returns - String with environment map indirect lighting contribution applied.
  */
 export declare const getIBLIndirect: ({ environmentMap, }: {
-    environmentMap?: FragmentShaderBaseInputParams['environmentMap'];
+    environmentMap?: PBRFragmentShaderInputParams['environmentMap'];
 }) => string;

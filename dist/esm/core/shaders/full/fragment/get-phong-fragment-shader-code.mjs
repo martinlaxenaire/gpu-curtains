@@ -18,7 +18,7 @@ import { patchAdditionalChunks } from '../../default-material-helpers.mjs';
 
 const getPhongFragmentShaderCode = ({
   chunks = null,
-  toneMapping = "Linear",
+  toneMapping = "Khronos",
   geometry,
   additionalVaryings = [],
   materialUniform = null,

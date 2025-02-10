@@ -18,7 +18,7 @@ import { VertexShaderInputParams } from '../vertex/get-vertex-shader-code'
 export type ShadingModels = 'Unlit' | 'Lambert' | 'Phong' | 'PBR'
 
 /** Defines all kinds of tone mappings available. */
-export type ToneMappings = 'Khronos' | 'Linear' | false
+export type ToneMappings = 'Khronos' | 'Reinhard' | 'Cineon' | false
 
 /**
  * Define a {@link ShaderTextureDescriptor} used to associate the {@link core/textures/Texture.Texture | Texture} names with the corresponding {@link Sampler} and UV names.
@@ -32,8 +32,16 @@ export interface ShaderTextureDescriptor {
   texCoordAttributeName?: string
 }
 
+/** Base parameters used to build a fragment shader. */
+export interface FragmentShaderInputBaseParams {
+  /** Whether the shading function should apply tone mapping to the resulting color and if so, which one. Default to `'Khronos'`. */
+  toneMapping?: ToneMappings
+  /** Optional additional {@link VertexShaderInputParams.additionalVaryings | varyings} to pass from the vertex shader to the fragment shader. */
+  additionalVaryings?: VertexShaderInputParams['additionalVaryings']
+}
+
 /** Parameters used to build an unlit fragment shader. */
-export interface UnlitFragmentShaderInputParams {
+export interface UnlitFragmentShaderInputParams extends FragmentShaderInputBaseParams {
   /** Additional WGSL chunks to add to the shaders. */
   chunks?: AdditionalChunks
   /** {@link Geometry} used to create the fragment shader. Can use the {@link Geometry#vertexBuffers | vertexBuffers} properties for vertex colors or tangent/bitangent computations. */
@@ -42,12 +50,8 @@ export interface UnlitFragmentShaderInputParams {
   materialUniform?: BufferBindingBaseParams
   /** The {@link BufferBindingBaseParams} name to use for variables declarations. Default to `'material'`. */
   materialUniformName?: string
-  /** Whether the shading function should apply tone mapping to the resulting color and if so, which one. Default to `'Linear'`. */
-  toneMapping?: ToneMappings
   /** {@link ShaderTextureDescriptor | Base color texture descriptor} to use if any. */
   baseColorTexture?: ShaderTextureDescriptor
-  /** Optional additional {@link VertexShaderInputParams.additionalVaryings | varyings} to pass from the vertex shader to the fragment shader. */
-  additionalVaryings?: VertexShaderInputParams['additionalVaryings']
 }
 
 /** Parameters used to build an unlit fragment shader. */
@@ -73,8 +77,8 @@ export interface PhongFragmentShaderInputParams extends LambertFragmentShaderInp
   specularColorTexture?: ShaderTextureDescriptor
 }
 
-/** Base parameters used to build a lit fragment shader. */
-export interface FragmentShaderBaseInputParams extends PhongFragmentShaderInputParams {
+/** Base parameters used to build a PBR fragment shader. */
+export interface PBRFragmentShaderInputParams extends PhongFragmentShaderInputParams {
   /** The {@link GLTFExtensionsUsed | glTF extensions} used to generate this fragment shader. */
   extensionsUsed?: GLTFExtensionsUsed
   /** {@link ShaderTextureDescriptor | Transmission texture descriptor} to use if any. */
@@ -88,7 +92,7 @@ export interface FragmentShaderBaseInputParams extends PhongFragmentShaderInputP
 }
 
 /** Parameters used to build a lit fragment shader. */
-export interface FragmentShaderInputParams extends FragmentShaderBaseInputParams {
+export interface FragmentShaderInputParams extends PBRFragmentShaderInputParams {
   /** Shading model to use. Default to `'PBR'`. */
   shadingModel?: ShadingModels
 }
@@ -101,7 +105,7 @@ export interface FragmentShaderInputParams extends FragmentShaderBaseInputParams
 export const getFragmentShaderCode = ({
   shadingModel = 'PBR',
   chunks = null,
-  toneMapping = 'Linear',
+  toneMapping = 'Khronos',
   geometry,
   additionalVaryings = [],
   materialUniform = null,

@@ -1,4 +1,4 @@
-import { FragmentShaderBaseInputParams } from '../../../full/fragment/get-fragment-shader-code'
+import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code'
 
 /**
  * Get the environment map indirect lighting contribution.
@@ -9,7 +9,7 @@ import { FragmentShaderBaseInputParams } from '../../../full/fragment/get-fragme
 export const getIBLIndirect = ({
   environmentMap = null,
 }: {
-  environmentMap?: FragmentShaderBaseInputParams['environmentMap']
+  environmentMap?: PBRFragmentShaderInputParams['environmentMap']
 }): string => {
   let iblIndirect = ''
 

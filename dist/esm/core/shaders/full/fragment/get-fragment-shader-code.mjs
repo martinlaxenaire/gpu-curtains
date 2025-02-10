@@ -6,7 +6,7 @@ import { getPBRFragmentShaderCode } from './get-PBR-fragment-shader-code.mjs';
 const getFragmentShaderCode = ({
   shadingModel = "PBR",
   chunks = null,
-  toneMapping = "Linear",
+  toneMapping = "Khronos",
   geometry,
   additionalVaryings = [],
   materialUniform = null,

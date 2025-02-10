@@ -1,11 +1,9 @@
 import { MeshDescriptor } from '../../types/gltf/GLTFScenesManager';
 import { ShaderOptions } from '../../types/Materials';
-import { FragmentShaderBaseInputParams, ShadingModels } from '../../core/shaders/full/fragment/get-fragment-shader-code';
+import { FragmentShaderInputBaseParams, PBRFragmentShaderInputParams, ShadingModels } from '../../core/shaders/full/fragment/get-fragment-shader-code';
 import { AdditionalChunks } from '../../core/shaders/default-material-helpers';
-/**
- * Parameters used to build the shaders
- */
-export interface ShaderBuilderParameters {
+/** Parameters used to build the shaders. */
+export interface ShaderBuilderParameters extends FragmentShaderInputBaseParams {
     /** Shading model to use. */
     shadingModel?: ShadingModels;
     /** {@link AdditionalChunks | Additional WGSL chunks} to add to the vertex shaders. */
@@ -13,7 +11,7 @@ export interface ShaderBuilderParameters {
     /** {@link AdditionalChunks | Additional WGSL chunks} to add to the fragment shaders. */
     fragmentChunks?: AdditionalChunks;
     /** Additional IBL parameters to pass as uniform and textures. */
-    environmentMap?: FragmentShaderBaseInputParams['environmentMap'];
+    environmentMap?: PBRFragmentShaderInputParams['environmentMap'];
 }
 /** Shaders returned by the shaders builder function. */
 export interface BuiltShaders {

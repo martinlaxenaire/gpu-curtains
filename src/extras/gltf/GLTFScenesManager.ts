@@ -24,7 +24,7 @@ import {
   ScenesManager,
   SkinDefinition,
 } from '../../types/gltf/GLTFScenesManager'
-import { throwWarning } from '../../utils/utils'
+import { throwWarning, toKebabCase } from '../../utils/utils'
 import { BufferBinding } from '../../core/bindings/BufferBinding'
 import { KeyframesAnimation } from '../animations/KeyframesAnimation'
 import { TargetsAnimationsManager } from '../animations/TargetsAnimationsManager'
@@ -398,7 +398,7 @@ export class GLTFScenesManager {
     })()
 
     const texture = new MediaTexture(this.renderer, {
-      label: material.name ? material.name + ': ' + name : name,
+      label: toKebabCase(name),
       name,
       format,
       visibility: ['fragment'],
@@ -463,7 +463,7 @@ export class GLTFScenesManager {
 
           if (hasTexture) {
             const reusedTexture = new MediaTexture(this.renderer, {
-              label: material.name ? material.name + ': ' + name : name,
+              label: toKebabCase(name),
               name,
               visibility: ['fragment'],
               generateMips: true, // generate mips by default
@@ -493,9 +493,7 @@ export class GLTFScenesManager {
           const texture = this.createTexture(material, image, name, !!textureTransform)
 
           if (textureTransform) {
-            console.log(textureTransform, texture)
-
-            const { offset, rotation, scale, texCoord } = textureTransform
+            const { offset, rotation, scale } = textureTransform
 
             if (offset !== undefined) texture.offset.set(offset[0], offset[1])
             if (rotation !== undefined) texture.rotation = rotation
@@ -715,6 +713,8 @@ export class GLTFScenesManager {
             : new Vec3(1),
       },
     }
+
+    console.log(materialUniformStruct.color.value)
 
     materialParams.uniforms.material = {
       visibility: ['fragment'],

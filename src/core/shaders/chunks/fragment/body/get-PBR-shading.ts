@@ -1,4 +1,4 @@
-import { ShaderTextureDescriptor, FragmentShaderBaseInputParams } from '../../../full/fragment/get-fragment-shader-code'
+import { ShaderTextureDescriptor, PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code'
 import { getPCFShadows } from './get-PCF-shadows'
 import { applyDirectionalShadows } from './apply-directional-shadows'
 import { applyPointShadows } from './apply-point-shadows'
@@ -21,9 +21,9 @@ export const getPBRShading = ({
   extensionsUsed = [],
 }: {
   receiveShadows?: boolean
-  environmentMap?: FragmentShaderBaseInputParams['environmentMap']
+  environmentMap?: PBRFragmentShaderInputParams['environmentMap']
   transmissionBackgroundTexture?: ShaderTextureDescriptor
-  extensionsUsed?: FragmentShaderBaseInputParams['extensionsUsed']
+  extensionsUsed?: PBRFragmentShaderInputParams['extensionsUsed']
 } = {}): string => {
   return /* wgsl */ `
   var directLight: DirectLight;

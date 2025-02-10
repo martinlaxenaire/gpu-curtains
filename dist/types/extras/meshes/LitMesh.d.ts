@@ -2,18 +2,13 @@ import { Mesh } from '../../core/meshes/Mesh';
 import { CameraRenderer } from '../../core/renderers/utils';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
 import { ProjectedMeshParameters } from '../../core/meshes/mixins/ProjectedMeshBaseMixin';
-import { FragmentShaderBaseInputParams, ShadingModels } from '../../core/shaders/full/fragment/get-fragment-shader-code';
+import { FragmentShaderInputParams, PBRFragmentShaderInputParams, ShadingModels } from '../../core/shaders/full/fragment/get-fragment-shader-code';
 import { Vec2 } from '../../math/Vec2';
 import { Vec3 } from '../../math/Vec3';
 import { AdditionalChunks } from '../../core/shaders/default-material-helpers';
-/** Defines the material parameters of a {@link LitMesh}. */
-export interface LitMeshMaterialParams extends Omit<FragmentShaderBaseInputParams, 'chunks' | 'geometry' | 'receiveShadows' | 'extensionsUsed' | 'materialUniform' | 'materialUniformName' | 'transmissionBackgroundTexture'> {
-    /** {@link ShadingModels} to use for lighting. Default to `PBR`. */
-    shading?: ShadingModels;
-    /** {@link AdditionalChunks | Additional WGSL chunks} to add to the vertex shaders. */
-    vertexChunks?: AdditionalChunks;
-    /** {@link AdditionalChunks | Additional WGSL chunks} to add to the fragment shaders. */
-    fragmentChunks?: AdditionalChunks;
+import { VertexShaderInputParams } from '../../core/shaders/full/vertex/get-vertex-shader-code';
+/** Define the material uniform parameters. */
+export interface LitMeshMaterialUniformParams {
     /** Base color of the {@link LitMesh} as a {@link Vec3}. Default to `new Vec3(1)`. */
     color?: Vec3;
     /** Opacity of the {@link LitMesh}. If different than `1`, consider setting the `transparent` parameter to `true`. Default to `1`.  */
@@ -50,6 +45,15 @@ export interface LitMeshMaterialParams extends Omit<FragmentShaderBaseInputParam
     attenuationDistance?: number;
     /** The color as a {@link Vec3} that white light turns into due to absorption when reaching the attenuation distance. Only applicable is `transmissive` parameter is set to `true`. Default to `new Vec3(1)`. */
     attenuationColor?: Vec3;
+}
+/** Define the material parameters of a {@link LitMesh}. */
+export interface LitMeshMaterialParams extends Omit<PBRFragmentShaderInputParams, 'chunks' | 'geometry' | 'receiveShadows' | 'extensionsUsed' | 'materialUniform' | 'materialUniformName' | 'transmissionBackgroundTexture'>, LitMeshMaterialUniformParams {
+    /** {@link ShadingModels} to use for lighting. Default to `PBR`. */
+    shading?: ShadingModels;
+    /** {@link AdditionalChunks | Additional WGSL chunks} to add to the vertex shaders. */
+    vertexChunks?: AdditionalChunks;
+    /** {@link AdditionalChunks | Additional WGSL chunks} to add to the fragment shaders. */
+    fragmentChunks?: AdditionalChunks;
 }
 /** Parameters used to create a {@link LitMesh}. */
 export interface LitMeshParameters extends Omit<ProjectedMeshParameters, 'shaders'> {
@@ -103,4 +107,6 @@ export declare class LitMesh extends Mesh {
      * @param parameters - {@link LitMeshParameters} used to create this {@link LitMesh}.
      */
     constructor(renderer: CameraRenderer | GPUCurtains, parameters?: LitMeshParameters);
+    static getVertexShaderCode({ bindings, geometry, chunks, additionalVaryings, }: VertexShaderInputParams): string;
+    static getFragmentShaderCode(params: FragmentShaderInputParams): string;
 }

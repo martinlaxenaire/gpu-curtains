@@ -10,7 +10,7 @@ import { Geometry } from '../../core/geometries/Geometry.mjs';
 import { IndexedGeometry } from '../../core/geometries/IndexedGeometry.mjs';
 import { Mesh } from '../../core/meshes/Mesh.mjs';
 import { Camera } from '../../core/camera/Camera.mjs';
-import { throwWarning } from '../../utils/utils.mjs';
+import { throwWarning, toKebabCase } from '../../utils/utils.mjs';
 import { BufferBinding } from '../../core/bindings/BufferBinding.mjs';
 import { KeyframesAnimation } from '../animations/KeyframesAnimation.mjs';
 import { TargetsAnimationsManager } from '../animations/TargetsAnimationsManager.mjs';
@@ -315,7 +315,7 @@ const _GLTFScenesManager = class _GLTFScenesManager {
       }
     })();
     const texture = new MediaTexture(this.renderer, {
-      label: material.name ? material.name + ": " + name : name,
+      label: toKebabCase(name),
       name,
       format,
       visibility: ["fragment"],
@@ -363,7 +363,7 @@ const _GLTFScenesManager = class _GLTFScenesManager {
           const hasTexture = createdTextures.find((createdTexture) => createdTexture.index === index);
           if (hasTexture) {
             const reusedTexture = new MediaTexture(this.renderer, {
-              label: material.name ? material.name + ": " + name : name,
+              label: toKebabCase(name),
               name,
               visibility: ["fragment"],
               generateMips: true,
@@ -390,8 +390,7 @@ const _GLTFScenesManager = class _GLTFScenesManager {
           const image = this.gltf.imagesBitmaps[source];
           const texture = this.createTexture(material, image, name, !!textureTransform);
           if (textureTransform) {
-            console.log(textureTransform, texture);
-            const { offset, rotation, scale, texCoord } = textureTransform;
+            const { offset, rotation, scale } = textureTransform;
             if (offset !== void 0)
               texture.offset.set(offset[0], offset[1]);
             if (rotation !== void 0)
@@ -556,6 +555,7 @@ const _GLTFScenesManager = class _GLTFScenesManager {
         value: volume && volume.attenuationColor !== void 0 ? new Vec3(volume.attenuationColor[0], volume.attenuationColor[1], volume.attenuationColor[2]) : new Vec3(1)
       }
     };
+    console.log(materialUniformStruct.color.value);
     materialParams.uniforms.material = {
       visibility: ["fragment"],
       struct: materialUniformStruct

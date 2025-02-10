@@ -1,7 +1,7 @@
-import { toneMappingUtils } from '../utils/tone-mapping-utils'
 import { GetShadingParams, lambertUtils } from './lambert-shading'
 import { getPhongDirect } from '../fragment/head/get-phong-direct'
 import { getPhongShading } from '../fragment/body/get-phong-shading'
+import { applyToneMapping } from '../fragment/body/apply-tone-mapping'
 
 /**
  * Shader chunk to add to the head of a fragment shader to be able to use Phong shading.
@@ -18,16 +18,15 @@ import { getPhongShading } from '../fragment/body/get-phong-shading'
  * ```
  */
 export const getPhong = (
-  { addUtils = true, receiveShadows = false, toneMapping = 'Linear', useOcclusion = false } = {} as GetShadingParams
+  { addUtils = true, receiveShadows = false, toneMapping, useOcclusion = false } = {} as GetShadingParams
 ) => /* wgsl */ `
 ${addUtils ? lambertUtils : ''}
 ${getPhongDirect}
-${toneMapping ? toneMappingUtils : ''}
 
 fn getPhong(
   normal: vec3f,
   worldPosition: vec3f,
-  outputColor: vec4f,
+  color: vec4f,
   viewDirection: vec3f,
   specularIntensity: f32,
   specularColor: vec3f,
@@ -36,16 +35,14 @@ fn getPhong(
 ) -> vec4f {
   ${!useOcclusion ? 'let occlusion: f32 = 1.0;' : ''}
 
+  var outputColor: vec4f = color;
+
   ${getPhongShading({ receiveShadows })}
   
-  ${
-    toneMapping === 'Linear'
-      ? 'outgoingLight = linearToOutput3(outgoingLight);'
-      : toneMapping === 'Khronos'
-      ? 'outgoingLight = linearTosRGB(toneMapKhronosPbrNeutral(outgoingLight));'
-      : ''
-  }
+  outputColor = vec4(outgoingLight, outputColor.a);
   
-  return vec4(outgoingLight, outputColor.a);;
+  ${applyToneMapping({ toneMapping })}
+    
+  return outputColor;
 }
 `

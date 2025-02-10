@@ -3,16 +3,15 @@ import { ShaderOptions } from '../../types/Materials'
 import { BufferBinding } from '../../core/bindings/BufferBinding'
 import { getVertexShaderCode } from '../../core/shaders/full/vertex/get-vertex-shader-code'
 import {
+  FragmentShaderInputBaseParams,
   getFragmentShaderCode,
-  FragmentShaderBaseInputParams,
+  PBRFragmentShaderInputParams,
   ShadingModels,
 } from '../../core/shaders/full/fragment/get-fragment-shader-code'
 import { AdditionalChunks } from '../../core/shaders/default-material-helpers'
 
-/**
- * Parameters used to build the shaders
- */
-export interface ShaderBuilderParameters {
+/** Parameters used to build the shaders. */
+export interface ShaderBuilderParameters extends FragmentShaderInputBaseParams {
   /** Shading model to use. */
   shadingModel?: ShadingModels
   /** {@link AdditionalChunks | Additional WGSL chunks} to add to the vertex shaders. */
@@ -20,7 +19,7 @@ export interface ShaderBuilderParameters {
   /** {@link AdditionalChunks | Additional WGSL chunks} to add to the fragment shaders. */
   fragmentChunks?: AdditionalChunks
   /** Additional IBL parameters to pass as uniform and textures. */
-  environmentMap?: FragmentShaderBaseInputParams['environmentMap']
+  environmentMap?: PBRFragmentShaderInputParams['environmentMap']
 }
 
 /** Shaders returned by the shaders builder function. */
@@ -52,6 +51,16 @@ export const buildShaders = (
 
   if (isUnlit) {
     shadingModel = 'Unlit'
+  }
+
+  let { toneMapping } = shaderParameters
+  if (!toneMapping) {
+    toneMapping = 'Khronos'
+  }
+
+  let { additionalVaryings } = shaderParameters
+  if (!additionalVaryings) {
+    additionalVaryings = []
   }
 
   // textures check
@@ -129,6 +138,7 @@ export const buildShaders = (
   const vs = getVertexShaderCode({
     bindings: meshDescriptor.parameters.bindings as BufferBinding[],
     geometry: meshDescriptor.parameters.geometry,
+    additionalVaryings,
     chunks: vertexChunks,
   })
 
@@ -136,8 +146,9 @@ export const buildShaders = (
     shadingModel,
     chunks: fragmentChunks,
     receiveShadows: !!meshDescriptor.parameters.receiveShadows,
-    toneMapping: 'Khronos',
+    toneMapping,
     geometry: meshDescriptor.parameters.geometry,
+    additionalVaryings,
     materialUniform: meshDescriptor.parameters.uniforms.material,
     materialUniformName: 'material',
     extensionsUsed: meshDescriptor.extensionsUsed,

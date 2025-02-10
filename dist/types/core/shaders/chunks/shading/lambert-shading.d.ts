@@ -5,8 +5,8 @@ export interface GetShadingParams {
     addUtils?: boolean;
     /** Whether the shading function should account for current shadows. Default to `false`. */
     receiveShadows?: boolean;
-    /** Whether the shading function should apply tone mapping to the resulting color and if so, which one. Default to `'Linear'`. */
-    toneMapping?: ToneMappings | boolean;
+    /** Whether the shading function should apply tone mapping to the resulting color and if so, which one. Default to `'Khronos'`. */
+    toneMapping?: ToneMappings;
     /** Whether ambient occlusion should be accounted when calculating the shading. Default to `false`. If set to `true`, a float `f32` ambient occlusion value should be passed as the last shading function parameter. */
     useOcclusion?: boolean;
 }

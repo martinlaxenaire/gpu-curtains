@@ -4,6 +4,7 @@ import { getFragmentShaderCode } from '../../core/shaders/full/fragment/get-frag
 import { Vec2 } from '../../math/Vec2.mjs';
 import { Vec3 } from '../../math/Vec3.mjs';
 import { getVertexShaderCode } from '../../core/shaders/full/vertex/get-vertex-shader-code.mjs';
+import { sRGBToLinear } from '../../math/color-utils.mjs';
 
 class LitMesh extends Mesh {
   /**
@@ -52,16 +53,10 @@ class LitMesh extends Mesh {
       thicknessTexture,
       environmentMap
     } = material;
-    const vs = getVertexShaderCode({
-      bindings: defaultParams.bindings,
-      geometry: defaultParams.geometry,
-      chunks: vertexChunks,
-      additionalVaryings
-    });
     const baseUniformStruct = {
       color: {
         type: "vec3f",
-        value: color !== void 0 ? color : new Vec3(1)
+        value: color !== void 0 ? sRGBToLinear(color.clone()) : new Vec3(1)
       },
       opacity: {
         type: "f32",
@@ -88,7 +83,7 @@ class LitMesh extends Mesh {
       },
       emissiveColor: {
         type: "vec3f",
-        value: emissiveColor !== void 0 ? emissiveColor : new Vec3()
+        value: emissiveColor !== void 0 ? sRGBToLinear(emissiveColor.clone()) : new Vec3()
       }
     };
     const specularUniformStruct = {
@@ -99,7 +94,7 @@ class LitMesh extends Mesh {
       },
       specularColor: {
         type: "vec3f",
-        value: specularColor !== void 0 ? specularColor : new Vec3(1)
+        value: specularColor !== void 0 ? sRGBToLinear(specularColor.clone()) : new Vec3(1)
       }
     };
     const phongUniformStruct = {
@@ -141,7 +136,7 @@ class LitMesh extends Mesh {
       },
       attenuationColor: {
         type: "vec3f",
-        value: attenuationColor !== void 0 ? attenuationColor : new Vec3(1)
+        value: attenuationColor !== void 0 ? sRGBToLinear(attenuationColor.clone()) : new Vec3(1)
       }
     };
     const materialStruct = (() => {
@@ -242,7 +237,13 @@ class LitMesh extends Mesh {
     if (defaultParams.geometry && !hasNormal) {
       defaultParams.geometry.computeGeometry();
     }
-    const fs = getFragmentShaderCode({
+    const vs = LitMesh.getVertexShaderCode({
+      bindings: defaultParams.bindings,
+      geometry: defaultParams.geometry,
+      chunks: vertexChunks,
+      additionalVaryings
+    });
+    const fs = LitMesh.getFragmentShaderCode({
       shadingModel: shading,
       chunks: fragmentChunks,
       extensionsUsed,
@@ -275,6 +276,22 @@ class LitMesh extends Mesh {
       }
     };
     super(renderer, { ...defaultParams, ...{ shaders } });
+  }
+  static getVertexShaderCode({
+    bindings = [],
+    geometry,
+    chunks = null,
+    additionalVaryings = []
+  }) {
+    return getVertexShaderCode({
+      bindings,
+      geometry,
+      chunks,
+      additionalVaryings
+    });
+  }
+  static getFragmentShaderCode(params) {
+    return getFragmentShaderCode(params);
   }
 }
 

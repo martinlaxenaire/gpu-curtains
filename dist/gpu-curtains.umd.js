@@ -16252,20 +16252,13 @@ fn F_Schlick(f0: vec3f, f90: f32, VdotH: f32) -> vec3f {
   const toneMappingUtils = (
     /* wgsl */
     `
-fn linearToOutput3(value: vec3f) -> vec3f {
-  return vec3( mix( pow( value.rgb, vec3( 0.41666 ) ) * 1.055 - vec3( 0.055 ), value.rgb * 12.92, vec3( lessThan3( value.rgb, vec3( 0.0031308 ) ) ) ) );
-}
-
-fn linearToOutput4(value: vec4f) -> vec4f {
-  return vec4( linearToOutput3(value.rgb), value.a );
-}
-
 // linear <-> sRGB conversions
 fn linearTosRGB(linear: vec3f) -> vec3f {
-  if (all(linear <= vec3(0.0031308))) {
-    return linear * 12.92;
-  }
-  return (pow(abs(linear), vec3(1.0/2.4)) * 1.055) - vec3(0.055);
+  return vec3( mix( pow( linear.rgb, vec3( 0.41666 ) ) * 1.055 - vec3( 0.055 ), linear.rgb * 12.92, vec3( lessThan3( linear.rgb, vec3( 0.0031308 ) ) ) ) );
+}
+
+fn linearTosRGB_4(linear: vec4f) -> vec4f {
+  return vec4( linearTosRGB(linear.rgb), linear.a );
 }
 
 fn sRGBToLinear(srgb: vec3f) -> vec3f {
@@ -16275,7 +16268,25 @@ fn sRGBToLinear(srgb: vec3f) -> vec3f {
   return pow((srgb + vec3(0.055)) / vec3(1.055), vec3(2.4));
 }
 
-fn toneMapKhronosPbrNeutral( color: vec3f ) -> vec3f {
+fn sRGBToLinear_4(srgb: vec4f) -> vec4f {
+  return vec4( sRGBToLinear(srgb.rgb), srgb.a );
+}
+
+// source: https://www.cs.utah.edu/docs/techreports/2002/pdf/UUCS-02-001.pdf
+fn ReinhardToneMapping( color: vec3f ) -> vec3f {
+	return saturate( color / ( vec3( 1.0 ) + color ) );
+}
+
+// source: http://filmicworlds.com/blog/filmic-tonemapping-operators/
+fn CineonToneMapping( color: vec3f ) -> vec3f {
+	// filmic operator by Jim Hejl and Richard Burgess-Dawson
+	let maxColor = max( vec3( 0.0 ), color - 0.004 );
+	return pow( ( maxColor * ( 6.2 * maxColor + 0.5 ) ) / ( maxColor * ( 6.2 * maxColor + 1.7 ) + 0.06 ), vec3( 2.2 ) );
+
+}
+
+// https://modelviewer.dev/examples/tone-mapping
+fn KhronosToneMapping( color: vec3f ) -> vec3f {
   var toneMapColor = color; 
   const startCompression: f32 = 0.8 - 0.04;
   const desaturation: f32 = 0.15;
@@ -16332,7 +16343,7 @@ fn getPointLightInfo(pointLight: PointLightsElement, worldPosition: vec3f, ptr_l
   let lightDistance: f32 = length(lightDirection);
   (*ptr_light).color = pointLight.color;
   (*ptr_light).color *= rangeAttenuation(pointLight.range, lightDistance);
-  (*ptr_light).visible = length((*ptr_light).color) > 0.01;
+  (*ptr_light).visible = length((*ptr_light).color) > EPSILON;
 }
 `
   );
@@ -16436,6 +16447,45 @@ fn getLambertDirect(
     );
   };
 
+  const applyToneMapping = ({ toneMapping = "Khronos" } = {}) => {
+    let toneMappingOutput = (
+      /* wgsl */
+      `
+  let exposure: f32 = 1.0; // TODO
+  outputColor *= exposure;
+  `
+    );
+    toneMappingOutput += (() => {
+      switch (toneMapping) {
+        case "Khronos":
+          return (
+            /* wgsl */
+            `
+  outputColor = vec4(KhronosToneMapping(outputColor.rgb), outputColor.a);
+  `
+          );
+        case "Reinhard":
+          return `
+  outputColor = vec4(ReinhardToneMapping(outputColor.rgb), outputColor.a);
+        `;
+        case "Cineon":
+          return `
+  outputColor = vec4(CineonToneMapping(outputColor.rgb), outputColor.a);
+        `;
+        case false:
+        default:
+          return `
+  outputColor = saturate(outputColor);
+        `;
+      }
+    })();
+    toneMappingOutput += /* wgsl */
+    `
+  outputColor = linearTosRGB_4(outputColor);
+  `;
+    return toneMappingOutput;
+  };
+
   const lambertUtils = (
     /* wgsl */
     `
@@ -16443,28 +16493,32 @@ ${constants}
 ${common}
 ${getLightsInfos}
 ${REIndirectDiffuse}
+${toneMappingUtils}
 `
   );
-  const getLambert = ({ addUtils = true, receiveShadows = false, toneMapping = "Linear", useOcclusion = false } = {}) => (
+  const getLambert = ({ addUtils = true, receiveShadows = false, toneMapping, useOcclusion = false } = {}) => (
     /* wgsl */
     `
 ${addUtils ? lambertUtils : ""}
 ${getLambertDirect}
-${toneMapping ? toneMappingUtils : ""}
 
 fn getLambert(
   normal: vec3f,
   worldPosition: vec3f,
-  outputColor: vec4f,
+  color: vec4f,
   ${useOcclusion ? "occlusion: f32," : ""}
 ) -> vec4f {
   ${!useOcclusion ? "let occlusion: f32 = 1.0;" : ""}
+  
+  var outputColor: vec4f = color;
 
   ${getLambertShading({ receiveShadows })}
   
-  ${toneMapping === "Linear" ? "outgoingLight = linearToOutput3(outgoingLight);" : toneMapping === "Khronos" ? "outgoingLight = linearTosRGB(toneMapKhronosPbrNeutral(outgoingLight));" : ""}
+  outputColor = vec4(outgoingLight, outputColor.a);
+  
+  ${applyToneMapping({ toneMapping })}
     
-  return vec4(outgoingLight, outputColor.a);
+  return outputColor;
 }
 `
   );
@@ -16561,17 +16615,16 @@ fn getPhongDirect(
     );
   };
 
-  const getPhong = ({ addUtils = true, receiveShadows = false, toneMapping = "Linear", useOcclusion = false } = {}) => (
+  const getPhong = ({ addUtils = true, receiveShadows = false, toneMapping, useOcclusion = false } = {}) => (
     /* wgsl */
     `
 ${addUtils ? lambertUtils : ""}
 ${getPhongDirect}
-${toneMapping ? toneMappingUtils : ""}
 
 fn getPhong(
   normal: vec3f,
   worldPosition: vec3f,
-  outputColor: vec4f,
+  color: vec4f,
   viewDirection: vec3f,
   specularIntensity: f32,
   specularColor: vec3f,
@@ -16580,11 +16633,15 @@ fn getPhong(
 ) -> vec4f {
   ${!useOcclusion ? "let occlusion: f32 = 1.0;" : ""}
 
+  var outputColor: vec4f = color;
+
   ${getPhongShading({ receiveShadows })}
   
-  ${toneMapping === "Linear" ? "outgoingLight = linearToOutput3(outgoingLight);" : toneMapping === "Khronos" ? "outgoingLight = linearTosRGB(toneMapKhronosPbrNeutral(outgoingLight));" : ""}
+  outputColor = vec4(outgoingLight, outputColor.a);
   
-  return vec4(outgoingLight, outputColor.a);;
+  ${applyToneMapping({ toneMapping })}
+    
+  return outputColor;
 }
 `
   );
@@ -17040,7 +17097,7 @@ fn getPBRDirect(
   const getPBR = ({
     addUtils = true,
     receiveShadows = false,
-    toneMapping = "Linear",
+    toneMapping,
     useOcclusion = false,
     environmentMap = null,
     transmissionBackgroundTexture = null,
@@ -17052,12 +17109,11 @@ ${addUtils ? lambertUtils : ""}
 ${REIndirectSpecular}
 ${getIBLTransmission}
 ${getPBRDirect}
-${toneMapping ? toneMappingUtils : ""}
 
 fn getPBR(
   normal: vec3f,
   worldPosition: vec3f,
-  outputColor: vec4f,
+  color: vec4f,
   viewDirection: vec3f,
   metallic: f32,
   roughness: f32,
@@ -17073,11 +17129,15 @@ fn getPBR(
 ) -> vec4f {
   ${!useOcclusion ? "let occlusion: f32 = 1.0;" : ""}
   
+  var outputColor: vec4f = color;
+  
   ${getPBRShading({ receiveShadows, environmentMap, transmissionBackgroundTexture, extensionsUsed })}
   
-  ${toneMapping === "Linear" ? "outgoingLight = linearToOutput3(outgoingLight);" : toneMapping === "Khronos" ? "outgoingLight = linearTosRGB(toneMapKhronosPbrNeutral(outgoingLight));" : ""}
+  outputColor = vec4(outgoingLight, outputColor.a);
+  
+  ${applyToneMapping({ toneMapping })}
     
-  return vec4(outgoingLight, outputColor.a);
+  return outputColor;
 }
 `
   );
@@ -17575,23 +17635,9 @@ struct FSInput {
     return baseColor;
   };
 
-  const applyToneMapping = ({ toneMapping = "Linear" } = {}) => {
-    return (() => {
-      switch (toneMapping) {
-        case "Linear":
-          return "outputColor = vec4(linearToOutput3(outputColor.rgb), outputColor.a);";
-        case "Khronos":
-          return "outputColor = vec4(linearTosRGB(toneMapKhronosPbrNeutral(outputColor.rgb)), outputColor.a);";
-        case false:
-        default:
-          return "";
-      }
-    })();
-  };
-
   const getUnlitFragmentShaderCode = ({
     chunks = null,
-    toneMapping = "Linear",
+    toneMapping = "Khronos",
     geometry,
     additionalVaryings = [],
     materialUniform = null,
@@ -17712,7 +17758,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       if ("useTransform" in emissiveTexture.texture.options && emissiveTexture.texture.options.useTransform) {
         emissiveOcclusion += /* wgsl */
         `
-  emissiveUV = (${emissiveTexture.texture.options.name}Matrix * vec3(emissiveUV, 1.0)).xy;`;
+  emissiveUV = (texturesMatrices.${emissiveTexture.texture.options.name}.matrix * vec3(emissiveUV, 1.0)).xy;`;
       }
       emissiveOcclusion += /* wgsl */
       `
@@ -17743,7 +17789,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
 
   const getLambertFragmentShaderCode = ({
     chunks = null,
-    toneMapping = "Linear",
+    toneMapping = "Khronos",
     geometry,
     additionalVaryings = [],
     materialUniform = null,
@@ -17884,7 +17930,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
 
   const getPhongFragmentShaderCode = ({
     chunks = null,
-    toneMapping = "Linear",
+    toneMapping = "Khronos",
     geometry,
     additionalVaryings = [],
     materialUniform = null,
@@ -18070,7 +18116,7 @@ fn getIBLIndirect(
 
   const getPBRFragmentShaderCode = ({
     chunks = null,
-    toneMapping = "Linear",
+    toneMapping = "Khronos",
     geometry,
     additionalVaryings = [],
     materialUniform = null,
@@ -18159,7 +18205,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
   const getFragmentShaderCode = ({
     shadingModel = "PBR",
     chunks = null,
-    toneMapping = "Linear",
+    toneMapping = "Khronos",
     geometry,
     additionalVaryings = [],
     materialUniform = null,
@@ -19387,6 +19433,25 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       this.deviceManager.destroy();
       this.scrollManager?.destroy();
     }
+  }
+
+  function sRGBToLinearFloat(c) {
+    return c < 0.04045 ? c * 0.0773993808 : Math.pow(c * 0.9478672986 + 0.0521327014, 2.4);
+  }
+  function linearTosRGBFloat(c) {
+    return c < 31308e-7 ? c * 12.92 : 1.055 * Math.pow(c, 0.41666) - 0.055;
+  }
+  function sRGBToLinear(vector = new Vec3()) {
+    vector.x = sRGBToLinearFloat(vector.x);
+    vector.y = sRGBToLinearFloat(vector.y);
+    vector.z = sRGBToLinearFloat(vector.z);
+    return vector;
+  }
+  function linearTosRGB(vector = new Vec3()) {
+    vector.x = linearTosRGBFloat(vector.x);
+    vector.y = linearTosRGBFloat(vector.y);
+    vector.z = linearTosRGBFloat(vector.z);
+    return vector;
   }
 
   var __accessCheck$5 = (obj, member, msg) => {
@@ -21062,16 +21127,10 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         thicknessTexture,
         environmentMap
       } = material;
-      const vs = getVertexShaderCode({
-        bindings: defaultParams.bindings,
-        geometry: defaultParams.geometry,
-        chunks: vertexChunks,
-        additionalVaryings
-      });
       const baseUniformStruct = {
         color: {
           type: "vec3f",
-          value: color !== void 0 ? color : new Vec3(1)
+          value: color !== void 0 ? sRGBToLinear(color.clone()) : new Vec3(1)
         },
         opacity: {
           type: "f32",
@@ -21098,7 +21157,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         },
         emissiveColor: {
           type: "vec3f",
-          value: emissiveColor !== void 0 ? emissiveColor : new Vec3()
+          value: emissiveColor !== void 0 ? sRGBToLinear(emissiveColor.clone()) : new Vec3()
         }
       };
       const specularUniformStruct = {
@@ -21109,7 +21168,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         },
         specularColor: {
           type: "vec3f",
-          value: specularColor !== void 0 ? specularColor : new Vec3(1)
+          value: specularColor !== void 0 ? sRGBToLinear(specularColor.clone()) : new Vec3(1)
         }
       };
       const phongUniformStruct = {
@@ -21151,7 +21210,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         },
         attenuationColor: {
           type: "vec3f",
-          value: attenuationColor !== void 0 ? attenuationColor : new Vec3(1)
+          value: attenuationColor !== void 0 ? sRGBToLinear(attenuationColor.clone()) : new Vec3(1)
         }
       };
       const materialStruct = (() => {
@@ -21252,7 +21311,13 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
       if (defaultParams.geometry && !hasNormal) {
         defaultParams.geometry.computeGeometry();
       }
-      const fs = getFragmentShaderCode({
+      const vs = LitMesh.getVertexShaderCode({
+        bindings: defaultParams.bindings,
+        geometry: defaultParams.geometry,
+        chunks: vertexChunks,
+        additionalVaryings
+      });
+      const fs = LitMesh.getFragmentShaderCode({
         shadingModel: shading,
         chunks: fragmentChunks,
         extensionsUsed,
@@ -21285,6 +21350,22 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         }
       };
       super(renderer, { ...defaultParams, ...{ shaders } });
+    }
+    static getVertexShaderCode({
+      bindings = [],
+      geometry,
+      chunks = null,
+      additionalVaryings = []
+    }) {
+      return getVertexShaderCode({
+        bindings,
+        geometry,
+        chunks,
+        additionalVaryings
+      });
+    }
+    static getFragmentShaderCode(params) {
+      return getFragmentShaderCode(params);
     }
   }
 
@@ -22435,7 +22516,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         }
       })();
       const texture = new MediaTexture(this.renderer, {
-        label: material.name ? material.name + ": " + name : name,
+        label: toKebabCase(name),
         name,
         format,
         visibility: ["fragment"],
@@ -22483,7 +22564,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
             const hasTexture = createdTextures.find((createdTexture) => createdTexture.index === index);
             if (hasTexture) {
               const reusedTexture = new MediaTexture(this.renderer, {
-                label: material.name ? material.name + ": " + name : name,
+                label: toKebabCase(name),
                 name,
                 visibility: ["fragment"],
                 generateMips: true,
@@ -22510,8 +22591,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
             const image = this.gltf.imagesBitmaps[source];
             const texture = this.createTexture(material, image, name, !!textureTransform);
             if (textureTransform) {
-              console.log(textureTransform, texture);
-              const { offset, rotation, scale, texCoord } = textureTransform;
+              const { offset, rotation, scale } = textureTransform;
               if (offset !== void 0)
                 texture.offset.set(offset[0], offset[1]);
               if (rotation !== void 0)
@@ -22676,6 +22756,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
           value: volume && volume.attenuationColor !== void 0 ? new Vec3(volume.attenuationColor[0], volume.attenuationColor[1], volume.attenuationColor[2]) : new Vec3(1)
         }
       };
+      console.log(materialUniformStruct.color.value);
       materialParams.uniforms.material = {
         visibility: ["fragment"],
         struct: materialUniformStruct
@@ -23647,6 +23728,14 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
     if (isUnlit) {
       shadingModel = "Unlit";
     }
+    let { toneMapping } = shaderParameters;
+    if (!toneMapping) {
+      toneMapping = "Khronos";
+    }
+    let { additionalVaryings } = shaderParameters;
+    if (!additionalVaryings) {
+      additionalVaryings = [];
+    }
     const baseColorTexture = meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === "baseColorTexture");
     const normalTexture = meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === "normalTexture");
     const emissiveTexture = meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === "emissiveTexture");
@@ -23699,14 +23788,16 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
     const vs = getVertexShaderCode({
       bindings: meshDescriptor.parameters.bindings,
       geometry: meshDescriptor.parameters.geometry,
+      additionalVaryings,
       chunks: vertexChunks
     });
     const fs = getFragmentShaderCode({
       shadingModel,
       chunks: fragmentChunks,
       receiveShadows: !!meshDescriptor.parameters.receiveShadows,
-      toneMapping: "Khronos",
+      toneMapping,
       geometry: meshDescriptor.parameters.geometry,
+      additionalVaryings,
       materialUniform: meshDescriptor.parameters.uniforms.material,
       materialUniformName: "material",
       extensionsUsed: meshDescriptor.extensionsUsed,
@@ -24030,6 +24121,10 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
   exports.getUnlitFragmentShaderCode = getUnlitFragmentShaderCode;
   exports.getVertexShaderCode = getVertexShaderCode;
   exports.lambertUtils = lambertUtils;
+  exports.linearTosRGB = linearTosRGB;
+  exports.linearTosRGBFloat = linearTosRGBFloat;
+  exports.sRGBToLinear = sRGBToLinear;
+  exports.sRGBToLinearFloat = sRGBToLinearFloat;
   exports.toneMappingUtils = toneMappingUtils;
 
 }));

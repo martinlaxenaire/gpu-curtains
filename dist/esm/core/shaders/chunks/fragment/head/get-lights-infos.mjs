@@ -35,7 +35,7 @@ fn getPointLightInfo(pointLight: PointLightsElement, worldPosition: vec3f, ptr_l
   let lightDistance: f32 = length(lightDirection);
   (*ptr_light).color = pointLight.color;
   (*ptr_light).color *= rangeAttenuation(pointLight.range, lightDistance);
-  (*ptr_light).visible = length((*ptr_light).color) > 0.01;
+  (*ptr_light).visible = length((*ptr_light).color) > EPSILON;
 }
 `
 );

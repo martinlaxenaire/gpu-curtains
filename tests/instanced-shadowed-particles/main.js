@@ -3,8 +3,6 @@ import { preliminaryFragmentParticle } from './shaders/chunks/preliminary-fragme
 import { particlesDepthPassShaders } from './shaders/shadowed-particles.wgsl.js'
 import { additionalVertexParticle } from './shaders/chunks/additional-vertex-particle.wgsl.js'
 import { getParticleSize } from './shaders/chunks/get-particle-size.wgsl.js'
-import { additionalFragmentParticle } from './shaders/chunks/additional-fragment-particle.wgsl.js'
-import { additionalFragmentHeadParticle } from './shaders/chunks/additional-fragment-head-particle.wgsl.js'
 
 // port of https://okaydev.co/articles/dive-into-webgpu-part-4
 // with the current lib features
@@ -23,6 +21,7 @@ window.addEventListener('load', async () => {
     PlaneGeometry,
     Vec2,
     Vec3,
+    sRGBToLinear,
   } = await import(/* @vite-ignore */ path)
 
   // create a device manager
@@ -216,9 +215,7 @@ window.addEventListener('load', async () => {
   // RENDERING
   //--------------------
 
-  // could be 'Khronos' or 'Linear'
-  // but I find that no tone mapping at all is better here
-  const toneMapping = false
+  const toneMapping = 'Khronos'
 
   //--------------------
   // PARTICLES
@@ -265,8 +262,9 @@ window.addEventListener('load', async () => {
     },
   })
 
-  const lightColor = new Vec3(255 / 255, 240 / 255, 97 / 255)
-  const darkColor = new Vec3(184 / 255, 162 / 255, 9 / 255)
+  // colors need to be in linear space
+  const lightColor = sRGBToLinear(new Vec3(255, 240, 97).divideScalar(255))
+  const darkColor = sRGBToLinear(new Vec3(184, 162, 9).divideScalar(255))
 
   const particlesSystem = new LitMesh(renderer, {
     label: 'Shadowed particles system',
@@ -276,6 +274,8 @@ window.addEventListener('load', async () => {
     material: {
       shading: 'Lambert',
       toneMapping,
+      // we need an additional 'velocity' varying
+      // to pass from the vertex to the fragment shader
       additionalVaryings: [
         {
           name: 'velocity',
@@ -287,9 +287,7 @@ window.addEventListener('load', async () => {
         additionalContribution: additionalVertexParticle,
       },
       fragmentChunks: {
-        additionalHead: additionalFragmentHeadParticle,
         preliminaryContribution: preliminaryFragmentParticle,
-        additionalContribution: additionalFragmentParticle,
       },
     },
     uniforms: {
@@ -299,25 +297,9 @@ window.addEventListener('load', async () => {
             type: 'vec3f',
             value: lightColor,
           },
-          brightness: {
-            type: 'f32',
-            value: 0.1,
-          },
           darkColor: {
             type: 'vec3f',
             value: darkColor,
-          },
-          contrast: {
-            type: 'f32',
-            value: 0.25,
-          },
-          exposure: {
-            type: 'f32',
-            value: 0.15,
-          },
-          saturation: {
-            type: 'f32',
-            value: 0.25,
           },
         },
       },
@@ -353,7 +335,7 @@ window.addEventListener('load', async () => {
     material: {
       shading: 'Lambert',
       toneMapping,
-      color: new Vec3(0.5),
+      color: new Vec3(0.5), // automatically converted to linear space
     },
   })
 
