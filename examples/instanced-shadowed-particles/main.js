@@ -1,3 +1,19 @@
+import {
+  GPUDeviceManager,
+  GPUCameraRenderer,
+  BindGroup,
+  AmbientLight,
+  DirectionalLight,
+  BoxGeometry,
+  BufferBinding,
+  ComputePass,
+  LitMesh,
+  PlaneGeometry,
+  Vec2,
+  Vec3,
+  sRGBToLinear,
+} from '../../dist/esm/index.mjs'
+
 import { computeParticles } from './shaders/compute-particles.wgsl.js'
 import { preliminaryFragmentParticle } from './shaders/chunks/preliminary-fragment-particle.wgsl.js'
 import { particlesDepthPassShaders } from './shaders/shadowed-particles.wgsl.js'
@@ -9,23 +25,6 @@ import { getParticleSize } from './shaders/chunks/get-particle-size.wgsl.js'
 // This demonstrates how to create complex scenes with built-in lit meshes
 // With the ability to use chunks, patch the default built-in shaders, create custom shadow maps shaders...
 window.addEventListener('load', async () => {
-  const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
-  const {
-    GPUDeviceManager,
-    GPUCameraRenderer,
-    BindGroup,
-    AmbientLight,
-    DirectionalLight,
-    BoxGeometry,
-    BufferBinding,
-    ComputePass,
-    LitMesh,
-    PlaneGeometry,
-    Vec2,
-    Vec3,
-    sRGBToLinear,
-  } = await import(/* @vite-ignore */ path)
-
   // create a device manager
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',

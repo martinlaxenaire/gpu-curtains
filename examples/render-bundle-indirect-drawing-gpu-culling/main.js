@@ -35,6 +35,7 @@ import {
   GPUDeviceManager,
   AmbientLight,
   DirectionalLight,
+  sRGBToLinear,
   getLambert,
   OrbitControls,
   RenderBundle,
@@ -110,9 +111,9 @@ window.addEventListener('load', async () => {
   const nbInstances = 4_000
 
   const materials = [
-    { name: 'Pink', color: new Vec3(1, 0, 1) },
-    { name: 'Blue', color: new Vec3(0, 1, 1) },
-    { name: 'Grey', color: new Vec3(0.85) },
+    { name: 'Pink', color: sRGBToLinear(new Vec3(1, 0, 1)) },
+    { name: 'Blue', color: sRGBToLinear(new Vec3(0, 1, 1)) },
+    { name: 'Grey', color: sRGBToLinear(new Vec3(0.85)) },
   ]
 
   const instancesDefinitionsModel = [
