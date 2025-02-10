@@ -7,7 +7,7 @@ import { getParticleSize } from './shaders/chunks/get-particle-size.wgsl.js'
 // Port of https://okaydev.co/articles/dive-into-webgpu-part-4
 // with the current lib features
 // This demonstrates how to create complex scenes with built-in lit meshes
-// With the ability to patch the default built-in shaders
+// With the ability to use chunks, patch the default built-in shaders, create custom shadow maps shaders...
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
   const {
@@ -86,7 +86,7 @@ window.addEventListener('load', async () => {
       top: distance * 1.05,
       bottom: distance * -1.05,
       near: 0.1,
-      far: distance * 5,
+      far: distance * 3,
     },
   })
 
