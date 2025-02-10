@@ -66,7 +66,6 @@ window.addEventListener('DOMContentLoaded', async () => {
   // environment map
   const environmentMap = new EnvironmentMap(gpuCurtains, {
     diffuseIntensity: 0.5,
-    specularIntensity: 0.5,
   })
 
   await environmentMap.loadAndComputeFromHDR('../../website/assets/hdr/Colorful_Studio.hdr')
@@ -185,7 +184,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         transmission: 1,
         thickness: 0.25,
         dispersion: 5,
-        ior: 1.5,
+        ior: 1.33,
         environmentMap,
       },
     })
