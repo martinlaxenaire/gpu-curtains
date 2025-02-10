@@ -102,8 +102,8 @@ window.addEventListener('load', async () => {
         params.useDiffuse > 0.0
       );
       
-      color = vec4(toneMapKhronosPbrNeutral(color.rgb), color.a);
-      color = vec4(linearTosRGB(color.rgb), color.a);
+      color = vec4(KhronosToneMapping(color.rgb), color.a);
+      color = linearTosRGB_4(color);
       
       return color;
     }
