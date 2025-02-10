@@ -7932,6 +7932,25 @@
     }
   }
 
+  function sRGBToLinearFloat(c) {
+    return c < 0.04045 ? c * 0.0773993808 : Math.pow(c * 0.9478672986 + 0.0521327014, 2.4);
+  }
+  function linearTosRGBFloat(c) {
+    return c < 31308e-7 ? c * 12.92 : 1.055 * Math.pow(c, 0.41666) - 0.055;
+  }
+  function sRGBToLinear(vector = new Vec3()) {
+    vector.x = sRGBToLinearFloat(vector.x);
+    vector.y = sRGBToLinearFloat(vector.y);
+    vector.z = sRGBToLinearFloat(vector.z);
+    return vector;
+  }
+  function linearTosRGB(vector = new Vec3()) {
+    vector.x = linearTosRGBFloat(vector.x);
+    vector.y = linearTosRGBFloat(vector.y);
+    vector.z = linearTosRGBFloat(vector.z);
+    return vector;
+  }
+
   var __accessCheck$i = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
@@ -7976,7 +7995,10 @@
       this.color = color;
       __privateSet$g(this, _intensityColor, this.color.clone());
       this.color.onChange(
-        () => this.onPropertyChanged("color", __privateGet$g(this, _intensityColor).copy(this.color).multiplyScalar(this.intensity))
+        () => this.onPropertyChanged(
+          "color",
+          sRGBToLinear(__privateGet$g(this, _intensityColor).copy(this.color)).multiplyScalar(this.intensity)
+        )
       );
       this.intensity = intensity;
     }
@@ -8014,7 +8036,7 @@
      */
     reset() {
       this.setRendererBinding();
-      this.onPropertyChanged("color", __privateGet$g(this, _intensityColor).copy(this.color).multiplyScalar(this.intensity));
+      this.onPropertyChanged("color", sRGBToLinear(__privateGet$g(this, _intensityColor).copy(this.color)).multiplyScalar(this.intensity));
     }
     /**
      * Get this {@link Light} intensity.
@@ -8029,7 +8051,7 @@
      */
     set intensity(value) {
       __privateSet$g(this, _intensity$1, value);
-      this.onPropertyChanged("color", __privateGet$g(this, _intensityColor).copy(this.color).multiplyScalar(this.intensity));
+      this.onPropertyChanged("color", sRGBToLinear(__privateGet$g(this, _intensityColor).copy(this.color)).multiplyScalar(this.intensity));
     }
     /**
      * Update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} input value and tell the {@link CameraRenderer#cameraLightsBindGroup | renderer camera, lights and shadows} bind group to update.
@@ -19418,25 +19440,6 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
     }
   }
 
-  function sRGBToLinearFloat(c) {
-    return c < 0.04045 ? c * 0.0773993808 : Math.pow(c * 0.9478672986 + 0.0521327014, 2.4);
-  }
-  function linearTosRGBFloat(c) {
-    return c < 31308e-7 ? c * 12.92 : 1.055 * Math.pow(c, 0.41666) - 0.055;
-  }
-  function sRGBToLinear(vector = new Vec3()) {
-    vector.x = sRGBToLinearFloat(vector.x);
-    vector.y = sRGBToLinearFloat(vector.y);
-    vector.z = sRGBToLinearFloat(vector.z);
-    return vector;
-  }
-  function linearTosRGB(vector = new Vec3()) {
-    vector.x = linearTosRGBFloat(vector.x);
-    vector.y = linearTosRGBFloat(vector.y);
-    vector.z = linearTosRGBFloat(vector.z);
-    return vector;
-  }
-
   var __accessCheck$5 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
@@ -23492,6 +23495,9 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         const { geometry } = meshDescriptor.parameters;
         if (geometry) {
           patchMeshesParameters(meshDescriptor);
+          if (meshDescriptor.extensionsUsed.includes("KHR_materials_unlit")) {
+            meshDescriptor.parameters.material.shading = "Unlit";
+          }
           const mesh = new LitMesh(this.renderer, {
             ...meshDescriptor.parameters
           });

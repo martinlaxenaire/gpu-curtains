@@ -2,6 +2,7 @@ import { Vec3 } from '../../math/Vec3.mjs';
 import { isCameraRenderer } from '../renderers/utils.mjs';
 import { Object3D } from '../objects3D/Object3D.mjs';
 import { generateUUID } from '../../utils/utils.mjs';
+import { sRGBToLinear } from '../../math/color-utils.mjs';
 
 var __accessCheck = (obj, member, msg) => {
   if (!member.has(obj))
@@ -47,7 +48,10 @@ class Light extends Object3D {
     this.color = color;
     __privateSet(this, _intensityColor, this.color.clone());
     this.color.onChange(
-      () => this.onPropertyChanged("color", __privateGet(this, _intensityColor).copy(this.color).multiplyScalar(this.intensity))
+      () => this.onPropertyChanged(
+        "color",
+        sRGBToLinear(__privateGet(this, _intensityColor).copy(this.color)).multiplyScalar(this.intensity)
+      )
     );
     this.intensity = intensity;
   }
@@ -85,7 +89,7 @@ class Light extends Object3D {
    */
   reset() {
     this.setRendererBinding();
-    this.onPropertyChanged("color", __privateGet(this, _intensityColor).copy(this.color).multiplyScalar(this.intensity));
+    this.onPropertyChanged("color", sRGBToLinear(__privateGet(this, _intensityColor).copy(this.color)).multiplyScalar(this.intensity));
   }
   /**
    * Get this {@link Light} intensity.
@@ -100,7 +104,7 @@ class Light extends Object3D {
    */
   set intensity(value) {
     __privateSet(this, _intensity, value);
-    this.onPropertyChanged("color", __privateGet(this, _intensityColor).copy(this.color).multiplyScalar(this.intensity));
+    this.onPropertyChanged("color", sRGBToLinear(__privateGet(this, _intensityColor).copy(this.color)).multiplyScalar(this.intensity));
   }
   /**
    * Update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} input value and tell the {@link CameraRenderer#cameraLightsBindGroup | renderer camera, lights and shadows} bind group to update.

@@ -1203,6 +1203,9 @@ const _GLTFScenesManager = class _GLTFScenesManager {
       const { geometry } = meshDescriptor.parameters;
       if (geometry) {
         patchMeshesParameters(meshDescriptor);
+        if (meshDescriptor.extensionsUsed.includes("KHR_materials_unlit")) {
+          meshDescriptor.parameters.material.shading = "Unlit";
+        }
         const mesh = new LitMesh(this.renderer, {
           ...meshDescriptor.parameters
         });
