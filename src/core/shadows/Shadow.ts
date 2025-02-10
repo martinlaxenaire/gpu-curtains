@@ -508,6 +508,10 @@ export class Shadow {
    * @param once - Whether to render it only once or not.
    */
   render(once = false): number {
+    // when multi-view will be available
+    // we'd be able to render all shadows, including point shadows, in a single pass
+    // we won't have to do that anymore, and just rely on the scene regular behaviour
+    // by rendering the depth meshes early into their output target
     return this.renderer.onBeforeRenderScene.add(
       (commandEncoder) => {
         if (!this.meshes.size) return
