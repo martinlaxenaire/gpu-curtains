@@ -4,8 +4,10 @@ import { particlesDepthPassShaders } from './shaders/shadowed-particles.wgsl.js'
 import { additionalVertexParticle } from './shaders/chunks/additional-vertex-particle.wgsl.js'
 import { getParticleSize } from './shaders/chunks/get-particle-size.wgsl.js'
 
-// port of https://okaydev.co/articles/dive-into-webgpu-part-4
+// Port of https://okaydev.co/articles/dive-into-webgpu-part-4
 // with the current lib features
+// This demonstrates how to create complex scenes with built-in lit meshes
+// With the ability to patch the default built-in shaders
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
   const {

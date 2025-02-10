@@ -182,7 +182,7 @@ export declare class GPUCameraRenderer extends GPURenderer {
     /**
      * Create the {@link cameraLightsBindGroup | camera, lights and shadows bind group} buffers
      */
-    setCameraBindGroup(): void;
+    createCameraLightsBindGroup(): void;
     /**
      * Tell our  {@link cameraLightsBindGroup | camera, lights and shadows bind group} to update.
      */
@@ -225,7 +225,7 @@ export declare class GPUCameraRenderer extends GPURenderer {
      */
     resize(rectBBox?: RectBBox | null): void;
     /**
-     * {@link setCameraBindGroup | Set the camera bind group if needed} and then call our {@link GPURenderer#render | GPURenderer render method}
+     * {@link createCameraLightsBindGroup | Set the camera bind group if needed} and then call our {@link GPURenderer#render | GPURenderer render method}
      * @param commandEncoder - current {@link GPUCommandEncoder}
      */
     render(commandEncoder: GPUCommandEncoder): void;

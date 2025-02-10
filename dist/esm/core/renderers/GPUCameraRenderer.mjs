@@ -423,13 +423,13 @@ class GPUCameraRenderer extends GPURenderer {
     });
     this.cameraLightsBindGroup.consumers.add(this.uuid);
     if (this.device) {
-      this.setCameraBindGroup();
+      this.createCameraLightsBindGroup();
     }
   }
   /**
    * Create the {@link cameraLightsBindGroup | camera, lights and shadows bind group} buffers
    */
-  setCameraBindGroup() {
+  createCameraLightsBindGroup() {
     if (this.cameraLightsBindGroup && this.cameraLightsBindGroup.shouldCreateBindGroup) {
       this.cameraLightsBindGroup.setIndex(0);
       this.cameraLightsBindGroup.createBindGroup();
@@ -541,13 +541,13 @@ class GPUCameraRenderer extends GPURenderer {
   }
   /* RENDER */
   /**
-   * {@link setCameraBindGroup | Set the camera bind group if needed} and then call our {@link GPURenderer#render | GPURenderer render method}
+   * {@link createCameraLightsBindGroup | Set the camera bind group if needed} and then call our {@link GPURenderer#render | GPURenderer render method}
    * @param commandEncoder - current {@link GPUCommandEncoder}
    */
   render(commandEncoder) {
     if (!this.ready)
       return;
-    this.setCameraBindGroup();
+    this.createCameraLightsBindGroup();
     this.updateCameraLightsBindGroup();
     super.render(commandEncoder);
     if (this.cameraLightsBindGroup) {

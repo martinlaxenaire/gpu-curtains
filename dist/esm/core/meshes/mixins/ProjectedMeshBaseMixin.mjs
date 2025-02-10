@@ -81,6 +81,13 @@ function ProjectedMeshBaseMixin(Base) {
      * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
      */
     setRenderer(renderer) {
+      if (this.renderer && this.options.castShadows) {
+        this.renderer.shadowCastingLights.forEach((light) => {
+          if (light.shadow.isActive) {
+            light.shadow.removeMesh(this);
+          }
+        });
+      }
       super.setRenderer(renderer);
       this.camera = this.renderer.camera;
       if (this.options.castShadows) {
@@ -174,6 +181,13 @@ function ProjectedMeshBaseMixin(Base) {
      */
     useGeometry(geometry) {
       super.useGeometry(geometry);
+      if (this.renderer && this.options.castShadows) {
+        this.renderer.shadowCastingLights.forEach((light) => {
+          if (light.shadow.isActive) {
+            light.shadow.updateMeshGeometry(this, geometry);
+          }
+        });
+      }
       if (this.domFrustum) {
         this.domFrustum.boundingBox = this.geometry.boundingBox;
       }

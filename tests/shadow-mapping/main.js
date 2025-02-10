@@ -76,8 +76,8 @@ window.addEventListener('load', async () => {
     position: new Vec3(15, 15, 15),
     shadow: {
       //intensity: 1,
-      //bias: 0.0001,
-      //normalBias: 0.002,
+      bias: 0.0005,
+      normalBias: 0.05,
       depthTextureSize: new Vec2(256, 256),
       pcfSamples: 3,
     },
@@ -89,8 +89,8 @@ window.addEventListener('load', async () => {
     position: new Vec3(-15, 15, 15),
     shadow: {
       //intensity: 1,
-      //bias: 0.0001,
-      //normalBias: 0.002,
+      bias: 0.0005,
+      normalBias: 0.05,
       pcfSamples: 2,
       //depthTextureSize: new Vec2(512, 512),
     },
@@ -102,8 +102,8 @@ window.addEventListener('load', async () => {
     position: new Vec3(15, 15, -15),
     shadow: {
       //intensity: 1,
-      //bias: 0.0001,
-      //normalBias: 0.002,
+      bias: 0.0005,
+      normalBias: 0.05,
       depthTextureSize: new Vec2(1024, 1024),
     },
   })
@@ -114,8 +114,8 @@ window.addEventListener('load', async () => {
     position: new Vec3(-15, 15, -15),
     shadow: {
       //intensity: 1,
-      //bias: 0.0001,
-      //normalBias: 0.002,
+      bias: 0.0005,
+      normalBias: 0.05,
       pcfSamples: 3,
       //depthTextureSize: new Vec2(512, 512),
     },
@@ -132,7 +132,7 @@ window.addEventListener('load', async () => {
 
   pointLight.shadow.cast({
     bias: 0.0005,
-    //normalBias: 0.075,
+    normalBias: 0.05,
     //intensity: 1,
     //depthTextureSize: new Vec2(512, 512),
     // camera: {
@@ -296,7 +296,7 @@ window.addEventListener('load', async () => {
     cullMode: 'none',
     material: {
       shading: shadingModel,
-      color: new Vec3(0.15),
+      color: new Vec3(0.5),
     },
   })
 

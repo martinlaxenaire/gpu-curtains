@@ -100,14 +100,12 @@ export declare class PointShadow extends Shadow {
     removeDepthPass(depthPassTaskID: any): void;
     /**
      * Render the depth pass. This happens before creating the {@link CameraRenderer} command encoder.<br>
-     * - Force all the {@link meshes} to use their depth materials
      * - For each face of the depth cube texture:
      *   - Create a command encoder.
      *   - Set the {@link depthPassTarget} descriptor depth texture view to our depth cube texture current face.
-     *   - Update the face index
-     *   - Render all the {@link meshes}
-     *   - Submit the command encoder
-     * - Reset all the {@link meshes} materials to their original one.
+     *   - Update the face index.
+     *   - Render all the depth meshes.
+     *   - Submit the command encoder.
      * @param once - Whether to render it only once or not.
      */
     render(once?: boolean): number;

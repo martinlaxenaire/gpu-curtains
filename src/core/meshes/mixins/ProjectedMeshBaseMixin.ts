@@ -295,6 +295,15 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
      * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
      */
     setRenderer(renderer: CameraRenderer | GPUCurtains) {
+      // if it casts shadows, remove depth mesh from old renderer
+      if (this.renderer && this.options.castShadows) {
+        this.renderer.shadowCastingLights.forEach((light) => {
+          if (light.shadow.isActive) {
+            light.shadow.removeMesh(this)
+          }
+        })
+      }
+
       super.setRenderer(renderer)
 
       // force update of new camera
@@ -420,6 +429,15 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
      */
     useGeometry(geometry) {
       super.useGeometry(geometry)
+
+      // if it casts shadows, update depth mesh geometry
+      if (this.renderer && this.options.castShadows) {
+        this.renderer.shadowCastingLights.forEach((light) => {
+          if (light.shadow.isActive) {
+            light.shadow.updateMeshGeometry(this, geometry)
+          }
+        })
+      }
 
       // update DOM Frustum bounding box
       if (this.domFrustum) {

@@ -274,8 +274,8 @@ class GPUDeviceManager {
     this.device?.queue.copyExternalImageToTexture(source, destination, copySize);
   }
   /**
-   * Upload a {@link MediaTexture#texture | texture} or {@link DOMTexture#texture | texture} to the GPU.
-   * @param texture - {@link MediaTexture} or {@link DOMTexture} containing the {@link GPUTexture} to upload.
+   * Upload a {@link MediaTexture#texture | texture} to the GPU.
+   * @param texture - {@link MediaTexture} containing the {@link GPUTexture} to upload.
    * @param sourceIndex - Index of the source to upload (for cube maps). Default to `0`.
    */
   uploadTexture(texture, sourceIndex = 0) {
@@ -319,7 +319,7 @@ class GPUDeviceManager {
   /**
    * Mips generation helper on the GPU using our {@link device}. Caches sampler, module and pipeline (by {@link GPUTexture} formats) for faster generation.
    * Ported from https://webgpufundamentals.org/webgpu/lessons/webgpu-importing-textures.html
-   * @param texture - {@link Texture} or {@link DOMTexture} for which to generate the mips.
+   * @param texture - {@link Texture} for which to generate the mips.
    * @param commandEncoder - optional {@link GPUCommandEncoder} to use if we're already in the middle of a command encoding process.
    */
   generateMips(texture, commandEncoder = null) {
@@ -474,7 +474,7 @@ class GPUDeviceManager {
    * - create a {@link GPUCommandEncoder}.
    * - render all our {@link renderers}.
    * - submit our {@link GPUCommandBuffer}.
-   * - upload {@link DOMTexture#texture | DOMTexture textures} that do not have a parentMesh.
+   * - upload {@link MediaTexture#texture | MediaTexture textures} that need it.
    * - empty our {@link texturesQueue} array.
    * - call all our {@link renderers} {@link core/renderers/GPURenderer.GPURenderer#onAfterCommandEncoder | onAfterCommandEncoder} callbacks.
    */

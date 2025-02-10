@@ -352,14 +352,12 @@ export class PointShadow extends Shadow {
 
   /**
    * Render the depth pass. This happens before creating the {@link CameraRenderer} command encoder.<br>
-   * - Force all the {@link meshes} to use their depth materials
    * - For each face of the depth cube texture:
    *   - Create a command encoder.
    *   - Set the {@link depthPassTarget} descriptor depth texture view to our depth cube texture current face.
-   *   - Update the face index
-   *   - Render all the {@link meshes}
-   *   - Submit the command encoder
-   * - Reset all the {@link meshes} materials to their original one.
+   *   - Update the face index.
+   *   - Render all the depth meshes.
+   *   - Submit the command encoder.
    * @param once - Whether to render it only once or not.
    */
   render(once = false): number {
@@ -373,10 +371,7 @@ export class PointShadow extends Shadow {
 
         // since we're not inside the main loop,
         // we need to be sure the renderer camera & lights bind group has been created
-        this.renderer.setCameraBindGroup()
-
-        // assign depth material to meshes
-        this.useDepthMaterials()
+        this.renderer.createCameraLightsBindGroup()
 
         for (let i = 0; i < 6; i++) {
           const commandEncoder = this.renderer.device.createCommandEncoder()
@@ -410,10 +405,6 @@ export class PointShadow extends Shadow {
           const commandBuffer = commandEncoder.finish()
           this.renderer.device.queue.submit([commandBuffer])
         }
-
-        // reset depth meshes material to use the original
-        // so the scene renders them normally
-        this.useOriginalMaterials()
 
         // reset renderer current pipeline again
         this.renderer.pipelineManager.resetCurrentPipeline()

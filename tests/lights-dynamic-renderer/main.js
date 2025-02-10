@@ -3,6 +3,8 @@ window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
   const {
     BoxGeometry,
+    SphereGeometry,
+    Geometry,
     OrbitControls,
     GPUCameraRenderer,
     GPUDeviceManager,
@@ -76,6 +78,8 @@ window.addEventListener('load', async () => {
     })
   )
 
+  console.log(directionalLights[0])
+
   directionalLights.push(
     new DirectionalLight(leftRenderer, {
       color: new Vec3(0, 1, 0),
@@ -96,7 +100,142 @@ window.addEventListener('load', async () => {
     })
   )
 
-  console.log(leftRenderer.lights)
+  // ---------------
+  // GEOMETRIES
+  // ---------------
+
+  // prettier-ignore
+  const vertices = new Float32Array([
+    // front face
+    1, -1, 1,
+    0, 1, 0,
+    -1, -1, 1,
+
+    // right face
+    1, -1, -1,
+    0, 1, 0,
+    1, -1, 1,
+
+    // back face
+    -1, -1, -1,
+    0, 1, 0,
+    1, -1, -1,
+
+    // left face
+    -1, -1, 1,
+    0, 1, 0,
+    -1, -1, -1,
+
+    // bottom first
+    -1, -1, -1,
+    1, -1, -1,
+    -1, -1, 1,
+    // bottom second
+    1, -1, 1,
+    -1, -1, 1,
+    1, -1, -1
+  ])
+
+  // prettier-ignore
+  const uvs = new Float32Array([
+    // front face
+    1, 1,
+    0.5, 0,
+    0, 1,
+
+    // right face
+    1, 1,
+    0.5, 0,
+    0, 1,
+
+    // back face
+    1, 1,
+    0.5, 0,
+    0, 1,
+
+    // left face
+    1, 1,
+    0.5, 0,
+    0, 1,
+
+    // bottom first
+    0, 1,
+    1, 1,
+    0, 0,
+    // bottom second
+    1, 0,
+    0, 0,
+    1, 1,
+  ])
+
+  const frontNormal = new Vec3(0, 1, 1).normalize()
+  const rightNormal = new Vec3(1, 1, 0).normalize()
+  const backNormal = new Vec3(0, 1, -1).normalize()
+  const leftNormal = new Vec3(-1, 1, 0).normalize()
+
+  // prettier-ignore
+  const normals = new Float32Array([
+    // front face
+    frontNormal.x, frontNormal.y, frontNormal.z,
+    frontNormal.x, frontNormal.y, frontNormal.z,
+    frontNormal.x, frontNormal.y, frontNormal.z,
+
+    // right face
+    rightNormal.x, rightNormal.y, rightNormal.z,
+    rightNormal.x, rightNormal.y, rightNormal.z,
+    rightNormal.x, rightNormal.y, rightNormal.z,
+
+    // back face
+    backNormal.x, backNormal.y, backNormal.z,
+    backNormal.x, backNormal.y, backNormal.z,
+    backNormal.x, backNormal.y, backNormal.z,
+
+    // left face
+    leftNormal.x, leftNormal.y, leftNormal.z,
+    leftNormal.x, leftNormal.y, leftNormal.z,
+    leftNormal.x, leftNormal.y, leftNormal.z,
+
+    // bottom first
+    0, -1, 0,
+    0, -1, 0,
+    0, -1, 0,
+    // bottom second
+    0, -1, 0,
+    0, -1, 0,
+    0, -1, 0,
+  ])
+
+  const customGeometry = new Geometry({
+    vertexBuffers: [
+      {
+        name: 'attributes',
+        stepMode: 'vertex', // explicitly set the stepMode even if not mandatory
+        attributes: [
+          {
+            name: 'position',
+            type: 'vec3f',
+            bufferFormat: 'float32x3',
+            size: 3,
+            array: vertices,
+          },
+          {
+            name: 'normal',
+            type: 'vec3f',
+            bufferFormat: 'float32x3',
+            size: 3,
+            array: normals,
+          },
+          {
+            name: 'uv',
+            type: 'vec2f',
+            bufferFormat: 'float32x2',
+            size: 2,
+            array: uvs,
+          },
+        ],
+      },
+    ],
+  })
 
   const mesh = new LitMesh(leftRenderer, {
     label: 'Cube',
@@ -112,8 +251,8 @@ window.addEventListener('load', async () => {
   })
 
   mesh.onBeforeRender(() => {
-    // mesh.rotation.x += 0.01
-    // mesh.rotation.y += 0.02
+    mesh.rotation.x += 0.01
+    mesh.rotation.y += 0.02
   })
 
   mesh.position.y = 2
@@ -143,35 +282,27 @@ window.addEventListener('load', async () => {
   floor.rotation.set(-Math.PI / 2, 0, 0)
   floor.scale.set(30)
 
+  const geometries = {
+    box: mesh.geometry,
+    sphere: new SphereGeometry(),
+    custom: customGeometry,
+  }
+
   // GUI
   const gui = new lil.GUI({
     title: 'Lights test',
   })
 
-  const rendererFolder = gui.addFolder('Renderer')
-  rendererFolder
-    .add({ activeRenderer: 'left' }, 'activeRenderer', { Left: 0, Right: 1 })
+  const meshFolder = gui.addFolder('Shadow casting mesh')
+
+  meshFolder
+    .add({ geometry: 'box' }, 'geometry', geometries)
+    .name('Geometry')
     .onChange((value) => {
-      const renderer = renderers[value]
-
-      console.log(renderer)
-
-      orbitControls.useCamera(renderer.camera)
-      orbitControls.element = renderer.domElement.element
-
-      // you can chose which lights you'd want to update!
-      ambientLights.forEach((light) => light.setRenderer(renderer))
-      //directionalLights.forEach((light) => light.setRenderer(renderer))
-      pointLights.forEach((light) => light.setRenderer(renderer))
-
-      mesh.setRenderer(renderer)
-
-      boxPivot.parent = renderer.scene
-      floor.setRenderer(renderer)
+      mesh.useGeometry(value)
     })
-    .name('Active renderer')
 
-  const materialFolder = gui.addFolder('Materials')
+  const materialFolder = meshFolder.addFolder('Materials')
   const cubeFolder = materialFolder.addFolder('Cube')
 
   cubeFolder
@@ -235,6 +366,29 @@ window.addEventListener('load', async () => {
       mesh.uniforms.material.shininess.value = value
     })
     .name('Shininess')
+
+  const rendererFolder = gui.addFolder('Renderer')
+  rendererFolder
+    .add({ activeRenderer: 'left' }, 'activeRenderer', { Left: 0, Right: 1 })
+    .onChange((value) => {
+      const renderer = renderers[value]
+
+      console.log(renderer)
+
+      orbitControls.useCamera(renderer.camera)
+      orbitControls.element = renderer.domElement.element
+
+      // you can chose which lights you'd want to update!
+      ambientLights.forEach((light) => light.setRenderer(renderer))
+      //directionalLights.forEach((light) => light.setRenderer(renderer))
+      pointLights.forEach((light) => light.setRenderer(renderer))
+
+      mesh.setRenderer(renderer)
+
+      boxPivot.parent = renderer.scene
+      floor.setRenderer(renderer)
+    })
+    .name('Active renderer')
 
   //materialShadingFolder.close()
 

@@ -4680,7 +4680,7 @@
         sampleCount: this.options.sampleCount,
         usage: getDefaultMediaTextureUsage(this.options.usage)
       };
-      if (!this.options.sources) {
+      if (!this.sources?.length) {
         options.mipLevelCount = 1;
         this.texture?.destroy();
         this.texture = this.renderer.createTexture(options);
@@ -5044,7 +5044,7 @@
           source.shouldUpdate = true;
         }
         if (source.shouldUpdate && sourceType !== "externalVideo") {
-          if (this.size.width !== this.texture.width || this.size.height !== this.texture.height) {
+          if (this.size.width !== this.texture.width || this.size.height !== this.texture.height || this.options.generateMips && this.texture && this.texture.mipLevelCount <= 1) {
             this.createTexture();
           }
           this.renderer.uploadTexture(this, sourceIndex);
@@ -8543,6 +8543,324 @@
   }
   _autoRender$1 = new WeakMap();
 
+  const declareAttributesVars$1 = ({ geometry }) => {
+    return geometry.vertexBuffers.map(
+      (vertexBuffer) => vertexBuffer.attributes.map((attribute) => {
+        return (
+          /* wgsl */
+          `
+  var ${attribute.name}: ${attribute.type} = attributes.${attribute.name};`
+        );
+      }).join("")
+    ).join("\n");
+  };
+
+  const getMorphTargets = ({ bindings = [], geometry }) => {
+    let morphTargets = "";
+    const morphTargetsBindings = bindings.filter((binding) => binding.name.includes("morphTarget"));
+    morphTargetsBindings.forEach((binding) => {
+      const morphAttributes = Object.values(binding.inputs).filter((input) => input.name !== "weight");
+      morphAttributes.forEach((input) => {
+        const bindingType = BufferElement.getType(input.type);
+        const attribute = geometry.getAttributeByName(input.name);
+        if (attribute) {
+          const attributeType = attribute.type;
+          const attributeBindingVar = morphAttributes.length === 1 ? `${binding.name}.${input.name}[attributes.vertexIndex]` : `${binding.name}.elements[attributes.vertexIndex].${input.name}`;
+          if (bindingType === attributeType) {
+            morphTargets += `${input.name} += ${binding.name}.weight * ${attributeBindingVar};
+	`;
+          } else {
+            if (bindingType === "vec3f" && attributeType === "vec4f") {
+              morphTargets += `${input.name} += ${binding.name}.weight * vec4(${attributeBindingVar}, 0.0);
+	`;
+            }
+          }
+        }
+      });
+    });
+    return morphTargets;
+  };
+
+  const getVertexSkinnedPositionNormal = ({ bindings = [], geometry }) => {
+    let output = "";
+    const hasInstances = geometry.instancesCount > 1 && bindings.find((binding) => binding.name === "instances");
+    const skinJoints = [];
+    const skinWeights = [];
+    if (geometry.vertexBuffers && geometry.vertexBuffers.length) {
+      geometry.vertexBuffers.forEach((vertexBuffer) => {
+        vertexBuffer.attributes.forEach((attribute) => {
+          if (attribute.name.includes("joints")) {
+            skinJoints.push(attribute);
+          }
+          if (attribute.name.includes("weights")) {
+            skinWeights.push(attribute);
+          }
+        });
+      });
+    }
+    const skinBindings = bindings.filter((binding) => binding.name.includes("skin"));
+    const hasSkin = skinJoints.length && skinWeights.length && skinBindings.length;
+    if (hasSkin) {
+      output += hasInstances ? `
+  var instancesWorldPosition = array<vec4f, ${geometry.instancesCount}>();
+  var instancesNormal = array<vec3f, ${geometry.instancesCount}>();
+      ` : "";
+      output += `
+  let skinJoints: vec4f = ${skinJoints.map((skinJoint) => skinJoint.name).join(" + ")};`;
+      output += `
+  var skinWeights: vec4f = ${skinWeights.map((skinWeight) => skinWeight.name).join(" + ")};
+  
+  let skinWeightsSum = dot(skinWeights, vec4(1.0));
+  if(skinWeightsSum > 0.0) {
+    skinWeights = skinWeights / skinWeightsSum;
+  }
+    `;
+      skinBindings.forEach((binding, bindingIndex) => {
+        output += /* wgsl */
+        `
+  ${hasInstances ? "// instancing with different skins: joints calculations for skin " + bindingIndex + "\n" : ""}
+  // position
+  let skinMatrix_${bindingIndex}: mat4x4f = 
+    skinWeights.x * ${binding.name}.joints[u32(skinJoints.x)].jointMatrix +
+    skinWeights.y * ${binding.name}.joints[u32(skinJoints.y)].jointMatrix +
+    skinWeights.z * ${binding.name}.joints[u32(skinJoints.z)].jointMatrix +
+    skinWeights.w * ${binding.name}.joints[u32(skinJoints.w)].jointMatrix;
+      
+  ${hasInstances ? "instancesWorldPosition[" + bindingIndex + "] = skinMatrix_" + bindingIndex + " * worldPosition;" : "worldPosition = skinMatrix_" + bindingIndex + " * worldPosition;"}
+      
+  // normal
+  let skinNormalMatrix_${bindingIndex}: mat4x4f = 
+    skinWeights.x * ${binding.name}.joints[u32(skinJoints.x)].normalMatrix +
+    skinWeights.y * ${binding.name}.joints[u32(skinJoints.y)].normalMatrix +
+    skinWeights.z * ${binding.name}.joints[u32(skinJoints.z)].normalMatrix +
+    skinWeights.w * ${binding.name}.joints[u32(skinJoints.w)].normalMatrix;
+    
+  let skinNormalMatrix_${bindingIndex}_3: mat3x3f = mat3x3f(
+    vec3(skinNormalMatrix_${bindingIndex}[0].xyz),
+    vec3(skinNormalMatrix_${bindingIndex}[1].xyz),
+    vec3(skinNormalMatrix_${bindingIndex}[2].xyz)
+  );
+      
+  ${hasInstances ? "instancesNormal[" + bindingIndex + "] = skinNormalMatrix_" + bindingIndex + "_3 * normal;" : "normal = skinNormalMatrix_" + bindingIndex + "_3 * normal;"}
+      `;
+      });
+    }
+    output += /* wgsl */
+    `
+  var modelMatrix: mat4x4f;
+  `;
+    if (hasInstances) {
+      if (hasSkin) {
+        output += /* wgsl */
+        `
+  worldPosition = instancesWorldPosition[attributes.instanceIndex];
+  normal = instancesNormal[attributes.instanceIndex];
+      `;
+      }
+      output += /* wgsl */
+      `
+  modelMatrix = instances.matrices[attributes.instanceIndex].model;
+  worldPosition = modelMatrix * worldPosition;
+  
+  normal = normalize(instances.matrices[attributes.instanceIndex].normal * normal);
+    `;
+    } else {
+      output += /* wgsl */
+      `
+  modelMatrix = matrices.model;
+  worldPosition = modelMatrix * worldPosition;
+  normal = getWorldNormal(normal);
+    `;
+    }
+    return output;
+  };
+
+  const getVertexTransformedPositionNormal = ({
+    bindings = [],
+    geometry
+  }) => {
+    let output = "";
+    output += getMorphTargets({ bindings, geometry });
+    output += /* wgsl */
+    `
+  var worldPosition: vec4f = vec4(position, 1.0);
+  `;
+    output += getVertexSkinnedPositionNormal({ bindings, geometry });
+    return output;
+  };
+
+  const getDefaultShadowDepthVs = (lightIndex = 0, { bindings = [], geometry }) => (
+    /* wgsl */
+    `
+@vertex fn main(
+  attributes: Attributes,
+) -> @builtin(position) vec4f {  
+  let directionalShadow: DirectionalShadowsElement = directionalShadows.directionalShadowsElements[${lightIndex}];
+  
+  ${declareAttributesVars$1({ geometry })}
+  ${getVertexTransformedPositionNormal({ bindings, geometry })}
+  
+  let worldPos = worldPosition.xyz / worldPosition.w;
+  
+  let lightDirection: vec3f = normalize(worldPos - directionalLights.elements[${lightIndex}].direction);
+  let NdotL: f32 = dot(normal, lightDirection);
+  let sinNdotL = sqrt(1.0 - NdotL * NdotL);
+  let normalBias: f32 = directionalShadow.normalBias * sinNdotL;
+  
+  worldPosition = vec4(worldPos - normal * normalBias, 1.0);
+  
+  return directionalShadow.projectionMatrix * directionalShadow.viewMatrix * worldPosition;
+}`
+  );
+
+  class ProjectedObject3D extends Object3D {
+    /**
+     * ProjectedObject3D constructor
+     * @param renderer - {@link CameraRenderer} object or {@link GPUCurtains} class object used to create this {@link ProjectedObject3D}
+     */
+    constructor(renderer) {
+      super();
+      renderer = isCameraRenderer(renderer, "ProjectedObject3D");
+      this.camera = renderer.camera;
+    }
+    /**
+     * Tell our projection matrix stack to update
+     */
+    applyPosition() {
+      super.applyPosition();
+      this.shouldUpdateProjectionMatrixStack();
+    }
+    /**
+     * Tell our projection matrix stack to update
+     */
+    applyRotation() {
+      super.applyRotation();
+      this.shouldUpdateProjectionMatrixStack();
+    }
+    /**
+     * Tell our projection matrix stack to update
+     */
+    applyScale() {
+      super.applyScale();
+      this.shouldUpdateProjectionMatrixStack();
+    }
+    /**
+     * Tell our projection matrix stack to update
+     */
+    applyTransformOrigin() {
+      super.applyTransformOrigin();
+      this.shouldUpdateProjectionMatrixStack();
+    }
+    /**
+     * Set our transform and projection matrices
+     */
+    setMatrices() {
+      super.setMatrices();
+      this.matrices = {
+        ...this.matrices,
+        modelView: {
+          matrix: new Mat4(),
+          shouldUpdate: true,
+          onUpdate: () => {
+            this.modelViewMatrix.multiplyMatrices(this.viewMatrix, this.worldMatrix);
+          }
+        },
+        modelViewProjection: {
+          matrix: new Mat4(),
+          shouldUpdate: true,
+          onUpdate: () => {
+            this.modelViewProjectionMatrix.multiplyMatrices(this.projectionMatrix, this.modelViewMatrix);
+          }
+        },
+        normal: {
+          matrix: new Mat3(),
+          shouldUpdate: true,
+          onUpdate: () => {
+            this.normalMatrix.getNormalMatrix(this.worldMatrix);
+          }
+        }
+      };
+    }
+    /**
+     * Get our {@link modelViewMatrix | model view matrix}
+     */
+    get modelViewMatrix() {
+      return this.matrices.modelView.matrix;
+    }
+    /**
+     * Set our {@link modelViewMatrix | model view matrix}
+     * @param value - new {@link modelViewMatrix | model view matrix}
+     */
+    set modelViewMatrix(value) {
+      this.matrices.modelView.matrix = value;
+      this.matrices.modelView.shouldUpdate = true;
+    }
+    /**
+     * Get our {@link Camera#viewMatrix | camera view matrix}
+     * @readonly
+     */
+    get viewMatrix() {
+      return this.camera.viewMatrix;
+    }
+    /**
+     * Get our {@link Camera#projectionMatrix | camera projection matrix}
+     * @readonly
+     */
+    get projectionMatrix() {
+      return this.camera.projectionMatrix;
+    }
+    /**
+     * Get our {@link modelViewProjectionMatrix | model view projection matrix}
+     */
+    get modelViewProjectionMatrix() {
+      return this.matrices.modelViewProjection.matrix;
+    }
+    /**
+     * Set our {@link modelViewProjectionMatrix | model view projection matrix}
+     * @param value - new {@link modelViewProjectionMatrix | model view projection matrix}s
+     */
+    set modelViewProjectionMatrix(value) {
+      this.matrices.modelViewProjection.matrix = value;
+      this.matrices.modelViewProjection.shouldUpdate = true;
+    }
+    /**
+     * Get our {@link normalMatrix | normal matrix}
+     */
+    get normalMatrix() {
+      return this.matrices.normal.matrix;
+    }
+    /**
+     * Set our {@link normalMatrix | normal matrix}
+     * @param value - new {@link normalMatrix | normal matrix}
+     */
+    set normalMatrix(value) {
+      this.matrices.normal.matrix = value;
+      this.matrices.normal.shouldUpdate = true;
+    }
+    /**
+     * Set our projection matrices shouldUpdate flags to true (tell them to update)
+     */
+    shouldUpdateProjectionMatrixStack() {
+      this.matrices.modelView.shouldUpdate = true;
+      this.matrices.modelViewProjection.shouldUpdate = true;
+    }
+    /**
+     * When the world matrix update, tell our projection matrix to update as well
+     */
+    shouldUpdateWorldMatrix() {
+      super.shouldUpdateWorldMatrix();
+      this.shouldUpdateProjectionMatrixStack();
+      this.matrices.normal.shouldUpdate = true;
+    }
+    /**
+     * Tell all our matrices to update
+     */
+    shouldUpdateMatrixStack() {
+      this.shouldUpdateModelMatrix();
+      this.shouldUpdateProjectionMatrixStack();
+    }
+  }
+
   let pipelineId = 0;
   class PipelineEntry {
     /**
@@ -9339,175 +9657,6 @@ New rendering options: ${JSON.stringify(
     }
   }
 
-  const declareAttributesVars$1 = ({ geometry }) => {
-    return geometry.vertexBuffers.map(
-      (vertexBuffer) => vertexBuffer.attributes.map((attribute) => {
-        return (
-          /* wgsl */
-          `
-  var ${attribute.name}: ${attribute.type} = attributes.${attribute.name};`
-        );
-      }).join("")
-    ).join("\n");
-  };
-
-  const getMorphTargets = ({ bindings = [], geometry }) => {
-    let morphTargets = "";
-    const morphTargetsBindings = bindings.filter((binding) => binding.name.includes("morphTarget"));
-    morphTargetsBindings.forEach((binding) => {
-      const morphAttributes = Object.values(binding.inputs).filter((input) => input.name !== "weight");
-      morphAttributes.forEach((input) => {
-        const bindingType = BufferElement.getType(input.type);
-        const attribute = geometry.getAttributeByName(input.name);
-        if (attribute) {
-          const attributeType = attribute.type;
-          const attributeBindingVar = morphAttributes.length === 1 ? `${binding.name}.${input.name}[attributes.vertexIndex]` : `${binding.name}.elements[attributes.vertexIndex].${input.name}`;
-          if (bindingType === attributeType) {
-            morphTargets += `${input.name} += ${binding.name}.weight * ${attributeBindingVar};
-	`;
-          } else {
-            if (bindingType === "vec3f" && attributeType === "vec4f") {
-              morphTargets += `${input.name} += ${binding.name}.weight * vec4(${attributeBindingVar}, 0.0);
-	`;
-            }
-          }
-        }
-      });
-    });
-    return morphTargets;
-  };
-
-  const getVertexSkinnedPositionNormal = ({ bindings = [], geometry }) => {
-    let output = "";
-    const hasInstances = geometry.instancesCount > 1 && bindings.find((binding) => binding.name === "instances");
-    const skinJoints = [];
-    const skinWeights = [];
-    if (geometry.vertexBuffers && geometry.vertexBuffers.length) {
-      geometry.vertexBuffers.forEach((vertexBuffer) => {
-        vertexBuffer.attributes.forEach((attribute) => {
-          if (attribute.name.includes("joints")) {
-            skinJoints.push(attribute);
-          }
-          if (attribute.name.includes("weights")) {
-            skinWeights.push(attribute);
-          }
-        });
-      });
-    }
-    const skinBindings = bindings.filter((binding) => binding.name.includes("skin"));
-    const hasSkin = skinJoints.length && skinWeights.length && skinBindings.length;
-    if (hasSkin) {
-      output += hasInstances ? `
-  var instancesWorldPosition = array<vec4f, ${geometry.instancesCount}>();
-  var instancesNormal = array<vec3f, ${geometry.instancesCount}>();
-      ` : "";
-      output += `
-  let skinJoints: vec4f = ${skinJoints.map((skinJoint) => skinJoint.name).join(" + ")};`;
-      output += `
-  var skinWeights: vec4f = ${skinWeights.map((skinWeight) => skinWeight.name).join(" + ")};
-  
-  let skinWeightsSum = dot(skinWeights, vec4(1.0));
-  if(skinWeightsSum > 0.0) {
-    skinWeights = skinWeights / skinWeightsSum;
-  }
-    `;
-      skinBindings.forEach((binding, bindingIndex) => {
-        output += /* wgsl */
-        `
-  ${hasInstances ? "// instancing with different skins: joints calculations for skin " + bindingIndex + "\n" : ""}
-  // position
-  let skinMatrix_${bindingIndex}: mat4x4f = 
-    skinWeights.x * ${binding.name}.joints[u32(skinJoints.x)].jointMatrix +
-    skinWeights.y * ${binding.name}.joints[u32(skinJoints.y)].jointMatrix +
-    skinWeights.z * ${binding.name}.joints[u32(skinJoints.z)].jointMatrix +
-    skinWeights.w * ${binding.name}.joints[u32(skinJoints.w)].jointMatrix;
-      
-  ${hasInstances ? "instancesWorldPosition[" + bindingIndex + "] = skinMatrix_" + bindingIndex + " * worldPosition;" : "worldPosition = skinMatrix_" + bindingIndex + " * worldPosition;"}
-      
-  // normal
-  let skinNormalMatrix_${bindingIndex}: mat4x4f = 
-    skinWeights.x * ${binding.name}.joints[u32(skinJoints.x)].normalMatrix +
-    skinWeights.y * ${binding.name}.joints[u32(skinJoints.y)].normalMatrix +
-    skinWeights.z * ${binding.name}.joints[u32(skinJoints.z)].normalMatrix +
-    skinWeights.w * ${binding.name}.joints[u32(skinJoints.w)].normalMatrix;
-    
-  let skinNormalMatrix_${bindingIndex}_3: mat3x3f = mat3x3f(
-    vec3(skinNormalMatrix_${bindingIndex}[0].xyz),
-    vec3(skinNormalMatrix_${bindingIndex}[1].xyz),
-    vec3(skinNormalMatrix_${bindingIndex}[2].xyz)
-  );
-      
-  ${hasInstances ? "instancesNormal[" + bindingIndex + "] = skinNormalMatrix_" + bindingIndex + "_3 * normal;" : "normal = skinNormalMatrix_" + bindingIndex + "_3 * normal;"}
-      `;
-      });
-    }
-    output += /* wgsl */
-    `
-  var modelMatrix: mat4x4f;
-  `;
-    if (hasInstances) {
-      if (hasSkin) {
-        output += /* wgsl */
-        `
-  worldPosition = instancesWorldPosition[attributes.instanceIndex];
-  normal = instancesNormal[attributes.instanceIndex];
-      `;
-      }
-      output += /* wgsl */
-      `
-  modelMatrix = instances.matrices[attributes.instanceIndex].model;
-  worldPosition = modelMatrix * worldPosition;
-  
-  normal = normalize(instances.matrices[attributes.instanceIndex].normal * normal);
-    `;
-    } else {
-      output += /* wgsl */
-      `
-  modelMatrix = matrices.model;
-  worldPosition = modelMatrix * worldPosition;
-  normal = getWorldNormal(normal);
-    `;
-    }
-    return output;
-  };
-
-  const getVertexTransformedPositionNormal = ({
-    bindings = [],
-    geometry
-  }) => {
-    let output = "";
-    output += getMorphTargets({ bindings, geometry });
-    output += /* wgsl */
-    `
-  var worldPosition: vec4f = vec4(position, 1.0);
-  `;
-    output += getVertexSkinnedPositionNormal({ bindings, geometry });
-    return output;
-  };
-
-  const getDefaultShadowDepthVs = (lightIndex = 0, { bindings = [], geometry }) => (
-    /* wgsl */
-    `
-@vertex fn main(
-  attributes: Attributes,
-) -> @builtin(position) vec4f {  
-  let directionalShadow: DirectionalShadowsElement = directionalShadows.directionalShadowsElements[${lightIndex}];
-  
-  ${declareAttributesVars$1({ geometry })}
-  ${getVertexTransformedPositionNormal({ bindings, geometry })}
-  
-  let worldPos = worldPosition.xyz / worldPosition.w;
-  let lightDirection: vec3f = normalize(worldPos - directionalLights.elements[${lightIndex}].direction);
-  let NdotL: f32 = dot(normalize(normal), lightDirection);
-  let sinNdotL = sqrt(1.0 - NdotL * NdotL);
-  let normalBias: f32 = directionalShadow.normalBias * sinNdotL;
-  
-  worldPosition = vec4(worldPos - normal * normalBias, 1.0);
-  
-  return directionalShadow.projectionMatrix * directionalShadow.viewMatrix * worldPosition;
-}`
-  );
-
   var __accessCheck$g = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
@@ -9523,1378 +9672,6 @@ New rendering options: ${JSON.stringify(
   };
   var __privateSet$e = (obj, member, value, setter) => {
     __accessCheck$g(obj, member, "write to private field");
-    member.set(obj, value);
-    return value;
-  };
-  var __privateMethod$8 = (obj, member, method) => {
-    __accessCheck$g(obj, member, "access private method");
-    return method;
-  };
-  var _intensity, _bias, _normalBias, _pcfSamples, _isActive, _autoRender, _materials, _depthMaterials, _depthPassTaskID, _setParameters, setParameters_fn;
-  const shadowStruct = {
-    isActive: {
-      type: "i32",
-      value: 0
-    },
-    pcfSamples: {
-      type: "i32",
-      value: 0
-    },
-    bias: {
-      type: "f32",
-      value: 0
-    },
-    normalBias: {
-      type: "f32",
-      value: 0
-    },
-    intensity: {
-      type: "f32",
-      value: 0
-    }
-  };
-  class Shadow {
-    /**
-     * Shadow constructor
-     * @param renderer - {@link CameraRenderer} used to create this {@link Shadow}.
-     * @param parameters - {@link ShadowBaseParams | parameters} used to create this {@link Shadow}.
-     */
-    constructor(renderer, {
-      light,
-      intensity = 1,
-      bias = 0,
-      normalBias = 0,
-      pcfSamples = 1,
-      depthTextureSize = new Vec2(512),
-      depthTextureFormat = "depth24plus",
-      autoRender = true
-    } = {}) {
-      /**
-       * Set the {@link Shadow} parameters.
-       * @param parameters - parameters to use for this {@link Shadow}.
-       * @private
-       */
-      __privateAdd$g(this, _setParameters);
-      /** @ignore */
-      __privateAdd$g(this, _intensity, void 0);
-      /** @ignore */
-      __privateAdd$g(this, _bias, void 0);
-      /** @ignore */
-      __privateAdd$g(this, _normalBias, void 0);
-      /** @ignore */
-      __privateAdd$g(this, _pcfSamples, void 0);
-      /** @ignore */
-      __privateAdd$g(this, _isActive, void 0);
-      /** @ignore */
-      __privateAdd$g(this, _autoRender, void 0);
-      /**
-       * Original {@link meshes} {@link RenderMaterial | materials}.
-       * @private
-       */
-      __privateAdd$g(this, _materials, void 0);
-      /**
-       * Corresponding depth {@link meshes} {@link RenderMaterial | materials}.
-       * @private
-       */
-      __privateAdd$g(this, _depthMaterials, void 0);
-      /** @ignore */
-      __privateAdd$g(this, _depthPassTaskID, void 0);
-      this.setRenderer(renderer);
-      this.light = light;
-      this.index = this.light.index;
-      this.options = {
-        light,
-        intensity,
-        bias,
-        normalBias,
-        pcfSamples,
-        depthTextureSize,
-        depthTextureFormat
-      };
-      this.sampleCount = 1;
-      this.meshes = /* @__PURE__ */ new Map();
-      __privateSet$e(this, _materials, /* @__PURE__ */ new Map());
-      __privateSet$e(this, _depthMaterials, /* @__PURE__ */ new Map());
-      __privateSet$e(this, _depthPassTaskID, null);
-      __privateMethod$8(this, _setParameters, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
-      this.isActive = false;
-    }
-    /**
-     * Set or reset this shadow {@link CameraRenderer}.
-     * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
-     */
-    setRenderer(renderer) {
-      renderer = isCameraRenderer(renderer, this.constructor.name);
-      this.renderer = renderer;
-      this.setRendererBinding();
-      __privateGet$e(this, _depthMaterials)?.forEach((depthMaterial) => {
-        depthMaterial.setRenderer(this.renderer);
-      });
-    }
-    /** @ignore */
-    setRendererBinding() {
-      this.rendererBinding = null;
-    }
-    /**
-     * Set the parameters and start casting shadows by setting the {@link isActive} setter to `true`.<br>
-     * Called internally by the associated {@link core/lights/Light.Light | Light} if any shadow parameters are specified when creating it. Can also be called directly.
-     * @param parameters - parameters to use for this {@link Shadow}.
-     */
-    cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender } = {}) {
-      __privateMethod$8(this, _setParameters, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
-      this.isActive = true;
-    }
-    /**
-     * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link core/lights/Light.Light | lights} has been overflowed.
-     */
-    reset() {
-      this.onPropertyChanged("isActive", this.isActive ? 1 : 0);
-      this.onPropertyChanged("intensity", this.intensity);
-      this.onPropertyChanged("bias", this.bias);
-      this.onPropertyChanged("normalBias", this.normalBias);
-      this.onPropertyChanged("pcfSamples", this.pcfSamples);
-    }
-    /**
-     * Get whether this {@link Shadow} is actually casting shadows.
-     * @returns - Whether this {@link Shadow} is actually casting shadows.
-     */
-    get isActive() {
-      return __privateGet$e(this, _isActive);
-    }
-    /**
-     * Start or stop casting shadows.
-     * @param value - New active state.
-     */
-    set isActive(value) {
-      if (!value && this.isActive) {
-        this.destroy();
-      } else if (value && !this.isActive) {
-        this.init();
-      }
-      __privateSet$e(this, _isActive, value);
-    }
-    /**
-     * Get this {@link Shadow} intensity.
-     * @returns - The {@link Shadow} intensity.
-     */
-    get intensity() {
-      return __privateGet$e(this, _intensity);
-    }
-    /**
-     * Set this {@link Shadow} intensity and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
-     * @param value - The new {@link Shadow} intensity.
-     */
-    set intensity(value) {
-      __privateSet$e(this, _intensity, value);
-      this.onPropertyChanged("intensity", this.intensity);
-    }
-    /**
-     * Get this {@link Shadow} bias.
-     * @returns - The {@link Shadow} bias.
-     */
-    get bias() {
-      return __privateGet$e(this, _bias);
-    }
-    /**
-     * Set this {@link Shadow} bias and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
-     * @param value - The new {@link Shadow} bias.
-     */
-    set bias(value) {
-      __privateSet$e(this, _bias, value);
-      this.onPropertyChanged("bias", this.bias);
-    }
-    /**
-     * Get this {@link Shadow} normal bias.
-     * @returns - The {@link Shadow} normal bias.
-     */
-    get normalBias() {
-      return __privateGet$e(this, _normalBias);
-    }
-    /**
-     * Set this {@link Shadow} normal bias and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
-     * @param value - The new {@link Shadow} normal bias.
-     */
-    set normalBias(value) {
-      __privateSet$e(this, _normalBias, value);
-      this.onPropertyChanged("normalBias", this.normalBias);
-    }
-    /**
-     * Get this {@link Shadow} PCF samples count.
-     * @returns - The {@link Shadow} PCF samples count.
-     */
-    get pcfSamples() {
-      return __privateGet$e(this, _pcfSamples);
-    }
-    /**
-     * Set this {@link Shadow} PCF samples count and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
-     * @param value - The new {@link Shadow} PCF samples count.
-     */
-    set pcfSamples(value) {
-      __privateSet$e(this, _pcfSamples, Math.max(1, Math.ceil(value)));
-      this.onPropertyChanged("pcfSamples", this.pcfSamples);
-    }
-    /**
-     * Set the {@link depthComparisonSampler}, {@link depthTexture}, {@link depthPassTarget} and start rendering to the shadow map.
-     */
-    init() {
-      if (!this.depthComparisonSampler) {
-        const samplerExists = this.renderer.samplers.find((sampler) => sampler.name === "depthComparisonSampler");
-        this.depthComparisonSampler = samplerExists || new Sampler(this.renderer, {
-          label: "Depth comparison sampler",
-          name: "depthComparisonSampler",
-          // we do not want to repeat the shadows
-          addressModeU: "clamp-to-edge",
-          addressModeV: "clamp-to-edge",
-          compare: "less",
-          minFilter: "linear",
-          magFilter: "linear",
-          type: "comparison"
-        });
-      }
-      this.setDepthTexture();
-      if (!this.depthPassTarget) {
-        this.createDepthPassTarget();
-      }
-      if (__privateGet$e(this, _depthPassTaskID) === null && __privateGet$e(this, _autoRender)) {
-        this.setDepthPass();
-        this.onPropertyChanged("isActive", 1);
-      }
-    }
-    /**
-     * Reset the {@link depthTexture} when the {@link depthTextureSize} changes.
-     */
-    onDepthTextureSizeChanged() {
-      this.setDepthTexture();
-    }
-    /**
-     * Set or resize the {@link depthTexture} and eventually resize the {@link depthPassTarget} as well.
-     */
-    setDepthTexture() {
-      if (this.depthTexture && (this.depthTexture.size.width !== this.depthTextureSize.x || this.depthTexture.size.height !== this.depthTextureSize.y)) {
-        this.depthTexture.options.fixedSize.width = this.depthTextureSize.x;
-        this.depthTexture.options.fixedSize.height = this.depthTextureSize.y;
-        this.depthTexture.size.width = this.depthTextureSize.x;
-        this.depthTexture.size.height = this.depthTextureSize.y;
-        this.depthTexture.createTexture();
-        if (this.depthPassTarget) {
-          this.depthPassTarget.resize();
-        }
-      } else if (!this.depthTexture) {
-        this.createDepthTexture();
-      }
-    }
-    /**
-     * Create the {@link depthTexture}.
-     */
-    createDepthTexture() {
-      this.depthTexture = new Texture(this.renderer, {
-        label: `${this.constructor.name} (index: ${this.light.index}) depth texture`,
-        name: "shadowDepthTexture" + this.index,
-        type: "depth",
-        format: this.depthTextureFormat,
-        sampleCount: this.sampleCount,
-        fixedSize: {
-          width: this.depthTextureSize.x,
-          height: this.depthTextureSize.y
-        },
-        autoDestroy: false
-        // do not destroy when removing a mesh
-      });
-    }
-    /**
-     * Clear the content of the depth texture. Called whenever the {@link meshes} array is empty after having removed a mesh.
-     */
-    clearDepthTexture() {
-      if (!this.depthTexture || !this.depthTexture.texture)
-        return;
-      const commandEncoder = this.renderer.device.createCommandEncoder();
-      !this.renderer.production && commandEncoder.pushDebugGroup(`Clear ${this.depthTexture.texture.label} command encoder`);
-      const renderPassDescriptor = {
-        colorAttachments: [],
-        depthStencilAttachment: {
-          view: this.depthTexture.texture.createView({
-            label: "Clear " + this.depthTexture.texture.label + " view"
-          }),
-          depthLoadOp: "clear",
-          // Clear the depth attachment
-          depthClearValue: 1,
-          // Clear to the maximum depth (farthest possible depth)
-          depthStoreOp: "store"
-          // Store the cleared depth
-        }
-      };
-      const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
-      passEncoder.end();
-      !this.renderer.production && commandEncoder.popDebugGroup();
-      this.renderer.device.queue.submit([commandEncoder.finish()]);
-    }
-    /**
-     * Create the {@link depthPassTarget}.
-     */
-    createDepthPassTarget() {
-      this.depthPassTarget = new RenderTarget(this.renderer, {
-        label: "Depth pass render target for " + this.constructor.name + " " + this.index,
-        useColorAttachments: false,
-        depthTexture: this.depthTexture,
-        sampleCount: this.sampleCount
-      });
-    }
-    /**
-     * Update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} input value and tell the {@link CameraRenderer#cameraLightsBindGroup | renderer camera, lights and shadows} bind group to update.
-     * @param propertyKey - name of the property to update.
-     * @param value - new value of the property.
-     */
-    onPropertyChanged(propertyKey, value) {
-      if (this.rendererBinding) {
-        if (value instanceof Mat4) {
-          for (let i = 0; i < value.elements.length; i++) {
-            this.rendererBinding.childrenBindings[this.index].inputs[propertyKey].value[i] = value.elements[i];
-          }
-          this.rendererBinding.childrenBindings[this.index].inputs[propertyKey].shouldUpdate = true;
-        } else {
-          this.rendererBinding.childrenBindings[this.index].inputs[propertyKey].value = value;
-        }
-        this.renderer.shouldUpdateCameraLightsBindGroup();
-      }
-    }
-    /**
-     * Start the depth pass.
-     */
-    setDepthPass() {
-      __privateSet$e(this, _depthPassTaskID, this.render());
-    }
-    /**
-     * Remove the depth pass from its {@link utils/TasksQueueManager.TasksQueueManager | task queue manager}.
-     * @param depthPassTaskID - Task queue manager ID to use for removal.
-     */
-    removeDepthPass(depthPassTaskID) {
-      this.renderer.onBeforeRenderScene.remove(depthPassTaskID);
-    }
-    /**
-     * Render the depth pass. This happens before rendering the {@link CameraRenderer#scene | scene}.<br>
-     * - Force all the {@link meshes} to use their depth materials
-     * - Render all the {@link meshes}
-     * - Reset all the {@link meshes} materials to their original one.
-     * @param once - Whether to render it only once or not.
-     */
-    render(once = false) {
-      return this.renderer.onBeforeRenderScene.add(
-        (commandEncoder) => {
-          if (!this.meshes.size)
-            return;
-          this.useDepthMaterials();
-          this.renderDepthPass(commandEncoder);
-          this.useOriginalMaterials();
-          this.renderer.pipelineManager.resetCurrentPipeline();
-        },
-        {
-          once,
-          order: this.index
-        }
-      );
-    }
-    /**
-     * Render the shadow map only once. Useful with static scenes if autoRender has been set to `false` to only take one snapshot of the shadow map.
-     */
-    async renderOnce() {
-      if (!__privateGet$e(this, _autoRender)) {
-        this.onPropertyChanged("isActive", 1);
-        this.useDepthMaterials();
-        this.meshes.forEach((mesh) => {
-          mesh.setGeometry();
-        });
-        await Promise.all(
-          [...__privateGet$e(this, _depthMaterials).values()].map(async (depthMaterial) => {
-            await depthMaterial.compileMaterial();
-          })
-        );
-        this.render(true);
-      }
-    }
-    /**
-     * Render all the {@link meshes} into the {@link depthPassTarget}.
-     * @param commandEncoder - {@link GPUCommandEncoder} to use.
-     */
-    renderDepthPass(commandEncoder) {
-      const renderBundles = /* @__PURE__ */ new Map();
-      this.meshes.forEach((mesh) => {
-        if (mesh.options.renderBundle) {
-          renderBundles.set(mesh.options.renderBundle.uuid, mesh.options.renderBundle);
-        }
-      });
-      renderBundles.forEach((bundle) => {
-        bundle.updateBinding();
-      });
-      renderBundles.clear();
-      this.renderer.pipelineManager.resetCurrentPipeline();
-      const depthPass = commandEncoder.beginRenderPass(this.depthPassTarget.renderPass.descriptor);
-      if (!this.renderer.production)
-        depthPass.pushDebugGroup(`${this.constructor.name} (index: ${this.index}): depth pass`);
-      this.meshes.forEach((mesh) => {
-        mesh.render(depthPass);
-      });
-      if (!this.renderer.production)
-        depthPass.popDebugGroup();
-      depthPass.end();
-    }
-    /**
-     * Get the default depth pass vertex shader for this {@link Shadow}.
-     * parameters - {@link VertexShaderInputBaseParams} used to compute the output `worldPosition` and `normal` vectors.
-     * @returns - Depth pass vertex shader.
-     */
-    getDefaultShadowDepthVs({ bindings = [], geometry }) {
-      return {
-        /** Returned code. */
-        code: getDefaultShadowDepthVs(this.index, { bindings, geometry })
-      };
-    }
-    /**
-     * Get the default depth pass fragment shader for this {@link Shadow}.
-     * @returns - A {@link ShaderOptions} if a depth pass fragment shader is needed, `false` otherwise.
-     */
-    getDefaultShadowDepthFs() {
-      return false;
-    }
-    /**
-     * Patch the given {@link ProjectedMesh | mesh} material parameters to create the depth material.
-     * @param mesh - original {@link ProjectedMesh | mesh} to use.
-     * @param parameters - Optional additional parameters to use for the depth material.
-     * @returns - Patched parameters.
-     */
-    patchShadowCastingMeshParams(mesh, parameters = {}) {
-      parameters = { ...mesh.material.options.rendering, ...parameters };
-      parameters.targets = [];
-      parameters.sampleCount = this.sampleCount;
-      parameters.depthFormat = this.depthTextureFormat;
-      const bindings = [mesh.material.getBufferBindingByName("matrices")];
-      mesh.material.inputsBindings.forEach((binding) => {
-        if (binding.name.includes("skin") || binding.name.includes("morphTarget")) {
-          bindings.push(binding);
-        }
-      });
-      const instancesBinding = mesh.material.getBufferBindingByName("instances");
-      if (instancesBinding) {
-        bindings.push(instancesBinding);
-      }
-      if (parameters.bindings) {
-        parameters.bindings = [...bindings, ...parameters.bindings];
-      } else {
-        parameters.bindings = [...bindings];
-      }
-      if (!parameters.shaders) {
-        parameters.shaders = {
-          vertex: this.getDefaultShadowDepthVs({ bindings, geometry: mesh.geometry }),
-          fragment: this.getDefaultShadowDepthFs()
-        };
-      }
-      return parameters;
-    }
-    /**
-     * Add a {@link ProjectedMesh | mesh} to the shadow map. Internally called by the {@link ProjectedMesh | mesh} if its `castShadows` parameters has been set to `true`, but can also be called externally to selectively cast shadows or to add specific parameters (such as custom depth pass shaders).
-     * - Save the original {@link ProjectedMesh | mesh} material.
-     * - {@link patchShadowCastingMeshParams | Patch} the parameters.
-     * - Create a new depth {@link RenderMaterial} with the patched parameters.
-     * - Add the {@link ProjectedMesh | mesh} to the {@link meshes} Map.
-     * @param mesh - {@link ProjectedMesh | mesh} to add to the shadow map.
-     * @param parameters - Optional {@link RenderMaterialParams | parameters} to use for the depth material.
-     */
-    addShadowCastingMesh(mesh, parameters = {}) {
-      if (this.meshes.get(mesh.uuid))
-        return;
-      mesh.options.castShadows = true;
-      __privateGet$e(this, _materials).set(mesh.uuid, mesh.material);
-      parameters = this.patchShadowCastingMeshParams(mesh, parameters);
-      if (__privateGet$e(this, _depthMaterials).get(mesh.uuid)) {
-        __privateGet$e(this, _depthMaterials).get(mesh.uuid).destroy();
-        __privateGet$e(this, _depthMaterials).delete(mesh.uuid);
-      }
-      __privateGet$e(this, _depthMaterials).set(
-        mesh.uuid,
-        new RenderMaterial(this.renderer, {
-          label: `${this.constructor.name} (index: ${this.index}) ${mesh.options.label} depth render material`,
-          ...parameters
-        })
-      );
-      this.meshes.set(mesh.uuid, mesh);
-    }
-    /**
-     * Force all the {@link meshes} to use the depth material.
-     */
-    useDepthMaterials() {
-      this.meshes.forEach((mesh) => {
-        mesh.useMaterial(__privateGet$e(this, _depthMaterials).get(mesh.uuid));
-      });
-    }
-    /**
-     * Force all the {@link meshes} to use their original material.
-     */
-    useOriginalMaterials() {
-      this.meshes.forEach((mesh) => {
-        mesh.useMaterial(__privateGet$e(this, _materials).get(mesh.uuid));
-      });
-    }
-    /**
-     * Remove a {@link ProjectedMesh | mesh} from the shadow map and destroy its depth material.
-     * @param mesh - {@link ProjectedMesh | mesh} to remove.
-     */
-    removeMesh(mesh) {
-      const depthMaterial = __privateGet$e(this, _depthMaterials).get(mesh.uuid);
-      if (depthMaterial) {
-        depthMaterial.destroy();
-        __privateGet$e(this, _depthMaterials).delete(mesh.uuid);
-      }
-      this.meshes.delete(mesh.uuid);
-      if (this.meshes.size === 0) {
-        this.clearDepthTexture();
-      }
-    }
-    /**
-     * Destroy the {@link Shadow}.
-     */
-    destroy() {
-      this.onPropertyChanged("isActive", 0);
-      if (__privateGet$e(this, _depthPassTaskID) !== null) {
-        this.removeDepthPass(__privateGet$e(this, _depthPassTaskID));
-        __privateSet$e(this, _depthPassTaskID, null);
-      }
-      this.meshes.forEach((mesh) => this.removeMesh(mesh));
-      __privateSet$e(this, _materials, /* @__PURE__ */ new Map());
-      __privateSet$e(this, _depthMaterials, /* @__PURE__ */ new Map());
-      this.meshes = /* @__PURE__ */ new Map();
-      this.depthPassTarget?.destroy();
-      this.depthTexture?.destroy();
-    }
-  }
-  _intensity = new WeakMap();
-  _bias = new WeakMap();
-  _normalBias = new WeakMap();
-  _pcfSamples = new WeakMap();
-  _isActive = new WeakMap();
-  _autoRender = new WeakMap();
-  _materials = new WeakMap();
-  _depthMaterials = new WeakMap();
-  _depthPassTaskID = new WeakMap();
-  _setParameters = new WeakSet();
-  setParameters_fn = function({
-    intensity = 1,
-    bias = 0,
-    normalBias = 0,
-    pcfSamples = 1,
-    depthTextureSize = new Vec2(512),
-    depthTextureFormat = "depth24plus",
-    autoRender = true
-  } = {}) {
-    this.intensity = intensity;
-    this.bias = bias;
-    this.normalBias = normalBias;
-    this.pcfSamples = pcfSamples;
-    this.depthTextureSize = depthTextureSize;
-    this.depthTextureSize.onChange(() => this.onDepthTextureSizeChanged());
-    this.depthTextureFormat = depthTextureFormat;
-    __privateSet$e(this, _autoRender, autoRender);
-  };
-
-  const directionalShadowStruct = {
-    ...shadowStruct,
-    viewMatrix: {
-      type: "mat4x4f",
-      value: new Float32Array(16)
-    },
-    projectionMatrix: {
-      type: "mat4x4f",
-      value: new Float32Array(16)
-    }
-  };
-  class DirectionalShadow extends Shadow {
-    /**
-     * DirectionalShadow constructor
-     * @param renderer - {@link CameraRenderer} used to create this {@link DirectionalShadow}.
-     * @param parameters - {@link DirectionalShadowParams | parameters} used to create this {@link DirectionalShadow}.
-     */
-    constructor(renderer, {
-      light,
-      intensity,
-      bias,
-      normalBias,
-      pcfSamples,
-      depthTextureSize,
-      depthTextureFormat,
-      autoRender,
-      camera = {
-        left: -10,
-        right: 10,
-        bottom: -10,
-        top: 10,
-        near: 0.1,
-        far: 50
-      }
-    } = {}) {
-      super(renderer, {
-        light,
-        intensity,
-        bias,
-        normalBias,
-        pcfSamples,
-        depthTextureSize,
-        depthTextureFormat,
-        autoRender
-      });
-      this.options = {
-        ...this.options,
-        camera
-      };
-      this.camera = {
-        projectionMatrix: new Mat4(),
-        viewMatrix: new Mat4(),
-        up: new Vec3(0, 1, 0),
-        _left: camera.left,
-        _right: camera.right,
-        _bottom: camera.bottom,
-        _top: camera.top,
-        _near: camera.near,
-        _far: camera.far
-      };
-      const _self = this;
-      const cameraProps = ["left", "right", "bottom", "top", "near", "far"];
-      cameraProps.forEach((prop) => {
-        Object.defineProperty(_self.camera, prop, {
-          get() {
-            return _self.camera["_" + prop];
-          },
-          set(v) {
-            _self.camera["_" + prop] = v;
-            _self.updateProjectionMatrix();
-          }
-        });
-      });
-    }
-    /**
-     * Set or reset this {@link DirectionalShadow} {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
-     */
-    setRendererBinding() {
-      this.rendererBinding = this.renderer.bindings.directionalShadows;
-    }
-    /**
-     * Set the parameters and start casting shadows by setting the {@link isActive} setter to `true`.<br>
-     * Called internally by the associated {@link DirectionalLight} if any shadow parameters are specified when creating it. Can also be called directly.
-     * @param parameters - parameters to use for this {@link DirectionalShadow}.
-     */
-    cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender, camera } = {}) {
-      if (camera) {
-        this.camera.left = camera.left ?? -10;
-        this.camera.right = camera.right ?? 10;
-        this.camera.bottom = camera.bottom ?? -10;
-        this.camera.top = camera.right ?? 10;
-        this.camera.near = camera.near ?? 0.1;
-        this.camera.far = camera.far ?? 50;
-      }
-      super.cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
-    }
-    /**
-     * Set the {@link depthComparisonSampler}, {@link depthTexture}, {@link depthPassTarget}, compute the {@link DirectionalShadow#camera.projectionMatrix | camera projection matrix} and start rendering to the shadow map.
-     */
-    init() {
-      super.init();
-      this.updateProjectionMatrix();
-    }
-    /**
-     * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link DirectionalLight} has been overflowed.
-     */
-    reset() {
-      this.setRendererBinding();
-      super.reset();
-      this.onPropertyChanged("projectionMatrix", this.camera.projectionMatrix);
-      this.onPropertyChanged("viewMatrix", this.camera.viewMatrix);
-    }
-    /**
-     * Update the {@link DirectionalShadow#camera.projectionMatrix | camera orthographic projection matrix} and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
-     */
-    updateProjectionMatrix() {
-      this.camera.projectionMatrix.identity().makeOrthographic({
-        left: this.camera.left,
-        right: this.camera.right,
-        bottom: this.camera.bottom,
-        top: this.camera.top,
-        near: this.camera.near,
-        far: this.camera.far
-      });
-      this.onPropertyChanged("projectionMatrix", this.camera.projectionMatrix);
-    }
-    /**
-     * Update the {@link DirectionalShadow#camera.viewMatrix | camera view matrix} and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
-     * @param position - {@link Vec3} to use as position for the {@link DirectionalShadow#camera.viewMatrix | camera view matrix}, based on the {@link light} position.
-     * @param target - {@link Vec3} to use as target for the {@link DirectionalShadow#camera.viewMatrix | camera view matrix}, based on the {@link light} target.
-     */
-    updateViewMatrix(position = new Vec3(), target = new Vec3()) {
-      if (position.x === 0 && position.z === 0) {
-        this.camera.up.set(0, 0, 1);
-      } else {
-        this.camera.up.set(0, 1, 0);
-      }
-      this.camera.viewMatrix.makeView(position, target, this.camera.up);
-      this.onPropertyChanged("viewMatrix", this.camera.viewMatrix);
-    }
-  }
-
-  var __accessCheck$f = (obj, member, msg) => {
-    if (!member.has(obj))
-      throw TypeError("Cannot " + msg);
-  };
-  var __privateGet$d = (obj, member, getter) => {
-    __accessCheck$f(obj, member, "read from private field");
-    return getter ? getter.call(obj) : member.get(obj);
-  };
-  var __privateAdd$f = (obj, member, value) => {
-    if (member.has(obj))
-      throw TypeError("Cannot add the same private member more than once");
-    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  };
-  var __privateSet$d = (obj, member, value, setter) => {
-    __accessCheck$f(obj, member, "write to private field");
-    member.set(obj, value);
-    return value;
-  };
-  var _actualPosition$1, _direction;
-  class DirectionalLight extends Light {
-    /**
-     * DirectionalLight constructor
-     * @param renderer - {@link CameraRenderer} used to create this {@link DirectionalLight}.
-     * @param parameters - {@link DirectionalLightBaseParams | parameters} used to create this {@link DirectionalLight}.
-     */
-    constructor(renderer, {
-      color = new Vec3(1),
-      intensity = 1,
-      position = new Vec3(1),
-      target = new Vec3(),
-      shadow = null
-    } = {}) {
-      const type = "directionalLights";
-      super(renderer, { color, intensity, type });
-      /** @ignore */
-      __privateAdd$f(this, _actualPosition$1, void 0);
-      /**
-       * The {@link Vec3 | direction} of the {@link DirectionalLight} is the {@link target} minus the actual {@link position}.
-       * @private
-       */
-      __privateAdd$f(this, _direction, void 0);
-      this.options = {
-        ...this.options,
-        position,
-        target,
-        shadow
-      };
-      __privateSet$d(this, _direction, new Vec3());
-      __privateSet$d(this, _actualPosition$1, new Vec3());
-      this.target = target;
-      this.target.onChange(() => this.setDirection());
-      this.position.copy(position);
-      this.parent = this.renderer.scene;
-      this.shadow = new DirectionalShadow(this.renderer, {
-        autoRender: false,
-        // will be set by calling cast()
-        light: this
-      });
-      if (shadow) {
-        this.shadow.cast(shadow);
-      }
-    }
-    /**
-     * Set or reset this {@link DirectionalLight} {@link CameraRenderer}.
-     * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
-     */
-    setRenderer(renderer) {
-      this.shadow?.setRenderer(renderer);
-      super.setRenderer(renderer);
-    }
-    /**
-     * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of {@link DirectionalLight} has been overflowed.
-     */
-    reset() {
-      super.reset();
-      this.setDirection();
-      this.shadow?.reset();
-    }
-    /**
-     * Set the {@link DirectionalLight} direction based on the {@link target} and the {@link worldMatrix} translation and update the {@link DirectionalShadow} view matrix.
-     */
-    setDirection() {
-      __privateGet$d(this, _direction).copy(this.target).sub(this.worldMatrix.getTranslation(__privateGet$d(this, _actualPosition$1)));
-      this.onPropertyChanged("direction", __privateGet$d(this, _direction));
-      this.shadow?.updateViewMatrix(__privateGet$d(this, _actualPosition$1), this.target);
-    }
-    // explicitly disable scale and transform origin transformations
-    /** @ignore */
-    applyScale() {
-    }
-    /** @ignore */
-    applyTransformOrigin() {
-    }
-    /**
-     * If the {@link modelMatrix | model matrix} has been updated, set the new direction from the {@link worldMatrix} translation.
-     */
-    updateMatrixStack() {
-      super.updateMatrixStack();
-      if (this.matricesNeedUpdate) {
-        this.setDirection();
-      }
-    }
-    /**
-     * Tell the {@link renderer} that the maximum number of {@link DirectionalLight} has been overflown.
-     * @param lightsType - {@link type} of this light.
-     */
-    onMaxLightOverflow(lightsType) {
-      super.onMaxLightOverflow(lightsType);
-      this.shadow?.setRendererBinding();
-    }
-    /**
-     * Destroy this {@link DirectionalLight} and associated {@link DirectionalShadow}.
-     */
-    destroy() {
-      super.destroy();
-      this.shadow.destroy();
-    }
-  }
-  _actualPosition$1 = new WeakMap();
-  _direction = new WeakMap();
-
-  const getDefaultPointShadowDepthVs = (lightIndex = 0, { bindings = [], geometry }) => (
-    /* wgsl */
-    `
-struct PointShadowVSOutput {
-  @builtin(position) position: vec4f,
-  @location(0) worldPosition: vec3f,
-}
-
-@vertex fn main(
-  attributes: Attributes,
-) -> PointShadowVSOutput {  
-  var pointShadowVSOutput: PointShadowVSOutput;
-  
-  ${declareAttributesVars$1({ geometry })}
-  ${getVertexTransformedPositionNormal({ bindings, geometry })}
-  
-  let worldPos = worldPosition.xyz / worldPosition.w;
-  
-  let pointShadow: PointShadowsElement = pointShadows.pointShadowsElements[${lightIndex}];
-  
-  let lightDirection: vec3f = normalize(pointLights.elements[${lightIndex}].position - worldPos);
-  let NdotL: f32 = dot(normalize(normal), lightDirection);
-  let sinNdotL = sqrt(1.0 - NdotL * NdotL);
-  let normalBias: f32 = pointShadow.normalBias * sinNdotL;
-  
-  worldPosition = vec4(worldPos - normal * normalBias, 1.0);
-    
-  var shadowPosition: vec4f = pointShadow.projectionMatrix * pointShadow.viewMatrices[pointShadow.face] * worldPosition;
-
-  pointShadowVSOutput.position = shadowPosition;
-  pointShadowVSOutput.worldPosition = worldPos;
-
-  return pointShadowVSOutput;
-}`
-  );
-
-  const getDefaultPointShadowDepthFs = (lightIndex = 0) => (
-    /* wgsl */
-    `
-struct PointShadowVSOutput {
-  @builtin(position) position: vec4f,
-  @location(0) worldPosition: vec3f,
-}
-
-@fragment fn main(fsInput: PointShadowVSOutput) -> @builtin(frag_depth) f32 {
-  // get distance between fragment and light source
-  var lightDistance: f32 = length(fsInput.worldPosition - pointLights.elements[${lightIndex}].position);
-  
-  let pointShadow: PointShadowsElement = pointShadows.pointShadowsElements[${lightIndex}];
-  
-  // map to [0, 1] range by dividing by far plane - near plane
-  lightDistance = (lightDistance - pointShadow.cameraNear) / (pointShadow.cameraFar - pointShadow.cameraNear);
-  
-  // write this as modified depth
-  return clamp(lightDistance, 0.0, 1.0);
-}`
-  );
-
-  var __accessCheck$e = (obj, member, msg) => {
-    if (!member.has(obj))
-      throw TypeError("Cannot " + msg);
-  };
-  var __privateGet$c = (obj, member, getter) => {
-    __accessCheck$e(obj, member, "read from private field");
-    return getter ? getter.call(obj) : member.get(obj);
-  };
-  var __privateAdd$e = (obj, member, value) => {
-    if (member.has(obj))
-      throw TypeError("Cannot add the same private member more than once");
-    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  };
-  var __privateSet$c = (obj, member, value, setter) => {
-    __accessCheck$e(obj, member, "write to private field");
-    member.set(obj, value);
-    return value;
-  };
-  var _tempCubeDirection;
-  const pointShadowStruct = {
-    face: {
-      type: "i32",
-      value: 0
-    },
-    ...shadowStruct,
-    cameraNear: {
-      type: "f32",
-      value: 0
-    },
-    cameraFar: {
-      type: "f32",
-      value: 0
-    },
-    projectionMatrix: {
-      type: "mat4x4f",
-      value: new Float32Array(16)
-    },
-    viewMatrices: {
-      type: "array<mat4x4f>",
-      value: new Float32Array(16 * 6)
-    }
-  };
-  class PointShadow extends Shadow {
-    /**
-     * PointShadow constructor
-     * @param renderer - {@link CameraRenderer} used to create this {@link PointShadow}.
-     * @param parameters - {@link PointShadowParams | parameters} used to create this {@link PointShadow}.
-     */
-    constructor(renderer, {
-      light,
-      intensity,
-      bias,
-      normalBias,
-      pcfSamples,
-      depthTextureSize,
-      depthTextureFormat,
-      autoRender,
-      camera = {
-        near: 0.1,
-        far: 150
-      }
-    } = {}) {
-      super(renderer, {
-        light,
-        intensity,
-        bias,
-        normalBias,
-        pcfSamples,
-        depthTextureSize,
-        depthTextureFormat,
-        autoRender
-      });
-      /**
-       * {@link Vec3} used to calculate the actual current direction based on the {@link PointLight} position.
-       * @private
-       */
-      __privateAdd$e(this, _tempCubeDirection, void 0);
-      this.options = {
-        ...this.options,
-        camera
-      };
-      this.cubeDirections = [
-        new Vec3(-1, 0, 0),
-        new Vec3(1, 0, 0),
-        new Vec3(0, -1, 0),
-        new Vec3(0, 1, 0),
-        new Vec3(0, 0, -1),
-        new Vec3(0, 0, 1)
-      ];
-      __privateSet$c(this, _tempCubeDirection, new Vec3());
-      this.cubeUps = [
-        new Vec3(0, -1, 0),
-        new Vec3(0, -1, 0),
-        new Vec3(0, 0, 1),
-        new Vec3(0, 0, -1),
-        new Vec3(0, -1, 0),
-        new Vec3(0, -1, 0)
-      ];
-      if (camera.far <= 0) {
-        camera.far = 150;
-      }
-      this.camera = {
-        projectionMatrix: new Mat4(),
-        viewMatrices: [],
-        _near: camera.near,
-        _far: camera.far
-      };
-      for (let i = 0; i < 6; i++) {
-        this.camera.viewMatrices.push(new Mat4());
-      }
-      const _self = this;
-      const cameraProps = ["near", "far"];
-      cameraProps.forEach((prop) => {
-        Object.defineProperty(_self.camera, prop, {
-          get() {
-            return _self.camera["_" + prop];
-          },
-          set(v) {
-            _self.camera["_" + prop] = v;
-            _self.updateProjectionMatrix();
-          }
-        });
-      });
-    }
-    /**
-     * Set or reset this {@link PointShadow} {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
-     */
-    setRendererBinding() {
-      this.rendererBinding = this.renderer.bindings.pointShadows;
-    }
-    /**
-     * Set the parameters and start casting shadows by setting the {@link isActive} setter to `true`.<br>
-     * Called internally by the associated {@link PointLight} if any shadow parameters are specified when creating it. Can also be called directly.
-     * @param parameters - parameters to use for this {@link PointShadow}.
-     */
-    cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender, camera } = {}) {
-      if (camera) {
-        this.camera.near = camera.near ?? 0.1;
-        this.camera.far = camera.far !== void 0 ? camera.far : this.light.range > 0 ? this.light.range : 150;
-      }
-      super.cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
-    }
-    /**
-     * Set the {@link depthComparisonSampler}, {@link depthTexture}, {@link depthPassTarget}, compute the {@link PointShadow#camera.projectionMatrix | camera projection matrix} and start rendering to the shadow map.
-     */
-    init() {
-      super.init();
-      this.updateProjectionMatrix();
-    }
-    /**
-     * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link PointLight} has been overflowed.
-     */
-    reset() {
-      this.setRendererBinding();
-      super.reset();
-      this.updateProjectionMatrix();
-    }
-    /**
-     * Update the {@link PointShadow#camera.projectionMatrix | camera perspective projection matrix} and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
-     */
-    updateProjectionMatrix() {
-      this.camera.projectionMatrix.identity().makePerspective({
-        near: this.camera.near,
-        far: this.camera.far,
-        fov: 90,
-        aspect: 1
-      });
-      this.onPropertyChanged("projectionMatrix", this.camera.projectionMatrix);
-      this.onPropertyChanged("cameraNear", this.camera.near);
-      this.onPropertyChanged("cameraFar", this.camera.far);
-    }
-    /**
-     * Update the {@link PointShadow#camera.viewMatrices | camera view matrices} and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
-     * @param position - {@link Vec3} to use as position for the {@link PointShadow#camera.viewMatrices | camera view matrices}, based on the {@link light} position.
-     */
-    updateViewMatrices(position = new Vec3()) {
-      for (let i = 0; i < 6; i++) {
-        __privateGet$c(this, _tempCubeDirection).copy(this.cubeDirections[i]).add(position);
-        this.camera.viewMatrices[i].makeView(position, __privateGet$c(this, _tempCubeDirection), this.cubeUps[i]);
-        for (let j = 0; j < 16; j++) {
-          this.rendererBinding.childrenBindings[this.index].inputs.viewMatrices.value[i * 16 + j] = this.camera.viewMatrices[i].elements[j];
-        }
-      }
-      this.rendererBinding.childrenBindings[this.index].inputs.viewMatrices.shouldUpdate = true;
-    }
-    /**
-     * Set or resize the {@link depthTexture} and eventually resize the {@link depthPassTarget} as well.
-     */
-    setDepthTexture() {
-      if (this.depthTexture && (this.depthTexture.size.width !== this.depthTextureSize.x || this.depthTexture.size.height !== this.depthTextureSize.y)) {
-        const maxSize = Math.max(this.depthTextureSize.x, this.depthTextureSize.y);
-        this.depthTexture.options.fixedSize.width = maxSize;
-        this.depthTexture.options.fixedSize.height = maxSize;
-        this.depthTexture.size.width = maxSize;
-        this.depthTexture.size.height = maxSize;
-        this.depthTexture.createTexture();
-        if (this.depthPassTarget) {
-          this.depthPassTarget.resize();
-        }
-      } else if (!this.depthTexture) {
-        this.createDepthTexture();
-      }
-    }
-    /**
-     * Create the cube {@link depthTexture}.
-     */
-    createDepthTexture() {
-      const maxSize = Math.max(this.depthTextureSize.x, this.depthTextureSize.y);
-      this.depthTexture = new Texture(this.renderer, {
-        label: `${this.constructor.name} (index: ${this.index}) depth texture`,
-        name: "pointShadowCubeDepthTexture" + this.index,
-        type: "depth",
-        format: this.depthTextureFormat,
-        viewDimension: "cube",
-        sampleCount: this.sampleCount,
-        fixedSize: {
-          width: maxSize,
-          height: maxSize
-        },
-        autoDestroy: false
-        // do not destroy when removing a mesh
-      });
-    }
-    /**
-     * Clear the content of the depth texture. Called whenever the {@link meshes} array is empty after having removed a mesh.
-     */
-    clearDepthTexture() {
-      if (!this.depthTexture || !this.depthTexture.texture)
-        return;
-      const commandEncoder = this.renderer.device.createCommandEncoder();
-      !this.renderer.production && commandEncoder.pushDebugGroup(`Clear ${this.depthTexture.texture.label} command encoder`);
-      for (let i = 0; i < 6; i++) {
-        const view = this.depthTexture.texture.createView({
-          label: "Clear " + this.depthTexture.texture.label + " cube face view",
-          dimension: "2d",
-          arrayLayerCount: 1,
-          baseArrayLayer: i
-        });
-        const renderPassDescriptor = {
-          colorAttachments: [],
-          depthStencilAttachment: {
-            view,
-            depthLoadOp: "clear",
-            // Clear the depth attachment
-            depthClearValue: 1,
-            // Clear to the maximum depth (farthest possible depth)
-            depthStoreOp: "store"
-            // Store the cleared depth
-          }
-        };
-        const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
-        passEncoder.end();
-      }
-      !this.renderer.production && commandEncoder.popDebugGroup();
-      this.renderer.device.queue.submit([commandEncoder.finish()]);
-    }
-    /**
-     * Remove the depth pass from its {@link utils/TasksQueueManager.TasksQueueManager | task queue manager}.
-     * @param depthPassTaskID - Task queue manager ID to use for removal.
-     */
-    removeDepthPass(depthPassTaskID) {
-      this.renderer.onBeforeCommandEncoderCreation.remove(depthPassTaskID);
-    }
-    /**
-     * Render the depth pass. This happens before creating the {@link CameraRenderer} command encoder.<br>
-     * - Force all the {@link meshes} to use their depth materials
-     * - For each face of the depth cube texture:
-     *   - Create a command encoder.
-     *   - Set the {@link depthPassTarget} descriptor depth texture view to our depth cube texture current face.
-     *   - Update the face index
-     *   - Render all the {@link meshes}
-     *   - Submit the command encoder
-     * - Reset all the {@link meshes} materials to their original one.
-     * @param once - Whether to render it only once or not.
-     */
-    render(once = false) {
-      return this.renderer.onBeforeCommandEncoderCreation.add(
-        () => {
-          if (!this.meshes.size)
-            return;
-          this.renderer.setCameraBindGroup();
-          this.useDepthMaterials();
-          for (let i = 0; i < 6; i++) {
-            const commandEncoder = this.renderer.device.createCommandEncoder();
-            if (!this.renderer.production)
-              commandEncoder.pushDebugGroup(
-                `${this.constructor.name} (index: ${this.index}): depth pass command encoder for face ${i}`
-              );
-            this.depthPassTarget.renderPass.setRenderPassDescriptor(
-              this.depthTexture.texture.createView({
-                label: this.depthTexture.texture.label + " cube face view " + i,
-                dimension: "2d",
-                arrayLayerCount: 1,
-                baseArrayLayer: i
-              })
-            );
-            this.rendererBinding.childrenBindings[this.index].inputs.face.value = i;
-            this.renderer.shouldUpdateCameraLightsBindGroup();
-            this.renderer.updateCameraLightsBindGroup();
-            this.renderDepthPass(commandEncoder);
-            if (!this.renderer.production)
-              commandEncoder.popDebugGroup();
-            const commandBuffer = commandEncoder.finish();
-            this.renderer.device.queue.submit([commandBuffer]);
-          }
-          this.useOriginalMaterials();
-          this.renderer.pipelineManager.resetCurrentPipeline();
-        },
-        {
-          once,
-          order: this.index
-        }
-      );
-    }
-    /**
-     * Get the default depth pass vertex shader for this {@link PointShadow}.
-     * parameters - {@link VertexShaderInputBaseParams} used to compute the output `worldPosition` and `normal` vectors.
-     * @returns - Depth pass vertex shader.
-     */
-    getDefaultShadowDepthVs({ bindings = [], geometry }) {
-      return {
-        /** Returned code. */
-        code: getDefaultPointShadowDepthVs(this.index, { bindings, geometry })
-      };
-    }
-    /**
-     * Get the default depth pass {@link types/Materials.ShaderOptions | fragment shader options} for this {@link PointShadow}.
-     * @returns - A {@link types/Materials.ShaderOptions | ShaderOptions} with the depth pass fragment shader.
-     */
-    getDefaultShadowDepthFs() {
-      return {
-        /** Returned code. */
-        code: getDefaultPointShadowDepthFs(this.index)
-      };
-    }
-  }
-  _tempCubeDirection = new WeakMap();
-
-  var __accessCheck$d = (obj, member, msg) => {
-    if (!member.has(obj))
-      throw TypeError("Cannot " + msg);
-  };
-  var __privateGet$b = (obj, member, getter) => {
-    __accessCheck$d(obj, member, "read from private field");
-    return getter ? getter.call(obj) : member.get(obj);
-  };
-  var __privateAdd$d = (obj, member, value) => {
-    if (member.has(obj))
-      throw TypeError("Cannot add the same private member more than once");
-    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  };
-  var __privateSet$b = (obj, member, value, setter) => {
-    __accessCheck$d(obj, member, "write to private field");
-    member.set(obj, value);
-    return value;
-  };
-  var _range, _actualPosition;
-  class PointLight extends Light {
-    /**
-     * PointLight constructor
-     * @param renderer - {@link CameraRenderer | CameraRenderer} used to create this {@link PointLight}.
-     * @param parameters - {@link PointLightBaseParams | parameters} used to create this {@link PointLight}.
-     */
-    constructor(renderer, { color = new Vec3(1), intensity = 1, position = new Vec3(), range = 0, shadow = null } = {}) {
-      const type = "pointLights";
-      super(renderer, { color, intensity, type });
-      /** @ignore */
-      __privateAdd$d(this, _range, void 0);
-      /** @ignore */
-      __privateAdd$d(this, _actualPosition, void 0);
-      this.options = {
-        ...this.options,
-        position,
-        range,
-        shadow
-      };
-      __privateSet$b(this, _actualPosition, new Vec3());
-      this.position.copy(position);
-      this.range = range;
-      this.parent = this.renderer.scene;
-      this.shadow = new PointShadow(this.renderer, {
-        autoRender: false,
-        // will be set by calling cast()
-        light: this
-      });
-      if (shadow) {
-        this.shadow.cast(shadow);
-      }
-    }
-    /**
-     * Set or reset this {@link PointLight} {@link CameraRenderer}.
-     * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
-     */
-    setRenderer(renderer) {
-      if (this.shadow) {
-        this.shadow.setRenderer(renderer);
-      }
-      super.setRenderer(renderer);
-    }
-    /**
-     * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of {@link PointLight} has been overflowed.
-     */
-    reset() {
-      super.reset();
-      this.onPropertyChanged("range", this.range);
-      this.setPosition();
-      this.shadow?.reset();
-    }
-    /**
-     * Get this {@link PointLight} range.
-     * @returns - The {@link PointLight} range.
-     */
-    get range() {
-      return __privateGet$b(this, _range);
-    }
-    /**
-     * Set this {@link PointLight} range and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
-     * @param value - The new {@link PointLight} range.
-     */
-    set range(value) {
-      __privateSet$b(this, _range, value);
-      this.onPropertyChanged("range", this.range);
-    }
-    /**
-     * Set the {@link PointLight} position based on the {@link worldMatrix} translation and update the {@link PointShadow} view matrices.
-     */
-    setPosition() {
-      this.onPropertyChanged("position", this.worldMatrix.getTranslation(__privateGet$b(this, _actualPosition)));
-      this.shadow?.updateViewMatrices(__privateGet$b(this, _actualPosition));
-    }
-    // explicitly disable scale and transform origin transformations
-    /** @ignore */
-    applyScale() {
-    }
-    /** @ignore */
-    applyTransformOrigin() {
-    }
-    /**
-     * If the {@link modelMatrix | model matrix} has been updated, set the new position from the {@link worldMatrix} translation.
-     */
-    updateMatrixStack() {
-      super.updateMatrixStack();
-      if (this.matricesNeedUpdate) {
-        this.setPosition();
-      }
-    }
-    /**
-     * Tell the {@link renderer} that the maximum number of {@link PointLight} has been overflown.
-     * @param lightsType - {@link type} of this light.
-     */
-    onMaxLightOverflow(lightsType) {
-      super.onMaxLightOverflow(lightsType);
-      this.shadow?.setRendererBinding();
-    }
-    /**
-     * Destroy this {@link PointLight} and associated {@link PointShadow}.
-     */
-    destroy() {
-      super.destroy();
-      this.shadow.destroy();
-    }
-  }
-  _range = new WeakMap();
-  _actualPosition = new WeakMap();
-
-  var __accessCheck$c = (obj, member, msg) => {
-    if (!member.has(obj))
-      throw TypeError("Cannot " + msg);
-  };
-  var __privateGet$a = (obj, member, getter) => {
-    __accessCheck$c(obj, member, "read from private field");
-    return getter ? getter.call(obj) : member.get(obj);
-  };
-  var __privateAdd$c = (obj, member, value) => {
-    if (member.has(obj))
-      throw TypeError("Cannot add the same private member more than once");
-    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  };
-  var __privateSet$a = (obj, member, value, setter) => {
-    __accessCheck$c(obj, member, "write to private field");
     member.set(obj, value);
     return value;
   };
@@ -10938,7 +9715,7 @@ struct PointShadowVSOutput {
           { ...defaultMeshBaseParams, ...params[2] }
         );
         /** Whether we should add this {@link MeshBase} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
-        __privateAdd$c(this, _autoRender, true);
+        __privateAdd$g(this, _autoRender, true);
         // callbacks / events
         /** function assigned to the {@link onReady} callback */
         this._onReadyCallback = () => {
@@ -10993,7 +9770,7 @@ struct PointShadowVSOutput {
           ...meshParameters
         };
         if (autoRender !== void 0) {
-          __privateSet$a(this, _autoRender, autoRender);
+          __privateSet$e(this, _autoRender, autoRender);
         }
         this.visible = visible;
         this.renderOrder = renderOrder;
@@ -11013,7 +9790,7 @@ struct PointShadowVSOutput {
        * @readonly
        */
       get autoRender() {
-        return __privateGet$a(this, _autoRender);
+        return __privateGet$e(this, _autoRender);
       }
       /**
        * Get/set whether a Mesh is ready or not
@@ -11038,7 +9815,7 @@ struct PointShadowVSOutput {
           this.renderer.meshes.push(this);
         }
         this.setRenderingOptionsForRenderPass(this.outputTarget ? this.outputTarget.renderPass : this.renderer.renderPass);
-        if (__privateGet$a(this, _autoRender)) {
+        if (__privateGet$e(this, _autoRender)) {
           this.renderer.scene.addMesh(this);
           if (this.additionalOutputTargets.length) {
             this.additionalOutputTargets.forEach((renderTarget) => {
@@ -11052,7 +9829,7 @@ struct PointShadowVSOutput {
        * @param removeFromRenderer - whether to remove this Mesh from the {@link Renderer#meshes | Renderer meshes array}
        */
       removeFromScene(removeFromRenderer = false) {
-        if (__privateGet$a(this, _autoRender)) {
+        if (__privateGet$e(this, _autoRender)) {
           this.renderer.scene.removeMesh(this);
         }
         if (removeFromRenderer) {
@@ -11586,251 +10363,6 @@ ${geometry.wgslStructFragment}`
     }, _autoRender = new WeakMap(), _a;
   }
 
-  class CacheManager {
-    /**
-     * CacheManager constructor
-     */
-    constructor() {
-      this.planeGeometries = [];
-    }
-    /**
-     * Check if a given {@link PlaneGeometry} is already cached based on its {@link PlaneGeometry#definition.id | definition id}
-     * @param planeGeometry - {@link PlaneGeometry} to check
-     * @returns - {@link PlaneGeometry} found or null if not found
-     */
-    getPlaneGeometry(planeGeometry) {
-      return this.planeGeometries.find((element) => element.definition.id === planeGeometry.definition.id);
-    }
-    /**
-     * Check if a given {@link PlaneGeometry} is already cached based on its {@link PlaneGeometry#definition | definition id}
-     * @param planeGeometryID - {@link PlaneGeometry#definition.id | PlaneGeometry definition id}
-     * @returns - {@link PlaneGeometry} found or null if not found
-     */
-    getPlaneGeometryByID(planeGeometryID) {
-      return this.planeGeometries.find((element) => element.definition.id === planeGeometryID);
-    }
-    /**
-     * Add a {@link PlaneGeometry} to our cache {@link planeGeometries} array
-     * @param planeGeometry
-     */
-    addPlaneGeometry(planeGeometry) {
-      this.planeGeometries.push(planeGeometry);
-    }
-    /**
-     * Destroy our {@link CacheManager}
-     */
-    destroy() {
-      this.planeGeometries = [];
-    }
-  }
-  const cacheManager = new CacheManager();
-
-  class FullscreenPlane extends MeshBaseMixin(class {
-  }) {
-    /**
-     * FullscreenPlane constructor
-     * @param renderer - {@link Renderer} or {@link GPUCurtains} class object used to create this {@link FullscreenPlane}.
-     * @param parameters - {@link MeshBaseRenderParams | parameters} use to create this {@link FullscreenPlane}.
-     */
-    constructor(renderer, parameters = {}) {
-      renderer = isRenderer(renderer, parameters.label ? parameters.label + " FullscreenQuadMesh" : "FullscreenQuadMesh");
-      let geometry = cacheManager.getPlaneGeometryByID(2);
-      if (!geometry) {
-        geometry = new PlaneGeometry({ widthSegments: 1, heightSegments: 1 });
-        cacheManager.addPlaneGeometry(geometry);
-      }
-      if (!parameters.shaders || !parameters.shaders.vertex) {
-        ["uniforms", "storages"].forEach((bindingType) => {
-          Object.values(parameters[bindingType] ?? {}).forEach(
-            (binding) => binding.visibility = ["fragment"]
-          );
-        });
-      }
-      parameters.depthWriteEnabled = false;
-      if (!parameters.label) {
-        parameters.label = "FullscreenQuadMesh";
-      }
-      super(renderer, null, { geometry, ...parameters });
-      this.size = {
-        document: {
-          width: this.renderer.boundingRect.width,
-          height: this.renderer.boundingRect.height,
-          top: this.renderer.boundingRect.top,
-          left: this.renderer.boundingRect.left
-        }
-      };
-      this.type = "FullscreenQuadMesh";
-    }
-    /**
-     * Resize our {@link FullscreenPlane}.
-     * @param boundingRect - the new bounding rectangle.
-     */
-    resize(boundingRect = null) {
-      this.size.document = boundingRect ?? this.renderer.boundingRect;
-      super.resize(boundingRect);
-    }
-    /**
-     * Take the pointer {@link Vec2} position relative to the document and returns it relative to our {@link FullscreenPlane}.
-     * It ranges from -1 to 1 on both axis.
-     * @param mouseCoords - pointer {@link Vec2} coordinates.
-     * @returns - the mapped {@link Vec2} coordinates in the [-1, 1] range.
-     */
-    mouseToPlaneCoords(mouseCoords = new Vec2()) {
-      return new Vec2(
-        (mouseCoords.x - this.size.document.left) / this.size.document.width * 2 - 1,
-        1 - (mouseCoords.y - this.size.document.top) / this.size.document.height * 2
-      );
-    }
-  }
-
-  class ProjectedObject3D extends Object3D {
-    /**
-     * ProjectedObject3D constructor
-     * @param renderer - {@link CameraRenderer} object or {@link GPUCurtains} class object used to create this {@link ProjectedObject3D}
-     */
-    constructor(renderer) {
-      super();
-      renderer = isCameraRenderer(renderer, "ProjectedObject3D");
-      this.camera = renderer.camera;
-    }
-    /**
-     * Tell our projection matrix stack to update
-     */
-    applyPosition() {
-      super.applyPosition();
-      this.shouldUpdateProjectionMatrixStack();
-    }
-    /**
-     * Tell our projection matrix stack to update
-     */
-    applyRotation() {
-      super.applyRotation();
-      this.shouldUpdateProjectionMatrixStack();
-    }
-    /**
-     * Tell our projection matrix stack to update
-     */
-    applyScale() {
-      super.applyScale();
-      this.shouldUpdateProjectionMatrixStack();
-    }
-    /**
-     * Tell our projection matrix stack to update
-     */
-    applyTransformOrigin() {
-      super.applyTransformOrigin();
-      this.shouldUpdateProjectionMatrixStack();
-    }
-    /**
-     * Set our transform and projection matrices
-     */
-    setMatrices() {
-      super.setMatrices();
-      this.matrices = {
-        ...this.matrices,
-        modelView: {
-          matrix: new Mat4(),
-          shouldUpdate: true,
-          onUpdate: () => {
-            this.modelViewMatrix.multiplyMatrices(this.viewMatrix, this.worldMatrix);
-          }
-        },
-        modelViewProjection: {
-          matrix: new Mat4(),
-          shouldUpdate: true,
-          onUpdate: () => {
-            this.modelViewProjectionMatrix.multiplyMatrices(this.projectionMatrix, this.modelViewMatrix);
-          }
-        },
-        normal: {
-          matrix: new Mat3(),
-          shouldUpdate: true,
-          onUpdate: () => {
-            this.normalMatrix.getNormalMatrix(this.worldMatrix);
-          }
-        }
-      };
-    }
-    /**
-     * Get our {@link modelViewMatrix | model view matrix}
-     */
-    get modelViewMatrix() {
-      return this.matrices.modelView.matrix;
-    }
-    /**
-     * Set our {@link modelViewMatrix | model view matrix}
-     * @param value - new {@link modelViewMatrix | model view matrix}
-     */
-    set modelViewMatrix(value) {
-      this.matrices.modelView.matrix = value;
-      this.matrices.modelView.shouldUpdate = true;
-    }
-    /**
-     * Get our {@link Camera#viewMatrix | camera view matrix}
-     * @readonly
-     */
-    get viewMatrix() {
-      return this.camera.viewMatrix;
-    }
-    /**
-     * Get our {@link Camera#projectionMatrix | camera projection matrix}
-     * @readonly
-     */
-    get projectionMatrix() {
-      return this.camera.projectionMatrix;
-    }
-    /**
-     * Get our {@link modelViewProjectionMatrix | model view projection matrix}
-     */
-    get modelViewProjectionMatrix() {
-      return this.matrices.modelViewProjection.matrix;
-    }
-    /**
-     * Set our {@link modelViewProjectionMatrix | model view projection matrix}
-     * @param value - new {@link modelViewProjectionMatrix | model view projection matrix}s
-     */
-    set modelViewProjectionMatrix(value) {
-      this.matrices.modelViewProjection.matrix = value;
-      this.matrices.modelViewProjection.shouldUpdate = true;
-    }
-    /**
-     * Get our {@link normalMatrix | normal matrix}
-     */
-    get normalMatrix() {
-      return this.matrices.normal.matrix;
-    }
-    /**
-     * Set our {@link normalMatrix | normal matrix}
-     * @param value - new {@link normalMatrix | normal matrix}
-     */
-    set normalMatrix(value) {
-      this.matrices.normal.matrix = value;
-      this.matrices.normal.shouldUpdate = true;
-    }
-    /**
-     * Set our projection matrices shouldUpdate flags to true (tell them to update)
-     */
-    shouldUpdateProjectionMatrixStack() {
-      this.matrices.modelView.shouldUpdate = true;
-      this.matrices.modelViewProjection.shouldUpdate = true;
-    }
-    /**
-     * When the world matrix update, tell our projection matrix to update as well
-     */
-    shouldUpdateWorldMatrix() {
-      super.shouldUpdateWorldMatrix();
-      this.shouldUpdateProjectionMatrixStack();
-      this.matrices.normal.shouldUpdate = true;
-    }
-    /**
-     * Tell all our matrices to update
-     */
-    shouldUpdateMatrixStack() {
-      this.shouldUpdateModelMatrix();
-      this.shouldUpdateProjectionMatrixStack();
-    }
-  }
-
   const getDefaultNormalFragmentCode = (
     /* wgsl */
     `
@@ -11853,7 +10385,8 @@ fn getPCFShadowContribution(index: i32, worldPosition: vec3f, depthTexture: text
   let directionalShadow: DirectionalShadowsElement = directionalShadows.directionalShadowsElements[index];
   
   // get shadow coords
-  var shadowCoords: vec3f = vec3((directionalShadow.projectionMatrix * directionalShadow.viewMatrix * vec4(worldPosition, 1.0)).xyz);
+  let projectedShadowCoords: vec4f = directionalShadow.projectionMatrix * directionalShadow.viewMatrix * vec4(worldPosition, 1.0);
+  var shadowCoords: vec3f = projectedShadowCoords.xyz / projectedShadowCoords.w;
   
   // Convert XY to (0, 1)
   // Y is flipped because texture coords are Y-down.
@@ -12101,6 +10634,13 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
        * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
        */
       setRenderer(renderer) {
+        if (this.renderer && this.options.castShadows) {
+          this.renderer.shadowCastingLights.forEach((light) => {
+            if (light.shadow.isActive) {
+              light.shadow.removeMesh(this);
+            }
+          });
+        }
         super.setRenderer(renderer);
         this.camera = this.renderer.camera;
         if (this.options.castShadows) {
@@ -12194,6 +10734,13 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
        */
       useGeometry(geometry) {
         super.useGeometry(geometry);
+        if (this.renderer && this.options.castShadows) {
+          this.renderer.shadowCastingLights.forEach((light) => {
+            if (light.shadow.isActive) {
+              light.shadow.updateMeshGeometry(this, geometry);
+            }
+          });
+        }
         if (this.domFrustum) {
           this.domFrustum.boundingBox = this.geometry.boundingBox;
         }
@@ -12469,6 +11016,1435 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
       renderer = isCameraRenderer(renderer, parameters.label ? parameters.label + " Mesh" : "Mesh");
       super(renderer, null, parameters);
       this.type = "Mesh";
+    }
+  }
+
+  var __accessCheck$f = (obj, member, msg) => {
+    if (!member.has(obj))
+      throw TypeError("Cannot " + msg);
+  };
+  var __privateGet$d = (obj, member, getter) => {
+    __accessCheck$f(obj, member, "read from private field");
+    return getter ? getter.call(obj) : member.get(obj);
+  };
+  var __privateAdd$f = (obj, member, value) => {
+    if (member.has(obj))
+      throw TypeError("Cannot add the same private member more than once");
+    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  };
+  var __privateSet$d = (obj, member, value, setter) => {
+    __accessCheck$f(obj, member, "write to private field");
+    member.set(obj, value);
+    return value;
+  };
+  var __privateMethod$8 = (obj, member, method) => {
+    __accessCheck$f(obj, member, "access private method");
+    return method;
+  };
+  var _intensity, _bias, _normalBias, _pcfSamples, _isActive, _autoRender, _depthMeshes, _depthPassTaskID, _setParameters, setParameters_fn;
+  const shadowStruct = {
+    isActive: {
+      type: "i32",
+      value: 0
+    },
+    pcfSamples: {
+      type: "i32",
+      value: 0
+    },
+    bias: {
+      type: "f32",
+      value: 0
+    },
+    normalBias: {
+      type: "f32",
+      value: 0
+    },
+    intensity: {
+      type: "f32",
+      value: 0
+    }
+  };
+  class Shadow {
+    /**
+     * Shadow constructor
+     * @param renderer - {@link CameraRenderer} used to create this {@link Shadow}.
+     * @param parameters - {@link ShadowBaseParams | parameters} used to create this {@link Shadow}.
+     */
+    constructor(renderer, {
+      light,
+      intensity = 1,
+      bias = 0,
+      normalBias = 0,
+      pcfSamples = 1,
+      depthTextureSize = new Vec2(512),
+      depthTextureFormat = "depth24plus",
+      autoRender = true
+    } = {}) {
+      /**
+       * Set the {@link Shadow} parameters.
+       * @param parameters - parameters to use for this {@link Shadow}.
+       * @private
+       */
+      __privateAdd$f(this, _setParameters);
+      /** @ignore */
+      __privateAdd$f(this, _intensity, void 0);
+      /** @ignore */
+      __privateAdd$f(this, _bias, void 0);
+      /** @ignore */
+      __privateAdd$f(this, _normalBias, void 0);
+      /** @ignore */
+      __privateAdd$f(this, _pcfSamples, void 0);
+      /** @ignore */
+      __privateAdd$f(this, _isActive, void 0);
+      /** @ignore */
+      __privateAdd$f(this, _autoRender, void 0);
+      /** Map of all the depth {@link ProjectedMesh} rendered to the shadow map. */
+      __privateAdd$f(this, _depthMeshes, void 0);
+      /** @ignore */
+      __privateAdd$f(this, _depthPassTaskID, void 0);
+      this.setRenderer(renderer);
+      this.light = light;
+      this.index = this.light.index;
+      this.options = {
+        light,
+        intensity,
+        bias,
+        normalBias,
+        pcfSamples,
+        depthTextureSize,
+        depthTextureFormat
+      };
+      this.sampleCount = 1;
+      this.meshes = /* @__PURE__ */ new Map();
+      __privateSet$d(this, _depthMeshes, /* @__PURE__ */ new Map());
+      __privateSet$d(this, _depthPassTaskID, null);
+      __privateMethod$8(this, _setParameters, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
+      this.isActive = false;
+    }
+    /**
+     * Set or reset this shadow {@link CameraRenderer}.
+     * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
+     */
+    setRenderer(renderer) {
+      renderer = isCameraRenderer(renderer, this.constructor.name);
+      this.renderer = renderer;
+      this.setRendererBinding();
+      __privateGet$d(this, _depthMeshes)?.forEach((depthMesh) => {
+        depthMesh.setRenderer(this.renderer);
+      });
+    }
+    /** @ignore */
+    setRendererBinding() {
+      this.rendererBinding = null;
+    }
+    /**
+     * Set the parameters and start casting shadows by setting the {@link isActive} setter to `true`.<br>
+     * Called internally by the associated {@link core/lights/Light.Light | Light} if any shadow parameters are specified when creating it. Can also be called directly.
+     * @param parameters - parameters to use for this {@link Shadow}.
+     */
+    cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender } = {}) {
+      __privateMethod$8(this, _setParameters, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
+      this.isActive = true;
+    }
+    /**
+     * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link core/lights/Light.Light | lights} has been overflowed.
+     */
+    reset() {
+      this.onPropertyChanged("isActive", this.isActive ? 1 : 0);
+      this.onPropertyChanged("intensity", this.intensity);
+      this.onPropertyChanged("bias", this.bias);
+      this.onPropertyChanged("normalBias", this.normalBias);
+      this.onPropertyChanged("pcfSamples", this.pcfSamples);
+    }
+    /**
+     * Get whether this {@link Shadow} is actually casting shadows.
+     * @returns - Whether this {@link Shadow} is actually casting shadows.
+     */
+    get isActive() {
+      return __privateGet$d(this, _isActive);
+    }
+    /**
+     * Start or stop casting shadows.
+     * @param value - New active state.
+     */
+    set isActive(value) {
+      if (!value && this.isActive) {
+        this.destroy();
+      } else if (value && !this.isActive) {
+        this.init();
+      }
+      __privateSet$d(this, _isActive, value);
+    }
+    /**
+     * Get this {@link Shadow} intensity.
+     * @returns - The {@link Shadow} intensity.
+     */
+    get intensity() {
+      return __privateGet$d(this, _intensity);
+    }
+    /**
+     * Set this {@link Shadow} intensity and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
+     * @param value - The new {@link Shadow} intensity.
+     */
+    set intensity(value) {
+      __privateSet$d(this, _intensity, value);
+      this.onPropertyChanged("intensity", this.intensity);
+    }
+    /**
+     * Get this {@link Shadow} bias.
+     * @returns - The {@link Shadow} bias.
+     */
+    get bias() {
+      return __privateGet$d(this, _bias);
+    }
+    /**
+     * Set this {@link Shadow} bias and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
+     * @param value - The new {@link Shadow} bias.
+     */
+    set bias(value) {
+      __privateSet$d(this, _bias, value);
+      this.onPropertyChanged("bias", this.bias);
+    }
+    /**
+     * Get this {@link Shadow} normal bias.
+     * @returns - The {@link Shadow} normal bias.
+     */
+    get normalBias() {
+      return __privateGet$d(this, _normalBias);
+    }
+    /**
+     * Set this {@link Shadow} normal bias and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
+     * @param value - The new {@link Shadow} normal bias.
+     */
+    set normalBias(value) {
+      __privateSet$d(this, _normalBias, value);
+      this.onPropertyChanged("normalBias", this.normalBias);
+    }
+    /**
+     * Get this {@link Shadow} PCF samples count.
+     * @returns - The {@link Shadow} PCF samples count.
+     */
+    get pcfSamples() {
+      return __privateGet$d(this, _pcfSamples);
+    }
+    /**
+     * Set this {@link Shadow} PCF samples count and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
+     * @param value - The new {@link Shadow} PCF samples count.
+     */
+    set pcfSamples(value) {
+      __privateSet$d(this, _pcfSamples, Math.max(1, Math.ceil(value)));
+      this.onPropertyChanged("pcfSamples", this.pcfSamples);
+    }
+    /**
+     * Set the {@link depthComparisonSampler}, {@link depthTexture}, {@link depthPassTarget} and start rendering to the shadow map.
+     */
+    init() {
+      if (!this.depthComparisonSampler) {
+        const samplerExists = this.renderer.samplers.find((sampler) => sampler.name === "depthComparisonSampler");
+        this.depthComparisonSampler = samplerExists || new Sampler(this.renderer, {
+          label: "Depth comparison sampler",
+          name: "depthComparisonSampler",
+          // we do not want to repeat the shadows
+          addressModeU: "clamp-to-edge",
+          addressModeV: "clamp-to-edge",
+          compare: "less",
+          minFilter: "linear",
+          magFilter: "linear",
+          type: "comparison"
+        });
+      }
+      this.setDepthTexture();
+      if (!this.depthPassTarget) {
+        this.createDepthPassTarget();
+      }
+      if (__privateGet$d(this, _depthPassTaskID) === null && __privateGet$d(this, _autoRender)) {
+        this.setDepthPass();
+        this.onPropertyChanged("isActive", 1);
+      }
+    }
+    /**
+     * Reset the {@link depthTexture} when the {@link depthTextureSize} changes.
+     */
+    onDepthTextureSizeChanged() {
+      this.setDepthTexture();
+    }
+    /**
+     * Set or resize the {@link depthTexture} and eventually resize the {@link depthPassTarget} as well.
+     */
+    setDepthTexture() {
+      if (this.depthTexture && (this.depthTexture.size.width !== this.depthTextureSize.x || this.depthTexture.size.height !== this.depthTextureSize.y)) {
+        this.depthTexture.options.fixedSize.width = this.depthTextureSize.x;
+        this.depthTexture.options.fixedSize.height = this.depthTextureSize.y;
+        this.depthTexture.size.width = this.depthTextureSize.x;
+        this.depthTexture.size.height = this.depthTextureSize.y;
+        this.depthTexture.createTexture();
+        if (this.depthPassTarget) {
+          this.depthPassTarget.resize();
+        }
+      } else if (!this.depthTexture) {
+        this.createDepthTexture();
+      }
+    }
+    /**
+     * Create the {@link depthTexture}.
+     */
+    createDepthTexture() {
+      this.depthTexture = new Texture(this.renderer, {
+        label: `${this.constructor.name} (index: ${this.light.index}) depth texture`,
+        name: "shadowDepthTexture" + this.index,
+        type: "depth",
+        format: this.depthTextureFormat,
+        sampleCount: this.sampleCount,
+        fixedSize: {
+          width: this.depthTextureSize.x,
+          height: this.depthTextureSize.y
+        },
+        autoDestroy: false
+        // do not destroy when removing a mesh
+      });
+    }
+    /**
+     * Clear the content of the depth texture. Called whenever the {@link meshes} array is empty after having removed a mesh.
+     */
+    clearDepthTexture() {
+      if (!this.depthTexture || !this.depthTexture.texture)
+        return;
+      const commandEncoder = this.renderer.device.createCommandEncoder();
+      !this.renderer.production && commandEncoder.pushDebugGroup(`Clear ${this.depthTexture.texture.label} command encoder`);
+      const renderPassDescriptor = {
+        colorAttachments: [],
+        depthStencilAttachment: {
+          view: this.depthTexture.texture.createView({
+            label: "Clear " + this.depthTexture.texture.label + " view"
+          }),
+          depthLoadOp: "clear",
+          // Clear the depth attachment
+          depthClearValue: 1,
+          // Clear to the maximum depth (farthest possible depth)
+          depthStoreOp: "store"
+          // Store the cleared depth
+        }
+      };
+      const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
+      passEncoder.end();
+      !this.renderer.production && commandEncoder.popDebugGroup();
+      this.renderer.device.queue.submit([commandEncoder.finish()]);
+    }
+    /**
+     * Create the {@link depthPassTarget}.
+     */
+    createDepthPassTarget() {
+      this.depthPassTarget = new RenderTarget(this.renderer, {
+        label: "Depth pass render target for " + this.constructor.name + " " + this.index,
+        useColorAttachments: false,
+        depthTexture: this.depthTexture,
+        sampleCount: this.sampleCount
+      });
+    }
+    /**
+     * Update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} input value and tell the {@link CameraRenderer#cameraLightsBindGroup | renderer camera, lights and shadows} bind group to update.
+     * @param propertyKey - name of the property to update.
+     * @param value - new value of the property.
+     */
+    onPropertyChanged(propertyKey, value) {
+      if (this.rendererBinding) {
+        if (value instanceof Mat4) {
+          for (let i = 0; i < value.elements.length; i++) {
+            this.rendererBinding.childrenBindings[this.index].inputs[propertyKey].value[i] = value.elements[i];
+          }
+          this.rendererBinding.childrenBindings[this.index].inputs[propertyKey].shouldUpdate = true;
+        } else {
+          this.rendererBinding.childrenBindings[this.index].inputs[propertyKey].value = value;
+        }
+        this.renderer.shouldUpdateCameraLightsBindGroup();
+      }
+    }
+    /**
+     * Start the depth pass.
+     */
+    setDepthPass() {
+      __privateSet$d(this, _depthPassTaskID, this.render());
+    }
+    /**
+     * Remove the depth pass from its {@link utils/TasksQueueManager.TasksQueueManager | task queue manager}.
+     * @param depthPassTaskID - Task queue manager ID to use for removal.
+     */
+    removeDepthPass(depthPassTaskID) {
+      this.renderer.onBeforeRenderScene.remove(depthPassTaskID);
+    }
+    /**
+     * Render the depth pass. This happens before rendering the {@link CameraRenderer#scene | scene}.<br>
+     * - Render all the depth meshes.
+     * @param once - Whether to render it only once or not.
+     */
+    render(once = false) {
+      return this.renderer.onBeforeRenderScene.add(
+        (commandEncoder) => {
+          if (!this.meshes.size)
+            return;
+          this.renderDepthPass(commandEncoder);
+          this.renderer.pipelineManager.resetCurrentPipeline();
+        },
+        {
+          once,
+          order: this.index
+        }
+      );
+    }
+    /**
+     * Render the shadow map only once. Useful with static scenes if autoRender has been set to `false` to only take one snapshot of the shadow map.
+     */
+    async renderOnce() {
+      if (!__privateGet$d(this, _autoRender)) {
+        this.onPropertyChanged("isActive", 1);
+        await Promise.all(
+          [...__privateGet$d(this, _depthMeshes).values()].map(async (depthMesh) => {
+            depthMesh.setGeometry();
+            await depthMesh.material.compileMaterial();
+          })
+        );
+        this.render(true);
+      }
+    }
+    /**
+     * Render all the {@link meshes} into the {@link depthPassTarget}.
+     * @param commandEncoder - {@link GPUCommandEncoder} to use.
+     */
+    renderDepthPass(commandEncoder) {
+      this.renderer.pipelineManager.resetCurrentPipeline();
+      const depthPass = commandEncoder.beginRenderPass(this.depthPassTarget.renderPass.descriptor);
+      if (!this.renderer.production)
+        depthPass.pushDebugGroup(`${this.constructor.name} (index: ${this.index}): depth pass`);
+      __privateGet$d(this, _depthMeshes).forEach((depthMesh) => depthMesh.render(depthPass));
+      if (!this.renderer.production)
+        depthPass.popDebugGroup();
+      depthPass.end();
+    }
+    /**
+     * Get the default depth pass vertex shader for this {@link Shadow}.
+     * parameters - {@link VertexShaderInputBaseParams} used to compute the output `worldPosition` and `normal` vectors.
+     * @returns - Depth pass vertex shader.
+     */
+    getDefaultShadowDepthVs({ bindings = [], geometry }) {
+      return {
+        /** Returned code. */
+        code: getDefaultShadowDepthVs(this.index, { bindings, geometry })
+      };
+    }
+    /**
+     * Get the default depth pass fragment shader for this {@link Shadow}.
+     * @returns - A {@link ShaderOptions} if a depth pass fragment shader is needed, `false` otherwise.
+     */
+    getDefaultShadowDepthFs() {
+      return false;
+    }
+    /**
+     * Patch the given {@link ProjectedMesh | mesh} material parameters to create the depth mesh.
+     * @param mesh - original {@link ProjectedMesh | mesh} to use.
+     * @param parameters - Optional additional parameters to use for the depth mesh.
+     * @returns - Patched parameters.
+     */
+    patchShadowCastingMeshParams(mesh, parameters = {}) {
+      parameters = { ...mesh.material.options.rendering, ...parameters };
+      const bindings = [];
+      mesh.material.inputsBindings.forEach((binding) => {
+        if (binding.name.includes("skin") || binding.name.includes("morphTarget")) {
+          bindings.push(binding);
+        }
+      });
+      const instancesBinding = mesh.material.getBufferBindingByName("instances");
+      if (instancesBinding) {
+        bindings.push(instancesBinding);
+      }
+      if (parameters.bindings) {
+        parameters.bindings = [...bindings, ...parameters.bindings];
+      } else {
+        parameters.bindings = [...bindings];
+      }
+      if (!parameters.shaders) {
+        parameters.shaders = {
+          vertex: this.getDefaultShadowDepthVs({ bindings, geometry: mesh.geometry }),
+          fragment: this.getDefaultShadowDepthFs()
+        };
+      }
+      return parameters;
+    }
+    /**
+     * Add a {@link ProjectedMesh | mesh} to the shadow map. Internally called by the {@link ProjectedMesh | mesh} if its `castShadows` parameters has been set to `true`, but can also be called externally to selectively cast shadows or to add specific parameters (such as custom depth pass shaders).
+     * - {@link patchShadowCastingMeshParams | Patch} the parameters.
+     * - Create a new depth {@link Mesh} with the patched parameters.
+     * - Add the {@link ProjectedMesh | mesh} to the {@link meshes} Map.
+     * @param mesh - {@link ProjectedMesh | mesh} to add to the shadow map.
+     * @param parameters - Optional {@link RenderMaterialParams | parameters} to use for the depth mesh.
+     */
+    addShadowCastingMesh(mesh, parameters = {}) {
+      if (this.meshes.get(mesh.uuid))
+        return;
+      mesh.options.castShadows = true;
+      parameters = this.patchShadowCastingMeshParams(mesh, parameters);
+      if (__privateGet$d(this, _depthMeshes).get(mesh.uuid)) {
+        __privateGet$d(this, _depthMeshes).get(mesh.uuid).remove();
+        __privateGet$d(this, _depthMeshes).delete(mesh.uuid);
+      }
+      const depthMesh = new Mesh(this.renderer, {
+        label: `${this.constructor.name} (index: ${this.index}) ${mesh.options.label} depth mesh`,
+        ...parameters,
+        geometry: mesh.geometry,
+        // explicitly set empty output targets
+        // we just want to write to the depth texture
+        targets: [],
+        outputTarget: this.depthPassTarget,
+        autoRender: false
+      });
+      depthMesh.parent = mesh;
+      __privateGet$d(this, _depthMeshes).set(mesh.uuid, depthMesh);
+      this.meshes.set(mesh.uuid, mesh);
+    }
+    /**
+     * Remove a {@link ProjectedMesh | mesh} from the shadow map and destroy its depth mesh.
+     * @param mesh - {@link ProjectedMesh | mesh} to remove.
+     */
+    removeMesh(mesh) {
+      const depthMesh = __privateGet$d(this, _depthMeshes).get(mesh.uuid);
+      if (depthMesh) {
+        depthMesh.remove();
+        __privateGet$d(this, _depthMeshes).delete(mesh.uuid);
+      }
+      this.meshes.delete(mesh.uuid);
+      if (this.meshes.size === 0) {
+        this.clearDepthTexture();
+      }
+    }
+    /**
+     * If one of the {@link meshes} had its geometry change, update the corresponding depth mesh geometry as well.
+     * @param mesh - Original {@link ProjectedMesh} which geometry just changed.
+     * @param geometry - New {@link ProjectedMesh} {@link Geometry} to use.
+     */
+    updateMeshGeometry(mesh, geometry) {
+      const depthMesh = __privateGet$d(this, _depthMeshes).get(mesh.uuid);
+      if (depthMesh) {
+        depthMesh.useGeometry(geometry);
+      }
+    }
+    /**
+     * Destroy the {@link Shadow}.
+     */
+    destroy() {
+      this.onPropertyChanged("isActive", 0);
+      if (__privateGet$d(this, _depthPassTaskID) !== null) {
+        this.removeDepthPass(__privateGet$d(this, _depthPassTaskID));
+        __privateSet$d(this, _depthPassTaskID, null);
+      }
+      this.meshes.forEach((mesh) => this.removeMesh(mesh));
+      __privateSet$d(this, _depthMeshes, /* @__PURE__ */ new Map());
+      this.meshes = /* @__PURE__ */ new Map();
+      this.depthPassTarget?.destroy();
+      this.depthTexture?.destroy();
+    }
+  }
+  _intensity = new WeakMap();
+  _bias = new WeakMap();
+  _normalBias = new WeakMap();
+  _pcfSamples = new WeakMap();
+  _isActive = new WeakMap();
+  _autoRender = new WeakMap();
+  _depthMeshes = new WeakMap();
+  _depthPassTaskID = new WeakMap();
+  _setParameters = new WeakSet();
+  setParameters_fn = function({
+    intensity = 1,
+    bias = 0,
+    normalBias = 0,
+    pcfSamples = 1,
+    depthTextureSize = new Vec2(512),
+    depthTextureFormat = "depth24plus",
+    autoRender = true
+  } = {}) {
+    this.intensity = intensity;
+    this.bias = bias;
+    this.normalBias = normalBias;
+    this.pcfSamples = pcfSamples;
+    this.depthTextureSize = depthTextureSize;
+    this.depthTextureSize.onChange(() => this.onDepthTextureSizeChanged());
+    this.depthTextureFormat = depthTextureFormat;
+    __privateSet$d(this, _autoRender, autoRender);
+  };
+
+  const directionalShadowStruct = {
+    ...shadowStruct,
+    viewMatrix: {
+      type: "mat4x4f",
+      value: new Float32Array(16)
+    },
+    projectionMatrix: {
+      type: "mat4x4f",
+      value: new Float32Array(16)
+    }
+  };
+  class DirectionalShadow extends Shadow {
+    /**
+     * DirectionalShadow constructor
+     * @param renderer - {@link CameraRenderer} used to create this {@link DirectionalShadow}.
+     * @param parameters - {@link DirectionalShadowParams | parameters} used to create this {@link DirectionalShadow}.
+     */
+    constructor(renderer, {
+      light,
+      intensity,
+      bias,
+      normalBias,
+      pcfSamples,
+      depthTextureSize,
+      depthTextureFormat,
+      autoRender,
+      camera = {
+        left: -10,
+        right: 10,
+        bottom: -10,
+        top: 10,
+        near: 0.1,
+        far: 50
+      }
+    } = {}) {
+      super(renderer, {
+        light,
+        intensity,
+        bias,
+        normalBias,
+        pcfSamples,
+        depthTextureSize,
+        depthTextureFormat,
+        autoRender
+      });
+      this.options = {
+        ...this.options,
+        camera
+      };
+      this.camera = {
+        projectionMatrix: new Mat4(),
+        viewMatrix: new Mat4(),
+        up: new Vec3(0, 1, 0),
+        _left: camera.left,
+        _right: camera.right,
+        _bottom: camera.bottom,
+        _top: camera.top,
+        _near: camera.near,
+        _far: camera.far
+      };
+      const _self = this;
+      const cameraProps = ["left", "right", "bottom", "top", "near", "far"];
+      cameraProps.forEach((prop) => {
+        Object.defineProperty(_self.camera, prop, {
+          get() {
+            return _self.camera["_" + prop];
+          },
+          set(v) {
+            _self.camera["_" + prop] = v;
+            _self.updateProjectionMatrix();
+          }
+        });
+      });
+    }
+    /**
+     * Set or reset this {@link DirectionalShadow} {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
+     */
+    setRendererBinding() {
+      this.rendererBinding = this.renderer.bindings.directionalShadows;
+    }
+    /**
+     * Set the parameters and start casting shadows by setting the {@link isActive} setter to `true`.<br>
+     * Called internally by the associated {@link DirectionalLight} if any shadow parameters are specified when creating it. Can also be called directly.
+     * @param parameters - parameters to use for this {@link DirectionalShadow}.
+     */
+    cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender, camera } = {}) {
+      if (camera) {
+        this.camera.left = camera.left ?? -10;
+        this.camera.right = camera.right ?? 10;
+        this.camera.bottom = camera.bottom ?? -10;
+        this.camera.top = camera.right ?? 10;
+        this.camera.near = camera.near ?? 0.1;
+        this.camera.far = camera.far ?? 50;
+      }
+      super.cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
+    }
+    /**
+     * Set the {@link depthComparisonSampler}, {@link depthTexture}, {@link depthPassTarget}, compute the {@link DirectionalShadow#camera.projectionMatrix | camera projection matrix} and start rendering to the shadow map.
+     */
+    init() {
+      super.init();
+      this.updateProjectionMatrix();
+    }
+    /**
+     * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link DirectionalLight} has been overflowed.
+     */
+    reset() {
+      this.setRendererBinding();
+      super.reset();
+      this.onPropertyChanged("projectionMatrix", this.camera.projectionMatrix);
+      this.onPropertyChanged("viewMatrix", this.camera.viewMatrix);
+    }
+    /**
+     * Update the {@link DirectionalShadow#camera.projectionMatrix | camera orthographic projection matrix} and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
+     */
+    updateProjectionMatrix() {
+      this.camera.projectionMatrix.identity().makeOrthographic({
+        left: this.camera.left,
+        right: this.camera.right,
+        bottom: this.camera.bottom,
+        top: this.camera.top,
+        near: this.camera.near,
+        far: this.camera.far
+      });
+      this.onPropertyChanged("projectionMatrix", this.camera.projectionMatrix);
+    }
+    /**
+     * Update the {@link DirectionalShadow#camera.viewMatrix | camera view matrix} and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
+     * @param position - {@link Vec3} to use as position for the {@link DirectionalShadow#camera.viewMatrix | camera view matrix}, based on the {@link light} position.
+     * @param target - {@link Vec3} to use as target for the {@link DirectionalShadow#camera.viewMatrix | camera view matrix}, based on the {@link light} target.
+     */
+    updateViewMatrix(position = new Vec3(), target = new Vec3()) {
+      if (position.x === 0 && position.z === 0) {
+        this.camera.up.set(0, 0, 1);
+      } else {
+        this.camera.up.set(0, 1, 0);
+      }
+      this.camera.viewMatrix.makeView(position, target, this.camera.up);
+      this.onPropertyChanged("viewMatrix", this.camera.viewMatrix);
+    }
+  }
+
+  var __accessCheck$e = (obj, member, msg) => {
+    if (!member.has(obj))
+      throw TypeError("Cannot " + msg);
+  };
+  var __privateGet$c = (obj, member, getter) => {
+    __accessCheck$e(obj, member, "read from private field");
+    return getter ? getter.call(obj) : member.get(obj);
+  };
+  var __privateAdd$e = (obj, member, value) => {
+    if (member.has(obj))
+      throw TypeError("Cannot add the same private member more than once");
+    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  };
+  var __privateSet$c = (obj, member, value, setter) => {
+    __accessCheck$e(obj, member, "write to private field");
+    member.set(obj, value);
+    return value;
+  };
+  var _actualPosition$1, _direction;
+  class DirectionalLight extends Light {
+    /**
+     * DirectionalLight constructor
+     * @param renderer - {@link CameraRenderer} used to create this {@link DirectionalLight}.
+     * @param parameters - {@link DirectionalLightBaseParams | parameters} used to create this {@link DirectionalLight}.
+     */
+    constructor(renderer, {
+      color = new Vec3(1),
+      intensity = 1,
+      position = new Vec3(1),
+      target = new Vec3(),
+      shadow = null
+    } = {}) {
+      const type = "directionalLights";
+      super(renderer, { color, intensity, type });
+      /** @ignore */
+      __privateAdd$e(this, _actualPosition$1, void 0);
+      /**
+       * The {@link Vec3 | direction} of the {@link DirectionalLight} is the {@link target} minus the actual {@link position}.
+       * @private
+       */
+      __privateAdd$e(this, _direction, void 0);
+      this.options = {
+        ...this.options,
+        position,
+        target,
+        shadow
+      };
+      __privateSet$c(this, _direction, new Vec3());
+      __privateSet$c(this, _actualPosition$1, new Vec3());
+      this.target = target;
+      this.target.onChange(() => this.setDirection());
+      this.position.copy(position);
+      this.parent = this.renderer.scene;
+      this.shadow = new DirectionalShadow(this.renderer, {
+        autoRender: false,
+        // will be set by calling cast()
+        light: this
+      });
+      if (shadow) {
+        this.shadow.cast(shadow);
+      }
+    }
+    /**
+     * Set or reset this {@link DirectionalLight} {@link CameraRenderer}.
+     * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
+     */
+    setRenderer(renderer) {
+      this.shadow?.setRenderer(renderer);
+      super.setRenderer(renderer);
+    }
+    /**
+     * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of {@link DirectionalLight} has been overflowed.
+     */
+    reset() {
+      super.reset();
+      this.setDirection();
+      this.shadow?.reset();
+    }
+    /**
+     * Set the {@link DirectionalLight} direction based on the {@link target} and the {@link worldMatrix} translation and update the {@link DirectionalShadow} view matrix.
+     */
+    setDirection() {
+      __privateGet$c(this, _direction).copy(this.target).sub(this.worldMatrix.getTranslation(__privateGet$c(this, _actualPosition$1)));
+      this.onPropertyChanged("direction", __privateGet$c(this, _direction));
+      this.shadow?.updateViewMatrix(__privateGet$c(this, _actualPosition$1), this.target);
+    }
+    // explicitly disable scale and transform origin transformations
+    /** @ignore */
+    applyScale() {
+    }
+    /** @ignore */
+    applyTransformOrigin() {
+    }
+    /**
+     * If the {@link modelMatrix | model matrix} has been updated, set the new direction from the {@link worldMatrix} translation.
+     */
+    updateMatrixStack() {
+      super.updateMatrixStack();
+      if (this.matricesNeedUpdate) {
+        this.setDirection();
+      }
+    }
+    /**
+     * Tell the {@link renderer} that the maximum number of {@link DirectionalLight} has been overflown.
+     * @param lightsType - {@link type} of this light.
+     */
+    onMaxLightOverflow(lightsType) {
+      super.onMaxLightOverflow(lightsType);
+      this.shadow?.setRendererBinding();
+    }
+    /**
+     * Destroy this {@link DirectionalLight} and associated {@link DirectionalShadow}.
+     */
+    destroy() {
+      super.destroy();
+      this.shadow.destroy();
+    }
+  }
+  _actualPosition$1 = new WeakMap();
+  _direction = new WeakMap();
+
+  const getDefaultPointShadowDepthVs = (lightIndex = 0, { bindings = [], geometry }) => (
+    /* wgsl */
+    `
+struct PointShadowVSOutput {
+  @builtin(position) position: vec4f,
+  @location(0) worldPosition: vec3f,
+}
+
+@vertex fn main(
+  attributes: Attributes,
+) -> PointShadowVSOutput {  
+  var pointShadowVSOutput: PointShadowVSOutput;
+  let pointShadow: PointShadowsElement = pointShadows.pointShadowsElements[${lightIndex}];
+  
+  ${declareAttributesVars$1({ geometry })}
+  ${getVertexTransformedPositionNormal({ bindings, geometry })}
+  
+  let worldPos = worldPosition.xyz / worldPosition.w;  
+  
+  let lightDirection: vec3f = normalize(pointLights.elements[${lightIndex}].position - worldPos);
+  let NdotL: f32 = dot(normalize(normal), lightDirection);
+  let sinNdotL = sqrt(1.0 - NdotL * NdotL);
+  let normalBias: f32 = pointShadow.normalBias * sinNdotL;
+  
+  worldPosition = vec4(worldPos - normal * normalBias, 1.0);
+    
+  let shadowPosition: vec4f = pointShadow.projectionMatrix * pointShadow.viewMatrices[pointShadow.face] * worldPosition;
+
+  pointShadowVSOutput.position = shadowPosition;
+  pointShadowVSOutput.worldPosition = worldPos;
+
+  return pointShadowVSOutput;
+}`
+  );
+
+  const getDefaultPointShadowDepthFs = (lightIndex = 0) => (
+    /* wgsl */
+    `
+struct PointShadowVSOutput {
+  @builtin(position) position: vec4f,
+  @location(0) worldPosition: vec3f,
+}
+
+@fragment fn main(fsInput: PointShadowVSOutput) -> @builtin(frag_depth) f32 {
+  // get distance between fragment and light source
+  var lightDistance: f32 = length(fsInput.worldPosition - pointLights.elements[${lightIndex}].position);
+  
+  let pointShadow: PointShadowsElement = pointShadows.pointShadowsElements[${lightIndex}];
+  
+  // map to [0, 1] range by dividing by far plane - near plane
+  lightDistance = (lightDistance - pointShadow.cameraNear) / (pointShadow.cameraFar - pointShadow.cameraNear);
+  
+  // write this as modified depth
+  return clamp(lightDistance, 0.0, 1.0);
+}`
+  );
+
+  var __accessCheck$d = (obj, member, msg) => {
+    if (!member.has(obj))
+      throw TypeError("Cannot " + msg);
+  };
+  var __privateGet$b = (obj, member, getter) => {
+    __accessCheck$d(obj, member, "read from private field");
+    return getter ? getter.call(obj) : member.get(obj);
+  };
+  var __privateAdd$d = (obj, member, value) => {
+    if (member.has(obj))
+      throw TypeError("Cannot add the same private member more than once");
+    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  };
+  var __privateSet$b = (obj, member, value, setter) => {
+    __accessCheck$d(obj, member, "write to private field");
+    member.set(obj, value);
+    return value;
+  };
+  var _tempCubeDirection;
+  const pointShadowStruct = {
+    face: {
+      type: "i32",
+      value: 0
+    },
+    ...shadowStruct,
+    cameraNear: {
+      type: "f32",
+      value: 0
+    },
+    cameraFar: {
+      type: "f32",
+      value: 0
+    },
+    projectionMatrix: {
+      type: "mat4x4f",
+      value: new Float32Array(16)
+    },
+    viewMatrices: {
+      type: "array<mat4x4f>",
+      value: new Float32Array(16 * 6)
+    }
+  };
+  class PointShadow extends Shadow {
+    /**
+     * PointShadow constructor
+     * @param renderer - {@link CameraRenderer} used to create this {@link PointShadow}.
+     * @param parameters - {@link PointShadowParams | parameters} used to create this {@link PointShadow}.
+     */
+    constructor(renderer, {
+      light,
+      intensity,
+      bias,
+      normalBias,
+      pcfSamples,
+      depthTextureSize,
+      depthTextureFormat,
+      autoRender,
+      camera = {
+        near: 0.1,
+        far: 150
+      }
+    } = {}) {
+      super(renderer, {
+        light,
+        intensity,
+        bias,
+        normalBias,
+        pcfSamples,
+        depthTextureSize,
+        depthTextureFormat,
+        autoRender
+      });
+      /**
+       * {@link Vec3} used to calculate the actual current direction based on the {@link PointLight} position.
+       * @private
+       */
+      __privateAdd$d(this, _tempCubeDirection, void 0);
+      this.options = {
+        ...this.options,
+        camera
+      };
+      this.cubeDirections = [
+        new Vec3(-1, 0, 0),
+        new Vec3(1, 0, 0),
+        new Vec3(0, -1, 0),
+        new Vec3(0, 1, 0),
+        new Vec3(0, 0, -1),
+        new Vec3(0, 0, 1)
+      ];
+      __privateSet$b(this, _tempCubeDirection, new Vec3());
+      this.cubeUps = [
+        new Vec3(0, -1, 0),
+        new Vec3(0, -1, 0),
+        new Vec3(0, 0, 1),
+        new Vec3(0, 0, -1),
+        new Vec3(0, -1, 0),
+        new Vec3(0, -1, 0)
+      ];
+      if (camera.far <= 0) {
+        camera.far = 150;
+      }
+      this.camera = {
+        projectionMatrix: new Mat4(),
+        viewMatrices: [],
+        _near: camera.near,
+        _far: camera.far
+      };
+      for (let i = 0; i < 6; i++) {
+        this.camera.viewMatrices.push(new Mat4());
+      }
+      const _self = this;
+      const cameraProps = ["near", "far"];
+      cameraProps.forEach((prop) => {
+        Object.defineProperty(_self.camera, prop, {
+          get() {
+            return _self.camera["_" + prop];
+          },
+          set(v) {
+            _self.camera["_" + prop] = v;
+            _self.updateProjectionMatrix();
+          }
+        });
+      });
+    }
+    /**
+     * Set or reset this {@link PointShadow} {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
+     */
+    setRendererBinding() {
+      this.rendererBinding = this.renderer.bindings.pointShadows;
+    }
+    /**
+     * Set the parameters and start casting shadows by setting the {@link isActive} setter to `true`.<br>
+     * Called internally by the associated {@link PointLight} if any shadow parameters are specified when creating it. Can also be called directly.
+     * @param parameters - parameters to use for this {@link PointShadow}.
+     */
+    cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender, camera } = {}) {
+      if (camera) {
+        this.camera.near = camera.near ?? 0.1;
+        this.camera.far = camera.far !== void 0 ? camera.far : this.light.range > 0 ? this.light.range : 150;
+      }
+      super.cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
+    }
+    /**
+     * Set the {@link depthComparisonSampler}, {@link depthTexture}, {@link depthPassTarget}, compute the {@link PointShadow#camera.projectionMatrix | camera projection matrix} and start rendering to the shadow map.
+     */
+    init() {
+      super.init();
+      this.updateProjectionMatrix();
+    }
+    /**
+     * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link PointLight} has been overflowed.
+     */
+    reset() {
+      this.setRendererBinding();
+      super.reset();
+      this.updateProjectionMatrix();
+    }
+    /**
+     * Update the {@link PointShadow#camera.projectionMatrix | camera perspective projection matrix} and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
+     */
+    updateProjectionMatrix() {
+      this.camera.projectionMatrix.identity().makePerspective({
+        near: this.camera.near,
+        far: this.camera.far,
+        fov: 90,
+        aspect: 1
+      });
+      this.onPropertyChanged("projectionMatrix", this.camera.projectionMatrix);
+      this.onPropertyChanged("cameraNear", this.camera.near);
+      this.onPropertyChanged("cameraFar", this.camera.far);
+    }
+    /**
+     * Update the {@link PointShadow#camera.viewMatrices | camera view matrices} and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
+     * @param position - {@link Vec3} to use as position for the {@link PointShadow#camera.viewMatrices | camera view matrices}, based on the {@link light} position.
+     */
+    updateViewMatrices(position = new Vec3()) {
+      for (let i = 0; i < 6; i++) {
+        __privateGet$b(this, _tempCubeDirection).copy(this.cubeDirections[i]).add(position);
+        this.camera.viewMatrices[i].makeView(position, __privateGet$b(this, _tempCubeDirection), this.cubeUps[i]);
+        for (let j = 0; j < 16; j++) {
+          this.rendererBinding.childrenBindings[this.index].inputs.viewMatrices.value[i * 16 + j] = this.camera.viewMatrices[i].elements[j];
+        }
+      }
+      this.rendererBinding.childrenBindings[this.index].inputs.viewMatrices.shouldUpdate = true;
+    }
+    /**
+     * Set or resize the {@link depthTexture} and eventually resize the {@link depthPassTarget} as well.
+     */
+    setDepthTexture() {
+      if (this.depthTexture && (this.depthTexture.size.width !== this.depthTextureSize.x || this.depthTexture.size.height !== this.depthTextureSize.y)) {
+        const maxSize = Math.max(this.depthTextureSize.x, this.depthTextureSize.y);
+        this.depthTexture.options.fixedSize.width = maxSize;
+        this.depthTexture.options.fixedSize.height = maxSize;
+        this.depthTexture.size.width = maxSize;
+        this.depthTexture.size.height = maxSize;
+        this.depthTexture.createTexture();
+        if (this.depthPassTarget) {
+          this.depthPassTarget.resize();
+        }
+      } else if (!this.depthTexture) {
+        this.createDepthTexture();
+      }
+    }
+    /**
+     * Create the cube {@link depthTexture}.
+     */
+    createDepthTexture() {
+      const maxSize = Math.max(this.depthTextureSize.x, this.depthTextureSize.y);
+      this.depthTexture = new Texture(this.renderer, {
+        label: `${this.constructor.name} (index: ${this.index}) depth texture`,
+        name: "pointShadowCubeDepthTexture" + this.index,
+        type: "depth",
+        format: this.depthTextureFormat,
+        viewDimension: "cube",
+        sampleCount: this.sampleCount,
+        fixedSize: {
+          width: maxSize,
+          height: maxSize
+        },
+        autoDestroy: false
+        // do not destroy when removing a mesh
+      });
+    }
+    /**
+     * Clear the content of the depth texture. Called whenever the {@link meshes} array is empty after having removed a mesh.
+     */
+    clearDepthTexture() {
+      if (!this.depthTexture || !this.depthTexture.texture)
+        return;
+      const commandEncoder = this.renderer.device.createCommandEncoder();
+      !this.renderer.production && commandEncoder.pushDebugGroup(`Clear ${this.depthTexture.texture.label} command encoder`);
+      for (let i = 0; i < 6; i++) {
+        const view = this.depthTexture.texture.createView({
+          label: "Clear " + this.depthTexture.texture.label + " cube face view",
+          dimension: "2d",
+          arrayLayerCount: 1,
+          baseArrayLayer: i
+        });
+        const renderPassDescriptor = {
+          colorAttachments: [],
+          depthStencilAttachment: {
+            view,
+            depthLoadOp: "clear",
+            // Clear the depth attachment
+            depthClearValue: 1,
+            // Clear to the maximum depth (farthest possible depth)
+            depthStoreOp: "store"
+            // Store the cleared depth
+          }
+        };
+        const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
+        passEncoder.end();
+      }
+      !this.renderer.production && commandEncoder.popDebugGroup();
+      this.renderer.device.queue.submit([commandEncoder.finish()]);
+    }
+    /**
+     * Remove the depth pass from its {@link utils/TasksQueueManager.TasksQueueManager | task queue manager}.
+     * @param depthPassTaskID - Task queue manager ID to use for removal.
+     */
+    removeDepthPass(depthPassTaskID) {
+      this.renderer.onBeforeCommandEncoderCreation.remove(depthPassTaskID);
+    }
+    /**
+     * Render the depth pass. This happens before creating the {@link CameraRenderer} command encoder.<br>
+     * - For each face of the depth cube texture:
+     *   - Create a command encoder.
+     *   - Set the {@link depthPassTarget} descriptor depth texture view to our depth cube texture current face.
+     *   - Update the face index.
+     *   - Render all the depth meshes.
+     *   - Submit the command encoder.
+     * @param once - Whether to render it only once or not.
+     */
+    render(once = false) {
+      return this.renderer.onBeforeCommandEncoderCreation.add(
+        () => {
+          if (!this.meshes.size)
+            return;
+          this.renderer.createCameraLightsBindGroup();
+          for (let i = 0; i < 6; i++) {
+            const commandEncoder = this.renderer.device.createCommandEncoder();
+            if (!this.renderer.production)
+              commandEncoder.pushDebugGroup(
+                `${this.constructor.name} (index: ${this.index}): depth pass command encoder for face ${i}`
+              );
+            this.depthPassTarget.renderPass.setRenderPassDescriptor(
+              this.depthTexture.texture.createView({
+                label: this.depthTexture.texture.label + " cube face view " + i,
+                dimension: "2d",
+                arrayLayerCount: 1,
+                baseArrayLayer: i
+              })
+            );
+            this.rendererBinding.childrenBindings[this.index].inputs.face.value = i;
+            this.renderer.shouldUpdateCameraLightsBindGroup();
+            this.renderer.updateCameraLightsBindGroup();
+            this.renderDepthPass(commandEncoder);
+            if (!this.renderer.production)
+              commandEncoder.popDebugGroup();
+            const commandBuffer = commandEncoder.finish();
+            this.renderer.device.queue.submit([commandBuffer]);
+          }
+          this.renderer.pipelineManager.resetCurrentPipeline();
+        },
+        {
+          once,
+          order: this.index
+        }
+      );
+    }
+    /**
+     * Get the default depth pass vertex shader for this {@link PointShadow}.
+     * parameters - {@link VertexShaderInputBaseParams} used to compute the output `worldPosition` and `normal` vectors.
+     * @returns - Depth pass vertex shader.
+     */
+    getDefaultShadowDepthVs({ bindings = [], geometry }) {
+      return {
+        /** Returned code. */
+        code: getDefaultPointShadowDepthVs(this.index, { bindings, geometry })
+      };
+    }
+    /**
+     * Get the default depth pass {@link types/Materials.ShaderOptions | fragment shader options} for this {@link PointShadow}.
+     * @returns - A {@link types/Materials.ShaderOptions | ShaderOptions} with the depth pass fragment shader.
+     */
+    getDefaultShadowDepthFs() {
+      return {
+        /** Returned code. */
+        code: getDefaultPointShadowDepthFs(this.index)
+      };
+    }
+  }
+  _tempCubeDirection = new WeakMap();
+
+  var __accessCheck$c = (obj, member, msg) => {
+    if (!member.has(obj))
+      throw TypeError("Cannot " + msg);
+  };
+  var __privateGet$a = (obj, member, getter) => {
+    __accessCheck$c(obj, member, "read from private field");
+    return getter ? getter.call(obj) : member.get(obj);
+  };
+  var __privateAdd$c = (obj, member, value) => {
+    if (member.has(obj))
+      throw TypeError("Cannot add the same private member more than once");
+    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  };
+  var __privateSet$a = (obj, member, value, setter) => {
+    __accessCheck$c(obj, member, "write to private field");
+    member.set(obj, value);
+    return value;
+  };
+  var _range, _actualPosition;
+  class PointLight extends Light {
+    /**
+     * PointLight constructor
+     * @param renderer - {@link CameraRenderer | CameraRenderer} used to create this {@link PointLight}.
+     * @param parameters - {@link PointLightBaseParams | parameters} used to create this {@link PointLight}.
+     */
+    constructor(renderer, { color = new Vec3(1), intensity = 1, position = new Vec3(), range = 0, shadow = null } = {}) {
+      const type = "pointLights";
+      super(renderer, { color, intensity, type });
+      /** @ignore */
+      __privateAdd$c(this, _range, void 0);
+      /** @ignore */
+      __privateAdd$c(this, _actualPosition, void 0);
+      this.options = {
+        ...this.options,
+        position,
+        range,
+        shadow
+      };
+      __privateSet$a(this, _actualPosition, new Vec3());
+      this.position.copy(position);
+      this.range = range;
+      this.parent = this.renderer.scene;
+      this.shadow = new PointShadow(this.renderer, {
+        autoRender: false,
+        // will be set by calling cast()
+        light: this
+      });
+      if (shadow) {
+        this.shadow.cast(shadow);
+      }
+    }
+    /**
+     * Set or reset this {@link PointLight} {@link CameraRenderer}.
+     * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
+     */
+    setRenderer(renderer) {
+      if (this.shadow) {
+        this.shadow.setRenderer(renderer);
+      }
+      super.setRenderer(renderer);
+    }
+    /**
+     * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of {@link PointLight} has been overflowed.
+     */
+    reset() {
+      super.reset();
+      this.onPropertyChanged("range", this.range);
+      this.setPosition();
+      this.shadow?.reset();
+    }
+    /**
+     * Get this {@link PointLight} range.
+     * @returns - The {@link PointLight} range.
+     */
+    get range() {
+      return __privateGet$a(this, _range);
+    }
+    /**
+     * Set this {@link PointLight} range and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
+     * @param value - The new {@link PointLight} range.
+     */
+    set range(value) {
+      __privateSet$a(this, _range, value);
+      this.onPropertyChanged("range", this.range);
+    }
+    /**
+     * Set the {@link PointLight} position based on the {@link worldMatrix} translation and update the {@link PointShadow} view matrices.
+     */
+    setPosition() {
+      this.onPropertyChanged("position", this.worldMatrix.getTranslation(__privateGet$a(this, _actualPosition)));
+      this.shadow?.updateViewMatrices(__privateGet$a(this, _actualPosition));
+    }
+    // explicitly disable scale and transform origin transformations
+    /** @ignore */
+    applyScale() {
+    }
+    /** @ignore */
+    applyTransformOrigin() {
+    }
+    /**
+     * If the {@link modelMatrix | model matrix} has been updated, set the new position from the {@link worldMatrix} translation.
+     */
+    updateMatrixStack() {
+      super.updateMatrixStack();
+      if (this.matricesNeedUpdate) {
+        this.setPosition();
+      }
+    }
+    /**
+     * Tell the {@link renderer} that the maximum number of {@link PointLight} has been overflown.
+     * @param lightsType - {@link type} of this light.
+     */
+    onMaxLightOverflow(lightsType) {
+      super.onMaxLightOverflow(lightsType);
+      this.shadow?.setRendererBinding();
+    }
+    /**
+     * Destroy this {@link PointLight} and associated {@link PointShadow}.
+     */
+    destroy() {
+      super.destroy();
+      this.shadow.destroy();
+    }
+  }
+  _range = new WeakMap();
+  _actualPosition = new WeakMap();
+
+  class CacheManager {
+    /**
+     * CacheManager constructor
+     */
+    constructor() {
+      this.planeGeometries = [];
+    }
+    /**
+     * Check if a given {@link PlaneGeometry} is already cached based on its {@link PlaneGeometry#definition.id | definition id}
+     * @param planeGeometry - {@link PlaneGeometry} to check
+     * @returns - {@link PlaneGeometry} found or null if not found
+     */
+    getPlaneGeometry(planeGeometry) {
+      return this.planeGeometries.find((element) => element.definition.id === planeGeometry.definition.id);
+    }
+    /**
+     * Check if a given {@link PlaneGeometry} is already cached based on its {@link PlaneGeometry#definition | definition id}
+     * @param planeGeometryID - {@link PlaneGeometry#definition.id | PlaneGeometry definition id}
+     * @returns - {@link PlaneGeometry} found or null if not found
+     */
+    getPlaneGeometryByID(planeGeometryID) {
+      return this.planeGeometries.find((element) => element.definition.id === planeGeometryID);
+    }
+    /**
+     * Add a {@link PlaneGeometry} to our cache {@link planeGeometries} array
+     * @param planeGeometry
+     */
+    addPlaneGeometry(planeGeometry) {
+      this.planeGeometries.push(planeGeometry);
+    }
+    /**
+     * Destroy our {@link CacheManager}
+     */
+    destroy() {
+      this.planeGeometries = [];
+    }
+  }
+  const cacheManager = new CacheManager();
+
+  class FullscreenPlane extends MeshBaseMixin(class {
+  }) {
+    /**
+     * FullscreenPlane constructor
+     * @param renderer - {@link Renderer} or {@link GPUCurtains} class object used to create this {@link FullscreenPlane}.
+     * @param parameters - {@link MeshBaseRenderParams | parameters} use to create this {@link FullscreenPlane}.
+     */
+    constructor(renderer, parameters = {}) {
+      renderer = isRenderer(renderer, parameters.label ? parameters.label + " FullscreenQuadMesh" : "FullscreenQuadMesh");
+      let geometry = cacheManager.getPlaneGeometryByID(2);
+      if (!geometry) {
+        geometry = new PlaneGeometry({ widthSegments: 1, heightSegments: 1 });
+        cacheManager.addPlaneGeometry(geometry);
+      }
+      if (!parameters.shaders || !parameters.shaders.vertex) {
+        ["uniforms", "storages"].forEach((bindingType) => {
+          Object.values(parameters[bindingType] ?? {}).forEach(
+            (binding) => binding.visibility = ["fragment"]
+          );
+        });
+      }
+      parameters.depthWriteEnabled = false;
+      if (!parameters.label) {
+        parameters.label = "FullscreenQuadMesh";
+      }
+      super(renderer, null, { geometry, ...parameters });
+      this.size = {
+        document: {
+          width: this.renderer.boundingRect.width,
+          height: this.renderer.boundingRect.height,
+          top: this.renderer.boundingRect.top,
+          left: this.renderer.boundingRect.left
+        }
+      };
+      this.type = "FullscreenQuadMesh";
+    }
+    /**
+     * Resize our {@link FullscreenPlane}.
+     * @param boundingRect - the new bounding rectangle.
+     */
+    resize(boundingRect = null) {
+      this.size.document = boundingRect ?? this.renderer.boundingRect;
+      super.resize(boundingRect);
+    }
+    /**
+     * Take the pointer {@link Vec2} position relative to the document and returns it relative to our {@link FullscreenPlane}.
+     * It ranges from -1 to 1 on both axis.
+     * @param mouseCoords - pointer {@link Vec2} coordinates.
+     * @returns - the mapped {@link Vec2} coordinates in the [-1, 1] range.
+     */
+    mouseToPlaneCoords(mouseCoords = new Vec2()) {
+      return new Vec2(
+        (mouseCoords.x - this.size.document.left) / this.size.document.width * 2 - 1,
+        1 - (mouseCoords.y - this.size.document.top) / this.size.document.height * 2
+      );
     }
   }
 
@@ -14800,13 +14776,13 @@ ${this.shaders.compute.head}`;
       });
       this.cameraLightsBindGroup.consumers.add(this.uuid);
       if (this.device) {
-        this.setCameraBindGroup();
+        this.createCameraLightsBindGroup();
       }
     }
     /**
      * Create the {@link cameraLightsBindGroup | camera, lights and shadows bind group} buffers
      */
-    setCameraBindGroup() {
+    createCameraLightsBindGroup() {
       if (this.cameraLightsBindGroup && this.cameraLightsBindGroup.shouldCreateBindGroup) {
         this.cameraLightsBindGroup.setIndex(0);
         this.cameraLightsBindGroup.createBindGroup();
@@ -14918,13 +14894,13 @@ ${this.shaders.compute.head}`;
     }
     /* RENDER */
     /**
-     * {@link setCameraBindGroup | Set the camera bind group if needed} and then call our {@link GPURenderer#render | GPURenderer render method}
+     * {@link createCameraLightsBindGroup | Set the camera bind group if needed} and then call our {@link GPURenderer#render | GPURenderer render method}
      * @param commandEncoder - current {@link GPUCommandEncoder}
      */
     render(commandEncoder) {
       if (!this.ready)
         return;
-      this.setCameraBindGroup();
+      this.createCameraLightsBindGroup();
       this.updateCameraLightsBindGroup();
       super.render(commandEncoder);
       if (this.cameraLightsBindGroup) {
@@ -15216,8 +15192,8 @@ ${this.shaders.compute.head}`;
       this.device?.queue.copyExternalImageToTexture(source, destination, copySize);
     }
     /**
-     * Upload a {@link MediaTexture#texture | texture} or {@link DOMTexture#texture | texture} to the GPU.
-     * @param texture - {@link MediaTexture} or {@link DOMTexture} containing the {@link GPUTexture} to upload.
+     * Upload a {@link MediaTexture#texture | texture} to the GPU.
+     * @param texture - {@link MediaTexture} containing the {@link GPUTexture} to upload.
      * @param sourceIndex - Index of the source to upload (for cube maps). Default to `0`.
      */
     uploadTexture(texture, sourceIndex = 0) {
@@ -15261,7 +15237,7 @@ ${this.shaders.compute.head}`;
     /**
      * Mips generation helper on the GPU using our {@link device}. Caches sampler, module and pipeline (by {@link GPUTexture} formats) for faster generation.
      * Ported from https://webgpufundamentals.org/webgpu/lessons/webgpu-importing-textures.html
-     * @param texture - {@link Texture} or {@link DOMTexture} for which to generate the mips.
+     * @param texture - {@link Texture} for which to generate the mips.
      * @param commandEncoder - optional {@link GPUCommandEncoder} to use if we're already in the middle of a command encoding process.
      */
     generateMips(texture, commandEncoder = null) {
@@ -15416,7 +15392,7 @@ ${this.shaders.compute.head}`;
      * - create a {@link GPUCommandEncoder}.
      * - render all our {@link renderers}.
      * - submit our {@link GPUCommandBuffer}.
-     * - upload {@link DOMTexture#texture | DOMTexture textures} that do not have a parentMesh.
+     * - upload {@link MediaTexture#texture | MediaTexture textures} that need it.
      * - empty our {@link texturesQueue} array.
      * - call all our {@link renderers} {@link core/renderers/GPURenderer.GPURenderer#onAfterCommandEncoder | onAfterCommandEncoder} callbacks.
      */
