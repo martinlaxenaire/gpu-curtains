@@ -6,6 +6,7 @@ import { generateUUID } from '../../utils/utils'
 import { DirectionalLight } from './DirectionalLight'
 import { PointLight } from './PointLight'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
+import { sRGBToLinear } from '../../math/color-utils'
 
 /** Defines all types of lights. */
 export type LightsType = 'ambientLights' | 'directionalLights' | 'pointLights'
@@ -84,7 +85,10 @@ export class Light extends Object3D {
     this.color = color
     this.#intensityColor = this.color.clone()
     this.color.onChange(() =>
-      this.onPropertyChanged('color', this.#intensityColor.copy(this.color).multiplyScalar(this.intensity))
+      this.onPropertyChanged(
+        'color',
+        sRGBToLinear(this.#intensityColor.copy(this.color)).multiplyScalar(this.intensity)
+      )
     )
 
     this.intensity = intensity
@@ -138,7 +142,7 @@ export class Light extends Object3D {
    */
   reset() {
     this.setRendererBinding()
-    this.onPropertyChanged('color', this.#intensityColor.copy(this.color).multiplyScalar(this.intensity))
+    this.onPropertyChanged('color', sRGBToLinear(this.#intensityColor.copy(this.color)).multiplyScalar(this.intensity))
   }
 
   /**
@@ -155,7 +159,7 @@ export class Light extends Object3D {
    */
   set intensity(value: number) {
     this.#intensity = value
-    this.onPropertyChanged('color', this.#intensityColor.copy(this.color).multiplyScalar(this.intensity))
+    this.onPropertyChanged('color', sRGBToLinear(this.#intensityColor.copy(this.color)).multiplyScalar(this.intensity))
   }
 
   /**

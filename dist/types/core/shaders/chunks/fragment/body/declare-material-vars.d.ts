@@ -1,5 +1,6 @@
 import { EnvironmentMap } from '../../../../../extras/environmentMap/EnvironmentMap';
-import { ShadingModels, UnlitFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code';
+import { ShadingModels } from '../../../../../extras/meshes/LitMesh';
+import { UnlitFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code';
 /** Parameters used to declare the fragment shader variables coming from the material uniforms. */
 export interface DeclareMaterialVarsParams {
     /** The {@link core/bindings/BufferBinding.BufferBindingBaseParams | BufferBindingBaseParams} holding the material uniform values. Will use default values if not provided. */

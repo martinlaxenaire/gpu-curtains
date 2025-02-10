@@ -1,4 +1,4 @@
-import { ShaderTextureDescriptor } from '../../../full/fragment/get-fragment-shader-code';
+import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh';
 /**
  * Set the `transmission` (`f32`) and `thickness` (`f32`) values from the material variables and eventual textures.
  * @param parameters - Parameters used to set the `transmission` (`f32`) and `thickness` (`f32`) values

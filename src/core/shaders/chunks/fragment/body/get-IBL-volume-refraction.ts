@@ -1,4 +1,5 @@
-import { PBRFragmentShaderInputParams, ShaderTextureDescriptor } from '../../../full/fragment/get-fragment-shader-code'
+import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code'
+import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh'
 
 /**
  * Apply transmission volume refraction to `totalDiffuse` light component if applicable.

@@ -9,7 +9,6 @@ window.addEventListener('load', async () => {
     GLTFLoader,
     GLTFScenesManager,
     RenderBundle,
-    buildShaders,
     AmbientLight,
     DirectionalLight,
     PointLight,
@@ -98,7 +97,8 @@ window.addEventListener('load', async () => {
     //intensity: 6,
     intensity: 3,
     shadow: {
-      bias: 0.001,
+      bias: 0.0001,
+      //normalBias: 0.0001,
       depthTextureSize: new Vec2(1500),
       pcfSamples: 2,
       camera: {
@@ -107,7 +107,7 @@ window.addEventListener('load', async () => {
         bottom: -20,
         top: 20,
         near: 0.01,
-        far: 200,
+        far: 60,
       },
       autoRender: false,
     },
@@ -115,11 +115,11 @@ window.addEventListener('load', async () => {
 
   const pointLights = []
   const pointLightsSettings = {
-    color: new Vec3(0.85, 0.15, 0),
+    color: new Vec3(0.85, 0.25, 0.1),
     intensity: 7.5,
     range: 10,
     shadow: {
-      bias: 0.001,
+      bias: 0.0001,
       pcfSamples: 1,
       depthTextureSize: new Vec2(512),
       camera: {
@@ -209,17 +209,15 @@ window.addEventListener('load', async () => {
       parameters.receiveShadows = true
 
       // debug
-      const additionalColorContribution = `
+      const additionalContribution = `
         // color = vec4(vec3(metallic), color.a);
       `
 
-      parameters.shaders = buildShaders(meshDescriptor, {
-        shadingModel,
-        chunks: {
-          additionalColorContribution,
-        },
-        environmentMap,
-      })
+      parameters.material.shading = shadingModel
+      parameters.material.fragmentChunks = {
+        additionalContribution,
+      }
+      parameters.material.environmentMap = environmentMap
     })
 
     // finally render shadows

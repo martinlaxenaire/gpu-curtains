@@ -1,4 +1,4 @@
-import { ToneMappings } from '../../../full/fragment/get-fragment-shader-code'
+import { ToneMappings } from '../../../../../extras/meshes/LitMesh'
 
 // Add more tone mappings? Handle exposure?
 

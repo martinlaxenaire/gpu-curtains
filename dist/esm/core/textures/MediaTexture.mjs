@@ -3,7 +3,7 @@ import { isRenderer } from '../renderers/utils.mjs';
 import { Vec2 } from '../../math/Vec2.mjs';
 import { Mat3 } from '../../math/Mat3.mjs';
 import { BufferBinding } from '../bindings/BufferBinding.mjs';
-import { throwWarning } from '../../utils/utils.mjs';
+import { toKebabCase, throwWarning } from '../../utils/utils.mjs';
 import { TextureBinding } from '../bindings/TextureBinding.mjs';
 import { getDefaultMediaTextureUsage, getNumMipLevels } from './utils.mjs';
 
@@ -121,7 +121,7 @@ const _MediaTexture = class _MediaTexture extends Texture {
     this.transformBinding = null;
     if (this.options.useTransform) {
       this.transformBinding = new BufferBinding({
-        label: this.options.label,
+        label: toKebabCase(this.options.name),
         name: this.options.name,
         struct: {
           matrix: {

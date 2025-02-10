@@ -8,7 +8,6 @@ window.addEventListener('load', async () => {
     EnvironmentMap,
     GLTFLoader,
     GLTFScenesManager,
-    buildShaders,
     AmbientLight,
     PointLight,
     DirectionalLight,
@@ -613,13 +612,14 @@ window.addEventListener('load', async () => {
         }
       `
 
-      parameters.shaders = buildShaders(meshDescriptor, {
-        shadingModel,
-        fragmentChunks: {
-          additionalContribution,
-        },
-        ...(useEnvMap && { environmentMap }),
-      })
+      parameters.material.shading = shadingModel
+      parameters.material.fragmentChunks = {
+        additionalContribution,
+      }
+
+      if (useEnvMap) {
+        parameters.material.environmentMap = environmentMap
+      }
     })
 
     // variants

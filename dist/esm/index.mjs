@@ -72,7 +72,6 @@ export { LitMesh } from './extras/meshes/LitMesh.mjs';
 export { PingPongPlane } from './extras/meshes/PingPongPlane.mjs';
 export { Raycaster } from './extras/raycaster/Raycaster.mjs';
 export { GLTFScenesManager } from './extras/gltf/GLTFScenesManager.mjs';
-export { buildShaders } from './extras/gltf/utils.mjs';
 export { GLTFLoader } from './extras/loaders/GLTFLoader.mjs';
 export { HDRLoader } from './extras/loaders/HDRLoader.mjs';
 export { KeyframesAnimation } from './extras/animations/KeyframesAnimation.mjs';

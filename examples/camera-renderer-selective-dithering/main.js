@@ -87,7 +87,7 @@ window.addEventListener('load', async () => {
 
   const sphereColor1 = new Vec3(0, 1, 1)
   const sphereColor2 = new Vec3(1, 0, 1)
-  const cubeColor = new Vec3(0.35)
+  const cubeColor = new Vec3(0.5)
 
   for (let i = 0; i < 50; i++) {
     const isCube = Math.random() > 0.5

@@ -1,4 +1,4 @@
-import { ToneMappings } from '../../full/fragment/get-fragment-shader-code';
+import { ToneMappings } from '../../../../extras/meshes/LitMesh';
 /** Defines the basic parameters available for the various shading getter functions. */
 export interface GetShadingParams {
     /** Whether to add the utils functions such as constants or helper functions. Default to `true`. */

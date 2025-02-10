@@ -1,5 +1,5 @@
 import { Geometry } from '../../../../geometries/Geometry'
-import { ShaderTextureDescriptor } from '../../../full/fragment/get-fragment-shader-code'
+import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh'
 
 /**
  * Get the base color from the `material` binding `baseColorFactor` value, {@link Geometry} colors attributes if any and `baseColorTexture` if any, and apply it to our `outputColor`. Can also discard fragments based on `material` binding `alphaCutoff` value.

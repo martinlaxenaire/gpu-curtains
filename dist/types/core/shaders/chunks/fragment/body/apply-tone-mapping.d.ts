@@ -1,4 +1,4 @@
-import { ToneMappings } from '../../../full/fragment/get-fragment-shader-code';
+import { ToneMappings } from '../../../../../extras/meshes/LitMesh';
 /**
  * Apply the corresponding tone mapping to our `outputColor` (`vec4f`).
  * @param parameters - Parameters to use for applying tone mapping.

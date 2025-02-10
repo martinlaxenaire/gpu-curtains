@@ -43,23 +43,6 @@ const getPBRFragmentShaderCode = ({
   environmentMap = null
 }) => {
   chunks = patchAdditionalChunks(chunks);
-  if (environmentMap && materialUniform && materialUniform.struct) {
-    materialUniform.struct = {
-      ...materialUniform.struct,
-      envRotation: {
-        type: "mat3x3f",
-        value: environmentMap.rotation
-      },
-      envDiffuseIntensity: {
-        type: "f32",
-        value: environmentMap.options.diffuseIntensity
-      },
-      envSpecularIntensity: {
-        type: "f32",
-        value: environmentMap.options.specularIntensity
-      }
-    };
-  }
   return (
     /* wgsl */
     `  

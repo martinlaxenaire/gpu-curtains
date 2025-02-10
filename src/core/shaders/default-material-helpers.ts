@@ -1,7 +1,7 @@
 import { Vec3 } from '../../math/Vec3'
 import { BindGroupInputs } from '../../types/BindGroups'
-import { ShadingModels } from './full/fragment/get-fragment-shader-code'
 import { Mat3 } from '../../math/Mat3'
+import { ShadingModels } from '../../extras/meshes/LitMesh'
 
 // chunks
 /** Additional WGSL chunks to add to the shaders. */

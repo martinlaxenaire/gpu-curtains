@@ -11,9 +11,9 @@ import { Mat3 } from '../../math/Mat3'
 import { Mat4 } from '../../math/Mat4'
 import { Geometry } from '../../core/geometries/Geometry'
 import { IndexedGeometry } from '../../core/geometries/IndexedGeometry'
-import { Mesh } from '../../core/meshes/Mesh'
 import { TypedArray, TypedArrayConstructor } from '../../core/bindings/utils'
 import { GeometryParams, VertexBufferAttribute, VertexBufferAttributeParams } from '../../types/Geometries'
+import { LitMesh, LitMeshMaterialUniformParams, LitMeshParameters } from '../meshes/LitMesh'
 import { Camera } from '../../core/camera/Camera'
 import {
   ChildDescriptor,
@@ -24,14 +24,13 @@ import {
   ScenesManager,
   SkinDefinition,
 } from '../../types/gltf/GLTFScenesManager'
-import { throwWarning, toKebabCase } from '../../utils/utils'
+import { throwWarning } from '../../utils/utils'
 import { BufferBinding } from '../../core/bindings/BufferBinding'
 import { KeyframesAnimation } from '../animations/KeyframesAnimation'
 import { TargetsAnimationsManager } from '../animations/TargetsAnimationsManager'
 import { GLTFExtensionsTypes } from '../../types/gltf/GLTFExtensions'
 import { Vec2 } from '../../math/Vec2'
 import { RenderMaterial } from '../../core/materials/RenderMaterial'
-import { ProjectedMeshParameters } from '../../core/meshes/mixins/ProjectedMeshBaseMixin'
 import { DirectionalLight } from '../../core/lights/DirectionalLight'
 import { PointLight } from '../../core/lights/PointLight'
 
@@ -42,7 +41,7 @@ const GL = WebGLRenderingContext
 /**
  * Used to create a {@link GLTFScenesManager} from a given {@link GLTFLoader.gltf | gltf} object.
  *
- * Parse the {@link GLTFLoader.gltf | gltf} object, create all the {@link Sampler} and {@link Texture}, create all the {@link Object3D} nodes to compute the correct transformations and parent -> child relationships, create all the needed {@link MeshDescriptor} containing the {@link Geometry}, {@link Mesh} parameters and so on.
+ * Parse the {@link GLTFLoader.gltf | gltf} object, create all the {@link Sampler} and {@link Texture}, create all the {@link Object3D} nodes to compute the correct transformations and parent -> child relationships, create all the needed {@link MeshDescriptor} containing the {@link Geometry}, {@link LitMesh} parameters and so on.
  *
  * ## Loading Features
  *
@@ -117,7 +116,7 @@ export class GLTFScenesManager {
   gltf: GLTFLoader['gltf']
   /** The {@link ScenesManager} containing all the useful data. */
   scenesManager: ScenesManager
-  /** The {@link PrimitiveInstances} Map, to group similar {@link Mesh} by instances. */
+  /** The {@link PrimitiveInstances} Map, to group similar {@link LitMesh} by instances. */
   #primitiveInstances: PrimitiveInstances
 
   /**
@@ -398,7 +397,7 @@ export class GLTFScenesManager {
     })()
 
     const texture = new MediaTexture(this.renderer, {
-      label: toKebabCase(name),
+      label: material.name ? material.name + ': ' + name : name,
       name,
       format,
       visibility: ['fragment'],
@@ -463,7 +462,7 @@ export class GLTFScenesManager {
 
           if (hasTexture) {
             const reusedTexture = new MediaTexture(this.renderer, {
-              label: toKebabCase(name),
+              label: material.name ? material.name + ': ' + name : name,
               name,
               visibility: ['fragment'],
               generateMips: true, // generate mips by default
@@ -472,7 +471,7 @@ export class GLTFScenesManager {
             })
 
             if (textureTransform) {
-              const { offset, rotation, scale, texCoord } = textureTransform
+              const { offset, rotation, scale } = textureTransform
 
               if (offset !== undefined) reusedTexture.offset.set(offset[0], offset[1])
               if (rotation !== undefined) reusedTexture.rotation = rotation
@@ -590,9 +589,7 @@ export class GLTFScenesManager {
     materialIndex: GLTF.IMeshPrimitive['material'],
     label: string = null
   ): MeshDescriptorMaterialParams {
-    const materialParams: MeshDescriptorMaterialParams = {
-      uniforms: {},
-    }
+    const materialParams: MeshDescriptorMaterialParams = {}
 
     const material = (this.gltf.materials && this.gltf.materials[materialIndex]) || {}
 
@@ -612,114 +609,52 @@ export class GLTFScenesManager {
     const specular = (extensions && extensions.KHR_materials_specular) || null
     const volume = (extensions && extensions.KHR_materials_volume) || null
 
-    // uniforms
-    const materialUniformStruct = {
-      color: {
-        type: 'vec3f',
-        value:
-          material.pbrMetallicRoughness && material.pbrMetallicRoughness.baseColorFactor !== undefined
-            ? new Vec3(
-                material.pbrMetallicRoughness.baseColorFactor[0],
-                material.pbrMetallicRoughness.baseColorFactor[1],
-                material.pbrMetallicRoughness.baseColorFactor[2]
-              )
-            : new Vec3(1),
-      },
-      opacity: {
-        type: 'f32',
-        value:
-          material.pbrMetallicRoughness && material.pbrMetallicRoughness.baseColorFactor !== undefined
-            ? material.pbrMetallicRoughness.baseColorFactor[3]
-            : 1,
-      },
-      alphaCutoff: {
-        type: 'f32',
-        value: material.alphaCutoff !== undefined ? material.alphaCutoff : material.alphaMode === 'MASK' ? 0.5 : 0,
-      },
-      metallic: {
-        type: 'f32',
-        value:
-          material.pbrMetallicRoughness?.metallicFactor === undefined
-            ? 1
-            : material.pbrMetallicRoughness.metallicFactor,
-      },
-      roughness: {
-        type: 'f32',
-        value:
-          material.pbrMetallicRoughness?.roughnessFactor === undefined
-            ? 1
-            : material.pbrMetallicRoughness.roughnessFactor,
-      },
-      normalScale: {
-        type: 'vec2f',
-        value: material.normalTexture?.scale === undefined ? new Vec2(1) : new Vec2(material.normalTexture.scale),
-      },
-      occlusionIntensity: {
-        type: 'f32',
-        value: material.occlusionTexture?.strength === undefined ? 1 : material.occlusionTexture.strength,
-      },
-      emissiveIntensity: {
-        type: 'f32',
-        value:
-          emissiveStrength && emissiveStrength.emissiveStrength !== undefined ? emissiveStrength.emissiveStrength : 1,
-      },
-      emissiveColor: {
-        type: 'vec3f',
-        value:
-          material.emissiveFactor !== undefined
-            ? new Vec3(material.emissiveFactor[0], material.emissiveFactor[1], material.emissiveFactor[2])
-            : new Vec3(0),
-      },
-      specularIntensity: {
-        type: 'f32',
-        value: specular && specular.specularFactor !== undefined ? specular.specularFactor : 1,
-      },
-      specularColor: {
-        type: 'vec3f',
-        value:
-          specular && specular.specularColorFactor !== undefined
-            ? new Vec3(
-                specular.specularColorFactor[0],
-                specular.specularColorFactor[1],
-                specular.specularColorFactor[2]
-              )
-            : new Vec3(1),
-      },
-      transmission: {
-        type: 'f32',
-        value: transmission && transmission.transmissionFactor !== undefined ? transmission.transmissionFactor : 0,
-      },
-      ior: {
-        type: 'f32',
-        value: ior && ior.ior !== undefined ? ior.ior : 1.5,
-      },
-      dispersion: {
-        type: 'f32',
-        value: dispersion && dispersion.dispersion !== undefined ? dispersion.dispersion : 0,
-      },
-      thickness: {
-        type: 'f32',
-        value: volume && volume.thicknessFactor !== undefined ? volume.thicknessFactor : 0,
-      },
-      attenuationDistance: {
-        type: 'f32',
-        value: volume && volume.attenuationDistance !== undefined ? volume.attenuationDistance : Infinity,
-      },
-      attenuationColor: {
-        type: 'vec3f',
-        value:
-          volume && volume.attenuationColor !== undefined
-            ? new Vec3(volume.attenuationColor[0], volume.attenuationColor[1], volume.attenuationColor[2])
-            : new Vec3(1),
-      },
+    const litMeshMaterialParams: LitMeshMaterialUniformParams = {
+      colorSpace: 'linear',
+      color:
+        material.pbrMetallicRoughness && material.pbrMetallicRoughness.baseColorFactor !== undefined
+          ? new Vec3(
+              material.pbrMetallicRoughness.baseColorFactor[0],
+              material.pbrMetallicRoughness.baseColorFactor[1],
+              material.pbrMetallicRoughness.baseColorFactor[2]
+            )
+          : new Vec3(1),
+      opacity:
+        material.pbrMetallicRoughness && material.pbrMetallicRoughness.baseColorFactor !== undefined
+          ? material.pbrMetallicRoughness.baseColorFactor[3]
+          : 1,
+      alphaCutoff: material.alphaCutoff !== undefined ? material.alphaCutoff : material.alphaMode === 'MASK' ? 0.5 : 0,
+      metallic:
+        material.pbrMetallicRoughness?.metallicFactor === undefined ? 1 : material.pbrMetallicRoughness.metallicFactor,
+      roughness:
+        material.pbrMetallicRoughness?.roughnessFactor === undefined
+          ? 1
+          : material.pbrMetallicRoughness.roughnessFactor,
+      normalScale: material.normalTexture?.scale === undefined ? new Vec2(1) : new Vec2(material.normalTexture.scale),
+      occlusionIntensity: material.occlusionTexture?.strength === undefined ? 1 : material.occlusionTexture.strength,
+      emissiveIntensity:
+        emissiveStrength && emissiveStrength.emissiveStrength !== undefined ? emissiveStrength.emissiveStrength : 1,
+      emissiveColor:
+        material.emissiveFactor !== undefined
+          ? new Vec3(material.emissiveFactor[0], material.emissiveFactor[1], material.emissiveFactor[2])
+          : new Vec3(0),
+      specularIntensity: specular && specular.specularFactor !== undefined ? specular.specularFactor : 1,
+      specularColor:
+        specular && specular.specularColorFactor !== undefined
+          ? new Vec3(specular.specularColorFactor[0], specular.specularColorFactor[1], specular.specularColorFactor[2])
+          : new Vec3(1),
+      transmission: transmission && transmission.transmissionFactor !== undefined ? transmission.transmissionFactor : 0,
+      ior: ior && ior.ior !== undefined ? ior.ior : 1.5,
+      dispersion: dispersion && dispersion.dispersion !== undefined ? dispersion.dispersion : 0,
+      thickness: volume && volume.thicknessFactor !== undefined ? volume.thicknessFactor : 0,
+      attenuationDistance: volume && volume.attenuationDistance !== undefined ? volume.attenuationDistance : Infinity,
+      attenuationColor:
+        volume && volume.attenuationColor !== undefined
+          ? new Vec3(volume.attenuationColor[0], volume.attenuationColor[1], volume.attenuationColor[2])
+          : new Vec3(1),
     }
 
-    console.log(materialUniformStruct.color.value)
-
-    materialParams.uniforms.material = {
-      visibility: ['fragment'],
-      struct: materialUniformStruct,
-    }
+    materialParams.material = litMeshMaterialParams
 
     materialParams.cullMode = material.doubleSided ? 'none' : 'back'
 
@@ -835,7 +770,6 @@ export class GLTFScenesManager {
           texturesDescriptors: [],
           variantName: 'Default',
           parameters: {
-            //uniforms: {},
             label: mesh.name ? mesh.name + ' ' + primitiveIndex : 'glTF mesh ' + primitiveIndex,
           },
           nodes: [],
@@ -1746,9 +1680,6 @@ export class GLTFScenesManager {
         this.gltf.extensionsUsed.includes('KHR_materials_volume') ||
         this.gltf.extensionsUsed.includes('KHR_materials_dispersion'))
 
-    meshDescriptor.parameters.samplers = []
-    meshDescriptor.parameters.textures = []
-
     if (useTransmission && hasTransmission) {
       // add transmissive property
       meshDescriptor.parameters.transmissive = true
@@ -1761,6 +1692,13 @@ export class GLTFScenesManager {
         texture: this.renderer.transmissionTarget.texture,
         sampler: this.renderer.transmissionTarget.sampler,
       })
+    }
+
+    meshDescriptor.parameters.material = {
+      ...meshDescriptor.parameters.material,
+      ...meshDescriptor.texturesDescriptors.reduce((acc, descriptor) => {
+        return { ...acc, [descriptor.texture.options.name]: descriptor }
+      }, {}),
     }
 
     // instances matrices storage
@@ -1865,7 +1803,7 @@ export class GLTFScenesManager {
               })
             }
 
-            const extensions = { gltfVariantMaterial }
+            const { extensions } = gltfVariantMaterial
             const extensionsUsed = []
 
             if (extensions) {
@@ -1895,11 +1833,18 @@ export class GLTFScenesManager {
                 label: variant.name + ' ' + variantMaterialParams.label,
                 transmissive: !!meshDescriptor.parameters.transmissive,
                 bindings: meshDescriptor.parameters.bindings ?? [],
-                uniforms: variantMaterialParams.uniforms,
                 transparent: !!variantMaterialParams.transparent,
                 cullMode: variantMaterialParams.cullMode,
+
+                material: {
+                  ...variantMaterialParams.material,
+                  ...texturesDescriptors.reduce((acc, descriptor) => {
+                    return { ...acc, [descriptor.texture.options.name]: descriptor }
+                  }, {}),
+                },
+
                 ...(variantMaterialParams.targets && { targets: variantMaterialParams.targets }),
-              } as ProjectedMeshParameters,
+              } as LitMeshParameters,
             }
 
             meshDescriptor.alternateDescriptors.set(variant.name, variantDescriptor)
@@ -1960,21 +1905,23 @@ export class GLTFScenesManager {
   }
 
   /**
-   * Add all the needed {@link Mesh} based on the {@link ScenesManager#meshesDescriptors | ScenesManager meshesDescriptors} array.
-   * @param patchMeshesParameters - allow to optionally patch the {@link Mesh} parameters before creating it (can be used to add custom shaders, uniforms or storages, change rendering options, etc.)
-   * @returns - Array of created {@link Mesh}.
+   * Add all the needed {@link LitMesh} based on the {@link ScenesManager#meshesDescriptors | ScenesManager meshesDescriptors} array.
+   * @param patchMeshesParameters - allow to optionally patch the {@link LitMesh} parameters before creating it (can be used to add custom shaders chunks, uniforms or storages, change rendering options, etc.)
+   * @returns - Array of created {@link LitMesh}.
    */
-  addMeshes(patchMeshesParameters = (meshDescriptor: MeshDescriptor) => {}): Mesh[] {
+  addMeshes(patchMeshesParameters = (meshDescriptor: MeshDescriptor) => {}): LitMesh[] {
     // once again, update all the matrix stack eagerly
     // because the main node or children transformations might have changed
     this.scenesManager.node.updateMatrixStack()
 
     return this.scenesManager.meshesDescriptors.map((meshDescriptor) => {
-      if (meshDescriptor.parameters.geometry) {
+      const { geometry } = meshDescriptor.parameters
+
+      if (geometry) {
         // patch the parameters
         patchMeshesParameters(meshDescriptor)
 
-        const mesh = new Mesh(this.renderer, {
+        const mesh = new LitMesh(this.renderer, {
           ...meshDescriptor.parameters,
         })
 
@@ -1982,19 +1929,151 @@ export class GLTFScenesManager {
 
         // variants
         meshDescriptor.alternateDescriptors.forEach((descriptor) => {
-          const matricesBindings = mesh.material.getBufferBindingByName('matrices')
-          descriptor.parameters.bindings = [matricesBindings, ...descriptor.parameters.bindings]
+          const { material: originalMaterial } = meshDescriptor.parameters
+          const { environmentMap, shading, vertexChunks, additionalVaryings, fragmentChunks, toneMapping } =
+            originalMaterial
 
-          const {
-            label,
-            shaders,
-            uniforms,
-            bindings,
-            samplers,
-            textures,
-            targets,
-            transparent,
-          }: MeshDescriptorMaterialParams = descriptor.parameters
+          const { label, targets, transparent, material }: MeshDescriptorMaterialParams = descriptor.parameters
+
+          material.shading = shading
+
+          if (descriptor.extensionsUsed.includes('KHR_materials_unlit')) {
+            material.shading = 'Unlit'
+          }
+
+          let { uniforms, samplers, textures, bindings } = descriptor.parameters
+
+          // textures and samplers
+          if (!textures) {
+            textures = []
+          }
+
+          if (!samplers) {
+            samplers = []
+          }
+
+          const variantTexturesDescriptors = LitMesh.getMaterialTexturesDescriptors(material)
+
+          variantTexturesDescriptors.forEach((textureDescriptor) => {
+            if (textureDescriptor.sampler) {
+              const samplerExists = samplers.find((s) => s.uuid === textureDescriptor.sampler.uuid)
+
+              if (!samplerExists) {
+                samplers.push(textureDescriptor.sampler)
+              }
+            }
+
+            textures.push(textureDescriptor.texture)
+          })
+
+          // env map
+          if (environmentMap && (material.shading === 'PBR' || !material.shading)) {
+            material.environmentMap = environmentMap
+
+            // add environment map textures and sampler
+            textures = [
+              ...textures,
+              environmentMap.lutTexture,
+              environmentMap.diffuseTexture,
+              environmentMap.specularTexture,
+            ]
+
+            samplers = [...samplers, environmentMap.sampler]
+          }
+
+          // uniforms
+          if (!uniforms) {
+            uniforms = {}
+          }
+
+          const variantMaterialUniform = LitMesh.getMaterialUniform(material)
+
+          uniforms = {
+            ...uniforms,
+            material: variantMaterialUniform,
+          }
+
+          if (meshDescriptor.parameters.uniforms) {
+            // add eventual additional uniforms
+            uniforms = { ...meshDescriptor.parameters.uniforms, ...uniforms }
+          }
+
+          if (!bindings) {
+            bindings = []
+          }
+
+          // bindings
+          const matricesBindings = mesh.material.getBufferBindingByName('matrices')
+          bindings = [matricesBindings, ...bindings]
+
+          if (meshDescriptor.parameters.bindings) {
+            meshDescriptor.parameters.bindings.forEach((binding) => {
+              const hasBinding = bindings.find((b) => b.name === binding.name)
+              if (!hasBinding) {
+                bindings.push(binding)
+              }
+            })
+          }
+
+          // transmission
+          let transmissionBackgroundTexture = null
+          if (meshDescriptor.parameters.transmissive) {
+            this.renderer.createTransmissionTarget()
+            transmissionBackgroundTexture = {
+              texture: this.renderer.transmissionTarget.texture,
+              sampler: this.renderer.transmissionTarget.sampler,
+            }
+
+            textures = [...textures, this.renderer.transmissionTarget.texture]
+            samplers = [...samplers, this.renderer.transmissionTarget.sampler]
+          }
+
+          // add eventual additional storages
+          if (meshDescriptor.parameters.storages) {
+            descriptor.parameters.storages = meshDescriptor.parameters.storages
+          }
+
+          // add eventual bind groups
+          if (meshDescriptor.parameters.bindGroups) {
+            descriptor.parameters.bindGroups = meshDescriptor.parameters.bindGroups
+          }
+
+          // shaders
+          const vs = LitMesh.getVertexShaderCode({
+            bindings: bindings as BufferBinding[],
+            geometry,
+            chunks: vertexChunks,
+            additionalVaryings: additionalVaryings,
+          })
+
+          const fs = LitMesh.getFragmentShaderCode({
+            shadingModel: shading,
+            chunks: fragmentChunks,
+            extensionsUsed: descriptor.extensionsUsed,
+            receiveShadows: meshDescriptor.parameters.receiveShadows,
+            toneMapping,
+            geometry,
+            additionalVaryings: additionalVaryings,
+            materialUniform: variantMaterialUniform,
+            ...variantTexturesDescriptors.reduce((acc, descriptor) => {
+              return { ...acc, [descriptor.texture.options.name]: descriptor }
+            }, {}),
+            transmissionBackgroundTexture,
+            ...(environmentMap && {
+              environmentMap,
+            }),
+          })
+
+          const shaders = {
+            vertex: {
+              code: vs,
+              entryPoint: 'main',
+            },
+            fragment: {
+              code: fs,
+              entryPoint: 'main',
+            },
+          }
 
           const alternateMaterial = new RenderMaterial(this.renderer, {
             ...JSON.parse(JSON.stringify(mesh.material.options.rendering)), // use default cloned mesh rendering options
@@ -2006,8 +2085,8 @@ export class GLTFScenesManager {
             ...(textures && { textures }),
             ...(targets && { targets }),
             transparent: !!transparent,
-            verticesOrder: meshDescriptor.parameters.geometry.verticesOrder,
-            topology: meshDescriptor.parameters.geometry.topology,
+            verticesOrder: geometry.verticesOrder,
+            topology: geometry.topology,
           })
 
           meshDescriptor.alternateMaterials.set(descriptor.variantName, alternateMaterial)

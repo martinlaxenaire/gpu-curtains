@@ -3,8 +3,9 @@ import { REIndirectSpecular } from '../fragment/head/RE-indirect-specular'
 import { getIBLTransmission } from '../fragment/head/get-IBL-transmission'
 import { getPBRDirect } from '../fragment/head/get-PBR-direct'
 import { getPBRShading } from '../fragment/body/get-PBR-shading'
-import { PBRFragmentShaderInputParams, ShaderTextureDescriptor } from '../../full/fragment/get-fragment-shader-code'
+import { PBRFragmentShaderInputParams } from '../../full/fragment/get-fragment-shader-code'
 import { applyToneMapping } from '../fragment/body/apply-tone-mapping'
+import { ShaderTextureDescriptor } from '../../../../extras/meshes/LitMesh'
 
 /** Defines the basic parameters available for the PBR shading getter function. */
 export interface GetPBRShadingParams extends GetShadingParams {

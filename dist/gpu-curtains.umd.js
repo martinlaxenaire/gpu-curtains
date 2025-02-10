@@ -4530,7 +4530,7 @@
       this.transformBinding = null;
       if (this.options.useTransform) {
         this.transformBinding = new BufferBinding({
-          label: this.options.label,
+          label: toKebabCase(this.options.name),
           name: this.options.name,
           struct: {
             matrix: {
@@ -18137,23 +18137,6 @@ fn getIBLIndirect(
     environmentMap = null
   }) => {
     chunks = patchAdditionalChunks(chunks);
-    if (environmentMap && materialUniform && materialUniform.struct) {
-      materialUniform.struct = {
-        ...materialUniform.struct,
-        envRotation: {
-          type: "mat3x3f",
-          value: environmentMap.rotation
-        },
-        envDiffuseIntensity: {
-          type: "f32",
-          value: environmentMap.options.diffuseIntensity
-        },
-        envSpecularIntensity: {
-          type: "f32",
-          value: environmentMap.options.specularIntensity
-        }
-      };
-    }
     return (
       /* wgsl */
       `  
@@ -21089,6 +21072,10 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
     constructor(renderer, parameters = {}) {
       renderer = isCameraRenderer(renderer, "LitMesh");
       const { material, ...defaultParams } = parameters;
+      let { colorSpace } = material;
+      if (!colorSpace) {
+        colorSpace = "srgb";
+      }
       const {
         shading,
         additionalVaryings,
@@ -21127,109 +21114,29 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         thicknessTexture,
         environmentMap
       } = material;
-      const baseUniformStruct = {
-        color: {
-          type: "vec3f",
-          value: color !== void 0 ? sRGBToLinear(color.clone()) : new Vec3(1)
-        },
-        opacity: {
-          type: "f32",
-          value: opacity !== void 0 ? opacity : 1
-        },
-        alphaCutoff: {
-          type: "f32",
-          value: alphaCutoff !== void 0 ? alphaCutoff : 0.5
-        }
-      };
-      const diffuseUniformStruct = {
-        ...baseUniformStruct,
-        normalScale: {
-          type: "vec2f",
-          value: normalScale !== void 0 ? normalScale : new Vec2(1)
-        },
-        occlusionIntensity: {
-          type: "f32",
-          value: occlusionIntensity !== void 0 ? occlusionIntensity : 1
-        },
-        emissiveIntensity: {
-          type: "f32",
-          value: emissiveIntensity !== void 0 ? emissiveIntensity : 1
-        },
-        emissiveColor: {
-          type: "vec3f",
-          value: emissiveColor !== void 0 ? sRGBToLinear(emissiveColor.clone()) : new Vec3()
-        }
-      };
-      const specularUniformStruct = {
-        ...diffuseUniformStruct,
-        specularIntensity: {
-          type: "f32",
-          value: specularIntensity !== void 0 ? specularIntensity : 1
-        },
-        specularColor: {
-          type: "vec3f",
-          value: specularColor !== void 0 ? sRGBToLinear(specularColor.clone()) : new Vec3(1)
-        }
-      };
-      const phongUniformStruct = {
-        ...specularUniformStruct,
-        shininess: {
-          type: "f32",
-          value: shininess !== void 0 ? shininess : 30
-        }
-      };
-      const pbrUniformStruct = {
-        ...specularUniformStruct,
-        metallic: {
-          type: "f32",
-          value: metallic !== void 0 ? metallic : 1
-        },
-        roughness: {
-          type: "f32",
-          value: roughness !== void 0 ? roughness : 1
-        },
-        transmission: {
-          type: "f32",
-          value: transmission !== void 0 ? transmission : 0
-        },
-        ior: {
-          type: "f32",
-          value: ior !== void 0 ? ior : 1.5
-        },
-        dispersion: {
-          type: "f32",
-          value: dispersion !== void 0 ? dispersion : 0
-        },
-        thickness: {
-          type: "f32",
-          value: thickness !== void 0 ? thickness : 0
-        },
-        attenuationDistance: {
-          type: "f32",
-          value: attenuationDistance !== void 0 ? attenuationDistance : Infinity
-        },
-        attenuationColor: {
-          type: "vec3f",
-          value: attenuationColor !== void 0 ? sRGBToLinear(attenuationColor.clone()) : new Vec3(1)
-        }
-      };
-      const materialStruct = (() => {
-        switch (shading) {
-          case "Unlit":
-            return baseUniformStruct;
-          case "Lambert":
-            return diffuseUniformStruct;
-          case "Phong":
-            return phongUniformStruct;
-          case "PBR":
-          default:
-            return pbrUniformStruct;
-        }
-      })();
-      const materialUniform = {
-        visibility: ["fragment"],
-        struct: materialStruct
-      };
+      const materialUniform = LitMesh.getMaterialUniform({
+        shading,
+        colorSpace,
+        color,
+        opacity,
+        alphaCutoff,
+        metallic,
+        roughness,
+        normalScale,
+        occlusionIntensity,
+        emissiveIntensity,
+        emissiveColor,
+        specularIntensity,
+        specularColor,
+        shininess,
+        transmission,
+        ior,
+        dispersion,
+        thickness,
+        attenuationDistance,
+        attenuationColor,
+        environmentMap
+      });
       if (defaultParams.uniforms) {
         defaultParams.uniforms = {
           ...defaultParams.uniforms,
@@ -21248,30 +21155,20 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
       if (!defaultParams.samplers) {
         defaultParams.samplers = [];
       }
-      const baseTextures = [baseColorTexture];
-      const diffuseTextures = [...baseTextures, normalTexture, emissiveTexture, occlusionTexture];
-      const specularTextures = [
-        ...diffuseTextures,
+      const materialTextures = LitMesh.getMaterialTexturesDescriptors({
+        shading,
+        baseColorTexture,
+        normalTexture,
+        emissiveTexture,
+        occlusionTexture,
         metallicRoughnessTexture,
         specularTexture,
         specularFactorTexture,
-        specularColorTexture
-      ];
-      const pbrTextures = [...specularTextures, transmissionTexture, thicknessTexture];
-      const materialTextures = (() => {
-        switch (shading) {
-          case "Unlit":
-            return baseTextures;
-          case "Lambert":
-            return diffuseTextures;
-          case "Phong":
-            return specularTextures;
-          case "PBR":
-          default:
-            return pbrTextures;
-        }
-      })();
-      materialTextures.filter(Boolean).forEach((textureDescriptor) => {
+        specularColorTexture,
+        transmissionTexture,
+        thicknessTexture
+      });
+      materialTextures.forEach((textureDescriptor) => {
         if (textureDescriptor.sampler) {
           const samplerExists = defaultParams.samplers.find((s) => s.uuid === textureDescriptor.sampler.uuid);
           if (!samplerExists) {
@@ -21351,21 +21248,212 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
       };
       super(renderer, { ...defaultParams, ...{ shaders } });
     }
-    static getVertexShaderCode({
-      bindings = [],
-      geometry,
-      chunks = null,
-      additionalVaryings = []
-    }) {
-      return getVertexShaderCode({
-        bindings,
-        geometry,
-        chunks,
-        additionalVaryings
-      });
+    /**
+     * Get the material {@link BufferBindingParams} to build the material uniform.
+     * @param parameters - {@link GetLitMeshMaterialUniform} parameters.
+     * @returns - Material uniform {@link BufferBindingParams}.
+     */
+    static getMaterialUniform(parameters) {
+      const {
+        shading,
+        colorSpace,
+        color,
+        opacity,
+        alphaCutoff,
+        metallic,
+        roughness,
+        normalScale,
+        occlusionIntensity,
+        emissiveIntensity,
+        emissiveColor,
+        specularIntensity,
+        specularColor,
+        shininess,
+        transmission,
+        ior,
+        dispersion,
+        thickness,
+        attenuationDistance,
+        attenuationColor,
+        environmentMap
+      } = parameters;
+      const baseUniformStruct = {
+        color: {
+          type: "vec3f",
+          value: color !== void 0 ? colorSpace === "srgb" ? sRGBToLinear(color.clone()) : color.clone() : new Vec3(1)
+        },
+        opacity: {
+          type: "f32",
+          value: opacity !== void 0 ? opacity : 1
+        },
+        alphaCutoff: {
+          type: "f32",
+          value: alphaCutoff !== void 0 ? alphaCutoff : 0.5
+        }
+      };
+      const diffuseUniformStruct = {
+        ...baseUniformStruct,
+        normalScale: {
+          type: "vec2f",
+          value: normalScale !== void 0 ? normalScale : new Vec2(1)
+        },
+        occlusionIntensity: {
+          type: "f32",
+          value: occlusionIntensity !== void 0 ? occlusionIntensity : 1
+        },
+        emissiveIntensity: {
+          type: "f32",
+          value: emissiveIntensity !== void 0 ? emissiveIntensity : 1
+        },
+        emissiveColor: {
+          type: "vec3f",
+          value: emissiveColor !== void 0 ? colorSpace === "srgb" ? sRGBToLinear(emissiveColor.clone()) : emissiveColor.clone() : new Vec3()
+        }
+      };
+      const specularUniformStruct = {
+        ...diffuseUniformStruct,
+        specularIntensity: {
+          type: "f32",
+          value: specularIntensity !== void 0 ? specularIntensity : 1
+        },
+        specularColor: {
+          type: "vec3f",
+          value: specularColor !== void 0 ? colorSpace === "srgb" ? sRGBToLinear(specularColor.clone()) : specularColor.clone() : new Vec3(1)
+        }
+      };
+      const phongUniformStruct = {
+        ...specularUniformStruct,
+        shininess: {
+          type: "f32",
+          value: shininess !== void 0 ? shininess : 30
+        }
+      };
+      const pbrUniformStruct = {
+        ...specularUniformStruct,
+        metallic: {
+          type: "f32",
+          value: metallic !== void 0 ? metallic : 1
+        },
+        roughness: {
+          type: "f32",
+          value: roughness !== void 0 ? roughness : 1
+        },
+        transmission: {
+          type: "f32",
+          value: transmission !== void 0 ? transmission : 0
+        },
+        ior: {
+          type: "f32",
+          value: ior !== void 0 ? ior : 1.5
+        },
+        dispersion: {
+          type: "f32",
+          value: dispersion !== void 0 ? dispersion : 0
+        },
+        thickness: {
+          type: "f32",
+          value: thickness !== void 0 ? thickness : 0
+        },
+        attenuationDistance: {
+          type: "f32",
+          value: attenuationDistance !== void 0 ? attenuationDistance : Infinity
+        },
+        attenuationColor: {
+          type: "vec3f",
+          value: attenuationColor !== void 0 ? colorSpace === "srgb" ? sRGBToLinear(attenuationColor.clone()) : attenuationColor.clone() : new Vec3(1)
+        },
+        ...environmentMap && {
+          envRotation: {
+            type: "mat3x3f",
+            value: environmentMap.rotation
+          },
+          envDiffuseIntensity: {
+            type: "f32",
+            value: environmentMap.options.diffuseIntensity
+          },
+          envSpecularIntensity: {
+            type: "f32",
+            value: environmentMap.options.specularIntensity
+          }
+        }
+      };
+      const materialStruct = (() => {
+        switch (shading) {
+          case "Unlit":
+            return baseUniformStruct;
+          case "Lambert":
+            return diffuseUniformStruct;
+          case "Phong":
+            return phongUniformStruct;
+          case "PBR":
+          default:
+            return pbrUniformStruct;
+        }
+      })();
+      return {
+        visibility: ["fragment"],
+        struct: materialStruct
+      };
     }
-    static getFragmentShaderCode(params) {
-      return getFragmentShaderCode(params);
+    /**
+     * Get all the material {@link ShaderTextureDescriptor} as an array.
+     * @param parameters - {@link GetMaterialTexturesDescriptors} parameters.
+     * @returns - Array of {@link ShaderTextureDescriptor} to use.
+     */
+    static getMaterialTexturesDescriptors(parameters) {
+      const {
+        shading,
+        baseColorTexture,
+        normalTexture,
+        emissiveTexture,
+        occlusionTexture,
+        metallicRoughnessTexture,
+        specularTexture,
+        specularFactorTexture,
+        specularColorTexture,
+        transmissionTexture,
+        thicknessTexture
+      } = parameters;
+      const baseTextures = [baseColorTexture];
+      const diffuseTextures = [...baseTextures, normalTexture, emissiveTexture, occlusionTexture];
+      const specularTextures = [
+        ...diffuseTextures,
+        metallicRoughnessTexture,
+        specularTexture,
+        specularFactorTexture,
+        specularColorTexture
+      ];
+      const pbrTextures = [...specularTextures, transmissionTexture, thicknessTexture];
+      const materialTextures = (() => {
+        switch (shading) {
+          case "Unlit":
+            return baseTextures;
+          case "Lambert":
+            return diffuseTextures;
+          case "Phong":
+            return specularTextures;
+          case "PBR":
+          default:
+            return pbrTextures;
+        }
+      })();
+      return materialTextures.filter(Boolean);
+    }
+    /**
+     * Generate the {@link LitMesh} vertex shader code.
+     * @param parameters - {@link VertexShaderInputParams} used to generate the vertex shader code.
+     * @returns - The vertex shader generated based on the provided parameters.
+     */
+    static getVertexShaderCode(parameters) {
+      return getVertexShaderCode(parameters);
+    }
+    /**
+     * Generate the {@link LitMesh} fragment shader.
+     * @param parameters - {@link FragmentShaderInputParams} used to build the fragment shader.
+     * @returns - The fragment shader generated based on the provided parameters.
+     */
+    static getFragmentShaderCode(parameters) {
+      return getFragmentShaderCode(parameters);
     }
   }
 
@@ -22267,7 +22355,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
        * @private
        */
       __privateAdd(this, _parsePrimitiveProperty);
-      /** The {@link PrimitiveInstances} Map, to group similar {@link Mesh} by instances. */
+      /** The {@link PrimitiveInstances} Map, to group similar {@link LitMesh} by instances. */
       __privateAdd(this, _primitiveInstances, void 0);
       renderer = isCameraRenderer(renderer, "GLTFScenesManager");
       this.renderer = renderer;
@@ -22516,7 +22604,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         }
       })();
       const texture = new MediaTexture(this.renderer, {
-        label: toKebabCase(name),
+        label: material.name ? material.name + ": " + name : name,
         name,
         format,
         visibility: ["fragment"],
@@ -22564,7 +22652,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
             const hasTexture = createdTextures.find((createdTexture) => createdTexture.index === index);
             if (hasTexture) {
               const reusedTexture = new MediaTexture(this.renderer, {
-                label: toKebabCase(name),
+                label: material.name ? material.name + ": " + name : name,
                 name,
                 visibility: ["fragment"],
                 generateMips: true,
@@ -22573,7 +22661,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
                 ...textureTransform && { useTransform: true }
               });
               if (textureTransform) {
-                const { offset, rotation, scale, texCoord } = textureTransform;
+                const { offset, rotation, scale } = textureTransform;
                 if (offset !== void 0)
                   reusedTexture.offset.set(offset[0], offset[1]);
                 if (rotation !== void 0)
@@ -22662,9 +22750,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
      * @returns - Created {@link MeshDescriptorMaterialParams}.
      */
     getMaterialBaseParameters(materialIndex, label = null) {
-      const materialParams = {
-        uniforms: {}
-      };
+      const materialParams = {};
       const material = this.gltf.materials && this.gltf.materials[materialIndex] || {};
       if (label) {
         materialParams.label = label + (material.name ? " " + material.name : "");
@@ -22678,89 +22764,31 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
       const transmission = extensions && extensions.KHR_materials_transmission || null;
       const specular = extensions && extensions.KHR_materials_specular || null;
       const volume = extensions && extensions.KHR_materials_volume || null;
-      const materialUniformStruct = {
-        color: {
-          type: "vec3f",
-          value: material.pbrMetallicRoughness && material.pbrMetallicRoughness.baseColorFactor !== void 0 ? new Vec3(
-            material.pbrMetallicRoughness.baseColorFactor[0],
-            material.pbrMetallicRoughness.baseColorFactor[1],
-            material.pbrMetallicRoughness.baseColorFactor[2]
-          ) : new Vec3(1)
-        },
-        opacity: {
-          type: "f32",
-          value: material.pbrMetallicRoughness && material.pbrMetallicRoughness.baseColorFactor !== void 0 ? material.pbrMetallicRoughness.baseColorFactor[3] : 1
-        },
-        alphaCutoff: {
-          type: "f32",
-          value: material.alphaCutoff !== void 0 ? material.alphaCutoff : material.alphaMode === "MASK" ? 0.5 : 0
-        },
-        metallic: {
-          type: "f32",
-          value: material.pbrMetallicRoughness?.metallicFactor === void 0 ? 1 : material.pbrMetallicRoughness.metallicFactor
-        },
-        roughness: {
-          type: "f32",
-          value: material.pbrMetallicRoughness?.roughnessFactor === void 0 ? 1 : material.pbrMetallicRoughness.roughnessFactor
-        },
-        normalScale: {
-          type: "vec2f",
-          value: material.normalTexture?.scale === void 0 ? new Vec2(1) : new Vec2(material.normalTexture.scale)
-        },
-        occlusionIntensity: {
-          type: "f32",
-          value: material.occlusionTexture?.strength === void 0 ? 1 : material.occlusionTexture.strength
-        },
-        emissiveIntensity: {
-          type: "f32",
-          value: emissiveStrength && emissiveStrength.emissiveStrength !== void 0 ? emissiveStrength.emissiveStrength : 1
-        },
-        emissiveColor: {
-          type: "vec3f",
-          value: material.emissiveFactor !== void 0 ? new Vec3(material.emissiveFactor[0], material.emissiveFactor[1], material.emissiveFactor[2]) : new Vec3(0)
-        },
-        specularIntensity: {
-          type: "f32",
-          value: specular && specular.specularFactor !== void 0 ? specular.specularFactor : 1
-        },
-        specularColor: {
-          type: "vec3f",
-          value: specular && specular.specularColorFactor !== void 0 ? new Vec3(
-            specular.specularColorFactor[0],
-            specular.specularColorFactor[1],
-            specular.specularColorFactor[2]
-          ) : new Vec3(1)
-        },
-        transmission: {
-          type: "f32",
-          value: transmission && transmission.transmissionFactor !== void 0 ? transmission.transmissionFactor : 0
-        },
-        ior: {
-          type: "f32",
-          value: ior && ior.ior !== void 0 ? ior.ior : 1.5
-        },
-        dispersion: {
-          type: "f32",
-          value: dispersion && dispersion.dispersion !== void 0 ? dispersion.dispersion : 0
-        },
-        thickness: {
-          type: "f32",
-          value: volume && volume.thicknessFactor !== void 0 ? volume.thicknessFactor : 0
-        },
-        attenuationDistance: {
-          type: "f32",
-          value: volume && volume.attenuationDistance !== void 0 ? volume.attenuationDistance : Infinity
-        },
-        attenuationColor: {
-          type: "vec3f",
-          value: volume && volume.attenuationColor !== void 0 ? new Vec3(volume.attenuationColor[0], volume.attenuationColor[1], volume.attenuationColor[2]) : new Vec3(1)
-        }
+      const litMeshMaterialParams = {
+        colorSpace: "linear",
+        color: material.pbrMetallicRoughness && material.pbrMetallicRoughness.baseColorFactor !== void 0 ? new Vec3(
+          material.pbrMetallicRoughness.baseColorFactor[0],
+          material.pbrMetallicRoughness.baseColorFactor[1],
+          material.pbrMetallicRoughness.baseColorFactor[2]
+        ) : new Vec3(1),
+        opacity: material.pbrMetallicRoughness && material.pbrMetallicRoughness.baseColorFactor !== void 0 ? material.pbrMetallicRoughness.baseColorFactor[3] : 1,
+        alphaCutoff: material.alphaCutoff !== void 0 ? material.alphaCutoff : material.alphaMode === "MASK" ? 0.5 : 0,
+        metallic: material.pbrMetallicRoughness?.metallicFactor === void 0 ? 1 : material.pbrMetallicRoughness.metallicFactor,
+        roughness: material.pbrMetallicRoughness?.roughnessFactor === void 0 ? 1 : material.pbrMetallicRoughness.roughnessFactor,
+        normalScale: material.normalTexture?.scale === void 0 ? new Vec2(1) : new Vec2(material.normalTexture.scale),
+        occlusionIntensity: material.occlusionTexture?.strength === void 0 ? 1 : material.occlusionTexture.strength,
+        emissiveIntensity: emissiveStrength && emissiveStrength.emissiveStrength !== void 0 ? emissiveStrength.emissiveStrength : 1,
+        emissiveColor: material.emissiveFactor !== void 0 ? new Vec3(material.emissiveFactor[0], material.emissiveFactor[1], material.emissiveFactor[2]) : new Vec3(0),
+        specularIntensity: specular && specular.specularFactor !== void 0 ? specular.specularFactor : 1,
+        specularColor: specular && specular.specularColorFactor !== void 0 ? new Vec3(specular.specularColorFactor[0], specular.specularColorFactor[1], specular.specularColorFactor[2]) : new Vec3(1),
+        transmission: transmission && transmission.transmissionFactor !== void 0 ? transmission.transmissionFactor : 0,
+        ior: ior && ior.ior !== void 0 ? ior.ior : 1.5,
+        dispersion: dispersion && dispersion.dispersion !== void 0 ? dispersion.dispersion : 0,
+        thickness: volume && volume.thicknessFactor !== void 0 ? volume.thicknessFactor : 0,
+        attenuationDistance: volume && volume.attenuationDistance !== void 0 ? volume.attenuationDistance : Infinity,
+        attenuationColor: volume && volume.attenuationColor !== void 0 ? new Vec3(volume.attenuationColor[0], volume.attenuationColor[1], volume.attenuationColor[2]) : new Vec3(1)
       };
-      console.log(materialUniformStruct.color.value);
-      materialParams.uniforms.material = {
-        visibility: ["fragment"],
-        struct: materialUniformStruct
-      };
+      materialParams.material = litMeshMaterialParams;
       materialParams.cullMode = material.doubleSided ? "none" : "back";
       if (material.alphaMode === "BLEND") {
         materialParams.transparent = true;
@@ -22855,7 +22883,6 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
             texturesDescriptors: [],
             variantName: "Default",
             parameters: {
-              //uniforms: {},
               label: mesh.name ? mesh.name + " " + primitiveIndex : "glTF mesh " + primitiveIndex
             },
             nodes: [],
@@ -23295,8 +23322,6 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
       const volume = extensions && extensions.KHR_materials_volume || null;
       const hasTransmission = transmission || volume || dispersion;
       const useTransmission = this.gltf.extensionsUsed && (this.gltf.extensionsUsed.includes("KHR_materials_transmission") || this.gltf.extensionsUsed.includes("KHR_materials_volume") || this.gltf.extensionsUsed.includes("KHR_materials_dispersion"));
-      meshDescriptor.parameters.samplers = [];
-      meshDescriptor.parameters.textures = [];
       if (useTransmission && hasTransmission) {
         meshDescriptor.parameters.transmissive = true;
       }
@@ -23307,6 +23332,12 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
           sampler: this.renderer.transmissionTarget.sampler
         });
       }
+      meshDescriptor.parameters.material = {
+        ...meshDescriptor.parameters.material,
+        ...meshDescriptor.texturesDescriptors.reduce((acc, descriptor) => {
+          return { ...acc, [descriptor.texture.options.name]: descriptor };
+        }, {})
+      };
       if (instancesCount > 1) {
         const instanceMatricesBinding = new BufferBinding({
           label: "Instance matrices",
@@ -23382,7 +23413,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
                   sampler: this.renderer.transmissionTarget.sampler
                 });
               }
-              const extensions2 = { gltfVariantMaterial };
+              const { extensions: extensions2 } = gltfVariantMaterial;
               const extensionsUsed = [];
               if (extensions2) {
                 for (const extension of Object.keys(extensions2)) {
@@ -23404,9 +23435,14 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
                   label: variant.name + " " + variantMaterialParams.label,
                   transmissive: !!meshDescriptor.parameters.transmissive,
                   bindings: meshDescriptor.parameters.bindings ?? [],
-                  uniforms: variantMaterialParams.uniforms,
                   transparent: !!variantMaterialParams.transparent,
                   cullMode: variantMaterialParams.cullMode,
+                  material: {
+                    ...variantMaterialParams.material,
+                    ...texturesDescriptors.reduce((acc, descriptor) => {
+                      return { ...acc, [descriptor.texture.options.name]: descriptor };
+                    }, {})
+                  },
                   ...variantMaterialParams.targets && { targets: variantMaterialParams.targets }
                 }
               };
@@ -23445,33 +23481,129 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
       }
     }
     /**
-     * Add all the needed {@link Mesh} based on the {@link ScenesManager#meshesDescriptors | ScenesManager meshesDescriptors} array.
-     * @param patchMeshesParameters - allow to optionally patch the {@link Mesh} parameters before creating it (can be used to add custom shaders, uniforms or storages, change rendering options, etc.)
-     * @returns - Array of created {@link Mesh}.
+     * Add all the needed {@link LitMesh} based on the {@link ScenesManager#meshesDescriptors | ScenesManager meshesDescriptors} array.
+     * @param patchMeshesParameters - allow to optionally patch the {@link LitMesh} parameters before creating it (can be used to add custom shaders chunks, uniforms or storages, change rendering options, etc.)
+     * @returns - Array of created {@link LitMesh}.
      */
     addMeshes(patchMeshesParameters = (meshDescriptor) => {
     }) {
       this.scenesManager.node.updateMatrixStack();
       return this.scenesManager.meshesDescriptors.map((meshDescriptor) => {
-        if (meshDescriptor.parameters.geometry) {
+        const { geometry } = meshDescriptor.parameters;
+        if (geometry) {
           patchMeshesParameters(meshDescriptor);
-          const mesh = new Mesh(this.renderer, {
+          const mesh = new LitMesh(this.renderer, {
             ...meshDescriptor.parameters
           });
           meshDescriptor.alternateMaterials.set("Default", mesh.material);
           meshDescriptor.alternateDescriptors.forEach((descriptor) => {
+            const { material: originalMaterial } = meshDescriptor.parameters;
+            const { environmentMap, shading, vertexChunks, additionalVaryings, fragmentChunks, toneMapping } = originalMaterial;
+            const { label, targets, transparent, material } = descriptor.parameters;
+            material.shading = shading;
+            if (descriptor.extensionsUsed.includes("KHR_materials_unlit")) {
+              material.shading = "Unlit";
+            }
+            let { uniforms, samplers, textures, bindings } = descriptor.parameters;
+            if (!textures) {
+              textures = [];
+            }
+            if (!samplers) {
+              samplers = [];
+            }
+            const variantTexturesDescriptors = LitMesh.getMaterialTexturesDescriptors(material);
+            variantTexturesDescriptors.forEach((textureDescriptor) => {
+              if (textureDescriptor.sampler) {
+                const samplerExists = samplers.find((s) => s.uuid === textureDescriptor.sampler.uuid);
+                if (!samplerExists) {
+                  samplers.push(textureDescriptor.sampler);
+                }
+              }
+              textures.push(textureDescriptor.texture);
+            });
+            if (environmentMap && (material.shading === "PBR" || !material.shading)) {
+              material.environmentMap = environmentMap;
+              textures = [
+                ...textures,
+                environmentMap.lutTexture,
+                environmentMap.diffuseTexture,
+                environmentMap.specularTexture
+              ];
+              samplers = [...samplers, environmentMap.sampler];
+            }
+            if (!uniforms) {
+              uniforms = {};
+            }
+            const variantMaterialUniform = LitMesh.getMaterialUniform(material);
+            uniforms = {
+              ...uniforms,
+              material: variantMaterialUniform
+            };
+            if (meshDescriptor.parameters.uniforms) {
+              uniforms = { ...meshDescriptor.parameters.uniforms, ...uniforms };
+            }
+            if (!bindings) {
+              bindings = [];
+            }
             const matricesBindings = mesh.material.getBufferBindingByName("matrices");
-            descriptor.parameters.bindings = [matricesBindings, ...descriptor.parameters.bindings];
-            const {
-              label,
-              shaders,
-              uniforms,
+            bindings = [matricesBindings, ...bindings];
+            if (meshDescriptor.parameters.bindings) {
+              meshDescriptor.parameters.bindings.forEach((binding) => {
+                const hasBinding = bindings.find((b) => b.name === binding.name);
+                if (!hasBinding) {
+                  bindings.push(binding);
+                }
+              });
+            }
+            let transmissionBackgroundTexture = null;
+            if (meshDescriptor.parameters.transmissive) {
+              this.renderer.createTransmissionTarget();
+              transmissionBackgroundTexture = {
+                texture: this.renderer.transmissionTarget.texture,
+                sampler: this.renderer.transmissionTarget.sampler
+              };
+              textures = [...textures, this.renderer.transmissionTarget.texture];
+              samplers = [...samplers, this.renderer.transmissionTarget.sampler];
+            }
+            if (meshDescriptor.parameters.storages) {
+              descriptor.parameters.storages = meshDescriptor.parameters.storages;
+            }
+            if (meshDescriptor.parameters.bindGroups) {
+              descriptor.parameters.bindGroups = meshDescriptor.parameters.bindGroups;
+            }
+            const vs = LitMesh.getVertexShaderCode({
               bindings,
-              samplers,
-              textures,
-              targets,
-              transparent
-            } = descriptor.parameters;
+              geometry,
+              chunks: vertexChunks,
+              additionalVaryings
+            });
+            const fs = LitMesh.getFragmentShaderCode({
+              shadingModel: shading,
+              chunks: fragmentChunks,
+              extensionsUsed: descriptor.extensionsUsed,
+              receiveShadows: meshDescriptor.parameters.receiveShadows,
+              toneMapping,
+              geometry,
+              additionalVaryings,
+              materialUniform: variantMaterialUniform,
+              ...variantTexturesDescriptors.reduce((acc, descriptor2) => {
+                return { ...acc, [descriptor2.texture.options.name]: descriptor2 };
+              }, {}),
+              transmissionBackgroundTexture,
+              ...environmentMap && {
+                environmentMap
+              }
+            });
+            const shaders = {
+              vertex: {
+                code: vs,
+                entryPoint: "main"
+              },
+              fragment: {
+                code: fs,
+                entryPoint: "main"
+              }
+            };
             const alternateMaterial = new RenderMaterial(this.renderer, {
               ...JSON.parse(JSON.stringify(mesh.material.options.rendering)),
               // use default cloned mesh rendering options
@@ -23483,8 +23615,8 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
               ...textures && { textures },
               ...targets && { targets },
               transparent: !!transparent,
-              verticesOrder: meshDescriptor.parameters.geometry.verticesOrder,
-              topology: meshDescriptor.parameters.geometry.topology
+              verticesOrder: geometry.verticesOrder,
+              topology: geometry.topology
             });
             meshDescriptor.alternateMaterials.set(descriptor.variantName, alternateMaterial);
           });
@@ -23718,133 +23850,6 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
     return interleavedArray;
   };
   let GLTFScenesManager = _GLTFScenesManager;
-
-  const buildShaders = (meshDescriptor, shaderParameters = {}) => {
-    let { shadingModel } = shaderParameters;
-    if (!shadingModel) {
-      shadingModel = "PBR";
-    }
-    const isUnlit = meshDescriptor.extensionsUsed.includes("KHR_materials_unlit");
-    if (isUnlit) {
-      shadingModel = "Unlit";
-    }
-    let { toneMapping } = shaderParameters;
-    if (!toneMapping) {
-      toneMapping = "Khronos";
-    }
-    let { additionalVaryings } = shaderParameters;
-    if (!additionalVaryings) {
-      additionalVaryings = [];
-    }
-    const baseColorTexture = meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === "baseColorTexture");
-    const normalTexture = meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === "normalTexture");
-    const emissiveTexture = meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === "emissiveTexture");
-    const occlusionTexture = meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === "occlusionTexture");
-    const metallicRoughnessTexture = meshDescriptor.texturesDescriptors.find(
-      (t) => t.texture.options.name === "metallicRoughnessTexture"
-    );
-    const specularTexture = meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === "specularTexture");
-    const specularFactorTexture = specularTexture || meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === "specularFactorTexture");
-    const specularColorTexture = specularTexture || meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === "specularColorTexture");
-    const transmissionTexture = meshDescriptor.texturesDescriptors.find(
-      (t) => t.texture.options.name === "transmissionTexture"
-    );
-    const thicknessTexture = meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === "thicknessTexture");
-    const transmissionBackgroundTexture = meshDescriptor.texturesDescriptors.find(
-      (t) => t.texture.options.name === "transmissionBackgroundTexture"
-    );
-    if (!meshDescriptor.parameters.textures) {
-      meshDescriptor.parameters.textures = [];
-    }
-    if (!meshDescriptor.parameters.samplers) {
-      meshDescriptor.parameters.samplers = [];
-    }
-    if (shadingModel !== "Unlit") {
-      meshDescriptor.texturesDescriptors.forEach((textureDescriptor) => {
-        const samplerExists = meshDescriptor.parameters.samplers.find((s) => s.uuid === textureDescriptor.sampler.uuid);
-        if (!samplerExists) {
-          meshDescriptor.parameters.samplers.push(textureDescriptor.sampler);
-        }
-        meshDescriptor.parameters.textures.push(textureDescriptor.texture);
-      });
-    } else if (baseColorTexture) {
-      const samplerExists = meshDescriptor.parameters.samplers.find((s) => s.uuid === baseColorTexture.sampler.uuid);
-      if (!samplerExists) {
-        meshDescriptor.parameters.samplers.push(baseColorTexture.sampler);
-      }
-      meshDescriptor.parameters.textures.push(baseColorTexture.texture);
-    }
-    let { vertexChunks, fragmentChunks } = shaderParameters || {};
-    const { environmentMap } = shaderParameters || {};
-    if (environmentMap) {
-      meshDescriptor.parameters.textures = [
-        ...meshDescriptor.parameters.textures,
-        environmentMap.lutTexture,
-        environmentMap.diffuseTexture,
-        environmentMap.specularTexture
-      ];
-      meshDescriptor.parameters.samplers = [...meshDescriptor.parameters.samplers, environmentMap.sampler];
-    }
-    const vs = getVertexShaderCode({
-      bindings: meshDescriptor.parameters.bindings,
-      geometry: meshDescriptor.parameters.geometry,
-      additionalVaryings,
-      chunks: vertexChunks
-    });
-    const fs = getFragmentShaderCode({
-      shadingModel,
-      chunks: fragmentChunks,
-      receiveShadows: !!meshDescriptor.parameters.receiveShadows,
-      toneMapping,
-      geometry: meshDescriptor.parameters.geometry,
-      additionalVaryings,
-      materialUniform: meshDescriptor.parameters.uniforms.material,
-      materialUniformName: "material",
-      extensionsUsed: meshDescriptor.extensionsUsed,
-      baseColorTexture,
-      normalTexture,
-      metallicRoughnessTexture,
-      specularTexture,
-      specularFactorTexture,
-      specularColorTexture,
-      transmissionTexture,
-      thicknessTexture,
-      emissiveTexture,
-      occlusionTexture,
-      transmissionBackgroundTexture,
-      environmentMap
-    });
-    meshDescriptor.alternateDescriptors?.forEach((descriptor) => {
-      descriptor.parameters.uniforms = { ...meshDescriptor.parameters.uniforms, ...descriptor.parameters.uniforms };
-      if (meshDescriptor.parameters.storages) {
-        descriptor.parameters.storages = meshDescriptor.parameters.storages;
-      }
-      if (meshDescriptor.parameters.bindings) {
-        if (!descriptor.parameters.bindings)
-          descriptor.parameters.bindings = [];
-        meshDescriptor.parameters.bindings.forEach((binding) => {
-          const hasBinding = descriptor.parameters.bindings.find((b) => b.name === binding.name);
-          if (!hasBinding) {
-            descriptor.parameters.bindings.push(binding);
-          }
-        });
-      }
-      if (meshDescriptor.parameters.bindGroups) {
-        descriptor.parameters.bindGroups = meshDescriptor.parameters.bindGroups;
-      }
-      descriptor.parameters.shaders = buildShaders(descriptor, shaderParameters);
-    });
-    return {
-      vertex: {
-        code: vs,
-        entryPoint: "main"
-      },
-      fragment: {
-        code: fs,
-        entryPoint: "main"
-      }
-    };
-  };
 
   const GL = WebGLRenderingContext;
   const GLB_MAGIC = 1179937895;
@@ -24108,7 +24113,6 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
   exports.Vec2 = Vec2;
   exports.Vec3 = Vec3;
   exports.WritableBufferBinding = WritableBufferBinding;
-  exports.buildShaders = buildShaders;
   exports.common = common;
   exports.constants = constants;
   exports.getFragmentShaderCode = getFragmentShaderCode;

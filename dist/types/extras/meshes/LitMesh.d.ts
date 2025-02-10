@@ -2,13 +2,37 @@ import { Mesh } from '../../core/meshes/Mesh';
 import { CameraRenderer } from '../../core/renderers/utils';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
 import { ProjectedMeshParameters } from '../../core/meshes/mixins/ProjectedMeshBaseMixin';
-import { FragmentShaderInputParams, PBRFragmentShaderInputParams, ShadingModels } from '../../core/shaders/full/fragment/get-fragment-shader-code';
+import { FragmentShaderInputParams, PBRFragmentShaderInputParams } from '../../core/shaders/full/fragment/get-fragment-shader-code';
 import { Vec2 } from '../../math/Vec2';
 import { Vec3 } from '../../math/Vec3';
 import { AdditionalChunks } from '../../core/shaders/default-material-helpers';
 import { VertexShaderInputParams } from '../../core/shaders/full/vertex/get-vertex-shader-code';
+import { BufferBindingParams } from '../../core/bindings/BufferBinding';
+import { Texture } from '../../core/textures/Texture';
+import { MediaTexture } from '../../core/textures/MediaTexture';
+import { Sampler } from '../../core/samplers/Sampler';
+import { EnvironmentMap } from '../environmentMap/EnvironmentMap';
+/** Defines all kinds of shading models available. */
+export type ShadingModels = 'Unlit' | 'Lambert' | 'Phong' | 'PBR';
+/** Defines all kinds of tone mappings available. */
+export type ToneMappings = 'Khronos' | 'Reinhard' | 'Cineon' | false;
+/**
+ * Define a {@link ShaderTextureDescriptor} used to associate the {@link core/textures/Texture.Texture | Texture} names with the corresponding {@link Sampler} and UV names.
+ */
+export interface ShaderTextureDescriptor {
+    /** Name of the {@link Texture} or {@link MediaTexture} to use. */
+    texture: Texture | MediaTexture;
+    /** Name of the {@link Sampler} to use. */
+    sampler?: Sampler;
+    /** Texture coordinate attribute name to use to map this texture. */
+    texCoordAttributeName?: string;
+}
+/** Define the color space in which the colors parameters are passed to the {@link LitMeshMaterialParams}. */
+export type ColorSpace = 'linear' | 'srgb';
 /** Define the material uniform parameters. */
 export interface LitMeshMaterialUniformParams {
+    /** {@link ColorSpace} to use for material uniform colors. All lighting calculations must be done in `linear` space. Default to `srgb` (which means the uniform colors are converted to `linear` space), but glTF internally use `linear`. */
+    colorSpace?: ColorSpace;
     /** Base color of the {@link LitMesh} as a {@link Vec3}. Default to `new Vec3(1)`. */
     color?: Vec3;
     /** Opacity of the {@link LitMesh}. If different than `1`, consider setting the `transparent` parameter to `true`. Default to `1`.  */
@@ -45,6 +69,52 @@ export interface LitMeshMaterialUniformParams {
     attenuationDistance?: number;
     /** The color as a {@link Vec3} that white light turns into due to absorption when reaching the attenuation distance. Only applicable is `transmissive` parameter is set to `true`. Default to `new Vec3(1)`. */
     attenuationColor?: Vec3;
+}
+/** Parameters used to get the {@link LitMesh} material uniforms. */
+export interface GetLitMeshMaterialUniform extends LitMeshMaterialUniformParams {
+    /** {@link ShadingModels} to use for lighting. Default to `PBR`. */
+    shading?: ShadingModels;
+    /** {@link EnvironmentMap} to use for IBL shading. */
+    environmentMap?: EnvironmentMap;
+}
+/** {@link ShaderTextureDescriptor} used for a {@link LitMesh} with unlit shading. */
+export interface UnlitTexturesDescriptors {
+    /** {@link ShaderTextureDescriptor | Base color texture descriptor} to use if any. */
+    baseColorTexture?: ShaderTextureDescriptor;
+}
+/** {@link ShaderTextureDescriptor} used for a {@link LitMesh} with lambert shading. */
+export interface LambertTexturesDescriptors extends UnlitTexturesDescriptors {
+    /** {@link ShaderTextureDescriptor | Normal texture descriptor} to use if any. */
+    normalTexture?: ShaderTextureDescriptor;
+    /** {@link ShaderTextureDescriptor | Emissive texture descriptor} to use if any. */
+    emissiveTexture?: ShaderTextureDescriptor;
+    /** {@link ShaderTextureDescriptor | Occlusion texture descriptor} to use if any. */
+    occlusionTexture?: ShaderTextureDescriptor;
+}
+/** {@link ShaderTextureDescriptor} used for a {@link LitMesh} with phong shading. */
+export interface PhongTexturesDescriptors extends LambertTexturesDescriptors {
+    /** {@link ShaderTextureDescriptor | Metallic roughness texture descriptor} to use if any. */
+    metallicRoughnessTexture?: ShaderTextureDescriptor;
+    /** {@link ShaderTextureDescriptor | Specular texture descriptor} (mixing both specular color in the `RGB` channels and specular intensity in the `A` channel) to use if any. */
+    specularTexture?: ShaderTextureDescriptor;
+    /** {@link ShaderTextureDescriptor | Specular intensity texture descriptor} (using the `A` channel) to use if any. */
+    specularFactorTexture?: ShaderTextureDescriptor;
+    /** {@link ShaderTextureDescriptor | Specular color texture descriptor} (using the `RGB` channels) to use if any. */
+    specularColorTexture?: ShaderTextureDescriptor;
+}
+/** {@link ShaderTextureDescriptor} used for a {@link LitMesh} with PBR shading. */
+export interface PBRTexturesDescriptors extends PhongTexturesDescriptors {
+    /** {@link ShaderTextureDescriptor | Transmission texture descriptor} to use if any. */
+    transmissionTexture?: ShaderTextureDescriptor;
+    /** {@link ShaderTextureDescriptor | Thickness texture descriptor} to use if any. */
+    thicknessTexture?: ShaderTextureDescriptor;
+    /** {@link ShaderTextureDescriptor | Transmission scene background texture descriptor} to use if any. */
+    transmissionBackgroundTexture?: ShaderTextureDescriptor;
+}
+/** Parameters used to get all the {@link LitMesh} {@link ShaderTextureDescriptor} as an array. */
+export interface GetMaterialTexturesDescriptors extends PBRTexturesDescriptors {
+    /** {@link ShadingModels} to use for lighting. Default to `PBR`. */
+    shading?: ShadingModels;
 }
 /** Define the material parameters of a {@link LitMesh}. */
 export interface LitMeshMaterialParams extends Omit<PBRFragmentShaderInputParams, 'chunks' | 'geometry' | 'receiveShadows' | 'extensionsUsed' | 'materialUniform' | 'materialUniformName' | 'transmissionBackgroundTexture'>, LitMeshMaterialUniformParams {
@@ -107,6 +177,28 @@ export declare class LitMesh extends Mesh {
      * @param parameters - {@link LitMeshParameters} used to create this {@link LitMesh}.
      */
     constructor(renderer: CameraRenderer | GPUCurtains, parameters?: LitMeshParameters);
-    static getVertexShaderCode({ bindings, geometry, chunks, additionalVaryings, }: VertexShaderInputParams): string;
-    static getFragmentShaderCode(params: FragmentShaderInputParams): string;
+    /**
+     * Get the material {@link BufferBindingParams} to build the material uniform.
+     * @param parameters - {@link GetLitMeshMaterialUniform} parameters.
+     * @returns - Material uniform {@link BufferBindingParams}.
+     */
+    static getMaterialUniform(parameters: GetLitMeshMaterialUniform): BufferBindingParams;
+    /**
+     * Get all the material {@link ShaderTextureDescriptor} as an array.
+     * @param parameters - {@link GetMaterialTexturesDescriptors} parameters.
+     * @returns - Array of {@link ShaderTextureDescriptor} to use.
+     */
+    static getMaterialTexturesDescriptors(parameters: GetMaterialTexturesDescriptors): ShaderTextureDescriptor[];
+    /**
+     * Generate the {@link LitMesh} vertex shader code.
+     * @param parameters - {@link VertexShaderInputParams} used to generate the vertex shader code.
+     * @returns - The vertex shader generated based on the provided parameters.
+     */
+    static getVertexShaderCode(parameters: VertexShaderInputParams): string;
+    /**
+     * Generate the {@link LitMesh} fragment shader.
+     * @param parameters - {@link FragmentShaderInputParams} used to build the fragment shader.
+     * @returns - The fragment shader generated based on the provided parameters.
+     */
+    static getFragmentShaderCode(parameters: FragmentShaderInputParams): string;
 }

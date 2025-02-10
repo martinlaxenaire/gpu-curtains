@@ -1,4 +1,4 @@
-import { ShaderTextureDescriptor } from '../../../full/fragment/get-fragment-shader-code'
+import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh'
 
 /**
  * Set the `metallic` (`f32`) and `roughness` (`f32`) values using the `material` binding `metallicFactor`, `roughnessFactor` values and the metallic roughness texture if any.

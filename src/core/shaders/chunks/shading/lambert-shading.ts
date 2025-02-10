@@ -4,9 +4,9 @@ import { toneMappingUtils } from '../utils/tone-mapping-utils'
 import { getLightsInfos } from '../fragment/head/get-lights-infos'
 import { REIndirectDiffuse } from '../fragment/head/RE-indirect-diffuse'
 import { getLambertDirect } from '../fragment/head/get-lambert-direct'
-import { ToneMappings } from '../../full/fragment/get-fragment-shader-code'
 import { getLambertShading } from '../fragment/body/get-lambert-shading'
 import { applyToneMapping } from '../fragment/body/apply-tone-mapping'
+import { ToneMappings } from '../../../../extras/meshes/LitMesh'
 
 // TODO add emissive?
 /** Defines the basic parameters available for the various shading getter functions. */

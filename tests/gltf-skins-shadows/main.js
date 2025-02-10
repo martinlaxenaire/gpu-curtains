@@ -14,7 +14,6 @@ window.addEventListener('load', async () => {
     BoxGeometry,
     GLTFLoader,
     GLTFScenesManager,
-    buildShaders,
     AmbientLight,
     DirectionalLight,
     OrbitControls,
@@ -300,18 +299,16 @@ window.addEventListener('load', async () => {
       parameters.receiveShadows = true
 
       // debug
-      const additionalColorContribution = `
+      const additionalContribution = `
         // color = vec4(vec3(metallic), color.a);
         // color = vec4(normalize(normal) * 0.5 + 0.5, 1.0);
       `
 
-      parameters.shaders = buildShaders(meshDescriptor, {
-        shadingModel,
-        chunks: {
-          additionalColorContribution,
-        },
-        environmentMap,
-      })
+      parameters.material.shading = shadingModel
+      parameters.material.fragmentChunks = {
+        additionalContribution,
+      }
+      parameters.material.environmentMap = environmentMap
     })
 
     if (scenesManager.animations.length) {

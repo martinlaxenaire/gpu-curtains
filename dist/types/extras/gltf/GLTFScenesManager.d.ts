@@ -3,14 +3,14 @@ import { CameraRenderer } from '../../core/renderers/utils';
 import { GLTF } from '../../types/gltf/GLTF';
 import { GLTFLoader } from '../loaders/GLTFLoader';
 import { MediaTexture } from '../../core/textures/MediaTexture';
-import { Mesh } from '../../core/meshes/Mesh';
 import { TypedArrayConstructor } from '../../core/bindings/utils';
 import { VertexBufferAttribute, VertexBufferAttributeParams } from '../../types/Geometries';
+import { LitMesh } from '../meshes/LitMesh';
 import { ChildDescriptor, MeshDescriptor, MeshDescriptorMaterialParams, PrimitiveInstanceDescriptor, ScenesManager } from '../../types/gltf/GLTFScenesManager';
 /**
  * Used to create a {@link GLTFScenesManager} from a given {@link GLTFLoader.gltf | gltf} object.
  *
- * Parse the {@link GLTFLoader.gltf | gltf} object, create all the {@link Sampler} and {@link Texture}, create all the {@link Object3D} nodes to compute the correct transformations and parent -> child relationships, create all the needed {@link MeshDescriptor} containing the {@link Geometry}, {@link Mesh} parameters and so on.
+ * Parse the {@link GLTFLoader.gltf | gltf} object, create all the {@link Sampler} and {@link Texture}, create all the {@link Object3D} nodes to compute the correct transformations and parent -> child relationships, create all the needed {@link MeshDescriptor} containing the {@link Geometry}, {@link LitMesh} parameters and so on.
  *
  * ## Loading Features
  *
@@ -203,11 +203,11 @@ export declare class GLTFScenesManager {
      */
     createScenes(): void;
     /**
-     * Add all the needed {@link Mesh} based on the {@link ScenesManager#meshesDescriptors | ScenesManager meshesDescriptors} array.
-     * @param patchMeshesParameters - allow to optionally patch the {@link Mesh} parameters before creating it (can be used to add custom shaders, uniforms or storages, change rendering options, etc.)
-     * @returns - Array of created {@link Mesh}.
+     * Add all the needed {@link LitMesh} based on the {@link ScenesManager#meshesDescriptors | ScenesManager meshesDescriptors} array.
+     * @param patchMeshesParameters - allow to optionally patch the {@link LitMesh} parameters before creating it (can be used to add custom shaders chunks, uniforms or storages, change rendering options, etc.)
+     * @returns - Array of created {@link LitMesh}.
      */
-    addMeshes(patchMeshesParameters?: (meshDescriptor: MeshDescriptor) => void): Mesh[];
+    addMeshes(patchMeshesParameters?: (meshDescriptor: MeshDescriptor) => void): LitMesh[];
     /**
      * Destroy the current {@link ScenesManager} by removing all created {@link ScenesManager#meshes | meshes} and destroying all the {@link Object3D} nodes.
      */

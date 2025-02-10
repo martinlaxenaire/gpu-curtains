@@ -5,7 +5,7 @@ import { Vec2 } from '../../math/Vec2'
 import { Mat3 } from '../../math/Mat3'
 import { BufferBinding } from '../bindings/BufferBinding'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { throwWarning } from '../../utils/utils'
+import { throwWarning, toKebabCase } from '../../utils/utils'
 import { TextureBinding } from '../bindings/TextureBinding'
 import { getDefaultMediaTextureUsage, getNumMipLevels } from './utils'
 import { BindingMemoryAccessType, TextureBindingType } from '../bindings/Binding'
@@ -207,7 +207,7 @@ export class MediaTexture extends Texture {
 
     if (this.options.useTransform) {
       this.transformBinding = new BufferBinding({
-        label: this.options.label,
+        label: toKebabCase(this.options.name),
         name: this.options.name,
         struct: {
           matrix: {

@@ -88,23 +88,13 @@ window.addEventListener('load', async () => {
   await environmentMap.loadAndComputeFromHDR(currentEnvMap.url)
 
   const ambientLight = new AmbientLight(gpuCameraRenderer, {
-    intensity: 0.1, // will be updated
+    intensity: 0.1,
   })
 
-  const light1 = new DirectionalLight(gpuCameraRenderer, {
+  const light = new DirectionalLight(gpuCameraRenderer, {
     position: new Vec3(100, 100, 150), // will be updated when model changes
     intensity: 3,
   })
-
-  // const light2 = new DirectionalLight(gpuCameraRenderer, {
-  //   position: new Vec3(100, 200, 100), // will be updated when model changes
-  //   intensity: 3,
-  // })
-
-  // const light3 = new DirectionalLight(gpuCameraRenderer, {
-  //   position: new Vec3(-100, -200, -100), // will be updated when model changes
-  //   intensity: 3,
-  // })
 
   // background checked
   const floorFs = `

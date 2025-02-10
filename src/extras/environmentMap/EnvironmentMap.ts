@@ -73,7 +73,7 @@ export interface EnvironmentMapParams extends Partial<EnvironmentMapOptions> {}
 export class EnvironmentMap {
   /** The {@link Renderer} used. */
   renderer: Renderer
-  /** The {@link Sampler} used in both the {@link ComputePass} and in `IBL` shading from the {@link extras/gltf/utils.buildShaders | buildShaders} utility function. */
+  /** The {@link Sampler} used in both the {@link ComputePass} and in `IBL` shading from the {@link core/shaders/full/fragment/get-PBR-fragment-shader-code | getPBRFragmentShaderCode} utility function. */
   sampler: Sampler
   /** {@link HDRLoader} used to load the .hdr file. */
   hdrLoader: HDRLoader
