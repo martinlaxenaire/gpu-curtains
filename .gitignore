@@ -1,3 +1,4 @@
 /.idea
 /node_modules
 /yarn-error.log
+/dist/esm/core/shaders/full/fragment/get-PBR-fragment-shader-code.mjs
