@@ -167,6 +167,9 @@ function ProjectedMeshBaseMixin(Base) {
         }
       }
       if (this.options.receiveShadows) {
+        this.renderer.shadowCastingLights.forEach((light) => {
+          light.shadow.addShadowReceivingMesh(this);
+        });
         const hasActiveShadows = this.renderer.shadowCastingLights.find((light) => light.shadow.isActive);
         if (hasActiveShadows && shaders.fragment && typeof shaders.fragment === "object") {
           shaders.fragment.code = getPCFDirectionalShadows(this.renderer) + getPCFShadowContribution + getPCFPointShadows(this.renderer) + getPCFPointShadowContribution + shaders.fragment.code;
@@ -440,12 +443,20 @@ function ProjectedMeshBaseMixin(Base) {
         this.geometry.render(pass);
       }
     }
+    /**
+     * Destroy the Mesh, and handle shadow casting or receiving meshes.
+     */
     destroy() {
       if (this.options.castShadows) {
         this.renderer.shadowCastingLights.forEach((light) => {
           if (light.shadow.isActive) {
             light.shadow.removeMesh(this);
           }
+        });
+      }
+      if (this.options.receiveShadows) {
+        this.renderer.shadowCastingLights.forEach((light) => {
+          light.shadow.removeShadowReceivingMesh(this);
         });
       }
       super.destroy();

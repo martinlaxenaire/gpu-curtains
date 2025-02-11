@@ -94,11 +94,13 @@ window.addEventListener('load', async () => {
       position: new Vec3(-3, 4, -3),
       range: 50,
       intensity: 20,
-      // shadow: {
-      //   intensity: 1,
-      // },
+      shadow: {
+        intensity: 1,
+      },
     })
   )
+
+  console.log(pointLights[0].shadow)
 
   // ---------------
   // GEOMETRIES

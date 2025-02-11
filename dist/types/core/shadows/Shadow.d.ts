@@ -64,12 +64,12 @@ export declare class Shadow {
     depthTextureFormat: GPUTextureFormat;
     /** Depth {@link Texture} used to create the shadow map. */
     depthTexture: null | Texture;
-    /** Depth {@link RenderTarget} onto which the {@link meshes} will be rendered. */
+    /** Depth {@link RenderTarget} onto which the {@link castingMeshes} will be rendered. */
     depthPassTarget: null | RenderTarget;
     /** Depth comparison {@link Sampler} used to compare depth in the shaders. */
     depthComparisonSampler: null | Sampler;
-    /** Map of all the parent {@link ProjectedMesh | meshes} used to create the depth meshes. */
-    meshes: Map<ProjectedMesh['uuid'], ProjectedMesh>;
+    /** Map of all the parent {@link ProjectedMesh | meshes} casting shadows used to create the depth meshes. */
+    castingMeshes: Map<ProjectedMesh['uuid'], ProjectedMesh>;
     /** Map of all the depth {@link ProjectedMesh} rendered to the shadow map. */
     depthMeshes: Map<ProjectedMesh['uuid'], ProjectedMesh>;
     /** {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} that holds all the bindings for this type of shadow to send to the shaders. */
@@ -163,8 +163,10 @@ export declare class Shadow {
      * Create the {@link depthTexture}.
      */
     createDepthTexture(): void;
+    /** Destroy the {@link depthTexture}. */
+    destroyDepthTexture(): void;
     /**
-     * Clear the content of the depth texture. Called whenever the {@link meshes} array is empty after having removed a mesh.
+     * Clear the content of the depth texture. Called whenever the {@link castingMeshes} {@link Map} is empty after having removed a mesh, or if all {@link castingMeshes} `visible` properties are `false`.
      */
     clearDepthTexture(): void;
     /**
@@ -178,26 +180,21 @@ export declare class Shadow {
      */
     onPropertyChanged(propertyKey: string, value: Mat4 | number): void;
     /**
-     * Start the depth pass.
+     * Set our {@link depthPassTarget} corresponding {@link CameraRenderer#scene | scene} render pass entry custom render pass.
      */
     setDepthPass(): void;
     /**
-     * Remove the depth pass from its {@link utils/TasksQueueManager.TasksQueueManager | task queue manager}.
-     * @param depthPassTaskID - Task queue manager ID to use for removal.
-     */
-    removeDepthPass(depthPassTaskID: any): void;
-    /**
-     * Render the depth pass. This happens before rendering the {@link CameraRenderer#scene | scene}.<br>
+     * Render the depth pass. Called by the {@link CameraRenderer#scene | scene} when rendering the {@link depthPassTarget} render pass entry, or by the {@link renderOnce} method.<br />
      * - Render all the depth meshes.
-     * @param once - Whether to render it only once or not.
+     * @param commandEncoder - {@link GPUCommandEncoder} to use.
      */
-    render(once?: boolean): number;
+    render(commandEncoder: GPUCommandEncoder): void;
     /**
      * Render the shadow map only once. Useful with static scenes if autoRender has been set to `false` to only take one snapshot of the shadow map.
      */
     renderOnce(): Promise<void>;
     /**
-     * Render all the {@link meshes} into the {@link depthPassTarget}.
+     * Render all the {@link castingMeshes} into the {@link depthPassTarget}.
      * @param commandEncoder - {@link GPUCommandEncoder} to use.
      */
     renderDepthPass(commandEncoder: GPUCommandEncoder): void;
@@ -223,18 +220,28 @@ export declare class Shadow {
      * Add a {@link ProjectedMesh | mesh} to the shadow map. Internally called by the {@link ProjectedMesh | mesh} if its `castShadows` parameters has been set to `true`, but can also be called externally to selectively cast shadows or to add specific parameters (such as custom depth pass shaders).
      * - {@link patchShadowCastingMeshParams | Patch} the parameters.
      * - Create a new depth {@link Mesh} with the patched parameters.
-     * - Add the {@link ProjectedMesh | mesh} to the {@link meshes} Map.
+     * - Add the {@link ProjectedMesh | mesh} to the {@link castingMeshes} Map.
      * @param mesh - {@link ProjectedMesh | mesh} to add to the shadow map.
      * @param parameters - Optional {@link RenderMaterialParams | parameters} to use for the depth mesh.
      */
     addShadowCastingMesh(mesh: ProjectedMesh, parameters?: RenderMaterialParams): void;
+    /**
+     * Add a shadow receiving {@link ProjectedMesh | mesh} to the #receivingMeshes {@link Map}.
+     * @param mesh - Shadow receiving {@link ProjectedMesh | mesh} to add.
+     */
+    addShadowReceivingMesh(mesh: ProjectedMesh): void;
+    /**
+     * Remove a shadow receiving {@link ProjectedMesh | mesh} from the #receivingMeshes {@link Map}.
+     * @param mesh - Shadow receiving {@link ProjectedMesh | mesh} to remove.
+     */
+    removeShadowReceivingMesh(mesh: ProjectedMesh): void;
     /**
      * Remove a {@link ProjectedMesh | mesh} from the shadow map and destroy its depth mesh.
      * @param mesh - {@link ProjectedMesh | mesh} to remove.
      */
     removeMesh(mesh: ProjectedMesh): void;
     /**
-     * If one of the {@link meshes} had its geometry change, update the corresponding depth mesh geometry as well.
+     * If one of the {@link castingMeshes} had its geometry change, update the corresponding depth mesh geometry as well.
      * @param mesh - Original {@link ProjectedMesh} which geometry just changed.
      * @param geometry - New {@link ProjectedMesh} {@link Geometry} to use.
      */

@@ -92,24 +92,19 @@ export declare class PointShadow extends Shadow {
      */
     createDepthTexture(): void;
     /**
-     * Clear the content of the depth texture. Called whenever the {@link meshes} array is empty after having removed a mesh.
+     * Clear the content of the depth texture. Called whenever the {@link castingMeshes} {@link Map} is empty after having removed a mesh, or if all {@link castingMeshes} `visible` properties are `false`.
      */
     clearDepthTexture(): void;
     /**
-     * Remove the depth pass from its {@link utils/TasksQueueManager.TasksQueueManager | task queue manager}.
-     * @param depthPassTaskID - Task queue manager ID to use for removal.
-     */
-    removeDepthPass(depthPassTaskID: any): void;
-    /**
-     * Render the depth pass. This happens before rendering the {@link CameraRenderer#scene | scene}.<br>
+     * Render the depth pass. Called by the {@link CameraRenderer#scene | scene} when rendering the {@link depthPassTarget} render pass entry, or by the {@link renderOnce} method.<br />
      * - For each face of the depth cube texture:
      *   - Set the {@link depthPassTarget} descriptor depth texture view to our depth cube texture current face.
      *   - Render all the depth meshes.
-     * @param once - Whether to render it only once or not.
+     * @param commandEncoder - {@link GPUCommandEncoder} to use.
      */
-    render(once?: boolean): number;
+    render(commandEncoder: GPUCommandEncoder): void;
     /**
-     * Render all the {@link meshes} into the {@link depthPassTarget}. Before rendering them, we swap the cube face bind group with the {@link CameraRenderer.pointShadowsCubeFaceBindGroups | renderer pointShadowsCubeFaceBindGroups} at the index containing the current face onto which we'll draw.
+     * Render all the {@link castingMeshes} into the {@link depthPassTarget}. Before rendering them, we swap the cube face bind group with the {@link CameraRenderer.pointShadowsCubeFaceBindGroups | renderer pointShadowsCubeFaceBindGroups} at the index containing the current face onto which we'll draw.
      * @param commandEncoder - {@link GPUCommandEncoder} to use.
      * @param face - Current cube map face onto which we're drawing.
      */

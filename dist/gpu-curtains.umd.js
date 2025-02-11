@@ -10723,6 +10723,9 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
           }
         }
         if (this.options.receiveShadows) {
+          this.renderer.shadowCastingLights.forEach((light) => {
+            light.shadow.addShadowReceivingMesh(this);
+          });
           const hasActiveShadows = this.renderer.shadowCastingLights.find((light) => light.shadow.isActive);
           if (hasActiveShadows && shaders.fragment && typeof shaders.fragment === "object") {
             shaders.fragment.code = getPCFDirectionalShadows(this.renderer) + getPCFShadowContribution + getPCFPointShadows(this.renderer) + getPCFPointShadowContribution + shaders.fragment.code;
@@ -10996,12 +10999,20 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
           this.geometry.render(pass);
         }
       }
+      /**
+       * Destroy the Mesh, and handle shadow casting or receiving meshes.
+       */
       destroy() {
         if (this.options.castShadows) {
           this.renderer.shadowCastingLights.forEach((light) => {
             if (light.shadow.isActive) {
               light.shadow.removeMesh(this);
             }
+          });
+        }
+        if (this.options.receiveShadows) {
+          this.renderer.shadowCastingLights.forEach((light) => {
+            light.shadow.removeShadowReceivingMesh(this);
           });
         }
         super.destroy();
@@ -11044,7 +11055,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
     __accessCheck$f(obj, member, "access private method");
     return method;
   };
-  var _intensity, _bias, _normalBias, _pcfSamples, _isActive, _autoRender, _depthPassTaskID, _setParameters, setParameters_fn;
+  var _intensity, _bias, _normalBias, _pcfSamples, _isActive, _autoRender, _receivingMeshes, _setParameters, setParameters_fn;
   const shadowStruct = {
     isActive: {
       type: "i32",
@@ -11101,8 +11112,8 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
       __privateAdd$f(this, _isActive, void 0);
       /** @ignore */
       __privateAdd$f(this, _autoRender, void 0);
-      /** @ignore */
-      __privateAdd$f(this, _depthPassTaskID, void 0);
+      /** Map of all the shadow receiving {@link ProjectedMesh | meshes}. */
+      __privateAdd$f(this, _receivingMeshes, void 0);
       this.setRenderer(renderer);
       this.light = light;
       this.index = this.light.index;
@@ -11116,9 +11127,9 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
         depthTextureFormat
       };
       this.sampleCount = 1;
-      this.meshes = /* @__PURE__ */ new Map();
+      this.castingMeshes = /* @__PURE__ */ new Map();
+      __privateSet$d(this, _receivingMeshes, /* @__PURE__ */ new Map());
       this.depthMeshes = /* @__PURE__ */ new Map();
-      __privateSet$d(this, _depthPassTaskID, null);
       __privateMethod$8(this, _setParameters, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
       this.isActive = false;
     }
@@ -11127,12 +11138,23 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
      * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
      */
     setRenderer(renderer) {
+      const oldRenderer = this.renderer;
+      if (oldRenderer && this.depthPassTarget) {
+        this.depthPassTarget.removeFromScene();
+      }
       renderer = isCameraRenderer(renderer, this.constructor.name);
       this.renderer = renderer;
       this.setRendererBinding();
+      if (this.depthPassTarget) {
+        this.depthPassTarget.renderer = this.renderer;
+        this.depthPassTarget.addToScene();
+      }
       this.depthMeshes?.forEach((depthMesh) => {
         depthMesh.setRenderer(this.renderer);
       });
+      if (oldRenderer && __privateGet$d(this, _autoRender)) {
+        this.setDepthPass();
+      }
     }
     /** @ignore */
     setRendererBinding() {
@@ -11255,10 +11277,11 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
         });
       }
       this.setDepthTexture();
+      this.depthTextureSize.onChange(() => this.onDepthTextureSizeChanged());
       if (!this.depthPassTarget) {
         this.createDepthPassTarget();
       }
-      if (__privateGet$d(this, _depthPassTaskID) === null && __privateGet$d(this, _autoRender)) {
+      if (__privateGet$d(this, _autoRender)) {
         this.setDepthPass();
         this.onPropertyChanged("isActive", 1);
       }
@@ -11304,8 +11327,15 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
         // do not destroy when removing a mesh
       });
     }
+    /** Destroy the {@link depthTexture}. */
+    destroyDepthTexture() {
+      this.depthTexture?.destroy();
+      this.depthTexture = null;
+      this.depthTextureSize.onChange(() => {
+      });
+    }
     /**
-     * Clear the content of the depth texture. Called whenever the {@link meshes} array is empty after having removed a mesh.
+     * Clear the content of the depth texture. Called whenever the {@link castingMeshes} {@link Map} is empty after having removed a mesh, or if all {@link castingMeshes} `visible` properties are `false`.
      */
     clearDepthTexture() {
       if (!this.depthTexture || !this.depthTexture.texture)
@@ -11339,7 +11369,8 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
         label: "Depth pass render target for " + this.constructor.name + " " + this.index,
         useColorAttachments: false,
         depthTexture: this.depthTexture,
-        sampleCount: this.sampleCount
+        sampleCount: this.sampleCount,
+        autoRender: __privateGet$d(this, _autoRender)
       });
     }
     /**
@@ -11361,47 +11392,33 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
       }
     }
     /**
-     * Start the depth pass.
+     * Set our {@link depthPassTarget} corresponding {@link CameraRenderer#scene | scene} render pass entry custom render pass.
      */
     setDepthPass() {
-      __privateSet$d(this, _depthPassTaskID, this.render());
+      const renderPassEntry = this.renderer.scene.getRenderTargetPassEntry(this.depthPassTarget);
+      renderPassEntry.useCustomRenderPass = (commandEncoder) => this.render(commandEncoder);
     }
     /**
-     * Remove the depth pass from its {@link utils/TasksQueueManager.TasksQueueManager | task queue manager}.
-     * @param depthPassTaskID - Task queue manager ID to use for removal.
-     */
-    removeDepthPass(depthPassTaskID) {
-      this.renderer.onBeforeRenderScene.remove(depthPassTaskID);
-    }
-    /**
-     * Render the depth pass. This happens before rendering the {@link CameraRenderer#scene | scene}.<br>
+     * Render the depth pass. Called by the {@link CameraRenderer#scene | scene} when rendering the {@link depthPassTarget} render pass entry, or by the {@link renderOnce} method.<br />
      * - Render all the depth meshes.
-     * @param once - Whether to render it only once or not.
+     * @param commandEncoder - {@link GPUCommandEncoder} to use.
      */
-    render(once = false) {
-      return this.renderer.onBeforeRenderScene.add(
-        (commandEncoder) => {
-          if (!this.meshes.size)
-            return;
-          let shouldRender = false;
-          for (const [_uuid, mesh] of this.meshes) {
-            if (mesh.visible) {
-              shouldRender = true;
-              break;
-            }
-          }
-          if (!shouldRender) {
-            this.clearDepthTexture();
-            return;
-          }
-          this.renderDepthPass(commandEncoder);
-          this.renderer.pipelineManager.resetCurrentPipeline();
-        },
-        {
-          once,
-          order: this.index
+    render(commandEncoder) {
+      if (!this.castingMeshes.size)
+        return;
+      let shouldRender = false;
+      for (const [_uuid, mesh] of this.castingMeshes) {
+        if (mesh.visible) {
+          shouldRender = true;
+          break;
         }
-      );
+      }
+      if (!shouldRender) {
+        this.clearDepthTexture();
+        return;
+      }
+      this.renderDepthPass(commandEncoder);
+      this.renderer.pipelineManager.resetCurrentPipeline();
     }
     /**
      * Render the shadow map only once. Useful with static scenes if autoRender has been set to `false` to only take one snapshot of the shadow map.
@@ -11415,11 +11432,18 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
             await depthMesh.material.compileMaterial();
           })
         );
-        this.render(true);
+        this.renderer.onBeforeRenderScene.add(
+          (commandEncoder) => {
+            this.render(commandEncoder);
+          },
+          {
+            once: true
+          }
+        );
       }
     }
     /**
-     * Render all the {@link meshes} into the {@link depthPassTarget}.
+     * Render all the {@link castingMeshes} into the {@link depthPassTarget}.
      * @param commandEncoder - {@link GPUCommandEncoder} to use.
      */
     renderDepthPass(commandEncoder) {
@@ -11428,7 +11452,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
       if (!this.renderer.production)
         depthPass.pushDebugGroup(`${this.constructor.name} (index: ${this.index}): depth pass`);
       for (const [uuid, depthMesh] of this.depthMeshes) {
-        if (!this.meshes.get(uuid)?.visible) {
+        if (!this.castingMeshes.get(uuid)?.visible) {
           continue;
         }
         depthMesh.render(depthPass);
@@ -11490,12 +11514,12 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
      * Add a {@link ProjectedMesh | mesh} to the shadow map. Internally called by the {@link ProjectedMesh | mesh} if its `castShadows` parameters has been set to `true`, but can also be called externally to selectively cast shadows or to add specific parameters (such as custom depth pass shaders).
      * - {@link patchShadowCastingMeshParams | Patch} the parameters.
      * - Create a new depth {@link Mesh} with the patched parameters.
-     * - Add the {@link ProjectedMesh | mesh} to the {@link meshes} Map.
+     * - Add the {@link ProjectedMesh | mesh} to the {@link castingMeshes} Map.
      * @param mesh - {@link ProjectedMesh | mesh} to add to the shadow map.
      * @param parameters - Optional {@link RenderMaterialParams | parameters} to use for the depth mesh.
      */
     addShadowCastingMesh(mesh, parameters = {}) {
-      if (this.meshes.get(mesh.uuid))
+      if (this.castingMeshes.get(mesh.uuid))
         return;
       mesh.options.castShadows = true;
       parameters = this.patchShadowCastingMeshParams(mesh, parameters);
@@ -11511,11 +11535,29 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
         // we just want to write to the depth texture
         targets: [],
         outputTarget: this.depthPassTarget,
-        autoRender: false
+        //autoRender: false,
+        autoRender: __privateGet$d(this, _autoRender)
       });
       depthMesh.parent = mesh;
       this.depthMeshes.set(mesh.uuid, depthMesh);
-      this.meshes.set(mesh.uuid, mesh);
+      this.castingMeshes.set(mesh.uuid, mesh);
+    }
+    /**
+     * Add a shadow receiving {@link ProjectedMesh | mesh} to the #receivingMeshes {@link Map}.
+     * @param mesh - Shadow receiving {@link ProjectedMesh | mesh} to add.
+     */
+    addShadowReceivingMesh(mesh) {
+      __privateGet$d(this, _receivingMeshes).set(mesh.uuid, mesh);
+    }
+    /**
+     * Remove a shadow receiving {@link ProjectedMesh | mesh} from the #receivingMeshes {@link Map}.
+     * @param mesh - Shadow receiving {@link ProjectedMesh | mesh} to remove.
+     */
+    removeShadowReceivingMesh(mesh) {
+      __privateGet$d(this, _receivingMeshes).delete(mesh.uuid);
+      if (__privateGet$d(this, _receivingMeshes).size === 0 && !this.isActive) {
+        this.destroyDepthTexture();
+      }
     }
     /**
      * Remove a {@link ProjectedMesh | mesh} from the shadow map and destroy its depth mesh.
@@ -11527,13 +11569,13 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
         depthMesh.remove();
         this.depthMeshes.delete(mesh.uuid);
       }
-      this.meshes.delete(mesh.uuid);
-      if (this.meshes.size === 0) {
+      this.castingMeshes.delete(mesh.uuid);
+      if (this.castingMeshes.size === 0) {
         this.clearDepthTexture();
       }
     }
     /**
-     * If one of the {@link meshes} had its geometry change, update the corresponding depth mesh geometry as well.
+     * If one of the {@link castingMeshes} had its geometry change, update the corresponding depth mesh geometry as well.
      * @param mesh - Original {@link ProjectedMesh} which geometry just changed.
      * @param geometry - New {@link ProjectedMesh} {@link Geometry} to use.
      */
@@ -11548,15 +11590,14 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
      */
     destroy() {
       this.onPropertyChanged("isActive", 0);
-      if (__privateGet$d(this, _depthPassTaskID) !== null) {
-        this.removeDepthPass(__privateGet$d(this, _depthPassTaskID));
-        __privateSet$d(this, _depthPassTaskID, null);
-      }
-      this.meshes.forEach((mesh) => this.removeMesh(mesh));
+      __privateSet$d(this, _isActive, false);
+      this.castingMeshes.forEach((mesh) => this.removeMesh(mesh));
+      this.castingMeshes = /* @__PURE__ */ new Map();
       this.depthMeshes = /* @__PURE__ */ new Map();
-      this.meshes = /* @__PURE__ */ new Map();
       this.depthPassTarget?.destroy();
-      this.depthTexture?.destroy();
+      if (__privateGet$d(this, _receivingMeshes).size === 0) {
+        this.destroyDepthTexture();
+      }
     }
   }
   _intensity = new WeakMap();
@@ -11565,7 +11606,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
   _pcfSamples = new WeakMap();
   _isActive = new WeakMap();
   _autoRender = new WeakMap();
-  _depthPassTaskID = new WeakMap();
+  _receivingMeshes = new WeakMap();
   _setParameters = new WeakSet();
   setParameters_fn = function({
     intensity = 1,
@@ -11581,7 +11622,6 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
     this.normalBias = normalBias;
     this.pcfSamples = pcfSamples;
     this.depthTextureSize = depthTextureSize;
-    this.depthTextureSize.onChange(() => this.onDepthTextureSizeChanged());
     this.depthTextureFormat = depthTextureFormat;
     __privateSet$d(this, _autoRender, autoRender);
   };
@@ -12126,7 +12166,7 @@ struct PointShadowVSOutput {
       });
     }
     /**
-     * Clear the content of the depth texture. Called whenever the {@link meshes} array is empty after having removed a mesh.
+     * Clear the content of the depth texture. Called whenever the {@link castingMeshes} {@link Map} is empty after having removed a mesh, or if all {@link castingMeshes} `visible` properties are `false`.
      */
     clearDepthTexture() {
       if (!this.depthTexture || !this.depthTexture.texture)
@@ -12159,56 +12199,41 @@ struct PointShadowVSOutput {
       this.renderer.device.queue.submit([commandEncoder.finish()]);
     }
     /**
-     * Remove the depth pass from its {@link utils/TasksQueueManager.TasksQueueManager | task queue manager}.
-     * @param depthPassTaskID - Task queue manager ID to use for removal.
-     */
-    removeDepthPass(depthPassTaskID) {
-      this.renderer.onBeforeCommandEncoderCreation.remove(depthPassTaskID);
-    }
-    /**
-     * Render the depth pass. This happens before rendering the {@link CameraRenderer#scene | scene}.<br>
+     * Render the depth pass. Called by the {@link CameraRenderer#scene | scene} when rendering the {@link depthPassTarget} render pass entry, or by the {@link renderOnce} method.<br />
      * - For each face of the depth cube texture:
      *   - Set the {@link depthPassTarget} descriptor depth texture view to our depth cube texture current face.
      *   - Render all the depth meshes.
-     * @param once - Whether to render it only once or not.
+     * @param commandEncoder - {@link GPUCommandEncoder} to use.
      */
-    render(once = false) {
-      return this.renderer.onBeforeRenderScene.add(
-        (commandEncoder) => {
-          if (!this.meshes.size)
-            return;
-          let shouldRender = false;
-          for (const [_uuid, mesh] of this.meshes) {
-            if (mesh.visible) {
-              shouldRender = true;
-              break;
-            }
-          }
-          if (!shouldRender) {
-            this.clearDepthTexture();
-            return;
-          }
-          for (let face = 0; face < 6; face++) {
-            this.depthPassTarget.renderPass.setRenderPassDescriptor(
-              this.depthTexture.texture.createView({
-                label: this.depthTexture.texture.label + " cube face view " + face,
-                dimension: "2d",
-                arrayLayerCount: 1,
-                baseArrayLayer: face
-              })
-            );
-            this.renderDepthPass(commandEncoder, face);
-          }
-          this.renderer.pipelineManager.resetCurrentPipeline();
-        },
-        {
-          once,
-          order: this.index
+    render(commandEncoder) {
+      if (!this.castingMeshes.size)
+        return;
+      let shouldRender = false;
+      for (const [_uuid, mesh] of this.castingMeshes) {
+        if (mesh.visible) {
+          shouldRender = true;
+          break;
         }
-      );
+      }
+      if (!shouldRender) {
+        this.clearDepthTexture();
+        return;
+      }
+      for (let face = 0; face < 6; face++) {
+        this.depthPassTarget.renderPass.setRenderPassDescriptor(
+          this.depthTexture.texture.createView({
+            label: this.depthTexture.texture.label + " cube face view " + face,
+            dimension: "2d",
+            arrayLayerCount: 1,
+            baseArrayLayer: face
+          })
+        );
+        this.renderDepthPass(commandEncoder, face);
+      }
+      this.renderer.pipelineManager.resetCurrentPipeline();
     }
     /**
-     * Render all the {@link meshes} into the {@link depthPassTarget}. Before rendering them, we swap the cube face bind group with the {@link CameraRenderer.pointShadowsCubeFaceBindGroups | renderer pointShadowsCubeFaceBindGroups} at the index containing the current face onto which we'll draw.
+     * Render all the {@link castingMeshes} into the {@link depthPassTarget}. Before rendering them, we swap the cube face bind group with the {@link CameraRenderer.pointShadowsCubeFaceBindGroups | renderer pointShadowsCubeFaceBindGroups} at the index containing the current face onto which we'll draw.
      * @param commandEncoder - {@link GPUCommandEncoder} to use.
      * @param face - Current cube map face onto which we're drawing.
      */
@@ -12218,11 +12243,12 @@ struct PointShadowVSOutput {
       if (!this.renderer.production)
         depthPass.pushDebugGroup(`${this.constructor.name} (index: ${this.index}): depth pass for face ${face}`);
       for (const [uuid, depthMesh] of this.depthMeshes) {
-        if (!this.meshes.get(uuid)?.visible) {
+        if (!this.castingMeshes.get(uuid)?.visible) {
           continue;
         }
-        this.renderer.pointShadowsCubeFaceBindGroups[face].setIndex(depthMesh.material.bindGroups.length - 1);
-        depthMesh.material.bindGroups[depthMesh.material.bindGroups.length - 1] = this.renderer.pointShadowsCubeFaceBindGroups[face];
+        const cubeFaceBindGroupIndex = depthMesh.material.bindGroups.length - 1;
+        this.renderer.pointShadowsCubeFaceBindGroups[face].setIndex(cubeFaceBindGroupIndex);
+        depthMesh.material.bindGroups[cubeFaceBindGroupIndex] = this.renderer.pointShadowsCubeFaceBindGroups[face];
         depthMesh.render(depthPass);
       }
       if (!this.renderer.production)
@@ -12958,6 +12984,7 @@ ${this.shaders.compute.head}`;
         renderTexture: null,
         onBeforeRenderPass: null,
         onAfterRenderPass: null,
+        useCustomRenderPass: null,
         element: null,
         // explicitly set to null
         stack: {
@@ -13029,6 +13056,7 @@ ${this.shaders.compute.head}`;
           renderTexture: renderTarget.renderTexture,
           onBeforeRenderPass: null,
           onAfterRenderPass: null,
+          useCustomRenderPass: null,
           element: null,
           // explicitly set to null
           stack: {
@@ -13219,6 +13247,7 @@ ${this.shaders.compute.head}`;
         renderTexture: shaderPass.outputTarget ? shaderPass.outputTarget.renderTexture : null,
         onBeforeRenderPass,
         onAfterRenderPass,
+        useCustomRenderPass: null,
         element: shaderPass,
         stack: null
         // explicitly set to null
@@ -13293,6 +13322,7 @@ ${this.shaders.compute.head}`;
         onAfterRenderPass: (commandEncoder, swapChainTexture) => {
           this.renderer.copyGPUTextureToTexture(swapChainTexture, pingPongPlane.renderTexture, commandEncoder);
         },
+        useCustomRenderPass: null,
         element: pingPongPlane,
         stack: null
         // explicitly set to null
@@ -13395,38 +13425,42 @@ ${this.shaders.compute.head}`;
     renderSinglePassEntry(commandEncoder, renderPassEntry) {
       const swapChainTexture = renderPassEntry.renderPass.updateView(renderPassEntry.renderTexture?.texture);
       renderPassEntry.onBeforeRenderPass && renderPassEntry.onBeforeRenderPass(commandEncoder, swapChainTexture);
-      const pass = commandEncoder.beginRenderPass(renderPassEntry.renderPass.descriptor);
-      if (!this.renderer.production) {
-        pass.pushDebugGroup(
-          renderPassEntry.element ? `${renderPassEntry.element.options.label} render pass using ${renderPassEntry.renderPass.options.label} descriptor` : `Render stack pass using ${renderPassEntry.renderPass.options.label}${renderPassEntry.renderTexture ? " onto " + renderPassEntry.renderTexture.options.label : ""}`
-        );
-      }
-      if (renderPassEntry.element) {
-        if (renderPassEntry.element.renderBundle) {
-          renderPassEntry.element.renderBundle.render(pass);
-        } else {
-          renderPassEntry.element.render(pass);
+      if (renderPassEntry.useCustomRenderPass) {
+        renderPassEntry.useCustomRenderPass(commandEncoder);
+      } else {
+        const pass = commandEncoder.beginRenderPass(renderPassEntry.renderPass.descriptor);
+        if (!this.renderer.production) {
+          pass.pushDebugGroup(
+            renderPassEntry.element ? `${renderPassEntry.element.options.label} render pass using ${renderPassEntry.renderPass.options.label} descriptor` : `Render stack pass using ${renderPassEntry.renderPass.options.label}${renderPassEntry.renderTexture ? " onto " + renderPassEntry.renderTexture.options.label : ""}`
+          );
         }
-      } else if (renderPassEntry.stack) {
-        for (const mesh of renderPassEntry.stack.unProjected.opaque) {
-          mesh.render(pass);
-        }
-        for (const mesh of renderPassEntry.stack.unProjected.transparent) {
-          mesh.render(pass);
-        }
-        if (renderPassEntry.stack.projected.opaque.length || renderPassEntry.stack.projected.transparent.length) {
-          for (const mesh of renderPassEntry.stack.projected.opaque) {
+        if (renderPassEntry.element) {
+          if (renderPassEntry.element.renderBundle) {
+            renderPassEntry.element.renderBundle.render(pass);
+          } else {
+            renderPassEntry.element.render(pass);
+          }
+        } else if (renderPassEntry.stack) {
+          for (const mesh of renderPassEntry.stack.unProjected.opaque) {
             mesh.render(pass);
           }
-          this.sortTransparentMeshes(renderPassEntry.stack.projected.transparent);
-          for (const mesh of renderPassEntry.stack.projected.transparent) {
+          for (const mesh of renderPassEntry.stack.unProjected.transparent) {
             mesh.render(pass);
           }
+          if (renderPassEntry.stack.projected.opaque.length || renderPassEntry.stack.projected.transparent.length) {
+            for (const mesh of renderPassEntry.stack.projected.opaque) {
+              mesh.render(pass);
+            }
+            this.sortTransparentMeshes(renderPassEntry.stack.projected.transparent);
+            for (const mesh of renderPassEntry.stack.projected.transparent) {
+              mesh.render(pass);
+            }
+          }
         }
+        if (!this.renderer.production)
+          pass.popDebugGroup();
+        pass.end();
       }
-      if (!this.renderer.production)
-        pass.popDebugGroup();
-      pass.end();
       renderPassEntry.onAfterRenderPass && renderPassEntry.onAfterRenderPass(commandEncoder, swapChainTexture);
       this.renderer.pipelineManager.resetCurrentPipeline();
     }
@@ -14977,9 +15011,10 @@ ${this.shaders.compute.head}`;
     destroy() {
       this.cameraLightsBindGroup?.destroy();
       this.pointShadowsCubeFaceBindGroups.forEach((bindGroup) => bindGroup.destroy());
-      this.lights.forEach((light) => light.remove());
       this.destroyTransmissionTarget();
+      this.lights.forEach((light) => light.destroy());
       super.destroy();
+      this.lights.forEach((light) => this.removeLight(light));
     }
   }
   _shouldUpdateCameraLightsBindGroup = new WeakMap();

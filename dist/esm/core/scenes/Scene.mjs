@@ -43,6 +43,7 @@ class Scene extends Object3D {
       renderTexture: null,
       onBeforeRenderPass: null,
       onAfterRenderPass: null,
+      useCustomRenderPass: null,
       element: null,
       // explicitly set to null
       stack: {
@@ -114,6 +115,7 @@ class Scene extends Object3D {
         renderTexture: renderTarget.renderTexture,
         onBeforeRenderPass: null,
         onAfterRenderPass: null,
+        useCustomRenderPass: null,
         element: null,
         // explicitly set to null
         stack: {
@@ -304,6 +306,7 @@ class Scene extends Object3D {
       renderTexture: shaderPass.outputTarget ? shaderPass.outputTarget.renderTexture : null,
       onBeforeRenderPass,
       onAfterRenderPass,
+      useCustomRenderPass: null,
       element: shaderPass,
       stack: null
       // explicitly set to null
@@ -378,6 +381,7 @@ class Scene extends Object3D {
       onAfterRenderPass: (commandEncoder, swapChainTexture) => {
         this.renderer.copyGPUTextureToTexture(swapChainTexture, pingPongPlane.renderTexture, commandEncoder);
       },
+      useCustomRenderPass: null,
       element: pingPongPlane,
       stack: null
       // explicitly set to null
@@ -480,38 +484,42 @@ class Scene extends Object3D {
   renderSinglePassEntry(commandEncoder, renderPassEntry) {
     const swapChainTexture = renderPassEntry.renderPass.updateView(renderPassEntry.renderTexture?.texture);
     renderPassEntry.onBeforeRenderPass && renderPassEntry.onBeforeRenderPass(commandEncoder, swapChainTexture);
-    const pass = commandEncoder.beginRenderPass(renderPassEntry.renderPass.descriptor);
-    if (!this.renderer.production) {
-      pass.pushDebugGroup(
-        renderPassEntry.element ? `${renderPassEntry.element.options.label} render pass using ${renderPassEntry.renderPass.options.label} descriptor` : `Render stack pass using ${renderPassEntry.renderPass.options.label}${renderPassEntry.renderTexture ? " onto " + renderPassEntry.renderTexture.options.label : ""}`
-      );
-    }
-    if (renderPassEntry.element) {
-      if (renderPassEntry.element.renderBundle) {
-        renderPassEntry.element.renderBundle.render(pass);
-      } else {
-        renderPassEntry.element.render(pass);
+    if (renderPassEntry.useCustomRenderPass) {
+      renderPassEntry.useCustomRenderPass(commandEncoder);
+    } else {
+      const pass = commandEncoder.beginRenderPass(renderPassEntry.renderPass.descriptor);
+      if (!this.renderer.production) {
+        pass.pushDebugGroup(
+          renderPassEntry.element ? `${renderPassEntry.element.options.label} render pass using ${renderPassEntry.renderPass.options.label} descriptor` : `Render stack pass using ${renderPassEntry.renderPass.options.label}${renderPassEntry.renderTexture ? " onto " + renderPassEntry.renderTexture.options.label : ""}`
+        );
       }
-    } else if (renderPassEntry.stack) {
-      for (const mesh of renderPassEntry.stack.unProjected.opaque) {
-        mesh.render(pass);
-      }
-      for (const mesh of renderPassEntry.stack.unProjected.transparent) {
-        mesh.render(pass);
-      }
-      if (renderPassEntry.stack.projected.opaque.length || renderPassEntry.stack.projected.transparent.length) {
-        for (const mesh of renderPassEntry.stack.projected.opaque) {
+      if (renderPassEntry.element) {
+        if (renderPassEntry.element.renderBundle) {
+          renderPassEntry.element.renderBundle.render(pass);
+        } else {
+          renderPassEntry.element.render(pass);
+        }
+      } else if (renderPassEntry.stack) {
+        for (const mesh of renderPassEntry.stack.unProjected.opaque) {
           mesh.render(pass);
         }
-        this.sortTransparentMeshes(renderPassEntry.stack.projected.transparent);
-        for (const mesh of renderPassEntry.stack.projected.transparent) {
+        for (const mesh of renderPassEntry.stack.unProjected.transparent) {
           mesh.render(pass);
         }
+        if (renderPassEntry.stack.projected.opaque.length || renderPassEntry.stack.projected.transparent.length) {
+          for (const mesh of renderPassEntry.stack.projected.opaque) {
+            mesh.render(pass);
+          }
+          this.sortTransparentMeshes(renderPassEntry.stack.projected.transparent);
+          for (const mesh of renderPassEntry.stack.projected.transparent) {
+            mesh.render(pass);
+          }
+        }
       }
+      if (!this.renderer.production)
+        pass.popDebugGroup();
+      pass.end();
     }
-    if (!this.renderer.production)
-      pass.popDebugGroup();
-    pass.end();
     renderPassEntry.onAfterRenderPass && renderPassEntry.onAfterRenderPass(commandEncoder, swapChainTexture);
     this.renderer.pipelineManager.resetCurrentPipeline();
   }

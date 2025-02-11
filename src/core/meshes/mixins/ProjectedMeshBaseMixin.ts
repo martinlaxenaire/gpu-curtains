@@ -406,6 +406,10 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
       // add shadow receiving chunks to shaders
       // TODO what if we change the mesh renderer?
       if (this.options.receiveShadows) {
+        this.renderer.shadowCastingLights.forEach((light) => {
+          light.shadow.addShadowReceivingMesh(this)
+        })
+
         const hasActiveShadows = this.renderer.shadowCastingLights.find((light) => light.shadow.isActive)
 
         if (hasActiveShadows && shaders.fragment && typeof shaders.fragment === 'object') {
@@ -767,12 +771,21 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
       }
     }
 
+    /**
+     * Destroy the Mesh, and handle shadow casting or receiving meshes.
+     */
     destroy() {
       if (this.options.castShadows) {
         this.renderer.shadowCastingLights.forEach((light) => {
           if (light.shadow.isActive) {
             light.shadow.removeMesh(this)
           }
+        })
+      }
+
+      if (this.options.receiveShadows) {
+        this.renderer.shadowCastingLights.forEach((light) => {
+          light.shadow.removeShadowReceivingMesh(this)
         })
       }
 

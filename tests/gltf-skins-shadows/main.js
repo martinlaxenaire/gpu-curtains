@@ -117,15 +117,30 @@ window.addEventListener('load', async () => {
   //   },
   // })
 
-  const light = new PointLight(gpuCameraRenderer, {
-    position: new Vec3(), // will be updated when model changes
-    intensity: 2,
-    shadow: {
-      depthTextureSize: new Vec2(1024),
-      pcfSamples: 3,
-      bias: 0.0001,
-    },
-  })
+  const usePointLight = false
+
+  let light
+  if (!usePointLight) {
+    light = new DirectionalLight(gpuCameraRenderer, {
+      position: new Vec3(), // will be updated when model changes
+      intensity: 2,
+      shadow: {
+        depthTextureSize: new Vec2(1024),
+        pcfSamples: 3,
+        bias: 0.0001, // will be updated when model changes
+      },
+    })
+  } else {
+    light = new PointLight(gpuCameraRenderer, {
+      position: new Vec3(), // will be updated when model changes
+      intensity: 2,
+      shadow: {
+        depthTextureSize: new Vec2(1024),
+        pcfSamples: 3,
+        bias: 0.0001, // will be updated when model changes
+      },
+    })
+  }
 
   // floor
   const floor = new LitMesh(gpuCameraRenderer, {
@@ -217,6 +232,7 @@ window.addEventListener('load', async () => {
     label: 'BBox debug',
     transparent: true,
     geometry: new BoxGeometry(),
+    visible: false,
     shaders: {
       fragment: {
         code: bboxFs,
@@ -253,6 +269,8 @@ window.addEventListener('load', async () => {
     .name('Environment maps')
 
   const shadingField = gui.add({ shadingModel }, 'shadingModel', ['PBR', 'Phong', 'Lambert', 'Unlit']).name('Shading')
+
+  gui.add(bboxHelper, 'visible').name('BBox helper visibility')
 
   const animationsFolder = gui.addFolder('Animations')
 
@@ -293,7 +311,7 @@ window.addEventListener('load', async () => {
       light.position.set(radius * 2)
 
       // shadow
-      light.shadow.bias = radius * 0.0001
+      light.shadow.bias = radius * 0.001
       light.shadow.camera.far = radius * 10
       light.shadow.camera.top = radius * 2
       light.shadow.camera.right = radius * 2

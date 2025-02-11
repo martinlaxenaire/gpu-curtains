@@ -299,7 +299,7 @@ export class PointShadow extends Shadow {
   }
 
   /**
-   * Clear the content of the depth texture. Called whenever the {@link meshes} array is empty after having removed a mesh.
+   * Clear the content of the depth texture. Called whenever the {@link castingMeshes} {@link Map} is empty after having removed a mesh, or if all {@link castingMeshes} `visible` properties are `false`.
    */
   clearDepthTexture() {
     if (!this.depthTexture || !this.depthTexture.texture) return
@@ -340,68 +340,52 @@ export class PointShadow extends Shadow {
   }
 
   /**
-   * Remove the depth pass from its {@link utils/TasksQueueManager.TasksQueueManager | task queue manager}.
-   * @param depthPassTaskID - Task queue manager ID to use for removal.
-   */
-  removeDepthPass(depthPassTaskID) {
-    this.renderer.onBeforeCommandEncoderCreation.remove(depthPassTaskID)
-  }
-
-  /**
-   * Render the depth pass. This happens before rendering the {@link CameraRenderer#scene | scene}.<br>
+   * Render the depth pass. Called by the {@link CameraRenderer#scene | scene} when rendering the {@link depthPassTarget} render pass entry, or by the {@link renderOnce} method.<br />
    * - For each face of the depth cube texture:
    *   - Set the {@link depthPassTarget} descriptor depth texture view to our depth cube texture current face.
    *   - Render all the depth meshes.
-   * @param once - Whether to render it only once or not.
+   * @param commandEncoder - {@link GPUCommandEncoder} to use.
    */
-  render(once = false): number {
+  render(commandEncoder: GPUCommandEncoder) {
     // TODO once multi-view is available,
     // we'll be able to use a single render pass
     // to render to all 6 faces of the cube depth map
     // see https://kidrigger.dev/post/vulkan-render-to-cubemap-using-multiview/
-    return this.renderer.onBeforeRenderScene.add(
-      (commandEncoder) => {
-        if (!this.meshes.size) return
+    if (!this.castingMeshes.size) return
 
-        let shouldRender = false
-        for (const [_uuid, mesh] of this.meshes) {
-          if (mesh.visible) {
-            shouldRender = true
-            break
-          }
-        }
-
-        // no visible meshes to draw
-        if (!shouldRender) {
-          this.clearDepthTexture()
-          return
-        }
-
-        for (let face = 0; face < 6; face++) {
-          this.depthPassTarget.renderPass.setRenderPassDescriptor(
-            this.depthTexture.texture.createView({
-              label: this.depthTexture.texture.label + ' cube face view ' + face,
-              dimension: '2d',
-              arrayLayerCount: 1,
-              baseArrayLayer: face,
-            })
-          )
-
-          this.renderDepthPass(commandEncoder, face)
-        }
-
-        // reset renderer current pipeline again
-        this.renderer.pipelineManager.resetCurrentPipeline()
-      },
-      {
-        once,
-        order: this.index,
+    let shouldRender = false
+    for (const [_uuid, mesh] of this.castingMeshes) {
+      if (mesh.visible) {
+        shouldRender = true
+        break
       }
-    )
+    }
+
+    // no visible meshes to draw
+    if (!shouldRender) {
+      this.clearDepthTexture()
+      return
+    }
+
+    for (let face = 0; face < 6; face++) {
+      this.depthPassTarget.renderPass.setRenderPassDescriptor(
+        this.depthTexture.texture.createView({
+          label: this.depthTexture.texture.label + ' cube face view ' + face,
+          dimension: '2d',
+          arrayLayerCount: 1,
+          baseArrayLayer: face,
+        })
+      )
+
+      this.renderDepthPass(commandEncoder, face)
+    }
+
+    // reset renderer current pipeline again
+    this.renderer.pipelineManager.resetCurrentPipeline()
   }
 
   /**
-   * Render all the {@link meshes} into the {@link depthPassTarget}. Before rendering them, we swap the cube face bind group with the {@link CameraRenderer.pointShadowsCubeFaceBindGroups | renderer pointShadowsCubeFaceBindGroups} at the index containing the current face onto which we'll draw.
+   * Render all the {@link castingMeshes} into the {@link depthPassTarget}. Before rendering them, we swap the cube face bind group with the {@link CameraRenderer.pointShadowsCubeFaceBindGroups | renderer pointShadowsCubeFaceBindGroups} at the index containing the current face onto which we'll draw.
    * @param commandEncoder - {@link GPUCommandEncoder} to use.
    * @param face - Current cube map face onto which we're drawing.
    */
@@ -418,15 +402,15 @@ export class PointShadow extends Shadow {
     // render depth meshes
     for (const [uuid, depthMesh] of this.depthMeshes) {
       // bail if original mesh is not visible
-      if (!this.meshes.get(uuid)?.visible) {
+      if (!this.castingMeshes.get(uuid)?.visible) {
         continue
       }
 
       // set cube face bind group index
-      this.renderer.pointShadowsCubeFaceBindGroups[face].setIndex(depthMesh.material.bindGroups.length - 1)
+      const cubeFaceBindGroupIndex = depthMesh.material.bindGroups.length - 1
+      this.renderer.pointShadowsCubeFaceBindGroups[face].setIndex(cubeFaceBindGroupIndex)
       // swap with bind group containing current face
-      depthMesh.material.bindGroups[depthMesh.material.bindGroups.length - 1] =
-        this.renderer.pointShadowsCubeFaceBindGroups[face]
+      depthMesh.material.bindGroups[cubeFaceBindGroupIndex] = this.renderer.pointShadowsCubeFaceBindGroups[face]
 
       depthMesh.render(depthPass)
     }

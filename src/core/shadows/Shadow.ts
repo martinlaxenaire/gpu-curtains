@@ -108,18 +108,17 @@ export class Shadow {
 
   /** Depth {@link Texture} used to create the shadow map. */
   depthTexture: null | Texture
-  /** Depth {@link RenderTarget} onto which the {@link meshes} will be rendered. */
+  /** Depth {@link RenderTarget} onto which the {@link castingMeshes} will be rendered. */
   depthPassTarget: null | RenderTarget
   /** Depth comparison {@link Sampler} used to compare depth in the shaders. */
   depthComparisonSampler: null | Sampler
 
-  /** Map of all the parent {@link ProjectedMesh | meshes} used to create the depth meshes. */
-  meshes: Map<ProjectedMesh['uuid'], ProjectedMesh>
+  /** Map of all the parent {@link ProjectedMesh | meshes} casting shadows used to create the depth meshes. */
+  castingMeshes: Map<ProjectedMesh['uuid'], ProjectedMesh>
   /** Map of all the depth {@link ProjectedMesh} rendered to the shadow map. */
   depthMeshes: Map<ProjectedMesh['uuid'], ProjectedMesh>
-
-  /** @ignore */
-  #depthPassTaskID: null | number
+  /** Map of all the shadow receiving {@link ProjectedMesh | meshes}. */
+  #receivingMeshes: Map<ProjectedMesh['uuid'], ProjectedMesh>
 
   /** {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} that holds all the bindings for this type of shadow to send to the shaders. */
   rendererBinding: BufferBinding | null
@@ -163,10 +162,9 @@ export class Shadow {
     // to manually resolve the depth texture before using it
     this.sampleCount = 1
 
-    this.meshes = new Map()
+    this.castingMeshes = new Map()
+    this.#receivingMeshes = new Map()
     this.depthMeshes = new Map()
-
-    this.#depthPassTaskID = null
 
     this.#setParameters({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender })
 
@@ -178,15 +176,31 @@ export class Shadow {
    * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
    */
   setRenderer(renderer: CameraRenderer | GPUCurtains) {
+    const oldRenderer = this.renderer
+    if (oldRenderer && this.depthPassTarget) {
+      this.depthPassTarget.removeFromScene()
+    }
+
     renderer = isCameraRenderer(renderer, this.constructor.name)
 
     this.renderer = renderer
 
     this.setRendererBinding()
 
+    if (this.depthPassTarget) {
+      // TODO this is a bit dirty
+      // should we implement a RenderTarget.setRenderer() method?
+      this.depthPassTarget.renderer = this.renderer
+      this.depthPassTarget.addToScene()
+    }
+
     this.depthMeshes?.forEach((depthMesh) => {
       depthMesh.setRenderer(this.renderer)
     })
+
+    if (oldRenderer && this.#autoRender) {
+      this.setDepthPass()
+    }
   }
 
   /** @ignore */
@@ -215,7 +229,6 @@ export class Shadow {
     this.normalBias = normalBias
     this.pcfSamples = pcfSamples
     this.depthTextureSize = depthTextureSize
-    this.depthTextureSize.onChange(() => this.onDepthTextureSizeChanged())
     this.depthTextureFormat = depthTextureFormat as GPUTextureFormat
     this.#autoRender = autoRender
   }
@@ -360,11 +373,13 @@ export class Shadow {
 
     this.setDepthTexture()
 
+    this.depthTextureSize.onChange(() => this.onDepthTextureSizeChanged())
+
     if (!this.depthPassTarget) {
       this.createDepthPassTarget()
     }
 
-    if (this.#depthPassTaskID === null && this.#autoRender) {
+    if (this.#autoRender) {
       this.setDepthPass()
       // do net set active flag if it's not rendered
       this.onPropertyChanged('isActive', 1)
@@ -419,8 +434,15 @@ export class Shadow {
     })
   }
 
+  /** Destroy the {@link depthTexture}. */
+  destroyDepthTexture() {
+    this.depthTexture?.destroy()
+    this.depthTexture = null
+    this.depthTextureSize.onChange(() => {})
+  }
+
   /**
-   * Clear the content of the depth texture. Called whenever the {@link meshes} array is empty after having removed a mesh.
+   * Clear the content of the depth texture. Called whenever the {@link castingMeshes} {@link Map} is empty after having removed a mesh, or if all {@link castingMeshes} `visible` properties are `false`.
    */
   clearDepthTexture() {
     if (!this.depthTexture || !this.depthTexture.texture) return
@@ -462,6 +484,7 @@ export class Shadow {
       useColorAttachments: false,
       depthTexture: this.depthTexture,
       sampleCount: this.sampleCount,
+      autoRender: this.#autoRender,
     })
   }
 
@@ -487,59 +510,40 @@ export class Shadow {
   }
 
   /**
-   * Start the depth pass.
+   * Set our {@link depthPassTarget} corresponding {@link CameraRenderer#scene | scene} render pass entry custom render pass.
    */
   setDepthPass() {
-    // add the depth pass (rendered each tick before our main scene)
-    this.#depthPassTaskID = this.render()
+    // set the depth pass target render pass entry custom render pass function
+    const renderPassEntry = this.renderer.scene.getRenderTargetPassEntry(this.depthPassTarget)
+    renderPassEntry.useCustomRenderPass = (commandEncoder) => this.render(commandEncoder)
   }
 
   /**
-   * Remove the depth pass from its {@link utils/TasksQueueManager.TasksQueueManager | task queue manager}.
-   * @param depthPassTaskID - Task queue manager ID to use for removal.
-   */
-  removeDepthPass(depthPassTaskID) {
-    this.renderer.onBeforeRenderScene.remove(depthPassTaskID)
-  }
-
-  /**
-   * Render the depth pass. This happens before rendering the {@link CameraRenderer#scene | scene}.<br>
+   * Render the depth pass. Called by the {@link CameraRenderer#scene | scene} when rendering the {@link depthPassTarget} render pass entry, or by the {@link renderOnce} method.<br />
    * - Render all the depth meshes.
-   * @param once - Whether to render it only once or not.
+   * @param commandEncoder - {@link GPUCommandEncoder} to use.
    */
-  render(once = false): number {
-    // when multi-view will be available
-    // we'd be able to render all shadows, including point shadows, in a single pass
-    // we won't have to do that anymore, and just rely on the scene regular behaviour
-    // by rendering the depth meshes early into their output target
-    return this.renderer.onBeforeRenderScene.add(
-      (commandEncoder) => {
-        if (!this.meshes.size) return
+  render(commandEncoder: GPUCommandEncoder) {
+    if (!this.castingMeshes.size) return
 
-        let shouldRender = false
-        for (const [_uuid, mesh] of this.meshes) {
-          if (mesh.visible) {
-            shouldRender = true
-            break
-          }
-        }
-
-        // no visible meshes to draw
-        if (!shouldRender) {
-          this.clearDepthTexture()
-          return
-        }
-
-        this.renderDepthPass(commandEncoder)
-
-        // reset renderer current pipeline again
-        this.renderer.pipelineManager.resetCurrentPipeline()
-      },
-      {
-        once,
-        order: this.index,
+    let shouldRender = false
+    for (const [_uuid, mesh] of this.castingMeshes) {
+      if (mesh.visible) {
+        shouldRender = true
+        break
       }
-    )
+    }
+
+    // no visible meshes to draw
+    if (!shouldRender) {
+      this.clearDepthTexture()
+      return
+    }
+
+    this.renderDepthPass(commandEncoder)
+
+    // reset renderer current pipeline again
+    this.renderer.pipelineManager.resetCurrentPipeline()
   }
 
   /**
@@ -557,12 +561,19 @@ export class Shadow {
         })
       )
 
-      this.render(true)
+      this.renderer.onBeforeRenderScene.add(
+        (commandEncoder) => {
+          this.render(commandEncoder)
+        },
+        {
+          once: true,
+        }
+      )
     }
   }
 
   /**
-   * Render all the {@link meshes} into the {@link depthPassTarget}.
+   * Render all the {@link castingMeshes} into the {@link depthPassTarget}.
    * @param commandEncoder - {@link GPUCommandEncoder} to use.
    */
   renderDepthPass(commandEncoder: GPUCommandEncoder) {
@@ -578,7 +589,7 @@ export class Shadow {
     // render depth meshes
     for (const [uuid, depthMesh] of this.depthMeshes) {
       // bail if original mesh is not visible
-      if (!this.meshes.get(uuid)?.visible) {
+      if (!this.castingMeshes.get(uuid)?.visible) {
         continue
       }
 
@@ -655,13 +666,13 @@ export class Shadow {
    * Add a {@link ProjectedMesh | mesh} to the shadow map. Internally called by the {@link ProjectedMesh | mesh} if its `castShadows` parameters has been set to `true`, but can also be called externally to selectively cast shadows or to add specific parameters (such as custom depth pass shaders).
    * - {@link patchShadowCastingMeshParams | Patch} the parameters.
    * - Create a new depth {@link Mesh} with the patched parameters.
-   * - Add the {@link ProjectedMesh | mesh} to the {@link meshes} Map.
+   * - Add the {@link ProjectedMesh | mesh} to the {@link castingMeshes} Map.
    * @param mesh - {@link ProjectedMesh | mesh} to add to the shadow map.
    * @param parameters - Optional {@link RenderMaterialParams | parameters} to use for the depth mesh.
    */
   addShadowCastingMesh(mesh: ProjectedMesh, parameters: RenderMaterialParams = {}) {
     // already there? bail
-    if (this.meshes.get(mesh.uuid)) return
+    if (this.castingMeshes.get(mesh.uuid)) return
 
     mesh.options.castShadows = true
 
@@ -680,14 +691,37 @@ export class Shadow {
       // we just want to write to the depth texture
       targets: [],
       outputTarget: this.depthPassTarget,
-      autoRender: false,
+      //autoRender: false,
+      autoRender: this.#autoRender,
     })
 
     depthMesh.parent = mesh
 
     this.depthMeshes.set(mesh.uuid, depthMesh)
 
-    this.meshes.set(mesh.uuid, mesh)
+    this.castingMeshes.set(mesh.uuid, mesh)
+  }
+
+  /**
+   * Add a shadow receiving {@link ProjectedMesh | mesh} to the #receivingMeshes {@link Map}.
+   * @param mesh - Shadow receiving {@link ProjectedMesh | mesh} to add.
+   */
+  addShadowReceivingMesh(mesh: ProjectedMesh) {
+    this.#receivingMeshes.set(mesh.uuid, mesh)
+  }
+
+  /**
+   * Remove a shadow receiving {@link ProjectedMesh | mesh} from the #receivingMeshes {@link Map}.
+   * @param mesh - Shadow receiving {@link ProjectedMesh | mesh} to remove.
+   */
+  removeShadowReceivingMesh(mesh: ProjectedMesh) {
+    this.#receivingMeshes.delete(mesh.uuid)
+
+    // shadow is inactive and there's no more receiving meshes?
+    // destroy depth texture
+    if (this.#receivingMeshes.size === 0 && !this.isActive) {
+      this.destroyDepthTexture()
+    }
   }
 
   /**
@@ -702,15 +736,15 @@ export class Shadow {
       this.depthMeshes.delete(mesh.uuid)
     }
 
-    this.meshes.delete(mesh.uuid)
+    this.castingMeshes.delete(mesh.uuid)
 
-    if (this.meshes.size === 0) {
+    if (this.castingMeshes.size === 0) {
       this.clearDepthTexture()
     }
   }
 
   /**
-   * If one of the {@link meshes} had its geometry change, update the corresponding depth mesh geometry as well.
+   * If one of the {@link castingMeshes} had its geometry change, update the corresponding depth mesh geometry as well.
    * @param mesh - Original {@link ProjectedMesh} which geometry just changed.
    * @param geometry - New {@link ProjectedMesh} {@link Geometry} to use.
    */
@@ -727,17 +761,17 @@ export class Shadow {
    */
   destroy() {
     this.onPropertyChanged('isActive', 0)
+    this.#isActive = false
 
-    if (this.#depthPassTaskID !== null) {
-      this.removeDepthPass(this.#depthPassTaskID)
-      this.#depthPassTaskID = null
-    }
-
-    this.meshes.forEach((mesh) => this.removeMesh(mesh))
+    this.castingMeshes.forEach((mesh) => this.removeMesh(mesh))
+    this.castingMeshes = new Map()
     this.depthMeshes = new Map()
-    this.meshes = new Map()
 
     this.depthPassTarget?.destroy()
-    this.depthTexture?.destroy()
+
+    // only destroy depth texture if there's no receiving meshes
+    if (this.#receivingMeshes.size === 0) {
+      this.destroyDepthTexture()
+    }
   }
 }

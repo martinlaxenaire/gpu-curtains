@@ -582,9 +582,10 @@ class GPUCameraRenderer extends GPURenderer {
   destroy() {
     this.cameraLightsBindGroup?.destroy();
     this.pointShadowsCubeFaceBindGroups.forEach((bindGroup) => bindGroup.destroy());
-    this.lights.forEach((light) => light.remove());
     this.destroyTransmissionTarget();
+    this.lights.forEach((light) => light.destroy());
     super.destroy();
+    this.lights.forEach((light) => this.removeLight(light));
   }
 }
 _shouldUpdateCameraLightsBindGroup = new WeakMap();
