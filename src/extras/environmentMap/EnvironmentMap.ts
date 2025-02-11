@@ -63,7 +63,7 @@ export interface EnvironmentMapParams extends Partial<EnvironmentMapOptions> {}
  *
  * Create a LUT texture on init using a {@link ComputePass}. Can load an HDR file and then create the specular and diffuse textures using two separate {@link ComputePass}.
  *
- * Especially useful for IBL shading with glTF.
+ * Especially useful for IBL shading with {@link extras/meshes/LitMesh.LitMesh | LitMesh}.
  *
  * @example
  * ```javascript
@@ -463,7 +463,7 @@ export class EnvironmentMap {
     // default options to absolutely use
     const textureDefaultOptions: TextureParams = {
       viewDimension: 'cube',
-      autoDestroy: false, // keep alive when changing glTF
+      autoDestroy: false, // keep alive when changing mesh
     }
 
     // specular texture

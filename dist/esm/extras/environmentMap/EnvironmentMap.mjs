@@ -330,7 +330,7 @@ class EnvironmentMap {
     const textureDefaultOptions = {
       viewDimension: "cube",
       autoDestroy: false
-      // keep alive when changing glTF
+      // keep alive when changing mesh
     };
     if (!this.specularTexture) {
       this.specularTexture = new Texture(this.renderer, {

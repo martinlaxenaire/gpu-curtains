@@ -20942,7 +20942,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
       const textureDefaultOptions = {
         viewDimension: "cube",
         autoDestroy: false
-        // keep alive when changing glTF
+        // keep alive when changing mesh
       };
       if (!this.specularTexture) {
         this.specularTexture = new Texture(this.renderer, {
