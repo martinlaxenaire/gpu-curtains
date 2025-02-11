@@ -77,8 +77,7 @@ class DOMElement {
    * @param delta - scroll delta values along X and Y axis
    */
   updateScrollPosition(delta = { x: 0, y: 0 }) {
-    if (this.isResizing)
-      return;
+    if (this.isResizing) return;
     this._boundingRect.top += delta.y;
     this._boundingRect.left += delta.x;
     if (delta.x || delta.y) {
@@ -90,8 +89,7 @@ class DOMElement {
    * @param boundingRect - new bounding rectangle
    */
   setSize(boundingRect = null) {
-    if (!this.element || this.isResizing)
-      return;
+    if (!this.element || this.isResizing) return;
     this.isResizing = true;
     this.boundingRect = boundingRect ?? this.element.getBoundingClientRect();
     setTimeout(() => {

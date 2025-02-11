@@ -204,10 +204,8 @@ class Quat {
    * @returns - this {@link Quat} after spherical linear interpolation.
    */
   slerp(quat = new Quat(), alpha = 0) {
-    if (alpha === 0)
-      return this;
-    if (alpha === 1)
-      return this.copy(quat);
+    if (alpha === 0) return this;
+    if (alpha === 1) return this.copy(quat);
     const x = this.elements[0], y = this.elements[1], z = this.elements[2], w = this.elements[3];
     let cosHalfTheta = w * quat.elements[3] + x * quat.elements[0] + y * quat.elements[1] + z * quat.elements[2];
     if (cosHalfTheta < 0) {

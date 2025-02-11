@@ -19,29 +19,15 @@ import { RenderMaterial } from '../../core/materials/RenderMaterial.mjs';
 import { DirectionalLight } from '../../core/lights/DirectionalLight.mjs';
 import { PointLight } from '../../core/lights/PointLight.mjs';
 
-var __accessCheck = (obj, member, msg) => {
-  if (!member.has(obj))
-    throw TypeError("Cannot " + msg);
+var __typeError = (msg) => {
+  throw TypeError(msg);
 };
-var __privateGet = (obj, member, getter) => {
-  __accessCheck(obj, member, "read from private field");
-  return getter ? getter.call(obj) : member.get(obj);
-};
-var __privateAdd = (obj, member, value) => {
-  if (member.has(obj))
-    throw TypeError("Cannot add the same private member more than once");
-  member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-};
-var __privateSet = (obj, member, value, setter) => {
-  __accessCheck(obj, member, "write to private field");
-  member.set(obj, value);
-  return value;
-};
-var __privateMethod = (obj, member, method) => {
-  __accessCheck(obj, member, "access private method");
-  return method;
-};
-var _primitiveInstances, _getSparseAccessorIndicesAndValues, getSparseAccessorIndicesAndValues_fn, _parsePrimitiveProperty, parsePrimitiveProperty_fn;
+var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
+var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
+var __privateMethod = (obj, member, method) => (__accessCheck(obj, member, "access private method"), method);
+var _primitiveInstances, _GLTFScenesManager_instances, getSparseAccessorIndicesAndValues_fn, parsePrimitiveProperty_fn;
 const GL = WebGLRenderingContext;
 const _GLTFScenesManager = class _GLTFScenesManager {
   /**
@@ -51,23 +37,9 @@ const _GLTFScenesManager = class _GLTFScenesManager {
    * @param parameters.gltf - The {@link GLTFLoader.gltf | gltf} object used.
    */
   constructor({ renderer, gltf }) {
-    /**
-     * Get an accessor sparse indices values to use for replacement if any.
-     * @param accessor - {@link GLTF.IAccessor | Accessor} to check for sparse indices.
-     * @returns parameters - indices and values found as {@link TypedArray} if any.
-     * @private
-     */
-    __privateAdd(this, _getSparseAccessorIndicesAndValues);
-    /**
-     * Parse a {@link GLTF.IMeshPrimitive | glTF primitive} and create typed arrays from the given {@link gltf} accessors, bufferViews and buffers.
-     * @param primitiveProperty- Primitive property to parse, can either be `attributes` or `targets`.
-     * @param attributes - An empty {@link VertexBufferAttributeParams} array to fill with parsed values.
-     * @returns - Interleaved attributes {@link TypedArray} if any.
-     * @private
-     */
-    __privateAdd(this, _parsePrimitiveProperty);
+    __privateAdd(this, _GLTFScenesManager_instances);
     /** The {@link PrimitiveInstances} Map, to group similar {@link LitMesh} by instances. */
-    __privateAdd(this, _primitiveInstances, void 0);
+    __privateAdd(this, _primitiveInstances);
     renderer = isCameraRenderer(renderer, "GLTFScenesManager");
     this.renderer = renderer;
     this.gltf = gltf;
@@ -167,6 +139,7 @@ const _GLTFScenesManager = class _GLTFScenesManager {
       case GL.UNSIGNED_INT:
         return Uint32Array;
       case GL.FLOAT:
+      // GL.FLOAT
       default:
         return Float32Array;
     }
@@ -343,8 +316,7 @@ const _GLTFScenesManager = class _GLTFScenesManager {
           texturesDescriptors: []
         };
         const getUVAttributeName = (texture) => {
-          if (!texture.texCoord)
-            return "uv";
+          if (!texture.texCoord) return "uv";
           return texture.texCoord !== 0 ? "uv" + texture.texCoord : "uv";
         };
         const createTexture = (gltfTextureInfo, name) => {
@@ -373,12 +345,9 @@ const _GLTFScenesManager = class _GLTFScenesManager {
             });
             if (textureTransform) {
               const { offset, rotation, scale } = textureTransform;
-              if (offset !== void 0)
-                reusedTexture.offset.set(offset[0], offset[1]);
-              if (rotation !== void 0)
-                reusedTexture.rotation = rotation;
-              if (scale !== void 0)
-                reusedTexture.scale.set(scale[0], scale[1]);
+              if (offset !== void 0) reusedTexture.offset.set(offset[0], offset[1]);
+              if (rotation !== void 0) reusedTexture.rotation = rotation;
+              if (scale !== void 0) reusedTexture.scale.set(scale[0], scale[1]);
             }
             materialTextures.texturesDescriptors.push({
               texture: reusedTexture,
@@ -391,12 +360,9 @@ const _GLTFScenesManager = class _GLTFScenesManager {
           const texture = this.createTexture(material, image, name, !!textureTransform);
           if (textureTransform) {
             const { offset, rotation, scale } = textureTransform;
-            if (offset !== void 0)
-              texture.offset.set(offset[0], offset[1]);
-            if (rotation !== void 0)
-              texture.rotation = rotation;
-            if (scale !== void 0)
-              texture.scale.set(scale[0], scale[1]);
+            if (offset !== void 0) texture.offset.set(offset[0], offset[1]);
+            if (rotation !== void 0) texture.rotation = rotation;
+            if (scale !== void 0) texture.scale.set(scale[0], scale[1]);
           }
           materialTextures.texturesDescriptors.push({
             texture,
@@ -549,12 +515,9 @@ const _GLTFScenesManager = class _GLTFScenesManager {
       child.node.modelMatrix.setFromArray(new Float32Array(node.matrix));
       child.node.matrices.model.shouldUpdate = false;
     } else {
-      if (node.translation)
-        child.node.position.set(node.translation[0], node.translation[1], node.translation[2]);
-      if (node.scale)
-        child.node.scale.set(node.scale[0], node.scale[1], node.scale[2]);
-      if (node.rotation)
-        child.node.quaternion.setFromArray(new Float32Array(node.rotation));
+      if (node.translation) child.node.position.set(node.translation[0], node.translation[1], node.translation[2]);
+      if (node.scale) child.node.scale.set(node.scale[0], node.scale[1], node.scale[2]);
+      if (node.rotation) child.node.quaternion.setFromArray(new Float32Array(node.rotation));
     }
     if (node.children) {
       node.children.forEach((childNodeIndex) => {
@@ -751,7 +714,7 @@ const _GLTFScenesManager = class _GLTFScenesManager {
       }
     }
     let defaultAttributes = [];
-    let interleavedArray = __privateMethod(this, _parsePrimitiveProperty, parsePrimitiveProperty_fn).call(this, primitive.attributes, defaultAttributes);
+    let interleavedArray = __privateMethod(this, _GLTFScenesManager_instances, parsePrimitiveProperty_fn).call(this, primitive.attributes, defaultAttributes);
     const isIndexedGeometry = "indices" in primitive;
     let indicesArray = null;
     let indicesConstructor = null;
@@ -948,12 +911,11 @@ const _GLTFScenesManager = class _GLTFScenesManager {
       let weightAnimation;
       for (const animation of this.scenesManager.animations) {
         weightAnimation = animation.getAnimationByObject3DAndPath(meshDescriptor.parent, "weights");
-        if (weightAnimation)
-          break;
+        if (weightAnimation) break;
       }
       primitive.targets.forEach((target, index) => {
         const targetAttributes = [];
-        __privateMethod(this, _parsePrimitiveProperty, parsePrimitiveProperty_fn).call(this, target, targetAttributes);
+        __privateMethod(this, _GLTFScenesManager_instances, parsePrimitiveProperty_fn).call(this, target, targetAttributes);
         const struct = targetAttributes.reduce(
           (acc, attribute) => {
             return acc = {
@@ -1363,10 +1325,15 @@ const _GLTFScenesManager = class _GLTFScenesManager {
   }
 };
 _primitiveInstances = new WeakMap();
-_getSparseAccessorIndicesAndValues = new WeakSet();
+_GLTFScenesManager_instances = new WeakSet();
+/**
+ * Get an accessor sparse indices values to use for replacement if any.
+ * @param accessor - {@link GLTF.IAccessor | Accessor} to check for sparse indices.
+ * @returns parameters - indices and values found as {@link TypedArray} if any.
+ * @private
+ */
 getSparseAccessorIndicesAndValues_fn = function(accessor) {
-  if (!accessor.sparse)
-    return { indices: null, values: null };
+  if (!accessor.sparse) return { indices: null, values: null };
   const accessorConstructor = _GLTFScenesManager.getTypedArrayConstructorFromComponentType(accessor.componentType);
   const attrSize = _GLTFScenesManager.getVertexAttributeParamsFromType(accessor.type).size;
   const sparseIndicesConstructor = _GLTFScenesManager.getTypedArrayConstructorFromComponentType(
@@ -1389,7 +1356,13 @@ getSparseAccessorIndicesAndValues_fn = function(accessor) {
     values: sparseValues
   };
 };
-_parsePrimitiveProperty = new WeakSet();
+/**
+ * Parse a {@link GLTF.IMeshPrimitive | glTF primitive} and create typed arrays from the given {@link gltf} accessors, bufferViews and buffers.
+ * @param primitiveProperty- Primitive property to parse, can either be `attributes` or `targets`.
+ * @param attributes - An empty {@link VertexBufferAttributeParams} array to fill with parsed values.
+ * @returns - Interleaved attributes {@link TypedArray} if any.
+ * @private
+ */
 parsePrimitiveProperty_fn = function(primitiveProperty, attributes) {
   let interleavedArray = null;
   let interleavedBufferView = null;
@@ -1452,7 +1425,7 @@ parsePrimitiveProperty_fn = function(primitiveProperty, attributes) {
       }
     }
     if (accessor.sparse) {
-      const { indices, values } = __privateMethod(this, _getSparseAccessorIndicesAndValues, getSparseAccessorIndicesAndValues_fn).call(this, accessor);
+      const { indices, values } = __privateMethod(this, _GLTFScenesManager_instances, getSparseAccessorIndicesAndValues_fn).call(this, accessor);
       for (let i = 0; i < indices.length; i++) {
         for (let j = 0; j < size; j++) {
           array[indices[i] * size + j] = values[i * size + j];
@@ -1509,7 +1482,7 @@ parsePrimitiveProperty_fn = function(primitiveProperty, attributes) {
         const accessor = this.gltf.accessors[accessorIndex];
         const bufferView = this.gltf.bufferViews[accessor.bufferView];
         const attrSize = _GLTFScenesManager.getVertexAttributeParamsFromType(accessor.type).size;
-        const { indices, values } = __privateMethod(this, _getSparseAccessorIndicesAndValues, getSparseAccessorIndicesAndValues_fn).call(this, accessor);
+        const { indices, values } = __privateMethod(this, _GLTFScenesManager_instances, getSparseAccessorIndicesAndValues_fn).call(this, accessor);
         for (let i = 0; i < accessor.count; i++) {
           const startOffset = accessor.byteOffset / Float32Array.BYTES_PER_ELEMENT + i * totalStride / Float32Array.BYTES_PER_ELEMENT;
           const subarray = new Float32Array(
@@ -1539,7 +1512,7 @@ parsePrimitiveProperty_fn = function(primitiveProperty, attributes) {
       primitiveAttributesValues.forEach((accessorIndex) => {
         const accessor = this.gltf.accessors[accessorIndex];
         const attrSize = _GLTFScenesManager.getVertexAttributeParamsFromType(accessor.type).size;
-        const { indices, values } = __privateMethod(this, _getSparseAccessorIndicesAndValues, getSparseAccessorIndicesAndValues_fn).call(this, accessor);
+        const { indices, values } = __privateMethod(this, _GLTFScenesManager_instances, getSparseAccessorIndicesAndValues_fn).call(this, accessor);
         if (indices && values) {
           for (let i = 0; i < indices.length; i++) {
             for (let j = 0; j < attrSize; j++) {

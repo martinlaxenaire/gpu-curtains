@@ -238,10 +238,8 @@
      * @returns - this {@link Quat} after spherical linear interpolation.
      */
     slerp(quat = new Quat(), alpha = 0) {
-      if (alpha === 0)
-        return this;
-      if (alpha === 1)
-        return this.copy(quat);
+      if (alpha === 0) return this;
+      if (alpha === 1) return this.copy(quat);
       const x = this.elements[0], y = this.elements[1], z = this.elements[2], w = this.elements[3];
       let cosHalfTheta = w * quat.elements[3] + x * quat.elements[0] + y * quat.elements[1] + z * quat.elements[2];
       if (cosHalfTheta < 0) {
@@ -969,8 +967,7 @@
     invert() {
       const te = this.elements, n11 = te[0], n21 = te[1], n31 = te[2], n41 = te[3], n12 = te[4], n22 = te[5], n32 = te[6], n42 = te[7], n13 = te[8], n23 = te[9], n33 = te[10], n43 = te[11], n14 = te[12], n24 = te[13], n34 = te[14], n44 = te[15], t11 = n23 * n34 * n42 - n24 * n33 * n42 + n24 * n32 * n43 - n22 * n34 * n43 - n23 * n32 * n44 + n22 * n33 * n44, t12 = n14 * n33 * n42 - n13 * n34 * n42 - n14 * n32 * n43 + n12 * n34 * n43 + n13 * n32 * n44 - n12 * n33 * n44, t13 = n13 * n24 * n42 - n14 * n23 * n42 + n14 * n22 * n43 - n12 * n24 * n43 - n13 * n22 * n44 + n12 * n23 * n44, t14 = n14 * n23 * n32 - n13 * n24 * n32 - n14 * n22 * n33 + n12 * n24 * n33 + n13 * n22 * n34 - n12 * n23 * n34;
       const det = n11 * t11 + n21 * t12 + n31 * t13 + n41 * t14;
-      if (det === 0)
-        return this.set(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+      if (det === 0) return this.set(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
       const detInv = 1 / det;
       te[0] = t11 * detInv;
       te[1] = (n24 * n33 * n41 - n23 * n34 * n41 - n24 * n31 * n43 + n21 * n34 * n43 + n23 * n31 * n44 - n21 * n33 * n44) * detInv;
@@ -1638,8 +1635,7 @@
      */
     destroy() {
       for (let i = 0, l = this.children.length; i < l; i++) {
-        if (this.children[i])
-          this.children[i].parent = null;
+        if (this.children[i]) this.children[i].parent = null;
       }
       this.parent = null;
     }
@@ -2603,8 +2599,7 @@
      * @returns - {@link Float32Array} holding the {@link GPUBuffer} data.
      */
     async mapBufferAsync() {
-      if (!this.GPUBuffer || this.GPUBuffer.mapState !== "unmapped")
-        return new Float32Array(0);
+      if (!this.GPUBuffer || this.GPUBuffer.mapState !== "unmapped") return new Float32Array(0);
       await this.GPUBuffer.mapAsync(GPUMapMode.READ);
       const result = new Float32Array(this.GPUBuffer.getMappedRange().slice(0));
       this.GPUBuffer.unmap();
@@ -2620,24 +2615,13 @@
     }
   }
 
-  var __accessCheck$p = (obj, member, msg) => {
-    if (!member.has(obj))
-      throw TypeError("Cannot " + msg);
+  var __typeError$p = (msg) => {
+    throw TypeError(msg);
   };
-  var __privateGet$n = (obj, member, getter) => {
-    __accessCheck$p(obj, member, "read from private field");
-    return getter ? getter.call(obj) : member.get(obj);
-  };
-  var __privateAdd$p = (obj, member, value) => {
-    if (member.has(obj))
-      throw TypeError("Cannot add the same private member more than once");
-    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  };
-  var __privateSet$m = (obj, member, value, setter) => {
-    __accessCheck$p(obj, member, "write to private field");
-    member.set(obj, value);
-    return value;
-  };
+  var __accessCheck$p = (obj, member, msg) => member.has(obj) || __typeError$p("Cannot " + msg);
+  var __privateGet$n = (obj, member, getter) => (__accessCheck$p(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$p = (obj, member, value) => member.has(obj) ? __typeError$p("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$m = (obj, member, value, setter) => (__accessCheck$p(obj, member, "write to private field"), member.set(obj, value), value);
   var _parent;
   const _BufferBinding = class _BufferBinding extends Binding {
     /**
@@ -2662,7 +2646,7 @@
       bindingType = bindingType ?? "uniform";
       super({ label, name, bindingType, visibility });
       /** @ignore */
-      __privateAdd$p(this, _parent, void 0);
+      __privateAdd$p(this, _parent);
       this.options = {
         ...this.options,
         useStruct,
@@ -3111,8 +3095,7 @@
      * Set the WGSL code snippet to append to the shaders code. It consists of variable (and Struct structures if needed) declarations.
      */
     setWGSLFragment() {
-      if (!this.bufferElements.length && !this.childrenBindings.length)
-        return;
+      if (!this.bufferElements.length && !this.childrenBindings.length) return;
       const kebabCaseLabel = toKebabCase(this.label);
       if (this.useStruct) {
         const structs = {};
@@ -3311,8 +3294,7 @@
       this.uuid = generateUUID();
       this.bindings = [];
       bindings.length && this.addBindings(bindings);
-      if (this.options.uniforms || this.options.storages)
-        this.setInputBindings();
+      if (this.options.uniforms || this.options.storages) this.setInputBindings();
       this.layoutCacheKey = "";
       this.pipelineCacheKey = "";
       this.resetEntries();
@@ -3403,8 +3385,7 @@
       let bindings = [
         ...Object.keys(inputs).map((inputKey) => {
           const binding = inputs[inputKey];
-          if (!binding.struct)
-            return;
+          if (!binding.struct) return;
           const bindingParams = {
             label: toKebabCase(binding.label || inputKey),
             name: inputKey,
@@ -3800,8 +3781,7 @@
      * @param value - new bind group resource
      */
     set resource(value) {
-      if (value || this.texture)
-        this.shouldResetBindGroup = true;
+      if (value || this.texture) this.shouldResetBindGroup = true;
       this.texture = value;
     }
     /**
@@ -3810,8 +3790,7 @@
      */
     setBindingType(bindingType) {
       if (bindingType !== this.bindingType) {
-        if (bindingType)
-          this.shouldResetBindGroupLayout = true;
+        if (bindingType) this.shouldResetBindGroupLayout = true;
         this.bindingType = bindingType;
         this.cacheKey = `${this.bindingType},${this.visibility},${this.options.format},${this.options.access},${this.options.viewDimension},${this.options.multisampled},`;
         this.setWGSLFragment();
@@ -3877,24 +3856,13 @@
     return 1 + Math.log2(maxSize) | 0;
   };
 
-  var __accessCheck$o = (obj, member, msg) => {
-    if (!member.has(obj))
-      throw TypeError("Cannot " + msg);
+  var __typeError$o = (msg) => {
+    throw TypeError(msg);
   };
-  var __privateGet$m = (obj, member, getter) => {
-    __accessCheck$o(obj, member, "read from private field");
-    return member.get(obj);
-  };
-  var __privateAdd$o = (obj, member, value) => {
-    if (member.has(obj))
-      throw TypeError("Cannot add the same private member more than once");
-    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  };
-  var __privateSet$l = (obj, member, value, setter) => {
-    __accessCheck$o(obj, member, "write to private field");
-    member.set(obj, value);
-    return value;
-  };
+  var __accessCheck$o = (obj, member, msg) => member.has(obj) || __typeError$o("Cannot " + msg);
+  var __privateGet$m = (obj, member, getter) => (__accessCheck$o(obj, member, "read from private field"), member.get(obj));
+  var __privateAdd$o = (obj, member, value) => member.has(obj) ? __typeError$o("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$l = (obj, member, value, setter) => (__accessCheck$o(obj, member, "write to private field"), member.set(obj, value), value);
   var _autoResize;
   const defaultTextureParams = {
     label: "Texture",
@@ -4008,8 +3976,7 @@
      * Create the {@link GPUTexture | texture} (or copy it from source) and update the {@link TextureBinding#resource | binding resource}.
      */
     createTexture() {
-      if (!this.size.width || !this.size.height)
-        return;
+      if (!this.size.width || !this.size.height) return;
       if (this.options.fromTexture) {
         this.copyGPUTexture(this.options.fromTexture.texture);
         return;
@@ -4083,8 +4050,7 @@
      * @param size - the optional new {@link TextureSize | size} to set.
      */
     resize(size = null) {
-      if (!__privateGet$m(this, _autoResize))
-        return;
+      if (!__privateGet$m(this, _autoResize)) return;
       if (!size) {
         size = {
           width: Math.floor(this.renderer.canvas.width * this.options.qualityRatio),
@@ -4273,8 +4239,7 @@
      */
     invert() {
       const te = this.elements, n11 = te[0], n21 = te[1], n31 = te[2], n12 = te[3], n22 = te[4], n32 = te[5], n13 = te[6], n23 = te[7], n33 = te[8], t11 = n33 * n22 - n32 * n23, t12 = n32 * n13 - n33 * n12, t13 = n23 * n12 - n22 * n13, det = n11 * t11 + n21 * t12 + n31 * t13;
-      if (det === 0)
-        return this.set(0, 0, 0, 0, 0, 0, 0, 0, 0);
+      if (det === 0) return this.set(0, 0, 0, 0, 0, 0, 0, 0, 0);
       const detInv = 1 / det;
       te[0] = t11 * detInv;
       te[1] = (n31 * n23 - n33 * n21) * detInv;
@@ -4438,29 +4403,15 @@
     }
   }
 
-  var __accessCheck$n = (obj, member, msg) => {
-    if (!member.has(obj))
-      throw TypeError("Cannot " + msg);
+  var __typeError$n = (msg) => {
+    throw TypeError(msg);
   };
-  var __privateGet$l = (obj, member, getter) => {
-    __accessCheck$n(obj, member, "read from private field");
-    return getter ? getter.call(obj) : member.get(obj);
-  };
-  var __privateAdd$n = (obj, member, value) => {
-    if (member.has(obj))
-      throw TypeError("Cannot add the same private member more than once");
-    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  };
-  var __privateSet$k = (obj, member, value, setter) => {
-    __accessCheck$n(obj, member, "write to private field");
-    member.set(obj, value);
-    return value;
-  };
-  var __privateMethod$9 = (obj, member, method) => {
-    __accessCheck$n(obj, member, "access private method");
-    return method;
-  };
-  var _sourcesLoaded, _sourcesUploaded, _rotation, _setSourceLoaded, setSourceLoaded_fn;
+  var __accessCheck$n = (obj, member, msg) => member.has(obj) || __typeError$n("Cannot " + msg);
+  var __privateGet$l = (obj, member, getter) => (__accessCheck$n(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$n = (obj, member, value) => member.has(obj) ? __typeError$n("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$k = (obj, member, value, setter) => (__accessCheck$n(obj, member, "write to private field"), member.set(obj, value), value);
+  var __privateMethod$9 = (obj, member, method) => (__accessCheck$n(obj, member, "access private method"), method);
+  var _sourcesLoaded, _sourcesUploaded, _rotation, _MediaTexture_instances, setSourceLoaded_fn;
   const defaultMediaTextureParams = {
     label: "Texture",
     name: "texture",
@@ -4501,19 +4452,13 @@
           fixedSize: { width: parameters.fixedSize?.width ?? 1, height: parameters.fixedSize?.height ?? 1 }
         }
       });
-      /* EVENTS */
-      /**
-       * Called each time a source has been loaded.
-       * @param source - {@link TextureSource} that has just been loaded.
-       * @private
-       */
-      __privateAdd$n(this, _setSourceLoaded);
+      __privateAdd$n(this, _MediaTexture_instances);
       /** Whether the sources have been loaded. */
-      __privateAdd$n(this, _sourcesLoaded, void 0);
+      __privateAdd$n(this, _sourcesLoaded);
       /** Whether the sources have been uploaded to the GPU, handled by the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#texturesQueue | GPUDeviceManager texturesQueue array}. */
-      __privateAdd$n(this, _sourcesUploaded, void 0);
+      __privateAdd$n(this, _sourcesUploaded);
       /** Rotation to apply to the {@link Texture} if {@link MediaTextureParams#useTransform | useTransform} parameter has been set to `true`. */
-      __privateAdd$n(this, _rotation, void 0);
+      __privateAdd$n(this, _rotation);
       // callbacks / events
       /** function assigned to the {@link onSourceLoaded} callback */
       this._onSourceLoadedCallback = (source) => {
@@ -4688,8 +4633,7 @@
      * Create the {@link GPUTexture | texture} (or copy it from source) and update the {@link TextureBinding#resource | binding resource}.
      */
     createTexture() {
-      if (!this.size.width || !this.size.height)
-        return;
+      if (!this.size.width || !this.size.height) return;
       if (this.options.fromTexture && (!(this.options.fromTexture instanceof _MediaTexture) || this.options.fromTexture.sourcesUploaded)) {
         this.copyGPUTexture(this.options.fromTexture.texture);
         return;
@@ -4783,8 +4727,7 @@
       if (this.options.cache) {
         const cachedTexture = this.renderer.textures.filter((t) => t instanceof _MediaTexture && t.uuid !== this.uuid).find((t) => {
           const sourceIndex2 = t.options.sources.findIndex((source2) => source2 === url);
-          if (sourceIndex2 === -1)
-            return null;
+          if (sourceIndex2 === -1) return null;
           return t.sources[sourceIndex2]?.sourceLoaded && t.texture && t.size.depth === this.size.depth;
         });
         if (cachedTexture) {
@@ -4819,7 +4762,7 @@
         ];
       }
       this.setSourceSize();
-      __privateMethod$9(this, _setSourceLoaded, setSourceLoaded_fn).call(this, imageBitmap);
+      __privateMethod$9(this, _MediaTexture_instances, setSourceLoaded_fn).call(this, imageBitmap);
     }
     /**
      * Load and create images using {@link loadImage} from an array of images sources as strings or {@link HTMLImageElement}. Useful for cube maps.
@@ -4867,7 +4810,7 @@
           );
           this.videoFrameCallbackIds.set(sourceIndex, videoFrameCallbackId);
         }
-        __privateMethod$9(this, _setSourceLoaded, setSourceLoaded_fn).call(this, video);
+        __privateMethod$9(this, _MediaTexture_instances, setSourceLoaded_fn).call(this, video);
       }
     }
     /**
@@ -4884,8 +4827,7 @@
      * @returns - Whether the video source is ready to be played.
      */
     isVideoSourceReady(source) {
-      if (!this.isVideoSource(source))
-        return false;
+      if (!this.isVideoSource(source)) return false;
       return source.readyState >= source.HAVE_CURRENT_DATA;
     }
     /**
@@ -4894,8 +4836,7 @@
      * @returns - Whether the video source is ready to be uploaded.
      */
     shouldUpdateVideoSource(source) {
-      if (!this.isVideoSource(source))
-        return false;
+      if (!this.isVideoSource(source)) return false;
       return this.isVideoSourceReady(source) && !source.paused;
     }
     /**
@@ -4985,7 +4926,7 @@
         ];
       }
       this.setSourceSize();
-      __privateMethod$9(this, _setSourceLoaded, setSourceLoaded_fn).call(this, source);
+      __privateMethod$9(this, _MediaTexture_instances, setSourceLoaded_fn).call(this, source);
     }
     /**
      * Load an array of {@link HTMLCanvasElement} using {@link loadCanvas} . Useful for cube maps.
@@ -5100,7 +5041,13 @@
   _sourcesLoaded = new WeakMap();
   _sourcesUploaded = new WeakMap();
   _rotation = new WeakMap();
-  _setSourceLoaded = new WeakSet();
+  _MediaTexture_instances = new WeakSet();
+  /* EVENTS */
+  /**
+   * Called each time a source has been loaded.
+   * @param source - {@link TextureSource} that has just been loaded.
+   * @private
+   */
   setSourceLoaded_fn = function(source) {
     this._onSourceLoadedCallback && this._onSourceLoadedCallback(source);
     const nbSourcesLoaded = this.sources.filter((source2) => source2.sourceLoaded)?.length || 0;
@@ -5110,19 +5057,12 @@
   };
   let MediaTexture = _MediaTexture;
 
-  var __accessCheck$m = (obj, member, msg) => {
-    if (!member.has(obj))
-      throw TypeError("Cannot " + msg);
+  var __typeError$m = (msg) => {
+    throw TypeError(msg);
   };
-  var __privateGet$k = (obj, member, getter) => {
-    __accessCheck$m(obj, member, "read from private field");
-    return getter ? getter.call(obj) : member.get(obj);
-  };
-  var __privateAdd$m = (obj, member, value) => {
-    if (member.has(obj))
-      throw TypeError("Cannot add the same private member more than once");
-    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  };
+  var __accessCheck$m = (obj, member, msg) => member.has(obj) || __typeError$m("Cannot " + msg);
+  var __privateGet$k = (obj, member, getter) => (__accessCheck$m(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$m = (obj, member, value) => member.has(obj) ? __typeError$m("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   var _parentRatio, _sourceRatio, _coverScale, _negatedOrigin, _rotationMatrix;
   const defaultDOMTextureParams = {
     name: "texture",
@@ -5269,24 +5209,13 @@
   _negatedOrigin = new WeakMap();
   _rotationMatrix = new WeakMap();
 
-  var __accessCheck$l = (obj, member, msg) => {
-    if (!member.has(obj))
-      throw TypeError("Cannot " + msg);
+  var __typeError$l = (msg) => {
+    throw TypeError(msg);
   };
-  var __privateGet$j = (obj, member, getter) => {
-    __accessCheck$l(obj, member, "read from private field");
-    return getter ? getter.call(obj) : member.get(obj);
-  };
-  var __privateAdd$l = (obj, member, value) => {
-    if (member.has(obj))
-      throw TypeError("Cannot add the same private member more than once");
-    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  };
-  var __privateSet$j = (obj, member, value, setter) => {
-    __accessCheck$l(obj, member, "write to private field");
-    member.set(obj, value);
-    return value;
-  };
+  var __accessCheck$l = (obj, member, msg) => member.has(obj) || __typeError$l("Cannot " + msg);
+  var __privateGet$j = (obj, member, getter) => (__accessCheck$l(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$l = (obj, member, value) => member.has(obj) ? __typeError$l("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$j = (obj, member, value, setter) => (__accessCheck$l(obj, member, "write to private field"), member.set(obj, value), value);
   var _transformedTextures;
   class TextureBindGroup extends BindGroup {
     /**
@@ -5302,7 +5231,7 @@
        * Array containing all the {@link MediaTexture} that handle a transformation {@link MediaTexture#modelMatrix | modelMatrix}.
        * @private
        */
-      __privateAdd$l(this, _transformedTextures, void 0);
+      __privateAdd$l(this, _transformedTextures);
       this.options = {
         ...this.options,
         // will be filled after
@@ -5505,8 +5434,7 @@
      * @param value - new bind group resource
      */
     set resource(value) {
-      if (value && this.sampler)
-        this.shouldResetBindGroup = true;
+      if (value && this.sampler) this.shouldResetBindGroup = true;
       this.sampler = value;
     }
     /**
@@ -5519,24 +5447,13 @@
     }
   }
 
-  var __accessCheck$k = (obj, member, msg) => {
-    if (!member.has(obj))
-      throw TypeError("Cannot " + msg);
+  var __typeError$k = (msg) => {
+    throw TypeError(msg);
   };
-  var __privateGet$i = (obj, member, getter) => {
-    __accessCheck$k(obj, member, "read from private field");
-    return getter ? getter.call(obj) : member.get(obj);
-  };
-  var __privateAdd$k = (obj, member, value) => {
-    if (member.has(obj))
-      throw TypeError("Cannot add the same private member more than once");
-    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  };
-  var __privateSet$i = (obj, member, value, setter) => {
-    __accessCheck$k(obj, member, "write to private field");
-    member.set(obj, value);
-    return value;
-  };
+  var __accessCheck$k = (obj, member, msg) => member.has(obj) || __typeError$k("Cannot " + msg);
+  var __privateGet$i = (obj, member, getter) => (__accessCheck$k(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$k = (obj, member, value) => member.has(obj) ? __typeError$k("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$i = (obj, member, value, setter) => (__accessCheck$k(obj, member, "write to private field"), member.set(obj, value), value);
   var _fov, _near, _far, _pixelRatio;
   class Camera extends Object3D {
     /**
@@ -5555,13 +5472,13 @@
     } = {}) {
       super();
       /** @ignore */
-      __privateAdd$k(this, _fov, void 0);
+      __privateAdd$k(this, _fov);
       /** @ignore */
-      __privateAdd$k(this, _near, void 0);
+      __privateAdd$k(this, _near);
       /** @ignore */
-      __privateAdd$k(this, _far, void 0);
+      __privateAdd$k(this, _far);
       /** @ignore */
-      __privateAdd$k(this, _pixelRatio, void 0);
+      __privateAdd$k(this, _pixelRatio);
       this.uuid = generateUUID();
       this.position.set(0, 0, 10);
       this.up = new Vec3(0, 1, 0);
@@ -6059,8 +5976,7 @@
      * @returns - The corresponding shader code
      */
     getShaderCode(shaderType = "full") {
-      if (!this.pipelineEntry)
-        return "";
+      if (!this.pipelineEntry) return "";
       shaderType = (() => {
         switch (shaderType) {
           case "vertex":
@@ -6080,8 +5996,7 @@
      * @returns - The corresponding shader code
      */
     getAddedShaderCode(shaderType = "vertex") {
-      if (!this.pipelineEntry)
-        return "";
+      if (!this.pipelineEntry) return "";
       shaderType = (() => {
         switch (shaderType) {
           case "vertex":
@@ -6191,8 +6106,7 @@
       bindings = [],
       keepLayout = true
     }) {
-      if (!bindGroup)
-        return null;
+      if (!bindGroup) return null;
       const clone = bindGroup.clone({ bindings, keepLayout });
       this.clonedBindGroups.push(clone);
       return clone;
@@ -6276,8 +6190,7 @@
      * @param bindingName - the binding name
      */
     shouldUpdateInputsBindings(bufferBindingName, bindingName) {
-      if (!bufferBindingName)
-        return;
+      if (!bufferBindingName) return;
       const bufferBinding = this.getBindingByName(bufferBindingName);
       if (bufferBinding) {
         if (!bindingName) {
@@ -6320,10 +6233,8 @@
      * @param texture - {@link MediaTexture} or {@link Texture} to eventually destroy
      */
     destroyTexture(texture) {
-      if (texture.options.cache)
-        return;
-      if (!texture.options.autoDestroy)
-        return;
+      if (texture.options.cache) return;
+      if (!texture.options.autoDestroy) return;
       const objectsUsingTexture = this.renderer.getObjectsByTexture(texture);
       const shouldDestroy = !objectsUsingTexture || !objectsUsingTexture.some((object) => object.material.uuid !== this.uuid);
       if (shouldDestroy) {
@@ -6439,8 +6350,7 @@
      * @param pass - current pass encoder
      */
     render(pass) {
-      if (!this.ready)
-        return;
+      if (!this.ready) return;
       this.setPipeline(pass);
       this.setActiveBindGroups(pass);
     }
@@ -6513,8 +6423,7 @@
      * Check if all bind groups are ready, create them if needed, set {@link ComputePipelineEntry} bind group buffers and compile the pipeline
      */
     async compileMaterial() {
-      if (this.ready)
-        return;
+      if (this.ready) return;
       super.compileMaterial();
       if (!this.pipelineEntry) {
         this.setPipelineEntry();
@@ -6555,8 +6464,7 @@
      * @param pass - current compute pass encoder
      */
     render(pass) {
-      if (!this.ready)
-        return;
+      if (!this.ready) return;
       this.setPipeline(pass);
       if (this._useCustomRenderCallback !== void 0) {
         this._useCustomRenderCallback(pass);
@@ -6610,24 +6518,13 @@
     }
   }
 
-  var __accessCheck$j = (obj, member, msg) => {
-    if (!member.has(obj))
-      throw TypeError("Cannot " + msg);
+  var __typeError$j = (msg) => {
+    throw TypeError(msg);
   };
-  var __privateGet$h = (obj, member, getter) => {
-    __accessCheck$j(obj, member, "read from private field");
-    return member.get(obj);
-  };
-  var __privateAdd$j = (obj, member, value) => {
-    if (member.has(obj))
-      throw TypeError("Cannot add the same private member more than once");
-    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  };
-  var __privateSet$h = (obj, member, value, setter) => {
-    __accessCheck$j(obj, member, "write to private field");
-    member.set(obj, value);
-    return value;
-  };
+  var __accessCheck$j = (obj, member, msg) => member.has(obj) || __typeError$j("Cannot " + msg);
+  var __privateGet$h = (obj, member, getter) => (__accessCheck$j(obj, member, "read from private field"), member.get(obj));
+  var __privateAdd$j = (obj, member, value) => member.has(obj) ? __typeError$j("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$h = (obj, member, value, setter) => (__accessCheck$j(obj, member, "write to private field"), member.set(obj, value), value);
   var _autoRender$2;
   let computePassIndex = 0;
   class ComputePass {
@@ -6919,8 +6816,7 @@
      * Checks if the material is ready and eventually update its struct
      */
     onBeforeRenderPass() {
-      if (!this.renderer.ready)
-        return;
+      if (!this.renderer.ready) return;
       this._onBeforeRenderCallback && this._onBeforeRenderCallback();
       this.material.onBeforeRender();
       if (this.material && this.material.ready && !this.ready) {
@@ -6932,8 +6828,7 @@
      * @param pass - current compute pass encoder
      */
     onRenderPass(pass) {
-      if (!this.material.ready)
-        return;
+      if (!this.material.ready) return;
       this._onRenderCallback && this._onRenderCallback();
       this.material.render(pass);
     }
@@ -6950,8 +6845,7 @@
      */
     render(pass) {
       this.onBeforeRenderPass();
-      if (!this.renderer.ready)
-        return;
+      if (!this.renderer.ready) return;
       !this.renderer.production && pass.pushDebugGroup(this.options.label);
       this.onRenderPass(pass);
       !this.renderer.production && pass.popDebugGroup();
@@ -7067,8 +6961,7 @@
      * @returns - the {@link Box3 | transformed Box3} after {@link Mat4 | matrix} application
      */
     applyMat4(matrix = new Mat4(), transformedBox = new Box3()) {
-      if (this.isEmpty())
-        return this;
+      if (this.isEmpty()) return this;
       const corners = [];
       if (this.min.z === this.max.z) {
         corners[0] = points[0].set(this.min.x, this.min.y, this.min.z).applyMat4(matrix);
@@ -7313,8 +7206,7 @@
      * @param renderer - The {@link Renderer} used to recreate the buffers
      */
     restoreContext(renderer) {
-      if (this.ready)
-        return;
+      if (this.ready) return;
       for (const vertexBuffer of this.vertexBuffers) {
         if (!vertexBuffer.buffer.GPUBuffer && vertexBuffer.buffer.consumers.size === 0) {
           vertexBuffer.buffer.createBuffer(renderer);
@@ -7382,8 +7274,7 @@
     }) {
       const attributes = vertexBuffer.attributes;
       const attributesLength = attributes.length;
-      if (!name)
-        name = "geometryAttribute" + attributesLength;
+      if (!name) name = "geometryAttribute" + attributesLength;
       if (name === "position" && (type !== "vec3f" || bufferFormat !== "float32x3" || size !== 3)) {
         throwWarning(
           `Geometry 'position' attribute must have this exact properties set:
@@ -7446,8 +7337,7 @@
       let attribute;
       for (const vertexBuffer of this.vertexBuffers) {
         attribute = vertexBuffer.attributes.find((attribute2) => attribute2.name === name);
-        if (attribute)
-          break;
+        if (attribute) break;
       }
       return attribute;
     }
@@ -7502,8 +7392,7 @@
      * Also compute the Geometry bounding box.
      */
     computeGeometry() {
-      if (this.ready)
-        return;
+      if (this.ready) return;
       this.vertexBuffers.forEach((vertexBuffer, index) => {
         if (index === 0) {
           const hasPositionAttribute = vertexBuffer.attributes.find(
@@ -7542,20 +7431,14 @@
               vertexBuffer.array[currentIndex] = attributeValue ?? 0;
               if (name === "position") {
                 if (s % 3 === 0) {
-                  if (this.boundingBox.min.x > attributeValue)
-                    this.boundingBox.min.x = attributeValue;
-                  if (this.boundingBox.max.x < attributeValue)
-                    this.boundingBox.max.x = attributeValue;
+                  if (this.boundingBox.min.x > attributeValue) this.boundingBox.min.x = attributeValue;
+                  if (this.boundingBox.max.x < attributeValue) this.boundingBox.max.x = attributeValue;
                 } else if (s % 3 === 1) {
-                  if (this.boundingBox.min.y > attributeValue)
-                    this.boundingBox.min.y = attributeValue;
-                  if (this.boundingBox.max.y < attributeValue)
-                    this.boundingBox.max.y = attributeValue;
+                  if (this.boundingBox.min.y > attributeValue) this.boundingBox.min.y = attributeValue;
+                  if (this.boundingBox.max.y < attributeValue) this.boundingBox.max.y = attributeValue;
                 } else if (s % 3 === 2) {
-                  if (this.boundingBox.min.z > attributeValue)
-                    this.boundingBox.min.z = attributeValue;
-                  if (this.boundingBox.max.z < attributeValue)
-                    this.boundingBox.max.z = attributeValue;
+                  if (this.boundingBox.min.z > attributeValue) this.boundingBox.min.z = attributeValue;
+                  if (this.boundingBox.max.z < attributeValue) this.boundingBox.max.z = attributeValue;
                 }
               }
               currentIndex++;
@@ -7596,8 +7479,7 @@
      * @param parameters.label - label to use for the vertex buffers.
      */
     createBuffers({ renderer, label = this.type }) {
-      if (this.ready)
-        return;
+      if (this.ready) return;
       for (const vertexBuffer of this.vertexBuffers) {
         if (!vertexBuffer.bufferSize) {
           vertexBuffer.bufferSize = vertexBuffer.array.length * vertexBuffer.array.constructor.BYTES_PER_ELEMENT;
@@ -7666,8 +7548,7 @@
      * @param pass - current render pass.
      */
     render(pass) {
-      if (!this.ready)
-        return;
+      if (!this.ready) return;
       this.setGeometryBuffers(pass);
       this.drawGeometry(pass);
     }
@@ -7683,8 +7564,7 @@
           vertexBuffer.buffer.destroy();
         }
         vertexBuffer.array = null;
-        if (renderer)
-          renderer.removeBuffer(vertexBuffer.buffer);
+        if (renderer) renderer.removeBuffer(vertexBuffer.buffer);
       }
     }
   }
@@ -7718,8 +7598,7 @@
      * @param renderer - The {@link Renderer} used to recreate the buffers
      */
     restoreContext(renderer) {
-      if (this.ready)
-        return;
+      if (this.ready) return;
       if (!this.indexBuffer.buffer.GPUBuffer) {
         this.indexBuffer.buffer.createBuffer(renderer);
         this.uploadBuffer(renderer, this.indexBuffer);
@@ -7745,14 +7624,11 @@
         const i0 = this.indexBuffer.array[i] * 3;
         const i1 = this.indexBuffer.array[i + 1] * 3;
         const i2 = this.indexBuffer.array[i + 2] * 3;
-        if (posLength < i0 + 2)
-          continue;
+        if (posLength < i0 + 2) continue;
         vertex1.set(positionAttribute.array[i0], positionAttribute.array[i0 + 1], positionAttribute.array[i0 + 2]);
-        if (posLength < i1 + 2)
-          continue;
+        if (posLength < i1 + 2) continue;
         vertex2.set(positionAttribute.array[i1], positionAttribute.array[i1 + 1], positionAttribute.array[i1 + 2]);
-        if (posLength < i2 + 2)
-          continue;
+        if (posLength < i2 + 2) continue;
         vertex3.set(positionAttribute.array[i2], positionAttribute.array[i2 + 1], positionAttribute.array[i2 + 2]);
         this.computeNormalFromTriangle(vertex1, vertex2, vertex3, edge1, edge2, normal);
         for (let j = 0; j < 3; j++) {
@@ -7850,8 +7726,7 @@
       if (this.indexBuffer) {
         this.indexBuffer.buffer.consumers.delete(this.uuid);
         this.indexBuffer.buffer.destroy();
-        if (renderer)
-          renderer.removeBuffer(this.indexBuffer.buffer);
+        if (renderer) renderer.removeBuffer(this.indexBuffer.buffer);
       }
     }
   }
@@ -7973,24 +7848,13 @@
     return vector;
   }
 
-  var __accessCheck$i = (obj, member, msg) => {
-    if (!member.has(obj))
-      throw TypeError("Cannot " + msg);
+  var __typeError$i = (msg) => {
+    throw TypeError(msg);
   };
-  var __privateGet$g = (obj, member, getter) => {
-    __accessCheck$i(obj, member, "read from private field");
-    return getter ? getter.call(obj) : member.get(obj);
-  };
-  var __privateAdd$i = (obj, member, value) => {
-    if (member.has(obj))
-      throw TypeError("Cannot add the same private member more than once");
-    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  };
-  var __privateSet$g = (obj, member, value, setter) => {
-    __accessCheck$i(obj, member, "write to private field");
-    member.set(obj, value);
-    return value;
-  };
+  var __accessCheck$i = (obj, member, msg) => member.has(obj) || __typeError$i("Cannot " + msg);
+  var __privateGet$g = (obj, member, getter) => (__accessCheck$i(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$i = (obj, member, value) => member.has(obj) ? __typeError$i("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$g = (obj, member, value, setter) => (__accessCheck$i(obj, member, "write to private field"), member.set(obj, value), value);
   var _intensity$1, _intensityColor;
   class Light extends Object3D {
     /**
@@ -8001,12 +7865,12 @@
     constructor(renderer, { color = new Vec3(1), intensity = 1, type = "lights" } = {}) {
       super();
       /** @ignore */
-      __privateAdd$i(this, _intensity$1, void 0);
+      __privateAdd$i(this, _intensity$1);
       /**
        * A {@link Vec3} holding the {@link Light} {@link color} multiplied by its {@link intensity}.
        * @private
        */
-      __privateAdd$i(this, _intensityColor, void 0);
+      __privateAdd$i(this, _intensityColor);
       this.type = type;
       this.setRenderer(renderer);
       this.uuid = generateUUID();
@@ -8438,24 +8302,13 @@
     }
   }
 
-  var __accessCheck$h = (obj, member, msg) => {
-    if (!member.has(obj))
-      throw TypeError("Cannot " + msg);
+  var __typeError$h = (msg) => {
+    throw TypeError(msg);
   };
-  var __privateGet$f = (obj, member, getter) => {
-    __accessCheck$h(obj, member, "read from private field");
-    return member.get(obj);
-  };
-  var __privateAdd$h = (obj, member, value) => {
-    if (member.has(obj))
-      throw TypeError("Cannot add the same private member more than once");
-    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  };
-  var __privateSet$f = (obj, member, value, setter) => {
-    __accessCheck$h(obj, member, "write to private field");
-    member.set(obj, value);
-    return value;
-  };
+  var __accessCheck$h = (obj, member, msg) => member.has(obj) || __typeError$h("Cannot " + msg);
+  var __privateGet$f = (obj, member, getter) => (__accessCheck$h(obj, member, "read from private field"), member.get(obj));
+  var __privateAdd$h = (obj, member, value) => member.has(obj) ? __typeError$h("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$f = (obj, member, value, setter) => (__accessCheck$h(obj, member, "write to private field"), member.set(obj, value), value);
   var _autoRender$1;
   class RenderTarget {
     /**
@@ -9203,8 +9056,7 @@ ${this.shaders.vertex.head}`;
           if (this.shaders.vertex.head.indexOf(groupBinding.wgslGroupFragment) === -1) {
             this.shaders.vertex.head = `${this.shaders.vertex.head}
 @group(${groupBinding.groupIndex}) @binding(${groupBinding.bindIndex}) ${groupBinding.wgslGroupFragment}`;
-            if (groupBinding.newLine)
-              this.shaders.vertex.head += `
+            if (groupBinding.newLine) this.shaders.vertex.head += `
 `;
           }
         }
@@ -9217,8 +9069,7 @@ ${this.shaders.fragment.head}`;
           if (this.shaders.fragment.head.indexOf(groupBinding.wgslGroupFragment) === -1) {
             this.shaders.fragment.head = `${this.shaders.fragment.head}
 @group(${groupBinding.groupIndex}) @binding(${groupBinding.bindIndex}) ${groupBinding.wgslGroupFragment}`;
-            if (groupBinding.newLine)
-              this.shaders.fragment.head += `
+            if (groupBinding.newLine) this.shaders.fragment.head += `
 `;
           }
         }
@@ -9230,8 +9081,7 @@ ${this.shaders.full.head}`;
         if (this.shaders.full.head.indexOf(groupBinding.wgslGroupFragment) === -1) {
           this.shaders.full.head = `${this.shaders.full.head}
 @group(${groupBinding.groupIndex}) @binding(${groupBinding.bindIndex}) ${groupBinding.wgslGroupFragment}`;
-          if (groupBinding.newLine)
-            this.shaders.full.head += `
+          if (groupBinding.newLine) this.shaders.full.head += `
 `;
         }
       }
@@ -9295,8 +9145,7 @@ ${this.shaders.full.head}`;
      * Create the render pipeline {@link descriptor}
      */
     createPipelineDescriptor() {
-      if (!this.shadersModulesReady)
-        return;
+      if (!this.shadersModulesReady) return;
       let vertexLocationIndex = -1;
       if (this.options.rendering.targets.length) {
         if (this.options.rendering.transparent) {
@@ -9358,8 +9207,7 @@ ${this.shaders.full.head}`;
      * Create the render {@link pipeline}
      */
     createRenderPipeline() {
-      if (!this.shadersModulesReady)
-        return;
+      if (!this.shadersModulesReady) return;
       try {
         this.pipeline = this.renderer.createRenderPipeline(this.descriptor);
       } catch (error) {
@@ -9372,8 +9220,7 @@ ${this.shaders.full.head}`;
      * @returns - void promise result
      */
     async createRenderPipelineAsync() {
-      if (!this.shadersModulesReady)
-        return;
+      if (!this.shadersModulesReady) return;
       try {
         this.pipeline = await this.renderer.createRenderPipelineAsync(this.descriptor);
         this.status.compiled = true;
@@ -9569,8 +9416,7 @@ struct VSOutput {
      * Check if attributes and all bind groups are ready, create them if needed, set {@link RenderPipelineEntry} bind group buffers and compile the pipeline.
      */
     async compileMaterial() {
-      if (this.ready)
-        return;
+      if (this.ready) return;
       super.compileMaterial();
       if (this.attributes && !this.pipelineEntry) {
         this.setPipelineEntry();
@@ -9686,24 +9532,13 @@ New rendering options: ${JSON.stringify(
     }
   }
 
-  var __accessCheck$g = (obj, member, msg) => {
-    if (!member.has(obj))
-      throw TypeError("Cannot " + msg);
+  var __typeError$g = (msg) => {
+    throw TypeError(msg);
   };
-  var __privateGet$e = (obj, member, getter) => {
-    __accessCheck$g(obj, member, "read from private field");
-    return getter ? getter.call(obj) : member.get(obj);
-  };
-  var __privateAdd$g = (obj, member, value) => {
-    if (member.has(obj))
-      throw TypeError("Cannot add the same private member more than once");
-    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  };
-  var __privateSet$e = (obj, member, value, setter) => {
-    __accessCheck$g(obj, member, "write to private field");
-    member.set(obj, value);
-    return value;
-  };
+  var __accessCheck$g = (obj, member, msg) => member.has(obj) || __typeError$g("Cannot " + msg);
+  var __privateGet$e = (obj, member, getter) => (__accessCheck$g(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$g = (obj, member, value) => member.has(obj) ? __typeError$g("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$e = (obj, member, value, setter) => (__accessCheck$g(obj, member, "write to private field"), member.set(obj, value), value);
   let meshIndex = 0;
   const defaultMeshBaseParams = {
     // material
@@ -10305,8 +10140,7 @@ ${geometry.wgslStructFragment}`
        * Execute {@link onBeforeRender} callback if needed. Called by the {@link core/scenes/Scene.Scene | Scene} before updating the matrix stack.
        */
       onBeforeRenderScene() {
-        if (!this.renderer.ready || !this.ready || !this.visible)
-          return;
+        if (!this.renderer.ready || !this.ready || !this.visible) return;
         this._onBeforeRenderCallback && this._onBeforeRenderCallback();
       }
       /**
@@ -10315,8 +10149,7 @@ ${geometry.wgslStructFragment}`
        * Then executes {@link RenderMaterial#onBeforeRender}: create its bind groups and pipeline if needed and eventually update its bindings
        */
       onBeforeRenderPass() {
-        if (!this.renderer.ready)
-          return;
+        if (!this.renderer.ready) return;
         this.setGeometry();
         if (this.visible) {
           this._onRenderCallback && this._onRenderCallback();
@@ -10329,8 +10162,7 @@ ${geometry.wgslStructFragment}`
        * @param pass - current render pass encoder
        */
       onRenderPass(pass) {
-        if (!this.ready)
-          return;
+        if (!this.ready) return;
         this.material.render(pass);
         this.geometry.render(pass);
       }
@@ -10351,8 +10183,7 @@ ${geometry.wgslStructFragment}`
        */
       render(pass) {
         this.onBeforeRenderPass();
-        if (!this.renderer.ready || !this.visible)
-          return;
+        if (!this.renderer.ready || !this.visible) return;
         !this.renderer.production && pass.pushDebugGroup(this.options.label);
         this.onRenderPass(pass);
         !this.renderer.production && pass.popDebugGroup();
@@ -10684,8 +10515,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
        * @param updateScene - Whether to remove and then re-add the Mesh from the {@link core/scenes/Scene.Scene | Scene} or not.
        */
       setRenderBundle(renderBundle, updateScene = true) {
-        if (this.renderBundle && renderBundle && this.renderBundle.uuid === renderBundle.uuid)
-          return;
+        if (this.renderBundle && renderBundle && this.renderBundle.uuid === renderBundle.uuid) return;
         const hasRenderBundle = !!this.renderBundle;
         const bindGroup = this.material.getBindGroupByBindingName("matrices");
         const matrices = this.material.getBufferBindingByName("matrices");
@@ -10877,8 +10707,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
           matricesUniforms.offset = this.options.renderBundle.meshes.size;
         }
         const meshTransformationBinding = new BufferBinding(matricesUniforms);
-        if (!meshParameters.bindings)
-          meshParameters.bindings = [];
+        if (!meshParameters.bindings) meshParameters.bindings = [];
         meshParameters.bindings.unshift(meshTransformationBinding);
         super.setMaterial(meshParameters);
       }
@@ -10902,8 +10731,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
        * @param boundingRect - the new bounding rectangle
        */
       resize(boundingRect) {
-        if (this.domFrustum)
-          this.domFrustum.setContainerBoundingRect(this.renderer.boundingRect);
+        if (this.domFrustum) this.domFrustum.setContainerBoundingRect(this.renderer.boundingRect);
         super.resize(boundingRect);
       }
       /**
@@ -11015,8 +10843,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
        * @param pass - current render pass
        */
       onRenderPass(pass) {
-        if (!this.ready)
-          return;
+        if (!this.ready) return;
         this._onRenderCallback && this._onRenderCallback();
         if (this.domFrustum && this.domFrustum.isIntersecting || !this.frustumCulling) {
           this.material.render(pass);
@@ -11057,29 +10884,15 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
     }
   }
 
-  var __accessCheck$f = (obj, member, msg) => {
-    if (!member.has(obj))
-      throw TypeError("Cannot " + msg);
+  var __typeError$f = (msg) => {
+    throw TypeError(msg);
   };
-  var __privateGet$d = (obj, member, getter) => {
-    __accessCheck$f(obj, member, "read from private field");
-    return getter ? getter.call(obj) : member.get(obj);
-  };
-  var __privateAdd$f = (obj, member, value) => {
-    if (member.has(obj))
-      throw TypeError("Cannot add the same private member more than once");
-    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  };
-  var __privateSet$d = (obj, member, value, setter) => {
-    __accessCheck$f(obj, member, "write to private field");
-    member.set(obj, value);
-    return value;
-  };
-  var __privateMethod$8 = (obj, member, method) => {
-    __accessCheck$f(obj, member, "access private method");
-    return method;
-  };
-  var _intensity, _bias, _normalBias, _pcfSamples, _isActive, _autoRender, _receivingMeshes, _setParameters, setParameters_fn;
+  var __accessCheck$f = (obj, member, msg) => member.has(obj) || __typeError$f("Cannot " + msg);
+  var __privateGet$d = (obj, member, getter) => (__accessCheck$f(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$f = (obj, member, value) => member.has(obj) ? __typeError$f("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$d = (obj, member, value, setter) => (__accessCheck$f(obj, member, "write to private field"), member.set(obj, value), value);
+  var __privateMethod$8 = (obj, member, method) => (__accessCheck$f(obj, member, "access private method"), method);
+  var _intensity, _bias, _normalBias, _pcfSamples, _isActive, _autoRender, _receivingMeshes, _Shadow_instances, setParameters_fn;
   const shadowStruct = {
     isActive: {
       type: "i32",
@@ -11118,26 +10931,21 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
       depthTextureFormat = "depth24plus",
       autoRender = true
     } = {}) {
-      /**
-       * Set the {@link Shadow} parameters.
-       * @param parameters - parameters to use for this {@link Shadow}.
-       * @private
-       */
-      __privateAdd$f(this, _setParameters);
+      __privateAdd$f(this, _Shadow_instances);
       /** @ignore */
-      __privateAdd$f(this, _intensity, void 0);
+      __privateAdd$f(this, _intensity);
       /** @ignore */
-      __privateAdd$f(this, _bias, void 0);
+      __privateAdd$f(this, _bias);
       /** @ignore */
-      __privateAdd$f(this, _normalBias, void 0);
+      __privateAdd$f(this, _normalBias);
       /** @ignore */
-      __privateAdd$f(this, _pcfSamples, void 0);
+      __privateAdd$f(this, _pcfSamples);
       /** @ignore */
-      __privateAdd$f(this, _isActive, void 0);
+      __privateAdd$f(this, _isActive);
       /** @ignore */
-      __privateAdd$f(this, _autoRender, void 0);
+      __privateAdd$f(this, _autoRender);
       /** Map of all the shadow receiving {@link ProjectedMesh | meshes}. */
-      __privateAdd$f(this, _receivingMeshes, void 0);
+      __privateAdd$f(this, _receivingMeshes);
       this.setRenderer(renderer);
       this.light = light;
       this.index = this.light.index;
@@ -11154,7 +10962,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
       this.castingMeshes = /* @__PURE__ */ new Map();
       __privateSet$d(this, _receivingMeshes, /* @__PURE__ */ new Map());
       this.depthMeshes = /* @__PURE__ */ new Map();
-      __privateMethod$8(this, _setParameters, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
+      __privateMethod$8(this, _Shadow_instances, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
       this.isActive = false;
     }
     /**
@@ -11190,7 +10998,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
      * @param parameters - parameters to use for this {@link Shadow}.
      */
     cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender } = {}) {
-      __privateMethod$8(this, _setParameters, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
+      __privateMethod$8(this, _Shadow_instances, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
       this.isActive = true;
     }
     /**
@@ -11362,8 +11170,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
      * Clear the content of the depth texture. Called whenever the {@link castingMeshes} {@link Map} is empty after having removed a mesh, or if all {@link castingMeshes} `visible` properties are `false`.
      */
     clearDepthTexture() {
-      if (!this.depthTexture || !this.depthTexture.texture)
-        return;
+      if (!this.depthTexture || !this.depthTexture.texture) return;
       const commandEncoder = this.renderer.device.createCommandEncoder();
       !this.renderer.production && commandEncoder.pushDebugGroup(`Clear ${this.depthTexture.texture.label} command encoder`);
       const renderPassDescriptor = {
@@ -11428,8 +11235,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
      * @param commandEncoder - {@link GPUCommandEncoder} to use.
      */
     render(commandEncoder) {
-      if (!this.castingMeshes.size)
-        return;
+      if (!this.castingMeshes.size) return;
       let shouldRender = false;
       for (const [_uuid, mesh] of this.castingMeshes) {
         if (mesh.visible) {
@@ -11481,8 +11287,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
         }
         depthMesh.render(depthPass);
       }
-      if (!this.renderer.production)
-        depthPass.popDebugGroup();
+      if (!this.renderer.production) depthPass.popDebugGroup();
       depthPass.end();
     }
     /**
@@ -11543,8 +11348,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
      * @param parameters - Optional {@link RenderMaterialParams | parameters} to use for the depth mesh.
      */
     addShadowCastingMesh(mesh, parameters = {}) {
-      if (this.castingMeshes.get(mesh.uuid))
-        return;
+      if (this.castingMeshes.get(mesh.uuid)) return;
       mesh.options.castShadows = true;
       parameters = this.patchShadowCastingMeshParams(mesh, parameters);
       if (this.depthMeshes.get(mesh.uuid)) {
@@ -11631,7 +11435,12 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
   _isActive = new WeakMap();
   _autoRender = new WeakMap();
   _receivingMeshes = new WeakMap();
-  _setParameters = new WeakSet();
+  _Shadow_instances = new WeakSet();
+  /**
+   * Set the {@link Shadow} parameters.
+   * @param parameters - parameters to use for this {@link Shadow}.
+   * @private
+   */
   setParameters_fn = function({
     intensity = 1,
     bias = 0,
@@ -11792,24 +11601,13 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
     }
   }
 
-  var __accessCheck$e = (obj, member, msg) => {
-    if (!member.has(obj))
-      throw TypeError("Cannot " + msg);
+  var __typeError$e = (msg) => {
+    throw TypeError(msg);
   };
-  var __privateGet$c = (obj, member, getter) => {
-    __accessCheck$e(obj, member, "read from private field");
-    return getter ? getter.call(obj) : member.get(obj);
-  };
-  var __privateAdd$e = (obj, member, value) => {
-    if (member.has(obj))
-      throw TypeError("Cannot add the same private member more than once");
-    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  };
-  var __privateSet$c = (obj, member, value, setter) => {
-    __accessCheck$e(obj, member, "write to private field");
-    member.set(obj, value);
-    return value;
-  };
+  var __accessCheck$e = (obj, member, msg) => member.has(obj) || __typeError$e("Cannot " + msg);
+  var __privateGet$c = (obj, member, getter) => (__accessCheck$e(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$e = (obj, member, value) => member.has(obj) ? __typeError$e("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$c = (obj, member, value, setter) => (__accessCheck$e(obj, member, "write to private field"), member.set(obj, value), value);
   var _actualPosition$1, _direction;
   class DirectionalLight extends Light {
     /**
@@ -11827,12 +11625,12 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
       const type = "directionalLights";
       super(renderer, { color, intensity, type });
       /** @ignore */
-      __privateAdd$e(this, _actualPosition$1, void 0);
+      __privateAdd$e(this, _actualPosition$1);
       /**
        * The {@link Vec3 | direction} of the {@link DirectionalLight} is the {@link target} minus the actual {@link position}.
        * @private
        */
-      __privateAdd$e(this, _direction, void 0);
+      __privateAdd$e(this, _direction);
       this.options = {
         ...this.options,
         position,
@@ -11970,24 +11768,13 @@ struct PointShadowVSOutput {
 }`
   );
 
-  var __accessCheck$d = (obj, member, msg) => {
-    if (!member.has(obj))
-      throw TypeError("Cannot " + msg);
+  var __typeError$d = (msg) => {
+    throw TypeError(msg);
   };
-  var __privateGet$b = (obj, member, getter) => {
-    __accessCheck$d(obj, member, "read from private field");
-    return getter ? getter.call(obj) : member.get(obj);
-  };
-  var __privateAdd$d = (obj, member, value) => {
-    if (member.has(obj))
-      throw TypeError("Cannot add the same private member more than once");
-    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  };
-  var __privateSet$b = (obj, member, value, setter) => {
-    __accessCheck$d(obj, member, "write to private field");
-    member.set(obj, value);
-    return value;
-  };
+  var __accessCheck$d = (obj, member, msg) => member.has(obj) || __typeError$d("Cannot " + msg);
+  var __privateGet$b = (obj, member, getter) => (__accessCheck$d(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$d = (obj, member, value) => member.has(obj) ? __typeError$d("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$b = (obj, member, value, setter) => (__accessCheck$d(obj, member, "write to private field"), member.set(obj, value), value);
   var _tempCubeDirection;
   const pointShadowStruct = {
     ...shadowStruct,
@@ -12042,7 +11829,7 @@ struct PointShadowVSOutput {
        * {@link Vec3} used to calculate the actual current direction based on the {@link PointLight} position.
        * @private
        */
-      __privateAdd$d(this, _tempCubeDirection, void 0);
+      __privateAdd$d(this, _tempCubeDirection);
       this.options = {
         ...this.options,
         camera
@@ -12193,8 +11980,7 @@ struct PointShadowVSOutput {
      * Clear the content of the depth texture. Called whenever the {@link castingMeshes} {@link Map} is empty after having removed a mesh, or if all {@link castingMeshes} `visible` properties are `false`.
      */
     clearDepthTexture() {
-      if (!this.depthTexture || !this.depthTexture.texture)
-        return;
+      if (!this.depthTexture || !this.depthTexture.texture) return;
       const commandEncoder = this.renderer.device.createCommandEncoder();
       !this.renderer.production && commandEncoder.pushDebugGroup(`Clear ${this.depthTexture.texture.label} command encoder`);
       for (let i = 0; i < 6; i++) {
@@ -12230,8 +12016,7 @@ struct PointShadowVSOutput {
      * @param commandEncoder - {@link GPUCommandEncoder} to use.
      */
     render(commandEncoder) {
-      if (!this.castingMeshes.size)
-        return;
+      if (!this.castingMeshes.size) return;
       let shouldRender = false;
       for (const [_uuid, mesh] of this.castingMeshes) {
         if (mesh.visible) {
@@ -12275,8 +12060,7 @@ struct PointShadowVSOutput {
         depthMesh.material.bindGroups[cubeFaceBindGroupIndex] = this.renderer.pointShadowsCubeFaceBindGroups[face];
         depthMesh.render(depthPass);
       }
-      if (!this.renderer.production)
-        depthPass.popDebugGroup();
+      if (!this.renderer.production) depthPass.popDebugGroup();
       depthPass.end();
     }
     /**
@@ -12316,24 +12100,13 @@ struct PointShadowVSOutput {
   }
   _tempCubeDirection = new WeakMap();
 
-  var __accessCheck$c = (obj, member, msg) => {
-    if (!member.has(obj))
-      throw TypeError("Cannot " + msg);
+  var __typeError$c = (msg) => {
+    throw TypeError(msg);
   };
-  var __privateGet$a = (obj, member, getter) => {
-    __accessCheck$c(obj, member, "read from private field");
-    return getter ? getter.call(obj) : member.get(obj);
-  };
-  var __privateAdd$c = (obj, member, value) => {
-    if (member.has(obj))
-      throw TypeError("Cannot add the same private member more than once");
-    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  };
-  var __privateSet$a = (obj, member, value, setter) => {
-    __accessCheck$c(obj, member, "write to private field");
-    member.set(obj, value);
-    return value;
-  };
+  var __accessCheck$c = (obj, member, msg) => member.has(obj) || __typeError$c("Cannot " + msg);
+  var __privateGet$a = (obj, member, getter) => (__accessCheck$c(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$c = (obj, member, value) => member.has(obj) ? __typeError$c("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$a = (obj, member, value, setter) => (__accessCheck$c(obj, member, "write to private field"), member.set(obj, value), value);
   var _range, _actualPosition;
   class PointLight extends Light {
     /**
@@ -12345,9 +12118,9 @@ struct PointShadowVSOutput {
       const type = "pointLights";
       super(renderer, { color, intensity, type });
       /** @ignore */
-      __privateAdd$c(this, _range, void 0);
+      __privateAdd$c(this, _range);
       /** @ignore */
-      __privateAdd$c(this, _actualPosition, void 0);
+      __privateAdd$c(this, _actualPosition);
       this.options = {
         ...this.options,
         position,
@@ -12593,8 +12366,7 @@ ${this.shaders.compute.head}`;
           this.shaders.compute.head = `${this.shaders.compute.head}
 @group(${groupBinding.groupIndex}) @binding(${groupBinding.bindIndex}) ${groupBinding.wgslGroupFragment}`;
         }
-        if (groupBinding.newLine)
-          this.shaders.compute.head += `
+        if (groupBinding.newLine) this.shaders.compute.head += `
 `;
       }
       this.shaders.compute.code = this.shaders.compute.head + this.options.shaders.compute.code;
@@ -12614,8 +12386,7 @@ ${this.shaders.compute.head}`;
      * Create the compute pipeline {@link descriptor}
      */
     createPipelineDescriptor() {
-      if (!this.shaders.compute.module)
-        return;
+      if (!this.shaders.compute.module) return;
       this.descriptor = {
         label: this.options.label,
         layout: this.layout,
@@ -12629,8 +12400,7 @@ ${this.shaders.compute.head}`;
      * Create the compute {@link pipeline}
      */
     createComputePipeline() {
-      if (!this.shaders.compute.module)
-        return;
+      if (!this.shaders.compute.module) return;
       try {
         this.pipeline = this.renderer.createComputePipeline(this.descriptor);
       } catch (error) {
@@ -12643,8 +12413,7 @@ ${this.shaders.compute.head}`;
      * @returns - void promise result
      */
     async createComputePipelineAsync() {
-      if (!this.shaders.compute.module)
-        return;
+      if (!this.shaders.compute.module) return;
       try {
         this.pipeline = await this.renderer.createComputePipelineAsync(this.descriptor);
         this.status.compiled = true;
@@ -12836,8 +12605,7 @@ ${this.shaders.compute.head}`;
      * @param entry - {@link ResizeManagerEntry | entry} to watch.
      */
     observe({ element, priority, callback }) {
-      if (!element || !this.shouldWatch)
-        return;
+      if (!element || !this.shouldWatch) return;
       this.resizeObserver?.observe(element);
       const entry = {
         element,
@@ -12939,8 +12707,7 @@ ${this.shaders.compute.head}`;
      * @param delta - scroll delta values along X and Y axis
      */
     updateScrollPosition(delta = { x: 0, y: 0 }) {
-      if (this.isResizing)
-        return;
+      if (this.isResizing) return;
       this._boundingRect.top += delta.y;
       this._boundingRect.left += delta.x;
       if (delta.x || delta.y) {
@@ -12952,8 +12719,7 @@ ${this.shaders.compute.head}`;
      * @param boundingRect - new bounding rectangle
      */
     setSize(boundingRect = null) {
-      if (!this.element || this.isResizing)
-        return;
+      if (!this.element || this.isResizing) return;
       this.isResizing = true;
       this.boundingRect = boundingRect ?? this.element.getBoundingClientRect();
       setTimeout(() => {
@@ -13481,8 +13247,7 @@ ${this.shaders.compute.head}`;
             }
           }
         }
-        if (!this.renderer.production)
-          pass.popDebugGroup();
+        if (!this.renderer.production) pass.popDebugGroup();
         pass.end();
       }
       renderPassEntry.onAfterRenderPass && renderPassEntry.onAfterRenderPass(commandEncoder, swapChainTexture);
@@ -13514,11 +13279,9 @@ ${this.shaders.compute.head}`;
     render(commandEncoder) {
       for (const computePass of this.computePassEntries) {
         const pass = commandEncoder.beginComputePass();
-        if (!this.renderer.production)
-          pass.pushDebugGroup(`${computePass.options.label}: begin compute pass`);
+        if (!this.renderer.production) pass.pushDebugGroup(`${computePass.options.label}: begin compute pass`);
         computePass.render(pass);
-        if (!this.renderer.production)
-          pass.popDebugGroup();
+        if (!this.renderer.production) pass.popDebugGroup();
         pass.end();
         computePass.copyBufferToResult(commandEncoder);
         this.renderer.pipelineManager.resetCurrentPipeline();
@@ -13529,13 +13292,11 @@ ${this.shaders.compute.head}`;
         }
         let passDrawnCount = 0;
         this.renderPassEntries[renderPassEntryType].forEach((renderPassEntry) => {
-          if (!this.getRenderPassEntryLength(renderPassEntry))
-            return;
+          if (!this.getRenderPassEntryLength(renderPassEntry)) return;
           const isSubesequentScreenPass = renderPassEntryType === "screen" && (passDrawnCount !== 0 || this.renderPassEntries.prePass.length);
           const loadContent = renderPassEntryType === "postProPass" || renderPassEntryType === "prePass" && passDrawnCount !== 0 || isSubesequentScreenPass;
           renderPassEntry.renderPass.setLoadOp(loadContent ? "load" : "clear");
-          if (isSubesequentScreenPass)
-            renderPassEntry.renderPass.setDepthLoadOp("load");
+          if (isSubesequentScreenPass) renderPassEntry.renderPass.setDepthLoadOp("load");
           passDrawnCount++;
           this.renderSinglePassEntry(commandEncoder, renderPassEntry);
         });
@@ -13543,24 +13304,13 @@ ${this.shaders.compute.head}`;
     }
   }
 
-  var __accessCheck$b = (obj, member, msg) => {
-    if (!member.has(obj))
-      throw TypeError("Cannot " + msg);
+  var __typeError$b = (msg) => {
+    throw TypeError(msg);
   };
-  var __privateGet$9 = (obj, member, getter) => {
-    __accessCheck$b(obj, member, "read from private field");
-    return getter ? getter.call(obj) : member.get(obj);
-  };
-  var __privateAdd$b = (obj, member, value) => {
-    if (member.has(obj))
-      throw TypeError("Cannot add the same private member more than once");
-    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  };
-  var __privateSet$9 = (obj, member, value, setter) => {
-    __accessCheck$b(obj, member, "write to private field");
-    member.set(obj, value);
-    return value;
-  };
+  var __accessCheck$b = (obj, member, msg) => member.has(obj) || __typeError$b("Cannot " + msg);
+  var __privateGet$9 = (obj, member, getter) => (__accessCheck$b(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$b = (obj, member, value) => member.has(obj) ? __typeError$b("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$9 = (obj, member, value, setter) => (__accessCheck$b(obj, member, "write to private field"), member.set(obj, value), value);
   var __privateWrapper = (obj, member, setter, getter) => ({
     set _(value) {
       __privateSet$9(obj, member, value);
@@ -13699,8 +13449,7 @@ ${this.shaders.compute.head}`;
           priority: 5,
           // renderer callback need to be called first
           onSizeChanged: () => {
-            if (this.options.autoResize)
-              this.resize();
+            if (this.options.autoResize) this.resize();
           }
         });
         this.resize();
@@ -14411,18 +14160,15 @@ ${this.shaders.compute.head}`;
      * Called by the {@link GPUDeviceManager#render | GPUDeviceManager render method} before the {@link GPUCommandEncoder} has been created. Used to update the {@link Scene} matrix stack.
      */
     onBeforeCommandEncoder() {
-      if (!this.ready)
-        return;
-      if (this.shouldRenderScene)
-        this.scene?.onBeforeRender();
+      if (!this.ready) return;
+      if (this.shouldRenderScene) this.scene?.onBeforeRender();
       this.onBeforeCommandEncoderCreation.execute();
     }
     /**
      * Called by the {@link GPUDeviceManager#render | GPUDeviceManager render method} after the {@link GPUCommandEncoder} has been created.
      */
     onAfterCommandEncoder() {
-      if (!this.ready)
-        return;
+      if (!this.ready) return;
       this.onAfterCommandEncoderSubmission.execute();
     }
     /**
@@ -14430,8 +14176,7 @@ ${this.shaders.compute.head}`;
      * @param commandEncoder - current {@link GPUCommandEncoder}.
      */
     render(commandEncoder) {
-      if (!this.ready || !this.shouldRender)
-        return;
+      if (!this.ready || !this.shouldRender) return;
       this._onBeforeRenderCallback && this._onBeforeRenderCallback(commandEncoder);
       this.onBeforeRenderScene.execute(commandEncoder);
       if (this.shouldRenderScene) {
@@ -14462,24 +14207,13 @@ ${this.shaders.compute.head}`;
     }
   }
 
-  var __accessCheck$a = (obj, member, msg) => {
-    if (!member.has(obj))
-      throw TypeError("Cannot " + msg);
+  var __typeError$a = (msg) => {
+    throw TypeError(msg);
   };
-  var __privateGet$8 = (obj, member, getter) => {
-    __accessCheck$a(obj, member, "read from private field");
-    return member.get(obj);
-  };
-  var __privateAdd$a = (obj, member, value) => {
-    if (member.has(obj))
-      throw TypeError("Cannot add the same private member more than once");
-    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  };
-  var __privateSet$8 = (obj, member, value, setter) => {
-    __accessCheck$a(obj, member, "write to private field");
-    member.set(obj, value);
-    return value;
-  };
+  var __accessCheck$a = (obj, member, msg) => member.has(obj) || __typeError$a("Cannot " + msg);
+  var __privateGet$8 = (obj, member, getter) => (__accessCheck$a(obj, member, "read from private field"), member.get(obj));
+  var __privateAdd$a = (obj, member, value) => member.has(obj) ? __typeError$a("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$8 = (obj, member, value, setter) => (__accessCheck$a(obj, member, "write to private field"), member.set(obj, value), value);
   var _shouldUpdateCameraLightsBindGroup;
   class GPUCameraRenderer extends GPURenderer {
     /**
@@ -14507,7 +14241,7 @@ ${this.shaders.compute.head}`;
         renderPass
       });
       /** @ignore */
-      __privateAdd$a(this, _shouldUpdateCameraLightsBindGroup, void 0);
+      __privateAdd$a(this, _shouldUpdateCameraLightsBindGroup);
       this.type = "GPUCameraRenderer";
       camera = { ...{ fov: 50, near: 0.1, far: 1e3 }, ...camera };
       if (lights !== false) {
@@ -14589,8 +14323,7 @@ ${this.shaders.compute.head}`;
      * @param camera - new {@link Camera} to use.
      */
     useCamera(camera) {
-      if (this.camera && camera && this.camera.uuid === camera.uuid)
-        return;
+      if (this.camera && camera && this.camera.uuid === camera.uuid) return;
       if (this.camera) {
         this.camera.parent = null;
         this.camera.onMatricesChanged = () => {
@@ -14673,8 +14406,7 @@ ${this.shaders.compute.head}`;
      * Set the lights {@link BufferBinding} based on the {@link lightsBindingParams}.
      */
     setLightsBinding() {
-      if (!this.options.lights)
-        return;
+      if (!this.options.lights) return;
       this.lightsBindingParams = {
         ambientLights: {
           max: this.options.lights.maxAmbientLights,
@@ -15020,8 +14752,7 @@ ${this.shaders.compute.head}`;
      * @param commandEncoder - current {@link GPUCommandEncoder}
      */
     render(commandEncoder) {
-      if (!this.ready)
-        return;
+      if (!this.ready) return;
       this.createCameraLightsBindGroup();
       this.updateCameraLightsBindGroup();
       super.render(commandEncoder);
@@ -15043,24 +14774,13 @@ ${this.shaders.compute.head}`;
   }
   _shouldUpdateCameraLightsBindGroup = new WeakMap();
 
-  var __accessCheck$9 = (obj, member, msg) => {
-    if (!member.has(obj))
-      throw TypeError("Cannot " + msg);
+  var __typeError$9 = (msg) => {
+    throw TypeError(msg);
   };
-  var __privateGet$7 = (obj, member, getter) => {
-    __accessCheck$9(obj, member, "read from private field");
-    return getter ? getter.call(obj) : member.get(obj);
-  };
-  var __privateAdd$9 = (obj, member, value) => {
-    if (member.has(obj))
-      throw TypeError("Cannot add the same private member more than once");
-    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  };
-  var __privateSet$7 = (obj, member, value, setter) => {
-    __accessCheck$9(obj, member, "write to private field");
-    member.set(obj, value);
-    return value;
-  };
+  var __accessCheck$9 = (obj, member, msg) => member.has(obj) || __typeError$9("Cannot " + msg);
+  var __privateGet$7 = (obj, member, getter) => (__accessCheck$9(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$9 = (obj, member, value) => member.has(obj) ? __typeError$9("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$7 = (obj, member, value, setter) => (__accessCheck$9(obj, member, "write to private field"), member.set(obj, value), value);
   var _mipsGeneration;
   class GPUDeviceManager {
     /**
@@ -15087,7 +14807,7 @@ ${this.shaders.compute.head}`;
       };
       /** @ignore */
       // mips generation cache handling
-      __privateAdd$9(this, _mipsGeneration, void 0);
+      __privateAdd$9(this, _mipsGeneration);
       this.index = 0;
       this.label = label ?? "GPUDeviceManager instance";
       this.production = production;
@@ -15365,8 +15085,7 @@ ${this.shaders.compute.head}`;
      * @param commandEncoder - optional {@link GPUCommandEncoder} to use if we're already in the middle of a command encoding process.
      */
     generateMips(texture, commandEncoder = null) {
-      if (!this.device)
-        return;
+      if (!this.device) return;
       if (!__privateGet$7(this, _mipsGeneration).module) {
         __privateGet$7(this, _mipsGeneration).module = this.device.createShaderModule({
           label: "textured quad shaders for mip level generation",
@@ -15521,12 +15240,10 @@ ${this.shaders.compute.head}`;
      * - call all our {@link renderers} {@link core/renderers/GPURenderer.GPURenderer#onAfterCommandEncoder | onAfterCommandEncoder} callbacks.
      */
     render() {
-      if (!this.ready)
-        return;
+      if (!this.ready) return;
       this._onBeforeRenderCallback && this._onBeforeRenderCallback();
       for (const renderer of this.renderers) {
-        if (renderer.shouldRender)
-          renderer.onBeforeCommandEncoder();
+        if (renderer.shouldRender) renderer.onBeforeCommandEncoder();
       }
       const commandEncoder = this.device?.createCommandEncoder({ label: this.label + " command encoder" });
       !this.production && commandEncoder.pushDebugGroup(this.label + " command encoder: main render loop");
@@ -15539,8 +15256,7 @@ ${this.shaders.compute.head}`;
       }
       this.texturesQueue = [];
       for (const renderer of this.renderers) {
-        if (renderer.shouldRender)
-          renderer.onAfterCommandEncoder();
+        if (renderer.shouldRender) renderer.onAfterCommandEncoder();
       }
       this._onAfterRenderCallback && this._onAfterRenderCallback();
     }
@@ -15563,20 +15279,13 @@ ${this.shaders.compute.head}`;
   }
   _mipsGeneration = new WeakMap();
 
-  var __accessCheck$8 = (obj, member, msg) => {
-    if (!member.has(obj))
-      throw TypeError("Cannot " + msg);
+  var __typeError$8 = (msg) => {
+    throw TypeError(msg);
   };
-  var __privateAdd$8 = (obj, member, value) => {
-    if (member.has(obj))
-      throw TypeError("Cannot add the same private member more than once");
-    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  };
-  var __privateMethod$7 = (obj, member, method) => {
-    __accessCheck$8(obj, member, "access private method");
-    return method;
-  };
-  var _addGeometryToIndirectMappedBuffer, addGeometryToIndirectMappedBuffer_fn;
+  var __accessCheck$8 = (obj, member, msg) => member.has(obj) || __typeError$8("Cannot " + msg);
+  var __privateAdd$8 = (obj, member, value) => member.has(obj) ? __typeError$8("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateMethod$7 = (obj, member, method) => (__accessCheck$8(obj, member, "access private method"), method);
+  var _IndirectBuffer_instances, addGeometryToIndirectMappedBuffer_fn;
   const indirectBufferEntrySize = 5;
   class IndirectBuffer {
     /**
@@ -15585,14 +15294,7 @@ ${this.shaders.compute.head}`;
      * @param parameters - {@link IndirectBufferParams | parameters} used to create this {@link IndirectBuffer}.
      */
     constructor(renderer, { label = "Indirect buffer", geometries = [], minEntrySize = indirectBufferEntrySize } = {}) {
-      /**
-       * Add a {@link Geometry} or {@link IndexedGeometry} attributes to the {@link buffer} mapped array buffer.
-       * @param geometry - {@link Geometry} or {@link IndexedGeometry} to add the attributes from
-       * @param mappedBuffer - The {@link buffer} mapped array buffer
-       * @param index - Index in the {@link buffer} mapped array buffer at which to add the attributes.
-       * @private
-       */
-      __privateAdd$8(this, _addGeometryToIndirectMappedBuffer);
+      __privateAdd$8(this, _IndirectBuffer_instances);
       this.type = "IndirectBuffer";
       renderer = isRenderer(renderer, this.type);
       this.renderer = renderer;
@@ -15658,7 +15360,7 @@ ${this.shaders.compute.head}`;
       const indirectMappedBuffer = new Uint32Array(this.buffer.GPUBuffer.getMappedRange());
       let offset = 0;
       this.geometries.forEach((geometry) => {
-        __privateMethod$7(this, _addGeometryToIndirectMappedBuffer, addGeometryToIndirectMappedBuffer_fn).call(this, geometry, indirectMappedBuffer, offset * this.options.minEntrySize);
+        __privateMethod$7(this, _IndirectBuffer_instances, addGeometryToIndirectMappedBuffer_fn).call(this, geometry, indirectMappedBuffer, offset * this.options.minEntrySize);
         geometry.useIndirectBuffer({ buffer: this.buffer, offset: this.getByteOffsetAtIndex(offset) });
         offset++;
       });
@@ -15676,7 +15378,14 @@ ${this.shaders.compute.head}`;
       this.geometries = null;
     }
   }
-  _addGeometryToIndirectMappedBuffer = new WeakSet();
+  _IndirectBuffer_instances = new WeakSet();
+  /**
+   * Add a {@link Geometry} or {@link IndexedGeometry} attributes to the {@link buffer} mapped array buffer.
+   * @param geometry - {@link Geometry} or {@link IndexedGeometry} to add the attributes from
+   * @param mappedBuffer - The {@link buffer} mapped array buffer
+   * @param index - Index in the {@link buffer} mapped array buffer at which to add the attributes.
+   * @private
+   */
   addGeometryToIndirectMappedBuffer_fn = function(geometry, mappedBuffer, index = 0) {
     if ("indexBuffer" in geometry && geometry.indexBuffer) {
       mappedBuffer[index] = geometry.indexBuffer.bufferLength;
@@ -15693,29 +15402,15 @@ ${this.shaders.compute.head}`;
     }
   };
 
-  var __accessCheck$7 = (obj, member, msg) => {
-    if (!member.has(obj))
-      throw TypeError("Cannot " + msg);
+  var __typeError$7 = (msg) => {
+    throw TypeError(msg);
   };
-  var __privateGet$6 = (obj, member, getter) => {
-    __accessCheck$7(obj, member, "read from private field");
-    return getter ? getter.call(obj) : member.get(obj);
-  };
-  var __privateAdd$7 = (obj, member, value) => {
-    if (member.has(obj))
-      throw TypeError("Cannot add the same private member more than once");
-    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  };
-  var __privateSet$6 = (obj, member, value, setter) => {
-    __accessCheck$7(obj, member, "write to private field");
-    member.set(obj, value);
-    return value;
-  };
-  var __privateMethod$6 = (obj, member, method) => {
-    __accessCheck$7(obj, member, "access private method");
-    return method;
-  };
-  var _useProjection, _ready, _setBinding, setBinding_fn, _patchBindingOffset, patchBindingOffset_fn, _onSizeChanged, onSizeChanged_fn, _setDescriptor, setDescriptor_fn, _encodeRenderCommands, encodeRenderCommands_fn, _cleanUp, cleanUp_fn;
+  var __accessCheck$7 = (obj, member, msg) => member.has(obj) || __typeError$7("Cannot " + msg);
+  var __privateGet$6 = (obj, member, getter) => (__accessCheck$7(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$7 = (obj, member, value) => member.has(obj) ? __typeError$7("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$6 = (obj, member, value, setter) => (__accessCheck$7(obj, member, "write to private field"), member.set(obj, value), value);
+  var __privateMethod$6 = (obj, member, method) => (__accessCheck$7(obj, member, "access private method"), method);
+  var _useProjection, _ready, _RenderBundle_instances, setBinding_fn, patchBindingOffset_fn, onSizeChanged_fn, setDescriptor_fn, encodeRenderCommands_fn, cleanUp_fn;
   let bundleIndex = 0;
   class RenderBundle {
     /**
@@ -15733,43 +15428,12 @@ ${this.shaders.compute.head}`;
       useBuffer = false,
       useIndirectDraw = false
     } = {}) {
-      /**
-       * Set the {@link binding} and patches its array and buffer size if needed.
-       * @private
-       */
-      __privateAdd$7(this, _setBinding);
-      /**
-       * Path the {@link binding} array and buffer size with the minimum {@link Renderer#device | device} buffer offset alignment.
-       * @param size - new {@link binding} size to use.
-       * @private
-       */
-      __privateAdd$7(this, _patchBindingOffset);
-      /**
-       * Called each time the {@link RenderBundle} size has actually changed.
-       * @param newSize - new {@link RenderBundle} size to set.
-       * @private
-       */
-      __privateAdd$7(this, _onSizeChanged);
-      /**
-       * Set the {@link descriptor} based on the {@link RenderBundleOptions#renderPass | render pass}.
-       * @private
-       */
-      __privateAdd$7(this, _setDescriptor);
-      /**
-       * Create the {@link descriptor}, {@link encoder} and {@link bundle} used by this {@link RenderBundle}.
-       * @private
-       */
-      __privateAdd$7(this, _encodeRenderCommands);
-      /**
-       * Destroy the {@link binding} buffer if needed and remove the {@link RenderBundle} from the {@link Renderer}.
-       * @private
-       */
-      __privateAdd$7(this, _cleanUp);
+      __privateAdd$7(this, _RenderBundle_instances);
       /** @ignore */
       // whether this render bundle should be added to the 'projected' or 'unProjected' Scene stacks.
-      __privateAdd$7(this, _useProjection, void 0);
+      __privateAdd$7(this, _useProjection);
       /** @ignore */
-      __privateAdd$7(this, _ready, void 0);
+      __privateAdd$7(this, _ready);
       this.type = "RenderBundle";
       renderer = isRenderer(renderer, this.type);
       this.uuid = generateUUID();
@@ -15798,7 +15462,7 @@ ${this.shaders.compute.head}`;
       if (this.options.useBuffer) {
         __privateSet$6(this, _useProjection, true);
         if (this.options.size !== 0) {
-          __privateMethod$6(this, _setBinding, setBinding_fn).call(this);
+          __privateMethod$6(this, _RenderBundle_instances, setBinding_fn).call(this);
         } else {
           this.options.useBuffer = false;
           if (!this.renderer.production) {
@@ -15883,7 +15547,7 @@ ${this.shaders.compute.head}`;
           );
         }
         this.ready = false;
-        __privateMethod$6(this, _onSizeChanged, onSizeChanged_fn).call(this, value);
+        __privateMethod$6(this, _RenderBundle_instances, onSizeChanged_fn).call(this, value);
         this.options.size = value;
       }
     }
@@ -15908,7 +15572,7 @@ ${this.shaders.compute.head}`;
           });
           this.indirectBuffer.create();
         }
-        __privateMethod$6(this, _encodeRenderCommands, encodeRenderCommands_fn).call(this);
+        __privateMethod$6(this, _RenderBundle_instances, encodeRenderCommands_fn).call(this);
       } else if (!value && this.ready) {
         this.bundle = null;
       }
@@ -16060,7 +15724,7 @@ ${this.shaders.compute.head}`;
      */
     remove() {
       this.empty(true);
-      __privateMethod$6(this, _cleanUp, cleanUp_fn).call(this);
+      __privateMethod$6(this, _RenderBundle_instances, cleanUp_fn).call(this);
     }
     /**
      * Remove the {@link RenderBundle} from our {@link core/scenes/Scene.Scene | Scene}, {@link RenderedMesh#remove | remove the meshes}, eventually destroy the {@link binding} and remove the {@link RenderBundle} from the {@link Renderer}.
@@ -16071,12 +15735,16 @@ ${this.shaders.compute.head}`;
         mesh.remove();
       });
       this.size = 0;
-      __privateMethod$6(this, _cleanUp, cleanUp_fn).call(this);
+      __privateMethod$6(this, _RenderBundle_instances, cleanUp_fn).call(this);
     }
   }
   _useProjection = new WeakMap();
   _ready = new WeakMap();
-  _setBinding = new WeakSet();
+  _RenderBundle_instances = new WeakSet();
+  /**
+   * Set the {@link binding} and patches its array and buffer size if needed.
+   * @private
+   */
   setBinding_fn = function() {
     this.binding = new BufferBinding({
       label: this.options.label + " matrices",
@@ -16097,9 +15765,13 @@ ${this.shaders.compute.head}`;
         }
       }
     });
-    __privateMethod$6(this, _patchBindingOffset, patchBindingOffset_fn).call(this, this.options.size);
+    __privateMethod$6(this, _RenderBundle_instances, patchBindingOffset_fn).call(this, this.options.size);
   };
-  _patchBindingOffset = new WeakSet();
+  /**
+   * Path the {@link binding} array and buffer size with the minimum {@link Renderer#device | device} buffer offset alignment.
+   * @param size - new {@link binding} size to use.
+   * @private
+   */
   patchBindingOffset_fn = function(size) {
     const minOffset = this.renderer.device.limits.minUniformBufferOffsetAlignment;
     if (this.binding.arrayBufferSize < size * minOffset) {
@@ -16108,10 +15780,14 @@ ${this.shaders.compute.head}`;
       this.binding.buffer.size = this.binding.arrayBuffer.byteLength;
     }
   };
-  _onSizeChanged = new WeakSet();
+  /**
+   * Called each time the {@link RenderBundle} size has actually changed.
+   * @param newSize - new {@link RenderBundle} size to set.
+   * @private
+   */
   onSizeChanged_fn = function(newSize) {
     if (newSize > this.options.size && this.binding) {
-      __privateMethod$6(this, _patchBindingOffset, patchBindingOffset_fn).call(this, newSize);
+      __privateMethod$6(this, _RenderBundle_instances, patchBindingOffset_fn).call(this, newSize);
       if (this.binding.buffer.GPUBuffer) {
         this.binding.buffer.GPUBuffer.destroy();
         this.binding.buffer.createBuffer(this.renderer, {
@@ -16130,7 +15806,10 @@ ${this.shaders.compute.head}`;
       }
     }
   };
-  _setDescriptor = new WeakSet();
+  /**
+   * Set the {@link descriptor} based on the {@link RenderBundleOptions#renderPass | render pass}.
+   * @private
+   */
   setDescriptor_fn = function() {
     this.descriptor = {
       ...this.options.renderPass.options.colorAttachments && {
@@ -16144,9 +15823,12 @@ ${this.shaders.compute.head}`;
       sampleCount: this.options.renderPass.options.sampleCount
     };
   };
-  _encodeRenderCommands = new WeakSet();
+  /**
+   * Create the {@link descriptor}, {@link encoder} and {@link bundle} used by this {@link RenderBundle}.
+   * @private
+   */
   encodeRenderCommands_fn = function() {
-    __privateMethod$6(this, _setDescriptor, setDescriptor_fn).call(this);
+    __privateMethod$6(this, _RenderBundle_instances, setDescriptor_fn).call(this);
     this.renderer.pipelineManager.resetCurrentPipeline();
     this.encoder = this.renderer.device.createRenderBundleEncoder({
       ...this.descriptor,
@@ -16165,7 +15847,10 @@ ${this.shaders.compute.head}`;
     this.bundle = this.encoder.finish({ label: this.options.label + " (bundle)" });
     this.renderer.pipelineManager.resetCurrentPipeline();
   };
-  _cleanUp = new WeakSet();
+  /**
+   * Destroy the {@link binding} buffer if needed and remove the {@link RenderBundle} from the {@link Renderer}.
+   * @private
+   */
   cleanUp_fn = function() {
     if (this.binding) {
       this.renderer.removeBuffer(this.binding.buffer);
@@ -18406,24 +18091,13 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
     })();
   };
 
-  var __accessCheck$6 = (obj, member, msg) => {
-    if (!member.has(obj))
-      throw TypeError("Cannot " + msg);
+  var __typeError$6 = (msg) => {
+    throw TypeError(msg);
   };
-  var __privateGet$5 = (obj, member, getter) => {
-    __accessCheck$6(obj, member, "read from private field");
-    return getter ? getter.call(obj) : member.get(obj);
-  };
-  var __privateAdd$6 = (obj, member, value) => {
-    if (member.has(obj))
-      throw TypeError("Cannot add the same private member more than once");
-    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  };
-  var __privateSet$5 = (obj, member, value, setter) => {
-    __accessCheck$6(obj, member, "write to private field");
-    member.set(obj, value);
-    return value;
-  };
+  var __accessCheck$6 = (obj, member, msg) => member.has(obj) || __typeError$6("Cannot " + msg);
+  var __privateGet$5 = (obj, member, getter) => (__accessCheck$6(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$6 = (obj, member, value) => member.has(obj) ? __typeError$6("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$5 = (obj, member, value, setter) => (__accessCheck$6(obj, member, "write to private field"), member.set(obj, value), value);
   var _DOMObjectWorldPosition, _DOMObjectWorldScale, _DOMObjectDepthScaleRatio;
   class DOMObject3D extends ProjectedObject3D {
     /**
@@ -18503,8 +18177,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
      * @param boundingRect - new {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}
      */
     resize(boundingRect = null) {
-      if (!boundingRect && (!this.domElement || this.domElement?.isResizing))
-        return;
+      if (!boundingRect && (!this.domElement || this.domElement?.isResizing)) return;
       this.updateSizeAndPosition();
       this._onAfterDOMElementResizeCallback && this._onAfterDOMElementResizeCallback();
     }
@@ -18642,8 +18315,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
      * Apply the transform origin and set the {@link DOMObject3D} world transform origin
      */
     applyTransformOrigin() {
-      if (!this.size)
-        return;
+      if (!this.size) return;
       this.setWorldTransformOrigin();
       super.applyTransformOrigin();
     }
@@ -19285,10 +18957,8 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
      * @param parameters - parameters to patch
      */
     patchRendererOptions(parameters) {
-      if (parameters.pixelRatio === void 0)
-        parameters.pixelRatio = this.options.pixelRatio;
-      if (parameters.autoResize === void 0)
-        parameters.autoResize = this.options.autoResize;
+      if (parameters.pixelRatio === void 0) parameters.pixelRatio = this.options.pixelRatio;
+      if (parameters.autoResize === void 0) parameters.autoResize = this.options.autoResize;
       return parameters;
     }
     /**
@@ -19544,29 +19214,15 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
     }
   }
 
-  var __accessCheck$5 = (obj, member, msg) => {
-    if (!member.has(obj))
-      throw TypeError("Cannot " + msg);
+  var __typeError$5 = (msg) => {
+    throw TypeError(msg);
   };
-  var __privateGet$4 = (obj, member, getter) => {
-    __accessCheck$5(obj, member, "read from private field");
-    return getter ? getter.call(obj) : member.get(obj);
-  };
-  var __privateAdd$5 = (obj, member, value) => {
-    if (member.has(obj))
-      throw TypeError("Cannot add the same private member more than once");
-    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  };
-  var __privateSet$4 = (obj, member, value, setter) => {
-    __accessCheck$5(obj, member, "write to private field");
-    member.set(obj, value);
-    return value;
-  };
-  var __privateMethod$5 = (obj, member, method) => {
-    __accessCheck$5(obj, member, "access private method");
-    return method;
-  };
-  var _element, _offset, _isOrbiting, _spherical, _rotateStart, _isPaning, _panStart, _panDelta, _setBaseParams, setBaseParams_fn, _addEvents, addEvents_fn, _removeEvents, removeEvents_fn, _onMouseDown, onMouseDown_fn, _onTouchStart, onTouchStart_fn, _onMouseMove, onMouseMove_fn, _onTouchMove, onTouchMove_fn, _onMouseUp, onMouseUp_fn, _onTouchEnd, onTouchEnd_fn, _onMouseWheel, onMouseWheel_fn, _onContextMenu, onContextMenu_fn, _update, update_fn, _rotate, rotate_fn, _pan, pan_fn, _zoom, zoom_fn;
+  var __accessCheck$5 = (obj, member, msg) => member.has(obj) || __typeError$5("Cannot " + msg);
+  var __privateGet$4 = (obj, member, getter) => (__accessCheck$5(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$5 = (obj, member, value) => member.has(obj) ? __typeError$5("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$4 = (obj, member, value, setter) => (__accessCheck$5(obj, member, "write to private field"), member.set(obj, value), value);
+  var __privateMethod$5 = (obj, member, method) => (__accessCheck$5(obj, member, "access private method"), method);
+  var _element, _offset, _isOrbiting, _spherical, _rotateStart, _isPaning, _panStart, _panDelta, _OrbitControls_instances, setBaseParams_fn, addEvents_fn, removeEvents_fn, onMouseDown_fn, onTouchStart_fn, onMouseMove_fn, onTouchMove_fn, onMouseUp_fn, onTouchEnd_fn, onMouseWheel_fn, onContextMenu_fn, update_fn, rotate_fn, pan_fn, zoom_fn;
   const tempVec2a = new Vec2();
   const tempVec2b = new Vec2();
   const tempVec3$1 = new Vec3();
@@ -19595,93 +19251,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       enablePan = true,
       panSpeed = 1
     }) {
-      /**
-       * Set / reset base params
-       * @ignore
-       */
-      __privateAdd$5(this, _setBaseParams);
-      /**
-       * Add the event listeners.
-       * @private
-       */
-      __privateAdd$5(this, _addEvents);
-      /**
-       * Remove the event listeners.
-       * @private
-       */
-      __privateAdd$5(this, _removeEvents);
-      /**
-       * Callback executed on mouse down event.
-       * @param e - {@link MouseEvent}.
-       * @private
-       */
-      __privateAdd$5(this, _onMouseDown);
-      /**
-       * Callback executed on touch start event.
-       * @param e - {@link TouchEvent}.
-       * @private
-       */
-      __privateAdd$5(this, _onTouchStart);
-      /**
-       * Callback executed on mouse move event.
-       * @param e - {@link MouseEvent}.
-       */
-      __privateAdd$5(this, _onMouseMove);
-      /**
-       * Callback executed on touch move event.
-       * @param e - {@link TouchEvent}.
-       * @private
-       */
-      __privateAdd$5(this, _onTouchMove);
-      /**
-       * Callback executed on mouse up event.
-       * @param e - {@link MouseEvent}.
-       * @private
-       */
-      __privateAdd$5(this, _onMouseUp);
-      /**
-       * Callback executed on touch end event.
-       * @param e - {@link MouseEvent}.
-       * @private
-       */
-      __privateAdd$5(this, _onTouchEnd);
-      /**
-       * Callback executed on wheel event.
-       * @param e - {@link WheelEvent}.
-       * @private
-       */
-      __privateAdd$5(this, _onMouseWheel);
-      /**
-       * Prevent context menu apparition on right click
-       * @param e - {@link MouseEvent}.
-       * @private
-       */
-      __privateAdd$5(this, _onContextMenu);
-      /**
-       * Update the {@link camera} position based on the {@link target} and internal values.
-       * @private
-       */
-      __privateAdd$5(this, _update);
-      /**
-       * Update the {@link camera} position based on input coordinates so it rotates around the {@link target}.
-       * @param x - input coordinate along the X axis.
-       * @param y - input coordinate along the Y axis.
-       * @private
-       */
-      __privateAdd$5(this, _rotate);
-      /**
-       * Pan the {@link camera} position based on input coordinates by updating {@link target}.
-       * @param x - input coordinate along the X axis.
-       * @param y - input coordinate along the Y axis.
-       * @private
-       */
-      __privateAdd$5(this, _pan);
-      /**
-       * Move the {@link camera} forward or backward.
-       * @param value - new value to use for zoom.
-       * @private
-       */
-      __privateAdd$5(this, _zoom);
+      __privateAdd$5(this, _OrbitControls_instances);
       /**
        * {@link HTMLElement} (or {@link Window} element) to use for event listeners.
        * @private
@@ -19705,7 +19275,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
         throwWarning("OrbitControls: cannot initialize without a camera.");
         return;
       }
-      __privateMethod$5(this, _setBaseParams, setBaseParams_fn).call(this, {
+      __privateMethod$5(this, _OrbitControls_instances, setBaseParams_fn).call(this, {
         target,
         enableZoom,
         minZoom,
@@ -19736,7 +19306,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       __privateGet$4(this, _spherical).radius = __privateGet$4(this, _offset).length();
       __privateGet$4(this, _spherical).theta = Math.atan2(__privateGet$4(this, _offset).x, __privateGet$4(this, _offset).z);
       __privateGet$4(this, _spherical).phi = Math.acos(Math.min(Math.max(__privateGet$4(this, _offset).y / __privateGet$4(this, _spherical).radius, -1), 1));
-      __privateMethod$5(this, _update, update_fn).call(this);
+      __privateMethod$5(this, _OrbitControls_instances, update_fn).call(this);
     }
     /**
      * Reset the {@link OrbitControls} values.
@@ -19761,7 +19331,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       enablePan = this.enablePan,
       panSpeed = this.panSpeed
     } = {}) {
-      __privateMethod$5(this, _setBaseParams, setBaseParams_fn).call(this, {
+      __privateMethod$5(this, _OrbitControls_instances, setBaseParams_fn).call(this, {
         target,
         enableZoom,
         minZoom,
@@ -19789,7 +19359,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       __privateGet$4(this, _spherical).radius = position.length();
       __privateGet$4(this, _spherical).theta = Math.atan2(position.x, position.z);
       __privateGet$4(this, _spherical).phi = Math.acos(Math.min(Math.max(position.y / __privateGet$4(this, _spherical).radius, -1), 1));
-      __privateMethod$5(this, _update, update_fn).call(this);
+      __privateMethod$5(this, _OrbitControls_instances, update_fn).call(this);
     }
     /**
      * Set the element to use for event listeners. Can remove previous event listeners first if needed.
@@ -19797,11 +19367,11 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
      */
     set element(value) {
       if (__privateGet$4(this, _element) && (!value || __privateGet$4(this, _element) !== value)) {
-        __privateMethod$5(this, _removeEvents, removeEvents_fn).call(this);
+        __privateMethod$5(this, _OrbitControls_instances, removeEvents_fn).call(this);
       }
       __privateSet$4(this, _element, value);
       if (value) {
-        __privateMethod$5(this, _addEvents, addEvents_fn).call(this);
+        __privateMethod$5(this, _OrbitControls_instances, addEvents_fn).call(this);
       }
     }
     /**
@@ -19826,7 +19396,11 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
   _isPaning = new WeakMap();
   _panStart = new WeakMap();
   _panDelta = new WeakMap();
-  _setBaseParams = new WeakSet();
+  _OrbitControls_instances = new WeakSet();
+  /**
+   * Set / reset base params
+   * @ignore
+   */
   setBaseParams_fn = function({
     target,
     // zoom
@@ -19861,29 +19435,39 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
     this.enablePan = enablePan;
     this.panSpeed = panSpeed;
   };
-  _addEvents = new WeakSet();
+  /**
+   * Add the event listeners.
+   * @private
+   */
   addEvents_fn = function() {
-    __privateGet$4(this, _element).addEventListener("contextmenu", __privateMethod$5(this, _onContextMenu, onContextMenu_fn).bind(this), false);
-    __privateGet$4(this, _element).addEventListener("mousedown", __privateMethod$5(this, _onMouseDown, onMouseDown_fn).bind(this), false);
-    __privateGet$4(this, _element).addEventListener("mousemove", __privateMethod$5(this, _onMouseMove, onMouseMove_fn).bind(this), false);
-    __privateGet$4(this, _element).addEventListener("mouseup", __privateMethod$5(this, _onMouseUp, onMouseUp_fn).bind(this), false);
-    __privateGet$4(this, _element).addEventListener("touchstart", __privateMethod$5(this, _onTouchStart, onTouchStart_fn).bind(this), { passive: false });
-    __privateGet$4(this, _element).addEventListener("touchmove", __privateMethod$5(this, _onTouchMove, onTouchMove_fn).bind(this), { passive: false });
-    __privateGet$4(this, _element).addEventListener("touchend", __privateMethod$5(this, _onTouchEnd, onTouchEnd_fn).bind(this), false);
-    __privateGet$4(this, _element).addEventListener("wheel", __privateMethod$5(this, _onMouseWheel, onMouseWheel_fn).bind(this), { passive: false });
+    __privateGet$4(this, _element).addEventListener("contextmenu", __privateMethod$5(this, _OrbitControls_instances, onContextMenu_fn).bind(this), false);
+    __privateGet$4(this, _element).addEventListener("mousedown", __privateMethod$5(this, _OrbitControls_instances, onMouseDown_fn).bind(this), false);
+    __privateGet$4(this, _element).addEventListener("mousemove", __privateMethod$5(this, _OrbitControls_instances, onMouseMove_fn).bind(this), false);
+    __privateGet$4(this, _element).addEventListener("mouseup", __privateMethod$5(this, _OrbitControls_instances, onMouseUp_fn).bind(this), false);
+    __privateGet$4(this, _element).addEventListener("touchstart", __privateMethod$5(this, _OrbitControls_instances, onTouchStart_fn).bind(this), { passive: false });
+    __privateGet$4(this, _element).addEventListener("touchmove", __privateMethod$5(this, _OrbitControls_instances, onTouchMove_fn).bind(this), { passive: false });
+    __privateGet$4(this, _element).addEventListener("touchend", __privateMethod$5(this, _OrbitControls_instances, onTouchEnd_fn).bind(this), false);
+    __privateGet$4(this, _element).addEventListener("wheel", __privateMethod$5(this, _OrbitControls_instances, onMouseWheel_fn).bind(this), { passive: false });
   };
-  _removeEvents = new WeakSet();
+  /**
+   * Remove the event listeners.
+   * @private
+   */
   removeEvents_fn = function() {
-    __privateGet$4(this, _element).removeEventListener("contextmenu", __privateMethod$5(this, _onContextMenu, onContextMenu_fn).bind(this), false);
-    __privateGet$4(this, _element).removeEventListener("mousedown", __privateMethod$5(this, _onMouseDown, onMouseDown_fn).bind(this), false);
-    __privateGet$4(this, _element).removeEventListener("mousemove", __privateMethod$5(this, _onMouseMove, onMouseMove_fn).bind(this), false);
-    __privateGet$4(this, _element).removeEventListener("mouseup", __privateMethod$5(this, _onMouseUp, onMouseUp_fn).bind(this), false);
-    __privateGet$4(this, _element).removeEventListener("touchstart", __privateMethod$5(this, _onTouchStart, onTouchStart_fn).bind(this), { passive: false });
-    __privateGet$4(this, _element).removeEventListener("touchmove", __privateMethod$5(this, _onTouchMove, onTouchMove_fn).bind(this), { passive: false });
-    __privateGet$4(this, _element).removeEventListener("touchend", __privateMethod$5(this, _onTouchEnd, onTouchEnd_fn).bind(this), false);
-    __privateGet$4(this, _element).removeEventListener("wheel", __privateMethod$5(this, _onMouseWheel, onMouseWheel_fn).bind(this), { passive: false });
+    __privateGet$4(this, _element).removeEventListener("contextmenu", __privateMethod$5(this, _OrbitControls_instances, onContextMenu_fn).bind(this), false);
+    __privateGet$4(this, _element).removeEventListener("mousedown", __privateMethod$5(this, _OrbitControls_instances, onMouseDown_fn).bind(this), false);
+    __privateGet$4(this, _element).removeEventListener("mousemove", __privateMethod$5(this, _OrbitControls_instances, onMouseMove_fn).bind(this), false);
+    __privateGet$4(this, _element).removeEventListener("mouseup", __privateMethod$5(this, _OrbitControls_instances, onMouseUp_fn).bind(this), false);
+    __privateGet$4(this, _element).removeEventListener("touchstart", __privateMethod$5(this, _OrbitControls_instances, onTouchStart_fn).bind(this), { passive: false });
+    __privateGet$4(this, _element).removeEventListener("touchmove", __privateMethod$5(this, _OrbitControls_instances, onTouchMove_fn).bind(this), { passive: false });
+    __privateGet$4(this, _element).removeEventListener("touchend", __privateMethod$5(this, _OrbitControls_instances, onTouchEnd_fn).bind(this), false);
+    __privateGet$4(this, _element).removeEventListener("wheel", __privateMethod$5(this, _OrbitControls_instances, onMouseWheel_fn).bind(this), { passive: false });
   };
-  _onMouseDown = new WeakSet();
+  /**
+   * Callback executed on mouse down event.
+   * @param e - {@link MouseEvent}.
+   * @private
+   */
   onMouseDown_fn = function(e) {
     if (e.button === 0 && this.enableRotate) {
       __privateSet$4(this, _isOrbiting, true);
@@ -19895,49 +19479,79 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
     e.stopPropagation();
     e.preventDefault();
   };
-  _onTouchStart = new WeakSet();
+  /**
+   * Callback executed on touch start event.
+   * @param e - {@link TouchEvent}.
+   * @private
+   */
   onTouchStart_fn = function(e) {
     if (e.touches.length === 1 && this.enableRotate) {
       __privateSet$4(this, _isOrbiting, true);
       __privateGet$4(this, _rotateStart).set(e.touches[0].pageX, e.touches[0].pageY);
     }
   };
-  _onMouseMove = new WeakSet();
+  /**
+   * Callback executed on mouse move event.
+   * @param e - {@link MouseEvent}.
+   */
   onMouseMove_fn = function(e) {
     if (__privateGet$4(this, _isOrbiting) && this.enableRotate) {
-      __privateMethod$5(this, _rotate, rotate_fn).call(this, e.clientX, e.clientY);
+      __privateMethod$5(this, _OrbitControls_instances, rotate_fn).call(this, e.clientX, e.clientY);
     } else if (__privateGet$4(this, _isPaning) && this.enablePan) {
-      __privateMethod$5(this, _pan, pan_fn).call(this, e.clientX, e.clientY);
+      __privateMethod$5(this, _OrbitControls_instances, pan_fn).call(this, e.clientX, e.clientY);
     }
   };
-  _onTouchMove = new WeakSet();
+  /**
+   * Callback executed on touch move event.
+   * @param e - {@link TouchEvent}.
+   * @private
+   */
   onTouchMove_fn = function(e) {
     if (__privateGet$4(this, _isOrbiting) && this.enableRotate) {
-      __privateMethod$5(this, _rotate, rotate_fn).call(this, e.touches[0].pageX, e.touches[0].pageY);
+      __privateMethod$5(this, _OrbitControls_instances, rotate_fn).call(this, e.touches[0].pageX, e.touches[0].pageY);
     }
   };
-  _onMouseUp = new WeakSet();
+  /**
+   * Callback executed on mouse up event.
+   * @param e - {@link MouseEvent}.
+   * @private
+   */
   onMouseUp_fn = function(e) {
     __privateSet$4(this, _isOrbiting, false);
     __privateSet$4(this, _isPaning, false);
   };
-  _onTouchEnd = new WeakSet();
+  /**
+   * Callback executed on touch end event.
+   * @param e - {@link MouseEvent}.
+   * @private
+   */
   onTouchEnd_fn = function(e) {
     __privateSet$4(this, _isOrbiting, false);
     __privateSet$4(this, _isPaning, false);
   };
-  _onMouseWheel = new WeakSet();
+  /**
+   * Callback executed on wheel event.
+   * @param e - {@link WheelEvent}.
+   * @private
+   */
   onMouseWheel_fn = function(e) {
     if (this.enableZoom) {
-      __privateMethod$5(this, _zoom, zoom_fn).call(this, e.deltaY);
+      __privateMethod$5(this, _OrbitControls_instances, zoom_fn).call(this, e.deltaY);
       e.preventDefault();
     }
   };
-  _onContextMenu = new WeakSet();
+  /**
+   * Prevent context menu apparition on right click
+   * @param e - {@link MouseEvent}.
+   * @private
+   */
   onContextMenu_fn = function(e) {
     e.preventDefault();
   };
-  _update = new WeakSet();
+  /**
+   * Update the {@link camera} position based on the {@link target} and internal values.
+   * @private
+   */
   update_fn = function() {
     const sinPhiRadius = __privateGet$4(this, _spherical).radius * Math.sin(Math.max(1e-6, __privateGet$4(this, _spherical).phi));
     __privateGet$4(this, _offset).x = sinPhiRadius * Math.sin(__privateGet$4(this, _spherical).theta);
@@ -19945,7 +19559,12 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
     __privateGet$4(this, _offset).z = sinPhiRadius * Math.cos(__privateGet$4(this, _spherical).theta);
     this.camera.position.copy(this.target).add(__privateGet$4(this, _offset));
   };
-  _rotate = new WeakSet();
+  /**
+   * Update the {@link camera} position based on input coordinates so it rotates around the {@link target}.
+   * @param x - input coordinate along the X axis.
+   * @param y - input coordinate along the Y axis.
+   * @private
+   */
   rotate_fn = function(x, y) {
     tempVec2a.set(x, y);
     tempVec2b.copy(tempVec2a).sub(__privateGet$4(this, _rotateStart)).multiplyScalar(this.rotateSpeed);
@@ -19954,9 +19573,14 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
     __privateGet$4(this, _spherical).theta = Math.min(this.maxAzimuthAngle, Math.max(this.minAzimuthAngle, __privateGet$4(this, _spherical).theta));
     __privateGet$4(this, _spherical).phi = Math.min(this.maxPolarAngle, Math.max(this.minPolarAngle, __privateGet$4(this, _spherical).phi));
     __privateGet$4(this, _rotateStart).copy(tempVec2a);
-    __privateMethod$5(this, _update, update_fn).call(this);
+    __privateMethod$5(this, _OrbitControls_instances, update_fn).call(this);
   };
-  _pan = new WeakSet();
+  /**
+   * Pan the {@link camera} position based on input coordinates by updating {@link target}.
+   * @param x - input coordinate along the X axis.
+   * @param y - input coordinate along the Y axis.
+   * @private
+   */
   pan_fn = function(x, y) {
     tempVec2a.set(x, y);
     tempVec2b.copy(tempVec2a).sub(__privateGet$4(this, _panStart)).multiplyScalar(this.panSpeed);
@@ -19982,69 +19606,31 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
     this.target.add(__privateGet$4(this, _panDelta));
     __privateGet$4(this, _offset).copy(this.camera.position).sub(this.target);
     __privateGet$4(this, _spherical).radius = __privateGet$4(this, _offset).length();
-    __privateMethod$5(this, _update, update_fn).call(this);
+    __privateMethod$5(this, _OrbitControls_instances, update_fn).call(this);
   };
-  _zoom = new WeakSet();
+  /**
+   * Move the {@link camera} forward or backward.
+   * @param value - new value to use for zoom.
+   * @private
+   */
   zoom_fn = function(value) {
     __privateGet$4(this, _spherical).radius = Math.min(
       this.maxZoom,
       Math.max(this.minZoom + 1e-6, __privateGet$4(this, _spherical).radius + value * this.zoomSpeed / 100)
     );
-    __privateMethod$5(this, _update, update_fn).call(this);
+    __privateMethod$5(this, _OrbitControls_instances, update_fn).call(this);
   };
 
-  var __accessCheck$4 = (obj, member, msg) => {
-    if (!member.has(obj))
-      throw TypeError("Cannot " + msg);
+  var __typeError$4 = (msg) => {
+    throw TypeError(msg);
   };
-  var __privateAdd$4 = (obj, member, value) => {
-    if (member.has(obj))
-      throw TypeError("Cannot add the same private member more than once");
-    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  };
-  var __privateMethod$4 = (obj, member, method) => {
-    __accessCheck$4(obj, member, "access private method");
-    return method;
-  };
-  var _decodeRGBE, decodeRGBE_fn, _parseHeader, parseHeader_fn, _parseSize, parseSize_fn, _readLine, readLine_fn, _parseData, parseData_fn, _parseNewRLE, parseNewRLE_fn, _swap, swap_fn, _flipX, flipX_fn, _flipY, flipY_fn;
+  var __accessCheck$4 = (obj, member, msg) => member.has(obj) || __typeError$4("Cannot " + msg);
+  var __privateAdd$4 = (obj, member, value) => member.has(obj) ? __typeError$4("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateMethod$4 = (obj, member, method) => (__accessCheck$4(obj, member, "access private method"), method);
+  var _HDRLoader_instances, decodeRGBE_fn, parseHeader_fn, parseSize_fn, readLine_fn, parseData_fn, parseNewRLE_fn, swap_fn, flipX_fn, flipY_fn;
   class HDRLoader {
     constructor() {
-      /**
-       * @ignore
-       */
-      __privateAdd$4(this, _decodeRGBE);
-      /**
-       * @ignore
-       */
-      __privateAdd$4(this, _parseHeader);
-      /**
-       * @ignore
-       */
-      __privateAdd$4(this, _parseSize);
-      /**
-       * @ignore
-       */
-      __privateAdd$4(this, _readLine);
-      /**
-       * @ignore
-       */
-      __privateAdd$4(this, _parseData);
-      /**
-       * @ignore
-       */
-      __privateAdd$4(this, _parseNewRLE);
-      /**
-       * @ignore
-       */
-      __privateAdd$4(this, _swap);
-      /**
-       * @ignore
-       */
-      __privateAdd$4(this, _flipX);
-      /**
-       * @ignore
-       */
-      __privateAdd$4(this, _flipY);
+      __privateAdd$4(this, _HDRLoader_instances);
     }
     /**
      * Load and decode RGBE-encoded data to a flat list of floating point pixel data (RGBA).
@@ -20053,27 +19639,32 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
      */
     async loadFromUrl(url) {
       const buffer = await (await fetch(url)).arrayBuffer();
-      return __privateMethod$4(this, _decodeRGBE, decodeRGBE_fn).call(this, new DataView(buffer));
+      return __privateMethod$4(this, _HDRLoader_instances, decodeRGBE_fn).call(this, new DataView(buffer));
     }
   }
-  _decodeRGBE = new WeakSet();
+  _HDRLoader_instances = new WeakSet();
+  /**
+   * @ignore
+   */
   decodeRGBE_fn = function(data) {
     const stream = {
       data,
       offset: 0
     };
-    const header = __privateMethod$4(this, _parseHeader, parseHeader_fn).call(this, stream);
+    const header = __privateMethod$4(this, _HDRLoader_instances, parseHeader_fn).call(this, stream);
     return {
       width: header.width,
       height: header.height,
       exposure: header.exposure,
       gamma: header.gamma,
-      data: __privateMethod$4(this, _parseData, parseData_fn).call(this, stream, header)
+      data: __privateMethod$4(this, _HDRLoader_instances, parseData_fn).call(this, stream, header)
     };
   };
-  _parseHeader = new WeakSet();
+  /**
+   * @ignore
+   */
   parseHeader_fn = function(stream) {
-    let line = __privateMethod$4(this, _readLine, readLine_fn).call(this, stream);
+    let line = __privateMethod$4(this, _HDRLoader_instances, readLine_fn).call(this, stream);
     const header = {
       colorCorr: [1, 1, 1],
       exposure: 1,
@@ -20083,10 +19674,9 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       flipX: false,
       flipY: false
     };
-    if (line !== "#?RADIANCE" && line !== "#?RGBE")
-      throw new Error("Incorrect file format!");
+    if (line !== "#?RADIANCE" && line !== "#?RGBE") throw new Error("Incorrect file format!");
     while (line !== "") {
-      line = __privateMethod$4(this, _readLine, readLine_fn).call(this, stream);
+      line = __privateMethod$4(this, _HDRLoader_instances, readLine_fn).call(this, stream);
       const parts2 = line.split("=");
       switch (parts2[0]) {
         case "GAMMA":
@@ -20104,13 +19694,15 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
           break;
       }
     }
-    line = __privateMethod$4(this, _readLine, readLine_fn).call(this, stream);
+    line = __privateMethod$4(this, _HDRLoader_instances, readLine_fn).call(this, stream);
     const parts = line.split(" ");
-    __privateMethod$4(this, _parseSize, parseSize_fn).call(this, parts[0], parseInt(parts[1]), header);
-    __privateMethod$4(this, _parseSize, parseSize_fn).call(this, parts[2], parseInt(parts[3]), header);
+    __privateMethod$4(this, _HDRLoader_instances, parseSize_fn).call(this, parts[0], parseInt(parts[1]), header);
+    __privateMethod$4(this, _HDRLoader_instances, parseSize_fn).call(this, parts[2], parseInt(parts[3]), header);
     return header;
   };
-  _parseSize = new WeakSet();
+  /**
+   * @ignore
+   */
   parseSize_fn = function(label, value, header) {
     switch (label) {
       case "+X":
@@ -20130,39 +19722,40 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
         break;
     }
   };
-  _readLine = new WeakSet();
+  /**
+   * @ignore
+   */
   readLine_fn = function(stream) {
     let ch, str = "";
-    while ((ch = stream.data.getUint8(stream.offset++)) !== 10)
-      str += String.fromCharCode(ch);
+    while ((ch = stream.data.getUint8(stream.offset++)) !== 10) str += String.fromCharCode(ch);
     return str;
   };
-  _parseData = new WeakSet();
+  /**
+   * @ignore
+   */
   parseData_fn = function(stream, header) {
     const hash = stream.data.getUint16(stream.offset);
     let data;
     if (hash === 514) {
-      data = __privateMethod$4(this, _parseNewRLE, parseNewRLE_fn).call(this, stream, header);
-      if (header.flipX)
-        __privateMethod$4(this, _flipX, flipX_fn).call(this, data, header);
-      if (header.flipY)
-        __privateMethod$4(this, _flipY, flipY_fn).call(this, data, header);
+      data = __privateMethod$4(this, _HDRLoader_instances, parseNewRLE_fn).call(this, stream, header);
+      if (header.flipX) __privateMethod$4(this, _HDRLoader_instances, flipX_fn).call(this, data, header);
+      if (header.flipY) __privateMethod$4(this, _HDRLoader_instances, flipY_fn).call(this, data, header);
     } else {
       throw new Error("Obsolete HDR file version!");
     }
     return data;
   };
-  _parseNewRLE = new WeakSet();
+  /**
+   * @ignore
+   */
   parseNewRLE_fn = function(stream, header) {
     const { width, height, colorCorr } = header;
     const tgt = new Float32Array(width * height * 4);
     let i = 0;
     let { offset, data } = stream;
     for (let y = 0; y < height; ++y) {
-      if (data.getUint16(offset) !== 514)
-        throw new Error("Incorrect scanline start hash");
-      if (data.getUint16(offset + 2) !== width)
-        throw new Error("Scanline doesn't match picture dimension!");
+      if (data.getUint16(offset) !== 514) throw new Error("Incorrect scanline start hash");
+      if (data.getUint16(offset + 2) !== width) throw new Error("Scanline doesn't match picture dimension!");
       offset += 4;
       const numComps = width * 4;
       const comps = [];
@@ -20195,7 +19788,9 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
     }
     return tgt;
   };
-  _swap = new WeakSet();
+  /**
+   * @ignore
+   */
   swap_fn = function(data, i1, i2) {
     i1 *= 4;
     i2 *= 4;
@@ -20205,7 +19800,9 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       data[i2 + i] = tmp;
     }
   };
-  _flipX = new WeakSet();
+  /**
+   * @ignore
+   */
   flipX_fn = function(data, header) {
     const { width, height } = header;
     const hw = width >> 1;
@@ -20214,11 +19811,13 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       for (let x = 0; x < hw; ++x) {
         const i1 = b + x;
         const i2 = b + width - 1 - x;
-        __privateMethod$4(this, _swap, swap_fn).call(this, data, i1, i2);
+        __privateMethod$4(this, _HDRLoader_instances, swap_fn).call(this, data, i1, i2);
       }
     }
   };
-  _flipY = new WeakSet();
+  /**
+   * @ignore
+   */
   flipY_fn = function(data, header) {
     const { width, height } = header;
     const hh = height >> 1;
@@ -20226,7 +19825,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       const b1 = y * width;
       const b2 = (height - 1 - y) * width;
       for (let x = 0; x < width; ++x) {
-        __privateMethod$4(this, _swap, swap_fn).call(this, data, b1 + x, b2 + x);
+        __privateMethod$4(this, _HDRLoader_instances, swap_fn).call(this, data, b1 + x, b2 + x);
       }
     }
   };
@@ -20622,29 +20221,15 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
 `
   );
 
-  var __accessCheck$3 = (obj, member, msg) => {
-    if (!member.has(obj))
-      throw TypeError("Cannot " + msg);
+  var __typeError$3 = (msg) => {
+    throw TypeError(msg);
   };
-  var __privateGet$3 = (obj, member, getter) => {
-    __accessCheck$3(obj, member, "read from private field");
-    return getter ? getter.call(obj) : member.get(obj);
-  };
-  var __privateAdd$3 = (obj, member, value) => {
-    if (member.has(obj))
-      throw TypeError("Cannot add the same private member more than once");
-    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  };
-  var __privateSet$3 = (obj, member, value, setter) => {
-    __accessCheck$3(obj, member, "write to private field");
-    member.set(obj, value);
-    return value;
-  };
-  var __privateMethod$3 = (obj, member, method) => {
-    __accessCheck$3(obj, member, "access private method");
-    return method;
-  };
-  var _lutStorageTexture, _runComputePass, runComputePass_fn;
+  var __accessCheck$3 = (obj, member, msg) => member.has(obj) || __typeError$3("Cannot " + msg);
+  var __privateGet$3 = (obj, member, getter) => (__accessCheck$3(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$3 = (obj, member, value) => member.has(obj) ? __typeError$3("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$3 = (obj, member, value, setter) => (__accessCheck$3(obj, member, "write to private field"), member.set(obj, value), value);
+  var __privateMethod$3 = (obj, member, method) => (__accessCheck$3(obj, member, "access private method"), method);
+  var _lutStorageTexture, _EnvironmentMap_instances, runComputePass_fn;
   class EnvironmentMap {
     /**
      * {@link EnvironmentMap} constructor.
@@ -20652,17 +20237,9 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
      * @param params - {@link EnvironmentMapParams | parameters} use to create this {@link EnvironmentMap}. Defines the various textures options.
      */
     constructor(renderer, params = {}) {
-      /**
-       * Run a {@link ComputePass} once by creating a {@link GPUCommandEncoder} and execute the pass.
-       * @param parameters - Parameters used to run the compute pass.
-       * @param parameters.computePass - {@link ComputePass} to run.
-       * @param parameters.label - Optional label for the {@link GPUCommandEncoder}.
-       * @param parameters.onAfterCompute - Optional callback to run just after the pass has been executed. Useful for eventual texture copies.
-       * @private
-       */
-      __privateAdd$3(this, _runComputePass);
+      __privateAdd$3(this, _EnvironmentMap_instances);
       /** BRDF GGX LUT storage {@link Texture} used in the compute shader. */
-      __privateAdd$3(this, _lutStorageTexture, void 0);
+      __privateAdd$3(this, _lutStorageTexture);
       // callbacks / events
       /** function assigned to the {@link onRotationAxisChanged} callback */
       this._onRotationAxisChangedCallback = () => {
@@ -20793,7 +20370,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         textures: [__privateGet$3(this, _lutStorageTexture)]
       });
       await computeLUTPass.material.compileMaterial();
-      __privateMethod$3(this, _runComputePass, runComputePass_fn).call(this, { computePass: computeLUTPass, label: "Compute LUT texture command encoder" });
+      __privateMethod$3(this, _EnvironmentMap_instances, runComputePass_fn).call(this, { computePass: computeLUTPass, label: "Compute LUT texture command encoder" });
       computeLUTPass.destroy();
       computeLUTPass = null;
     }
@@ -20851,7 +20428,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         textures: [cubeStorageTexture]
       });
       await computeCubeMapPass.material.compileMaterial();
-      __privateMethod$3(this, _runComputePass, runComputePass_fn).call(this, {
+      __privateMethod$3(this, _EnvironmentMap_instances, runComputePass_fn).call(this, {
         computePass: computeCubeMapPass,
         label: "Compute specular cube map command encoder",
         onAfterCompute: (commandEncoder) => {
@@ -20919,7 +20496,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         textures: [this.specularTexture, diffuseStorageTexture]
       });
       await computeDiffusePass.material.compileMaterial();
-      __privateMethod$3(this, _runComputePass, runComputePass_fn).call(this, {
+      __privateMethod$3(this, _EnvironmentMap_instances, runComputePass_fn).call(this, {
         computePass: computeDiffusePass,
         label: "Compute diffuse cube map from specular cube map command encoder",
         onAfterCompute: (commandEncoder) => {
@@ -21001,7 +20578,15 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
     }
   }
   _lutStorageTexture = new WeakMap();
-  _runComputePass = new WeakSet();
+  _EnvironmentMap_instances = new WeakSet();
+  /**
+   * Run a {@link ComputePass} once by creating a {@link GPUCommandEncoder} and execute the pass.
+   * @param parameters - Parameters used to run the compute pass.
+   * @param parameters.computePass - {@link ComputePass} to run.
+   * @param parameters.label - Optional label for the {@link GPUCommandEncoder}.
+   * @param parameters.onAfterCompute - Optional callback to run just after the pass has been executed. Useful for eventual texture copies.
+   * @private
+   */
   runComputePass_fn = function({
     computePass,
     label = "",
@@ -21168,10 +20753,8 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
           const b = grid[iy][ix];
           const c = grid[iy + 1][ix];
           const d = grid[iy + 1][ix + 1];
-          if (iy !== 0 || thetaStart > 0)
-            indices.push(a, b, d);
-          if (iy !== heightSegments - 1 || thetaEnd < Math.PI)
-            indices.push(b, c, d);
+          if (iy !== 0 || thetaStart > 0) indices.push(a, b, d);
+          if (iy !== heightSegments - 1 || thetaEnd < Math.PI) indices.push(b, c, d);
         }
       }
       this.setAttribute({
@@ -21668,71 +21251,46 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
     }
   }
 
-  var __accessCheck$2 = (obj, member, msg) => {
-    if (!member.has(obj))
-      throw TypeError("Cannot " + msg);
+  var __typeError$2 = (msg) => {
+    throw TypeError(msg);
   };
-  var __privateGet$2 = (obj, member, getter) => {
-    __accessCheck$2(obj, member, "read from private field");
-    return getter ? getter.call(obj) : member.get(obj);
-  };
-  var __privateAdd$2 = (obj, member, value) => {
-    if (member.has(obj))
-      throw TypeError("Cannot add the same private member more than once");
-    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  };
-  var __privateSet$2 = (obj, member, value, setter) => {
-    __accessCheck$2(obj, member, "write to private field");
-    member.set(obj, value);
-    return value;
-  };
-  var __privateMethod$2 = (obj, member, method) => {
-    __accessCheck$2(obj, member, "access private method");
-    return method;
-  };
-  var _localRay, _v0, _v1, _v2, _edge1, _edge2, _uv0, _uv1, _uv2, _n0, _n1, _n2, _intersectMesh, intersectMesh_fn;
+  var __accessCheck$2 = (obj, member, msg) => member.has(obj) || __typeError$2("Cannot " + msg);
+  var __privateGet$2 = (obj, member, getter) => (__accessCheck$2(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$2 = (obj, member, value) => member.has(obj) ? __typeError$2("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$2 = (obj, member, value, setter) => (__accessCheck$2(obj, member, "write to private field"), member.set(obj, value), value);
+  var __privateMethod$2 = (obj, member, method) => (__accessCheck$2(obj, member, "access private method"), method);
+  var _localRay, _v0, _v1, _v2, _edge1, _edge2, _uv0, _uv1, _uv2, _n0, _n1, _n2, _Raycaster_instances, intersectMesh_fn;
   class Raycaster {
     /**
      * Raycaster constructor
      * @param renderer - {@link CameraRenderer} object or {@link GPUCurtains} class object used to create this {@link Raycaster}
      */
     constructor(renderer) {
-      /**
-       * Test whether the {@link ray} is intersecting a given {@link ProjectedMesh | projected mesh} and if so, returns the given {@link Intersection | intersection} information.
-       * Uses various early exits to optimize the process:
-       * - if the mesh is frustum culled
-       * - if the pointer is currently outside the mesh clip space bounding rectangle.
-       * - based on the face culling.
-       * @param mesh - {@link ProjectedMesh | Projected mesh} to test against.
-       * @param intersections - Already existing {@link Intersection | intersections} if any.
-       * @returns - Updated {@link Intersection | intersections}.
-       * @private
-       */
-      __privateAdd$2(this, _intersectMesh);
+      __privateAdd$2(this, _Raycaster_instances);
       /** @ignore */
-      __privateAdd$2(this, _localRay, void 0);
+      __privateAdd$2(this, _localRay);
       /** @ignore */
-      __privateAdd$2(this, _v0, void 0);
+      __privateAdd$2(this, _v0);
       /** @ignore */
-      __privateAdd$2(this, _v1, void 0);
+      __privateAdd$2(this, _v1);
       /** @ignore */
-      __privateAdd$2(this, _v2, void 0);
+      __privateAdd$2(this, _v2);
       /** @ignore */
-      __privateAdd$2(this, _edge1, void 0);
+      __privateAdd$2(this, _edge1);
       /** @ignore */
-      __privateAdd$2(this, _edge2, void 0);
+      __privateAdd$2(this, _edge2);
       /** @ignore */
-      __privateAdd$2(this, _uv0, void 0);
+      __privateAdd$2(this, _uv0);
       /** @ignore */
-      __privateAdd$2(this, _uv1, void 0);
+      __privateAdd$2(this, _uv1);
       /** @ignore */
-      __privateAdd$2(this, _uv2, void 0);
+      __privateAdd$2(this, _uv2);
       /** @ignore */
-      __privateAdd$2(this, _n0, void 0);
+      __privateAdd$2(this, _n0);
       /** @ignore */
-      __privateAdd$2(this, _n1, void 0);
+      __privateAdd$2(this, _n1);
       /** @ignore */
-      __privateAdd$2(this, _n2, void 0);
+      __privateAdd$2(this, _n2);
       this.type = "Raycaster";
       renderer = isCameraRenderer(renderer, this.type);
       this.renderer = renderer;
@@ -21797,17 +21355,14 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
       const q = new Vec3();
       h.crossVectors(__privateGet$2(this, _localRay).direction, __privateGet$2(this, _edge2));
       const a = __privateGet$2(this, _edge1).dot(h);
-      if (Math.abs(a) < EPSILON)
-        return false;
+      if (Math.abs(a) < EPSILON) return false;
       const f = 1 / a;
       const s = __privateGet$2(this, _localRay).origin.clone().sub(__privateGet$2(this, _v0));
       const u = f * s.dot(h);
-      if (u < 0 || u > 1)
-        return false;
+      if (u < 0 || u > 1) return false;
       q.crossVectors(s, __privateGet$2(this, _edge1));
       const v = f * __privateGet$2(this, _localRay).direction.dot(q);
-      if (v < 0 || u + v > 1)
-        return false;
+      if (v < 0 || u + v > 1) return false;
       const t = f * __privateGet$2(this, _edge2).dot(q);
       if (t > EPSILON) {
         intersectionPoint.copy(__privateGet$2(this, _localRay).origin).add(__privateGet$2(this, _localRay).direction.clone().multiplyScalar(t));
@@ -21872,7 +21427,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
       }
       const mesh = isProjectedMesh(object);
       if (mesh) {
-        __privateMethod$2(this, _intersectMesh, intersectMesh_fn).call(this, mesh, intersections);
+        __privateMethod$2(this, _Raycaster_instances, intersectMesh_fn).call(this, mesh, intersections);
       }
       if (recursive) {
         object.children.forEach((child) => {
@@ -21918,10 +21473,20 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
   _n0 = new WeakMap();
   _n1 = new WeakMap();
   _n2 = new WeakMap();
-  _intersectMesh = new WeakSet();
+  _Raycaster_instances = new WeakSet();
+  /**
+   * Test whether the {@link ray} is intersecting a given {@link ProjectedMesh | projected mesh} and if so, returns the given {@link Intersection | intersection} information.
+   * Uses various early exits to optimize the process:
+   * - if the mesh is frustum culled
+   * - if the pointer is currently outside the mesh clip space bounding rectangle.
+   * - based on the face culling.
+   * @param mesh - {@link ProjectedMesh | Projected mesh} to test against.
+   * @param intersections - Already existing {@link Intersection | intersections} if any.
+   * @returns - Updated {@link Intersection | intersections}.
+   * @private
+   */
   intersectMesh_fn = function(mesh, intersections = []) {
-    if (!mesh.geometry)
-      return intersections;
+    if (!mesh.geometry) return intersections;
     const position = mesh.geometry.getAttributeByName("position");
     if (!position) {
       if (!this.renderer.production) {
@@ -22057,14 +21622,11 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
      * @param currentTime - Current time in seconds.
      */
     update(target, currentTime = 0) {
-      if (!this.keyframes || !this.values || !this.path)
-        return;
+      if (!this.keyframes || !this.values || !this.path) return;
       const nextTimeIndex = this.keyframes.findIndex((t) => t >= currentTime);
-      if (nextTimeIndex === -1)
-        return;
+      if (nextTimeIndex === -1) return;
       const previousTimeIndex = nextTimeIndex - 1;
-      if (previousTimeIndex === -1)
-        return;
+      if (previousTimeIndex === -1) return;
       const nextTime = this.keyframes[nextTimeIndex];
       const previousTime = this.keyframes[previousTimeIndex];
       const interpolatedTime = (currentTime - previousTime) / (nextTime - previousTime);
@@ -22202,29 +21764,15 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
     }
   }
 
-  var __accessCheck$1 = (obj, member, msg) => {
-    if (!member.has(obj))
-      throw TypeError("Cannot " + msg);
+  var __typeError$1 = (msg) => {
+    throw TypeError(msg);
   };
-  var __privateGet$1 = (obj, member, getter) => {
-    __accessCheck$1(obj, member, "read from private field");
-    return getter ? getter.call(obj) : member.get(obj);
-  };
-  var __privateAdd$1 = (obj, member, value) => {
-    if (member.has(obj))
-      throw TypeError("Cannot add the same private member more than once");
-    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  };
-  var __privateSet$1 = (obj, member, value, setter) => {
-    __accessCheck$1(obj, member, "write to private field");
-    member.set(obj, value);
-    return value;
-  };
-  var __privateMethod$1 = (obj, member, method) => {
-    __accessCheck$1(obj, member, "access private method");
-    return method;
-  };
-  var _startTime, _currentTime, _deltaTime, _count, _maxCount, _setSiblings, setSiblings_fn;
+  var __accessCheck$1 = (obj, member, msg) => member.has(obj) || __typeError$1("Cannot " + msg);
+  var __privateGet$1 = (obj, member, getter) => (__accessCheck$1(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$1 = (obj, member, value) => member.has(obj) ? __typeError$1("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$1 = (obj, member, value, setter) => (__accessCheck$1(obj, member, "write to private field"), member.set(obj, value), value);
+  var __privateMethod$1 = (obj, member, method) => (__accessCheck$1(obj, member, "access private method"), method);
+  var _startTime, _currentTime, _deltaTime, _count, _maxCount, _TargetsAnimationsManager_instances, setSiblings_fn;
   class TargetsAnimationsManager {
     /**
      * TargetsAnimationsManager constructor
@@ -22232,22 +21780,18 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
      * @param parameters - {@link TargetsAnimationsManagerParams | parameters} used to create this {@link TargetsAnimationsManager}.
      */
     constructor(renderer, { label = "", targets = [] } = {}) {
-      /**
-       * Set the {@link TargetsAnimationsManager} siblings by comparing {@link inputIndices} arrays.
-       * @private
-       */
-      __privateAdd$1(this, _setSiblings);
+      __privateAdd$1(this, _TargetsAnimationsManager_instances);
       // inner time values
       /** @ignore */
-      __privateAdd$1(this, _startTime, void 0);
+      __privateAdd$1(this, _startTime);
       /** @ignore */
-      __privateAdd$1(this, _currentTime, void 0);
+      __privateAdd$1(this, _currentTime);
       /** @ignore */
-      __privateAdd$1(this, _deltaTime, void 0);
+      __privateAdd$1(this, _deltaTime);
       /** @ignore */
-      __privateAdd$1(this, _count, void 0);
+      __privateAdd$1(this, _count);
       /** @ignore */
-      __privateAdd$1(this, _maxCount, void 0);
+      __privateAdd$1(this, _maxCount);
       this.uuid = generateUUID();
       this.inputIndices = [];
       this.setRenderer(renderer);
@@ -22281,7 +21825,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         this.renderer = renderer;
         this.renderer.animations.set(this.uuid, this);
         if (this.inputIndices.length) {
-          __privateMethod$1(this, _setSiblings, setSiblings_fn).call(this);
+          __privateMethod$1(this, _TargetsAnimationsManager_instances, setSiblings_fn).call(this);
         }
       }
     }
@@ -22319,7 +21863,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
       if (animation.inputIndex !== null && !this.inputIndices.includes(animation.inputIndex)) {
         this.inputIndices.push(animation.inputIndex);
       }
-      __privateMethod$1(this, _setSiblings, setSiblings_fn).call(this);
+      __privateMethod$1(this, _TargetsAnimationsManager_instances, setSiblings_fn).call(this);
     }
     /**
      * Get a {@link Target} from the {@link targets} array based on an {@link Object3D}.
@@ -22381,8 +21925,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         () => {
           this.targets.forEach((target) => {
             target.animations.forEach((animation) => {
-              if (animation.onAfterUpdate)
-                animation.onAfterUpdate();
+              if (animation.onAfterUpdate) animation.onAfterUpdate();
             });
           });
         },
@@ -22401,8 +21944,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
      * Update all the {@link targets} animations.
      */
     update() {
-      if (!this.isPlaying)
-        return;
+      if (!this.isPlaying) return;
       if (__privateGet$1(this, _startTime) === -1) {
         __privateSet$1(this, _startTime, performance.now() - __privateGet$1(this, _deltaTime));
       } else if (__privateGet$1(this, _startTime) === 0) {
@@ -22425,12 +21967,10 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
      * Call all the {@link targets} animations {@link KeyframesAnimation#onAfterUpdate | onAfterUpdate} callbacks.
      */
     onAfterUpdate() {
-      if (!this.isPlaying)
-        return;
+      if (!this.isPlaying) return;
       this.targets.forEach(
         (target) => target.animations.forEach((animation) => {
-          if (animation.onAfterUpdate)
-            animation.onAfterUpdate();
+          if (animation.onAfterUpdate) animation.onAfterUpdate();
         })
       );
     }
@@ -22440,7 +21980,11 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
   _deltaTime = new WeakMap();
   _count = new WeakMap();
   _maxCount = new WeakMap();
-  _setSiblings = new WeakSet();
+  _TargetsAnimationsManager_instances = new WeakSet();
+  /**
+   * Set the {@link TargetsAnimationsManager} siblings by comparing {@link inputIndices} arrays.
+   * @private
+   */
   setSiblings_fn = function() {
     this.siblings = /* @__PURE__ */ new Map();
     this.renderer.animations.forEach((animation) => {
@@ -22453,29 +21997,15 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
     });
   };
 
-  var __accessCheck = (obj, member, msg) => {
-    if (!member.has(obj))
-      throw TypeError("Cannot " + msg);
+  var __typeError = (msg) => {
+    throw TypeError(msg);
   };
-  var __privateGet = (obj, member, getter) => {
-    __accessCheck(obj, member, "read from private field");
-    return getter ? getter.call(obj) : member.get(obj);
-  };
-  var __privateAdd = (obj, member, value) => {
-    if (member.has(obj))
-      throw TypeError("Cannot add the same private member more than once");
-    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  };
-  var __privateSet = (obj, member, value, setter) => {
-    __accessCheck(obj, member, "write to private field");
-    member.set(obj, value);
-    return value;
-  };
-  var __privateMethod = (obj, member, method) => {
-    __accessCheck(obj, member, "access private method");
-    return method;
-  };
-  var _primitiveInstances, _getSparseAccessorIndicesAndValues, getSparseAccessorIndicesAndValues_fn, _parsePrimitiveProperty, parsePrimitiveProperty_fn;
+  var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
+  var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
+  var __privateMethod = (obj, member, method) => (__accessCheck(obj, member, "access private method"), method);
+  var _primitiveInstances, _GLTFScenesManager_instances, getSparseAccessorIndicesAndValues_fn, parsePrimitiveProperty_fn;
   const GL$1 = WebGLRenderingContext;
   const _GLTFScenesManager = class _GLTFScenesManager {
     /**
@@ -22485,23 +22015,9 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
      * @param parameters.gltf - The {@link GLTFLoader.gltf | gltf} object used.
      */
     constructor({ renderer, gltf }) {
-      /**
-       * Get an accessor sparse indices values to use for replacement if any.
-       * @param accessor - {@link GLTF.IAccessor | Accessor} to check for sparse indices.
-       * @returns parameters - indices and values found as {@link TypedArray} if any.
-       * @private
-       */
-      __privateAdd(this, _getSparseAccessorIndicesAndValues);
-      /**
-       * Parse a {@link GLTF.IMeshPrimitive | glTF primitive} and create typed arrays from the given {@link gltf} accessors, bufferViews and buffers.
-       * @param primitiveProperty- Primitive property to parse, can either be `attributes` or `targets`.
-       * @param attributes - An empty {@link VertexBufferAttributeParams} array to fill with parsed values.
-       * @returns - Interleaved attributes {@link TypedArray} if any.
-       * @private
-       */
-      __privateAdd(this, _parsePrimitiveProperty);
+      __privateAdd(this, _GLTFScenesManager_instances);
       /** The {@link PrimitiveInstances} Map, to group similar {@link LitMesh} by instances. */
-      __privateAdd(this, _primitiveInstances, void 0);
+      __privateAdd(this, _primitiveInstances);
       renderer = isCameraRenderer(renderer, "GLTFScenesManager");
       this.renderer = renderer;
       this.gltf = gltf;
@@ -22601,6 +22117,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         case GL$1.UNSIGNED_INT:
           return Uint32Array;
         case GL$1.FLOAT:
+        // GL.FLOAT
         default:
           return Float32Array;
       }
@@ -22777,8 +22294,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
             texturesDescriptors: []
           };
           const getUVAttributeName = (texture) => {
-            if (!texture.texCoord)
-              return "uv";
+            if (!texture.texCoord) return "uv";
             return texture.texCoord !== 0 ? "uv" + texture.texCoord : "uv";
           };
           const createTexture = (gltfTextureInfo, name) => {
@@ -22807,12 +22323,9 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
               });
               if (textureTransform) {
                 const { offset, rotation, scale } = textureTransform;
-                if (offset !== void 0)
-                  reusedTexture.offset.set(offset[0], offset[1]);
-                if (rotation !== void 0)
-                  reusedTexture.rotation = rotation;
-                if (scale !== void 0)
-                  reusedTexture.scale.set(scale[0], scale[1]);
+                if (offset !== void 0) reusedTexture.offset.set(offset[0], offset[1]);
+                if (rotation !== void 0) reusedTexture.rotation = rotation;
+                if (scale !== void 0) reusedTexture.scale.set(scale[0], scale[1]);
               }
               materialTextures.texturesDescriptors.push({
                 texture: reusedTexture,
@@ -22825,12 +22338,9 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
             const texture = this.createTexture(material, image, name, !!textureTransform);
             if (textureTransform) {
               const { offset, rotation, scale } = textureTransform;
-              if (offset !== void 0)
-                texture.offset.set(offset[0], offset[1]);
-              if (rotation !== void 0)
-                texture.rotation = rotation;
-              if (scale !== void 0)
-                texture.scale.set(scale[0], scale[1]);
+              if (offset !== void 0) texture.offset.set(offset[0], offset[1]);
+              if (rotation !== void 0) texture.rotation = rotation;
+              if (scale !== void 0) texture.scale.set(scale[0], scale[1]);
             }
             materialTextures.texturesDescriptors.push({
               texture,
@@ -22983,12 +22493,9 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         child.node.modelMatrix.setFromArray(new Float32Array(node.matrix));
         child.node.matrices.model.shouldUpdate = false;
       } else {
-        if (node.translation)
-          child.node.position.set(node.translation[0], node.translation[1], node.translation[2]);
-        if (node.scale)
-          child.node.scale.set(node.scale[0], node.scale[1], node.scale[2]);
-        if (node.rotation)
-          child.node.quaternion.setFromArray(new Float32Array(node.rotation));
+        if (node.translation) child.node.position.set(node.translation[0], node.translation[1], node.translation[2]);
+        if (node.scale) child.node.scale.set(node.scale[0], node.scale[1], node.scale[2]);
+        if (node.rotation) child.node.quaternion.setFromArray(new Float32Array(node.rotation));
       }
       if (node.children) {
         node.children.forEach((childNodeIndex) => {
@@ -23185,7 +22692,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         }
       }
       let defaultAttributes = [];
-      let interleavedArray = __privateMethod(this, _parsePrimitiveProperty, parsePrimitiveProperty_fn).call(this, primitive.attributes, defaultAttributes);
+      let interleavedArray = __privateMethod(this, _GLTFScenesManager_instances, parsePrimitiveProperty_fn).call(this, primitive.attributes, defaultAttributes);
       const isIndexedGeometry = "indices" in primitive;
       let indicesArray = null;
       let indicesConstructor = null;
@@ -23382,12 +22889,11 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         let weightAnimation;
         for (const animation of this.scenesManager.animations) {
           weightAnimation = animation.getAnimationByObject3DAndPath(meshDescriptor.parent, "weights");
-          if (weightAnimation)
-            break;
+          if (weightAnimation) break;
         }
         primitive.targets.forEach((target, index) => {
           const targetAttributes = [];
-          __privateMethod(this, _parsePrimitiveProperty, parsePrimitiveProperty_fn).call(this, target, targetAttributes);
+          __privateMethod(this, _GLTFScenesManager_instances, parsePrimitiveProperty_fn).call(this, target, targetAttributes);
           const struct = targetAttributes.reduce(
             (acc, attribute) => {
               return acc = {
@@ -23797,10 +23303,15 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
     }
   };
   _primitiveInstances = new WeakMap();
-  _getSparseAccessorIndicesAndValues = new WeakSet();
+  _GLTFScenesManager_instances = new WeakSet();
+  /**
+   * Get an accessor sparse indices values to use for replacement if any.
+   * @param accessor - {@link GLTF.IAccessor | Accessor} to check for sparse indices.
+   * @returns parameters - indices and values found as {@link TypedArray} if any.
+   * @private
+   */
   getSparseAccessorIndicesAndValues_fn = function(accessor) {
-    if (!accessor.sparse)
-      return { indices: null, values: null };
+    if (!accessor.sparse) return { indices: null, values: null };
     const accessorConstructor = _GLTFScenesManager.getTypedArrayConstructorFromComponentType(accessor.componentType);
     const attrSize = _GLTFScenesManager.getVertexAttributeParamsFromType(accessor.type).size;
     const sparseIndicesConstructor = _GLTFScenesManager.getTypedArrayConstructorFromComponentType(
@@ -23823,7 +23334,13 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
       values: sparseValues
     };
   };
-  _parsePrimitiveProperty = new WeakSet();
+  /**
+   * Parse a {@link GLTF.IMeshPrimitive | glTF primitive} and create typed arrays from the given {@link gltf} accessors, bufferViews and buffers.
+   * @param primitiveProperty- Primitive property to parse, can either be `attributes` or `targets`.
+   * @param attributes - An empty {@link VertexBufferAttributeParams} array to fill with parsed values.
+   * @returns - Interleaved attributes {@link TypedArray} if any.
+   * @private
+   */
   parsePrimitiveProperty_fn = function(primitiveProperty, attributes) {
     let interleavedArray = null;
     let interleavedBufferView = null;
@@ -23886,7 +23403,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         }
       }
       if (accessor.sparse) {
-        const { indices, values } = __privateMethod(this, _getSparseAccessorIndicesAndValues, getSparseAccessorIndicesAndValues_fn).call(this, accessor);
+        const { indices, values } = __privateMethod(this, _GLTFScenesManager_instances, getSparseAccessorIndicesAndValues_fn).call(this, accessor);
         for (let i = 0; i < indices.length; i++) {
           for (let j = 0; j < size; j++) {
             array[indices[i] * size + j] = values[i * size + j];
@@ -23943,7 +23460,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
           const accessor = this.gltf.accessors[accessorIndex];
           const bufferView = this.gltf.bufferViews[accessor.bufferView];
           const attrSize = _GLTFScenesManager.getVertexAttributeParamsFromType(accessor.type).size;
-          const { indices, values } = __privateMethod(this, _getSparseAccessorIndicesAndValues, getSparseAccessorIndicesAndValues_fn).call(this, accessor);
+          const { indices, values } = __privateMethod(this, _GLTFScenesManager_instances, getSparseAccessorIndicesAndValues_fn).call(this, accessor);
           for (let i = 0; i < accessor.count; i++) {
             const startOffset = accessor.byteOffset / Float32Array.BYTES_PER_ELEMENT + i * totalStride / Float32Array.BYTES_PER_ELEMENT;
             const subarray = new Float32Array(
@@ -23973,7 +23490,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         primitiveAttributesValues.forEach((accessorIndex) => {
           const accessor = this.gltf.accessors[accessorIndex];
           const attrSize = _GLTFScenesManager.getVertexAttributeParamsFromType(accessor.type).size;
-          const { indices, values } = __privateMethod(this, _getSparseAccessorIndicesAndValues, getSparseAccessorIndicesAndValues_fn).call(this, accessor);
+          const { indices, values } = __privateMethod(this, _GLTFScenesManager_instances, getSparseAccessorIndicesAndValues_fn).call(this, accessor);
           if (indices && values) {
             for (let i = 0; i < indices.length; i++) {
               for (let j = 0; j < attrSize; j++) {

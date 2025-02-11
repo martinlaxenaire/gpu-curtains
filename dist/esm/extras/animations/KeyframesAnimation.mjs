@@ -61,14 +61,11 @@ class KeyframesAnimation {
    * @param currentTime - Current time in seconds.
    */
   update(target, currentTime = 0) {
-    if (!this.keyframes || !this.values || !this.path)
-      return;
+    if (!this.keyframes || !this.values || !this.path) return;
     const nextTimeIndex = this.keyframes.findIndex((t) => t >= currentTime);
-    if (nextTimeIndex === -1)
-      return;
+    if (nextTimeIndex === -1) return;
     const previousTimeIndex = nextTimeIndex - 1;
-    if (previousTimeIndex === -1)
-      return;
+    if (previousTimeIndex === -1) return;
     const nextTime = this.keyframes[nextTimeIndex];
     const previousTime = this.keyframes[previousTimeIndex];
     const interpolatedTime = (currentTime - previousTime) / (nextTime - previousTime);

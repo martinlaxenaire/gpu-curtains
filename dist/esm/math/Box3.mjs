@@ -75,8 +75,7 @@ class Box3 {
    * @returns - the {@link Box3 | transformed Box3} after {@link Mat4 | matrix} application
    */
   applyMat4(matrix = new Mat4(), transformedBox = new Box3()) {
-    if (this.isEmpty())
-      return this;
+    if (this.isEmpty()) return this;
     const corners = [];
     if (this.min.z === this.max.z) {
       corners[0] = points[0].set(this.min.x, this.min.y, this.min.z).applyMat4(matrix);

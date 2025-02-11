@@ -4,24 +4,13 @@ import { ComputeMaterial } from '../materials/ComputeMaterial.mjs';
 import { Texture } from '../textures/Texture.mjs';
 import { MediaTexture } from '../textures/MediaTexture.mjs';
 
-var __accessCheck = (obj, member, msg) => {
-  if (!member.has(obj))
-    throw TypeError("Cannot " + msg);
+var __typeError = (msg) => {
+  throw TypeError(msg);
 };
-var __privateGet = (obj, member, getter) => {
-  __accessCheck(obj, member, "read from private field");
-  return member.get(obj);
-};
-var __privateAdd = (obj, member, value) => {
-  if (member.has(obj))
-    throw TypeError("Cannot add the same private member more than once");
-  member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-};
-var __privateSet = (obj, member, value, setter) => {
-  __accessCheck(obj, member, "write to private field");
-  member.set(obj, value);
-  return value;
-};
+var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
+var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), member.get(obj));
+var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
 var _autoRender;
 let computePassIndex = 0;
 class ComputePass {
@@ -313,8 +302,7 @@ class ComputePass {
    * Checks if the material is ready and eventually update its struct
    */
   onBeforeRenderPass() {
-    if (!this.renderer.ready)
-      return;
+    if (!this.renderer.ready) return;
     this._onBeforeRenderCallback && this._onBeforeRenderCallback();
     this.material.onBeforeRender();
     if (this.material && this.material.ready && !this.ready) {
@@ -326,8 +314,7 @@ class ComputePass {
    * @param pass - current compute pass encoder
    */
   onRenderPass(pass) {
-    if (!this.material.ready)
-      return;
+    if (!this.material.ready) return;
     this._onRenderCallback && this._onRenderCallback();
     this.material.render(pass);
   }
@@ -344,8 +331,7 @@ class ComputePass {
    */
   render(pass) {
     this.onBeforeRenderPass();
-    if (!this.renderer.ready)
-      return;
+    if (!this.renderer.ready) return;
     !this.renderer.production && pass.pushDebugGroup(this.options.label);
     this.onRenderPass(pass);
     !this.renderer.production && pass.popDebugGroup();

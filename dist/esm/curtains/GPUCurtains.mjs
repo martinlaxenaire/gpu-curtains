@@ -108,10 +108,8 @@ class GPUCurtains {
    * @param parameters - parameters to patch
    */
   patchRendererOptions(parameters) {
-    if (parameters.pixelRatio === void 0)
-      parameters.pixelRatio = this.options.pixelRatio;
-    if (parameters.autoResize === void 0)
-      parameters.autoResize = this.options.autoResize;
+    if (parameters.pixelRatio === void 0) parameters.pixelRatio = this.options.pixelRatio;
+    if (parameters.autoResize === void 0) parameters.autoResize = this.options.autoResize;
     return parameters;
   }
   /**

@@ -1,24 +1,13 @@
 import { throwError, throwWarning } from '../../utils/utils.mjs';
 import { PipelineManager } from '../pipelines/PipelineManager.mjs';
 
-var __accessCheck = (obj, member, msg) => {
-  if (!member.has(obj))
-    throw TypeError("Cannot " + msg);
+var __typeError = (msg) => {
+  throw TypeError(msg);
 };
-var __privateGet = (obj, member, getter) => {
-  __accessCheck(obj, member, "read from private field");
-  return getter ? getter.call(obj) : member.get(obj);
-};
-var __privateAdd = (obj, member, value) => {
-  if (member.has(obj))
-    throw TypeError("Cannot add the same private member more than once");
-  member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-};
-var __privateSet = (obj, member, value, setter) => {
-  __accessCheck(obj, member, "write to private field");
-  member.set(obj, value);
-  return value;
-};
+var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
+var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
 var _mipsGeneration;
 class GPUDeviceManager {
   /**
@@ -45,7 +34,7 @@ class GPUDeviceManager {
     };
     /** @ignore */
     // mips generation cache handling
-    __privateAdd(this, _mipsGeneration, void 0);
+    __privateAdd(this, _mipsGeneration);
     this.index = 0;
     this.label = label ?? "GPUDeviceManager instance";
     this.production = production;
@@ -323,8 +312,7 @@ class GPUDeviceManager {
    * @param commandEncoder - optional {@link GPUCommandEncoder} to use if we're already in the middle of a command encoding process.
    */
   generateMips(texture, commandEncoder = null) {
-    if (!this.device)
-      return;
+    if (!this.device) return;
     if (!__privateGet(this, _mipsGeneration).module) {
       __privateGet(this, _mipsGeneration).module = this.device.createShaderModule({
         label: "textured quad shaders for mip level generation",
@@ -479,12 +467,10 @@ class GPUDeviceManager {
    * - call all our {@link renderers} {@link core/renderers/GPURenderer.GPURenderer#onAfterCommandEncoder | onAfterCommandEncoder} callbacks.
    */
   render() {
-    if (!this.ready)
-      return;
+    if (!this.ready) return;
     this._onBeforeRenderCallback && this._onBeforeRenderCallback();
     for (const renderer of this.renderers) {
-      if (renderer.shouldRender)
-        renderer.onBeforeCommandEncoder();
+      if (renderer.shouldRender) renderer.onBeforeCommandEncoder();
     }
     const commandEncoder = this.device?.createCommandEncoder({ label: this.label + " command encoder" });
     !this.production && commandEncoder.pushDebugGroup(this.label + " command encoder: main render loop");
@@ -497,8 +483,7 @@ class GPUDeviceManager {
     }
     this.texturesQueue = [];
     for (const renderer of this.renderers) {
-      if (renderer.shouldRender)
-        renderer.onAfterCommandEncoder();
+      if (renderer.shouldRender) renderer.onAfterCommandEncoder();
     }
     this._onAfterRenderCallback && this._onAfterRenderCallback();
   }

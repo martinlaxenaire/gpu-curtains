@@ -303,28 +303,28 @@ export class TestRenderTargets {
       }
   `
 
-    // this.additionalPostProPass = new ShaderPass(this.gpuCurtains, {
-    //   label: 'Invert colors banding post processing pass',
-    //   shaders: {
-    //     fragment: {
-    //       code: postProShader,
-    //     },
-    //   },
-    //   targets: [
-    //     {
-    //       blend: {
-    //         color: {
-    //           srcFactor: 'src-alpha',
-    //           dstFactor: 'one-minus-src-alpha',
-    //         },
-    //         alpha: {
-    //           srcFactor: 'one',
-    //           dstFactor: 'one-minus-src-alpha',
-    //         },
-    //       },
-    //     },
-    //   ],
-    // })
+    this.additionalPostProPass = new ShaderPass(this.gpuCurtains, {
+      label: 'Invert colors banding post processing pass',
+      shaders: {
+        fragment: {
+          code: postProShader,
+        },
+      },
+      targets: [
+        {
+          blend: {
+            color: {
+              srcFactor: 'src-alpha',
+              dstFactor: 'one-minus-src-alpha',
+            },
+            alpha: {
+              srcFactor: 'one',
+              dstFactor: 'one-minus-src-alpha',
+            },
+          },
+        },
+      ],
+    })
 
     console.log('TEST RT init', this.gpuCurtains.renderer, this.gpuCurtains.renderer.scene)
   }

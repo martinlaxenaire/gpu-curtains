@@ -7,29 +7,15 @@ import { Sampler } from '../samplers/Sampler.mjs';
 import { getDefaultShadowDepthVs } from '../shaders/full/vertex/get-default-shadow-depth-vertex-shader-code.mjs';
 import { Mesh } from '../meshes/Mesh.mjs';
 
-var __accessCheck = (obj, member, msg) => {
-  if (!member.has(obj))
-    throw TypeError("Cannot " + msg);
+var __typeError = (msg) => {
+  throw TypeError(msg);
 };
-var __privateGet = (obj, member, getter) => {
-  __accessCheck(obj, member, "read from private field");
-  return getter ? getter.call(obj) : member.get(obj);
-};
-var __privateAdd = (obj, member, value) => {
-  if (member.has(obj))
-    throw TypeError("Cannot add the same private member more than once");
-  member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-};
-var __privateSet = (obj, member, value, setter) => {
-  __accessCheck(obj, member, "write to private field");
-  member.set(obj, value);
-  return value;
-};
-var __privateMethod = (obj, member, method) => {
-  __accessCheck(obj, member, "access private method");
-  return method;
-};
-var _intensity, _bias, _normalBias, _pcfSamples, _isActive, _autoRender, _receivingMeshes, _setParameters, setParameters_fn;
+var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
+var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
+var __privateMethod = (obj, member, method) => (__accessCheck(obj, member, "access private method"), method);
+var _intensity, _bias, _normalBias, _pcfSamples, _isActive, _autoRender, _receivingMeshes, _Shadow_instances, setParameters_fn;
 const shadowStruct = {
   isActive: {
     type: "i32",
@@ -68,26 +54,21 @@ class Shadow {
     depthTextureFormat = "depth24plus",
     autoRender = true
   } = {}) {
-    /**
-     * Set the {@link Shadow} parameters.
-     * @param parameters - parameters to use for this {@link Shadow}.
-     * @private
-     */
-    __privateAdd(this, _setParameters);
+    __privateAdd(this, _Shadow_instances);
     /** @ignore */
-    __privateAdd(this, _intensity, void 0);
+    __privateAdd(this, _intensity);
     /** @ignore */
-    __privateAdd(this, _bias, void 0);
+    __privateAdd(this, _bias);
     /** @ignore */
-    __privateAdd(this, _normalBias, void 0);
+    __privateAdd(this, _normalBias);
     /** @ignore */
-    __privateAdd(this, _pcfSamples, void 0);
+    __privateAdd(this, _pcfSamples);
     /** @ignore */
-    __privateAdd(this, _isActive, void 0);
+    __privateAdd(this, _isActive);
     /** @ignore */
-    __privateAdd(this, _autoRender, void 0);
+    __privateAdd(this, _autoRender);
     /** Map of all the shadow receiving {@link ProjectedMesh | meshes}. */
-    __privateAdd(this, _receivingMeshes, void 0);
+    __privateAdd(this, _receivingMeshes);
     this.setRenderer(renderer);
     this.light = light;
     this.index = this.light.index;
@@ -104,7 +85,7 @@ class Shadow {
     this.castingMeshes = /* @__PURE__ */ new Map();
     __privateSet(this, _receivingMeshes, /* @__PURE__ */ new Map());
     this.depthMeshes = /* @__PURE__ */ new Map();
-    __privateMethod(this, _setParameters, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
+    __privateMethod(this, _Shadow_instances, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
     this.isActive = false;
   }
   /**
@@ -140,7 +121,7 @@ class Shadow {
    * @param parameters - parameters to use for this {@link Shadow}.
    */
   cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender } = {}) {
-    __privateMethod(this, _setParameters, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
+    __privateMethod(this, _Shadow_instances, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
     this.isActive = true;
   }
   /**
@@ -312,8 +293,7 @@ class Shadow {
    * Clear the content of the depth texture. Called whenever the {@link castingMeshes} {@link Map} is empty after having removed a mesh, or if all {@link castingMeshes} `visible` properties are `false`.
    */
   clearDepthTexture() {
-    if (!this.depthTexture || !this.depthTexture.texture)
-      return;
+    if (!this.depthTexture || !this.depthTexture.texture) return;
     const commandEncoder = this.renderer.device.createCommandEncoder();
     !this.renderer.production && commandEncoder.pushDebugGroup(`Clear ${this.depthTexture.texture.label} command encoder`);
     const renderPassDescriptor = {
@@ -378,8 +358,7 @@ class Shadow {
    * @param commandEncoder - {@link GPUCommandEncoder} to use.
    */
   render(commandEncoder) {
-    if (!this.castingMeshes.size)
-      return;
+    if (!this.castingMeshes.size) return;
     let shouldRender = false;
     for (const [_uuid, mesh] of this.castingMeshes) {
       if (mesh.visible) {
@@ -431,8 +410,7 @@ class Shadow {
       }
       depthMesh.render(depthPass);
     }
-    if (!this.renderer.production)
-      depthPass.popDebugGroup();
+    if (!this.renderer.production) depthPass.popDebugGroup();
     depthPass.end();
   }
   /**
@@ -493,8 +471,7 @@ class Shadow {
    * @param parameters - Optional {@link RenderMaterialParams | parameters} to use for the depth mesh.
    */
   addShadowCastingMesh(mesh, parameters = {}) {
-    if (this.castingMeshes.get(mesh.uuid))
-      return;
+    if (this.castingMeshes.get(mesh.uuid)) return;
     mesh.options.castShadows = true;
     parameters = this.patchShadowCastingMeshParams(mesh, parameters);
     if (this.depthMeshes.get(mesh.uuid)) {
@@ -581,7 +558,12 @@ _pcfSamples = new WeakMap();
 _isActive = new WeakMap();
 _autoRender = new WeakMap();
 _receivingMeshes = new WeakMap();
-_setParameters = new WeakSet();
+_Shadow_instances = new WeakSet();
+/**
+ * Set the {@link Shadow} parameters.
+ * @param parameters - parameters to use for this {@link Shadow}.
+ * @private
+ */
 setParameters_fn = function({
   intensity = 1,
   bias = 0,

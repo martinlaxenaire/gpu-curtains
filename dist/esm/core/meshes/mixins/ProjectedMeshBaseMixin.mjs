@@ -104,8 +104,7 @@ function ProjectedMeshBaseMixin(Base) {
      * @param updateScene - Whether to remove and then re-add the Mesh from the {@link core/scenes/Scene.Scene | Scene} or not.
      */
     setRenderBundle(renderBundle, updateScene = true) {
-      if (this.renderBundle && renderBundle && this.renderBundle.uuid === renderBundle.uuid)
-        return;
+      if (this.renderBundle && renderBundle && this.renderBundle.uuid === renderBundle.uuid) return;
       const hasRenderBundle = !!this.renderBundle;
       const bindGroup = this.material.getBindGroupByBindingName("matrices");
       const matrices = this.material.getBufferBindingByName("matrices");
@@ -297,8 +296,7 @@ function ProjectedMeshBaseMixin(Base) {
         matricesUniforms.offset = this.options.renderBundle.meshes.size;
       }
       const meshTransformationBinding = new BufferBinding(matricesUniforms);
-      if (!meshParameters.bindings)
-        meshParameters.bindings = [];
+      if (!meshParameters.bindings) meshParameters.bindings = [];
       meshParameters.bindings.unshift(meshTransformationBinding);
       super.setMaterial(meshParameters);
     }
@@ -322,8 +320,7 @@ function ProjectedMeshBaseMixin(Base) {
      * @param boundingRect - the new bounding rectangle
      */
     resize(boundingRect) {
-      if (this.domFrustum)
-        this.domFrustum.setContainerBoundingRect(this.renderer.boundingRect);
+      if (this.domFrustum) this.domFrustum.setContainerBoundingRect(this.renderer.boundingRect);
       super.resize(boundingRect);
     }
     /**
@@ -435,8 +432,7 @@ function ProjectedMeshBaseMixin(Base) {
      * @param pass - current render pass
      */
     onRenderPass(pass) {
-      if (!this.ready)
-        return;
+      if (!this.ready) return;
       this._onRenderCallback && this._onRenderCallback();
       if (this.domFrustum && this.domFrustum.isIntersecting || !this.frustumCulling) {
         this.material.render(pass);
