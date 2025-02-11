@@ -1,11 +1,18 @@
 import { throwError, throwWarning } from '../../utils/utils.mjs';
-import { generateMips } from './utils.mjs';
 import { PipelineManager } from '../pipelines/PipelineManager.mjs';
 
+var __typeError = (msg) => {
+  throw TypeError(msg);
+};
+var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
+var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
+var _mipsGeneration;
 class GPUDeviceManager {
   /**
    * GPUDeviceManager constructor
-   * @param parameters - {@link GPUDeviceManagerParams | parameters} used to create this {@link GPUDeviceManager}
+   * @param parameters - {@link GPUDeviceManagerParams | parameters} used to create this {@link GPUDeviceManager}.
    */
   constructor({
     label,
@@ -19,12 +26,15 @@ class GPUDeviceManager {
     onDeviceDestroyed = (info) => {
     }
   } = {}) {
-    /** function assigned to the {@link onBeforeRender} callback */
+    /** function assigned to the {@link onBeforeRender} callback. */
     this._onBeforeRenderCallback = () => {
     };
-    /** function assigned to the {@link onAfterRender} callback */
+    /** function assigned to the {@link onAfterRender} callback. */
     this._onAfterRenderCallback = () => {
     };
+    /** @ignore */
+    // mips generation cache handling
+    __privateAdd(this, _mipsGeneration);
     this.index = 0;
     this.label = label ?? "GPUDeviceManager instance";
     this.production = production;
@@ -36,6 +46,11 @@ class GPUDeviceManager {
     this.gpu = navigator.gpu;
     this.setPipelineManager();
     this.setDeviceObjects();
+    __privateSet(this, _mipsGeneration, {
+      sampler: null,
+      module: null,
+      pipelineByFormat: {}
+    });
     if (autoRender) {
       this.animate();
     }
@@ -49,7 +64,7 @@ class GPUDeviceManager {
     await this.setDevice(device);
   }
   /**
-   * Set up our {@link adapter} and {@link device} and all the already created {@link renderers} contexts
+   * Set up our {@link adapter} and {@link device} and all the already created {@link renderers} contexts.
    * @param parameters - {@link GPUAdapter} and/or {@link GPUDevice} to use if set.
    */
   async init({ adapter = null, device = null } = {}) {
@@ -126,14 +141,14 @@ class GPUDeviceManager {
     });
   }
   /**
-   * Set our {@link pipelineManager | pipeline manager}
+   * Set our {@link pipelineManager | pipeline manager}.
    */
   setPipelineManager() {
     this.pipelineManager = new PipelineManager();
   }
   /**
    * Called when the {@link device} is lost.
-   * Reset all our renderers
+   * Reset all our renderers.
    */
   loseDevice() {
     this.ready = false;
@@ -163,7 +178,7 @@ class GPUDeviceManager {
     }
   }
   /**
-   * Set all objects arrays that we'll keep track of
+   * Set all objects arrays that we'll keep track of.
    */
   setDeviceObjects() {
     this.renderers = [];
@@ -173,129 +188,256 @@ class GPUDeviceManager {
     this.bindGroupLayouts = /* @__PURE__ */ new Map();
     this.bufferBindings = /* @__PURE__ */ new Map();
     this.samplers = [];
-    this.domTextures = [];
     this.texturesQueue = [];
   }
   /**
-   * Add a {@link Renderer} to our {@link renderers} array
-   * @param renderer - {@link Renderer} to add
+   * Add a {@link Renderer} to our {@link renderers} array.
+   * @param renderer - {@link Renderer} to add.
    */
   addRenderer(renderer) {
     this.renderers.push(renderer);
   }
   /**
-   * Remove a {@link Renderer} from our {@link renderers} array
-   * @param renderer - {@link Renderer} to remove
+   * Remove a {@link Renderer} from our {@link renderers} array.
+   * @param renderer - {@link Renderer} to remove.
    */
   removeRenderer(renderer) {
     this.renderers = this.renderers.filter((r) => r.uuid !== renderer.uuid);
   }
   /**
-   * Get all the rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes) created by this {@link GPUDeviceManager}
+   * Get all the rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes) created by this {@link GPUDeviceManager}.
    * @readonly
    */
   get deviceRenderedObjects() {
     return this.renderers.map((renderer) => renderer.renderedObjects).flat();
   }
   /**
-   * Add a {@link AllowedBindGroups | bind group} to our {@link bindGroups | bind groups array}
-   * @param bindGroup - {@link AllowedBindGroups | bind group} to add
+   * Add a {@link AllowedBindGroups | bind group} to our {@link bindGroups | bind groups array}.
+   * @param bindGroup - {@link AllowedBindGroups | bind group} to add.
    */
   addBindGroup(bindGroup) {
     this.bindGroups.set(bindGroup.uuid, bindGroup);
   }
   /**
-   * Remove a {@link AllowedBindGroups | bind group} from our {@link bindGroups | bind groups array}
-   * @param bindGroup - {@link AllowedBindGroups | bind group} to remove
+   * Remove a {@link AllowedBindGroups | bind group} from our {@link bindGroups | bind groups array}.
+   * @param bindGroup - {@link AllowedBindGroups | bind group} to remove.
    */
   removeBindGroup(bindGroup) {
     this.bindGroups.delete(bindGroup.uuid);
   }
   /**
-   * Add a {@link GPUBuffer} to our our {@link buffers} array
-   * @param buffer - {@link Buffer} to add
+   * Add a {@link GPUBuffer} to our our {@link buffers} array.
+   * @param buffer - {@link Buffer} to add.
    */
   addBuffer(buffer) {
     this.buffers.set(buffer.uuid, buffer);
   }
   /**
-   * Remove a {@link Buffer} from our {@link buffers} Map
-   * @param buffer - {@link Buffer} to remove
+   * Remove a {@link Buffer} from our {@link buffers} Map.
+   * @param buffer - {@link Buffer} to remove.
    */
   removeBuffer(buffer) {
     this.buffers.delete(buffer?.uuid);
   }
   /**
-   * Add a {@link Sampler} to our {@link samplers} array
-   * @param sampler - {@link Sampler} to add
+   * Add a {@link Sampler} to our {@link samplers} array.
+   * @param sampler - {@link Sampler} to add.
    */
   addSampler(sampler) {
     this.samplers.push(sampler);
   }
   /**
-   * Remove a {@link Sampler} from our {@link samplers} array
-   * @param sampler - {@link Sampler} to remove
+   * Remove a {@link Sampler} from our {@link samplers} array.
+   * @param sampler - {@link Sampler} to remove.
    */
   removeSampler(sampler) {
     this.samplers = this.samplers.filter((s) => s.uuid !== sampler.uuid);
   }
   /**
-   * Add a {@link DOMTexture} to our {@link domTextures} array
-   * @param texture - {@link DOMTexture} to add
+   * Copy an external image to the GPU.
+   * @param source - {@link GPUCopyExternalImageSourceInfo} to use.
+   * @param destination - {@link GPUCopyExternalImageDestInfo} to use.
+   * @param copySize - {@link GPUExtent3DStrict} to use.
    */
-  addDOMTexture(texture) {
-    this.domTextures.push(texture);
+  copyExternalImageToTexture(source, destination, copySize) {
+    this.device?.queue.copyExternalImageToTexture(source, destination, copySize);
   }
   /**
-   * Upload a {@link DOMTexture#texture | texture} to the GPU
-   * @param texture - {@link DOMTexture} class object with the {@link DOMTexture#texture | texture} to upload
+   * Upload a {@link MediaTexture#texture | texture} to the GPU.
+   * @param texture - {@link MediaTexture} containing the {@link GPUTexture} to upload.
+   * @param sourceIndex - Index of the source to upload (for cube maps). Default to `0`.
    */
-  uploadTexture(texture) {
-    if (texture.source) {
+  uploadTexture(texture, sourceIndex = 0) {
+    if ("sources" in texture && texture.sources.length) {
       try {
         this.device?.queue.copyExternalImageToTexture(
           {
-            source: texture.source,
+            source: texture.sources[sourceIndex].source,
             flipY: texture.options.flipY
           },
-          { texture: texture.texture, premultipliedAlpha: texture.options.premultipliedAlpha },
-          { width: texture.size.width, height: texture.size.height }
+          {
+            texture: texture.texture,
+            premultipliedAlpha: texture.options.premultipliedAlpha,
+            aspect: texture.options.aspect,
+            colorSpace: texture.options.colorSpace,
+            origin: [0, 0, sourceIndex]
+          },
+          { width: texture.size.width, height: texture.size.height, depthOrArrayLayers: 1 }
         );
         if (texture.texture.mipLevelCount > 1) {
-          generateMips(this.device, texture.texture);
+          this.generateMips(texture);
         }
-        this.texturesQueue.push(texture);
+        this.texturesQueue.push({
+          sourceIndex,
+          texture
+        });
       } catch ({ message }) {
         throwError(`GPUDeviceManager: could not upload texture: ${texture.options.name} because: ${message}`);
       }
     } else {
-      this.device?.queue.writeTexture(
-        { texture: texture.texture },
-        new Uint8Array(texture.options.placeholderColor),
-        { bytesPerRow: texture.size.width * 4 },
-        { width: texture.size.width, height: texture.size.height }
-      );
+      for (let i = 0; i < texture.size.depth; i++) {
+        this.device?.queue.writeTexture(
+          { texture: texture.texture, origin: [0, 0, i] },
+          new Uint8Array(texture.options.placeholderColor),
+          { bytesPerRow: texture.size.width * 4 },
+          { width: 1, height: 1, depthOrArrayLayers: 1 }
+        );
+      }
     }
   }
   /**
-   * Remove a {@link DOMTexture} from our {@link domTextures} array
-   * @param texture - {@link DOMTexture} to remove
+   * Mips generation helper on the GPU using our {@link device}. Caches sampler, module and pipeline (by {@link GPUTexture} formats) for faster generation.
+   * Ported from https://webgpufundamentals.org/webgpu/lessons/webgpu-importing-textures.html
+   * @param texture - {@link Texture} for which to generate the mips.
+   * @param commandEncoder - optional {@link GPUCommandEncoder} to use if we're already in the middle of a command encoding process.
    */
-  removeDOMTexture(texture) {
-    this.domTextures = this.domTextures.filter((t) => t.uuid !== texture.uuid);
+  generateMips(texture, commandEncoder = null) {
+    if (!this.device) return;
+    if (!__privateGet(this, _mipsGeneration).module) {
+      __privateGet(this, _mipsGeneration).module = this.device.createShaderModule({
+        label: "textured quad shaders for mip level generation",
+        code: `
+            struct VSOutput {
+              @builtin(position) position: vec4f,
+              @location(0) texcoord: vec2f,
+            };
+
+            @vertex fn vs(
+              @builtin(vertex_index) vertexIndex : u32
+            ) -> VSOutput {
+              let pos = array(
+
+                vec2f( 0.0,  0.0),  // center
+                vec2f( 1.0,  0.0),  // right, center
+                vec2f( 0.0,  1.0),  // center, top
+
+                // 2st triangle
+                vec2f( 0.0,  1.0),  // center, top
+                vec2f( 1.0,  0.0),  // right, center
+                vec2f( 1.0,  1.0),  // right, top
+              );
+
+              var vsOutput: VSOutput;
+              let xy = pos[vertexIndex];
+              vsOutput.position = vec4f(xy * 2.0 - 1.0, 0.0, 1.0);
+              vsOutput.texcoord = vec2f(xy.x, 1.0 - xy.y);
+              return vsOutput;
+            }
+
+            @group(0) @binding(0) var ourSampler: sampler;
+            @group(0) @binding(1) var ourTexture: texture_2d<f32>;
+
+            @fragment fn fs(fsInput: VSOutput) -> @location(0) vec4f {
+              return textureSample(ourTexture, ourSampler, fsInput.texcoord);
+            }
+          `
+      });
+      __privateGet(this, _mipsGeneration).sampler = this.device.createSampler({
+        minFilter: "linear",
+        magFilter: "linear"
+      });
+    }
+    if (!__privateGet(this, _mipsGeneration).pipelineByFormat[texture.texture.format]) {
+      __privateGet(this, _mipsGeneration).pipelineByFormat[texture.texture.format] = this.device.createRenderPipeline({
+        label: "Mip level generator pipeline",
+        layout: "auto",
+        vertex: {
+          module: __privateGet(this, _mipsGeneration).module
+        },
+        fragment: {
+          module: __privateGet(this, _mipsGeneration).module,
+          targets: [{ format: texture.texture.format }]
+        }
+      });
+    }
+    const pipeline = __privateGet(this, _mipsGeneration).pipelineByFormat[texture.texture.format];
+    const encoder = commandEncoder || this.device.createCommandEncoder({
+      label: "Mip gen encoder"
+    });
+    let width = texture.texture.width;
+    let height = texture.texture.height;
+    let baseMipLevel = 0;
+    while (width > 1 || height > 1) {
+      width = Math.max(1, width / 2 | 0);
+      height = Math.max(1, height / 2 | 0);
+      for (let layer = 0; layer < texture.texture.depthOrArrayLayers; ++layer) {
+        const bindGroup = this.device.createBindGroup({
+          layout: pipeline.getBindGroupLayout(0),
+          entries: [
+            { binding: 0, resource: __privateGet(this, _mipsGeneration).sampler },
+            {
+              binding: 1,
+              resource: texture.texture.createView({
+                dimension: "2d",
+                baseMipLevel,
+                mipLevelCount: 1,
+                baseArrayLayer: layer,
+                arrayLayerCount: 1
+              })
+            }
+          ]
+        });
+        const renderPassDescriptor = {
+          label: "Mip generation render pass",
+          colorAttachments: [
+            {
+              view: texture.texture.createView({
+                dimension: "2d",
+                baseMipLevel: baseMipLevel + 1,
+                mipLevelCount: 1,
+                baseArrayLayer: layer,
+                arrayLayerCount: 1
+              }),
+              loadOp: "clear",
+              storeOp: "store"
+            }
+          ]
+        };
+        const pass = encoder.beginRenderPass(renderPassDescriptor);
+        pass.setPipeline(pipeline);
+        pass.setBindGroup(0, bindGroup);
+        pass.draw(6);
+        pass.end();
+      }
+      ++baseMipLevel;
+    }
+    if (!commandEncoder) {
+      const commandBuffer = encoder.finish();
+      this.device.queue.submit([commandBuffer]);
+    }
   }
   /* RENDER */
   /**
-   * Create a requestAnimationFrame loop and run it
+   * Create a requestAnimationFrame loop and run it.
    */
   animate() {
     this.render();
     this.animationFrameID = requestAnimationFrame(this.animate.bind(this));
   }
   /**
-   * Called each frame before rendering
-   * @param callback - callback to run at each render
-   * @returns - our {@link GPUDeviceManager}
+   * Called each frame before rendering.
+   * @param callback - callback to run at each render.
+   * @returns - our {@link GPUDeviceManager}.
    */
   onBeforeRender(callback) {
     if (callback) {
@@ -304,9 +446,9 @@ class GPUDeviceManager {
     return this;
   }
   /**
-   * Called each frame after rendering
-   * @param callback - callback to run at each render
-   * @returns - our {@link GPUDeviceManager}
+   * Called each frame after rendering.
+   * @param callback - callback to run at each render.
+   * @returns - our {@link GPUDeviceManager}.
    */
   onAfterRender(callback) {
     if (callback) {
@@ -316,21 +458,19 @@ class GPUDeviceManager {
   }
   /**
    * Render everything:
-   * - call all our {@link renderers} {@link core/renderers/GPURenderer.GPURenderer#onBeforeCommandEncoder | onBeforeCommandEncoder} callbacks
-   * - create a {@link GPUCommandEncoder}
-   * - render all our {@link renderers}
-   * - submit our {@link GPUCommandBuffer}
-   * - upload {@link DOMTexture#texture | DOMTexture textures} that do not have a parentMesh
-   * - empty our {@link texturesQueue} array
-   * - call all our {@link renderers} {@link core/renderers/GPURenderer.GPURenderer#onAfterCommandEncoder | onAfterCommandEncoder} callbacks
+   * - call all our {@link renderers} {@link core/renderers/GPURenderer.GPURenderer#onBeforeCommandEncoder | onBeforeCommandEncoder} callbacks.
+   * - create a {@link GPUCommandEncoder}.
+   * - render all our {@link renderers}.
+   * - submit our {@link GPUCommandBuffer}.
+   * - upload {@link MediaTexture#texture | MediaTexture textures} that need it.
+   * - empty our {@link texturesQueue} array.
+   * - call all our {@link renderers} {@link core/renderers/GPURenderer.GPURenderer#onAfterCommandEncoder | onAfterCommandEncoder} callbacks.
    */
   render() {
-    if (!this.ready)
-      return;
+    if (!this.ready) return;
     this._onBeforeRenderCallback && this._onBeforeRenderCallback();
     for (const renderer of this.renderers) {
-      if (renderer.shouldRender)
-        renderer.onBeforeCommandEncoder();
+      if (renderer.shouldRender) renderer.onBeforeCommandEncoder();
     }
     const commandEncoder = this.device?.createCommandEncoder({ label: this.label + " command encoder" });
     !this.production && commandEncoder.pushDebugGroup(this.label + " command encoder: main render loop");
@@ -338,19 +478,17 @@ class GPUDeviceManager {
     !this.production && commandEncoder.popDebugGroup();
     const commandBuffer = commandEncoder.finish();
     this.device?.queue.submit([commandBuffer]);
-    this.domTextures.filter((texture) => !texture.parentMesh && texture.sourceLoaded && !texture.sourceUploaded).forEach((texture) => this.uploadTexture(texture));
     for (const texture of this.texturesQueue) {
-      texture.sourceUploaded = true;
+      texture.texture.setSourceUploaded(texture.sourceIndex);
     }
     this.texturesQueue = [];
     for (const renderer of this.renderers) {
-      if (renderer.shouldRender)
-        renderer.onAfterCommandEncoder();
+      if (renderer.shouldRender) renderer.onAfterCommandEncoder();
     }
     this._onAfterRenderCallback && this._onAfterRenderCallback();
   }
   /**
-   * Destroy the {@link GPUDeviceManager} and its {@link renderers}
+   * Destroy the {@link GPUDeviceManager} and its {@link renderers}.
    */
   destroy() {
     if (this.animationFrameID) {
@@ -363,9 +501,9 @@ class GPUDeviceManager {
     this.bindGroups.forEach((bindGroup) => bindGroup.destroy());
     this.buffers.forEach((buffer) => buffer?.destroy());
     this.indirectBuffers.forEach((indirectBuffer) => indirectBuffer.destroy());
-    this.domTextures.forEach((texture) => texture.destroy());
     this.setDeviceObjects();
   }
 }
+_mipsGeneration = new WeakMap();
 
 export { GPUDeviceManager };

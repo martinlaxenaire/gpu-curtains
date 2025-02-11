@@ -3,24 +3,13 @@ import { RenderPass } from './RenderPass.mjs';
 import { Texture } from '../textures/Texture.mjs';
 import { generateUUID } from '../../utils/utils.mjs';
 
-var __accessCheck = (obj, member, msg) => {
-  if (!member.has(obj))
-    throw TypeError("Cannot " + msg);
+var __typeError = (msg) => {
+  throw TypeError(msg);
 };
-var __privateGet = (obj, member, getter) => {
-  __accessCheck(obj, member, "read from private field");
-  return member.get(obj);
-};
-var __privateAdd = (obj, member, value) => {
-  if (member.has(obj))
-    throw TypeError("Cannot add the same private member more than once");
-  member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-};
-var __privateSet = (obj, member, value, setter) => {
-  __accessCheck(obj, member, "write to private field");
-  member.set(obj, value);
-  return value;
-};
+var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
+var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), member.get(obj));
+var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
 var _autoRender;
 class RenderTarget {
   /**
@@ -36,7 +25,7 @@ class RenderTarget {
     this.renderer = renderer;
     this.uuid = generateUUID();
     const { label, colorAttachments, depthTexture, autoRender, ...renderPassParams } = parameters;
-    const depthTextureToUse = !!depthTexture ? depthTexture : this.renderer.renderPass.options.sampleCount === (parameters.sampleCount ?? 4) ? this.renderer.renderPass.depthTexture : null;
+    const depthTextureToUse = !!depthTexture ? depthTexture : this.renderer.renderPass.options.sampleCount === (parameters.sampleCount ?? 4) && (!renderPassParams.qualityRatio || renderPassParams.qualityRatio === 1) && !renderPassParams.fixedSize ? this.renderer.renderPass.depthTexture : null;
     this.options = {
       label,
       ...renderPassParams,
@@ -59,6 +48,7 @@ class RenderTarget {
         name: "renderTexture",
         format: colorAttachments && colorAttachments.length && colorAttachments[0].targetFormat ? colorAttachments[0].targetFormat : this.renderer.options.context.format,
         ...this.options.qualityRatio !== void 0 && { qualityRatio: this.options.qualityRatio },
+        ...this.options.fixedSize !== void 0 && { fixedSize: this.options.fixedSize },
         usage: ["copySrc", "renderAttachment", "textureBinding"]
       });
     }

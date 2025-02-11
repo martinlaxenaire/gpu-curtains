@@ -75,7 +75,7 @@ window.addEventListener('load', async () => {
       vsOutput.position = getOutputPosition(attributes.position);
 
       // 'getUVCover' is used to compute a texture UV based on UV attributes and texture matrix
-      vsOutput.uv = getUVCover(attributes.uv, planeTextureMatrix);
+      vsOutput.uv = getUVCover(attributes.uv, texturesMatrices.planeTexture.matrix);
 
       return vsOutput;
     }
@@ -156,7 +156,7 @@ window.addEventListener('load', async () => {
     } else {
       gpuCurtains.restoreContext()
       loseCtxButton.textContent = 'Lose context'
-      console.log('restored', postProPass.material, mesh.material)
+      console.log('restored', postProPass.material, mesh.material, plane.textures)
     }
 
     isContextActive = !isContextActive

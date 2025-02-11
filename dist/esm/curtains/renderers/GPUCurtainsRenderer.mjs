@@ -3,7 +3,7 @@ import { GPUCameraRenderer } from '../../core/renderers/GPUCameraRenderer.mjs';
 class GPUCurtainsRenderer extends GPUCameraRenderer {
   /**
    * GPUCurtainsRenderer constructor
-   * @param parameters - {@link GPUCameraRendererParams | parameters} used to create this {@link GPUCurtainsRenderer}
+   * @param parameters - {@link GPUCameraRendererParams | parameters} used to create this {@link GPUCurtainsRenderer}.
    */
   constructor({
     deviceManager,
@@ -30,12 +30,27 @@ class GPUCurtainsRenderer extends GPUCameraRenderer {
     this.type = "GPUCurtainsRenderer";
   }
   /**
-   * Add the {@link GPUCurtainsRenderer#domMeshes | domMeshes} to our tracked elements
+   * Add the {@link GPUCurtainsRenderer#domMeshes | domMeshes} to our tracked elements.
    */
   setRendererObjects() {
     super.setRendererObjects();
     this.domMeshes = [];
     this.domObjects = [];
+    this.domTextures = [];
+  }
+  /**
+   * Add a {@link DOMTexture} to our {@link domTextures | DOM textures array}.
+   * @param texture - {@link DOMTexture} to add.
+   */
+  addDOMTexture(texture) {
+    this.domTextures.push(texture);
+  }
+  /**
+   * Remove a {@link DOMTexture} from our {@link domTextures | textures array}.
+   * @param texture - {@link DOMTexture} to remove.
+   */
+  removeDOMTexture(texture) {
+    this.domTextures = this.domTextures.filter((t) => t.uuid !== texture.uuid);
   }
   /**
    * Update the {@link domObjects} sizes and positions when the {@link camera} {@link core/camera/Camera.Camera#position | position} or {@link core/camera/Camera.Camera#size | size} change.

@@ -1,3 +1,12 @@
+import {
+  GLTFExtensionsUsed,
+  GLTFMaterialsExtensions,
+  GLTFNodesExtensions,
+  GLTFPrimitivesExtensions,
+  GLTFTexturesExtensions,
+  GLTFTexturesInfosExtensions,
+} from './GLTFExtensions'
+
 // hard copy from https://github.com/donmccurdy/glTF-Transform/blob/main/packages/core/src/types/gltf.ts
 /* eslint-disable @typescript-eslint/no-namespace */
 /**
@@ -426,6 +435,10 @@ export declare module GLTF {
      * Specifies whether the material is double sided
      */
     doubleSided?: boolean
+    /**
+     * Dictionary object with material extension-specific objects
+     */
+    extensions?: GLTFMaterialsExtensions
   }
   /**
    * Geometry to be rendered with the given material
@@ -457,6 +470,10 @@ export declare module GLTF {
     targets?: {
       [name: string]: number
     }[]
+    /**
+     * Dictionary object with primitive extension-specific objects
+     */
+    extensions?: GLTFPrimitivesExtensions
   }
   /**
    * A set of primitives to be rendered.  A node can contain one mesh.  A node's transform
@@ -513,6 +530,10 @@ export declare module GLTF {
      * Morph Targets of used mesh
      */
     weights?: number[]
+    /**
+     * Dictionary object with node extension-specific objects
+     */
+    extensions?: GLTFNodesExtensions
   }
   /**
    * Texture sampler properties for filtering and wrapping modes
@@ -579,6 +600,10 @@ export declare module GLTF {
      * The index of the image used by this texture
      */
     source?: number
+    /**
+     * Dictionary object with texture extension-specific objects
+     */
+    extensions?: GLTFTexturesExtensions
   }
   /**
    * Reference to a texture
@@ -592,6 +617,10 @@ export declare module GLTF {
      * The set index of texture's TEXCOORD attribute used for texture coordinate mapping
      */
     texCoord?: number
+    /**
+     * Dictionary object with texture infos extension-specific objects
+     */
+    extensions?: GLTFTexturesInfosExtensions
   }
   /**
    * The root object for a glTF asset
@@ -625,11 +654,11 @@ export declare module GLTF {
     /**
      * Names of glTF extensions used somewhere in this asset
      */
-    extensionsUsed?: string[]
+    extensionsUsed?: GLTFExtensionsUsed
     /**
      * Names of glTF extensions required to properly load this asset
      */
-    extensionsRequired?: string[]
+    extensionsRequired?: GLTFExtensionsUsed
     /**
      * An array of images.  An image defines data used to create a texture
      */

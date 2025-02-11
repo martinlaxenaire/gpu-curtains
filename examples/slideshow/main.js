@@ -51,8 +51,8 @@ window.addEventListener('load', async () => {
       
         // used for the transition effect
         vsOutput.uv = attributes.uv;
-        vsOutput.activeUv = getUVCover(attributes.uv, activeTextureMatrix);
-        vsOutput.nextUv = getUVCover(attributes.uv, nextTextureMatrix);
+        vsOutput.activeUv = getUVCover(attributes.uv, texturesMatrices.activeTexture.matrix);
+        vsOutput.nextUv = getUVCover(attributes.uv, texturesMatrices.nextTexture.matrix);
       
         return vsOutput;
       }
@@ -172,7 +172,7 @@ window.addEventListener('load', async () => {
           // apply it to our next texture
           nextTex.copy(plane.domTextures[slideshowState.nextTextureIndex])
 
-          if (nextTex.isVideoSource) {
+          if (nextTex.isVideoSource(nextTex.source)) {
             nextTex.source.play()
           }
 
@@ -181,7 +181,7 @@ window.addEventListener('load', async () => {
             slideshowState.isChanging = false
             slideshowState.activeTextureIndex = slideshowState.nextTextureIndex
 
-            if (activeTex.isVideoSource) {
+            if (activeTex.isVideoSource(activeTex.source)) {
               activeTex.source.pause()
             }
 

@@ -75,9 +75,10 @@ export declare class Mat4 {
     /**
      * Sets the {@link Mat4} values from an array
      * @param array - array to use
+     * @param offset - optional offset in the array to use
      * @returns - this {@link Mat4} after being set
      */
-    setFromArray(array?: Float32Array | number[]): Mat4;
+    setFromArray(array?: Float32Array | number[], offset?: number): Mat4;
     /**
      * Copy another {@link Mat4}
      * @param matrix - matrix to copy
@@ -90,34 +91,34 @@ export declare class Mat4 {
      */
     clone(): Mat4;
     /**
-     * Multiply this {@link Mat4} with another {@link Mat4}
-     * @param matrix - {@link Mat4} to multiply with
-     * @returns - this {@link Mat4} after multiplication
+     * Multiply this {@link Mat4} with another {@link Mat4}.
+     * @param matrix - {@link Mat4} to multiply with.
+     * @returns - this {@link Mat4} after multiplication.
      */
     multiply(matrix?: Mat4): Mat4;
     /**
-     * Multiply another {@link Mat4} with this {@link Mat4}
-     * @param matrix - {@link Mat4} to multiply with
-     * @returns - this {@link Mat4} after multiplication
+     * Multiply another {@link Mat4} with this {@link Mat4}.
+     * @param matrix - {@link Mat4} to multiply with.
+     * @returns - this {@link Mat4} after multiplication.
      */
     premultiply(matrix?: Mat4): Mat4;
     /**
-     * Multiply two {@link Mat4}
-     * @param a - first {@link Mat4}
-     * @param b - second {@link Mat4}
-     * @returns - {@link Mat4} resulting from the multiplication
+     * Multiply two {@link Mat4}.
+     * @param a - first {@link Mat4}.
+     * @param b - second {@link Mat4}.
+     * @returns - {@link Mat4} resulting from the multiplication.
      */
     multiplyMatrices(a?: Mat4, b?: Mat4): Mat4;
     /**
-     * {@link premultiply} this {@link Mat4} by a translate matrix (i.e. translateMatrix = new Mat4().translate(vector))
-     * @param vector - translation {@link Vec3 | vector} to use
-     * @returns - this {@link Mat4} after the premultiply translate operation
+     * {@link premultiply} this {@link Mat4} by a translate matrix (i.e. translateMatrix = new Mat4().translate(vector)).
+     * @param vector - translation {@link Vec3} to use.
+     * @returns - this {@link Mat4} after the premultiply translate operation.
      */
     premultiplyTranslate(vector?: Vec3): Mat4;
     /**
-     * {@link premultiply} this {@link Mat4} by a scale matrix (i.e. translateMatrix = new Mat4().scale(vector))
-     * @param vector - scale {@link Vec3 | vector} to use
-     * @returns - this {@link Mat4} after the premultiply scale operation
+     * {@link premultiply} this {@link Mat4} by a scale matrix (i.e. translateMatrix = new Mat4().scale(vector)).
+     * @param vector - scale {@link Vec3 | vector} to use.
+     * @returns - this {@link Mat4} after the premultiply scale operation.
      */
     premultiplyScale(vector?: Vec3): Mat4;
     /**
@@ -136,9 +137,9 @@ export declare class Mat4 {
      */
     transpose(): Mat4;
     /**
-     * Translate a {@link Mat4}
-     * @param vector - translation {@link Vec3 | vector} to use
-     * @returns - translated {@link Mat4}
+     * Translate a {@link Mat4}.
+     * @param vector - translation {@link Vec3} to use.
+     * @returns - translated {@link Mat4}.
      */
     translate(vector?: Vec3): Mat4;
     /**

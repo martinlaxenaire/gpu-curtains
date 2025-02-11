@@ -11,7 +11,7 @@
 - Buffers & Bindings & BindGroups
 - Render + Compute Pipelines (async by default)
 - PipelineManager to cache RenderPipelineEntry and ComputePipelineEntry + set only needed BindGroup
-- Meshes (Mesh, DOMMesh, FullscreenPlane, Plane)
+- Meshes (Mesh, DOMMesh, FullscreenPlane, Plane, LitMesh)
 - Compute passes
 - Texture (including storage & depth) & DOMTexture classes
 - Sampler class
@@ -36,10 +36,10 @@
 
 ## TODO / possible improvements
 
-- Add/improve GLTFScenesManager features (sparse accessors, animations, morphing, skinning...)
+- Improve/add more GLTFScenesManager extensions
+- OrthographicCamera?
 - Add more lights (SpotLight...)
 - MSDF fonts
-- Better shader chunks system and/or custom preprocessor
-- Implement different lit extras RenderMaterial (i.e. RenderLambertMaterial, RenderPhongMaterial, RenderPBRMaterial, etc.)?
+- Eventual shader custom preprocessor?
 - Improve typedoc documentation?
 - More examples & tests?

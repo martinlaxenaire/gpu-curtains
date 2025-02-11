@@ -5,9 +5,8 @@ import {
   Object3D,
   AmbientLight,
   DirectionalLight,
-  getPhong,
   RenderBundle,
-  Mesh,
+  LitMesh,
   SphereGeometry,
   Vec3,
   Raycaster,
@@ -57,7 +56,7 @@ window.addEventListener('load', async () => {
 
   // lights
   const ambientLight = new AmbientLight(gpuCameraRenderer, {
-    intensity: 0.3,
+    intensity: 0.1,
   })
 
   const directionalLight = new DirectionalLight(gpuCameraRenderer, {
@@ -68,36 +67,6 @@ window.addEventListener('load', async () => {
   // now add objects to our scene
   const cubeGeometry = new BoxGeometry()
   const sphereGeometry = new SphereGeometry()
-
-  const meshFs = /* wgsl */ `
-    struct VSOutput {
-      @builtin(position) position: vec4f,
-      @builtin(front_facing) frontFacing: bool,
-      @location(0) uv: vec2f,
-      @location(1) normal: vec3f,
-      @location(2) worldPosition: vec3f,
-      @location(3) viewDirection: vec3f,
-    };
-    
-    ${getPhong()}
-    
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {   
-      // select color based on the hit test
-      var color: vec3f = select(shading.color, raycasting.hitColor, bool(raycasting.isHit));
-      
-      // negate the normals if we're using front face culling
-      let faceDirection = select(-1.0, 1.0, fsInput.frontFacing);
-      let normal = normalize(faceDirection * fsInput.normal);
-      
-      let worldPosition = fsInput.worldPosition;
-      let viewDirection = normalize(fsInput.viewDirection);
-      
-      // lambert
-      color = getPhong(normal, worldPosition, color, viewDirection, shading.specularColor, shading.specularStrength, shading.shininess);
-    
-      return vec4(color, 1.0);
-    }
-  `
 
   const blue = new Vec3(0, 1, 1)
   const pink = new Vec3(1, 0, 1)
@@ -120,37 +89,27 @@ window.addEventListener('load', async () => {
   for (let i = 0; i < nbMeshes; i++) {
     const isCube = Math.random() > 0.5
 
-    const mesh = new Mesh(gpuCameraRenderer, {
+    const mesh = new LitMesh(gpuCameraRenderer, {
       label: isCube ? 'Cube ' + i : 'Sphere ' + i,
       geometry: isCube ? cubeGeometry : sphereGeometry,
       renderBundle,
-      shaders: {
-        fragment: {
-          code: meshFs,
+      material: {
+        shading: 'Phong',
+        fragmentChunks: {
+          preliminaryContribution: `
+          // select color based on the hit test
+          // apply to 'outputColor'
+          let hitColor: vec3f = select(outputColor.rgb, raycasting.hitColor, bool(raycasting.isHit));
+          outputColor = vec4(hitColor, 1.0);
+          `,
         },
+        color: pink.clone().lerp(blue, easeInOutCubic(Math.random())),
+        specularStrength: 0.25,
+        shininess: 40,
       },
       uniforms: {
-        shading: {
-          struct: {
-            color: {
-              type: 'vec3f',
-              value: pink.clone().lerp(blue, easeInOutCubic(Math.random())), // random color between pink and blue
-            },
-            specularColor: {
-              type: 'vec3f',
-              value: new Vec3(1),
-            },
-            specularStrength: {
-              type: 'f32',
-              value: 0.25,
-            },
-            shininess: {
-              type: 'f32',
-              value: 32,
-            },
-          },
-        },
         raycasting: {
+          visibility: ['fragment'],
           struct: {
             hitColor: {
               type: 'vec3f',
@@ -205,6 +164,8 @@ window.addEventListener('load', async () => {
     const intersections = raycaster.intersectObject(pivot, true)
     // this would work as well
     // const intersections = raycaster.intersectObjects([meshes])
+
+    // console.log(intersections)
 
     if (intersections.length) {
       // highlight intersect meshes if any

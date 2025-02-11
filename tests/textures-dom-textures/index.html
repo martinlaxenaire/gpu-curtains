@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+    <!-- Metas -->
+    <title>gpu-curtains | DOM textures test</title>
+    <meta name="description" content="DOM textures test with gpu-curtains" />
+
+    <link href="../../examples/common-styles.css" rel="stylesheet" />
+    <link href="styles.css" rel="stylesheet" />
+
+    <link
+      rel="icon"
+      type="image/png"
+      href="https://raw.githubusercontent.com/martinlaxenaire/gpu-curtains/main/website/assets/favicon.png"
+    />
+  </head>
+
+  <body>
+    <div id="canvas" class="scrollable"></div>
+
+    <div id="page">
+      <h1>Media textures</h1>
+
+      <div class="large-container">
+        <h2>Planes</h2>
+        <div class="meshes-container">
+          <div class="mesh-container">
+            <h3>WebP image</h3>
+            <div class="mesh plane">
+              <img
+                src="https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/refs/heads/main/Models/SheenWoodLeatherSofa/glTF/Frame_BaseColor.webp"
+                data-texture-name="meshTexture"
+              />
+            </div>
+          </div>
+
+          <div class="mesh-container">
+            <h3>Regular video</h3>
+            <div class="mesh plane">
+              <video
+                crossorigin="anonymous"
+                muted=""
+                autoplay=""
+                playsinline=""
+                loop=""
+                preload="none"
+                src="https://static.vecteezy.com/system/resources/previews/054/892/911/mp4/loop-colorful-loght-in-motion-video.mp4"
+                data-texture-name="meshTexture"
+              ></video>
+            </div>
+          </div>
+
+          <div class="mesh-container">
+            <h3>External video</h3>
+            <div class="mesh plane">
+              <video
+                crossorigin="anonymous"
+                muted=""
+                autoplay=""
+                playsinline=""
+                loop=""
+                preload="none"
+                src="https://static.vecteezy.com/system/resources/previews/054/892/911/mp4/loop-colorful-loght-in-motion-video.mp4"
+                data-texture-name="meshTexture"
+              ></video>
+            </div>
+          </div>
+        </div>
+
+        <h2>Cubes</h2>
+        <div class="meshes-container">
+          <div class="mesh-container">
+            <h3>Image cube</h3>
+            <div class="mesh cube-map">
+              <img src="https://picsum.photos/1280/720?random=1" data-texture-name="meshTexture" />
+            </div>
+          </div>
+
+          <div class="mesh-container">
+            <h3>Video cube</h3>
+            <div class="mesh cube-map">
+              <video
+                crossorigin="anonymous"
+                muted=""
+                autoplay=""
+                playsinline=""
+                loop=""
+                preload="none"
+                src="https://static.vecteezy.com/system/resources/previews/054/892/911/mp4/loop-colorful-loght-in-motion-video.mp4"
+                data-texture-name="meshTexture"
+              ></video>
+            </div>
+          </div>
+
+          <div class="mesh-container">
+            <h3>Canvas cube</h3>
+            <div class="mesh cube-map">
+              <canvas id="cube-canvas" data-texture-name="meshTexture" />
+            </div>
+          </div>
+        </div>
+
+        <h2>Planes with cached images</h2>
+        <div class="meshes-container">
+          <div class="mesh-container">
+            <h3>Cached image</h3>
+            <div class="mesh plane-cached">
+              <img src="https://picsum.photos/1980/720?random=1" data-texture-name="meshTexture" />
+            </div>
+          </div>
+
+          <div class="mesh-container">
+            <h3>Cached image</h3>
+            <div class="mesh plane-cached">
+              <img src="https://picsum.photos/1980/720?random=1" data-texture-name="meshTexture" />
+            </div>
+          </div>
+
+          <div class="mesh-container">
+            <h3>Cached image</h3>
+            <div class="mesh plane-cached">
+              <img src="https://picsum.photos/1980/720?random=1" data-texture-name="meshTexture" />
+            </div>
+          </div>
+        </div>
+
+        <h2>One DOM texture for multiple planes, with transformation</h2>
+        <div class="meshes-container">
+          <div class="mesh-container">
+            <h3>Transformed texture</h3>
+            <div class="mesh plane-transform"></div>
+          </div>
+
+          <div class="mesh-container">
+            <h3>Transformed texture</h3>
+            <div class="mesh plane-transform"></div>
+          </div>
+
+          <div class="mesh-container">
+            <h3>Transformed texture</h3>
+            <div class="mesh plane-transform"></div>
+          </div>
+        </div>
+
+        <h2>Slides (copy textures)</h2>
+        <div id="slideshow" class="mesh">
+          <img src="https://picsum.photos/1920/1080?random=1" crossorigin="" loading="lazy" />
+          <!-- this image will have a different size just to highlight that texture matrices work -->
+          <img src="https://picsum.photos/1280/1280?random=2" crossorigin="" loading="lazy" />
+          <img src="https://picsum.photos/1920/1080?random=3" crossorigin="" loading="lazy" />
+          <img src="https://picsum.photos/1920/1080?random=4" crossorigin="" loading="lazy" />
+          <video
+            crossorigin="anonymous"
+            muted=""
+            autoplay=""
+            playsinline=""
+            loop=""
+            preload="none"
+            src="https://cdn.coverr.co/videos/coverr-raglan-beach-in-new-zealand-958/1080p.mp4"
+          ></video>
+        </div>
+      </div>
+    </div>
+
+    <script src="main.js" type="module"></script>
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-45554DLGL6"></script>
+    <script>
+      window.dataLayer = window.dataLayer || []
+      function gtag() {
+        dataLayer.push(arguments)
+      }
+
+      if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+        gtag('js', new Date())
+        gtag('config', 'G-45554DLGL6')
+      }
+    </script>
+  </body>
+</html>

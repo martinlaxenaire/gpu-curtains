@@ -4,13 +4,14 @@ import {
   GPUDeviceManager,
   AmbientLight,
   DirectionalLight,
-  getLambert,
-  Mesh,
+  LitMesh,
   SphereGeometry,
   Vec2,
   Vec3,
   Object3D,
   BoxGeometry,
+  Mesh,
+  Sampler,
 } from '../../dist/esm/index.mjs'
 
 // Shadow mapping
@@ -24,7 +25,6 @@ import {
 // refs:
 // https://webgpu.github.io/webgpu-samples/samples/shadowMapping
 // https://github.com/jack1232/webgpu-new-video-series/blob/video08/src/examples/sc02/shadow.ts
-
 window.addEventListener('load', async () => {
   const systemSize = 10
 
@@ -82,7 +82,7 @@ window.addEventListener('load', async () => {
 
   const directionalLight = new DirectionalLight(gpuCameraRenderer, {
     position: new Vec3(systemSize * 6, systemSize * 4.5, systemSize * 6),
-    intensity: 1,
+    intensity: 1.25,
     shadow: {
       bias: 0.007,
       //normalBias: 0.001,
@@ -99,41 +99,6 @@ window.addEventListener('load', async () => {
     },
   })
 
-  const meshFs = /* wgsl */ `
-    struct VSOutput {
-      @builtin(position) position: vec4f,
-      @builtin(front_facing) frontFacing: bool,
-      @location(0) uv: vec2f,
-      @location(1) normal: vec3f,
-      @location(2) worldPosition: vec3f,
-      @location(3) viewDirection: vec3f,
-    };
-    
-    ${getLambert({
-      receiveShadows: true,
-    })}
-    
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-      // negate the normals if we're using front face culling
-      let faceDirection = select(-1.0, 1.0, fsInput.frontFacing);
-      
-      // apply lightning and shadows
-      let normal: vec3f = normalize(faceDirection * fsInput.normal);
-      
-      let worldPosition: vec3f = fsInput.worldPosition;
-      
-      var color: vec3f = shading.color;
-      
-      color = getLambert(
-        normal,
-        worldPosition,
-        color
-      );
-      
-      return vec4(color, 1.0);
-    }
-  `
-
   // create meshes
 
   const sphereGeometry = new SphereGeometry()
@@ -141,30 +106,19 @@ window.addEventListener('load', async () => {
 
   const blue = new Vec3(0, 1, 1)
   const pink = new Vec3(1, 0, 1)
-  const grey = new Vec3(0.2)
+  const grey = new Vec3(0.5)
 
   for (let i = 0; i < 25; i++) {
     const isCube = i % 2 === 1
 
-    const mesh = new Mesh(gpuCameraRenderer, {
+    const mesh = new LitMesh(gpuCameraRenderer, {
       label: 'Mesh ' + i,
       geometry: isCube ? cubeGeometry : sphereGeometry,
-      shaders: {
-        fragment: {
-          code: meshFs,
-        },
-      },
       castShadows: true,
       receiveShadows: true,
-      uniforms: {
-        shading: {
-          struct: {
-            color: {
-              type: 'vec3f',
-              value: isCube ? grey : Math.random() > 0.5 ? blue : pink,
-            },
-          },
-        },
+      material: {
+        shading: 'Lambert',
+        color: isCube ? grey : Math.random() > 0.5 ? blue : pink,
       },
     })
 
@@ -186,26 +140,15 @@ window.addEventListener('load', async () => {
   // create a wrapping box
   // the box will not cast shadows, but it will receive them
   // it will be drawn by culling the front faces
-  const wrappingBox = new Mesh(gpuCameraRenderer, {
+  const wrappingBox = new LitMesh(gpuCameraRenderer, {
     label: 'Wrapping box',
     geometry: cubeGeometry,
     cullMode: 'front',
     receiveShadows: true,
     frustumCulling: false, // always draw the walls
-    shaders: {
-      fragment: {
-        code: meshFs,
-      },
-    },
-    uniforms: {
-      shading: {
-        struct: {
-          color: {
-            type: 'vec3f',
-            value: new Vec3(0.85),
-          },
-        },
-      },
+    material: {
+      shading: 'Lambert',
+      color: new Vec3(0.65),
     },
   })
 
@@ -252,13 +195,12 @@ window.addEventListener('load', async () => {
       @location(0) uv: vec2f,
     };
 
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {          
-      
-      let rawDepth = textureSampleLevel(
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {        
+      let rawDepth = textureSampleCompare(
         depthTexture,
-        defaultSampler,
+        debugDepthSampler,
         fsInput.uv,
-        0
+        fsInput.uv.y * 0.5 + 0.5
       );
       
       // remap depth into something a bit more visible
@@ -278,6 +220,14 @@ window.addEventListener('load', async () => {
     depthWriteEnabled: false,
     frustumCulling: false,
     visible: false,
+    samplers: [
+      new Sampler(gpuCameraRenderer, {
+        label: 'Debug depth sampler',
+        name: 'debugDepthSampler',
+        type: 'comparison',
+        compare: 'less',
+      }),
+    ],
     shaders: {
       vertex: {
         code: debugDepthVs,

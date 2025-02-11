@@ -1,6 +1,7 @@
 import { GPUCameraRenderer, GPUCameraRendererParams } from '../../core/renderers/GPUCameraRenderer';
 import { DOMProjectedMesh } from '../../core/renderers/GPURenderer';
 import { DOMObject3D } from '../objects3D/DOMObject3D';
+import { DOMTexture } from '../textures/DOMTexture';
 /**
  * This renderer just extends the {@link GPUCameraRenderer} by keeping track of all the created {@link curtains/meshes/DOMMesh.DOMMesh | DOM Meshes}
  *
@@ -22,19 +23,31 @@ import { DOMObject3D } from '../objects3D/DOMObject3D';
  * ```
  */
 export declare class GPUCurtainsRenderer extends GPUCameraRenderer {
-    /** All created {@link curtains/meshes/DOMMesh.DOMMesh | DOM Meshes} and {@link curtains/meshes/Plane.Plane | planes} */
+    /** All created {@link curtains/meshes/DOMMesh.DOMMesh | DOM Meshes} and {@link curtains/meshes/Plane.Plane | planes}. */
     domMeshes: DOMProjectedMesh[];
     /** All created {@link curtains/objects3D/DOMObject3D.DOMObject3D | DOMObject3D} which position should be updated on scroll. */
     domObjects: DOMObject3D[];
+    /** An array containing all our created {@link DOMTexture}. */
+    domTextures: DOMTexture[];
     /**
      * GPUCurtainsRenderer constructor
-     * @param parameters - {@link GPUCameraRendererParams | parameters} used to create this {@link GPUCurtainsRenderer}
+     * @param parameters - {@link GPUCameraRendererParams | parameters} used to create this {@link GPUCurtainsRenderer}.
      */
     constructor({ deviceManager, label, container, pixelRatio, autoResize, context, renderPass, camera, lights, }: GPUCameraRendererParams);
     /**
-     * Add the {@link GPUCurtainsRenderer#domMeshes | domMeshes} to our tracked elements
+     * Add the {@link GPUCurtainsRenderer#domMeshes | domMeshes} to our tracked elements.
      */
     setRendererObjects(): void;
+    /**
+     * Add a {@link DOMTexture} to our {@link domTextures | DOM textures array}.
+     * @param texture - {@link DOMTexture} to add.
+     */
+    addDOMTexture(texture: DOMTexture): void;
+    /**
+     * Remove a {@link DOMTexture} from our {@link domTextures | textures array}.
+     * @param texture - {@link DOMTexture} to remove.
+     */
+    removeDOMTexture(texture: DOMTexture): void;
     /**
      * Update the {@link domObjects} sizes and positions when the {@link camera} {@link core/camera/Camera.Camera#position | position} or {@link core/camera/Camera.Camera#size | size} change.
      */

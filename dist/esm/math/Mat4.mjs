@@ -101,6 +101,7 @@ class Mat4 {
   /**
    * Sets the {@link Mat4} values from an array
    * @param array - array to use
+   * @param offset - optional offset in the array to use
    * @returns - this {@link Mat4} after being set
    */
   // prettier-ignore
@@ -121,9 +122,9 @@ class Mat4 {
     0,
     0,
     1
-  ])) {
+  ]), offset = 0) {
     for (let i = 0; i < this.elements.length; i++) {
-      this.elements[i] = array[i];
+      this.elements[i] = array[i + offset];
     }
     return this;
   }
@@ -160,26 +161,26 @@ class Mat4 {
     return new Mat4().copy(this);
   }
   /**
-   * Multiply this {@link Mat4} with another {@link Mat4}
-   * @param matrix - {@link Mat4} to multiply with
-   * @returns - this {@link Mat4} after multiplication
+   * Multiply this {@link Mat4} with another {@link Mat4}.
+   * @param matrix - {@link Mat4} to multiply with.
+   * @returns - this {@link Mat4} after multiplication.
    */
   multiply(matrix = new Mat4()) {
     return this.multiplyMatrices(this, matrix);
   }
   /**
-   * Multiply another {@link Mat4} with this {@link Mat4}
-   * @param matrix - {@link Mat4} to multiply with
-   * @returns - this {@link Mat4} after multiplication
+   * Multiply another {@link Mat4} with this {@link Mat4}.
+   * @param matrix - {@link Mat4} to multiply with.
+   * @returns - this {@link Mat4} after multiplication.
    */
   premultiply(matrix = new Mat4()) {
     return this.multiplyMatrices(matrix, this);
   }
   /**
-   * Multiply two {@link Mat4}
-   * @param a - first {@link Mat4}
-   * @param b - second {@link Mat4}
-   * @returns - {@link Mat4} resulting from the multiplication
+   * Multiply two {@link Mat4}.
+   * @param a - first {@link Mat4}.
+   * @param b - second {@link Mat4}.
+   * @returns - {@link Mat4} resulting from the multiplication.
    */
   multiplyMatrices(a = new Mat4(), b = new Mat4()) {
     const ae = a.elements;
@@ -212,9 +213,9 @@ class Mat4 {
     return this;
   }
   /**
-   * {@link premultiply} this {@link Mat4} by a translate matrix (i.e. translateMatrix = new Mat4().translate(vector))
-   * @param vector - translation {@link Vec3 | vector} to use
-   * @returns - this {@link Mat4} after the premultiply translate operation
+   * {@link premultiply} this {@link Mat4} by a translate matrix (i.e. translateMatrix = new Mat4().translate(vector)).
+   * @param vector - translation {@link Vec3} to use.
+   * @returns - this {@link Mat4} after the premultiply translate operation.
    */
   premultiplyTranslate(vector = new Vec3()) {
     const a11 = 1;
@@ -249,9 +250,9 @@ class Mat4 {
     return this;
   }
   /**
-   * {@link premultiply} this {@link Mat4} by a scale matrix (i.e. translateMatrix = new Mat4().scale(vector))
-   * @param vector - scale {@link Vec3 | vector} to use
-   * @returns - this {@link Mat4} after the premultiply scale operation
+   * {@link premultiply} this {@link Mat4} by a scale matrix (i.e. translateMatrix = new Mat4().scale(vector)).
+   * @param vector - scale {@link Vec3 | vector} to use.
+   * @returns - this {@link Mat4} after the premultiply scale operation.
    */
   premultiplyScale(vector = new Vec3()) {
     const be = this.elements;
@@ -289,8 +290,7 @@ class Mat4 {
   invert() {
     const te = this.elements, n11 = te[0], n21 = te[1], n31 = te[2], n41 = te[3], n12 = te[4], n22 = te[5], n32 = te[6], n42 = te[7], n13 = te[8], n23 = te[9], n33 = te[10], n43 = te[11], n14 = te[12], n24 = te[13], n34 = te[14], n44 = te[15], t11 = n23 * n34 * n42 - n24 * n33 * n42 + n24 * n32 * n43 - n22 * n34 * n43 - n23 * n32 * n44 + n22 * n33 * n44, t12 = n14 * n33 * n42 - n13 * n34 * n42 - n14 * n32 * n43 + n12 * n34 * n43 + n13 * n32 * n44 - n12 * n33 * n44, t13 = n13 * n24 * n42 - n14 * n23 * n42 + n14 * n22 * n43 - n12 * n24 * n43 - n13 * n22 * n44 + n12 * n23 * n44, t14 = n14 * n23 * n32 - n13 * n24 * n32 - n14 * n22 * n33 + n12 * n24 * n33 + n13 * n22 * n34 - n12 * n23 * n34;
     const det = n11 * t11 + n21 * t12 + n31 * t13 + n41 * t14;
-    if (det === 0)
-      return this.set(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    if (det === 0) return this.set(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
     const detInv = 1 / det;
     te[0] = t11 * detInv;
     te[1] = (n24 * n33 * n41 - n23 * n34 * n41 - n24 * n31 * n43 + n21 * n34 * n43 + n23 * n31 * n44 - n21 * n33 * n44) * detInv;
@@ -345,9 +345,9 @@ class Mat4 {
     return this;
   }
   /**
-   * Translate a {@link Mat4}
-   * @param vector - translation {@link Vec3 | vector} to use
-   * @returns - translated {@link Mat4}
+   * Translate a {@link Mat4}.
+   * @param vector - translation {@link Vec3} to use.
+   * @returns - translated {@link Mat4}.
    */
   translate(vector = new Vec3()) {
     const a = this.elements;

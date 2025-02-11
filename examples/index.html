@@ -114,7 +114,7 @@
             <a href="./custom-scroll-and-transformations/" target="_blank">Custom scroll and plane transformations</a>
           </li>
         </ul>
-        <h2 class="overlay-title">Meshes</h2>
+        <h2 class="overlay-title">Basic meshes</h2>
         <ul>
           <li>
             <a href="./basic-cube/" target="_blank">Basic cube</a>
@@ -129,14 +129,25 @@
             <a href="./dom-meshes/" target="_blank">DOM Meshes</a>
           </li>
           <li>
-            <a href="./camera-renderer-object-3d-pivot/" target="_blank">GPUCameraRenderer and Object3D as pivots</a>
-          </li>
-          <li>
             <a href="./cubemap/" target="_blank">Cubemap</a>
+          </li>
+        </ul>
+        <h2 class="overlay-title">Lit meshes</h2>
+        <ul>
+          <li>
+            <a href="./camera-renderer-object-3d-pivot/" target="_blank">GPUCameraRenderer and Object3D as pivots</a>
           </li>
           <li>
             <a href="./raycasting-render-bundle-phong-shading/" target="_blank"
               >Raycasting, render bundle and Phong shading</a
+            >
+          </li>
+          <li>
+            <a href="shadow-mapping/" target="_blank">Shadow mapping</a>
+          </li>
+          <li>
+            <a href="mixing-dom-synced-planes-transmissive-bubbles/" target="_blank"
+              >Mixing DOM synced planes and transmissive bubbles</a
             >
           </li>
         </ul>
@@ -157,6 +168,14 @@
           </li>
           <li>
             <a href="./ping-pong-plane/" target="_blank">Ping pong plane</a>
+          </li>
+          <li>
+            <a href="camera-renderer-transforms-bloom-pass/" target="_blank"> Camera rotationMatrix and bloom pass </a>
+          </li>
+          <li>
+            <a href="camera-renderer-selective-dithering/" target="_blank">
+              Selective dithering pass and orbit controls
+            </a>
           </li>
         </ul>
         <h2 class="overlay-title">Renderers</h2>
@@ -194,23 +213,20 @@
           <li>
             <a href="gltf-dom-meshes/" target="_blank">DOM aligned glTF meshes</a>
           </li>
+          <li>
+            <a href="gltf-loader-skins-animations-shadows/" target="_blank"
+              >glTF loader, animated skinned meshes and shadow maps</a
+            >
+          </li>
         </ul>
 
         <h2 class="overlay-title">Advanced rendering</h2>
         <ul>
           <li>
-            <a href="camera-renderer-transforms-bloom-pass/" target="_blank"> Camera rotation and bloom pass </a>
-          </li>
-          <li>
-            <a href="camera-renderer-selective-dithering/" target="_blank">
-              Selective dithering pass and orbit controls
-            </a>
+            <a href="instanced-shadowed-particles/" target="_blank">Instanced shadowed particles</a>
           </li>
           <li>
             <a href="deferred-rendering/?sampleCount=4" target="_blank">Deferred rendering (Multiple Render Targets)</a>
-          </li>
-          <li>
-            <a href="shadow-mapping/" target="_blank">Shadow mapping</a>
           </li>
           <li>
             <a href="screen-space-ambient-occlusion/?sampleCount=4" target="_blank">Screen space ambient occlusion</a>
@@ -289,11 +305,11 @@
           // add the scene as the pivot parent
           pivot.parent = gpuCurtains.renderer.scene
 
-          // random rotation speed
+          // random rotationMatrix speed
           const pivotRotationSpeed = (Math.random() * 0.015 + 0.01) * Math.sign(Math.random() - 0.5)
           // set the quaternion axis order
           pivot.quaternion.setAxisOrder('ZYX')
-          // random init rotation values
+          // random init rotationMatrix values
           pivot.rotation.y = Math.random() * Math.PI * 2
           pivot.rotation.z = Math.random() * Math.PI
 

@@ -4,6 +4,7 @@ import { RenderPass } from '../renderPasses/RenderPass.mjs';
 import { generateUUID, throwError, throwWarning } from '../../utils/utils.mjs';
 import { TasksQueueManager } from '../../utils/TasksQueueManager.mjs';
 import { Buffer } from '../buffers/Buffer.mjs';
+import { MediaTexture } from '../textures/MediaTexture.mjs';
 
 class GPURenderer {
   /**
@@ -26,7 +27,7 @@ class GPURenderer {
     /** function assigned to the {@link onAfterRender} callback */
     this._onAfterRenderCallback = (commandEncoder) => {
     };
-    /** function assigned to the {@link resizeObjects} callback */
+    /** function assigned to the {@link onResize} callback */
     this._onResizeCallback = () => {
     };
     /** function assigned to the {@link onAfterResize} callback */
@@ -53,7 +54,7 @@ class GPURenderer {
       },
       ...context
     };
-    renderPass = { ...{ useDepth: true, sampleCount: 4, clearValue: [0, 0, 0, 0] }, ...renderPass };
+    renderPass = { ...{ useDepth: true, sampleCount: 4 }, ...renderPass };
     this.options = {
       deviceManager,
       label,
@@ -83,8 +84,7 @@ class GPURenderer {
         priority: 5,
         // renderer callback need to be called first
         onSizeChanged: () => {
-          if (this.options.autoResize)
-            this.resize();
+          if (this.options.autoResize) this.resize();
         }
       });
       this.resize();
@@ -147,6 +147,7 @@ class GPURenderer {
    * Resize all tracked objects ({@link Texture | textures}, {@link RenderPass | render passes}, {@link RenderTarget | render targets}, {@link ComputePass | compute passes} and meshes).
    */
   resizeObjects() {
+    this.renderBundles.forEach((renderBundle) => renderBundle.resize());
     this.textures.forEach((texture) => {
       texture.resize();
     });
@@ -504,27 +505,6 @@ class GPURenderer {
   }
   /* TEXTURES */
   /**
-   * Get all created {@link DOMTexture} tracked by our {@link GPUDeviceManager}
-   * @readonly
-   */
-  get domTextures() {
-    return this.deviceManager.domTextures;
-  }
-  /**
-   * Add a {@link DOMTexture} to our {@link GPUDeviceManager#domTextures | textures array}
-   * @param texture - {@link DOMTexture} to add
-   */
-  addDOMTexture(texture) {
-    this.deviceManager.addDOMTexture(texture);
-  }
-  /**
-   * Remove a {@link DOMTexture} from our {@link GPUDeviceManager#domTextures | textures array}
-   * @param texture - {@link DOMTexture} to remove
-   */
-  removeDOMTexture(texture) {
-    this.deviceManager.removeDOMTexture(texture);
-  }
-  /**
    * Add a {@link Texture} to our {@link textures} array
    * @param texture - {@link Texture} to add
    */
@@ -547,20 +527,68 @@ class GPURenderer {
     return this.deviceManager.device?.createTexture(textureDescriptor);
   }
   /**
-   * Upload a {@linkDOMTexture#texture | texture} to the GPU
-   * @param texture - {@link DOMTexture} class object with the {@link DOMTexture#texture | texture} to upload
+   * Upload a {@link MediaTexture#texture | texture} or {@link DOMTexture#texture | texture} to the GPU.
+   * @param texture - {@link MediaTexture} or {@link DOMTexture} containing the {@link GPUTexture} to upload.
+   * @param sourceIndex - Index of the source to upload (for cube maps). Default to `0`.
    */
-  uploadTexture(texture) {
-    this.deviceManager.uploadTexture(texture);
+  uploadTexture(texture, sourceIndex = 0) {
+    this.deviceManager.uploadTexture(texture, sourceIndex);
   }
   /**
-   * Import a {@link GPUExternalTexture}
-   * @param video - {@link HTMLVideoElement} source
-   * @returns - {@link GPUExternalTexture}
+   * Generate mips on the GPU using our {@link GPUDeviceManager}.
+   * @param texture - {@link Texture}, {@link MediaTexture} or {@link DOMTexture} for which to generate the mips.
+   * @param commandEncoder - optional {@link GPUCommandEncoder} to use if we're already in the middle of a command encoding process.
    */
-  importExternalTexture(video) {
-    return this.deviceManager.device?.importExternalTexture({ source: video });
+  generateMips(texture, commandEncoder = null) {
+    this.deviceManager.generateMips(texture, commandEncoder);
   }
+  /**
+   * Import a {@link GPUExternalTexture}.
+   * @param video - {@link HTMLVideoElement} source.
+   * @param label - Optional label of the texture.
+   * @returns - {@link GPUExternalTexture}.
+   */
+  importExternalTexture(video, label = "") {
+    return this.deviceManager.device?.importExternalTexture({ label, source: video });
+  }
+  /**
+   * Copy a {@link GPUTexture} to a {@link Texture} using a {@link GPUCommandEncoder}. Automatically generate mips after copy if the {@link Texture} needs it.
+   * @param gpuTexture - {@link GPUTexture} source to copy from.
+   * @param texture - {@link Texture} destination to copy onto.
+   * @param commandEncoder - {@link GPUCommandEncoder} to use for copy operation.
+   */
+  copyGPUTextureToTexture(gpuTexture, texture, commandEncoder) {
+    commandEncoder.copyTextureToTexture(
+      {
+        texture: gpuTexture
+      },
+      {
+        texture: texture.texture
+      },
+      [gpuTexture.width, gpuTexture.height, gpuTexture.depthOrArrayLayers]
+    );
+    if (texture.options.generateMips) {
+      this.generateMips(texture, commandEncoder);
+    }
+  }
+  /**
+   * Copy a {@link Texture} to a {@link GPUTexture} using a {@link GPUCommandEncoder}.
+   * @param texture - {@link Texture} source to copy from.
+   * @param gpuTexture - {@link GPUTexture} destination to copy onto.
+   * @param commandEncoder - {@link GPUCommandEncoder} to use for copy operation.
+   */
+  copyTextureToGPUTexture(texture, gpuTexture, commandEncoder) {
+    commandEncoder.copyTextureToTexture(
+      {
+        texture: texture.texture
+      },
+      {
+        texture: gpuTexture
+      },
+      [gpuTexture.width, gpuTexture.height, gpuTexture.depthOrArrayLayers]
+    );
+  }
+  /* SAMPLERS */
   /**
    * Check if a {@link Sampler} has already been created with the same {@link Sampler#options | parameters}.
    * Use it if found, else create a new one and add it to the {@link GPUDeviceManager#samplers | samplers array}.
@@ -615,6 +643,7 @@ class GPURenderer {
     this.meshes = [];
     this.textures = [];
     this.renderBundles = /* @__PURE__ */ new Map();
+    this.animations = /* @__PURE__ */ new Map();
   }
   /**
    * Get all this {@link GPURenderer} rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes)
@@ -638,20 +667,20 @@ class GPURenderer {
     });
   }
   /**
-   * Get all objects ({@link RenderedMesh | rendered meshes} or {@link ComputePass | compute passes}) using a given {@link DOMTexture} or {@link Texture}.
+   * Get all objects ({@link RenderedMesh | rendered meshes} or {@link ComputePass | compute passes}) using a given {@link DOMTexture}, {@link MediaTexture} or {@link Texture}.
    * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
-   * @param texture - {@link DOMTexture} or {@link Texture} to check
+   * @param texture - {@link DOMTexture}, {@link MediaTexture} or {@link Texture} to check.
    */
   getObjectsByTexture(texture) {
     return this.deviceRenderedObjects.filter((object) => {
-      return [...object.material.domTextures, ...object.material.textures].some((t) => t.uuid === texture.uuid);
+      return object.material.textures.some((t) => t.uuid === texture.uuid);
     });
   }
   /* EVENTS */
   /**
-   * Assign a callback function to _onBeforeRenderCallback
-   * @param callback - callback to run just before the {@link render} method will be executed
-   * @returns - our {@link GPURenderer}
+   * Assign a callback function to _onBeforeRenderCallback.
+   * @param callback - callback to run just before the {@link render} method will be executed.
+   * @returns - our {@link GPURenderer}.
    */
   onBeforeRender(callback) {
     if (callback) {
@@ -694,20 +723,23 @@ class GPURenderer {
   }
   /* RENDER */
   /**
-   * Render a single {@link ComputePass}
-   * @param commandEncoder - current {@link GPUCommandEncoder}
-   * @param computePass - {@link ComputePass}
+   * Render a single {@link ComputePass}.
+   * @param commandEncoder - current {@link GPUCommandEncoder} to use.
+   * @param computePass - {@link ComputePass} to run.
+   * @param copyBuffer - Whether to copy all writable binding buffers that need it.
    */
-  renderSingleComputePass(commandEncoder, computePass) {
+  renderSingleComputePass(commandEncoder, computePass, copyBuffer = true) {
     const pass = commandEncoder.beginComputePass();
     computePass.render(pass);
     pass.end();
-    computePass.copyBufferToResult(commandEncoder);
+    if (copyBuffer) {
+      computePass.copyBufferToResult(commandEncoder);
+    }
   }
   /**
-   * Render a single {@link RenderedMesh | Mesh}
-   * @param commandEncoder - current {@link GPUCommandEncoder}
-   * @param mesh - {@link RenderedMesh | Mesh} to render
+   * Render a single {@link RenderedMesh | Mesh}.
+   * @param commandEncoder - current {@link GPUCommandEncoder}.
+   * @param mesh - {@link RenderedMesh | Mesh} to render.
    */
   renderSingleMesh(commandEncoder, mesh) {
     const pass = commandEncoder.beginRenderPass(this.renderPass.descriptor);
@@ -715,8 +747,8 @@ class GPURenderer {
     pass.end();
   }
   /**
-   * Render an array of objects (either {@link RenderedMesh | Meshes} or {@link ComputePass}) once. This method won't call any of the renderer render hooks like {@link onBeforeRender}, {@link onAfterRender}
-   * @param objects - Array of {@link RenderedMesh | Meshes} or {@link ComputePass} to render
+   * Render an array of objects (either {@link RenderedMesh | Meshes} or {@link ComputePass}) once. This method won't call any of the renderer render hooks like {@link onBeforeRender}, {@link onAfterRender}.
+   * @param objects - Array of {@link RenderedMesh | Meshes} or {@link ComputePass} to render.
    */
   renderOnce(objects) {
     const commandEncoder = this.device?.createCommandEncoder({
@@ -738,7 +770,7 @@ class GPURenderer {
   }
   /**
    * Force to clear a {@link GPURenderer} content to its {@link RenderPass#options.clearValue | clear value} by rendering and empty pass.
-   * @param commandEncoder
+   * @param commandEncoder - {@link GPUCommandEncoder} to use if any.
    */
   forceClear(commandEncoder) {
     const hasCommandEncoder = !!commandEncoder;
@@ -749,6 +781,8 @@ class GPURenderer {
       !this.production && commandEncoder.pushDebugGroup(`${this.type} (${this.options.label}): Force clear command encoder`);
     }
     this.renderPass.updateView();
+    this.renderPass.setLoadOp("clear");
+    this.renderPass.setDepthLoadOp("clear");
     const pass = commandEncoder.beginRenderPass(this.renderPass.descriptor);
     pass.end();
     if (!hasCommandEncoder) {
@@ -761,41 +795,44 @@ class GPURenderer {
    * Called by the {@link GPUDeviceManager#render | GPUDeviceManager render method} before the {@link GPUCommandEncoder} has been created. Used to update the {@link Scene} matrix stack.
    */
   onBeforeCommandEncoder() {
-    if (!this.ready)
-      return;
-    if (this.shouldRenderScene)
-      this.scene?.onBeforeRender();
+    if (!this.ready) return;
+    if (this.shouldRenderScene) this.scene?.onBeforeRender();
     this.onBeforeCommandEncoderCreation.execute();
   }
   /**
    * Called by the {@link GPUDeviceManager#render | GPUDeviceManager render method} after the {@link GPUCommandEncoder} has been created.
    */
   onAfterCommandEncoder() {
-    if (!this.ready)
-      return;
+    if (!this.ready) return;
     this.onAfterCommandEncoderSubmission.execute();
   }
   /**
-   * Called at each draw call to render our scene and its content
-   * @param commandEncoder - current {@link GPUCommandEncoder}
+   * Called at each draw call to render our scene and its content.
+   * @param commandEncoder - current {@link GPUCommandEncoder}.
    */
   render(commandEncoder) {
-    if (!this.ready || !this.shouldRender)
-      return;
+    if (!this.ready || !this.shouldRender) return;
     this._onBeforeRenderCallback && this._onBeforeRenderCallback(commandEncoder);
     this.onBeforeRenderScene.execute(commandEncoder);
-    if (this.shouldRenderScene)
+    if (this.shouldRenderScene) {
+      this.textures.forEach((texture) => {
+        if (texture instanceof MediaTexture) {
+          texture.update();
+        }
+      });
       this.scene?.render(commandEncoder);
+    }
     this._onAfterRenderCallback && this._onAfterRenderCallback(commandEncoder);
     this.onAfterRenderScene.execute(commandEncoder);
   }
   /**
-   * Destroy our {@link GPURenderer} and everything that needs to be destroyed as well
+   * Destroy our {@link GPURenderer} and everything that needs to be destroyed as well.
    */
   destroy() {
     this.deviceManager.renderers = this.deviceManager.renderers.filter((renderer) => renderer.uuid !== this.uuid);
     this.domElement?.destroy();
     this.renderBundles.forEach((bundle) => bundle.destroy());
+    this.animations = /* @__PURE__ */ new Map();
     this.renderPass?.destroy();
     this.postProcessingPass?.destroy();
     this.renderTargets.forEach((renderTarget) => renderTarget.destroy());

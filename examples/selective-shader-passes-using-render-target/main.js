@@ -26,7 +26,7 @@ window.addEventListener('load', async () => {
   await gpuCurtains.setDevice()
 
   gpuCurtains
-    .onRender(() => {
+    .onBeforeRender(() => {
       // update our scroll effect
       // increase/decrease the effect
       scrollEffect = lerp(scrollEffect, 0, 0.075)
@@ -67,7 +67,7 @@ window.addEventListener('load', async () => {
       var vsOutput: VSOutput;
   
       vsOutput.position = getOutputPosition(attributes.position);
-      vsOutput.uv = getUVCover(attributes.uv, planeTextureMatrix);
+      vsOutput.uv = getUVCover(attributes.uv, texturesMatrices.planeTexture.matrix);
   
       return vsOutput;
     }

@@ -2,36 +2,22 @@ import { isRenderer } from '../../core/renderers/utils.mjs';
 import { Buffer } from '../../core/buffers/Buffer.mjs';
 import { generateUUID } from '../../utils/utils.mjs';
 
-var __accessCheck = (obj, member, msg) => {
-  if (!member.has(obj))
-    throw TypeError("Cannot " + msg);
+var __typeError = (msg) => {
+  throw TypeError(msg);
 };
-var __privateAdd = (obj, member, value) => {
-  if (member.has(obj))
-    throw TypeError("Cannot add the same private member more than once");
-  member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-};
-var __privateMethod = (obj, member, method) => {
-  __accessCheck(obj, member, "access private method");
-  return method;
-};
-var _addGeometryToIndirectMappedBuffer, addGeometryToIndirectMappedBuffer_fn;
+var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
+var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+var __privateMethod = (obj, member, method) => (__accessCheck(obj, member, "access private method"), method);
+var _IndirectBuffer_instances, addGeometryToIndirectMappedBuffer_fn;
 const indirectBufferEntrySize = 5;
 class IndirectBuffer {
   /**
    * IndirectBuffer constructor.
    * @param renderer - {@link Renderer} or {@link GPUCurtains} class object used to create this {@link IndirectBuffer}.
-   * @param parameters - {@link IndirectBufferParams | parameters} use to create this {@link IndirectBuffer}.
+   * @param parameters - {@link IndirectBufferParams | parameters} used to create this {@link IndirectBuffer}.
    */
   constructor(renderer, { label = "Indirect buffer", geometries = [], minEntrySize = indirectBufferEntrySize } = {}) {
-    /**
-     * Add a {@link Geometry} or {@link IndexedGeometry} attributes to the {@link buffer} mapped array buffer.
-     * @param geometry - {@link Geometry} or {@link IndexedGeometry} to add the attributes from
-     * @param mappedBuffer - The {@link buffer} mapped array buffer
-     * @param index - Index in the {@link buffer} mapped array buffer at which to add the attributes.
-     * @private
-     */
-    __privateAdd(this, _addGeometryToIndirectMappedBuffer);
+    __privateAdd(this, _IndirectBuffer_instances);
     this.type = "IndirectBuffer";
     renderer = isRenderer(renderer, this.type);
     this.renderer = renderer;
@@ -97,7 +83,7 @@ class IndirectBuffer {
     const indirectMappedBuffer = new Uint32Array(this.buffer.GPUBuffer.getMappedRange());
     let offset = 0;
     this.geometries.forEach((geometry) => {
-      __privateMethod(this, _addGeometryToIndirectMappedBuffer, addGeometryToIndirectMappedBuffer_fn).call(this, geometry, indirectMappedBuffer, offset * this.options.minEntrySize);
+      __privateMethod(this, _IndirectBuffer_instances, addGeometryToIndirectMappedBuffer_fn).call(this, geometry, indirectMappedBuffer, offset * this.options.minEntrySize);
       geometry.useIndirectBuffer({ buffer: this.buffer, offset: this.getByteOffsetAtIndex(offset) });
       offset++;
     });
@@ -115,7 +101,14 @@ class IndirectBuffer {
     this.geometries = null;
   }
 }
-_addGeometryToIndirectMappedBuffer = new WeakSet();
+_IndirectBuffer_instances = new WeakSet();
+/**
+ * Add a {@link Geometry} or {@link IndexedGeometry} attributes to the {@link buffer} mapped array buffer.
+ * @param geometry - {@link Geometry} or {@link IndexedGeometry} to add the attributes from
+ * @param mappedBuffer - The {@link buffer} mapped array buffer
+ * @param index - Index in the {@link buffer} mapped array buffer at which to add the attributes.
+ * @private
+ */
 addGeometryToIndirectMappedBuffer_fn = function(geometry, mappedBuffer, index = 0) {
   if ("indexBuffer" in geometry && geometry.indexBuffer) {
     mappedBuffer[index] = geometry.indexBuffer.bufferLength;

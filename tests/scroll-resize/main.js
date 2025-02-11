@@ -33,7 +33,7 @@ window.addEventListener('load', async () => {
       var vsOutput : VSOutput;
       
       vsOutput.position = getOutputPosition(attributes.position);
-      vsOutput.uv = getUVCover(attributes.uv, meshTextureMatrix);
+      vsOutput.uv = getUVCover(attributes.uv, texturesMatrices.meshTexture.matrix);
       vsOutput.normal = attributes.normal;
       
       return vsOutput;
@@ -101,7 +101,7 @@ window.addEventListener('load', async () => {
 
     cubeMesh
       .onBeforeRender(() => {
-        //cubeMesh.rotation.x += 0.01
+        //cubeMesh.rotationMatrix.x += 0.01
       })
       .onAfterResize(() => {
         updateCubeScaleAndPosition()

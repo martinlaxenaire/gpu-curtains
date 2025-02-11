@@ -24,7 +24,7 @@ window.addEventListener('load', async () => {
       var vsOutput: VSOutput;
 
       vsOutput.position = getOutputPosition(attributes.position);
-      vsOutput.uv = getUVCover(attributes.uv, planeTextureMatrix);
+      vsOutput.uv = getUVCover(attributes.uv, texturesMatrices.planeTexture.matrix);
     
       return vsOutput;
     }
@@ -53,6 +53,7 @@ window.addEventListener('load', async () => {
 
   planeEls.forEach((planeEl, index) => {
     const plane = new Plane(gpuCurtains, planeEl, {
+      label: 'Plane ' + index,
       renderBundle,
       shaders: {
         vertex: {
@@ -64,12 +65,12 @@ window.addEventListener('load', async () => {
       },
     })
 
-    plane.domTextures[0].scale.set(1.5, 1.5, 1)
+    plane.domTextures[0].scale.set(1.5, 1.5)
 
     if (index % 2 === 1) {
       plane.onBeforeRender(() => {
         plane.rotation.z += 0.01
-        plane.domTextures[0].rotation.z -= 0.01
+        plane.domTextures[0].rotation -= 0.01
       })
     }
   })

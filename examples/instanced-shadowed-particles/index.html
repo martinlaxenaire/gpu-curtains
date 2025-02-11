@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+    <!-- Metas -->
+    <title>gpu-curtains | Instanced shadowed particles with compute shaders example</title>
+    <meta
+      name="description"
+      content="WebGPU instanced shadowed particles with compute shaders and shadow maps with gpu-curtains"
+    />
+
+    <meta property="og:title" content="gpu-curtains | Instanced shadowed particles with compute shaders example" />
+    <meta property="og:type" content="article" />
+    <meta
+      property="og:description"
+      content="WebGPU instanced shadowed particles with compute shaders and shadow maps with gpu-curtains"
+    />
+    <meta
+      property="og:image"
+      content="https://raw.githubusercontent.com/martinlaxenaire/gpu-curtains/main/website/assets/gpu-curtains-logo-1920-1280.jpg"
+    />
+    <meta
+      property="og:url"
+      content="https://martinlaxenaire.github.io/gpu-curtains/examples/instanced-shadowed-particles/"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link href="../common-styles.css" rel="stylesheet" />
+    <link href="styles.css" rel="stylesheet" />
+
+    <link
+      rel="icon"
+      type="image/png"
+      href="https://raw.githubusercontent.com/martinlaxenaire/gpu-curtains/main/website/assets/favicon.png"
+    />
+  </head>
+
+  <body>
+    <div id="canvas"></div>
+
+    <div id="credits">
+      Port of the
+      <a href="https://okaydev.co/articles/dive-into-webgpu-part-4" target="_blank"
+        >Okay Dev - Dive into WebGPU — Part 4</a
+      >
+      tutorial using the current lib features.
+    </div>
+
+    <a
+      href="https://github.com/martinlaxenaire/gpu-curtains/blob/main/examples/instanced-shadowed-particles/main.js"
+      title="Show source code"
+      id="source-code-link"
+      class="primary-button"
+      target="_blank"
+      >&lt;/ &gt;</a
+    >
+
+    <script src="main.js" type="module"></script>
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-45554DLGL6"></script>
+    <script>
+      window.dataLayer = window.dataLayer || []
+      function gtag() {
+        dataLayer.push(arguments)
+      }
+
+      if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+        gtag('js', new Date())
+        gtag('config', 'G-45554DLGL6')
+      }
+    </script>
+  </body>
+</html>

@@ -70,8 +70,7 @@ class Buffer {
    * @returns - {@link Float32Array} holding the {@link GPUBuffer} data.
    */
   async mapBufferAsync() {
-    if (!this.GPUBuffer || this.GPUBuffer.mapState !== "unmapped")
-      return new Float32Array(0);
+    if (!this.GPUBuffer || this.GPUBuffer.mapState !== "unmapped") return new Float32Array(0);
     await this.GPUBuffer.mapAsync(GPUMapMode.READ);
     const result = new Float32Array(this.GPUBuffer.getMappedRange().slice(0));
     this.GPUBuffer.unmap();

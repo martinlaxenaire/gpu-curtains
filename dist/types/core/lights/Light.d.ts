@@ -74,6 +74,11 @@ export declare class Light extends Object3D {
      */
     set intensity(value: number);
     /**
+     * Get the actual {@link Vec3} color used in the shader: convert {@link color} to linear space, then multiply by {@link intensity}.
+     * @returns - Actual {@link Vec3} color used in the shader.
+     */
+    get actualColor(): Vec3;
+    /**
      * Update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} input value and tell the {@link CameraRenderer#cameraLightsBindGroup | renderer camera, lights and shadows} bind group to update.
      * @param propertyKey - name of the property to update.
      * @param value - new value of the property.

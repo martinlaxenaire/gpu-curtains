@@ -1,5 +1,5 @@
 import { PipelineEntry } from './PipelineEntry.mjs';
-import { ShaderChunks, ProjectedShaderChunks } from '../shaders/ShaderChunks.mjs';
+import { shaderChunks, ProjectedShaderChunks } from '../shaders/shader-chunks.mjs';
 import { isRenderer } from '../renderers/utils.mjs';
 import { throwError } from '../../utils/utils.mjs';
 
@@ -51,18 +51,18 @@ class RenderPipelineEntry extends PipelineEntry {
     this.shaders.fragment.code = "";
     this.shaders.full.head = "";
     this.shaders.full.code = "";
-    for (const chunk in ShaderChunks.vertex) {
-      this.shaders.vertex.head = `${ShaderChunks.vertex[chunk]}
+    for (const chunk in shaderChunks.vertex) {
+      this.shaders.vertex.head = `${shaderChunks.vertex[chunk]}
 ${this.shaders.vertex.head}`;
-      this.shaders.full.head = `${ShaderChunks.vertex[chunk]}
+      this.shaders.full.head = `${shaderChunks.vertex[chunk]}
 ${this.shaders.full.head}`;
     }
     if (this.options.shaders.fragment) {
-      for (const chunk in ShaderChunks.fragment) {
-        this.shaders.fragment.head = `${ShaderChunks.fragment[chunk]}
+      for (const chunk in shaderChunks.fragment) {
+        this.shaders.fragment.head = `${shaderChunks.fragment[chunk]}
 ${this.shaders.fragment.head}`;
-        if (this.shaders.full.head.indexOf(ShaderChunks.fragment[chunk]) === -1) {
-          this.shaders.full.head = `${ShaderChunks.fragment[chunk]}
+        if (this.shaders.full.head.indexOf(shaderChunks.fragment[chunk]) === -1) {
+          this.shaders.full.head = `${shaderChunks.fragment[chunk]}
 ${this.shaders.full.head}`;
         }
       }
@@ -112,8 +112,7 @@ ${this.shaders.vertex.head}`;
         if (this.shaders.vertex.head.indexOf(groupBinding.wgslGroupFragment) === -1) {
           this.shaders.vertex.head = `${this.shaders.vertex.head}
 @group(${groupBinding.groupIndex}) @binding(${groupBinding.bindIndex}) ${groupBinding.wgslGroupFragment}`;
-          if (groupBinding.newLine)
-            this.shaders.vertex.head += `
+          if (groupBinding.newLine) this.shaders.vertex.head += `
 `;
         }
       }
@@ -126,8 +125,7 @@ ${this.shaders.fragment.head}`;
         if (this.shaders.fragment.head.indexOf(groupBinding.wgslGroupFragment) === -1) {
           this.shaders.fragment.head = `${this.shaders.fragment.head}
 @group(${groupBinding.groupIndex}) @binding(${groupBinding.bindIndex}) ${groupBinding.wgslGroupFragment}`;
-          if (groupBinding.newLine)
-            this.shaders.fragment.head += `
+          if (groupBinding.newLine) this.shaders.fragment.head += `
 `;
         }
       }
@@ -139,8 +137,7 @@ ${this.shaders.full.head}`;
       if (this.shaders.full.head.indexOf(groupBinding.wgslGroupFragment) === -1) {
         this.shaders.full.head = `${this.shaders.full.head}
 @group(${groupBinding.groupIndex}) @binding(${groupBinding.bindIndex}) ${groupBinding.wgslGroupFragment}`;
-        if (groupBinding.newLine)
-          this.shaders.full.head += `
+        if (groupBinding.newLine) this.shaders.full.head += `
 `;
       }
     }
@@ -204,8 +201,7 @@ ${this.shaders.full.head}`;
    * Create the render pipeline {@link descriptor}
    */
   createPipelineDescriptor() {
-    if (!this.shadersModulesReady)
-      return;
+    if (!this.shadersModulesReady) return;
     let vertexLocationIndex = -1;
     if (this.options.rendering.targets.length) {
       if (this.options.rendering.transparent) {
@@ -267,8 +263,7 @@ ${this.shaders.full.head}`;
    * Create the render {@link pipeline}
    */
   createRenderPipeline() {
-    if (!this.shadersModulesReady)
-      return;
+    if (!this.shadersModulesReady) return;
     try {
       this.pipeline = this.renderer.createRenderPipeline(this.descriptor);
     } catch (error) {
@@ -281,8 +276,7 @@ ${this.shaders.full.head}`;
    * @returns - void promise result
    */
   async createRenderPipelineAsync() {
-    if (!this.shadersModulesReady)
-      return;
+    if (!this.shadersModulesReady) return;
     try {
       this.pipeline = await this.renderer.createRenderPipelineAsync(this.descriptor);
       this.status.compiled = true;

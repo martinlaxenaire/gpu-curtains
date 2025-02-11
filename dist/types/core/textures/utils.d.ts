@@ -16,6 +16,12 @@ export declare const getTextureUsages: (usages?: TextureUsageKeys[]) => GPUTextu
  */
 export declare const getDefaultTextureUsage: (usages: TextureUsageKeys[], textureType: TextureBindingType) => number;
 /**
+ * Get the corresponding {@link GPUDevice.createTexture().descriptor.usage | GPUTextureUsageFlags} based on an array of {@link TextureUsageKeys | texture usage names} if specified.
+ * @param usages - array of {@link TextureUsageKeys | texture usage names}.
+ * @returns - corresponding {@link GPUDevice.createTexture().descriptor.usage | GPUTextureUsageFlags}.
+ */
+export declare const getDefaultMediaTextureUsage: (usages?: TextureUsageKeys[]) => number;
+/**
  * Get the number of mip levels create based on {@link types/Textures.TextureSize | size}
  * @param sizes - Array containing our texture width, height and depth
  * @returns - number of mip levels

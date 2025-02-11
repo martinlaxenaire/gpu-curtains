@@ -9,15 +9,12 @@ window.addEventListener('load', async () => {
     GLTFLoader,
     GLTFScenesManager,
     RenderBundle,
-    buildShaders,
     AmbientLight,
     DirectionalLight,
     PointLight,
     OrbitControls,
     Vec3,
     Vec2,
-    Mesh,
-    PlaneGeometry,
   } = await import(/* @vite-ignore */ path)
 
   const stats = new Stats()
@@ -81,10 +78,13 @@ window.addEventListener('load', async () => {
   const currentEnvMapKey = 'cannon'
   let currentEnvMap = envMaps[currentEnvMapKey]
 
-  const environmentMap = new EnvironmentMap(gpuCameraRenderer)
+  const environmentMap = new EnvironmentMap(gpuCameraRenderer, {
+    diffuseIntensity: 0.25,
+    specularIntensity: 0.25,
+  })
   await environmentMap.loadAndComputeFromHDR(currentEnvMap.url)
 
-  let shadingModel = 'IBL' // 'IBL', 'PBR', 'Phong' or 'Lambert'
+  let shadingModel = 'PBR' // 'PBR', 'Phong' or 'Lambert'
 
   const ambientLight = new AmbientLight(gpuCameraRenderer, {
     intensity: 1,
@@ -97,7 +97,8 @@ window.addEventListener('load', async () => {
     //intensity: 6,
     intensity: 3,
     shadow: {
-      bias: 0.001,
+      bias: 0.0001,
+      normalBias: 0.0001,
       depthTextureSize: new Vec2(1500),
       pcfSamples: 2,
       camera: {
@@ -105,8 +106,8 @@ window.addEventListener('load', async () => {
         right: 20,
         bottom: -20,
         top: 20,
-        near: 0.01,
-        far: 200,
+        near: 0.1,
+        far: 100,
       },
       autoRender: false,
     },
@@ -114,16 +115,16 @@ window.addEventListener('load', async () => {
 
   const pointLights = []
   const pointLightsSettings = {
-    color: new Vec3(0.85, 0.15, 0),
+    color: new Vec3(0.85, 0.25, 0),
     intensity: 7.5,
     range: 10,
     shadow: {
-      bias: 0.001,
+      bias: 0.0001,
       pcfSamples: 1,
       depthTextureSize: new Vec2(512),
       camera: {
         near: 0.01,
-        far: 200,
+        far: 20,
       },
       autoRender: false,
     },
@@ -159,6 +160,8 @@ window.addEventListener('load', async () => {
   const gltfLoader = new GLTFLoader()
 
   let gltfScenesManager = null
+
+  const useRenderBundle = true
   let renderBundle = null
 
   const loadGLTF = async () => {
@@ -176,11 +179,13 @@ window.addEventListener('load', async () => {
 
     console.log({ gltf, scenesManager, scenes, boundingBox })
 
-    renderBundle = new RenderBundle(gpuCameraRenderer, {
-      label: 'glTF render bundle',
-      size: scenesManager.meshesDescriptors.length,
-      useBuffer: true,
-    })
+    if (useRenderBundle) {
+      renderBundle = new RenderBundle(gpuCameraRenderer, {
+        label: 'glTF render bundle',
+        size: scenesManager.meshesDescriptors.length,
+        useBuffer: true,
+      })
+    }
 
     const { center } = boundingBox
 
@@ -192,31 +197,27 @@ window.addEventListener('load', async () => {
       const { parameters } = meshDescriptor
 
       // add render bundle
-      parameters.renderBundle = renderBundle
+      if (useRenderBundle) {
+        parameters.renderBundle = renderBundle
 
-      // disable frustum culling
-      parameters.frustumCulling = false
+        // disable frustum culling
+        parameters.frustumCulling = false
+      }
 
       // shadows
       parameters.castShadows = true
       parameters.receiveShadows = true
 
       // debug
-      const additionalColorContribution = `
+      const additionalContribution = `
         // color = vec4(vec3(metallic), color.a);
       `
 
-      parameters.shaders = buildShaders(meshDescriptor, {
-        shadingModel,
-        chunks: {
-          additionalColorContribution,
-        },
-        iblParameters: {
-          diffuseStrength: 0.1,
-          specularStrength: 0.4,
-          environmentMap,
-        },
-      })
+      parameters.material.shading = shadingModel
+      parameters.material.fragmentChunks = {
+        additionalContribution,
+      }
+      parameters.material.environmentMap = environmentMap
     })
 
     // finally render shadows
@@ -251,7 +252,7 @@ window.addEventListener('load', async () => {
     .name('Environment maps')
 
   gui
-    .add({ shadingModel }, 'shadingModel', ['IBL', 'PBR', 'Phong', 'Lambert'])
+    .add({ shadingModel }, 'shadingModel', ['PBR', 'Phong', 'Lambert', 'Unlit'])
     .onChange(async (value) => {
       if (value !== shadingModel) {
         shadingModel = value
@@ -347,104 +348,5 @@ window.addEventListener('load', async () => {
     .add(directionalLight.shadow.camera, 'far', 20, 500, 1)
     .onChange(async () => await directionalLight.shadow.renderOnce())
 
-  const shadowMapFolder = shadowFolder.addFolder('Debug')
-  const showShadowMap = shadowMapFolder.add({ isDebug }, 'isDebug').name('Show shadow map')
-
   await loadGLTF()
-
-  // DEBUG DEPTH
-
-  const debugDepthVs = /* wgsl */ `
-    struct VSOutput {
-      @builtin(position) position: vec4f,
-      @location(0) uv: vec2f,
-    };
-
-    @vertex fn main(
-      attributes: Attributes,
-    ) -> VSOutput {
-      var vsOutput: VSOutput;
-
-      // just use the world matrix here, do not take the projection into account
-      vsOutput.position = matrices.model * vec4(attributes.position, 1.0);
-      vsOutput.uv = attributes.uv;
-      
-      return vsOutput;
-    }
-  `
-
-  const debugDepthFs = /* wgsl */ `
-    struct VSOutput {
-      @builtin(position) position: vec4f,
-      @location(0) uv: vec2f,
-    };
-
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {          
-      
-      let rawDepth = textureSampleLevel(
-        depthTexture,
-        defaultSampler,
-        fsInput.uv,
-        0
-      );
-      
-      // remap depth into something a bit more visible
-      let depth = (1.0 - rawDepth);
-      
-      var color: vec4f = vec4(vec3(pow(depth, 5.0)), 1.0);
-
-      return color;
-    }
-  `
-
-  const scale = new Vec3(0.25, 0.25 * (gpuCameraRenderer.boundingRect.width / gpuCameraRenderer.boundingRect.height), 1)
-
-  const debugPlane = new Mesh(gpuCameraRenderer, {
-    label: 'Debug depth plane',
-    geometry: new PlaneGeometry(),
-    depthWriteEnabled: false,
-    frustumCulling: false,
-    visible: false,
-    renderOrder: 10,
-    shaders: {
-      vertex: {
-        code: debugDepthVs,
-      },
-      fragment: {
-        code: debugDepthFs,
-      },
-    },
-    uniforms: {
-      params: {
-        struct: {
-          scale: {
-            type: 'vec3f',
-            value: scale,
-          },
-        },
-      },
-    },
-  })
-
-  const depthTexture = debugPlane.createTexture({
-    label: 'Debug depth texture',
-    name: 'depthTexture',
-    type: 'depth',
-    //fromTexture: shadowDepthTexture,
-    fromTexture: directionalLight.shadow.depthTexture,
-  })
-
-  debugPlane.transformOrigin.set(-1, -1, 0)
-
-  debugPlane.scale.copy(scale)
-
-  debugPlane.onAfterResize(() => {
-    scale.set(0.25, 0.25 * (gpuCameraRenderer.boundingRect.width / gpuCameraRenderer.boundingRect.height), 1)
-    debugPlane.scale.copy(scale)
-  })
-
-  showShadowMap.onChange((value) => {
-    isDebug = value
-    debugPlane.visible = isDebug
-  })
 })

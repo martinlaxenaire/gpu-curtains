@@ -8,7 +8,7 @@ import { ComputePass } from '../computePasses/ComputePass'
 import { PingPongPlane } from '../../extras/meshes/PingPongPlane'
 import { ShaderPass } from '../renderPasses/ShaderPass'
 import { RenderTarget } from '../renderPasses/RenderTarget'
-import { DOMTexture } from '../textures/DOMTexture'
+import { DOMTexture } from '../../curtains/textures/DOMTexture'
 import { Sampler } from '../samplers/Sampler'
 
 import { DOMMesh } from '../../curtains/meshes/DOMMesh'
@@ -22,6 +22,8 @@ import { FullscreenPlane } from '../meshes/FullscreenPlane'
 import { Buffer } from '../buffers/Buffer'
 import { RenderBundle } from '../renderPasses/RenderBundle'
 import { IndirectBuffer } from '../../extras/buffers/IndirectBuffer'
+import { TargetsAnimationsManager } from '../../extras/animations/TargetsAnimationsManager'
+import { MediaTexture } from '../textures/MediaTexture'
 
 /** Options used to configure the renderer canvas context. If not specified, `format` will be set with `GPU.getPreferredCanvasFormat()` and `alphaMode` with `premultiplied`. */
 export interface GPURendererContextOptions extends Omit<GPUCanvasConfiguration, 'device' | 'usage'> {}
@@ -103,8 +105,6 @@ export class GPURenderer {
   canvas: HTMLCanvasElement
   /** The WebGPU {@link GPUCanvasContext | context} used */
   context: null | GPUCanvasContext
-  /** Set the {@link GPUCanvasContext | context} alpha mode */
-  //alphaMode?: GPUCanvasAlphaMode
 
   /** Options used to create this {@link GPURenderer} */
   options: GPURendererOptions
@@ -134,9 +134,11 @@ export class GPURenderer {
   /** An array containing all our created {@link SceneStackedMesh | meshes} */
   meshes: SceneStackedMesh[]
   /** An array containing all our created {@link Texture} */
-  textures: Texture[]
-  /** An {@link Map} containing all our created {@link RenderBundle} */
+  textures: Array<Texture | MediaTexture>
+  /** A {@link Map} containing all the {@link RenderBundle} handled by this renderer. */
   renderBundles: Map<RenderBundle['uuid'], RenderBundle>
+  /** A {@link Map} containing all the {@link TargetsAnimationsManager} handled by this renderer. */
+  animations: Map<TargetsAnimationsManager['uuid'], TargetsAnimationsManager>
 
   /** Pixel ratio to use for rendering */
   pixelRatio: number
@@ -164,7 +166,7 @@ export class GPURenderer {
   _onAfterRenderCallback = (commandEncoder: GPUCommandEncoder) => {
     /* allow empty callback */
   }
-  /** function assigned to the {@link resizeObjects} callback */
+  /** function assigned to the {@link onResize} callback */
   _onResizeCallback: () => void = () => {
     /* allow empty callback */
   }
@@ -217,7 +219,7 @@ export class GPURenderer {
     }
 
     // render pass default values
-    renderPass = { ...{ useDepth: true, sampleCount: 4, clearValue: [0, 0, 0, 0] }, ...renderPass }
+    renderPass = { ...{ useDepth: true, sampleCount: 4 }, ...renderPass }
 
     this.options = {
       deviceManager,
@@ -340,7 +342,10 @@ export class GPURenderer {
    * Resize all tracked objects ({@link Texture | textures}, {@link RenderPass | render passes}, {@link RenderTarget | render targets}, {@link ComputePass | compute passes} and meshes).
    */
   resizeObjects() {
-    // resize textures first
+    // invalidate render bundles first if needed
+    this.renderBundles.forEach((renderBundle) => renderBundle.resize())
+
+    // then resize textures
     this.textures.forEach((texture) => {
       texture.resize()
     })
@@ -772,30 +777,6 @@ export class GPURenderer {
   /* TEXTURES */
 
   /**
-   * Get all created {@link DOMTexture} tracked by our {@link GPUDeviceManager}
-   * @readonly
-   */
-  get domTextures(): DOMTexture[] {
-    return this.deviceManager.domTextures
-  }
-
-  /**
-   * Add a {@link DOMTexture} to our {@link GPUDeviceManager#domTextures | textures array}
-   * @param texture - {@link DOMTexture} to add
-   */
-  addDOMTexture(texture: DOMTexture) {
-    this.deviceManager.addDOMTexture(texture)
-  }
-
-  /**
-   * Remove a {@link DOMTexture} from our {@link GPUDeviceManager#domTextures | textures array}
-   * @param texture - {@link DOMTexture} to remove
-   */
-  removeDOMTexture(texture: DOMTexture) {
-    this.deviceManager.removeDOMTexture(texture)
-  }
-
-  /**
    * Add a {@link Texture} to our {@link textures} array
    * @param texture - {@link Texture} to add
    */
@@ -821,26 +802,79 @@ export class GPURenderer {
   }
 
   /**
-   * Upload a {@linkDOMTexture#texture | texture} to the GPU
-   * @param texture - {@link DOMTexture} class object with the {@link DOMTexture#texture | texture} to upload
+   * Upload a {@link MediaTexture#texture | texture} or {@link DOMTexture#texture | texture} to the GPU.
+   * @param texture - {@link MediaTexture} or {@link DOMTexture} containing the {@link GPUTexture} to upload.
+   * @param sourceIndex - Index of the source to upload (for cube maps). Default to `0`.
    */
-  uploadTexture(texture: DOMTexture) {
-    this.deviceManager.uploadTexture(texture)
+  uploadTexture(texture: MediaTexture | DOMTexture, sourceIndex = 0) {
+    this.deviceManager.uploadTexture(texture, sourceIndex)
   }
 
   /**
-   * Import a {@link GPUExternalTexture}
-   * @param video - {@link HTMLVideoElement} source
-   * @returns - {@link GPUExternalTexture}
+   * Generate mips on the GPU using our {@link GPUDeviceManager}.
+   * @param texture - {@link Texture}, {@link MediaTexture} or {@link DOMTexture} for which to generate the mips.
+   * @param commandEncoder - optional {@link GPUCommandEncoder} to use if we're already in the middle of a command encoding process.
    */
-  importExternalTexture(video: HTMLVideoElement): GPUExternalTexture {
+  generateMips(texture: Texture | MediaTexture | DOMTexture, commandEncoder: GPUCommandEncoder = null) {
+    this.deviceManager.generateMips(texture, commandEncoder)
+  }
+
+  /**
+   * Import a {@link GPUExternalTexture}.
+   * @param video - {@link HTMLVideoElement} source.
+   * @param label - Optional label of the texture.
+   * @returns - {@link GPUExternalTexture}.
+   */
+  importExternalTexture(video: HTMLVideoElement, label = ''): GPUExternalTexture {
     // TODO WebCodecs may be the way to go when time comes!
     // https://developer.chrome.com/blog/new-in-webgpu-113/#use-webcodecs-videoframe-source-in-importexternaltexture
-    // see onVideoFrameCallback method in DOMTexture class
+    // see onVideoFrameCallback method in MediaTexture class
     // const videoFrame = new VideoFrame(video)
     // return this.deviceManager.device?.importExternalTexture({ source: videoFrame })
-    return this.deviceManager.device?.importExternalTexture({ source: video })
+    return this.deviceManager.device?.importExternalTexture({ label, source: video })
   }
+
+  /**
+   * Copy a {@link GPUTexture} to a {@link Texture} using a {@link GPUCommandEncoder}. Automatically generate mips after copy if the {@link Texture} needs it.
+   * @param gpuTexture - {@link GPUTexture} source to copy from.
+   * @param texture - {@link Texture} destination to copy onto.
+   * @param commandEncoder - {@link GPUCommandEncoder} to use for copy operation.
+   */
+  copyGPUTextureToTexture(gpuTexture: GPUTexture, texture: Texture, commandEncoder: GPUCommandEncoder) {
+    commandEncoder.copyTextureToTexture(
+      {
+        texture: gpuTexture,
+      },
+      {
+        texture: texture.texture,
+      },
+      [gpuTexture.width, gpuTexture.height, gpuTexture.depthOrArrayLayers]
+    )
+
+    if (texture.options.generateMips) {
+      this.generateMips(texture, commandEncoder)
+    }
+  }
+
+  /**
+   * Copy a {@link Texture} to a {@link GPUTexture} using a {@link GPUCommandEncoder}.
+   * @param texture - {@link Texture} source to copy from.
+   * @param gpuTexture - {@link GPUTexture} destination to copy onto.
+   * @param commandEncoder - {@link GPUCommandEncoder} to use for copy operation.
+   */
+  copyTextureToGPUTexture(texture: Texture, gpuTexture: GPUTexture, commandEncoder: GPUCommandEncoder) {
+    commandEncoder.copyTextureToTexture(
+      {
+        texture: texture.texture,
+      },
+      {
+        texture: gpuTexture,
+      },
+      [gpuTexture.width, gpuTexture.height, gpuTexture.depthOrArrayLayers]
+    )
+  }
+
+  /* SAMPLERS */
 
   /**
    * Check if a {@link Sampler} has already been created with the same {@link Sampler#options | parameters}.
@@ -905,6 +939,7 @@ export class GPURenderer {
     this.meshes = []
     this.textures = []
     this.renderBundles = new Map()
+    this.animations = new Map()
   }
 
   /**
@@ -931,24 +966,24 @@ export class GPURenderer {
   }
 
   /**
-   * Get all objects ({@link RenderedMesh | rendered meshes} or {@link ComputePass | compute passes}) using a given {@link DOMTexture} or {@link Texture}.
+   * Get all objects ({@link RenderedMesh | rendered meshes} or {@link ComputePass | compute passes}) using a given {@link DOMTexture}, {@link MediaTexture} or {@link Texture}.
    * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
-   * @param texture - {@link DOMTexture} or {@link Texture} to check
+   * @param texture - {@link DOMTexture}, {@link MediaTexture} or {@link Texture} to check.
    */
   getObjectsByTexture(texture: DOMTexture | Texture): undefined | SceneObject[] {
     return this.deviceRenderedObjects.filter((object) => {
-      return [...object.material.domTextures, ...object.material.textures].some((t) => t.uuid === texture.uuid)
+      return object.material.textures.some((t) => t.uuid === texture.uuid)
     })
   }
 
   /* EVENTS */
 
   /**
-   * Assign a callback function to _onBeforeRenderCallback
-   * @param callback - callback to run just before the {@link render} method will be executed
-   * @returns - our {@link GPURenderer}
+   * Assign a callback function to _onBeforeRenderCallback.
+   * @param callback - callback to run just before the {@link render} method will be executed.
+   * @returns - our {@link GPURenderer}.
    */
-  onBeforeRender(callback: (commandEncoder?: GPUCommandEncoder) => void) {
+  onBeforeRender(callback: (commandEncoder?: GPUCommandEncoder) => void): this {
     if (callback) {
       this._onBeforeRenderCallback = callback
     }
@@ -961,7 +996,7 @@ export class GPURenderer {
    * @param callback - callback to run just after the {@link render} method has been executed
    * @returns - our {@link GPURenderer}
    */
-  onAfterRender(callback: (commandEncoder?: GPUCommandEncoder) => void) {
+  onAfterRender(callback: (commandEncoder?: GPUCommandEncoder) => void): this {
     if (callback) {
       this._onAfterRenderCallback = callback
     }
@@ -974,7 +1009,7 @@ export class GPURenderer {
    * @param callback - callback to execute.
    * @returns - our {@link GPURenderer}
    */
-  onResize(callback: (commandEncoder?: GPUCommandEncoder) => void) {
+  onResize(callback: (commandEncoder?: GPUCommandEncoder) => void): this {
     if (callback) {
       this._onResizeCallback = callback
     }
@@ -987,7 +1022,7 @@ export class GPURenderer {
    * @param callback - callback to execute.
    * @returns - our {@link GPURenderer}
    */
-  onAfterResize(callback: (commandEncoder?: GPUCommandEncoder) => void) {
+  onAfterResize(callback: (commandEncoder?: GPUCommandEncoder) => void): this {
     if (callback) {
       this._onAfterResizeCallback = callback
     }
@@ -998,22 +1033,25 @@ export class GPURenderer {
   /* RENDER */
 
   /**
-   * Render a single {@link ComputePass}
-   * @param commandEncoder - current {@link GPUCommandEncoder}
-   * @param computePass - {@link ComputePass}
+   * Render a single {@link ComputePass}.
+   * @param commandEncoder - current {@link GPUCommandEncoder} to use.
+   * @param computePass - {@link ComputePass} to run.
+   * @param copyBuffer - Whether to copy all writable binding buffers that need it.
    */
-  renderSingleComputePass(commandEncoder: GPUCommandEncoder, computePass: ComputePass) {
+  renderSingleComputePass(commandEncoder: GPUCommandEncoder, computePass: ComputePass, copyBuffer = true) {
     const pass = commandEncoder.beginComputePass()
     computePass.render(pass)
     pass.end()
 
-    computePass.copyBufferToResult(commandEncoder)
+    if (copyBuffer) {
+      computePass.copyBufferToResult(commandEncoder)
+    }
   }
 
   /**
-   * Render a single {@link RenderedMesh | Mesh}
-   * @param commandEncoder - current {@link GPUCommandEncoder}
-   * @param mesh - {@link RenderedMesh | Mesh} to render
+   * Render a single {@link RenderedMesh | Mesh}.
+   * @param commandEncoder - current {@link GPUCommandEncoder}.
+   * @param mesh - {@link RenderedMesh | Mesh} to render.
    */
   renderSingleMesh(commandEncoder: GPUCommandEncoder, mesh: RenderedMesh) {
     const pass = commandEncoder.beginRenderPass(this.renderPass.descriptor)
@@ -1022,8 +1060,8 @@ export class GPURenderer {
   }
 
   /**
-   * Render an array of objects (either {@link RenderedMesh | Meshes} or {@link ComputePass}) once. This method won't call any of the renderer render hooks like {@link onBeforeRender}, {@link onAfterRender}
-   * @param objects - Array of {@link RenderedMesh | Meshes} or {@link ComputePass} to render
+   * Render an array of objects (either {@link RenderedMesh | Meshes} or {@link ComputePass}) once. This method won't call any of the renderer render hooks like {@link onBeforeRender}, {@link onAfterRender}.
+   * @param objects - Array of {@link RenderedMesh | Meshes} or {@link ComputePass} to render.
    */
   renderOnce(objects: SceneObject[]) {
     const commandEncoder = this.device?.createCommandEncoder({
@@ -1050,7 +1088,7 @@ export class GPURenderer {
 
   /**
    * Force to clear a {@link GPURenderer} content to its {@link RenderPass#options.clearValue | clear value} by rendering and empty pass.
-   * @param commandEncoder
+   * @param commandEncoder - {@link GPUCommandEncoder} to use if any.
    */
   forceClear(commandEncoder?: GPUCommandEncoder) {
     // if there's no command encoder provided, we'll have to create one and submit it after the copy process
@@ -1065,6 +1103,8 @@ export class GPURenderer {
     }
 
     this.renderPass.updateView()
+    this.renderPass.setLoadOp('clear')
+    this.renderPass.setDepthLoadOp('clear')
     const pass = commandEncoder.beginRenderPass(this.renderPass.descriptor)
     pass.end()
 
@@ -1094,8 +1134,8 @@ export class GPURenderer {
   }
 
   /**
-   * Called at each draw call to render our scene and its content
-   * @param commandEncoder - current {@link GPUCommandEncoder}
+   * Called at each draw call to render our scene and its content.
+   * @param commandEncoder - current {@link GPUCommandEncoder}.
    */
   render(commandEncoder: GPUCommandEncoder) {
     if (!this.ready || !this.shouldRender) return
@@ -1103,14 +1143,24 @@ export class GPURenderer {
     this._onBeforeRenderCallback && this._onBeforeRenderCallback(commandEncoder)
     this.onBeforeRenderScene.execute(commandEncoder)
 
-    if (this.shouldRenderScene) this.scene?.render(commandEncoder)
+    if (this.shouldRenderScene) {
+      // update all textures that need to
+      // allow to upload textures that are not handled by a material
+      this.textures.forEach((texture) => {
+        if (texture instanceof MediaTexture) {
+          texture.update()
+        }
+      })
+
+      this.scene?.render(commandEncoder)
+    }
 
     this._onAfterRenderCallback && this._onAfterRenderCallback(commandEncoder)
     this.onAfterRenderScene.execute(commandEncoder)
   }
 
   /**
-   * Destroy our {@link GPURenderer} and everything that needs to be destroyed as well
+   * Destroy our {@link GPURenderer} and everything that needs to be destroyed as well.
    */
   destroy() {
     this.deviceManager.renderers = this.deviceManager.renderers.filter((renderer) => renderer.uuid !== this.uuid)
@@ -1119,6 +1169,8 @@ export class GPURenderer {
 
     // remove/destroy render bundles
     this.renderBundles.forEach((bundle) => bundle.destroy())
+
+    this.animations = new Map()
 
     // destroy render passes
     this.renderPass?.destroy()

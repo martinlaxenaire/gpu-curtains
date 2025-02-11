@@ -1,6 +1,7 @@
 import { Vec3 } from '../../math/Vec3'
 import { Quat } from '../../math/Quat'
 import { Mat4 } from '../../math/Mat4'
+import { KeyframesAnimation } from '../../extras/animations/KeyframesAnimation'
 
 let objectIndex = 0
 const tempMatrix = new Mat4()
@@ -222,7 +223,6 @@ export class Object3D {
    */
   applyRotation() {
     this.quaternion.setFromVec3(this.rotation)
-
     this.shouldUpdateModelMatrix()
   }
 
@@ -320,8 +320,8 @@ export class Object3D {
    * @param position - {@link Vec3 | postion} from which to look at
    */
   lookAt(target: Vec3 = new Vec3(), position = this.position, up = new Vec3(0, 1, 0)) {
-    const rotationMatrix = tempMatrix.lookAt(target, position, up)
-    this.quaternion.setFromRotationMatrix(rotationMatrix)
+    const rotation = tempMatrix.lookAt(target, position, up)
+    this.quaternion.setFromRotationMatrix(rotation)
     this.shouldUpdateModelMatrix()
   }
 

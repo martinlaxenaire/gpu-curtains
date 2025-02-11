@@ -1,5 +1,6 @@
 import { Geometry } from './Geometry.mjs';
 import { Buffer } from '../buffers/Buffer.mjs';
+import { Vec3 } from '../../math/Vec3.mjs';
 
 class IndexedGeometry extends Geometry {
   /**
@@ -30,14 +31,52 @@ class IndexedGeometry extends Geometry {
    * @param renderer - The {@link Renderer} used to recreate the buffers
    */
   restoreContext(renderer) {
-    if (this.ready)
-      return;
+    if (this.ready) return;
     if (!this.indexBuffer.buffer.GPUBuffer) {
       this.indexBuffer.buffer.createBuffer(renderer);
       this.uploadBuffer(renderer, this.indexBuffer);
       this.indexBuffer.buffer.consumers.add(this.uuid);
     }
     super.restoreContext(renderer);
+  }
+  /**
+   * Compute {@link IndexedGeometry} flat normals in case the `normal` attribute is missing.
+   */
+  computeFlatNormals() {
+    const positionAttribute = this.getAttributeByName("position");
+    const vertex1 = new Vec3();
+    const vertex2 = new Vec3();
+    const vertex3 = new Vec3();
+    const edge1 = new Vec3();
+    const edge2 = new Vec3();
+    const normal = new Vec3();
+    const posLength = positionAttribute.array.length;
+    const normalArray = new Float32Array(posLength);
+    const nbIndices = this.indexBuffer.array.length;
+    for (let i = 0; i < nbIndices; i += 3) {
+      const i0 = this.indexBuffer.array[i] * 3;
+      const i1 = this.indexBuffer.array[i + 1] * 3;
+      const i2 = this.indexBuffer.array[i + 2] * 3;
+      if (posLength < i0 + 2) continue;
+      vertex1.set(positionAttribute.array[i0], positionAttribute.array[i0 + 1], positionAttribute.array[i0 + 2]);
+      if (posLength < i1 + 2) continue;
+      vertex2.set(positionAttribute.array[i1], positionAttribute.array[i1 + 1], positionAttribute.array[i1 + 2]);
+      if (posLength < i2 + 2) continue;
+      vertex3.set(positionAttribute.array[i2], positionAttribute.array[i2 + 1], positionAttribute.array[i2 + 2]);
+      this.computeNormalFromTriangle(vertex1, vertex2, vertex3, edge1, edge2, normal);
+      for (let j = 0; j < 3; j++) {
+        normalArray[this.indexBuffer.array[i + j] * 3] = normal.x;
+        normalArray[this.indexBuffer.array[i + j] * 3 + 1] = normal.y;
+        normalArray[this.indexBuffer.array[i + j] * 3 + 2] = normal.z;
+      }
+    }
+    this.setAttribute({
+      name: "normal",
+      type: "vec3f",
+      bufferFormat: "float32x3",
+      size: 3,
+      array: normalArray
+    });
   }
   /**
    * If we have less than 65.536 vertices, we should use a Uin16Array to hold our index buffer values
@@ -120,8 +159,7 @@ class IndexedGeometry extends Geometry {
     if (this.indexBuffer) {
       this.indexBuffer.buffer.consumers.delete(this.uuid);
       this.indexBuffer.buffer.destroy();
-      if (renderer)
-        renderer.removeBuffer(this.indexBuffer.buffer);
+      if (renderer) renderer.removeBuffer(this.indexBuffer.buffer);
     }
   }
 }

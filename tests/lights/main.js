@@ -11,9 +11,12 @@ window.addEventListener('load', async () => {
     PointLight,
     Vec3,
     Mesh,
-    toneMappingUtils,
     getLambert,
     getPhong,
+    LitMesh,
+    Object3D,
+    getVertexShaderCode,
+    getFragmentShaderCode,
   } = await import(/* @vite-ignore */ path)
 
   // create a device manager
@@ -31,7 +34,10 @@ window.addEventListener('load', async () => {
     //pixelRatio: window.devicePixelRatio,
   })
 
-  const orbitControls = new OrbitControls(gpuCameraRenderer)
+  const orbitControls = new OrbitControls({
+    camera: gpuCameraRenderer.camera,
+    element: gpuCameraRenderer.canvas,
+  })
 
   const fs = /* wgsl */ `
     struct VSOutput {
@@ -42,9 +48,7 @@ window.addEventListener('load', async () => {
       @location(2) worldPosition: vec3f,
       @location(3) viewDirection: vec3f,
     };
-    
-    ${toneMappingUtils}
-    
+        
     ${getPhong({
       toneMapping: false,
     })}
@@ -56,7 +60,7 @@ window.addEventListener('load', async () => {
     
 
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-      var color: vec3f = shading.color;
+      var color: vec4f = vec4(shading.color, 1.0);
       
       // negate the normals if we're using front face culling
       let faceDirection = select(-1.0, 1.0, fsInput.frontFacing);
@@ -79,14 +83,13 @@ window.addEventListener('load', async () => {
           worldPosition,
           color,
           viewDirection,
+          phong.specularIntensity,
           phong.specularColor,
-          phong.specularStrength,
           phong.shininess
         );
       }
       
-      return vec4(color, 1.0);
-      //return vec4(linearToOutput3(color), 1.0);
+      return color;
     }
   `
 
@@ -118,8 +121,9 @@ window.addEventListener('load', async () => {
   pointLights.push(
     new PointLight(gpuCameraRenderer, {
       color: new Vec3(0, 0, 1),
-      position: new Vec3(-0.7, -1.25, 2),
+      position: new Vec3(-0.7, -1.75, 2.5),
       range: 10,
+      intensity: 5,
     })
   )
 
@@ -133,9 +137,11 @@ window.addEventListener('load', async () => {
 
   console.log(gpuCameraRenderer.lights)
 
+  const boxGeometry = new BoxGeometry()
+
   const mesh = new Mesh(gpuCameraRenderer, {
     label: 'Cube',
-    geometry: new BoxGeometry(),
+    geometry: boxGeometry,
     shaders: {
       // vertex: {
       //   code: vs,
@@ -165,13 +171,13 @@ window.addEventListener('load', async () => {
             type: 'vec3f',
             value: new Vec3(1),
           },
-          specularStrength: {
+          specularIntensity: {
             type: 'f32',
             value: 1,
           },
           shininess: {
             type: 'f32',
-            value: 32,
+            value: 30,
           },
         },
       },
@@ -180,17 +186,45 @@ window.addEventListener('load', async () => {
 
   mesh
     .onBeforeRender(() => {
-      // mesh.rotation.x += 0.01
-      // mesh.rotation.y += 0.02
+      // mesh.rotationMatrix.x += 0.01
+      // mesh.rotationMatrix.y += 0.02
     })
     .onReady(() => {
       console.log(mesh.material.getAddedShaderCode('fragment'))
     })
 
-  // mesh.rotation.x = 0.5
-  // mesh.rotation.y = -1
+  // mesh.rotationMatrix.x = 0.5
+  // mesh.rotationMatrix.y = -1
 
   console.log(mesh, gpuCameraRenderer)
+
+  // test with lit mesh
+  const pivot = new Object3D()
+  pivot.parent = gpuCameraRenderer.scene
+
+  let litMesh
+
+  const buildLitMesh = (shading = 'Phong') => {
+    litMesh = new LitMesh(gpuCameraRenderer, {
+      label: 'Lit mesh',
+      geometry: boxGeometry,
+      material: {
+        shading,
+        color: new Vec3(1),
+        toneMapping: false,
+      },
+    })
+
+    litMesh.parent = pivot
+
+    litMesh.position.x = -3
+
+    litMesh.onBeforeRender(() => {
+      pivot.rotation.z += 0.01
+    })
+  }
+
+  buildLitMesh()
 
   // GUI
   const gui = new lil.GUI({
@@ -212,6 +246,12 @@ window.addEventListener('load', async () => {
     .name('Use lambert shading')
     .onChange((value) => {
       mesh.uniforms.shading.useLambert.value = value ? 1 : 0
+
+      if (litMesh) {
+        litMesh.remove()
+      }
+
+      buildLitMesh(value ? 'Lambert' : 'Phong')
     })
 
   materialShadingFolder
@@ -247,7 +287,7 @@ window.addEventListener('load', async () => {
     })
     .name('Specular color')
 
-  materialPhongFolder.add(mesh.uniforms.phong.specularStrength, 'value', 0, 1, 0.1).name('Specular strength')
+  materialPhongFolder.add(mesh.uniforms.phong.specularIntensity, 'value', 0, 1, 0.1).name('Specular strength')
   materialPhongFolder.add(mesh.uniforms.phong.shininess, 'value', 2, 64, 2).name('Shininess')
 
   const ambientLightsFolder = gui.addFolder('Ambient lights')

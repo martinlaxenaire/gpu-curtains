@@ -7,7 +7,7 @@ import { ComputePass } from '../computePasses/ComputePass';
 import { PingPongPlane } from '../../extras/meshes/PingPongPlane';
 import { ShaderPass } from '../renderPasses/ShaderPass';
 import { RenderTarget } from '../renderPasses/RenderTarget';
-import { DOMTexture } from '../textures/DOMTexture';
+import { DOMTexture } from '../../curtains/textures/DOMTexture';
 import { Sampler } from '../samplers/Sampler';
 import { DOMMesh } from '../../curtains/meshes/DOMMesh';
 import { Plane } from '../../curtains/meshes/Plane';
@@ -20,6 +20,8 @@ import { FullscreenPlane } from '../meshes/FullscreenPlane';
 import { Buffer } from '../buffers/Buffer';
 import { RenderBundle } from '../renderPasses/RenderBundle';
 import { IndirectBuffer } from '../../extras/buffers/IndirectBuffer';
+import { TargetsAnimationsManager } from '../../extras/animations/TargetsAnimationsManager';
+import { MediaTexture } from '../textures/MediaTexture';
 /** Options used to configure the renderer canvas context. If not specified, `format` will be set with `GPU.getPreferredCanvasFormat()` and `alphaMode` with `premultiplied`. */
 export interface GPURendererContextOptions extends Omit<GPUCanvasConfiguration, 'device' | 'usage'> {
 }
@@ -91,7 +93,6 @@ export declare class GPURenderer {
     canvas: HTMLCanvasElement;
     /** The WebGPU {@link GPUCanvasContext | context} used */
     context: null | GPUCanvasContext;
-    /** Set the {@link GPUCanvasContext | context} alpha mode */
     /** Options used to create this {@link GPURenderer} */
     options: GPURendererOptions;
     /** The {@link RenderPass | render pass} used to render our result to screen */
@@ -115,9 +116,11 @@ export declare class GPURenderer {
     /** An array containing all our created {@link SceneStackedMesh | meshes} */
     meshes: SceneStackedMesh[];
     /** An array containing all our created {@link Texture} */
-    textures: Texture[];
-    /** An {@link Map} containing all our created {@link RenderBundle} */
+    textures: Array<Texture | MediaTexture>;
+    /** A {@link Map} containing all the {@link RenderBundle} handled by this renderer. */
     renderBundles: Map<RenderBundle['uuid'], RenderBundle>;
+    /** A {@link Map} containing all the {@link TargetsAnimationsManager} handled by this renderer. */
+    animations: Map<TargetsAnimationsManager['uuid'], TargetsAnimationsManager>;
     /** Pixel ratio to use for rendering */
     pixelRatio: number;
     /** An object defining the width, height, top and left position of the canvas. Mainly used internally. If you need to get the renderer dimensions, use {@link boundingRect} instead. */
@@ -136,7 +139,7 @@ export declare class GPURenderer {
     _onBeforeRenderCallback: (commandEncoder: GPUCommandEncoder) => void;
     /** function assigned to the {@link onAfterRender} callback */
     _onAfterRenderCallback: (commandEncoder: GPUCommandEncoder) => void;
-    /** function assigned to the {@link resizeObjects} callback */
+    /** function assigned to the {@link onResize} callback */
     _onResizeCallback: () => void;
     /** function assigned to the {@link onAfterResize} callback */
     _onAfterResizeCallback: () => void;
@@ -338,21 +341,6 @@ export declare class GPURenderer {
      */
     createComputePipelineAsync(pipelineDescriptor: GPUComputePipelineDescriptor): Promise<GPUComputePipeline>;
     /**
-     * Get all created {@link DOMTexture} tracked by our {@link GPUDeviceManager}
-     * @readonly
-     */
-    get domTextures(): DOMTexture[];
-    /**
-     * Add a {@link DOMTexture} to our {@link GPUDeviceManager#domTextures | textures array}
-     * @param texture - {@link DOMTexture} to add
-     */
-    addDOMTexture(texture: DOMTexture): void;
-    /**
-     * Remove a {@link DOMTexture} from our {@link GPUDeviceManager#domTextures | textures array}
-     * @param texture - {@link DOMTexture} to remove
-     */
-    removeDOMTexture(texture: DOMTexture): void;
-    /**
      * Add a {@link Texture} to our {@link textures} array
      * @param texture - {@link Texture} to add
      */
@@ -369,16 +357,38 @@ export declare class GPURenderer {
      */
     createTexture(textureDescriptor: GPUTextureDescriptor): GPUTexture;
     /**
-     * Upload a {@linkDOMTexture#texture | texture} to the GPU
-     * @param texture - {@link DOMTexture} class object with the {@link DOMTexture#texture | texture} to upload
+     * Upload a {@link MediaTexture#texture | texture} or {@link DOMTexture#texture | texture} to the GPU.
+     * @param texture - {@link MediaTexture} or {@link DOMTexture} containing the {@link GPUTexture} to upload.
+     * @param sourceIndex - Index of the source to upload (for cube maps). Default to `0`.
      */
-    uploadTexture(texture: DOMTexture): void;
+    uploadTexture(texture: MediaTexture | DOMTexture, sourceIndex?: number): void;
     /**
-     * Import a {@link GPUExternalTexture}
-     * @param video - {@link HTMLVideoElement} source
-     * @returns - {@link GPUExternalTexture}
+     * Generate mips on the GPU using our {@link GPUDeviceManager}.
+     * @param texture - {@link Texture}, {@link MediaTexture} or {@link DOMTexture} for which to generate the mips.
+     * @param commandEncoder - optional {@link GPUCommandEncoder} to use if we're already in the middle of a command encoding process.
      */
-    importExternalTexture(video: HTMLVideoElement): GPUExternalTexture;
+    generateMips(texture: Texture | MediaTexture | DOMTexture, commandEncoder?: GPUCommandEncoder): void;
+    /**
+     * Import a {@link GPUExternalTexture}.
+     * @param video - {@link HTMLVideoElement} source.
+     * @param label - Optional label of the texture.
+     * @returns - {@link GPUExternalTexture}.
+     */
+    importExternalTexture(video: HTMLVideoElement, label?: string): GPUExternalTexture;
+    /**
+     * Copy a {@link GPUTexture} to a {@link Texture} using a {@link GPUCommandEncoder}. Automatically generate mips after copy if the {@link Texture} needs it.
+     * @param gpuTexture - {@link GPUTexture} source to copy from.
+     * @param texture - {@link Texture} destination to copy onto.
+     * @param commandEncoder - {@link GPUCommandEncoder} to use for copy operation.
+     */
+    copyGPUTextureToTexture(gpuTexture: GPUTexture, texture: Texture, commandEncoder: GPUCommandEncoder): void;
+    /**
+     * Copy a {@link Texture} to a {@link GPUTexture} using a {@link GPUCommandEncoder}.
+     * @param texture - {@link Texture} source to copy from.
+     * @param gpuTexture - {@link GPUTexture} destination to copy onto.
+     * @param commandEncoder - {@link GPUCommandEncoder} to use for copy operation.
+     */
+    copyTextureToGPUTexture(texture: Texture, gpuTexture: GPUTexture, commandEncoder: GPUCommandEncoder): void;
     /**
      * Check if a {@link Sampler} has already been created with the same {@link Sampler#options | parameters}.
      * Use it if found, else create a new one and add it to the {@link GPUDeviceManager#samplers | samplers array}.
@@ -415,15 +425,15 @@ export declare class GPURenderer {
      */
     getObjectsByBindGroup(bindGroup: AllowedBindGroups): undefined | SceneObject[];
     /**
-     * Get all objects ({@link RenderedMesh | rendered meshes} or {@link ComputePass | compute passes}) using a given {@link DOMTexture} or {@link Texture}.
+     * Get all objects ({@link RenderedMesh | rendered meshes} or {@link ComputePass | compute passes}) using a given {@link DOMTexture}, {@link MediaTexture} or {@link Texture}.
      * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
-     * @param texture - {@link DOMTexture} or {@link Texture} to check
+     * @param texture - {@link DOMTexture}, {@link MediaTexture} or {@link Texture} to check.
      */
     getObjectsByTexture(texture: DOMTexture | Texture): undefined | SceneObject[];
     /**
-     * Assign a callback function to _onBeforeRenderCallback
-     * @param callback - callback to run just before the {@link render} method will be executed
-     * @returns - our {@link GPURenderer}
+     * Assign a callback function to _onBeforeRenderCallback.
+     * @param callback - callback to run just before the {@link render} method will be executed.
+     * @returns - our {@link GPURenderer}.
      */
     onBeforeRender(callback: (commandEncoder?: GPUCommandEncoder) => void): this;
     /**
@@ -445,25 +455,26 @@ export declare class GPURenderer {
      */
     onAfterResize(callback: (commandEncoder?: GPUCommandEncoder) => void): this;
     /**
-     * Render a single {@link ComputePass}
-     * @param commandEncoder - current {@link GPUCommandEncoder}
-     * @param computePass - {@link ComputePass}
+     * Render a single {@link ComputePass}.
+     * @param commandEncoder - current {@link GPUCommandEncoder} to use.
+     * @param computePass - {@link ComputePass} to run.
+     * @param copyBuffer - Whether to copy all writable binding buffers that need it.
      */
-    renderSingleComputePass(commandEncoder: GPUCommandEncoder, computePass: ComputePass): void;
+    renderSingleComputePass(commandEncoder: GPUCommandEncoder, computePass: ComputePass, copyBuffer?: boolean): void;
     /**
-     * Render a single {@link RenderedMesh | Mesh}
-     * @param commandEncoder - current {@link GPUCommandEncoder}
-     * @param mesh - {@link RenderedMesh | Mesh} to render
+     * Render a single {@link RenderedMesh | Mesh}.
+     * @param commandEncoder - current {@link GPUCommandEncoder}.
+     * @param mesh - {@link RenderedMesh | Mesh} to render.
      */
     renderSingleMesh(commandEncoder: GPUCommandEncoder, mesh: RenderedMesh): void;
     /**
-     * Render an array of objects (either {@link RenderedMesh | Meshes} or {@link ComputePass}) once. This method won't call any of the renderer render hooks like {@link onBeforeRender}, {@link onAfterRender}
-     * @param objects - Array of {@link RenderedMesh | Meshes} or {@link ComputePass} to render
+     * Render an array of objects (either {@link RenderedMesh | Meshes} or {@link ComputePass}) once. This method won't call any of the renderer render hooks like {@link onBeforeRender}, {@link onAfterRender}.
+     * @param objects - Array of {@link RenderedMesh | Meshes} or {@link ComputePass} to render.
      */
     renderOnce(objects: SceneObject[]): void;
     /**
      * Force to clear a {@link GPURenderer} content to its {@link RenderPass#options.clearValue | clear value} by rendering and empty pass.
-     * @param commandEncoder
+     * @param commandEncoder - {@link GPUCommandEncoder} to use if any.
      */
     forceClear(commandEncoder?: GPUCommandEncoder): void;
     /**
@@ -475,12 +486,12 @@ export declare class GPURenderer {
      */
     onAfterCommandEncoder(): void;
     /**
-     * Called at each draw call to render our scene and its content
-     * @param commandEncoder - current {@link GPUCommandEncoder}
+     * Called at each draw call to render our scene and its content.
+     * @param commandEncoder - current {@link GPUCommandEncoder}.
      */
     render(commandEncoder: GPUCommandEncoder): void;
     /**
-     * Destroy our {@link GPURenderer} and everything that needs to be destroyed as well
+     * Destroy our {@link GPURenderer} and everything that needs to be destroyed as well.
      */
     destroy(): void;
 }

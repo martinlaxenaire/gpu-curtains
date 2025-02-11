@@ -80,7 +80,7 @@ window.addEventListener('load', async () => {
       var normalizeXPos: f32 = (attributes.position.x + 0.5) * 0.5;
 
       // notice how the "uniforms" struct name matches our bindings object name property
-      var time: f32 = frames.elapsed * 0.0375;
+      var time: f32 = frames.elapsed * 0.015;
 
       var waveSinusoid: f32 = sin(3.141595 * nbWaves * normalizeXPos - time);
 
@@ -91,7 +91,7 @@ window.addEventListener('load', async () => {
       );
   
       vsOutput.position = getOutputPosition(transformed);
-      vsOutput.uv = getUVCover(attributes.uv, planeTextureMatrix);
+      vsOutput.uv = getUVCover(attributes.uv, texturesMatrices.planeTexture.matrix);
   
       return vsOutput;
     }

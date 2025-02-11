@@ -67,4 +67,26 @@ export declare class Quat {
      * @returns - {@link Quat} after having applied the rotation
      */
     setFromRotationMatrix(matrix: Mat4): Quat;
+    /**
+     * Get the square length of this {@link Quat}.
+     * @returns - square length of this {@link Quat}.
+     */
+    lengthSq(): number;
+    /**
+     * Get the length of this {@link Quat}.
+     * @returns - length of this {@link Quat}.
+     */
+    length(): number;
+    /**
+     * Normalize this {@link Quat}.
+     * @returns - normalized {@link Quat}.
+     */
+    normalize(): this;
+    /**
+     * Calculate the spherical linear interpolation of this {@link Quat} by given {@link Quat} and alpha, where alpha is the percent distance.
+     * @param quat - {@link Quat} to interpolate towards.
+     * @param alpha - spherical interpolation factor in the [0, 1] interval.
+     * @returns - this {@link Quat} after spherical linear interpolation.
+     */
+    slerp(quat?: Quat, alpha?: number): Quat;
 }

@@ -1,4 +1,5 @@
 import { Mat4 } from './Mat4'
+import { Vec2 } from './Vec2'
 
 /**
  * Basic 3x3 matrix class used for matrix calculations.
@@ -81,6 +82,7 @@ export class Mat3 {
   /**
    * Sets the {@link Mat3} values from an array
    * @param array - array to use
+   * @param offset - optional offset in the array to use
    * @returns - this {@link Mat3} after being set
    */
   // prettier-ignore
@@ -88,9 +90,9 @@ export class Mat3 {
     1, 0, 0,
     0, 1, 0,
     0, 0, 1,
-  ])): Mat3 {
+  ]), offset = 0): Mat3 {
     for (let i = 0; i < this.elements.length; i++) {
-      this.elements[i] = array[i]
+      this.elements[i] = array[i + offset]
     }
 
     return this
@@ -268,5 +270,196 @@ export class Mat3 {
    */
   getNormalMatrix(matrix: Mat4 = new Mat4()): Mat3 {
     return this.setFromMat4(matrix).invert().transpose()
+  }
+
+  /**
+   * Set a transformation matrix from translation, scale and center 2D coordinates and a rotation. Useful to compute UV transformation matrices.
+   * @param tx - translation along X axis.
+   * @param ty - translation along Y axis.
+   * @param sx - Scale along X axis.
+   * @param sy - Scale along Y axis.
+   * @param rotation - Rotation in radians.
+   * @param cx - Center of the transformation along X axis.
+   * @param cy - Center of the transformation along Y axis.
+   */
+  setUVTransform(tx = 0, ty = 0, sx = 1, sy = 1, rotation = 0, cx = 0, cy = 0): Mat3 {
+    const c = Math.cos(rotation)
+    const s = Math.sin(rotation)
+
+    // prettier-ignore
+    this.set(
+      sx * c, sx * s, - sx * ( c * cx + s * cy ) + cx + tx,
+      - sy * s, sy * c, - sy * ( - s * cx + c * cy ) + cy + ty,
+      0, 0, 1
+    );
+
+    return this
+  }
+
+  /**
+   * Rotate this {@link Mat3} by a given angle around X axis, counterclockwise.
+   * @param theta - Angle to rotate along X axis.
+   * @returns - this {@link Mat3} after rotation.
+   */
+  rotateByAngleX(theta = 0): Mat3 {
+    const c = Math.cos(theta)
+    const s = Math.sin(theta)
+
+    this.set(1, 0, 0, 0, c, s, 0, -s, c)
+
+    return this
+  }
+
+  /**
+   * Rotate this {@link Mat3} by a given angle around Y axis, counterclockwise.
+   * @param theta - Angle to rotate along Y axis.
+   * @returns - this {@link Mat3} after rotation.
+   */
+  rotateByAngleY(theta = 0): Mat3 {
+    const c = Math.cos(theta)
+    const s = Math.sin(theta)
+
+    this.set(c, 0, s, 0, 1, 0, -s, 0, c)
+
+    return this
+  }
+
+  /**
+   * Rotate this {@link Mat3} by a given angle around Z axis, counterclockwise.
+   * @param theta - Angle to rotate along Z axis.
+   * @returns - this {@link Mat3} after rotation.
+   */
+  rotateByAngleZ(theta = 0): Mat3 {
+    // counterclockwise
+
+    const c = Math.cos(theta)
+    const s = Math.sin(theta)
+
+    this.set(c, -s, 0, s, c, 0, 0, 0, 1)
+
+    return this
+  }
+
+  /**
+   * {@link premultiply} this {@link Mat3} by a translate matrix (i.e. translateMatrix = new Mat3().translate(vector)).
+   * @param vector - translation {@link Vec2} to use.
+   * @returns - this {@link Mat3} after the premultiply translate operation.
+   */
+  premultiplyTranslate(vector: Vec2 = new Vec2()): Mat3 {
+    // Premultiply by a translation matrix:
+    // translateMatrix = [ 1, 0, tx ]
+    //                   [ 0, 1, ty ]
+    //                   [ 0, 0,  1 ]
+
+    const a11 = 1,
+      a22 = 1,
+      a33 = 1
+    const a13 = vector.x,
+      a23 = vector.y
+
+    const be = this.elements
+    const te = this.elements
+
+    const b11 = be[0],
+      b12 = be[3],
+      b13 = be[6]
+    const b21 = be[1],
+      b22 = be[4],
+      b23 = be[7]
+    const b31 = be[2],
+      b32 = be[5],
+      b33 = be[8]
+
+    te[0] = a11 * b11 + a13 * b31
+    te[3] = a11 * b12 + a13 * b32
+    te[6] = a11 * b13 + a13 * b33
+
+    te[1] = a22 * b21 + a23 * b31
+    te[4] = a22 * b22 + a23 * b32
+    te[7] = a22 * b23 + a23 * b33
+
+    te[2] = a33 * b31
+    te[5] = a33 * b32
+    te[8] = a33 * b33
+
+    return this
+  }
+
+  /**
+   * {@link premultiply} this {@link Mat3} by a scale matrix (i.e. translateMatrix = new Mat3().scale(vector)).
+   * @param vector - scale {@link Vec2} to use.
+   * @returns - this {@link Mat3} after the premultiply scale operation.
+   */
+  premultiplyScale(vector: Vec2 = new Vec2()): Mat3 {
+    // Premultiply by a scale matrix:
+    // scaleMatrix = [ sx  0   0 ]
+    //               [  0  sy   0 ]
+    //               [  0   0   1 ]
+
+    const a11 = vector.x,
+      a22 = vector.y,
+      a33 = 1
+
+    const be = this.elements
+    const te = this.elements
+
+    const b11 = be[0],
+      b12 = be[3],
+      b13 = be[6]
+    const b21 = be[1],
+      b22 = be[4],
+      b23 = be[7]
+    const b31 = be[2],
+      b32 = be[5],
+      b33 = be[8]
+
+    te[0] = a11 * b11
+    te[3] = a11 * b12
+    te[6] = a11 * b13
+
+    te[1] = a22 * b21
+    te[4] = a22 * b22
+    te[7] = a22 * b23
+
+    te[2] = a33 * b31
+    te[5] = a33 * b32
+    te[8] = a33 * b33
+
+    return this
+  }
+
+  /**
+   * Translate a {@link Mat3}.
+   * @param vector - translation {@link Vec2} to use.
+   * @returns - translated {@link Mat3}.
+   */
+  translate(vector: Vec2 = new Vec2()): Mat3 {
+    // Post-multiply by a translation matrix:
+    // translateMatrix = [ 1  0  tx ]
+    //                   [ 0  1  ty ]
+    //                   [ 0  0   1 ]
+
+    const tx = vector.x,
+      ty = vector.y
+
+    const be = this.elements
+    const te = this.elements
+
+    const b11 = be[0],
+      b12 = be[3],
+      b13 = be[6]
+    const b21 = be[1],
+      b22 = be[4],
+      b23 = be[7]
+    const b31 = be[2],
+      b32 = be[5],
+      b33 = be[8]
+
+    // Update the translation column (third column)
+    te[6] = b11 * tx + b12 * ty + b13
+    te[7] = b21 * tx + b22 * ty + b23
+    te[8] = b31 * tx + b32 * ty + b33 // This remains 1
+
+    return this
   }
 }

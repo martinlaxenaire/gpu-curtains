@@ -1,6 +1,7 @@
 import { Box3 } from '../../math/Box3.mjs';
 import { generateUUID, throwWarning, throwError } from '../../utils/utils.mjs';
 import { Buffer } from '../buffers/Buffer.mjs';
+import { Vec3 } from '../../math/Vec3.mjs';
 
 class Geometry {
   /**
@@ -73,8 +74,7 @@ class Geometry {
    * @param renderer - The {@link Renderer} used to recreate the buffers
    */
   restoreContext(renderer) {
-    if (this.ready)
-      return;
+    if (this.ready) return;
     for (const vertexBuffer of this.vertexBuffers) {
       if (!vertexBuffer.buffer.GPUBuffer && vertexBuffer.buffer.consumers.size === 0) {
         vertexBuffer.buffer.createBuffer(renderer);
@@ -142,8 +142,7 @@ class Geometry {
   }) {
     const attributes = vertexBuffer.attributes;
     const attributesLength = attributes.length;
-    if (!name)
-      name = "geometryAttribute" + attributesLength;
+    if (!name) name = "geometryAttribute" + attributesLength;
     if (name === "position" && (type !== "vec3f" || bufferFormat !== "float32x3" || size !== 3)) {
       throwWarning(
         `Geometry 'position' attribute must have this exact properties set:
@@ -206,18 +205,62 @@ class Geometry {
     let attribute;
     for (const vertexBuffer of this.vertexBuffers) {
       attribute = vertexBuffer.attributes.find((attribute2) => attribute2.name === name);
-      if (attribute)
-        break;
+      if (attribute) break;
     }
     return attribute;
+  }
+  /**
+   * Compute the normal {@link Vec3} from a triangle defined by three {@link Vec3} by computing edges {@link Vec3}.
+   * @param vertex1 - first triangle position
+   * @param vertex2 - second triangle position
+   * @param vertex3 - third triangle position
+   * @param edge1 - first edge
+   * @param edge2 - second edge
+   * @param normal - flat normal generated.
+   */
+  computeNormalFromTriangle(vertex1, vertex2, vertex3, edge1, edge2, normal) {
+    edge1.copy(vertex2).sub(vertex1);
+    edge2.copy(vertex3).sub(vertex1);
+    normal.crossVectors(edge1, edge2).normalize();
+  }
+  /**
+   * Compute {@link Geometry} flat normals in case the `normal` attribute is missing.
+   */
+  computeFlatNormals() {
+    const positionAttribute = this.getAttributeByName("position");
+    const vertex1 = new Vec3();
+    const vertex2 = new Vec3();
+    const vertex3 = new Vec3();
+    const edge1 = new Vec3();
+    const edge2 = new Vec3();
+    const normal = new Vec3();
+    const posLength = positionAttribute.array.length;
+    const normalArray = new Float32Array(posLength);
+    for (let i = 0; i < posLength; i += positionAttribute.size * 3) {
+      vertex1.set(positionAttribute.array[i], positionAttribute.array[i + 1], positionAttribute.array[i + 2]);
+      vertex2.set(positionAttribute.array[i + 3], positionAttribute.array[i + 4], positionAttribute.array[i + 5]);
+      vertex3.set(positionAttribute.array[i + 6], positionAttribute.array[i + 7], positionAttribute.array[i + 8]);
+      this.computeNormalFromTriangle(vertex1, vertex2, vertex3, edge1, edge2, normal);
+      for (let j = 0; j < 3; j++) {
+        normalArray[i + j * 3] = normal.x;
+        normalArray[i + 1 + j * 3] = normal.y;
+        normalArray[i + 2 + j * 3] = normal.z;
+      }
+    }
+    this.setAttribute({
+      name: "normal",
+      type: "vec3f",
+      bufferFormat: "float32x3",
+      size: 3,
+      array: normalArray
+    });
   }
   /**
    * Compute a Geometry, which means iterate through all vertex buffers and create the attributes array that will be sent as buffers.
    * Also compute the Geometry bounding box.
    */
   computeGeometry() {
-    if (this.ready)
-      return;
+    if (this.ready) return;
     this.vertexBuffers.forEach((vertexBuffer, index) => {
       if (index === 0) {
         const hasPositionAttribute = vertexBuffer.attributes.find(
@@ -237,6 +280,13 @@ class Geometry {
           hasPositionAttribute.bufferFormat = "float32x3";
           hasPositionAttribute.size = 3;
         }
+        const hasNormalAttribute = vertexBuffer.attributes.find(
+          (attribute) => attribute.name === "normal"
+        );
+        if (!hasNormalAttribute) {
+          this.computeFlatNormals();
+          this.setWGSLFragment();
+        }
       }
       vertexBuffer.array = new Float32Array(vertexBuffer.bufferLength);
       let currentIndex = 0;
@@ -249,20 +299,14 @@ class Geometry {
             vertexBuffer.array[currentIndex] = attributeValue ?? 0;
             if (name === "position") {
               if (s % 3 === 0) {
-                if (this.boundingBox.min.x > attributeValue)
-                  this.boundingBox.min.x = attributeValue;
-                if (this.boundingBox.max.x < attributeValue)
-                  this.boundingBox.max.x = attributeValue;
+                if (this.boundingBox.min.x > attributeValue) this.boundingBox.min.x = attributeValue;
+                if (this.boundingBox.max.x < attributeValue) this.boundingBox.max.x = attributeValue;
               } else if (s % 3 === 1) {
-                if (this.boundingBox.min.y > attributeValue)
-                  this.boundingBox.min.y = attributeValue;
-                if (this.boundingBox.max.y < attributeValue)
-                  this.boundingBox.max.y = attributeValue;
+                if (this.boundingBox.min.y > attributeValue) this.boundingBox.min.y = attributeValue;
+                if (this.boundingBox.max.y < attributeValue) this.boundingBox.max.y = attributeValue;
               } else if (s % 3 === 2) {
-                if (this.boundingBox.min.z > attributeValue)
-                  this.boundingBox.min.z = attributeValue;
-                if (this.boundingBox.max.z < attributeValue)
-                  this.boundingBox.max.z = attributeValue;
+                if (this.boundingBox.min.z > attributeValue) this.boundingBox.min.z = attributeValue;
+                if (this.boundingBox.max.z < attributeValue) this.boundingBox.max.z = attributeValue;
               }
             }
             currentIndex++;
@@ -303,8 +347,7 @@ class Geometry {
    * @param parameters.label - label to use for the vertex buffers.
    */
   createBuffers({ renderer, label = this.type }) {
-    if (this.ready)
-      return;
+    if (this.ready) return;
     for (const vertexBuffer of this.vertexBuffers) {
       if (!vertexBuffer.bufferSize) {
         vertexBuffer.bufferSize = vertexBuffer.array.length * vertexBuffer.array.constructor.BYTES_PER_ELEMENT;
@@ -373,8 +416,7 @@ class Geometry {
    * @param pass - current render pass.
    */
   render(pass) {
-    if (!this.ready)
-      return;
+    if (!this.ready) return;
     this.setGeometryBuffers(pass);
     this.drawGeometry(pass);
   }
@@ -390,8 +432,7 @@ class Geometry {
         vertexBuffer.buffer.destroy();
       }
       vertexBuffer.array = null;
-      if (renderer)
-        renderer.removeBuffer(vertexBuffer.buffer);
+      if (renderer) renderer.removeBuffer(vertexBuffer.buffer);
     }
   }
 }

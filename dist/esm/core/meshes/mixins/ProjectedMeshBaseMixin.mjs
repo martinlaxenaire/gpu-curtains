@@ -1,10 +1,13 @@
 import { isCameraRenderer } from '../../renderers/utils.mjs';
 import { DOMFrustum } from '../../DOM/DOMFrustum.mjs';
 import { MeshBaseMixin } from './MeshBaseMixin.mjs';
-import default_projected_vsWgsl from '../../shaders/chunks/default/default_projected_vs.wgsl.mjs';
-import default_normal_fsWgsl from '../../shaders/chunks/default/default_normal_fs.wgsl.mjs';
-import { getPCFDirectionalShadows, getPCFShadowContribution, getPCFPointShadows, getPCFPointShadowContribution } from '../../shaders/chunks/shading/shadows.mjs';
 import { BufferBinding } from '../../bindings/BufferBinding.mjs';
+import { getDefaultProjectedVertexShaderCode } from '../../shaders/full/vertex/get-default-projected-vertex-shader-code.mjs';
+import { getDefaultNormalFragmentCode } from '../../shaders/full/fragment/get-default-normal-fragment-code.mjs';
+import { getPCFShadowContribution } from '../../shaders/chunks/fragment/head/get-PCF-shadow-contribution.mjs';
+import { getPCFDirectionalShadows } from '../../shaders/chunks/fragment/head/get-PCF-directional-shadows.mjs';
+import { getPCFPointShadowContribution } from '../../shaders/chunks/fragment/head/get-PCF-point-shadow-contribution.mjs';
+import { getPCFPointShadows } from '../../shaders/chunks/fragment/head/get-PCF-point-shadows.mjs';
 
 const defaultProjectedMeshParams = {
   // frustum culling and visibility
@@ -16,7 +19,8 @@ const defaultProjectedMeshParams = {
     left: 0
   },
   receiveShadows: false,
-  castShadows: false
+  castShadows: false,
+  transmissive: false
 };
 function ProjectedMeshBaseMixin(Base) {
   return class ProjectedMeshBase extends MeshBaseMixin(Base) {
@@ -53,14 +57,15 @@ function ProjectedMeshBaseMixin(Base) {
       this.type = "MeshTransformed";
       renderer = isCameraRenderer(renderer, parameters.label ? parameters.label + " " + this.type : this.type);
       this.renderer = renderer;
-      const { frustumCulling, DOMFrustumMargins, receiveShadows, castShadows } = parameters;
+      const { frustumCulling, DOMFrustumMargins, receiveShadows, castShadows, transmissive } = parameters;
       this.options = {
         ...this.options ?? {},
         // merge possible lower options?
         frustumCulling,
         DOMFrustumMargins,
         receiveShadows,
-        castShadows
+        castShadows,
+        transmissive
       };
       if (this.options.castShadows) {
         this.renderer.shadowCastingLights.forEach((light) => {
@@ -76,6 +81,13 @@ function ProjectedMeshBaseMixin(Base) {
      * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
      */
     setRenderer(renderer) {
+      if (this.renderer && this.options.castShadows) {
+        this.renderer.shadowCastingLights.forEach((light) => {
+          if (light.shadow.isActive) {
+            light.shadow.removeMesh(this);
+          }
+        });
+      }
       super.setRenderer(renderer);
       this.camera = this.renderer.camera;
       if (this.options.castShadows) {
@@ -92,8 +104,7 @@ function ProjectedMeshBaseMixin(Base) {
      * @param updateScene - Whether to remove and then re-add the Mesh from the {@link core/scenes/Scene.Scene | Scene} or not.
      */
     setRenderBundle(renderBundle, updateScene = true) {
-      if (this.renderBundle && renderBundle && this.renderBundle.uuid === renderBundle.uuid)
-        return;
+      if (this.renderBundle && renderBundle && this.renderBundle.uuid === renderBundle.uuid) return;
       const hasRenderBundle = !!this.renderBundle;
       const bindGroup = this.material.getBindGroupByBindingName("matrices");
       const matrices = this.material.getBufferBindingByName("matrices");
@@ -132,29 +143,32 @@ function ProjectedMeshBaseMixin(Base) {
       if (!shaders) {
         this.options.shaders = {
           vertex: {
-            code: default_projected_vsWgsl,
+            code: getDefaultProjectedVertexShaderCode,
             entryPoint: "main"
           },
           fragment: {
-            code: default_normal_fsWgsl,
+            code: getDefaultNormalFragmentCode,
             entryPoint: "main"
           }
         };
       } else {
         if (!shaders.vertex || !shaders.vertex.code) {
           shaders.vertex = {
-            code: default_projected_vsWgsl,
+            code: getDefaultProjectedVertexShaderCode,
             entryPoint: "main"
           };
         }
         if (shaders.fragment === void 0 || shaders.fragment && !shaders.fragment.code) {
           shaders.fragment = {
-            code: default_normal_fsWgsl,
+            code: getDefaultNormalFragmentCode,
             entryPoint: "main"
           };
         }
       }
       if (this.options.receiveShadows) {
+        this.renderer.shadowCastingLights.forEach((light) => {
+          light.shadow.addShadowReceivingMesh(this);
+        });
         const hasActiveShadows = this.renderer.shadowCastingLights.find((light) => light.shadow.isActive);
         if (hasActiveShadows && shaders.fragment && typeof shaders.fragment === "object") {
           shaders.fragment.code = getPCFDirectionalShadows(this.renderer) + getPCFShadowContribution + getPCFPointShadows(this.renderer) + getPCFPointShadowContribution + shaders.fragment.code;
@@ -169,6 +183,13 @@ function ProjectedMeshBaseMixin(Base) {
      */
     useGeometry(geometry) {
       super.useGeometry(geometry);
+      if (this.renderer && this.options.castShadows) {
+        this.renderer.shadowCastingLights.forEach((light) => {
+          if (light.shadow.isActive) {
+            light.shadow.updateMeshGeometry(this, geometry);
+          }
+        });
+      }
       if (this.domFrustum) {
         this.domFrustum.boundingBox = this.geometry.boundingBox;
       }
@@ -200,8 +221,11 @@ function ProjectedMeshBaseMixin(Base) {
      * @returns - cleaned parameters
      */
     cleanupRenderMaterialParameters(parameters) {
-      delete parameters.frustumCulling;
+      delete parameters.castShadows;
       delete parameters.DOMFrustumMargins;
+      delete parameters.frustumCulling;
+      delete parameters.receiveShadows;
+      delete parameters.transmissive;
       if (this.options.receiveShadows) {
         const depthTextures = [];
         let depthSamplers = [];
@@ -225,6 +249,19 @@ function ProjectedMeshBaseMixin(Base) {
           parameters.samplers = depthSamplers;
         }
       }
+      if (this.options.transmissive) {
+        this.renderer.createTransmissionTarget();
+        if (parameters.textures) {
+          parameters.textures = [...parameters.textures, this.renderer.transmissionTarget.texture];
+        } else {
+          parameters.textures = [this.renderer.transmissionTarget.texture];
+        }
+        if (parameters.samplers) {
+          parameters.samplers = [...parameters.samplers, this.renderer.transmissionTarget.sampler];
+        } else {
+          parameters.samplers = [this.renderer.transmissionTarget.sampler];
+        }
+      }
       return super.cleanupRenderMaterialParameters(parameters);
     }
     /**
@@ -235,7 +272,7 @@ function ProjectedMeshBaseMixin(Base) {
       const matricesUniforms = {
         label: "Matrices",
         name: "matrices",
-        visibility: ["vertex"],
+        visibility: ["vertex", "fragment"],
         minOffset: this.renderer.device.limits.minUniformBufferOffsetAlignment,
         struct: {
           model: {
@@ -259,8 +296,7 @@ function ProjectedMeshBaseMixin(Base) {
         matricesUniforms.offset = this.options.renderBundle.meshes.size;
       }
       const meshTransformationBinding = new BufferBinding(matricesUniforms);
-      if (!meshParameters.bindings)
-        meshParameters.bindings = [];
+      if (!meshParameters.bindings) meshParameters.bindings = [];
       meshParameters.bindings.unshift(meshTransformationBinding);
       super.setMaterial(meshParameters);
     }
@@ -284,18 +320,8 @@ function ProjectedMeshBaseMixin(Base) {
      * @param boundingRect - the new bounding rectangle
      */
     resize(boundingRect) {
-      if (this.domFrustum)
-        this.domFrustum.setContainerBoundingRect(this.renderer.boundingRect);
+      if (this.domFrustum) this.domFrustum.setContainerBoundingRect(this.renderer.boundingRect);
       super.resize(boundingRect);
-    }
-    /**
-     * Apply scale and resize textures
-     */
-    applyScale() {
-      super.applyScale();
-      for (const texture of this.domTextures) {
-        texture.resize();
-      }
     }
     /**
      * Get our {@link DOMFrustum} projected bounding rectangle
@@ -406,20 +432,27 @@ function ProjectedMeshBaseMixin(Base) {
      * @param pass - current render pass
      */
     onRenderPass(pass) {
-      if (!this.ready)
-        return;
+      if (!this.ready) return;
       this._onRenderCallback && this._onRenderCallback();
       if (this.domFrustum && this.domFrustum.isIntersecting || !this.frustumCulling) {
         this.material.render(pass);
         this.geometry.render(pass);
       }
     }
+    /**
+     * Destroy the Mesh, and handle shadow casting or receiving meshes.
+     */
     destroy() {
       if (this.options.castShadows) {
         this.renderer.shadowCastingLights.forEach((light) => {
           if (light.shadow.isActive) {
             light.shadow.removeMesh(this);
           }
+        });
+      }
+      if (this.options.receiveShadows) {
+        this.renderer.shadowCastingLights.forEach((light) => {
+          light.shadow.removeShadowReceivingMesh(this);
         });
       }
       super.destroy();

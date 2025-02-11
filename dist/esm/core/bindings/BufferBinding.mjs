@@ -8,24 +8,13 @@ import { BufferArrayElement } from './bufferElements/BufferArrayElement.mjs';
 import { BufferInterleavedArrayElement } from './bufferElements/BufferInterleavedArrayElement.mjs';
 import { Buffer } from '../buffers/Buffer.mjs';
 
-var __accessCheck = (obj, member, msg) => {
-  if (!member.has(obj))
-    throw TypeError("Cannot " + msg);
+var __typeError = (msg) => {
+  throw TypeError(msg);
 };
-var __privateGet = (obj, member, getter) => {
-  __accessCheck(obj, member, "read from private field");
-  return getter ? getter.call(obj) : member.get(obj);
-};
-var __privateAdd = (obj, member, value) => {
-  if (member.has(obj))
-    throw TypeError("Cannot add the same private member more than once");
-  member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-};
-var __privateSet = (obj, member, value, setter) => {
-  __accessCheck(obj, member, "write to private field");
-  member.set(obj, value);
-  return value;
-};
+var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
+var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
 var _parent;
 const _BufferBinding = class _BufferBinding extends Binding {
   /**
@@ -50,7 +39,7 @@ const _BufferBinding = class _BufferBinding extends Binding {
     bindingType = bindingType ?? "uniform";
     super({ label, name, bindingType, visibility });
     /** @ignore */
-    __privateAdd(this, _parent, void 0);
+    __privateAdd(this, _parent);
     this.options = {
       ...this.options,
       useStruct,
@@ -499,8 +488,7 @@ const _BufferBinding = class _BufferBinding extends Binding {
    * Set the WGSL code snippet to append to the shaders code. It consists of variable (and Struct structures if needed) declarations.
    */
   setWGSLFragment() {
-    if (!this.bufferElements.length && !this.childrenBindings.length)
-      return;
+    if (!this.bufferElements.length && !this.childrenBindings.length) return;
     const kebabCaseLabel = toKebabCase(this.label);
     if (this.useStruct) {
       const structs = {};

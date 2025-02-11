@@ -6,25 +6,16 @@ import { Vec3 } from '../../math/Vec3.mjs';
 import { throwWarning } from '../../utils/utils.mjs';
 import { directionalShadowStruct } from '../shadows/DirectionalShadow.mjs';
 import { pointShadowStruct } from '../shadows/PointShadow.mjs';
+import { Texture } from '../textures/Texture.mjs';
+import { Sampler } from '../samplers/Sampler.mjs';
 
-var __accessCheck = (obj, member, msg) => {
-  if (!member.has(obj))
-    throw TypeError("Cannot " + msg);
+var __typeError = (msg) => {
+  throw TypeError(msg);
 };
-var __privateGet = (obj, member, getter) => {
-  __accessCheck(obj, member, "read from private field");
-  return member.get(obj);
-};
-var __privateAdd = (obj, member, value) => {
-  if (member.has(obj))
-    throw TypeError("Cannot add the same private member more than once");
-  member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-};
-var __privateSet = (obj, member, value, setter) => {
-  __accessCheck(obj, member, "write to private field");
-  member.set(obj, value);
-  return value;
-};
+var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
+var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), member.get(obj));
+var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
 var _shouldUpdateCameraLightsBindGroup;
 class GPUCameraRenderer extends GPURenderer {
   /**
@@ -52,7 +43,7 @@ class GPUCameraRenderer extends GPURenderer {
       renderPass
     });
     /** @ignore */
-    __privateAdd(this, _shouldUpdateCameraLightsBindGroup, void 0);
+    __privateAdd(this, _shouldUpdateCameraLightsBindGroup);
     this.type = "GPUCameraRenderer";
     camera = { ...{ fov: 50, near: 0.1, far: 1e3 }, ...camera };
     if (lights !== false) {
@@ -91,6 +82,23 @@ class GPUCameraRenderer extends GPURenderer {
     this.cameraLightsBindGroup?.restoreContext();
     this.updateCameraBindings();
   }
+  /**
+   * Set our {@link renderPass | main render pass} and our {@link transmissionTarget} sampler.
+   */
+  setMainRenderPasses() {
+    super.setMainRenderPasses();
+    this.transmissionTarget = {
+      sampler: new Sampler(this, {
+        label: "Transmission sampler",
+        name: "transmissionSampler",
+        magFilter: "linear",
+        minFilter: "linear",
+        mipmapFilter: "linear",
+        addressModeU: "clamp-to-edge",
+        addressModeV: "clamp-to-edge"
+      })
+    };
+  }
   /* CAMERA */
   /**
    * Set the {@link camera}
@@ -117,8 +125,7 @@ class GPUCameraRenderer extends GPURenderer {
    * @param camera - new {@link Camera} to use.
    */
   useCamera(camera) {
-    if (this.camera && camera && this.camera.uuid === camera.uuid)
-      return;
+    if (this.camera && camera && this.camera.uuid === camera.uuid) return;
     if (this.camera) {
       this.camera.parent = null;
       this.camera.onMatricesChanged = () => {
@@ -155,7 +162,7 @@ class GPUCameraRenderer extends GPURenderer {
     this.bindings.camera = new BufferBinding({
       label: "Camera",
       name: "camera",
-      visibility: ["vertex"],
+      visibility: ["vertex", "fragment"],
       struct: {
         view: {
           // camera view matrix
@@ -201,8 +208,7 @@ class GPUCameraRenderer extends GPURenderer {
    * Set the lights {@link BufferBinding} based on the {@link lightsBindingParams}.
    */
   setLightsBinding() {
-    if (!this.options.lights)
-      return;
+    if (!this.options.lights) return;
     this.lightsBindingParams = {
       ambientLights: {
         max: this.options.lights.maxAmbientLights,
@@ -403,11 +409,36 @@ class GPUCameraRenderer extends GPURenderer {
       bindings: Object.keys(this.bindings).map((bindingName) => this.bindings[bindingName]).flat()
     });
     this.cameraLightsBindGroup.consumers.add(this.uuid);
+    this.pointShadowsCubeFaceBindGroups = [];
+    for (let face = 0; face < 6; face++) {
+      const cubeFace = new BufferBinding({
+        label: "Cube face",
+        name: "cubeFace",
+        bindingType: "uniform",
+        visibility: ["vertex"],
+        struct: {
+          face: {
+            type: "u32",
+            value: face
+          }
+        }
+      });
+      const cubeBindGroup = new BindGroup(this, {
+        label: `Cube face bind group ${face}`,
+        bindings: [cubeFace]
+      });
+      cubeBindGroup.createBindGroup();
+      cubeBindGroup.consumers.add(this.uuid);
+      this.pointShadowsCubeFaceBindGroups.push(cubeBindGroup);
+    }
+    if (this.device) {
+      this.createCameraLightsBindGroup();
+    }
   }
   /**
    * Create the {@link cameraLightsBindGroup | camera, lights and shadows bind group} buffers
    */
-  setCameraBindGroup() {
+  createCameraLightsBindGroup() {
     if (this.cameraLightsBindGroup && this.cameraLightsBindGroup.shouldCreateBindGroup) {
       this.cameraLightsBindGroup.setIndex(0);
       this.cameraLightsBindGroup.createBindGroup();
@@ -473,6 +504,39 @@ class GPUCameraRenderer extends GPURenderer {
   setCameraPosition(position = new Vec3(0, 0, 1)) {
     this.camera.position.copy(position);
   }
+  /* TRANSMISSIVE */
+  /**
+   * Create the {@link transmissionTarget} {@link Texture} and {@link RenderPassEntry} if not already created.
+   */
+  createTransmissionTarget() {
+    if (!this.transmissionTarget.texture) {
+      this.transmissionTarget.passEntry = this.scene.createScreenPassEntry("Transmission scene screen render pass");
+      this.transmissionTarget.texture = new Texture(this, {
+        label: "Transmission background scene render target output",
+        name: "transmissionBackgroundTexture",
+        generateMips: true,
+        // needed for roughness LOD!
+        format: this.options.context.format,
+        autoDestroy: false
+      });
+      this.transmissionTarget.passEntry.onBeforeRenderPass = (commandEncoder, swapChainTexture) => {
+        this.copyGPUTextureToTexture(swapChainTexture, this.transmissionTarget.texture, commandEncoder);
+      };
+    }
+  }
+  /**
+   * Destroy the {@link transmissionTarget} {@link Texture} and {@link RenderPassEntry} if already created.
+   */
+  destroyTransmissionTarget() {
+    if (this.transmissionTarget.texture) {
+      this.transmissionTarget.texture.destroy();
+      this.scene.renderPassEntries.screen = this.scene.renderPassEntries.screen.filter(
+        (passEntry) => passEntry.label !== "Transmission scene screen render pass"
+      );
+      this.transmissionTarget.texture = null;
+      this.transmissionTarget.passEntry = null;
+    }
+  }
   /**
    * Resize our {@link GPUCameraRenderer} and resize our {@link camera} before anything else.
    * @param rectBBox - the optional new {@link canvas} {@link RectBBox} to set
@@ -486,13 +550,12 @@ class GPUCameraRenderer extends GPURenderer {
   }
   /* RENDER */
   /**
-   * {@link setCameraBindGroup | Set the camera bind group if needed} and then call our {@link GPURenderer#render | GPURenderer render method}
+   * {@link createCameraLightsBindGroup | Set the camera bind group if needed} and then call our {@link GPURenderer#render | GPURenderer render method}
    * @param commandEncoder - current {@link GPUCommandEncoder}
    */
   render(commandEncoder) {
-    if (!this.ready)
-      return;
-    this.setCameraBindGroup();
+    if (!this.ready) return;
+    this.createCameraLightsBindGroup();
     this.updateCameraLightsBindGroup();
     super.render(commandEncoder);
     if (this.cameraLightsBindGroup) {
@@ -504,8 +567,11 @@ class GPUCameraRenderer extends GPURenderer {
    */
   destroy() {
     this.cameraLightsBindGroup?.destroy();
-    this.lights.forEach((light) => light.remove());
+    this.pointShadowsCubeFaceBindGroups.forEach((bindGroup) => bindGroup.destroy());
+    this.destroyTransmissionTarget();
+    this.lights.forEach((light) => light.destroy());
     super.destroy();
+    this.lights.forEach((light) => this.removeLight(light));
   }
 }
 _shouldUpdateCameraLightsBindGroup = new WeakMap();

@@ -185,8 +185,14 @@
     left: 0;
     height: 100vh;
     /* prettier-ignore */
-    height: 100lvh;
+    height: 100svh;
     width: 100vw;
+  }
+
+  #canvas.scrollable {
+    height: 100vh;
+    /* prettier-ignore */
+    height: 100lvh;
   }
 
   /** header **/

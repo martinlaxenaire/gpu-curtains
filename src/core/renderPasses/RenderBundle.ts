@@ -8,6 +8,7 @@ import { ShaderPass } from './ShaderPass'
 import { PingPongPlane } from '../../extras/meshes/PingPongPlane'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { IndirectBuffer } from '../../extras/buffers/IndirectBuffer'
+import { MediaTexture } from '../textures/MediaTexture'
 
 let bundleIndex = 0
 
@@ -268,6 +269,7 @@ export class RenderBundle {
     this.binding = new BufferBinding({
       label: this.options.label + ' matrices',
       name: 'matrices',
+      visibility: ['vertex', 'fragment'],
       struct: {
         model: {
           type: 'array<mat4x4f>',
@@ -528,6 +530,19 @@ export class RenderBundle {
   }
 
   /**
+   * If one of the {@link meshes} is using a {@link core/textures/Texture.Texture | Texture} dependent of the {@link renderer}, invalidate the {@link RenderBundle} in order to resize the {@link core/textures/Texture.Texture | Texture}.
+   */
+  resize() {
+    for (const [_uuid, mesh] of this.meshes) {
+      const hasRenderTexture = mesh.textures.find((texture) => !texture.options.fixedSize)
+      if (hasRenderTexture) {
+        this.ready = false
+        break
+      }
+    }
+  }
+
+  /**
    * Render the {@link RenderBundle}.
    *
    * If it is ready, execute each {@link core/meshes/Mesh.Mesh.onBeforeRenderPass | mesh onBeforeRenderPass method}, {@link updateBinding | update the binding} if needed, execute the {@link bundle} and finally execute each {@link core/meshes/Mesh.Mesh.onAfterRenderPass | mesh onAfterRenderPass method}.
@@ -576,12 +591,16 @@ export class RenderBundle {
 
         if (!mesh.ready) {
           isReady = false
+          break
         }
 
-        // dom textures should be ready
+        // media textures should be ready
         // in order to validate the render bundle
-        if ('sourcesReady' in mesh && !mesh.sourcesReady) {
-          isReady = false
+        for (const texture of mesh.textures) {
+          if (texture instanceof MediaTexture && !texture.sourcesUploaded) {
+            isReady = false
+            break
+          }
         }
 
         index++

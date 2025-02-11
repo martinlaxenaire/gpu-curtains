@@ -3,9 +3,8 @@ import {
   GPUDeviceManager,
   AmbientLight,
   DirectionalLight,
-  getLambert,
   Object3D,
-  Mesh,
+  LitMesh,
   BoxGeometry,
   SphereGeometry,
   Vec3,
@@ -39,35 +38,13 @@ window.addEventListener('load', async () => {
   })
 
   const ambientLight = new AmbientLight(gpuCameraRenderer, {
-    intensity: 0.7,
+    intensity: 0.1,
   })
 
   const directionalLight = new DirectionalLight(gpuCameraRenderer, {
     position: new Vec3(0, 10, 10),
-    intensity: 1,
+    intensity: 0.75,
   })
-
-  const meshFs = /* wgsl */ `
-    struct VSOutput {
-      @builtin(position) position: vec4f,
-      @location(0) uv: vec2f,
-      @location(1) normal: vec3f,
-      @location(2) worldPosition: vec3f,
-    };
-    
-    ${getLambert()}
-    
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-          
-      var color: vec3f = getLambert(
-        normalize(fsInput.normal),
-        fsInput.worldPosition,
-        shading.color,
-      );
-    
-      return vec4(color, 1.0);
-    }
-  `
 
   const blue = new Vec3(0, 1, 1)
   const pink = new Vec3(1, 0, 1)
@@ -97,23 +74,12 @@ window.addEventListener('load', async () => {
 
     // now add a small sphere that will act as our pivot center helper
     // note we could have directly used the mesh as a parent!
-    const pivotSphere = new Mesh(gpuCameraRenderer, {
+    const pivotSphere = new LitMesh(gpuCameraRenderer, {
       label: 'Pivot center ' + i,
       geometry: new SphereGeometry(),
-      shaders: {
-        fragment: {
-          code: meshFs,
-        },
-      },
-      uniforms: {
-        shading: {
-          struct: {
-            color: {
-              type: 'vec3f',
-              value: meshColor,
-            },
-          },
-        },
+      material: {
+        shading: 'Lambert',
+        color: meshColor,
       },
     })
 
@@ -122,23 +88,12 @@ window.addEventListener('load', async () => {
     pivotSphere.parent = pivot
 
     // create a cube mesh
-    const cube = new Mesh(gpuCameraRenderer, {
+    const cube = new LitMesh(gpuCameraRenderer, {
       label: 'Cube ' + i,
       geometry: new BoxGeometry(),
-      shaders: {
-        fragment: {
-          code: meshFs,
-        },
-      },
-      uniforms: {
-        shading: {
-          struct: {
-            color: {
-              type: 'vec3f',
-              value: meshColor,
-            },
-          },
-        },
+      material: {
+        shading: 'Lambert',
+        color: meshColor,
       },
     })
 

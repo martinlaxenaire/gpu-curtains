@@ -37,22 +37,31 @@ export { ShaderPass } from './core/renderPasses/ShaderPass'
 export { Sampler } from './core/samplers/Sampler'
 export { Scene } from './core/scenes/Scene'
 export { Texture } from './core/textures/Texture'
-export { DOMTexture } from './core/textures/DOMTexture'
+export { MediaTexture } from './core/textures/MediaTexture'
 export { DOMElement } from './core/DOM/DOMElement'
 
 // shading
+export * from './core/shaders/chunks/utils/constants'
+export * from './core/shaders/chunks/utils/common'
+export * from './core/shaders/chunks/utils/tone-mapping-utils'
+
 export * from './core/shaders/chunks/shading/lambert-shading'
 export * from './core/shaders/chunks/shading/phong-shading'
-export * from './core/shaders/chunks/shading/pbr-shading'
-export * from './core/shaders/chunks/shading/ibl-shading'
-export * from './core/shaders/chunks/shading/shadows'
-export * from './core/shaders/chunks/shading/tone-mapping-utils'
+export * from './core/shaders/chunks/shading/PBR-shading'
+
+export * from './core/shaders/full/vertex/get-vertex-shader-code'
+export * from './core/shaders/full/fragment/get-fragment-shader-code'
+export * from './core/shaders/full/fragment/get-unlit-fragment-shader-code'
+export * from './core/shaders/full/fragment/get-lambert-fragment-shader-code'
+export * from './core/shaders/full/fragment/get-phong-fragment-shader-code'
+export * from './core/shaders/full/fragment/get-PBR-fragment-shader-code'
 
 // curtains
 export { DOMMesh } from './curtains/meshes/DOMMesh'
 export { Plane } from './curtains/meshes/Plane'
 export { DOMObject3D } from './curtains/objects3D/DOMObject3D'
 export { GPUCurtainsRenderer } from './curtains/renderers/GPUCurtainsRenderer'
+export { DOMTexture } from './curtains/textures/DOMTexture'
 export { GPUCurtains } from './curtains/GPUCurtains'
 
 // math
@@ -62,20 +71,25 @@ export { Mat4 } from './math/Mat4'
 export { Quat } from './math/Quat'
 export { Vec2 } from './math/Vec2'
 export { Vec3 } from './math/Vec3'
+export * from './math/color-utils'
 
 // extras
 export { IndirectBuffer } from './extras/buffers/IndirectBuffer'
 export { OrbitControls } from './extras/controls/OrbitControls'
-export { EnvironmentMap } from './extras/environment-map/EnvironmentMap'
+export { EnvironmentMap } from './extras/environmentMap/EnvironmentMap'
 export { BoxGeometry } from './extras/geometries/BoxGeometry'
 export { SphereGeometry } from './extras/geometries/SphereGeometry'
+export { LitMesh } from './extras/meshes/LitMesh'
 export { PingPongPlane } from './extras/meshes/PingPongPlane'
 export { Raycaster } from './extras/raycaster/Raycaster'
 
 // gltf extras
 export { GLTFScenesManager } from './extras/gltf/GLTFScenesManager'
-export * from './extras/gltf/utils'
 
 // loaders
 export { GLTFLoader } from './extras/loaders/GLTFLoader'
 export { HDRLoader } from './extras/loaders/HDRLoader'
+
+// animations
+export { KeyframesAnimation } from './extras/animations/KeyframesAnimation'
+export { TargetsAnimationsManager } from './extras/animations/TargetsAnimationsManager'

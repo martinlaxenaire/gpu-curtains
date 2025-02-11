@@ -4,7 +4,6 @@ import {
   AmbientLight,
   DirectionalLight,
   GLTFScenesManager,
-  buildShaders,
   DOMMesh,
   DOMObject3D,
   Vec3,
@@ -51,7 +50,7 @@ window.addEventListener('load', async () => {
 
   parentNode.parent = gpuCurtains.renderer.scene
 
-  gpuCurtains.onRender(() => {
+  gpuCurtains.onBeforeRender(() => {
     parentNode.rotation.y += 0.02
   })
 
@@ -117,7 +116,7 @@ window.addEventListener('load', async () => {
     node.position.sub(center)
     node.parent = parentNode
 
-    // reset parent node rotation
+    // reset parent node rotationMatrix
     parentNode.rotation.y = 0
 
     // set the new DOM element aspect ratio
@@ -131,7 +130,7 @@ window.addEventListener('load', async () => {
     const meshes = gltfScenesManager.addMeshes((meshDescriptor) => {
       const { parameters } = meshDescriptor
 
-      parameters.shaders = buildShaders(meshDescriptor, { shadingModel: 'Phong' })
+      parameters.material.shading = 'Phong'
     })
   }
 

@@ -16,7 +16,7 @@ struct VSOutput {
   );
 
   vsOutput.position = getOutputPosition(transformed);
-  vsOutput.uv = getUVCover(attributes.uv, planeTextureMatrix);
+  vsOutput.uv = getUVCover(attributes.uv, texturesMatrices.planeTexture.matrix);
 
   return vsOutput;
 }

@@ -77,7 +77,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   await gpuCurtains.setDevice()
 
-  gpuCurtains.onRender(() => {
+  gpuCurtains.onBeforeRender(() => {
     rotationEffect = lerp(rotationEffect, 0, 0.05)
   })
 
@@ -94,7 +94,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       var vsOutput: VSOutput;
   
       vsOutput.position = getOutputPosition(attributes.position);
-      vsOutput.uv = getUVCover(attributes.uv, planeTextureMatrix);
+      vsOutput.uv = getUVCover(attributes.uv, texturesMatrices.planeTexture.matrix);
   
       return vsOutput;
     }
@@ -137,12 +137,12 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     setPlaneTransformOrigin(plane)
 
-    // set initial rotation based on plane index
+    // set initial rotationMatrix based on plane index
     plane.rotation.z = (index / planeEls.length) * Math.PI * 2
 
     plane
       .onBeforeRender(() => {
-        // update rotation based on rotation effect
+        // update rotationMatrix based on rotationMatrix effect
         plane.rotation.z += rotationEffect / 100
       })
       .onAfterResize(() => {

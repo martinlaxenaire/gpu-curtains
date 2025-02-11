@@ -1,56 +1,52 @@
 import { GLTF } from './GLTF';
-import { VertexBufferAttributeParams } from '../Geometries';
-import { Texture, TextureParams } from '../../core/textures/Texture';
 import { Sampler } from '../../core/samplers/Sampler';
 import { ProjectedMeshParameters } from '../../core/meshes/mixins/ProjectedMeshBaseMixin';
 import { Object3D } from '../../core/objects3D/Object3D';
-import { Mesh } from '../../core/meshes/Mesh';
 import { Box3 } from '../../math/Box3';
-/**
- * Define a {@link MeshDescriptorAttribute} used to create the {@link core/geometries/Geometry.Geometry | Geometry}.
- */
-export interface MeshDescriptorAttribute {
-    /** Name of the attribute. */
-    name: VertexBufferAttributeParams['name'];
-    /** Type of the attibute. */
-    type: VertexBufferAttributeParams['type'];
+import { Camera } from '../../core/camera/Camera';
+import { BufferBinding } from '../../core/bindings/BufferBinding';
+import { TargetsAnimationsManager } from '../../extras/animations/TargetsAnimationsManager';
+import { Mat4 } from '../../math/Mat4';
+import { LitMesh, LitMeshMaterialParams, LitMeshParameters, ShaderTextureDescriptor } from '../../extras/meshes/LitMesh';
+import { GLTFExtensionsUsed } from './GLTFExtensions';
+import { RenderMaterialParams } from '../Materials';
+import { RenderMaterial } from '../../core/materials/RenderMaterial';
+import { Light } from '../../core/lights/Light';
+/** Parameters parsed from a {@link GLTF.IMaterial | glTF material} entry. */
+export interface MeshDescriptorMaterialParams {
+    /** Optional label of the {@link RenderMaterial} to build. */
+    label?: RenderMaterialParams['label'];
+    /** Optional bindings used by the {@link RenderMaterial}. */
+    bindings?: RenderMaterialParams['bindings'];
+    /** Optional cull mode used by the {@link RenderMaterial}. */
+    cullMode?: RenderMaterialParams['cullMode'];
+    /** Whether the {@link RenderMaterial} should handle transparency. */
+    transparent?: RenderMaterialParams['transparent'];
+    /** Optional targets used by the {@link RenderMaterial}, set alongside the `transparent` parameter. */
+    targets?: ProjectedMeshParameters['targets'];
+    /** Specific {@link LitMeshMaterialParams} used to build the {@link LitMesh} material. */
+    material?: LitMeshMaterialParams;
 }
 /**
- * Define a {@link MeshDescriptorTexture} used to associate the {@link core/textures/Texture.Texture | Texture} names with the corresponding {@link Sampler} names.
- */
-export interface MeshDescriptorTexture {
-    /** Name of the {@link core/textures/Texture.Texture | Texture} to use. */
-    texture: TextureParams['name'];
-    /** Name of the {@link Sampler} to use. */
-    sampler: Sampler['name'];
-    /** {@link MeshDescriptorAttribute.name | Texture coordinate attribute name} to use to map this texture. */
-    texCoordAttributeName?: string;
-}
-/**
- * Define a {@link MeshDescriptor} object, which helps creating a {@link Mesh} and its shaders based on the various properties.
+ * Define a {@link MeshDescriptor} object, which helps creating a {@link LitMesh} and its shaders based on the various properties.
  */
 export interface MeshDescriptor {
-    /** {@link ProjectedMeshParameters} used to create the {@link Mesh}. */
-    parameters: ProjectedMeshParameters;
-    /** {@link Mesh} parent {@link Object3D}. */
+    /** {@link ProjectedMeshParameters} used to create the {@link LitMesh}. */
+    parameters: LitMeshParameters;
+    /** {@link LitMesh} parent {@link Object3D}. */
     parent: Object3D;
-    /** {@link MeshDescriptorAttribute} defining the {@link core/geometries/Geometry.Geometry | Geometry} attributes used. Useful to build custom shaders from scratch. */
-    attributes: MeshDescriptorAttribute[];
-    /** {@link MeshDescriptorTexture} defining the available textures and corresponding sampler names. Useful to build custom shaders from scratch. */
-    textures: MeshDescriptorTexture[];
+    /** Array of {@link ShaderTextureDescriptor} defining the available textures and corresponding sampler names. Useful to build custom shaders from scratch. */
+    texturesDescriptors: ShaderTextureDescriptor[];
     /** All the {@link core/geometries/Geometry.Geometry | Geometry} instances {@link Object3D} nodes used to calculate the eventual instances world and normal matrices. */
     nodes: Object3D[];
-}
-/**
- * Define a {@link MaterialTextureDescriptor} used to group a {@link Texture} and its associated {@link Sampler}.
- */
-export interface MaterialTextureDescriptor {
-    /** {@link Texture} to use. */
-    texture: Texture;
-    /** {@link Sampler} to use. */
-    sampler: Sampler;
-    /** {@link MeshDescriptorAttribute.name | Texture coordinate attribute name} to use to map this texture. */
-    texCoordAttributeName?: string;
+    /** {@link GLTFExtensionsUsed} that should be used when creating the shaders. */
+    extensionsUsed: GLTFExtensionsUsed;
+    /** Name of the {@link MeshDescriptor} variant. Default to `Default`. */
+    variantName?: string;
+    /** Optional alternate {@link Map} of {@link MeshDescriptor} variants using variant names. */
+    alternateDescriptors?: Map<string, MeshDescriptor>;
+    /** Optional alternate {@link Map} of {@link RenderMaterial} variants using variant names. */
+    alternateMaterials?: Map<string, RenderMaterial>;
 }
 /**
  * Define a {@link MaterialTexture} describing all {@link Texture} and {@link Sampler} used by a specified material.
@@ -58,8 +54,8 @@ export interface MaterialTextureDescriptor {
 export interface MaterialTexture {
     /** Material index in the {@link extras/loaders/GLTFLoader.GPUCurtainsGLTF.materials | materials array}. */
     material: number;
-    /** {@link MaterialTextureDescriptor} defining the {@link Texture} and {@link Sampler} used by the material. */
-    texturesDescriptors: MaterialTextureDescriptor[];
+    /** Array of {@link ShaderTextureDescriptor} defining the {@link Texture}, and eventual {@link Sampler} and UV attribute name used by the material. */
+    texturesDescriptors: ShaderTextureDescriptor[];
 }
 /**
  * Define a {@link PrimitiveInstanceDescriptor} used to group {@link core/geometries/Geometry.Geometry | Geometry} instances and transform nodes and their {@link MeshDescriptor}.
@@ -69,7 +65,7 @@ export interface PrimitiveInstanceDescriptor {
     instances: GLTF.INode[];
     /** Array of {@link Object3D} corresponding to the {@link instances}. */
     nodes: Object3D[];
-    /** Unique {@link MeshDescriptor} used to create the instances {@link Mesh}. */
+    /** Unique {@link MeshDescriptor} used to create the instanced {@link LitMesh}. */
     meshDescriptor: MeshDescriptor;
 }
 /**
@@ -80,6 +76,8 @@ export type PrimitiveInstances = Map<GLTF.IMeshPrimitive, PrimitiveInstanceDescr
  * Define a {@link ChildDescriptor}.
  */
 export interface ChildDescriptor {
+    /** Index of the {@link GLTF.INode | glTF Node} used by this child. */
+    index?: number;
     /** Optional name if available in the {@link GLTF} json. */
     name?: string;
     /** {@link Object3D} describing the transformations of this child. */
@@ -88,23 +86,52 @@ export interface ChildDescriptor {
     children: ChildDescriptor[];
 }
 /**
+ * Define a {@link SkinDefinition} used to handle skin animations.
+ */
+export interface SkinDefinition {
+    /** The parent {@link Object3D} used to calculate joint matrices. */
+    parentNode: Object3D;
+    /** An array of joint {@link Object3D}. */
+    joints: Object3D[];
+    /** A {@link Float32Array} containing all the skin inverse bind matrices. */
+    inverseBindMatrices: Float32Array;
+    /** A {@link Mat4} that will handle our joint matrix. */
+    jointMatrix: Mat4;
+    /** A {@link Mat4} that will handle our joint normal matrix. */
+    normalMatrix: Mat4;
+    /** A {@link Mat4} that will handle the parent {@link Object3D} inverse world matrix. */
+    parentInverseWorldMatrix: Mat4;
+    /** The storage {@link BufferBinding} used to send the matrices to the shaders. */
+    binding: BufferBinding;
+}
+/**
  * Define the {@link ScenesManager}.
  */
 export interface ScenesManager {
     /** {@link Object3D} used as a parent for all {@link scenes} nodes. */
     node: Object3D;
+    /** A {@link Map} of all the nodes {@link Object3D} created by the {@link ScenesManager}. */
+    nodes: Map<number, Object3D>;
     /** Final computed {@link Box3 | bounding box} of the scenes. */
     boundingBox: Box3;
     /** Array of {@link Sampler} used by this {@link ScenesManager}. */
     samplers: Sampler[];
     /** Array of {@link MaterialTexture} describing the material, {@link Texture} and {@link Sampler} relationship. */
     materialsTextures: MaterialTexture[];
+    /** Array of {@link MeshDescriptorMaterialParams} created from the {@link GLTF.IMaterial | glTF materials}. */
+    materialsParams: MeshDescriptorMaterialParams[];
     /** Array of scenes as {@link ChildDescriptor}. */
     scenes: ChildDescriptor[];
-    /** Array of created {@link Mesh} to render this {@link ScenesManager} scene. */
-    meshes: Mesh[];
+    /** Array of created {@link LitMesh} to render this {@link ScenesManager} scene. */
+    meshes: LitMesh[];
     /** Array of {@link MeshDescriptor} used to create the {@link meshes}. */
     meshesDescriptors: MeshDescriptor[];
-    /** Utility helper to get all the {@link Object3D} created by this {@link ScenesManager} */
-    getScenesNodes: () => Object3D[];
+    /** Array of {@link TargetsAnimationsManager} used by this {@link ScenesManager}. */
+    animations: TargetsAnimationsManager[];
+    /** Array of available created {@link Camera}. */
+    cameras: Camera[];
+    /** Array of {@link SkinDefinition} used by this {@link ScenesManager}. */
+    skins: SkinDefinition[];
+    /** Array of predefined {@link Light} used by this {@link ScenesManager}. */
+    lights: Light[];
 }

@@ -4,32 +4,18 @@ import { Mat4 } from '../../math/Mat4.mjs';
 import { Texture } from '../textures/Texture.mjs';
 import { RenderTarget } from '../renderPasses/RenderTarget.mjs';
 import { Sampler } from '../samplers/Sampler.mjs';
-import { RenderMaterial } from '../materials/RenderMaterial.mjs';
-import { getDefaultShadowDepthVs } from '../shaders/chunks/shading/shadows.mjs';
+import { getDefaultShadowDepthVs } from '../shaders/full/vertex/get-default-shadow-depth-vertex-shader-code.mjs';
+import { Mesh } from '../meshes/Mesh.mjs';
 
-var __accessCheck = (obj, member, msg) => {
-  if (!member.has(obj))
-    throw TypeError("Cannot " + msg);
+var __typeError = (msg) => {
+  throw TypeError(msg);
 };
-var __privateGet = (obj, member, getter) => {
-  __accessCheck(obj, member, "read from private field");
-  return getter ? getter.call(obj) : member.get(obj);
-};
-var __privateAdd = (obj, member, value) => {
-  if (member.has(obj))
-    throw TypeError("Cannot add the same private member more than once");
-  member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-};
-var __privateSet = (obj, member, value, setter) => {
-  __accessCheck(obj, member, "write to private field");
-  member.set(obj, value);
-  return value;
-};
-var __privateMethod = (obj, member, method) => {
-  __accessCheck(obj, member, "access private method");
-  return method;
-};
-var _intensity, _bias, _normalBias, _pcfSamples, _isActive, _autoRender, _materials, _depthMaterials, _depthPassTaskID, _setParameters, setParameters_fn;
+var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
+var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
+var __privateMethod = (obj, member, method) => (__accessCheck(obj, member, "access private method"), method);
+var _intensity, _bias, _normalBias, _pcfSamples, _isActive, _autoRender, _receivingMeshes, _Shadow_instances, setParameters_fn;
 const shadowStruct = {
   isActive: {
     type: "i32",
@@ -68,36 +54,21 @@ class Shadow {
     depthTextureFormat = "depth24plus",
     autoRender = true
   } = {}) {
-    /**
-     * Set the {@link Shadow} parameters.
-     * @param parameters - parameters to use for this {@link Shadow}.
-     * @private
-     */
-    __privateAdd(this, _setParameters);
+    __privateAdd(this, _Shadow_instances);
     /** @ignore */
-    __privateAdd(this, _intensity, void 0);
+    __privateAdd(this, _intensity);
     /** @ignore */
-    __privateAdd(this, _bias, void 0);
+    __privateAdd(this, _bias);
     /** @ignore */
-    __privateAdd(this, _normalBias, void 0);
+    __privateAdd(this, _normalBias);
     /** @ignore */
-    __privateAdd(this, _pcfSamples, void 0);
+    __privateAdd(this, _pcfSamples);
     /** @ignore */
-    __privateAdd(this, _isActive, void 0);
+    __privateAdd(this, _isActive);
     /** @ignore */
-    __privateAdd(this, _autoRender, void 0);
-    /**
-     * Original {@link meshes} {@link RenderMaterial | materials}.
-     * @private
-     */
-    __privateAdd(this, _materials, void 0);
-    /**
-     * Corresponding depth {@link meshes} {@link RenderMaterial | materials}.
-     * @private
-     */
-    __privateAdd(this, _depthMaterials, void 0);
-    /** @ignore */
-    __privateAdd(this, _depthPassTaskID, void 0);
+    __privateAdd(this, _autoRender);
+    /** Map of all the shadow receiving {@link ProjectedMesh | meshes}. */
+    __privateAdd(this, _receivingMeshes);
     this.setRenderer(renderer);
     this.light = light;
     this.index = this.light.index;
@@ -111,11 +82,10 @@ class Shadow {
       depthTextureFormat
     };
     this.sampleCount = 1;
-    this.meshes = /* @__PURE__ */ new Map();
-    __privateSet(this, _materials, /* @__PURE__ */ new Map());
-    __privateSet(this, _depthMaterials, /* @__PURE__ */ new Map());
-    __privateSet(this, _depthPassTaskID, null);
-    __privateMethod(this, _setParameters, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
+    this.castingMeshes = /* @__PURE__ */ new Map();
+    __privateSet(this, _receivingMeshes, /* @__PURE__ */ new Map());
+    this.depthMeshes = /* @__PURE__ */ new Map();
+    __privateMethod(this, _Shadow_instances, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
     this.isActive = false;
   }
   /**
@@ -123,12 +93,23 @@ class Shadow {
    * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
    */
   setRenderer(renderer) {
+    const oldRenderer = this.renderer;
+    if (oldRenderer && this.depthPassTarget) {
+      this.depthPassTarget.removeFromScene();
+    }
     renderer = isCameraRenderer(renderer, this.constructor.name);
     this.renderer = renderer;
     this.setRendererBinding();
-    __privateGet(this, _depthMaterials)?.forEach((depthMaterial) => {
-      depthMaterial.setRenderer(this.renderer);
+    if (this.depthPassTarget) {
+      this.depthPassTarget.renderer = this.renderer;
+      this.depthPassTarget.addToScene();
+    }
+    this.depthMeshes?.forEach((depthMesh) => {
+      depthMesh.setRenderer(this.renderer);
     });
+    if (oldRenderer && __privateGet(this, _autoRender)) {
+      this.setDepthPass();
+    }
   }
   /** @ignore */
   setRendererBinding() {
@@ -140,7 +121,7 @@ class Shadow {
    * @param parameters - parameters to use for this {@link Shadow}.
    */
   cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender } = {}) {
-    __privateMethod(this, _setParameters, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
+    __privateMethod(this, _Shadow_instances, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
     this.isActive = true;
   }
   /**
@@ -251,10 +232,11 @@ class Shadow {
       });
     }
     this.setDepthTexture();
+    this.depthTextureSize.onChange(() => this.onDepthTextureSizeChanged());
     if (!this.depthPassTarget) {
       this.createDepthPassTarget();
     }
-    if (__privateGet(this, _depthPassTaskID) === null && __privateGet(this, _autoRender)) {
+    if (__privateGet(this, _autoRender)) {
       this.setDepthPass();
       this.onPropertyChanged("isActive", 1);
     }
@@ -300,6 +282,39 @@ class Shadow {
       // do not destroy when removing a mesh
     });
   }
+  /** Destroy the {@link depthTexture}. */
+  destroyDepthTexture() {
+    this.depthTexture?.destroy();
+    this.depthTexture = null;
+    this.depthTextureSize.onChange(() => {
+    });
+  }
+  /**
+   * Clear the content of the depth texture. Called whenever the {@link castingMeshes} {@link Map} is empty after having removed a mesh, or if all {@link castingMeshes} `visible` properties are `false`.
+   */
+  clearDepthTexture() {
+    if (!this.depthTexture || !this.depthTexture.texture) return;
+    const commandEncoder = this.renderer.device.createCommandEncoder();
+    !this.renderer.production && commandEncoder.pushDebugGroup(`Clear ${this.depthTexture.texture.label} command encoder`);
+    const renderPassDescriptor = {
+      colorAttachments: [],
+      depthStencilAttachment: {
+        view: this.depthTexture.texture.createView({
+          label: "Clear " + this.depthTexture.texture.label + " view"
+        }),
+        depthLoadOp: "clear",
+        // Clear the depth attachment
+        depthClearValue: 1,
+        // Clear to the maximum depth (farthest possible depth)
+        depthStoreOp: "store"
+        // Store the cleared depth
+      }
+    };
+    const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
+    passEncoder.end();
+    !this.renderer.production && commandEncoder.popDebugGroup();
+    this.renderer.device.queue.submit([commandEncoder.finish()]);
+  }
   /**
    * Create the {@link depthPassTarget}.
    */
@@ -308,7 +323,8 @@ class Shadow {
       label: "Depth pass render target for " + this.constructor.name + " " + this.index,
       useColorAttachments: false,
       depthTexture: this.depthTexture,
-      sampleCount: this.sampleCount
+      sampleCount: this.sampleCount,
+      autoRender: __privateGet(this, _autoRender)
     });
   }
   /**
@@ -330,40 +346,32 @@ class Shadow {
     }
   }
   /**
-   * Start the depth pass.
+   * Set our {@link depthPassTarget} corresponding {@link CameraRenderer#scene | scene} render pass entry custom render pass.
    */
   setDepthPass() {
-    __privateSet(this, _depthPassTaskID, this.render());
+    const renderPassEntry = this.renderer.scene.getRenderTargetPassEntry(this.depthPassTarget);
+    renderPassEntry.useCustomRenderPass = (commandEncoder) => this.render(commandEncoder);
   }
   /**
-   * Remove the depth pass from its {@link utils/TasksQueueManager.TasksQueueManager | task queue manager}.
-   * @param depthPassTaskID - Task queue manager ID to use for removal.
+   * Render the depth pass. Called by the {@link CameraRenderer#scene | scene} when rendering the {@link depthPassTarget} render pass entry, or by the {@link renderOnce} method.<br />
+   * - Render all the depth meshes.
+   * @param commandEncoder - {@link GPUCommandEncoder} to use.
    */
-  removeDepthPass(depthPassTaskID) {
-    this.renderer.onBeforeRenderScene.remove(depthPassTaskID);
-  }
-  /**
-   * Render the depth pass. This happens before rendering the {@link CameraRenderer#scene | scene}.<br>
-   * - Force all the {@link meshes} to use their depth materials
-   * - Render all the {@link meshes}
-   * - Reset all the {@link meshes} materials to their original one.
-   * @param once - Whether to render it only once or not.
-   */
-  render(once = false) {
-    return this.renderer.onBeforeRenderScene.add(
-      (commandEncoder) => {
-        if (!this.meshes.size)
-          return;
-        this.useDepthMaterials();
-        this.renderDepthPass(commandEncoder);
-        this.useOriginalMaterials();
-        this.renderer.pipelineManager.resetCurrentPipeline();
-      },
-      {
-        once,
-        order: this.index
+  render(commandEncoder) {
+    if (!this.castingMeshes.size) return;
+    let shouldRender = false;
+    for (const [_uuid, mesh] of this.castingMeshes) {
+      if (mesh.visible) {
+        shouldRender = true;
+        break;
       }
-    );
+    }
+    if (!shouldRender) {
+      this.clearDepthTexture();
+      return;
+    }
+    this.renderDepthPass(commandEncoder);
+    this.renderer.pipelineManager.resetCurrentPipeline();
   }
   /**
    * Render the shadow map only once. Useful with static scenes if autoRender has been set to `false` to only take one snapshot of the shadow map.
@@ -371,52 +379,49 @@ class Shadow {
   async renderOnce() {
     if (!__privateGet(this, _autoRender)) {
       this.onPropertyChanged("isActive", 1);
-      this.useDepthMaterials();
-      this.meshes.forEach((mesh) => {
-        mesh.setGeometry();
-      });
       await Promise.all(
-        [...__privateGet(this, _depthMaterials).values()].map(async (depthMaterial) => {
-          await depthMaterial.compileMaterial();
+        [...this.depthMeshes.values()].map(async (depthMesh) => {
+          depthMesh.setGeometry();
+          await depthMesh.material.compileMaterial();
         })
       );
-      this.render(true);
+      this.renderer.onBeforeRenderScene.add(
+        (commandEncoder) => {
+          this.render(commandEncoder);
+        },
+        {
+          once: true
+        }
+      );
     }
   }
   /**
-   * Render all the {@link meshes} into the {@link depthPassTarget}.
+   * Render all the {@link castingMeshes} into the {@link depthPassTarget}.
    * @param commandEncoder - {@link GPUCommandEncoder} to use.
    */
   renderDepthPass(commandEncoder) {
-    const renderBundles = /* @__PURE__ */ new Map();
-    this.meshes.forEach((mesh) => {
-      if (mesh.options.renderBundle) {
-        renderBundles.set(mesh.options.renderBundle.uuid, mesh.options.renderBundle);
-      }
-    });
-    renderBundles.forEach((bundle) => {
-      bundle.updateBinding();
-    });
-    renderBundles.clear();
     this.renderer.pipelineManager.resetCurrentPipeline();
     const depthPass = commandEncoder.beginRenderPass(this.depthPassTarget.renderPass.descriptor);
     if (!this.renderer.production)
       depthPass.pushDebugGroup(`${this.constructor.name} (index: ${this.index}): depth pass`);
-    this.meshes.forEach((mesh) => {
-      mesh.render(depthPass);
-    });
-    if (!this.renderer.production)
-      depthPass.popDebugGroup();
+    for (const [uuid, depthMesh] of this.depthMeshes) {
+      if (!this.castingMeshes.get(uuid)?.visible) {
+        continue;
+      }
+      depthMesh.render(depthPass);
+    }
+    if (!this.renderer.production) depthPass.popDebugGroup();
     depthPass.end();
   }
   /**
    * Get the default depth pass vertex shader for this {@link Shadow}.
+   * parameters - {@link VertexShaderInputBaseParams} used to compute the output `worldPosition` and `normal` vectors.
    * @returns - Depth pass vertex shader.
    */
-  getDefaultShadowDepthVs(hasInstances = false) {
+  getDefaultShadowDepthVs({ bindings = [], geometry }) {
     return {
       /** Returned code. */
-      code: getDefaultShadowDepthVs(this.index, hasInstances)
+      code: getDefaultShadowDepthVs(this.index, { bindings, geometry })
     };
   }
   /**
@@ -427,25 +432,31 @@ class Shadow {
     return false;
   }
   /**
-   * Patch the given {@link ProjectedMesh | mesh} material parameters to create the depth material.
+   * Patch the given {@link ProjectedMesh | mesh} material parameters to create the depth mesh.
    * @param mesh - original {@link ProjectedMesh | mesh} to use.
-   * @param parameters - Optional additional parameters to use for the depth material.
+   * @param parameters - Optional additional parameters to use for the depth mesh.
    * @returns - Patched parameters.
    */
   patchShadowCastingMeshParams(mesh, parameters = {}) {
     parameters = { ...mesh.material.options.rendering, ...parameters };
-    parameters.targets = [];
-    parameters.sampleCount = this.sampleCount;
-    parameters.depthFormat = this.depthTextureFormat;
-    if (parameters.bindings) {
-      parameters.bindings = [mesh.material.getBufferBindingByName("matrices"), ...parameters.bindings];
-    } else {
-      parameters.bindings = [mesh.material.getBufferBindingByName("matrices")];
+    const bindings = [];
+    mesh.material.inputsBindings.forEach((binding) => {
+      if (binding.name.includes("skin") || binding.name.includes("morphTarget")) {
+        bindings.push(binding);
+      }
+    });
+    const instancesBinding = mesh.material.getBufferBindingByName("instances");
+    if (instancesBinding) {
+      bindings.push(instancesBinding);
     }
-    const hasInstances = mesh.material.inputsBindings.get("instances") && mesh.geometry.instancesCount > 1;
+    if (parameters.bindings) {
+      parameters.bindings = [...bindings, ...parameters.bindings];
+    } else {
+      parameters.bindings = [...bindings];
+    }
     if (!parameters.shaders) {
       parameters.shaders = {
-        vertex: this.getDefaultShadowDepthVs(hasInstances),
+        vertex: this.getDefaultShadowDepthVs({ bindings, geometry: mesh.geometry }),
         fragment: this.getDefaultShadowDepthFs()
       };
     }
@@ -453,75 +464,91 @@ class Shadow {
   }
   /**
    * Add a {@link ProjectedMesh | mesh} to the shadow map. Internally called by the {@link ProjectedMesh | mesh} if its `castShadows` parameters has been set to `true`, but can also be called externally to selectively cast shadows or to add specific parameters (such as custom depth pass shaders).
-   * - Save the original {@link ProjectedMesh | mesh} material.
    * - {@link patchShadowCastingMeshParams | Patch} the parameters.
-   * - Create a new depth {@link RenderMaterial} with the patched parameters.
-   * - Add the {@link ProjectedMesh | mesh} to the {@link meshes} Map.
+   * - Create a new depth {@link Mesh} with the patched parameters.
+   * - Add the {@link ProjectedMesh | mesh} to the {@link castingMeshes} Map.
    * @param mesh - {@link ProjectedMesh | mesh} to add to the shadow map.
-   * @param parameters - Optional {@link RenderMaterialParams | parameters} to use for the depth material.
+   * @param parameters - Optional {@link RenderMaterialParams | parameters} to use for the depth mesh.
    */
   addShadowCastingMesh(mesh, parameters = {}) {
-    if (this.meshes.get(mesh.uuid))
-      return;
+    if (this.castingMeshes.get(mesh.uuid)) return;
     mesh.options.castShadows = true;
-    __privateGet(this, _materials).set(mesh.uuid, mesh.material);
     parameters = this.patchShadowCastingMeshParams(mesh, parameters);
-    if (__privateGet(this, _depthMaterials).get(mesh.uuid)) {
-      __privateGet(this, _depthMaterials).get(mesh.uuid).destroy();
-      __privateGet(this, _depthMaterials).delete(mesh.uuid);
+    if (this.depthMeshes.get(mesh.uuid)) {
+      this.depthMeshes.get(mesh.uuid).remove();
+      this.depthMeshes.delete(mesh.uuid);
     }
-    __privateGet(this, _depthMaterials).set(
-      mesh.uuid,
-      new RenderMaterial(this.renderer, {
-        label: `${this.constructor.name} (index: ${this.index}) ${mesh.options.label} depth render material`,
-        ...parameters
-      })
-    );
-    this.meshes.set(mesh.uuid, mesh);
-  }
-  /**
-   * Force all the {@link meshes} to use the depth material.
-   */
-  useDepthMaterials() {
-    this.meshes.forEach((mesh) => {
-      mesh.useMaterial(__privateGet(this, _depthMaterials).get(mesh.uuid));
+    const depthMesh = new Mesh(this.renderer, {
+      label: `${this.constructor.name} (index: ${this.index}) ${mesh.options.label} depth mesh`,
+      ...parameters,
+      geometry: mesh.geometry,
+      // explicitly set empty output targets
+      // we just want to write to the depth texture
+      targets: [],
+      outputTarget: this.depthPassTarget,
+      //autoRender: false,
+      autoRender: __privateGet(this, _autoRender)
     });
+    depthMesh.parent = mesh;
+    this.depthMeshes.set(mesh.uuid, depthMesh);
+    this.castingMeshes.set(mesh.uuid, mesh);
   }
   /**
-   * Force all the {@link meshes} to use their original material.
+   * Add a shadow receiving {@link ProjectedMesh | mesh} to the #receivingMeshes {@link Map}.
+   * @param mesh - Shadow receiving {@link ProjectedMesh | mesh} to add.
    */
-  useOriginalMaterials() {
-    this.meshes.forEach((mesh) => {
-      mesh.useMaterial(__privateGet(this, _materials).get(mesh.uuid));
-    });
+  addShadowReceivingMesh(mesh) {
+    __privateGet(this, _receivingMeshes).set(mesh.uuid, mesh);
   }
   /**
-   * Remove a {@link ProjectedMesh | mesh} from the shadow map and destroy its depth material.
+   * Remove a shadow receiving {@link ProjectedMesh | mesh} from the #receivingMeshes {@link Map}.
+   * @param mesh - Shadow receiving {@link ProjectedMesh | mesh} to remove.
+   */
+  removeShadowReceivingMesh(mesh) {
+    __privateGet(this, _receivingMeshes).delete(mesh.uuid);
+    if (__privateGet(this, _receivingMeshes).size === 0 && !this.isActive) {
+      this.destroyDepthTexture();
+    }
+  }
+  /**
+   * Remove a {@link ProjectedMesh | mesh} from the shadow map and destroy its depth mesh.
    * @param mesh - {@link ProjectedMesh | mesh} to remove.
    */
   removeMesh(mesh) {
-    const depthMaterial = __privateGet(this, _depthMaterials).get(mesh.uuid);
-    if (depthMaterial) {
-      depthMaterial.destroy();
-      __privateGet(this, _depthMaterials).delete(mesh.uuid);
+    const depthMesh = this.depthMeshes.get(mesh.uuid);
+    if (depthMesh) {
+      depthMesh.remove();
+      this.depthMeshes.delete(mesh.uuid);
     }
-    this.meshes.delete(mesh.uuid);
+    this.castingMeshes.delete(mesh.uuid);
+    if (this.castingMeshes.size === 0) {
+      this.clearDepthTexture();
+    }
+  }
+  /**
+   * If one of the {@link castingMeshes} had its geometry change, update the corresponding depth mesh geometry as well.
+   * @param mesh - Original {@link ProjectedMesh} which geometry just changed.
+   * @param geometry - New {@link ProjectedMesh} {@link Geometry} to use.
+   */
+  updateMeshGeometry(mesh, geometry) {
+    const depthMesh = this.depthMeshes.get(mesh.uuid);
+    if (depthMesh) {
+      depthMesh.useGeometry(geometry);
+    }
   }
   /**
    * Destroy the {@link Shadow}.
    */
   destroy() {
     this.onPropertyChanged("isActive", 0);
-    if (__privateGet(this, _depthPassTaskID) !== null) {
-      this.removeDepthPass(__privateGet(this, _depthPassTaskID));
-      __privateSet(this, _depthPassTaskID, null);
-    }
-    this.meshes.forEach((mesh) => this.removeMesh(mesh));
-    __privateSet(this, _materials, /* @__PURE__ */ new Map());
-    __privateSet(this, _depthMaterials, /* @__PURE__ */ new Map());
-    this.meshes = /* @__PURE__ */ new Map();
+    __privateSet(this, _isActive, false);
+    this.castingMeshes.forEach((mesh) => this.removeMesh(mesh));
+    this.castingMeshes = /* @__PURE__ */ new Map();
+    this.depthMeshes = /* @__PURE__ */ new Map();
     this.depthPassTarget?.destroy();
-    this.depthTexture?.destroy();
+    if (__privateGet(this, _receivingMeshes).size === 0) {
+      this.destroyDepthTexture();
+    }
   }
 }
 _intensity = new WeakMap();
@@ -530,10 +557,13 @@ _normalBias = new WeakMap();
 _pcfSamples = new WeakMap();
 _isActive = new WeakMap();
 _autoRender = new WeakMap();
-_materials = new WeakMap();
-_depthMaterials = new WeakMap();
-_depthPassTaskID = new WeakMap();
-_setParameters = new WeakSet();
+_receivingMeshes = new WeakMap();
+_Shadow_instances = new WeakSet();
+/**
+ * Set the {@link Shadow} parameters.
+ * @param parameters - parameters to use for this {@link Shadow}.
+ * @private
+ */
 setParameters_fn = function({
   intensity = 1,
   bias = 0,
@@ -548,7 +578,6 @@ setParameters_fn = function({
   this.normalBias = normalBias;
   this.pcfSamples = pcfSamples;
   this.depthTextureSize = depthTextureSize;
-  this.depthTextureSize.onChange(() => this.onDepthTextureSizeChanged());
   this.depthTextureFormat = depthTextureFormat;
   __privateSet(this, _autoRender, autoRender);
 };

@@ -1,5 +1,5 @@
 import { PipelineEntry } from './PipelineEntry'
-import { ProjectedShaderChunks, ShaderChunks } from '../shaders/ShaderChunks'
+import { ProjectedShaderChunks, shaderChunks } from '../shaders/shader-chunks'
 import { isRenderer } from '../renderers/utils'
 import { throwError } from '../../utils/utils'
 import {
@@ -94,8 +94,8 @@ import { RenderMaterialAttributes, ShaderOptions } from '../../types/Materials'
  * To help you compute scaled UV based on a texture matrix, this function is always added to both vertex and fragment shaders:
  *
  * ```wgsl
- * fn getUVCover(uv: vec2f, textureMatrix: mat4x4f) -> vec2f {
- *   return (textureMatrix * vec4f(uv, 0.0, 1.0)).xy;
+ * fn getUVCover(uv: vec2f, textureMatrix: mat3x3f) -> vec2f {
+ *   return (textureMatrix * vec4f(uv, 1.0)).xy;
  * }
  * ```
  *
@@ -220,17 +220,17 @@ export class RenderPipelineEntry extends PipelineEntry {
     this.shaders.full.code = ''
 
     // first add chunks
-    for (const chunk in ShaderChunks.vertex) {
-      this.shaders.vertex.head = `${ShaderChunks.vertex[chunk]}\n${this.shaders.vertex.head}`
-      this.shaders.full.head = `${ShaderChunks.vertex[chunk]}\n${this.shaders.full.head}`
+    for (const chunk in shaderChunks.vertex) {
+      this.shaders.vertex.head = `${shaderChunks.vertex[chunk]}\n${this.shaders.vertex.head}`
+      this.shaders.full.head = `${shaderChunks.vertex[chunk]}\n${this.shaders.full.head}`
     }
 
     if (this.options.shaders.fragment) {
-      for (const chunk in ShaderChunks.fragment) {
-        this.shaders.fragment.head = `${ShaderChunks.fragment[chunk]}\n${this.shaders.fragment.head}`
+      for (const chunk in shaderChunks.fragment) {
+        this.shaders.fragment.head = `${shaderChunks.fragment[chunk]}\n${this.shaders.fragment.head}`
 
-        if (this.shaders.full.head.indexOf(ShaderChunks.fragment[chunk]) === -1) {
-          this.shaders.full.head = `${ShaderChunks.fragment[chunk]}\n${this.shaders.full.head}`
+        if (this.shaders.full.head.indexOf(shaderChunks.fragment[chunk]) === -1) {
+          this.shaders.full.head = `${shaderChunks.fragment[chunk]}\n${this.shaders.full.head}`
         }
       }
     }

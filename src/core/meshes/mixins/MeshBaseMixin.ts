@@ -1,10 +1,9 @@
 import { generateUUID, throwWarning } from '../../../utils/utils'
 import { isRenderer, Renderer } from '../../renderers/utils'
 import { RenderMaterial } from '../../materials/RenderMaterial'
-import { DOMTexture } from '../../textures/DOMTexture'
 import { Geometry } from '../../geometries/Geometry'
 import { Texture, TextureParams } from '../../textures/Texture'
-import { ExternalTextureParams, DOMTextureParams, DOMTextureParent } from '../../../types/Textures'
+import { SceneObjectTextureOptions } from '../../../types/Textures'
 import { RenderTarget } from '../../renderPasses/RenderTarget'
 import { GPUCurtains } from '../../../curtains/GPUCurtains'
 import { ProjectedMesh, SceneStackedMesh } from '../../renderers/GPURenderer'
@@ -12,10 +11,12 @@ import { Material } from '../../materials/Material'
 import { DOMElementBoundingRect } from '../../DOM/DOMElement'
 import { AllowedGeometries, RenderMaterialParams, ShaderOptions } from '../../../types/Materials'
 import { ProjectedMeshBaseClass } from './ProjectedMeshBaseMixin'
-import default_vsWgsl from '../../shaders/chunks/default/default_vs.wgsl'
-import default_fsWgsl from '../../shaders/chunks/default/default_fs.wgsl'
+import { getDefaultVertexShaderCode } from '../../shaders/full/vertex/get-default-vertex-shader-code'
+import { getDefaultFragmentCode } from '../../shaders/full/fragment/get-default-fragment-code'
 import { RenderPass } from '../../renderPasses/RenderPass'
 import { RenderBundle } from '../../renderPasses/RenderBundle'
+import { RenderPassEntry } from '../../scenes/Scene'
+import { MediaTexture, MediaTextureParams } from '../../textures/MediaTexture'
 
 let meshIndex = 0
 
@@ -31,8 +32,14 @@ export interface MeshBaseRenderParams extends Omit<RenderMaterialParams, 'target
   renderOrder?: number
   /** Optional {@link RenderTarget} to render this Mesh to instead of the canvas context. */
   outputTarget?: RenderTarget
-  /** Parameters used by this Mesh to create a {@link DOMTexture}. */
-  texturesOptions?: ExternalTextureParams
+
+  /** Additional output {@link RenderTarget} onto which render this Mesh, besides the main {@link outputTarget} or screen. Useful for some effects that might need to render the same Mesh twice or more. Beware tho that the Mesh pipeline has to exactly fit the provided {@link RenderTarget} render passes descriptors as no checks will be performed here. */
+  additionalOutputTargets?: RenderTarget[]
+  /** Whether to render this Mesh into a custom {@link core/scenes/Scene.Scene | Scene} custom screen pass entry instead of the default one. */
+  useCustomScenePassEntry?: RenderPassEntry
+
+  /** Parameters used by this Mesh to create a {@link MediaTexture}. */
+  texturesOptions?: SceneObjectTextureOptions
   /** Optional {@link GPUDevice.createRenderPipeline().targets | targets} properties. */
   targets?: Partial<GPUColorTargetState>[]
   /** Optional {@link RenderBundle} into which this Mesh should be added. */
@@ -53,7 +60,6 @@ export interface MeshBaseParams extends MeshBaseRenderParams {
 export interface MeshBaseOptions extends Omit<MeshBaseRenderParams, 'renderOrder' | 'visible'> {
   /** The label of this Mesh, sent to various GPU objects for debugging purpose. */
   label?: MeshBaseParams['label']
-  //targets?: RenderMaterialParams['targets']
 }
 
 /** @const - Default Mesh parameters to merge with user defined parameters. */
@@ -81,7 +87,7 @@ const defaultMeshBaseParams = {
 /**
  * This class describes the properties and methods to set up a basic Mesh, implemented in the {@link MeshBaseMixin}:
  * - Set and render the {@link Geometry} and {@link RenderMaterial}
- * - Add helpers to create {@link DOMTexture} and {@link Texture}
+ * - Add helpers to create {@link MediaTexture} and {@link Texture}
  * - Handle resizing, device lost/restoration and destroying the resources
  */
 export declare class MeshBaseClass {
@@ -104,6 +110,9 @@ export declare class MeshBaseClass {
 
   /** {@link RenderTarget} to render this Mesh to instead of the canvas context, if any. */
   outputTarget: null | RenderTarget
+
+  /** Additional output {@link RenderTarget} onto which render this Mesh, besides the main {@link outputTarget} or screen. Useful for some effects that might need to render the same Mesh twice or more. Beware tho that the Mesh pipeline has to exactly fit the provided {@link RenderTarget} render passes descriptors as no checks will be performed here. */
+  additionalOutputTargets?: RenderTarget[]
 
   /** {@link RenderBundle} used to render this Mesh, if any. */
   renderBundle: null | RenderBundle
@@ -192,12 +201,12 @@ export declare class MeshBaseClass {
   /**
    * Add a Mesh to the renderer and the {@link core/scenes/Scene.Scene | Scene}
    */
-  addToScene(addToRenderer: boolean): void
+  addToScene(addToRenderer?: boolean): void
 
   /**
    * Remove a Mesh from the renderer and the {@link core/scenes/Scene.Scene | Scene}
    */
-  removeFromScene(removeFromRenderer: boolean): void
+  removeFromScene(removeFromRenderer?: boolean): void
 
   /**
    * Set a new {@link Renderer} for this Mesh
@@ -290,35 +299,17 @@ export declare class MeshBaseClass {
   set visible(value: boolean)
 
   /**
-   * Get our {@link RenderMaterial#domTextures | RenderMaterial domTextures array}
-   * @readonly
-   */
-  get domTextures(): DOMTexture[]
-
-  /**
    * Get our {@link RenderMaterial#textures | RenderMaterial textures array}
    * @readonly
    */
   get textures(): Texture[]
 
   /**
-   * Create a new {@link DOMTexture}
-   * @param options - {@link DOMTextureParams | DOMTexture parameters}
-   * @returns - newly created DOMTexture
+   * Create a new {@link MediaTexture}.
+   * @param options - {@link MediaTextureParams | MediaTexture parameters}.
+   * @returns - newly created {@link MediaTexture}.
    */
-  createDOMTexture(options: DOMTextureParams): DOMTexture
-
-  /**
-   * Add a {@link DOMTexture}
-   * @param domTexture - {@link DOMTexture} to add
-   */
-  addDOMTexture(domTexture: DOMTexture)
-
-  /**
-   * Callback run when a new {@link DOMTexture} has been created
-   * @param domTexture - newly created DOMTexture
-   */
-  onDOMTextureAdded(domTexture: DOMTexture): void
+  createMediaTexture(options: MediaTextureParams): MediaTexture
 
   /**
    * Create a new {@link Texture}
@@ -360,10 +351,15 @@ export declare class MeshBaseClass {
   get storages(): Material['storages']
 
   /**
-   * Resize the Mesh's textures
-   * @param boundingRect
+   * Resize the Mesh.
+   * @param boundingRect - optional new {@link DOMElementBoundingRect} to use.
    */
   resize(boundingRect?: DOMElementBoundingRect): void
+
+  /**
+   * Resize the {@link textures}.
+   */
+  resizeTextures(): void
 
   /**
    * Execute {@link onBeforeRender} callback if needed. Called by the {@link core/scenes/Scene.Scene | Scene} before updating the matrix stack.
@@ -420,7 +416,7 @@ export declare class MeshBaseClass {
 export type MixinConstructor<T = {}> = new (...args: any[]) => T
 
 /**
- * Used to mix the basic Mesh properties and methods defined in {@link MeshBaseClass} (basically, set a {@link Geometry} and a {@link RenderMaterial} and render them, add helpers to create {@link DOMTexture} and {@link Texture}) with a given Base of type {@link core/objects3D/Object3D.Object3D | Object3D}, {@link core/objects3D/ProjectedObject3D.ProjectedObject3D | ProjectedObject3D}, {@link curtains/objects3D/DOMObject3D.DOMObject3D | DOMObject3D} or an empty class.
+ * Used to mix the basic Mesh properties and methods defined in {@link MeshBaseClass} (basically, set a {@link Geometry} and a {@link RenderMaterial} and render them, add helpers to create {@link MediaTexture} and {@link Texture}) with a given Base of type {@link core/objects3D/Object3D.Object3D | Object3D}, {@link core/objects3D/ProjectedObject3D.ProjectedObject3D | ProjectedObject3D}, {@link curtains/objects3D/DOMObject3D.DOMObject3D | DOMObject3D} or an empty class.
  * @param Base - the class to mix onto
  * @returns - the mixed classes, creating a basic Mesh.
  */
@@ -448,6 +444,9 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
 
     /** {@link RenderTarget} to render this Mesh to, if any */
     outputTarget: null | RenderTarget
+
+    /** Additional output {@link RenderTarget} onto which render this Mesh, besides the main {@link outputTarget} or screen. Useful for some effects that might need to render the same Mesh twice or more. Beware tho that the Mesh pipeline has to exactly fit the provided {@link RenderTarget} render passes descriptors as no checks will be performed here. */
+    additionalOutputTargets: RenderTarget[]
 
     /** {@link RenderBundle} used to render this Mesh, if any. */
     renderBundle: null | RenderBundle
@@ -527,6 +526,8 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
         visible,
         renderOrder,
         outputTarget,
+        additionalOutputTargets,
+        useCustomScenePassEntry,
         renderBundle,
         texturesOptions,
         autoRender,
@@ -535,6 +536,8 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
 
       this.outputTarget = outputTarget ?? null
       this.renderBundle = renderBundle ?? null
+
+      this.additionalOutputTargets = additionalOutputTargets || []
 
       // set default sample count
       meshParameters.sampleCount = !!meshParameters.sampleCount
@@ -553,6 +556,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
         ...(renderBundle !== undefined && { renderBundle }),
         texturesOptions,
         ...(autoRender !== undefined && { autoRender }),
+        useCustomScenePassEntry,
         ...meshParameters,
       }
 
@@ -616,6 +620,12 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
 
       if (this.#autoRender) {
         this.renderer.scene.addMesh(this as unknown as SceneStackedMesh)
+
+        if (this.additionalOutputTargets.length) {
+          this.additionalOutputTargets.forEach((renderTarget) => {
+            this.renderer.scene.addMeshToRenderTargetStack(this as unknown as SceneStackedMesh, renderTarget)
+          })
+        }
       }
     }
 
@@ -741,25 +751,25 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       if (!shaders) {
         this.options.shaders = {
           vertex: {
-            code: default_vsWgsl,
+            code: getDefaultVertexShaderCode,
             entryPoint: 'main',
           },
           fragment: {
-            code: default_fsWgsl,
+            code: getDefaultFragmentCode,
             entryPoint: 'main',
           },
         }
       } else {
         if (!shaders.vertex || !shaders.vertex.code) {
           shaders.vertex = {
-            code: default_vsWgsl,
+            code: getDefaultVertexShaderCode,
             entryPoint: 'main',
           }
         }
 
         if (shaders.fragment === undefined || (shaders.fragment && !(shaders.fragment as ShaderOptions).code)) {
           shaders.fragment = {
-            code: default_fsWgsl,
+            code: getDefaultFragmentCode,
             entryPoint: 'main',
           }
         }
@@ -789,6 +799,10 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
         }
 
         this.geometry.consumers.delete(this.uuid)
+
+        if (this.options.renderBundle) {
+          this.options.renderBundle.ready = false
+        }
       }
 
       this.geometry = geometry
@@ -876,9 +890,12 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      */
     cleanupRenderMaterialParameters(parameters: MeshBaseRenderParams): MeshBaseRenderParams {
       // patch and set options, return mesh parameters
-      delete parameters.texturesOptions
-      delete parameters.outputTarget
+      delete parameters.additionalOutputTargets
       delete parameters.autoRender
+      delete parameters.outputTarget
+      delete parameters.renderBundle
+      delete parameters.texturesOptions
+      delete parameters.useCustomScenePassEntry
 
       return parameters
     }
@@ -892,8 +909,14 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
 
       // if we already have geometry attributes linked to a material
       // we'll need to check if everything matches
-      if (this.material && this.geometry) {
-        currentCacheKey = this.material.cacheKey
+      if (this.material) {
+        if (this.geometry) {
+          currentCacheKey = this.material.cacheKey
+        }
+
+        if (this.options.renderBundle) {
+          this.options.renderBundle.ready = false
+        }
       }
 
       this.material = material
@@ -905,14 +928,13 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       // update transparent property
       this.transparent = this.material.options.rendering.transparent
 
-      // add eventual textures passed as parameters
-      this.material.options.domTextures
-        ?.filter((texture) => texture instanceof DOMTexture)
-        .forEach((texture) => this.onDOMTextureAdded(texture))
-
-      // reset pipeline entry if cache keys differ
+      // compile material and/or reset pipeline entry if cache keys differ
       if (currentCacheKey && currentCacheKey !== this.material.cacheKey) {
-        this.material.setPipelineEntry()
+        if (this.material.ready) {
+          this.material.setPipelineEntry()
+        } else {
+          this.material.compileMaterial()
+        }
       }
     }
 
@@ -980,15 +1002,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     /* TEXTURES */
 
     /**
-     * Get our {@link RenderMaterial#domTextures | RenderMaterial domTextures array}
-     * @readonly
-     */
-    get domTextures(): DOMTexture[] {
-      return this.material?.domTextures || []
-    }
-
-    /**
-     * Get our {@link RenderMaterial#textures | RenderMaterial textures array}
+     * Get our {@link RenderMaterial#textures | RenderMaterial textures array}.
      * @readonly
      */
     get textures(): Texture[] {
@@ -996,53 +1010,31 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     }
 
     /**
-     * Create a new {@link DOMTexture}
-     * @param options - {@link DOMTextureParams | DOMTexture parameters}
-     * @returns - newly created {@link DOMTexture}
+     * Create a new {@link MediaTexture}.
+     * @param options - {@link MediaTextureParams | MediaTexture parameters}.
+     * @returns - newly created {@link MediaTexture}.
      */
-    createDOMTexture(options: DOMTextureParams): DOMTexture {
+    createMediaTexture(options: MediaTextureParams): MediaTexture {
       if (!options.name) {
-        options.name = 'texture' + (this.textures.length + this.domTextures.length)
+        options.name = 'texture' + this.textures.length
       }
 
       if (!options.label) {
         options.label = this.options.label + ' ' + options.name
       }
 
-      const texturesOptions: DOMTextureParams = { ...options, ...this.options.texturesOptions }
+      const texturesOptions: MediaTextureParams = { ...options, ...this.options.texturesOptions }
 
       if (this.renderBundle) {
         // do not allow external video textures if we have a render bundle
         texturesOptions.useExternalTextures = false
       }
 
-      const domTexture = new DOMTexture(this.renderer, texturesOptions)
+      const mediaTexture = new MediaTexture(this.renderer, texturesOptions)
 
-      this.addDOMTexture(domTexture)
+      this.addTexture(mediaTexture)
 
-      return domTexture
-    }
-
-    /**
-     * Add a {@link DOMTexture}
-     * @param domTexture - {@link DOMTexture} to add
-     */
-    addDOMTexture(domTexture: DOMTexture) {
-      if (this.renderBundle) {
-        // if we create a new texture, invalidate the render bundle
-        this.renderBundle.ready = false
-      }
-
-      this.material.addTexture(domTexture)
-      this.onDOMTextureAdded(domTexture)
-    }
-
-    /**
-     * Callback run when a new {@link DOMTexture} has been added
-     * @param domTexture - newly created DOMTexture
-     */
-    onDOMTextureAdded(domTexture: DOMTexture) {
-      domTexture.parentMesh = this as unknown as DOMTextureParent
+      return mediaTexture
     }
 
     /**
@@ -1052,7 +1044,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      */
     createTexture(options: TextureParams): Texture {
       if (!options.name) {
-        options.name = 'texture' + (this.textures.length + this.domTextures.length)
+        options.name = 'texture' + this.textures.length
       }
 
       const texture = new Texture(this.renderer, options)
@@ -1063,10 +1055,10 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     }
 
     /**
-     * Add a {@link Texture}
-     * @param texture - {@link Texture} to add
+     * Add a {@link Texture} or {@link MediaTexture}.
+     * @param texture - {@link Texture} or {@link MediaTexture} to add.
      */
-    addTexture(texture: Texture) {
+    addTexture(texture: Texture | MediaTexture) {
       if (this.renderBundle) {
         // if we create a new texture, invalidate the render bundle
         this.renderBundle.ready = false
@@ -1096,8 +1088,8 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     /* RESIZE */
 
     /**
-     * Resize the Mesh's textures
-     * @param boundingRect
+     * Resize the Mesh.
+     * @param boundingRect - optional new {@link DOMElementBoundingRect} to use.
      */
     resize(boundingRect?: DOMElementBoundingRect | null) {
       // @ts-ignore
@@ -1106,19 +1098,21 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
         super.resize(boundingRect)
       }
 
+      this.resizeTextures()
+
+      this._onAfterResizeCallback && this._onAfterResizeCallback()
+    }
+
+    /**
+     * Resize the {@link textures}.
+     */
+    resizeTextures() {
       this.textures?.forEach((texture) => {
         // copy from original textures again if needed
         if (texture.options.fromTexture) {
           texture.copy(texture.options.fromTexture)
         }
       })
-
-      // resize textures
-      this.domTextures?.forEach((texture) => {
-        texture.resize()
-      })
-
-      this._onAfterResizeCallback && this._onAfterResizeCallback()
     }
 
     /* EVENTS */

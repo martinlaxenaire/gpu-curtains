@@ -48,7 +48,7 @@ class Quat {
    * @returns - this {@link Quat} after copy
    */
   copy(quaternion = new Quat()) {
-    this.elements = quaternion.elements;
+    this.elements.set(quaternion.elements);
     this.axisOrder = quaternion.axisOrder;
     return this;
   }
@@ -161,6 +161,86 @@ class Quat {
       this.elements[1] = (m23 + m32) / s;
       this.elements[2] = 0.25 * s;
     }
+    return this;
+  }
+  /**
+   * Get the square length of this {@link Quat}.
+   * @returns - square length of this {@link Quat}.
+   */
+  lengthSq() {
+    return this.elements[0] * this.elements[0] + this.elements[1] * this.elements[1] + this.elements[2] * this.elements[2] + this.elements[3] * this.elements[3];
+  }
+  /**
+   * Get the length of this {@link Quat}.
+   * @returns - length of this {@link Quat}.
+   */
+  length() {
+    return Math.sqrt(this.lengthSq());
+  }
+  /**
+   * Normalize this {@link Quat}.
+   * @returns - normalized {@link Quat}.
+   */
+  normalize() {
+    let l = this.length();
+    if (l === 0) {
+      this.elements[0] = 0;
+      this.elements[1] = 0;
+      this.elements[2] = 0;
+      this.elements[3] = 1;
+    } else {
+      l = 1 / l;
+      this.elements[0] = this.elements[0] * l;
+      this.elements[1] = this.elements[1] * l;
+      this.elements[2] = this.elements[2] * l;
+      this.elements[3] = this.elements[3] * l;
+    }
+    return this;
+  }
+  /**
+   * Calculate the spherical linear interpolation of this {@link Quat} by given {@link Quat} and alpha, where alpha is the percent distance.
+   * @param quat - {@link Quat} to interpolate towards.
+   * @param alpha - spherical interpolation factor in the [0, 1] interval.
+   * @returns - this {@link Quat} after spherical linear interpolation.
+   */
+  slerp(quat = new Quat(), alpha = 0) {
+    if (alpha === 0) return this;
+    if (alpha === 1) return this.copy(quat);
+    const x = this.elements[0], y = this.elements[1], z = this.elements[2], w = this.elements[3];
+    let cosHalfTheta = w * quat.elements[3] + x * quat.elements[0] + y * quat.elements[1] + z * quat.elements[2];
+    if (cosHalfTheta < 0) {
+      this.elements[3] = -quat.elements[3];
+      this.elements[0] = -quat.elements[0];
+      this.elements[1] = -quat.elements[1];
+      this.elements[2] = -quat.elements[2];
+      cosHalfTheta = -cosHalfTheta;
+    } else {
+      this.copy(quat);
+    }
+    if (cosHalfTheta >= 1) {
+      this.elements[3] = w;
+      this.elements[0] = x;
+      this.elements[1] = y;
+      this.elements[2] = z;
+      return this;
+    }
+    const sqrSinHalfTheta = 1 - cosHalfTheta * cosHalfTheta;
+    if (sqrSinHalfTheta <= Number.EPSILON) {
+      const s = 1 - alpha;
+      this.elements[3] = s * w + alpha * this.elements[3];
+      this.elements[0] = s * x + alpha * this.elements[0];
+      this.elements[1] = s * y + alpha * this.elements[1];
+      this.elements[2] = s * z + alpha * this.elements[2];
+      this.normalize();
+      return this;
+    }
+    const sinHalfTheta = Math.sqrt(sqrSinHalfTheta);
+    const halfTheta = Math.atan2(sinHalfTheta, cosHalfTheta);
+    const ratioA = Math.sin((1 - alpha) * halfTheta) / sinHalfTheta, ratioB = Math.sin(alpha * halfTheta) / sinHalfTheta;
+    this.elements[3] = w * ratioA + this.elements[3] * ratioB;
+    this.elements[0] = x * ratioA + this.elements[0] * ratioB;
+    this.elements[1] = y * ratioA + this.elements[1] * ratioB;
+    this.elements[2] = z * ratioA + this.elements[2] * ratioB;
     return this;
   }
 }

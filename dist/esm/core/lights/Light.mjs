@@ -2,25 +2,15 @@ import { Vec3 } from '../../math/Vec3.mjs';
 import { isCameraRenderer } from '../renderers/utils.mjs';
 import { Object3D } from '../objects3D/Object3D.mjs';
 import { generateUUID } from '../../utils/utils.mjs';
+import { sRGBToLinear } from '../../math/color-utils.mjs';
 
-var __accessCheck = (obj, member, msg) => {
-  if (!member.has(obj))
-    throw TypeError("Cannot " + msg);
+var __typeError = (msg) => {
+  throw TypeError(msg);
 };
-var __privateGet = (obj, member, getter) => {
-  __accessCheck(obj, member, "read from private field");
-  return getter ? getter.call(obj) : member.get(obj);
-};
-var __privateAdd = (obj, member, value) => {
-  if (member.has(obj))
-    throw TypeError("Cannot add the same private member more than once");
-  member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-};
-var __privateSet = (obj, member, value, setter) => {
-  __accessCheck(obj, member, "write to private field");
-  member.set(obj, value);
-  return value;
-};
+var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
+var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
 var _intensity, _intensityColor;
 class Light extends Object3D {
   /**
@@ -31,12 +21,12 @@ class Light extends Object3D {
   constructor(renderer, { color = new Vec3(1), intensity = 1, type = "lights" } = {}) {
     super();
     /** @ignore */
-    __privateAdd(this, _intensity, void 0);
+    __privateAdd(this, _intensity);
     /**
      * A {@link Vec3} holding the {@link Light} {@link color} multiplied by its {@link intensity}.
      * @private
      */
-    __privateAdd(this, _intensityColor, void 0);
+    __privateAdd(this, _intensityColor);
     this.type = type;
     this.setRenderer(renderer);
     this.uuid = generateUUID();
@@ -46,9 +36,7 @@ class Light extends Object3D {
     };
     this.color = color;
     __privateSet(this, _intensityColor, this.color.clone());
-    this.color.onChange(
-      () => this.onPropertyChanged("color", __privateGet(this, _intensityColor).copy(this.color).multiplyScalar(this.intensity))
-    );
+    this.color.onChange(() => this.onPropertyChanged("color", this.actualColor));
     this.intensity = intensity;
   }
   /**
@@ -85,7 +73,7 @@ class Light extends Object3D {
    */
   reset() {
     this.setRendererBinding();
-    this.onPropertyChanged("color", __privateGet(this, _intensityColor).copy(this.color).multiplyScalar(this.intensity));
+    this.onPropertyChanged("color", this.actualColor);
   }
   /**
    * Get this {@link Light} intensity.
@@ -100,7 +88,14 @@ class Light extends Object3D {
    */
   set intensity(value) {
     __privateSet(this, _intensity, value);
-    this.onPropertyChanged("color", __privateGet(this, _intensityColor).copy(this.color).multiplyScalar(this.intensity));
+    this.onPropertyChanged("color", this.actualColor);
+  }
+  /**
+   * Get the actual {@link Vec3} color used in the shader: convert {@link color} to linear space, then multiply by {@link intensity}.
+   * @returns - Actual {@link Vec3} color used in the shader.
+   */
+  get actualColor() {
+    return sRGBToLinear(__privateGet(this, _intensityColor).copy(this.color)).multiplyScalar(this.intensity);
   }
   /**
    * Update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} input value and tell the {@link CameraRenderer#cameraLightsBindGroup | renderer camera, lights and shadows} bind group to update.

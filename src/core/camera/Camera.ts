@@ -263,7 +263,7 @@ export class Camera extends Object3D {
    * @param near - new near plane value
    */
   set near(near: number) {
-    near = Math.max(near ?? this.near, 0.01)
+    near = Math.max(near ?? this.near, 1e-4)
 
     if (near !== this.near) {
       this.#near = near

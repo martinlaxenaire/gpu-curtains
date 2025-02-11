@@ -6,11 +6,14 @@ import { Vec3 } from '../../math/Vec3'
 import { AllowedBindGroups, Input } from '../../types/BindGroups'
 import { RectBBox } from '../DOM/DOMElement'
 import type { Light, LightsType, ShadowCastingLights } from '../lights/Light'
-import { TypedArrayConstructor, WGSLVariableType } from '../bindings/utils'
+import { WGSLVariableType } from '../bindings/utils'
 import { throwWarning } from '../../utils/utils'
 import { directionalShadowStruct } from '../shadows/DirectionalShadow'
 import { pointShadowStruct } from '../shadows/PointShadow'
 import { ShadowsType } from '../shadows/Shadow'
+import { Texture } from '../textures/Texture'
+import { Sampler } from '../samplers/Sampler'
+import { RenderPassEntry } from '../scenes/Scene'
 
 /** Defines the parameters used to build the {@link BufferBinding} of each type of lights. */
 export interface LightParams {
@@ -98,11 +101,24 @@ export class GPUCameraRenderer extends GPURenderer {
   /** The bindings used by the {@link cameraLightsBindGroup | camera, lights and shadows bind group}. */
   bindings: GPUCameraRendererBindings
 
+  /** An array of {@link BindGroup} containing a single {@link BufferBinding} with the cube face index onto which we'll want to draw for {@link core/shadows/PointShadow.PointShadow | PointShadow} depth cube map. Will be swapped for each face render passes by the {@link core/shadows/PointShadow.PointShadow | PointShadow}. */
+  pointShadowsCubeFaceBindGroups: BindGroup[]
+
   /** Options used to create this {@link GPUCameraRenderer}. */
   options: GPUCameraRendererOptions
 
   /** @ignore */
   #shouldUpdateCameraLightsBindGroup: boolean
+
+  /** If our scene contains transmissive objects, we need to handle the rendering of transmissive meshes. To do so, we'll need a new screen pass {@link RenderPassEntry} and a {@link Texture} onto which we'll write the content of the non transmissive objects main buffer rendered objects. */
+  transmissionTarget: {
+    /** The new screen pass {@link RenderPassEntry} where we'll draw our transmissive objects. */
+    passEntry?: RenderPassEntry
+    /** The {@link Texture} holding the content of all the non transmissive objects we've already drawn onto the main screen buffer. */
+    texture?: Texture
+    /** The {@link Sampler} used to sample the background output texture. */
+    sampler: Sampler
+  }
 
   /**
    * GPUCameraRenderer constructor
@@ -178,6 +194,25 @@ export class GPUCameraRenderer extends GPURenderer {
     super.restoreContext()
     this.cameraLightsBindGroup?.restoreContext()
     this.updateCameraBindings()
+  }
+
+  /**
+   * Set our {@link renderPass | main render pass} and our {@link transmissionTarget} sampler.
+   */
+  setMainRenderPasses() {
+    super.setMainRenderPasses()
+
+    this.transmissionTarget = {
+      sampler: new Sampler(this, {
+        label: 'Transmission sampler',
+        name: 'transmissionSampler',
+        magFilter: 'linear',
+        minFilter: 'linear',
+        mipmapFilter: 'linear',
+        addressModeU: 'clamp-to-edge',
+        addressModeV: 'clamp-to-edge',
+      }),
+    }
   }
 
   /* CAMERA */
@@ -256,7 +291,7 @@ export class GPUCameraRenderer extends GPURenderer {
     this.bindings.camera = new BufferBinding({
       label: 'Camera',
       name: 'camera',
-      visibility: ['vertex'],
+      visibility: ['vertex', 'fragment'],
       struct: {
         view: {
           // camera view matrix
@@ -548,12 +583,44 @@ export class GPUCameraRenderer extends GPURenderer {
     })
 
     this.cameraLightsBindGroup.consumers.add(this.uuid)
+
+    // add point shadows cube faces bind groups
+    this.pointShadowsCubeFaceBindGroups = []
+    for (let face = 0; face < 6; face++) {
+      const cubeFace = new BufferBinding({
+        label: 'Cube face',
+        name: 'cubeFace',
+        bindingType: 'uniform',
+        visibility: ['vertex'],
+        struct: {
+          face: {
+            type: 'u32',
+            value: face,
+          },
+        },
+      })
+
+      const cubeBindGroup = new BindGroup(this, {
+        label: `Cube face bind group ${face}`,
+        bindings: [cubeFace],
+      })
+
+      cubeBindGroup.createBindGroup()
+      cubeBindGroup.consumers.add(this.uuid)
+
+      this.pointShadowsCubeFaceBindGroups.push(cubeBindGroup)
+    }
+
+    // create eagerly
+    if (this.device) {
+      this.createCameraLightsBindGroup()
+    }
   }
 
   /**
    * Create the {@link cameraLightsBindGroup | camera, lights and shadows bind group} buffers
    */
-  setCameraBindGroup() {
+  createCameraLightsBindGroup() {
     if (this.cameraLightsBindGroup && this.cameraLightsBindGroup.shouldCreateBindGroup) {
       this.cameraLightsBindGroup.setIndex(0)
       this.cameraLightsBindGroup.createBindGroup()
@@ -628,6 +695,45 @@ export class GPUCameraRenderer extends GPURenderer {
     this.camera.position.copy(position)
   }
 
+  /* TRANSMISSIVE */
+
+  /**
+   * Create the {@link transmissionTarget} {@link Texture} and {@link RenderPassEntry} if not already created.
+   */
+  createTransmissionTarget() {
+    if (!this.transmissionTarget.texture) {
+      this.transmissionTarget.passEntry = this.scene.createScreenPassEntry('Transmission scene screen render pass')
+      this.transmissionTarget.texture = new Texture(this, {
+        label: 'Transmission background scene render target output',
+        name: 'transmissionBackgroundTexture',
+        generateMips: true, // needed for roughness LOD!
+        format: this.options.context.format,
+        autoDestroy: false,
+      })
+
+      this.transmissionTarget.passEntry.onBeforeRenderPass = (commandEncoder, swapChainTexture) => {
+        // Copy background scene texture to the output, because the output texture needs mips
+        // and we can't have mips on a rendered texture
+        this.copyGPUTextureToTexture(swapChainTexture, this.transmissionTarget.texture, commandEncoder)
+      }
+    }
+  }
+
+  /**
+   * Destroy the {@link transmissionTarget} {@link Texture} and {@link RenderPassEntry} if already created.
+   */
+  destroyTransmissionTarget() {
+    if (this.transmissionTarget.texture) {
+      this.transmissionTarget.texture.destroy()
+      this.scene.renderPassEntries.screen = this.scene.renderPassEntries.screen.filter(
+        (passEntry) => passEntry.label !== 'Transmission scene screen render pass'
+      )
+
+      this.transmissionTarget.texture = null
+      this.transmissionTarget.passEntry = null
+    }
+  }
+
   /**
    * Resize our {@link GPUCameraRenderer} and resize our {@link camera} before anything else.
    * @param rectBBox - the optional new {@link canvas} {@link RectBBox} to set
@@ -647,13 +753,13 @@ export class GPUCameraRenderer extends GPURenderer {
   /* RENDER */
 
   /**
-   * {@link setCameraBindGroup | Set the camera bind group if needed} and then call our {@link GPURenderer#render | GPURenderer render method}
+   * {@link createCameraLightsBindGroup | Set the camera bind group if needed} and then call our {@link GPURenderer#render | GPURenderer render method}
    * @param commandEncoder - current {@link GPUCommandEncoder}
    */
   render(commandEncoder: GPUCommandEncoder) {
     if (!this.ready) return
 
-    this.setCameraBindGroup()
+    this.createCameraLightsBindGroup()
 
     this.updateCameraLightsBindGroup()
 
@@ -669,7 +775,10 @@ export class GPUCameraRenderer extends GPURenderer {
    */
   destroy() {
     this.cameraLightsBindGroup?.destroy()
-    this.lights.forEach((light) => light.remove())
+    this.pointShadowsCubeFaceBindGroups.forEach((bindGroup) => bindGroup.destroy())
+    this.destroyTransmissionTarget()
+    this.lights.forEach((light) => light.destroy())
     super.destroy()
+    this.lights.forEach((light) => this.removeLight(light))
   }
 }

@@ -28,7 +28,7 @@ window.addEventListener('load', async () => {
                     
       vsOutput.position = getOutputPosition(attributes.position);
       vsOutput.originalUv = attributes.uv;
-      vsOutput.uv = getUVCover(attributes.uv, planeTextureMatrix);
+      vsOutput.uv = getUVCover(attributes.uv, texturesMatrices.planeTexture.matrix);
       
       return vsOutput;
     }
@@ -184,8 +184,7 @@ window.addEventListener('load', async () => {
   textureTransformOriginFolder.add(texture.transformOrigin, 'x', -1, 2, 0.1).name('X')
   textureTransformOriginFolder.add(texture.transformOrigin, 'y', -1, 2, 0.1).name('Y')
 
-  const textureRotationFolder = textureFolder.addFolder('Rotation')
-  textureRotationFolder.add(texture.rotation, 'z', Math.PI * -2, Math.PI * 2, 0.01).name('Z')
+  textureFolder.add(texture, 'rotation', Math.PI * -2, Math.PI * 2, 0.01).name('Rotation')
 
   const textureScaleFolder = textureFolder.addFolder('Scale')
   textureScaleFolder.add(texture.scale, 'x', 0.1, 2, 0.1).name('X')

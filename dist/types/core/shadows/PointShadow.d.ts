@@ -1,11 +1,14 @@
+/// <reference types="dist" />
 import { Shadow, ShadowBaseParams } from './Shadow';
 import { CameraRenderer } from '../renderers/utils';
 import { Mat4, PerspectiveProjectionParams } from '../../math/Mat4';
 import { Vec3 } from '../../math/Vec3';
 import { PointLight } from '../lights/PointLight';
 import { Input } from '../../types/BindGroups';
-import { ShaderOptions } from '../../types/Materials';
+import { RenderMaterialParams, ShaderOptions } from '../../types/Materials';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
+import { VertexShaderInputBaseParams } from '../shaders/full/vertex/get-vertex-shader-code';
+import { ProjectedMesh } from '../renderers/GPURenderer';
 /** Defines the perspective shadow camera params. */
 export type PerspectiveShadowCameraParams = Omit<PerspectiveProjectionParams, 'fov' | 'aspect'>;
 /** Defines the perspective shadow camera. */
@@ -89,31 +92,39 @@ export declare class PointShadow extends Shadow {
      */
     createDepthTexture(): void;
     /**
-     * Remove the depth pass from its {@link utils/TasksQueueManager.TasksQueueManager | task queue manager}.
-     * @param depthPassTaskID - Task queue manager ID to use for removal.
+     * Clear the content of the depth texture. Called whenever the {@link castingMeshes} {@link Map} is empty after having removed a mesh, or if all {@link castingMeshes} `visible` properties are `false`.
      */
-    removeDepthPass(depthPassTaskID: any): void;
+    clearDepthTexture(): void;
     /**
-     * Render the depth pass. This happens before creating the {@link CameraRenderer} command encoder.<br>
-     * - Force all the {@link meshes} to use their depth materials
+     * Render the depth pass. Called by the {@link CameraRenderer#scene | scene} when rendering the {@link depthPassTarget} render pass entry, or by the {@link renderOnce} method.<br />
      * - For each face of the depth cube texture:
-     *   - Create a command encoder.
      *   - Set the {@link depthPassTarget} descriptor depth texture view to our depth cube texture current face.
-     *   - Update the face index
-     *   - Render all the {@link meshes}
-     *   - Submit the command encoder
-     * - Reset all the {@link meshes} materials to their original one.
-     * @param once - Whether to render it only once or not.
+     *   - Render all the depth meshes.
+     * @param commandEncoder - {@link GPUCommandEncoder} to use.
      */
-    render(once?: boolean): number;
+    render(commandEncoder: GPUCommandEncoder): void;
+    /**
+     * Render all the {@link castingMeshes} into the {@link depthPassTarget}. Before rendering them, we swap the cube face bind group with the {@link CameraRenderer.pointShadowsCubeFaceBindGroups | renderer pointShadowsCubeFaceBindGroups} at the index containing the current face onto which we'll draw.
+     * @param commandEncoder - {@link GPUCommandEncoder} to use.
+     * @param face - Current cube map face onto which we're drawing.
+     */
+    renderDepthPass(commandEncoder: GPUCommandEncoder, face?: number): void;
     /**
      * Get the default depth pass vertex shader for this {@link PointShadow}.
+     * parameters - {@link VertexShaderInputBaseParams} used to compute the output `worldPosition` and `normal` vectors.
      * @returns - Depth pass vertex shader.
      */
-    getDefaultShadowDepthVs(hasInstances?: boolean): ShaderOptions;
+    getDefaultShadowDepthVs({ bindings, geometry }: VertexShaderInputBaseParams): ShaderOptions;
     /**
      * Get the default depth pass {@link types/Materials.ShaderOptions | fragment shader options} for this {@link PointShadow}.
      * @returns - A {@link types/Materials.ShaderOptions | ShaderOptions} with the depth pass fragment shader.
      */
     getDefaultShadowDepthFs(): ShaderOptions;
+    /**
+     * Patch the given {@link ProjectedMesh | mesh} material parameters to create the depth mesh. Here we'll be adding the first {@link CameraRenderer.pointShadowsCubeFaceBindGroups | renderer pointShadowsCubeFaceBindGroups} bind group containing the face index onto which we'll be drawing. This bind group will be swapped when rendering using {@link renderDepthPass}.
+     * @param mesh - original {@link ProjectedMesh | mesh} to use.
+     * @param parameters - Optional additional parameters to use for the depth mesh.
+     * @returns - Patched parameters.
+     */
+    patchShadowCastingMeshParams(mesh: ProjectedMesh, parameters?: RenderMaterialParams): RenderMaterialParams;
 }

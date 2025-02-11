@@ -35,7 +35,6 @@ import {
   GPUDeviceManager,
   AmbientLight,
   DirectionalLight,
-  getLambert,
   OrbitControls,
   RenderBundle,
   Vec3,
@@ -46,7 +45,7 @@ import {
   ComputePass,
   IndirectBuffer,
   Camera,
-  Mesh,
+  LitMesh,
 } from '../../dist/esm/index.mjs'
 
 window.addEventListener('load', async () => {
@@ -376,74 +375,6 @@ window.addEventListener('load', async () => {
     )
   })
 
-  const vs = /* wgsl */ `
-    struct VSOutput {
-      @builtin(position) position: vec4f,
-      @location(0) uv: vec2f,
-      @location(1) normal: vec3f,
-      @location(2) worldPosition: vec3f,
-    };
-    
-    @vertex fn main(
-      attributes: Attributes,
-    ) -> VSOutput {    
-      var vsOutput : VSOutput;
-      
-      let instanceIndex = culled.instances[attributes.instanceIndex];
-      
-      let model = instancesModel.models[instanceIndex];
-                  
-      if(debug.camera > 0.0) {
-        vsOutput.position = 
-          debugCamera.projection
-          * debugCamera.view
-          * model
-          * vec4f(attributes.position, 1.0);
-      } else {
-        vsOutput.position = 
-          camera.projection
-          * camera.view
-          * model
-          * vec4f(attributes.position, 1.0);
-      }
-        
-      vsOutput.uv = attributes.uv;
-      
-      // since we're using uniform scale, we can just multiply the normals
-      // with the instance model matrix
-      // also, we're computing them in view space
-      // it's not correct but the result is more pleasing visually
-      vsOutput.normal = normalize((camera.view * model * vec4f(attributes.normal, 0)).xyz);
-      
-      vsOutput.worldPosition = (model * vec4f(attributes.position, 1.0)).xyz;
-      
-      return vsOutput;
-    }
-  `
-
-  // simple lambert shading
-  const fs = /* wgsl */ `
-    struct VSOutput {
-      @builtin(position) position: vec4f,
-      @location(0) uv: vec2f,
-      @location(1) normal: vec3f,
-      @location(2) worldPosition: vec3f,
-    };
-    
-    ${getLambert()}
-    
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-          
-      var color: vec3f = getLambert(
-        normalize(fsInput.normal),
-        fsInput.worldPosition,
-        shading.color,
-      );
-    
-      return vec4(color, 1.0);
-    }
-  `
-
   const debugCamera = new Camera({
     far: 500,
     width: gpuCameraRenderer.boundingRect.width,
@@ -481,19 +412,49 @@ window.addEventListener('load', async () => {
       buffer: instancesDefinition.culledInstancesBinding.buffer,
     })
 
-    instancesDefinition.mesh = new Mesh(gpuCameraRenderer, {
+    // we need to modify the vertex shader outputs
+    // to account for culling result, debug camera, etc.
+    const additionalVertexContribution = `
+    let instanceIndex = culled.instances[attributes.instanceIndex];
+      
+    let model = instancesModel.models[instanceIndex];
+        
+    // camera debug        
+    if(debug.camera > 0.0) {
+      vsOutput.position = 
+        debugCamera.projection
+        * debugCamera.view
+        * model
+        * vec4f(attributes.position, 1.0);
+    } else {
+      vsOutput.position = 
+        camera.projection
+        * camera.view
+        * model
+        * vec4f(attributes.position, 1.0);
+    }
+    
+    // since we're using uniform scale, we can just multiply the normals
+    // with the instance model matrix
+    // also, we're computing them in view space
+    // it's not correct but the result is more pleasing visually
+    vsOutput.normal = normalize((camera.view * model * vec4f(attributes.normal, 0)).xyz);
+    
+    vsOutput.worldPosition = (model * vec4f(attributes.position, 1.0)).xyz;
+    `
+
+    instancesDefinition.mesh = new LitMesh(gpuCameraRenderer, {
       label: instancesDefinition.name + ' mesh',
       geometry: instancesDefinition.geometry,
       frustumCulling: false, // it's done on the GPU!
       renderBundle,
       bindings: [instancesDefinition.modelBinding, culledInstancesVertexBinding, debugCameraBinding],
-      shaders: {
-        vertex: {
-          code: vs,
+      material: {
+        shading: 'Lambert',
+        vertexChunks: {
+          additionalContribution: additionalVertexContribution,
         },
-        fragment: {
-          code: fs,
-        },
+        color: instancesDefinition.color,
       },
       uniforms: {
         debug: {
@@ -501,14 +462,6 @@ window.addEventListener('load', async () => {
             camera: {
               type: 'f32',
               value: 0,
-            },
-          },
-        },
-        shading: {
-          struct: {
-            color: {
-              type: 'vec3f',
-              value: instancesDefinition.color,
             },
           },
         },

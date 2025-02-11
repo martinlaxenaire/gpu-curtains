@@ -2,30 +2,17 @@ import { isRenderer } from '../renderers/utils.mjs';
 import { generateUUID, throwWarning } from '../../utils/utils.mjs';
 import { BufferBinding } from '../bindings/BufferBinding.mjs';
 import { IndirectBuffer } from '../../extras/buffers/IndirectBuffer.mjs';
+import { MediaTexture } from '../textures/MediaTexture.mjs';
 
-var __accessCheck = (obj, member, msg) => {
-  if (!member.has(obj))
-    throw TypeError("Cannot " + msg);
+var __typeError = (msg) => {
+  throw TypeError(msg);
 };
-var __privateGet = (obj, member, getter) => {
-  __accessCheck(obj, member, "read from private field");
-  return getter ? getter.call(obj) : member.get(obj);
-};
-var __privateAdd = (obj, member, value) => {
-  if (member.has(obj))
-    throw TypeError("Cannot add the same private member more than once");
-  member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-};
-var __privateSet = (obj, member, value, setter) => {
-  __accessCheck(obj, member, "write to private field");
-  member.set(obj, value);
-  return value;
-};
-var __privateMethod = (obj, member, method) => {
-  __accessCheck(obj, member, "access private method");
-  return method;
-};
-var _useProjection, _ready, _setBinding, setBinding_fn, _patchBindingOffset, patchBindingOffset_fn, _onSizeChanged, onSizeChanged_fn, _setDescriptor, setDescriptor_fn, _encodeRenderCommands, encodeRenderCommands_fn, _cleanUp, cleanUp_fn;
+var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
+var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
+var __privateMethod = (obj, member, method) => (__accessCheck(obj, member, "access private method"), method);
+var _useProjection, _ready, _RenderBundle_instances, setBinding_fn, patchBindingOffset_fn, onSizeChanged_fn, setDescriptor_fn, encodeRenderCommands_fn, cleanUp_fn;
 let bundleIndex = 0;
 class RenderBundle {
   /**
@@ -43,43 +30,12 @@ class RenderBundle {
     useBuffer = false,
     useIndirectDraw = false
   } = {}) {
-    /**
-     * Set the {@link binding} and patches its array and buffer size if needed.
-     * @private
-     */
-    __privateAdd(this, _setBinding);
-    /**
-     * Path the {@link binding} array and buffer size with the minimum {@link Renderer#device | device} buffer offset alignment.
-     * @param size - new {@link binding} size to use.
-     * @private
-     */
-    __privateAdd(this, _patchBindingOffset);
-    /**
-     * Called each time the {@link RenderBundle} size has actually changed.
-     * @param newSize - new {@link RenderBundle} size to set.
-     * @private
-     */
-    __privateAdd(this, _onSizeChanged);
-    /**
-     * Set the {@link descriptor} based on the {@link RenderBundleOptions#renderPass | render pass}.
-     * @private
-     */
-    __privateAdd(this, _setDescriptor);
-    /**
-     * Create the {@link descriptor}, {@link encoder} and {@link bundle} used by this {@link RenderBundle}.
-     * @private
-     */
-    __privateAdd(this, _encodeRenderCommands);
-    /**
-     * Destroy the {@link binding} buffer if needed and remove the {@link RenderBundle} from the {@link Renderer}.
-     * @private
-     */
-    __privateAdd(this, _cleanUp);
+    __privateAdd(this, _RenderBundle_instances);
     /** @ignore */
     // whether this render bundle should be added to the 'projected' or 'unProjected' Scene stacks.
-    __privateAdd(this, _useProjection, void 0);
+    __privateAdd(this, _useProjection);
     /** @ignore */
-    __privateAdd(this, _ready, void 0);
+    __privateAdd(this, _ready);
     this.type = "RenderBundle";
     renderer = isRenderer(renderer, this.type);
     this.uuid = generateUUID();
@@ -108,7 +64,7 @@ class RenderBundle {
     if (this.options.useBuffer) {
       __privateSet(this, _useProjection, true);
       if (this.options.size !== 0) {
-        __privateMethod(this, _setBinding, setBinding_fn).call(this);
+        __privateMethod(this, _RenderBundle_instances, setBinding_fn).call(this);
       } else {
         this.options.useBuffer = false;
         if (!this.renderer.production) {
@@ -193,7 +149,7 @@ class RenderBundle {
         );
       }
       this.ready = false;
-      __privateMethod(this, _onSizeChanged, onSizeChanged_fn).call(this, value);
+      __privateMethod(this, _RenderBundle_instances, onSizeChanged_fn).call(this, value);
       this.options.size = value;
     }
   }
@@ -218,7 +174,7 @@ class RenderBundle {
         });
         this.indirectBuffer.create();
       }
-      __privateMethod(this, _encodeRenderCommands, encodeRenderCommands_fn).call(this);
+      __privateMethod(this, _RenderBundle_instances, encodeRenderCommands_fn).call(this);
     } else if (!value && this.ready) {
       this.bundle = null;
     }
@@ -291,6 +247,18 @@ class RenderBundle {
     }
   }
   /**
+   * If one of the {@link meshes} is using a {@link core/textures/Texture.Texture | Texture} dependent of the {@link renderer}, invalidate the {@link RenderBundle} in order to resize the {@link core/textures/Texture.Texture | Texture}.
+   */
+  resize() {
+    for (const [_uuid, mesh] of this.meshes) {
+      const hasRenderTexture = mesh.textures.find((texture) => !texture.options.fixedSize);
+      if (hasRenderTexture) {
+        this.ready = false;
+        break;
+      }
+    }
+  }
+  /**
    * Render the {@link RenderBundle}.
    *
    * If it is ready, execute each {@link core/meshes/Mesh.Mesh.onBeforeRenderPass | mesh onBeforeRenderPass method}, {@link updateBinding | update the binding} if needed, execute the {@link bundle} and finally execute each {@link core/meshes/Mesh.Mesh.onAfterRenderPass | mesh onAfterRenderPass method}.
@@ -323,9 +291,13 @@ class RenderBundle {
         mesh.render(pass);
         if (!mesh.ready) {
           isReady = false;
+          break;
         }
-        if ("sourcesReady" in mesh && !mesh.sourcesReady) {
-          isReady = false;
+        for (const texture of mesh.textures) {
+          if (texture instanceof MediaTexture && !texture.sourcesUploaded) {
+            isReady = false;
+            break;
+          }
         }
       }
       this.ready = isReady;
@@ -354,7 +326,7 @@ class RenderBundle {
    */
   remove() {
     this.empty(true);
-    __privateMethod(this, _cleanUp, cleanUp_fn).call(this);
+    __privateMethod(this, _RenderBundle_instances, cleanUp_fn).call(this);
   }
   /**
    * Remove the {@link RenderBundle} from our {@link core/scenes/Scene.Scene | Scene}, {@link RenderedMesh#remove | remove the meshes}, eventually destroy the {@link binding} and remove the {@link RenderBundle} from the {@link Renderer}.
@@ -365,16 +337,21 @@ class RenderBundle {
       mesh.remove();
     });
     this.size = 0;
-    __privateMethod(this, _cleanUp, cleanUp_fn).call(this);
+    __privateMethod(this, _RenderBundle_instances, cleanUp_fn).call(this);
   }
 }
 _useProjection = new WeakMap();
 _ready = new WeakMap();
-_setBinding = new WeakSet();
+_RenderBundle_instances = new WeakSet();
+/**
+ * Set the {@link binding} and patches its array and buffer size if needed.
+ * @private
+ */
 setBinding_fn = function() {
   this.binding = new BufferBinding({
     label: this.options.label + " matrices",
     name: "matrices",
+    visibility: ["vertex", "fragment"],
     struct: {
       model: {
         type: "array<mat4x4f>",
@@ -390,9 +367,13 @@ setBinding_fn = function() {
       }
     }
   });
-  __privateMethod(this, _patchBindingOffset, patchBindingOffset_fn).call(this, this.options.size);
+  __privateMethod(this, _RenderBundle_instances, patchBindingOffset_fn).call(this, this.options.size);
 };
-_patchBindingOffset = new WeakSet();
+/**
+ * Path the {@link binding} array and buffer size with the minimum {@link Renderer#device | device} buffer offset alignment.
+ * @param size - new {@link binding} size to use.
+ * @private
+ */
 patchBindingOffset_fn = function(size) {
   const minOffset = this.renderer.device.limits.minUniformBufferOffsetAlignment;
   if (this.binding.arrayBufferSize < size * minOffset) {
@@ -401,10 +382,14 @@ patchBindingOffset_fn = function(size) {
     this.binding.buffer.size = this.binding.arrayBuffer.byteLength;
   }
 };
-_onSizeChanged = new WeakSet();
+/**
+ * Called each time the {@link RenderBundle} size has actually changed.
+ * @param newSize - new {@link RenderBundle} size to set.
+ * @private
+ */
 onSizeChanged_fn = function(newSize) {
   if (newSize > this.options.size && this.binding) {
-    __privateMethod(this, _patchBindingOffset, patchBindingOffset_fn).call(this, newSize);
+    __privateMethod(this, _RenderBundle_instances, patchBindingOffset_fn).call(this, newSize);
     if (this.binding.buffer.GPUBuffer) {
       this.binding.buffer.GPUBuffer.destroy();
       this.binding.buffer.createBuffer(this.renderer, {
@@ -423,7 +408,10 @@ onSizeChanged_fn = function(newSize) {
     }
   }
 };
-_setDescriptor = new WeakSet();
+/**
+ * Set the {@link descriptor} based on the {@link RenderBundleOptions#renderPass | render pass}.
+ * @private
+ */
 setDescriptor_fn = function() {
   this.descriptor = {
     ...this.options.renderPass.options.colorAttachments && {
@@ -437,9 +425,12 @@ setDescriptor_fn = function() {
     sampleCount: this.options.renderPass.options.sampleCount
   };
 };
-_encodeRenderCommands = new WeakSet();
+/**
+ * Create the {@link descriptor}, {@link encoder} and {@link bundle} used by this {@link RenderBundle}.
+ * @private
+ */
 encodeRenderCommands_fn = function() {
-  __privateMethod(this, _setDescriptor, setDescriptor_fn).call(this);
+  __privateMethod(this, _RenderBundle_instances, setDescriptor_fn).call(this);
   this.renderer.pipelineManager.resetCurrentPipeline();
   this.encoder = this.renderer.device.createRenderBundleEncoder({
     ...this.descriptor,
@@ -458,7 +449,10 @@ encodeRenderCommands_fn = function() {
   this.bundle = this.encoder.finish({ label: this.options.label + " (bundle)" });
   this.renderer.pipelineManager.resetCurrentPipeline();
 };
-_cleanUp = new WeakSet();
+/**
+ * Destroy the {@link binding} buffer if needed and remove the {@link RenderBundle} from the {@link Renderer}.
+ * @private
+ */
 cleanUp_fn = function() {
   if (this.binding) {
     this.renderer.removeBuffer(this.binding.buffer);

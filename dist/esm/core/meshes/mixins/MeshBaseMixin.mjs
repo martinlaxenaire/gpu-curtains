@@ -1,29 +1,18 @@
 import { generateUUID, throwWarning } from '../../../utils/utils.mjs';
 import { isRenderer } from '../../renderers/utils.mjs';
 import { RenderMaterial } from '../../materials/RenderMaterial.mjs';
-import { DOMTexture } from '../../textures/DOMTexture.mjs';
 import { Texture } from '../../textures/Texture.mjs';
-import default_vsWgsl from '../../shaders/chunks/default/default_vs.wgsl.mjs';
-import default_fsWgsl from '../../shaders/chunks/default/default_fs.wgsl.mjs';
+import { getDefaultVertexShaderCode } from '../../shaders/full/vertex/get-default-vertex-shader-code.mjs';
+import { getDefaultFragmentCode } from '../../shaders/full/fragment/get-default-fragment-code.mjs';
+import { MediaTexture } from '../../textures/MediaTexture.mjs';
 
-var __accessCheck = (obj, member, msg) => {
-  if (!member.has(obj))
-    throw TypeError("Cannot " + msg);
+var __typeError = (msg) => {
+  throw TypeError(msg);
 };
-var __privateGet = (obj, member, getter) => {
-  __accessCheck(obj, member, "read from private field");
-  return getter ? getter.call(obj) : member.get(obj);
-};
-var __privateAdd = (obj, member, value) => {
-  if (member.has(obj))
-    throw TypeError("Cannot add the same private member more than once");
-  member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-};
-var __privateSet = (obj, member, value, setter) => {
-  __accessCheck(obj, member, "write to private field");
-  member.set(obj, value);
-  return value;
-};
+var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
+var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
 let meshIndex = 0;
 const defaultMeshBaseParams = {
   // material
@@ -95,6 +84,8 @@ function MeshBaseMixin(Base) {
         visible,
         renderOrder,
         outputTarget,
+        additionalOutputTargets,
+        useCustomScenePassEntry,
         renderBundle,
         texturesOptions,
         autoRender,
@@ -102,6 +93,7 @@ function MeshBaseMixin(Base) {
       } = parameters;
       this.outputTarget = outputTarget ?? null;
       this.renderBundle = renderBundle ?? null;
+      this.additionalOutputTargets = additionalOutputTargets || [];
       meshParameters.sampleCount = !!meshParameters.sampleCount ? meshParameters.sampleCount : this.outputTarget ? this.outputTarget.renderPass.options.sampleCount : this.renderer && this.renderer.renderPass ? this.renderer.renderPass.options.sampleCount : 1;
       this.options = {
         ...this.options ?? {},
@@ -112,6 +104,7 @@ function MeshBaseMixin(Base) {
         ...renderBundle !== void 0 && { renderBundle },
         texturesOptions,
         ...autoRender !== void 0 && { autoRender },
+        useCustomScenePassEntry,
         ...meshParameters
       };
       if (autoRender !== void 0) {
@@ -162,6 +155,11 @@ function MeshBaseMixin(Base) {
       this.setRenderingOptionsForRenderPass(this.outputTarget ? this.outputTarget.renderPass : this.renderer.renderPass);
       if (__privateGet(this, _autoRender)) {
         this.renderer.scene.addMesh(this);
+        if (this.additionalOutputTargets.length) {
+          this.additionalOutputTargets.forEach((renderTarget) => {
+            this.renderer.scene.addMeshToRenderTargetStack(this, renderTarget);
+          });
+        }
       }
     }
     /**
@@ -255,24 +253,24 @@ function MeshBaseMixin(Base) {
       if (!shaders) {
         this.options.shaders = {
           vertex: {
-            code: default_vsWgsl,
+            code: getDefaultVertexShaderCode,
             entryPoint: "main"
           },
           fragment: {
-            code: default_fsWgsl,
+            code: getDefaultFragmentCode,
             entryPoint: "main"
           }
         };
       } else {
         if (!shaders.vertex || !shaders.vertex.code) {
           shaders.vertex = {
-            code: default_vsWgsl,
+            code: getDefaultVertexShaderCode,
             entryPoint: "main"
           };
         }
         if (shaders.fragment === void 0 || shaders.fragment && !shaders.fragment.code) {
           shaders.fragment = {
-            code: default_fsWgsl,
+            code: getDefaultFragmentCode,
             entryPoint: "main"
           };
         }
@@ -306,6 +304,9 @@ ${geometry.wgslStructFragment}`
           this.material.setPipelineEntry();
         }
         this.geometry.consumers.delete(this.uuid);
+        if (this.options.renderBundle) {
+          this.options.renderBundle.ready = false;
+        }
       }
       this.geometry = geometry;
       this.geometry.consumers.add(this.uuid);
@@ -378,9 +379,12 @@ ${geometry.wgslStructFragment}`
      * @returns - cleaned parameters
      */
     cleanupRenderMaterialParameters(parameters) {
-      delete parameters.texturesOptions;
-      delete parameters.outputTarget;
+      delete parameters.additionalOutputTargets;
       delete parameters.autoRender;
+      delete parameters.outputTarget;
+      delete parameters.renderBundle;
+      delete parameters.texturesOptions;
+      delete parameters.useCustomScenePassEntry;
       return parameters;
     }
     /**
@@ -389,17 +393,25 @@ ${geometry.wgslStructFragment}`
      */
     useMaterial(material) {
       let currentCacheKey = null;
-      if (this.material && this.geometry) {
-        currentCacheKey = this.material.cacheKey;
+      if (this.material) {
+        if (this.geometry) {
+          currentCacheKey = this.material.cacheKey;
+        }
+        if (this.options.renderBundle) {
+          this.options.renderBundle.ready = false;
+        }
       }
       this.material = material;
       if (this.geometry) {
         this.material.setAttributesFromGeometry(this.geometry);
       }
       this.transparent = this.material.options.rendering.transparent;
-      this.material.options.domTextures?.filter((texture) => texture instanceof DOMTexture).forEach((texture) => this.onDOMTextureAdded(texture));
       if (currentCacheKey && currentCacheKey !== this.material.cacheKey) {
-        this.material.setPipelineEntry();
+        if (this.material.ready) {
+          this.material.setPipelineEntry();
+        } else {
+          this.material.compileMaterial();
+        }
       }
     }
     /**
@@ -455,27 +467,20 @@ ${geometry.wgslStructFragment}`
     }
     /* TEXTURES */
     /**
-     * Get our {@link RenderMaterial#domTextures | RenderMaterial domTextures array}
-     * @readonly
-     */
-    get domTextures() {
-      return this.material?.domTextures || [];
-    }
-    /**
-     * Get our {@link RenderMaterial#textures | RenderMaterial textures array}
+     * Get our {@link RenderMaterial#textures | RenderMaterial textures array}.
      * @readonly
      */
     get textures() {
       return this.material?.textures || [];
     }
     /**
-     * Create a new {@link DOMTexture}
-     * @param options - {@link DOMTextureParams | DOMTexture parameters}
-     * @returns - newly created {@link DOMTexture}
+     * Create a new {@link MediaTexture}.
+     * @param options - {@link MediaTextureParams | MediaTexture parameters}.
+     * @returns - newly created {@link MediaTexture}.
      */
-    createDOMTexture(options) {
+    createMediaTexture(options) {
       if (!options.name) {
-        options.name = "texture" + (this.textures.length + this.domTextures.length);
+        options.name = "texture" + this.textures.length;
       }
       if (!options.label) {
         options.label = this.options.label + " " + options.name;
@@ -484,27 +489,9 @@ ${geometry.wgslStructFragment}`
       if (this.renderBundle) {
         texturesOptions.useExternalTextures = false;
       }
-      const domTexture = new DOMTexture(this.renderer, texturesOptions);
-      this.addDOMTexture(domTexture);
-      return domTexture;
-    }
-    /**
-     * Add a {@link DOMTexture}
-     * @param domTexture - {@link DOMTexture} to add
-     */
-    addDOMTexture(domTexture) {
-      if (this.renderBundle) {
-        this.renderBundle.ready = false;
-      }
-      this.material.addTexture(domTexture);
-      this.onDOMTextureAdded(domTexture);
-    }
-    /**
-     * Callback run when a new {@link DOMTexture} has been added
-     * @param domTexture - newly created DOMTexture
-     */
-    onDOMTextureAdded(domTexture) {
-      domTexture.parentMesh = this;
+      const mediaTexture = new MediaTexture(this.renderer, texturesOptions);
+      this.addTexture(mediaTexture);
+      return mediaTexture;
     }
     /**
      * Create a new {@link Texture}
@@ -513,15 +500,15 @@ ${geometry.wgslStructFragment}`
      */
     createTexture(options) {
       if (!options.name) {
-        options.name = "texture" + (this.textures.length + this.domTextures.length);
+        options.name = "texture" + this.textures.length;
       }
       const texture = new Texture(this.renderer, options);
       this.addTexture(texture);
       return texture;
     }
     /**
-     * Add a {@link Texture}
-     * @param texture - {@link Texture} to add
+     * Add a {@link Texture} or {@link MediaTexture}.
+     * @param texture - {@link Texture} or {@link MediaTexture} to add.
      */
     addTexture(texture) {
       if (this.renderBundle) {
@@ -546,22 +533,25 @@ ${geometry.wgslStructFragment}`
     }
     /* RESIZE */
     /**
-     * Resize the Mesh's textures
-     * @param boundingRect
+     * Resize the Mesh.
+     * @param boundingRect - optional new {@link DOMElementBoundingRect} to use.
      */
     resize(boundingRect) {
       if (super.resize) {
         super.resize(boundingRect);
       }
+      this.resizeTextures();
+      this._onAfterResizeCallback && this._onAfterResizeCallback();
+    }
+    /**
+     * Resize the {@link textures}.
+     */
+    resizeTextures() {
       this.textures?.forEach((texture) => {
         if (texture.options.fromTexture) {
           texture.copy(texture.options.fromTexture);
         }
       });
-      this.domTextures?.forEach((texture) => {
-        texture.resize();
-      });
-      this._onAfterResizeCallback && this._onAfterResizeCallback();
     }
     /* EVENTS */
     /**
@@ -624,8 +614,7 @@ ${geometry.wgslStructFragment}`
      * Execute {@link onBeforeRender} callback if needed. Called by the {@link core/scenes/Scene.Scene | Scene} before updating the matrix stack.
      */
     onBeforeRenderScene() {
-      if (!this.renderer.ready || !this.ready || !this.visible)
-        return;
+      if (!this.renderer.ready || !this.ready || !this.visible) return;
       this._onBeforeRenderCallback && this._onBeforeRenderCallback();
     }
     /**
@@ -634,8 +623,7 @@ ${geometry.wgslStructFragment}`
      * Then executes {@link RenderMaterial#onBeforeRender}: create its bind groups and pipeline if needed and eventually update its bindings
      */
     onBeforeRenderPass() {
-      if (!this.renderer.ready)
-        return;
+      if (!this.renderer.ready) return;
       this.setGeometry();
       if (this.visible) {
         this._onRenderCallback && this._onRenderCallback();
@@ -648,8 +636,7 @@ ${geometry.wgslStructFragment}`
      * @param pass - current render pass encoder
      */
     onRenderPass(pass) {
-      if (!this.ready)
-        return;
+      if (!this.ready) return;
       this.material.render(pass);
       this.geometry.render(pass);
     }
@@ -670,8 +657,7 @@ ${geometry.wgslStructFragment}`
      */
     render(pass) {
       this.onBeforeRenderPass();
-      if (!this.renderer.ready || !this.visible)
-        return;
+      if (!this.renderer.ready || !this.visible) return;
       !this.renderer.production && pass.pushDebugGroup(this.options.label);
       this.onRenderPass(pass);
       !this.renderer.production && pass.popDebugGroup();

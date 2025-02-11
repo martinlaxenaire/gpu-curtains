@@ -1,0 +1,2 @@
+/** Default fragment shader code to use with {@link core/renderPasses/ShaderPass.ShaderPass | ShaderPass} that outputs the content of the pass `renderTexture` as is. */
+export declare const getDefaultShaderPassFragmentCode = "\nstruct VSOutput {\n  @builtin(position) position: vec4f,\n  @location(0) uv: vec2f,\n};\n\n@fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {\n  return textureSample(renderTexture, defaultSampler, fsInput.uv);\n}";

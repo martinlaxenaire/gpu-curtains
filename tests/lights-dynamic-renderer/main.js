@@ -3,6 +3,8 @@ window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
   const {
     BoxGeometry,
+    SphereGeometry,
+    Geometry,
     OrbitControls,
     GPUCameraRenderer,
     GPUDeviceManager,
@@ -10,9 +12,7 @@ window.addEventListener('load', async () => {
     DirectionalLight,
     PointLight,
     Vec3,
-    Mesh,
-    getLambert,
-    getPhong,
+    LitMesh,
     PlaneGeometry,
     Object3D,
   } = await import(/* @vite-ignore */ path)
@@ -57,74 +57,28 @@ window.addEventListener('load', async () => {
     element: leftRenderer.domElement.element,
   })
 
-  const litFragmentShader = ({ useLambert = true, receiveShadows = false } = {}) => /* wgsl */ `
-    struct VSOutput {
-      @builtin(position) position: vec4f,
-      @builtin(front_facing) frontFacing: bool,
-      @location(0) uv: vec2f,
-      @location(1) normal: vec3f,
-      @location(2) worldPosition: vec3f,
-      @location(3) viewDirection: vec3f,
-    };
-    
-    ${useLambert ? getLambert({ receiveShadows }) : getPhong({ receiveShadows })}
-    
-
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-      var color: vec3f = shading.color;
-      
-      // negate the normals if we're using front face culling
-      let faceDirection = select(-1.0, 1.0, fsInput.frontFacing);
-      let normal = normalize(faceDirection * fsInput.normal);
-      
-      let worldPosition = fsInput.worldPosition;
-      let viewDirection = normalize(fsInput.viewDirection);
-      
-      ${
-        useLambert
-          ? `
-          // lambert
-          color = getLambert(
-            normal,
-            worldPosition,
-            color
-          );
-        `
-          : `
-          // phong
-          color = getPhong(
-            normal,
-            worldPosition,
-            color,
-            viewDirection,
-            phong.specularColor,
-            phong.specularStrength,
-            phong.shininess
-          );
-        `
-      }
-      
-      
-      return vec4(color, 1.0);
-    }
-  `
-
   const ambientLights = []
   const directionalLights = []
   const pointLights = []
 
-  ambientLights.push(new AmbientLight(leftRenderer))
+  ambientLights.push(
+    new AmbientLight(leftRenderer, {
+      intensity: 0.1,
+    })
+  )
 
   directionalLights.push(
     new DirectionalLight(leftRenderer, {
       color: new Vec3(1, 0, 0),
       position: new Vec3(10),
-      intensity: 0.5,
+      intensity: 0.25,
       shadow: {
         intensity: 1,
       },
     })
   )
+
+  console.log(directionalLights[0])
 
   directionalLights.push(
     new DirectionalLight(leftRenderer, {
@@ -137,7 +91,7 @@ window.addEventListener('load', async () => {
   pointLights.push(
     new PointLight(leftRenderer, {
       color: new Vec3(0, 0, 1),
-      position: new Vec3(-3, 3, -3),
+      position: new Vec3(-3, 4, -3),
       range: 50,
       intensity: 20,
       shadow: {
@@ -146,44 +100,155 @@ window.addEventListener('load', async () => {
     })
   )
 
-  console.log(leftRenderer.lights)
+  console.log(pointLights[0].shadow)
 
-  const mesh = new Mesh(leftRenderer, {
+  // ---------------
+  // GEOMETRIES
+  // ---------------
+
+  // prettier-ignore
+  const vertices = new Float32Array([
+    // front face
+    1, -1, 1,
+    0, 1, 0,
+    -1, -1, 1,
+
+    // right face
+    1, -1, -1,
+    0, 1, 0,
+    1, -1, 1,
+
+    // back face
+    -1, -1, -1,
+    0, 1, 0,
+    1, -1, -1,
+
+    // left face
+    -1, -1, 1,
+    0, 1, 0,
+    -1, -1, -1,
+
+    // bottom first
+    -1, -1, -1,
+    1, -1, -1,
+    -1, -1, 1,
+    // bottom second
+    1, -1, 1,
+    -1, -1, 1,
+    1, -1, -1
+  ])
+
+  // prettier-ignore
+  const uvs = new Float32Array([
+    // front face
+    1, 1,
+    0.5, 0,
+    0, 1,
+
+    // right face
+    1, 1,
+    0.5, 0,
+    0, 1,
+
+    // back face
+    1, 1,
+    0.5, 0,
+    0, 1,
+
+    // left face
+    1, 1,
+    0.5, 0,
+    0, 1,
+
+    // bottom first
+    0, 1,
+    1, 1,
+    0, 0,
+    // bottom second
+    1, 0,
+    0, 0,
+    1, 1,
+  ])
+
+  const frontNormal = new Vec3(0, 1, 1).normalize()
+  const rightNormal = new Vec3(1, 1, 0).normalize()
+  const backNormal = new Vec3(0, 1, -1).normalize()
+  const leftNormal = new Vec3(-1, 1, 0).normalize()
+
+  // prettier-ignore
+  const normals = new Float32Array([
+    // front face
+    frontNormal.x, frontNormal.y, frontNormal.z,
+    frontNormal.x, frontNormal.y, frontNormal.z,
+    frontNormal.x, frontNormal.y, frontNormal.z,
+
+    // right face
+    rightNormal.x, rightNormal.y, rightNormal.z,
+    rightNormal.x, rightNormal.y, rightNormal.z,
+    rightNormal.x, rightNormal.y, rightNormal.z,
+
+    // back face
+    backNormal.x, backNormal.y, backNormal.z,
+    backNormal.x, backNormal.y, backNormal.z,
+    backNormal.x, backNormal.y, backNormal.z,
+
+    // left face
+    leftNormal.x, leftNormal.y, leftNormal.z,
+    leftNormal.x, leftNormal.y, leftNormal.z,
+    leftNormal.x, leftNormal.y, leftNormal.z,
+
+    // bottom first
+    0, -1, 0,
+    0, -1, 0,
+    0, -1, 0,
+    // bottom second
+    0, -1, 0,
+    0, -1, 0,
+    0, -1, 0,
+  ])
+
+  const customGeometry = new Geometry({
+    vertexBuffers: [
+      {
+        name: 'attributes',
+        stepMode: 'vertex', // explicitly set the stepMode even if not mandatory
+        attributes: [
+          {
+            name: 'position',
+            type: 'vec3f',
+            bufferFormat: 'float32x3',
+            size: 3,
+            array: vertices,
+          },
+          {
+            name: 'normal',
+            type: 'vec3f',
+            bufferFormat: 'float32x3',
+            size: 3,
+            array: normals,
+          },
+          {
+            name: 'uv',
+            type: 'vec2f',
+            bufferFormat: 'float32x2',
+            size: 2,
+            array: uvs,
+          },
+        ],
+      },
+    ],
+  })
+
+  const mesh = new LitMesh(leftRenderer, {
     label: 'Cube',
     geometry: new BoxGeometry(),
     castShadows: true,
-    shaders: {
-      fragment: {
-        code: litFragmentShader({ useLambert: false }),
-      },
-    },
-    uniforms: {
-      shading: {
-        visibility: ['fragment'],
-        struct: {
-          color: {
-            type: 'vec3f',
-            value: new Vec3(1),
-          },
-        },
-      },
-      phong: {
-        visibility: ['fragment'],
-        struct: {
-          specularColor: {
-            type: 'vec3f',
-            value: new Vec3(1),
-          },
-          specularStrength: {
-            type: 'f32',
-            value: 1,
-          },
-          shininess: {
-            type: 'f32',
-            value: 32,
-          },
-        },
-      },
+    material: {
+      shading: 'Phong',
+      color: new Vec3(1),
+      specularColor: new Vec3(1),
+      specularIntensity: 1,
+      shininess: 64,
     },
   })
 
@@ -199,43 +264,18 @@ window.addEventListener('load', async () => {
   const boxPivot = new Object3D()
   boxPivot.parent = leftRenderer.scene
 
-  const floor = new Mesh(leftRenderer, {
+  const floor = new LitMesh(leftRenderer, {
     label: 'Floor',
     geometry: planeGeometry,
     receiveShadows: true,
     frustumCulling: false, // always draw
     cullMode: 'none',
-    shaders: {
-      fragment: {
-        code: litFragmentShader({ useLambert: false, receiveShadows: true }),
-      },
-    },
-    uniforms: {
-      shading: {
-        struct: {
-          color: {
-            type: 'vec3f',
-            value: new Vec3(0.7),
-          },
-        },
-      },
-      phong: {
-        visibility: ['fragment'],
-        struct: {
-          specularColor: {
-            type: 'vec3f',
-            value: new Vec3(1),
-          },
-          specularStrength: {
-            type: 'f32',
-            value: 1,
-          },
-          shininess: {
-            type: 'f32',
-            value: 32,
-          },
-        },
-      },
+    material: {
+      shading: 'Phong',
+      color: new Vec3(0.7),
+      specularColor: new Vec3(1),
+      specularIntensity: 1,
+      shininess: 32,
     },
   })
 
@@ -244,10 +284,97 @@ window.addEventListener('load', async () => {
   floor.rotation.set(-Math.PI / 2, 0, 0)
   floor.scale.set(30)
 
+  const geometries = {
+    box: mesh.geometry,
+    sphere: new SphereGeometry(),
+    custom: customGeometry,
+  }
+
   // GUI
   const gui = new lil.GUI({
     title: 'Lights test',
   })
+
+  const meshFolder = gui.addFolder('Shadow casting mesh')
+
+  meshFolder
+    .add({ visible: true }, 'visible')
+    .name('Visible')
+    .onChange((value) => {
+      mesh.visible = value
+    })
+
+  meshFolder
+    .add({ geometry: 'box' }, 'geometry', geometries)
+    .name('Geometry')
+    .onChange((value) => {
+      mesh.useGeometry(value)
+    })
+
+  const materialFolder = meshFolder.addFolder('Materials')
+  const cubeFolder = materialFolder.addFolder('Cube')
+
+  cubeFolder
+    .addColor(
+      {
+        color: {
+          r: mesh.uniforms.material.color.value.x,
+          g: mesh.uniforms.material.color.value.y,
+          b: mesh.uniforms.material.color.value.z,
+        },
+      },
+      'color'
+    )
+    .onChange((value) => {
+      mesh.uniforms.material.color.value.set(value.r, value.g, value.b)
+    })
+    .name('Color')
+
+  cubeFolder
+    .addColor(
+      {
+        specularColor: {
+          r: mesh.uniforms.material.specularColor.value.x,
+          g: mesh.uniforms.material.specularColor.value.y,
+          b: mesh.uniforms.material.specularColor.value.z,
+        },
+      },
+      'specularColor'
+    )
+    .onChange((value) => {
+      mesh.uniforms.material.specularColor.value.set(value.r, value.g, value.b)
+    })
+    .name('Specular color')
+
+  cubeFolder
+    .add(
+      {
+        specularIntensity: mesh.uniforms.material.specularIntensity.value,
+      },
+      'specularIntensity',
+      0,
+      10,
+      0.1
+    )
+    .onChange((value) => {
+      mesh.uniforms.material.specularIntensity.value = value
+    })
+    .name('Specular intensity')
+
+  cubeFolder
+    .add(
+      {
+        shininess: mesh.uniforms.material.shininess.value,
+      },
+      'shininess',
+      1,
+      150,
+      1
+    )
+    .onChange((value) => {
+      mesh.uniforms.material.shininess.value = value
+    })
+    .name('Shininess')
 
   const rendererFolder = gui.addFolder('Renderer')
   rendererFolder
@@ -272,40 +399,7 @@ window.addEventListener('load', async () => {
     })
     .name('Active renderer')
 
-  const materialFolder = gui.addFolder('Material')
-  const materialShadingFolder = materialFolder.addFolder('Shading')
-
-  // materialShadingFolder
-  //   .add({ materials }, 'material', materials)
-  //   .name('Material')
-  //   .onChange((value) => {
-  //     mesh.useMaterial(value)
-  //   })
-
-  // materialShadingFolder
-  //   .add({ useLambert: !!mesh.uniforms.shading.useLambert.value }, 'useLambert', [false, true])
-  //   .name('Use lambert shading')
-  //   .onChange((value) => {
-  //     mesh.uniforms.shading.useLambert.value = value ? 1 : 0
-  //   })
-
-  materialShadingFolder
-    .addColor(
-      {
-        color: {
-          r: mesh.uniforms.shading.color.value.x,
-          g: mesh.uniforms.shading.color.value.y,
-          b: mesh.uniforms.shading.color.value.z,
-        },
-      },
-      'color'
-    )
-    .onChange((value) => {
-      mesh.uniforms.shading.color.value.set(value.r, value.g, value.b)
-    })
-    .name('Base color')
-
-  materialShadingFolder.close()
+  //materialShadingFolder.close()
 
   // const materialPhongFolder = materialFolder.addFolder('Phong')
   // materialPhongFolder
@@ -375,7 +469,7 @@ window.addEventListener('load', async () => {
 
     const pointLightPosFolder = pointLightFolder.addFolder('Position')
     pointLightPosFolder.add(pointLight.position, 'x', -20, 20, 0.1)
-    pointLightPosFolder.add(pointLight.position, 'y', -20, 20, 0.1)
+    pointLightPosFolder.add(pointLight.position, 'y', 4, 20, 0.1)
     pointLightPosFolder.add(pointLight.position, 'z', -20, 20, 0.1)
   })
 

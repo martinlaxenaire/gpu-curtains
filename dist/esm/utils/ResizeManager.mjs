@@ -30,8 +30,7 @@ class ResizeManager {
    * @param entry - {@link ResizeManagerEntry | entry} to watch.
    */
   observe({ element, priority, callback }) {
-    if (!element || !this.shouldWatch)
-      return;
+    if (!element || !this.shouldWatch) return;
     this.resizeObserver?.observe(element);
     const entry = {
       element,

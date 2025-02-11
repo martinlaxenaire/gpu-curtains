@@ -1,4 +1,5 @@
 import { Mat4 } from './Mat4';
+import { Vec2 } from './Vec2';
 /**
  * Basic 3x3 matrix class used for matrix calculations.
  *
@@ -40,9 +41,10 @@ export declare class Mat3 {
     /**
      * Sets the {@link Mat3} values from an array
      * @param array - array to use
+     * @param offset - optional offset in the array to use
      * @returns - this {@link Mat3} after being set
      */
-    setFromArray(array?: Float32Array | number[]): Mat3;
+    setFromArray(array?: Float32Array | number[], offset?: number): Mat3;
     /**
      * Copy another {@link Mat3}
      * @param matrix - matrix to copy
@@ -95,4 +97,51 @@ export declare class Mat3 {
      * @returns - this {@link Mat3} after being inverted and transposed
      */
     getNormalMatrix(matrix?: Mat4): Mat3;
+    /**
+     * Set a transformation matrix from translation, scale and center 2D coordinates and a rotation. Useful to compute UV transformation matrices.
+     * @param tx - translation along X axis.
+     * @param ty - translation along Y axis.
+     * @param sx - Scale along X axis.
+     * @param sy - Scale along Y axis.
+     * @param rotation - Rotation in radians.
+     * @param cx - Center of the transformation along X axis.
+     * @param cy - Center of the transformation along Y axis.
+     */
+    setUVTransform(tx?: number, ty?: number, sx?: number, sy?: number, rotation?: number, cx?: number, cy?: number): Mat3;
+    /**
+     * Rotate this {@link Mat3} by a given angle around X axis, counterclockwise.
+     * @param theta - Angle to rotate along X axis.
+     * @returns - this {@link Mat3} after rotation.
+     */
+    rotateByAngleX(theta?: number): Mat3;
+    /**
+     * Rotate this {@link Mat3} by a given angle around Y axis, counterclockwise.
+     * @param theta - Angle to rotate along Y axis.
+     * @returns - this {@link Mat3} after rotation.
+     */
+    rotateByAngleY(theta?: number): Mat3;
+    /**
+     * Rotate this {@link Mat3} by a given angle around Z axis, counterclockwise.
+     * @param theta - Angle to rotate along Z axis.
+     * @returns - this {@link Mat3} after rotation.
+     */
+    rotateByAngleZ(theta?: number): Mat3;
+    /**
+     * {@link premultiply} this {@link Mat3} by a translate matrix (i.e. translateMatrix = new Mat3().translate(vector)).
+     * @param vector - translation {@link Vec2} to use.
+     * @returns - this {@link Mat3} after the premultiply translate operation.
+     */
+    premultiplyTranslate(vector?: Vec2): Mat3;
+    /**
+     * {@link premultiply} this {@link Mat3} by a scale matrix (i.e. translateMatrix = new Mat3().scale(vector)).
+     * @param vector - scale {@link Vec2} to use.
+     * @returns - this {@link Mat3} after the premultiply scale operation.
+     */
+    premultiplyScale(vector?: Vec2): Mat3;
+    /**
+     * Translate a {@link Mat3}.
+     * @param vector - translation {@link Vec2} to use.
+     * @returns - translated {@link Mat3}.
+     */
+    translate(vector?: Vec2): Mat3;
 }

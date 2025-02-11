@@ -13,6 +13,7 @@ window.addEventListener('load', async () => {
     PointLight,
     Vec2,
     Mesh,
+    LitMesh,
     SphereGeometry,
     BoxGeometry,
     Vec3,
@@ -75,8 +76,8 @@ window.addEventListener('load', async () => {
     position: new Vec3(15, 15, 15),
     shadow: {
       //intensity: 1,
-      //bias: 0.0001,
-      //normalBias: 0.002,
+      bias: 0.0005,
+      normalBias: 0.05,
       depthTextureSize: new Vec2(256, 256),
       pcfSamples: 3,
     },
@@ -88,8 +89,8 @@ window.addEventListener('load', async () => {
     position: new Vec3(-15, 15, 15),
     shadow: {
       //intensity: 1,
-      //bias: 0.0001,
-      //normalBias: 0.002,
+      bias: 0.0005,
+      normalBias: 0.05,
       pcfSamples: 2,
       //depthTextureSize: new Vec2(512, 512),
     },
@@ -101,8 +102,8 @@ window.addEventListener('load', async () => {
     position: new Vec3(15, 15, -15),
     shadow: {
       //intensity: 1,
-      //bias: 0.0001,
-      //normalBias: 0.002,
+      bias: 0.0005,
+      normalBias: 0.05,
       depthTextureSize: new Vec2(1024, 1024),
     },
   })
@@ -113,8 +114,8 @@ window.addEventListener('load', async () => {
     position: new Vec3(-15, 15, -15),
     shadow: {
       //intensity: 1,
-      //bias: 0.0001,
-      //normalBias: 0.002,
+      bias: 0.0005,
+      normalBias: 0.05,
       pcfSamples: 3,
       //depthTextureSize: new Vec2(512, 512),
     },
@@ -131,7 +132,7 @@ window.addEventListener('load', async () => {
 
   pointLight.shadow.cast({
     bias: 0.0005,
-    //normalBias: 0.075,
+    normalBias: 0.05,
     //intensity: 1,
     //depthTextureSize: new Vec2(512, 512),
     // camera: {
@@ -177,112 +178,36 @@ window.addEventListener('load', async () => {
       stats.end()
     })
 
-  const meshVs = /* wgsl */ `
-    struct VertexOutput {
-      @builtin(position) position: vec4f,
-      @location(0) normal: vec3f,
-      @location(1) worldPosition: vec3f,
-    };
-    
-    @vertex fn main(
-      attributes: Attributes,
-    ) -> VertexOutput {
-      var vsOutput: VertexOutput;
-    
-      vsOutput.position = getOutputPosition(attributes.position);
-      vsOutput.normal = getWorldNormal(attributes.normal);
-      vsOutput.worldPosition = getWorldPosition(attributes.position).xyz;
-      
-      return vsOutput;
-    }
-  `
-
-  const meshFs = /* wgsl */ `
-    struct VSOutput {
-      @builtin(position) position: vec4f,
-      @builtin(front_facing) frontFacing: bool,
-      @location(0) normal: vec3f,
-      @location(1) worldPosition: vec3f,
-    };
-        
-    ${getLambert({
-      receiveShadows: true,
-    })}
-
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {      
-      // negate the normals if we're using front face culling
-      let faceDirection = select(-1.0, 1.0, fsInput.frontFacing);
-      
-      // apply lightning and shadows
-      let normal: vec3f = normalize(faceDirection * fsInput.normal);
-      
-      let worldPosition: vec3f = fsInput.worldPosition;
-      
-      var color: vec3f = shading.color;
-      
-      color = getLambert(
-        normal,
-        worldPosition,
-        color
-      );
-      
-      return vec4(color, 1.0);
-    }
-  `
+  const shadowCastingMeshes = []
+  const shadingModel = 'Lambert'
 
   // create sphere
 
   const sphereGeometry = new SphereGeometry()
 
-  const sphere = new Mesh(gpuCameraRenderer, {
-    label: 'Sphere',
+  const sphere = new LitMesh(gpuCameraRenderer, {
+    label: 'Red sphere',
     geometry: sphereGeometry,
     receiveShadows: true,
     castShadows: true, // could be added that way
-    shaders: {
-      vertex: {
-        code: meshVs,
-      },
-      fragment: {
-        code: meshFs,
-      },
-    },
-    uniforms: {
-      shading: {
-        struct: {
-          color: {
-            type: 'vec3f',
-            value: new Vec3(1, 0, 0),
-          },
-        },
-      },
+    material: {
+      shading: shadingModel,
+      color: new Vec3(1, 0, 0),
     },
   })
 
   sphere.position.z = 2.5
   sphere.parent = scenePivot
 
-  const cube = new Mesh(gpuCameraRenderer, {
-    label: 'Cube',
+  shadowCastingMeshes.push(sphere)
+
+  const cube = new LitMesh(gpuCameraRenderer, {
+    label: 'Blue cube',
     geometry: new BoxGeometry(),
     receiveShadows: true,
-    shaders: {
-      vertex: {
-        code: meshVs,
-      },
-      fragment: {
-        code: meshFs,
-      },
-    },
-    uniforms: {
-      shading: {
-        struct: {
-          color: {
-            type: 'vec3f',
-            value: new Vec3(0, 0, 1),
-          },
-        },
-      },
+    material: {
+      shading: shadingModel,
+      color: new Vec3(0, 0, 1),
     },
   })
 
@@ -318,28 +243,16 @@ window.addEventListener('load', async () => {
     cube.rotation.y = -scenePivot.rotation.y
   })
 
-  const cube2 = new Mesh(gpuCameraRenderer, {
-    label: 'Cube 2',
+  shadowCastingMeshes.push(cube)
+
+  const cube2 = new LitMesh(gpuCameraRenderer, {
+    label: 'Green cube',
     geometry: new BoxGeometry(),
     castShadows: true,
     receiveShadows: true,
-    shaders: {
-      vertex: {
-        code: meshVs,
-      },
-      fragment: {
-        code: meshFs,
-      },
-    },
-    uniforms: {
-      shading: {
-        struct: {
-          color: {
-            type: 'vec3f',
-            value: new Vec3(0, 1, 0),
-          },
-        },
-      },
+    material: {
+      shading: shadingModel,
+      color: new Vec3(0, 1, 0),
     },
   })
 
@@ -350,33 +263,23 @@ window.addEventListener('load', async () => {
     cube2.rotation.y = -scenePivot.rotation.y
   })
 
-  const sphere2 = new Mesh(gpuCameraRenderer, {
-    label: 'Sphere 2',
+  shadowCastingMeshes.push(cube2)
+
+  const sphere2 = new LitMesh(gpuCameraRenderer, {
+    label: 'Yellow sphere',
     geometry: sphereGeometry,
     receiveShadows: true,
     castShadows: true,
-    shaders: {
-      vertex: {
-        code: meshVs,
-      },
-      fragment: {
-        code: meshFs,
-      },
-    },
-    uniforms: {
-      shading: {
-        struct: {
-          color: {
-            type: 'vec3f',
-            value: new Vec3(1, 1, 0),
-          },
-        },
-      },
+    material: {
+      shading: shadingModel,
+      color: new Vec3(1, 1, 0),
     },
   })
 
   sphere2.position.z = -2.5
   sphere2.parent = scenePivot
+
+  shadowCastingMeshes.push(sphere2)
 
   // let time = 0
   //
@@ -394,29 +297,15 @@ window.addEventListener('load', async () => {
   const boxPivot = new Object3D()
   boxPivot.parent = scene
 
-  const floor = new Mesh(gpuCameraRenderer, {
+  const floor = new LitMesh(gpuCameraRenderer, {
     label: 'Floor',
     geometry: planeGeometry,
     receiveShadows: true,
     frustumCulling: false, // always draw
     cullMode: 'none',
-    shaders: {
-      vertex: {
-        code: meshVs,
-      },
-      fragment: {
-        code: meshFs,
-      },
-    },
-    uniforms: {
-      shading: {
-        struct: {
-          color: {
-            type: 'vec3f',
-            value: new Vec3(0.15),
-          },
-        },
-      },
+    material: {
+      shading: shadingModel,
+      color: new Vec3(0.5),
     },
   })
 
@@ -433,8 +322,6 @@ window.addEventListener('load', async () => {
     title: 'Lights & shadows test',
   })
 
-  gui.close()
-
   gui
     .add({ rotatePivot }, 'rotatePivot')
     .name('Rotate scene')
@@ -442,9 +329,17 @@ window.addEventListener('load', async () => {
       rotatePivot = value
     })
 
+  const shadowCastingMeshesFolder = gui.addFolder('Shadow casting meshes')
+
+  shadowCastingMeshes.forEach((mesh) => {
+    shadowCastingMeshesFolder.add(mesh, 'visible').name(mesh.options.label + ' visibility')
+  })
+
   const ambientLightsFolder = gui.addFolder('Ambient lights')
   ambientLights.forEach((ambientLight, index) => {
     const ambientLightFolder = ambientLightsFolder.addFolder('Ambient light ' + index)
+    ambientLightFolder.close()
+
     ambientLightFolder.add(ambientLight, 'intensity', 0, 1, 0.01)
     ambientLightFolder
       .addColor({ color: { r: ambientLight.color.x, g: ambientLight.color.y, b: ambientLight.color.z } }, 'color')
@@ -456,6 +351,8 @@ window.addEventListener('load', async () => {
   const directionalLightsFolder = gui.addFolder('Directional lights')
   directionalLights.forEach((directionalLight, index) => {
     const directionalLightFolder = directionalLightsFolder.addFolder('Directional light ' + index)
+    directionalLightFolder.close()
+
     directionalLightFolder.add(directionalLight, 'intensity', 0, 10, 0.01)
     directionalLightFolder
       .addColor(
@@ -485,6 +382,8 @@ window.addEventListener('load', async () => {
   const pointLightsFolder = gui.addFolder('Point lights')
   pointLights.forEach((pointLight, index) => {
     const pointLightFolder = pointLightsFolder.addFolder('Point light ' + index)
+    pointLightFolder.close()
+
     pointLightFolder.add(pointLight, 'intensity', 0, 100, 0.01)
     pointLightFolder.add(pointLight, 'range', 0, 100000, 0.25)
 

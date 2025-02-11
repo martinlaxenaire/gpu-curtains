@@ -3,24 +3,13 @@ import { Object3D } from '../objects3D/Object3D.mjs';
 import { Vec3 } from '../../math/Vec3.mjs';
 import { generateUUID } from '../../utils/utils.mjs';
 
-var __accessCheck = (obj, member, msg) => {
-  if (!member.has(obj))
-    throw TypeError("Cannot " + msg);
+var __typeError = (msg) => {
+  throw TypeError(msg);
 };
-var __privateGet = (obj, member, getter) => {
-  __accessCheck(obj, member, "read from private field");
-  return getter ? getter.call(obj) : member.get(obj);
-};
-var __privateAdd = (obj, member, value) => {
-  if (member.has(obj))
-    throw TypeError("Cannot add the same private member more than once");
-  member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-};
-var __privateSet = (obj, member, value, setter) => {
-  __accessCheck(obj, member, "write to private field");
-  member.set(obj, value);
-  return value;
-};
+var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
+var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
 var _fov, _near, _far, _pixelRatio;
 class Camera extends Object3D {
   /**
@@ -39,13 +28,13 @@ class Camera extends Object3D {
   } = {}) {
     super();
     /** @ignore */
-    __privateAdd(this, _fov, void 0);
+    __privateAdd(this, _fov);
     /** @ignore */
-    __privateAdd(this, _near, void 0);
+    __privateAdd(this, _near);
     /** @ignore */
-    __privateAdd(this, _far, void 0);
+    __privateAdd(this, _far);
     /** @ignore */
-    __privateAdd(this, _pixelRatio, void 0);
+    __privateAdd(this, _pixelRatio);
     this.uuid = generateUUID();
     this.position.set(0, 0, 10);
     this.up = new Vec3(0, 1, 0);
@@ -179,7 +168,7 @@ class Camera extends Object3D {
    * @param near - new near plane value
    */
   set near(near) {
-    near = Math.max(near ?? this.near, 0.01);
+    near = Math.max(near ?? this.near, 1e-4);
     if (near !== this.near) {
       __privateSet(this, _near, near);
       this.shouldUpdateProjectionMatrices();

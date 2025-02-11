@@ -6,8 +6,8 @@ import { BufferBinding } from '../bindings/BufferBinding.mjs';
 class BindGroup {
   /**
    * BindGroup constructor
-   * @param renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object
-   * @param parameters - {@link BindGroupParams | parameters} used to create our {@link BindGroup}
+   * @param renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object.
+   * @param parameters - {@link BindGroupParams | parameters} used to create our {@link BindGroup}.
    */
   constructor(renderer, { label = "BindGroup", index = 0, bindings = [], uniforms, storages } = {}) {
     this.type = "BindGroup";
@@ -24,8 +24,7 @@ class BindGroup {
     this.uuid = generateUUID();
     this.bindings = [];
     bindings.length && this.addBindings(bindings);
-    if (this.options.uniforms || this.options.storages)
-      this.setInputBindings();
+    if (this.options.uniforms || this.options.storages) this.setInputBindings();
     this.layoutCacheKey = "";
     this.pipelineCacheKey = "";
     this.resetEntries();
@@ -48,15 +47,15 @@ class BindGroup {
     this.renderer.addBindGroup(this);
   }
   /**
-   * Sets our {@link BindGroup#index | bind group index}
-   * @param index - {@link BindGroup#index | bind group index} to set
+   * Sets our {@link BindGroup#index | bind group index}.
+   * @param index - {@link BindGroup#index | bind group index} to set.
    */
   setIndex(index) {
     this.index = index;
   }
   /**
-   * Adds an array of already created {@link bindings} (buffers, texture, etc.) to the {@link bindings} array
-   * @param bindings - {@link bindings} to add
+   * Adds an array of already created {@link bindings} (buffers, texture, etc.) to the {@link bindings} array.
+   * @param bindings - {@link bindings} to add.
    */
   addBindings(bindings = []) {
     bindings.forEach((binding) => {
@@ -73,8 +72,8 @@ class BindGroup {
     this.bindings = [...this.bindings, ...bindings];
   }
   /**
-   * Adds an already created {@link bindings} (buffers, texture, etc.) to the {@link bindings} array
-   * @param binding - binding to add
+   * Adds an already created {@link bindings} (buffers, texture, etc.) to the {@link bindings} array.
+   * @param binding - binding to add.
    */
   addBinding(binding) {
     this.bindings.push(binding);
@@ -107,17 +106,16 @@ class BindGroup {
     }
   }
   /**
-   * Creates Bindings based on a list of inputs
-   * @param bindingType - {@link core/bindings/Binding.Binding#bindingType | binding type}
-   * @param inputs - {@link ReadOnlyInputBindings | inputs (uniform or storage)} that will be used to create the binding
-   * @returns - a {@link bindings} array
+   * Creates Bindings based on a list of inputs.
+   * @param bindingType - {@link core/bindings/Binding.Binding#bindingType | binding type}.
+   * @param inputs - {@link ReadOnlyInputBindings | inputs (uniform or storage)} that will be used to create the binding.
+   * @returns - A {@link bindings} array.
    */
   createInputBindings(bindingType = "uniform", inputs = {}) {
     let bindings = [
       ...Object.keys(inputs).map((inputKey) => {
         const binding = inputs[inputKey];
-        if (!binding.struct)
-          return;
+        if (!binding.struct) return;
         const bindingParams = {
           label: toKebabCase(binding.label || inputKey),
           name: inputKey,
@@ -161,7 +159,7 @@ class BindGroup {
     return bindings;
   }
   /**
-   * Create and adds {@link bindings} based on inputs provided upon creation
+   * Create and adds {@link bindings} based on inputs provided upon creation.
    */
   setInputBindings() {
     this.addBindings([
@@ -170,15 +168,15 @@ class BindGroup {
     ]);
   }
   /**
-   * Get whether the GPU bind group is ready to be created
-   * It can be created if it has {@link bindings} and has not been created yet
+   * Get whether the GPU bind group is ready to be created.
+   * It can be created if it has {@link bindings} and has not been created yet.
    * @readonly
    */
   get shouldCreateBindGroup() {
     return !this.bindGroup && !!this.bindings.length;
   }
   /**
-   * Reset our {@link BindGroup} {@link entries}
+   * Reset our {@link BindGroup} {@link entries}.
    */
   resetEntries() {
     this.entries = {
@@ -187,7 +185,7 @@ class BindGroup {
     };
   }
   /**
-   * Create the GPU buffers, {@link bindings}, {@link entries}, {@link bindGroupLayout} and {@link bindGroup}
+   * Create the GPU buffers, {@link bindings}, {@link entries}, {@link bindGroupLayout} and {@link bindGroup}.
    */
   createBindGroup() {
     this.fillEntries();
@@ -195,7 +193,7 @@ class BindGroup {
     this.setBindGroup();
   }
   /**
-   * Reset the {@link BindGroup#entries.bindGroup | bindGroup entries}, recreates them and then recreate the {@link BindGroup#bindGroup | GPU bind group}
+   * Reset the {@link BindGroup#entries.bindGroup | bindGroup entries}, recreates them and then recreate the {@link BindGroup#bindGroup | GPU bind group}.
    */
   resetBindGroup() {
     this.entries.bindGroup = [];
@@ -293,6 +291,7 @@ class BindGroup {
         usage: ["copyDst", "mapRead"]
       });
     }
+    this.renderer.deviceManager.bufferBindings.set(binding.cacheKey, binding);
   }
   /**
    * Fill in our entries bindGroupLayout and bindGroup arrays with the correct binding resources.

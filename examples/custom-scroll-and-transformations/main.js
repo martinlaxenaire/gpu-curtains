@@ -43,7 +43,7 @@ window.addEventListener('load', async () => {
   await gpuCurtains.setDevice()
 
   // should be hooked on a gsap ticker instead
-  gpuCurtains.onRender(() => {
+  gpuCurtains.onBeforeRender(() => {
     lenis.raf(performance.now())
   })
 
@@ -63,7 +63,7 @@ window.addEventListener('load', async () => {
       var vsOutput: VSOutput;
 
       vsOutput.position = getOutputPosition(attributes.position);
-      vsOutput.uv = getUVCover(attributes.uv, planeTextureMatrix);
+      vsOutput.uv = getUVCover(attributes.uv, texturesMatrices.planeTexture.matrix);
     
       return vsOutput;
     }
@@ -116,7 +116,7 @@ window.addEventListener('load', async () => {
   planeElements.forEach((planeEl, planeIndex) => {
     params.label = 'Plane' + planeIndex
     // random placeholder color while textures are loading
-    params.texturesOptions.placeholderColor = Math.random() > 0.5 ? [255, 0, 255, 1] : [0, 255, 255, 1]
+    params.texturesOptions.placeholderColor = Math.random() > 0.5 ? [255, 0, 255, 255] : [255, 255, 0, 255]
 
     const plane = new Plane(gpuCurtains, planeEl, { ...params, renderOrder: -planeIndex })
 
@@ -142,7 +142,7 @@ window.addEventListener('load', async () => {
         const halfScreenEffect = Math.pow(Math.max(0, distanceFromCenter.y), 2)
         const scrollEffect = halfScreenEffect * Math.sign(distanceFromCenter.x)
         plane.rotation.z = -scrollEffect
-        plane.domTextures[0].rotation.z = scrollEffect
+        plane.domTextures[0].rotation = scrollEffect
 
         plane.rotation.y = -scrollEffect * 0.5
 

@@ -1,26 +1,15 @@
-import { isRenderer, generateMips } from '../renderers/utils.mjs';
+import { isRenderer } from '../renderers/utils.mjs';
 import { TextureBinding } from '../bindings/TextureBinding.mjs';
 import { generateUUID } from '../../utils/utils.mjs';
 import { getNumMipLevels, getDefaultTextureUsage } from './utils.mjs';
 
-var __accessCheck = (obj, member, msg) => {
-  if (!member.has(obj))
-    throw TypeError("Cannot " + msg);
+var __typeError = (msg) => {
+  throw TypeError(msg);
 };
-var __privateGet = (obj, member, getter) => {
-  __accessCheck(obj, member, "read from private field");
-  return member.get(obj);
-};
-var __privateAdd = (obj, member, value) => {
-  if (member.has(obj))
-    throw TypeError("Cannot add the same private member more than once");
-  member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-};
-var __privateSet = (obj, member, value, setter) => {
-  __accessCheck(obj, member, "write to private field");
-  member.set(obj, value);
-  return value;
-};
+var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
+var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), member.get(obj));
+var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
 var _autoResize;
 const defaultTextureParams = {
   label: "Texture",
@@ -36,13 +25,15 @@ const defaultTextureParams = {
   generateMips: false,
   flipY: false,
   premultipliedAlpha: false,
+  aspect: "all",
+  colorSpace: "srgb",
   autoDestroy: true
 };
 class Texture {
   /**
    * Texture constructor
-   * @param renderer - {@link Renderer | renderer} object or {@link GPUCurtains} class object used to create this {@link Texture}
-   * @param parameters - {@link TextureParams | parameters} used to create this {@link Texture}
+   * @param renderer - {@link Renderer | renderer} object or {@link GPUCurtains} class object used to create this {@link Texture}.
+   * @param parameters - {@link TextureParams | parameters} used to create this {@link Texture}.
    */
   constructor(renderer, parameters = defaultTextureParams) {
     /** Whether this texture should be automatically resized when the {@link Renderer renderer} size changes. Default to true. */
@@ -80,8 +71,32 @@ class Texture {
     this.createTexture();
   }
   /**
-   * Copy another {@link Texture} into this {@link Texture}
-   * @param texture - {@link Texture} to copy
+   * Set our {@link Texture#bindings | bindings}.
+   */
+  setBindings() {
+    this.bindings = [
+      new TextureBinding({
+        label: this.options.label + ": " + this.options.name + " texture",
+        name: this.options.name,
+        bindingType: this.options.type,
+        visibility: this.options.visibility,
+        texture: this.texture,
+        format: this.options.format,
+        viewDimension: this.options.viewDimension,
+        multisampled: this.options.sampleCount > 1
+      })
+    ];
+  }
+  /**
+   * Get our {@link TextureBinding | texture binding}.
+   * @readonly
+   */
+  get textureBinding() {
+    return this.bindings[0];
+  }
+  /**
+   * Copy another {@link Texture} into this {@link Texture}.
+   * @param texture - {@link Texture} to copy.
    */
   copy(texture) {
     this.options.fromTexture = texture;
@@ -89,7 +104,7 @@ class Texture {
   }
   /**
    * Copy a {@link GPUTexture} directly into this {@link Texture}. Mainly used for depth textures.
-   * @param texture - {@link GPUTexture} to copy
+   * @param texture - {@link GPUTexture} to copy.
    */
   copyGPUTexture(texture) {
     this.size = {
@@ -105,11 +120,10 @@ class Texture {
     this.textureBinding.resource = this.texture;
   }
   /**
-   * Create the {@link GPUTexture | texture} (or copy it from source) and update the {@link TextureBinding#resource | binding resource}
+   * Create the {@link GPUTexture | texture} (or copy it from source) and update the {@link TextureBinding#resource | binding resource}.
    */
   createTexture() {
-    if (!this.size.width || !this.size.height)
-      return;
+    if (!this.size.width || !this.size.height) return;
     if (this.options.fromTexture) {
       this.copyGPUTexture(this.options.fromTexture.texture);
       return;
@@ -143,13 +157,13 @@ class Texture {
     origin = [0, 0, 0],
     colorSpace = "srgb"
   }) {
-    this.renderer.device.queue.copyExternalImageToTexture(
+    this.renderer.deviceManager.copyExternalImageToTexture(
       { source, flipY: this.options.flipY },
       { texture: this.texture, premultipliedAlpha: this.options.premultipliedAlpha, origin, colorSpace },
       [width, height, depth]
     );
     if (this.texture.mipLevelCount > 1) {
-      generateMips(this.renderer.device, this.texture);
+      this.renderer.generateMips(this);
     }
   }
   /**
@@ -175,40 +189,15 @@ class Texture {
       [width, height, depth]
     );
     if (this.texture.mipLevelCount > 1) {
-      generateMips(this.renderer.device, this.texture);
+      this.renderer.generateMips(this);
     }
   }
   /**
-   * Set our {@link Texture#bindings | bindings}
-   */
-  setBindings() {
-    this.bindings = [
-      new TextureBinding({
-        label: this.options.label + ": " + this.options.name + " texture",
-        name: this.options.name,
-        bindingType: this.options.type,
-        visibility: this.options.visibility,
-        texture: this.texture,
-        format: this.options.format,
-        viewDimension: this.options.viewDimension,
-        multisampled: this.options.sampleCount > 1
-      })
-    ];
-  }
-  /**
-   * Get our {@link TextureBinding | texture binding}
-   * @readonly
-   */
-  get textureBinding() {
-    return this.bindings[0];
-  }
-  /**
-   * Resize our {@link Texture}, which means recreate it/copy it again and tell the {@link core/bindGroups/TextureBindGroup.TextureBindGroup | texture bind group} to update
-   * @param size - the optional new {@link TextureSize | size} to set
+   * Resize our {@link Texture}, which means recreate it/copy it again and tell the {@link core/bindGroups/TextureBindGroup.TextureBindGroup | texture bind group} to update.
+   * @param size - the optional new {@link TextureSize | size} to set.
    */
   resize(size = null) {
-    if (!__privateGet(this, _autoResize))
-      return;
+    if (!__privateGet(this, _autoResize)) return;
     if (!size) {
       size = {
         width: Math.floor(this.renderer.canvas.width * this.options.qualityRatio),
@@ -223,7 +212,7 @@ class Texture {
     this.createTexture();
   }
   /**
-   * Destroy our {@link Texture}
+   * Destroy our {@link Texture}.
    */
   destroy() {
     this.renderer.removeTexture(this);

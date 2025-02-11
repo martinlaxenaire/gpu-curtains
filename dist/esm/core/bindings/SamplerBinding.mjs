@@ -54,8 +54,7 @@ class SamplerBinding extends Binding {
    * @param value - new bind group resource
    */
   set resource(value) {
-    if (value && this.sampler)
-      this.shouldResetBindGroup = true;
+    if (value && this.sampler) this.shouldResetBindGroup = true;
     this.sampler = value;
   }
   /**
