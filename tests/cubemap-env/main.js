@@ -102,8 +102,8 @@ window.addEventListener('load', async () => {
         params.useDiffuse > 0.0
       );
       
-      color = vec4(toneMapKhronosPbrNeutral(color.rgb), color.a);
-      color = vec4(linearTosRGB(color.rgb), color.a);
+      color = vec4(KhronosToneMapping(color.rgb), color.a);
+      color = linearTosRGB_4(color);
       
       return color;
     }
@@ -127,7 +127,7 @@ window.addEventListener('load', async () => {
         struct: {
           envRotation: {
             type: 'mat3x3f',
-            value: environmentMap.rotation,
+            value: environmentMap.rotationMatrix,
           },
           useDiffuse: {
             type: 'f32',
@@ -236,6 +236,21 @@ window.addEventListener('load', async () => {
       }
     })
     .name('Maps')
+
+  envFolder
+    .add({ rotation: 90 }, 'rotation', 0, 360, 1)
+    .name('Rotation')
+    .onChange((value) => {
+      if (environmentMap) {
+        environmentMap.rotation = value * (Math.PI / 180)
+      }
+    })
+
+  environmentMap.onRotationAxisChanged(() => {
+    if (cubeMap) {
+      cubeMap.uniforms.params.envRotation.value = environmentMap.rotationMatrix
+    }
+  })
 
   const envTexturesFolder = gui.addFolder('Environment textures')
 

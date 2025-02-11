@@ -271,7 +271,7 @@ const _MediaTexture = class _MediaTexture extends Texture {
       sampleCount: this.options.sampleCount,
       usage: getDefaultMediaTextureUsage(this.options.usage)
     };
-    if (!this.options.sources) {
+    if (!this.sources?.length) {
       options.mipLevelCount = 1;
       this.texture?.destroy();
       this.texture = this.renderer.createTexture(options);
@@ -635,7 +635,7 @@ const _MediaTexture = class _MediaTexture extends Texture {
         source.shouldUpdate = true;
       }
       if (source.shouldUpdate && sourceType !== "externalVideo") {
-        if (this.size.width !== this.texture.width || this.size.height !== this.texture.height) {
+        if (this.size.width !== this.texture.width || this.size.height !== this.texture.height || this.options.generateMips && this.texture && this.texture.mipLevelCount <= 1) {
           this.createTexture();
         }
         this.renderer.uploadTexture(this, sourceIndex);

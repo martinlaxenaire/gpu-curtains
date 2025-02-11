@@ -4,7 +4,6 @@ import {
   AmbientLight,
   DirectionalLight,
   GLTFScenesManager,
-  buildShaders,
   DOMObject3D,
   Vec3,
 } from '../../../dist/esm/index.mjs'
@@ -72,7 +71,7 @@ export class GLTFExample {
     node.position.sub(center)
     node.parent = this.parentNode
 
-    // reset parent node rotation
+    // reset parent node rotationMatrix
     this.parentNode.rotation.y = 0
 
     // copy new scenes bounding box into DOMObject3D own bounding box
@@ -82,39 +81,26 @@ export class GLTFExample {
     this.meshes = this.gltfScenesManager.addMeshes((meshDescriptor) => {
       const { parameters } = meshDescriptor
 
-      parameters.uniforms = {
-        ...parameters.uniforms,
-        ...{
-          global: {
-            struct: {
-              opacity: {
-                type: 'f32',
-                value: 0,
-              },
-            },
-          },
-        },
-      }
-
-      const additionalColorContribution = `
-        color = vec4(color.rgb * global.opacity, color.a * global.opacity);
-      `
-
       parameters.userData = {
         isHovered: false,
         scaleTween: null,
       }
 
-      parameters.shaders = buildShaders(meshDescriptor, {
-        shadingModel: 'PBR',
-        chunks: {
-          additionalColorContribution,
-        },
-      })
+      parameters.material.opacity = 0
+      // for a better result we won't use transparency blending
+      // but rather multiply the rgb values with opacity
+      //parameters.transparent = true
+      parameters.material.fragmentChunks = {
+        additionalContribution: `
+          outputColor = vec4(outputColor.rgb * outputColor.a, outputColor.a);
+        `,
+      }
+
+      parameters.material.shading = 'PBR'
     })
 
     this.meshes.forEach((mesh, index) => {
-      this.opacityTween.to(mesh.uniforms.global.opacity, {
+      this.opacityTween.to(mesh.uniforms.material.opacity, {
         value: 1,
         duration: 1.5,
         delay: 0.5,

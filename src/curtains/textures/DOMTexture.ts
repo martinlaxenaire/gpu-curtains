@@ -157,7 +157,7 @@ export class DOMTexture extends MediaTexture {
     this.#coverScale.set(1 / (coverRatio * this.scale.x), 1 / (coverRatio * this.scale.y))
     this.#negatedOrigin.copy(this.transformOrigin).multiplyScalar(-1)
 
-    this.#rotationMatrix.rotateByAngle(this.rotation)
+    this.#rotationMatrix.rotateByAngleZ(this.rotation)
 
     // here we could create a matrix for each translations / scales and do:
     // this.modelMatrix

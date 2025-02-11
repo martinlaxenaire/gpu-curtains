@@ -51,6 +51,10 @@ class EnvironmentMap {
     __privateAdd(this, _runComputePass);
     /** BRDF GGX LUT storage {@link Texture} used in the compute shader. */
     __privateAdd(this, _lutStorageTexture, void 0);
+    // callbacks / events
+    /** function assigned to the {@link onRotationAxisChanged} callback */
+    this._onRotationAxisChangedCallback = () => {
+    };
     renderer = isRenderer(renderer, "EnvironmentMap");
     this.renderer = renderer;
     params = {
@@ -76,7 +80,8 @@ class EnvironmentMap {
           generateMips: true
         },
         diffuseIntensity: 1,
-        specularIntensity: 1
+        specularIntensity: 1,
+        rotation: Math.PI / 2
       },
       ...params
     };
@@ -90,9 +95,36 @@ class EnvironmentMap {
       addressModeU: "clamp-to-edge",
       addressModeV: "clamp-to-edge"
     });
-    this.rotation = new Mat3(new Float32Array([0, 0, 1, 0, 1, 0, -1, 0, 0]));
+    this.rotationMatrix = new Mat3().rotateByAngleY(-Math.PI / 2);
     this.hdrLoader = new HDRLoader();
     this.computeBRDFLUTTexture();
+  }
+  /**
+   * Get the current {@link EnvironmentMapOptions.rotation | rotation}, in radians.
+   */
+  get rotation() {
+    return this.options.rotation;
+  }
+  /**
+   * Set the current {@link EnvironmentMapOptions.rotation | rotation}, in radians.
+   * @param value - New {@link EnvironmentMapOptions.rotation | rotation} to use, in radians.
+   */
+  set rotation(value) {
+    if (value !== this.options.rotation) {
+      this.options.rotation = value;
+      this.rotationMatrix.rotateByAngleY(-value);
+      this._onRotationAxisChangedCallback && this._onRotationAxisChangedCallback();
+    }
+  }
+  /**
+   * Callback to call whenever the {@link EnvironmentMapOptions.rotation | rotation} changed.
+   * @param callback - Called whenever the {@link EnvironmentMapOptions.rotation | rotation} changed.
+   */
+  onRotationAxisChanged(callback) {
+    if (callback) {
+      this._onRotationAxisChangedCallback = callback;
+    }
+    return this;
   }
   /**
    * Create the {@link lutTexture | BRDF GGX LUT texture} using the provided {@link LUTTextureParams | LUT texture options} and a {@link ComputePass} that runs once.
@@ -298,7 +330,7 @@ class EnvironmentMap {
     const textureDefaultOptions = {
       viewDimension: "cube",
       autoDestroy: false
-      // keep alive when changing glTF
+      // keep alive when changing mesh
     };
     if (!this.specularTexture) {
       this.specularTexture = new Texture(this.renderer, {

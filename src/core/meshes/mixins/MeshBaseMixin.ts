@@ -906,21 +906,15 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      */
     useMaterial(material: RenderMaterial) {
       let currentCacheKey = null
-      let isDepthMaterialSwitch = false
 
       // if we already have geometry attributes linked to a material
       // we'll need to check if everything matches
-      // also we need to ensure we're not switching from a depth material
       if (this.material) {
-        isDepthMaterialSwitch =
-          this.material.options.label.includes('depth render material') ||
-          material.options.label.includes('depth render material')
-
         if (this.geometry) {
           currentCacheKey = this.material.cacheKey
         }
 
-        if (this.options.renderBundle && !isDepthMaterialSwitch) {
+        if (this.options.renderBundle) {
           this.options.renderBundle.ready = false
         }
       }
@@ -935,7 +929,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       this.transparent = this.material.options.rendering.transparent
 
       // compile material and/or reset pipeline entry if cache keys differ
-      if (currentCacheKey && currentCacheKey !== this.material.cacheKey && !isDepthMaterialSwitch) {
+      if (currentCacheKey && currentCacheKey !== this.material.cacheKey) {
         if (this.material.ready) {
           this.material.setPipelineEntry()
         } else {

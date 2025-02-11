@@ -389,7 +389,7 @@ export class MediaTexture extends Texture {
       usage: getDefaultMediaTextureUsage(this.options.usage),
     } as GPUTextureDescriptor
 
-    if (!this.options.sources) {
+    if (!this.sources?.length) {
       options.mipLevelCount = 1
 
       this.texture?.destroy()
@@ -867,8 +867,12 @@ export class MediaTexture extends Texture {
 
       // upload texture if needed
       if (source.shouldUpdate && sourceType !== 'externalVideo') {
-        // if the size is not matching, this means we need to recreate the texture
-        if (this.size.width !== this.texture.width || this.size.height !== this.texture.height) {
+        // if the size or mips are not matching, this means we need to recreate the texture
+        if (
+          this.size.width !== this.texture.width ||
+          this.size.height !== this.texture.height ||
+          (this.options.generateMips && this.texture && this.texture.mipLevelCount <= 1)
+        ) {
           this.createTexture()
         }
 

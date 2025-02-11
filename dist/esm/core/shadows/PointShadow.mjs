@@ -25,10 +25,6 @@ var __privateSet = (obj, member, value, setter) => {
 };
 var _tempCubeDirection;
 const pointShadowStruct = {
-  face: {
-    type: "i32",
-    value: 0
-  },
   ...shadowStruct,
   cameraNear: {
     type: "f32",
@@ -229,7 +225,7 @@ class PointShadow extends Shadow {
     });
   }
   /**
-   * Clear the content of the depth texture. Called whenever the {@link meshes} array is empty after having removed a mesh.
+   * Clear the content of the depth texture. Called whenever the {@link castingMeshes} {@link Map} is empty after having removed a mesh, or if all {@link castingMeshes} `visible` properties are `false`.
    */
   clearDepthTexture() {
     if (!this.depthTexture || !this.depthTexture.texture)
@@ -262,62 +258,61 @@ class PointShadow extends Shadow {
     this.renderer.device.queue.submit([commandEncoder.finish()]);
   }
   /**
-   * Remove the depth pass from its {@link utils/TasksQueueManager.TasksQueueManager | task queue manager}.
-   * @param depthPassTaskID - Task queue manager ID to use for removal.
+   * Render the depth pass. Called by the {@link CameraRenderer#scene | scene} when rendering the {@link depthPassTarget} render pass entry, or by the {@link renderOnce} method.<br />
+   * - For each face of the depth cube texture:
+   *   - Set the {@link depthPassTarget} descriptor depth texture view to our depth cube texture current face.
+   *   - Render all the depth meshes.
+   * @param commandEncoder - {@link GPUCommandEncoder} to use.
    */
-  removeDepthPass(depthPassTaskID) {
-    this.renderer.onBeforeCommandEncoderCreation.remove(depthPassTaskID);
+  render(commandEncoder) {
+    if (!this.castingMeshes.size)
+      return;
+    let shouldRender = false;
+    for (const [_uuid, mesh] of this.castingMeshes) {
+      if (mesh.visible) {
+        shouldRender = true;
+        break;
+      }
+    }
+    if (!shouldRender) {
+      this.clearDepthTexture();
+      return;
+    }
+    for (let face = 0; face < 6; face++) {
+      this.depthPassTarget.renderPass.setRenderPassDescriptor(
+        this.depthTexture.texture.createView({
+          label: this.depthTexture.texture.label + " cube face view " + face,
+          dimension: "2d",
+          arrayLayerCount: 1,
+          baseArrayLayer: face
+        })
+      );
+      this.renderDepthPass(commandEncoder, face);
+    }
+    this.renderer.pipelineManager.resetCurrentPipeline();
   }
   /**
-   * Render the depth pass. This happens before creating the {@link CameraRenderer} command encoder.<br>
-   * - Force all the {@link meshes} to use their depth materials
-   * - For each face of the depth cube texture:
-   *   - Create a command encoder.
-   *   - Set the {@link depthPassTarget} descriptor depth texture view to our depth cube texture current face.
-   *   - Update the face index
-   *   - Render all the {@link meshes}
-   *   - Submit the command encoder
-   * - Reset all the {@link meshes} materials to their original one.
-   * @param once - Whether to render it only once or not.
+   * Render all the {@link castingMeshes} into the {@link depthPassTarget}. Before rendering them, we swap the cube face bind group with the {@link CameraRenderer.pointShadowsCubeFaceBindGroups | renderer pointShadowsCubeFaceBindGroups} at the index containing the current face onto which we'll draw.
+   * @param commandEncoder - {@link GPUCommandEncoder} to use.
+   * @param face - Current cube map face onto which we're drawing.
    */
-  render(once = false) {
-    return this.renderer.onBeforeCommandEncoderCreation.add(
-      () => {
-        if (!this.meshes.size)
-          return;
-        this.renderer.setCameraBindGroup();
-        this.useDepthMaterials();
-        for (let i = 0; i < 6; i++) {
-          const commandEncoder = this.renderer.device.createCommandEncoder();
-          if (!this.renderer.production)
-            commandEncoder.pushDebugGroup(
-              `${this.constructor.name} (index: ${this.index}): depth pass command encoder for face ${i}`
-            );
-          this.depthPassTarget.renderPass.setRenderPassDescriptor(
-            this.depthTexture.texture.createView({
-              label: this.depthTexture.texture.label + " cube face view " + i,
-              dimension: "2d",
-              arrayLayerCount: 1,
-              baseArrayLayer: i
-            })
-          );
-          this.rendererBinding.childrenBindings[this.index].inputs.face.value = i;
-          this.renderer.shouldUpdateCameraLightsBindGroup();
-          this.renderer.updateCameraLightsBindGroup();
-          this.renderDepthPass(commandEncoder);
-          if (!this.renderer.production)
-            commandEncoder.popDebugGroup();
-          const commandBuffer = commandEncoder.finish();
-          this.renderer.device.queue.submit([commandBuffer]);
-        }
-        this.useOriginalMaterials();
-        this.renderer.pipelineManager.resetCurrentPipeline();
-      },
-      {
-        once,
-        order: this.index
+  renderDepthPass(commandEncoder, face = 0) {
+    this.renderer.pipelineManager.resetCurrentPipeline();
+    const depthPass = commandEncoder.beginRenderPass(this.depthPassTarget.renderPass.descriptor);
+    if (!this.renderer.production)
+      depthPass.pushDebugGroup(`${this.constructor.name} (index: ${this.index}): depth pass for face ${face}`);
+    for (const [uuid, depthMesh] of this.depthMeshes) {
+      if (!this.castingMeshes.get(uuid)?.visible) {
+        continue;
       }
-    );
+      const cubeFaceBindGroupIndex = depthMesh.material.bindGroups.length - 1;
+      this.renderer.pointShadowsCubeFaceBindGroups[face].setIndex(cubeFaceBindGroupIndex);
+      depthMesh.material.bindGroups[cubeFaceBindGroupIndex] = this.renderer.pointShadowsCubeFaceBindGroups[face];
+      depthMesh.render(depthPass);
+    }
+    if (!this.renderer.production)
+      depthPass.popDebugGroup();
+    depthPass.end();
   }
   /**
    * Get the default depth pass vertex shader for this {@link PointShadow}.
@@ -339,6 +334,19 @@ class PointShadow extends Shadow {
       /** Returned code. */
       code: getDefaultPointShadowDepthFs(this.index)
     };
+  }
+  /**
+   * Patch the given {@link ProjectedMesh | mesh} material parameters to create the depth mesh. Here we'll be adding the first {@link CameraRenderer.pointShadowsCubeFaceBindGroups | renderer pointShadowsCubeFaceBindGroups} bind group containing the face index onto which we'll be drawing. This bind group will be swapped when rendering using {@link renderDepthPass}.
+   * @param mesh - original {@link ProjectedMesh | mesh} to use.
+   * @param parameters - Optional additional parameters to use for the depth mesh.
+   * @returns - Patched parameters.
+   */
+  patchShadowCastingMeshParams(mesh, parameters = {}) {
+    if (!parameters.bindGroups) {
+      parameters.bindGroups = [];
+    }
+    parameters.bindGroups = [...parameters.bindGroups, this.renderer.pointShadowsCubeFaceBindGroups[0]];
+    return super.patchShadowCastingMeshParams(mesh, parameters);
   }
 }
 _tempCubeDirection = new WeakMap();

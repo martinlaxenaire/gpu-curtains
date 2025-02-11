@@ -3,7 +3,6 @@ import { Renderer } from './utils'
 import { Sampler } from '../samplers/Sampler'
 import { PipelineManager } from '../pipelines/PipelineManager'
 import { SceneObject } from './GPURenderer'
-import { DOMTexture } from '../../curtains/textures/DOMTexture'
 import { AllowedBindGroups } from '../../types/BindGroups'
 import { Buffer } from '../buffers/Buffer'
 import { BufferBinding } from '../bindings/BufferBinding'
@@ -48,7 +47,7 @@ export interface GPUDeviceManagerSetupParams {
 /**
  * Responsible for the WebGPU {@link GPUAdapter | adapter} and {@link GPUDevice | device} creations, losing and restoration.
  *
- * It will create all the GPU objects that need a {@link GPUDevice | device} to do so, as well as a {@link PipelineManager}. It will also keep a track of all the {@link Renderer}, {@link AllowedBindGroups | bind groups}, {@link Sampler}, {@link DOMTexture} and {@link GPUBuffer | GPU buffers} created.
+ * It will create all the GPU objects that need a {@link GPUDevice | device} to do so, as well as a {@link PipelineManager}. It will also keep a track of all the {@link Renderer}, {@link AllowedBindGroups | bind groups}, {@link Sampler}, {@link MediaTexture} and {@link GPUBuffer | GPU buffers} created.
  *
  * The {@link GPUDeviceManager} is also responsible for creating the {@link GPUCommandBuffer}, rendering all the {@link Renderer} and then submitting the {@link GPUCommandBuffer} at each {@link GPUDeviceManager#render | render} calls.
  */
@@ -431,11 +430,11 @@ export class GPUDeviceManager {
   }
 
   /**
-   * Upload a {@link MediaTexture#texture | texture} or {@link DOMTexture#texture | texture} to the GPU.
-   * @param texture - {@link MediaTexture} or {@link DOMTexture} containing the {@link GPUTexture} to upload.
+   * Upload a {@link MediaTexture#texture | texture} to the GPU.
+   * @param texture - {@link MediaTexture} containing the {@link GPUTexture} to upload.
    * @param sourceIndex - Index of the source to upload (for cube maps). Default to `0`.
    */
-  uploadTexture(texture: MediaTexture | DOMTexture, sourceIndex = 0) {
+  uploadTexture(texture: MediaTexture, sourceIndex = 0) {
     if ('sources' in texture && texture.sources.length) {
       try {
         this.device?.queue.copyExternalImageToTexture(
@@ -480,10 +479,10 @@ export class GPUDeviceManager {
   /**
    * Mips generation helper on the GPU using our {@link device}. Caches sampler, module and pipeline (by {@link GPUTexture} formats) for faster generation.
    * Ported from https://webgpufundamentals.org/webgpu/lessons/webgpu-importing-textures.html
-   * @param texture - {@link Texture} or {@link DOMTexture} for which to generate the mips.
+   * @param texture - {@link Texture} for which to generate the mips.
    * @param commandEncoder - optional {@link GPUCommandEncoder} to use if we're already in the middle of a command encoding process.
    */
-  generateMips(texture: Texture | DOMTexture, commandEncoder: GPUCommandEncoder = null) {
+  generateMips(texture: Texture, commandEncoder: GPUCommandEncoder = null) {
     // TODO use compute instead?
     // see https://eliemichel.github.io/LearnWebGPU/basic-compute/image-processing/mipmap-generation.html
     // and https://github.com/GPUOpen-Effects/FidelityFX-SPD
@@ -656,7 +655,7 @@ export class GPUDeviceManager {
    * - create a {@link GPUCommandEncoder}.
    * - render all our {@link renderers}.
    * - submit our {@link GPUCommandBuffer}.
-   * - upload {@link DOMTexture#texture | DOMTexture textures} that do not have a parentMesh.
+   * - upload {@link MediaTexture#texture | MediaTexture textures} that need it.
    * - empty our {@link texturesQueue} array.
    * - call all our {@link renderers} {@link core/renderers/GPURenderer.GPURenderer#onAfterCommandEncoder | onAfterCommandEncoder} callbacks.
    */

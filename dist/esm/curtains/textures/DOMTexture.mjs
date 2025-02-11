@@ -108,7 +108,7 @@ class DOMTexture extends MediaTexture {
     const coverRatio = parentRatio > sourceRatio !== parentWidth > parentHeight ? 1 : parentWidth > parentHeight ? __privateGet(this, _parentRatio).x * __privateGet(this, _sourceRatio).x : __privateGet(this, _sourceRatio).y * __privateGet(this, _parentRatio).y;
     __privateGet(this, _coverScale).set(1 / (coverRatio * this.scale.x), 1 / (coverRatio * this.scale.y));
     __privateGet(this, _negatedOrigin).copy(this.transformOrigin).multiplyScalar(-1);
-    __privateGet(this, _rotationMatrix).rotateByAngle(this.rotation);
+    __privateGet(this, _rotationMatrix).rotateByAngleZ(this.rotation);
     this.modelMatrix.identity().premultiplyTranslate(__privateGet(this, _negatedOrigin)).premultiplyScale(__privateGet(this, _coverScale)).premultiplyScale(__privateGet(this, _parentRatio)).premultiply(__privateGet(this, _rotationMatrix)).premultiplyScale(__privateGet(this, _sourceRatio)).premultiplyTranslate(this.transformOrigin).translate(this.offset);
     this.transformBinding.inputs.matrix.shouldUpdate = true;
   }

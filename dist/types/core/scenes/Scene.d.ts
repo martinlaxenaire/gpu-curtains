@@ -37,6 +37,8 @@ export interface RenderPassEntry {
     onBeforeRenderPass: ((commandEncoder?: GPUCommandEncoder, swapChainTexture?: GPUTexture) => void) | null;
     /** Optional function to execute just after rendering the Meshes, useful for eventual texture copy. */
     onAfterRenderPass: ((commandEncoder?: GPUCommandEncoder, swapChainTexture?: GPUTexture) => void) | null;
+    /** Optional function that can be used to manually create a {@link GPURenderPassEncoder} and create a custom rendering behaviour instead of the regular one. Used internally to render shadows. */
+    useCustomRenderPass: ((commandEncoder?: GPUCommandEncoder) => void) | null;
     /** If this {@link RenderPassEntry} needs to render only one Mesh. */
     element: PingPongPlane | ShaderPass | null;
     /** If this {@link RenderPassEntry} needs to render multiple Meshes or {@link RenderBundle}, then use a {@link Stack} object. */

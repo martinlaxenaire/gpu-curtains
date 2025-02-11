@@ -297,11 +297,39 @@ export class Mat3 {
   }
 
   /**
-   * Rotate this {@link Mat3} by a given angle, counterclockwise.
-   * @param theta - Angle to rotate.
+   * Rotate this {@link Mat3} by a given angle around X axis, counterclockwise.
+   * @param theta - Angle to rotate along X axis.
    * @returns - this {@link Mat3} after rotation.
    */
-  rotateByAngle(theta = 0): Mat3 {
+  rotateByAngleX(theta = 0): Mat3 {
+    const c = Math.cos(theta)
+    const s = Math.sin(theta)
+
+    this.set(1, 0, 0, 0, c, s, 0, -s, c)
+
+    return this
+  }
+
+  /**
+   * Rotate this {@link Mat3} by a given angle around Y axis, counterclockwise.
+   * @param theta - Angle to rotate along Y axis.
+   * @returns - this {@link Mat3} after rotation.
+   */
+  rotateByAngleY(theta = 0): Mat3 {
+    const c = Math.cos(theta)
+    const s = Math.sin(theta)
+
+    this.set(c, 0, s, 0, 1, 0, -s, 0, c)
+
+    return this
+  }
+
+  /**
+   * Rotate this {@link Mat3} by a given angle around Z axis, counterclockwise.
+   * @param theta - Angle to rotate along Z axis.
+   * @returns - this {@link Mat3} after rotation.
+   */
+  rotateByAngleZ(theta = 0): Mat3 {
     // counterclockwise
 
     const c = Math.cos(theta)

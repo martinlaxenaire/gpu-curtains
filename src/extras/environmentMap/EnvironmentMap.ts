@@ -51,6 +51,8 @@ export interface EnvironmentMapOptions {
   diffuseIntensity: number
   /** Define the intensity of the indirect specular contribution to use in a PBR shader. Default to `1`. */
   specularIntensity: number
+  /** Define the {@link EnvironmentMap} rotation along Y axis, in radians. Default to `Math.PI / 2` (90 degrees). */
+  rotation: number
 }
 
 /** Define the parameters used to create the {@link EnvironmentMap}. */
@@ -61,7 +63,7 @@ export interface EnvironmentMapParams extends Partial<EnvironmentMapOptions> {}
  *
  * Create a LUT texture on init using a {@link ComputePass}. Can load an HDR file and then create the specular and diffuse textures using two separate {@link ComputePass}.
  *
- * Especially useful for IBL shading with glTF.
+ * Especially useful for IBL shading with {@link extras/meshes/LitMesh.LitMesh | LitMesh}.
  *
  * @example
  * ```javascript
@@ -81,9 +83,8 @@ export class EnvironmentMap {
   /** Options used to generate the {@link lutTexture}, {@link specularTexture} and {@link diffuseTexture}. */
   options: EnvironmentMapOptions
 
-  /** Define the default environment maps rotation. */
-  // TODO use a Vec3 and compute the Mat3 from it?
-  rotation: Mat3
+  /** Define the default environment maps rotation {@link Mat3}. */
+  rotationMatrix: Mat3
 
   /** BRDF GGX LUT storage {@link Texture} used in the compute shader. */
   #lutStorageTexture: Texture
@@ -94,6 +95,12 @@ export class EnvironmentMap {
   diffuseTexture: Texture | null
   /** Specular environment cube map {@link Texture}. */
   specularTexture: Texture | null
+
+  // callbacks / events
+  /** function assigned to the {@link onRotationAxisChanged} callback */
+  _onRotationAxisChangedCallback = () => {
+    /* allow empty callback */
+  }
 
   /**
    * {@link EnvironmentMap} constructor.
@@ -129,6 +136,7 @@ export class EnvironmentMap {
         },
         diffuseIntensity: 1,
         specularIntensity: 1,
+        rotation: Math.PI / 2,
       },
       ...params,
     } as EnvironmentMapParams
@@ -145,12 +153,45 @@ export class EnvironmentMap {
       addressModeV: 'clamp-to-edge',
     })
 
-    this.rotation = new Mat3(new Float32Array([0, 0, 1, 0, 1, 0, -1, 0, 0]))
+    this.rotationMatrix = new Mat3().rotateByAngleY(-Math.PI / 2)
 
     this.hdrLoader = new HDRLoader()
 
     // generate LUT texture right now
     this.computeBRDFLUTTexture()
+  }
+
+  /**
+   * Get the current {@link EnvironmentMapOptions.rotation | rotation}, in radians.
+   */
+  get rotation(): number {
+    return this.options.rotation
+  }
+
+  /**
+   * Set the current {@link EnvironmentMapOptions.rotation | rotation}, in radians.
+   * @param value - New {@link EnvironmentMapOptions.rotation | rotation} to use, in radians.
+   */
+  set rotation(value: number) {
+    if (value !== this.options.rotation) {
+      this.options.rotation = value
+      // need a clockwise rotation
+      this.rotationMatrix.rotateByAngleY(-value)
+
+      this._onRotationAxisChangedCallback && this._onRotationAxisChangedCallback()
+    }
+  }
+
+  /**
+   * Callback to call whenever the {@link EnvironmentMapOptions.rotation | rotation} changed.
+   * @param callback - Called whenever the {@link EnvironmentMapOptions.rotation | rotation} changed.
+   */
+  onRotationAxisChanged(callback: () => void): this {
+    if (callback) {
+      this._onRotationAxisChangedCallback = callback
+    }
+
+    return this
   }
 
   /**
@@ -422,7 +463,7 @@ export class EnvironmentMap {
     // default options to absolutely use
     const textureDefaultOptions: TextureParams = {
       viewDimension: 'cube',
-      autoDestroy: false, // keep alive when changing glTF
+      autoDestroy: false, // keep alive when changing mesh
     }
 
     // specular texture

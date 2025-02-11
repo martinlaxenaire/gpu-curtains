@@ -20,8 +20,9 @@ export const getDefaultShadowDepthVs = (
   ${getVertexTransformedPositionNormal({ bindings, geometry })}
   
   let worldPos = worldPosition.xyz / worldPosition.w;
+  
   let lightDirection: vec3f = normalize(worldPos - directionalLights.elements[${lightIndex}].direction);
-  let NdotL: f32 = dot(normalize(normal), lightDirection);
+  let NdotL: f32 = dot(normal, lightDirection);
   let sinNdotL = sqrt(1.0 - NdotL * NdotL);
   let normalBias: f32 = directionalShadow.normalBias * sinNdotL;
   

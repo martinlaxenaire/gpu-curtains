@@ -43,6 +43,8 @@ export interface EnvironmentMapOptions {
     diffuseIntensity: number;
     /** Define the intensity of the indirect specular contribution to use in a PBR shader. Default to `1`. */
     specularIntensity: number;
+    /** Define the {@link EnvironmentMap} rotation along Y axis, in radians. Default to `Math.PI / 2` (90 degrees). */
+    rotation: number;
 }
 /** Define the parameters used to create the {@link EnvironmentMap}. */
 export interface EnvironmentMapParams extends Partial<EnvironmentMapOptions> {
@@ -52,7 +54,7 @@ export interface EnvironmentMapParams extends Partial<EnvironmentMapOptions> {
  *
  * Create a LUT texture on init using a {@link ComputePass}. Can load an HDR file and then create the specular and diffuse textures using two separate {@link ComputePass}.
  *
- * Especially useful for IBL shading with glTF.
+ * Especially useful for IBL shading with {@link extras/meshes/LitMesh.LitMesh | LitMesh}.
  *
  * @example
  * ```javascript
@@ -71,20 +73,36 @@ export declare class EnvironmentMap {
     hdrLoader: HDRLoader;
     /** Options used to generate the {@link lutTexture}, {@link specularTexture} and {@link diffuseTexture}. */
     options: EnvironmentMapOptions;
-    /** Define the default environment maps rotation. */
-    rotation: Mat3;
+    /** Define the default environment maps rotation {@link Mat3}. */
+    rotationMatrix: Mat3;
     /** BRDF GGX LUT {@link Texture} used for IBL shading. */
     lutTexture: Texture | null;
     /** Diffuse environment cube map {@link Texture}. */
     diffuseTexture: Texture | null;
     /** Specular environment cube map {@link Texture}. */
     specularTexture: Texture | null;
+    /** function assigned to the {@link onRotationAxisChanged} callback */
+    _onRotationAxisChangedCallback: () => void;
     /**
      * {@link EnvironmentMap} constructor.
      * @param renderer - {@link Renderer} or {@link GPUCurtains} class object used to create this {@link EnvironmentMap}.
      * @param params - {@link EnvironmentMapParams | parameters} use to create this {@link EnvironmentMap}. Defines the various textures options.
      */
     constructor(renderer: Renderer | GPUCurtains, params?: EnvironmentMapParams);
+    /**
+     * Get the current {@link EnvironmentMapOptions.rotation | rotation}, in radians.
+     */
+    get rotation(): number;
+    /**
+     * Set the current {@link EnvironmentMapOptions.rotation | rotation}, in radians.
+     * @param value - New {@link EnvironmentMapOptions.rotation | rotation} to use, in radians.
+     */
+    set rotation(value: number);
+    /**
+     * Callback to call whenever the {@link EnvironmentMapOptions.rotation | rotation} changed.
+     * @param callback - Called whenever the {@link EnvironmentMapOptions.rotation | rotation} changed.
+     */
+    onRotationAxisChanged(callback: () => void): this;
     /**
      * Create the {@link lutTexture | BRDF GGX LUT texture} using the provided {@link LUTTextureParams | LUT texture options} and a {@link ComputePass} that runs once.
      */

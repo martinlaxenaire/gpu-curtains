@@ -323,7 +323,9 @@ window.addEventListener('load', async () => {
     )
     .name('Models')
 
-  const envMapField = gui
+  const envMapFolder = gui.addFolder('Environment map')
+
+  const envMapField = envMapFolder
     .add(
       { [currentEnvMap.name]: currentEnvMapKey },
       currentEnvMap.name,
@@ -334,7 +336,9 @@ window.addEventListener('load', async () => {
         { None: null }
       )
     )
-    .name('Environment maps')
+    .name('Current')
+
+  const envMapRotationField = envMapFolder.add({ rotation: 90 }, 'rotation', 0, 360, 1).name('Rotation')
 
   const shadingField = gui.add({ shadingModel }, 'shadingModel', ['PBR', 'Phong', 'Lambert', 'Unlit']).name('Shading')
 
@@ -740,62 +744,66 @@ window.addEventListener('load', async () => {
     await loadGLTF(currentModel.url)
   })
 
-  modelField
-    .onChange(async (value) => {
-      if (models[value].name !== currentModel.name) {
-        cleanUpScene()
+  modelField.onChange(async (value) => {
+    if (models[value].name !== currentModel.name) {
+      cleanUpScene()
 
-        if (animationsFields.length) {
-          animationsFields.forEach((animationField) => animationField.destroy())
-        }
-
-        animationsFields = []
-
-        currentModel = models[value]
-
-        useCamera(defaultCamera)
-
-        await loadGLTF(currentModel.url)
+      if (animationsFields.length) {
+        animationsFields.forEach((animationField) => animationField.destroy())
       }
-    })
-    .name('Models')
 
-  envMapField
-    .onChange(async (value) => {
-      if (envMaps[value]) {
-        if (envMaps[value].name !== currentEnvMap.name) {
-          currentEnvMap = envMaps[value]
-          await environmentMap.loadAndComputeFromHDR(envMaps[value].url)
-        }
+      animationsFields = []
 
-        if (!useEnvMap) {
-          useEnvMap = true
+      currentModel = models[value]
 
-          cleanUpScene()
+      useCamera(defaultCamera)
 
-          await loadGLTF(currentModel.url)
-        }
-      } else if (useEnvMap) {
-        useEnvMap = false
+      await loadGLTF(currentModel.url)
+    }
+  })
+
+  envMapField.onChange(async (value) => {
+    if (envMaps[value]) {
+      if (envMaps[value].name !== currentEnvMap.name) {
+        currentEnvMap = envMaps[value]
+        await environmentMap.loadAndComputeFromHDR(envMaps[value].url)
+      }
+
+      if (!useEnvMap) {
+        useEnvMap = true
+
+        envMapRotationField.enable()
 
         cleanUpScene()
 
         await loadGLTF(currentModel.url)
       }
-    })
-    .name('Environment maps')
+    } else if (useEnvMap) {
+      useEnvMap = false
 
-  shadingField
-    .onChange(async (value) => {
-      if (value !== shadingModel) {
-        shadingModel = value
+      envMapRotationField.disable()
 
-        cleanUpScene()
+      cleanUpScene()
 
-        await loadGLTF(currentModel.url)
-      }
-    })
-    .name('Shading')
+      await loadGLTF(currentModel.url)
+    }
+  })
+
+  envMapRotationField.onChange((value) => {
+    if (useEnvMap) {
+      environmentMap.rotation = value * (Math.PI / 180)
+    }
+  })
+
+  shadingField.onChange(async (value) => {
+    if (value !== shadingModel) {
+      shadingModel = value
+
+      cleanUpScene()
+
+      await loadGLTF(currentModel.url)
+    }
+  })
 
   debugField.onChange((value) => {
     gltfScenesManager?.scenesManager?.meshes?.forEach((mesh) => {

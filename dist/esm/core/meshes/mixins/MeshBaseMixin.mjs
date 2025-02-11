@@ -404,13 +404,11 @@ ${geometry.wgslStructFragment}`
      */
     useMaterial(material) {
       let currentCacheKey = null;
-      let isDepthMaterialSwitch = false;
       if (this.material) {
-        isDepthMaterialSwitch = this.material.options.label.includes("depth render material") || material.options.label.includes("depth render material");
         if (this.geometry) {
           currentCacheKey = this.material.cacheKey;
         }
-        if (this.options.renderBundle && !isDepthMaterialSwitch) {
+        if (this.options.renderBundle) {
           this.options.renderBundle.ready = false;
         }
       }
@@ -419,7 +417,7 @@ ${geometry.wgslStructFragment}`
         this.material.setAttributesFromGeometry(this.geometry);
       }
       this.transparent = this.material.options.rendering.transparent;
-      if (currentCacheKey && currentCacheKey !== this.material.cacheKey && !isDepthMaterialSwitch) {
+      if (currentCacheKey && currentCacheKey !== this.material.cacheKey) {
         if (this.material.ready) {
           this.material.setPipelineEntry();
         } else {

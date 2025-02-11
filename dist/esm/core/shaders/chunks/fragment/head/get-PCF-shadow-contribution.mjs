@@ -5,7 +5,8 @@ fn getPCFShadowContribution(index: i32, worldPosition: vec3f, depthTexture: text
   let directionalShadow: DirectionalShadowsElement = directionalShadows.directionalShadowsElements[index];
   
   // get shadow coords
-  var shadowCoords: vec3f = vec3((directionalShadow.projectionMatrix * directionalShadow.viewMatrix * vec4(worldPosition, 1.0)).xyz);
+  let projectedShadowCoords: vec4f = directionalShadow.projectionMatrix * directionalShadow.viewMatrix * vec4(worldPosition, 1.0);
+  var shadowCoords: vec3f = projectedShadowCoords.xyz / projectedShadowCoords.w;
   
   // Convert XY to (0, 1)
   // Y is flipped because texture coords are Y-down.

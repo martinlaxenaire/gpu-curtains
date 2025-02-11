@@ -7,7 +7,7 @@ import { Geometry } from '../../../../geometries/Geometry'
  * @returns - A string with all the attributes variables declared.
  */
 export const declareAttributesVars = ({ geometry }: { geometry: Geometry }): string => {
-  return geometry.vertexBuffers
+  let attributeVars = geometry.vertexBuffers
     .map((vertexBuffer) =>
       vertexBuffer.attributes
         .map((attribute) => {
@@ -17,4 +17,10 @@ export const declareAttributesVars = ({ geometry }: { geometry: Geometry }): str
         .join('')
     )
     .join('\n')
+
+  attributeVars += /* wgsl */ `
+  var instanceIndex: u32 = attributes.instanceIndex;
+  `
+
+  return attributeVars
 }

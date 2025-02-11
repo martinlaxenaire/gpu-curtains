@@ -89,6 +89,8 @@ export declare class GPUCameraRenderer extends GPURenderer {
     shadowsBindingsStruct: Record<string, Record<string, Input>>;
     /** The bindings used by the {@link cameraLightsBindGroup | camera, lights and shadows bind group}. */
     bindings: GPUCameraRendererBindings;
+    /** An array of {@link BindGroup} containing a single {@link BufferBinding} with the cube face index onto which we'll want to draw for {@link core/shadows/PointShadow.PointShadow | PointShadow} depth cube map. Will be swapped for each face render passes by the {@link core/shadows/PointShadow.PointShadow | PointShadow}. */
+    pointShadowsCubeFaceBindGroups: BindGroup[];
     /** Options used to create this {@link GPUCameraRenderer}. */
     options: GPUCameraRendererOptions;
     /** If our scene contains transmissive objects, we need to handle the rendering of transmissive meshes. To do so, we'll need a new screen pass {@link RenderPassEntry} and a {@link Texture} onto which we'll write the content of the non transmissive objects main buffer rendered objects. */
@@ -182,7 +184,7 @@ export declare class GPUCameraRenderer extends GPURenderer {
     /**
      * Create the {@link cameraLightsBindGroup | camera, lights and shadows bind group} buffers
      */
-    setCameraBindGroup(): void;
+    createCameraLightsBindGroup(): void;
     /**
      * Tell our  {@link cameraLightsBindGroup | camera, lights and shadows bind group} to update.
      */
@@ -225,7 +227,7 @@ export declare class GPUCameraRenderer extends GPURenderer {
      */
     resize(rectBBox?: RectBBox | null): void;
     /**
-     * {@link setCameraBindGroup | Set the camera bind group if needed} and then call our {@link GPURenderer#render | GPURenderer render method}
+     * {@link createCameraLightsBindGroup | Set the camera bind group if needed} and then call our {@link GPURenderer#render | GPURenderer render method}
      * @param commandEncoder - current {@link GPUCommandEncoder}
      */
     render(commandEncoder: GPUCommandEncoder): void;

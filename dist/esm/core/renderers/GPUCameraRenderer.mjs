@@ -422,14 +422,36 @@ class GPUCameraRenderer extends GPURenderer {
       bindings: Object.keys(this.bindings).map((bindingName) => this.bindings[bindingName]).flat()
     });
     this.cameraLightsBindGroup.consumers.add(this.uuid);
+    this.pointShadowsCubeFaceBindGroups = [];
+    for (let face = 0; face < 6; face++) {
+      const cubeFace = new BufferBinding({
+        label: "Cube face",
+        name: "cubeFace",
+        bindingType: "uniform",
+        visibility: ["vertex"],
+        struct: {
+          face: {
+            type: "u32",
+            value: face
+          }
+        }
+      });
+      const cubeBindGroup = new BindGroup(this, {
+        label: `Cube face bind group ${face}`,
+        bindings: [cubeFace]
+      });
+      cubeBindGroup.createBindGroup();
+      cubeBindGroup.consumers.add(this.uuid);
+      this.pointShadowsCubeFaceBindGroups.push(cubeBindGroup);
+    }
     if (this.device) {
-      this.setCameraBindGroup();
+      this.createCameraLightsBindGroup();
     }
   }
   /**
    * Create the {@link cameraLightsBindGroup | camera, lights and shadows bind group} buffers
    */
-  setCameraBindGroup() {
+  createCameraLightsBindGroup() {
     if (this.cameraLightsBindGroup && this.cameraLightsBindGroup.shouldCreateBindGroup) {
       this.cameraLightsBindGroup.setIndex(0);
       this.cameraLightsBindGroup.createBindGroup();
@@ -541,13 +563,13 @@ class GPUCameraRenderer extends GPURenderer {
   }
   /* RENDER */
   /**
-   * {@link setCameraBindGroup | Set the camera bind group if needed} and then call our {@link GPURenderer#render | GPURenderer render method}
+   * {@link createCameraLightsBindGroup | Set the camera bind group if needed} and then call our {@link GPURenderer#render | GPURenderer render method}
    * @param commandEncoder - current {@link GPUCommandEncoder}
    */
   render(commandEncoder) {
     if (!this.ready)
       return;
-    this.setCameraBindGroup();
+    this.createCameraLightsBindGroup();
     this.updateCameraLightsBindGroup();
     super.render(commandEncoder);
     if (this.cameraLightsBindGroup) {
@@ -559,9 +581,11 @@ class GPUCameraRenderer extends GPURenderer {
    */
   destroy() {
     this.cameraLightsBindGroup?.destroy();
-    this.lights.forEach((light) => light.remove());
+    this.pointShadowsCubeFaceBindGroups.forEach((bindGroup) => bindGroup.destroy());
     this.destroyTransmissionTarget();
+    this.lights.forEach((light) => light.destroy());
     super.destroy();
+    this.lights.forEach((light) => this.removeLight(light));
   }
 }
 _shouldUpdateCameraLightsBindGroup = new WeakMap();

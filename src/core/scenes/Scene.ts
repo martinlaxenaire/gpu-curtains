@@ -49,6 +49,9 @@ export interface RenderPassEntry {
   onBeforeRenderPass: ((commandEncoder?: GPUCommandEncoder, swapChainTexture?: GPUTexture) => void) | null
   /** Optional function to execute just after rendering the Meshes, useful for eventual texture copy. */
   onAfterRenderPass: ((commandEncoder?: GPUCommandEncoder, swapChainTexture?: GPUTexture) => void) | null
+  /** Optional function that can be used to manually create a {@link GPURenderPassEncoder} and create a custom rendering behaviour instead of the regular one. Used internally to render shadows. */
+  useCustomRenderPass: ((commandEncoder?: GPUCommandEncoder) => void) | null
+
   /** If this {@link RenderPassEntry} needs to render only one Mesh. */
   element: PingPongPlane | ShaderPass | null
   /** If this {@link RenderPassEntry} needs to render multiple Meshes or {@link RenderBundle}, then use a {@link Stack} object. */
@@ -129,6 +132,7 @@ export class Scene extends Object3D {
       renderTexture: null,
       onBeforeRenderPass: null,
       onAfterRenderPass: null,
+      useCustomRenderPass: null,
       element: null, // explicitly set to null
       stack: {
         unProjected: {
@@ -215,6 +219,7 @@ export class Scene extends Object3D {
         renderTexture: renderTarget.renderTexture,
         onBeforeRenderPass: null,
         onAfterRenderPass: null,
+        useCustomRenderPass: null,
         element: null, // explicitly set to null
         stack: {
           unProjected: {
@@ -482,6 +487,7 @@ export class Scene extends Object3D {
       renderTexture: shaderPass.outputTarget ? shaderPass.outputTarget.renderTexture : null,
       onBeforeRenderPass,
       onAfterRenderPass,
+      useCustomRenderPass: null,
       element: shaderPass,
       stack: null, // explicitly set to null
     }
@@ -570,6 +576,7 @@ export class Scene extends Object3D {
         // Copy the rendering results from the swapChainTexture into our |pingPongPlane texture|.
         this.renderer.copyGPUTextureToTexture(swapChainTexture, pingPongPlane.renderTexture, commandEncoder)
       },
+      useCustomRenderPass: null,
       element: pingPongPlane,
       stack: null, // explicitly set to null
     } as RenderPassEntry)
@@ -702,54 +709,58 @@ export class Scene extends Object3D {
 
     renderPassEntry.onBeforeRenderPass && renderPassEntry.onBeforeRenderPass(commandEncoder, swapChainTexture)
 
-    // now begin our actual render pass
-    const pass = commandEncoder.beginRenderPass(renderPassEntry.renderPass.descriptor)
+    if (renderPassEntry.useCustomRenderPass) {
+      renderPassEntry.useCustomRenderPass(commandEncoder)
+    } else {
+      // now begin our actual render pass
+      const pass = commandEncoder.beginRenderPass(renderPassEntry.renderPass.descriptor)
 
-    if (!this.renderer.production) {
-      pass.pushDebugGroup(
-        renderPassEntry.element
-          ? `${renderPassEntry.element.options.label} render pass using ${renderPassEntry.renderPass.options.label} descriptor`
-          : `Render stack pass using ${renderPassEntry.renderPass.options.label}${
-              renderPassEntry.renderTexture ? ' onto ' + renderPassEntry.renderTexture.options.label : ''
-            }`
-      )
-    }
-
-    // pass entries can have a single element or a stack
-    if (renderPassEntry.element) {
-      if (renderPassEntry.element.renderBundle) {
-        renderPassEntry.element.renderBundle.render(pass)
-      } else {
-        renderPassEntry.element.render(pass)
-      }
-    } else if (renderPassEntry.stack) {
-      // draw unProjected regular meshes
-      for (const mesh of renderPassEntry.stack.unProjected.opaque) {
-        mesh.render(pass)
-      }
-      for (const mesh of renderPassEntry.stack.unProjected.transparent) {
-        mesh.render(pass)
+      if (!this.renderer.production) {
+        pass.pushDebugGroup(
+          renderPassEntry.element
+            ? `${renderPassEntry.element.options.label} render pass using ${renderPassEntry.renderPass.options.label} descriptor`
+            : `Render stack pass using ${renderPassEntry.renderPass.options.label}${
+                renderPassEntry.renderTexture ? ' onto ' + renderPassEntry.renderTexture.options.label : ''
+              }`
+        )
       }
 
-      // then draw projected meshes
-      if (renderPassEntry.stack.projected.opaque.length || renderPassEntry.stack.projected.transparent.length) {
-        // opaque
-        for (const mesh of renderPassEntry.stack.projected.opaque) {
+      // pass entries can have a single element or a stack
+      if (renderPassEntry.element) {
+        if (renderPassEntry.element.renderBundle) {
+          renderPassEntry.element.renderBundle.render(pass)
+        } else {
+          renderPassEntry.element.render(pass)
+        }
+      } else if (renderPassEntry.stack) {
+        // draw unProjected regular meshes
+        for (const mesh of renderPassEntry.stack.unProjected.opaque) {
+          mesh.render(pass)
+        }
+        for (const mesh of renderPassEntry.stack.unProjected.transparent) {
           mesh.render(pass)
         }
 
-        // transparent
-        this.sortTransparentMeshes(renderPassEntry.stack.projected.transparent as Array<ProjectedMesh | RenderBundle>)
+        // then draw projected meshes
+        if (renderPassEntry.stack.projected.opaque.length || renderPassEntry.stack.projected.transparent.length) {
+          // opaque
+          for (const mesh of renderPassEntry.stack.projected.opaque) {
+            mesh.render(pass)
+          }
 
-        for (const mesh of renderPassEntry.stack.projected.transparent) {
-          mesh.render(pass)
+          // transparent
+          this.sortTransparentMeshes(renderPassEntry.stack.projected.transparent as Array<ProjectedMesh | RenderBundle>)
+
+          for (const mesh of renderPassEntry.stack.projected.transparent) {
+            mesh.render(pass)
+          }
         }
       }
+
+      if (!this.renderer.production) pass.popDebugGroup()
+
+      pass.end()
     }
-
-    if (!this.renderer.production) pass.popDebugGroup()
-
-    pass.end()
 
     renderPassEntry.onAfterRenderPass && renderPassEntry.onAfterRenderPass(commandEncoder, swapChainTexture)
 

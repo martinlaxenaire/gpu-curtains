@@ -320,8 +320,8 @@ export class Object3D {
    * @param position - {@link Vec3 | postion} from which to look at
    */
   lookAt(target: Vec3 = new Vec3(), position = this.position, up = new Vec3(0, 1, 0)) {
-    const rotationMatrix = tempMatrix.lookAt(target, position, up)
-    this.quaternion.setFromRotationMatrix(rotationMatrix)
+    const rotation = tempMatrix.lookAt(target, position, up)
+    this.quaternion.setFromRotationMatrix(rotation)
     this.shouldUpdateModelMatrix()
   }
 

@@ -96,8 +96,8 @@ window.addEventListener('load', async () => {
     // set the quaternion axis order
     meshPivot.quaternion.setAxisOrder('ZYX')
 
-    //meshPivot.rotation.z = (Math.PI * 2 * i) / 5
-    // random init rotation values
+    //meshPivot.rotationMatrix.z = (Math.PI * 2 * i) / 5
+    // random init rotationMatrix values
     meshPivot.rotation.y = Math.random() * Math.PI * 2
     meshPivot.rotation.z = Math.random() * Math.PI * 2
 

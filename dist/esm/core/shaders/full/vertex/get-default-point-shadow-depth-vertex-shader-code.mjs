@@ -13,13 +13,12 @@ struct PointShadowVSOutput {
   attributes: Attributes,
 ) -> PointShadowVSOutput {  
   var pointShadowVSOutput: PointShadowVSOutput;
+  let pointShadow: PointShadowsElement = pointShadows.pointShadowsElements[${lightIndex}];
   
   ${declareAttributesVars({ geometry })}
   ${getVertexTransformedPositionNormal({ bindings, geometry })}
   
-  let worldPos = worldPosition.xyz / worldPosition.w;
-  
-  let pointShadow: PointShadowsElement = pointShadows.pointShadowsElements[${lightIndex}];
+  let worldPos = worldPosition.xyz / worldPosition.w;  
   
   let lightDirection: vec3f = normalize(pointLights.elements[${lightIndex}].position - worldPos);
   let NdotL: f32 = dot(normalize(normal), lightDirection);
@@ -28,7 +27,7 @@ struct PointShadowVSOutput {
   
   worldPosition = vec4(worldPos - normal * normalBias, 1.0);
     
-  var shadowPosition: vec4f = pointShadow.projectionMatrix * pointShadow.viewMatrices[pointShadow.face] * worldPosition;
+  let shadowPosition: vec4f = pointShadow.projectionMatrix * pointShadow.viewMatrices[cubeFace.face] * worldPosition;
 
   pointShadowVSOutput.position = shadowPosition;
   pointShadowVSOutput.worldPosition = worldPos;
