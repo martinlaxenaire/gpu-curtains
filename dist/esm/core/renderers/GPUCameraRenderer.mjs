@@ -9,24 +9,13 @@ import { pointShadowStruct } from '../shadows/PointShadow.mjs';
 import { Texture } from '../textures/Texture.mjs';
 import { Sampler } from '../samplers/Sampler.mjs';
 
-var __accessCheck = (obj, member, msg) => {
-  if (!member.has(obj))
-    throw TypeError("Cannot " + msg);
+var __typeError = (msg) => {
+  throw TypeError(msg);
 };
-var __privateGet = (obj, member, getter) => {
-  __accessCheck(obj, member, "read from private field");
-  return member.get(obj);
-};
-var __privateAdd = (obj, member, value) => {
-  if (member.has(obj))
-    throw TypeError("Cannot add the same private member more than once");
-  member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-};
-var __privateSet = (obj, member, value, setter) => {
-  __accessCheck(obj, member, "write to private field");
-  member.set(obj, value);
-  return value;
-};
+var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
+var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), member.get(obj));
+var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
 var _shouldUpdateCameraLightsBindGroup;
 class GPUCameraRenderer extends GPURenderer {
   /**
@@ -54,7 +43,7 @@ class GPUCameraRenderer extends GPURenderer {
       renderPass
     });
     /** @ignore */
-    __privateAdd(this, _shouldUpdateCameraLightsBindGroup, void 0);
+    __privateAdd(this, _shouldUpdateCameraLightsBindGroup);
     this.type = "GPUCameraRenderer";
     camera = { ...{ fov: 50, near: 0.1, far: 1e3 }, ...camera };
     if (lights !== false) {
@@ -136,8 +125,7 @@ class GPUCameraRenderer extends GPURenderer {
    * @param camera - new {@link Camera} to use.
    */
   useCamera(camera) {
-    if (this.camera && camera && this.camera.uuid === camera.uuid)
-      return;
+    if (this.camera && camera && this.camera.uuid === camera.uuid) return;
     if (this.camera) {
       this.camera.parent = null;
       this.camera.onMatricesChanged = () => {
@@ -220,8 +208,7 @@ class GPUCameraRenderer extends GPURenderer {
    * Set the lights {@link BufferBinding} based on the {@link lightsBindingParams}.
    */
   setLightsBinding() {
-    if (!this.options.lights)
-      return;
+    if (!this.options.lights) return;
     this.lightsBindingParams = {
       ambientLights: {
         max: this.options.lights.maxAmbientLights,
@@ -567,8 +554,7 @@ class GPUCameraRenderer extends GPURenderer {
    * @param commandEncoder - current {@link GPUCommandEncoder}
    */
   render(commandEncoder) {
-    if (!this.ready)
-      return;
+    if (!this.ready) return;
     this.createCameraLightsBindGroup();
     this.updateCameraLightsBindGroup();
     super.render(commandEncoder);

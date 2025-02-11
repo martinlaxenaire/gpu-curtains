@@ -4,71 +4,46 @@ import { isCameraRenderer, isProjectedMesh } from '../../core/renderers/utils.mj
 import { throwWarning } from '../../utils/utils.mjs';
 import { Object3D } from '../../core/objects3D/Object3D.mjs';
 
-var __accessCheck = (obj, member, msg) => {
-  if (!member.has(obj))
-    throw TypeError("Cannot " + msg);
+var __typeError = (msg) => {
+  throw TypeError(msg);
 };
-var __privateGet = (obj, member, getter) => {
-  __accessCheck(obj, member, "read from private field");
-  return getter ? getter.call(obj) : member.get(obj);
-};
-var __privateAdd = (obj, member, value) => {
-  if (member.has(obj))
-    throw TypeError("Cannot add the same private member more than once");
-  member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-};
-var __privateSet = (obj, member, value, setter) => {
-  __accessCheck(obj, member, "write to private field");
-  member.set(obj, value);
-  return value;
-};
-var __privateMethod = (obj, member, method) => {
-  __accessCheck(obj, member, "access private method");
-  return method;
-};
-var _localRay, _v0, _v1, _v2, _edge1, _edge2, _uv0, _uv1, _uv2, _n0, _n1, _n2, _intersectMesh, intersectMesh_fn;
+var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
+var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
+var __privateMethod = (obj, member, method) => (__accessCheck(obj, member, "access private method"), method);
+var _localRay, _v0, _v1, _v2, _edge1, _edge2, _uv0, _uv1, _uv2, _n0, _n1, _n2, _Raycaster_instances, intersectMesh_fn;
 class Raycaster {
   /**
    * Raycaster constructor
    * @param renderer - {@link CameraRenderer} object or {@link GPUCurtains} class object used to create this {@link Raycaster}
    */
   constructor(renderer) {
-    /**
-     * Test whether the {@link ray} is intersecting a given {@link ProjectedMesh | projected mesh} and if so, returns the given {@link Intersection | intersection} information.
-     * Uses various early exits to optimize the process:
-     * - if the mesh is frustum culled
-     * - if the pointer is currently outside the mesh clip space bounding rectangle.
-     * - based on the face culling.
-     * @param mesh - {@link ProjectedMesh | Projected mesh} to test against.
-     * @param intersections - Already existing {@link Intersection | intersections} if any.
-     * @returns - Updated {@link Intersection | intersections}.
-     * @private
-     */
-    __privateAdd(this, _intersectMesh);
+    __privateAdd(this, _Raycaster_instances);
     /** @ignore */
-    __privateAdd(this, _localRay, void 0);
+    __privateAdd(this, _localRay);
     /** @ignore */
-    __privateAdd(this, _v0, void 0);
+    __privateAdd(this, _v0);
     /** @ignore */
-    __privateAdd(this, _v1, void 0);
+    __privateAdd(this, _v1);
     /** @ignore */
-    __privateAdd(this, _v2, void 0);
+    __privateAdd(this, _v2);
     /** @ignore */
-    __privateAdd(this, _edge1, void 0);
+    __privateAdd(this, _edge1);
     /** @ignore */
-    __privateAdd(this, _edge2, void 0);
+    __privateAdd(this, _edge2);
     /** @ignore */
-    __privateAdd(this, _uv0, void 0);
+    __privateAdd(this, _uv0);
     /** @ignore */
-    __privateAdd(this, _uv1, void 0);
+    __privateAdd(this, _uv1);
     /** @ignore */
-    __privateAdd(this, _uv2, void 0);
+    __privateAdd(this, _uv2);
     /** @ignore */
-    __privateAdd(this, _n0, void 0);
+    __privateAdd(this, _n0);
     /** @ignore */
-    __privateAdd(this, _n1, void 0);
+    __privateAdd(this, _n1);
     /** @ignore */
-    __privateAdd(this, _n2, void 0);
+    __privateAdd(this, _n2);
     this.type = "Raycaster";
     renderer = isCameraRenderer(renderer, this.type);
     this.renderer = renderer;
@@ -133,17 +108,14 @@ class Raycaster {
     const q = new Vec3();
     h.crossVectors(__privateGet(this, _localRay).direction, __privateGet(this, _edge2));
     const a = __privateGet(this, _edge1).dot(h);
-    if (Math.abs(a) < EPSILON)
-      return false;
+    if (Math.abs(a) < EPSILON) return false;
     const f = 1 / a;
     const s = __privateGet(this, _localRay).origin.clone().sub(__privateGet(this, _v0));
     const u = f * s.dot(h);
-    if (u < 0 || u > 1)
-      return false;
+    if (u < 0 || u > 1) return false;
     q.crossVectors(s, __privateGet(this, _edge1));
     const v = f * __privateGet(this, _localRay).direction.dot(q);
-    if (v < 0 || u + v > 1)
-      return false;
+    if (v < 0 || u + v > 1) return false;
     const t = f * __privateGet(this, _edge2).dot(q);
     if (t > EPSILON) {
       intersectionPoint.copy(__privateGet(this, _localRay).origin).add(__privateGet(this, _localRay).direction.clone().multiplyScalar(t));
@@ -208,7 +180,7 @@ class Raycaster {
     }
     const mesh = isProjectedMesh(object);
     if (mesh) {
-      __privateMethod(this, _intersectMesh, intersectMesh_fn).call(this, mesh, intersections);
+      __privateMethod(this, _Raycaster_instances, intersectMesh_fn).call(this, mesh, intersections);
     }
     if (recursive) {
       object.children.forEach((child) => {
@@ -254,10 +226,20 @@ _uv2 = new WeakMap();
 _n0 = new WeakMap();
 _n1 = new WeakMap();
 _n2 = new WeakMap();
-_intersectMesh = new WeakSet();
+_Raycaster_instances = new WeakSet();
+/**
+ * Test whether the {@link ray} is intersecting a given {@link ProjectedMesh | projected mesh} and if so, returns the given {@link Intersection | intersection} information.
+ * Uses various early exits to optimize the process:
+ * - if the mesh is frustum culled
+ * - if the pointer is currently outside the mesh clip space bounding rectangle.
+ * - based on the face culling.
+ * @param mesh - {@link ProjectedMesh | Projected mesh} to test against.
+ * @param intersections - Already existing {@link Intersection | intersections} if any.
+ * @returns - Updated {@link Intersection | intersections}.
+ * @private
+ */
 intersectMesh_fn = function(mesh, intersections = []) {
-  if (!mesh.geometry)
-    return intersections;
+  if (!mesh.geometry) return intersections;
   const position = mesh.geometry.getAttributeByName("position");
   if (!position) {
     if (!this.renderer.production) {

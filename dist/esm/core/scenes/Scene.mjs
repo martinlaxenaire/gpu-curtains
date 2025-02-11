@@ -516,8 +516,7 @@ class Scene extends Object3D {
           }
         }
       }
-      if (!this.renderer.production)
-        pass.popDebugGroup();
+      if (!this.renderer.production) pass.popDebugGroup();
       pass.end();
     }
     renderPassEntry.onAfterRenderPass && renderPassEntry.onAfterRenderPass(commandEncoder, swapChainTexture);
@@ -549,11 +548,9 @@ class Scene extends Object3D {
   render(commandEncoder) {
     for (const computePass of this.computePassEntries) {
       const pass = commandEncoder.beginComputePass();
-      if (!this.renderer.production)
-        pass.pushDebugGroup(`${computePass.options.label}: begin compute pass`);
+      if (!this.renderer.production) pass.pushDebugGroup(`${computePass.options.label}: begin compute pass`);
       computePass.render(pass);
-      if (!this.renderer.production)
-        pass.popDebugGroup();
+      if (!this.renderer.production) pass.popDebugGroup();
       pass.end();
       computePass.copyBufferToResult(commandEncoder);
       this.renderer.pipelineManager.resetCurrentPipeline();
@@ -564,13 +561,11 @@ class Scene extends Object3D {
       }
       let passDrawnCount = 0;
       this.renderPassEntries[renderPassEntryType].forEach((renderPassEntry) => {
-        if (!this.getRenderPassEntryLength(renderPassEntry))
-          return;
+        if (!this.getRenderPassEntryLength(renderPassEntry)) return;
         const isSubesequentScreenPass = renderPassEntryType === "screen" && (passDrawnCount !== 0 || this.renderPassEntries.prePass.length);
         const loadContent = renderPassEntryType === "postProPass" || renderPassEntryType === "prePass" && passDrawnCount !== 0 || isSubesequentScreenPass;
         renderPassEntry.renderPass.setLoadOp(loadContent ? "load" : "clear");
-        if (isSubesequentScreenPass)
-          renderPassEntry.renderPass.setDepthLoadOp("load");
+        if (isSubesequentScreenPass) renderPassEntry.renderPass.setDepthLoadOp("load");
         passDrawnCount++;
         this.renderSinglePassEntry(commandEncoder, renderPassEntry);
       });

@@ -3,24 +3,13 @@ import { TextureBinding } from '../bindings/TextureBinding.mjs';
 import { generateUUID } from '../../utils/utils.mjs';
 import { getNumMipLevels, getDefaultTextureUsage } from './utils.mjs';
 
-var __accessCheck = (obj, member, msg) => {
-  if (!member.has(obj))
-    throw TypeError("Cannot " + msg);
+var __typeError = (msg) => {
+  throw TypeError(msg);
 };
-var __privateGet = (obj, member, getter) => {
-  __accessCheck(obj, member, "read from private field");
-  return member.get(obj);
-};
-var __privateAdd = (obj, member, value) => {
-  if (member.has(obj))
-    throw TypeError("Cannot add the same private member more than once");
-  member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-};
-var __privateSet = (obj, member, value, setter) => {
-  __accessCheck(obj, member, "write to private field");
-  member.set(obj, value);
-  return value;
-};
+var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
+var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), member.get(obj));
+var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
 var _autoResize;
 const defaultTextureParams = {
   label: "Texture",
@@ -134,8 +123,7 @@ class Texture {
    * Create the {@link GPUTexture | texture} (or copy it from source) and update the {@link TextureBinding#resource | binding resource}.
    */
   createTexture() {
-    if (!this.size.width || !this.size.height)
-      return;
+    if (!this.size.width || !this.size.height) return;
     if (this.options.fromTexture) {
       this.copyGPUTexture(this.options.fromTexture.texture);
       return;
@@ -209,8 +197,7 @@ class Texture {
    * @param size - the optional new {@link TextureSize | size} to set.
    */
   resize(size = null) {
-    if (!__privateGet(this, _autoResize))
-      return;
+    if (!__privateGet(this, _autoResize)) return;
     if (!size) {
       size = {
         width: Math.floor(this.renderer.canvas.width * this.options.qualityRatio),

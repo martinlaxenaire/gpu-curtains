@@ -1,55 +1,13 @@
-var __accessCheck = (obj, member, msg) => {
-  if (!member.has(obj))
-    throw TypeError("Cannot " + msg);
+var __typeError = (msg) => {
+  throw TypeError(msg);
 };
-var __privateAdd = (obj, member, value) => {
-  if (member.has(obj))
-    throw TypeError("Cannot add the same private member more than once");
-  member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-};
-var __privateMethod = (obj, member, method) => {
-  __accessCheck(obj, member, "access private method");
-  return method;
-};
-var _decodeRGBE, decodeRGBE_fn, _parseHeader, parseHeader_fn, _parseSize, parseSize_fn, _readLine, readLine_fn, _parseData, parseData_fn, _parseNewRLE, parseNewRLE_fn, _swap, swap_fn, _flipX, flipX_fn, _flipY, flipY_fn;
+var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
+var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+var __privateMethod = (obj, member, method) => (__accessCheck(obj, member, "access private method"), method);
+var _HDRLoader_instances, decodeRGBE_fn, parseHeader_fn, parseSize_fn, readLine_fn, parseData_fn, parseNewRLE_fn, swap_fn, flipX_fn, flipY_fn;
 class HDRLoader {
   constructor() {
-    /**
-     * @ignore
-     */
-    __privateAdd(this, _decodeRGBE);
-    /**
-     * @ignore
-     */
-    __privateAdd(this, _parseHeader);
-    /**
-     * @ignore
-     */
-    __privateAdd(this, _parseSize);
-    /**
-     * @ignore
-     */
-    __privateAdd(this, _readLine);
-    /**
-     * @ignore
-     */
-    __privateAdd(this, _parseData);
-    /**
-     * @ignore
-     */
-    __privateAdd(this, _parseNewRLE);
-    /**
-     * @ignore
-     */
-    __privateAdd(this, _swap);
-    /**
-     * @ignore
-     */
-    __privateAdd(this, _flipX);
-    /**
-     * @ignore
-     */
-    __privateAdd(this, _flipY);
+    __privateAdd(this, _HDRLoader_instances);
   }
   /**
    * Load and decode RGBE-encoded data to a flat list of floating point pixel data (RGBA).
@@ -58,27 +16,32 @@ class HDRLoader {
    */
   async loadFromUrl(url) {
     const buffer = await (await fetch(url)).arrayBuffer();
-    return __privateMethod(this, _decodeRGBE, decodeRGBE_fn).call(this, new DataView(buffer));
+    return __privateMethod(this, _HDRLoader_instances, decodeRGBE_fn).call(this, new DataView(buffer));
   }
 }
-_decodeRGBE = new WeakSet();
+_HDRLoader_instances = new WeakSet();
+/**
+ * @ignore
+ */
 decodeRGBE_fn = function(data) {
   const stream = {
     data,
     offset: 0
   };
-  const header = __privateMethod(this, _parseHeader, parseHeader_fn).call(this, stream);
+  const header = __privateMethod(this, _HDRLoader_instances, parseHeader_fn).call(this, stream);
   return {
     width: header.width,
     height: header.height,
     exposure: header.exposure,
     gamma: header.gamma,
-    data: __privateMethod(this, _parseData, parseData_fn).call(this, stream, header)
+    data: __privateMethod(this, _HDRLoader_instances, parseData_fn).call(this, stream, header)
   };
 };
-_parseHeader = new WeakSet();
+/**
+ * @ignore
+ */
 parseHeader_fn = function(stream) {
-  let line = __privateMethod(this, _readLine, readLine_fn).call(this, stream);
+  let line = __privateMethod(this, _HDRLoader_instances, readLine_fn).call(this, stream);
   const header = {
     colorCorr: [1, 1, 1],
     exposure: 1,
@@ -88,10 +51,9 @@ parseHeader_fn = function(stream) {
     flipX: false,
     flipY: false
   };
-  if (line !== "#?RADIANCE" && line !== "#?RGBE")
-    throw new Error("Incorrect file format!");
+  if (line !== "#?RADIANCE" && line !== "#?RGBE") throw new Error("Incorrect file format!");
   while (line !== "") {
-    line = __privateMethod(this, _readLine, readLine_fn).call(this, stream);
+    line = __privateMethod(this, _HDRLoader_instances, readLine_fn).call(this, stream);
     const parts2 = line.split("=");
     switch (parts2[0]) {
       case "GAMMA":
@@ -109,13 +71,15 @@ parseHeader_fn = function(stream) {
         break;
     }
   }
-  line = __privateMethod(this, _readLine, readLine_fn).call(this, stream);
+  line = __privateMethod(this, _HDRLoader_instances, readLine_fn).call(this, stream);
   const parts = line.split(" ");
-  __privateMethod(this, _parseSize, parseSize_fn).call(this, parts[0], parseInt(parts[1]), header);
-  __privateMethod(this, _parseSize, parseSize_fn).call(this, parts[2], parseInt(parts[3]), header);
+  __privateMethod(this, _HDRLoader_instances, parseSize_fn).call(this, parts[0], parseInt(parts[1]), header);
+  __privateMethod(this, _HDRLoader_instances, parseSize_fn).call(this, parts[2], parseInt(parts[3]), header);
   return header;
 };
-_parseSize = new WeakSet();
+/**
+ * @ignore
+ */
 parseSize_fn = function(label, value, header) {
   switch (label) {
     case "+X":
@@ -135,39 +99,40 @@ parseSize_fn = function(label, value, header) {
       break;
   }
 };
-_readLine = new WeakSet();
+/**
+ * @ignore
+ */
 readLine_fn = function(stream) {
   let ch, str = "";
-  while ((ch = stream.data.getUint8(stream.offset++)) !== 10)
-    str += String.fromCharCode(ch);
+  while ((ch = stream.data.getUint8(stream.offset++)) !== 10) str += String.fromCharCode(ch);
   return str;
 };
-_parseData = new WeakSet();
+/**
+ * @ignore
+ */
 parseData_fn = function(stream, header) {
   const hash = stream.data.getUint16(stream.offset);
   let data;
   if (hash === 514) {
-    data = __privateMethod(this, _parseNewRLE, parseNewRLE_fn).call(this, stream, header);
-    if (header.flipX)
-      __privateMethod(this, _flipX, flipX_fn).call(this, data, header);
-    if (header.flipY)
-      __privateMethod(this, _flipY, flipY_fn).call(this, data, header);
+    data = __privateMethod(this, _HDRLoader_instances, parseNewRLE_fn).call(this, stream, header);
+    if (header.flipX) __privateMethod(this, _HDRLoader_instances, flipX_fn).call(this, data, header);
+    if (header.flipY) __privateMethod(this, _HDRLoader_instances, flipY_fn).call(this, data, header);
   } else {
     throw new Error("Obsolete HDR file version!");
   }
   return data;
 };
-_parseNewRLE = new WeakSet();
+/**
+ * @ignore
+ */
 parseNewRLE_fn = function(stream, header) {
   const { width, height, colorCorr } = header;
   const tgt = new Float32Array(width * height * 4);
   let i = 0;
   let { offset, data } = stream;
   for (let y = 0; y < height; ++y) {
-    if (data.getUint16(offset) !== 514)
-      throw new Error("Incorrect scanline start hash");
-    if (data.getUint16(offset + 2) !== width)
-      throw new Error("Scanline doesn't match picture dimension!");
+    if (data.getUint16(offset) !== 514) throw new Error("Incorrect scanline start hash");
+    if (data.getUint16(offset + 2) !== width) throw new Error("Scanline doesn't match picture dimension!");
     offset += 4;
     const numComps = width * 4;
     const comps = [];
@@ -200,7 +165,9 @@ parseNewRLE_fn = function(stream, header) {
   }
   return tgt;
 };
-_swap = new WeakSet();
+/**
+ * @ignore
+ */
 swap_fn = function(data, i1, i2) {
   i1 *= 4;
   i2 *= 4;
@@ -210,7 +177,9 @@ swap_fn = function(data, i1, i2) {
     data[i2 + i] = tmp;
   }
 };
-_flipX = new WeakSet();
+/**
+ * @ignore
+ */
 flipX_fn = function(data, header) {
   const { width, height } = header;
   const hw = width >> 1;
@@ -219,11 +188,13 @@ flipX_fn = function(data, header) {
     for (let x = 0; x < hw; ++x) {
       const i1 = b + x;
       const i2 = b + width - 1 - x;
-      __privateMethod(this, _swap, swap_fn).call(this, data, i1, i2);
+      __privateMethod(this, _HDRLoader_instances, swap_fn).call(this, data, i1, i2);
     }
   }
 };
-_flipY = new WeakSet();
+/**
+ * @ignore
+ */
 flipY_fn = function(data, header) {
   const { width, height } = header;
   const hh = height >> 1;
@@ -231,7 +202,7 @@ flipY_fn = function(data, header) {
     const b1 = y * width;
     const b2 = (height - 1 - y) * width;
     for (let x = 0; x < width; ++x) {
-      __privateMethod(this, _swap, swap_fn).call(this, data, b1 + x, b2 + x);
+      __privateMethod(this, _HDRLoader_instances, swap_fn).call(this, data, b1 + x, b2 + x);
     }
   }
 };

@@ -7,29 +7,15 @@ import { toKebabCase, throwWarning } from '../../utils/utils.mjs';
 import { TextureBinding } from '../bindings/TextureBinding.mjs';
 import { getDefaultMediaTextureUsage, getNumMipLevels } from './utils.mjs';
 
-var __accessCheck = (obj, member, msg) => {
-  if (!member.has(obj))
-    throw TypeError("Cannot " + msg);
+var __typeError = (msg) => {
+  throw TypeError(msg);
 };
-var __privateGet = (obj, member, getter) => {
-  __accessCheck(obj, member, "read from private field");
-  return getter ? getter.call(obj) : member.get(obj);
-};
-var __privateAdd = (obj, member, value) => {
-  if (member.has(obj))
-    throw TypeError("Cannot add the same private member more than once");
-  member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-};
-var __privateSet = (obj, member, value, setter) => {
-  __accessCheck(obj, member, "write to private field");
-  member.set(obj, value);
-  return value;
-};
-var __privateMethod = (obj, member, method) => {
-  __accessCheck(obj, member, "access private method");
-  return method;
-};
-var _sourcesLoaded, _sourcesUploaded, _rotation, _setSourceLoaded, setSourceLoaded_fn;
+var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
+var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
+var __privateMethod = (obj, member, method) => (__accessCheck(obj, member, "access private method"), method);
+var _sourcesLoaded, _sourcesUploaded, _rotation, _MediaTexture_instances, setSourceLoaded_fn;
 const defaultMediaTextureParams = {
   label: "Texture",
   name: "texture",
@@ -70,19 +56,13 @@ const _MediaTexture = class _MediaTexture extends Texture {
         fixedSize: { width: parameters.fixedSize?.width ?? 1, height: parameters.fixedSize?.height ?? 1 }
       }
     });
-    /* EVENTS */
-    /**
-     * Called each time a source has been loaded.
-     * @param source - {@link TextureSource} that has just been loaded.
-     * @private
-     */
-    __privateAdd(this, _setSourceLoaded);
+    __privateAdd(this, _MediaTexture_instances);
     /** Whether the sources have been loaded. */
-    __privateAdd(this, _sourcesLoaded, void 0);
+    __privateAdd(this, _sourcesLoaded);
     /** Whether the sources have been uploaded to the GPU, handled by the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#texturesQueue | GPUDeviceManager texturesQueue array}. */
-    __privateAdd(this, _sourcesUploaded, void 0);
+    __privateAdd(this, _sourcesUploaded);
     /** Rotation to apply to the {@link Texture} if {@link MediaTextureParams#useTransform | useTransform} parameter has been set to `true`. */
-    __privateAdd(this, _rotation, void 0);
+    __privateAdd(this, _rotation);
     // callbacks / events
     /** function assigned to the {@link onSourceLoaded} callback */
     this._onSourceLoadedCallback = (source) => {
@@ -257,8 +237,7 @@ const _MediaTexture = class _MediaTexture extends Texture {
    * Create the {@link GPUTexture | texture} (or copy it from source) and update the {@link TextureBinding#resource | binding resource}.
    */
   createTexture() {
-    if (!this.size.width || !this.size.height)
-      return;
+    if (!this.size.width || !this.size.height) return;
     if (this.options.fromTexture && (!(this.options.fromTexture instanceof _MediaTexture) || this.options.fromTexture.sourcesUploaded)) {
       this.copyGPUTexture(this.options.fromTexture.texture);
       return;
@@ -352,8 +331,7 @@ const _MediaTexture = class _MediaTexture extends Texture {
     if (this.options.cache) {
       const cachedTexture = this.renderer.textures.filter((t) => t instanceof _MediaTexture && t.uuid !== this.uuid).find((t) => {
         const sourceIndex2 = t.options.sources.findIndex((source2) => source2 === url);
-        if (sourceIndex2 === -1)
-          return null;
+        if (sourceIndex2 === -1) return null;
         return t.sources[sourceIndex2]?.sourceLoaded && t.texture && t.size.depth === this.size.depth;
       });
       if (cachedTexture) {
@@ -388,7 +366,7 @@ const _MediaTexture = class _MediaTexture extends Texture {
       ];
     }
     this.setSourceSize();
-    __privateMethod(this, _setSourceLoaded, setSourceLoaded_fn).call(this, imageBitmap);
+    __privateMethod(this, _MediaTexture_instances, setSourceLoaded_fn).call(this, imageBitmap);
   }
   /**
    * Load and create images using {@link loadImage} from an array of images sources as strings or {@link HTMLImageElement}. Useful for cube maps.
@@ -436,7 +414,7 @@ const _MediaTexture = class _MediaTexture extends Texture {
         );
         this.videoFrameCallbackIds.set(sourceIndex, videoFrameCallbackId);
       }
-      __privateMethod(this, _setSourceLoaded, setSourceLoaded_fn).call(this, video);
+      __privateMethod(this, _MediaTexture_instances, setSourceLoaded_fn).call(this, video);
     }
   }
   /**
@@ -453,8 +431,7 @@ const _MediaTexture = class _MediaTexture extends Texture {
    * @returns - Whether the video source is ready to be played.
    */
   isVideoSourceReady(source) {
-    if (!this.isVideoSource(source))
-      return false;
+    if (!this.isVideoSource(source)) return false;
     return source.readyState >= source.HAVE_CURRENT_DATA;
   }
   /**
@@ -463,8 +440,7 @@ const _MediaTexture = class _MediaTexture extends Texture {
    * @returns - Whether the video source is ready to be uploaded.
    */
   shouldUpdateVideoSource(source) {
-    if (!this.isVideoSource(source))
-      return false;
+    if (!this.isVideoSource(source)) return false;
     return this.isVideoSourceReady(source) && !source.paused;
   }
   /**
@@ -554,7 +530,7 @@ const _MediaTexture = class _MediaTexture extends Texture {
       ];
     }
     this.setSourceSize();
-    __privateMethod(this, _setSourceLoaded, setSourceLoaded_fn).call(this, source);
+    __privateMethod(this, _MediaTexture_instances, setSourceLoaded_fn).call(this, source);
   }
   /**
    * Load an array of {@link HTMLCanvasElement} using {@link loadCanvas} . Useful for cube maps.
@@ -669,7 +645,13 @@ const _MediaTexture = class _MediaTexture extends Texture {
 _sourcesLoaded = new WeakMap();
 _sourcesUploaded = new WeakMap();
 _rotation = new WeakMap();
-_setSourceLoaded = new WeakSet();
+_MediaTexture_instances = new WeakSet();
+/* EVENTS */
+/**
+ * Called each time a source has been loaded.
+ * @param source - {@link TextureSource} that has just been loaded.
+ * @private
+ */
 setSourceLoaded_fn = function(source) {
   this._onSourceLoadedCallback && this._onSourceLoadedCallback(source);
   const nbSourcesLoaded = this.sources.filter((source2) => source2.sourceLoaded)?.length || 0;

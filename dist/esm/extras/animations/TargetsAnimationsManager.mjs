@@ -1,29 +1,15 @@
 import { generateUUID } from '../../utils/utils.mjs';
 import { isRenderer } from '../../core/renderers/utils.mjs';
 
-var __accessCheck = (obj, member, msg) => {
-  if (!member.has(obj))
-    throw TypeError("Cannot " + msg);
+var __typeError = (msg) => {
+  throw TypeError(msg);
 };
-var __privateGet = (obj, member, getter) => {
-  __accessCheck(obj, member, "read from private field");
-  return getter ? getter.call(obj) : member.get(obj);
-};
-var __privateAdd = (obj, member, value) => {
-  if (member.has(obj))
-    throw TypeError("Cannot add the same private member more than once");
-  member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-};
-var __privateSet = (obj, member, value, setter) => {
-  __accessCheck(obj, member, "write to private field");
-  member.set(obj, value);
-  return value;
-};
-var __privateMethod = (obj, member, method) => {
-  __accessCheck(obj, member, "access private method");
-  return method;
-};
-var _startTime, _currentTime, _deltaTime, _count, _maxCount, _setSiblings, setSiblings_fn;
+var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
+var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
+var __privateMethod = (obj, member, method) => (__accessCheck(obj, member, "access private method"), method);
+var _startTime, _currentTime, _deltaTime, _count, _maxCount, _TargetsAnimationsManager_instances, setSiblings_fn;
 class TargetsAnimationsManager {
   /**
    * TargetsAnimationsManager constructor
@@ -31,22 +17,18 @@ class TargetsAnimationsManager {
    * @param parameters - {@link TargetsAnimationsManagerParams | parameters} used to create this {@link TargetsAnimationsManager}.
    */
   constructor(renderer, { label = "", targets = [] } = {}) {
-    /**
-     * Set the {@link TargetsAnimationsManager} siblings by comparing {@link inputIndices} arrays.
-     * @private
-     */
-    __privateAdd(this, _setSiblings);
+    __privateAdd(this, _TargetsAnimationsManager_instances);
     // inner time values
     /** @ignore */
-    __privateAdd(this, _startTime, void 0);
+    __privateAdd(this, _startTime);
     /** @ignore */
-    __privateAdd(this, _currentTime, void 0);
+    __privateAdd(this, _currentTime);
     /** @ignore */
-    __privateAdd(this, _deltaTime, void 0);
+    __privateAdd(this, _deltaTime);
     /** @ignore */
-    __privateAdd(this, _count, void 0);
+    __privateAdd(this, _count);
     /** @ignore */
-    __privateAdd(this, _maxCount, void 0);
+    __privateAdd(this, _maxCount);
     this.uuid = generateUUID();
     this.inputIndices = [];
     this.setRenderer(renderer);
@@ -80,7 +62,7 @@ class TargetsAnimationsManager {
       this.renderer = renderer;
       this.renderer.animations.set(this.uuid, this);
       if (this.inputIndices.length) {
-        __privateMethod(this, _setSiblings, setSiblings_fn).call(this);
+        __privateMethod(this, _TargetsAnimationsManager_instances, setSiblings_fn).call(this);
       }
     }
   }
@@ -118,7 +100,7 @@ class TargetsAnimationsManager {
     if (animation.inputIndex !== null && !this.inputIndices.includes(animation.inputIndex)) {
       this.inputIndices.push(animation.inputIndex);
     }
-    __privateMethod(this, _setSiblings, setSiblings_fn).call(this);
+    __privateMethod(this, _TargetsAnimationsManager_instances, setSiblings_fn).call(this);
   }
   /**
    * Get a {@link Target} from the {@link targets} array based on an {@link Object3D}.
@@ -180,8 +162,7 @@ class TargetsAnimationsManager {
       () => {
         this.targets.forEach((target) => {
           target.animations.forEach((animation) => {
-            if (animation.onAfterUpdate)
-              animation.onAfterUpdate();
+            if (animation.onAfterUpdate) animation.onAfterUpdate();
           });
         });
       },
@@ -200,8 +181,7 @@ class TargetsAnimationsManager {
    * Update all the {@link targets} animations.
    */
   update() {
-    if (!this.isPlaying)
-      return;
+    if (!this.isPlaying) return;
     if (__privateGet(this, _startTime) === -1) {
       __privateSet(this, _startTime, performance.now() - __privateGet(this, _deltaTime));
     } else if (__privateGet(this, _startTime) === 0) {
@@ -224,12 +204,10 @@ class TargetsAnimationsManager {
    * Call all the {@link targets} animations {@link KeyframesAnimation#onAfterUpdate | onAfterUpdate} callbacks.
    */
   onAfterUpdate() {
-    if (!this.isPlaying)
-      return;
+    if (!this.isPlaying) return;
     this.targets.forEach(
       (target) => target.animations.forEach((animation) => {
-        if (animation.onAfterUpdate)
-          animation.onAfterUpdate();
+        if (animation.onAfterUpdate) animation.onAfterUpdate();
       })
     );
   }
@@ -239,7 +217,11 @@ _currentTime = new WeakMap();
 _deltaTime = new WeakMap();
 _count = new WeakMap();
 _maxCount = new WeakMap();
-_setSiblings = new WeakSet();
+_TargetsAnimationsManager_instances = new WeakSet();
+/**
+ * Set the {@link TargetsAnimationsManager} siblings by comparing {@link inputIndices} arrays.
+ * @private
+ */
 setSiblings_fn = function() {
   this.siblings = /* @__PURE__ */ new Map();
   this.renderer.animations.forEach((animation) => {

@@ -84,8 +84,7 @@ class GPURenderer {
         priority: 5,
         // renderer callback need to be called first
         onSizeChanged: () => {
-          if (this.options.autoResize)
-            this.resize();
+          if (this.options.autoResize) this.resize();
         }
       });
       this.resize();
@@ -796,18 +795,15 @@ class GPURenderer {
    * Called by the {@link GPUDeviceManager#render | GPUDeviceManager render method} before the {@link GPUCommandEncoder} has been created. Used to update the {@link Scene} matrix stack.
    */
   onBeforeCommandEncoder() {
-    if (!this.ready)
-      return;
-    if (this.shouldRenderScene)
-      this.scene?.onBeforeRender();
+    if (!this.ready) return;
+    if (this.shouldRenderScene) this.scene?.onBeforeRender();
     this.onBeforeCommandEncoderCreation.execute();
   }
   /**
    * Called by the {@link GPUDeviceManager#render | GPUDeviceManager render method} after the {@link GPUCommandEncoder} has been created.
    */
   onAfterCommandEncoder() {
-    if (!this.ready)
-      return;
+    if (!this.ready) return;
     this.onAfterCommandEncoderSubmission.execute();
   }
   /**
@@ -815,8 +811,7 @@ class GPURenderer {
    * @param commandEncoder - current {@link GPUCommandEncoder}.
    */
   render(commandEncoder) {
-    if (!this.ready || !this.shouldRender)
-      return;
+    if (!this.ready || !this.shouldRender) return;
     this._onBeforeRenderCallback && this._onBeforeRenderCallback(commandEncoder);
     this.onBeforeRenderScene.execute(commandEncoder);
     if (this.shouldRenderScene) {

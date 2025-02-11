@@ -74,8 +74,7 @@ class Geometry {
    * @param renderer - The {@link Renderer} used to recreate the buffers
    */
   restoreContext(renderer) {
-    if (this.ready)
-      return;
+    if (this.ready) return;
     for (const vertexBuffer of this.vertexBuffers) {
       if (!vertexBuffer.buffer.GPUBuffer && vertexBuffer.buffer.consumers.size === 0) {
         vertexBuffer.buffer.createBuffer(renderer);
@@ -143,8 +142,7 @@ class Geometry {
   }) {
     const attributes = vertexBuffer.attributes;
     const attributesLength = attributes.length;
-    if (!name)
-      name = "geometryAttribute" + attributesLength;
+    if (!name) name = "geometryAttribute" + attributesLength;
     if (name === "position" && (type !== "vec3f" || bufferFormat !== "float32x3" || size !== 3)) {
       throwWarning(
         `Geometry 'position' attribute must have this exact properties set:
@@ -207,8 +205,7 @@ class Geometry {
     let attribute;
     for (const vertexBuffer of this.vertexBuffers) {
       attribute = vertexBuffer.attributes.find((attribute2) => attribute2.name === name);
-      if (attribute)
-        break;
+      if (attribute) break;
     }
     return attribute;
   }
@@ -263,8 +260,7 @@ class Geometry {
    * Also compute the Geometry bounding box.
    */
   computeGeometry() {
-    if (this.ready)
-      return;
+    if (this.ready) return;
     this.vertexBuffers.forEach((vertexBuffer, index) => {
       if (index === 0) {
         const hasPositionAttribute = vertexBuffer.attributes.find(
@@ -303,20 +299,14 @@ class Geometry {
             vertexBuffer.array[currentIndex] = attributeValue ?? 0;
             if (name === "position") {
               if (s % 3 === 0) {
-                if (this.boundingBox.min.x > attributeValue)
-                  this.boundingBox.min.x = attributeValue;
-                if (this.boundingBox.max.x < attributeValue)
-                  this.boundingBox.max.x = attributeValue;
+                if (this.boundingBox.min.x > attributeValue) this.boundingBox.min.x = attributeValue;
+                if (this.boundingBox.max.x < attributeValue) this.boundingBox.max.x = attributeValue;
               } else if (s % 3 === 1) {
-                if (this.boundingBox.min.y > attributeValue)
-                  this.boundingBox.min.y = attributeValue;
-                if (this.boundingBox.max.y < attributeValue)
-                  this.boundingBox.max.y = attributeValue;
+                if (this.boundingBox.min.y > attributeValue) this.boundingBox.min.y = attributeValue;
+                if (this.boundingBox.max.y < attributeValue) this.boundingBox.max.y = attributeValue;
               } else if (s % 3 === 2) {
-                if (this.boundingBox.min.z > attributeValue)
-                  this.boundingBox.min.z = attributeValue;
-                if (this.boundingBox.max.z < attributeValue)
-                  this.boundingBox.max.z = attributeValue;
+                if (this.boundingBox.min.z > attributeValue) this.boundingBox.min.z = attributeValue;
+                if (this.boundingBox.max.z < attributeValue) this.boundingBox.max.z = attributeValue;
               }
             }
             currentIndex++;
@@ -357,8 +347,7 @@ class Geometry {
    * @param parameters.label - label to use for the vertex buffers.
    */
   createBuffers({ renderer, label = this.type }) {
-    if (this.ready)
-      return;
+    if (this.ready) return;
     for (const vertexBuffer of this.vertexBuffers) {
       if (!vertexBuffer.bufferSize) {
         vertexBuffer.bufferSize = vertexBuffer.array.length * vertexBuffer.array.constructor.BYTES_PER_ELEMENT;
@@ -427,8 +416,7 @@ class Geometry {
    * @param pass - current render pass.
    */
   render(pass) {
-    if (!this.ready)
-      return;
+    if (!this.ready) return;
     this.setGeometryBuffers(pass);
     this.drawGeometry(pass);
   }
@@ -444,8 +432,7 @@ class Geometry {
         vertexBuffer.buffer.destroy();
       }
       vertexBuffer.array = null;
-      if (renderer)
-        renderer.removeBuffer(vertexBuffer.buffer);
+      if (renderer) renderer.removeBuffer(vertexBuffer.buffer);
     }
   }
 }

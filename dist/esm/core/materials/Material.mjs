@@ -120,8 +120,7 @@ class Material {
    * @returns - The corresponding shader code
    */
   getShaderCode(shaderType = "full") {
-    if (!this.pipelineEntry)
-      return "";
+    if (!this.pipelineEntry) return "";
     shaderType = (() => {
       switch (shaderType) {
         case "vertex":
@@ -141,8 +140,7 @@ class Material {
    * @returns - The corresponding shader code
    */
   getAddedShaderCode(shaderType = "vertex") {
-    if (!this.pipelineEntry)
-      return "";
+    if (!this.pipelineEntry) return "";
     shaderType = (() => {
       switch (shaderType) {
         case "vertex":
@@ -252,8 +250,7 @@ class Material {
     bindings = [],
     keepLayout = true
   }) {
-    if (!bindGroup)
-      return null;
+    if (!bindGroup) return null;
     const clone = bindGroup.clone({ bindings, keepLayout });
     this.clonedBindGroups.push(clone);
     return clone;
@@ -337,8 +334,7 @@ class Material {
    * @param bindingName - the binding name
    */
   shouldUpdateInputsBindings(bufferBindingName, bindingName) {
-    if (!bufferBindingName)
-      return;
+    if (!bufferBindingName) return;
     const bufferBinding = this.getBindingByName(bufferBindingName);
     if (bufferBinding) {
       if (!bindingName) {
@@ -381,10 +377,8 @@ class Material {
    * @param texture - {@link MediaTexture} or {@link Texture} to eventually destroy
    */
   destroyTexture(texture) {
-    if (texture.options.cache)
-      return;
-    if (!texture.options.autoDestroy)
-      return;
+    if (texture.options.cache) return;
+    if (!texture.options.autoDestroy) return;
     const objectsUsingTexture = this.renderer.getObjectsByTexture(texture);
     const shouldDestroy = !objectsUsingTexture || !objectsUsingTexture.some((object) => object.material.uuid !== this.uuid);
     if (shouldDestroy) {
@@ -500,8 +494,7 @@ class Material {
    * @param pass - current pass encoder
    */
   render(pass) {
-    if (!this.ready)
-      return;
+    if (!this.ready) return;
     this.setPipeline(pass);
     this.setActiveBindGroups(pass);
   }

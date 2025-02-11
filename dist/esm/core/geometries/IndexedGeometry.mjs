@@ -31,8 +31,7 @@ class IndexedGeometry extends Geometry {
    * @param renderer - The {@link Renderer} used to recreate the buffers
    */
   restoreContext(renderer) {
-    if (this.ready)
-      return;
+    if (this.ready) return;
     if (!this.indexBuffer.buffer.GPUBuffer) {
       this.indexBuffer.buffer.createBuffer(renderer);
       this.uploadBuffer(renderer, this.indexBuffer);
@@ -58,14 +57,11 @@ class IndexedGeometry extends Geometry {
       const i0 = this.indexBuffer.array[i] * 3;
       const i1 = this.indexBuffer.array[i + 1] * 3;
       const i2 = this.indexBuffer.array[i + 2] * 3;
-      if (posLength < i0 + 2)
-        continue;
+      if (posLength < i0 + 2) continue;
       vertex1.set(positionAttribute.array[i0], positionAttribute.array[i0 + 1], positionAttribute.array[i0 + 2]);
-      if (posLength < i1 + 2)
-        continue;
+      if (posLength < i1 + 2) continue;
       vertex2.set(positionAttribute.array[i1], positionAttribute.array[i1 + 1], positionAttribute.array[i1 + 2]);
-      if (posLength < i2 + 2)
-        continue;
+      if (posLength < i2 + 2) continue;
       vertex3.set(positionAttribute.array[i2], positionAttribute.array[i2 + 1], positionAttribute.array[i2 + 2]);
       this.computeNormalFromTriangle(vertex1, vertex2, vertex3, edge1, edge2, normal);
       for (let j = 0; j < 3; j++) {
@@ -163,8 +159,7 @@ class IndexedGeometry extends Geometry {
     if (this.indexBuffer) {
       this.indexBuffer.buffer.consumers.delete(this.uuid);
       this.indexBuffer.buffer.destroy();
-      if (renderer)
-        renderer.removeBuffer(this.indexBuffer.buffer);
+      if (renderer) renderer.removeBuffer(this.indexBuffer.buffer);
     }
   }
 }

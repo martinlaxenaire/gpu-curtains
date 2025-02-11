@@ -55,8 +55,7 @@ ${this.shaders.compute.head}`;
         this.shaders.compute.head = `${this.shaders.compute.head}
 @group(${groupBinding.groupIndex}) @binding(${groupBinding.bindIndex}) ${groupBinding.wgslGroupFragment}`;
       }
-      if (groupBinding.newLine)
-        this.shaders.compute.head += `
+      if (groupBinding.newLine) this.shaders.compute.head += `
 `;
     }
     this.shaders.compute.code = this.shaders.compute.head + this.options.shaders.compute.code;
@@ -76,8 +75,7 @@ ${this.shaders.compute.head}`;
    * Create the compute pipeline {@link descriptor}
    */
   createPipelineDescriptor() {
-    if (!this.shaders.compute.module)
-      return;
+    if (!this.shaders.compute.module) return;
     this.descriptor = {
       label: this.options.label,
       layout: this.layout,
@@ -91,8 +89,7 @@ ${this.shaders.compute.head}`;
    * Create the compute {@link pipeline}
    */
   createComputePipeline() {
-    if (!this.shaders.compute.module)
-      return;
+    if (!this.shaders.compute.module) return;
     try {
       this.pipeline = this.renderer.createComputePipeline(this.descriptor);
     } catch (error) {
@@ -105,8 +102,7 @@ ${this.shaders.compute.head}`;
    * @returns - void promise result
    */
   async createComputePipelineAsync() {
-    if (!this.shaders.compute.module)
-      return;
+    if (!this.shaders.compute.module) return;
     try {
       this.pipeline = await this.renderer.createComputePipelineAsync(this.descriptor);
       this.status.compiled = true;

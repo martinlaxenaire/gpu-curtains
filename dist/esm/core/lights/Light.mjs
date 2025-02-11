@@ -4,24 +4,13 @@ import { Object3D } from '../objects3D/Object3D.mjs';
 import { generateUUID } from '../../utils/utils.mjs';
 import { sRGBToLinear } from '../../math/color-utils.mjs';
 
-var __accessCheck = (obj, member, msg) => {
-  if (!member.has(obj))
-    throw TypeError("Cannot " + msg);
+var __typeError = (msg) => {
+  throw TypeError(msg);
 };
-var __privateGet = (obj, member, getter) => {
-  __accessCheck(obj, member, "read from private field");
-  return getter ? getter.call(obj) : member.get(obj);
-};
-var __privateAdd = (obj, member, value) => {
-  if (member.has(obj))
-    throw TypeError("Cannot add the same private member more than once");
-  member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-};
-var __privateSet = (obj, member, value, setter) => {
-  __accessCheck(obj, member, "write to private field");
-  member.set(obj, value);
-  return value;
-};
+var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
+var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
 var _intensity, _intensityColor;
 class Light extends Object3D {
   /**
@@ -32,12 +21,12 @@ class Light extends Object3D {
   constructor(renderer, { color = new Vec3(1), intensity = 1, type = "lights" } = {}) {
     super();
     /** @ignore */
-    __privateAdd(this, _intensity, void 0);
+    __privateAdd(this, _intensity);
     /**
      * A {@link Vec3} holding the {@link Light} {@link color} multiplied by its {@link intensity}.
      * @private
      */
-    __privateAdd(this, _intensityColor, void 0);
+    __privateAdd(this, _intensityColor);
     this.type = type;
     this.setRenderer(renderer);
     this.uuid = generateUUID();

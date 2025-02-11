@@ -6,24 +6,13 @@ import { getDefaultVertexShaderCode } from '../../shaders/full/vertex/get-defaul
 import { getDefaultFragmentCode } from '../../shaders/full/fragment/get-default-fragment-code.mjs';
 import { MediaTexture } from '../../textures/MediaTexture.mjs';
 
-var __accessCheck = (obj, member, msg) => {
-  if (!member.has(obj))
-    throw TypeError("Cannot " + msg);
+var __typeError = (msg) => {
+  throw TypeError(msg);
 };
-var __privateGet = (obj, member, getter) => {
-  __accessCheck(obj, member, "read from private field");
-  return getter ? getter.call(obj) : member.get(obj);
-};
-var __privateAdd = (obj, member, value) => {
-  if (member.has(obj))
-    throw TypeError("Cannot add the same private member more than once");
-  member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-};
-var __privateSet = (obj, member, value, setter) => {
-  __accessCheck(obj, member, "write to private field");
-  member.set(obj, value);
-  return value;
-};
+var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
+var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
 let meshIndex = 0;
 const defaultMeshBaseParams = {
   // material
@@ -625,8 +614,7 @@ ${geometry.wgslStructFragment}`
      * Execute {@link onBeforeRender} callback if needed. Called by the {@link core/scenes/Scene.Scene | Scene} before updating the matrix stack.
      */
     onBeforeRenderScene() {
-      if (!this.renderer.ready || !this.ready || !this.visible)
-        return;
+      if (!this.renderer.ready || !this.ready || !this.visible) return;
       this._onBeforeRenderCallback && this._onBeforeRenderCallback();
     }
     /**
@@ -635,8 +623,7 @@ ${geometry.wgslStructFragment}`
      * Then executes {@link RenderMaterial#onBeforeRender}: create its bind groups and pipeline if needed and eventually update its bindings
      */
     onBeforeRenderPass() {
-      if (!this.renderer.ready)
-        return;
+      if (!this.renderer.ready) return;
       this.setGeometry();
       if (this.visible) {
         this._onRenderCallback && this._onRenderCallback();
@@ -649,8 +636,7 @@ ${geometry.wgslStructFragment}`
      * @param pass - current render pass encoder
      */
     onRenderPass(pass) {
-      if (!this.ready)
-        return;
+      if (!this.ready) return;
       this.material.render(pass);
       this.geometry.render(pass);
     }
@@ -671,8 +657,7 @@ ${geometry.wgslStructFragment}`
      */
     render(pass) {
       this.onBeforeRenderPass();
-      if (!this.renderer.ready || !this.visible)
-        return;
+      if (!this.renderer.ready || !this.visible) return;
       !this.renderer.production && pass.pushDebugGroup(this.options.label);
       this.onRenderPass(pass);
       !this.renderer.production && pass.popDebugGroup();

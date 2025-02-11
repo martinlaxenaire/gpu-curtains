@@ -5,24 +5,13 @@ import { Texture } from '../textures/Texture.mjs';
 import { getDefaultPointShadowDepthVs } from '../shaders/full/vertex/get-default-point-shadow-depth-vertex-shader-code.mjs';
 import { getDefaultPointShadowDepthFs } from '../shaders/full/fragment/get-default-point-shadow-depth-fragment-code.mjs';
 
-var __accessCheck = (obj, member, msg) => {
-  if (!member.has(obj))
-    throw TypeError("Cannot " + msg);
+var __typeError = (msg) => {
+  throw TypeError(msg);
 };
-var __privateGet = (obj, member, getter) => {
-  __accessCheck(obj, member, "read from private field");
-  return getter ? getter.call(obj) : member.get(obj);
-};
-var __privateAdd = (obj, member, value) => {
-  if (member.has(obj))
-    throw TypeError("Cannot add the same private member more than once");
-  member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-};
-var __privateSet = (obj, member, value, setter) => {
-  __accessCheck(obj, member, "write to private field");
-  member.set(obj, value);
-  return value;
-};
+var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
+var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
 var _tempCubeDirection;
 const pointShadowStruct = {
   ...shadowStruct,
@@ -77,7 +66,7 @@ class PointShadow extends Shadow {
      * {@link Vec3} used to calculate the actual current direction based on the {@link PointLight} position.
      * @private
      */
-    __privateAdd(this, _tempCubeDirection, void 0);
+    __privateAdd(this, _tempCubeDirection);
     this.options = {
       ...this.options,
       camera
@@ -228,8 +217,7 @@ class PointShadow extends Shadow {
    * Clear the content of the depth texture. Called whenever the {@link castingMeshes} {@link Map} is empty after having removed a mesh, or if all {@link castingMeshes} `visible` properties are `false`.
    */
   clearDepthTexture() {
-    if (!this.depthTexture || !this.depthTexture.texture)
-      return;
+    if (!this.depthTexture || !this.depthTexture.texture) return;
     const commandEncoder = this.renderer.device.createCommandEncoder();
     !this.renderer.production && commandEncoder.pushDebugGroup(`Clear ${this.depthTexture.texture.label} command encoder`);
     for (let i = 0; i < 6; i++) {
@@ -265,8 +253,7 @@ class PointShadow extends Shadow {
    * @param commandEncoder - {@link GPUCommandEncoder} to use.
    */
   render(commandEncoder) {
-    if (!this.castingMeshes.size)
-      return;
+    if (!this.castingMeshes.size) return;
     let shouldRender = false;
     for (const [_uuid, mesh] of this.castingMeshes) {
       if (mesh.visible) {
@@ -310,8 +297,7 @@ class PointShadow extends Shadow {
       depthMesh.material.bindGroups[cubeFaceBindGroupIndex] = this.renderer.pointShadowsCubeFaceBindGroups[face];
       depthMesh.render(depthPass);
     }
-    if (!this.renderer.production)
-      depthPass.popDebugGroup();
+    if (!this.renderer.production) depthPass.popDebugGroup();
     depthPass.end();
   }
   /**

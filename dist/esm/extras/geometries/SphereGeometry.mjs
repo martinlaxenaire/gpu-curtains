@@ -56,10 +56,8 @@ class SphereGeometry extends IndexedGeometry {
         const b = grid[iy][ix];
         const c = grid[iy + 1][ix];
         const d = grid[iy + 1][ix + 1];
-        if (iy !== 0 || thetaStart > 0)
-          indices.push(a, b, d);
-        if (iy !== heightSegments - 1 || thetaEnd < Math.PI)
-          indices.push(b, c, d);
+        if (iy !== 0 || thetaStart > 0) indices.push(a, b, d);
+        if (iy !== heightSegments - 1 || thetaEnd < Math.PI) indices.push(b, c, d);
       }
     }
     this.setAttribute({

@@ -275,8 +275,7 @@ class Object3D {
    */
   destroy() {
     for (let i = 0, l = this.children.length; i < l; i++) {
-      if (this.children[i])
-        this.children[i].parent = null;
+      if (this.children[i]) this.children[i].parent = null;
     }
     this.parent = null;
   }

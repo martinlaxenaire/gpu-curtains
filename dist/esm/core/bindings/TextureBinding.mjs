@@ -59,8 +59,7 @@ class TextureBinding extends Binding {
    * @param value - new bind group resource
    */
   set resource(value) {
-    if (value || this.texture)
-      this.shouldResetBindGroup = true;
+    if (value || this.texture) this.shouldResetBindGroup = true;
     this.texture = value;
   }
   /**
@@ -69,8 +68,7 @@ class TextureBinding extends Binding {
    */
   setBindingType(bindingType) {
     if (bindingType !== this.bindingType) {
-      if (bindingType)
-        this.shouldResetBindGroupLayout = true;
+      if (bindingType) this.shouldResetBindGroupLayout = true;
       this.bindingType = bindingType;
       this.cacheKey = `${this.bindingType},${this.visibility},${this.options.format},${this.options.access},${this.options.viewDimension},${this.options.multisampled},`;
       this.setWGSLFragment();

@@ -2,29 +2,15 @@ import { Vec2 } from '../../math/Vec2.mjs';
 import { Vec3 } from '../../math/Vec3.mjs';
 import { throwWarning } from '../../utils/utils.mjs';
 
-var __accessCheck = (obj, member, msg) => {
-  if (!member.has(obj))
-    throw TypeError("Cannot " + msg);
+var __typeError = (msg) => {
+  throw TypeError(msg);
 };
-var __privateGet = (obj, member, getter) => {
-  __accessCheck(obj, member, "read from private field");
-  return getter ? getter.call(obj) : member.get(obj);
-};
-var __privateAdd = (obj, member, value) => {
-  if (member.has(obj))
-    throw TypeError("Cannot add the same private member more than once");
-  member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-};
-var __privateSet = (obj, member, value, setter) => {
-  __accessCheck(obj, member, "write to private field");
-  member.set(obj, value);
-  return value;
-};
-var __privateMethod = (obj, member, method) => {
-  __accessCheck(obj, member, "access private method");
-  return method;
-};
-var _element, _offset, _isOrbiting, _spherical, _rotateStart, _isPaning, _panStart, _panDelta, _setBaseParams, setBaseParams_fn, _addEvents, addEvents_fn, _removeEvents, removeEvents_fn, _onMouseDown, onMouseDown_fn, _onTouchStart, onTouchStart_fn, _onMouseMove, onMouseMove_fn, _onTouchMove, onTouchMove_fn, _onMouseUp, onMouseUp_fn, _onTouchEnd, onTouchEnd_fn, _onMouseWheel, onMouseWheel_fn, _onContextMenu, onContextMenu_fn, _update, update_fn, _rotate, rotate_fn, _pan, pan_fn, _zoom, zoom_fn;
+var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
+var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
+var __privateMethod = (obj, member, method) => (__accessCheck(obj, member, "access private method"), method);
+var _element, _offset, _isOrbiting, _spherical, _rotateStart, _isPaning, _panStart, _panDelta, _OrbitControls_instances, setBaseParams_fn, addEvents_fn, removeEvents_fn, onMouseDown_fn, onTouchStart_fn, onMouseMove_fn, onTouchMove_fn, onMouseUp_fn, onTouchEnd_fn, onMouseWheel_fn, onContextMenu_fn, update_fn, rotate_fn, pan_fn, zoom_fn;
 const tempVec2a = new Vec2();
 const tempVec2b = new Vec2();
 const tempVec3 = new Vec3();
@@ -53,93 +39,7 @@ class OrbitControls {
     enablePan = true,
     panSpeed = 1
   }) {
-    /**
-     * Set / reset base params
-     * @ignore
-     */
-    __privateAdd(this, _setBaseParams);
-    /**
-     * Add the event listeners.
-     * @private
-     */
-    __privateAdd(this, _addEvents);
-    /**
-     * Remove the event listeners.
-     * @private
-     */
-    __privateAdd(this, _removeEvents);
-    /**
-     * Callback executed on mouse down event.
-     * @param e - {@link MouseEvent}.
-     * @private
-     */
-    __privateAdd(this, _onMouseDown);
-    /**
-     * Callback executed on touch start event.
-     * @param e - {@link TouchEvent}.
-     * @private
-     */
-    __privateAdd(this, _onTouchStart);
-    /**
-     * Callback executed on mouse move event.
-     * @param e - {@link MouseEvent}.
-     */
-    __privateAdd(this, _onMouseMove);
-    /**
-     * Callback executed on touch move event.
-     * @param e - {@link TouchEvent}.
-     * @private
-     */
-    __privateAdd(this, _onTouchMove);
-    /**
-     * Callback executed on mouse up event.
-     * @param e - {@link MouseEvent}.
-     * @private
-     */
-    __privateAdd(this, _onMouseUp);
-    /**
-     * Callback executed on touch end event.
-     * @param e - {@link MouseEvent}.
-     * @private
-     */
-    __privateAdd(this, _onTouchEnd);
-    /**
-     * Callback executed on wheel event.
-     * @param e - {@link WheelEvent}.
-     * @private
-     */
-    __privateAdd(this, _onMouseWheel);
-    /**
-     * Prevent context menu apparition on right click
-     * @param e - {@link MouseEvent}.
-     * @private
-     */
-    __privateAdd(this, _onContextMenu);
-    /**
-     * Update the {@link camera} position based on the {@link target} and internal values.
-     * @private
-     */
-    __privateAdd(this, _update);
-    /**
-     * Update the {@link camera} position based on input coordinates so it rotates around the {@link target}.
-     * @param x - input coordinate along the X axis.
-     * @param y - input coordinate along the Y axis.
-     * @private
-     */
-    __privateAdd(this, _rotate);
-    /**
-     * Pan the {@link camera} position based on input coordinates by updating {@link target}.
-     * @param x - input coordinate along the X axis.
-     * @param y - input coordinate along the Y axis.
-     * @private
-     */
-    __privateAdd(this, _pan);
-    /**
-     * Move the {@link camera} forward or backward.
-     * @param value - new value to use for zoom.
-     * @private
-     */
-    __privateAdd(this, _zoom);
+    __privateAdd(this, _OrbitControls_instances);
     /**
      * {@link HTMLElement} (or {@link Window} element) to use for event listeners.
      * @private
@@ -163,7 +63,7 @@ class OrbitControls {
       throwWarning("OrbitControls: cannot initialize without a camera.");
       return;
     }
-    __privateMethod(this, _setBaseParams, setBaseParams_fn).call(this, {
+    __privateMethod(this, _OrbitControls_instances, setBaseParams_fn).call(this, {
       target,
       enableZoom,
       minZoom,
@@ -194,7 +94,7 @@ class OrbitControls {
     __privateGet(this, _spherical).radius = __privateGet(this, _offset).length();
     __privateGet(this, _spherical).theta = Math.atan2(__privateGet(this, _offset).x, __privateGet(this, _offset).z);
     __privateGet(this, _spherical).phi = Math.acos(Math.min(Math.max(__privateGet(this, _offset).y / __privateGet(this, _spherical).radius, -1), 1));
-    __privateMethod(this, _update, update_fn).call(this);
+    __privateMethod(this, _OrbitControls_instances, update_fn).call(this);
   }
   /**
    * Reset the {@link OrbitControls} values.
@@ -219,7 +119,7 @@ class OrbitControls {
     enablePan = this.enablePan,
     panSpeed = this.panSpeed
   } = {}) {
-    __privateMethod(this, _setBaseParams, setBaseParams_fn).call(this, {
+    __privateMethod(this, _OrbitControls_instances, setBaseParams_fn).call(this, {
       target,
       enableZoom,
       minZoom,
@@ -247,7 +147,7 @@ class OrbitControls {
     __privateGet(this, _spherical).radius = position.length();
     __privateGet(this, _spherical).theta = Math.atan2(position.x, position.z);
     __privateGet(this, _spherical).phi = Math.acos(Math.min(Math.max(position.y / __privateGet(this, _spherical).radius, -1), 1));
-    __privateMethod(this, _update, update_fn).call(this);
+    __privateMethod(this, _OrbitControls_instances, update_fn).call(this);
   }
   /**
    * Set the element to use for event listeners. Can remove previous event listeners first if needed.
@@ -255,11 +155,11 @@ class OrbitControls {
    */
   set element(value) {
     if (__privateGet(this, _element) && (!value || __privateGet(this, _element) !== value)) {
-      __privateMethod(this, _removeEvents, removeEvents_fn).call(this);
+      __privateMethod(this, _OrbitControls_instances, removeEvents_fn).call(this);
     }
     __privateSet(this, _element, value);
     if (value) {
-      __privateMethod(this, _addEvents, addEvents_fn).call(this);
+      __privateMethod(this, _OrbitControls_instances, addEvents_fn).call(this);
     }
   }
   /**
@@ -284,7 +184,11 @@ _rotateStart = new WeakMap();
 _isPaning = new WeakMap();
 _panStart = new WeakMap();
 _panDelta = new WeakMap();
-_setBaseParams = new WeakSet();
+_OrbitControls_instances = new WeakSet();
+/**
+ * Set / reset base params
+ * @ignore
+ */
 setBaseParams_fn = function({
   target,
   // zoom
@@ -319,29 +223,39 @@ setBaseParams_fn = function({
   this.enablePan = enablePan;
   this.panSpeed = panSpeed;
 };
-_addEvents = new WeakSet();
+/**
+ * Add the event listeners.
+ * @private
+ */
 addEvents_fn = function() {
-  __privateGet(this, _element).addEventListener("contextmenu", __privateMethod(this, _onContextMenu, onContextMenu_fn).bind(this), false);
-  __privateGet(this, _element).addEventListener("mousedown", __privateMethod(this, _onMouseDown, onMouseDown_fn).bind(this), false);
-  __privateGet(this, _element).addEventListener("mousemove", __privateMethod(this, _onMouseMove, onMouseMove_fn).bind(this), false);
-  __privateGet(this, _element).addEventListener("mouseup", __privateMethod(this, _onMouseUp, onMouseUp_fn).bind(this), false);
-  __privateGet(this, _element).addEventListener("touchstart", __privateMethod(this, _onTouchStart, onTouchStart_fn).bind(this), { passive: false });
-  __privateGet(this, _element).addEventListener("touchmove", __privateMethod(this, _onTouchMove, onTouchMove_fn).bind(this), { passive: false });
-  __privateGet(this, _element).addEventListener("touchend", __privateMethod(this, _onTouchEnd, onTouchEnd_fn).bind(this), false);
-  __privateGet(this, _element).addEventListener("wheel", __privateMethod(this, _onMouseWheel, onMouseWheel_fn).bind(this), { passive: false });
+  __privateGet(this, _element).addEventListener("contextmenu", __privateMethod(this, _OrbitControls_instances, onContextMenu_fn).bind(this), false);
+  __privateGet(this, _element).addEventListener("mousedown", __privateMethod(this, _OrbitControls_instances, onMouseDown_fn).bind(this), false);
+  __privateGet(this, _element).addEventListener("mousemove", __privateMethod(this, _OrbitControls_instances, onMouseMove_fn).bind(this), false);
+  __privateGet(this, _element).addEventListener("mouseup", __privateMethod(this, _OrbitControls_instances, onMouseUp_fn).bind(this), false);
+  __privateGet(this, _element).addEventListener("touchstart", __privateMethod(this, _OrbitControls_instances, onTouchStart_fn).bind(this), { passive: false });
+  __privateGet(this, _element).addEventListener("touchmove", __privateMethod(this, _OrbitControls_instances, onTouchMove_fn).bind(this), { passive: false });
+  __privateGet(this, _element).addEventListener("touchend", __privateMethod(this, _OrbitControls_instances, onTouchEnd_fn).bind(this), false);
+  __privateGet(this, _element).addEventListener("wheel", __privateMethod(this, _OrbitControls_instances, onMouseWheel_fn).bind(this), { passive: false });
 };
-_removeEvents = new WeakSet();
+/**
+ * Remove the event listeners.
+ * @private
+ */
 removeEvents_fn = function() {
-  __privateGet(this, _element).removeEventListener("contextmenu", __privateMethod(this, _onContextMenu, onContextMenu_fn).bind(this), false);
-  __privateGet(this, _element).removeEventListener("mousedown", __privateMethod(this, _onMouseDown, onMouseDown_fn).bind(this), false);
-  __privateGet(this, _element).removeEventListener("mousemove", __privateMethod(this, _onMouseMove, onMouseMove_fn).bind(this), false);
-  __privateGet(this, _element).removeEventListener("mouseup", __privateMethod(this, _onMouseUp, onMouseUp_fn).bind(this), false);
-  __privateGet(this, _element).removeEventListener("touchstart", __privateMethod(this, _onTouchStart, onTouchStart_fn).bind(this), { passive: false });
-  __privateGet(this, _element).removeEventListener("touchmove", __privateMethod(this, _onTouchMove, onTouchMove_fn).bind(this), { passive: false });
-  __privateGet(this, _element).removeEventListener("touchend", __privateMethod(this, _onTouchEnd, onTouchEnd_fn).bind(this), false);
-  __privateGet(this, _element).removeEventListener("wheel", __privateMethod(this, _onMouseWheel, onMouseWheel_fn).bind(this), { passive: false });
+  __privateGet(this, _element).removeEventListener("contextmenu", __privateMethod(this, _OrbitControls_instances, onContextMenu_fn).bind(this), false);
+  __privateGet(this, _element).removeEventListener("mousedown", __privateMethod(this, _OrbitControls_instances, onMouseDown_fn).bind(this), false);
+  __privateGet(this, _element).removeEventListener("mousemove", __privateMethod(this, _OrbitControls_instances, onMouseMove_fn).bind(this), false);
+  __privateGet(this, _element).removeEventListener("mouseup", __privateMethod(this, _OrbitControls_instances, onMouseUp_fn).bind(this), false);
+  __privateGet(this, _element).removeEventListener("touchstart", __privateMethod(this, _OrbitControls_instances, onTouchStart_fn).bind(this), { passive: false });
+  __privateGet(this, _element).removeEventListener("touchmove", __privateMethod(this, _OrbitControls_instances, onTouchMove_fn).bind(this), { passive: false });
+  __privateGet(this, _element).removeEventListener("touchend", __privateMethod(this, _OrbitControls_instances, onTouchEnd_fn).bind(this), false);
+  __privateGet(this, _element).removeEventListener("wheel", __privateMethod(this, _OrbitControls_instances, onMouseWheel_fn).bind(this), { passive: false });
 };
-_onMouseDown = new WeakSet();
+/**
+ * Callback executed on mouse down event.
+ * @param e - {@link MouseEvent}.
+ * @private
+ */
 onMouseDown_fn = function(e) {
   if (e.button === 0 && this.enableRotate) {
     __privateSet(this, _isOrbiting, true);
@@ -353,49 +267,79 @@ onMouseDown_fn = function(e) {
   e.stopPropagation();
   e.preventDefault();
 };
-_onTouchStart = new WeakSet();
+/**
+ * Callback executed on touch start event.
+ * @param e - {@link TouchEvent}.
+ * @private
+ */
 onTouchStart_fn = function(e) {
   if (e.touches.length === 1 && this.enableRotate) {
     __privateSet(this, _isOrbiting, true);
     __privateGet(this, _rotateStart).set(e.touches[0].pageX, e.touches[0].pageY);
   }
 };
-_onMouseMove = new WeakSet();
+/**
+ * Callback executed on mouse move event.
+ * @param e - {@link MouseEvent}.
+ */
 onMouseMove_fn = function(e) {
   if (__privateGet(this, _isOrbiting) && this.enableRotate) {
-    __privateMethod(this, _rotate, rotate_fn).call(this, e.clientX, e.clientY);
+    __privateMethod(this, _OrbitControls_instances, rotate_fn).call(this, e.clientX, e.clientY);
   } else if (__privateGet(this, _isPaning) && this.enablePan) {
-    __privateMethod(this, _pan, pan_fn).call(this, e.clientX, e.clientY);
+    __privateMethod(this, _OrbitControls_instances, pan_fn).call(this, e.clientX, e.clientY);
   }
 };
-_onTouchMove = new WeakSet();
+/**
+ * Callback executed on touch move event.
+ * @param e - {@link TouchEvent}.
+ * @private
+ */
 onTouchMove_fn = function(e) {
   if (__privateGet(this, _isOrbiting) && this.enableRotate) {
-    __privateMethod(this, _rotate, rotate_fn).call(this, e.touches[0].pageX, e.touches[0].pageY);
+    __privateMethod(this, _OrbitControls_instances, rotate_fn).call(this, e.touches[0].pageX, e.touches[0].pageY);
   }
 };
-_onMouseUp = new WeakSet();
+/**
+ * Callback executed on mouse up event.
+ * @param e - {@link MouseEvent}.
+ * @private
+ */
 onMouseUp_fn = function(e) {
   __privateSet(this, _isOrbiting, false);
   __privateSet(this, _isPaning, false);
 };
-_onTouchEnd = new WeakSet();
+/**
+ * Callback executed on touch end event.
+ * @param e - {@link MouseEvent}.
+ * @private
+ */
 onTouchEnd_fn = function(e) {
   __privateSet(this, _isOrbiting, false);
   __privateSet(this, _isPaning, false);
 };
-_onMouseWheel = new WeakSet();
+/**
+ * Callback executed on wheel event.
+ * @param e - {@link WheelEvent}.
+ * @private
+ */
 onMouseWheel_fn = function(e) {
   if (this.enableZoom) {
-    __privateMethod(this, _zoom, zoom_fn).call(this, e.deltaY);
+    __privateMethod(this, _OrbitControls_instances, zoom_fn).call(this, e.deltaY);
     e.preventDefault();
   }
 };
-_onContextMenu = new WeakSet();
+/**
+ * Prevent context menu apparition on right click
+ * @param e - {@link MouseEvent}.
+ * @private
+ */
 onContextMenu_fn = function(e) {
   e.preventDefault();
 };
-_update = new WeakSet();
+/**
+ * Update the {@link camera} position based on the {@link target} and internal values.
+ * @private
+ */
 update_fn = function() {
   const sinPhiRadius = __privateGet(this, _spherical).radius * Math.sin(Math.max(1e-6, __privateGet(this, _spherical).phi));
   __privateGet(this, _offset).x = sinPhiRadius * Math.sin(__privateGet(this, _spherical).theta);
@@ -403,7 +347,12 @@ update_fn = function() {
   __privateGet(this, _offset).z = sinPhiRadius * Math.cos(__privateGet(this, _spherical).theta);
   this.camera.position.copy(this.target).add(__privateGet(this, _offset));
 };
-_rotate = new WeakSet();
+/**
+ * Update the {@link camera} position based on input coordinates so it rotates around the {@link target}.
+ * @param x - input coordinate along the X axis.
+ * @param y - input coordinate along the Y axis.
+ * @private
+ */
 rotate_fn = function(x, y) {
   tempVec2a.set(x, y);
   tempVec2b.copy(tempVec2a).sub(__privateGet(this, _rotateStart)).multiplyScalar(this.rotateSpeed);
@@ -412,9 +361,14 @@ rotate_fn = function(x, y) {
   __privateGet(this, _spherical).theta = Math.min(this.maxAzimuthAngle, Math.max(this.minAzimuthAngle, __privateGet(this, _spherical).theta));
   __privateGet(this, _spherical).phi = Math.min(this.maxPolarAngle, Math.max(this.minPolarAngle, __privateGet(this, _spherical).phi));
   __privateGet(this, _rotateStart).copy(tempVec2a);
-  __privateMethod(this, _update, update_fn).call(this);
+  __privateMethod(this, _OrbitControls_instances, update_fn).call(this);
 };
-_pan = new WeakSet();
+/**
+ * Pan the {@link camera} position based on input coordinates by updating {@link target}.
+ * @param x - input coordinate along the X axis.
+ * @param y - input coordinate along the Y axis.
+ * @private
+ */
 pan_fn = function(x, y) {
   tempVec2a.set(x, y);
   tempVec2b.copy(tempVec2a).sub(__privateGet(this, _panStart)).multiplyScalar(this.panSpeed);
@@ -440,15 +394,19 @@ pan_fn = function(x, y) {
   this.target.add(__privateGet(this, _panDelta));
   __privateGet(this, _offset).copy(this.camera.position).sub(this.target);
   __privateGet(this, _spherical).radius = __privateGet(this, _offset).length();
-  __privateMethod(this, _update, update_fn).call(this);
+  __privateMethod(this, _OrbitControls_instances, update_fn).call(this);
 };
-_zoom = new WeakSet();
+/**
+ * Move the {@link camera} forward or backward.
+ * @param value - new value to use for zoom.
+ * @private
+ */
 zoom_fn = function(value) {
   __privateGet(this, _spherical).radius = Math.min(
     this.maxZoom,
     Math.max(this.minZoom + 1e-6, __privateGet(this, _spherical).radius + value * this.zoomSpeed / 100)
   );
-  __privateMethod(this, _update, update_fn).call(this);
+  __privateMethod(this, _OrbitControls_instances, update_fn).call(this);
 };
 
 export { OrbitControls };

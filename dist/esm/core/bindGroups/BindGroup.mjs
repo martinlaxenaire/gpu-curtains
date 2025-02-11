@@ -24,8 +24,7 @@ class BindGroup {
     this.uuid = generateUUID();
     this.bindings = [];
     bindings.length && this.addBindings(bindings);
-    if (this.options.uniforms || this.options.storages)
-      this.setInputBindings();
+    if (this.options.uniforms || this.options.storages) this.setInputBindings();
     this.layoutCacheKey = "";
     this.pipelineCacheKey = "";
     this.resetEntries();
@@ -116,8 +115,7 @@ class BindGroup {
     let bindings = [
       ...Object.keys(inputs).map((inputKey) => {
         const binding = inputs[inputKey];
-        if (!binding.struct)
-          return;
+        if (!binding.struct) return;
         const bindingParams = {
           label: toKebabCase(binding.label || inputKey),
           name: inputKey,

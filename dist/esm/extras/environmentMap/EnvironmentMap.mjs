@@ -10,29 +10,15 @@ import { computeBRDFLUT } from '../../core/shaders/full/compute/compute-BRDF-LUT
 import { computeSpecularCubemapFromHDR } from '../../core/shaders/full/compute/compute-specular-cubemap-from-HDR.mjs';
 import { computeDiffuseFromSpecularCubemap } from '../../core/shaders/full/compute/compute-diffuse-from-specular-cubemap.mjs';
 
-var __accessCheck = (obj, member, msg) => {
-  if (!member.has(obj))
-    throw TypeError("Cannot " + msg);
+var __typeError = (msg) => {
+  throw TypeError(msg);
 };
-var __privateGet = (obj, member, getter) => {
-  __accessCheck(obj, member, "read from private field");
-  return getter ? getter.call(obj) : member.get(obj);
-};
-var __privateAdd = (obj, member, value) => {
-  if (member.has(obj))
-    throw TypeError("Cannot add the same private member more than once");
-  member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-};
-var __privateSet = (obj, member, value, setter) => {
-  __accessCheck(obj, member, "write to private field");
-  member.set(obj, value);
-  return value;
-};
-var __privateMethod = (obj, member, method) => {
-  __accessCheck(obj, member, "access private method");
-  return method;
-};
-var _lutStorageTexture, _runComputePass, runComputePass_fn;
+var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
+var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
+var __privateMethod = (obj, member, method) => (__accessCheck(obj, member, "access private method"), method);
+var _lutStorageTexture, _EnvironmentMap_instances, runComputePass_fn;
 class EnvironmentMap {
   /**
    * {@link EnvironmentMap} constructor.
@@ -40,17 +26,9 @@ class EnvironmentMap {
    * @param params - {@link EnvironmentMapParams | parameters} use to create this {@link EnvironmentMap}. Defines the various textures options.
    */
   constructor(renderer, params = {}) {
-    /**
-     * Run a {@link ComputePass} once by creating a {@link GPUCommandEncoder} and execute the pass.
-     * @param parameters - Parameters used to run the compute pass.
-     * @param parameters.computePass - {@link ComputePass} to run.
-     * @param parameters.label - Optional label for the {@link GPUCommandEncoder}.
-     * @param parameters.onAfterCompute - Optional callback to run just after the pass has been executed. Useful for eventual texture copies.
-     * @private
-     */
-    __privateAdd(this, _runComputePass);
+    __privateAdd(this, _EnvironmentMap_instances);
     /** BRDF GGX LUT storage {@link Texture} used in the compute shader. */
-    __privateAdd(this, _lutStorageTexture, void 0);
+    __privateAdd(this, _lutStorageTexture);
     // callbacks / events
     /** function assigned to the {@link onRotationAxisChanged} callback */
     this._onRotationAxisChangedCallback = () => {
@@ -181,7 +159,7 @@ class EnvironmentMap {
       textures: [__privateGet(this, _lutStorageTexture)]
     });
     await computeLUTPass.material.compileMaterial();
-    __privateMethod(this, _runComputePass, runComputePass_fn).call(this, { computePass: computeLUTPass, label: "Compute LUT texture command encoder" });
+    __privateMethod(this, _EnvironmentMap_instances, runComputePass_fn).call(this, { computePass: computeLUTPass, label: "Compute LUT texture command encoder" });
     computeLUTPass.destroy();
     computeLUTPass = null;
   }
@@ -239,7 +217,7 @@ class EnvironmentMap {
       textures: [cubeStorageTexture]
     });
     await computeCubeMapPass.material.compileMaterial();
-    __privateMethod(this, _runComputePass, runComputePass_fn).call(this, {
+    __privateMethod(this, _EnvironmentMap_instances, runComputePass_fn).call(this, {
       computePass: computeCubeMapPass,
       label: "Compute specular cube map command encoder",
       onAfterCompute: (commandEncoder) => {
@@ -307,7 +285,7 @@ class EnvironmentMap {
       textures: [this.specularTexture, diffuseStorageTexture]
     });
     await computeDiffusePass.material.compileMaterial();
-    __privateMethod(this, _runComputePass, runComputePass_fn).call(this, {
+    __privateMethod(this, _EnvironmentMap_instances, runComputePass_fn).call(this, {
       computePass: computeDiffusePass,
       label: "Compute diffuse cube map from specular cube map command encoder",
       onAfterCompute: (commandEncoder) => {
@@ -389,7 +367,15 @@ class EnvironmentMap {
   }
 }
 _lutStorageTexture = new WeakMap();
-_runComputePass = new WeakSet();
+_EnvironmentMap_instances = new WeakSet();
+/**
+ * Run a {@link ComputePass} once by creating a {@link GPUCommandEncoder} and execute the pass.
+ * @param parameters - Parameters used to run the compute pass.
+ * @param parameters.computePass - {@link ComputePass} to run.
+ * @param parameters.label - Optional label for the {@link GPUCommandEncoder}.
+ * @param parameters.onAfterCompute - Optional callback to run just after the pass has been executed. Useful for eventual texture copies.
+ * @private
+ */
 runComputePass_fn = function({
   computePass,
   label = "",
