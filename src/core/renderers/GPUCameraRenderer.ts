@@ -101,6 +101,9 @@ export class GPUCameraRenderer extends GPURenderer {
   /** The bindings used by the {@link cameraLightsBindGroup | camera, lights and shadows bind group}. */
   bindings: GPUCameraRendererBindings
 
+  /** An array of {@link BindGroup} containing a single {@link BufferBinding} with the cube face index onto which we'll want to draw for {@link core/shadows/PointShadow.PointShadow | PointShadow} depth cube map. Will be swapped for each face render passes by the {@link core/shadows/PointShadow.PointShadow | PointShadow}. */
+  pointShadowsCubeFaceBindGroups: BindGroup[]
+
   /** Options used to create this {@link GPUCameraRenderer}. */
   options: GPUCameraRendererOptions
 
@@ -581,6 +584,33 @@ export class GPUCameraRenderer extends GPURenderer {
 
     this.cameraLightsBindGroup.consumers.add(this.uuid)
 
+    // add point shadows cube faces bind groups
+    this.pointShadowsCubeFaceBindGroups = []
+    for (let face = 0; face < 6; face++) {
+      const cubeFace = new BufferBinding({
+        label: 'Cube face',
+        name: 'cubeFace',
+        bindingType: 'uniform',
+        visibility: ['vertex'],
+        struct: {
+          face: {
+            type: 'u32',
+            value: face,
+          },
+        },
+      })
+
+      const cubeBindGroup = new BindGroup(this, {
+        label: `Cube face bind group ${face}`,
+        bindings: [cubeFace],
+      })
+
+      cubeBindGroup.createBindGroup()
+      cubeBindGroup.consumers.add(this.uuid)
+
+      this.pointShadowsCubeFaceBindGroups.push(cubeBindGroup)
+    }
+
     // create eagerly
     if (this.device) {
       this.createCameraLightsBindGroup()
@@ -745,6 +775,7 @@ export class GPUCameraRenderer extends GPURenderer {
    */
   destroy() {
     this.cameraLightsBindGroup?.destroy()
+    this.pointShadowsCubeFaceBindGroups.forEach((bindGroup) => bindGroup.destroy())
     this.lights.forEach((light) => light.remove())
     this.destroyTransmissionTarget()
     super.destroy()

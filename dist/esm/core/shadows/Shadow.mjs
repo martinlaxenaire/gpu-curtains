@@ -29,7 +29,7 @@ var __privateMethod = (obj, member, method) => {
   __accessCheck(obj, member, "access private method");
   return method;
 };
-var _intensity, _bias, _normalBias, _pcfSamples, _isActive, _autoRender, _depthMeshes, _depthPassTaskID, _setParameters, setParameters_fn;
+var _intensity, _bias, _normalBias, _pcfSamples, _isActive, _autoRender, _depthPassTaskID, _setParameters, setParameters_fn;
 const shadowStruct = {
   isActive: {
     type: "i32",
@@ -86,8 +86,6 @@ class Shadow {
     __privateAdd(this, _isActive, void 0);
     /** @ignore */
     __privateAdd(this, _autoRender, void 0);
-    /** Map of all the depth {@link ProjectedMesh} rendered to the shadow map. */
-    __privateAdd(this, _depthMeshes, void 0);
     /** @ignore */
     __privateAdd(this, _depthPassTaskID, void 0);
     this.setRenderer(renderer);
@@ -104,7 +102,7 @@ class Shadow {
     };
     this.sampleCount = 1;
     this.meshes = /* @__PURE__ */ new Map();
-    __privateSet(this, _depthMeshes, /* @__PURE__ */ new Map());
+    this.depthMeshes = /* @__PURE__ */ new Map();
     __privateSet(this, _depthPassTaskID, null);
     __privateMethod(this, _setParameters, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
     this.isActive = false;
@@ -117,7 +115,7 @@ class Shadow {
     renderer = isCameraRenderer(renderer, this.constructor.name);
     this.renderer = renderer;
     this.setRendererBinding();
-    __privateGet(this, _depthMeshes)?.forEach((depthMesh) => {
+    this.depthMeshes?.forEach((depthMesh) => {
       depthMesh.setRenderer(this.renderer);
     });
   }
@@ -370,6 +368,17 @@ class Shadow {
       (commandEncoder) => {
         if (!this.meshes.size)
           return;
+        let shouldRender = false;
+        for (const [_uuid, mesh] of this.meshes) {
+          if (mesh.visible) {
+            shouldRender = true;
+            break;
+          }
+        }
+        if (!shouldRender) {
+          this.clearDepthTexture();
+          return;
+        }
         this.renderDepthPass(commandEncoder);
         this.renderer.pipelineManager.resetCurrentPipeline();
       },
@@ -386,7 +395,7 @@ class Shadow {
     if (!__privateGet(this, _autoRender)) {
       this.onPropertyChanged("isActive", 1);
       await Promise.all(
-        [...__privateGet(this, _depthMeshes).values()].map(async (depthMesh) => {
+        [...this.depthMeshes.values()].map(async (depthMesh) => {
           depthMesh.setGeometry();
           await depthMesh.material.compileMaterial();
         })
@@ -403,7 +412,12 @@ class Shadow {
     const depthPass = commandEncoder.beginRenderPass(this.depthPassTarget.renderPass.descriptor);
     if (!this.renderer.production)
       depthPass.pushDebugGroup(`${this.constructor.name} (index: ${this.index}): depth pass`);
-    __privateGet(this, _depthMeshes).forEach((depthMesh) => depthMesh.render(depthPass));
+    for (const [uuid, depthMesh] of this.depthMeshes) {
+      if (!this.meshes.get(uuid)?.visible) {
+        continue;
+      }
+      depthMesh.render(depthPass);
+    }
     if (!this.renderer.production)
       depthPass.popDebugGroup();
     depthPass.end();
@@ -470,9 +484,9 @@ class Shadow {
       return;
     mesh.options.castShadows = true;
     parameters = this.patchShadowCastingMeshParams(mesh, parameters);
-    if (__privateGet(this, _depthMeshes).get(mesh.uuid)) {
-      __privateGet(this, _depthMeshes).get(mesh.uuid).remove();
-      __privateGet(this, _depthMeshes).delete(mesh.uuid);
+    if (this.depthMeshes.get(mesh.uuid)) {
+      this.depthMeshes.get(mesh.uuid).remove();
+      this.depthMeshes.delete(mesh.uuid);
     }
     const depthMesh = new Mesh(this.renderer, {
       label: `${this.constructor.name} (index: ${this.index}) ${mesh.options.label} depth mesh`,
@@ -485,7 +499,7 @@ class Shadow {
       autoRender: false
     });
     depthMesh.parent = mesh;
-    __privateGet(this, _depthMeshes).set(mesh.uuid, depthMesh);
+    this.depthMeshes.set(mesh.uuid, depthMesh);
     this.meshes.set(mesh.uuid, mesh);
   }
   /**
@@ -493,10 +507,10 @@ class Shadow {
    * @param mesh - {@link ProjectedMesh | mesh} to remove.
    */
   removeMesh(mesh) {
-    const depthMesh = __privateGet(this, _depthMeshes).get(mesh.uuid);
+    const depthMesh = this.depthMeshes.get(mesh.uuid);
     if (depthMesh) {
       depthMesh.remove();
-      __privateGet(this, _depthMeshes).delete(mesh.uuid);
+      this.depthMeshes.delete(mesh.uuid);
     }
     this.meshes.delete(mesh.uuid);
     if (this.meshes.size === 0) {
@@ -509,7 +523,7 @@ class Shadow {
    * @param geometry - New {@link ProjectedMesh} {@link Geometry} to use.
    */
   updateMeshGeometry(mesh, geometry) {
-    const depthMesh = __privateGet(this, _depthMeshes).get(mesh.uuid);
+    const depthMesh = this.depthMeshes.get(mesh.uuid);
     if (depthMesh) {
       depthMesh.useGeometry(geometry);
     }
@@ -524,7 +538,7 @@ class Shadow {
       __privateSet(this, _depthPassTaskID, null);
     }
     this.meshes.forEach((mesh) => this.removeMesh(mesh));
-    __privateSet(this, _depthMeshes, /* @__PURE__ */ new Map());
+    this.depthMeshes = /* @__PURE__ */ new Map();
     this.meshes = /* @__PURE__ */ new Map();
     this.depthPassTarget?.destroy();
     this.depthTexture?.destroy();
@@ -536,7 +550,6 @@ _normalBias = new WeakMap();
 _pcfSamples = new WeakMap();
 _isActive = new WeakMap();
 _autoRender = new WeakMap();
-_depthMeshes = new WeakMap();
 _depthPassTaskID = new WeakMap();
 _setParameters = new WeakSet();
 setParameters_fn = function({

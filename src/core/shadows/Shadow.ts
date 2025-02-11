@@ -116,7 +116,7 @@ export class Shadow {
   /** Map of all the parent {@link ProjectedMesh | meshes} used to create the depth meshes. */
   meshes: Map<ProjectedMesh['uuid'], ProjectedMesh>
   /** Map of all the depth {@link ProjectedMesh} rendered to the shadow map. */
-  #depthMeshes: Map<ProjectedMesh['uuid'], ProjectedMesh>
+  depthMeshes: Map<ProjectedMesh['uuid'], ProjectedMesh>
 
   /** @ignore */
   #depthPassTaskID: null | number
@@ -164,7 +164,7 @@ export class Shadow {
     this.sampleCount = 1
 
     this.meshes = new Map()
-    this.#depthMeshes = new Map()
+    this.depthMeshes = new Map()
 
     this.#depthPassTaskID = null
 
@@ -184,7 +184,7 @@ export class Shadow {
 
     this.setRendererBinding()
 
-    this.#depthMeshes?.forEach((depthMesh) => {
+    this.depthMeshes?.forEach((depthMesh) => {
       depthMesh.setRenderer(this.renderer)
     })
   }
@@ -516,6 +516,20 @@ export class Shadow {
       (commandEncoder) => {
         if (!this.meshes.size) return
 
+        let shouldRender = false
+        for (const [_uuid, mesh] of this.meshes) {
+          if (mesh.visible) {
+            shouldRender = true
+            break
+          }
+        }
+
+        // no visible meshes to draw
+        if (!shouldRender) {
+          this.clearDepthTexture()
+          return
+        }
+
         this.renderDepthPass(commandEncoder)
 
         // reset renderer current pipeline again
@@ -537,7 +551,7 @@ export class Shadow {
       this.onPropertyChanged('isActive', 1)
 
       await Promise.all(
-        [...this.#depthMeshes.values()].map(async (depthMesh) => {
+        [...this.depthMeshes.values()].map(async (depthMesh) => {
           depthMesh.setGeometry()
           await depthMesh.material.compileMaterial()
         })
@@ -562,7 +576,14 @@ export class Shadow {
       depthPass.pushDebugGroup(`${this.constructor.name} (index: ${this.index}): depth pass`)
 
     // render depth meshes
-    this.#depthMeshes.forEach((depthMesh) => depthMesh.render(depthPass))
+    for (const [uuid, depthMesh] of this.depthMeshes) {
+      // bail if original mesh is not visible
+      if (!this.meshes.get(uuid)?.visible) {
+        continue
+      }
+
+      depthMesh.render(depthPass)
+    }
 
     if (!this.renderer.production) depthPass.popDebugGroup()
 
@@ -646,9 +667,9 @@ export class Shadow {
 
     parameters = this.patchShadowCastingMeshParams(mesh, parameters)
 
-    if (this.#depthMeshes.get(mesh.uuid)) {
-      this.#depthMeshes.get(mesh.uuid).remove()
-      this.#depthMeshes.delete(mesh.uuid)
+    if (this.depthMeshes.get(mesh.uuid)) {
+      this.depthMeshes.get(mesh.uuid).remove()
+      this.depthMeshes.delete(mesh.uuid)
     }
 
     const depthMesh = new Mesh(this.renderer, {
@@ -664,7 +685,7 @@ export class Shadow {
 
     depthMesh.parent = mesh
 
-    this.#depthMeshes.set(mesh.uuid, depthMesh)
+    this.depthMeshes.set(mesh.uuid, depthMesh)
 
     this.meshes.set(mesh.uuid, mesh)
   }
@@ -674,11 +695,11 @@ export class Shadow {
    * @param mesh - {@link ProjectedMesh | mesh} to remove.
    */
   removeMesh(mesh: ProjectedMesh) {
-    const depthMesh = this.#depthMeshes.get(mesh.uuid)
+    const depthMesh = this.depthMeshes.get(mesh.uuid)
 
     if (depthMesh) {
       depthMesh.remove()
-      this.#depthMeshes.delete(mesh.uuid)
+      this.depthMeshes.delete(mesh.uuid)
     }
 
     this.meshes.delete(mesh.uuid)
@@ -694,7 +715,7 @@ export class Shadow {
    * @param geometry - New {@link ProjectedMesh} {@link Geometry} to use.
    */
   updateMeshGeometry(mesh: ProjectedMesh, geometry: Geometry) {
-    const depthMesh = this.#depthMeshes.get(mesh.uuid)
+    const depthMesh = this.depthMeshes.get(mesh.uuid)
 
     if (depthMesh) {
       depthMesh.useGeometry(geometry)
@@ -713,7 +734,7 @@ export class Shadow {
     }
 
     this.meshes.forEach((mesh) => this.removeMesh(mesh))
-    this.#depthMeshes = new Map()
+    this.depthMeshes = new Map()
     this.meshes = new Map()
 
     this.depthPassTarget?.destroy()

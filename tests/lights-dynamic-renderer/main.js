@@ -91,12 +91,12 @@ window.addEventListener('load', async () => {
   pointLights.push(
     new PointLight(leftRenderer, {
       color: new Vec3(0, 0, 1),
-      position: new Vec3(-3, 3, -3),
+      position: new Vec3(-3, 4, -3),
       range: 50,
       intensity: 20,
-      shadow: {
-        intensity: 1,
-      },
+      // shadow: {
+      //   intensity: 1,
+      // },
     })
   )
 
@@ -296,6 +296,13 @@ window.addEventListener('load', async () => {
   const meshFolder = gui.addFolder('Shadow casting mesh')
 
   meshFolder
+    .add({ visible: true }, 'visible')
+    .name('Visible')
+    .onChange((value) => {
+      mesh.visible = value
+    })
+
+  meshFolder
     .add({ geometry: 'box' }, 'geometry', geometries)
     .name('Geometry')
     .onChange((value) => {
@@ -460,7 +467,7 @@ window.addEventListener('load', async () => {
 
     const pointLightPosFolder = pointLightFolder.addFolder('Position')
     pointLightPosFolder.add(pointLight.position, 'x', -20, 20, 0.1)
-    pointLightPosFolder.add(pointLight.position, 'y', -20, 20, 0.1)
+    pointLightPosFolder.add(pointLight.position, 'y', 4, 20, 0.1)
     pointLightPosFolder.add(pointLight.position, 'z', -20, 20, 0.1)
   })
 

@@ -70,16 +70,16 @@ const getVertexSkinnedPositionNormal = ({ bindings = [], geometry }) => {
     if (hasSkin) {
       output += /* wgsl */
       `
-  worldPosition = instancesWorldPosition[attributes.instanceIndex];
-  normal = instancesNormal[attributes.instanceIndex];
+  worldPosition = instancesWorldPosition[instanceIndex];
+  normal = instancesNormal[instanceIndex];
       `;
     }
     output += /* wgsl */
     `
-  modelMatrix = instances.matrices[attributes.instanceIndex].model;
+  modelMatrix = instances.matrices[instanceIndex].model;
   worldPosition = modelMatrix * worldPosition;
   
-  normal = normalize(instances.matrices[attributes.instanceIndex].normal * normal);
+  normal = normalize(instances.matrices[instanceIndex].normal * normal);
     `;
   } else {
     output += /* wgsl */

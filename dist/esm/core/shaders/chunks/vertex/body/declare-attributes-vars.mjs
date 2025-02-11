@@ -1,5 +1,5 @@
 const declareAttributesVars = ({ geometry }) => {
-  return geometry.vertexBuffers.map(
+  let attributeVars = geometry.vertexBuffers.map(
     (vertexBuffer) => vertexBuffer.attributes.map((attribute) => {
       return (
         /* wgsl */
@@ -8,6 +8,11 @@ const declareAttributesVars = ({ geometry }) => {
       );
     }).join("")
   ).join("\n");
+  attributeVars += /* wgsl */
+  `
+  var instanceIndex: u32 = attributes.instanceIndex;
+  `;
+  return attributeVars;
 };
 
 export { declareAttributesVars };

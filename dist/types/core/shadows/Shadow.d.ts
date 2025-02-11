@@ -70,6 +70,8 @@ export declare class Shadow {
     depthComparisonSampler: null | Sampler;
     /** Map of all the parent {@link ProjectedMesh | meshes} used to create the depth meshes. */
     meshes: Map<ProjectedMesh['uuid'], ProjectedMesh>;
+    /** Map of all the depth {@link ProjectedMesh} rendered to the shadow map. */
+    depthMeshes: Map<ProjectedMesh['uuid'], ProjectedMesh>;
     /** {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} that holds all the bindings for this type of shadow to send to the shaders. */
     rendererBinding: BufferBinding | null;
     /**

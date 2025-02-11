@@ -422,6 +422,28 @@ class GPUCameraRenderer extends GPURenderer {
       bindings: Object.keys(this.bindings).map((bindingName) => this.bindings[bindingName]).flat()
     });
     this.cameraLightsBindGroup.consumers.add(this.uuid);
+    this.pointShadowsCubeFaceBindGroups = [];
+    for (let face = 0; face < 6; face++) {
+      const cubeFace = new BufferBinding({
+        label: "Cube face",
+        name: "cubeFace",
+        bindingType: "uniform",
+        visibility: ["vertex"],
+        struct: {
+          face: {
+            type: "u32",
+            value: face
+          }
+        }
+      });
+      const cubeBindGroup = new BindGroup(this, {
+        label: `Cube face bind group ${face}`,
+        bindings: [cubeFace]
+      });
+      cubeBindGroup.createBindGroup();
+      cubeBindGroup.consumers.add(this.uuid);
+      this.pointShadowsCubeFaceBindGroups.push(cubeBindGroup);
+    }
     if (this.device) {
       this.createCameraLightsBindGroup();
     }
@@ -559,6 +581,7 @@ class GPUCameraRenderer extends GPURenderer {
    */
   destroy() {
     this.cameraLightsBindGroup?.destroy();
+    this.pointShadowsCubeFaceBindGroups.forEach((bindGroup) => bindGroup.destroy());
     this.lights.forEach((light) => light.remove());
     this.destroyTransmissionTarget();
     super.destroy();

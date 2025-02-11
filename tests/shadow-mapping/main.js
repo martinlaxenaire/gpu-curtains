@@ -178,6 +178,7 @@ window.addEventListener('load', async () => {
       stats.end()
     })
 
+  const shadowCastingMeshes = []
   const shadingModel = 'Lambert'
 
   // create sphere
@@ -185,7 +186,7 @@ window.addEventListener('load', async () => {
   const sphereGeometry = new SphereGeometry()
 
   const sphere = new LitMesh(gpuCameraRenderer, {
-    label: 'Sphere',
+    label: 'Red sphere',
     geometry: sphereGeometry,
     receiveShadows: true,
     castShadows: true, // could be added that way
@@ -198,8 +199,10 @@ window.addEventListener('load', async () => {
   sphere.position.z = 2.5
   sphere.parent = scenePivot
 
+  shadowCastingMeshes.push(sphere)
+
   const cube = new LitMesh(gpuCameraRenderer, {
-    label: 'Cube',
+    label: 'Blue cube',
     geometry: new BoxGeometry(),
     receiveShadows: true,
     material: {
@@ -240,8 +243,10 @@ window.addEventListener('load', async () => {
     cube.rotation.y = -scenePivot.rotation.y
   })
 
+  shadowCastingMeshes.push(cube)
+
   const cube2 = new LitMesh(gpuCameraRenderer, {
-    label: 'Cube 2',
+    label: 'Green cube',
     geometry: new BoxGeometry(),
     castShadows: true,
     receiveShadows: true,
@@ -258,8 +263,10 @@ window.addEventListener('load', async () => {
     cube2.rotation.y = -scenePivot.rotation.y
   })
 
+  shadowCastingMeshes.push(cube2)
+
   const sphere2 = new LitMesh(gpuCameraRenderer, {
-    label: 'Sphere 2',
+    label: 'Yellow sphere',
     geometry: sphereGeometry,
     receiveShadows: true,
     castShadows: true,
@@ -271,6 +278,8 @@ window.addEventListener('load', async () => {
 
   sphere2.position.z = -2.5
   sphere2.parent = scenePivot
+
+  shadowCastingMeshes.push(sphere2)
 
   // let time = 0
   //
@@ -313,8 +322,6 @@ window.addEventListener('load', async () => {
     title: 'Lights & shadows test',
   })
 
-  gui.close()
-
   gui
     .add({ rotatePivot }, 'rotatePivot')
     .name('Rotate scene')
@@ -322,9 +329,17 @@ window.addEventListener('load', async () => {
       rotatePivot = value
     })
 
+  const shadowCastingMeshesFolder = gui.addFolder('Shadow casting meshes')
+
+  shadowCastingMeshes.forEach((mesh) => {
+    shadowCastingMeshesFolder.add(mesh, 'visible').name(mesh.options.label + ' visibility')
+  })
+
   const ambientLightsFolder = gui.addFolder('Ambient lights')
   ambientLights.forEach((ambientLight, index) => {
     const ambientLightFolder = ambientLightsFolder.addFolder('Ambient light ' + index)
+    ambientLightFolder.close()
+
     ambientLightFolder.add(ambientLight, 'intensity', 0, 1, 0.01)
     ambientLightFolder
       .addColor({ color: { r: ambientLight.color.x, g: ambientLight.color.y, b: ambientLight.color.z } }, 'color')
@@ -336,6 +351,8 @@ window.addEventListener('load', async () => {
   const directionalLightsFolder = gui.addFolder('Directional lights')
   directionalLights.forEach((directionalLight, index) => {
     const directionalLightFolder = directionalLightsFolder.addFolder('Directional light ' + index)
+    directionalLightFolder.close()
+
     directionalLightFolder.add(directionalLight, 'intensity', 0, 10, 0.01)
     directionalLightFolder
       .addColor(
@@ -365,6 +382,8 @@ window.addEventListener('load', async () => {
   const pointLightsFolder = gui.addFolder('Point lights')
   pointLights.forEach((pointLight, index) => {
     const pointLightFolder = pointLightsFolder.addFolder('Point light ' + index)
+    pointLightFolder.close()
+
     pointLightFolder.add(pointLight, 'intensity', 0, 100, 0.01)
     pointLightFolder.add(pointLight, 'range', 0, 100000, 0.25)
 

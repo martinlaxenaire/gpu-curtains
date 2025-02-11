@@ -34,7 +34,7 @@ struct PointShadowVSOutput {
   
   worldPosition = vec4(worldPos - normal * normalBias, 1.0);
     
-  let shadowPosition: vec4f = pointShadow.projectionMatrix * pointShadow.viewMatrices[pointShadow.face] * worldPosition;
+  let shadowPosition: vec4f = pointShadow.projectionMatrix * pointShadow.viewMatrices[cubeFace.face] * worldPosition;
 
   pointShadowVSOutput.position = shadowPosition;
   pointShadowVSOutput.worldPosition = worldPos;

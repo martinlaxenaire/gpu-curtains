@@ -8544,7 +8544,7 @@
   _autoRender$1 = new WeakMap();
 
   const declareAttributesVars$1 = ({ geometry }) => {
-    return geometry.vertexBuffers.map(
+    let attributeVars = geometry.vertexBuffers.map(
       (vertexBuffer) => vertexBuffer.attributes.map((attribute) => {
         return (
           /* wgsl */
@@ -8553,6 +8553,11 @@
         );
       }).join("")
     ).join("\n");
+    attributeVars += /* wgsl */
+    `
+  var instanceIndex: u32 = attributes.instanceIndex;
+  `;
+    return attributeVars;
   };
 
   const getMorphTargets = ({ bindings = [], geometry }) => {
@@ -8653,16 +8658,16 @@
       if (hasSkin) {
         output += /* wgsl */
         `
-  worldPosition = instancesWorldPosition[attributes.instanceIndex];
-  normal = instancesNormal[attributes.instanceIndex];
+  worldPosition = instancesWorldPosition[instanceIndex];
+  normal = instancesNormal[instanceIndex];
       `;
       }
       output += /* wgsl */
       `
-  modelMatrix = instances.matrices[attributes.instanceIndex].model;
+  modelMatrix = instances.matrices[instanceIndex].model;
   worldPosition = modelMatrix * worldPosition;
   
-  normal = normalize(instances.matrices[attributes.instanceIndex].normal * normal);
+  normal = normalize(instances.matrices[instanceIndex].normal * normal);
     `;
     } else {
       output += /* wgsl */
@@ -11039,7 +11044,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
     __accessCheck$f(obj, member, "access private method");
     return method;
   };
-  var _intensity, _bias, _normalBias, _pcfSamples, _isActive, _autoRender, _depthMeshes, _depthPassTaskID, _setParameters, setParameters_fn;
+  var _intensity, _bias, _normalBias, _pcfSamples, _isActive, _autoRender, _depthPassTaskID, _setParameters, setParameters_fn;
   const shadowStruct = {
     isActive: {
       type: "i32",
@@ -11096,8 +11101,6 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
       __privateAdd$f(this, _isActive, void 0);
       /** @ignore */
       __privateAdd$f(this, _autoRender, void 0);
-      /** Map of all the depth {@link ProjectedMesh} rendered to the shadow map. */
-      __privateAdd$f(this, _depthMeshes, void 0);
       /** @ignore */
       __privateAdd$f(this, _depthPassTaskID, void 0);
       this.setRenderer(renderer);
@@ -11114,7 +11117,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
       };
       this.sampleCount = 1;
       this.meshes = /* @__PURE__ */ new Map();
-      __privateSet$d(this, _depthMeshes, /* @__PURE__ */ new Map());
+      this.depthMeshes = /* @__PURE__ */ new Map();
       __privateSet$d(this, _depthPassTaskID, null);
       __privateMethod$8(this, _setParameters, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
       this.isActive = false;
@@ -11127,7 +11130,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
       renderer = isCameraRenderer(renderer, this.constructor.name);
       this.renderer = renderer;
       this.setRendererBinding();
-      __privateGet$d(this, _depthMeshes)?.forEach((depthMesh) => {
+      this.depthMeshes?.forEach((depthMesh) => {
         depthMesh.setRenderer(this.renderer);
       });
     }
@@ -11380,6 +11383,17 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
         (commandEncoder) => {
           if (!this.meshes.size)
             return;
+          let shouldRender = false;
+          for (const [_uuid, mesh] of this.meshes) {
+            if (mesh.visible) {
+              shouldRender = true;
+              break;
+            }
+          }
+          if (!shouldRender) {
+            this.clearDepthTexture();
+            return;
+          }
           this.renderDepthPass(commandEncoder);
           this.renderer.pipelineManager.resetCurrentPipeline();
         },
@@ -11396,7 +11410,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
       if (!__privateGet$d(this, _autoRender)) {
         this.onPropertyChanged("isActive", 1);
         await Promise.all(
-          [...__privateGet$d(this, _depthMeshes).values()].map(async (depthMesh) => {
+          [...this.depthMeshes.values()].map(async (depthMesh) => {
             depthMesh.setGeometry();
             await depthMesh.material.compileMaterial();
           })
@@ -11413,7 +11427,12 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
       const depthPass = commandEncoder.beginRenderPass(this.depthPassTarget.renderPass.descriptor);
       if (!this.renderer.production)
         depthPass.pushDebugGroup(`${this.constructor.name} (index: ${this.index}): depth pass`);
-      __privateGet$d(this, _depthMeshes).forEach((depthMesh) => depthMesh.render(depthPass));
+      for (const [uuid, depthMesh] of this.depthMeshes) {
+        if (!this.meshes.get(uuid)?.visible) {
+          continue;
+        }
+        depthMesh.render(depthPass);
+      }
       if (!this.renderer.production)
         depthPass.popDebugGroup();
       depthPass.end();
@@ -11480,9 +11499,9 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
         return;
       mesh.options.castShadows = true;
       parameters = this.patchShadowCastingMeshParams(mesh, parameters);
-      if (__privateGet$d(this, _depthMeshes).get(mesh.uuid)) {
-        __privateGet$d(this, _depthMeshes).get(mesh.uuid).remove();
-        __privateGet$d(this, _depthMeshes).delete(mesh.uuid);
+      if (this.depthMeshes.get(mesh.uuid)) {
+        this.depthMeshes.get(mesh.uuid).remove();
+        this.depthMeshes.delete(mesh.uuid);
       }
       const depthMesh = new Mesh(this.renderer, {
         label: `${this.constructor.name} (index: ${this.index}) ${mesh.options.label} depth mesh`,
@@ -11495,7 +11514,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
         autoRender: false
       });
       depthMesh.parent = mesh;
-      __privateGet$d(this, _depthMeshes).set(mesh.uuid, depthMesh);
+      this.depthMeshes.set(mesh.uuid, depthMesh);
       this.meshes.set(mesh.uuid, mesh);
     }
     /**
@@ -11503,10 +11522,10 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
      * @param mesh - {@link ProjectedMesh | mesh} to remove.
      */
     removeMesh(mesh) {
-      const depthMesh = __privateGet$d(this, _depthMeshes).get(mesh.uuid);
+      const depthMesh = this.depthMeshes.get(mesh.uuid);
       if (depthMesh) {
         depthMesh.remove();
-        __privateGet$d(this, _depthMeshes).delete(mesh.uuid);
+        this.depthMeshes.delete(mesh.uuid);
       }
       this.meshes.delete(mesh.uuid);
       if (this.meshes.size === 0) {
@@ -11519,7 +11538,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
      * @param geometry - New {@link ProjectedMesh} {@link Geometry} to use.
      */
     updateMeshGeometry(mesh, geometry) {
-      const depthMesh = __privateGet$d(this, _depthMeshes).get(mesh.uuid);
+      const depthMesh = this.depthMeshes.get(mesh.uuid);
       if (depthMesh) {
         depthMesh.useGeometry(geometry);
       }
@@ -11534,7 +11553,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
         __privateSet$d(this, _depthPassTaskID, null);
       }
       this.meshes.forEach((mesh) => this.removeMesh(mesh));
-      __privateSet$d(this, _depthMeshes, /* @__PURE__ */ new Map());
+      this.depthMeshes = /* @__PURE__ */ new Map();
       this.meshes = /* @__PURE__ */ new Map();
       this.depthPassTarget?.destroy();
       this.depthTexture?.destroy();
@@ -11546,7 +11565,6 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
   _pcfSamples = new WeakMap();
   _isActive = new WeakMap();
   _autoRender = new WeakMap();
-  _depthMeshes = new WeakMap();
   _depthPassTaskID = new WeakMap();
   _setParameters = new WeakSet();
   setParameters_fn = function({
@@ -11857,7 +11875,7 @@ struct PointShadowVSOutput {
   
   worldPosition = vec4(worldPos - normal * normalBias, 1.0);
     
-  let shadowPosition: vec4f = pointShadow.projectionMatrix * pointShadow.viewMatrices[pointShadow.face] * worldPosition;
+  let shadowPosition: vec4f = pointShadow.projectionMatrix * pointShadow.viewMatrices[cubeFace.face] * worldPosition;
 
   pointShadowVSOutput.position = shadowPosition;
   pointShadowVSOutput.worldPosition = worldPos;
@@ -11908,10 +11926,6 @@ struct PointShadowVSOutput {
   };
   var _tempCubeDirection;
   const pointShadowStruct = {
-    face: {
-      type: "i32",
-      value: 0
-    },
     ...shadowStruct,
     cameraNear: {
       type: "f32",
@@ -12152,43 +12166,38 @@ struct PointShadowVSOutput {
       this.renderer.onBeforeCommandEncoderCreation.remove(depthPassTaskID);
     }
     /**
-     * Render the depth pass. This happens before creating the {@link CameraRenderer} command encoder.<br>
+     * Render the depth pass. This happens before rendering the {@link CameraRenderer#scene | scene}.<br>
      * - For each face of the depth cube texture:
-     *   - Create a command encoder.
      *   - Set the {@link depthPassTarget} descriptor depth texture view to our depth cube texture current face.
-     *   - Update the face index.
      *   - Render all the depth meshes.
-     *   - Submit the command encoder.
      * @param once - Whether to render it only once or not.
      */
     render(once = false) {
-      return this.renderer.onBeforeCommandEncoderCreation.add(
-        () => {
+      return this.renderer.onBeforeRenderScene.add(
+        (commandEncoder) => {
           if (!this.meshes.size)
             return;
-          this.renderer.createCameraLightsBindGroup();
-          for (let i = 0; i < 6; i++) {
-            const commandEncoder = this.renderer.device.createCommandEncoder();
-            if (!this.renderer.production)
-              commandEncoder.pushDebugGroup(
-                `${this.constructor.name} (index: ${this.index}): depth pass command encoder for face ${i}`
-              );
+          let shouldRender = false;
+          for (const [_uuid, mesh] of this.meshes) {
+            if (mesh.visible) {
+              shouldRender = true;
+              break;
+            }
+          }
+          if (!shouldRender) {
+            this.clearDepthTexture();
+            return;
+          }
+          for (let face = 0; face < 6; face++) {
             this.depthPassTarget.renderPass.setRenderPassDescriptor(
               this.depthTexture.texture.createView({
-                label: this.depthTexture.texture.label + " cube face view " + i,
+                label: this.depthTexture.texture.label + " cube face view " + face,
                 dimension: "2d",
                 arrayLayerCount: 1,
-                baseArrayLayer: i
+                baseArrayLayer: face
               })
             );
-            this.rendererBinding.childrenBindings[this.index].inputs.face.value = i;
-            this.renderer.shouldUpdateCameraLightsBindGroup();
-            this.renderer.updateCameraLightsBindGroup();
-            this.renderDepthPass(commandEncoder);
-            if (!this.renderer.production)
-              commandEncoder.popDebugGroup();
-            const commandBuffer = commandEncoder.finish();
-            this.renderer.device.queue.submit([commandBuffer]);
+            this.renderDepthPass(commandEncoder, face);
           }
           this.renderer.pipelineManager.resetCurrentPipeline();
         },
@@ -12197,6 +12206,28 @@ struct PointShadowVSOutput {
           order: this.index
         }
       );
+    }
+    /**
+     * Render all the {@link meshes} into the {@link depthPassTarget}. Before rendering them, we swap the cube face bind group with the {@link CameraRenderer.pointShadowsCubeFaceBindGroups | renderer pointShadowsCubeFaceBindGroups} at the index containing the current face onto which we'll draw.
+     * @param commandEncoder - {@link GPUCommandEncoder} to use.
+     * @param face - Current cube map face onto which we're drawing.
+     */
+    renderDepthPass(commandEncoder, face = 0) {
+      this.renderer.pipelineManager.resetCurrentPipeline();
+      const depthPass = commandEncoder.beginRenderPass(this.depthPassTarget.renderPass.descriptor);
+      if (!this.renderer.production)
+        depthPass.pushDebugGroup(`${this.constructor.name} (index: ${this.index}): depth pass for face ${face}`);
+      for (const [uuid, depthMesh] of this.depthMeshes) {
+        if (!this.meshes.get(uuid)?.visible) {
+          continue;
+        }
+        this.renderer.pointShadowsCubeFaceBindGroups[face].setIndex(depthMesh.material.bindGroups.length - 1);
+        depthMesh.material.bindGroups[depthMesh.material.bindGroups.length - 1] = this.renderer.pointShadowsCubeFaceBindGroups[face];
+        depthMesh.render(depthPass);
+      }
+      if (!this.renderer.production)
+        depthPass.popDebugGroup();
+      depthPass.end();
     }
     /**
      * Get the default depth pass vertex shader for this {@link PointShadow}.
@@ -12218,6 +12249,19 @@ struct PointShadowVSOutput {
         /** Returned code. */
         code: getDefaultPointShadowDepthFs(this.index)
       };
+    }
+    /**
+     * Patch the given {@link ProjectedMesh | mesh} material parameters to create the depth mesh. Here we'll be adding the first {@link CameraRenderer.pointShadowsCubeFaceBindGroups | renderer pointShadowsCubeFaceBindGroups} bind group containing the face index onto which we'll be drawing. This bind group will be swapped when rendering using {@link renderDepthPass}.
+     * @param mesh - original {@link ProjectedMesh | mesh} to use.
+     * @param parameters - Optional additional parameters to use for the depth mesh.
+     * @returns - Patched parameters.
+     */
+    patchShadowCastingMeshParams(mesh, parameters = {}) {
+      if (!parameters.bindGroups) {
+        parameters.bindGroups = [];
+      }
+      parameters.bindGroups = [...parameters.bindGroups, this.renderer.pointShadowsCubeFaceBindGroups[0]];
+      return super.patchShadowCastingMeshParams(mesh, parameters);
     }
   }
   _tempCubeDirection = new WeakMap();
@@ -14773,6 +14817,28 @@ ${this.shaders.compute.head}`;
         bindings: Object.keys(this.bindings).map((bindingName) => this.bindings[bindingName]).flat()
       });
       this.cameraLightsBindGroup.consumers.add(this.uuid);
+      this.pointShadowsCubeFaceBindGroups = [];
+      for (let face = 0; face < 6; face++) {
+        const cubeFace = new BufferBinding({
+          label: "Cube face",
+          name: "cubeFace",
+          bindingType: "uniform",
+          visibility: ["vertex"],
+          struct: {
+            face: {
+              type: "u32",
+              value: face
+            }
+          }
+        });
+        const cubeBindGroup = new BindGroup(this, {
+          label: `Cube face bind group ${face}`,
+          bindings: [cubeFace]
+        });
+        cubeBindGroup.createBindGroup();
+        cubeBindGroup.consumers.add(this.uuid);
+        this.pointShadowsCubeFaceBindGroups.push(cubeBindGroup);
+      }
       if (this.device) {
         this.createCameraLightsBindGroup();
       }
@@ -14910,6 +14976,7 @@ ${this.shaders.compute.head}`;
      */
     destroy() {
       this.cameraLightsBindGroup?.destroy();
+      this.pointShadowsCubeFaceBindGroups.forEach((bindGroup) => bindGroup.destroy());
       this.lights.forEach((light) => light.remove());
       this.destroyTransmissionTarget();
       super.destroy();

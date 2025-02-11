@@ -1,5 +1,5 @@
 // Goals of this test:
-// - test various capacities of the gltf loader (skinning, animation, shadows)
+// - test various capacities of the gltf loader (skinning, animation, instancing) with shadow maps
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
   const {
@@ -16,6 +16,7 @@ window.addEventListener('load', async () => {
     GLTFScenesManager,
     AmbientLight,
     DirectionalLight,
+    PointLight,
     OrbitControls,
     Vec3,
   } = await import(/* @vite-ignore */ path)
@@ -79,7 +80,7 @@ window.addEventListener('load', async () => {
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/SimpleSkin/glTF/SimpleSkin.gltf',
     },
     riggedSimple: {
-      name: 'Rigged Simple', // TODO not centered in scene?
+      name: 'Rigged Simple',
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/RiggedSimple/glTF/RiggedSimple.gltf',
     },
     fox: {
@@ -94,6 +95,10 @@ window.addEventListener('load', async () => {
       name: 'SkinD',
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Asset-Generator/main/Output/Positive/Animation_Skin/Animation_Skin_11.gltf',
     },
+    simpleInstancing: {
+      name: 'Simple Instancing',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/SimpleInstancing/glTF/SimpleInstancing.gltf',
+    },
   }
 
   let shadingModel = 'PBR' // 'PBR', 'Phong' or 'Lambert'
@@ -102,13 +107,23 @@ window.addEventListener('load', async () => {
     intensity: 0.1,
   })
 
-  const light = new DirectionalLight(gpuCameraRenderer, {
+  // const light = new DirectionalLight(gpuCameraRenderer, {
+  //   position: new Vec3(), // will be updated when model changes
+  //   intensity: 2,
+  //   shadow: {
+  //     depthTextureSize: new Vec2(1024),
+  //     pcfSamples: 3,
+  //     bias: 0.001,
+  //   },
+  // })
+
+  const light = new PointLight(gpuCameraRenderer, {
     position: new Vec3(), // will be updated when model changes
     intensity: 2,
     shadow: {
       depthTextureSize: new Vec2(1024),
       pcfSamples: 3,
-      bias: 0.001,
+      bias: 0.0001,
     },
   })
 
@@ -274,12 +289,24 @@ window.addEventListener('load', async () => {
       target: new Vec3(),
     })
 
-    light.position.set(radius * 2)
-    light.shadow.camera.far = radius * 10
-    light.shadow.camera.top = radius * 2
-    light.shadow.camera.right = radius * 2
-    light.shadow.camera.bottom = radius * -2
-    light.shadow.camera.left = radius * -2
+    if (light instanceof DirectionalLight) {
+      light.position.set(radius * 2)
+
+      // shadow
+      light.shadow.bias = radius * 0.0001
+      light.shadow.camera.far = radius * 10
+      light.shadow.camera.top = radius * 2
+      light.shadow.camera.right = radius * 2
+      light.shadow.camera.bottom = radius * -2
+      light.shadow.camera.left = radius * -2
+    } else {
+      light.position.set(radius * 2)
+      const lightPositionLengthSq = light.position.lengthSq()
+      light.intensity = lightPositionLengthSq * 6
+
+      // shadow
+      light.shadow.bias = radius * 0.0001
+    }
 
     floorPivot.position.y = -size.y * 0.5
     floor.scale.x = radius * 50
