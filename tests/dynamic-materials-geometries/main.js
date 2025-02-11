@@ -1,6 +1,6 @@
 // Goals of this test:
 // - test the GPUDeviceManager and GPUCameraRenderer without the use of GPUCurtains class
-// - test camera position, rotation, lookAt, fov
+// - test camera position, rotationMatrix, lookAt, fov
 // - test frustum culling
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
@@ -45,7 +45,7 @@ window.addEventListener('load', async () => {
   let time = 0
 
   mesh.onBeforeRender(() => {
-    //mesh.rotation.x += 0.005
+    //mesh.rotationMatrix.x += 0.005
     mesh.rotation.y += 0.02
 
     mesh.position.x = Math.cos(time * 0.02) * 2

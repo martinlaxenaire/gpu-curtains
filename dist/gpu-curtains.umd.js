@@ -1581,8 +1581,8 @@
      * @param position - {@link Vec3 | postion} from which to look at
      */
     lookAt(target = new Vec3(), position = this.position, up = new Vec3(0, 1, 0)) {
-      const rotationMatrix = tempMatrix.lookAt(target, position, up);
-      this.quaternion.setFromRotationMatrix(rotationMatrix);
+      const rotation = tempMatrix.lookAt(target, position, up);
+      this.quaternion.setFromRotationMatrix(rotation);
       this.shouldUpdateModelMatrix();
     }
     /**
@@ -4340,11 +4340,33 @@
       return this;
     }
     /**
-     * Rotate this {@link Mat3} by a given angle, counterclockwise.
-     * @param theta - Angle to rotate.
+     * Rotate this {@link Mat3} by a given angle around X axis, counterclockwise.
+     * @param theta - Angle to rotate along X axis.
      * @returns - this {@link Mat3} after rotation.
      */
-    rotateByAngle(theta = 0) {
+    rotateByAngleX(theta = 0) {
+      const c = Math.cos(theta);
+      const s = Math.sin(theta);
+      this.set(1, 0, 0, 0, c, s, 0, -s, c);
+      return this;
+    }
+    /**
+     * Rotate this {@link Mat3} by a given angle around Y axis, counterclockwise.
+     * @param theta - Angle to rotate along Y axis.
+     * @returns - this {@link Mat3} after rotation.
+     */
+    rotateByAngleY(theta = 0) {
+      const c = Math.cos(theta);
+      const s = Math.sin(theta);
+      this.set(c, 0, s, 0, 1, 0, -s, 0, c);
+      return this;
+    }
+    /**
+     * Rotate this {@link Mat3} by a given angle around Z axis, counterclockwise.
+     * @param theta - Angle to rotate along Z axis.
+     * @returns - this {@link Mat3} after rotation.
+     */
+    rotateByAngleZ(theta = 0) {
       const c = Math.cos(theta);
       const s = Math.sin(theta);
       this.set(c, -s, 0, s, c, 0, 0, 0, 1);
@@ -5193,7 +5215,7 @@
       const coverRatio = parentRatio > sourceRatio !== parentWidth > parentHeight ? 1 : parentWidth > parentHeight ? __privateGet$k(this, _parentRatio).x * __privateGet$k(this, _sourceRatio).x : __privateGet$k(this, _sourceRatio).y * __privateGet$k(this, _parentRatio).y;
       __privateGet$k(this, _coverScale).set(1 / (coverRatio * this.scale.x), 1 / (coverRatio * this.scale.y));
       __privateGet$k(this, _negatedOrigin).copy(this.transformOrigin).multiplyScalar(-1);
-      __privateGet$k(this, _rotationMatrix).rotateByAngle(this.rotation);
+      __privateGet$k(this, _rotationMatrix).rotateByAngleZ(this.rotation);
       this.modelMatrix.identity().premultiplyTranslate(__privateGet$k(this, _negatedOrigin)).premultiplyScale(__privateGet$k(this, _coverScale)).premultiplyScale(__privateGet$k(this, _parentRatio)).premultiply(__privateGet$k(this, _rotationMatrix)).premultiplyScale(__privateGet$k(this, _sourceRatio)).premultiplyTranslate(this.transformOrigin).translate(this.offset);
       this.transformBinding.inputs.matrix.shouldUpdate = true;
     }
@@ -20671,7 +20693,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
           },
           diffuseIntensity: 1,
           specularIntensity: 1,
-          rotationAxis: "+Z"
+          rotation: Math.PI / 2
         },
         ...params
       };
@@ -20685,44 +20707,30 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         addressModeU: "clamp-to-edge",
         addressModeV: "clamp-to-edge"
       });
-      this.rotation = new Mat3(new Float32Array([0, 0, 1, 0, 1, 0, -1, 0, 0]));
+      this.rotationMatrix = new Mat3().rotateByAngleY(-Math.PI / 2);
       this.hdrLoader = new HDRLoader();
       this.computeBRDFLUTTexture();
     }
     /**
-     * Get the current {@link EnvironmentMapOptions.rotationAxis | rotationAxis}.
+     * Get the current {@link EnvironmentMapOptions.rotation | rotation}, in radians.
      */
-    get rotationAxis() {
-      return this.options.rotationAxis;
+    get rotation() {
+      return this.options.rotation;
     }
     /**
-     * Set the current {@link EnvironmentMapOptions.rotationAxis | rotationAxis}.
-     * @param value - New {@link EnvironmentMapOptions.rotationAxis | rotationAxis} to use.
+     * Set the current {@link EnvironmentMapOptions.rotation | rotation}, in radians.
+     * @param value - New {@link EnvironmentMapOptions.rotation | rotation} to use, in radians.
      */
-    set rotationAxis(value) {
-      if (value !== this.options.rotationAxis) {
-        this.options.rotationAxis = value;
-        switch (this.options.rotationAxis) {
-          case "+Z":
-          default:
-            this.rotation = new Mat3(new Float32Array([0, 0, 1, 0, 1, 0, -1, 0, 0]));
-            break;
-          case "-Z":
-            this.rotation = new Mat3(new Float32Array([0, 0, -1, 0, 1, 0, 1, 0, 0]));
-            break;
-          case "+X":
-            this.rotation = new Mat3(new Float32Array([1, 0, 0, 0, 1, 0, 0, 0, 1]));
-            break;
-          case "-X":
-            this.rotation = new Mat3(new Float32Array([-1, 0, 0, 0, 1, 0, 0, 0, -1]));
-            break;
-        }
+    set rotation(value) {
+      if (value !== this.options.rotation) {
+        this.options.rotation = value;
+        this.rotationMatrix.rotateByAngleY(-value);
         this._onRotationAxisChangedCallback && this._onRotationAxisChangedCallback();
       }
     }
     /**
-     * Callback to call whenever the {@link EnvironmentMapOptions.rotationAxis | rotationAxis} changed.
-     * @param callback - Called whenever the {@link EnvironmentMapOptions.rotationAxis | rotationAxis} changed.
+     * Callback to call whenever the {@link EnvironmentMapOptions.rotation | rotation} changed.
+     * @param callback - Called whenever the {@link EnvironmentMapOptions.rotation | rotation} changed.
      */
     onRotationAxisChanged(callback) {
       if (callback) {
@@ -21381,7 +21389,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
       super(renderer, { ...defaultParams, ...{ shaders } });
       if (useEnvMap) {
         environmentMap.onRotationAxisChanged(() => {
-          this.uniforms.material.envRotation.value = environmentMap.rotation;
+          this.uniforms.material.envRotation.value = environmentMap.rotationMatrix;
         });
       }
     }
@@ -21502,7 +21510,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         ...environmentMap && {
           envRotation: {
             type: "mat3x3f",
-            value: environmentMap.rotation
+            value: environmentMap.rotationMatrix
           },
           envDiffuseIntensity: {
             type: "f32",

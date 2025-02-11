@@ -338,9 +338,7 @@ window.addEventListener('load', async () => {
     )
     .name('Current')
 
-  const envMapRotationField = envMapFolder
-    .add({ rotationAxis: '+Z' }, 'rotationAxis', ['+Z', '-Z', '+X', '-X'])
-    .name('Rotation axis')
+  const envMapRotationField = envMapFolder.add({ rotation: 90 }, 'rotation', 0, 360, 1).name('Rotation')
 
   const shadingField = gui.add({ shadingModel }, 'shadingModel', ['PBR', 'Phong', 'Lambert', 'Unlit']).name('Shading')
 
@@ -793,7 +791,7 @@ window.addEventListener('load', async () => {
 
   envMapRotationField.onChange((value) => {
     if (useEnvMap) {
-      environmentMap.rotationAxis = value
+      environmentMap.rotation = value * (Math.PI / 180)
     }
   })
 

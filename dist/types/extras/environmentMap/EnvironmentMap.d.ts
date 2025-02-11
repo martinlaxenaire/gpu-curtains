@@ -43,8 +43,8 @@ export interface EnvironmentMapOptions {
     diffuseIntensity: number;
     /** Define the intensity of the indirect specular contribution to use in a PBR shader. Default to `1`. */
     specularIntensity: number;
-    /** Define how the {@link EnvironmentMap} should be rotated. Default to `'+Z'`. */
-    rotationAxis: '+Z' | '-Z' | '+X' | '-X';
+    /** Define the {@link EnvironmentMap} rotation along Y axis, in radians. Default to `Math.PI / 2` (90 degrees). */
+    rotation: number;
 }
 /** Define the parameters used to create the {@link EnvironmentMap}. */
 export interface EnvironmentMapParams extends Partial<EnvironmentMapOptions> {
@@ -73,8 +73,8 @@ export declare class EnvironmentMap {
     hdrLoader: HDRLoader;
     /** Options used to generate the {@link lutTexture}, {@link specularTexture} and {@link diffuseTexture}. */
     options: EnvironmentMapOptions;
-    /** Define the default environment maps rotation. */
-    rotation: Mat3;
+    /** Define the default environment maps rotation {@link Mat3}. */
+    rotationMatrix: Mat3;
     /** BRDF GGX LUT {@link Texture} used for IBL shading. */
     lutTexture: Texture | null;
     /** Diffuse environment cube map {@link Texture}. */
@@ -90,17 +90,17 @@ export declare class EnvironmentMap {
      */
     constructor(renderer: Renderer | GPUCurtains, params?: EnvironmentMapParams);
     /**
-     * Get the current {@link EnvironmentMapOptions.rotationAxis | rotationAxis}.
+     * Get the current {@link EnvironmentMapOptions.rotation | rotation}, in radians.
      */
-    get rotationAxis(): EnvironmentMapOptions['rotationAxis'];
+    get rotation(): number;
     /**
-     * Set the current {@link EnvironmentMapOptions.rotationAxis | rotationAxis}.
-     * @param value - New {@link EnvironmentMapOptions.rotationAxis | rotationAxis} to use.
+     * Set the current {@link EnvironmentMapOptions.rotation | rotation}, in radians.
+     * @param value - New {@link EnvironmentMapOptions.rotation | rotation} to use, in radians.
      */
-    set rotationAxis(value: EnvironmentMapOptions['rotationAxis']);
+    set rotation(value: number);
     /**
-     * Callback to call whenever the {@link EnvironmentMapOptions.rotationAxis | rotationAxis} changed.
-     * @param callback - Called whenever the {@link EnvironmentMapOptions.rotationAxis | rotationAxis} changed.
+     * Callback to call whenever the {@link EnvironmentMapOptions.rotation | rotation} changed.
+     * @param callback - Called whenever the {@link EnvironmentMapOptions.rotation | rotation} changed.
      */
     onRotationAxisChanged(callback: () => void): this;
     /**

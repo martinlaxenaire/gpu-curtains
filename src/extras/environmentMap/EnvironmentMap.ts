@@ -51,8 +51,8 @@ export interface EnvironmentMapOptions {
   diffuseIntensity: number
   /** Define the intensity of the indirect specular contribution to use in a PBR shader. Default to `1`. */
   specularIntensity: number
-  /** Define how the {@link EnvironmentMap} should be rotated. Default to `'+Z'`. */
-  rotationAxis: '+Z' | '-Z' | '+X' | '-X'
+  /** Define the {@link EnvironmentMap} rotation along Y axis, in radians. Default to `Math.PI / 2` (90 degrees). */
+  rotation: number
 }
 
 /** Define the parameters used to create the {@link EnvironmentMap}. */
@@ -83,8 +83,8 @@ export class EnvironmentMap {
   /** Options used to generate the {@link lutTexture}, {@link specularTexture} and {@link diffuseTexture}. */
   options: EnvironmentMapOptions
 
-  /** Define the default environment maps rotation. */
-  rotation: Mat3
+  /** Define the default environment maps rotation {@link Mat3}. */
+  rotationMatrix: Mat3
 
   /** BRDF GGX LUT storage {@link Texture} used in the compute shader. */
   #lutStorageTexture: Texture
@@ -136,7 +136,7 @@ export class EnvironmentMap {
         },
         diffuseIntensity: 1,
         specularIntensity: 1,
-        rotationAxis: '+Z',
+        rotation: Math.PI / 2,
       },
       ...params,
     } as EnvironmentMapParams
@@ -153,7 +153,7 @@ export class EnvironmentMap {
       addressModeV: 'clamp-to-edge',
     })
 
-    this.rotation = new Mat3(new Float32Array([0, 0, 1, 0, 1, 0, -1, 0, 0]))
+    this.rotationMatrix = new Mat3().rotateByAngleY(-Math.PI / 2)
 
     this.hdrLoader = new HDRLoader()
 
@@ -162,43 +162,29 @@ export class EnvironmentMap {
   }
 
   /**
-   * Get the current {@link EnvironmentMapOptions.rotationAxis | rotationAxis}.
+   * Get the current {@link EnvironmentMapOptions.rotation | rotation}, in radians.
    */
-  get rotationAxis(): EnvironmentMapOptions['rotationAxis'] {
-    return this.options.rotationAxis
+  get rotation(): number {
+    return this.options.rotation
   }
 
   /**
-   * Set the current {@link EnvironmentMapOptions.rotationAxis | rotationAxis}.
-   * @param value - New {@link EnvironmentMapOptions.rotationAxis | rotationAxis} to use.
+   * Set the current {@link EnvironmentMapOptions.rotation | rotation}, in radians.
+   * @param value - New {@link EnvironmentMapOptions.rotation | rotation} to use, in radians.
    */
-  set rotationAxis(value: EnvironmentMapOptions['rotationAxis']) {
-    if (value !== this.options.rotationAxis) {
-      this.options.rotationAxis = value
-
-      switch (this.options.rotationAxis) {
-        case '+Z':
-        default:
-          this.rotation = new Mat3(new Float32Array([0, 0, 1, 0, 1, 0, -1, 0, 0]))
-          break
-        case '-Z':
-          this.rotation = new Mat3(new Float32Array([0, 0, -1, 0, 1, 0, 1, 0, 0]))
-          break
-        case '+X':
-          this.rotation = new Mat3(new Float32Array([1, 0, 0, 0, 1, 0, 0, 0, 1]))
-          break
-        case '-X':
-          this.rotation = new Mat3(new Float32Array([-1, 0, 0, 0, 1, 0, 0, 0, -1]))
-          break
-      }
+  set rotation(value: number) {
+    if (value !== this.options.rotation) {
+      this.options.rotation = value
+      // need a clockwise rotation
+      this.rotationMatrix.rotateByAngleY(-value)
 
       this._onRotationAxisChangedCallback && this._onRotationAxisChangedCallback()
     }
   }
 
   /**
-   * Callback to call whenever the {@link EnvironmentMapOptions.rotationAxis | rotationAxis} changed.
-   * @param callback - Called whenever the {@link EnvironmentMapOptions.rotationAxis | rotationAxis} changed.
+   * Callback to call whenever the {@link EnvironmentMapOptions.rotation | rotation} changed.
+   * @param callback - Called whenever the {@link EnvironmentMapOptions.rotation | rotation} changed.
    */
   onRotationAxisChanged(callback: () => void): this {
     if (callback) {

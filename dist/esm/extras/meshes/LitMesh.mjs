@@ -193,7 +193,7 @@ class LitMesh extends Mesh {
     super(renderer, { ...defaultParams, ...{ shaders } });
     if (useEnvMap) {
       environmentMap.onRotationAxisChanged(() => {
-        this.uniforms.material.envRotation.value = environmentMap.rotation;
+        this.uniforms.material.envRotation.value = environmentMap.rotationMatrix;
       });
     }
   }
@@ -314,7 +314,7 @@ class LitMesh extends Mesh {
       ...environmentMap && {
         envRotation: {
           type: "mat3x3f",
-          value: environmentMap.rotation
+          value: environmentMap.rotationMatrix
         },
         envDiffuseIntensity: {
           type: "f32",

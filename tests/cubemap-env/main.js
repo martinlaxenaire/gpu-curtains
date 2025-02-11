@@ -127,7 +127,7 @@ window.addEventListener('load', async () => {
         struct: {
           envRotation: {
             type: 'mat3x3f',
-            value: environmentMap.rotation,
+            value: environmentMap.rotationMatrix,
           },
           useDiffuse: {
             type: 'f32',
@@ -238,17 +238,17 @@ window.addEventListener('load', async () => {
     .name('Maps')
 
   envFolder
-    .add({ rotationAxis: '+Z' }, 'rotationAxis', ['+Z', '-Z', '+X', '-X'])
-    .name('Rotation axis')
+    .add({ rotation: 90 }, 'rotation', 0, 360, 1)
+    .name('Rotation')
     .onChange((value) => {
       if (environmentMap) {
-        environmentMap.rotationAxis = value
+        environmentMap.rotation = value * (Math.PI / 180)
       }
     })
 
   environmentMap.onRotationAxisChanged(() => {
     if (cubeMap) {
-      cubeMap.uniforms.params.envRotation.value = environmentMap.rotation
+      cubeMap.uniforms.params.envRotation.value = environmentMap.rotationMatrix
     }
   })
 

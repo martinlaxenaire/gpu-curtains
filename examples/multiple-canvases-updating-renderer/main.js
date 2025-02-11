@@ -48,7 +48,7 @@ window.addEventListener('load', async () => {
 
     // set the quaternion axis order
     pivot.quaternion.setAxisOrder('ZYX')
-    // random init rotation values
+    // random init rotationMatrix values
     pivot.rotation.y = Math.random() * Math.PI * 2
     pivot.rotation.z = Math.random() * Math.PI * 2
 
@@ -65,11 +65,11 @@ window.addEventListener('load', async () => {
     const distance = systemSize * 0.375 + Math.random() * systemSize * 0.625
     cubeMesh.position.x = distance
 
-    // random rotation speed
+    // random rotationMatrix speed
     const rotationSpeed = new Vec3(
       (Math.random() * 0.01 + 0.005) * Math.sign(Math.random() - 0.5),
       (Math.random() * 0.01 + 0.005) * Math.sign(Math.random() - 0.5),
-      (Math.random() * 0.01 + 0.005) * Math.sign(Math.random() - 0.5) // pivot rotation speed
+      (Math.random() * 0.01 + 0.005) * Math.sign(Math.random() - 0.5) // pivot rotationMatrix speed
     )
 
     const currentWorldPosition = new Vec3()

@@ -81,7 +81,7 @@ class EnvironmentMap {
         },
         diffuseIntensity: 1,
         specularIntensity: 1,
-        rotationAxis: "+Z"
+        rotation: Math.PI / 2
       },
       ...params
     };
@@ -95,44 +95,30 @@ class EnvironmentMap {
       addressModeU: "clamp-to-edge",
       addressModeV: "clamp-to-edge"
     });
-    this.rotation = new Mat3(new Float32Array([0, 0, 1, 0, 1, 0, -1, 0, 0]));
+    this.rotationMatrix = new Mat3().rotateByAngleY(-Math.PI / 2);
     this.hdrLoader = new HDRLoader();
     this.computeBRDFLUTTexture();
   }
   /**
-   * Get the current {@link EnvironmentMapOptions.rotationAxis | rotationAxis}.
+   * Get the current {@link EnvironmentMapOptions.rotation | rotation}, in radians.
    */
-  get rotationAxis() {
-    return this.options.rotationAxis;
+  get rotation() {
+    return this.options.rotation;
   }
   /**
-   * Set the current {@link EnvironmentMapOptions.rotationAxis | rotationAxis}.
-   * @param value - New {@link EnvironmentMapOptions.rotationAxis | rotationAxis} to use.
+   * Set the current {@link EnvironmentMapOptions.rotation | rotation}, in radians.
+   * @param value - New {@link EnvironmentMapOptions.rotation | rotation} to use, in radians.
    */
-  set rotationAxis(value) {
-    if (value !== this.options.rotationAxis) {
-      this.options.rotationAxis = value;
-      switch (this.options.rotationAxis) {
-        case "+Z":
-        default:
-          this.rotation = new Mat3(new Float32Array([0, 0, 1, 0, 1, 0, -1, 0, 0]));
-          break;
-        case "-Z":
-          this.rotation = new Mat3(new Float32Array([0, 0, -1, 0, 1, 0, 1, 0, 0]));
-          break;
-        case "+X":
-          this.rotation = new Mat3(new Float32Array([1, 0, 0, 0, 1, 0, 0, 0, 1]));
-          break;
-        case "-X":
-          this.rotation = new Mat3(new Float32Array([-1, 0, 0, 0, 1, 0, 0, 0, -1]));
-          break;
-      }
+  set rotation(value) {
+    if (value !== this.options.rotation) {
+      this.options.rotation = value;
+      this.rotationMatrix.rotateByAngleY(-value);
       this._onRotationAxisChangedCallback && this._onRotationAxisChangedCallback();
     }
   }
   /**
-   * Callback to call whenever the {@link EnvironmentMapOptions.rotationAxis | rotationAxis} changed.
-   * @param callback - Called whenever the {@link EnvironmentMapOptions.rotationAxis | rotationAxis} changed.
+   * Callback to call whenever the {@link EnvironmentMapOptions.rotation | rotation} changed.
+   * @param callback - Called whenever the {@link EnvironmentMapOptions.rotation | rotation} changed.
    */
   onRotationAxisChanged(callback) {
     if (callback) {

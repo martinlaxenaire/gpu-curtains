@@ -109,11 +109,23 @@ export declare class Mat3 {
      */
     setUVTransform(tx?: number, ty?: number, sx?: number, sy?: number, rotation?: number, cx?: number, cy?: number): Mat3;
     /**
-     * Rotate this {@link Mat3} by a given angle, counterclockwise.
-     * @param theta - Angle to rotate.
+     * Rotate this {@link Mat3} by a given angle around X axis, counterclockwise.
+     * @param theta - Angle to rotate along X axis.
      * @returns - this {@link Mat3} after rotation.
      */
-    rotateByAngle(theta?: number): Mat3;
+    rotateByAngleX(theta?: number): Mat3;
+    /**
+     * Rotate this {@link Mat3} by a given angle around Y axis, counterclockwise.
+     * @param theta - Angle to rotate along Y axis.
+     * @returns - this {@link Mat3} after rotation.
+     */
+    rotateByAngleY(theta?: number): Mat3;
+    /**
+     * Rotate this {@link Mat3} by a given angle around Z axis, counterclockwise.
+     * @param theta - Angle to rotate along Z axis.
+     * @returns - this {@link Mat3} after rotation.
+     */
+    rotateByAngleZ(theta?: number): Mat3;
     /**
      * {@link premultiply} this {@link Mat3} by a translate matrix (i.e. translateMatrix = new Mat3().translate(vector)).
      * @param vector - translation {@link Vec2} to use.
