@@ -983,7 +983,7 @@ export class GPURenderer {
    * @param callback - callback to run just before the {@link render} method will be executed.
    * @returns - our {@link GPURenderer}.
    */
-  onBeforeRender(callback: (commandEncoder?: GPUCommandEncoder) => void) {
+  onBeforeRender(callback: (commandEncoder?: GPUCommandEncoder) => void): this {
     if (callback) {
       this._onBeforeRenderCallback = callback
     }
@@ -996,7 +996,7 @@ export class GPURenderer {
    * @param callback - callback to run just after the {@link render} method has been executed
    * @returns - our {@link GPURenderer}
    */
-  onAfterRender(callback: (commandEncoder?: GPUCommandEncoder) => void) {
+  onAfterRender(callback: (commandEncoder?: GPUCommandEncoder) => void): this {
     if (callback) {
       this._onAfterRenderCallback = callback
     }
@@ -1009,7 +1009,7 @@ export class GPURenderer {
    * @param callback - callback to execute.
    * @returns - our {@link GPURenderer}
    */
-  onResize(callback: (commandEncoder?: GPUCommandEncoder) => void) {
+  onResize(callback: (commandEncoder?: GPUCommandEncoder) => void): this {
     if (callback) {
       this._onResizeCallback = callback
     }
@@ -1022,7 +1022,7 @@ export class GPURenderer {
    * @param callback - callback to execute.
    * @returns - our {@link GPURenderer}
    */
-  onAfterResize(callback: (commandEncoder?: GPUCommandEncoder) => void) {
+  onAfterResize(callback: (commandEncoder?: GPUCommandEncoder) => void): this {
     if (callback) {
       this._onAfterResizeCallback = callback
     }

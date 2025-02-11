@@ -51,6 +51,10 @@ class EnvironmentMap {
     __privateAdd(this, _runComputePass);
     /** BRDF GGX LUT storage {@link Texture} used in the compute shader. */
     __privateAdd(this, _lutStorageTexture, void 0);
+    // callbacks / events
+    /** function assigned to the {@link onRotationAxisChanged} callback */
+    this._onRotationAxisChangedCallback = () => {
+    };
     renderer = isRenderer(renderer, "EnvironmentMap");
     this.renderer = renderer;
     params = {
@@ -76,7 +80,8 @@ class EnvironmentMap {
           generateMips: true
         },
         diffuseIntensity: 1,
-        specularIntensity: 1
+        specularIntensity: 1,
+        rotationAxis: "+Z"
       },
       ...params
     };
@@ -93,6 +98,47 @@ class EnvironmentMap {
     this.rotation = new Mat3(new Float32Array([0, 0, 1, 0, 1, 0, -1, 0, 0]));
     this.hdrLoader = new HDRLoader();
     this.computeBRDFLUTTexture();
+  }
+  /**
+   * Get the current {@link EnvironmentMapOptions.rotationAxis | rotationAxis}.
+   */
+  get rotationAxis() {
+    return this.options.rotationAxis;
+  }
+  /**
+   * Set the current {@link EnvironmentMapOptions.rotationAxis | rotationAxis}.
+   * @param value - New {@link EnvironmentMapOptions.rotationAxis | rotationAxis} to use.
+   */
+  set rotationAxis(value) {
+    if (value !== this.options.rotationAxis) {
+      this.options.rotationAxis = value;
+      switch (this.options.rotationAxis) {
+        case "+Z":
+        default:
+          this.rotation = new Mat3(new Float32Array([0, 0, 1, 0, 1, 0, -1, 0, 0]));
+          break;
+        case "-Z":
+          this.rotation = new Mat3(new Float32Array([0, 0, -1, 0, 1, 0, 1, 0, 0]));
+          break;
+        case "+X":
+          this.rotation = new Mat3(new Float32Array([1, 0, 0, 0, 1, 0, 0, 0, 1]));
+          break;
+        case "-X":
+          this.rotation = new Mat3(new Float32Array([-1, 0, 0, 0, 1, 0, 0, 0, -1]));
+          break;
+      }
+      this._onRotationAxisChangedCallback && this._onRotationAxisChangedCallback();
+    }
+  }
+  /**
+   * Callback to call whenever the {@link EnvironmentMapOptions.rotationAxis | rotationAxis} changed.
+   * @param callback - Called whenever the {@link EnvironmentMapOptions.rotationAxis | rotationAxis} changed.
+   */
+  onRotationAxisChanged(callback) {
+    if (callback) {
+      this._onRotationAxisChangedCallback = callback;
+    }
+    return this;
   }
   /**
    * Create the {@link lutTexture | BRDF GGX LUT texture} using the provided {@link LUTTextureParams | LUT texture options} and a {@link ComputePass} that runs once.

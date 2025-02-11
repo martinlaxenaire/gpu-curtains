@@ -51,6 +51,8 @@ export interface EnvironmentMapOptions {
   diffuseIntensity: number
   /** Define the intensity of the indirect specular contribution to use in a PBR shader. Default to `1`. */
   specularIntensity: number
+  /** Define how the {@link EnvironmentMap} should be rotated. Default to `'+Z'`. */
+  rotationAxis: '+Z' | '-Z' | '+X' | '-X'
 }
 
 /** Define the parameters used to create the {@link EnvironmentMap}. */
@@ -82,7 +84,6 @@ export class EnvironmentMap {
   options: EnvironmentMapOptions
 
   /** Define the default environment maps rotation. */
-  // TODO use a Vec3 and compute the Mat3 from it?
   rotation: Mat3
 
   /** BRDF GGX LUT storage {@link Texture} used in the compute shader. */
@@ -94,6 +95,12 @@ export class EnvironmentMap {
   diffuseTexture: Texture | null
   /** Specular environment cube map {@link Texture}. */
   specularTexture: Texture | null
+
+  // callbacks / events
+  /** function assigned to the {@link onRotationAxisChanged} callback */
+  _onRotationAxisChangedCallback = () => {
+    /* allow empty callback */
+  }
 
   /**
    * {@link EnvironmentMap} constructor.
@@ -129,6 +136,7 @@ export class EnvironmentMap {
         },
         diffuseIntensity: 1,
         specularIntensity: 1,
+        rotationAxis: '+Z',
       },
       ...params,
     } as EnvironmentMapParams
@@ -151,6 +159,53 @@ export class EnvironmentMap {
 
     // generate LUT texture right now
     this.computeBRDFLUTTexture()
+  }
+
+  /**
+   * Get the current {@link EnvironmentMapOptions.rotationAxis | rotationAxis}.
+   */
+  get rotationAxis(): EnvironmentMapOptions['rotationAxis'] {
+    return this.options.rotationAxis
+  }
+
+  /**
+   * Set the current {@link EnvironmentMapOptions.rotationAxis | rotationAxis}.
+   * @param value - New {@link EnvironmentMapOptions.rotationAxis | rotationAxis} to use.
+   */
+  set rotationAxis(value: EnvironmentMapOptions['rotationAxis']) {
+    if (value !== this.options.rotationAxis) {
+      this.options.rotationAxis = value
+
+      switch (this.options.rotationAxis) {
+        case '+Z':
+        default:
+          this.rotation = new Mat3(new Float32Array([0, 0, 1, 0, 1, 0, -1, 0, 0]))
+          break
+        case '-Z':
+          this.rotation = new Mat3(new Float32Array([0, 0, -1, 0, 1, 0, 1, 0, 0]))
+          break
+        case '+X':
+          this.rotation = new Mat3(new Float32Array([1, 0, 0, 0, 1, 0, 0, 0, 1]))
+          break
+        case '-X':
+          this.rotation = new Mat3(new Float32Array([-1, 0, 0, 0, 1, 0, 0, 0, -1]))
+          break
+      }
+
+      this._onRotationAxisChangedCallback && this._onRotationAxisChangedCallback()
+    }
+  }
+
+  /**
+   * Callback to call whenever the {@link EnvironmentMapOptions.rotationAxis | rotationAxis} changed.
+   * @param callback - Called whenever the {@link EnvironmentMapOptions.rotationAxis | rotationAxis} changed.
+   */
+  onRotationAxisChanged(callback: () => void): this {
+    if (callback) {
+      this._onRotationAxisChangedCallback = callback
+    }
+
+    return this
   }
 
   /**

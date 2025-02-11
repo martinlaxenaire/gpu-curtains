@@ -120,7 +120,8 @@ class LitMesh extends Mesh {
       }
       defaultParams.textures.push(textureDescriptor.texture);
     });
-    if (environmentMap && (shading === "PBR" || !shading)) {
+    const useEnvMap = environmentMap && (shading === "PBR" || !shading);
+    if (useEnvMap) {
       if (!defaultParams.textures) {
         defaultParams.textures = [];
       }
@@ -190,6 +191,11 @@ class LitMesh extends Mesh {
       }
     };
     super(renderer, { ...defaultParams, ...{ shaders } });
+    if (useEnvMap) {
+      environmentMap.onRotationAxisChanged(() => {
+        this.uniforms.material.envRotation.value = environmentMap.rotation;
+      });
+    }
   }
   /**
    * Get the material {@link BufferBindingParams} to build the material uniform.

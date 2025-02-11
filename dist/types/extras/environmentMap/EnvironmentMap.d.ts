@@ -43,6 +43,8 @@ export interface EnvironmentMapOptions {
     diffuseIntensity: number;
     /** Define the intensity of the indirect specular contribution to use in a PBR shader. Default to `1`. */
     specularIntensity: number;
+    /** Define how the {@link EnvironmentMap} should be rotated. Default to `'+Z'`. */
+    rotationAxis: '+Z' | '-Z' | '+X' | '-X';
 }
 /** Define the parameters used to create the {@link EnvironmentMap}. */
 export interface EnvironmentMapParams extends Partial<EnvironmentMapOptions> {
@@ -79,12 +81,28 @@ export declare class EnvironmentMap {
     diffuseTexture: Texture | null;
     /** Specular environment cube map {@link Texture}. */
     specularTexture: Texture | null;
+    /** function assigned to the {@link onRotationAxisChanged} callback */
+    _onRotationAxisChangedCallback: () => void;
     /**
      * {@link EnvironmentMap} constructor.
      * @param renderer - {@link Renderer} or {@link GPUCurtains} class object used to create this {@link EnvironmentMap}.
      * @param params - {@link EnvironmentMapParams | parameters} use to create this {@link EnvironmentMap}. Defines the various textures options.
      */
     constructor(renderer: Renderer | GPUCurtains, params?: EnvironmentMapParams);
+    /**
+     * Get the current {@link EnvironmentMapOptions.rotationAxis | rotationAxis}.
+     */
+    get rotationAxis(): EnvironmentMapOptions['rotationAxis'];
+    /**
+     * Set the current {@link EnvironmentMapOptions.rotationAxis | rotationAxis}.
+     * @param value - New {@link EnvironmentMapOptions.rotationAxis | rotationAxis} to use.
+     */
+    set rotationAxis(value: EnvironmentMapOptions['rotationAxis']);
+    /**
+     * Callback to call whenever the {@link EnvironmentMapOptions.rotationAxis | rotationAxis} changed.
+     * @param callback - Called whenever the {@link EnvironmentMapOptions.rotationAxis | rotationAxis} changed.
+     */
+    onRotationAxisChanged(callback: () => void): this;
     /**
      * Create the {@link lutTexture | BRDF GGX LUT texture} using the provided {@link LUTTextureParams | LUT texture options} and a {@link ComputePass} that runs once.
      */

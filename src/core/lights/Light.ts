@@ -84,12 +84,7 @@ export class Light extends Object3D {
 
     this.color = color
     this.#intensityColor = this.color.clone()
-    this.color.onChange(() =>
-      this.onPropertyChanged(
-        'color',
-        sRGBToLinear(this.#intensityColor.copy(this.color)).multiplyScalar(this.intensity)
-      )
-    )
+    this.color.onChange(() => this.onPropertyChanged('color', this.actualColor))
 
     this.intensity = intensity
   }
@@ -142,7 +137,7 @@ export class Light extends Object3D {
    */
   reset() {
     this.setRendererBinding()
-    this.onPropertyChanged('color', sRGBToLinear(this.#intensityColor.copy(this.color)).multiplyScalar(this.intensity))
+    this.onPropertyChanged('color', this.actualColor)
   }
 
   /**
@@ -159,7 +154,15 @@ export class Light extends Object3D {
    */
   set intensity(value: number) {
     this.#intensity = value
-    this.onPropertyChanged('color', sRGBToLinear(this.#intensityColor.copy(this.color)).multiplyScalar(this.intensity))
+    this.onPropertyChanged('color', this.actualColor)
+  }
+
+  /**
+   * Get the actual {@link Vec3} color used in the shader: convert {@link color} to linear space, then multiply by {@link intensity}.
+   * @returns - Actual {@link Vec3} color used in the shader.
+   */
+  get actualColor(): Vec3 {
+    return sRGBToLinear(this.#intensityColor.copy(this.color)).multiplyScalar(this.intensity)
   }
 
   /**

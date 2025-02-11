@@ -335,7 +335,8 @@ export class LitMesh extends Mesh {
     })
 
     // env map
-    if (environmentMap && (shading === 'PBR' || !shading)) {
+    const useEnvMap = environmentMap && (shading === 'PBR' || !shading)
+    if (useEnvMap) {
       // add environment map textures and sampler
       if (!defaultParams.textures) {
         defaultParams.textures = []
@@ -423,6 +424,12 @@ export class LitMesh extends Mesh {
     }
 
     super(renderer, { ...defaultParams, ...{ shaders } })
+
+    if (useEnvMap) {
+      environmentMap.onRotationAxisChanged(() => {
+        this.uniforms.material.envRotation.value = environmentMap.rotation
+      })
+    }
   }
 
   /**

@@ -117,18 +117,22 @@ const declareMaterialVars = ({
       `
   var ior: f32 = 1.5;`;
     }
-    if (shadingModel === "Phong" && materialStruct.shininess) {
-      materialVars += /* wgsl */
-      `
+    if (shadingModel === "Phong") {
+      if (materialStruct.shininess) {
+        materialVars += /* wgsl */
+        `
   var shininess: f32 = ${materialUniformName}.shininess;`;
-    } else {
-      materialVars += /* wgsl */
-      `
-  // arbitrary computation of shininess from roughness and metallic
-  var Ns: f32 = (1.0 / max(EPSILON, roughness * roughness));  // Convert roughness to shininess
-  Ns *= (1.0 - 0.5 * metallic);  // Reduce shininess for metals
-  var shininess: f32 = clamp(Ns * 60.0, 1.0, 256.0);  // Clamp to avoid extreme values
-  shininess = 60.0;`;
+      } else {
+        materialVars += /* wgsl */
+        `
+  // approximating phong shading from PBR properties
+  // arbitrary computation of diffuse, shininess and specular color from roughness and metallic  
+  baseColorFactor = mix(baseColorFactor, vec3(0.0), metallic);
+  specularColor = mix(specularColor, baseColorFactor, metallic);
+  // from https://graphicrants.blogspot.com/2013/08/specular-brdf-reference.html
+  var shininess: f32 = clamp(2.0 / (roughness * roughness * roughness * roughness) - 2.0, 1000.0);
+  `;
+      }
     }
   }
   if (shadingModel === "PBR") {

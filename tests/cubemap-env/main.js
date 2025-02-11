@@ -237,6 +237,21 @@ window.addEventListener('load', async () => {
     })
     .name('Maps')
 
+  envFolder
+    .add({ rotationAxis: '+Z' }, 'rotationAxis', ['+Z', '-Z', '+X', '-X'])
+    .name('Rotation axis')
+    .onChange((value) => {
+      if (environmentMap) {
+        environmentMap.rotationAxis = value
+      }
+    })
+
+  environmentMap.onRotationAxisChanged(() => {
+    if (cubeMap) {
+      cubeMap.uniforms.params.envRotation.value = environmentMap.rotation
+    }
+  })
+
   const envTexturesFolder = gui.addFolder('Environment textures')
 
   envTexturesFolder

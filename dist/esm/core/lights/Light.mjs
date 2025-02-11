@@ -47,12 +47,7 @@ class Light extends Object3D {
     };
     this.color = color;
     __privateSet(this, _intensityColor, this.color.clone());
-    this.color.onChange(
-      () => this.onPropertyChanged(
-        "color",
-        sRGBToLinear(__privateGet(this, _intensityColor).copy(this.color)).multiplyScalar(this.intensity)
-      )
-    );
+    this.color.onChange(() => this.onPropertyChanged("color", this.actualColor));
     this.intensity = intensity;
   }
   /**
@@ -89,7 +84,7 @@ class Light extends Object3D {
    */
   reset() {
     this.setRendererBinding();
-    this.onPropertyChanged("color", sRGBToLinear(__privateGet(this, _intensityColor).copy(this.color)).multiplyScalar(this.intensity));
+    this.onPropertyChanged("color", this.actualColor);
   }
   /**
    * Get this {@link Light} intensity.
@@ -104,7 +99,14 @@ class Light extends Object3D {
    */
   set intensity(value) {
     __privateSet(this, _intensity, value);
-    this.onPropertyChanged("color", sRGBToLinear(__privateGet(this, _intensityColor).copy(this.color)).multiplyScalar(this.intensity));
+    this.onPropertyChanged("color", this.actualColor);
+  }
+  /**
+   * Get the actual {@link Vec3} color used in the shader: convert {@link color} to linear space, then multiply by {@link intensity}.
+   * @returns - Actual {@link Vec3} color used in the shader.
+   */
+  get actualColor() {
+    return sRGBToLinear(__privateGet(this, _intensityColor).copy(this.color)).multiplyScalar(this.intensity);
   }
   /**
    * Update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} input value and tell the {@link CameraRenderer#cameraLightsBindGroup | renderer camera, lights and shadows} bind group to update.

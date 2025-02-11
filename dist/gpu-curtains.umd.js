@@ -7994,12 +7994,7 @@
       };
       this.color = color;
       __privateSet$g(this, _intensityColor, this.color.clone());
-      this.color.onChange(
-        () => this.onPropertyChanged(
-          "color",
-          sRGBToLinear(__privateGet$g(this, _intensityColor).copy(this.color)).multiplyScalar(this.intensity)
-        )
-      );
+      this.color.onChange(() => this.onPropertyChanged("color", this.actualColor));
       this.intensity = intensity;
     }
     /**
@@ -8036,7 +8031,7 @@
      */
     reset() {
       this.setRendererBinding();
-      this.onPropertyChanged("color", sRGBToLinear(__privateGet$g(this, _intensityColor).copy(this.color)).multiplyScalar(this.intensity));
+      this.onPropertyChanged("color", this.actualColor);
     }
     /**
      * Get this {@link Light} intensity.
@@ -8051,7 +8046,14 @@
      */
     set intensity(value) {
       __privateSet$g(this, _intensity$1, value);
-      this.onPropertyChanged("color", sRGBToLinear(__privateGet$g(this, _intensityColor).copy(this.color)).multiplyScalar(this.intensity));
+      this.onPropertyChanged("color", this.actualColor);
+    }
+    /**
+     * Get the actual {@link Vec3} color used in the shader: convert {@link color} to linear space, then multiply by {@link intensity}.
+     * @returns - Actual {@link Vec3} color used in the shader.
+     */
+    get actualColor() {
+      return sRGBToLinear(__privateGet$g(this, _intensityColor).copy(this.color)).multiplyScalar(this.intensity);
     }
     /**
      * Update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} input value and tell the {@link CameraRenderer#cameraLightsBindGroup | renderer camera, lights and shadows} bind group to update.
@@ -17583,18 +17585,22 @@ struct FSInput {
         `
   var ior: f32 = 1.5;`;
       }
-      if (shadingModel === "Phong" && materialStruct.shininess) {
-        materialVars += /* wgsl */
-        `
+      if (shadingModel === "Phong") {
+        if (materialStruct.shininess) {
+          materialVars += /* wgsl */
+          `
   var shininess: f32 = ${materialUniformName}.shininess;`;
-      } else {
-        materialVars += /* wgsl */
-        `
-  // arbitrary computation of shininess from roughness and metallic
-  var Ns: f32 = (1.0 / max(EPSILON, roughness * roughness));  // Convert roughness to shininess
-  Ns *= (1.0 - 0.5 * metallic);  // Reduce shininess for metals
-  var shininess: f32 = clamp(Ns * 60.0, 1.0, 256.0);  // Clamp to avoid extreme values
-  shininess = 60.0;`;
+        } else {
+          materialVars += /* wgsl */
+          `
+  // approximating phong shading from PBR properties
+  // arbitrary computation of diffuse, shininess and specular color from roughness and metallic  
+  baseColorFactor = mix(baseColorFactor, vec3(0.0), metallic);
+  specularColor = mix(specularColor, baseColorFactor, metallic);
+  // from https://graphicrants.blogspot.com/2013/08/specular-brdf-reference.html
+  var shininess: f32 = clamp(2.0 / (roughness * roughness * roughness * roughness) - 2.0, 1000.0);
+  `;
+        }
       }
     }
     if (shadingModel === "PBR") {
@@ -20635,6 +20641,10 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
       __privateAdd$3(this, _runComputePass);
       /** BRDF GGX LUT storage {@link Texture} used in the compute shader. */
       __privateAdd$3(this, _lutStorageTexture, void 0);
+      // callbacks / events
+      /** function assigned to the {@link onRotationAxisChanged} callback */
+      this._onRotationAxisChangedCallback = () => {
+      };
       renderer = isRenderer(renderer, "EnvironmentMap");
       this.renderer = renderer;
       params = {
@@ -20660,7 +20670,8 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
             generateMips: true
           },
           diffuseIntensity: 1,
-          specularIntensity: 1
+          specularIntensity: 1,
+          rotationAxis: "+Z"
         },
         ...params
       };
@@ -20677,6 +20688,47 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
       this.rotation = new Mat3(new Float32Array([0, 0, 1, 0, 1, 0, -1, 0, 0]));
       this.hdrLoader = new HDRLoader();
       this.computeBRDFLUTTexture();
+    }
+    /**
+     * Get the current {@link EnvironmentMapOptions.rotationAxis | rotationAxis}.
+     */
+    get rotationAxis() {
+      return this.options.rotationAxis;
+    }
+    /**
+     * Set the current {@link EnvironmentMapOptions.rotationAxis | rotationAxis}.
+     * @param value - New {@link EnvironmentMapOptions.rotationAxis | rotationAxis} to use.
+     */
+    set rotationAxis(value) {
+      if (value !== this.options.rotationAxis) {
+        this.options.rotationAxis = value;
+        switch (this.options.rotationAxis) {
+          case "+Z":
+          default:
+            this.rotation = new Mat3(new Float32Array([0, 0, 1, 0, 1, 0, -1, 0, 0]));
+            break;
+          case "-Z":
+            this.rotation = new Mat3(new Float32Array([0, 0, -1, 0, 1, 0, 1, 0, 0]));
+            break;
+          case "+X":
+            this.rotation = new Mat3(new Float32Array([1, 0, 0, 0, 1, 0, 0, 0, 1]));
+            break;
+          case "-X":
+            this.rotation = new Mat3(new Float32Array([-1, 0, 0, 0, 1, 0, 0, 0, -1]));
+            break;
+        }
+        this._onRotationAxisChangedCallback && this._onRotationAxisChangedCallback();
+      }
+    }
+    /**
+     * Callback to call whenever the {@link EnvironmentMapOptions.rotationAxis | rotationAxis} changed.
+     * @param callback - Called whenever the {@link EnvironmentMapOptions.rotationAxis | rotationAxis} changed.
+     */
+    onRotationAxisChanged(callback) {
+      if (callback) {
+        this._onRotationAxisChangedCallback = callback;
+      }
+      return this;
     }
     /**
      * Create the {@link lutTexture | BRDF GGX LUT texture} using the provided {@link LUTTextureParams | LUT texture options} and a {@link ComputePass} that runs once.
@@ -21256,7 +21308,8 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         }
         defaultParams.textures.push(textureDescriptor.texture);
       });
-      if (environmentMap && (shading === "PBR" || !shading)) {
+      const useEnvMap = environmentMap && (shading === "PBR" || !shading);
+      if (useEnvMap) {
         if (!defaultParams.textures) {
           defaultParams.textures = [];
         }
@@ -21326,6 +21379,11 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         }
       };
       super(renderer, { ...defaultParams, ...{ shaders } });
+      if (useEnvMap) {
+        environmentMap.onRotationAxisChanged(() => {
+          this.uniforms.material.envRotation.value = environmentMap.rotation;
+        });
+      }
     }
     /**
      * Get the material {@link BufferBindingParams} to build the material uniform.
