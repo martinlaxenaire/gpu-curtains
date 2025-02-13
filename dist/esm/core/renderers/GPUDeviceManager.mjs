@@ -255,9 +255,9 @@ class GPUDeviceManager {
   }
   /**
    * Copy an external image to the GPU.
-   * @param source - {@link GPUCopyExternalImageSourceInfo} to use.
-   * @param destination - {@link GPUCopyExternalImageDestInfo} to use.
-   * @param copySize - {@link GPUExtent3DStrict} to use.
+   * @param source - {@link https://gpuweb.github.io/types/interfaces/GPUCopyExternalImageSourceInfo.html | GPUCopyExternalImageSourceInfo (WebGPU API reference)} to use.
+   * @param destination - {@link https://gpuweb.github.io/types/interfaces/GPUCopyExternalImageDestInfo.html | GPUCopyExternalImageDestInfo (WebGPU API reference)} to use.
+   * @param copySize - {@link https://gpuweb.github.io/types/types/GPUExtent3DStrict.html | GPUExtent3DStrict (WebGPU API reference)} to use.
    */
   copyExternalImageToTexture(source, destination, copySize) {
     this.device?.queue.copyExternalImageToTexture(source, destination, copySize);

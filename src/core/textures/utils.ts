@@ -6,7 +6,7 @@ import { TextureBindingType } from '../bindings/Binding'
 export type TextureUsageKeys = 'copySrc' | 'copyDst' | 'renderAttachment' | 'storageBinding' | 'textureBinding'
 
 /**
- * Map {@link TextureUsageKeys | texture usage names} with actual {@link GPUDevice.createTexture().descriptor.usage | GPUTextureUsageFlags}.
+ * Map {@link TextureUsageKeys | texture usage names} with actual {@link GPUDevice.createTexture.descriptor.usage | GPUTextureUsageFlags}.
  */
 const textureUsages: Map<TextureUsageKeys, GPUTextureUsageFlags> = new Map([
   ['copySrc', WebGPUTextureUsageConstants.COPY_SRC],
@@ -17,9 +17,9 @@ const textureUsages: Map<TextureUsageKeys, GPUTextureUsageFlags> = new Map([
 ])
 
 /**
- * Get the corresponding {@link GPUDevice.createTexture().descriptor.usage | GPUTextureUsageFlags} based on an array of {@link TextureUsageKeys | texture usage names}.
+ * Get the corresponding {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUTexture/usage#value | GPUTextureUsageFlags} based on an array of {@link TextureUsageKeys | texture usage names}.
  * @param usages - array of {@link TextureUsageKeys | texture usage names}.
- * @returns - corresponding {@link GPUDevice.createTexture().descriptor.usage | GPUTextureUsageFlags}.
+ * @returns - corresponding {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUTexture/usage#value | GPUTextureUsageFlags}.
  */
 export const getTextureUsages = (usages: TextureUsageKeys[] = []): GPUTextureUsageFlags => {
   return usages.reduce((acc, v) => {
@@ -28,10 +28,10 @@ export const getTextureUsages = (usages: TextureUsageKeys[] = []): GPUTextureUsa
 }
 
 /**
- * Get the corresponding {@link GPUDevice.createTexture().descriptor.usage | GPUTextureUsageFlags} based on an array of {@link TextureUsageKeys | texture usage names} if specified. If not, will try to fall back to a usage based on the {@link TextureBindingType | texture type}.
+ * Get the corresponding {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUTexture/usage#value | GPUTextureUsageFlags} based on an array of {@link TextureUsageKeys | texture usage names} if specified. If not, will try to fall back to a usage based on the {@link TextureBindingType | texture type}.
  * @param usages - array of {@link TextureUsageKeys | texture usage names}.
  * @param textureType - the {@link TextureBindingType | texture type}.
- * @returns - corresponding {@link GPUDevice.createTexture().descriptor.usage | GPUTextureUsageFlags}.
+ * @returns - corresponding {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUTexture/usage#value | GPUTextureUsageFlags}.
  */
 export const getDefaultTextureUsage = (usages: TextureUsageKeys[] = [], textureType: TextureBindingType) => {
   if (usages.length) {
@@ -47,9 +47,9 @@ export const getDefaultTextureUsage = (usages: TextureUsageKeys[] = [], textureT
 }
 
 /**
- * Get the corresponding {@link GPUDevice.createTexture().descriptor.usage | GPUTextureUsageFlags} based on an array of {@link TextureUsageKeys | texture usage names} if specified.
+ * Get the corresponding {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUTexture/usage#value | GPUTextureUsageFlags} based on an array of {@link TextureUsageKeys | texture usage names} if specified.
  * @param usages - array of {@link TextureUsageKeys | texture usage names}.
- * @returns - corresponding {@link GPUDevice.createTexture().descriptor.usage | GPUTextureUsageFlags}.
+ * @returns - corresponding {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUTexture/usage#value | GPUTextureUsageFlags}.
  */
 export const getDefaultMediaTextureUsage = (usages: TextureUsageKeys[] = []) => {
   return getDefaultTextureUsage(usages, 'texture')

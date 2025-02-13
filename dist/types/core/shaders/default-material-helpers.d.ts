@@ -6,7 +6,7 @@ export interface AdditionalChunks {
      *
      * For the vertex shader, it is called after the attributes variables declarations and before applying any morph, skinning or matrices calculations.
      *
-     * For the fragment shader, it is called after the material and attributes variables declarations and before applying any lightning calculations. */
+     * For the fragment shader, it is called after the material and attributes variables declarations and before applying any lighting calculations. */
     preliminaryContribution?: string;
     /** Additional modification to apply to the shader.
      *

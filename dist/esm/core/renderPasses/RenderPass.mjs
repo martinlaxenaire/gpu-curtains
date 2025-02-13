@@ -6,7 +6,7 @@ class RenderPass {
   /**
    * RenderPass constructor
    * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link RenderPass}
-   * @param parameters - {@link RenderPassParams | parameters} used to create this {@link RenderPass}
+   * @param parameters - {@link RenderPassParams | parameters} used to create this {@link RenderPass}.
    */
   constructor(renderer, {
     label = "Render Pass",
@@ -73,7 +73,7 @@ class RenderPass {
     this.setRenderPassDescriptor();
   }
   /**
-   * Create and set our {@link depthTexture | depth texture}
+   * Create and set our {@link depthTexture | depth texture}.
    */
   createDepthTexture() {
     if (this.options.depthTexture) {
@@ -93,7 +93,7 @@ class RenderPass {
     }
   }
   /**
-   * Create and set our {@link viewTextures | view textures}
+   * Create and set our {@link viewTextures | view textures}.
    */
   createViewTextures() {
     this.options.colorAttachments.forEach((colorAttachment, index) => {
@@ -141,7 +141,7 @@ class RenderPass {
     return this.options.sampleCount > 1 ? this.resolveTargets : this.viewTextures;
   }
   /**
-   * Set our render pass {@link descriptor}
+   * Set our render pass {@link descriptor}.
    */
   setRenderPassDescriptor(depthTextureView = null) {
     this.descriptor = {
@@ -182,7 +182,7 @@ class RenderPass {
     };
   }
   /**
-   * Resize our {@link RenderPass}: reset its {@link Texture}
+   * Resize our {@link RenderPass}: reset its {@link Texture}.
    */
   resize() {
     if (this.options.useDepth) {
@@ -204,9 +204,9 @@ class RenderPass {
     });
   }
   /**
-   * Set the {@link descriptor} {@link GPUCommandEncoder.beginRenderPass().loadOp | load operation}
-   * @param loadOp - new {@link GPUCommandEncoder.beginRenderPass().loadOp | load operation} to use
-   * @param colorAttachmentIndex - index of the color attachment for which to use this load operation
+   * Set the {@link descriptor} {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#loadop | load operation}.
+   * @param loadOp - new {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#loadop | load operation} to use.
+   * @param colorAttachmentIndex - index of the color attachment for which to use this load operation.
    */
   setLoadOp(loadOp = "clear", colorAttachmentIndex = 0) {
     if (this.options.useColorAttachments) {
@@ -221,8 +221,8 @@ class RenderPass {
     }
   }
   /**
-   * Set the {@link descriptor} {@link GPUCommandEncoder.beginRenderPass().loadOp | depth load operation}
-   * @param depthLoadOp - new {@link GPUCommandEncoder.beginRenderPass().loadOp | depth load operation} to use
+   * Set the {@link descriptor} {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#depthloadop | depth load operation}.
+   * @param depthLoadOp - new {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#depthloadop | depth load operation} to use.
    */
   setDepthLoadOp(depthLoadOp = "clear") {
     this.options.depthLoadOp = depthLoadOp;
@@ -231,10 +231,10 @@ class RenderPass {
     }
   }
   /**
-   * Set our {@link GPUCommandEncoder.beginRenderPass().clearValue | clear colors value}.<br>
-   * Beware that if the {@link renderer} is using {@link core/renderers/GPURenderer.GPURendererContextOptions#alphaMode | premultiplied alpha mode}, your R, G and B channels should be premultiplied by your alpha channel.
-   * @param clearValue - new {@link GPUCommandEncoder.beginRenderPass().clearValue | clear colors value} to use
-   * @param colorAttachmentIndex - index of the color attachment for which to use this clear value
+   * Set our {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#clearvalue | clear colors value}.<br>
+   * Beware that if the {@link renderer} is using {@link core/renderers/GPURenderer.GPURendererContextOptions#alphaMode | premultiplied alpha mode}, your `R`, `G` and `B` channels should be premultiplied by your alpha channel.
+   * @param clearValue - new {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#clearvalue | clear colors value} to use.
+   * @param colorAttachmentIndex - index of the color attachment for which to use this clear value.
    */
   setClearValue(clearValue = [0, 0, 0, 0], colorAttachmentIndex = 0) {
     if (this.options.useColorAttachments) {
@@ -255,7 +255,7 @@ class RenderPass {
     }
   }
   /**
-   * Set the current {@link descriptor} texture {@link GPUCommandEncoder.beginRenderPass().view | view} and {@link GPUCommandEncoder.beginRenderPass().resolveTarget | resolveTarget} (depending on whether we're using multisampling)
+   * Set the current {@link descriptor} texture {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#view | view} and {@link GPUCommandEncoder.beginRenderPass().resolveTarget | resolveTarget} (depending on whether we're using multisampling).
    * @param renderTexture - {@link GPUTexture} to use, or the {@link core/renderers/GPURenderer.GPURenderer#context | context} {@link GPUTexture | current texture} if null.
    * @returns - the {@link GPUTexture | texture} to render to.
    */
@@ -282,7 +282,7 @@ class RenderPass {
     return renderTexture;
   }
   /**
-   * Destroy our {@link RenderPass}
+   * Destroy our {@link RenderPass}.
    */
   destroy() {
     this.viewTextures.forEach((viewTexture) => viewTexture.destroy());

@@ -1827,7 +1827,7 @@
   class Binding {
     /**
      * Binding constructor
-     * @param parameters - {@link BindingParams | parameters} used to create our {@link Binding}
+     * @param parameters - {@link BindingParams | parameters} used to create our {@link Binding}.
      */
     constructor({
       label = "Uniform",
@@ -4418,6 +4418,7 @@
     useExternalTextures: true,
     fromTexture: null,
     viewDimension: "2d",
+    format: "rgba8unorm",
     // copy external texture options
     generateMips: false,
     flipY: false,
@@ -8015,7 +8016,7 @@
     /**
      * RenderPass constructor
      * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link RenderPass}
-     * @param parameters - {@link RenderPassParams | parameters} used to create this {@link RenderPass}
+     * @param parameters - {@link RenderPassParams | parameters} used to create this {@link RenderPass}.
      */
     constructor(renderer, {
       label = "Render Pass",
@@ -8082,7 +8083,7 @@
       this.setRenderPassDescriptor();
     }
     /**
-     * Create and set our {@link depthTexture | depth texture}
+     * Create and set our {@link depthTexture | depth texture}.
      */
     createDepthTexture() {
       if (this.options.depthTexture) {
@@ -8102,7 +8103,7 @@
       }
     }
     /**
-     * Create and set our {@link viewTextures | view textures}
+     * Create and set our {@link viewTextures | view textures}.
      */
     createViewTextures() {
       this.options.colorAttachments.forEach((colorAttachment, index) => {
@@ -8150,7 +8151,7 @@
       return this.options.sampleCount > 1 ? this.resolveTargets : this.viewTextures;
     }
     /**
-     * Set our render pass {@link descriptor}
+     * Set our render pass {@link descriptor}.
      */
     setRenderPassDescriptor(depthTextureView = null) {
       this.descriptor = {
@@ -8191,7 +8192,7 @@
       };
     }
     /**
-     * Resize our {@link RenderPass}: reset its {@link Texture}
+     * Resize our {@link RenderPass}: reset its {@link Texture}.
      */
     resize() {
       if (this.options.useDepth) {
@@ -8213,9 +8214,9 @@
       });
     }
     /**
-     * Set the {@link descriptor} {@link GPUCommandEncoder.beginRenderPass().loadOp | load operation}
-     * @param loadOp - new {@link GPUCommandEncoder.beginRenderPass().loadOp | load operation} to use
-     * @param colorAttachmentIndex - index of the color attachment for which to use this load operation
+     * Set the {@link descriptor} {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#loadop | load operation}.
+     * @param loadOp - new {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#loadop | load operation} to use.
+     * @param colorAttachmentIndex - index of the color attachment for which to use this load operation.
      */
     setLoadOp(loadOp = "clear", colorAttachmentIndex = 0) {
       if (this.options.useColorAttachments) {
@@ -8230,8 +8231,8 @@
       }
     }
     /**
-     * Set the {@link descriptor} {@link GPUCommandEncoder.beginRenderPass().loadOp | depth load operation}
-     * @param depthLoadOp - new {@link GPUCommandEncoder.beginRenderPass().loadOp | depth load operation} to use
+     * Set the {@link descriptor} {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#depthloadop | depth load operation}.
+     * @param depthLoadOp - new {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#depthloadop | depth load operation} to use.
      */
     setDepthLoadOp(depthLoadOp = "clear") {
       this.options.depthLoadOp = depthLoadOp;
@@ -8240,10 +8241,10 @@
       }
     }
     /**
-     * Set our {@link GPUCommandEncoder.beginRenderPass().clearValue | clear colors value}.<br>
-     * Beware that if the {@link renderer} is using {@link core/renderers/GPURenderer.GPURendererContextOptions#alphaMode | premultiplied alpha mode}, your R, G and B channels should be premultiplied by your alpha channel.
-     * @param clearValue - new {@link GPUCommandEncoder.beginRenderPass().clearValue | clear colors value} to use
-     * @param colorAttachmentIndex - index of the color attachment for which to use this clear value
+     * Set our {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#clearvalue | clear colors value}.<br>
+     * Beware that if the {@link renderer} is using {@link core/renderers/GPURenderer.GPURendererContextOptions#alphaMode | premultiplied alpha mode}, your `R`, `G` and `B` channels should be premultiplied by your alpha channel.
+     * @param clearValue - new {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#clearvalue | clear colors value} to use.
+     * @param colorAttachmentIndex - index of the color attachment for which to use this clear value.
      */
     setClearValue(clearValue = [0, 0, 0, 0], colorAttachmentIndex = 0) {
       if (this.options.useColorAttachments) {
@@ -8264,7 +8265,7 @@
       }
     }
     /**
-     * Set the current {@link descriptor} texture {@link GPUCommandEncoder.beginRenderPass().view | view} and {@link GPUCommandEncoder.beginRenderPass().resolveTarget | resolveTarget} (depending on whether we're using multisampling)
+     * Set the current {@link descriptor} texture {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#view | view} and {@link GPUCommandEncoder.beginRenderPass().resolveTarget | resolveTarget} (depending on whether we're using multisampling).
      * @param renderTexture - {@link GPUTexture} to use, or the {@link core/renderers/GPURenderer.GPURenderer#context | context} {@link GPUTexture | current texture} if null.
      * @returns - the {@link GPUTexture | texture} to render to.
      */
@@ -8291,7 +8292,7 @@
       return renderTexture;
     }
     /**
-     * Destroy our {@link RenderPass}
+     * Destroy our {@link RenderPass}.
      */
     destroy() {
       this.viewTextures.forEach((viewTexture) => viewTexture.destroy());
@@ -13718,8 +13719,8 @@ ${this.shaders.compute.head}`;
     /**
      * Write to a {@link GPUBuffer}
      * @param buffer - {@link GPUBuffer} to write to
-     * @param bufferOffset - {@link GPUQueue.writeBuffer().bufferOffset | buffer offset}
-     * @param data - {@link GPUQueue.writeBuffer().data | data} to write
+     * @param bufferOffset - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUQueue/writeBuffer#bufferoffset | buffer offset}
+     * @param data - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUQueue/writeBuffer#data | data} to write
      */
     queueWriteBuffer(buffer, bufferOffset, data) {
       this.deviceManager.device?.queue.writeBuffer(buffer, bufferOffset, data);
@@ -13805,7 +13806,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Create a {@link GPUBindGroupLayout}
-     * @param bindGroupLayoutDescriptor - {@link GPUDevice.createBindGroupLayout().descriptor | GPUBindGroupLayoutDescriptor}
+     * @param bindGroupLayoutDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createBindGroupLayout#descriptor | GPUBindGroupLayoutDescriptor}
      * @returns - newly created {@link GPUBindGroupLayout}
      */
     createBindGroupLayout(bindGroupLayoutDescriptor) {
@@ -13813,7 +13814,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Create a {@link GPUBindGroup}
-     * @param bindGroupDescriptor - {@link GPUDevice.createBindGroup().descriptor | GPUBindGroupDescriptor}
+     * @param bindGroupDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createBindGroup#descriptor | GPUBindGroupDescriptor}
      * @returns - newly created {@link GPUBindGroup}
      */
     createBindGroup(bindGroupDescriptor) {
@@ -13822,7 +13823,7 @@ ${this.shaders.compute.head}`;
     /* SHADERS & PIPELINES */
     /**
      * Create a {@link GPUShaderModule}
-     * @param shaderModuleDescriptor - {@link GPUDevice.createShaderModule().descriptor | GPUShaderModuleDescriptor}
+     * @param shaderModuleDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createShaderModule#descriptor | GPUShaderModuleDescriptor}
      * @returns - newly created {@link GPUShaderModule}
      */
     createShaderModule(shaderModuleDescriptor) {
@@ -13830,7 +13831,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Create a {@link GPUPipelineLayout}
-     * @param pipelineLayoutDescriptor - {@link GPUDevice.createPipelineLayout().descriptor | GPUPipelineLayoutDescriptor}
+     * @param pipelineLayoutDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createPipelineLayout#descriptor | GPUPipelineLayoutDescriptor}
      * @returns - newly created {@link GPUPipelineLayout}
      */
     createPipelineLayout(pipelineLayoutDescriptor) {
@@ -13838,7 +13839,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Create a {@link GPURenderPipeline}
-     * @param pipelineDescriptor - {@link GPUDevice.createRenderPipeline().descriptor | GPURenderPipelineDescriptor}
+     * @param pipelineDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createRenderPipeline#descriptor | GPURenderPipelineDescriptor}
      * @returns - newly created {@link GPURenderPipeline}
      */
     createRenderPipeline(pipelineDescriptor) {
@@ -13846,7 +13847,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Asynchronously create a {@link GPURenderPipeline}
-     * @param pipelineDescriptor - {@link GPUDevice.createRenderPipeline().descriptor | GPURenderPipelineDescriptor}
+     * @param pipelineDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createRenderPipeline#descriptor | GPURenderPipelineDescriptor}
      * @returns - newly created {@link GPURenderPipeline}
      */
     async createRenderPipelineAsync(pipelineDescriptor) {
@@ -13854,7 +13855,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Create a {@link GPUComputePipeline}
-     * @param pipelineDescriptor - {@link GPUDevice.createComputePipeline().descriptor | GPUComputePipelineDescriptor}
+     * @param pipelineDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createComputePipeline#descriptor | GPUComputePipelineDescriptor}
      * @returns - newly created {@link GPUComputePipeline}
      */
     createComputePipeline(pipelineDescriptor) {
@@ -13862,7 +13863,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Asynchronously create a {@link GPUComputePipeline}
-     * @param pipelineDescriptor - {@link GPUDevice.createComputePipeline().descriptor | GPUComputePipelineDescriptor}
+     * @param pipelineDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createComputePipeline#descriptor | GPUComputePipelineDescriptor}
      * @returns - newly created {@link GPUComputePipeline}
      */
     async createComputePipelineAsync(pipelineDescriptor) {
@@ -13885,7 +13886,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Create a {@link GPUTexture}
-     * @param textureDescriptor - {@link GPUDevice.createTexture().descriptor | GPUTextureDescriptor}
+     * @param textureDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createTexture#descriptor | GPUTextureDescriptor}
      * @returns - newly created {@link GPUTexture}
      */
     createTexture(textureDescriptor) {
@@ -15028,9 +15029,9 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Copy an external image to the GPU.
-     * @param source - {@link GPUCopyExternalImageSourceInfo} to use.
-     * @param destination - {@link GPUCopyExternalImageDestInfo} to use.
-     * @param copySize - {@link GPUExtent3DStrict} to use.
+     * @param source - {@link https://gpuweb.github.io/types/interfaces/GPUCopyExternalImageSourceInfo.html | GPUCopyExternalImageSourceInfo (WebGPU API reference)} to use.
+     * @param destination - {@link https://gpuweb.github.io/types/interfaces/GPUCopyExternalImageDestInfo.html | GPUCopyExternalImageDestInfo (WebGPU API reference)} to use.
+     * @param copySize - {@link https://gpuweb.github.io/types/types/GPUExtent3DStrict.html | GPUExtent3DStrict (WebGPU API reference)} to use.
      */
     copyExternalImageToTexture(source, destination, copySize) {
       this.device?.queue.copyExternalImageToTexture(source, destination, copySize);
@@ -16456,53 +16457,6 @@ fn getPhong(
   const REIndirectSpecular = (
     /* wgsl */
     `
-fn DFGApprox(
-  normal: vec3f,
-  viewDirection: vec3f,
-  roughness: f32,
-) -> vec2f {
-  let dotNV: f32 = saturate(dot( normal, viewDirection ));
-
-	let c0: vec4f = vec4( - 1, - 0.0275, - 0.572, 0.022 );
-	let c1: vec4f = vec4( 1, 0.0425, 1.04, - 0.04 );
-
-	let r: vec4f = roughness * c0 + c1;
-	let a004: f32 = min( r.x * r.x, exp2( - 9.28 * dotNV ) ) * r.x + r.y;
-	
-	let fab: vec2f = vec2( - 1.04, 1.04 ) * a004 + r.zw;
-
-	return fab;
-}
-
-struct TotalScattering {
-  single: vec3f,
-  multi: vec3f,
-}
-
-fn computeMultiscattering(
-  normal: vec3f,
-  viewDirection: vec3f,
-  specularColor: vec3f,
-  f90: f32,
-  roughness: f32,
-  ptr_totalScattering: ptr<function, TotalScattering>
-) {
-  let fab: vec2f = DFGApprox( normal, viewDirection, roughness );
-
-	let Fr: vec3f = specularColor;
-
-	let FssEss: vec3f = Fr * fab.x + f90 * fab.y;
-
-	let Ess: f32 = fab.x + fab.y;
-	let Ems: f32 = 1.0 - Ess;
-
-	let Favg: vec3f = Fr + ( 1.0 - Fr ) * 0.047619; // 1/21
-	let Fms: vec3f = FssEss * Favg / ( 1.0 - Ems * Favg );
-
-	(*ptr_totalScattering).single += FssEss;
-	(*ptr_totalScattering).multi += Fms * Ems;
-}
-
 // Indirect Specular RenderEquations
 fn RE_IndirectSpecular(
   radiance: vec3f,
@@ -16514,20 +16468,22 @@ fn RE_IndirectSpecular(
   viewDirection: vec3f,
   metallic: f32,
   roughness: f32,
+  iBLGGXFresnel: IBLGGXFresnel,
   ptr_reflectedLight: ptr<function, ReflectedLight>
 ) {
-  var totalScattering: TotalScattering;
-  let cosineWeightedIrradiance: vec3f = irradiance * RECIPROCAL_PI;
-    
-  computeMultiscattering( normal, viewDirection, specularColorFactor, specularFactor, roughness, &totalScattering );
+  let k_D: vec3f = diffuseColor * (1.0 - iBLGGXFresnel.FssEss + iBLGGXFresnel.FmsEms);
+
+  // we just add radiance and irradiance to the indirect contributions using iBLGGXFresnel
+  // we might need to adjust when implementing clearcoat, sheen or iridescence
+
+  // we remove RECIPROCAL_PI multiplication since the LUT already ensures energy conservation
+  let cosineWeightedIrradiance: vec3f = irradiance;
+  // let cosineWeightedIrradiance: vec3f = irradiance * RECIPROCAL_PI;  
+
+  (*ptr_reflectedLight).indirectSpecular += iBLGGXFresnel.FssEss * radiance;
+  (*ptr_reflectedLight).indirectSpecular += iBLGGXFresnel.FmsEms * cosineWeightedIrradiance;
   
-  let totalScatter: vec3f = totalScattering.single + totalScattering.multi;
-  let diffuse: vec3f = diffuseColor * ( 1.0 - max( max( totalScatter.r, totalScatter.g ), totalScatter.b ) );
-
-  (*ptr_reflectedLight).indirectSpecular += radiance * totalScattering.single;
-  (*ptr_reflectedLight).indirectSpecular += totalScattering.multi * cosineWeightedIrradiance;
-
-  (*ptr_reflectedLight).indirectDiffuse += diffuse * cosineWeightedIrradiance;
+  (*ptr_reflectedLight).indirectDiffuse += k_D * cosineWeightedIrradiance;
 }
 `
   );
@@ -16775,32 +16731,46 @@ fn getPBRDirect(
 `
   );
 
-  const getIBLIndirect$1 = ({
+  const getIBLIndirectIrradiance$1 = ({
     environmentMap = null
   }) => {
-    let iblIndirect = "";
+    let iblIndirectDiffuse = "";
     if (environmentMap) {
-      iblIndirect += /* wgs */
-      `
-  getIBLIndirect(
+      iblIndirectDiffuse += /* wgs */
+      `    
+  iblIrradiance += getIBLIndirectIrradiance(
     normal,
-    viewDirection,
-    roughness,
-    metallic,
     baseDiffuseColor.rgb,
-    specularColor,
-    specularIntensity,
     ${environmentMap.sampler.name},
-    ${environmentMap.lutTexture.options.name},
-    ${environmentMap.specularTexture.options.name},
     ${environmentMap.diffuseTexture.options.name},
     envRotation,
     envDiffuseIntensity,
-    envSpecularIntensity,
-    &reflectedLight
   );`;
     }
-    return iblIndirect;
+    return iblIndirectDiffuse;
+  };
+
+  const getIBLIndirectRadiance$1 = ({
+    environmentMap = null
+  }) => {
+    let iblIndirectSpecular = "";
+    if (environmentMap) {
+      iblIndirectSpecular += /* wgs */
+      `
+  radiance += getIBLIndirectRadiance(
+    normal,
+    viewDirection,
+    roughness,
+    specularColor,
+    specularIntensity,
+    iBLGGXFresnel,
+    ${environmentMap.sampler.name},
+    ${environmentMap.specularTexture.options.name},
+    envRotation,
+    envSpecularIntensity,
+  );`;
+    }
+    return iblIndirectSpecular;
   };
 
   const getIBLVolumeRefraction = ({
@@ -16841,6 +16811,41 @@ fn getPBRDirect(
     ) : "";
   };
 
+  const getIBLGGXFresnel$1 = ({
+    environmentMap = null
+  }) => {
+    let iblIGGXFresnel = (
+      /* wgsl */
+      `
+  var iBLGGXFresnel: IBLGGXFresnel;`
+    );
+    if (environmentMap && environmentMap.lutTexture) {
+      iblIGGXFresnel += /* wgsl */
+      `
+  iBLGGXFresnel = getIBLGGXFresnel(
+    normal,
+    viewDirection,
+    roughness,
+    specularColor,
+    specularIntensity,
+    ${environmentMap.sampler.name},
+    ${environmentMap.lutTexture.options.name},
+  );`;
+    } else {
+      iblIGGXFresnel += /* wgsl */
+      `
+  computeMultiscattering(
+    normal,
+    viewDirection,
+    specularColor,
+    specularIntensity,
+    roughness,
+    &iBLGGXFresnel
+  );`;
+    }
+    return iblIGGXFresnel;
+  };
+
   const getPBRShading = ({
     receiveShadows = false,
     environmentMap = null,
@@ -16877,15 +16882,32 @@ fn getPBRDirect(
     getPBRDirect(normal, baseDiffuseColor.rgb, viewDirection, specularF90, specularColor, metallic, roughness, directLight, &reflectedLight);
   }
   
-  ${getIBLIndirect$1({ environmentMap })}
+  var irradiance: vec3f = vec3(0.0);
+  var iblIrradiance: vec3f = vec3(0.0);
+  var radiance: vec3f = vec3(0.0);
+  
+  // IBL indirect contributions
+  ${getIBLGGXFresnel$1({ environmentMap })}
+  ${getIBLIndirectIrradiance$1({ environmentMap })}
+  ${getIBLIndirectRadiance$1({ environmentMap })}
   
   // ambient lights
-  var irradiance: vec3f = vec3(0.0);
   RE_IndirectDiffuse(irradiance, baseDiffuseColor.rgb, &reflectedLight);
   
-  // ambient lights specular
-  var radiance: vec3f = vec3(0.0);
-  RE_IndirectSpecular(radiance, irradiance, normal, baseDiffuseColor.rgb, specularF90, specularColor, viewDirection, metallic, roughness, &reflectedLight);
+  // indirect specular (and diffuse) from IBL
+  RE_IndirectSpecular(
+    radiance,
+    iblIrradiance,
+    normal,
+    baseDiffuseColor.rgb,
+    specularF90,
+    specularColor,
+    viewDirection,
+    metallic,
+    roughness,
+    iBLGGXFresnel,
+    &reflectedLight
+  );
   
   reflectedLight.indirectDiffuse *= occlusion;
   
@@ -17801,66 +17823,143 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
     );
   };
 
-  const getIBLIndirect = (
-    /* wgsl */
+  const getIBLGGXFresnel = (
+    /*  */
     `
+// multi scattering equations
+// not used for now since our IBL GGX Fresnel already handles energy conseervation
+// could be used if we dropped the environment map LUT texture
+fn DFGApprox(
+  normal: vec3f,
+  viewDirection: vec3f,
+  roughness: f32,
+) -> vec2f {
+  let dotNV: f32 = saturate(dot( normal, viewDirection ));
+
+	let c0: vec4f = vec4( - 1, - 0.0275, - 0.572, 0.022 );
+	let c1: vec4f = vec4( 1, 0.0425, 1.04, - 0.04 );
+
+	let r: vec4f = roughness * c0 + c1;
+	let a004: f32 = min( r.x * r.x, exp2( - 9.28 * dotNV ) ) * r.x + r.y;
+	
+	let fab: vec2f = vec2( - 1.04, 1.04 ) * a004 + r.zw;
+
+	return fab;
+}
+
 struct IBLGGXFresnel {
   FssEss: vec3f,
   FmsEms: vec3f
 }
 
-fn getIBLGGXFresnel(normal: vec3f, viewDirection: vec3f, roughness: f32, f0: vec3f, specularWeight: f32, clampSampler: sampler,
-  lutTexture: texture_2d<f32>) -> IBLGGXFresnel {
-    var iBLGGXFresnel: IBLGGXFresnel;
-
-    let N: vec3f = normalize(normal);
-    let V: vec3f = normalize(viewDirection);
-    let NdotV: f32 = saturate(dot(N, V));
-    
-    let brdfSamplePoint: vec2f = saturate(vec2(NdotV, roughness));
-
-    let brdf: vec3f = textureSample(
-      lutTexture,
-      clampSampler,
-      brdfSamplePoint
-    ).rgb;
-
-    let Fr: vec3f = max(vec3(1.0 - roughness), f0) - f0;
-    let k_S: vec3f = f0 + Fr * pow(1.0 - NdotV, 5.0);
-    iBLGGXFresnel.FssEss = specularWeight * (k_S * brdf.x + brdf.y);
-    let Ems: f32 = (1.0 - (brdf.x + brdf.y));
-    let F_avg: vec3f = specularWeight * (f0 + (1.0 - f0) / 21.0);
-    iBLGGXFresnel.FmsEms = Ems * iBLGGXFresnel.FssEss * F_avg / (1.0 - F_avg * Ems);
-
-    return iBLGGXFresnel;
+struct TotalScattering {
+  single: vec3f,
+  multi: vec3f,
 }
 
-fn getIBLIndirect(
+fn computeMultiscattering(
+  normal: vec3f,
+  viewDirection: vec3f,
+  specularColor: vec3f,
+  f90: f32,
+  roughness: f32,
+  ptr_totalScattering: ptr<function, IBLGGXFresnel>
+) {
+  let fab: vec2f = DFGApprox( normal, viewDirection, roughness );
+
+	let Fr: vec3f = specularColor;
+
+	let FssEss: vec3f = Fr * fab.x + f90 * fab.y;
+
+	let Ess: f32 = fab.x + fab.y;
+	let Ems: f32 = 1.0 - Ess;
+
+	let Favg: vec3f = Fr + ( 1.0 - Fr ) * 0.047619; // 1/21
+	let Fms: vec3f = FssEss * Favg / ( 1.0 - Ems * Favg );
+
+	(*ptr_totalScattering).FssEss += FssEss;
+	(*ptr_totalScattering).FmsEms += Fms * Ems;
+}
+
+fn getIBLGGXFresnel(
   normal: vec3f,
   viewDirection: vec3f,
   roughness: f32,
-  metallic: f32,
-  diffuseColor: vec3f,
-  specularColor: vec3f,
-  specularFactor: f32,
+  f0: vec3f,
+  specularWeight: f32,
   clampSampler: sampler,
-  lutTexture: texture_2d<f32>,
-  envSpecularTexture: texture_cube<f32>,
+  lutTexture: texture_2d<f32>
+) -> IBLGGXFresnel {
+  var iBLGGXFresnel: IBLGGXFresnel;
+  
+  let N: vec3f = normalize(normal);
+  let V: vec3f = normalize(viewDirection);
+  let NdotV: f32 = saturate(dot(N, V));
+  
+  let brdfSamplePoint: vec2f = saturate(vec2(NdotV, roughness));
+  
+  let brdf: vec3f = textureSample(
+    lutTexture,
+    clampSampler,
+    brdfSamplePoint
+  ).rgb;
+  
+  let Fr: vec3f = max(vec3(1.0 - roughness), f0) - f0;
+  let k_S: vec3f = f0 + Fr * pow(1.0 - NdotV, 5.0);
+  iBLGGXFresnel.FssEss = specularWeight * (k_S * brdf.x + brdf.y);
+  let Ems: f32 = (1.0 - (brdf.x + brdf.y));
+  let F_avg: vec3f = specularWeight * (f0 + (1.0 - f0) / 21.0);
+  iBLGGXFresnel.FmsEms = Ems * iBLGGXFresnel.FssEss * F_avg / (1.0 - F_avg * Ems);
+  
+  return iBLGGXFresnel;
+}
+`
+  );
+
+  const getIBLIndirectIrradiance = (
+    /* wgsl */
+    `
+fn getIBLIndirectIrradiance(
+  normal: vec3f,
+  diffuseColor: vec3f,
+  clampSampler: sampler,
   envDiffuseTexture: texture_cube<f32>,
   envRotation: mat3x3f,
   envDiffuseIntensity: f32,
+) -> vec3f {
+  // IBL diffuse (irradiance)
+  let diffuseLight: vec4f = textureSample(
+    envDiffuseTexture,
+    clampSampler,
+    normal * envRotation
+  );
+
+  return diffuseLight.rgb * envDiffuseIntensity;
+}
+`
+  );
+
+  const getIBLIndirectRadiance = (
+    /* wgsl */
+    `
+fn getIBLIndirectRadiance(
+  normal: vec3f,
+  viewDirection: vec3f,
+  roughness: f32,
+  specularColor: vec3f,
+  specularFactor: f32,
+  iBLGGXFresnel: IBLGGXFresnel,
+  clampSampler: sampler,
+  envSpecularTexture: texture_cube<f32>,
+  envRotation: mat3x3f,
   envSpecularIntensity: f32,
-  ptr_reflectedLight: ptr<function, ReflectedLight>,
-) {
+)-> vec3f {
   let N: vec3f = normalize(normal);
   let V: vec3f = normalize(viewDirection);
   let NdotV: f32 = saturate(dot(N, V));
 
   let reflection: vec3f = normalize(reflect(-V, N));
 
-  let iblDiffuseColor: vec3f = mix(diffuseColor, vec3(0.0), vec3(metallic));
-
-  // IBL specular (radiance)
   let lod: f32 = roughness * f32(textureNumLevels(envSpecularTexture) - 1);
 
   let specularLight: vec4f = textureSampleLevel(
@@ -17870,19 +17969,7 @@ fn getIBLIndirect(
     lod
   );
 
-  // IBL diffuse (irradiance)
-  let diffuseLight: vec4f = textureSample(
-    envDiffuseTexture,
-    clampSampler,
-    normal * envRotation
-  );
-
-  let iBLGGXFresnel = getIBLGGXFresnel(normal, viewDirection, roughness, specularColor, specularFactor, clampSampler, lutTexture);
-
-  let k_D: vec3f = iblDiffuseColor * (1.0 - iBLGGXFresnel.FssEss + iBLGGXFresnel.FmsEms);
-
-  (*ptr_reflectedLight).indirectSpecular += specularLight.rgb * iBLGGXFresnel.FssEss * envSpecularIntensity;
-  (*ptr_reflectedLight).indirectDiffuse += (iBLGGXFresnel.FmsEms + k_D) * diffuseLight.rgb * envDiffuseIntensity;
+  return specularLight.rgb * envSpecularIntensity;
 }
 `
   );
@@ -17960,7 +18047,9 @@ ${getLightsInfos}
 ${REIndirectDiffuse}
 ${REIndirectSpecular}
 ${getPBRDirect}
-${getIBLIndirect}
+${getIBLGGXFresnel}
+${getIBLIndirectIrradiance}
+${getIBLIndirectRadiance}
 ${getIBLTransmission}
 
 ${getFragmentInputStruct({ geometry, additionalVaryings })}
@@ -22123,9 +22212,9 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
       }
     }
     /**
-     * Get the {@link GPUDevice.createRenderPipeline().topology | GPUPrimitiveTopology} based on the {@link GLTF.MeshPrimitiveMode | WebGL primitive mode}.
+     * Get the {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createRenderPipeline#topology | GPUPrimitiveTopology} based on the {@link GLTF.MeshPrimitiveMode | WebGL primitive mode}.
      * @param mode - {@link GLTF.MeshPrimitiveMode | WebGL primitive mode} to use.
-     * @returns - corresponding {@link GPUDevice.createRenderPipeline().topology | GPUPrimitiveTopology}.
+     * @returns - corresponding {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createRenderPipeline#topology | GPUPrimitiveTopology}.
      */
     static gpuPrimitiveTopologyForMode(mode) {
       switch (mode) {
@@ -22142,9 +22231,9 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
       }
     }
     /**
-     * Get the {@link GPUDevice.createSampler().descriptor.addressModeU | GPUAddressMode} based on the {@link GLTF.TextureWrapMode | WebGL texture wrap mode}.
+     * Get the {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createSampler#addressmodeu | GPUAddressMode} based on the {@link GLTF.TextureWrapMode | WebGL texture wrap mode}.
      * @param wrap - {@link GLTF.TextureWrapMode | WebGL texture wrap mode} to use.
-     * @returns - corresponding {@link GPUDevice.createSampler().descriptor.addressModeU | GPUAddressMode}.
+     * @returns - corresponding {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createSampler#addressmodeu | GPUAddressMode}.
      */
     static gpuAddressModeForWrap(wrap) {
       switch (wrap) {

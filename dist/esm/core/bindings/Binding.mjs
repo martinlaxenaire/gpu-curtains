@@ -4,7 +4,7 @@ import { getBindingVisibility } from './utils.mjs';
 class Binding {
   /**
    * Binding constructor
-   * @param parameters - {@link BindingParams | parameters} used to create our {@link Binding}
+   * @param parameters - {@link BindingParams | parameters} used to create our {@link Binding}.
    */
   constructor({
     label = "Uniform",

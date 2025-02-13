@@ -4,8 +4,12 @@ import { BufferUsageKeys } from './utils';
  * Parameters used to create a {@link Buffer}.
  */
 export interface BufferParams extends Partial<Omit<GPUBufferDescriptor, 'usage'>> {
-    /** Allowed usages for the {@link Buffer#GPUBuffer | GPU buffer} as an array of {@link BufferUsageKeys | buffer usages names} */
+    /** The label of the {@link Buffer#GPUBuffer | GPUBuffer}, useful for debugging purpose. */
+    label?: string;
+    /** Allowed usages for the {@link Buffer#GPUBuffer | GPUBuffer} as an array of {@link BufferUsageKeys | buffer usages names} */
     usage?: BufferUsageKeys[];
+    /** Whether to create the {@link Buffer#GPUBuffer | GPUBuffer} in an already mapped state. See {@link https://gpuweb.github.io/types/interfaces/GPUBufferDescriptor.html#mappedAtCreation | mappedAtCreation (WebGPU API reference)}. */
+    mappedAtCreation?: boolean;
 }
 /**
  * Used as a wrapper around {@link GPUBuffer}.
@@ -17,7 +21,7 @@ export declare class Buffer {
     type: string;
     /** The universal unique id of the {@link Buffer} */
     uuid: string;
-    /** Options used to create this {@link Buffer}, also used as {@link GPUDevice.createBuffer().descriptor | GPUBufferDescriptor} */
+    /** Options used to create this {@link Buffer}, also used as {@link https://gpuweb.github.io/types/interfaces/GPUBufferDescriptor.html | GPUBufferDescriptor (WebGPU API reference)}. */
     options: GPUBufferDescriptor;
     /** The actual {@link GPUBuffer} after having been created. */
     GPUBuffer: null | GPUBuffer;

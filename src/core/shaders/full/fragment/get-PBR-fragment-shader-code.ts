@@ -6,7 +6,9 @@ import { getLightsInfos } from '../../chunks/fragment/head/get-lights-infos'
 import { REIndirectDiffuse } from '../../chunks/fragment/head/RE-indirect-diffuse'
 import { REIndirectSpecular } from '../../chunks/fragment/head/RE-indirect-specular'
 import { getPBRDirect } from '../../chunks/fragment/head/get-PBR-direct'
-import { getIBLIndirect } from '../../chunks/fragment/head/get-IBL-indirect'
+import { getIBLGGXFresnel } from '../../chunks/fragment/head/get-IBL-GGX-Fresnel'
+import { getIBLIndirectIrradiance } from '../../chunks/fragment/head/get-IBL-indirect-irradiance'
+import { getIBLIndirectRadiance } from '../../chunks/fragment/head/get-IBL-indirect-radiance'
 import { getIBLTransmission } from '../../chunks/fragment/head/get-IBL-transmission'
 import { getPBRShading } from '../../chunks/fragment/body/get-PBR-shading'
 import { getFragmentInputStruct } from '../../chunks/fragment/head/get-fragment-input-struct'
@@ -61,7 +63,9 @@ ${getLightsInfos}
 ${REIndirectDiffuse}
 ${REIndirectSpecular}
 ${getPBRDirect}
-${getIBLIndirect}
+${getIBLGGXFresnel}
+${getIBLIndirectIrradiance}
+${getIBLIndirectRadiance}
 ${getIBLTransmission}
 
 ${getFragmentInputStruct({ geometry, additionalVaryings })}

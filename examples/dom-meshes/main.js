@@ -85,7 +85,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       ],
       texturesOptions: {
         // random placeholder color between pink and blue
-        placeholderColor: Math.random() > 0.5 ? [255, 0, 255, 255] : [255, 255, 0, 255],
+        placeholderColor: Math.random() > 0.5 ? [0, 255, 255, 255] : [255, 0, 255, 255],
         generateMips: true,
       },
     })
