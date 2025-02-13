@@ -17,7 +17,7 @@ import { MediaTexture, MediaTextureParams } from '../../textures/MediaTexture';
 /**
  * Base render params used to create a Mesh.
  */
-export interface MeshBaseRenderParams extends Omit<RenderMaterialParams, 'targets'> {
+export interface MeshBaseRenderParams extends Omit<RenderMaterialParams, 'targets' | 'verticesOrder' | 'topology'> {
     /** Whether we should add this Mesh to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically. */
     autoRender?: boolean;
     /** Flag indicating whether to draw this Mesh or not. */

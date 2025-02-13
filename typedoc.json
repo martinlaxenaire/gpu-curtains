@@ -31,6 +31,8 @@
   "categoryOrder": ["Tutorials", "About", "API"],
   "projectDocuments": ["guides/getting-started.md", "guides/core-concepts.md"],
   "sort": ["source-order"],
+  "sourceLinkExternal": true,
+  "markdownLinkExternal": true,
   "validation": {
     "notExported": true,
     "invalidLink": true,

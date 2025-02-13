@@ -22,11 +22,11 @@ export interface ExternalTextureParamsBase {
     flipY?: boolean;
     /** Whether this texture should be premultiplied or not. Default to `false`. */
     premultipliedAlpha?: boolean;
-    /** The {@link GPUTexture.createView().dimension | GPUTexture view dimension} to use. Default to `'2d'`. */
+    /** The {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUTexture/createView#dimension | GPUTexture view dimension} to use. Default to `'2d'`. */
     viewDimension?: GPUTextureViewDimension;
-    /** Define which {@link GPUQueue.copyExternalImageToTexture().destination.aspect | aspect} of the texture to write the image to. Default to `all`. */
+    /** Define which {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUQueue/copyExternalImageToTexture#aspect | aspect} of the texture to write the image to. Default to `all`. */
     aspect?: GPUTextureAspect;
-    /** Define the {@link GPUQueue.copyExternalImageToTexture().destination.colorSpace | colorSpace} and encoding used to encode data into the destination texture. Default to `srgb`. */
+    /** Define the {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUQueue/copyExternalImageToTexture#colorspace | colorSpace} and encoding used to encode data into the destination texture. Default to `srgb`. */
     colorSpace?: PredefinedColorSpace;
 }
 /** Define the texture shaders visibility. */

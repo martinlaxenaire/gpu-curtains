@@ -10,13 +10,13 @@ import { MediaTexture } from '../core/textures/MediaTexture'
 
 // SHADERS
 
-/** Shaders types that can be used by a {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} */
+/** Shaders types that can be used by a {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}. */
 export type RenderMaterialShadersType = 'vertex' | 'fragment'
-/** Shaders types that can be used by a {@link core/materials/ComputeMaterial.ComputeMaterial | ComputeMaterial} */
+/** Shaders types that can be used by a {@link core/materials/ComputeMaterial.ComputeMaterial | ComputeMaterial}. */
 export type ComputeMaterialShadersType = 'compute'
-/** All shaders types */
+/** All shaders types. */
 export type MaterialShadersType = RenderMaterialShadersType | ComputeMaterialShadersType
-/** All shaders types, plus a 'full' type used to retrieve a complete shader code, i.e. 'vertex' + 'fragment' into one */
+/** All shaders types, plus a 'full' type used to retrieve a complete shader code, i.e. 'vertex' + 'fragment' into one. */
 export type FullShadersType = 'full' | MaterialShadersType
 
 /**
@@ -76,23 +76,23 @@ export interface MaterialInputBindingsParams extends BindGroupInputs {
   textures?: MaterialTexture[]
 }
 
-/** Parameters used to create a {@link core/materials/Material.Material | Material} */
+/** Parameters used to create a {@link core/materials/Material.Material | Material}. */
 export interface MaterialParams extends MaterialBaseParams, MaterialInputBindingsParams {}
 
-/** Options used to create this {@link core/materials/Material.Material | Material} */
+/** Options used to create this {@link core/materials/Material.Material | Material}. */
 export interface MaterialOptions extends MaterialBaseOptions, MaterialInputBindingsParams {}
 
 /* COMPUTE MATERIAL */
 
-/** Parameters used to create a {@link core/materials/ComputeMaterial.ComputeMaterial | ComputeMaterial} */
+/** Parameters used to create a {@link core/materials/ComputeMaterial.ComputeMaterial | ComputeMaterial}. */
 export interface ComputeMaterialParams extends MaterialParams {
-  /** Main/first work group dispatch size to use with this {@link core/materials/ComputeMaterial.ComputeMaterial | ComputeMaterial} */
+  /** Main/first work group dispatch size to use with this {@link core/materials/ComputeMaterial.ComputeMaterial | ComputeMaterial}. */
   dispatchSize?: number | number[]
 }
 
-/** Options used to create this {@link core/materials/ComputeMaterial.ComputeMaterial | ComputeMaterial} */
+/** Options used to create this {@link core/materials/ComputeMaterial.ComputeMaterial | ComputeMaterial}. */
 export interface ComputeMaterialOptions extends MaterialOptions {
-  /** Default work group dispatch size to use with this {@link core/materials/ComputeMaterial.ComputeMaterial | ComputeMaterial} */
+  /** Default work group dispatch size to use with this {@link core/materials/ComputeMaterial.ComputeMaterial | ComputeMaterial}. */
   dispatchSize?: number | number[]
 }
 
@@ -101,45 +101,45 @@ export interface ComputeMaterialOptions extends MaterialOptions {
 // GEOMETRY
 
 /**
- * Defines the geometry attributes that a {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} should send to the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline}
+ * Defines the geometry attributes that a {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} should send to the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline}.
  */
 export interface RenderMaterialAttributes {
-  /** WGSL structure code fragment containing the attributes to use as vertex shader inputs */
+  /** WGSL structure code fragment containing the attributes to use as vertex shader inputs. */
   wgslStructFragment?: Geometry['wgslStructFragment']
-  /** Array of {@link types/Geometries.VertexBuffer | vertex buffers} to send to the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} */
+  /** Array of {@link types/Geometries.VertexBuffer | vertex buffers} to send to the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline}. */
   vertexBuffers?: Geometry['vertexBuffers']
-  /** A string representing the {@link core/geometries/Geometry.Geometry#vertexBuffers | Geometry vertex buffers} layout, used for {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipelines} caching */
+  /** A string representing the {@link core/geometries/Geometry.Geometry#vertexBuffers | Geometry vertex buffers} layout, used for {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipelines} caching. */
   layoutCacheKey?: Geometry['layoutCacheKey']
 }
 
-/** Defines all basic allowed geometries */
+/** Defines all basic allowed geometries. */
 export type AllowedGeometries = Geometry | IndexedGeometry
 
 /**
- * Base rendering options to send to the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline}
+ * Base rendering options to send to the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline}.
  */
 export interface RenderMaterialBaseRenderingOptions {
-  /** Whether this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} should implicitly use the {@link core/renderers/GPUCameraRenderer.GPUCameraRenderer#cameraLightsBindGroup | renderer camera bind group} */
+  /** Whether this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} should implicitly use the {@link core/renderers/GPUCameraRenderer.GPUCameraRenderer#cameraLightsBindGroup | renderer camera and lights bind group}. */
   useProjection: boolean
-  /** Whether this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} should be treated as transparent. Impacts the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} {@link GPUDevice.createRenderPipeline().blend | blend property} */
+  /** Whether this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} should be treated as transparent. Impacts the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createRenderPipeline#blend | blend property}. */
   transparent: boolean
-  /** Whether this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} should write to the depth buffer */
+  /** Whether this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} should write to the depth buffer. */
   depth: boolean
-  /** Whether this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} should enable depth write */
+  /** Whether this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} should enable depth write. */
   depthWriteEnabled: boolean
-  /** Depth function to use with this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} */
+  /** Depth function to use with this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}. */
   depthCompare: GPUCompareFunction
-  /** Format of the depth texture to use with this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} */
+  /** Format of the depth texture to use with this {@link core/materials/RenderMaterial.RenderMaterial | RenderMateria.l} */
   depthFormat: GPUTextureFormat
-  /** Cull mode to use with this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} */
+  /** Cull mode to use with this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}. */
   cullMode: GPUCullMode
   /** The {@link core/renderPasses/RenderPass.RenderPassParams#sampleCount | sampleCount} of the {@link core/renderPasses/RenderPass.RenderPass | RenderPass} onto which we'll be drawing. Set internally. */
   sampleCount: GPUSize32
 
   /**
-   * Array of one or multiple {@link GPUDevice.createRenderPipeline().targets | targets} properties.
+   * Array of one or multiple {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createRenderPipeline#targets | targets} properties.
    *
-   * Each target should be an object with the optional {@link GPUDevice.createRenderPipeline().format | format}, {@link GPUDevice.createRenderPipeline().blend | blend} and {@link GPUDevice.createRenderPipeline().writemask | writeMask} properties.
+   * Each target should be an object with the optional {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createRenderPipeline#format_2 | format}, {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createRenderPipeline#blend | blend} and {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createRenderPipeline#writemask | writeMask} properties.
    *
    * The format property will be internally patched to match the output {@link core/renderPasses/RenderPass.RenderPass | RenderPass} target (default to the renderer preferred format).
    *
@@ -161,7 +161,7 @@ export interface RenderMaterialRenderingOptions extends RenderMaterialBaseRender
 export interface RenderMaterialBaseParams
   extends Omit<RenderMaterialRenderingOptions, 'targets'>,
     MaterialInputBindingsParams {
-  /** Optional array of one or multiple {@link GPUDevice.createRenderPipeline().targets | targets} properties. Format property will be patched internally. */
+  /** Optional array of one or multiple {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createRenderPipeline#targets | targets} properties. Format property will be patched internally. */
   targets?: Partial<GPUColorTargetState>[]
 }
 

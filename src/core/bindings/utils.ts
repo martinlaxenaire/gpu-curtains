@@ -4,7 +4,7 @@ import { TextureBinding } from './TextureBinding'
 import { MaterialShadersType } from '../../types/Materials'
 
 /**
- * Map {@link MaterialShadersType | shaders types names} with actual {@link GPUDevice.createBindGroupLayout().visibility | GPUShaderStageFlags}.
+ * Map {@link MaterialShadersType | shaders types names} with actual {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createBindGroupLayout#visibility | GPUShaderStageFlags}.
  */
 const bindingVisibilities: Map<MaterialShadersType, GPUShaderStageFlags> = new Map([
   ['vertex', WebGPUShaderStageConstants.VERTEX],
@@ -13,9 +13,9 @@ const bindingVisibilities: Map<MaterialShadersType, GPUShaderStageFlags> = new M
 ])
 
 /**
- * Get the corresponding {@link GPUDevice.createBindGroupLayout().visibility | GPUShaderStageFlags} based on an array of {@link MaterialShadersType | shaders types names}.
+ * Get the corresponding {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createBindGroupLayout#visibility | GPUShaderStageFlags} based on an array of {@link MaterialShadersType | shaders types names}.
  * @param visibilities - array of {@link MaterialShadersType | shaders types names}.
- * @returns - corresponding {@link GPUDevice.createBindGroupLayout().visibility | GPUShaderStageFlags}.
+ * @returns - corresponding {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createBindGroupLayout#visibility | GPUShaderStageFlags}.
  */
 export const getBindingVisibility = (visibilities: MaterialShadersType[] = []): GPUShaderStageFlags => {
   return visibilities.reduce((acc, v) => {
@@ -23,7 +23,7 @@ export const getBindingVisibility = (visibilities: MaterialShadersType[] = []): 
   }, 0)
 }
 
-/** Defines a typed array */
+/** Defines a typed array. */
 export type TypedArray =
   | Int8Array
   | Uint8Array
@@ -35,7 +35,7 @@ export type TypedArray =
   | Float32Array
   | Float64Array
 
-/** Defines a typed array constructor */
+/** Defines a typed array constructor. */
 export type TypedArrayConstructor =
   | Int8ArrayConstructor
   | Uint8ArrayConstructor
@@ -46,30 +46,30 @@ export type TypedArrayConstructor =
   | Float32ArrayConstructor
   | Float64ArrayConstructor
 
-/** Defines the possible base WGSL variable types */
+/** Defines the possible base WGSL variable types. */
 export type WGSLBaseVariableType = string // TODO 'mat4x4f', 'mat3x3f', 'vec3f', 'vec2f', 'f32' etc
-/** Defines the possible WGSL variable types */
+/** Defines the possible WGSL variable types. */
 export type WGSLVariableType = string // TODO 'mat4x4f', 'mat3x3f', 'vec3f', 'vec2f', 'f32', 'atomic<u32>' etc
 
 /**
- * Defines a {@link BufferLayout} object used to pad our {@link GPUBuffer} arrays
+ * Defines a {@link BufferLayout} object used to pad our {@link GPUBuffer} arrays.
  */
 export type BufferLayout = {
-  /** Number of elements hold by this variable type */
+  /** Number of elements hold by this variable type. */
   numElements: number
-  /** Required alignment by this variable type */
+  /** Required alignment by this variable type. */
   align: number
-  /** Size in bytes of this variable type */
+  /** Size in bytes of this variable type. */
   size: number
-  /** Variable type */
+  /** Variable type. */
   type: WGSLVariableType
-  /** Typed array constructor required by this variable type */
+  /** Typed array constructor required by this variable type. */
   View: TypedArrayConstructor
-  /** Pad values required by this variable type */
+  /** Pad values required by this variable type. */
   pad?: number[]
 }
 
-/** Object containing all buffer layouts */
+/** Object containing all buffer layouts. */
 const bufferLayouts: Record<string, BufferLayout> = {
   i32: { numElements: 1, align: 4, size: 4, type: 'i32', View: Int32Array },
   u32: { numElements: 1, align: 4, size: 4, type: 'u32', View: Uint32Array },
@@ -112,18 +112,18 @@ const bufferLayouts: Record<string, BufferLayout> = {
 
 // from https://github.com/greggman/webgpu-utils/blob/main/src/buffer-views.ts
 /**
- * Get the correct {@link BufferLayout | buffer layout} for given {@link WGSLVariableType | variable type}
- * @param bufferType - [{@link WGSLVariableType | variable type} to use
- * @returns - the ={@link BufferLayout | buffer layout}
+ * Get the correct {@link BufferLayout | buffer layout} for given {@link WGSLVariableType | variable type}.
+ * @param bufferType - [{@link WGSLVariableType | variable type} to use.
+ * @returns - the ={@link BufferLayout | buffer layout}.
  */
 export const getBufferLayout = (bufferType: WGSLVariableType): BufferLayout => {
   return bufferLayouts[bufferType]
 }
 
 /**
- * Get the correct WGSL variable declaration code fragment based on the given {@link BufferBinding}
- * @param binding - {@link BufferBinding} to use
- * @returns - WGSL variable declaration code fragment
+ * Get the correct WGSL variable declaration code fragment based on the given {@link BufferBinding}.
+ * @param binding - {@link BufferBinding} to use.
+ * @returns - WGSL variable declaration code fragment.
  */
 export const getBindingWGSLVarType = (binding: BufferBinding): string => {
   return (() => {
@@ -138,9 +138,9 @@ export const getBindingWGSLVarType = (binding: BufferBinding): string => {
 }
 
 /**
- * Get the correct WGSL variable declaration code fragment based on the given {@link TextureBinding}
- * @param binding - {@link TextureBinding} to use
- * @returns - WGSL variable declaration code fragment
+ * Get the correct WGSL variable declaration code fragment based on the given {@link TextureBinding}.
+ * @param binding - {@link TextureBinding} to use.
+ * @returns - WGSL variable declaration code fragment.
  */
 export const getTextureBindingWGSLVarType = (binding: TextureBinding): string => {
   if (binding.bindingType === 'externalTexture') {
@@ -161,9 +161,9 @@ export const getTextureBindingWGSLVarType = (binding: TextureBinding): string =>
 }
 
 /**
- * Get the correct {@link GPUBindGroupLayout | bind group layout} resource type based on the given {@link core/bindings/Binding.BindingType | binding type}
- * @param binding - {@link BufferBinding | buffer binding} to use
- * @returns - {@link GPUBindGroupLayout | bind group layout} resource type
+ * Get the correct {@link GPUBindGroupLayout | bind group layout} resource type based on the given {@link core/bindings/Binding.BindingType | binding type}.
+ * @param binding - {@link BufferBinding | buffer binding} to use.
+ * @returns - {@link GPUBindGroupLayout | bind group layout} resource type.
  */
 export const getBindGroupLayoutBindingType = (binding: BufferBinding): GPUBufferBindingType => {
   if (binding.bindingType === 'storage' && binding.options.access === 'read_write') {
@@ -176,9 +176,9 @@ export const getBindGroupLayoutBindingType = (binding: BufferBinding): GPUBuffer
 }
 
 /**
- * Get the correct {@link GPUBindGroupLayout} resource type based on the given {@link core/bindings/Binding.BindingType | texture binding type}
- * @param binding - {@link TextureBinding | texture binding} to use
- * @returns - {@link GPUBindGroupLayout} resource type
+ * Get the correct {@link GPUBindGroupLayout} resource type based on the given {@link core/bindings/Binding.BindingType | texture binding type}.
+ * @param binding - {@link TextureBinding | texture binding} to use.
+ * @returns - {@link GPUBindGroupLayout} resource type.
  */
 export const getBindGroupLayoutTextureBindingType = (
   binding: TextureBinding
@@ -218,8 +218,8 @@ export const getBindGroupLayoutTextureBindingType = (
 
 /**
  * Get the correct {@link TextureBinding | texture binding} cache key.
- * @param binding - {@link TextureBinding | texture binding} to use
- * @returns - binding cache key
+ * @param binding - {@link TextureBinding | texture binding} to use.
+ * @returns - binding cache key.
  */
 export const getBindGroupLayoutTextureBindingCacheKey = (binding: TextureBinding): string => {
   return (() => {

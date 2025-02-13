@@ -16,7 +16,7 @@ import { PipelineEntryParams, PipelineEntryShaders } from '../../types/PipelineE
 export declare class ComputePipelineEntry extends PipelineEntry {
     /** Shaders to use with this {@link ComputePipelineEntry} */
     shaders: PipelineEntryShaders;
-    /** {@link GPUDevice.createComputePipeline().descriptor | GPUComputePipelineDescriptor} based on {@link layout} and {@link shaders} */
+    /** {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createComputePipeline#descriptor | GPUComputePipelineDescriptor} based on {@link layout} and {@link shaders} */
     descriptor: GPUComputePipelineDescriptor | null;
     /**
      * ComputePipelineEntry constructor

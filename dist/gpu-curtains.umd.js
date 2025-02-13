@@ -1827,7 +1827,7 @@
   class Binding {
     /**
      * Binding constructor
-     * @param parameters - {@link BindingParams | parameters} used to create our {@link Binding}
+     * @param parameters - {@link BindingParams | parameters} used to create our {@link Binding}.
      */
     constructor({
       label = "Uniform",
@@ -8016,7 +8016,7 @@
     /**
      * RenderPass constructor
      * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link RenderPass}
-     * @param parameters - {@link RenderPassParams | parameters} used to create this {@link RenderPass}
+     * @param parameters - {@link RenderPassParams | parameters} used to create this {@link RenderPass}.
      */
     constructor(renderer, {
       label = "Render Pass",
@@ -8083,7 +8083,7 @@
       this.setRenderPassDescriptor();
     }
     /**
-     * Create and set our {@link depthTexture | depth texture}
+     * Create and set our {@link depthTexture | depth texture}.
      */
     createDepthTexture() {
       if (this.options.depthTexture) {
@@ -8103,7 +8103,7 @@
       }
     }
     /**
-     * Create and set our {@link viewTextures | view textures}
+     * Create and set our {@link viewTextures | view textures}.
      */
     createViewTextures() {
       this.options.colorAttachments.forEach((colorAttachment, index) => {
@@ -8151,7 +8151,7 @@
       return this.options.sampleCount > 1 ? this.resolveTargets : this.viewTextures;
     }
     /**
-     * Set our render pass {@link descriptor}
+     * Set our render pass {@link descriptor}.
      */
     setRenderPassDescriptor(depthTextureView = null) {
       this.descriptor = {
@@ -8192,7 +8192,7 @@
       };
     }
     /**
-     * Resize our {@link RenderPass}: reset its {@link Texture}
+     * Resize our {@link RenderPass}: reset its {@link Texture}.
      */
     resize() {
       if (this.options.useDepth) {
@@ -8214,9 +8214,9 @@
       });
     }
     /**
-     * Set the {@link descriptor} {@link GPUCommandEncoder.beginRenderPass().loadOp | load operation}
-     * @param loadOp - new {@link GPUCommandEncoder.beginRenderPass().loadOp | load operation} to use
-     * @param colorAttachmentIndex - index of the color attachment for which to use this load operation
+     * Set the {@link descriptor} {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#loadop | load operation}.
+     * @param loadOp - new {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#loadop | load operation} to use.
+     * @param colorAttachmentIndex - index of the color attachment for which to use this load operation.
      */
     setLoadOp(loadOp = "clear", colorAttachmentIndex = 0) {
       if (this.options.useColorAttachments) {
@@ -8231,8 +8231,8 @@
       }
     }
     /**
-     * Set the {@link descriptor} {@link GPUCommandEncoder.beginRenderPass().loadOp | depth load operation}
-     * @param depthLoadOp - new {@link GPUCommandEncoder.beginRenderPass().loadOp | depth load operation} to use
+     * Set the {@link descriptor} {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#depthloadop | depth load operation}.
+     * @param depthLoadOp - new {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#depthloadop | depth load operation} to use.
      */
     setDepthLoadOp(depthLoadOp = "clear") {
       this.options.depthLoadOp = depthLoadOp;
@@ -8241,10 +8241,10 @@
       }
     }
     /**
-     * Set our {@link GPUCommandEncoder.beginRenderPass().clearValue | clear colors value}.<br>
-     * Beware that if the {@link renderer} is using {@link core/renderers/GPURenderer.GPURendererContextOptions#alphaMode | premultiplied alpha mode}, your R, G and B channels should be premultiplied by your alpha channel.
-     * @param clearValue - new {@link GPUCommandEncoder.beginRenderPass().clearValue | clear colors value} to use
-     * @param colorAttachmentIndex - index of the color attachment for which to use this clear value
+     * Set our {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#clearvalue | clear colors value}.<br>
+     * Beware that if the {@link renderer} is using {@link core/renderers/GPURenderer.GPURendererContextOptions#alphaMode | premultiplied alpha mode}, your `R`, `G` and `B` channels should be premultiplied by your alpha channel.
+     * @param clearValue - new {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#clearvalue | clear colors value} to use.
+     * @param colorAttachmentIndex - index of the color attachment for which to use this clear value.
      */
     setClearValue(clearValue = [0, 0, 0, 0], colorAttachmentIndex = 0) {
       if (this.options.useColorAttachments) {
@@ -8265,7 +8265,7 @@
       }
     }
     /**
-     * Set the current {@link descriptor} texture {@link GPUCommandEncoder.beginRenderPass().view | view} and {@link GPUCommandEncoder.beginRenderPass().resolveTarget | resolveTarget} (depending on whether we're using multisampling)
+     * Set the current {@link descriptor} texture {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#view | view} and {@link GPUCommandEncoder.beginRenderPass().resolveTarget | resolveTarget} (depending on whether we're using multisampling).
      * @param renderTexture - {@link GPUTexture} to use, or the {@link core/renderers/GPURenderer.GPURenderer#context | context} {@link GPUTexture | current texture} if null.
      * @returns - the {@link GPUTexture | texture} to render to.
      */
@@ -8292,7 +8292,7 @@
       return renderTexture;
     }
     /**
-     * Destroy our {@link RenderPass}
+     * Destroy our {@link RenderPass}.
      */
     destroy() {
       this.viewTextures.forEach((viewTexture) => viewTexture.destroy());
@@ -13719,8 +13719,8 @@ ${this.shaders.compute.head}`;
     /**
      * Write to a {@link GPUBuffer}
      * @param buffer - {@link GPUBuffer} to write to
-     * @param bufferOffset - {@link GPUQueue.writeBuffer().bufferOffset | buffer offset}
-     * @param data - {@link GPUQueue.writeBuffer().data | data} to write
+     * @param bufferOffset - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUQueue/writeBuffer#bufferoffset | buffer offset}
+     * @param data - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUQueue/writeBuffer#data | data} to write
      */
     queueWriteBuffer(buffer, bufferOffset, data) {
       this.deviceManager.device?.queue.writeBuffer(buffer, bufferOffset, data);
@@ -13806,7 +13806,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Create a {@link GPUBindGroupLayout}
-     * @param bindGroupLayoutDescriptor - {@link GPUDevice.createBindGroupLayout().descriptor | GPUBindGroupLayoutDescriptor}
+     * @param bindGroupLayoutDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createBindGroupLayout#descriptor | GPUBindGroupLayoutDescriptor}
      * @returns - newly created {@link GPUBindGroupLayout}
      */
     createBindGroupLayout(bindGroupLayoutDescriptor) {
@@ -13814,7 +13814,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Create a {@link GPUBindGroup}
-     * @param bindGroupDescriptor - {@link GPUDevice.createBindGroup().descriptor | GPUBindGroupDescriptor}
+     * @param bindGroupDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createBindGroup#descriptor | GPUBindGroupDescriptor}
      * @returns - newly created {@link GPUBindGroup}
      */
     createBindGroup(bindGroupDescriptor) {
@@ -13823,7 +13823,7 @@ ${this.shaders.compute.head}`;
     /* SHADERS & PIPELINES */
     /**
      * Create a {@link GPUShaderModule}
-     * @param shaderModuleDescriptor - {@link GPUDevice.createShaderModule().descriptor | GPUShaderModuleDescriptor}
+     * @param shaderModuleDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createShaderModule#descriptor | GPUShaderModuleDescriptor}
      * @returns - newly created {@link GPUShaderModule}
      */
     createShaderModule(shaderModuleDescriptor) {
@@ -13831,7 +13831,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Create a {@link GPUPipelineLayout}
-     * @param pipelineLayoutDescriptor - {@link GPUDevice.createPipelineLayout().descriptor | GPUPipelineLayoutDescriptor}
+     * @param pipelineLayoutDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createPipelineLayout#descriptor | GPUPipelineLayoutDescriptor}
      * @returns - newly created {@link GPUPipelineLayout}
      */
     createPipelineLayout(pipelineLayoutDescriptor) {
@@ -13839,7 +13839,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Create a {@link GPURenderPipeline}
-     * @param pipelineDescriptor - {@link GPUDevice.createRenderPipeline().descriptor | GPURenderPipelineDescriptor}
+     * @param pipelineDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createRenderPipeline#descriptor | GPURenderPipelineDescriptor}
      * @returns - newly created {@link GPURenderPipeline}
      */
     createRenderPipeline(pipelineDescriptor) {
@@ -13847,7 +13847,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Asynchronously create a {@link GPURenderPipeline}
-     * @param pipelineDescriptor - {@link GPUDevice.createRenderPipeline().descriptor | GPURenderPipelineDescriptor}
+     * @param pipelineDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createRenderPipeline#descriptor | GPURenderPipelineDescriptor}
      * @returns - newly created {@link GPURenderPipeline}
      */
     async createRenderPipelineAsync(pipelineDescriptor) {
@@ -13855,7 +13855,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Create a {@link GPUComputePipeline}
-     * @param pipelineDescriptor - {@link GPUDevice.createComputePipeline().descriptor | GPUComputePipelineDescriptor}
+     * @param pipelineDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createComputePipeline#descriptor | GPUComputePipelineDescriptor}
      * @returns - newly created {@link GPUComputePipeline}
      */
     createComputePipeline(pipelineDescriptor) {
@@ -13863,7 +13863,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Asynchronously create a {@link GPUComputePipeline}
-     * @param pipelineDescriptor - {@link GPUDevice.createComputePipeline().descriptor | GPUComputePipelineDescriptor}
+     * @param pipelineDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createComputePipeline#descriptor | GPUComputePipelineDescriptor}
      * @returns - newly created {@link GPUComputePipeline}
      */
     async createComputePipelineAsync(pipelineDescriptor) {
@@ -13886,7 +13886,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Create a {@link GPUTexture}
-     * @param textureDescriptor - {@link GPUDevice.createTexture().descriptor | GPUTextureDescriptor}
+     * @param textureDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createTexture#descriptor | GPUTextureDescriptor}
      * @returns - newly created {@link GPUTexture}
      */
     createTexture(textureDescriptor) {
@@ -15029,9 +15029,9 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Copy an external image to the GPU.
-     * @param source - {@link GPUCopyExternalImageSourceInfo} to use.
-     * @param destination - {@link GPUCopyExternalImageDestInfo} to use.
-     * @param copySize - {@link GPUExtent3DStrict} to use.
+     * @param source - {@link https://gpuweb.github.io/types/interfaces/GPUCopyExternalImageSourceInfo.html | GPUCopyExternalImageSourceInfo (WebGPU API reference)} to use.
+     * @param destination - {@link https://gpuweb.github.io/types/interfaces/GPUCopyExternalImageDestInfo.html | GPUCopyExternalImageDestInfo (WebGPU API reference)} to use.
+     * @param copySize - {@link https://gpuweb.github.io/types/types/GPUExtent3DStrict.html | GPUExtent3DStrict (WebGPU API reference)} to use.
      */
     copyExternalImageToTexture(source, destination, copySize) {
       this.device?.queue.copyExternalImageToTexture(source, destination, copySize);
@@ -22212,9 +22212,9 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
       }
     }
     /**
-     * Get the {@link GPUDevice.createRenderPipeline().topology | GPUPrimitiveTopology} based on the {@link GLTF.MeshPrimitiveMode | WebGL primitive mode}.
+     * Get the {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createRenderPipeline#topology | GPUPrimitiveTopology} based on the {@link GLTF.MeshPrimitiveMode | WebGL primitive mode}.
      * @param mode - {@link GLTF.MeshPrimitiveMode | WebGL primitive mode} to use.
-     * @returns - corresponding {@link GPUDevice.createRenderPipeline().topology | GPUPrimitiveTopology}.
+     * @returns - corresponding {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createRenderPipeline#topology | GPUPrimitiveTopology}.
      */
     static gpuPrimitiveTopologyForMode(mode) {
       switch (mode) {
@@ -22231,9 +22231,9 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
       }
     }
     /**
-     * Get the {@link GPUDevice.createSampler().descriptor.addressModeU | GPUAddressMode} based on the {@link GLTF.TextureWrapMode | WebGL texture wrap mode}.
+     * Get the {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createSampler#addressmodeu | GPUAddressMode} based on the {@link GLTF.TextureWrapMode | WebGL texture wrap mode}.
      * @param wrap - {@link GLTF.TextureWrapMode | WebGL texture wrap mode} to use.
-     * @returns - corresponding {@link GPUDevice.createSampler().descriptor.addressModeU | GPUAddressMode}.
+     * @returns - corresponding {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createSampler#addressmodeu | GPUAddressMode}.
      */
     static gpuAddressModeForWrap(wrap) {
       switch (wrap) {
