@@ -116,7 +116,7 @@ window.addEventListener('load', async () => {
   planeElements.forEach((planeEl, planeIndex) => {
     params.label = 'Plane' + planeIndex
     // random placeholder color while textures are loading
-    params.texturesOptions.placeholderColor = Math.random() > 0.5 ? [255, 0, 255, 255] : [255, 255, 0, 255]
+    params.texturesOptions.placeholderColor = Math.random() > 0.5 ? [0, 255, 255, 255] : [255, 0, 255, 255]
 
     const plane = new Plane(gpuCurtains, planeEl, { ...params, renderOrder: -planeIndex })
 

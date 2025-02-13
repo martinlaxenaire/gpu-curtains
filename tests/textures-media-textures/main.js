@@ -172,7 +172,7 @@ window.addEventListener('load', async () => {
       name: 'cubeMapTexture',
       viewDimension: 'cube',
       useTransform: false,
-      placeholderColor: Math.random() > 0.5 ? [255, 0, 255, 255] : [255, 255, 0, 255],
+      placeholderColor: Math.random() > 0.5 ? [0, 255, 255, 255] : [255, 0, 255, 255],
       //useExternalTextures: false,
       cache: false,
     })

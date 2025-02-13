@@ -36,7 +36,7 @@ export interface TextureVisibility {
 }
 /** Define the base parameters used to create a {@link core/textures/MediaTexture.MediaTexture | MediaTexture}. */
 export interface MediaTextureBaseParams {
-    /** Solid color used by temporary texture to display while loading the source. Default to `[0, 0, 0, 255]` (solid black). */
+    /** Solid color used by temporary texture to display while loading the source, as an array of `RGBA` integer values in the `[0, 255]` range. Default to `[0, 0, 0, 255]` (solid black). */
     placeholderColor?: [number, number, number, number];
     /** Whether video textures should use {@link GPUExternalTexture} or not. Default to `true`. */
     useExternalTextures?: boolean;

@@ -4418,6 +4418,7 @@
     useExternalTextures: true,
     fromTexture: null,
     viewDimension: "2d",
+    format: "rgba8unorm",
     // copy external texture options
     generateMips: false,
     flipY: false,
