@@ -353,8 +353,8 @@ class GPURenderer {
   /**
    * Write to a {@link GPUBuffer}
    * @param buffer - {@link GPUBuffer} to write to
-   * @param bufferOffset - {@link GPUQueue.writeBuffer().bufferOffset | buffer offset}
-   * @param data - {@link GPUQueue.writeBuffer().data | data} to write
+   * @param bufferOffset - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUQueue/writeBuffer#bufferoffset | buffer offset}
+   * @param data - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUQueue/writeBuffer#data | data} to write
    */
   queueWriteBuffer(buffer, bufferOffset, data) {
     this.deviceManager.device?.queue.writeBuffer(buffer, bufferOffset, data);
@@ -440,7 +440,7 @@ class GPURenderer {
   }
   /**
    * Create a {@link GPUBindGroupLayout}
-   * @param bindGroupLayoutDescriptor - {@link GPUDevice.createBindGroupLayout().descriptor | GPUBindGroupLayoutDescriptor}
+   * @param bindGroupLayoutDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createBindGroupLayout#descriptor | GPUBindGroupLayoutDescriptor}
    * @returns - newly created {@link GPUBindGroupLayout}
    */
   createBindGroupLayout(bindGroupLayoutDescriptor) {
@@ -448,7 +448,7 @@ class GPURenderer {
   }
   /**
    * Create a {@link GPUBindGroup}
-   * @param bindGroupDescriptor - {@link GPUDevice.createBindGroup().descriptor | GPUBindGroupDescriptor}
+   * @param bindGroupDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createBindGroup#descriptor | GPUBindGroupDescriptor}
    * @returns - newly created {@link GPUBindGroup}
    */
   createBindGroup(bindGroupDescriptor) {
@@ -457,7 +457,7 @@ class GPURenderer {
   /* SHADERS & PIPELINES */
   /**
    * Create a {@link GPUShaderModule}
-   * @param shaderModuleDescriptor - {@link GPUDevice.createShaderModule().descriptor | GPUShaderModuleDescriptor}
+   * @param shaderModuleDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createShaderModule#descriptor | GPUShaderModuleDescriptor}
    * @returns - newly created {@link GPUShaderModule}
    */
   createShaderModule(shaderModuleDescriptor) {
@@ -465,7 +465,7 @@ class GPURenderer {
   }
   /**
    * Create a {@link GPUPipelineLayout}
-   * @param pipelineLayoutDescriptor - {@link GPUDevice.createPipelineLayout().descriptor | GPUPipelineLayoutDescriptor}
+   * @param pipelineLayoutDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createPipelineLayout#descriptor | GPUPipelineLayoutDescriptor}
    * @returns - newly created {@link GPUPipelineLayout}
    */
   createPipelineLayout(pipelineLayoutDescriptor) {
@@ -473,7 +473,7 @@ class GPURenderer {
   }
   /**
    * Create a {@link GPURenderPipeline}
-   * @param pipelineDescriptor - {@link GPUDevice.createRenderPipeline().descriptor | GPURenderPipelineDescriptor}
+   * @param pipelineDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createRenderPipeline#descriptor | GPURenderPipelineDescriptor}
    * @returns - newly created {@link GPURenderPipeline}
    */
   createRenderPipeline(pipelineDescriptor) {
@@ -481,7 +481,7 @@ class GPURenderer {
   }
   /**
    * Asynchronously create a {@link GPURenderPipeline}
-   * @param pipelineDescriptor - {@link GPUDevice.createRenderPipeline().descriptor | GPURenderPipelineDescriptor}
+   * @param pipelineDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createRenderPipeline#descriptor | GPURenderPipelineDescriptor}
    * @returns - newly created {@link GPURenderPipeline}
    */
   async createRenderPipelineAsync(pipelineDescriptor) {
@@ -489,7 +489,7 @@ class GPURenderer {
   }
   /**
    * Create a {@link GPUComputePipeline}
-   * @param pipelineDescriptor - {@link GPUDevice.createComputePipeline().descriptor | GPUComputePipelineDescriptor}
+   * @param pipelineDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createComputePipeline#descriptor | GPUComputePipelineDescriptor}
    * @returns - newly created {@link GPUComputePipeline}
    */
   createComputePipeline(pipelineDescriptor) {
@@ -497,7 +497,7 @@ class GPURenderer {
   }
   /**
    * Asynchronously create a {@link GPUComputePipeline}
-   * @param pipelineDescriptor - {@link GPUDevice.createComputePipeline().descriptor | GPUComputePipelineDescriptor}
+   * @param pipelineDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createComputePipeline#descriptor | GPUComputePipelineDescriptor}
    * @returns - newly created {@link GPUComputePipeline}
    */
   async createComputePipelineAsync(pipelineDescriptor) {
@@ -520,7 +520,7 @@ class GPURenderer {
   }
   /**
    * Create a {@link GPUTexture}
-   * @param textureDescriptor - {@link GPUDevice.createTexture().descriptor | GPUTextureDescriptor}
+   * @param textureDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createTexture#descriptor | GPUTextureDescriptor}
    * @returns - newly created {@link GPUTexture}
    */
   createTexture(textureDescriptor) {

@@ -17,14 +17,14 @@ export type ShadingModels = 'Unlit' | 'Lambert' | 'Phong' | 'PBR';
 /** Defines all kinds of tone mappings available. */
 export type ToneMappings = 'Khronos' | 'Reinhard' | 'Cineon' | false;
 /**
- * Define a {@link ShaderTextureDescriptor} used to associate the {@link core/textures/Texture.Texture | Texture} names with the corresponding {@link Sampler} and UV names.
+ * Define a {@link ShaderTextureDescriptor} used to associate a {@link core/textures/Texture.Texture | Texture} with the corresponding {@link Sampler} and UV names.
  */
 export interface ShaderTextureDescriptor {
-    /** Name of the {@link Texture} or {@link MediaTexture} to use. */
+    /** {@link Texture} or {@link MediaTexture} to use. */
     texture: Texture | MediaTexture;
-    /** Name of the {@link Sampler} to use. */
+    /** {@link Sampler} to use. Fallback to default sampler if not provided. */
     sampler?: Sampler;
-    /** Texture coordinate attribute name to use to map this texture. */
+    /** Texture coordinate attribute name to use to map this texture. Default to `'uv'`. */
     texCoordAttributeName?: string;
 }
 /** Define the color space in which the colors parameters are passed to the {@link LitMeshMaterialParams}. */
@@ -57,17 +57,17 @@ export interface LitMeshMaterialUniformParams {
     specularColor?: Vec3;
     /** Shininess of the {@link LitMesh} when using `Phong` shading. Default to `30`. */
     shininess?: number;
-    /** The base percentage of light that is transmitted through the surface of the {@link LitMesh}. Only applicable is `transmissive` parameter is set to `true`. Default to `0`. */
+    /** The base percentage of light that is transmitted through the surface of the {@link LitMesh}. Only applicable to `PBR` shading if `transmissive` parameter is set to `true`. Default to `0`. */
     transmission?: number;
     /** The index of refraction of the {@link LitMesh}. Default to `1.5`. */
     ior?: number;
-    /** The strength of the dispersion effect, specified as 20/Abbe number. Only applicable is `transmissive` parameter is set to `true`. Default to `0`. */
+    /** The strength of the dispersion effect, specified as 20/Abbe number. Only applicable to `PBR` shading if `transmissive` parameter is set to `true`. Default to `0`. */
     dispersion?: number;
-    /** The thickness of the volume beneath the surface. The value is given in the coordinate space of the mesh. If the value is 0 the material is thin-walled. Only applicable is `transmissive` parameter is set to `true`. Default to `0`. */
+    /** The thickness of the volume beneath the surface. The value is given in the coordinate space of the mesh. If the value is 0 the material is thin-walled. Only applicable to `PBR` shading if `transmissive` parameter is set to `true`. Default to `0`. */
     thickness?: number;
-    /** Density of the medium given as the average distance that light travels in the medium before interacting with a particle. The value is given in world space. Only applicable is `transmissive` parameter is set to `true`. Default to `Infinity`. */
+    /** Density of the medium given as the average distance that light travels in the medium before interacting with a particle. The value is given in world space. Only applicable to `PBR` shading if `transmissive` parameter is set to `true`. Default to `Infinity`. */
     attenuationDistance?: number;
-    /** The color as a {@link Vec3} that white light turns into due to absorption when reaching the attenuation distance. Only applicable is `transmissive` parameter is set to `true`. Default to `new Vec3(1)`. */
+    /** The color as a {@link Vec3} that white light turns into due to absorption when reaching the attenuation distance. Only applicable to `PBR` shading if `transmissive` parameter is set to `true`. Default to `new Vec3(1)`. */
     attenuationColor?: Vec3;
 }
 /** Parameters used to get the {@link LitMesh} material uniforms. */
@@ -77,12 +77,12 @@ export interface GetLitMeshMaterialUniform extends LitMeshMaterialUniformParams 
     /** {@link EnvironmentMap} to use for IBL shading. */
     environmentMap?: EnvironmentMap;
 }
-/** {@link ShaderTextureDescriptor} used for a {@link LitMesh} with unlit shading. */
+/** {@link ShaderTextureDescriptor} used for a {@link LitMesh} with `Unlit` shading. */
 export interface UnlitTexturesDescriptors {
     /** {@link ShaderTextureDescriptor | Base color texture descriptor} to use if any. */
     baseColorTexture?: ShaderTextureDescriptor;
 }
-/** {@link ShaderTextureDescriptor} used for a {@link LitMesh} with lambert shading. */
+/** {@link ShaderTextureDescriptor} used for a {@link LitMesh} with `Lambert` shading. */
 export interface LambertTexturesDescriptors extends UnlitTexturesDescriptors {
     /** {@link ShaderTextureDescriptor | Normal texture descriptor} to use if any. */
     normalTexture?: ShaderTextureDescriptor;
@@ -91,7 +91,7 @@ export interface LambertTexturesDescriptors extends UnlitTexturesDescriptors {
     /** {@link ShaderTextureDescriptor | Occlusion texture descriptor} to use if any. */
     occlusionTexture?: ShaderTextureDescriptor;
 }
-/** {@link ShaderTextureDescriptor} used for a {@link LitMesh} with phong shading. */
+/** {@link ShaderTextureDescriptor} used for a {@link LitMesh} with `Phong` shading. */
 export interface PhongTexturesDescriptors extends LambertTexturesDescriptors {
     /** {@link ShaderTextureDescriptor | Metallic roughness texture descriptor} to use if any. */
     metallicRoughnessTexture?: ShaderTextureDescriptor;
@@ -102,7 +102,7 @@ export interface PhongTexturesDescriptors extends LambertTexturesDescriptors {
     /** {@link ShaderTextureDescriptor | Specular color texture descriptor} (using the `RGB` channels) to use if any. */
     specularColorTexture?: ShaderTextureDescriptor;
 }
-/** {@link ShaderTextureDescriptor} used for a {@link LitMesh} with PBR shading. */
+/** {@link ShaderTextureDescriptor} used for a {@link LitMesh} with `PBR` shading. */
 export interface PBRTexturesDescriptors extends PhongTexturesDescriptors {
     /** {@link ShaderTextureDescriptor | Transmission texture descriptor} to use if any. */
     transmissionTexture?: ShaderTextureDescriptor;
@@ -147,6 +147,7 @@ export interface LitMeshParameters extends Omit<ProjectedMeshParameters, 'shader
  *   position: new Vec3(10),
  * })
  *
+ * // A mesh with 'Lambert' shading
  * const lambertMesh = new LitMesh(renderer, {
  *   label: 'Mesh with lambert shading',
  *   geometry: new BoxGeometry(),
@@ -156,16 +157,51 @@ export interface LitMeshParameters extends Omit<ProjectedMeshParameters, 'shader
  *   },
  * })
  *
+ * // A mesh with a base color texture, 'Phong' shading
+ * // and where we modify the output color before the lighting calculations
+ *
+ * // create a base color texture
+ * baseColorTexture = new MediaTexture(renderer, {
+ *   label: 'Base color texture',
+ *   name: 'baseColorTexture',
+ *   format: 'rgba8unorm-srgb',
+ *   visibility: ['fragment'],
+ * })
+ *
+ * // load the image
+ * baseColorTexture.loadImage('./path/to/texture.jpg')
+ *
+ * // create the mesh
  * const phongMesh = new LitMesh(renderer, {
  *   label: 'Mesh with phong shading',
  *   geometry: new BoxGeometry(),
  *   material: {
  *     shading: 'Phong',
  *     fragmentChunks: {
- *       preliminaryContribution: 'outputColor = mix(outputColor, vec4(1.0, 0.0, 0.0, 1.0), 0.5);'
+ *       // applied after having set the color and baseColorTexture to outputColor
+ *       // but before lighting calculations
+ *       preliminaryContribution: 'outputColor = mix(outputColor, vec4(vec3(modifiedMaterial.color), 1.0), modifiedMaterial.mixValue);'
  *     },
  *     color: new Vec3(1),
  *     shininess: 60,
+ *     baseColorTexture: {
+ *       texture: baseColorTexture,
+ *     },
+ *   },
+ *   uniforms: {
+ *     modifiedMaterial: {
+ *       visibility: ['fragment'],
+ *       struct: {
+ *         color: {
+ *           type: 'vec3f',
+ *           value: sRGBToLinear(new Vec3(0.5)), // colors need to be in linear space
+ *         },
+ *         mixValue: {
+ *           type: 'f32',
+ *           value: 0.5,
+ *         }
+ *       },
+ *     },
  *   },
  * })
  * ```

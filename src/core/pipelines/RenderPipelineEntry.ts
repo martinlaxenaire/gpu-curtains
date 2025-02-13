@@ -155,7 +155,7 @@ export class RenderPipelineEntry extends PipelineEntry {
   shaders: PipelineEntryShaders
   /** {@link RenderMaterialAttributes | Geometry attributes} sent to the {@link RenderPipelineEntry} */
   attributes: RenderMaterialAttributes
-  /** {@link GPUDevice.createRenderPipeline().descriptor | GPURenderPipelineDescriptor} based on {@link layout} and {@link shaders} */
+  /** {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createRenderPipeline#descriptor | GPURenderPipelineDescriptor} based on {@link layout} and {@link shaders} */
   descriptor: GPURenderPipelineDescriptor | null
   /** Options used to create this {@link RenderPipelineEntry} */
   options: RenderPipelineEntryOptions
