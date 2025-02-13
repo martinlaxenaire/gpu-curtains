@@ -32,7 +32,7 @@ export interface GetPBRShadingParams extends GetShadingParams {
  * let transmission: f32 = 0.0;
  * let dispersion: f32 = 0.0;
  * let thickness: f32 = 0.0;
- * let attenuationDistance: f32 = 1.0e38;
+ * let attenuationDistance: f32 = 1.0e38; // Should be infinity or close
  * let attenuationColor: vec3f = vec3(1.0);
  *
  * color = getPBR(

@@ -5,7 +5,9 @@ import { getLightsInfos } from '../../chunks/fragment/head/get-lights-infos.mjs'
 import { REIndirectDiffuse } from '../../chunks/fragment/head/RE-indirect-diffuse.mjs';
 import { REIndirectSpecular } from '../../chunks/fragment/head/RE-indirect-specular.mjs';
 import { getPBRDirect } from '../../chunks/fragment/head/get-PBR-direct.mjs';
-import { getIBLIndirect } from '../../chunks/fragment/head/get-IBL-indirect.mjs';
+import { getIBLGGXFresnel } from '../../chunks/fragment/head/get-IBL-GGX-Fresnel.mjs';
+import { getIBLIndirectIrradiance } from '../../chunks/fragment/head/get-IBL-indirect-irradiance.mjs';
+import { getIBLIndirectRadiance } from '../../chunks/fragment/head/get-IBL-indirect-radiance.mjs';
 import { getIBLTransmission } from '../../chunks/fragment/head/get-IBL-transmission.mjs';
 import { getPBRShading } from '../../chunks/fragment/body/get-PBR-shading.mjs';
 import { getFragmentInputStruct } from '../../chunks/fragment/head/get-fragment-input-struct.mjs';
@@ -55,7 +57,9 @@ ${getLightsInfos}
 ${REIndirectDiffuse}
 ${REIndirectSpecular}
 ${getPBRDirect}
-${getIBLIndirect}
+${getIBLGGXFresnel}
+${getIBLIndirectIrradiance}
+${getIBLIndirectRadiance}
 ${getIBLTransmission}
 
 ${getFragmentInputStruct({ geometry, additionalVaryings })}

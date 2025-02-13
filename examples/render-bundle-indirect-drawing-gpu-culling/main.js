@@ -415,9 +415,9 @@ window.addEventListener('load', async () => {
     // we need to modify the vertex shader outputs
     // to account for culling result, debug camera, etc.
     const additionalVertexContribution = `
-    let instanceIndex = culled.instances[attributes.instanceIndex];
+    let culledInstanceIndex = culled.instances[instanceIndex];
       
-    let model = instancesModel.models[instanceIndex];
+    let model = instancesModel.models[culledInstanceIndex];
         
     // camera debug        
     if(debug.camera > 0.0) {
