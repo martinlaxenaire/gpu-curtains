@@ -2,9 +2,11 @@ import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragmen
 import { getPCFShadows } from './get-PCF-shadows'
 import { applyDirectionalShadows } from './apply-directional-shadows'
 import { applyPointShadows } from './apply-point-shadows'
-import { getIBLIndirect } from './get-IBL-indirect'
+import { getIBLIndirectIrradiance } from './get-IBL-indirect-irradiance'
+import { getIBLIndirectRadiance } from './get-IBL-indirect-radiance'
 import { getIBLVolumeRefraction } from './get-IBL-volume-refraction'
 import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh'
+import { getIBLGGXFresnel } from './get-IBL-GGX-Fresnel'
 
 /**
  * Set the `outgoingLight` (`vec3f`) using PBR shading.
@@ -54,15 +56,32 @@ export const getPBRShading = ({
     getPBRDirect(normal, baseDiffuseColor.rgb, viewDirection, specularF90, specularColor, metallic, roughness, directLight, &reflectedLight);
   }
   
-  ${getIBLIndirect({ environmentMap })}
+  var irradiance: vec3f = vec3(0.0);
+  var iblIrradiance: vec3f = vec3(0.0);
+  var radiance: vec3f = vec3(0.0);
+  
+  // IBL indirect contributions
+  ${getIBLGGXFresnel({ environmentMap })}
+  ${getIBLIndirectIrradiance({ environmentMap })}
+  ${getIBLIndirectRadiance({ environmentMap })}
   
   // ambient lights
-  var irradiance: vec3f = vec3(0.0);
   RE_IndirectDiffuse(irradiance, baseDiffuseColor.rgb, &reflectedLight);
   
-  // ambient lights specular
-  var radiance: vec3f = vec3(0.0);
-  RE_IndirectSpecular(radiance, irradiance, normal, baseDiffuseColor.rgb, specularF90, specularColor, viewDirection, metallic, roughness, &reflectedLight);
+  // indirect specular (and diffuse) from IBL
+  RE_IndirectSpecular(
+    radiance,
+    iblIrradiance,
+    normal,
+    baseDiffuseColor.rgb,
+    specularF90,
+    specularColor,
+    viewDirection,
+    metallic,
+    roughness,
+    iBLGGXFresnel,
+    &reflectedLight
+  );
   
   reflectedLight.indirectDiffuse *= occlusion;
   

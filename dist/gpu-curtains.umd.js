@@ -16457,53 +16457,6 @@ fn getPhong(
   const REIndirectSpecular = (
     /* wgsl */
     `
-fn DFGApprox(
-  normal: vec3f,
-  viewDirection: vec3f,
-  roughness: f32,
-) -> vec2f {
-  let dotNV: f32 = saturate(dot( normal, viewDirection ));
-
-	let c0: vec4f = vec4( - 1, - 0.0275, - 0.572, 0.022 );
-	let c1: vec4f = vec4( 1, 0.0425, 1.04, - 0.04 );
-
-	let r: vec4f = roughness * c0 + c1;
-	let a004: f32 = min( r.x * r.x, exp2( - 9.28 * dotNV ) ) * r.x + r.y;
-	
-	let fab: vec2f = vec2( - 1.04, 1.04 ) * a004 + r.zw;
-
-	return fab;
-}
-
-struct TotalScattering {
-  single: vec3f,
-  multi: vec3f,
-}
-
-fn computeMultiscattering(
-  normal: vec3f,
-  viewDirection: vec3f,
-  specularColor: vec3f,
-  f90: f32,
-  roughness: f32,
-  ptr_totalScattering: ptr<function, TotalScattering>
-) {
-  let fab: vec2f = DFGApprox( normal, viewDirection, roughness );
-
-	let Fr: vec3f = specularColor;
-
-	let FssEss: vec3f = Fr * fab.x + f90 * fab.y;
-
-	let Ess: f32 = fab.x + fab.y;
-	let Ems: f32 = 1.0 - Ess;
-
-	let Favg: vec3f = Fr + ( 1.0 - Fr ) * 0.047619; // 1/21
-	let Fms: vec3f = FssEss * Favg / ( 1.0 - Ems * Favg );
-
-	(*ptr_totalScattering).single += FssEss;
-	(*ptr_totalScattering).multi += Fms * Ems;
-}
-
 // Indirect Specular RenderEquations
 fn RE_IndirectSpecular(
   radiance: vec3f,
@@ -16515,20 +16468,22 @@ fn RE_IndirectSpecular(
   viewDirection: vec3f,
   metallic: f32,
   roughness: f32,
+  iBLGGXFresnel: IBLGGXFresnel,
   ptr_reflectedLight: ptr<function, ReflectedLight>
 ) {
-  var totalScattering: TotalScattering;
-  let cosineWeightedIrradiance: vec3f = irradiance * RECIPROCAL_PI;
-    
-  computeMultiscattering( normal, viewDirection, specularColorFactor, specularFactor, roughness, &totalScattering );
+  let k_D: vec3f = diffuseColor * (1.0 - iBLGGXFresnel.FssEss + iBLGGXFresnel.FmsEms);
+
+  // we just add radiance and irradiance to the indirect contributions using iBLGGXFresnel
+  // we might need to adjust when implementing clearcoat, sheen or iridescence
+
+  // we remove RECIPROCAL_PI multiplication since the LUT already ensures energy conservation
+  let cosineWeightedIrradiance: vec3f = irradiance;
+  // let cosineWeightedIrradiance: vec3f = irradiance * RECIPROCAL_PI;  
+
+  (*ptr_reflectedLight).indirectSpecular += iBLGGXFresnel.FssEss * radiance;
+  (*ptr_reflectedLight).indirectSpecular += iBLGGXFresnel.FmsEms * cosineWeightedIrradiance;
   
-  let totalScatter: vec3f = totalScattering.single + totalScattering.multi;
-  let diffuse: vec3f = diffuseColor * ( 1.0 - max( max( totalScatter.r, totalScatter.g ), totalScatter.b ) );
-
-  (*ptr_reflectedLight).indirectSpecular += radiance * totalScattering.single;
-  (*ptr_reflectedLight).indirectSpecular += totalScattering.multi * cosineWeightedIrradiance;
-
-  (*ptr_reflectedLight).indirectDiffuse += diffuse * cosineWeightedIrradiance;
+  (*ptr_reflectedLight).indirectDiffuse += k_D * cosineWeightedIrradiance;
 }
 `
   );
@@ -16776,32 +16731,46 @@ fn getPBRDirect(
 `
   );
 
-  const getIBLIndirect$1 = ({
+  const getIBLIndirectIrradiance$1 = ({
     environmentMap = null
   }) => {
-    let iblIndirect = "";
+    let iblIndirectDiffuse = "";
     if (environmentMap) {
-      iblIndirect += /* wgs */
-      `
-  getIBLIndirect(
+      iblIndirectDiffuse += /* wgs */
+      `    
+  iblIrradiance += getIBLIndirectIrradiance(
     normal,
-    viewDirection,
-    roughness,
-    metallic,
     baseDiffuseColor.rgb,
-    specularColor,
-    specularIntensity,
     ${environmentMap.sampler.name},
-    ${environmentMap.lutTexture.options.name},
-    ${environmentMap.specularTexture.options.name},
     ${environmentMap.diffuseTexture.options.name},
     envRotation,
     envDiffuseIntensity,
-    envSpecularIntensity,
-    &reflectedLight
   );`;
     }
-    return iblIndirect;
+    return iblIndirectDiffuse;
+  };
+
+  const getIBLIndirectRadiance$1 = ({
+    environmentMap = null
+  }) => {
+    let iblIndirectSpecular = "";
+    if (environmentMap) {
+      iblIndirectSpecular += /* wgs */
+      `
+  radiance += getIBLIndirectRadiance(
+    normal,
+    viewDirection,
+    roughness,
+    specularColor,
+    specularIntensity,
+    iBLGGXFresnel,
+    ${environmentMap.sampler.name},
+    ${environmentMap.specularTexture.options.name},
+    envRotation,
+    envSpecularIntensity,
+  );`;
+    }
+    return iblIndirectSpecular;
   };
 
   const getIBLVolumeRefraction = ({
@@ -16842,6 +16811,41 @@ fn getPBRDirect(
     ) : "";
   };
 
+  const getIBLGGXFresnel$1 = ({
+    environmentMap = null
+  }) => {
+    let iblIGGXFresnel = (
+      /* wgsl */
+      `
+  var iBLGGXFresnel: IBLGGXFresnel;`
+    );
+    if (environmentMap && environmentMap.lutTexture) {
+      iblIGGXFresnel += /* wgsl */
+      `
+  iBLGGXFresnel = getIBLGGXFresnel(
+    normal,
+    viewDirection,
+    roughness,
+    specularColor,
+    specularIntensity,
+    ${environmentMap.sampler.name},
+    ${environmentMap.lutTexture.options.name},
+  );`;
+    } else {
+      iblIGGXFresnel += /* wgsl */
+      `
+  computeMultiscattering(
+    normal,
+    viewDirection,
+    specularColor,
+    specularIntensity,
+    roughness,
+    &iBLGGXFresnel
+  );`;
+    }
+    return iblIGGXFresnel;
+  };
+
   const getPBRShading = ({
     receiveShadows = false,
     environmentMap = null,
@@ -16878,15 +16882,32 @@ fn getPBRDirect(
     getPBRDirect(normal, baseDiffuseColor.rgb, viewDirection, specularF90, specularColor, metallic, roughness, directLight, &reflectedLight);
   }
   
-  ${getIBLIndirect$1({ environmentMap })}
+  var irradiance: vec3f = vec3(0.0);
+  var iblIrradiance: vec3f = vec3(0.0);
+  var radiance: vec3f = vec3(0.0);
+  
+  // IBL indirect contributions
+  ${getIBLGGXFresnel$1({ environmentMap })}
+  ${getIBLIndirectIrradiance$1({ environmentMap })}
+  ${getIBLIndirectRadiance$1({ environmentMap })}
   
   // ambient lights
-  var irradiance: vec3f = vec3(0.0);
   RE_IndirectDiffuse(irradiance, baseDiffuseColor.rgb, &reflectedLight);
   
-  // ambient lights specular
-  var radiance: vec3f = vec3(0.0);
-  RE_IndirectSpecular(radiance, irradiance, normal, baseDiffuseColor.rgb, specularF90, specularColor, viewDirection, metallic, roughness, &reflectedLight);
+  // indirect specular (and diffuse) from IBL
+  RE_IndirectSpecular(
+    radiance,
+    iblIrradiance,
+    normal,
+    baseDiffuseColor.rgb,
+    specularF90,
+    specularColor,
+    viewDirection,
+    metallic,
+    roughness,
+    iBLGGXFresnel,
+    &reflectedLight
+  );
   
   reflectedLight.indirectDiffuse *= occlusion;
   
@@ -17802,66 +17823,143 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
     );
   };
 
-  const getIBLIndirect = (
-    /* wgsl */
+  const getIBLGGXFresnel = (
+    /*  */
     `
+// multi scattering equations
+// not used for now since our IBL GGX Fresnel already handles energy conseervation
+// could be used if we dropped the environment map LUT texture
+fn DFGApprox(
+  normal: vec3f,
+  viewDirection: vec3f,
+  roughness: f32,
+) -> vec2f {
+  let dotNV: f32 = saturate(dot( normal, viewDirection ));
+
+	let c0: vec4f = vec4( - 1, - 0.0275, - 0.572, 0.022 );
+	let c1: vec4f = vec4( 1, 0.0425, 1.04, - 0.04 );
+
+	let r: vec4f = roughness * c0 + c1;
+	let a004: f32 = min( r.x * r.x, exp2( - 9.28 * dotNV ) ) * r.x + r.y;
+	
+	let fab: vec2f = vec2( - 1.04, 1.04 ) * a004 + r.zw;
+
+	return fab;
+}
+
 struct IBLGGXFresnel {
   FssEss: vec3f,
   FmsEms: vec3f
 }
 
-fn getIBLGGXFresnel(normal: vec3f, viewDirection: vec3f, roughness: f32, f0: vec3f, specularWeight: f32, clampSampler: sampler,
-  lutTexture: texture_2d<f32>) -> IBLGGXFresnel {
-    var iBLGGXFresnel: IBLGGXFresnel;
-
-    let N: vec3f = normalize(normal);
-    let V: vec3f = normalize(viewDirection);
-    let NdotV: f32 = saturate(dot(N, V));
-    
-    let brdfSamplePoint: vec2f = saturate(vec2(NdotV, roughness));
-
-    let brdf: vec3f = textureSample(
-      lutTexture,
-      clampSampler,
-      brdfSamplePoint
-    ).rgb;
-
-    let Fr: vec3f = max(vec3(1.0 - roughness), f0) - f0;
-    let k_S: vec3f = f0 + Fr * pow(1.0 - NdotV, 5.0);
-    iBLGGXFresnel.FssEss = specularWeight * (k_S * brdf.x + brdf.y);
-    let Ems: f32 = (1.0 - (brdf.x + brdf.y));
-    let F_avg: vec3f = specularWeight * (f0 + (1.0 - f0) / 21.0);
-    iBLGGXFresnel.FmsEms = Ems * iBLGGXFresnel.FssEss * F_avg / (1.0 - F_avg * Ems);
-
-    return iBLGGXFresnel;
+struct TotalScattering {
+  single: vec3f,
+  multi: vec3f,
 }
 
-fn getIBLIndirect(
+fn computeMultiscattering(
+  normal: vec3f,
+  viewDirection: vec3f,
+  specularColor: vec3f,
+  f90: f32,
+  roughness: f32,
+  ptr_totalScattering: ptr<function, IBLGGXFresnel>
+) {
+  let fab: vec2f = DFGApprox( normal, viewDirection, roughness );
+
+	let Fr: vec3f = specularColor;
+
+	let FssEss: vec3f = Fr * fab.x + f90 * fab.y;
+
+	let Ess: f32 = fab.x + fab.y;
+	let Ems: f32 = 1.0 - Ess;
+
+	let Favg: vec3f = Fr + ( 1.0 - Fr ) * 0.047619; // 1/21
+	let Fms: vec3f = FssEss * Favg / ( 1.0 - Ems * Favg );
+
+	(*ptr_totalScattering).FssEss += FssEss;
+	(*ptr_totalScattering).FmsEms += Fms * Ems;
+}
+
+fn getIBLGGXFresnel(
   normal: vec3f,
   viewDirection: vec3f,
   roughness: f32,
-  metallic: f32,
-  diffuseColor: vec3f,
-  specularColor: vec3f,
-  specularFactor: f32,
+  f0: vec3f,
+  specularWeight: f32,
   clampSampler: sampler,
-  lutTexture: texture_2d<f32>,
-  envSpecularTexture: texture_cube<f32>,
+  lutTexture: texture_2d<f32>
+) -> IBLGGXFresnel {
+  var iBLGGXFresnel: IBLGGXFresnel;
+  
+  let N: vec3f = normalize(normal);
+  let V: vec3f = normalize(viewDirection);
+  let NdotV: f32 = saturate(dot(N, V));
+  
+  let brdfSamplePoint: vec2f = saturate(vec2(NdotV, roughness));
+  
+  let brdf: vec3f = textureSample(
+    lutTexture,
+    clampSampler,
+    brdfSamplePoint
+  ).rgb;
+  
+  let Fr: vec3f = max(vec3(1.0 - roughness), f0) - f0;
+  let k_S: vec3f = f0 + Fr * pow(1.0 - NdotV, 5.0);
+  iBLGGXFresnel.FssEss = specularWeight * (k_S * brdf.x + brdf.y);
+  let Ems: f32 = (1.0 - (brdf.x + brdf.y));
+  let F_avg: vec3f = specularWeight * (f0 + (1.0 - f0) / 21.0);
+  iBLGGXFresnel.FmsEms = Ems * iBLGGXFresnel.FssEss * F_avg / (1.0 - F_avg * Ems);
+  
+  return iBLGGXFresnel;
+}
+`
+  );
+
+  const getIBLIndirectIrradiance = (
+    /* wgsl */
+    `
+fn getIBLIndirectIrradiance(
+  normal: vec3f,
+  diffuseColor: vec3f,
+  clampSampler: sampler,
   envDiffuseTexture: texture_cube<f32>,
   envRotation: mat3x3f,
   envDiffuseIntensity: f32,
+) -> vec3f {
+  // IBL diffuse (irradiance)
+  let diffuseLight: vec4f = textureSample(
+    envDiffuseTexture,
+    clampSampler,
+    normal * envRotation
+  );
+
+  return diffuseLight.rgb * envDiffuseIntensity;
+}
+`
+  );
+
+  const getIBLIndirectRadiance = (
+    /* wgsl */
+    `
+fn getIBLIndirectRadiance(
+  normal: vec3f,
+  viewDirection: vec3f,
+  roughness: f32,
+  specularColor: vec3f,
+  specularFactor: f32,
+  iBLGGXFresnel: IBLGGXFresnel,
+  clampSampler: sampler,
+  envSpecularTexture: texture_cube<f32>,
+  envRotation: mat3x3f,
   envSpecularIntensity: f32,
-  ptr_reflectedLight: ptr<function, ReflectedLight>,
-) {
+)-> vec3f {
   let N: vec3f = normalize(normal);
   let V: vec3f = normalize(viewDirection);
   let NdotV: f32 = saturate(dot(N, V));
 
   let reflection: vec3f = normalize(reflect(-V, N));
 
-  let iblDiffuseColor: vec3f = mix(diffuseColor, vec3(0.0), vec3(metallic));
-
-  // IBL specular (radiance)
   let lod: f32 = roughness * f32(textureNumLevels(envSpecularTexture) - 1);
 
   let specularLight: vec4f = textureSampleLevel(
@@ -17871,19 +17969,7 @@ fn getIBLIndirect(
     lod
   );
 
-  // IBL diffuse (irradiance)
-  let diffuseLight: vec4f = textureSample(
-    envDiffuseTexture,
-    clampSampler,
-    normal * envRotation
-  );
-
-  let iBLGGXFresnel = getIBLGGXFresnel(normal, viewDirection, roughness, specularColor, specularFactor, clampSampler, lutTexture);
-
-  let k_D: vec3f = iblDiffuseColor * (1.0 - iBLGGXFresnel.FssEss + iBLGGXFresnel.FmsEms);
-
-  (*ptr_reflectedLight).indirectSpecular += specularLight.rgb * iBLGGXFresnel.FssEss * envSpecularIntensity;
-  (*ptr_reflectedLight).indirectDiffuse += (iBLGGXFresnel.FmsEms + k_D) * diffuseLight.rgb * envDiffuseIntensity;
+  return specularLight.rgb * envSpecularIntensity;
 }
 `
   );
@@ -17961,7 +18047,9 @@ ${getLightsInfos}
 ${REIndirectDiffuse}
 ${REIndirectSpecular}
 ${getPBRDirect}
-${getIBLIndirect}
+${getIBLGGXFresnel}
+${getIBLIndirectIrradiance}
+${getIBLIndirectRadiance}
 ${getIBLTransmission}
 
 ${getFragmentInputStruct({ geometry, additionalVaryings })}
