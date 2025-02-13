@@ -56,7 +56,7 @@ export class TexturesPlanes {
         texturesOptions: {
           generateMips: true,
           useExternalTextures: false,
-          placeholderColor: Math.random() > 0.5 ? [255, 0, 255, 1] : [0, 255, 255, 1],
+          placeholderColor: Math.random() > 0.5 ? [0, 255, 255, 255] : [255, 0, 255, 255],
         },
       })
 
