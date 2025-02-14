@@ -1,4 +1,12 @@
-import { BoxGeometry, GPUCameraRenderer, GPUDeviceManager, Mesh, Object3D, Vec3 } from '../../dist/esm/index.mjs'
+import {
+  BoxGeometry,
+  GPUCameraRenderer,
+  GPUDeviceManager,
+  MediaTexture,
+  Mesh,
+  Object3D,
+  Vec3,
+} from '../../dist/esm/index.mjs'
 
 window.addEventListener('load', async () => {
   const systemSize = 15
@@ -40,7 +48,35 @@ window.addEventListener('load', async () => {
   gpuFrontCameraRenderer.camera.position.z = systemSize * 3
   gpuBackCameraRenderer.camera.position.z = systemSize * 3
 
+  const texturedFragmentShader = /* wgsl */ `
+    struct VSOutput {
+      @builtin(position) position: vec4f,
+      @location(0) uv: vec2f,
+    };
+    
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {      
+      return textureSample(meshTexture, defaultSampler, fsInput.uv);
+    }
+  `
+
   for (let i = 0; i < 15; i++) {
+    // just so you can see that we can update a mesh renderer
+    // even if it has textures
+    // everything's handled internally!
+    const useTexture = Math.random() > 0.5
+
+    let texture = null
+
+    if (useTexture) {
+      texture = new MediaTexture(gpuBackCameraRenderer, {
+        label: 'Mesh texture',
+        name: 'meshTexture',
+        placeholderColor: Math.random() > 0.5 ? [0, 255, 255, 255] : [255, 0, 255, 255],
+      })
+
+      texture.loadImage('https://picsum.photos/720/720?random=' + i)
+    }
+
     // create a different pivot for each satellite
     const pivot = new Object3D()
     // set back renderer scene as default parent
@@ -56,13 +92,23 @@ window.addEventListener('load', async () => {
     const cubeMesh = new Mesh(gpuBackCameraRenderer, {
       label: 'Cube ' + i,
       geometry: new BoxGeometry(),
+      ...(useTexture && {
+        textures: [texture],
+        shaders: {
+          fragment: {
+            code: texturedFragmentShader,
+          },
+        },
+      }),
     })
 
     // now add the satellite to our pivot
     cubeMesh.parent = pivot
 
+    cubeMesh.scale.set(1.5)
+
     // random distance
-    cubeMesh.position.x = systemSize * 0.375 + Math.random() * systemSize * 0.625
+    cubeMesh.position.x = systemSize * 0.625 + Math.random() * systemSize * 0.5
 
     // random rotationMatrix speed
     const rotationSpeed = new Vec3(
