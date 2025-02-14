@@ -516,7 +516,6 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       Object.defineProperty(this as MeshBase, 'index', { value: meshIndex++ })
 
       renderer = isRenderer(renderer, parameters.label ? parameters.label + ' ' + this.type : this.type)
-
       this.renderer = renderer
 
       const {

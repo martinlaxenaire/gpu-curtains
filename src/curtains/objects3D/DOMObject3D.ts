@@ -109,7 +109,8 @@ export class DOMObject3D extends ProjectedObject3D {
   ) {
     super(renderer)
 
-    this.setRenderer(renderer)
+    renderer = isCurtainsRenderer(renderer, 'DOMObject3D')
+    this.renderer = renderer
 
     this.size = {
       shouldUpdate: true,
