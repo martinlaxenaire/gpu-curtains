@@ -297,6 +297,12 @@ export class GPUDeviceManager {
 
     // reset the buffers array, it would eventually be repopulated while restoring the device
     this.buffers.clear()
+
+    this.#mipsGeneration = {
+      sampler: null,
+      module: null,
+      pipelineByFormat: {} as Record<GPUTextureFormat, GPURenderPipeline>,
+    }
   }
 
   /**

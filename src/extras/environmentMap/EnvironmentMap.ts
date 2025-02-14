@@ -80,6 +80,9 @@ export class EnvironmentMap {
   /** {@link HDRLoader} used to load the .hdr file. */
   hdrLoader: HDRLoader
 
+  /** Parsed {@link HDRImageData} from the {@link HDRLoader} if any. */
+  #hdrData: HDRImageData | null
+
   /** Options used to generate the {@link lutTexture}, {@link specularTexture} and {@link diffuseTexture}. */
   options: EnvironmentMapOptions
 
@@ -108,9 +111,7 @@ export class EnvironmentMap {
    * @param params - {@link EnvironmentMapParams | parameters} use to create this {@link EnvironmentMap}. Defines the various textures options.
    */
   constructor(renderer: Renderer | GPUCurtains, params: EnvironmentMapParams = {}) {
-    renderer = isRenderer(renderer, 'EnvironmentMap')
-
-    this.renderer = renderer
+    this.setRenderer(renderer)
 
     params = {
       ...{
@@ -159,6 +160,15 @@ export class EnvironmentMap {
 
     // generate LUT texture right now
     this.computeBRDFLUTTexture()
+  }
+
+  /**
+   * Set or reset this {@link EnvironmentMap} {@link EnvironmentMap.renderer | renderer}.
+   * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
+   */
+  setRenderer(renderer: Renderer | GPUCurtains) {
+    renderer = isRenderer(renderer, 'EnvironmentMap')
+    this.renderer = renderer
   }
 
   /**
@@ -291,6 +301,7 @@ export class EnvironmentMap {
     await computeLUTPass.material.compileMaterial()
 
     this.#runComputePass({ computePass: computeLUTPass, label: 'Compute LUT texture command encoder' })
+    this.lutTexture.textureBinding.resource = this.lutTexture.texture
 
     // once command encoder has been submitted, free the resources
     computeLUTPass.destroy()
@@ -361,6 +372,7 @@ export class EnvironmentMap {
       onAfterCompute: (commandEncoder) => {
         // copy the result to our specular texture
         this.renderer.copyGPUTextureToTexture(cubeStorageTexture.texture, this.specularTexture, commandEncoder)
+        this.specularTexture.textureBinding.resource = this.specularTexture.texture
       },
     })
 
@@ -437,6 +449,7 @@ export class EnvironmentMap {
       onAfterCompute: (commandEncoder) => {
         // copy the result to our diffuse texture
         this.renderer.copyGPUTextureToTexture(diffuseStorageTexture.texture, this.diffuseTexture, commandEncoder)
+        this.diffuseTexture.textureBinding.resource = this.diffuseTexture.texture
       },
     })
 
@@ -448,13 +461,13 @@ export class EnvironmentMap {
   }
 
   /**
-   * Load an HDR environment map and then generates the {@link specularTexture} and {@link diffuseTexture} using two separate {@link ComputePass}.
+   * Load an HDR environment map and then generate the {@link specularTexture} and {@link diffuseTexture} using two separate {@link ComputePass}.
    * @param url - The url of the .hdr file to load.
    */
   async loadAndComputeFromHDR(url: string) {
-    const parsedHdr = await this.hdrLoader.loadFromUrl(url)
+    this.#hdrData = await this.hdrLoader.loadFromUrl(url)
 
-    const { width, height } = parsedHdr ? parsedHdr : { width: 1024, height: 512 }
+    const { width, height } = this.#hdrData ? this.#hdrData : { width: 1024, height: 512 }
 
     const faceSize = Math.max(width / 4, height / 2)
 
@@ -513,8 +526,15 @@ export class EnvironmentMap {
       this.diffuseTexture.createTexture()
     }
 
-    if (parsedHdr) {
-      this.computeSpecularCubemapFromHDRData(parsedHdr).then(() => {
+    this.computeFromHDR()
+  }
+
+  /**
+   * Generate the {@link specularTexture} and {@link diffuseTexture} using two separate {@link ComputePass}.
+   */
+  computeFromHDR() {
+    if (this.#hdrData) {
+      this.computeSpecularCubemapFromHDRData(this.#hdrData).then(() => {
         this.computeDiffuseFromSpecular()
       })
     }

@@ -2,8 +2,8 @@
   position: fixed;
   top: 0;
   left: 0;
-  width: 50%;
-  height: 100lvh;
+  width: 47.5%;
+  height: 100svh;
 }
 
 #left-canvas::before {
@@ -31,9 +31,9 @@
 #right-canvas {
   position: fixed;
   top: 0;
-  left: 50%;
-  width: 50%;
-  height: 100lvh;
+  left: 47.5%;
+  width: 52.5%;
+  height: 100svh;
 }
 
 #right-canvas::before {
@@ -45,4 +45,10 @@
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+#lose-context-button {
+  position: relative;
+  top: 1rem;
+  left: 1rem;
 }

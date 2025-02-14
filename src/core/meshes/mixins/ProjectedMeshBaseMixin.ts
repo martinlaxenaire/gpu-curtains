@@ -22,6 +22,7 @@ import { getPCFShadowContribution } from '../../shaders/chunks/fragment/head/get
 import { getPCFDirectionalShadows } from '../../shaders/chunks/fragment/head/get-PCF-directional-shadows'
 import { getPCFPointShadowContribution } from '../../shaders/chunks/fragment/head/get-PCF-point-shadow-contribution'
 import { getPCFPointShadows } from '../../shaders/chunks/fragment/head/get-PCF-point-shadows'
+import { Texture } from '../../textures/Texture'
 
 /** Define all possible frustum culling checks. */
 export type FrustumCullingCheck = 'OBB' | 'sphere' | false
@@ -304,6 +305,20 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
         })
       }
 
+      // recreate future renderer transmission target
+      // and copy texture if needed
+      if (this.options.transmissive) {
+        renderer = isCameraRenderer(renderer, this.options.label + ' ' + renderer.type)
+        renderer.createTransmissionTarget()
+        let transmissiveTexture = this.material.textures.find(
+          (texture) => texture.options.name === 'transmissionBackgroundTexture'
+        )
+
+        if (transmissiveTexture) {
+          transmissiveTexture.copy(renderer.transmissionTarget.texture)
+        }
+      }
+
       super.setRenderer(renderer)
 
       // force update of new camera
@@ -521,10 +536,16 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
       if (this.options.transmissive) {
         this.renderer.createTransmissionTarget()
 
+        const transmissionTexture = new Texture(this.renderer, {
+          label: this.options.label + ' transmission texture',
+          name: 'transmissionBackgroundTexture',
+          fromTexture: this.renderer.transmissionTarget.texture,
+        })
+
         if (parameters.textures) {
-          parameters.textures = [...parameters.textures, this.renderer.transmissionTarget.texture]
+          parameters.textures = [...parameters.textures, transmissionTexture]
         } else {
-          parameters.textures = [this.renderer.transmissionTarget.texture]
+          parameters.textures = [transmissionTexture]
         }
 
         if (parameters.samplers) {

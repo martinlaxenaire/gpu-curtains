@@ -117,6 +117,30 @@ export class TextureBindGroup extends BindGroup {
   }
 
   /**
+   * Set or reset this {@link TextureBindGroup} {@link TextureBindGroup.renderer | renderer}, and update the {@link samplers} and {@link textures} renderer as well.
+   * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
+   */
+  setRenderer(renderer: Renderer | GPUCurtains) {
+    super.setRenderer(renderer)
+
+    if (this.options && this.samplers) {
+      this.samplers.forEach((sampler) => {
+        sampler.setRenderer(this.renderer)
+      })
+    }
+
+    if (this.options && this.textures) {
+      this.textures.forEach((texture) => {
+        // do not update the shadow map renderer texture
+        // it will be done in the shadow class if needed
+        if (texture.options.type == 'depth' && texture.options.label.includes('Shadow')) return
+
+        texture.setRenderer(this.renderer)
+      })
+    }
+  }
+
+  /**
    * Adds a texture to the {@link textures} array and {@link bindings}.
    * @param texture - texture to add.
    */
@@ -254,7 +278,6 @@ export class TextureBindGroup extends BindGroup {
           !!texture.transformBinding.inputs.matrix.shouldUpdate
 
         // reset original flag
-        // TODO reset it at end of render
         if (texture.transformBinding.inputs.matrix.shouldUpdate) {
           this.renderer.onAfterCommandEncoderSubmission.add(
             () => {

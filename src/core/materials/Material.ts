@@ -111,12 +111,20 @@ export class Material {
   }
 
   /**
-   * Set or reset this {@link Material} {@link Material.renderer | renderer}.
+   * Set or reset this {@link Material} {@link Material.renderer | renderer}. Also reset the {@link bindGroups} renderer.
    * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
    */
   setRenderer(renderer: Renderer | GPUCurtains) {
     renderer = isRenderer(renderer, this.type)
     this.renderer = renderer
+
+    this.bindGroups.forEach((bindGroup) => {
+      bindGroup.setRenderer(this.renderer)
+    })
+
+    if (this.pipelineEntry) {
+      this.pipelineEntry.setRenderer(this.renderer)
+    }
   }
 
   /**

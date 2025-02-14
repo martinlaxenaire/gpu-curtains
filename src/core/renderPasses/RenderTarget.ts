@@ -62,10 +62,11 @@ export class RenderTarget {
    * @param parameters - {@link RenderTargetParams | parameters} use to create this {@link RenderTarget}
    */
   constructor(renderer: Renderer | GPUCurtains, parameters = {} as RenderTargetParams) {
-    renderer = isRenderer(renderer, 'RenderTarget')
-
     this.type = 'RenderTarget'
+
+    renderer = isRenderer(renderer, this.type)
     this.renderer = renderer
+
     this.uuid = generateUUID()
 
     const { label, colorAttachments, depthTexture, autoRender, ...renderPassParams } = parameters
@@ -112,6 +113,31 @@ export class RenderTarget {
         ...(this.options.fixedSize !== undefined && { fixedSize: this.options.fixedSize }),
         usage: ['copySrc', 'renderAttachment', 'textureBinding'],
       })
+    }
+
+    this.addToScene()
+  }
+
+  /**
+   * Reset this {@link RenderTarget} {@link RenderTarget.renderer | renderer}. Also set the {@link renderPass} renderer.
+   * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
+   */
+  setRenderer(renderer: Renderer | GPUCurtains) {
+    if (this.renderer) {
+      this.removeFromScene()
+    }
+
+    renderer = isRenderer(renderer, this.type)
+    this.renderer = renderer
+
+    if (this.options.depthTexture) {
+      this.options.depthTexture.setRenderer(this.renderer)
+    }
+
+    this.renderPass.setRenderer(this.renderer)
+
+    if (this.renderTexture) {
+      this.renderTexture.setRenderer(this.renderer)
     }
 
     this.addToScene()

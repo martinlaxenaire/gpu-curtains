@@ -2,6 +2,7 @@ import { isRenderer, Renderer } from '../renderers/utils'
 import { PipelineEntryOptions, PipelineEntryParams, PipelineEntryStatus } from '../../types/PipelineEntries'
 import { AllowedBindGroups } from '../../types/BindGroups'
 import { MaterialShadersType } from '../../types/Materials'
+import { GPUCurtains } from '../../curtains/GPUCurtains'
 
 let pipelineId = 0
 
@@ -42,7 +43,6 @@ export class PipelineEntry {
     const { label, shaders, useAsync, bindGroups, cacheKey } = parameters
 
     renderer = isRenderer(renderer, label ? label + ' ' + this.type : this.type)
-
     this.renderer = renderer
 
     Object.defineProperty(this as PipelineEntry, 'index', { value: pipelineId++ })
@@ -65,6 +65,15 @@ export class PipelineEntry {
     }
 
     this.bindGroups = bindGroups
+  }
+
+  /**
+   * Set or reset this {@link PipelineEntry} {@link PipelineEntry.renderer | renderer}.
+   * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
+   */
+  setRenderer(renderer: Renderer | GPUCurtains) {
+    renderer = isRenderer(renderer, this.options.label + ' ' + this.type)
+    this.renderer = renderer
   }
 
   /**

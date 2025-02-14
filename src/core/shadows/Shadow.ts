@@ -177,21 +177,14 @@ export class Shadow {
    */
   setRenderer(renderer: CameraRenderer | GPUCurtains) {
     const oldRenderer = this.renderer
-    if (oldRenderer && this.depthPassTarget) {
-      this.depthPassTarget.removeFromScene()
-    }
 
     renderer = isCameraRenderer(renderer, this.constructor.name)
-
     this.renderer = renderer
 
     this.setRendererBinding()
 
     if (this.depthPassTarget) {
-      // TODO this is a bit dirty
-      // should we implement a RenderTarget.setRenderer() method?
-      this.depthPassTarget.renderer = this.renderer
-      this.depthPassTarget.addToScene()
+      this.depthPassTarget.setRenderer(this.renderer)
     }
 
     this.depthMeshes?.forEach((depthMesh) => {

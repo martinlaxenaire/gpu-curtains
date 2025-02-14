@@ -1,4 +1,6 @@
 // Basic rotating cube for most simple tests
+import { Vec3 } from '../../dist/esm/index.mjs'
+
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
   const {
@@ -11,6 +13,7 @@ window.addEventListener('load', async () => {
     AmbientLight,
     DirectionalLight,
     PointLight,
+    EnvironmentMap,
     Vec3,
     LitMesh,
     PlaneGeometry,
@@ -30,6 +33,13 @@ window.addEventListener('load', async () => {
     deviceManager: gpuDeviceManager,
     label: 'Left renderer',
     container: document.querySelector('#left-canvas'),
+    renderPass: {
+      colorAttachments: [
+        {
+          clearValue: [34 / 255, 34 / 255, 34 / 255, 1],
+        },
+      ],
+    },
   })
 
   // create a camera renderer
@@ -41,9 +51,17 @@ window.addEventListener('load', async () => {
       maxDirectionalLights: 0,
       //maxPointLights: 0,
     },
+    renderPass: {
+      colorAttachments: [
+        {
+          clearValue: [34 / 255, 34 / 255, 34 / 255, 1],
+        },
+      ],
+    },
   })
 
   const renderers = [leftRenderer, rightRenderer]
+  let activeRenderer = renderers[0]
   console.log(renderers)
 
   renderers.forEach((renderer) => {
@@ -101,6 +119,9 @@ window.addEventListener('load', async () => {
   )
 
   console.log(pointLights[0].shadow)
+
+  const environmentMap = new EnvironmentMap(leftRenderer)
+  await environmentMap.loadAndComputeFromHDR('../../website/assets/hdr/Colorful_Studio.hdr')
 
   // ---------------
   // GEOMETRIES
@@ -259,6 +280,28 @@ window.addEventListener('load', async () => {
 
   mesh.position.y = 2
 
+  const bubble = new LitMesh(leftRenderer, {
+    label: 'Transmissive bubble',
+    geometry: new SphereGeometry(),
+    transmissive: true,
+    material: {
+      shading: 'PBR',
+      toneMapping: 'Khronos',
+      metallic: 0.1, // if we'd set it to 0, we'd lose specular on transparent background
+      roughness: 0.15,
+      transmission: 1,
+      thickness: 0.5,
+      dispersion: 10,
+      ior: 1.33,
+      environmentMap,
+    },
+  })
+
+  bubble.position.x = 1.5
+  bubble.position.y = 3
+  bubble.position.z = 4
+  bubble.scale.set(1.5)
+
   const planeGeometry = new PlaneGeometry()
 
   const boxPivot = new Object3D()
@@ -381,6 +424,7 @@ window.addEventListener('load', async () => {
     .add({ activeRenderer: 'left' }, 'activeRenderer', { Left: 0, Right: 1 })
     .onChange((value) => {
       const renderer = renderers[value]
+      activeRenderer = renderer
 
       console.log(renderer)
 
@@ -392,7 +436,11 @@ window.addEventListener('load', async () => {
       //directionalLights.forEach((light) => light.setRenderer(renderer))
       pointLights.forEach((light) => light.setRenderer(renderer))
 
+      environmentMap.setRenderer(renderer)
+
       mesh.setRenderer(renderer)
+
+      bubble.setRenderer(renderer)
 
       boxPivot.parent = renderer.scene
       floor.setRenderer(renderer)
@@ -474,4 +522,29 @@ window.addEventListener('load', async () => {
   })
 
   pointLightsFolder.close()
+
+  // lost context
+
+  const loseCtxButton = document.querySelector('#lose-context-button')
+
+  let isContextActive = true
+
+  loseCtxButton.addEventListener('click', () => {
+    if (isContextActive) {
+      activeRenderer.device?.destroy()
+      loseCtxButton.textContent = 'Restore context'
+      console.log('lost', activeRenderer)
+    } else {
+      console.log(activeRenderer.textures)
+      activeRenderer.deviceManager.restoreDevice()
+      loseCtxButton.textContent = 'Lose context'
+      console.log('restored', activeRenderer)
+      setTimeout(() => {
+        environmentMap.computeBRDFLUTTexture()
+        environmentMap.computeFromHDR()
+      }, 100)
+    }
+
+    isContextActive = !isContextActive
+  })
 })
