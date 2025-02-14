@@ -191,7 +191,7 @@ class EnvironmentMap {
     let cachedLUT = null;
     for (const renderer of this.renderer.deviceManager.renderers) {
       for (const [uuid, envMap] of renderer.environmentMaps) {
-        if (uuid !== this.uuid && envMap.lutTexture) {
+        if (uuid !== this.uuid && envMap.lutTexture && envMap.lutTexture.size.width === this.lutTexture.size.width) {
           cachedLUT = envMap.lutTexture;
           break;
         }
