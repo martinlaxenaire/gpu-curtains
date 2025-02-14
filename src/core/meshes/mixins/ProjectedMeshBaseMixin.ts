@@ -782,8 +782,6 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
     onRenderPass(pass: GPURenderPassEncoder) {
       if (!this.ready) return
 
-      this._onRenderCallback && this._onRenderCallback()
-
       if ((this.domFrustum && this.domFrustum.isIntersecting) || !this.frustumCulling) {
         // render our material
         this.material.render(pass)

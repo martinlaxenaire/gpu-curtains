@@ -772,9 +772,9 @@ export class Scene extends Object3D {
    */
   onBeforeRender() {
     // execute meshes onBeforeRender callback if needed
-    for (let i = 0, l = this.renderer.meshes.length; i < l; i++) {
-      this.renderer.meshes[i].onBeforeRenderScene()
-    }
+    this.renderer.meshes.forEach((mesh) => {
+      if (mesh) mesh.onBeforeRenderScene()
+    })
 
     this.renderer.animations.forEach((targetsAnimation) => targetsAnimation.update())
 

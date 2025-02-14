@@ -1202,7 +1202,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
 
       this.setGeometry()
 
-      if (this.visible) {
+      if (this.visible && this.ready) {
         this._onRenderCallback && this._onRenderCallback()
       }
 

@@ -449,7 +449,6 @@ function ProjectedMeshBaseMixin(Base) {
      */
     onRenderPass(pass) {
       if (!this.ready) return;
-      this._onRenderCallback && this._onRenderCallback();
       if (this.domFrustum && this.domFrustum.isIntersecting || !this.frustumCulling) {
         this.material.render(pass);
         this.geometry.render(pass);

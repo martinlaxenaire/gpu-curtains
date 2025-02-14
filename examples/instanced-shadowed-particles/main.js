@@ -74,18 +74,18 @@ window.addEventListener('load', async () => {
 
   onResize()
 
-  directionalLight.position.set(distance, distance * 0.5, distance)
+  directionalLight.position.set(distance * 2, distance, distance * 2)
   directionalLight.shadow.cast({
     depthTextureSize: new Vec2(1024),
     intensity: 1,
     pcfSamples: 3,
     camera: {
-      left: distance * -1.05,
-      right: distance * 1.05,
-      top: distance * 1.05,
-      bottom: distance * -1.05,
+      left: distance * -1.25,
+      right: distance * 1.25,
+      top: distance * 1.25,
+      bottom: distance * -1.25,
       near: 0.1,
-      far: distance * 3,
+      far: distance * 6,
     },
   })
 

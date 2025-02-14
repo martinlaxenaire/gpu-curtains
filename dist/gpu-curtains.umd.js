@@ -10255,7 +10255,7 @@ ${geometry.wgslStructFragment}`
       onBeforeRenderPass() {
         if (!this.renderer.ready) return;
         this.setGeometry();
-        if (this.visible) {
+        if (this.visible && this.ready) {
           this._onRenderCallback && this._onRenderCallback();
         }
         this.material.onBeforeRender();
@@ -10963,7 +10963,6 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
        */
       onRenderPass(pass) {
         if (!this.ready) return;
-        this._onRenderCallback && this._onRenderCallback();
         if (this.domFrustum && this.domFrustum.isIntersecting || !this.frustumCulling) {
           this.material.render(pass);
           this.geometry.render(pass);
@@ -13372,9 +13371,9 @@ ${this.shaders.compute.head}`;
      * Before actually rendering the scene, update matrix stack and frustum culling checks. Batching these calls greatly improve performance. Called by the {@link renderer} before rendering.
      */
     onBeforeRender() {
-      for (let i = 0, l = this.renderer.meshes.length; i < l; i++) {
-        this.renderer.meshes[i].onBeforeRenderScene();
-      }
+      this.renderer.meshes.forEach((mesh) => {
+        if (mesh) mesh.onBeforeRenderScene();
+      });
       this.renderer.animations.forEach((targetsAnimation) => targetsAnimation.update());
       this.updateMatrixStack();
       this.renderer.animations.forEach((targetsAnimation) => targetsAnimation.onAfterUpdate());
