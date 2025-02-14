@@ -92,7 +92,7 @@ window.addEventListener('load', async () => {
   })
 
   const light = new DirectionalLight(gpuCameraRenderer, {
-    position: new Vec3(100, 100, 150), // will be updated when model changes
+    position: new Vec3(100, 100, 150),
     intensity: 3,
   })
 

@@ -12,18 +12,13 @@ fn BRDF_BlinnPhong(
   shininess: f32,
   directLight: DirectLight
 ) -> vec3f {
-  let L = normalize(directLight.direction);
-  let NdotL = saturate(dot(normalize(normal), L));
-  let H: vec3f = normalize(viewDirection + L);
+  let H: vec3f = normalize(viewDirection + directLight.direction);
   
-  let NdotH: f32 = saturate(dot(normalize(normal), H));
-  let VdotH: f32 = saturate(dot(normalize(viewDirection), H));
-  let NdotV: f32 = saturate(dot(normalize(normal), normalize(viewDirection)));
+  let NdotH: f32 = saturate(dot(normal, H));
+  let VdotH: f32 = saturate(dot(viewDirection, H));
   
   let F: vec3f = F_Schlick(specularColor, 1.0, VdotH);
-  
   let G: f32 = 0.25; // blinn phong implicit
-  
   let D = D_BlinnPhong(shininess, NdotH);
   
   let specular: vec3f = F * G * D;
@@ -41,8 +36,7 @@ fn getPhongDirect(
   directLight: DirectLight,
   ptr_reflectedLight: ptr<function, ReflectedLight>
 ) {
-  let L = normalize(directLight.direction);
-  let NdotL = saturate(dot(normalize(normal), L));
+  let NdotL = saturate(dot(normal, directLight.direction));
   
   let irradiance: vec3f = NdotL * directLight.color;
   (*ptr_reflectedLight).directDiffuse += irradiance * BRDF_Lambert( diffuseColor );

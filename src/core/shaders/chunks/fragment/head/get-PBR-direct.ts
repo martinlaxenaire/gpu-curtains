@@ -30,14 +30,11 @@ fn getPBRDirect(
   directLight: DirectLight,
   ptr_reflectedLight: ptr<function, ReflectedLight>
 ) {
-  let N: vec3f = normalize(normal);
-  let L: vec3f = normalize(directLight.direction);
-  let V: vec3f = normalize(viewDirection);
-  let H: vec3f = normalize(V + L);
-  let NdotV: f32 = saturate(dot(N, V));
-  let NdotL: f32 = saturate(dot(N, L));
-  let NdotH: f32 = saturate(dot(N, H));
-  let VdotH: f32 = saturate(dot(V, H));
+  let H: vec3f = normalize(viewDirection + directLight.direction);
+  let NdotV: f32 = saturate(dot(normal, viewDirection));
+  let NdotL: f32 = saturate(dot(normal, directLight.direction));
+  let NdotH: f32 = saturate(dot(normal, H));
+  let VdotH: f32 = saturate(dot(viewDirection, H));
 
   let irradiance: vec3f = NdotL * directLight.color;
   let ggx: vec3f = BRDF_GGX(NdotV, NdotL, NdotH, VdotH, roughness, specularFactor, specularColor);
