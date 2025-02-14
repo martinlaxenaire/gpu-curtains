@@ -13372,7 +13372,7 @@ ${this.shaders.compute.head}`;
      */
     onBeforeRender() {
       this.renderer.meshes.forEach((mesh) => {
-        if (mesh) mesh.onBeforeRenderScene();
+        mesh.onBeforeRenderScene();
       });
       this.renderer.animations.forEach((targetsAnimation) => targetsAnimation.update());
       this.updateMatrixStack();

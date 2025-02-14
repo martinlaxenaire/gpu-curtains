@@ -4,12 +4,12 @@ export const preliminaryFragmentParticle = /* wgsl */ `
   ${discardParticleFragment}
   
   // clamp velocity
-  let velocityLength = clamp(length(velocity.xyz), 0.0, 1.0);
+  let velocityLength = saturate(length(velocity.xyz) * shading.velocityStrength);
   
-  // use it to mix between our 2 colors
+  // use it to mix between our base (blue) color and our additional (pink) color
   outputColor = mix(
-    vec4(shading.darkColor, 1.0),
-    vec4(shading.lightColor, 1.0),
+    outputColor,
+    vec4(shading.pinkColor, 1.0),
     vec4(vec3(velocityLength), 1.0)
   );
 `
