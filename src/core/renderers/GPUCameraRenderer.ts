@@ -184,6 +184,7 @@ export class GPUCameraRenderer extends GPURenderer {
     super.loseContext()
     // lose camera bind group context as well
     this.cameraLightsBindGroup.loseContext()
+    this.pointShadowsCubeFaceBindGroups.forEach((bindGroup) => bindGroup.loseContext())
   }
 
   /**
@@ -193,6 +194,7 @@ export class GPUCameraRenderer extends GPURenderer {
   restoreContext() {
     super.restoreContext()
     this.cameraLightsBindGroup?.restoreContext()
+    this.pointShadowsCubeFaceBindGroups.forEach((bindGroup) => bindGroup.restoreContext())
     this.updateCameraBindings()
   }
 

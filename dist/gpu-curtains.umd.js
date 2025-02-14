@@ -3281,8 +3281,7 @@
      */
     constructor(renderer, { label = "BindGroup", index = 0, bindings = [], uniforms, storages } = {}) {
       this.type = "BindGroup";
-      renderer = isRenderer(renderer, this.type);
-      this.renderer = renderer;
+      this.setRenderer(renderer);
       this.options = {
         label,
         index,
@@ -3315,6 +3314,14 @@
         }
       }
       this.renderer.addBindGroup(this);
+    }
+    /**
+     * Set or reset this {@link BindGroup} {@link BindGroup.renderer | renderer}.
+     * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
+     */
+    setRenderer(renderer) {
+      renderer = isRenderer(renderer, this.type);
+      this.renderer = renderer;
     }
     /**
      * Sets our {@link BindGroup#index | bind group index}.
@@ -3922,6 +3929,21 @@
       this.setBindings();
       this.renderer.addTexture(this);
       this.createTexture();
+    }
+    /**
+     * Reset this {@link Texture} {@link Texture.renderer | renderer}, and resize it if needed.
+     * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
+     */
+    setRenderer(renderer) {
+      if (this.renderer) {
+        this.renderer.removeTexture(this);
+      }
+      renderer = isRenderer(renderer, this.options.label + " Texture");
+      this.renderer = renderer;
+      this.renderer.addTexture(this);
+      if (__privateGet$m(this, _autoResize) && (this.size.width !== this.renderer.canvas.width * this.options.qualityRatio || this.size.height !== this.renderer.canvas.height * this.options.qualityRatio)) {
+        this.resize();
+      }
     }
     /**
      * Set our {@link Texture#bindings | bindings}.
@@ -5253,6 +5275,33 @@
       this.texturesMatricesBinding = null;
     }
     /**
+     * Set or reset this {@link TextureBindGroup} {@link TextureBindGroup.renderer | renderer}, and update the {@link samplers} and {@link textures} renderer as well.
+     * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
+     */
+    setRenderer(renderer) {
+      const shadowTextures = /* @__PURE__ */ new Set();
+      if (this.renderer && "shadowCastingLights" in this.renderer) {
+        this.renderer.shadowCastingLights.forEach((light) => {
+          if (light.shadow.isActive && light.shadow.depthTexture) {
+            shadowTextures.add(light.shadow.depthTexture.uuid);
+          }
+        });
+      }
+      super.setRenderer(renderer);
+      if (this.options && this.samplers) {
+        this.samplers.forEach((sampler) => {
+          sampler.setRenderer(this.renderer);
+        });
+      }
+      if (this.options && this.textures) {
+        this.textures.forEach((texture) => {
+          if (!shadowTextures.has(texture.uuid)) {
+            texture.setRenderer(this.renderer);
+          }
+        });
+      }
+    }
+    /**
      * Adds a texture to the {@link textures} array and {@link bindings}.
      * @param texture - texture to add.
      */
@@ -5819,9 +5868,8 @@
     } = {}) {
       this.type = "Sampler";
       this.uuid = generateUUID();
-      renderer = isRenderer(renderer, label ? label + " " + this.type : this.type);
-      this.renderer = renderer;
       this.label = label;
+      this.setRenderer(renderer);
       if (!name && !this.renderer.production) {
         name = "sampler" + this.renderer.samplers.length;
         throwWarning(
@@ -5841,6 +5889,14 @@
       };
       this.createSampler();
       this.createBinding();
+    }
+    /**
+     * Set or reset this {@link Sampler} {@link Sampler.renderer | renderer}.
+     * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
+     */
+    setRenderer(renderer) {
+      renderer = isRenderer(renderer, this.label + " " + this.type);
+      this.renderer = renderer;
     }
     /**
      * Set the {@link GPUSampler}.
@@ -5893,12 +5949,18 @@
       this.setSamplers();
     }
     /**
-     * Set or reset this {@link Material} {@link Material.renderer | renderer}.
+     * Set or reset this {@link Material} {@link Material.renderer | renderer}. Also reset the {@link bindGroups} renderer.
      * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
      */
     setRenderer(renderer) {
       renderer = isRenderer(renderer, this.type);
       this.renderer = renderer;
+      this.bindGroups.forEach((bindGroup) => {
+        bindGroup.setRenderer(this.renderer);
+      });
+      if (this.pipelineEntry) {
+        this.pipelineEntry.setRenderer(this.renderer);
+      }
     }
     /**
      * Check if all bind groups are ready, and create them if needed
@@ -6650,13 +6712,7 @@
      * @param renderer - new {@link Renderer} to set.
      */
     setRenderer(renderer) {
-      renderer = renderer && renderer.renderer || renderer;
-      if (!renderer || !(renderer.type === "GPURenderer" || renderer.type === "GPUCameraRenderer" || renderer.type === "GPUCurtainsRenderer")) {
-        throwWarning(
-          `${this.options.label}: Cannot set ${renderer} as a renderer because it is not of a valid Renderer type.`
-        );
-        return;
-      }
+      renderer = isRenderer(renderer, this.options.label + " ComputePass");
       this.material?.setRenderer(renderer);
       this.removeFromScene(true);
       this.renderer = renderer;
@@ -8035,10 +8091,10 @@
       depthClearValue = 1,
       depthFormat = "depth24plus"
     } = {}) {
-      renderer = isRenderer(renderer, "RenderPass");
       this.type = "RenderPass";
-      this.uuid = generateUUID();
+      renderer = isRenderer(renderer, label + " " + this.type);
       this.renderer = renderer;
+      this.uuid = generateUUID();
       if (useColorAttachments) {
         const defaultColorAttachment = {
           loadOp: "clear",
@@ -8081,6 +8137,25 @@
         this.createResolveTargets();
       }
       this.setRenderPassDescriptor();
+    }
+    /**
+     * Reset this {@link RenderPass} {@link RenderPass.renderer | renderer}.
+     * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
+     */
+    setRenderer(renderer) {
+      renderer = isRenderer(renderer, this.options.label + " " + this.type);
+      this.renderer = renderer;
+      if (this.options.useDepth && !this.options.depthTexture) {
+        this.depthTexture.setRenderer(this.renderer);
+      }
+      this.viewTextures.forEach((texture) => {
+        texture.setRenderer(this.renderer);
+      });
+      this.resolveTargets.forEach((texture) => {
+        if (texture) {
+          texture.setRenderer(this.renderer);
+        }
+      });
     }
     /**
      * Create and set our {@link depthTexture | depth texture}.
@@ -8320,8 +8395,8 @@
     constructor(renderer, parameters = {}) {
       /** Whether we should add this {@link RenderTarget} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
       __privateAdd$h(this, _autoRender$1, true);
-      renderer = isRenderer(renderer, "RenderTarget");
       this.type = "RenderTarget";
+      renderer = isRenderer(renderer, this.type);
       this.renderer = renderer;
       this.uuid = generateUUID();
       const { label, colorAttachments, depthTexture, autoRender, ...renderPassParams } = parameters;
@@ -8351,6 +8426,25 @@
           ...this.options.fixedSize !== void 0 && { fixedSize: this.options.fixedSize },
           usage: ["copySrc", "renderAttachment", "textureBinding"]
         });
+      }
+      this.addToScene();
+    }
+    /**
+     * Reset this {@link RenderTarget} {@link RenderTarget.renderer | renderer}. Also set the {@link renderPass} renderer.
+     * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
+     */
+    setRenderer(renderer) {
+      if (this.renderer) {
+        this.removeFromScene();
+      }
+      renderer = isRenderer(renderer, this.type);
+      this.renderer = renderer;
+      if (this.options.depthTexture) {
+        this.options.depthTexture.setRenderer(this.renderer);
+      }
+      this.renderPass.setRenderer(this.renderer);
+      if (this.renderTexture) {
+        this.renderTexture.setRenderer(this.renderer);
       }
       this.addToScene();
     }
@@ -8752,6 +8846,7 @@
      */
     constructor(parameters) {
       this.type = "PipelineEntry";
+      this.uuid = generateUUID();
       let { renderer } = parameters;
       const { label, shaders, useAsync, bindGroups, cacheKey } = parameters;
       renderer = isRenderer(renderer, label ? label + " " + this.type : this.type);
@@ -8772,6 +8867,14 @@
         cacheKey
       };
       this.bindGroups = bindGroups;
+    }
+    /**
+     * Set or reset this {@link PipelineEntry} {@link PipelineEntry.renderer | renderer}.
+     * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
+     */
+    setRenderer(renderer) {
+      renderer = isRenderer(renderer, this.options.label + " " + this.type);
+      this.renderer = renderer;
     }
     /**
      * Get whether the {@link pipeline} is ready, i.e. successfully compiled
@@ -10152,7 +10255,7 @@ ${geometry.wgslStructFragment}`
       onBeforeRenderPass() {
         if (!this.renderer.ready) return;
         this.setGeometry();
-        if (this.visible) {
+        if (this.visible && this.ready) {
           this._onRenderCallback && this._onRenderCallback();
         }
         this.material.onBeforeRender();
@@ -10500,6 +10603,16 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
             }
           });
         }
+        if (this.options.transmissive) {
+          renderer = isCameraRenderer(renderer, this.options.label + " " + renderer.type);
+          renderer.createTransmissionTarget();
+          let transmissiveTexture = this.material.textures.find(
+            (texture) => texture.options.name === "transmissionBackgroundTexture"
+          );
+          if (transmissiveTexture) {
+            transmissiveTexture.copy(renderer.transmissionTarget.texture);
+          }
+        }
         super.setRenderer(renderer);
         this.camera = this.renderer.camera;
         if (this.options.castShadows) {
@@ -10663,10 +10776,15 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
         }
         if (this.options.transmissive) {
           this.renderer.createTransmissionTarget();
+          const transmissionTexture = new Texture(this.renderer, {
+            label: this.options.label + " transmission texture",
+            name: "transmissionBackgroundTexture",
+            fromTexture: this.renderer.transmissionTarget.texture
+          });
           if (parameters.textures) {
-            parameters.textures = [...parameters.textures, this.renderer.transmissionTarget.texture];
+            parameters.textures = [...parameters.textures, transmissionTexture];
           } else {
-            parameters.textures = [this.renderer.transmissionTarget.texture];
+            parameters.textures = [transmissionTexture];
           }
           if (parameters.samplers) {
             parameters.samplers = [...parameters.samplers, this.renderer.transmissionTarget.sampler];
@@ -10845,7 +10963,6 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
        */
       onRenderPass(pass) {
         if (!this.ready) return;
-        this._onRenderCallback && this._onRenderCallback();
         if (this.domFrustum && this.domFrustum.isIntersecting || !this.frustumCulling) {
           this.material.render(pass);
           this.geometry.render(pass);
@@ -10945,7 +11062,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
       __privateAdd$f(this, _isActive);
       /** @ignore */
       __privateAdd$f(this, _autoRender);
-      /** Map of all the shadow receiving {@link ProjectedMesh | meshes}. */
+      /** Map of all the shadow receiving {@link Mesh}. */
       __privateAdd$f(this, _receivingMeshes);
       this.setRenderer(renderer);
       this.light = light;
@@ -10972,15 +11089,11 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
      */
     setRenderer(renderer) {
       const oldRenderer = this.renderer;
-      if (oldRenderer && this.depthPassTarget) {
-        this.depthPassTarget.removeFromScene();
-      }
       renderer = isCameraRenderer(renderer, this.constructor.name);
       this.renderer = renderer;
       this.setRendererBinding();
       if (this.depthPassTarget) {
-        this.depthPassTarget.renderer = this.renderer;
-        this.depthPassTarget.addToScene();
+        this.depthPassTarget.setRenderer(this.renderer);
       }
       this.depthMeshes?.forEach((depthMesh) => {
         depthMesh.setRenderer(this.renderer);
@@ -11310,8 +11423,8 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
       return false;
     }
     /**
-     * Patch the given {@link ProjectedMesh | mesh} material parameters to create the depth mesh.
-     * @param mesh - original {@link ProjectedMesh | mesh} to use.
+     * Patch the given {@link Mesh | mesh} material parameters to create the depth mesh.
+     * @param mesh - original {@link Mesh | mesh} to use.
      * @param parameters - Optional additional parameters to use for the depth mesh.
      * @returns - Patched parameters.
      */
@@ -11341,11 +11454,11 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
       return parameters;
     }
     /**
-     * Add a {@link ProjectedMesh | mesh} to the shadow map. Internally called by the {@link ProjectedMesh | mesh} if its `castShadows` parameters has been set to `true`, but can also be called externally to selectively cast shadows or to add specific parameters (such as custom depth pass shaders).
+     * Add a {@link Mesh} to the shadow map. Internally called by the {@link Mesh} if its `castShadows` parameters has been set to `true`, but can also be called externally to selectively cast shadows or to add specific parameters (such as custom depth pass shaders).
      * - {@link patchShadowCastingMeshParams | Patch} the parameters.
      * - Create a new depth {@link Mesh} with the patched parameters.
-     * - Add the {@link ProjectedMesh | mesh} to the {@link castingMeshes} Map.
-     * @param mesh - {@link ProjectedMesh | mesh} to add to the shadow map.
+     * - Add the {@link Mesh} to the {@link castingMeshes} Map.
+     * @param mesh - {@link Mesh} to add to the shadow map.
      * @param parameters - Optional {@link RenderMaterialParams | parameters} to use for the depth mesh.
      */
     addShadowCastingMesh(mesh, parameters = {}) {
@@ -11372,15 +11485,15 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
       this.castingMeshes.set(mesh.uuid, mesh);
     }
     /**
-     * Add a shadow receiving {@link ProjectedMesh | mesh} to the #receivingMeshes {@link Map}.
-     * @param mesh - Shadow receiving {@link ProjectedMesh | mesh} to add.
+     * Add a shadow receiving {@link Mesh} to the #receivingMeshes {@link Map}.
+     * @param mesh - Shadow receiving {@link Mesh} to add.
      */
     addShadowReceivingMesh(mesh) {
       __privateGet$d(this, _receivingMeshes).set(mesh.uuid, mesh);
     }
     /**
-     * Remove a shadow receiving {@link ProjectedMesh | mesh} from the #receivingMeshes {@link Map}.
-     * @param mesh - Shadow receiving {@link ProjectedMesh | mesh} to remove.
+     * Remove a shadow receiving {@link Mesh} from the #receivingMeshes {@link Map}.
+     * @param mesh - Shadow receiving {@link Mesh} to remove.
      */
     removeShadowReceivingMesh(mesh) {
       __privateGet$d(this, _receivingMeshes).delete(mesh.uuid);
@@ -11389,8 +11502,8 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
       }
     }
     /**
-     * Remove a {@link ProjectedMesh | mesh} from the shadow map and destroy its depth mesh.
-     * @param mesh - {@link ProjectedMesh | mesh} to remove.
+     * Remove a {@link Mesh} from the shadow map and destroy its depth mesh.
+     * @param mesh - {@link Mesh} to remove.
      */
     removeMesh(mesh) {
       const depthMesh = this.depthMeshes.get(mesh.uuid);
@@ -11405,8 +11518,8 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
     }
     /**
      * If one of the {@link castingMeshes} had its geometry change, update the corresponding depth mesh geometry as well.
-     * @param mesh - Original {@link ProjectedMesh} which geometry just changed.
-     * @param geometry - New {@link ProjectedMesh} {@link Geometry} to use.
+     * @param mesh - Original {@link Mesh} which geometry just changed.
+     * @param geometry - New {@link Mesh} {@link Geometry} to use.
      */
     updateMeshGeometry(mesh, geometry) {
       const depthMesh = this.depthMeshes.get(mesh.uuid);
@@ -12086,8 +12199,8 @@ struct PointShadowVSOutput {
       };
     }
     /**
-     * Patch the given {@link ProjectedMesh | mesh} material parameters to create the depth mesh. Here we'll be adding the first {@link CameraRenderer.pointShadowsCubeFaceBindGroups | renderer pointShadowsCubeFaceBindGroups} bind group containing the face index onto which we'll be drawing. This bind group will be swapped when rendering using {@link renderDepthPass}.
-     * @param mesh - original {@link ProjectedMesh | mesh} to use.
+     * Patch the given {@link Mesh} material parameters to create the depth mesh. Here we'll be adding the first {@link CameraRenderer.pointShadowsCubeFaceBindGroups | renderer pointShadowsCubeFaceBindGroups} bind group containing the face index onto which we'll be drawing. This bind group will be swapped when rendering using {@link renderDepthPass}.
+     * @param mesh - original {@link Mesh} to use.
      * @param parameters - Optional additional parameters to use for the depth mesh.
      * @returns - Patched parameters.
      */
@@ -13258,9 +13371,9 @@ ${this.shaders.compute.head}`;
      * Before actually rendering the scene, update matrix stack and frustum culling checks. Batching these calls greatly improve performance. Called by the {@link renderer} before rendering.
      */
     onBeforeRender() {
-      for (let i = 0, l = this.renderer.meshes.length; i < l; i++) {
-        this.renderer.meshes[i].onBeforeRenderScene();
-      }
+      this.renderer.meshes.forEach((mesh) => {
+        mesh.onBeforeRenderScene();
+      });
       this.renderer.animations.forEach((targetsAnimation) => targetsAnimation.update());
       this.updateMatrixStack();
       this.renderer.animations.forEach((targetsAnimation) => targetsAnimation.onAfterUpdate());
@@ -13674,6 +13787,10 @@ ${this.shaders.compute.head}`;
       this.postProcessingPass?.resize();
       this.renderTargets.forEach((renderTarget) => renderTarget.resize());
       this.renderedObjects.forEach((sceneObject) => sceneObject.restoreContext());
+      this.environmentMaps.forEach((environmentMap) => {
+        environmentMap.computeBRDFLUTTexture();
+        environmentMap.computeFromHDR();
+      });
     }
     /* PIPELINES, SCENE & MAIN RENDER PASS */
     /**
@@ -14008,6 +14125,7 @@ ${this.shaders.compute.head}`;
       this.renderTargets = [];
       this.meshes = [];
       this.textures = [];
+      this.environmentMaps = /* @__PURE__ */ new Map();
       this.renderBundles = /* @__PURE__ */ new Map();
       this.animations = /* @__PURE__ */ new Map();
     }
@@ -14271,6 +14389,7 @@ ${this.shaders.compute.head}`;
     loseContext() {
       super.loseContext();
       this.cameraLightsBindGroup.loseContext();
+      this.pointShadowsCubeFaceBindGroups.forEach((bindGroup) => bindGroup.loseContext());
     }
     /**
      * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored.
@@ -14279,6 +14398,7 @@ ${this.shaders.compute.head}`;
     restoreContext() {
       super.restoreContext();
       this.cameraLightsBindGroup?.restoreContext();
+      this.pointShadowsCubeFaceBindGroups.forEach((bindGroup) => bindGroup.restoreContext());
       this.updateCameraBindings();
     }
     /**
@@ -14927,10 +15047,24 @@ ${this.shaders.compute.head}`;
     loseDevice() {
       this.ready = false;
       this.pipelineManager.resetCurrentPipeline();
+      const usedPipelineEntries = /* @__PURE__ */ new Set();
+      this.deviceRenderedObjects.forEach((object) => {
+        if (object.material && object.material.pipelineEntry) {
+          usedPipelineEntries.add(object.material.pipelineEntry.uuid);
+        }
+      });
+      this.pipelineManager.pipelineEntries = this.pipelineManager.pipelineEntries.filter(
+        (pipelineEntry) => usedPipelineEntries.has(pipelineEntry.uuid)
+      );
       this.samplers.forEach((sampler) => sampler.sampler = null);
       this.renderers.forEach((renderer) => renderer.loseContext());
       this.bindGroupLayouts.clear();
       this.buffers.clear();
+      __privateSet$7(this, _mipsGeneration, {
+        sampler: null,
+        module: null,
+        pipelineByFormat: {}
+      });
     }
     /**
      * Called when the {@link device} should be restored.
@@ -15297,8 +15431,7 @@ ${this.shaders.compute.head}`;
     constructor(renderer, { label = "Indirect buffer", geometries = [], minEntrySize = indirectBufferEntrySize } = {}) {
       __privateAdd$8(this, _IndirectBuffer_instances);
       this.type = "IndirectBuffer";
-      renderer = isRenderer(renderer, this.type);
-      this.renderer = renderer;
+      this.setRenderer(renderer);
       this.uuid = generateUUID();
       this.options = {
         label,
@@ -15309,6 +15442,14 @@ ${this.shaders.compute.head}`;
       this.buffer = null;
       this.addGeometries(geometries);
       this.renderer.indirectBuffers.set(this.uuid, this);
+    }
+    /**
+     * Set or reset this {@link IndirectBuffer} {@link IndirectBuffer.renderer | renderer}.
+     * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
+     */
+    setRenderer(renderer) {
+      renderer = isRenderer(renderer, this.type);
+      this.renderer = renderer;
     }
     /**
      * Get the number of unique {@link Geometry} and {@link IndexedGeometry} added to this {@link IndirectBuffer}.
@@ -16141,7 +16282,7 @@ fn rangeAttenuation(range: f32, distance: f32) -> f32 {
 
 fn getDirectionalLightInfo(directionalLight: DirectionalLightsElement, ptr_light: ptr<function, DirectLight>) {
   (*ptr_light).color = directionalLight.color;
-  (*ptr_light).direction = -directionalLight.direction;
+  (*ptr_light).direction = normalize(-directionalLight.direction);
   (*ptr_light).visible = true;
 }
 
@@ -16185,8 +16326,7 @@ fn getLambertDirect(
   directLight: DirectLight,
   ptr_reflectedLight: ptr<function, ReflectedLight>
 ) {
-  let L = normalize(directLight.direction);
-  let NdotL = saturate(dot(normal, L));
+  let NdotL = saturate(dot(normal, directLight.direction));
   
   let irradiance: vec3f = NdotL * directLight.color;
   (*ptr_reflectedLight).directDiffuse += irradiance * BRDF_Lambert( diffuseColor );
@@ -16345,18 +16485,13 @@ fn BRDF_BlinnPhong(
   shininess: f32,
   directLight: DirectLight
 ) -> vec3f {
-  let L = normalize(directLight.direction);
-  let NdotL = saturate(dot(normalize(normal), L));
-  let H: vec3f = normalize(viewDirection + L);
+  let H: vec3f = normalize(viewDirection + directLight.direction);
   
-  let NdotH: f32 = saturate(dot(normalize(normal), H));
-  let VdotH: f32 = saturate(dot(normalize(viewDirection), H));
-  let NdotV: f32 = saturate(dot(normalize(normal), normalize(viewDirection)));
+  let NdotH: f32 = saturate(dot(normal, H));
+  let VdotH: f32 = saturate(dot(viewDirection, H));
   
   let F: vec3f = F_Schlick(specularColor, 1.0, VdotH);
-  
   let G: f32 = 0.25; // blinn phong implicit
-  
   let D = D_BlinnPhong(shininess, NdotH);
   
   let specular: vec3f = F * G * D;
@@ -16374,8 +16509,7 @@ fn getPhongDirect(
   directLight: DirectLight,
   ptr_reflectedLight: ptr<function, ReflectedLight>
 ) {
-  let L = normalize(directLight.direction);
-  let NdotL = saturate(dot(normalize(normal), L));
+  let NdotL = saturate(dot(normal, directLight.direction));
   
   let irradiance: vec3f = NdotL * directLight.color;
   (*ptr_reflectedLight).directDiffuse += irradiance * BRDF_Lambert( diffuseColor );
@@ -16492,7 +16626,7 @@ fn RE_IndirectSpecular(
     /* wgsl */
     `
 fn getVolumeTransmissionRay(normal: vec3f, viewDirection: vec3f, thickness: f32, ior: f32, modelScale: vec3f) -> vec3f {
-  let refractionVector = refract(-viewDirection, normalize(normal), 1.0 / ior);    
+  let refractionVector = refract(-viewDirection, normal, 1.0 / ior);    
   return normalize(refractionVector) * thickness * modelScale;
 }
 
@@ -16711,14 +16845,11 @@ fn getPBRDirect(
   directLight: DirectLight,
   ptr_reflectedLight: ptr<function, ReflectedLight>
 ) {
-  let N: vec3f = normalize(normal);
-  let L: vec3f = normalize(directLight.direction);
-  let V: vec3f = normalize(viewDirection);
-  let H: vec3f = normalize(V + L);
-  let NdotV: f32 = saturate(dot(N, V));
-  let NdotL: f32 = saturate(dot(N, L));
-  let NdotH: f32 = saturate(dot(N, H));
-  let VdotH: f32 = saturate(dot(V, H));
+  let H: vec3f = normalize(viewDirection + directLight.direction);
+  let NdotV: f32 = saturate(dot(normal, viewDirection));
+  let NdotL: f32 = saturate(dot(normal, directLight.direction));
+  let NdotH: f32 = saturate(dot(normal, H));
+  let VdotH: f32 = saturate(dot(viewDirection, H));
 
   let irradiance: vec3f = NdotL * directLight.color;
   let ggx: vec3f = BRDF_GGX(NdotV, NdotL, NdotH, VdotH, roughness, specularFactor, specularColor);
@@ -16911,7 +17042,7 @@ fn getPBRDirect(
   
   reflectedLight.indirectDiffuse *= occlusion;
   
-  let NdotV: f32 = saturate(dot(geometryNormal, normalize(viewDirection)));
+  let NdotV: f32 = saturate(dot(geometryNormal, viewDirection));
   reflectedLight.indirectSpecular *= computeSpecularOcclusion(NdotV, occlusion, roughness);
   
   var totalDiffuse: vec3f = reflectedLight.indirectDiffuse + reflectedLight.directDiffuse;
@@ -17104,8 +17235,6 @@ ${getVertexOutputStruct({ geometry, additionalVaryings })}
   
   ${getVertexTransformedPositionNormal({ bindings, geometry })}
   
-  
-  
   ${getVertexOutput({ geometry })}
   
   // user defined additional contribution
@@ -17185,7 +17314,7 @@ struct FSInput {
     attributeVars += /* wgsl */
     `
   let worldPosition: vec3f = fsInput.worldPosition;
-  let viewDirection: vec3f = fsInput.viewDirection;
+  let viewDirection: vec3f = normalize(fsInput.viewDirection);
   let modelScale: vec3f = fsInput.modelScale;
   `;
     attributeVars += additionalVaryings.map((attribute) => {
@@ -17892,9 +18021,7 @@ fn getIBLGGXFresnel(
 ) -> IBLGGXFresnel {
   var iBLGGXFresnel: IBLGGXFresnel;
   
-  let N: vec3f = normalize(normal);
-  let V: vec3f = normalize(viewDirection);
-  let NdotV: f32 = saturate(dot(N, V));
+  let NdotV: f32 = saturate(dot(normal, viewDirection));
   
   let brdfSamplePoint: vec2f = saturate(vec2(NdotV, roughness));
   
@@ -17954,8 +18081,8 @@ fn getIBLIndirectRadiance(
   envRotation: mat3x3f,
   envSpecularIntensity: f32,
 )-> vec3f {
-  let N: vec3f = normalize(normal);
-  let V: vec3f = normalize(viewDirection);
+  let N: vec3f = normal;
+  let V: vec3f = viewDirection;
   let NdotV: f32 = saturate(dot(N, V));
 
   let reflection: vec3f = normalize(reflect(-V, N));
@@ -18208,7 +18335,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       /** function assigned to the {@link onAfterDOMElementResize} callback */
       this._onAfterDOMElementResizeCallback = () => {
       };
-      renderer = isCurtainsRenderer(renderer, "DOM3DObject");
+      renderer = isCurtainsRenderer(renderer, "DOMObject3D");
       this.renderer = renderer;
       this.size = {
         shouldUpdate: true,
@@ -18229,6 +18356,20 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       this.boundingBox.min.onChange(() => this.shouldUpdateComputedSizes());
       this.boundingBox.max.onChange(() => this.shouldUpdateComputedSizes());
       this.setDOMElement(element);
+      this.renderer.domObjects.push(this);
+    }
+    /**
+     * Set or reset this {@link DOMObject3D} {@link DOMObject3D.renderer | renderer}.
+     * @param renderer - New {@link GPUCurtainsRenderer} or {@link GPUCurtains} instance to use.
+     */
+    setRenderer(renderer) {
+      if (this.renderer) {
+        this.renderer.domObjects = this.renderer.domObjects.filter(
+          (object) => object.object3DIndex !== this.object3DIndex
+        );
+      }
+      renderer = isCurtainsRenderer(renderer, "DOMObject3D");
+      this.renderer = renderer;
       this.renderer.domObjects.push(this);
     }
     /**
@@ -18535,6 +18676,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
      */
     destroy() {
       super.destroy();
+      this.renderer.domObjects = this.renderer.domObjects.filter((object) => object.object3DIndex !== this.object3DIndex);
       this.domElement?.destroy();
     }
   }
@@ -18572,6 +18714,19 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       this.autoloadSources = autoloadSources;
       this.sourcesReady = false;
       this.setInitSources();
+    }
+    /**
+     * Set or reset this {@link DOMMesh} {@link DOMMesh.renderer | renderer}.
+     * @param renderer - New {@link GPUCurtainsRenderer} or {@link GPUCurtains} instance to use.
+     */
+    setRenderer(renderer) {
+      if (this.renderer) {
+        this.renderer.domMeshes = this.renderer.domMeshes.filter((m) => m.uuid !== this.uuid);
+      }
+      renderer = isCurtainsRenderer(renderer, this.options.label + " DOMMesh");
+      super.setRenderer(renderer);
+      this.renderer = renderer;
+      this.renderer.domMeshes.push(this);
     }
     /**
      * Get/set whether our {@link material} and {@link geometry} are ready.
@@ -18616,9 +18771,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
     removeFromScene(removeFromRenderer = false) {
       super.removeFromScene(removeFromRenderer);
       if (removeFromRenderer) {
-        this.renderer.domMeshes = this.renderer.domMeshes.filter(
-          (m) => m.uuid !== this.uuid
-        );
+        this.renderer.domMeshes = this.renderer.domMeshes.filter((m) => m.uuid !== this.uuid);
       }
     }
     /**
@@ -20318,7 +20471,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
   var __privateAdd$3 = (obj, member, value) => member.has(obj) ? __typeError$3("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   var __privateSet$3 = (obj, member, value, setter) => (__accessCheck$3(obj, member, "write to private field"), member.set(obj, value), value);
   var __privateMethod$3 = (obj, member, method) => (__accessCheck$3(obj, member, "access private method"), method);
-  var _lutStorageTexture, _EnvironmentMap_instances, runComputePass_fn;
+  var _hdrData, _lutStorageTexture, _EnvironmentMap_instances, runComputePass_fn;
   class EnvironmentMap {
     /**
      * {@link EnvironmentMap} constructor.
@@ -20327,14 +20480,16 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
      */
     constructor(renderer, params = {}) {
       __privateAdd$3(this, _EnvironmentMap_instances);
+      /** Parsed {@link HDRImageData} from the {@link HDRLoader} if any. */
+      __privateAdd$3(this, _hdrData);
       /** BRDF GGX LUT storage {@link Texture} used in the compute shader. */
       __privateAdd$3(this, _lutStorageTexture);
       // callbacks / events
       /** function assigned to the {@link onRotationAxisChanged} callback */
       this._onRotationAxisChangedCallback = () => {
       };
-      renderer = isRenderer(renderer, "EnvironmentMap");
-      this.renderer = renderer;
+      this.uuid = generateUUID();
+      this.setRenderer(renderer);
       params = {
         ...{
           lutTextureParams: {
@@ -20375,7 +20530,21 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
       });
       this.rotationMatrix = new Mat3().rotateByAngleY(-Math.PI / 2);
       this.hdrLoader = new HDRLoader();
+      this.createLUTTextures();
+      this.createSpecularDiffuseTextures();
       this.computeBRDFLUTTexture();
+    }
+    /**
+     * Set or reset this {@link EnvironmentMap} {@link EnvironmentMap.renderer | renderer}.
+     * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
+     */
+    setRenderer(renderer) {
+      if (this.renderer) {
+        this.renderer.environmentMaps.delete(this.uuid);
+      }
+      renderer = isRenderer(renderer, "EnvironmentMap");
+      this.renderer = renderer;
+      this.renderer.environmentMaps.set(this.uuid, this);
     }
     /**
      * Get the current {@link EnvironmentMapOptions.rotation | rotation}, in radians.
@@ -20405,9 +20574,9 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
       return this;
     }
     /**
-     * Create the {@link lutTexture | BRDF GGX LUT texture} using the provided {@link LUTTextureParams | LUT texture options} and a {@link ComputePass} that runs once.
+     * Create our {@link lutTexture} eagerly.
      */
-    async computeBRDFLUTTexture() {
+    createLUTTextures() {
       const { size, computeSampleCount, ...lutTextureParams } = this.options.lutTextureParams;
       __privateSet$3(this, _lutStorageTexture, new Texture(this.renderer, {
         label: "LUT storage texture",
@@ -20432,6 +20601,61 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         autoDestroy: false,
         fromTexture: __privateGet$3(this, _lutStorageTexture)
       });
+    }
+    /**
+     * Create our {@link specularTexture} and {@link diffuseTexture} eagerly. They could be resized later when calling the {@link computeFromHDR} method.
+     */
+    createSpecularDiffuseTextures() {
+      const textureDefaultOptions = {
+        viewDimension: "cube",
+        autoDestroy: false
+        // keep alive when changing mesh
+      };
+      this.specularTexture = new Texture(this.renderer, {
+        ...this.options.specularTextureParams,
+        ...{
+          visibility: ["fragment", "compute"],
+          // could be resized later
+          fixedSize: {
+            width: 256,
+            height: 256
+          }
+        },
+        ...textureDefaultOptions
+      });
+      const { size, computeSampleCount, ...diffuseTextureParams } = this.options.diffuseTextureParams;
+      this.diffuseTexture = new Texture(this.renderer, {
+        ...diffuseTextureParams,
+        ...{
+          visibility: ["fragment"],
+          // could be resized later
+          fixedSize: {
+            width: size,
+            height: size
+          }
+        },
+        ...textureDefaultOptions
+      });
+    }
+    /**
+     * Create the {@link lutTexture | BRDF GGX LUT texture} using the provided {@link LUTTextureParams | LUT texture options} and a {@link ComputePass} that runs once.
+     */
+    async computeBRDFLUTTexture() {
+      let cachedLUT = null;
+      for (const renderer of this.renderer.deviceManager.renderers) {
+        for (const [uuid, envMap] of renderer.environmentMaps) {
+          if (uuid !== this.uuid && envMap.lutTexture && envMap.lutTexture.size.width === this.lutTexture.size.width) {
+            cachedLUT = envMap.lutTexture;
+            break;
+          }
+        }
+        if (cachedLUT) break;
+      }
+      if (cachedLUT) {
+        this.lutTexture.copy(cachedLUT);
+        return;
+      }
+      const { computeSampleCount } = this.options.lutTextureParams;
       let computeLUTPass = new ComputePass(this.renderer, {
         label: "Compute LUT texture",
         autoRender: false,
@@ -20460,7 +20684,8 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
       });
       await computeLUTPass.material.compileMaterial();
       __privateMethod$3(this, _EnvironmentMap_instances, runComputePass_fn).call(this, { computePass: computeLUTPass, label: "Compute LUT texture command encoder" });
-      computeLUTPass.destroy();
+      this.lutTexture.textureBinding.resource = this.lutTexture.texture;
+      computeLUTPass.remove();
       computeLUTPass = null;
     }
     /**
@@ -20522,9 +20747,10 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         label: "Compute specular cube map command encoder",
         onAfterCompute: (commandEncoder) => {
           this.renderer.copyGPUTextureToTexture(cubeStorageTexture.texture, this.specularTexture, commandEncoder);
+          this.specularTexture.textureBinding.resource = this.specularTexture.texture;
         }
       });
-      computeCubeMapPass.destroy();
+      computeCubeMapPass.remove();
       cubeStorageTexture.destroy();
       cubeStorageTexture = null;
       computeCubeMapPass = null;
@@ -20590,68 +20816,46 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         label: "Compute diffuse cube map from specular cube map command encoder",
         onAfterCompute: (commandEncoder) => {
           this.renderer.copyGPUTextureToTexture(diffuseStorageTexture.texture, this.diffuseTexture, commandEncoder);
+          this.diffuseTexture.textureBinding.resource = this.diffuseTexture.texture;
         }
       });
-      computeDiffusePass.destroy();
+      computeDiffusePass.remove();
       diffuseStorageTexture.destroy();
       diffuseStorageTexture = null;
       computeDiffusePass = null;
     }
     /**
-     * Load an HDR environment map and then generates the {@link specularTexture} and {@link diffuseTexture} using two separate {@link ComputePass}.
+     * Load an HDR environment map and then generate the {@link specularTexture} and {@link diffuseTexture} using two separate {@link ComputePass}.
      * @param url - The url of the .hdr file to load.
      */
     async loadAndComputeFromHDR(url) {
-      const parsedHdr = await this.hdrLoader.loadFromUrl(url);
-      const { width, height } = parsedHdr ? parsedHdr : { width: 1024, height: 512 };
+      __privateSet$3(this, _hdrData, await this.hdrLoader.loadFromUrl(url));
+      const { width, height } = __privateGet$3(this, _hdrData) ? __privateGet$3(this, _hdrData) : { width: 1024, height: 512 };
       const faceSize = Math.max(width / 4, height / 2);
-      const textureDefaultOptions = {
-        viewDimension: "cube",
-        autoDestroy: false
-        // keep alive when changing mesh
-      };
-      if (!this.specularTexture) {
-        this.specularTexture = new Texture(this.renderer, {
-          ...this.options.specularTextureParams,
-          ...{
-            visibility: ["fragment", "compute"],
-            fixedSize: {
-              width: faceSize,
-              height: faceSize
-            }
-          },
-          ...textureDefaultOptions
-        });
-      } else if (this.specularTexture.size.width !== faceSize || this.specularTexture.size.height !== faceSize) {
+      if (this.specularTexture.size.width !== faceSize || this.specularTexture.size.height !== faceSize) {
         this.specularTexture.options.fixedSize.width = faceSize;
         this.specularTexture.options.fixedSize.height = faceSize;
         this.specularTexture.size.width = faceSize;
         this.specularTexture.size.height = faceSize;
         this.specularTexture.createTexture();
       }
-      const { size, computeSampleCount, ...diffuseTextureParams } = this.options.diffuseTextureParams;
+      const { size } = this.options.diffuseTextureParams;
       const diffuseSize = Math.min(size, faceSize);
-      if (!this.diffuseTexture) {
-        this.diffuseTexture = new Texture(this.renderer, {
-          ...diffuseTextureParams,
-          ...{
-            visibility: ["fragment"],
-            fixedSize: {
-              width: diffuseSize,
-              height: diffuseSize
-            }
-          },
-          ...textureDefaultOptions
-        });
-      } else if (this.diffuseTexture.size.width !== diffuseSize || this.diffuseTexture.size.height !== diffuseSize) {
+      if (this.diffuseTexture.size.width !== diffuseSize || this.diffuseTexture.size.height !== diffuseSize) {
         this.diffuseTexture.options.fixedSize.width = diffuseSize;
         this.diffuseTexture.options.fixedSize.height = diffuseSize;
         this.diffuseTexture.size.width = diffuseSize;
         this.diffuseTexture.size.height = diffuseSize;
         this.diffuseTexture.createTexture();
       }
-      if (parsedHdr) {
-        this.computeSpecularCubemapFromHDRData(parsedHdr).then(() => {
+      this.computeFromHDR();
+    }
+    /**
+     * Generate the {@link specularTexture} and {@link diffuseTexture} using two separate {@link ComputePass}.
+     */
+    computeFromHDR() {
+      if (__privateGet$3(this, _hdrData)) {
+        this.computeSpecularCubemapFromHDRData(__privateGet$3(this, _hdrData)).then(() => {
           this.computeDiffuseFromSpecular();
         });
       }
@@ -20660,12 +20864,13 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
      * Destroy the {@link EnvironmentMap} and its associated textures.
      */
     destroy() {
-      this.lutTexture?.destroy();
       this.diffuseTexture?.destroy();
       this.specularTexture?.destroy();
+      this.lutTexture?.destroy();
       __privateGet$3(this, _lutStorageTexture).destroy();
     }
   }
+  _hdrData = new WeakMap();
   _lutStorageTexture = new WeakMap();
   _EnvironmentMap_instances = new WeakSet();
   /**
@@ -21381,9 +21586,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
       /** @ignore */
       __privateAdd$2(this, _n2);
       this.type = "Raycaster";
-      renderer = isCameraRenderer(renderer, this.type);
-      this.renderer = renderer;
-      this.camera = this.renderer.camera;
+      this.setRenderer(renderer);
       this.pointer = new Vec2(Infinity);
       this.ray = {
         origin: new Vec3(),
@@ -21404,6 +21607,15 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
       __privateSet$2(this, _n0, new Vec3());
       __privateSet$2(this, _n1, new Vec3());
       __privateSet$2(this, _n2, new Vec3());
+    }
+    /**
+     * Set or reset this {@link Raycaster} {@link Raycaster.renderer | renderer}.
+     * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
+     */
+    setRenderer(renderer) {
+      renderer = isCameraRenderer(renderer, this.type);
+      this.renderer = renderer;
+      this.camera = this.renderer.camera;
     }
     /**
      * Set the {@link pointer} normalized device coordinates values (in the [-1, 1] range) based on a mouse/pointer/touch event and the {@link CameraRenderer#boundingRect | renderer bounding rectangle}. Useful if the canvas has a fixed position for example, but you might need to directly use {@link setFromNDCCoords} if not.

@@ -112,9 +112,8 @@ export class BindGroup {
   ) {
     this.type = 'BindGroup'
 
-    renderer = isRenderer(renderer, this.type)
+    this.setRenderer(renderer)
 
-    this.renderer = renderer
     this.options = {
       label,
       index,
@@ -159,6 +158,15 @@ export class BindGroup {
     }
 
     this.renderer.addBindGroup(this)
+  }
+
+  /**
+   * Set or reset this {@link BindGroup} {@link BindGroup.renderer | renderer}.
+   * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
+   */
+  setRenderer(renderer: Renderer | GPUCurtains) {
+    renderer = isRenderer(renderer, this.type)
+    this.renderer = renderer
   }
 
   /**

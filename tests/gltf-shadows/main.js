@@ -82,7 +82,7 @@ window.addEventListener('load', async () => {
     diffuseIntensity: 0.25,
     specularIntensity: 0.25,
   })
-  await environmentMap.loadAndComputeFromHDR(currentEnvMap.url)
+  environmentMap.loadAndComputeFromHDR(currentEnvMap.url)
 
   let shadingModel = 'PBR' // 'PBR', 'Phong' or 'Lambert'
 

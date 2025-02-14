@@ -67,7 +67,7 @@ class Shadow {
     __privateAdd(this, _isActive);
     /** @ignore */
     __privateAdd(this, _autoRender);
-    /** Map of all the shadow receiving {@link ProjectedMesh | meshes}. */
+    /** Map of all the shadow receiving {@link Mesh}. */
     __privateAdd(this, _receivingMeshes);
     this.setRenderer(renderer);
     this.light = light;
@@ -94,15 +94,11 @@ class Shadow {
    */
   setRenderer(renderer) {
     const oldRenderer = this.renderer;
-    if (oldRenderer && this.depthPassTarget) {
-      this.depthPassTarget.removeFromScene();
-    }
     renderer = isCameraRenderer(renderer, this.constructor.name);
     this.renderer = renderer;
     this.setRendererBinding();
     if (this.depthPassTarget) {
-      this.depthPassTarget.renderer = this.renderer;
-      this.depthPassTarget.addToScene();
+      this.depthPassTarget.setRenderer(this.renderer);
     }
     this.depthMeshes?.forEach((depthMesh) => {
       depthMesh.setRenderer(this.renderer);
@@ -432,8 +428,8 @@ class Shadow {
     return false;
   }
   /**
-   * Patch the given {@link ProjectedMesh | mesh} material parameters to create the depth mesh.
-   * @param mesh - original {@link ProjectedMesh | mesh} to use.
+   * Patch the given {@link Mesh | mesh} material parameters to create the depth mesh.
+   * @param mesh - original {@link Mesh | mesh} to use.
    * @param parameters - Optional additional parameters to use for the depth mesh.
    * @returns - Patched parameters.
    */
@@ -463,11 +459,11 @@ class Shadow {
     return parameters;
   }
   /**
-   * Add a {@link ProjectedMesh | mesh} to the shadow map. Internally called by the {@link ProjectedMesh | mesh} if its `castShadows` parameters has been set to `true`, but can also be called externally to selectively cast shadows or to add specific parameters (such as custom depth pass shaders).
+   * Add a {@link Mesh} to the shadow map. Internally called by the {@link Mesh} if its `castShadows` parameters has been set to `true`, but can also be called externally to selectively cast shadows or to add specific parameters (such as custom depth pass shaders).
    * - {@link patchShadowCastingMeshParams | Patch} the parameters.
    * - Create a new depth {@link Mesh} with the patched parameters.
-   * - Add the {@link ProjectedMesh | mesh} to the {@link castingMeshes} Map.
-   * @param mesh - {@link ProjectedMesh | mesh} to add to the shadow map.
+   * - Add the {@link Mesh} to the {@link castingMeshes} Map.
+   * @param mesh - {@link Mesh} to add to the shadow map.
    * @param parameters - Optional {@link RenderMaterialParams | parameters} to use for the depth mesh.
    */
   addShadowCastingMesh(mesh, parameters = {}) {
@@ -494,15 +490,15 @@ class Shadow {
     this.castingMeshes.set(mesh.uuid, mesh);
   }
   /**
-   * Add a shadow receiving {@link ProjectedMesh | mesh} to the #receivingMeshes {@link Map}.
-   * @param mesh - Shadow receiving {@link ProjectedMesh | mesh} to add.
+   * Add a shadow receiving {@link Mesh} to the #receivingMeshes {@link Map}.
+   * @param mesh - Shadow receiving {@link Mesh} to add.
    */
   addShadowReceivingMesh(mesh) {
     __privateGet(this, _receivingMeshes).set(mesh.uuid, mesh);
   }
   /**
-   * Remove a shadow receiving {@link ProjectedMesh | mesh} from the #receivingMeshes {@link Map}.
-   * @param mesh - Shadow receiving {@link ProjectedMesh | mesh} to remove.
+   * Remove a shadow receiving {@link Mesh} from the #receivingMeshes {@link Map}.
+   * @param mesh - Shadow receiving {@link Mesh} to remove.
    */
   removeShadowReceivingMesh(mesh) {
     __privateGet(this, _receivingMeshes).delete(mesh.uuid);
@@ -511,8 +507,8 @@ class Shadow {
     }
   }
   /**
-   * Remove a {@link ProjectedMesh | mesh} from the shadow map and destroy its depth mesh.
-   * @param mesh - {@link ProjectedMesh | mesh} to remove.
+   * Remove a {@link Mesh} from the shadow map and destroy its depth mesh.
+   * @param mesh - {@link Mesh} to remove.
    */
   removeMesh(mesh) {
     const depthMesh = this.depthMeshes.get(mesh.uuid);
@@ -527,8 +523,8 @@ class Shadow {
   }
   /**
    * If one of the {@link castingMeshes} had its geometry change, update the corresponding depth mesh geometry as well.
-   * @param mesh - Original {@link ProjectedMesh} which geometry just changed.
-   * @param geometry - New {@link ProjectedMesh} {@link Geometry} to use.
+   * @param mesh - Original {@link Mesh} which geometry just changed.
+   * @param geometry - New {@link Mesh} {@link Geometry} to use.
    */
   updateMeshGeometry(mesh, geometry) {
     const depthMesh = this.depthMeshes.get(mesh.uuid);

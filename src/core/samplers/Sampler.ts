@@ -86,12 +86,9 @@ export class Sampler {
   ) {
     this.type = 'Sampler'
     this.uuid = generateUUID()
-
-    renderer = isRenderer(renderer, label ? label + ' ' + this.type : this.type)
-
-    this.renderer = renderer
-
     this.label = label
+
+    this.setRenderer(renderer)
 
     if (!name && !this.renderer.production) {
       name = 'sampler' + this.renderer.samplers.length
@@ -115,6 +112,15 @@ export class Sampler {
 
     this.createSampler()
     this.createBinding()
+  }
+
+  /**
+   * Set or reset this {@link Sampler} {@link Sampler.renderer | renderer}.
+   * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
+   */
+  setRenderer(renderer: GPUCurtains | Renderer) {
+    renderer = isRenderer(renderer, this.label + ' ' + this.type)
+    this.renderer = renderer
   }
 
   /**

@@ -153,10 +153,24 @@ class GPUDeviceManager {
   loseDevice() {
     this.ready = false;
     this.pipelineManager.resetCurrentPipeline();
+    const usedPipelineEntries = /* @__PURE__ */ new Set();
+    this.deviceRenderedObjects.forEach((object) => {
+      if (object.material && object.material.pipelineEntry) {
+        usedPipelineEntries.add(object.material.pipelineEntry.uuid);
+      }
+    });
+    this.pipelineManager.pipelineEntries = this.pipelineManager.pipelineEntries.filter(
+      (pipelineEntry) => usedPipelineEntries.has(pipelineEntry.uuid)
+    );
     this.samplers.forEach((sampler) => sampler.sampler = null);
     this.renderers.forEach((renderer) => renderer.loseContext());
     this.bindGroupLayouts.clear();
     this.buffers.clear();
+    __privateSet(this, _mipsGeneration, {
+      sampler: null,
+      module: null,
+      pipelineByFormat: {}
+    });
   }
   /**
    * Called when the {@link device} should be restored.

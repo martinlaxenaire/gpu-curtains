@@ -85,7 +85,7 @@ export const getPBRShading = ({
   
   reflectedLight.indirectDiffuse *= occlusion;
   
-  let NdotV: f32 = saturate(dot(geometryNormal, normalize(viewDirection)));
+  let NdotV: f32 = saturate(dot(geometryNormal, viewDirection));
   reflectedLight.indirectSpecular *= computeSpecularOcclusion(NdotV, occlusion, roughness);
   
   var totalDiffuse: vec3f = reflectedLight.indirectDiffuse + reflectedLight.directDiffuse;

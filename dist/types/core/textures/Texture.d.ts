@@ -74,6 +74,11 @@ export declare class Texture {
      */
     constructor(renderer: Renderer | GPUCurtains, parameters?: TextureParams);
     /**
+     * Reset this {@link Texture} {@link Texture.renderer | renderer}, and resize it if needed.
+     * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
+     */
+    setRenderer(renderer: Renderer | GPUCurtains): void;
+    /**
      * Set our {@link Texture#bindings | bindings}.
      */
     setBindings(): void;

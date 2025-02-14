@@ -1,15 +1,15 @@
 import { generateUUID, throwWarning } from '../../../utils/utils'
 import { isRenderer, Renderer } from '../../renderers/utils'
+import type { Material } from '../../materials/Material'
 import { RenderMaterial } from '../../materials/RenderMaterial'
+import { AllowedGeometries, RenderMaterialParams, ShaderOptions } from '../../../types/Materials'
 import { Geometry } from '../../geometries/Geometry'
 import { Texture, TextureParams } from '../../textures/Texture'
 import { SceneObjectTextureOptions } from '../../../types/Textures'
 import { RenderTarget } from '../../renderPasses/RenderTarget'
 import { GPUCurtains } from '../../../curtains/GPUCurtains'
 import { ProjectedMesh, SceneStackedMesh } from '../../renderers/GPURenderer'
-import { Material } from '../../materials/Material'
 import { DOMElementBoundingRect } from '../../DOM/DOMElement'
-import { AllowedGeometries, RenderMaterialParams, ShaderOptions } from '../../../types/Materials'
 import { ProjectedMeshBaseClass } from './ProjectedMeshBaseMixin'
 import { getDefaultVertexShaderCode } from '../../shaders/full/vertex/get-default-vertex-shader-code'
 import { getDefaultFragmentCode } from '../../shaders/full/fragment/get-default-fragment-code'
@@ -516,7 +516,6 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       Object.defineProperty(this as MeshBase, 'index', { value: meshIndex++ })
 
       renderer = isRenderer(renderer, parameters.label ? parameters.label + ' ' + this.type : this.type)
-
       this.renderer = renderer
 
       const {
@@ -1203,7 +1202,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
 
       this.setGeometry()
 
-      if (this.visible) {
+      if (this.visible && this.ready) {
         this._onRenderCallback && this._onRenderCallback()
       }
 

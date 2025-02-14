@@ -1,4 +1,12 @@
-import { BoxGeometry, GPUCameraRenderer, GPUDeviceManager, Mesh, Object3D, Vec3 } from '../../dist/esm/index.mjs'
+import {
+  BoxGeometry,
+  GPUCameraRenderer,
+  GPUDeviceManager,
+  MediaTexture,
+  Mesh,
+  Object3D,
+  Vec3,
+} from '../../dist/esm/index.mjs'
 
 window.addEventListener('load', async () => {
   const systemSize = 15
@@ -21,7 +29,7 @@ window.addEventListener('load', async () => {
     container: document.querySelector('#canvas-front'),
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
     camera: {
-      near: 0,
+      near: 0.1,
       far: systemSize * 6,
     },
   })
@@ -32,7 +40,7 @@ window.addEventListener('load', async () => {
     container: document.querySelector('#canvas-back'),
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
     camera: {
-      near: 0,
+      near: 0.1,
       far: systemSize * 6,
     },
   })
@@ -40,7 +48,35 @@ window.addEventListener('load', async () => {
   gpuFrontCameraRenderer.camera.position.z = systemSize * 3
   gpuBackCameraRenderer.camera.position.z = systemSize * 3
 
+  const texturedFragmentShader = /* wgsl */ `
+    struct VSOutput {
+      @builtin(position) position: vec4f,
+      @location(0) uv: vec2f,
+    };
+    
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {      
+      return textureSample(meshTexture, defaultSampler, fsInput.uv);
+    }
+  `
+
   for (let i = 0; i < 15; i++) {
+    // just so you can see that we can update a mesh renderer
+    // even if it has textures
+    // everything's handled internally!
+    const useTexture = Math.random() > 0.5
+
+    let texture = null
+
+    if (useTexture) {
+      texture = new MediaTexture(gpuBackCameraRenderer, {
+        label: 'Mesh texture',
+        name: 'meshTexture',
+        placeholderColor: Math.random() > 0.5 ? [0, 255, 255, 255] : [255, 0, 255, 255],
+      })
+
+      texture.loadImage('https://picsum.photos/720/720?random=' + i)
+    }
+
     // create a different pivot for each satellite
     const pivot = new Object3D()
     // set back renderer scene as default parent
@@ -56,14 +92,23 @@ window.addEventListener('load', async () => {
     const cubeMesh = new Mesh(gpuBackCameraRenderer, {
       label: 'Cube ' + i,
       geometry: new BoxGeometry(),
+      ...(useTexture && {
+        textures: [texture],
+        shaders: {
+          fragment: {
+            code: texturedFragmentShader,
+          },
+        },
+      }),
     })
 
     // now add the satellite to our pivot
     cubeMesh.parent = pivot
 
+    cubeMesh.scale.set(1.5)
+
     // random distance
-    const distance = systemSize * 0.375 + Math.random() * systemSize * 0.625
-    cubeMesh.position.x = distance
+    cubeMesh.position.x = systemSize * 0.625 + Math.random() * systemSize * 0.5
 
     // random rotationMatrix speed
     const rotationSpeed = new Vec3(
@@ -77,36 +122,36 @@ window.addEventListener('load', async () => {
     cubeMesh.worldMatrix.getTranslation(currentWorldPosition)
     const lastWorldPosition = currentWorldPosition.clone()
 
-    cubeMesh.onAfterRender(() => {
-      // we're using onAfterRender here on purpose:
-      // to avoid flickering when updating a mesh renderer
+    cubeMesh
+      .onBeforeRender(() => {
+        cubeMesh.rotation.x += rotationSpeed.x
+        cubeMesh.rotation.z += rotationSpeed.y
 
-      // update current world position
-      cubeMesh.worldMatrix.getTranslation(currentWorldPosition)
+        // rotate the pivot
+        pivot.rotation.y += rotationSpeed.z
+      })
+      .onAfterRender(() => {
+        // we're using onAfterRender here to have fresh translations
+        // after the scene has updated the matrix stack
 
-      cubeMesh.rotation.x += rotationSpeed.x
-      cubeMesh.rotation.z += rotationSpeed.y
+        // update current world position
+        cubeMesh.worldMatrix.getTranslation(currentWorldPosition)
 
-      // rotate the pivot
-      pivot.rotation.y += rotationSpeed.z
+        // switching renderers at runtime based on depth position!
+        if (lastWorldPosition.z <= 0 && currentWorldPosition.z > 0) {
+          cubeMesh.setRenderer(gpuFrontCameraRenderer)
+          // update the mesh pivot parent as well
+          pivot.parent = gpuFrontCameraRenderer.scene
+        }
 
-      // switching renderers at runtime based on depth position!
-      if (lastWorldPosition.z <= 0 && currentWorldPosition.z > 0) {
-        cubeMesh.setRenderer(gpuFrontCameraRenderer)
-        // theoritically we should update the mesh pivot parent as well
-        // but since the scenes matrix are the same, no point in doing that
-        // pivot.parent = gpuFrontCameraRenderer.scene
-      }
+        if (lastWorldPosition.z >= 0 && currentWorldPosition.z < 0) {
+          cubeMesh.setRenderer(gpuBackCameraRenderer)
+          // update the mesh pivot parent as well
+          pivot.parent = gpuBackCameraRenderer.scene
+        }
 
-      if (lastWorldPosition.z >= 0 && currentWorldPosition.z < 0) {
-        cubeMesh.setRenderer(gpuBackCameraRenderer)
-        // theoritically we should update the mesh pivot parent as well
-        // but since the scenes matrix are the same, no point in doing that
-        // pivot.parent = gpuBackCameraRenderer.scene
-      }
-
-      // update last world position for next render depth comparison
-      cubeMesh.worldMatrix.getTranslation(lastWorldPosition)
-    })
+        // update last world position for next render depth comparison
+        cubeMesh.worldMatrix.getTranslation(lastWorldPosition)
+      })
   }
 })

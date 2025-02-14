@@ -24,6 +24,7 @@ import { RenderBundle } from '../renderPasses/RenderBundle'
 import { IndirectBuffer } from '../../extras/buffers/IndirectBuffer'
 import { TargetsAnimationsManager } from '../../extras/animations/TargetsAnimationsManager'
 import { MediaTexture } from '../textures/MediaTexture'
+import { EnvironmentMap } from '../../extras/environmentMap/EnvironmentMap'
 
 /** Options used to configure the renderer canvas context. If not specified, `format` will be set with `GPU.getPreferredCanvasFormat()` and `alphaMode` with `premultiplied`. */
 export interface GPURendererContextOptions extends Omit<GPUCanvasConfiguration, 'device' | 'usage'> {}
@@ -135,6 +136,8 @@ export class GPURenderer {
   meshes: SceneStackedMesh[]
   /** An array containing all our created {@link Texture} */
   textures: Array<Texture | MediaTexture>
+  /** A {@link Map} containing all the {@link EnvironmentMap} handled by this renderer. */
+  environmentMaps: Map<EnvironmentMap['uuid'], EnvironmentMap>
   /** A {@link Map} containing all the {@link RenderBundle} handled by this renderer. */
   renderBundles: Map<RenderBundle['uuid'], RenderBundle>
   /** A {@link Map} containing all the {@link TargetsAnimationsManager} handled by this renderer. */
@@ -540,6 +543,12 @@ export class GPURenderer {
 
     // restore context of all our scene objects
     this.renderedObjects.forEach((sceneObject) => sceneObject.restoreContext())
+
+    // re-compute environment maps
+    this.environmentMaps.forEach((environmentMap) => {
+      environmentMap.computeBRDFLUTTexture()
+      environmentMap.computeFromHDR()
+    })
   }
 
   /* PIPELINES, SCENE & MAIN RENDER PASS */
@@ -938,6 +947,7 @@ export class GPURenderer {
     this.renderTargets = []
     this.meshes = []
     this.textures = []
+    this.environmentMaps = new Map()
     this.renderBundles = new Map()
     this.animations = new Map()
   }

@@ -117,6 +117,41 @@ export class TextureBindGroup extends BindGroup {
   }
 
   /**
+   * Set or reset this {@link TextureBindGroup} {@link TextureBindGroup.renderer | renderer}, and update the {@link samplers} and {@link textures} renderer as well.
+   * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
+   */
+  setRenderer(renderer: Renderer | GPUCurtains) {
+    // shadow texture renderer switching need to be done by the shadow class itself
+    // so get old renderer shadow textures to be sure we won't switch them here accidentally
+    const shadowTextures = new Set()
+    if (this.renderer && 'shadowCastingLights' in this.renderer) {
+      this.renderer.shadowCastingLights.forEach((light) => {
+        if (light.shadow.isActive && light.shadow.depthTexture) {
+          shadowTextures.add(light.shadow.depthTexture.uuid)
+        }
+      })
+    }
+
+    super.setRenderer(renderer)
+
+    if (this.options && this.samplers) {
+      this.samplers.forEach((sampler) => {
+        sampler.setRenderer(this.renderer)
+      })
+    }
+
+    if (this.options && this.textures) {
+      this.textures.forEach((texture) => {
+        // as said above, do not update the shadow map renderer texture
+        // it will be done in the shadow class if needed
+        if (!shadowTextures.has(texture.uuid)) {
+          texture.setRenderer(this.renderer)
+        }
+      })
+    }
+  }
+
+  /**
    * Adds a texture to the {@link textures} array and {@link bindings}.
    * @param texture - texture to add.
    */
@@ -254,7 +289,6 @@ export class TextureBindGroup extends BindGroup {
           !!texture.transformBinding.inputs.matrix.shouldUpdate
 
         // reset original flag
-        // TODO reset it at end of render
         if (texture.transformBinding.inputs.matrix.shouldUpdate) {
           this.renderer.onAfterCommandEncoderSubmission.add(
             () => {

@@ -13,8 +13,8 @@ fn getIBLIndirectRadiance(
   envRotation: mat3x3f,
   envSpecularIntensity: f32,
 )-> vec3f {
-  let N: vec3f = normalize(normal);
-  let V: vec3f = normalize(viewDirection);
+  let N: vec3f = normal;
+  let V: vec3f = viewDirection;
   let NdotV: f32 = saturate(dot(N, V));
 
   let reflection: vec3f = normalize(reflect(-V, N));

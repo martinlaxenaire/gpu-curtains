@@ -30,8 +30,6 @@ ${getVertexOutputStruct({ geometry, additionalVaryings })}
   
   ${getVertexTransformedPositionNormal({ bindings, geometry })}
   
-  
-  
   ${getVertexOutput({ geometry })}
   
   // user defined additional contribution

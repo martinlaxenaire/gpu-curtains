@@ -244,22 +244,7 @@ export class ComputePass {
    * @param renderer - new {@link Renderer} to set.
    */
   setRenderer(renderer: Renderer | GPUCurtains) {
-    // we could pass our curtains object OR our curtains renderer object
-    renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as Renderer)
-
-    if (
-      !renderer ||
-      !(
-        renderer.type === 'GPURenderer' ||
-        renderer.type === 'GPUCameraRenderer' ||
-        renderer.type === 'GPUCurtainsRenderer'
-      )
-    ) {
-      throwWarning(
-        `${this.options.label}: Cannot set ${renderer} as a renderer because it is not of a valid Renderer type.`
-      )
-      return
-    }
+    renderer = isRenderer(renderer, this.options.label + ' ComputePass')
 
     this.material?.setRenderer(renderer)
 

@@ -85,6 +85,11 @@ export declare class DOMObject3D extends ProjectedObject3D {
      */
     constructor(renderer: GPUCurtainsRenderer | GPUCurtains, element: DOMElementParams['element'], parameters?: DOMObject3DParams);
     /**
+     * Set or reset this {@link DOMObject3D} {@link DOMObject3D.renderer | renderer}.
+     * @param renderer - New {@link GPUCurtainsRenderer} or {@link GPUCurtains} instance to use.
+     */
+    setRenderer(renderer: GPUCurtainsRenderer | GPUCurtains): void;
+    /**
      * Set the {@link domElement | DOM Element}
      * @param element - {@link HTMLElement} or string representing an {@link HTMLElement} selector to use
      */

@@ -71,9 +71,7 @@ export class IndirectBuffer {
   ) {
     this.type = 'IndirectBuffer'
 
-    renderer = isRenderer(renderer, this.type)
-
-    this.renderer = renderer
+    this.setRenderer(renderer)
 
     this.uuid = generateUUID()
 
@@ -90,6 +88,15 @@ export class IndirectBuffer {
 
     // add to renderer
     this.renderer.indirectBuffers.set(this.uuid, this)
+  }
+
+  /**
+   * Set or reset this {@link IndirectBuffer} {@link IndirectBuffer.renderer | renderer}.
+   * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
+   */
+  setRenderer(renderer: Renderer | GPUCurtains) {
+    renderer = isRenderer(renderer, this.type)
+    this.renderer = renderer
   }
 
   /**

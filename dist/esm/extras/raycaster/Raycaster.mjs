@@ -45,9 +45,7 @@ class Raycaster {
     /** @ignore */
     __privateAdd(this, _n2);
     this.type = "Raycaster";
-    renderer = isCameraRenderer(renderer, this.type);
-    this.renderer = renderer;
-    this.camera = this.renderer.camera;
+    this.setRenderer(renderer);
     this.pointer = new Vec2(Infinity);
     this.ray = {
       origin: new Vec3(),
@@ -68,6 +66,15 @@ class Raycaster {
     __privateSet(this, _n0, new Vec3());
     __privateSet(this, _n1, new Vec3());
     __privateSet(this, _n2, new Vec3());
+  }
+  /**
+   * Set or reset this {@link Raycaster} {@link Raycaster.renderer | renderer}.
+   * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
+   */
+  setRenderer(renderer) {
+    renderer = isCameraRenderer(renderer, this.type);
+    this.renderer = renderer;
+    this.camera = this.renderer.camera;
   }
   /**
    * Set the {@link pointer} normalized device coordinates values (in the [-1, 1] range) based on a mouse/pointer/touch event and the {@link CameraRenderer#boundingRect | renderer bounding rectangle}. Useful if the canvas has a fixed position for example, but you might need to directly use {@link setFromNDCCoords} if not.

@@ -89,6 +89,11 @@ export declare class Raycaster {
      */
     constructor(renderer: CameraRenderer | GPUCurtains);
     /**
+     * Set or reset this {@link Raycaster} {@link Raycaster.renderer | renderer}.
+     * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
+     */
+    setRenderer(renderer: CameraRenderer | GPUCurtains): void;
+    /**
      * Set the {@link pointer} normalized device coordinates values (in the [-1, 1] range) based on a mouse/pointer/touch event and the {@link CameraRenderer#boundingRect | renderer bounding rectangle}. Useful if the canvas has a fixed position for example, but you might need to directly use {@link setFromNDCCoords} if not.
      * @param e - Mouse, pointer or touch event.
      */

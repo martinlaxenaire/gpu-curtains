@@ -2,7 +2,7 @@ const getIBLTransmission = (
   /* wgsl */
   `
 fn getVolumeTransmissionRay(normal: vec3f, viewDirection: vec3f, thickness: f32, ior: f32, modelScale: vec3f) -> vec3f {
-  let refractionVector = refract(-viewDirection, normalize(normal), 1.0 / ior);    
+  let refractionVector = refract(-viewDirection, normal, 1.0 / ior);    
   return normalize(refractionVector) * thickness * modelScale;
 }
 

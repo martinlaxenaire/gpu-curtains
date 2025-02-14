@@ -8,6 +8,7 @@ import { getPCFShadowContribution } from '../../shaders/chunks/fragment/head/get
 import { getPCFDirectionalShadows } from '../../shaders/chunks/fragment/head/get-PCF-directional-shadows.mjs';
 import { getPCFPointShadowContribution } from '../../shaders/chunks/fragment/head/get-PCF-point-shadow-contribution.mjs';
 import { getPCFPointShadows } from '../../shaders/chunks/fragment/head/get-PCF-point-shadows.mjs';
+import { Texture } from '../../textures/Texture.mjs';
 
 const defaultProjectedMeshParams = {
   // frustum culling and visibility
@@ -87,6 +88,16 @@ function ProjectedMeshBaseMixin(Base) {
             light.shadow.removeMesh(this);
           }
         });
+      }
+      if (this.options.transmissive) {
+        renderer = isCameraRenderer(renderer, this.options.label + " " + renderer.type);
+        renderer.createTransmissionTarget();
+        let transmissiveTexture = this.material.textures.find(
+          (texture) => texture.options.name === "transmissionBackgroundTexture"
+        );
+        if (transmissiveTexture) {
+          transmissiveTexture.copy(renderer.transmissionTarget.texture);
+        }
       }
       super.setRenderer(renderer);
       this.camera = this.renderer.camera;
@@ -251,10 +262,15 @@ function ProjectedMeshBaseMixin(Base) {
       }
       if (this.options.transmissive) {
         this.renderer.createTransmissionTarget();
+        const transmissionTexture = new Texture(this.renderer, {
+          label: this.options.label + " transmission texture",
+          name: "transmissionBackgroundTexture",
+          fromTexture: this.renderer.transmissionTarget.texture
+        });
         if (parameters.textures) {
-          parameters.textures = [...parameters.textures, this.renderer.transmissionTarget.texture];
+          parameters.textures = [...parameters.textures, transmissionTexture];
         } else {
-          parameters.textures = [this.renderer.transmissionTarget.texture];
+          parameters.textures = [transmissionTexture];
         }
         if (parameters.samplers) {
           parameters.samplers = [...parameters.samplers, this.renderer.transmissionTarget.sampler];
@@ -433,7 +449,6 @@ function ProjectedMeshBaseMixin(Base) {
      */
     onRenderPass(pass) {
       if (!this.ready) return;
-      this._onRenderCallback && this._onRenderCallback();
       if (this.domFrustum && this.domFrustum.isIntersecting || !this.frustumCulling) {
         this.material.render(pass);
         this.geometry.render(pass);

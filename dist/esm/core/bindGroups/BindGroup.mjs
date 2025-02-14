@@ -11,8 +11,7 @@ class BindGroup {
    */
   constructor(renderer, { label = "BindGroup", index = 0, bindings = [], uniforms, storages } = {}) {
     this.type = "BindGroup";
-    renderer = isRenderer(renderer, this.type);
-    this.renderer = renderer;
+    this.setRenderer(renderer);
     this.options = {
       label,
       index,
@@ -45,6 +44,14 @@ class BindGroup {
       }
     }
     this.renderer.addBindGroup(this);
+  }
+  /**
+   * Set or reset this {@link BindGroup} {@link BindGroup.renderer | renderer}.
+   * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
+   */
+  setRenderer(renderer) {
+    renderer = isRenderer(renderer, this.type);
+    this.renderer = renderer;
   }
   /**
    * Sets our {@link BindGroup#index | bind group index}.

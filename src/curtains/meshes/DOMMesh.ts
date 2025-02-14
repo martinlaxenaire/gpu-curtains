@@ -89,12 +89,6 @@ export class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
     parameters = { ...defaultDOMMeshParams, ...parameters }
     const { autoloadSources, watchScroll, domTextures, ...projectedMeshParams } = parameters
 
-    // if (!projectedMeshParams.textures) {
-    //   projectedMeshParams.textures = []
-    // }
-    //
-    // projectedMeshParams.textures = [...projectedMeshParams.textures, ...domTextures]
-
     super(renderer, element, parameters)
 
     isCurtainsRenderer(renderer, parameters.label ? parameters.label + ' DOMMesh' : 'DOMMesh')
@@ -112,6 +106,22 @@ export class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
 
     this.sourcesReady = false
     this.setInitSources()
+  }
+
+  /**
+   * Set or reset this {@link DOMMesh} {@link DOMMesh.renderer | renderer}.
+   * @param renderer - New {@link GPUCurtainsRenderer} or {@link GPUCurtains} instance to use.
+   */
+  setRenderer(renderer: GPUCurtainsRenderer | GPUCurtains) {
+    if (this.renderer) {
+      this.renderer.domMeshes = this.renderer.domMeshes.filter((m) => m.uuid !== this.uuid)
+    }
+
+    renderer = isCurtainsRenderer(renderer, this.options.label + ' DOMMesh')
+    super.setRenderer(renderer)
+    this.renderer = renderer
+
+    this.renderer.domMeshes.push(this)
   }
 
   /**
@@ -154,7 +164,7 @@ export class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
     super.addToScene(addToRenderer)
 
     if (addToRenderer) {
-      ;(this.renderer as GPUCurtainsRenderer).domMeshes.push(this)
+      this.renderer.domMeshes.push(this)
     }
   }
 
@@ -166,9 +176,7 @@ export class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
     super.removeFromScene(removeFromRenderer)
 
     if (removeFromRenderer) {
-      ;(this.renderer as GPUCurtainsRenderer).domMeshes = (this.renderer as GPUCurtainsRenderer).domMeshes.filter(
-        (m) => m.uuid !== this.uuid
-      )
+      this.renderer.domMeshes = this.renderer.domMeshes.filter((m) => m.uuid !== this.uuid)
     }
   }
 

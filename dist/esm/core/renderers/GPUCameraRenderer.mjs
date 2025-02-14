@@ -72,6 +72,7 @@ class GPUCameraRenderer extends GPURenderer {
   loseContext() {
     super.loseContext();
     this.cameraLightsBindGroup.loseContext();
+    this.pointShadowsCubeFaceBindGroups.forEach((bindGroup) => bindGroup.loseContext());
   }
   /**
    * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored.
@@ -80,6 +81,7 @@ class GPUCameraRenderer extends GPURenderer {
   restoreContext() {
     super.restoreContext();
     this.cameraLightsBindGroup?.restoreContext();
+    this.pointShadowsCubeFaceBindGroups.forEach((bindGroup) => bindGroup.restoreContext());
     this.updateCameraBindings();
   }
   /**

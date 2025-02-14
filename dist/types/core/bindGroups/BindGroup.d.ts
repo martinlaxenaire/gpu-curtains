@@ -90,6 +90,11 @@ export declare class BindGroup {
      */
     constructor(renderer: Renderer | GPUCurtains, { label, index, bindings, uniforms, storages }?: BindGroupParams);
     /**
+     * Set or reset this {@link BindGroup} {@link BindGroup.renderer | renderer}.
+     * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
+     */
+    setRenderer(renderer: Renderer | GPUCurtains): void;
+    /**
      * Sets our {@link BindGroup#index | bind group index}.
      * @param index - {@link BindGroup#index | bind group index} to set.
      */

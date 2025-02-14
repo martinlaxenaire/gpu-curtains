@@ -72,6 +72,11 @@ export declare class RenderPass {
      */
     constructor(renderer: Renderer | GPUCurtains, { label, sampleCount, qualityRatio, fixedSize, useColorAttachments, renderToSwapChain, colorAttachments, useDepth, depthTexture, depthLoadOp, depthStoreOp, depthClearValue, depthFormat, }?: RenderPassParams);
     /**
+     * Reset this {@link RenderPass} {@link RenderPass.renderer | renderer}.
+     * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
+     */
+    setRenderer(renderer: Renderer | GPUCurtains): void;
+    /**
      * Create and set our {@link depthTexture | depth texture}.
      */
     createDepthTexture(): void;

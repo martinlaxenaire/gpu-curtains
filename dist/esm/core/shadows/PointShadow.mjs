@@ -322,8 +322,8 @@ class PointShadow extends Shadow {
     };
   }
   /**
-   * Patch the given {@link ProjectedMesh | mesh} material parameters to create the depth mesh. Here we'll be adding the first {@link CameraRenderer.pointShadowsCubeFaceBindGroups | renderer pointShadowsCubeFaceBindGroups} bind group containing the face index onto which we'll be drawing. This bind group will be swapped when rendering using {@link renderDepthPass}.
-   * @param mesh - original {@link ProjectedMesh | mesh} to use.
+   * Patch the given {@link Mesh} material parameters to create the depth mesh. Here we'll be adding the first {@link CameraRenderer.pointShadowsCubeFaceBindGroups | renderer pointShadowsCubeFaceBindGroups} bind group containing the face index onto which we'll be drawing. This bind group will be swapped when rendering using {@link renderDepthPass}.
+   * @param mesh - original {@link Mesh} to use.
    * @param parameters - Optional additional parameters to use for the depth mesh.
    * @returns - Patched parameters.
    */
