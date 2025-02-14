@@ -36,12 +36,18 @@ class Material {
     this.setSamplers();
   }
   /**
-   * Set or reset this {@link Material} {@link Material.renderer | renderer}.
+   * Set or reset this {@link Material} {@link Material.renderer | renderer}. Also reset the {@link bindGroups} renderer.
    * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
    */
   setRenderer(renderer) {
     renderer = isRenderer(renderer, this.type);
     this.renderer = renderer;
+    this.bindGroups.forEach((bindGroup) => {
+      bindGroup.setRenderer(this.renderer);
+    });
+    if (this.pipelineEntry) {
+      this.pipelineEntry.setRenderer(this.renderer);
+    }
   }
   /**
    * Check if all bind groups are ready, and create them if needed

@@ -288,6 +288,22 @@ export class GPUDeviceManager {
 
     this.pipelineManager.resetCurrentPipeline()
 
+    // get all used pipeline entries
+    const usedPipelineEntries = new Set()
+    this.deviceRenderedObjects.forEach((object) => {
+      if (object.material && object.material.pipelineEntry) {
+        usedPipelineEntries.add(object.material.pipelineEntry.uuid)
+      }
+    })
+
+    // now clean up unused pipeline entries
+    // (most probably pipelines belonging to removed compute passes)
+    // because when restoring context, we might get those pipelines from cache
+    // and they'll be associated with the wrong device
+    this.pipelineManager.pipelineEntries = this.pipelineManager.pipelineEntries.filter((pipelineEntry) =>
+      usedPipelineEntries.has(pipelineEntry.uuid)
+    )
+
     // first clean all samplers
     this.samplers.forEach((sampler) => (sampler.sampler = null))
 
@@ -297,6 +313,12 @@ export class GPUDeviceManager {
 
     // reset the buffers array, it would eventually be repopulated while restoring the device
     this.buffers.clear()
+
+    this.#mipsGeneration = {
+      sampler: null,
+      module: null,
+      pipelineByFormat: {} as Record<GPUTextureFormat, GPURenderPipeline>,
+    }
   }
 
   /**

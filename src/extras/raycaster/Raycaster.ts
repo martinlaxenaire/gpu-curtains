@@ -127,10 +127,7 @@ export class Raycaster {
   constructor(renderer: CameraRenderer | GPUCurtains) {
     this.type = 'Raycaster'
 
-    renderer = isCameraRenderer(renderer, this.type)
-
-    this.renderer = renderer
-    this.camera = this.renderer.camera
+    this.setRenderer(renderer)
 
     this.pointer = new Vec2(Infinity)
 
@@ -161,6 +158,16 @@ export class Raycaster {
     this.#n0 = new Vec3()
     this.#n1 = new Vec3()
     this.#n2 = new Vec3()
+  }
+
+  /**
+   * Set or reset this {@link Raycaster} {@link Raycaster.renderer | renderer}.
+   * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
+   */
+  setRenderer(renderer: CameraRenderer | GPUCurtains) {
+    renderer = isCameraRenderer(renderer, this.type)
+    this.renderer = renderer
+    this.camera = this.renderer.camera
   }
 
   /**

@@ -25,7 +25,7 @@ fn rangeAttenuation(range: f32, distance: f32) -> f32 {
 
 fn getDirectionalLightInfo(directionalLight: DirectionalLightsElement, ptr_light: ptr<function, DirectLight>) {
   (*ptr_light).color = directionalLight.color;
-  (*ptr_light).direction = -directionalLight.direction;
+  (*ptr_light).direction = normalize(-directionalLight.direction);
   (*ptr_light).visible = true;
 }
 

@@ -67,9 +67,7 @@ fn getIBLGGXFresnel(
 ) -> IBLGGXFresnel {
   var iBLGGXFresnel: IBLGGXFresnel;
   
-  let N: vec3f = normalize(normal);
-  let V: vec3f = normalize(viewDirection);
-  let NdotV: f32 = saturate(dot(N, V));
+  let NdotV: f32 = saturate(dot(normal, viewDirection));
   
   let brdfSamplePoint: vec2f = saturate(vec2(NdotV, roughness));
   

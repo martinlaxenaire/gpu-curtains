@@ -155,6 +155,29 @@ export class Texture {
   }
 
   /**
+   * Reset this {@link Texture} {@link Texture.renderer | renderer}, and resize it if needed.
+   * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
+   */
+  setRenderer(renderer: Renderer | GPUCurtains) {
+    if (this.renderer) {
+      this.renderer.removeTexture(this)
+    }
+
+    renderer = isRenderer(renderer, this.options.label + ' Texture')
+    this.renderer = renderer
+
+    this.renderer.addTexture(this)
+
+    if (
+      this.#autoResize &&
+      (this.size.width !== this.renderer.canvas.width * this.options.qualityRatio ||
+        this.size.height !== this.renderer.canvas.height * this.options.qualityRatio)
+    ) {
+      this.resize()
+    }
+  }
+
+  /**
    * Set our {@link Texture#bindings | bindings}.
    */
   setBindings() {

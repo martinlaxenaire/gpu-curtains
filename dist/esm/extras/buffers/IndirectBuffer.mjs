@@ -19,8 +19,7 @@ class IndirectBuffer {
   constructor(renderer, { label = "Indirect buffer", geometries = [], minEntrySize = indirectBufferEntrySize } = {}) {
     __privateAdd(this, _IndirectBuffer_instances);
     this.type = "IndirectBuffer";
-    renderer = isRenderer(renderer, this.type);
-    this.renderer = renderer;
+    this.setRenderer(renderer);
     this.uuid = generateUUID();
     this.options = {
       label,
@@ -31,6 +30,14 @@ class IndirectBuffer {
     this.buffer = null;
     this.addGeometries(geometries);
     this.renderer.indirectBuffers.set(this.uuid, this);
+  }
+  /**
+   * Set or reset this {@link IndirectBuffer} {@link IndirectBuffer.renderer | renderer}.
+   * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
+   */
+  setRenderer(renderer) {
+    renderer = isRenderer(renderer, this.type);
+    this.renderer = renderer;
   }
   /**
    * Get the number of unique {@link Geometry} and {@link IndexedGeometry} added to this {@link IndirectBuffer}.

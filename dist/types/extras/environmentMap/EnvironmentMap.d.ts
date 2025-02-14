@@ -67,6 +67,8 @@ export declare class EnvironmentMap {
     #private;
     /** The {@link Renderer} used. */
     renderer: Renderer;
+    /** The universal unique id of the {@link EnvironmentMap}. */
+    readonly uuid: string;
     /** The {@link Sampler} used in both the {@link ComputePass} and in `IBL` shading from the {@link core/shaders/full/fragment/get-PBR-fragment-shader-code | getPBRFragmentShaderCode} utility function. */
     sampler: Sampler;
     /** {@link HDRLoader} used to load the .hdr file. */
@@ -90,6 +92,11 @@ export declare class EnvironmentMap {
      */
     constructor(renderer: Renderer | GPUCurtains, params?: EnvironmentMapParams);
     /**
+     * Set or reset this {@link EnvironmentMap} {@link EnvironmentMap.renderer | renderer}.
+     * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
+     */
+    setRenderer(renderer: Renderer | GPUCurtains): void;
+    /**
      * Get the current {@link EnvironmentMapOptions.rotation | rotation}, in radians.
      */
     get rotation(): number;
@@ -104,6 +111,14 @@ export declare class EnvironmentMap {
      */
     onRotationAxisChanged(callback: () => void): this;
     /**
+     * Create our {@link lutTexture} eagerly.
+     */
+    createLUTTextures(): void;
+    /**
+     * Create our {@link specularTexture} and {@link diffuseTexture} eagerly. They could be resized later when calling the {@link computeFromHDR} method.
+     */
+    createSpecularDiffuseTextures(): void;
+    /**
      * Create the {@link lutTexture | BRDF GGX LUT texture} using the provided {@link LUTTextureParams | LUT texture options} and a {@link ComputePass} that runs once.
      */
     computeBRDFLUTTexture(): Promise<void>;
@@ -117,10 +132,14 @@ export declare class EnvironmentMap {
      */
     computeDiffuseFromSpecular(): Promise<void>;
     /**
-     * Load an HDR environment map and then generates the {@link specularTexture} and {@link diffuseTexture} using two separate {@link ComputePass}.
+     * Load an HDR environment map and then generate the {@link specularTexture} and {@link diffuseTexture} using two separate {@link ComputePass}.
      * @param url - The url of the .hdr file to load.
      */
     loadAndComputeFromHDR(url: string): Promise<void>;
+    /**
+     * Generate the {@link specularTexture} and {@link diffuseTexture} using two separate {@link ComputePass}.
+     */
+    computeFromHDR(): void;
     /**
      * Destroy the {@link EnvironmentMap} and its associated textures.
      */

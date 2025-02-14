@@ -30,7 +30,7 @@ export declare class Material {
     /** The type of the {@link Material}. */
     type: string;
     /** The universal unique id of the {@link Material}. */
-    uuid: string;
+    readonly uuid: string;
     /** The {@link Renderer} used. */
     renderer: Renderer;
     /** Options used to create this {@link Material}. */
@@ -68,7 +68,7 @@ export declare class Material {
      */
     constructor(renderer: Renderer | GPUCurtains, parameters: MaterialParams);
     /**
-     * Set or reset this {@link Material} {@link Material.renderer | renderer}.
+     * Set or reset this {@link Material} {@link Material.renderer | renderer}. Also reset the {@link bindGroups} renderer.
      * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
      */
     setRenderer(renderer: Renderer | GPUCurtains): void;

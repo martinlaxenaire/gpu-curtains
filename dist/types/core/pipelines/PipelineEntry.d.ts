@@ -3,6 +3,7 @@ import { Renderer } from '../renderers/utils';
 import { PipelineEntryOptions, PipelineEntryParams, PipelineEntryStatus } from '../../types/PipelineEntries';
 import { AllowedBindGroups } from '../../types/BindGroups';
 import { MaterialShadersType } from '../../types/Materials';
+import { GPUCurtains } from '../../curtains/GPUCurtains';
 /**
  * Used as a base class to create a pipeline entry.<br>
  * {@link PipelineEntry} roles are:
@@ -13,6 +14,8 @@ import { MaterialShadersType } from '../../types/Materials';
 export declare class PipelineEntry {
     /** The type of the {@link PipelineEntry} */
     type: string;
+    /** The universal unique id of the {@link PipelineEntry}. */
+    readonly uuid: string;
     /** The {@link Renderer} used to create this {@link PipelineEntry} */
     renderer: Renderer;
     /** Index of this {@link PipelineEntry}, i.e. creation order */
@@ -32,6 +35,11 @@ export declare class PipelineEntry {
      * @param parameters - {@link PipelineEntryParams | parameters} used to create this {@link PipelineEntry}
      */
     constructor(parameters: PipelineEntryParams);
+    /**
+     * Set or reset this {@link PipelineEntry} {@link PipelineEntry.renderer | renderer}.
+     * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
+     */
+    setRenderer(renderer: Renderer | GPUCurtains): void;
     /**
      * Get whether the {@link pipeline} is ready, i.e. successfully compiled
      * @readonly

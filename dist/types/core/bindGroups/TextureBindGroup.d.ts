@@ -73,6 +73,11 @@ export declare class TextureBindGroup extends BindGroup {
      */
     constructor(renderer: Renderer | GPUCurtains, { label, index, bindings, uniforms, storages, textures, samplers }?: TextureBindGroupParams);
     /**
+     * Set or reset this {@link TextureBindGroup} {@link TextureBindGroup.renderer | renderer}, and update the {@link samplers} and {@link textures} renderer as well.
+     * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
+     */
+    setRenderer(renderer: Renderer | GPUCurtains): void;
+    /**
      * Adds a texture to the {@link textures} array and {@link bindings}.
      * @param texture - texture to add.
      */

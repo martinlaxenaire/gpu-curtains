@@ -5,7 +5,6 @@ import { Mat4 } from '../../math/Mat4';
 import { Texture } from '../textures/Texture';
 import { RenderTarget } from '../renderPasses/RenderTarget';
 import { Sampler } from '../samplers/Sampler';
-import { ProjectedMesh } from '../renderers/GPURenderer';
 import { DirectionalLight } from '../lights/DirectionalLight';
 import { PointLight } from '../lights/PointLight';
 import { BufferBinding } from '../bindings/BufferBinding';
@@ -13,6 +12,7 @@ import { RenderMaterialParams, ShaderOptions } from '../../types/Materials';
 import { Input } from '../../types/BindGroups';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
 import { VertexShaderInputBaseParams } from '../shaders/full/vertex/get-vertex-shader-code';
+import { Mesh } from '../meshes/Mesh';
 import { Geometry } from '../geometries/Geometry';
 /** Defines all types of shadows. */
 export type ShadowsType = 'directionalShadows' | 'pointShadows';
@@ -44,7 +44,7 @@ export interface ShadowBaseParams {
  *
  * A {@link Shadow} creates a {@link depthTexture | depth Texture} (that can vary based on the light type) and a {@link depthComparisonSampler | depth comparison Sampler}.
  *
- * Each {@link ProjectedMesh | Mesh} added to the {@link Shadow} will be rendered beforehand to the {@link depthTexture} using a {@link depthPassTarget | RenderTarget} and a custom {@link RenderMaterial}.
+ * Each {@link Mesh} added to the {@link Shadow} will be rendered beforehand to the {@link depthTexture} using a {@link depthPassTarget | RenderTarget} and a custom {@link RenderMaterial}.
  */
 export declare class Shadow {
     #private;
@@ -68,10 +68,10 @@ export declare class Shadow {
     depthPassTarget: null | RenderTarget;
     /** Depth comparison {@link Sampler} used to compare depth in the shaders. */
     depthComparisonSampler: null | Sampler;
-    /** Map of all the parent {@link ProjectedMesh | meshes} casting shadows used to create the depth meshes. */
-    castingMeshes: Map<ProjectedMesh['uuid'], ProjectedMesh>;
-    /** Map of all the depth {@link ProjectedMesh} rendered to the shadow map. */
-    depthMeshes: Map<ProjectedMesh['uuid'], ProjectedMesh>;
+    /** Map of all the parent {@link Mesh} casting shadows used to create the depth meshes. */
+    castingMeshes: Map<Mesh['uuid'], Mesh>;
+    /** Map of all the depth {@link Mesh} rendered to the shadow map. */
+    depthMeshes: Map<Mesh['uuid'], Mesh>;
     /** {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} that holds all the bindings for this type of shadow to send to the shaders. */
     rendererBinding: BufferBinding | null;
     /**
@@ -210,42 +210,42 @@ export declare class Shadow {
      */
     getDefaultShadowDepthFs(): false | ShaderOptions;
     /**
-     * Patch the given {@link ProjectedMesh | mesh} material parameters to create the depth mesh.
-     * @param mesh - original {@link ProjectedMesh | mesh} to use.
+     * Patch the given {@link Mesh | mesh} material parameters to create the depth mesh.
+     * @param mesh - original {@link Mesh | mesh} to use.
      * @param parameters - Optional additional parameters to use for the depth mesh.
      * @returns - Patched parameters.
      */
-    patchShadowCastingMeshParams(mesh: ProjectedMesh, parameters?: RenderMaterialParams): RenderMaterialParams;
+    patchShadowCastingMeshParams(mesh: Mesh, parameters?: RenderMaterialParams): RenderMaterialParams;
     /**
-     * Add a {@link ProjectedMesh | mesh} to the shadow map. Internally called by the {@link ProjectedMesh | mesh} if its `castShadows` parameters has been set to `true`, but can also be called externally to selectively cast shadows or to add specific parameters (such as custom depth pass shaders).
+     * Add a {@link Mesh} to the shadow map. Internally called by the {@link Mesh} if its `castShadows` parameters has been set to `true`, but can also be called externally to selectively cast shadows or to add specific parameters (such as custom depth pass shaders).
      * - {@link patchShadowCastingMeshParams | Patch} the parameters.
      * - Create a new depth {@link Mesh} with the patched parameters.
-     * - Add the {@link ProjectedMesh | mesh} to the {@link castingMeshes} Map.
-     * @param mesh - {@link ProjectedMesh | mesh} to add to the shadow map.
+     * - Add the {@link Mesh} to the {@link castingMeshes} Map.
+     * @param mesh - {@link Mesh} to add to the shadow map.
      * @param parameters - Optional {@link RenderMaterialParams | parameters} to use for the depth mesh.
      */
-    addShadowCastingMesh(mesh: ProjectedMesh, parameters?: RenderMaterialParams): void;
+    addShadowCastingMesh(mesh: Mesh, parameters?: RenderMaterialParams): void;
     /**
-     * Add a shadow receiving {@link ProjectedMesh | mesh} to the #receivingMeshes {@link Map}.
-     * @param mesh - Shadow receiving {@link ProjectedMesh | mesh} to add.
+     * Add a shadow receiving {@link Mesh} to the #receivingMeshes {@link Map}.
+     * @param mesh - Shadow receiving {@link Mesh} to add.
      */
-    addShadowReceivingMesh(mesh: ProjectedMesh): void;
+    addShadowReceivingMesh(mesh: Mesh): void;
     /**
-     * Remove a shadow receiving {@link ProjectedMesh | mesh} from the #receivingMeshes {@link Map}.
-     * @param mesh - Shadow receiving {@link ProjectedMesh | mesh} to remove.
+     * Remove a shadow receiving {@link Mesh} from the #receivingMeshes {@link Map}.
+     * @param mesh - Shadow receiving {@link Mesh} to remove.
      */
-    removeShadowReceivingMesh(mesh: ProjectedMesh): void;
+    removeShadowReceivingMesh(mesh: Mesh): void;
     /**
-     * Remove a {@link ProjectedMesh | mesh} from the shadow map and destroy its depth mesh.
-     * @param mesh - {@link ProjectedMesh | mesh} to remove.
+     * Remove a {@link Mesh} from the shadow map and destroy its depth mesh.
+     * @param mesh - {@link Mesh} to remove.
      */
-    removeMesh(mesh: ProjectedMesh): void;
+    removeMesh(mesh: Mesh): void;
     /**
      * If one of the {@link castingMeshes} had its geometry change, update the corresponding depth mesh geometry as well.
-     * @param mesh - Original {@link ProjectedMesh} which geometry just changed.
-     * @param geometry - New {@link ProjectedMesh} {@link Geometry} to use.
+     * @param mesh - Original {@link Mesh} which geometry just changed.
+     * @param geometry - New {@link Mesh} {@link Geometry} to use.
      */
-    updateMeshGeometry(mesh: ProjectedMesh, geometry: Geometry): void;
+    updateMeshGeometry(mesh: Mesh, geometry: Geometry): void;
     /**
      * Destroy the {@link Shadow}.
      */

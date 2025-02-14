@@ -57,6 +57,11 @@ export declare class IndirectBuffer {
      */
     constructor(renderer: Renderer | GPUCurtains, { label, geometries, minEntrySize }?: IndirectBufferParams);
     /**
+     * Set or reset this {@link IndirectBuffer} {@link IndirectBuffer.renderer | renderer}.
+     * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
+     */
+    setRenderer(renderer: Renderer | GPUCurtains): void;
+    /**
      * Get the number of unique {@link Geometry} and {@link IndexedGeometry} added to this {@link IndirectBuffer}.
      * @returns - Number of unique {@link Geometry} and {@link IndexedGeometry} added to this {@link IndirectBuffer}.
      * @readonly

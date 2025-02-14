@@ -24,7 +24,21 @@
     />
 
     <style>
-      #tests ul li {
+      #select-feature {
+        display: flex;
+        margin: 1.5rem 0;
+      }
+
+      #tested-feature {
+        margin-left: 1rem;
+        background: var(--dark-color);
+        color: var(--light-color);
+        font: inherit;
+        font-size: 0.85rem;
+        padding: 0.125em 0.25em;
+      }
+
+      #tests-list li {
         margin: 0.5rem 0;
       }
     </style>
@@ -51,116 +65,134 @@
       <div id="tests" class="large-container">
         <h1>gpu-curtains tests</h1>
         <p>Tests used to help debugging existing features or implementing new ones.</p>
-        <ul>
-          <li>
+        <div id="select-feature">
+          <label for="tested-feature">Feature filters:</label>
+          <select id="tested-feature">
+            <option value="all">All</option>
+            <option value="basic">Basic</option>
+            <option value="resize-scroll">Resize & scroll</option>
+            <option value="camera">Cameras</option>
+            <option value="texture">Textures</option>
+            <option value="compute">Compute shaders</option>
+            <option value="renderer">Renderers</option>
+            <option value="light">Lights and shadows</option>
+            <option value="post-processing">Post processing</option>
+            <option value="gltf">glTF</option>
+            <option value="switch-properties">Switch properties</option>
+            <option value="gpu-curtains">GPUCurtains</option>
+            <option value="stress-test">Stress tests</option>
+          </select>
+        </div>
+        <ul id="tests-list">
+          <li class="basic">
             <a href="./basic-rotating-cube/" target="_blank">Basic rotating cube</a>
           </li>
-          <li>
+          <li class="basic">
             <a href="./bindings-offsets/" target="_blank">Binding offsets/layout alignment</a>
           </li>
-          <li>
+          <li class="basic camera">
             <a href="./camera/" target="_blank">Camera</a>
           </li>
-          <li>
+          <li class="renderer resize-scroll">
             <a href="./canvas-resizing/" target="_blank">Canvas resizing</a>
           </li>
-          <li>
+          <li class="compute">
             <a href="./compute-results/" target="_blank">Compute results</a>
           </li>
-          <li>
+          <li class="basic renderer post-processing gpu-curtains">
             <a href="./context-lost/" target="_blank">Context lost/restored</a>
           </li>
-          <li>
+          <li class="texture">
             <a href="./cubemap-env/" target="_blank">Cubemap environment texture</a>
           </li>
-          <li>
+          <li class="switch-properties">
             <a href="./dynamic-materials-geometries/" target="_blank">Dynamic materials and geometries</a>
           </li>
-          <li>
+          <li class="basic">
             <a href="./frustum-culling/" target="_blank">Frustum culling</a>
           </li>
-          <li>
+          <li class="gltf">
             <a href="./gltf-loader/" target="_blank">glTF loader</a>
           </li>
-          <li>
+          <li class="gltf light">
             <a href="./gltf-shadows/" target="_blank">glTF and shadow map</a>
           </li>
-          <li>
+          <li class="gltf light">
             <a href="./gltf-skins-shadows/" target="_blank">glTF skins and shadow map</a>
           </li>
-          <li>
+          <li class="light">
             <a href="./lights/" target="_blank">Lights</a>
           </li>
-          <li>
+          <li class="renderer light switch-properties compute">
             <a href="./lights-dynamic-renderer/" target="_blank">Lights dynamic renderer</a>
           </li>
-          <li>
+          <li class="light">
             <a href="./lit-meshes/" target="_blank">Lit meshes</a>
           </li>
-          <li>
+          <li class="renderer">
             <a href="./multiple-canvases/" target="_blank">Multiple canvases</a>
           </li>
-          <li>
+          <li class="renderer gpu-curtains">
             <a href="./objects-removal/" target="_blank">Objects removal</a>
           </li>
-          <li>
+          <li class="renderer">
             <a href="./offscreen-canvas/" target="_blank">Offscreen canvas</a>
           </li>
-          <li>
+          <li class="camera post-processing">
             <a href="./orbit-camera-depth-texture/" target="_blank">Orbit camera and depth texture</a>
           </li>
-          <li>
+          <li class="camera post-processing">
             <a href="./orbit-camera-selective-passes/" target="_blank">Orbit camera and selective passes</a>
           </li>
-          <li>
+          <li class="basic camera">
             <a href="./orbit-controls/" target="_blank">Orbit controls</a>
           </li>
-          <li>
+          <li class="post-processing">
             <a href="./order-independent-transparency/?sampleCount=4" target="_blank">Weighted blended OIT</a>
           </li>
-          <li>
+          <li class="basic gpu-curtains texture">
             <a href="./plane-transformations/" target="_blank">Plane transformations</a>
           </li>
-          <li>
+          <li class="basic">
             <a href="./raycaster/" target="_blank">Raycaster</a>
           </li>
-          <li>
+          <li class="basic">
             <a href="./render-bundles/" target="_blank">Render bundles</a>
           </li>
-          <li>
+          <li class="gpu-curtains">
             <a href="./reset-plane/" target="_blank">Reset plane HTML element</a>
           </li>
-          <li>
+          <li class="basic">
             <a href="./scene-graph/" target="_blank">Scene graph</a>
           </li>
-          <li>
+          <li class="scroll-resize gpu-curtains">
             <a href="./scroll-resize/" target="_blank">Scroll and resize</a>
           </li>
-          <li>
+          <li class="light">
             <a href="./shadow-mapping/" target="_blank">Shadow mapping</a>
           </li>
-          <li>
+          <li class="stress-test">
             <a href="./stress-test/?count=3000" target="_blank">Stress test</a>
           </li>
-          <li>
+          <li class="stress-test">
             <a href="./stress-test-instanced/?count=10000" target="_blank">Stress test instanced</a>
           </li>
-          <li>
+          <li class="stress-test">
             <a href="./stress-test-render-bundle/?count=5000" target="_blank">Stress test render bundle</a>
           </li>
-          <li>
+          <li class="texture gpu-curtains">
             <a href="./textures-dom-textures/" target="_blank">Textures: DOM textures</a>
           </li>
-          <li>
+          <li class="texture">
             <a href="./textures-media-textures/" target="_blank">Textures: Media textures</a>
           </li>
-          <li>
+          <li class="texture gpu-curtains">
             <a href="./textures-transformations/" target="_blank">Textures transformations</a>
           </li>
-          <li>
+          <li class="basic">
             <a href="./transparent-meshes-sorting/" target="_blank">Transparent meshes sorting</a>
           </li>
-          <li>
+          <li class="basic">
             <a href="./umd-test/" target="_blank">Test UMD lib</a>
           </li>
         </ul>
@@ -179,6 +211,39 @@
         gtag('js', new Date())
         gtag('config', 'G-45554DLGL6')
       }
+    </script>
+    <script>
+      window.addEventListener('load', () => {
+        const selectFeature = document.querySelector('#tested-feature')
+        const listElements = document.querySelectorAll('#tests-list li')
+
+        selectFeature.addEventListener('change', (e) => {
+          window.location.hash = e.target.value
+        })
+
+        const onHashChange = () => {
+          const feature = window.location.hash.replace('#', '')
+
+          listElements.forEach((li) => {
+            li.style.display = ''
+          })
+
+          if (feature !== 'all') {
+            listElements.forEach((li) => {
+              if (!li.classList.contains(feature)) {
+                li.style.display = 'none'
+              }
+            })
+          }
+        }
+
+        window.addEventListener('hashchange', onHashChange)
+
+        if (window.location.hash) {
+          onHashChange()
+          selectFeature.value = window.location.hash.replace('#', '')
+        }
+      })
     </script>
   </body>
 </html>

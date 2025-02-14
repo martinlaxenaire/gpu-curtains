@@ -4,7 +4,6 @@ import { Mat4 } from '../../math/Mat4'
 import { Texture } from '../textures/Texture'
 import { RenderTarget } from '../renderPasses/RenderTarget'
 import { Sampler } from '../samplers/Sampler'
-import { ProjectedMesh } from '../renderers/GPURenderer'
 import { RenderMaterial } from '../materials/RenderMaterial'
 import { DirectionalLight } from '../lights/DirectionalLight'
 import { PointLight } from '../lights/PointLight'
@@ -71,7 +70,7 @@ export interface ShadowBaseParams {
  *
  * A {@link Shadow} creates a {@link depthTexture | depth Texture} (that can vary based on the light type) and a {@link depthComparisonSampler | depth comparison Sampler}.
  *
- * Each {@link ProjectedMesh | Mesh} added to the {@link Shadow} will be rendered beforehand to the {@link depthTexture} using a {@link depthPassTarget | RenderTarget} and a custom {@link RenderMaterial}.
+ * Each {@link Mesh} added to the {@link Shadow} will be rendered beforehand to the {@link depthTexture} using a {@link depthPassTarget | RenderTarget} and a custom {@link RenderMaterial}.
  */
 export class Shadow {
   /** The {@link CameraRenderer} used to create this {@link Shadow}. */
@@ -113,12 +112,12 @@ export class Shadow {
   /** Depth comparison {@link Sampler} used to compare depth in the shaders. */
   depthComparisonSampler: null | Sampler
 
-  /** Map of all the parent {@link ProjectedMesh | meshes} casting shadows used to create the depth meshes. */
-  castingMeshes: Map<ProjectedMesh['uuid'], ProjectedMesh>
-  /** Map of all the depth {@link ProjectedMesh} rendered to the shadow map. */
-  depthMeshes: Map<ProjectedMesh['uuid'], ProjectedMesh>
-  /** Map of all the shadow receiving {@link ProjectedMesh | meshes}. */
-  #receivingMeshes: Map<ProjectedMesh['uuid'], ProjectedMesh>
+  /** Map of all the parent {@link Mesh} casting shadows used to create the depth meshes. */
+  castingMeshes: Map<Mesh['uuid'], Mesh>
+  /** Map of all the depth {@link Mesh} rendered to the shadow map. */
+  depthMeshes: Map<Mesh['uuid'], Mesh>
+  /** Map of all the shadow receiving {@link Mesh}. */
+  #receivingMeshes: Map<Mesh['uuid'], Mesh>
 
   /** {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} that holds all the bindings for this type of shadow to send to the shaders. */
   rendererBinding: BufferBinding | null
@@ -177,21 +176,14 @@ export class Shadow {
    */
   setRenderer(renderer: CameraRenderer | GPUCurtains) {
     const oldRenderer = this.renderer
-    if (oldRenderer && this.depthPassTarget) {
-      this.depthPassTarget.removeFromScene()
-    }
 
     renderer = isCameraRenderer(renderer, this.constructor.name)
-
     this.renderer = renderer
 
     this.setRendererBinding()
 
     if (this.depthPassTarget) {
-      // TODO this is a bit dirty
-      // should we implement a RenderTarget.setRenderer() method?
-      this.depthPassTarget.renderer = this.renderer
-      this.depthPassTarget.addToScene()
+      this.depthPassTarget.setRenderer(this.renderer)
     }
 
     this.depthMeshes?.forEach((depthMesh) => {
@@ -622,12 +614,12 @@ export class Shadow {
   }
 
   /**
-   * Patch the given {@link ProjectedMesh | mesh} material parameters to create the depth mesh.
-   * @param mesh - original {@link ProjectedMesh | mesh} to use.
+   * Patch the given {@link Mesh | mesh} material parameters to create the depth mesh.
+   * @param mesh - original {@link Mesh | mesh} to use.
    * @param parameters - Optional additional parameters to use for the depth mesh.
    * @returns - Patched parameters.
    */
-  patchShadowCastingMeshParams(mesh: ProjectedMesh, parameters: RenderMaterialParams = {}): RenderMaterialParams {
+  patchShadowCastingMeshParams(mesh: Mesh, parameters: RenderMaterialParams = {}): RenderMaterialParams {
     parameters = { ...mesh.material.options.rendering, ...parameters }
 
     // eventual internal bindings
@@ -663,14 +655,14 @@ export class Shadow {
   }
 
   /**
-   * Add a {@link ProjectedMesh | mesh} to the shadow map. Internally called by the {@link ProjectedMesh | mesh} if its `castShadows` parameters has been set to `true`, but can also be called externally to selectively cast shadows or to add specific parameters (such as custom depth pass shaders).
+   * Add a {@link Mesh} to the shadow map. Internally called by the {@link Mesh} if its `castShadows` parameters has been set to `true`, but can also be called externally to selectively cast shadows or to add specific parameters (such as custom depth pass shaders).
    * - {@link patchShadowCastingMeshParams | Patch} the parameters.
    * - Create a new depth {@link Mesh} with the patched parameters.
-   * - Add the {@link ProjectedMesh | mesh} to the {@link castingMeshes} Map.
-   * @param mesh - {@link ProjectedMesh | mesh} to add to the shadow map.
+   * - Add the {@link Mesh} to the {@link castingMeshes} Map.
+   * @param mesh - {@link Mesh} to add to the shadow map.
    * @param parameters - Optional {@link RenderMaterialParams | parameters} to use for the depth mesh.
    */
-  addShadowCastingMesh(mesh: ProjectedMesh, parameters: RenderMaterialParams = {}) {
+  addShadowCastingMesh(mesh: Mesh, parameters: RenderMaterialParams = {}) {
     // already there? bail
     if (this.castingMeshes.get(mesh.uuid)) return
 
@@ -703,18 +695,18 @@ export class Shadow {
   }
 
   /**
-   * Add a shadow receiving {@link ProjectedMesh | mesh} to the #receivingMeshes {@link Map}.
-   * @param mesh - Shadow receiving {@link ProjectedMesh | mesh} to add.
+   * Add a shadow receiving {@link Mesh} to the #receivingMeshes {@link Map}.
+   * @param mesh - Shadow receiving {@link Mesh} to add.
    */
-  addShadowReceivingMesh(mesh: ProjectedMesh) {
+  addShadowReceivingMesh(mesh: Mesh) {
     this.#receivingMeshes.set(mesh.uuid, mesh)
   }
 
   /**
-   * Remove a shadow receiving {@link ProjectedMesh | mesh} from the #receivingMeshes {@link Map}.
-   * @param mesh - Shadow receiving {@link ProjectedMesh | mesh} to remove.
+   * Remove a shadow receiving {@link Mesh} from the #receivingMeshes {@link Map}.
+   * @param mesh - Shadow receiving {@link Mesh} to remove.
    */
-  removeShadowReceivingMesh(mesh: ProjectedMesh) {
+  removeShadowReceivingMesh(mesh: Mesh) {
     this.#receivingMeshes.delete(mesh.uuid)
 
     // shadow is inactive and there's no more receiving meshes?
@@ -725,10 +717,10 @@ export class Shadow {
   }
 
   /**
-   * Remove a {@link ProjectedMesh | mesh} from the shadow map and destroy its depth mesh.
-   * @param mesh - {@link ProjectedMesh | mesh} to remove.
+   * Remove a {@link Mesh} from the shadow map and destroy its depth mesh.
+   * @param mesh - {@link Mesh} to remove.
    */
-  removeMesh(mesh: ProjectedMesh) {
+  removeMesh(mesh: Mesh) {
     const depthMesh = this.depthMeshes.get(mesh.uuid)
 
     if (depthMesh) {
@@ -745,10 +737,10 @@ export class Shadow {
 
   /**
    * If one of the {@link castingMeshes} had its geometry change, update the corresponding depth mesh geometry as well.
-   * @param mesh - Original {@link ProjectedMesh} which geometry just changed.
-   * @param geometry - New {@link ProjectedMesh} {@link Geometry} to use.
+   * @param mesh - Original {@link Mesh} which geometry just changed.
+   * @param geometry - New {@link Mesh} {@link Geometry} to use.
    */
-  updateMeshGeometry(mesh: ProjectedMesh, geometry: Geometry) {
+  updateMeshGeometry(mesh: Mesh, geometry: Geometry) {
     const depthMesh = this.depthMeshes.get(mesh.uuid)
 
     if (depthMesh) {

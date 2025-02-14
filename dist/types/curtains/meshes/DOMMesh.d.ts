@@ -66,6 +66,11 @@ export declare class DOMMesh extends DOMMesh_base {
      */
     constructor(renderer: GPUCurtainsRenderer | GPUCurtains, element: DOMElementParams['element'], parameters: DOMMeshParams);
     /**
+     * Set or reset this {@link DOMMesh} {@link DOMMesh.renderer | renderer}.
+     * @param renderer - New {@link GPUCurtainsRenderer} or {@link GPUCurtains} instance to use.
+     */
+    setRenderer(renderer: GPUCurtainsRenderer | GPUCurtains): void;
+    /**
      * Get/set whether our {@link material} and {@link geometry} are ready.
      * @readonly
      */

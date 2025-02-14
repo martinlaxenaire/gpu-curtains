@@ -74,18 +74,21 @@ window.addEventListener('load', async () => {
 
   onResize()
 
-  directionalLight.position.set(distance, distance * 0.5, distance)
+  // lazy test to assign a smaller depth texture on mobile
+  const shadowTextureSize = renderer.boundingRect.width < 1000 && renderer.boundingRect.height < 1000 ? 1024 : 1536
+
+  directionalLight.position.set(distance * 2, distance, distance * 2)
   directionalLight.shadow.cast({
-    depthTextureSize: new Vec2(1024),
+    depthTextureSize: new Vec2(shadowTextureSize),
     intensity: 1,
     pcfSamples: 3,
     camera: {
-      left: distance * -1.05,
-      right: distance * 1.05,
-      top: distance * 1.05,
-      bottom: distance * -1.05,
+      left: distance * -1.25,
+      right: distance * 1.25,
+      top: distance * 1.25,
+      bottom: distance * -1.25,
       near: 0.1,
-      far: distance * 3,
+      far: distance * 6,
     },
   })
 
@@ -263,9 +266,9 @@ window.addEventListener('load', async () => {
     },
   })
 
-  // colors need to be in linear space
-  const lightColor = sRGBToLinear(new Vec3(255, 240, 97).divideScalar(255))
-  const darkColor = sRGBToLinear(new Vec3(184, 162, 9).divideScalar(255))
+  // particles colors
+  const blue = new Vec3(0, 1, 1)
+  const pink = new Vec3(1, 0, 1)
 
   const particlesSystem = new LitMesh(renderer, {
     label: 'Shadowed particles system',
@@ -274,6 +277,7 @@ window.addEventListener('load', async () => {
     receiveShadows: true,
     material: {
       shading: 'Lambert',
+      color: blue,
       toneMapping,
       // we need an additional 'velocity' varying
       // to pass from the vertex to the fragment shader
@@ -294,13 +298,14 @@ window.addEventListener('load', async () => {
     uniforms: {
       shading: {
         struct: {
-          lightColor: {
+          pinkColor: {
             type: 'vec3f',
-            value: lightColor,
+            // externally added colors need to be in linear space
+            value: sRGBToLinear(pink),
           },
-          darkColor: {
-            type: 'vec3f',
-            value: darkColor,
+          velocityStrength: {
+            type: 'f32',
+            value: 0.625,
           },
         },
       },

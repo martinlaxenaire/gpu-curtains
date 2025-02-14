@@ -308,6 +308,10 @@ class GPURenderer {
     this.postProcessingPass?.resize();
     this.renderTargets.forEach((renderTarget) => renderTarget.resize());
     this.renderedObjects.forEach((sceneObject) => sceneObject.restoreContext());
+    this.environmentMaps.forEach((environmentMap) => {
+      environmentMap.computeBRDFLUTTexture();
+      environmentMap.computeFromHDR();
+    });
   }
   /* PIPELINES, SCENE & MAIN RENDER PASS */
   /**
@@ -642,6 +646,7 @@ class GPURenderer {
     this.renderTargets = [];
     this.meshes = [];
     this.textures = [];
+    this.environmentMaps = /* @__PURE__ */ new Map();
     this.renderBundles = /* @__PURE__ */ new Map();
     this.animations = /* @__PURE__ */ new Map();
   }

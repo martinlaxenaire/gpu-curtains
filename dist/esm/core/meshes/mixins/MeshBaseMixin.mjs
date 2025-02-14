@@ -625,7 +625,7 @@ ${geometry.wgslStructFragment}`
     onBeforeRenderPass() {
       if (!this.renderer.ready) return;
       this.setGeometry();
-      if (this.visible) {
+      if (this.visible && this.ready) {
         this._onRenderCallback && this._onRenderCallback();
       }
       this.material.onBeforeRender();

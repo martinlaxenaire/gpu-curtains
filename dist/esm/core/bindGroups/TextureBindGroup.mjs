@@ -47,6 +47,33 @@ class TextureBindGroup extends BindGroup {
     this.texturesMatricesBinding = null;
   }
   /**
+   * Set or reset this {@link TextureBindGroup} {@link TextureBindGroup.renderer | renderer}, and update the {@link samplers} and {@link textures} renderer as well.
+   * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
+   */
+  setRenderer(renderer) {
+    const shadowTextures = /* @__PURE__ */ new Set();
+    if (this.renderer && "shadowCastingLights" in this.renderer) {
+      this.renderer.shadowCastingLights.forEach((light) => {
+        if (light.shadow.isActive && light.shadow.depthTexture) {
+          shadowTextures.add(light.shadow.depthTexture.uuid);
+        }
+      });
+    }
+    super.setRenderer(renderer);
+    if (this.options && this.samplers) {
+      this.samplers.forEach((sampler) => {
+        sampler.setRenderer(this.renderer);
+      });
+    }
+    if (this.options && this.textures) {
+      this.textures.forEach((texture) => {
+        if (!shadowTextures.has(texture.uuid)) {
+          texture.setRenderer(this.renderer);
+        }
+      });
+    }
+  }
+  /**
    * Adds a texture to the {@link textures} array and {@link bindings}.
    * @param texture - texture to add.
    */

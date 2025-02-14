@@ -1,4 +1,5 @@
 import { isRenderer } from '../renderers/utils.mjs';
+import { generateUUID } from '../../utils/utils.mjs';
 
 let pipelineId = 0;
 class PipelineEntry {
@@ -8,6 +9,7 @@ class PipelineEntry {
    */
   constructor(parameters) {
     this.type = "PipelineEntry";
+    this.uuid = generateUUID();
     let { renderer } = parameters;
     const { label, shaders, useAsync, bindGroups, cacheKey } = parameters;
     renderer = isRenderer(renderer, label ? label + " " + this.type : this.type);
@@ -28,6 +30,14 @@ class PipelineEntry {
       cacheKey
     };
     this.bindGroups = bindGroups;
+  }
+  /**
+   * Set or reset this {@link PipelineEntry} {@link PipelineEntry.renderer | renderer}.
+   * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
+   */
+  setRenderer(renderer) {
+    renderer = isRenderer(renderer, this.options.label + " " + this.type);
+    this.renderer = renderer;
   }
   /**
    * Get whether the {@link pipeline} is ready, i.e. successfully compiled
