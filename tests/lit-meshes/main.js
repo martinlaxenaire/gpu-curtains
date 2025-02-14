@@ -85,7 +85,7 @@ window.addEventListener('load', async () => {
     diffuseIntensity: 0.5,
     specularIntensity: 0.5,
   })
-  await environmentMap.loadAndComputeFromHDR(currentEnvMap.url)
+  environmentMap.loadAndComputeFromHDR(currentEnvMap.url)
 
   const ambientLight = new AmbientLight(gpuCameraRenderer, {
     intensity: 0.1,
@@ -233,6 +233,7 @@ window.addEventListener('load', async () => {
       material: {
         shading: 'Phong',
         color: gold,
+        shininess: 100,
         ...(hasBaseColorTexture && {
           baseColorTexture: {
             texture: baseColorTexture,

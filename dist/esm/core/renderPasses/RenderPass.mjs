@@ -25,10 +25,10 @@ class RenderPass {
     depthClearValue = 1,
     depthFormat = "depth24plus"
   } = {}) {
-    renderer = isRenderer(renderer, "RenderPass");
     this.type = "RenderPass";
-    this.uuid = generateUUID();
+    renderer = isRenderer(renderer, label + " " + this.type);
     this.renderer = renderer;
+    this.uuid = generateUUID();
     if (useColorAttachments) {
       const defaultColorAttachment = {
         loadOp: "clear",
@@ -71,6 +71,25 @@ class RenderPass {
       this.createResolveTargets();
     }
     this.setRenderPassDescriptor();
+  }
+  /**
+   * Reset this {@link RenderPass} {@link RenderPass.renderer | renderer}.
+   * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
+   */
+  setRenderer(renderer) {
+    renderer = isRenderer(renderer, this.options.label + " " + this.type);
+    this.renderer = renderer;
+    if (this.options.useDepth && !this.options.depthTexture) {
+      this.depthTexture.setRenderer(this.renderer);
+    }
+    this.viewTextures.forEach((texture) => {
+      texture.setRenderer(this.renderer);
+    });
+    this.resolveTargets.forEach((texture) => {
+      if (texture) {
+        texture.setRenderer(this.renderer);
+      }
+    });
   }
   /**
    * Create and set our {@link depthTexture | depth texture}.

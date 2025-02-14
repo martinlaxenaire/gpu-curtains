@@ -1,14 +1,14 @@
 /// <reference types="dist" />
 import { Renderer } from '../../renderers/utils';
+import type { Material } from '../../materials/Material';
 import { RenderMaterial } from '../../materials/RenderMaterial';
+import { AllowedGeometries, RenderMaterialParams } from '../../../types/Materials';
 import { Geometry } from '../../geometries/Geometry';
 import { Texture, TextureParams } from '../../textures/Texture';
 import { SceneObjectTextureOptions } from '../../../types/Textures';
 import { RenderTarget } from '../../renderPasses/RenderTarget';
 import { GPUCurtains } from '../../../curtains/GPUCurtains';
-import { Material } from '../../materials/Material';
 import { DOMElementBoundingRect } from '../../DOM/DOMElement';
-import { AllowedGeometries, RenderMaterialParams } from '../../../types/Materials';
 import { ProjectedMeshBaseClass } from './ProjectedMeshBaseMixin';
 import { RenderPass } from '../../renderPasses/RenderPass';
 import { RenderBundle } from '../../renderPasses/RenderBundle';

@@ -61,7 +61,7 @@ window.addEventListener('load', async () => {
     diffuseIntensity: 0.5,
     specularIntensity: 0.5,
   })
-  await environmentMap.loadAndComputeFromHDR(currentEnvMap.url)
+  environmentMap.loadAndComputeFromHDR(currentEnvMap.url)
 
   const models = {
     // skins

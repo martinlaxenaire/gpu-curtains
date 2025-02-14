@@ -33,8 +33,7 @@ class DOMObject3D extends ProjectedObject3D {
     /** function assigned to the {@link onAfterDOMElementResize} callback */
     this._onAfterDOMElementResizeCallback = () => {
     };
-    renderer = isCurtainsRenderer(renderer, "DOM3DObject");
-    this.renderer = renderer;
+    this.setRenderer(renderer);
     this.size = {
       shouldUpdate: true,
       normalizedWorld: {
@@ -54,6 +53,20 @@ class DOMObject3D extends ProjectedObject3D {
     this.boundingBox.min.onChange(() => this.shouldUpdateComputedSizes());
     this.boundingBox.max.onChange(() => this.shouldUpdateComputedSizes());
     this.setDOMElement(element);
+    this.renderer.domObjects.push(this);
+  }
+  /**
+   * Set or reset this {@link DOMObject3D} {@link DOMObject3D.renderer | renderer}.
+   * @param renderer - New {@link GPUCurtainsRenderer} or {@link GPUCurtains} instance to use.
+   */
+  setRenderer(renderer) {
+    if (this.renderer) {
+      this.renderer.domObjects = this.renderer.domObjects.filter(
+        (object) => object.object3DIndex !== this.object3DIndex
+      );
+    }
+    renderer = isCurtainsRenderer(renderer, "DOMObject3D");
+    this.renderer = renderer;
     this.renderer.domObjects.push(this);
   }
   /**
@@ -360,6 +373,7 @@ class DOMObject3D extends ProjectedObject3D {
    */
   destroy() {
     super.destroy();
+    this.renderer.domObjects = this.renderer.domObjects.filter((object) => object.object3DIndex !== this.object3DIndex);
     this.domElement?.destroy();
   }
 }

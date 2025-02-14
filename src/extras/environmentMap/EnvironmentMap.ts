@@ -4,7 +4,7 @@ import { HDRImageData, HDRLoader } from '../loaders/HDRLoader'
 import { Texture, TextureParams } from '../../core/textures/Texture'
 import { ComputePass } from '../../core/computePasses/ComputePass'
 import { Vec2 } from '../../math/Vec2'
-import { throwWarning } from '../../utils/utils'
+import { generateUUID, throwWarning } from '../../utils/utils'
 import { Sampler } from '../../core/samplers/Sampler'
 import { Mat3 } from '../../math/Mat3'
 import { computeBRDFLUT } from '../../core/shaders/full/compute/compute-BRDF-LUT'
@@ -75,6 +75,8 @@ export interface EnvironmentMapParams extends Partial<EnvironmentMapOptions> {}
 export class EnvironmentMap {
   /** The {@link Renderer} used. */
   renderer: Renderer
+  /** The universal unique id of the {@link EnvironmentMap}. */
+  readonly uuid: string
   /** The {@link Sampler} used in both the {@link ComputePass} and in `IBL` shading from the {@link core/shaders/full/fragment/get-PBR-fragment-shader-code | getPBRFragmentShaderCode} utility function. */
   sampler: Sampler
   /** {@link HDRLoader} used to load the .hdr file. */
@@ -111,6 +113,8 @@ export class EnvironmentMap {
    * @param params - {@link EnvironmentMapParams | parameters} use to create this {@link EnvironmentMap}. Defines the various textures options.
    */
   constructor(renderer: Renderer | GPUCurtains, params: EnvironmentMapParams = {}) {
+    this.uuid = generateUUID()
+
     this.setRenderer(renderer)
 
     params = {
@@ -158,6 +162,9 @@ export class EnvironmentMap {
 
     this.hdrLoader = new HDRLoader()
 
+    this.createLUTTextures()
+    this.createSpecularDiffuseTextures()
+
     // generate LUT texture right now
     this.computeBRDFLUTTexture()
   }
@@ -167,8 +174,14 @@ export class EnvironmentMap {
    * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
    */
   setRenderer(renderer: Renderer | GPUCurtains) {
+    if (this.renderer) {
+      this.renderer.environmentMaps.delete(this.uuid)
+    }
+
     renderer = isRenderer(renderer, 'EnvironmentMap')
     this.renderer = renderer
+
+    this.renderer.environmentMaps.set(this.uuid, this)
   }
 
   /**
@@ -202,6 +215,80 @@ export class EnvironmentMap {
     }
 
     return this
+  }
+
+  /**
+   * Create our {@link lutTexture} eagerly.
+   */
+  createLUTTextures() {
+    // specific lut texture options
+    const { size, computeSampleCount, ...lutTextureParams } = this.options.lutTextureParams
+
+    this.#lutStorageTexture = new Texture(this.renderer, {
+      label: 'LUT storage texture',
+      name: 'lutStorageTexture',
+      format: lutTextureParams.format,
+      visibility: ['compute', 'fragment'],
+      usage: ['copySrc', 'storageBinding', 'textureBinding'],
+      type: 'storage',
+      fixedSize: {
+        width: size,
+        height: size,
+      },
+      autoDestroy: false,
+    })
+
+    this.lutTexture = new Texture(this.renderer, {
+      ...lutTextureParams,
+      visibility: ['fragment'],
+      fixedSize: {
+        width: size,
+        height: size,
+      },
+      autoDestroy: false,
+      fromTexture: this.#lutStorageTexture,
+    })
+  }
+
+  /**
+   * Create our {@link specularTexture} and {@link diffuseTexture} eagerly. They could be resized later when calling the {@link computeFromHDR} method.
+   */
+  createSpecularDiffuseTextures() {
+    // default options to absolutely use
+    const textureDefaultOptions: TextureParams = {
+      viewDimension: 'cube',
+      autoDestroy: false, // keep alive when changing mesh
+    }
+
+    this.specularTexture = new Texture(this.renderer, {
+      ...this.options.specularTextureParams,
+      ...{
+        visibility: ['fragment', 'compute'],
+        // could be resized later
+        fixedSize: {
+          width: 256,
+          height: 256,
+        },
+      },
+      ...textureDefaultOptions,
+    } as TextureParams)
+
+    // specific diffuse texture options
+    const { size, computeSampleCount, ...diffuseTextureParams } = this.options.diffuseTextureParams
+
+    // diffuse texture
+    this.diffuseTexture = new Texture(this.renderer, {
+      ...diffuseTextureParams,
+      ...{
+        visibility: ['fragment'],
+        // could be resized later
+        fixedSize: {
+          width: size,
+          height: size,
+        },
+      },
+      ...textureDefaultOptions,
+    } as TextureParams)
   }
 
   /**
@@ -244,33 +331,24 @@ export class EnvironmentMap {
    * Create the {@link lutTexture | BRDF GGX LUT texture} using the provided {@link LUTTextureParams | LUT texture options} and a {@link ComputePass} that runs once.
    */
   async computeBRDFLUTTexture() {
-    // specific lut texture options
-    const { size, computeSampleCount, ...lutTextureParams } = this.options.lutTextureParams
+    // could we get one from another env map?
+    let cachedLUT = null
+    for (const renderer of this.renderer.deviceManager.renderers) {
+      for (const [uuid, envMap] of renderer.environmentMaps) {
+        if (uuid !== this.uuid && envMap.lutTexture) {
+          cachedLUT = envMap.lutTexture
+          break
+        }
+      }
+      if (cachedLUT) break
+    }
 
-    this.#lutStorageTexture = new Texture(this.renderer, {
-      label: 'LUT storage texture',
-      name: 'lutStorageTexture',
-      format: lutTextureParams.format,
-      visibility: ['compute', 'fragment'],
-      usage: ['copySrc', 'storageBinding', 'textureBinding'],
-      type: 'storage',
-      fixedSize: {
-        width: size,
-        height: size,
-      },
-      autoDestroy: false,
-    })
+    if (cachedLUT) {
+      this.lutTexture.copy(cachedLUT)
+      return
+    }
 
-    this.lutTexture = new Texture(this.renderer, {
-      ...lutTextureParams,
-      visibility: ['fragment'],
-      fixedSize: {
-        width: size,
-        height: size,
-      },
-      autoDestroy: false,
-      fromTexture: this.#lutStorageTexture,
-    })
+    const { computeSampleCount } = this.options.lutTextureParams
 
     let computeLUTPass = new ComputePass(this.renderer, {
       label: 'Compute LUT texture',
@@ -301,10 +379,11 @@ export class EnvironmentMap {
     await computeLUTPass.material.compileMaterial()
 
     this.#runComputePass({ computePass: computeLUTPass, label: 'Compute LUT texture command encoder' })
+
     this.lutTexture.textureBinding.resource = this.lutTexture.texture
 
     // once command encoder has been submitted, free the resources
-    computeLUTPass.destroy()
+    computeLUTPass.remove()
     computeLUTPass = null
   }
 
@@ -377,7 +456,7 @@ export class EnvironmentMap {
     })
 
     // once command encoder has been submitted, free the resources
-    computeCubeMapPass.destroy()
+    computeCubeMapPass.remove()
     cubeStorageTexture.destroy()
     cubeStorageTexture = null
     computeCubeMapPass = null
@@ -454,7 +533,7 @@ export class EnvironmentMap {
     })
 
     // once command encoder has been submitted, free the resources
-    computeDiffusePass.destroy()
+    computeDiffusePass.remove()
     diffuseStorageTexture.destroy()
     diffuseStorageTexture = null
     computeDiffusePass = null
@@ -471,28 +550,10 @@ export class EnvironmentMap {
 
     const faceSize = Math.max(width / 4, height / 2)
 
-    // now prepare the textures
-
-    // default options to absolutely use
-    const textureDefaultOptions: TextureParams = {
-      viewDimension: 'cube',
-      autoDestroy: false, // keep alive when changing mesh
-    }
+    // now resize the textures if needed
 
     // specular texture
-    if (!this.specularTexture) {
-      this.specularTexture = new Texture(this.renderer, {
-        ...this.options.specularTextureParams,
-        ...{
-          visibility: ['fragment', 'compute'],
-          fixedSize: {
-            width: faceSize,
-            height: faceSize,
-          },
-        },
-        ...textureDefaultOptions,
-      } as TextureParams)
-    } else if (this.specularTexture.size.width !== faceSize || this.specularTexture.size.height !== faceSize) {
+    if (this.specularTexture.size.width !== faceSize || this.specularTexture.size.height !== faceSize) {
       this.specularTexture.options.fixedSize.width = faceSize
       this.specularTexture.options.fixedSize.height = faceSize
       this.specularTexture.size.width = faceSize
@@ -501,24 +562,11 @@ export class EnvironmentMap {
     }
 
     // specific diffuse texture options
-    const { size, computeSampleCount, ...diffuseTextureParams } = this.options.diffuseTextureParams
+    const { size } = this.options.diffuseTextureParams
 
     const diffuseSize = Math.min(size, faceSize)
 
-    if (!this.diffuseTexture) {
-      // diffuse texture
-      this.diffuseTexture = new Texture(this.renderer, {
-        ...diffuseTextureParams,
-        ...{
-          visibility: ['fragment'],
-          fixedSize: {
-            width: diffuseSize,
-            height: diffuseSize,
-          },
-        },
-        ...textureDefaultOptions,
-      } as TextureParams)
-    } else if (this.diffuseTexture.size.width !== diffuseSize || this.diffuseTexture.size.height !== diffuseSize) {
+    if (this.diffuseTexture.size.width !== diffuseSize || this.diffuseTexture.size.height !== diffuseSize) {
       this.diffuseTexture.options.fixedSize.width = diffuseSize
       this.diffuseTexture.options.fixedSize.height = diffuseSize
       this.diffuseTexture.size.width = diffuseSize
@@ -544,11 +592,11 @@ export class EnvironmentMap {
    * Destroy the {@link EnvironmentMap} and its associated textures.
    */
   destroy() {
-    this.lutTexture?.destroy()
     this.diffuseTexture?.destroy()
     this.specularTexture?.destroy()
 
     // destroy LUT storage texture
+    this.lutTexture?.destroy()
     this.#lutStorageTexture.destroy()
   }
 }

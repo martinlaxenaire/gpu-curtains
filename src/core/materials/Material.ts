@@ -34,7 +34,7 @@ export class Material {
   /** The type of the {@link Material}. */
   type: string
   /** The universal unique id of the {@link Material}. */
-  uuid: string
+  readonly uuid: string
   /** The {@link Renderer} used. */
   renderer: Renderer
   /** Options used to create this {@link Material}. */

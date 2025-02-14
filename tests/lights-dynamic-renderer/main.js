@@ -1,6 +1,10 @@
-// Basic rotating cube for most simple tests
-import { Vec3 } from '../../dist/esm/index.mjs'
-
+// Built to test a lot of important things:
+// - Various renderer dependent objects renderer switching & context lost/restoration. Objects tested:
+//   - Mesh & LitMesh (including transmissive)
+//   - Lights & shadows
+//   - EnvironmentMap
+//   - IndirectBuffer
+// - Dynamic meshes geometries and shadow maps
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
   const {
@@ -8,6 +12,7 @@ window.addEventListener('load', async () => {
     SphereGeometry,
     Geometry,
     OrbitControls,
+    IndirectBuffer,
     GPUCameraRenderer,
     GPUDeviceManager,
     AmbientLight,
@@ -121,7 +126,7 @@ window.addEventListener('load', async () => {
   console.log(pointLights[0].shadow)
 
   const environmentMap = new EnvironmentMap(leftRenderer)
-  await environmentMap.loadAndComputeFromHDR('../../website/assets/hdr/Colorful_Studio.hdr')
+  environmentMap.loadAndComputeFromHDR('../../website/assets/hdr/Colorful_Studio.hdr')
 
   // ---------------
   // GEOMETRIES
@@ -260,9 +265,20 @@ window.addEventListener('load', async () => {
     ],
   })
 
+  const boxGeometry = new BoxGeometry()
+  const sphereGeometry = new SphereGeometry()
+  const planeGeometry = new PlaneGeometry()
+
+  const indirectBuffer = new IndirectBuffer(leftRenderer, {
+    label: 'Test indirect buffer',
+    geometries: [boxGeometry, sphereGeometry, planeGeometry, customGeometry],
+  })
+
+  indirectBuffer.create()
+
   const mesh = new LitMesh(leftRenderer, {
     label: 'Cube',
-    geometry: new BoxGeometry(),
+    geometry: boxGeometry,
     castShadows: true,
     material: {
       shading: 'Phong',
@@ -282,7 +298,7 @@ window.addEventListener('load', async () => {
 
   const bubble = new LitMesh(leftRenderer, {
     label: 'Transmissive bubble',
-    geometry: new SphereGeometry(),
+    geometry: sphereGeometry,
     transmissive: true,
     material: {
       shading: 'PBR',
@@ -301,8 +317,6 @@ window.addEventListener('load', async () => {
   bubble.position.y = 3
   bubble.position.z = 4
   bubble.scale.set(1.5)
-
-  const planeGeometry = new PlaneGeometry()
 
   const boxPivot = new Object3D()
   boxPivot.parent = leftRenderer.scene
@@ -329,7 +343,7 @@ window.addEventListener('load', async () => {
 
   const geometries = {
     box: mesh.geometry,
-    sphere: new SphereGeometry(),
+    sphere: sphereGeometry,
     custom: customGeometry,
   }
 
@@ -438,6 +452,8 @@ window.addEventListener('load', async () => {
 
       environmentMap.setRenderer(renderer)
 
+      indirectBuffer.setRenderer(renderer)
+
       mesh.setRenderer(renderer)
 
       bubble.setRenderer(renderer)
@@ -539,10 +555,6 @@ window.addEventListener('load', async () => {
       activeRenderer.deviceManager.restoreDevice()
       loseCtxButton.textContent = 'Lose context'
       console.log('restored', activeRenderer)
-      setTimeout(() => {
-        environmentMap.computeBRDFLUTTexture()
-        environmentMap.computeFromHDR()
-      }, 100)
     }
 
     isContextActive = !isContextActive

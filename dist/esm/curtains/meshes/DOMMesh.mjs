@@ -36,6 +36,19 @@ class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
     this.setInitSources();
   }
   /**
+   * Set or reset this {@link DOMMesh} {@link DOMMesh.renderer | renderer}.
+   * @param renderer - New {@link GPUCurtainsRenderer} or {@link GPUCurtains} instance to use.
+   */
+  setRenderer(renderer) {
+    if (this.renderer) {
+      this.renderer.domMeshes = this.renderer.domMeshes.filter((m) => m.uuid !== this.uuid);
+    }
+    renderer = isCurtainsRenderer(renderer, this.options.label + " DOMMesh");
+    super.setRenderer(renderer);
+    this.renderer = renderer;
+    this.renderer.domMeshes.push(this);
+  }
+  /**
    * Get/set whether our {@link material} and {@link geometry} are ready.
    * @readonly
    */
@@ -78,9 +91,7 @@ class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
   removeFromScene(removeFromRenderer = false) {
     super.removeFromScene(removeFromRenderer);
     if (removeFromRenderer) {
-      this.renderer.domMeshes = this.renderer.domMeshes.filter(
-        (m) => m.uuid !== this.uuid
-      );
+      this.renderer.domMeshes = this.renderer.domMeshes.filter((m) => m.uuid !== this.uuid);
     }
   }
   /**

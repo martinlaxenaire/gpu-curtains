@@ -3,6 +3,7 @@ import { PipelineEntryOptions, PipelineEntryParams, PipelineEntryStatus } from '
 import { AllowedBindGroups } from '../../types/BindGroups'
 import { MaterialShadersType } from '../../types/Materials'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
+import { generateUUID } from '../../utils/utils'
 
 let pipelineId = 0
 
@@ -16,6 +17,8 @@ let pipelineId = 0
 export class PipelineEntry {
   /** The type of the {@link PipelineEntry} */
   type: string
+  /** The universal unique id of the {@link PipelineEntry}. */
+  readonly uuid: string
   /** The {@link Renderer} used to create this {@link PipelineEntry} */
   renderer: Renderer
   /** Index of this {@link PipelineEntry}, i.e. creation order */
@@ -38,6 +41,7 @@ export class PipelineEntry {
    */
   constructor(parameters: PipelineEntryParams) {
     this.type = 'PipelineEntry'
+    this.uuid = generateUUID()
 
     let { renderer } = parameters
     const { label, shaders, useAsync, bindGroups, cacheKey } = parameters

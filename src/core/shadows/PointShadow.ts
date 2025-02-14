@@ -11,7 +11,7 @@ import { BufferBinding } from '../bindings/BufferBinding'
 import { VertexShaderInputBaseParams } from '../shaders/full/vertex/get-vertex-shader-code'
 import { getDefaultPointShadowDepthVs } from '../shaders/full/vertex/get-default-point-shadow-depth-vertex-shader-code'
 import { getDefaultPointShadowDepthFs } from '../shaders/full/fragment/get-default-point-shadow-depth-fragment-code'
-import { ProjectedMesh } from '../renderers/GPURenderer'
+import { Mesh } from '../meshes/Mesh'
 
 /** Defines the perspective shadow camera params. */
 export type PerspectiveShadowCameraParams = Omit<PerspectiveProjectionParams, 'fov' | 'aspect'>
@@ -444,12 +444,12 @@ export class PointShadow extends Shadow {
   }
 
   /**
-   * Patch the given {@link ProjectedMesh | mesh} material parameters to create the depth mesh. Here we'll be adding the first {@link CameraRenderer.pointShadowsCubeFaceBindGroups | renderer pointShadowsCubeFaceBindGroups} bind group containing the face index onto which we'll be drawing. This bind group will be swapped when rendering using {@link renderDepthPass}.
-   * @param mesh - original {@link ProjectedMesh | mesh} to use.
+   * Patch the given {@link Mesh} material parameters to create the depth mesh. Here we'll be adding the first {@link CameraRenderer.pointShadowsCubeFaceBindGroups | renderer pointShadowsCubeFaceBindGroups} bind group containing the face index onto which we'll be drawing. This bind group will be swapped when rendering using {@link renderDepthPass}.
+   * @param mesh - original {@link Mesh} to use.
    * @param parameters - Optional additional parameters to use for the depth mesh.
    * @returns - Patched parameters.
    */
-  patchShadowCastingMeshParams(mesh: ProjectedMesh, parameters: RenderMaterialParams = {}): RenderMaterialParams {
+  patchShadowCastingMeshParams(mesh: Mesh, parameters: RenderMaterialParams = {}): RenderMaterialParams {
     if (!parameters.bindGroups) {
       parameters.bindGroups = []
     }

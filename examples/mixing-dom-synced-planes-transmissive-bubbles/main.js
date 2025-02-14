@@ -68,7 +68,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     diffuseIntensity: 0.5,
   })
 
-  await environmentMap.loadAndComputeFromHDR('../../website/assets/hdr/Colorful_Studio.hdr')
+  environmentMap.loadAndComputeFromHDR('../../website/assets/hdr/Colorful_Studio.hdr')
 
   // DOM synced planes
   const vertexShader = /* wgsl */ `

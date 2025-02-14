@@ -3,7 +3,7 @@ import { HDRLoader } from '../loaders/HDRLoader.mjs';
 import { Texture } from '../../core/textures/Texture.mjs';
 import { ComputePass } from '../../core/computePasses/ComputePass.mjs';
 import { Vec2 } from '../../math/Vec2.mjs';
-import { throwWarning } from '../../utils/utils.mjs';
+import { generateUUID, throwWarning } from '../../utils/utils.mjs';
 import { Sampler } from '../../core/samplers/Sampler.mjs';
 import { Mat3 } from '../../math/Mat3.mjs';
 import { computeBRDFLUT } from '../../core/shaders/full/compute/compute-BRDF-LUT.mjs';
@@ -18,7 +18,7 @@ var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read fr
 var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
 var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
 var __privateMethod = (obj, member, method) => (__accessCheck(obj, member, "access private method"), method);
-var _lutStorageTexture, _EnvironmentMap_instances, runComputePass_fn;
+var _hdrData, _lutStorageTexture, _EnvironmentMap_instances, runComputePass_fn;
 class EnvironmentMap {
   /**
    * {@link EnvironmentMap} constructor.
@@ -27,14 +27,16 @@ class EnvironmentMap {
    */
   constructor(renderer, params = {}) {
     __privateAdd(this, _EnvironmentMap_instances);
+    /** Parsed {@link HDRImageData} from the {@link HDRLoader} if any. */
+    __privateAdd(this, _hdrData);
     /** BRDF GGX LUT storage {@link Texture} used in the compute shader. */
     __privateAdd(this, _lutStorageTexture);
     // callbacks / events
     /** function assigned to the {@link onRotationAxisChanged} callback */
     this._onRotationAxisChangedCallback = () => {
     };
-    renderer = isRenderer(renderer, "EnvironmentMap");
-    this.renderer = renderer;
+    this.uuid = generateUUID();
+    this.setRenderer(renderer);
     params = {
       ...{
         lutTextureParams: {
@@ -75,7 +77,21 @@ class EnvironmentMap {
     });
     this.rotationMatrix = new Mat3().rotateByAngleY(-Math.PI / 2);
     this.hdrLoader = new HDRLoader();
+    this.createLUTTextures();
+    this.createSpecularDiffuseTextures();
     this.computeBRDFLUTTexture();
+  }
+  /**
+   * Set or reset this {@link EnvironmentMap} {@link EnvironmentMap.renderer | renderer}.
+   * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
+   */
+  setRenderer(renderer) {
+    if (this.renderer) {
+      this.renderer.environmentMaps.delete(this.uuid);
+    }
+    renderer = isRenderer(renderer, "EnvironmentMap");
+    this.renderer = renderer;
+    this.renderer.environmentMaps.set(this.uuid, this);
   }
   /**
    * Get the current {@link EnvironmentMapOptions.rotation | rotation}, in radians.
@@ -105,9 +121,9 @@ class EnvironmentMap {
     return this;
   }
   /**
-   * Create the {@link lutTexture | BRDF GGX LUT texture} using the provided {@link LUTTextureParams | LUT texture options} and a {@link ComputePass} that runs once.
+   * Create our {@link lutTexture} eagerly.
    */
-  async computeBRDFLUTTexture() {
+  createLUTTextures() {
     const { size, computeSampleCount, ...lutTextureParams } = this.options.lutTextureParams;
     __privateSet(this, _lutStorageTexture, new Texture(this.renderer, {
       label: "LUT storage texture",
@@ -132,6 +148,61 @@ class EnvironmentMap {
       autoDestroy: false,
       fromTexture: __privateGet(this, _lutStorageTexture)
     });
+  }
+  /**
+   * Create our {@link specularTexture} and {@link diffuseTexture} eagerly. They could be resized later when calling the {@link computeFromHDR} method.
+   */
+  createSpecularDiffuseTextures() {
+    const textureDefaultOptions = {
+      viewDimension: "cube",
+      autoDestroy: false
+      // keep alive when changing mesh
+    };
+    this.specularTexture = new Texture(this.renderer, {
+      ...this.options.specularTextureParams,
+      ...{
+        visibility: ["fragment", "compute"],
+        // could be resized later
+        fixedSize: {
+          width: 256,
+          height: 256
+        }
+      },
+      ...textureDefaultOptions
+    });
+    const { size, computeSampleCount, ...diffuseTextureParams } = this.options.diffuseTextureParams;
+    this.diffuseTexture = new Texture(this.renderer, {
+      ...diffuseTextureParams,
+      ...{
+        visibility: ["fragment"],
+        // could be resized later
+        fixedSize: {
+          width: size,
+          height: size
+        }
+      },
+      ...textureDefaultOptions
+    });
+  }
+  /**
+   * Create the {@link lutTexture | BRDF GGX LUT texture} using the provided {@link LUTTextureParams | LUT texture options} and a {@link ComputePass} that runs once.
+   */
+  async computeBRDFLUTTexture() {
+    let cachedLUT = null;
+    for (const renderer of this.renderer.deviceManager.renderers) {
+      for (const [uuid, envMap] of renderer.environmentMaps) {
+        if (uuid !== this.uuid && envMap.lutTexture) {
+          cachedLUT = envMap.lutTexture;
+          break;
+        }
+      }
+      if (cachedLUT) break;
+    }
+    if (cachedLUT) {
+      this.lutTexture.copy(cachedLUT);
+      return;
+    }
+    const { computeSampleCount } = this.options.lutTextureParams;
     let computeLUTPass = new ComputePass(this.renderer, {
       label: "Compute LUT texture",
       autoRender: false,
@@ -160,7 +231,8 @@ class EnvironmentMap {
     });
     await computeLUTPass.material.compileMaterial();
     __privateMethod(this, _EnvironmentMap_instances, runComputePass_fn).call(this, { computePass: computeLUTPass, label: "Compute LUT texture command encoder" });
-    computeLUTPass.destroy();
+    this.lutTexture.textureBinding.resource = this.lutTexture.texture;
+    computeLUTPass.remove();
     computeLUTPass = null;
   }
   /**
@@ -222,9 +294,10 @@ class EnvironmentMap {
       label: "Compute specular cube map command encoder",
       onAfterCompute: (commandEncoder) => {
         this.renderer.copyGPUTextureToTexture(cubeStorageTexture.texture, this.specularTexture, commandEncoder);
+        this.specularTexture.textureBinding.resource = this.specularTexture.texture;
       }
     });
-    computeCubeMapPass.destroy();
+    computeCubeMapPass.remove();
     cubeStorageTexture.destroy();
     cubeStorageTexture = null;
     computeCubeMapPass = null;
@@ -290,68 +363,46 @@ class EnvironmentMap {
       label: "Compute diffuse cube map from specular cube map command encoder",
       onAfterCompute: (commandEncoder) => {
         this.renderer.copyGPUTextureToTexture(diffuseStorageTexture.texture, this.diffuseTexture, commandEncoder);
+        this.diffuseTexture.textureBinding.resource = this.diffuseTexture.texture;
       }
     });
-    computeDiffusePass.destroy();
+    computeDiffusePass.remove();
     diffuseStorageTexture.destroy();
     diffuseStorageTexture = null;
     computeDiffusePass = null;
   }
   /**
-   * Load an HDR environment map and then generates the {@link specularTexture} and {@link diffuseTexture} using two separate {@link ComputePass}.
+   * Load an HDR environment map and then generate the {@link specularTexture} and {@link diffuseTexture} using two separate {@link ComputePass}.
    * @param url - The url of the .hdr file to load.
    */
   async loadAndComputeFromHDR(url) {
-    const parsedHdr = await this.hdrLoader.loadFromUrl(url);
-    const { width, height } = parsedHdr ? parsedHdr : { width: 1024, height: 512 };
+    __privateSet(this, _hdrData, await this.hdrLoader.loadFromUrl(url));
+    const { width, height } = __privateGet(this, _hdrData) ? __privateGet(this, _hdrData) : { width: 1024, height: 512 };
     const faceSize = Math.max(width / 4, height / 2);
-    const textureDefaultOptions = {
-      viewDimension: "cube",
-      autoDestroy: false
-      // keep alive when changing mesh
-    };
-    if (!this.specularTexture) {
-      this.specularTexture = new Texture(this.renderer, {
-        ...this.options.specularTextureParams,
-        ...{
-          visibility: ["fragment", "compute"],
-          fixedSize: {
-            width: faceSize,
-            height: faceSize
-          }
-        },
-        ...textureDefaultOptions
-      });
-    } else if (this.specularTexture.size.width !== faceSize || this.specularTexture.size.height !== faceSize) {
+    if (this.specularTexture.size.width !== faceSize || this.specularTexture.size.height !== faceSize) {
       this.specularTexture.options.fixedSize.width = faceSize;
       this.specularTexture.options.fixedSize.height = faceSize;
       this.specularTexture.size.width = faceSize;
       this.specularTexture.size.height = faceSize;
       this.specularTexture.createTexture();
     }
-    const { size, computeSampleCount, ...diffuseTextureParams } = this.options.diffuseTextureParams;
+    const { size } = this.options.diffuseTextureParams;
     const diffuseSize = Math.min(size, faceSize);
-    if (!this.diffuseTexture) {
-      this.diffuseTexture = new Texture(this.renderer, {
-        ...diffuseTextureParams,
-        ...{
-          visibility: ["fragment"],
-          fixedSize: {
-            width: diffuseSize,
-            height: diffuseSize
-          }
-        },
-        ...textureDefaultOptions
-      });
-    } else if (this.diffuseTexture.size.width !== diffuseSize || this.diffuseTexture.size.height !== diffuseSize) {
+    if (this.diffuseTexture.size.width !== diffuseSize || this.diffuseTexture.size.height !== diffuseSize) {
       this.diffuseTexture.options.fixedSize.width = diffuseSize;
       this.diffuseTexture.options.fixedSize.height = diffuseSize;
       this.diffuseTexture.size.width = diffuseSize;
       this.diffuseTexture.size.height = diffuseSize;
       this.diffuseTexture.createTexture();
     }
-    if (parsedHdr) {
-      this.computeSpecularCubemapFromHDRData(parsedHdr).then(() => {
+    this.computeFromHDR();
+  }
+  /**
+   * Generate the {@link specularTexture} and {@link diffuseTexture} using two separate {@link ComputePass}.
+   */
+  computeFromHDR() {
+    if (__privateGet(this, _hdrData)) {
+      this.computeSpecularCubemapFromHDRData(__privateGet(this, _hdrData)).then(() => {
         this.computeDiffuseFromSpecular();
       });
     }
@@ -360,12 +411,13 @@ class EnvironmentMap {
    * Destroy the {@link EnvironmentMap} and its associated textures.
    */
   destroy() {
-    this.lutTexture?.destroy();
     this.diffuseTexture?.destroy();
     this.specularTexture?.destroy();
+    this.lutTexture?.destroy();
     __privateGet(this, _lutStorageTexture).destroy();
   }
 }
+_hdrData = new WeakMap();
 _lutStorageTexture = new WeakMap();
 _EnvironmentMap_instances = new WeakSet();
 /**

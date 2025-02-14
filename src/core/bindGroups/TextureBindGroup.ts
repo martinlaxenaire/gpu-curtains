@@ -121,6 +121,17 @@ export class TextureBindGroup extends BindGroup {
    * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
    */
   setRenderer(renderer: Renderer | GPUCurtains) {
+    // shadow texture renderer switching need to be done by the shadow class itself
+    // so get old renderer shadow textures to be sure we won't switch them here accidentally
+    const shadowTextures = new Set()
+    if (this.renderer && 'shadowCastingLights' in this.renderer) {
+      this.renderer.shadowCastingLights.forEach((light) => {
+        if (light.shadow.isActive && light.shadow.depthTexture) {
+          shadowTextures.add(light.shadow.depthTexture.uuid)
+        }
+      })
+    }
+
     super.setRenderer(renderer)
 
     if (this.options && this.samplers) {
@@ -131,11 +142,11 @@ export class TextureBindGroup extends BindGroup {
 
     if (this.options && this.textures) {
       this.textures.forEach((texture) => {
-        // do not update the shadow map renderer texture
+        // as said above, do not update the shadow map renderer texture
         // it will be done in the shadow class if needed
-        if (texture.options.type == 'depth' && texture.options.label.includes('Shadow')) return
-
-        texture.setRenderer(this.renderer)
+        if (!shadowTextures.has(texture.uuid)) {
+          texture.setRenderer(this.renderer)
+        }
       })
     }
   }

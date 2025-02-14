@@ -1,5 +1,5 @@
 import { isRenderer } from '../renderers/utils.mjs';
-import { generateUUID, throwWarning } from '../../utils/utils.mjs';
+import { generateUUID } from '../../utils/utils.mjs';
 import { ComputeMaterial } from '../materials/ComputeMaterial.mjs';
 import { Texture } from '../textures/Texture.mjs';
 import { MediaTexture } from '../textures/MediaTexture.mjs';
@@ -135,13 +135,7 @@ class ComputePass {
    * @param renderer - new {@link Renderer} to set.
    */
   setRenderer(renderer) {
-    renderer = renderer && renderer.renderer || renderer;
-    if (!renderer || !(renderer.type === "GPURenderer" || renderer.type === "GPUCameraRenderer" || renderer.type === "GPUCurtainsRenderer")) {
-      throwWarning(
-        `${this.options.label}: Cannot set ${renderer} as a renderer because it is not of a valid Renderer type.`
-      );
-      return;
-    }
+    renderer = isRenderer(renderer, this.options.label + " ComputePass");
     this.material?.setRenderer(renderer);
     this.removeFromScene(true);
     this.renderer = renderer;
