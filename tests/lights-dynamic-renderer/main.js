@@ -57,6 +57,7 @@ window.addEventListener('load', async () => {
       maxDirectionalLights: 0,
       //maxPointLights: 0,
     },
+    // lights: false,
     renderPass: {
       colorAttachments: [
         {

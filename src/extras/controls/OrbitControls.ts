@@ -317,7 +317,6 @@ export class OrbitControls {
    */
   set element(value: HTMLElement | Window | null) {
     if (this.#element && (!value || this.#element !== value)) {
-      console.log('set element, remove events', value)
       this.#removeEvents()
     }
 

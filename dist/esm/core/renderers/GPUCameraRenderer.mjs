@@ -18,7 +18,7 @@ var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read fr
 var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
 var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
 var __privateMethod = (obj, member, method) => (__accessCheck(obj, member, "access private method"), method);
-var _shouldUpdateCameraLightsBindGroup, _GPUCameraRenderer_instances, updateLightsCount_fn;
+var _shouldUpdateCameraLightsBindGroup, _GPUCameraRenderer_instances, initLights_fn, updateLightsCount_fn;
 class GPUCameraRenderer extends GPURenderer {
   /**
    * GPUCameraRenderer constructor
@@ -63,8 +63,7 @@ class GPUCameraRenderer extends GPURenderer {
     this.setCamera(camera);
     this.setCameraBinding();
     if (this.options.lights) {
-      this.setLightsBinding();
-      this.setShadowsBinding();
+      __privateMethod(this, _GPUCameraRenderer_instances, initLights_fn).call(this);
     }
     this.setCameraLightsBindGroup();
   }
@@ -190,7 +189,6 @@ class GPUCameraRenderer extends GPURenderer {
       }
     });
   }
-  /* LIGHTS */
   /**
    * Add a {@link Light} to the {@link lights} array.
    * @param light - {@link Light} to add.
@@ -332,54 +330,67 @@ class GPUCameraRenderer extends GPURenderer {
   /**
    * Called when a {@link LightsType | type of light} has overflown its maximum capacity. Destroys the associated {@link BufferBinding} (and eventually the associated shadow {@link BufferBinding}), recreates the {@link cameraLightsBindGroup | camera, lights and shadows bind group} and reset all lights for this {@link LightsType | type of light}.
    * @param lightsType - {@link LightsType | Type of light} that has overflown its maximum capacity.
+   * @param lightIndex - The {@link Light#index | light index} that caused overflow. Will be used to reset the new max light count.
    */
   onMaxLightOverflow(lightsType, lightIndex = 0) {
-    if (!this.production) {
-      throwWarning(
-        `${this.options.label} (${this.type}): You are overflowing the current max lights count of '${this.lightsBindingParams[lightsType].max}' for this type of lights: ${lightsType}. This should be avoided by setting a larger ${"max" + lightsType.charAt(0).toUpperCase() + lightsType.slice(1)} when instancing your ${this.type}.`
-      );
-    }
-    this.lightsBindingParams[lightsType].max = lightIndex + 1;
-    const oldLightBinding = this.cameraLightsBindGroup.getBindingByName(lightsType);
-    if (oldLightBinding) {
-      this.cameraLightsBindGroup.destroyBufferBinding(oldLightBinding);
-    }
-    this.setLightsTypeBinding(lightsType);
-    const lightBindingIndex = this.cameraLightsBindGroup.bindings.findIndex((binding) => binding.name === lightsType);
-    if (lightBindingIndex !== -1) {
-      this.cameraLightsBindGroup.bindings[lightBindingIndex] = this.bindings[lightsType];
-    } else {
-      this.bindings[lightsType].shouldResetBindGroup = true;
-      this.bindings[lightsType].shouldResetBindGroupLayout = true;
-      this.cameraLightsBindGroup.addBinding(this.bindings[lightsType]);
-      this.shouldUpdateCameraLightsBindGroup();
-    }
-    if (lightsType === "directionalLights" || lightsType === "pointLights" || lightsType === "spotLights") {
-      const shadowsType = lightsType.replace("Lights", "") + "Shadows";
-      const oldShadowsBinding = this.cameraLightsBindGroup.getBindingByName(shadowsType);
-      if (oldShadowsBinding) {
-        this.cameraLightsBindGroup.destroyBufferBinding(oldShadowsBinding);
+    if (!this.options.lights) {
+      if (!this.production) {
+        throwWarning(
+          `${this.options.label} (${this.type}): You are adding a light (${lightsType}) to a renderer that should not initially handle lights. The renderer bind group will be re-created. This should be avoided.`
+        );
       }
-      this.setShadowsTypeBinding(lightsType);
-      const shadowsBindingIndex = this.cameraLightsBindGroup.bindings.findIndex(
-        (binding) => binding.name === shadowsType
-      );
-      if (shadowsBindingIndex !== -1) {
-        this.cameraLightsBindGroup.bindings[shadowsBindingIndex] = this.bindings[shadowsType];
+      __privateMethod(this, _GPUCameraRenderer_instances, initLights_fn).call(this);
+      this.cameraLightsBindGroup.destroy();
+      this.setCameraLightsBindGroup();
+    } else {
+      if (!this.production) {
+        throwWarning(
+          `${this.options.label} (${this.type}): You are overflowing the current max lights count of '${this.lightsBindingParams[lightsType].max}' for this type of lights: ${lightsType}. This should be avoided by setting a larger ${"max" + lightsType.charAt(0).toUpperCase() + lightsType.slice(1)} when instancing your ${this.type}.`
+        );
+      }
+      this.lightsBindingParams[lightsType].max = Math.max(this.lightsBindingParams[lightsType].max, lightIndex + 1);
+      const oldLightBinding = this.cameraLightsBindGroup.getBindingByName(lightsType);
+      if (oldLightBinding) {
+        this.cameraLightsBindGroup.destroyBufferBinding(oldLightBinding);
+      }
+      this.setLightsTypeBinding(lightsType);
+      const lightBindingIndex = this.cameraLightsBindGroup.bindings.findIndex((binding) => binding.name === lightsType);
+      if (lightBindingIndex !== -1) {
+        this.cameraLightsBindGroup.bindings[lightBindingIndex] = this.bindings[lightsType];
       } else {
-        this.bindings[shadowsType].shouldResetBindGroup = true;
-        this.bindings[shadowsType].shouldResetBindGroupLayout = true;
-        this.cameraLightsBindGroup.addBinding(this.bindings[shadowsType]);
+        console.log("not found", lightsType);
+        this.bindings[lightsType].shouldResetBindGroup = true;
+        this.bindings[lightsType].shouldResetBindGroupLayout = true;
+        this.cameraLightsBindGroup.addBinding(this.bindings[lightsType]);
         this.shouldUpdateCameraLightsBindGroup();
       }
-    }
-    this.cameraLightsBindGroup.resetEntries();
-    this.cameraLightsBindGroup.createBindGroup();
-    this.lights.forEach((light) => {
-      if (light.type === lightsType) {
-        light.reset();
+      if (lightsType === "directionalLights" || lightsType === "pointLights" || lightsType === "spotLights") {
+        const shadowsType = lightsType.replace("Lights", "") + "Shadows";
+        const oldShadowsBinding = this.cameraLightsBindGroup.getBindingByName(shadowsType);
+        if (oldShadowsBinding) {
+          this.cameraLightsBindGroup.destroyBufferBinding(oldShadowsBinding);
+        }
+        this.setShadowsTypeBinding(lightsType);
+        const shadowsBindingIndex = this.cameraLightsBindGroup.bindings.findIndex(
+          (binding) => binding.name === shadowsType
+        );
+        if (shadowsBindingIndex !== -1) {
+          this.cameraLightsBindGroup.bindings[shadowsBindingIndex] = this.bindings[shadowsType];
+        } else {
+          this.bindings[shadowsType].shouldResetBindGroup = true;
+          this.bindings[shadowsType].shouldResetBindGroupLayout = true;
+          this.cameraLightsBindGroup.addBinding(this.bindings[shadowsType]);
+          this.shouldUpdateCameraLightsBindGroup();
+        }
       }
-    });
+      this.cameraLightsBindGroup.resetEntries();
+      this.cameraLightsBindGroup.createBindGroup();
+      this.lights.forEach((light) => {
+        if (light.type === lightsType) {
+          light.reset();
+        }
+      });
+    }
   }
   /* SHADOW MAPS */
   /**
@@ -612,6 +623,18 @@ class GPUCameraRenderer extends GPURenderer {
 }
 _shouldUpdateCameraLightsBindGroup = new WeakMap();
 _GPUCameraRenderer_instances = new WeakSet();
+/* LIGHTS */
+/**
+ * Initialize the lights and shadows bindings.
+ * @private
+ */
+initLights_fn = function() {
+  if (!this.options.lights) {
+    this.options.lights = { maxAmbientLights: 2, maxDirectionalLights: 5, maxPointLights: 5, maxSpotLights: 5 };
+  }
+  this.setLightsBinding();
+  this.setShadowsBinding();
+};
 /**
  * Update the lights count for the given {@link LightsType} based on the max light index.
  * @param lightsType - {@link LightsType} for which to update the light count.

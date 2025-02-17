@@ -54,7 +54,7 @@ class Light extends Object3D {
     if (this.index === void 0) {
       this.index = this.renderer.lights.filter((light) => light.type === this.type).length;
     }
-    if (this.index + 1 > this.renderer.lightsBindingParams[this.type].max) {
+    if (!this.renderer.lightsBindingParams || this.index + 1 > this.renderer.lightsBindingParams[this.type].max) {
       this.onMaxLightOverflow(this.type);
     }
     this.renderer.addLight(this);

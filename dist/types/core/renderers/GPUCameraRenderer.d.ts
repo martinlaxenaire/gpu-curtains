@@ -163,6 +163,7 @@ export declare class GPUCameraRenderer extends GPURenderer {
     /**
      * Called when a {@link LightsType | type of light} has overflown its maximum capacity. Destroys the associated {@link BufferBinding} (and eventually the associated shadow {@link BufferBinding}), recreates the {@link cameraLightsBindGroup | camera, lights and shadows bind group} and reset all lights for this {@link LightsType | type of light}.
      * @param lightsType - {@link LightsType | Type of light} that has overflown its maximum capacity.
+     * @param lightIndex - The {@link Light#index | light index} that caused overflow. Will be used to reset the new max light count.
      */
     onMaxLightOverflow(lightsType: LightsType, lightIndex?: number): void;
     /**

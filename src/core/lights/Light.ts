@@ -115,7 +115,7 @@ export class Light extends Object3D {
     }
 
     // check for overflow
-    if (this.index + 1 > this.renderer.lightsBindingParams[this.type].max) {
+    if (!this.renderer.lightsBindingParams || this.index + 1 > this.renderer.lightsBindingParams[this.type].max) {
       this.onMaxLightOverflow(this.type as LightsType)
     }
 

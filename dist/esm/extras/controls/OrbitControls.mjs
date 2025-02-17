@@ -179,7 +179,6 @@ class OrbitControls {
    */
   set element(value) {
     if (__privateGet(this, _element) && (!value || __privateGet(this, _element) !== value)) {
-      console.log("set element, remove events", value);
       __privateMethod(this, _OrbitControls_instances, removeEvents_fn).call(this);
     }
     __privateSet(this, _element, value);
