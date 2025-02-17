@@ -33,6 +33,7 @@ import { Vec2 } from '../../math/Vec2'
 import { RenderMaterial } from '../../core/materials/RenderMaterial'
 import { DirectionalLight } from '../../core/lights/DirectionalLight'
 import { PointLight } from '../../core/lights/PointLight'
+import { SpotLight } from '../../core/lights/SpotLight'
 
 // https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Constants
 // To make it easier to reference the WebGL enums that glTF uses.
@@ -77,7 +78,7 @@ const GL = WebGLRenderingContext
  * ## Extensions
  * - [ ] KHR_animation_pointer
  * - [ ] KHR_draco_mesh_compression
- * - [x] KHR_lights_punctual (partial support - SpotLight not yet implemented)
+ * - [x] KHR_lights_punctual
  * - [ ] KHR_materials_anisotropy
  * - [ ] KHR_materials_clearcoat
  * - [x] KHR_materials_dispersion
@@ -299,19 +300,36 @@ export class GLTFScenesManager {
         lightIndex++
 
         if (light.type === 'spot') {
-          throwWarning('GLTFScenesManager: Spot lights are not supported yet.')
-          continue
+          const innerConeAngle = light.spot.innerConeAngle !== undefined ? light.spot.innerConeAngle : 0
+          const outerConeAngle = light.spot.outerConeAngle !== undefined ? light.spot.outerConeAngle : Math.PI / 4.0
+
+          this.scenesManager.lights.push(
+            new SpotLight(this.renderer, {
+              ...(light.name !== undefined && { label: light.name }),
+              color: light.color !== undefined ? new Vec3(light.color[0], light.color[1], light.color[2]) : new Vec3(1),
+              intensity: light.intensity !== undefined ? light.intensity : 1,
+              range: light.range !== undefined ? light.range : 0,
+              angle: outerConeAngle,
+              penumbra: 1.0 - innerConeAngle / outerConeAngle,
+            })
+          )
         } else if (light.type === 'directional') {
-          this.scenesManager.lights[lightIndex - 1] = new DirectionalLight(this.renderer, {
-            color: light.color !== undefined ? new Vec3(light.color[0], light.color[1], light.color[2]) : new Vec3(1),
-            intensity: light.intensity !== undefined ? light.intensity : 1,
-          })
+          this.scenesManager.lights.push(
+            new DirectionalLight(this.renderer, {
+              ...(light.name !== undefined && { label: light.name }),
+              color: light.color !== undefined ? new Vec3(light.color[0], light.color[1], light.color[2]) : new Vec3(1),
+              intensity: light.intensity !== undefined ? light.intensity : 1,
+            })
+          )
         } else if (light.type === 'point') {
-          this.scenesManager.lights[lightIndex - 1] = new PointLight(this.renderer, {
-            color: light.color !== undefined ? new Vec3(light.color[0], light.color[1], light.color[2]) : new Vec3(1),
-            intensity: light.intensity !== undefined ? light.intensity : 1,
-            range: light.range !== undefined ? light.range : 0,
-          })
+          this.scenesManager.lights.push(
+            new PointLight(this.renderer, {
+              ...(light.name !== undefined && { label: light.name }),
+              color: light.color !== undefined ? new Vec3(light.color[0], light.color[1], light.color[2]) : new Vec3(1),
+              intensity: light.intensity !== undefined ? light.intensity : 1,
+              range: light.range !== undefined ? light.range : 0,
+            })
+          )
         }
       }
     }
@@ -826,7 +844,7 @@ export class GLTFScenesManager {
 
       light.position.set(0, 0, 0)
 
-      if (light instanceof DirectionalLight) {
+      if (light instanceof DirectionalLight || light instanceof SpotLight) {
         light.target.set(0, 0, -1)
       }
 

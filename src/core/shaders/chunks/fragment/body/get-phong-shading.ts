@@ -1,6 +1,7 @@
 import { getPCFShadows } from './get-PCF-shadows'
 import { applyDirectionalShadows } from './apply-directional-shadows'
 import { applyPointShadows } from './apply-point-shadows'
+import { applySpotShadows } from './apply-spot-shadows'
 
 /**
  * Set the `outgoingLight` (`vec3f`) using Phong shading.
@@ -18,16 +19,35 @@ export const getPhongShading = ({ receiveShadows = false }: { receiveShadows?: b
   // point lights
   for(var i = 0; i < pointLights.count; i++) {  
     getPointLightInfo(pointLights.elements[i], worldPosition, &directLight);
+    
     if(!directLight.visible) {
       continue;
     }
+    
     ${receiveShadows ? applyPointShadows : ''}
+    getPhongDirect(normal, outputColor.rgb, viewDirection, specularColor, specularIntensity, shininess, directLight, &reflectedLight);
+  }
+  
+  // spot lights
+  for(var i = 0; i < spotLights.count; i++) {
+    getSpotLightInfo(spotLights.elements[i], worldPosition, &directLight);
+    
+    if(!directLight.visible) {
+      continue;
+    }
+    
+    ${receiveShadows ? applySpotShadows : ''}
     getPhongDirect(normal, outputColor.rgb, viewDirection, specularColor, specularIntensity, shininess, directLight, &reflectedLight);
   }
   
   // directional lights
   for(var i = 0; i < directionalLights.count; i++) {
     getDirectionalLightInfo(directionalLights.elements[i], &directLight);
+    
+    if(!directLight.visible) {
+      continue;
+    }
+    
     ${receiveShadows ? applyDirectionalShadows : ''}
     getPhongDirect(normal, outputColor.rgb, viewDirection, specularColor, specularIntensity, shininess, directLight, &reflectedLight);
   }

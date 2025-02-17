@@ -17,6 +17,7 @@ class DirectionalLight extends Light {
    * @param parameters - {@link DirectionalLightBaseParams | parameters} used to create this {@link DirectionalLight}.
    */
   constructor(renderer, {
+    label = "DirectionalLight",
     color = new Vec3(1),
     intensity = 1,
     position = new Vec3(1),
@@ -24,7 +25,7 @@ class DirectionalLight extends Light {
     shadow = null
   } = {}) {
     const type = "directionalLights";
-    super(renderer, { color, intensity, type });
+    super(renderer, { label, color, intensity, type });
     /** @ignore */
     __privateAdd(this, _actualPosition);
     /**
@@ -58,22 +59,29 @@ class DirectionalLight extends Light {
    * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
    */
   setRenderer(renderer) {
-    this.shadow?.setRenderer(renderer);
     super.setRenderer(renderer);
+    if (this.shadow) {
+      this.shadow.setRenderer(renderer);
+      this.shadow.updateViewMatrix(__privateGet(this, _actualPosition), this.target);
+    }
   }
   /**
-   * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of {@link DirectionalLight} has been overflowed.
+   * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of {@link DirectionalLight} has been overflowed or when updating the {@link DirectionalLight} {@link renderer}.
+   * @param resetShadow - Whether to reset the {@link DirectionalLight} shadow if any. Set to `true` when the {@link renderer} number of {@link DirectionalLight} has been overflown, `false` when the {@link renderer} has been changed (since the shadow will reset itself).
    */
-  reset() {
+  reset(resetShadow = true) {
     super.reset();
-    this.setDirection();
-    this.shadow?.reset();
+    this.onPropertyChanged("direction", __privateGet(this, _direction));
+    if (this.shadow && resetShadow) {
+      this.shadow.reset();
+      this.shadow.updateViewMatrix(__privateGet(this, _actualPosition), this.target);
+    }
   }
   /**
    * Set the {@link DirectionalLight} direction based on the {@link target} and the {@link worldMatrix} translation and update the {@link DirectionalShadow} view matrix.
    */
   setDirection() {
-    __privateGet(this, _direction).copy(this.target).sub(this.worldMatrix.getTranslation(__privateGet(this, _actualPosition)));
+    __privateGet(this, _direction).copy(this.target).sub(this.worldMatrix.getTranslation(__privateGet(this, _actualPosition))).normalize();
     this.onPropertyChanged("direction", __privateGet(this, _direction));
     this.shadow?.updateViewMatrix(__privateGet(this, _actualPosition), this.target);
   }

@@ -140,7 +140,7 @@ class PointShadow extends Shadow {
     this.updateProjectionMatrix();
   }
   /**
-   * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link PointLight} has been overflowed.
+   * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link PointLight} has been overflowed or when the {@link renderer} has changed.
    */
   reset() {
     this.setRendererBinding();
@@ -199,7 +199,7 @@ class PointShadow extends Shadow {
   createDepthTexture() {
     const maxSize = Math.max(this.depthTextureSize.x, this.depthTextureSize.y);
     this.depthTexture = new Texture(this.renderer, {
-      label: `${this.constructor.name} (index: ${this.index}) depth texture`,
+      label: `${this.light.options.label} (index: ${this.index}) shadow depth texture`,
       name: "pointShadowCubeDepthTexture" + this.index,
       type: "depth",
       format: this.depthTextureFormat,

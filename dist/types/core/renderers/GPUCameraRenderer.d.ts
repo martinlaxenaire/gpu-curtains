@@ -40,6 +40,8 @@ export interface GPUCameraRendererLightParams {
     maxDirectionalLights?: LightsBindingParams['directionalLights']['max'];
     /** Maximum number of {@link core/lights/PointLight.PointLight | PointLight} to use. Default to `5`. */
     maxPointLights?: LightsBindingParams['pointLights']['max'];
+    /** Maximum number of {@link core/lights/SpotLight.SpotLight | SpotLight} to use. Default to `5`. */
+    maxSpotLights?: LightsBindingParams['spotLights']['max'];
 }
 /** Extra parameters used to define the {@link Camera} and various lights options. */
 export interface GPUCameraLightsRendererParams {
@@ -162,7 +164,7 @@ export declare class GPUCameraRenderer extends GPURenderer {
      * Called when a {@link LightsType | type of light} has overflown its maximum capacity. Destroys the associated {@link BufferBinding} (and eventually the associated shadow {@link BufferBinding}), recreates the {@link cameraLightsBindGroup | camera, lights and shadows bind group} and reset all lights for this {@link LightsType | type of light}.
      * @param lightsType - {@link LightsType | Type of light} that has overflown its maximum capacity.
      */
-    onMaxLightOverflow(lightsType: LightsType): void;
+    onMaxLightOverflow(lightsType: LightsType, lightIndex?: number): void;
     /**
      * Get all the current {@link ShadowCastingLights | lights that can cast shadows}.
      * @returns - All {@link ShadowCastingLights | lights that can cast shadows}.

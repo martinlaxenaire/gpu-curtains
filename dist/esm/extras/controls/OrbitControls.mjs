@@ -10,15 +10,15 @@ var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read fr
 var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
 var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
 var __privateMethod = (obj, member, method) => (__accessCheck(obj, member, "access private method"), method);
-var _element, _offset, _isOrbiting, _spherical, _rotateStart, _isPaning, _panStart, _panDelta, _OrbitControls_instances, setBaseParams_fn, addEvents_fn, removeEvents_fn, onMouseDown_fn, onTouchStart_fn, onMouseMove_fn, onTouchMove_fn, onMouseUp_fn, onTouchEnd_fn, onMouseWheel_fn, onContextMenu_fn, update_fn, rotate_fn, pan_fn, zoom_fn;
+var _element, _offset, _isOrbiting, _spherical, _rotateStart, _isPaning, _panStart, _panDelta, __onContextMenu, __onMouseDown, __onMouseMove, __onMouseUp, __onTouchStart, __onTouchMove, __onTouchEnd, __onMouseWheel, _OrbitControls_instances, setBaseParams_fn, addEvents_fn, removeEvents_fn, onMouseDown_fn, onTouchStart_fn, onMouseMove_fn, onTouchMove_fn, onMouseUp_fn, onTouchEnd_fn, onMouseWheel_fn, onContextMenu_fn, update_fn, rotate_fn, pan_fn, zoom_fn;
 const tempVec2a = new Vec2();
 const tempVec2b = new Vec2();
 const tempVec3 = new Vec3();
 class OrbitControls {
   /**
-     * OrbitControls constructor
-  =   * @param parameters - parameters to use.
-     */
+   * OrbitControls constructor
+   * @param parameters - parameters to use.
+   */
   constructor({
     camera,
     element = null,
@@ -59,6 +59,22 @@ class OrbitControls {
     __privateAdd(this, _panStart, new Vec2());
     /** @ignore */
     __privateAdd(this, _panDelta, new Vec3());
+    /** @ignore */
+    __privateAdd(this, __onContextMenu);
+    /** @ignore */
+    __privateAdd(this, __onMouseDown);
+    /** @ignore */
+    __privateAdd(this, __onMouseMove);
+    /** @ignore */
+    __privateAdd(this, __onMouseUp);
+    /** @ignore */
+    __privateAdd(this, __onTouchStart);
+    /** @ignore */
+    __privateAdd(this, __onTouchMove);
+    /** @ignore */
+    __privateAdd(this, __onTouchEnd);
+    /** @ignore */
+    __privateAdd(this, __onMouseWheel);
     if (!camera) {
       throwWarning("OrbitControls: cannot initialize without a camera.");
       return;
@@ -78,6 +94,14 @@ class OrbitControls {
       enablePan,
       panSpeed
     });
+    __privateSet(this, __onContextMenu, __privateMethod(this, _OrbitControls_instances, onContextMenu_fn).bind(this));
+    __privateSet(this, __onMouseDown, __privateMethod(this, _OrbitControls_instances, onMouseDown_fn).bind(this));
+    __privateSet(this, __onMouseMove, __privateMethod(this, _OrbitControls_instances, onMouseMove_fn).bind(this));
+    __privateSet(this, __onMouseUp, __privateMethod(this, _OrbitControls_instances, onMouseUp_fn).bind(this));
+    __privateSet(this, __onTouchStart, __privateMethod(this, _OrbitControls_instances, onTouchStart_fn).bind(this));
+    __privateSet(this, __onTouchMove, __privateMethod(this, _OrbitControls_instances, onTouchMove_fn).bind(this));
+    __privateSet(this, __onTouchEnd, __privateMethod(this, _OrbitControls_instances, onTouchEnd_fn).bind(this));
+    __privateSet(this, __onMouseWheel, __privateMethod(this, _OrbitControls_instances, onMouseWheel_fn).bind(this));
     this.element = element ?? (typeof window !== "undefined" ? window : null);
     this.useCamera(camera);
   }
@@ -155,6 +179,7 @@ class OrbitControls {
    */
   set element(value) {
     if (__privateGet(this, _element) && (!value || __privateGet(this, _element) !== value)) {
+      console.log("set element, remove events", value);
       __privateMethod(this, _OrbitControls_instances, removeEvents_fn).call(this);
     }
     __privateSet(this, _element, value);
@@ -184,6 +209,14 @@ _rotateStart = new WeakMap();
 _isPaning = new WeakMap();
 _panStart = new WeakMap();
 _panDelta = new WeakMap();
+__onContextMenu = new WeakMap();
+__onMouseDown = new WeakMap();
+__onMouseMove = new WeakMap();
+__onMouseUp = new WeakMap();
+__onTouchStart = new WeakMap();
+__onTouchMove = new WeakMap();
+__onTouchEnd = new WeakMap();
+__onMouseWheel = new WeakMap();
 _OrbitControls_instances = new WeakSet();
 /**
  * Set / reset base params
@@ -228,28 +261,28 @@ setBaseParams_fn = function({
  * @private
  */
 addEvents_fn = function() {
-  __privateGet(this, _element).addEventListener("contextmenu", __privateMethod(this, _OrbitControls_instances, onContextMenu_fn).bind(this), false);
-  __privateGet(this, _element).addEventListener("mousedown", __privateMethod(this, _OrbitControls_instances, onMouseDown_fn).bind(this), false);
-  __privateGet(this, _element).addEventListener("mousemove", __privateMethod(this, _OrbitControls_instances, onMouseMove_fn).bind(this), false);
-  __privateGet(this, _element).addEventListener("mouseup", __privateMethod(this, _OrbitControls_instances, onMouseUp_fn).bind(this), false);
-  __privateGet(this, _element).addEventListener("touchstart", __privateMethod(this, _OrbitControls_instances, onTouchStart_fn).bind(this), { passive: false });
-  __privateGet(this, _element).addEventListener("touchmove", __privateMethod(this, _OrbitControls_instances, onTouchMove_fn).bind(this), { passive: false });
-  __privateGet(this, _element).addEventListener("touchend", __privateMethod(this, _OrbitControls_instances, onTouchEnd_fn).bind(this), false);
-  __privateGet(this, _element).addEventListener("wheel", __privateMethod(this, _OrbitControls_instances, onMouseWheel_fn).bind(this), { passive: false });
+  __privateGet(this, _element).addEventListener("contextmenu", __privateGet(this, __onContextMenu), false);
+  __privateGet(this, _element).addEventListener("mousedown", __privateGet(this, __onMouseDown), false);
+  __privateGet(this, _element).addEventListener("mousemove", __privateGet(this, __onMouseMove), false);
+  __privateGet(this, _element).addEventListener("mouseup", __privateGet(this, __onMouseUp), false);
+  __privateGet(this, _element).addEventListener("touchstart", __privateGet(this, __onTouchStart), { passive: false });
+  __privateGet(this, _element).addEventListener("touchmove", __privateGet(this, __onTouchMove), { passive: false });
+  __privateGet(this, _element).addEventListener("touchend", __privateGet(this, __onTouchEnd), false);
+  __privateGet(this, _element).addEventListener("wheel", __privateGet(this, __onMouseWheel), { passive: false });
 };
 /**
  * Remove the event listeners.
  * @private
  */
 removeEvents_fn = function() {
-  __privateGet(this, _element).removeEventListener("contextmenu", __privateMethod(this, _OrbitControls_instances, onContextMenu_fn).bind(this), false);
-  __privateGet(this, _element).removeEventListener("mousedown", __privateMethod(this, _OrbitControls_instances, onMouseDown_fn).bind(this), false);
-  __privateGet(this, _element).removeEventListener("mousemove", __privateMethod(this, _OrbitControls_instances, onMouseMove_fn).bind(this), false);
-  __privateGet(this, _element).removeEventListener("mouseup", __privateMethod(this, _OrbitControls_instances, onMouseUp_fn).bind(this), false);
-  __privateGet(this, _element).removeEventListener("touchstart", __privateMethod(this, _OrbitControls_instances, onTouchStart_fn).bind(this), { passive: false });
-  __privateGet(this, _element).removeEventListener("touchmove", __privateMethod(this, _OrbitControls_instances, onTouchMove_fn).bind(this), { passive: false });
-  __privateGet(this, _element).removeEventListener("touchend", __privateMethod(this, _OrbitControls_instances, onTouchEnd_fn).bind(this), false);
-  __privateGet(this, _element).removeEventListener("wheel", __privateMethod(this, _OrbitControls_instances, onMouseWheel_fn).bind(this), { passive: false });
+  __privateGet(this, _element).removeEventListener("contextmenu", __privateGet(this, __onContextMenu), false);
+  __privateGet(this, _element).removeEventListener("mousedown", __privateGet(this, __onMouseDown), false);
+  __privateGet(this, _element).removeEventListener("mousemove", __privateGet(this, __onMouseMove), false);
+  __privateGet(this, _element).removeEventListener("mouseup", __privateGet(this, __onMouseUp), false);
+  __privateGet(this, _element).removeEventListener("touchstart", __privateGet(this, __onTouchStart), { passive: false });
+  __privateGet(this, _element).removeEventListener("touchmove", __privateGet(this, __onTouchMove), { passive: false });
+  __privateGet(this, _element).removeEventListener("touchend", __privateGet(this, __onTouchEnd), false);
+  __privateGet(this, _element).removeEventListener("wheel", __privateGet(this, __onMouseWheel), { passive: false });
 };
 /**
  * Callback executed on mouse down event.

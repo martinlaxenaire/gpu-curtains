@@ -16,9 +16,16 @@ class PointLight extends Light {
    * @param renderer - {@link CameraRenderer | CameraRenderer} used to create this {@link PointLight}.
    * @param parameters - {@link PointLightBaseParams | parameters} used to create this {@link PointLight}.
    */
-  constructor(renderer, { color = new Vec3(1), intensity = 1, position = new Vec3(), range = 0, shadow = null } = {}) {
+  constructor(renderer, {
+    label = "PointLight",
+    color = new Vec3(1),
+    intensity = 1,
+    position = new Vec3(),
+    range = 0,
+    shadow = null
+  } = {}) {
     const type = "pointLights";
-    super(renderer, { color, intensity, type });
+    super(renderer, { label, color, intensity, type });
     /** @ignore */
     __privateAdd(this, _range);
     /** @ignore */
@@ -47,19 +54,24 @@ class PointLight extends Light {
    * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
    */
   setRenderer(renderer) {
+    super.setRenderer(renderer);
     if (this.shadow) {
       this.shadow.setRenderer(renderer);
+      this.shadow.updateViewMatrices(__privateGet(this, _actualPosition));
     }
-    super.setRenderer(renderer);
   }
   /**
-   * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of {@link PointLight} has been overflowed.
+   * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of {@link PointLight} has been overflowed or when updating the {@link PointLight} {@link renderer}.
+   * @param resetShadow - Whether to reset the {@link PointLight} shadow if any. Set to `true` when the {@link renderer} number of {@link PointLight} has been overflown, `false` when the {@link renderer} has been changed (since the shadow will reset itself).
    */
-  reset() {
+  reset(resetShadow = true) {
     super.reset();
     this.onPropertyChanged("range", this.range);
-    this.setPosition();
-    this.shadow?.reset();
+    this.onPropertyChanged("position", this.worldMatrix.getTranslation(__privateGet(this, _actualPosition)));
+    if (this.shadow && resetShadow) {
+      this.shadow.reset();
+      this.shadow.updateViewMatrices(__privateGet(this, _actualPosition));
+    }
   }
   /**
    * Get this {@link PointLight} range.

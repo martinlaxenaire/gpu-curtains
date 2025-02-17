@@ -1,6 +1,8 @@
 import { shadowStruct, Shadow } from './Shadow.mjs';
 import { Mat4 } from '../../math/Mat4.mjs';
 import { Vec3 } from '../../math/Vec3.mjs';
+import { Texture } from '../textures/Texture.mjs';
+import { getDefaultDirectionalShadowDepthVs } from '../shaders/full/vertex/get-default-directional-shadow-depth-vertex-shader-code.mjs';
 
 const directionalShadowStruct = {
   ...shadowStruct,
@@ -106,13 +108,15 @@ class DirectionalShadow extends Shadow {
     this.updateProjectionMatrix();
   }
   /**
-   * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link DirectionalLight} has been overflowed.
+   * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link DirectionalLight} has been overflowed or when the {@link renderer} has changed.
    */
   reset() {
     this.setRendererBinding();
     super.reset();
-    this.onPropertyChanged("projectionMatrix", this.camera.projectionMatrix);
-    this.onPropertyChanged("viewMatrix", this.camera.viewMatrix);
+    if (this.isActive) {
+      this.onPropertyChanged("projectionMatrix", this.camera.projectionMatrix);
+      this.onPropertyChanged("viewMatrix", this.camera.viewMatrix);
+    }
   }
   /**
    * Update the {@link DirectionalShadow#camera.projectionMatrix | camera orthographic projection matrix} and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
@@ -141,6 +145,35 @@ class DirectionalShadow extends Shadow {
     }
     this.camera.viewMatrix.makeView(position, target, this.camera.up);
     this.onPropertyChanged("viewMatrix", this.camera.viewMatrix);
+  }
+  /**
+   * Create the {@link depthTexture}.
+   */
+  createDepthTexture() {
+    this.depthTexture = new Texture(this.renderer, {
+      label: `${this.light.options.label} (index: ${this.index}) shadow depth texture`,
+      name: "directionalShadowDepthTexture" + this.index,
+      type: "depth",
+      format: this.depthTextureFormat,
+      sampleCount: this.sampleCount,
+      fixedSize: {
+        width: this.depthTextureSize.x,
+        height: this.depthTextureSize.y
+      },
+      autoDestroy: false
+      // do not destroy when removing a mesh
+    });
+  }
+  /**
+   * Get the default depth pass vertex shader for this {@link Shadow}.
+   * parameters - {@link VertexShaderInputBaseParams} used to compute the output `worldPosition` and `normal` vectors.
+   * @returns - Depth pass vertex shader.
+   */
+  getDefaultShadowDepthVs({ bindings = [], geometry }) {
+    return {
+      /** Returned code. */
+      code: getDefaultDirectionalShadowDepthVs(this.index, { bindings, geometry })
+    };
   }
 }
 

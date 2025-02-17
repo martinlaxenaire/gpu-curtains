@@ -6,6 +6,7 @@ import { Vec3 } from '../../math/Vec3.mjs';
 import { throwWarning } from '../../utils/utils.mjs';
 import { directionalShadowStruct } from '../shadows/DirectionalShadow.mjs';
 import { pointShadowStruct } from '../shadows/PointShadow.mjs';
+import { spotShadowStruct } from '../shadows/SpotShadow.mjs';
 import { Texture } from '../textures/Texture.mjs';
 import { Sampler } from '../samplers/Sampler.mjs';
 
@@ -16,7 +17,8 @@ var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot
 var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), member.get(obj));
 var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
 var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
-var _shouldUpdateCameraLightsBindGroup;
+var __privateMethod = (obj, member, method) => (__accessCheck(obj, member, "access private method"), method);
+var _shouldUpdateCameraLightsBindGroup, _GPUCameraRenderer_instances, updateLightsCount_fn;
 class GPUCameraRenderer extends GPURenderer {
   /**
    * GPUCameraRenderer constructor
@@ -42,12 +44,13 @@ class GPUCameraRenderer extends GPURenderer {
       context,
       renderPass
     });
+    __privateAdd(this, _GPUCameraRenderer_instances);
     /** @ignore */
     __privateAdd(this, _shouldUpdateCameraLightsBindGroup);
     this.type = "GPUCameraRenderer";
     camera = { ...{ fov: 50, near: 0.1, far: 1e3 }, ...camera };
     if (lights !== false) {
-      lights = { ...{ maxAmbientLights: 2, maxDirectionalLights: 5, maxPointLights: 5 }, ...lights };
+      lights = { ...{ maxAmbientLights: 2, maxDirectionalLights: 5, maxPointLights: 5, maxSpotLights: 5 }, ...lights };
     }
     this.options = {
       ...this.options,
@@ -194,8 +197,7 @@ class GPUCameraRenderer extends GPURenderer {
    */
   addLight(light) {
     this.lights.push(light);
-    this.bindings[light.type].inputs.count.value++;
-    this.bindings[light.type].inputs.count.shouldUpdate = true;
+    __privateMethod(this, _GPUCameraRenderer_instances, updateLightsCount_fn).call(this, light.type);
   }
   /**
    * Remove a {@link Light} from the {@link lights} array.
@@ -203,8 +205,7 @@ class GPUCameraRenderer extends GPURenderer {
    */
   removeLight(light) {
     this.lights = this.lights.filter((l) => l.uuid !== light.uuid);
-    this.bindings[light.type].inputs.count.value--;
-    this.bindings[light.type].inputs.count.shouldUpdate = true;
+    __privateMethod(this, _GPUCameraRenderer_instances, updateLightsCount_fn).call(this, light.type);
   }
   /**
    * Set the lights {@link BufferBinding} based on the {@link lightsBindingParams}.
@@ -253,12 +254,43 @@ class GPUCameraRenderer extends GPURenderer {
             size: 1
           }
         }
+      },
+      spotLights: {
+        max: this.options.lights.maxSpotLights,
+        label: "Spot lights",
+        params: {
+          color: {
+            type: "array<vec3f>",
+            size: 3
+          },
+          direction: {
+            type: "array<vec3f>",
+            size: 3
+          },
+          position: {
+            type: "array<vec3f>",
+            size: 3
+          },
+          coneCos: {
+            type: "array<f32>",
+            size: 1
+          },
+          penumbraCos: {
+            type: "array<f32>",
+            size: 1
+          },
+          range: {
+            type: "array<f32>",
+            size: 1
+          }
+        }
       }
     };
     const lightsBindings = {
       ambientLights: null,
       directionalLights: null,
-      pointLights: null
+      pointLights: null,
+      spotLights: null
     };
     Object.keys(lightsBindings).forEach((lightsType) => {
       this.setLightsTypeBinding(lightsType);
@@ -301,13 +333,13 @@ class GPUCameraRenderer extends GPURenderer {
    * Called when a {@link LightsType | type of light} has overflown its maximum capacity. Destroys the associated {@link BufferBinding} (and eventually the associated shadow {@link BufferBinding}), recreates the {@link cameraLightsBindGroup | camera, lights and shadows bind group} and reset all lights for this {@link LightsType | type of light}.
    * @param lightsType - {@link LightsType | Type of light} that has overflown its maximum capacity.
    */
-  onMaxLightOverflow(lightsType) {
+  onMaxLightOverflow(lightsType, lightIndex = 0) {
     if (!this.production) {
       throwWarning(
         `${this.options.label} (${this.type}): You are overflowing the current max lights count of '${this.lightsBindingParams[lightsType].max}' for this type of lights: ${lightsType}. This should be avoided by setting a larger ${"max" + lightsType.charAt(0).toUpperCase() + lightsType.slice(1)} when instancing your ${this.type}.`
       );
     }
-    this.lightsBindingParams[lightsType].max++;
+    this.lightsBindingParams[lightsType].max = lightIndex + 1;
     const oldLightBinding = this.cameraLightsBindGroup.getBindingByName(lightsType);
     if (oldLightBinding) {
       this.cameraLightsBindGroup.destroyBufferBinding(oldLightBinding);
@@ -322,7 +354,7 @@ class GPUCameraRenderer extends GPURenderer {
       this.cameraLightsBindGroup.addBinding(this.bindings[lightsType]);
       this.shouldUpdateCameraLightsBindGroup();
     }
-    if (lightsType === "directionalLights" || lightsType === "pointLights") {
+    if (lightsType === "directionalLights" || lightsType === "pointLights" || lightsType === "spotLights") {
       const shadowsType = lightsType.replace("Lights", "") + "Shadows";
       const oldShadowsBinding = this.cameraLightsBindGroup.getBindingByName(shadowsType);
       if (oldShadowsBinding) {
@@ -356,7 +388,7 @@ class GPUCameraRenderer extends GPURenderer {
    */
   get shadowCastingLights() {
     return this.lights.filter(
-      (light) => light.type === "directionalLights" || light.type === "pointLights"
+      (light) => light.type === "directionalLights" || light.type === "pointLights" || light.type === "spotLights"
     );
   }
   /**
@@ -365,10 +397,12 @@ class GPUCameraRenderer extends GPURenderer {
   setShadowsBinding() {
     this.shadowsBindingsStruct = {
       directional: directionalShadowStruct,
-      point: pointShadowStruct
+      point: pointShadowStruct,
+      spot: spotShadowStruct
     };
     this.setShadowsTypeBinding("directionalLights");
     this.setShadowsTypeBinding("pointLights");
+    this.setShadowsTypeBinding("spotLights");
   }
   /**
    * Set or reset the associated shadow {@link BufferBinding} for a given {@link LightsType | type of light}.
@@ -577,5 +611,19 @@ class GPUCameraRenderer extends GPURenderer {
   }
 }
 _shouldUpdateCameraLightsBindGroup = new WeakMap();
+_GPUCameraRenderer_instances = new WeakSet();
+/**
+ * Update the lights count for the given {@link LightsType} based on the max light index.
+ * @param lightsType - {@link LightsType} for which to update the light count.
+ * @private
+ */
+updateLightsCount_fn = function(lightsType) {
+  let maxIndex = 0;
+  this.lights.filter((light) => light.type === lightsType).forEach((light) => {
+    maxIndex = Math.max(maxIndex, light.index + 1);
+  });
+  this.bindings[lightsType].inputs.count.value = maxIndex;
+  this.bindings[lightsType].inputs.count.shouldUpdate = true;
+};
 
 export { GPUCameraRenderer };

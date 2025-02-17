@@ -73,16 +73,17 @@ export declare class DirectionalLight extends Light {
      * @param renderer - {@link CameraRenderer} used to create this {@link DirectionalLight}.
      * @param parameters - {@link DirectionalLightBaseParams | parameters} used to create this {@link DirectionalLight}.
      */
-    constructor(renderer: CameraRenderer | GPUCurtains, { color, intensity, position, target, shadow, }?: DirectionalLightBaseParams);
+    constructor(renderer: CameraRenderer | GPUCurtains, { label, color, intensity, position, target, shadow, }?: DirectionalLightBaseParams);
     /**
      * Set or reset this {@link DirectionalLight} {@link CameraRenderer}.
      * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
      */
     setRenderer(renderer: CameraRenderer | GPUCurtains): void;
     /**
-     * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of {@link DirectionalLight} has been overflowed.
+     * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of {@link DirectionalLight} has been overflowed or when updating the {@link DirectionalLight} {@link renderer}.
+     * @param resetShadow - Whether to reset the {@link DirectionalLight} shadow if any. Set to `true` when the {@link renderer} number of {@link DirectionalLight} has been overflown, `false` when the {@link renderer} has been changed (since the shadow will reset itself).
      */
-    reset(): void;
+    reset(resetShadow?: boolean): void;
     /**
      * Set the {@link DirectionalLight} direction based on the {@link target} and the {@link worldMatrix} translation and update the {@link DirectionalShadow} view matrix.
      */

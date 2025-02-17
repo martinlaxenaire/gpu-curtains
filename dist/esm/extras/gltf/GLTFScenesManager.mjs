@@ -18,6 +18,7 @@ import { Vec2 } from '../../math/Vec2.mjs';
 import { RenderMaterial } from '../../core/materials/RenderMaterial.mjs';
 import { DirectionalLight } from '../../core/lights/DirectionalLight.mjs';
 import { PointLight } from '../../core/lights/PointLight.mjs';
+import { SpotLight } from '../../core/lights/SpotLight.mjs';
 
 var __typeError = (msg) => {
   throw TypeError(msg);
@@ -195,23 +196,37 @@ const _GLTFScenesManager = class _GLTFScenesManager {
    */
   createLights() {
     if (this.gltf.extensions && this.gltf.extensions["KHR_lights_punctual"]) {
-      let lightIndex = 0;
       for (const light of this.gltf.extensions["KHR_lights_punctual"].lights) {
-        lightIndex++;
         if (light.type === "spot") {
-          throwWarning("GLTFScenesManager: Spot lights are not supported yet.");
-          continue;
+          const innerConeAngle = light.spot.innerConeAngle !== void 0 ? light.spot.innerConeAngle : 0;
+          const outerConeAngle = light.spot.outerConeAngle !== void 0 ? light.spot.outerConeAngle : Math.PI / 4;
+          this.scenesManager.lights.push(
+            new SpotLight(this.renderer, {
+              ...light.name !== void 0 && { label: light.name },
+              color: light.color !== void 0 ? new Vec3(light.color[0], light.color[1], light.color[2]) : new Vec3(1),
+              intensity: light.intensity !== void 0 ? light.intensity : 1,
+              range: light.range !== void 0 ? light.range : 0,
+              angle: outerConeAngle,
+              penumbra: 1 - innerConeAngle / outerConeAngle
+            })
+          );
         } else if (light.type === "directional") {
-          this.scenesManager.lights[lightIndex - 1] = new DirectionalLight(this.renderer, {
-            color: light.color !== void 0 ? new Vec3(light.color[0], light.color[1], light.color[2]) : new Vec3(1),
-            intensity: light.intensity !== void 0 ? light.intensity : 1
-          });
+          this.scenesManager.lights.push(
+            new DirectionalLight(this.renderer, {
+              ...light.name !== void 0 && { label: light.name },
+              color: light.color !== void 0 ? new Vec3(light.color[0], light.color[1], light.color[2]) : new Vec3(1),
+              intensity: light.intensity !== void 0 ? light.intensity : 1
+            })
+          );
         } else if (light.type === "point") {
-          this.scenesManager.lights[lightIndex - 1] = new PointLight(this.renderer, {
-            color: light.color !== void 0 ? new Vec3(light.color[0], light.color[1], light.color[2]) : new Vec3(1),
-            intensity: light.intensity !== void 0 ? light.intensity : 1,
-            range: light.range !== void 0 ? light.range : 0
-          });
+          this.scenesManager.lights.push(
+            new PointLight(this.renderer, {
+              ...light.name !== void 0 && { label: light.name },
+              color: light.color !== void 0 ? new Vec3(light.color[0], light.color[1], light.color[2]) : new Vec3(1),
+              intensity: light.intensity !== void 0 ? light.intensity : 1,
+              range: light.range !== void 0 ? light.range : 0
+            })
+          );
         }
       }
     }
@@ -604,7 +619,7 @@ const _GLTFScenesManager = class _GLTFScenesManager {
     if (node.extensions && node.extensions.KHR_lights_punctual) {
       const light = this.scenesManager.lights[node.extensions.KHR_lights_punctual.light];
       light.position.set(0, 0, 0);
-      if (light instanceof DirectionalLight) {
+      if (light instanceof DirectionalLight || light instanceof SpotLight) {
         light.target.set(0, 0, -1);
       }
       light.parent = child.node;

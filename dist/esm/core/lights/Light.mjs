@@ -18,7 +18,7 @@ class Light extends Object3D {
    * @param renderer - {@link CameraRenderer} used to create this {@link Light}.
    * @param parameters - {@link LightParams | parameters} used to create this {@link Light}.
    */
-  constructor(renderer, { color = new Vec3(1), intensity = 1, type = "lights" } = {}) {
+  constructor(renderer, { label = "", color = new Vec3(1), intensity = 1, type = "lights" } = {}) {
     super();
     /** @ignore */
     __privateAdd(this, _intensity);
@@ -31,6 +31,7 @@ class Light extends Object3D {
     this.setRenderer(renderer);
     this.uuid = generateUUID();
     this.options = {
+      label,
       color,
       intensity
     };
@@ -50,14 +51,16 @@ class Light extends Object3D {
     }
     renderer = isCameraRenderer(renderer, this.constructor.name);
     this.renderer = renderer;
-    this.index = this.renderer.lights.filter((light) => light.type === this.type).length;
+    if (this.index === void 0) {
+      this.index = this.renderer.lights.filter((light) => light.type === this.type).length;
+    }
     if (this.index + 1 > this.renderer.lightsBindingParams[this.type].max) {
       this.onMaxLightOverflow(this.type);
     }
     this.renderer.addLight(this);
     this.setRendererBinding();
     if (hasRenderer) {
-      this.reset();
+      this.reset(false);
     }
   }
   /**
@@ -69,9 +72,10 @@ class Light extends Object3D {
     }
   }
   /**
-   * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link Light} has been overflowed.
+   * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link Light} has been overflowed or when updating the {@link Light} {@link renderer}.
+   * @param resetShadow - Whether to reset the {@link Light} shadow if any.
    */
-  reset() {
+  reset(resetShadow = true) {
     this.setRendererBinding();
     this.onPropertyChanged("color", this.actualColor);
   }
@@ -120,7 +124,7 @@ class Light extends Object3D {
    * @param lightsType - {@link type} of light.
    */
   onMaxLightOverflow(lightsType) {
-    this.renderer.onMaxLightOverflow(lightsType);
+    this.renderer.onMaxLightOverflow(lightsType, this.index);
     if (this.rendererBinding) {
       this.rendererBinding = this.renderer.bindings[lightsType];
     }

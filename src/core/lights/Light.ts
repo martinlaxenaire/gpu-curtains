@@ -5,18 +5,21 @@ import { Object3D } from '../objects3D/Object3D'
 import { generateUUID } from '../../utils/utils'
 import { DirectionalLight } from './DirectionalLight'
 import { PointLight } from './PointLight'
-import { GPUCurtains } from '../../curtains/GPUCurtains'
+import { SpotLight } from './SpotLight'
+import type { GPUCurtains } from '../../curtains/GPUCurtains'
 import { sRGBToLinear } from '../../math/color-utils'
 
 /** Defines all types of lights. */
-export type LightsType = 'ambientLights' | 'directionalLights' | 'pointLights'
+export type LightsType = 'ambientLights' | 'directionalLights' | 'pointLights' | 'spotLights'
 /** Defines all types of shadow casting lights. */
-export type ShadowCastingLights = DirectionalLight | PointLight
+export type ShadowCastingLights = DirectionalLight | PointLight | SpotLight
 
 /**
  * Base parameters used to create a {@link Light}.
  */
 export interface LightBaseParams {
+  /** Optional label of the {@link Light}. */
+  label?: string
   /** The {@link Light} color. Default to `Vec3(1)`. */
   color?: Vec3
   /** The {@link Light} intensity. Default to `1`. */
@@ -67,7 +70,7 @@ export class Light extends Object3D {
    */
   constructor(
     renderer: CameraRenderer | GPUCurtains,
-    { color = new Vec3(1), intensity = 1, type = 'lights' } = {} as LightParams
+    { label = '', color = new Vec3(1), intensity = 1, type = 'lights' } = {} as LightParams
   ) {
     super()
 
@@ -78,6 +81,7 @@ export class Light extends Object3D {
     this.uuid = generateUUID()
 
     this.options = {
+      label,
       color,
       intensity,
     }
@@ -105,7 +109,10 @@ export class Light extends Object3D {
     renderer = isCameraRenderer(renderer, this.constructor.name)
     this.renderer = renderer
 
-    this.index = this.renderer.lights.filter((light) => light.type === this.type).length
+    // set index only on first init
+    if (this.index === undefined) {
+      this.index = this.renderer.lights.filter((light) => light.type === this.type).length
+    }
 
     // check for overflow
     if (this.index + 1 > this.renderer.lightsBindingParams[this.type].max) {
@@ -119,7 +126,7 @@ export class Light extends Object3D {
     this.setRendererBinding()
 
     if (hasRenderer) {
-      this.reset()
+      this.reset(false)
     }
   }
 
@@ -133,9 +140,10 @@ export class Light extends Object3D {
   }
 
   /**
-   * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link Light} has been overflowed.
+   * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link Light} has been overflowed or when updating the {@link Light} {@link renderer}.
+   * @param resetShadow - Whether to reset the {@link Light} shadow if any.
    */
-  reset() {
+  reset(resetShadow = true) {
     this.setRendererBinding()
     this.onPropertyChanged('color', this.actualColor)
   }
@@ -190,7 +198,7 @@ export class Light extends Object3D {
    * @param lightsType - {@link type} of light.
    */
   onMaxLightOverflow(lightsType: LightsType) {
-    this.renderer.onMaxLightOverflow(lightsType)
+    this.renderer.onMaxLightOverflow(lightsType, this.index)
 
     if (this.rendererBinding) {
       this.rendererBinding = this.renderer.bindings[lightsType]

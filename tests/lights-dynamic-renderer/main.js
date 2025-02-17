@@ -18,6 +18,7 @@ window.addEventListener('load', async () => {
     AmbientLight,
     DirectionalLight,
     PointLight,
+    SpotLight,
     EnvironmentMap,
     Vec3,
     LitMesh,
@@ -83,6 +84,7 @@ window.addEventListener('load', async () => {
   const ambientLights = []
   const directionalLights = []
   const pointLights = []
+  const spotLights = []
 
   ambientLights.push(
     new AmbientLight(leftRenderer, {
@@ -92,6 +94,7 @@ window.addEventListener('load', async () => {
 
   directionalLights.push(
     new DirectionalLight(leftRenderer, {
+      label: 'Red directional light',
       color: new Vec3(1, 0, 0),
       position: new Vec3(10),
       intensity: 0.25,
@@ -105,6 +108,7 @@ window.addEventListener('load', async () => {
 
   directionalLights.push(
     new DirectionalLight(leftRenderer, {
+      label: 'Green directional light',
       color: new Vec3(0, 1, 0),
       position: new Vec3(-10, 10, -10),
       intensity: 0.25,
@@ -113,6 +117,7 @@ window.addEventListener('load', async () => {
 
   pointLights.push(
     new PointLight(leftRenderer, {
+      label: 'Blue point light',
       color: new Vec3(0, 0, 1),
       position: new Vec3(-3, 4, -3),
       range: 50,
@@ -123,7 +128,20 @@ window.addEventListener('load', async () => {
     })
   )
 
-  console.log(pointLights[0].shadow)
+  spotLights.push(
+    new SpotLight(leftRenderer, {
+      label: 'White spot light',
+      color: new Vec3(1),
+      position: new Vec3(-3, 6, 3),
+      target: new Vec3(0, 2, 0),
+      intensity: 20,
+      shadow: {
+        intensity: 1,
+      },
+    })
+  )
+
+  console.log(spotLights[0])
 
   const environmentMap = new EnvironmentMap(leftRenderer)
   environmentMap.loadAndComputeFromHDR('../../website/assets/hdr/Colorful_Studio.hdr')
@@ -300,6 +318,7 @@ window.addEventListener('load', async () => {
     label: 'Transmissive bubble',
     geometry: sphereGeometry,
     transmissive: true,
+    //castShadows: true,
     material: {
       shading: 'PBR',
       toneMapping: 'Khronos',
@@ -328,7 +347,7 @@ window.addEventListener('load', async () => {
     frustumCulling: false, // always draw
     cullMode: 'none',
     material: {
-      shading: 'Phong',
+      shading: 'Lambert',
       color: new Vec3(0.7),
       specularColor: new Vec3(1),
       specularIntensity: 1,
@@ -448,7 +467,9 @@ window.addEventListener('load', async () => {
       // you can chose which lights you'd want to update!
       ambientLights.forEach((light) => light.setRenderer(renderer))
       //directionalLights.forEach((light) => light.setRenderer(renderer))
+      directionalLights[1].setRenderer(renderer)
       pointLights.forEach((light) => light.setRenderer(renderer))
+      spotLights.forEach((light) => light.setRenderer(renderer))
 
       environmentMap.setRenderer(renderer)
 
@@ -523,7 +544,7 @@ window.addEventListener('load', async () => {
   pointLights.forEach((pointLight, index) => {
     const pointLightFolder = pointLightsFolder.addFolder('Point light ' + index)
     pointLightFolder.add(pointLight, 'intensity', 0, 100, 0.01)
-    pointLightFolder.add(pointLight, 'range', 0, 100000, 0.25)
+    pointLightFolder.add(pointLight, 'range', 0, 100, 0.25)
 
     pointLightFolder
       .addColor({ color: { r: pointLight.color.x, g: pointLight.color.y, b: pointLight.color.z } }, 'color')
@@ -538,6 +559,33 @@ window.addEventListener('load', async () => {
   })
 
   pointLightsFolder.close()
+
+  const spotLightsFolder = gui.addFolder('Spot lights')
+  spotLights.forEach((spotLight, index) => {
+    const spotLightFolder = spotLightsFolder.addFolder('Spot light ' + index)
+    spotLightFolder.add(spotLight, 'intensity', 0, 100, 0.01)
+    spotLightFolder.add(spotLight, 'range', 0, 100, 0.25)
+    spotLightFolder.add(spotLight, 'angle', 0, Math.PI / 2, Math.PI / 20)
+    spotLightFolder.add(spotLight, 'penumbra', 0, 1, 0.1)
+
+    spotLightFolder
+      .addColor({ color: { r: spotLight.color.x, g: spotLight.color.y, b: spotLight.color.z } }, 'color')
+      .onChange((value) => {
+        spotLight.color.set(value.r, value.g, value.b)
+      })
+
+    const pointLightPosFolder = spotLightFolder.addFolder('Position')
+    pointLightPosFolder.add(spotLight.position, 'x', -20, 20, 0.1)
+    pointLightPosFolder.add(spotLight.position, 'y', 4, 20, 0.1)
+    pointLightPosFolder.add(spotLight.position, 'z', -20, 20, 0.1)
+
+    const pointLightTargetFolder = spotLightFolder.addFolder('Target')
+    pointLightTargetFolder.add(spotLight.target, 'x', -20, 20, 0.1)
+    pointLightTargetFolder.add(spotLight.target, 'y', 0, 20, 0.1)
+    pointLightTargetFolder.add(spotLight.target, 'z', -20, 20, 0.1)
+  })
+
+  spotLightsFolder.close()
 
   // lost context
 

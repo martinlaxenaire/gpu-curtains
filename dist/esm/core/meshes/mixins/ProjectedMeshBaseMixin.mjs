@@ -4,11 +4,14 @@ import { MeshBaseMixin } from './MeshBaseMixin.mjs';
 import { BufferBinding } from '../../bindings/BufferBinding.mjs';
 import { getDefaultProjectedVertexShaderCode } from '../../shaders/full/vertex/get-default-projected-vertex-shader-code.mjs';
 import { getDefaultNormalFragmentCode } from '../../shaders/full/fragment/get-default-normal-fragment-code.mjs';
-import { getPCFShadowContribution } from '../../shaders/chunks/fragment/head/get-PCF-shadow-contribution.mjs';
+import { getPCFDirectionalShadowContribution } from '../../shaders/chunks/fragment/head/get-PCF-directional-shadow-contribution.mjs';
 import { getPCFDirectionalShadows } from '../../shaders/chunks/fragment/head/get-PCF-directional-shadows.mjs';
 import { getPCFPointShadowContribution } from '../../shaders/chunks/fragment/head/get-PCF-point-shadow-contribution.mjs';
 import { getPCFPointShadows } from '../../shaders/chunks/fragment/head/get-PCF-point-shadows.mjs';
 import { Texture } from '../../textures/Texture.mjs';
+import { getPCFSpotShadows } from '../../shaders/chunks/fragment/head/get-PCF-spot-shadows.mjs';
+import { getPCFSpotShadowContribution } from '../../shaders/chunks/fragment/head/get-PCF-spot-shadow-contribution.mjs';
+import { getPCFBaseShadowContribution } from '../../shaders/chunks/fragment/head/get-PCF-base-shadow-contribution.mjs';
 
 const defaultProjectedMeshParams = {
   // frustum culling and visibility
@@ -181,8 +184,8 @@ function ProjectedMeshBaseMixin(Base) {
           light.shadow.addShadowReceivingMesh(this);
         });
         const hasActiveShadows = this.renderer.shadowCastingLights.find((light) => light.shadow.isActive);
-        if (hasActiveShadows && shaders.fragment && typeof shaders.fragment === "object") {
-          shaders.fragment.code = getPCFDirectionalShadows(this.renderer) + getPCFShadowContribution + getPCFPointShadows(this.renderer) + getPCFPointShadowContribution + shaders.fragment.code;
+        if (hasActiveShadows && shaders.fragment) {
+          shaders.fragment.code = getPCFBaseShadowContribution + getPCFDirectionalShadows(this.renderer) + getPCFDirectionalShadowContribution + getPCFPointShadows(this.renderer) + getPCFPointShadowContribution + getPCFSpotShadows(this.renderer) + getPCFSpotShadowContribution + shaders.fragment.code;
         }
       }
       return shaders;

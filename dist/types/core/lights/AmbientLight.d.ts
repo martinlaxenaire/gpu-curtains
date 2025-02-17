@@ -21,7 +21,7 @@ export declare class AmbientLight extends Light {
      * @param renderer - {@link CameraRenderer} used to create this {@link AmbientLight}.
      * @param parameters - {@link LightBaseParams | parameters} used to create this {@link AmbientLight}.
      */
-    constructor(renderer: CameraRenderer | GPUCurtains, { color, intensity }?: LightBaseParams);
+    constructor(renderer: CameraRenderer | GPUCurtains, { label, color, intensity }?: LightBaseParams);
     /** @ignore */
     applyRotation(): void;
     /** @ignore */
