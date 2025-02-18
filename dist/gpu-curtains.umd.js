@@ -3161,7 +3161,7 @@
         }
         if (this.childrenBindings.length) {
           this.options.childrenBindings.forEach((child) => {
-            structs[kebabCaseLabel][child.binding.name] = child.count && child.count > 1 || child.forceArray ? `array<${toKebabCase(child.binding.label)}>` : toKebabCase(child.binding.label);
+            structs[kebabCaseLabel][child.binding.name] = child.count && child.count > 1 || child.forceArray ? this.bindingType === "uniform" && child.binding.bindingType === "uniform" ? `array<${toKebabCase(child.binding.label)}, ${child.count}>` : `array<${toKebabCase(child.binding.label)}>` : toKebabCase(child.binding.label);
           });
         }
         const additionalBindings = this.childrenBindings.length ? this.options.childrenBindings.map((child) => child.binding.wgslStructFragment).join("\n\n") + "\n\n" : "";
@@ -14880,7 +14880,16 @@ ${this.shaders.compute.head}`;
       this.type = "GPUCameraRenderer";
       camera = { ...{ fov: 50, near: 0.1, far: 1e3 }, ...camera };
       if (lights !== false) {
-        lights = { ...{ maxAmbientLights: 2, maxDirectionalLights: 5, maxPointLights: 5, maxSpotLights: 5 }, ...lights };
+        lights = {
+          ...{
+            maxAmbientLights: 2,
+            maxDirectionalLights: 5,
+            maxPointLights: 5,
+            maxSpotLights: 5,
+            useUniformsForShadows: false
+          },
+          ...lights
+        };
       }
       this.options = {
         ...this.options,
@@ -15188,7 +15197,6 @@ ${this.shaders.compute.head}`;
         if (lightBindingIndex !== -1) {
           this.cameraLightsBindGroup.bindings[lightBindingIndex] = this.bindings[lightsType];
         } else {
-          console.log("not found", lightsType);
           this.bindings[lightsType].shouldResetBindGroup = true;
           this.bindings[lightsType].shouldResetBindGroupLayout = true;
           this.cameraLightsBindGroup.addBinding(this.bindings[lightsType]);
@@ -15257,7 +15265,7 @@ ${this.shaders.compute.head}`;
       this.bindings[shadowsType] = new BufferBinding({
         label,
         name: shadowsType,
-        bindingType: "storage",
+        bindingType: this.options.lights && this.options.lights.useUniformsForShadows ? "uniform" : "storage",
         visibility: ["vertex", "fragment", "compute"],
         // TODO needed in compute?
         childrenBindings: [
@@ -15460,7 +15468,13 @@ ${this.shaders.compute.head}`;
    */
   initLights_fn = function() {
     if (!this.options.lights) {
-      this.options.lights = { maxAmbientLights: 2, maxDirectionalLights: 5, maxPointLights: 5, maxSpotLights: 5 };
+      this.options.lights = {
+        maxAmbientLights: 2,
+        maxDirectionalLights: 5,
+        maxPointLights: 5,
+        maxSpotLights: 5,
+        useUniformsForShadows: false
+      };
     }
     this.setLightsBinding();
     this.setShadowsBinding();
@@ -15595,9 +15609,15 @@ ${this.shaders.compute.head}`;
           if (this.adapter.features.has("float32-filterable")) {
             requiredFeatures.push("float32-filterable");
           }
+          const { limits } = this.adapter;
+          const requiredLimits = {};
+          for (const key in limits) {
+            requiredLimits[key] = limits[key];
+          }
           this.device = await this.adapter?.requestDevice({
             label: this.label + " " + this.index,
-            requiredFeatures
+            requiredFeatures,
+            requiredLimits
           });
           if (this.device) {
             this.ready = true;

@@ -42,12 +42,14 @@ export interface GPUCameraRendererLightParams {
     maxPointLights?: LightsBindingParams['pointLights']['max'];
     /** Maximum number of {@link core/lights/SpotLight.SpotLight | SpotLight} to use. Default to `5`. */
     maxSpotLights?: LightsBindingParams['spotLights']['max'];
+    /** Whether to use `uniform` instead of `storage` binding type for the shadows bindings. In some case, for example when using models with skinning or morph targets, the maximum number of `storage` bindings can be reached in the vertex shader. This allows to bypass this limit by switching the shadows binding from `storage` to `uniforms`, but restrict the flexibility by removing the ability to overflow lights. Default to `false`. */
+    useUniformsForShadows?: boolean;
 }
 /** Extra parameters used to define the {@link Camera} and various lights options. */
 export interface GPUCameraLightsRendererParams {
     /** An object defining {@link CameraBasePerspectiveOptions | camera perspective parameters} */
     camera?: CameraBasePerspectiveOptions;
-    /** An object defining {@link GPUCameraRendererLightParams | the maximum number of light} to use when creating the {@link GPUCameraRenderer}. Can be set to `false` to avoid creating lights and shadows buffers, but note this is a permanent choice and cannot be changed later. */
+    /** An object defining {@link GPUCameraRendererLightParams | the maximum number of light} to use when creating the {@link GPUCameraRenderer}. Can be set to `false` to avoid creating lights and shadows buffers. */
     lights?: GPUCameraRendererLightParams | false;
 }
 /** Parameters used to create a {@link GPUCameraRenderer}. */

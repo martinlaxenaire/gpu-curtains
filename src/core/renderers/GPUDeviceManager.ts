@@ -242,9 +242,17 @@ export class GPUDeviceManager {
           requiredFeatures.push('float32-filterable')
         }
 
+        const { limits } = this.adapter as GPUAdapter
+
+        const requiredLimits = {}
+        for (const key in limits) {
+          requiredLimits[key] = limits[key]
+        }
+
         this.device = await (this.adapter as GPUAdapter)?.requestDevice({
           label: this.label + ' ' + this.index,
           requiredFeatures,
+          requiredLimits,
         })
 
         if (this.device) {

@@ -41,7 +41,8 @@ window.addEventListener('load', async () => {
       far: 2000,
     },
     lights: {
-      maxSpotLights: 1,
+      // we might overflow the vertex shaders max storages capacity with skinning or morphing
+      useUniformsForShadows: gpuDeviceManager.device.limits.maxStorageBuffersPerShaderStage < 10,
     },
   })
 
@@ -311,10 +312,10 @@ window.addEventListener('load', async () => {
     })
 
     if (light instanceof DirectionalLight) {
-      light.position.set(radius * 2)
+      light.position.set(radius * 4)
 
       // shadow
-      light.shadow.bias = radius * 0.001
+      //light.shadow.bias = radius * 0.00001
       light.shadow.camera.far = radius * 10
       light.shadow.camera.top = radius * 2
       light.shadow.camera.right = radius * 2

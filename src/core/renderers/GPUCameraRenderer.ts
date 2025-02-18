@@ -52,13 +52,15 @@ export interface GPUCameraRendererLightParams {
   maxPointLights?: LightsBindingParams['pointLights']['max']
   /** Maximum number of {@link core/lights/SpotLight.SpotLight | SpotLight} to use. Default to `5`. */
   maxSpotLights?: LightsBindingParams['spotLights']['max']
+  /** Whether to use `uniform` instead of `storage` binding type for the shadows bindings. In some case, for example when using models with skinning or morph targets, the maximum number of `storage` bindings can be reached in the vertex shader. This allows to bypass this limit by switching the shadows binding from `storage` to `uniforms`, but restrict the flexibility by removing the ability to overflow lights. Default to `false`. */
+  useUniformsForShadows?: boolean
 }
 
 /** Extra parameters used to define the {@link Camera} and various lights options. */
 export interface GPUCameraLightsRendererParams {
   /** An object defining {@link CameraBasePerspectiveOptions | camera perspective parameters} */
   camera?: CameraBasePerspectiveOptions
-  /** An object defining {@link GPUCameraRendererLightParams | the maximum number of light} to use when creating the {@link GPUCameraRenderer}. Can be set to `false` to avoid creating lights and shadows buffers, but note this is a permanent choice and cannot be changed later. */
+  /** An object defining {@link GPUCameraRendererLightParams | the maximum number of light} to use when creating the {@link GPUCameraRenderer}. Can be set to `false` to avoid creating lights and shadows buffers. */
   lights?: GPUCameraRendererLightParams | false
 }
 
@@ -153,7 +155,16 @@ export class GPUCameraRenderer extends GPURenderer {
     camera = { ...{ fov: 50, near: 0.1, far: 1000 }, ...camera }
 
     if (lights !== false) {
-      lights = { ...{ maxAmbientLights: 2, maxDirectionalLights: 5, maxPointLights: 5, maxSpotLights: 5 }, ...lights }
+      lights = {
+        ...{
+          maxAmbientLights: 2,
+          maxDirectionalLights: 5,
+          maxPointLights: 5,
+          maxSpotLights: 5,
+          useUniformsForShadows: false,
+        },
+        ...lights,
+      }
     }
 
     this.options = {
@@ -329,7 +340,13 @@ export class GPUCameraRenderer extends GPURenderer {
    */
   #initLights() {
     if (!this.options.lights) {
-      this.options.lights = { maxAmbientLights: 2, maxDirectionalLights: 5, maxPointLights: 5, maxSpotLights: 5 }
+      this.options.lights = {
+        maxAmbientLights: 2,
+        maxDirectionalLights: 5,
+        maxPointLights: 5,
+        maxSpotLights: 5,
+        useUniformsForShadows: false,
+      }
     }
 
     this.setLightsBinding()
@@ -548,7 +565,6 @@ export class GPUCameraRenderer extends GPURenderer {
       if (lightBindingIndex !== -1) {
         this.cameraLightsBindGroup.bindings[lightBindingIndex] = this.bindings[lightsType]
       } else {
-        console.log('not found', lightsType)
         // not used yet but could be useful
         // if we'd decide not to create a binding if max === 0
         this.bindings[lightsType].shouldResetBindGroup = true
@@ -633,7 +649,7 @@ export class GPUCameraRenderer extends GPURenderer {
     this.bindings[shadowsType] = new BufferBinding({
       label: label,
       name: shadowsType,
-      bindingType: 'storage',
+      bindingType: this.options.lights && this.options.lights.useUniformsForShadows ? 'uniform' : 'storage',
       visibility: ['vertex', 'fragment', 'compute'], // TODO needed in compute?
       childrenBindings: [
         {

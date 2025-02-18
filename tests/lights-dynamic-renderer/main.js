@@ -370,6 +370,10 @@ window.addEventListener('load', async () => {
     },
   })
 
+  floor.onReady(() => {
+    console.log(floor.material.getAddedShaderCode('fragment'))
+  })
+
   floor.parent = boxPivot
   floor.position.set(0, -1, -0.5)
   floor.rotation.set(-Math.PI / 2, 0, 0)
