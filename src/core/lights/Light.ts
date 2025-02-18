@@ -8,6 +8,7 @@ import { PointLight } from './PointLight'
 import { SpotLight } from './SpotLight'
 import type { GPUCurtains } from '../../curtains/GPUCurtains'
 import { sRGBToLinear } from '../../math/color-utils'
+import { ProjectedMeshBaseClass } from '../meshes/mixins/ProjectedMeshBaseMixin'
 
 /** Defines all types of lights. */
 export type LightsType = 'ambientLights' | 'directionalLights' | 'pointLights' | 'spotLights'
@@ -63,6 +64,12 @@ export class Light extends Object3D {
   /** {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} that holds all the bindings to send to the shaders. */
   rendererBinding: BufferBinding | null
 
+  /** Empty object to store any additional data or custom properties into your {@link Light}. */
+  userData: Record<string, unknown>
+
+  /** function assigned to the {@link onBeforeRender} callback */
+  _onBeforeRenderCallback: () => void
+
   /**
    * Light constructor
    * @param renderer - {@link CameraRenderer} used to create this {@link Light}.
@@ -91,6 +98,8 @@ export class Light extends Object3D {
     this.color.onChange(() => this.onPropertyChanged('color', this.actualColor))
 
     this.intensity = intensity
+
+    this.userData = {}
   }
 
   /**
@@ -203,6 +212,26 @@ export class Light extends Object3D {
     if (this.rendererBinding) {
       this.rendererBinding = this.renderer.bindings[lightsType]
     }
+  }
+
+  /**
+   * Called by the {@link core/scenes/Scene.Scene | Scene} before updating the matrix stack.
+   */
+  onBeforeRenderScene() {
+    this._onBeforeRenderCallback && this._onBeforeRenderCallback()
+  }
+
+  /**
+   * Callback to execute before updating the {@link core/scenes/Scene.Scene | Scene} matrix stack. This means it is called early and allows to update transformations values before actually setting the {@link Light} matrices. The callback won't be called if the {@link renderer} is not ready.
+   * @param callback - callback to run just before updating the {@link core/scenes/Scene.Scene | Scene} matrix stack.
+   * @returns - our {@link Light}
+   */
+  onBeforeRender(callback: () => void): this {
+    if (callback) {
+      this._onBeforeRenderCallback = callback
+    }
+
+    return this
   }
 
   /**

@@ -21,6 +21,54 @@ export interface SpotLightBaseParams extends LightBaseParams {
     /** The {@link SpotLight} shadow parameters used to create a {@link SpotShadow}. If not set, the {@link SpotShadow} won't be set as active and won't cast any shadows. On the other hand, if anything is passed (even an empty object), the {@link SpotShadow} will start casting shadows, so use with caution. Default to `null` (which means the {@link SpotLight} will not cast shadows). */
     shadow?: ShadowBaseParams;
 }
+/**
+ * Create a spot light, that is emitted from a single point in one direction, along a cone that increases in size the further from the light it gets.
+ *
+ * This light can cast {@link SpotShadow}.
+ *
+ * @example
+ * ```javascript
+ * // assuming 'renderer' is a valid Camera renderer
+ *
+ * // this spot light will not cast any shadows
+ * const spotLight = new SpotLight(renderer, {
+ *   color: new Vec3(1),
+ *   intensity: 1,
+ *   position: new Vec3(5, 2, 3),
+ *   penumbra: 0.5,
+ * })
+ *
+ * // this spot light will cast shadows
+ * const spotLightWithShadows = new SpotLight(renderer, {
+ *   color: new Vec3(1),
+ *   intensity: 1,
+ *   position: new Vec3(-10, 10, -5),
+ *   target: new Vec3(0, 0.5, 0),
+ *   shadow: {
+ *     intensity: 1,
+ *   },
+ * })
+ *
+ * // this spot light will ALSO cast shadows!
+ * const anotherSpotLightWithShadows = new SpotLight(renderer, {
+ *   color: new Vec3(1),
+ *   intensity: 2,
+ *   position: new Vec3(12, 0.5, 5),
+ *   target: new Vec3(3),
+ *   shadow: {}, // that's enough to start casting shadows
+ * })
+ *
+ * // this spot light will cast shadows as well...
+ * const lastSpotLightWithShadows = new SpotLight(renderer, {
+ *   color: new Vec3(1),
+ *   intensity: 1,
+ *   position: new Vec3(10),
+ * })
+ *
+ * // ... because we're telling it here to start casting shadows
+ * lastSpotLightWithShadows.shadow.cast()
+ * ```
+ */
 export declare class SpotLight extends Light {
     #private;
     /** The {@link SpotLight} {@link Vec3 | target}. */
@@ -78,6 +126,11 @@ export declare class SpotLight extends Light {
     applyScale(): void;
     /** @ignore */
     applyTransformOrigin(): void;
+    /**
+     * Rotate this {@link SpotLight} so it looks at the {@link Vec3 | target}.
+     * @param target - {@link Vec3} to look at. Default to `new Vec3()`.
+     */
+    lookAt(target?: Vec3): void;
     /**
      * If the {@link modelMatrix | model matrix} has been updated, set the new direction from the {@link worldMatrix} translation.
      */

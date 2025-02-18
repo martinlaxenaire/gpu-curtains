@@ -37,7 +37,7 @@ export interface PointLightBaseParams extends LightBaseParams {
  *   range: 3,
  *   position: new Vec3(-10, 10, -5),
  *   shadow: {
- *     intensity: 1
+ *     intensity: 1,
  *   },
  * })
  *
@@ -101,6 +101,8 @@ export declare class PointLight extends Light {
     applyScale(): void;
     /** @ignore */
     applyTransformOrigin(): void;
+    /** @ignore */
+    applyRotation(): void;
     /**
      * If the {@link modelMatrix | model matrix} has been updated, set the new position from the {@link worldMatrix} translation.
      */

@@ -856,8 +856,8 @@ const _GLTFScenesManager = class _GLTFScenesManager {
           const parentNode = this.scenesManager.nodes.get(parentNodeIndex);
           const parentInverseWorldMatrix = new Mat4();
           const _updateWorldMatrix = parentNode.updateWorldMatrix.bind(parentNode);
-          parentNode.updateWorldMatrix = () => {
-            _updateWorldMatrix();
+          parentNode.updateWorldMatrix = (updateParents, updateChildren) => {
+            _updateWorldMatrix(updateParents, updateChildren);
             parentInverseWorldMatrix.copy(parentNode.worldMatrix).invert();
           };
           if (this.scenesManager.animations.length) {

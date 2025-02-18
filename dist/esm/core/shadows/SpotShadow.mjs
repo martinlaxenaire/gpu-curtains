@@ -1,9 +1,8 @@
 import { shadowStruct, Shadow } from './Shadow.mjs';
 import { Vec2 } from '../../math/Vec2.mjs';
 import { Camera } from '../camera/Camera.mjs';
-import { getDefaultSpotShadowDepthVs } from '../shaders/full/vertex/get-default-spot-shadow-depth-vertex-shader-code.mjs';
-import { Vec3 } from '../../math/Vec3.mjs';
 import { Texture } from '../textures/Texture.mjs';
+import { getDefaultSpotShadowDepthVs } from '../shaders/full/vertex/get-default-spot-shadow-depth-vertex-shader-code.mjs';
 
 const spotShadowStruct = {
   ...shadowStruct,
@@ -40,7 +39,7 @@ class SpotShadow extends Shadow {
     this.focus = 1;
     this.camera = new Camera({
       near: 0.1,
-      far: this.light.range !== 0 ? this.light.range : 500,
+      far: this.light.range !== 0 ? this.light.range : 150,
       fov: 180 / Math.PI * 2 * this.light.angle * this.focus,
       width: this.options.depthTextureSize.x,
       height: this.options.depthTextureSize.y,
@@ -72,18 +71,6 @@ class SpotShadow extends Shadow {
    */
   setCameraFov() {
     this.camera.fov = 180 / Math.PI * 2 * this.light.angle * this.focus;
-  }
-  /**
-   * Update the {@link camera} target based on the {@link light} position.
-   * @param position - {@link Vec3} to use as position for the {@link camera} look at calculations, based on the {@link light} position.
-   */
-  updateLookAt(position = new Vec3()) {
-    if (position.x === 0 && position.z === 0) {
-      this.camera.up.set(0, 0, 1);
-    } else {
-      this.camera.up.set(0, 1, 0);
-    }
-    this.camera.lookAt(this.light.target, position);
   }
   /**
    * Reset the {@link depthTexture} when the {@link depthTextureSize} changes and update camera ratio.

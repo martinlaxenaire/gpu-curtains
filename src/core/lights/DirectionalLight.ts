@@ -38,7 +38,7 @@ export interface DirectionalLightBaseParams extends LightBaseParams {
  *   intensity: 1,
  *   position: new Vec3(-10, 10, -5),
  *   shadow: {
- *     intensity: 1
+ *     intensity: 1,
  *   },
  * })
  *
@@ -65,8 +65,6 @@ export interface DirectionalLightBaseParams extends LightBaseParams {
 export class DirectionalLight extends Light {
   /** The {@link DirectionalLight} {@link Vec3 | target}. */
   target: Vec3
-  /** @ignore */
-  #actualPosition: Vec3
   /**
    * The {@link Vec3 | direction} of the {@link DirectionalLight} is the {@link target} minus the actual {@link position}.
    * @private
@@ -104,11 +102,14 @@ export class DirectionalLight extends Light {
       shadow,
     }
 
-    this.#direction = new Vec3()
-    this.#actualPosition = new Vec3()
-    this.target = target
-    this.target.onChange(() => this.setDirection())
     this.position.copy(position)
+
+    this.#direction = new Vec3()
+    this.target = target
+    this.target.onChange(() => {
+      this.updateMatrixStack()
+      this.setDirection()
+    })
 
     this.parent = this.renderer.scene
 
@@ -132,7 +133,7 @@ export class DirectionalLight extends Light {
     if (this.shadow) {
       //this.shadow.updateIndex(this.index)
       this.shadow.setRenderer(renderer)
-      this.shadow.updateViewMatrix(this.#actualPosition, this.target)
+      this.shadow.updateViewMatrix()
     }
   }
 
@@ -146,7 +147,7 @@ export class DirectionalLight extends Light {
 
     if (this.shadow && resetShadow) {
       this.shadow.reset()
-      this.shadow.updateViewMatrix(this.#actualPosition, this.target)
+      this.shadow.updateViewMatrix()
     }
   }
 
@@ -154,10 +155,10 @@ export class DirectionalLight extends Light {
    * Set the {@link DirectionalLight} direction based on the {@link target} and the {@link worldMatrix} translation and update the {@link DirectionalShadow} view matrix.
    */
   setDirection() {
-    this.#direction.copy(this.target).sub(this.worldMatrix.getTranslation(this.#actualPosition)).normalize()
+    this.#direction.copy(this.target).sub(this.actualPosition).normalize()
     this.onPropertyChanged('direction', this.#direction)
 
-    this.shadow?.updateViewMatrix(this.#actualPosition, this.target)
+    this.shadow?.updateViewMatrix()
   }
 
   // explicitly disable scale and transform origin transformations

@@ -11,9 +11,15 @@ export const getDefaultSpotShadowDepthVs = (
   lightIndex = 0,
   { bindings = [], geometry }: VertexShaderInputBaseParams
 ): string => /* wgsl */ `
+struct SpotShadowVSOutput {
+  @builtin(position) position: vec4f,
+  @location(0) worldPosition: vec3f,
+}
+
 @vertex fn main(
   attributes: Attributes,
 ) -> @builtin(position) vec4f {  
+  var spotShadowVSOutput: SpotShadowVSOutput;
   let spotShadow: SpotShadowsElement = spotShadows.spotShadowsElements[${lightIndex}];
   
   ${declareAttributesVars({ geometry })}

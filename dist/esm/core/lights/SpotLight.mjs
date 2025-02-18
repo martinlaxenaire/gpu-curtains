@@ -9,7 +9,7 @@ var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot
 var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
 var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
 var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
-var _actualPosition, _direction, _angle, _penumbra, _range;
+var _direction, _angle, _penumbra, _range;
 class SpotLight extends Light {
   constructor(renderer, {
     label = "SpotLight",
@@ -24,8 +24,6 @@ class SpotLight extends Light {
   } = {}) {
     const type = "spotLights";
     super(renderer, { label, color, intensity, type });
-    /** @ignore */
-    __privateAdd(this, _actualPosition);
     /**
      * The {@link Vec3 | direction} of the {@link SpotLight} is the {@link target} minus the actual {@link position}.
      * @private
@@ -37,11 +35,22 @@ class SpotLight extends Light {
     __privateAdd(this, _penumbra);
     /** @ignore */
     __privateAdd(this, _range);
+    this.options = {
+      ...this.options,
+      position,
+      range,
+      angle,
+      penumbra,
+      target,
+      shadow
+    };
     __privateSet(this, _direction, new Vec3());
-    __privateSet(this, _actualPosition, new Vec3());
-    this.target = target;
-    this.target.onChange(() => this.setPositionDirection());
     this.position.copy(position);
+    this.target = new Vec3();
+    this.target.onChange(() => {
+      this.lookAt(this.target);
+    });
+    this.target.copy(target);
     this.angle = angle;
     this.penumbra = penumbra;
     this.range = range;
@@ -54,6 +63,7 @@ class SpotLight extends Light {
     if (shadow) {
       this.shadow.cast(shadow);
     }
+    this.shouldUpdateModelMatrix();
   }
   /**
    * Set or reset this {@link SpotLight} {@link CameraRenderer}.
@@ -74,7 +84,7 @@ class SpotLight extends Light {
     this.onPropertyChanged("range", this.range);
     this.onPropertyChanged("coneCos", Math.cos(this.angle));
     this.onPropertyChanged("penumbraCos", Math.cos(this.angle * (1 - this.penumbra)));
-    this.onPropertyChanged("position", this.worldMatrix.getTranslation(__privateGet(this, _actualPosition)));
+    this.onPropertyChanged("position", this.actualPosition);
     this.onPropertyChanged("direction", __privateGet(this, _direction));
     if (this.shadow && resetShadow) {
       this.shadow.reset();
@@ -84,10 +94,9 @@ class SpotLight extends Light {
    * Set the {@link SpotLight} position and direction based on the {@link target} and the {@link worldMatrix} translation and update the {@link SpotShadow} view matrix.
    */
   setPositionDirection() {
-    this.onPropertyChanged("position", this.worldMatrix.getTranslation(__privateGet(this, _actualPosition)));
-    __privateGet(this, _direction).copy(this.target).sub(__privateGet(this, _actualPosition)).normalize();
+    this.onPropertyChanged("position", this.actualPosition);
+    __privateGet(this, _direction).copy(this.target).sub(this.actualPosition).normalize();
     this.onPropertyChanged("direction", __privateGet(this, _direction));
-    this.shadow?.updateLookAt(__privateGet(this, _actualPosition));
   }
   /**
    * Get this {@link SpotLight} angle.
@@ -133,10 +142,10 @@ class SpotLight extends Light {
    * @param value - The new {@link SpotLight} range.
    */
   set range(value) {
-    __privateSet(this, _range, value);
+    __privateSet(this, _range, Math.max(0, value));
     this.onPropertyChanged("range", this.range);
     if (this.shadow) {
-      this.shadow.camera.far = this.range !== 0 ? this.range : 500;
+      this.shadow.camera.far = this.range !== 0 ? this.range : 150;
     }
   }
   // explicitly disable scale and transform origin transformations
@@ -145,6 +154,20 @@ class SpotLight extends Light {
   }
   /** @ignore */
   applyTransformOrigin() {
+  }
+  /**
+   * Rotate this {@link SpotLight} so it looks at the {@link Vec3 | target}.
+   * @param target - {@link Vec3} to look at. Default to `new Vec3()`.
+   */
+  lookAt(target = new Vec3()) {
+    this.updateModelMatrix();
+    this.updateWorldMatrix(true, false);
+    if (this.actualPosition.x === 0 && this.actualPosition.y !== 0 && this.actualPosition.z === 0) {
+      this.up.set(0, 0, 1);
+    } else {
+      this.up.set(0, 1, 0);
+    }
+    this.applyLookAt(this.actualPosition, target);
   }
   /**
    * If the {@link modelMatrix | model matrix} has been updated, set the new direction from the {@link worldMatrix} translation.
@@ -171,7 +194,6 @@ class SpotLight extends Light {
     this.shadow.destroy();
   }
 }
-_actualPosition = new WeakMap();
 _direction = new WeakMap();
 _angle = new WeakMap();
 _penumbra = new WeakMap();

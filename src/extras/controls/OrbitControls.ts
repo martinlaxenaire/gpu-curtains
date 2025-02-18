@@ -198,10 +198,7 @@ export class OrbitControls {
    */
   useCamera(camera: Camera) {
     this.camera = camera
-
-    this.camera.position.onChange(() => {
-      this.camera.lookAt(this.target)
-    })
+    this.camera.lookAt(this.target)
 
     // Grab initial position values
     this.#offset.copy(this.camera.position).sub(this.target)
@@ -474,6 +471,7 @@ export class OrbitControls {
 
     // Apply updated values to object
     this.camera.position.copy(this.target).add(this.#offset)
+    this.camera.lookAt(this.target)
   }
 
   /**

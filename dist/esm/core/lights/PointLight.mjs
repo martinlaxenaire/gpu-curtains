@@ -9,7 +9,7 @@ var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot
 var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
 var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
 var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
-var _range, _actualPosition;
+var _range;
 class PointLight extends Light {
   /**
    * PointLight constructor
@@ -28,15 +28,12 @@ class PointLight extends Light {
     super(renderer, { label, color, intensity, type });
     /** @ignore */
     __privateAdd(this, _range);
-    /** @ignore */
-    __privateAdd(this, _actualPosition);
     this.options = {
       ...this.options,
       position,
       range,
       shadow
     };
-    __privateSet(this, _actualPosition, new Vec3());
     this.position.copy(position);
     this.range = range;
     this.parent = this.renderer.scene;
@@ -57,7 +54,6 @@ class PointLight extends Light {
     super.setRenderer(renderer);
     if (this.shadow) {
       this.shadow.setRenderer(renderer);
-      this.shadow.updateViewMatrices(__privateGet(this, _actualPosition));
     }
   }
   /**
@@ -67,10 +63,9 @@ class PointLight extends Light {
   reset(resetShadow = true) {
     super.reset();
     this.onPropertyChanged("range", this.range);
-    this.onPropertyChanged("position", this.worldMatrix.getTranslation(__privateGet(this, _actualPosition)));
+    this.onPropertyChanged("position", this.actualPosition);
     if (this.shadow && resetShadow) {
       this.shadow.reset();
-      this.shadow.updateViewMatrices(__privateGet(this, _actualPosition));
     }
   }
   /**
@@ -85,22 +80,27 @@ class PointLight extends Light {
    * @param value - The new {@link PointLight} range.
    */
   set range(value) {
-    __privateSet(this, _range, value);
+    __privateSet(this, _range, Math.max(0, value));
     this.onPropertyChanged("range", this.range);
+    if (this.shadow) {
+      this.shadow.camera.far = this.range !== 0 ? this.range : 150;
+    }
   }
   /**
    * Set the {@link PointLight} position based on the {@link worldMatrix} translation and update the {@link PointShadow} view matrices.
    */
   setPosition() {
-    this.onPropertyChanged("position", this.worldMatrix.getTranslation(__privateGet(this, _actualPosition)));
-    this.shadow?.updateViewMatrices(__privateGet(this, _actualPosition));
+    this.onPropertyChanged("position", this.actualPosition);
   }
-  // explicitly disable scale and transform origin transformations
+  // explicitly disable scale, transform origin and rotation transformations
   /** @ignore */
   applyScale() {
   }
   /** @ignore */
   applyTransformOrigin() {
+  }
+  /** @ignore */
+  applyRotation() {
   }
   /**
    * If the {@link modelMatrix | model matrix} has been updated, set the new position from the {@link worldMatrix} translation.
@@ -128,6 +128,5 @@ class PointLight extends Light {
   }
 }
 _range = new WeakMap();
-_actualPosition = new WeakMap();
 
 export { PointLight };

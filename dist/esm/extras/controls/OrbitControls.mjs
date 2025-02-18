@@ -111,9 +111,7 @@ class OrbitControls {
    */
   useCamera(camera) {
     this.camera = camera;
-    this.camera.position.onChange(() => {
-      this.camera.lookAt(this.target);
-    });
+    this.camera.lookAt(this.target);
     __privateGet(this, _offset).copy(this.camera.position).sub(this.target);
     __privateGet(this, _spherical).radius = __privateGet(this, _offset).length();
     __privateGet(this, _spherical).theta = Math.atan2(__privateGet(this, _offset).x, __privateGet(this, _offset).z);
@@ -378,6 +376,7 @@ update_fn = function() {
   __privateGet(this, _offset).y = __privateGet(this, _spherical).radius * Math.cos(__privateGet(this, _spherical).phi);
   __privateGet(this, _offset).z = sinPhiRadius * Math.cos(__privateGet(this, _spherical).theta);
   this.camera.position.copy(this.target).add(__privateGet(this, _offset));
+  this.camera.lookAt(this.target);
 };
 /**
  * Update the {@link camera} position based on input coordinates so it rotates around the {@link target}.

@@ -66,9 +66,6 @@ export class Camera extends Object3D {
   /** @ignore */
   #far: number
 
-  /** {@link Vec3 | Up vector} used for {@link lookAt} calculations. */
-  up: Vec3
-
   /** The {@link Camera} frustum width and height */
   size: RectSize
   /** @ignore */
@@ -107,7 +104,6 @@ export class Camera extends Object3D {
     // camera can't be at position (0, 0, 0), it needs some recoil
     // arbitrarily set to 10 so objects of default size (1, 1, 1) don't appear too big
     this.position.set(0, 0, 10)
-    this.up = new Vec3(0, 1, 0)
 
     // callback to run if any of the matrices changed
     this.onMatricesChanged = onMatricesChanged
@@ -200,7 +196,7 @@ export class Camera extends Object3D {
   }
 
   /**
-   * Update our model matrix and tell our view matrix to update as well
+   * Update our model matrix and tell our view matrix to update as well.
    */
   updateModelMatrix() {
     super.updateModelMatrix()
@@ -209,10 +205,10 @@ export class Camera extends Object3D {
   }
 
   /**
-   * Update our world matrix and tell our view matrix to update as well
+   * Update our view matrix whenever we need to update the world matrix.
    */
-  updateWorldMatrix() {
-    super.updateWorldMatrix()
+  shouldUpdateWorldMatrix() {
+    super.shouldUpdateWorldMatrix()
     this.shouldUpdateViewMatrices()
   }
 
@@ -390,17 +386,25 @@ export class Camera extends Object3D {
   }
 
   /**
-   * Rotate this {@link Camera} so it looks at the {@link Vec3 | target}
-   * @param target - {@link Vec3 | target} to look at
-   * @param position - {@link Vec3 | postion} from which to look at
+   * Rotate this {@link Camera} so it looks at the {@link Vec3 | target}.
+   * @param target - {@link Vec3} to look at. Default to `new Vec3()`.
    */
-  lookAt(target: Vec3 = new Vec3(), position = this.position) {
+  lookAt(target: Vec3 = new Vec3()) {
+    this.updateModelMatrix()
+    this.updateWorldMatrix(true, false)
+
+    if (this.actualPosition.x === 0 && this.actualPosition.y !== 0 && this.actualPosition.z === 0) {
+      this.up.set(0, 0, 1)
+    } else {
+      this.up.set(0, 1, 0)
+    }
+
     // since we know it's a camera, inverse position and target
-    super.lookAt(position, target, this.up)
+    this.applyLookAt(this.actualPosition, target)
   }
 
   /**
-   * Updates the {@link Camera} {@link projectionMatrix}
+   * Updates the {@link Camera} {@link projectionMatrix}.
    */
   updateProjectionMatrix() {
     this.projectionMatrix.makePerspective({

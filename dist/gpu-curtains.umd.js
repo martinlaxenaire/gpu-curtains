@@ -1372,6 +1372,8 @@
       this._parent = null;
       this.children = [];
       this.matricesNeedUpdate = false;
+      this.up = new Vec3(0, 1, 0);
+      this.actualPosition = new Vec3();
       Object.defineProperty(this, "object3DIndex", { value: objectIndex++ });
       this.setMatrices();
       this.setTransforms();
@@ -1573,12 +1575,26 @@
       this.matrices.world.shouldUpdate = true;
     }
     /**
-     * Rotate this {@link Object3D} so it looks at the {@link Vec3 | target}
-     * @param target - {@link Vec3 | target} to look at
-     * @param position - {@link Vec3 | postion} from which to look at
+     * Rotate this {@link Object3D} so it looks at the {@link Vec3 | target}.
+     * @param target - {@link Vec3} to look at. Default to `new Vec3()`.
      */
-    lookAt(target = new Vec3(), position = this.position, up = new Vec3(0, 1, 0)) {
-      const rotation = tempMatrix.lookAt(target, position, up);
+    lookAt(target = new Vec3()) {
+      this.updateModelMatrix();
+      this.updateWorldMatrix(true, false);
+      if (this.actualPosition.x === 0 && this.actualPosition.y !== 0 && this.actualPosition.z === 0) {
+        this.up.set(0, 0, 1);
+      } else {
+        this.up.set(0, 1, 0);
+      }
+      this.applyLookAt(target, this.actualPosition);
+    }
+    /**
+     * Apply a look at rotation based on a target, a position and our {link up} vectors.
+     * @param target - {@link Vec3} target to look at.
+     * @param position - {@link Vec3} position from which to look at.
+     */
+    applyLookAt(target, position) {
+      const rotation = tempMatrix.lookAt(target, position, this.up);
       this.quaternion.setFromRotationMatrix(rotation);
       this.shouldUpdateModelMatrix();
     }
@@ -1595,16 +1611,24 @@
       this.shouldUpdateWorldMatrix();
     }
     /**
-     * Update our {@link worldMatrix | model matrix}
+     * Update our {@link worldMatrix | model matrix}.
+     * @param updateParents - Whether to update the {@link parent} {@link worldMatrix} beforehand. Default to `false`.
+     * @param updateChildren - Whether to update the {@link children} {@link worldMatrix} afterward. Default to `true`.
      */
-    updateWorldMatrix() {
+    updateWorldMatrix(updateParents = false, updateChildren = true) {
       if (!this.parent) {
         this.worldMatrix.copy(this.modelMatrix);
       } else {
+        if (updateParents) {
+          this.parent.updateWorldMatrix(true, false);
+        }
         this.worldMatrix.multiplyMatrices(this.parent.worldMatrix, this.modelMatrix);
       }
-      for (let i = 0, l = this.children.length; i < l; i++) {
-        this.children[i].shouldUpdateWorldMatrix();
+      this.worldMatrix.getTranslation(this.actualPosition);
+      if (updateChildren) {
+        for (let i = 0, l = this.children.length; i < l; i++) {
+          this.children[i].shouldUpdateWorldMatrix();
+        }
       }
     }
     /**
@@ -5531,7 +5555,6 @@
       __privateAdd$m(this, _pixelRatio);
       this.uuid = generateUUID();
       this.position.set(0, 0, 10);
-      this.up = new Vec3(0, 1, 0);
       this.onMatricesChanged = onMatricesChanged;
       this.size = {
         width: 1,
@@ -5609,7 +5632,7 @@
       this.matrices.viewProjection.shouldUpdate = true;
     }
     /**
-     * Update our model matrix and tell our view matrix to update as well
+     * Update our model matrix and tell our view matrix to update as well.
      */
     updateModelMatrix() {
       super.updateModelMatrix();
@@ -5617,10 +5640,10 @@
       this.shouldUpdateViewMatrices();
     }
     /**
-     * Update our world matrix and tell our view matrix to update as well
+     * Update our view matrix whenever we need to update the world matrix.
      */
-    updateWorldMatrix() {
-      super.updateWorldMatrix();
+    shouldUpdateWorldMatrix() {
+      super.shouldUpdateWorldMatrix();
       this.shouldUpdateViewMatrices();
     }
     /**
@@ -5768,15 +5791,21 @@
       this.visibleSize = this.getVisibleSizeAtDepth();
     }
     /**
-     * Rotate this {@link Camera} so it looks at the {@link Vec3 | target}
-     * @param target - {@link Vec3 | target} to look at
-     * @param position - {@link Vec3 | postion} from which to look at
+     * Rotate this {@link Camera} so it looks at the {@link Vec3 | target}.
+     * @param target - {@link Vec3} to look at. Default to `new Vec3()`.
      */
-    lookAt(target = new Vec3(), position = this.position) {
-      super.lookAt(position, target, this.up);
+    lookAt(target = new Vec3()) {
+      this.updateModelMatrix();
+      this.updateWorldMatrix(true, false);
+      if (this.actualPosition.x === 0 && this.actualPosition.y !== 0 && this.actualPosition.z === 0) {
+        this.up.set(0, 0, 1);
+      } else {
+        this.up.set(0, 1, 0);
+      }
+      this.applyLookAt(this.actualPosition, target);
     }
     /**
-     * Updates the {@link Camera} {@link projectionMatrix}
+     * Updates the {@link Camera} {@link projectionMatrix}.
      */
     updateProjectionMatrix() {
       this.projectionMatrix.makePerspective({
@@ -7022,9 +7051,10 @@
       const corners = [];
       if (this.min.z === this.max.z) {
         corners[0] = points[0].set(this.min.x, this.min.y, this.min.z).applyMat4(matrix);
-        corners[1] = points[2].set(this.min.x, this.max.y, this.min.z).applyMat4(matrix);
-        corners[2] = points[4].set(this.max.x, this.min.y, this.min.z).applyMat4(matrix);
-        corners[3] = points[6].set(this.max.x, this.max.y, this.min.z).applyMat4(matrix);
+        corners[1] = points[1].set(this.min.x, this.max.y, this.min.z).applyMat4(matrix);
+        corners[2] = points[2].set(this.max.x, this.min.y, this.min.z).applyMat4(matrix);
+        corners[3] = points[3].set(this.max.x, this.max.y, this.min.z).applyMat4(matrix);
+        corners[4] = points[4].set(0, 0, 0).applyMat4(matrix);
       } else {
         corners[0] = points[0].set(this.min.x, this.min.y, this.min.z).applyMat4(matrix);
         corners[1] = points[1].set(this.min.x, this.min.y, this.max.z).applyMat4(matrix);
@@ -7940,6 +7970,7 @@
       __privateSet$i(this, _intensityColor, this.color.clone());
       this.color.onChange(() => this.onPropertyChanged("color", this.actualColor));
       this.intensity = intensity;
+      this.userData = {};
     }
     /**
      * Set or reset this light {@link CameraRenderer}.
@@ -8029,6 +8060,23 @@
       if (this.rendererBinding) {
         this.rendererBinding = this.renderer.bindings[lightsType];
       }
+    }
+    /**
+     * Called by the {@link core/scenes/Scene.Scene | Scene} before updating the matrix stack.
+     */
+    onBeforeRenderScene() {
+      this._onBeforeRenderCallback && this._onBeforeRenderCallback();
+    }
+    /**
+     * Callback to execute before updating the {@link core/scenes/Scene.Scene | Scene} matrix stack. This means it is called early and allows to update transformations values before actually setting the {@link Light} matrices. The callback won't be called if the {@link renderer} is not ready.
+     * @param callback - callback to run just before updating the {@link core/scenes/Scene.Scene | Scene} matrix stack.
+     * @returns - our {@link Light}
+     */
+    onBeforeRender(callback) {
+      if (callback) {
+        this._onBeforeRenderCallback = callback;
+      }
+      return this;
     }
     /**
      * Remove this {@link Light} from the {@link renderer} and destroy it.
@@ -10277,7 +10325,7 @@ fn getPCFPointShadowContribution(index: i32, shadowPosition: vec4f, depthCubeTex
   
   visibility /= f32(sampleCount * sampleCount * sampleCount);
   
-  visibility = clamp(visibility, 1.0 - saturate(pointShadow.intensity), 1.0);
+  visibility = mix(1.0, visibility, saturate(pointShadow.intensity));
   
   return visibility;
 }`
@@ -10303,7 +10351,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
       lightColor = pointLights.elements[${index}].color * rangeAttenuation(pointLights.elements[${index}].range, lightDistance, 2.0);
       
       ${light.shadow.isActive ? `
-      if(pointShadows.pointShadowsElements[${index}].isActive > 0 && length(lightColor) > 0.0001) {
+      if(pointShadows.pointShadowsElements[${index}].isActive > 0 && length(lightColor) > EPSILON) {
         pointShadowContribution[${index}] = getPCFPointShadowContribution(
           ${index},
           vec4(lightDirection, length(lightDirection)),
@@ -10424,7 +10472,7 @@ fn getPCFBaseShadowContribution(
     }
     visibility /= f32(sampleCount * sampleCount);
     
-    visibility = clamp(visibility, 1.0 - saturate(intensity), 1.0);
+    visibility = mix(1.0, visibility, saturate(intensity));
   }
   else {
     visibility = 1.0;
@@ -11386,7 +11434,8 @@ fn getPCFBaseShadowContribution(
         // we just want to write to the depth texture
         targets: [],
         outputTarget: this.depthPassTarget,
-        //autoRender: false,
+        frustumCulling: false,
+        // draw shadow even if original mesh is hidden
         autoRender: __privateGet$f(this, _autoRender)
       });
       depthMesh.parent = mesh;
@@ -11797,16 +11846,16 @@ fn getPCFBaseShadowContribution(
     }
     /**
      * Update the {@link DirectionalShadow#camera.viewMatrix | camera view matrix} and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
-     * @param position - {@link Vec3} to use as position for the {@link DirectionalShadow#camera.viewMatrix | camera view matrix}, based on the {@link light} position.
-     * @param target - {@link Vec3} to use as target for the {@link DirectionalShadow#camera.viewMatrix | camera view matrix}, based on the {@link light} target.
      */
-    updateViewMatrix(position = new Vec3(), target = new Vec3()) {
-      if (position.x === 0 && position.z === 0) {
+    updateViewMatrix() {
+      if (this.light.actualPosition.x === 0 && this.light.actualPosition.y !== 0 && this.light.actualPosition.z === 0) {
         this.camera.up.set(0, 0, 1);
+      } else if (this.light.actualPosition.x === 0 && this.light.actualPosition.y === 0 && this.light.actualPosition.z !== 0) {
+        this.camera.up.set(1, 0, 0);
       } else {
         this.camera.up.set(0, 1, 0);
       }
-      this.camera.viewMatrix.makeView(position, target, this.camera.up);
+      this.camera.viewMatrix.makeView(this.light.actualPosition, this.light.target, this.camera.up);
       this.onPropertyChanged("viewMatrix", this.camera.viewMatrix);
     }
     /**
@@ -11847,7 +11896,7 @@ fn getPCFBaseShadowContribution(
   var __privateGet$e = (obj, member, getter) => (__accessCheck$g(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
   var __privateAdd$g = (obj, member, value) => member.has(obj) ? __typeError$g("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   var __privateSet$e = (obj, member, value, setter) => (__accessCheck$g(obj, member, "write to private field"), member.set(obj, value), value);
-  var _actualPosition$2, _direction$1;
+  var _direction$1;
   class DirectionalLight extends Light {
     /**
      * DirectionalLight constructor
@@ -11864,8 +11913,6 @@ fn getPCFBaseShadowContribution(
     } = {}) {
       const type = "directionalLights";
       super(renderer, { label, color, intensity, type });
-      /** @ignore */
-      __privateAdd$g(this, _actualPosition$2);
       /**
        * The {@link Vec3 | direction} of the {@link DirectionalLight} is the {@link target} minus the actual {@link position}.
        * @private
@@ -11877,11 +11924,13 @@ fn getPCFBaseShadowContribution(
         target,
         shadow
       };
-      __privateSet$e(this, _direction$1, new Vec3());
-      __privateSet$e(this, _actualPosition$2, new Vec3());
-      this.target = target;
-      this.target.onChange(() => this.setDirection());
       this.position.copy(position);
+      __privateSet$e(this, _direction$1, new Vec3());
+      this.target = target;
+      this.target.onChange(() => {
+        this.updateMatrixStack();
+        this.setDirection();
+      });
       this.parent = this.renderer.scene;
       this.shadow = new DirectionalShadow(this.renderer, {
         autoRender: false,
@@ -11900,7 +11949,7 @@ fn getPCFBaseShadowContribution(
       super.setRenderer(renderer);
       if (this.shadow) {
         this.shadow.setRenderer(renderer);
-        this.shadow.updateViewMatrix(__privateGet$e(this, _actualPosition$2), this.target);
+        this.shadow.updateViewMatrix();
       }
     }
     /**
@@ -11912,16 +11961,16 @@ fn getPCFBaseShadowContribution(
       this.onPropertyChanged("direction", __privateGet$e(this, _direction$1));
       if (this.shadow && resetShadow) {
         this.shadow.reset();
-        this.shadow.updateViewMatrix(__privateGet$e(this, _actualPosition$2), this.target);
+        this.shadow.updateViewMatrix();
       }
     }
     /**
      * Set the {@link DirectionalLight} direction based on the {@link target} and the {@link worldMatrix} translation and update the {@link DirectionalShadow} view matrix.
      */
     setDirection() {
-      __privateGet$e(this, _direction$1).copy(this.target).sub(this.worldMatrix.getTranslation(__privateGet$e(this, _actualPosition$2))).normalize();
+      __privateGet$e(this, _direction$1).copy(this.target).sub(this.actualPosition).normalize();
       this.onPropertyChanged("direction", __privateGet$e(this, _direction$1));
-      this.shadow?.updateViewMatrix(__privateGet$e(this, _actualPosition$2), this.target);
+      this.shadow?.updateViewMatrix();
     }
     // explicitly disable scale and transform origin transformations
     /** @ignore */
@@ -11955,7 +12004,6 @@ fn getPCFBaseShadowContribution(
       this.shadow.destroy();
     }
   }
-  _actualPosition$2 = new WeakMap();
   _direction$1 = new WeakMap();
 
   const getDefaultPointShadowDepthVs = (lightIndex = 0, { bindings = [], geometry }) => (
@@ -12022,7 +12070,7 @@ struct PointShadowVSOutput {
   var __privateGet$d = (obj, member, getter) => (__accessCheck$f(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
   var __privateAdd$f = (obj, member, value) => member.has(obj) ? __typeError$f("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   var __privateSet$d = (obj, member, value, setter) => (__accessCheck$f(obj, member, "write to private field"), member.set(obj, value), value);
-  var _tempCubeDirection;
+  var _tempCubeDirection, _viewMatrices;
   const pointShadowStruct = {
     ...shadowStruct,
     cameraNear: {
@@ -12056,11 +12104,7 @@ struct PointShadowVSOutput {
       pcfSamples,
       depthTextureSize,
       depthTextureFormat,
-      autoRender,
-      camera = {
-        near: 0.1,
-        far: 150
-      }
+      autoRender
     } = {}) {
       super(renderer, {
         light,
@@ -12077,10 +12121,11 @@ struct PointShadowVSOutput {
        * @private
        */
       __privateAdd$f(this, _tempCubeDirection);
-      this.options = {
-        ...this.options,
-        camera
-      };
+      /**
+       * Array of {@link Mat4} view matrices to use for cube map faces rendering.
+       * @private
+       */
+      __privateAdd$f(this, _viewMatrices);
       this.cubeDirections = [
         new Vec3(-1, 0, 0),
         new Vec3(1, 0, 0),
@@ -12098,31 +12143,25 @@ struct PointShadowVSOutput {
         new Vec3(0, -1, 0),
         new Vec3(0, -1, 0)
       ];
-      if (camera.far <= 0) {
-        camera.far = 150;
-      }
-      this.camera = {
-        projectionMatrix: new Mat4(),
-        viewMatrices: [],
-        _near: camera.near,
-        _far: camera.far
-      };
+      __privateSet$d(this, _viewMatrices, []);
       for (let i = 0; i < 6; i++) {
-        this.camera.viewMatrices.push(new Mat4());
+        __privateGet$d(this, _viewMatrices).push(new Mat4());
       }
-      const _self = this;
-      const cameraProps = ["near", "far"];
-      cameraProps.forEach((prop) => {
-        Object.defineProperty(_self.camera, prop, {
-          get() {
-            return _self.camera["_" + prop];
-          },
-          set(v) {
-            _self.camera["_" + prop] = v;
-            _self.updateProjectionMatrix();
-          }
-        });
+      this.camera = new Camera({
+        fov: 90,
+        near: 0.1,
+        far: this.light.range !== 0 ? this.light.range : 150,
+        width: this.depthTextureSize.x,
+        height: this.depthTextureSize.y,
+        onMatricesChanged: () => {
+          this.onProjectionMatrixChanged();
+        }
       });
+      this.camera.matrices.view.onUpdate = () => {
+        this.updateViewMatrices();
+      };
+      this.camera.position.set(0);
+      this.camera.parent = this.light;
     }
     /**
      * Set or reset this {@link PointShadow} {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
@@ -12131,23 +12170,11 @@ struct PointShadowVSOutput {
       this.rendererBinding = this.renderer.bindings.pointShadows;
     }
     /**
-     * Set the parameters and start casting shadows by setting the {@link isActive} setter to `true`.<br>
-     * Called internally by the associated {@link PointLight} if any shadow parameters are specified when creating it. Can also be called directly.
-     * @param parameters - parameters to use for this {@link PointShadow}.
-     */
-    cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender, camera } = {}) {
-      if (camera) {
-        this.camera.near = camera.near ?? 0.1;
-        this.camera.far = camera.far !== void 0 ? camera.far : this.light.range > 0 ? this.light.range : 150;
-      }
-      super.cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
-    }
-    /**
      * Set the {@link depthComparisonSampler}, {@link depthTexture}, {@link depthPassTarget}, compute the {@link PointShadow#camera.projectionMatrix | camera projection matrix} and start rendering to the shadow map.
      */
     init() {
       super.init();
-      this.updateProjectionMatrix();
+      this.onProjectionMatrixChanged();
     }
     /**
      * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link PointLight} has been overflowed or when the {@link renderer} has changed.
@@ -12155,34 +12182,35 @@ struct PointShadowVSOutput {
     reset() {
       this.setRendererBinding();
       super.reset();
-      this.updateProjectionMatrix();
+      this.onProjectionMatrixChanged();
+      this.onViewMatricesChanged();
     }
     /**
-     * Update the {@link PointShadow#camera.projectionMatrix | camera perspective projection matrix} and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
+     * Called whenever the {@link Camera#projectionMatrix | camera projectionMatrix} changed (or on reset) to update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      */
-    updateProjectionMatrix() {
-      this.camera.projectionMatrix.identity().makePerspective({
-        near: this.camera.near,
-        far: this.camera.far,
-        fov: 90,
-        aspect: 1
-      });
+    onProjectionMatrixChanged() {
       this.onPropertyChanged("projectionMatrix", this.camera.projectionMatrix);
       this.onPropertyChanged("cameraNear", this.camera.near);
       this.onPropertyChanged("cameraFar", this.camera.far);
     }
     /**
-     * Update the {@link PointShadow#camera.viewMatrices | camera view matrices} and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
-     * @param position - {@link Vec3} to use as position for the {@link PointShadow#camera.viewMatrices | camera view matrices}, based on the {@link light} position.
+     * Update the #viewMatrices and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      */
-    updateViewMatrices(position = new Vec3()) {
+    updateViewMatrices() {
       for (let i = 0; i < 6; i++) {
-        __privateGet$d(this, _tempCubeDirection).copy(this.cubeDirections[i]).add(position);
-        this.camera.viewMatrices[i].makeView(position, __privateGet$d(this, _tempCubeDirection), this.cubeUps[i]);
+        __privateGet$d(this, _tempCubeDirection).copy(this.cubeDirections[i]).add(this.camera.actualPosition);
+        this.camera.viewMatrix.makeView(this.camera.actualPosition, __privateGet$d(this, _tempCubeDirection), this.cubeUps[i]);
+        __privateGet$d(this, _viewMatrices)[i].copy(this.camera.viewMatrix);
         for (let j = 0; j < 16; j++) {
-          this.rendererBinding.childrenBindings[this.index].inputs.viewMatrices.value[i * 16 + j] = this.camera.viewMatrices[i].elements[j];
+          this.rendererBinding.childrenBindings[this.index].inputs.viewMatrices.value[i * 16 + j] = __privateGet$d(this, _viewMatrices)[i].elements[j];
         }
       }
+      this.onViewMatricesChanged();
+    }
+    /**
+     * Called whenever the #viewMatrices changed (or on reset) to update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
+     */
+    onViewMatricesChanged() {
       this.rendererBinding.childrenBindings[this.index].inputs.viewMatrices.shouldUpdate = true;
     }
     /**
@@ -12346,6 +12374,7 @@ struct PointShadowVSOutput {
     }
   }
   _tempCubeDirection = new WeakMap();
+  _viewMatrices = new WeakMap();
 
   var __typeError$e = (msg) => {
     throw TypeError(msg);
@@ -12354,7 +12383,7 @@ struct PointShadowVSOutput {
   var __privateGet$c = (obj, member, getter) => (__accessCheck$e(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
   var __privateAdd$e = (obj, member, value) => member.has(obj) ? __typeError$e("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   var __privateSet$c = (obj, member, value, setter) => (__accessCheck$e(obj, member, "write to private field"), member.set(obj, value), value);
-  var _range$1, _actualPosition$1;
+  var _range$1;
   class PointLight extends Light {
     /**
      * PointLight constructor
@@ -12373,15 +12402,12 @@ struct PointShadowVSOutput {
       super(renderer, { label, color, intensity, type });
       /** @ignore */
       __privateAdd$e(this, _range$1);
-      /** @ignore */
-      __privateAdd$e(this, _actualPosition$1);
       this.options = {
         ...this.options,
         position,
         range,
         shadow
       };
-      __privateSet$c(this, _actualPosition$1, new Vec3());
       this.position.copy(position);
       this.range = range;
       this.parent = this.renderer.scene;
@@ -12402,7 +12428,6 @@ struct PointShadowVSOutput {
       super.setRenderer(renderer);
       if (this.shadow) {
         this.shadow.setRenderer(renderer);
-        this.shadow.updateViewMatrices(__privateGet$c(this, _actualPosition$1));
       }
     }
     /**
@@ -12412,10 +12437,9 @@ struct PointShadowVSOutput {
     reset(resetShadow = true) {
       super.reset();
       this.onPropertyChanged("range", this.range);
-      this.onPropertyChanged("position", this.worldMatrix.getTranslation(__privateGet$c(this, _actualPosition$1)));
+      this.onPropertyChanged("position", this.actualPosition);
       if (this.shadow && resetShadow) {
         this.shadow.reset();
-        this.shadow.updateViewMatrices(__privateGet$c(this, _actualPosition$1));
       }
     }
     /**
@@ -12430,22 +12454,27 @@ struct PointShadowVSOutput {
      * @param value - The new {@link PointLight} range.
      */
     set range(value) {
-      __privateSet$c(this, _range$1, value);
+      __privateSet$c(this, _range$1, Math.max(0, value));
       this.onPropertyChanged("range", this.range);
+      if (this.shadow) {
+        this.shadow.camera.far = this.range !== 0 ? this.range : 150;
+      }
     }
     /**
      * Set the {@link PointLight} position based on the {@link worldMatrix} translation and update the {@link PointShadow} view matrices.
      */
     setPosition() {
-      this.onPropertyChanged("position", this.worldMatrix.getTranslation(__privateGet$c(this, _actualPosition$1)));
-      this.shadow?.updateViewMatrices(__privateGet$c(this, _actualPosition$1));
+      this.onPropertyChanged("position", this.actualPosition);
     }
-    // explicitly disable scale and transform origin transformations
+    // explicitly disable scale, transform origin and rotation transformations
     /** @ignore */
     applyScale() {
     }
     /** @ignore */
     applyTransformOrigin() {
+    }
+    /** @ignore */
+    applyRotation() {
     }
     /**
      * If the {@link modelMatrix | model matrix} has been updated, set the new position from the {@link worldMatrix} translation.
@@ -12473,14 +12502,19 @@ struct PointShadowVSOutput {
     }
   }
   _range$1 = new WeakMap();
-  _actualPosition$1 = new WeakMap();
 
   const getDefaultSpotShadowDepthVs = (lightIndex = 0, { bindings = [], geometry }) => (
     /* wgsl */
     `
+struct SpotShadowVSOutput {
+  @builtin(position) position: vec4f,
+  @location(0) worldPosition: vec3f,
+}
+
 @vertex fn main(
   attributes: Attributes,
 ) -> @builtin(position) vec4f {  
+  var spotShadowVSOutput: SpotShadowVSOutput;
   let spotShadow: SpotShadowsElement = spotShadows.spotShadowsElements[${lightIndex}];
   
   ${declareAttributesVars$1({ geometry })}
@@ -12534,7 +12568,7 @@ struct PointShadowVSOutput {
       this.focus = 1;
       this.camera = new Camera({
         near: 0.1,
-        far: this.light.range !== 0 ? this.light.range : 500,
+        far: this.light.range !== 0 ? this.light.range : 150,
         fov: 180 / Math.PI * 2 * this.light.angle * this.focus,
         width: this.options.depthTextureSize.x,
         height: this.options.depthTextureSize.y,
@@ -12566,18 +12600,6 @@ struct PointShadowVSOutput {
      */
     setCameraFov() {
       this.camera.fov = 180 / Math.PI * 2 * this.light.angle * this.focus;
-    }
-    /**
-     * Update the {@link camera} target based on the {@link light} position.
-     * @param position - {@link Vec3} to use as position for the {@link camera} look at calculations, based on the {@link light} position.
-     */
-    updateLookAt(position = new Vec3()) {
-      if (position.x === 0 && position.z === 0) {
-        this.camera.up.set(0, 0, 1);
-      } else {
-        this.camera.up.set(0, 1, 0);
-      }
-      this.camera.lookAt(this.light.target, position);
     }
     /**
      * Reset the {@link depthTexture} when the {@link depthTextureSize} changes and update camera ratio.
@@ -12627,7 +12649,7 @@ struct PointShadowVSOutput {
   var __privateGet$b = (obj, member, getter) => (__accessCheck$d(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
   var __privateAdd$d = (obj, member, value) => member.has(obj) ? __typeError$d("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   var __privateSet$b = (obj, member, value, setter) => (__accessCheck$d(obj, member, "write to private field"), member.set(obj, value), value);
-  var _actualPosition, _direction, _angle, _penumbra, _range;
+  var _direction, _angle, _penumbra, _range;
   class SpotLight extends Light {
     constructor(renderer, {
       label = "SpotLight",
@@ -12642,8 +12664,6 @@ struct PointShadowVSOutput {
     } = {}) {
       const type = "spotLights";
       super(renderer, { label, color, intensity, type });
-      /** @ignore */
-      __privateAdd$d(this, _actualPosition);
       /**
        * The {@link Vec3 | direction} of the {@link SpotLight} is the {@link target} minus the actual {@link position}.
        * @private
@@ -12655,11 +12675,22 @@ struct PointShadowVSOutput {
       __privateAdd$d(this, _penumbra);
       /** @ignore */
       __privateAdd$d(this, _range);
+      this.options = {
+        ...this.options,
+        position,
+        range,
+        angle,
+        penumbra,
+        target,
+        shadow
+      };
       __privateSet$b(this, _direction, new Vec3());
-      __privateSet$b(this, _actualPosition, new Vec3());
-      this.target = target;
-      this.target.onChange(() => this.setPositionDirection());
       this.position.copy(position);
+      this.target = new Vec3();
+      this.target.onChange(() => {
+        this.lookAt(this.target);
+      });
+      this.target.copy(target);
       this.angle = angle;
       this.penumbra = penumbra;
       this.range = range;
@@ -12672,6 +12703,7 @@ struct PointShadowVSOutput {
       if (shadow) {
         this.shadow.cast(shadow);
       }
+      this.shouldUpdateModelMatrix();
     }
     /**
      * Set or reset this {@link SpotLight} {@link CameraRenderer}.
@@ -12692,7 +12724,7 @@ struct PointShadowVSOutput {
       this.onPropertyChanged("range", this.range);
       this.onPropertyChanged("coneCos", Math.cos(this.angle));
       this.onPropertyChanged("penumbraCos", Math.cos(this.angle * (1 - this.penumbra)));
-      this.onPropertyChanged("position", this.worldMatrix.getTranslation(__privateGet$b(this, _actualPosition)));
+      this.onPropertyChanged("position", this.actualPosition);
       this.onPropertyChanged("direction", __privateGet$b(this, _direction));
       if (this.shadow && resetShadow) {
         this.shadow.reset();
@@ -12702,10 +12734,9 @@ struct PointShadowVSOutput {
      * Set the {@link SpotLight} position and direction based on the {@link target} and the {@link worldMatrix} translation and update the {@link SpotShadow} view matrix.
      */
     setPositionDirection() {
-      this.onPropertyChanged("position", this.worldMatrix.getTranslation(__privateGet$b(this, _actualPosition)));
-      __privateGet$b(this, _direction).copy(this.target).sub(__privateGet$b(this, _actualPosition)).normalize();
+      this.onPropertyChanged("position", this.actualPosition);
+      __privateGet$b(this, _direction).copy(this.target).sub(this.actualPosition).normalize();
       this.onPropertyChanged("direction", __privateGet$b(this, _direction));
-      this.shadow?.updateLookAt(__privateGet$b(this, _actualPosition));
     }
     /**
      * Get this {@link SpotLight} angle.
@@ -12751,10 +12782,10 @@ struct PointShadowVSOutput {
      * @param value - The new {@link SpotLight} range.
      */
     set range(value) {
-      __privateSet$b(this, _range, value);
+      __privateSet$b(this, _range, Math.max(0, value));
       this.onPropertyChanged("range", this.range);
       if (this.shadow) {
-        this.shadow.camera.far = this.range !== 0 ? this.range : 500;
+        this.shadow.camera.far = this.range !== 0 ? this.range : 150;
       }
     }
     // explicitly disable scale and transform origin transformations
@@ -12763,6 +12794,20 @@ struct PointShadowVSOutput {
     }
     /** @ignore */
     applyTransformOrigin() {
+    }
+    /**
+     * Rotate this {@link SpotLight} so it looks at the {@link Vec3 | target}.
+     * @param target - {@link Vec3} to look at. Default to `new Vec3()`.
+     */
+    lookAt(target = new Vec3()) {
+      this.updateModelMatrix();
+      this.updateWorldMatrix(true, false);
+      if (this.actualPosition.x === 0 && this.actualPosition.y !== 0 && this.actualPosition.z === 0) {
+        this.up.set(0, 0, 1);
+      } else {
+        this.up.set(0, 1, 0);
+      }
+      this.applyLookAt(this.actualPosition, target);
     }
     /**
      * If the {@link modelMatrix | model matrix} has been updated, set the new direction from the {@link worldMatrix} translation.
@@ -12789,7 +12834,6 @@ struct PointShadowVSOutput {
       this.shadow.destroy();
     }
   }
-  _actualPosition = new WeakMap();
   _direction = new WeakMap();
   _angle = new WeakMap();
   _penumbra = new WeakMap();
@@ -13836,6 +13880,11 @@ ${this.shaders.compute.head}`;
      * Before actually rendering the scene, update matrix stack and frustum culling checks. Batching these calls greatly improve performance. Called by the {@link renderer} before rendering.
      */
     onBeforeRender() {
+      if ("lights" in this.renderer) {
+        this.renderer.lights.forEach((light) => {
+          light.onBeforeRenderScene();
+        });
+      }
       this.renderer.meshes.forEach((mesh) => {
         mesh.onBeforeRenderScene();
       });
@@ -20203,9 +20252,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
      */
     useCamera(camera) {
       this.camera = camera;
-      this.camera.position.onChange(() => {
-        this.camera.lookAt(this.target);
-      });
+      this.camera.lookAt(this.target);
       __privateGet$4(this, _offset).copy(this.camera.position).sub(this.target);
       __privateGet$4(this, _spherical).radius = __privateGet$4(this, _offset).length();
       __privateGet$4(this, _spherical).theta = Math.atan2(__privateGet$4(this, _offset).x, __privateGet$4(this, _offset).z);
@@ -20470,6 +20517,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
     __privateGet$4(this, _offset).y = __privateGet$4(this, _spherical).radius * Math.cos(__privateGet$4(this, _spherical).phi);
     __privateGet$4(this, _offset).z = sinPhiRadius * Math.cos(__privateGet$4(this, _spherical).theta);
     this.camera.position.copy(this.target).add(__privateGet$4(this, _offset));
+    this.camera.lookAt(this.target);
   };
   /**
    * Update the {@link camera} position based on input coordinates so it rotates around the {@link target}.
@@ -23804,8 +23852,8 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
             const parentNode = this.scenesManager.nodes.get(parentNodeIndex);
             const parentInverseWorldMatrix = new Mat4();
             const _updateWorldMatrix = parentNode.updateWorldMatrix.bind(parentNode);
-            parentNode.updateWorldMatrix = () => {
-              _updateWorldMatrix();
+            parentNode.updateWorldMatrix = (updateParents, updateChildren) => {
+              _updateWorldMatrix(updateParents, updateChildren);
               parentInverseWorldMatrix.copy(parentNode.worldMatrix).invert();
             };
             if (this.scenesManager.animations.length) {

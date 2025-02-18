@@ -21,6 +21,7 @@ window.addEventListener('load', async () => {
     SpotLight,
     EnvironmentMap,
     Vec3,
+    Vec2,
     LitMesh,
     PlaneGeometry,
     Object3D,
@@ -98,7 +99,7 @@ window.addEventListener('load', async () => {
       label: 'Red directional light',
       color: new Vec3(1, 0, 0),
       position: new Vec3(10),
-      intensity: 0.25,
+      intensity: 0.5,
       shadow: {
         intensity: 1,
       },
@@ -129,18 +130,31 @@ window.addEventListener('load', async () => {
     })
   )
 
-  spotLights.push(
-    new SpotLight(leftRenderer, {
-      label: 'White spot light',
-      color: new Vec3(1),
-      position: new Vec3(-3, 6, 3),
-      target: new Vec3(0, 2, 0),
-      intensity: 20,
-      shadow: {
-        intensity: 1,
-      },
-    })
-  )
+  const spotLight = new SpotLight(leftRenderer, {
+    label: 'White spot light',
+    color: new Vec3(1),
+    position: new Vec3(-4, 5, 0),
+    target: new Vec3(0, 2, 0),
+    intensity: 40,
+    range: 30,
+    penumbra: 0,
+    shadow: {
+      intensity: 1,
+      depthTextureSize: new Vec2(2048),
+      pcfSamples: 3,
+    },
+  })
+
+  spotLight.userData.time = 0
+
+  spotLight.onBeforeRender(() => {
+    //spotLight.position.x = -4 + Math.cos(time) * 0.5
+    spotLight.target.x = (Math.cos(spotLight.userData.time) * 0.5 - 0.5) * 4
+    spotLight.shadow.nomalBias = (Math.cos(spotLight.userData.time) * 0.5 + 0.5) * 0.001
+    spotLight.userData.time += 0.02
+  })
+
+  spotLights.push(spotLight)
 
   console.log(spotLights[0])
 
@@ -309,8 +323,8 @@ window.addEventListener('load', async () => {
   })
 
   mesh.onBeforeRender(() => {
-    mesh.rotation.x += 0.01
-    mesh.rotation.y += 0.02
+    // mesh.rotation.x += 0.01
+    // mesh.rotation.y += 0.02
   })
 
   mesh.position.y = 2
@@ -345,8 +359,8 @@ window.addEventListener('load', async () => {
     label: 'Floor',
     geometry: planeGeometry,
     receiveShadows: true,
-    frustumCulling: false, // always draw
-    cullMode: 'none',
+    //frustumCulling: false, // always draw
+    //cullMode: 'none',
     material: {
       shading: 'Lambert',
       color: new Vec3(0.7),

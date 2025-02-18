@@ -1472,8 +1472,8 @@ export class GLTFScenesManager {
 
           const _updateWorldMatrix = parentNode.updateWorldMatrix.bind(parentNode)
 
-          parentNode.updateWorldMatrix = () => {
-            _updateWorldMatrix()
+          parentNode.updateWorldMatrix = (updateParents, updateChildren) => {
+            _updateWorldMatrix(updateParents, updateChildren)
 
             parentInverseWorldMatrix.copy(parentNode.worldMatrix).invert()
           }

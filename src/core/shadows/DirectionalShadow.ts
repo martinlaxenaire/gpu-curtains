@@ -211,18 +211,21 @@ export class DirectionalShadow extends Shadow {
 
   /**
    * Update the {@link DirectionalShadow#camera.viewMatrix | camera view matrix} and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
-   * @param position - {@link Vec3} to use as position for the {@link DirectionalShadow#camera.viewMatrix | camera view matrix}, based on the {@link light} position.
-   * @param target - {@link Vec3} to use as target for the {@link DirectionalShadow#camera.viewMatrix | camera view matrix}, based on the {@link light} target.
    */
-  updateViewMatrix(position = new Vec3(), target = new Vec3()) {
-    // avoid direction and up being parallel
-    if (position.x === 0 && position.z === 0) {
+  updateViewMatrix() {
+    if (this.light.actualPosition.x === 0 && this.light.actualPosition.y !== 0 && this.light.actualPosition.z === 0) {
       this.camera.up.set(0, 0, 1)
+    } else if (
+      this.light.actualPosition.x === 0 &&
+      this.light.actualPosition.y === 0 &&
+      this.light.actualPosition.z !== 0
+    ) {
+      this.camera.up.set(1, 0, 0)
     } else {
       this.camera.up.set(0, 1, 0)
     }
 
-    this.camera.viewMatrix.makeView(position, target, this.camera.up)
+    this.camera.viewMatrix.makeView(this.light.actualPosition, this.light.target, this.camera.up)
     this.onPropertyChanged('viewMatrix', this.camera.viewMatrix)
   }
 

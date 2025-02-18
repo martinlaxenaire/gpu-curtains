@@ -23,11 +23,57 @@ export interface SpotLightBaseParams extends LightBaseParams {
   shadow?: ShadowBaseParams // TODO
 }
 
+/**
+ * Create a spot light, that is emitted from a single point in one direction, along a cone that increases in size the further from the light it gets.
+ *
+ * This light can cast {@link SpotShadow}.
+ *
+ * @example
+ * ```javascript
+ * // assuming 'renderer' is a valid Camera renderer
+ *
+ * // this spot light will not cast any shadows
+ * const spotLight = new SpotLight(renderer, {
+ *   color: new Vec3(1),
+ *   intensity: 1,
+ *   position: new Vec3(5, 2, 3),
+ *   penumbra: 0.5,
+ * })
+ *
+ * // this spot light will cast shadows
+ * const spotLightWithShadows = new SpotLight(renderer, {
+ *   color: new Vec3(1),
+ *   intensity: 1,
+ *   position: new Vec3(-10, 10, -5),
+ *   target: new Vec3(0, 0.5, 0),
+ *   shadow: {
+ *     intensity: 1,
+ *   },
+ * })
+ *
+ * // this spot light will ALSO cast shadows!
+ * const anotherSpotLightWithShadows = new SpotLight(renderer, {
+ *   color: new Vec3(1),
+ *   intensity: 2,
+ *   position: new Vec3(12, 0.5, 5),
+ *   target: new Vec3(3),
+ *   shadow: {}, // that's enough to start casting shadows
+ * })
+ *
+ * // this spot light will cast shadows as well...
+ * const lastSpotLightWithShadows = new SpotLight(renderer, {
+ *   color: new Vec3(1),
+ *   intensity: 1,
+ *   position: new Vec3(10),
+ * })
+ *
+ * // ... because we're telling it here to start casting shadows
+ * lastSpotLightWithShadows.shadow.cast()
+ * ```
+ */
 export class SpotLight extends Light {
   /** The {@link SpotLight} {@link Vec3 | target}. */
   target: Vec3
-  /** @ignore */
-  #actualPosition: Vec3
   /**
    * The {@link Vec3 | direction} of the {@link SpotLight} is the {@link target} minus the actual {@link position}.
    * @private
@@ -63,11 +109,25 @@ export class SpotLight extends Light {
     const type = 'spotLights'
     super(renderer, { label, color, intensity, type })
 
+    this.options = {
+      ...this.options,
+      position,
+      range,
+      angle,
+      penumbra,
+      target,
+      shadow,
+    }
+
     this.#direction = new Vec3()
-    this.#actualPosition = new Vec3()
-    this.target = target
-    this.target.onChange(() => this.setPositionDirection())
+
     this.position.copy(position)
+
+    this.target = new Vec3()
+    this.target.onChange(() => {
+      this.lookAt(this.target)
+    })
+    this.target.copy(target)
 
     this.angle = angle
     this.penumbra = penumbra
@@ -83,6 +143,8 @@ export class SpotLight extends Light {
     if (shadow) {
       this.shadow.cast(shadow)
     }
+
+    this.shouldUpdateModelMatrix()
   }
 
   /**
@@ -107,7 +169,7 @@ export class SpotLight extends Light {
     this.onPropertyChanged('range', this.range)
     this.onPropertyChanged('coneCos', Math.cos(this.angle))
     this.onPropertyChanged('penumbraCos', Math.cos(this.angle * (1 - this.penumbra)))
-    this.onPropertyChanged('position', this.worldMatrix.getTranslation(this.#actualPosition))
+    this.onPropertyChanged('position', this.actualPosition)
     this.onPropertyChanged('direction', this.#direction)
 
     if (this.shadow && resetShadow) {
@@ -119,11 +181,10 @@ export class SpotLight extends Light {
    * Set the {@link SpotLight} position and direction based on the {@link target} and the {@link worldMatrix} translation and update the {@link SpotShadow} view matrix.
    */
   setPositionDirection() {
-    this.onPropertyChanged('position', this.worldMatrix.getTranslation(this.#actualPosition))
-    this.#direction.copy(this.target).sub(this.#actualPosition).normalize()
-    this.onPropertyChanged('direction', this.#direction)
+    this.onPropertyChanged('position', this.actualPosition)
 
-    this.shadow?.updateLookAt(this.#actualPosition)
+    this.#direction.copy(this.target).sub(this.actualPosition).normalize()
+    this.onPropertyChanged('direction', this.#direction)
   }
 
   /**
@@ -176,11 +237,11 @@ export class SpotLight extends Light {
    * @param value - The new {@link SpotLight} range.
    */
   set range(value: number) {
-    this.#range = value
+    this.#range = Math.max(0, value)
     this.onPropertyChanged('range', this.range)
 
     if (this.shadow) {
-      this.shadow.camera.far = this.range !== 0 ? this.range : 500
+      this.shadow.camera.far = this.range !== 0 ? this.range : 150
     }
   }
 
@@ -191,6 +252,24 @@ export class SpotLight extends Light {
 
   /** @ignore */
   applyTransformOrigin() {}
+
+  /**
+   * Rotate this {@link SpotLight} so it looks at the {@link Vec3 | target}.
+   * @param target - {@link Vec3} to look at. Default to `new Vec3()`.
+   */
+  lookAt(target: Vec3 = new Vec3()) {
+    this.updateModelMatrix()
+    this.updateWorldMatrix(true, false)
+
+    if (this.actualPosition.x === 0 && this.actualPosition.y !== 0 && this.actualPosition.z === 0) {
+      this.up.set(0, 0, 1)
+    } else {
+      this.up.set(0, 1, 0)
+    }
+
+    // since we know it's a light, inverse position and target
+    this.applyLookAt(this.actualPosition, target)
+  }
 
   /**
    * If the {@link modelMatrix | model matrix} has been updated, set the new direction from the {@link worldMatrix} translation.

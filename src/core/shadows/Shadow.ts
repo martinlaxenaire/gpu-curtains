@@ -697,7 +697,7 @@ export class Shadow {
       // we just want to write to the depth texture
       targets: [],
       outputTarget: this.depthPassTarget,
-      //autoRender: false,
+      frustumCulling: false, // draw shadow even if original mesh is hidden
       autoRender: this.#autoRender,
     })
 

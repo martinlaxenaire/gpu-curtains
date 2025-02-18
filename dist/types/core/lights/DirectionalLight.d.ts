@@ -36,7 +36,7 @@ export interface DirectionalLightBaseParams extends LightBaseParams {
  *   intensity: 1,
  *   position: new Vec3(-10, 10, -5),
  *   shadow: {
- *     intensity: 1
+ *     intensity: 1,
  *   },
  * })
  *

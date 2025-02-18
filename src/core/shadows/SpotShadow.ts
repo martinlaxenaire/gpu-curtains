@@ -7,9 +7,8 @@ import { Camera } from '../camera/Camera'
 import { SpotLight } from '../lights/SpotLight'
 import { VertexShaderInputBaseParams } from '../shaders/full/vertex/get-vertex-shader-code'
 import { ShaderOptions } from '../../types/Materials'
-import { getDefaultSpotShadowDepthVs } from '../shaders/full/vertex/get-default-spot-shadow-depth-vertex-shader-code'
-import { Vec3 } from '../../math/Vec3'
 import { Texture } from '../textures/Texture'
+import { getDefaultSpotShadowDepthVs } from '../shaders/full/vertex/get-default-spot-shadow-depth-vertex-shader-code'
 
 /**
  * Base parameters used to create a {@link SpotShadow}.
@@ -32,6 +31,9 @@ export const spotShadowStruct: Record<string, Input> = {
   },
 }
 
+/**
+ * Create a shadow map from a {@link SpotLight} by rendering to a depth texture using a {@link Camera}.
+ */
 export class SpotShadow extends Shadow {
   /** {@link SpotLight} associated with this {@link SpotShadow}. */
   light: SpotLight
@@ -71,7 +73,7 @@ export class SpotShadow extends Shadow {
 
     this.camera = new Camera({
       near: 0.1,
-      far: this.light.range !== 0 ? this.light.range : 500,
+      far: this.light.range !== 0 ? this.light.range : 150,
       fov: (180 / Math.PI) * 2 * this.light.angle * this.focus,
       width: this.options.depthTextureSize.x,
       height: this.options.depthTextureSize.y,
@@ -109,20 +111,6 @@ export class SpotShadow extends Shadow {
    */
   setCameraFov() {
     this.camera.fov = (180 / Math.PI) * 2 * this.light.angle * this.focus
-  }
-
-  /**
-   * Update the {@link camera} target based on the {@link light} position.
-   * @param position - {@link Vec3} to use as position for the {@link camera} look at calculations, based on the {@link light} position.
-   */
-  updateLookAt(position = new Vec3()) {
-    if (position.x === 0 && position.z === 0) {
-      this.camera.up.set(0, 0, 1)
-    } else {
-      this.camera.up.set(0, 1, 0)
-    }
-
-    this.camera.lookAt(this.light.target, position)
   }
 
   /**

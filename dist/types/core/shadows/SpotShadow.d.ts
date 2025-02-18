@@ -6,7 +6,6 @@ import { Camera } from '../camera/Camera';
 import { SpotLight } from '../lights/SpotLight';
 import { VertexShaderInputBaseParams } from '../shaders/full/vertex/get-vertex-shader-code';
 import { ShaderOptions } from '../../types/Materials';
-import { Vec3 } from '../../math/Vec3';
 /**
  * Base parameters used to create a {@link SpotShadow}.
  */
@@ -16,6 +15,9 @@ export interface SpotShadowParams extends ShadowBaseParams {
 }
 /** @ignore */
 export declare const spotShadowStruct: Record<string, Input>;
+/**
+ * Create a shadow map from a {@link SpotLight} by rendering to a depth texture using a {@link Camera}.
+ */
 export declare class SpotShadow extends Shadow {
     /** {@link SpotLight} associated with this {@link SpotShadow}. */
     light: SpotLight;
@@ -38,11 +40,6 @@ export declare class SpotShadow extends Shadow {
      * Set the {@link Camera#fov | camera fov} based on the {@link SpotLight#angle | SpotLight angle}.
      */
     setCameraFov(): void;
-    /**
-     * Update the {@link camera} target based on the {@link light} position.
-     * @param position - {@link Vec3} to use as position for the {@link camera} look at calculations, based on the {@link light} position.
-     */
-    updateLookAt(position?: Vec3): void;
     /**
      * Reset the {@link depthTexture} when the {@link depthTextureSize} changes and update camera ratio.
      */

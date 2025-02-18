@@ -40,6 +40,9 @@ window.addEventListener('load', async () => {
       near: 0.1,
       far: 2000,
     },
+    lights: {
+      maxSpotLights: 1,
+    },
   })
 
   const { camera } = gpuCameraRenderer

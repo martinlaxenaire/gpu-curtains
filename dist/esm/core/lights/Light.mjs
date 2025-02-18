@@ -39,6 +39,7 @@ class Light extends Object3D {
     __privateSet(this, _intensityColor, this.color.clone());
     this.color.onChange(() => this.onPropertyChanged("color", this.actualColor));
     this.intensity = intensity;
+    this.userData = {};
   }
   /**
    * Set or reset this light {@link CameraRenderer}.
@@ -128,6 +129,23 @@ class Light extends Object3D {
     if (this.rendererBinding) {
       this.rendererBinding = this.renderer.bindings[lightsType];
     }
+  }
+  /**
+   * Called by the {@link core/scenes/Scene.Scene | Scene} before updating the matrix stack.
+   */
+  onBeforeRenderScene() {
+    this._onBeforeRenderCallback && this._onBeforeRenderCallback();
+  }
+  /**
+   * Callback to execute before updating the {@link core/scenes/Scene.Scene | Scene} matrix stack. This means it is called early and allows to update transformations values before actually setting the {@link Light} matrices. The callback won't be called if the {@link renderer} is not ready.
+   * @param callback - callback to run just before updating the {@link core/scenes/Scene.Scene | Scene} matrix stack.
+   * @returns - our {@link Light}
+   */
+  onBeforeRender(callback) {
+    if (callback) {
+      this._onBeforeRenderCallback = callback;
+    }
+    return this;
   }
   /**
    * Remove this {@link Light} from the {@link renderer} and destroy it.

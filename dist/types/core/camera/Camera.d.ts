@@ -53,8 +53,6 @@ export declare class Camera extends Object3D {
     uuid: string;
     /** {@link CameraObject3DMatrices | Matrices object} of the {@link Camera} */
     matrices: CameraObject3DMatrices;
-    /** {@link Vec3 | Up vector} used for {@link lookAt} calculations. */
-    up: Vec3;
     /** The {@link Camera} frustum width and height */
     size: RectSize;
     /** Callback to execute when one of the camera {@link matrices} changed */
@@ -98,13 +96,13 @@ export declare class Camera extends Object3D {
      */
     shouldUpdateProjectionMatrices(): void;
     /**
-     * Update our model matrix and tell our view matrix to update as well
+     * Update our model matrix and tell our view matrix to update as well.
      */
     updateModelMatrix(): void;
     /**
-     * Update our world matrix and tell our view matrix to update as well
+     * Update our view matrix whenever we need to update the world matrix.
      */
-    updateWorldMatrix(): void;
+    shouldUpdateWorldMatrix(): void;
     /**
      * Callback to run when the camera {@link modelMatrix | model matrix} has been updated
      */
@@ -173,13 +171,12 @@ export declare class Camera extends Object3D {
      */
     setVisibleSize(): void;
     /**
-     * Rotate this {@link Camera} so it looks at the {@link Vec3 | target}
-     * @param target - {@link Vec3 | target} to look at
-     * @param position - {@link Vec3 | postion} from which to look at
+     * Rotate this {@link Camera} so it looks at the {@link Vec3 | target}.
+     * @param target - {@link Vec3} to look at. Default to `new Vec3()`.
      */
-    lookAt(target?: Vec3, position?: Vec3): void;
+    lookAt(target?: Vec3): void;
     /**
-     * Updates the {@link Camera} {@link projectionMatrix}
+     * Updates the {@link Camera} {@link projectionMatrix}.
      */
     updateProjectionMatrix(): void;
     /**

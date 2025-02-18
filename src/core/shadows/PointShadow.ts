@@ -1,6 +1,6 @@
 import { Shadow, ShadowBaseParams, shadowStruct } from './Shadow'
 import { CameraRenderer } from '../renderers/utils'
-import { Mat4, PerspectiveProjectionParams } from '../../math/Mat4'
+import { Mat4 } from '../../math/Mat4'
 import { Vec3 } from '../../math/Vec3'
 import { Texture } from '../textures/Texture'
 import { PointLight } from '../lights/PointLight'
@@ -12,21 +12,7 @@ import { VertexShaderInputBaseParams } from '../shaders/full/vertex/get-vertex-s
 import { getDefaultPointShadowDepthVs } from '../shaders/full/vertex/get-default-point-shadow-depth-vertex-shader-code'
 import { getDefaultPointShadowDepthFs } from '../shaders/full/fragment/get-default-point-shadow-depth-fragment-code'
 import { Mesh } from '../meshes/Mesh'
-
-/** Defines the perspective shadow camera params. */
-export type PerspectiveShadowCameraParams = Omit<PerspectiveProjectionParams, 'fov' | 'aspect'>
-
-/** Defines the perspective shadow camera. */
-export interface PerspectiveShadowCamera extends PerspectiveShadowCameraParams {
-  /** @ignore */
-  _near: number
-  /** @ignore */
-  _far: number
-  /** Perspective camera projection {@link Mat4}. */
-  projectionMatrix: Mat4
-  /** Array of 6 view {@link Mat4} corresponding to each faces of a cube. */
-  viewMatrices: Mat4[]
-}
+import { Camera } from '../camera/Camera'
 
 /**
  * Base parameters used to create a {@link PointShadow}.
@@ -34,8 +20,6 @@ export interface PerspectiveShadowCamera extends PerspectiveShadowCameraParams {
 export interface PointShadowParams extends ShadowBaseParams {
   /** {@link PointLight} used to create the {@link PointShadow}. */
   light: PointLight
-  /** {@link PerspectiveShadowCameraParams | Perspective projection parameters} to use. */
-  camera?: PerspectiveShadowCameraParams
 }
 
 /** @ignore */
@@ -60,7 +44,7 @@ export const pointShadowStruct: Record<string, Input> = {
 }
 
 /**
- * Create a shadow map from a {@link PointLight} by rendering to a depth cube texture using an array of view {@link Mat4} based on the {@link PointLight} position and a {@link PerspectiveShadowCamera | perspective shadow camera} {@link Mat4}.
+ * Create a shadow map from a {@link PointLight} by rendering to a depth cube texture using an array of view {@link Mat4} based on the {@link PointLight} position and a {@link Camera#projectionMatrix | Camera projectionMatrix}.
  *
  * This type of shadow is more expensive than {@link core/shadows/DirectionalShadow.DirectionalShadow | DirectionalShadow} since its scene needs to be rendered 6 times to each face of a depth cube texture instead of once.
  */
@@ -68,21 +52,27 @@ export class PointShadow extends Shadow {
   /** {@link PointLight} associated with this {@link PointShadow}. */
   light: PointLight
 
-  /** {@link PerspectiveShadowCamera | Perspective shadow camera} to use for shadow calculations. */
-  camera: PerspectiveShadowCamera
+  /** {@link Camera} to use for shadow calculations. */
+  camera: Camera
 
   /** Options used to create this {@link PointShadow}. */
   options: PointShadowParams
 
-  /** Array of {@link Vec3} representing each cube face up directions to compute the {@link PointShadow#camera.viewMatrices | camera view matrices}. */
+  /** Array of {@link Vec3} representing each cube face up directions to compute the #viewMatrices. */
   cubeUps: Vec3[]
-  /** Array of {@link Vec3} representing each cube face directions to compute the {@link PointShadow#camera.viewMatrices | camera view matrices}. */
+  /** Array of {@link Vec3} representing each cube face directions to compute the #viewMatrices. */
   cubeDirections: Vec3[]
   /**
    * {@link Vec3} used to calculate the actual current direction based on the {@link PointLight} position.
    * @private
    */
   #tempCubeDirection: Vec3
+
+  /**
+   * Array of {@link Mat4} view matrices to use for cube map faces rendering.
+   * @private
+   */
+  #viewMatrices: Mat4[]
 
   /**
    * PointShadow constructor
@@ -100,10 +90,6 @@ export class PointShadow extends Shadow {
       depthTextureSize,
       depthTextureFormat,
       autoRender,
-      camera = {
-        near: 0.1,
-        far: 150,
-      },
     } = {} as PointShadowParams
   ) {
     super(renderer, {
@@ -116,13 +102,6 @@ export class PointShadow extends Shadow {
       depthTextureFormat,
       autoRender,
     })
-
-    this.options = {
-      ...this.options,
-      camera,
-    }
-
-    //this.setRendererBinding()
 
     this.cubeDirections = [
       new Vec3(-1, 0, 0),
@@ -144,36 +123,31 @@ export class PointShadow extends Shadow {
       new Vec3(0, -1, 0),
     ]
 
-    if (camera.far <= 0) {
-      camera.far = 150
-    }
-
-    this.camera = {
-      projectionMatrix: new Mat4(),
-      viewMatrices: [],
-      _near: camera.near,
-      _far: camera.far,
-    }
+    this.#viewMatrices = []
 
     for (let i = 0; i < 6; i++) {
-      this.camera.viewMatrices.push(new Mat4())
+      this.#viewMatrices.push(new Mat4())
     }
 
-    // camera props getters and setters
-    const _self = this
-    const cameraProps = ['near', 'far'] as Array<keyof PerspectiveShadowCameraParams>
-
-    cameraProps.forEach((prop) => {
-      Object.defineProperty(_self.camera, prop, {
-        get() {
-          return _self.camera['_' + prop]
-        },
-        set(v) {
-          _self.camera['_' + prop] = v
-          _self.updateProjectionMatrix()
-        },
-      })
+    this.camera = new Camera({
+      fov: 90,
+      near: 0.1,
+      far: this.light.range !== 0 ? this.light.range : 150,
+      width: this.depthTextureSize.x,
+      height: this.depthTextureSize.y,
+      onMatricesChanged: () => {
+        this.onProjectionMatrixChanged()
+      },
     })
+
+    // override view matrix onUpdate to compute all 6 view matrices
+    this.camera.matrices.view.onUpdate = () => {
+      this.updateViewMatrices()
+    }
+
+    // force camera position to 0
+    this.camera.position.set(0)
+    this.camera.parent = this.light
   }
 
   /**
@@ -181,26 +155,6 @@ export class PointShadow extends Shadow {
    */
   setRendererBinding() {
     this.rendererBinding = this.renderer.bindings.pointShadows
-    //console.log('SET RENDERER BINDING', this.rendererBinding, this.renderer.options.label)
-  }
-
-  /**
-   * Set the parameters and start casting shadows by setting the {@link isActive} setter to `true`.<br>
-   * Called internally by the associated {@link PointLight} if any shadow parameters are specified when creating it. Can also be called directly.
-   * @param parameters - parameters to use for this {@link PointShadow}.
-   */
-  cast(
-    { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender, camera } = {} as Omit<
-      PointShadowParams,
-      'light'
-    >
-  ) {
-    if (camera) {
-      this.camera.near = camera.near ?? 0.1
-      this.camera.far = camera.far !== undefined ? camera.far : this.light.range > 0 ? this.light.range : 150
-    }
-
-    super.cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender })
   }
 
   /**
@@ -208,7 +162,7 @@ export class PointShadow extends Shadow {
    */
   init() {
     super.init()
-    this.updateProjectionMatrix()
+    this.onProjectionMatrixChanged()
   }
 
   /**
@@ -218,41 +172,41 @@ export class PointShadow extends Shadow {
     this.setRendererBinding()
     super.reset()
 
-    // no need to update view matrices, they are handled by the parent PointLight reset call
-    this.updateProjectionMatrix()
+    this.onProjectionMatrixChanged()
+    this.onViewMatricesChanged()
   }
 
   /**
-   * Update the {@link PointShadow#camera.projectionMatrix | camera perspective projection matrix} and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
+   * Called whenever the {@link Camera#projectionMatrix | camera projectionMatrix} changed (or on reset) to update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
    */
-  updateProjectionMatrix() {
-    this.camera.projectionMatrix.identity().makePerspective({
-      near: this.camera.near,
-      far: this.camera.far,
-      fov: 90,
-      aspect: 1,
-    })
-
+  onProjectionMatrixChanged() {
     this.onPropertyChanged('projectionMatrix', this.camera.projectionMatrix)
     this.onPropertyChanged('cameraNear', this.camera.near)
     this.onPropertyChanged('cameraFar', this.camera.far)
   }
 
   /**
-   * Update the {@link PointShadow#camera.viewMatrices | camera view matrices} and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
-   * @param position - {@link Vec3} to use as position for the {@link PointShadow#camera.viewMatrices | camera view matrices}, based on the {@link light} position.
+   * Update the #viewMatrices and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
    */
-  updateViewMatrices(position = new Vec3()) {
+  updateViewMatrices() {
     for (let i = 0; i < 6; i++) {
-      this.#tempCubeDirection.copy(this.cubeDirections[i]).add(position)
-      this.camera.viewMatrices[i].makeView(position, this.#tempCubeDirection, this.cubeUps[i])
+      this.#tempCubeDirection.copy(this.cubeDirections[i]).add(this.camera.actualPosition)
+      this.camera.viewMatrix.makeView(this.camera.actualPosition, this.#tempCubeDirection, this.cubeUps[i])
+      this.#viewMatrices[i].copy(this.camera.viewMatrix)
 
       for (let j = 0; j < 16; j++) {
         this.rendererBinding.childrenBindings[this.index].inputs.viewMatrices.value[i * 16 + j] =
-          this.camera.viewMatrices[i].elements[j]
+          this.#viewMatrices[i].elements[j]
       }
     }
 
+    this.onViewMatricesChanged()
+  }
+
+  /**
+   * Called whenever the #viewMatrices changed (or on reset) to update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
+   */
+  onViewMatricesChanged() {
     this.rendererBinding.childrenBindings[this.index].inputs.viewMatrices.shouldUpdate = true
   }
 

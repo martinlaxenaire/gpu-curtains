@@ -9,7 +9,7 @@ var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot
 var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
 var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
 var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
-var _actualPosition, _direction;
+var _direction;
 class DirectionalLight extends Light {
   /**
    * DirectionalLight constructor
@@ -26,8 +26,6 @@ class DirectionalLight extends Light {
   } = {}) {
     const type = "directionalLights";
     super(renderer, { label, color, intensity, type });
-    /** @ignore */
-    __privateAdd(this, _actualPosition);
     /**
      * The {@link Vec3 | direction} of the {@link DirectionalLight} is the {@link target} minus the actual {@link position}.
      * @private
@@ -39,11 +37,13 @@ class DirectionalLight extends Light {
       target,
       shadow
     };
-    __privateSet(this, _direction, new Vec3());
-    __privateSet(this, _actualPosition, new Vec3());
-    this.target = target;
-    this.target.onChange(() => this.setDirection());
     this.position.copy(position);
+    __privateSet(this, _direction, new Vec3());
+    this.target = target;
+    this.target.onChange(() => {
+      this.updateMatrixStack();
+      this.setDirection();
+    });
     this.parent = this.renderer.scene;
     this.shadow = new DirectionalShadow(this.renderer, {
       autoRender: false,
@@ -62,7 +62,7 @@ class DirectionalLight extends Light {
     super.setRenderer(renderer);
     if (this.shadow) {
       this.shadow.setRenderer(renderer);
-      this.shadow.updateViewMatrix(__privateGet(this, _actualPosition), this.target);
+      this.shadow.updateViewMatrix();
     }
   }
   /**
@@ -74,16 +74,16 @@ class DirectionalLight extends Light {
     this.onPropertyChanged("direction", __privateGet(this, _direction));
     if (this.shadow && resetShadow) {
       this.shadow.reset();
-      this.shadow.updateViewMatrix(__privateGet(this, _actualPosition), this.target);
+      this.shadow.updateViewMatrix();
     }
   }
   /**
    * Set the {@link DirectionalLight} direction based on the {@link target} and the {@link worldMatrix} translation and update the {@link DirectionalShadow} view matrix.
    */
   setDirection() {
-    __privateGet(this, _direction).copy(this.target).sub(this.worldMatrix.getTranslation(__privateGet(this, _actualPosition))).normalize();
+    __privateGet(this, _direction).copy(this.target).sub(this.actualPosition).normalize();
     this.onPropertyChanged("direction", __privateGet(this, _direction));
-    this.shadow?.updateViewMatrix(__privateGet(this, _actualPosition), this.target);
+    this.shadow?.updateViewMatrix();
   }
   // explicitly disable scale and transform origin transformations
   /** @ignore */
@@ -117,7 +117,6 @@ class DirectionalLight extends Light {
     this.shadow.destroy();
   }
 }
-_actualPosition = new WeakMap();
 _direction = new WeakMap();
 
 export { DirectionalLight };

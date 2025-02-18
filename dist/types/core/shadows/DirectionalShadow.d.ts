@@ -79,10 +79,8 @@ export declare class DirectionalShadow extends Shadow {
     updateProjectionMatrix(): void;
     /**
      * Update the {@link DirectionalShadow#camera.viewMatrix | camera view matrix} and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
-     * @param position - {@link Vec3} to use as position for the {@link DirectionalShadow#camera.viewMatrix | camera view matrix}, based on the {@link light} position.
-     * @param target - {@link Vec3} to use as target for the {@link DirectionalShadow#camera.viewMatrix | camera view matrix}, based on the {@link light} target.
      */
-    updateViewMatrix(position?: Vec3, target?: Vec3): void;
+    updateViewMatrix(): void;
     /**
      * Create the {@link depthTexture}.
      */

@@ -39,7 +39,7 @@ export interface PointLightBaseParams extends LightBaseParams {
  *   range: 3,
  *   position: new Vec3(-10, 10, -5),
  *   shadow: {
- *     intensity: 1
+ *     intensity: 1,
  *   },
  * })
  *
@@ -66,8 +66,6 @@ export interface PointLightBaseParams extends LightBaseParams {
 export class PointLight extends Light {
   /** @ignore */
   #range: number
-  /** @ignore */
-  #actualPosition: Vec3
 
   /** Options used to create this {@link PointLight}. */
   options: PointLightBaseParams
@@ -101,7 +99,6 @@ export class PointLight extends Light {
       shadow,
     }
 
-    this.#actualPosition = new Vec3()
     this.position.copy(position)
 
     this.range = range
@@ -128,7 +125,6 @@ export class PointLight extends Light {
     if (this.shadow) {
       //this.shadow.updateIndex(this.index)
       this.shadow.setRenderer(renderer)
-      this.shadow.updateViewMatrices(this.#actualPosition)
     }
   }
 
@@ -139,11 +135,10 @@ export class PointLight extends Light {
   reset(resetShadow = true) {
     super.reset()
     this.onPropertyChanged('range', this.range)
-    this.onPropertyChanged('position', this.worldMatrix.getTranslation(this.#actualPosition))
+    this.onPropertyChanged('position', this.actualPosition)
 
     if (this.shadow && resetShadow) {
       this.shadow.reset()
-      this.shadow.updateViewMatrices(this.#actualPosition)
     }
   }
 
@@ -160,25 +155,31 @@ export class PointLight extends Light {
    * @param value - The new {@link PointLight} range.
    */
   set range(value: number) {
-    this.#range = value
+    this.#range = Math.max(0, value)
     this.onPropertyChanged('range', this.range)
+
+    if (this.shadow) {
+      this.shadow.camera.far = this.range !== 0 ? this.range : 150
+    }
   }
 
   /**
    * Set the {@link PointLight} position based on the {@link worldMatrix} translation and update the {@link PointShadow} view matrices.
    */
   setPosition() {
-    this.onPropertyChanged('position', this.worldMatrix.getTranslation(this.#actualPosition))
-    this.shadow?.updateViewMatrices(this.#actualPosition)
+    this.onPropertyChanged('position', this.actualPosition)
   }
 
-  // explicitly disable scale and transform origin transformations
+  // explicitly disable scale, transform origin and rotation transformations
 
   /** @ignore */
   applyScale() {}
 
   /** @ignore */
   applyTransformOrigin() {}
+
+  /** @ignore */
+  applyRotation() {}
 
   /**
    * If the {@link modelMatrix | model matrix} has been updated, set the new position from the {@link worldMatrix} translation.

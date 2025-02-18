@@ -526,6 +526,11 @@ class Scene extends Object3D {
    * Before actually rendering the scene, update matrix stack and frustum culling checks. Batching these calls greatly improve performance. Called by the {@link renderer} before rendering.
    */
   onBeforeRender() {
+    if ("lights" in this.renderer) {
+      this.renderer.lights.forEach((light) => {
+        light.onBeforeRenderScene();
+      });
+    }
     this.renderer.meshes.forEach((mesh) => {
       mesh.onBeforeRenderScene();
     });

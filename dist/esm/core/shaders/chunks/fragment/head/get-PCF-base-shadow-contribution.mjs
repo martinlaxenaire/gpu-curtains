@@ -40,7 +40,7 @@ fn getPCFBaseShadowContribution(
     }
     visibility /= f32(sampleCount * sampleCount);
     
-    visibility = clamp(visibility, 1.0 - saturate(intensity), 1.0);
+    visibility = mix(1.0, visibility, saturate(intensity));
   }
   else {
     visibility = 1.0;

@@ -28,7 +28,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
       ${
         light.shadow.isActive
           ? `
-      if(pointShadows.pointShadowsElements[${index}].isActive > 0 && length(lightColor) > 0.0001) {
+      if(pointShadows.pointShadowsElements[${index}].isActive > 0 && length(lightColor) > EPSILON) {
         pointShadowContribution[${index}] = getPCFPointShadowContribution(
           ${index},
           vec4(lightDirection, length(lightDirection)),
