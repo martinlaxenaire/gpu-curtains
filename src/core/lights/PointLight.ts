@@ -39,7 +39,7 @@ export interface PointLightBaseParams extends LightBaseParams {
  *   range: 3,
  *   position: new Vec3(-10, 10, -5),
  *   shadow: {
- *     intensity: 1
+ *     intensity: 1,
  *   },
  * })
  *
@@ -66,8 +66,6 @@ export interface PointLightBaseParams extends LightBaseParams {
 export class PointLight extends Light {
   /** @ignore */
   #range: number
-  /** @ignore */
-  #actualPosition: Vec3
 
   /** Options used to create this {@link PointLight}. */
   options: PointLightBaseParams
@@ -82,10 +80,17 @@ export class PointLight extends Light {
    */
   constructor(
     renderer: CameraRenderer | GPUCurtains,
-    { color = new Vec3(1), intensity = 1, position = new Vec3(), range = 0, shadow = null } = {} as PointLightBaseParams
+    {
+      label = 'PointLight',
+      color = new Vec3(1),
+      intensity = 1,
+      position = new Vec3(),
+      range = 0,
+      shadow = null,
+    } = {} as PointLightBaseParams
   ) {
     const type = 'pointLights'
-    super(renderer, { color, intensity, type })
+    super(renderer, { label, color, intensity, type })
 
     this.options = {
       ...this.options,
@@ -94,7 +99,6 @@ export class PointLight extends Light {
       shadow,
     }
 
-    this.#actualPosition = new Vec3()
     this.position.copy(position)
 
     this.range = range
@@ -116,21 +120,26 @@ export class PointLight extends Light {
    * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
    */
   setRenderer(renderer: CameraRenderer | GPUCurtains) {
+    super.setRenderer(renderer)
+
     if (this.shadow) {
+      //this.shadow.updateIndex(this.index)
       this.shadow.setRenderer(renderer)
     }
-
-    super.setRenderer(renderer)
   }
 
   /**
-   * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of {@link PointLight} has been overflowed.
+   * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of {@link PointLight} has been overflowed or when updating the {@link PointLight} {@link renderer}.
+   * @param resetShadow - Whether to reset the {@link PointLight} shadow if any. Set to `true` when the {@link renderer} number of {@link PointLight} has been overflown, `false` when the {@link renderer} has been changed (since the shadow will reset itself).
    */
-  reset() {
+  reset(resetShadow = true) {
     super.reset()
     this.onPropertyChanged('range', this.range)
-    this.setPosition()
-    this.shadow?.reset()
+    this.onPropertyChanged('position', this.actualPosition)
+
+    if (this.shadow && resetShadow) {
+      this.shadow.reset()
+    }
   }
 
   /**
@@ -146,25 +155,31 @@ export class PointLight extends Light {
    * @param value - The new {@link PointLight} range.
    */
   set range(value: number) {
-    this.#range = value
+    this.#range = Math.max(0, value)
     this.onPropertyChanged('range', this.range)
+
+    if (this.shadow) {
+      this.shadow.camera.far = this.range !== 0 ? this.range : 150
+    }
   }
 
   /**
    * Set the {@link PointLight} position based on the {@link worldMatrix} translation and update the {@link PointShadow} view matrices.
    */
   setPosition() {
-    this.onPropertyChanged('position', this.worldMatrix.getTranslation(this.#actualPosition))
-    this.shadow?.updateViewMatrices(this.#actualPosition)
+    this.onPropertyChanged('position', this.actualPosition)
   }
 
-  // explicitly disable scale and transform origin transformations
+  // explicitly disable scale, transform origin and rotation transformations
 
   /** @ignore */
   applyScale() {}
 
   /** @ignore */
   applyTransformOrigin() {}
+
+  /** @ignore */
+  applyRotation() {}
 
   /**
    * If the {@link modelMatrix | model matrix} has been updated, set the new position from the {@link worldMatrix} translation.

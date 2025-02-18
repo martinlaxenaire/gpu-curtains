@@ -15,6 +15,7 @@ export { PlaneGeometry } from './core/geometries/PlaneGeometry.mjs';
 export { AmbientLight } from './core/lights/AmbientLight.mjs';
 export { DirectionalLight } from './core/lights/DirectionalLight.mjs';
 export { PointLight } from './core/lights/PointLight.mjs';
+export { SpotLight } from './core/lights/SpotLight.mjs';
 export { Material } from './core/materials/Material.mjs';
 export { RenderMaterial } from './core/materials/RenderMaterial.mjs';
 export { ComputeMaterial } from './core/materials/ComputeMaterial.mjs';

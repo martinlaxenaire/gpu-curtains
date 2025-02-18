@@ -78,7 +78,7 @@ export declare class OrbitControls {
     panSpeed: number;
     /**
      * OrbitControls constructor
-  =   * @param parameters - parameters to use.
+     * @param parameters - parameters to use.
      */
     constructor({ camera, element, target, enableZoom, minZoom, maxZoom, zoomSpeed, enableRotate, minPolarAngle, maxPolarAngle, minAzimuthAngle, maxAzimuthAngle, rotateSpeed, enablePan, panSpeed, }: OrbitControlsParams);
     /**

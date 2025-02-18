@@ -338,7 +338,8 @@ window.addEventListener('load', async () => {
         0
       ).rgb;
 
-      // handmade phong
+      // cheap phong
+      // library built-in is Blinn-Phong (more expensive)
       var reflectedLight: ReflectedLight;
 
       for (var i = 0i; i < pointLights.count; i++) {
@@ -389,6 +390,7 @@ window.addEventListener('load', async () => {
       gpuCameraRenderer.bindings.ambientLights,
       gpuCameraRenderer.bindings.directionalLights,
       gpuCameraRenderer.bindings.pointLights,
+      gpuCameraRenderer.bindings.spotLights,
     ],
     uniforms: {
       camera: {

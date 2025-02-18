@@ -25,10 +25,10 @@ export class AmbientLight extends Light {
    */
   constructor(
     renderer: CameraRenderer | GPUCurtains,
-    { color = new Vec3(1), intensity = 0.1 } = {} as LightBaseParams
+    { label = 'AmbientLight', color = new Vec3(1), intensity = 0.1 } = {} as LightBaseParams
   ) {
     const type = 'ambientLights'
-    super(renderer, { color, intensity, type })
+    super(renderer, { label, color, intensity, type })
   }
 
   // explicitly disable all kinds of transformations

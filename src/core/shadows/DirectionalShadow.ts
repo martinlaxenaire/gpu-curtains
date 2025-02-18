@@ -5,6 +5,10 @@ import { Vec3 } from '../../math/Vec3'
 import { Input } from '../../types/BindGroups'
 import { DirectionalLight } from '../lights/DirectionalLight'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
+import { Texture } from '../textures/Texture'
+import { VertexShaderInputBaseParams } from '../shaders/full/vertex/get-vertex-shader-code'
+import { ShaderOptions } from '../../types/Materials'
+import { getDefaultDirectionalShadowDepthVs } from '../shaders/full/vertex/get-default-directional-shadow-depth-vertex-shader-code'
 
 /** Defines the orthographic shadow camera. */
 export interface OrthographicShadowCamera extends OrthographicProjectionParams {
@@ -178,13 +182,15 @@ export class DirectionalShadow extends Shadow {
   }
 
   /**
-   * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link DirectionalLight} has been overflowed.
+   * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link DirectionalLight} has been overflowed or when the {@link renderer} has changed.
    */
   reset() {
     this.setRendererBinding()
     super.reset()
-    this.onPropertyChanged('projectionMatrix', this.camera.projectionMatrix)
-    this.onPropertyChanged('viewMatrix', this.camera.viewMatrix)
+    if (this.isActive) {
+      this.onPropertyChanged('projectionMatrix', this.camera.projectionMatrix)
+      this.onPropertyChanged('viewMatrix', this.camera.viewMatrix)
+    }
   }
 
   /**
@@ -205,18 +211,51 @@ export class DirectionalShadow extends Shadow {
 
   /**
    * Update the {@link DirectionalShadow#camera.viewMatrix | camera view matrix} and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
-   * @param position - {@link Vec3} to use as position for the {@link DirectionalShadow#camera.viewMatrix | camera view matrix}, based on the {@link light} position.
-   * @param target - {@link Vec3} to use as target for the {@link DirectionalShadow#camera.viewMatrix | camera view matrix}, based on the {@link light} target.
    */
-  updateViewMatrix(position = new Vec3(), target = new Vec3()) {
-    // avoid direction and up being parallel
-    if (position.x === 0 && position.z === 0) {
+  updateViewMatrix() {
+    if (this.light.actualPosition.x === 0 && this.light.actualPosition.y !== 0 && this.light.actualPosition.z === 0) {
       this.camera.up.set(0, 0, 1)
+    } else if (
+      this.light.actualPosition.x === 0 &&
+      this.light.actualPosition.y === 0 &&
+      this.light.actualPosition.z !== 0
+    ) {
+      this.camera.up.set(1, 0, 0)
     } else {
       this.camera.up.set(0, 1, 0)
     }
 
-    this.camera.viewMatrix.makeView(position, target, this.camera.up)
+    this.camera.viewMatrix.makeView(this.light.actualPosition, this.light.target, this.camera.up)
     this.onPropertyChanged('viewMatrix', this.camera.viewMatrix)
+  }
+
+  /**
+   * Create the {@link depthTexture}.
+   */
+  createDepthTexture() {
+    this.depthTexture = new Texture(this.renderer, {
+      label: `${this.light.options.label} (index: ${this.index}) shadow depth texture`,
+      name: 'directionalShadowDepthTexture' + this.index,
+      type: 'depth',
+      format: this.depthTextureFormat,
+      sampleCount: this.sampleCount,
+      fixedSize: {
+        width: this.depthTextureSize.x,
+        height: this.depthTextureSize.y,
+      },
+      autoDestroy: false, // do not destroy when removing a mesh
+    })
+  }
+
+  /**
+   * Get the default depth pass vertex shader for this {@link Shadow}.
+   * parameters - {@link VertexShaderInputBaseParams} used to compute the output `worldPosition` and `normal` vectors.
+   * @returns - Depth pass vertex shader.
+   */
+  getDefaultShadowDepthVs({ bindings = [], geometry }: VertexShaderInputBaseParams): ShaderOptions {
+    return {
+      /** Returned code. */
+      code: getDefaultDirectionalShadowDepthVs(this.index, { bindings, geometry }),
+    }
   }
 }

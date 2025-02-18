@@ -1,3 +1,11 @@
+var __typeError = (msg) => {
+  throw TypeError(msg);
+};
+var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
+var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), member.get(obj));
+var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
+var __setScroll;
 class ScrollManager {
   /**
    * ScrollManager constructor
@@ -10,12 +18,15 @@ class ScrollManager {
     onScroll = (delta2 = { x: 0, y: 0 }) => {
     }
   } = {}) {
+    /** @ignore */
+    __privateAdd(this, __setScroll);
     this.scroll = scroll;
     this.delta = delta;
     this.shouldWatch = shouldWatch;
     this.onScroll = onScroll;
+    __privateSet(this, __setScroll, this.setScroll.bind(this));
     if (this.shouldWatch) {
-      window.addEventListener("scroll", this.setScroll.bind(this), { passive: true });
+      window.addEventListener("scroll", __privateGet(this, __setScroll), { passive: true });
     }
   }
   /**
@@ -46,9 +57,10 @@ class ScrollManager {
    */
   destroy() {
     if (this.shouldWatch) {
-      window.removeEventListener("scroll", this.setScroll.bind(this), { passive: true });
+      window.removeEventListener("scroll", __privateGet(this, __setScroll), { passive: true });
     }
   }
 }
+__setScroll = new WeakMap();
 
 export { ScrollManager };

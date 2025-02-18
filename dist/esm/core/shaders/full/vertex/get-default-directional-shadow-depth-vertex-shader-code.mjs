@@ -1,7 +1,7 @@
 import { declareAttributesVars } from '../../chunks/vertex/body/declare-attributes-vars.mjs';
 import { getVertexTransformedPositionNormal } from '../../chunks/vertex/body/get-vertex-transformed-position-normal.mjs';
 
-const getDefaultShadowDepthVs = (lightIndex = 0, { bindings = [], geometry }) => (
+const getDefaultDirectionalShadowDepthVs = (lightIndex = 0, { bindings = [], geometry }) => (
   /* wgsl */
   `
 @vertex fn main(
@@ -25,4 +25,4 @@ const getDefaultShadowDepthVs = (lightIndex = 0, { bindings = [], geometry }) =>
 }`
 );
 
-export { getDefaultShadowDepthVs };
+export { getDefaultDirectionalShadowDepthVs };

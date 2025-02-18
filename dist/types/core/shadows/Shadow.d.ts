@@ -5,8 +5,7 @@ import { Mat4 } from '../../math/Mat4';
 import { Texture } from '../textures/Texture';
 import { RenderTarget } from '../renderPasses/RenderTarget';
 import { Sampler } from '../samplers/Sampler';
-import { DirectionalLight } from '../lights/DirectionalLight';
-import { PointLight } from '../lights/PointLight';
+import { ShadowCastingLights } from '../lights/Light';
 import { BufferBinding } from '../bindings/BufferBinding';
 import { RenderMaterialParams, ShaderOptions } from '../../types/Materials';
 import { Input } from '../../types/BindGroups';
@@ -15,7 +14,7 @@ import { VertexShaderInputBaseParams } from '../shaders/full/vertex/get-vertex-s
 import { Mesh } from '../meshes/Mesh';
 import { Geometry } from '../geometries/Geometry';
 /** Defines all types of shadows. */
-export type ShadowsType = 'directionalShadows' | 'pointShadows';
+export type ShadowsType = 'directionalShadows' | 'pointShadows' | 'spotShadows';
 /** @ignore */
 export declare const shadowStruct: Record<string, Input>;
 /**
@@ -37,7 +36,7 @@ export interface ShadowBaseParams {
     /** Whether the shadow should be automatically rendered each frame or not. Should be set to `false` if the scene is static and be rendered manually instead. Default to `true`. */
     autoRender?: boolean;
     /** The {@link core/lights/Light.Light | light} that will be used to cast shadows. */
-    light: DirectionalLight | PointLight;
+    light: ShadowCastingLights;
 }
 /**
  * Used as a base class to create a shadow map.
@@ -53,7 +52,7 @@ export declare class Shadow {
     /** Index of this {@link Shadow} used in the corresponding {@link CameraRenderer} shadow buffer binding. */
     index: number;
     /** The {@link core/lights/Light.Light | light} that will be used to cast shadows. */
-    light: DirectionalLight | PointLight;
+    light: ShadowCastingLights;
     /** Options used to create this {@link Shadow}. */
     options: Omit<ShadowBaseParams, 'autoRender'>;
     /** Sample count of the {@link depthTexture}. Only `1` is accepted for now. */
@@ -94,9 +93,15 @@ export declare class Shadow {
      */
     cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender }?: Omit<ShadowBaseParams, "light">): void;
     /**
-     * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link core/lights/Light.Light | lights} has been overflowed.
+     * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link core/lights/Light.Light | lights} has been overflowed or when the {@link renderer} has changed.
      */
     reset(): void;
+    /**
+     * Update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} input value and tell the {@link CameraRenderer#cameraLightsBindGroup | renderer camera, lights and shadows} bind group to update.
+     * @param propertyKey - name of the property to update.
+     * @param value - new value of the property.
+     */
+    onPropertyChanged(propertyKey: string, value: Mat4 | number): void;
     /**
      * Get whether this {@link Shadow} is actually casting shadows.
      * @returns - Whether this {@link Shadow} is actually casting shadows.
@@ -173,12 +178,6 @@ export declare class Shadow {
      * Create the {@link depthPassTarget}.
      */
     createDepthPassTarget(): void;
-    /**
-     * Update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} input value and tell the {@link CameraRenderer#cameraLightsBindGroup | renderer camera, lights and shadows} bind group to update.
-     * @param propertyKey - name of the property to update.
-     * @param value - new value of the property.
-     */
-    onPropertyChanged(propertyKey: string, value: Mat4 | number): void;
     /**
      * Set our {@link depthPassTarget} corresponding {@link CameraRenderer#scene | scene} render pass entry custom render pass.
      */

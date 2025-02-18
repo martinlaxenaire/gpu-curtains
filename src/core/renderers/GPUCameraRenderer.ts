@@ -10,6 +10,7 @@ import { WGSLVariableType } from '../bindings/utils'
 import { throwWarning } from '../../utils/utils'
 import { directionalShadowStruct } from '../shadows/DirectionalShadow'
 import { pointShadowStruct } from '../shadows/PointShadow'
+import { spotShadowStruct } from '../shadows/SpotShadow'
 import { ShadowsType } from '../shadows/Shadow'
 import { Texture } from '../textures/Texture'
 import { Sampler } from '../samplers/Sampler'
@@ -49,13 +50,17 @@ export interface GPUCameraRendererLightParams {
   maxDirectionalLights?: LightsBindingParams['directionalLights']['max']
   /** Maximum number of {@link core/lights/PointLight.PointLight | PointLight} to use. Default to `5`. */
   maxPointLights?: LightsBindingParams['pointLights']['max']
+  /** Maximum number of {@link core/lights/SpotLight.SpotLight | SpotLight} to use. Default to `5`. */
+  maxSpotLights?: LightsBindingParams['spotLights']['max']
+  /** Whether to use `uniform` instead of `storage` binding type for the shadows bindings. In some case, for example when using models with skinning or morph targets, the maximum number of `storage` bindings can be reached in the vertex shader. This allows to bypass this limit by switching the shadows binding from `storage` to `uniforms`, but restrict the flexibility by removing the ability to overflow lights. Default to `false`. */
+  useUniformsForShadows?: boolean
 }
 
 /** Extra parameters used to define the {@link Camera} and various lights options. */
 export interface GPUCameraLightsRendererParams {
   /** An object defining {@link CameraBasePerspectiveOptions | camera perspective parameters} */
   camera?: CameraBasePerspectiveOptions
-  /** An object defining {@link GPUCameraRendererLightParams | the maximum number of light} to use when creating the {@link GPUCameraRenderer}. Can be set to `false` to avoid creating lights and shadows buffers, but note this is a permanent choice and cannot be changed later. */
+  /** An object defining {@link GPUCameraRendererLightParams | the maximum number of light} to use when creating the {@link GPUCameraRenderer}. Can be set to `false` to avoid creating lights and shadows buffers. */
   lights?: GPUCameraRendererLightParams | false
 }
 
@@ -150,7 +155,16 @@ export class GPUCameraRenderer extends GPURenderer {
     camera = { ...{ fov: 50, near: 0.1, far: 1000 }, ...camera }
 
     if (lights !== false) {
-      lights = { ...{ maxAmbientLights: 2, maxDirectionalLights: 5, maxPointLights: 5 }, ...lights }
+      lights = {
+        ...{
+          maxAmbientLights: 2,
+          maxDirectionalLights: 5,
+          maxPointLights: 5,
+          maxSpotLights: 5,
+          useUniformsForShadows: false,
+        },
+        ...lights,
+      }
     }
 
     this.options = {
@@ -169,8 +183,7 @@ export class GPUCameraRenderer extends GPURenderer {
     this.setCameraBinding()
 
     if (this.options.lights) {
-      this.setLightsBinding()
-      this.setShadowsBinding()
+      this.#initLights()
     }
 
     this.setCameraLightsBindGroup()
@@ -322,13 +335,31 @@ export class GPUCameraRenderer extends GPURenderer {
   /* LIGHTS */
 
   /**
+   * Initialize the lights and shadows bindings.
+   * @private
+   */
+  #initLights() {
+    if (!this.options.lights) {
+      this.options.lights = {
+        maxAmbientLights: 2,
+        maxDirectionalLights: 5,
+        maxPointLights: 5,
+        maxSpotLights: 5,
+        useUniformsForShadows: false,
+      }
+    }
+
+    this.setLightsBinding()
+    this.setShadowsBinding()
+  }
+
+  /**
    * Add a {@link Light} to the {@link lights} array.
    * @param light - {@link Light} to add.
    */
   addLight(light: Light) {
     this.lights.push(light)
-    this.bindings[light.type].inputs.count.value++
-    this.bindings[light.type].inputs.count.shouldUpdate = true
+    this.#updateLightsCount(light.type as LightsType)
   }
 
   /**
@@ -337,8 +368,24 @@ export class GPUCameraRenderer extends GPURenderer {
    */
   removeLight(light: Light) {
     this.lights = this.lights.filter((l) => l.uuid !== light.uuid)
-    this.bindings[light.type].inputs.count.value--
-    this.bindings[light.type].inputs.count.shouldUpdate = true
+    this.#updateLightsCount(light.type as LightsType)
+  }
+
+  /**
+   * Update the lights count for the given {@link LightsType} based on the max light index.
+   * @param lightsType - {@link LightsType} for which to update the light count.
+   * @private
+   */
+  #updateLightsCount(lightsType: LightsType) {
+    let maxIndex = 0
+    this.lights
+      .filter((light) => light.type === lightsType)
+      .forEach((light) => {
+        maxIndex = Math.max(maxIndex, light.index + 1)
+      })
+
+    this.bindings[lightsType].inputs.count.value = maxIndex
+    this.bindings[lightsType].inputs.count.shouldUpdate = true
   }
 
   /**
@@ -392,12 +439,43 @@ export class GPUCameraRenderer extends GPURenderer {
           },
         },
       },
+      spotLights: {
+        max: this.options.lights.maxSpotLights,
+        label: 'Spot lights',
+        params: {
+          color: {
+            type: 'array<vec3f>',
+            size: 3,
+          },
+          direction: {
+            type: 'array<vec3f>',
+            size: 3,
+          },
+          position: {
+            type: 'array<vec3f>',
+            size: 3,
+          },
+          coneCos: {
+            type: 'array<f32>',
+            size: 1,
+          },
+          penumbraCos: {
+            type: 'array<f32>',
+            size: 1,
+          },
+          range: {
+            type: 'array<f32>',
+            size: 1,
+          },
+        },
+      },
     }
 
     const lightsBindings = {
       ambientLights: null,
       directionalLights: null,
       pointLights: null,
+      spotLights: null,
     }
 
     Object.keys(lightsBindings).forEach((lightsType) => {
@@ -445,73 +523,90 @@ export class GPUCameraRenderer extends GPURenderer {
   /**
    * Called when a {@link LightsType | type of light} has overflown its maximum capacity. Destroys the associated {@link BufferBinding} (and eventually the associated shadow {@link BufferBinding}), recreates the {@link cameraLightsBindGroup | camera, lights and shadows bind group} and reset all lights for this {@link LightsType | type of light}.
    * @param lightsType - {@link LightsType | Type of light} that has overflown its maximum capacity.
+   * @param lightIndex - The {@link Light#index | light index} that caused overflow. Will be used to reset the new max light count.
    */
-  onMaxLightOverflow(lightsType: LightsType) {
-    if (!this.production) {
-      throwWarning(
-        `${this.options.label} (${this.type}): You are overflowing the current max lights count of '${
-          this.lightsBindingParams[lightsType].max
-        }' for this type of lights: ${lightsType}. This should be avoided by setting a larger ${
-          'max' + lightsType.charAt(0).toUpperCase() + lightsType.slice(1)
-        } when instancing your ${this.type}.`
-      )
-    }
-
-    this.lightsBindingParams[lightsType].max++
-
-    const oldLightBinding = this.cameraLightsBindGroup.getBindingByName(lightsType)
-    if (oldLightBinding) {
-      this.cameraLightsBindGroup.destroyBufferBinding(oldLightBinding as BufferBinding)
-    }
-
-    this.setLightsTypeBinding(lightsType)
-
-    const lightBindingIndex = this.cameraLightsBindGroup.bindings.findIndex((binding) => binding.name === lightsType)
-
-    if (lightBindingIndex !== -1) {
-      this.cameraLightsBindGroup.bindings[lightBindingIndex] = this.bindings[lightsType]
-    } else {
-      // not used yet but could be useful
-      // if we'd decide not to create a binding if max === 0
-      this.bindings[lightsType].shouldResetBindGroup = true
-      this.bindings[lightsType].shouldResetBindGroupLayout = true
-      this.cameraLightsBindGroup.addBinding(this.bindings[lightsType])
-      this.shouldUpdateCameraLightsBindGroup()
-    }
-
-    // increase shadows binding size as well
-    if (lightsType === 'directionalLights' || lightsType === 'pointLights') {
-      const shadowsType = (lightsType.replace('Lights', '') + 'Shadows') as ShadowsType
-      const oldShadowsBinding = this.cameraLightsBindGroup.getBindingByName(shadowsType)
-      if (oldShadowsBinding) {
-        this.cameraLightsBindGroup.destroyBufferBinding(oldShadowsBinding as BufferBinding)
+  onMaxLightOverflow(lightsType: LightsType, lightIndex = 0) {
+    if (!this.options.lights) {
+      if (!this.production) {
+        throwWarning(
+          `${this.options.label} (${this.type}): You are adding a light (${lightsType}) to a renderer that should not initially handle lights. The renderer bind group will be re-created. This should be avoided.`
+        )
       }
 
-      this.setShadowsTypeBinding(lightsType)
+      this.#initLights()
+      this.cameraLightsBindGroup.destroy()
+      this.setCameraLightsBindGroup()
+    } else {
+      if (!this.production) {
+        throwWarning(
+          `${this.options.label} (${this.type}): You are overflowing the current max lights count of '${
+            this.lightsBindingParams[lightsType].max
+          }' for this type of lights: ${lightsType}. This should be avoided by setting a larger ${
+            'max' + lightsType.charAt(0).toUpperCase() + lightsType.slice(1)
+          } when instancing your ${this.type}.`
+        )
+      }
 
-      const shadowsBindingIndex = this.cameraLightsBindGroup.bindings.findIndex(
-        (binding) => binding.name === shadowsType
-      )
+      //this.lightsBindingParams[lightsType].max++
+      this.lightsBindingParams[lightsType].max = Math.max(this.lightsBindingParams[lightsType].max, lightIndex + 1)
 
-      if (shadowsBindingIndex !== -1) {
-        this.cameraLightsBindGroup.bindings[shadowsBindingIndex] = this.bindings[shadowsType]
+      const oldLightBinding = this.cameraLightsBindGroup.getBindingByName(lightsType)
+      if (oldLightBinding) {
+        this.cameraLightsBindGroup.destroyBufferBinding(oldLightBinding as BufferBinding)
+      }
+
+      this.setLightsTypeBinding(lightsType)
+
+      // reset count to new max
+      //this.bindings[lightsType].inputs.count.value = this.lightsBindingParams[lightsType].max
+
+      const lightBindingIndex = this.cameraLightsBindGroup.bindings.findIndex((binding) => binding.name === lightsType)
+
+      if (lightBindingIndex !== -1) {
+        this.cameraLightsBindGroup.bindings[lightBindingIndex] = this.bindings[lightsType]
       } else {
-        // not used yet, same as above
-        this.bindings[shadowsType].shouldResetBindGroup = true
-        this.bindings[shadowsType].shouldResetBindGroupLayout = true
-        this.cameraLightsBindGroup.addBinding(this.bindings[shadowsType])
+        // not used yet but could be useful
+        // if we'd decide not to create a binding if max === 0
+        this.bindings[lightsType].shouldResetBindGroup = true
+        this.bindings[lightsType].shouldResetBindGroupLayout = true
+        this.cameraLightsBindGroup.addBinding(this.bindings[lightsType])
         this.shouldUpdateCameraLightsBindGroup()
       }
-    }
 
-    this.cameraLightsBindGroup.resetEntries()
-    this.cameraLightsBindGroup.createBindGroup()
+      // increase shadows binding size as well
+      if (lightsType === 'directionalLights' || lightsType === 'pointLights' || lightsType === 'spotLights') {
+        const shadowsType = (lightsType.replace('Lights', '') + 'Shadows') as ShadowsType
+        const oldShadowsBinding = this.cameraLightsBindGroup.getBindingByName(shadowsType)
+        if (oldShadowsBinding) {
+          this.cameraLightsBindGroup.destroyBufferBinding(oldShadowsBinding as BufferBinding)
+        }
 
-    this.lights.forEach((light) => {
-      if (light.type === lightsType) {
-        light.reset()
+        this.setShadowsTypeBinding(lightsType)
+
+        const shadowsBindingIndex = this.cameraLightsBindGroup.bindings.findIndex(
+          (binding) => binding.name === shadowsType
+        )
+
+        if (shadowsBindingIndex !== -1) {
+          this.cameraLightsBindGroup.bindings[shadowsBindingIndex] = this.bindings[shadowsType]
+        } else {
+          // not used yet, same as above
+          this.bindings[shadowsType].shouldResetBindGroup = true
+          this.bindings[shadowsType].shouldResetBindGroupLayout = true
+          this.cameraLightsBindGroup.addBinding(this.bindings[shadowsType])
+          this.shouldUpdateCameraLightsBindGroup()
+        }
       }
-    })
+
+      this.cameraLightsBindGroup.resetEntries()
+      this.cameraLightsBindGroup.createBindGroup()
+
+      this.lights.forEach((light) => {
+        if (light.type === lightsType) {
+          light.reset()
+        }
+      })
+    }
   }
 
   /* SHADOW MAPS */
@@ -522,7 +617,7 @@ export class GPUCameraRenderer extends GPURenderer {
    */
   get shadowCastingLights(): ShadowCastingLights[] {
     return this.lights.filter(
-      (light) => light.type === 'directionalLights' || light.type === 'pointLights'
+      (light) => light.type === 'directionalLights' || light.type === 'pointLights' || light.type === 'spotLights'
     ) as ShadowCastingLights[]
   }
 
@@ -533,10 +628,12 @@ export class GPUCameraRenderer extends GPURenderer {
     this.shadowsBindingsStruct = {
       directional: directionalShadowStruct,
       point: pointShadowStruct,
+      spot: spotShadowStruct,
     }
 
     this.setShadowsTypeBinding('directionalLights')
     this.setShadowsTypeBinding('pointLights')
+    this.setShadowsTypeBinding('spotLights')
   }
 
   /**
@@ -552,7 +649,7 @@ export class GPUCameraRenderer extends GPURenderer {
     this.bindings[shadowsType] = new BufferBinding({
       label: label,
       name: shadowsType,
-      bindingType: 'storage',
+      bindingType: this.options.lights && this.options.lights.useUniformsForShadows ? 'uniform' : 'storage',
       visibility: ['vertex', 'fragment', 'compute'], // TODO needed in compute?
       childrenBindings: [
         {

@@ -49,9 +49,13 @@ export declare class Object3D {
     transforms: Object3DTransforms;
     /** {@link Object3DMatrices | Matrices object} of the {@link Object3D} */
     matrices: Object3DMatrices;
-    /** Parent {@link Object3D} in the scene graph, used to compute the {@link worldMatrix | world matrix} */
+    /** {@link Vec3} used by the {@link lookAt} method, to determine the orientation of the result. Default to `new Vec3(0, 1, 0).` */
+    up: Vec3;
+    /** {@link Vec3} holding the actual position of this {@link Object3D} from its {@link worldMatrix}. */
+    actualPosition: Vec3;
+    /** Parent {@link Object3D} in the scene graph, used to compute the {@link worldMatrix}. */
     private _parent;
-    /** Children {@link Object3D} in the scene graph, used to compute their own {@link worldMatrix | world matrix} */
+    /** Children {@link Object3D} in the scene graph, used to compute their own {@link worldMatrix}. */
     children: Object3D[];
     /** Index (order of creation) of this {@link Object3D}. Used in the {@link parent} / {@link children} relation. */
     object3DIndex: number;
@@ -166,19 +170,26 @@ export declare class Object3D {
      */
     shouldUpdateWorldMatrix(): void;
     /**
-     * Rotate this {@link Object3D} so it looks at the {@link Vec3 | target}
-     * @param target - {@link Vec3 | target} to look at
-     * @param position - {@link Vec3 | postion} from which to look at
+     * Rotate this {@link Object3D} so it looks at the {@link Vec3 | target}.
+     * @param target - {@link Vec3} to look at. Default to `new Vec3()`.
      */
-    lookAt(target?: Vec3, position?: Vec3, up?: Vec3): void;
+    lookAt(target?: Vec3): void;
+    /**
+     * Apply a look at rotation based on a target, a position and our {link up} vectors.
+     * @param target - {@link Vec3} target to look at.
+     * @param position - {@link Vec3} position from which to look at.
+     */
+    applyLookAt(target: Vec3, position: Vec3): void;
     /**
      * Update our {@link modelMatrix | model matrix}
      */
     updateModelMatrix(): void;
     /**
-     * Update our {@link worldMatrix | model matrix}
+     * Update our {@link worldMatrix | model matrix}.
+     * @param updateParents - Whether to update the {@link parent} {@link worldMatrix} beforehand. Default to `false`.
+     * @param updateChildren - Whether to update the {@link children} {@link worldMatrix} afterward. Default to `true`.
      */
-    updateWorldMatrix(): void;
+    updateWorldMatrix(updateParents?: boolean, updateChildren?: boolean): void;
     /**
      * Check whether at least one of the matrix should be updated
      */

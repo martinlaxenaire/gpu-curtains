@@ -5,18 +5,22 @@ import { Object3D } from '../objects3D/Object3D'
 import { generateUUID } from '../../utils/utils'
 import { DirectionalLight } from './DirectionalLight'
 import { PointLight } from './PointLight'
-import { GPUCurtains } from '../../curtains/GPUCurtains'
+import { SpotLight } from './SpotLight'
+import type { GPUCurtains } from '../../curtains/GPUCurtains'
 import { sRGBToLinear } from '../../math/color-utils'
+import { ProjectedMeshBaseClass } from '../meshes/mixins/ProjectedMeshBaseMixin'
 
 /** Defines all types of lights. */
-export type LightsType = 'ambientLights' | 'directionalLights' | 'pointLights'
+export type LightsType = 'ambientLights' | 'directionalLights' | 'pointLights' | 'spotLights'
 /** Defines all types of shadow casting lights. */
-export type ShadowCastingLights = DirectionalLight | PointLight
+export type ShadowCastingLights = DirectionalLight | PointLight | SpotLight
 
 /**
  * Base parameters used to create a {@link Light}.
  */
 export interface LightBaseParams {
+  /** Optional label of the {@link Light}. */
+  label?: string
   /** The {@link Light} color. Default to `Vec3(1)`. */
   color?: Vec3
   /** The {@link Light} intensity. Default to `1`. */
@@ -60,6 +64,12 @@ export class Light extends Object3D {
   /** {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} that holds all the bindings to send to the shaders. */
   rendererBinding: BufferBinding | null
 
+  /** Empty object to store any additional data or custom properties into your {@link Light}. */
+  userData: Record<string, unknown>
+
+  /** function assigned to the {@link onBeforeRender} callback */
+  _onBeforeRenderCallback: () => void
+
   /**
    * Light constructor
    * @param renderer - {@link CameraRenderer} used to create this {@link Light}.
@@ -67,7 +77,7 @@ export class Light extends Object3D {
    */
   constructor(
     renderer: CameraRenderer | GPUCurtains,
-    { color = new Vec3(1), intensity = 1, type = 'lights' } = {} as LightParams
+    { label = '', color = new Vec3(1), intensity = 1, type = 'lights' } = {} as LightParams
   ) {
     super()
 
@@ -78,6 +88,7 @@ export class Light extends Object3D {
     this.uuid = generateUUID()
 
     this.options = {
+      label,
       color,
       intensity,
     }
@@ -87,6 +98,8 @@ export class Light extends Object3D {
     this.color.onChange(() => this.onPropertyChanged('color', this.actualColor))
 
     this.intensity = intensity
+
+    this.userData = {}
   }
 
   /**
@@ -105,10 +118,13 @@ export class Light extends Object3D {
     renderer = isCameraRenderer(renderer, this.constructor.name)
     this.renderer = renderer
 
-    this.index = this.renderer.lights.filter((light) => light.type === this.type).length
+    // set index only on first init
+    if (this.index === undefined) {
+      this.index = this.renderer.lights.filter((light) => light.type === this.type).length
+    }
 
     // check for overflow
-    if (this.index + 1 > this.renderer.lightsBindingParams[this.type].max) {
+    if (!this.renderer.lightsBindingParams || this.index + 1 > this.renderer.lightsBindingParams[this.type].max) {
       this.onMaxLightOverflow(this.type as LightsType)
     }
 
@@ -119,7 +135,7 @@ export class Light extends Object3D {
     this.setRendererBinding()
 
     if (hasRenderer) {
-      this.reset()
+      this.reset(false)
     }
   }
 
@@ -133,9 +149,10 @@ export class Light extends Object3D {
   }
 
   /**
-   * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link Light} has been overflowed.
+   * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link Light} has been overflowed or when updating the {@link Light} {@link renderer}.
+   * @param resetShadow - Whether to reset the {@link Light} shadow if any.
    */
-  reset() {
+  reset(resetShadow = true) {
     this.setRendererBinding()
     this.onPropertyChanged('color', this.actualColor)
   }
@@ -190,11 +207,31 @@ export class Light extends Object3D {
    * @param lightsType - {@link type} of light.
    */
   onMaxLightOverflow(lightsType: LightsType) {
-    this.renderer.onMaxLightOverflow(lightsType)
+    this.renderer.onMaxLightOverflow(lightsType, this.index)
 
     if (this.rendererBinding) {
       this.rendererBinding = this.renderer.bindings[lightsType]
     }
+  }
+
+  /**
+   * Called by the {@link core/scenes/Scene.Scene | Scene} before updating the matrix stack.
+   */
+  onBeforeRenderScene() {
+    this._onBeforeRenderCallback && this._onBeforeRenderCallback()
+  }
+
+  /**
+   * Callback to execute before updating the {@link core/scenes/Scene.Scene | Scene} matrix stack. This means it is called early and allows to update transformations values before actually setting the {@link Light} matrices. The callback won't be called if the {@link renderer} is not ready.
+   * @param callback - callback to run just before updating the {@link core/scenes/Scene.Scene | Scene} matrix stack.
+   * @returns - our {@link Light}
+   */
+  onBeforeRender(callback: () => void): this {
+    if (callback) {
+      this._onBeforeRenderCallback = callback
+    }
+
+    return this
   }
 
   /**

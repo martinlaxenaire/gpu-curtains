@@ -59,9 +59,15 @@ export class Object3D {
   /** {@link Object3DMatrices | Matrices object} of the {@link Object3D} */
   matrices: Object3DMatrices
 
-  /** Parent {@link Object3D} in the scene graph, used to compute the {@link worldMatrix | world matrix} */
+  /** {@link Vec3} used by the {@link lookAt} method, to determine the orientation of the result. Default to `new Vec3(0, 1, 0).` */
+  up: Vec3
+
+  /** {@link Vec3} holding the actual position of this {@link Object3D} from its {@link worldMatrix}. */
+  actualPosition: Vec3
+
+  /** Parent {@link Object3D} in the scene graph, used to compute the {@link worldMatrix}. */
   private _parent: null | Object3D
-  /** Children {@link Object3D} in the scene graph, used to compute their own {@link worldMatrix | world matrix} */
+  /** Children {@link Object3D} in the scene graph, used to compute their own {@link worldMatrix}. */
   children: Object3D[]
 
   /** Index (order of creation) of this {@link Object3D}. Used in the {@link parent} / {@link children} relation. */
@@ -78,6 +84,8 @@ export class Object3D {
     this.children = []
 
     this.matricesNeedUpdate = false
+    this.up = new Vec3(0, 1, 0)
+    this.actualPosition = new Vec3()
 
     Object.defineProperty(this as Object3D, 'object3DIndex', { value: objectIndex++ })
 
@@ -315,12 +323,29 @@ export class Object3D {
   }
 
   /**
-   * Rotate this {@link Object3D} so it looks at the {@link Vec3 | target}
-   * @param target - {@link Vec3 | target} to look at
-   * @param position - {@link Vec3 | postion} from which to look at
+   * Rotate this {@link Object3D} so it looks at the {@link Vec3 | target}.
+   * @param target - {@link Vec3} to look at. Default to `new Vec3()`.
    */
-  lookAt(target: Vec3 = new Vec3(), position = this.position, up = new Vec3(0, 1, 0)) {
-    const rotation = tempMatrix.lookAt(target, position, up)
+  lookAt(target: Vec3 = new Vec3()) {
+    this.updateModelMatrix()
+    this.updateWorldMatrix(true, false)
+
+    if (this.actualPosition.x === 0 && this.actualPosition.y !== 0 && this.actualPosition.z === 0) {
+      this.up.set(0, 0, 1)
+    } else {
+      this.up.set(0, 1, 0)
+    }
+
+    this.applyLookAt(target, this.actualPosition)
+  }
+
+  /**
+   * Apply a look at rotation based on a target, a position and our {link up} vectors.
+   * @param target - {@link Vec3} target to look at.
+   * @param position - {@link Vec3} position from which to look at.
+   */
+  applyLookAt(target: Vec3, position: Vec3) {
+    const rotation = tempMatrix.lookAt(target, position, this.up)
     this.quaternion.setFromRotationMatrix(rotation)
     this.shouldUpdateModelMatrix()
   }
@@ -342,18 +367,28 @@ export class Object3D {
   }
 
   /**
-   * Update our {@link worldMatrix | model matrix}
+   * Update our {@link worldMatrix | model matrix}.
+   * @param updateParents - Whether to update the {@link parent} {@link worldMatrix} beforehand. Default to `false`.
+   * @param updateChildren - Whether to update the {@link children} {@link worldMatrix} afterward. Default to `true`.
    */
-  updateWorldMatrix() {
+  updateWorldMatrix(updateParents = false, updateChildren = true) {
     if (!this.parent) {
       this.worldMatrix.copy(this.modelMatrix)
     } else {
+      if (updateParents) {
+        this.parent.updateWorldMatrix(true, false)
+      }
+
       this.worldMatrix.multiplyMatrices(this.parent.worldMatrix, this.modelMatrix)
     }
 
+    this.worldMatrix.getTranslation(this.actualPosition)
+
     // update the children world matrix as well
-    for (let i = 0, l = this.children.length; i < l; i++) {
-      this.children[i].shouldUpdateWorldMatrix()
+    if (updateChildren) {
+      for (let i = 0, l = this.children.length; i < l; i++) {
+        this.children[i].shouldUpdateWorldMatrix()
+      }
     }
   }
 

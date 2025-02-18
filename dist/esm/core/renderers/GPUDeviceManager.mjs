@@ -117,9 +117,15 @@ class GPUDeviceManager {
         if (this.adapter.features.has("float32-filterable")) {
           requiredFeatures.push("float32-filterable");
         }
+        const { limits } = this.adapter;
+        const requiredLimits = {};
+        for (const key in limits) {
+          requiredLimits[key] = limits[key];
+        }
         this.device = await this.adapter?.requestDevice({
           label: this.label + " " + this.index,
-          requiredFeatures
+          requiredFeatures,
+          requiredLimits
         });
         if (this.device) {
           this.ready = true;

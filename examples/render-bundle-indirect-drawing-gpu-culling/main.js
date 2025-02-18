@@ -382,7 +382,7 @@ window.addEventListener('load', async () => {
   })
 
   debugCamera.position.y = 175
-  debugCamera.lookAt(new Vec3())
+  debugCamera.lookAt()
 
   debugCamera.parent = gpuCameraRenderer.scene
 

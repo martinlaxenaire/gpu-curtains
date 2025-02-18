@@ -4,15 +4,18 @@ import { BufferBinding } from '../bindings/BufferBinding';
 import { Object3D } from '../objects3D/Object3D';
 import { DirectionalLight } from './DirectionalLight';
 import { PointLight } from './PointLight';
-import { GPUCurtains } from '../../curtains/GPUCurtains';
+import { SpotLight } from './SpotLight';
+import type { GPUCurtains } from '../../curtains/GPUCurtains';
 /** Defines all types of lights. */
-export type LightsType = 'ambientLights' | 'directionalLights' | 'pointLights';
+export type LightsType = 'ambientLights' | 'directionalLights' | 'pointLights' | 'spotLights';
 /** Defines all types of shadow casting lights. */
-export type ShadowCastingLights = DirectionalLight | PointLight;
+export type ShadowCastingLights = DirectionalLight | PointLight | SpotLight;
 /**
  * Base parameters used to create a {@link Light}.
  */
 export interface LightBaseParams {
+    /** Optional label of the {@link Light}. */
+    label?: string;
     /** The {@link Light} color. Default to `Vec3(1)`. */
     color?: Vec3;
     /** The {@link Light} intensity. Default to `1`. */
@@ -44,12 +47,16 @@ export declare class Light extends Object3D {
     color: Vec3;
     /** {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} that holds all the bindings to send to the shaders. */
     rendererBinding: BufferBinding | null;
+    /** Empty object to store any additional data or custom properties into your {@link Light}. */
+    userData: Record<string, unknown>;
+    /** function assigned to the {@link onBeforeRender} callback */
+    _onBeforeRenderCallback: () => void;
     /**
      * Light constructor
      * @param renderer - {@link CameraRenderer} used to create this {@link Light}.
      * @param parameters - {@link LightParams | parameters} used to create this {@link Light}.
      */
-    constructor(renderer: CameraRenderer | GPUCurtains, { color, intensity, type }?: LightParams);
+    constructor(renderer: CameraRenderer | GPUCurtains, { label, color, intensity, type }?: LightParams);
     /**
      * Set or reset this light {@link CameraRenderer}.
      * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
@@ -60,9 +67,10 @@ export declare class Light extends Object3D {
      */
     setRendererBinding(): void;
     /**
-     * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link Light} has been overflowed.
+     * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link Light} has been overflowed or when updating the {@link Light} {@link renderer}.
+     * @param resetShadow - Whether to reset the {@link Light} shadow if any.
      */
-    reset(): void;
+    reset(resetShadow?: boolean): void;
     /**
      * Get this {@link Light} intensity.
      * @returns - The {@link Light} intensity.
@@ -89,6 +97,16 @@ export declare class Light extends Object3D {
      * @param lightsType - {@link type} of light.
      */
     onMaxLightOverflow(lightsType: LightsType): void;
+    /**
+     * Called by the {@link core/scenes/Scene.Scene | Scene} before updating the matrix stack.
+     */
+    onBeforeRenderScene(): void;
+    /**
+     * Callback to execute before updating the {@link core/scenes/Scene.Scene | Scene} matrix stack. This means it is called early and allows to update transformations values before actually setting the {@link Light} matrices. The callback won't be called if the {@link renderer} is not ready.
+     * @param callback - callback to run just before updating the {@link core/scenes/Scene.Scene | Scene} matrix stack.
+     * @returns - our {@link Light}
+     */
+    onBeforeRender(callback: () => void): this;
     /**
      * Remove this {@link Light} from the {@link renderer} and destroy it.
      */

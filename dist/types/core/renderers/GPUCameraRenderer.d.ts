@@ -40,12 +40,16 @@ export interface GPUCameraRendererLightParams {
     maxDirectionalLights?: LightsBindingParams['directionalLights']['max'];
     /** Maximum number of {@link core/lights/PointLight.PointLight | PointLight} to use. Default to `5`. */
     maxPointLights?: LightsBindingParams['pointLights']['max'];
+    /** Maximum number of {@link core/lights/SpotLight.SpotLight | SpotLight} to use. Default to `5`. */
+    maxSpotLights?: LightsBindingParams['spotLights']['max'];
+    /** Whether to use `uniform` instead of `storage` binding type for the shadows bindings. In some case, for example when using models with skinning or morph targets, the maximum number of `storage` bindings can be reached in the vertex shader. This allows to bypass this limit by switching the shadows binding from `storage` to `uniforms`, but restrict the flexibility by removing the ability to overflow lights. Default to `false`. */
+    useUniformsForShadows?: boolean;
 }
 /** Extra parameters used to define the {@link Camera} and various lights options. */
 export interface GPUCameraLightsRendererParams {
     /** An object defining {@link CameraBasePerspectiveOptions | camera perspective parameters} */
     camera?: CameraBasePerspectiveOptions;
-    /** An object defining {@link GPUCameraRendererLightParams | the maximum number of light} to use when creating the {@link GPUCameraRenderer}. Can be set to `false` to avoid creating lights and shadows buffers, but note this is a permanent choice and cannot be changed later. */
+    /** An object defining {@link GPUCameraRendererLightParams | the maximum number of light} to use when creating the {@link GPUCameraRenderer}. Can be set to `false` to avoid creating lights and shadows buffers. */
     lights?: GPUCameraRendererLightParams | false;
 }
 /** Parameters used to create a {@link GPUCameraRenderer}. */
@@ -161,8 +165,9 @@ export declare class GPUCameraRenderer extends GPURenderer {
     /**
      * Called when a {@link LightsType | type of light} has overflown its maximum capacity. Destroys the associated {@link BufferBinding} (and eventually the associated shadow {@link BufferBinding}), recreates the {@link cameraLightsBindGroup | camera, lights and shadows bind group} and reset all lights for this {@link LightsType | type of light}.
      * @param lightsType - {@link LightsType | Type of light} that has overflown its maximum capacity.
+     * @param lightIndex - The {@link Light#index | light index} that caused overflow. Will be used to reset the new max light count.
      */
-    onMaxLightOverflow(lightsType: LightsType): void;
+    onMaxLightOverflow(lightsType: LightsType, lightIndex?: number): void;
     /**
      * Get all the current {@link ShadowCastingLights | lights that can cast shadows}.
      * @returns - All {@link ShadowCastingLights | lights that can cast shadows}.

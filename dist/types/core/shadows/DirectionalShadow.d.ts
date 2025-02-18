@@ -5,6 +5,8 @@ import { Vec3 } from '../../math/Vec3';
 import { Input } from '../../types/BindGroups';
 import { DirectionalLight } from '../lights/DirectionalLight';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
+import { VertexShaderInputBaseParams } from '../shaders/full/vertex/get-vertex-shader-code';
+import { ShaderOptions } from '../../types/Materials';
 /** Defines the orthographic shadow camera. */
 export interface OrthographicShadowCamera extends OrthographicProjectionParams {
     /** @ignore */
@@ -68,7 +70,7 @@ export declare class DirectionalShadow extends Shadow {
      */
     init(): void;
     /**
-     * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link DirectionalLight} has been overflowed.
+     * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link DirectionalLight} has been overflowed or when the {@link renderer} has changed.
      */
     reset(): void;
     /**
@@ -77,8 +79,16 @@ export declare class DirectionalShadow extends Shadow {
     updateProjectionMatrix(): void;
     /**
      * Update the {@link DirectionalShadow#camera.viewMatrix | camera view matrix} and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
-     * @param position - {@link Vec3} to use as position for the {@link DirectionalShadow#camera.viewMatrix | camera view matrix}, based on the {@link light} position.
-     * @param target - {@link Vec3} to use as target for the {@link DirectionalShadow#camera.viewMatrix | camera view matrix}, based on the {@link light} target.
      */
-    updateViewMatrix(position?: Vec3, target?: Vec3): void;
+    updateViewMatrix(): void;
+    /**
+     * Create the {@link depthTexture}.
+     */
+    createDepthTexture(): void;
+    /**
+     * Get the default depth pass vertex shader for this {@link Shadow}.
+     * parameters - {@link VertexShaderInputBaseParams} used to compute the output `worldPosition` and `normal` vectors.
+     * @returns - Depth pass vertex shader.
+     */
+    getDefaultShadowDepthVs({ bindings, geometry }: VertexShaderInputBaseParams): ShaderOptions;
 }

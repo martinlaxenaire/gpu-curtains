@@ -46,7 +46,7 @@ import { ChildDescriptor, MeshDescriptor, MeshDescriptorMaterialParams, Primitiv
  * ## Extensions
  * - [ ] KHR_animation_pointer
  * - [ ] KHR_draco_mesh_compression
- * - [x] KHR_lights_punctual (partial support - SpotLight not yet implemented)
+ * - [x] KHR_lights_punctual
  * - [ ] KHR_materials_anisotropy
  * - [ ] KHR_materials_clearcoat
  * - [x] KHR_materials_dispersion

@@ -115,9 +115,26 @@ export class OrbitControls {
   /** @ignore */
   #panDelta = new Vec3()
 
+  /** @ignore */
+  #_onContextMenu: () => void
+  /** @ignore */
+  #_onMouseDown: () => void
+  /** @ignore */
+  #_onMouseMove: () => void
+  /** @ignore */
+  #_onMouseUp: () => void
+  /** @ignore */
+  #_onTouchStart: () => void
+  /** @ignore */
+  #_onTouchMove: () => void
+  /** @ignore */
+  #_onTouchEnd: () => void
+  /** @ignore */
+  #_onMouseWheel: () => void
+
   /**
    * OrbitControls constructor
-=   * @param parameters - parameters to use.
+   * @param parameters - parameters to use.
    */
   constructor({
     camera,
@@ -161,6 +178,15 @@ export class OrbitControls {
       panSpeed,
     })
 
+    this.#_onContextMenu = this.#onContextMenu.bind(this)
+    this.#_onMouseDown = this.#onMouseDown.bind(this)
+    this.#_onMouseMove = this.#onMouseMove.bind(this)
+    this.#_onMouseUp = this.#onMouseUp.bind(this)
+    this.#_onTouchStart = this.#onTouchStart.bind(this)
+    this.#_onTouchMove = this.#onTouchMove.bind(this)
+    this.#_onTouchEnd = this.#onTouchEnd.bind(this)
+    this.#_onMouseWheel = this.#onMouseWheel.bind(this)
+
     this.element = element ?? (typeof window !== 'undefined' ? window : null)
 
     this.useCamera(camera)
@@ -172,10 +198,7 @@ export class OrbitControls {
    */
   useCamera(camera: Camera) {
     this.camera = camera
-
-    this.camera.position.onChange(() => {
-      this.camera.lookAt(this.target)
-    })
+    this.camera.lookAt(this.target)
 
     // Grab initial position values
     this.#offset.copy(this.camera.position).sub(this.target)
@@ -314,14 +337,14 @@ export class OrbitControls {
    * @private
    */
   #addEvents() {
-    this.#element.addEventListener('contextmenu', this.#onContextMenu.bind(this), false)
-    this.#element.addEventListener('mousedown', this.#onMouseDown.bind(this), false)
-    this.#element.addEventListener('mousemove', this.#onMouseMove.bind(this), false)
-    this.#element.addEventListener('mouseup', this.#onMouseUp.bind(this), false)
-    this.#element.addEventListener('touchstart', this.#onTouchStart.bind(this), { passive: false })
-    this.#element.addEventListener('touchmove', this.#onTouchMove.bind(this), { passive: false })
-    this.#element.addEventListener('touchend', this.#onTouchEnd.bind(this), false)
-    this.#element.addEventListener('wheel', this.#onMouseWheel.bind(this), { passive: false })
+    this.#element.addEventListener('contextmenu', this.#_onContextMenu, false)
+    this.#element.addEventListener('mousedown', this.#_onMouseDown, false)
+    this.#element.addEventListener('mousemove', this.#_onMouseMove, false)
+    this.#element.addEventListener('mouseup', this.#_onMouseUp, false)
+    this.#element.addEventListener('touchstart', this.#_onTouchStart, { passive: false })
+    this.#element.addEventListener('touchmove', this.#_onTouchMove, { passive: false })
+    this.#element.addEventListener('touchend', this.#_onTouchEnd, false)
+    this.#element.addEventListener('wheel', this.#_onMouseWheel, { passive: false })
   }
 
   /**
@@ -329,14 +352,14 @@ export class OrbitControls {
    * @private
    */
   #removeEvents() {
-    this.#element.removeEventListener('contextmenu', this.#onContextMenu.bind(this), false)
-    this.#element.removeEventListener('mousedown', this.#onMouseDown.bind(this), false)
-    this.#element.removeEventListener('mousemove', this.#onMouseMove.bind(this), false)
-    this.#element.removeEventListener('mouseup', this.#onMouseUp.bind(this), false)
-    this.#element.removeEventListener('touchstart', this.#onTouchStart.bind(this), { passive: false })
-    this.#element.removeEventListener('touchmove', this.#onTouchMove.bind(this), { passive: false })
-    this.#element.removeEventListener('touchend', this.#onTouchEnd.bind(this), false)
-    this.#element.removeEventListener('wheel', this.#onMouseWheel.bind(this), { passive: false })
+    this.#element.removeEventListener('contextmenu', this.#_onContextMenu, false)
+    this.#element.removeEventListener('mousedown', this.#_onMouseDown, false)
+    this.#element.removeEventListener('mousemove', this.#_onMouseMove, false)
+    this.#element.removeEventListener('mouseup', this.#_onMouseUp, false)
+    this.#element.removeEventListener('touchstart', this.#_onTouchStart, { passive: false })
+    this.#element.removeEventListener('touchmove', this.#_onTouchMove, { passive: false })
+    this.#element.removeEventListener('touchend', this.#_onTouchEnd, false)
+    this.#element.removeEventListener('wheel', this.#_onMouseWheel, { passive: false })
   }
 
   /**
@@ -448,6 +471,7 @@ export class OrbitControls {
 
     // Apply updated values to object
     this.camera.position.copy(this.target).add(this.#offset)
+    this.camera.lookAt(this.target)
   }
 
   /**
