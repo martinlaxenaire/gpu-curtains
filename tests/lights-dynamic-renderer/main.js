@@ -133,15 +133,15 @@ window.addEventListener('load', async () => {
   const spotLight = new SpotLight(leftRenderer, {
     label: 'White spot light',
     color: new Vec3(1),
-    position: new Vec3(-4, 5, 0),
+    position: new Vec3(-4, 6, 0),
     target: new Vec3(0, 2, 0),
     intensity: 40,
     range: 30,
     penumbra: 0,
     shadow: {
       intensity: 1,
-      depthTextureSize: new Vec2(2048),
-      pcfSamples: 3,
+      // depthTextureSize: new Vec2(2048),
+      // pcfSamples: 3,
     },
   })
 

@@ -1,5 +1,7 @@
 // Goals of this test:
 // - test various capacities of the gltf loader
+import { Mat4 } from '../../dist/esm/index.mjs'
+
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
   const {
@@ -14,6 +16,10 @@ window.addEventListener('load', async () => {
     OrbitControls,
     Vec3,
     RenderBundle,
+    FullscreenPlane,
+    constants,
+    common,
+    toneMappingUtils,
   } = await import(/* @vite-ignore */ path)
 
   const stats = new Stats()
@@ -709,6 +715,70 @@ window.addEventListener('load', async () => {
     // meshes[0].onReady(() => console.log(meshes[0].material.getShaderCode('fragment')))
   }
 
+  // sky box
+  const skyBoxFs = /* wgsl */ `
+    struct VSOutput {
+      @builtin(position) position: vec4f,
+      @location(0) uv: vec2f,
+    };
+    
+    ${constants}
+    ${common}
+    ${toneMappingUtils}
+    
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
+      var uv: vec2f = fsInput.uv;
+      uv.y = 1.0 - uv.y;
+      
+      uv = uv * 2.0 - 1.0;
+      
+      var position: vec4f = params.inverseViewProjectionMatrix * vec4(uv, 1.0, 1.0);
+      let samplePosition: vec3f = normalize(position.xyz / position.w);
+    
+      var color: vec4f = textureSample(${environmentMap.specularTexture.options.name}, clampSampler, samplePosition * params.envRotation);
+      
+      color = vec4(KhronosToneMapping(color.rgb), color.a);
+      color = linearTosRGB_4(color);
+      
+      return color;
+    }
+  `
+
+  const skybox = new FullscreenPlane(gpuCameraRenderer, {
+    textures: [environmentMap.specularTexture],
+    samplers: [environmentMap.sampler],
+    shaders: {
+      fragment: {
+        code: skyBoxFs,
+      },
+    },
+    uniforms: {
+      params: {
+        struct: {
+          envRotation: {
+            type: 'mat3x3f',
+            value: environmentMap.rotationMatrix,
+          },
+          inverseViewProjectionMatrix: {
+            type: 'mat4x4f',
+            value: new Mat4().multiplyMatrices(camera.projectionMatrix, camera.viewMatrix).invert(),
+          },
+        },
+      },
+    },
+  })
+
+  skybox.onRender(() => {
+    skybox.uniforms.params.inverseViewProjectionMatrix.value
+      .multiplyMatrices(camera.projectionMatrix, camera.viewMatrix)
+      .invert()
+
+    skybox.uniforms.params.envRotation.value = environmentMap.rotationMatrix
+
+    // explicitly tell the uniform to update
+    skybox.uniforms.params.inverseViewProjectionMatrix.shouldUpdate = true
+  })
+
   // GUI updates
 
   const cleanUpScene = () => {
@@ -771,6 +841,7 @@ window.addEventListener('load', async () => {
 
       if (!useEnvMap) {
         useEnvMap = true
+        skybox.visible = true
 
         envMapRotationField.enable()
 
@@ -780,6 +851,7 @@ window.addEventListener('load', async () => {
       }
     } else if (useEnvMap) {
       useEnvMap = false
+      skybox.visible = false
 
       envMapRotationField.disable()
 

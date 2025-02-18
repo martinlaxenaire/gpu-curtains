@@ -34,6 +34,8 @@ export const spotShadowStruct: Record<string, Input> = {
 /**
  * Create a shadow map from a {@link SpotLight} by rendering to a depth texture using a {@link Camera}.
  */
+// TODO there's a known issue where the shadow flickers when updating the light target
+// we should try to fix that one day...
 export class SpotShadow extends Shadow {
   /** {@link SpotLight} associated with this {@link SpotShadow}. */
   light: SpotLight

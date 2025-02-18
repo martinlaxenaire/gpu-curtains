@@ -69,7 +69,9 @@
           <label for="tested-feature">Feature filters:</label>
           <select id="tested-feature">
             <option value="all">All</option>
-            <option value="basic">Basic</option>
+            <option value="core">Core</option>
+            <option value="extras">Extras</option>
+            <option value="curtains">Curtains</option>
             <option value="resize-scroll">Resize & scroll</option>
             <option value="camera">Cameras</option>
             <option value="texture">Textures</option>
@@ -79,18 +81,17 @@
             <option value="post-processing">Post processing</option>
             <option value="gltf">glTF</option>
             <option value="switch-properties">Switch properties</option>
-            <option value="gpu-curtains">GPUCurtains</option>
             <option value="stress-test">Stress tests</option>
           </select>
         </div>
         <ul id="tests-list">
-          <li class="basic">
-            <a href="./basic-rotating-cube/" target="_blank">Basic rotating cube</a>
+          <li class="core">
+            <a href="./core-rotating-cube/" target="_blank">Basic rotating cube</a>
           </li>
-          <li class="basic">
+          <li class="core">
             <a href="./bindings-offsets/" target="_blank">Binding offsets/layout alignment</a>
           </li>
-          <li class="basic camera">
+          <li class="core camera">
             <a href="./camera/" target="_blank">Camera</a>
           </li>
           <li class="renderer resize-scroll">
@@ -99,40 +100,40 @@
           <li class="compute">
             <a href="./compute-results/" target="_blank">Compute results</a>
           </li>
-          <li class="basic renderer post-processing gpu-curtains">
+          <li class="core renderer post-processing curtains">
             <a href="./context-lost/" target="_blank">Context lost/restored</a>
           </li>
-          <li class="texture">
+          <li class="texture extras">
             <a href="./cubemap-env/" target="_blank">Cubemap environment texture</a>
           </li>
           <li class="switch-properties">
             <a href="./dynamic-materials-geometries/" target="_blank">Dynamic materials and geometries</a>
           </li>
-          <li class="basic">
+          <li class="core">
             <a href="./frustum-culling/" target="_blank">Frustum culling</a>
           </li>
-          <li class="gltf">
+          <li class="gltf extras">
             <a href="./gltf-loader/" target="_blank">glTF loader</a>
           </li>
-          <li class="gltf light">
+          <li class="gltf light extras">
             <a href="./gltf-shadows/" target="_blank">glTF and shadow map</a>
           </li>
-          <li class="gltf light">
+          <li class="gltf light extras">
             <a href="./gltf-skins-shadows/" target="_blank">glTF skins and shadow map</a>
           </li>
           <li class="light">
             <a href="./lights/" target="_blank">Lights</a>
           </li>
-          <li class="renderer light switch-properties compute">
+          <li class="renderer resize-scroll light switch-properties compute extras">
             <a href="./lights-dynamic-renderer/" target="_blank">Lights dynamic renderer</a>
           </li>
-          <li class="light">
+          <li class="light extras">
             <a href="./lit-meshes/" target="_blank">Lit meshes</a>
           </li>
           <li class="renderer">
             <a href="./multiple-canvases/" target="_blank">Multiple canvases</a>
           </li>
-          <li class="renderer gpu-curtains">
+          <li class="renderer curtains">
             <a href="./objects-removal/" target="_blank">Objects removal</a>
           </li>
           <li class="renderer">
@@ -144,28 +145,28 @@
           <li class="camera post-processing">
             <a href="./orbit-camera-selective-passes/" target="_blank">Orbit camera and selective passes</a>
           </li>
-          <li class="basic camera">
+          <li class="camera extras">
             <a href="./orbit-controls/" target="_blank">Orbit controls</a>
           </li>
           <li class="post-processing">
             <a href="./order-independent-transparency/?sampleCount=4" target="_blank">Weighted blended OIT</a>
           </li>
-          <li class="basic gpu-curtains texture">
+          <li class="core curtains texture">
             <a href="./plane-transformations/" target="_blank">Plane transformations</a>
           </li>
-          <li class="basic">
+          <li class="extras">
             <a href="./raycaster/" target="_blank">Raycaster</a>
           </li>
-          <li class="basic">
+          <li class="core">
             <a href="./render-bundles/" target="_blank">Render bundles</a>
           </li>
-          <li class="gpu-curtains">
+          <li class="curtains">
             <a href="./reset-plane/" target="_blank">Reset plane HTML element</a>
           </li>
-          <li class="basic">
+          <li class="core">
             <a href="./scene-graph/" target="_blank">Scene graph</a>
           </li>
-          <li class="scroll-resize gpu-curtains">
+          <li class="scroll-resize curtains">
             <a href="./scroll-resize/" target="_blank">Scroll and resize</a>
           </li>
           <li class="light">
@@ -180,19 +181,19 @@
           <li class="stress-test">
             <a href="./stress-test-render-bundle/?count=5000" target="_blank">Stress test render bundle</a>
           </li>
-          <li class="texture gpu-curtains">
+          <li class="texture curtains">
             <a href="./textures-dom-textures/" target="_blank">Textures: DOM textures</a>
           </li>
           <li class="texture">
             <a href="./textures-media-textures/" target="_blank">Textures: Media textures</a>
           </li>
-          <li class="texture gpu-curtains">
+          <li class="texture curtains">
             <a href="./textures-transformations/" target="_blank">Textures transformations</a>
           </li>
-          <li class="basic">
+          <li class="core">
             <a href="./transparent-meshes-sorting/" target="_blank">Transparent meshes sorting</a>
           </li>
-          <li class="basic">
+          <li class="core">
             <a href="./umd-test/" target="_blank">Test UMD lib</a>
           </li>
         </ul>
