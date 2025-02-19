@@ -22,12 +22,14 @@ class PerspectiveCamera extends Camera {
     width = 1,
     height = 1,
     pixelRatio = 1,
+    forceAspect = false,
     onMatricesChanged = () => {
     }
   } = {}) {
     super({ near, far, pixelRatio, onMatricesChanged });
     /** @ignore */
     __privateAdd(this, _fov);
+    this.forceAspect = forceAspect;
     this.position.set(0, 0, 10);
     this.size = {
       width: 1,

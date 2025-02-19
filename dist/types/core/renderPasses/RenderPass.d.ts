@@ -3,6 +3,7 @@ import { Renderer } from '../renderers/utils';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
 import { Texture } from '../textures/Texture';
 import { TextureSize } from '../../types/Textures';
+import { RectBBox } from '../DOM/DOMElement';
 /** Define the parameters of a color attachment. */
 export interface ColorAttachmentParams {
     /** The {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#loadop | load operation} to perform while drawing this {@link RenderPass}. */
@@ -13,6 +14,13 @@ export interface ColorAttachmentParams {
     clearValue?: GPUColor;
     /** Optional format of the color attachment texture. */
     targetFormat: GPUTextureFormat;
+}
+/** Parameters used to set a {@link GPURenderPassEncoder} viewport. */
+export interface RenderPassViewport extends RectBBox {
+    /** Minimum depth value of the viewport. Default to `0`. */
+    minDepth: number;
+    /** Maximum depth value of the viewport. Default to `1`. */
+    maxDepth: number;
 }
 /**
  * Parameters used to create this {@link RenderPass}.
@@ -65,6 +73,10 @@ export declare class RenderPass {
     resolveTargets: Array<null | Texture>;
     /** The {@link RenderPass} {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#descriptor | GPURenderPassDescriptor}. */
     descriptor: GPURenderPassDescriptor;
+    /** Viewport to set to the {@link GPURenderPassEncoder} if any. */
+    viewport: RenderPassViewport | null;
+    /** Scissor {@link RectBBox} to use for scissors if any. */
+    scissorRect: RectBBox | null;
     /**
      * RenderPass constructor
      * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link RenderPass}
@@ -92,7 +104,6 @@ export declare class RenderPass {
     createResolveTargets(): void;
     /**
      * Get the textures outputted by this {@link RenderPass}, which means the {@link viewTextures} if not multisampled, or their {@link resolveTargets} else (beware that the first resolve target might be `null` if this {@link RenderPass} should {@link RenderPassParams#renderToSwapChain | render to the swap chain}).
-     *
      * @readonly
      */
     get outputTextures(): Texture[];
@@ -100,6 +111,23 @@ export declare class RenderPass {
      * Set our render pass {@link descriptor}.
      */
     setRenderPassDescriptor(depthTextureView?: any): void;
+    /**
+     * Set the {@link viewport} to use if any.
+     * @param viewport - {@link RenderPassViewport} settings to use. Can be set to `null` to cancel the {@link viewport}.
+     */
+    setViewport(viewport?: RenderPassViewport | null): void;
+    /**
+     * Set the {@link scissorRect} to use if any.
+     * @param scissorRect - {@link RectBBox} size to use for scissors. Can be set to `null` to cancel the {@link scissorRect}.
+     */
+    setScissorRect(scissorRect?: RectBBox | null): void;
+    /**
+     * Begin the {@link GPURenderPassEncoder} and eventually set the {@link viewport} and {@link scissorRect}.
+     * @param commandEncoder - {@link GPUCommandEncoder} to use.
+     * @param descriptor - Custom {@link https://gpuweb.github.io/types/interfaces/GPURenderPassDescriptor.html | GPURenderPassDescriptor} to use if any. Default to {@link RenderPass#descriptor | descriptor}.
+     * @returns - The created {@link GPURenderPassEncoder}.
+     */
+    beginRenderPass(commandEncoder: GPUCommandEncoder, descriptor?: GPURenderPassDescriptor): GPURenderPassEncoder;
     /**
      * Resize our {@link RenderPass}: reset its {@link Texture}.
      */

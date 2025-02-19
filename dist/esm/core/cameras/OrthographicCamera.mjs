@@ -33,7 +33,7 @@ class OrthographicCamera extends Camera {
     __privateAdd(this, _top);
     /** @ignore */
     __privateAdd(this, _bottom);
-    this.position.set(0, 0, 1);
+    this.position.set(0, 0, 10);
     this.setOrthographic({ near, far, left, right, top, bottom, pixelRatio });
   }
   /**

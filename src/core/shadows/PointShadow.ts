@@ -285,7 +285,7 @@ export class PointShadow extends Shadow {
       }
 
       // Begin the render pass
-      const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor)
+      const passEncoder = this.depthPassTarget.renderPass.beginRenderPass(commandEncoder, renderPassDescriptor)
       // End the render pass (we don't need to draw anything, just clear)
       passEncoder.end()
     }

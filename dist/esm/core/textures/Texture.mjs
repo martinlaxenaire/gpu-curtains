@@ -54,13 +54,14 @@ class Texture {
     if (!this.options.format) {
       this.options.format = this.renderer.options.context.format;
     }
+    const { width, height } = this.renderer.canvas;
     this.size = this.options.fixedSize ? {
       width: this.options.fixedSize.width * this.options.qualityRatio,
       height: this.options.fixedSize.height * this.options.qualityRatio,
       depth: this.options.fixedSize.depth ?? this.options.viewDimension.indexOf("cube") !== -1 ? 6 : 1
     } : {
-      width: Math.floor(this.renderer.canvas.width * this.options.qualityRatio),
-      height: Math.floor(this.renderer.canvas.height * this.options.qualityRatio),
+      width: Math.floor(width * this.options.qualityRatio),
+      height: Math.floor(height * this.options.qualityRatio),
       depth: this.options.viewDimension.indexOf("cube") !== -1 ? 6 : 1
     };
     if (this.options.fixedSize) {
@@ -81,7 +82,8 @@ class Texture {
     renderer = isRenderer(renderer, this.options.label + " Texture");
     this.renderer = renderer;
     this.renderer.addTexture(this);
-    if (__privateGet(this, _autoResize) && (this.size.width !== this.renderer.canvas.width * this.options.qualityRatio || this.size.height !== this.renderer.canvas.height * this.options.qualityRatio)) {
+    const { width, height } = this.renderer.canvas;
+    if (__privateGet(this, _autoResize) && (this.size.width !== width * this.options.qualityRatio || this.size.height !== height * this.options.qualityRatio)) {
       this.resize();
     }
   }
@@ -214,9 +216,10 @@ class Texture {
   resize(size = null) {
     if (!__privateGet(this, _autoResize)) return;
     if (!size) {
+      const { width, height } = this.renderer.canvas;
       size = {
-        width: Math.floor(this.renderer.canvas.width * this.options.qualityRatio),
-        height: Math.floor(this.renderer.canvas.height * this.options.qualityRatio),
+        width: Math.floor(width * this.options.qualityRatio),
+        height: Math.floor(height * this.options.qualityRatio),
         depth: 1
       };
     }

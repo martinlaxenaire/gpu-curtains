@@ -587,7 +587,7 @@ export class Shadow {
     this.renderer.pipelineManager.resetCurrentPipeline()
 
     // begin depth pass
-    const depthPass = commandEncoder.beginRenderPass(this.depthPassTarget.renderPass.descriptor)
+    const depthPass = this.depthPassTarget.renderPass.beginRenderPass(commandEncoder)
 
     if (!this.renderer.production)
       depthPass.pushDebugGroup(`${this.constructor.name} (index: ${this.index}): depth pass`)

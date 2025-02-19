@@ -15,6 +15,8 @@ export interface PerspectiveCameraOptions extends CameraOptions, PerspectiveCame
     width?: number;
     /** {@link PerspectiveCamera} frustum height. */
     height?: number;
+    /** Allow to force the {@link PerspectiveCamera} aspect ratio to a defined value. Default to `false`. */
+    forceAspect?: number | false;
 }
 /**
  * An object defining all possible {@link PerspectiveCamera} class instancing parameters.
@@ -35,13 +37,15 @@ export interface PerspectiveCameraParams extends CameraParams, PerspectiveCamera
  */
 export declare class PerspectiveCamera extends Camera {
     #private;
+    /** Eventual aspect ratio of the {@link PerspectiveCamera} to use. */
+    forceAspect: number | false;
     /** The {@link PerspectiveCamera} frustum width and height. */
     size: RectSize;
     /**
      * PerspectiveCamera constructor
      * @param parameters - {@link PerspectiveCameraParams} used to create our {@link PerspectiveCamera}.
      */
-    constructor({ fov, near, far, width, height, pixelRatio, onMatricesChanged, }?: PerspectiveCameraParams);
+    constructor({ fov, near, far, width, height, pixelRatio, forceAspect, onMatricesChanged, }?: PerspectiveCameraParams);
     /**
      * Get the {@link PerspectiveCamera.fov | field of view}.
      */

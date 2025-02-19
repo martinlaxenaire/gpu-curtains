@@ -29,6 +29,8 @@ class RenderPass {
     renderer = isRenderer(renderer, label + " " + this.type);
     this.renderer = renderer;
     this.uuid = generateUUID();
+    this.viewport = null;
+    this.scissorRect = null;
     if (useColorAttachments) {
       const defaultColorAttachment = {
         loadOp: "clear",
@@ -153,7 +155,6 @@ class RenderPass {
   }
   /**
    * Get the textures outputted by this {@link RenderPass}, which means the {@link viewTextures} if not multisampled, or their {@link resolveTargets} else (beware that the first resolve target might be `null` if this {@link RenderPass} should {@link RenderPassParams#renderToSwapChain | render to the swap chain}).
-   *
    * @readonly
    */
   get outputTextures() {
@@ -199,6 +200,43 @@ class RenderPass {
         }
       }
     };
+  }
+  /**
+   * Set the {@link viewport} to use if any.
+   * @param viewport - {@link RenderPassViewport} settings to use. Can be set to `null` to cancel the {@link viewport}.
+   */
+  setViewport(viewport = null) {
+    this.viewport = viewport;
+  }
+  /**
+   * Set the {@link scissorRect} to use if any.
+   * @param scissorRect - {@link RectBBox} size to use for scissors. Can be set to `null` to cancel the {@link scissorRect}.
+   */
+  setScissorRect(scissorRect = null) {
+    this.scissorRect = scissorRect;
+  }
+  /**
+   * Begin the {@link GPURenderPassEncoder} and eventually set the {@link viewport} and {@link scissorRect}.
+   * @param commandEncoder - {@link GPUCommandEncoder} to use.
+   * @param descriptor - Custom {@link https://gpuweb.github.io/types/interfaces/GPURenderPassDescriptor.html | GPURenderPassDescriptor} to use if any. Default to {@link RenderPass#descriptor | descriptor}.
+   * @returns - The created {@link GPURenderPassEncoder}.
+   */
+  beginRenderPass(commandEncoder, descriptor = this.descriptor) {
+    const pass = commandEncoder.beginRenderPass(descriptor);
+    if (this.viewport) {
+      pass.setViewport(
+        this.viewport.left,
+        this.viewport.top,
+        this.viewport.width,
+        this.viewport.height,
+        this.viewport.minDepth,
+        this.viewport.maxDepth
+      );
+    }
+    if (this.scissorRect) {
+      pass.setScissorRect(this.scissorRect.left, this.scissorRect.top, this.scissorRect.width, this.scissorRect.height);
+    }
+    return pass;
   }
   /**
    * Resize our {@link RenderPass}: reset its {@link Texture}.

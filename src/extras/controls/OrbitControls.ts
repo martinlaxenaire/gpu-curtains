@@ -494,7 +494,7 @@ export class OrbitControls {
       this.#spherical.theta -= (2 * Math.PI * tempVec2b.x) / this.camera.size.height
       this.#spherical.phi -= (2 * Math.PI * tempVec2b.y) / this.camera.size.height
     } else if (this.camera instanceof OrthographicCamera) {
-      const height = this.camera.top - this.camera.bottom
+      const height = (this.camera.top - this.camera.bottom) * 2
       tempVec2b.multiplyScalar(1 / height)
       this.#spherical.theta -= (2 * Math.PI * tempVec2b.x) / height
       this.#spherical.phi -= (2 * Math.PI * tempVec2b.y) / height
@@ -535,8 +535,8 @@ export class OrbitControls {
       targetDistance *= Math.tan(((this.camera.fov / 2) * Math.PI) / 180.0)
       tempVec3.multiplyScalar(-(2 * tempVec2b.x * targetDistance) / this.camera.size.height)
     } else if (this.camera instanceof OrthographicCamera) {
-      targetDistance *= 1 / (this.camera.top - this.camera.bottom)
-      tempVec3.multiplyScalar(-(2 * tempVec2b.x * targetDistance) / (this.camera.right - this.camera.left))
+      targetDistance *= 1 / ((this.camera.top - this.camera.bottom) * 2)
+      tempVec3.multiplyScalar(-(2 * tempVec2b.x * targetDistance) / ((this.camera.right - this.camera.left) * 2))
     }
     this.#panDelta.add(tempVec3)
 
@@ -551,7 +551,7 @@ export class OrbitControls {
     if (this.camera instanceof PerspectiveCamera) {
       tempVec3.multiplyScalar((2 * tempVec2b.y * targetDistance) / this.camera.size.height)
     } else if (this.camera instanceof OrthographicCamera) {
-      tempVec3.multiplyScalar((2 * tempVec2b.y * targetDistance) / (this.camera.top - this.camera.bottom))
+      tempVec3.multiplyScalar((2 * tempVec2b.y * targetDistance) / ((this.camera.top - this.camera.bottom) * 2))
     }
 
     this.#panDelta.add(tempVec3)

@@ -17,6 +17,7 @@ import { Texture } from '../textures/Texture'
 import { Sampler } from '../samplers/Sampler'
 import { RenderPassEntry } from '../scenes/Scene'
 import { OrthographicCamera } from '../cameras/OrthographicCamera'
+import { RenderPassViewport } from '../renderPasses/RenderPass'
 
 /** Defines the parameters used to build the {@link BufferBinding} of each type of lights. */
 export interface LightParams {
@@ -98,6 +99,8 @@ export class GPUCameraRenderer extends GPURenderer {
   camera: Camera
   /** {@link BindGroup | bind group} handling the camera, lights and shadows {@link BufferBinding}. */
   cameraLightsBindGroup: BindGroup
+  /** Additional {@link RenderPassViewport} from the {@link Camera} to use if any. Will be contained inside the {@link viewport} if any. */
+  cameraViewport: RenderPassViewport | null
 
   /** Array of all the created {@link Light}. */
   lights: Light[]
@@ -179,6 +182,8 @@ export class GPUCameraRenderer extends GPURenderer {
     this.#shouldUpdateCameraLightsBindGroup = true
 
     this.lights = []
+
+    this.cameraViewport = null
 
     this.setCamera(camera)
 
@@ -271,6 +276,8 @@ export class GPUCameraRenderer extends GPURenderer {
     this.camera = camera
     this.camera.parent = this.scene
 
+    this.resizeCamera()
+
     if (this.bindings.camera) {
       this.camera.onMatricesChanged = () => this.onCameraMatricesChanged()
 
@@ -288,7 +295,95 @@ export class GPUCameraRenderer extends GPURenderer {
   }
 
   /**
-   * Update the {@link core/renderers/GPURenderer.ProjectedMesh | projected meshes} sizes and positions when the {@link camera} {@link Camera#position | position} changes
+   * Update the {@link cameraViewport} if needed (i.e. if the camera use a different aspect ratio than the renderer).
+   */
+  updateCameraViewport() {
+    let { width, height } = this.canvas
+
+    if (this.viewport) {
+      width = Math.min(width, this.viewport.width)
+      height = Math.min(height, this.viewport.height)
+    }
+
+    if (this.camera instanceof PerspectiveCamera && this.camera.forceAspect) {
+      width = Math.min(width, height * this.camera.forceAspect)
+      height = Math.min(width / this.camera.forceAspect, height)
+
+      this.setCameraViewport({
+        width,
+        height,
+        top: (this.canvas.height - height) * 0.5,
+        left: (this.canvas.width - width) * 0.5,
+        minDepth: 0,
+        maxDepth: 1,
+      })
+    } else {
+      this.setCameraViewport()
+    }
+  }
+
+  /**
+   * Resize the {@link camera}, first by updating the {@link cameraViewport} and then resetting the {@link camera} projection.
+   */
+  resizeCamera() {
+    this.updateCameraViewport()
+
+    const { width, height } = this.cameraViewport ?? this.viewport ?? this.canvas
+
+    if (this.camera instanceof PerspectiveCamera) {
+      this.camera?.setPerspective({
+        width: width,
+        height: height,
+        pixelRatio: this.pixelRatio,
+      })
+    } else if (this.camera instanceof OrthographicCamera) {
+      const aspect = width / height
+      const frustumSize = this.camera.top * 2
+
+      this.camera.setOrthographic({
+        left: (-frustumSize * aspect) / 2,
+        right: (frustumSize * aspect) / 2,
+        pixelRatio: this.pixelRatio,
+      })
+    }
+  }
+
+  /**
+   * Set the {@link cameraViewport} (that should be contained within the renderer {@link viewport} if any) and update the {@link renderPass} and {@link postProcessingPass} {@link viewport} values.
+   * @param viewport - {@link RenderPassViewport} settings to use if any.
+   */
+  setCameraViewport(viewport: RenderPassViewport | null = null) {
+    this.cameraViewport = viewport
+
+    if (!this.cameraViewport) {
+      this.renderPass?.setViewport(this.viewport)
+      this.postProcessingPass?.setViewport(this.viewport)
+    } else {
+      if (this.viewport) {
+        // camera viewport must be contained within renderer viewport
+        const aspect = this.cameraViewport.width / this.cameraViewport.height
+        this.cameraViewport.width = Math.min(this.viewport.width, this.viewport.height * aspect)
+        this.cameraViewport.height = Math.min(this.cameraViewport.width / aspect, this.viewport.height)
+        this.cameraViewport.left = Math.max(0, (this.viewport.width - this.cameraViewport.width) * 0.5)
+        this.cameraViewport.top = Math.max(0, (this.viewport.height - this.cameraViewport.height) * 0.5)
+      }
+
+      this.renderPass?.setViewport(this.cameraViewport)
+      this.postProcessingPass?.setViewport(this.cameraViewport)
+    }
+  }
+
+  /**
+   * Resize the {@link camera} whenever the {@link viewport} is updated.
+   * @param viewport - {@link RenderPassViewport} settings to use if any. Can be set to `null` to cancel the {@link viewport}.
+   */
+  setViewport(viewport: RenderPassViewport | null = null) {
+    super.setViewport(viewport)
+    this.resizeCamera()
+  }
+
+  /**
+   * Update the {@link core/renderers/GPURenderer.ProjectedMesh | projected meshes} sizes and positions when the {@link camera} {@link Camera#position | position} changes.
    */
   onCameraMatricesChanged() {
     this.updateCameraBindings()
@@ -827,24 +922,9 @@ export class GPUCameraRenderer extends GPURenderer {
   resize(rectBBox: RectBBox | null = null) {
     this.setSize(rectBBox)
 
-    if (this.camera instanceof PerspectiveCamera) {
-      this.camera?.setPerspective({
-        width: this.rectBBox.width,
-        height: this.rectBBox.height,
-        pixelRatio: this.pixelRatio,
-      })
-    } else if (this.camera instanceof OrthographicCamera) {
-      const aspect = this.rectBBox.width / this.rectBBox.height
-      const frustumSize = this.camera.top * 2
-
-      this.camera.setOrthographic({
-        left: (-frustumSize * aspect) / 2,
-        right: (frustumSize * aspect) / 2,
-        pixelRatio: this.pixelRatio,
-      })
-    }
-
     this._onResizeCallback && this._onResizeCallback()
+
+    this.resizeCamera()
 
     this.resizeObjects()
 

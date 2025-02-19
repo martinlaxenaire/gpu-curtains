@@ -19,6 +19,8 @@ export interface PerspectiveCameraOptions extends CameraOptions, PerspectiveCame
   width?: number
   /** {@link PerspectiveCamera} frustum height. */
   height?: number
+  /** Allow to force the {@link PerspectiveCamera} aspect ratio to a defined value. Default to `false`. */
+  forceAspect?: number | false
 }
 
 /**
@@ -41,6 +43,8 @@ export interface PerspectiveCameraParams extends CameraParams, PerspectiveCamera
 export class PerspectiveCamera extends Camera {
   /** @ignore */
   #fov: number
+  /** Eventual aspect ratio of the {@link PerspectiveCamera} to use. */
+  forceAspect: number | false
 
   /** The {@link PerspectiveCamera} frustum width and height. */
   size: RectSize
@@ -57,12 +61,15 @@ export class PerspectiveCamera extends Camera {
       width = 1,
       height = 1,
       pixelRatio = 1,
+      forceAspect = false,
       onMatricesChanged = () => {
         /* allow empty callback */
       },
     } = {} as PerspectiveCameraParams
   ) {
     super({ near, far, pixelRatio, onMatricesChanged })
+
+    this.forceAspect = forceAspect
 
     // camera can't be at position (0, 0, 0), it needs some recoil
     // arbitrarily set to 10 so objects of default size (1, 1, 1) don't appear too big

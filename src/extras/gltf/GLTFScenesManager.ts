@@ -876,6 +876,7 @@ export class GLTFScenesManager {
           width,
           height,
           pixelRatio: this.renderer.pixelRatio,
+          ...(gltfCamera.perspective.aspectRatio !== undefined && { forceAspect: gltfCamera.perspective.aspectRatio }),
         })
 
         camera.parent = child.node

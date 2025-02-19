@@ -13,6 +13,7 @@ import { ShadowsType } from '../shadows/Shadow';
 import { Texture } from '../textures/Texture';
 import { Sampler } from '../samplers/Sampler';
 import { RenderPassEntry } from '../scenes/Scene';
+import { RenderPassViewport } from '../renderPasses/RenderPass';
 /** Defines the parameters used to build the {@link BufferBinding} of each type of lights. */
 export interface LightParams {
     /** Maximum number for a given type of light. */
@@ -86,6 +87,8 @@ export declare class GPUCameraRenderer extends GPURenderer {
     camera: Camera;
     /** {@link BindGroup | bind group} handling the camera, lights and shadows {@link BufferBinding}. */
     cameraLightsBindGroup: BindGroup;
+    /** Additional {@link RenderPassViewport} from the {@link Camera} to use if any. Will be contained inside the {@link viewport} if any. */
+    cameraViewport: RenderPassViewport | null;
     /** Array of all the created {@link Light}. */
     lights: Light[];
     /** An object defining the current {@link LightsBindingParams | lights binding parameters}, including the maximum number of lights for each type and the structure used to create the associated {@link BufferBinding}. */
@@ -137,7 +140,25 @@ export declare class GPUCameraRenderer extends GPURenderer {
      */
     useCamera(camera: Camera): void;
     /**
-     * Update the {@link core/renderers/GPURenderer.ProjectedMesh | projected meshes} sizes and positions when the {@link camera} {@link Camera#position | position} changes
+     * Update the {@link cameraViewport} if needed (i.e. if the camera use a different aspect ratio than the renderer).
+     */
+    updateCameraViewport(): void;
+    /**
+     * Resize the {@link camera}, first by updating the {@link cameraViewport} and then resetting the {@link camera} projection.
+     */
+    resizeCamera(): void;
+    /**
+     * Set the {@link cameraViewport} (that should be contained within the renderer {@link viewport} if any) and update the {@link renderPass} and {@link postProcessingPass} {@link viewport} values.
+     * @param viewport - {@link RenderPassViewport} settings to use if any.
+     */
+    setCameraViewport(viewport?: RenderPassViewport | null): void;
+    /**
+     * Resize the {@link camera} whenever the {@link viewport} is updated.
+     * @param viewport - {@link RenderPassViewport} settings to use if any. Can be set to `null` to cancel the {@link viewport}.
+     */
+    setViewport(viewport?: RenderPassViewport | null): void;
+    /**
+     * Update the {@link core/renderers/GPURenderer.ProjectedMesh | projected meshes} sizes and positions when the {@link camera} {@link Camera#position | position} changes.
      */
     onCameraMatricesChanged(): void;
     /**

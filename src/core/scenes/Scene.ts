@@ -713,7 +713,7 @@ export class Scene extends Object3D {
       renderPassEntry.useCustomRenderPass(commandEncoder)
     } else {
       // now begin our actual render pass
-      const pass = commandEncoder.beginRenderPass(renderPassEntry.renderPass.descriptor)
+      const pass = renderPassEntry.renderPass.beginRenderPass(commandEncoder)
 
       if (!this.renderer.production) {
         pass.pushDebugGroup(

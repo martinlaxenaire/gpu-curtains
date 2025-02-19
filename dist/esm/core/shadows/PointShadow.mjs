@@ -220,7 +220,7 @@ class PointShadow extends Shadow {
           // Store the cleared depth
         }
       };
-      const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
+      const passEncoder = this.depthPassTarget.renderPass.beginRenderPass(commandEncoder, renderPassDescriptor);
       passEncoder.end();
     }
     !this.renderer.production && commandEncoder.popDebugGroup();

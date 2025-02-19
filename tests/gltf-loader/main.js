@@ -55,6 +55,10 @@ window.addEventListener('load', async () => {
       near: 0.1,
       far: 2000,
     },
+    context: {
+      format: 'rgba16float', // allow HDR output
+      toneMapping: { mode: 'standard' },
+    },
     renderPass: {
       // since transmission need a solid background color to be blended with
       // just clear the renderer renderPass color values to match the css background
@@ -761,7 +765,9 @@ window.addEventListener('load', async () => {
           },
           inverseViewProjectionMatrix: {
             type: 'mat4x4f',
-            value: new Mat4().multiplyMatrices(camera.projectionMatrix, camera.viewMatrix).invert(),
+            value: new Mat4()
+              .multiplyMatrices(gpuCameraRenderer.camera.projectionMatrix, gpuCameraRenderer.camera.viewMatrix)
+              .invert(),
           },
         },
       },
@@ -770,7 +776,7 @@ window.addEventListener('load', async () => {
 
   skybox.onRender(() => {
     skybox.uniforms.params.inverseViewProjectionMatrix.value
-      .multiplyMatrices(camera.projectionMatrix, camera.viewMatrix)
+      .multiplyMatrices(gpuCameraRenderer.camera.projectionMatrix, gpuCameraRenderer.camera.viewMatrix)
       .invert()
 
     skybox.uniforms.params.envRotation.value = environmentMap.rotationMatrix

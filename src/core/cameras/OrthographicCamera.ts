@@ -58,7 +58,7 @@ export class OrthographicCamera extends Camera {
     super({ near, far, pixelRatio, onMatricesChanged })
 
     // whatever
-    this.position.set(0, 0, 1)
+    this.position.set(0, 0, 10)
 
     this.setOrthographic({ near, far, left, right, top, bottom, pixelRatio })
   }

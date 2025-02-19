@@ -487,7 +487,7 @@ class Scene extends Object3D {
     if (renderPassEntry.useCustomRenderPass) {
       renderPassEntry.useCustomRenderPass(commandEncoder);
     } else {
-      const pass = commandEncoder.beginRenderPass(renderPassEntry.renderPass.descriptor);
+      const pass = renderPassEntry.renderPass.beginRenderPass(commandEncoder);
       if (!this.renderer.production) {
         pass.pushDebugGroup(
           renderPassEntry.element ? `${renderPassEntry.element.options.label} render pass using ${renderPassEntry.renderPass.options.label} descriptor` : `Render stack pass using ${renderPassEntry.renderPass.options.label}${renderPassEntry.renderTexture ? " onto " + renderPassEntry.renderTexture.options.label : ""}`

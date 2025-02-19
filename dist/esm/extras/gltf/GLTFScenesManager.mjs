@@ -643,7 +643,8 @@ const _GLTFScenesManager = class _GLTFScenesManager {
           far: gltfCamera.perspective.zfar,
           width,
           height,
-          pixelRatio: this.renderer.pixelRatio
+          pixelRatio: this.renderer.pixelRatio,
+          ...gltfCamera.perspective.aspectRatio !== void 0 && { forceAspect: gltfCamera.perspective.aspectRatio }
         });
         camera.parent = child.node;
         this.scenesManager.cameras.push(camera);

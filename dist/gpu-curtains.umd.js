@@ -3938,13 +3938,14 @@
       if (!this.options.format) {
         this.options.format = this.renderer.options.context.format;
       }
+      const { width, height } = this.renderer.canvas;
       this.size = this.options.fixedSize ? {
         width: this.options.fixedSize.width * this.options.qualityRatio,
         height: this.options.fixedSize.height * this.options.qualityRatio,
         depth: this.options.fixedSize.depth ?? this.options.viewDimension.indexOf("cube") !== -1 ? 6 : 1
       } : {
-        width: Math.floor(this.renderer.canvas.width * this.options.qualityRatio),
-        height: Math.floor(this.renderer.canvas.height * this.options.qualityRatio),
+        width: Math.floor(width * this.options.qualityRatio),
+        height: Math.floor(height * this.options.qualityRatio),
         depth: this.options.viewDimension.indexOf("cube") !== -1 ? 6 : 1
       };
       if (this.options.fixedSize) {
@@ -3965,7 +3966,8 @@
       renderer = isRenderer(renderer, this.options.label + " Texture");
       this.renderer = renderer;
       this.renderer.addTexture(this);
-      if (__privateGet$q(this, _autoResize) && (this.size.width !== this.renderer.canvas.width * this.options.qualityRatio || this.size.height !== this.renderer.canvas.height * this.options.qualityRatio)) {
+      const { width, height } = this.renderer.canvas;
+      if (__privateGet$q(this, _autoResize) && (this.size.width !== width * this.options.qualityRatio || this.size.height !== height * this.options.qualityRatio)) {
         this.resize();
       }
     }
@@ -4098,9 +4100,10 @@
     resize(size = null) {
       if (!__privateGet$q(this, _autoResize)) return;
       if (!size) {
+        const { width, height } = this.renderer.canvas;
         size = {
-          width: Math.floor(this.renderer.canvas.width * this.options.qualityRatio),
-          height: Math.floor(this.renderer.canvas.height * this.options.qualityRatio),
+          width: Math.floor(width * this.options.qualityRatio),
+          height: Math.floor(height * this.options.qualityRatio),
           depth: 1
         };
       }
@@ -5770,7 +5773,7 @@
       __privateAdd$n(this, _top);
       /** @ignore */
       __privateAdd$n(this, _bottom);
-      this.position.set(0, 0, 1);
+      this.position.set(0, 0, 10);
       this.setOrthographic({ near, far, left, right, top, bottom, pixelRatio });
     }
     /**
@@ -5935,12 +5938,14 @@
       width = 1,
       height = 1,
       pixelRatio = 1,
+      forceAspect = false,
       onMatricesChanged = () => {
       }
     } = {}) {
       super({ near, far, pixelRatio, onMatricesChanged });
       /** @ignore */
       __privateAdd$m(this, _fov);
+      this.forceAspect = forceAspect;
       this.position.set(0, 0, 10);
       this.size = {
         width: 1,
@@ -8373,6 +8378,8 @@
       renderer = isRenderer(renderer, label + " " + this.type);
       this.renderer = renderer;
       this.uuid = generateUUID();
+      this.viewport = null;
+      this.scissorRect = null;
       if (useColorAttachments) {
         const defaultColorAttachment = {
           loadOp: "clear",
@@ -8497,7 +8504,6 @@
     }
     /**
      * Get the textures outputted by this {@link RenderPass}, which means the {@link viewTextures} if not multisampled, or their {@link resolveTargets} else (beware that the first resolve target might be `null` if this {@link RenderPass} should {@link RenderPassParams#renderToSwapChain | render to the swap chain}).
-     *
      * @readonly
      */
     get outputTextures() {
@@ -8543,6 +8549,43 @@
           }
         }
       };
+    }
+    /**
+     * Set the {@link viewport} to use if any.
+     * @param viewport - {@link RenderPassViewport} settings to use. Can be set to `null` to cancel the {@link viewport}.
+     */
+    setViewport(viewport = null) {
+      this.viewport = viewport;
+    }
+    /**
+     * Set the {@link scissorRect} to use if any.
+     * @param scissorRect - {@link RectBBox} size to use for scissors. Can be set to `null` to cancel the {@link scissorRect}.
+     */
+    setScissorRect(scissorRect = null) {
+      this.scissorRect = scissorRect;
+    }
+    /**
+     * Begin the {@link GPURenderPassEncoder} and eventually set the {@link viewport} and {@link scissorRect}.
+     * @param commandEncoder - {@link GPUCommandEncoder} to use.
+     * @param descriptor - Custom {@link https://gpuweb.github.io/types/interfaces/GPURenderPassDescriptor.html | GPURenderPassDescriptor} to use if any. Default to {@link RenderPass#descriptor | descriptor}.
+     * @returns - The created {@link GPURenderPassEncoder}.
+     */
+    beginRenderPass(commandEncoder, descriptor = this.descriptor) {
+      const pass = commandEncoder.beginRenderPass(descriptor);
+      if (this.viewport) {
+        pass.setViewport(
+          this.viewport.left,
+          this.viewport.top,
+          this.viewport.width,
+          this.viewport.height,
+          this.viewport.minDepth,
+          this.viewport.maxDepth
+        );
+      }
+      if (this.scissorRect) {
+        pass.setScissorRect(this.scissorRect.left, this.scissorRect.top, this.scissorRect.width, this.scissorRect.height);
+      }
+      return pass;
     }
     /**
      * Resize our {@link RenderPass}: reset its {@link Texture}.
@@ -11575,7 +11618,7 @@ fn getPCFBaseShadowContribution(
      */
     renderDepthPass(commandEncoder) {
       this.renderer.pipelineManager.resetCurrentPipeline();
-      const depthPass = commandEncoder.beginRenderPass(this.depthPassTarget.renderPass.descriptor);
+      const depthPass = this.depthPassTarget.renderPass.beginRenderPass(commandEncoder);
       if (!this.renderer.production)
         depthPass.pushDebugGroup(`${this.constructor.name} (index: ${this.index}): depth pass`);
       for (const [uuid, depthMesh] of this.depthMeshes) {
@@ -12463,7 +12506,7 @@ struct PointShadowVSOutput {
             // Store the cleared depth
           }
         };
-        const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
+        const passEncoder = this.depthPassTarget.renderPass.beginRenderPass(commandEncoder, renderPassDescriptor);
         passEncoder.end();
       }
       !this.renderer.production && commandEncoder.popDebugGroup();
@@ -14012,7 +14055,7 @@ ${this.shaders.compute.head}`;
       if (renderPassEntry.useCustomRenderPass) {
         renderPassEntry.useCustomRenderPass(commandEncoder);
       } else {
-        const pass = commandEncoder.beginRenderPass(renderPassEntry.renderPass.descriptor);
+        const pass = renderPassEntry.renderPass.beginRenderPass(commandEncoder);
         if (!this.renderer.production) {
           pass.pushDebugGroup(
             renderPassEntry.element ? `${renderPassEntry.element.options.label} render pass using ${renderPassEntry.renderPass.options.label} descriptor` : `Render stack pass using ${renderPassEntry.renderPass.options.label}${renderPassEntry.renderTexture ? " onto " + renderPassEntry.renderTexture.options.label : ""}`
@@ -14239,6 +14282,8 @@ ${this.shaders.compute.head}`;
         top: 0,
         left: 0
       };
+      this.viewport = null;
+      this.scissorRect = null;
       this.setScene();
       this.setTasksQueues();
       this.setRendererObjects();
@@ -14287,6 +14332,78 @@ ${this.shaders.compute.head}`;
       if (this.canvas.style) {
         this.canvas.style.width = this.rectBBox.width + "px";
         this.canvas.style.height = this.rectBBox.height + "px";
+      }
+    }
+    /**
+     * Set the renderer, {@link renderPass} and {@link postProcessingPass} {@link viewport} values. Beware that if you use a {@link viewport}, you should resize it yourself so it does not overflow the `canvas` in the `onResize` callback to avoid issues.
+     * @param viewport - {@link RenderPassViewport} settings to use. Can be set to `null` to cancel the {@link viewport}.
+     */
+    setViewport(viewport = null) {
+      if (!viewport) {
+        this.viewport = null;
+        this.renderPass?.setViewport(null);
+        this.postProcessingPass?.setViewport(null);
+      } else {
+        viewport = {
+          ...{
+            width: this.canvas.width,
+            height: this.canvas.height,
+            top: 0,
+            left: 0,
+            minDepth: 0,
+            maxDepth: 1
+          },
+          ...viewport
+        };
+        let { width, height, top, left, minDepth, maxDepth } = viewport;
+        width = Math.min(width, this.canvas.width);
+        height = Math.min(height, this.canvas.height);
+        top = Math.max(0, top);
+        left = Math.max(0, left);
+        this.viewport = {
+          width,
+          height,
+          top,
+          left,
+          minDepth,
+          maxDepth
+        };
+        this.renderPass?.setViewport(this.viewport);
+        this.postProcessingPass?.setViewport(this.viewport);
+      }
+    }
+    /**
+     * Set the renderer, {@link renderPass} and {@link postProcessingPass} {@link scissorRect} values. Beware that if you use a {@link scissorRect}, you should resize it yourself so it does not overflow the `canvas` in the `onResize` callback to avoid issues.
+     * @param scissorRect - {@link RectBBox} settings to use. Can be set to `null` to cancel the {@link scissorRect}.
+     */
+    setScissorRect(scissorRect = null) {
+      if (!scissorRect) {
+        this.scissorRect = null;
+        this.renderPass?.setScissorRect(null);
+        this.postProcessingPass?.setScissorRect(null);
+      } else {
+        scissorRect = {
+          ...{
+            width: this.canvas.width,
+            height: this.canvas.height,
+            top: 0,
+            left: 0
+          },
+          ...scissorRect
+        };
+        let { width, height, top, left } = scissorRect;
+        width = Math.min(width, this.canvas.width);
+        height = Math.min(height, this.canvas.height);
+        top = Math.max(0, top);
+        left = Math.max(0, left);
+        this.scissorRect = {
+          width,
+          height,
+          top,
+          left
+        };
+        this.renderPass?.setScissorRect(this.scissorRect);
+        this.postProcessingPass?.setScissorRect(this.scissorRect);
       }
     }
     /**
@@ -15070,6 +15187,7 @@ ${this.shaders.compute.head}`;
       this.bindings = {};
       __privateSet$9(this, _shouldUpdateCameraLightsBindGroup, true);
       this.lights = [];
+      this.cameraViewport = null;
       this.setCamera(camera);
       this.setCameraBinding();
       if (this.options.lights) {
@@ -15147,6 +15265,7 @@ ${this.shaders.compute.head}`;
       }
       this.camera = camera;
       this.camera.parent = this.scene;
+      this.resizeCamera();
       if (this.bindings.camera) {
         this.camera.onMatricesChanged = () => this.onCameraMatricesChanged();
         this.bindings.camera.inputs.view.value = this.camera.viewMatrix;
@@ -15159,7 +15278,82 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Update the {@link core/renderers/GPURenderer.ProjectedMesh | projected meshes} sizes and positions when the {@link camera} {@link Camera#position | position} changes
+     * Update the {@link cameraViewport} if needed (i.e. if the camera use a different aspect ratio than the renderer).
+     */
+    updateCameraViewport() {
+      let { width, height } = this.canvas;
+      if (this.viewport) {
+        width = Math.min(width, this.viewport.width);
+        height = Math.min(height, this.viewport.height);
+      }
+      if (this.camera instanceof PerspectiveCamera && this.camera.forceAspect) {
+        width = Math.min(width, height * this.camera.forceAspect);
+        height = Math.min(width / this.camera.forceAspect, height);
+        this.setCameraViewport({
+          width,
+          height,
+          top: (this.canvas.height - height) * 0.5,
+          left: (this.canvas.width - width) * 0.5,
+          minDepth: 0,
+          maxDepth: 1
+        });
+      } else {
+        this.setCameraViewport();
+      }
+    }
+    /**
+     * Resize the {@link camera}, first by updating the {@link cameraViewport} and then resetting the {@link camera} projection.
+     */
+    resizeCamera() {
+      this.updateCameraViewport();
+      const { width, height } = this.cameraViewport ?? this.viewport ?? this.canvas;
+      if (this.camera instanceof PerspectiveCamera) {
+        this.camera?.setPerspective({
+          width,
+          height,
+          pixelRatio: this.pixelRatio
+        });
+      } else if (this.camera instanceof OrthographicCamera) {
+        const aspect = width / height;
+        const frustumSize = this.camera.top * 2;
+        this.camera.setOrthographic({
+          left: -frustumSize * aspect / 2,
+          right: frustumSize * aspect / 2,
+          pixelRatio: this.pixelRatio
+        });
+      }
+    }
+    /**
+     * Set the {@link cameraViewport} (that should be contained within the renderer {@link viewport} if any) and update the {@link renderPass} and {@link postProcessingPass} {@link viewport} values.
+     * @param viewport - {@link RenderPassViewport} settings to use if any.
+     */
+    setCameraViewport(viewport = null) {
+      this.cameraViewport = viewport;
+      if (!this.cameraViewport) {
+        this.renderPass?.setViewport(this.viewport);
+        this.postProcessingPass?.setViewport(this.viewport);
+      } else {
+        if (this.viewport) {
+          const aspect = this.cameraViewport.width / this.cameraViewport.height;
+          this.cameraViewport.width = Math.min(this.viewport.width, this.viewport.height * aspect);
+          this.cameraViewport.height = Math.min(this.cameraViewport.width / aspect, this.viewport.height);
+          this.cameraViewport.left = Math.max(0, (this.viewport.width - this.cameraViewport.width) * 0.5);
+          this.cameraViewport.top = Math.max(0, (this.viewport.height - this.cameraViewport.height) * 0.5);
+        }
+        this.renderPass?.setViewport(this.cameraViewport);
+        this.postProcessingPass?.setViewport(this.cameraViewport);
+      }
+    }
+    /**
+     * Resize the {@link camera} whenever the {@link viewport} is updated.
+     * @param viewport - {@link RenderPassViewport} settings to use if any. Can be set to `null` to cancel the {@link viewport}.
+     */
+    setViewport(viewport = null) {
+      super.setViewport(viewport);
+      this.resizeCamera();
+    }
+    /**
+     * Update the {@link core/renderers/GPURenderer.ProjectedMesh | projected meshes} sizes and positions when the {@link camera} {@link Camera#position | position} changes.
      */
     onCameraMatricesChanged() {
       this.updateCameraBindings();
@@ -15585,22 +15779,8 @@ ${this.shaders.compute.head}`;
      */
     resize(rectBBox = null) {
       this.setSize(rectBBox);
-      if (this.camera instanceof PerspectiveCamera) {
-        this.camera?.setPerspective({
-          width: this.rectBBox.width,
-          height: this.rectBBox.height,
-          pixelRatio: this.pixelRatio
-        });
-      } else if (this.camera instanceof OrthographicCamera) {
-        const aspect = this.rectBBox.width / this.rectBBox.height;
-        const frustumSize = this.camera.top * 2;
-        this.camera.setOrthographic({
-          left: -frustumSize * aspect / 2,
-          right: frustumSize * aspect / 2,
-          pixelRatio: this.pixelRatio
-        });
-      }
       this._onResizeCallback && this._onResizeCallback();
+      this.resizeCamera();
       this.resizeObjects();
       this._onAfterResizeCallback && this._onAfterResizeCallback();
     }
@@ -20726,7 +20906,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       __privateGet$4(this, _spherical).theta -= 2 * Math.PI * tempVec2b.x / this.camera.size.height;
       __privateGet$4(this, _spherical).phi -= 2 * Math.PI * tempVec2b.y / this.camera.size.height;
     } else if (this.camera instanceof OrthographicCamera) {
-      const height = this.camera.top - this.camera.bottom;
+      const height = (this.camera.top - this.camera.bottom) * 2;
       tempVec2b.multiplyScalar(1 / height);
       __privateGet$4(this, _spherical).theta -= 2 * Math.PI * tempVec2b.x / height;
       __privateGet$4(this, _spherical).phi -= 2 * Math.PI * tempVec2b.y / height;
@@ -20757,8 +20937,8 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       targetDistance *= Math.tan(this.camera.fov / 2 * Math.PI / 180);
       tempVec3$1.multiplyScalar(-(2 * tempVec2b.x * targetDistance) / this.camera.size.height);
     } else if (this.camera instanceof OrthographicCamera) {
-      targetDistance *= 1 / (this.camera.top - this.camera.bottom);
-      tempVec3$1.multiplyScalar(-(2 * tempVec2b.x * targetDistance) / (this.camera.right - this.camera.left));
+      targetDistance *= 1 / ((this.camera.top - this.camera.bottom) * 2);
+      tempVec3$1.multiplyScalar(-(2 * tempVec2b.x * targetDistance) / ((this.camera.right - this.camera.left) * 2));
     }
     __privateGet$4(this, _panDelta).add(tempVec3$1);
     tempVec3$1.set(
@@ -20769,7 +20949,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
     if (this.camera instanceof PerspectiveCamera) {
       tempVec3$1.multiplyScalar(2 * tempVec2b.y * targetDistance / this.camera.size.height);
     } else if (this.camera instanceof OrthographicCamera) {
-      tempVec3$1.multiplyScalar(2 * tempVec2b.y * targetDistance / (this.camera.top - this.camera.bottom));
+      tempVec3$1.multiplyScalar(2 * tempVec2b.y * targetDistance / ((this.camera.top - this.camera.bottom) * 2));
     }
     __privateGet$4(this, _panDelta).add(tempVec3$1);
     __privateGet$4(this, _panStart).copy(tempVec2a);
@@ -23849,7 +24029,8 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
             far: gltfCamera.perspective.zfar,
             width,
             height,
-            pixelRatio: this.renderer.pixelRatio
+            pixelRatio: this.renderer.pixelRatio,
+            ...gltfCamera.perspective.aspectRatio !== void 0 && { forceAspect: gltfCamera.perspective.aspectRatio }
           });
           camera.parent = child.node;
           this.scenesManager.cameras.push(camera);
