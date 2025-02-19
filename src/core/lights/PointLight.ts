@@ -158,28 +158,17 @@ export class PointLight extends Light {
     this.#range = Math.max(0, value)
     this.onPropertyChanged('range', this.range)
 
-    if (this.shadow) {
-      this.shadow.camera.far = this.range !== 0 ? this.range : 150
+    if (this.shadow && this.range !== 0) {
+      this.shadow.camera.far = this.range
     }
   }
 
   /**
-   * Set the {@link PointLight} position based on the {@link worldMatrix} translation and update the {@link PointShadow} view matrices.
+   * Set the {@link PointLight} position based on the {@link worldMatrix} translation.
    */
   setPosition() {
     this.onPropertyChanged('position', this.actualPosition)
   }
-
-  // explicitly disable scale, transform origin and rotation transformations
-
-  /** @ignore */
-  applyScale() {}
-
-  /** @ignore */
-  applyTransformOrigin() {}
-
-  /** @ignore */
-  applyRotation() {}
 
   /**
    * If the {@link modelMatrix | model matrix} has been updated, set the new position from the {@link worldMatrix} translation.
@@ -206,6 +195,6 @@ export class PointLight extends Light {
    */
   destroy() {
     super.destroy()
-    this.shadow.destroy()
+    this.shadow?.destroy()
   }
 }

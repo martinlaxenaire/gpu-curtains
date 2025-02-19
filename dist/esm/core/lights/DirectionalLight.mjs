@@ -37,12 +37,15 @@ class DirectionalLight extends Light {
       target,
       shadow
     };
-    this.position.copy(position);
     __privateSet(this, _direction, new Vec3());
-    this.target = target;
+    this.position.copy(position);
+    this.target = new Vec3();
     this.target.onChange(() => {
-      this.updateMatrixStack();
-      this.setDirection();
+      this.lookAt(this.target);
+    });
+    this.target.copy(target);
+    this.position.onChange(() => {
+      this.lookAt(this.target);
     });
     this.parent = this.renderer.scene;
     this.shadow = new DirectionalShadow(this.renderer, {
@@ -62,7 +65,6 @@ class DirectionalLight extends Light {
     super.setRenderer(renderer);
     if (this.shadow) {
       this.shadow.setRenderer(renderer);
-      this.shadow.updateViewMatrix();
     }
   }
   /**
@@ -74,23 +76,28 @@ class DirectionalLight extends Light {
     this.onPropertyChanged("direction", __privateGet(this, _direction));
     if (this.shadow && resetShadow) {
       this.shadow.reset();
-      this.shadow.updateViewMatrix();
     }
   }
   /**
-   * Set the {@link DirectionalLight} direction based on the {@link target} and the {@link worldMatrix} translation and update the {@link DirectionalShadow} view matrix.
+   * Set the {@link DirectionalLight} direction based on the {@link target} and the {@link worldMatrix} translation.
    */
   setDirection() {
     __privateGet(this, _direction).copy(this.target).sub(this.actualPosition).normalize();
     this.onPropertyChanged("direction", __privateGet(this, _direction));
-    this.shadow?.updateViewMatrix();
   }
-  // explicitly disable scale and transform origin transformations
-  /** @ignore */
-  applyScale() {
-  }
-  /** @ignore */
-  applyTransformOrigin() {
+  /**
+   * Rotate this {@link DirectionalLight} so it looks at the {@link Vec3 | target}.
+   * @param target - {@link Vec3} to look at. Default to `new Vec3()`.
+   */
+  lookAt(target = new Vec3()) {
+    this.updateModelMatrix();
+    this.updateWorldMatrix(true, false);
+    if (this.actualPosition.x === 0 && this.actualPosition.y !== 0 && this.actualPosition.z === 0) {
+      this.up.set(0, 0, 1);
+    } else {
+      this.up.set(0, 1, 0);
+    }
+    this.applyLookAt(this.actualPosition, target);
   }
   /**
    * If the {@link modelMatrix | model matrix} has been updated, set the new direction from the {@link worldMatrix} translation.
@@ -114,7 +121,7 @@ class DirectionalLight extends Light {
    */
   destroy() {
     super.destroy();
-    this.shadow.destroy();
+    this.shadow?.destroy();
   }
 }
 _direction = new WeakMap();

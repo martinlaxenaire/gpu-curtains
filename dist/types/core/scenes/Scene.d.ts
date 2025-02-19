@@ -19,7 +19,7 @@ export interface ProjectionStack {
     /** transparent Meshes or {@link RenderBundle} will be drawn last */
     transparent: SceneStackedObject[];
 }
-/** Meshes or render bundles will be stacked in 2 different objects whether they are projected (use a {@link core/camera/Camera.Camera | Camera}) or not. */
+/** Meshes or render bundles will be stacked in 2 different objects whether they are projected (use a {@link core/cameras/Camera.Camera | Camera}) or not. */
 export type ProjectionType = 'unProjected' | 'projected';
 /** Meshes or render bundles will be put into two stacks of projected/unprojected transparent and opaques objects arrays. */
 export type Stack = Record<ProjectionType, ProjectionStack>;

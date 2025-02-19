@@ -31,17 +31,8 @@ export class AmbientLight extends Light {
     super(renderer, { label, color, intensity, type })
   }
 
-  // explicitly disable all kinds of transformations
-
-  /** @ignore */
-  applyRotation() {}
+  // explicitly disable position as well
 
   /** @ignore */
   applyPosition() {}
-
-  /** @ignore */
-  applyScale() {}
-
-  /** @ignore */
-  applyTransformOrigin() {}
 }

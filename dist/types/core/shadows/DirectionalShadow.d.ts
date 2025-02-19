@@ -1,52 +1,30 @@
 import { Shadow, ShadowBaseParams } from './Shadow';
 import { CameraRenderer } from '../renderers/utils';
-import { Mat4, OrthographicProjectionParams } from '../../math/Mat4';
-import { Vec3 } from '../../math/Vec3';
+import { OrthographicCamera, OrthographicCameraBaseOptions } from '../cameras/OrthographicCamera';
 import { Input } from '../../types/BindGroups';
 import { DirectionalLight } from '../lights/DirectionalLight';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
 import { VertexShaderInputBaseParams } from '../shaders/full/vertex/get-vertex-shader-code';
 import { ShaderOptions } from '../../types/Materials';
-/** Defines the orthographic shadow camera. */
-export interface OrthographicShadowCamera extends OrthographicProjectionParams {
-    /** @ignore */
-    _left: number;
-    /** @ignore */
-    _right: number;
-    /** @ignore */
-    _bottom: number;
-    /** @ignore */
-    _top: number;
-    /** @ignore */
-    _near: number;
-    /** @ignore */
-    _far: number;
-    /** Orthographic camera projection {@link Mat4}. */
-    projectionMatrix: Mat4;
-    /** Orthographic camera view {@link Mat4}. */
-    viewMatrix: Mat4;
-    /** Up {@link Vec3} used to compute the view {@link Mat4}. */
-    up: Vec3;
-}
 /**
  * Base parameters used to create a {@link DirectionalShadow}.
  */
 export interface DirectionalShadowParams extends ShadowBaseParams {
     /** {@link DirectionalLight} used to create the {@link DirectionalShadow}. */
     light: DirectionalLight;
-    /** {@link OrthographicProjectionParams | Orthographic projection parameters} to use. */
-    camera?: OrthographicProjectionParams;
+    /** {@link OrthographicCameraBaseOptions | Orthographic projection parameters} to use. */
+    camera?: OrthographicCameraBaseOptions;
 }
 /** @ignore */
 export declare const directionalShadowStruct: Record<string, Input>;
 /**
- * Create a shadow map from a {@link DirectionalLight} by rendering to a depth texture using a view {@link Mat4} based on the {@link DirectionalLight} position and target and an {@link OrthographicShadowCamera | orthographic shadow camera} {@link Mat4}.
+ * Create a shadow map from a {@link DirectionalLight}  by rendering to a depth texture using a {@link OrthographicCamera}.
  */
 export declare class DirectionalShadow extends Shadow {
     /** {@link DirectionalLight} associated with this {@link DirectionalShadow}. */
     light: DirectionalLight;
-    /** {@link OrthographicShadowCamera | Orthographic shadow camera} to use for shadow calculations. */
-    camera: OrthographicShadowCamera;
+    /** Shadow {@link OrthographicCamera} to use for shadow calculations. */
+    camera: OrthographicCamera;
     /** Options used to create this {@link DirectionalShadow}. */
     options: DirectionalShadowParams;
     /**
@@ -66,21 +44,9 @@ export declare class DirectionalShadow extends Shadow {
      */
     cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender, camera }?: Omit<DirectionalShadowParams, "light">): void;
     /**
-     * Set the {@link depthComparisonSampler}, {@link depthTexture}, {@link depthPassTarget}, compute the {@link DirectionalShadow#camera.projectionMatrix | camera projection matrix} and start rendering to the shadow map.
-     */
-    init(): void;
-    /**
      * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link DirectionalLight} has been overflowed or when the {@link renderer} has changed.
      */
     reset(): void;
-    /**
-     * Update the {@link DirectionalShadow#camera.projectionMatrix | camera orthographic projection matrix} and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
-     */
-    updateProjectionMatrix(): void;
-    /**
-     * Update the {@link DirectionalShadow#camera.viewMatrix | camera view matrix} and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
-     */
-    updateViewMatrix(): void;
     /**
      * Create the {@link depthTexture}.
      */

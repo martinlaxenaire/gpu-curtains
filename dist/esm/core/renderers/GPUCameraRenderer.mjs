@@ -1,5 +1,5 @@
 import { GPURenderer } from './GPURenderer.mjs';
-import { Camera } from '../camera/Camera.mjs';
+import { PerspectiveCamera } from '../cameras/PerspectiveCamera.mjs';
 import { BufferBinding } from '../bindings/BufferBinding.mjs';
 import { BindGroup } from '../bindGroups/BindGroup.mjs';
 import { Vec3 } from '../../math/Vec3.mjs';
@@ -9,6 +9,7 @@ import { pointShadowStruct } from '../shadows/PointShadow.mjs';
 import { spotShadowStruct } from '../shadows/SpotShadow.mjs';
 import { Texture } from '../textures/Texture.mjs';
 import { Sampler } from '../samplers/Sampler.mjs';
+import { OrthographicCamera } from '../cameras/OrthographicCamera.mjs';
 
 var __typeError = (msg) => {
   throw TypeError(msg);
@@ -115,12 +116,12 @@ class GPUCameraRenderer extends GPURenderer {
   /* CAMERA */
   /**
    * Set the {@link camera}
-   * @param cameraParameters - {@link CameraBasePerspectiveOptions | parameters} used to create the {@link camera}
+   * @param cameraParameters - {@link PerspectiveCameraBaseOptions | parameters} used to create the {@link camera}
    */
   setCamera(cameraParameters) {
     const { width, height } = this.rectBBox;
     this.useCamera(
-      new Camera({
+      new PerspectiveCamera({
         fov: cameraParameters.fov,
         near: cameraParameters.near,
         far: cameraParameters.far,
@@ -539,20 +540,6 @@ class GPUCameraRenderer extends GPURenderer {
     });
   }
   /**
-   * Set our {@link camera} perspective matrix new parameters (fov, near plane and far plane)
-   * @param parameters - {@link CameraBasePerspectiveOptions | parameters} to use for the perspective
-   */
-  setPerspective({ fov, near, far } = {}) {
-    this.camera?.setPerspective({
-      fov,
-      near,
-      far,
-      width: this.rectBBox.width,
-      height: this.rectBBox.height,
-      pixelRatio: this.pixelRatio
-    });
-  }
-  /**
    * Set our {@link camera} {@link Camera#position | position}
    * @param position - new {@link Camera#position | position}
    */
@@ -598,15 +585,29 @@ class GPUCameraRenderer extends GPURenderer {
    */
   resize(rectBBox = null) {
     this.setSize(rectBBox);
-    this.setPerspective();
+    if (this.camera instanceof PerspectiveCamera) {
+      this.camera?.setPerspective({
+        width: this.rectBBox.width,
+        height: this.rectBBox.height,
+        pixelRatio: this.pixelRatio
+      });
+    } else if (this.camera instanceof OrthographicCamera) {
+      const aspect = this.rectBBox.width / this.rectBBox.height;
+      const frustumSize = this.camera.top * 2;
+      this.camera.setOrthographic({
+        left: -frustumSize * aspect / 2,
+        right: frustumSize * aspect / 2,
+        pixelRatio: this.pixelRatio
+      });
+    }
     this._onResizeCallback && this._onResizeCallback();
     this.resizeObjects();
     this._onAfterResizeCallback && this._onAfterResizeCallback();
   }
   /* RENDER */
   /**
-   * {@link createCameraLightsBindGroup | Set the camera bind group if needed} and then call our {@link GPURenderer#render | GPURenderer render method}
-   * @param commandEncoder - current {@link GPUCommandEncoder}
+   * {@link createCameraLightsBindGroup | Set the camera bind group if needed} and then call our {@link GPURenderer#render | GPURenderer render method}.
+   * @param commandEncoder - Current {@link GPUCommandEncoder}.
    */
   render(commandEncoder) {
     if (!this.ready) return;

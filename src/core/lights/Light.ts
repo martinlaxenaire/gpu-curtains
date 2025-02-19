@@ -214,6 +214,17 @@ export class Light extends Object3D {
     }
   }
 
+  // explicitly disable rotation, scale and transformation origin
+
+  /** @ignore */
+  applyRotation() {}
+
+  /** @ignore */
+  applyScale() {}
+
+  /** @ignore */
+  applyTransformOrigin() {}
+
   /**
    * Called by the {@link core/scenes/Scene.Scene | Scene} before updating the matrix stack.
    */

@@ -1,7 +1,9 @@
-import { Camera } from '../../core/camera/Camera'
+import { Camera } from '../../core/cameras/Camera'
 import { Vec2 } from '../../math/Vec2'
 import { Vec3 } from '../../math/Vec3'
 import { throwWarning } from '../../utils/utils'
+import { PerspectiveCamera } from '../../core/cameras/PerspectiveCamera'
+import { OrthographicCamera } from '../../core/cameras/OrthographicCamera'
 
 // largely based on https://github.com/oframe/ogl/blob/master/src/extras/Orbit.js
 
@@ -199,6 +201,10 @@ export class OrbitControls {
   useCamera(camera: Camera) {
     this.camera = camera
     this.camera.lookAt(this.target)
+
+    this.target.onChange(() => {
+      this.#update()
+    })
 
     // Grab initial position values
     this.#offset.copy(this.camera.position).sub(this.target)
@@ -483,8 +489,16 @@ export class OrbitControls {
   #rotate(x: number, y: number) {
     tempVec2a.set(x, y)
     tempVec2b.copy(tempVec2a).sub(this.#rotateStart).multiplyScalar(this.rotateSpeed)
-    this.#spherical.theta -= (2 * Math.PI * tempVec2b.x) / this.camera.size.height
-    this.#spherical.phi -= (2 * Math.PI * tempVec2b.y) / this.camera.size.height
+
+    if (this.camera instanceof PerspectiveCamera) {
+      this.#spherical.theta -= (2 * Math.PI * tempVec2b.x) / this.camera.size.height
+      this.#spherical.phi -= (2 * Math.PI * tempVec2b.y) / this.camera.size.height
+    } else if (this.camera instanceof OrthographicCamera) {
+      const height = this.camera.top - this.camera.bottom
+      tempVec2b.multiplyScalar(1 / height)
+      this.#spherical.theta -= (2 * Math.PI * tempVec2b.x) / height
+      this.#spherical.phi -= (2 * Math.PI * tempVec2b.y) / height
+    }
 
     this.#spherical.theta = Math.min(this.maxAzimuthAngle, Math.max(this.minAzimuthAngle, this.#spherical.theta))
     this.#spherical.phi = Math.min(this.maxPolarAngle, Math.max(this.minPolarAngle, this.#spherical.phi))
@@ -508,7 +522,6 @@ export class OrbitControls {
 
     tempVec3.copy(this.camera.position).sub(this.target)
     let targetDistance = tempVec3.length()
-    targetDistance *= Math.tan(((this.camera.fov / 2) * Math.PI) / 180.0)
 
     // pan left
     // get right direction axis accounting for camera transform
@@ -518,7 +531,13 @@ export class OrbitControls {
       this.camera.modelMatrix.elements[2]
     )
 
-    tempVec3.multiplyScalar(-(2 * tempVec2b.x * targetDistance) / this.camera.size.height)
+    if (this.camera instanceof PerspectiveCamera) {
+      targetDistance *= Math.tan(((this.camera.fov / 2) * Math.PI) / 180.0)
+      tempVec3.multiplyScalar(-(2 * tempVec2b.x * targetDistance) / this.camera.size.height)
+    } else if (this.camera instanceof OrthographicCamera) {
+      targetDistance *= 1 / (this.camera.top - this.camera.bottom)
+      tempVec3.multiplyScalar(-(2 * tempVec2b.x * targetDistance) / (this.camera.right - this.camera.left))
+    }
     this.#panDelta.add(tempVec3)
 
     // pan up
@@ -528,7 +547,13 @@ export class OrbitControls {
       this.camera.modelMatrix.elements[5],
       this.camera.modelMatrix.elements[6]
     )
-    tempVec3.multiplyScalar((2 * tempVec2b.y * targetDistance) / this.camera.size.height)
+
+    if (this.camera instanceof PerspectiveCamera) {
+      tempVec3.multiplyScalar((2 * tempVec2b.y * targetDistance) / this.camera.size.height)
+    } else if (this.camera instanceof OrthographicCamera) {
+      tempVec3.multiplyScalar((2 * tempVec2b.y * targetDistance) / (this.camera.top - this.camera.bottom))
+    }
+
     this.#panDelta.add(tempVec3)
 
     this.#panStart.copy(tempVec2a)

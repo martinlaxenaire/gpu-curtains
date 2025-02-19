@@ -636,6 +636,11 @@ window.addEventListener('load', async () => {
     directionalLightPosFolder.add(directionalLight.position, 'x', -20, 20, 0.1)
     directionalLightPosFolder.add(directionalLight.position, 'y', -20, 20, 0.1)
     directionalLightPosFolder.add(directionalLight.position, 'z', -20, 20, 0.1)
+
+    const directionalLightTargetFolder = directionalLightFolder.addFolder('Target')
+    directionalLightTargetFolder.add(directionalLight.target, 'x', -20, 20, 0.1)
+    directionalLightTargetFolder.add(directionalLight.target, 'y', 0, 20, 0.1)
+    directionalLightTargetFolder.add(directionalLight.target, 'z', -20, 20, 0.1)
   })
 
   directionalLightsFolder.close()

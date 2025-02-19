@@ -49,7 +49,7 @@ export declare class GPUCurtainsRenderer extends GPUCameraRenderer {
      */
     removeDOMTexture(texture: DOMTexture): void;
     /**
-     * Update the {@link domObjects} sizes and positions when the {@link camera} {@link core/camera/Camera.Camera#position | position} or {@link core/camera/Camera.Camera#size | size} change.
+     * Update the {@link domObjects} sizes and positions when the {@link camera} {@link core/cameras/PerspectiveCamera.PerspectiveCamera#position | position} or {@link core/cameras/PerspectiveCamera.PerspectiveCamera#size | size} changed.
      */
     onCameraMatricesChanged(): void;
     /**

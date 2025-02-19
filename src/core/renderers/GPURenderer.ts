@@ -71,7 +71,7 @@ export interface GPURendererOptions extends GPURendererParams {
 
 /** Any Mesh that is bound to a DOM Element */
 export type DOMProjectedMesh = DOMMesh | Plane
-/** Any Mesh that is projected (i.e use a {@link core/camera/Camera.Camera | Camera} to compute a model view projection matrix) */
+/** Any Mesh that is projected (i.e use a {@link core/cameras/Camera.Camera | Camera} to compute a model view projection matrix) */
 export type ProjectedMesh = Mesh | DOMProjectedMesh
 /** Any Mesh that can be drawn (including fullscreen quad meshes) and that will be put in the {@link Scene} meshes stacks */
 export type SceneStackedMesh = ProjectedMesh | FullscreenPlane

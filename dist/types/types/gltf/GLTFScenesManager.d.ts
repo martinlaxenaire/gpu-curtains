@@ -3,7 +3,7 @@ import { Sampler } from '../../core/samplers/Sampler';
 import { ProjectedMeshParameters } from '../../core/meshes/mixins/ProjectedMeshBaseMixin';
 import { Object3D } from '../../core/objects3D/Object3D';
 import { Box3 } from '../../math/Box3';
-import { Camera } from '../../core/camera/Camera';
+import { Camera } from '../../core/cameras/Camera';
 import { BufferBinding } from '../../core/bindings/BufferBinding';
 import { TargetsAnimationsManager } from '../../extras/animations/TargetsAnimationsManager';
 import { Mat4 } from '../../math/Mat4';

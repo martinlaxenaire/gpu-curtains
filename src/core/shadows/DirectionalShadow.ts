@@ -1,6 +1,7 @@
 import { Shadow, ShadowBaseParams, shadowStruct } from './Shadow'
 import { CameraRenderer } from '../renderers/utils'
-import { Mat4, OrthographicProjectionParams } from '../../math/Mat4'
+import { OrthographicCamera, OrthographicCameraBaseOptions } from '../cameras/OrthographicCamera'
+import { Mat4 } from '../../math/Mat4'
 import { Vec3 } from '../../math/Vec3'
 import { Input } from '../../types/BindGroups'
 import { DirectionalLight } from '../lights/DirectionalLight'
@@ -10,36 +11,14 @@ import { VertexShaderInputBaseParams } from '../shaders/full/vertex/get-vertex-s
 import { ShaderOptions } from '../../types/Materials'
 import { getDefaultDirectionalShadowDepthVs } from '../shaders/full/vertex/get-default-directional-shadow-depth-vertex-shader-code'
 
-/** Defines the orthographic shadow camera. */
-export interface OrthographicShadowCamera extends OrthographicProjectionParams {
-  /** @ignore */
-  _left: number
-  /** @ignore */
-  _right: number
-  /** @ignore */
-  _bottom: number
-  /** @ignore */
-  _top: number
-  /** @ignore */
-  _near: number
-  /** @ignore */
-  _far: number
-  /** Orthographic camera projection {@link Mat4}. */
-  projectionMatrix: Mat4
-  /** Orthographic camera view {@link Mat4}. */
-  viewMatrix: Mat4
-  /** Up {@link Vec3} used to compute the view {@link Mat4}. */
-  up: Vec3
-}
-
 /**
  * Base parameters used to create a {@link DirectionalShadow}.
  */
 export interface DirectionalShadowParams extends ShadowBaseParams {
   /** {@link DirectionalLight} used to create the {@link DirectionalShadow}. */
   light: DirectionalLight
-  /** {@link OrthographicProjectionParams | Orthographic projection parameters} to use. */
-  camera?: OrthographicProjectionParams
+  /** {@link OrthographicCameraBaseOptions | Orthographic projection parameters} to use. */
+  camera?: OrthographicCameraBaseOptions
 }
 
 /** @ignore */
@@ -56,14 +35,14 @@ export const directionalShadowStruct: Record<string, Input> = {
 }
 
 /**
- * Create a shadow map from a {@link DirectionalLight} by rendering to a depth texture using a view {@link Mat4} based on the {@link DirectionalLight} position and target and an {@link OrthographicShadowCamera | orthographic shadow camera} {@link Mat4}.
+ * Create a shadow map from a {@link DirectionalLight}  by rendering to a depth texture using a {@link OrthographicCamera}.
  */
 export class DirectionalShadow extends Shadow {
   /** {@link DirectionalLight} associated with this {@link DirectionalShadow}. */
   light: DirectionalLight
 
-  /** {@link OrthographicShadowCamera | Orthographic shadow camera} to use for shadow calculations. */
-  camera: OrthographicShadowCamera
+  /** Shadow {@link OrthographicCamera} to use for shadow calculations. */
+  camera: OrthographicCamera
 
   /** Options used to create this {@link DirectionalShadow}. */
   options: DirectionalShadowParams
@@ -90,7 +69,7 @@ export class DirectionalShadow extends Shadow {
         bottom: -10,
         top: 10,
         near: 0.1,
-        far: 50,
+        far: 150,
       },
     } = {} as DirectionalShadowParams
   ) {
@@ -110,37 +89,22 @@ export class DirectionalShadow extends Shadow {
       camera,
     }
 
-    this.camera = {
-      projectionMatrix: new Mat4(),
-      viewMatrix: new Mat4(),
-      up: new Vec3(0, 1, 0),
-      _left: camera.left,
-      _right: camera.right,
-      _bottom: camera.bottom,
-      _top: camera.top,
-      _near: camera.near,
-      _far: camera.far,
-    }
-
-    // camera props getters and setters
-    const _self = this
-    const cameraProps = ['left', 'right', 'bottom', 'top', 'near', 'far'] as Array<keyof OrthographicProjectionParams>
-
-    cameraProps.forEach((prop) => {
-      Object.defineProperty(_self.camera, prop, {
-        get() {
-          return _self.camera['_' + prop]
-        },
-        set(v) {
-          _self.camera['_' + prop] = v
-          _self.updateProjectionMatrix()
-        },
-      })
+    this.camera = new OrthographicCamera({
+      left: camera.left,
+      right: camera.right,
+      top: camera.top,
+      bottom: camera.bottom,
+      near: camera.near,
+      far: camera.far,
+      onMatricesChanged: () => {
+        this.onPropertyChanged('projectionMatrix', this.camera.projectionMatrix)
+        this.onPropertyChanged('viewMatrix', this.camera.viewMatrix)
+      },
     })
 
-    // this.camera.up.onChange(() => {
-    //   this.updateProjectionMatrix()
-    // })
+    // force camera position to 0
+    this.camera.position.set(0)
+    this.camera.parent = this.light
   }
 
   /**
@@ -164,21 +128,13 @@ export class DirectionalShadow extends Shadow {
     if (camera) {
       this.camera.left = camera.left ?? -10
       this.camera.right = camera.right ?? 10
+      this.camera.top = camera.top ?? 10
       this.camera.bottom = camera.bottom ?? -10
-      this.camera.top = camera.right ?? 10
       this.camera.near = camera.near ?? 0.1
-      this.camera.far = camera.far ?? 50
+      this.camera.far = camera.far ?? 150
     }
 
     super.cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender })
-  }
-
-  /**
-   * Set the {@link depthComparisonSampler}, {@link depthTexture}, {@link depthPassTarget}, compute the {@link DirectionalShadow#camera.projectionMatrix | camera projection matrix} and start rendering to the shadow map.
-   */
-  init() {
-    super.init()
-    this.updateProjectionMatrix()
   }
 
   /**
@@ -187,45 +143,8 @@ export class DirectionalShadow extends Shadow {
   reset() {
     this.setRendererBinding()
     super.reset()
-    if (this.isActive) {
-      this.onPropertyChanged('projectionMatrix', this.camera.projectionMatrix)
-      this.onPropertyChanged('viewMatrix', this.camera.viewMatrix)
-    }
-  }
-
-  /**
-   * Update the {@link DirectionalShadow#camera.projectionMatrix | camera orthographic projection matrix} and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
-   */
-  updateProjectionMatrix() {
-    this.camera.projectionMatrix.identity().makeOrthographic({
-      left: this.camera.left,
-      right: this.camera.right,
-      bottom: this.camera.bottom,
-      top: this.camera.top,
-      near: this.camera.near,
-      far: this.camera.far,
-    })
 
     this.onPropertyChanged('projectionMatrix', this.camera.projectionMatrix)
-  }
-
-  /**
-   * Update the {@link DirectionalShadow#camera.viewMatrix | camera view matrix} and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
-   */
-  updateViewMatrix() {
-    if (this.light.actualPosition.x === 0 && this.light.actualPosition.y !== 0 && this.light.actualPosition.z === 0) {
-      this.camera.up.set(0, 0, 1)
-    } else if (
-      this.light.actualPosition.x === 0 &&
-      this.light.actualPosition.y === 0 &&
-      this.light.actualPosition.z !== 0
-    ) {
-      this.camera.up.set(1, 0, 0)
-    } else {
-      this.camera.up.set(0, 1, 0)
-    }
-
-    this.camera.viewMatrix.makeView(this.light.actualPosition, this.light.target, this.camera.up)
     this.onPropertyChanged('viewMatrix', this.camera.viewMatrix)
   }
 

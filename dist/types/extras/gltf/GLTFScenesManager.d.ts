@@ -37,7 +37,7 @@ import { ChildDescriptor, MeshDescriptor, MeshDescriptorMaterialParams, Primitiv
  *     - [x] Linear
  *     - [x] CubicSpline
  * - [x] Cameras
- *   - [ ] OrthographicCamera
+ *   - [x] OrthographicCamera
  *   - [x] PerspectiveCamera
  * - [x] Materials
  * - [x] Skins

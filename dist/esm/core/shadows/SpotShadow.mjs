@@ -1,6 +1,6 @@
 import { shadowStruct, Shadow } from './Shadow.mjs';
 import { Vec2 } from '../../math/Vec2.mjs';
-import { Camera } from '../camera/Camera.mjs';
+import { PerspectiveCamera } from '../cameras/PerspectiveCamera.mjs';
 import { Texture } from '../textures/Texture.mjs';
 import { getDefaultSpotShadowDepthVs } from '../shaders/full/vertex/get-default-spot-shadow-depth-vertex-shader-code.mjs';
 
@@ -37,7 +37,7 @@ class SpotShadow extends Shadow {
       autoRender
     });
     this.focus = 1;
-    this.camera = new Camera({
+    this.camera = new PerspectiveCamera({
       near: 0.1,
       far: this.light.range !== 0 ? this.light.range : 150,
       fov: 180 / Math.PI * 2 * this.light.angle * this.focus,
@@ -67,7 +67,7 @@ class SpotShadow extends Shadow {
     this.onPropertyChanged("viewMatrix", this.camera.viewMatrix);
   }
   /**
-   * Set the {@link Camera#fov | camera fov} based on the {@link SpotLight#angle | SpotLight angle}.
+   * Set the {@link PerspectiveCamera#fov | camera fov} based on the {@link SpotLight#angle | SpotLight angle}.
    */
   setCameraFov() {
     this.camera.fov = 180 / Math.PI * 2 * this.light.angle * this.focus;

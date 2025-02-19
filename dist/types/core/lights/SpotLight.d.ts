@@ -89,7 +89,7 @@ export declare class SpotLight extends Light {
      */
     reset(resetShadow?: boolean): void;
     /**
-     * Set the {@link SpotLight} position and direction based on the {@link target} and the {@link worldMatrix} translation and update the {@link SpotShadow} view matrix.
+     * Set the {@link SpotLight} position and direction based on the {@link target} and the {@link worldMatrix} translation.
      */
     setPositionDirection(): void;
     /**
@@ -122,17 +122,13 @@ export declare class SpotLight extends Light {
      * @param value - The new {@link SpotLight} range.
      */
     set range(value: number);
-    /** @ignore */
-    applyScale(): void;
-    /** @ignore */
-    applyTransformOrigin(): void;
     /**
      * Rotate this {@link SpotLight} so it looks at the {@link Vec3 | target}.
      * @param target - {@link Vec3} to look at. Default to `new Vec3()`.
      */
     lookAt(target?: Vec3): void;
     /**
-     * If the {@link modelMatrix | model matrix} has been updated, set the new direction from the {@link worldMatrix} translation.
+     * If the {@link modelMatrix | model matrix} has been updated, set the new position and direction from the {@link worldMatrix} translation.
      */
     updateMatrixStack(): void;
     /**

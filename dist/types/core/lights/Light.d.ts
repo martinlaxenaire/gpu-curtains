@@ -97,6 +97,12 @@ export declare class Light extends Object3D {
      * @param lightsType - {@link type} of light.
      */
     onMaxLightOverflow(lightsType: LightsType): void;
+    /** @ignore */
+    applyRotation(): void;
+    /** @ignore */
+    applyScale(): void;
+    /** @ignore */
+    applyTransformOrigin(): void;
     /**
      * Called by the {@link core/scenes/Scene.Scene | Scene} before updating the matrix stack.
      */

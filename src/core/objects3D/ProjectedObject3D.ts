@@ -2,7 +2,7 @@ import { Object3D, Object3DMatricesType, Object3DTransformMatrix } from './Objec
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { CameraRenderer, isCameraRenderer } from '../renderers/utils'
 import { Mat4 } from '../../math/Mat4'
-import { Camera } from '../camera/Camera'
+import { Camera } from '../cameras/Camera'
 import { Mat3 } from '../../math/Mat3'
 
 /**

@@ -102,13 +102,17 @@ export class DirectionalLight extends Light {
       shadow,
     }
 
+    this.#direction = new Vec3()
     this.position.copy(position)
 
-    this.#direction = new Vec3()
-    this.target = target
+    this.target = new Vec3()
     this.target.onChange(() => {
-      this.updateMatrixStack()
-      this.setDirection()
+      this.lookAt(this.target)
+    })
+    this.target.copy(target)
+
+    this.position.onChange(() => {
+      this.lookAt(this.target)
     })
 
     this.parent = this.renderer.scene
@@ -133,7 +137,6 @@ export class DirectionalLight extends Light {
     if (this.shadow) {
       //this.shadow.updateIndex(this.index)
       this.shadow.setRenderer(renderer)
-      this.shadow.updateViewMatrix()
     }
   }
 
@@ -147,27 +150,34 @@ export class DirectionalLight extends Light {
 
     if (this.shadow && resetShadow) {
       this.shadow.reset()
-      this.shadow.updateViewMatrix()
     }
   }
 
   /**
-   * Set the {@link DirectionalLight} direction based on the {@link target} and the {@link worldMatrix} translation and update the {@link DirectionalShadow} view matrix.
+   * Set the {@link DirectionalLight} direction based on the {@link target} and the {@link worldMatrix} translation.
    */
   setDirection() {
     this.#direction.copy(this.target).sub(this.actualPosition).normalize()
     this.onPropertyChanged('direction', this.#direction)
-
-    this.shadow?.updateViewMatrix()
   }
 
-  // explicitly disable scale and transform origin transformations
+  /**
+   * Rotate this {@link DirectionalLight} so it looks at the {@link Vec3 | target}.
+   * @param target - {@link Vec3} to look at. Default to `new Vec3()`.
+   */
+  lookAt(target: Vec3 = new Vec3()) {
+    this.updateModelMatrix()
+    this.updateWorldMatrix(true, false)
 
-  /** @ignore */
-  applyScale() {}
+    if (this.actualPosition.x === 0 && this.actualPosition.y !== 0 && this.actualPosition.z === 0) {
+      this.up.set(0, 0, 1)
+    } else {
+      this.up.set(0, 1, 0)
+    }
 
-  /** @ignore */
-  applyTransformOrigin() {}
+    // since we know it's a light, inverse position and target
+    this.applyLookAt(this.actualPosition, target)
+  }
 
   /**
    * If the {@link modelMatrix | model matrix} has been updated, set the new direction from the {@link worldMatrix} translation.
@@ -194,6 +204,6 @@ export class DirectionalLight extends Light {
    */
   destroy() {
     super.destroy()
-    this.shadow.destroy()
+    this.shadow?.destroy()
   }
 }

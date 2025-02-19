@@ -3,7 +3,7 @@ import { CameraRenderer } from '../renderers/utils'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { Vec2 } from '../../math/Vec2'
 import { Input } from '../../types/BindGroups'
-import { Camera } from '../camera/Camera'
+import { PerspectiveCamera } from '../cameras/PerspectiveCamera'
 import { SpotLight } from '../lights/SpotLight'
 import { VertexShaderInputBaseParams } from '../shaders/full/vertex/get-vertex-shader-code'
 import { ShaderOptions } from '../../types/Materials'
@@ -32,7 +32,7 @@ export const spotShadowStruct: Record<string, Input> = {
 }
 
 /**
- * Create a shadow map from a {@link SpotLight} by rendering to a depth texture using a {@link Camera}.
+ * Create a shadow map from a {@link SpotLight} by rendering to a depth texture using a {@link PerspectiveCamera}.
  */
 // TODO there's a known issue where the shadow flickers when updating the light target
 // we should try to fix that one day...
@@ -41,8 +41,8 @@ export class SpotShadow extends Shadow {
   light: SpotLight
   /** Options used to create this {@link SpotShadow}. */
   options: SpotShadowParams
-  /** Shadow {@link Camera} used for shadow calculations. */
-  camera: Camera
+  /** Shadow {@link PerspectiveCamera} used for shadow calculations. */
+  camera: PerspectiveCamera
   /** Focus of the {@link camera}. Default to `1`. */
   focus: number
 
@@ -73,7 +73,7 @@ export class SpotShadow extends Shadow {
     // arbitrary
     this.focus = 1
 
-    this.camera = new Camera({
+    this.camera = new PerspectiveCamera({
       near: 0.1,
       far: this.light.range !== 0 ? this.light.range : 150,
       fov: (180 / Math.PI) * 2 * this.light.angle * this.focus,
@@ -109,7 +109,7 @@ export class SpotShadow extends Shadow {
   }
 
   /**
-   * Set the {@link Camera#fov | camera fov} based on the {@link SpotLight#angle | SpotLight angle}.
+   * Set the {@link PerspectiveCamera#fov | camera fov} based on the {@link SpotLight#angle | SpotLight angle}.
    */
   setCameraFov() {
     this.camera.fov = (180 / Math.PI) * 2 * this.light.angle * this.focus

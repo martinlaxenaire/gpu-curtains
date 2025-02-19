@@ -1287,14 +1287,14 @@
      *  * the given the left, right, bottom, and top dimensions to -1 +1 in x, and y
      *  * and 0 to +1 in z.
      *
-     * @param parameters - {@link OrthographicProjectionParams | parameters} used to create the camera orthographic matrix.
+     * @param parameters - {@link OrthographicCameraBaseOptions | parameters} used to create the camera orthographic matrix.
      * @returns - the camera orthographic {@link Mat4} matrix.
      */
     makeOrthographic({
-      left = -5,
-      right = 5,
-      bottom = -5,
-      top = 5,
+      left = -1,
+      right = 1,
+      bottom = -1,
+      top = 1,
       near = 0.1,
       far = 50
     }) {
@@ -2639,13 +2639,13 @@
     }
   }
 
-  var __typeError$r = (msg) => {
+  var __typeError$t = (msg) => {
     throw TypeError(msg);
   };
-  var __accessCheck$r = (obj, member, msg) => member.has(obj) || __typeError$r("Cannot " + msg);
-  var __privateGet$p = (obj, member, getter) => (__accessCheck$r(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
-  var __privateAdd$r = (obj, member, value) => member.has(obj) ? __typeError$r("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  var __privateSet$o = (obj, member, value, setter) => (__accessCheck$r(obj, member, "write to private field"), member.set(obj, value), value);
+  var __accessCheck$t = (obj, member, msg) => member.has(obj) || __typeError$t("Cannot " + msg);
+  var __privateGet$r = (obj, member, getter) => (__accessCheck$t(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$t = (obj, member, value) => member.has(obj) ? __typeError$t("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$q = (obj, member, value, setter) => (__accessCheck$t(obj, member, "write to private field"), member.set(obj, value), value);
   var _parent;
   const _BufferBinding = class _BufferBinding extends Binding {
     /**
@@ -2670,7 +2670,7 @@
       bindingType = bindingType ?? "uniform";
       super({ label, name, bindingType, visibility });
       /** @ignore */
-      __privateAdd$r(this, _parent);
+      __privateAdd$t(this, _parent);
       this.options = {
         ...this.options,
         useStruct,
@@ -2731,7 +2731,7 @@
      * @returns - The {@link BufferBinding} parent if any.
      */
     get parent() {
-      return __privateGet$p(this, _parent);
+      return __privateGet$r(this, _parent);
     }
     /**
      * Set the new {@link BufferBinding} parent.
@@ -2782,7 +2782,7 @@
         this.parentView = null;
         this.parentViewSetBufferEls = null;
       }
-      __privateSet$o(this, _parent, value);
+      __privateSet$q(this, _parent, value);
     }
     /**
      * Round the given size value to the nearest minimum {@link GPUDevice} buffer offset alignment.
@@ -3887,13 +3887,13 @@
     return 1 + Math.log2(maxSize) | 0;
   };
 
-  var __typeError$q = (msg) => {
+  var __typeError$s = (msg) => {
     throw TypeError(msg);
   };
-  var __accessCheck$q = (obj, member, msg) => member.has(obj) || __typeError$q("Cannot " + msg);
-  var __privateGet$o = (obj, member, getter) => (__accessCheck$q(obj, member, "read from private field"), member.get(obj));
-  var __privateAdd$q = (obj, member, value) => member.has(obj) ? __typeError$q("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  var __privateSet$n = (obj, member, value, setter) => (__accessCheck$q(obj, member, "write to private field"), member.set(obj, value), value);
+  var __accessCheck$s = (obj, member, msg) => member.has(obj) || __typeError$s("Cannot " + msg);
+  var __privateGet$q = (obj, member, getter) => (__accessCheck$s(obj, member, "read from private field"), member.get(obj));
+  var __privateAdd$s = (obj, member, value) => member.has(obj) ? __typeError$s("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$p = (obj, member, value, setter) => (__accessCheck$s(obj, member, "write to private field"), member.set(obj, value), value);
   var _autoResize;
   const defaultTextureParams = {
     label: "Texture",
@@ -3921,7 +3921,7 @@
      */
     constructor(renderer, parameters = defaultTextureParams) {
       /** Whether this texture should be automatically resized when the {@link Renderer renderer} size changes. Default to true. */
-      __privateAdd$q(this, _autoResize, true);
+      __privateAdd$s(this, _autoResize, true);
       renderer = isRenderer(renderer, parameters.label ? parameters.label + " Texture" : "Texture");
       this.type = "Texture";
       this.renderer = renderer;
@@ -3948,7 +3948,7 @@
         depth: this.options.viewDimension.indexOf("cube") !== -1 ? 6 : 1
       };
       if (this.options.fixedSize) {
-        __privateSet$n(this, _autoResize, false);
+        __privateSet$p(this, _autoResize, false);
       }
       this.setBindings();
       this.renderer.addTexture(this);
@@ -3965,7 +3965,7 @@
       renderer = isRenderer(renderer, this.options.label + " Texture");
       this.renderer = renderer;
       this.renderer.addTexture(this);
-      if (__privateGet$o(this, _autoResize) && (this.size.width !== this.renderer.canvas.width * this.options.qualityRatio || this.size.height !== this.renderer.canvas.height * this.options.qualityRatio)) {
+      if (__privateGet$q(this, _autoResize) && (this.size.width !== this.renderer.canvas.width * this.options.qualityRatio || this.size.height !== this.renderer.canvas.height * this.options.qualityRatio)) {
         this.resize();
       }
     }
@@ -4096,7 +4096,7 @@
      * @param size - the optional new {@link TextureSize | size} to set.
      */
     resize(size = null) {
-      if (!__privateGet$o(this, _autoResize)) return;
+      if (!__privateGet$q(this, _autoResize)) return;
       if (!size) {
         size = {
           width: Math.floor(this.renderer.canvas.width * this.options.qualityRatio),
@@ -4449,14 +4449,14 @@
     }
   }
 
-  var __typeError$p = (msg) => {
+  var __typeError$r = (msg) => {
     throw TypeError(msg);
   };
-  var __accessCheck$p = (obj, member, msg) => member.has(obj) || __typeError$p("Cannot " + msg);
-  var __privateGet$n = (obj, member, getter) => (__accessCheck$p(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
-  var __privateAdd$p = (obj, member, value) => member.has(obj) ? __typeError$p("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  var __privateSet$m = (obj, member, value, setter) => (__accessCheck$p(obj, member, "write to private field"), member.set(obj, value), value);
-  var __privateMethod$a = (obj, member, method) => (__accessCheck$p(obj, member, "access private method"), method);
+  var __accessCheck$r = (obj, member, msg) => member.has(obj) || __typeError$r("Cannot " + msg);
+  var __privateGet$p = (obj, member, getter) => (__accessCheck$r(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$r = (obj, member, value) => member.has(obj) ? __typeError$r("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$o = (obj, member, value, setter) => (__accessCheck$r(obj, member, "write to private field"), member.set(obj, value), value);
+  var __privateMethod$a = (obj, member, method) => (__accessCheck$r(obj, member, "access private method"), method);
   var _sourcesLoaded, _sourcesUploaded, _rotation, _MediaTexture_instances, setSourceLoaded_fn;
   const defaultMediaTextureParams = {
     label: "Texture",
@@ -4499,13 +4499,13 @@
           fixedSize: { width: parameters.fixedSize?.width ?? 1, height: parameters.fixedSize?.height ?? 1 }
         }
       });
-      __privateAdd$p(this, _MediaTexture_instances);
+      __privateAdd$r(this, _MediaTexture_instances);
       /** Whether the sources have been loaded. */
-      __privateAdd$p(this, _sourcesLoaded);
+      __privateAdd$r(this, _sourcesLoaded);
       /** Whether the sources have been uploaded to the GPU, handled by the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#texturesQueue | GPUDeviceManager texturesQueue array}. */
-      __privateAdd$p(this, _sourcesUploaded);
+      __privateAdd$r(this, _sourcesUploaded);
       /** Rotation to apply to the {@link Texture} if {@link MediaTextureParams#useTransform | useTransform} parameter has been set to `true`. */
-      __privateAdd$p(this, _rotation);
+      __privateAdd$r(this, _rotation);
       // callbacks / events
       /** function assigned to the {@link onSourceLoaded} callback */
       this._onSourceLoadedCallback = (source) => {
@@ -4536,7 +4536,7 @@
         this.options.sourcesTypes = parameters.fromTexture.options.sourcesTypes;
         this.sources = parameters.fromTexture.sources;
       }
-      __privateSet$m(this, _rotation, 0);
+      __privateSet$o(this, _rotation, 0);
       this.offset = new Vec2().onChange(() => this.updateModelMatrix());
       this.scale = new Vec2(1).onChange(() => this.updateModelMatrix());
       this.transformOrigin = new Vec2().onChange(() => this.updateModelMatrix());
@@ -4566,7 +4566,7 @@
      * Get whether all our {@link sources} have been loaded.
      */
     get sourcesLoaded() {
-      return __privateGet$n(this, _sourcesLoaded);
+      return __privateGet$p(this, _sourcesLoaded);
     }
     /**
      * Set whether all our {@link sources} have been loaded.
@@ -4576,13 +4576,13 @@
       if (value && !this.sourcesLoaded) {
         this._onAllSourcesLoadedCallback && this._onAllSourcesLoadedCallback();
       }
-      __privateSet$m(this, _sourcesLoaded, value);
+      __privateSet$o(this, _sourcesLoaded, value);
     }
     /**
      * Get whether all our {@link sources} have been uploaded.
      */
     get sourcesUploaded() {
-      return __privateGet$n(this, _sourcesUploaded);
+      return __privateGet$p(this, _sourcesUploaded);
     }
     /**
      * Set whether all our {@link sources} have been uploaded.
@@ -4592,7 +4592,7 @@
       if (value && !this.sourcesUploaded) {
         this._onAllSourcesUploadedCallback && this._onAllSourcesUploadedCallback();
       }
-      __privateSet$m(this, _sourcesUploaded, value);
+      __privateSet$o(this, _sourcesUploaded, value);
     }
     /* TRANSFORM */
     /**
@@ -4600,14 +4600,14 @@
      * @returns - the actual {@link rotation} value.
      */
     get rotation() {
-      return __privateGet$n(this, _rotation);
+      return __privateGet$p(this, _rotation);
     }
     /**
      * Set the actual {@link rotation} value and update the {@link modelMatrix}.
      * @param value - new {@link rotation} value to use.
      */
     set rotation(value) {
-      __privateSet$m(this, _rotation, value);
+      __privateSet$o(this, _rotation, value);
       this.updateModelMatrix();
     }
     /**
@@ -5104,12 +5104,12 @@
   };
   let MediaTexture = _MediaTexture;
 
-  var __typeError$o = (msg) => {
+  var __typeError$q = (msg) => {
     throw TypeError(msg);
   };
-  var __accessCheck$o = (obj, member, msg) => member.has(obj) || __typeError$o("Cannot " + msg);
-  var __privateGet$m = (obj, member, getter) => (__accessCheck$o(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
-  var __privateAdd$o = (obj, member, value) => member.has(obj) ? __typeError$o("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __accessCheck$q = (obj, member, msg) => member.has(obj) || __typeError$q("Cannot " + msg);
+  var __privateGet$o = (obj, member, getter) => (__accessCheck$q(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$q = (obj, member, value) => member.has(obj) ? __typeError$q("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   var _parentRatio, _sourceRatio, _coverScale, _negatedOrigin, _rotationMatrix;
   const defaultDOMTextureParams = {
     name: "texture",
@@ -5139,27 +5139,27 @@
        * {@link Vec2} used for {@link modelMatrix} calculations, based on {@link mesh} {@link core/DOM/DOMElement.RectSize | size}.
        * @private
        */
-      __privateAdd$o(this, _parentRatio, new Vec2(1));
+      __privateAdd$q(this, _parentRatio, new Vec2(1));
       /**
        * {@link Vec2} used for {@link modelMatrix} calculations, based on {@link size | source size}.
        * @private
        */
-      __privateAdd$o(this, _sourceRatio, new Vec2(1));
+      __privateAdd$q(this, _sourceRatio, new Vec2(1));
       /**
        * {@link Vec2} used for {@link modelMatrix} calculations, based on #parentRatio and #sourceRatio.
        * @private
        */
-      __privateAdd$o(this, _coverScale, new Vec2(1));
+      __privateAdd$q(this, _coverScale, new Vec2(1));
       /**
        * {@link Vec2} used for {@link modelMatrix} calculations, based on {@link transformOrigin}.
        * @private
        */
-      __privateAdd$o(this, _negatedOrigin, new Vec2());
+      __privateAdd$q(this, _negatedOrigin, new Vec2());
       /**
        * Rotation {@link Mat3} based on texture {@link rotation}.
        * @private
        */
-      __privateAdd$o(this, _rotationMatrix, new Mat3());
+      __privateAdd$q(this, _rotationMatrix, new Mat3());
       this.transformOrigin.set(0.5, 0.5);
       this.type = "DOMTexture";
       this.renderer.addDOMTexture(this);
@@ -5193,17 +5193,17 @@
       const parentRatio = parentWidth / parentHeight;
       const sourceRatio = this.size.width / this.size.height;
       if (parentWidth > parentHeight) {
-        __privateGet$m(this, _parentRatio).set(parentRatio, 1);
-        __privateGet$m(this, _sourceRatio).set(1 / sourceRatio, 1);
+        __privateGet$o(this, _parentRatio).set(parentRatio, 1);
+        __privateGet$o(this, _sourceRatio).set(1 / sourceRatio, 1);
       } else {
-        __privateGet$m(this, _parentRatio).set(1, 1 / parentRatio);
-        __privateGet$m(this, _sourceRatio).set(1, sourceRatio);
+        __privateGet$o(this, _parentRatio).set(1, 1 / parentRatio);
+        __privateGet$o(this, _sourceRatio).set(1, sourceRatio);
       }
-      const coverRatio = parentRatio > sourceRatio !== parentWidth > parentHeight ? 1 : parentWidth > parentHeight ? __privateGet$m(this, _parentRatio).x * __privateGet$m(this, _sourceRatio).x : __privateGet$m(this, _sourceRatio).y * __privateGet$m(this, _parentRatio).y;
-      __privateGet$m(this, _coverScale).set(1 / (coverRatio * this.scale.x), 1 / (coverRatio * this.scale.y));
-      __privateGet$m(this, _negatedOrigin).copy(this.transformOrigin).multiplyScalar(-1);
-      __privateGet$m(this, _rotationMatrix).rotateByAngleZ(this.rotation);
-      this.modelMatrix.identity().premultiplyTranslate(__privateGet$m(this, _negatedOrigin)).premultiplyScale(__privateGet$m(this, _coverScale)).premultiplyScale(__privateGet$m(this, _parentRatio)).premultiply(__privateGet$m(this, _rotationMatrix)).premultiplyScale(__privateGet$m(this, _sourceRatio)).premultiplyTranslate(this.transformOrigin).translate(this.offset);
+      const coverRatio = parentRatio > sourceRatio !== parentWidth > parentHeight ? 1 : parentWidth > parentHeight ? __privateGet$o(this, _parentRatio).x * __privateGet$o(this, _sourceRatio).x : __privateGet$o(this, _sourceRatio).y * __privateGet$o(this, _parentRatio).y;
+      __privateGet$o(this, _coverScale).set(1 / (coverRatio * this.scale.x), 1 / (coverRatio * this.scale.y));
+      __privateGet$o(this, _negatedOrigin).copy(this.transformOrigin).multiplyScalar(-1);
+      __privateGet$o(this, _rotationMatrix).rotateByAngleZ(this.rotation);
+      this.modelMatrix.identity().premultiplyTranslate(__privateGet$o(this, _negatedOrigin)).premultiplyScale(__privateGet$o(this, _coverScale)).premultiplyScale(__privateGet$o(this, _parentRatio)).premultiply(__privateGet$o(this, _rotationMatrix)).premultiplyScale(__privateGet$o(this, _sourceRatio)).premultiplyTranslate(this.transformOrigin).translate(this.offset);
       this.transformBinding.inputs.matrix.shouldUpdate = true;
     }
     /**
@@ -5256,13 +5256,13 @@
   _negatedOrigin = new WeakMap();
   _rotationMatrix = new WeakMap();
 
-  var __typeError$n = (msg) => {
+  var __typeError$p = (msg) => {
     throw TypeError(msg);
   };
-  var __accessCheck$n = (obj, member, msg) => member.has(obj) || __typeError$n("Cannot " + msg);
-  var __privateGet$l = (obj, member, getter) => (__accessCheck$n(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
-  var __privateAdd$n = (obj, member, value) => member.has(obj) ? __typeError$n("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  var __privateSet$l = (obj, member, value, setter) => (__accessCheck$n(obj, member, "write to private field"), member.set(obj, value), value);
+  var __accessCheck$p = (obj, member, msg) => member.has(obj) || __typeError$p("Cannot " + msg);
+  var __privateGet$n = (obj, member, getter) => (__accessCheck$p(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$p = (obj, member, value) => member.has(obj) ? __typeError$p("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$n = (obj, member, value, setter) => (__accessCheck$p(obj, member, "write to private field"), member.set(obj, value), value);
   var _transformedTextures;
   class TextureBindGroup extends BindGroup {
     /**
@@ -5278,7 +5278,7 @@
        * Array containing all the {@link MediaTexture} that handle a transformation {@link MediaTexture#modelMatrix | modelMatrix}.
        * @private
        */
-      __privateAdd$n(this, _transformedTextures);
+      __privateAdd$p(this, _transformedTextures);
       this.options = {
         ...this.options,
         // will be filled after
@@ -5367,10 +5367,10 @@
      * Set the {@link texturesMatricesBinding} if needed.
      */
     setTexturesMatricesBinding() {
-      __privateSet$l(this, _transformedTextures, this.textures.filter(
+      __privateSet$n(this, _transformedTextures, this.textures.filter(
         (texture) => (texture instanceof MediaTexture || texture instanceof DOMTexture) && !!texture.transformBinding
       ));
-      const texturesBindings = __privateGet$l(this, _transformedTextures).map((texture) => {
+      const texturesBindings = __privateGet$n(this, _transformedTextures).map((texture) => {
         return texture.transformBinding;
       });
       if (texturesBindings.length) {
@@ -5423,7 +5423,7 @@
         }
       }
       if (this.texturesMatricesBinding) {
-        __privateGet$l(this, _transformedTextures).forEach((texture, i) => {
+        __privateGet$n(this, _transformedTextures).forEach((texture, i) => {
           this.texturesMatricesBinding.childrenBindings[i].inputs.matrix.shouldUpdate = !!texture.transformBinding.inputs.matrix.shouldUpdate;
           if (texture.transformBinding.inputs.matrix.shouldUpdate) {
             this.renderer.onAfterCommandEncoderSubmission.add(
@@ -5521,49 +5521,38 @@
     }
   }
 
-  var __typeError$m = (msg) => {
+  var __typeError$o = (msg) => {
     throw TypeError(msg);
   };
-  var __accessCheck$m = (obj, member, msg) => member.has(obj) || __typeError$m("Cannot " + msg);
-  var __privateGet$k = (obj, member, getter) => (__accessCheck$m(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
-  var __privateAdd$m = (obj, member, value) => member.has(obj) ? __typeError$m("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  var __privateSet$k = (obj, member, value, setter) => (__accessCheck$m(obj, member, "write to private field"), member.set(obj, value), value);
-  var _fov, _near, _far, _pixelRatio;
+  var __accessCheck$o = (obj, member, msg) => member.has(obj) || __typeError$o("Cannot " + msg);
+  var __privateGet$m = (obj, member, getter) => (__accessCheck$o(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$o = (obj, member, value) => member.has(obj) ? __typeError$o("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$m = (obj, member, value, setter) => (__accessCheck$o(obj, member, "write to private field"), member.set(obj, value), value);
+  var _near, _far, _pixelRatio;
   class Camera extends Object3D {
     /**
      * Camera constructor
-     * @param parameters - {@link CameraParams | parameters} used to create our {@link Camera}
+     * @param parameters - {@link CameraParams} used to create our {@link Camera}.
      */
     constructor({
-      fov = 50,
       near = 0.1,
       far = 150,
-      width = 1,
-      height = 1,
       pixelRatio = 1,
       onMatricesChanged = () => {
       }
     } = {}) {
       super();
       /** @ignore */
-      __privateAdd$m(this, _fov);
+      __privateAdd$o(this, _near);
       /** @ignore */
-      __privateAdd$m(this, _near);
+      __privateAdd$o(this, _far);
       /** @ignore */
-      __privateAdd$m(this, _far);
-      /** @ignore */
-      __privateAdd$m(this, _pixelRatio);
+      __privateAdd$o(this, _pixelRatio);
       this.uuid = generateUUID();
-      this.position.set(0, 0, 10);
       this.onMatricesChanged = onMatricesChanged;
-      this.size = {
-        width: 1,
-        height: 1
-      };
-      this.setPerspective({ fov, near, far, width, height, pixelRatio });
     }
     /**
-     * Set our transform and projection matrices
+     * Set our transform and projection matrices.
      */
     setMatrices() {
       super.setMatrices();
@@ -5589,7 +5578,7 @@
       };
     }
     /**
-     * Get our view matrix
+     * Get our view matrix.
      * @readonly
      */
     get viewMatrix() {
@@ -5600,7 +5589,7 @@
       this.shouldUpdateViewMatrices();
     }
     /**
-     * Get our projection matrix
+     * Get our projection matrix.
      * @readonly
      */
     get projectionMatrix() {
@@ -5611,21 +5600,21 @@
       this.shouldUpdateProjectionMatrices();
     }
     /**
-     * Get our view projection matrix
+     * Get our view projection matrix.
      * @readonly
      */
     get viewProjectionMatrix() {
       return this.matrices.viewProjection.matrix;
     }
     /**
-     * Set our view dependent matrices shouldUpdate flag to true (tell it to update)
+     * Set our view dependent matrices shouldUpdate flag to `true` (tell it to update).
      */
     shouldUpdateViewMatrices() {
       this.matrices.view.shouldUpdate = true;
       this.matrices.viewProjection.shouldUpdate = true;
     }
     /**
-     * Set our projection dependent matrices shouldUpdate flag to true (tell it to update)
+     * Set our projection dependent matrices shouldUpdate flag to `true` (tell it to update).
      */
     shouldUpdateProjectionMatrices() {
       this.matrices.projection.shouldUpdate = true;
@@ -5647,7 +5636,7 @@
       this.shouldUpdateViewMatrices();
     }
     /**
-     * Callback to run when the camera {@link modelMatrix | model matrix} has been updated
+     * Callback to run when the camera {@link modelMatrix | model matrix} has been updated.
      */
     updateMatrixStack() {
       super.updateMatrixStack();
@@ -5656,132 +5645,66 @@
       }
     }
     /**
-     * Get the {@link Camera} {@link Camera.fov | field of view}
-     */
-    get fov() {
-      return __privateGet$k(this, _fov);
-    }
-    /**
-     * Set the {@link Camera} {@link Camera.fov | field of view}. Update the {@link projectionMatrix} only if the field of view actually changed
-     * @param fov - new field of view
-     */
-    set fov(fov) {
-      fov = Math.max(1, Math.min(fov ?? this.fov, 179));
-      if (fov !== this.fov) {
-        __privateSet$k(this, _fov, fov);
-        this.shouldUpdateProjectionMatrices();
-      }
-      this.setVisibleSize();
-      this.setCSSPerspective();
-    }
-    /**
-     * Get the {@link Camera} {@link Camera.near | near} plane value.
+     * Get the {@link Camera.near | near} plane value.
      */
     get near() {
-      return __privateGet$k(this, _near);
+      return __privateGet$m(this, _near);
     }
     /**
-     * Set the {@link Camera} {@link Camera.near | near} plane value. Update the {@link projectionMatrix} only if the near plane actually changed
-     * @param near - new near plane value
+     * Set the {@link Camera.near | near} plane value. Update the {@link projectionMatrix} only if the near plane actually changed.
+     * @param near - New near plane value.
      */
     set near(near) {
       near = Math.max(near ?? this.near, 1e-4);
       if (near !== this.near) {
-        __privateSet$k(this, _near, near);
+        __privateSet$m(this, _near, near);
         this.shouldUpdateProjectionMatrices();
       }
     }
     /**
-     * Get the {@link Camera} {@link Camera.far | far} plane value.
+     * Get the {@link Camera.far | far} plane value.
      */
     get far() {
-      return __privateGet$k(this, _far);
+      return __privateGet$m(this, _far);
     }
     /**
-     * Set the {@link Camera} {@link Camera.far | far} plane value. Update {@link projectionMatrix} only if the far plane actually changed
-     * @param far - new far plane value
+     * Set the {@link Camera.far | far} plane value. Update {@link projectionMatrix} only if the far plane actually changed.
+     * @param far - New far plane value.
      */
     set far(far) {
       far = Math.max(far ?? this.far, this.near + 1);
       if (far !== this.far) {
-        __privateSet$k(this, _far, far);
+        __privateSet$m(this, _far, far);
         this.shouldUpdateProjectionMatrices();
       }
     }
     /**
-     * Get the {@link Camera} {@link Camera.pixelRatio | pixelRatio} value.
+     * Get the {@link Camera.pixelRatio | pixelRatio} value.
      */
     get pixelRatio() {
-      return __privateGet$k(this, _pixelRatio);
+      return __privateGet$m(this, _pixelRatio);
     }
     /**
-     * Set the {@link Camera} {@link Camera.pixelRatio | pixelRatio} value. Update the {@link CSSPerspective} only if the pixel ratio actually changed
-     * @param pixelRatio - new pixel ratio value
+     * Set the {@link Camera.pixelRatio | pixelRatio} value. Update the {@link CSSPerspective} only if the pixel ratio actually changed.
+     * @param pixelRatio - New pixel ratio value.
      */
     set pixelRatio(pixelRatio) {
-      __privateSet$k(this, _pixelRatio, pixelRatio ?? this.pixelRatio);
+      __privateSet$m(this, _pixelRatio, pixelRatio ?? this.pixelRatio);
       this.setCSSPerspective();
     }
-    /**
-     * Set the {@link Camera} {@link RectSize.width | width} and {@link RectSize.height | height}. Update the {@link projectionMatrix} only if the width or height actually changed
-     * @param size - width and height values to use
-     */
-    setSize({ width, height }) {
-      if (width !== this.size.width || height !== this.size.height) {
-        this.shouldUpdateProjectionMatrices();
-      }
-      this.size.width = width;
-      this.size.height = height;
-      this.setVisibleSize();
-      this.setCSSPerspective();
-    }
-    /**
-     * Sets the {@link Camera} perspective. Update the {@link projectionMatrix} if needed.
-     * @param parameters - {@link CameraPerspectiveOptions | parameters} to use for the perspective
-     */
-    setPerspective({
-      fov = this.fov,
-      near = this.near,
-      far = this.far,
-      width = this.size.width,
-      height = this.size.height,
-      pixelRatio = this.pixelRatio
-    } = {}) {
-      this.setSize({ width, height });
-      this.pixelRatio = pixelRatio;
-      this.fov = fov;
-      this.near = near;
-      this.far = far;
-    }
-    /**
-     * Sets a {@link CSSPerspective} property based on {@link size}, {@link pixelRatio} and {@link fov}.<br>
-     * Used to translate planes along the Z axis using pixel units as CSS would do.<br>
-     * {@link https://stackoverflow.com/questions/22421439/convert-field-of-view-value-to-css3d-perspective-value | See reference}
-     */
+    /** @ignore */
     setCSSPerspective() {
-      this.CSSPerspective = Math.pow(
-        Math.pow(this.size.width / (2 * this.pixelRatio), 2) + Math.pow(this.size.height / (2 * this.pixelRatio), 2),
-        0.5
-      ) / Math.tan(this.fov * 0.5 * Math.PI / 180);
+      this.CSSPerspective = 0;
     }
     /**
-     * Get visible width / height at a given z-depth from our {@link Camera} parameters.<br>
-     * {@link https://discourse.threejs.org/t/functions-to-calculate-the-visible-width-height-at-a-given-z-depth-from-a-perspective-camera/269 | See reference}
-     * @param depth - depth to use for calculations
-     * @returns - visible width and height at given depth
+     * Get visible width / height at a given z-depth from our {@link Camera} parameters. Useless for this base class, but will be overriden by children classes.
+     * @param depth - Depth to use for calculations.
+     * @returns - Visible width and height at given depth.
      */
     getVisibleSizeAtDepth(depth = 0) {
-      const cameraOffset = this.position.z;
-      if (depth < cameraOffset) {
-        depth -= cameraOffset;
-      } else {
-        depth += cameraOffset;
-      }
-      const vFOV = this.fov * Math.PI / 180;
-      const height = 2 * Math.tan(vFOV / 2) * Math.abs(depth);
       return {
-        width: height * this.size.width / this.size.height,
-        height
+        width: 0,
+        height: 0
       };
     }
     /**
@@ -5808,6 +5731,311 @@
      * Updates the {@link Camera} {@link projectionMatrix}.
      */
     updateProjectionMatrix() {
+    }
+  }
+  _near = new WeakMap();
+  _far = new WeakMap();
+  _pixelRatio = new WeakMap();
+
+  var __typeError$n = (msg) => {
+    throw TypeError(msg);
+  };
+  var __accessCheck$n = (obj, member, msg) => member.has(obj) || __typeError$n("Cannot " + msg);
+  var __privateGet$l = (obj, member, getter) => (__accessCheck$n(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$n = (obj, member, value) => member.has(obj) ? __typeError$n("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$l = (obj, member, value, setter) => (__accessCheck$n(obj, member, "write to private field"), member.set(obj, value), value);
+  var _left, _right, _top, _bottom;
+  class OrthographicCamera extends Camera {
+    /**
+     * OrthographicCamera constructor
+     * @param parameters - {@link OrthographicCameraParams} used to create our {@link OrthographicCamera}.
+     */
+    constructor({
+      near = 0.1,
+      far = 150,
+      left = -1,
+      right = 1,
+      top = 1,
+      bottom = -1,
+      pixelRatio = 1,
+      onMatricesChanged = () => {
+      }
+    } = {}) {
+      super({ near, far, pixelRatio, onMatricesChanged });
+      /** @ignore */
+      __privateAdd$n(this, _left);
+      /** @ignore */
+      __privateAdd$n(this, _right);
+      /** @ignore */
+      __privateAdd$n(this, _top);
+      /** @ignore */
+      __privateAdd$n(this, _bottom);
+      this.position.set(0, 0, 1);
+      this.setOrthographic({ near, far, left, right, top, bottom, pixelRatio });
+    }
+    /**
+     * Get the {@link OrthographicCamera.left | left} frustum plane value.
+     */
+    get left() {
+      return __privateGet$l(this, _left);
+    }
+    /**
+     * Set the {@link OrthographicCamera.left | left} frustum plane value. Update the {@link projectionMatrix} only if the value actually changed.
+     * @param left - New left frustum plane value.
+     */
+    set left(left) {
+      if (left !== this.left) {
+        __privateSet$l(this, _left, left);
+        this.shouldUpdateProjectionMatrices();
+      }
+    }
+    /**
+     * Get the {@link OrthographicCamera.right | right} frustum plane value.
+     */
+    get right() {
+      return __privateGet$l(this, _right);
+    }
+    /**
+     * Set the {@link OrthographicCamera.right | right} frustum plane value. Update the {@link projectionMatrix} only if the value actually changed.
+     * @param right - New right frustum plane value.
+     */
+    set right(right) {
+      if (right !== this.right) {
+        __privateSet$l(this, _right, right);
+        this.shouldUpdateProjectionMatrices();
+      }
+    }
+    /**
+     * Get the {@link OrthographicCamera.top | top} frustum plane value.
+     */
+    get top() {
+      return __privateGet$l(this, _top);
+    }
+    /**
+     * Set the {@link OrthographicCamera.top | top} frustum plane value. Update the {@link projectionMatrix} only if the value actually changed.
+     * @param top - New top frustum plane value.
+     */
+    set top(top) {
+      if (top !== this.top) {
+        __privateSet$l(this, _top, top);
+        this.shouldUpdateProjectionMatrices();
+      }
+    }
+    /**
+     * Get the {@link OrthographicCamera.bottom | bottom} frustum plane value.
+     */
+    get bottom() {
+      return __privateGet$l(this, _bottom);
+    }
+    /**
+     * Set the {@link OrthographicCamera.bottom | bottom} frustum plane value. Update the {@link projectionMatrix} only if the value actually changed.
+     * @param bottom - New bottom frustum plane value.
+     */
+    set bottom(bottom) {
+      if (bottom !== this.bottom) {
+        __privateSet$l(this, _bottom, bottom);
+        this.shouldUpdateProjectionMatrices();
+      }
+    }
+    /**
+     * Sets the {@link OrthographicCamera} orthographic projection settings. Update the {@link projectionMatrix} if needed.
+     * @param parameters - {@link OrthographicCameraOptions} to use for the orthographic projection.
+     */
+    setOrthographic({
+      near = this.near,
+      far = this.far,
+      left = this.left,
+      right = this.right,
+      top = this.top,
+      bottom = this.bottom,
+      pixelRatio = this.pixelRatio
+    }) {
+      this.left = left;
+      this.right = right;
+      this.top = top;
+      this.bottom = bottom;
+      this.pixelRatio = pixelRatio;
+      this.near = near;
+      this.far = far;
+    }
+    /**
+     * Get visible width / height at a given z-depth from our {@link OrthographicCamera} parameters.
+     * @param depth - Depth to use for calculations - unused since width and height does not change according to depth in orthographic projection.
+     * @returns - Visible width and height.
+     */
+    getVisibleSizeAtDepth(depth = 0) {
+      return {
+        width: this.right - this.left,
+        height: this.top - this.bottom
+      };
+    }
+    /**
+     * Sets visible width / height at a depth of 0.
+     */
+    setVisibleSize() {
+      this.visibleSize = this.getVisibleSizeAtDepth();
+    }
+    /**
+     * Updates the {@link OrthographicCamera} {@link projectionMatrix}.
+     */
+    updateProjectionMatrix() {
+      this.projectionMatrix.makeOrthographic({
+        left: this.left,
+        right: this.right,
+        top: this.top,
+        bottom: this.bottom,
+        near: this.near,
+        far: this.far
+      });
+    }
+    /**
+     * Get the current {@link OrthographicCamera} frustum planes in the [left, right, top, bottom, near, far] order.
+     * @returns - Frustum planes as an array of 6 faces in the [left, right, top, bottom, near, far] order, made of {@link Float32Array} of length 4.
+     * @readonly
+     */
+    get frustumPlanes() {
+      return [
+        new Float32Array([1, 0, 0, -this.right]),
+        // Left
+        new Float32Array([-1, 0, 0, this.left]),
+        // Right
+        new Float32Array([0, 1, 0, -this.top]),
+        // Bottom
+        new Float32Array([0, -1, 0, this.bottom]),
+        // Top
+        new Float32Array([0, 0, 1, -this.near]),
+        // Near
+        new Float32Array([0, 0, -1, this.far])
+        // Far
+      ];
+    }
+  }
+  _left = new WeakMap();
+  _right = new WeakMap();
+  _top = new WeakMap();
+  _bottom = new WeakMap();
+
+  var __typeError$m = (msg) => {
+    throw TypeError(msg);
+  };
+  var __accessCheck$m = (obj, member, msg) => member.has(obj) || __typeError$m("Cannot " + msg);
+  var __privateGet$k = (obj, member, getter) => (__accessCheck$m(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$m = (obj, member, value) => member.has(obj) ? __typeError$m("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$k = (obj, member, value, setter) => (__accessCheck$m(obj, member, "write to private field"), member.set(obj, value), value);
+  var _fov;
+  class PerspectiveCamera extends Camera {
+    /**
+     * PerspectiveCamera constructor
+     * @param parameters - {@link PerspectiveCameraParams} used to create our {@link PerspectiveCamera}.
+     */
+    constructor({
+      fov = 50,
+      near = 0.1,
+      far = 150,
+      width = 1,
+      height = 1,
+      pixelRatio = 1,
+      onMatricesChanged = () => {
+      }
+    } = {}) {
+      super({ near, far, pixelRatio, onMatricesChanged });
+      /** @ignore */
+      __privateAdd$m(this, _fov);
+      this.position.set(0, 0, 10);
+      this.size = {
+        width: 1,
+        height: 1
+      };
+      this.setPerspective({ fov, near, far, width, height, pixelRatio });
+    }
+    /**
+     * Get the {@link PerspectiveCamera.fov | field of view}.
+     */
+    get fov() {
+      return __privateGet$k(this, _fov);
+    }
+    /**
+     * Set the {@link PerspectiveCamera.fov | field of view}. Update the {@link projectionMatrix} only if the field of view actually changed.
+     * @param fov - New field of view.
+     */
+    set fov(fov) {
+      fov = Math.max(1, Math.min(fov ?? this.fov, 179));
+      if (fov !== this.fov) {
+        __privateSet$k(this, _fov, fov);
+        this.shouldUpdateProjectionMatrices();
+      }
+      this.setVisibleSize();
+      this.setCSSPerspective();
+    }
+    /**
+     * Set the {@link PerspectiveCamera} {@link RectSize.width | width} and {@link RectSize.height | height}. Update the {@link projectionMatrix} only if the width or height actually changed.
+     * @param size - New width and height values to use.
+     */
+    setSize({ width, height }) {
+      if (width !== this.size.width || height !== this.size.height) {
+        this.shouldUpdateProjectionMatrices();
+      }
+      this.size.width = width;
+      this.size.height = height;
+      this.setVisibleSize();
+      this.setCSSPerspective();
+    }
+    /**
+     * Sets the {@link PerspectiveCamera} perspective projection settings. Update the {@link projectionMatrix} if needed.
+     * @param parameters - {@link PerspectiveCameraOptions} to use for the perspective projection.
+     */
+    setPerspective({
+      fov = this.fov,
+      near = this.near,
+      far = this.far,
+      width = this.size.width,
+      height = this.size.height,
+      pixelRatio = this.pixelRatio
+    } = {}) {
+      this.setSize({ width, height });
+      this.pixelRatio = pixelRatio;
+      this.fov = fov;
+      this.near = near;
+      this.far = far;
+    }
+    /**
+     * Sets a {@link CSSPerspective} property based on {@link size}, {@link pixelRatio} and {@link fov}.
+     *
+     * Used to translate planes along the Z axis using pixel units as CSS would do.
+     *
+     * {@link https://stackoverflow.com/questions/22421439/convert-field-of-view-value-to-css3d-perspective-value | See reference}
+     */
+    setCSSPerspective() {
+      this.CSSPerspective = Math.pow(
+        Math.pow(this.size.width / (2 * this.pixelRatio), 2) + Math.pow(this.size.height / (2 * this.pixelRatio), 2),
+        0.5
+      ) / Math.tan(this.fov * 0.5 * Math.PI / 180);
+    }
+    /**
+     * Get visible width / height at a given z-depth from our {@link PerspectiveCamera} parameters.
+     *
+     * {@link https://discourse.threejs.org/t/functions-to-calculate-the-visible-width-height-at-a-given-z-depth-from-a-perspective-camera/269 | See reference}.
+     * @param depth - Depth to use for calculations.
+     * @returns - Visible width and height at given depth.
+     */
+    getVisibleSizeAtDepth(depth = 0) {
+      const cameraOffset = this.position.z;
+      if (depth < cameraOffset) {
+        depth -= cameraOffset;
+      } else {
+        depth += cameraOffset;
+      }
+      const vFOV = this.fov * Math.PI / 180;
+      const height = 2 * Math.tan(vFOV / 2) * Math.abs(depth);
+      return {
+        width: height * this.size.width / this.size.height,
+        height
+      };
+    }
+    /**
+     * Updates the {@link PerspectiveCamera} {@link projectionMatrix}.
+     */
+    updateProjectionMatrix() {
       this.projectionMatrix.makePerspective({
         fov: this.fov,
         aspect: this.size.width / this.size.height,
@@ -5816,7 +6044,7 @@
       });
     }
     /**
-     * Get the current {@link Camera} frustum planes in the [left, right, top, bottom, near, far] order, based on its {@link projectionMatrix} and {@link viewMatrix}.
+     * Get the current {@link PerspectiveCamera} frustum planes in the [left, right, top, bottom, near, far] order, based on its {@link projectionMatrix} and {@link viewMatrix}.
      * @returns - Frustum planes as an array of 6 faces in the [left, right, top, bottom, near, far] order, made of {@link Float32Array} of length 4.
      * @readonly
      */
@@ -5873,9 +6101,6 @@
     }
   }
   _fov = new WeakMap();
-  _near = new WeakMap();
-  _far = new WeakMap();
-  _pixelRatio = new WeakMap();
 
   class Sampler {
     /**
@@ -8061,6 +8286,16 @@
         this.rendererBinding = this.renderer.bindings[lightsType];
       }
     }
+    // explicitly disable rotation, scale and transformation origin
+    /** @ignore */
+    applyRotation() {
+    }
+    /** @ignore */
+    applyScale() {
+    }
+    /** @ignore */
+    applyTransformOrigin() {
+    }
     /**
      * Called by the {@link core/scenes/Scene.Scene | Scene} before updating the matrix stack.
      */
@@ -8105,18 +8340,9 @@
       const type = "ambientLights";
       super(renderer, { label, color, intensity, type });
     }
-    // explicitly disable all kinds of transformations
-    /** @ignore */
-    applyRotation() {
-    }
+    // explicitly disable position as well
     /** @ignore */
     applyPosition() {
-    }
-    /** @ignore */
-    applyScale() {
-    }
-    /** @ignore */
-    applyTransformOrigin() {
     }
   }
 
@@ -11748,7 +11974,7 @@ fn getPCFBaseShadowContribution(
         bottom: -10,
         top: 10,
         near: 0.1,
-        far: 50
+        far: 150
       }
     } = {}) {
       super(renderer, {
@@ -11765,30 +11991,20 @@ fn getPCFBaseShadowContribution(
         ...this.options,
         camera
       };
-      this.camera = {
-        projectionMatrix: new Mat4(),
-        viewMatrix: new Mat4(),
-        up: new Vec3(0, 1, 0),
-        _left: camera.left,
-        _right: camera.right,
-        _bottom: camera.bottom,
-        _top: camera.top,
-        _near: camera.near,
-        _far: camera.far
-      };
-      const _self = this;
-      const cameraProps = ["left", "right", "bottom", "top", "near", "far"];
-      cameraProps.forEach((prop) => {
-        Object.defineProperty(_self.camera, prop, {
-          get() {
-            return _self.camera["_" + prop];
-          },
-          set(v) {
-            _self.camera["_" + prop] = v;
-            _self.updateProjectionMatrix();
-          }
-        });
+      this.camera = new OrthographicCamera({
+        left: camera.left,
+        right: camera.right,
+        top: camera.top,
+        bottom: camera.bottom,
+        near: camera.near,
+        far: camera.far,
+        onMatricesChanged: () => {
+          this.onPropertyChanged("projectionMatrix", this.camera.projectionMatrix);
+          this.onPropertyChanged("viewMatrix", this.camera.viewMatrix);
+        }
       });
+      this.camera.position.set(0);
+      this.camera.parent = this.light;
     }
     /**
      * Set or reset this {@link DirectionalShadow} {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
@@ -11805,19 +12021,12 @@ fn getPCFBaseShadowContribution(
       if (camera) {
         this.camera.left = camera.left ?? -10;
         this.camera.right = camera.right ?? 10;
+        this.camera.top = camera.top ?? 10;
         this.camera.bottom = camera.bottom ?? -10;
-        this.camera.top = camera.right ?? 10;
         this.camera.near = camera.near ?? 0.1;
-        this.camera.far = camera.far ?? 50;
+        this.camera.far = camera.far ?? 150;
       }
       super.cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
-    }
-    /**
-     * Set the {@link depthComparisonSampler}, {@link depthTexture}, {@link depthPassTarget}, compute the {@link DirectionalShadow#camera.projectionMatrix | camera projection matrix} and start rendering to the shadow map.
-     */
-    init() {
-      super.init();
-      this.updateProjectionMatrix();
     }
     /**
      * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link DirectionalLight} has been overflowed or when the {@link renderer} has changed.
@@ -11825,37 +12034,7 @@ fn getPCFBaseShadowContribution(
     reset() {
       this.setRendererBinding();
       super.reset();
-      if (this.isActive) {
-        this.onPropertyChanged("projectionMatrix", this.camera.projectionMatrix);
-        this.onPropertyChanged("viewMatrix", this.camera.viewMatrix);
-      }
-    }
-    /**
-     * Update the {@link DirectionalShadow#camera.projectionMatrix | camera orthographic projection matrix} and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
-     */
-    updateProjectionMatrix() {
-      this.camera.projectionMatrix.identity().makeOrthographic({
-        left: this.camera.left,
-        right: this.camera.right,
-        bottom: this.camera.bottom,
-        top: this.camera.top,
-        near: this.camera.near,
-        far: this.camera.far
-      });
       this.onPropertyChanged("projectionMatrix", this.camera.projectionMatrix);
-    }
-    /**
-     * Update the {@link DirectionalShadow#camera.viewMatrix | camera view matrix} and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
-     */
-    updateViewMatrix() {
-      if (this.light.actualPosition.x === 0 && this.light.actualPosition.y !== 0 && this.light.actualPosition.z === 0) {
-        this.camera.up.set(0, 0, 1);
-      } else if (this.light.actualPosition.x === 0 && this.light.actualPosition.y === 0 && this.light.actualPosition.z !== 0) {
-        this.camera.up.set(1, 0, 0);
-      } else {
-        this.camera.up.set(0, 1, 0);
-      }
-      this.camera.viewMatrix.makeView(this.light.actualPosition, this.light.target, this.camera.up);
       this.onPropertyChanged("viewMatrix", this.camera.viewMatrix);
     }
     /**
@@ -11924,12 +12103,15 @@ fn getPCFBaseShadowContribution(
         target,
         shadow
       };
-      this.position.copy(position);
       __privateSet$e(this, _direction$1, new Vec3());
-      this.target = target;
+      this.position.copy(position);
+      this.target = new Vec3();
       this.target.onChange(() => {
-        this.updateMatrixStack();
-        this.setDirection();
+        this.lookAt(this.target);
+      });
+      this.target.copy(target);
+      this.position.onChange(() => {
+        this.lookAt(this.target);
       });
       this.parent = this.renderer.scene;
       this.shadow = new DirectionalShadow(this.renderer, {
@@ -11949,7 +12131,6 @@ fn getPCFBaseShadowContribution(
       super.setRenderer(renderer);
       if (this.shadow) {
         this.shadow.setRenderer(renderer);
-        this.shadow.updateViewMatrix();
       }
     }
     /**
@@ -11961,23 +12142,28 @@ fn getPCFBaseShadowContribution(
       this.onPropertyChanged("direction", __privateGet$e(this, _direction$1));
       if (this.shadow && resetShadow) {
         this.shadow.reset();
-        this.shadow.updateViewMatrix();
       }
     }
     /**
-     * Set the {@link DirectionalLight} direction based on the {@link target} and the {@link worldMatrix} translation and update the {@link DirectionalShadow} view matrix.
+     * Set the {@link DirectionalLight} direction based on the {@link target} and the {@link worldMatrix} translation.
      */
     setDirection() {
       __privateGet$e(this, _direction$1).copy(this.target).sub(this.actualPosition).normalize();
       this.onPropertyChanged("direction", __privateGet$e(this, _direction$1));
-      this.shadow?.updateViewMatrix();
     }
-    // explicitly disable scale and transform origin transformations
-    /** @ignore */
-    applyScale() {
-    }
-    /** @ignore */
-    applyTransformOrigin() {
+    /**
+     * Rotate this {@link DirectionalLight} so it looks at the {@link Vec3 | target}.
+     * @param target - {@link Vec3} to look at. Default to `new Vec3()`.
+     */
+    lookAt(target = new Vec3()) {
+      this.updateModelMatrix();
+      this.updateWorldMatrix(true, false);
+      if (this.actualPosition.x === 0 && this.actualPosition.y !== 0 && this.actualPosition.z === 0) {
+        this.up.set(0, 0, 1);
+      } else {
+        this.up.set(0, 1, 0);
+      }
+      this.applyLookAt(this.actualPosition, target);
     }
     /**
      * If the {@link modelMatrix | model matrix} has been updated, set the new direction from the {@link worldMatrix} translation.
@@ -12001,7 +12187,7 @@ fn getPCFBaseShadowContribution(
      */
     destroy() {
       super.destroy();
-      this.shadow.destroy();
+      this.shadow?.destroy();
     }
   }
   _direction$1 = new WeakMap();
@@ -12147,7 +12333,7 @@ struct PointShadowVSOutput {
       for (let i = 0; i < 6; i++) {
         __privateGet$d(this, _viewMatrices).push(new Mat4());
       }
-      this.camera = new Camera({
+      this.camera = new PerspectiveCamera({
         fov: 90,
         near: 0.1,
         far: this.light.range !== 0 ? this.light.range : 150,
@@ -12186,7 +12372,7 @@ struct PointShadowVSOutput {
       this.onViewMatricesChanged();
     }
     /**
-     * Called whenever the {@link Camera#projectionMatrix | camera projectionMatrix} changed (or on reset) to update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
+     * Called whenever the {@link PerspectiveCamera#projectionMatrix | camera projectionMatrix} changed (or on reset) to update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      */
     onProjectionMatrixChanged() {
       this.onPropertyChanged("projectionMatrix", this.camera.projectionMatrix);
@@ -12456,25 +12642,15 @@ struct PointShadowVSOutput {
     set range(value) {
       __privateSet$c(this, _range$1, Math.max(0, value));
       this.onPropertyChanged("range", this.range);
-      if (this.shadow) {
-        this.shadow.camera.far = this.range !== 0 ? this.range : 150;
+      if (this.shadow && this.range !== 0) {
+        this.shadow.camera.far = this.range;
       }
     }
     /**
-     * Set the {@link PointLight} position based on the {@link worldMatrix} translation and update the {@link PointShadow} view matrices.
+     * Set the {@link PointLight} position based on the {@link worldMatrix} translation.
      */
     setPosition() {
       this.onPropertyChanged("position", this.actualPosition);
-    }
-    // explicitly disable scale, transform origin and rotation transformations
-    /** @ignore */
-    applyScale() {
-    }
-    /** @ignore */
-    applyTransformOrigin() {
-    }
-    /** @ignore */
-    applyRotation() {
     }
     /**
      * If the {@link modelMatrix | model matrix} has been updated, set the new position from the {@link worldMatrix} translation.
@@ -12498,7 +12674,7 @@ struct PointShadowVSOutput {
      */
     destroy() {
       super.destroy();
-      this.shadow.destroy();
+      this.shadow?.destroy();
     }
   }
   _range$1 = new WeakMap();
@@ -12566,7 +12742,7 @@ struct SpotShadowVSOutput {
         autoRender
       });
       this.focus = 1;
-      this.camera = new Camera({
+      this.camera = new PerspectiveCamera({
         near: 0.1,
         far: this.light.range !== 0 ? this.light.range : 150,
         fov: 180 / Math.PI * 2 * this.light.angle * this.focus,
@@ -12596,7 +12772,7 @@ struct SpotShadowVSOutput {
       this.onPropertyChanged("viewMatrix", this.camera.viewMatrix);
     }
     /**
-     * Set the {@link Camera#fov | camera fov} based on the {@link SpotLight#angle | SpotLight angle}.
+     * Set the {@link PerspectiveCamera#fov | camera fov} based on the {@link SpotLight#angle | SpotLight angle}.
      */
     setCameraFov() {
       this.camera.fov = 180 / Math.PI * 2 * this.light.angle * this.focus;
@@ -12691,6 +12867,9 @@ struct SpotShadowVSOutput {
         this.lookAt(this.target);
       });
       this.target.copy(target);
+      this.position.onChange(() => {
+        this.lookAt(this.target);
+      });
       this.angle = angle;
       this.penumbra = penumbra;
       this.range = range;
@@ -12703,7 +12882,6 @@ struct SpotShadowVSOutput {
       if (shadow) {
         this.shadow.cast(shadow);
       }
-      this.shouldUpdateModelMatrix();
     }
     /**
      * Set or reset this {@link SpotLight} {@link CameraRenderer}.
@@ -12731,7 +12909,7 @@ struct SpotShadowVSOutput {
       }
     }
     /**
-     * Set the {@link SpotLight} position and direction based on the {@link target} and the {@link worldMatrix} translation and update the {@link SpotShadow} view matrix.
+     * Set the {@link SpotLight} position and direction based on the {@link target} and the {@link worldMatrix} translation.
      */
     setPositionDirection() {
       this.onPropertyChanged("position", this.actualPosition);
@@ -12784,16 +12962,9 @@ struct SpotShadowVSOutput {
     set range(value) {
       __privateSet$b(this, _range, Math.max(0, value));
       this.onPropertyChanged("range", this.range);
-      if (this.shadow) {
-        this.shadow.camera.far = this.range !== 0 ? this.range : 150;
+      if (this.shadow && this.range !== 0) {
+        this.shadow.camera.far = this.range;
       }
-    }
-    // explicitly disable scale and transform origin transformations
-    /** @ignore */
-    applyScale() {
-    }
-    /** @ignore */
-    applyTransformOrigin() {
     }
     /**
      * Rotate this {@link SpotLight} so it looks at the {@link Vec3 | target}.
@@ -12810,7 +12981,7 @@ struct SpotShadowVSOutput {
       this.applyLookAt(this.actualPosition, target);
     }
     /**
-     * If the {@link modelMatrix | model matrix} has been updated, set the new direction from the {@link worldMatrix} translation.
+     * If the {@link modelMatrix | model matrix} has been updated, set the new position and direction from the {@link worldMatrix} translation.
      */
     updateMatrixStack() {
       super.updateMatrixStack();
@@ -12831,7 +13002,7 @@ struct SpotShadowVSOutput {
      */
     destroy() {
       super.destroy();
-      this.shadow.destroy();
+      this.shadow?.destroy();
     }
   }
   _direction = new WeakMap();
@@ -14945,12 +15116,12 @@ ${this.shaders.compute.head}`;
     /* CAMERA */
     /**
      * Set the {@link camera}
-     * @param cameraParameters - {@link CameraBasePerspectiveOptions | parameters} used to create the {@link camera}
+     * @param cameraParameters - {@link PerspectiveCameraBaseOptions | parameters} used to create the {@link camera}
      */
     setCamera(cameraParameters) {
       const { width, height } = this.rectBBox;
       this.useCamera(
-        new Camera({
+        new PerspectiveCamera({
           fov: cameraParameters.fov,
           near: cameraParameters.near,
           far: cameraParameters.far,
@@ -15369,20 +15540,6 @@ ${this.shaders.compute.head}`;
       });
     }
     /**
-     * Set our {@link camera} perspective matrix new parameters (fov, near plane and far plane)
-     * @param parameters - {@link CameraBasePerspectiveOptions | parameters} to use for the perspective
-     */
-    setPerspective({ fov, near, far } = {}) {
-      this.camera?.setPerspective({
-        fov,
-        near,
-        far,
-        width: this.rectBBox.width,
-        height: this.rectBBox.height,
-        pixelRatio: this.pixelRatio
-      });
-    }
-    /**
      * Set our {@link camera} {@link Camera#position | position}
      * @param position - new {@link Camera#position | position}
      */
@@ -15428,15 +15585,29 @@ ${this.shaders.compute.head}`;
      */
     resize(rectBBox = null) {
       this.setSize(rectBBox);
-      this.setPerspective();
+      if (this.camera instanceof PerspectiveCamera) {
+        this.camera?.setPerspective({
+          width: this.rectBBox.width,
+          height: this.rectBBox.height,
+          pixelRatio: this.pixelRatio
+        });
+      } else if (this.camera instanceof OrthographicCamera) {
+        const aspect = this.rectBBox.width / this.rectBBox.height;
+        const frustumSize = this.camera.top * 2;
+        this.camera.setOrthographic({
+          left: -frustumSize * aspect / 2,
+          right: frustumSize * aspect / 2,
+          pixelRatio: this.pixelRatio
+        });
+      }
       this._onResizeCallback && this._onResizeCallback();
       this.resizeObjects();
       this._onAfterResizeCallback && this._onAfterResizeCallback();
     }
     /* RENDER */
     /**
-     * {@link createCameraLightsBindGroup | Set the camera bind group if needed} and then call our {@link GPURenderer#render | GPURenderer render method}
-     * @param commandEncoder - current {@link GPUCommandEncoder}
+     * {@link createCameraLightsBindGroup | Set the camera bind group if needed} and then call our {@link GPURenderer#render | GPURenderer render method}.
+     * @param commandEncoder - Current {@link GPUCommandEncoder}.
      */
     render(commandEncoder) {
       if (!this.ready) return;
@@ -19713,7 +19884,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       this.domTextures = this.domTextures.filter((t) => t.uuid !== texture.uuid);
     }
     /**
-     * Update the {@link domObjects} sizes and positions when the {@link camera} {@link core/camera/Camera.Camera#position | position} or {@link core/camera/Camera.Camera#size | size} change.
+     * Update the {@link domObjects} sizes and positions when the {@link camera} {@link core/cameras/PerspectiveCamera.PerspectiveCamera#position | position} or {@link core/cameras/PerspectiveCamera.PerspectiveCamera#size | size} changed.
      */
     onCameraMatricesChanged() {
       super.onCameraMatricesChanged();
@@ -19806,7 +19977,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
   class GPUCurtains {
     /**
      * GPUCurtains constructor
-     * @param parameters - {@link GPUCurtainsParams | parameters} used to create this {@link GPUCurtains}
+     * @param parameters - {@link GPUCurtainsParams | parameters} used to create this {@link GPUCurtains}.
      */
     constructor({
       container,
@@ -19823,16 +19994,16 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       watchScroll = true
     } = {}) {
       // callbacks / events
-      /** function assigned to the {@link onScroll} callback */
+      /** function assigned to the {@link onScroll} callback. */
       this._onScrollCallback = () => {
       };
-      /** function assigned to the {@link onError} callback */
+      /** function assigned to the {@link onError} callback. */
       this._onErrorCallback = () => {
       };
-      /** function assigned to the {@link onContextLost} callback */
+      /** function assigned to the {@link onContextLost} callback. */
       this._onContextLostCallback = () => {
       };
-      /** function assigned to the {@link onContextLost} callback */
+      /** function assigned to the {@link onContextLost} callback. */
       this._onContextDestroyedCallback = () => {
       };
       this.type = "CurtainsGPU";
@@ -19858,7 +20029,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
     }
     /**
      * Set the {@link GPUCurtains.container | container}.
-     * @param container - {@link HTMLElement} or string representing an {@link HTMLElement} selector to use
+     * @param container - {@link HTMLElement} or string representing an {@link HTMLElement} selector to use.
      */
     setContainer(container) {
       if (!container) {
@@ -19885,7 +20056,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       this.setMainRenderer();
     }
     /**
-     * Set the default {@link GPUCurtainsRenderer | renderer}
+     * Set the default {@link GPUCurtainsRenderer | renderer}.
      */
     setMainRenderer() {
       this.createCurtainsRenderer({
@@ -19902,8 +20073,8 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       });
     }
     /**
-     * Patch the options with default values before creating a {@link Renderer}
-     * @param parameters - parameters to patch
+     * Patch the options with default values before creating a {@link Renderer}.
+     * @param parameters - Parameters to patch.
      */
     patchRendererOptions(parameters) {
       if (parameters.pixelRatio === void 0) parameters.pixelRatio = this.options.pixelRatio;
@@ -19911,31 +20082,31 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       return parameters;
     }
     /**
-     * Create a new {@link GPURenderer} instance
-     * @param parameters - {@link GPURendererParams | parameters} to use
+     * Create a new {@link GPURenderer} instance.
+     * @param parameters - {@link GPURendererParams | parameters} to use.
      */
     createRenderer(parameters) {
       parameters = this.patchRendererOptions(parameters);
       return new GPURenderer({ ...parameters, deviceManager: this.deviceManager });
     }
     /**
-     * Create a new {@link GPUCameraRenderer} instance
-     * @param parameters - {@link GPUCameraRendererParams | parameters} to use
+     * Create a new {@link GPUCameraRenderer} instance.
+     * @param parameters - {@link GPUCameraRendererParams | parameters} to use.
      */
     createCameraRenderer(parameters) {
       parameters = this.patchRendererOptions(parameters);
       return new GPUCameraRenderer({ ...parameters, deviceManager: this.deviceManager });
     }
     /**
-     * Create a new {@link GPUCurtainsRenderer} instance
-     * @param parameters - {@link GPUCameraRendererParams | parameters} to use
+     * Create a new {@link GPUCurtainsRenderer} instance.
+     * @param parameters - {@link GPUCameraRendererParams | parameters} to use.
      */
     createCurtainsRenderer(parameters) {
       parameters = this.patchRendererOptions(parameters);
       return new GPUCurtainsRenderer({ ...parameters, deviceManager: this.deviceManager });
     }
     /**
-     * Set our {@link GPUDeviceManager}
+     * Set our {@link GPUDeviceManager}.
      */
     setDeviceManager() {
       this.deviceManager = new GPUDeviceManager({
@@ -19951,14 +20122,14 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       });
     }
     /**
-     * Get all created {@link Renderer}
+     * Get all created {@link Renderer}.
      * @readonly
      */
     get renderers() {
       return this.deviceManager.renderers;
     }
     /**
-     * Get the first created {@link Renderer} if any
+     * Get the first created {@link Renderer} if any.
      * @readonly
      */
     get renderer() {
@@ -19972,35 +20143,35 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       await this.deviceManager.init({ adapter, device });
     }
     /**
-     * Restore the {@link GPUDeviceManager#adapter | adapter} and {@link GPUDeviceManager#device | device}
+     * Restore the {@link GPUDeviceManager#adapter | adapter} and {@link GPUDeviceManager#device | device}.
      */
     async restoreContext() {
       await this.deviceManager.restoreDevice();
     }
     /* RENDERER TRACKED OBJECTS */
     /**
-     * Get all the created {@link PingPongPlane}
+     * Get all the created {@link PingPongPlane}.
      * @readonly
      */
     get pingPongPlanes() {
       return this.renderers?.map((renderer) => renderer.pingPongPlanes).flat();
     }
     /**
-     * Get all the created {@link ShaderPass}
+     * Get all the created {@link ShaderPass}.
      * @readonly
      */
     get shaderPasses() {
       return this.renderers?.map((renderer) => renderer.shaderPasses).flat();
     }
     /**
-     * Get all the created {@link SceneStackedMesh | meshes}
+     * Get all the created {@link SceneStackedMesh | meshes}.
      * @readonly
      */
     get meshes() {
       return this.renderers?.map((renderer) => renderer.meshes).flat();
     }
     /**
-     * Get all the created {@link DOMMesh | DOM Meshes} (including {@link Plane | planes})
+     * Get all the created {@link DOMMesh | DOM Meshes} (including {@link Plane | planes}).
      * @readonly
      */
     get domMeshes() {
@@ -20014,28 +20185,28 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       return this.renderers?.filter((renderer) => renderer instanceof GPUCurtainsRenderer).map((renderer) => renderer.domObjects).flat();
     }
     /**
-     * Get all the created {@link Plane | planes}
+     * Get all the created {@link Plane | planes}.
      * @readonly
      */
     get planes() {
       return this.domMeshes.filter((domMesh) => domMesh instanceof Plane);
     }
     /**
-     * Get all the created {@link ComputePass | compute passes}
+     * Get all the created {@link ComputePass | compute passes}.
      * @readonly
      */
     get computePasses() {
       return this.renderers?.map((renderer) => renderer.computePasses).flat();
     }
     /**
-     * Get our {@link GPUCurtainsRenderer#setPerspective | default GPUCurtainsRenderer bounding rectangle}
+     * Get our {@link GPUCurtainsRenderer#boundingRect | default GPUCurtainsRenderer bounding rectangle}.
      */
     get boundingRect() {
       return this.renderer?.boundingRect;
     }
     /* SCROLL */
     /**
-     * Set the {@link scrollManager}
+     * Set the {@link scrollManager}.
      */
     initScroll() {
       this.scrollManager = new ScrollManager({
@@ -20053,8 +20224,8 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       });
     }
     /**
-     * Update all {@link DOMMesh#updateScrollPosition | DOMMesh scroll positions}
-     * @param delta - last {@link ScrollManager#delta | scroll delta values}
+     * Update all {@link DOMMesh#updateScrollPosition | DOMMesh scroll positions}.
+     * @param delta - Last {@link ScrollManager#delta | scroll delta values}.
      */
     updateScroll(delta = { x: 0, y: 0 }) {
       this.domObjects.forEach((domObject) => {
@@ -20066,20 +20237,20 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
     }
     /**
      * Update our {@link ScrollManager#scroll | scrollManager scroll values}. Called each time the scroll has changed if {@link GPUCurtains#options.watchScroll | watchScroll option} is set to true. Could be called externally as well.
-     * @param scroll - new {@link DOMPosition | scroll values}
+     * @param scroll - New {@link DOMPosition | scroll values}.
      */
     updateScrollValues(scroll = { x: 0, y: 0 }) {
       this.scrollManager.updateScrollValues(scroll);
     }
     /**
-     * Get our {@link ScrollManager#delta | scrollManager delta values}
+     * Get our {@link ScrollManager#delta | scrollManager delta values}.
      * @readonly
      */
     get scrollDelta() {
       return this.scrollManager.delta;
     }
     /**
-     * Get our {@link ScrollManager#scroll | scrollManager scroll values}
+     * Get our {@link ScrollManager#scroll | scrollManager scroll values}.
      * @readonly
      */
     get scrollValues() {
@@ -20087,27 +20258,27 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
     }
     /* EVENTS */
     /**
-     * Called each frame before rendering
-     * @param callback - callback to run at each render
-     * @returns - our {@link GPUCurtains}
+     * Called each frame before rendering.
+     * @param callback - callback to run at each render.
+     * @returns - our {@link GPUCurtains}.
      */
     onBeforeRender(callback) {
       this.deviceManager.onBeforeRender(callback);
       return this;
     }
     /**
-     * Called each frame after rendering
-     * @param callback - callback to run at each render
-     * @returns - our {@link GPUCurtains}
+     * Called each frame after rendering.
+     * @param callback - callback to run at each render.
+     * @returns - our {@link GPUCurtains}.
      */
     onAfterRender(callback) {
       this.deviceManager.onAfterRender(callback);
       return this;
     }
     /**
-     * Called each time the {@link ScrollManager#scroll | scrollManager scroll values} changed
-     * @param callback - callback to run each time the {@link ScrollManager#scroll | scrollManager scroll values} changed
-     * @returns - our {@link GPUCurtains}
+     * Called each time the {@link ScrollManager#scroll | scrollManager scroll values} changed.
+     * @param callback - callback to run each time the {@link ScrollManager#scroll | scrollManager scroll values} changed.
+     * @returns - our {@link GPUCurtains}.
      */
     onScroll(callback) {
       if (callback) {
@@ -20116,9 +20287,9 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       return this;
     }
     /**
-     * Called if there's been an error while trying to create the {@link GPUDeviceManager#device | device}
-     * @param callback - callback to run if there's been an error while trying to create the {@link GPUDeviceManager#device | device}
-     * @returns - our {@link GPUCurtains}
+     * Called if there's been an error while trying to create the {@link GPUDeviceManager#device | device}.
+     * @param callback - callback to run if there's been an error while trying to create the {@link GPUDeviceManager#device | device}.
+     * @returns - our {@link GPUCurtains}.
      */
     onError(callback) {
       if (callback) {
@@ -20127,9 +20298,9 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       return this;
     }
     /**
-     * Called whenever the {@link GPUDeviceManager#device | device} is lost
-     * @param callback - callback to run whenever the {@link GPUDeviceManager#device | device} is lost
-     * @returns - our {@link GPUCurtains}
+     * Called whenever the {@link GPUDeviceManager#device | device} is lost.
+     * @param callback - callback to run whenever the {@link GPUDeviceManager#device | device} is lost.
+     * @returns - our {@link GPUCurtains}.
      */
     onContextLost(callback) {
       if (callback) {
@@ -20140,7 +20311,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
     /**
      * Called whenever the {@link GPUDeviceManager#device | device} has been intentionally destroyed.
      * @param callback - callback to run whenever the {@link GPUDeviceManager#device | device} has been destroyed.
-     * @returns - our {@link GPUCurtains}
+     * @returns - our {@link GPUCurtains}.
      */
     onContextDestroyed(callback) {
       if (callback) {
@@ -20149,13 +20320,13 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       return this;
     }
     /**
-     * Render our {@link GPUDeviceManager}
+     * Render our {@link GPUDeviceManager}.
      */
     render() {
       this.deviceManager.render();
     }
     /**
-     * Destroy our {@link GPUCurtains} and {@link GPUDeviceManager}
+     * Destroy our {@link GPUCurtains} and {@link GPUDeviceManager}.
      */
     destroy() {
       this.deviceManager.destroy();
@@ -20273,6 +20444,9 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
     useCamera(camera) {
       this.camera = camera;
       this.camera.lookAt(this.target);
+      this.target.onChange(() => {
+        __privateMethod$5(this, _OrbitControls_instances, update_fn).call(this);
+      });
       __privateGet$4(this, _offset).copy(this.camera.position).sub(this.target);
       __privateGet$4(this, _spherical).radius = __privateGet$4(this, _offset).length();
       __privateGet$4(this, _spherical).theta = Math.atan2(__privateGet$4(this, _offset).x, __privateGet$4(this, _offset).z);
@@ -20548,8 +20722,15 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
   rotate_fn = function(x, y) {
     tempVec2a.set(x, y);
     tempVec2b.copy(tempVec2a).sub(__privateGet$4(this, _rotateStart)).multiplyScalar(this.rotateSpeed);
-    __privateGet$4(this, _spherical).theta -= 2 * Math.PI * tempVec2b.x / this.camera.size.height;
-    __privateGet$4(this, _spherical).phi -= 2 * Math.PI * tempVec2b.y / this.camera.size.height;
+    if (this.camera instanceof PerspectiveCamera) {
+      __privateGet$4(this, _spherical).theta -= 2 * Math.PI * tempVec2b.x / this.camera.size.height;
+      __privateGet$4(this, _spherical).phi -= 2 * Math.PI * tempVec2b.y / this.camera.size.height;
+    } else if (this.camera instanceof OrthographicCamera) {
+      const height = this.camera.top - this.camera.bottom;
+      tempVec2b.multiplyScalar(1 / height);
+      __privateGet$4(this, _spherical).theta -= 2 * Math.PI * tempVec2b.x / height;
+      __privateGet$4(this, _spherical).phi -= 2 * Math.PI * tempVec2b.y / height;
+    }
     __privateGet$4(this, _spherical).theta = Math.min(this.maxAzimuthAngle, Math.max(this.minAzimuthAngle, __privateGet$4(this, _spherical).theta));
     __privateGet$4(this, _spherical).phi = Math.min(this.maxPolarAngle, Math.max(this.minPolarAngle, __privateGet$4(this, _spherical).phi));
     __privateGet$4(this, _rotateStart).copy(tempVec2a);
@@ -20567,20 +20748,29 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
     __privateGet$4(this, _panDelta).set(0);
     tempVec3$1.copy(this.camera.position).sub(this.target);
     let targetDistance = tempVec3$1.length();
-    targetDistance *= Math.tan(this.camera.fov / 2 * Math.PI / 180);
     tempVec3$1.set(
       this.camera.modelMatrix.elements[0],
       this.camera.modelMatrix.elements[1],
       this.camera.modelMatrix.elements[2]
     );
-    tempVec3$1.multiplyScalar(-(2 * tempVec2b.x * targetDistance) / this.camera.size.height);
+    if (this.camera instanceof PerspectiveCamera) {
+      targetDistance *= Math.tan(this.camera.fov / 2 * Math.PI / 180);
+      tempVec3$1.multiplyScalar(-(2 * tempVec2b.x * targetDistance) / this.camera.size.height);
+    } else if (this.camera instanceof OrthographicCamera) {
+      targetDistance *= 1 / (this.camera.top - this.camera.bottom);
+      tempVec3$1.multiplyScalar(-(2 * tempVec2b.x * targetDistance) / (this.camera.right - this.camera.left));
+    }
     __privateGet$4(this, _panDelta).add(tempVec3$1);
     tempVec3$1.set(
       this.camera.modelMatrix.elements[4],
       this.camera.modelMatrix.elements[5],
       this.camera.modelMatrix.elements[6]
     );
-    tempVec3$1.multiplyScalar(2 * tempVec2b.y * targetDistance / this.camera.size.height);
+    if (this.camera instanceof PerspectiveCamera) {
+      tempVec3$1.multiplyScalar(2 * tempVec2b.y * targetDistance / this.camera.size.height);
+    } else if (this.camera instanceof OrthographicCamera) {
+      tempVec3$1.multiplyScalar(2 * tempVec2b.y * targetDistance / (this.camera.top - this.camera.bottom));
+    }
     __privateGet$4(this, _panDelta).add(tempVec3$1);
     __privateGet$4(this, _panStart).copy(tempVec2a);
     this.target.add(__privateGet$4(this, _panDelta));
@@ -23643,11 +23833,17 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
       if (node.camera !== void 0) {
         const gltfCamera = this.gltf.cameras[node.camera];
         if (gltfCamera.type === "perspective") {
-          const minSize = Math.min(this.renderer.boundingRect.width, this.renderer.boundingRect.height);
-          const width = minSize / gltfCamera.perspective.aspectRatio;
-          const height = minSize * gltfCamera.perspective.aspectRatio;
+          let width, height;
+          if (gltfCamera.perspective.aspectRatio !== void 0) {
+            const minSize = Math.min(this.renderer.boundingRect.width, this.renderer.boundingRect.height);
+            width = minSize / gltfCamera.perspective.aspectRatio;
+            height = minSize * gltfCamera.perspective.aspectRatio;
+          } else {
+            width = this.renderer.boundingRect.width;
+            height = this.renderer.boundingRect.height;
+          }
           const fov = gltfCamera.perspective.yfov * 180 / Math.PI;
-          const camera = new Camera({
+          const camera = new PerspectiveCamera({
             fov,
             near: gltfCamera.perspective.znear,
             far: gltfCamera.perspective.zfar,
@@ -23658,7 +23854,16 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
           camera.parent = child.node;
           this.scenesManager.cameras.push(camera);
         } else if (gltfCamera.type === "orthographic") {
-          throwWarning("GLTFScenesManager: Orthographic cameras are not supported yet.");
+          const camera = new OrthographicCamera({
+            near: gltfCamera.orthographic.znear,
+            far: gltfCamera.orthographic.zfar,
+            left: -gltfCamera.orthographic.xmag,
+            right: gltfCamera.orthographic.xmag,
+            top: gltfCamera.orthographic.ymag,
+            bottom: -gltfCamera.orthographic.ymag
+          });
+          camera.parent = child.node;
+          this.scenesManager.cameras.push(camera);
         }
       }
       if (this.gltf.animations) {
@@ -24773,7 +24978,6 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
   exports.BoxGeometry = BoxGeometry;
   exports.Buffer = Buffer;
   exports.BufferBinding = BufferBinding;
-  exports.Camera = Camera;
   exports.ComputeMaterial = ComputeMaterial;
   exports.ComputePass = ComputePass;
   exports.ComputePipelineEntry = ComputePipelineEntry;
@@ -24805,6 +25009,8 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
   exports.Mesh = Mesh;
   exports.Object3D = Object3D;
   exports.OrbitControls = OrbitControls;
+  exports.OrthographicCamera = OrthographicCamera;
+  exports.PerspectiveCamera = PerspectiveCamera;
   exports.PingPongPlane = PingPongPlane;
   exports.PipelineEntry = PipelineEntry;
   exports.PipelineManager = PipelineManager;

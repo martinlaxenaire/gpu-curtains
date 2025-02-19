@@ -1,5 +1,6 @@
 import { GPURenderer, GPURendererOptions, GPURendererParams, SceneObject } from './GPURenderer'
-import { Camera, CameraBasePerspectiveOptions } from '../camera/Camera'
+import { Camera } from '../cameras/Camera'
+import { PerspectiveCamera, PerspectiveCameraBaseOptions } from '../cameras/PerspectiveCamera'
 import { BufferBinding } from '../bindings/BufferBinding'
 import { BindGroup } from '../bindGroups/BindGroup'
 import { Vec3 } from '../../math/Vec3'
@@ -15,6 +16,7 @@ import { ShadowsType } from '../shadows/Shadow'
 import { Texture } from '../textures/Texture'
 import { Sampler } from '../samplers/Sampler'
 import { RenderPassEntry } from '../scenes/Scene'
+import { OrthographicCamera } from '../cameras/OrthographicCamera'
 
 /** Defines the parameters used to build the {@link BufferBinding} of each type of lights. */
 export interface LightParams {
@@ -58,8 +60,8 @@ export interface GPUCameraRendererLightParams {
 
 /** Extra parameters used to define the {@link Camera} and various lights options. */
 export interface GPUCameraLightsRendererParams {
-  /** An object defining {@link CameraBasePerspectiveOptions | camera perspective parameters} */
-  camera?: CameraBasePerspectiveOptions
+  /** An object defining {@link PerspectiveCameraBaseOptions | camera perspective parameters} */
+  camera?: PerspectiveCameraBaseOptions
   /** An object defining {@link GPUCameraRendererLightParams | the maximum number of light} to use when creating the {@link GPUCameraRenderer}. Can be set to `false` to avoid creating lights and shadows buffers. */
   lights?: GPUCameraRendererLightParams | false
 }
@@ -234,13 +236,13 @@ export class GPUCameraRenderer extends GPURenderer {
 
   /**
    * Set the {@link camera}
-   * @param cameraParameters - {@link CameraBasePerspectiveOptions | parameters} used to create the {@link camera}
+   * @param cameraParameters - {@link PerspectiveCameraBaseOptions | parameters} used to create the {@link camera}
    */
-  setCamera(cameraParameters: CameraBasePerspectiveOptions) {
+  setCamera(cameraParameters: PerspectiveCameraBaseOptions) {
     const { width, height } = this.rectBBox
 
     this.useCamera(
-      new Camera({
+      new PerspectiveCamera({
         fov: cameraParameters.fov,
         near: cameraParameters.near,
         far: cameraParameters.far,
@@ -772,21 +774,6 @@ export class GPUCameraRenderer extends GPURenderer {
   }
 
   /**
-   * Set our {@link camera} perspective matrix new parameters (fov, near plane and far plane)
-   * @param parameters - {@link CameraBasePerspectiveOptions | parameters} to use for the perspective
-   */
-  setPerspective({ fov, near, far }: CameraBasePerspectiveOptions = {}) {
-    this.camera?.setPerspective({
-      fov,
-      near,
-      far,
-      width: this.rectBBox.width,
-      height: this.rectBBox.height,
-      pixelRatio: this.pixelRatio,
-    })
-  }
-
-  /**
    * Set our {@link camera} {@link Camera#position | position}
    * @param position - new {@link Camera#position | position}
    */
@@ -840,7 +827,22 @@ export class GPUCameraRenderer extends GPURenderer {
   resize(rectBBox: RectBBox | null = null) {
     this.setSize(rectBBox)
 
-    this.setPerspective()
+    if (this.camera instanceof PerspectiveCamera) {
+      this.camera?.setPerspective({
+        width: this.rectBBox.width,
+        height: this.rectBBox.height,
+        pixelRatio: this.pixelRatio,
+      })
+    } else if (this.camera instanceof OrthographicCamera) {
+      const aspect = this.rectBBox.width / this.rectBBox.height
+      const frustumSize = this.camera.top * 2
+
+      this.camera.setOrthographic({
+        left: (-frustumSize * aspect) / 2,
+        right: (frustumSize * aspect) / 2,
+        pixelRatio: this.pixelRatio,
+      })
+    }
 
     this._onResizeCallback && this._onResizeCallback()
 
@@ -852,8 +854,8 @@ export class GPUCameraRenderer extends GPURenderer {
   /* RENDER */
 
   /**
-   * {@link createCameraLightsBindGroup | Set the camera bind group if needed} and then call our {@link GPURenderer#render | GPURenderer render method}
-   * @param commandEncoder - current {@link GPUCommandEncoder}
+   * {@link createCameraLightsBindGroup | Set the camera bind group if needed} and then call our {@link GPURenderer#render | GPURenderer render method}.
+   * @param commandEncoder - Current {@link GPUCommandEncoder}.
    */
   render(commandEncoder: GPUCommandEncoder) {
     if (!this.ready) return
