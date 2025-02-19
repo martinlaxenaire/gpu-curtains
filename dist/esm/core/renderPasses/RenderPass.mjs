@@ -2,6 +2,14 @@ import { isRenderer } from '../renderers/utils.mjs';
 import { generateUUID } from '../../utils/utils.mjs';
 import { Texture } from '../textures/Texture.mjs';
 
+var __typeError = (msg) => {
+  throw TypeError(msg);
+};
+var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
+var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
+var _useStencil;
 class RenderPass {
   /**
    * RenderPass constructor
@@ -23,14 +31,22 @@ class RenderPass {
     depthLoadOp = "clear",
     depthStoreOp = "store",
     depthClearValue = 1,
-    depthFormat = "depth24plus"
+    depthFormat = "depth24plus",
+    depthReadOnly = false,
+    stencilClearValue = 0,
+    stencilLoadOp = "clear",
+    stencilStoreOp = "store",
+    stencilReadOnly = false
   } = {}) {
+    /** Whether the {@link RenderPass} should handle stencil. Default to `false`, eventually set to `true` based on the {@link depthTexture} format. */
+    __privateAdd(this, _useStencil);
     this.type = "RenderPass";
     renderer = isRenderer(renderer, label + " " + this.type);
     this.renderer = renderer;
     this.uuid = generateUUID();
     this.viewport = null;
     this.scissorRect = null;
+    __privateSet(this, _useStencil, false);
     if (useColorAttachments) {
       const defaultColorAttachment = {
         loadOp: "clear",
@@ -61,7 +77,12 @@ class RenderPass {
       depthLoadOp,
       depthStoreOp,
       depthClearValue,
-      depthFormat
+      depthFormat,
+      depthReadOnly,
+      stencilClearValue,
+      stencilLoadOp,
+      stencilStoreOp,
+      stencilReadOnly
     };
     if (this.options.useDepth) {
       this.createDepthTexture();
@@ -111,6 +132,9 @@ class RenderPass {
         type: "depth",
         usage: ["renderAttachment", "textureBinding"]
       });
+    }
+    if (this.depthTexture.options.format.includes("stencil")) {
+      __privateSet(this, _useStencil, true);
     }
   }
   /**
@@ -196,7 +220,13 @@ class RenderPass {
           depthClearValue: this.options.depthClearValue,
           // the same way loadOp is working, we can specify if we want to clear or load the previous depth buffer result
           depthLoadOp: this.options.depthLoadOp,
-          depthStoreOp: this.options.depthStoreOp
+          depthStoreOp: this.options.depthStoreOp,
+          depthReadOnly: this.options.depthReadOnly,
+          ...__privateGet(this, _useStencil) && {
+            stencilLoadOp: this.options.stencilLoadOp,
+            stencilStoreOp: this.options.stencilStoreOp,
+            stencilReadOnly: this.options.stencilReadOnly
+          }
         }
       }
     };
@@ -349,5 +379,6 @@ class RenderPass {
     }
   }
 }
+_useStencil = new WeakMap();
 
 export { RenderPass };

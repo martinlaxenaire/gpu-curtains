@@ -53,14 +53,25 @@ export interface RenderPassParams {
   useDepth?: boolean
   /** Whether this {@link RenderPass} should use an already created depth texture. */
   depthTexture?: Texture
-  /** The {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#loadop | depth load operation} to perform while drawing this {@link RenderPass}. */
+  /** The {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#depthloadop | depth load operation} to perform while drawing this {@link RenderPass}. Default to `'clear`. */
   depthLoadOp?: GPULoadOp
-  /** The {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#storeop | depth store operation} to perform while drawing this {@link RenderPass}. */
+  /** The {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#depthstoreop | depth store operation} to perform while drawing this {@link RenderPass}. Default to `'store'`. */
   depthStoreOp?: GPUStoreOp
   /** The depth clear value to clear to before drawing this {@link RenderPass}. */
   depthClearValue?: number
   /** Optional format of the depth texture. */
   depthFormat?: GPUTextureFormat
+
+  /** Indicates that the depth component of the depth texture view is read only. Default to `false`. */
+  depthReadOnly?: boolean
+  /** A number indicating the value to clear view's stencil component to prior to executing the render pass. This is ignored if stencilLoadOp is not set to "clear". Default to `0`. */
+  stencilClearValue?: number
+  /** The {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#stencilloadop | stencil load operation} to perform while drawing this {@link RenderPass}. Default to `'clear`. */
+  stencilLoadOp?: GPULoadOp
+  /** The {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#stencilstoreop | stencil store operation} to perform while drawing this {@link RenderPass}. Default to `'store'`. */
+  stencilStoreOp?: GPUStoreOp
+  /** Indicates that the stencil component of the depth texture view is read only. Default to `false`. */
+  stencilReadOnly?: boolean
 }
 
 /**
@@ -95,6 +106,9 @@ export class RenderPass {
   /** Scissor {@link RectBBox} to use for scissors if any. */
   scissorRect: RectBBox | null
 
+  /** Whether the {@link RenderPass} should handle stencil. Default to `false`, eventually set to `true` based on the {@link depthTexture} format. */
+  #useStencil: boolean
+
   /**
    * RenderPass constructor
    * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link RenderPass}
@@ -118,6 +132,11 @@ export class RenderPass {
       depthStoreOp = 'store' as GPUStoreOp,
       depthClearValue = 1,
       depthFormat = 'depth24plus' as GPUTextureFormat,
+      depthReadOnly = false,
+      stencilClearValue = 0,
+      stencilLoadOp = 'clear' as GPULoadOp,
+      stencilStoreOp = 'store' as GPUStoreOp,
+      stencilReadOnly = false,
     } = {} as RenderPassParams
   ) {
     this.type = 'RenderPass'
@@ -129,6 +148,8 @@ export class RenderPass {
 
     this.viewport = null
     this.scissorRect = null
+
+    this.#useStencil = false
 
     if (useColorAttachments) {
       const defaultColorAttachment = {
@@ -163,6 +184,11 @@ export class RenderPass {
       depthStoreOp,
       depthClearValue,
       depthFormat,
+      depthReadOnly,
+      stencilClearValue,
+      stencilLoadOp,
+      stencilStoreOp,
+      stencilReadOnly,
     }
 
     // if needed, create a depth texture before our descriptor
@@ -223,6 +249,10 @@ export class RenderPass {
         type: 'depth',
         usage: ['renderAttachment', 'textureBinding'],
       })
+    }
+
+    if (this.depthTexture.options.format.includes('stencil')) {
+      this.#useStencil = true
     }
   }
 
@@ -318,6 +348,12 @@ export class RenderPass {
           // the same way loadOp is working, we can specify if we want to clear or load the previous depth buffer result
           depthLoadOp: this.options.depthLoadOp,
           depthStoreOp: this.options.depthStoreOp,
+          depthReadOnly: this.options.depthReadOnly,
+          ...(this.#useStencil && {
+            stencilLoadOp: this.options.stencilLoadOp,
+            stencilStoreOp: this.options.stencilStoreOp,
+            stencilReadOnly: this.options.stencilReadOnly,
+          }),
         },
       }),
     }

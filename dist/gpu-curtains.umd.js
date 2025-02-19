@@ -2639,13 +2639,13 @@
     }
   }
 
-  var __typeError$t = (msg) => {
+  var __typeError$u = (msg) => {
     throw TypeError(msg);
   };
-  var __accessCheck$t = (obj, member, msg) => member.has(obj) || __typeError$t("Cannot " + msg);
-  var __privateGet$r = (obj, member, getter) => (__accessCheck$t(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
-  var __privateAdd$t = (obj, member, value) => member.has(obj) ? __typeError$t("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  var __privateSet$q = (obj, member, value, setter) => (__accessCheck$t(obj, member, "write to private field"), member.set(obj, value), value);
+  var __accessCheck$u = (obj, member, msg) => member.has(obj) || __typeError$u("Cannot " + msg);
+  var __privateGet$s = (obj, member, getter) => (__accessCheck$u(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$u = (obj, member, value) => member.has(obj) ? __typeError$u("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$r = (obj, member, value, setter) => (__accessCheck$u(obj, member, "write to private field"), member.set(obj, value), value);
   var _parent;
   const _BufferBinding = class _BufferBinding extends Binding {
     /**
@@ -2670,7 +2670,7 @@
       bindingType = bindingType ?? "uniform";
       super({ label, name, bindingType, visibility });
       /** @ignore */
-      __privateAdd$t(this, _parent);
+      __privateAdd$u(this, _parent);
       this.options = {
         ...this.options,
         useStruct,
@@ -2731,7 +2731,7 @@
      * @returns - The {@link BufferBinding} parent if any.
      */
     get parent() {
-      return __privateGet$r(this, _parent);
+      return __privateGet$s(this, _parent);
     }
     /**
      * Set the new {@link BufferBinding} parent.
@@ -2782,7 +2782,7 @@
         this.parentView = null;
         this.parentViewSetBufferEls = null;
       }
-      __privateSet$q(this, _parent, value);
+      __privateSet$r(this, _parent, value);
     }
     /**
      * Round the given size value to the nearest minimum {@link GPUDevice} buffer offset alignment.
@@ -3887,13 +3887,13 @@
     return 1 + Math.log2(maxSize) | 0;
   };
 
-  var __typeError$s = (msg) => {
+  var __typeError$t = (msg) => {
     throw TypeError(msg);
   };
-  var __accessCheck$s = (obj, member, msg) => member.has(obj) || __typeError$s("Cannot " + msg);
-  var __privateGet$q = (obj, member, getter) => (__accessCheck$s(obj, member, "read from private field"), member.get(obj));
-  var __privateAdd$s = (obj, member, value) => member.has(obj) ? __typeError$s("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  var __privateSet$p = (obj, member, value, setter) => (__accessCheck$s(obj, member, "write to private field"), member.set(obj, value), value);
+  var __accessCheck$t = (obj, member, msg) => member.has(obj) || __typeError$t("Cannot " + msg);
+  var __privateGet$r = (obj, member, getter) => (__accessCheck$t(obj, member, "read from private field"), member.get(obj));
+  var __privateAdd$t = (obj, member, value) => member.has(obj) ? __typeError$t("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$q = (obj, member, value, setter) => (__accessCheck$t(obj, member, "write to private field"), member.set(obj, value), value);
   var _autoResize;
   const defaultTextureParams = {
     label: "Texture",
@@ -3921,7 +3921,7 @@
      */
     constructor(renderer, parameters = defaultTextureParams) {
       /** Whether this texture should be automatically resized when the {@link Renderer renderer} size changes. Default to true. */
-      __privateAdd$s(this, _autoResize, true);
+      __privateAdd$t(this, _autoResize, true);
       renderer = isRenderer(renderer, parameters.label ? parameters.label + " Texture" : "Texture");
       this.type = "Texture";
       this.renderer = renderer;
@@ -3949,7 +3949,7 @@
         depth: this.options.viewDimension.indexOf("cube") !== -1 ? 6 : 1
       };
       if (this.options.fixedSize) {
-        __privateSet$p(this, _autoResize, false);
+        __privateSet$q(this, _autoResize, false);
       }
       this.setBindings();
       this.renderer.addTexture(this);
@@ -3967,7 +3967,7 @@
       this.renderer = renderer;
       this.renderer.addTexture(this);
       const { width, height } = this.renderer.canvas;
-      if (__privateGet$q(this, _autoResize) && (this.size.width !== width * this.options.qualityRatio || this.size.height !== height * this.options.qualityRatio)) {
+      if (__privateGet$r(this, _autoResize) && (this.size.width !== width * this.options.qualityRatio || this.size.height !== height * this.options.qualityRatio)) {
         this.resize();
       }
     }
@@ -4098,7 +4098,7 @@
      * @param size - the optional new {@link TextureSize | size} to set.
      */
     resize(size = null) {
-      if (!__privateGet$q(this, _autoResize)) return;
+      if (!__privateGet$r(this, _autoResize)) return;
       if (!size) {
         const { width, height } = this.renderer.canvas;
         size = {
@@ -4452,14 +4452,14 @@
     }
   }
 
-  var __typeError$r = (msg) => {
+  var __typeError$s = (msg) => {
     throw TypeError(msg);
   };
-  var __accessCheck$r = (obj, member, msg) => member.has(obj) || __typeError$r("Cannot " + msg);
-  var __privateGet$p = (obj, member, getter) => (__accessCheck$r(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
-  var __privateAdd$r = (obj, member, value) => member.has(obj) ? __typeError$r("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  var __privateSet$o = (obj, member, value, setter) => (__accessCheck$r(obj, member, "write to private field"), member.set(obj, value), value);
-  var __privateMethod$a = (obj, member, method) => (__accessCheck$r(obj, member, "access private method"), method);
+  var __accessCheck$s = (obj, member, msg) => member.has(obj) || __typeError$s("Cannot " + msg);
+  var __privateGet$q = (obj, member, getter) => (__accessCheck$s(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$s = (obj, member, value) => member.has(obj) ? __typeError$s("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$p = (obj, member, value, setter) => (__accessCheck$s(obj, member, "write to private field"), member.set(obj, value), value);
+  var __privateMethod$a = (obj, member, method) => (__accessCheck$s(obj, member, "access private method"), method);
   var _sourcesLoaded, _sourcesUploaded, _rotation, _MediaTexture_instances, setSourceLoaded_fn;
   const defaultMediaTextureParams = {
     label: "Texture",
@@ -4502,13 +4502,13 @@
           fixedSize: { width: parameters.fixedSize?.width ?? 1, height: parameters.fixedSize?.height ?? 1 }
         }
       });
-      __privateAdd$r(this, _MediaTexture_instances);
+      __privateAdd$s(this, _MediaTexture_instances);
       /** Whether the sources have been loaded. */
-      __privateAdd$r(this, _sourcesLoaded);
+      __privateAdd$s(this, _sourcesLoaded);
       /** Whether the sources have been uploaded to the GPU, handled by the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#texturesQueue | GPUDeviceManager texturesQueue array}. */
-      __privateAdd$r(this, _sourcesUploaded);
+      __privateAdd$s(this, _sourcesUploaded);
       /** Rotation to apply to the {@link Texture} if {@link MediaTextureParams#useTransform | useTransform} parameter has been set to `true`. */
-      __privateAdd$r(this, _rotation);
+      __privateAdd$s(this, _rotation);
       // callbacks / events
       /** function assigned to the {@link onSourceLoaded} callback */
       this._onSourceLoadedCallback = (source) => {
@@ -4539,7 +4539,7 @@
         this.options.sourcesTypes = parameters.fromTexture.options.sourcesTypes;
         this.sources = parameters.fromTexture.sources;
       }
-      __privateSet$o(this, _rotation, 0);
+      __privateSet$p(this, _rotation, 0);
       this.offset = new Vec2().onChange(() => this.updateModelMatrix());
       this.scale = new Vec2(1).onChange(() => this.updateModelMatrix());
       this.transformOrigin = new Vec2().onChange(() => this.updateModelMatrix());
@@ -4569,7 +4569,7 @@
      * Get whether all our {@link sources} have been loaded.
      */
     get sourcesLoaded() {
-      return __privateGet$p(this, _sourcesLoaded);
+      return __privateGet$q(this, _sourcesLoaded);
     }
     /**
      * Set whether all our {@link sources} have been loaded.
@@ -4579,13 +4579,13 @@
       if (value && !this.sourcesLoaded) {
         this._onAllSourcesLoadedCallback && this._onAllSourcesLoadedCallback();
       }
-      __privateSet$o(this, _sourcesLoaded, value);
+      __privateSet$p(this, _sourcesLoaded, value);
     }
     /**
      * Get whether all our {@link sources} have been uploaded.
      */
     get sourcesUploaded() {
-      return __privateGet$p(this, _sourcesUploaded);
+      return __privateGet$q(this, _sourcesUploaded);
     }
     /**
      * Set whether all our {@link sources} have been uploaded.
@@ -4595,7 +4595,7 @@
       if (value && !this.sourcesUploaded) {
         this._onAllSourcesUploadedCallback && this._onAllSourcesUploadedCallback();
       }
-      __privateSet$o(this, _sourcesUploaded, value);
+      __privateSet$p(this, _sourcesUploaded, value);
     }
     /* TRANSFORM */
     /**
@@ -4603,14 +4603,14 @@
      * @returns - the actual {@link rotation} value.
      */
     get rotation() {
-      return __privateGet$p(this, _rotation);
+      return __privateGet$q(this, _rotation);
     }
     /**
      * Set the actual {@link rotation} value and update the {@link modelMatrix}.
      * @param value - new {@link rotation} value to use.
      */
     set rotation(value) {
-      __privateSet$o(this, _rotation, value);
+      __privateSet$p(this, _rotation, value);
       this.updateModelMatrix();
     }
     /**
@@ -5107,12 +5107,12 @@
   };
   let MediaTexture = _MediaTexture;
 
-  var __typeError$q = (msg) => {
+  var __typeError$r = (msg) => {
     throw TypeError(msg);
   };
-  var __accessCheck$q = (obj, member, msg) => member.has(obj) || __typeError$q("Cannot " + msg);
-  var __privateGet$o = (obj, member, getter) => (__accessCheck$q(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
-  var __privateAdd$q = (obj, member, value) => member.has(obj) ? __typeError$q("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __accessCheck$r = (obj, member, msg) => member.has(obj) || __typeError$r("Cannot " + msg);
+  var __privateGet$p = (obj, member, getter) => (__accessCheck$r(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$r = (obj, member, value) => member.has(obj) ? __typeError$r("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   var _parentRatio, _sourceRatio, _coverScale, _negatedOrigin, _rotationMatrix;
   const defaultDOMTextureParams = {
     name: "texture",
@@ -5142,27 +5142,27 @@
        * {@link Vec2} used for {@link modelMatrix} calculations, based on {@link mesh} {@link core/DOM/DOMElement.RectSize | size}.
        * @private
        */
-      __privateAdd$q(this, _parentRatio, new Vec2(1));
+      __privateAdd$r(this, _parentRatio, new Vec2(1));
       /**
        * {@link Vec2} used for {@link modelMatrix} calculations, based on {@link size | source size}.
        * @private
        */
-      __privateAdd$q(this, _sourceRatio, new Vec2(1));
+      __privateAdd$r(this, _sourceRatio, new Vec2(1));
       /**
        * {@link Vec2} used for {@link modelMatrix} calculations, based on #parentRatio and #sourceRatio.
        * @private
        */
-      __privateAdd$q(this, _coverScale, new Vec2(1));
+      __privateAdd$r(this, _coverScale, new Vec2(1));
       /**
        * {@link Vec2} used for {@link modelMatrix} calculations, based on {@link transformOrigin}.
        * @private
        */
-      __privateAdd$q(this, _negatedOrigin, new Vec2());
+      __privateAdd$r(this, _negatedOrigin, new Vec2());
       /**
        * Rotation {@link Mat3} based on texture {@link rotation}.
        * @private
        */
-      __privateAdd$q(this, _rotationMatrix, new Mat3());
+      __privateAdd$r(this, _rotationMatrix, new Mat3());
       this.transformOrigin.set(0.5, 0.5);
       this.type = "DOMTexture";
       this.renderer.addDOMTexture(this);
@@ -5196,17 +5196,17 @@
       const parentRatio = parentWidth / parentHeight;
       const sourceRatio = this.size.width / this.size.height;
       if (parentWidth > parentHeight) {
-        __privateGet$o(this, _parentRatio).set(parentRatio, 1);
-        __privateGet$o(this, _sourceRatio).set(1 / sourceRatio, 1);
+        __privateGet$p(this, _parentRatio).set(parentRatio, 1);
+        __privateGet$p(this, _sourceRatio).set(1 / sourceRatio, 1);
       } else {
-        __privateGet$o(this, _parentRatio).set(1, 1 / parentRatio);
-        __privateGet$o(this, _sourceRatio).set(1, sourceRatio);
+        __privateGet$p(this, _parentRatio).set(1, 1 / parentRatio);
+        __privateGet$p(this, _sourceRatio).set(1, sourceRatio);
       }
-      const coverRatio = parentRatio > sourceRatio !== parentWidth > parentHeight ? 1 : parentWidth > parentHeight ? __privateGet$o(this, _parentRatio).x * __privateGet$o(this, _sourceRatio).x : __privateGet$o(this, _sourceRatio).y * __privateGet$o(this, _parentRatio).y;
-      __privateGet$o(this, _coverScale).set(1 / (coverRatio * this.scale.x), 1 / (coverRatio * this.scale.y));
-      __privateGet$o(this, _negatedOrigin).copy(this.transformOrigin).multiplyScalar(-1);
-      __privateGet$o(this, _rotationMatrix).rotateByAngleZ(this.rotation);
-      this.modelMatrix.identity().premultiplyTranslate(__privateGet$o(this, _negatedOrigin)).premultiplyScale(__privateGet$o(this, _coverScale)).premultiplyScale(__privateGet$o(this, _parentRatio)).premultiply(__privateGet$o(this, _rotationMatrix)).premultiplyScale(__privateGet$o(this, _sourceRatio)).premultiplyTranslate(this.transformOrigin).translate(this.offset);
+      const coverRatio = parentRatio > sourceRatio !== parentWidth > parentHeight ? 1 : parentWidth > parentHeight ? __privateGet$p(this, _parentRatio).x * __privateGet$p(this, _sourceRatio).x : __privateGet$p(this, _sourceRatio).y * __privateGet$p(this, _parentRatio).y;
+      __privateGet$p(this, _coverScale).set(1 / (coverRatio * this.scale.x), 1 / (coverRatio * this.scale.y));
+      __privateGet$p(this, _negatedOrigin).copy(this.transformOrigin).multiplyScalar(-1);
+      __privateGet$p(this, _rotationMatrix).rotateByAngleZ(this.rotation);
+      this.modelMatrix.identity().premultiplyTranslate(__privateGet$p(this, _negatedOrigin)).premultiplyScale(__privateGet$p(this, _coverScale)).premultiplyScale(__privateGet$p(this, _parentRatio)).premultiply(__privateGet$p(this, _rotationMatrix)).premultiplyScale(__privateGet$p(this, _sourceRatio)).premultiplyTranslate(this.transformOrigin).translate(this.offset);
       this.transformBinding.inputs.matrix.shouldUpdate = true;
     }
     /**
@@ -5259,13 +5259,13 @@
   _negatedOrigin = new WeakMap();
   _rotationMatrix = new WeakMap();
 
-  var __typeError$p = (msg) => {
+  var __typeError$q = (msg) => {
     throw TypeError(msg);
   };
-  var __accessCheck$p = (obj, member, msg) => member.has(obj) || __typeError$p("Cannot " + msg);
-  var __privateGet$n = (obj, member, getter) => (__accessCheck$p(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
-  var __privateAdd$p = (obj, member, value) => member.has(obj) ? __typeError$p("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  var __privateSet$n = (obj, member, value, setter) => (__accessCheck$p(obj, member, "write to private field"), member.set(obj, value), value);
+  var __accessCheck$q = (obj, member, msg) => member.has(obj) || __typeError$q("Cannot " + msg);
+  var __privateGet$o = (obj, member, getter) => (__accessCheck$q(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$q = (obj, member, value) => member.has(obj) ? __typeError$q("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$o = (obj, member, value, setter) => (__accessCheck$q(obj, member, "write to private field"), member.set(obj, value), value);
   var _transformedTextures;
   class TextureBindGroup extends BindGroup {
     /**
@@ -5281,7 +5281,7 @@
        * Array containing all the {@link MediaTexture} that handle a transformation {@link MediaTexture#modelMatrix | modelMatrix}.
        * @private
        */
-      __privateAdd$p(this, _transformedTextures);
+      __privateAdd$q(this, _transformedTextures);
       this.options = {
         ...this.options,
         // will be filled after
@@ -5370,10 +5370,10 @@
      * Set the {@link texturesMatricesBinding} if needed.
      */
     setTexturesMatricesBinding() {
-      __privateSet$n(this, _transformedTextures, this.textures.filter(
+      __privateSet$o(this, _transformedTextures, this.textures.filter(
         (texture) => (texture instanceof MediaTexture || texture instanceof DOMTexture) && !!texture.transformBinding
       ));
-      const texturesBindings = __privateGet$n(this, _transformedTextures).map((texture) => {
+      const texturesBindings = __privateGet$o(this, _transformedTextures).map((texture) => {
         return texture.transformBinding;
       });
       if (texturesBindings.length) {
@@ -5426,7 +5426,7 @@
         }
       }
       if (this.texturesMatricesBinding) {
-        __privateGet$n(this, _transformedTextures).forEach((texture, i) => {
+        __privateGet$o(this, _transformedTextures).forEach((texture, i) => {
           this.texturesMatricesBinding.childrenBindings[i].inputs.matrix.shouldUpdate = !!texture.transformBinding.inputs.matrix.shouldUpdate;
           if (texture.transformBinding.inputs.matrix.shouldUpdate) {
             this.renderer.onAfterCommandEncoderSubmission.add(
@@ -5524,13 +5524,13 @@
     }
   }
 
-  var __typeError$o = (msg) => {
+  var __typeError$p = (msg) => {
     throw TypeError(msg);
   };
-  var __accessCheck$o = (obj, member, msg) => member.has(obj) || __typeError$o("Cannot " + msg);
-  var __privateGet$m = (obj, member, getter) => (__accessCheck$o(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
-  var __privateAdd$o = (obj, member, value) => member.has(obj) ? __typeError$o("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  var __privateSet$m = (obj, member, value, setter) => (__accessCheck$o(obj, member, "write to private field"), member.set(obj, value), value);
+  var __accessCheck$p = (obj, member, msg) => member.has(obj) || __typeError$p("Cannot " + msg);
+  var __privateGet$n = (obj, member, getter) => (__accessCheck$p(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$p = (obj, member, value) => member.has(obj) ? __typeError$p("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$n = (obj, member, value, setter) => (__accessCheck$p(obj, member, "write to private field"), member.set(obj, value), value);
   var _near, _far, _pixelRatio;
   class Camera extends Object3D {
     /**
@@ -5546,11 +5546,11 @@
     } = {}) {
       super();
       /** @ignore */
-      __privateAdd$o(this, _near);
+      __privateAdd$p(this, _near);
       /** @ignore */
-      __privateAdd$o(this, _far);
+      __privateAdd$p(this, _far);
       /** @ignore */
-      __privateAdd$o(this, _pixelRatio);
+      __privateAdd$p(this, _pixelRatio);
       this.uuid = generateUUID();
       this.onMatricesChanged = onMatricesChanged;
     }
@@ -5651,7 +5651,7 @@
      * Get the {@link Camera.near | near} plane value.
      */
     get near() {
-      return __privateGet$m(this, _near);
+      return __privateGet$n(this, _near);
     }
     /**
      * Set the {@link Camera.near | near} plane value. Update the {@link projectionMatrix} only if the near plane actually changed.
@@ -5660,7 +5660,7 @@
     set near(near) {
       near = Math.max(near ?? this.near, 1e-4);
       if (near !== this.near) {
-        __privateSet$m(this, _near, near);
+        __privateSet$n(this, _near, near);
         this.shouldUpdateProjectionMatrices();
       }
     }
@@ -5668,7 +5668,7 @@
      * Get the {@link Camera.far | far} plane value.
      */
     get far() {
-      return __privateGet$m(this, _far);
+      return __privateGet$n(this, _far);
     }
     /**
      * Set the {@link Camera.far | far} plane value. Update {@link projectionMatrix} only if the far plane actually changed.
@@ -5677,7 +5677,7 @@
     set far(far) {
       far = Math.max(far ?? this.far, this.near + 1);
       if (far !== this.far) {
-        __privateSet$m(this, _far, far);
+        __privateSet$n(this, _far, far);
         this.shouldUpdateProjectionMatrices();
       }
     }
@@ -5685,14 +5685,14 @@
      * Get the {@link Camera.pixelRatio | pixelRatio} value.
      */
     get pixelRatio() {
-      return __privateGet$m(this, _pixelRatio);
+      return __privateGet$n(this, _pixelRatio);
     }
     /**
      * Set the {@link Camera.pixelRatio | pixelRatio} value. Update the {@link CSSPerspective} only if the pixel ratio actually changed.
      * @param pixelRatio - New pixel ratio value.
      */
     set pixelRatio(pixelRatio) {
-      __privateSet$m(this, _pixelRatio, pixelRatio ?? this.pixelRatio);
+      __privateSet$n(this, _pixelRatio, pixelRatio ?? this.pixelRatio);
       this.setCSSPerspective();
     }
     /** @ignore */
@@ -5740,13 +5740,13 @@
   _far = new WeakMap();
   _pixelRatio = new WeakMap();
 
-  var __typeError$n = (msg) => {
+  var __typeError$o = (msg) => {
     throw TypeError(msg);
   };
-  var __accessCheck$n = (obj, member, msg) => member.has(obj) || __typeError$n("Cannot " + msg);
-  var __privateGet$l = (obj, member, getter) => (__accessCheck$n(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
-  var __privateAdd$n = (obj, member, value) => member.has(obj) ? __typeError$n("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  var __privateSet$l = (obj, member, value, setter) => (__accessCheck$n(obj, member, "write to private field"), member.set(obj, value), value);
+  var __accessCheck$o = (obj, member, msg) => member.has(obj) || __typeError$o("Cannot " + msg);
+  var __privateGet$m = (obj, member, getter) => (__accessCheck$o(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$o = (obj, member, value) => member.has(obj) ? __typeError$o("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$m = (obj, member, value, setter) => (__accessCheck$o(obj, member, "write to private field"), member.set(obj, value), value);
   var _left, _right, _top, _bottom;
   class OrthographicCamera extends Camera {
     /**
@@ -5766,13 +5766,13 @@
     } = {}) {
       super({ near, far, pixelRatio, onMatricesChanged });
       /** @ignore */
-      __privateAdd$n(this, _left);
+      __privateAdd$o(this, _left);
       /** @ignore */
-      __privateAdd$n(this, _right);
+      __privateAdd$o(this, _right);
       /** @ignore */
-      __privateAdd$n(this, _top);
+      __privateAdd$o(this, _top);
       /** @ignore */
-      __privateAdd$n(this, _bottom);
+      __privateAdd$o(this, _bottom);
       this.position.set(0, 0, 10);
       this.setOrthographic({ near, far, left, right, top, bottom, pixelRatio });
     }
@@ -5780,7 +5780,7 @@
      * Get the {@link OrthographicCamera.left | left} frustum plane value.
      */
     get left() {
-      return __privateGet$l(this, _left);
+      return __privateGet$m(this, _left);
     }
     /**
      * Set the {@link OrthographicCamera.left | left} frustum plane value. Update the {@link projectionMatrix} only if the value actually changed.
@@ -5788,7 +5788,7 @@
      */
     set left(left) {
       if (left !== this.left) {
-        __privateSet$l(this, _left, left);
+        __privateSet$m(this, _left, left);
         this.shouldUpdateProjectionMatrices();
       }
     }
@@ -5796,7 +5796,7 @@
      * Get the {@link OrthographicCamera.right | right} frustum plane value.
      */
     get right() {
-      return __privateGet$l(this, _right);
+      return __privateGet$m(this, _right);
     }
     /**
      * Set the {@link OrthographicCamera.right | right} frustum plane value. Update the {@link projectionMatrix} only if the value actually changed.
@@ -5804,7 +5804,7 @@
      */
     set right(right) {
       if (right !== this.right) {
-        __privateSet$l(this, _right, right);
+        __privateSet$m(this, _right, right);
         this.shouldUpdateProjectionMatrices();
       }
     }
@@ -5812,7 +5812,7 @@
      * Get the {@link OrthographicCamera.top | top} frustum plane value.
      */
     get top() {
-      return __privateGet$l(this, _top);
+      return __privateGet$m(this, _top);
     }
     /**
      * Set the {@link OrthographicCamera.top | top} frustum plane value. Update the {@link projectionMatrix} only if the value actually changed.
@@ -5820,7 +5820,7 @@
      */
     set top(top) {
       if (top !== this.top) {
-        __privateSet$l(this, _top, top);
+        __privateSet$m(this, _top, top);
         this.shouldUpdateProjectionMatrices();
       }
     }
@@ -5828,7 +5828,7 @@
      * Get the {@link OrthographicCamera.bottom | bottom} frustum plane value.
      */
     get bottom() {
-      return __privateGet$l(this, _bottom);
+      return __privateGet$m(this, _bottom);
     }
     /**
      * Set the {@link OrthographicCamera.bottom | bottom} frustum plane value. Update the {@link projectionMatrix} only if the value actually changed.
@@ -5836,7 +5836,7 @@
      */
     set bottom(bottom) {
       if (bottom !== this.bottom) {
-        __privateSet$l(this, _bottom, bottom);
+        __privateSet$m(this, _bottom, bottom);
         this.shouldUpdateProjectionMatrices();
       }
     }
@@ -5918,13 +5918,13 @@
   _top = new WeakMap();
   _bottom = new WeakMap();
 
-  var __typeError$m = (msg) => {
+  var __typeError$n = (msg) => {
     throw TypeError(msg);
   };
-  var __accessCheck$m = (obj, member, msg) => member.has(obj) || __typeError$m("Cannot " + msg);
-  var __privateGet$k = (obj, member, getter) => (__accessCheck$m(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
-  var __privateAdd$m = (obj, member, value) => member.has(obj) ? __typeError$m("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  var __privateSet$k = (obj, member, value, setter) => (__accessCheck$m(obj, member, "write to private field"), member.set(obj, value), value);
+  var __accessCheck$n = (obj, member, msg) => member.has(obj) || __typeError$n("Cannot " + msg);
+  var __privateGet$l = (obj, member, getter) => (__accessCheck$n(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$n = (obj, member, value) => member.has(obj) ? __typeError$n("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$l = (obj, member, value, setter) => (__accessCheck$n(obj, member, "write to private field"), member.set(obj, value), value);
   var _fov;
   class PerspectiveCamera extends Camera {
     /**
@@ -5944,7 +5944,7 @@
     } = {}) {
       super({ near, far, pixelRatio, onMatricesChanged });
       /** @ignore */
-      __privateAdd$m(this, _fov);
+      __privateAdd$n(this, _fov);
       this.forceAspect = forceAspect;
       this.position.set(0, 0, 10);
       this.size = {
@@ -5957,7 +5957,7 @@
      * Get the {@link PerspectiveCamera.fov | field of view}.
      */
     get fov() {
-      return __privateGet$k(this, _fov);
+      return __privateGet$l(this, _fov);
     }
     /**
      * Set the {@link PerspectiveCamera.fov | field of view}. Update the {@link projectionMatrix} only if the field of view actually changed.
@@ -5966,7 +5966,7 @@
     set fov(fov) {
       fov = Math.max(1, Math.min(fov ?? this.fov, 179));
       if (fov !== this.fov) {
-        __privateSet$k(this, _fov, fov);
+        __privateSet$l(this, _fov, fov);
         this.shouldUpdateProjectionMatrices();
       }
       this.setVisibleSize();
@@ -6840,13 +6840,13 @@
     }
   }
 
-  var __typeError$l = (msg) => {
+  var __typeError$m = (msg) => {
     throw TypeError(msg);
   };
-  var __accessCheck$l = (obj, member, msg) => member.has(obj) || __typeError$l("Cannot " + msg);
-  var __privateGet$j = (obj, member, getter) => (__accessCheck$l(obj, member, "read from private field"), member.get(obj));
-  var __privateAdd$l = (obj, member, value) => member.has(obj) ? __typeError$l("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  var __privateSet$j = (obj, member, value, setter) => (__accessCheck$l(obj, member, "write to private field"), member.set(obj, value), value);
+  var __accessCheck$m = (obj, member, msg) => member.has(obj) || __typeError$m("Cannot " + msg);
+  var __privateGet$k = (obj, member, getter) => (__accessCheck$m(obj, member, "read from private field"), member.get(obj));
+  var __privateAdd$m = (obj, member, value) => member.has(obj) ? __typeError$m("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$k = (obj, member, value, setter) => (__accessCheck$m(obj, member, "write to private field"), member.set(obj, value), value);
   var _autoRender$2;
   let computePassIndex = 0;
   class ComputePass {
@@ -6860,7 +6860,7 @@
        * Whether this {@link ComputePass} should be added to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically.
        * @private
        */
-      __privateAdd$l(this, _autoRender$2, true);
+      __privateAdd$m(this, _autoRender$2, true);
       // callbacks / events
       /** function assigned to the {@link onReady} callback. */
       this._onReadyCallback = () => {
@@ -6911,7 +6911,7 @@
       };
       this.renderOrder = renderOrder ?? 0;
       if (autoRender !== void 0) {
-        __privateSet$j(this, _autoRender$2, autoRender);
+        __privateSet$k(this, _autoRender$2, autoRender);
       }
       this.userData = {};
       this.ready = false;
@@ -6950,7 +6950,7 @@
       if (addToRenderer) {
         this.renderer.computePasses.push(this);
       }
-      if (__privateGet$j(this, _autoRender$2)) {
+      if (__privateGet$k(this, _autoRender$2)) {
         this.renderer.scene.addComputePass(this);
       }
     }
@@ -6959,7 +6959,7 @@
      * @param removeFromRenderer - whether to remove this {@link ComputePass} from the {@link Renderer#computePasses | Renderer computePasses array}.
      */
     removeFromScene(removeFromRenderer = false) {
-      if (__privateGet$j(this, _autoRender$2)) {
+      if (__privateGet$k(this, _autoRender$2)) {
         this.renderer.scene.removeComputePass(this);
       }
       if (removeFromRenderer) {
@@ -8165,13 +8165,13 @@
     return vector;
   }
 
-  var __typeError$k = (msg) => {
+  var __typeError$l = (msg) => {
     throw TypeError(msg);
   };
-  var __accessCheck$k = (obj, member, msg) => member.has(obj) || __typeError$k("Cannot " + msg);
-  var __privateGet$i = (obj, member, getter) => (__accessCheck$k(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
-  var __privateAdd$k = (obj, member, value) => member.has(obj) ? __typeError$k("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  var __privateSet$i = (obj, member, value, setter) => (__accessCheck$k(obj, member, "write to private field"), member.set(obj, value), value);
+  var __accessCheck$l = (obj, member, msg) => member.has(obj) || __typeError$l("Cannot " + msg);
+  var __privateGet$j = (obj, member, getter) => (__accessCheck$l(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$l = (obj, member, value) => member.has(obj) ? __typeError$l("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$j = (obj, member, value, setter) => (__accessCheck$l(obj, member, "write to private field"), member.set(obj, value), value);
   var _intensity$1, _intensityColor;
   class Light extends Object3D {
     /**
@@ -8182,12 +8182,12 @@
     constructor(renderer, { label = "", color = new Vec3(1), intensity = 1, type = "lights" } = {}) {
       super();
       /** @ignore */
-      __privateAdd$k(this, _intensity$1);
+      __privateAdd$l(this, _intensity$1);
       /**
        * A {@link Vec3} holding the {@link Light} {@link color} multiplied by its {@link intensity}.
        * @private
        */
-      __privateAdd$k(this, _intensityColor);
+      __privateAdd$l(this, _intensityColor);
       this.type = type;
       this.setRenderer(renderer);
       this.uuid = generateUUID();
@@ -8197,7 +8197,7 @@
         intensity
       };
       this.color = color;
-      __privateSet$i(this, _intensityColor, this.color.clone());
+      __privateSet$j(this, _intensityColor, this.color.clone());
       this.color.onChange(() => this.onPropertyChanged("color", this.actualColor));
       this.intensity = intensity;
       this.userData = {};
@@ -8246,14 +8246,14 @@
      * @returns - The {@link Light} intensity.
      */
     get intensity() {
-      return __privateGet$i(this, _intensity$1);
+      return __privateGet$j(this, _intensity$1);
     }
     /**
      * Set this {@link Light} intensity and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      * @param value - The new {@link Light} intensity.
      */
     set intensity(value) {
-      __privateSet$i(this, _intensity$1, value);
+      __privateSet$j(this, _intensity$1, value);
       this.onPropertyChanged("color", this.actualColor);
     }
     /**
@@ -8261,7 +8261,7 @@
      * @returns - Actual {@link Vec3} color used in the shader.
      */
     get actualColor() {
-      return sRGBToLinear(__privateGet$i(this, _intensityColor).copy(this.color)).multiplyScalar(this.intensity);
+      return sRGBToLinear(__privateGet$j(this, _intensityColor).copy(this.color)).multiplyScalar(this.intensity);
     }
     /**
      * Update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} input value and tell the {@link CameraRenderer#cameraLightsBindGroup | renderer camera, lights and shadows} bind group to update.
@@ -8351,6 +8351,14 @@
     }
   }
 
+  var __typeError$k = (msg) => {
+    throw TypeError(msg);
+  };
+  var __accessCheck$k = (obj, member, msg) => member.has(obj) || __typeError$k("Cannot " + msg);
+  var __privateGet$i = (obj, member, getter) => (__accessCheck$k(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$k = (obj, member, value) => member.has(obj) ? __typeError$k("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$i = (obj, member, value, setter) => (__accessCheck$k(obj, member, "write to private field"), member.set(obj, value), value);
+  var _useStencil;
   class RenderPass {
     /**
      * RenderPass constructor
@@ -8372,14 +8380,22 @@
       depthLoadOp = "clear",
       depthStoreOp = "store",
       depthClearValue = 1,
-      depthFormat = "depth24plus"
+      depthFormat = "depth24plus",
+      depthReadOnly = false,
+      stencilClearValue = 0,
+      stencilLoadOp = "clear",
+      stencilStoreOp = "store",
+      stencilReadOnly = false
     } = {}) {
+      /** Whether the {@link RenderPass} should handle stencil. Default to `false`, eventually set to `true` based on the {@link depthTexture} format. */
+      __privateAdd$k(this, _useStencil);
       this.type = "RenderPass";
       renderer = isRenderer(renderer, label + " " + this.type);
       this.renderer = renderer;
       this.uuid = generateUUID();
       this.viewport = null;
       this.scissorRect = null;
+      __privateSet$i(this, _useStencil, false);
       if (useColorAttachments) {
         const defaultColorAttachment = {
           loadOp: "clear",
@@ -8410,7 +8426,12 @@
         depthLoadOp,
         depthStoreOp,
         depthClearValue,
-        depthFormat
+        depthFormat,
+        depthReadOnly,
+        stencilClearValue,
+        stencilLoadOp,
+        stencilStoreOp,
+        stencilReadOnly
       };
       if (this.options.useDepth) {
         this.createDepthTexture();
@@ -8460,6 +8481,9 @@
           type: "depth",
           usage: ["renderAttachment", "textureBinding"]
         });
+      }
+      if (this.depthTexture.options.format.includes("stencil")) {
+        __privateSet$i(this, _useStencil, true);
       }
     }
     /**
@@ -8545,7 +8569,13 @@
             depthClearValue: this.options.depthClearValue,
             // the same way loadOp is working, we can specify if we want to clear or load the previous depth buffer result
             depthLoadOp: this.options.depthLoadOp,
-            depthStoreOp: this.options.depthStoreOp
+            depthStoreOp: this.options.depthStoreOp,
+            depthReadOnly: this.options.depthReadOnly,
+            ...__privateGet$i(this, _useStencil) && {
+              stencilLoadOp: this.options.stencilLoadOp,
+              stencilStoreOp: this.options.stencilStoreOp,
+              stencilReadOnly: this.options.stencilReadOnly
+            }
           }
         }
       };
@@ -8698,6 +8728,7 @@
       }
     }
   }
+  _useStencil = new WeakMap();
 
   var __typeError$j = (msg) => {
     throw TypeError(msg);
@@ -14373,8 +14404,8 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Set the renderer, {@link renderPass} and {@link postProcessingPass} {@link scissorRect} values. Beware that if you use a {@link scissorRect}, you should resize it yourself so it does not overflow the `canvas` in the `onResize` callback to avoid issues.
-     * @param scissorRect - {@link RectBBox} settings to use. Can be set to `null` to cancel the {@link scissorRect}.
+     * Set the renderer, {@link renderPass} and {@link postProcessingPass} {@link GPURenderer#scissorRect | scissorRect} values. Beware that if you use a {@link GPURenderer#scissorRect | scissorRect}, you should resize it yourself so it does not overflow the `canvas` in the `onResize` callback to avoid issues.
+     * @param scissorRect - {@link RectBBox} settings to use. Can be set to `null` to cancel the {@link GPURenderer#scissorRect | scissorRect}.
      */
     setScissorRect(scissorRect = null) {
       if (!scissorRect) {

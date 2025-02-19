@@ -166,8 +166,8 @@ export declare class GPURenderer {
      */
     setViewport(viewport?: RenderPassViewport | null): void;
     /**
-     * Set the renderer, {@link renderPass} and {@link postProcessingPass} {@link scissorRect} values. Beware that if you use a {@link scissorRect}, you should resize it yourself so it does not overflow the `canvas` in the `onResize` callback to avoid issues.
-     * @param scissorRect - {@link RectBBox} settings to use. Can be set to `null` to cancel the {@link scissorRect}.
+     * Set the renderer, {@link renderPass} and {@link postProcessingPass} {@link GPURenderer#scissorRect | scissorRect} values. Beware that if you use a {@link GPURenderer#scissorRect | scissorRect}, you should resize it yourself so it does not overflow the `canvas` in the `onResize` callback to avoid issues.
+     * @param scissorRect - {@link RectBBox} settings to use. Can be set to `null` to cancel the {@link GPURenderer#scissorRect | scissorRect}.
      */
     setScissorRect(scissorRect?: RectBBox | null): void;
     /**

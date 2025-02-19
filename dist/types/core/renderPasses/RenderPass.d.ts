@@ -44,19 +44,30 @@ export interface RenderPassParams {
     useDepth?: boolean;
     /** Whether this {@link RenderPass} should use an already created depth texture. */
     depthTexture?: Texture;
-    /** The {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#loadop | depth load operation} to perform while drawing this {@link RenderPass}. */
+    /** The {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#depthloadop | depth load operation} to perform while drawing this {@link RenderPass}. Default to `'clear`. */
     depthLoadOp?: GPULoadOp;
-    /** The {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#storeop | depth store operation} to perform while drawing this {@link RenderPass}. */
+    /** The {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#depthstoreop | depth store operation} to perform while drawing this {@link RenderPass}. Default to `'store'`. */
     depthStoreOp?: GPUStoreOp;
     /** The depth clear value to clear to before drawing this {@link RenderPass}. */
     depthClearValue?: number;
     /** Optional format of the depth texture. */
     depthFormat?: GPUTextureFormat;
+    /** Indicates that the depth component of the depth texture view is read only. Default to `false`. */
+    depthReadOnly?: boolean;
+    /** A number indicating the value to clear view's stencil component to prior to executing the render pass. This is ignored if stencilLoadOp is not set to "clear". Default to `0`. */
+    stencilClearValue?: number;
+    /** The {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#stencilloadop | stencil load operation} to perform while drawing this {@link RenderPass}. Default to `'clear`. */
+    stencilLoadOp?: GPULoadOp;
+    /** The {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#stencilstoreop | stencil store operation} to perform while drawing this {@link RenderPass}. Default to `'store'`. */
+    stencilStoreOp?: GPUStoreOp;
+    /** Indicates that the stencil component of the depth texture view is read only. Default to `false`. */
+    stencilReadOnly?: boolean;
 }
 /**
  * Used by {@link core/renderPasses/RenderTarget.RenderTarget | RenderTarget} and the {@link Renderer} to render to one or multiple {@link RenderPass#viewTextures | view textures} (and optionally a {@link RenderPass#depthTexture | depth texture}), using a specific {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#descriptor | GPURenderPassDescriptor}.
  */
 export declare class RenderPass {
+    #private;
     /** {@link Renderer} used by this {@link RenderPass}. */
     renderer: Renderer;
     /** The type of the {@link RenderPass}. */
@@ -82,7 +93,7 @@ export declare class RenderPass {
      * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link RenderPass}
      * @param parameters - {@link RenderPassParams | parameters} used to create this {@link RenderPass}.
      */
-    constructor(renderer: Renderer | GPUCurtains, { label, sampleCount, qualityRatio, fixedSize, useColorAttachments, renderToSwapChain, colorAttachments, useDepth, depthTexture, depthLoadOp, depthStoreOp, depthClearValue, depthFormat, }?: RenderPassParams);
+    constructor(renderer: Renderer | GPUCurtains, { label, sampleCount, qualityRatio, fixedSize, useColorAttachments, renderToSwapChain, colorAttachments, useDepth, depthTexture, depthLoadOp, depthStoreOp, depthClearValue, depthFormat, depthReadOnly, stencilClearValue, stencilLoadOp, stencilStoreOp, stencilReadOnly, }?: RenderPassParams);
     /**
      * Reset this {@link RenderPass} {@link RenderPass.renderer | renderer}.
      * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
