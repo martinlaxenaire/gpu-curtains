@@ -171,7 +171,6 @@ window.addEventListener('load', async () => {
       stencilReference: 0x000000,
     },
     frustumCulling: false, // always draw the floor
-    cullMode: 'none',
     uniforms: {
       checkerboard: {
         struct: {
@@ -258,7 +257,7 @@ window.addEventListener('load', async () => {
   })
 
   orbitControls.target.set(0, 1, 0)
-  orbitControls.updatePosition(new Vec3(0, 3, 15))
+  orbitControls.updatePosition(new Vec3(0, 5, 15))
 
   orbitControls.minZoom = 2
   orbitControls.maxZoom = 40
