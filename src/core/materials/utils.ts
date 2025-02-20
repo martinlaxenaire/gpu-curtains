@@ -2,17 +2,34 @@ import { RenderMaterialRenderingOptions } from '../../types/Materials'
 
 /**
  * Compare two sets of {@link RenderMaterialRenderingOptions | rendering options} and returns an array of different options keys if any.
- * @param newOptions - rendering new options to compare
- * @param baseOptions - rendering options to compare with
- * @returns - an array with the options keys that differ, if any.
+ * @param newOptions - Rendering new options to compare.
+ * @param baseOptions - Rendering options to compare with.
+ * @returns - An array with the options keys that differ, if any.
  */
 export const compareRenderingOptions = (
   newOptions: Partial<RenderMaterialRenderingOptions> = {},
   baseOptions: Partial<RenderMaterialRenderingOptions> = {}
 ): Array<keyof RenderMaterialRenderingOptions> => {
-  return Object.keys(newOptions).filter((key) => {
-    if (Array.isArray(newOptions[key])) {
-      // 'targets' property
+  const renderingOptions = [
+    'useProjection',
+    'transparent',
+    'depth',
+    'depthWriteEnabled',
+    'depthCompare',
+    'depthFormat',
+    'cullMode',
+    'sampleCount',
+    'targets',
+    'stencil',
+    'verticesOrder',
+    'topology',
+  ] as Array<keyof RenderMaterialRenderingOptions>
+
+  return renderingOptions.map((key) => {
+    if ((newOptions[key] && !baseOptions[key]) || (baseOptions[key] && !newOptions[key])) {
+      return key
+    } else if (Array.isArray(newOptions[key]) || typeof newOptions[key] === 'object') {
+      // 'targets', 'stencil' properties...
       return JSON.stringify(newOptions[key]) !== JSON.stringify(baseOptions[key])
     } else {
       return newOptions[key] !== baseOptions[key]

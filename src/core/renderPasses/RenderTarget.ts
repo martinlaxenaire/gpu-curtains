@@ -111,7 +111,7 @@ export class RenderTarget {
             : this.renderer.options.context.format,
         ...(this.options.qualityRatio !== undefined && { qualityRatio: this.options.qualityRatio }),
         ...(this.options.fixedSize !== undefined && { fixedSize: this.options.fixedSize }),
-        usage: ['copySrc', 'renderAttachment', 'textureBinding'],
+        usage: ['copySrc', 'copyDst', 'renderAttachment', 'textureBinding'],
       })
     }
 

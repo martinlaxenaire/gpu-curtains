@@ -62,6 +62,17 @@ class RenderMaterial extends Material {
     if (targets && targets.length && !targets[0].format) {
       targets[0].format = this.renderer.options.context.format;
     }
+    if (stencil) {
+      if (!stencil.front) {
+        stencil.front = {};
+      }
+      if (stencil.front && !stencil.back) {
+        stencil.back = stencil.front;
+      }
+      if (!stencil.stencilReference) {
+        stencil.stencilReference = 0;
+      }
+    }
     this.options = {
       ...this.options,
       shaders,

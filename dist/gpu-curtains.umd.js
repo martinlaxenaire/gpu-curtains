@@ -8776,7 +8776,7 @@
           format: colorAttachments && colorAttachments.length && colorAttachments[0].targetFormat ? colorAttachments[0].targetFormat : this.renderer.options.context.format,
           ...this.options.qualityRatio !== void 0 && { qualityRatio: this.options.qualityRatio },
           ...this.options.fixedSize !== void 0 && { fixedSize: this.options.fixedSize },
-          usage: ["copySrc", "renderAttachment", "textureBinding"]
+          usage: ["copySrc", "copyDst", "renderAttachment", "textureBinding"]
         });
       }
       this.addToScene();
@@ -9477,7 +9477,7 @@ ${this.shaders.full.head}`;
             format: this.options.rendering.depthFormat,
             ...this.options.rendering.stencil && {
               stencilFront: this.options.rendering.stencil.front,
-              stencilBack: this.options.rendering.stencil.back ?? this.options.rendering.stencil.front
+              stencilBack: this.options.rendering.stencil.back
             }
           }
         },
@@ -9533,8 +9533,24 @@ ${this.shaders.full.head}`;
   }
 
   const compareRenderingOptions = (newOptions = {}, baseOptions = {}) => {
-    return Object.keys(newOptions).filter((key) => {
-      if (Array.isArray(newOptions[key])) {
+    const renderingOptions = [
+      "useProjection",
+      "transparent",
+      "depth",
+      "depthWriteEnabled",
+      "depthCompare",
+      "depthFormat",
+      "cullMode",
+      "sampleCount",
+      "targets",
+      "stencil",
+      "verticesOrder",
+      "topology"
+    ];
+    return renderingOptions.map((key) => {
+      if (newOptions[key] && !baseOptions[key] || baseOptions[key] && !newOptions[key]) {
+        return key;
+      } else if (Array.isArray(newOptions[key]) || typeof newOptions[key] === "object") {
         return JSON.stringify(newOptions[key]) !== JSON.stringify(baseOptions[key]);
       } else {
         return newOptions[key] !== baseOptions[key];
@@ -9651,6 +9667,17 @@ struct VSOutput {
       }
       if (targets && targets.length && !targets[0].format) {
         targets[0].format = this.renderer.options.context.format;
+      }
+      if (stencil) {
+        if (!stencil.front) {
+          stencil.front = {};
+        }
+        if (stencil.front && !stencil.back) {
+          stencil.back = stencil.front;
+        }
+        if (!stencil.stencilReference) {
+          stencil.stencilReference = 0;
+        }
       }
       this.options = {
         ...this.options,
@@ -13732,7 +13759,7 @@ ${this.shaders.compute.head}`;
     addRenderTarget(renderTarget) {
       if (!this.renderPassEntries.renderTarget.find((entry) => entry.renderPass.uuid === renderTarget.renderPass.uuid))
         this.renderPassEntries.renderTarget.push({
-          label: renderTarget.options.label,
+          label: renderTarget.options.label ? `${renderTarget.options.label} pass entry` : `RenderTarget ${renderTarget.uuid} pass entry`,
           renderPass: renderTarget.renderPass,
           renderTexture: renderTarget.renderTexture,
           onBeforeRenderPass: null,
@@ -14189,10 +14216,11 @@ ${this.shaders.compute.head}`;
         let passDrawnCount = 0;
         this.renderPassEntries[renderPassEntryType].forEach((renderPassEntry) => {
           if (!this.getRenderPassEntryLength(renderPassEntry)) return;
-          const isSubesequentScreenPass = renderPassEntryType === "screen" && (passDrawnCount !== 0 || this.renderPassEntries.prePass.length);
-          const loadContent = renderPassEntryType === "postProPass" || renderPassEntryType === "prePass" && passDrawnCount !== 0 || isSubesequentScreenPass;
+          const isSubsequentScreenPass = renderPassEntryType === "screen" && (passDrawnCount !== 0 || this.renderPassEntries.prePass.length);
+          const loadContent = renderPassEntryType === "postProPass" || renderPassEntryType === "prePass" && passDrawnCount !== 0 || isSubsequentScreenPass;
+          const loadDepth = renderPassEntryType === "prePass" || isSubsequentScreenPass;
           renderPassEntry.renderPass.setLoadOp(loadContent ? "load" : "clear");
-          if (isSubesequentScreenPass) renderPassEntry.renderPass.setDepthLoadOp("load");
+          if (loadDepth) renderPassEntry.renderPass.setDepthLoadOp("load");
           passDrawnCount++;
           this.renderSinglePassEntry(commandEncoder, renderPassEntry);
         });

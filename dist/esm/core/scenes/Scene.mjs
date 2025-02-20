@@ -110,7 +110,7 @@ class Scene extends Object3D {
   addRenderTarget(renderTarget) {
     if (!this.renderPassEntries.renderTarget.find((entry) => entry.renderPass.uuid === renderTarget.renderPass.uuid))
       this.renderPassEntries.renderTarget.push({
-        label: renderTarget.options.label,
+        label: renderTarget.options.label ? `${renderTarget.options.label} pass entry` : `RenderTarget ${renderTarget.uuid} pass entry`,
         renderPass: renderTarget.renderPass,
         renderTexture: renderTarget.renderTexture,
         onBeforeRenderPass: null,
@@ -567,10 +567,11 @@ class Scene extends Object3D {
       let passDrawnCount = 0;
       this.renderPassEntries[renderPassEntryType].forEach((renderPassEntry) => {
         if (!this.getRenderPassEntryLength(renderPassEntry)) return;
-        const isSubesequentScreenPass = renderPassEntryType === "screen" && (passDrawnCount !== 0 || this.renderPassEntries.prePass.length);
-        const loadContent = renderPassEntryType === "postProPass" || renderPassEntryType === "prePass" && passDrawnCount !== 0 || isSubesequentScreenPass;
+        const isSubsequentScreenPass = renderPassEntryType === "screen" && (passDrawnCount !== 0 || this.renderPassEntries.prePass.length);
+        const loadContent = renderPassEntryType === "postProPass" || renderPassEntryType === "prePass" && passDrawnCount !== 0 || isSubsequentScreenPass;
+        const loadDepth = renderPassEntryType === "prePass" || isSubsequentScreenPass;
         renderPassEntry.renderPass.setLoadOp(loadContent ? "load" : "clear");
-        if (isSubesequentScreenPass) renderPassEntry.renderPass.setDepthLoadOp("load");
+        if (loadDepth) renderPassEntry.renderPass.setDepthLoadOp("load");
         passDrawnCount++;
         this.renderSinglePassEntry(commandEncoder, renderPassEntry);
       });

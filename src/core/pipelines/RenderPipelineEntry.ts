@@ -455,7 +455,7 @@ export class RenderPipelineEntry extends PipelineEntry {
           format: this.options.rendering.depthFormat,
           ...(this.options.rendering.stencil && {
             stencilFront: this.options.rendering.stencil.front,
-            stencilBack: this.options.rendering.stencil.back ?? this.options.rendering.stencil.front,
+            stencilBack: this.options.rendering.stencil.back,
           }),
         },
       }),

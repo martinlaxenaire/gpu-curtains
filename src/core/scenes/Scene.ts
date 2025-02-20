@@ -214,7 +214,9 @@ export class Scene extends Object3D {
     // if RT is not already in the render pass entries
     if (!this.renderPassEntries.renderTarget.find((entry) => entry.renderPass.uuid === renderTarget.renderPass.uuid))
       this.renderPassEntries.renderTarget.push({
-        label: renderTarget.options.label,
+        label: renderTarget.options.label
+          ? `${renderTarget.options.label} pass entry`
+          : `RenderTarget ${renderTarget.uuid} pass entry`,
         renderPass: renderTarget.renderPass,
         renderTexture: renderTarget.renderTexture,
         onBeforeRenderPass: null,
@@ -836,18 +838,20 @@ export class Scene extends Object3D {
         // early bail if there's nothing to draw
         if (!this.getRenderPassEntryLength(renderPassEntry)) return
 
-        const isSubesequentScreenPass =
+        const isSubsequentScreenPass =
           renderPassEntryType === 'screen' && (passDrawnCount !== 0 || this.renderPassEntries.prePass.length)
 
         const loadContent =
           renderPassEntryType === 'postProPass' ||
           (renderPassEntryType === 'prePass' && passDrawnCount !== 0) ||
-          isSubesequentScreenPass
+          isSubsequentScreenPass
+
+        const loadDepth = renderPassEntryType === 'prePass' || isSubsequentScreenPass
 
         // if we're drawing to screen and it's not our first pass, load result from previous passes
         // post processing scene pass will clear content inside onBeforeRenderPass anyway
         renderPassEntry.renderPass.setLoadOp(loadContent ? 'load' : 'clear')
-        if (isSubesequentScreenPass) renderPassEntry.renderPass.setDepthLoadOp('load')
+        if (loadDepth) renderPassEntry.renderPass.setDepthLoadOp('load')
 
         passDrawnCount++
 

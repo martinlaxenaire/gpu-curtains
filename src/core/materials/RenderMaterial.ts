@@ -101,6 +101,21 @@ export class RenderMaterial extends Material {
       targets[0].format = this.renderer.options.context.format
     }
 
+    // patch stencil options for a better pipeline cache
+    if (stencil) {
+      if (!stencil.front) {
+        stencil.front = {}
+      }
+
+      if (stencil.front && !stencil.back) {
+        stencil.back = stencil.front
+      }
+
+      if (!stencil.stencilReference) {
+        stencil.stencilReference = 0x000000
+      }
+    }
+
     this.options = {
       ...this.options,
       shaders,
