@@ -453,8 +453,7 @@ function ProjectedMeshBaseMixin(Base) {
     onRenderPass(pass) {
       if (!this.ready) return;
       if (this.domFrustum && this.domFrustum.isIntersecting || !this.frustumCulling) {
-        this.material.render(pass);
-        this.geometry.render(pass);
+        this.renderPass(pass);
       }
     }
     /**

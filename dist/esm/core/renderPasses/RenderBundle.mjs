@@ -189,9 +189,20 @@ class RenderBundle {
     if (!this.options.renderPass) {
       this.options.renderPass = outputPass;
     } else if (outputPass.uuid !== this.options.renderPass.uuid) {
-      throwWarning(
-        `${this.options.label} (${this.type}): Cannot add Mesh ${mesh.options.label} to this render bundle because the output render passes do not match.`
-      );
+      if (!this.renderer.production) {
+        throwWarning(
+          `${this.options.label} (${this.type}): Cannot add Mesh ${mesh.options.label} to this render bundle because the output render passes do not match.`
+        );
+      }
+      mesh.renderBundle = null;
+      return;
+    }
+    if (mesh.options.stencil) {
+      if (!this.renderer.production) {
+        throwWarning(
+          `${this.options.label} (${this.type}): Cannot add Mesh ${mesh.options.label} to this render bundle because stencil operations are not supported by render bundles.`
+        );
+      }
       mesh.renderBundle = null;
       return;
     }

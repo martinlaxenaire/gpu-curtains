@@ -380,6 +380,12 @@ export declare class MeshBaseClass {
   onRenderPass(pass: GPURenderPassEncoder): void
 
   /**
+   * Render the {@link material} and {@link geometry}.
+   * @param pass - Current render pass encoder.
+   */
+  renderPass(pass: GPURenderPassEncoder): void
+
+  /**
    * Called after having rendered the Mesh
    */
   onAfterRenderPass(): void
@@ -1213,11 +1219,19 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
 
     /**
      * Render our {@link MeshBase} if the {@link RenderMaterial} is ready
-     * @param pass - current render pass encoder
+     * @param pass - Current render pass encoder.
      */
     onRenderPass(pass: GPURenderPassEncoder) {
       if (!this.ready) return
 
+      this.renderPass(pass)
+    }
+
+    /**
+     * Render the {@link material} and {@link geometry}.
+     * @param pass - Current render pass encoder.
+     */
+    renderPass(pass: GPURenderPassEncoder) {
       // render ou material
       this.material.render(pass)
       // then render our geometry

@@ -26,17 +26,17 @@ import { getDefaultFragmentCode } from '../shaders/full/fragment/get-default-fra
  * After the {@link GPURenderPipeline} has been successfully compiled, the {@link RenderMaterial} is considered to be ready.
  */
 export class RenderMaterial extends Material {
-  /** {@link RenderPipelineEntry | Render pipeline entry} used by this {@link RenderMaterial} */
+  /** {@link RenderPipelineEntry | Render pipeline entry} used by this {@link RenderMaterial}. */
   pipelineEntry: RenderPipelineEntry | null
-  /** Mandatory {@link RenderMaterialAttributes | geometry attributes} to pass to the {@link RenderPipelineEntry | render pipeline entry} */
+  /** Mandatory {@link RenderMaterialAttributes | geometry attributes} to pass to the {@link RenderPipelineEntry | render pipeline entry}. */
   attributes: RenderMaterialAttributes | null
-  /** Options used to create this {@link RenderMaterial} */
+  /** Options used to create this {@link RenderMaterial}. */
   options: RenderMaterialOptions
 
   /**
    * RenderMaterial constructor
    * @param renderer - our renderer class object
-   * @param parameters - {@link RenderMaterialParams | parameters} used to create our RenderMaterial
+   * @param parameters - {@link RenderMaterialParams | parameters} used to create our {@link RenderMaterial}.
    */
   constructor(renderer: Renderer | GPUCurtains, parameters: RenderMaterialParams) {
     const type = 'RenderMaterial'
@@ -80,6 +80,7 @@ export class RenderMaterial extends Material {
       depthWriteEnabled,
       depthCompare,
       depthFormat,
+      stencil,
       cullMode,
       sampleCount,
       verticesOrder,
@@ -110,6 +111,7 @@ export class RenderMaterial extends Material {
         depthWriteEnabled,
         depthCompare,
         depthFormat,
+        ...(stencil && { stencil }),
         cullMode,
         sampleCount,
         targets,
@@ -150,7 +152,7 @@ export class RenderMaterial extends Material {
   }
 
   /**
-   * Compile the {@link RenderPipelineEntry}
+   * Compile the {@link RenderPipelineEntry}.
    */
   async compilePipelineEntry(): Promise<void> {
     await this.pipelineEntry.compilePipelineEntry()
@@ -175,7 +177,7 @@ export class RenderMaterial extends Material {
 
   /**
    * Set or reset one of the {@link RenderMaterialRenderingOptions | rendering options}. Should be use with great caution, because if the {@link RenderPipelineEntry#pipeline | render pipeline} has already been compiled, it can cause a pipeline flush.
-   * @param renderingOptions - new {@link RenderMaterialRenderingOptions | rendering options} properties to be set
+   * @param renderingOptions - New {@link RenderMaterialRenderingOptions | rendering options} properties to be set.
    */
   setRenderingOptions(renderingOptions: Partial<RenderMaterialRenderingOptions> = {}) {
     // patch original transparent blending if it had been lost
@@ -240,8 +242,8 @@ export class RenderMaterial extends Material {
   /* ATTRIBUTES */
 
   /**
-   * Compute geometry if needed and get all useful geometry properties needed to create attributes buffers
-   * @param geometry - the geometry to draw
+   * Get all useful {@link core/geometries/Geometry.Geometry | Geometry} properties needed to create attributes buffers.
+   * @param geometry - The geometry to draw.
    */
   setAttributesFromGeometry(geometry: AllowedGeometries) {
     this.attributes = {
@@ -298,6 +300,20 @@ export class RenderMaterial extends Material {
 
     for (let i = startBindGroupIndex; i < this.bindGroups.length; i++) {
       this.updateBindGroup(this.bindGroups[i])
+    }
+  }
+
+  /**
+   * Render the material if it is ready. Call super, and the set the pass encoder stencil reference if needed.
+   * @param pass - Current pass encoder.
+   */
+  render(pass: GPURenderPassEncoder | GPURenderBundleEncoder) {
+    if (!this.ready) return
+
+    super.render(pass)
+
+    if (this.options.rendering.stencil) {
+      ;(pass as GPURenderPassEncoder).setStencilReference(this.options.rendering.stencil.stencilReference ?? 0x000000)
     }
   }
 }

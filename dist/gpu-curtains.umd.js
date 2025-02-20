@@ -6222,7 +6222,7 @@
       }
     }
     /**
-     * Check if all bind groups are ready, and create them if needed
+     * Check if all bind groups are ready, and create them if needed.
      */
     compileMaterial() {
       const texturesBindGroupLength = this.texturesBindGroup.bindings.length ? 1 : 0;
@@ -6232,7 +6232,7 @@
       }
     }
     /**
-     * Get whether the renderer is ready, our pipeline entry and pipeline have been created and successfully compiled
+     * Get whether the renderer is ready, our pipeline entry and pipeline have been created and successfully compiled.
      * @readonly
      */
     get ready() {
@@ -6255,7 +6255,7 @@
     }
     /**
      * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been lost to prepare everything for restoration.
-     * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to render
+     * Basically set all the {@link GPUBuffer} to `null`, so they will be reset next time we try to render.
      */
     loseContext() {
       for (const texture of this.textures) {
@@ -6294,8 +6294,8 @@
     }
     /**
      * Get the complete code of a given shader including all the WGSL fragment code snippets added by the pipeline
-     * @param [shaderType="full"] - shader to get the code from
-     * @returns - The corresponding shader code
+     * @param [shaderType="full"] - Shader to get the code from.
+     * @returns - The corresponding shader code.
      */
     getShaderCode(shaderType = "full") {
       if (!this.pipelineEntry) return "";
@@ -6314,8 +6314,8 @@
     }
     /**
      * Get the added code of a given shader, i.e. all the WGSL fragment code snippets added by the pipeline
-     * @param [shaderType="vertex"] - shader to get the code from
-     * @returns - The corresponding shader code
+     * @param [shaderType="vertex"] - Shader to get the code from.
+     * @returns - The corresponding shader code.
      */
     getAddedShaderCode(shaderType = "vertex") {
       if (!this.pipelineEntry) return "";
@@ -6333,7 +6333,7 @@
     }
     /* BIND GROUPS */
     /**
-     * Prepare and set our bind groups based on inputs and bindGroups Material parameters
+     * Prepare and set our bind groups based on inputs and bindGroups Material parameters.
      */
     setBindGroups() {
       this.uniforms = {};
@@ -6358,7 +6358,7 @@
       });
     }
     /**
-     * Get the main {@link TextureBindGroup | texture bind group} created by this {@link Material} to manage all textures related struct
+     * Get the main {@link TextureBindGroup | texture bind group} created by this {@link Material} to manage all textures related struct.
      * @readonly
      */
     get texturesBindGroup() {
@@ -6366,7 +6366,7 @@
     }
     /**
      * Process all {@link BindGroup} struct and add them to the corresponding objects based on their binding types. Also store them in a inputsBindings array to facilitate further access to struct.
-     * @param bindGroup - The {@link BindGroup} to process
+     * @param bindGroup - The {@link BindGroup} to process.
      */
     processBindGroupBindings(bindGroup) {
       for (const inputBinding of bindGroup.bindings) {
@@ -6384,7 +6384,7 @@
       }
     }
     /**
-     * Create the bind groups if they need to be created
+     * Create the bind groups if they need to be created.
      */
     createBindGroups() {
       if (this.texturesBindGroup.shouldCreateBindGroup) {
@@ -6415,13 +6415,13 @@
       });
     }
     /**
-     * Clones a {@link BindGroup} from a list of buffers
-     * Useful to create a new bind group with already created buffers, but swapped
-     * @param parameters - parameters used to clone the {@link BindGroup | bind group}
-     * @param parameters.bindGroup - the BindGroup to clone
-     * @param parameters.bindings - our input binding buffers
-     * @param parameters.keepLayout - whether we should keep original bind group layout or not
-     * @returns - the cloned BindGroup
+     * Clones a {@link BindGroup} from a list of buffers.
+     * Useful to create a new{@link BindGroup} with already created buffers, but swapped.
+     * @param parameters - parameters used to clone the {@link BindGroup}.
+     * @param parameters.bindGroup - the {@link BindGroup} to clone.
+     * @param parameters.bindings - our input binding buffers.
+     * @param parameters.keepLayout - whether we should keep original bind group layout or not.
+     * @returns - the cloned {@link BindGroup}.
      */
     cloneBindGroup({
       bindGroup,
@@ -6435,8 +6435,8 @@
     }
     /**
      * Get a corresponding {@link BindGroup} or {@link TextureBindGroup} from one of its binding name/key
-     * @param bindingName - the binding name/key to look for
-     * @returns - bind group found or null if not found
+     * @param bindingName - the binding name/key to look for.
+     * @returns - {@link BindGroup} found or null if not found.
      */
     getBindGroupByBindingName(bindingName = "") {
       return (this.ready ? this.bindGroups : this.inputsBindGroups).find((bindGroup) => {
@@ -6444,8 +6444,8 @@
       });
     }
     /**
-     * Destroy a bind group, only if it is not used by another object
-     * @param bindGroup - bind group to eventually destroy
+     * Destroy a {@link BindGroup}, only if it is not used by another object.
+     * @param bindGroup - {@link BindGroup} to eventually destroy.
      */
     destroyBindGroup(bindGroup) {
       bindGroup.consumers.delete(this.uuid);
@@ -6454,7 +6454,7 @@
       }
     }
     /**
-     * Destroy all bind groups
+     * Destroy all {@link BindGroup}.
      */
     destroyBindGroups() {
       this.bindGroups.forEach((bindGroup) => this.destroyBindGroup(bindGroup));
@@ -6466,7 +6466,7 @@
       this.clonedBindGroups = [];
     }
     /**
-     * Update all bind groups.
+     * Update all {@link BindGroup}.
      */
     updateBindGroups() {
       for (const bindGroup of this.bindGroups) {
@@ -6474,7 +6474,7 @@
       }
     }
     /**
-     * {@link BindGroup#update | Update a bind group}:
+     * {@link BindGroup#update | Update a BindGroup}:
      * - Update the textures if it's a {@link texturesBindGroups | textures bind group}.
      * - Update its {@link BindGroup#bufferBindings | buffer bindings}.
      * - Check if it eventually needs a {@link BindGroup#resetBindGroup | reset}.
@@ -6491,25 +6491,25 @@
     /* INPUTS */
     /**
      * Look for a {@link BindGroupBindingElement | binding} by name in all {@link inputsBindings | input bindings}
-     * @param bindingName - the binding name or key
-     * @returns - the found binding, or null if not found
+     * @param bindingName - the binding name or key.
+     * @returns - The found binding, or null if not found.
      */
     getBindingByName(bindingName = "") {
       return this.inputsBindings.get(bindingName);
     }
     /**
-     * Look for a {@link BindGroupBufferBindingElement | buffer binding} by name in all {@link inputsBindings | input bindings}
-     * @param bindingName - the binding name or key
-     * @returns - the found binding, or null if not found
+     * Look for a {@link BindGroupBufferBindingElement | buffer binding} by name in all {@link inputsBindings | input bindings}.
+     * @param bindingName - The binding name or key.
+     * @returns - The found binding, or null if not found.
      */
     getBufferBindingByName(bindingName = "") {
       const bufferBinding = this.getBindingByName(bindingName);
       return bufferBinding && "buffer" in bufferBinding ? bufferBinding : void 0;
     }
     /**
-     * Force setting a given {@link BufferBindingInput | buffer binding} shouldUpdate flag to `true` to update it at next render
-     * @param bufferBindingName - the buffer binding name
-     * @param bindingName - the binding name
+     * Force setting a given {@link BufferBindingInput | buffer binding} shouldUpdate flag to `true` to update it at next render.
+     * @param bufferBindingName - The buffer binding name.
+     * @param bindingName - The binding name.
      */
     shouldUpdateInputsBindings(bufferBindingName, bindingName) {
       if (!bufferBindingName) return;
@@ -6526,7 +6526,7 @@
     }
     /* SAMPLERS & TEXTURES */
     /**
-     * Prepare our textures array and set the {@link TextureBindGroup}
+     * Prepare our {@link Material.textures | textures} array and set the {@link TextureBindGroup}.
      */
     setTextures() {
       this.textures = [];
@@ -6541,8 +6541,8 @@
       });
     }
     /**
-     * Add a texture to our array, and add it to the textures bind group only if used in the shaders (avoid binding useless data)
-     * @param texture - texture to add
+     * Add a {@link MediaTexture} or {@link Texture} to our {@link textures} array, and add it to the textures bind group only if used in the shaders (avoid binding useless data).
+     * @param texture - {@link MediaTexture} or {@link Texture} to add.
      */
     addTexture(texture) {
       this.textures.push(texture);
@@ -6552,7 +6552,7 @@
     }
     /**
      * Destroy a {@link MediaTexture} or {@link Texture}, only if it is not used by another object or cached.
-     * @param texture - {@link MediaTexture} or {@link Texture} to eventually destroy
+     * @param texture - {@link MediaTexture} or {@link Texture} to eventually destroy.
      */
     destroyTexture(texture) {
       if (texture.options.cache) return;
@@ -6564,14 +6564,14 @@
       }
     }
     /**
-     * Destroy all the Material textures
+     * Destroy all the Material {@link textures}.
      */
     destroyTextures() {
       this.textures?.forEach((texture) => this.destroyTexture(texture));
       this.textures = [];
     }
     /**
-     * Prepare our samplers array and always add a default sampler if not already passed as parameter
+     * Prepare our {@link Material.samplers | samplers} array and always add a default {@link Sampler} if not already passed as parameter.
      */
     setSamplers() {
       this.samplers = [];
@@ -6585,8 +6585,8 @@
       }
     }
     /**
-     * Add a sampler to our array, and add it to the textures bind group only if used in the shaders (avoid binding useless data)
-     * @param sampler - sampler to add
+     * Add a {@link Sampler} to our {@link samplers} array, and add it to the textures bind group only if used in the shaders (avoid binding useless data).
+     * @param sampler - {@link Sampler} to add.
      */
     addSampler(sampler) {
       this.samplers.push(sampler);
@@ -6597,16 +6597,16 @@
     /* BUFFER RESULTS */
     /**
      * Map a {@link Buffer#GPUBuffer | Buffer's GPU buffer} and put a copy of the data into a {@link Float32Array}
-     * @param buffer - {@link Buffer} to use for mapping
-     * @returns - {@link Float32Array} holding the {@link GPUBuffer} data
+     * @param buffer - {@link Buffer} to use for mapping.
+     * @returns - {@link Float32Array} holding the {@link GPUBuffer} data.
      */
     async getBufferResult(buffer) {
       return await buffer.mapBufferAsync();
     }
     /**
-     * Map the content of a {@link BufferBinding} {@link Buffer#GPUBuffer | GPU buffer} and put a copy of the data into a {@link Float32Array}
-     * @param bindingName - The name of the {@link inputsBindings | input bindings} from which to map the {@link Buffer#GPUBuffer | GPU buffer}
-     * @returns - {@link Float32Array} holding the {@link GPUBuffer} data
+     * Map the content of a {@link BufferBinding} {@link Buffer#GPUBuffer | GPU buffer} and put a copy of the data into a {@link Float32Array}.
+     * @param bindingName - The name of the {@link inputsBindings | input bindings} from which to map the {@link Buffer#GPUBuffer | GPU buffer}.
+     * @returns - {@link Float32Array} holding the {@link GPUBuffer} data.
      */
     async getBufferBindingResultByBindingName(bindingName = "") {
       const binding = this.getBufferBindingByName(bindingName);
@@ -6620,11 +6620,11 @@
       }
     }
     /**
-     * Map the content of a specific {@link BufferElement | buffer element} belonging to a {@link BufferBinding} {@link Buffer#GPUBuffer | GPU buffer} and put a copy of the data into a {@link Float32Array}
-     * @param parameters - parameters used to get the result
-     * @param parameters.bindingName - The name of the {@link inputsBindings | input bindings} from which to map the {@link Buffer#GPUBuffer | GPU buffer}
-     * @param parameters.bufferElementName - The name of the {@link BufferElement | buffer element} from which to extract the data afterwards
-     * @returns - {@link Float32Array} holding {@link GPUBuffer} data
+     * Map the content of a specific {@link BufferElement | buffer element} belonging to a {@link BufferBinding} {@link Buffer#GPUBuffer | GPU buffer} and put a copy of the data into a {@link Float32Array}.
+     * @param parameters - Parameters used to get the result.
+     * @param parameters.bindingName - The name of the {@link inputsBindings | input bindings} from which to map the {@link Buffer#GPUBuffer | GPU buffer}.
+     * @param parameters.bufferElementName - The name of the {@link BufferElement | buffer element} from which to extract the data afterwards.
+     * @returns - {@link Float32Array} holding {@link GPUBuffer} data.
      */
     async getBufferElementResultByNames({
       bindingName,
@@ -6646,30 +6646,30 @@
     /**
      * Called before rendering the Material.
      * First, check if we need to create our bind groups or pipeline.
-     * Finally updates all the {@link bindGroups | bind groups}.
+     * Finally, updates all the {@link bindGroups | bind groups}.
      */
     onBeforeRender() {
       this.compileMaterial();
       this.updateBindGroups();
     }
     /**
-     * Set the current pipeline
-     * @param pass - current pass encoder
+     * Set the current pipeline.
+     * @param pass - Current pass encoder.
      */
     setPipeline(pass) {
       this.renderer.pipelineManager.setCurrentPipeline(pass, this.pipelineEntry);
     }
     /**
      * Use the {@link Renderer#pipelineManager | renderer pipelineManager} to only set the bind groups that are not already set.
-     * @param pass - current pass encoder
+     * @param pass - Current pass encoder.
      */
     setActiveBindGroups(pass) {
       this.renderer.pipelineManager.setActiveBindGroups(pass, this.bindGroups);
     }
     /**
      * Render the material if it is ready:
-     * Set the current pipeline and set the bind groups
-     * @param pass - current pass encoder
+     * Set the current pipeline and set the bind groups.
+     * @param pass - Current pass encoder.
      */
     render(pass) {
       if (!this.ready) return;
@@ -6677,7 +6677,7 @@
       this.setActiveBindGroups(pass);
     }
     /**
-     * Destroy the Material
+     * Destroy the Material.
      */
     destroy() {
       this.destroyBindGroups();
@@ -9474,7 +9474,11 @@ ${this.shaders.full.head}`;
           depthStencil: {
             depthWriteEnabled: this.options.rendering.depthWriteEnabled,
             depthCompare: this.options.rendering.depthCompare,
-            format: this.options.rendering.depthFormat
+            format: this.options.rendering.depthFormat,
+            ...this.options.rendering.stencil && {
+              stencilFront: this.options.rendering.stencil.front,
+              stencilBack: this.options.rendering.stencil.back ?? this.options.rendering.stencil.front
+            }
           }
         },
         ...this.options.rendering.sampleCount > 1 && {
@@ -9597,7 +9601,7 @@ struct VSOutput {
     /**
      * RenderMaterial constructor
      * @param renderer - our renderer class object
-     * @param parameters - {@link RenderMaterialParams | parameters} used to create our RenderMaterial
+     * @param parameters - {@link RenderMaterialParams | parameters} used to create our {@link RenderMaterial}.
      */
     constructor(renderer, parameters) {
       const type = "RenderMaterial";
@@ -9631,6 +9635,7 @@ struct VSOutput {
         depthWriteEnabled,
         depthCompare,
         depthFormat,
+        stencil,
         cullMode,
         sampleCount,
         verticesOrder,
@@ -9657,6 +9662,7 @@ struct VSOutput {
           depthWriteEnabled,
           depthCompare,
           depthFormat,
+          ...stencil && { stencil },
           cullMode,
           sampleCount,
           targets,
@@ -9688,7 +9694,7 @@ struct VSOutput {
       this.pipelineEntry = this.renderer.pipelineManager.createRenderPipeline(this);
     }
     /**
-     * Compile the {@link RenderPipelineEntry}
+     * Compile the {@link RenderPipelineEntry}.
      */
     async compilePipelineEntry() {
       await this.pipelineEntry.compilePipelineEntry();
@@ -9708,7 +9714,7 @@ struct VSOutput {
     }
     /**
      * Set or reset one of the {@link RenderMaterialRenderingOptions | rendering options}. Should be use with great caution, because if the {@link RenderPipelineEntry#pipeline | render pipeline} has already been compiled, it can cause a pipeline flush.
-     * @param renderingOptions - new {@link RenderMaterialRenderingOptions | rendering options} properties to be set
+     * @param renderingOptions - New {@link RenderMaterialRenderingOptions | rendering options} properties to be set.
      */
     setRenderingOptions(renderingOptions = {}) {
       if (renderingOptions.transparent && renderingOptions.targets.length && !renderingOptions.targets[0].blend) {
@@ -9760,8 +9766,8 @@ New rendering options: ${JSON.stringify(
     }
     /* ATTRIBUTES */
     /**
-     * Compute geometry if needed and get all useful geometry properties needed to create attributes buffers
-     * @param geometry - the geometry to draw
+     * Get all useful {@link core/geometries/Geometry.Geometry | Geometry} properties needed to create attributes buffers.
+     * @param geometry - The geometry to draw.
      */
     setAttributesFromGeometry(geometry) {
       this.attributes = {
@@ -9809,6 +9815,17 @@ New rendering options: ${JSON.stringify(
       }
       for (let i = startBindGroupIndex; i < this.bindGroups.length; i++) {
         this.updateBindGroup(this.bindGroups[i]);
+      }
+    }
+    /**
+     * Render the material if it is ready. Call super, and the set the pass encoder stencil reference if needed.
+     * @param pass - Current pass encoder.
+     */
+    render(pass) {
+      if (!this.ready) return;
+      super.render(pass);
+      if (this.options.rendering.stencil) {
+        pass.setStencilReference(this.options.rendering.stencil.stencilReference ?? 0);
       }
     }
   }
@@ -10440,10 +10457,17 @@ ${geometry.wgslStructFragment}`
       }
       /**
        * Render our {@link MeshBase} if the {@link RenderMaterial} is ready
-       * @param pass - current render pass encoder
+       * @param pass - Current render pass encoder.
        */
       onRenderPass(pass) {
         if (!this.ready) return;
+        this.renderPass(pass);
+      }
+      /**
+       * Render the {@link material} and {@link geometry}.
+       * @param pass - Current render pass encoder.
+       */
+      renderPass(pass) {
         this.material.render(pass);
         this.geometry.render(pass);
       }
@@ -11223,8 +11247,7 @@ fn getPCFBaseShadowContribution(
       onRenderPass(pass) {
         if (!this.ready) return;
         if (this.domFrustum && this.domFrustum.isIntersecting || !this.frustumCulling) {
-          this.material.render(pass);
-          this.geometry.render(pass);
+          this.renderPass(pass);
         }
       }
       /**
@@ -13609,7 +13632,7 @@ ${this.shaders.compute.head}`;
   class Scene extends Object3D {
     /**
      * Scene constructor
-     * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Scene}
+     * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Scene}.
      */
     constructor({ renderer }) {
       super();
@@ -13617,9 +13640,9 @@ ${this.shaders.compute.head}`;
       this.renderer = renderer;
       this.computePassEntries = [];
       this.renderPassEntries = {
-        /** Array of {@link RenderPassEntry} that will handle {@link PingPongPlane}. Each {@link PingPongPlane} will be added as a distinct {@link RenderPassEntry} here */
+        /** Array of {@link RenderPassEntry} that will handle {@link PingPongPlane}. Each {@link PingPongPlane} will be added as a distinct {@link RenderPassEntry} here. */
         pingPong: [],
-        /** Array of {@link RenderPassEntry} that will render to a specific {@link RenderTarget}. Each {@link RenderTarget} will be added as a distinct {@link RenderPassEntry} here */
+        /** Array of {@link RenderPassEntry} that will render to a specific {@link RenderTarget}. Each {@link RenderTarget} will be added as a distinct {@link RenderPassEntry} here. */
         renderTarget: [],
         /** Array of {@link RenderPassEntry} containing {@link ShaderPass} that will render directly to the screen before rendering any other pass to the screen. Useful to perform "blit" pass before actually rendering the usual scene content. */
         prePass: [],
@@ -13671,7 +13694,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Get the number of meshes a {@link RenderPassEntry | render pass entry} should draw.
-     * @param renderPassEntry - The {@link RenderPassEntry | render pass entry} to test
+     * @param renderPassEntry - The {@link RenderPassEntry | render pass entry} to test.
      */
     getRenderPassEntryLength(renderPassEntry) {
       if (!renderPassEntry) {
@@ -13681,8 +13704,8 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Add a {@link ComputePass} to our scene {@link computePassEntries} array
-     * @param computePass - {@link ComputePass} to add
+     * Add a {@link ComputePass} to our scene {@link computePassEntries} array.
+     * @param computePass - {@link ComputePass} to add.
      */
     addComputePass(computePass) {
       this.computePassEntries.push(computePass);
@@ -13695,16 +13718,16 @@ ${this.shaders.compute.head}`;
       });
     }
     /**
-     * Remove a {@link ComputePass} from our scene {@link computePassEntries} array
-     * @param computePass - {@link ComputePass} to remove
+     * Remove a {@link ComputePass} from our scene {@link computePassEntries} array.
+     * @param computePass - {@link ComputePass} to remove.
      */
     removeComputePass(computePass) {
       this.computePassEntries = this.computePassEntries.filter((cP) => cP.uuid !== computePass.uuid);
     }
     /**
      * Add a {@link RenderTarget} to our scene {@link renderPassEntries} outputTarget array.
-     * Every Meshes later added to this {@link RenderTarget} will be rendered to the {@link RenderTarget#renderTexture | RenderTarget Texture} using the {@link RenderTarget#renderPass.descriptor | RenderTarget RenderPass descriptor}
-     * @param renderTarget - {@link RenderTarget} to add
+     * Every Meshes later added to this {@link RenderTarget} will be rendered to the {@link RenderTarget#renderTexture | RenderTarget Texture} using the {@link RenderTarget#renderPass.descriptor | RenderTarget RenderPass descriptor}.
+     * @param renderTarget - {@link RenderTarget} to add.
      */
     addRenderTarget(renderTarget) {
       if (!this.renderPassEntries.renderTarget.find((entry) => entry.renderPass.uuid === renderTarget.renderPass.uuid))
@@ -13731,7 +13754,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Remove a {@link RenderTarget} from our scene {@link renderPassEntries} outputTarget array.
-     * @param renderTarget - {@link RenderTarget} to add
+     * @param renderTarget - {@link RenderTarget} to add.
      */
     removeRenderTarget(renderTarget) {
       this.renderPassEntries.renderTarget = this.renderPassEntries.renderTarget.filter(
@@ -13749,9 +13772,9 @@ ${this.shaders.compute.head}`;
       ) : this.renderPassEntries.screen.find((passEntry) => passEntry.renderPass.uuid === this.renderer.renderPass.uuid);
     }
     /**
-     * Get the correct {@link renderPassEntries | render pass entry} (either {@link renderPassEntries} outputTarget or {@link renderPassEntries} screen) {@link Stack} onto which this Mesh should be added, depending on whether it's projected or not
-     * @param mesh - Mesh to check
-     * @returns - the corresponding render pass entry {@link Stack}
+     * Get the correct {@link renderPassEntries | render pass entry} (either {@link renderPassEntries} outputTarget or {@link renderPassEntries} screen) {@link Stack} onto which this Mesh should be added, depending on whether it's projected or not.
+     * @param mesh - Mesh to check.
+     * @returns - The corresponding render pass entry {@link Stack}.
      */
     getMeshProjectionStack(mesh) {
       const renderPassEntry = mesh.options.useCustomScenePassEntry ? mesh.options.useCustomScenePassEntry : "transmissive" in mesh.options && mesh.options.transmissive ? this.renderer.transmissionTarget.passEntry : this.getRenderTargetPassEntry(mesh.outputTarget);
@@ -13791,8 +13814,8 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Add a Mesh to the correct {@link renderPassEntries | render pass entry} {@link Stack} array.
-     * Meshes are then ordered by their {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#index | indexes (order of creation]}, {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#index | pipeline entry indexes} and then {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#renderOrder | renderOrder}
-     * @param mesh - Mesh to add
+     * Meshes are then ordered by their {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#index | indexes (order of creation]}, {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#index | pipeline entry indexes} and then {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#renderOrder | renderOrder}.
+     * @param mesh - Mesh to add.
      */
     addMesh(mesh) {
       if (mesh.renderBundle) {
@@ -13968,8 +13991,8 @@ ${this.shaders.compute.head}`;
     /**
      * Add a {@link PingPongPlane} to our scene {@link renderPassEntries} pingPong array.
      * After rendering the {@link PingPongPlane}, we will copy the context current texture into its {@link PingPongPlane#renderTexture | renderTexture} so we'll be able to use it as an input for the next pass.
-     * @see {@link https://codesandbox.io/p/sandbox/webgpu-render-ping-pong-to-texture-use-in-quad-gwjx9p | minimal code example}
-     * @param pingPongPlane
+     * @see {@link https://codesandbox.io/p/sandbox/webgpu-render-ping-pong-to-texture-use-in-quad-gwjx9p | minimal code example}.
+     * @param pingPongPlane - {@link PingPongPlane} to add.
      */
     addPingPongPlane(pingPongPlane) {
       this.renderPassEntries.pingPong.push({
@@ -14013,7 +14036,7 @@ ${this.shaders.compute.head}`;
     /**
      * Get any rendered object or {@link RenderTarget} {@link RenderPassEntry}. Useful to override a {@link RenderPassEntry#onBeforeRenderPass | RenderPassEntry onBeforeRenderPass} or {@link RenderPassEntry#onAfterRenderPass | RenderPassEntry onAfterRenderPass} default behavior.
      * @param object - The object from which we want to get the parentMesh {@link RenderPassEntry}
-     * @returns - the {@link RenderPassEntry} if found.
+     * @returns - The {@link RenderPassEntry} if found.
      */
     getObjectRenderPassEntry(object) {
       if (object.type === "RenderTarget") {
@@ -14051,7 +14074,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Sort transparent projected meshes by their render order or distance to the camera (farther meshes should be drawn first).
-     * @param meshes - transparent projected meshes array to sort.
+     * @param meshes - Transparent projected meshes array to sort.
      */
     sortTransparentMeshes(meshes) {
       meshes.sort((meshA, meshB) => {
@@ -14070,15 +14093,15 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Here we render a {@link RenderPassEntry}:
-     * - Set its {@link RenderPass#descriptor | renderPass descriptor} view or resolveTarget and get it at as swap chain texture
-     * - Execute {@link RenderPassEntry#onBeforeRenderPass | onBeforeRenderPass} callback if specified
-     * - Begin the {@link GPURenderPassEncoder | GPU render pass encoder} using our {@link RenderPass#descriptor | renderPass descriptor}
-     * - Render the single element if specified or the render pass entry {@link Stack}: draw unprojected opaque / transparent meshes first, then set the {@link core/renderers/GPUCameraRenderer.GPUCameraRenderer#cameraLightsBindGroup | camera and lights bind group} and draw projected opaque / transparent meshes
-     * - End the {@link GPURenderPassEncoder | GPU render pass encoder}
-     * - Execute {@link RenderPassEntry#onAfterRenderPass | onAfterRenderPass} callback if specified
-     * - Reset {@link core/pipelines/PipelineManager.PipelineManager#currentPipelineIndex | pipeline manager current pipeline}
-     * @param commandEncoder - current {@link GPUCommandEncoder}
-     * @param renderPassEntry - {@link RenderPassEntry} to render
+     * - Set its {@link RenderPass#descriptor | renderPass descriptor} view or resolveTarget and get it at as swap chain texture.
+     * - Execute {@link RenderPassEntry#onBeforeRenderPass | onBeforeRenderPass} callback if specified.
+     * - Begin the {@link GPURenderPassEncoder | GPU render pass encoder} using our {@link RenderPass#descriptor | renderPass descriptor}.
+     * - Render the single element if specified or the render pass entry {@link Stack}: draw unprojected opaque / transparent meshes first, then set the {@link core/renderers/GPUCameraRenderer.GPUCameraRenderer#cameraLightsBindGroup | camera and lights bind group} and draw projected opaque / transparent meshes.
+     * - End the {@link GPURenderPassEncoder | GPU render pass encoder}.
+     * - Execute {@link RenderPassEntry#onAfterRenderPass | onAfterRenderPass} callback if specified.
+     * - Reset {@link core/pipelines/PipelineManager.PipelineManager#currentPipelineIndex | pipeline manager current pipeline}.
+     * @param commandEncoder - Current {@link GPUCommandEncoder}.
+     * @param renderPassEntry - {@link RenderPassEntry} to render.
      */
     renderSinglePassEntry(commandEncoder, renderPassEntry) {
       const swapChainTexture = renderPassEntry.renderPass.updateView(renderPassEntry.renderTexture?.texture);
@@ -14143,11 +14166,11 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Render our {@link Scene}
-     * - Execute {@link onBeforeRender} first
-     * - Then render {@link computePassEntries}
-     * - And finally render our {@link renderPassEntries}
-     * @param commandEncoder - current {@link GPUCommandEncoder}
+     * Render our {@link Scene}.
+     * - Execute {@link onBeforeRender} first.
+     * - Then render {@link computePassEntries}.
+     * - And finally render our {@link renderPassEntries}.
+     * @param commandEncoder - Current {@link GPUCommandEncoder}.
      */
     render(commandEncoder) {
       for (const computePass of this.computePassEntries) {
@@ -16715,9 +16738,20 @@ ${this.shaders.compute.head}`;
       if (!this.options.renderPass) {
         this.options.renderPass = outputPass;
       } else if (outputPass.uuid !== this.options.renderPass.uuid) {
-        throwWarning(
-          `${this.options.label} (${this.type}): Cannot add Mesh ${mesh.options.label} to this render bundle because the output render passes do not match.`
-        );
+        if (!this.renderer.production) {
+          throwWarning(
+            `${this.options.label} (${this.type}): Cannot add Mesh ${mesh.options.label} to this render bundle because the output render passes do not match.`
+          );
+        }
+        mesh.renderBundle = null;
+        return;
+      }
+      if (mesh.options.stencil) {
+        if (!this.renderer.production) {
+          throwWarning(
+            `${this.options.label} (${this.type}): Cannot add Mesh ${mesh.options.label} to this render bundle because stencil operations are not supported by render bundles.`
+          );
+        }
         mesh.renderBundle = null;
         return;
       }

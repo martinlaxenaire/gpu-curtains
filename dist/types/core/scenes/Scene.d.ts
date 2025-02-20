@@ -78,7 +78,7 @@ export declare class Scene extends Object3D {
     renderPassEntries: RenderPassEntries;
     /**
      * Scene constructor
-     * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Scene}
+     * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Scene}.
      */
     constructor({ renderer }: {
         renderer: Renderer | GPUCurtains;
@@ -96,28 +96,28 @@ export declare class Scene extends Object3D {
     setMainRenderPassEntry(): void;
     /**
      * Get the number of meshes a {@link RenderPassEntry | render pass entry} should draw.
-     * @param renderPassEntry - The {@link RenderPassEntry | render pass entry} to test
+     * @param renderPassEntry - The {@link RenderPassEntry | render pass entry} to test.
      */
     getRenderPassEntryLength(renderPassEntry: RenderPassEntry): number;
     /**
-     * Add a {@link ComputePass} to our scene {@link computePassEntries} array
-     * @param computePass - {@link ComputePass} to add
+     * Add a {@link ComputePass} to our scene {@link computePassEntries} array.
+     * @param computePass - {@link ComputePass} to add.
      */
     addComputePass(computePass: ComputePass): void;
     /**
-     * Remove a {@link ComputePass} from our scene {@link computePassEntries} array
-     * @param computePass - {@link ComputePass} to remove
+     * Remove a {@link ComputePass} from our scene {@link computePassEntries} array.
+     * @param computePass - {@link ComputePass} to remove.
      */
     removeComputePass(computePass: ComputePass): void;
     /**
      * Add a {@link RenderTarget} to our scene {@link renderPassEntries} outputTarget array.
-     * Every Meshes later added to this {@link RenderTarget} will be rendered to the {@link RenderTarget#renderTexture | RenderTarget Texture} using the {@link RenderTarget#renderPass.descriptor | RenderTarget RenderPass descriptor}
-     * @param renderTarget - {@link RenderTarget} to add
+     * Every Meshes later added to this {@link RenderTarget} will be rendered to the {@link RenderTarget#renderTexture | RenderTarget Texture} using the {@link RenderTarget#renderPass.descriptor | RenderTarget RenderPass descriptor}.
+     * @param renderTarget - {@link RenderTarget} to add.
      */
     addRenderTarget(renderTarget: RenderTarget): void;
     /**
      * Remove a {@link RenderTarget} from our scene {@link renderPassEntries} outputTarget array.
-     * @param renderTarget - {@link RenderTarget} to add
+     * @param renderTarget - {@link RenderTarget} to add.
      */
     removeRenderTarget(renderTarget: RenderTarget): void;
     /**
@@ -127,9 +127,9 @@ export declare class Scene extends Object3D {
      */
     getRenderTargetPassEntry(renderTarget?: RenderTarget | null): RenderPassEntry;
     /**
-     * Get the correct {@link renderPassEntries | render pass entry} (either {@link renderPassEntries} outputTarget or {@link renderPassEntries} screen) {@link Stack} onto which this Mesh should be added, depending on whether it's projected or not
-     * @param mesh - Mesh to check
-     * @returns - the corresponding render pass entry {@link Stack}
+     * Get the correct {@link renderPassEntries | render pass entry} (either {@link renderPassEntries} outputTarget or {@link renderPassEntries} screen) {@link Stack} onto which this Mesh should be added, depending on whether it's projected or not.
+     * @param mesh - Mesh to check.
+     * @returns - The corresponding render pass entry {@link Stack}.
      */
     getMeshProjectionStack(mesh: RenderedMesh): ProjectionStack;
     /**
@@ -151,8 +151,8 @@ export declare class Scene extends Object3D {
     addMeshToRenderTargetStack(mesh: SceneStackedMesh, renderTarget?: RenderTarget | null): void;
     /**
      * Add a Mesh to the correct {@link renderPassEntries | render pass entry} {@link Stack} array.
-     * Meshes are then ordered by their {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#index | indexes (order of creation]}, {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#index | pipeline entry indexes} and then {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#renderOrder | renderOrder}
-     * @param mesh - Mesh to add
+     * Meshes are then ordered by their {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#index | indexes (order of creation]}, {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#index | pipeline entry indexes} and then {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#renderOrder | renderOrder}.
+     * @param mesh - Mesh to add.
      */
     addMesh(mesh: SceneStackedMesh): void;
     /**
@@ -187,8 +187,8 @@ export declare class Scene extends Object3D {
     /**
      * Add a {@link PingPongPlane} to our scene {@link renderPassEntries} pingPong array.
      * After rendering the {@link PingPongPlane}, we will copy the context current texture into its {@link PingPongPlane#renderTexture | renderTexture} so we'll be able to use it as an input for the next pass.
-     * @see {@link https://codesandbox.io/p/sandbox/webgpu-render-ping-pong-to-texture-use-in-quad-gwjx9p | minimal code example}
-     * @param pingPongPlane
+     * @see {@link https://codesandbox.io/p/sandbox/webgpu-render-ping-pong-to-texture-use-in-quad-gwjx9p | minimal code example}.
+     * @param pingPongPlane - {@link PingPongPlane} to add.
      */
     addPingPongPlane(pingPongPlane: PingPongPlane): void;
     /**
@@ -199,25 +199,25 @@ export declare class Scene extends Object3D {
     /**
      * Get any rendered object or {@link RenderTarget} {@link RenderPassEntry}. Useful to override a {@link RenderPassEntry#onBeforeRenderPass | RenderPassEntry onBeforeRenderPass} or {@link RenderPassEntry#onAfterRenderPass | RenderPassEntry onAfterRenderPass} default behavior.
      * @param object - The object from which we want to get the parentMesh {@link RenderPassEntry}
-     * @returns - the {@link RenderPassEntry} if found.
+     * @returns - The {@link RenderPassEntry} if found.
      */
     getObjectRenderPassEntry(object: RenderedMesh | RenderTarget): RenderPassEntry | undefined;
     /**
      * Sort transparent projected meshes by their render order or distance to the camera (farther meshes should be drawn first).
-     * @param meshes - transparent projected meshes array to sort.
+     * @param meshes - Transparent projected meshes array to sort.
      */
     sortTransparentMeshes(meshes: Array<ProjectedMesh | RenderBundle>): void;
     /**
      * Here we render a {@link RenderPassEntry}:
-     * - Set its {@link RenderPass#descriptor | renderPass descriptor} view or resolveTarget and get it at as swap chain texture
-     * - Execute {@link RenderPassEntry#onBeforeRenderPass | onBeforeRenderPass} callback if specified
-     * - Begin the {@link GPURenderPassEncoder | GPU render pass encoder} using our {@link RenderPass#descriptor | renderPass descriptor}
-     * - Render the single element if specified or the render pass entry {@link Stack}: draw unprojected opaque / transparent meshes first, then set the {@link core/renderers/GPUCameraRenderer.GPUCameraRenderer#cameraLightsBindGroup | camera and lights bind group} and draw projected opaque / transparent meshes
-     * - End the {@link GPURenderPassEncoder | GPU render pass encoder}
-     * - Execute {@link RenderPassEntry#onAfterRenderPass | onAfterRenderPass} callback if specified
-     * - Reset {@link core/pipelines/PipelineManager.PipelineManager#currentPipelineIndex | pipeline manager current pipeline}
-     * @param commandEncoder - current {@link GPUCommandEncoder}
-     * @param renderPassEntry - {@link RenderPassEntry} to render
+     * - Set its {@link RenderPass#descriptor | renderPass descriptor} view or resolveTarget and get it at as swap chain texture.
+     * - Execute {@link RenderPassEntry#onBeforeRenderPass | onBeforeRenderPass} callback if specified.
+     * - Begin the {@link GPURenderPassEncoder | GPU render pass encoder} using our {@link RenderPass#descriptor | renderPass descriptor}.
+     * - Render the single element if specified or the render pass entry {@link Stack}: draw unprojected opaque / transparent meshes first, then set the {@link core/renderers/GPUCameraRenderer.GPUCameraRenderer#cameraLightsBindGroup | camera and lights bind group} and draw projected opaque / transparent meshes.
+     * - End the {@link GPURenderPassEncoder | GPU render pass encoder}.
+     * - Execute {@link RenderPassEntry#onAfterRenderPass | onAfterRenderPass} callback if specified.
+     * - Reset {@link core/pipelines/PipelineManager.PipelineManager#currentPipelineIndex | pipeline manager current pipeline}.
+     * @param commandEncoder - Current {@link GPUCommandEncoder}.
+     * @param renderPassEntry - {@link RenderPassEntry} to render.
      */
     renderSinglePassEntry(commandEncoder: GPUCommandEncoder, renderPassEntry: RenderPassEntry): void;
     /**
@@ -225,11 +225,11 @@ export declare class Scene extends Object3D {
      */
     onBeforeRender(): void;
     /**
-     * Render our {@link Scene}
-     * - Execute {@link onBeforeRender} first
-     * - Then render {@link computePassEntries}
-     * - And finally render our {@link renderPassEntries}
-     * @param commandEncoder - current {@link GPUCommandEncoder}
+     * Render our {@link Scene}.
+     * - Execute {@link onBeforeRender} first.
+     * - Then render {@link computePassEntries}.
+     * - And finally render our {@link renderPassEntries}.
+     * @param commandEncoder - Current {@link GPUCommandEncoder}.
      */
     render(commandEncoder: GPUCommandEncoder): void;
 }

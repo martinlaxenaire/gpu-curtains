@@ -453,6 +453,10 @@ export class RenderPipelineEntry extends PipelineEntry {
           depthWriteEnabled: this.options.rendering.depthWriteEnabled,
           depthCompare: this.options.rendering.depthCompare,
           format: this.options.rendering.depthFormat,
+          ...(this.options.rendering.stencil && {
+            stencilFront: this.options.rendering.stencil.front,
+            stencilBack: this.options.rendering.stencil.back ?? this.options.rendering.stencil.front,
+          }),
         },
       }),
       ...(this.options.rendering.sampleCount > 1 && {

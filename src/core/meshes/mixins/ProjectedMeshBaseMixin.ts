@@ -789,10 +789,7 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
       if (!this.ready) return
 
       if ((this.domFrustum && this.domFrustum.isIntersecting) || !this.frustumCulling) {
-        // render our material
-        this.material.render(pass)
-        // then render our geometry
-        this.geometry.render(pass)
+        this.renderPass(pass)
       }
     }
 
