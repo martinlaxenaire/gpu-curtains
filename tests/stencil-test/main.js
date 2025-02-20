@@ -13,7 +13,7 @@ window.addEventListener('load', async () => {
     Mesh,
     PlaneGeometry,
     SphereGeometry,
-    ShaderPass,
+    Sampler,
     Vec2,
     Vec3,
     Object3D,
@@ -28,56 +28,29 @@ window.addEventListener('load', async () => {
   await gpuDeviceManager.init()
 
   const depthStencilFormat = 'depth24plus-stencil8'
-  const useBlitPass = false
+  const useRenderTarget = false
 
   // create a camera renderer
   const gpuCameraRenderer = new GPUCameraRenderer({
     deviceManager: gpuDeviceManager,
     container: document.querySelector('#canvas'),
     pixelRatio: Math.min(1.5, window.devicePixelRatio),
-    renderPass: {
-      depthFormat: depthStencilFormat, // use stencil!
-    },
+    ...(!useRenderTarget && {
+      renderPass: {
+        depthFormat: depthStencilFormat, // use stencil!
+      },
+    }),
   })
 
   const { camera, scene } = gpuCameraRenderer
 
   let stencilRenderTarget = null
 
-  if (useBlitPass) {
+  if (useRenderTarget) {
     stencilRenderTarget = new RenderTarget(gpuCameraRenderer, {
       label: 'Stencil render target',
-      depthTexture: gpuCameraRenderer.renderPass.depthTexture,
+      depthFormat: depthStencilFormat,
     })
-
-    const blitPass = new ShaderPass(gpuCameraRenderer, {
-      label: 'Stencil blit pass',
-      isPrePass: true,
-      inputTarget: stencilRenderTarget,
-    })
-
-    // const blitPassScenePassEntry = gpuCameraRenderer.scene.getRenderTargetPassEntry(stencilRenderTarget)
-    // console.log(blitPassScenePassEntry)
-
-    // blitPassScenePassEntry.onBeforeRenderPass = () => {
-    //   gpuCameraRenderer.renderPass.setStencilReadOnly(false)
-    // }
-    //
-    // blitPassScenePassEntry.onAfterRenderPass = () => {
-    //   gpuCameraRenderer.renderPass.setStencilReadOnly(true)
-    // }
-
-    // blitPass
-    //   .onBeforeRender(() => {
-    //     gpuCameraRenderer.renderPass.setDepthLoadOp('load')
-    //     gpuCameraRenderer.renderPass.setLoadOp('load')
-    //   })
-    //   .onAfterRender(() => {
-    //     gpuCameraRenderer.renderPass.setDepthLoadOp('load')
-    //     gpuCameraRenderer.renderPass.setLoadOp('load')
-    //   })
-
-    console.log(stencilRenderTarget, blitPass, gpuCameraRenderer.scene)
   }
 
   const portalPivot = new Object3D()
@@ -89,7 +62,7 @@ window.addEventListener('load', async () => {
   const stencilPlane = new Mesh(gpuCameraRenderer, {
     label: 'Stencil plane',
     geometry: new PlaneGeometry(),
-    ...(useBlitPass && { outputTarget: stencilRenderTarget }),
+    ...(useRenderTarget && { outputTarget: stencilRenderTarget }),
     shaders: {
       fragment: {
         code: `
@@ -118,6 +91,81 @@ window.addEventListener('load', async () => {
 
   stencilPlane.parent = portalPivot
 
+  if (useRenderTarget) {
+    const stencilTexture = new Texture(gpuCameraRenderer, {
+      label: 'Stencil content texture',
+      name: 'stencilTexture',
+      fromTexture: stencilRenderTarget.renderTexture,
+    })
+
+    const clampSampler = new Sampler(gpuCameraRenderer, {
+      label: 'Clamp sampler',
+      name: 'clampSampler',
+      addressModeU: 'clamp-to-edge',
+      addressModeV: 'clamp-to-edge',
+      minFilter: 'linear',
+      magFilter: 'linear',
+    })
+
+    const portalVs = `
+      struct VSOutput {
+        @builtin(position) position: vec4f,
+        @location(0) uv: vec3f, // Homogeneous UV coordinates
+      };
+      
+      // Project the portal texture onto the plane
+      @vertex fn main(attributes: Attributes) -> VSOutput {
+        var vsOutput: VSOutput;
+        vsOutput.position = getOutputPosition(attributes.position);
+    
+        // Perspective-correct UV mapping
+        vsOutput.uv = vsOutput.position.xyz;
+    
+        return vsOutput;
+      }
+    `
+
+    const portalFs = `
+      struct VSOutput {
+        @builtin(position) position: vec4f,
+        @location(0) uv: vec3f,
+      };
+
+      @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
+        // Perspective correct UVs
+        let uvPadding = vec2(0.01); // Reduce border artifacts
+        var uv: vec2f = fsInput.uv.xy;
+        uv.y = -uv.y;
+        uv = uv / max(fsInput.uv.z, 0.0001);
+        var correctedUV = uv * 0.5 + 0.5;
+        correctedUV = mix(uvPadding, vec2(1.0) - uvPadding, correctedUV);
+    
+        // Sample the portal texture
+        return textureSample(stencilTexture, clampSampler, correctedUV);
+      }
+    `
+
+    const portalPlane = new Mesh(gpuCameraRenderer, {
+      label: 'Portal content plane',
+      geometry: new PlaneGeometry(),
+      shaders: {
+        vertex: {
+          code: portalVs,
+        },
+        fragment: {
+          code: portalFs,
+        },
+      },
+      cullMode: 'back', // draw only front of plane
+      textures: [stencilTexture],
+      samplers: [clampSampler],
+    })
+
+    portalPlane.parent = portalPivot
+
+    console.log(portalPlane)
+  }
+
   const backPortal = new Mesh(gpuCameraRenderer, {
     label: 'Back portal plane',
     geometry: new PlaneGeometry(),
@@ -131,14 +179,14 @@ window.addEventListener('load', async () => {
       },
     },
     cullMode: 'front', // draw only back of plane
-    ...(!useBlitPass && {
-      stencil: {
-        front: {
-          compare: 'always',
-          passOp: 'replace',
-        },
-      },
-    }),
+    // ...(!useRenderTarget && {
+    //   stencil: {
+    //     front: {
+    //       compare: 'always',
+    //       passOp: 'replace',
+    //     },
+    //   },
+    // }),
   })
 
   backPortal.parent = portalPivot
@@ -198,7 +246,7 @@ window.addEventListener('load', async () => {
   const stenciledFloor = new Mesh(gpuCameraRenderer, {
     label: 'Stenciled floor',
     geometry: new PlaneGeometry(),
-    ...(useBlitPass && { outputTarget: stencilRenderTarget }),
+    ...(useRenderTarget && { outputTarget: stencilRenderTarget }),
     shaders: {
       vertex: {
         code: floorVs,
@@ -236,7 +284,7 @@ window.addEventListener('load', async () => {
   const cube = new Mesh(gpuCameraRenderer, {
     label: 'Stenciled cube',
     geometry: new BoxGeometry(),
-    ...(useBlitPass && { outputTarget: stencilRenderTarget }),
+    ...(useRenderTarget && { outputTarget: stencilRenderTarget }),
     stencil: {
       front: {
         compare: 'less',
@@ -297,18 +345,20 @@ window.addEventListener('load', async () => {
   const backSphere = new Mesh(gpuCameraRenderer, {
     label: 'Back sphere',
     geometry: new SphereGeometry(),
-    stencil: {
-      // occluded by the stencil plane when behind
-      front: {
-        compare: 'greater',
-        passOp: 'keep',
+    ...(!useRenderTarget && {
+      stencil: {
+        // occluded by the stencil plane when behind
+        front: {
+          compare: 'greater',
+          passOp: 'keep',
+        },
+        back: {
+          compare: 'greater',
+          passOp: 'keep',
+        },
+        stencilReference: 0xffffff,
       },
-      back: {
-        compare: 'greater',
-        passOp: 'keep',
-      },
-      stencilReference: 0xffffff,
-    },
+    }),
   })
 
   backSphere.position.y = 1

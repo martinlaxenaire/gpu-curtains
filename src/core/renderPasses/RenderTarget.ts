@@ -72,12 +72,13 @@ export class RenderTarget {
     const { label, colorAttachments, depthTexture, autoRender, ...renderPassParams } = parameters
 
     // use depth texture from params
-    // OR renderer render pass depth texture if sample counts match
+    // OR renderer render pass depth texture if options match
     const depthTextureToUse = !!depthTexture
       ? depthTexture
       : this.renderer.renderPass.options.sampleCount === (parameters.sampleCount ?? 4) &&
         (!renderPassParams.qualityRatio || renderPassParams.qualityRatio === 1) &&
-        !renderPassParams.fixedSize
+        !renderPassParams.fixedSize &&
+        (!parameters.depthFormat || parameters.depthFormat === this.renderer.renderPass.depthTexture.options.format)
       ? this.renderer.renderPass.depthTexture
       : null
 
