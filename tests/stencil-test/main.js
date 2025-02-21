@@ -28,7 +28,7 @@ window.addEventListener('load', async () => {
   await gpuDeviceManager.init()
 
   const depthStencilFormat = 'depth24plus-stencil8'
-  const useRenderTarget = false
+  const useRenderTarget = true
 
   // create a camera renderer
   const gpuCameraRenderer = new GPUCameraRenderer({
@@ -91,81 +91,6 @@ window.addEventListener('load', async () => {
 
   stencilPlane.parent = portalPivot
 
-  if (useRenderTarget) {
-    const stencilTexture = new Texture(gpuCameraRenderer, {
-      label: 'Stencil content texture',
-      name: 'stencilTexture',
-      fromTexture: stencilRenderTarget.renderTexture,
-    })
-
-    const clampSampler = new Sampler(gpuCameraRenderer, {
-      label: 'Clamp sampler',
-      name: 'clampSampler',
-      addressModeU: 'clamp-to-edge',
-      addressModeV: 'clamp-to-edge',
-      minFilter: 'linear',
-      magFilter: 'linear',
-    })
-
-    const portalVs = `
-      struct VSOutput {
-        @builtin(position) position: vec4f,
-        @location(0) uv: vec3f, // Homogeneous UV coordinates
-      };
-      
-      // Project the portal texture onto the plane
-      @vertex fn main(attributes: Attributes) -> VSOutput {
-        var vsOutput: VSOutput;
-        vsOutput.position = getOutputPosition(attributes.position);
-    
-        // Perspective-correct UV mapping
-        vsOutput.uv = vsOutput.position.xyz;
-    
-        return vsOutput;
-      }
-    `
-
-    const portalFs = `
-      struct VSOutput {
-        @builtin(position) position: vec4f,
-        @location(0) uv: vec3f,
-      };
-
-      @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-        // Perspective correct UVs
-        let uvPadding = vec2(0.01); // Reduce border artifacts
-        var uv: vec2f = fsInput.uv.xy;
-        uv.y = -uv.y;
-        uv = uv / max(fsInput.uv.z, 0.0001);
-        var correctedUV = uv * 0.5 + 0.5;
-        correctedUV = mix(uvPadding, vec2(1.0) - uvPadding, correctedUV);
-    
-        // Sample the portal texture
-        return textureSample(stencilTexture, clampSampler, correctedUV);
-      }
-    `
-
-    const portalPlane = new Mesh(gpuCameraRenderer, {
-      label: 'Portal content plane',
-      geometry: new PlaneGeometry(),
-      shaders: {
-        vertex: {
-          code: portalVs,
-        },
-        fragment: {
-          code: portalFs,
-        },
-      },
-      cullMode: 'back', // draw only front of plane
-      textures: [stencilTexture],
-      samplers: [clampSampler],
-    })
-
-    portalPlane.parent = portalPivot
-
-    console.log(portalPlane)
-  }
-
   const backPortal = new Mesh(gpuCameraRenderer, {
     label: 'Back portal plane',
     geometry: new PlaneGeometry(),
@@ -179,21 +104,11 @@ window.addEventListener('load', async () => {
       },
     },
     cullMode: 'front', // draw only back of plane
-    // ...(!useRenderTarget && {
-    //   stencil: {
-    //     front: {
-    //       compare: 'always',
-    //       passOp: 'replace',
-    //     },
-    //   },
-    // }),
   })
 
   backPortal.parent = portalPivot
 
-  console.log(stencilPlane)
-
-  // now our stenciled scene
+  // our stenciled scene
   const floorVs = `
     struct VertexOutput {
       @builtin(position) position: vec4f,
@@ -306,6 +221,79 @@ window.addEventListener('load', async () => {
   })
 
   // now our non stenciled scene
+
+  if (useRenderTarget) {
+    const stencilTexture = new Texture(gpuCameraRenderer, {
+      label: 'Stencil content texture',
+      name: 'stencilTexture',
+      fromTexture: stencilRenderTarget.renderTexture,
+    })
+
+    const clampSampler = new Sampler(gpuCameraRenderer, {
+      label: 'Clamp sampler',
+      name: 'clampSampler',
+      addressModeU: 'clamp-to-edge',
+      addressModeV: 'clamp-to-edge',
+      minFilter: 'linear',
+      magFilter: 'linear',
+      mipmapFilter: 'linear',
+    })
+
+    const portalVs = `
+      struct VSOutput {
+        @builtin(position) position: vec4f,
+        @location(0) @interpolate(perspective, sample) uv: vec3f, // Homogeneous UV coordinates
+      };
+      
+      // Project the portal texture onto the plane
+      @vertex fn main(attributes: Attributes) -> VSOutput {
+        var vsOutput: VSOutput;
+        vsOutput.position = getOutputPosition(attributes.position);
+    
+        // Perspective-correct UV mapping
+        // use w component for perspective division
+        vsOutput.uv = vsOutput.position.xyw;
+    
+        return vsOutput;
+      }
+    `
+
+    const portalFs = `
+      struct VSOutput {
+        @builtin(position) position: vec4f,
+        @location(0) @interpolate(perspective, sample) uv: vec3f,
+      };
+
+      @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
+        // Perspective correct UVs
+        var uv: vec2f = fsInput.uv.xy;
+        uv.y = -uv.y;
+        uv = uv / max(fsInput.uv.z, 0.0001);
+        uv = uv * 0.5 + 0.5;
+    
+        // Sample the portal texture
+        return textureSample(stencilTexture, clampSampler, uv);
+      }
+    `
+
+    const portalPlane = new Mesh(gpuCameraRenderer, {
+      label: 'Portal content plane',
+      geometry: new PlaneGeometry(),
+      shaders: {
+        vertex: {
+          code: portalVs,
+        },
+        fragment: {
+          code: portalFs,
+        },
+      },
+      cullMode: 'back', // draw only front of plane
+      textures: [stencilTexture],
+      samplers: [clampSampler],
+    })
+
+    portalPlane.parent = portalPivot
+  }
 
   // add a non stenciled floor
   const floor = new Mesh(gpuCameraRenderer, {
