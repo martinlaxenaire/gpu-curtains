@@ -1,30 +1,11 @@
 import { Vec3 } from './Vec3';
 import { Quat } from './Quat';
-/** Defines the base parameters to create an orthographic projection {@link Mat4} */
-export interface OrthographicProjectionParams {
-    /** Left side of the projection near clipping plane viewport. Default to `-5`. */
-    left?: number;
-    /** Right side of the projection near clipping plane viewport. Default to `5`. */
-    right?: number;
-    /** Bottom side of the projection near clipping plane viewport. Default to `-5`. */
-    bottom?: number;
-    /** Top side of the projection near clipping plane viewport. Default to `5`. */
-    top?: number;
-    /** Projection near plane. Default to `0.1`. */
-    near?: number;
-    /** Projection far plane. Default to `50`. */
-    far?: number;
-}
-/** Defines the base parameters to create a perspective projection {@link Mat4} */
-export interface PerspectiveProjectionParams {
-    /** Perspective field of view (in radians). Default to `90`. */
-    fov?: number;
+import { OrthographicCameraBaseOptions } from '../core/cameras/OrthographicCamera';
+import { PerspectiveCameraBaseOptions } from '../core/cameras/PerspectiveCamera';
+/** Defines the base parameters to create a perspective projection {@link Mat4}. */
+export interface PerspectiveProjectionParams extends PerspectiveCameraBaseOptions {
     /** Perspective aspect ratio (width / height). Default to `1`. */
     aspect?: number;
-    /** Projection near plane. Default to `0.1`. */
-    near?: number;
-    /** Projection far plane. Default to `150`. */
-    far?: number;
 }
 /**
  * Basic 4x4 matrix class used for matrix calculations.
@@ -215,10 +196,10 @@ export declare class Mat4 {
      *  * the given the left, right, bottom, and top dimensions to -1 +1 in x, and y
      *  * and 0 to +1 in z.
      *
-     * @param parameters - {@link OrthographicProjectionParams | parameters} used to create the camera orthographic matrix.
+     * @param parameters - {@link OrthographicCameraBaseOptions | parameters} used to create the camera orthographic matrix.
      * @returns - the camera orthographic {@link Mat4} matrix.
      */
-    makeOrthographic({ left, right, bottom, top, near, far, }: OrthographicProjectionParams): Mat4;
+    makeOrthographic({ left, right, bottom, top, near, far, }: OrthographicCameraBaseOptions): Mat4;
     /**
      * Create a perspective {@link Mat4} matrix based on the parameters.
      *

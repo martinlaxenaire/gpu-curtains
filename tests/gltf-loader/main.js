@@ -55,6 +55,10 @@ window.addEventListener('load', async () => {
       near: 0.1,
       far: 2000,
     },
+    context: {
+      format: 'rgba16float', // allow HDR output
+      toneMapping: { mode: 'standard' },
+    },
     renderPass: {
       // since transmission need a solid background color to be blended with
       // just clear the renderer renderPass color values to match the css background
@@ -345,6 +349,9 @@ window.addEventListener('load', async () => {
     .name('Current')
 
   const envMapRotationField = envMapFolder.add({ rotation: 90 }, 'rotation', 0, 360, 1).name('Rotation')
+  const envMapBackgroundField = envMapFolder
+    .add({ background: 0 }, 'background', { Diffuse: 0, Specular: 1 })
+    .name('Skybox background')
 
   const shadingField = gui.add({ shadingModel }, 'shadingModel', ['PBR', 'Phong', 'Lambert', 'Unlit']).name('Shading')
 
@@ -734,8 +741,12 @@ window.addEventListener('load', async () => {
       
       var position: vec4f = params.inverseViewProjectionMatrix * vec4(uv, 1.0, 1.0);
       let samplePosition: vec3f = normalize(position.xyz / position.w);
-    
-      var color: vec4f = textureSample(${environmentMap.specularTexture.options.name}, clampSampler, samplePosition * params.envRotation);
+      
+      var color: vec4f = select(
+        textureSample(${environmentMap.specularTexture.options.name}, clampSampler, samplePosition * params.envRotation),
+        textureSample(${environmentMap.diffuseTexture.options.name}, clampSampler, samplePosition * params.envRotation),
+        params.useSpecular < 1
+      );
       
       color = vec4(KhronosToneMapping(color.rgb), color.a);
       color = linearTosRGB_4(color);
@@ -745,7 +756,7 @@ window.addEventListener('load', async () => {
   `
 
   const skybox = new FullscreenPlane(gpuCameraRenderer, {
-    textures: [environmentMap.specularTexture],
+    textures: [environmentMap.specularTexture, environmentMap.diffuseTexture],
     samplers: [environmentMap.sampler],
     shaders: {
       fragment: {
@@ -761,7 +772,13 @@ window.addEventListener('load', async () => {
           },
           inverseViewProjectionMatrix: {
             type: 'mat4x4f',
-            value: new Mat4().multiplyMatrices(camera.projectionMatrix, camera.viewMatrix).invert(),
+            value: new Mat4()
+              .multiplyMatrices(gpuCameraRenderer.camera.projectionMatrix, gpuCameraRenderer.camera.viewMatrix)
+              .invert(),
+          },
+          useSpecular: {
+            type: 'u32',
+            value: 0,
           },
         },
       },
@@ -770,7 +787,7 @@ window.addEventListener('load', async () => {
 
   skybox.onRender(() => {
     skybox.uniforms.params.inverseViewProjectionMatrix.value
-      .multiplyMatrices(camera.projectionMatrix, camera.viewMatrix)
+      .multiplyMatrices(gpuCameraRenderer.camera.projectionMatrix, gpuCameraRenderer.camera.viewMatrix)
       .invert()
 
     skybox.uniforms.params.envRotation.value = environmentMap.rotationMatrix
@@ -865,6 +882,10 @@ window.addEventListener('load', async () => {
     if (useEnvMap) {
       environmentMap.rotation = value * (Math.PI / 180)
     }
+  })
+
+  envMapBackgroundField.onChange((value) => {
+    skybox.uniforms.params.useSpecular.value = value
   })
 
   shadingField.onChange(async (value) => {

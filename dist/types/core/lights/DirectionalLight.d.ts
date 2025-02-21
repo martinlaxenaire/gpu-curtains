@@ -70,8 +70,8 @@ export declare class DirectionalLight extends Light {
     shadow: DirectionalShadow;
     /**
      * DirectionalLight constructor
-     * @param renderer - {@link CameraRenderer} used to create this {@link DirectionalLight}.
-     * @param parameters - {@link DirectionalLightBaseParams | parameters} used to create this {@link DirectionalLight}.
+     * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link DirectionalLight}.
+     * @param parameters - {@link DirectionalLightBaseParams} used to create this {@link DirectionalLight}.
      */
     constructor(renderer: CameraRenderer | GPUCurtains, { label, color, intensity, position, target, shadow, }?: DirectionalLightBaseParams);
     /**
@@ -85,13 +85,14 @@ export declare class DirectionalLight extends Light {
      */
     reset(resetShadow?: boolean): void;
     /**
-     * Set the {@link DirectionalLight} direction based on the {@link target} and the {@link worldMatrix} translation and update the {@link DirectionalShadow} view matrix.
+     * Set the {@link DirectionalLight} direction based on the {@link target} and the {@link worldMatrix} translation.
      */
     setDirection(): void;
-    /** @ignore */
-    applyScale(): void;
-    /** @ignore */
-    applyTransformOrigin(): void;
+    /**
+     * Rotate this {@link DirectionalLight} so it looks at the {@link Vec3 | target}.
+     * @param target - {@link Vec3} to look at. Default to `new Vec3()`.
+     */
+    lookAt(target?: Vec3): void;
     /**
      * If the {@link modelMatrix | model matrix} has been updated, set the new direction from the {@link worldMatrix} translation.
      */

@@ -111,16 +111,6 @@ window.addEventListener('load', async () => {
     intensity: 0.1,
   })
 
-  // const light = new DirectionalLight(gpuCameraRenderer, {
-  //   position: new Vec3(), // will be updated when model changes
-  //   intensity: 2,
-  //   shadow: {
-  //     depthTextureSize: new Vec2(1024),
-  //     pcfSamples: 3,
-  //     bias: 0.001,
-  //   },
-  // })
-
   const usePointLight = false
 
   let light
@@ -395,9 +385,7 @@ window.addEventListener('load', async () => {
 
     console.log(gpuCameraRenderer, meshes)
 
-    // meshes[0].onReady(() => {
-    //   console.log(meshes[0].material.getShaderCode('vertex'))
-    // })
+    console.log(await meshes[0].material.getAddedShaderCode('vertex'))
   }
 
   // GUI updates

@@ -50,7 +50,7 @@ const gpuRenderer = new GPURenderer({
 ### GPUCameraRenderer
 
 This is the renderer you’ll use if you want to render a typical 3D scene.
-It internally creates a {@link core/camera/Camera.Camera | Camera} and a {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} for its matrices, as well as optional {@link core/bindings/BufferBinding.BufferBinding | buffer bindings} for the lights and shadows, a put all of them in a
+It internally creates a {@link core/cameras/PerspectiveCamera.PerspectiveCamera | PerspectiveCamera} and a {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} for its matrices, as well as optional {@link core/bindings/BufferBinding.BufferBinding | buffer bindings} for the lights and shadows, a put all of them in a
 {@link core/bindGroups/BindGroup.BindGroup | BindGroup}.
 This bind group will be automatically added to all the meshes that should be projected onto the screen using the camera projection and view matrices.
 

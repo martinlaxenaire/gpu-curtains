@@ -1287,14 +1287,14 @@
      *  * the given the left, right, bottom, and top dimensions to -1 +1 in x, and y
      *  * and 0 to +1 in z.
      *
-     * @param parameters - {@link OrthographicProjectionParams | parameters} used to create the camera orthographic matrix.
+     * @param parameters - {@link OrthographicCameraBaseOptions | parameters} used to create the camera orthographic matrix.
      * @returns - the camera orthographic {@link Mat4} matrix.
      */
     makeOrthographic({
-      left = -5,
-      right = 5,
-      bottom = -5,
-      top = 5,
+      left = -1,
+      right = 1,
+      bottom = -1,
+      top = 1,
       near = 0.1,
       far = 50
     }) {
@@ -2639,13 +2639,13 @@
     }
   }
 
-  var __typeError$r = (msg) => {
+  var __typeError$u = (msg) => {
     throw TypeError(msg);
   };
-  var __accessCheck$r = (obj, member, msg) => member.has(obj) || __typeError$r("Cannot " + msg);
-  var __privateGet$p = (obj, member, getter) => (__accessCheck$r(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
-  var __privateAdd$r = (obj, member, value) => member.has(obj) ? __typeError$r("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  var __privateSet$o = (obj, member, value, setter) => (__accessCheck$r(obj, member, "write to private field"), member.set(obj, value), value);
+  var __accessCheck$u = (obj, member, msg) => member.has(obj) || __typeError$u("Cannot " + msg);
+  var __privateGet$s = (obj, member, getter) => (__accessCheck$u(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$u = (obj, member, value) => member.has(obj) ? __typeError$u("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$r = (obj, member, value, setter) => (__accessCheck$u(obj, member, "write to private field"), member.set(obj, value), value);
   var _parent;
   const _BufferBinding = class _BufferBinding extends Binding {
     /**
@@ -2670,7 +2670,7 @@
       bindingType = bindingType ?? "uniform";
       super({ label, name, bindingType, visibility });
       /** @ignore */
-      __privateAdd$r(this, _parent);
+      __privateAdd$u(this, _parent);
       this.options = {
         ...this.options,
         useStruct,
@@ -2731,7 +2731,7 @@
      * @returns - The {@link BufferBinding} parent if any.
      */
     get parent() {
-      return __privateGet$p(this, _parent);
+      return __privateGet$s(this, _parent);
     }
     /**
      * Set the new {@link BufferBinding} parent.
@@ -2782,7 +2782,7 @@
         this.parentView = null;
         this.parentViewSetBufferEls = null;
       }
-      __privateSet$o(this, _parent, value);
+      __privateSet$r(this, _parent, value);
     }
     /**
      * Round the given size value to the nearest minimum {@link GPUDevice} buffer offset alignment.
@@ -3887,13 +3887,13 @@
     return 1 + Math.log2(maxSize) | 0;
   };
 
-  var __typeError$q = (msg) => {
+  var __typeError$t = (msg) => {
     throw TypeError(msg);
   };
-  var __accessCheck$q = (obj, member, msg) => member.has(obj) || __typeError$q("Cannot " + msg);
-  var __privateGet$o = (obj, member, getter) => (__accessCheck$q(obj, member, "read from private field"), member.get(obj));
-  var __privateAdd$q = (obj, member, value) => member.has(obj) ? __typeError$q("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  var __privateSet$n = (obj, member, value, setter) => (__accessCheck$q(obj, member, "write to private field"), member.set(obj, value), value);
+  var __accessCheck$t = (obj, member, msg) => member.has(obj) || __typeError$t("Cannot " + msg);
+  var __privateGet$r = (obj, member, getter) => (__accessCheck$t(obj, member, "read from private field"), member.get(obj));
+  var __privateAdd$t = (obj, member, value) => member.has(obj) ? __typeError$t("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$q = (obj, member, value, setter) => (__accessCheck$t(obj, member, "write to private field"), member.set(obj, value), value);
   var _autoResize;
   const defaultTextureParams = {
     label: "Texture",
@@ -3921,7 +3921,7 @@
      */
     constructor(renderer, parameters = defaultTextureParams) {
       /** Whether this texture should be automatically resized when the {@link Renderer renderer} size changes. Default to true. */
-      __privateAdd$q(this, _autoResize, true);
+      __privateAdd$t(this, _autoResize, true);
       renderer = isRenderer(renderer, parameters.label ? parameters.label + " Texture" : "Texture");
       this.type = "Texture";
       this.renderer = renderer;
@@ -3938,17 +3938,18 @@
       if (!this.options.format) {
         this.options.format = this.renderer.options.context.format;
       }
+      const { width, height } = this.renderer.canvas;
       this.size = this.options.fixedSize ? {
         width: this.options.fixedSize.width * this.options.qualityRatio,
         height: this.options.fixedSize.height * this.options.qualityRatio,
         depth: this.options.fixedSize.depth ?? this.options.viewDimension.indexOf("cube") !== -1 ? 6 : 1
       } : {
-        width: Math.floor(this.renderer.canvas.width * this.options.qualityRatio),
-        height: Math.floor(this.renderer.canvas.height * this.options.qualityRatio),
+        width: Math.floor(width * this.options.qualityRatio),
+        height: Math.floor(height * this.options.qualityRatio),
         depth: this.options.viewDimension.indexOf("cube") !== -1 ? 6 : 1
       };
       if (this.options.fixedSize) {
-        __privateSet$n(this, _autoResize, false);
+        __privateSet$q(this, _autoResize, false);
       }
       this.setBindings();
       this.renderer.addTexture(this);
@@ -3965,7 +3966,8 @@
       renderer = isRenderer(renderer, this.options.label + " Texture");
       this.renderer = renderer;
       this.renderer.addTexture(this);
-      if (__privateGet$o(this, _autoResize) && (this.size.width !== this.renderer.canvas.width * this.options.qualityRatio || this.size.height !== this.renderer.canvas.height * this.options.qualityRatio)) {
+      const { width, height } = this.renderer.canvas;
+      if (__privateGet$r(this, _autoResize) && (this.size.width !== width * this.options.qualityRatio || this.size.height !== height * this.options.qualityRatio)) {
         this.resize();
       }
     }
@@ -4096,11 +4098,12 @@
      * @param size - the optional new {@link TextureSize | size} to set.
      */
     resize(size = null) {
-      if (!__privateGet$o(this, _autoResize)) return;
+      if (!__privateGet$r(this, _autoResize)) return;
       if (!size) {
+        const { width, height } = this.renderer.canvas;
         size = {
-          width: Math.floor(this.renderer.canvas.width * this.options.qualityRatio),
-          height: Math.floor(this.renderer.canvas.height * this.options.qualityRatio),
+          width: Math.floor(width * this.options.qualityRatio),
+          height: Math.floor(height * this.options.qualityRatio),
           depth: 1
         };
       }
@@ -4449,14 +4452,14 @@
     }
   }
 
-  var __typeError$p = (msg) => {
+  var __typeError$s = (msg) => {
     throw TypeError(msg);
   };
-  var __accessCheck$p = (obj, member, msg) => member.has(obj) || __typeError$p("Cannot " + msg);
-  var __privateGet$n = (obj, member, getter) => (__accessCheck$p(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
-  var __privateAdd$p = (obj, member, value) => member.has(obj) ? __typeError$p("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  var __privateSet$m = (obj, member, value, setter) => (__accessCheck$p(obj, member, "write to private field"), member.set(obj, value), value);
-  var __privateMethod$a = (obj, member, method) => (__accessCheck$p(obj, member, "access private method"), method);
+  var __accessCheck$s = (obj, member, msg) => member.has(obj) || __typeError$s("Cannot " + msg);
+  var __privateGet$q = (obj, member, getter) => (__accessCheck$s(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$s = (obj, member, value) => member.has(obj) ? __typeError$s("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$p = (obj, member, value, setter) => (__accessCheck$s(obj, member, "write to private field"), member.set(obj, value), value);
+  var __privateMethod$a = (obj, member, method) => (__accessCheck$s(obj, member, "access private method"), method);
   var _sourcesLoaded, _sourcesUploaded, _rotation, _MediaTexture_instances, setSourceLoaded_fn;
   const defaultMediaTextureParams = {
     label: "Texture",
@@ -4499,13 +4502,13 @@
           fixedSize: { width: parameters.fixedSize?.width ?? 1, height: parameters.fixedSize?.height ?? 1 }
         }
       });
-      __privateAdd$p(this, _MediaTexture_instances);
+      __privateAdd$s(this, _MediaTexture_instances);
       /** Whether the sources have been loaded. */
-      __privateAdd$p(this, _sourcesLoaded);
+      __privateAdd$s(this, _sourcesLoaded);
       /** Whether the sources have been uploaded to the GPU, handled by the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#texturesQueue | GPUDeviceManager texturesQueue array}. */
-      __privateAdd$p(this, _sourcesUploaded);
+      __privateAdd$s(this, _sourcesUploaded);
       /** Rotation to apply to the {@link Texture} if {@link MediaTextureParams#useTransform | useTransform} parameter has been set to `true`. */
-      __privateAdd$p(this, _rotation);
+      __privateAdd$s(this, _rotation);
       // callbacks / events
       /** function assigned to the {@link onSourceLoaded} callback */
       this._onSourceLoadedCallback = (source) => {
@@ -4536,7 +4539,7 @@
         this.options.sourcesTypes = parameters.fromTexture.options.sourcesTypes;
         this.sources = parameters.fromTexture.sources;
       }
-      __privateSet$m(this, _rotation, 0);
+      __privateSet$p(this, _rotation, 0);
       this.offset = new Vec2().onChange(() => this.updateModelMatrix());
       this.scale = new Vec2(1).onChange(() => this.updateModelMatrix());
       this.transformOrigin = new Vec2().onChange(() => this.updateModelMatrix());
@@ -4566,7 +4569,7 @@
      * Get whether all our {@link sources} have been loaded.
      */
     get sourcesLoaded() {
-      return __privateGet$n(this, _sourcesLoaded);
+      return __privateGet$q(this, _sourcesLoaded);
     }
     /**
      * Set whether all our {@link sources} have been loaded.
@@ -4576,13 +4579,13 @@
       if (value && !this.sourcesLoaded) {
         this._onAllSourcesLoadedCallback && this._onAllSourcesLoadedCallback();
       }
-      __privateSet$m(this, _sourcesLoaded, value);
+      __privateSet$p(this, _sourcesLoaded, value);
     }
     /**
      * Get whether all our {@link sources} have been uploaded.
      */
     get sourcesUploaded() {
-      return __privateGet$n(this, _sourcesUploaded);
+      return __privateGet$q(this, _sourcesUploaded);
     }
     /**
      * Set whether all our {@link sources} have been uploaded.
@@ -4592,7 +4595,7 @@
       if (value && !this.sourcesUploaded) {
         this._onAllSourcesUploadedCallback && this._onAllSourcesUploadedCallback();
       }
-      __privateSet$m(this, _sourcesUploaded, value);
+      __privateSet$p(this, _sourcesUploaded, value);
     }
     /* TRANSFORM */
     /**
@@ -4600,14 +4603,14 @@
      * @returns - the actual {@link rotation} value.
      */
     get rotation() {
-      return __privateGet$n(this, _rotation);
+      return __privateGet$q(this, _rotation);
     }
     /**
      * Set the actual {@link rotation} value and update the {@link modelMatrix}.
      * @param value - new {@link rotation} value to use.
      */
     set rotation(value) {
-      __privateSet$m(this, _rotation, value);
+      __privateSet$p(this, _rotation, value);
       this.updateModelMatrix();
     }
     /**
@@ -5104,12 +5107,12 @@
   };
   let MediaTexture = _MediaTexture;
 
-  var __typeError$o = (msg) => {
+  var __typeError$r = (msg) => {
     throw TypeError(msg);
   };
-  var __accessCheck$o = (obj, member, msg) => member.has(obj) || __typeError$o("Cannot " + msg);
-  var __privateGet$m = (obj, member, getter) => (__accessCheck$o(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
-  var __privateAdd$o = (obj, member, value) => member.has(obj) ? __typeError$o("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __accessCheck$r = (obj, member, msg) => member.has(obj) || __typeError$r("Cannot " + msg);
+  var __privateGet$p = (obj, member, getter) => (__accessCheck$r(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$r = (obj, member, value) => member.has(obj) ? __typeError$r("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   var _parentRatio, _sourceRatio, _coverScale, _negatedOrigin, _rotationMatrix;
   const defaultDOMTextureParams = {
     name: "texture",
@@ -5139,27 +5142,27 @@
        * {@link Vec2} used for {@link modelMatrix} calculations, based on {@link mesh} {@link core/DOM/DOMElement.RectSize | size}.
        * @private
        */
-      __privateAdd$o(this, _parentRatio, new Vec2(1));
+      __privateAdd$r(this, _parentRatio, new Vec2(1));
       /**
        * {@link Vec2} used for {@link modelMatrix} calculations, based on {@link size | source size}.
        * @private
        */
-      __privateAdd$o(this, _sourceRatio, new Vec2(1));
+      __privateAdd$r(this, _sourceRatio, new Vec2(1));
       /**
        * {@link Vec2} used for {@link modelMatrix} calculations, based on #parentRatio and #sourceRatio.
        * @private
        */
-      __privateAdd$o(this, _coverScale, new Vec2(1));
+      __privateAdd$r(this, _coverScale, new Vec2(1));
       /**
        * {@link Vec2} used for {@link modelMatrix} calculations, based on {@link transformOrigin}.
        * @private
        */
-      __privateAdd$o(this, _negatedOrigin, new Vec2());
+      __privateAdd$r(this, _negatedOrigin, new Vec2());
       /**
        * Rotation {@link Mat3} based on texture {@link rotation}.
        * @private
        */
-      __privateAdd$o(this, _rotationMatrix, new Mat3());
+      __privateAdd$r(this, _rotationMatrix, new Mat3());
       this.transformOrigin.set(0.5, 0.5);
       this.type = "DOMTexture";
       this.renderer.addDOMTexture(this);
@@ -5193,17 +5196,17 @@
       const parentRatio = parentWidth / parentHeight;
       const sourceRatio = this.size.width / this.size.height;
       if (parentWidth > parentHeight) {
-        __privateGet$m(this, _parentRatio).set(parentRatio, 1);
-        __privateGet$m(this, _sourceRatio).set(1 / sourceRatio, 1);
+        __privateGet$p(this, _parentRatio).set(parentRatio, 1);
+        __privateGet$p(this, _sourceRatio).set(1 / sourceRatio, 1);
       } else {
-        __privateGet$m(this, _parentRatio).set(1, 1 / parentRatio);
-        __privateGet$m(this, _sourceRatio).set(1, sourceRatio);
+        __privateGet$p(this, _parentRatio).set(1, 1 / parentRatio);
+        __privateGet$p(this, _sourceRatio).set(1, sourceRatio);
       }
-      const coverRatio = parentRatio > sourceRatio !== parentWidth > parentHeight ? 1 : parentWidth > parentHeight ? __privateGet$m(this, _parentRatio).x * __privateGet$m(this, _sourceRatio).x : __privateGet$m(this, _sourceRatio).y * __privateGet$m(this, _parentRatio).y;
-      __privateGet$m(this, _coverScale).set(1 / (coverRatio * this.scale.x), 1 / (coverRatio * this.scale.y));
-      __privateGet$m(this, _negatedOrigin).copy(this.transformOrigin).multiplyScalar(-1);
-      __privateGet$m(this, _rotationMatrix).rotateByAngleZ(this.rotation);
-      this.modelMatrix.identity().premultiplyTranslate(__privateGet$m(this, _negatedOrigin)).premultiplyScale(__privateGet$m(this, _coverScale)).premultiplyScale(__privateGet$m(this, _parentRatio)).premultiply(__privateGet$m(this, _rotationMatrix)).premultiplyScale(__privateGet$m(this, _sourceRatio)).premultiplyTranslate(this.transformOrigin).translate(this.offset);
+      const coverRatio = parentRatio > sourceRatio !== parentWidth > parentHeight ? 1 : parentWidth > parentHeight ? __privateGet$p(this, _parentRatio).x * __privateGet$p(this, _sourceRatio).x : __privateGet$p(this, _sourceRatio).y * __privateGet$p(this, _parentRatio).y;
+      __privateGet$p(this, _coverScale).set(1 / (coverRatio * this.scale.x), 1 / (coverRatio * this.scale.y));
+      __privateGet$p(this, _negatedOrigin).copy(this.transformOrigin).multiplyScalar(-1);
+      __privateGet$p(this, _rotationMatrix).rotateByAngleZ(this.rotation);
+      this.modelMatrix.identity().premultiplyTranslate(__privateGet$p(this, _negatedOrigin)).premultiplyScale(__privateGet$p(this, _coverScale)).premultiplyScale(__privateGet$p(this, _parentRatio)).premultiply(__privateGet$p(this, _rotationMatrix)).premultiplyScale(__privateGet$p(this, _sourceRatio)).premultiplyTranslate(this.transformOrigin).translate(this.offset);
       this.transformBinding.inputs.matrix.shouldUpdate = true;
     }
     /**
@@ -5256,13 +5259,13 @@
   _negatedOrigin = new WeakMap();
   _rotationMatrix = new WeakMap();
 
-  var __typeError$n = (msg) => {
+  var __typeError$q = (msg) => {
     throw TypeError(msg);
   };
-  var __accessCheck$n = (obj, member, msg) => member.has(obj) || __typeError$n("Cannot " + msg);
-  var __privateGet$l = (obj, member, getter) => (__accessCheck$n(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
-  var __privateAdd$n = (obj, member, value) => member.has(obj) ? __typeError$n("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  var __privateSet$l = (obj, member, value, setter) => (__accessCheck$n(obj, member, "write to private field"), member.set(obj, value), value);
+  var __accessCheck$q = (obj, member, msg) => member.has(obj) || __typeError$q("Cannot " + msg);
+  var __privateGet$o = (obj, member, getter) => (__accessCheck$q(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$q = (obj, member, value) => member.has(obj) ? __typeError$q("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$o = (obj, member, value, setter) => (__accessCheck$q(obj, member, "write to private field"), member.set(obj, value), value);
   var _transformedTextures;
   class TextureBindGroup extends BindGroup {
     /**
@@ -5278,7 +5281,7 @@
        * Array containing all the {@link MediaTexture} that handle a transformation {@link MediaTexture#modelMatrix | modelMatrix}.
        * @private
        */
-      __privateAdd$n(this, _transformedTextures);
+      __privateAdd$q(this, _transformedTextures);
       this.options = {
         ...this.options,
         // will be filled after
@@ -5367,10 +5370,10 @@
      * Set the {@link texturesMatricesBinding} if needed.
      */
     setTexturesMatricesBinding() {
-      __privateSet$l(this, _transformedTextures, this.textures.filter(
+      __privateSet$o(this, _transformedTextures, this.textures.filter(
         (texture) => (texture instanceof MediaTexture || texture instanceof DOMTexture) && !!texture.transformBinding
       ));
-      const texturesBindings = __privateGet$l(this, _transformedTextures).map((texture) => {
+      const texturesBindings = __privateGet$o(this, _transformedTextures).map((texture) => {
         return texture.transformBinding;
       });
       if (texturesBindings.length) {
@@ -5423,7 +5426,7 @@
         }
       }
       if (this.texturesMatricesBinding) {
-        __privateGet$l(this, _transformedTextures).forEach((texture, i) => {
+        __privateGet$o(this, _transformedTextures).forEach((texture, i) => {
           this.texturesMatricesBinding.childrenBindings[i].inputs.matrix.shouldUpdate = !!texture.transformBinding.inputs.matrix.shouldUpdate;
           if (texture.transformBinding.inputs.matrix.shouldUpdate) {
             this.renderer.onAfterCommandEncoderSubmission.add(
@@ -5521,49 +5524,38 @@
     }
   }
 
-  var __typeError$m = (msg) => {
+  var __typeError$p = (msg) => {
     throw TypeError(msg);
   };
-  var __accessCheck$m = (obj, member, msg) => member.has(obj) || __typeError$m("Cannot " + msg);
-  var __privateGet$k = (obj, member, getter) => (__accessCheck$m(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
-  var __privateAdd$m = (obj, member, value) => member.has(obj) ? __typeError$m("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  var __privateSet$k = (obj, member, value, setter) => (__accessCheck$m(obj, member, "write to private field"), member.set(obj, value), value);
-  var _fov, _near, _far, _pixelRatio;
+  var __accessCheck$p = (obj, member, msg) => member.has(obj) || __typeError$p("Cannot " + msg);
+  var __privateGet$n = (obj, member, getter) => (__accessCheck$p(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$p = (obj, member, value) => member.has(obj) ? __typeError$p("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$n = (obj, member, value, setter) => (__accessCheck$p(obj, member, "write to private field"), member.set(obj, value), value);
+  var _near, _far, _pixelRatio;
   class Camera extends Object3D {
     /**
      * Camera constructor
-     * @param parameters - {@link CameraParams | parameters} used to create our {@link Camera}
+     * @param parameters - {@link CameraParams} used to create our {@link Camera}.
      */
     constructor({
-      fov = 50,
       near = 0.1,
       far = 150,
-      width = 1,
-      height = 1,
       pixelRatio = 1,
       onMatricesChanged = () => {
       }
     } = {}) {
       super();
       /** @ignore */
-      __privateAdd$m(this, _fov);
+      __privateAdd$p(this, _near);
       /** @ignore */
-      __privateAdd$m(this, _near);
+      __privateAdd$p(this, _far);
       /** @ignore */
-      __privateAdd$m(this, _far);
-      /** @ignore */
-      __privateAdd$m(this, _pixelRatio);
+      __privateAdd$p(this, _pixelRatio);
       this.uuid = generateUUID();
-      this.position.set(0, 0, 10);
       this.onMatricesChanged = onMatricesChanged;
-      this.size = {
-        width: 1,
-        height: 1
-      };
-      this.setPerspective({ fov, near, far, width, height, pixelRatio });
     }
     /**
-     * Set our transform and projection matrices
+     * Set our transform and projection matrices.
      */
     setMatrices() {
       super.setMatrices();
@@ -5589,7 +5581,7 @@
       };
     }
     /**
-     * Get our view matrix
+     * Get our view matrix.
      * @readonly
      */
     get viewMatrix() {
@@ -5600,7 +5592,7 @@
       this.shouldUpdateViewMatrices();
     }
     /**
-     * Get our projection matrix
+     * Get our projection matrix.
      * @readonly
      */
     get projectionMatrix() {
@@ -5611,21 +5603,21 @@
       this.shouldUpdateProjectionMatrices();
     }
     /**
-     * Get our view projection matrix
+     * Get our view projection matrix.
      * @readonly
      */
     get viewProjectionMatrix() {
       return this.matrices.viewProjection.matrix;
     }
     /**
-     * Set our view dependent matrices shouldUpdate flag to true (tell it to update)
+     * Set our view dependent matrices shouldUpdate flag to `true` (tell it to update).
      */
     shouldUpdateViewMatrices() {
       this.matrices.view.shouldUpdate = true;
       this.matrices.viewProjection.shouldUpdate = true;
     }
     /**
-     * Set our projection dependent matrices shouldUpdate flag to true (tell it to update)
+     * Set our projection dependent matrices shouldUpdate flag to `true` (tell it to update).
      */
     shouldUpdateProjectionMatrices() {
       this.matrices.projection.shouldUpdate = true;
@@ -5647,7 +5639,7 @@
       this.shouldUpdateViewMatrices();
     }
     /**
-     * Callback to run when the camera {@link modelMatrix | model matrix} has been updated
+     * Callback to run when the camera {@link modelMatrix | model matrix} has been updated.
      */
     updateMatrixStack() {
       super.updateMatrixStack();
@@ -5656,132 +5648,66 @@
       }
     }
     /**
-     * Get the {@link Camera} {@link Camera.fov | field of view}
-     */
-    get fov() {
-      return __privateGet$k(this, _fov);
-    }
-    /**
-     * Set the {@link Camera} {@link Camera.fov | field of view}. Update the {@link projectionMatrix} only if the field of view actually changed
-     * @param fov - new field of view
-     */
-    set fov(fov) {
-      fov = Math.max(1, Math.min(fov ?? this.fov, 179));
-      if (fov !== this.fov) {
-        __privateSet$k(this, _fov, fov);
-        this.shouldUpdateProjectionMatrices();
-      }
-      this.setVisibleSize();
-      this.setCSSPerspective();
-    }
-    /**
-     * Get the {@link Camera} {@link Camera.near | near} plane value.
+     * Get the {@link Camera.near | near} plane value.
      */
     get near() {
-      return __privateGet$k(this, _near);
+      return __privateGet$n(this, _near);
     }
     /**
-     * Set the {@link Camera} {@link Camera.near | near} plane value. Update the {@link projectionMatrix} only if the near plane actually changed
-     * @param near - new near plane value
+     * Set the {@link Camera.near | near} plane value. Update the {@link projectionMatrix} only if the near plane actually changed.
+     * @param near - New near plane value.
      */
     set near(near) {
       near = Math.max(near ?? this.near, 1e-4);
       if (near !== this.near) {
-        __privateSet$k(this, _near, near);
+        __privateSet$n(this, _near, near);
         this.shouldUpdateProjectionMatrices();
       }
     }
     /**
-     * Get the {@link Camera} {@link Camera.far | far} plane value.
+     * Get the {@link Camera.far | far} plane value.
      */
     get far() {
-      return __privateGet$k(this, _far);
+      return __privateGet$n(this, _far);
     }
     /**
-     * Set the {@link Camera} {@link Camera.far | far} plane value. Update {@link projectionMatrix} only if the far plane actually changed
-     * @param far - new far plane value
+     * Set the {@link Camera.far | far} plane value. Update {@link projectionMatrix} only if the far plane actually changed.
+     * @param far - New far plane value.
      */
     set far(far) {
       far = Math.max(far ?? this.far, this.near + 1);
       if (far !== this.far) {
-        __privateSet$k(this, _far, far);
+        __privateSet$n(this, _far, far);
         this.shouldUpdateProjectionMatrices();
       }
     }
     /**
-     * Get the {@link Camera} {@link Camera.pixelRatio | pixelRatio} value.
+     * Get the {@link Camera.pixelRatio | pixelRatio} value.
      */
     get pixelRatio() {
-      return __privateGet$k(this, _pixelRatio);
+      return __privateGet$n(this, _pixelRatio);
     }
     /**
-     * Set the {@link Camera} {@link Camera.pixelRatio | pixelRatio} value. Update the {@link CSSPerspective} only if the pixel ratio actually changed
-     * @param pixelRatio - new pixel ratio value
+     * Set the {@link Camera.pixelRatio | pixelRatio} value. Update the {@link CSSPerspective} only if the pixel ratio actually changed.
+     * @param pixelRatio - New pixel ratio value.
      */
     set pixelRatio(pixelRatio) {
-      __privateSet$k(this, _pixelRatio, pixelRatio ?? this.pixelRatio);
+      __privateSet$n(this, _pixelRatio, pixelRatio ?? this.pixelRatio);
       this.setCSSPerspective();
     }
-    /**
-     * Set the {@link Camera} {@link RectSize.width | width} and {@link RectSize.height | height}. Update the {@link projectionMatrix} only if the width or height actually changed
-     * @param size - width and height values to use
-     */
-    setSize({ width, height }) {
-      if (width !== this.size.width || height !== this.size.height) {
-        this.shouldUpdateProjectionMatrices();
-      }
-      this.size.width = width;
-      this.size.height = height;
-      this.setVisibleSize();
-      this.setCSSPerspective();
-    }
-    /**
-     * Sets the {@link Camera} perspective. Update the {@link projectionMatrix} if needed.
-     * @param parameters - {@link CameraPerspectiveOptions | parameters} to use for the perspective
-     */
-    setPerspective({
-      fov = this.fov,
-      near = this.near,
-      far = this.far,
-      width = this.size.width,
-      height = this.size.height,
-      pixelRatio = this.pixelRatio
-    } = {}) {
-      this.setSize({ width, height });
-      this.pixelRatio = pixelRatio;
-      this.fov = fov;
-      this.near = near;
-      this.far = far;
-    }
-    /**
-     * Sets a {@link CSSPerspective} property based on {@link size}, {@link pixelRatio} and {@link fov}.<br>
-     * Used to translate planes along the Z axis using pixel units as CSS would do.<br>
-     * {@link https://stackoverflow.com/questions/22421439/convert-field-of-view-value-to-css3d-perspective-value | See reference}
-     */
+    /** @ignore */
     setCSSPerspective() {
-      this.CSSPerspective = Math.pow(
-        Math.pow(this.size.width / (2 * this.pixelRatio), 2) + Math.pow(this.size.height / (2 * this.pixelRatio), 2),
-        0.5
-      ) / Math.tan(this.fov * 0.5 * Math.PI / 180);
+      this.CSSPerspective = 0;
     }
     /**
-     * Get visible width / height at a given z-depth from our {@link Camera} parameters.<br>
-     * {@link https://discourse.threejs.org/t/functions-to-calculate-the-visible-width-height-at-a-given-z-depth-from-a-perspective-camera/269 | See reference}
-     * @param depth - depth to use for calculations
-     * @returns - visible width and height at given depth
+     * Get visible width / height at a given z-depth from our {@link Camera} parameters. Useless for this base class, but will be overriden by children classes.
+     * @param depth - Depth to use for calculations.
+     * @returns - Visible width and height at given depth.
      */
     getVisibleSizeAtDepth(depth = 0) {
-      const cameraOffset = this.position.z;
-      if (depth < cameraOffset) {
-        depth -= cameraOffset;
-      } else {
-        depth += cameraOffset;
-      }
-      const vFOV = this.fov * Math.PI / 180;
-      const height = 2 * Math.tan(vFOV / 2) * Math.abs(depth);
       return {
-        width: height * this.size.width / this.size.height,
-        height
+        width: 0,
+        height: 0
       };
     }
     /**
@@ -5808,6 +5734,313 @@
      * Updates the {@link Camera} {@link projectionMatrix}.
      */
     updateProjectionMatrix() {
+    }
+  }
+  _near = new WeakMap();
+  _far = new WeakMap();
+  _pixelRatio = new WeakMap();
+
+  var __typeError$o = (msg) => {
+    throw TypeError(msg);
+  };
+  var __accessCheck$o = (obj, member, msg) => member.has(obj) || __typeError$o("Cannot " + msg);
+  var __privateGet$m = (obj, member, getter) => (__accessCheck$o(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$o = (obj, member, value) => member.has(obj) ? __typeError$o("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$m = (obj, member, value, setter) => (__accessCheck$o(obj, member, "write to private field"), member.set(obj, value), value);
+  var _left, _right, _top, _bottom;
+  class OrthographicCamera extends Camera {
+    /**
+     * OrthographicCamera constructor
+     * @param parameters - {@link OrthographicCameraParams} used to create our {@link OrthographicCamera}.
+     */
+    constructor({
+      near = 0.1,
+      far = 150,
+      left = -1,
+      right = 1,
+      top = 1,
+      bottom = -1,
+      pixelRatio = 1,
+      onMatricesChanged = () => {
+      }
+    } = {}) {
+      super({ near, far, pixelRatio, onMatricesChanged });
+      /** @ignore */
+      __privateAdd$o(this, _left);
+      /** @ignore */
+      __privateAdd$o(this, _right);
+      /** @ignore */
+      __privateAdd$o(this, _top);
+      /** @ignore */
+      __privateAdd$o(this, _bottom);
+      this.position.set(0, 0, 10);
+      this.setOrthographic({ near, far, left, right, top, bottom, pixelRatio });
+    }
+    /**
+     * Get the {@link OrthographicCamera.left | left} frustum plane value.
+     */
+    get left() {
+      return __privateGet$m(this, _left);
+    }
+    /**
+     * Set the {@link OrthographicCamera.left | left} frustum plane value. Update the {@link projectionMatrix} only if the value actually changed.
+     * @param left - New left frustum plane value.
+     */
+    set left(left) {
+      if (left !== this.left) {
+        __privateSet$m(this, _left, left);
+        this.shouldUpdateProjectionMatrices();
+      }
+    }
+    /**
+     * Get the {@link OrthographicCamera.right | right} frustum plane value.
+     */
+    get right() {
+      return __privateGet$m(this, _right);
+    }
+    /**
+     * Set the {@link OrthographicCamera.right | right} frustum plane value. Update the {@link projectionMatrix} only if the value actually changed.
+     * @param right - New right frustum plane value.
+     */
+    set right(right) {
+      if (right !== this.right) {
+        __privateSet$m(this, _right, right);
+        this.shouldUpdateProjectionMatrices();
+      }
+    }
+    /**
+     * Get the {@link OrthographicCamera.top | top} frustum plane value.
+     */
+    get top() {
+      return __privateGet$m(this, _top);
+    }
+    /**
+     * Set the {@link OrthographicCamera.top | top} frustum plane value. Update the {@link projectionMatrix} only if the value actually changed.
+     * @param top - New top frustum plane value.
+     */
+    set top(top) {
+      if (top !== this.top) {
+        __privateSet$m(this, _top, top);
+        this.shouldUpdateProjectionMatrices();
+      }
+    }
+    /**
+     * Get the {@link OrthographicCamera.bottom | bottom} frustum plane value.
+     */
+    get bottom() {
+      return __privateGet$m(this, _bottom);
+    }
+    /**
+     * Set the {@link OrthographicCamera.bottom | bottom} frustum plane value. Update the {@link projectionMatrix} only if the value actually changed.
+     * @param bottom - New bottom frustum plane value.
+     */
+    set bottom(bottom) {
+      if (bottom !== this.bottom) {
+        __privateSet$m(this, _bottom, bottom);
+        this.shouldUpdateProjectionMatrices();
+      }
+    }
+    /**
+     * Sets the {@link OrthographicCamera} orthographic projection settings. Update the {@link projectionMatrix} if needed.
+     * @param parameters - {@link OrthographicCameraOptions} to use for the orthographic projection.
+     */
+    setOrthographic({
+      near = this.near,
+      far = this.far,
+      left = this.left,
+      right = this.right,
+      top = this.top,
+      bottom = this.bottom,
+      pixelRatio = this.pixelRatio
+    }) {
+      this.left = left;
+      this.right = right;
+      this.top = top;
+      this.bottom = bottom;
+      this.pixelRatio = pixelRatio;
+      this.near = near;
+      this.far = far;
+    }
+    /**
+     * Get visible width / height at a given z-depth from our {@link OrthographicCamera} parameters.
+     * @param depth - Depth to use for calculations - unused since width and height does not change according to depth in orthographic projection.
+     * @returns - Visible width and height.
+     */
+    getVisibleSizeAtDepth(depth = 0) {
+      return {
+        width: this.right - this.left,
+        height: this.top - this.bottom
+      };
+    }
+    /**
+     * Sets visible width / height at a depth of 0.
+     */
+    setVisibleSize() {
+      this.visibleSize = this.getVisibleSizeAtDepth();
+    }
+    /**
+     * Updates the {@link OrthographicCamera} {@link projectionMatrix}.
+     */
+    updateProjectionMatrix() {
+      this.projectionMatrix.makeOrthographic({
+        left: this.left,
+        right: this.right,
+        top: this.top,
+        bottom: this.bottom,
+        near: this.near,
+        far: this.far
+      });
+    }
+    /**
+     * Get the current {@link OrthographicCamera} frustum planes in the [left, right, top, bottom, near, far] order.
+     * @returns - Frustum planes as an array of 6 faces in the [left, right, top, bottom, near, far] order, made of {@link Float32Array} of length 4.
+     * @readonly
+     */
+    get frustumPlanes() {
+      return [
+        new Float32Array([1, 0, 0, -this.right]),
+        // Left
+        new Float32Array([-1, 0, 0, this.left]),
+        // Right
+        new Float32Array([0, 1, 0, -this.top]),
+        // Bottom
+        new Float32Array([0, -1, 0, this.bottom]),
+        // Top
+        new Float32Array([0, 0, 1, -this.near]),
+        // Near
+        new Float32Array([0, 0, -1, this.far])
+        // Far
+      ];
+    }
+  }
+  _left = new WeakMap();
+  _right = new WeakMap();
+  _top = new WeakMap();
+  _bottom = new WeakMap();
+
+  var __typeError$n = (msg) => {
+    throw TypeError(msg);
+  };
+  var __accessCheck$n = (obj, member, msg) => member.has(obj) || __typeError$n("Cannot " + msg);
+  var __privateGet$l = (obj, member, getter) => (__accessCheck$n(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$n = (obj, member, value) => member.has(obj) ? __typeError$n("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$l = (obj, member, value, setter) => (__accessCheck$n(obj, member, "write to private field"), member.set(obj, value), value);
+  var _fov;
+  class PerspectiveCamera extends Camera {
+    /**
+     * PerspectiveCamera constructor
+     * @param parameters - {@link PerspectiveCameraParams} used to create our {@link PerspectiveCamera}.
+     */
+    constructor({
+      fov = 50,
+      near = 0.1,
+      far = 150,
+      width = 1,
+      height = 1,
+      pixelRatio = 1,
+      forceAspect = false,
+      onMatricesChanged = () => {
+      }
+    } = {}) {
+      super({ near, far, pixelRatio, onMatricesChanged });
+      /** @ignore */
+      __privateAdd$n(this, _fov);
+      this.forceAspect = forceAspect;
+      this.position.set(0, 0, 10);
+      this.size = {
+        width: 1,
+        height: 1
+      };
+      this.setPerspective({ fov, near, far, width, height, pixelRatio });
+    }
+    /**
+     * Get the {@link PerspectiveCamera.fov | field of view}.
+     */
+    get fov() {
+      return __privateGet$l(this, _fov);
+    }
+    /**
+     * Set the {@link PerspectiveCamera.fov | field of view}. Update the {@link projectionMatrix} only if the field of view actually changed.
+     * @param fov - New field of view.
+     */
+    set fov(fov) {
+      fov = Math.max(1, Math.min(fov ?? this.fov, 179));
+      if (fov !== this.fov) {
+        __privateSet$l(this, _fov, fov);
+        this.shouldUpdateProjectionMatrices();
+      }
+      this.setVisibleSize();
+      this.setCSSPerspective();
+    }
+    /**
+     * Set the {@link PerspectiveCamera} {@link RectSize.width | width} and {@link RectSize.height | height}. Update the {@link projectionMatrix} only if the width or height actually changed.
+     * @param size - New width and height values to use.
+     */
+    setSize({ width, height }) {
+      if (width !== this.size.width || height !== this.size.height) {
+        this.shouldUpdateProjectionMatrices();
+      }
+      this.size.width = width;
+      this.size.height = height;
+      this.setVisibleSize();
+      this.setCSSPerspective();
+    }
+    /**
+     * Sets the {@link PerspectiveCamera} perspective projection settings. Update the {@link projectionMatrix} if needed.
+     * @param parameters - {@link PerspectiveCameraOptions} to use for the perspective projection.
+     */
+    setPerspective({
+      fov = this.fov,
+      near = this.near,
+      far = this.far,
+      width = this.size.width,
+      height = this.size.height,
+      pixelRatio = this.pixelRatio
+    } = {}) {
+      this.setSize({ width, height });
+      this.pixelRatio = pixelRatio;
+      this.fov = fov;
+      this.near = near;
+      this.far = far;
+    }
+    /**
+     * Sets a {@link CSSPerspective} property based on {@link size}, {@link pixelRatio} and {@link fov}.
+     *
+     * Used to translate planes along the Z axis using pixel units as CSS would do.
+     *
+     * {@link https://stackoverflow.com/questions/22421439/convert-field-of-view-value-to-css3d-perspective-value | See reference}
+     */
+    setCSSPerspective() {
+      this.CSSPerspective = Math.pow(
+        Math.pow(this.size.width / (2 * this.pixelRatio), 2) + Math.pow(this.size.height / (2 * this.pixelRatio), 2),
+        0.5
+      ) / Math.tan(this.fov * 0.5 * Math.PI / 180);
+    }
+    /**
+     * Get visible width / height at a given z-depth from our {@link PerspectiveCamera} parameters.
+     *
+     * {@link https://discourse.threejs.org/t/functions-to-calculate-the-visible-width-height-at-a-given-z-depth-from-a-perspective-camera/269 | See reference}.
+     * @param depth - Depth to use for calculations.
+     * @returns - Visible width and height at given depth.
+     */
+    getVisibleSizeAtDepth(depth = 0) {
+      const cameraOffset = this.position.z;
+      if (depth < cameraOffset) {
+        depth -= cameraOffset;
+      } else {
+        depth += cameraOffset;
+      }
+      const vFOV = this.fov * Math.PI / 180;
+      const height = 2 * Math.tan(vFOV / 2) * Math.abs(depth);
+      return {
+        width: height * this.size.width / this.size.height,
+        height
+      };
+    }
+    /**
+     * Updates the {@link PerspectiveCamera} {@link projectionMatrix}.
+     */
+    updateProjectionMatrix() {
       this.projectionMatrix.makePerspective({
         fov: this.fov,
         aspect: this.size.width / this.size.height,
@@ -5816,7 +6049,7 @@
       });
     }
     /**
-     * Get the current {@link Camera} frustum planes in the [left, right, top, bottom, near, far] order, based on its {@link projectionMatrix} and {@link viewMatrix}.
+     * Get the current {@link PerspectiveCamera} frustum planes in the [left, right, top, bottom, near, far] order, based on its {@link projectionMatrix} and {@link viewMatrix}.
      * @returns - Frustum planes as an array of 6 faces in the [left, right, top, bottom, near, far] order, made of {@link Float32Array} of length 4.
      * @readonly
      */
@@ -5873,9 +6106,6 @@
     }
   }
   _fov = new WeakMap();
-  _near = new WeakMap();
-  _far = new WeakMap();
-  _pixelRatio = new WeakMap();
 
   class Sampler {
     /**
@@ -5950,7 +6180,7 @@
   class Material {
     /**
      * Material constructor
-     * @param renderer - our renderer class object.
+     * @param renderer - {@link Renderer} class object or {@link GPUCurtains} class object used to create this {@link Material}.
      * @param parameters - {@link types/Materials.MaterialParams | parameters} used to create our Material.
      */
     constructor(renderer, parameters) {
@@ -5992,7 +6222,7 @@
       }
     }
     /**
-     * Check if all bind groups are ready, and create them if needed
+     * Check if all bind groups are ready, and create them if needed.
      */
     compileMaterial() {
       const texturesBindGroupLength = this.texturesBindGroup.bindings.length ? 1 : 0;
@@ -6002,7 +6232,7 @@
       }
     }
     /**
-     * Get whether the renderer is ready, our pipeline entry and pipeline have been created and successfully compiled
+     * Get whether the renderer is ready, our pipeline entry and pipeline have been created and successfully compiled.
      * @readonly
      */
     get ready() {
@@ -6025,7 +6255,7 @@
     }
     /**
      * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been lost to prepare everything for restoration.
-     * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to render
+     * Basically set all the {@link GPUBuffer} to `null`, so they will be reset next time we try to render.
      */
     loseContext() {
       for (const texture of this.textures) {
@@ -6063,12 +6293,11 @@
       });
     }
     /**
-     * Get the complete code of a given shader including all the WGSL fragment code snippets added by the pipeline
-     * @param [shaderType="full"] - shader to get the code from
-     * @returns - The corresponding shader code
+     * Get the complete code of a given shader including all the WGSL fragment code snippets added by the pipeline. Can wait for the {@link pipelineEntry} to be compiled if that's not already the case.
+     * @param [shaderType="full"] - Shader to get the code from.
+     * @returns - The corresponding shader code.
      */
-    getShaderCode(shaderType = "full") {
-      if (!this.pipelineEntry) return "";
+    async getShaderCode(shaderType = "full") {
       shaderType = (() => {
         switch (shaderType) {
           case "vertex":
@@ -6080,15 +6309,28 @@
             return "full";
         }
       })();
-      return this.pipelineEntry.shaders[shaderType].code;
+      if (this.pipelineEntry) {
+        return this.pipelineEntry.shaders[shaderType].code;
+      } else {
+        return new Promise((resolve) => {
+          const taskId = this.renderer.onBeforeRenderScene.add(
+            () => {
+              if (this.pipelineEntry) {
+                this.renderer.onBeforeRenderScene.remove(taskId);
+                resolve(this.pipelineEntry.shaders[shaderType].code);
+              }
+            },
+            { once: false }
+          );
+        });
+      }
     }
     /**
-     * Get the added code of a given shader, i.e. all the WGSL fragment code snippets added by the pipeline
-     * @param [shaderType="vertex"] - shader to get the code from
-     * @returns - The corresponding shader code
+     * Get the added code of a given shader, i.e. all the WGSL fragment code snippets added by the pipeline. Can wait for the {@link pipelineEntry} to be compiled if that's not already the case.
+     * @param [shaderType="vertex"] - Shader to get the code from.
+     * @returns - The corresponding shader code.
      */
-    getAddedShaderCode(shaderType = "vertex") {
-      if (!this.pipelineEntry) return "";
+    async getAddedShaderCode(shaderType = "vertex") {
       shaderType = (() => {
         switch (shaderType) {
           case "vertex":
@@ -6099,11 +6341,25 @@
             return "vertex";
         }
       })();
-      return this.pipelineEntry.shaders[shaderType].head;
+      if (this.pipelineEntry) {
+        return this.pipelineEntry.shaders[shaderType].head;
+      } else {
+        return new Promise((resolve) => {
+          const taskId = this.renderer.onBeforeRenderScene.add(
+            () => {
+              if (this.pipelineEntry) {
+                this.renderer.onBeforeRenderScene.remove(taskId);
+                resolve(this.pipelineEntry.shaders[shaderType].head);
+              }
+            },
+            { once: false }
+          );
+        });
+      }
     }
     /* BIND GROUPS */
     /**
-     * Prepare and set our bind groups based on inputs and bindGroups Material parameters
+     * Prepare and set our bind groups based on inputs and bindGroups Material parameters.
      */
     setBindGroups() {
       this.uniforms = {};
@@ -6128,7 +6384,7 @@
       });
     }
     /**
-     * Get the main {@link TextureBindGroup | texture bind group} created by this {@link Material} to manage all textures related struct
+     * Get the main {@link TextureBindGroup | texture bind group} created by this {@link Material} to manage all textures related struct.
      * @readonly
      */
     get texturesBindGroup() {
@@ -6136,7 +6392,7 @@
     }
     /**
      * Process all {@link BindGroup} struct and add them to the corresponding objects based on their binding types. Also store them in a inputsBindings array to facilitate further access to struct.
-     * @param bindGroup - The {@link BindGroup} to process
+     * @param bindGroup - The {@link BindGroup} to process.
      */
     processBindGroupBindings(bindGroup) {
       for (const inputBinding of bindGroup.bindings) {
@@ -6154,7 +6410,7 @@
       }
     }
     /**
-     * Create the bind groups if they need to be created
+     * Create the bind groups if they need to be created.
      */
     createBindGroups() {
       if (this.texturesBindGroup.shouldCreateBindGroup) {
@@ -6185,13 +6441,13 @@
       });
     }
     /**
-     * Clones a {@link BindGroup} from a list of buffers
-     * Useful to create a new bind group with already created buffers, but swapped
-     * @param parameters - parameters used to clone the {@link BindGroup | bind group}
-     * @param parameters.bindGroup - the BindGroup to clone
-     * @param parameters.bindings - our input binding buffers
-     * @param parameters.keepLayout - whether we should keep original bind group layout or not
-     * @returns - the cloned BindGroup
+     * Clones a {@link BindGroup} from a list of buffers.
+     * Useful to create a new{@link BindGroup} with already created buffers, but swapped.
+     * @param parameters - parameters used to clone the {@link BindGroup}.
+     * @param parameters.bindGroup - the {@link BindGroup} to clone.
+     * @param parameters.bindings - our input binding buffers.
+     * @param parameters.keepLayout - whether we should keep original bind group layout or not.
+     * @returns - the cloned {@link BindGroup}.
      */
     cloneBindGroup({
       bindGroup,
@@ -6205,8 +6461,8 @@
     }
     /**
      * Get a corresponding {@link BindGroup} or {@link TextureBindGroup} from one of its binding name/key
-     * @param bindingName - the binding name/key to look for
-     * @returns - bind group found or null if not found
+     * @param bindingName - the binding name/key to look for.
+     * @returns - {@link BindGroup} found or null if not found.
      */
     getBindGroupByBindingName(bindingName = "") {
       return (this.ready ? this.bindGroups : this.inputsBindGroups).find((bindGroup) => {
@@ -6214,8 +6470,8 @@
       });
     }
     /**
-     * Destroy a bind group, only if it is not used by another object
-     * @param bindGroup - bind group to eventually destroy
+     * Destroy a {@link BindGroup}, only if it is not used by another object.
+     * @param bindGroup - {@link BindGroup} to eventually destroy.
      */
     destroyBindGroup(bindGroup) {
       bindGroup.consumers.delete(this.uuid);
@@ -6224,7 +6480,7 @@
       }
     }
     /**
-     * Destroy all bind groups
+     * Destroy all {@link BindGroup}.
      */
     destroyBindGroups() {
       this.bindGroups.forEach((bindGroup) => this.destroyBindGroup(bindGroup));
@@ -6236,7 +6492,7 @@
       this.clonedBindGroups = [];
     }
     /**
-     * Update all bind groups.
+     * Update all {@link BindGroup}.
      */
     updateBindGroups() {
       for (const bindGroup of this.bindGroups) {
@@ -6244,7 +6500,7 @@
       }
     }
     /**
-     * {@link BindGroup#update | Update a bind group}:
+     * {@link BindGroup#update | Update a BindGroup}:
      * - Update the textures if it's a {@link texturesBindGroups | textures bind group}.
      * - Update its {@link BindGroup#bufferBindings | buffer bindings}.
      * - Check if it eventually needs a {@link BindGroup#resetBindGroup | reset}.
@@ -6261,25 +6517,25 @@
     /* INPUTS */
     /**
      * Look for a {@link BindGroupBindingElement | binding} by name in all {@link inputsBindings | input bindings}
-     * @param bindingName - the binding name or key
-     * @returns - the found binding, or null if not found
+     * @param bindingName - the binding name or key.
+     * @returns - The found binding, or null if not found.
      */
     getBindingByName(bindingName = "") {
       return this.inputsBindings.get(bindingName);
     }
     /**
-     * Look for a {@link BindGroupBufferBindingElement | buffer binding} by name in all {@link inputsBindings | input bindings}
-     * @param bindingName - the binding name or key
-     * @returns - the found binding, or null if not found
+     * Look for a {@link BindGroupBufferBindingElement | buffer binding} by name in all {@link inputsBindings | input bindings}.
+     * @param bindingName - The binding name or key.
+     * @returns - The found binding, or null if not found.
      */
     getBufferBindingByName(bindingName = "") {
       const bufferBinding = this.getBindingByName(bindingName);
       return bufferBinding && "buffer" in bufferBinding ? bufferBinding : void 0;
     }
     /**
-     * Force setting a given {@link BufferBindingInput | buffer binding} shouldUpdate flag to `true` to update it at next render
-     * @param bufferBindingName - the buffer binding name
-     * @param bindingName - the binding name
+     * Force setting a given {@link BufferBindingInput | buffer binding} shouldUpdate flag to `true` to update it at next render.
+     * @param bufferBindingName - The buffer binding name.
+     * @param bindingName - The binding name.
      */
     shouldUpdateInputsBindings(bufferBindingName, bindingName) {
       if (!bufferBindingName) return;
@@ -6296,7 +6552,7 @@
     }
     /* SAMPLERS & TEXTURES */
     /**
-     * Prepare our textures array and set the {@link TextureBindGroup}
+     * Prepare our {@link Material.textures | textures} array and set the {@link TextureBindGroup}.
      */
     setTextures() {
       this.textures = [];
@@ -6311,8 +6567,8 @@
       });
     }
     /**
-     * Add a texture to our array, and add it to the textures bind group only if used in the shaders (avoid binding useless data)
-     * @param texture - texture to add
+     * Add a {@link MediaTexture} or {@link Texture} to our {@link textures} array, and add it to the textures bind group only if used in the shaders (avoid binding useless data).
+     * @param texture - {@link MediaTexture} or {@link Texture} to add.
      */
     addTexture(texture) {
       this.textures.push(texture);
@@ -6322,7 +6578,7 @@
     }
     /**
      * Destroy a {@link MediaTexture} or {@link Texture}, only if it is not used by another object or cached.
-     * @param texture - {@link MediaTexture} or {@link Texture} to eventually destroy
+     * @param texture - {@link MediaTexture} or {@link Texture} to eventually destroy.
      */
     destroyTexture(texture) {
       if (texture.options.cache) return;
@@ -6334,14 +6590,14 @@
       }
     }
     /**
-     * Destroy all the Material textures
+     * Destroy all the Material {@link textures}.
      */
     destroyTextures() {
       this.textures?.forEach((texture) => this.destroyTexture(texture));
       this.textures = [];
     }
     /**
-     * Prepare our samplers array and always add a default sampler if not already passed as parameter
+     * Prepare our {@link Material.samplers | samplers} array and always add a default {@link Sampler} if not already passed as parameter.
      */
     setSamplers() {
       this.samplers = [];
@@ -6355,8 +6611,8 @@
       }
     }
     /**
-     * Add a sampler to our array, and add it to the textures bind group only if used in the shaders (avoid binding useless data)
-     * @param sampler - sampler to add
+     * Add a {@link Sampler} to our {@link samplers} array, and add it to the textures bind group only if used in the shaders (avoid binding useless data).
+     * @param sampler - {@link Sampler} to add.
      */
     addSampler(sampler) {
       this.samplers.push(sampler);
@@ -6367,16 +6623,16 @@
     /* BUFFER RESULTS */
     /**
      * Map a {@link Buffer#GPUBuffer | Buffer's GPU buffer} and put a copy of the data into a {@link Float32Array}
-     * @param buffer - {@link Buffer} to use for mapping
-     * @returns - {@link Float32Array} holding the {@link GPUBuffer} data
+     * @param buffer - {@link Buffer} to use for mapping.
+     * @returns - {@link Float32Array} holding the {@link GPUBuffer} data.
      */
     async getBufferResult(buffer) {
       return await buffer.mapBufferAsync();
     }
     /**
-     * Map the content of a {@link BufferBinding} {@link Buffer#GPUBuffer | GPU buffer} and put a copy of the data into a {@link Float32Array}
-     * @param bindingName - The name of the {@link inputsBindings | input bindings} from which to map the {@link Buffer#GPUBuffer | GPU buffer}
-     * @returns - {@link Float32Array} holding the {@link GPUBuffer} data
+     * Map the content of a {@link BufferBinding} {@link Buffer#GPUBuffer | GPU buffer} and put a copy of the data into a {@link Float32Array}.
+     * @param bindingName - The name of the {@link inputsBindings | input bindings} from which to map the {@link Buffer#GPUBuffer | GPU buffer}.
+     * @returns - {@link Float32Array} holding the {@link GPUBuffer} data.
      */
     async getBufferBindingResultByBindingName(bindingName = "") {
       const binding = this.getBufferBindingByName(bindingName);
@@ -6390,11 +6646,11 @@
       }
     }
     /**
-     * Map the content of a specific {@link BufferElement | buffer element} belonging to a {@link BufferBinding} {@link Buffer#GPUBuffer | GPU buffer} and put a copy of the data into a {@link Float32Array}
-     * @param parameters - parameters used to get the result
-     * @param parameters.bindingName - The name of the {@link inputsBindings | input bindings} from which to map the {@link Buffer#GPUBuffer | GPU buffer}
-     * @param parameters.bufferElementName - The name of the {@link BufferElement | buffer element} from which to extract the data afterwards
-     * @returns - {@link Float32Array} holding {@link GPUBuffer} data
+     * Map the content of a specific {@link BufferElement | buffer element} belonging to a {@link BufferBinding} {@link Buffer#GPUBuffer | GPU buffer} and put a copy of the data into a {@link Float32Array}.
+     * @param parameters - Parameters used to get the result.
+     * @param parameters.bindingName - The name of the {@link inputsBindings | input bindings} from which to map the {@link Buffer#GPUBuffer | GPU buffer}.
+     * @param parameters.bufferElementName - The name of the {@link BufferElement | buffer element} from which to extract the data afterwards.
+     * @returns - {@link Float32Array} holding {@link GPUBuffer} data.
      */
     async getBufferElementResultByNames({
       bindingName,
@@ -6416,30 +6672,30 @@
     /**
      * Called before rendering the Material.
      * First, check if we need to create our bind groups or pipeline.
-     * Finally updates all the {@link bindGroups | bind groups}.
+     * Finally, updates all the {@link bindGroups | bind groups}.
      */
     onBeforeRender() {
       this.compileMaterial();
       this.updateBindGroups();
     }
     /**
-     * Set the current pipeline
-     * @param pass - current pass encoder
+     * Set the current pipeline.
+     * @param pass - Current pass encoder.
      */
     setPipeline(pass) {
       this.renderer.pipelineManager.setCurrentPipeline(pass, this.pipelineEntry);
     }
     /**
      * Use the {@link Renderer#pipelineManager | renderer pipelineManager} to only set the bind groups that are not already set.
-     * @param pass - current pass encoder
+     * @param pass - Current pass encoder.
      */
     setActiveBindGroups(pass) {
       this.renderer.pipelineManager.setActiveBindGroups(pass, this.bindGroups);
     }
     /**
      * Render the material if it is ready:
-     * Set the current pipeline and set the bind groups
-     * @param pass - current pass encoder
+     * Set the current pipeline and set the bind groups.
+     * @param pass - Current pass encoder.
      */
     render(pass) {
       if (!this.ready) return;
@@ -6447,7 +6703,7 @@
       this.setActiveBindGroups(pass);
     }
     /**
-     * Destroy the Material
+     * Destroy the Material.
      */
     destroy() {
       this.destroyBindGroups();
@@ -6458,8 +6714,8 @@
   class ComputeMaterial extends Material {
     /**
      * ComputeMaterial constructor
-     * @param renderer - our {@link Renderer} class object
-     * @param parameters - {@link ComputeMaterialParams | parameters} used to create our {@link ComputeMaterial}
+     * @param renderer - {@link Renderer} class object or {@link GPUCurtains} class object used to create this {@link ComputeMaterial}.
+     * @param parameters - {@link ComputeMaterialParams | parameters} used to create our {@link ComputeMaterial}.
      */
     constructor(renderer, parameters) {
       const type = "ComputeMaterial";
@@ -6506,13 +6762,13 @@
       this.pipelineEntry = this.renderer.pipelineManager.createComputePipeline(this);
     }
     /**
-     * Compile the {@link ComputePipelineEntry}
+     * Compile the {@link ComputePipelineEntry}.
      */
     async compilePipelineEntry() {
       await this.pipelineEntry.compilePipelineEntry();
     }
     /**
-     * Check if all bind groups are ready, create them if needed, set {@link ComputePipelineEntry} bind group buffers and compile the pipeline
+     * Check if all bind groups are ready, create them if needed, set {@link ComputePipelineEntry} bind group buffers and compile the pipeline.
      */
     async compileMaterial() {
       if (this.ready) return;
@@ -6525,20 +6781,20 @@
       }
     }
     /**
-     * Get the complete code of a given shader including all the WGSL fragment code snippets added by the pipeline
-     * @param [shaderType="compute"] - shader to get the code from
-     * @returns - The corresponding shader code
+     * Get the complete code of a given shader including all the WGSL fragment code snippets added by the pipeline. Can wait for the {@link pipelineEntry} to be compiled if that's not already the case.
+     * @param [shaderType="compute"] - Shader to get the code from.
+     * @returns - The corresponding shader code.
      */
-    getShaderCode(shaderType = "compute") {
-      return super.getShaderCode(shaderType);
+    async getShaderCode(shaderType = "compute") {
+      return await super.getShaderCode(shaderType);
     }
     /**
-     * Get the added code of a given shader, i.e. all the WGSL fragment code snippets added by the pipeline
-     * @param [shaderType="compute"] - shader to get the code from
+     * Get the added code of a given shader, i.e. all the WGSL fragment code snippets added by the pipeline. Can wait for the {@link pipelineEntry} to be compiled if that's not already the case.
+     * @param [shaderType="compute"] - Shader to get the code from
      * @returns - The corresponding shader code
      */
-    getAddedShaderCode(shaderType = "compute") {
-      return super.getAddedShaderCode(shaderType);
+    async getAddedShaderCode(shaderType = "compute") {
+      return await super.getAddedShaderCode(shaderType);
     }
     /* RENDER */
     /**
@@ -6552,8 +6808,8 @@
     }
     /**
      * Render the material if it is ready:
-     * Set the current pipeline, set the bind groups and dispatch the work groups
-     * @param pass - current compute pass encoder
+     * Set the current pipeline, set the bind groups and dispatch the work groups.
+     * @param pass - Current compute pass encoder.
      */
     render(pass) {
       if (!this.ready) return;
@@ -6569,8 +6825,8 @@
     }
     /* RESULT BUFFER */
     /**
-     * Copy all writable binding buffers that need it
-     * @param commandEncoder - current command encoder
+     * Copy all writable binding buffers that need it.
+     * @param commandEncoder - Current command encoder.
      */
     copyBufferToResult(commandEncoder) {
       for (const bindGroup of this.bindGroups) {
@@ -6586,11 +6842,11 @@
       }
     }
     /**
-     * Get the {@link core/bindings/WritableBufferBinding.WritableBufferBinding#resultBuffer | result GPU buffer} content by {@link core/bindings/WritableBufferBinding.WritableBufferBinding | binding} and {@link core/bindings/bufferElements/BufferElement.BufferElement | buffer element} names
-     * @param parameters - parameters used to get the result
-     * @param parameters.bindingName - {@link core/bindings/WritableBufferBinding.WritableBufferBinding#name | binding name} from which to get the result
-     * @param parameters.bufferElementName - optional {@link core/bindings/bufferElements/BufferElement.BufferElement | buffer element} (i.e. struct member) name if the result needs to be restrained to only one element
-     * @returns - the mapped content of the {@link GPUBuffer} as a {@link Float32Array}
+     * Get the {@link core/bindings/WritableBufferBinding.WritableBufferBinding#resultBuffer | result GPU buffer} content by {@link core/bindings/WritableBufferBinding.WritableBufferBinding | binding} and {@link core/bindings/bufferElements/BufferElement.BufferElement | buffer element} names.
+     * @param parameters - Parameters used to get the result.
+     * @param parameters.bindingName - {@link core/bindings/WritableBufferBinding.WritableBufferBinding#name | binding name} from which to get the result.
+     * @param parameters.bufferElementName - Pptional {@link core/bindings/bufferElements/BufferElement.BufferElement | buffer element} (i.e. struct member) name if the result needs to be restrained to only one element.
+     * @returns - the mapped content of the {@link GPUBuffer} as a {@link Float32Array}.
      */
     async getComputeResult({
       bindingName = "",
@@ -6610,19 +6866,19 @@
     }
   }
 
-  var __typeError$l = (msg) => {
+  var __typeError$m = (msg) => {
     throw TypeError(msg);
   };
-  var __accessCheck$l = (obj, member, msg) => member.has(obj) || __typeError$l("Cannot " + msg);
-  var __privateGet$j = (obj, member, getter) => (__accessCheck$l(obj, member, "read from private field"), member.get(obj));
-  var __privateAdd$l = (obj, member, value) => member.has(obj) ? __typeError$l("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  var __privateSet$j = (obj, member, value, setter) => (__accessCheck$l(obj, member, "write to private field"), member.set(obj, value), value);
+  var __accessCheck$m = (obj, member, msg) => member.has(obj) || __typeError$m("Cannot " + msg);
+  var __privateGet$k = (obj, member, getter) => (__accessCheck$m(obj, member, "read from private field"), member.get(obj));
+  var __privateAdd$m = (obj, member, value) => member.has(obj) ? __typeError$m("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$k = (obj, member, value, setter) => (__accessCheck$m(obj, member, "write to private field"), member.set(obj, value), value);
   var _autoRender$2;
   let computePassIndex = 0;
   class ComputePass {
     /**
      * ComputePass constructor
-     * @param renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object.
+     * @param renderer - {@link Renderer} class object or {@link GPUCurtains} class object used to create this {@link ComputePass}.
      * @param parameters - {@link ComputePassParams | parameters} used to create our {@link ComputePass}.
      */
     constructor(renderer, parameters = {}) {
@@ -6630,7 +6886,7 @@
        * Whether this {@link ComputePass} should be added to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically.
        * @private
        */
-      __privateAdd$l(this, _autoRender$2, true);
+      __privateAdd$m(this, _autoRender$2, true);
       // callbacks / events
       /** function assigned to the {@link onReady} callback. */
       this._onReadyCallback = () => {
@@ -6681,7 +6937,7 @@
       };
       this.renderOrder = renderOrder ?? 0;
       if (autoRender !== void 0) {
-        __privateSet$j(this, _autoRender$2, autoRender);
+        __privateSet$k(this, _autoRender$2, autoRender);
       }
       this.userData = {};
       this.ready = false;
@@ -6720,7 +6976,7 @@
       if (addToRenderer) {
         this.renderer.computePasses.push(this);
       }
-      if (__privateGet$j(this, _autoRender$2)) {
+      if (__privateGet$k(this, _autoRender$2)) {
         this.renderer.scene.addComputePass(this);
       }
     }
@@ -6729,7 +6985,7 @@
      * @param removeFromRenderer - whether to remove this {@link ComputePass} from the {@link Renderer#computePasses | Renderer computePasses array}.
      */
     removeFromScene(removeFromRenderer = false) {
-      if (__privateGet$j(this, _autoRender$2)) {
+      if (__privateGet$k(this, _autoRender$2)) {
         this.renderer.scene.removeComputePass(this);
       }
       if (removeFromRenderer) {
@@ -7935,29 +8191,29 @@
     return vector;
   }
 
-  var __typeError$k = (msg) => {
+  var __typeError$l = (msg) => {
     throw TypeError(msg);
   };
-  var __accessCheck$k = (obj, member, msg) => member.has(obj) || __typeError$k("Cannot " + msg);
-  var __privateGet$i = (obj, member, getter) => (__accessCheck$k(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
-  var __privateAdd$k = (obj, member, value) => member.has(obj) ? __typeError$k("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  var __privateSet$i = (obj, member, value, setter) => (__accessCheck$k(obj, member, "write to private field"), member.set(obj, value), value);
+  var __accessCheck$l = (obj, member, msg) => member.has(obj) || __typeError$l("Cannot " + msg);
+  var __privateGet$j = (obj, member, getter) => (__accessCheck$l(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$l = (obj, member, value) => member.has(obj) ? __typeError$l("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$j = (obj, member, value, setter) => (__accessCheck$l(obj, member, "write to private field"), member.set(obj, value), value);
   var _intensity$1, _intensityColor;
   class Light extends Object3D {
     /**
      * Light constructor
-     * @param renderer - {@link CameraRenderer} used to create this {@link Light}.
-     * @param parameters - {@link LightParams | parameters} used to create this {@link Light}.
+     * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link Light}.
+     * @param parameters - {@link LightParams} used to create this {@link Light}.
      */
     constructor(renderer, { label = "", color = new Vec3(1), intensity = 1, type = "lights" } = {}) {
       super();
       /** @ignore */
-      __privateAdd$k(this, _intensity$1);
+      __privateAdd$l(this, _intensity$1);
       /**
        * A {@link Vec3} holding the {@link Light} {@link color} multiplied by its {@link intensity}.
        * @private
        */
-      __privateAdd$k(this, _intensityColor);
+      __privateAdd$l(this, _intensityColor);
       this.type = type;
       this.setRenderer(renderer);
       this.uuid = generateUUID();
@@ -7967,7 +8223,7 @@
         intensity
       };
       this.color = color;
-      __privateSet$i(this, _intensityColor, this.color.clone());
+      __privateSet$j(this, _intensityColor, this.color.clone());
       this.color.onChange(() => this.onPropertyChanged("color", this.actualColor));
       this.intensity = intensity;
       this.userData = {};
@@ -8016,14 +8272,14 @@
      * @returns - The {@link Light} intensity.
      */
     get intensity() {
-      return __privateGet$i(this, _intensity$1);
+      return __privateGet$j(this, _intensity$1);
     }
     /**
      * Set this {@link Light} intensity and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      * @param value - The new {@link Light} intensity.
      */
     set intensity(value) {
-      __privateSet$i(this, _intensity$1, value);
+      __privateSet$j(this, _intensity$1, value);
       this.onPropertyChanged("color", this.actualColor);
     }
     /**
@@ -8031,7 +8287,7 @@
      * @returns - Actual {@link Vec3} color used in the shader.
      */
     get actualColor() {
-      return sRGBToLinear(__privateGet$i(this, _intensityColor).copy(this.color)).multiplyScalar(this.intensity);
+      return sRGBToLinear(__privateGet$j(this, _intensityColor).copy(this.color)).multiplyScalar(this.intensity);
     }
     /**
      * Update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} input value and tell the {@link CameraRenderer#cameraLightsBindGroup | renderer camera, lights and shadows} bind group to update.
@@ -8060,6 +8316,16 @@
       if (this.rendererBinding) {
         this.rendererBinding = this.renderer.bindings[lightsType];
       }
+    }
+    // explicitly disable rotation, scale and transformation origin
+    /** @ignore */
+    applyRotation() {
+    }
+    /** @ignore */
+    applyScale() {
+    }
+    /** @ignore */
+    applyTransformOrigin() {
     }
     /**
      * Called by the {@link core/scenes/Scene.Scene | Scene} before updating the matrix stack.
@@ -8098,28 +8364,27 @@
   class AmbientLight extends Light {
     /**
      * AmbientLight constructor
-     * @param renderer - {@link CameraRenderer} used to create this {@link AmbientLight}.
-     * @param parameters - {@link LightBaseParams | parameters} used to create this {@link AmbientLight}.
+     * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link AmbientLight}.
+     * @param parameters - {@link LightBaseParams} used to create this {@link AmbientLight}.
      */
     constructor(renderer, { label = "AmbientLight", color = new Vec3(1), intensity = 0.1 } = {}) {
       const type = "ambientLights";
       super(renderer, { label, color, intensity, type });
     }
-    // explicitly disable all kinds of transformations
-    /** @ignore */
-    applyRotation() {
-    }
+    // explicitly disable position as well
     /** @ignore */
     applyPosition() {
     }
-    /** @ignore */
-    applyScale() {
-    }
-    /** @ignore */
-    applyTransformOrigin() {
-    }
   }
 
+  var __typeError$k = (msg) => {
+    throw TypeError(msg);
+  };
+  var __accessCheck$k = (obj, member, msg) => member.has(obj) || __typeError$k("Cannot " + msg);
+  var __privateGet$i = (obj, member, getter) => (__accessCheck$k(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$k = (obj, member, value) => member.has(obj) ? __typeError$k("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$i = (obj, member, value, setter) => (__accessCheck$k(obj, member, "write to private field"), member.set(obj, value), value);
+  var _useStencil;
   class RenderPass {
     /**
      * RenderPass constructor
@@ -8141,12 +8406,22 @@
       depthLoadOp = "clear",
       depthStoreOp = "store",
       depthClearValue = 1,
-      depthFormat = "depth24plus"
+      depthFormat = "depth24plus",
+      depthReadOnly = false,
+      stencilClearValue = 0,
+      stencilLoadOp = "clear",
+      stencilStoreOp = "store",
+      stencilReadOnly = false
     } = {}) {
+      /** Whether the {@link RenderPass} should handle stencil. Default to `false`, eventually set to `true` based on the {@link depthTexture} format. */
+      __privateAdd$k(this, _useStencil);
       this.type = "RenderPass";
       renderer = isRenderer(renderer, label + " " + this.type);
       this.renderer = renderer;
       this.uuid = generateUUID();
+      this.viewport = null;
+      this.scissorRect = null;
+      __privateSet$i(this, _useStencil, false);
       if (useColorAttachments) {
         const defaultColorAttachment = {
           loadOp: "clear",
@@ -8177,7 +8452,12 @@
         depthLoadOp,
         depthStoreOp,
         depthClearValue,
-        depthFormat
+        depthFormat,
+        depthReadOnly,
+        stencilClearValue,
+        stencilLoadOp,
+        stencilStoreOp,
+        stencilReadOnly
       };
       if (this.options.useDepth) {
         this.createDepthTexture();
@@ -8228,6 +8508,9 @@
           usage: ["renderAttachment", "textureBinding"]
         });
       }
+      if (this.depthTexture.options.format.includes("stencil")) {
+        __privateSet$i(this, _useStencil, true);
+      }
     }
     /**
      * Create and set our {@link viewTextures | view textures}.
@@ -8271,7 +8554,6 @@
     }
     /**
      * Get the textures outputted by this {@link RenderPass}, which means the {@link viewTextures} if not multisampled, or their {@link resolveTargets} else (beware that the first resolve target might be `null` if this {@link RenderPass} should {@link RenderPassParams#renderToSwapChain | render to the swap chain}).
-     *
      * @readonly
      */
     get outputTextures() {
@@ -8313,10 +8595,53 @@
             depthClearValue: this.options.depthClearValue,
             // the same way loadOp is working, we can specify if we want to clear or load the previous depth buffer result
             depthLoadOp: this.options.depthLoadOp,
-            depthStoreOp: this.options.depthStoreOp
+            depthStoreOp: this.options.depthStoreOp,
+            depthReadOnly: this.options.depthReadOnly,
+            ...__privateGet$i(this, _useStencil) && {
+              stencilLoadOp: this.options.stencilLoadOp,
+              stencilStoreOp: this.options.stencilStoreOp,
+              stencilReadOnly: this.options.stencilReadOnly
+            }
           }
         }
       };
+    }
+    /**
+     * Set the {@link viewport} to use if any.
+     * @param viewport - {@link RenderPassViewport} settings to use. Can be set to `null` to cancel the {@link viewport}.
+     */
+    setViewport(viewport = null) {
+      this.viewport = viewport;
+    }
+    /**
+     * Set the {@link scissorRect} to use if any.
+     * @param scissorRect - {@link RectBBox} size to use for scissors. Can be set to `null` to cancel the {@link scissorRect}.
+     */
+    setScissorRect(scissorRect = null) {
+      this.scissorRect = scissorRect;
+    }
+    /**
+     * Begin the {@link GPURenderPassEncoder} and eventually set the {@link viewport} and {@link scissorRect}.
+     * @param commandEncoder - {@link GPUCommandEncoder} to use.
+     * @param descriptor - Custom {@link https://gpuweb.github.io/types/interfaces/GPURenderPassDescriptor.html | GPURenderPassDescriptor} to use if any. Default to {@link RenderPass#descriptor | descriptor}.
+     * @returns - The created {@link GPURenderPassEncoder}.
+     */
+    beginRenderPass(commandEncoder, descriptor = this.descriptor) {
+      const pass = commandEncoder.beginRenderPass(descriptor);
+      if (this.viewport) {
+        pass.setViewport(
+          this.viewport.left,
+          this.viewport.top,
+          this.viewport.width,
+          this.viewport.height,
+          this.viewport.minDepth,
+          this.viewport.maxDepth
+        );
+      }
+      if (this.scissorRect) {
+        pass.setScissorRect(this.scissorRect.left, this.scissorRect.top, this.scissorRect.width, this.scissorRect.height);
+      }
+      return pass;
     }
     /**
      * Resize our {@link RenderPass}: reset its {@link Texture}.
@@ -8429,6 +8754,7 @@
       }
     }
   }
+  _useStencil = new WeakMap();
 
   var __typeError$j = (msg) => {
     throw TypeError(msg);
@@ -8452,7 +8778,7 @@
       this.renderer = renderer;
       this.uuid = generateUUID();
       const { label, colorAttachments, depthTexture, autoRender, ...renderPassParams } = parameters;
-      const depthTextureToUse = !!depthTexture ? depthTexture : this.renderer.renderPass.options.sampleCount === (parameters.sampleCount ?? 4) && (!renderPassParams.qualityRatio || renderPassParams.qualityRatio === 1) && !renderPassParams.fixedSize ? this.renderer.renderPass.depthTexture : null;
+      const depthTextureToUse = !!depthTexture ? depthTexture : this.renderer.renderPass.options.sampleCount === (parameters.sampleCount ?? 4) && (!renderPassParams.qualityRatio || renderPassParams.qualityRatio === 1) && !renderPassParams.fixedSize && (!parameters.depthFormat || parameters.depthFormat === this.renderer.renderPass.depthTexture.options.format) ? this.renderer.renderPass.depthTexture : null;
       this.options = {
         label,
         ...renderPassParams,
@@ -8476,7 +8802,7 @@
           format: colorAttachments && colorAttachments.length && colorAttachments[0].targetFormat ? colorAttachments[0].targetFormat : this.renderer.options.context.format,
           ...this.options.qualityRatio !== void 0 && { qualityRatio: this.options.qualityRatio },
           ...this.options.fixedSize !== void 0 && { fixedSize: this.options.fixedSize },
-          usage: ["copySrc", "renderAttachment", "textureBinding"]
+          usage: ["copySrc", "copyDst", "renderAttachment", "textureBinding"]
         });
       }
       this.addToScene();
@@ -9174,7 +9500,11 @@ ${this.shaders.full.head}`;
           depthStencil: {
             depthWriteEnabled: this.options.rendering.depthWriteEnabled,
             depthCompare: this.options.rendering.depthCompare,
-            format: this.options.rendering.depthFormat
+            format: this.options.rendering.depthFormat,
+            ...this.options.rendering.stencil && {
+              stencilFront: this.options.rendering.stencil.front,
+              stencilBack: this.options.rendering.stencil.back
+            }
           }
         },
         ...this.options.rendering.sampleCount > 1 && {
@@ -9229,8 +9559,24 @@ ${this.shaders.full.head}`;
   }
 
   const compareRenderingOptions = (newOptions = {}, baseOptions = {}) => {
-    return Object.keys(newOptions).filter((key) => {
-      if (Array.isArray(newOptions[key])) {
+    const renderingOptions = [
+      "useProjection",
+      "transparent",
+      "depth",
+      "depthWriteEnabled",
+      "depthCompare",
+      "depthFormat",
+      "cullMode",
+      "sampleCount",
+      "targets",
+      "stencil",
+      "verticesOrder",
+      "topology"
+    ];
+    return renderingOptions.map((key) => {
+      if (newOptions[key] && !baseOptions[key] || baseOptions[key] && !newOptions[key]) {
+        return key;
+      } else if (Array.isArray(newOptions[key]) || typeof newOptions[key] === "object") {
         return JSON.stringify(newOptions[key]) !== JSON.stringify(baseOptions[key]);
       } else {
         return newOptions[key] !== baseOptions[key];
@@ -9296,8 +9642,8 @@ struct VSOutput {
   class RenderMaterial extends Material {
     /**
      * RenderMaterial constructor
-     * @param renderer - our renderer class object
-     * @param parameters - {@link RenderMaterialParams | parameters} used to create our RenderMaterial
+     * @param renderer - {@link Renderer} class object or {@link GPUCurtains} class object used to create this {@link RenderMaterial}.
+     * @param parameters - {@link RenderMaterialParams} used to create our {@link RenderMaterial}.
      */
     constructor(renderer, parameters) {
       const type = "RenderMaterial";
@@ -9331,6 +9677,7 @@ struct VSOutput {
         depthWriteEnabled,
         depthCompare,
         depthFormat,
+        stencil,
         cullMode,
         sampleCount,
         verticesOrder,
@@ -9347,6 +9694,17 @@ struct VSOutput {
       if (targets && targets.length && !targets[0].format) {
         targets[0].format = this.renderer.options.context.format;
       }
+      if (stencil) {
+        if (!stencil.front) {
+          stencil.front = {};
+        }
+        if (stencil.front && !stencil.back) {
+          stencil.back = stencil.front;
+        }
+        if (!stencil.stencilReference) {
+          stencil.stencilReference = 0;
+        }
+      }
       this.options = {
         ...this.options,
         shaders,
@@ -9357,6 +9715,7 @@ struct VSOutput {
           depthWriteEnabled,
           depthCompare,
           depthFormat,
+          ...stencil && { stencil },
           cullMode,
           sampleCount,
           targets,
@@ -9388,7 +9747,7 @@ struct VSOutput {
       this.pipelineEntry = this.renderer.pipelineManager.createRenderPipeline(this);
     }
     /**
-     * Compile the {@link RenderPipelineEntry}
+     * Compile the {@link RenderPipelineEntry}.
      */
     async compilePipelineEntry() {
       await this.pipelineEntry.compilePipelineEntry();
@@ -9408,7 +9767,7 @@ struct VSOutput {
     }
     /**
      * Set or reset one of the {@link RenderMaterialRenderingOptions | rendering options}. Should be use with great caution, because if the {@link RenderPipelineEntry#pipeline | render pipeline} has already been compiled, it can cause a pipeline flush.
-     * @param renderingOptions - new {@link RenderMaterialRenderingOptions | rendering options} properties to be set
+     * @param renderingOptions - New {@link RenderMaterialRenderingOptions | rendering options} properties to be set.
      */
     setRenderingOptions(renderingOptions = {}) {
       if (renderingOptions.transparent && renderingOptions.targets.length && !renderingOptions.targets[0].blend) {
@@ -9460,8 +9819,8 @@ New rendering options: ${JSON.stringify(
     }
     /* ATTRIBUTES */
     /**
-     * Compute geometry if needed and get all useful geometry properties needed to create attributes buffers
-     * @param geometry - the geometry to draw
+     * Get all useful {@link core/geometries/Geometry.Geometry | Geometry} properties needed to create attributes buffers.
+     * @param geometry - The geometry to draw.
      */
     setAttributesFromGeometry(geometry) {
       this.attributes = {
@@ -9509,6 +9868,17 @@ New rendering options: ${JSON.stringify(
       }
       for (let i = startBindGroupIndex; i < this.bindGroups.length; i++) {
         this.updateBindGroup(this.bindGroups[i]);
+      }
+    }
+    /**
+     * Render the material if it is ready. Call super, and the set the pass encoder stencil reference if needed.
+     * @param pass - Current pass encoder.
+     */
+    render(pass) {
+      if (!this.ready) return;
+      super.render(pass);
+      if (this.options.rendering.stencil) {
+        pass.setStencilReference(this.options.rendering.stencil.stencilReference ?? 0);
       }
     }
   }
@@ -10140,10 +10510,17 @@ ${geometry.wgslStructFragment}`
       }
       /**
        * Render our {@link MeshBase} if the {@link RenderMaterial} is ready
-       * @param pass - current render pass encoder
+       * @param pass - Current render pass encoder.
        */
       onRenderPass(pass) {
         if (!this.ready) return;
+        this.renderPass(pass);
+      }
+      /**
+       * Render the {@link material} and {@link geometry}.
+       * @param pass - Current render pass encoder.
+       */
+      renderPass(pass) {
         this.material.render(pass);
         this.geometry.render(pass);
       }
@@ -10923,8 +11300,7 @@ fn getPCFBaseShadowContribution(
       onRenderPass(pass) {
         if (!this.ready) return;
         if (this.domFrustum && this.domFrustum.isIntersecting || !this.frustumCulling) {
-          this.material.render(pass);
-          this.geometry.render(pass);
+          this.renderPass(pass);
         }
       }
       /**
@@ -10995,8 +11371,8 @@ fn getPCFBaseShadowContribution(
   class Shadow {
     /**
      * Shadow constructor
-     * @param renderer - {@link CameraRenderer} used to create this {@link Shadow}.
-     * @param parameters - {@link ShadowBaseParams | parameters} used to create this {@link Shadow}.
+     * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link Shadow}.
+     * @param parameters - {@link ShadowBaseParams} used to create this {@link Shadow}.
      */
     constructor(renderer, {
       light,
@@ -11349,7 +11725,7 @@ fn getPCFBaseShadowContribution(
      */
     renderDepthPass(commandEncoder) {
       this.renderer.pipelineManager.resetCurrentPipeline();
-      const depthPass = commandEncoder.beginRenderPass(this.depthPassTarget.renderPass.descriptor);
+      const depthPass = this.depthPassTarget.renderPass.beginRenderPass(commandEncoder);
       if (!this.renderer.production)
         depthPass.pushDebugGroup(`${this.constructor.name} (index: ${this.index}): depth pass`);
       for (const [uuid, depthMesh] of this.depthMeshes) {
@@ -11730,8 +12106,8 @@ fn getPCFBaseShadowContribution(
   class DirectionalShadow extends Shadow {
     /**
      * DirectionalShadow constructor
-     * @param renderer - {@link CameraRenderer} used to create this {@link DirectionalShadow}.
-     * @param parameters - {@link DirectionalShadowParams | parameters} used to create this {@link DirectionalShadow}.
+     * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link DirectionalShadow}.
+     * @param parameters - {@link DirectionalShadowParams} used to create this {@link DirectionalShadow}.
      */
     constructor(renderer, {
       light,
@@ -11748,7 +12124,7 @@ fn getPCFBaseShadowContribution(
         bottom: -10,
         top: 10,
         near: 0.1,
-        far: 50
+        far: 150
       }
     } = {}) {
       super(renderer, {
@@ -11765,30 +12141,20 @@ fn getPCFBaseShadowContribution(
         ...this.options,
         camera
       };
-      this.camera = {
-        projectionMatrix: new Mat4(),
-        viewMatrix: new Mat4(),
-        up: new Vec3(0, 1, 0),
-        _left: camera.left,
-        _right: camera.right,
-        _bottom: camera.bottom,
-        _top: camera.top,
-        _near: camera.near,
-        _far: camera.far
-      };
-      const _self = this;
-      const cameraProps = ["left", "right", "bottom", "top", "near", "far"];
-      cameraProps.forEach((prop) => {
-        Object.defineProperty(_self.camera, prop, {
-          get() {
-            return _self.camera["_" + prop];
-          },
-          set(v) {
-            _self.camera["_" + prop] = v;
-            _self.updateProjectionMatrix();
-          }
-        });
+      this.camera = new OrthographicCamera({
+        left: camera.left,
+        right: camera.right,
+        top: camera.top,
+        bottom: camera.bottom,
+        near: camera.near,
+        far: camera.far,
+        onMatricesChanged: () => {
+          this.onPropertyChanged("projectionMatrix", this.camera.projectionMatrix);
+          this.onPropertyChanged("viewMatrix", this.camera.viewMatrix);
+        }
       });
+      this.camera.position.set(0);
+      this.camera.parent = this.light;
     }
     /**
      * Set or reset this {@link DirectionalShadow} {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
@@ -11805,19 +12171,12 @@ fn getPCFBaseShadowContribution(
       if (camera) {
         this.camera.left = camera.left ?? -10;
         this.camera.right = camera.right ?? 10;
+        this.camera.top = camera.top ?? 10;
         this.camera.bottom = camera.bottom ?? -10;
-        this.camera.top = camera.right ?? 10;
         this.camera.near = camera.near ?? 0.1;
-        this.camera.far = camera.far ?? 50;
+        this.camera.far = camera.far ?? 150;
       }
       super.cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
-    }
-    /**
-     * Set the {@link depthComparisonSampler}, {@link depthTexture}, {@link depthPassTarget}, compute the {@link DirectionalShadow#camera.projectionMatrix | camera projection matrix} and start rendering to the shadow map.
-     */
-    init() {
-      super.init();
-      this.updateProjectionMatrix();
     }
     /**
      * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link DirectionalLight} has been overflowed or when the {@link renderer} has changed.
@@ -11825,37 +12184,7 @@ fn getPCFBaseShadowContribution(
     reset() {
       this.setRendererBinding();
       super.reset();
-      if (this.isActive) {
-        this.onPropertyChanged("projectionMatrix", this.camera.projectionMatrix);
-        this.onPropertyChanged("viewMatrix", this.camera.viewMatrix);
-      }
-    }
-    /**
-     * Update the {@link DirectionalShadow#camera.projectionMatrix | camera orthographic projection matrix} and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
-     */
-    updateProjectionMatrix() {
-      this.camera.projectionMatrix.identity().makeOrthographic({
-        left: this.camera.left,
-        right: this.camera.right,
-        bottom: this.camera.bottom,
-        top: this.camera.top,
-        near: this.camera.near,
-        far: this.camera.far
-      });
       this.onPropertyChanged("projectionMatrix", this.camera.projectionMatrix);
-    }
-    /**
-     * Update the {@link DirectionalShadow#camera.viewMatrix | camera view matrix} and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
-     */
-    updateViewMatrix() {
-      if (this.light.actualPosition.x === 0 && this.light.actualPosition.y !== 0 && this.light.actualPosition.z === 0) {
-        this.camera.up.set(0, 0, 1);
-      } else if (this.light.actualPosition.x === 0 && this.light.actualPosition.y === 0 && this.light.actualPosition.z !== 0) {
-        this.camera.up.set(1, 0, 0);
-      } else {
-        this.camera.up.set(0, 1, 0);
-      }
-      this.camera.viewMatrix.makeView(this.light.actualPosition, this.light.target, this.camera.up);
       this.onPropertyChanged("viewMatrix", this.camera.viewMatrix);
     }
     /**
@@ -11900,8 +12229,8 @@ fn getPCFBaseShadowContribution(
   class DirectionalLight extends Light {
     /**
      * DirectionalLight constructor
-     * @param renderer - {@link CameraRenderer} used to create this {@link DirectionalLight}.
-     * @param parameters - {@link DirectionalLightBaseParams | parameters} used to create this {@link DirectionalLight}.
+     * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link DirectionalLight}.
+     * @param parameters - {@link DirectionalLightBaseParams} used to create this {@link DirectionalLight}.
      */
     constructor(renderer, {
       label = "DirectionalLight",
@@ -11924,12 +12253,15 @@ fn getPCFBaseShadowContribution(
         target,
         shadow
       };
-      this.position.copy(position);
       __privateSet$e(this, _direction$1, new Vec3());
-      this.target = target;
+      this.position.copy(position);
+      this.target = new Vec3();
       this.target.onChange(() => {
-        this.updateMatrixStack();
-        this.setDirection();
+        this.lookAt(this.target);
+      });
+      this.target.copy(target);
+      this.position.onChange(() => {
+        this.lookAt(this.target);
       });
       this.parent = this.renderer.scene;
       this.shadow = new DirectionalShadow(this.renderer, {
@@ -11949,7 +12281,6 @@ fn getPCFBaseShadowContribution(
       super.setRenderer(renderer);
       if (this.shadow) {
         this.shadow.setRenderer(renderer);
-        this.shadow.updateViewMatrix();
       }
     }
     /**
@@ -11961,23 +12292,28 @@ fn getPCFBaseShadowContribution(
       this.onPropertyChanged("direction", __privateGet$e(this, _direction$1));
       if (this.shadow && resetShadow) {
         this.shadow.reset();
-        this.shadow.updateViewMatrix();
       }
     }
     /**
-     * Set the {@link DirectionalLight} direction based on the {@link target} and the {@link worldMatrix} translation and update the {@link DirectionalShadow} view matrix.
+     * Set the {@link DirectionalLight} direction based on the {@link target} and the {@link worldMatrix} translation.
      */
     setDirection() {
       __privateGet$e(this, _direction$1).copy(this.target).sub(this.actualPosition).normalize();
       this.onPropertyChanged("direction", __privateGet$e(this, _direction$1));
-      this.shadow?.updateViewMatrix();
     }
-    // explicitly disable scale and transform origin transformations
-    /** @ignore */
-    applyScale() {
-    }
-    /** @ignore */
-    applyTransformOrigin() {
+    /**
+     * Rotate this {@link DirectionalLight} so it looks at the {@link Vec3 | target}.
+     * @param target - {@link Vec3} to look at. Default to `new Vec3()`.
+     */
+    lookAt(target = new Vec3()) {
+      this.updateModelMatrix();
+      this.updateWorldMatrix(true, false);
+      if (this.actualPosition.x === 0 && this.actualPosition.y !== 0 && this.actualPosition.z === 0) {
+        this.up.set(0, 0, 1);
+      } else {
+        this.up.set(0, 1, 0);
+      }
+      this.applyLookAt(this.actualPosition, target);
     }
     /**
      * If the {@link modelMatrix | model matrix} has been updated, set the new direction from the {@link worldMatrix} translation.
@@ -12001,7 +12337,7 @@ fn getPCFBaseShadowContribution(
      */
     destroy() {
       super.destroy();
-      this.shadow.destroy();
+      this.shadow?.destroy();
     }
   }
   _direction$1 = new WeakMap();
@@ -12093,8 +12429,8 @@ struct PointShadowVSOutput {
   class PointShadow extends Shadow {
     /**
      * PointShadow constructor
-     * @param renderer - {@link CameraRenderer} used to create this {@link PointShadow}.
-     * @param parameters - {@link PointShadowParams | parameters} used to create this {@link PointShadow}.
+     * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link PointShadow}.
+     * @param parameters - {@link PointShadowParams} used to create this {@link PointShadow}.
      */
     constructor(renderer, {
       light,
@@ -12147,7 +12483,7 @@ struct PointShadowVSOutput {
       for (let i = 0; i < 6; i++) {
         __privateGet$d(this, _viewMatrices).push(new Mat4());
       }
-      this.camera = new Camera({
+      this.camera = new PerspectiveCamera({
         fov: 90,
         near: 0.1,
         far: this.light.range !== 0 ? this.light.range : 150,
@@ -12186,7 +12522,7 @@ struct PointShadowVSOutput {
       this.onViewMatricesChanged();
     }
     /**
-     * Called whenever the {@link Camera#projectionMatrix | camera projectionMatrix} changed (or on reset) to update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
+     * Called whenever the {@link PerspectiveCamera#projectionMatrix | camera projectionMatrix} changed (or on reset) to update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      */
     onProjectionMatrixChanged() {
       this.onPropertyChanged("projectionMatrix", this.camera.projectionMatrix);
@@ -12277,7 +12613,7 @@ struct PointShadowVSOutput {
             // Store the cleared depth
           }
         };
-        const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
+        const passEncoder = this.depthPassTarget.renderPass.beginRenderPass(commandEncoder, renderPassDescriptor);
         passEncoder.end();
       }
       !this.renderer.production && commandEncoder.popDebugGroup();
@@ -12387,8 +12723,8 @@ struct PointShadowVSOutput {
   class PointLight extends Light {
     /**
      * PointLight constructor
-     * @param renderer - {@link CameraRenderer | CameraRenderer} used to create this {@link PointLight}.
-     * @param parameters - {@link PointLightBaseParams | parameters} used to create this {@link PointLight}.
+     * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link PointLight}.
+     * @param parameters - {@link PointLightBaseParams} used to create this {@link PointLight}.
      */
     constructor(renderer, {
       label = "PointLight",
@@ -12456,25 +12792,15 @@ struct PointShadowVSOutput {
     set range(value) {
       __privateSet$c(this, _range$1, Math.max(0, value));
       this.onPropertyChanged("range", this.range);
-      if (this.shadow) {
-        this.shadow.camera.far = this.range !== 0 ? this.range : 150;
+      if (this.shadow && this.range !== 0) {
+        this.shadow.camera.far = this.range;
       }
     }
     /**
-     * Set the {@link PointLight} position based on the {@link worldMatrix} translation and update the {@link PointShadow} view matrices.
+     * Set the {@link PointLight} position based on the {@link worldMatrix} translation.
      */
     setPosition() {
       this.onPropertyChanged("position", this.actualPosition);
-    }
-    // explicitly disable scale, transform origin and rotation transformations
-    /** @ignore */
-    applyScale() {
-    }
-    /** @ignore */
-    applyTransformOrigin() {
-    }
-    /** @ignore */
-    applyRotation() {
     }
     /**
      * If the {@link modelMatrix | model matrix} has been updated, set the new position from the {@link worldMatrix} translation.
@@ -12498,7 +12824,7 @@ struct PointShadowVSOutput {
      */
     destroy() {
       super.destroy();
-      this.shadow.destroy();
+      this.shadow?.destroy();
     }
   }
   _range$1 = new WeakMap();
@@ -12545,6 +12871,11 @@ struct SpotShadowVSOutput {
     }
   };
   class SpotShadow extends Shadow {
+    /**
+     * SpotShadow constructor
+     * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link SpotShadow}.
+     * @param parameters - {@link SpotShadowParams} used to create this {@link SpotShadow}.
+     */
     constructor(renderer, {
       light,
       intensity = 1,
@@ -12566,7 +12897,7 @@ struct SpotShadowVSOutput {
         autoRender
       });
       this.focus = 1;
-      this.camera = new Camera({
+      this.camera = new PerspectiveCamera({
         near: 0.1,
         far: this.light.range !== 0 ? this.light.range : 150,
         fov: 180 / Math.PI * 2 * this.light.angle * this.focus,
@@ -12596,7 +12927,7 @@ struct SpotShadowVSOutput {
       this.onPropertyChanged("viewMatrix", this.camera.viewMatrix);
     }
     /**
-     * Set the {@link Camera#fov | camera fov} based on the {@link SpotLight#angle | SpotLight angle}.
+     * Set the {@link PerspectiveCamera#fov | camera fov} based on the {@link SpotLight#angle | SpotLight angle}.
      */
     setCameraFov() {
       this.camera.fov = 180 / Math.PI * 2 * this.light.angle * this.focus;
@@ -12651,6 +12982,11 @@ struct SpotShadowVSOutput {
   var __privateSet$b = (obj, member, value, setter) => (__accessCheck$d(obj, member, "write to private field"), member.set(obj, value), value);
   var _direction, _angle, _penumbra, _range;
   class SpotLight extends Light {
+    /**
+     * SpotLight constructor
+     * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link SpotLight}.
+     * @param parameters - {@link SpotLightBaseParams} used to create this {@link SpotLight}.
+     */
     constructor(renderer, {
       label = "SpotLight",
       color = new Vec3(1),
@@ -12691,6 +13027,9 @@ struct SpotShadowVSOutput {
         this.lookAt(this.target);
       });
       this.target.copy(target);
+      this.position.onChange(() => {
+        this.lookAt(this.target);
+      });
       this.angle = angle;
       this.penumbra = penumbra;
       this.range = range;
@@ -12703,7 +13042,6 @@ struct SpotShadowVSOutput {
       if (shadow) {
         this.shadow.cast(shadow);
       }
-      this.shouldUpdateModelMatrix();
     }
     /**
      * Set or reset this {@link SpotLight} {@link CameraRenderer}.
@@ -12731,7 +13069,7 @@ struct SpotShadowVSOutput {
       }
     }
     /**
-     * Set the {@link SpotLight} position and direction based on the {@link target} and the {@link worldMatrix} translation and update the {@link SpotShadow} view matrix.
+     * Set the {@link SpotLight} position and direction based on the {@link target} and the {@link worldMatrix} translation.
      */
     setPositionDirection() {
       this.onPropertyChanged("position", this.actualPosition);
@@ -12784,16 +13122,9 @@ struct SpotShadowVSOutput {
     set range(value) {
       __privateSet$b(this, _range, Math.max(0, value));
       this.onPropertyChanged("range", this.range);
-      if (this.shadow) {
-        this.shadow.camera.far = this.range !== 0 ? this.range : 150;
+      if (this.shadow && this.range !== 0) {
+        this.shadow.camera.far = this.range;
       }
-    }
-    // explicitly disable scale and transform origin transformations
-    /** @ignore */
-    applyScale() {
-    }
-    /** @ignore */
-    applyTransformOrigin() {
     }
     /**
      * Rotate this {@link SpotLight} so it looks at the {@link Vec3 | target}.
@@ -12810,7 +13141,7 @@ struct SpotShadowVSOutput {
       this.applyLookAt(this.actualPosition, target);
     }
     /**
-     * If the {@link modelMatrix | model matrix} has been updated, set the new direction from the {@link worldMatrix} translation.
+     * If the {@link modelMatrix | model matrix} has been updated, set the new position and direction from the {@link worldMatrix} translation.
      */
     updateMatrixStack() {
       super.updateMatrixStack();
@@ -12831,7 +13162,7 @@ struct SpotShadowVSOutput {
      */
     destroy() {
       super.destroy();
-      this.shadow.destroy();
+      this.shadow?.destroy();
     }
   }
   _direction = new WeakMap();
@@ -13364,7 +13695,7 @@ ${this.shaders.compute.head}`;
   class Scene extends Object3D {
     /**
      * Scene constructor
-     * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Scene}
+     * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Scene}.
      */
     constructor({ renderer }) {
       super();
@@ -13372,9 +13703,9 @@ ${this.shaders.compute.head}`;
       this.renderer = renderer;
       this.computePassEntries = [];
       this.renderPassEntries = {
-        /** Array of {@link RenderPassEntry} that will handle {@link PingPongPlane}. Each {@link PingPongPlane} will be added as a distinct {@link RenderPassEntry} here */
+        /** Array of {@link RenderPassEntry} that will handle {@link PingPongPlane}. Each {@link PingPongPlane} will be added as a distinct {@link RenderPassEntry} here. */
         pingPong: [],
-        /** Array of {@link RenderPassEntry} that will render to a specific {@link RenderTarget}. Each {@link RenderTarget} will be added as a distinct {@link RenderPassEntry} here */
+        /** Array of {@link RenderPassEntry} that will render to a specific {@link RenderTarget}. Each {@link RenderTarget} will be added as a distinct {@link RenderPassEntry} here. */
         renderTarget: [],
         /** Array of {@link RenderPassEntry} containing {@link ShaderPass} that will render directly to the screen before rendering any other pass to the screen. Useful to perform "blit" pass before actually rendering the usual scene content. */
         prePass: [],
@@ -13426,7 +13757,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Get the number of meshes a {@link RenderPassEntry | render pass entry} should draw.
-     * @param renderPassEntry - The {@link RenderPassEntry | render pass entry} to test
+     * @param renderPassEntry - The {@link RenderPassEntry | render pass entry} to test.
      */
     getRenderPassEntryLength(renderPassEntry) {
       if (!renderPassEntry) {
@@ -13436,8 +13767,8 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Add a {@link ComputePass} to our scene {@link computePassEntries} array
-     * @param computePass - {@link ComputePass} to add
+     * Add a {@link ComputePass} to our scene {@link computePassEntries} array.
+     * @param computePass - {@link ComputePass} to add.
      */
     addComputePass(computePass) {
       this.computePassEntries.push(computePass);
@@ -13450,21 +13781,21 @@ ${this.shaders.compute.head}`;
       });
     }
     /**
-     * Remove a {@link ComputePass} from our scene {@link computePassEntries} array
-     * @param computePass - {@link ComputePass} to remove
+     * Remove a {@link ComputePass} from our scene {@link computePassEntries} array.
+     * @param computePass - {@link ComputePass} to remove.
      */
     removeComputePass(computePass) {
       this.computePassEntries = this.computePassEntries.filter((cP) => cP.uuid !== computePass.uuid);
     }
     /**
      * Add a {@link RenderTarget} to our scene {@link renderPassEntries} outputTarget array.
-     * Every Meshes later added to this {@link RenderTarget} will be rendered to the {@link RenderTarget#renderTexture | RenderTarget Texture} using the {@link RenderTarget#renderPass.descriptor | RenderTarget RenderPass descriptor}
-     * @param renderTarget - {@link RenderTarget} to add
+     * Every Meshes later added to this {@link RenderTarget} will be rendered to the {@link RenderTarget#renderTexture | RenderTarget Texture} using the {@link RenderTarget#renderPass.descriptor | RenderTarget RenderPass descriptor}.
+     * @param renderTarget - {@link RenderTarget} to add.
      */
     addRenderTarget(renderTarget) {
       if (!this.renderPassEntries.renderTarget.find((entry) => entry.renderPass.uuid === renderTarget.renderPass.uuid))
         this.renderPassEntries.renderTarget.push({
-          label: renderTarget.options.label,
+          label: renderTarget.options.label ? `${renderTarget.options.label} pass entry` : `RenderTarget ${renderTarget.uuid} pass entry`,
           renderPass: renderTarget.renderPass,
           renderTexture: renderTarget.renderTexture,
           onBeforeRenderPass: null,
@@ -13486,7 +13817,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Remove a {@link RenderTarget} from our scene {@link renderPassEntries} outputTarget array.
-     * @param renderTarget - {@link RenderTarget} to add
+     * @param renderTarget - {@link RenderTarget} to add.
      */
     removeRenderTarget(renderTarget) {
       this.renderPassEntries.renderTarget = this.renderPassEntries.renderTarget.filter(
@@ -13504,9 +13835,9 @@ ${this.shaders.compute.head}`;
       ) : this.renderPassEntries.screen.find((passEntry) => passEntry.renderPass.uuid === this.renderer.renderPass.uuid);
     }
     /**
-     * Get the correct {@link renderPassEntries | render pass entry} (either {@link renderPassEntries} outputTarget or {@link renderPassEntries} screen) {@link Stack} onto which this Mesh should be added, depending on whether it's projected or not
-     * @param mesh - Mesh to check
-     * @returns - the corresponding render pass entry {@link Stack}
+     * Get the correct {@link renderPassEntries | render pass entry} (either {@link renderPassEntries} outputTarget or {@link renderPassEntries} screen) {@link Stack} onto which this Mesh should be added, depending on whether it's projected or not.
+     * @param mesh - Mesh to check.
+     * @returns - The corresponding render pass entry {@link Stack}.
      */
     getMeshProjectionStack(mesh) {
       const renderPassEntry = mesh.options.useCustomScenePassEntry ? mesh.options.useCustomScenePassEntry : "transmissive" in mesh.options && mesh.options.transmissive ? this.renderer.transmissionTarget.passEntry : this.getRenderTargetPassEntry(mesh.outputTarget);
@@ -13546,8 +13877,8 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Add a Mesh to the correct {@link renderPassEntries | render pass entry} {@link Stack} array.
-     * Meshes are then ordered by their {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#index | indexes (order of creation]}, {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#index | pipeline entry indexes} and then {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#renderOrder | renderOrder}
-     * @param mesh - Mesh to add
+     * Meshes are then ordered by their {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#index | indexes (order of creation]}, {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#index | pipeline entry indexes} and then {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#renderOrder | renderOrder}.
+     * @param mesh - Mesh to add.
      */
     addMesh(mesh) {
       if (mesh.renderBundle) {
@@ -13723,8 +14054,8 @@ ${this.shaders.compute.head}`;
     /**
      * Add a {@link PingPongPlane} to our scene {@link renderPassEntries} pingPong array.
      * After rendering the {@link PingPongPlane}, we will copy the context current texture into its {@link PingPongPlane#renderTexture | renderTexture} so we'll be able to use it as an input for the next pass.
-     * @see {@link https://codesandbox.io/p/sandbox/webgpu-render-ping-pong-to-texture-use-in-quad-gwjx9p | minimal code example}
-     * @param pingPongPlane
+     * @see {@link https://codesandbox.io/p/sandbox/webgpu-render-ping-pong-to-texture-use-in-quad-gwjx9p | minimal code example}.
+     * @param pingPongPlane - {@link PingPongPlane} to add.
      */
     addPingPongPlane(pingPongPlane) {
       this.renderPassEntries.pingPong.push({
@@ -13768,7 +14099,7 @@ ${this.shaders.compute.head}`;
     /**
      * Get any rendered object or {@link RenderTarget} {@link RenderPassEntry}. Useful to override a {@link RenderPassEntry#onBeforeRenderPass | RenderPassEntry onBeforeRenderPass} or {@link RenderPassEntry#onAfterRenderPass | RenderPassEntry onAfterRenderPass} default behavior.
      * @param object - The object from which we want to get the parentMesh {@link RenderPassEntry}
-     * @returns - the {@link RenderPassEntry} if found.
+     * @returns - The {@link RenderPassEntry} if found.
      */
     getObjectRenderPassEntry(object) {
       if (object.type === "RenderTarget") {
@@ -13806,7 +14137,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Sort transparent projected meshes by their render order or distance to the camera (farther meshes should be drawn first).
-     * @param meshes - transparent projected meshes array to sort.
+     * @param meshes - Transparent projected meshes array to sort.
      */
     sortTransparentMeshes(meshes) {
       meshes.sort((meshA, meshB) => {
@@ -13825,15 +14156,15 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Here we render a {@link RenderPassEntry}:
-     * - Set its {@link RenderPass#descriptor | renderPass descriptor} view or resolveTarget and get it at as swap chain texture
-     * - Execute {@link RenderPassEntry#onBeforeRenderPass | onBeforeRenderPass} callback if specified
-     * - Begin the {@link GPURenderPassEncoder | GPU render pass encoder} using our {@link RenderPass#descriptor | renderPass descriptor}
-     * - Render the single element if specified or the render pass entry {@link Stack}: draw unprojected opaque / transparent meshes first, then set the {@link core/renderers/GPUCameraRenderer.GPUCameraRenderer#cameraLightsBindGroup | camera and lights bind group} and draw projected opaque / transparent meshes
-     * - End the {@link GPURenderPassEncoder | GPU render pass encoder}
-     * - Execute {@link RenderPassEntry#onAfterRenderPass | onAfterRenderPass} callback if specified
-     * - Reset {@link core/pipelines/PipelineManager.PipelineManager#currentPipelineIndex | pipeline manager current pipeline}
-     * @param commandEncoder - current {@link GPUCommandEncoder}
-     * @param renderPassEntry - {@link RenderPassEntry} to render
+     * - Set its {@link RenderPass#descriptor | renderPass descriptor} view or resolveTarget and get it at as swap chain texture.
+     * - Execute {@link RenderPassEntry#onBeforeRenderPass | onBeforeRenderPass} callback if specified.
+     * - Begin the {@link GPURenderPassEncoder | GPU render pass encoder} using our {@link RenderPass#descriptor | renderPass descriptor}.
+     * - Render the single element if specified or the render pass entry {@link Stack}: draw unprojected opaque / transparent meshes first, then set the {@link core/renderers/GPUCameraRenderer.GPUCameraRenderer#cameraLightsBindGroup | camera and lights bind group} and draw projected opaque / transparent meshes.
+     * - End the {@link GPURenderPassEncoder | GPU render pass encoder}.
+     * - Execute {@link RenderPassEntry#onAfterRenderPass | onAfterRenderPass} callback if specified.
+     * - Reset {@link core/pipelines/PipelineManager.PipelineManager#currentPipelineIndex | pipeline manager current pipeline}.
+     * @param commandEncoder - Current {@link GPUCommandEncoder}.
+     * @param renderPassEntry - {@link RenderPassEntry} to render.
      */
     renderSinglePassEntry(commandEncoder, renderPassEntry) {
       const swapChainTexture = renderPassEntry.renderPass.updateView(renderPassEntry.renderTexture?.texture);
@@ -13841,7 +14172,7 @@ ${this.shaders.compute.head}`;
       if (renderPassEntry.useCustomRenderPass) {
         renderPassEntry.useCustomRenderPass(commandEncoder);
       } else {
-        const pass = commandEncoder.beginRenderPass(renderPassEntry.renderPass.descriptor);
+        const pass = renderPassEntry.renderPass.beginRenderPass(commandEncoder);
         if (!this.renderer.production) {
           pass.pushDebugGroup(
             renderPassEntry.element ? `${renderPassEntry.element.options.label} render pass using ${renderPassEntry.renderPass.options.label} descriptor` : `Render stack pass using ${renderPassEntry.renderPass.options.label}${renderPassEntry.renderTexture ? " onto " + renderPassEntry.renderTexture.options.label : ""}`
@@ -13898,11 +14229,11 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Render our {@link Scene}
-     * - Execute {@link onBeforeRender} first
-     * - Then render {@link computePassEntries}
-     * - And finally render our {@link renderPassEntries}
-     * @param commandEncoder - current {@link GPUCommandEncoder}
+     * Render our {@link Scene}.
+     * - Execute {@link onBeforeRender} first.
+     * - Then render {@link computePassEntries}.
+     * - And finally render our {@link renderPassEntries}.
+     * @param commandEncoder - Current {@link GPUCommandEncoder}.
      */
     render(commandEncoder) {
       for (const computePass of this.computePassEntries) {
@@ -13921,10 +14252,11 @@ ${this.shaders.compute.head}`;
         let passDrawnCount = 0;
         this.renderPassEntries[renderPassEntryType].forEach((renderPassEntry) => {
           if (!this.getRenderPassEntryLength(renderPassEntry)) return;
-          const isSubesequentScreenPass = renderPassEntryType === "screen" && (passDrawnCount !== 0 || this.renderPassEntries.prePass.length);
-          const loadContent = renderPassEntryType === "postProPass" || renderPassEntryType === "prePass" && passDrawnCount !== 0 || isSubesequentScreenPass;
+          const isSubsequentScreenPass = renderPassEntryType === "screen" && (passDrawnCount !== 0 || this.renderPassEntries.prePass.length);
+          const loadContent = renderPassEntryType === "postProPass" || renderPassEntryType === "prePass" && passDrawnCount !== 0 || isSubsequentScreenPass;
+          const loadDepth = renderPassEntryType === "prePass" || isSubsequentScreenPass;
           renderPassEntry.renderPass.setLoadOp(loadContent ? "load" : "clear");
-          if (isSubesequentScreenPass) renderPassEntry.renderPass.setDepthLoadOp("load");
+          if (loadDepth) renderPassEntry.renderPass.setDepthLoadOp("load");
           passDrawnCount++;
           this.renderSinglePassEntry(commandEncoder, renderPassEntry);
         });
@@ -14068,6 +14400,8 @@ ${this.shaders.compute.head}`;
         top: 0,
         left: 0
       };
+      this.viewport = null;
+      this.scissorRect = null;
       this.setScene();
       this.setTasksQueues();
       this.setRendererObjects();
@@ -14116,6 +14450,78 @@ ${this.shaders.compute.head}`;
       if (this.canvas.style) {
         this.canvas.style.width = this.rectBBox.width + "px";
         this.canvas.style.height = this.rectBBox.height + "px";
+      }
+    }
+    /**
+     * Set the renderer, {@link renderPass} and {@link postProcessingPass} {@link viewport} values. Beware that if you use a {@link viewport}, you should resize it yourself so it does not overflow the `canvas` in the `onResize` callback to avoid issues.
+     * @param viewport - {@link RenderPassViewport} settings to use. Can be set to `null` to cancel the {@link viewport}.
+     */
+    setViewport(viewport = null) {
+      if (!viewport) {
+        this.viewport = null;
+        this.renderPass?.setViewport(null);
+        this.postProcessingPass?.setViewport(null);
+      } else {
+        viewport = {
+          ...{
+            width: this.canvas.width,
+            height: this.canvas.height,
+            top: 0,
+            left: 0,
+            minDepth: 0,
+            maxDepth: 1
+          },
+          ...viewport
+        };
+        let { width, height, top, left, minDepth, maxDepth } = viewport;
+        width = Math.min(width, this.canvas.width);
+        height = Math.min(height, this.canvas.height);
+        top = Math.max(0, top);
+        left = Math.max(0, left);
+        this.viewport = {
+          width,
+          height,
+          top,
+          left,
+          minDepth,
+          maxDepth
+        };
+        this.renderPass?.setViewport(this.viewport);
+        this.postProcessingPass?.setViewport(this.viewport);
+      }
+    }
+    /**
+     * Set the renderer, {@link renderPass} and {@link postProcessingPass} {@link GPURenderer#scissorRect | scissorRect} values. Beware that if you use a {@link GPURenderer#scissorRect | scissorRect}, you should resize it yourself so it does not overflow the `canvas` in the `onResize` callback to avoid issues.
+     * @param scissorRect - {@link RectBBox} settings to use. Can be set to `null` to cancel the {@link GPURenderer#scissorRect | scissorRect}.
+     */
+    setScissorRect(scissorRect = null) {
+      if (!scissorRect) {
+        this.scissorRect = null;
+        this.renderPass?.setScissorRect(null);
+        this.postProcessingPass?.setScissorRect(null);
+      } else {
+        scissorRect = {
+          ...{
+            width: this.canvas.width,
+            height: this.canvas.height,
+            top: 0,
+            left: 0
+          },
+          ...scissorRect
+        };
+        let { width, height, top, left } = scissorRect;
+        width = Math.min(width, this.canvas.width);
+        height = Math.min(height, this.canvas.height);
+        top = Math.max(0, top);
+        left = Math.max(0, left);
+        this.scissorRect = {
+          width,
+          height,
+          top,
+          left
+        };
+        this.renderPass?.setScissorRect(this.scissorRect);
+        this.postProcessingPass?.setScissorRect(this.scissorRect);
       }
     }
     /**
@@ -14899,6 +15305,7 @@ ${this.shaders.compute.head}`;
       this.bindings = {};
       __privateSet$9(this, _shouldUpdateCameraLightsBindGroup, true);
       this.lights = [];
+      this.cameraViewport = null;
       this.setCamera(camera);
       this.setCameraBinding();
       if (this.options.lights) {
@@ -14945,12 +15352,12 @@ ${this.shaders.compute.head}`;
     /* CAMERA */
     /**
      * Set the {@link camera}
-     * @param cameraParameters - {@link CameraBasePerspectiveOptions | parameters} used to create the {@link camera}
+     * @param cameraParameters - {@link PerspectiveCameraBaseOptions | parameters} used to create the {@link camera}
      */
     setCamera(cameraParameters) {
       const { width, height } = this.rectBBox;
       this.useCamera(
-        new Camera({
+        new PerspectiveCamera({
           fov: cameraParameters.fov,
           near: cameraParameters.near,
           far: cameraParameters.far,
@@ -14976,6 +15383,7 @@ ${this.shaders.compute.head}`;
       }
       this.camera = camera;
       this.camera.parent = this.scene;
+      this.resizeCamera();
       if (this.bindings.camera) {
         this.camera.onMatricesChanged = () => this.onCameraMatricesChanged();
         this.bindings.camera.inputs.view.value = this.camera.viewMatrix;
@@ -14988,7 +15396,82 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Update the {@link core/renderers/GPURenderer.ProjectedMesh | projected meshes} sizes and positions when the {@link camera} {@link Camera#position | position} changes
+     * Update the {@link cameraViewport} if needed (i.e. if the camera use a different aspect ratio than the renderer).
+     */
+    updateCameraViewport() {
+      let { width, height } = this.canvas;
+      if (this.viewport) {
+        width = Math.min(width, this.viewport.width);
+        height = Math.min(height, this.viewport.height);
+      }
+      if (this.camera instanceof PerspectiveCamera && this.camera.forceAspect) {
+        width = Math.min(width, height * this.camera.forceAspect);
+        height = Math.min(width / this.camera.forceAspect, height);
+        this.setCameraViewport({
+          width,
+          height,
+          top: (this.canvas.height - height) * 0.5,
+          left: (this.canvas.width - width) * 0.5,
+          minDepth: 0,
+          maxDepth: 1
+        });
+      } else {
+        this.setCameraViewport();
+      }
+    }
+    /**
+     * Resize the {@link camera}, first by updating the {@link cameraViewport} and then resetting the {@link camera} projection.
+     */
+    resizeCamera() {
+      this.updateCameraViewport();
+      const { width, height } = this.cameraViewport ?? this.viewport ?? this.canvas;
+      if (this.camera instanceof PerspectiveCamera) {
+        this.camera?.setPerspective({
+          width,
+          height,
+          pixelRatio: this.pixelRatio
+        });
+      } else if (this.camera instanceof OrthographicCamera) {
+        const aspect = width / height;
+        const frustumSize = this.camera.top * 2;
+        this.camera.setOrthographic({
+          left: -frustumSize * aspect / 2,
+          right: frustumSize * aspect / 2,
+          pixelRatio: this.pixelRatio
+        });
+      }
+    }
+    /**
+     * Set the {@link cameraViewport} (that should be contained within the renderer {@link viewport} if any) and update the {@link renderPass} and {@link postProcessingPass} {@link viewport} values.
+     * @param viewport - {@link RenderPassViewport} settings to use if any.
+     */
+    setCameraViewport(viewport = null) {
+      this.cameraViewport = viewport;
+      if (!this.cameraViewport) {
+        this.renderPass?.setViewport(this.viewport);
+        this.postProcessingPass?.setViewport(this.viewport);
+      } else {
+        if (this.viewport) {
+          const aspect = this.cameraViewport.width / this.cameraViewport.height;
+          this.cameraViewport.width = Math.min(this.viewport.width, this.viewport.height * aspect);
+          this.cameraViewport.height = Math.min(this.cameraViewport.width / aspect, this.viewport.height);
+          this.cameraViewport.left = Math.max(0, (this.viewport.width - this.cameraViewport.width) * 0.5);
+          this.cameraViewport.top = Math.max(0, (this.viewport.height - this.cameraViewport.height) * 0.5);
+        }
+        this.renderPass?.setViewport(this.cameraViewport);
+        this.postProcessingPass?.setViewport(this.cameraViewport);
+      }
+    }
+    /**
+     * Resize the {@link camera} whenever the {@link viewport} is updated.
+     * @param viewport - {@link RenderPassViewport} settings to use if any. Can be set to `null` to cancel the {@link viewport}.
+     */
+    setViewport(viewport = null) {
+      super.setViewport(viewport);
+      this.resizeCamera();
+    }
+    /**
+     * Update the {@link core/renderers/GPURenderer.ProjectedMesh | projected meshes} sizes and positions when the {@link camera} {@link Camera#position | position} changes.
      */
     onCameraMatricesChanged() {
       this.updateCameraBindings();
@@ -15369,20 +15852,6 @@ ${this.shaders.compute.head}`;
       });
     }
     /**
-     * Set our {@link camera} perspective matrix new parameters (fov, near plane and far plane)
-     * @param parameters - {@link CameraBasePerspectiveOptions | parameters} to use for the perspective
-     */
-    setPerspective({ fov, near, far } = {}) {
-      this.camera?.setPerspective({
-        fov,
-        near,
-        far,
-        width: this.rectBBox.width,
-        height: this.rectBBox.height,
-        pixelRatio: this.pixelRatio
-      });
-    }
-    /**
      * Set our {@link camera} {@link Camera#position | position}
      * @param position - new {@link Camera#position | position}
      */
@@ -15428,15 +15897,15 @@ ${this.shaders.compute.head}`;
      */
     resize(rectBBox = null) {
       this.setSize(rectBBox);
-      this.setPerspective();
       this._onResizeCallback && this._onResizeCallback();
+      this.resizeCamera();
       this.resizeObjects();
       this._onAfterResizeCallback && this._onAfterResizeCallback();
     }
     /* RENDER */
     /**
-     * {@link createCameraLightsBindGroup | Set the camera bind group if needed} and then call our {@link GPURenderer#render | GPURenderer render method}
-     * @param commandEncoder - current {@link GPUCommandEncoder}
+     * {@link createCameraLightsBindGroup | Set the camera bind group if needed} and then call our {@link GPURenderer#render | GPURenderer render method}.
+     * @param commandEncoder - Current {@link GPUCommandEncoder}.
      */
     render(commandEncoder) {
       if (!this.ready) return;
@@ -16333,9 +16802,20 @@ ${this.shaders.compute.head}`;
       if (!this.options.renderPass) {
         this.options.renderPass = outputPass;
       } else if (outputPass.uuid !== this.options.renderPass.uuid) {
-        throwWarning(
-          `${this.options.label} (${this.type}): Cannot add Mesh ${mesh.options.label} to this render bundle because the output render passes do not match.`
-        );
+        if (!this.renderer.production) {
+          throwWarning(
+            `${this.options.label} (${this.type}): Cannot add Mesh ${mesh.options.label} to this render bundle because the output render passes do not match.`
+          );
+        }
+        mesh.renderBundle = null;
+        return;
+      }
+      if (mesh.options.stencil) {
+        if (!this.renderer.production) {
+          throwWarning(
+            `${this.options.label} (${this.type}): Cannot add Mesh ${mesh.options.label} to this render bundle because stencil operations are not supported by render bundles.`
+          );
+        }
         mesh.renderBundle = null;
         return;
       }
@@ -19713,7 +20193,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       this.domTextures = this.domTextures.filter((t) => t.uuid !== texture.uuid);
     }
     /**
-     * Update the {@link domObjects} sizes and positions when the {@link camera} {@link core/camera/Camera.Camera#position | position} or {@link core/camera/Camera.Camera#size | size} change.
+     * Update the {@link domObjects} sizes and positions when the {@link camera} {@link core/cameras/PerspectiveCamera.PerspectiveCamera#position | position} or {@link core/cameras/PerspectiveCamera.PerspectiveCamera#size | size} changed.
      */
     onCameraMatricesChanged() {
       super.onCameraMatricesChanged();
@@ -19806,7 +20286,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
   class GPUCurtains {
     /**
      * GPUCurtains constructor
-     * @param parameters - {@link GPUCurtainsParams | parameters} used to create this {@link GPUCurtains}
+     * @param parameters - {@link GPUCurtainsParams | parameters} used to create this {@link GPUCurtains}.
      */
     constructor({
       container,
@@ -19823,16 +20303,16 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       watchScroll = true
     } = {}) {
       // callbacks / events
-      /** function assigned to the {@link onScroll} callback */
+      /** function assigned to the {@link onScroll} callback. */
       this._onScrollCallback = () => {
       };
-      /** function assigned to the {@link onError} callback */
+      /** function assigned to the {@link onError} callback. */
       this._onErrorCallback = () => {
       };
-      /** function assigned to the {@link onContextLost} callback */
+      /** function assigned to the {@link onContextLost} callback. */
       this._onContextLostCallback = () => {
       };
-      /** function assigned to the {@link onContextLost} callback */
+      /** function assigned to the {@link onContextLost} callback. */
       this._onContextDestroyedCallback = () => {
       };
       this.type = "CurtainsGPU";
@@ -19858,7 +20338,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
     }
     /**
      * Set the {@link GPUCurtains.container | container}.
-     * @param container - {@link HTMLElement} or string representing an {@link HTMLElement} selector to use
+     * @param container - {@link HTMLElement} or string representing an {@link HTMLElement} selector to use.
      */
     setContainer(container) {
       if (!container) {
@@ -19885,7 +20365,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       this.setMainRenderer();
     }
     /**
-     * Set the default {@link GPUCurtainsRenderer | renderer}
+     * Set the default {@link GPUCurtainsRenderer | renderer}.
      */
     setMainRenderer() {
       this.createCurtainsRenderer({
@@ -19902,8 +20382,8 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       });
     }
     /**
-     * Patch the options with default values before creating a {@link Renderer}
-     * @param parameters - parameters to patch
+     * Patch the options with default values before creating a {@link Renderer}.
+     * @param parameters - Parameters to patch.
      */
     patchRendererOptions(parameters) {
       if (parameters.pixelRatio === void 0) parameters.pixelRatio = this.options.pixelRatio;
@@ -19911,31 +20391,31 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       return parameters;
     }
     /**
-     * Create a new {@link GPURenderer} instance
-     * @param parameters - {@link GPURendererParams | parameters} to use
+     * Create a new {@link GPURenderer} instance.
+     * @param parameters - {@link GPURendererParams | parameters} to use.
      */
     createRenderer(parameters) {
       parameters = this.patchRendererOptions(parameters);
       return new GPURenderer({ ...parameters, deviceManager: this.deviceManager });
     }
     /**
-     * Create a new {@link GPUCameraRenderer} instance
-     * @param parameters - {@link GPUCameraRendererParams | parameters} to use
+     * Create a new {@link GPUCameraRenderer} instance.
+     * @param parameters - {@link GPUCameraRendererParams | parameters} to use.
      */
     createCameraRenderer(parameters) {
       parameters = this.patchRendererOptions(parameters);
       return new GPUCameraRenderer({ ...parameters, deviceManager: this.deviceManager });
     }
     /**
-     * Create a new {@link GPUCurtainsRenderer} instance
-     * @param parameters - {@link GPUCameraRendererParams | parameters} to use
+     * Create a new {@link GPUCurtainsRenderer} instance.
+     * @param parameters - {@link GPUCameraRendererParams | parameters} to use.
      */
     createCurtainsRenderer(parameters) {
       parameters = this.patchRendererOptions(parameters);
       return new GPUCurtainsRenderer({ ...parameters, deviceManager: this.deviceManager });
     }
     /**
-     * Set our {@link GPUDeviceManager}
+     * Set our {@link GPUDeviceManager}.
      */
     setDeviceManager() {
       this.deviceManager = new GPUDeviceManager({
@@ -19951,14 +20431,14 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       });
     }
     /**
-     * Get all created {@link Renderer}
+     * Get all created {@link Renderer}.
      * @readonly
      */
     get renderers() {
       return this.deviceManager.renderers;
     }
     /**
-     * Get the first created {@link Renderer} if any
+     * Get the first created {@link Renderer} if any.
      * @readonly
      */
     get renderer() {
@@ -19972,35 +20452,35 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       await this.deviceManager.init({ adapter, device });
     }
     /**
-     * Restore the {@link GPUDeviceManager#adapter | adapter} and {@link GPUDeviceManager#device | device}
+     * Restore the {@link GPUDeviceManager#adapter | adapter} and {@link GPUDeviceManager#device | device}.
      */
     async restoreContext() {
       await this.deviceManager.restoreDevice();
     }
     /* RENDERER TRACKED OBJECTS */
     /**
-     * Get all the created {@link PingPongPlane}
+     * Get all the created {@link PingPongPlane}.
      * @readonly
      */
     get pingPongPlanes() {
       return this.renderers?.map((renderer) => renderer.pingPongPlanes).flat();
     }
     /**
-     * Get all the created {@link ShaderPass}
+     * Get all the created {@link ShaderPass}.
      * @readonly
      */
     get shaderPasses() {
       return this.renderers?.map((renderer) => renderer.shaderPasses).flat();
     }
     /**
-     * Get all the created {@link SceneStackedMesh | meshes}
+     * Get all the created {@link SceneStackedMesh | meshes}.
      * @readonly
      */
     get meshes() {
       return this.renderers?.map((renderer) => renderer.meshes).flat();
     }
     /**
-     * Get all the created {@link DOMMesh | DOM Meshes} (including {@link Plane | planes})
+     * Get all the created {@link DOMMesh | DOM Meshes} (including {@link Plane | planes}).
      * @readonly
      */
     get domMeshes() {
@@ -20014,28 +20494,28 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       return this.renderers?.filter((renderer) => renderer instanceof GPUCurtainsRenderer).map((renderer) => renderer.domObjects).flat();
     }
     /**
-     * Get all the created {@link Plane | planes}
+     * Get all the created {@link Plane | planes}.
      * @readonly
      */
     get planes() {
       return this.domMeshes.filter((domMesh) => domMesh instanceof Plane);
     }
     /**
-     * Get all the created {@link ComputePass | compute passes}
+     * Get all the created {@link ComputePass | compute passes}.
      * @readonly
      */
     get computePasses() {
       return this.renderers?.map((renderer) => renderer.computePasses).flat();
     }
     /**
-     * Get our {@link GPUCurtainsRenderer#setPerspective | default GPUCurtainsRenderer bounding rectangle}
+     * Get our {@link GPUCurtainsRenderer#boundingRect | default GPUCurtainsRenderer bounding rectangle}.
      */
     get boundingRect() {
       return this.renderer?.boundingRect;
     }
     /* SCROLL */
     /**
-     * Set the {@link scrollManager}
+     * Set the {@link scrollManager}.
      */
     initScroll() {
       this.scrollManager = new ScrollManager({
@@ -20053,8 +20533,8 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       });
     }
     /**
-     * Update all {@link DOMMesh#updateScrollPosition | DOMMesh scroll positions}
-     * @param delta - last {@link ScrollManager#delta | scroll delta values}
+     * Update all {@link DOMMesh#updateScrollPosition | DOMMesh scroll positions}.
+     * @param delta - Last {@link ScrollManager#delta | scroll delta values}.
      */
     updateScroll(delta = { x: 0, y: 0 }) {
       this.domObjects.forEach((domObject) => {
@@ -20066,20 +20546,20 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
     }
     /**
      * Update our {@link ScrollManager#scroll | scrollManager scroll values}. Called each time the scroll has changed if {@link GPUCurtains#options.watchScroll | watchScroll option} is set to true. Could be called externally as well.
-     * @param scroll - new {@link DOMPosition | scroll values}
+     * @param scroll - New {@link DOMPosition | scroll values}.
      */
     updateScrollValues(scroll = { x: 0, y: 0 }) {
       this.scrollManager.updateScrollValues(scroll);
     }
     /**
-     * Get our {@link ScrollManager#delta | scrollManager delta values}
+     * Get our {@link ScrollManager#delta | scrollManager delta values}.
      * @readonly
      */
     get scrollDelta() {
       return this.scrollManager.delta;
     }
     /**
-     * Get our {@link ScrollManager#scroll | scrollManager scroll values}
+     * Get our {@link ScrollManager#scroll | scrollManager scroll values}.
      * @readonly
      */
     get scrollValues() {
@@ -20087,27 +20567,27 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
     }
     /* EVENTS */
     /**
-     * Called each frame before rendering
-     * @param callback - callback to run at each render
-     * @returns - our {@link GPUCurtains}
+     * Called each frame before rendering.
+     * @param callback - callback to run at each render.
+     * @returns - our {@link GPUCurtains}.
      */
     onBeforeRender(callback) {
       this.deviceManager.onBeforeRender(callback);
       return this;
     }
     /**
-     * Called each frame after rendering
-     * @param callback - callback to run at each render
-     * @returns - our {@link GPUCurtains}
+     * Called each frame after rendering.
+     * @param callback - callback to run at each render.
+     * @returns - our {@link GPUCurtains}.
      */
     onAfterRender(callback) {
       this.deviceManager.onAfterRender(callback);
       return this;
     }
     /**
-     * Called each time the {@link ScrollManager#scroll | scrollManager scroll values} changed
-     * @param callback - callback to run each time the {@link ScrollManager#scroll | scrollManager scroll values} changed
-     * @returns - our {@link GPUCurtains}
+     * Called each time the {@link ScrollManager#scroll | scrollManager scroll values} changed.
+     * @param callback - callback to run each time the {@link ScrollManager#scroll | scrollManager scroll values} changed.
+     * @returns - our {@link GPUCurtains}.
      */
     onScroll(callback) {
       if (callback) {
@@ -20116,9 +20596,9 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       return this;
     }
     /**
-     * Called if there's been an error while trying to create the {@link GPUDeviceManager#device | device}
-     * @param callback - callback to run if there's been an error while trying to create the {@link GPUDeviceManager#device | device}
-     * @returns - our {@link GPUCurtains}
+     * Called if there's been an error while trying to create the {@link GPUDeviceManager#device | device}.
+     * @param callback - callback to run if there's been an error while trying to create the {@link GPUDeviceManager#device | device}.
+     * @returns - our {@link GPUCurtains}.
      */
     onError(callback) {
       if (callback) {
@@ -20127,9 +20607,9 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       return this;
     }
     /**
-     * Called whenever the {@link GPUDeviceManager#device | device} is lost
-     * @param callback - callback to run whenever the {@link GPUDeviceManager#device | device} is lost
-     * @returns - our {@link GPUCurtains}
+     * Called whenever the {@link GPUDeviceManager#device | device} is lost.
+     * @param callback - callback to run whenever the {@link GPUDeviceManager#device | device} is lost.
+     * @returns - our {@link GPUCurtains}.
      */
     onContextLost(callback) {
       if (callback) {
@@ -20140,7 +20620,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
     /**
      * Called whenever the {@link GPUDeviceManager#device | device} has been intentionally destroyed.
      * @param callback - callback to run whenever the {@link GPUDeviceManager#device | device} has been destroyed.
-     * @returns - our {@link GPUCurtains}
+     * @returns - our {@link GPUCurtains}.
      */
     onContextDestroyed(callback) {
       if (callback) {
@@ -20149,13 +20629,13 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       return this;
     }
     /**
-     * Render our {@link GPUDeviceManager}
+     * Render our {@link GPUDeviceManager}.
      */
     render() {
       this.deviceManager.render();
     }
     /**
-     * Destroy our {@link GPUCurtains} and {@link GPUDeviceManager}
+     * Destroy our {@link GPUCurtains} and {@link GPUDeviceManager}.
      */
     destroy() {
       this.deviceManager.destroy();
@@ -20273,6 +20753,9 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
     useCamera(camera) {
       this.camera = camera;
       this.camera.lookAt(this.target);
+      this.target.onChange(() => {
+        __privateMethod$5(this, _OrbitControls_instances, update_fn).call(this);
+      });
       __privateGet$4(this, _offset).copy(this.camera.position).sub(this.target);
       __privateGet$4(this, _spherical).radius = __privateGet$4(this, _offset).length();
       __privateGet$4(this, _spherical).theta = Math.atan2(__privateGet$4(this, _offset).x, __privateGet$4(this, _offset).z);
@@ -20548,8 +21031,15 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
   rotate_fn = function(x, y) {
     tempVec2a.set(x, y);
     tempVec2b.copy(tempVec2a).sub(__privateGet$4(this, _rotateStart)).multiplyScalar(this.rotateSpeed);
-    __privateGet$4(this, _spherical).theta -= 2 * Math.PI * tempVec2b.x / this.camera.size.height;
-    __privateGet$4(this, _spherical).phi -= 2 * Math.PI * tempVec2b.y / this.camera.size.height;
+    if (this.camera instanceof PerspectiveCamera) {
+      __privateGet$4(this, _spherical).theta -= 2 * Math.PI * tempVec2b.x / this.camera.size.height;
+      __privateGet$4(this, _spherical).phi -= 2 * Math.PI * tempVec2b.y / this.camera.size.height;
+    } else if (this.camera instanceof OrthographicCamera) {
+      const height = (this.camera.top - this.camera.bottom) * 2;
+      tempVec2b.multiplyScalar(1 / height);
+      __privateGet$4(this, _spherical).theta -= 2 * Math.PI * tempVec2b.x / height;
+      __privateGet$4(this, _spherical).phi -= 2 * Math.PI * tempVec2b.y / height;
+    }
     __privateGet$4(this, _spherical).theta = Math.min(this.maxAzimuthAngle, Math.max(this.minAzimuthAngle, __privateGet$4(this, _spherical).theta));
     __privateGet$4(this, _spherical).phi = Math.min(this.maxPolarAngle, Math.max(this.minPolarAngle, __privateGet$4(this, _spherical).phi));
     __privateGet$4(this, _rotateStart).copy(tempVec2a);
@@ -20567,20 +21057,29 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
     __privateGet$4(this, _panDelta).set(0);
     tempVec3$1.copy(this.camera.position).sub(this.target);
     let targetDistance = tempVec3$1.length();
-    targetDistance *= Math.tan(this.camera.fov / 2 * Math.PI / 180);
     tempVec3$1.set(
       this.camera.modelMatrix.elements[0],
       this.camera.modelMatrix.elements[1],
       this.camera.modelMatrix.elements[2]
     );
-    tempVec3$1.multiplyScalar(-(2 * tempVec2b.x * targetDistance) / this.camera.size.height);
+    if (this.camera instanceof PerspectiveCamera) {
+      targetDistance *= Math.tan(this.camera.fov / 2 * Math.PI / 180);
+      tempVec3$1.multiplyScalar(-(2 * tempVec2b.x * targetDistance) / this.camera.size.height);
+    } else if (this.camera instanceof OrthographicCamera) {
+      targetDistance *= 1 / ((this.camera.top - this.camera.bottom) * 2);
+      tempVec3$1.multiplyScalar(-(2 * tempVec2b.x * targetDistance) / ((this.camera.right - this.camera.left) * 2));
+    }
     __privateGet$4(this, _panDelta).add(tempVec3$1);
     tempVec3$1.set(
       this.camera.modelMatrix.elements[4],
       this.camera.modelMatrix.elements[5],
       this.camera.modelMatrix.elements[6]
     );
-    tempVec3$1.multiplyScalar(2 * tempVec2b.y * targetDistance / this.camera.size.height);
+    if (this.camera instanceof PerspectiveCamera) {
+      tempVec3$1.multiplyScalar(2 * tempVec2b.y * targetDistance / this.camera.size.height);
+    } else if (this.camera instanceof OrthographicCamera) {
+      tempVec3$1.multiplyScalar(2 * tempVec2b.y * targetDistance / ((this.camera.top - this.camera.bottom) * 2));
+    }
     __privateGet$4(this, _panDelta).add(tempVec3$1);
     __privateGet$4(this, _panStart).copy(tempVec2a);
     this.target.add(__privateGet$4(this, _panDelta));
@@ -23643,22 +24142,38 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
       if (node.camera !== void 0) {
         const gltfCamera = this.gltf.cameras[node.camera];
         if (gltfCamera.type === "perspective") {
-          const minSize = Math.min(this.renderer.boundingRect.width, this.renderer.boundingRect.height);
-          const width = minSize / gltfCamera.perspective.aspectRatio;
-          const height = minSize * gltfCamera.perspective.aspectRatio;
+          let width, height;
+          if (gltfCamera.perspective.aspectRatio !== void 0) {
+            const minSize = Math.min(this.renderer.boundingRect.width, this.renderer.boundingRect.height);
+            width = minSize / gltfCamera.perspective.aspectRatio;
+            height = minSize * gltfCamera.perspective.aspectRatio;
+          } else {
+            width = this.renderer.boundingRect.width;
+            height = this.renderer.boundingRect.height;
+          }
           const fov = gltfCamera.perspective.yfov * 180 / Math.PI;
-          const camera = new Camera({
+          const camera = new PerspectiveCamera({
             fov,
             near: gltfCamera.perspective.znear,
             far: gltfCamera.perspective.zfar,
             width,
             height,
-            pixelRatio: this.renderer.pixelRatio
+            pixelRatio: this.renderer.pixelRatio,
+            ...gltfCamera.perspective.aspectRatio !== void 0 && { forceAspect: gltfCamera.perspective.aspectRatio }
           });
           camera.parent = child.node;
           this.scenesManager.cameras.push(camera);
         } else if (gltfCamera.type === "orthographic") {
-          throwWarning("GLTFScenesManager: Orthographic cameras are not supported yet.");
+          const camera = new OrthographicCamera({
+            near: gltfCamera.orthographic.znear,
+            far: gltfCamera.orthographic.zfar,
+            left: -gltfCamera.orthographic.xmag,
+            right: gltfCamera.orthographic.xmag,
+            top: gltfCamera.orthographic.ymag,
+            bottom: -gltfCamera.orthographic.ymag
+          });
+          camera.parent = child.node;
+          this.scenesManager.cameras.push(camera);
         }
       }
       if (this.gltf.animations) {
@@ -24773,7 +25288,6 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
   exports.BoxGeometry = BoxGeometry;
   exports.Buffer = Buffer;
   exports.BufferBinding = BufferBinding;
-  exports.Camera = Camera;
   exports.ComputeMaterial = ComputeMaterial;
   exports.ComputePass = ComputePass;
   exports.ComputePipelineEntry = ComputePipelineEntry;
@@ -24805,6 +25319,8 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
   exports.Mesh = Mesh;
   exports.Object3D = Object3D;
   exports.OrbitControls = OrbitControls;
+  exports.OrthographicCamera = OrthographicCamera;
+  exports.PerspectiveCamera = PerspectiveCamera;
   exports.PingPongPlane = PingPongPlane;
   exports.PipelineEntry = PipelineEntry;
   exports.PipelineManager = PipelineManager;

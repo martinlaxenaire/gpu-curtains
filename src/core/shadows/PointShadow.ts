@@ -3,6 +3,7 @@ import { CameraRenderer } from '../renderers/utils'
 import { Mat4 } from '../../math/Mat4'
 import { Vec3 } from '../../math/Vec3'
 import { Texture } from '../textures/Texture'
+import { PerspectiveCamera } from '../cameras/PerspectiveCamera'
 import { PointLight } from '../lights/PointLight'
 import { Input } from '../../types/BindGroups'
 import { RenderMaterialParams, ShaderOptions } from '../../types/Materials'
@@ -12,7 +13,6 @@ import { VertexShaderInputBaseParams } from '../shaders/full/vertex/get-vertex-s
 import { getDefaultPointShadowDepthVs } from '../shaders/full/vertex/get-default-point-shadow-depth-vertex-shader-code'
 import { getDefaultPointShadowDepthFs } from '../shaders/full/fragment/get-default-point-shadow-depth-fragment-code'
 import { Mesh } from '../meshes/Mesh'
-import { Camera } from '../camera/Camera'
 
 /**
  * Base parameters used to create a {@link PointShadow}.
@@ -44,7 +44,7 @@ export const pointShadowStruct: Record<string, Input> = {
 }
 
 /**
- * Create a shadow map from a {@link PointLight} by rendering to a depth cube texture using an array of view {@link Mat4} based on the {@link PointLight} position and a {@link Camera#projectionMatrix | Camera projectionMatrix}.
+ * Create a shadow map from a {@link PointLight} by rendering to a depth cube texture using an array of view {@link Mat4} based on the {@link PointLight} position and a {@link PerspectiveCamera#projectionMatrix | Camera projectionMatrix}.
  *
  * This type of shadow is more expensive than {@link core/shadows/DirectionalShadow.DirectionalShadow | DirectionalShadow} since its scene needs to be rendered 6 times to each face of a depth cube texture instead of once.
  */
@@ -52,8 +52,8 @@ export class PointShadow extends Shadow {
   /** {@link PointLight} associated with this {@link PointShadow}. */
   light: PointLight
 
-  /** {@link Camera} to use for shadow calculations. */
-  camera: Camera
+  /** {@link PerspectiveCamera} to use for shadow calculations. */
+  camera: PerspectiveCamera
 
   /** Options used to create this {@link PointShadow}. */
   options: PointShadowParams
@@ -76,8 +76,8 @@ export class PointShadow extends Shadow {
 
   /**
    * PointShadow constructor
-   * @param renderer - {@link CameraRenderer} used to create this {@link PointShadow}.
-   * @param parameters - {@link PointShadowParams | parameters} used to create this {@link PointShadow}.
+   * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link PointShadow}.
+   * @param parameters - {@link PointShadowParams} used to create this {@link PointShadow}.
    */
   constructor(
     renderer: CameraRenderer | GPUCurtains,
@@ -129,7 +129,7 @@ export class PointShadow extends Shadow {
       this.#viewMatrices.push(new Mat4())
     }
 
-    this.camera = new Camera({
+    this.camera = new PerspectiveCamera({
       fov: 90,
       near: 0.1,
       far: this.light.range !== 0 ? this.light.range : 150,
@@ -177,7 +177,7 @@ export class PointShadow extends Shadow {
   }
 
   /**
-   * Called whenever the {@link Camera#projectionMatrix | camera projectionMatrix} changed (or on reset) to update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
+   * Called whenever the {@link PerspectiveCamera#projectionMatrix | camera projectionMatrix} changed (or on reset) to update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
    */
   onProjectionMatrixChanged() {
     this.onPropertyChanged('projectionMatrix', this.camera.projectionMatrix)
@@ -285,7 +285,7 @@ export class PointShadow extends Shadow {
       }
 
       // Begin the render pass
-      const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor)
+      const passEncoder = this.depthPassTarget.renderPass.beginRenderPass(commandEncoder, renderPassDescriptor)
       // End the render pass (we don't need to draw anything, just clear)
       passEncoder.end()
     }

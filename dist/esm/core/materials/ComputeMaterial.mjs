@@ -4,8 +4,8 @@ import { isRenderer } from '../renderers/utils.mjs';
 class ComputeMaterial extends Material {
   /**
    * ComputeMaterial constructor
-   * @param renderer - our {@link Renderer} class object
-   * @param parameters - {@link ComputeMaterialParams | parameters} used to create our {@link ComputeMaterial}
+   * @param renderer - {@link Renderer} class object or {@link GPUCurtains} class object used to create this {@link ComputeMaterial}.
+   * @param parameters - {@link ComputeMaterialParams | parameters} used to create our {@link ComputeMaterial}.
    */
   constructor(renderer, parameters) {
     const type = "ComputeMaterial";
@@ -52,13 +52,13 @@ class ComputeMaterial extends Material {
     this.pipelineEntry = this.renderer.pipelineManager.createComputePipeline(this);
   }
   /**
-   * Compile the {@link ComputePipelineEntry}
+   * Compile the {@link ComputePipelineEntry}.
    */
   async compilePipelineEntry() {
     await this.pipelineEntry.compilePipelineEntry();
   }
   /**
-   * Check if all bind groups are ready, create them if needed, set {@link ComputePipelineEntry} bind group buffers and compile the pipeline
+   * Check if all bind groups are ready, create them if needed, set {@link ComputePipelineEntry} bind group buffers and compile the pipeline.
    */
   async compileMaterial() {
     if (this.ready) return;
@@ -71,20 +71,20 @@ class ComputeMaterial extends Material {
     }
   }
   /**
-   * Get the complete code of a given shader including all the WGSL fragment code snippets added by the pipeline
-   * @param [shaderType="compute"] - shader to get the code from
-   * @returns - The corresponding shader code
+   * Get the complete code of a given shader including all the WGSL fragment code snippets added by the pipeline. Can wait for the {@link pipelineEntry} to be compiled if that's not already the case.
+   * @param [shaderType="compute"] - Shader to get the code from.
+   * @returns - The corresponding shader code.
    */
-  getShaderCode(shaderType = "compute") {
-    return super.getShaderCode(shaderType);
+  async getShaderCode(shaderType = "compute") {
+    return await super.getShaderCode(shaderType);
   }
   /**
-   * Get the added code of a given shader, i.e. all the WGSL fragment code snippets added by the pipeline
-   * @param [shaderType="compute"] - shader to get the code from
+   * Get the added code of a given shader, i.e. all the WGSL fragment code snippets added by the pipeline. Can wait for the {@link pipelineEntry} to be compiled if that's not already the case.
+   * @param [shaderType="compute"] - Shader to get the code from
    * @returns - The corresponding shader code
    */
-  getAddedShaderCode(shaderType = "compute") {
-    return super.getAddedShaderCode(shaderType);
+  async getAddedShaderCode(shaderType = "compute") {
+    return await super.getAddedShaderCode(shaderType);
   }
   /* RENDER */
   /**
@@ -98,8 +98,8 @@ class ComputeMaterial extends Material {
   }
   /**
    * Render the material if it is ready:
-   * Set the current pipeline, set the bind groups and dispatch the work groups
-   * @param pass - current compute pass encoder
+   * Set the current pipeline, set the bind groups and dispatch the work groups.
+   * @param pass - Current compute pass encoder.
    */
   render(pass) {
     if (!this.ready) return;
@@ -115,8 +115,8 @@ class ComputeMaterial extends Material {
   }
   /* RESULT BUFFER */
   /**
-   * Copy all writable binding buffers that need it
-   * @param commandEncoder - current command encoder
+   * Copy all writable binding buffers that need it.
+   * @param commandEncoder - Current command encoder.
    */
   copyBufferToResult(commandEncoder) {
     for (const bindGroup of this.bindGroups) {
@@ -132,11 +132,11 @@ class ComputeMaterial extends Material {
     }
   }
   /**
-   * Get the {@link core/bindings/WritableBufferBinding.WritableBufferBinding#resultBuffer | result GPU buffer} content by {@link core/bindings/WritableBufferBinding.WritableBufferBinding | binding} and {@link core/bindings/bufferElements/BufferElement.BufferElement | buffer element} names
-   * @param parameters - parameters used to get the result
-   * @param parameters.bindingName - {@link core/bindings/WritableBufferBinding.WritableBufferBinding#name | binding name} from which to get the result
-   * @param parameters.bufferElementName - optional {@link core/bindings/bufferElements/BufferElement.BufferElement | buffer element} (i.e. struct member) name if the result needs to be restrained to only one element
-   * @returns - the mapped content of the {@link GPUBuffer} as a {@link Float32Array}
+   * Get the {@link core/bindings/WritableBufferBinding.WritableBufferBinding#resultBuffer | result GPU buffer} content by {@link core/bindings/WritableBufferBinding.WritableBufferBinding | binding} and {@link core/bindings/bufferElements/BufferElement.BufferElement | buffer element} names.
+   * @param parameters - Parameters used to get the result.
+   * @param parameters.bindingName - {@link core/bindings/WritableBufferBinding.WritableBufferBinding#name | binding name} from which to get the result.
+   * @param parameters.bufferElementName - Pptional {@link core/bindings/bufferElements/BufferElement.BufferElement | buffer element} (i.e. struct member) name if the result needs to be restrained to only one element.
+   * @returns - the mapped content of the {@link GPUBuffer} as a {@link Float32Array}.
    */
   async getComputeResult({
     bindingName = "",

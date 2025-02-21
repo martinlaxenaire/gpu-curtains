@@ -10,8 +10,8 @@ import { getDefaultFragmentCode } from '../shaders/full/fragment/get-default-fra
 class RenderMaterial extends Material {
   /**
    * RenderMaterial constructor
-   * @param renderer - our renderer class object
-   * @param parameters - {@link RenderMaterialParams | parameters} used to create our RenderMaterial
+   * @param renderer - {@link Renderer} class object or {@link GPUCurtains} class object used to create this {@link RenderMaterial}.
+   * @param parameters - {@link RenderMaterialParams} used to create our {@link RenderMaterial}.
    */
   constructor(renderer, parameters) {
     const type = "RenderMaterial";
@@ -45,6 +45,7 @@ class RenderMaterial extends Material {
       depthWriteEnabled,
       depthCompare,
       depthFormat,
+      stencil,
       cullMode,
       sampleCount,
       verticesOrder,
@@ -61,6 +62,17 @@ class RenderMaterial extends Material {
     if (targets && targets.length && !targets[0].format) {
       targets[0].format = this.renderer.options.context.format;
     }
+    if (stencil) {
+      if (!stencil.front) {
+        stencil.front = {};
+      }
+      if (stencil.front && !stencil.back) {
+        stencil.back = stencil.front;
+      }
+      if (!stencil.stencilReference) {
+        stencil.stencilReference = 0;
+      }
+    }
     this.options = {
       ...this.options,
       shaders,
@@ -71,6 +83,7 @@ class RenderMaterial extends Material {
         depthWriteEnabled,
         depthCompare,
         depthFormat,
+        ...stencil && { stencil },
         cullMode,
         sampleCount,
         targets,
@@ -102,7 +115,7 @@ class RenderMaterial extends Material {
     this.pipelineEntry = this.renderer.pipelineManager.createRenderPipeline(this);
   }
   /**
-   * Compile the {@link RenderPipelineEntry}
+   * Compile the {@link RenderPipelineEntry}.
    */
   async compilePipelineEntry() {
     await this.pipelineEntry.compilePipelineEntry();
@@ -122,7 +135,7 @@ class RenderMaterial extends Material {
   }
   /**
    * Set or reset one of the {@link RenderMaterialRenderingOptions | rendering options}. Should be use with great caution, because if the {@link RenderPipelineEntry#pipeline | render pipeline} has already been compiled, it can cause a pipeline flush.
-   * @param renderingOptions - new {@link RenderMaterialRenderingOptions | rendering options} properties to be set
+   * @param renderingOptions - New {@link RenderMaterialRenderingOptions | rendering options} properties to be set.
    */
   setRenderingOptions(renderingOptions = {}) {
     if (renderingOptions.transparent && renderingOptions.targets.length && !renderingOptions.targets[0].blend) {
@@ -174,8 +187,8 @@ New rendering options: ${JSON.stringify(
   }
   /* ATTRIBUTES */
   /**
-   * Compute geometry if needed and get all useful geometry properties needed to create attributes buffers
-   * @param geometry - the geometry to draw
+   * Get all useful {@link core/geometries/Geometry.Geometry | Geometry} properties needed to create attributes buffers.
+   * @param geometry - The geometry to draw.
    */
   setAttributesFromGeometry(geometry) {
     this.attributes = {
@@ -223,6 +236,17 @@ New rendering options: ${JSON.stringify(
     }
     for (let i = startBindGroupIndex; i < this.bindGroups.length; i++) {
       this.updateBindGroup(this.bindGroups[i]);
+    }
+  }
+  /**
+   * Render the material if it is ready. Call super, and the set the pass encoder stencil reference if needed.
+   * @param pass - Current pass encoder.
+   */
+  render(pass) {
+    if (!this.ready) return;
+    super.render(pass);
+    if (this.options.rendering.stencil) {
+      pass.setStencilReference(this.options.rendering.stencil.stencilReference ?? 0);
     }
   }
 }

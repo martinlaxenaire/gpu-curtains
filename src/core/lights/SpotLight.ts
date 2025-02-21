@@ -92,6 +92,11 @@ export class SpotLight extends Light {
   /** {@link SpotShadow} associated with this {@link SpotLight}. */
   shadow: SpotShadow
 
+  /**
+   * SpotLight constructor
+   * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link SpotLight}.
+   * @param parameters - {@link SpotLightBaseParams} used to create this {@link SpotLight}.
+   */
   constructor(
     renderer: CameraRenderer | GPUCurtains,
     {
@@ -120,7 +125,6 @@ export class SpotLight extends Light {
     }
 
     this.#direction = new Vec3()
-
     this.position.copy(position)
 
     this.target = new Vec3()
@@ -128,6 +132,10 @@ export class SpotLight extends Light {
       this.lookAt(this.target)
     })
     this.target.copy(target)
+
+    this.position.onChange(() => {
+      this.lookAt(this.target)
+    })
 
     this.angle = angle
     this.penumbra = penumbra
@@ -143,8 +151,6 @@ export class SpotLight extends Light {
     if (shadow) {
       this.shadow.cast(shadow)
     }
-
-    this.shouldUpdateModelMatrix()
   }
 
   /**
@@ -178,7 +184,7 @@ export class SpotLight extends Light {
   }
 
   /**
-   * Set the {@link SpotLight} position and direction based on the {@link target} and the {@link worldMatrix} translation and update the {@link SpotShadow} view matrix.
+   * Set the {@link SpotLight} position and direction based on the {@link target} and the {@link worldMatrix} translation.
    */
   setPositionDirection() {
     this.onPropertyChanged('position', this.actualPosition)
@@ -240,18 +246,10 @@ export class SpotLight extends Light {
     this.#range = Math.max(0, value)
     this.onPropertyChanged('range', this.range)
 
-    if (this.shadow) {
-      this.shadow.camera.far = this.range !== 0 ? this.range : 150
+    if (this.shadow && this.range !== 0) {
+      this.shadow.camera.far = this.range
     }
   }
-
-  // explicitly disable scale and transform origin transformations
-
-  /** @ignore */
-  applyScale() {}
-
-  /** @ignore */
-  applyTransformOrigin() {}
 
   /**
    * Rotate this {@link SpotLight} so it looks at the {@link Vec3 | target}.
@@ -272,7 +270,7 @@ export class SpotLight extends Light {
   }
 
   /**
-   * If the {@link modelMatrix | model matrix} has been updated, set the new direction from the {@link worldMatrix} translation.
+   * If the {@link modelMatrix | model matrix} has been updated, set the new position and direction from the {@link worldMatrix} translation.
    */
   updateMatrixStack() {
     super.updateMatrixStack()
@@ -296,6 +294,6 @@ export class SpotLight extends Light {
    */
   destroy() {
     super.destroy()
-    this.shadow.destroy()
+    this.shadow?.destroy()
   }
 }

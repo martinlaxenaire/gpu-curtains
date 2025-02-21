@@ -2,7 +2,7 @@
 import { PipelineManager } from '../pipelines/PipelineManager';
 import { DOMElement, DOMElementBoundingRect, RectBBox, RectSize } from '../DOM/DOMElement';
 import { Scene } from '../scenes/Scene';
-import { RenderPass, RenderPassParams } from '../renderPasses/RenderPass';
+import { RenderPass, RenderPassParams, RenderPassViewport } from '../renderPasses/RenderPass';
 import { ComputePass } from '../computePasses/ComputePass';
 import { PingPongPlane } from '../../extras/meshes/PingPongPlane';
 import { ShaderPass } from '../renderPasses/ShaderPass';
@@ -62,7 +62,7 @@ export interface GPURendererOptions extends GPURendererParams {
 }
 /** Any Mesh that is bound to a DOM Element */
 export type DOMProjectedMesh = DOMMesh | Plane;
-/** Any Mesh that is projected (i.e use a {@link core/camera/Camera.Camera | Camera} to compute a model view projection matrix) */
+/** Any Mesh that is projected (i.e use a {@link core/cameras/Camera.Camera | Camera} to compute a model view projection matrix) */
 export type ProjectedMesh = Mesh | DOMProjectedMesh;
 /** Any Mesh that can be drawn (including fullscreen quad meshes) and that will be put in the {@link Scene} meshes stacks */
 export type SceneStackedMesh = ProjectedMesh | FullscreenPlane;
@@ -128,6 +128,10 @@ export declare class GPURenderer {
     pixelRatio: number;
     /** An object defining the width, height, top and left position of the canvas. Mainly used internally. If you need to get the renderer dimensions, use {@link boundingRect} instead. */
     rectBBox: RectBBox;
+    /** Current {@link RenderPassViewport} to use to set the {@link renderPass} and {@link postProcessingPass} {@link RenderPass#viewport | RenderPass viewport} if any. */
+    viewport: RenderPassViewport | null;
+    /** Current scissor {@link RectBBox} to use to set the {@link renderPass} and {@link postProcessingPass} {@link RenderPass#scissorRect | RenderPass scissorRect} if any. */
+    scissorRect: RectBBox | null;
     /** {@link DOMElement} that will track our canvas container size */
     domElement: DOMElement | undefined;
     /** Allow to add callbacks to be executed at each render before the {@link GPUCommandEncoder} is created */
@@ -156,6 +160,16 @@ export declare class GPURenderer {
      * @param rectBBox - the optional new {@link canvas} {@link RectBBox} to set
      */
     setSize(rectBBox?: Partial<RectBBox> | null): void;
+    /**
+     * Set the renderer, {@link renderPass} and {@link postProcessingPass} {@link viewport} values. Beware that if you use a {@link viewport}, you should resize it yourself so it does not overflow the `canvas` in the `onResize` callback to avoid issues.
+     * @param viewport - {@link RenderPassViewport} settings to use. Can be set to `null` to cancel the {@link viewport}.
+     */
+    setViewport(viewport?: RenderPassViewport | null): void;
+    /**
+     * Set the renderer, {@link renderPass} and {@link postProcessingPass} {@link GPURenderer#scissorRect | scissorRect} values. Beware that if you use a {@link GPURenderer#scissorRect | scissorRect}, you should resize it yourself so it does not overflow the `canvas` in the `onResize` callback to avoid issues.
+     * @param scissorRect - {@link RectBBox} settings to use. Can be set to `null` to cancel the {@link GPURenderer#scissorRect | scissorRect}.
+     */
+    setScissorRect(scissorRect?: RectBBox | null): void;
     /**
      * Set the renderer {@link GPURenderer.pixelRatio | pixel ratio} and {@link resize} it
      * @param pixelRatio - new pixel ratio to use

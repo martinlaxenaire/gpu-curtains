@@ -75,6 +75,8 @@ class GPURenderer {
       top: 0,
       left: 0
     };
+    this.viewport = null;
+    this.scissorRect = null;
     this.setScene();
     this.setTasksQueues();
     this.setRendererObjects();
@@ -123,6 +125,78 @@ class GPURenderer {
     if (this.canvas.style) {
       this.canvas.style.width = this.rectBBox.width + "px";
       this.canvas.style.height = this.rectBBox.height + "px";
+    }
+  }
+  /**
+   * Set the renderer, {@link renderPass} and {@link postProcessingPass} {@link viewport} values. Beware that if you use a {@link viewport}, you should resize it yourself so it does not overflow the `canvas` in the `onResize` callback to avoid issues.
+   * @param viewport - {@link RenderPassViewport} settings to use. Can be set to `null` to cancel the {@link viewport}.
+   */
+  setViewport(viewport = null) {
+    if (!viewport) {
+      this.viewport = null;
+      this.renderPass?.setViewport(null);
+      this.postProcessingPass?.setViewport(null);
+    } else {
+      viewport = {
+        ...{
+          width: this.canvas.width,
+          height: this.canvas.height,
+          top: 0,
+          left: 0,
+          minDepth: 0,
+          maxDepth: 1
+        },
+        ...viewport
+      };
+      let { width, height, top, left, minDepth, maxDepth } = viewport;
+      width = Math.min(width, this.canvas.width);
+      height = Math.min(height, this.canvas.height);
+      top = Math.max(0, top);
+      left = Math.max(0, left);
+      this.viewport = {
+        width,
+        height,
+        top,
+        left,
+        minDepth,
+        maxDepth
+      };
+      this.renderPass?.setViewport(this.viewport);
+      this.postProcessingPass?.setViewport(this.viewport);
+    }
+  }
+  /**
+   * Set the renderer, {@link renderPass} and {@link postProcessingPass} {@link GPURenderer#scissorRect | scissorRect} values. Beware that if you use a {@link GPURenderer#scissorRect | scissorRect}, you should resize it yourself so it does not overflow the `canvas` in the `onResize` callback to avoid issues.
+   * @param scissorRect - {@link RectBBox} settings to use. Can be set to `null` to cancel the {@link GPURenderer#scissorRect | scissorRect}.
+   */
+  setScissorRect(scissorRect = null) {
+    if (!scissorRect) {
+      this.scissorRect = null;
+      this.renderPass?.setScissorRect(null);
+      this.postProcessingPass?.setScissorRect(null);
+    } else {
+      scissorRect = {
+        ...{
+          width: this.canvas.width,
+          height: this.canvas.height,
+          top: 0,
+          left: 0
+        },
+        ...scissorRect
+      };
+      let { width, height, top, left } = scissorRect;
+      width = Math.min(width, this.canvas.width);
+      height = Math.min(height, this.canvas.height);
+      top = Math.max(0, top);
+      left = Math.max(0, left);
+      this.scissorRect = {
+        width,
+        height,
+        top,
+        left
+      };
+      this.renderPass?.setScissorRect(this.scissorRect);
+      this.postProcessingPass?.setScissorRect(this.scissorRect);
     }
   }
   /**

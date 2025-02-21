@@ -72,8 +72,8 @@ export class Light extends Object3D {
 
   /**
    * Light constructor
-   * @param renderer - {@link CameraRenderer} used to create this {@link Light}.
-   * @param parameters - {@link LightParams | parameters} used to create this {@link Light}.
+   * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link Light}.
+   * @param parameters - {@link LightParams} used to create this {@link Light}.
    */
   constructor(
     renderer: CameraRenderer | GPUCurtains,
@@ -213,6 +213,17 @@ export class Light extends Object3D {
       this.rendererBinding = this.renderer.bindings[lightsType]
     }
   }
+
+  // explicitly disable rotation, scale and transformation origin
+
+  /** @ignore */
+  applyRotation() {}
+
+  /** @ignore */
+  applyScale() {}
+
+  /** @ignore */
+  applyTransformOrigin() {}
 
   /**
    * Called by the {@link core/scenes/Scene.Scene | Scene} before updating the matrix stack.

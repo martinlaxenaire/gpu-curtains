@@ -3,6 +3,7 @@ import { generateUUID } from '../../utils/utils'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { Texture } from '../textures/Texture'
 import { TextureSize } from '../../types/Textures'
+import { RectBBox } from '../DOM/DOMElement'
 
 /** Define the parameters of a color attachment. */
 export interface ColorAttachmentParams {
@@ -14,6 +15,14 @@ export interface ColorAttachmentParams {
   clearValue?: GPUColor
   /** Optional format of the color attachment texture. */
   targetFormat: GPUTextureFormat
+}
+
+/** Parameters used to set a {@link GPURenderPassEncoder} viewport. */
+export interface RenderPassViewport extends RectBBox {
+  /** Minimum depth value of the viewport. Default to `0`. */
+  minDepth: number
+  /** Maximum depth value of the viewport. Default to `1`. */
+  maxDepth: number
 }
 
 /**
@@ -44,14 +53,25 @@ export interface RenderPassParams {
   useDepth?: boolean
   /** Whether this {@link RenderPass} should use an already created depth texture. */
   depthTexture?: Texture
-  /** The {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#loadop | depth load operation} to perform while drawing this {@link RenderPass}. */
+  /** The {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#depthloadop | depth load operation} to perform while drawing this {@link RenderPass}. Default to `'clear`. */
   depthLoadOp?: GPULoadOp
-  /** The {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#storeop | depth store operation} to perform while drawing this {@link RenderPass}. */
+  /** The {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#depthstoreop | depth store operation} to perform while drawing this {@link RenderPass}. Default to `'store'`. */
   depthStoreOp?: GPUStoreOp
   /** The depth clear value to clear to before drawing this {@link RenderPass}. */
   depthClearValue?: number
   /** Optional format of the depth texture. */
   depthFormat?: GPUTextureFormat
+
+  /** Indicates that the depth component of the depth texture view is read only. Default to `false`. */
+  depthReadOnly?: boolean
+  /** A number indicating the value to clear view's stencil component to prior to executing the render pass. This is ignored if stencilLoadOp is not set to "clear". Default to `0`. */
+  stencilClearValue?: number
+  /** The {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#stencilloadop | stencil load operation} to perform while drawing this {@link RenderPass}. Default to `'clear`. */
+  stencilLoadOp?: GPULoadOp
+  /** The {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#stencilstoreop | stencil store operation} to perform while drawing this {@link RenderPass}. Default to `'store'`. */
+  stencilStoreOp?: GPUStoreOp
+  /** Indicates that the stencil component of the depth texture view is read only. Default to `false`. */
+  stencilReadOnly?: boolean
 }
 
 /**
@@ -80,6 +100,15 @@ export class RenderPass {
   /** The {@link RenderPass} {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#descriptor | GPURenderPassDescriptor}. */
   descriptor: GPURenderPassDescriptor
 
+  /** Viewport to set to the {@link GPURenderPassEncoder} if any. */
+  viewport: RenderPassViewport | null
+
+  /** Scissor {@link RectBBox} to use for scissors if any. */
+  scissorRect: RectBBox | null
+
+  /** Whether the {@link RenderPass} should handle stencil. Default to `false`, eventually set to `true` based on the {@link depthTexture} format. */
+  #useStencil: boolean
+
   /**
    * RenderPass constructor
    * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link RenderPass}
@@ -103,6 +132,11 @@ export class RenderPass {
       depthStoreOp = 'store' as GPUStoreOp,
       depthClearValue = 1,
       depthFormat = 'depth24plus' as GPUTextureFormat,
+      depthReadOnly = false,
+      stencilClearValue = 0,
+      stencilLoadOp = 'clear' as GPULoadOp,
+      stencilStoreOp = 'store' as GPUStoreOp,
+      stencilReadOnly = false,
     } = {} as RenderPassParams
   ) {
     this.type = 'RenderPass'
@@ -111,6 +145,11 @@ export class RenderPass {
     this.renderer = renderer
 
     this.uuid = generateUUID()
+
+    this.viewport = null
+    this.scissorRect = null
+
+    this.#useStencil = false
 
     if (useColorAttachments) {
       const defaultColorAttachment = {
@@ -145,6 +184,11 @@ export class RenderPass {
       depthStoreOp,
       depthClearValue,
       depthFormat,
+      depthReadOnly,
+      stencilClearValue,
+      stencilLoadOp,
+      stencilStoreOp,
+      stencilReadOnly,
     }
 
     // if needed, create a depth texture before our descriptor
@@ -206,6 +250,10 @@ export class RenderPass {
         usage: ['renderAttachment', 'textureBinding'],
       })
     }
+
+    if (this.depthTexture.options.format.includes('stencil')) {
+      this.#useStencil = true
+    }
   }
 
   /**
@@ -254,7 +302,6 @@ export class RenderPass {
 
   /**
    * Get the textures outputted by this {@link RenderPass}, which means the {@link viewTextures} if not multisampled, or their {@link resolveTargets} else (beware that the first resolve target might be `null` if this {@link RenderPass} should {@link RenderPassParams#renderToSwapChain | render to the swap chain}).
-   *
    * @readonly
    */
   get outputTextures(): Texture[] {
@@ -301,9 +348,58 @@ export class RenderPass {
           // the same way loadOp is working, we can specify if we want to clear or load the previous depth buffer result
           depthLoadOp: this.options.depthLoadOp,
           depthStoreOp: this.options.depthStoreOp,
+          depthReadOnly: this.options.depthReadOnly,
+          ...(this.#useStencil && {
+            stencilLoadOp: this.options.stencilLoadOp,
+            stencilStoreOp: this.options.stencilStoreOp,
+            stencilReadOnly: this.options.stencilReadOnly,
+          }),
         },
       }),
     }
+  }
+
+  /**
+   * Set the {@link viewport} to use if any.
+   * @param viewport - {@link RenderPassViewport} settings to use. Can be set to `null` to cancel the {@link viewport}.
+   */
+  setViewport(viewport: RenderPassViewport | null = null) {
+    this.viewport = viewport
+  }
+
+  /**
+   * Set the {@link scissorRect} to use if any.
+   * @param scissorRect - {@link RectBBox} size to use for scissors. Can be set to `null` to cancel the {@link scissorRect}.
+   */
+  setScissorRect(scissorRect: RectBBox | null = null) {
+    this.scissorRect = scissorRect
+  }
+
+  /**
+   * Begin the {@link GPURenderPassEncoder} and eventually set the {@link viewport} and {@link scissorRect}.
+   * @param commandEncoder - {@link GPUCommandEncoder} to use.
+   * @param descriptor - Custom {@link https://gpuweb.github.io/types/interfaces/GPURenderPassDescriptor.html | GPURenderPassDescriptor} to use if any. Default to {@link RenderPass#descriptor | descriptor}.
+   * @returns - The created {@link GPURenderPassEncoder}.
+   */
+  beginRenderPass(commandEncoder: GPUCommandEncoder, descriptor = this.descriptor): GPURenderPassEncoder {
+    const pass = commandEncoder.beginRenderPass(descriptor)
+
+    if (this.viewport) {
+      pass.setViewport(
+        this.viewport.left,
+        this.viewport.top,
+        this.viewport.width,
+        this.viewport.height,
+        this.viewport.minDepth,
+        this.viewport.maxDepth
+      )
+    }
+
+    if (this.scissorRect) {
+      pass.setScissorRect(this.scissorRect.left, this.scissorRect.top, this.scissorRect.width, this.scissorRect.height)
+    }
+
+    return pass
   }
 
   /**
@@ -311,6 +407,7 @@ export class RenderPass {
    */
   resize() {
     // reassign textures
+    // they have actually been resized beforehand by the renderer
     if (this.options.useDepth) {
       this.descriptor.depthStencilAttachment.view = this.depthTexture.texture.createView({
         label: this.depthTexture.options.label + ' view',

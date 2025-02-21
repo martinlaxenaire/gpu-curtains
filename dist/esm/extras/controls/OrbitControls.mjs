@@ -1,6 +1,8 @@
 import { Vec2 } from '../../math/Vec2.mjs';
 import { Vec3 } from '../../math/Vec3.mjs';
 import { throwWarning } from '../../utils/utils.mjs';
+import { PerspectiveCamera } from '../../core/cameras/PerspectiveCamera.mjs';
+import { OrthographicCamera } from '../../core/cameras/OrthographicCamera.mjs';
 
 var __typeError = (msg) => {
   throw TypeError(msg);
@@ -112,6 +114,9 @@ class OrbitControls {
   useCamera(camera) {
     this.camera = camera;
     this.camera.lookAt(this.target);
+    this.target.onChange(() => {
+      __privateMethod(this, _OrbitControls_instances, update_fn).call(this);
+    });
     __privateGet(this, _offset).copy(this.camera.position).sub(this.target);
     __privateGet(this, _spherical).radius = __privateGet(this, _offset).length();
     __privateGet(this, _spherical).theta = Math.atan2(__privateGet(this, _offset).x, __privateGet(this, _offset).z);
@@ -387,8 +392,15 @@ update_fn = function() {
 rotate_fn = function(x, y) {
   tempVec2a.set(x, y);
   tempVec2b.copy(tempVec2a).sub(__privateGet(this, _rotateStart)).multiplyScalar(this.rotateSpeed);
-  __privateGet(this, _spherical).theta -= 2 * Math.PI * tempVec2b.x / this.camera.size.height;
-  __privateGet(this, _spherical).phi -= 2 * Math.PI * tempVec2b.y / this.camera.size.height;
+  if (this.camera instanceof PerspectiveCamera) {
+    __privateGet(this, _spherical).theta -= 2 * Math.PI * tempVec2b.x / this.camera.size.height;
+    __privateGet(this, _spherical).phi -= 2 * Math.PI * tempVec2b.y / this.camera.size.height;
+  } else if (this.camera instanceof OrthographicCamera) {
+    const height = (this.camera.top - this.camera.bottom) * 2;
+    tempVec2b.multiplyScalar(1 / height);
+    __privateGet(this, _spherical).theta -= 2 * Math.PI * tempVec2b.x / height;
+    __privateGet(this, _spherical).phi -= 2 * Math.PI * tempVec2b.y / height;
+  }
   __privateGet(this, _spherical).theta = Math.min(this.maxAzimuthAngle, Math.max(this.minAzimuthAngle, __privateGet(this, _spherical).theta));
   __privateGet(this, _spherical).phi = Math.min(this.maxPolarAngle, Math.max(this.minPolarAngle, __privateGet(this, _spherical).phi));
   __privateGet(this, _rotateStart).copy(tempVec2a);
@@ -406,20 +418,29 @@ pan_fn = function(x, y) {
   __privateGet(this, _panDelta).set(0);
   tempVec3.copy(this.camera.position).sub(this.target);
   let targetDistance = tempVec3.length();
-  targetDistance *= Math.tan(this.camera.fov / 2 * Math.PI / 180);
   tempVec3.set(
     this.camera.modelMatrix.elements[0],
     this.camera.modelMatrix.elements[1],
     this.camera.modelMatrix.elements[2]
   );
-  tempVec3.multiplyScalar(-(2 * tempVec2b.x * targetDistance) / this.camera.size.height);
+  if (this.camera instanceof PerspectiveCamera) {
+    targetDistance *= Math.tan(this.camera.fov / 2 * Math.PI / 180);
+    tempVec3.multiplyScalar(-(2 * tempVec2b.x * targetDistance) / this.camera.size.height);
+  } else if (this.camera instanceof OrthographicCamera) {
+    targetDistance *= 1 / ((this.camera.top - this.camera.bottom) * 2);
+    tempVec3.multiplyScalar(-(2 * tempVec2b.x * targetDistance) / ((this.camera.right - this.camera.left) * 2));
+  }
   __privateGet(this, _panDelta).add(tempVec3);
   tempVec3.set(
     this.camera.modelMatrix.elements[4],
     this.camera.modelMatrix.elements[5],
     this.camera.modelMatrix.elements[6]
   );
-  tempVec3.multiplyScalar(2 * tempVec2b.y * targetDistance / this.camera.size.height);
+  if (this.camera instanceof PerspectiveCamera) {
+    tempVec3.multiplyScalar(2 * tempVec2b.y * targetDistance / this.camera.size.height);
+  } else if (this.camera instanceof OrthographicCamera) {
+    tempVec3.multiplyScalar(2 * tempVec2b.y * targetDistance / ((this.camera.top - this.camera.bottom) * 2));
+  }
   __privateGet(this, _panDelta).add(tempVec3);
   __privateGet(this, _panStart).copy(tempVec2a);
   this.target.add(__privateGet(this, _panDelta));

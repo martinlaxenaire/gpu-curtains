@@ -9,8 +9,8 @@ import { Mat4 } from '../../math/Mat4.mjs';
 import { Geometry } from '../../core/geometries/Geometry.mjs';
 import { IndexedGeometry } from '../../core/geometries/IndexedGeometry.mjs';
 import { LitMesh } from '../meshes/LitMesh.mjs';
-import { Camera } from '../../core/camera/Camera.mjs';
-import { throwWarning } from '../../utils/utils.mjs';
+import { OrthographicCamera } from '../../core/cameras/OrthographicCamera.mjs';
+import { PerspectiveCamera } from '../../core/cameras/PerspectiveCamera.mjs';
 import { BufferBinding } from '../../core/bindings/BufferBinding.mjs';
 import { KeyframesAnimation } from '../animations/KeyframesAnimation.mjs';
 import { TargetsAnimationsManager } from '../animations/TargetsAnimationsManager.mjs';
@@ -627,22 +627,38 @@ const _GLTFScenesManager = class _GLTFScenesManager {
     if (node.camera !== void 0) {
       const gltfCamera = this.gltf.cameras[node.camera];
       if (gltfCamera.type === "perspective") {
-        const minSize = Math.min(this.renderer.boundingRect.width, this.renderer.boundingRect.height);
-        const width = minSize / gltfCamera.perspective.aspectRatio;
-        const height = minSize * gltfCamera.perspective.aspectRatio;
+        let width, height;
+        if (gltfCamera.perspective.aspectRatio !== void 0) {
+          const minSize = Math.min(this.renderer.boundingRect.width, this.renderer.boundingRect.height);
+          width = minSize / gltfCamera.perspective.aspectRatio;
+          height = minSize * gltfCamera.perspective.aspectRatio;
+        } else {
+          width = this.renderer.boundingRect.width;
+          height = this.renderer.boundingRect.height;
+        }
         const fov = gltfCamera.perspective.yfov * 180 / Math.PI;
-        const camera = new Camera({
+        const camera = new PerspectiveCamera({
           fov,
           near: gltfCamera.perspective.znear,
           far: gltfCamera.perspective.zfar,
           width,
           height,
-          pixelRatio: this.renderer.pixelRatio
+          pixelRatio: this.renderer.pixelRatio,
+          ...gltfCamera.perspective.aspectRatio !== void 0 && { forceAspect: gltfCamera.perspective.aspectRatio }
         });
         camera.parent = child.node;
         this.scenesManager.cameras.push(camera);
       } else if (gltfCamera.type === "orthographic") {
-        throwWarning("GLTFScenesManager: Orthographic cameras are not supported yet.");
+        const camera = new OrthographicCamera({
+          near: gltfCamera.orthographic.znear,
+          far: gltfCamera.orthographic.zfar,
+          left: -gltfCamera.orthographic.xmag,
+          right: gltfCamera.orthographic.xmag,
+          top: gltfCamera.orthographic.ymag,
+          bottom: -gltfCamera.orthographic.ymag
+        });
+        camera.parent = child.node;
+        this.scenesManager.cameras.push(camera);
       }
     }
     if (this.gltf.animations) {

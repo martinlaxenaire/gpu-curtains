@@ -14,7 +14,8 @@ import { IndexedGeometry } from '../../core/geometries/IndexedGeometry'
 import { TypedArray, TypedArrayConstructor } from '../../core/bindings/utils'
 import { GeometryParams, VertexBufferAttribute, VertexBufferAttributeParams } from '../../types/Geometries'
 import { LitMesh, LitMeshMaterialUniformParams, LitMeshParameters } from '../meshes/LitMesh'
-import { Camera } from '../../core/camera/Camera'
+import { OrthographicCamera } from '../../core/cameras/OrthographicCamera'
+import { PerspectiveCamera } from '../../core/cameras/PerspectiveCamera'
 import {
   ChildDescriptor,
   MeshDescriptor,
@@ -69,7 +70,7 @@ const GL = WebGLRenderingContext
  *     - [x] Linear
  *     - [x] CubicSpline
  * - [x] Cameras
- *   - [ ] OrthographicCamera
+ *   - [x] OrthographicCamera
  *   - [x] PerspectiveCamera
  * - [x] Materials
  * - [x] Skins
@@ -855,27 +856,45 @@ export class GLTFScenesManager {
       const gltfCamera = this.gltf.cameras[node.camera]
 
       if (gltfCamera.type === 'perspective') {
-        const minSize = Math.min(this.renderer.boundingRect.width, this.renderer.boundingRect.height)
-        const width = minSize / gltfCamera.perspective.aspectRatio
-        const height = minSize * gltfCamera.perspective.aspectRatio
+        let width, height
+
+        if (gltfCamera.perspective.aspectRatio !== undefined) {
+          const minSize = Math.min(this.renderer.boundingRect.width, this.renderer.boundingRect.height)
+          width = minSize / gltfCamera.perspective.aspectRatio
+          height = minSize * gltfCamera.perspective.aspectRatio
+        } else {
+          width = this.renderer.boundingRect.width
+          height = this.renderer.boundingRect.height
+        }
+
         const fov = (gltfCamera.perspective.yfov * 180) / Math.PI
 
-        const camera = new Camera({
+        const camera = new PerspectiveCamera({
           fov,
           near: gltfCamera.perspective.znear,
           far: gltfCamera.perspective.zfar,
           width,
           height,
           pixelRatio: this.renderer.pixelRatio,
+          ...(gltfCamera.perspective.aspectRatio !== undefined && { forceAspect: gltfCamera.perspective.aspectRatio }),
         })
 
         camera.parent = child.node
 
         this.scenesManager.cameras.push(camera)
       } else if (gltfCamera.type === 'orthographic') {
-        // TODO orthographic not supported for now
-        // since they're not implemented (yet?)
-        throwWarning('GLTFScenesManager: Orthographic cameras are not supported yet.')
+        const camera = new OrthographicCamera({
+          near: gltfCamera.orthographic.znear,
+          far: gltfCamera.orthographic.zfar,
+          left: -gltfCamera.orthographic.xmag,
+          right: gltfCamera.orthographic.xmag,
+          top: gltfCamera.orthographic.ymag,
+          bottom: -gltfCamera.orthographic.ymag,
+        })
+
+        camera.parent = child.node
+
+        this.scenesManager.cameras.push(camera)
       }
     }
 

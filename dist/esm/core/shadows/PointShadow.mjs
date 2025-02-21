@@ -2,9 +2,9 @@ import { shadowStruct, Shadow } from './Shadow.mjs';
 import { Mat4 } from '../../math/Mat4.mjs';
 import { Vec3 } from '../../math/Vec3.mjs';
 import { Texture } from '../textures/Texture.mjs';
+import { PerspectiveCamera } from '../cameras/PerspectiveCamera.mjs';
 import { getDefaultPointShadowDepthVs } from '../shaders/full/vertex/get-default-point-shadow-depth-vertex-shader-code.mjs';
 import { getDefaultPointShadowDepthFs } from '../shaders/full/fragment/get-default-point-shadow-depth-fragment-code.mjs';
-import { Camera } from '../camera/Camera.mjs';
 
 var __typeError = (msg) => {
   throw TypeError(msg);
@@ -36,8 +36,8 @@ const pointShadowStruct = {
 class PointShadow extends Shadow {
   /**
    * PointShadow constructor
-   * @param renderer - {@link CameraRenderer} used to create this {@link PointShadow}.
-   * @param parameters - {@link PointShadowParams | parameters} used to create this {@link PointShadow}.
+   * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link PointShadow}.
+   * @param parameters - {@link PointShadowParams} used to create this {@link PointShadow}.
    */
   constructor(renderer, {
     light,
@@ -90,7 +90,7 @@ class PointShadow extends Shadow {
     for (let i = 0; i < 6; i++) {
       __privateGet(this, _viewMatrices).push(new Mat4());
     }
-    this.camera = new Camera({
+    this.camera = new PerspectiveCamera({
       fov: 90,
       near: 0.1,
       far: this.light.range !== 0 ? this.light.range : 150,
@@ -129,7 +129,7 @@ class PointShadow extends Shadow {
     this.onViewMatricesChanged();
   }
   /**
-   * Called whenever the {@link Camera#projectionMatrix | camera projectionMatrix} changed (or on reset) to update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
+   * Called whenever the {@link PerspectiveCamera#projectionMatrix | camera projectionMatrix} changed (or on reset) to update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
    */
   onProjectionMatrixChanged() {
     this.onPropertyChanged("projectionMatrix", this.camera.projectionMatrix);
@@ -220,7 +220,7 @@ class PointShadow extends Shadow {
           // Store the cleared depth
         }
       };
-      const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
+      const passEncoder = this.depthPassTarget.renderPass.beginRenderPass(commandEncoder, renderPassDescriptor);
       passEncoder.end();
     }
     !this.renderer.production && commandEncoder.popDebugGroup();

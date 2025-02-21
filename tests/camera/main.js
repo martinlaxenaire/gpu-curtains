@@ -1,12 +1,19 @@
 // Goals of this test:
-// - test the GPUDeviceManager and GPUCameraRenderer without the use of GPUCurtains class
-// - test camera position, rotationMatrix, lookAt, fov
+// - test various cameras, position, rotation, lookAt, fov
 // - test frustum culling
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
-  const { BoxGeometry, GPUCameraRenderer, Camera, GPUDeviceManager, Mesh, PlaneGeometry, Vec2, Vec3 } = await import(
-    /* @vite-ignore */ path
-  )
+  const {
+    BoxGeometry,
+    GPUCameraRenderer,
+    PerspectiveCamera,
+    OrthographicCamera,
+    GPUDeviceManager,
+    Mesh,
+    PlaneGeometry,
+    Vec2,
+    Vec3,
+  } = await import(/* @vite-ignore */ path)
 
   // create a device manager
   const gpuDeviceManager = new GPUDeviceManager({
@@ -27,7 +34,7 @@ window.addEventListener('load', async () => {
 
   const firstCamera = gpuCameraRenderer.camera
 
-  const secondCamera = new Camera({
+  const secondCamera = new PerspectiveCamera({
     width: gpuCameraRenderer.boundingRect.width,
     height: gpuCameraRenderer.boundingRect.height,
   })
@@ -36,6 +43,26 @@ window.addEventListener('load', async () => {
   secondCamera.position.y = 10
   secondCamera.position.z = 10
   secondCamera.lookAt(lookAt)
+
+  const aspect = gpuCameraRenderer.boundingRect.width / gpuCameraRenderer.boundingRect.height
+  const frustumSize = 10
+
+  const orthoCamera = new OrthographicCamera({
+    left: (-frustumSize * aspect) / 2,
+    right: (frustumSize * aspect) / 2,
+    top: frustumSize / 2,
+    bottom: -frustumSize / 2,
+    near: 0.0001,
+  })
+
+  orthoCamera.position.set(0, 2, 5)
+  orthoCamera.lookAt(lookAt)
+
+  const cameras = {
+    Default: firstCamera,
+    'High perspective': secondCamera,
+    Orthographic: orthoCamera,
+  }
 
   // now our scene
   const floorVs = `
@@ -175,15 +202,12 @@ window.addEventListener('load', async () => {
   const { camera } = gpuCameraRenderer
 
   gui
-    .add({ useSecondCamera: false }, 'useSecondCamera')
+    .add({ activeCamera: 'Default' }, 'activeCamera', cameras)
+    .name('Active camera')
     .onChange((value) => {
-      if (value) {
-        gpuCameraRenderer.useCamera(secondCamera)
-      } else {
-        gpuCameraRenderer.useCamera(firstCamera)
-      }
+      console.log(value)
+      gpuCameraRenderer.useCamera(value)
     })
-    .name('Use second camera')
 
   const perspectiveFolder = gui.addFolder('Perspective')
   perspectiveFolder.add(camera, 'fov', 1, 179, 1).name('Field of view')

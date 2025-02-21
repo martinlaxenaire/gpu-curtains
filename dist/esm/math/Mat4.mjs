@@ -610,14 +610,14 @@ class Mat4 {
    *  * the given the left, right, bottom, and top dimensions to -1 +1 in x, and y
    *  * and 0 to +1 in z.
    *
-   * @param parameters - {@link OrthographicProjectionParams | parameters} used to create the camera orthographic matrix.
+   * @param parameters - {@link OrthographicCameraBaseOptions | parameters} used to create the camera orthographic matrix.
    * @returns - the camera orthographic {@link Mat4} matrix.
    */
   makeOrthographic({
-    left = -5,
-    right = 5,
-    bottom = -5,
-    top = 5,
+    left = -1,
+    right = 1,
+    bottom = -1,
+    top = 1,
     near = 0.1,
     far = 50
   }) {

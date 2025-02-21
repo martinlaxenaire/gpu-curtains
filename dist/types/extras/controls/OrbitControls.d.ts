@@ -1,4 +1,4 @@
-import { Camera } from '../../core/camera/Camera';
+import { Camera } from '../../core/cameras/Camera';
 import { Vec3 } from '../../math/Vec3';
 /** Defines the base parameters used to set / reset an {@link OrbitControls}. */
 export interface OrbitControlsBaseParams {

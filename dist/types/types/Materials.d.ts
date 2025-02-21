@@ -125,6 +125,15 @@ export interface RenderMaterialBaseRenderingOptions {
      *
      */
     targets: GPUColorTargetState[];
+    /** Define the stencil operations to use if any. */
+    stencil?: {
+        /** Defines how stencil comparisons and operations are performed for front-facing primitives. */
+        front: GPUStencilFaceState;
+        /** Defines how stencil comparisons and operations are performed for back-facing primitives. If undefined, will fall back to `front` values. */
+        back?: GPUStencilFaceState;
+        /** Set the {@link https://developer.mozilla.org/en-US/docs/Web/API/GPURenderPassEncoder/setStencilReference#reference | GPURenderPassEncoder stencil reference} value used during stencil tests if any. Default to `0x000000` if a stencil is used. */
+        stencilReference?: GPUStencilValue | null;
+    };
 }
 /** Rendering options to send to the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline}. */
 export interface RenderMaterialRenderingOptions extends RenderMaterialBaseRenderingOptions {

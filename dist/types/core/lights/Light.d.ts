@@ -53,8 +53,8 @@ export declare class Light extends Object3D {
     _onBeforeRenderCallback: () => void;
     /**
      * Light constructor
-     * @param renderer - {@link CameraRenderer} used to create this {@link Light}.
-     * @param parameters - {@link LightParams | parameters} used to create this {@link Light}.
+     * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link Light}.
+     * @param parameters - {@link LightParams} used to create this {@link Light}.
      */
     constructor(renderer: CameraRenderer | GPUCurtains, { label, color, intensity, type }?: LightParams);
     /**
@@ -97,6 +97,12 @@ export declare class Light extends Object3D {
      * @param lightsType - {@link type} of light.
      */
     onMaxLightOverflow(lightsType: LightsType): void;
+    /** @ignore */
+    applyRotation(): void;
+    /** @ignore */
+    applyScale(): void;
+    /** @ignore */
+    applyTransformOrigin(): void;
     /**
      * Called by the {@link core/scenes/Scene.Scene | Scene} before updating the matrix stack.
      */

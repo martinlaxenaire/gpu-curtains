@@ -8,7 +8,7 @@ import { generateUUID } from '../../utils/utils.mjs';
 class Material {
   /**
    * Material constructor
-   * @param renderer - our renderer class object.
+   * @param renderer - {@link Renderer} class object or {@link GPUCurtains} class object used to create this {@link Material}.
    * @param parameters - {@link types/Materials.MaterialParams | parameters} used to create our Material.
    */
   constructor(renderer, parameters) {
@@ -50,7 +50,7 @@ class Material {
     }
   }
   /**
-   * Check if all bind groups are ready, and create them if needed
+   * Check if all bind groups are ready, and create them if needed.
    */
   compileMaterial() {
     const texturesBindGroupLength = this.texturesBindGroup.bindings.length ? 1 : 0;
@@ -60,7 +60,7 @@ class Material {
     }
   }
   /**
-   * Get whether the renderer is ready, our pipeline entry and pipeline have been created and successfully compiled
+   * Get whether the renderer is ready, our pipeline entry and pipeline have been created and successfully compiled.
    * @readonly
    */
   get ready() {
@@ -83,7 +83,7 @@ class Material {
   }
   /**
    * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been lost to prepare everything for restoration.
-   * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to render
+   * Basically set all the {@link GPUBuffer} to `null`, so they will be reset next time we try to render.
    */
   loseContext() {
     for (const texture of this.textures) {
@@ -121,12 +121,11 @@ class Material {
     });
   }
   /**
-   * Get the complete code of a given shader including all the WGSL fragment code snippets added by the pipeline
-   * @param [shaderType="full"] - shader to get the code from
-   * @returns - The corresponding shader code
+   * Get the complete code of a given shader including all the WGSL fragment code snippets added by the pipeline. Can wait for the {@link pipelineEntry} to be compiled if that's not already the case.
+   * @param [shaderType="full"] - Shader to get the code from.
+   * @returns - The corresponding shader code.
    */
-  getShaderCode(shaderType = "full") {
-    if (!this.pipelineEntry) return "";
+  async getShaderCode(shaderType = "full") {
     shaderType = (() => {
       switch (shaderType) {
         case "vertex":
@@ -138,15 +137,28 @@ class Material {
           return "full";
       }
     })();
-    return this.pipelineEntry.shaders[shaderType].code;
+    if (this.pipelineEntry) {
+      return this.pipelineEntry.shaders[shaderType].code;
+    } else {
+      return new Promise((resolve) => {
+        const taskId = this.renderer.onBeforeRenderScene.add(
+          () => {
+            if (this.pipelineEntry) {
+              this.renderer.onBeforeRenderScene.remove(taskId);
+              resolve(this.pipelineEntry.shaders[shaderType].code);
+            }
+          },
+          { once: false }
+        );
+      });
+    }
   }
   /**
-   * Get the added code of a given shader, i.e. all the WGSL fragment code snippets added by the pipeline
-   * @param [shaderType="vertex"] - shader to get the code from
-   * @returns - The corresponding shader code
+   * Get the added code of a given shader, i.e. all the WGSL fragment code snippets added by the pipeline. Can wait for the {@link pipelineEntry} to be compiled if that's not already the case.
+   * @param [shaderType="vertex"] - Shader to get the code from.
+   * @returns - The corresponding shader code.
    */
-  getAddedShaderCode(shaderType = "vertex") {
-    if (!this.pipelineEntry) return "";
+  async getAddedShaderCode(shaderType = "vertex") {
     shaderType = (() => {
       switch (shaderType) {
         case "vertex":
@@ -157,11 +169,25 @@ class Material {
           return "vertex";
       }
     })();
-    return this.pipelineEntry.shaders[shaderType].head;
+    if (this.pipelineEntry) {
+      return this.pipelineEntry.shaders[shaderType].head;
+    } else {
+      return new Promise((resolve) => {
+        const taskId = this.renderer.onBeforeRenderScene.add(
+          () => {
+            if (this.pipelineEntry) {
+              this.renderer.onBeforeRenderScene.remove(taskId);
+              resolve(this.pipelineEntry.shaders[shaderType].head);
+            }
+          },
+          { once: false }
+        );
+      });
+    }
   }
   /* BIND GROUPS */
   /**
-   * Prepare and set our bind groups based on inputs and bindGroups Material parameters
+   * Prepare and set our bind groups based on inputs and bindGroups Material parameters.
    */
   setBindGroups() {
     this.uniforms = {};
@@ -186,7 +212,7 @@ class Material {
     });
   }
   /**
-   * Get the main {@link TextureBindGroup | texture bind group} created by this {@link Material} to manage all textures related struct
+   * Get the main {@link TextureBindGroup | texture bind group} created by this {@link Material} to manage all textures related struct.
    * @readonly
    */
   get texturesBindGroup() {
@@ -194,7 +220,7 @@ class Material {
   }
   /**
    * Process all {@link BindGroup} struct and add them to the corresponding objects based on their binding types. Also store them in a inputsBindings array to facilitate further access to struct.
-   * @param bindGroup - The {@link BindGroup} to process
+   * @param bindGroup - The {@link BindGroup} to process.
    */
   processBindGroupBindings(bindGroup) {
     for (const inputBinding of bindGroup.bindings) {
@@ -212,7 +238,7 @@ class Material {
     }
   }
   /**
-   * Create the bind groups if they need to be created
+   * Create the bind groups if they need to be created.
    */
   createBindGroups() {
     if (this.texturesBindGroup.shouldCreateBindGroup) {
@@ -243,13 +269,13 @@ class Material {
     });
   }
   /**
-   * Clones a {@link BindGroup} from a list of buffers
-   * Useful to create a new bind group with already created buffers, but swapped
-   * @param parameters - parameters used to clone the {@link BindGroup | bind group}
-   * @param parameters.bindGroup - the BindGroup to clone
-   * @param parameters.bindings - our input binding buffers
-   * @param parameters.keepLayout - whether we should keep original bind group layout or not
-   * @returns - the cloned BindGroup
+   * Clones a {@link BindGroup} from a list of buffers.
+   * Useful to create a new{@link BindGroup} with already created buffers, but swapped.
+   * @param parameters - parameters used to clone the {@link BindGroup}.
+   * @param parameters.bindGroup - the {@link BindGroup} to clone.
+   * @param parameters.bindings - our input binding buffers.
+   * @param parameters.keepLayout - whether we should keep original bind group layout or not.
+   * @returns - the cloned {@link BindGroup}.
    */
   cloneBindGroup({
     bindGroup,
@@ -263,8 +289,8 @@ class Material {
   }
   /**
    * Get a corresponding {@link BindGroup} or {@link TextureBindGroup} from one of its binding name/key
-   * @param bindingName - the binding name/key to look for
-   * @returns - bind group found or null if not found
+   * @param bindingName - the binding name/key to look for.
+   * @returns - {@link BindGroup} found or null if not found.
    */
   getBindGroupByBindingName(bindingName = "") {
     return (this.ready ? this.bindGroups : this.inputsBindGroups).find((bindGroup) => {
@@ -272,8 +298,8 @@ class Material {
     });
   }
   /**
-   * Destroy a bind group, only if it is not used by another object
-   * @param bindGroup - bind group to eventually destroy
+   * Destroy a {@link BindGroup}, only if it is not used by another object.
+   * @param bindGroup - {@link BindGroup} to eventually destroy.
    */
   destroyBindGroup(bindGroup) {
     bindGroup.consumers.delete(this.uuid);
@@ -282,7 +308,7 @@ class Material {
     }
   }
   /**
-   * Destroy all bind groups
+   * Destroy all {@link BindGroup}.
    */
   destroyBindGroups() {
     this.bindGroups.forEach((bindGroup) => this.destroyBindGroup(bindGroup));
@@ -294,7 +320,7 @@ class Material {
     this.clonedBindGroups = [];
   }
   /**
-   * Update all bind groups.
+   * Update all {@link BindGroup}.
    */
   updateBindGroups() {
     for (const bindGroup of this.bindGroups) {
@@ -302,7 +328,7 @@ class Material {
     }
   }
   /**
-   * {@link BindGroup#update | Update a bind group}:
+   * {@link BindGroup#update | Update a BindGroup}:
    * - Update the textures if it's a {@link texturesBindGroups | textures bind group}.
    * - Update its {@link BindGroup#bufferBindings | buffer bindings}.
    * - Check if it eventually needs a {@link BindGroup#resetBindGroup | reset}.
@@ -319,25 +345,25 @@ class Material {
   /* INPUTS */
   /**
    * Look for a {@link BindGroupBindingElement | binding} by name in all {@link inputsBindings | input bindings}
-   * @param bindingName - the binding name or key
-   * @returns - the found binding, or null if not found
+   * @param bindingName - the binding name or key.
+   * @returns - The found binding, or null if not found.
    */
   getBindingByName(bindingName = "") {
     return this.inputsBindings.get(bindingName);
   }
   /**
-   * Look for a {@link BindGroupBufferBindingElement | buffer binding} by name in all {@link inputsBindings | input bindings}
-   * @param bindingName - the binding name or key
-   * @returns - the found binding, or null if not found
+   * Look for a {@link BindGroupBufferBindingElement | buffer binding} by name in all {@link inputsBindings | input bindings}.
+   * @param bindingName - The binding name or key.
+   * @returns - The found binding, or null if not found.
    */
   getBufferBindingByName(bindingName = "") {
     const bufferBinding = this.getBindingByName(bindingName);
     return bufferBinding && "buffer" in bufferBinding ? bufferBinding : void 0;
   }
   /**
-   * Force setting a given {@link BufferBindingInput | buffer binding} shouldUpdate flag to `true` to update it at next render
-   * @param bufferBindingName - the buffer binding name
-   * @param bindingName - the binding name
+   * Force setting a given {@link BufferBindingInput | buffer binding} shouldUpdate flag to `true` to update it at next render.
+   * @param bufferBindingName - The buffer binding name.
+   * @param bindingName - The binding name.
    */
   shouldUpdateInputsBindings(bufferBindingName, bindingName) {
     if (!bufferBindingName) return;
@@ -354,7 +380,7 @@ class Material {
   }
   /* SAMPLERS & TEXTURES */
   /**
-   * Prepare our textures array and set the {@link TextureBindGroup}
+   * Prepare our {@link Material.textures | textures} array and set the {@link TextureBindGroup}.
    */
   setTextures() {
     this.textures = [];
@@ -369,8 +395,8 @@ class Material {
     });
   }
   /**
-   * Add a texture to our array, and add it to the textures bind group only if used in the shaders (avoid binding useless data)
-   * @param texture - texture to add
+   * Add a {@link MediaTexture} or {@link Texture} to our {@link textures} array, and add it to the textures bind group only if used in the shaders (avoid binding useless data).
+   * @param texture - {@link MediaTexture} or {@link Texture} to add.
    */
   addTexture(texture) {
     this.textures.push(texture);
@@ -380,7 +406,7 @@ class Material {
   }
   /**
    * Destroy a {@link MediaTexture} or {@link Texture}, only if it is not used by another object or cached.
-   * @param texture - {@link MediaTexture} or {@link Texture} to eventually destroy
+   * @param texture - {@link MediaTexture} or {@link Texture} to eventually destroy.
    */
   destroyTexture(texture) {
     if (texture.options.cache) return;
@@ -392,14 +418,14 @@ class Material {
     }
   }
   /**
-   * Destroy all the Material textures
+   * Destroy all the Material {@link textures}.
    */
   destroyTextures() {
     this.textures?.forEach((texture) => this.destroyTexture(texture));
     this.textures = [];
   }
   /**
-   * Prepare our samplers array and always add a default sampler if not already passed as parameter
+   * Prepare our {@link Material.samplers | samplers} array and always add a default {@link Sampler} if not already passed as parameter.
    */
   setSamplers() {
     this.samplers = [];
@@ -413,8 +439,8 @@ class Material {
     }
   }
   /**
-   * Add a sampler to our array, and add it to the textures bind group only if used in the shaders (avoid binding useless data)
-   * @param sampler - sampler to add
+   * Add a {@link Sampler} to our {@link samplers} array, and add it to the textures bind group only if used in the shaders (avoid binding useless data).
+   * @param sampler - {@link Sampler} to add.
    */
   addSampler(sampler) {
     this.samplers.push(sampler);
@@ -425,16 +451,16 @@ class Material {
   /* BUFFER RESULTS */
   /**
    * Map a {@link Buffer#GPUBuffer | Buffer's GPU buffer} and put a copy of the data into a {@link Float32Array}
-   * @param buffer - {@link Buffer} to use for mapping
-   * @returns - {@link Float32Array} holding the {@link GPUBuffer} data
+   * @param buffer - {@link Buffer} to use for mapping.
+   * @returns - {@link Float32Array} holding the {@link GPUBuffer} data.
    */
   async getBufferResult(buffer) {
     return await buffer.mapBufferAsync();
   }
   /**
-   * Map the content of a {@link BufferBinding} {@link Buffer#GPUBuffer | GPU buffer} and put a copy of the data into a {@link Float32Array}
-   * @param bindingName - The name of the {@link inputsBindings | input bindings} from which to map the {@link Buffer#GPUBuffer | GPU buffer}
-   * @returns - {@link Float32Array} holding the {@link GPUBuffer} data
+   * Map the content of a {@link BufferBinding} {@link Buffer#GPUBuffer | GPU buffer} and put a copy of the data into a {@link Float32Array}.
+   * @param bindingName - The name of the {@link inputsBindings | input bindings} from which to map the {@link Buffer#GPUBuffer | GPU buffer}.
+   * @returns - {@link Float32Array} holding the {@link GPUBuffer} data.
    */
   async getBufferBindingResultByBindingName(bindingName = "") {
     const binding = this.getBufferBindingByName(bindingName);
@@ -448,11 +474,11 @@ class Material {
     }
   }
   /**
-   * Map the content of a specific {@link BufferElement | buffer element} belonging to a {@link BufferBinding} {@link Buffer#GPUBuffer | GPU buffer} and put a copy of the data into a {@link Float32Array}
-   * @param parameters - parameters used to get the result
-   * @param parameters.bindingName - The name of the {@link inputsBindings | input bindings} from which to map the {@link Buffer#GPUBuffer | GPU buffer}
-   * @param parameters.bufferElementName - The name of the {@link BufferElement | buffer element} from which to extract the data afterwards
-   * @returns - {@link Float32Array} holding {@link GPUBuffer} data
+   * Map the content of a specific {@link BufferElement | buffer element} belonging to a {@link BufferBinding} {@link Buffer#GPUBuffer | GPU buffer} and put a copy of the data into a {@link Float32Array}.
+   * @param parameters - Parameters used to get the result.
+   * @param parameters.bindingName - The name of the {@link inputsBindings | input bindings} from which to map the {@link Buffer#GPUBuffer | GPU buffer}.
+   * @param parameters.bufferElementName - The name of the {@link BufferElement | buffer element} from which to extract the data afterwards.
+   * @returns - {@link Float32Array} holding {@link GPUBuffer} data.
    */
   async getBufferElementResultByNames({
     bindingName,
@@ -474,30 +500,30 @@ class Material {
   /**
    * Called before rendering the Material.
    * First, check if we need to create our bind groups or pipeline.
-   * Finally updates all the {@link bindGroups | bind groups}.
+   * Finally, updates all the {@link bindGroups | bind groups}.
    */
   onBeforeRender() {
     this.compileMaterial();
     this.updateBindGroups();
   }
   /**
-   * Set the current pipeline
-   * @param pass - current pass encoder
+   * Set the current pipeline.
+   * @param pass - Current pass encoder.
    */
   setPipeline(pass) {
     this.renderer.pipelineManager.setCurrentPipeline(pass, this.pipelineEntry);
   }
   /**
    * Use the {@link Renderer#pipelineManager | renderer pipelineManager} to only set the bind groups that are not already set.
-   * @param pass - current pass encoder
+   * @param pass - Current pass encoder.
    */
   setActiveBindGroups(pass) {
     this.renderer.pipelineManager.setActiveBindGroups(pass, this.bindGroups);
   }
   /**
    * Render the material if it is ready:
-   * Set the current pipeline and set the bind groups
-   * @param pass - current pass encoder
+   * Set the current pipeline and set the bind groups.
+   * @param pass - Current pass encoder.
    */
   render(pass) {
     if (!this.ready) return;
@@ -505,7 +531,7 @@ class Material {
     this.setActiveBindGroups(pass);
   }
   /**
-   * Destroy the Material
+   * Destroy the Material.
    */
   destroy() {
     this.destroyBindGroups();

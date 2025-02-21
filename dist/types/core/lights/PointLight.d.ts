@@ -69,8 +69,8 @@ export declare class PointLight extends Light {
     shadow: PointShadow;
     /**
      * PointLight constructor
-     * @param renderer - {@link CameraRenderer | CameraRenderer} used to create this {@link PointLight}.
-     * @param parameters - {@link PointLightBaseParams | parameters} used to create this {@link PointLight}.
+     * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link PointLight}.
+     * @param parameters - {@link PointLightBaseParams} used to create this {@link PointLight}.
      */
     constructor(renderer: CameraRenderer | GPUCurtains, { label, color, intensity, position, range, shadow, }?: PointLightBaseParams);
     /**
@@ -94,15 +94,9 @@ export declare class PointLight extends Light {
      */
     set range(value: number);
     /**
-     * Set the {@link PointLight} position based on the {@link worldMatrix} translation and update the {@link PointShadow} view matrices.
+     * Set the {@link PointLight} position based on the {@link worldMatrix} translation.
      */
     setPosition(): void;
-    /** @ignore */
-    applyScale(): void;
-    /** @ignore */
-    applyTransformOrigin(): void;
-    /** @ignore */
-    applyRotation(): void;
     /**
      * If the {@link modelMatrix | model matrix} has been updated, set the new position from the {@link worldMatrix} translation.
      */

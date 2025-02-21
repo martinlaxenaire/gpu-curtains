@@ -50,40 +50,40 @@ export interface GPUCurtainsParams extends Partial<Omit<GPUCurtainsOptions, 'con
  * ```
  */
 export class GPUCurtains {
-  /** The type of this {@link GPUCurtains} */
+  /** The type of this {@link GPUCurtains}. */
   type: string
-  /** Options used to create this {@link GPUCurtains} */
+  /** Options used to create this {@link GPUCurtains}. */
   options: GPUCurtainsOptions
-  /** {@link HTMLElement} that will hold the WebGPU {@link HTMLCanvasElement} */
+  /** {@link HTMLElement} that will hold the WebGPU {@link HTMLCanvasElement}. */
   container: HTMLElement
 
-  /** {@link GPUDeviceManager} used to handle the {@link GPUAdapter} and {@link GPUDevice} */
+  /** {@link GPUDeviceManager} used to handle the {@link GPUAdapter} and {@link GPUDevice}. */
   deviceManager: GPUDeviceManager
 
-  /** Tiny scroll event listener wrapper */
+  /** Tiny scroll event listener wrapper. */
   scrollManager: ScrollManager
 
   // callbacks / events
-  /** function assigned to the {@link onScroll} callback */
+  /** function assigned to the {@link onScroll} callback. */
   _onScrollCallback: () => void = () => {
     /* allow empty callback */
   }
-  /** function assigned to the {@link onError} callback */
+  /** function assigned to the {@link onError} callback. */
   _onErrorCallback: () => void = () => {
     /* allow empty callback */
   }
-  /** function assigned to the {@link onContextLost} callback */
+  /** function assigned to the {@link onContextLost} callback. */
   _onContextLostCallback: (info?: GPUDeviceLostInfo) => void = () => {
     /* allow empty callback */
   }
-  /** function assigned to the {@link onContextLost} callback */
+  /** function assigned to the {@link onContextLost} callback. */
   _onContextDestroyedCallback: (info?: GPUDeviceLostInfo) => void = () => {
     /* allow empty callback */
   }
 
   /**
    * GPUCurtains constructor
-   * @param parameters - {@link GPUCurtainsParams | parameters} used to create this {@link GPUCurtains}
+   * @param parameters - {@link GPUCurtainsParams | parameters} used to create this {@link GPUCurtains}.
    */
   constructor({
     container,
@@ -127,7 +127,7 @@ export class GPUCurtains {
 
   /**
    * Set the {@link GPUCurtains.container | container}.
-   * @param container - {@link HTMLElement} or string representing an {@link HTMLElement} selector to use
+   * @param container - {@link HTMLElement} or string representing an {@link HTMLElement} selector to use.
    */
   setContainer(container: DOMElementParams['element']) {
     if (!container) {
@@ -158,7 +158,7 @@ export class GPUCurtains {
   }
 
   /**
-   * Set the default {@link GPUCurtainsRenderer | renderer}
+   * Set the default {@link GPUCurtainsRenderer | renderer}.
    */
   setMainRenderer() {
     this.createCurtainsRenderer({
@@ -176,8 +176,8 @@ export class GPUCurtains {
   }
 
   /**
-   * Patch the options with default values before creating a {@link Renderer}
-   * @param parameters - parameters to patch
+   * Patch the options with default values before creating a {@link Renderer}.
+   * @param parameters - Parameters to patch.
    */
   patchRendererOptions<T extends GPURendererParams | GPUCameraRendererParams>(parameters: T): T {
     if (parameters.pixelRatio === undefined) parameters.pixelRatio = this.options.pixelRatio
@@ -187,8 +187,8 @@ export class GPUCurtains {
   }
 
   /**
-   * Create a new {@link GPURenderer} instance
-   * @param parameters - {@link GPURendererParams | parameters} to use
+   * Create a new {@link GPURenderer} instance.
+   * @param parameters - {@link GPURendererParams | parameters} to use.
    */
   createRenderer(parameters: GPURendererParams): GPURenderer {
     parameters = this.patchRendererOptions(parameters)
@@ -197,8 +197,8 @@ export class GPUCurtains {
   }
 
   /**
-   * Create a new {@link GPUCameraRenderer} instance
-   * @param parameters - {@link GPUCameraRendererParams | parameters} to use
+   * Create a new {@link GPUCameraRenderer} instance.
+   * @param parameters - {@link GPUCameraRendererParams | parameters} to use.
    */
   createCameraRenderer(parameters: GPUCameraRendererParams): GPUCameraRenderer {
     parameters = this.patchRendererOptions(parameters)
@@ -207,8 +207,8 @@ export class GPUCurtains {
   }
 
   /**
-   * Create a new {@link GPUCurtainsRenderer} instance
-   * @param parameters - {@link GPUCameraRendererParams | parameters} to use
+   * Create a new {@link GPUCurtainsRenderer} instance.
+   * @param parameters - {@link GPUCameraRendererParams | parameters} to use.
    */
   createCurtainsRenderer(parameters: GPUCameraRendererParams): GPUCurtainsRenderer {
     parameters = this.patchRendererOptions(parameters)
@@ -217,7 +217,7 @@ export class GPUCurtains {
   }
 
   /**
-   * Set our {@link GPUDeviceManager}
+   * Set our {@link GPUDeviceManager}.
    */
   setDeviceManager() {
     this.deviceManager = new GPUDeviceManager({
@@ -235,7 +235,7 @@ export class GPUCurtains {
   }
 
   /**
-   * Get all created {@link Renderer}
+   * Get all created {@link Renderer}.
    * @readonly
    */
   get renderers(): Renderer[] {
@@ -243,7 +243,7 @@ export class GPUCurtains {
   }
 
   /**
-   * Get the first created {@link Renderer} if any
+   * Get the first created {@link Renderer} if any.
    * @readonly
    */
   get renderer(): Renderer | undefined {
@@ -259,7 +259,7 @@ export class GPUCurtains {
   }
 
   /**
-   * Restore the {@link GPUDeviceManager#adapter | adapter} and {@link GPUDeviceManager#device | device}
+   * Restore the {@link GPUDeviceManager#adapter | adapter} and {@link GPUDeviceManager#device | device}.
    */
   async restoreContext() {
     await this.deviceManager.restoreDevice()
@@ -268,7 +268,7 @@ export class GPUCurtains {
   /* RENDERER TRACKED OBJECTS */
 
   /**
-   * Get all the created {@link PingPongPlane}
+   * Get all the created {@link PingPongPlane}.
    * @readonly
    */
   get pingPongPlanes(): PingPongPlane[] {
@@ -276,7 +276,7 @@ export class GPUCurtains {
   }
 
   /**
-   * Get all the created {@link ShaderPass}
+   * Get all the created {@link ShaderPass}.
    * @readonly
    */
   get shaderPasses(): ShaderPass[] {
@@ -284,7 +284,7 @@ export class GPUCurtains {
   }
 
   /**
-   * Get all the created {@link SceneStackedMesh | meshes}
+   * Get all the created {@link SceneStackedMesh | meshes}.
    * @readonly
    */
   get meshes(): SceneStackedMesh[] {
@@ -292,7 +292,7 @@ export class GPUCurtains {
   }
 
   /**
-   * Get all the created {@link DOMMesh | DOM Meshes} (including {@link Plane | planes})
+   * Get all the created {@link DOMMesh | DOM Meshes} (including {@link Plane | planes}).
    * @readonly
    */
   get domMeshes(): DOMMesh[] {
@@ -314,7 +314,7 @@ export class GPUCurtains {
   }
 
   /**
-   * Get all the created {@link Plane | planes}
+   * Get all the created {@link Plane | planes}.
    * @readonly
    */
   get planes(): Plane[] {
@@ -322,7 +322,7 @@ export class GPUCurtains {
   }
 
   /**
-   * Get all the created {@link ComputePass | compute passes}
+   * Get all the created {@link ComputePass | compute passes}.
    * @readonly
    */
   get computePasses(): ComputePass[] {
@@ -330,7 +330,7 @@ export class GPUCurtains {
   }
 
   /**
-   * Get our {@link GPUCurtainsRenderer#setPerspective | default GPUCurtainsRenderer bounding rectangle}
+   * Get our {@link GPUCurtainsRenderer#boundingRect | default GPUCurtainsRenderer bounding rectangle}.
    */
   get boundingRect(): DOMElementBoundingRect {
     return this.renderer?.boundingRect
@@ -339,7 +339,7 @@ export class GPUCurtains {
   /* SCROLL */
 
   /**
-   * Set the {@link scrollManager}
+   * Set the {@link scrollManager}.
    */
   initScroll() {
     this.scrollManager = new ScrollManager({
@@ -358,8 +358,8 @@ export class GPUCurtains {
   }
 
   /**
-   * Update all {@link DOMMesh#updateScrollPosition | DOMMesh scroll positions}
-   * @param delta - last {@link ScrollManager#delta | scroll delta values}
+   * Update all {@link DOMMesh#updateScrollPosition | DOMMesh scroll positions}.
+   * @param delta - Last {@link ScrollManager#delta | scroll delta values}.
    */
   updateScroll(delta: DOMPosition = { x: 0, y: 0 }) {
     this.domObjects.forEach((domObject) => {
@@ -373,14 +373,14 @@ export class GPUCurtains {
 
   /**
    * Update our {@link ScrollManager#scroll | scrollManager scroll values}. Called each time the scroll has changed if {@link GPUCurtains#options.watchScroll | watchScroll option} is set to true. Could be called externally as well.
-   * @param scroll - new {@link DOMPosition | scroll values}
+   * @param scroll - New {@link DOMPosition | scroll values}.
    */
   updateScrollValues(scroll: DOMPosition = { x: 0, y: 0 }) {
     this.scrollManager.updateScrollValues(scroll)
   }
 
   /**
-   * Get our {@link ScrollManager#delta | scrollManager delta values}
+   * Get our {@link ScrollManager#delta | scrollManager delta values}.
    * @readonly
    */
   get scrollDelta(): DOMPosition {
@@ -388,7 +388,7 @@ export class GPUCurtains {
   }
 
   /**
-   * Get our {@link ScrollManager#scroll | scrollManager scroll values}
+   * Get our {@link ScrollManager#scroll | scrollManager scroll values}.
    * @readonly
    */
   get scrollValues(): DOMPosition {
@@ -398,9 +398,9 @@ export class GPUCurtains {
   /* EVENTS */
 
   /**
-   * Called each frame before rendering
-   * @param callback - callback to run at each render
-   * @returns - our {@link GPUCurtains}
+   * Called each frame before rendering.
+   * @param callback - callback to run at each render.
+   * @returns - our {@link GPUCurtains}.
    */
   onBeforeRender(callback: () => void): GPUCurtains {
     this.deviceManager.onBeforeRender(callback)
@@ -409,9 +409,9 @@ export class GPUCurtains {
   }
 
   /**
-   * Called each frame after rendering
-   * @param callback - callback to run at each render
-   * @returns - our {@link GPUCurtains}
+   * Called each frame after rendering.
+   * @param callback - callback to run at each render.
+   * @returns - our {@link GPUCurtains}.
    */
   onAfterRender(callback: () => void): GPUCurtains {
     this.deviceManager.onAfterRender(callback)
@@ -420,9 +420,9 @@ export class GPUCurtains {
   }
 
   /**
-   * Called each time the {@link ScrollManager#scroll | scrollManager scroll values} changed
-   * @param callback - callback to run each time the {@link ScrollManager#scroll | scrollManager scroll values} changed
-   * @returns - our {@link GPUCurtains}
+   * Called each time the {@link ScrollManager#scroll | scrollManager scroll values} changed.
+   * @param callback - callback to run each time the {@link ScrollManager#scroll | scrollManager scroll values} changed.
+   * @returns - our {@link GPUCurtains}.
    */
   onScroll(callback: () => void): GPUCurtains {
     if (callback) {
@@ -433,9 +433,9 @@ export class GPUCurtains {
   }
 
   /**
-   * Called if there's been an error while trying to create the {@link GPUDeviceManager#device | device}
-   * @param callback - callback to run if there's been an error while trying to create the {@link GPUDeviceManager#device | device}
-   * @returns - our {@link GPUCurtains}
+   * Called if there's been an error while trying to create the {@link GPUDeviceManager#device | device}.
+   * @param callback - callback to run if there's been an error while trying to create the {@link GPUDeviceManager#device | device}.
+   * @returns - our {@link GPUCurtains}.
    */
   onError(callback: () => void): GPUCurtains {
     if (callback) {
@@ -446,9 +446,9 @@ export class GPUCurtains {
   }
 
   /**
-   * Called whenever the {@link GPUDeviceManager#device | device} is lost
-   * @param callback - callback to run whenever the {@link GPUDeviceManager#device | device} is lost
-   * @returns - our {@link GPUCurtains}
+   * Called whenever the {@link GPUDeviceManager#device | device} is lost.
+   * @param callback - callback to run whenever the {@link GPUDeviceManager#device | device} is lost.
+   * @returns - our {@link GPUCurtains}.
    */
   onContextLost(callback: (info?: GPUDeviceLostInfo) => void): GPUCurtains {
     if (callback) {
@@ -461,7 +461,7 @@ export class GPUCurtains {
   /**
    * Called whenever the {@link GPUDeviceManager#device | device} has been intentionally destroyed.
    * @param callback - callback to run whenever the {@link GPUDeviceManager#device | device} has been destroyed.
-   * @returns - our {@link GPUCurtains}
+   * @returns - our {@link GPUCurtains}.
    */
   onContextDestroyed(callback: (info?: GPUDeviceLostInfo) => void): GPUCurtains {
     if (callback) {
@@ -472,14 +472,14 @@ export class GPUCurtains {
   }
 
   /**
-   * Render our {@link GPUDeviceManager}
+   * Render our {@link GPUDeviceManager}.
    */
   render() {
     this.deviceManager.render()
   }
 
   /**
-   * Destroy our {@link GPUCurtains} and {@link GPUDeviceManager}
+   * Destroy our {@link GPUCurtains} and {@link GPUDeviceManager}.
    */
   destroy() {
     this.deviceManager.destroy()

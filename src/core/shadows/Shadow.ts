@@ -122,8 +122,8 @@ export class Shadow {
 
   /**
    * Shadow constructor
-   * @param renderer - {@link CameraRenderer} used to create this {@link Shadow}.
-   * @param parameters - {@link ShadowBaseParams | parameters} used to create this {@link Shadow}.
+   * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link Shadow}.
+   * @param parameters - {@link ShadowBaseParams} used to create this {@link Shadow}.
    */
   constructor(
     renderer: CameraRenderer | GPUCurtains,
@@ -587,7 +587,7 @@ export class Shadow {
     this.renderer.pipelineManager.resetCurrentPipeline()
 
     // begin depth pass
-    const depthPass = commandEncoder.beginRenderPass(this.depthPassTarget.renderPass.descriptor)
+    const depthPass = this.depthPassTarget.renderPass.beginRenderPass(commandEncoder)
 
     if (!this.renderer.production)
       depthPass.pushDebugGroup(`${this.constructor.name} (index: ${this.index}): depth pass`)

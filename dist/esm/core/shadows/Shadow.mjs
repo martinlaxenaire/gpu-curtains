@@ -39,8 +39,8 @@ const shadowStruct = {
 class Shadow {
   /**
    * Shadow constructor
-   * @param renderer - {@link CameraRenderer} used to create this {@link Shadow}.
-   * @param parameters - {@link ShadowBaseParams | parameters} used to create this {@link Shadow}.
+   * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link Shadow}.
+   * @param parameters - {@link ShadowBaseParams} used to create this {@link Shadow}.
    */
   constructor(renderer, {
     light,
@@ -393,7 +393,7 @@ class Shadow {
    */
   renderDepthPass(commandEncoder) {
     this.renderer.pipelineManager.resetCurrentPipeline();
-    const depthPass = commandEncoder.beginRenderPass(this.depthPassTarget.renderPass.descriptor);
+    const depthPass = this.depthPassTarget.renderPass.beginRenderPass(commandEncoder);
     if (!this.renderer.production)
       depthPass.pushDebugGroup(`${this.constructor.name} (index: ${this.index}): depth pass`);
     for (const [uuid, depthMesh] of this.depthMeshes) {

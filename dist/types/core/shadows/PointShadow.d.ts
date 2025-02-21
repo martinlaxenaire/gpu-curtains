@@ -2,13 +2,13 @@
 import { Shadow, ShadowBaseParams } from './Shadow';
 import { CameraRenderer } from '../renderers/utils';
 import { Vec3 } from '../../math/Vec3';
+import { PerspectiveCamera } from '../cameras/PerspectiveCamera';
 import { PointLight } from '../lights/PointLight';
 import { Input } from '../../types/BindGroups';
 import { RenderMaterialParams, ShaderOptions } from '../../types/Materials';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
 import { VertexShaderInputBaseParams } from '../shaders/full/vertex/get-vertex-shader-code';
 import { Mesh } from '../meshes/Mesh';
-import { Camera } from '../camera/Camera';
 /**
  * Base parameters used to create a {@link PointShadow}.
  */
@@ -19,7 +19,7 @@ export interface PointShadowParams extends ShadowBaseParams {
 /** @ignore */
 export declare const pointShadowStruct: Record<string, Input>;
 /**
- * Create a shadow map from a {@link PointLight} by rendering to a depth cube texture using an array of view {@link Mat4} based on the {@link PointLight} position and a {@link Camera#projectionMatrix | Camera projectionMatrix}.
+ * Create a shadow map from a {@link PointLight} by rendering to a depth cube texture using an array of view {@link Mat4} based on the {@link PointLight} position and a {@link PerspectiveCamera#projectionMatrix | Camera projectionMatrix}.
  *
  * This type of shadow is more expensive than {@link core/shadows/DirectionalShadow.DirectionalShadow | DirectionalShadow} since its scene needs to be rendered 6 times to each face of a depth cube texture instead of once.
  */
@@ -27,8 +27,8 @@ export declare class PointShadow extends Shadow {
     #private;
     /** {@link PointLight} associated with this {@link PointShadow}. */
     light: PointLight;
-    /** {@link Camera} to use for shadow calculations. */
-    camera: Camera;
+    /** {@link PerspectiveCamera} to use for shadow calculations. */
+    camera: PerspectiveCamera;
     /** Options used to create this {@link PointShadow}. */
     options: PointShadowParams;
     /** Array of {@link Vec3} representing each cube face up directions to compute the #viewMatrices. */
@@ -37,8 +37,8 @@ export declare class PointShadow extends Shadow {
     cubeDirections: Vec3[];
     /**
      * PointShadow constructor
-     * @param renderer - {@link CameraRenderer} used to create this {@link PointShadow}.
-     * @param parameters - {@link PointShadowParams | parameters} used to create this {@link PointShadow}.
+     * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link PointShadow}.
+     * @param parameters - {@link PointShadowParams} used to create this {@link PointShadow}.
      */
     constructor(renderer: CameraRenderer | GPUCurtains, { light, intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender, }?: PointShadowParams);
     /**
@@ -54,7 +54,7 @@ export declare class PointShadow extends Shadow {
      */
     reset(): void;
     /**
-     * Called whenever the {@link Camera#projectionMatrix | camera projectionMatrix} changed (or on reset) to update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
+     * Called whenever the {@link PerspectiveCamera#projectionMatrix | camera projectionMatrix} changed (or on reset) to update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      */
     onProjectionMatrixChanged(): void;
     /**
