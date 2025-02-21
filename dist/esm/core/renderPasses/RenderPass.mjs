@@ -9,7 +9,8 @@ var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot
 var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
 var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
 var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
-var _useStencil;
+var __privateMethod = (obj, member, method) => (__accessCheck(obj, member, "access private method"), method);
+var _useStencil, _RenderPass_instances, updateDepthAttachmentSettings_fn;
 class RenderPass {
   /**
    * RenderPass constructor
@@ -38,6 +39,7 @@ class RenderPass {
     stencilStoreOp = "store",
     stencilReadOnly = false
   } = {}) {
+    __privateAdd(this, _RenderPass_instances);
     /** Whether the {@link RenderPass} should handle stencil. Default to `false`, eventually set to `true` based on the {@link depthTexture} format. */
     __privateAdd(this, _useStencil);
     this.type = "RenderPass";
@@ -209,7 +211,11 @@ class RenderPass {
           // storeOp: 'store' means store the result of what we draw.
           // We could also pass 'discard' which would throw away what we draw.
           // see https://webgpufundamentals.org/webgpu/lessons/webgpu-multisampling.html
-          storeOp: colorAttachment.storeOp
+          storeOp: colorAttachment.storeOp,
+          // eventual depth slice
+          ...colorAttachment.depthSlice !== void 0 && {
+            depthSlice: colorAttachment.depthSlice
+          }
         };
       }),
       ...this.options.useDepth && {
@@ -217,17 +223,29 @@ class RenderPass {
           view: depthTextureView || this.depthTexture.texture.createView({
             label: this.depthTexture.texture.label + " view"
           }),
-          depthClearValue: this.options.depthClearValue,
-          // the same way loadOp is working, we can specify if we want to clear or load the previous depth buffer result
-          depthLoadOp: this.options.depthLoadOp,
-          depthStoreOp: this.options.depthStoreOp,
-          depthReadOnly: this.options.depthReadOnly,
-          ...__privateGet(this, _useStencil) && {
-            stencilLoadOp: this.options.stencilLoadOp,
-            stencilStoreOp: this.options.stencilStoreOp,
-            stencilReadOnly: this.options.stencilReadOnly
-          }
+          ...this.depthStencilAttachmentSettings
         }
+      }
+    };
+  }
+  /**
+   * Get the {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#depthstencil_attachment_object_structure | descriptor depthStencilAttachment} settings, except for the {@link depthTexture} view.
+   * @readonly
+   */
+  get depthStencilAttachmentSettings() {
+    const depthReadOnly = !!this.options.depthReadOnly;
+    const stencilReadOnly = !!this.options.stencilReadOnly;
+    return {
+      depthClearValue: this.options.depthClearValue,
+      // the same way loadOp is working, we can specify if we want to clear or load the previous depth buffer result
+      ...!depthReadOnly && { depthLoadOp: this.options.depthLoadOp, depthStoreOp: this.options.depthStoreOp },
+      depthReadOnly,
+      ...__privateGet(this, _useStencil) && {
+        ...!stencilReadOnly && {
+          stencilLoadOp: this.options.stencilLoadOp,
+          stencilStoreOp: this.options.stencilStoreOp
+        },
+        stencilReadOnly
       }
     };
   }
@@ -313,9 +331,23 @@ class RenderPass {
    */
   setDepthLoadOp(depthLoadOp = "clear") {
     this.options.depthLoadOp = depthLoadOp;
-    if (this.options.useDepth && this.descriptor.depthStencilAttachment) {
-      this.descriptor.depthStencilAttachment.depthLoadOp = depthLoadOp;
-    }
+    __privateMethod(this, _RenderPass_instances, updateDepthAttachmentSettings_fn).call(this);
+  }
+  /**
+   * Set the new {@link RenderPassParams.depthReadOnly | depthReadOnly} setting.
+   * @param value - Whether the depth buffer should be read-only or not.
+   */
+  setDepthReadOnly(value) {
+    this.options.depthReadOnly = value;
+    __privateMethod(this, _RenderPass_instances, updateDepthAttachmentSettings_fn).call(this);
+  }
+  /**
+   * Set the new {@link RenderPassParams.stencilReadOnly | stencilReadOnly} setting.
+   * @param value - Whether the stencil buffer should be read-only or not.
+   */
+  setStencilReadOnly(value) {
+    this.options.stencilReadOnly = value;
+    __privateMethod(this, _RenderPass_instances, updateDepthAttachmentSettings_fn).call(this);
   }
   /**
    * Set our {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#clearvalue | clear colors value}.<br>
@@ -380,5 +412,18 @@ class RenderPass {
   }
 }
 _useStencil = new WeakMap();
+_RenderPass_instances = new WeakSet();
+/**
+ * Update the {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#depthstencil_attachment_object_structure | descriptor depthStencilAttachment} settings, except for the {@link depthTexture} view.
+ * @private
+ */
+updateDepthAttachmentSettings_fn = function() {
+  if (this.options.useDepth && this.descriptor.depthStencilAttachment) {
+    this.descriptor.depthStencilAttachment = {
+      view: this.descriptor.depthStencilAttachment.view,
+      ...this.depthStencilAttachmentSettings
+    };
+  }
+};
 
 export { RenderPass };

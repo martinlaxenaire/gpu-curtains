@@ -14,6 +14,8 @@ export interface ColorAttachmentParams {
     clearValue?: GPUColor;
     /** Optional format of the color attachment texture. */
     targetFormat: GPUTextureFormat;
+    /** Indicates the depth slice index of the '3d' texture viewDimension view that will be output to for this color attachment. */
+    depthSlice?: GPUIntegerCoordinate;
 }
 /** Parameters used to set a {@link GPURenderPassEncoder} viewport. */
 export interface RenderPassViewport extends RectBBox {
@@ -123,6 +125,11 @@ export declare class RenderPass {
      */
     setRenderPassDescriptor(depthTextureView?: any): void;
     /**
+     * Get the {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#depthstencil_attachment_object_structure | descriptor depthStencilAttachment} settings, except for the {@link depthTexture} view.
+     * @readonly
+     */
+    get depthStencilAttachmentSettings(): Omit<GPURenderPassDescriptor['depthStencilAttachment'], 'view'>;
+    /**
      * Set the {@link viewport} to use if any.
      * @param viewport - {@link RenderPassViewport} settings to use. Can be set to `null` to cancel the {@link viewport}.
      */
@@ -154,6 +161,16 @@ export declare class RenderPass {
      * @param depthLoadOp - new {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#depthloadop | depth load operation} to use.
      */
     setDepthLoadOp(depthLoadOp?: GPULoadOp): void;
+    /**
+     * Set the new {@link RenderPassParams.depthReadOnly | depthReadOnly} setting.
+     * @param value - Whether the depth buffer should be read-only or not.
+     */
+    setDepthReadOnly(value: boolean): void;
+    /**
+     * Set the new {@link RenderPassParams.stencilReadOnly | stencilReadOnly} setting.
+     * @param value - Whether the stencil buffer should be read-only or not.
+     */
+    setStencilReadOnly(value: boolean): void;
     /**
      * Set our {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#clearvalue | clear colors value}.<br>
      * Beware that if the {@link renderer} is using {@link core/renderers/GPURenderer.GPURendererContextOptions#alphaMode | premultiplied alpha mode}, your `R`, `G` and `B` channels should be premultiplied by your alpha channel.

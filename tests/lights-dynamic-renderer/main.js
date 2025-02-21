@@ -337,7 +337,7 @@ window.addEventListener('load', async () => {
     geometry: sphereGeometry,
     transmissive: true,
     //castShadows: true,
-    visible: false,
+    //visible: false,
     material: {
       shading: 'PBR',
       toneMapping: 'Khronos',

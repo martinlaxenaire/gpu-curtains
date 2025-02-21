@@ -15,6 +15,8 @@ export interface ColorAttachmentParams {
   clearValue?: GPUColor
   /** Optional format of the color attachment texture. */
   targetFormat: GPUTextureFormat
+  /** Indicates the depth slice index of the '3d' texture viewDimension view that will be output to for this color attachment. */
+  depthSlice?: GPUIntegerCoordinate
 }
 
 /** Parameters used to set a {@link GPURenderPassEncoder} viewport. */
@@ -334,9 +336,12 @@ export class RenderPass {
           // We could also pass 'discard' which would throw away what we draw.
           // see https://webgpufundamentals.org/webgpu/lessons/webgpu-multisampling.html
           storeOp: colorAttachment.storeOp,
+          // eventual depth slice
+          ...(colorAttachment.depthSlice !== undefined && {
+            depthSlice: colorAttachment.depthSlice,
+          }),
         }
       }),
-
       ...(this.options.useDepth && {
         depthStencilAttachment: {
           view:
@@ -344,18 +349,45 @@ export class RenderPass {
             this.depthTexture.texture.createView({
               label: this.depthTexture.texture.label + ' view',
             }),
-          depthClearValue: this.options.depthClearValue,
-          // the same way loadOp is working, we can specify if we want to clear or load the previous depth buffer result
-          depthLoadOp: this.options.depthLoadOp,
-          depthStoreOp: this.options.depthStoreOp,
-          depthReadOnly: this.options.depthReadOnly,
-          ...(this.#useStencil && {
-            stencilLoadOp: this.options.stencilLoadOp,
-            stencilStoreOp: this.options.stencilStoreOp,
-            stencilReadOnly: this.options.stencilReadOnly,
-          }),
+          ...this.depthStencilAttachmentSettings,
         },
       }),
+    }
+  }
+
+  /**
+   * Get the {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#depthstencil_attachment_object_structure | descriptor depthStencilAttachment} settings, except for the {@link depthTexture} view.
+   * @readonly
+   */
+  get depthStencilAttachmentSettings(): Omit<GPURenderPassDescriptor['depthStencilAttachment'], 'view'> {
+    const depthReadOnly = !!this.options.depthReadOnly
+    const stencilReadOnly = !!this.options.stencilReadOnly
+
+    return {
+      depthClearValue: this.options.depthClearValue,
+      // the same way loadOp is working, we can specify if we want to clear or load the previous depth buffer result
+      ...(!depthReadOnly && { depthLoadOp: this.options.depthLoadOp, depthStoreOp: this.options.depthStoreOp }),
+      depthReadOnly,
+      ...(this.#useStencil && {
+        ...(!stencilReadOnly && {
+          stencilLoadOp: this.options.stencilLoadOp,
+          stencilStoreOp: this.options.stencilStoreOp,
+        }),
+        stencilReadOnly,
+      }),
+    }
+  }
+
+  /**
+   * Update the {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#depthstencil_attachment_object_structure | descriptor depthStencilAttachment} settings, except for the {@link depthTexture} view.
+   * @private
+   */
+  #updateDepthAttachmentSettings() {
+    if (this.options.useDepth && this.descriptor.depthStencilAttachment) {
+      this.descriptor.depthStencilAttachment = {
+        view: this.descriptor.depthStencilAttachment.view,
+        ...this.depthStencilAttachmentSettings,
+      }
     }
   }
 
@@ -454,9 +486,25 @@ export class RenderPass {
    */
   setDepthLoadOp(depthLoadOp: GPULoadOp = 'clear') {
     this.options.depthLoadOp = depthLoadOp
-    if (this.options.useDepth && this.descriptor.depthStencilAttachment) {
-      this.descriptor.depthStencilAttachment.depthLoadOp = depthLoadOp
-    }
+    this.#updateDepthAttachmentSettings()
+  }
+
+  /**
+   * Set the new {@link RenderPassParams.depthReadOnly | depthReadOnly} setting.
+   * @param value - Whether the depth buffer should be read-only or not.
+   */
+  setDepthReadOnly(value: boolean) {
+    this.options.depthReadOnly = value
+    this.#updateDepthAttachmentSettings()
+  }
+
+  /**
+   * Set the new {@link RenderPassParams.stencilReadOnly | stencilReadOnly} setting.
+   * @param value - Whether the stencil buffer should be read-only or not.
+   */
+  setStencilReadOnly(value: boolean) {
+    this.options.stencilReadOnly = value
+    this.#updateDepthAttachmentSettings()
   }
 
   /**

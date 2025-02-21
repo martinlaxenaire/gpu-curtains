@@ -4459,7 +4459,7 @@
   var __privateGet$q = (obj, member, getter) => (__accessCheck$s(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
   var __privateAdd$s = (obj, member, value) => member.has(obj) ? __typeError$s("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   var __privateSet$p = (obj, member, value, setter) => (__accessCheck$s(obj, member, "write to private field"), member.set(obj, value), value);
-  var __privateMethod$a = (obj, member, method) => (__accessCheck$s(obj, member, "access private method"), method);
+  var __privateMethod$b = (obj, member, method) => (__accessCheck$s(obj, member, "access private method"), method);
   var _sourcesLoaded, _sourcesUploaded, _rotation, _MediaTexture_instances, setSourceLoaded_fn;
   const defaultMediaTextureParams = {
     label: "Texture",
@@ -4812,7 +4812,7 @@
         ];
       }
       this.setSourceSize();
-      __privateMethod$a(this, _MediaTexture_instances, setSourceLoaded_fn).call(this, imageBitmap);
+      __privateMethod$b(this, _MediaTexture_instances, setSourceLoaded_fn).call(this, imageBitmap);
     }
     /**
      * Load and create images using {@link loadImage} from an array of images sources as strings or {@link HTMLImageElement}. Useful for cube maps.
@@ -4860,7 +4860,7 @@
           );
           this.videoFrameCallbackIds.set(sourceIndex, videoFrameCallbackId);
         }
-        __privateMethod$a(this, _MediaTexture_instances, setSourceLoaded_fn).call(this, video);
+        __privateMethod$b(this, _MediaTexture_instances, setSourceLoaded_fn).call(this, video);
       }
     }
     /**
@@ -4976,7 +4976,7 @@
         ];
       }
       this.setSourceSize();
-      __privateMethod$a(this, _MediaTexture_instances, setSourceLoaded_fn).call(this, source);
+      __privateMethod$b(this, _MediaTexture_instances, setSourceLoaded_fn).call(this, source);
     }
     /**
      * Load an array of {@link HTMLCanvasElement} using {@link loadCanvas} . Useful for cube maps.
@@ -8393,7 +8393,8 @@
   var __privateGet$i = (obj, member, getter) => (__accessCheck$k(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
   var __privateAdd$k = (obj, member, value) => member.has(obj) ? __typeError$k("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   var __privateSet$i = (obj, member, value, setter) => (__accessCheck$k(obj, member, "write to private field"), member.set(obj, value), value);
-  var _useStencil;
+  var __privateMethod$a = (obj, member, method) => (__accessCheck$k(obj, member, "access private method"), method);
+  var _useStencil, _RenderPass_instances, updateDepthAttachmentSettings_fn;
   class RenderPass {
     /**
      * RenderPass constructor
@@ -8422,6 +8423,7 @@
       stencilStoreOp = "store",
       stencilReadOnly = false
     } = {}) {
+      __privateAdd$k(this, _RenderPass_instances);
       /** Whether the {@link RenderPass} should handle stencil. Default to `false`, eventually set to `true` based on the {@link depthTexture} format. */
       __privateAdd$k(this, _useStencil);
       this.type = "RenderPass";
@@ -8593,7 +8595,11 @@
             // storeOp: 'store' means store the result of what we draw.
             // We could also pass 'discard' which would throw away what we draw.
             // see https://webgpufundamentals.org/webgpu/lessons/webgpu-multisampling.html
-            storeOp: colorAttachment.storeOp
+            storeOp: colorAttachment.storeOp,
+            // eventual depth slice
+            ...colorAttachment.depthSlice !== void 0 && {
+              depthSlice: colorAttachment.depthSlice
+            }
           };
         }),
         ...this.options.useDepth && {
@@ -8601,17 +8607,29 @@
             view: depthTextureView || this.depthTexture.texture.createView({
               label: this.depthTexture.texture.label + " view"
             }),
-            depthClearValue: this.options.depthClearValue,
-            // the same way loadOp is working, we can specify if we want to clear or load the previous depth buffer result
-            depthLoadOp: this.options.depthLoadOp,
-            depthStoreOp: this.options.depthStoreOp,
-            depthReadOnly: this.options.depthReadOnly,
-            ...__privateGet$i(this, _useStencil) && {
-              stencilLoadOp: this.options.stencilLoadOp,
-              stencilStoreOp: this.options.stencilStoreOp,
-              stencilReadOnly: this.options.stencilReadOnly
-            }
+            ...this.depthStencilAttachmentSettings
           }
+        }
+      };
+    }
+    /**
+     * Get the {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#depthstencil_attachment_object_structure | descriptor depthStencilAttachment} settings, except for the {@link depthTexture} view.
+     * @readonly
+     */
+    get depthStencilAttachmentSettings() {
+      const depthReadOnly = !!this.options.depthReadOnly;
+      const stencilReadOnly = !!this.options.stencilReadOnly;
+      return {
+        depthClearValue: this.options.depthClearValue,
+        // the same way loadOp is working, we can specify if we want to clear or load the previous depth buffer result
+        ...!depthReadOnly && { depthLoadOp: this.options.depthLoadOp, depthStoreOp: this.options.depthStoreOp },
+        depthReadOnly,
+        ...__privateGet$i(this, _useStencil) && {
+          ...!stencilReadOnly && {
+            stencilLoadOp: this.options.stencilLoadOp,
+            stencilStoreOp: this.options.stencilStoreOp
+          },
+          stencilReadOnly
         }
       };
     }
@@ -8697,9 +8715,23 @@
      */
     setDepthLoadOp(depthLoadOp = "clear") {
       this.options.depthLoadOp = depthLoadOp;
-      if (this.options.useDepth && this.descriptor.depthStencilAttachment) {
-        this.descriptor.depthStencilAttachment.depthLoadOp = depthLoadOp;
-      }
+      __privateMethod$a(this, _RenderPass_instances, updateDepthAttachmentSettings_fn).call(this);
+    }
+    /**
+     * Set the new {@link RenderPassParams.depthReadOnly | depthReadOnly} setting.
+     * @param value - Whether the depth buffer should be read-only or not.
+     */
+    setDepthReadOnly(value) {
+      this.options.depthReadOnly = value;
+      __privateMethod$a(this, _RenderPass_instances, updateDepthAttachmentSettings_fn).call(this);
+    }
+    /**
+     * Set the new {@link RenderPassParams.stencilReadOnly | stencilReadOnly} setting.
+     * @param value - Whether the stencil buffer should be read-only or not.
+     */
+    setStencilReadOnly(value) {
+      this.options.stencilReadOnly = value;
+      __privateMethod$a(this, _RenderPass_instances, updateDepthAttachmentSettings_fn).call(this);
     }
     /**
      * Set our {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#clearvalue | clear colors value}.<br>
@@ -8764,6 +8796,19 @@
     }
   }
   _useStencil = new WeakMap();
+  _RenderPass_instances = new WeakSet();
+  /**
+   * Update the {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#depthstencil_attachment_object_structure | descriptor depthStencilAttachment} settings, except for the {@link depthTexture} view.
+   * @private
+   */
+  updateDepthAttachmentSettings_fn = function() {
+    if (this.options.useDepth && this.descriptor.depthStencilAttachment) {
+      this.descriptor.depthStencilAttachment = {
+        view: this.descriptor.depthStencilAttachment.view,
+        ...this.depthStencilAttachmentSettings
+      };
+    }
+  };
 
   var __typeError$j = (msg) => {
     throw TypeError(msg);
