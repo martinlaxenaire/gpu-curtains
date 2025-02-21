@@ -9,6 +9,7 @@ import { VertexShaderInputBaseParams } from '../shaders/full/vertex/get-vertex-s
 import { ShaderOptions } from '../../types/Materials'
 import { Texture } from '../textures/Texture'
 import { getDefaultSpotShadowDepthVs } from '../shaders/full/vertex/get-default-spot-shadow-depth-vertex-shader-code'
+import { Vec3 } from '../../math/Vec3'
 
 /**
  * Base parameters used to create a {@link SpotShadow}.
@@ -21,6 +22,10 @@ export interface SpotShadowParams extends ShadowBaseParams {
 /** @ignore */
 export const spotShadowStruct: Record<string, Input> = {
   ...shadowStruct,
+  direction: {
+    type: 'vec3f',
+    value: new Vec3(),
+  },
   viewMatrix: {
     type: 'mat4x4f',
     value: new Float32Array(16),
@@ -45,6 +50,12 @@ export class SpotShadow extends Shadow {
   camera: PerspectiveCamera
   /** Focus of the {@link camera}. Default to `1`. */
   focus: number
+
+  /**
+   * Direction of the parent {@link SpotLight}. Duplicate to avoid adding the {@link SpotLight} binding to vertex shaders.
+   * @private
+   */
+  #direction: Vec3
 
   /**
    * SpotShadow constructor
@@ -93,6 +104,8 @@ export class SpotShadow extends Shadow {
     // force camera position to 0
     this.camera.position.set(0)
     this.camera.parent = this.light
+
+    this.#direction = new Vec3()
   }
 
   /**
@@ -111,6 +124,16 @@ export class SpotShadow extends Shadow {
 
     this.onPropertyChanged('projectionMatrix', this.camera.projectionMatrix)
     this.onPropertyChanged('viewMatrix', this.camera.viewMatrix)
+    this.onPropertyChanged('direction', this.#direction)
+  }
+
+  /**
+   * Copy the {@link SpotLight} direction and update binding.
+   * @param direction - {@link SpotLight} direction to copy.
+   */
+  setDirection(direction = new Vec3()) {
+    this.#direction.copy(direction)
+    this.onPropertyChanged('direction', this.#direction)
   }
 
   /**

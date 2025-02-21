@@ -1,6 +1,7 @@
 import { Shadow, ShadowBaseParams } from './Shadow';
 import { CameraRenderer } from '../renderers/utils';
 import { OrthographicCamera, OrthographicCameraBaseOptions } from '../cameras/OrthographicCamera';
+import { Vec3 } from '../../math/Vec3';
 import { Input } from '../../types/BindGroups';
 import { DirectionalLight } from '../lights/DirectionalLight';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
@@ -21,6 +22,7 @@ export declare const directionalShadowStruct: Record<string, Input>;
  * Create a shadow map from a {@link DirectionalLight}  by rendering to a depth texture using a {@link OrthographicCamera}.
  */
 export declare class DirectionalShadow extends Shadow {
+    #private;
     /** {@link DirectionalLight} associated with this {@link DirectionalShadow}. */
     light: DirectionalLight;
     /** Shadow {@link OrthographicCamera} to use for shadow calculations. */
@@ -47,6 +49,11 @@ export declare class DirectionalShadow extends Shadow {
      * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link DirectionalLight} has been overflowed or when the {@link renderer} has changed.
      */
     reset(): void;
+    /**
+     * Copy the {@link DirectionalLight} direction and update binding.
+     * @param direction - {@link DirectionalLight} direction to copy.
+     */
+    setDirection(direction?: Vec3): void;
     /**
      * Create the {@link depthTexture}.
      */

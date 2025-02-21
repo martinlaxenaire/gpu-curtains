@@ -168,6 +168,10 @@ export class PointLight extends Light {
    */
   setPosition() {
     this.onPropertyChanged('position', this.actualPosition)
+
+    if (this.shadow) {
+      this.shadow.setPosition()
+    }
   }
 
   /**

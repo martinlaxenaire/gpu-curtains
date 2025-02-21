@@ -191,6 +191,10 @@ export class SpotLight extends Light {
 
     this.#direction.copy(this.target).sub(this.actualPosition).normalize()
     this.onPropertyChanged('direction', this.#direction)
+
+    if (this.shadow) {
+      this.shadow.setDirection(this.#direction)
+    }
   }
 
   /**

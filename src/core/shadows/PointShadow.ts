@@ -25,6 +25,10 @@ export interface PointShadowParams extends ShadowBaseParams {
 /** @ignore */
 export const pointShadowStruct: Record<string, Input> = {
   ...shadowStruct,
+  position: {
+    type: 'vec3f',
+    value: new Vec3(),
+  },
   cameraNear: {
     type: 'f32',
     value: 0,
@@ -173,7 +177,15 @@ export class PointShadow extends Shadow {
     super.reset()
 
     this.onProjectionMatrixChanged()
-    this.onViewMatricesChanged()
+    this.updateViewMatrices()
+    this.setPosition()
+  }
+
+  /**
+   * Copy the {@link PointLight} actual position and update binding.
+   */
+  setPosition() {
+    this.onPropertyChanged('position', this.light.actualPosition)
   }
 
   /**

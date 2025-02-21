@@ -54,6 +54,10 @@ export declare class PointShadow extends Shadow {
      */
     reset(): void;
     /**
+     * Copy the {@link PointLight} actual position and update binding.
+     */
+    setPosition(): void;
+    /**
      * Called whenever the {@link PerspectiveCamera#projectionMatrix | camera projectionMatrix} changed (or on reset) to update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      */
     onProjectionMatrixChanged(): void;

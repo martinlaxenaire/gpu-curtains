@@ -91,6 +91,9 @@ class PointLight extends Light {
    */
   setPosition() {
     this.onPropertyChanged("position", this.actualPosition);
+    if (this.shadow) {
+      this.shadow.setPosition();
+    }
   }
   /**
    * If the {@link modelMatrix | model matrix} has been updated, set the new position from the {@link worldMatrix} translation.

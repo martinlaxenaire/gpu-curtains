@@ -104,6 +104,9 @@ class SpotLight extends Light {
     this.onPropertyChanged("position", this.actualPosition);
     __privateGet(this, _direction).copy(this.target).sub(this.actualPosition).normalize();
     this.onPropertyChanged("direction", __privateGet(this, _direction));
+    if (this.shadow) {
+      this.shadow.setDirection(__privateGet(this, _direction));
+    }
   }
   /**
    * Get this {@link SpotLight} angle.

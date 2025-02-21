@@ -371,7 +371,7 @@ ${geometry.wgslStructFragment}`
           depthFormat: renderPass.options.depthFormat
         }
       };
-      this.material?.setRenderingOptions(renderingOptions);
+      this.material?.setRenderingOptions({ ...this.material.options.rendering, ...renderingOptions });
     }
     /**
      * Hook used to clean up parameters before sending them to the {@link RenderMaterial}.

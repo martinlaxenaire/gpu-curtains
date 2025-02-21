@@ -25,9 +25,9 @@ struct PointShadowVSOutput {
   ${declareAttributesVars({ geometry })}
   ${getVertexTransformedPositionNormal({ bindings, geometry })}
   
-  let worldPos = worldPosition.xyz / worldPosition.w;  
+  let worldPos = worldPosition.xyz / worldPosition.w;
   
-  let lightDirection: vec3f = normalize(pointLights.elements[${lightIndex}].position - worldPos);
+  let lightDirection: vec3f = normalize(pointShadow.position - worldPos);
   let NdotL: f32 = dot(normalize(normal), lightDirection);
   let sinNdotL = sqrt(1.0 - NdotL * NdotL);
   let normalBias: f32 = pointShadow.normalBias * sinNdotL;

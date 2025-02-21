@@ -16,6 +16,10 @@ var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "
 var _tempCubeDirection, _viewMatrices;
 const pointShadowStruct = {
   ...shadowStruct,
+  position: {
+    type: "vec3f",
+    value: new Vec3()
+  },
   cameraNear: {
     type: "f32",
     value: 0
@@ -126,7 +130,14 @@ class PointShadow extends Shadow {
     this.setRendererBinding();
     super.reset();
     this.onProjectionMatrixChanged();
-    this.onViewMatricesChanged();
+    this.updateViewMatrices();
+    this.setPosition();
+  }
+  /**
+   * Copy the {@link PointLight} actual position and update binding.
+   */
+  setPosition() {
+    this.onPropertyChanged("position", this.light.actualPosition);
   }
   /**
    * Called whenever the {@link PerspectiveCamera#projectionMatrix | camera projectionMatrix} changed (or on reset) to update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.

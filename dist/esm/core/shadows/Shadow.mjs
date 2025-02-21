@@ -4,6 +4,7 @@ import { Mat4 } from '../../math/Mat4.mjs';
 import { RenderTarget } from '../renderPasses/RenderTarget.mjs';
 import { Sampler } from '../samplers/Sampler.mjs';
 import { Mesh } from '../meshes/Mesh.mjs';
+import { Vec3 } from '../../math/Vec3.mjs';
 
 var __typeError = (msg) => {
   throw TypeError(msg);
@@ -151,10 +152,15 @@ class Shadow {
           this.rendererBinding.childrenBindings[this.index].inputs[propertyKey].value[i] = value.elements[i];
         }
         this.rendererBinding.childrenBindings[this.index].inputs[propertyKey].shouldUpdate = true;
+      } else if (value instanceof Vec3) {
+        this.rendererBinding.childrenBindings[this.index].inputs[propertyKey].shouldUpdate = true;
+        this.rendererBinding.childrenBindings[this.index].inputs[propertyKey].value.copy(value);
       } else {
         this.rendererBinding.childrenBindings[this.index].inputs[propertyKey].value = value;
       }
       this.renderer.shouldUpdateCameraLightsBindGroup();
+    } else {
+      console.log("bail for property", propertyKey, this.constructor.name, this.rendererBinding);
     }
   }
   /**

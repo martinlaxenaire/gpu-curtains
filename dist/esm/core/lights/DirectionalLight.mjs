@@ -84,6 +84,9 @@ class DirectionalLight extends Light {
   setDirection() {
     __privateGet(this, _direction).copy(this.target).sub(this.actualPosition).normalize();
     this.onPropertyChanged("direction", __privateGet(this, _direction));
+    if (this.shadow) {
+      this.shadow.setDirection(__privateGet(this, _direction));
+    }
   }
   /**
    * Rotate this {@link DirectionalLight} so it looks at the {@link Vec3 | target}.

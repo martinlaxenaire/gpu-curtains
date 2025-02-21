@@ -25,14 +25,19 @@ export const compareRenderingOptions = (
     'topology',
   ] as Array<keyof RenderMaterialRenderingOptions>
 
-  return renderingOptions.map((key) => {
-    if ((newOptions[key] && !baseOptions[key]) || (baseOptions[key] && !newOptions[key])) {
-      return key
-    } else if (Array.isArray(newOptions[key]) || typeof newOptions[key] === 'object') {
-      // 'targets', 'stencil' properties...
-      return JSON.stringify(newOptions[key]) !== JSON.stringify(baseOptions[key])
-    } else {
-      return newOptions[key] !== baseOptions[key]
-    }
-  }) as Array<keyof RenderMaterialRenderingOptions>
+  return renderingOptions
+    .map((key) => {
+      if (
+        (newOptions[key] !== undefined && baseOptions[key] === undefined) ||
+        (baseOptions[key] !== undefined && newOptions[key] === undefined)
+      ) {
+        return key
+      } else if (Array.isArray(newOptions[key]) || typeof newOptions[key] === 'object') {
+        // 'targets', 'stencil' properties...
+        return JSON.stringify(newOptions[key]) !== JSON.stringify(baseOptions[key])
+      } else {
+        return newOptions[key] !== baseOptions[key]
+      }
+    })
+    .filter(Boolean) as Array<keyof RenderMaterialRenderingOptions>
 }
