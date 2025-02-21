@@ -22,6 +22,8 @@ export interface ShaderOptions {
     code: string;
     /** The shader main function entry point. */
     entryPoint?: string;
+    /** Specifies the values of pipeline-overridable constants in the shader module if any. Note that if a constant is defined here, it *must* be used in the shader code. */
+    constants?: Record<string, number | boolean>;
 }
 /**
  * Defines all possible {@link ShaderOptions | shader options} entries of a {@link core/materials/Material.Material | Material}.

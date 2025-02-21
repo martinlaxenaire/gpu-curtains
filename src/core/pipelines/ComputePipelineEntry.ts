@@ -42,6 +42,7 @@ export class ComputePipelineEntry extends PipelineEntry {
         head: '',
         code: '',
         module: null,
+        constants: new Map(),
       },
     }
 
@@ -56,6 +57,19 @@ export class ComputePipelineEntry extends PipelineEntry {
   patchShaders() {
     this.shaders.compute.head = ''
     this.shaders.compute.code = ''
+
+    // compute constants
+    if (this.options.shaders.compute.constants) {
+      for (const [key, value] of Object.entries(this.options.shaders.compute.constants)) {
+        this.shaders.compute.constants.set(key, value)
+      }
+    }
+
+    // add constants to heads
+    this.shaders.compute.constants.forEach((value, key) => {
+      const type = typeof value === 'boolean' ? 'bool' : 'f32'
+      this.shaders.compute.head += `override ${key}: ${type} = ${value};\n`
+    })
 
     const groupsBindings = []
     for (const bindGroup of this.bindGroups) {
@@ -123,6 +137,9 @@ export class ComputePipelineEntry extends PipelineEntry {
       compute: {
         module: this.shaders.compute.module,
         entryPoint: this.options.shaders.compute.entryPoint,
+        ...(this.options.shaders.compute.constants && {
+          constants: this.options.shaders.compute.constants as Record<string, GPUPipelineConstantValue>,
+        }),
       },
     }
   }

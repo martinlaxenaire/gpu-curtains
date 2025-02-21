@@ -9270,17 +9270,20 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
         vertex: {
           head: "",
           code: "",
-          module: null
+          module: null,
+          constants: /* @__PURE__ */ new Map()
         },
         fragment: {
           head: "",
           code: "",
-          module: null
+          module: null,
+          constants: /* @__PURE__ */ new Map()
         },
         full: {
           head: "",
           code: "",
-          module: null
+          module: null,
+          constants: /* @__PURE__ */ new Map()
         }
       };
       this.descriptor = null;
@@ -9317,6 +9320,11 @@ ${this.shaders.fragment.head}`;
 ${this.shaders.full.head}`;
           }
         }
+        if (this.options.shaders.fragment.constants) {
+          for (const [key, value] of Object.entries(this.options.shaders.fragment.constants)) {
+            this.shaders.fragment.constants.set(key, value);
+          }
+        }
       }
       if (this.options.rendering.useProjection) {
         for (const chunk in ProjectedShaderChunks.vertex) {
@@ -9336,6 +9344,28 @@ ${this.shaders.full.head}`;
           }
         }
       }
+      if (this.options.shaders.vertex.constants) {
+        for (const [key, value] of Object.entries(this.options.shaders.vertex.constants)) {
+          this.shaders.vertex.constants.set(key, value);
+        }
+      }
+      this.shaders.vertex.constants.forEach((value, key) => this.shaders.full.constants.set(key, value));
+      this.shaders.fragment.constants.forEach((value, key) => this.shaders.full.constants.set(key, value));
+      this.shaders.vertex.constants.forEach((value, key) => {
+        const type = typeof value === "boolean" ? "bool" : "f32";
+        this.shaders.vertex.head += `override ${key}: ${type} = ${value};
+`;
+      });
+      this.shaders.fragment.constants.forEach((value, key) => {
+        const type = typeof value === "boolean" ? "bool" : "f32";
+        this.shaders.fragment.head += `override ${key}: ${type} = ${value};
+`;
+      });
+      this.shaders.full.constants.forEach((value, key) => {
+        const type = typeof value === "boolean" ? "bool" : "f32";
+        this.shaders.full.head += `override ${key}: ${type};
+`;
+      });
       const groupsBindings = [];
       for (const bindGroup of this.bindGroups) {
         let bindIndex = 0;
@@ -9397,15 +9427,16 @@ ${this.shaders.vertex.head}`;
       this.shaders.full.head = `${this.attributes.wgslStructFragment}
 ${this.shaders.full.head}`;
       this.shaders.vertex.code = this.shaders.vertex.head + this.options.shaders.vertex.code;
-      if (typeof this.options.shaders.fragment === "object")
+      if (this.options.shaders.fragment)
         this.shaders.fragment.code = this.shaders.fragment.head + this.options.shaders.fragment.code;
-      if (typeof this.options.shaders.fragment === "object") {
+      if (this.options.shaders.fragment) {
         if (this.options.shaders.vertex.entryPoint !== this.options.shaders.fragment.entryPoint && this.options.shaders.vertex.code.localeCompare(this.options.shaders.fragment.code) === 0) {
           this.shaders.full.code = this.shaders.full.head + this.options.shaders.vertex.code;
         } else {
           this.shaders.full.code = this.shaders.full.head + this.options.shaders.vertex.code + this.options.shaders.fragment.code;
         }
       }
+      console.log(this.options.label, this.shaders.fragment.head);
     }
     /* SETUP */
     /**
@@ -9449,7 +9480,7 @@ ${this.shaders.full.head}`;
       };
     }
     /**
-     * Create the render pipeline {@link descriptor}
+     * Create the render pipeline {@link descriptor}.
      */
     createPipelineDescriptor() {
       if (!this.shadersModulesReady) return;
@@ -9482,13 +9513,15 @@ ${this.shaders.full.head}`;
                 };
               })
             };
-          })
+          }),
+          ...this.options.shaders.vertex.constants && { constants: this.options.shaders.vertex.constants }
         },
         ...this.options.shaders.fragment && {
           fragment: {
             module: this.shaders.fragment.module,
             entryPoint: this.options.shaders.fragment.entryPoint,
-            targets: this.options.rendering.targets
+            targets: this.options.rendering.targets,
+            ...this.options.shaders.fragment.constants && { constants: this.options.shaders.fragment.constants }
           }
         },
         primitive: {
@@ -13282,7 +13315,8 @@ struct SpotShadowVSOutput {
         compute: {
           head: "",
           code: "",
-          module: null
+          module: null,
+          constants: /* @__PURE__ */ new Map()
         }
       };
       this.descriptor = null;
@@ -13294,6 +13328,16 @@ struct SpotShadowVSOutput {
     patchShaders() {
       this.shaders.compute.head = "";
       this.shaders.compute.code = "";
+      if (this.options.shaders.compute.constants) {
+        for (const [key, value] of Object.entries(this.options.shaders.compute.constants)) {
+          this.shaders.compute.constants.set(key, value);
+        }
+      }
+      this.shaders.compute.constants.forEach((value, key) => {
+        const type = typeof value === "boolean" ? "bool" : "f32";
+        this.shaders.compute.head += `override ${key}: ${type} = ${value};
+`;
+      });
       const groupsBindings = [];
       for (const bindGroup of this.bindGroups) {
         let bindIndex = 0;
@@ -13346,7 +13390,10 @@ ${this.shaders.compute.head}`;
         layout: this.layout,
         compute: {
           module: this.shaders.compute.module,
-          entryPoint: this.options.shaders.compute.entryPoint
+          entryPoint: this.options.shaders.compute.entryPoint,
+          ...this.options.shaders.compute.constants && {
+            constants: this.options.shaders.compute.constants
+          }
         }
       };
     }
