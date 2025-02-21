@@ -76,17 +76,27 @@ export class RenderMaterial extends Material {
     const {
       useProjection,
       transparent,
+      // depth stencil
       depth,
       depthWriteEnabled,
       depthCompare,
       depthFormat,
+      depthBias,
+      depthBiasClamp,
+      depthBiasSlopeScale,
       stencil,
-      cullMode,
+      // multisample
       sampleCount,
+      alphaToCoverageEnabled,
+      mask,
+      // primitive
+      cullMode,
       verticesOrder,
       topology,
+      unclippedDepth,
     } = parameters
 
+    // targets
     let { targets } = parameters
 
     // patch default target format if not set
@@ -114,6 +124,14 @@ export class RenderMaterial extends Material {
       if (!stencil.stencilReference) {
         stencil.stencilReference = 0x000000
       }
+
+      if (!stencil.stencilReadMask) {
+        stencil.stencilReadMask = 0xffffff
+      }
+
+      if (!stencil.stencilWriteMask) {
+        stencil.stencilWriteMask = 0xffffff
+      }
     }
 
     this.options = {
@@ -122,16 +140,26 @@ export class RenderMaterial extends Material {
       rendering: {
         useProjection,
         transparent,
+        // depth stencil
         depth,
         depthWriteEnabled,
         depthCompare,
         depthFormat,
+        depthBias: depthBias !== undefined ? depthBias : 0,
+        depthBiasClamp: depthBiasClamp !== undefined ? depthBiasClamp : 0,
+        depthBiasSlopeScale: depthBiasSlopeScale !== undefined ? depthBiasSlopeScale : 0,
         ...(stencil && { stencil }),
-        cullMode,
+        // multisample
         sampleCount,
+        alphaToCoverageEnabled: !!alphaToCoverageEnabled,
+        mask: mask !== undefined ? mask : 0xffffff,
+        // targets
         targets,
+        // primitive
+        cullMode,
         verticesOrder,
         topology,
+        unclippedDepth: !!unclippedDepth,
       },
     } as RenderMaterialOptions
 
@@ -265,6 +293,14 @@ export class RenderMaterial extends Material {
       wgslStructFragment: geometry.wgslStructFragment,
       vertexBuffers: geometry.vertexBuffers,
       layoutCacheKey: geometry.layoutCacheKey,
+    }
+
+    if ('indexBuffer' in geometry && geometry.indexBuffer && geometry.topology.includes('strip')) {
+      //this.options.rendering.stripIndexFormat = geometry.indexBuffer.bufferFormat
+      this.setRenderingOptions({
+        ...this.options.rendering,
+        stripIndexFormat: geometry.indexBuffer.bufferFormat,
+      })
     }
   }
 

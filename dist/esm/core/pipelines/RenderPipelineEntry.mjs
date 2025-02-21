@@ -185,7 +185,6 @@ ${this.shaders.full.head}`;
         this.shaders.full.code = this.shaders.full.head + this.options.shaders.vertex.code + this.options.shaders.fragment.code;
       }
     }
-    console.log(this.options.label, this.shaders.fragment.head);
   }
   /* SETUP */
   /**
@@ -276,23 +275,32 @@ ${this.shaders.full.head}`;
       primitive: {
         topology: this.options.rendering.topology,
         frontFace: this.options.rendering.verticesOrder,
-        cullMode: this.options.rendering.cullMode
+        cullMode: this.options.rendering.cullMode,
+        unclippedDepth: this.options.rendering.unclippedDepth,
+        ...this.options.rendering.stripIndexFormat && {
+          stripIndexFormat: this.options.rendering.stripIndexFormat
+        }
       },
       ...this.options.rendering.depth && {
         depthStencil: {
+          depthBias: this.options.rendering.depthBias,
+          depthBiasClamp: this.options.rendering.depthBiasClamp,
+          depthBiasSlopeScale: this.options.rendering.depthBiasSlopeScale,
           depthWriteEnabled: this.options.rendering.depthWriteEnabled,
           depthCompare: this.options.rendering.depthCompare,
           format: this.options.rendering.depthFormat,
           ...this.options.rendering.stencil && {
             stencilFront: this.options.rendering.stencil.front,
-            stencilBack: this.options.rendering.stencil.back
+            stencilBack: this.options.rendering.stencil.back,
+            stencilReadMask: this.options.rendering.stencil.stencilReadMask,
+            stencilWriteMask: this.options.rendering.stencil.stencilWriteMask
           }
         }
       },
-      ...this.options.rendering.sampleCount > 1 && {
-        multisample: {
-          count: this.options.rendering.sampleCount
-        }
+      multisample: {
+        count: this.options.rendering.sampleCount,
+        alphaToCoverageEnabled: this.options.rendering.alphaToCoverageEnabled,
+        mask: this.options.rendering.mask
       }
     };
   }

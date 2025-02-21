@@ -7795,7 +7795,7 @@
       }
     }
     /**
-     * Set the WGSL code snippet that will be appended to the vertex shader.
+     * Set the {@link layoutCacheKey} and WGSL code snippet that will be appended to the vertex shader.
      */
     setWGSLFragment() {
       let locationIndex = -1;
@@ -8014,6 +8014,15 @@
         bufferOffset,
         bufferSize: bufferSize !== null ? bufferSize : array.length * array.constructor.BYTES_PER_ELEMENT
       };
+    }
+    /**
+     * Set the {@link layoutCacheKey} and WGSL code snippet that will be appended to the vertex shader.
+     */
+    setWGSLFragment() {
+      super.setWGSLFragment();
+      if (this.indexBuffer) {
+        this.layoutCacheKey += "indexFormat," + this.indexBuffer.bufferFormat + ",";
+      }
     }
     /**
      * Create the {@link Geometry} {@link vertexBuffers | vertex buffers} and {@link indexBuffer | index buffer}.
@@ -9436,7 +9445,6 @@ ${this.shaders.full.head}`;
           this.shaders.full.code = this.shaders.full.head + this.options.shaders.vertex.code + this.options.shaders.fragment.code;
         }
       }
-      console.log(this.options.label, this.shaders.fragment.head);
     }
     /* SETUP */
     /**
@@ -9527,23 +9535,32 @@ ${this.shaders.full.head}`;
         primitive: {
           topology: this.options.rendering.topology,
           frontFace: this.options.rendering.verticesOrder,
-          cullMode: this.options.rendering.cullMode
+          cullMode: this.options.rendering.cullMode,
+          unclippedDepth: this.options.rendering.unclippedDepth,
+          ...this.options.rendering.stripIndexFormat && {
+            stripIndexFormat: this.options.rendering.stripIndexFormat
+          }
         },
         ...this.options.rendering.depth && {
           depthStencil: {
+            depthBias: this.options.rendering.depthBias,
+            depthBiasClamp: this.options.rendering.depthBiasClamp,
+            depthBiasSlopeScale: this.options.rendering.depthBiasSlopeScale,
             depthWriteEnabled: this.options.rendering.depthWriteEnabled,
             depthCompare: this.options.rendering.depthCompare,
             format: this.options.rendering.depthFormat,
             ...this.options.rendering.stencil && {
               stencilFront: this.options.rendering.stencil.front,
-              stencilBack: this.options.rendering.stencil.back
+              stencilBack: this.options.rendering.stencil.back,
+              stencilReadMask: this.options.rendering.stencil.stencilReadMask,
+              stencilWriteMask: this.options.rendering.stencil.stencilWriteMask
             }
           }
         },
-        ...this.options.rendering.sampleCount > 1 && {
-          multisample: {
-            count: this.options.rendering.sampleCount
-          }
+        multisample: {
+          count: this.options.rendering.sampleCount,
+          alphaToCoverageEnabled: this.options.rendering.alphaToCoverageEnabled,
+          mask: this.options.rendering.mask
         }
       };
     }
@@ -9706,15 +9723,24 @@ struct VSOutput {
       const {
         useProjection,
         transparent,
+        // depth stencil
         depth,
         depthWriteEnabled,
         depthCompare,
         depthFormat,
+        depthBias,
+        depthBiasClamp,
+        depthBiasSlopeScale,
         stencil,
-        cullMode,
+        // multisample
         sampleCount,
+        alphaToCoverageEnabled,
+        mask,
+        // primitive
+        cullMode,
         verticesOrder,
-        topology
+        topology,
+        unclippedDepth
       } = parameters;
       let { targets } = parameters;
       if (targets === void 0) {
@@ -9737,6 +9763,12 @@ struct VSOutput {
         if (!stencil.stencilReference) {
           stencil.stencilReference = 0;
         }
+        if (!stencil.stencilReadMask) {
+          stencil.stencilReadMask = 16777215;
+        }
+        if (!stencil.stencilWriteMask) {
+          stencil.stencilWriteMask = 16777215;
+        }
       }
       this.options = {
         ...this.options,
@@ -9744,16 +9776,26 @@ struct VSOutput {
         rendering: {
           useProjection,
           transparent,
+          // depth stencil
           depth,
           depthWriteEnabled,
           depthCompare,
           depthFormat,
+          depthBias: depthBias !== void 0 ? depthBias : 0,
+          depthBiasClamp: depthBiasClamp !== void 0 ? depthBiasClamp : 0,
+          depthBiasSlopeScale: depthBiasSlopeScale !== void 0 ? depthBiasSlopeScale : 0,
           ...stencil && { stencil },
-          cullMode,
+          // multisample
           sampleCount,
+          alphaToCoverageEnabled: !!alphaToCoverageEnabled,
+          mask: mask !== void 0 ? mask : 16777215,
+          // targets
           targets,
+          // primitive
+          cullMode,
           verticesOrder,
-          topology
+          topology,
+          unclippedDepth: !!unclippedDepth
         }
       };
       this.attributes = null;
@@ -9861,6 +9903,12 @@ New rendering options: ${JSON.stringify(
         vertexBuffers: geometry.vertexBuffers,
         layoutCacheKey: geometry.layoutCacheKey
       };
+      if ("indexBuffer" in geometry && geometry.indexBuffer && geometry.topology.includes("strip")) {
+        this.setRenderingOptions({
+          ...this.options.rendering,
+          stripIndexFormat: geometry.indexBuffer.bufferFormat
+        });
+      }
     }
     /**
      * Get the {@link RenderMaterial} pipeline buffers cache key based on its {@link core/bindGroups/BindGroup.BindGroup | BindGroup} cache keys and eventually {@link attributes} cache keys.
