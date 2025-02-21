@@ -13,8 +13,8 @@ var _direction;
 class DirectionalLight extends Light {
   /**
    * DirectionalLight constructor
-   * @param renderer - {@link CameraRenderer} used to create this {@link DirectionalLight}.
-   * @param parameters - {@link DirectionalLightBaseParams | parameters} used to create this {@link DirectionalLight}.
+   * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link DirectionalLight}.
+   * @param parameters - {@link DirectionalLightBaseParams} used to create this {@link DirectionalLight}.
    */
   constructor(renderer, {
     label = "DirectionalLight",

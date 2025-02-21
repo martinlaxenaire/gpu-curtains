@@ -39,8 +39,8 @@ const shadowStruct = {
 class Shadow {
   /**
    * Shadow constructor
-   * @param renderer - {@link CameraRenderer} used to create this {@link Shadow}.
-   * @param parameters - {@link ShadowBaseParams | parameters} used to create this {@link Shadow}.
+   * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link Shadow}.
+   * @param parameters - {@link ShadowBaseParams} used to create this {@link Shadow}.
    */
   constructor(renderer, {
     light,

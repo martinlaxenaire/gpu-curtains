@@ -92,6 +92,11 @@ export class SpotLight extends Light {
   /** {@link SpotShadow} associated with this {@link SpotLight}. */
   shadow: SpotShadow
 
+  /**
+   * SpotLight constructor
+   * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link SpotLight}.
+   * @param parameters - {@link SpotLightBaseParams} used to create this {@link SpotLight}.
+   */
   constructor(
     renderer: CameraRenderer | GPUCurtains,
     {
@@ -146,9 +151,6 @@ export class SpotLight extends Light {
     if (shadow) {
       this.shadow.cast(shadow)
     }
-
-    // TODO needed?
-    //this.shouldUpdateModelMatrix()
   }
 
   /**

@@ -20,8 +20,8 @@ import { GPUCurtains } from '../../curtains/GPUCurtains'
 export class AmbientLight extends Light {
   /**
    * AmbientLight constructor
-   * @param renderer - {@link CameraRenderer} used to create this {@link AmbientLight}.
-   * @param parameters - {@link LightBaseParams | parameters} used to create this {@link AmbientLight}.
+   * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link AmbientLight}.
+   * @param parameters - {@link LightBaseParams} used to create this {@link AmbientLight}.
    */
   constructor(
     renderer: CameraRenderer | GPUCurtains,

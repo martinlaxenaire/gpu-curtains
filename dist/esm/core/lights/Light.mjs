@@ -15,8 +15,8 @@ var _intensity, _intensityColor;
 class Light extends Object3D {
   /**
    * Light constructor
-   * @param renderer - {@link CameraRenderer} used to create this {@link Light}.
-   * @param parameters - {@link LightParams | parameters} used to create this {@link Light}.
+   * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link Light}.
+   * @param parameters - {@link LightParams} used to create this {@link Light}.
    */
   constructor(renderer, { label = "", color = new Vec3(1), intensity = 1, type = "lights" } = {}) {
     super();

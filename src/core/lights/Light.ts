@@ -72,8 +72,8 @@ export class Light extends Object3D {
 
   /**
    * Light constructor
-   * @param renderer - {@link CameraRenderer} used to create this {@link Light}.
-   * @param parameters - {@link LightParams | parameters} used to create this {@link Light}.
+   * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link Light}.
+   * @param parameters - {@link LightParams} used to create this {@link Light}.
    */
   constructor(
     renderer: CameraRenderer | GPUCurtains,

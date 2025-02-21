@@ -22,8 +22,8 @@ export declare class RenderMaterial extends Material {
     options: RenderMaterialOptions;
     /**
      * RenderMaterial constructor
-     * @param renderer - our renderer class object
-     * @param parameters - {@link RenderMaterialParams | parameters} used to create our {@link RenderMaterial}.
+     * @param renderer - {@link Renderer} class object or {@link GPUCurtains} class object used to create this {@link RenderMaterial}.
+     * @param parameters - {@link RenderMaterialParams} used to create our {@link RenderMaterial}.
      */
     constructor(renderer: Renderer | GPUCurtains, parameters: RenderMaterialParams);
     /**

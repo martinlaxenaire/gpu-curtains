@@ -49,8 +49,8 @@ export class DirectionalShadow extends Shadow {
 
   /**
    * DirectionalShadow constructor
-   * @param renderer - {@link CameraRenderer} used to create this {@link DirectionalShadow}.
-   * @param parameters - {@link DirectionalShadowParams | parameters} used to create this {@link DirectionalShadow}.
+   * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link DirectionalShadow}.
+   * @param parameters - {@link DirectionalShadowParams} used to create this {@link DirectionalShadow}.
    */
   constructor(
     renderer: CameraRenderer | GPUCurtains,

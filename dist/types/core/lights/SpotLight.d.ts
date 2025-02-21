@@ -77,6 +77,11 @@ export declare class SpotLight extends Light {
     options: SpotLightBaseParams;
     /** {@link SpotShadow} associated with this {@link SpotLight}. */
     shadow: SpotShadow;
+    /**
+     * SpotLight constructor
+     * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link SpotLight}.
+     * @param parameters - {@link SpotLightBaseParams} used to create this {@link SpotLight}.
+     */
     constructor(renderer: CameraRenderer | GPUCurtains, { label, color, intensity, position, target, angle, penumbra, range, shadow, }?: SpotLightBaseParams);
     /**
      * Set or reset this {@link SpotLight} {@link CameraRenderer}.

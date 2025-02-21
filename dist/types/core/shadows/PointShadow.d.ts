@@ -37,8 +37,8 @@ export declare class PointShadow extends Shadow {
     cubeDirections: Vec3[];
     /**
      * PointShadow constructor
-     * @param renderer - {@link CameraRenderer} used to create this {@link PointShadow}.
-     * @param parameters - {@link PointShadowParams | parameters} used to create this {@link PointShadow}.
+     * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link PointShadow}.
+     * @param parameters - {@link PointShadowParams} used to create this {@link PointShadow}.
      */
     constructor(renderer: CameraRenderer | GPUCurtains, { light, intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender, }?: PointShadowParams);
     /**

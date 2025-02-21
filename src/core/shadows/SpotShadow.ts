@@ -46,6 +46,11 @@ export class SpotShadow extends Shadow {
   /** Focus of the {@link camera}. Default to `1`. */
   focus: number
 
+  /**
+   * SpotShadow constructor
+   * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link SpotShadow}.
+   * @param parameters - {@link SpotShadowParams} used to create this {@link SpotShadow}.
+   */
   constructor(
     renderer: CameraRenderer | GPUCurtains,
     {

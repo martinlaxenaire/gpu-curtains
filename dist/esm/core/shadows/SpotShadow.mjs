@@ -16,6 +16,11 @@ const spotShadowStruct = {
   }
 };
 class SpotShadow extends Shadow {
+  /**
+   * SpotShadow constructor
+   * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link SpotShadow}.
+   * @param parameters - {@link SpotShadowParams} used to create this {@link SpotShadow}.
+   */
   constructor(renderer, {
     light,
     intensity = 1,

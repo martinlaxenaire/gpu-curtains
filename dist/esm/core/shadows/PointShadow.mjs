@@ -36,8 +36,8 @@ const pointShadowStruct = {
 class PointShadow extends Shadow {
   /**
    * PointShadow constructor
-   * @param renderer - {@link CameraRenderer} used to create this {@link PointShadow}.
-   * @param parameters - {@link PointShadowParams | parameters} used to create this {@link PointShadow}.
+   * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link PointShadow}.
+   * @param parameters - {@link PointShadowParams} used to create this {@link PointShadow}.
    */
   constructor(renderer, {
     light,

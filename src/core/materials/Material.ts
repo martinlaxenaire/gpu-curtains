@@ -74,7 +74,7 @@ export class Material {
 
   /**
    * Material constructor
-   * @param renderer - our renderer class object.
+   * @param renderer - {@link Renderer} class object or {@link GPUCurtains} class object used to create this {@link Material}.
    * @param parameters - {@link types/Materials.MaterialParams | parameters} used to create our Material.
    */
   constructor(renderer: Renderer | GPUCurtains, parameters: MaterialParams) {
@@ -221,13 +221,11 @@ export class Material {
   }
 
   /**
-   * Get the complete code of a given shader including all the WGSL fragment code snippets added by the pipeline
+   * Get the complete code of a given shader including all the WGSL fragment code snippets added by the pipeline. Can wait for the {@link pipelineEntry} to be compiled if that's not already the case.
    * @param [shaderType="full"] - Shader to get the code from.
    * @returns - The corresponding shader code.
    */
-  getShaderCode(shaderType: FullShadersType = 'full'): string {
-    if (!this.pipelineEntry) return ''
-
+  async getShaderCode(shaderType: FullShadersType = 'full'): Promise<string> {
     shaderType = (() => {
       switch (shaderType) {
         case 'vertex':
@@ -240,17 +238,29 @@ export class Material {
       }
     })()
 
-    return this.pipelineEntry.shaders[shaderType].code
+    if (this.pipelineEntry) {
+      return this.pipelineEntry.shaders[shaderType].code
+    } else {
+      return new Promise<string>((resolve) => {
+        const taskId = this.renderer.onBeforeRenderScene.add(
+          () => {
+            if (this.pipelineEntry) {
+              this.renderer.onBeforeRenderScene.remove(taskId)
+              resolve(this.pipelineEntry.shaders[shaderType].code)
+            }
+          },
+          { once: false }
+        )
+      })
+    }
   }
 
   /**
-   * Get the added code of a given shader, i.e. all the WGSL fragment code snippets added by the pipeline
+   * Get the added code of a given shader, i.e. all the WGSL fragment code snippets added by the pipeline. Can wait for the {@link pipelineEntry} to be compiled if that's not already the case.
    * @param [shaderType="vertex"] - Shader to get the code from.
    * @returns - The corresponding shader code.
    */
-  getAddedShaderCode(shaderType: FullShadersType = 'vertex'): string {
-    if (!this.pipelineEntry) return ''
-
+  async getAddedShaderCode(shaderType: FullShadersType = 'vertex'): Promise<string> {
     shaderType = (() => {
       switch (shaderType) {
         case 'vertex':
@@ -262,7 +272,21 @@ export class Material {
       }
     })()
 
-    return this.pipelineEntry.shaders[shaderType].head
+    if (this.pipelineEntry) {
+      return this.pipelineEntry.shaders[shaderType].head
+    } else {
+      return new Promise<string>((resolve) => {
+        const taskId = this.renderer.onBeforeRenderScene.add(
+          () => {
+            if (this.pipelineEntry) {
+              this.renderer.onBeforeRenderScene.remove(taskId)
+              resolve(this.pipelineEntry.shaders[shaderType].head)
+            }
+          },
+          { once: false }
+        )
+      })
+    }
   }
 
   /* BIND GROUPS */

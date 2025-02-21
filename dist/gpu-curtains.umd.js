@@ -6180,7 +6180,7 @@
   class Material {
     /**
      * Material constructor
-     * @param renderer - our renderer class object.
+     * @param renderer - {@link Renderer} class object or {@link GPUCurtains} class object used to create this {@link Material}.
      * @param parameters - {@link types/Materials.MaterialParams | parameters} used to create our Material.
      */
     constructor(renderer, parameters) {
@@ -6293,12 +6293,11 @@
       });
     }
     /**
-     * Get the complete code of a given shader including all the WGSL fragment code snippets added by the pipeline
+     * Get the complete code of a given shader including all the WGSL fragment code snippets added by the pipeline. Can wait for the {@link pipelineEntry} to be compiled if that's not already the case.
      * @param [shaderType="full"] - Shader to get the code from.
      * @returns - The corresponding shader code.
      */
-    getShaderCode(shaderType = "full") {
-      if (!this.pipelineEntry) return "";
+    async getShaderCode(shaderType = "full") {
       shaderType = (() => {
         switch (shaderType) {
           case "vertex":
@@ -6310,15 +6309,28 @@
             return "full";
         }
       })();
-      return this.pipelineEntry.shaders[shaderType].code;
+      if (this.pipelineEntry) {
+        return this.pipelineEntry.shaders[shaderType].code;
+      } else {
+        return new Promise((resolve) => {
+          const taskId = this.renderer.onBeforeRenderScene.add(
+            () => {
+              if (this.pipelineEntry) {
+                this.renderer.onBeforeRenderScene.remove(taskId);
+                resolve(this.pipelineEntry.shaders[shaderType].code);
+              }
+            },
+            { once: false }
+          );
+        });
+      }
     }
     /**
-     * Get the added code of a given shader, i.e. all the WGSL fragment code snippets added by the pipeline
+     * Get the added code of a given shader, i.e. all the WGSL fragment code snippets added by the pipeline. Can wait for the {@link pipelineEntry} to be compiled if that's not already the case.
      * @param [shaderType="vertex"] - Shader to get the code from.
      * @returns - The corresponding shader code.
      */
-    getAddedShaderCode(shaderType = "vertex") {
-      if (!this.pipelineEntry) return "";
+    async getAddedShaderCode(shaderType = "vertex") {
       shaderType = (() => {
         switch (shaderType) {
           case "vertex":
@@ -6329,7 +6341,21 @@
             return "vertex";
         }
       })();
-      return this.pipelineEntry.shaders[shaderType].head;
+      if (this.pipelineEntry) {
+        return this.pipelineEntry.shaders[shaderType].head;
+      } else {
+        return new Promise((resolve) => {
+          const taskId = this.renderer.onBeforeRenderScene.add(
+            () => {
+              if (this.pipelineEntry) {
+                this.renderer.onBeforeRenderScene.remove(taskId);
+                resolve(this.pipelineEntry.shaders[shaderType].head);
+              }
+            },
+            { once: false }
+          );
+        });
+      }
     }
     /* BIND GROUPS */
     /**
@@ -6688,8 +6714,8 @@
   class ComputeMaterial extends Material {
     /**
      * ComputeMaterial constructor
-     * @param renderer - our {@link Renderer} class object
-     * @param parameters - {@link ComputeMaterialParams | parameters} used to create our {@link ComputeMaterial}
+     * @param renderer - {@link Renderer} class object or {@link GPUCurtains} class object used to create this {@link ComputeMaterial}.
+     * @param parameters - {@link ComputeMaterialParams | parameters} used to create our {@link ComputeMaterial}.
      */
     constructor(renderer, parameters) {
       const type = "ComputeMaterial";
@@ -6736,13 +6762,13 @@
       this.pipelineEntry = this.renderer.pipelineManager.createComputePipeline(this);
     }
     /**
-     * Compile the {@link ComputePipelineEntry}
+     * Compile the {@link ComputePipelineEntry}.
      */
     async compilePipelineEntry() {
       await this.pipelineEntry.compilePipelineEntry();
     }
     /**
-     * Check if all bind groups are ready, create them if needed, set {@link ComputePipelineEntry} bind group buffers and compile the pipeline
+     * Check if all bind groups are ready, create them if needed, set {@link ComputePipelineEntry} bind group buffers and compile the pipeline.
      */
     async compileMaterial() {
       if (this.ready) return;
@@ -6755,20 +6781,20 @@
       }
     }
     /**
-     * Get the complete code of a given shader including all the WGSL fragment code snippets added by the pipeline
-     * @param [shaderType="compute"] - shader to get the code from
-     * @returns - The corresponding shader code
+     * Get the complete code of a given shader including all the WGSL fragment code snippets added by the pipeline. Can wait for the {@link pipelineEntry} to be compiled if that's not already the case.
+     * @param [shaderType="compute"] - Shader to get the code from.
+     * @returns - The corresponding shader code.
      */
-    getShaderCode(shaderType = "compute") {
-      return super.getShaderCode(shaderType);
+    async getShaderCode(shaderType = "compute") {
+      return await super.getShaderCode(shaderType);
     }
     /**
-     * Get the added code of a given shader, i.e. all the WGSL fragment code snippets added by the pipeline
-     * @param [shaderType="compute"] - shader to get the code from
+     * Get the added code of a given shader, i.e. all the WGSL fragment code snippets added by the pipeline. Can wait for the {@link pipelineEntry} to be compiled if that's not already the case.
+     * @param [shaderType="compute"] - Shader to get the code from
      * @returns - The corresponding shader code
      */
-    getAddedShaderCode(shaderType = "compute") {
-      return super.getAddedShaderCode(shaderType);
+    async getAddedShaderCode(shaderType = "compute") {
+      return await super.getAddedShaderCode(shaderType);
     }
     /* RENDER */
     /**
@@ -6782,8 +6808,8 @@
     }
     /**
      * Render the material if it is ready:
-     * Set the current pipeline, set the bind groups and dispatch the work groups
-     * @param pass - current compute pass encoder
+     * Set the current pipeline, set the bind groups and dispatch the work groups.
+     * @param pass - Current compute pass encoder.
      */
     render(pass) {
       if (!this.ready) return;
@@ -6799,8 +6825,8 @@
     }
     /* RESULT BUFFER */
     /**
-     * Copy all writable binding buffers that need it
-     * @param commandEncoder - current command encoder
+     * Copy all writable binding buffers that need it.
+     * @param commandEncoder - Current command encoder.
      */
     copyBufferToResult(commandEncoder) {
       for (const bindGroup of this.bindGroups) {
@@ -6816,11 +6842,11 @@
       }
     }
     /**
-     * Get the {@link core/bindings/WritableBufferBinding.WritableBufferBinding#resultBuffer | result GPU buffer} content by {@link core/bindings/WritableBufferBinding.WritableBufferBinding | binding} and {@link core/bindings/bufferElements/BufferElement.BufferElement | buffer element} names
-     * @param parameters - parameters used to get the result
-     * @param parameters.bindingName - {@link core/bindings/WritableBufferBinding.WritableBufferBinding#name | binding name} from which to get the result
-     * @param parameters.bufferElementName - optional {@link core/bindings/bufferElements/BufferElement.BufferElement | buffer element} (i.e. struct member) name if the result needs to be restrained to only one element
-     * @returns - the mapped content of the {@link GPUBuffer} as a {@link Float32Array}
+     * Get the {@link core/bindings/WritableBufferBinding.WritableBufferBinding#resultBuffer | result GPU buffer} content by {@link core/bindings/WritableBufferBinding.WritableBufferBinding | binding} and {@link core/bindings/bufferElements/BufferElement.BufferElement | buffer element} names.
+     * @param parameters - Parameters used to get the result.
+     * @param parameters.bindingName - {@link core/bindings/WritableBufferBinding.WritableBufferBinding#name | binding name} from which to get the result.
+     * @param parameters.bufferElementName - Pptional {@link core/bindings/bufferElements/BufferElement.BufferElement | buffer element} (i.e. struct member) name if the result needs to be restrained to only one element.
+     * @returns - the mapped content of the {@link GPUBuffer} as a {@link Float32Array}.
      */
     async getComputeResult({
       bindingName = "",
@@ -6852,7 +6878,7 @@
   class ComputePass {
     /**
      * ComputePass constructor
-     * @param renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object.
+     * @param renderer - {@link Renderer} class object or {@link GPUCurtains} class object used to create this {@link ComputePass}.
      * @param parameters - {@link ComputePassParams | parameters} used to create our {@link ComputePass}.
      */
     constructor(renderer, parameters = {}) {
@@ -8176,8 +8202,8 @@
   class Light extends Object3D {
     /**
      * Light constructor
-     * @param renderer - {@link CameraRenderer} used to create this {@link Light}.
-     * @param parameters - {@link LightParams | parameters} used to create this {@link Light}.
+     * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link Light}.
+     * @param parameters - {@link LightParams} used to create this {@link Light}.
      */
     constructor(renderer, { label = "", color = new Vec3(1), intensity = 1, type = "lights" } = {}) {
       super();
@@ -8338,8 +8364,8 @@
   class AmbientLight extends Light {
     /**
      * AmbientLight constructor
-     * @param renderer - {@link CameraRenderer} used to create this {@link AmbientLight}.
-     * @param parameters - {@link LightBaseParams | parameters} used to create this {@link AmbientLight}.
+     * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link AmbientLight}.
+     * @param parameters - {@link LightBaseParams} used to create this {@link AmbientLight}.
      */
     constructor(renderer, { label = "AmbientLight", color = new Vec3(1), intensity = 0.1 } = {}) {
       const type = "ambientLights";
@@ -9616,8 +9642,8 @@ struct VSOutput {
   class RenderMaterial extends Material {
     /**
      * RenderMaterial constructor
-     * @param renderer - our renderer class object
-     * @param parameters - {@link RenderMaterialParams | parameters} used to create our {@link RenderMaterial}.
+     * @param renderer - {@link Renderer} class object or {@link GPUCurtains} class object used to create this {@link RenderMaterial}.
+     * @param parameters - {@link RenderMaterialParams} used to create our {@link RenderMaterial}.
      */
     constructor(renderer, parameters) {
       const type = "RenderMaterial";
@@ -11345,8 +11371,8 @@ fn getPCFBaseShadowContribution(
   class Shadow {
     /**
      * Shadow constructor
-     * @param renderer - {@link CameraRenderer} used to create this {@link Shadow}.
-     * @param parameters - {@link ShadowBaseParams | parameters} used to create this {@link Shadow}.
+     * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link Shadow}.
+     * @param parameters - {@link ShadowBaseParams} used to create this {@link Shadow}.
      */
     constructor(renderer, {
       light,
@@ -12080,8 +12106,8 @@ fn getPCFBaseShadowContribution(
   class DirectionalShadow extends Shadow {
     /**
      * DirectionalShadow constructor
-     * @param renderer - {@link CameraRenderer} used to create this {@link DirectionalShadow}.
-     * @param parameters - {@link DirectionalShadowParams | parameters} used to create this {@link DirectionalShadow}.
+     * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link DirectionalShadow}.
+     * @param parameters - {@link DirectionalShadowParams} used to create this {@link DirectionalShadow}.
      */
     constructor(renderer, {
       light,
@@ -12203,8 +12229,8 @@ fn getPCFBaseShadowContribution(
   class DirectionalLight extends Light {
     /**
      * DirectionalLight constructor
-     * @param renderer - {@link CameraRenderer} used to create this {@link DirectionalLight}.
-     * @param parameters - {@link DirectionalLightBaseParams | parameters} used to create this {@link DirectionalLight}.
+     * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link DirectionalLight}.
+     * @param parameters - {@link DirectionalLightBaseParams} used to create this {@link DirectionalLight}.
      */
     constructor(renderer, {
       label = "DirectionalLight",
@@ -12403,8 +12429,8 @@ struct PointShadowVSOutput {
   class PointShadow extends Shadow {
     /**
      * PointShadow constructor
-     * @param renderer - {@link CameraRenderer} used to create this {@link PointShadow}.
-     * @param parameters - {@link PointShadowParams | parameters} used to create this {@link PointShadow}.
+     * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link PointShadow}.
+     * @param parameters - {@link PointShadowParams} used to create this {@link PointShadow}.
      */
     constructor(renderer, {
       light,
@@ -12697,8 +12723,8 @@ struct PointShadowVSOutput {
   class PointLight extends Light {
     /**
      * PointLight constructor
-     * @param renderer - {@link CameraRenderer | CameraRenderer} used to create this {@link PointLight}.
-     * @param parameters - {@link PointLightBaseParams | parameters} used to create this {@link PointLight}.
+     * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link PointLight}.
+     * @param parameters - {@link PointLightBaseParams} used to create this {@link PointLight}.
      */
     constructor(renderer, {
       label = "PointLight",
@@ -12845,6 +12871,11 @@ struct SpotShadowVSOutput {
     }
   };
   class SpotShadow extends Shadow {
+    /**
+     * SpotShadow constructor
+     * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link SpotShadow}.
+     * @param parameters - {@link SpotShadowParams} used to create this {@link SpotShadow}.
+     */
     constructor(renderer, {
       light,
       intensity = 1,
@@ -12951,6 +12982,11 @@ struct SpotShadowVSOutput {
   var __privateSet$b = (obj, member, value, setter) => (__accessCheck$d(obj, member, "write to private field"), member.set(obj, value), value);
   var _direction, _angle, _penumbra, _range;
   class SpotLight extends Light {
+    /**
+     * SpotLight constructor
+     * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link SpotLight}.
+     * @param parameters - {@link SpotLightBaseParams} used to create this {@link SpotLight}.
+     */
     constructor(renderer, {
       label = "SpotLight",
       color = new Vec3(1),

@@ -75,8 +75,8 @@ export class PointLight extends Light {
 
   /**
    * PointLight constructor
-   * @param renderer - {@link CameraRenderer | CameraRenderer} used to create this {@link PointLight}.
-   * @param parameters - {@link PointLightBaseParams | parameters} used to create this {@link PointLight}.
+   * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link PointLight}.
+   * @param parameters - {@link PointLightBaseParams} used to create this {@link PointLight}.
    */
   constructor(
     renderer: CameraRenderer | GPUCurtains,

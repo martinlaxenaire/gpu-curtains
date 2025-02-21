@@ -11,6 +11,11 @@ var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot
 var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
 var _direction, _angle, _penumbra, _range;
 class SpotLight extends Light {
+  /**
+   * SpotLight constructor
+   * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link SpotLight}.
+   * @param parameters - {@link SpotLightBaseParams} used to create this {@link SpotLight}.
+   */
   constructor(renderer, {
     label = "SpotLight",
     color = new Vec3(1),

@@ -64,7 +64,7 @@ export declare class Material {
     samplers: Sampler[];
     /**
      * Material constructor
-     * @param renderer - our renderer class object.
+     * @param renderer - {@link Renderer} class object or {@link GPUCurtains} class object used to create this {@link Material}.
      * @param parameters - {@link types/Materials.MaterialParams | parameters} used to create our Material.
      */
     constructor(renderer: Renderer | GPUCurtains, parameters: MaterialParams);
@@ -98,17 +98,17 @@ export declare class Material {
      */
     restoreContext(): void;
     /**
-     * Get the complete code of a given shader including all the WGSL fragment code snippets added by the pipeline
+     * Get the complete code of a given shader including all the WGSL fragment code snippets added by the pipeline. Can wait for the {@link pipelineEntry} to be compiled if that's not already the case.
      * @param [shaderType="full"] - Shader to get the code from.
      * @returns - The corresponding shader code.
      */
-    getShaderCode(shaderType?: FullShadersType): string;
+    getShaderCode(shaderType?: FullShadersType): Promise<string>;
     /**
-     * Get the added code of a given shader, i.e. all the WGSL fragment code snippets added by the pipeline
+     * Get the added code of a given shader, i.e. all the WGSL fragment code snippets added by the pipeline. Can wait for the {@link pipelineEntry} to be compiled if that's not already the case.
      * @param [shaderType="vertex"] - Shader to get the code from.
      * @returns - The corresponding shader code.
      */
-    getAddedShaderCode(shaderType?: FullShadersType): string;
+    getAddedShaderCode(shaderType?: FullShadersType): Promise<string>;
     /**
      * Prepare and set our bind groups based on inputs and bindGroups Material parameters.
      */
