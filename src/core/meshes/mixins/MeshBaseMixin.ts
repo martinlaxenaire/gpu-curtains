@@ -885,7 +885,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
         }),
       }
 
-      this.material?.setRenderingOptions(renderingOptions)
+      this.material?.setRenderingOptions({ ...this.material.options.rendering, ...renderingOptions })
     }
 
     /**

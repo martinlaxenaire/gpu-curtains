@@ -17,7 +17,8 @@ class ComputePipelineEntry extends PipelineEntry {
       compute: {
         head: "",
         code: "",
-        module: null
+        module: null,
+        constants: /* @__PURE__ */ new Map()
       }
     };
     this.descriptor = null;
@@ -29,6 +30,16 @@ class ComputePipelineEntry extends PipelineEntry {
   patchShaders() {
     this.shaders.compute.head = "";
     this.shaders.compute.code = "";
+    if (this.options.shaders.compute.constants) {
+      for (const [key, value] of Object.entries(this.options.shaders.compute.constants)) {
+        this.shaders.compute.constants.set(key, value);
+      }
+    }
+    this.shaders.compute.constants.forEach((value, key) => {
+      const type = typeof value === "boolean" ? "bool" : "f32";
+      this.shaders.compute.head += `override ${key}: ${type} = ${value};
+`;
+    });
     const groupsBindings = [];
     for (const bindGroup of this.bindGroups) {
       let bindIndex = 0;
@@ -81,7 +92,10 @@ ${this.shaders.compute.head}`;
       layout: this.layout,
       compute: {
         module: this.shaders.compute.module,
-        entryPoint: this.options.shaders.compute.entryPoint
+        entryPoint: this.options.shaders.compute.entryPoint,
+        ...this.options.shaders.compute.constants && {
+          constants: this.options.shaders.compute.constants
+        }
       }
     };
   }

@@ -13,19 +13,23 @@ import { MediaTexture } from '../textures/MediaTexture';
  * Base parameters used to create a {@link GPUDeviceManager}.
  */
 export interface GPUDeviceManagerBaseParams {
+    /** The label of the {@link GPUDeviceManager}, used to create the {@link GPUDevice} for debugging purpose. */
+    label?: string;
     /** Flag indicating whether we're running the production mode or not. If not, useful warnings could be logged to the console. */
     production?: boolean;
     /** Additional options to use when requesting an {@link GPUAdapter | adapter}. */
     adapterOptions?: GPURequestAdapterOptions;
     /** Whether the {@link GPUDeviceManager} should create its own requestAnimationFrame loop to render or not. */
     autoRender?: boolean;
+    /** Optional {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUSupportedFeatures#available_features | required features} representing additional functionalities to use when requesting a device. */
+    requiredFeatures?: GPUFeatureName[];
+    /** Optional {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUSupportedLimits#instance_properties | limits keys} to use to force the device to use the maximum supported adapter limits. */
+    requestAdapterLimits?: Array<keyof GPUSupportedLimits>;
 }
 /**
  * Parameters used to create a {@link GPUDeviceManager}.
  */
 export interface GPUDeviceManagerParams extends GPUDeviceManagerBaseParams {
-    /** The label of the {@link GPUDeviceManager}, used to create the {@link GPUDevice} for debugging purpose. */
-    label?: string;
     /** Callback to run if there's any error while trying to set up the {@link GPUAdapter | adapter} or {@link GPUDevice | device}. */
     onError?: () => void;
     /** Callback to run whenever the {@link GPUDeviceManager#device | device} is lost. */
@@ -51,20 +55,16 @@ export declare class GPUDeviceManager {
     #private;
     /** Number of times a {@link GPUDevice} has been created. */
     index: number;
-    /** The label of the {@link GPUDeviceManager}, used to create the {@link GPUDevice} for debugging purpose. */
-    label: string;
-    /** Flag indicating whether we're running the production mode or not. If not, useful warnings could be logged to the console. */
-    production: boolean;
     /** The navigator {@link GPU} object. */
     gpu: GPU | undefined;
     /** The WebGPU {@link GPUAdapter | adapter} used. */
     adapter: GPUAdapter | void;
-    /** Additional options to use when requesting an {@link GPUAdapter | adapter}. */
-    adapterOptions: GPURequestAdapterOptions;
     /** The WebGPU {@link GPUDevice | device} used. */
     device: GPUDevice | undefined;
     /** Flag indicating whether the {@link GPUDeviceManager} is ready, i.e. its {@link adapter} and {@link device} have been successfully created. */
     ready: boolean;
+    /** Options used to create this {@link GPUDeviceManager}. */
+    options: GPUDeviceManagerBaseParams;
     /** The {@link PipelineManager} used to cache {@link GPURenderPipeline} and {@link GPUComputePipeline} and set them only when appropriate. */
     pipelineManager: PipelineManager;
     /** Array of {@link Renderer | renderers} using that {@link GPUDeviceManager}. */
@@ -104,7 +104,7 @@ export declare class GPUDeviceManager {
      * GPUDeviceManager constructor
      * @param parameters - {@link GPUDeviceManagerParams | parameters} used to create this {@link GPUDeviceManager}.
      */
-    constructor({ label, production, adapterOptions, autoRender, onError, onDeviceLost, onDeviceDestroyed, }?: GPUDeviceManagerParams);
+    constructor({ label, production, adapterOptions, requiredFeatures, requestAdapterLimits, autoRender, onError, onDeviceLost, onDeviceDestroyed, }?: GPUDeviceManagerParams);
     /**
      * Set our {@link adapter} and {@link device} if possible.
      * @param parameters - {@link GPUAdapter} and/or {@link GPUDevice} to use if set.

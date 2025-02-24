@@ -303,14 +303,29 @@ window.addEventListener('load', async () => {
     cullMode: 'none',
     shaders: {
       fragment: {
+        constants: {
+          red: 1,
+          green: 0.325,
+          blue: 0.325,
+          useConstants: false,
+        },
         code: `
           @fragment fn main() -> @location(0) vec4f {
-            return vec4(vec3(0.325), 1.0);
+            var color: vec4f;
+            if(useConstants) {
+              color = vec4(red, green, blue, 1.0);
+            }
+            else {
+              color = vec4(vec3(0.325), 1.0);
+            }
+            return color;
           }
         `,
       },
     },
   })
+
+  console.log(floor)
 
   floor.parent = floorPivot
 

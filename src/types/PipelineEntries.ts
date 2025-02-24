@@ -3,6 +3,7 @@ import {
   MaterialShaders,
   RenderMaterialAttributes,
   RenderMaterialRenderingOptions,
+  ShaderOptions,
 } from './Materials'
 import { Renderer } from '../core/renderers/utils'
 import { GPUCurtains } from '../curtains/GPUCurtains'
@@ -15,6 +16,8 @@ export interface PipelineEntryShader {
   code: string
   /** {@link GPUShaderModule} created based on the given {@link code}. */
   module: GPUShaderModule | null
+  /** Map of {@link ShaderOptions.constants | ShaderOptions constants} to add to the shader head. */
+  constants: Map<keyof ShaderOptions['constants'], ShaderOptions['constants'][keyof ShaderOptions['constants']]>
 }
 
 /** Defines all possible {@link PipelineEntryShader} objects. */

@@ -42,6 +42,10 @@ export declare class SpotShadow extends Shadow {
      */
     reset(): void;
     /**
+     * Copy the {@link SpotLight} actual position and update binding.
+     */
+    setPosition(): void;
+    /**
      * Set the {@link PerspectiveCamera#fov | camera fov} based on the {@link SpotLight#angle | SpotLight angle}.
      */
     setCameraFov(): void;

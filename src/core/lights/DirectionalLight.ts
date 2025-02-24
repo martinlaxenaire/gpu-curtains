@@ -154,11 +154,35 @@ export class DirectionalLight extends Light {
   }
 
   /**
+   * Get this {@link DirectionalLight} intensity.
+   * @returns - The {@link DirectionalLight} intensity.
+   */
+  get intensity(): number {
+    return super.intensity
+  }
+
+  /**
+   * Set this {@link DirectionalLight} intensity and clear shadow if intensity is `0`.
+   * @param value - The new {@link DirectionalLight} intensity.
+   */
+  set intensity(value: number) {
+    super.intensity = value
+
+    if (this.shadow && this.shadow.isActive && !value) {
+      this.shadow.clearDepthTexture()
+    }
+  }
+
+  /**
    * Set the {@link DirectionalLight} direction based on the {@link target} and the {@link worldMatrix} translation.
    */
   setDirection() {
     this.#direction.copy(this.target).sub(this.actualPosition).normalize()
     this.onPropertyChanged('direction', this.#direction)
+
+    if (this.shadow) {
+      this.shadow.setDirection(this.#direction)
+    }
   }
 
   /**

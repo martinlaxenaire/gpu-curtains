@@ -41,15 +41,24 @@ class RenderMaterial extends Material {
     const {
       useProjection,
       transparent,
+      // depth stencil
       depth,
       depthWriteEnabled,
       depthCompare,
       depthFormat,
+      depthBias,
+      depthBiasClamp,
+      depthBiasSlopeScale,
       stencil,
-      cullMode,
+      // multisample
       sampleCount,
+      alphaToCoverageEnabled,
+      mask,
+      // primitive
+      cullMode,
       verticesOrder,
-      topology
+      topology,
+      unclippedDepth
     } = parameters;
     let { targets } = parameters;
     if (targets === void 0) {
@@ -72,6 +81,12 @@ class RenderMaterial extends Material {
       if (!stencil.stencilReference) {
         stencil.stencilReference = 0;
       }
+      if (!stencil.stencilReadMask) {
+        stencil.stencilReadMask = 16777215;
+      }
+      if (!stencil.stencilWriteMask) {
+        stencil.stencilWriteMask = 16777215;
+      }
     }
     this.options = {
       ...this.options,
@@ -79,16 +94,26 @@ class RenderMaterial extends Material {
       rendering: {
         useProjection,
         transparent,
+        // depth stencil
         depth,
         depthWriteEnabled,
         depthCompare,
         depthFormat,
+        depthBias: depthBias !== void 0 ? depthBias : 0,
+        depthBiasClamp: depthBiasClamp !== void 0 ? depthBiasClamp : 0,
+        depthBiasSlopeScale: depthBiasSlopeScale !== void 0 ? depthBiasSlopeScale : 0,
         ...stencil && { stencil },
-        cullMode,
+        // multisample
         sampleCount,
+        alphaToCoverageEnabled: !!alphaToCoverageEnabled,
+        mask: mask !== void 0 ? mask : 16777215,
+        // targets
         targets,
+        // primitive
+        cullMode,
         verticesOrder,
-        topology
+        topology,
+        unclippedDepth: !!unclippedDepth
       }
     };
     this.attributes = null;
@@ -196,6 +221,12 @@ New rendering options: ${JSON.stringify(
       vertexBuffers: geometry.vertexBuffers,
       layoutCacheKey: geometry.layoutCacheKey
     };
+    if ("indexBuffer" in geometry && geometry.indexBuffer && geometry.topology.includes("strip")) {
+      this.setRenderingOptions({
+        ...this.options.rendering,
+        stripIndexFormat: geometry.indexBuffer.bufferFormat
+      });
+    }
   }
   /**
    * Get the {@link RenderMaterial} pipeline buffers cache key based on its {@link core/bindGroups/BindGroup.BindGroup | BindGroup} cache keys and eventually {@link attributes} cache keys.

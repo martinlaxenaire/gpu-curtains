@@ -194,6 +194,16 @@ export class IndexedGeometry extends Geometry {
   }
 
   /**
+   * Set the {@link layoutCacheKey} and WGSL code snippet that will be appended to the vertex shader.
+   */
+  setWGSLFragment() {
+    super.setWGSLFragment()
+    if (this.indexBuffer) {
+      this.layoutCacheKey += 'indexFormat,' + this.indexBuffer.bufferFormat + ','
+    }
+  }
+
+  /**
    * Create the {@link Geometry} {@link vertexBuffers | vertex buffers} and {@link indexBuffer | index buffer}.
    * @param parameters - parameters used to create the vertex buffers.
    * @param parameters.renderer - {@link Renderer} used to create the vertex buffers.

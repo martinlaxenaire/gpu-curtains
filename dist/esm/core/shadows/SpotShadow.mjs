@@ -3,9 +3,14 @@ import { Vec2 } from '../../math/Vec2.mjs';
 import { PerspectiveCamera } from '../cameras/PerspectiveCamera.mjs';
 import { Texture } from '../textures/Texture.mjs';
 import { getDefaultSpotShadowDepthVs } from '../shaders/full/vertex/get-default-spot-shadow-depth-vertex-shader-code.mjs';
+import { Vec3 } from '../../math/Vec3.mjs';
 
 const spotShadowStruct = {
   ...shadowStruct,
+  position: {
+    type: "vec3f",
+    value: new Vec3()
+  },
   viewMatrix: {
     type: "mat4x4f",
     value: new Float32Array(16)
@@ -70,6 +75,13 @@ class SpotShadow extends Shadow {
     super.reset();
     this.onPropertyChanged("projectionMatrix", this.camera.projectionMatrix);
     this.onPropertyChanged("viewMatrix", this.camera.viewMatrix);
+    this.setPosition();
+  }
+  /**
+   * Copy the {@link SpotLight} actual position and update binding.
+   */
+  setPosition() {
+    this.onPropertyChanged("position", this.light.actualPosition);
   }
   /**
    * Set the {@link PerspectiveCamera#fov | camera fov} based on the {@link SpotLight#angle | SpotLight angle}.

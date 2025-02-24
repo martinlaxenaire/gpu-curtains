@@ -69,6 +69,23 @@ class PointLight extends Light {
     }
   }
   /**
+   * Get this {@link PointLight} intensity.
+   * @returns - The {@link PointLight} intensity.
+   */
+  get intensity() {
+    return super.intensity;
+  }
+  /**
+   * Set this {@link PointLight} intensity and clear shadow if intensity is `0`.
+   * @param value - The new {@link PointLight} intensity.
+   */
+  set intensity(value) {
+    super.intensity = value;
+    if (this.shadow && this.shadow.isActive && !value) {
+      this.shadow.clearDepthTexture();
+    }
+  }
+  /**
    * Get this {@link PointLight} range.
    * @returns - The {@link PointLight} range.
    */
@@ -91,6 +108,9 @@ class PointLight extends Light {
    */
   setPosition() {
     this.onPropertyChanged("position", this.actualPosition);
+    if (this.shadow) {
+      this.shadow.setPosition();
+    }
   }
   /**
    * If the {@link modelMatrix | model matrix} has been updated, set the new position from the {@link worldMatrix} translation.

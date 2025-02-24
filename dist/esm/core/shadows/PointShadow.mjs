@@ -16,6 +16,10 @@ var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "
 var _tempCubeDirection, _viewMatrices;
 const pointShadowStruct = {
   ...shadowStruct,
+  position: {
+    type: "vec3f",
+    value: new Vec3()
+  },
   cameraNear: {
     type: "f32",
     value: 0
@@ -126,7 +130,14 @@ class PointShadow extends Shadow {
     this.setRendererBinding();
     super.reset();
     this.onProjectionMatrixChanged();
-    this.onViewMatricesChanged();
+    this.updateViewMatrices();
+    this.setPosition();
+  }
+  /**
+   * Copy the {@link PointLight} actual position and update binding.
+   */
+  setPosition() {
+    this.onPropertyChanged("position", this.light.actualPosition);
   }
   /**
    * Called whenever the {@link PerspectiveCamera#projectionMatrix | camera projectionMatrix} changed (or on reset) to update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
@@ -142,8 +153,7 @@ class PointShadow extends Shadow {
   updateViewMatrices() {
     for (let i = 0; i < 6; i++) {
       __privateGet(this, _tempCubeDirection).copy(this.cubeDirections[i]).add(this.camera.actualPosition);
-      this.camera.viewMatrix.makeView(this.camera.actualPosition, __privateGet(this, _tempCubeDirection), this.cubeUps[i]);
-      __privateGet(this, _viewMatrices)[i].copy(this.camera.viewMatrix);
+      __privateGet(this, _viewMatrices)[i].makeView(this.camera.actualPosition, __privateGet(this, _tempCubeDirection), this.cubeUps[i]);
       for (let j = 0; j < 16; j++) {
         this.rendererBinding.childrenBindings[this.index].inputs.viewMatrices.value[i * 16 + j] = __privateGet(this, _viewMatrices)[i].elements[j];
       }
@@ -234,7 +244,7 @@ class PointShadow extends Shadow {
    * @param commandEncoder - {@link GPUCommandEncoder} to use.
    */
   render(commandEncoder) {
-    if (!this.castingMeshes.size) return;
+    if (!this.castingMeshes.size || !this.light.intensity) return;
     let shouldRender = false;
     for (const [_uuid, mesh] of this.castingMeshes) {
       if (mesh.visible) {

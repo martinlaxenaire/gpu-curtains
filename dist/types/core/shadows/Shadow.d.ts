@@ -13,6 +13,7 @@ import { GPUCurtains } from '../../curtains/GPUCurtains';
 import { VertexShaderInputBaseParams } from '../shaders/full/vertex/get-vertex-shader-code';
 import { Mesh } from '../meshes/Mesh';
 import { Geometry } from '../geometries/Geometry';
+import { Vec3 } from '../../math/Vec3';
 /** Defines all types of shadows. */
 export type ShadowsType = 'directionalShadows' | 'pointShadows' | 'spotShadows';
 /** @ignore */
@@ -101,7 +102,7 @@ export declare class Shadow {
      * @param propertyKey - name of the property to update.
      * @param value - new value of the property.
      */
-    onPropertyChanged(propertyKey: string, value: Mat4 | number): void;
+    onPropertyChanged(propertyKey: string, value: Mat4 | Vec3 | number): void;
     /**
      * Get whether this {@link Shadow} is actually casting shadows.
      * @returns - Whether this {@link Shadow} is actually casting shadows.

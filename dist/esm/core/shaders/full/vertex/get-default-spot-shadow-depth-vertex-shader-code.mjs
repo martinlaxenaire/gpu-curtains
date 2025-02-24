@@ -18,16 +18,26 @@ struct SpotShadowVSOutput {
   ${declareAttributesVars({ geometry })}
   ${getVertexTransformedPositionNormal({ bindings, geometry })}
   
-  let worldPos = worldPosition.xyz / worldPosition.w;
+  // shadows calculations in view space instead of world space
+  // prevents world-space scaling issues for normal bias
+  let viewMatrix: mat4x4f = spotShadow.viewMatrix;
+  var shadowViewPos: vec3f = (viewMatrix * worldPosition).xyz;
+  let lightViewPos: vec3f = (viewMatrix * vec4(spotShadow.position, 1.0)).xyz;
+
+  // Transform normal into shadow view space
+  let shadowNormal: vec3f = normalize((viewMatrix * vec4(normal, 0.0)).xyz);
   
-  let lightDirection: vec3f = normalize(worldPos - spotLights.elements[${lightIndex}].direction);
-  let NdotL: f32 = dot(normal, lightDirection);
+  // Compute light direction in shadow space
+  let lightDirection: vec3f = normalize(lightViewPos - shadowViewPos);
+  
+  let NdotL: f32 = dot(shadowNormal, lightDirection);
   let sinNdotL = sqrt(1.0 - NdotL * NdotL);
   let normalBias: f32 = spotShadow.normalBias * sinNdotL;
   
-  worldPosition = vec4(worldPos - normal * normalBias, 1.0);
+  // Apply bias in shadow view space
+  shadowViewPos -= shadowNormal * normalBias;
   
-  return spotShadow.projectionMatrix * spotShadow.viewMatrix * worldPosition;
+  return spotShadow.projectionMatrix * vec4(shadowViewPos, 1.0);
 }`
 );
 

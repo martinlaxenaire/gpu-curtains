@@ -403,7 +403,7 @@ class GPUCameraRenderer extends GPURenderer {
       label: this.lightsBindingParams[lightsType].label,
       name: lightsType,
       bindingType: "storage",
-      visibility: ["vertex", "fragment", "compute"],
+      visibility: ["fragment", "compute"],
       // TODO needed in compute?
       struct: {
         count: {

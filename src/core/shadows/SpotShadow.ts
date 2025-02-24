@@ -9,6 +9,7 @@ import { VertexShaderInputBaseParams } from '../shaders/full/vertex/get-vertex-s
 import { ShaderOptions } from '../../types/Materials'
 import { Texture } from '../textures/Texture'
 import { getDefaultSpotShadowDepthVs } from '../shaders/full/vertex/get-default-spot-shadow-depth-vertex-shader-code'
+import { Vec3 } from '../../math/Vec3'
 
 /**
  * Base parameters used to create a {@link SpotShadow}.
@@ -21,6 +22,10 @@ export interface SpotShadowParams extends ShadowBaseParams {
 /** @ignore */
 export const spotShadowStruct: Record<string, Input> = {
   ...shadowStruct,
+  position: {
+    type: 'vec3f',
+    value: new Vec3(),
+  },
   viewMatrix: {
     type: 'mat4x4f',
     value: new Float32Array(16),
@@ -111,6 +116,14 @@ export class SpotShadow extends Shadow {
 
     this.onPropertyChanged('projectionMatrix', this.camera.projectionMatrix)
     this.onPropertyChanged('viewMatrix', this.camera.viewMatrix)
+    this.setPosition()
+  }
+
+  /**
+   * Copy the {@link SpotLight} actual position and update binding.
+   */
+  setPosition() {
+    this.onPropertyChanged('position', this.light.actualPosition)
   }
 
   /**

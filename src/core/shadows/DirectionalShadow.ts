@@ -24,6 +24,10 @@ export interface DirectionalShadowParams extends ShadowBaseParams {
 /** @ignore */
 export const directionalShadowStruct: Record<string, Input> = {
   ...shadowStruct,
+  direction: {
+    type: 'vec3f',
+    value: new Vec3(),
+  },
   viewMatrix: {
     type: 'mat4x4f',
     value: new Float32Array(16),
@@ -46,6 +50,12 @@ export class DirectionalShadow extends Shadow {
 
   /** Options used to create this {@link DirectionalShadow}. */
   options: DirectionalShadowParams
+
+  /**
+   * Direction of the parent {@link DirectionalLight}. Duplicate to avoid adding the {@link DirectionalLight} binding to vertex shaders.
+   * @private
+   */
+  #direction: Vec3
 
   /**
    * DirectionalShadow constructor
@@ -105,6 +115,8 @@ export class DirectionalShadow extends Shadow {
     // force camera position to 0
     this.camera.position.set(0)
     this.camera.parent = this.light
+
+    this.#direction = new Vec3()
   }
 
   /**
@@ -146,6 +158,16 @@ export class DirectionalShadow extends Shadow {
 
     this.onPropertyChanged('projectionMatrix', this.camera.projectionMatrix)
     this.onPropertyChanged('viewMatrix', this.camera.viewMatrix)
+    this.onPropertyChanged('direction', this.#direction)
+  }
+
+  /**
+   * Copy the {@link DirectionalLight} direction and update binding.
+   * @param direction - {@link DirectionalLight} direction to copy.
+   */
+  setDirection(direction = new Vec3()) {
+    this.#direction.copy(direction)
+    this.onPropertyChanged('direction', this.#direction)
   }
 
   /**

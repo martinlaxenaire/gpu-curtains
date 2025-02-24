@@ -13,6 +13,7 @@ import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { VertexShaderInputBaseParams } from '../shaders/full/vertex/get-vertex-shader-code'
 import { Mesh } from '../meshes/Mesh'
 import { Geometry } from '../geometries/Geometry'
+import { Vec3 } from '../../math/Vec3'
 
 /** Defines all types of shadows. */
 export type ShadowsType = 'directionalShadows' | 'pointShadows' | 'spotShadows'
@@ -281,7 +282,7 @@ export class Shadow {
    * @param propertyKey - name of the property to update.
    * @param value - new value of the property.
    */
-  onPropertyChanged(propertyKey: string, value: Mat4 | number) {
+  onPropertyChanged(propertyKey: string, value: Mat4 | Vec3 | number) {
     if (this.rendererBinding && this.rendererBinding.childrenBindings.length > this.index) {
       if (value instanceof Mat4) {
         for (let i = 0; i < value.elements.length; i++) {
@@ -289,11 +290,16 @@ export class Shadow {
         }
 
         this.rendererBinding.childrenBindings[this.index].inputs[propertyKey].shouldUpdate = true
+      } else if (value instanceof Vec3) {
+        this.rendererBinding.childrenBindings[this.index].inputs[propertyKey].shouldUpdate = true
+        ;(this.rendererBinding.childrenBindings[this.index].inputs[propertyKey].value as Vec3).copy(value)
       } else {
         this.rendererBinding.childrenBindings[this.index].inputs[propertyKey].value = value
       }
 
       this.renderer.shouldUpdateCameraLightsBindGroup()
+    } else {
+      console.log('bail for property', propertyKey, this.constructor.name, this.rendererBinding)
     }
   }
 
@@ -530,7 +536,7 @@ export class Shadow {
    * @param commandEncoder - {@link GPUCommandEncoder} to use.
    */
   render(commandEncoder: GPUCommandEncoder) {
-    if (!this.castingMeshes.size) return
+    if (!this.castingMeshes.size || !this.light.intensity) return
 
     let shouldRender = false
     for (const [_uuid, mesh] of this.castingMeshes) {

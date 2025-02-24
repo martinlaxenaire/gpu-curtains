@@ -8,7 +8,6 @@ import { getLambertShading } from '../fragment/body/get-lambert-shading'
 import { applyToneMapping } from '../fragment/body/apply-tone-mapping'
 import { ToneMappings } from '../../../../extras/meshes/LitMesh'
 
-// TODO add emissive?
 /** Defines the basic parameters available for the various shading getter functions. */
 export interface GetShadingParams {
   /** Whether to add the utils functions such as constants or helper functions. Default to `true`. */
