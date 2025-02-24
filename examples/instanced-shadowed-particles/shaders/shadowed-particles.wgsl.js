@@ -17,7 +17,6 @@ export const particlesDepthPassShaders = /* wgsl */ `
     depthVsOutput.uv = attributes.uv;
     
     // get our directional light & shadow
-    let directionalLight: DirectionalLightsElement = directionalLights.elements[0];
     let directionalShadow: DirectionalShadowsElement = directionalShadows.directionalShadowsElements[0];
     
     let size: f32 = getParticleSize(attributes.particlePosition.w, attributes.particleVelocity.w);
