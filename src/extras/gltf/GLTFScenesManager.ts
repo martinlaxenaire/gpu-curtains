@@ -396,7 +396,6 @@ export class GLTFScenesManager {
    * @returns - newly created {@link MediaTexture}.
    */
   createTexture(material: GLTF.IMaterial, image: ImageBitmap, name: string, useTransform = false): MediaTexture {
-    // TODO check for all textures!
     const format = (() => {
       switch (name) {
         case 'baseColorTexture':
@@ -442,7 +441,6 @@ export class GLTFScenesManager {
 
     if (this.gltf.materials) {
       for (const [materialIndex, material] of Object.entries(this.gltf.materials)) {
-        // TODO handle custom/additional UV attributes
         const materialTextures = {
           material: materialIndex,
           texturesDescriptors: [],
