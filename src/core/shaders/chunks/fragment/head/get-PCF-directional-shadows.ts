@@ -26,10 +26,10 @@ fn getPCFDirectionalShadows(worldPosition: vec3f) -> array<f32, ${minDirectional
         light.shadow.isActive
           ? `
       if(directionalShadows.directionalShadowsElements[${index}].isActive > 0) {
-        directionalShadowContribution[${index}] = getPCFShadowContribution(
+        directionalShadowContribution[${index}] = getPCFDirectionalShadowContribution(
           ${index},
           worldPosition,
-          shadowDepthTexture${index}
+          directionalShadowDepthTexture${index}
         );
       } else {
         directionalShadowContribution[${index}] = 1.0;

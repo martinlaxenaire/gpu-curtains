@@ -9,14 +9,14 @@ struct PointShadowVSOutput {
 }
 
 @fragment fn main(fsInput: PointShadowVSOutput) -> @builtin(frag_depth) f32 {
-  // get distance between fragment and light source
-  var lightDistance: f32 = length(fsInput.worldPosition - pointLights.elements[${lightIndex}].position);
-  
   let pointShadow: PointShadowsElement = pointShadows.pointShadowsElements[${lightIndex}];
   
+  // get distance between fragment and light source
+  var lightDistance: f32 = length(fsInput.worldPosition - pointShadow.position);
+    
   // map to [0, 1] range by dividing by far plane - near plane
   lightDistance = (lightDistance - pointShadow.cameraNear) / (pointShadow.cameraFar - pointShadow.cameraNear);
   
   // write this as modified depth
-  return clamp(lightDistance, 0.0, 1.0);
+  return saturate(lightDistance);
 }`

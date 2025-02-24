@@ -38,7 +38,7 @@ export interface DirectionalLightBaseParams extends LightBaseParams {
  *   intensity: 1,
  *   position: new Vec3(-10, 10, -5),
  *   shadow: {
- *     intensity: 1
+ *     intensity: 1,
  *   },
  * })
  *
@@ -65,8 +65,6 @@ export interface DirectionalLightBaseParams extends LightBaseParams {
 export class DirectionalLight extends Light {
   /** The {@link DirectionalLight} {@link Vec3 | target}. */
   target: Vec3
-  /** @ignore */
-  #actualPosition: Vec3
   /**
    * The {@link Vec3 | direction} of the {@link DirectionalLight} is the {@link target} minus the actual {@link position}.
    * @private
@@ -80,12 +78,13 @@ export class DirectionalLight extends Light {
 
   /**
    * DirectionalLight constructor
-   * @param renderer - {@link CameraRenderer} used to create this {@link DirectionalLight}.
-   * @param parameters - {@link DirectionalLightBaseParams | parameters} used to create this {@link DirectionalLight}.
+   * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link DirectionalLight}.
+   * @param parameters - {@link DirectionalLightBaseParams} used to create this {@link DirectionalLight}.
    */
   constructor(
     renderer: CameraRenderer | GPUCurtains,
     {
+      label = 'DirectionalLight',
       color = new Vec3(1),
       intensity = 1,
       position = new Vec3(1),
@@ -94,7 +93,7 @@ export class DirectionalLight extends Light {
     } = {} as DirectionalLightBaseParams
   ) {
     const type = 'directionalLights'
-    super(renderer, { color, intensity, type })
+    super(renderer, { label, color, intensity, type })
 
     this.options = {
       ...this.options,
@@ -104,10 +103,17 @@ export class DirectionalLight extends Light {
     }
 
     this.#direction = new Vec3()
-    this.#actualPosition = new Vec3()
-    this.target = target
-    this.target.onChange(() => this.setDirection())
     this.position.copy(position)
+
+    this.target = new Vec3()
+    this.target.onChange(() => {
+      this.lookAt(this.target)
+    })
+    this.target.copy(target)
+
+    this.position.onChange(() => {
+      this.lookAt(this.target)
+    })
 
     this.parent = this.renderer.scene
 
@@ -126,38 +132,76 @@ export class DirectionalLight extends Light {
    * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
    */
   setRenderer(renderer: CameraRenderer | GPUCurtains) {
-    this.shadow?.setRenderer(renderer)
-
     super.setRenderer(renderer)
+
+    if (this.shadow) {
+      //this.shadow.updateIndex(this.index)
+      this.shadow.setRenderer(renderer)
+    }
   }
 
   /**
-   * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of {@link DirectionalLight} has been overflowed.
+   * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of {@link DirectionalLight} has been overflowed or when updating the {@link DirectionalLight} {@link renderer}.
+   * @param resetShadow - Whether to reset the {@link DirectionalLight} shadow if any. Set to `true` when the {@link renderer} number of {@link DirectionalLight} has been overflown, `false` when the {@link renderer} has been changed (since the shadow will reset itself).
    */
-  reset() {
+  reset(resetShadow = true) {
     super.reset()
-    this.setDirection()
-
-    this.shadow?.reset()
-  }
-
-  /**
-   * Set the {@link DirectionalLight} direction based on the {@link target} and the {@link worldMatrix} translation and update the {@link DirectionalShadow} view matrix.
-   */
-  setDirection() {
-    this.#direction.copy(this.target).sub(this.worldMatrix.getTranslation(this.#actualPosition))
     this.onPropertyChanged('direction', this.#direction)
 
-    this.shadow?.updateViewMatrix(this.#actualPosition, this.target)
+    if (this.shadow && resetShadow) {
+      this.shadow.reset()
+    }
   }
 
-  // explicitly disable scale and transform origin transformations
+  /**
+   * Get this {@link DirectionalLight} intensity.
+   * @returns - The {@link DirectionalLight} intensity.
+   */
+  get intensity(): number {
+    return super.intensity
+  }
 
-  /** @ignore */
-  applyScale() {}
+  /**
+   * Set this {@link DirectionalLight} intensity and clear shadow if intensity is `0`.
+   * @param value - The new {@link DirectionalLight} intensity.
+   */
+  set intensity(value: number) {
+    super.intensity = value
 
-  /** @ignore */
-  applyTransformOrigin() {}
+    if (this.shadow && this.shadow.isActive && !value) {
+      this.shadow.clearDepthTexture()
+    }
+  }
+
+  /**
+   * Set the {@link DirectionalLight} direction based on the {@link target} and the {@link worldMatrix} translation.
+   */
+  setDirection() {
+    this.#direction.copy(this.target).sub(this.actualPosition).normalize()
+    this.onPropertyChanged('direction', this.#direction)
+
+    if (this.shadow) {
+      this.shadow.setDirection(this.#direction)
+    }
+  }
+
+  /**
+   * Rotate this {@link DirectionalLight} so it looks at the {@link Vec3 | target}.
+   * @param target - {@link Vec3} to look at. Default to `new Vec3()`.
+   */
+  lookAt(target: Vec3 = new Vec3()) {
+    this.updateModelMatrix()
+    this.updateWorldMatrix(true, false)
+
+    if (this.actualPosition.x === 0 && this.actualPosition.y !== 0 && this.actualPosition.z === 0) {
+      this.up.set(0, 0, 1)
+    } else {
+      this.up.set(0, 1, 0)
+    }
+
+    // since we know it's a light, inverse position and target
+    this.applyLookAt(this.actualPosition, target)
+  }
 
   /**
    * If the {@link modelMatrix | model matrix} has been updated, set the new direction from the {@link worldMatrix} translation.
@@ -184,6 +228,6 @@ export class DirectionalLight extends Light {
    */
   destroy() {
     super.destroy()
-    this.shadow.destroy()
+    this.shadow?.destroy()
   }
 }

@@ -28,6 +28,9 @@ export class ScrollManager {
   /** Callback to execute each time the {@link scroll} values change */
   onScroll: (delta?: DOMPosition) => void
 
+  /** @ignore */
+  #_setScroll: () => void
+
   /**
    * ScrollManager constructor
    * @param parameters - {@link ScrollManagerParams | parameters} used to create this {@link ScrollManager}
@@ -46,9 +49,10 @@ export class ScrollManager {
     this.shouldWatch = shouldWatch
 
     this.onScroll = onScroll
+    this.#_setScroll = this.setScroll.bind(this)
 
     if (this.shouldWatch) {
-      window.addEventListener('scroll', this.setScroll.bind(this), { passive: true })
+      window.addEventListener('scroll', this.#_setScroll, { passive: true })
     }
   }
 
@@ -86,7 +90,7 @@ export class ScrollManager {
     if (this.shouldWatch) {
       // passive triggers a typescript error
       // https://github.com/microsoft/TypeScript/issues/32912#issuecomment-522142969
-      window.removeEventListener('scroll', this.setScroll.bind(this), { passive: true } as AddEventListenerOptions &
+      window.removeEventListener('scroll', this.#_setScroll, { passive: true } as AddEventListenerOptions &
         EventListenerOptions)
     }
   }

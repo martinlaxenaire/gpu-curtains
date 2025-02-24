@@ -15,10 +15,10 @@ var _intensity, _intensityColor;
 class Light extends Object3D {
   /**
    * Light constructor
-   * @param renderer - {@link CameraRenderer} used to create this {@link Light}.
-   * @param parameters - {@link LightParams | parameters} used to create this {@link Light}.
+   * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link Light}.
+   * @param parameters - {@link LightParams} used to create this {@link Light}.
    */
-  constructor(renderer, { color = new Vec3(1), intensity = 1, type = "lights" } = {}) {
+  constructor(renderer, { label = "", color = new Vec3(1), intensity = 1, type = "lights" } = {}) {
     super();
     /** @ignore */
     __privateAdd(this, _intensity);
@@ -31,6 +31,7 @@ class Light extends Object3D {
     this.setRenderer(renderer);
     this.uuid = generateUUID();
     this.options = {
+      label,
       color,
       intensity
     };
@@ -38,6 +39,7 @@ class Light extends Object3D {
     __privateSet(this, _intensityColor, this.color.clone());
     this.color.onChange(() => this.onPropertyChanged("color", this.actualColor));
     this.intensity = intensity;
+    this.userData = {};
   }
   /**
    * Set or reset this light {@link CameraRenderer}.
@@ -50,14 +52,16 @@ class Light extends Object3D {
     }
     renderer = isCameraRenderer(renderer, this.constructor.name);
     this.renderer = renderer;
-    this.index = this.renderer.lights.filter((light) => light.type === this.type).length;
-    if (this.index + 1 > this.renderer.lightsBindingParams[this.type].max) {
+    if (this.index === void 0) {
+      this.index = this.renderer.lights.filter((light) => light.type === this.type).length;
+    }
+    if (!this.renderer.lightsBindingParams || this.index + 1 > this.renderer.lightsBindingParams[this.type].max) {
       this.onMaxLightOverflow(this.type);
     }
     this.renderer.addLight(this);
     this.setRendererBinding();
     if (hasRenderer) {
-      this.reset();
+      this.reset(false);
     }
   }
   /**
@@ -69,9 +73,10 @@ class Light extends Object3D {
     }
   }
   /**
-   * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link Light} has been overflowed.
+   * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link Light} has been overflowed or when updating the {@link Light} {@link renderer}.
+   * @param resetShadow - Whether to reset the {@link Light} shadow if any.
    */
-  reset() {
+  reset(resetShadow = true) {
     this.setRendererBinding();
     this.onPropertyChanged("color", this.actualColor);
   }
@@ -120,10 +125,37 @@ class Light extends Object3D {
    * @param lightsType - {@link type} of light.
    */
   onMaxLightOverflow(lightsType) {
-    this.renderer.onMaxLightOverflow(lightsType);
+    this.renderer.onMaxLightOverflow(lightsType, this.index);
     if (this.rendererBinding) {
       this.rendererBinding = this.renderer.bindings[lightsType];
     }
+  }
+  // explicitly disable rotation, scale and transformation origin
+  /** @ignore */
+  applyRotation() {
+  }
+  /** @ignore */
+  applyScale() {
+  }
+  /** @ignore */
+  applyTransformOrigin() {
+  }
+  /**
+   * Called by the {@link core/scenes/Scene.Scene | Scene} before updating the matrix stack.
+   */
+  onBeforeRenderScene() {
+    this._onBeforeRenderCallback && this._onBeforeRenderCallback();
+  }
+  /**
+   * Callback to execute before updating the {@link core/scenes/Scene.Scene | Scene} matrix stack. This means it is called early and allows to update transformations values before actually setting the {@link Light} matrices. The callback won't be called if the {@link renderer} is not ready.
+   * @param callback - callback to run just before updating the {@link core/scenes/Scene.Scene | Scene} matrix stack.
+   * @returns - our {@link Light}
+   */
+  onBeforeRender(callback) {
+    if (callback) {
+      this._onBeforeRenderCallback = callback;
+    }
+    return this;
   }
   /**
    * Remove this {@link Light} from the {@link renderer} and destroy it.

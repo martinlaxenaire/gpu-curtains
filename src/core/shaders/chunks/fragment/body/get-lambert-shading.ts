@@ -1,6 +1,7 @@
 import { getPCFShadows } from './get-PCF-shadows'
 import { applyDirectionalShadows } from './apply-directional-shadows'
 import { applyPointShadows } from './apply-point-shadows'
+import { applySpotShadows } from './apply-spot-shadows'
 
 /**
  * Set the `outgoingLight` (`vec3f`) using Lambert shading.
@@ -14,20 +15,39 @@ export const getLambertShading = ({ receiveShadows = false }: { receiveShadows?:
   var reflectedLight: ReflectedLight;
   
   ${receiveShadows ? getPCFShadows : ''}
-
+  
   // point lights
   for(var i = 0; i < pointLights.count; i++) {
     getPointLightInfo(pointLights.elements[i], worldPosition, &directLight);
+    
     if(!directLight.visible) {
       continue;
     }
+    
     ${receiveShadows ? applyPointShadows : ''}
+    getLambertDirect(normal, outputColor.rgb, directLight, &reflectedLight);
+  }
+
+  // spot lights
+  for(var i = 0; i < spotLights.count; i++) {
+    getSpotLightInfo(spotLights.elements[i], worldPosition, &directLight);
+    
+    if(!directLight.visible) {
+      continue;
+    }
+    
+    ${receiveShadows ? applySpotShadows : ''}
     getLambertDirect(normal, outputColor.rgb, directLight, &reflectedLight);
   }
   
   // directional lights
   for(var i = 0; i < directionalLights.count; i++) {
     getDirectionalLightInfo(directionalLights.elements[i], &directLight);
+    
+    if(!directLight.visible) {
+      continue;
+    }
+    
     ${receiveShadows ? applyDirectionalShadows : ''}
     getLambertDirect(normal, outputColor.rgb, directLight, &reflectedLight);
   }

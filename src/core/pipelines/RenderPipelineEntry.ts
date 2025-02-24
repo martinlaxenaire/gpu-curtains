@@ -182,16 +182,19 @@ export class RenderPipelineEntry extends PipelineEntry {
         head: '',
         code: '',
         module: null,
+        constants: new Map(),
       },
       fragment: {
         head: '',
         code: '',
         module: null,
+        constants: new Map(),
       },
       full: {
         head: '',
         code: '',
         module: null,
+        constants: new Map(),
       },
     }
 
@@ -233,6 +236,13 @@ export class RenderPipelineEntry extends PipelineEntry {
           this.shaders.full.head = `${shaderChunks.fragment[chunk]}\n${this.shaders.full.head}`
         }
       }
+
+      // fragment constants
+      if (this.options.shaders.fragment.constants) {
+        for (const [key, value] of Object.entries(this.options.shaders.fragment.constants)) {
+          this.shaders.fragment.constants.set(key, value)
+        }
+      }
     }
 
     if (this.options.rendering.useProjection) {
@@ -251,6 +261,33 @@ export class RenderPipelineEntry extends PipelineEntry {
         }
       }
     }
+
+    // vertex constants
+    if (this.options.shaders.vertex.constants) {
+      for (const [key, value] of Object.entries(this.options.shaders.vertex.constants)) {
+        this.shaders.vertex.constants.set(key, value)
+      }
+    }
+
+    // full constants
+    this.shaders.vertex.constants.forEach((value, key) => this.shaders.full.constants.set(key, value))
+    this.shaders.fragment.constants.forEach((value, key) => this.shaders.full.constants.set(key, value))
+
+    // add constants to heads
+    this.shaders.vertex.constants.forEach((value, key) => {
+      const type = typeof value === 'boolean' ? 'bool' : 'f32'
+      this.shaders.vertex.head += `override ${key}: ${type} = ${value};\n`
+    })
+
+    this.shaders.fragment.constants.forEach((value, key) => {
+      const type = typeof value === 'boolean' ? 'bool' : 'f32'
+      this.shaders.fragment.head += `override ${key}: ${type} = ${value};\n`
+    })
+
+    this.shaders.full.constants.forEach((value, key) => {
+      const type = typeof value === 'boolean' ? 'bool' : 'f32'
+      this.shaders.full.head += `override ${key}: ${type};\n`
+    })
 
     const groupsBindings = []
     for (const bindGroup of this.bindGroups) {
@@ -325,11 +362,11 @@ export class RenderPipelineEntry extends PipelineEntry {
 
     this.shaders.vertex.code = this.shaders.vertex.head + this.options.shaders.vertex.code
 
-    if (typeof this.options.shaders.fragment === 'object')
+    if (this.options.shaders.fragment)
       this.shaders.fragment.code = this.shaders.fragment.head + this.options.shaders.fragment.code
 
     // check if its one shader string with different entry points
-    if (typeof this.options.shaders.fragment === 'object') {
+    if (this.options.shaders.fragment) {
       if (
         this.options.shaders.vertex.entryPoint !== this.options.shaders.fragment.entryPoint &&
         this.options.shaders.vertex.code.localeCompare(this.options.shaders.fragment.code) === 0
@@ -394,7 +431,7 @@ export class RenderPipelineEntry extends PipelineEntry {
   }
 
   /**
-   * Create the render pipeline {@link descriptor}
+   * Create the render pipeline {@link descriptor}.
    */
   createPipelineDescriptor() {
     if (!this.shadersModulesReady) return
@@ -435,31 +472,46 @@ export class RenderPipelineEntry extends PipelineEntry {
             }),
           }
         }),
+        ...(this.options.shaders.vertex.constants && { constants: this.options.shaders.vertex.constants }),
       },
       ...(this.options.shaders.fragment && {
         fragment: {
           module: this.shaders.fragment.module,
           entryPoint: (this.options.shaders.fragment as ShaderOptions).entryPoint,
           targets: this.options.rendering.targets,
+          ...(this.options.shaders.fragment.constants && { constants: this.options.shaders.fragment.constants }),
         },
       }),
       primitive: {
         topology: this.options.rendering.topology,
         frontFace: this.options.rendering.verticesOrder,
         cullMode: this.options.rendering.cullMode,
+        unclippedDepth: this.options.rendering.unclippedDepth,
+        ...(this.options.rendering.stripIndexFormat && {
+          stripIndexFormat: this.options.rendering.stripIndexFormat,
+        }),
       },
       ...(this.options.rendering.depth && {
         depthStencil: {
+          depthBias: this.options.rendering.depthBias,
+          depthBiasClamp: this.options.rendering.depthBiasClamp,
+          depthBiasSlopeScale: this.options.rendering.depthBiasSlopeScale,
           depthWriteEnabled: this.options.rendering.depthWriteEnabled,
           depthCompare: this.options.rendering.depthCompare,
           format: this.options.rendering.depthFormat,
+          ...(this.options.rendering.stencil && {
+            stencilFront: this.options.rendering.stencil.front,
+            stencilBack: this.options.rendering.stencil.back,
+            stencilReadMask: this.options.rendering.stencil.stencilReadMask,
+            stencilWriteMask: this.options.rendering.stencil.stencilWriteMask,
+          }),
         },
       }),
-      ...(this.options.rendering.sampleCount > 1 && {
-        multisample: {
-          count: this.options.rendering.sampleCount,
-        },
-      }),
+      multisample: {
+        count: this.options.rendering.sampleCount,
+        alphaToCoverageEnabled: this.options.rendering.alphaToCoverageEnabled,
+        mask: this.options.rendering.mask,
+      },
     } as GPURenderPipelineDescriptor
   }
 

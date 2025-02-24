@@ -1,3 +1,4 @@
+/// <reference types="dist" />
 import { Material } from './Material';
 import { Renderer } from '../renderers/utils';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
@@ -13,16 +14,16 @@ import { RenderPipelineEntry } from '../pipelines/RenderPipelineEntry';
  * After the {@link GPURenderPipeline} has been successfully compiled, the {@link RenderMaterial} is considered to be ready.
  */
 export declare class RenderMaterial extends Material {
-    /** {@link RenderPipelineEntry | Render pipeline entry} used by this {@link RenderMaterial} */
+    /** {@link RenderPipelineEntry | Render pipeline entry} used by this {@link RenderMaterial}. */
     pipelineEntry: RenderPipelineEntry | null;
-    /** Mandatory {@link RenderMaterialAttributes | geometry attributes} to pass to the {@link RenderPipelineEntry | render pipeline entry} */
+    /** Mandatory {@link RenderMaterialAttributes | geometry attributes} to pass to the {@link RenderPipelineEntry | render pipeline entry}. */
     attributes: RenderMaterialAttributes | null;
-    /** Options used to create this {@link RenderMaterial} */
+    /** Options used to create this {@link RenderMaterial}. */
     options: RenderMaterialOptions;
     /**
      * RenderMaterial constructor
-     * @param renderer - our renderer class object
-     * @param parameters - {@link RenderMaterialParams | parameters} used to create our RenderMaterial
+     * @param renderer - {@link Renderer} class object or {@link GPUCurtains} class object used to create this {@link RenderMaterial}.
+     * @param parameters - {@link RenderMaterialParams} used to create our {@link RenderMaterial}.
      */
     constructor(renderer: Renderer | GPUCurtains, parameters: RenderMaterialParams);
     /**
@@ -35,7 +36,7 @@ export declare class RenderMaterial extends Material {
      */
     setPipelineEntry(): void;
     /**
-     * Compile the {@link RenderPipelineEntry}
+     * Compile the {@link RenderPipelineEntry}.
      */
     compilePipelineEntry(): Promise<void>;
     /**
@@ -44,12 +45,12 @@ export declare class RenderMaterial extends Material {
     compileMaterial(): Promise<void>;
     /**
      * Set or reset one of the {@link RenderMaterialRenderingOptions | rendering options}. Should be use with great caution, because if the {@link RenderPipelineEntry#pipeline | render pipeline} has already been compiled, it can cause a pipeline flush.
-     * @param renderingOptions - new {@link RenderMaterialRenderingOptions | rendering options} properties to be set
+     * @param renderingOptions - New {@link RenderMaterialRenderingOptions | rendering options} properties to be set.
      */
     setRenderingOptions(renderingOptions?: Partial<RenderMaterialRenderingOptions>): void;
     /**
-     * Compute geometry if needed and get all useful geometry properties needed to create attributes buffers
-     * @param geometry - the geometry to draw
+     * Get all useful {@link core/geometries/Geometry.Geometry | Geometry} properties needed to create attributes buffers.
+     * @param geometry - The geometry to draw.
      */
     setAttributesFromGeometry(geometry: AllowedGeometries): void;
     /**
@@ -71,4 +72,9 @@ export declare class RenderMaterial extends Material {
      * Update all bind groups, except for the camera and light bind groups if present, as it is already updated by the renderer itself.
      */
     updateBindGroups(): void;
+    /**
+     * Render the material if it is ready. Call super, and the set the pass encoder stencil reference if needed.
+     * @param pass - Current pass encoder.
+     */
+    render(pass: GPURenderPassEncoder | GPURenderBundleEncoder): void;
 }

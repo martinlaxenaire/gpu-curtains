@@ -5,6 +5,7 @@ import { getIBLIndirectIrradiance } from './get-IBL-indirect-irradiance.mjs';
 import { getIBLIndirectRadiance } from './get-IBL-indirect-radiance.mjs';
 import { getIBLVolumeRefraction } from './get-IBL-volume-refraction.mjs';
 import { getIBLGGXFresnel } from './get-IBL-GGX-Fresnel.mjs';
+import { applySpotShadows } from './apply-spot-shadows.mjs';
 
 const getPBRShading = ({
   receiveShadows = false,
@@ -28,16 +29,35 @@ const getPBRShading = ({
   // point lights
   for(var i = 0; i < pointLights.count; i++) {
     getPointLightInfo(pointLights.elements[i], worldPosition, &directLight);
+    
     if(!directLight.visible) {
       continue;
     }
+    
     ${receiveShadows ? applyPointShadows : ""}
+    getPBRDirect(normal, baseDiffuseColor.rgb, viewDirection, specularF90, specularColor, metallic, roughness, directLight, &reflectedLight);
+  }
+  
+  // spot lights
+  for(var i = 0; i < spotLights.count; i++) {
+    getSpotLightInfo(spotLights.elements[i], worldPosition, &directLight);
+    
+    if(!directLight.visible) {
+      continue;
+    }
+    
+    ${receiveShadows ? applySpotShadows : ""}
     getPBRDirect(normal, baseDiffuseColor.rgb, viewDirection, specularF90, specularColor, metallic, roughness, directLight, &reflectedLight);
   }
   
   // directional lights
   for(var i = 0; i < directionalLights.count; i++) {
     getDirectionalLightInfo(directionalLights.elements[i], &directLight);
+    
+    if(!directLight.visible) {
+      continue;
+    }
+    
     ${receiveShadows ? applyDirectionalShadows : ""}
     getPBRDirect(normal, baseDiffuseColor.rgb, viewDirection, specularF90, specularColor, metallic, roughness, directLight, &reflectedLight);
   }

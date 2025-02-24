@@ -20,28 +20,19 @@ import { GPUCurtains } from '../../curtains/GPUCurtains'
 export class AmbientLight extends Light {
   /**
    * AmbientLight constructor
-   * @param renderer - {@link CameraRenderer} used to create this {@link AmbientLight}.
-   * @param parameters - {@link LightBaseParams | parameters} used to create this {@link AmbientLight}.
+   * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link AmbientLight}.
+   * @param parameters - {@link LightBaseParams} used to create this {@link AmbientLight}.
    */
   constructor(
     renderer: CameraRenderer | GPUCurtains,
-    { color = new Vec3(1), intensity = 0.1 } = {} as LightBaseParams
+    { label = 'AmbientLight', color = new Vec3(1), intensity = 0.1 } = {} as LightBaseParams
   ) {
     const type = 'ambientLights'
-    super(renderer, { color, intensity, type })
+    super(renderer, { label, color, intensity, type })
   }
 
-  // explicitly disable all kinds of transformations
-
-  /** @ignore */
-  applyRotation() {}
+  // explicitly disable position as well
 
   /** @ignore */
   applyPosition() {}
-
-  /** @ignore */
-  applyScale() {}
-
-  /** @ignore */
-  applyTransformOrigin() {}
 }

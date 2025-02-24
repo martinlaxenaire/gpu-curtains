@@ -1,13 +1,39 @@
-#left-canvas {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 47.5%;
+#sides-container {
+  display: flex;
+  width: 100%;
   height: 100svh;
+  overflow: hidden;
+  background: var(--light-color);
+}
+
+.side {
+  position: relative;
+  display: flex;
+  overflow-y: hidden;
+  overflow-x: auto;
+  box-sizing: border-box;
+}
+
+.inner {
+  flex-grow: 1;
+  position: relative;
+}
+
+#left {
+  width: 50%;
+  resize: horizontal;
+  padding-right: 10px;
+}
+
+#left-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
 }
 
 #left-canvas::before {
-  content: 'Left renderer';
+  content: 'Left renderer (inactive)';
+  background: var(--dark-color);
   position: absolute;
   inset: 0;
   color: white;
@@ -17,27 +43,20 @@
   align-items: center;
 }
 
-#left-canvas::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: 1px;
-  background: white;
-  z-index: 1;
+#right {
+  padding-left: 10px;
+  flex: 1 1 0;
 }
 
 #right-canvas {
-  position: fixed;
-  top: 0;
-  left: 47.5%;
-  width: 52.5%;
-  height: 100svh;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
 }
 
 #right-canvas::before {
-  content: 'Right renderer';
+  content: 'Right renderer (inactive)';
+  background: var(--dark-color);
   position: absolute;
   inset: 0;
   color: white;
@@ -48,7 +67,8 @@
 }
 
 #lose-context-button {
-  position: relative;
+  position: absolute;
   top: 1rem;
   left: 1rem;
+  z-index: 2;
 }

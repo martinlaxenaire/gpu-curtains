@@ -112,10 +112,7 @@ export class Texture {
 
     this.options = { ...defaultTextureParams, ...parameters }
 
-    if (
-      this.options.format === 'rgba32float' &&
-      !(this.renderer.deviceManager.adapter as GPUAdapter).features.has('float32-filterable')
-    ) {
+    if (this.options.format === 'rgba32float' && !this.renderer.device.features.has('float32-filterable')) {
       this.options.format = 'rgba16float'
     }
 
@@ -129,6 +126,8 @@ export class Texture {
       this.options.format = this.renderer.options.context.format
     }
 
+    const { width, height } = this.renderer.canvas
+
     // sizes
     this.size = this.options.fixedSize
       ? {
@@ -137,8 +136,8 @@ export class Texture {
           depth: this.options.fixedSize.depth ?? this.options.viewDimension.indexOf('cube') !== -1 ? 6 : 1,
         }
       : {
-          width: Math.floor(this.renderer.canvas.width * this.options.qualityRatio),
-          height: Math.floor(this.renderer.canvas.height * this.options.qualityRatio),
+          width: Math.floor(width * this.options.qualityRatio),
+          height: Math.floor(height * this.options.qualityRatio),
           depth: this.options.viewDimension.indexOf('cube') !== -1 ? 6 : 1,
         }
 
@@ -168,10 +167,11 @@ export class Texture {
 
     this.renderer.addTexture(this)
 
+    const { width, height } = this.renderer.canvas
+
     if (
       this.#autoResize &&
-      (this.size.width !== this.renderer.canvas.width * this.options.qualityRatio ||
-        this.size.height !== this.renderer.canvas.height * this.options.qualityRatio)
+      (this.size.width !== width * this.options.qualityRatio || this.size.height !== height * this.options.qualityRatio)
     ) {
       this.resize()
     }
@@ -341,9 +341,11 @@ export class Texture {
     if (!this.#autoResize) return
 
     if (!size) {
+      const { width, height } = this.renderer.canvas
+
       size = {
-        width: Math.floor(this.renderer.canvas.width * this.options.qualityRatio),
-        height: Math.floor(this.renderer.canvas.height * this.options.qualityRatio),
+        width: Math.floor(width * this.options.qualityRatio),
+        height: Math.floor(height * this.options.qualityRatio),
         depth: 1,
       }
     }

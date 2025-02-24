@@ -128,7 +128,7 @@ export declare class Geometry {
      */
     computeGeometry(): void;
     /**
-     * Set the WGSL code snippet that will be appended to the vertex shader.
+     * Set the {@link layoutCacheKey} and WGSL code snippet that will be appended to the vertex shader.
      */
     setWGSLFragment(): void;
     /**

@@ -175,7 +175,7 @@ export declare class RenderPipelineEntry extends PipelineEntry {
      */
     static getDefaultTransparentBlending(): GPUBlendState;
     /**
-     * Create the render pipeline {@link descriptor}
+     * Create the render pipeline {@link descriptor}.
      */
     createPipelineDescriptor(): void;
     /**

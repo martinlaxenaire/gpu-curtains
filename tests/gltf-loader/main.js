@@ -1,5 +1,7 @@
 // Goals of this test:
 // - test various capacities of the gltf loader
+import { Mat4 } from '../../dist/esm/index.mjs'
+
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
   const {
@@ -14,6 +16,10 @@ window.addEventListener('load', async () => {
     OrbitControls,
     Vec3,
     RenderBundle,
+    FullscreenPlane,
+    constants,
+    common,
+    toneMappingUtils,
   } = await import(/* @vite-ignore */ path)
 
   const stats = new Stats()
@@ -48,6 +54,10 @@ window.addEventListener('load', async () => {
     camera: {
       near: 0.1,
       far: 2000,
+    },
+    context: {
+      format: 'rgba16float', // allow HDR output
+      toneMapping: { mode: 'extended' },
     },
     renderPass: {
       // since transmission need a solid background color to be blended with
@@ -339,6 +349,9 @@ window.addEventListener('load', async () => {
     .name('Current')
 
   const envMapRotationField = envMapFolder.add({ rotation: 90 }, 'rotation', 0, 360, 1).name('Rotation')
+  const envMapBackgroundField = envMapFolder
+    .add({ background: 0 }, 'background', { Diffuse: 0, Specular: 1 })
+    .name('Skybox background')
 
   const shadingField = gui.add({ shadingModel }, 'shadingModel', ['PBR', 'Phong', 'Lambert', 'Unlit']).name('Shading')
 
@@ -709,6 +722,80 @@ window.addEventListener('load', async () => {
     // meshes[0].onReady(() => console.log(meshes[0].material.getShaderCode('fragment')))
   }
 
+  // sky box
+  const skyBoxFs = /* wgsl */ `
+    struct VSOutput {
+      @builtin(position) position: vec4f,
+      @location(0) uv: vec2f,
+    };
+    
+    ${constants}
+    ${common}
+    ${toneMappingUtils}
+    
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
+      var uv: vec2f = fsInput.uv;
+      uv.y = 1.0 - uv.y;
+      
+      uv = uv * 2.0 - 1.0;
+      
+      var position: vec4f = params.inverseViewProjectionMatrix * vec4(uv, 1.0, 1.0);
+      let samplePosition: vec3f = normalize(position.xyz / position.w);
+      
+      var color: vec4f = select(
+        textureSample(${environmentMap.specularTexture.options.name}, clampSampler, samplePosition * params.envRotation),
+        textureSample(${environmentMap.diffuseTexture.options.name}, clampSampler, samplePosition * params.envRotation),
+        params.useSpecular < 1
+      );
+      
+      color = vec4(KhronosToneMapping(color.rgb), color.a);
+      color = linearTosRGB_4(color);
+      
+      return color;
+    }
+  `
+
+  const skybox = new FullscreenPlane(gpuCameraRenderer, {
+    textures: [environmentMap.specularTexture, environmentMap.diffuseTexture],
+    samplers: [environmentMap.sampler],
+    shaders: {
+      fragment: {
+        code: skyBoxFs,
+      },
+    },
+    uniforms: {
+      params: {
+        struct: {
+          envRotation: {
+            type: 'mat3x3f',
+            value: environmentMap.rotationMatrix,
+          },
+          inverseViewProjectionMatrix: {
+            type: 'mat4x4f',
+            value: new Mat4()
+              .multiplyMatrices(gpuCameraRenderer.camera.projectionMatrix, gpuCameraRenderer.camera.viewMatrix)
+              .invert(),
+          },
+          useSpecular: {
+            type: 'u32',
+            value: 0,
+          },
+        },
+      },
+    },
+  })
+
+  skybox.onRender(() => {
+    skybox.uniforms.params.inverseViewProjectionMatrix.value
+      .multiplyMatrices(gpuCameraRenderer.camera.projectionMatrix, gpuCameraRenderer.camera.viewMatrix)
+      .invert()
+
+    skybox.uniforms.params.envRotation.value = environmentMap.rotationMatrix
+
+    // explicitly tell the uniform to update
+    skybox.uniforms.params.inverseViewProjectionMatrix.shouldUpdate = true
+  })
+
   // GUI updates
 
   const cleanUpScene = () => {
@@ -771,6 +858,7 @@ window.addEventListener('load', async () => {
 
       if (!useEnvMap) {
         useEnvMap = true
+        skybox.visible = true
 
         envMapRotationField.enable()
 
@@ -780,6 +868,7 @@ window.addEventListener('load', async () => {
       }
     } else if (useEnvMap) {
       useEnvMap = false
+      skybox.visible = false
 
       envMapRotationField.disable()
 
@@ -793,6 +882,10 @@ window.addEventListener('load', async () => {
     if (useEnvMap) {
       environmentMap.rotation = value * (Math.PI / 180)
     }
+  })
+
+  envMapBackgroundField.onChange((value) => {
+    skybox.uniforms.params.useSpecular.value = value
   })
 
   shadingField.onChange(async (value) => {

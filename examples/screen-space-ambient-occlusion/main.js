@@ -71,7 +71,7 @@ window.addEventListener('load', async () => {
   objectsPivot.parent = scene
 
   camera.parent = cameraPivot
-  camera.position.z = systemSize.z * 2.5
+  camera.position.z = systemSize.z * 3
 
   gpuDeviceManager.onBeforeRender(() => {
     // rotate our camera pivot
@@ -783,6 +783,7 @@ window.addEventListener('load', async () => {
       gpuCameraRenderer.bindings.ambientLights,
       gpuCameraRenderer.bindings.directionalLights,
       gpuCameraRenderer.bindings.pointLights,
+      gpuCameraRenderer.bindings.spotLights,
     ],
     uniforms: {
       camera: {

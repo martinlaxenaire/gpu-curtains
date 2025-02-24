@@ -77,7 +77,7 @@ export class ComputeFeature {
     this.renderer.camera.position.y = outerRadius * 0.25
     this.renderer.camera.position.z = outerRadius * 0.825
 
-    this.renderer.camera.lookAt(new Vec3())
+    this.renderer.camera.lookAt()
 
     // pass the instanced vertex buffer attributes
     const featureInstancesGeometry = new BoxGeometry({

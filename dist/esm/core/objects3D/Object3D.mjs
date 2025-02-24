@@ -12,6 +12,8 @@ class Object3D {
     this._parent = null;
     this.children = [];
     this.matricesNeedUpdate = false;
+    this.up = new Vec3(0, 1, 0);
+    this.actualPosition = new Vec3();
     Object.defineProperty(this, "object3DIndex", { value: objectIndex++ });
     this.setMatrices();
     this.setTransforms();
@@ -213,12 +215,26 @@ class Object3D {
     this.matrices.world.shouldUpdate = true;
   }
   /**
-   * Rotate this {@link Object3D} so it looks at the {@link Vec3 | target}
-   * @param target - {@link Vec3 | target} to look at
-   * @param position - {@link Vec3 | postion} from which to look at
+   * Rotate this {@link Object3D} so it looks at the {@link Vec3 | target}.
+   * @param target - {@link Vec3} to look at. Default to `new Vec3()`.
    */
-  lookAt(target = new Vec3(), position = this.position, up = new Vec3(0, 1, 0)) {
-    const rotation = tempMatrix.lookAt(target, position, up);
+  lookAt(target = new Vec3()) {
+    this.updateModelMatrix();
+    this.updateWorldMatrix(true, false);
+    if (this.actualPosition.x === 0 && this.actualPosition.y !== 0 && this.actualPosition.z === 0) {
+      this.up.set(0, 0, 1);
+    } else {
+      this.up.set(0, 1, 0);
+    }
+    this.applyLookAt(target, this.actualPosition);
+  }
+  /**
+   * Apply a look at rotation based on a target, a position and our {link up} vectors.
+   * @param target - {@link Vec3} target to look at.
+   * @param position - {@link Vec3} position from which to look at.
+   */
+  applyLookAt(target, position) {
+    const rotation = tempMatrix.lookAt(target, position, this.up);
     this.quaternion.setFromRotationMatrix(rotation);
     this.shouldUpdateModelMatrix();
   }
@@ -235,16 +251,24 @@ class Object3D {
     this.shouldUpdateWorldMatrix();
   }
   /**
-   * Update our {@link worldMatrix | model matrix}
+   * Update our {@link worldMatrix | model matrix}.
+   * @param updateParents - Whether to update the {@link parent} {@link worldMatrix} beforehand. Default to `false`.
+   * @param updateChildren - Whether to update the {@link children} {@link worldMatrix} afterward. Default to `true`.
    */
-  updateWorldMatrix() {
+  updateWorldMatrix(updateParents = false, updateChildren = true) {
     if (!this.parent) {
       this.worldMatrix.copy(this.modelMatrix);
     } else {
+      if (updateParents) {
+        this.parent.updateWorldMatrix(true, false);
+      }
       this.worldMatrix.multiplyMatrices(this.parent.worldMatrix, this.modelMatrix);
     }
-    for (let i = 0, l = this.children.length; i < l; i++) {
-      this.children[i].shouldUpdateWorldMatrix();
+    this.worldMatrix.getTranslation(this.actualPosition);
+    if (updateChildren) {
+      for (let i = 0, l = this.children.length; i < l; i++) {
+        this.children[i].shouldUpdateWorldMatrix();
+      }
     }
   }
   /**

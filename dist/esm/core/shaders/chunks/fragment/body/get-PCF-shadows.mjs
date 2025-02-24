@@ -3,6 +3,7 @@ const getPCFShadows = (
   `
   let pointShadows = getPCFPointShadows(worldPosition);
   let directionalShadows = getPCFDirectionalShadows(worldPosition);
+  let spotShadows = getPCFSpotShadows(worldPosition);
 `
 );
 

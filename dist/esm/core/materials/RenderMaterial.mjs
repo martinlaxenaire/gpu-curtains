@@ -10,8 +10,8 @@ import { getDefaultFragmentCode } from '../shaders/full/fragment/get-default-fra
 class RenderMaterial extends Material {
   /**
    * RenderMaterial constructor
-   * @param renderer - our renderer class object
-   * @param parameters - {@link RenderMaterialParams | parameters} used to create our RenderMaterial
+   * @param renderer - {@link Renderer} class object or {@link GPUCurtains} class object used to create this {@link RenderMaterial}.
+   * @param parameters - {@link RenderMaterialParams} used to create our {@link RenderMaterial}.
    */
   constructor(renderer, parameters) {
     const type = "RenderMaterial";
@@ -41,14 +41,24 @@ class RenderMaterial extends Material {
     const {
       useProjection,
       transparent,
+      // depth stencil
       depth,
       depthWriteEnabled,
       depthCompare,
       depthFormat,
-      cullMode,
+      depthBias,
+      depthBiasClamp,
+      depthBiasSlopeScale,
+      stencil,
+      // multisample
       sampleCount,
+      alphaToCoverageEnabled,
+      mask,
+      // primitive
+      cullMode,
       verticesOrder,
-      topology
+      topology,
+      unclippedDepth
     } = parameters;
     let { targets } = parameters;
     if (targets === void 0) {
@@ -61,21 +71,49 @@ class RenderMaterial extends Material {
     if (targets && targets.length && !targets[0].format) {
       targets[0].format = this.renderer.options.context.format;
     }
+    if (stencil) {
+      if (!stencil.front) {
+        stencil.front = {};
+      }
+      if (stencil.front && !stencil.back) {
+        stencil.back = stencil.front;
+      }
+      if (!stencil.stencilReference) {
+        stencil.stencilReference = 0;
+      }
+      if (!stencil.stencilReadMask) {
+        stencil.stencilReadMask = 16777215;
+      }
+      if (!stencil.stencilWriteMask) {
+        stencil.stencilWriteMask = 16777215;
+      }
+    }
     this.options = {
       ...this.options,
       shaders,
       rendering: {
         useProjection,
         transparent,
+        // depth stencil
         depth,
         depthWriteEnabled,
         depthCompare,
         depthFormat,
-        cullMode,
+        depthBias: depthBias !== void 0 ? depthBias : 0,
+        depthBiasClamp: depthBiasClamp !== void 0 ? depthBiasClamp : 0,
+        depthBiasSlopeScale: depthBiasSlopeScale !== void 0 ? depthBiasSlopeScale : 0,
+        ...stencil && { stencil },
+        // multisample
         sampleCount,
+        alphaToCoverageEnabled: !!alphaToCoverageEnabled,
+        mask: mask !== void 0 ? mask : 16777215,
+        // targets
         targets,
+        // primitive
+        cullMode,
         verticesOrder,
-        topology
+        topology,
+        unclippedDepth: !!unclippedDepth
       }
     };
     this.attributes = null;
@@ -102,7 +140,7 @@ class RenderMaterial extends Material {
     this.pipelineEntry = this.renderer.pipelineManager.createRenderPipeline(this);
   }
   /**
-   * Compile the {@link RenderPipelineEntry}
+   * Compile the {@link RenderPipelineEntry}.
    */
   async compilePipelineEntry() {
     await this.pipelineEntry.compilePipelineEntry();
@@ -122,7 +160,7 @@ class RenderMaterial extends Material {
   }
   /**
    * Set or reset one of the {@link RenderMaterialRenderingOptions | rendering options}. Should be use with great caution, because if the {@link RenderPipelineEntry#pipeline | render pipeline} has already been compiled, it can cause a pipeline flush.
-   * @param renderingOptions - new {@link RenderMaterialRenderingOptions | rendering options} properties to be set
+   * @param renderingOptions - New {@link RenderMaterialRenderingOptions | rendering options} properties to be set.
    */
   setRenderingOptions(renderingOptions = {}) {
     if (renderingOptions.transparent && renderingOptions.targets.length && !renderingOptions.targets[0].blend) {
@@ -174,8 +212,8 @@ New rendering options: ${JSON.stringify(
   }
   /* ATTRIBUTES */
   /**
-   * Compute geometry if needed and get all useful geometry properties needed to create attributes buffers
-   * @param geometry - the geometry to draw
+   * Get all useful {@link core/geometries/Geometry.Geometry | Geometry} properties needed to create attributes buffers.
+   * @param geometry - The geometry to draw.
    */
   setAttributesFromGeometry(geometry) {
     this.attributes = {
@@ -183,6 +221,12 @@ New rendering options: ${JSON.stringify(
       vertexBuffers: geometry.vertexBuffers,
       layoutCacheKey: geometry.layoutCacheKey
     };
+    if ("indexBuffer" in geometry && geometry.indexBuffer && geometry.topology.includes("strip")) {
+      this.setRenderingOptions({
+        ...this.options.rendering,
+        stripIndexFormat: geometry.indexBuffer.bufferFormat
+      });
+    }
   }
   /**
    * Get the {@link RenderMaterial} pipeline buffers cache key based on its {@link core/bindGroups/BindGroup.BindGroup | BindGroup} cache keys and eventually {@link attributes} cache keys.
@@ -223,6 +267,17 @@ New rendering options: ${JSON.stringify(
     }
     for (let i = startBindGroupIndex; i < this.bindGroups.length; i++) {
       this.updateBindGroup(this.bindGroups[i]);
+    }
+  }
+  /**
+   * Render the material if it is ready. Call super, and the set the pass encoder stencil reference if needed.
+   * @param pass - Current pass encoder.
+   */
+  render(pass) {
+    if (!this.ready) return;
+    super.render(pass);
+    if (this.options.rendering.stencil) {
+      pass.setStencilReference(this.options.rendering.stencil.stencilReference ?? 0);
     }
   }
 }

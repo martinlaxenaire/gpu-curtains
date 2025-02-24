@@ -5,9 +5,7 @@ import { Texture } from '../textures/Texture'
 import { RenderTarget } from '../renderPasses/RenderTarget'
 import { Sampler } from '../samplers/Sampler'
 import { RenderMaterial } from '../materials/RenderMaterial'
-import { DirectionalLight } from '../lights/DirectionalLight'
-import { PointLight } from '../lights/PointLight'
-import { getDefaultShadowDepthVs } from '../shaders/full/vertex/get-default-shadow-depth-vertex-shader-code'
+import { ShadowCastingLights } from '../lights/Light'
 import { BufferBinding } from '../bindings/BufferBinding'
 import { RenderMaterialParams, ShaderOptions } from '../../types/Materials'
 import { Input } from '../../types/BindGroups'
@@ -15,9 +13,10 @@ import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { VertexShaderInputBaseParams } from '../shaders/full/vertex/get-vertex-shader-code'
 import { Mesh } from '../meshes/Mesh'
 import { Geometry } from '../geometries/Geometry'
+import { Vec3 } from '../../math/Vec3'
 
 /** Defines all types of shadows. */
-export type ShadowsType = 'directionalShadows' | 'pointShadows'
+export type ShadowsType = 'directionalShadows' | 'pointShadows' | 'spotShadows'
 
 /** @ignore */
 export const shadowStruct: Record<string, Input> = {
@@ -62,7 +61,7 @@ export interface ShadowBaseParams {
   /** Whether the shadow should be automatically rendered each frame or not. Should be set to `false` if the scene is static and be rendered manually instead. Default to `true`. */
   autoRender?: boolean
   /** The {@link core/lights/Light.Light | light} that will be used to cast shadows. */
-  light: DirectionalLight | PointLight
+  light: ShadowCastingLights
 }
 
 /**
@@ -79,7 +78,7 @@ export class Shadow {
   index: number
 
   /** The {@link core/lights/Light.Light | light} that will be used to cast shadows. */
-  light: DirectionalLight | PointLight
+  light: ShadowCastingLights
 
   /** Options used to create this {@link Shadow}. */
   options: Omit<ShadowBaseParams, 'autoRender'>
@@ -124,8 +123,8 @@ export class Shadow {
 
   /**
    * Shadow constructor
-   * @param renderer - {@link CameraRenderer} used to create this {@link Shadow}.
-   * @param parameters - {@link ShadowBaseParams | parameters} used to create this {@link Shadow}.
+   * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link Shadow}.
+   * @param parameters - {@link ShadowBaseParams} used to create this {@link Shadow}.
    */
   constructor(
     renderer: CameraRenderer | GPUCurtains,
@@ -186,12 +185,26 @@ export class Shadow {
       this.depthPassTarget.setRenderer(this.renderer)
     }
 
+    // now the depth meshes
+    // we need to check if the original shadow casting meshes belong to the new renderer?
+    // of course this test can fail depending on the order of the operations...
+    this.castingMeshes = new Map()
+    this.renderer.meshes.forEach((mesh) => {
+      if ('castShadows' in mesh.options && mesh.options.castShadows) {
+        this.castingMeshes.set(mesh.uuid, mesh as Mesh)
+      }
+    })
+
     this.depthMeshes?.forEach((depthMesh) => {
       depthMesh.setRenderer(this.renderer)
     })
 
-    if (oldRenderer && this.#autoRender) {
-      this.setDepthPass()
+    if (oldRenderer) {
+      this.reset()
+
+      if (this.#autoRender) {
+        this.setDepthPass()
+      }
     }
   }
 
@@ -199,6 +212,17 @@ export class Shadow {
   setRendererBinding() {
     this.rendererBinding = null
   }
+
+  // TODO unused for now, should we really consider this case?
+  // updateIndex(index: number) {
+  //   const shouldUpdateIndex = index !== this.index
+  //
+  //   this.index = index
+  //
+  //   if (shouldUpdateIndex) {
+  //     throwWarning(`This ${this.constructor.name} index has changed, the shaders need to be recreated`)
+  //   }
+  // }
 
   /**
    * Set the {@link Shadow} parameters.
@@ -241,14 +265,42 @@ export class Shadow {
   }
 
   /**
-   * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link core/lights/Light.Light | lights} has been overflowed.
+   * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link core/lights/Light.Light | lights} has been overflowed or when the {@link renderer} has changed.
    */
   reset() {
     this.onPropertyChanged('isActive', this.isActive ? 1 : 0)
-    this.onPropertyChanged('intensity', this.intensity)
-    this.onPropertyChanged('bias', this.bias)
-    this.onPropertyChanged('normalBias', this.normalBias)
-    this.onPropertyChanged('pcfSamples', this.pcfSamples)
+    if (this.isActive) {
+      this.onPropertyChanged('intensity', this.intensity)
+      this.onPropertyChanged('bias', this.bias)
+      this.onPropertyChanged('normalBias', this.normalBias)
+      this.onPropertyChanged('pcfSamples', this.pcfSamples)
+    }
+  }
+
+  /**
+   * Update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} input value and tell the {@link CameraRenderer#cameraLightsBindGroup | renderer camera, lights and shadows} bind group to update.
+   * @param propertyKey - name of the property to update.
+   * @param value - new value of the property.
+   */
+  onPropertyChanged(propertyKey: string, value: Mat4 | Vec3 | number) {
+    if (this.rendererBinding && this.rendererBinding.childrenBindings.length > this.index) {
+      if (value instanceof Mat4) {
+        for (let i = 0; i < value.elements.length; i++) {
+          this.rendererBinding.childrenBindings[this.index].inputs[propertyKey].value[i] = value.elements[i]
+        }
+
+        this.rendererBinding.childrenBindings[this.index].inputs[propertyKey].shouldUpdate = true
+      } else if (value instanceof Vec3) {
+        this.rendererBinding.childrenBindings[this.index].inputs[propertyKey].shouldUpdate = true
+        ;(this.rendererBinding.childrenBindings[this.index].inputs[propertyKey].value as Vec3).copy(value)
+      } else {
+        this.rendererBinding.childrenBindings[this.index].inputs[propertyKey].value = value
+      }
+
+      this.renderer.shouldUpdateCameraLightsBindGroup()
+    } else {
+      console.log('bail for property', propertyKey, this.constructor.name, this.rendererBinding)
+    }
   }
 
   /**
@@ -412,18 +464,7 @@ export class Shadow {
    * Create the {@link depthTexture}.
    */
   createDepthTexture() {
-    this.depthTexture = new Texture(this.renderer, {
-      label: `${this.constructor.name} (index: ${this.light.index}) depth texture`,
-      name: 'shadowDepthTexture' + this.index,
-      type: 'depth',
-      format: this.depthTextureFormat,
-      sampleCount: this.sampleCount,
-      fixedSize: {
-        width: this.depthTextureSize.x,
-        height: this.depthTextureSize.y,
-      },
-      autoDestroy: false, // do not destroy when removing a mesh
-    })
+    /* Will be overriden by child classes */
   }
 
   /** Destroy the {@link depthTexture}. */
@@ -481,27 +522,6 @@ export class Shadow {
   }
 
   /**
-   * Update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} input value and tell the {@link CameraRenderer#cameraLightsBindGroup | renderer camera, lights and shadows} bind group to update.
-   * @param propertyKey - name of the property to update.
-   * @param value - new value of the property.
-   */
-  onPropertyChanged(propertyKey: string, value: Mat4 | number) {
-    if (this.rendererBinding) {
-      if (value instanceof Mat4) {
-        for (let i = 0; i < value.elements.length; i++) {
-          this.rendererBinding.childrenBindings[this.index].inputs[propertyKey].value[i] = value.elements[i]
-        }
-
-        this.rendererBinding.childrenBindings[this.index].inputs[propertyKey].shouldUpdate = true
-      } else {
-        this.rendererBinding.childrenBindings[this.index].inputs[propertyKey].value = value
-      }
-
-      this.renderer.shouldUpdateCameraLightsBindGroup()
-    }
-  }
-
-  /**
    * Set our {@link depthPassTarget} corresponding {@link CameraRenderer#scene | scene} render pass entry custom render pass.
    */
   setDepthPass() {
@@ -516,7 +536,7 @@ export class Shadow {
    * @param commandEncoder - {@link GPUCommandEncoder} to use.
    */
   render(commandEncoder: GPUCommandEncoder) {
-    if (!this.castingMeshes.size) return
+    if (!this.castingMeshes.size || !this.light.intensity) return
 
     let shouldRender = false
     for (const [_uuid, mesh] of this.castingMeshes) {
@@ -573,7 +593,7 @@ export class Shadow {
     this.renderer.pipelineManager.resetCurrentPipeline()
 
     // begin depth pass
-    const depthPass = commandEncoder.beginRenderPass(this.depthPassTarget.renderPass.descriptor)
+    const depthPass = this.depthPassTarget.renderPass.beginRenderPass(commandEncoder)
 
     if (!this.renderer.production)
       depthPass.pushDebugGroup(`${this.constructor.name} (index: ${this.index}): depth pass`)
@@ -601,7 +621,7 @@ export class Shadow {
   getDefaultShadowDepthVs({ bindings = [], geometry }: VertexShaderInputBaseParams): ShaderOptions {
     return {
       /** Returned code. */
-      code: getDefaultShadowDepthVs(this.index, { bindings, geometry }),
+      code: `@vertex fn main(@location(0) position: vec4f) -> @builtin(position) vec4f { return position; }`,
     }
   }
 
@@ -683,7 +703,7 @@ export class Shadow {
       // we just want to write to the depth texture
       targets: [],
       outputTarget: this.depthPassTarget,
-      //autoRender: false,
+      frustumCulling: false, // draw shadow even if original mesh is hidden
       autoRender: this.#autoRender,
     })
 

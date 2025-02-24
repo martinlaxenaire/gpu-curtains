@@ -1,7 +1,7 @@
 import { PipelineManager } from '../pipelines/PipelineManager'
 import { DOMElement, DOMElementBoundingRect, RectBBox, RectSize } from '../DOM/DOMElement'
 import { Scene } from '../scenes/Scene'
-import { RenderPass, RenderPassParams } from '../renderPasses/RenderPass'
+import { RenderPass, RenderPassParams, RenderPassViewport } from '../renderPasses/RenderPass'
 import { generateUUID, throwError, throwWarning } from '../../utils/utils'
 
 import { ComputePass } from '../computePasses/ComputePass'
@@ -36,14 +36,14 @@ export interface GPURendererContextParams extends Partial<GPURendererContextOpti
  * Parameters used to create a {@link GPURenderer}.
  */
 export interface GPURendererParams {
-  /** The {@link GPUDeviceManager} used to create this {@link GPURenderer} */
+  /** The {@link GPUDeviceManager} used to create this {@link GPURenderer}. */
   deviceManager: GPUDeviceManager
 
-  /** Optional label of this {@link GPURenderer} */
+  /** Optional label of this {@link GPURenderer}. */
   label?: string
   /** {@link HTMLElement} or selector used as a container for our {@link GPURenderer#canvas | canvas}. Could also be directly a {@link HTMLCanvasElement | canvas element}. */
   container: string | HTMLElement
-  /** Pixel ratio to use for rendering */
+  /** Pixel ratio to use for rendering. */
   pixelRatio?: number
 
   /** Whether to auto resize the renderer each time its {@link GPURenderer#domElement} size changes or not. It is advised to set this parameter to `false` if the provided {@link container} is a {@link HTMLCanvasElement | canvas element}, and handle {@link GPURenderer#resize | resizing} by yourself. */
@@ -52,13 +52,13 @@ export interface GPURendererParams {
   /** Options used to configure this {@link GPURenderer} context. If not specified, `format` will be set with `GPU.getPreferredCanvasFormat()` and `alphaMode` with `premultiplied`. */
   context?: GPURendererContextParams
 
-  /** The {@link GPURenderer#renderPass | renderer RenderPass} parameters */
+  /** The {@link GPURenderer#renderPass | renderer RenderPass} parameters. */
   renderPass?: {
-    /** Whether the {@link GPURenderer#renderPass | renderer RenderPass} should handle depth. Default to `true` */
+    /** Whether the {@link GPURenderer#renderPass | renderer RenderPass} should handle depth. Default to `true`. */
     useDepth: RenderPassParams['useDepth']
-    /** The {@link GPURenderer#renderPass | renderer RenderPass} sample count (i.e. whether it should use multisampled antialiasing). Default to `4` */
+    /** The {@link GPURenderer#renderPass | renderer RenderPass} sample count (i.e. whether it should use multisampled antialiasing). Default to `4`. */
     sampleCount: RenderPassParams['sampleCount']
-    /** The {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#clearvalue | color values} to clear to before drawing the {@link GPURenderer#renderPass | renderer RenderPass}. Default to `[0, 0, 0, 0]` */
+    /** The {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#clearvalue | color values} to clear to before drawing the {@link GPURenderer#renderPass | renderer RenderPass}. Default to `[0, 0, 0, 0]`. */
     clearValue: GPUColor
   }
 }
@@ -69,53 +69,53 @@ export interface GPURendererOptions extends GPURendererParams {
   context: GPURendererContextOptions
 }
 
-/** Any Mesh that is bound to a DOM Element */
+/** Any Mesh that is bound to a DOM Element. */
 export type DOMProjectedMesh = DOMMesh | Plane
-/** Any Mesh that is projected (i.e use a {@link core/camera/Camera.Camera | Camera} to compute a model view projection matrix) */
+/** Any Mesh that is projected (i.e use a {@link core/cameras/Camera.Camera | Camera} to compute a model view projection matrix). */
 export type ProjectedMesh = Mesh | DOMProjectedMesh
-/** Any Mesh that can be drawn (including fullscreen quad meshes) and that will be put in the {@link Scene} meshes stacks */
+/** Any Mesh that can be drawn (including fullscreen quad meshes) and that will be put in the {@link Scene} meshes stacks. */
 export type SceneStackedMesh = ProjectedMesh | FullscreenPlane
-/** Anything that can be added to a {@link Scene} meshes stacks, including {@link RenderBundle} */
+/** Anything that can be added to a {@link Scene} meshes stacks, including {@link RenderBundle}. */
 export type SceneStackedObject = SceneStackedMesh | RenderBundle
-/** Any Mesh that is drawn fullscren, i.e. fullscreen quad meshes used for post processing and {@link PingPongPlane} */
+/** Any Mesh that is drawn fullscren, i.e. fullscreen quad meshes used for post processing and {@link PingPongPlane}. */
 export type FullscreenPass = PingPongPlane | ShaderPass
-/** Any Mesh that can be drawn, including fullscreen quad meshes used for post processing and {@link PingPongPlane} */
+/** Any Mesh that can be drawn, including fullscreen quad meshes used for post processing and {@link PingPongPlane}. */
 export type RenderedMesh = SceneStackedMesh | FullscreenPass
-/** Any Mesh or Compute pass */
+/** Any Mesh or Compute pass. */
 export type SceneObject = RenderedMesh | ComputePass
 
 /**
  * Base renderer class, that could technically be used to render compute passes and draw fullscreen quads, even tho it is strongly advised to use at least the {@link core/renderers/GPUCameraRenderer.GPUCameraRenderer | GPUCameraRenderer} class instead.
  * A renderer is responsible for:
- * - Setting a {@link GPUCanvasContext | context}
- * - Handling the {@link HTMLCanvasElement | canvas} onto everything is drawn
- * - Creating a {@link RenderPass} that will handle our render and depth textures and the render pass descriptor
- * - Keeping track of every specific class objects created relative to computing and rendering
- * - Creating a {@link Scene} class that will take care of the rendering process of all previously mentioned objects
+ * - Setting a {@link GPUCanvasContext | context}.
+ * - Handling the {@link HTMLCanvasElement | canvas} onto everything is drawn.
+ * - Creating a {@link RenderPass} that will handle our render and depth textures and the render pass descriptor.
+ * - Keeping track of every specific class objects created relative to computing and rendering.
+ * - Creating a {@link Scene} class that will take care of the rendering process of all previously mentioned objects.
  */
 export class GPURenderer {
-  /** The type of the {@link GPURenderer} */
+  /** The type of the {@link GPURenderer}. */
   type: string
-  /** The universal unique id of this {@link GPURenderer} */
+  /** The universal unique id of this {@link GPURenderer}. */
   readonly uuid: string
 
-  /** The {@link GPUDeviceManager} used to create this {@link GPURenderer} */
+  /** The {@link GPUDeviceManager} used to create this {@link GPURenderer}. */
   deviceManager: GPUDeviceManager
 
-  /** {@link HTMLCanvasElement} onto everything is drawn */
+  /** {@link HTMLCanvasElement} onto everything is drawn. */
   canvas: HTMLCanvasElement
-  /** The WebGPU {@link GPUCanvasContext | context} used */
+  /** The WebGPU {@link GPUCanvasContext | context} used. */
   context: null | GPUCanvasContext
 
-  /** Options used to create this {@link GPURenderer} */
+  /** Options used to create this {@link GPURenderer}. */
   options: GPURendererOptions
 
-  /** The {@link RenderPass | render pass} used to render our result to screen */
+  /** The {@link RenderPass | render pass} used to render our result to screen. */
   renderPass: RenderPass
-  /** Additional {@link RenderPass | render pass} used by {@link ShaderPass} for compositing / post processing. Does not handle depth */
+  /** Additional {@link RenderPass | render pass} used by {@link ShaderPass} for compositing / post processing. Does not handle depth. */
   postProcessingPass: RenderPass
 
-  /** The {@link Scene} used */
+  /** The {@link Scene} used. */
   scene: Scene
 
   /** Whether we should render our {@link GPURenderer} or not. If set to `false`, the render hooks {@link onBeforeCommandEncoderCreation}, {@link onBeforeRenderScene}, {@link onAfterRenderScene} and {@link onAfterCommandEncoderSubmission} won't be called, the scene graph will not be updated and the scene will not be rendered, completely pausing the renderer. Default to `true`. */
@@ -124,17 +124,17 @@ export class GPURenderer {
   /** Whether we should explicitly update our {@link Scene} or not. If set to `false`, the scene graph will not be updated and the scene will not be rendered. Default to `true`. */
   shouldRenderScene: boolean
 
-  /** An array containing all our created {@link ComputePass} */
+  /** An array containing all our created {@link ComputePass}. */
   computePasses: ComputePass[]
-  /** An array containing all our created {@link PingPongPlane} */
+  /** An array containing all our created {@link PingPongPlane}. */
   pingPongPlanes: PingPongPlane[]
-  /** An array containing all our created {@link ShaderPass} */
+  /** An array containing all our created {@link ShaderPass}. */
   shaderPasses: ShaderPass[]
-  /** An array containing all our created {@link RenderTarget} */
+  /** An array containing all our created {@link RenderTarget}. */
   renderTargets: RenderTarget[]
-  /** An array containing all our created {@link SceneStackedMesh | meshes} */
+  /** An array containing all our created {@link SceneStackedMesh | meshes}. */
   meshes: SceneStackedMesh[]
-  /** An array containing all our created {@link Texture} */
+  /** An array containing all our created {@link Texture}. */
   textures: Array<Texture | MediaTexture>
   /** A {@link Map} containing all the {@link EnvironmentMap} handled by this renderer. */
   environmentMaps: Map<EnvironmentMap['uuid'], EnvironmentMap>
@@ -143,44 +143,50 @@ export class GPURenderer {
   /** A {@link Map} containing all the {@link TargetsAnimationsManager} handled by this renderer. */
   animations: Map<TargetsAnimationsManager['uuid'], TargetsAnimationsManager>
 
-  /** Pixel ratio to use for rendering */
+  /** Pixel ratio to use for rendering. */
   pixelRatio: number
   /** An object defining the width, height, top and left position of the canvas. Mainly used internally. If you need to get the renderer dimensions, use {@link boundingRect} instead. */
   rectBBox: RectBBox
 
-  /** {@link DOMElement} that will track our canvas container size */
+  /** Current {@link RenderPassViewport} to use to set the {@link renderPass} and {@link postProcessingPass} {@link RenderPass#viewport | RenderPass viewport} if any. */
+  viewport: RenderPassViewport | null
+
+  /** Current scissor {@link RectBBox} to use to set the {@link renderPass} and {@link postProcessingPass} {@link RenderPass#scissorRect | RenderPass scissorRect} if any. */
+  scissorRect: RectBBox | null
+
+  /** {@link DOMElement} that will track our canvas container size. */
   domElement: DOMElement | undefined
 
-  /** Allow to add callbacks to be executed at each render before the {@link GPUCommandEncoder} is created */
+  /** Allow to add callbacks to be executed at each render before the {@link GPUCommandEncoder} is created. */
   onBeforeCommandEncoderCreation: TasksQueueManager
-  /** Allow to add callbacks to be executed at each render after the {@link GPUCommandEncoder} has been created but before the {@link Scene} is rendered */
+  /** Allow to add callbacks to be executed at each render after the {@link GPUCommandEncoder} has been created but before the {@link Scene} is rendered. */
   onBeforeRenderScene: TasksQueueManager
-  /** Allow to add callbacks to be executed at each render after the {@link GPUCommandEncoder} has been created and after the {@link Scene} has been rendered */
+  /** Allow to add callbacks to be executed at each render after the {@link GPUCommandEncoder} has been created and after the {@link Scene} has been rendered. */
   onAfterRenderScene: TasksQueueManager
-  /** Allow to add callbacks to be executed at each render after the {@link Scene} has been rendered and the {@link GPUCommandEncoder} has been submitted */
+  /** Allow to add callbacks to be executed at each render after the {@link Scene} has been rendered and the {@link GPUCommandEncoder} has been submitted. */
   onAfterCommandEncoderSubmission: TasksQueueManager
 
   // callbacks / events
-  /** function assigned to the {@link onBeforeRender} callback */
+  /** function assigned to the {@link onBeforeRender} callback. */
   _onBeforeRenderCallback = (commandEncoder: GPUCommandEncoder) => {
     /* allow empty callback */
   }
-  /** function assigned to the {@link onAfterRender} callback */
+  /** function assigned to the {@link onAfterRender} callback. */
   _onAfterRenderCallback = (commandEncoder: GPUCommandEncoder) => {
     /* allow empty callback */
   }
-  /** function assigned to the {@link onResize} callback */
+  /** function assigned to the {@link onResize} callback. */
   _onResizeCallback: () => void = () => {
     /* allow empty callback */
   }
-  /** function assigned to the {@link onAfterResize} callback */
+  /** function assigned to the {@link onAfterResize} callback. */
   _onAfterResizeCallback: () => void = () => {
     /* allow empty callback */
   }
 
   /**
    * GPURenderer constructor
-   * @param parameters - {@link GPURendererParams | parameters} used to create this {@link GPURenderer}
+   * @param parameters - {@link GPURendererParams | parameters} used to create this {@link GPURenderer}.
    */
   constructor({
     deviceManager,
@@ -250,6 +256,10 @@ export class GPURenderer {
       left: 0,
     }
 
+    // will be set later
+    this.viewport = null
+    this.scissorRect = null
+
     this.setScene()
     this.setTasksQueues()
     this.setRendererObjects()
@@ -280,8 +290,8 @@ export class GPURenderer {
   }
 
   /**
-   * Set the renderer {@link RectBBox} and canvas sizes
-   * @param rectBBox - the optional new {@link canvas} {@link RectBBox} to set
+   * Set the renderer {@link RectBBox} and canvas sizes.
+   * @param rectBBox - The optional new {@link canvas} {@link RectBBox} to set.
    */
   setSize(rectBBox: Partial<RectBBox> | null = null) {
     // patch rect bbox with missing values from bounding rect if needed
@@ -319,8 +329,90 @@ export class GPURenderer {
   }
 
   /**
-   * Set the renderer {@link GPURenderer.pixelRatio | pixel ratio} and {@link resize} it
-   * @param pixelRatio - new pixel ratio to use
+   * Set the renderer, {@link renderPass} and {@link postProcessingPass} {@link viewport} values. Beware that if you use a {@link viewport}, you should resize it yourself so it does not overflow the `canvas` in the `onResize` callback to avoid issues.
+   * @param viewport - {@link RenderPassViewport} settings to use. Can be set to `null` to cancel the {@link viewport}.
+   */
+  setViewport(viewport: RenderPassViewport | null = null) {
+    if (!viewport) {
+      this.viewport = null
+      this.renderPass?.setViewport(null)
+      this.postProcessingPass?.setViewport(null)
+    } else {
+      viewport = {
+        ...{
+          width: this.canvas.width,
+          height: this.canvas.height,
+          top: 0,
+          left: 0,
+          minDepth: 0,
+          maxDepth: 1,
+        },
+        ...viewport,
+      }
+
+      let { width, height, top, left, minDepth, maxDepth } = viewport
+
+      width = Math.min(width, this.canvas.width)
+      height = Math.min(height, this.canvas.height)
+      top = Math.max(0, top)
+      left = Math.max(0, left)
+
+      this.viewport = {
+        width,
+        height,
+        top,
+        left,
+        minDepth,
+        maxDepth,
+      }
+
+      this.renderPass?.setViewport(this.viewport)
+      this.postProcessingPass?.setViewport(this.viewport)
+    }
+  }
+
+  /**
+   * Set the renderer, {@link renderPass} and {@link postProcessingPass} {@link GPURenderer#scissorRect | scissorRect} values. Beware that if you use a {@link GPURenderer#scissorRect | scissorRect}, you should resize it yourself so it does not overflow the `canvas` in the `onResize` callback to avoid issues.
+   * @param scissorRect - {@link RectBBox} settings to use. Can be set to `null` to cancel the {@link GPURenderer#scissorRect | scissorRect}.
+   */
+  setScissorRect(scissorRect: RectBBox | null = null) {
+    if (!scissorRect) {
+      this.scissorRect = null
+      this.renderPass?.setScissorRect(null)
+      this.postProcessingPass?.setScissorRect(null)
+    } else {
+      scissorRect = {
+        ...{
+          width: this.canvas.width,
+          height: this.canvas.height,
+          top: 0,
+          left: 0,
+        },
+        ...scissorRect,
+      }
+
+      let { width, height, top, left } = scissorRect
+
+      width = Math.min(width, this.canvas.width)
+      height = Math.min(height, this.canvas.height)
+      top = Math.max(0, top)
+      left = Math.max(0, left)
+
+      this.scissorRect = {
+        width,
+        height,
+        top,
+        left,
+      }
+
+      this.renderPass?.setScissorRect(this.scissorRect)
+      this.postProcessingPass?.setScissorRect(this.scissorRect)
+    }
+  }
+
+  /**
+   * Set the renderer {@link GPURenderer.pixelRatio | pixel ratio} and {@link resize} it.
+   * @param pixelRatio - New pixel ratio to use.
    */
   setPixelRatio(pixelRatio: number = 1) {
     this.pixelRatio = pixelRatio
@@ -328,8 +420,8 @@ export class GPURenderer {
   }
 
   /**
-   * Resize our {@link GPURenderer}
-   * @param rectBBox - the optional new {@link canvas} {@link RectBBox} to set
+   * Resize our {@link GPURenderer}.
+   * @param rectBBox - The optional new {@link canvas} {@link RectBBox} to set.
    */
   resize(rectBBox: RectBBox | null = null) {
     this.setSize(rectBBox)
@@ -411,8 +503,8 @@ export class GPURenderer {
   }
 
   /**
-   * Clamp to max WebGPU texture dimensions
-   * @param dimension - width and height dimensions to clamp
+   * Clamp to max WebGPU texture dimensions.
+   * @param dimension - Width and height dimensions to clamp.
    */
   clampToMaxDimension(dimension: RectSize | DOMElementBoundingRect) {
     if (this.device) {
@@ -424,7 +516,7 @@ export class GPURenderer {
   /* USEFUL DEVICE MANAGER OBJECTS */
 
   /**
-   * Get our {@link GPUDeviceManager#device | device}
+   * Get our {@link GPUDeviceManager#device | device}.
    * @readonly
    */
   get device(): GPUDevice | undefined {
@@ -432,7 +524,7 @@ export class GPURenderer {
   }
 
   /**
-   * Get whether our {@link GPUDeviceManager} is ready (i.e. its {@link GPUDeviceManager#adapter | adapter} and {@link GPUDeviceManager#device | device} are set) its {@link context} is set and its size is set
+   * Get whether our {@link GPUDeviceManager} is ready (i.e. its {@link GPUDeviceManager#adapter | adapter} and {@link GPUDeviceManager#device | device} are set) its {@link context} is set and its size is set.
    * @readonly
    */
   get ready(): boolean {
@@ -440,15 +532,15 @@ export class GPURenderer {
   }
 
   /**
-   * Get our {@link GPUDeviceManager#production | GPUDeviceManager production flag}
+   * Get our {@link core/renderers/GPUDeviceManager.GPUDeviceManagerBaseParams#production | GPUDeviceManager production flag}.
    * @readonly
    */
   get production(): boolean {
-    return this.deviceManager.production
+    return this.deviceManager.options.production
   }
 
   /**
-   * Get all the created {@link GPUDeviceManager#samplers | samplers}
+   * Get all the created {@link GPUDeviceManager#samplers | samplers}.
    * @readonly
    */
   get samplers(): Sampler[] {
@@ -456,7 +548,7 @@ export class GPURenderer {
   }
 
   /**
-   * Get all the created {@link GPUDeviceManager#buffers | GPU buffers}
+   * Get all the created {@link GPUDeviceManager#buffers | GPU buffers}.
    * @readonly
    */
   get buffers(): Map<Buffer['uuid'], Buffer> {
@@ -464,7 +556,7 @@ export class GPURenderer {
   }
 
   /**
-   * Get all the created {@link GPUDeviceManager#indirectBuffers | indirect buffers}
+   * Get all the created {@link GPUDeviceManager#indirectBuffers | indirect buffers}.
    * @readonly
    */
   get indirectBuffers(): Map<IndirectBuffer['uuid'], IndirectBuffer> {
@@ -472,7 +564,7 @@ export class GPURenderer {
   }
 
   /**
-   * Get the {@link GPUDeviceManager#pipelineManager | pipeline manager}
+   * Get the {@link GPUDeviceManager#pipelineManager | pipeline manager}.
    * @readonly
    */
   get pipelineManager(): PipelineManager {
@@ -480,7 +572,7 @@ export class GPURenderer {
   }
 
   /**
-   * Get all the rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes) created by the {@link GPUDeviceManager}
+   * Get all the rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes) created by the {@link GPUDeviceManager}.
    * @readonly
    */
   get deviceRenderedObjects(): SceneObject[] {
@@ -488,7 +580,7 @@ export class GPURenderer {
   }
 
   /**
-   * Configure our {@link context} with the given options
+   * Configure our {@link context} with the given options.
    */
   configureContext() {
     this.context.configure({
@@ -501,7 +593,7 @@ export class GPURenderer {
   }
 
   /**
-   * Set our {@link context} if possible and set {@link renderPass | main render pass} and {@link scene}
+   * Set our {@link context} if possible and set {@link renderPass | main render pass} and {@link scene}.
    */
   setContext() {
     this.context = this.canvas.getContext('webgpu')
@@ -574,7 +666,7 @@ export class GPURenderer {
   }
 
   /**
-   * Set our {@link scene}
+   * Set our {@link scene}.
    */
   setScene() {
     this.scene = new Scene({ renderer: this })
@@ -583,9 +675,9 @@ export class GPURenderer {
   /* BUFFERS & BINDINGS */
 
   /**
-   * Create a {@link !GPUBuffer}
-   * @param buffer - {@link Buffer} to use for buffer creation
-   * @returns - newly created {@link !GPUBuffer}
+   * Create a {@link !GPUBuffer}.
+   * @param buffer - {@link Buffer} to use for buffer creation.
+   * @returns - newly created {@link !GPUBuffer}.
    */
   createBuffer(buffer: Buffer): GPUBuffer {
     const GPUBuffer = this.deviceManager.device?.createBuffer(buffer.options)
@@ -594,30 +686,30 @@ export class GPURenderer {
   }
 
   /**
-   * Remove a {@link Buffer} from our {@link GPUDeviceManager#buffers | buffers Map}
-   * @param buffer - {@link Buffer} to remove
+   * Remove a {@link Buffer} from our {@link GPUDeviceManager#buffers | buffers Map}.
+   * @param buffer - {@link Buffer} to remove.
    */
   removeBuffer(buffer: Buffer) {
     this.deviceManager.removeBuffer(buffer)
   }
 
   /**
-   * Write to a {@link GPUBuffer}
-   * @param buffer - {@link GPUBuffer} to write to
-   * @param bufferOffset - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUQueue/writeBuffer#bufferoffset | buffer offset}
-   * @param data - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUQueue/writeBuffer#data | data} to write
+   * Write to a {@link GPUBuffer}.
+   * @param buffer - {@link GPUBuffer} to write to.
+   * @param bufferOffset - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUQueue/writeBuffer#bufferoffset | Buffer offset}.
+   * @param data - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUQueue/writeBuffer#data | Data} to write.
    */
   queueWriteBuffer(buffer: GPUBuffer, bufferOffset: GPUSize64, data: BufferSource) {
     this.deviceManager.device?.queue.writeBuffer(buffer, bufferOffset, data)
   }
 
   /**
-   * Copy a source {@link Buffer#GPUBuffer | Buffer GPUBuffer} into a destination {@link Buffer#GPUBuffer | Buffer GPUBuffer}
-   * @param parameters - parameters used to realize the copy
-   * @param parameters.srcBuffer - source {@link Buffer}
-   * @param [parameters.dstBuffer] - destination {@link Buffer}. Will create a new one if none provided.
+   * Copy a source {@link Buffer#GPUBuffer | Buffer GPUBuffer} into a destination {@link Buffer#GPUBuffer | Buffer GPUBuffer}.
+   * @param parameters - Parameters used to realize the copy.
+   * @param parameters.srcBuffer - Source {@link Buffer}.
+   * @param [parameters.dstBuffer] - Destination {@link Buffer}. Will create a new one if none provided.
    * @param [parameters.commandEncoder] - {@link GPUCommandEncoder} to use for the copy. Will create a new one and submit the command buffer if none provided.
-   * @returns - destination {@link Buffer} after copy
+   * @returns - Destination {@link Buffer} after copy.
    */
   copyBufferToBuffer({
     srcBuffer,
@@ -686,7 +778,7 @@ export class GPURenderer {
   /* BIND GROUPS & LAYOUTS */
 
   /**
-   * Get all created {@link AllowedBindGroups | bind group} tracked by our {@link GPUDeviceManager}
+   * Get all created {@link AllowedBindGroups | bind group} tracked by our {@link GPUDeviceManager}.
    * @readonly
    */
   get bindGroups(): Map<string, AllowedBindGroups> {
@@ -694,34 +786,34 @@ export class GPURenderer {
   }
 
   /**
-   * Add a {@link AllowedBindGroups | bind group} to our {@link GPUDeviceManager#bindGroups | bind groups array}
-   * @param bindGroup - {@link AllowedBindGroups | bind group} to add
+   * Add a {@link AllowedBindGroups | bind group} to our {@link GPUDeviceManager#bindGroups | bind groups array}.
+   * @param bindGroup - {@link AllowedBindGroups | Bind group} to add.
    */
   addBindGroup(bindGroup: AllowedBindGroups) {
     this.deviceManager.addBindGroup(bindGroup)
   }
 
   /**
-   * Remove a {@link AllowedBindGroups | bind group} from our {@link GPUDeviceManager#bindGroups | bind groups array}
-   * @param bindGroup - {@link AllowedBindGroups | bind group} to remove
+   * Remove a {@link AllowedBindGroups | bind group} from our {@link GPUDeviceManager#bindGroups | bind groups array}.
+   * @param bindGroup - {@link AllowedBindGroups | Bind group} to remove.
    */
   removeBindGroup(bindGroup: AllowedBindGroups) {
     this.deviceManager.removeBindGroup(bindGroup)
   }
 
   /**
-   * Create a {@link GPUBindGroupLayout}
-   * @param bindGroupLayoutDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createBindGroupLayout#descriptor | GPUBindGroupLayoutDescriptor}
-   * @returns - newly created {@link GPUBindGroupLayout}
+   * Create a {@link GPUBindGroupLayout}.
+   * @param bindGroupLayoutDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createBindGroupLayout#descriptor | GPUBindGroupLayoutDescriptor}.
+   * @returns - Newly created {@link GPUBindGroupLayout}.
    */
   createBindGroupLayout(bindGroupLayoutDescriptor: GPUBindGroupLayoutDescriptor): GPUBindGroupLayout {
     return this.deviceManager.device?.createBindGroupLayout(bindGroupLayoutDescriptor)
   }
 
   /**
-   * Create a {@link GPUBindGroup}
-   * @param bindGroupDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createBindGroup#descriptor | GPUBindGroupDescriptor}
-   * @returns - newly created {@link GPUBindGroup}
+   * Create a {@link GPUBindGroup}.
+   * @param bindGroupDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createBindGroup#descriptor | GPUBindGroupDescriptor}.
+   * @returns - Newly created {@link GPUBindGroup}.
    */
   createBindGroup(bindGroupDescriptor: GPUBindGroupDescriptor): GPUBindGroup {
     return this.deviceManager.device?.createBindGroup(bindGroupDescriptor)
@@ -730,54 +822,54 @@ export class GPURenderer {
   /* SHADERS & PIPELINES */
 
   /**
-   * Create a {@link GPUShaderModule}
+   * Create a {@link GPUShaderModule}.
    * @param shaderModuleDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createShaderModule#descriptor | GPUShaderModuleDescriptor}
-   * @returns - newly created {@link GPUShaderModule}
+   * @returns - Newly created {@link GPUShaderModule}.
    */
   createShaderModule(shaderModuleDescriptor: GPUShaderModuleDescriptor): GPUShaderModule {
     return this.device?.createShaderModule(shaderModuleDescriptor)
   }
 
   /**
-   * Create a {@link GPUPipelineLayout}
-   * @param pipelineLayoutDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createPipelineLayout#descriptor | GPUPipelineLayoutDescriptor}
-   * @returns - newly created {@link GPUPipelineLayout}
+   * Create a {@link GPUPipelineLayout}.
+   * @param pipelineLayoutDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createPipelineLayout#descriptor | GPUPipelineLayoutDescriptor}.
+   * @returns - Newly created {@link GPUPipelineLayout}.
    */
   createPipelineLayout(pipelineLayoutDescriptor: GPUPipelineLayoutDescriptor): GPUPipelineLayout {
     return this.device?.createPipelineLayout(pipelineLayoutDescriptor)
   }
 
   /**
-   * Create a {@link GPURenderPipeline}
-   * @param pipelineDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createRenderPipeline#descriptor | GPURenderPipelineDescriptor}
-   * @returns - newly created {@link GPURenderPipeline}
+   * Create a {@link GPURenderPipeline}.
+   * @param pipelineDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createRenderPipeline#descriptor | GPURenderPipelineDescriptor}.
+   * @returns - Newly created {@link GPURenderPipeline}.
    */
   createRenderPipeline(pipelineDescriptor: GPURenderPipelineDescriptor): GPURenderPipeline {
     return this.device?.createRenderPipeline(pipelineDescriptor)
   }
 
   /**
-   * Asynchronously create a {@link GPURenderPipeline}
-   * @param pipelineDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createRenderPipeline#descriptor | GPURenderPipelineDescriptor}
-   * @returns - newly created {@link GPURenderPipeline}
+   * Asynchronously create a {@link GPURenderPipeline}.
+   * @param pipelineDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createRenderPipeline#descriptor | GPURenderPipelineDescriptor}.
+   * @returns - Newly created {@link GPURenderPipeline}.
    */
   async createRenderPipelineAsync(pipelineDescriptor: GPURenderPipelineDescriptor): Promise<GPURenderPipeline> {
     return await this.device?.createRenderPipelineAsync(pipelineDescriptor)
   }
 
   /**
-   * Create a {@link GPUComputePipeline}
-   * @param pipelineDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createComputePipeline#descriptor | GPUComputePipelineDescriptor}
-   * @returns - newly created {@link GPUComputePipeline}
+   * Create a {@link GPUComputePipeline}.
+   * @param pipelineDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createComputePipeline#descriptor | GPUComputePipelineDescriptor}.
+   * @returns - Newly created {@link GPUComputePipeline}.
    */
   createComputePipeline(pipelineDescriptor: GPUComputePipelineDescriptor): GPUComputePipeline {
     return this.device?.createComputePipeline(pipelineDescriptor)
   }
 
   /**
-   * Asynchronously create a {@link GPUComputePipeline}
-   * @param pipelineDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createComputePipeline#descriptor | GPUComputePipelineDescriptor}
-   * @returns - newly created {@link GPUComputePipeline}
+   * Asynchronously create a {@link GPUComputePipeline}.
+   * @param pipelineDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createComputePipeline#descriptor | GPUComputePipelineDescriptor}.
+   * @returns - Newly created {@link GPUComputePipeline}.
    */
   async createComputePipelineAsync(pipelineDescriptor: GPUComputePipelineDescriptor): Promise<GPUComputePipeline> {
     return await this.device?.createComputePipelineAsync(pipelineDescriptor)
@@ -786,25 +878,25 @@ export class GPURenderer {
   /* TEXTURES */
 
   /**
-   * Add a {@link Texture} to our {@link textures} array
-   * @param texture - {@link Texture} to add
+   * Add a {@link Texture} to our {@link textures} array.
+   * @param texture - {@link Texture} to add.
    */
   addTexture(texture: Texture) {
     this.textures.push(texture)
   }
 
   /**
-   * Remove a {@link Texture} from our {@link textures} array
-   * @param texture - {@link Texture} to remove
+   * Remove a {@link Texture} from our {@link textures} array.
+   * @param texture - {@link Texture} to remove.
    */
   removeTexture(texture: Texture) {
     this.textures = this.textures.filter((t) => t.uuid !== texture.uuid)
   }
 
   /**
-   * Create a {@link GPUTexture}
-   * @param textureDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createTexture#descriptor | GPUTextureDescriptor}
-   * @returns - newly created {@link GPUTexture}
+   * Create a {@link GPUTexture}.
+   * @param textureDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createTexture#descriptor | GPUTextureDescriptor}.
+   * @returns - Newly created {@link GPUTexture}.
    */
   createTexture(textureDescriptor: GPUTextureDescriptor): GPUTexture {
     return this.deviceManager.device?.createTexture(textureDescriptor)
@@ -888,8 +980,8 @@ export class GPURenderer {
   /**
    * Check if a {@link Sampler} has already been created with the same {@link Sampler#options | parameters}.
    * Use it if found, else create a new one and add it to the {@link GPUDeviceManager#samplers | samplers array}.
-   * @param sampler - {@link Sampler} to create
-   * @returns - the {@link GPUSampler}
+   * @param sampler - {@link Sampler} to create.
+   * @returns - {@link GPUSampler} from cache or newly created {@link GPUSampler}.
    */
   createSampler(sampler: Sampler): GPUSampler {
     const existingSampler = this.samplers.find((existingSampler) => {
@@ -913,8 +1005,8 @@ export class GPURenderer {
   }
 
   /**
-   * Remove a {@link Sampler} from our {@link GPUDeviceManager#samplers | samplers array}
-   * @param sampler - {@link Sampler} to remove
+   * Remove a {@link Sampler} from our {@link GPUDeviceManager#samplers | samplers array}.
+   * @param sampler - {@link Sampler} to remove.
    */
   removeSampler(sampler: Sampler) {
     this.deviceManager.removeSampler(sampler)
@@ -924,10 +1016,10 @@ export class GPURenderer {
 
   /**
    * Set different tasks queue managers to execute callbacks at different phases of our render call:
-   * - {@link onBeforeCommandEncoderCreation}: callbacks executed before the creation of the command encoder
-   * - {@link onBeforeRenderScene}: callbacks executed after the creation of the command encoder and before rendering the {@link Scene}
-   * - {@link onAfterRenderScene}: callbacks executed after the creation of the command encoder and after rendering the {@link Scene}
-   * - {@link onAfterCommandEncoderSubmission}: callbacks executed after the submission of the command encoder
+   * - {@link onBeforeCommandEncoderCreation}: callbacks executed before the creation of the command encoder.
+   * - {@link onBeforeRenderScene}: callbacks executed after the creation of the command encoder and before rendering the {@link Scene}.
+   * - {@link onAfterRenderScene}: callbacks executed after the creation of the command encoder and after rendering the {@link Scene}.
+   * - {@link onAfterCommandEncoderSubmission}: callbacks executed after the submission of the command encoder.
    */
   setTasksQueues() {
     this.onBeforeCommandEncoderCreation = new TasksQueueManager()
@@ -937,7 +1029,7 @@ export class GPURenderer {
   }
 
   /**
-   * Set all objects arrays that we'll keep track of
+   * Set all objects arrays and {@link Map} that we'll keep track of.
    */
   setRendererObjects() {
     // keep track of compute passes, meshes, etc.
@@ -953,7 +1045,7 @@ export class GPURenderer {
   }
 
   /**
-   * Get all this {@link GPURenderer} rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes)
+   * Get all this {@link GPURenderer} rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes).
    * @readonly
    */
   get renderedObjects(): SceneObject[] {
@@ -963,7 +1055,7 @@ export class GPURenderer {
   /**
    * Get all objects ({@link RenderedMesh | rendered meshes} or {@link ComputePass | compute passes}) using a given {@link AllowedBindGroups | bind group}.
    * Useful (but slow) to know if a resource is used by multiple objects and if it is safe to destroy it or not.
-   * @param bindGroup - {@link AllowedBindGroups | bind group} to check
+   * @param bindGroup - {@link AllowedBindGroups | Bind group} to check.
    */
   getObjectsByBindGroup(bindGroup: AllowedBindGroups): undefined | SceneObject[] {
     return this.deviceRenderedObjects.filter((object) => {
@@ -991,7 +1083,7 @@ export class GPURenderer {
   /**
    * Assign a callback function to _onBeforeRenderCallback.
    * @param callback - callback to run just before the {@link render} method will be executed.
-   * @returns - our {@link GPURenderer}.
+   * @returns - Our renderer.
    */
   onBeforeRender(callback: (commandEncoder?: GPUCommandEncoder) => void): this {
     if (callback) {
@@ -1002,9 +1094,9 @@ export class GPURenderer {
   }
 
   /**
-   * Assign a callback function to _onAfterRenderCallback
-   * @param callback - callback to run just after the {@link render} method has been executed
-   * @returns - our {@link GPURenderer}
+   * Assign a callback function to _onAfterRenderCallback.
+   * @param callback - callback to run just after the {@link render} method has been executed.
+   * @returns - Our renderer.
    */
   onAfterRender(callback: (commandEncoder?: GPUCommandEncoder) => void): this {
     if (callback) {
@@ -1017,7 +1109,7 @@ export class GPURenderer {
   /**
    * Callback to run after the {@link GPURenderer} has been resized but before the {@link resizeObjects} method has been executed (before the {@link Texture | textures}, {@link RenderPass | render passes}, {@link RenderTarget | render targets}, {@link ComputePass | compute passes} and meshes are resized).
    * @param callback - callback to execute.
-   * @returns - our {@link GPURenderer}
+   * @returns - Our renderer.
    */
   onResize(callback: (commandEncoder?: GPUCommandEncoder) => void): this {
     if (callback) {
@@ -1030,7 +1122,7 @@ export class GPURenderer {
   /**
    * Callback to run after the {@link GPURenderer} has been resized and after the {@link resizeObjects} method has been executed (after the {@link Texture | textures}, {@link RenderPass | render passes}, {@link RenderTarget | render targets}, {@link ComputePass | compute passes} and meshes have been resized).
    * @param callback - callback to execute.
-   * @returns - our {@link GPURenderer}
+   * @returns - Our renderer.
    */
   onAfterResize(callback: (commandEncoder?: GPUCommandEncoder) => void): this {
     if (callback) {

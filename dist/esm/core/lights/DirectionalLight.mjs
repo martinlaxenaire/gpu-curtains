@@ -9,14 +9,15 @@ var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot
 var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
 var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
 var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
-var _actualPosition, _direction;
+var _direction;
 class DirectionalLight extends Light {
   /**
    * DirectionalLight constructor
-   * @param renderer - {@link CameraRenderer} used to create this {@link DirectionalLight}.
-   * @param parameters - {@link DirectionalLightBaseParams | parameters} used to create this {@link DirectionalLight}.
+   * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link DirectionalLight}.
+   * @param parameters - {@link DirectionalLightBaseParams} used to create this {@link DirectionalLight}.
    */
   constructor(renderer, {
+    label = "DirectionalLight",
     color = new Vec3(1),
     intensity = 1,
     position = new Vec3(1),
@@ -24,9 +25,7 @@ class DirectionalLight extends Light {
     shadow = null
   } = {}) {
     const type = "directionalLights";
-    super(renderer, { color, intensity, type });
-    /** @ignore */
-    __privateAdd(this, _actualPosition);
+    super(renderer, { label, color, intensity, type });
     /**
      * The {@link Vec3 | direction} of the {@link DirectionalLight} is the {@link target} minus the actual {@link position}.
      * @private
@@ -39,10 +38,15 @@ class DirectionalLight extends Light {
       shadow
     };
     __privateSet(this, _direction, new Vec3());
-    __privateSet(this, _actualPosition, new Vec3());
-    this.target = target;
-    this.target.onChange(() => this.setDirection());
     this.position.copy(position);
+    this.target = new Vec3();
+    this.target.onChange(() => {
+      this.lookAt(this.target);
+    });
+    this.target.copy(target);
+    this.position.onChange(() => {
+      this.lookAt(this.target);
+    });
     this.parent = this.renderer.scene;
     this.shadow = new DirectionalShadow(this.renderer, {
       autoRender: false,
@@ -58,31 +62,62 @@ class DirectionalLight extends Light {
    * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
    */
   setRenderer(renderer) {
-    this.shadow?.setRenderer(renderer);
     super.setRenderer(renderer);
+    if (this.shadow) {
+      this.shadow.setRenderer(renderer);
+    }
   }
   /**
-   * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of {@link DirectionalLight} has been overflowed.
+   * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of {@link DirectionalLight} has been overflowed or when updating the {@link DirectionalLight} {@link renderer}.
+   * @param resetShadow - Whether to reset the {@link DirectionalLight} shadow if any. Set to `true` when the {@link renderer} number of {@link DirectionalLight} has been overflown, `false` when the {@link renderer} has been changed (since the shadow will reset itself).
    */
-  reset() {
+  reset(resetShadow = true) {
     super.reset();
-    this.setDirection();
-    this.shadow?.reset();
+    this.onPropertyChanged("direction", __privateGet(this, _direction));
+    if (this.shadow && resetShadow) {
+      this.shadow.reset();
+    }
   }
   /**
-   * Set the {@link DirectionalLight} direction based on the {@link target} and the {@link worldMatrix} translation and update the {@link DirectionalShadow} view matrix.
+   * Get this {@link DirectionalLight} intensity.
+   * @returns - The {@link DirectionalLight} intensity.
+   */
+  get intensity() {
+    return super.intensity;
+  }
+  /**
+   * Set this {@link DirectionalLight} intensity and clear shadow if intensity is `0`.
+   * @param value - The new {@link DirectionalLight} intensity.
+   */
+  set intensity(value) {
+    super.intensity = value;
+    if (this.shadow && this.shadow.isActive && !value) {
+      this.shadow.clearDepthTexture();
+    }
+  }
+  /**
+   * Set the {@link DirectionalLight} direction based on the {@link target} and the {@link worldMatrix} translation.
    */
   setDirection() {
-    __privateGet(this, _direction).copy(this.target).sub(this.worldMatrix.getTranslation(__privateGet(this, _actualPosition)));
+    __privateGet(this, _direction).copy(this.target).sub(this.actualPosition).normalize();
     this.onPropertyChanged("direction", __privateGet(this, _direction));
-    this.shadow?.updateViewMatrix(__privateGet(this, _actualPosition), this.target);
+    if (this.shadow) {
+      this.shadow.setDirection(__privateGet(this, _direction));
+    }
   }
-  // explicitly disable scale and transform origin transformations
-  /** @ignore */
-  applyScale() {
-  }
-  /** @ignore */
-  applyTransformOrigin() {
+  /**
+   * Rotate this {@link DirectionalLight} so it looks at the {@link Vec3 | target}.
+   * @param target - {@link Vec3} to look at. Default to `new Vec3()`.
+   */
+  lookAt(target = new Vec3()) {
+    this.updateModelMatrix();
+    this.updateWorldMatrix(true, false);
+    if (this.actualPosition.x === 0 && this.actualPosition.y !== 0 && this.actualPosition.z === 0) {
+      this.up.set(0, 0, 1);
+    } else {
+      this.up.set(0, 1, 0);
+    }
+    this.applyLookAt(this.actualPosition, target);
   }
   /**
    * If the {@link modelMatrix | model matrix} has been updated, set the new direction from the {@link worldMatrix} translation.
@@ -106,10 +141,9 @@ class DirectionalLight extends Light {
    */
   destroy() {
     super.destroy();
-    this.shadow.destroy();
+    this.shadow?.destroy();
   }
 }
-_actualPosition = new WeakMap();
 _direction = new WeakMap();
 
 export { DirectionalLight };

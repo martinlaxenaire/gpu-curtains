@@ -19,6 +19,7 @@ window.addEventListener('load', async () => {
   // create a device manager
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
+    requiredFeatures: ['float32-filterable'], // test
   })
 
   // wait for the device to be created
@@ -33,7 +34,7 @@ window.addEventListener('load', async () => {
     },
     context: {
       format: 'rgba16float', // allow HDR output
-      toneMapping: { mode: 'standard' },
+      toneMapping: { mode: 'extended' },
     },
   })
 

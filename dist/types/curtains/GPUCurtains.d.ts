@@ -15,7 +15,7 @@ import { DOMObject3D } from './objects3D/DOMObject3D';
 /**
  * Options used to create a {@link GPUCurtains}.
  */
-export interface GPUCurtainsOptions extends Omit<GPUCameraRendererParams, 'deviceManager'>, GPUDeviceManagerBaseParams {
+export interface GPUCurtainsOptions extends Omit<GPUCameraRendererParams, 'deviceManager'>, Omit<GPUDeviceManagerBaseParams, 'label'> {
     /** Whether the {@link Renderer | renderers} created by this {@link GPUCurtains} instance should handle resizing by themselves or not. */
     autoResize?: boolean;
     /** Whether this {@link GPUCurtains} instance should listen to scroll event or not. */
@@ -44,69 +44,69 @@ export interface GPUCurtainsParams extends Partial<Omit<GPUCurtainsOptions, 'con
  * ```
  */
 export declare class GPUCurtains {
-    /** The type of this {@link GPUCurtains} */
+    /** The type of this {@link GPUCurtains}. */
     type: string;
-    /** Options used to create this {@link GPUCurtains} */
+    /** Options used to create this {@link GPUCurtains}. */
     options: GPUCurtainsOptions;
-    /** {@link HTMLElement} that will hold the WebGPU {@link HTMLCanvasElement} */
+    /** {@link HTMLElement} that will hold the WebGPU {@link HTMLCanvasElement}. */
     container: HTMLElement;
-    /** {@link GPUDeviceManager} used to handle the {@link GPUAdapter} and {@link GPUDevice} */
+    /** {@link GPUDeviceManager} used to handle the {@link GPUAdapter} and {@link GPUDevice}. */
     deviceManager: GPUDeviceManager;
-    /** Tiny scroll event listener wrapper */
+    /** Tiny scroll event listener wrapper. */
     scrollManager: ScrollManager;
-    /** function assigned to the {@link onScroll} callback */
+    /** function assigned to the {@link onScroll} callback. */
     _onScrollCallback: () => void;
-    /** function assigned to the {@link onError} callback */
+    /** function assigned to the {@link onError} callback. */
     _onErrorCallback: () => void;
-    /** function assigned to the {@link onContextLost} callback */
+    /** function assigned to the {@link onContextLost} callback. */
     _onContextLostCallback: (info?: GPUDeviceLostInfo) => void;
-    /** function assigned to the {@link onContextLost} callback */
+    /** function assigned to the {@link onContextLost} callback. */
     _onContextDestroyedCallback: (info?: GPUDeviceLostInfo) => void;
     /**
      * GPUCurtains constructor
-     * @param parameters - {@link GPUCurtainsParams | parameters} used to create this {@link GPUCurtains}
+     * @param parameters - {@link GPUCurtainsParams | parameters} used to create this {@link GPUCurtains}.
      */
     constructor({ container, label, pixelRatio, context, production, adapterOptions, renderPass, camera, lights, autoRender, autoResize, watchScroll, }?: GPUCurtainsParams);
     /**
      * Set the {@link GPUCurtains.container | container}.
-     * @param container - {@link HTMLElement} or string representing an {@link HTMLElement} selector to use
+     * @param container - {@link HTMLElement} or string representing an {@link HTMLElement} selector to use.
      */
     setContainer(container: DOMElementParams['element']): void;
     /**
-     * Set the default {@link GPUCurtainsRenderer | renderer}
+     * Set the default {@link GPUCurtainsRenderer | renderer}.
      */
     setMainRenderer(): void;
     /**
-     * Patch the options with default values before creating a {@link Renderer}
-     * @param parameters - parameters to patch
+     * Patch the options with default values before creating a {@link Renderer}.
+     * @param parameters - Parameters to patch.
      */
     patchRendererOptions<T extends GPURendererParams | GPUCameraRendererParams>(parameters: T): T;
     /**
-     * Create a new {@link GPURenderer} instance
-     * @param parameters - {@link GPURendererParams | parameters} to use
+     * Create a new {@link GPURenderer} instance.
+     * @param parameters - {@link GPURendererParams | parameters} to use.
      */
     createRenderer(parameters: GPURendererParams): GPURenderer;
     /**
-     * Create a new {@link GPUCameraRenderer} instance
-     * @param parameters - {@link GPUCameraRendererParams | parameters} to use
+     * Create a new {@link GPUCameraRenderer} instance.
+     * @param parameters - {@link GPUCameraRendererParams | parameters} to use.
      */
     createCameraRenderer(parameters: GPUCameraRendererParams): GPUCameraRenderer;
     /**
-     * Create a new {@link GPUCurtainsRenderer} instance
-     * @param parameters - {@link GPUCameraRendererParams | parameters} to use
+     * Create a new {@link GPUCurtainsRenderer} instance.
+     * @param parameters - {@link GPUCameraRendererParams | parameters} to use.
      */
     createCurtainsRenderer(parameters: GPUCameraRendererParams): GPUCurtainsRenderer;
     /**
-     * Set our {@link GPUDeviceManager}
+     * Set our {@link GPUDeviceManager}.
      */
     setDeviceManager(): void;
     /**
-     * Get all created {@link Renderer}
+     * Get all created {@link Renderer}.
      * @readonly
      */
     get renderers(): Renderer[];
     /**
-     * Get the first created {@link Renderer} if any
+     * Get the first created {@link Renderer} if any.
      * @readonly
      */
     get renderer(): Renderer | undefined;
@@ -116,26 +116,26 @@ export declare class GPUCurtains {
      */
     setDevice({ adapter, device }?: GPUDeviceManagerSetupParams): Promise<void>;
     /**
-     * Restore the {@link GPUDeviceManager#adapter | adapter} and {@link GPUDeviceManager#device | device}
+     * Restore the {@link GPUDeviceManager#adapter | adapter} and {@link GPUDeviceManager#device | device}.
      */
     restoreContext(): Promise<void>;
     /**
-     * Get all the created {@link PingPongPlane}
+     * Get all the created {@link PingPongPlane}.
      * @readonly
      */
     get pingPongPlanes(): PingPongPlane[];
     /**
-     * Get all the created {@link ShaderPass}
+     * Get all the created {@link ShaderPass}.
      * @readonly
      */
     get shaderPasses(): ShaderPass[];
     /**
-     * Get all the created {@link SceneStackedMesh | meshes}
+     * Get all the created {@link SceneStackedMesh | meshes}.
      * @readonly
      */
     get meshes(): SceneStackedMesh[];
     /**
-     * Get all the created {@link DOMMesh | DOM Meshes} (including {@link Plane | planes})
+     * Get all the created {@link DOMMesh | DOM Meshes} (including {@link Plane | planes}).
      * @readonly
      */
     get domMeshes(): DOMMesh[];
@@ -145,85 +145,85 @@ export declare class GPUCurtains {
      */
     get domObjects(): DOMObject3D[];
     /**
-     * Get all the created {@link Plane | planes}
+     * Get all the created {@link Plane | planes}.
      * @readonly
      */
     get planes(): Plane[];
     /**
-     * Get all the created {@link ComputePass | compute passes}
+     * Get all the created {@link ComputePass | compute passes}.
      * @readonly
      */
     get computePasses(): ComputePass[];
     /**
-     * Get our {@link GPUCurtainsRenderer#setPerspective | default GPUCurtainsRenderer bounding rectangle}
+     * Get our {@link GPUCurtainsRenderer#boundingRect | default GPUCurtainsRenderer bounding rectangle}.
      */
     get boundingRect(): DOMElementBoundingRect;
     /**
-     * Set the {@link scrollManager}
+     * Set the {@link scrollManager}.
      */
     initScroll(): void;
     /**
-     * Update all {@link DOMMesh#updateScrollPosition | DOMMesh scroll positions}
-     * @param delta - last {@link ScrollManager#delta | scroll delta values}
+     * Update all {@link DOMMesh#updateScrollPosition | DOMMesh scroll positions}.
+     * @param delta - Last {@link ScrollManager#delta | scroll delta values}.
      */
     updateScroll(delta?: DOMPosition): void;
     /**
      * Update our {@link ScrollManager#scroll | scrollManager scroll values}. Called each time the scroll has changed if {@link GPUCurtains#options.watchScroll | watchScroll option} is set to true. Could be called externally as well.
-     * @param scroll - new {@link DOMPosition | scroll values}
+     * @param scroll - New {@link DOMPosition | scroll values}.
      */
     updateScrollValues(scroll?: DOMPosition): void;
     /**
-     * Get our {@link ScrollManager#delta | scrollManager delta values}
+     * Get our {@link ScrollManager#delta | scrollManager delta values}.
      * @readonly
      */
     get scrollDelta(): DOMPosition;
     /**
-     * Get our {@link ScrollManager#scroll | scrollManager scroll values}
+     * Get our {@link ScrollManager#scroll | scrollManager scroll values}.
      * @readonly
      */
     get scrollValues(): DOMPosition;
     /**
-     * Called each frame before rendering
-     * @param callback - callback to run at each render
-     * @returns - our {@link GPUCurtains}
+     * Called each frame before rendering.
+     * @param callback - callback to run at each render.
+     * @returns - our {@link GPUCurtains}.
      */
     onBeforeRender(callback: () => void): GPUCurtains;
     /**
-     * Called each frame after rendering
-     * @param callback - callback to run at each render
-     * @returns - our {@link GPUCurtains}
+     * Called each frame after rendering.
+     * @param callback - callback to run at each render.
+     * @returns - our {@link GPUCurtains}.
      */
     onAfterRender(callback: () => void): GPUCurtains;
     /**
-     * Called each time the {@link ScrollManager#scroll | scrollManager scroll values} changed
-     * @param callback - callback to run each time the {@link ScrollManager#scroll | scrollManager scroll values} changed
-     * @returns - our {@link GPUCurtains}
+     * Called each time the {@link ScrollManager#scroll | scrollManager scroll values} changed.
+     * @param callback - callback to run each time the {@link ScrollManager#scroll | scrollManager scroll values} changed.
+     * @returns - our {@link GPUCurtains}.
      */
     onScroll(callback: () => void): GPUCurtains;
     /**
-     * Called if there's been an error while trying to create the {@link GPUDeviceManager#device | device}
-     * @param callback - callback to run if there's been an error while trying to create the {@link GPUDeviceManager#device | device}
-     * @returns - our {@link GPUCurtains}
+     * Called if there's been an error while trying to create the {@link GPUDeviceManager#device | device}.
+     * @param callback - callback to run if there's been an error while trying to create the {@link GPUDeviceManager#device | device}.
+     * @returns - our {@link GPUCurtains}.
      */
     onError(callback: () => void): GPUCurtains;
     /**
-     * Called whenever the {@link GPUDeviceManager#device | device} is lost
-     * @param callback - callback to run whenever the {@link GPUDeviceManager#device | device} is lost
-     * @returns - our {@link GPUCurtains}
+     * Called whenever the {@link GPUDeviceManager#device | device} is lost.
+     * @param callback - callback to run whenever the {@link GPUDeviceManager#device | device} is lost.
+     * @returns - our {@link GPUCurtains}.
      */
     onContextLost(callback: (info?: GPUDeviceLostInfo) => void): GPUCurtains;
     /**
      * Called whenever the {@link GPUDeviceManager#device | device} has been intentionally destroyed.
      * @param callback - callback to run whenever the {@link GPUDeviceManager#device | device} has been destroyed.
-     * @returns - our {@link GPUCurtains}
+     * @returns - our {@link GPUCurtains}.
      */
     onContextDestroyed(callback: (info?: GPUDeviceLostInfo) => void): GPUCurtains;
     /**
-     * Render our {@link GPUDeviceManager}
+     * Render our {@link GPUDeviceManager}.
      */
     render(): void;
     /**
-     * Destroy our {@link GPUCurtains} and {@link GPUDeviceManager}
+     * Destroy our {@link GPUCurtains} and {@link GPUDeviceManager}.
      */
     destroy(): void;
 }

@@ -1,7 +1,9 @@
-import { Camera } from '../../core/camera/Camera'
+import { Camera } from '../../core/cameras/Camera'
 import { Vec2 } from '../../math/Vec2'
 import { Vec3 } from '../../math/Vec3'
 import { throwWarning } from '../../utils/utils'
+import { PerspectiveCamera } from '../../core/cameras/PerspectiveCamera'
+import { OrthographicCamera } from '../../core/cameras/OrthographicCamera'
 
 // largely based on https://github.com/oframe/ogl/blob/master/src/extras/Orbit.js
 
@@ -115,9 +117,26 @@ export class OrbitControls {
   /** @ignore */
   #panDelta = new Vec3()
 
+  /** @ignore */
+  #_onContextMenu: () => void
+  /** @ignore */
+  #_onMouseDown: () => void
+  /** @ignore */
+  #_onMouseMove: () => void
+  /** @ignore */
+  #_onMouseUp: () => void
+  /** @ignore */
+  #_onTouchStart: () => void
+  /** @ignore */
+  #_onTouchMove: () => void
+  /** @ignore */
+  #_onTouchEnd: () => void
+  /** @ignore */
+  #_onMouseWheel: () => void
+
   /**
    * OrbitControls constructor
-=   * @param parameters - parameters to use.
+   * @param parameters - parameters to use.
    */
   constructor({
     camera,
@@ -161,6 +180,15 @@ export class OrbitControls {
       panSpeed,
     })
 
+    this.#_onContextMenu = this.#onContextMenu.bind(this)
+    this.#_onMouseDown = this.#onMouseDown.bind(this)
+    this.#_onMouseMove = this.#onMouseMove.bind(this)
+    this.#_onMouseUp = this.#onMouseUp.bind(this)
+    this.#_onTouchStart = this.#onTouchStart.bind(this)
+    this.#_onTouchMove = this.#onTouchMove.bind(this)
+    this.#_onTouchEnd = this.#onTouchEnd.bind(this)
+    this.#_onMouseWheel = this.#onMouseWheel.bind(this)
+
     this.element = element ?? (typeof window !== 'undefined' ? window : null)
 
     this.useCamera(camera)
@@ -172,9 +200,10 @@ export class OrbitControls {
    */
   useCamera(camera: Camera) {
     this.camera = camera
+    this.camera.lookAt(this.target)
 
-    this.camera.position.onChange(() => {
-      this.camera.lookAt(this.target)
+    this.target.onChange(() => {
+      this.#update()
     })
 
     // Grab initial position values
@@ -314,14 +343,14 @@ export class OrbitControls {
    * @private
    */
   #addEvents() {
-    this.#element.addEventListener('contextmenu', this.#onContextMenu.bind(this), false)
-    this.#element.addEventListener('mousedown', this.#onMouseDown.bind(this), false)
-    this.#element.addEventListener('mousemove', this.#onMouseMove.bind(this), false)
-    this.#element.addEventListener('mouseup', this.#onMouseUp.bind(this), false)
-    this.#element.addEventListener('touchstart', this.#onTouchStart.bind(this), { passive: false })
-    this.#element.addEventListener('touchmove', this.#onTouchMove.bind(this), { passive: false })
-    this.#element.addEventListener('touchend', this.#onTouchEnd.bind(this), false)
-    this.#element.addEventListener('wheel', this.#onMouseWheel.bind(this), { passive: false })
+    this.#element.addEventListener('contextmenu', this.#_onContextMenu, false)
+    this.#element.addEventListener('mousedown', this.#_onMouseDown, false)
+    this.#element.addEventListener('mousemove', this.#_onMouseMove, false)
+    this.#element.addEventListener('mouseup', this.#_onMouseUp, false)
+    this.#element.addEventListener('touchstart', this.#_onTouchStart, { passive: false })
+    this.#element.addEventListener('touchmove', this.#_onTouchMove, { passive: false })
+    this.#element.addEventListener('touchend', this.#_onTouchEnd, false)
+    this.#element.addEventListener('wheel', this.#_onMouseWheel, { passive: false })
   }
 
   /**
@@ -329,14 +358,14 @@ export class OrbitControls {
    * @private
    */
   #removeEvents() {
-    this.#element.removeEventListener('contextmenu', this.#onContextMenu.bind(this), false)
-    this.#element.removeEventListener('mousedown', this.#onMouseDown.bind(this), false)
-    this.#element.removeEventListener('mousemove', this.#onMouseMove.bind(this), false)
-    this.#element.removeEventListener('mouseup', this.#onMouseUp.bind(this), false)
-    this.#element.removeEventListener('touchstart', this.#onTouchStart.bind(this), { passive: false })
-    this.#element.removeEventListener('touchmove', this.#onTouchMove.bind(this), { passive: false })
-    this.#element.removeEventListener('touchend', this.#onTouchEnd.bind(this), false)
-    this.#element.removeEventListener('wheel', this.#onMouseWheel.bind(this), { passive: false })
+    this.#element.removeEventListener('contextmenu', this.#_onContextMenu, false)
+    this.#element.removeEventListener('mousedown', this.#_onMouseDown, false)
+    this.#element.removeEventListener('mousemove', this.#_onMouseMove, false)
+    this.#element.removeEventListener('mouseup', this.#_onMouseUp, false)
+    this.#element.removeEventListener('touchstart', this.#_onTouchStart, { passive: false })
+    this.#element.removeEventListener('touchmove', this.#_onTouchMove, { passive: false })
+    this.#element.removeEventListener('touchend', this.#_onTouchEnd, false)
+    this.#element.removeEventListener('wheel', this.#_onMouseWheel, { passive: false })
   }
 
   /**
@@ -448,6 +477,7 @@ export class OrbitControls {
 
     // Apply updated values to object
     this.camera.position.copy(this.target).add(this.#offset)
+    this.camera.lookAt(this.target)
   }
 
   /**
@@ -459,8 +489,16 @@ export class OrbitControls {
   #rotate(x: number, y: number) {
     tempVec2a.set(x, y)
     tempVec2b.copy(tempVec2a).sub(this.#rotateStart).multiplyScalar(this.rotateSpeed)
-    this.#spherical.theta -= (2 * Math.PI * tempVec2b.x) / this.camera.size.height
-    this.#spherical.phi -= (2 * Math.PI * tempVec2b.y) / this.camera.size.height
+
+    if (this.camera instanceof PerspectiveCamera) {
+      this.#spherical.theta -= (2 * Math.PI * tempVec2b.x) / this.camera.size.height
+      this.#spherical.phi -= (2 * Math.PI * tempVec2b.y) / this.camera.size.height
+    } else if (this.camera instanceof OrthographicCamera) {
+      const height = (this.camera.top - this.camera.bottom) * 2
+      tempVec2b.multiplyScalar(1 / height)
+      this.#spherical.theta -= (2 * Math.PI * tempVec2b.x) / height
+      this.#spherical.phi -= (2 * Math.PI * tempVec2b.y) / height
+    }
 
     this.#spherical.theta = Math.min(this.maxAzimuthAngle, Math.max(this.minAzimuthAngle, this.#spherical.theta))
     this.#spherical.phi = Math.min(this.maxPolarAngle, Math.max(this.minPolarAngle, this.#spherical.phi))
@@ -484,7 +522,6 @@ export class OrbitControls {
 
     tempVec3.copy(this.camera.position).sub(this.target)
     let targetDistance = tempVec3.length()
-    targetDistance *= Math.tan(((this.camera.fov / 2) * Math.PI) / 180.0)
 
     // pan left
     // get right direction axis accounting for camera transform
@@ -494,7 +531,13 @@ export class OrbitControls {
       this.camera.modelMatrix.elements[2]
     )
 
-    tempVec3.multiplyScalar(-(2 * tempVec2b.x * targetDistance) / this.camera.size.height)
+    if (this.camera instanceof PerspectiveCamera) {
+      targetDistance *= Math.tan(((this.camera.fov / 2) * Math.PI) / 180.0)
+      tempVec3.multiplyScalar(-(2 * tempVec2b.x * targetDistance) / this.camera.size.height)
+    } else if (this.camera instanceof OrthographicCamera) {
+      targetDistance *= 1 / ((this.camera.top - this.camera.bottom) * 2)
+      tempVec3.multiplyScalar(-(2 * tempVec2b.x * targetDistance) / ((this.camera.right - this.camera.left) * 2))
+    }
     this.#panDelta.add(tempVec3)
 
     // pan up
@@ -504,7 +547,13 @@ export class OrbitControls {
       this.camera.modelMatrix.elements[5],
       this.camera.modelMatrix.elements[6]
     )
-    tempVec3.multiplyScalar((2 * tempVec2b.y * targetDistance) / this.camera.size.height)
+
+    if (this.camera instanceof PerspectiveCamera) {
+      tempVec3.multiplyScalar((2 * tempVec2b.y * targetDistance) / this.camera.size.height)
+    } else if (this.camera instanceof OrthographicCamera) {
+      tempVec3.multiplyScalar((2 * tempVec2b.y * targetDistance) / ((this.camera.top - this.camera.bottom) * 2))
+    }
+
     this.#panDelta.add(tempVec3)
 
     this.#panStart.copy(tempVec2a)

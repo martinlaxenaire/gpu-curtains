@@ -1,6 +1,7 @@
 /// <reference types="dist" />
 import { GPURenderer, GPURendererOptions, GPURendererParams, SceneObject } from './GPURenderer';
-import { Camera, CameraBasePerspectiveOptions } from '../camera/Camera';
+import { Camera } from '../cameras/Camera';
+import { PerspectiveCameraBaseOptions } from '../cameras/PerspectiveCamera';
 import { BufferBinding } from '../bindings/BufferBinding';
 import { BindGroup } from '../bindGroups/BindGroup';
 import { Vec3 } from '../../math/Vec3';
@@ -12,6 +13,7 @@ import { ShadowsType } from '../shadows/Shadow';
 import { Texture } from '../textures/Texture';
 import { Sampler } from '../samplers/Sampler';
 import { RenderPassEntry } from '../scenes/Scene';
+import { RenderPassViewport } from '../renderPasses/RenderPass';
 /** Defines the parameters used to build the {@link BufferBinding} of each type of lights. */
 export interface LightParams {
     /** Maximum number for a given type of light. */
@@ -40,12 +42,16 @@ export interface GPUCameraRendererLightParams {
     maxDirectionalLights?: LightsBindingParams['directionalLights']['max'];
     /** Maximum number of {@link core/lights/PointLight.PointLight | PointLight} to use. Default to `5`. */
     maxPointLights?: LightsBindingParams['pointLights']['max'];
+    /** Maximum number of {@link core/lights/SpotLight.SpotLight | SpotLight} to use. Default to `5`. */
+    maxSpotLights?: LightsBindingParams['spotLights']['max'];
+    /** Whether to use `uniform` instead of `storage` binding type for the shadows bindings. In some case, for example when using models with skinning or morph targets, the maximum number of `storage` bindings can be reached in the vertex shader. This allows to bypass this limit by switching the shadows binding from `storage` to `uniforms`, but restrict the flexibility by removing the ability to overflow lights. Default to `false`. */
+    useUniformsForShadows?: boolean;
 }
 /** Extra parameters used to define the {@link Camera} and various lights options. */
 export interface GPUCameraLightsRendererParams {
-    /** An object defining {@link CameraBasePerspectiveOptions | camera perspective parameters} */
-    camera?: CameraBasePerspectiveOptions;
-    /** An object defining {@link GPUCameraRendererLightParams | the maximum number of light} to use when creating the {@link GPUCameraRenderer}. Can be set to `false` to avoid creating lights and shadows buffers, but note this is a permanent choice and cannot be changed later. */
+    /** An object defining {@link PerspectiveCameraBaseOptions | camera perspective parameters} */
+    camera?: PerspectiveCameraBaseOptions;
+    /** An object defining {@link GPUCameraRendererLightParams | the maximum number of light} to use when creating the {@link GPUCameraRenderer}. Can be set to `false` to avoid creating lights and shadows buffers. */
     lights?: GPUCameraRendererLightParams | false;
 }
 /** Parameters used to create a {@link GPUCameraRenderer}. */
@@ -81,6 +87,8 @@ export declare class GPUCameraRenderer extends GPURenderer {
     camera: Camera;
     /** {@link BindGroup | bind group} handling the camera, lights and shadows {@link BufferBinding}. */
     cameraLightsBindGroup: BindGroup;
+    /** Additional {@link RenderPassViewport} from the {@link Camera} to use if any. Will be contained inside the {@link viewport} if any. */
+    cameraViewport: RenderPassViewport | null;
     /** Array of all the created {@link Light}. */
     lights: Light[];
     /** An object defining the current {@link LightsBindingParams | lights binding parameters}, including the maximum number of lights for each type and the structure used to create the associated {@link BufferBinding}. */
@@ -123,16 +131,34 @@ export declare class GPUCameraRenderer extends GPURenderer {
     setMainRenderPasses(): void;
     /**
      * Set the {@link camera}
-     * @param cameraParameters - {@link CameraBasePerspectiveOptions | parameters} used to create the {@link camera}
+     * @param cameraParameters - {@link PerspectiveCameraBaseOptions | parameters} used to create the {@link camera}
      */
-    setCamera(cameraParameters: CameraBasePerspectiveOptions): void;
+    setCamera(cameraParameters: PerspectiveCameraBaseOptions): void;
     /**
      * Tell our {@link GPUCameraRenderer} to use this {@link Camera}. If a {@link camera} has already been set, reset the {@link GPUCameraRenderer#bindings.camera | camera binding} inputs view values and the {@link meshes} {@link Camera} object.
      * @param camera - new {@link Camera} to use.
      */
     useCamera(camera: Camera): void;
     /**
-     * Update the {@link core/renderers/GPURenderer.ProjectedMesh | projected meshes} sizes and positions when the {@link camera} {@link Camera#position | position} changes
+     * Update the {@link cameraViewport} if needed (i.e. if the camera use a different aspect ratio than the renderer).
+     */
+    updateCameraViewport(): void;
+    /**
+     * Resize the {@link camera}, first by updating the {@link cameraViewport} and then resetting the {@link camera} projection.
+     */
+    resizeCamera(): void;
+    /**
+     * Set the {@link cameraViewport} (that should be contained within the renderer {@link viewport} if any) and update the {@link renderPass} and {@link postProcessingPass} {@link viewport} values.
+     * @param viewport - {@link RenderPassViewport} settings to use if any.
+     */
+    setCameraViewport(viewport?: RenderPassViewport | null): void;
+    /**
+     * Resize the {@link camera} whenever the {@link viewport} is updated.
+     * @param viewport - {@link RenderPassViewport} settings to use if any. Can be set to `null` to cancel the {@link viewport}.
+     */
+    setViewport(viewport?: RenderPassViewport | null): void;
+    /**
+     * Update the {@link core/renderers/GPURenderer.ProjectedMesh | projected meshes} sizes and positions when the {@link camera} {@link Camera#position | position} changes.
      */
     onCameraMatricesChanged(): void;
     /**
@@ -161,8 +187,9 @@ export declare class GPUCameraRenderer extends GPURenderer {
     /**
      * Called when a {@link LightsType | type of light} has overflown its maximum capacity. Destroys the associated {@link BufferBinding} (and eventually the associated shadow {@link BufferBinding}), recreates the {@link cameraLightsBindGroup | camera, lights and shadows bind group} and reset all lights for this {@link LightsType | type of light}.
      * @param lightsType - {@link LightsType | Type of light} that has overflown its maximum capacity.
+     * @param lightIndex - The {@link Light#index | light index} that caused overflow. Will be used to reset the new max light count.
      */
-    onMaxLightOverflow(lightsType: LightsType): void;
+    onMaxLightOverflow(lightsType: LightsType, lightIndex?: number): void;
     /**
      * Get all the current {@link ShadowCastingLights | lights that can cast shadows}.
      * @returns - All {@link ShadowCastingLights | lights that can cast shadows}.
@@ -204,11 +231,6 @@ export declare class GPUCameraRenderer extends GPURenderer {
      */
     getObjectsByBindGroup(bindGroup: AllowedBindGroups): undefined | SceneObject[];
     /**
-     * Set our {@link camera} perspective matrix new parameters (fov, near plane and far plane)
-     * @param parameters - {@link CameraBasePerspectiveOptions | parameters} to use for the perspective
-     */
-    setPerspective({ fov, near, far }?: CameraBasePerspectiveOptions): void;
-    /**
      * Set our {@link camera} {@link Camera#position | position}
      * @param position - new {@link Camera#position | position}
      */
@@ -227,8 +249,8 @@ export declare class GPUCameraRenderer extends GPURenderer {
      */
     resize(rectBBox?: RectBBox | null): void;
     /**
-     * {@link createCameraLightsBindGroup | Set the camera bind group if needed} and then call our {@link GPURenderer#render | GPURenderer render method}
-     * @param commandEncoder - current {@link GPUCommandEncoder}
+     * {@link createCameraLightsBindGroup | Set the camera bind group if needed} and then call our {@link GPURenderer#render | GPURenderer render method}.
+     * @param commandEncoder - Current {@link GPUCommandEncoder}.
      */
     render(commandEncoder: GPUCommandEncoder): void;
     /**

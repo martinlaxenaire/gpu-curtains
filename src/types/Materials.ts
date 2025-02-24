@@ -27,6 +27,8 @@ export interface ShaderOptions {
   code: string
   /** The shader main function entry point. */
   entryPoint?: string
+  /** Specifies the values of pipeline-overridable constants in the shader module if any. Note that if a constant is defined here, it *must* be used in the shader code. */
+  constants?: Record<string, number | boolean>
 }
 
 /**
@@ -123,6 +125,8 @@ export interface RenderMaterialBaseRenderingOptions {
   useProjection: boolean
   /** Whether this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} should be treated as transparent. Impacts the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createRenderPipeline#blend | blend property}. */
   transparent: boolean
+
+  // DEPTH STENCIL
   /** Whether this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} should write to the depth buffer. */
   depth: boolean
   /** Whether this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} should enable depth write. */
@@ -131,10 +135,34 @@ export interface RenderMaterialBaseRenderingOptions {
   depthCompare: GPUCompareFunction
   /** Format of the depth texture to use with this {@link core/materials/RenderMaterial.RenderMaterial | RenderMateria.l} */
   depthFormat: GPUTextureFormat
-  /** Cull mode to use with this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}. */
-  cullMode: GPUCullMode
+  /** A number representing a constant depth bias that is added to each fragment. Default to `0`. */
+  depthBias: number
+  /** A number representing the maximum depth bias of a fragment. Default to `0`. */
+  depthBiasClamp: number
+  /** A number representing a depth bias that scales with the fragment's slope. Default to `0`. */
+  depthBiasSlopeScale: number
+  /** Define the stencil operations to use if any. */
+  stencil?: {
+    /** Defines how stencil comparisons and operations are performed for front-facing primitives. */
+    front: GPUStencilFaceState
+    /** Defines how stencil comparisons and operations are performed for back-facing primitives. If undefined, will fall back to `front` values. */
+    back?: GPUStencilFaceState
+    /** Set the {@link https://developer.mozilla.org/en-US/docs/Web/API/GPURenderPassEncoder/setStencilReference#reference | GPURenderPassEncoder stencil reference} value used during stencil tests if any. Default to `0x000000` if a stencil is used. */
+    stencilReference?: GPUStencilValue
+    /** A bitmask controlling which stencil value bits are read when performing stencil comparison tests. Default to `0xFFFFFF`. */
+    stencilReadMask?: GPUStencilValue
+    /** A bitmask controlling which stencil value bits are written to when performing stencil comparison tests. Default to `0xFFFFFF`. */
+    stencilWriteMask?: GPUStencilValue
+  }
+
+  // MULTISAMPLE
   /** The {@link core/renderPasses/RenderPass.RenderPassParams#sampleCount | sampleCount} of the {@link core/renderPasses/RenderPass.RenderPass | RenderPass} onto which we'll be drawing. Set internally. */
   sampleCount: GPUSize32
+  /** When `true` indicates that a fragment's alpha channel should be used to generate a sample
+   * coverage mask. Default to `false`. */
+  alphaToCoverageEnabled: boolean
+  /** Mask determining which samples are written to. Default to `0xFFFFFFFF`. */
+  mask: GPUSampleMask
 
   /**
    * Array of one or multiple {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createRenderPipeline#targets | targets} properties.
@@ -147,6 +175,15 @@ export interface RenderMaterialBaseRenderingOptions {
    *
    */
   targets: GPUColorTargetState[]
+
+  // PRIMITIVE (will also use geometry options just below)
+  /** Cull mode to use with this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}. */
+  cullMode: GPUCullMode
+  /**
+   * If `true`, indicates that depth clipping is disabled.
+   * Requires the {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUSupportedFeatures#available_features | depth-clip-control} feature to be enabled. Default to `false`.
+   */
+  unclippedDepth?: boolean
 }
 
 /** Rendering options to send to the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline}. */
@@ -155,11 +192,13 @@ export interface RenderMaterialRenderingOptions extends RenderMaterialBaseRender
   verticesOrder: Geometry['verticesOrder']
   /** Topology to use with this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}, i.e. whether to draw triangles or points (see https://www.w3.org/TR/webgpu/#enumdef-gpuprimitivetopology). */
   topology: Geometry['topology']
+  /** Define the index buffer format for strip topologies. Set internally. */
+  stripIndexFormat?: GPUIndexFormat
 }
 
 /** Base parameters used to create a {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}. */
 export interface RenderMaterialBaseParams
-  extends Omit<RenderMaterialRenderingOptions, 'targets'>,
+  extends Omit<RenderMaterialRenderingOptions, 'targets' | 'stripIndexFormat'>,
     MaterialInputBindingsParams {
   /** Optional array of one or multiple {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createRenderPipeline#targets | targets} properties. Format property will be patched internally. */
   targets?: Partial<GPUColorTargetState>[]

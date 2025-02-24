@@ -44,7 +44,7 @@ import {
   BindGroup,
   ComputePass,
   IndirectBuffer,
-  Camera,
+  PerspectiveCamera,
   LitMesh,
 } from '../../dist/esm/index.mjs'
 
@@ -375,14 +375,14 @@ window.addEventListener('load', async () => {
     )
   })
 
-  const debugCamera = new Camera({
+  const debugCamera = new PerspectiveCamera({
     far: 500,
     width: gpuCameraRenderer.boundingRect.width,
     height: gpuCameraRenderer.boundingRect.height,
   })
 
   debugCamera.position.y = 175
-  debugCamera.lookAt(new Vec3())
+  debugCamera.lookAt()
 
   debugCamera.parent = gpuCameraRenderer.scene
 

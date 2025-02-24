@@ -1,9 +1,23 @@
 import { shadowStruct, Shadow } from './Shadow.mjs';
-import { Mat4 } from '../../math/Mat4.mjs';
+import { OrthographicCamera } from '../cameras/OrthographicCamera.mjs';
 import { Vec3 } from '../../math/Vec3.mjs';
+import { Texture } from '../textures/Texture.mjs';
+import { getDefaultDirectionalShadowDepthVs } from '../shaders/full/vertex/get-default-directional-shadow-depth-vertex-shader-code.mjs';
 
+var __typeError = (msg) => {
+  throw TypeError(msg);
+};
+var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
+var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
+var _direction;
 const directionalShadowStruct = {
   ...shadowStruct,
+  direction: {
+    type: "vec3f",
+    value: new Vec3()
+  },
   viewMatrix: {
     type: "mat4x4f",
     value: new Float32Array(16)
@@ -16,8 +30,8 @@ const directionalShadowStruct = {
 class DirectionalShadow extends Shadow {
   /**
    * DirectionalShadow constructor
-   * @param renderer - {@link CameraRenderer} used to create this {@link DirectionalShadow}.
-   * @param parameters - {@link DirectionalShadowParams | parameters} used to create this {@link DirectionalShadow}.
+   * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link DirectionalShadow}.
+   * @param parameters - {@link DirectionalShadowParams} used to create this {@link DirectionalShadow}.
    */
   constructor(renderer, {
     light,
@@ -34,7 +48,7 @@ class DirectionalShadow extends Shadow {
       bottom: -10,
       top: 10,
       near: 0.1,
-      far: 50
+      far: 150
     }
   } = {}) {
     super(renderer, {
@@ -47,34 +61,30 @@ class DirectionalShadow extends Shadow {
       depthTextureFormat,
       autoRender
     });
+    /**
+     * Direction of the parent {@link DirectionalLight}. Duplicate to avoid adding the {@link DirectionalLight} binding to vertex shaders.
+     * @private
+     */
+    __privateAdd(this, _direction);
     this.options = {
       ...this.options,
       camera
     };
-    this.camera = {
-      projectionMatrix: new Mat4(),
-      viewMatrix: new Mat4(),
-      up: new Vec3(0, 1, 0),
-      _left: camera.left,
-      _right: camera.right,
-      _bottom: camera.bottom,
-      _top: camera.top,
-      _near: camera.near,
-      _far: camera.far
-    };
-    const _self = this;
-    const cameraProps = ["left", "right", "bottom", "top", "near", "far"];
-    cameraProps.forEach((prop) => {
-      Object.defineProperty(_self.camera, prop, {
-        get() {
-          return _self.camera["_" + prop];
-        },
-        set(v) {
-          _self.camera["_" + prop] = v;
-          _self.updateProjectionMatrix();
-        }
-      });
+    this.camera = new OrthographicCamera({
+      left: camera.left,
+      right: camera.right,
+      top: camera.top,
+      bottom: camera.bottom,
+      near: camera.near,
+      far: camera.far,
+      onMatricesChanged: () => {
+        this.onPropertyChanged("projectionMatrix", this.camera.projectionMatrix);
+        this.onPropertyChanged("viewMatrix", this.camera.viewMatrix);
+      }
     });
+    this.camera.position.set(0);
+    this.camera.parent = this.light;
+    __privateSet(this, _direction, new Vec3());
   }
   /**
    * Set or reset this {@link DirectionalShadow} {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
@@ -91,57 +101,61 @@ class DirectionalShadow extends Shadow {
     if (camera) {
       this.camera.left = camera.left ?? -10;
       this.camera.right = camera.right ?? 10;
+      this.camera.top = camera.top ?? 10;
       this.camera.bottom = camera.bottom ?? -10;
-      this.camera.top = camera.right ?? 10;
       this.camera.near = camera.near ?? 0.1;
-      this.camera.far = camera.far ?? 50;
+      this.camera.far = camera.far ?? 150;
     }
     super.cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
   }
   /**
-   * Set the {@link depthComparisonSampler}, {@link depthTexture}, {@link depthPassTarget}, compute the {@link DirectionalShadow#camera.projectionMatrix | camera projection matrix} and start rendering to the shadow map.
-   */
-  init() {
-    super.init();
-    this.updateProjectionMatrix();
-  }
-  /**
-   * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link DirectionalLight} has been overflowed.
+   * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link DirectionalLight} has been overflowed or when the {@link renderer} has changed.
    */
   reset() {
     this.setRendererBinding();
     super.reset();
     this.onPropertyChanged("projectionMatrix", this.camera.projectionMatrix);
     this.onPropertyChanged("viewMatrix", this.camera.viewMatrix);
+    this.onPropertyChanged("direction", __privateGet(this, _direction));
   }
   /**
-   * Update the {@link DirectionalShadow#camera.projectionMatrix | camera orthographic projection matrix} and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
+   * Copy the {@link DirectionalLight} direction and update binding.
+   * @param direction - {@link DirectionalLight} direction to copy.
    */
-  updateProjectionMatrix() {
-    this.camera.projectionMatrix.identity().makeOrthographic({
-      left: this.camera.left,
-      right: this.camera.right,
-      bottom: this.camera.bottom,
-      top: this.camera.top,
-      near: this.camera.near,
-      far: this.camera.far
+  setDirection(direction = new Vec3()) {
+    __privateGet(this, _direction).copy(direction);
+    this.onPropertyChanged("direction", __privateGet(this, _direction));
+  }
+  /**
+   * Create the {@link depthTexture}.
+   */
+  createDepthTexture() {
+    this.depthTexture = new Texture(this.renderer, {
+      label: `${this.light.options.label} (index: ${this.index}) shadow depth texture`,
+      name: "directionalShadowDepthTexture" + this.index,
+      type: "depth",
+      format: this.depthTextureFormat,
+      sampleCount: this.sampleCount,
+      fixedSize: {
+        width: this.depthTextureSize.x,
+        height: this.depthTextureSize.y
+      },
+      autoDestroy: false
+      // do not destroy when removing a mesh
     });
-    this.onPropertyChanged("projectionMatrix", this.camera.projectionMatrix);
   }
   /**
-   * Update the {@link DirectionalShadow#camera.viewMatrix | camera view matrix} and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
-   * @param position - {@link Vec3} to use as position for the {@link DirectionalShadow#camera.viewMatrix | camera view matrix}, based on the {@link light} position.
-   * @param target - {@link Vec3} to use as target for the {@link DirectionalShadow#camera.viewMatrix | camera view matrix}, based on the {@link light} target.
+   * Get the default depth pass vertex shader for this {@link Shadow}.
+   * parameters - {@link VertexShaderInputBaseParams} used to compute the output `worldPosition` and `normal` vectors.
+   * @returns - Depth pass vertex shader.
    */
-  updateViewMatrix(position = new Vec3(), target = new Vec3()) {
-    if (position.x === 0 && position.z === 0) {
-      this.camera.up.set(0, 0, 1);
-    } else {
-      this.camera.up.set(0, 1, 0);
-    }
-    this.camera.viewMatrix.makeView(position, target, this.camera.up);
-    this.onPropertyChanged("viewMatrix", this.camera.viewMatrix);
+  getDefaultShadowDepthVs({ bindings = [], geometry }) {
+    return {
+      /** Returned code. */
+      code: getDefaultDirectionalShadowDepthVs(this.index, { bindings, geometry })
+    };
   }
 }
+_direction = new WeakMap();
 
 export { DirectionalShadow, directionalShadowStruct };

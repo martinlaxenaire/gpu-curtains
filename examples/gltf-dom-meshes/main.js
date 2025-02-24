@@ -58,7 +58,7 @@ window.addEventListener('load', async () => {
   const helper = new DOMMesh(gpuCurtains, gltfElement, {
     label: 'Helper',
     geometry: new BoxGeometry({
-      topology: 'line-list',
+      topology: 'line-strip',
     }),
     visible: false,
   })

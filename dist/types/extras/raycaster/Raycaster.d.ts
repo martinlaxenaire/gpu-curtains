@@ -1,7 +1,7 @@
 import { Vec2 } from '../../math/Vec2';
 import { Vec3 } from '../../math/Vec3';
 import { CameraRenderer } from '../../core/renderers/utils';
-import { Camera } from '../../core/camera/Camera';
+import { Camera } from '../../core/cameras/Camera';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
 import { ProjectedMesh } from '../../core/renderers/GPURenderer';
 import { IndexBuffer } from '../../core/geometries/IndexedGeometry';

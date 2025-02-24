@@ -894,7 +894,9 @@ export class BufferBinding extends Binding {
         this.options.childrenBindings.forEach((child) => {
           structs[kebabCaseLabel][child.binding.name] =
             (child.count && child.count > 1) || child.forceArray
-              ? `array<${toKebabCase(child.binding.label)}>`
+              ? this.bindingType === 'uniform' && child.binding.bindingType === 'uniform'
+                ? `array<${toKebabCase(child.binding.label)}, ${child.count}>`
+                : `array<${toKebabCase(child.binding.label)}>`
               : toKebabCase(child.binding.label)
         })
       }

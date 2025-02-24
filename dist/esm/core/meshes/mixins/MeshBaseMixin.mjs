@@ -371,7 +371,7 @@ ${geometry.wgslStructFragment}`
           depthFormat: renderPass.options.depthFormat
         }
       };
-      this.material?.setRenderingOptions(renderingOptions);
+      this.material?.setRenderingOptions({ ...this.material.options.rendering, ...renderingOptions });
     }
     /**
      * Hook used to clean up parameters before sending them to the {@link RenderMaterial}.
@@ -633,10 +633,17 @@ ${geometry.wgslStructFragment}`
     }
     /**
      * Render our {@link MeshBase} if the {@link RenderMaterial} is ready
-     * @param pass - current render pass encoder
+     * @param pass - Current render pass encoder.
      */
     onRenderPass(pass) {
       if (!this.ready) return;
+      this.renderPass(pass);
+    }
+    /**
+     * Render the {@link material} and {@link geometry}.
+     * @param pass - Current render pass encoder.
+     */
+    renderPass(pass) {
       this.material.render(pass);
       this.geometry.render(pass);
     }

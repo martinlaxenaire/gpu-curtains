@@ -1,7 +1,5 @@
 // Goals of this test:
-// - test the GPUDeviceManager and GPUCameraRenderer without the use of GPUCurtains class
-// - test camera position, rotationMatrix, lookAt, fov
-// - test frustum culling
+// - test the various frustum culling options
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
   const { BoxGeometry, GPUCameraRenderer, GPUDeviceManager, Mesh, SphereGeometry } = await import(

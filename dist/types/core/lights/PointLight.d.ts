@@ -37,7 +37,7 @@ export interface PointLightBaseParams extends LightBaseParams {
  *   range: 3,
  *   position: new Vec3(-10, 10, -5),
  *   shadow: {
- *     intensity: 1
+ *     intensity: 1,
  *   },
  * })
  *
@@ -69,19 +69,30 @@ export declare class PointLight extends Light {
     shadow: PointShadow;
     /**
      * PointLight constructor
-     * @param renderer - {@link CameraRenderer | CameraRenderer} used to create this {@link PointLight}.
-     * @param parameters - {@link PointLightBaseParams | parameters} used to create this {@link PointLight}.
+     * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link PointLight}.
+     * @param parameters - {@link PointLightBaseParams} used to create this {@link PointLight}.
      */
-    constructor(renderer: CameraRenderer | GPUCurtains, { color, intensity, position, range, shadow }?: PointLightBaseParams);
+    constructor(renderer: CameraRenderer | GPUCurtains, { label, color, intensity, position, range, shadow, }?: PointLightBaseParams);
     /**
      * Set or reset this {@link PointLight} {@link CameraRenderer}.
      * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
      */
     setRenderer(renderer: CameraRenderer | GPUCurtains): void;
     /**
-     * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of {@link PointLight} has been overflowed.
+     * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of {@link PointLight} has been overflowed or when updating the {@link PointLight} {@link renderer}.
+     * @param resetShadow - Whether to reset the {@link PointLight} shadow if any. Set to `true` when the {@link renderer} number of {@link PointLight} has been overflown, `false` when the {@link renderer} has been changed (since the shadow will reset itself).
      */
-    reset(): void;
+    reset(resetShadow?: boolean): void;
+    /**
+     * Get this {@link PointLight} intensity.
+     * @returns - The {@link PointLight} intensity.
+     */
+    get intensity(): number;
+    /**
+     * Set this {@link PointLight} intensity and clear shadow if intensity is `0`.
+     * @param value - The new {@link PointLight} intensity.
+     */
+    set intensity(value: number);
     /**
      * Get this {@link PointLight} range.
      * @returns - The {@link PointLight} range.
@@ -93,13 +104,9 @@ export declare class PointLight extends Light {
      */
     set range(value: number);
     /**
-     * Set the {@link PointLight} position based on the {@link worldMatrix} translation and update the {@link PointShadow} view matrices.
+     * Set the {@link PointLight} position based on the {@link worldMatrix} translation.
      */
     setPosition(): void;
-    /** @ignore */
-    applyScale(): void;
-    /** @ignore */
-    applyTransformOrigin(): void;
     /**
      * If the {@link modelMatrix | model matrix} has been updated, set the new position from the {@link worldMatrix} translation.
      */

@@ -297,6 +297,11 @@ export declare class MeshBaseClass {
      */
     onRenderPass(pass: GPURenderPassEncoder): void;
     /**
+     * Render the {@link material} and {@link geometry}.
+     * @param pass - Current render pass encoder.
+     */
+    renderPass(pass: GPURenderPassEncoder): void;
+    /**
      * Called after having rendered the Mesh
      */
     onAfterRenderPass(): void;

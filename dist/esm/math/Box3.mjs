@@ -79,9 +79,10 @@ class Box3 {
     const corners = [];
     if (this.min.z === this.max.z) {
       corners[0] = points[0].set(this.min.x, this.min.y, this.min.z).applyMat4(matrix);
-      corners[1] = points[2].set(this.min.x, this.max.y, this.min.z).applyMat4(matrix);
-      corners[2] = points[4].set(this.max.x, this.min.y, this.min.z).applyMat4(matrix);
-      corners[3] = points[6].set(this.max.x, this.max.y, this.min.z).applyMat4(matrix);
+      corners[1] = points[1].set(this.min.x, this.max.y, this.min.z).applyMat4(matrix);
+      corners[2] = points[2].set(this.max.x, this.min.y, this.min.z).applyMat4(matrix);
+      corners[3] = points[3].set(this.max.x, this.max.y, this.min.z).applyMat4(matrix);
+      corners[4] = points[4].set(0, 0, 0).applyMat4(matrix);
     } else {
       corners[0] = points[0].set(this.min.x, this.min.y, this.min.z).applyMat4(matrix);
       corners[1] = points[1].set(this.min.x, this.min.y, this.max.z).applyMat4(matrix);

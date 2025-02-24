@@ -18,11 +18,14 @@ import { BufferBinding, BufferBindingParams } from '../../bindings/BufferBinding
 
 import { getDefaultProjectedVertexShaderCode } from '../../shaders/full/vertex/get-default-projected-vertex-shader-code'
 import { getDefaultNormalFragmentCode } from '../../shaders/full/fragment/get-default-normal-fragment-code'
-import { getPCFShadowContribution } from '../../shaders/chunks/fragment/head/get-PCF-shadow-contribution'
+import { getPCFDirectionalShadowContribution } from '../../shaders/chunks/fragment/head/get-PCF-directional-shadow-contribution'
 import { getPCFDirectionalShadows } from '../../shaders/chunks/fragment/head/get-PCF-directional-shadows'
 import { getPCFPointShadowContribution } from '../../shaders/chunks/fragment/head/get-PCF-point-shadow-contribution'
 import { getPCFPointShadows } from '../../shaders/chunks/fragment/head/get-PCF-point-shadows'
 import { Texture } from '../../textures/Texture'
+import { getPCFSpotShadows } from '../../shaders/chunks/fragment/head/get-PCF-spot-shadows'
+import { getPCFSpotShadowContribution } from '../../shaders/chunks/fragment/head/get-PCF-spot-shadow-contribution'
+import { getPCFBaseShadowContribution } from '../../shaders/chunks/fragment/head/get-PCF-base-shadow-contribution'
 
 /** Define all possible frustum culling checks. */
 export type FrustumCullingCheck = 'OBB' | 'sphere' | false
@@ -70,9 +73,9 @@ const defaultProjectedMeshParams: ProjectedMeshBaseParams = {
 export interface ProjectedMeshBaseOptions extends MeshBaseOptions, ProjectedMeshBaseParams {}
 
 /**
- * This class describes the properties and methods to set up a Projected Mesh (i.e. a basic {@link MeshBaseClass | Mesh} with {@link ProjectedObject3D} transformations matrices and a {@link core/camera/Camera.Camera | Camera} to use for projection), implemented in the {@link ProjectedMeshBaseMixin}:
- * - Handle the frustum culling (check if the {@link ProjectedObject3D} currently lies inside the {@link core/camera/Camera.Camera | Camera} frustum)
- * - Add callbacks for when the Mesh enters or leaves the {@link core/camera/Camera.Camera | Camera} frustum
+ * This class describes the properties and methods to set up a Projected Mesh (i.e. a basic {@link MeshBaseClass | Mesh} with {@link ProjectedObject3D} transformations matrices and a {@link core/cameras/Camera.Camera | Camera} to use for projection), implemented in the {@link ProjectedMeshBaseMixin}:
+ * - Handle the frustum culling (check if the {@link ProjectedObject3D} currently lies inside the {@link core/cameras/Camera.Camera | Camera} frustum)
+ * - Add callbacks for when the Mesh enters or leaves the {@link core/cameras/Camera.Camera | Camera} frustum
  */
 export declare class ProjectedMeshBaseClass extends MeshBaseClass {
   /** The {@link CameraRenderer} used */
@@ -427,12 +430,15 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
 
         const hasActiveShadows = this.renderer.shadowCastingLights.find((light) => light.shadow.isActive)
 
-        if (hasActiveShadows && shaders.fragment && typeof shaders.fragment === 'object') {
+        if (hasActiveShadows && shaders.fragment) {
           shaders.fragment.code =
+            getPCFBaseShadowContribution +
             getPCFDirectionalShadows(this.renderer) +
-            getPCFShadowContribution +
+            getPCFDirectionalShadowContribution +
             getPCFPointShadows(this.renderer) +
             getPCFPointShadowContribution +
+            getPCFSpotShadows(this.renderer) +
+            getPCFSpotShadowContribution +
             shaders.fragment.code
         }
       }
@@ -783,10 +789,7 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
       if (!this.ready) return
 
       if ((this.domFrustum && this.domFrustum.isIntersecting) || !this.frustumCulling) {
-        // render our material
-        this.material.render(pass)
-        // then render our geometry
-        this.geometry.render(pass)
+        this.renderPass(pass)
       }
     }
 

@@ -129,7 +129,7 @@ export class ComputePass {
 
   /**
    * ComputePass constructor
-   * @param renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object.
+   * @param renderer - {@link Renderer} class object or {@link GPUCurtains} class object used to create this {@link ComputePass}.
    * @param parameters - {@link ComputePassParams | parameters} used to create our {@link ComputePass}.
    */
   constructor(renderer: Renderer | GPUCurtains, parameters: ComputePassParams = {}) {

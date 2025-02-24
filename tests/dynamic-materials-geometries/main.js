@@ -1,7 +1,5 @@
 // Goals of this test:
-// - test the GPUDeviceManager and GPUCameraRenderer without the use of GPUCurtains class
-// - test camera position, rotationMatrix, lookAt, fov
-// - test frustum culling
+// - test switching geometries and materials at runtime
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
   const {
@@ -214,7 +212,7 @@ window.addEventListener('load', async () => {
       var c: vec2f = floor(fsInput.uv * checkerboard.scale) * 0.5;
       var checker: f32 = 2.0 * fract(c.x + c.y);
     
-      var color: vec4f = vec4(vec3(checker) * 0.5, 1.0);
+      var color: vec4f = vec4(vec3(checker) * 0.5, 0.5);
       return color;
     }
   `
@@ -256,6 +254,7 @@ window.addEventListener('load', async () => {
     normal: mesh.material,
     checkerboard: new RenderMaterial(gpuCameraRenderer, {
       ...commonMaterialProps,
+      transparent: true,
       label: 'Checkerboard material',
       shaders: {
         fragment: {

@@ -14,20 +14,24 @@ import { MediaTexture } from '../textures/MediaTexture'
  * Base parameters used to create a {@link GPUDeviceManager}.
  */
 export interface GPUDeviceManagerBaseParams {
+  /** The label of the {@link GPUDeviceManager}, used to create the {@link GPUDevice} for debugging purpose. */
+  label?: string
   /** Flag indicating whether we're running the production mode or not. If not, useful warnings could be logged to the console. */
   production?: boolean
   /** Additional options to use when requesting an {@link GPUAdapter | adapter}. */
   adapterOptions?: GPURequestAdapterOptions
   /** Whether the {@link GPUDeviceManager} should create its own requestAnimationFrame loop to render or not. */
   autoRender?: boolean
+  /** Optional {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUSupportedFeatures#available_features | required features} representing additional functionalities to use when requesting a device. */
+  requiredFeatures?: GPUFeatureName[]
+  /** Optional {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUSupportedLimits#instance_properties | limits keys} to use to force the device to use the maximum supported adapter limits. */
+  requestAdapterLimits?: Array<keyof GPUSupportedLimits>
 }
 
 /**
  * Parameters used to create a {@link GPUDeviceManager}.
  */
 export interface GPUDeviceManagerParams extends GPUDeviceManagerBaseParams {
-  /** The label of the {@link GPUDeviceManager}, used to create the {@link GPUDevice} for debugging purpose. */
-  label?: string
   /** Callback to run if there's any error while trying to set up the {@link GPUAdapter | adapter} or {@link GPUDevice | device}. */
   onError?: () => void
   /** Callback to run whenever the {@link GPUDeviceManager#device | device} is lost. */
@@ -54,22 +58,18 @@ export interface GPUDeviceManagerSetupParams {
 export class GPUDeviceManager {
   /** Number of times a {@link GPUDevice} has been created. */
   index: number
-  /** The label of the {@link GPUDeviceManager}, used to create the {@link GPUDevice} for debugging purpose. */
-  label: string
-
-  /** Flag indicating whether we're running the production mode or not. If not, useful warnings could be logged to the console. */
-  production: boolean
 
   /** The navigator {@link GPU} object. */
   gpu: GPU | undefined
   /** The WebGPU {@link GPUAdapter | adapter} used. */
   adapter: GPUAdapter | void
-  /** Additional options to use when requesting an {@link GPUAdapter | adapter}. */
-  adapterOptions: GPURequestAdapterOptions
   /** The WebGPU {@link GPUDevice | device} used. */
   device: GPUDevice | undefined
   /** Flag indicating whether the {@link GPUDeviceManager} is ready, i.e. its {@link adapter} and {@link device} have been successfully created. */
   ready: boolean
+
+  /** Options used to create this {@link GPUDeviceManager}. */
+  options: GPUDeviceManagerBaseParams
 
   /** The {@link PipelineManager} used to cache {@link GPURenderPipeline} and {@link GPUComputePipeline} and set them only when appropriate. */
   pipelineManager: PipelineManager
@@ -133,6 +133,8 @@ export class GPUDeviceManager {
     label,
     production = false,
     adapterOptions = {},
+    requiredFeatures = [],
+    requestAdapterLimits = [],
     autoRender = true,
     onError = () => {
       /* allow empty callbacks */
@@ -145,11 +147,16 @@ export class GPUDeviceManager {
     },
   }: GPUDeviceManagerParams = {}) {
     this.index = 0
-    this.label = label ?? 'GPUDeviceManager instance'
-    this.production = production
     this.ready = false
 
-    this.adapterOptions = adapterOptions
+    this.options = {
+      label: label ?? 'GPUDeviceManager instance',
+      production,
+      adapterOptions,
+      requiredFeatures,
+      requestAdapterLimits,
+      autoRender,
+    }
 
     this.onError = onError
     this.onDeviceLost = onDeviceLost
@@ -166,7 +173,7 @@ export class GPUDeviceManager {
       pipelineByFormat: {} as Record<GPUTextureFormat, GPURenderPipeline>,
     }
 
-    if (autoRender) {
+    if (this.options.autoRender) {
       this.animate()
     }
   }
@@ -212,7 +219,7 @@ export class GPUDeviceManager {
       this.adapter = adapter
     } else {
       try {
-        this.adapter = await this.gpu?.requestAdapter(this.adapterOptions)
+        this.adapter = await this.gpu?.requestAdapter(this.options.adapterOptions)
 
         if (!this.adapter) {
           this.onError()
@@ -236,15 +243,19 @@ export class GPUDeviceManager {
       this.index++
     } else {
       try {
-        const requiredFeatures = [] as GPUFeatureName[]
+        const { limits } = this.adapter as GPUAdapter
 
-        if ((this.adapter as GPUAdapter).features.has('float32-filterable')) {
-          requiredFeatures.push('float32-filterable')
+        const requiredLimits = {}
+        for (const key in limits) {
+          if (this.options.requestAdapterLimits.includes(key as keyof GPUSupportedLimits)) {
+            requiredLimits[key] = limits[key]
+          }
         }
 
         this.device = await (this.adapter as GPUAdapter)?.requestDevice({
-          label: this.label + ' ' + this.index,
-          requiredFeatures,
+          label: this.options.label + ' ' + this.index,
+          requiredFeatures: this.options.requiredFeatures,
+          requiredLimits,
         })
 
         if (this.device) {
@@ -253,12 +264,14 @@ export class GPUDeviceManager {
         }
       } catch (error) {
         this.onError()
-        throwError(`${this.label}: WebGPU is not supported on your browser/OS. 'requestDevice' failed: ${error}`)
+        throwError(
+          `${this.options.label}: WebGPU is not supported on your browser/OS. 'requestDevice' failed: ${error}`
+        )
       }
     }
 
     this.device?.lost.then((info) => {
-      throwWarning(`${this.label}: WebGPU device was lost: ${info.message}`)
+      throwWarning(`${this.options.label}: WebGPU device was lost: ${info.message}`)
 
       this.loseDevice()
 
@@ -690,12 +703,12 @@ export class GPUDeviceManager {
       if (renderer.shouldRender) renderer.onBeforeCommandEncoder()
     }
 
-    const commandEncoder = this.device?.createCommandEncoder({ label: this.label + ' command encoder' })
-    !this.production && commandEncoder.pushDebugGroup(this.label + ' command encoder: main render loop')
+    const commandEncoder = this.device?.createCommandEncoder({ label: this.options.label + ' command encoder' })
+    !this.options.production && commandEncoder.pushDebugGroup(this.options.label + ' command encoder: main render loop')
 
     this.renderers.forEach((renderer) => renderer.render(commandEncoder))
 
-    !this.production && commandEncoder.popDebugGroup()
+    !this.options.production && commandEncoder.popDebugGroup()
     const commandBuffer = commandEncoder.finish()
     this.device?.queue.submit([commandBuffer])
 

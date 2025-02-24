@@ -1,11 +1,18 @@
 // Goals of this test:
-// - test the GPUDeviceManager and GPUCameraRenderer without the use of GPUCurtains class
-// - test camera position, rotationMatrix, lookAt, fov
-// - test frustum culling
+// - test the OrbitControls class
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
-  const { BoxGeometry, GPUCameraRenderer, OrbitControls, GPUDeviceManager, Mesh, PlaneGeometry, Vec2, Vec3 } =
-    await import(/* @vite-ignore */ path)
+  const {
+    BoxGeometry,
+    GPUCameraRenderer,
+    OrbitControls,
+    OrthographicCamera,
+    GPUDeviceManager,
+    Mesh,
+    PlaneGeometry,
+    Vec2,
+    Vec3,
+  } = await import(/* @vite-ignore */ path)
 
   // create a device manager
   const gpuDeviceManager = new GPUDeviceManager({
@@ -109,17 +116,50 @@ window.addEventListener('load', async () => {
 
   const { camera, container } = gpuCameraRenderer
 
+  const initPos = new Vec3(10, 5, 0)
+
+  camera.position.copy(initPos)
+
   // orbit controls
   const orbitControls = new OrbitControls({
     camera,
-    element: container,
+    element: gpuCameraRenderer.domElement.element,
   })
-  orbitControls.target.set(0, 0.5, 0)
 
-  orbitControls.updatePosition(new Vec3(10, 2, 0))
+  console.log(orbitControls)
+
+  const aspect = gpuCameraRenderer.boundingRect.width / gpuCameraRenderer.boundingRect.height
+  const frustumSize = 10
+
+  const orthoCamera = new OrthographicCamera({
+    left: (-frustumSize * aspect) / 2,
+    right: (frustumSize * aspect) / 2,
+    top: frustumSize / 2,
+    bottom: -frustumSize / 2,
+  })
+
+  orthoCamera.position.copy(initPos)
+
+  orbitControls.target.set(0, 0.5, 0)
+  // orbitControls.updatePosition(initPos)
 
   orbitControls.minZoom = 2
   orbitControls.maxZoom = 40
 
-  console.log(orbitControls)
+  const cameras = {
+    Perspective: camera,
+    Orthographic: orthoCamera,
+  }
+
+  const gui = new lil.GUI({
+    title: 'Cameras',
+  })
+
+  gui
+    .add({ activeCamera: 'Perspective' }, 'activeCamera', cameras)
+    .name('Active camera')
+    .onChange((value) => {
+      gpuCameraRenderer.useCamera(value)
+      orbitControls.useCamera(value)
+    })
 })

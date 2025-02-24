@@ -42,7 +42,7 @@ fn getPCFPointShadowContribution(index: i32, shadowPosition: vec4f, depthCubeTex
   
   visibility /= f32(sampleCount * sampleCount * sampleCount);
   
-  visibility = clamp(visibility, 1.0 - saturate(pointShadow.intensity), 1.0);
+  visibility = mix(1.0, visibility, saturate(pointShadow.intensity));
   
   return visibility;
 }`

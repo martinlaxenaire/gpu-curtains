@@ -36,7 +36,7 @@ export interface DirectionalLightBaseParams extends LightBaseParams {
  *   intensity: 1,
  *   position: new Vec3(-10, 10, -5),
  *   shadow: {
- *     intensity: 1
+ *     intensity: 1,
  *   },
  * })
  *
@@ -70,27 +70,39 @@ export declare class DirectionalLight extends Light {
     shadow: DirectionalShadow;
     /**
      * DirectionalLight constructor
-     * @param renderer - {@link CameraRenderer} used to create this {@link DirectionalLight}.
-     * @param parameters - {@link DirectionalLightBaseParams | parameters} used to create this {@link DirectionalLight}.
+     * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link DirectionalLight}.
+     * @param parameters - {@link DirectionalLightBaseParams} used to create this {@link DirectionalLight}.
      */
-    constructor(renderer: CameraRenderer | GPUCurtains, { color, intensity, position, target, shadow, }?: DirectionalLightBaseParams);
+    constructor(renderer: CameraRenderer | GPUCurtains, { label, color, intensity, position, target, shadow, }?: DirectionalLightBaseParams);
     /**
      * Set or reset this {@link DirectionalLight} {@link CameraRenderer}.
      * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
      */
     setRenderer(renderer: CameraRenderer | GPUCurtains): void;
     /**
-     * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of {@link DirectionalLight} has been overflowed.
+     * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of {@link DirectionalLight} has been overflowed or when updating the {@link DirectionalLight} {@link renderer}.
+     * @param resetShadow - Whether to reset the {@link DirectionalLight} shadow if any. Set to `true` when the {@link renderer} number of {@link DirectionalLight} has been overflown, `false` when the {@link renderer} has been changed (since the shadow will reset itself).
      */
-    reset(): void;
+    reset(resetShadow?: boolean): void;
     /**
-     * Set the {@link DirectionalLight} direction based on the {@link target} and the {@link worldMatrix} translation and update the {@link DirectionalShadow} view matrix.
+     * Get this {@link DirectionalLight} intensity.
+     * @returns - The {@link DirectionalLight} intensity.
+     */
+    get intensity(): number;
+    /**
+     * Set this {@link DirectionalLight} intensity and clear shadow if intensity is `0`.
+     * @param value - The new {@link DirectionalLight} intensity.
+     */
+    set intensity(value: number);
+    /**
+     * Set the {@link DirectionalLight} direction based on the {@link target} and the {@link worldMatrix} translation.
      */
     setDirection(): void;
-    /** @ignore */
-    applyScale(): void;
-    /** @ignore */
-    applyTransformOrigin(): void;
+    /**
+     * Rotate this {@link DirectionalLight} so it looks at the {@link Vec3 | target}.
+     * @param target - {@link Vec3} to look at. Default to `new Vec3()`.
+     */
+    lookAt(target?: Vec3): void;
     /**
      * If the {@link modelMatrix | model matrix} has been updated, set the new direction from the {@link worldMatrix} translation.
      */

@@ -5,6 +5,8 @@
 //   - EnvironmentMap
 //   - IndirectBuffer
 // - Dynamic meshes geometries and shadow maps
+import { Mesh, PlaneGeometry, Sampler, Vec3 } from '../../dist/esm/index.mjs'
+
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
   const {
@@ -18,11 +20,15 @@ window.addEventListener('load', async () => {
     AmbientLight,
     DirectionalLight,
     PointLight,
+    SpotLight,
     EnvironmentMap,
     Vec3,
+    Vec2,
     LitMesh,
     PlaneGeometry,
     Object3D,
+    FullscreenPlane,
+    Sampler,
   } = await import(/* @vite-ignore */ path)
 
   // create a device manager
@@ -56,6 +62,7 @@ window.addEventListener('load', async () => {
       maxDirectionalLights: 0,
       //maxPointLights: 0,
     },
+    // lights: false,
     renderPass: {
       colorAttachments: [
         {
@@ -83,6 +90,7 @@ window.addEventListener('load', async () => {
   const ambientLights = []
   const directionalLights = []
   const pointLights = []
+  const spotLights = []
 
   ambientLights.push(
     new AmbientLight(leftRenderer, {
@@ -92,19 +100,20 @@ window.addEventListener('load', async () => {
 
   directionalLights.push(
     new DirectionalLight(leftRenderer, {
+      label: 'Red directional light',
       color: new Vec3(1, 0, 0),
       position: new Vec3(10),
-      intensity: 0.25,
+      target: new Vec3(0, 2.5, 0),
+      intensity: 0.5,
       shadow: {
         intensity: 1,
       },
     })
   )
 
-  console.log(directionalLights[0])
-
   directionalLights.push(
     new DirectionalLight(leftRenderer, {
+      label: 'Green directional light',
       color: new Vec3(0, 1, 0),
       position: new Vec3(-10, 10, -10),
       intensity: 0.25,
@@ -113,6 +122,7 @@ window.addEventListener('load', async () => {
 
   pointLights.push(
     new PointLight(leftRenderer, {
+      label: 'Blue point light',
       color: new Vec3(0, 0, 1),
       position: new Vec3(-3, 4, -3),
       range: 50,
@@ -123,7 +133,32 @@ window.addEventListener('load', async () => {
     })
   )
 
-  console.log(pointLights[0].shadow)
+  const spotLight = new SpotLight(leftRenderer, {
+    label: 'White spot light',
+    color: new Vec3(1),
+    position: new Vec3(-4, 5, 0),
+    target: new Vec3(0, 2.5, 0),
+    intensity: 40,
+    range: 30,
+    penumbra: 0,
+    shadow: {
+      intensity: 1,
+      // depthTextureSize: new Vec2(2048),
+      // pcfSamples: 3,
+    },
+  })
+
+  spotLight.userData.time = 0
+
+  spotLight.onBeforeRender(() => {
+    //spotLight.position.x = -4 + Math.cos(time) * 0.5
+    spotLight.target.x = (Math.cos(spotLight.userData.time) * 0.5 - 0.5) * 4
+    spotLight.userData.time += 0.01
+  })
+
+  spotLights.push(spotLight)
+
+  console.log(spotLights[0])
 
   const environmentMap = new EnvironmentMap(leftRenderer)
   environmentMap.loadAndComputeFromHDR('../../website/assets/hdr/Colorful_Studio.hdr')
@@ -290,8 +325,8 @@ window.addEventListener('load', async () => {
   })
 
   mesh.onBeforeRender(() => {
-    mesh.rotation.x += 0.01
-    mesh.rotation.y += 0.02
+    // mesh.rotation.x += 0.01
+    // mesh.rotation.y += 0.02
   })
 
   mesh.position.y = 2
@@ -300,6 +335,8 @@ window.addEventListener('load', async () => {
     label: 'Transmissive bubble',
     geometry: sphereGeometry,
     transmissive: true,
+    //castShadows: true,
+    //visible: false,
     material: {
       shading: 'PBR',
       toneMapping: 'Khronos',
@@ -325,10 +362,10 @@ window.addEventListener('load', async () => {
     label: 'Floor',
     geometry: planeGeometry,
     receiveShadows: true,
-    frustumCulling: false, // always draw
-    cullMode: 'none',
+    //frustumCulling: false, // always draw
+    //cullMode: 'none',
     material: {
-      shading: 'Phong',
+      shading: 'Lambert',
       color: new Vec3(0.7),
       specularColor: new Vec3(1),
       specularIntensity: 1,
@@ -346,6 +383,87 @@ window.addEventListener('load', async () => {
     sphere: sphereGeometry,
     custom: customGeometry,
   }
+
+  // DEBUG SPOT DEPTH
+
+  const debugDepthVs = /* wgsl */ `
+    struct VSOutput {
+      @builtin(position) position: vec4f,
+      @location(0) uv: vec2f,
+    };
+
+    @vertex fn main(
+      attributes: Attributes,
+    ) -> VSOutput {
+      var vsOutput: VSOutput;
+
+      // just use the world matrix here, do not take the projection into account
+      vsOutput.position = vec4(attributes.position, 1.0);
+      vsOutput.uv = attributes.uv;
+      
+      return vsOutput;
+    }
+  `
+
+  const debugDepthFs = /* wgsl */ `
+    struct VSOutput {
+      @builtin(position) position: vec4f,
+      @location(0) uv: vec2f,
+    };
+
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
+      var uv = fsInput.uv;
+      
+      uv = uv * 2.0 - 1.0;
+      uv *= 0.5;
+      uv = uv * 0.5 + 0.5;
+          
+      let rawDepth = textureSample(
+        depthTexture,
+        defaultSampler,
+        uv
+      );
+      
+      // remap depth into something a bit more visible
+      let depth = (1.0 - rawDepth);
+      
+      var color: vec4f = vec4(vec3(depth) * 10.0, 1.0);
+
+      return color;
+    }
+  `
+
+  const debugPlane = new Mesh(leftRenderer, {
+    label: 'Debug depth plane',
+    geometry: new PlaneGeometry(),
+    depthWriteEnabled: false,
+    frustumCulling: false,
+    visible: false,
+    renderOrder: 10,
+    samplers: [
+      new Sampler(leftRenderer, {
+        label: 'Debug depth sampler',
+        name: 'debugDepthSampler',
+        type: 'comparison',
+        compare: 'less',
+      }),
+    ],
+    shaders: {
+      vertex: {
+        code: debugDepthVs,
+      },
+      fragment: {
+        code: debugDepthFs,
+      },
+    },
+  })
+
+  const depthTexture = debugPlane.createTexture({
+    label: 'Debug depth texture',
+    name: 'depthTexture',
+    type: 'depth',
+    fromTexture: spotLight.shadow.depthTexture,
+  })
 
   // GUI
   const gui = new lil.GUI({
@@ -448,7 +566,9 @@ window.addEventListener('load', async () => {
       // you can chose which lights you'd want to update!
       ambientLights.forEach((light) => light.setRenderer(renderer))
       //directionalLights.forEach((light) => light.setRenderer(renderer))
+      directionalLights[1].setRenderer(renderer)
       pointLights.forEach((light) => light.setRenderer(renderer))
+      spotLights.forEach((light) => light.setRenderer(renderer))
 
       environmentMap.setRenderer(renderer)
 
@@ -515,6 +635,11 @@ window.addEventListener('load', async () => {
     directionalLightPosFolder.add(directionalLight.position, 'x', -20, 20, 0.1)
     directionalLightPosFolder.add(directionalLight.position, 'y', -20, 20, 0.1)
     directionalLightPosFolder.add(directionalLight.position, 'z', -20, 20, 0.1)
+
+    const directionalLightTargetFolder = directionalLightFolder.addFolder('Target')
+    directionalLightTargetFolder.add(directionalLight.target, 'x', -20, 20, 0.1)
+    directionalLightTargetFolder.add(directionalLight.target, 'y', 0, 20, 0.1)
+    directionalLightTargetFolder.add(directionalLight.target, 'z', -20, 20, 0.1)
   })
 
   directionalLightsFolder.close()
@@ -523,7 +648,7 @@ window.addEventListener('load', async () => {
   pointLights.forEach((pointLight, index) => {
     const pointLightFolder = pointLightsFolder.addFolder('Point light ' + index)
     pointLightFolder.add(pointLight, 'intensity', 0, 100, 0.01)
-    pointLightFolder.add(pointLight, 'range', 0, 100000, 0.25)
+    pointLightFolder.add(pointLight, 'range', 0, 100, 0.25)
 
     pointLightFolder
       .addColor({ color: { r: pointLight.color.x, g: pointLight.color.y, b: pointLight.color.z } }, 'color')
@@ -538,6 +663,36 @@ window.addEventListener('load', async () => {
   })
 
   pointLightsFolder.close()
+
+  const spotLightsFolder = gui.addFolder('Spot lights')
+
+  spotLightsFolder.add(debugPlane, 'visible').name('Debug spot shadow depth')
+
+  spotLights.forEach((spotLight, index) => {
+    const spotLightFolder = spotLightsFolder.addFolder('Spot light ' + index)
+    spotLightFolder.add(spotLight, 'intensity', 0, 100, 0.01)
+    spotLightFolder.add(spotLight, 'range', 0, 100, 0.25)
+    spotLightFolder.add(spotLight, 'angle', 0, Math.PI / 2, Math.PI / 20)
+    spotLightFolder.add(spotLight, 'penumbra', 0, 1, 0.1)
+
+    spotLightFolder
+      .addColor({ color: { r: spotLight.color.x, g: spotLight.color.y, b: spotLight.color.z } }, 'color')
+      .onChange((value) => {
+        spotLight.color.set(value.r, value.g, value.b)
+      })
+
+    const pointLightPosFolder = spotLightFolder.addFolder('Position')
+    pointLightPosFolder.add(spotLight.position, 'x', -20, 20, 0.1)
+    pointLightPosFolder.add(spotLight.position, 'y', 4, 20, 0.1)
+    pointLightPosFolder.add(spotLight.position, 'z', -20, 20, 0.1)
+
+    const pointLightTargetFolder = spotLightFolder.addFolder('Target')
+    pointLightTargetFolder.add(spotLight.target, 'x', -20, 20, 0.1)
+    pointLightTargetFolder.add(spotLight.target, 'y', 0, 20, 0.1)
+    pointLightTargetFolder.add(spotLight.target, 'z', -20, 20, 0.1)
+  })
+
+  spotLightsFolder.close()
 
   // lost context
 

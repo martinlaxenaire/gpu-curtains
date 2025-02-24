@@ -17,6 +17,7 @@ export interface ScrollManagerParams {
  * Could either listen to the native scroll event or be hooked to any scroll (natural or virtual) scroll event
  */
 export declare class ScrollManager {
+    #private;
     /** Current scroll position */
     scroll: DOMPosition;
     /** Last scroll deltas */

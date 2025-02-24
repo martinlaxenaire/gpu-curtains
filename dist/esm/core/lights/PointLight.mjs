@@ -9,27 +9,31 @@ var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot
 var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
 var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
 var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
-var _range, _actualPosition;
+var _range;
 class PointLight extends Light {
   /**
    * PointLight constructor
-   * @param renderer - {@link CameraRenderer | CameraRenderer} used to create this {@link PointLight}.
-   * @param parameters - {@link PointLightBaseParams | parameters} used to create this {@link PointLight}.
+   * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link PointLight}.
+   * @param parameters - {@link PointLightBaseParams} used to create this {@link PointLight}.
    */
-  constructor(renderer, { color = new Vec3(1), intensity = 1, position = new Vec3(), range = 0, shadow = null } = {}) {
+  constructor(renderer, {
+    label = "PointLight",
+    color = new Vec3(1),
+    intensity = 1,
+    position = new Vec3(),
+    range = 0,
+    shadow = null
+  } = {}) {
     const type = "pointLights";
-    super(renderer, { color, intensity, type });
+    super(renderer, { label, color, intensity, type });
     /** @ignore */
     __privateAdd(this, _range);
-    /** @ignore */
-    __privateAdd(this, _actualPosition);
     this.options = {
       ...this.options,
       position,
       range,
       shadow
     };
-    __privateSet(this, _actualPosition, new Vec3());
     this.position.copy(position);
     this.range = range;
     this.parent = this.renderer.scene;
@@ -47,19 +51,39 @@ class PointLight extends Light {
    * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
    */
   setRenderer(renderer) {
+    super.setRenderer(renderer);
     if (this.shadow) {
       this.shadow.setRenderer(renderer);
     }
-    super.setRenderer(renderer);
   }
   /**
-   * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of {@link PointLight} has been overflowed.
+   * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of {@link PointLight} has been overflowed or when updating the {@link PointLight} {@link renderer}.
+   * @param resetShadow - Whether to reset the {@link PointLight} shadow if any. Set to `true` when the {@link renderer} number of {@link PointLight} has been overflown, `false` when the {@link renderer} has been changed (since the shadow will reset itself).
    */
-  reset() {
+  reset(resetShadow = true) {
     super.reset();
     this.onPropertyChanged("range", this.range);
-    this.setPosition();
-    this.shadow?.reset();
+    this.onPropertyChanged("position", this.actualPosition);
+    if (this.shadow && resetShadow) {
+      this.shadow.reset();
+    }
+  }
+  /**
+   * Get this {@link PointLight} intensity.
+   * @returns - The {@link PointLight} intensity.
+   */
+  get intensity() {
+    return super.intensity;
+  }
+  /**
+   * Set this {@link PointLight} intensity and clear shadow if intensity is `0`.
+   * @param value - The new {@link PointLight} intensity.
+   */
+  set intensity(value) {
+    super.intensity = value;
+    if (this.shadow && this.shadow.isActive && !value) {
+      this.shadow.clearDepthTexture();
+    }
   }
   /**
    * Get this {@link PointLight} range.
@@ -73,22 +97,20 @@ class PointLight extends Light {
    * @param value - The new {@link PointLight} range.
    */
   set range(value) {
-    __privateSet(this, _range, value);
+    __privateSet(this, _range, Math.max(0, value));
     this.onPropertyChanged("range", this.range);
+    if (this.shadow && this.range !== 0) {
+      this.shadow.camera.far = this.range;
+    }
   }
   /**
-   * Set the {@link PointLight} position based on the {@link worldMatrix} translation and update the {@link PointShadow} view matrices.
+   * Set the {@link PointLight} position based on the {@link worldMatrix} translation.
    */
   setPosition() {
-    this.onPropertyChanged("position", this.worldMatrix.getTranslation(__privateGet(this, _actualPosition)));
-    this.shadow?.updateViewMatrices(__privateGet(this, _actualPosition));
-  }
-  // explicitly disable scale and transform origin transformations
-  /** @ignore */
-  applyScale() {
-  }
-  /** @ignore */
-  applyTransformOrigin() {
+    this.onPropertyChanged("position", this.actualPosition);
+    if (this.shadow) {
+      this.shadow.setPosition();
+    }
   }
   /**
    * If the {@link modelMatrix | model matrix} has been updated, set the new position from the {@link worldMatrix} translation.
@@ -112,10 +134,9 @@ class PointLight extends Light {
    */
   destroy() {
     super.destroy();
-    this.shadow.destroy();
+    this.shadow?.destroy();
   }
 }
 _range = new WeakMap();
-_actualPosition = new WeakMap();
 
 export { PointLight };

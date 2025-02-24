@@ -1,4 +1,4 @@
-import { Camera } from '../../core/camera/Camera';
+import { Camera } from '../../core/cameras/Camera';
 import { Vec3 } from '../../math/Vec3';
 /** Defines the base parameters used to set / reset an {@link OrbitControls}. */
 export interface OrbitControlsBaseParams {
@@ -78,7 +78,7 @@ export declare class OrbitControls {
     panSpeed: number;
     /**
      * OrbitControls constructor
-  =   * @param parameters - parameters to use.
+     * @param parameters - parameters to use.
      */
     constructor({ camera, element, target, enableZoom, minZoom, maxZoom, zoomSpeed, enableRotate, minPolarAngle, maxPolarAngle, minAzimuthAngle, maxAzimuthAngle, rotateSpeed, enablePan, panSpeed, }: OrbitControlsParams);
     /**

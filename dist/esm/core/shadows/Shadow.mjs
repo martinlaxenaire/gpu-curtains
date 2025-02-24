@@ -1,11 +1,10 @@
 import { isCameraRenderer } from '../renderers/utils.mjs';
 import { Vec2 } from '../../math/Vec2.mjs';
 import { Mat4 } from '../../math/Mat4.mjs';
-import { Texture } from '../textures/Texture.mjs';
 import { RenderTarget } from '../renderPasses/RenderTarget.mjs';
 import { Sampler } from '../samplers/Sampler.mjs';
-import { getDefaultShadowDepthVs } from '../shaders/full/vertex/get-default-shadow-depth-vertex-shader-code.mjs';
 import { Mesh } from '../meshes/Mesh.mjs';
+import { Vec3 } from '../../math/Vec3.mjs';
 
 var __typeError = (msg) => {
   throw TypeError(msg);
@@ -41,8 +40,8 @@ const shadowStruct = {
 class Shadow {
   /**
    * Shadow constructor
-   * @param renderer - {@link CameraRenderer} used to create this {@link Shadow}.
-   * @param parameters - {@link ShadowBaseParams | parameters} used to create this {@link Shadow}.
+   * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link Shadow}.
+   * @param parameters - {@link ShadowBaseParams} used to create this {@link Shadow}.
    */
   constructor(renderer, {
     light,
@@ -100,11 +99,20 @@ class Shadow {
     if (this.depthPassTarget) {
       this.depthPassTarget.setRenderer(this.renderer);
     }
+    this.castingMeshes = /* @__PURE__ */ new Map();
+    this.renderer.meshes.forEach((mesh) => {
+      if ("castShadows" in mesh.options && mesh.options.castShadows) {
+        this.castingMeshes.set(mesh.uuid, mesh);
+      }
+    });
     this.depthMeshes?.forEach((depthMesh) => {
       depthMesh.setRenderer(this.renderer);
     });
-    if (oldRenderer && __privateGet(this, _autoRender)) {
-      this.setDepthPass();
+    if (oldRenderer) {
+      this.reset();
+      if (__privateGet(this, _autoRender)) {
+        this.setDepthPass();
+      }
     }
   }
   /** @ignore */
@@ -121,14 +129,39 @@ class Shadow {
     this.isActive = true;
   }
   /**
-   * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link core/lights/Light.Light | lights} has been overflowed.
+   * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link core/lights/Light.Light | lights} has been overflowed or when the {@link renderer} has changed.
    */
   reset() {
     this.onPropertyChanged("isActive", this.isActive ? 1 : 0);
-    this.onPropertyChanged("intensity", this.intensity);
-    this.onPropertyChanged("bias", this.bias);
-    this.onPropertyChanged("normalBias", this.normalBias);
-    this.onPropertyChanged("pcfSamples", this.pcfSamples);
+    if (this.isActive) {
+      this.onPropertyChanged("intensity", this.intensity);
+      this.onPropertyChanged("bias", this.bias);
+      this.onPropertyChanged("normalBias", this.normalBias);
+      this.onPropertyChanged("pcfSamples", this.pcfSamples);
+    }
+  }
+  /**
+   * Update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} input value and tell the {@link CameraRenderer#cameraLightsBindGroup | renderer camera, lights and shadows} bind group to update.
+   * @param propertyKey - name of the property to update.
+   * @param value - new value of the property.
+   */
+  onPropertyChanged(propertyKey, value) {
+    if (this.rendererBinding && this.rendererBinding.childrenBindings.length > this.index) {
+      if (value instanceof Mat4) {
+        for (let i = 0; i < value.elements.length; i++) {
+          this.rendererBinding.childrenBindings[this.index].inputs[propertyKey].value[i] = value.elements[i];
+        }
+        this.rendererBinding.childrenBindings[this.index].inputs[propertyKey].shouldUpdate = true;
+      } else if (value instanceof Vec3) {
+        this.rendererBinding.childrenBindings[this.index].inputs[propertyKey].shouldUpdate = true;
+        this.rendererBinding.childrenBindings[this.index].inputs[propertyKey].value.copy(value);
+      } else {
+        this.rendererBinding.childrenBindings[this.index].inputs[propertyKey].value = value;
+      }
+      this.renderer.shouldUpdateCameraLightsBindGroup();
+    } else {
+      console.log("bail for property", propertyKey, this.constructor.name, this.rendererBinding);
+    }
   }
   /**
    * Get whether this {@link Shadow} is actually casting shadows.
@@ -264,19 +297,6 @@ class Shadow {
    * Create the {@link depthTexture}.
    */
   createDepthTexture() {
-    this.depthTexture = new Texture(this.renderer, {
-      label: `${this.constructor.name} (index: ${this.light.index}) depth texture`,
-      name: "shadowDepthTexture" + this.index,
-      type: "depth",
-      format: this.depthTextureFormat,
-      sampleCount: this.sampleCount,
-      fixedSize: {
-        width: this.depthTextureSize.x,
-        height: this.depthTextureSize.y
-      },
-      autoDestroy: false
-      // do not destroy when removing a mesh
-    });
   }
   /** Destroy the {@link depthTexture}. */
   destroyDepthTexture() {
@@ -324,24 +344,6 @@ class Shadow {
     });
   }
   /**
-   * Update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} input value and tell the {@link CameraRenderer#cameraLightsBindGroup | renderer camera, lights and shadows} bind group to update.
-   * @param propertyKey - name of the property to update.
-   * @param value - new value of the property.
-   */
-  onPropertyChanged(propertyKey, value) {
-    if (this.rendererBinding) {
-      if (value instanceof Mat4) {
-        for (let i = 0; i < value.elements.length; i++) {
-          this.rendererBinding.childrenBindings[this.index].inputs[propertyKey].value[i] = value.elements[i];
-        }
-        this.rendererBinding.childrenBindings[this.index].inputs[propertyKey].shouldUpdate = true;
-      } else {
-        this.rendererBinding.childrenBindings[this.index].inputs[propertyKey].value = value;
-      }
-      this.renderer.shouldUpdateCameraLightsBindGroup();
-    }
-  }
-  /**
    * Set our {@link depthPassTarget} corresponding {@link CameraRenderer#scene | scene} render pass entry custom render pass.
    */
   setDepthPass() {
@@ -354,7 +356,7 @@ class Shadow {
    * @param commandEncoder - {@link GPUCommandEncoder} to use.
    */
   render(commandEncoder) {
-    if (!this.castingMeshes.size) return;
+    if (!this.castingMeshes.size || !this.light.intensity) return;
     let shouldRender = false;
     for (const [_uuid, mesh] of this.castingMeshes) {
       if (mesh.visible) {
@@ -397,7 +399,7 @@ class Shadow {
    */
   renderDepthPass(commandEncoder) {
     this.renderer.pipelineManager.resetCurrentPipeline();
-    const depthPass = commandEncoder.beginRenderPass(this.depthPassTarget.renderPass.descriptor);
+    const depthPass = this.depthPassTarget.renderPass.beginRenderPass(commandEncoder);
     if (!this.renderer.production)
       depthPass.pushDebugGroup(`${this.constructor.name} (index: ${this.index}): depth pass`);
     for (const [uuid, depthMesh] of this.depthMeshes) {
@@ -417,7 +419,7 @@ class Shadow {
   getDefaultShadowDepthVs({ bindings = [], geometry }) {
     return {
       /** Returned code. */
-      code: getDefaultShadowDepthVs(this.index, { bindings, geometry })
+      code: `@vertex fn main(@location(0) position: vec4f) -> @builtin(position) vec4f { return position; }`
     };
   }
   /**
@@ -482,7 +484,8 @@ class Shadow {
       // we just want to write to the depth texture
       targets: [],
       outputTarget: this.depthPassTarget,
-      //autoRender: false,
+      frustumCulling: false,
+      // draw shadow even if original mesh is hidden
       autoRender: __privateGet(this, _autoRender)
     });
     depthMesh.parent = mesh;
@@ -555,6 +558,16 @@ _isActive = new WeakMap();
 _autoRender = new WeakMap();
 _receivingMeshes = new WeakMap();
 _Shadow_instances = new WeakSet();
+// TODO unused for now, should we really consider this case?
+// updateIndex(index: number) {
+//   const shouldUpdateIndex = index !== this.index
+//
+//   this.index = index
+//
+//   if (shouldUpdateIndex) {
+//     throwWarning(`This ${this.constructor.name} index has changed, the shaders need to be recreated`)
+//   }
+// }
 /**
  * Set the {@link Shadow} parameters.
  * @param parameters - parameters to use for this {@link Shadow}.

@@ -9,8 +9,8 @@ import { Mat4 } from '../../math/Mat4.mjs';
 import { Geometry } from '../../core/geometries/Geometry.mjs';
 import { IndexedGeometry } from '../../core/geometries/IndexedGeometry.mjs';
 import { LitMesh } from '../meshes/LitMesh.mjs';
-import { Camera } from '../../core/camera/Camera.mjs';
-import { throwWarning } from '../../utils/utils.mjs';
+import { OrthographicCamera } from '../../core/cameras/OrthographicCamera.mjs';
+import { PerspectiveCamera } from '../../core/cameras/PerspectiveCamera.mjs';
 import { BufferBinding } from '../../core/bindings/BufferBinding.mjs';
 import { KeyframesAnimation } from '../animations/KeyframesAnimation.mjs';
 import { TargetsAnimationsManager } from '../animations/TargetsAnimationsManager.mjs';
@@ -18,6 +18,7 @@ import { Vec2 } from '../../math/Vec2.mjs';
 import { RenderMaterial } from '../../core/materials/RenderMaterial.mjs';
 import { DirectionalLight } from '../../core/lights/DirectionalLight.mjs';
 import { PointLight } from '../../core/lights/PointLight.mjs';
+import { SpotLight } from '../../core/lights/SpotLight.mjs';
 
 var __typeError = (msg) => {
   throw TypeError(msg);
@@ -27,7 +28,7 @@ var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read fr
 var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
 var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
 var __privateMethod = (obj, member, method) => (__accessCheck(obj, member, "access private method"), method);
-var _primitiveInstances, _GLTFScenesManager_instances, getSparseAccessorIndicesAndValues_fn, parsePrimitiveProperty_fn;
+var _primitiveInstances, _GLTFScenesManager_instances, getAccessorArray_fn, getSparseAccessorIndicesAndValues_fn, parsePrimitiveProperty_fn;
 const GL = WebGLRenderingContext;
 const _GLTFScenesManager = class _GLTFScenesManager {
   /**
@@ -195,23 +196,37 @@ const _GLTFScenesManager = class _GLTFScenesManager {
    */
   createLights() {
     if (this.gltf.extensions && this.gltf.extensions["KHR_lights_punctual"]) {
-      let lightIndex = 0;
       for (const light of this.gltf.extensions["KHR_lights_punctual"].lights) {
-        lightIndex++;
         if (light.type === "spot") {
-          throwWarning("GLTFScenesManager: Spot lights are not supported yet.");
-          continue;
+          const innerConeAngle = light.spot.innerConeAngle !== void 0 ? light.spot.innerConeAngle : 0;
+          const outerConeAngle = light.spot.outerConeAngle !== void 0 ? light.spot.outerConeAngle : Math.PI / 4;
+          this.scenesManager.lights.push(
+            new SpotLight(this.renderer, {
+              ...light.name !== void 0 && { label: light.name },
+              color: light.color !== void 0 ? new Vec3(light.color[0], light.color[1], light.color[2]) : new Vec3(1),
+              intensity: light.intensity !== void 0 ? light.intensity : 1,
+              range: light.range !== void 0 ? light.range : 0,
+              angle: outerConeAngle,
+              penumbra: 1 - innerConeAngle / outerConeAngle
+            })
+          );
         } else if (light.type === "directional") {
-          this.scenesManager.lights[lightIndex - 1] = new DirectionalLight(this.renderer, {
-            color: light.color !== void 0 ? new Vec3(light.color[0], light.color[1], light.color[2]) : new Vec3(1),
-            intensity: light.intensity !== void 0 ? light.intensity : 1
-          });
+          this.scenesManager.lights.push(
+            new DirectionalLight(this.renderer, {
+              ...light.name !== void 0 && { label: light.name },
+              color: light.color !== void 0 ? new Vec3(light.color[0], light.color[1], light.color[2]) : new Vec3(1),
+              intensity: light.intensity !== void 0 ? light.intensity : 1
+            })
+          );
         } else if (light.type === "point") {
-          this.scenesManager.lights[lightIndex - 1] = new PointLight(this.renderer, {
-            color: light.color !== void 0 ? new Vec3(light.color[0], light.color[1], light.color[2]) : new Vec3(1),
-            intensity: light.intensity !== void 0 ? light.intensity : 1,
-            range: light.range !== void 0 ? light.range : 0
-          });
+          this.scenesManager.lights.push(
+            new PointLight(this.renderer, {
+              ...light.name !== void 0 && { label: light.name },
+              color: light.color !== void 0 ? new Vec3(light.color[0], light.color[1], light.color[2]) : new Vec3(1),
+              intensity: light.intensity !== void 0 ? light.intensity : 1,
+              range: light.range !== void 0 ? light.range : 0
+            })
+          );
         }
       }
     }
@@ -536,16 +551,7 @@ const _GLTFScenesManager = class _GLTFScenesManager {
         };
         for (const attribute of Object.entries(attributes)) {
           const accessor = this.gltf.accessors[attribute[1]];
-          const bufferView = this.gltf.bufferViews[accessor.bufferView];
-          const accessorConstructor = _GLTFScenesManager.getTypedArrayConstructorFromComponentType(
-            accessor.componentType
-          );
-          const attributeSize = _GLTFScenesManager.getVertexAttributeParamsFromType(accessor.type).size;
-          const attributeValues = new accessorConstructor(
-            this.gltf.arrayBuffers[bufferView.buffer],
-            accessor.byteOffset + bufferView.byteOffset,
-            accessor.count * attributeSize
-          );
+          const attributeValues = __privateMethod(this, _GLTFScenesManager_instances, getAccessorArray_fn).call(this, accessor);
           instanceAttributes.count = accessor.count;
           instanceAttributes.nodesTransformations[attribute[0].toLowerCase()] = attributeValues;
         }
@@ -604,7 +610,7 @@ const _GLTFScenesManager = class _GLTFScenesManager {
     if (node.extensions && node.extensions.KHR_lights_punctual) {
       const light = this.scenesManager.lights[node.extensions.KHR_lights_punctual.light];
       light.position.set(0, 0, 0);
-      if (light instanceof DirectionalLight) {
+      if (light instanceof DirectionalLight || light instanceof SpotLight) {
         light.target.set(0, 0, -1);
       }
       light.parent = child.node;
@@ -612,22 +618,38 @@ const _GLTFScenesManager = class _GLTFScenesManager {
     if (node.camera !== void 0) {
       const gltfCamera = this.gltf.cameras[node.camera];
       if (gltfCamera.type === "perspective") {
-        const minSize = Math.min(this.renderer.boundingRect.width, this.renderer.boundingRect.height);
-        const width = minSize / gltfCamera.perspective.aspectRatio;
-        const height = minSize * gltfCamera.perspective.aspectRatio;
+        let width, height;
+        if (gltfCamera.perspective.aspectRatio !== void 0) {
+          const minSize = Math.min(this.renderer.boundingRect.width, this.renderer.boundingRect.height);
+          width = minSize / gltfCamera.perspective.aspectRatio;
+          height = minSize * gltfCamera.perspective.aspectRatio;
+        } else {
+          width = this.renderer.boundingRect.width;
+          height = this.renderer.boundingRect.height;
+        }
         const fov = gltfCamera.perspective.yfov * 180 / Math.PI;
-        const camera = new Camera({
+        const camera = new PerspectiveCamera({
           fov,
           near: gltfCamera.perspective.znear,
           far: gltfCamera.perspective.zfar,
           width,
           height,
-          pixelRatio: this.renderer.pixelRatio
+          pixelRatio: this.renderer.pixelRatio,
+          ...gltfCamera.perspective.aspectRatio !== void 0 && { forceAspect: gltfCamera.perspective.aspectRatio }
         });
         camera.parent = child.node;
         this.scenesManager.cameras.push(camera);
       } else if (gltfCamera.type === "orthographic") {
-        throwWarning("GLTFScenesManager: Orthographic cameras are not supported yet.");
+        const camera = new OrthographicCamera({
+          near: gltfCamera.orthographic.znear,
+          far: gltfCamera.orthographic.zfar,
+          left: -gltfCamera.orthographic.xmag,
+          right: gltfCamera.orthographic.xmag,
+          top: gltfCamera.orthographic.ymag,
+          bottom: -gltfCamera.orthographic.ymag
+        });
+        camera.parent = child.node;
+        this.scenesManager.cameras.push(camera);
       }
     }
     if (this.gltf.animations) {
@@ -640,25 +662,9 @@ const _GLTFScenesManager = class _GLTFScenesManager {
             const sampler = animation.samplers[channel.sampler];
             const path = channel.target.path;
             const inputAccessor = this.gltf.accessors[sampler.input];
-            const inputBufferView = this.gltf.bufferViews[inputAccessor.bufferView];
-            const inputTypedArrayConstructor = _GLTFScenesManager.getTypedArrayConstructorFromComponentType(
-              inputAccessor.componentType
-            );
+            const keyframes = __privateMethod(this, _GLTFScenesManager_instances, getAccessorArray_fn).call(this, inputAccessor);
             const outputAccessor = this.gltf.accessors[sampler.output];
-            const outputBufferView = this.gltf.bufferViews[outputAccessor.bufferView];
-            const outputTypedArrayConstructor = _GLTFScenesManager.getTypedArrayConstructorFromComponentType(
-              outputAccessor.componentType
-            );
-            const keyframes = new inputTypedArrayConstructor(
-              this.gltf.arrayBuffers[inputBufferView.buffer],
-              inputAccessor.byteOffset + inputBufferView.byteOffset,
-              inputAccessor.count * _GLTFScenesManager.getVertexAttributeParamsFromType(inputAccessor.type).size
-            );
-            const values = new outputTypedArrayConstructor(
-              this.gltf.arrayBuffers[outputBufferView.buffer],
-              outputAccessor.byteOffset + outputBufferView.byteOffset,
-              outputAccessor.count * _GLTFScenesManager.getVertexAttributeParamsFromType(outputAccessor.type).size
-            );
+            const values = __privateMethod(this, _GLTFScenesManager_instances, getAccessorArray_fn).call(this, outputAccessor);
             const animName = node.name ? `${node.name} animation` : `${channel.target.path} animation ${index}`;
             const keyframesAnimation = new KeyframesAnimation({
               label: animation.name ? `${animation.name} ${animName}` : `Animation ${i} ${animName}`,
@@ -727,6 +733,12 @@ const _GLTFScenesManager = class _GLTFScenesManager {
       const arrayBuffer = this.gltf.arrayBuffers[bufferView.buffer];
       const arrayLength = Math.ceil(accessor.count / bytesPerElement) * bytesPerElement;
       indicesArray = indicesConstructor.name === "Uint8Array" ? Uint16Array.from(new indicesConstructor(arrayBuffer, arrayOffset, arrayLength)) : new indicesConstructor(arrayBuffer, arrayOffset, arrayLength);
+      if (accessor.sparse) {
+        const { indices, values } = __privateMethod(this, _GLTFScenesManager_instances, getSparseAccessorIndicesAndValues_fn).call(this, accessor);
+        for (let i = 0; i < indices.length; i++) {
+          indicesArray[indices[i]] = values[i];
+        }
+      }
     }
     const hasNormal = defaultAttributes.find((attribute) => attribute.name === "normal");
     if (!hasNormal) {
@@ -776,15 +788,7 @@ const _GLTFScenesManager = class _GLTFScenesManager {
         let matrices;
         if (skin.inverseBindMatrices) {
           const matricesAccessor = this.gltf.accessors[skin.inverseBindMatrices];
-          const matricesBufferView = this.gltf.bufferViews[matricesAccessor.bufferView];
-          const matricesTypedArrayConstructor = _GLTFScenesManager.getTypedArrayConstructorFromComponentType(
-            matricesAccessor.componentType
-          );
-          matrices = new matricesTypedArrayConstructor(
-            this.gltf.arrayBuffers[matricesBufferView.buffer],
-            matricesAccessor.byteOffset + matricesBufferView.byteOffset,
-            matricesAccessor.count * _GLTFScenesManager.getVertexAttributeParamsFromType(matricesAccessor.type).size
-          );
+          matrices = __privateMethod(this, _GLTFScenesManager_instances, getAccessorArray_fn).call(this, matricesAccessor);
         } else {
           matrices = new Float32Array(16 * skin.joints.length);
           for (let i = 0; i < skin.joints.length * 16; i += 16) {
@@ -841,8 +845,8 @@ const _GLTFScenesManager = class _GLTFScenesManager {
           const parentNode = this.scenesManager.nodes.get(parentNodeIndex);
           const parentInverseWorldMatrix = new Mat4();
           const _updateWorldMatrix = parentNode.updateWorldMatrix.bind(parentNode);
-          parentNode.updateWorldMatrix = () => {
-            _updateWorldMatrix();
+          parentNode.updateWorldMatrix = (updateParents, updateChildren) => {
+            _updateWorldMatrix(updateParents, updateChildren);
             parentInverseWorldMatrix.copy(parentNode.worldMatrix).invert();
           };
           if (this.scenesManager.animations.length) {
@@ -1327,6 +1331,31 @@ const _GLTFScenesManager = class _GLTFScenesManager {
 _primitiveInstances = new WeakMap();
 _GLTFScenesManager_instances = new WeakSet();
 /**
+ * Get a {@link TypedArray} from an accessor patched with sparse values if needed.
+ * @param accessor - {@link GLTF.IAccessor | Accessor} to get the array from.
+ * @returns - {@link TypedArray} holding the referent accessor values, patched with sparse values if needed.
+ * @private
+ */
+getAccessorArray_fn = function(accessor) {
+  const constructor = accessor.componentType ? _GLTFScenesManager.getTypedArrayConstructorFromComponentType(accessor.componentType) : Float32Array;
+  const attrSize = _GLTFScenesManager.getVertexAttributeParamsFromType(accessor.type).size;
+  const bufferView = this.gltf.bufferViews[accessor.bufferView];
+  const array = new constructor(
+    this.gltf.arrayBuffers[bufferView.buffer],
+    accessor.byteOffset + bufferView.byteOffset,
+    accessor.count * attrSize
+  );
+  if (accessor.sparse) {
+    const { indices, values } = __privateMethod(this, _GLTFScenesManager_instances, getSparseAccessorIndicesAndValues_fn).call(this, accessor);
+    for (let i = 0; i < indices.length; i++) {
+      for (let j = 0; j < attrSize; j++) {
+        array[indices[i] * attrSize + j] = values[i * attrSize + j];
+      }
+    }
+  }
+  return array;
+};
+/**
  * Get an accessor sparse indices values to use for replacement if any.
  * @param accessor - {@link GLTF.IAccessor | Accessor} to check for sparse indices.
  * @returns parameters - indices and values found as {@link TypedArray} if any.
@@ -1336,6 +1365,12 @@ getSparseAccessorIndicesAndValues_fn = function(accessor) {
   if (!accessor.sparse) return { indices: null, values: null };
   const accessorConstructor = _GLTFScenesManager.getTypedArrayConstructorFromComponentType(accessor.componentType);
   const attrSize = _GLTFScenesManager.getVertexAttributeParamsFromType(accessor.type).size;
+  const sparseValuesBufferView = this.gltf.bufferViews[accessor.sparse.values.bufferView];
+  const sparseValues = new accessorConstructor(
+    this.gltf.arrayBuffers[sparseValuesBufferView.buffer],
+    accessor.byteOffset + sparseValuesBufferView.byteOffset,
+    accessor.sparse.count * attrSize
+  );
   const sparseIndicesConstructor = _GLTFScenesManager.getTypedArrayConstructorFromComponentType(
     accessor.sparse.indices.componentType
   );
@@ -1344,12 +1379,6 @@ getSparseAccessorIndicesAndValues_fn = function(accessor) {
     this.gltf.arrayBuffers[sparseIndicesBufferView.buffer],
     accessor.byteOffset + sparseIndicesBufferView.byteOffset,
     accessor.sparse.count
-  );
-  const sparseValuesBufferView = this.gltf.bufferViews[accessor.sparse.values.bufferView];
-  const sparseValues = new accessorConstructor(
-    this.gltf.arrayBuffers[sparseValuesBufferView.buffer],
-    accessor.byteOffset + sparseValuesBufferView.byteOffset,
-    accessor.sparse.count * attrSize
   );
   return {
     indices: sparseIndices,

@@ -173,9 +173,9 @@ window.addEventListener('load', async () => {
 
 gpu-curtains is a slowly evolving 3D engine and still is a work in progress.
 
-It can now handle built-in lights (`AmbientLight`, `DirectionalLight` and `PointLight`) with shadows, `EnvironmentMap` and standard mesh lighting materials out of the box (such as `Lambert`, `Phong` and `PBR` - although there are still a few things missing in the `PBR` material, such as `sheen`, `clearcoat`, `iridescence` and `anisotropy`).
+It can now handle built-in lights (`AmbientLight`, `DirectionalLight`, `PointLight` and `SpotLight`) with shadows, `EnvironmentMap` and standard mesh lighting materials out of the box (such as `Lambert`, `Phong` and `PBR` - although there are still a few things missing in the `PBR` material, such as `sheen`, `clearcoat`, `iridescence` and `anisotropy`).
 
-glTF support is also coming along nicely. Almost all the core features are supported, except for `OrthographicCamera`, and a bunch of extensions are also available.
+glTF support is also coming along nicely. All the core features are supported, and a bunch of extensions are also available.
 
 If you need a more robust 3D engine that could handle all the glTF extensions, advanced lighting setup (such as light probes), shading or rendering mechanics, then you should probably go with another library like [three.js](https://github.com/mrdoob/three.js) or [Babylon.js](https://github.com/BabylonJS).
 
