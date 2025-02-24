@@ -236,7 +236,10 @@ window.addEventListener('load', async () => {
     })
 
     light.position.set(radius * 2)
-    light.shadow.camera.far = radius * 10
+    light.target.y = radius * 0.5
+    light.shadow.bias = radius * 0.00002
+    light.shadow.camera.near = radius * 0.5
+    light.shadow.camera.far = radius * 8
     light.shadow.camera.top = radius * 2
     light.shadow.camera.right = radius * 2
     light.shadow.camera.bottom = radius * -2
