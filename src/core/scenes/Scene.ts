@@ -841,7 +841,7 @@ export class Scene extends Object3D {
         const isSubsequentScreenPass =
           renderPassEntryType === 'screen' && (passDrawnCount !== 0 || this.renderPassEntries.prePass.length)
 
-        const loadContent =
+        const loadColors =
           renderPassEntryType === 'postProPass' ||
           (renderPassEntryType === 'prePass' && passDrawnCount !== 0) ||
           isSubsequentScreenPass
@@ -850,7 +850,7 @@ export class Scene extends Object3D {
 
         // if we're drawing to screen and it's not our first pass, load result from previous passes
         // post processing scene pass will clear content inside onBeforeRenderPass anyway
-        renderPassEntry.renderPass.setLoadOp(loadContent ? 'load' : 'clear')
+        renderPassEntry.renderPass.setLoadOp(loadColors ? 'load' : 'clear')
         if (loadDepth) renderPassEntry.renderPass.setDepthLoadOp('load')
 
         passDrawnCount++

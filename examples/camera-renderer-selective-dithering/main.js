@@ -60,58 +60,20 @@ window.addEventListener('load', async () => {
   })
 
   const directionalLight = new DirectionalLight(gpuCameraRenderer, {
-    position: new Vec3(systemSize, systemSize * 4, 0),
+    position: new Vec3(systemSize * 2, systemSize * 2, systemSize),
     intensity: 2,
   })
 
-  // we will add cubes and spheres to our scene
-  // they will use a lambert shading
-
   // the spheres will be rendered in a separate render target
-  // they will be rendered on screen using a pre-pass where they'll be dithered
-  // that way they'll be rendered before the rest of the scene
+  // they will be rendered on screen using a postprocessing pass where they'll be dithered
+  // using the depth from our cube scene
   const selectiveDitheringTarget = new RenderTarget(gpuCameraRenderer, {
-    label: 'Selective bloom render target',
-    depthLoadOp: 'load', // load the depth buffer from the cube scene into this pass
+    label: 'Selective dithering render target',
+    // load the depth buffer from the cube scene into this pass
+    depthLoadOp: 'load',
   })
 
-  const cubeGeometry = new BoxGeometry()
-  const sphereGeometry = new SphereGeometry()
-
-  const sphereColor1 = new Vec3(0, 1, 1)
-  const sphereColor2 = new Vec3(1, 0, 1)
-  const cubeColor = new Vec3(0.925)
-
-  for (let i = 0; i < 50; i++) {
-    const isCube = Math.random() > 0.5
-
-    const mesh = new LitMesh(gpuCameraRenderer, {
-      label: isCube ? 'Cube ' + i : 'Sphere ' + i,
-      geometry: isCube ? cubeGeometry : sphereGeometry,
-      outputTarget: isCube ? null : selectiveDitheringTarget,
-      material: {
-        shading: 'Lambert',
-        color: isCube ? cubeColor : Math.random() > 0.5 ? sphereColor1 : sphereColor2,
-      },
-    })
-
-    mesh.position.x = Math.random() * systemSize * 2 - systemSize
-    mesh.position.y = Math.random() * systemSize * 2 - systemSize
-    mesh.position.z = Math.random() * systemSize * 2 - systemSize
-
-    if (!isCube) {
-      mesh.scale.set(1.25)
-    }
-
-    const rotationSpeed = Math.random() * 0.025
-
-    mesh.onBeforeRender(() => {
-      mesh.rotation.y += rotationSpeed
-      mesh.rotation.z += rotationSpeed
-    })
-  }
-
-  // render the spheres on top with a dithering pass
+  // our dither pass where we'll render the spheres with a dithering effect
   // from https://www.shadertoy.com/view/ltSSzW
   const ditherFs = /* wgsl */ `
     struct VSOutput {
@@ -194,7 +156,6 @@ window.addEventListener('load', async () => {
   const ditherPass = new ShaderPass(gpuCameraRenderer, {
     label: 'Selective dither pass',
     inputTarget: selectiveDitheringTarget,
-    prePass: true, // render before cubes
     shaders: {
       fragment: {
         code: ditherFs,
@@ -211,4 +172,44 @@ window.addEventListener('load', async () => {
       },
     },
   })
+
+  // now draw everything
+  // the cubes will be drawn to the main buffer as usual
+  // the spheres will be drawn into our render target defined above
+  // they will use a lambert shading
+  const cubeGeometry = new BoxGeometry()
+  const sphereGeometry = new SphereGeometry()
+
+  const sphereColor1 = new Vec3(0, 1, 1)
+  const sphereColor2 = new Vec3(1, 0, 1)
+  const cubeColor = new Vec3(0.9)
+
+  for (let i = 0; i < 50; i++) {
+    const isCube = Math.random() > 0.5
+
+    const mesh = new LitMesh(gpuCameraRenderer, {
+      label: isCube ? 'Cube ' + i : 'Sphere ' + i,
+      geometry: isCube ? cubeGeometry : sphereGeometry,
+      outputTarget: isCube ? null : selectiveDitheringTarget,
+      material: {
+        shading: 'Lambert',
+        color: isCube ? cubeColor : Math.random() > 0.5 ? sphereColor1 : sphereColor2,
+      },
+    })
+
+    mesh.position.x = Math.random() * systemSize * 2 - systemSize
+    mesh.position.y = Math.random() * systemSize * 2 - systemSize
+    mesh.position.z = Math.random() * systemSize * 2 - systemSize
+
+    if (!isCube) {
+      mesh.scale.set(1.25)
+    }
+
+    const rotationSpeed = Math.random() * 0.025
+
+    mesh.onBeforeRender(() => {
+      mesh.rotation.y += rotationSpeed
+      mesh.rotation.z += rotationSpeed
+    })
+  }
 })

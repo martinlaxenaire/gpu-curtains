@@ -568,9 +568,9 @@ class Scene extends Object3D {
       this.renderPassEntries[renderPassEntryType].forEach((renderPassEntry) => {
         if (!this.getRenderPassEntryLength(renderPassEntry)) return;
         const isSubsequentScreenPass = renderPassEntryType === "screen" && (passDrawnCount !== 0 || this.renderPassEntries.prePass.length);
-        const loadContent = renderPassEntryType === "postProPass" || renderPassEntryType === "prePass" && passDrawnCount !== 0 || isSubsequentScreenPass;
+        const loadColors = renderPassEntryType === "postProPass" || renderPassEntryType === "prePass" && passDrawnCount !== 0 || isSubsequentScreenPass;
         const loadDepth = renderPassEntryType === "prePass" || isSubsequentScreenPass;
-        renderPassEntry.renderPass.setLoadOp(loadContent ? "load" : "clear");
+        renderPassEntry.renderPass.setLoadOp(loadColors ? "load" : "clear");
         if (loadDepth) renderPassEntry.renderPass.setDepthLoadOp("load");
         passDrawnCount++;
         this.renderSinglePassEntry(commandEncoder, renderPassEntry);
