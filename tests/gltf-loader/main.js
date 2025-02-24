@@ -57,7 +57,7 @@ window.addEventListener('load', async () => {
     },
     context: {
       format: 'rgba16float', // allow HDR output
-      toneMapping: { mode: 'standard' },
+      toneMapping: { mode: 'extended' },
     },
     renderPass: {
       // since transmission need a solid background color to be blended with

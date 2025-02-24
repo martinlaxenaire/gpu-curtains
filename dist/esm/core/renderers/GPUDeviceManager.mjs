@@ -18,6 +18,8 @@ class GPUDeviceManager {
     label,
     production = false,
     adapterOptions = {},
+    requiredFeatures = [],
+    requestAdapterLimits = [],
     autoRender = true,
     onError = () => {
     },
@@ -36,10 +38,15 @@ class GPUDeviceManager {
     // mips generation cache handling
     __privateAdd(this, _mipsGeneration);
     this.index = 0;
-    this.label = label ?? "GPUDeviceManager instance";
-    this.production = production;
     this.ready = false;
-    this.adapterOptions = adapterOptions;
+    this.options = {
+      label: label ?? "GPUDeviceManager instance",
+      production,
+      adapterOptions,
+      requiredFeatures,
+      requestAdapterLimits,
+      autoRender
+    };
     this.onError = onError;
     this.onDeviceLost = onDeviceLost;
     this.onDeviceDestroyed = onDeviceDestroyed;
@@ -51,7 +58,7 @@ class GPUDeviceManager {
       module: null,
       pipelineByFormat: {}
     });
-    if (autoRender) {
+    if (this.options.autoRender) {
       this.animate();
     }
   }
@@ -91,7 +98,7 @@ class GPUDeviceManager {
       this.adapter = adapter;
     } else {
       try {
-        this.adapter = await this.gpu?.requestAdapter(this.adapterOptions);
+        this.adapter = await this.gpu?.requestAdapter(this.options.adapterOptions);
         if (!this.adapter) {
           this.onError();
           throwError("GPUDeviceManager: WebGPU is not supported on your browser/OS. 'requestAdapter' failed.");
@@ -113,18 +120,16 @@ class GPUDeviceManager {
       this.index++;
     } else {
       try {
-        const requiredFeatures = [];
-        if (this.adapter.features.has("float32-filterable")) {
-          requiredFeatures.push("float32-filterable");
-        }
         const { limits } = this.adapter;
         const requiredLimits = {};
         for (const key in limits) {
-          requiredLimits[key] = limits[key];
+          if (this.options.requestAdapterLimits.includes(key)) {
+            requiredLimits[key] = limits[key];
+          }
         }
         this.device = await this.adapter?.requestDevice({
-          label: this.label + " " + this.index,
-          requiredFeatures,
+          label: this.options.label + " " + this.index,
+          requiredFeatures: this.options.requiredFeatures,
           requiredLimits
         });
         if (this.device) {
@@ -133,11 +138,13 @@ class GPUDeviceManager {
         }
       } catch (error) {
         this.onError();
-        throwError(`${this.label}: WebGPU is not supported on your browser/OS. 'requestDevice' failed: ${error}`);
+        throwError(
+          `${this.options.label}: WebGPU is not supported on your browser/OS. 'requestDevice' failed: ${error}`
+        );
       }
     }
     this.device?.lost.then((info) => {
-      throwWarning(`${this.label}: WebGPU device was lost: ${info.message}`);
+      throwWarning(`${this.options.label}: WebGPU device was lost: ${info.message}`);
       this.loseDevice();
       if (info.reason !== "destroyed") {
         this.onDeviceLost(info);
@@ -492,10 +499,10 @@ class GPUDeviceManager {
     for (const renderer of this.renderers) {
       if (renderer.shouldRender) renderer.onBeforeCommandEncoder();
     }
-    const commandEncoder = this.device?.createCommandEncoder({ label: this.label + " command encoder" });
-    !this.production && commandEncoder.pushDebugGroup(this.label + " command encoder: main render loop");
+    const commandEncoder = this.device?.createCommandEncoder({ label: this.options.label + " command encoder" });
+    !this.options.production && commandEncoder.pushDebugGroup(this.options.label + " command encoder: main render loop");
     this.renderers.forEach((renderer) => renderer.render(commandEncoder));
-    !this.production && commandEncoder.popDebugGroup();
+    !this.options.production && commandEncoder.popDebugGroup();
     const commandBuffer = commandEncoder.finish();
     this.device?.queue.submit([commandBuffer]);
     for (const texture of this.texturesQueue) {

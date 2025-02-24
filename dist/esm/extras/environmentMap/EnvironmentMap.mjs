@@ -44,7 +44,7 @@ class EnvironmentMap {
           computeSampleCount: 1024,
           label: "Environment LUT texture",
           name: "lutTexture",
-          format: "rgba32float"
+          format: "rgba16float"
         },
         diffuseTextureParams: {
           size: 128,

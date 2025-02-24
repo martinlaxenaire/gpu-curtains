@@ -3927,7 +3927,7 @@
       this.renderer = renderer;
       this.uuid = generateUUID();
       this.options = { ...defaultTextureParams, ...parameters };
-      if (this.options.format === "rgba32float" && !this.renderer.deviceManager.adapter.features.has("float32-filterable")) {
+      if (this.options.format === "rgba32float" && !this.renderer.device.features.has("float32-filterable")) {
         this.options.format = "rgba16float";
       }
       if (parameters.fromTexture) {
@@ -14631,7 +14631,7 @@ ${this.shaders.compute.head}`;
   class GPURenderer {
     /**
      * GPURenderer constructor
-     * @param parameters - {@link GPURendererParams | parameters} used to create this {@link GPURenderer}
+     * @param parameters - {@link GPURendererParams | parameters} used to create this {@link GPURenderer}.
      */
     constructor({
       deviceManager,
@@ -14643,16 +14643,16 @@ ${this.shaders.compute.head}`;
       renderPass
     }) {
       // callbacks / events
-      /** function assigned to the {@link onBeforeRender} callback */
+      /** function assigned to the {@link onBeforeRender} callback. */
       this._onBeforeRenderCallback = (commandEncoder) => {
       };
-      /** function assigned to the {@link onAfterRender} callback */
+      /** function assigned to the {@link onAfterRender} callback. */
       this._onAfterRenderCallback = (commandEncoder) => {
       };
-      /** function assigned to the {@link onResize} callback */
+      /** function assigned to the {@link onResize} callback. */
       this._onResizeCallback = () => {
       };
-      /** function assigned to the {@link onAfterResize} callback */
+      /** function assigned to the {@link onAfterResize} callback. */
       this._onAfterResizeCallback = () => {
       };
       this.type = "GPURenderer";
@@ -14721,8 +14721,8 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Set the renderer {@link RectBBox} and canvas sizes
-     * @param rectBBox - the optional new {@link canvas} {@link RectBBox} to set
+     * Set the renderer {@link RectBBox} and canvas sizes.
+     * @param rectBBox - The optional new {@link canvas} {@link RectBBox} to set.
      */
     setSize(rectBBox = null) {
       rectBBox = {
@@ -14822,16 +14822,16 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Set the renderer {@link GPURenderer.pixelRatio | pixel ratio} and {@link resize} it
-     * @param pixelRatio - new pixel ratio to use
+     * Set the renderer {@link GPURenderer.pixelRatio | pixel ratio} and {@link resize} it.
+     * @param pixelRatio - New pixel ratio to use.
      */
     setPixelRatio(pixelRatio = 1) {
       this.pixelRatio = pixelRatio;
       this.resize(this.rectBBox);
     }
     /**
-     * Resize our {@link GPURenderer}
-     * @param rectBBox - the optional new {@link canvas} {@link RectBBox} to set
+     * Resize our {@link GPURenderer}.
+     * @param rectBBox - The optional new {@link canvas} {@link RectBBox} to set.
      */
     resize(rectBBox = null) {
       this.setSize(rectBBox);
@@ -14895,8 +14895,8 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Clamp to max WebGPU texture dimensions
-     * @param dimension - width and height dimensions to clamp
+     * Clamp to max WebGPU texture dimensions.
+     * @param dimension - Width and height dimensions to clamp.
      */
     clampToMaxDimension(dimension) {
       if (this.device) {
@@ -14906,63 +14906,63 @@ ${this.shaders.compute.head}`;
     }
     /* USEFUL DEVICE MANAGER OBJECTS */
     /**
-     * Get our {@link GPUDeviceManager#device | device}
+     * Get our {@link GPUDeviceManager#device | device}.
      * @readonly
      */
     get device() {
       return this.deviceManager.device;
     }
     /**
-     * Get whether our {@link GPUDeviceManager} is ready (i.e. its {@link GPUDeviceManager#adapter | adapter} and {@link GPUDeviceManager#device | device} are set) its {@link context} is set and its size is set
+     * Get whether our {@link GPUDeviceManager} is ready (i.e. its {@link GPUDeviceManager#adapter | adapter} and {@link GPUDeviceManager#device | device} are set) its {@link context} is set and its size is set.
      * @readonly
      */
     get ready() {
       return this.deviceManager.ready && !!this.context && !!this.canvas.width && !!this.canvas.height;
     }
     /**
-     * Get our {@link GPUDeviceManager#production | GPUDeviceManager production flag}
+     * Get our {@link core/renderers/GPUDeviceManager.GPUDeviceManagerBaseParams#production | GPUDeviceManager production flag}.
      * @readonly
      */
     get production() {
-      return this.deviceManager.production;
+      return this.deviceManager.options.production;
     }
     /**
-     * Get all the created {@link GPUDeviceManager#samplers | samplers}
+     * Get all the created {@link GPUDeviceManager#samplers | samplers}.
      * @readonly
      */
     get samplers() {
       return this.deviceManager.samplers;
     }
     /**
-     * Get all the created {@link GPUDeviceManager#buffers | GPU buffers}
+     * Get all the created {@link GPUDeviceManager#buffers | GPU buffers}.
      * @readonly
      */
     get buffers() {
       return this.deviceManager.buffers;
     }
     /**
-     * Get all the created {@link GPUDeviceManager#indirectBuffers | indirect buffers}
+     * Get all the created {@link GPUDeviceManager#indirectBuffers | indirect buffers}.
      * @readonly
      */
     get indirectBuffers() {
       return this.deviceManager.indirectBuffers;
     }
     /**
-     * Get the {@link GPUDeviceManager#pipelineManager | pipeline manager}
+     * Get the {@link GPUDeviceManager#pipelineManager | pipeline manager}.
      * @readonly
      */
     get pipelineManager() {
       return this.deviceManager.pipelineManager;
     }
     /**
-     * Get all the rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes) created by the {@link GPUDeviceManager}
+     * Get all the rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes) created by the {@link GPUDeviceManager}.
      * @readonly
      */
     get deviceRenderedObjects() {
       return this.deviceManager.deviceRenderedObjects;
     }
     /**
-     * Configure our {@link context} with the given options
+     * Configure our {@link context} with the given options.
      */
     configureContext() {
       this.context.configure({
@@ -14974,7 +14974,7 @@ ${this.shaders.compute.head}`;
       });
     }
     /**
-     * Set our {@link context} if possible and set {@link renderPass | main render pass} and {@link scene}
+     * Set our {@link context} if possible and set {@link renderPass | main render pass} and {@link scene}.
      */
     setContext() {
       this.context = this.canvas.getContext("webgpu");
@@ -15027,16 +15027,16 @@ ${this.shaders.compute.head}`;
       });
     }
     /**
-     * Set our {@link scene}
+     * Set our {@link scene}.
      */
     setScene() {
       this.scene = new Scene({ renderer: this });
     }
     /* BUFFERS & BINDINGS */
     /**
-     * Create a {@link !GPUBuffer}
-     * @param buffer - {@link Buffer} to use for buffer creation
-     * @returns - newly created {@link !GPUBuffer}
+     * Create a {@link !GPUBuffer}.
+     * @param buffer - {@link Buffer} to use for buffer creation.
+     * @returns - newly created {@link !GPUBuffer}.
      */
     createBuffer(buffer) {
       const GPUBuffer = this.deviceManager.device?.createBuffer(buffer.options);
@@ -15044,28 +15044,28 @@ ${this.shaders.compute.head}`;
       return GPUBuffer;
     }
     /**
-     * Remove a {@link Buffer} from our {@link GPUDeviceManager#buffers | buffers Map}
-     * @param buffer - {@link Buffer} to remove
+     * Remove a {@link Buffer} from our {@link GPUDeviceManager#buffers | buffers Map}.
+     * @param buffer - {@link Buffer} to remove.
      */
     removeBuffer(buffer) {
       this.deviceManager.removeBuffer(buffer);
     }
     /**
-     * Write to a {@link GPUBuffer}
-     * @param buffer - {@link GPUBuffer} to write to
-     * @param bufferOffset - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUQueue/writeBuffer#bufferoffset | buffer offset}
-     * @param data - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUQueue/writeBuffer#data | data} to write
+     * Write to a {@link GPUBuffer}.
+     * @param buffer - {@link GPUBuffer} to write to.
+     * @param bufferOffset - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUQueue/writeBuffer#bufferoffset | Buffer offset}.
+     * @param data - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUQueue/writeBuffer#data | Data} to write.
      */
     queueWriteBuffer(buffer, bufferOffset, data) {
       this.deviceManager.device?.queue.writeBuffer(buffer, bufferOffset, data);
     }
     /**
-     * Copy a source {@link Buffer#GPUBuffer | Buffer GPUBuffer} into a destination {@link Buffer#GPUBuffer | Buffer GPUBuffer}
-     * @param parameters - parameters used to realize the copy
-     * @param parameters.srcBuffer - source {@link Buffer}
-     * @param [parameters.dstBuffer] - destination {@link Buffer}. Will create a new one if none provided.
+     * Copy a source {@link Buffer#GPUBuffer | Buffer GPUBuffer} into a destination {@link Buffer#GPUBuffer | Buffer GPUBuffer}.
+     * @param parameters - Parameters used to realize the copy.
+     * @param parameters.srcBuffer - Source {@link Buffer}.
+     * @param [parameters.dstBuffer] - Destination {@link Buffer}. Will create a new one if none provided.
      * @param [parameters.commandEncoder] - {@link GPUCommandEncoder} to use for the copy. Will create a new one and submit the command buffer if none provided.
-     * @returns - destination {@link Buffer} after copy
+     * @returns - Destination {@link Buffer} after copy.
      */
     copyBufferToBuffer({
       srcBuffer,
@@ -15118,110 +15118,110 @@ ${this.shaders.compute.head}`;
     }
     /* BIND GROUPS & LAYOUTS */
     /**
-     * Get all created {@link AllowedBindGroups | bind group} tracked by our {@link GPUDeviceManager}
+     * Get all created {@link AllowedBindGroups | bind group} tracked by our {@link GPUDeviceManager}.
      * @readonly
      */
     get bindGroups() {
       return this.deviceManager.bindGroups;
     }
     /**
-     * Add a {@link AllowedBindGroups | bind group} to our {@link GPUDeviceManager#bindGroups | bind groups array}
-     * @param bindGroup - {@link AllowedBindGroups | bind group} to add
+     * Add a {@link AllowedBindGroups | bind group} to our {@link GPUDeviceManager#bindGroups | bind groups array}.
+     * @param bindGroup - {@link AllowedBindGroups | Bind group} to add.
      */
     addBindGroup(bindGroup) {
       this.deviceManager.addBindGroup(bindGroup);
     }
     /**
-     * Remove a {@link AllowedBindGroups | bind group} from our {@link GPUDeviceManager#bindGroups | bind groups array}
-     * @param bindGroup - {@link AllowedBindGroups | bind group} to remove
+     * Remove a {@link AllowedBindGroups | bind group} from our {@link GPUDeviceManager#bindGroups | bind groups array}.
+     * @param bindGroup - {@link AllowedBindGroups | Bind group} to remove.
      */
     removeBindGroup(bindGroup) {
       this.deviceManager.removeBindGroup(bindGroup);
     }
     /**
-     * Create a {@link GPUBindGroupLayout}
-     * @param bindGroupLayoutDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createBindGroupLayout#descriptor | GPUBindGroupLayoutDescriptor}
-     * @returns - newly created {@link GPUBindGroupLayout}
+     * Create a {@link GPUBindGroupLayout}.
+     * @param bindGroupLayoutDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createBindGroupLayout#descriptor | GPUBindGroupLayoutDescriptor}.
+     * @returns - Newly created {@link GPUBindGroupLayout}.
      */
     createBindGroupLayout(bindGroupLayoutDescriptor) {
       return this.deviceManager.device?.createBindGroupLayout(bindGroupLayoutDescriptor);
     }
     /**
-     * Create a {@link GPUBindGroup}
-     * @param bindGroupDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createBindGroup#descriptor | GPUBindGroupDescriptor}
-     * @returns - newly created {@link GPUBindGroup}
+     * Create a {@link GPUBindGroup}.
+     * @param bindGroupDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createBindGroup#descriptor | GPUBindGroupDescriptor}.
+     * @returns - Newly created {@link GPUBindGroup}.
      */
     createBindGroup(bindGroupDescriptor) {
       return this.deviceManager.device?.createBindGroup(bindGroupDescriptor);
     }
     /* SHADERS & PIPELINES */
     /**
-     * Create a {@link GPUShaderModule}
+     * Create a {@link GPUShaderModule}.
      * @param shaderModuleDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createShaderModule#descriptor | GPUShaderModuleDescriptor}
-     * @returns - newly created {@link GPUShaderModule}
+     * @returns - Newly created {@link GPUShaderModule}.
      */
     createShaderModule(shaderModuleDescriptor) {
       return this.device?.createShaderModule(shaderModuleDescriptor);
     }
     /**
-     * Create a {@link GPUPipelineLayout}
-     * @param pipelineLayoutDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createPipelineLayout#descriptor | GPUPipelineLayoutDescriptor}
-     * @returns - newly created {@link GPUPipelineLayout}
+     * Create a {@link GPUPipelineLayout}.
+     * @param pipelineLayoutDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createPipelineLayout#descriptor | GPUPipelineLayoutDescriptor}.
+     * @returns - Newly created {@link GPUPipelineLayout}.
      */
     createPipelineLayout(pipelineLayoutDescriptor) {
       return this.device?.createPipelineLayout(pipelineLayoutDescriptor);
     }
     /**
-     * Create a {@link GPURenderPipeline}
-     * @param pipelineDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createRenderPipeline#descriptor | GPURenderPipelineDescriptor}
-     * @returns - newly created {@link GPURenderPipeline}
+     * Create a {@link GPURenderPipeline}.
+     * @param pipelineDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createRenderPipeline#descriptor | GPURenderPipelineDescriptor}.
+     * @returns - Newly created {@link GPURenderPipeline}.
      */
     createRenderPipeline(pipelineDescriptor) {
       return this.device?.createRenderPipeline(pipelineDescriptor);
     }
     /**
-     * Asynchronously create a {@link GPURenderPipeline}
-     * @param pipelineDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createRenderPipeline#descriptor | GPURenderPipelineDescriptor}
-     * @returns - newly created {@link GPURenderPipeline}
+     * Asynchronously create a {@link GPURenderPipeline}.
+     * @param pipelineDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createRenderPipeline#descriptor | GPURenderPipelineDescriptor}.
+     * @returns - Newly created {@link GPURenderPipeline}.
      */
     async createRenderPipelineAsync(pipelineDescriptor) {
       return await this.device?.createRenderPipelineAsync(pipelineDescriptor);
     }
     /**
-     * Create a {@link GPUComputePipeline}
-     * @param pipelineDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createComputePipeline#descriptor | GPUComputePipelineDescriptor}
-     * @returns - newly created {@link GPUComputePipeline}
+     * Create a {@link GPUComputePipeline}.
+     * @param pipelineDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createComputePipeline#descriptor | GPUComputePipelineDescriptor}.
+     * @returns - Newly created {@link GPUComputePipeline}.
      */
     createComputePipeline(pipelineDescriptor) {
       return this.device?.createComputePipeline(pipelineDescriptor);
     }
     /**
-     * Asynchronously create a {@link GPUComputePipeline}
-     * @param pipelineDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createComputePipeline#descriptor | GPUComputePipelineDescriptor}
-     * @returns - newly created {@link GPUComputePipeline}
+     * Asynchronously create a {@link GPUComputePipeline}.
+     * @param pipelineDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createComputePipeline#descriptor | GPUComputePipelineDescriptor}.
+     * @returns - Newly created {@link GPUComputePipeline}.
      */
     async createComputePipelineAsync(pipelineDescriptor) {
       return await this.device?.createComputePipelineAsync(pipelineDescriptor);
     }
     /* TEXTURES */
     /**
-     * Add a {@link Texture} to our {@link textures} array
-     * @param texture - {@link Texture} to add
+     * Add a {@link Texture} to our {@link textures} array.
+     * @param texture - {@link Texture} to add.
      */
     addTexture(texture) {
       this.textures.push(texture);
     }
     /**
-     * Remove a {@link Texture} from our {@link textures} array
-     * @param texture - {@link Texture} to remove
+     * Remove a {@link Texture} from our {@link textures} array.
+     * @param texture - {@link Texture} to remove.
      */
     removeTexture(texture) {
       this.textures = this.textures.filter((t) => t.uuid !== texture.uuid);
     }
     /**
-     * Create a {@link GPUTexture}
-     * @param textureDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createTexture#descriptor | GPUTextureDescriptor}
-     * @returns - newly created {@link GPUTexture}
+     * Create a {@link GPUTexture}.
+     * @param textureDescriptor - {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createTexture#descriptor | GPUTextureDescriptor}.
+     * @returns - Newly created {@link GPUTexture}.
      */
     createTexture(textureDescriptor) {
       return this.deviceManager.device?.createTexture(textureDescriptor);
@@ -15292,8 +15292,8 @@ ${this.shaders.compute.head}`;
     /**
      * Check if a {@link Sampler} has already been created with the same {@link Sampler#options | parameters}.
      * Use it if found, else create a new one and add it to the {@link GPUDeviceManager#samplers | samplers array}.
-     * @param sampler - {@link Sampler} to create
-     * @returns - the {@link GPUSampler}
+     * @param sampler - {@link Sampler} to create.
+     * @returns - {@link GPUSampler} from cache or newly created {@link GPUSampler}.
      */
     createSampler(sampler) {
       const existingSampler = this.samplers.find((existingSampler2) => {
@@ -15312,8 +15312,8 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Remove a {@link Sampler} from our {@link GPUDeviceManager#samplers | samplers array}
-     * @param sampler - {@link Sampler} to remove
+     * Remove a {@link Sampler} from our {@link GPUDeviceManager#samplers | samplers array}.
+     * @param sampler - {@link Sampler} to remove.
      */
     removeSampler(sampler) {
       this.deviceManager.removeSampler(sampler);
@@ -15321,10 +15321,10 @@ ${this.shaders.compute.head}`;
     /* OBJECTS & TASKS */
     /**
      * Set different tasks queue managers to execute callbacks at different phases of our render call:
-     * - {@link onBeforeCommandEncoderCreation}: callbacks executed before the creation of the command encoder
-     * - {@link onBeforeRenderScene}: callbacks executed after the creation of the command encoder and before rendering the {@link Scene}
-     * - {@link onAfterRenderScene}: callbacks executed after the creation of the command encoder and after rendering the {@link Scene}
-     * - {@link onAfterCommandEncoderSubmission}: callbacks executed after the submission of the command encoder
+     * - {@link onBeforeCommandEncoderCreation}: callbacks executed before the creation of the command encoder.
+     * - {@link onBeforeRenderScene}: callbacks executed after the creation of the command encoder and before rendering the {@link Scene}.
+     * - {@link onAfterRenderScene}: callbacks executed after the creation of the command encoder and after rendering the {@link Scene}.
+     * - {@link onAfterCommandEncoderSubmission}: callbacks executed after the submission of the command encoder.
      */
     setTasksQueues() {
       this.onBeforeCommandEncoderCreation = new TasksQueueManager();
@@ -15333,7 +15333,7 @@ ${this.shaders.compute.head}`;
       this.onAfterCommandEncoderSubmission = new TasksQueueManager();
     }
     /**
-     * Set all objects arrays that we'll keep track of
+     * Set all objects arrays and {@link Map} that we'll keep track of.
      */
     setRendererObjects() {
       this.computePasses = [];
@@ -15347,7 +15347,7 @@ ${this.shaders.compute.head}`;
       this.animations = /* @__PURE__ */ new Map();
     }
     /**
-     * Get all this {@link GPURenderer} rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes)
+     * Get all this {@link GPURenderer} rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes).
      * @readonly
      */
     get renderedObjects() {
@@ -15356,7 +15356,7 @@ ${this.shaders.compute.head}`;
     /**
      * Get all objects ({@link RenderedMesh | rendered meshes} or {@link ComputePass | compute passes}) using a given {@link AllowedBindGroups | bind group}.
      * Useful (but slow) to know if a resource is used by multiple objects and if it is safe to destroy it or not.
-     * @param bindGroup - {@link AllowedBindGroups | bind group} to check
+     * @param bindGroup - {@link AllowedBindGroups | Bind group} to check.
      */
     getObjectsByBindGroup(bindGroup) {
       return this.deviceRenderedObjects.filter((object) => {
@@ -15381,7 +15381,7 @@ ${this.shaders.compute.head}`;
     /**
      * Assign a callback function to _onBeforeRenderCallback.
      * @param callback - callback to run just before the {@link render} method will be executed.
-     * @returns - our {@link GPURenderer}.
+     * @returns - Our renderer.
      */
     onBeforeRender(callback) {
       if (callback) {
@@ -15390,9 +15390,9 @@ ${this.shaders.compute.head}`;
       return this;
     }
     /**
-     * Assign a callback function to _onAfterRenderCallback
-     * @param callback - callback to run just after the {@link render} method has been executed
-     * @returns - our {@link GPURenderer}
+     * Assign a callback function to _onAfterRenderCallback.
+     * @param callback - callback to run just after the {@link render} method has been executed.
+     * @returns - Our renderer.
      */
     onAfterRender(callback) {
       if (callback) {
@@ -15403,7 +15403,7 @@ ${this.shaders.compute.head}`;
     /**
      * Callback to run after the {@link GPURenderer} has been resized but before the {@link resizeObjects} method has been executed (before the {@link Texture | textures}, {@link RenderPass | render passes}, {@link RenderTarget | render targets}, {@link ComputePass | compute passes} and meshes are resized).
      * @param callback - callback to execute.
-     * @returns - our {@link GPURenderer}
+     * @returns - Our renderer.
      */
     onResize(callback) {
       if (callback) {
@@ -15414,7 +15414,7 @@ ${this.shaders.compute.head}`;
     /**
      * Callback to run after the {@link GPURenderer} has been resized and after the {@link resizeObjects} method has been executed (after the {@link Texture | textures}, {@link RenderPass | render passes}, {@link RenderTarget | render targets}, {@link ComputePass | compute passes} and meshes have been resized).
      * @param callback - callback to execute.
-     * @returns - our {@link GPURenderer}
+     * @returns - Our renderer.
      */
     onAfterResize(callback) {
       if (callback) {
@@ -16276,6 +16276,8 @@ ${this.shaders.compute.head}`;
       label,
       production = false,
       adapterOptions = {},
+      requiredFeatures = [],
+      requestAdapterLimits = [],
       autoRender = true,
       onError = () => {
       },
@@ -16294,10 +16296,15 @@ ${this.shaders.compute.head}`;
       // mips generation cache handling
       __privateAdd$a(this, _mipsGeneration);
       this.index = 0;
-      this.label = label ?? "GPUDeviceManager instance";
-      this.production = production;
       this.ready = false;
-      this.adapterOptions = adapterOptions;
+      this.options = {
+        label: label ?? "GPUDeviceManager instance",
+        production,
+        adapterOptions,
+        requiredFeatures,
+        requestAdapterLimits,
+        autoRender
+      };
       this.onError = onError;
       this.onDeviceLost = onDeviceLost;
       this.onDeviceDestroyed = onDeviceDestroyed;
@@ -16309,7 +16316,7 @@ ${this.shaders.compute.head}`;
         module: null,
         pipelineByFormat: {}
       });
-      if (autoRender) {
+      if (this.options.autoRender) {
         this.animate();
       }
     }
@@ -16349,7 +16356,7 @@ ${this.shaders.compute.head}`;
         this.adapter = adapter;
       } else {
         try {
-          this.adapter = await this.gpu?.requestAdapter(this.adapterOptions);
+          this.adapter = await this.gpu?.requestAdapter(this.options.adapterOptions);
           if (!this.adapter) {
             this.onError();
             throwError("GPUDeviceManager: WebGPU is not supported on your browser/OS. 'requestAdapter' failed.");
@@ -16371,18 +16378,16 @@ ${this.shaders.compute.head}`;
         this.index++;
       } else {
         try {
-          const requiredFeatures = [];
-          if (this.adapter.features.has("float32-filterable")) {
-            requiredFeatures.push("float32-filterable");
-          }
           const { limits } = this.adapter;
           const requiredLimits = {};
           for (const key in limits) {
-            requiredLimits[key] = limits[key];
+            if (this.options.requestAdapterLimits.includes(key)) {
+              requiredLimits[key] = limits[key];
+            }
           }
           this.device = await this.adapter?.requestDevice({
-            label: this.label + " " + this.index,
-            requiredFeatures,
+            label: this.options.label + " " + this.index,
+            requiredFeatures: this.options.requiredFeatures,
             requiredLimits
           });
           if (this.device) {
@@ -16391,11 +16396,13 @@ ${this.shaders.compute.head}`;
           }
         } catch (error) {
           this.onError();
-          throwError(`${this.label}: WebGPU is not supported on your browser/OS. 'requestDevice' failed: ${error}`);
+          throwError(
+            `${this.options.label}: WebGPU is not supported on your browser/OS. 'requestDevice' failed: ${error}`
+          );
         }
       }
       this.device?.lost.then((info) => {
-        throwWarning(`${this.label}: WebGPU device was lost: ${info.message}`);
+        throwWarning(`${this.options.label}: WebGPU device was lost: ${info.message}`);
         this.loseDevice();
         if (info.reason !== "destroyed") {
           this.onDeviceLost(info);
@@ -16750,10 +16757,10 @@ ${this.shaders.compute.head}`;
       for (const renderer of this.renderers) {
         if (renderer.shouldRender) renderer.onBeforeCommandEncoder();
       }
-      const commandEncoder = this.device?.createCommandEncoder({ label: this.label + " command encoder" });
-      !this.production && commandEncoder.pushDebugGroup(this.label + " command encoder: main render loop");
+      const commandEncoder = this.device?.createCommandEncoder({ label: this.options.label + " command encoder" });
+      !this.options.production && commandEncoder.pushDebugGroup(this.options.label + " command encoder: main render loop");
       this.renderers.forEach((renderer) => renderer.render(commandEncoder));
-      !this.production && commandEncoder.popDebugGroup();
+      !this.options.production && commandEncoder.popDebugGroup();
       const commandBuffer = commandEncoder.finish();
       this.device?.queue.submit([commandBuffer]);
       for (const texture of this.texturesQueue) {
@@ -22031,7 +22038,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
             computeSampleCount: 1024,
             label: "Environment LUT texture",
             name: "lutTexture",
-            format: "rgba32float"
+            format: "rgba16float"
           },
           diffuseTextureParams: {
             size: 128,

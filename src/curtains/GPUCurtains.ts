@@ -19,7 +19,9 @@ import { DOMObject3D } from './objects3D/DOMObject3D'
 /**
  * Options used to create a {@link GPUCurtains}.
  */
-export interface GPUCurtainsOptions extends Omit<GPUCameraRendererParams, 'deviceManager'>, GPUDeviceManagerBaseParams {
+export interface GPUCurtainsOptions
+  extends Omit<GPUCameraRendererParams, 'deviceManager'>,
+    Omit<GPUDeviceManagerBaseParams, 'label'> {
   /** Whether the {@link Renderer | renderers} created by this {@link GPUCurtains} instance should handle resizing by themselves or not. */
   autoResize?: boolean
   /** Whether this {@link GPUCurtains} instance should listen to scroll event or not. */
