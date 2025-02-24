@@ -98,6 +98,23 @@ class SpotLight extends Light {
     }
   }
   /**
+   * Get this {@link SpotLight} intensity.
+   * @returns - The {@link SpotLight} intensity.
+   */
+  get intensity() {
+    return super.intensity;
+  }
+  /**
+   * Set this {@link SpotLight} intensity and clear shadow if intensity is `0`.
+   * @param value - The new {@link SpotLight} intensity.
+   */
+  set intensity(value) {
+    super.intensity = value;
+    if (this.shadow && this.shadow.isActive && !value) {
+      this.shadow.clearDepthTexture();
+    }
+  }
+  /**
    * Set the {@link SpotLight} position and direction based on the {@link target} and the {@link worldMatrix} translation.
    */
   setPositionDirection() {
@@ -105,7 +122,7 @@ class SpotLight extends Light {
     __privateGet(this, _direction).copy(this.target).sub(this.actualPosition).normalize();
     this.onPropertyChanged("direction", __privateGet(this, _direction));
     if (this.shadow) {
-      this.shadow.setDirection(__privateGet(this, _direction));
+      this.shadow.setPosition();
     }
   }
   /**

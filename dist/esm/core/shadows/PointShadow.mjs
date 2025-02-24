@@ -153,8 +153,7 @@ class PointShadow extends Shadow {
   updateViewMatrices() {
     for (let i = 0; i < 6; i++) {
       __privateGet(this, _tempCubeDirection).copy(this.cubeDirections[i]).add(this.camera.actualPosition);
-      this.camera.viewMatrix.makeView(this.camera.actualPosition, __privateGet(this, _tempCubeDirection), this.cubeUps[i]);
-      __privateGet(this, _viewMatrices)[i].copy(this.camera.viewMatrix);
+      __privateGet(this, _viewMatrices)[i].makeView(this.camera.actualPosition, __privateGet(this, _tempCubeDirection), this.cubeUps[i]);
       for (let j = 0; j < 16; j++) {
         this.rendererBinding.childrenBindings[this.index].inputs.viewMatrices.value[i * 16 + j] = __privateGet(this, _viewMatrices)[i].elements[j];
       }
@@ -245,7 +244,7 @@ class PointShadow extends Shadow {
    * @param commandEncoder - {@link GPUCommandEncoder} to use.
    */
   render(commandEncoder) {
-    if (!this.castingMeshes.size) return;
+    if (!this.castingMeshes.size || !this.light.intensity) return;
     let shouldRender = false;
     for (const [_uuid, mesh] of this.castingMeshes) {
       if (mesh.visible) {

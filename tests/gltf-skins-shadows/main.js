@@ -17,6 +17,7 @@ window.addEventListener('load', async () => {
     AmbientLight,
     DirectionalLight,
     PointLight,
+    SpotLight,
     OrbitControls,
     Vec3,
   } = await import(/* @vite-ignore */ path)
@@ -111,30 +112,48 @@ window.addEventListener('load', async () => {
     intensity: 0.1,
   })
 
-  const usePointLight = false
+  let currentLight = 'DirectionalLight'
+  const directLights = []
 
-  let light
-  if (!usePointLight) {
-    light = new DirectionalLight(gpuCameraRenderer, {
-      position: new Vec3(), // will be updated when model changes
-      intensity: 2,
-      shadow: {
-        depthTextureSize: new Vec2(1024),
-        pcfSamples: 3,
-        bias: 0.0001, // will be updated when model changes
-      },
-    })
-  } else {
-    light = new PointLight(gpuCameraRenderer, {
-      position: new Vec3(), // will be updated when model changes
-      intensity: 2,
-      shadow: {
-        depthTextureSize: new Vec2(1024),
-        pcfSamples: 3,
-        bias: 0.0001, // will be updated when model changes
-      },
-    })
-  }
+  const directionalLight = new DirectionalLight(gpuCameraRenderer, {
+    position: new Vec3(), // will be updated when model changes
+    intensity: 2,
+    shadow: {
+      depthTextureSize: new Vec2(1024),
+      pcfSamples: 3,
+      bias: 0.0001, // will be updated when model changes
+      normalBias: 0.001,
+    },
+  })
+
+  directLights.push(directionalLight)
+
+  const pointLight = new PointLight(gpuCameraRenderer, {
+    position: new Vec3(), // will be updated when model changes
+    intensity: 0,
+    shadow: {
+      depthTextureSize: new Vec2(1024),
+      pcfSamples: 3,
+      bias: 0.0001, // will be updated when model changes
+      normalBias: 0.001,
+    },
+  })
+
+  directLights.push(pointLight)
+
+  const spotLight = new SpotLight(gpuCameraRenderer, {
+    position: new Vec3(), // will be updated when model changes
+    intensity: 0,
+    penumbra: 0.5,
+    shadow: {
+      depthTextureSize: new Vec2(1024),
+      pcfSamples: 3,
+      bias: 0.0001, // will be updated when model changes
+      normalBias: 0.001,
+    },
+  })
+
+  directLights.push(spotLight)
 
   // floor
   const floor = new LitMesh(gpuCameraRenderer, {
@@ -239,7 +258,7 @@ window.addEventListener('load', async () => {
     title: 'GLTF loader',
   })
 
-  const currentModelKey = 'skinD'
+  const currentModelKey = 'fox'
   let currentModel = models[currentModelKey]
 
   const modelField = gui
@@ -251,6 +270,21 @@ window.addEventListener('load', async () => {
       }, {})
     )
     .name('Models')
+
+  const lightField = gui
+    .add({ currentLight }, 'currentLight', ['DirectionalLight', 'PointLight', 'SpotLight'])
+    .name('Current light')
+    .onChange((value) => {
+      currentLight = value
+
+      directLights.forEach((light) => {
+        if (light.options.label !== value) {
+          light.intensity = 0
+        } else {
+          light.intensity = value === 'DirectionalLight' ? 2 : light.position.lengthSq() * 6
+        }
+      })
+    })
 
   const envMapField = gui
     .add(
@@ -301,24 +335,31 @@ window.addEventListener('load', async () => {
       target: new Vec3(),
     })
 
-    if (light instanceof DirectionalLight) {
-      light.position.set(radius * 4)
+    // directional light
+    directionalLight.position.set(radius * 4)
+    directionalLight.target.y = radius * 0.5
+    directionalLight.shadow.bias = radius * 0.00001
+    directionalLight.shadow.camera.near = radius * 0.1
+    directionalLight.shadow.camera.far = radius * 10
+    directionalLight.shadow.camera.top = radius * 2
+    directionalLight.shadow.camera.right = radius * 2
+    directionalLight.shadow.camera.bottom = radius * -2
+    directionalLight.shadow.camera.left = radius * -2
 
-      // shadow
-      //light.shadow.bias = radius * 0.00001
-      light.shadow.camera.far = radius * 10
-      light.shadow.camera.top = radius * 2
-      light.shadow.camera.right = radius * 2
-      light.shadow.camera.bottom = radius * -2
-      light.shadow.camera.left = radius * -2
-    } else {
-      light.position.set(radius * 2)
-      const lightPositionLengthSq = light.position.lengthSq()
-      light.intensity = lightPositionLengthSq * 6
+    // point light
+    pointLight.position.set(radius * 1.5)
+    pointLight.intensity = currentLight === 'PointLight' ? pointLight.position.lengthSq() * 6 : 0
+    pointLight.range = radius * 6
+    pointLight.shadow.camera.near = radius * 0.75
+    pointLight.shadow.bias = radius * 0.00001
 
-      // shadow
-      light.shadow.bias = radius * 0.0001
-    }
+    // spot light
+    spotLight.position.set(radius * 1.5)
+    spotLight.intensity = currentLight === 'SpotLight' ? spotLight.position.lengthSq() * 6 : 0
+    spotLight.range = radius * 6
+    spotLight.target.y = radius * 0.5
+    spotLight.shadow.camera.near = radius * 0.75
+    spotLight.shadow.bias = radius * 0.00001
 
     floorPivot.position.y = -size.y * 0.5
     floor.scale.x = radius * 50

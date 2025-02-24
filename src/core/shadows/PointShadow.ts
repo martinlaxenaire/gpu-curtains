@@ -203,8 +203,7 @@ export class PointShadow extends Shadow {
   updateViewMatrices() {
     for (let i = 0; i < 6; i++) {
       this.#tempCubeDirection.copy(this.cubeDirections[i]).add(this.camera.actualPosition)
-      this.camera.viewMatrix.makeView(this.camera.actualPosition, this.#tempCubeDirection, this.cubeUps[i])
-      this.#viewMatrices[i].copy(this.camera.viewMatrix)
+      this.#viewMatrices[i].makeView(this.camera.actualPosition, this.#tempCubeDirection, this.cubeUps[i])
 
       for (let j = 0; j < 16; j++) {
         this.rendererBinding.childrenBindings[this.index].inputs.viewMatrices.value[i * 16 + j] =
@@ -319,7 +318,7 @@ export class PointShadow extends Shadow {
     // we'll be able to use a single render pass
     // to render to all 6 faces of the cube depth map
     // see https://kidrigger.dev/post/vulkan-render-to-cubemap-using-multiview/
-    if (!this.castingMeshes.size) return
+    if (!this.castingMeshes.size || !this.light.intensity) return
 
     let shouldRender = false
     for (const [_uuid, mesh] of this.castingMeshes) {

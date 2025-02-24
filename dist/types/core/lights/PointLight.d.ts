@@ -84,6 +84,16 @@ export declare class PointLight extends Light {
      */
     reset(resetShadow?: boolean): void;
     /**
+     * Get this {@link PointLight} intensity.
+     * @returns - The {@link PointLight} intensity.
+     */
+    get intensity(): number;
+    /**
+     * Set this {@link PointLight} intensity and clear shadow if intensity is `0`.
+     * @param value - The new {@link PointLight} intensity.
+     */
+    set intensity(value: number);
+    /**
      * Get this {@link PointLight} range.
      * @returns - The {@link PointLight} range.
      */

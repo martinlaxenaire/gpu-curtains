@@ -35,10 +35,6 @@ window.addEventListener('load', async () => {
       near: 0.1,
       far: 2000,
     },
-    lights: {
-      // we might overflow the vertex shaders max storages capacity with skinning or morphing
-      useUniformsForShadows: gpuDeviceManager.device.limits.maxStorageBuffersPerShaderStage < 10,
-    },
   })
 
   const { camera } = gpuCameraRenderer

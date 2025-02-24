@@ -34,9 +34,9 @@ export const compareRenderingOptions = (
         return key
       } else if (Array.isArray(newOptions[key]) || typeof newOptions[key] === 'object') {
         // 'targets', 'stencil' properties...
-        return JSON.stringify(newOptions[key]) !== JSON.stringify(baseOptions[key])
+        return JSON.stringify(newOptions[key]) !== JSON.stringify(baseOptions[key]) ? key : false
       } else {
-        return newOptions[key] !== baseOptions[key]
+        return newOptions[key] !== baseOptions[key] ? key : false
       }
     })
     .filter(Boolean) as Array<keyof RenderMaterialRenderingOptions>

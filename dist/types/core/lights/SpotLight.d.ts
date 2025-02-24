@@ -94,6 +94,16 @@ export declare class SpotLight extends Light {
      */
     reset(resetShadow?: boolean): void;
     /**
+     * Get this {@link SpotLight} intensity.
+     * @returns - The {@link SpotLight} intensity.
+     */
+    get intensity(): number;
+    /**
+     * Set this {@link SpotLight} intensity and clear shadow if intensity is `0`.
+     * @param value - The new {@link SpotLight} intensity.
+     */
+    set intensity(value: number);
+    /**
      * Set the {@link SpotLight} position and direction based on the {@link target} and the {@link worldMatrix} translation.
      */
     setPositionDirection(): void;

@@ -5,17 +5,9 @@ import { Texture } from '../textures/Texture.mjs';
 import { getDefaultSpotShadowDepthVs } from '../shaders/full/vertex/get-default-spot-shadow-depth-vertex-shader-code.mjs';
 import { Vec3 } from '../../math/Vec3.mjs';
 
-var __typeError = (msg) => {
-  throw TypeError(msg);
-};
-var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
-var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
-var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
-var _direction;
 const spotShadowStruct = {
   ...shadowStruct,
-  direction: {
+  position: {
     type: "vec3f",
     value: new Vec3()
   },
@@ -54,11 +46,6 @@ class SpotShadow extends Shadow {
       depthTextureFormat,
       autoRender
     });
-    /**
-     * Direction of the parent {@link SpotLight}. Duplicate to avoid adding the {@link SpotLight} binding to vertex shaders.
-     * @private
-     */
-    __privateAdd(this, _direction);
     this.focus = 1;
     this.camera = new PerspectiveCamera({
       near: 0.1,
@@ -73,7 +60,6 @@ class SpotShadow extends Shadow {
     });
     this.camera.position.set(0);
     this.camera.parent = this.light;
-    __privateSet(this, _direction, new Vec3());
   }
   /**
    * Set or reset this {@link SpotShadow} {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
@@ -89,15 +75,13 @@ class SpotShadow extends Shadow {
     super.reset();
     this.onPropertyChanged("projectionMatrix", this.camera.projectionMatrix);
     this.onPropertyChanged("viewMatrix", this.camera.viewMatrix);
-    this.onPropertyChanged("direction", __privateGet(this, _direction));
+    this.setPosition();
   }
   /**
-   * Copy the {@link SpotLight} direction and update binding.
-   * @param direction - {@link SpotLight} direction to copy.
+   * Copy the {@link SpotLight} actual position and update binding.
    */
-  setDirection(direction = new Vec3()) {
-    __privateGet(this, _direction).copy(direction);
-    this.onPropertyChanged("direction", __privateGet(this, _direction));
+  setPosition() {
+    this.onPropertyChanged("position", this.light.actualPosition);
   }
   /**
    * Set the {@link PerspectiveCamera#fov | camera fov} based on the {@link SpotLight#angle | SpotLight angle}.
@@ -145,6 +129,5 @@ class SpotShadow extends Shadow {
     };
   }
 }
-_direction = new WeakMap();
 
 export { SpotShadow, spotShadowStruct };

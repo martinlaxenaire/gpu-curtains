@@ -153,7 +153,6 @@ window.addEventListener('load', async () => {
   spotLight.onBeforeRender(() => {
     //spotLight.position.x = -4 + Math.cos(time) * 0.5
     spotLight.target.x = (Math.cos(spotLight.userData.time) * 0.5 - 0.5) * 4
-    spotLight.shadow.nomalBias = (Math.cos(spotLight.userData.time) * 0.5 + 0.5) * 0.001
     spotLight.userData.time += 0.01
   })
 

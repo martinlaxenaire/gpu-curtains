@@ -5,8 +5,6 @@ import {
   OrbitControls,
   AmbientLight,
   DirectionalLight,
-  getLambert,
-  Mesh,
   LitMesh,
   RenderTarget,
   ShaderPass,
@@ -69,17 +67,12 @@ window.addEventListener('load', async () => {
   // we will add cubes and spheres to our scene
   // they will use a lambert shading
 
-  // the cubes will be rendered in a 'blank' render target pass
-  // that will just render them as is
-  const blankRenderTarget = new RenderTarget(gpuCameraRenderer, {
-    label: 'Blank render target',
-  })
-
-  // the spheres will be rendered in a second separate render target pass
-  // where they will be dithered
+  // the spheres will be rendered in a separate render target
+  // they will be rendered on screen using a pre-pass where they'll be dithered
+  // that way they'll be rendered before the rest of the scene
   const selectiveDitheringTarget = new RenderTarget(gpuCameraRenderer, {
     label: 'Selective bloom render target',
-    depthLoadOp: 'load', // load the depth buffer from the cube 'blank' pass into this pass
+    depthLoadOp: 'load', // load the depth buffer from the cube scene into this pass
   })
 
   const cubeGeometry = new BoxGeometry()
@@ -87,7 +80,7 @@ window.addEventListener('load', async () => {
 
   const sphereColor1 = new Vec3(0, 1, 1)
   const sphereColor2 = new Vec3(1, 0, 1)
-  const cubeColor = new Vec3(0.5)
+  const cubeColor = new Vec3(0.925)
 
   for (let i = 0; i < 50; i++) {
     const isCube = Math.random() > 0.5
@@ -95,7 +88,7 @@ window.addEventListener('load', async () => {
     const mesh = new LitMesh(gpuCameraRenderer, {
       label: isCube ? 'Cube ' + i : 'Sphere ' + i,
       geometry: isCube ? cubeGeometry : sphereGeometry,
-      outputTarget: isCube ? blankRenderTarget : selectiveDitheringTarget,
+      outputTarget: isCube ? null : selectiveDitheringTarget,
       material: {
         shading: 'Lambert',
         color: isCube ? cubeColor : Math.random() > 0.5 ? sphereColor1 : sphereColor2,
@@ -117,12 +110,6 @@ window.addEventListener('load', async () => {
       mesh.rotation.z += rotationSpeed
     })
   }
-
-  // blank pass, just render the cubes
-  const blankCubePass = new ShaderPass(gpuCameraRenderer, {
-    label: 'Blank pass',
-    inputTarget: blankRenderTarget,
-  })
 
   // render the spheres on top with a dithering pass
   // from https://www.shadertoy.com/view/ltSSzW
@@ -207,6 +194,7 @@ window.addEventListener('load', async () => {
   const ditherPass = new ShaderPass(gpuCameraRenderer, {
     label: 'Selective dither pass',
     inputTarget: selectiveDitheringTarget,
+    prePass: true, // render before cubes
     shaders: {
       fragment: {
         code: ditherFs,
