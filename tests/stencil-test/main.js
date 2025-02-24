@@ -307,7 +307,7 @@ window.addEventListener('load', async () => {
           red: 1,
           green: 0.325,
           blue: 0.325,
-          useConstants: true,
+          useConstants: false,
         },
         code: `
           @fragment fn main() -> @location(0) vec4f {

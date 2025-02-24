@@ -28,7 +28,7 @@ var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read fr
 var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
 var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
 var __privateMethod = (obj, member, method) => (__accessCheck(obj, member, "access private method"), method);
-var _primitiveInstances, _GLTFScenesManager_instances, getSparseAccessorIndicesAndValues_fn, parsePrimitiveProperty_fn;
+var _primitiveInstances, _GLTFScenesManager_instances, getAccessorArray_fn, getSparseAccessorIndicesAndValues_fn, parsePrimitiveProperty_fn;
 const GL = WebGLRenderingContext;
 const _GLTFScenesManager = class _GLTFScenesManager {
   /**
@@ -551,16 +551,7 @@ const _GLTFScenesManager = class _GLTFScenesManager {
         };
         for (const attribute of Object.entries(attributes)) {
           const accessor = this.gltf.accessors[attribute[1]];
-          const bufferView = this.gltf.bufferViews[accessor.bufferView];
-          const accessorConstructor = _GLTFScenesManager.getTypedArrayConstructorFromComponentType(
-            accessor.componentType
-          );
-          const attributeSize = _GLTFScenesManager.getVertexAttributeParamsFromType(accessor.type).size;
-          const attributeValues = new accessorConstructor(
-            this.gltf.arrayBuffers[bufferView.buffer],
-            accessor.byteOffset + bufferView.byteOffset,
-            accessor.count * attributeSize
-          );
+          const attributeValues = __privateMethod(this, _GLTFScenesManager_instances, getAccessorArray_fn).call(this, accessor);
           instanceAttributes.count = accessor.count;
           instanceAttributes.nodesTransformations[attribute[0].toLowerCase()] = attributeValues;
         }
@@ -671,25 +662,9 @@ const _GLTFScenesManager = class _GLTFScenesManager {
             const sampler = animation.samplers[channel.sampler];
             const path = channel.target.path;
             const inputAccessor = this.gltf.accessors[sampler.input];
-            const inputBufferView = this.gltf.bufferViews[inputAccessor.bufferView];
-            const inputTypedArrayConstructor = _GLTFScenesManager.getTypedArrayConstructorFromComponentType(
-              inputAccessor.componentType
-            );
+            const keyframes = __privateMethod(this, _GLTFScenesManager_instances, getAccessorArray_fn).call(this, inputAccessor);
             const outputAccessor = this.gltf.accessors[sampler.output];
-            const outputBufferView = this.gltf.bufferViews[outputAccessor.bufferView];
-            const outputTypedArrayConstructor = _GLTFScenesManager.getTypedArrayConstructorFromComponentType(
-              outputAccessor.componentType
-            );
-            const keyframes = new inputTypedArrayConstructor(
-              this.gltf.arrayBuffers[inputBufferView.buffer],
-              inputAccessor.byteOffset + inputBufferView.byteOffset,
-              inputAccessor.count * _GLTFScenesManager.getVertexAttributeParamsFromType(inputAccessor.type).size
-            );
-            const values = new outputTypedArrayConstructor(
-              this.gltf.arrayBuffers[outputBufferView.buffer],
-              outputAccessor.byteOffset + outputBufferView.byteOffset,
-              outputAccessor.count * _GLTFScenesManager.getVertexAttributeParamsFromType(outputAccessor.type).size
-            );
+            const values = __privateMethod(this, _GLTFScenesManager_instances, getAccessorArray_fn).call(this, outputAccessor);
             const animName = node.name ? `${node.name} animation` : `${channel.target.path} animation ${index}`;
             const keyframesAnimation = new KeyframesAnimation({
               label: animation.name ? `${animation.name} ${animName}` : `Animation ${i} ${animName}`,
@@ -758,6 +733,12 @@ const _GLTFScenesManager = class _GLTFScenesManager {
       const arrayBuffer = this.gltf.arrayBuffers[bufferView.buffer];
       const arrayLength = Math.ceil(accessor.count / bytesPerElement) * bytesPerElement;
       indicesArray = indicesConstructor.name === "Uint8Array" ? Uint16Array.from(new indicesConstructor(arrayBuffer, arrayOffset, arrayLength)) : new indicesConstructor(arrayBuffer, arrayOffset, arrayLength);
+      if (accessor.sparse) {
+        const { indices, values } = __privateMethod(this, _GLTFScenesManager_instances, getSparseAccessorIndicesAndValues_fn).call(this, accessor);
+        for (let i = 0; i < indices.length; i++) {
+          indicesArray[indices[i]] = values[i];
+        }
+      }
     }
     const hasNormal = defaultAttributes.find((attribute) => attribute.name === "normal");
     if (!hasNormal) {
@@ -807,15 +788,7 @@ const _GLTFScenesManager = class _GLTFScenesManager {
         let matrices;
         if (skin.inverseBindMatrices) {
           const matricesAccessor = this.gltf.accessors[skin.inverseBindMatrices];
-          const matricesBufferView = this.gltf.bufferViews[matricesAccessor.bufferView];
-          const matricesTypedArrayConstructor = _GLTFScenesManager.getTypedArrayConstructorFromComponentType(
-            matricesAccessor.componentType
-          );
-          matrices = new matricesTypedArrayConstructor(
-            this.gltf.arrayBuffers[matricesBufferView.buffer],
-            matricesAccessor.byteOffset + matricesBufferView.byteOffset,
-            matricesAccessor.count * _GLTFScenesManager.getVertexAttributeParamsFromType(matricesAccessor.type).size
-          );
+          matrices = __privateMethod(this, _GLTFScenesManager_instances, getAccessorArray_fn).call(this, matricesAccessor);
         } else {
           matrices = new Float32Array(16 * skin.joints.length);
           for (let i = 0; i < skin.joints.length * 16; i += 16) {
@@ -1358,6 +1331,31 @@ const _GLTFScenesManager = class _GLTFScenesManager {
 _primitiveInstances = new WeakMap();
 _GLTFScenesManager_instances = new WeakSet();
 /**
+ * Get a {@link TypedArray} from an accessor patched with sparse values if needed.
+ * @param accessor - {@link GLTF.IAccessor | Accessor} to get the array from.
+ * @returns - {@link TypedArray} holding the referent accessor values, patched with sparse values if needed.
+ * @private
+ */
+getAccessorArray_fn = function(accessor) {
+  const constructor = accessor.componentType ? _GLTFScenesManager.getTypedArrayConstructorFromComponentType(accessor.componentType) : Float32Array;
+  const attrSize = _GLTFScenesManager.getVertexAttributeParamsFromType(accessor.type).size;
+  const bufferView = this.gltf.bufferViews[accessor.bufferView];
+  const array = new constructor(
+    this.gltf.arrayBuffers[bufferView.buffer],
+    accessor.byteOffset + bufferView.byteOffset,
+    accessor.count * attrSize
+  );
+  if (accessor.sparse) {
+    const { indices, values } = __privateMethod(this, _GLTFScenesManager_instances, getSparseAccessorIndicesAndValues_fn).call(this, accessor);
+    for (let i = 0; i < indices.length; i++) {
+      for (let j = 0; j < attrSize; j++) {
+        array[indices[i] * attrSize + j] = values[i * attrSize + j];
+      }
+    }
+  }
+  return array;
+};
+/**
  * Get an accessor sparse indices values to use for replacement if any.
  * @param accessor - {@link GLTF.IAccessor | Accessor} to check for sparse indices.
  * @returns parameters - indices and values found as {@link TypedArray} if any.
@@ -1367,6 +1365,12 @@ getSparseAccessorIndicesAndValues_fn = function(accessor) {
   if (!accessor.sparse) return { indices: null, values: null };
   const accessorConstructor = _GLTFScenesManager.getTypedArrayConstructorFromComponentType(accessor.componentType);
   const attrSize = _GLTFScenesManager.getVertexAttributeParamsFromType(accessor.type).size;
+  const sparseValuesBufferView = this.gltf.bufferViews[accessor.sparse.values.bufferView];
+  const sparseValues = new accessorConstructor(
+    this.gltf.arrayBuffers[sparseValuesBufferView.buffer],
+    accessor.byteOffset + sparseValuesBufferView.byteOffset,
+    accessor.sparse.count * attrSize
+  );
   const sparseIndicesConstructor = _GLTFScenesManager.getTypedArrayConstructorFromComponentType(
     accessor.sparse.indices.componentType
   );
@@ -1375,12 +1379,6 @@ getSparseAccessorIndicesAndValues_fn = function(accessor) {
     this.gltf.arrayBuffers[sparseIndicesBufferView.buffer],
     accessor.byteOffset + sparseIndicesBufferView.byteOffset,
     accessor.sparse.count
-  );
-  const sparseValuesBufferView = this.gltf.bufferViews[accessor.sparse.values.bufferView];
-  const sparseValues = new accessorConstructor(
-    this.gltf.arrayBuffers[sparseValuesBufferView.buffer],
-    accessor.byteOffset + sparseValuesBufferView.byteOffset,
-    accessor.sparse.count * attrSize
   );
   return {
     indices: sparseIndices,

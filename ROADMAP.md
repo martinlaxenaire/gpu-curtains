@@ -30,16 +30,11 @@
 - GLTFLoader + GLTFScenesManager
 - HDRLoader + EnvironmentMap
 
-## Work in progress
-
-- Examples & tests
-
 ## TODO / possible improvements
 
 - Improve/add more GLTFScenesManager extensions
-- OrthographicCamera?
-- Add more lights (SpotLight...)
 - MSDF fonts
 - Eventual shader custom preprocessor?
 - Improve typedoc documentation?
+- Cascaded shadow maps/Variance shadow maps?
 - More examples & tests?
