@@ -1,4 +1,6 @@
-const GL = WebGLRenderingContext;
+const GL = typeof window !== "undefined" && WebGLRenderingContext || {
+  REPEAT: 10497
+};
 const GLB_MAGIC = 1179937895;
 const CHUNK_TYPE = {
   JSON: 1313821514,

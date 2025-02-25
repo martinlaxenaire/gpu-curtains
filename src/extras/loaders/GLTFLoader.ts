@@ -22,7 +22,10 @@ export interface GPUCurtainsGLTF extends Omit<GLTF.IGLTF, 'extensions'> {
 
 // https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Constants
 // To make it easier to reference the WebGL enums that glTF uses.
-const GL = WebGLRenderingContext
+// avoid breaking in case of import in node
+const GL = (typeof window !== 'undefined' && WebGLRenderingContext) || {
+  REPEAT: 10497,
+}
 
 const GLB_MAGIC = 0x46546c67
 const CHUNK_TYPE = {
