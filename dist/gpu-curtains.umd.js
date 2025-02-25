@@ -16194,8 +16194,8 @@ ${this.shaders.compute.head}`;
      */
     resize(rectBBox = null) {
       this.setSize(rectBBox);
-      this._onResizeCallback && this._onResizeCallback();
       this.resizeCamera();
+      this._onResizeCallback && this._onResizeCallback();
       this.resizeObjects();
       this._onAfterResizeCallback && this._onAfterResizeCallback();
     }

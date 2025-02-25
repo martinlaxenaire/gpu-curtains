@@ -922,9 +922,9 @@ export class GPUCameraRenderer extends GPURenderer {
   resize(rectBBox: RectBBox | null = null) {
     this.setSize(rectBBox)
 
-    this._onResizeCallback && this._onResizeCallback()
-
     this.resizeCamera()
+
+    this._onResizeCallback && this._onResizeCallback()
 
     this.resizeObjects()
 
