@@ -8,6 +8,11 @@ import {
   GLTFScenesManager,
   OrbitControls,
   Vec3,
+  Mat4,
+  constants,
+  common,
+  toneMappingUtils,
+  FullscreenPlane,
 } from '../../dist/esm/index.mjs'
 
 // glTF loader with environment maps and IBL shaders
@@ -30,6 +35,10 @@ window.addEventListener('load', async () => {
     camera: {
       near: 0.01,
       far: 2000,
+    },
+    context: {
+      format: 'rgba16float', // allow HDR output for specular skybox
+      toneMapping: { mode: 'extended' },
     },
   })
 
@@ -84,6 +93,10 @@ window.addEventListener('load', async () => {
     flightHelmet: {
       name: 'Flight Helmet',
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/FlightHelmet/glTF/FlightHelmet.gltf',
+    },
+    dragonAttenuation: {
+      name: 'Dragon Attenuation',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/DragonAttenuation/glTF/DragonAttenuation.gltf',
     },
     optimizedSponza: {
       name: 'Sponza (optimized / interleaved)',
@@ -162,6 +175,81 @@ window.addEventListener('load', async () => {
     })
   }
 
+  // SKYBOX
+  // sky box
+  const skyBoxFs = /* wgsl */ `
+    struct VSOutput {
+      @builtin(position) position: vec4f,
+      @location(0) uv: vec2f,
+    };
+    
+    ${constants}
+    ${common}
+    ${toneMappingUtils}
+    
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
+      var uv: vec2f = fsInput.uv;
+      uv.y = 1.0 - uv.y;
+      
+      uv = uv * 2.0 - 1.0;
+      
+      var position: vec4f = params.inverseViewProjectionMatrix * vec4(uv, 1.0, 1.0);
+      let samplePosition: vec3f = normalize(position.xyz / position.w);
+      
+      var color: vec4f = select(
+        textureSample(${environmentMap.specularTexture.options.name}, clampSampler, samplePosition * params.envRotation),
+        textureSample(${environmentMap.diffuseTexture.options.name}, clampSampler, samplePosition * params.envRotation),
+        params.useSpecular < 1
+      );
+      
+      color = vec4(KhronosToneMapping(color.rgb), color.a);
+      color = linearTosRGB_4(color);
+      
+      return color;
+    }
+  `
+
+  const skybox = new FullscreenPlane(gpuCameraRenderer, {
+    textures: [environmentMap.specularTexture, environmentMap.diffuseTexture],
+    samplers: [environmentMap.sampler],
+    shaders: {
+      fragment: {
+        code: skyBoxFs,
+      },
+    },
+    uniforms: {
+      params: {
+        struct: {
+          envRotation: {
+            type: 'mat3x3f',
+            value: environmentMap.rotationMatrix,
+          },
+          inverseViewProjectionMatrix: {
+            type: 'mat4x4f',
+            value: new Mat4()
+              .multiplyMatrices(gpuCameraRenderer.camera.projectionMatrix, gpuCameraRenderer.camera.viewMatrix)
+              .invert(),
+          },
+          useSpecular: {
+            type: 'u32',
+            value: 0,
+          },
+        },
+      },
+    },
+  })
+
+  skybox.onRender(() => {
+    skybox.uniforms.params.inverseViewProjectionMatrix.value
+      .multiplyMatrices(gpuCameraRenderer.camera.projectionMatrix, gpuCameraRenderer.camera.viewMatrix)
+      .invert()
+
+    skybox.uniforms.params.envRotation.value = environmentMap.rotationMatrix
+
+    // explicitly tell the uniform to update
+    skybox.uniforms.params.inverseViewProjectionMatrix.shouldUpdate = true
+  })
+
   // GUI
   const gui = new lil.GUI({
     title: 'GLTF loader',
@@ -207,6 +295,13 @@ window.addEventListener('load', async () => {
       }
     })
     .name('Environment maps')
+
+  const envMapBackgroundField = gui
+    .add({ background: 0 }, 'background', { Diffuse: 0, Specular: 1 })
+    .name('Skybox background')
+    .onChange((value) => {
+      skybox.uniforms.params.useSpecular.value = value
+    })
 
   gui
     .add({ shadingModel }, 'shadingModel', ['PBR', 'Phong', 'Lambert'])
