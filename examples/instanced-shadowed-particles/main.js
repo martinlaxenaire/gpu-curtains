@@ -346,7 +346,6 @@ window.addEventListener('load', async () => {
   })
 
   const setWrappingBoxScale = () => {
-    console.log(visibleSize.width)
     wrappingBox.scale.x = visibleSize.width * 0.5
     wrappingBox.scale.y = visibleSize.height * 0.5
   }
