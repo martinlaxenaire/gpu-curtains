@@ -43,7 +43,7 @@ window.addEventListener('load', async () => {
   let time = 0
 
   mesh.onBeforeRender(() => {
-    //mesh.rotationMatrix.x += 0.005
+    //mesh.rotation.x += 0.005
     mesh.rotation.y += 0.02
 
     mesh.position.x = Math.cos(time * 0.02) * 2

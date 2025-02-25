@@ -89,7 +89,7 @@
     height: 5vw;
     border-radius: 50%;
     clip-path: inset(0 100% 0 0);
-    transition: clip-path 0.5s 0.125s ease-in-out;
+    transition: clip-path 1s 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .text-section.is-visible .text-section-main-title span::after {

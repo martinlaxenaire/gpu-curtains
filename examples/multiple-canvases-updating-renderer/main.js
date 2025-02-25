@@ -110,7 +110,7 @@ window.addEventListener('load', async () => {
     // random distance
     cubeMesh.position.x = systemSize * 0.625 + Math.random() * systemSize * 0.5
 
-    // random rotationMatrix speed
+    // random rotation speed
     const rotationSpeed = new Vec3(
       (Math.random() * 0.01 + 0.005) * Math.sign(Math.random() - 0.5),
       (Math.random() * 0.01 + 0.005) * Math.sign(Math.random() - 0.5),
