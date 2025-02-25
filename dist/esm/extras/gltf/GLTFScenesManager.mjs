@@ -29,7 +29,26 @@ var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot
 var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
 var __privateMethod = (obj, member, method) => (__accessCheck(obj, member, "access private method"), method);
 var _primitiveInstances, _GLTFScenesManager_instances, getAccessorArray_fn, getSparseAccessorIndicesAndValues_fn, parsePrimitiveProperty_fn;
-const GL = WebGLRenderingContext;
+const GL = typeof window !== "undefined" && WebGLRenderingContext || {
+  BYTE: 5120,
+  UNSIGNED_BYTE: 5121,
+  SHORT: 5122,
+  UNSIGNED_SHORT: 5123,
+  UNSIGNED_INT: 5125,
+  FLOAT: 5126,
+  TRIANGLES: 4,
+  TRIANGLE_STRIP: 5,
+  LINES: 1,
+  LINE_STRIP: 3,
+  POINTS: 0,
+  CLAMP_TO_EDGE: 33071,
+  MIRRORED_REPEAT: 33648,
+  NEAREST: 9728,
+  LINEAR: 9729,
+  LINEAR_MIPMAP_NEAREST: 9985,
+  NEAREST_MIPMAP_LINEAR: 9986,
+  LINEAR_MIPMAP_LINEAR: 9987
+};
 const _GLTFScenesManager = class _GLTFScenesManager {
   /**
    * {@link GLTFScenesManager} constructor.
