@@ -25,7 +25,7 @@ window.addEventListener('load', async () => {
   pivot.parent = gpuCameraRenderer.scene
 
   // pivot.quaternion.setAxisOrder('ZXY')
-  // pivot.rotationMatrix.z = Math.PI / 2
+  // pivot.rotation.z = Math.PI / 2
 
   gpuCameraRenderer.camera.position.z = 25
   const orbitControls = new OrbitControls(gpuCameraRenderer)

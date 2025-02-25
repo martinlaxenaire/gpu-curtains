@@ -116,7 +116,7 @@ window.addEventListener('load', async () => {
     node.position.sub(center)
     node.parent = parentNode
 
-    // reset parent node rotationMatrix
+    // reset parent node rotation
     parentNode.rotation.y = 0
 
     // set the new DOM element aspect ratio

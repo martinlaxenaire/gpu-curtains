@@ -71,7 +71,7 @@ export class GLTFExample {
     node.position.sub(center)
     node.parent = this.parentNode
 
-    // reset parent node rotationMatrix
+    // reset parent node rotation
     this.parentNode.rotation.y = 0
 
     // copy new scenes bounding box into DOMObject3D own bounding box

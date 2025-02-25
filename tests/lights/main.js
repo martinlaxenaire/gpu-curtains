@@ -186,15 +186,15 @@ window.addEventListener('load', async () => {
 
   mesh
     .onBeforeRender(() => {
-      // mesh.rotationMatrix.x += 0.01
-      // mesh.rotationMatrix.y += 0.02
+      // mesh.rotation.x += 0.01
+      // mesh.rotation.y += 0.02
     })
     .onReady(() => {
       console.log(mesh.material.getAddedShaderCode('fragment'))
     })
 
-  // mesh.rotationMatrix.x = 0.5
-  // mesh.rotationMatrix.y = -1
+  // mesh.rotation.x = 0.5
+  // mesh.rotation.y = -1
 
   console.log(mesh, gpuCameraRenderer)
 

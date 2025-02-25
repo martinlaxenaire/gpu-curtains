@@ -147,6 +147,10 @@ window.addEventListener('load', async () => {
 
   mesh.position.y = 0.5
 
+  mesh.onBeforeRender(() => {
+    mesh.rotation.y += 0.005
+  })
+
   const floorPivot = new Object3D()
   floorPivot.parent = gpuCameraRenderer.scene
 
