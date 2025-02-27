@@ -576,7 +576,7 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
         label: 'Matrices',
         name: 'matrices',
         visibility: ['vertex', 'fragment'],
-        minOffset: this.renderer.device.limits.minUniformBufferOffsetAlignment,
+        minOffset: this.renderer.device ? this.renderer.device.limits.minUniformBufferOffsetAlignment : 256,
         struct: {
           model: {
             type: 'mat4x4f',

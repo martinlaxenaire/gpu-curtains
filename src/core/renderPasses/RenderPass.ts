@@ -193,6 +193,15 @@ export class RenderPass {
       stencilReadOnly,
     }
 
+    if (this.renderer.device) {
+      this.init()
+    }
+  }
+
+  /**
+   * Initialize the {@link RenderPass} textures and descriptor.
+   */
+  init() {
     // if needed, create a depth texture before our descriptor
     if (this.options.useDepth) {
       this.createDepthTexture()
@@ -438,6 +447,8 @@ export class RenderPass {
    * Resize our {@link RenderPass}: reset its {@link Texture}.
    */
   resize() {
+    if (!this.renderer.device) return
+
     // reassign textures
     // they have actually been resized beforehand by the renderer
     if (this.options.useDepth) {

@@ -80,22 +80,22 @@ export declare class GPUCurtains {
      * Patch the options with default values before creating a {@link Renderer}.
      * @param parameters - Parameters to patch.
      */
-    patchRendererOptions<T extends GPURendererParams | GPUCameraRendererParams>(parameters: T): T;
+    patchRendererOptions<T extends Omit<GPURendererParams | GPUCameraRendererParams, 'deviceManager'>>(parameters: T): T;
     /**
      * Create a new {@link GPURenderer} instance.
      * @param parameters - {@link GPURendererParams | parameters} to use.
      */
-    createRenderer(parameters: GPURendererParams): GPURenderer;
+    createRenderer(parameters: Omit<GPURendererParams, 'deviceManager'>): GPURenderer;
     /**
      * Create a new {@link GPUCameraRenderer} instance.
      * @param parameters - {@link GPUCameraRendererParams | parameters} to use.
      */
-    createCameraRenderer(parameters: GPUCameraRendererParams): GPUCameraRenderer;
+    createCameraRenderer(parameters: Omit<GPUCameraRendererParams, 'deviceManager'>): GPUCameraRenderer;
     /**
      * Create a new {@link GPUCurtainsRenderer} instance.
      * @param parameters - {@link GPUCameraRendererParams | parameters} to use.
      */
-    createCurtainsRenderer(parameters: GPUCameraRendererParams): GPUCurtainsRenderer;
+    createCurtainsRenderer(parameters: Omit<GPUCameraRendererParams, 'deviceManager'>): GPUCurtainsRenderer;
     /**
      * Set our {@link GPUDeviceManager}.
      */

@@ -86,6 +86,14 @@ class RenderPass {
       stencilStoreOp,
       stencilReadOnly
     };
+    if (this.renderer.device) {
+      this.init();
+    }
+  }
+  /**
+   * Initialize the {@link RenderPass} textures and descriptor.
+   */
+  init() {
     if (this.options.useDepth) {
       this.createDepthTexture();
     }
@@ -290,6 +298,7 @@ class RenderPass {
    * Resize our {@link RenderPass}: reset its {@link Texture}.
    */
   resize() {
+    if (!this.renderer.device) return;
     if (this.options.useDepth) {
       this.descriptor.depthStencilAttachment.view = this.depthTexture.texture.createView({
         label: this.depthTexture.options.label + " view"

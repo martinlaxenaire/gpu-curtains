@@ -3927,7 +3927,7 @@
       this.renderer = renderer;
       this.uuid = generateUUID();
       this.options = { ...defaultTextureParams, ...parameters };
-      if (this.options.format === "rgba32float" && !this.renderer.device.features.has("float32-filterable")) {
+      if (this.options.format === "rgba32float" && this.renderer.device && !this.renderer.device.features.has("float32-filterable")) {
         this.options.format = "rgba16float";
       }
       if (parameters.fromTexture) {
@@ -8470,6 +8470,14 @@
         stencilStoreOp,
         stencilReadOnly
       };
+      if (this.renderer.device) {
+        this.init();
+      }
+    }
+    /**
+     * Initialize the {@link RenderPass} textures and descriptor.
+     */
+    init() {
       if (this.options.useDepth) {
         this.createDepthTexture();
       }
@@ -8674,6 +8682,7 @@
      * Resize our {@link RenderPass}: reset its {@link Texture}.
      */
     resize() {
+      if (!this.renderer.device) return;
       if (this.options.useDepth) {
         this.descriptor.depthStencilAttachment.view = this.depthTexture.texture.createView({
           label: this.depthTexture.options.label + " view"
@@ -11265,7 +11274,7 @@ fn getPCFBaseShadowContribution(
           label: "Matrices",
           name: "matrices",
           visibility: ["vertex", "fragment"],
-          minOffset: this.renderer.device.limits.minUniformBufferOffsetAlignment,
+          minOffset: this.renderer.device ? this.renderer.device.limits.minUniformBufferOffsetAlignment : 256,
           struct: {
             model: {
               type: "mat4x4f",
@@ -14672,7 +14681,7 @@ ${this.shaders.compute.head}`;
       const contextOptions = {
         ...{
           alphaMode: "premultiplied",
-          format: this.deviceManager.gpu?.getPreferredCanvasFormat()
+          format: this.deviceManager.gpu?.getPreferredCanvasFormat() || "bgra8unorm"
         },
         ...context
       };
@@ -14702,6 +14711,7 @@ ${this.shaders.compute.head}`;
       this.setScene();
       this.setTasksQueues();
       this.setRendererObjects();
+      this.setMainRenderPasses();
       if (!isOffscreenCanvas) {
         this.domElement = new DOMElement({
           element: container,
@@ -14974,13 +14984,14 @@ ${this.shaders.compute.head}`;
       });
     }
     /**
-     * Set our {@link context} if possible and set {@link renderPass | main render pass} and {@link scene}.
+     * Set our {@link context} if possible and initialize the {@link renderPass} and {@link postProcessingPass}.
      */
     setContext() {
       this.context = this.canvas.getContext("webgpu");
       if (this.device) {
         this.configureContext();
-        this.setMainRenderPasses();
+        this.renderPass.init();
+        this.postProcessingPass.init();
       }
     }
     /**
@@ -20673,7 +20684,6 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
      */
     setMainRenderer() {
       this.createCurtainsRenderer({
-        deviceManager: this.deviceManager,
         // TODO ...this.options?
         label: this.options.label || "GPUCurtains main GPUCurtainsRenderer",
         container: this.options.container,

@@ -222,7 +222,7 @@ export class GPURenderer {
     const contextOptions = {
       ...{
         alphaMode: 'premultiplied' as GPUCanvasAlphaMode,
-        format: this.deviceManager.gpu?.getPreferredCanvasFormat(),
+        format: this.deviceManager.gpu?.getPreferredCanvasFormat() || 'bgra8unorm',
       },
       ...context,
     }
@@ -263,6 +263,7 @@ export class GPURenderer {
     this.setScene()
     this.setTasksQueues()
     this.setRendererObjects()
+    this.setMainRenderPasses()
 
     if (!isOffscreenCanvas) {
       // needed to get container bounding box
@@ -593,7 +594,7 @@ export class GPURenderer {
   }
 
   /**
-   * Set our {@link context} if possible and set {@link renderPass | main render pass} and {@link scene}.
+   * Set our {@link context} if possible and initialize the {@link renderPass} and {@link postProcessingPass}.
    */
   setContext() {
     this.context = this.canvas.getContext('webgpu')
@@ -601,7 +602,8 @@ export class GPURenderer {
     if (this.device) {
       this.configureContext()
 
-      this.setMainRenderPasses()
+      this.renderPass.init()
+      this.postProcessingPass.init()
     }
   }
 

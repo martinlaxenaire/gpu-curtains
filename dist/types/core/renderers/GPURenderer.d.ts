@@ -242,7 +242,7 @@ export declare class GPURenderer {
      */
     configureContext(): void;
     /**
-     * Set our {@link context} if possible and set {@link renderPass | main render pass} and {@link scene}.
+     * Set our {@link context} if possible and initialize the {@link renderPass} and {@link postProcessingPass}.
      */
     setContext(): void;
     /**

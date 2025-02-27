@@ -43,7 +43,7 @@ class Texture {
     this.renderer = renderer;
     this.uuid = generateUUID();
     this.options = { ...defaultTextureParams, ...parameters };
-    if (this.options.format === "rgba32float" && !this.renderer.device.features.has("float32-filterable")) {
+    if (this.options.format === "rgba32float" && this.renderer.device && !this.renderer.device.features.has("float32-filterable")) {
       this.options.format = "rgba16float";
     }
     if (parameters.fromTexture) {
