@@ -359,8 +359,12 @@ class GPURenderer {
     this.context = this.canvas.getContext("webgpu");
     if (this.device) {
       this.configureContext();
-      this.renderPass.init();
-      this.postProcessingPass.init();
+      this.textures.forEach((texture) => {
+        if (!texture.texture) {
+          texture.createTexture();
+        }
+      });
+      this.renderPasses.forEach((renderPass) => renderPass.init());
     }
   }
   /**
@@ -719,6 +723,7 @@ class GPURenderer {
     this.computePasses = [];
     this.pingPongPlanes = [];
     this.shaderPasses = [];
+    this.renderPasses = /* @__PURE__ */ new Map();
     this.renderTargets = [];
     this.meshes = [];
     this.textures = [];

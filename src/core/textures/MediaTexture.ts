@@ -368,7 +368,7 @@ export class MediaTexture extends Texture {
    * Create the {@link GPUTexture | texture} (or copy it from source) and update the {@link TextureBinding#resource | binding resource}.
    */
   createTexture() {
-    if (!this.size.width || !this.size.height) return
+    if (!this.renderer.device || !this.size.width || !this.size.height) return
 
     // copy the GPU texture only if
     // - it's not a MediaTexture

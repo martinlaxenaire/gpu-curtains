@@ -713,7 +713,7 @@ export class GPUCameraRenderer extends GPURenderer {
    * @returns - All {@link ShadowCastingLights | lights that can cast shadows}.
    */
   get shadowCastingLights(): ShadowCastingLights[] {
-    return this.lights.filter(
+    return this.lights?.filter(
       (light) => light.type === 'directionalLights' || light.type === 'pointLights' || light.type === 'spotLights'
     ) as ShadowCastingLights[]
   }

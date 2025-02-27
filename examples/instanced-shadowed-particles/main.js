@@ -34,7 +34,7 @@ window.addEventListener('load', async () => {
   })
 
   // wait for the device to be created
-  await gpuDeviceManager.init()
+  gpuDeviceManager.init()
 
   // create a camera renderer
   const renderer = new GPUCameraRenderer({

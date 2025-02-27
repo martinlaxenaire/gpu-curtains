@@ -295,7 +295,7 @@ export class RenderBundle {
    * @private
    */
   #patchBindingOffset(size: number) {
-    const minOffset = this.renderer.device.limits.minUniformBufferOffsetAlignment
+    const minOffset = this.renderer.device?.limits.minUniformBufferOffsetAlignment || 256
 
     // patch minimum uniform buffer offset
     if (this.binding.arrayBufferSize < size * minOffset) {
@@ -363,7 +363,7 @@ export class RenderBundle {
    * @returns - Whether our {@link RenderBundle} is ready.
    */
   get ready(): boolean {
-    return this.#ready
+    return this.renderer.ready && this.#ready
   }
 
   /**
@@ -372,26 +372,42 @@ export class RenderBundle {
    */
   set ready(value: boolean) {
     if (value && !this.ready) {
-      // set the new size
-      // can eventually resize the buffer
-      this.size = this.meshes.size
+      const init = () => {
+        // set the new size
+        // can eventually resize the buffer
+        this.size = this.meshes.size
 
-      if (this.options.useIndirectDraw) {
-        this.meshes.forEach((mesh) => {
-          this.indirectBuffer.addGeometry(mesh.geometry)
-        })
+        if (this.options.useIndirectDraw) {
+          this.meshes.forEach((mesh) => {
+            this.indirectBuffer.addGeometry(mesh.geometry)
+          })
 
-        this.indirectBuffer.create()
+          this.indirectBuffer.create()
+        }
+
+        // finally ready
+        this.#encodeRenderCommands()
+        this.#ready = value
       }
 
-      // finally ready
-      this.#encodeRenderCommands()
+      if (this.renderer.device) {
+        init()
+      } else {
+        const taskId = this.renderer.onBeforeCommandEncoderCreation.add(
+          () => {
+            if (this.renderer.device) {
+              this.renderer.onBeforeCommandEncoderCreation.remove(taskId)
+              init()
+            }
+          },
+          { once: false }
+        )
+      }
     } else if (!value && this.ready) {
       // invalidate
       this.bundle = null
+      this.#ready = value
     }
-
-    this.#ready = value
   }
 
   /**
@@ -565,6 +581,8 @@ export class RenderBundle {
    * @param pass - {@link GPURenderPassEncoder} to use.
    */
   render(pass: GPURenderPassEncoder) {
+    if (!this.renderer.ready) return
+
     // render bundle ready, render meshes
     if (this.ready && this.bundle && this.visible) {
       this.meshes.forEach((mesh) => {

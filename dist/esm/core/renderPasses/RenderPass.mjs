@@ -86,6 +86,7 @@ class RenderPass {
       stencilStoreOp,
       stencilReadOnly
     };
+    this.renderer.renderPasses.set(this.uuid, this);
     if (this.renderer.device) {
       this.init();
     }
@@ -110,6 +111,9 @@ class RenderPass {
    * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
    */
   setRenderer(renderer) {
+    if (this.renderer) {
+      this.renderer.renderPasses.delete(this.uuid);
+    }
     renderer = isRenderer(renderer, this.options.label + " " + this.type);
     this.renderer = renderer;
     if (this.options.useDepth && !this.options.depthTexture) {
@@ -123,6 +127,7 @@ class RenderPass {
         texture.setRenderer(this.renderer);
       }
     });
+    this.renderer.renderPasses.set(this.uuid, this);
   }
   /**
    * Create and set our {@link depthTexture | depth texture}.
@@ -418,6 +423,7 @@ class RenderPass {
     if (!this.options.depthTexture && this.depthTexture) {
       this.depthTexture.destroy();
     }
+    this.renderer.renderPasses.delete(this.uuid);
   }
 }
 _useStencil = new WeakMap();

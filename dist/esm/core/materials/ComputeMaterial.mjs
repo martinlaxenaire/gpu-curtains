@@ -62,7 +62,7 @@ class ComputeMaterial extends Material {
    */
   async compileMaterial() {
     if (this.ready) return;
-    super.compileMaterial();
+    await super.compileMaterial();
     if (!this.pipelineEntry) {
       this.setPipelineEntry();
     }

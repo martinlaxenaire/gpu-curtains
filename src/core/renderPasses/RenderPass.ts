@@ -193,6 +193,8 @@ export class RenderPass {
       stencilReadOnly,
     }
 
+    this.renderer.renderPasses.set(this.uuid, this)
+
     if (this.renderer.device) {
       this.init()
     }
@@ -223,6 +225,10 @@ export class RenderPass {
    * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
    */
   setRenderer(renderer: Renderer | GPUCurtains) {
+    if (this.renderer) {
+      this.renderer.renderPasses.delete(this.uuid)
+    }
+
     renderer = isRenderer(renderer, this.options.label + ' ' + this.type)
     this.renderer = renderer
 
@@ -239,6 +245,8 @@ export class RenderPass {
         texture.setRenderer(this.renderer)
       }
     })
+
+    this.renderer.renderPasses.set(this.uuid, this)
   }
 
   /**
@@ -586,5 +594,7 @@ export class RenderPass {
     if (!this.options.depthTexture && this.depthTexture) {
       this.depthTexture.destroy()
     }
+
+    this.renderer.renderPasses.delete(this.uuid)
   }
 }

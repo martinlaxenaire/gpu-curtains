@@ -178,7 +178,19 @@ class Shadow {
     if (!value && this.isActive) {
       this.destroy();
     } else if (value && !this.isActive) {
-      this.init();
+      if (this.renderer.ready) {
+        this.init();
+      } else {
+        const taskId = this.renderer.onBeforeCommandEncoderCreation.add(
+          () => {
+            if (this.renderer.ready) {
+              this.renderer.onBeforeCommandEncoderCreation.remove(taskId);
+              this.init();
+            }
+          },
+          { once: false }
+        );
+      }
     }
     __privateSet(this, _isActive, value);
   }
@@ -348,7 +360,11 @@ class Shadow {
    */
   setDepthPass() {
     const renderPassEntry = this.renderer.scene.getRenderTargetPassEntry(this.depthPassTarget);
-    renderPassEntry.useCustomRenderPass = (commandEncoder) => this.render(commandEncoder);
+    renderPassEntry.useCustomRenderPass = (commandEncoder) => {
+      if (this.renderer.ready) {
+        this.render(commandEncoder);
+      }
+    };
   }
   /**
    * Render the depth pass. Called by the {@link CameraRenderer#scene | scene} when rendering the {@link depthPassTarget} render pass entry, or by the {@link renderOnce} method.<br />

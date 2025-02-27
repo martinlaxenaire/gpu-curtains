@@ -76,7 +76,7 @@ export declare class Material {
     /**
      * Check if all bind groups are ready, and create them if needed.
      */
-    compileMaterial(): void;
+    compileMaterial(): Promise<void>;
     /**
      * Get whether the renderer is ready, our pipeline entry and pipeline have been created and successfully compiled.
      * @readonly

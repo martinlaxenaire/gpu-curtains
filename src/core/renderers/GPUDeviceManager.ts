@@ -189,13 +189,15 @@ export class GPUDeviceManager {
 
   /**
    * Set up our {@link adapter} and {@link device} and all the already created {@link renderers} contexts.
-   * @param parameters - {@link GPUAdapter} and/or {@link GPUDevice} to use if set.
+   * @param parameters - {@link GPUAdapter} and/or {@link GPUDevice} to use if set. Allow to use already created adapter and device.
    */
   async init({ adapter = null, device = null }: GPUDeviceManagerSetupParams = {}) {
     await this.setAdapterAndDevice({ adapter, device })
 
     // set context
     if (this.device) {
+      this.#createSamplers()
+
       for (const renderer of this.renderers) {
         if (!renderer.context) {
           renderer.setContext()
@@ -343,15 +345,7 @@ export class GPUDeviceManager {
     await this.setAdapterAndDevice({ adapter, device })
 
     if (this.device) {
-      // now recreate all the samplers
-      this.samplers.forEach((sampler) => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { type, ...samplerOptions } = sampler.options
-        sampler.sampler = this.device.createSampler({
-          label: sampler.label,
-          ...samplerOptions,
-        })
-      })
+      this.#createSamplers()
 
       // recreate indirect buffers
       this.indirectBuffers.forEach((indirectBuffer) => indirectBuffer.create())
@@ -432,6 +426,17 @@ export class GPUDeviceManager {
    */
   removeBuffer(buffer: Buffer) {
     this.buffers.delete(buffer?.uuid)
+  }
+
+  /**
+   * Create or recreate (on device restoration) all {@link samplers}.
+   * @private
+   */
+  #createSamplers() {
+    // create/recreate all the samplers
+    this.samplers.forEach((sampler) => {
+      sampler.createSampler()
+    })
   }
 
   /**
@@ -686,6 +691,7 @@ export class GPUDeviceManager {
 
   /**
    * Render everything:
+   * - call all our {@link onBeforeRender} callback.
    * - call all our {@link renderers} {@link core/renderers/GPURenderer.GPURenderer#onBeforeCommandEncoder | onBeforeCommandEncoder} callbacks.
    * - create a {@link GPUCommandEncoder}.
    * - render all our {@link renderers}.
@@ -693,6 +699,7 @@ export class GPUDeviceManager {
    * - upload {@link MediaTexture#texture | MediaTexture textures} that need it.
    * - empty our {@link texturesQueue} array.
    * - call all our {@link renderers} {@link core/renderers/GPURenderer.GPURenderer#onAfterCommandEncoder | onAfterCommandEncoder} callbacks.
+   * - call all our {@link onAfterRender} callback.
    */
   render() {
     if (!this.ready) return

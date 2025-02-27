@@ -52,11 +52,29 @@ class Material {
   /**
    * Check if all bind groups are ready, and create them if needed.
    */
-  compileMaterial() {
-    const texturesBindGroupLength = this.texturesBindGroup.bindings.length ? 1 : 0;
-    const bindGroupsReady = this.bindGroups.length >= this.inputsBindGroups.length + texturesBindGroupLength;
-    if (!bindGroupsReady) {
-      this.createBindGroups();
+  async compileMaterial() {
+    const createBindGroups = () => {
+      const texturesBindGroupLength = this.texturesBindGroup.bindings.length ? 1 : 0;
+      const bindGroupsReady = this.bindGroups.length >= this.inputsBindGroups.length + texturesBindGroupLength;
+      if (!bindGroupsReady) {
+        this.createBindGroups();
+      }
+    };
+    if (this.renderer.ready) {
+      createBindGroups();
+    } else {
+      await new Promise((resolve) => {
+        const taskId = this.renderer.onBeforeCommandEncoderCreation.add(
+          () => {
+            if (this.renderer.device) {
+              this.renderer.onBeforeCommandEncoderCreation.remove(taskId);
+              createBindGroups();
+              resolve();
+            }
+          },
+          { once: false }
+        );
+      });
     }
   }
   /**

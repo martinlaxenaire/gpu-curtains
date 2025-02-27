@@ -112,6 +112,8 @@ export declare class GPURenderer {
     pingPongPlanes: PingPongPlane[];
     /** An array containing all our created {@link ShaderPass}. */
     shaderPasses: ShaderPass[];
+    /** A {@link Map} containing all the {@link RenderPass} handled by this renderer. */
+    renderPasses: Map<RenderPass['uuid'], RenderPass>;
     /** An array containing all our created {@link RenderTarget}. */
     renderTargets: RenderTarget[];
     /** An array containing all our created {@link SceneStackedMesh | meshes}. */
