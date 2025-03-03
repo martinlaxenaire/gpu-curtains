@@ -14601,11 +14601,16 @@ ${this.shaders.compute.head}`;
         let passDrawnCount = 0;
         this.renderPassEntries[renderPassEntryType].forEach((renderPassEntry) => {
           if (!this.getRenderPassEntryLength(renderPassEntry)) return;
+          if (renderPassEntryType === "prePass") {
+            renderPassEntry.renderPass.setDepthReadOnly(true);
+          } else if (renderPassEntryType === "screen") {
+            renderPassEntry.renderPass.setDepthReadOnly(false);
+          }
           const isSubsequentScreenPass = renderPassEntryType === "screen" && (passDrawnCount !== 0 || this.renderPassEntries.prePass.length);
           const loadColors = renderPassEntryType === "postProPass" || renderPassEntryType === "prePass" && passDrawnCount !== 0 || isSubsequentScreenPass;
-          const loadDepth = renderPassEntryType === "prePass" || isSubsequentScreenPass;
+          const loadDepth = isSubsequentScreenPass;
           renderPassEntry.renderPass.setLoadOp(loadColors ? "load" : "clear");
-          if (loadDepth) renderPassEntry.renderPass.setDepthLoadOp("load");
+          renderPassEntry.renderPass.setDepthLoadOp(loadDepth ? "load" : "clear");
           passDrawnCount++;
           this.renderSinglePassEntry(commandEncoder, renderPassEntry);
         });

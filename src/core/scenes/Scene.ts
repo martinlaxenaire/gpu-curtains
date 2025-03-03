@@ -838,6 +838,13 @@ export class Scene extends Object3D {
         // early bail if there's nothing to draw
         if (!this.getRenderPassEntryLength(renderPassEntry)) return
 
+        // if it's a pre pass, disable depth write
+        if (renderPassEntryType === 'prePass') {
+          renderPassEntry.renderPass.setDepthReadOnly(true)
+        } else if (renderPassEntryType === 'screen') {
+          renderPassEntry.renderPass.setDepthReadOnly(false)
+        }
+
         const isSubsequentScreenPass =
           renderPassEntryType === 'screen' && (passDrawnCount !== 0 || this.renderPassEntries.prePass.length)
 
@@ -846,12 +853,12 @@ export class Scene extends Object3D {
           (renderPassEntryType === 'prePass' && passDrawnCount !== 0) ||
           isSubsequentScreenPass
 
-        const loadDepth = renderPassEntryType === 'prePass' || isSubsequentScreenPass
+        const loadDepth = isSubsequentScreenPass
 
         // if we're drawing to screen and it's not our first pass, load result from previous passes
         // post processing scene pass will clear content inside onBeforeRenderPass anyway
         renderPassEntry.renderPass.setLoadOp(loadColors ? 'load' : 'clear')
-        if (loadDepth) renderPassEntry.renderPass.setDepthLoadOp('load')
+        renderPassEntry.renderPass.setDepthLoadOp(loadDepth ? 'load' : 'clear')
 
         passDrawnCount++
 

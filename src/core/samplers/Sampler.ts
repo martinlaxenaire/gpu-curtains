@@ -4,7 +4,7 @@ import { generateUUID, throwWarning } from '../../utils/utils'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 
 /** Options used to create a {@link Sampler}. */
-export interface SamplerOptions extends Partial<GPUSamplerDescriptor>, GPUSamplerBindingLayout {
+export interface SamplerOptions extends GPUSamplerDescriptor, GPUSamplerBindingLayout {
   /** The label of the {@link Sampler#sampler | GPUSampler}, useful for debugging purpose. */
   label?: string
   /**
