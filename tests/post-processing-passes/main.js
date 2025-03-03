@@ -1,4 +1,9 @@
 // Goal of this test is to test post processing passes including prepass
+// what should be outputted:
+// - first a pre pass that draws a dummy grey rectangle in the middle of the screen
+// - then a red plane rendered in a render target without depth + a pre pass
+// - then a bunch of spheres and cubes. The cubes are rendered in a render target using depth + a pre pass that invert their colors on top half of screen
+// - then a post pro pass where the content of the depth buffer is drawn on the left half of the screen
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
   const {
@@ -9,6 +14,7 @@ window.addEventListener('load', async () => {
     Mesh,
     RenderTarget,
     ShaderPass,
+    PlaneGeometry,
     SphereGeometry,
     Vec2,
     Vec3,
@@ -51,12 +57,73 @@ window.addEventListener('load', async () => {
   orbitControls.zoomSpeed = 2
   orbitControls.maxZoom = systemSize * 6
 
-  // pre pass
-  const prePassTarget = new RenderTarget(gpuCameraRenderer, {
+  // pre passes
+  const prePassShader = /* wgsl */ `
+    struct VSOutput {
+      @builtin(position) position: vec4f,
+      @location(0) uv: vec2f,
+    };
+
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
+      var bg: vec4f;
+      
+      let uv: vec2f = fsInput.uv * 2.0 - 1.0;
+      
+      if(abs(uv.x) < 0.5 && abs(uv.y) < 0.5) {
+        bg = vec4(vec3(0.5), 1.0);
+      } else {
+        bg = vec4(0.0);
+      }
+    
+      return bg;
+    }
+  `
+
+  const prePass = new ShaderPass(gpuCameraRenderer, {
+    isPrePass: true,
+    transparent: true, // blending
+    shaders: {
+      fragment: {
+        code: prePassShader,
+      },
+    },
+  })
+
+  const cubePrePassTarget = new RenderTarget(gpuCameraRenderer, {
     label: 'Pre pass target',
   })
 
-  const prePassShader = /* wgsl */ `
+  const planeTarget = new RenderTarget(gpuCameraRenderer, {
+    label: 'Plane target without depth',
+    useDepth: false,
+  })
+
+  const planePrePass = new ShaderPass(gpuCameraRenderer, {
+    label: 'Plane pre pass',
+    inputTarget: planeTarget, // do nothing, just display plane
+    isPrePass: true,
+    transparent: true,
+  })
+
+  const plane = new Mesh(gpuCameraRenderer, {
+    label: 'Plane',
+    geometry: new PlaneGeometry(),
+    outputTarget: planeTarget,
+    cullMode: 'none',
+    shaders: {
+      fragment: {
+        code: `
+          @fragment fn main(@builtin(position) position: vec4f) -> @location(0) vec4f {          
+            return vec4(1.0, 0.0, 0.0, 1.0);
+          }
+        `,
+      },
+    },
+  })
+
+  plane.scale.set(8, 6, 1)
+
+  const cubePrePassShader = /* wgsl */ `
     struct VSOutput {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
@@ -65,27 +132,17 @@ window.addEventListener('load', async () => {
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var texture: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv);
 
-        return mix( vec4(texture.rgb, texture.a), vec4(1.0 - texture.rgb, texture.a), step(fsInput.uv.y, 0.5) );
+      return mix( vec4(texture.rgb, texture.a), vec4(1.0 - texture.rgb, texture.a), step(fsInput.uv.y, 0.5) );
     }
   `
 
-  const prePassPass = new ShaderPass(gpuCameraRenderer, {
+  const cubePrePass = new ShaderPass(gpuCameraRenderer, {
     isPrePass: true,
-    inputTarget: prePassTarget,
+    inputTarget: cubePrePassTarget,
     transparent: true, // blending
     shaders: {
       fragment: {
-        code: prePassShader,
-      },
-    },
-    uniforms: {
-      params: {
-        struct: {
-          systemSize: {
-            type: 'f32',
-            value: systemSize,
-          },
-        },
+        code: cubePrePassShader,
       },
     },
   })
@@ -98,7 +155,7 @@ window.addEventListener('load', async () => {
     const isCube = Math.random() > 0.5
     const mesh = new Mesh(gpuCameraRenderer, {
       geometry: isCube ? cubeGeometry : sphereGeometry,
-      outputTarget: isCube ? prePassTarget : null,
+      outputTarget: isCube ? cubePrePassTarget : null,
     })
 
     mesh.position.x = Math.random() * systemSize * 2 - systemSize
