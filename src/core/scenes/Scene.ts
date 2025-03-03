@@ -829,6 +829,7 @@ export class Scene extends Object3D {
       // force clearing the renderPass depth buffer before drawing any post processing pass
       // reset it even if there's no post processing pass
       if (renderPassEntryType === 'postProPass') {
+        this.renderer.renderPass.setDepthReadOnly(false)
         this.renderer.renderPass.setDepthLoadOp('clear')
       }
 
@@ -838,24 +839,38 @@ export class Scene extends Object3D {
         // early bail if there's nothing to draw
         if (!this.getRenderPassEntryLength(renderPassEntry)) return
 
-        // if it's a pre pass, disable depth write
-        if (renderPassEntryType === 'prePass') {
+        // disable depth write if it's a pre pass, else enable
+        if (renderPassEntryType === 'prePass' || renderPassEntryType === 'postProPass') {
           renderPassEntry.renderPass.setDepthReadOnly(true)
-        } else if (renderPassEntryType === 'screen') {
+        } else {
           renderPassEntry.renderPass.setDepthReadOnly(false)
         }
 
-        const isSubsequentScreenPass =
-          renderPassEntryType === 'screen' && (passDrawnCount !== 0 || this.renderPassEntries.prePass.length)
-
+        // load colors if:
+        // it's a post pro pass
+        // it's a pre pass and it's not the first one
+        // it's a standard screen pass and it's not the first one, or we've already drawn a pre pass
         const loadColors =
           renderPassEntryType === 'postProPass' ||
           (renderPassEntryType === 'prePass' && passDrawnCount !== 0) ||
-          isSubsequentScreenPass
+          (renderPassEntryType === 'screen' &&
+            (passDrawnCount !== 0 ||
+              !!this.renderPassEntries.prePass.filter((passEntry) => passEntry.element && passEntry.element.visible)
+                .length))
 
-        const loadDepth = isSubsequentScreenPass
+        // load depth if:
+        // it's a screen pass and it's not the first one, or we've drawn at least one pre pass with depth
+        const loadDepth =
+          renderPassEntryType === 'screen' &&
+          (passDrawnCount !== 0 ||
+            !!this.renderPassEntries.prePass.filter(
+              (passEntry) =>
+                passEntry.element &&
+                passEntry.element.visible &&
+                (passEntry.element as ShaderPass).inputTarget &&
+                (passEntry.element as ShaderPass).inputTarget.renderPass.options.useDepth
+            ).length)
 
-        // if we're drawing to screen and it's not our first pass, load result from previous passes
         // post processing scene pass will clear content inside onBeforeRenderPass anyway
         renderPassEntry.renderPass.setLoadOp(loadColors ? 'load' : 'clear')
         renderPassEntry.renderPass.setDepthLoadOp(loadDepth ? 'load' : 'clear')

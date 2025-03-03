@@ -562,19 +562,21 @@ class Scene extends Object3D {
     }
     for (const renderPassEntryType in this.renderPassEntries) {
       if (renderPassEntryType === "postProPass") {
+        this.renderer.renderPass.setDepthReadOnly(false);
         this.renderer.renderPass.setDepthLoadOp("clear");
       }
       let passDrawnCount = 0;
       this.renderPassEntries[renderPassEntryType].forEach((renderPassEntry) => {
         if (!this.getRenderPassEntryLength(renderPassEntry)) return;
-        if (renderPassEntryType === "prePass") {
+        if (renderPassEntryType === "prePass" || renderPassEntryType === "postProPass") {
           renderPassEntry.renderPass.setDepthReadOnly(true);
-        } else if (renderPassEntryType === "screen") {
+        } else {
           renderPassEntry.renderPass.setDepthReadOnly(false);
         }
-        const isSubsequentScreenPass = renderPassEntryType === "screen" && (passDrawnCount !== 0 || this.renderPassEntries.prePass.length);
-        const loadColors = renderPassEntryType === "postProPass" || renderPassEntryType === "prePass" && passDrawnCount !== 0 || isSubsequentScreenPass;
-        const loadDepth = isSubsequentScreenPass;
+        const loadColors = renderPassEntryType === "postProPass" || renderPassEntryType === "prePass" && passDrawnCount !== 0 || renderPassEntryType === "screen" && (passDrawnCount !== 0 || !!this.renderPassEntries.prePass.filter((passEntry) => passEntry.element && passEntry.element.visible).length);
+        const loadDepth = renderPassEntryType === "screen" && (passDrawnCount !== 0 || !!this.renderPassEntries.prePass.filter(
+          (passEntry) => passEntry.element && passEntry.element.visible && passEntry.element.inputTarget && passEntry.element.inputTarget.renderPass.options.useDepth
+        ).length);
         renderPassEntry.renderPass.setLoadOp(loadColors ? "load" : "clear");
         renderPassEntry.renderPass.setDepthLoadOp(loadDepth ? "load" : "clear");
         passDrawnCount++;

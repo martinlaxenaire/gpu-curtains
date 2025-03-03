@@ -14596,19 +14596,21 @@ ${this.shaders.compute.head}`;
       }
       for (const renderPassEntryType in this.renderPassEntries) {
         if (renderPassEntryType === "postProPass") {
+          this.renderer.renderPass.setDepthReadOnly(false);
           this.renderer.renderPass.setDepthLoadOp("clear");
         }
         let passDrawnCount = 0;
         this.renderPassEntries[renderPassEntryType].forEach((renderPassEntry) => {
           if (!this.getRenderPassEntryLength(renderPassEntry)) return;
-          if (renderPassEntryType === "prePass") {
+          if (renderPassEntryType === "prePass" || renderPassEntryType === "postProPass") {
             renderPassEntry.renderPass.setDepthReadOnly(true);
-          } else if (renderPassEntryType === "screen") {
+          } else {
             renderPassEntry.renderPass.setDepthReadOnly(false);
           }
-          const isSubsequentScreenPass = renderPassEntryType === "screen" && (passDrawnCount !== 0 || this.renderPassEntries.prePass.length);
-          const loadColors = renderPassEntryType === "postProPass" || renderPassEntryType === "prePass" && passDrawnCount !== 0 || isSubsequentScreenPass;
-          const loadDepth = isSubsequentScreenPass;
+          const loadColors = renderPassEntryType === "postProPass" || renderPassEntryType === "prePass" && passDrawnCount !== 0 || renderPassEntryType === "screen" && (passDrawnCount !== 0 || !!this.renderPassEntries.prePass.filter((passEntry) => passEntry.element && passEntry.element.visible).length);
+          const loadDepth = renderPassEntryType === "screen" && (passDrawnCount !== 0 || !!this.renderPassEntries.prePass.filter(
+            (passEntry) => passEntry.element && passEntry.element.visible && passEntry.element.inputTarget && passEntry.element.inputTarget.renderPass.options.useDepth
+          ).length);
           renderPassEntry.renderPass.setLoadOp(loadColors ? "load" : "clear");
           renderPassEntry.renderPass.setDepthLoadOp(loadDepth ? "load" : "clear");
           passDrawnCount++;
@@ -15536,8 +15538,9 @@ ${this.shaders.compute.head}`;
     /**
      * Force to clear a {@link GPURenderer} content to its {@link RenderPass#options.clearValue | clear value} by rendering and empty pass.
      * @param commandEncoder - {@link GPUCommandEncoder} to use if any.
+     * @param renderPass - {@link RenderPass} to clear. Default to {@link GPURenderer#renderPass | renderPass}.
      */
-    forceClear(commandEncoder) {
+    forceClear(commandEncoder, renderPass = this.renderPass) {
       const hasCommandEncoder = !!commandEncoder;
       if (!hasCommandEncoder) {
         commandEncoder = this.device?.createCommandEncoder({
@@ -15545,10 +15548,11 @@ ${this.shaders.compute.head}`;
         });
         !this.production && commandEncoder.pushDebugGroup(`${this.type} (${this.options.label}): Force clear command encoder`);
       }
-      this.renderPass.updateView();
-      this.renderPass.setLoadOp("clear");
-      this.renderPass.setDepthLoadOp("clear");
-      const pass = commandEncoder.beginRenderPass(this.renderPass.descriptor);
+      renderPass.updateView();
+      renderPass.setDepthReadOnly(false);
+      renderPass.setLoadOp("clear");
+      renderPass.setDepthLoadOp("clear");
+      const pass = commandEncoder.beginRenderPass(renderPass.descriptor);
       pass.end();
       if (!hasCommandEncoder) {
         !this.production && commandEncoder.popDebugGroup();

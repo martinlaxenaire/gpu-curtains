@@ -494,8 +494,9 @@ export declare class GPURenderer {
     /**
      * Force to clear a {@link GPURenderer} content to its {@link RenderPass#options.clearValue | clear value} by rendering and empty pass.
      * @param commandEncoder - {@link GPUCommandEncoder} to use if any.
+     * @param renderPass - {@link RenderPass} to clear. Default to {@link GPURenderer#renderPass | renderPass}.
      */
-    forceClear(commandEncoder?: GPUCommandEncoder): void;
+    forceClear(commandEncoder?: GPUCommandEncoder, renderPass?: RenderPass): void;
     /**
      * Called by the {@link GPUDeviceManager#render | GPUDeviceManager render method} before the {@link GPUCommandEncoder} has been created. Used to update the {@link Scene} matrix stack.
      */
