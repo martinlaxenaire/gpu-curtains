@@ -15,7 +15,7 @@
     "vite": "^6.1.0"
   },
   "name": "gpu-curtains",
-  "version": "0.12.2",
+  "version": "0.12.3",
   "description": "gpu-curtains is a 3D WebGPU rendering engine. It can be used as a standalone 3D engine, but also includes extra classes focused on mapping 3d objects to DOM elements; It allows users to synchronize values such as position, sizing, or scale between them.",
   "keywords": [
     "webgpu",
