@@ -112,7 +112,7 @@ export declare class GPUDeviceManager {
     setAdapterAndDevice({ adapter, device }?: GPUDeviceManagerSetupParams): Promise<void>;
     /**
      * Set up our {@link adapter} and {@link device} and all the already created {@link renderers} contexts.
-     * @param parameters - {@link GPUAdapter} and/or {@link GPUDevice} to use if set.
+     * @param parameters - {@link GPUAdapter} and/or {@link GPUDevice} to use if set. Allow to use already created adapter and device.
      */
     init({ adapter, device }?: GPUDeviceManagerSetupParams): Promise<void>;
     /**
@@ -228,6 +228,7 @@ export declare class GPUDeviceManager {
     onAfterRender(callback: () => void): GPUDeviceManager;
     /**
      * Render everything:
+     * - call all our {@link onBeforeRender} callback.
      * - call all our {@link renderers} {@link core/renderers/GPURenderer.GPURenderer#onBeforeCommandEncoder | onBeforeCommandEncoder} callbacks.
      * - create a {@link GPUCommandEncoder}.
      * - render all our {@link renderers}.
@@ -235,6 +236,7 @@ export declare class GPUDeviceManager {
      * - upload {@link MediaTexture#texture | MediaTexture textures} that need it.
      * - empty our {@link texturesQueue} array.
      * - call all our {@link renderers} {@link core/renderers/GPURenderer.GPURenderer#onAfterCommandEncoder | onAfterCommandEncoder} callbacks.
+     * - call all our {@link onAfterRender} callback.
      */
     render(): void;
     /**

@@ -135,8 +135,9 @@ export class IndirectBuffer {
 
   /**
    * Create the {@link buffer} (or destroy it if it already exists) with the right size, create its {@link GPUBuffer} in a mapped state, add all {@link geometries} attributes to the mapped buffer and tell the {@link geometries} to use this {@link IndirectBuffer}.
+   * @private
    */
-  create() {
+  #createIndirectBuffer() {
     const size = this.getByteOffsetAtIndex(this.geometries.size)
 
     if (this.buffer) {
@@ -165,6 +166,25 @@ export class IndirectBuffer {
     })
 
     this.buffer.GPUBuffer.unmap()
+  }
+
+  /**
+   * Create the {@link buffer} as soon as the {@link Renderer#device | device} is ready.
+   */
+  create() {
+    if (this.renderer.ready) {
+      this.#createIndirectBuffer()
+    } else {
+      const taskId = this.renderer.onBeforeCommandEncoderCreation.add(
+        () => {
+          if (this.renderer.device) {
+            this.renderer.onBeforeCommandEncoderCreation.remove(taskId)
+            this.#createIndirectBuffer()
+          }
+        },
+        { once: false }
+      )
+    }
   }
 
   /**

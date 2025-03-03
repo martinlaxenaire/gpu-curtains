@@ -164,7 +164,6 @@ export class GPUCurtains {
    */
   setMainRenderer() {
     this.createCurtainsRenderer({
-      deviceManager: this.deviceManager,
       // TODO ...this.options?
       label: this.options.label || 'GPUCurtains main GPUCurtainsRenderer',
       container: this.options.container,
@@ -181,7 +180,7 @@ export class GPUCurtains {
    * Patch the options with default values before creating a {@link Renderer}.
    * @param parameters - Parameters to patch.
    */
-  patchRendererOptions<T extends GPURendererParams | GPUCameraRendererParams>(parameters: T): T {
+  patchRendererOptions<T extends Omit<GPURendererParams | GPUCameraRendererParams, 'deviceManager'>>(parameters: T): T {
     if (parameters.pixelRatio === undefined) parameters.pixelRatio = this.options.pixelRatio
     if (parameters.autoResize === undefined) parameters.autoResize = this.options.autoResize
 
@@ -192,7 +191,7 @@ export class GPUCurtains {
    * Create a new {@link GPURenderer} instance.
    * @param parameters - {@link GPURendererParams | parameters} to use.
    */
-  createRenderer(parameters: GPURendererParams): GPURenderer {
+  createRenderer(parameters: Omit<GPURendererParams, 'deviceManager'>): GPURenderer {
     parameters = this.patchRendererOptions(parameters)
 
     return new GPURenderer({ ...parameters, deviceManager: this.deviceManager })
@@ -202,7 +201,7 @@ export class GPUCurtains {
    * Create a new {@link GPUCameraRenderer} instance.
    * @param parameters - {@link GPUCameraRendererParams | parameters} to use.
    */
-  createCameraRenderer(parameters: GPUCameraRendererParams): GPUCameraRenderer {
+  createCameraRenderer(parameters: Omit<GPUCameraRendererParams, 'deviceManager'>): GPUCameraRenderer {
     parameters = this.patchRendererOptions(parameters)
 
     return new GPUCameraRenderer({ ...parameters, deviceManager: this.deviceManager })
@@ -212,7 +211,7 @@ export class GPUCurtains {
    * Create a new {@link GPUCurtainsRenderer} instance.
    * @param parameters - {@link GPUCameraRendererParams | parameters} to use.
    */
-  createCurtainsRenderer(parameters: GPUCameraRendererParams): GPUCurtainsRenderer {
+  createCurtainsRenderer(parameters: Omit<GPUCameraRendererParams, 'deviceManager'>): GPUCurtainsRenderer {
     parameters = this.patchRendererOptions(parameters)
 
     return new GPUCurtainsRenderer({ ...parameters, deviceManager: this.deviceManager })

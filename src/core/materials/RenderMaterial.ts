@@ -207,7 +207,7 @@ export class RenderMaterial extends Material {
   async compileMaterial(): Promise<void> {
     if (this.ready) return
 
-    super.compileMaterial()
+    await super.compileMaterial()
 
     if (this.attributes && !this.pipelineEntry) {
       this.setPipelineEntry()

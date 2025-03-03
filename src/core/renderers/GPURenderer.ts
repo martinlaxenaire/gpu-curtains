@@ -130,6 +130,8 @@ export class GPURenderer {
   pingPongPlanes: PingPongPlane[]
   /** An array containing all our created {@link ShaderPass}. */
   shaderPasses: ShaderPass[]
+  /** A {@link Map} containing all the {@link RenderPass} handled by this renderer. */
+  renderPasses: Map<RenderPass['uuid'], RenderPass>
   /** An array containing all our created {@link RenderTarget}. */
   renderTargets: RenderTarget[]
   /** An array containing all our created {@link SceneStackedMesh | meshes}. */
@@ -222,7 +224,7 @@ export class GPURenderer {
     const contextOptions = {
       ...{
         alphaMode: 'premultiplied' as GPUCanvasAlphaMode,
-        format: this.deviceManager.gpu?.getPreferredCanvasFormat(),
+        format: this.deviceManager.gpu?.getPreferredCanvasFormat() || 'bgra8unorm',
       },
       ...context,
     }
@@ -263,6 +265,7 @@ export class GPURenderer {
     this.setScene()
     this.setTasksQueues()
     this.setRendererObjects()
+    this.setMainRenderPasses()
 
     if (!isOffscreenCanvas) {
       // needed to get container bounding box
@@ -593,7 +596,7 @@ export class GPURenderer {
   }
 
   /**
-   * Set our {@link context} if possible and set {@link renderPass | main render pass} and {@link scene}.
+   * Set our {@link context} if possible and initialize the {@link renderPass} and {@link postProcessingPass}.
    */
   setContext() {
     this.context = this.canvas.getContext('webgpu')
@@ -601,7 +604,14 @@ export class GPURenderer {
     if (this.device) {
       this.configureContext()
 
-      this.setMainRenderPasses()
+      // init everything that was waiting for it
+      this.textures.forEach((texture) => {
+        if (!texture.texture) {
+          texture.createTexture()
+        }
+      })
+
+      this.renderPasses.forEach((renderPass) => renderPass.init())
     }
   }
 
@@ -1036,6 +1046,7 @@ export class GPURenderer {
     this.computePasses = []
     this.pingPongPlanes = []
     this.shaderPasses = []
+    this.renderPasses = new Map()
     this.renderTargets = []
     this.meshes = []
     this.textures = []

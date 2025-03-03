@@ -86,6 +86,15 @@ class RenderPass {
       stencilStoreOp,
       stencilReadOnly
     };
+    this.renderer.renderPasses.set(this.uuid, this);
+    if (this.renderer.device) {
+      this.init();
+    }
+  }
+  /**
+   * Initialize the {@link RenderPass} textures and descriptor.
+   */
+  init() {
     if (this.options.useDepth) {
       this.createDepthTexture();
     }
@@ -102,6 +111,9 @@ class RenderPass {
    * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
    */
   setRenderer(renderer) {
+    if (this.renderer) {
+      this.renderer.renderPasses.delete(this.uuid);
+    }
     renderer = isRenderer(renderer, this.options.label + " " + this.type);
     this.renderer = renderer;
     if (this.options.useDepth && !this.options.depthTexture) {
@@ -115,6 +127,7 @@ class RenderPass {
         texture.setRenderer(this.renderer);
       }
     });
+    this.renderer.renderPasses.set(this.uuid, this);
   }
   /**
    * Create and set our {@link depthTexture | depth texture}.
@@ -290,6 +303,7 @@ class RenderPass {
    * Resize our {@link RenderPass}: reset its {@link Texture}.
    */
   resize() {
+    if (!this.renderer.device) return;
     if (this.options.useDepth) {
       this.descriptor.depthStencilAttachment.view = this.depthTexture.texture.createView({
         label: this.depthTexture.options.label + " view"
@@ -409,6 +423,7 @@ class RenderPass {
     if (!this.options.depthTexture && this.depthTexture) {
       this.depthTexture.destroy();
     }
+    this.renderer.renderPasses.delete(this.uuid);
   }
 }
 _useStencil = new WeakMap();

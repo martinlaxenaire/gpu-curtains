@@ -50,7 +50,7 @@ class GPURenderer {
     const contextOptions = {
       ...{
         alphaMode: "premultiplied",
-        format: this.deviceManager.gpu?.getPreferredCanvasFormat()
+        format: this.deviceManager.gpu?.getPreferredCanvasFormat() || "bgra8unorm"
       },
       ...context
     };
@@ -80,6 +80,7 @@ class GPURenderer {
     this.setScene();
     this.setTasksQueues();
     this.setRendererObjects();
+    this.setMainRenderPasses();
     if (!isOffscreenCanvas) {
       this.domElement = new DOMElement({
         element: container,
@@ -352,13 +353,18 @@ class GPURenderer {
     });
   }
   /**
-   * Set our {@link context} if possible and set {@link renderPass | main render pass} and {@link scene}.
+   * Set our {@link context} if possible and initialize the {@link renderPass} and {@link postProcessingPass}.
    */
   setContext() {
     this.context = this.canvas.getContext("webgpu");
     if (this.device) {
       this.configureContext();
-      this.setMainRenderPasses();
+      this.textures.forEach((texture) => {
+        if (!texture.texture) {
+          texture.createTexture();
+        }
+      });
+      this.renderPasses.forEach((renderPass) => renderPass.init());
     }
   }
   /**
@@ -717,6 +723,7 @@ class GPURenderer {
     this.computePasses = [];
     this.pingPongPlanes = [];
     this.shaderPasses = [];
+    this.renderPasses = /* @__PURE__ */ new Map();
     this.renderTargets = [];
     this.meshes = [];
     this.textures = [];

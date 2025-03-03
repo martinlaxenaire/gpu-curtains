@@ -193,6 +193,17 @@ export class RenderPass {
       stencilReadOnly,
     }
 
+    this.renderer.renderPasses.set(this.uuid, this)
+
+    if (this.renderer.device) {
+      this.init()
+    }
+  }
+
+  /**
+   * Initialize the {@link RenderPass} textures and descriptor.
+   */
+  init() {
     // if needed, create a depth texture before our descriptor
     if (this.options.useDepth) {
       this.createDepthTexture()
@@ -214,6 +225,10 @@ export class RenderPass {
    * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
    */
   setRenderer(renderer: Renderer | GPUCurtains) {
+    if (this.renderer) {
+      this.renderer.renderPasses.delete(this.uuid)
+    }
+
     renderer = isRenderer(renderer, this.options.label + ' ' + this.type)
     this.renderer = renderer
 
@@ -230,6 +245,8 @@ export class RenderPass {
         texture.setRenderer(this.renderer)
       }
     })
+
+    this.renderer.renderPasses.set(this.uuid, this)
   }
 
   /**
@@ -438,6 +455,8 @@ export class RenderPass {
    * Resize our {@link RenderPass}: reset its {@link Texture}.
    */
   resize() {
+    if (!this.renderer.device) return
+
     // reassign textures
     // they have actually been resized beforehand by the renderer
     if (this.options.useDepth) {
@@ -575,5 +594,7 @@ export class RenderPass {
     if (!this.options.depthTexture && this.depthTexture) {
       this.depthTexture.destroy()
     }
+
+    this.renderer.renderPasses.delete(this.uuid)
   }
 }

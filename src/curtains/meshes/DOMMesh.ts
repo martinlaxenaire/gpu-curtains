@@ -18,7 +18,7 @@ export interface DOMMeshBaseParams extends MeshBaseRenderParams {
   /** Whether to automatically update the {@link DOMMesh} position on scroll */
   watchScroll?: boolean
   /** Array of already created {@link DOMTexture} to add to this {@link DOMMesh}. */
-  domTextures: DOMTexture[]
+  domTextures?: DOMTexture[]
 }
 
 /**

@@ -112,6 +112,8 @@ export declare class GPURenderer {
     pingPongPlanes: PingPongPlane[];
     /** An array containing all our created {@link ShaderPass}. */
     shaderPasses: ShaderPass[];
+    /** A {@link Map} containing all the {@link RenderPass} handled by this renderer. */
+    renderPasses: Map<RenderPass['uuid'], RenderPass>;
     /** An array containing all our created {@link RenderTarget}. */
     renderTargets: RenderTarget[];
     /** An array containing all our created {@link SceneStackedMesh | meshes}. */
@@ -242,7 +244,7 @@ export declare class GPURenderer {
      */
     configureContext(): void;
     /**
-     * Set our {@link context} if possible and set {@link renderPass | main render pass} and {@link scene}.
+     * Set our {@link context} if possible and initialize the {@link renderPass} and {@link postProcessingPass}.
      */
     setContext(): void;
     /**

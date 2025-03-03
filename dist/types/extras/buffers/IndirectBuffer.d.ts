@@ -84,7 +84,7 @@ export declare class IndirectBuffer {
      */
     getByteOffsetAtIndex(index?: number): number;
     /**
-     * Create the {@link buffer} (or destroy it if it already exists) with the right size, create its {@link GPUBuffer} in a mapped state, add all {@link geometries} attributes to the mapped buffer and tell the {@link geometries} to use this {@link IndirectBuffer}.
+     * Create the {@link buffer} as soon as the {@link Renderer#device | device} is ready.
      */
     create(): void;
     /**

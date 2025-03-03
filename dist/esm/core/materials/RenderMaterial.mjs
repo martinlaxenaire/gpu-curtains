@@ -150,7 +150,7 @@ class RenderMaterial extends Material {
    */
   async compileMaterial() {
     if (this.ready) return;
-    super.compileMaterial();
+    await super.compileMaterial();
     if (this.attributes && !this.pipelineEntry) {
       this.setPipelineEntry();
     }

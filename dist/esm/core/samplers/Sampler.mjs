@@ -57,6 +57,9 @@ class Sampler {
    */
   createSampler() {
     this.sampler = this.renderer.createSampler(this);
+    if (this.binding) {
+      this.binding.resource = this.sampler;
+    }
   }
   /**
    * Set the {@link SamplerBinding | binding}.

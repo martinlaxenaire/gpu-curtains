@@ -8,7 +8,7 @@ var __typeError = (msg) => {
 var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
 var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
 var __privateMethod = (obj, member, method) => (__accessCheck(obj, member, "access private method"), method);
-var _IndirectBuffer_instances, addGeometryToIndirectMappedBuffer_fn;
+var _IndirectBuffer_instances, createIndirectBuffer_fn, addGeometryToIndirectMappedBuffer_fn;
 const indirectBufferEntrySize = 5;
 class IndirectBuffer {
   /**
@@ -70,31 +70,22 @@ class IndirectBuffer {
     return index * this.options.minEntrySize * Uint32Array.BYTES_PER_ELEMENT;
   }
   /**
-   * Create the {@link buffer} (or destroy it if it already exists) with the right size, create its {@link GPUBuffer} in a mapped state, add all {@link geometries} attributes to the mapped buffer and tell the {@link geometries} to use this {@link IndirectBuffer}.
+   * Create the {@link buffer} as soon as the {@link Renderer#device | device} is ready.
    */
   create() {
-    const size = this.getByteOffsetAtIndex(this.geometries.size);
-    if (this.buffer) {
-      this.buffer.destroy();
-      this.buffer.options.size = size;
+    if (this.renderer.ready) {
+      __privateMethod(this, _IndirectBuffer_instances, createIndirectBuffer_fn).call(this);
     } else {
-      this.buffer = new Buffer({
-        label: this.options.label,
-        size,
-        usage: ["copyDst", "indirect", "storage"],
-        mappedAtCreation: true
-      });
+      const taskId = this.renderer.onBeforeCommandEncoderCreation.add(
+        () => {
+          if (this.renderer.device) {
+            this.renderer.onBeforeCommandEncoderCreation.remove(taskId);
+            __privateMethod(this, _IndirectBuffer_instances, createIndirectBuffer_fn).call(this);
+          }
+        },
+        { once: false }
+      );
     }
-    this.buffer.consumers.add(this.uuid);
-    this.buffer.createBuffer(this.renderer);
-    const indirectMappedBuffer = new Uint32Array(this.buffer.GPUBuffer.getMappedRange());
-    let offset = 0;
-    this.geometries.forEach((geometry) => {
-      __privateMethod(this, _IndirectBuffer_instances, addGeometryToIndirectMappedBuffer_fn).call(this, geometry, indirectMappedBuffer, offset * this.options.minEntrySize);
-      geometry.useIndirectBuffer({ buffer: this.buffer, offset: this.getByteOffsetAtIndex(offset) });
-      offset++;
-    });
-    this.buffer.GPUBuffer.unmap();
   }
   /**
    * Destroy this {@link IndirectBuffer}. Reset all {@link geometries} {@link Geometry#indirectDraw | indirectDraw} properties and destroy the {@link Buffer}.
@@ -109,6 +100,34 @@ class IndirectBuffer {
   }
 }
 _IndirectBuffer_instances = new WeakSet();
+/**
+ * Create the {@link buffer} (or destroy it if it already exists) with the right size, create its {@link GPUBuffer} in a mapped state, add all {@link geometries} attributes to the mapped buffer and tell the {@link geometries} to use this {@link IndirectBuffer}.
+ * @private
+ */
+createIndirectBuffer_fn = function() {
+  const size = this.getByteOffsetAtIndex(this.geometries.size);
+  if (this.buffer) {
+    this.buffer.destroy();
+    this.buffer.options.size = size;
+  } else {
+    this.buffer = new Buffer({
+      label: this.options.label,
+      size,
+      usage: ["copyDst", "indirect", "storage"],
+      mappedAtCreation: true
+    });
+  }
+  this.buffer.consumers.add(this.uuid);
+  this.buffer.createBuffer(this.renderer);
+  const indirectMappedBuffer = new Uint32Array(this.buffer.GPUBuffer.getMappedRange());
+  let offset = 0;
+  this.geometries.forEach((geometry) => {
+    __privateMethod(this, _IndirectBuffer_instances, addGeometryToIndirectMappedBuffer_fn).call(this, geometry, indirectMappedBuffer, offset * this.options.minEntrySize);
+    geometry.useIndirectBuffer({ buffer: this.buffer, offset: this.getByteOffsetAtIndex(offset) });
+    offset++;
+  });
+  this.buffer.GPUBuffer.unmap();
+};
 /**
  * Add a {@link Geometry} or {@link IndexedGeometry} attributes to the {@link buffer} mapped array buffer.
  * @param geometry - {@link Geometry} or {@link IndexedGeometry} to add the attributes from

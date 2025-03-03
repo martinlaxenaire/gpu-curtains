@@ -91,7 +91,6 @@ class GPUCurtains {
    */
   setMainRenderer() {
     this.createCurtainsRenderer({
-      deviceManager: this.deviceManager,
       // TODO ...this.options?
       label: this.options.label || "GPUCurtains main GPUCurtainsRenderer",
       container: this.options.container,

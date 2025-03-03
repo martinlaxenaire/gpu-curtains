@@ -97,6 +97,10 @@ export declare class RenderPass {
      */
     constructor(renderer: Renderer | GPUCurtains, { label, sampleCount, qualityRatio, fixedSize, useColorAttachments, renderToSwapChain, colorAttachments, useDepth, depthTexture, depthLoadOp, depthStoreOp, depthClearValue, depthFormat, depthReadOnly, stencilClearValue, stencilLoadOp, stencilStoreOp, stencilReadOnly, }?: RenderPassParams);
     /**
+     * Initialize the {@link RenderPass} textures and descriptor.
+     */
+    init(): void;
+    /**
      * Reset this {@link RenderPass} {@link RenderPass.renderer | renderer}.
      * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
      */

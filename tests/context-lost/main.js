@@ -29,7 +29,8 @@ window.addEventListener('load', async () => {
   const adapter = await navigator.gpu.requestAdapter()
   const device = await adapter.requestDevice()
 
-  await gpuCurtains.setDevice({ adapter, device })
+  gpuCurtains.setDevice({ adapter, device })
+  // await gpuCurtains.setDevice()
   //
 
   //await gpuCurtains.setDevice()

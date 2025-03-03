@@ -319,7 +319,19 @@ export class Shadow {
     if (!value && this.isActive) {
       this.destroy()
     } else if (value && !this.isActive) {
-      this.init()
+      if (this.renderer.ready) {
+        this.init()
+      } else {
+        const taskId = this.renderer.onBeforeCommandEncoderCreation.add(
+          () => {
+            if (this.renderer.ready) {
+              this.renderer.onBeforeCommandEncoderCreation.remove(taskId)
+              this.init()
+            }
+          },
+          { once: false }
+        )
+      }
     }
 
     this.#isActive = value
@@ -527,7 +539,11 @@ export class Shadow {
   setDepthPass() {
     // set the depth pass target render pass entry custom render pass function
     const renderPassEntry = this.renderer.scene.getRenderTargetPassEntry(this.depthPassTarget)
-    renderPassEntry.useCustomRenderPass = (commandEncoder) => this.render(commandEncoder)
+    renderPassEntry.useCustomRenderPass = (commandEncoder) => {
+      if (this.renderer.ready) {
+        this.render(commandEncoder)
+      }
+    }
   }
 
   /**

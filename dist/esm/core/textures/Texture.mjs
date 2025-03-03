@@ -43,7 +43,7 @@ class Texture {
     this.renderer = renderer;
     this.uuid = generateUUID();
     this.options = { ...defaultTextureParams, ...parameters };
-    if (this.options.format === "rgba32float" && !this.renderer.device.features.has("float32-filterable")) {
+    if (this.options.format === "rgba32float" && this.renderer.device && !this.renderer.device.features.has("float32-filterable")) {
       this.options.format = "rgba16float";
     }
     if (parameters.fromTexture) {
@@ -140,7 +140,7 @@ class Texture {
    * Create the {@link GPUTexture | texture} (or copy it from source) and update the {@link TextureBinding#resource | binding resource}.
    */
   createTexture() {
-    if (!this.size.width || !this.size.height) return;
+    if (!this.renderer.device || !this.size.width || !this.size.height) return;
     if (this.options.fromTexture) {
       this.copyGPUTexture(this.options.fromTexture.texture);
       return;

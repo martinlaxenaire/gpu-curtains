@@ -112,7 +112,11 @@ export class Texture {
 
     this.options = { ...defaultTextureParams, ...parameters }
 
-    if (this.options.format === 'rgba32float' && !this.renderer.device.features.has('float32-filterable')) {
+    if (
+      this.options.format === 'rgba32float' &&
+      this.renderer.device &&
+      !this.renderer.device.features.has('float32-filterable')
+    ) {
       this.options.format = 'rgba16float'
     }
 
@@ -238,7 +242,7 @@ export class Texture {
    * Create the {@link GPUTexture | texture} (or copy it from source) and update the {@link TextureBinding#resource | binding resource}.
    */
   createTexture() {
-    if (!this.size.width || !this.size.height) return
+    if (!this.renderer.device || !this.size.width || !this.size.height) return
 
     if (this.options.fromTexture) {
       // copy the GPU texture

@@ -8,7 +8,8 @@ var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot
 var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
 var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
 var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
-var _mipsGeneration;
+var __privateMethod = (obj, member, method) => (__accessCheck(obj, member, "access private method"), method);
+var _mipsGeneration, _GPUDeviceManager_instances, createSamplers_fn;
 class GPUDeviceManager {
   /**
    * GPUDeviceManager constructor
@@ -28,6 +29,7 @@ class GPUDeviceManager {
     onDeviceDestroyed = (info) => {
     }
   } = {}) {
+    __privateAdd(this, _GPUDeviceManager_instances);
     /** function assigned to the {@link onBeforeRender} callback. */
     this._onBeforeRenderCallback = () => {
     };
@@ -72,11 +74,12 @@ class GPUDeviceManager {
   }
   /**
    * Set up our {@link adapter} and {@link device} and all the already created {@link renderers} contexts.
-   * @param parameters - {@link GPUAdapter} and/or {@link GPUDevice} to use if set.
+   * @param parameters - {@link GPUAdapter} and/or {@link GPUDevice} to use if set. Allow to use already created adapter and device.
    */
   async init({ adapter = null, device = null } = {}) {
     await this.setAdapterAndDevice({ adapter, device });
     if (this.device) {
+      __privateMethod(this, _GPUDeviceManager_instances, createSamplers_fn).call(this);
       for (const renderer of this.renderers) {
         if (!renderer.context) {
           renderer.setContext();
@@ -193,13 +196,7 @@ class GPUDeviceManager {
   async restoreDevice({ adapter = null, device = null } = {}) {
     await this.setAdapterAndDevice({ adapter, device });
     if (this.device) {
-      this.samplers.forEach((sampler) => {
-        const { type, ...samplerOptions } = sampler.options;
-        sampler.sampler = this.device.createSampler({
-          label: sampler.label,
-          ...samplerOptions
-        });
-      });
+      __privateMethod(this, _GPUDeviceManager_instances, createSamplers_fn).call(this);
       this.indirectBuffers.forEach((indirectBuffer) => indirectBuffer.create());
       this.renderers.forEach((renderer) => renderer.restoreContext());
     }
@@ -485,6 +482,7 @@ class GPUDeviceManager {
   }
   /**
    * Render everything:
+   * - call all our {@link onBeforeRender} callback.
    * - call all our {@link renderers} {@link core/renderers/GPURenderer.GPURenderer#onBeforeCommandEncoder | onBeforeCommandEncoder} callbacks.
    * - create a {@link GPUCommandEncoder}.
    * - render all our {@link renderers}.
@@ -492,6 +490,7 @@ class GPUDeviceManager {
    * - upload {@link MediaTexture#texture | MediaTexture textures} that need it.
    * - empty our {@link texturesQueue} array.
    * - call all our {@link renderers} {@link core/renderers/GPURenderer.GPURenderer#onAfterCommandEncoder | onAfterCommandEncoder} callbacks.
+   * - call all our {@link onAfterRender} callback.
    */
   render() {
     if (!this.ready) return;
@@ -532,5 +531,15 @@ class GPUDeviceManager {
   }
 }
 _mipsGeneration = new WeakMap();
+_GPUDeviceManager_instances = new WeakSet();
+/**
+ * Create or recreate (on device restoration) all {@link samplers}.
+ * @private
+ */
+createSamplers_fn = function() {
+  this.samplers.forEach((sampler) => {
+    sampler.createSampler();
+  });
+};
 
 export { GPUDeviceManager };

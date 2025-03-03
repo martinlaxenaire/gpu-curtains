@@ -3927,7 +3927,7 @@
       this.renderer = renderer;
       this.uuid = generateUUID();
       this.options = { ...defaultTextureParams, ...parameters };
-      if (this.options.format === "rgba32float" && !this.renderer.device.features.has("float32-filterable")) {
+      if (this.options.format === "rgba32float" && this.renderer.device && !this.renderer.device.features.has("float32-filterable")) {
         this.options.format = "rgba16float";
       }
       if (parameters.fromTexture) {
@@ -4024,7 +4024,7 @@
      * Create the {@link GPUTexture | texture} (or copy it from source) and update the {@link TextureBinding#resource | binding resource}.
      */
     createTexture() {
-      if (!this.size.width || !this.size.height) return;
+      if (!this.renderer.device || !this.size.width || !this.size.height) return;
       if (this.options.fromTexture) {
         this.copyGPUTexture(this.options.fromTexture.texture);
         return;
@@ -4459,7 +4459,7 @@
   var __privateGet$r = (obj, member, getter) => (__accessCheck$t(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
   var __privateAdd$t = (obj, member, value) => member.has(obj) ? __typeError$t("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   var __privateSet$q = (obj, member, value, setter) => (__accessCheck$t(obj, member, "write to private field"), member.set(obj, value), value);
-  var __privateMethod$b = (obj, member, method) => (__accessCheck$t(obj, member, "access private method"), method);
+  var __privateMethod$c = (obj, member, method) => (__accessCheck$t(obj, member, "access private method"), method);
   var _sourcesLoaded, _sourcesUploaded, _rotation, _MediaTexture_instances, setSourceLoaded_fn;
   const defaultMediaTextureParams = {
     label: "Texture",
@@ -4683,7 +4683,7 @@
      * Create the {@link GPUTexture | texture} (or copy it from source) and update the {@link TextureBinding#resource | binding resource}.
      */
     createTexture() {
-      if (!this.size.width || !this.size.height) return;
+      if (!this.renderer.device || !this.size.width || !this.size.height) return;
       if (this.options.fromTexture && (!(this.options.fromTexture instanceof _MediaTexture) || this.options.fromTexture.sourcesUploaded)) {
         this.copyGPUTexture(this.options.fromTexture.texture);
         return;
@@ -4812,7 +4812,7 @@
         ];
       }
       this.setSourceSize();
-      __privateMethod$b(this, _MediaTexture_instances, setSourceLoaded_fn).call(this, imageBitmap);
+      __privateMethod$c(this, _MediaTexture_instances, setSourceLoaded_fn).call(this, imageBitmap);
     }
     /**
      * Load and create images using {@link loadImage} from an array of images sources as strings or {@link HTMLImageElement}. Useful for cube maps.
@@ -4860,7 +4860,7 @@
           );
           this.videoFrameCallbackIds.set(sourceIndex, videoFrameCallbackId);
         }
-        __privateMethod$b(this, _MediaTexture_instances, setSourceLoaded_fn).call(this, video);
+        __privateMethod$c(this, _MediaTexture_instances, setSourceLoaded_fn).call(this, video);
       }
     }
     /**
@@ -4976,7 +4976,7 @@
         ];
       }
       this.setSourceSize();
-      __privateMethod$b(this, _MediaTexture_instances, setSourceLoaded_fn).call(this, source);
+      __privateMethod$c(this, _MediaTexture_instances, setSourceLoaded_fn).call(this, source);
     }
     /**
      * Load an array of {@link HTMLCanvasElement} using {@link loadCanvas} . Useful for cube maps.
@@ -6162,6 +6162,9 @@
      */
     createSampler() {
       this.sampler = this.renderer.createSampler(this);
+      if (this.binding) {
+        this.binding.resource = this.sampler;
+      }
     }
     /**
      * Set the {@link SamplerBinding | binding}.
@@ -6224,11 +6227,29 @@
     /**
      * Check if all bind groups are ready, and create them if needed.
      */
-    compileMaterial() {
-      const texturesBindGroupLength = this.texturesBindGroup.bindings.length ? 1 : 0;
-      const bindGroupsReady = this.bindGroups.length >= this.inputsBindGroups.length + texturesBindGroupLength;
-      if (!bindGroupsReady) {
-        this.createBindGroups();
+    async compileMaterial() {
+      const createBindGroups = () => {
+        const texturesBindGroupLength = this.texturesBindGroup.bindings.length ? 1 : 0;
+        const bindGroupsReady = this.bindGroups.length >= this.inputsBindGroups.length + texturesBindGroupLength;
+        if (!bindGroupsReady) {
+          this.createBindGroups();
+        }
+      };
+      if (this.renderer.ready) {
+        createBindGroups();
+      } else {
+        await new Promise((resolve) => {
+          const taskId = this.renderer.onBeforeCommandEncoderCreation.add(
+            () => {
+              if (this.renderer.device) {
+                this.renderer.onBeforeCommandEncoderCreation.remove(taskId);
+                createBindGroups();
+                resolve();
+              }
+            },
+            { once: false }
+          );
+        });
       }
     }
     /**
@@ -6772,7 +6793,7 @@
      */
     async compileMaterial() {
       if (this.ready) return;
-      super.compileMaterial();
+      await super.compileMaterial();
       if (!this.pipelineEntry) {
         this.setPipelineEntry();
       }
@@ -8393,7 +8414,7 @@
   var __privateGet$j = (obj, member, getter) => (__accessCheck$l(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
   var __privateAdd$l = (obj, member, value) => member.has(obj) ? __typeError$l("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   var __privateSet$j = (obj, member, value, setter) => (__accessCheck$l(obj, member, "write to private field"), member.set(obj, value), value);
-  var __privateMethod$a = (obj, member, method) => (__accessCheck$l(obj, member, "access private method"), method);
+  var __privateMethod$b = (obj, member, method) => (__accessCheck$l(obj, member, "access private method"), method);
   var _useStencil, _RenderPass_instances, updateDepthAttachmentSettings_fn;
   class RenderPass {
     /**
@@ -8470,6 +8491,15 @@
         stencilStoreOp,
         stencilReadOnly
       };
+      this.renderer.renderPasses.set(this.uuid, this);
+      if (this.renderer.device) {
+        this.init();
+      }
+    }
+    /**
+     * Initialize the {@link RenderPass} textures and descriptor.
+     */
+    init() {
       if (this.options.useDepth) {
         this.createDepthTexture();
       }
@@ -8486,6 +8516,9 @@
      * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
      */
     setRenderer(renderer) {
+      if (this.renderer) {
+        this.renderer.renderPasses.delete(this.uuid);
+      }
       renderer = isRenderer(renderer, this.options.label + " " + this.type);
       this.renderer = renderer;
       if (this.options.useDepth && !this.options.depthTexture) {
@@ -8499,6 +8532,7 @@
           texture.setRenderer(this.renderer);
         }
       });
+      this.renderer.renderPasses.set(this.uuid, this);
     }
     /**
      * Create and set our {@link depthTexture | depth texture}.
@@ -8674,6 +8708,7 @@
      * Resize our {@link RenderPass}: reset its {@link Texture}.
      */
     resize() {
+      if (!this.renderer.device) return;
       if (this.options.useDepth) {
         this.descriptor.depthStencilAttachment.view = this.depthTexture.texture.createView({
           label: this.depthTexture.options.label + " view"
@@ -8715,7 +8750,7 @@
      */
     setDepthLoadOp(depthLoadOp = "clear") {
       this.options.depthLoadOp = depthLoadOp;
-      __privateMethod$a(this, _RenderPass_instances, updateDepthAttachmentSettings_fn).call(this);
+      __privateMethod$b(this, _RenderPass_instances, updateDepthAttachmentSettings_fn).call(this);
     }
     /**
      * Set the new {@link RenderPassParams.depthReadOnly | depthReadOnly} setting.
@@ -8723,7 +8758,7 @@
      */
     setDepthReadOnly(value) {
       this.options.depthReadOnly = value;
-      __privateMethod$a(this, _RenderPass_instances, updateDepthAttachmentSettings_fn).call(this);
+      __privateMethod$b(this, _RenderPass_instances, updateDepthAttachmentSettings_fn).call(this);
     }
     /**
      * Set the new {@link RenderPassParams.stencilReadOnly | stencilReadOnly} setting.
@@ -8731,7 +8766,7 @@
      */
     setStencilReadOnly(value) {
       this.options.stencilReadOnly = value;
-      __privateMethod$a(this, _RenderPass_instances, updateDepthAttachmentSettings_fn).call(this);
+      __privateMethod$b(this, _RenderPass_instances, updateDepthAttachmentSettings_fn).call(this);
     }
     /**
      * Set our {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#clearvalue | clear colors value}.<br>
@@ -8793,6 +8828,7 @@
       if (!this.options.depthTexture && this.depthTexture) {
         this.depthTexture.destroy();
       }
+      this.renderer.renderPasses.delete(this.uuid);
     }
   }
   _useStencil = new WeakMap();
@@ -9877,7 +9913,7 @@ struct VSOutput {
      */
     async compileMaterial() {
       if (this.ready) return;
-      super.compileMaterial();
+      await super.compileMaterial();
       if (this.attributes && !this.pipelineEntry) {
         this.setPipelineEntry();
       }
@@ -11265,7 +11301,7 @@ fn getPCFBaseShadowContribution(
           label: "Matrices",
           name: "matrices",
           visibility: ["vertex", "fragment"],
-          minOffset: this.renderer.device.limits.minUniformBufferOffsetAlignment,
+          minOffset: this.renderer.device ? this.renderer.device.limits.minUniformBufferOffsetAlignment : 256,
           struct: {
             model: {
               type: "mat4x4f",
@@ -11470,7 +11506,7 @@ fn getPCFBaseShadowContribution(
   var __privateGet$g = (obj, member, getter) => (__accessCheck$i(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
   var __privateAdd$i = (obj, member, value) => member.has(obj) ? __typeError$i("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   var __privateSet$g = (obj, member, value, setter) => (__accessCheck$i(obj, member, "write to private field"), member.set(obj, value), value);
-  var __privateMethod$9 = (obj, member, method) => (__accessCheck$i(obj, member, "access private method"), method);
+  var __privateMethod$a = (obj, member, method) => (__accessCheck$i(obj, member, "access private method"), method);
   var _intensity, _bias, _normalBias, _pcfSamples, _isActive, _autoRender, _receivingMeshes, _Shadow_instances, setParameters_fn;
   const shadowStruct = {
     isActive: {
@@ -11541,7 +11577,7 @@ fn getPCFBaseShadowContribution(
       this.castingMeshes = /* @__PURE__ */ new Map();
       __privateSet$g(this, _receivingMeshes, /* @__PURE__ */ new Map());
       this.depthMeshes = /* @__PURE__ */ new Map();
-      __privateMethod$9(this, _Shadow_instances, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
+      __privateMethod$a(this, _Shadow_instances, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
       this.isActive = false;
     }
     /**
@@ -11582,7 +11618,7 @@ fn getPCFBaseShadowContribution(
      * @param parameters - parameters to use for this {@link Shadow}.
      */
     cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender } = {}) {
-      __privateMethod$9(this, _Shadow_instances, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
+      __privateMethod$a(this, _Shadow_instances, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
       this.isActive = true;
     }
     /**
@@ -11635,7 +11671,19 @@ fn getPCFBaseShadowContribution(
       if (!value && this.isActive) {
         this.destroy();
       } else if (value && !this.isActive) {
-        this.init();
+        if (this.renderer.ready) {
+          this.init();
+        } else {
+          const taskId = this.renderer.onBeforeCommandEncoderCreation.add(
+            () => {
+              if (this.renderer.ready) {
+                this.renderer.onBeforeCommandEncoderCreation.remove(taskId);
+                this.init();
+              }
+            },
+            { once: false }
+          );
+        }
       }
       __privateSet$g(this, _isActive, value);
     }
@@ -11805,7 +11853,11 @@ fn getPCFBaseShadowContribution(
      */
     setDepthPass() {
       const renderPassEntry = this.renderer.scene.getRenderTargetPassEntry(this.depthPassTarget);
-      renderPassEntry.useCustomRenderPass = (commandEncoder) => this.render(commandEncoder);
+      renderPassEntry.useCustomRenderPass = (commandEncoder) => {
+        if (this.renderer.ready) {
+          this.render(commandEncoder);
+        }
+      };
     }
     /**
      * Render the depth pass. Called by the {@link CameraRenderer#scene | scene} when rendering the {@link depthPassTarget} render pass entry, or by the {@link renderOnce} method.<br />
@@ -14549,11 +14601,16 @@ ${this.shaders.compute.head}`;
         let passDrawnCount = 0;
         this.renderPassEntries[renderPassEntryType].forEach((renderPassEntry) => {
           if (!this.getRenderPassEntryLength(renderPassEntry)) return;
+          if (renderPassEntryType === "prePass") {
+            renderPassEntry.renderPass.setDepthReadOnly(true);
+          } else if (renderPassEntryType === "screen") {
+            renderPassEntry.renderPass.setDepthReadOnly(false);
+          }
           const isSubsequentScreenPass = renderPassEntryType === "screen" && (passDrawnCount !== 0 || this.renderPassEntries.prePass.length);
           const loadColors = renderPassEntryType === "postProPass" || renderPassEntryType === "prePass" && passDrawnCount !== 0 || isSubsequentScreenPass;
-          const loadDepth = renderPassEntryType === "prePass" || isSubsequentScreenPass;
+          const loadDepth = isSubsequentScreenPass;
           renderPassEntry.renderPass.setLoadOp(loadColors ? "load" : "clear");
-          if (loadDepth) renderPassEntry.renderPass.setDepthLoadOp("load");
+          renderPassEntry.renderPass.setDepthLoadOp(loadDepth ? "load" : "clear");
           passDrawnCount++;
           this.renderSinglePassEntry(commandEncoder, renderPassEntry);
         });
@@ -14672,7 +14729,7 @@ ${this.shaders.compute.head}`;
       const contextOptions = {
         ...{
           alphaMode: "premultiplied",
-          format: this.deviceManager.gpu?.getPreferredCanvasFormat()
+          format: this.deviceManager.gpu?.getPreferredCanvasFormat() || "bgra8unorm"
         },
         ...context
       };
@@ -14702,6 +14759,7 @@ ${this.shaders.compute.head}`;
       this.setScene();
       this.setTasksQueues();
       this.setRendererObjects();
+      this.setMainRenderPasses();
       if (!isOffscreenCanvas) {
         this.domElement = new DOMElement({
           element: container,
@@ -14974,13 +15032,18 @@ ${this.shaders.compute.head}`;
       });
     }
     /**
-     * Set our {@link context} if possible and set {@link renderPass | main render pass} and {@link scene}.
+     * Set our {@link context} if possible and initialize the {@link renderPass} and {@link postProcessingPass}.
      */
     setContext() {
       this.context = this.canvas.getContext("webgpu");
       if (this.device) {
         this.configureContext();
-        this.setMainRenderPasses();
+        this.textures.forEach((texture) => {
+          if (!texture.texture) {
+            texture.createTexture();
+          }
+        });
+        this.renderPasses.forEach((renderPass) => renderPass.init());
       }
     }
     /**
@@ -15339,6 +15402,7 @@ ${this.shaders.compute.head}`;
       this.computePasses = [];
       this.pingPongPlanes = [];
       this.shaderPasses = [];
+      this.renderPasses = /* @__PURE__ */ new Map();
       this.renderTargets = [];
       this.meshes = [];
       this.textures = [];
@@ -15550,7 +15614,7 @@ ${this.shaders.compute.head}`;
   var __privateGet$9 = (obj, member, getter) => (__accessCheck$b(obj, member, "read from private field"), member.get(obj));
   var __privateAdd$b = (obj, member, value) => member.has(obj) ? __typeError$b("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   var __privateSet$9 = (obj, member, value, setter) => (__accessCheck$b(obj, member, "write to private field"), member.set(obj, value), value);
-  var __privateMethod$8 = (obj, member, method) => (__accessCheck$b(obj, member, "access private method"), method);
+  var __privateMethod$9 = (obj, member, method) => (__accessCheck$b(obj, member, "access private method"), method);
   var _shouldUpdateCameraLightsBindGroup, _GPUCameraRenderer_instances, initLights_fn, updateLightsCount_fn;
   class GPUCameraRenderer extends GPURenderer {
     /**
@@ -15606,7 +15670,7 @@ ${this.shaders.compute.head}`;
       this.setCamera(camera);
       this.setCameraBinding();
       if (this.options.lights) {
-        __privateMethod$8(this, _GPUCameraRenderer_instances, initLights_fn).call(this);
+        __privateMethod$9(this, _GPUCameraRenderer_instances, initLights_fn).call(this);
       }
       this.setCameraLightsBindGroup();
     }
@@ -15814,7 +15878,7 @@ ${this.shaders.compute.head}`;
      */
     addLight(light) {
       this.lights.push(light);
-      __privateMethod$8(this, _GPUCameraRenderer_instances, updateLightsCount_fn).call(this, light.type);
+      __privateMethod$9(this, _GPUCameraRenderer_instances, updateLightsCount_fn).call(this, light.type);
     }
     /**
      * Remove a {@link Light} from the {@link lights} array.
@@ -15822,7 +15886,7 @@ ${this.shaders.compute.head}`;
      */
     removeLight(light) {
       this.lights = this.lights.filter((l) => l.uuid !== light.uuid);
-      __privateMethod$8(this, _GPUCameraRenderer_instances, updateLightsCount_fn).call(this, light.type);
+      __privateMethod$9(this, _GPUCameraRenderer_instances, updateLightsCount_fn).call(this, light.type);
     }
     /**
      * Set the lights {@link BufferBinding} based on the {@link lightsBindingParams}.
@@ -15958,7 +16022,7 @@ ${this.shaders.compute.head}`;
             `${this.options.label} (${this.type}): You are adding a light (${lightsType}) to a renderer that should not initially handle lights. The renderer bind group will be re-created. This should be avoided.`
           );
         }
-        __privateMethod$8(this, _GPUCameraRenderer_instances, initLights_fn).call(this);
+        __privateMethod$9(this, _GPUCameraRenderer_instances, initLights_fn).call(this);
         this.cameraLightsBindGroup.destroy();
         this.setCameraLightsBindGroup();
       } else {
@@ -16016,7 +16080,7 @@ ${this.shaders.compute.head}`;
      * @returns - All {@link ShadowCastingLights | lights that can cast shadows}.
      */
     get shadowCastingLights() {
-      return this.lights.filter(
+      return this.lights?.filter(
         (light) => light.type === "directionalLights" || light.type === "pointLights" || light.type === "spotLights"
       );
     }
@@ -16266,7 +16330,8 @@ ${this.shaders.compute.head}`;
   var __privateGet$8 = (obj, member, getter) => (__accessCheck$a(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
   var __privateAdd$a = (obj, member, value) => member.has(obj) ? __typeError$a("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   var __privateSet$8 = (obj, member, value, setter) => (__accessCheck$a(obj, member, "write to private field"), member.set(obj, value), value);
-  var _mipsGeneration;
+  var __privateMethod$8 = (obj, member, method) => (__accessCheck$a(obj, member, "access private method"), method);
+  var _mipsGeneration, _GPUDeviceManager_instances, createSamplers_fn;
   class GPUDeviceManager {
     /**
      * GPUDeviceManager constructor
@@ -16286,6 +16351,7 @@ ${this.shaders.compute.head}`;
       onDeviceDestroyed = (info) => {
       }
     } = {}) {
+      __privateAdd$a(this, _GPUDeviceManager_instances);
       /** function assigned to the {@link onBeforeRender} callback. */
       this._onBeforeRenderCallback = () => {
       };
@@ -16330,11 +16396,12 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Set up our {@link adapter} and {@link device} and all the already created {@link renderers} contexts.
-     * @param parameters - {@link GPUAdapter} and/or {@link GPUDevice} to use if set.
+     * @param parameters - {@link GPUAdapter} and/or {@link GPUDevice} to use if set. Allow to use already created adapter and device.
      */
     async init({ adapter = null, device = null } = {}) {
       await this.setAdapterAndDevice({ adapter, device });
       if (this.device) {
+        __privateMethod$8(this, _GPUDeviceManager_instances, createSamplers_fn).call(this);
         for (const renderer of this.renderers) {
           if (!renderer.context) {
             renderer.setContext();
@@ -16451,13 +16518,7 @@ ${this.shaders.compute.head}`;
     async restoreDevice({ adapter = null, device = null } = {}) {
       await this.setAdapterAndDevice({ adapter, device });
       if (this.device) {
-        this.samplers.forEach((sampler) => {
-          const { type, ...samplerOptions } = sampler.options;
-          sampler.sampler = this.device.createSampler({
-            label: sampler.label,
-            ...samplerOptions
-          });
-        });
+        __privateMethod$8(this, _GPUDeviceManager_instances, createSamplers_fn).call(this);
         this.indirectBuffers.forEach((indirectBuffer) => indirectBuffer.create());
         this.renderers.forEach((renderer) => renderer.restoreContext());
       }
@@ -16743,6 +16804,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Render everything:
+     * - call all our {@link onBeforeRender} callback.
      * - call all our {@link renderers} {@link core/renderers/GPURenderer.GPURenderer#onBeforeCommandEncoder | onBeforeCommandEncoder} callbacks.
      * - create a {@link GPUCommandEncoder}.
      * - render all our {@link renderers}.
@@ -16750,6 +16812,7 @@ ${this.shaders.compute.head}`;
      * - upload {@link MediaTexture#texture | MediaTexture textures} that need it.
      * - empty our {@link texturesQueue} array.
      * - call all our {@link renderers} {@link core/renderers/GPURenderer.GPURenderer#onAfterCommandEncoder | onAfterCommandEncoder} callbacks.
+     * - call all our {@link onAfterRender} callback.
      */
     render() {
       if (!this.ready) return;
@@ -16790,6 +16853,16 @@ ${this.shaders.compute.head}`;
     }
   }
   _mipsGeneration = new WeakMap();
+  _GPUDeviceManager_instances = new WeakSet();
+  /**
+   * Create or recreate (on device restoration) all {@link samplers}.
+   * @private
+   */
+  createSamplers_fn = function() {
+    this.samplers.forEach((sampler) => {
+      sampler.createSampler();
+    });
+  };
 
   var __typeError$9 = (msg) => {
     throw TypeError(msg);
@@ -16797,7 +16870,7 @@ ${this.shaders.compute.head}`;
   var __accessCheck$9 = (obj, member, msg) => member.has(obj) || __typeError$9("Cannot " + msg);
   var __privateAdd$9 = (obj, member, value) => member.has(obj) ? __typeError$9("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   var __privateMethod$7 = (obj, member, method) => (__accessCheck$9(obj, member, "access private method"), method);
-  var _IndirectBuffer_instances, addGeometryToIndirectMappedBuffer_fn;
+  var _IndirectBuffer_instances, createIndirectBuffer_fn, addGeometryToIndirectMappedBuffer_fn;
   const indirectBufferEntrySize = 5;
   class IndirectBuffer {
     /**
@@ -16859,31 +16932,22 @@ ${this.shaders.compute.head}`;
       return index * this.options.minEntrySize * Uint32Array.BYTES_PER_ELEMENT;
     }
     /**
-     * Create the {@link buffer} (or destroy it if it already exists) with the right size, create its {@link GPUBuffer} in a mapped state, add all {@link geometries} attributes to the mapped buffer and tell the {@link geometries} to use this {@link IndirectBuffer}.
+     * Create the {@link buffer} as soon as the {@link Renderer#device | device} is ready.
      */
     create() {
-      const size = this.getByteOffsetAtIndex(this.geometries.size);
-      if (this.buffer) {
-        this.buffer.destroy();
-        this.buffer.options.size = size;
+      if (this.renderer.ready) {
+        __privateMethod$7(this, _IndirectBuffer_instances, createIndirectBuffer_fn).call(this);
       } else {
-        this.buffer = new Buffer({
-          label: this.options.label,
-          size,
-          usage: ["copyDst", "indirect", "storage"],
-          mappedAtCreation: true
-        });
+        const taskId = this.renderer.onBeforeCommandEncoderCreation.add(
+          () => {
+            if (this.renderer.device) {
+              this.renderer.onBeforeCommandEncoderCreation.remove(taskId);
+              __privateMethod$7(this, _IndirectBuffer_instances, createIndirectBuffer_fn).call(this);
+            }
+          },
+          { once: false }
+        );
       }
-      this.buffer.consumers.add(this.uuid);
-      this.buffer.createBuffer(this.renderer);
-      const indirectMappedBuffer = new Uint32Array(this.buffer.GPUBuffer.getMappedRange());
-      let offset = 0;
-      this.geometries.forEach((geometry) => {
-        __privateMethod$7(this, _IndirectBuffer_instances, addGeometryToIndirectMappedBuffer_fn).call(this, geometry, indirectMappedBuffer, offset * this.options.minEntrySize);
-        geometry.useIndirectBuffer({ buffer: this.buffer, offset: this.getByteOffsetAtIndex(offset) });
-        offset++;
-      });
-      this.buffer.GPUBuffer.unmap();
     }
     /**
      * Destroy this {@link IndirectBuffer}. Reset all {@link geometries} {@link Geometry#indirectDraw | indirectDraw} properties and destroy the {@link Buffer}.
@@ -16898,6 +16962,34 @@ ${this.shaders.compute.head}`;
     }
   }
   _IndirectBuffer_instances = new WeakSet();
+  /**
+   * Create the {@link buffer} (or destroy it if it already exists) with the right size, create its {@link GPUBuffer} in a mapped state, add all {@link geometries} attributes to the mapped buffer and tell the {@link geometries} to use this {@link IndirectBuffer}.
+   * @private
+   */
+  createIndirectBuffer_fn = function() {
+    const size = this.getByteOffsetAtIndex(this.geometries.size);
+    if (this.buffer) {
+      this.buffer.destroy();
+      this.buffer.options.size = size;
+    } else {
+      this.buffer = new Buffer({
+        label: this.options.label,
+        size,
+        usage: ["copyDst", "indirect", "storage"],
+        mappedAtCreation: true
+      });
+    }
+    this.buffer.consumers.add(this.uuid);
+    this.buffer.createBuffer(this.renderer);
+    const indirectMappedBuffer = new Uint32Array(this.buffer.GPUBuffer.getMappedRange());
+    let offset = 0;
+    this.geometries.forEach((geometry) => {
+      __privateMethod$7(this, _IndirectBuffer_instances, addGeometryToIndirectMappedBuffer_fn).call(this, geometry, indirectMappedBuffer, offset * this.options.minEntrySize);
+      geometry.useIndirectBuffer({ buffer: this.buffer, offset: this.getByteOffsetAtIndex(offset) });
+      offset++;
+    });
+    this.buffer.GPUBuffer.unmap();
+  };
   /**
    * Add a {@link Geometry} or {@link IndexedGeometry} attributes to the {@link buffer} mapped array buffer.
    * @param geometry - {@link Geometry} or {@link IndexedGeometry} to add the attributes from
@@ -17076,7 +17168,7 @@ ${this.shaders.compute.head}`;
      * @returns - Whether our {@link RenderBundle} is ready.
      */
     get ready() {
-      return __privateGet$7(this, _ready);
+      return this.renderer.ready && __privateGet$7(this, _ready);
     }
     /**
      * Set whether our {@link RenderBundle} is ready and encode it if needed.
@@ -17084,18 +17176,34 @@ ${this.shaders.compute.head}`;
      */
     set ready(value) {
       if (value && !this.ready) {
-        this.size = this.meshes.size;
-        if (this.options.useIndirectDraw) {
-          this.meshes.forEach((mesh) => {
-            this.indirectBuffer.addGeometry(mesh.geometry);
-          });
-          this.indirectBuffer.create();
+        const init = () => {
+          this.size = this.meshes.size;
+          if (this.options.useIndirectDraw) {
+            this.meshes.forEach((mesh) => {
+              this.indirectBuffer.addGeometry(mesh.geometry);
+            });
+            this.indirectBuffer.create();
+          }
+          __privateMethod$6(this, _RenderBundle_instances, encodeRenderCommands_fn).call(this);
+          __privateSet$7(this, _ready, value);
+        };
+        if (this.renderer.device) {
+          init();
+        } else {
+          const taskId = this.renderer.onBeforeCommandEncoderCreation.add(
+            () => {
+              if (this.renderer.device) {
+                this.renderer.onBeforeCommandEncoderCreation.remove(taskId);
+                init();
+              }
+            },
+            { once: false }
+          );
         }
-        __privateMethod$6(this, _RenderBundle_instances, encodeRenderCommands_fn).call(this);
       } else if (!value && this.ready) {
         this.bundle = null;
+        __privateSet$7(this, _ready, value);
       }
-      __privateSet$7(this, _ready, value);
     }
     /**
      * Called by the {@link core/scenes/Scene.Scene | Scene} to eventually add a {@link RenderedMesh | mesh} to this {@link RenderBundle}. Can set the {@link RenderBundleOptions#renderPass | render pass} if needed. If the {@link RenderBundleOptions#renderPass | render pass} is already set and the mesh output {@link RenderPass} does not match, it won't be added.
@@ -17195,6 +17303,7 @@ ${this.shaders.compute.head}`;
      * @param pass - {@link GPURenderPassEncoder} to use.
      */
     render(pass) {
+      if (!this.renderer.ready) return;
       if (this.ready && this.bundle && this.visible) {
         this.meshes.forEach((mesh) => {
           mesh.onBeforeRenderPass();
@@ -17303,7 +17412,7 @@ ${this.shaders.compute.head}`;
    * @private
    */
   patchBindingOffset_fn = function(size) {
-    const minOffset = this.renderer.device.limits.minUniformBufferOffsetAlignment;
+    const minOffset = this.renderer.device?.limits.minUniformBufferOffsetAlignment || 256;
     if (this.binding.arrayBufferSize < size * minOffset) {
       this.binding.arrayBufferSize = size * minOffset;
       this.binding.arrayBuffer = new ArrayBuffer(this.binding.arrayBufferSize);
@@ -20673,7 +20782,6 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
      */
     setMainRenderer() {
       this.createCurtainsRenderer({
-        deviceManager: this.deviceManager,
         // TODO ...this.options?
         label: this.options.label || "GPUCurtains main GPUCurtainsRenderer",
         container: this.options.container,

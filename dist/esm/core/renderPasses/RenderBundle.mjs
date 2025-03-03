@@ -159,7 +159,7 @@ class RenderBundle {
    * @returns - Whether our {@link RenderBundle} is ready.
    */
   get ready() {
-    return __privateGet(this, _ready);
+    return this.renderer.ready && __privateGet(this, _ready);
   }
   /**
    * Set whether our {@link RenderBundle} is ready and encode it if needed.
@@ -167,18 +167,34 @@ class RenderBundle {
    */
   set ready(value) {
     if (value && !this.ready) {
-      this.size = this.meshes.size;
-      if (this.options.useIndirectDraw) {
-        this.meshes.forEach((mesh) => {
-          this.indirectBuffer.addGeometry(mesh.geometry);
-        });
-        this.indirectBuffer.create();
+      const init = () => {
+        this.size = this.meshes.size;
+        if (this.options.useIndirectDraw) {
+          this.meshes.forEach((mesh) => {
+            this.indirectBuffer.addGeometry(mesh.geometry);
+          });
+          this.indirectBuffer.create();
+        }
+        __privateMethod(this, _RenderBundle_instances, encodeRenderCommands_fn).call(this);
+        __privateSet(this, _ready, value);
+      };
+      if (this.renderer.device) {
+        init();
+      } else {
+        const taskId = this.renderer.onBeforeCommandEncoderCreation.add(
+          () => {
+            if (this.renderer.device) {
+              this.renderer.onBeforeCommandEncoderCreation.remove(taskId);
+              init();
+            }
+          },
+          { once: false }
+        );
       }
-      __privateMethod(this, _RenderBundle_instances, encodeRenderCommands_fn).call(this);
     } else if (!value && this.ready) {
       this.bundle = null;
+      __privateSet(this, _ready, value);
     }
-    __privateSet(this, _ready, value);
   }
   /**
    * Called by the {@link core/scenes/Scene.Scene | Scene} to eventually add a {@link RenderedMesh | mesh} to this {@link RenderBundle}. Can set the {@link RenderBundleOptions#renderPass | render pass} if needed. If the {@link RenderBundleOptions#renderPass | render pass} is already set and the mesh output {@link RenderPass} does not match, it won't be added.
@@ -278,6 +294,7 @@ class RenderBundle {
    * @param pass - {@link GPURenderPassEncoder} to use.
    */
   render(pass) {
+    if (!this.renderer.ready) return;
     if (this.ready && this.bundle && this.visible) {
       this.meshes.forEach((mesh) => {
         mesh.onBeforeRenderPass();
@@ -386,7 +403,7 @@ setBinding_fn = function() {
  * @private
  */
 patchBindingOffset_fn = function(size) {
-  const minOffset = this.renderer.device.limits.minUniformBufferOffsetAlignment;
+  const minOffset = this.renderer.device?.limits.minUniformBufferOffsetAlignment || 256;
   if (this.binding.arrayBufferSize < size * minOffset) {
     this.binding.arrayBufferSize = size * minOffset;
     this.binding.arrayBuffer = new ArrayBuffer(this.binding.arrayBufferSize);
