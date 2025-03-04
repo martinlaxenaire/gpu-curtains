@@ -3,6 +3,14 @@ import { Object3D } from '../objects3D/Object3D.mjs';
 import { Vec3 } from '../../math/Vec3.mjs';
 import { throwWarning } from '../../utils/utils.mjs';
 
+var __typeError = (msg) => {
+  throw TypeError(msg);
+};
+var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
+var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
+var _shouldLoadColors, _shouldLoadDepth;
 const camPosA = new Vec3();
 const camPosB = new Vec3();
 const posA = new Vec3();
@@ -14,8 +22,20 @@ class Scene extends Object3D {
    */
   constructor({ renderer }) {
     super();
+    /**
+     * Keep track of whether the next render pass should set its `loadOp` to `'load'` when rendering.
+     * @private
+     */
+    __privateAdd(this, _shouldLoadColors);
+    /**
+     * Keep track of whether the next render pass should set its `depthLoadOp` to `'load'` when rendering.
+     * @private
+     */
+    __privateAdd(this, _shouldLoadDepth);
     renderer = isRenderer(renderer, "Scene");
     this.renderer = renderer;
+    __privateSet(this, _shouldLoadColors, false);
+    __privateSet(this, _shouldLoadDepth, false);
     this.computePassEntries = [];
     this.renderPassEntries = {
       /** Array of {@link RenderPassEntry} that will handle {@link PingPongPlane}. Each {@link PingPongPlane} will be added as a distinct {@link RenderPassEntry} here. */
@@ -521,6 +541,9 @@ class Scene extends Object3D {
     }
     renderPassEntry.onAfterRenderPass && renderPassEntry.onAfterRenderPass(commandEncoder, swapChainTexture);
     this.renderer.pipelineManager.resetCurrentPipeline();
+    if (renderPassEntry.renderPass.options.useDepth && !renderPassEntry.renderPass.options.depthReadOnly && renderPassEntry.renderPass.options.depthStoreOp === "store" && renderPassEntry.renderPass.depthTexture.uuid === this.renderer.renderPass.depthTexture?.uuid) {
+      __privateSet(this, _shouldLoadDepth, true);
+    }
   }
   /**
    * Before actually rendering the scene, update matrix stack and frustum culling checks. Batching these calls greatly improve performance. Called by the {@link renderer} before rendering.
@@ -560,12 +583,14 @@ class Scene extends Object3D {
       computePass.copyBufferToResult(commandEncoder);
       this.renderer.pipelineManager.resetCurrentPipeline();
     }
+    __privateSet(this, _shouldLoadColors, false);
+    __privateSet(this, _shouldLoadDepth, false);
     for (const renderPassEntryType in this.renderPassEntries) {
       if (renderPassEntryType === "postProPass") {
         this.renderer.renderPass.setDepthReadOnly(false);
         this.renderer.renderPass.setDepthLoadOp("clear");
+        __privateSet(this, _shouldLoadColors, true);
       }
-      let passDrawnCount = 0;
       this.renderPassEntries[renderPassEntryType].forEach((renderPassEntry) => {
         if (!this.getRenderPassEntryLength(renderPassEntry)) return;
         if (renderPassEntryType === "prePass" || renderPassEntryType === "postProPass") {
@@ -573,17 +598,19 @@ class Scene extends Object3D {
         } else {
           renderPassEntry.renderPass.setDepthReadOnly(false);
         }
-        const loadColors = renderPassEntryType === "postProPass" || renderPassEntryType === "prePass" && passDrawnCount !== 0 || renderPassEntryType === "screen" && (passDrawnCount !== 0 || !!this.renderPassEntries.prePass.filter((passEntry) => passEntry.element && passEntry.element.visible).length);
-        const loadDepth = renderPassEntryType === "screen" && (passDrawnCount !== 0 || !!this.renderPassEntries.prePass.filter(
-          (passEntry) => passEntry.element && passEntry.element.visible && passEntry.element.inputTarget && passEntry.element.inputTarget.renderPass.options.useDepth
-        ).length);
-        renderPassEntry.renderPass.setLoadOp(loadColors ? "load" : "clear");
-        renderPassEntry.renderPass.setDepthLoadOp(loadDepth ? "load" : "clear");
-        passDrawnCount++;
+        renderPassEntry.renderPass.setLoadOp(__privateGet(this, _shouldLoadColors) ? "load" : "clear");
+        renderPassEntry.renderPass.setDepthLoadOp(
+          __privateGet(this, _shouldLoadDepth) && !renderPassEntry.renderPass.options.depthReadOnly ? "load" : "clear"
+        );
         this.renderSinglePassEntry(commandEncoder, renderPassEntry);
+        if (renderPassEntryType !== "renderTarget") {
+          __privateSet(this, _shouldLoadColors, true);
+        }
       });
     }
   }
 }
+_shouldLoadColors = new WeakMap();
+_shouldLoadDepth = new WeakMap();
 
 export { Scene };
