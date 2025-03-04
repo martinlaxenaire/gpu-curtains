@@ -93,6 +93,17 @@ export class Scene extends Object3D {
   renderPassEntries: RenderPassEntries
 
   /**
+   * Keep track of whether the next render pass should set its `loadOp` to `'load'` when rendering.
+   * @private
+   */
+  #shouldLoadColors: boolean
+  /**
+   * Keep track of whether the next render pass should set its `depthLoadOp` to `'load'` when rendering.
+   * @private
+   */
+  #shouldLoadDepth: boolean
+
+  /**
    * Scene constructor
    * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Scene}.
    */
@@ -102,6 +113,9 @@ export class Scene extends Object3D {
     renderer = isRenderer(renderer, 'Scene')
 
     this.renderer = renderer
+
+    this.#shouldLoadColors = false
+    this.#shouldLoadDepth = false
 
     this.computePassEntries = []
 
@@ -767,6 +781,17 @@ export class Scene extends Object3D {
     renderPassEntry.onAfterRenderPass && renderPassEntry.onAfterRenderPass(commandEncoder, swapChainTexture)
 
     this.renderer.pipelineManager.resetCurrentPipeline()
+
+    // if we've written to the main buffer depth,
+    // we'll need to load its depth next time
+    if (
+      renderPassEntry.renderPass.options.useDepth &&
+      !renderPassEntry.renderPass.options.depthReadOnly &&
+      renderPassEntry.renderPass.options.depthStoreOp === 'store' &&
+      renderPassEntry.renderPass.depthTexture.uuid === this.renderer.renderPass.depthTexture?.uuid
+    ) {
+      this.#shouldLoadDepth = true
+    }
   }
 
   /**
@@ -825,44 +850,44 @@ export class Scene extends Object3D {
       this.renderer.pipelineManager.resetCurrentPipeline()
     }
 
+    // reset load flags
+    this.#shouldLoadColors = false
+    this.#shouldLoadDepth = false
+
     for (const renderPassEntryType in this.renderPassEntries) {
       // force clearing the renderPass depth buffer before drawing any post processing pass
       // reset it even if there's no post processing pass
       if (renderPassEntryType === 'postProPass') {
+        this.renderer.renderPass.setDepthReadOnly(false)
         this.renderer.renderPass.setDepthLoadOp('clear')
-      }
 
-      let passDrawnCount = 0
+        // load colors for post processing pass
+        this.#shouldLoadColors = true
+      }
 
       this.renderPassEntries[renderPassEntryType].forEach((renderPassEntry) => {
         // early bail if there's nothing to draw
         if (!this.getRenderPassEntryLength(renderPassEntry)) return
 
-        // if it's a pre pass, disable depth write
-        if (renderPassEntryType === 'prePass') {
+        // disable depth write if it's a shader pass, else enable
+        if (renderPassEntryType === 'prePass' || renderPassEntryType === 'postProPass') {
           renderPassEntry.renderPass.setDepthReadOnly(true)
-        } else if (renderPassEntryType === 'screen') {
+        } else {
           renderPassEntry.renderPass.setDepthReadOnly(false)
         }
 
-        const isSubsequentScreenPass =
-          renderPassEntryType === 'screen' && (passDrawnCount !== 0 || this.renderPassEntries.prePass.length)
-
-        const loadColors =
-          renderPassEntryType === 'postProPass' ||
-          (renderPassEntryType === 'prePass' && passDrawnCount !== 0) ||
-          isSubsequentScreenPass
-
-        const loadDepth = isSubsequentScreenPass
-
-        // if we're drawing to screen and it's not our first pass, load result from previous passes
         // post processing scene pass will clear content inside onBeforeRenderPass anyway
-        renderPassEntry.renderPass.setLoadOp(loadColors ? 'load' : 'clear')
-        renderPassEntry.renderPass.setDepthLoadOp(loadDepth ? 'load' : 'clear')
-
-        passDrawnCount++
+        renderPassEntry.renderPass.setLoadOp(this.#shouldLoadColors ? 'load' : 'clear')
+        renderPassEntry.renderPass.setDepthLoadOp(
+          this.#shouldLoadDepth && !renderPassEntry.renderPass.options.depthReadOnly ? 'load' : 'clear'
+        )
 
         this.renderSinglePassEntry(commandEncoder, renderPassEntry)
+
+        // if we're rendering to the screen, we'll need to load colors next time
+        if (renderPassEntryType !== 'renderTarget') {
+          this.#shouldLoadColors = true
+        }
       })
     }
   }

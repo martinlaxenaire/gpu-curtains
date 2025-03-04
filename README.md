@@ -187,6 +187,15 @@ If you need to debug your scenes, understand in which order they are rendered or
 
 Contribution are more than welcome! Please refer to the [contribution guidelines](CONTRIBUTING.md).
 
+## Resources
+
+I've wrote a 4 parts tutorial on [OKAY DEV](https://okaydev.co/). Altho it uses a deprecated version of the library, it is still pretty useful to understand the library basics and how things are built under the hood.
+
+- [Dive Into WebGPU — Part 1 (basic scene)](https://okaydev.co/articles/dive-into-webgpu-part-1)
+- [Dive Into WebGPU — Part 2 (DOM synced gallery with post-processing)](https://okaydev.co/articles/dive-into-webgpu-part-2)
+- [Dive Into WebGPU — Part 3 (glTF product configurator)](https://okaydev.co/articles/dive-into-webgpu-part-3)
+- [Dive Into WebGPU — Part 4 (instanced particles with shadow map)](https://okaydev.co/articles/dive-into-webgpu-part-4)
+
 ## Acknowledgements
 
 Some parts of the code (mostly the math classes) have been ported or adapted from other existing open source libraries like [three.js](https://github.com/mrdoob/three.js) and [glmatrix](https://github.com/toji/gl-matrix).

@@ -857,8 +857,9 @@ class GPURenderer {
   /**
    * Force to clear a {@link GPURenderer} content to its {@link RenderPass#options.clearValue | clear value} by rendering and empty pass.
    * @param commandEncoder - {@link GPUCommandEncoder} to use if any.
+   * @param renderPass - {@link RenderPass} to clear. Default to {@link GPURenderer#renderPass | renderPass}.
    */
-  forceClear(commandEncoder) {
+  forceClear(commandEncoder, renderPass = this.renderPass) {
     const hasCommandEncoder = !!commandEncoder;
     if (!hasCommandEncoder) {
       commandEncoder = this.device?.createCommandEncoder({
@@ -866,10 +867,11 @@ class GPURenderer {
       });
       !this.production && commandEncoder.pushDebugGroup(`${this.type} (${this.options.label}): Force clear command encoder`);
     }
-    this.renderPass.updateView();
-    this.renderPass.setLoadOp("clear");
-    this.renderPass.setDepthLoadOp("clear");
-    const pass = commandEncoder.beginRenderPass(this.renderPass.descriptor);
+    renderPass.updateView();
+    renderPass.setDepthReadOnly(false);
+    renderPass.setLoadOp("clear");
+    renderPass.setDepthLoadOp("clear");
+    const pass = commandEncoder.beginRenderPass(renderPass.descriptor);
     pass.end();
     if (!hasCommandEncoder) {
       !this.production && commandEncoder.popDebugGroup();

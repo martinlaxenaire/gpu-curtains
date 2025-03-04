@@ -50,6 +50,7 @@ window.addEventListener('load', async () => {
     stencilRenderTarget = new RenderTarget(gpuCameraRenderer, {
       label: 'Stencil render target',
       depthFormat: depthStencilFormat,
+      depthStoreOp: 'discard',
     })
   }
 

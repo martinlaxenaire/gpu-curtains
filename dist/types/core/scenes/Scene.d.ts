@@ -65,6 +65,7 @@ export type RenderPassEntries = Record<RenderPassEntriesType, RenderPassEntry[]>
  * - Finally, all the post processing {@link ShaderPass} in the `postProPass` {@link renderPassEntries} array.
  */
 export declare class Scene extends Object3D {
+    #private;
     /** {@link Renderer} used by this {@link Scene} */
     renderer: Renderer;
     /** Array of {@link ComputePass} to render, ordered by {@link ComputePass#renderOrder | renderOrder} */

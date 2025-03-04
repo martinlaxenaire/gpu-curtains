@@ -79,7 +79,8 @@ window.addEventListener('load', async () => {
     }
   `
 
-  const prePass = new ShaderPass(gpuCameraRenderer, {
+  const bgPrePass = new ShaderPass(gpuCameraRenderer, {
+    label: 'Background pre pass',
     isPrePass: true,
     transparent: true, // blending
     shaders: {
@@ -87,10 +88,6 @@ window.addEventListener('load', async () => {
         code: prePassShader,
       },
     },
-  })
-
-  const cubePrePassTarget = new RenderTarget(gpuCameraRenderer, {
-    label: 'Pre pass target',
   })
 
   const planeTarget = new RenderTarget(gpuCameraRenderer, {
@@ -136,7 +133,12 @@ window.addEventListener('load', async () => {
     }
   `
 
+  const cubePrePassTarget = new RenderTarget(gpuCameraRenderer, {
+    label: 'Cube pre pass target',
+  })
+
   const cubePrePass = new ShaderPass(gpuCameraRenderer, {
+    label: 'Cube pre pass',
     isPrePass: true,
     inputTarget: cubePrePassTarget,
     transparent: true, // blending
@@ -147,13 +149,17 @@ window.addEventListener('load', async () => {
     },
   })
 
+  console.log(gpuCameraRenderer.scene)
+
   // now add objects to our scene
   const cubeGeometry = new BoxGeometry()
   const sphereGeometry = new SphereGeometry()
+  let meshes = []
 
   for (let i = 0; i < 50; i++) {
     const isCube = Math.random() > 0.5
     const mesh = new Mesh(gpuCameraRenderer, {
+      label: (isCube ? 'Cube' : 'Sphere') + ' mesh ' + i,
       geometry: isCube ? cubeGeometry : sphereGeometry,
       outputTarget: isCube ? cubePrePassTarget : null,
     })
@@ -164,10 +170,14 @@ window.addEventListener('load', async () => {
 
     const rotationSpeed = Math.random() * 0.025
 
+    mesh.userData.updateOutputTarget = isCube
+
     mesh.onBeforeRender(() => {
       mesh.rotation.y += rotationSpeed
       mesh.rotation.z += rotationSpeed
     })
+
+    meshes.push(mesh)
   }
 
   //
@@ -217,4 +227,32 @@ window.addEventListener('load', async () => {
     type: 'depth',
     fromTexture: gpuCameraRenderer.renderPass.depthTexture,
   })
+
+  // GUI
+  const gui = new lil.GUI({
+    title: 'Passes',
+  })
+
+  gui.add(bgPrePass, 'visible').name('Background pre pass visibility')
+
+  gui
+    .add({ usePlanePrePass: true }, 'usePlanePrePass')
+    .name('Use red plane pre pass')
+    .onChange((value) => {
+      planePrePass.visible = value
+      plane.setOutputTarget(value ? planeTarget : null)
+    })
+
+  gui
+    .add({ useCubePrePass: true }, 'useCubePrePass')
+    .name('Use cube pre pass')
+    .onChange((value) => {
+      meshes
+        .filter((mesh) => mesh.userData.updateOutputTarget)
+        .forEach((mesh) => {
+          mesh.setOutputTarget(value ? cubePrePassTarget : null)
+        })
+      cubePrePass.visible = value
+    })
+  gui.add(postProPass, 'visible').name('Depth post processing pass visibility')
 })
