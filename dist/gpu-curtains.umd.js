@@ -3316,6 +3316,9 @@
       this.index = index;
       this.uuid = generateUUID();
       this.bindings = [];
+      this.bufferBindings = [];
+      this.uniforms = {};
+      this.storages = {};
       bindings.length && this.addBindings(bindings);
       if (this.options.uniforms || this.options.storages) this.setInputBindings();
       this.layoutCacheKey = "";
@@ -3325,18 +3328,6 @@
       this.bindGroup = null;
       this.needsPipelineFlush = false;
       this.consumers = /* @__PURE__ */ new Set();
-      for (const binding of this.bufferBindings) {
-        if ("buffer" in binding) {
-          if (binding.parent) {
-            binding.parent.buffer.consumers.add(this.uuid);
-          } else {
-            binding.buffer.consumers.add(this.uuid);
-          }
-        }
-        if ("resultBuffer" in binding) {
-          binding.resultBuffer.consumers.add(this.uuid);
-        }
-      }
       this.renderer.addBindGroup(this);
     }
     /**
@@ -3360,23 +3351,32 @@
      */
     addBindings(bindings = []) {
       bindings.forEach((binding) => {
-        if ("buffer" in binding) {
-          if (binding.parent) {
-            this.renderer.deviceManager.bufferBindings.set(binding.parent.cacheKey, binding.parent);
-            binding.parent.buffer.consumers.add(this.uuid);
-          } else {
-            this.renderer.deviceManager.bufferBindings.set(binding.cacheKey, binding);
-            binding.buffer.consumers.add(this.uuid);
-          }
-        }
+        this.addBinding(binding);
       });
-      this.bindings = [...this.bindings, ...bindings];
     }
     /**
      * Adds an already created {@link bindings} (buffers, texture, etc.) to the {@link bindings} array.
      * @param binding - binding to add.
      */
     addBinding(binding) {
+      if ("buffer" in binding) {
+        if (binding.parent) {
+          this.renderer.deviceManager.bufferBindings.set(binding.parent.cacheKey, binding.parent);
+          binding.parent.buffer.consumers.add(this.uuid);
+        } else {
+          this.renderer.deviceManager.bufferBindings.set(binding.cacheKey, binding);
+          binding.buffer.consumers.add(this.uuid);
+        }
+        if ("resultBuffer" in binding) {
+          binding.resultBuffer.consumers.add(this.uuid);
+        }
+        this.bufferBindings.push(binding);
+        if (binding.bindingType === "uniform") {
+          this.uniforms[binding.name] = binding.inputs;
+        } else {
+          this.storages[binding.name] = binding.inputs;
+        }
+      }
       this.bindings.push(binding);
     }
     /**
@@ -3566,14 +3566,6 @@
       for (const bufferBinding of this.bufferBindings) {
         bufferBinding.shouldUpdate = true;
       }
-    }
-    /**
-     * Get all {@link BindGroup#bindings | bind group bindings} that handle a {@link GPUBuffer}
-     */
-    get bufferBindings() {
-      return this.bindings.filter(
-        (binding) => binding instanceof BufferBinding || binding instanceof WritableBufferBinding
-      );
     }
     /**
      * Creates binding GPUBuffer with correct params.
@@ -6417,18 +6409,16 @@
      */
     processBindGroupBindings(bindGroup) {
       for (const inputBinding of bindGroup.bindings) {
-        if (inputBinding.bindingType === "uniform")
-          this.uniforms = {
-            ...this.uniforms,
-            [inputBinding.name]: inputBinding.inputs
-          };
-        if (inputBinding.bindingType === "storage")
-          this.storages = {
-            ...this.storages,
-            [inputBinding.name]: inputBinding.inputs
-          };
         this.inputsBindings.set(inputBinding.name, inputBinding);
       }
+      this.uniforms = {
+        ...this.uniforms,
+        ...bindGroup.uniforms
+      };
+      this.storages = {
+        ...this.storages,
+        ...bindGroup.storages
+      };
     }
     /**
      * Create the bind groups if they need to be created.
@@ -6637,7 +6627,7 @@
      */
     addSampler(sampler) {
       this.samplers.push(sampler);
-      if (this.options.shaders.vertex && this.options.shaders.vertex.code.indexOf(sampler.name) !== -1 || this.options.shaders.fragment && this.options.shaders.fragment.code.indexOf(sampler.name) !== -1 || this.options.shaders.compute && this.options.shaders.compute.code.indexOf(sampler.name) !== -1) {
+      if (this.options.shaders && this.options.shaders.vertex && this.options.shaders.vertex.code.indexOf(sampler.name) !== -1 || this.options.shaders && this.options.shaders.fragment && this.options.shaders.fragment.code.indexOf(sampler.name) !== -1 || this.options.shaders && this.options.shaders.compute && this.options.shaders.compute.code.indexOf(sampler.name) !== -1) {
         this.texturesBindGroup.addSampler(sampler);
       }
     }

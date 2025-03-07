@@ -1,4 +1,4 @@
-/// <reference types="dist" />
+/// <reference types="@webgpu/types" />
 import { BufferBinding } from './BufferBinding';
 import { TextureBinding } from './TextureBinding';
 import { MaterialShadersType } from '../../types/Materials';

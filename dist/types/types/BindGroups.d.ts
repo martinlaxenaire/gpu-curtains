@@ -1,4 +1,4 @@
-/// <reference types="dist" />
+/// <reference types="@webgpu/types" />
 import { BindGroup } from '../core/bindGroups/BindGroup';
 import { TextureBindGroup } from '../core/bindGroups/TextureBindGroup';
 import { BufferBinding, BufferBindingParams } from '../core/bindings/BufferBinding';

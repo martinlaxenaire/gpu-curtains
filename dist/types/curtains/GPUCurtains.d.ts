@@ -1,4 +1,4 @@
-/// <reference types="dist" />
+/// <reference types="@webgpu/types" />
 import { GPUCurtainsRenderer } from './renderers/GPUCurtainsRenderer';
 import { ScrollManager } from '../utils/ScrollManager';
 import { PingPongPlane } from '../extras/meshes/PingPongPlane';

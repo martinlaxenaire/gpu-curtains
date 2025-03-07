@@ -354,18 +354,17 @@ export class Material {
    */
   processBindGroupBindings(bindGroup: BindGroup) {
     for (const inputBinding of bindGroup.bindings) {
-      if (inputBinding.bindingType === 'uniform')
-        this.uniforms = {
-          ...this.uniforms,
-          [inputBinding.name]: (inputBinding as BindGroupBufferBindingElement).inputs,
-        }
-      if (inputBinding.bindingType === 'storage')
-        this.storages = {
-          ...this.storages,
-          [inputBinding.name]: (inputBinding as BindGroupBufferBindingElement).inputs,
-        }
-
       this.inputsBindings.set(inputBinding.name, inputBinding)
+    }
+
+    this.uniforms = {
+      ...this.uniforms,
+      ...bindGroup.uniforms,
+    }
+
+    this.storages = {
+      ...this.storages,
+      ...bindGroup.storages,
     }
   }
 

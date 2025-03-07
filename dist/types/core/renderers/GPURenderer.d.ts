@@ -1,4 +1,4 @@
-/// <reference types="dist" />
+/// <reference types="@webgpu/types" />
 import { PipelineManager } from '../pipelines/PipelineManager';
 import { DOMElement, DOMElementBoundingRect, RectBBox, RectSize } from '../DOM/DOMElement';
 import { Scene } from '../scenes/Scene';

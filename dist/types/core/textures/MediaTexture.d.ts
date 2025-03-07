@@ -1,4 +1,4 @@
-/// <reference types="dist" />
+/// <reference types="@webgpu/types" />
 import { Texture, TextureBaseParams, TextureParams } from './Texture';
 import { Renderer } from '../renderers/utils';
 import { MediaTextureBaseParams, TextureSize, TextureSource, TextureSourceType } from '../../types/Textures';
