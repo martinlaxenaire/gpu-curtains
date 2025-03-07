@@ -1,5 +1,3 @@
-/// <reference types="@webgpu/types" />
-
 // core
 export { BindGroup } from './core/bindGroups/BindGroup'
 export { TextureBindGroup } from './core/bindGroups/TextureBindGroup'
@@ -97,3 +95,6 @@ export { HDRLoader } from './extras/loaders/HDRLoader'
 // animations
 export { KeyframesAnimation } from './extras/animations/KeyframesAnimation'
 export { TargetsAnimationsManager } from './extras/animations/TargetsAnimationsManager'
+
+// types
+export * from './types'
