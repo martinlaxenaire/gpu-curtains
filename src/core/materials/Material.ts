@@ -642,10 +642,15 @@ export class Material {
 
     // is it used in our shaders?
     if (
-      (this.options.shaders.vertex && this.options.shaders.vertex.code.indexOf(sampler.name) !== -1) ||
-      (this.options.shaders.fragment &&
+      (this.options.shaders &&
+        this.options.shaders.vertex &&
+        this.options.shaders.vertex.code.indexOf(sampler.name) !== -1) ||
+      (this.options.shaders &&
+        this.options.shaders.fragment &&
         (this.options.shaders.fragment as ShaderOptions).code.indexOf(sampler.name) !== -1) ||
-      (this.options.shaders.compute && this.options.shaders.compute.code.indexOf(sampler.name) !== -1)
+      (this.options.shaders &&
+        this.options.shaders.compute &&
+        this.options.shaders.compute.code.indexOf(sampler.name) !== -1)
     ) {
       this.texturesBindGroup.addSampler(sampler)
     }
