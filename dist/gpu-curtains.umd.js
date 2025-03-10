@@ -13741,29 +13741,73 @@ ${this.shaders.compute.head}`;
       this.activeBindGroups = [];
     }
     /**
-     * Compare two {@link ShaderOptions | shader objects}
-     * @param shaderA - first {@link ShaderOptions | shader object} to compare
-     * @param shaderB - second {@link ShaderOptions | shader object} to compare
-     * @returns - whether the two {@link ShaderOptions | shader objects} code and entryPoint match
+     * Get all the already created {@link RenderPipelineEntry}.
+     * @readonly
+     */
+    get renderPipelines() {
+      return this.pipelineEntries.filter(
+        (pipelineEntry) => pipelineEntry instanceof RenderPipelineEntry
+      );
+    }
+    /**
+     * Get all the already created {@link ComputePipelineEntry}.
+     * @readonly
+     */
+    get computePipelines() {
+      return this.pipelineEntries.filter(
+        (pipelineEntry) => pipelineEntry instanceof ComputePipelineEntry
+      );
+    }
+    /**
+     * Compare two {@link ShaderOptions | shader objects}.
+     * @param shaderA - First {@link ShaderOptions | shader object} to compare.
+     * @param shaderB - Second {@link ShaderOptions | shader object} to compare.
+     * @returns - Whether the two {@link ShaderOptions | shader objects} code and entryPoint match.
      */
     compareShaders(shaderA, shaderB) {
       return shaderA.code === shaderB.code && shaderA.entryPoint === shaderB.entryPoint;
     }
     /**
-     * Checks if the provided {@link RenderPipelineEntryParams | RenderPipelineEntry parameters} belongs to an already created {@link RenderPipelineEntry}.
-     * @param parameters - {@link RenderPipelineEntryParams | RenderPipelineEntry parameters}
-     * @returns - the found {@link RenderPipelineEntry}, or null if not found
+     * Check if the provided {@link RenderPipelineEntryParams | RenderPipelineEntry parameters} belongs to an already created {@link RenderPipelineEntry}.
+     * @param parameters - {@link RenderPipelineEntryParams | RenderPipelineEntry parameters}.
+     * @returns - Found {@link RenderPipelineEntry}, or null if not found.
      */
     isSameRenderPipeline(parameters) {
-      return this.pipelineEntries.filter((pipelineEntry) => pipelineEntry instanceof RenderPipelineEntry).find((pipelineEntry) => {
-        const { options } = pipelineEntry;
+      let cachedPipeline = null;
+      const renderPipelines = this.renderPipelines;
+      for (const renderPipeline of renderPipelines) {
+        const { options } = renderPipeline;
         const { shaders, rendering, cacheKey } = parameters;
-        const sameCacheKey = cacheKey === options.cacheKey;
-        const sameVertexShader = this.compareShaders(shaders.vertex, options.shaders.vertex);
-        const sameFragmentShader = !shaders.fragment && !options.shaders.fragment || this.compareShaders(shaders.fragment, options.shaders.fragment);
+        if (cacheKey !== options.cacheKey) continue;
         const differentParams = compareRenderingOptions(rendering, options.rendering);
-        return sameCacheKey && !differentParams.length && sameVertexShader && sameFragmentShader;
-      });
+        if (differentParams.length) continue;
+        const sameVertexShader = this.compareShaders(shaders.vertex, options.shaders.vertex);
+        if (!sameVertexShader) continue;
+        const sameFragmentShader = !shaders.fragment && !options.shaders.fragment || this.compareShaders(shaders.fragment, options.shaders.fragment);
+        if (!sameFragmentShader) continue;
+        cachedPipeline = renderPipeline;
+        break;
+      }
+      return cachedPipeline;
+    }
+    /**
+     * Check if the provided {@link PipelineEntryParams | PipelineEntry parameters} belongs to an already created {@link ComputePipelineEntry}.
+     * @param parameters - {@link PipelineEntryParams | PipelineEntry parameters}.
+     * @returns - Found {@link ComputePipelineEntry}, or null if not found.
+     */
+    isSameComputePipeline(parameters) {
+      let cachedPipeline = null;
+      const computePipelines = this.computePipelines;
+      for (const computePipeline of computePipelines) {
+        const { options } = computePipeline;
+        const { shaders, cacheKey } = parameters;
+        if (cacheKey !== options.cacheKey) continue;
+        const sameComputeShader = this.compareShaders(shaders.compute, options.shaders.compute);
+        if (!sameComputeShader) continue;
+        cachedPipeline = computePipeline;
+        break;
+      }
+      return cachedPipeline;
     }
     /**
      * Check if a {@link RenderPipelineEntry} has already been created with the given {@link RenderPipelineEntryParams | parameters}.
@@ -13792,20 +13836,6 @@ ${this.shaders.compute.head}`;
         this.pipelineEntries.push(pipelineEntry);
         return pipelineEntry;
       }
-    }
-    /**
-     * Checks if the provided {@link PipelineEntryParams | PipelineEntry parameters} belongs to an already created {@link ComputePipelineEntry}.
-     * @param parameters - {@link PipelineEntryParams | PipelineEntry parameters}
-     * @returns - the found {@link ComputePipelineEntry}, or null if not found
-     */
-    isSameComputePipeline(parameters) {
-      return this.pipelineEntries.filter((pipelineEntry) => pipelineEntry instanceof ComputePipelineEntry).find((pipelineEntry) => {
-        const { options } = pipelineEntry;
-        const { shaders, cacheKey } = parameters;
-        const sameCacheKey = cacheKey === options.cacheKey;
-        const sameComputeShader = this.compareShaders(shaders.compute, options.shaders.compute);
-        return sameCacheKey && sameComputeShader;
-      });
     }
     /**
      * Check if a {@link ComputePipelineEntry} has already been created with the given {@link PipelineEntryParams | parameters}.

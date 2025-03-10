@@ -42,10 +42,30 @@ export class PipelineManager {
   }
 
   /**
-   * Compare two {@link ShaderOptions | shader objects}
-   * @param shaderA - first {@link ShaderOptions | shader object} to compare
-   * @param shaderB - second {@link ShaderOptions | shader object} to compare
-   * @returns - whether the two {@link ShaderOptions | shader objects} code and entryPoint match
+   * Get all the already created {@link RenderPipelineEntry}.
+   * @readonly
+   */
+  get renderPipelines(): RenderPipelineEntry[] {
+    return this.pipelineEntries.filter(
+      (pipelineEntry) => pipelineEntry instanceof RenderPipelineEntry
+    ) as RenderPipelineEntry[]
+  }
+
+  /**
+   * Get all the already created {@link ComputePipelineEntry}.
+   * @readonly
+   */
+  get computePipelines(): ComputePipelineEntry[] {
+    return this.pipelineEntries.filter(
+      (pipelineEntry) => pipelineEntry instanceof ComputePipelineEntry
+    ) as ComputePipelineEntry[]
+  }
+
+  /**
+   * Compare two {@link ShaderOptions | shader objects}.
+   * @param shaderA - First {@link ShaderOptions | shader object} to compare.
+   * @param shaderB - Second {@link ShaderOptions | shader object} to compare.
+   * @returns - Whether the two {@link ShaderOptions | shader objects} code and entryPoint match.
    */
   compareShaders(shaderA: ShaderOptions, shaderB: ShaderOptions): boolean {
     // store shader code in a Set map?
@@ -55,28 +75,69 @@ export class PipelineManager {
   }
 
   /**
-   * Checks if the provided {@link RenderPipelineEntryParams | RenderPipelineEntry parameters} belongs to an already created {@link RenderPipelineEntry}.
-   * @param parameters - {@link RenderPipelineEntryParams | RenderPipelineEntry parameters}
-   * @returns - the found {@link RenderPipelineEntry}, or null if not found
+   * Check if the provided {@link RenderPipelineEntryParams | RenderPipelineEntry parameters} belongs to an already created {@link RenderPipelineEntry}.
+   * @param parameters - {@link RenderPipelineEntryParams | RenderPipelineEntry parameters}.
+   * @returns - Found {@link RenderPipelineEntry}, or null if not found.
    */
   isSameRenderPipeline(parameters: RenderPipelineEntryParams): RenderPipelineEntry | null {
-    return this.pipelineEntries
-      .filter((pipelineEntry) => pipelineEntry instanceof RenderPipelineEntry)
-      .find((pipelineEntry: RenderPipelineEntry) => {
-        const { options } = pipelineEntry
-        const { shaders, rendering, cacheKey } = parameters
+    let cachedPipeline = null
+    const renderPipelines = this.renderPipelines
 
-        const sameCacheKey = cacheKey === options.cacheKey
+    for (const renderPipeline of renderPipelines) {
+      const { options } = renderPipeline
+      const { shaders, rendering, cacheKey } = parameters
 
-        const sameVertexShader = this.compareShaders(shaders.vertex, options.shaders.vertex)
-        const sameFragmentShader =
-          (!shaders.fragment && !options.shaders.fragment) ||
-          this.compareShaders(shaders.fragment as ShaderOptions, options.shaders.fragment as ShaderOptions)
+      // compare material cache keys
+      if (cacheKey !== options.cacheKey) continue
 
-        const differentParams = compareRenderingOptions(rendering, options.rendering)
+      // compare rendering options
+      const differentParams = compareRenderingOptions(rendering, options.rendering)
+      if (differentParams.length) continue
 
-        return sameCacheKey && !differentParams.length && sameVertexShader && sameFragmentShader
-      }) as RenderPipelineEntry | null
+      // compare vertex shaders
+      const sameVertexShader = this.compareShaders(shaders.vertex, options.shaders.vertex)
+      if (!sameVertexShader) continue
+
+      // compare fragment shaders
+      const sameFragmentShader =
+        (!shaders.fragment && !options.shaders.fragment) ||
+        this.compareShaders(shaders.fragment as ShaderOptions, options.shaders.fragment as ShaderOptions)
+      if (!sameFragmentShader) continue
+
+      // if everything matched, return pipeline and break loop
+      cachedPipeline = renderPipeline
+      break
+    }
+
+    return cachedPipeline
+  }
+
+  /**
+   * Check if the provided {@link PipelineEntryParams | PipelineEntry parameters} belongs to an already created {@link ComputePipelineEntry}.
+   * @param parameters - {@link PipelineEntryParams | PipelineEntry parameters}.
+   * @returns - Found {@link ComputePipelineEntry}, or null if not found.
+   */
+  isSameComputePipeline(parameters: PipelineEntryParams): ComputePipelineEntry | null {
+    let cachedPipeline = null
+    const computePipelines = this.computePipelines
+
+    for (const computePipeline of computePipelines) {
+      const { options } = computePipeline
+      const { shaders, cacheKey } = parameters
+
+      // compare material cache keys
+      if (cacheKey !== options.cacheKey) continue
+
+      // compare compute shaders
+      const sameComputeShader = this.compareShaders(shaders.compute, options.shaders.compute)
+      if (!sameComputeShader) continue
+
+      // if everything matched, return pipeline and break loop
+      cachedPipeline = computePipeline
+      break
+    }
+
+    return cachedPipeline
   }
 
   /**
@@ -116,26 +177,6 @@ export class PipelineManager {
 
       return pipelineEntry
     }
-  }
-
-  /**
-   * Checks if the provided {@link PipelineEntryParams | PipelineEntry parameters} belongs to an already created {@link ComputePipelineEntry}.
-   * @param parameters - {@link PipelineEntryParams | PipelineEntry parameters}
-   * @returns - the found {@link ComputePipelineEntry}, or null if not found
-   */
-  isSameComputePipeline(parameters: PipelineEntryParams): ComputePipelineEntry | null {
-    return this.pipelineEntries
-      .filter((pipelineEntry) => pipelineEntry instanceof ComputePipelineEntry)
-      .find((pipelineEntry: ComputePipelineEntry) => {
-        const { options } = pipelineEntry
-        const { shaders, cacheKey } = parameters
-
-        const sameCacheKey = cacheKey === options.cacheKey
-
-        const sameComputeShader = this.compareShaders(shaders.compute, options.shaders.compute)
-
-        return sameCacheKey && sameComputeShader
-      }) as ComputePipelineEntry | null
   }
 
   /**
