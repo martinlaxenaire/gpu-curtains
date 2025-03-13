@@ -53,14 +53,7 @@ export interface GPURendererParams {
   context?: GPURendererContextParams
 
   /** The {@link GPURenderer#renderPass | renderer RenderPass} parameters. */
-  renderPass?: {
-    /** Whether the {@link GPURenderer#renderPass | renderer RenderPass} should handle depth. Default to `true`. */
-    useDepth: RenderPassParams['useDepth']
-    /** The {@link GPURenderer#renderPass | renderer RenderPass} sample count (i.e. whether it should use multisampled antialiasing). Default to `4`. */
-    sampleCount: RenderPassParams['sampleCount']
-    /** The {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#clearvalue | color values} to clear to before drawing the {@link GPURenderer#renderPass | renderer RenderPass}. Default to `[0, 0, 0, 0]`. */
-    clearValue: GPUColor
-  }
+  renderPass?: Omit<RenderPassParams, 'label'>
 }
 
 /** Options used to create this {@link GPURenderer}. */
