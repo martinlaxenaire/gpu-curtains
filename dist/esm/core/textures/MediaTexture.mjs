@@ -265,19 +265,6 @@ const _MediaTexture = class _MediaTexture extends Texture {
   }
   /* SOURCES */
   /**
-   * Import a {@link GPUExternalTexture} from the {@link Renderer}, update the {@link textureBinding} and its {@link core/bindGroups/TextureBindGroup.TextureBindGroup | bind group}
-   */
-  uploadVideoTexture() {
-    const source = this.sources[0];
-    if (source && source.source) {
-      this.externalTexture = this.renderer.importExternalTexture(source.source, this.options.label);
-      this.textureBinding.resource = this.externalTexture;
-      this.textureBinding.setBindingType("externalTexture");
-      source.shouldUpdate = false;
-      this.setSourceUploaded(0);
-    }
-  }
-  /**
    * Set the {@link size} based on the first available loaded {@link sources}.
    */
   setSourceSize() {
@@ -352,6 +339,7 @@ const _MediaTexture = class _MediaTexture extends Texture {
     if (this.size.depth > 1) {
       this.sources[sourceIndex] = {
         source: imageBitmap,
+        externalSource: null,
         sourceLoaded: true,
         sourceUploaded: false,
         shouldUpdate: true
@@ -360,6 +348,7 @@ const _MediaTexture = class _MediaTexture extends Texture {
       this.sources = [
         {
           source: imageBitmap,
+          externalSource: null,
           sourceLoaded: true,
           sourceUploaded: false,
           shouldUpdate: true
@@ -376,6 +365,32 @@ const _MediaTexture = class _MediaTexture extends Texture {
   async loadImages(sources) {
     for (let i = 0; i < Math.min(this.size.depth, sources.length); i++) {
       this.loadImage(sources[i]);
+    }
+  }
+  /**
+   * Import a {@link GPUExternalTexture} from the {@link Renderer}, update the {@link textureBinding} and its {@link core/bindGroups/TextureBindGroup.TextureBindGroup | bind group}
+   */
+  uploadVideoTexture() {
+    const source = this.sources[0];
+    if (source && source.source) {
+      this.setSourceUploaded(0);
+      if (source.source.paused) return;
+      this.texture?.destroy();
+      this.texture = null;
+      source.externalSource = new VideoFrame(source.source);
+      this.externalTexture = this.renderer.importExternalTexture(source.externalSource, this.options.label);
+      this.textureBinding.resource = this.externalTexture;
+      this.textureBinding.setBindingType("externalTexture");
+      source.shouldUpdate = false;
+    }
+  }
+  /**
+   * Close an external source {@link VideoFrame} if any.
+   */
+  closeVideoFrame() {
+    const source = this.sources[0];
+    if (source && source.externalSource) {
+      source.externalSource.close();
     }
   }
   // weirldy enough, we don't have to do anything in that callback
@@ -406,9 +421,6 @@ const _MediaTexture = class _MediaTexture extends Texture {
       this.sources[sourceIndex].sourceLoaded = true;
       this.sources[sourceIndex].shouldUpdate = true;
       this.setSourceSize();
-      if (this.options.sourcesTypes[sourceIndex] === "externalVideo") {
-        this.texture?.destroy();
-      }
       if ("requestVideoFrameCallback" in HTMLVideoElement.prototype) {
         const videoFrameCallbackId = this.sources[sourceIndex].source.requestVideoFrameCallback(
           this.onVideoFrameCallback.bind(this, sourceIndex)
@@ -467,6 +479,7 @@ const _MediaTexture = class _MediaTexture extends Texture {
       this.options.sourcesTypes.push("video");
       this.sources[sourceIndex] = {
         source: video,
+        externalSource: null,
         sourceLoaded: false,
         sourceUploaded: false,
         shouldUpdate: false
@@ -477,6 +490,7 @@ const _MediaTexture = class _MediaTexture extends Texture {
       this.sources = [
         {
           source: video,
+          externalSource: null,
           sourceLoaded: false,
           sourceUploaded: false,
           shouldUpdate: false
@@ -514,6 +528,7 @@ const _MediaTexture = class _MediaTexture extends Texture {
       this.options.sourcesTypes.push("canvas");
       this.sources[sourceIndex] = {
         source,
+        externalSource: null,
         sourceLoaded: true,
         sourceUploaded: false,
         shouldUpdate: true
@@ -524,6 +539,7 @@ const _MediaTexture = class _MediaTexture extends Texture {
       this.sources = [
         {
           source,
+          externalSource: null,
           sourceLoaded: true,
           sourceUploaded: false,
           shouldUpdate: true
@@ -605,7 +621,7 @@ const _MediaTexture = class _MediaTexture extends Texture {
   update() {
     this.sources?.forEach((source, sourceIndex) => {
       const sourceType = this.options.sourcesTypes[sourceIndex];
-      if (sourceType === "externalVideo" && this.isVideoSourceReady(source.source)) {
+      if (sourceType === "externalVideo") {
         source.shouldUpdate = true;
       }
       if (this.isVideoSource(source.source) && !this.videoFrameCallbackIds.size && this.shouldUpdateVideoSource(source.source)) {

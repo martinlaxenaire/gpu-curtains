@@ -21,6 +21,8 @@ export interface MediaTextureOptions extends TextureParams, MediaTextureParams {
 export interface MediaTextureSource {
     /** Original {@link TextureSource} to use. */
     source: TextureSource;
+    /** {@link VideoFrame} to use with external textures, or `null`. */
+    externalSource: VideoFrame | null;
     /** Whether we should update the {@link GPUTexture} for this source. */
     shouldUpdate: boolean;
     /** Whether the source has been loaded. */
@@ -153,10 +155,6 @@ export declare class MediaTexture extends Texture {
      */
     createTexture(): void;
     /**
-     * Import a {@link GPUExternalTexture} from the {@link Renderer}, update the {@link textureBinding} and its {@link core/bindGroups/TextureBindGroup.TextureBindGroup | bind group}
-     */
-    uploadVideoTexture(): void;
-    /**
      * Set the {@link size} based on the first available loaded {@link sources}.
      */
     setSourceSize(): void;
@@ -182,6 +180,14 @@ export declare class MediaTexture extends Texture {
      * @param sources - Array of images sources as strings or {@link HTMLImageElement} to load.
      */
     loadImages(sources: Array<string | HTMLImageElement>): Promise<void>;
+    /**
+     * Import a {@link GPUExternalTexture} from the {@link Renderer}, update the {@link textureBinding} and its {@link core/bindGroups/TextureBindGroup.TextureBindGroup | bind group}
+     */
+    uploadVideoTexture(): void;
+    /**
+     * Close an external source {@link VideoFrame} if any.
+     */
+    closeVideoFrame(): void;
     /**
      * Set our {@link MediaTextureSource.shouldUpdate | source shouldUpdate} flag to true at each new video frame.
      */

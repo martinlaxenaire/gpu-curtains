@@ -501,7 +501,7 @@ export class Material {
     // if a bind group needs to flush the pipeline
     // usually happens if one of the struct bindingType has changed,
     // which means the shader should be re-patched and recreated
-    if (bindGroup.needsPipelineFlush && this.pipelineEntry.ready) {
+    if (bindGroup.needsPipelineFlush && this.pipelineEntry?.ready) {
       this.pipelineEntry.flushPipelineEntry(this.bindGroups)
       bindGroup.needsPipelineFlush = false
     }

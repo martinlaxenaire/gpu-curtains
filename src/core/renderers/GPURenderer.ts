@@ -932,17 +932,12 @@ export class GPURenderer {
 
   /**
    * Import a {@link GPUExternalTexture}.
-   * @param video - {@link HTMLVideoElement} source.
+   * @param source - {@link HTMLVideoElement} or {@link VideoFrame} source.
    * @param label - Optional label of the texture.
    * @returns - {@link GPUExternalTexture}.
    */
-  importExternalTexture(video: HTMLVideoElement, label = ''): GPUExternalTexture {
-    // TODO WebCodecs may be the way to go when time comes!
-    // https://developer.chrome.com/blog/new-in-webgpu-113/#use-webcodecs-videoframe-source-in-importexternaltexture
-    // see onVideoFrameCallback method in MediaTexture class
-    // const videoFrame = new VideoFrame(video)
-    // return this.deviceManager.device?.importExternalTexture({ source: videoFrame })
-    return this.deviceManager.device?.importExternalTexture({ label, source: video })
+  importExternalTexture(source: HTMLVideoElement | VideoFrame, label = ''): GPUExternalTexture {
+    return this.deviceManager.device?.importExternalTexture({ label, source })
   }
 
   /**
@@ -1244,6 +1239,12 @@ export class GPURenderer {
    */
   onAfterCommandEncoder() {
     if (!this.ready) return
+
+    this.textures.forEach((texture) => {
+      if (texture instanceof MediaTexture) {
+        texture.closeVideoFrame()
+      }
+    })
 
     this.onAfterCommandEncoderSubmission.execute()
   }

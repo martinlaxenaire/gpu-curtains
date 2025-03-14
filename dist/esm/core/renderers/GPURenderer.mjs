@@ -628,12 +628,12 @@ class GPURenderer {
   }
   /**
    * Import a {@link GPUExternalTexture}.
-   * @param video - {@link HTMLVideoElement} source.
+   * @param source - {@link HTMLVideoElement} or {@link VideoFrame} source.
    * @param label - Optional label of the texture.
    * @returns - {@link GPUExternalTexture}.
    */
-  importExternalTexture(video, label = "") {
-    return this.deviceManager.device?.importExternalTexture({ label, source: video });
+  importExternalTexture(source, label = "") {
+    return this.deviceManager.device?.importExternalTexture({ label, source });
   }
   /**
    * Copy a {@link GPUTexture} to a {@link Texture} using a {@link GPUCommandEncoder}. Automatically generate mips after copy if the {@link Texture} needs it.
@@ -892,6 +892,11 @@ class GPURenderer {
    */
   onAfterCommandEncoder() {
     if (!this.ready) return;
+    this.textures.forEach((texture) => {
+      if (texture instanceof MediaTexture) {
+        texture.closeVideoFrame();
+      }
+    });
     this.onAfterCommandEncoderSubmission.execute();
   }
   /**

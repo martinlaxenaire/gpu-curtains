@@ -84,13 +84,9 @@ window.addEventListener('load', async () => {
     'https://static.vecteezy.com/system/resources/previews/054/892/911/mp4/loop-colorful-loght-in-motion-video.mp4',
   ]
 
-  // setup canvas from DOM
-  const cubeCanvas = document.querySelector('#cube-canvas')
-  const cubeCtx = cubeCanvas.getContext('2d')
-  cubeCtx.fillStyle = 'green'
-  cubeCtx.fillRect(0, 0, 300, 150)
-
   const planesEls = document.querySelectorAll('.plane')
+
+  const autoplay = true
 
   planesEls.forEach((planeEl, i) => {
     const plane = new Plane(gpuCurtains, planeEl, {
@@ -112,12 +108,22 @@ window.addEventListener('load', async () => {
       },
     })
 
-    if (i > 0) {
+    if (autoplay) {
       plane.onLoading((texture) => {
-        texture.source.play()
+        if(texture.isVideoSource(texture.source)) {
+          texture.source.play()
+        }
       })
     }
+
+    console.log(plane)
   })
+
+  // setup canvas from DOM
+  const cubeCanvas = document.querySelector('#cube-canvas')
+  const cubeCtx = cubeCanvas.getContext('2d')
+  cubeCtx.fillStyle = 'green'
+  cubeCtx.fillRect(0, 0, 300, 150)
 
   // create the geometries
   const cubeGeometry = new BoxGeometry()

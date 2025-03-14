@@ -389,11 +389,11 @@ export declare class GPURenderer {
     generateMips(texture: Texture | MediaTexture | DOMTexture, commandEncoder?: GPUCommandEncoder): void;
     /**
      * Import a {@link GPUExternalTexture}.
-     * @param video - {@link HTMLVideoElement} source.
+     * @param source - {@link HTMLVideoElement} or {@link VideoFrame} source.
      * @param label - Optional label of the texture.
      * @returns - {@link GPUExternalTexture}.
      */
-    importExternalTexture(video: HTMLVideoElement, label?: string): GPUExternalTexture;
+    importExternalTexture(source: HTMLVideoElement | VideoFrame, label?: string): GPUExternalTexture;
     /**
      * Copy a {@link GPUTexture} to a {@link Texture} using a {@link GPUCommandEncoder}. Automatically generate mips after copy if the {@link Texture} needs it.
      * @param gpuTexture - {@link GPUTexture} source to copy from.
