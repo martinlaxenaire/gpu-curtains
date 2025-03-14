@@ -112,6 +112,14 @@ window.addEventListener('load', async () => {
       plane.onLoading((texture) => {
         if(texture.isVideoSource(texture.source)) {
           texture.source.play()
+
+          setTimeout(() => {
+            texture.source.pause()
+
+            setTimeout(() => {
+              texture.source.play()
+            }, 1000)
+          }, 1000)
         }
       })
     }

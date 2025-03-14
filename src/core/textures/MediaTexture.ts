@@ -551,20 +551,18 @@ export class MediaTexture extends Texture {
    */
   uploadVideoTexture() {
     const source = this.sources[0]
+    const video = source.source as HTMLVideoElement
 
-    if (source && source.source) {
-      // set source uploaded anyway to trigger mesh loading/ready callback
+    if (source && video) {
+      // set source uploaded
       this.setSourceUploaded(0)
-
-      // bail if video is paused
-      if ((source.source as HTMLVideoElement).paused) return
 
       // destroy current texture if any
       this.texture?.destroy()
       this.texture = null
 
       // create video frame as external source and
-      source.externalSource = new VideoFrame(source.source as HTMLVideoElement)
+      source.externalSource = new VideoFrame(video)
       this.externalTexture = this.renderer.importExternalTexture(source.externalSource, this.options.label)
       this.textureBinding.resource = this.externalTexture
       this.textureBinding.setBindingType('externalTexture')

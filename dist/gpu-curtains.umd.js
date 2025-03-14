@@ -4809,12 +4809,12 @@
      */
     uploadVideoTexture() {
       const source = this.sources[0];
-      if (source && source.source) {
+      const video = source.source;
+      if (source && video) {
         this.setSourceUploaded(0);
-        if (source.source.paused) return;
         this.texture?.destroy();
         this.texture = null;
-        source.externalSource = new VideoFrame(source.source);
+        source.externalSource = new VideoFrame(video);
         this.externalTexture = this.renderer.importExternalTexture(source.externalSource, this.options.label);
         this.textureBinding.resource = this.externalTexture;
         this.textureBinding.setBindingType("externalTexture");
