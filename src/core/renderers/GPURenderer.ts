@@ -1,7 +1,7 @@
 import { PipelineManager } from '../pipelines/PipelineManager'
 import { DOMElement, DOMElementBoundingRect, RectBBox, RectSize } from '../DOM/DOMElement'
 import { Scene } from '../scenes/Scene'
-import { RenderPass, RenderPassParams, RenderPassViewport } from '../renderPasses/RenderPass'
+import { ColorAttachmentParams, RenderPass, RenderPassParams, RenderPassViewport } from '../renderPasses/RenderPass'
 import { generateUUID, throwError, throwWarning } from '../../utils/utils'
 
 import { ComputePass } from '../computePasses/ComputePass'
@@ -53,7 +53,14 @@ export interface GPURendererParams {
   context?: GPURendererContextParams
 
   /** The {@link GPURenderer#renderPass | renderer RenderPass} parameters. */
-  renderPass?: Omit<RenderPassParams, 'label'>
+  renderPass?: {
+    /** Whether the {@link GPURenderer#renderPass | renderer RenderPass} should handle depth. Default to `true`. */
+    useDepth?: RenderPassParams['useDepth']
+    /** The {@link GPURenderer#renderPass | renderer RenderPass} sample count (i.e. whether it should use multisampled antialiasing). Default to `4`. */
+    sampleCount?: RenderPassParams['sampleCount']
+    /** Array of one or multiple {@link ColorAttachmentParams}. Useful to set a default {@link ColorAttachmentParams#clearValue | clear value}. */
+    colorAttachments?: [Partial<ColorAttachmentParams>, ...ColorAttachmentParams[]]
+  }
 }
 
 /** Options used to create this {@link GPURenderer}. */
