@@ -95,3 +95,6 @@ export { HDRLoader } from './extras/loaders/HDRLoader'
 // animations
 export { KeyframesAnimation } from './extras/animations/KeyframesAnimation'
 export { TargetsAnimationsManager } from './extras/animations/TargetsAnimationsManager'
+
+// types
+export * from './types'

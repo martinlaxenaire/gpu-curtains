@@ -1,7 +1,7 @@
 import { isRenderer, Renderer } from '../renderers/utils'
 import { generateUUID, toKebabCase } from '../../utils/utils'
 import { WritableBufferBinding, WritableBufferBindingParams } from '../bindings/WritableBufferBinding'
-import { BufferBinding } from '../bindings/BufferBinding'
+import { BufferBinding, BufferBindingInput } from '../bindings/BufferBinding'
 import {
   AllowedBindGroups,
   BindGroupBindingElement,
@@ -16,12 +16,14 @@ import { BufferBindingType } from '../bindings/Binding'
 import { BufferUsageKeys } from '../buffers/utils'
 
 /**
- * Used to handle all inputs data sent to the GPU.<br>
+ * Used to handle all inputs data sent to the GPU.
+ *
  * In WebGPU, data (buffers, textures or samplers, called bindings) are organised by bind groups, containing those bindings.
  *
  * ## Bindings
  *
- * A {@link BindGroup} is responsible for creating each {@link BufferBinding} {@link GPUBuffer} and then the {@link GPUBindGroup} and {@link GPUBindGroupLayout} that are used to create {@link GPUComputePipeline} or {@link GPURenderPipeline}.<br>
+ * A {@link BindGroup} is responsible for creating each {@link BufferBinding} {@link GPUBuffer} and then the {@link GPUBindGroup} and {@link GPUBindGroupLayout} that are used to create {@link GPUComputePipeline} or {@link GPURenderPipeline}.
+ *
  * Those are generally automatically created by the {@link core/materials/Material.Material | Material} using this {@link BindGroup}. If you need to manually create them, you will have to call its {@link BindGroup#createBindGroup | `createBindGroup()` method}
  *
  * ### Samplers and textures
@@ -30,7 +32,8 @@ import { BufferUsageKeys } from '../buffers/utils'
  *
  * ### Updating a GPUBindGroup or GPUBindGroupLayout
  *
- * Each time one of the {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createBindGroup#resource | binding resource} changes, its {@link BindGroup#bindGroup | bindGroup} will be recreated (usually, when a {@link GPUTexture} is uploaded).<br>
+ * Each time one of the {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createBindGroup#resource | binding resource} changes, its {@link BindGroup#bindGroup | bindGroup} will be recreated (usually, when a {@link GPUTexture} is uploaded).
+ *
  * Each time one of the {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createBindGroupLayout#resource_layout_objects | binding resource layout} changes, its {@link BindGroup#bindGroupLayout | bindGroupLayout} and {@link BindGroup#bindGroup | bindGroup} will be recreated, and the {@link GPUComputePipeline} or {@link GPURenderPipeline} will be recreated as well.
  *
  * @example
@@ -81,6 +84,13 @@ export class BindGroup {
 
   /** List of {@link BindGroupBindingElement | bindings} (buffers, texture, etc.) handled by this {@link BindGroup}. */
   bindings: BindGroupBindingElement[]
+  /** List of all {@link BindGroupBindingElement | bindings} that handle a {@link GPUBuffer}. */
+  bufferBindings: BindGroupBufferBindingElement[]
+
+  /** Object containing all uniforms inputs handled by this {@link BindGroup}. */
+  uniforms: Record<string, Record<string, BufferBindingInput>>
+  /** Object containing all read only or read/write storages inputs handled by this {@link BindGroup}. */
+  storages: Record<string, Record<string, BufferBindingInput>>
 
   /** Our {@link BindGroup} {@link BindGroupEntries | entries} objects. */
   entries: BindGroupEntries
@@ -125,7 +135,13 @@ export class BindGroup {
     this.index = index
     this.uuid = generateUUID()
 
+    // bindings
     this.bindings = []
+    // buffer bindings
+    this.bufferBindings = []
+    this.uniforms = {}
+    this.storages = {}
+
     bindings.length && this.addBindings(bindings)
     if (this.options.uniforms || this.options.storages) this.setInputBindings()
 
@@ -141,21 +157,6 @@ export class BindGroup {
     this.needsPipelineFlush = false
 
     this.consumers = new Set()
-
-    // add the bind group to the buffers consumers
-    for (const binding of this.bufferBindings) {
-      if ('buffer' in binding) {
-        if (binding.parent) {
-          binding.parent.buffer.consumers.add(this.uuid)
-        } else {
-          binding.buffer.consumers.add(this.uuid)
-        }
-      }
-
-      if ('resultBuffer' in binding) {
-        binding.resultBuffer.consumers.add(this.uuid)
-      }
-    }
 
     this.renderer.addBindGroup(this)
   }
@@ -183,18 +184,8 @@ export class BindGroup {
    */
   addBindings(bindings: BindGroupBindingElement[] = []) {
     bindings.forEach((binding) => {
-      if ('buffer' in binding) {
-        if (binding.parent) {
-          this.renderer.deviceManager.bufferBindings.set(binding.parent.cacheKey, binding.parent)
-          binding.parent.buffer.consumers.add(this.uuid)
-        } else {
-          this.renderer.deviceManager.bufferBindings.set(binding.cacheKey, binding)
-          binding.buffer.consumers.add(this.uuid)
-        }
-      }
+      this.addBinding(binding)
     })
-
-    this.bindings = [...this.bindings, ...bindings]
   }
 
   /**
@@ -202,6 +193,28 @@ export class BindGroup {
    * @param binding - binding to add.
    */
   addBinding(binding: BindGroupBindingElement) {
+    if ('buffer' in binding) {
+      if (binding.parent) {
+        this.renderer.deviceManager.bufferBindings.set(binding.parent.cacheKey, binding.parent)
+        binding.parent.buffer.consumers.add(this.uuid)
+      } else {
+        this.renderer.deviceManager.bufferBindings.set(binding.cacheKey, binding)
+        binding.buffer.consumers.add(this.uuid)
+      }
+
+      if ('resultBuffer' in binding) {
+        binding.resultBuffer.consumers.add(this.uuid)
+      }
+
+      this.bufferBindings.push(binding)
+
+      if (binding.bindingType === 'uniform') {
+        this.uniforms[binding.name] = binding.inputs
+      } else {
+        this.storages[binding.name] = binding.inputs
+      }
+    }
+
     this.bindings.push(binding)
   }
 
@@ -440,15 +453,6 @@ export class BindGroup {
     for (const bufferBinding of this.bufferBindings) {
       bufferBinding.shouldUpdate = true
     }
-  }
-
-  /**
-   * Get all {@link BindGroup#bindings | bind group bindings} that handle a {@link GPUBuffer}
-   */
-  get bufferBindings(): BindGroupBufferBindingElement[] {
-    return this.bindings.filter(
-      (binding) => binding instanceof BufferBinding || binding instanceof WritableBufferBinding
-    ) as BindGroupBufferBindingElement[]
   }
 
   /**

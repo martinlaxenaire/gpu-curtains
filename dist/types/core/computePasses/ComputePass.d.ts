@@ -1,4 +1,4 @@
-/// <reference types="dist" />
+/// <reference types="@webgpu/types" />
 import { Renderer } from '../renderers/utils';
 import { ComputeMaterial } from '../materials/ComputeMaterial';
 import { ComputeMaterialParams, MaterialParams, MaterialShaders } from '../../types/Materials';

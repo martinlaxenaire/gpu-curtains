@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+        <loc>https://martinlaxenaire.github.io/gpu-curtains/index.html</loc>
+    </url>
+    <sitemap>
+        <loc>https://martinlaxenaire.github.io/gpu-curtains/examples/sitemap.xml</loc>
+    </sitemap>
+    <sitemap>
+        <loc>https://martinlaxenaire.github.io/gpu-curtains/docs/sitemap.xml</loc>
+    </sitemap>
+</sitemapindex>

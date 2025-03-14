@@ -1,4 +1,4 @@
-/// <reference types="dist" />
+/// <reference types="@webgpu/types" />
 import { Shadow, ShadowBaseParams } from './Shadow';
 import { CameraRenderer } from '../renderers/utils';
 import { Vec3 } from '../../math/Vec3';

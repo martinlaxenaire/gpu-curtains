@@ -1,4 +1,4 @@
-/// <reference types="dist" />
+/// <reference types="@webgpu/types" />
 import { BufferUsageKeys } from './utils';
 /**
  * Parameters used to create a {@link Buffer}.

@@ -452,7 +452,7 @@ export class GLTFScenesManager {
   }
 
   /**
-   * Create the {ScenesManager.materialsTextures | scenesManager materialsTextures array} and each associated {@link types/gltf/GLTFScenesManager.MaterialTexture | MaterialTexture} and their respective {@link Texture}.
+   * Create the {ScenesManager.materialsTextures | scenesManager materialsTextures array} and each associated {@link types/gltf/GLTFScenesManager.MaterialTextureDescriptor | MaterialTextureDescriptor} and their respective {@link Texture}.
    */
   createMaterialTextures() {
     this.scenesManager.materialsTextures = []

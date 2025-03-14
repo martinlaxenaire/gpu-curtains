@@ -1,4 +1,4 @@
-/// <reference types="dist" />
+/// <reference types="@webgpu/types" />
 import { Binding, BindingParams, BufferBindingMemoryAccessType, BufferBindingType } from './Binding';
 import { Input, InputBase, InputValue } from '../../types/BindGroups';
 import { BufferElement } from './bufferElements/BufferElement';

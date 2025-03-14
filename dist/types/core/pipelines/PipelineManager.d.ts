@@ -1,4 +1,4 @@
-/// <reference types="dist" />
+/// <reference types="@webgpu/types" />
 import { RenderPipelineEntry } from './RenderPipelineEntry';
 import { ComputePipelineEntry } from './ComputePipelineEntry';
 import { PipelineEntryParams, RenderPipelineEntryParams } from '../../types/PipelineEntries';
@@ -31,18 +31,34 @@ export declare class PipelineManager {
     activeBindGroups: BindGroup[];
     constructor();
     /**
-     * Compare two {@link ShaderOptions | shader objects}
-     * @param shaderA - first {@link ShaderOptions | shader object} to compare
-     * @param shaderB - second {@link ShaderOptions | shader object} to compare
-     * @returns - whether the two {@link ShaderOptions | shader objects} code and entryPoint match
+     * Get all the already created {@link RenderPipelineEntry}.
+     * @readonly
+     */
+    get renderPipelines(): RenderPipelineEntry[];
+    /**
+     * Get all the already created {@link ComputePipelineEntry}.
+     * @readonly
+     */
+    get computePipelines(): ComputePipelineEntry[];
+    /**
+     * Compare two {@link ShaderOptions | shader objects}.
+     * @param shaderA - First {@link ShaderOptions | shader object} to compare.
+     * @param shaderB - Second {@link ShaderOptions | shader object} to compare.
+     * @returns - Whether the two {@link ShaderOptions | shader objects} code and entryPoint match.
      */
     compareShaders(shaderA: ShaderOptions, shaderB: ShaderOptions): boolean;
     /**
-     * Checks if the provided {@link RenderPipelineEntryParams | RenderPipelineEntry parameters} belongs to an already created {@link RenderPipelineEntry}.
-     * @param parameters - {@link RenderPipelineEntryParams | RenderPipelineEntry parameters}
-     * @returns - the found {@link RenderPipelineEntry}, or null if not found
+     * Check if the provided {@link RenderPipelineEntryParams | RenderPipelineEntry parameters} belongs to an already created {@link RenderPipelineEntry}.
+     * @param parameters - {@link RenderPipelineEntryParams | RenderPipelineEntry parameters}.
+     * @returns - Found {@link RenderPipelineEntry}, or null if not found.
      */
     isSameRenderPipeline(parameters: RenderPipelineEntryParams): RenderPipelineEntry | null;
+    /**
+     * Check if the provided {@link PipelineEntryParams | PipelineEntry parameters} belongs to an already created {@link ComputePipelineEntry}.
+     * @param parameters - {@link PipelineEntryParams | PipelineEntry parameters}.
+     * @returns - Found {@link ComputePipelineEntry}, or null if not found.
+     */
+    isSameComputePipeline(parameters: PipelineEntryParams): ComputePipelineEntry | null;
     /**
      * Check if a {@link RenderPipelineEntry} has already been created with the given {@link RenderPipelineEntryParams | parameters}.
      * Use it if found, else create a new one and add it to the {@link pipelineEntries} array.
@@ -50,12 +66,6 @@ export declare class PipelineManager {
      * @returns - {@link RenderPipelineEntry}, either from cache or newly created.
      */
     createRenderPipeline(material: RenderMaterial): RenderPipelineEntry;
-    /**
-     * Checks if the provided {@link PipelineEntryParams | PipelineEntry parameters} belongs to an already created {@link ComputePipelineEntry}.
-     * @param parameters - {@link PipelineEntryParams | PipelineEntry parameters}
-     * @returns - the found {@link ComputePipelineEntry}, or null if not found
-     */
-    isSameComputePipeline(parameters: PipelineEntryParams): ComputePipelineEntry | null;
     /**
      * Check if a {@link ComputePipelineEntry} has already been created with the given {@link PipelineEntryParams | parameters}.
      * Use it if found, else create a new one and add it to the {@link pipelineEntries} array.

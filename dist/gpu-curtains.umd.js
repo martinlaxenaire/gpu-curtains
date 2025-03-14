@@ -3316,6 +3316,9 @@
       this.index = index;
       this.uuid = generateUUID();
       this.bindings = [];
+      this.bufferBindings = [];
+      this.uniforms = {};
+      this.storages = {};
       bindings.length && this.addBindings(bindings);
       if (this.options.uniforms || this.options.storages) this.setInputBindings();
       this.layoutCacheKey = "";
@@ -3325,18 +3328,6 @@
       this.bindGroup = null;
       this.needsPipelineFlush = false;
       this.consumers = /* @__PURE__ */ new Set();
-      for (const binding of this.bufferBindings) {
-        if ("buffer" in binding) {
-          if (binding.parent) {
-            binding.parent.buffer.consumers.add(this.uuid);
-          } else {
-            binding.buffer.consumers.add(this.uuid);
-          }
-        }
-        if ("resultBuffer" in binding) {
-          binding.resultBuffer.consumers.add(this.uuid);
-        }
-      }
       this.renderer.addBindGroup(this);
     }
     /**
@@ -3360,23 +3351,32 @@
      */
     addBindings(bindings = []) {
       bindings.forEach((binding) => {
-        if ("buffer" in binding) {
-          if (binding.parent) {
-            this.renderer.deviceManager.bufferBindings.set(binding.parent.cacheKey, binding.parent);
-            binding.parent.buffer.consumers.add(this.uuid);
-          } else {
-            this.renderer.deviceManager.bufferBindings.set(binding.cacheKey, binding);
-            binding.buffer.consumers.add(this.uuid);
-          }
-        }
+        this.addBinding(binding);
       });
-      this.bindings = [...this.bindings, ...bindings];
     }
     /**
      * Adds an already created {@link bindings} (buffers, texture, etc.) to the {@link bindings} array.
      * @param binding - binding to add.
      */
     addBinding(binding) {
+      if ("buffer" in binding) {
+        if (binding.parent) {
+          this.renderer.deviceManager.bufferBindings.set(binding.parent.cacheKey, binding.parent);
+          binding.parent.buffer.consumers.add(this.uuid);
+        } else {
+          this.renderer.deviceManager.bufferBindings.set(binding.cacheKey, binding);
+          binding.buffer.consumers.add(this.uuid);
+        }
+        if ("resultBuffer" in binding) {
+          binding.resultBuffer.consumers.add(this.uuid);
+        }
+        this.bufferBindings.push(binding);
+        if (binding.bindingType === "uniform") {
+          this.uniforms[binding.name] = binding.inputs;
+        } else {
+          this.storages[binding.name] = binding.inputs;
+        }
+      }
       this.bindings.push(binding);
     }
     /**
@@ -3566,14 +3566,6 @@
       for (const bufferBinding of this.bufferBindings) {
         bufferBinding.shouldUpdate = true;
       }
-    }
-    /**
-     * Get all {@link BindGroup#bindings | bind group bindings} that handle a {@link GPUBuffer}
-     */
-    get bufferBindings() {
-      return this.bindings.filter(
-        (binding) => binding instanceof BufferBinding || binding instanceof WritableBufferBinding
-      );
     }
     /**
      * Creates binding GPUBuffer with correct params.
@@ -6417,18 +6409,16 @@
      */
     processBindGroupBindings(bindGroup) {
       for (const inputBinding of bindGroup.bindings) {
-        if (inputBinding.bindingType === "uniform")
-          this.uniforms = {
-            ...this.uniforms,
-            [inputBinding.name]: inputBinding.inputs
-          };
-        if (inputBinding.bindingType === "storage")
-          this.storages = {
-            ...this.storages,
-            [inputBinding.name]: inputBinding.inputs
-          };
         this.inputsBindings.set(inputBinding.name, inputBinding);
       }
+      this.uniforms = {
+        ...this.uniforms,
+        ...bindGroup.uniforms
+      };
+      this.storages = {
+        ...this.storages,
+        ...bindGroup.storages
+      };
     }
     /**
      * Create the bind groups if they need to be created.
@@ -6637,7 +6627,7 @@
      */
     addSampler(sampler) {
       this.samplers.push(sampler);
-      if (this.options.shaders.vertex && this.options.shaders.vertex.code.indexOf(sampler.name) !== -1 || this.options.shaders.fragment && this.options.shaders.fragment.code.indexOf(sampler.name) !== -1 || this.options.shaders.compute && this.options.shaders.compute.code.indexOf(sampler.name) !== -1) {
+      if (this.options.shaders && this.options.shaders.vertex && this.options.shaders.vertex.code.indexOf(sampler.name) !== -1 || this.options.shaders && this.options.shaders.fragment && this.options.shaders.fragment.code.indexOf(sampler.name) !== -1 || this.options.shaders && this.options.shaders.compute && this.options.shaders.compute.code.indexOf(sampler.name) !== -1) {
         this.texturesBindGroup.addSampler(sampler);
       }
     }
@@ -13751,29 +13741,73 @@ ${this.shaders.compute.head}`;
       this.activeBindGroups = [];
     }
     /**
-     * Compare two {@link ShaderOptions | shader objects}
-     * @param shaderA - first {@link ShaderOptions | shader object} to compare
-     * @param shaderB - second {@link ShaderOptions | shader object} to compare
-     * @returns - whether the two {@link ShaderOptions | shader objects} code and entryPoint match
+     * Get all the already created {@link RenderPipelineEntry}.
+     * @readonly
+     */
+    get renderPipelines() {
+      return this.pipelineEntries.filter(
+        (pipelineEntry) => pipelineEntry instanceof RenderPipelineEntry
+      );
+    }
+    /**
+     * Get all the already created {@link ComputePipelineEntry}.
+     * @readonly
+     */
+    get computePipelines() {
+      return this.pipelineEntries.filter(
+        (pipelineEntry) => pipelineEntry instanceof ComputePipelineEntry
+      );
+    }
+    /**
+     * Compare two {@link ShaderOptions | shader objects}.
+     * @param shaderA - First {@link ShaderOptions | shader object} to compare.
+     * @param shaderB - Second {@link ShaderOptions | shader object} to compare.
+     * @returns - Whether the two {@link ShaderOptions | shader objects} code and entryPoint match.
      */
     compareShaders(shaderA, shaderB) {
       return shaderA.code === shaderB.code && shaderA.entryPoint === shaderB.entryPoint;
     }
     /**
-     * Checks if the provided {@link RenderPipelineEntryParams | RenderPipelineEntry parameters} belongs to an already created {@link RenderPipelineEntry}.
-     * @param parameters - {@link RenderPipelineEntryParams | RenderPipelineEntry parameters}
-     * @returns - the found {@link RenderPipelineEntry}, or null if not found
+     * Check if the provided {@link RenderPipelineEntryParams | RenderPipelineEntry parameters} belongs to an already created {@link RenderPipelineEntry}.
+     * @param parameters - {@link RenderPipelineEntryParams | RenderPipelineEntry parameters}.
+     * @returns - Found {@link RenderPipelineEntry}, or null if not found.
      */
     isSameRenderPipeline(parameters) {
-      return this.pipelineEntries.filter((pipelineEntry) => pipelineEntry instanceof RenderPipelineEntry).find((pipelineEntry) => {
-        const { options } = pipelineEntry;
+      let cachedPipeline = null;
+      const renderPipelines = this.renderPipelines;
+      for (const renderPipeline of renderPipelines) {
+        const { options } = renderPipeline;
         const { shaders, rendering, cacheKey } = parameters;
-        const sameCacheKey = cacheKey === options.cacheKey;
-        const sameVertexShader = this.compareShaders(shaders.vertex, options.shaders.vertex);
-        const sameFragmentShader = !shaders.fragment && !options.shaders.fragment || this.compareShaders(shaders.fragment, options.shaders.fragment);
+        if (cacheKey !== options.cacheKey) continue;
         const differentParams = compareRenderingOptions(rendering, options.rendering);
-        return sameCacheKey && !differentParams.length && sameVertexShader && sameFragmentShader;
-      });
+        if (differentParams.length) continue;
+        const sameVertexShader = this.compareShaders(shaders.vertex, options.shaders.vertex);
+        if (!sameVertexShader) continue;
+        const sameFragmentShader = !shaders.fragment && !options.shaders.fragment || this.compareShaders(shaders.fragment, options.shaders.fragment);
+        if (!sameFragmentShader) continue;
+        cachedPipeline = renderPipeline;
+        break;
+      }
+      return cachedPipeline;
+    }
+    /**
+     * Check if the provided {@link PipelineEntryParams | PipelineEntry parameters} belongs to an already created {@link ComputePipelineEntry}.
+     * @param parameters - {@link PipelineEntryParams | PipelineEntry parameters}.
+     * @returns - Found {@link ComputePipelineEntry}, or null if not found.
+     */
+    isSameComputePipeline(parameters) {
+      let cachedPipeline = null;
+      const computePipelines = this.computePipelines;
+      for (const computePipeline of computePipelines) {
+        const { options } = computePipeline;
+        const { shaders, cacheKey } = parameters;
+        if (cacheKey !== options.cacheKey) continue;
+        const sameComputeShader = this.compareShaders(shaders.compute, options.shaders.compute);
+        if (!sameComputeShader) continue;
+        cachedPipeline = computePipeline;
+        break;
+      }
+      return cachedPipeline;
     }
     /**
      * Check if a {@link RenderPipelineEntry} has already been created with the given {@link RenderPipelineEntryParams | parameters}.
@@ -13802,20 +13836,6 @@ ${this.shaders.compute.head}`;
         this.pipelineEntries.push(pipelineEntry);
         return pipelineEntry;
       }
-    }
-    /**
-     * Checks if the provided {@link PipelineEntryParams | PipelineEntry parameters} belongs to an already created {@link ComputePipelineEntry}.
-     * @param parameters - {@link PipelineEntryParams | PipelineEntry parameters}
-     * @returns - the found {@link ComputePipelineEntry}, or null if not found
-     */
-    isSameComputePipeline(parameters) {
-      return this.pipelineEntries.filter((pipelineEntry) => pipelineEntry instanceof ComputePipelineEntry).find((pipelineEntry) => {
-        const { options } = pipelineEntry;
-        const { shaders, cacheKey } = parameters;
-        const sameCacheKey = cacheKey === options.cacheKey;
-        const sameComputeShader = this.compareShaders(shaders.compute, options.shaders.compute);
-        return sameCacheKey && sameComputeShader;
-      });
     }
     /**
      * Check if a {@link ComputePipelineEntry} has already been created with the given {@link PipelineEntryParams | parameters}.
@@ -24296,7 +24316,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
       return texture;
     }
     /**
-     * Create the {ScenesManager.materialsTextures | scenesManager materialsTextures array} and each associated {@link types/gltf/GLTFScenesManager.MaterialTexture | MaterialTexture} and their respective {@link Texture}.
+     * Create the {ScenesManager.materialsTextures | scenesManager materialsTextures array} and each associated {@link types/gltf/GLTFScenesManager.MaterialTextureDescriptor | MaterialTextureDescriptor} and their respective {@link Texture}.
      */
     createMaterialTextures() {
       this.scenesManager.materialsTextures = [];

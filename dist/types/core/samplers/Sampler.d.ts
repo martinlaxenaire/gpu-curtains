@@ -1,4 +1,4 @@
-/// <reference types="dist" />
+/// <reference types="@webgpu/types" />
 import { Renderer } from '../renderers/utils';
 import { SamplerBinding } from '../bindings/SamplerBinding';
 import { GPUCurtains } from '../../curtains/GPUCurtains';

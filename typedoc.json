@@ -26,6 +26,7 @@
     "Docs": "https://martinlaxenaire.github.io/gpu-curtains/docs/",
     "Examples": "https://martinlaxenaire.github.io/gpu-curtains/examples/"
   },
+  "hostedBaseUrl": "https://martinlaxenaire.github.io/gpu-curtains/docs",
   "plugin": ["typedoc-plugin-mdn-links"],
   "defaultCategory": "API",
   "categoryOrder": ["Tutorials", "About", "API"],

@@ -1,4 +1,4 @@
-/// <reference types="dist" />
+/// <reference types="@webgpu/types" />
 import { Renderer } from '../renderers/utils';
 import { SceneStackedMesh, RenderedMesh, ProjectedMesh, SceneStackedObject } from '../renderers/GPURenderer';
 import { ShaderPass } from '../renderPasses/ShaderPass';

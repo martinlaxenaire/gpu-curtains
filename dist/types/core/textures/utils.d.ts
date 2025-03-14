@@ -1,4 +1,4 @@
-/// <reference types="dist" />
+/// <reference types="@webgpu/types" />
 import { TextureBindingType } from '../bindings/Binding';
 /**  Defines all kinds of allowed texture usages as camel case strings. */
 export type TextureUsageKeys = 'copySrc' | 'copyDst' | 'renderAttachment' | 'storageBinding' | 'textureBinding';

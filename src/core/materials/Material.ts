@@ -354,18 +354,17 @@ export class Material {
    */
   processBindGroupBindings(bindGroup: BindGroup) {
     for (const inputBinding of bindGroup.bindings) {
-      if (inputBinding.bindingType === 'uniform')
-        this.uniforms = {
-          ...this.uniforms,
-          [inputBinding.name]: (inputBinding as BindGroupBufferBindingElement).inputs,
-        }
-      if (inputBinding.bindingType === 'storage')
-        this.storages = {
-          ...this.storages,
-          [inputBinding.name]: (inputBinding as BindGroupBufferBindingElement).inputs,
-        }
-
       this.inputsBindings.set(inputBinding.name, inputBinding)
+    }
+
+    this.uniforms = {
+      ...this.uniforms,
+      ...bindGroup.uniforms,
+    }
+
+    this.storages = {
+      ...this.storages,
+      ...bindGroup.storages,
     }
   }
 
@@ -642,10 +641,15 @@ export class Material {
 
     // is it used in our shaders?
     if (
-      (this.options.shaders.vertex && this.options.shaders.vertex.code.indexOf(sampler.name) !== -1) ||
-      (this.options.shaders.fragment &&
+      (this.options.shaders &&
+        this.options.shaders.vertex &&
+        this.options.shaders.vertex.code.indexOf(sampler.name) !== -1) ||
+      (this.options.shaders &&
+        this.options.shaders.fragment &&
         (this.options.shaders.fragment as ShaderOptions).code.indexOf(sampler.name) !== -1) ||
-      (this.options.shaders.compute && this.options.shaders.compute.code.indexOf(sampler.name) !== -1)
+      (this.options.shaders &&
+        this.options.shaders.compute &&
+        this.options.shaders.compute.code.indexOf(sampler.name) !== -1)
     ) {
       this.texturesBindGroup.addSampler(sampler)
     }

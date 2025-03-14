@@ -1,16 +1,19 @@
-/// <reference types="dist" />
+/// <reference types="@webgpu/types" />
 import { Renderer } from '../renderers/utils';
+import { BufferBindingInput } from '../bindings/BufferBinding';
 import { AllowedBindGroups, BindGroupBindingElement, BindGroupBufferBindingElement, BindGroupEntries, BindGroupParams, ReadOnlyInputBindings } from '../../types/BindGroups';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
 import { TextureBindGroupParams } from './TextureBindGroup';
 import { BufferBindingType } from '../bindings/Binding';
 /**
- * Used to handle all inputs data sent to the GPU.<br>
+ * Used to handle all inputs data sent to the GPU.
+ *
  * In WebGPU, data (buffers, textures or samplers, called bindings) are organised by bind groups, containing those bindings.
  *
  * ## Bindings
  *
- * A {@link BindGroup} is responsible for creating each {@link BufferBinding} {@link GPUBuffer} and then the {@link GPUBindGroup} and {@link GPUBindGroupLayout} that are used to create {@link GPUComputePipeline} or {@link GPURenderPipeline}.<br>
+ * A {@link BindGroup} is responsible for creating each {@link BufferBinding} {@link GPUBuffer} and then the {@link GPUBindGroup} and {@link GPUBindGroupLayout} that are used to create {@link GPUComputePipeline} or {@link GPURenderPipeline}.
+ *
  * Those are generally automatically created by the {@link core/materials/Material.Material | Material} using this {@link BindGroup}. If you need to manually create them, you will have to call its {@link BindGroup#createBindGroup | `createBindGroup()` method}
  *
  * ### Samplers and textures
@@ -19,7 +22,8 @@ import { BufferBindingType } from '../bindings/Binding';
  *
  * ### Updating a GPUBindGroup or GPUBindGroupLayout
  *
- * Each time one of the {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createBindGroup#resource | binding resource} changes, its {@link BindGroup#bindGroup | bindGroup} will be recreated (usually, when a {@link GPUTexture} is uploaded).<br>
+ * Each time one of the {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createBindGroup#resource | binding resource} changes, its {@link BindGroup#bindGroup | bindGroup} will be recreated (usually, when a {@link GPUTexture} is uploaded).
+ *
  * Each time one of the {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createBindGroupLayout#resource_layout_objects | binding resource layout} changes, its {@link BindGroup#bindGroupLayout | bindGroupLayout} and {@link BindGroup#bindGroup | bindGroup} will be recreated, and the {@link GPUComputePipeline} or {@link GPURenderPipeline} will be recreated as well.
  *
  * @example
@@ -69,6 +73,12 @@ export declare class BindGroup {
     index: number;
     /** List of {@link BindGroupBindingElement | bindings} (buffers, texture, etc.) handled by this {@link BindGroup}. */
     bindings: BindGroupBindingElement[];
+    /** List of all {@link BindGroupBindingElement | bindings} that handle a {@link GPUBuffer}. */
+    bufferBindings: BindGroupBufferBindingElement[];
+    /** Object containing all uniforms inputs handled by this {@link BindGroup}. */
+    uniforms: Record<string, Record<string, BufferBindingInput>>;
+    /** Object containing all read only or read/write storages inputs handled by this {@link BindGroup}. */
+    storages: Record<string, Record<string, BufferBindingInput>>;
     /** Our {@link BindGroup} {@link BindGroupEntries | entries} objects. */
     entries: BindGroupEntries;
     /** Our {@link BindGroup}{@link GPUBindGroupLayout}. */
@@ -165,10 +175,6 @@ export declare class BindGroup {
      * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored to update our bindings.
      */
     restoreContext(): void;
-    /**
-     * Get all {@link BindGroup#bindings | bind group bindings} that handle a {@link GPUBuffer}
-     */
-    get bufferBindings(): BindGroupBufferBindingElement[];
     /**
      * Creates binding GPUBuffer with correct params.
      * @param binding - The binding element.

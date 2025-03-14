@@ -1,4 +1,4 @@
-/// <reference types="dist" />
+/// <reference types="@webgpu/types" />
 import { Box3 } from '../../math/Box3';
 import { GeometryBuffer, GeometryOptions, GeometryParams, VertexBuffer, VertexBufferAttribute, VertexBufferAttributeParams, VertexBufferParams, IndirectDrawParams } from '../../types/Geometries';
 import { Renderer } from '../renderers/utils';

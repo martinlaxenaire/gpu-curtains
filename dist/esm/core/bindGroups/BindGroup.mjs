@@ -22,6 +22,9 @@ class BindGroup {
     this.index = index;
     this.uuid = generateUUID();
     this.bindings = [];
+    this.bufferBindings = [];
+    this.uniforms = {};
+    this.storages = {};
     bindings.length && this.addBindings(bindings);
     if (this.options.uniforms || this.options.storages) this.setInputBindings();
     this.layoutCacheKey = "";
@@ -31,18 +34,6 @@ class BindGroup {
     this.bindGroup = null;
     this.needsPipelineFlush = false;
     this.consumers = /* @__PURE__ */ new Set();
-    for (const binding of this.bufferBindings) {
-      if ("buffer" in binding) {
-        if (binding.parent) {
-          binding.parent.buffer.consumers.add(this.uuid);
-        } else {
-          binding.buffer.consumers.add(this.uuid);
-        }
-      }
-      if ("resultBuffer" in binding) {
-        binding.resultBuffer.consumers.add(this.uuid);
-      }
-    }
     this.renderer.addBindGroup(this);
   }
   /**
@@ -66,23 +57,32 @@ class BindGroup {
    */
   addBindings(bindings = []) {
     bindings.forEach((binding) => {
-      if ("buffer" in binding) {
-        if (binding.parent) {
-          this.renderer.deviceManager.bufferBindings.set(binding.parent.cacheKey, binding.parent);
-          binding.parent.buffer.consumers.add(this.uuid);
-        } else {
-          this.renderer.deviceManager.bufferBindings.set(binding.cacheKey, binding);
-          binding.buffer.consumers.add(this.uuid);
-        }
-      }
+      this.addBinding(binding);
     });
-    this.bindings = [...this.bindings, ...bindings];
   }
   /**
    * Adds an already created {@link bindings} (buffers, texture, etc.) to the {@link bindings} array.
    * @param binding - binding to add.
    */
   addBinding(binding) {
+    if ("buffer" in binding) {
+      if (binding.parent) {
+        this.renderer.deviceManager.bufferBindings.set(binding.parent.cacheKey, binding.parent);
+        binding.parent.buffer.consumers.add(this.uuid);
+      } else {
+        this.renderer.deviceManager.bufferBindings.set(binding.cacheKey, binding);
+        binding.buffer.consumers.add(this.uuid);
+      }
+      if ("resultBuffer" in binding) {
+        binding.resultBuffer.consumers.add(this.uuid);
+      }
+      this.bufferBindings.push(binding);
+      if (binding.bindingType === "uniform") {
+        this.uniforms[binding.name] = binding.inputs;
+      } else {
+        this.storages[binding.name] = binding.inputs;
+      }
+    }
     this.bindings.push(binding);
   }
   /**
@@ -272,14 +272,6 @@ class BindGroup {
     for (const bufferBinding of this.bufferBindings) {
       bufferBinding.shouldUpdate = true;
     }
-  }
-  /**
-   * Get all {@link BindGroup#bindings | bind group bindings} that handle a {@link GPUBuffer}
-   */
-  get bufferBindings() {
-    return this.bindings.filter(
-      (binding) => binding instanceof BufferBinding || binding instanceof WritableBufferBinding
-    );
   }
   /**
    * Creates binding GPUBuffer with correct params.

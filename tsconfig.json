@@ -1,12 +1,14 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
+    "module": "es2020",
     "target": "es2021",
     "declaration": true,
+    "emitDeclarationOnly": true,
     "outDir": "./dist/types",
     "typeRoots": [ "./node_modules/@webgpu/types", "./node_modules/@types"],
     "allowJs": true,
-    "checkJs": true
+    "checkJs": true,
+    "moduleResolution": "Bundler"
   },
   "exclude": [
     "node_modules"

@@ -73,7 +73,7 @@
   "scripts": {
     "dev": "vite --host",
     "build:docs": "rimraf docs && typedoc --options typedoc.json",
-    "build:types": "rimraf dist/types && tsc --allowJs -d --emitDeclarationOnly",
+    "build:types": "rimraf dist/types && tsc",
     "build:lib": "rimraf dist/esm && rollup -c",
     "build:dist": "yarn build:types && yarn build:lib",
     "build": "yarn build:dist && yarn build:docs"
