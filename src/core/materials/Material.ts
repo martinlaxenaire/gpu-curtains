@@ -503,8 +503,9 @@ export class Material {
     // which means the shader should be re-patched and recreated
     if (bindGroup.needsPipelineFlush && this.pipelineEntry?.ready) {
       this.pipelineEntry.flushPipelineEntry(this.bindGroups)
-      bindGroup.needsPipelineFlush = false
     }
+
+    bindGroup.needsPipelineFlush = false
   }
 
   /* INPUTS */

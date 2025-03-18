@@ -10,6 +10,8 @@ import { GPUCurtains } from '../../curtains/GPUCurtains'
 export interface RenderTargetParams extends RenderPassParams {
   /** Whether we should add this {@link RenderTarget} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
   autoRender?: boolean
+  /** {@link core/textures/Texture.TextureBaseParams | Texture name} to use for the {@link RenderTarget} render texture. Default to `'renderTexture'`. */
+  renderTextureName?: string
 }
 
 /**
@@ -69,7 +71,7 @@ export class RenderTarget {
 
     this.uuid = generateUUID()
 
-    const { label, colorAttachments, depthTexture, autoRender, ...renderPassParams } = parameters
+    const { label, colorAttachments, depthTexture, autoRender, renderTextureName, ...renderPassParams } = parameters
 
     // use depth texture from params
     // OR renderer render pass depth texture if options match
@@ -105,7 +107,7 @@ export class RenderTarget {
       // this is the texture that will be resolved when setting the current render pass texture
       this.renderTexture = new Texture(this.renderer, {
         label: this.options.label ? `${this.options.label} Render Texture` : 'Render Target render texture',
-        name: 'renderTexture',
+        name: renderTextureName ?? 'renderTexture',
         format:
           colorAttachments && colorAttachments.length && colorAttachments[0].targetFormat
             ? colorAttachments[0].targetFormat

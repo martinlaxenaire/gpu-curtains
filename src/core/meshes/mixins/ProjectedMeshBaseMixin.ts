@@ -129,6 +129,17 @@ export declare class ProjectedMeshBaseClass extends MeshBaseClass {
   setShaders(): void
 
   /**
+   * Set the Mesh frustum culling
+   */
+  setDOMFrustum(): void
+
+  /**
+   * Get whether the Mesh is currently in the {@link CameraRenderer#camera | camera} frustum.
+   * @readonly
+   */
+  get isInFrustum(): boolean
+
+  /**
    * Set a Mesh matrices uniforms inputs then call {@link MeshBaseClass} super method
    * @param meshParameters - {@link RenderMaterialParams | RenderMaterial parameters}
    */
@@ -492,6 +503,14 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
 
       this.DOMFrustumMargins = this.domFrustum.DOMFrustumMargins
       this.frustumCulling = this.options.frustumCulling
+    }
+
+    /**
+     * Get whether the Mesh is currently in the {@link camera} frustum.
+     * @readonly
+     */
+    get isInFrustum(): boolean {
+      return this.domFrustum.isIntersecting
     }
 
     /* MATERIAL */

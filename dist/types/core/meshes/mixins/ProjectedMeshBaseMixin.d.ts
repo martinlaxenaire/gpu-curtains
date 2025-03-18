@@ -82,6 +82,15 @@ export declare class ProjectedMeshBaseClass extends MeshBaseClass {
      */
     setShaders(): void;
     /**
+     * Set the Mesh frustum culling
+     */
+    setDOMFrustum(): void;
+    /**
+     * Get whether the Mesh is currently in the {@link CameraRenderer#camera | camera} frustum.
+     * @readonly
+     */
+    get isInFrustum(): boolean;
+    /**
      * Set a Mesh matrices uniforms inputs then call {@link MeshBaseClass} super method
      * @param meshParameters - {@link RenderMaterialParams | RenderMaterial parameters}
      */

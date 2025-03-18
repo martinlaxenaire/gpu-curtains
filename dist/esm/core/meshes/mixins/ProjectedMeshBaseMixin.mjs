@@ -228,6 +228,13 @@ function ProjectedMeshBaseMixin(Base) {
       this.DOMFrustumMargins = this.domFrustum.DOMFrustumMargins;
       this.frustumCulling = this.options.frustumCulling;
     }
+    /**
+     * Get whether the Mesh is currently in the {@link camera} frustum.
+     * @readonly
+     */
+    get isInFrustum() {
+      return this.domFrustum.isIntersecting;
+    }
     /* MATERIAL */
     /**
      * Hook used to clean up parameters before sending them to the material.

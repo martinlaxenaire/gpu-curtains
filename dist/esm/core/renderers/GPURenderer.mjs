@@ -642,6 +642,9 @@ class GPURenderer {
    * @param commandEncoder - {@link GPUCommandEncoder} to use for copy operation.
    */
   copyGPUTextureToTexture(gpuTexture, texture, commandEncoder) {
+    if (gpuTexture.width !== texture.texture.width || gpuTexture.height !== texture.texture.height || gpuTexture.depthOrArrayLayers !== texture.texture.depthOrArrayLayers) {
+      return;
+    }
     commandEncoder.copyTextureToTexture(
       {
         texture: gpuTexture
@@ -656,12 +659,24 @@ class GPURenderer {
     }
   }
   /**
+   * Copy a {@link Texture} to a {@link Texture} using a {@link GPUCommandEncoder}. Automatically generate mips after copy if the destination {@link Texture} needs it.
+   * @param texture1 - {@link Texture} source to copy from.
+   * @param texture2 - {@link Texture} destination to copy onto.
+   * @param commandEncoder - {@link GPUCommandEncoder} to use for copy operation.
+   */
+  copyTextureToTexture(texture1, texture2, commandEncoder) {
+    this.copyGPUTextureToTexture(texture1.texture, texture2, commandEncoder);
+  }
+  /**
    * Copy a {@link Texture} to a {@link GPUTexture} using a {@link GPUCommandEncoder}.
    * @param texture - {@link Texture} source to copy from.
    * @param gpuTexture - {@link GPUTexture} destination to copy onto.
    * @param commandEncoder - {@link GPUCommandEncoder} to use for copy operation.
    */
   copyTextureToGPUTexture(texture, gpuTexture, commandEncoder) {
+    if (gpuTexture.width !== texture.texture.width || gpuTexture.height !== texture.texture.height || gpuTexture.depthOrArrayLayers !== texture.texture.depthOrArrayLayers) {
+      return;
+    }
     commandEncoder.copyTextureToTexture(
       {
         texture: texture.texture

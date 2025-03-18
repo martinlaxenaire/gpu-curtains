@@ -58,9 +58,9 @@ class ShaderPass extends FullscreenPlane {
       this.setRenderingOptionsForRenderPass(this.outputTarget.renderPass);
     }
     this.type = "ShaderPass";
-    this.createTexture({
+    this.renderTexture = this.createTexture({
       label: parameters.label ? `${parameters.label} render texture` : "Shader pass render texture",
-      name: "renderTexture",
+      name: parameters.renderTextureName ?? "renderTexture",
       fromTexture: this.inputTarget ? this.inputTarget.renderTexture : null,
       usage: ["copySrc", "copyDst", "textureBinding"],
       ...this.outputTarget && this.outputTarget.options.qualityRatio && { qualityRatio: this.outputTarget.options.qualityRatio }
@@ -77,13 +77,6 @@ class ShaderPass extends FullscreenPlane {
     delete parameters.isPrePass;
     super.cleanupRenderMaterialParameters(parameters);
     return parameters;
-  }
-  /**
-   * Get our main {@link Texture} that contains the input content to be used by the {@link ShaderPass}. Can also contain the ouputted content if {@link ShaderPassOptions#copyOutputToRenderTexture | copyOutputToRenderTexture} is set to true.
-   * @readonly
-   */
-  get renderTexture() {
-    return this.textures.find((texture) => texture.options.name === "renderTexture");
   }
   /**
    * Assign or remove an input {@link RenderTarget} to this {@link ShaderPass}, which can be different from what has just been drawn to the {@link core/renderers/GPURenderer.GPURenderer#context | context} current texture.

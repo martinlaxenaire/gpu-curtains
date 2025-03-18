@@ -13,7 +13,7 @@ export interface MediaTextureParams extends TextureBaseParams, MediaTextureBaseP
 /** Options used to create this {@link MediaTexture}. */
 export interface MediaTextureOptions extends TextureParams, MediaTextureParams {
     /** {@link Texture} sources. */
-    sources: Array<TextureSource | string>;
+    sources: Array<TextureSource | string | MediaProvider>;
     /** {@link Texture} sources type. */
     sourcesTypes: TextureSourceType[];
 }
@@ -222,6 +222,12 @@ export declare class MediaTexture extends Texture {
      * @param source - the video URL or {@link HTMLVideoElement} to load.
      */
     loadVideo(source: string | HTMLVideoElement): void;
+    /**
+     * Use a {@link HTMLVideoElement} as a {@link sources}.
+     * @param video - {@link HTMLVideoElement} to use.
+     * @param sourceIndex - Index at which to insert the source in the {@link sources} array in case of cube map.
+     */
+    useVideo(video: HTMLVideoElement, sourceIndex?: number): void;
     /**
      * Load and create videos using {@link loadVideo} from an array of videos sources as strings or {@link HTMLVideoElement}. Useful for cube maps.
      * @param sources - Array of images sources as strings or {@link HTMLVideoElement} to load.

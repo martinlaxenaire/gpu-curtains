@@ -8,6 +8,8 @@ import { GPUCurtains } from '../../curtains/GPUCurtains';
 export interface RenderTargetParams extends RenderPassParams {
     /** Whether we should add this {@link RenderTarget} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
     autoRender?: boolean;
+    /** {@link core/textures/Texture.TextureBaseParams | Texture name} to use for the {@link RenderTarget} render texture. Default to `'renderTexture'`. */
+    renderTextureName?: string;
 }
 /**
  * Used to draw to {@link RenderPass#viewTextures | RenderPass view textures} (and eventually {@link RenderPass#depthTexture | depth texture}) instead of directly to screen.

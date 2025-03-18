@@ -374,14 +374,20 @@ const _MediaTexture = class _MediaTexture extends Texture {
     const source = this.sources[0];
     const video = source.source;
     if (source && video) {
-      this.setSourceUploaded(0);
       this.texture?.destroy();
       this.texture = null;
-      source.externalSource = new VideoFrame(video);
+      try {
+        source.externalSource = new VideoFrame(video);
+      } catch (e) {
+        const offscreen = new OffscreenCanvas(this.size.width, this.size.height);
+        offscreen.getContext("2d");
+        source.externalSource = new VideoFrame(offscreen, { timestamp: 0 });
+      }
       this.externalTexture = this.renderer.importExternalTexture(source.externalSource, this.options.label);
       this.textureBinding.resource = this.externalTexture;
       this.textureBinding.setBindingType("externalTexture");
       source.shouldUpdate = false;
+      this.setSourceUploaded(0);
     }
   }
   /**
@@ -418,15 +424,23 @@ const _MediaTexture = class _MediaTexture extends Texture {
    */
   onVideoLoaded(video, sourceIndex = 0) {
     if (!this.sources[sourceIndex].sourceLoaded) {
-      this.sources[sourceIndex].sourceLoaded = true;
-      this.sources[sourceIndex].shouldUpdate = true;
-      this.setSourceSize();
-      if ("requestVideoFrameCallback" in HTMLVideoElement.prototype) {
-        const videoFrameCallbackId = this.sources[sourceIndex].source.requestVideoFrameCallback(
-          this.onVideoFrameCallback.bind(this, sourceIndex)
+      if (this.options.sources[sourceIndex] instanceof MediaStream && video.paused) {
+        video.addEventListener(
+          "play",
+          () => {
+            this.sources[sourceIndex].sourceLoaded = true;
+            this.sources[sourceIndex].shouldUpdate = true;
+            this.setSourceSize();
+          },
+          { once: true }
         );
-        this.videoFrameCallbackIds.set(sourceIndex, videoFrameCallbackId);
+      } else {
+        this.sources[sourceIndex].sourceLoaded = true;
+        this.sources[sourceIndex].shouldUpdate = true;
+        this.setSourceSize();
       }
+      const videoFrameCallbackId = video.requestVideoFrameCallback(this.onVideoFrameCallback.bind(this, sourceIndex));
+      this.videoFrameCallbackIds.set(sourceIndex, videoFrameCallbackId);
       __privateMethod(this, _MediaTexture_instances, setSourceLoaded_fn).call(this, video);
     }
   }
@@ -462,6 +476,7 @@ const _MediaTexture = class _MediaTexture extends Texture {
    */
   loadVideo(source) {
     let video;
+    const sourceIndex = this.options.sources.length;
     if (typeof source === "string") {
       video = document.createElement("video");
       video.src = source;
@@ -473,9 +488,24 @@ const _MediaTexture = class _MediaTexture extends Texture {
     video.loop = true;
     video.crossOrigin = "anonymous";
     video.setAttribute("playsinline", "");
+    this.useVideo(video, sourceIndex);
+    if (isNaN(video.duration)) {
+      video.load();
+    }
+  }
+  /**
+   * Use a {@link HTMLVideoElement} as a {@link sources}.
+   * @param video - {@link HTMLVideoElement} to use.
+   * @param sourceIndex - Index at which to insert the source in the {@link sources} array in case of cube map.
+   */
+  useVideo(video, sourceIndex = 0) {
+    const source = video.src ? video.src : video.srcObject ?? null;
+    if (!source) {
+      throwWarning(`MediaTexture (${this.options.label}): Can not use this video as it as no source.`);
+      return;
+    }
     if (this.size.depth > 1) {
-      const sourceIndex = this.options.sources.length;
-      this.options.sources.push(video.src);
+      this.options.sources.push(source);
       this.options.sourcesTypes.push("video");
       this.sources[sourceIndex] = {
         source: video,
@@ -485,7 +515,7 @@ const _MediaTexture = class _MediaTexture extends Texture {
         shouldUpdate: false
       };
     } else {
-      this.options.sources = [video.src];
+      this.options.sources = [source];
       this.options.sourcesTypes = [this.options.useExternalTextures ? "externalVideo" : "video"];
       this.sources = [
         {
@@ -498,14 +528,11 @@ const _MediaTexture = class _MediaTexture extends Texture {
       ];
     }
     if (video.readyState >= video.HAVE_ENOUGH_DATA) {
-      this.onVideoLoaded(video, this.sources.length - 1);
+      this.onVideoLoaded(video, sourceIndex);
     } else {
-      video.addEventListener("canplaythrough", this.onVideoLoaded.bind(this, video, this.sources.length - 1), {
+      video.addEventListener("canplaythrough", this.onVideoLoaded.bind(this, video, sourceIndex), {
         once: true
       });
-    }
-    if (isNaN(video.duration)) {
-      video.load();
     }
   }
   /**
@@ -620,11 +647,9 @@ const _MediaTexture = class _MediaTexture extends Texture {
    * */
   update() {
     this.sources?.forEach((source, sourceIndex) => {
+      if (!source.sourceLoaded) return;
       const sourceType = this.options.sourcesTypes[sourceIndex];
       if (sourceType === "externalVideo") {
-        source.shouldUpdate = true;
-      }
-      if (this.isVideoSource(source.source) && !this.videoFrameCallbackIds.size && this.shouldUpdateVideoSource(source.source)) {
         source.shouldUpdate = true;
       }
       if (source.shouldUpdate && sourceType !== "externalVideo") {

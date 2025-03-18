@@ -355,8 +355,8 @@ class Material {
     bindGroup.update();
     if (bindGroup.needsPipelineFlush && this.pipelineEntry?.ready) {
       this.pipelineEntry.flushPipelineEntry(this.bindGroups);
-      bindGroup.needsPipelineFlush = false;
     }
+    bindGroup.needsPipelineFlush = false;
   }
   /* INPUTS */
   /**

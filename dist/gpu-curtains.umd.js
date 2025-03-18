@@ -4102,6 +4102,13 @@
       if (size.width === this.size.width && size.height === this.size.height && size.depth === this.size.depth) {
         return;
       }
+      this.setSize(size);
+    }
+    /**
+     * Set our {@link Texture} {@link Texture.size | size}, recreate it/copy it again and tell the {@link core/bindGroups/TextureBindGroup.TextureBindGroup | texture bind group} to update.
+     * @param size - the new {@link TextureSize | size} to set.
+     */
+    setSize(size) {
       this.size = size;
       this.createTexture();
     }
@@ -4811,14 +4818,20 @@
       const source = this.sources[0];
       const video = source.source;
       if (source && video) {
-        this.setSourceUploaded(0);
         this.texture?.destroy();
         this.texture = null;
-        source.externalSource = new VideoFrame(video);
+        try {
+          source.externalSource = new VideoFrame(video);
+        } catch (e) {
+          const offscreen = new OffscreenCanvas(this.size.width, this.size.height);
+          offscreen.getContext("2d");
+          source.externalSource = new VideoFrame(offscreen, { timestamp: 0 });
+        }
         this.externalTexture = this.renderer.importExternalTexture(source.externalSource, this.options.label);
         this.textureBinding.resource = this.externalTexture;
         this.textureBinding.setBindingType("externalTexture");
         source.shouldUpdate = false;
+        this.setSourceUploaded(0);
       }
     }
     /**
@@ -4855,15 +4868,23 @@
      */
     onVideoLoaded(video, sourceIndex = 0) {
       if (!this.sources[sourceIndex].sourceLoaded) {
-        this.sources[sourceIndex].sourceLoaded = true;
-        this.sources[sourceIndex].shouldUpdate = true;
-        this.setSourceSize();
-        if ("requestVideoFrameCallback" in HTMLVideoElement.prototype) {
-          const videoFrameCallbackId = this.sources[sourceIndex].source.requestVideoFrameCallback(
-            this.onVideoFrameCallback.bind(this, sourceIndex)
+        if (this.options.sources[sourceIndex] instanceof MediaStream && video.paused) {
+          video.addEventListener(
+            "play",
+            () => {
+              this.sources[sourceIndex].sourceLoaded = true;
+              this.sources[sourceIndex].shouldUpdate = true;
+              this.setSourceSize();
+            },
+            { once: true }
           );
-          this.videoFrameCallbackIds.set(sourceIndex, videoFrameCallbackId);
+        } else {
+          this.sources[sourceIndex].sourceLoaded = true;
+          this.sources[sourceIndex].shouldUpdate = true;
+          this.setSourceSize();
         }
+        const videoFrameCallbackId = video.requestVideoFrameCallback(this.onVideoFrameCallback.bind(this, sourceIndex));
+        this.videoFrameCallbackIds.set(sourceIndex, videoFrameCallbackId);
         __privateMethod$c(this, _MediaTexture_instances, setSourceLoaded_fn).call(this, video);
       }
     }
@@ -4899,6 +4920,7 @@
      */
     loadVideo(source) {
       let video;
+      const sourceIndex = this.options.sources.length;
       if (typeof source === "string") {
         video = document.createElement("video");
         video.src = source;
@@ -4910,9 +4932,24 @@
       video.loop = true;
       video.crossOrigin = "anonymous";
       video.setAttribute("playsinline", "");
+      this.useVideo(video, sourceIndex);
+      if (isNaN(video.duration)) {
+        video.load();
+      }
+    }
+    /**
+     * Use a {@link HTMLVideoElement} as a {@link sources}.
+     * @param video - {@link HTMLVideoElement} to use.
+     * @param sourceIndex - Index at which to insert the source in the {@link sources} array in case of cube map.
+     */
+    useVideo(video, sourceIndex = 0) {
+      const source = video.src ? video.src : video.srcObject ?? null;
+      if (!source) {
+        throwWarning(`MediaTexture (${this.options.label}): Can not use this video as it as no source.`);
+        return;
+      }
       if (this.size.depth > 1) {
-        const sourceIndex = this.options.sources.length;
-        this.options.sources.push(video.src);
+        this.options.sources.push(source);
         this.options.sourcesTypes.push("video");
         this.sources[sourceIndex] = {
           source: video,
@@ -4922,7 +4959,7 @@
           shouldUpdate: false
         };
       } else {
-        this.options.sources = [video.src];
+        this.options.sources = [source];
         this.options.sourcesTypes = [this.options.useExternalTextures ? "externalVideo" : "video"];
         this.sources = [
           {
@@ -4935,14 +4972,11 @@
         ];
       }
       if (video.readyState >= video.HAVE_ENOUGH_DATA) {
-        this.onVideoLoaded(video, this.sources.length - 1);
+        this.onVideoLoaded(video, sourceIndex);
       } else {
-        video.addEventListener("canplaythrough", this.onVideoLoaded.bind(this, video, this.sources.length - 1), {
+        video.addEventListener("canplaythrough", this.onVideoLoaded.bind(this, video, sourceIndex), {
           once: true
         });
-      }
-      if (isNaN(video.duration)) {
-        video.load();
       }
     }
     /**
@@ -5057,11 +5091,9 @@
      * */
     update() {
       this.sources?.forEach((source, sourceIndex) => {
+        if (!source.sourceLoaded) return;
         const sourceType = this.options.sourcesTypes[sourceIndex];
         if (sourceType === "externalVideo") {
-          source.shouldUpdate = true;
-        }
-        if (this.isVideoSource(source.source) && !this.videoFrameCallbackIds.size && this.shouldUpdateVideoSource(source.source)) {
           source.shouldUpdate = true;
         }
         if (source.shouldUpdate && sourceType !== "externalVideo") {
@@ -6538,8 +6570,8 @@
       bindGroup.update();
       if (bindGroup.needsPipelineFlush && this.pipelineEntry?.ready) {
         this.pipelineEntry.flushPipelineEntry(this.bindGroups);
-        bindGroup.needsPipelineFlush = false;
       }
+      bindGroup.needsPipelineFlush = false;
     }
     /* INPUTS */
     /**
@@ -8873,7 +8905,7 @@
       renderer = isRenderer(renderer, this.type);
       this.renderer = renderer;
       this.uuid = generateUUID();
-      const { label, colorAttachments, depthTexture, autoRender, ...renderPassParams } = parameters;
+      const { label, colorAttachments, depthTexture, autoRender, renderTextureName, ...renderPassParams } = parameters;
       const depthTextureToUse = !!depthTexture ? depthTexture : this.renderer.renderPass.options.sampleCount === (parameters.sampleCount ?? 4) && (!renderPassParams.qualityRatio || renderPassParams.qualityRatio === 1) && !renderPassParams.fixedSize && (!parameters.depthFormat || parameters.depthFormat === this.renderer.renderPass.depthTexture.options.format) ? this.renderer.renderPass.depthTexture : null;
       this.options = {
         label,
@@ -8894,7 +8926,7 @@
       if (renderPassParams.useColorAttachments !== false) {
         this.renderTexture = new Texture(this.renderer, {
           label: this.options.label ? `${this.options.label} Render Texture` : "Render Target render texture",
-          name: "renderTexture",
+          name: renderTextureName ?? "renderTexture",
           format: colorAttachments && colorAttachments.length && colorAttachments[0].targetFormat ? colorAttachments[0].targetFormat : this.renderer.options.context.format,
           ...this.options.qualityRatio !== void 0 && { qualityRatio: this.options.qualityRatio },
           ...this.options.fixedSize !== void 0 && { fixedSize: this.options.fixedSize },
@@ -11242,6 +11274,13 @@ fn getPCFBaseShadowContribution(
         });
         this.DOMFrustumMargins = this.domFrustum.DOMFrustumMargins;
         this.frustumCulling = this.options.frustumCulling;
+      }
+      /**
+       * Get whether the Mesh is currently in the {@link camera} frustum.
+       * @readonly
+       */
+      get isInFrustum() {
+        return this.domFrustum.isIntersecting;
       }
       /* MATERIAL */
       /**
@@ -15386,6 +15425,9 @@ ${this.shaders.compute.head}`;
      * @param commandEncoder - {@link GPUCommandEncoder} to use for copy operation.
      */
     copyGPUTextureToTexture(gpuTexture, texture, commandEncoder) {
+      if (gpuTexture.width !== texture.texture.width || gpuTexture.height !== texture.texture.height || gpuTexture.depthOrArrayLayers !== texture.texture.depthOrArrayLayers) {
+        return;
+      }
       commandEncoder.copyTextureToTexture(
         {
           texture: gpuTexture
@@ -15400,12 +15442,24 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
+     * Copy a {@link Texture} to a {@link Texture} using a {@link GPUCommandEncoder}. Automatically generate mips after copy if the destination {@link Texture} needs it.
+     * @param texture1 - {@link Texture} source to copy from.
+     * @param texture2 - {@link Texture} destination to copy onto.
+     * @param commandEncoder - {@link GPUCommandEncoder} to use for copy operation.
+     */
+    copyTextureToTexture(texture1, texture2, commandEncoder) {
+      this.copyGPUTextureToTexture(texture1.texture, texture2, commandEncoder);
+    }
+    /**
      * Copy a {@link Texture} to a {@link GPUTexture} using a {@link GPUCommandEncoder}.
      * @param texture - {@link Texture} source to copy from.
      * @param gpuTexture - {@link GPUTexture} destination to copy onto.
      * @param commandEncoder - {@link GPUCommandEncoder} to use for copy operation.
      */
     copyTextureToGPUTexture(texture, gpuTexture, commandEncoder) {
+      if (gpuTexture.width !== texture.texture.width || gpuTexture.height !== texture.texture.height || gpuTexture.depthOrArrayLayers !== texture.texture.depthOrArrayLayers) {
+        return;
+      }
       commandEncoder.copyTextureToTexture(
         {
           texture: texture.texture
@@ -17641,9 +17695,9 @@ struct VSOutput {
         this.setRenderingOptionsForRenderPass(this.outputTarget.renderPass);
       }
       this.type = "ShaderPass";
-      this.createTexture({
+      this.renderTexture = this.createTexture({
         label: parameters.label ? `${parameters.label} render texture` : "Shader pass render texture",
-        name: "renderTexture",
+        name: parameters.renderTextureName ?? "renderTexture",
         fromTexture: this.inputTarget ? this.inputTarget.renderTexture : null,
         usage: ["copySrc", "copyDst", "textureBinding"],
         ...this.outputTarget && this.outputTarget.options.qualityRatio && { qualityRatio: this.outputTarget.options.qualityRatio }
@@ -17660,13 +17714,6 @@ struct VSOutput {
       delete parameters.isPrePass;
       super.cleanupRenderMaterialParameters(parameters);
       return parameters;
-    }
-    /**
-     * Get our main {@link Texture} that contains the input content to be used by the {@link ShaderPass}. Can also contain the ouputted content if {@link ShaderPassOptions#copyOutputToRenderTexture | copyOutputToRenderTexture} is set to true.
-     * @readonly
-     */
-    get renderTexture() {
-      return this.textures.find((texture) => texture.options.name === "renderTexture");
     }
     /**
      * Assign or remove an input {@link RenderTarget} to this {@link ShaderPass}, which can be different from what has just been drawn to the {@link core/renderers/GPURenderer.GPURenderer#context | context} current texture.
@@ -23203,8 +23250,8 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
   class PingPongPlane extends FullscreenPlane {
     /**
      * PingPongPlane constructor
-     * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link PingPongPlane}
-     * @param parameters - {@link MeshBaseRenderParams | parameters} use to create this {@link PingPongPlane}
+     * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link PingPongPlane}.
+     * @param parameters - {@link PingPongPlaneParams | parameters} use to create this {@link PingPongPlane}.
      */
     constructor(renderer, parameters = {}) {
       renderer = isRenderer(renderer, parameters.label ? parameters.label + " PingPongPlane" : "PingPongPlane");
@@ -23223,23 +23270,16 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
       parameters.label = parameters.label ?? "PingPongPlane " + renderer.pingPongPlanes?.length;
       super(renderer, parameters);
       this.type = "PingPongPlane";
-      this.createTexture({
+      this.renderTexture = this.createTexture({
         label: parameters.label ? `${parameters.label} render texture` : "PingPongPlane render texture",
-        name: "renderTexture",
+        name: parameters.renderTextureName ?? "renderTexture",
         ...parameters.targets && parameters.targets.length && { format: parameters.targets[0].format },
         usage: ["copyDst", "textureBinding"]
       });
     }
     /**
-     * Get our main {@link Texture}, the one that contains our ping pong content
-     * @readonly
-     */
-    get renderTexture() {
-      return this.textures.find((texture) => texture.options.name === "renderTexture");
-    }
-    /**
      * Add the {@link PingPongPlane} to the {@link core/scenes/Scene.Scene | Scene} and optionally to the renderer.
-     * @param addToRenderer - whether to add this {@link PingPongPlane} to the {@link Renderer#pingPongPlanes | Renderer pingPongPlanes array}
+     * @param addToRenderer - Whether to add this {@link PingPongPlane} to the {@link Renderer#pingPongPlanes | Renderer pingPongPlanes array}.
      */
     addToScene(addToRenderer = false) {
       if (addToRenderer) {
@@ -23251,7 +23291,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
     }
     /**
      * Remove the {@link PingPongPlane} from the {@link core/scenes/Scene.Scene | Scene} and optionally from the renderer as well.
-     * @param removeFromRenderer - whether to remove this {@link PingPongPlane} from the {@link Renderer#pingPongPlanes | Renderer pingPongPlanes array}
+     * @param removeFromRenderer - Whether to remove this {@link PingPongPlane} from the {@link Renderer#pingPongPlanes | Renderer pingPongPlanes array}.
      */
     removeFromScene(removeFromRenderer = false) {
       if (this.outputTarget) {

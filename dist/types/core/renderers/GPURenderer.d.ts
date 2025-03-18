@@ -402,6 +402,13 @@ export declare class GPURenderer {
      */
     copyGPUTextureToTexture(gpuTexture: GPUTexture, texture: Texture, commandEncoder: GPUCommandEncoder): void;
     /**
+     * Copy a {@link Texture} to a {@link Texture} using a {@link GPUCommandEncoder}. Automatically generate mips after copy if the destination {@link Texture} needs it.
+     * @param texture1 - {@link Texture} source to copy from.
+     * @param texture2 - {@link Texture} destination to copy onto.
+     * @param commandEncoder - {@link GPUCommandEncoder} to use for copy operation.
+     */
+    copyTextureToTexture(texture1: Texture, texture2: Texture, commandEncoder: GPUCommandEncoder): void;
+    /**
      * Copy a {@link Texture} to a {@link GPUTexture} using a {@link GPUCommandEncoder}.
      * @param texture - {@link Texture} source to copy from.
      * @param gpuTexture - {@link GPUTexture} destination to copy onto.
