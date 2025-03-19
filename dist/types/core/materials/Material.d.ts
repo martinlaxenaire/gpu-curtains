@@ -74,6 +74,10 @@ export declare class Material {
      */
     setRenderer(renderer: Renderer | GPUCurtains): void;
     /**
+     * Set the {@link pipelineEntry}.
+     */
+    setPipelineEntry(): void;
+    /**
      * Check if all bind groups are ready, and create them if needed.
      */
     compileMaterial(): Promise<void>;

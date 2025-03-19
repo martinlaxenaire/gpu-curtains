@@ -70,15 +70,16 @@ export declare class PipelineEntry {
      */
     createPipelineLayout(): void;
     /**
-     * Create the {@link PipelineEntry} descriptor
+     * Create the {@link PipelineEntry} descriptor.
      */
     createPipelineDescriptor(): void;
     /**
-     * Flush a {@link PipelineEntry}, i.e. reset its {@link bindGroups | bind groups}, {@link layout} and descriptor and recompile the {@link pipeline}
-     * Used when one of the bind group or rendering property has changed
-     * @param newBindGroups - new {@link bindGroups | bind groups} in case they have changed
+     * Flush a {@link PipelineEntry}, i.e. reset its {@link bindGroups | bind groups}, {@link layout} and descriptor and recompile the {@link pipeline}.
+     * Used when one of the bind group or rendering property has changed.
+     * @param newBindGroups - new {@link bindGroups | bind groups} in case they have changed.
+     * @param cacheKey - new {@link core/materials/Material.Material#cacheKey | Material cacheKey} in case it has changed.
      */
-    flushPipelineEntry(newBindGroups?: AllowedBindGroups[]): void;
+    flushPipelineEntry(newBindGroups?: AllowedBindGroups[], cacheKey?: string): void;
     /**
      * Set up a {@link pipeline} by creating the shaders, the {@link layout} and the descriptor
      */

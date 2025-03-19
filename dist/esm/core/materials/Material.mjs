@@ -50,6 +50,11 @@ class Material {
     }
   }
   /**
+   * Set the {@link pipelineEntry}.
+   */
+  setPipelineEntry() {
+  }
+  /**
    * Check if all bind groups are ready, and create them if needed.
    */
   async compileMaterial() {
@@ -354,9 +359,9 @@ class Material {
   updateBindGroup(bindGroup) {
     bindGroup.update();
     if (bindGroup.needsPipelineFlush && this.pipelineEntry?.ready) {
-      this.pipelineEntry.flushPipelineEntry(this.bindGroups);
+      this.setPipelineEntry();
+      bindGroup.needsPipelineFlush = false;
     }
-    bindGroup.needsPipelineFlush = false;
   }
   /* INPUTS */
   /**

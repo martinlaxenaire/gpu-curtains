@@ -129,6 +129,13 @@ export class Material {
   }
 
   /**
+   * Set the {@link pipelineEntry}.
+   */
+  setPipelineEntry() {
+    /* will be overriden */
+  }
+
+  /**
    * Check if all bind groups are ready, and create them if needed.
    */
   async compileMaterial(): Promise<void> {
@@ -502,10 +509,9 @@ export class Material {
     // usually happens if one of the struct bindingType has changed,
     // which means the shader should be re-patched and recreated
     if (bindGroup.needsPipelineFlush && this.pipelineEntry?.ready) {
-      this.pipelineEntry.flushPipelineEntry(this.bindGroups)
+      this.setPipelineEntry()
+      bindGroup.needsPipelineFlush = false
     }
-
-    bindGroup.needsPipelineFlush = false
   }
 
   /* INPUTS */
