@@ -415,6 +415,25 @@ export class MediaTexture extends Texture {
     }
   }
 
+  /**
+   * Resize our {@link MediaTexture}.
+   */
+  resize() {
+    // this should only happen with canvas textures
+    if (
+      this.sources.length === 1 &&
+      this.sources[0] &&
+      this.sources[0].source instanceof HTMLCanvasElement &&
+      (this.sources[0].source.width !== this.size.width || this.sources[0].source.height !== this.size.height)
+    ) {
+      // since the source size has changed, we have to re upload a new texture
+      this.setSourceSize()
+      this.sources[0].shouldUpdate = true
+    } else {
+      super.resize()
+    }
+  }
+
   /* SOURCES */
 
   /**

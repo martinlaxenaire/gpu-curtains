@@ -196,18 +196,7 @@ export class DOMTexture extends MediaTexture {
    * Resize our {@link DOMTexture}.
    */
   resize() {
-    // this should only happen with canvas textures
-    if (
-      this.source &&
-      this.source instanceof HTMLCanvasElement &&
-      (this.source.width !== this.size.width || this.source.height !== this.size.height)
-    ) {
-      // since the source size has changed, we have to re upload a new texture
-      this.setSourceSize()
-      this.sources[0].shouldUpdate = true
-    } else {
-      super.resize()
-    }
+    super.resize()
 
     this.updateModelMatrix()
   }

@@ -155,6 +155,10 @@ export declare class MediaTexture extends Texture {
      */
     createTexture(): void;
     /**
+     * Resize our {@link MediaTexture}.
+     */
+    resize(): void;
+    /**
      * Set the {@link size} based on the first available loaded {@link sources}.
      */
     setSourceSize(): void;

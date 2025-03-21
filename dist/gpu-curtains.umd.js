@@ -4707,6 +4707,17 @@
         this.textureBinding.resource = this.texture;
       }
     }
+    /**
+     * Resize our {@link MediaTexture}.
+     */
+    resize() {
+      if (this.sources.length === 1 && this.sources[0] && this.sources[0].source instanceof HTMLCanvasElement && (this.sources[0].source.width !== this.size.width || this.sources[0].source.height !== this.size.height)) {
+        this.setSourceSize();
+        this.sources[0].shouldUpdate = true;
+      } else {
+        super.resize();
+      }
+    }
     /* SOURCES */
     /**
      * Set the {@link size} based on the first available loaded {@link sources}.
@@ -5260,12 +5271,7 @@
      * Resize our {@link DOMTexture}.
      */
     resize() {
-      if (this.source && this.source instanceof HTMLCanvasElement && (this.source.width !== this.size.width || this.source.height !== this.size.height)) {
-        this.setSourceSize();
-        this.sources[0].shouldUpdate = true;
-      } else {
-        super.resize();
-      }
+      super.resize();
       this.updateModelMatrix();
     }
     /**
