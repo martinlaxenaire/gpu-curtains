@@ -42,7 +42,7 @@ export interface PipelineEntryOptions {
   shaders: MaterialShaders
   /** Array of {@link core/bindGroups/BindGroup.BindGroup | BindGroup} to use with this {@link core/pipelines/PipelineEntry.PipelineEntry#pipeline | pipeline}. */
   bindGroups: MaterialBindGroups
-  /** Cache key defining the and bind groups buffer layouts, used to eventually get a {@link core/pipelines/PipelineEntry.PipelineEntry | PipelineEntry} from cache. */
+  /** Cache key defining the bind groups buffer layouts, used to eventually get a {@link core/pipelines/PipelineEntry.PipelineEntry | PipelineEntry} from cache. */
   cacheKey: string
 }
 

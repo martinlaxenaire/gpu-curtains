@@ -17,7 +17,7 @@ export interface MediaTextureParams extends TextureBaseParams, MediaTextureBaseP
 /** Options used to create this {@link MediaTexture}. */
 export interface MediaTextureOptions extends TextureParams, MediaTextureParams {
   /** {@link Texture} sources. */
-  sources: Array<TextureSource | string> // for image urls
+  sources: Array<TextureSource | string | MediaProvider> // for image urls
   /** {@link Texture} sources type. */
   sourcesTypes: TextureSourceType[]
 }
@@ -26,6 +26,8 @@ export interface MediaTextureOptions extends TextureParams, MediaTextureParams {
 export interface MediaTextureSource {
   /** Original {@link TextureSource} to use. */
   source: TextureSource
+  /** {@link VideoFrame} to use with external textures, or `null`. */
+  externalSource: VideoFrame | null
   /** Whether we should update the {@link GPUTexture} for this source. */
   shouldUpdate: boolean
   /** Whether the source has been loaded. */
@@ -413,22 +415,26 @@ export class MediaTexture extends Texture {
     }
   }
 
-  /* SOURCES */
-
   /**
-   * Import a {@link GPUExternalTexture} from the {@link Renderer}, update the {@link textureBinding} and its {@link core/bindGroups/TextureBindGroup.TextureBindGroup | bind group}
+   * Resize our {@link MediaTexture}.
    */
-  uploadVideoTexture() {
-    const source = this.sources[0]
-
-    if (source && source.source) {
-      this.externalTexture = this.renderer.importExternalTexture(source.source as HTMLVideoElement, this.options.label)
-      this.textureBinding.resource = this.externalTexture
-      this.textureBinding.setBindingType('externalTexture')
-      source.shouldUpdate = false
-      this.setSourceUploaded(0)
+  resize() {
+    // this should only happen with canvas textures
+    if (
+      this.sources.length === 1 &&
+      this.sources[0] &&
+      this.sources[0].source instanceof HTMLCanvasElement &&
+      (this.sources[0].source.width !== this.size.width || this.sources[0].source.height !== this.size.height)
+    ) {
+      // since the source size has changed, we have to re upload a new texture
+      this.setSourceSize()
+      this.sources[0].shouldUpdate = true
+    } else {
+      super.resize()
     }
   }
+
+  /* SOURCES */
 
   /**
    * Set the {@link size} based on the first available loaded {@link sources}.
@@ -528,6 +534,7 @@ export class MediaTexture extends Texture {
     if (this.size.depth > 1) {
       this.sources[sourceIndex] = {
         source: imageBitmap,
+        externalSource: null,
         sourceLoaded: true,
         sourceUploaded: false,
         shouldUpdate: true,
@@ -536,6 +543,7 @@ export class MediaTexture extends Texture {
       this.sources = [
         {
           source: imageBitmap,
+          externalSource: null,
           sourceLoaded: true,
           sourceUploaded: false,
           shouldUpdate: true,
@@ -554,6 +562,47 @@ export class MediaTexture extends Texture {
   async loadImages(sources: Array<string | HTMLImageElement>) {
     for (let i = 0; i < Math.min(this.size.depth, sources.length); i++) {
       this.loadImage(sources[i])
+    }
+  }
+
+  /**
+   * Import a {@link GPUExternalTexture} from the {@link Renderer}, update the {@link textureBinding} and its {@link core/bindGroups/TextureBindGroup.TextureBindGroup | bind group}
+   */
+  uploadVideoTexture() {
+    const source = this.sources[0]
+    const video = source.source as HTMLVideoElement
+
+    if (source && video) {
+      // destroy current texture if any
+      this.texture?.destroy()
+      this.texture = null
+
+      // try yo create a video frame from video
+      // if it fails for any reason, just upload an empty offscreen canvas
+      try {
+        source.externalSource = new VideoFrame(video)
+      } catch (e) {
+        const offscreen = new OffscreenCanvas(this.size.width, this.size.height)
+        offscreen.getContext('2d')
+        source.externalSource = new VideoFrame(offscreen, { timestamp: 0 })
+      }
+
+      this.externalTexture = this.renderer.importExternalTexture(source.externalSource, this.options.label)
+      this.textureBinding.resource = this.externalTexture
+      this.textureBinding.setBindingType('externalTexture')
+      source.shouldUpdate = false
+      this.setSourceUploaded(0)
+    }
+  }
+
+  /**
+   * Close an external source {@link VideoFrame} if any.
+   */
+  closeVideoFrame() {
+    const source = this.sources[0]
+
+    if (source && source.externalSource) {
+      source.externalSource.close()
     }
   }
 
@@ -583,24 +632,26 @@ export class MediaTexture extends Texture {
    */
   onVideoLoaded(video: HTMLVideoElement, sourceIndex = 0) {
     if (!this.sources[sourceIndex].sourceLoaded) {
-      this.sources[sourceIndex].sourceLoaded = true
-      // update at least first frame
-      this.sources[sourceIndex].shouldUpdate = true
-      this.setSourceSize()
-
-      if (this.options.sourcesTypes[sourceIndex] === 'externalVideo') {
-        // texture binding will be set when uploading external texture
-        // meanwhile, destroy previous texture
-        this.texture?.destroy()
-      }
-
-      if ('requestVideoFrameCallback' in HTMLVideoElement.prototype) {
-        const videoFrameCallbackId = (this.sources[sourceIndex].source as HTMLVideoElement).requestVideoFrameCallback(
-          this.onVideoFrameCallback.bind(this, sourceIndex)
+      if (this.options.sources[sourceIndex] instanceof MediaStream && video.paused) {
+        video.addEventListener(
+          'play',
+          () => {
+            this.sources[sourceIndex].sourceLoaded = true
+            this.sources[sourceIndex].shouldUpdate = true
+            this.setSourceSize()
+          },
+          { once: true }
         )
-
-        this.videoFrameCallbackIds.set(sourceIndex, videoFrameCallbackId)
+      } else {
+        this.sources[sourceIndex].sourceLoaded = true
+        // update at least first frame
+        this.sources[sourceIndex].shouldUpdate = true
+        this.setSourceSize()
       }
+
+      const videoFrameCallbackId = video.requestVideoFrameCallback(this.onVideoFrameCallback.bind(this, sourceIndex))
+
+      this.videoFrameCallbackIds.set(sourceIndex, videoFrameCallbackId)
 
       this.#setSourceLoaded(video)
     }
@@ -644,6 +695,8 @@ export class MediaTexture extends Texture {
   loadVideo(source: string | HTMLVideoElement) {
     let video
 
+    const sourceIndex = this.options.sources.length
+
     if (typeof source === 'string') {
       video = document.createElement('video')
       video.src = source
@@ -657,27 +710,48 @@ export class MediaTexture extends Texture {
     video.crossOrigin = 'anonymous'
     video.setAttribute('playsinline', '')
 
-    if (this.size.depth > 1) {
-      const sourceIndex = this.options.sources.length
+    this.useVideo(video, sourceIndex)
 
-      this.options.sources.push(video.src)
+    // if duration is not available, should mean our video has not started loading
+    if (isNaN(video.duration)) {
+      video.load()
+    }
+  }
+
+  /**
+   * Use a {@link HTMLVideoElement} as a {@link sources}.
+   * @param video - {@link HTMLVideoElement} to use.
+   * @param sourceIndex - Index at which to insert the source in the {@link sources} array in case of cube map.
+   */
+  useVideo(video: HTMLVideoElement, sourceIndex = 0) {
+    const source = video.src ? video.src : video.srcObject ?? null
+
+    if (!source) {
+      throwWarning(`MediaTexture (${this.options.label}): Can not use this video as it as no source.`)
+      return
+    }
+
+    if (this.size.depth > 1) {
+      this.options.sources.push(source)
 
       // cannot use external video textures on a cube map
       this.options.sourcesTypes.push('video')
 
       this.sources[sourceIndex] = {
         source: video,
+        externalSource: null,
         sourceLoaded: false,
         sourceUploaded: false,
         shouldUpdate: false,
       }
     } else {
-      this.options.sources = [video.src]
+      this.options.sources = [source]
       this.options.sourcesTypes = [this.options.useExternalTextures ? 'externalVideo' : 'video']
 
       this.sources = [
         {
           source: video,
+          externalSource: null,
           sourceLoaded: false,
           sourceUploaded: false,
           shouldUpdate: false,
@@ -689,16 +763,11 @@ export class MediaTexture extends Texture {
     // the 'canplaythrough' event might have been triggered
     // before we registered the event handler.
     if (video.readyState >= video.HAVE_ENOUGH_DATA) {
-      this.onVideoLoaded(video, this.sources.length - 1)
+      this.onVideoLoaded(video, sourceIndex)
     } else {
-      video.addEventListener('canplaythrough', this.onVideoLoaded.bind(this, video, this.sources.length - 1), {
+      video.addEventListener('canplaythrough', this.onVideoLoaded.bind(this, video, sourceIndex), {
         once: true,
       })
-    }
-
-    // if duration is not available, should mean our video has not started loading
-    if (isNaN(video.duration)) {
-      video.load()
     }
   }
 
@@ -724,6 +793,7 @@ export class MediaTexture extends Texture {
 
       this.sources[sourceIndex] = {
         source: source,
+        externalSource: null,
         sourceLoaded: true,
         sourceUploaded: false,
         shouldUpdate: true,
@@ -734,6 +804,7 @@ export class MediaTexture extends Texture {
       this.sources = [
         {
           source: source,
+          externalSource: null,
           sourceLoaded: true,
           sourceUploaded: false,
           shouldUpdate: true,
@@ -847,22 +918,15 @@ export class MediaTexture extends Texture {
    * */
   update() {
     this.sources?.forEach((source, sourceIndex) => {
+      if (!source.sourceLoaded) return
+
       const sourceType = this.options.sourcesTypes[sourceIndex]
 
       // since external texture are destroyed as soon as JavaScript returns to the browser
       // we need to update it at every tick, even if it hasn't changed
       // to ensure we're not sending a stale / destroyed texture
       // anyway, external texture are cached so it is fined to call importExternalTexture at each tick
-      if (sourceType === 'externalVideo' && this.isVideoSourceReady(source.source)) {
-        source.shouldUpdate = true
-      }
-
-      // if no videoFrameCallback check if the video is actually really playing
-      if (
-        this.isVideoSource(source.source) &&
-        !this.videoFrameCallbackIds.size &&
-        this.shouldUpdateVideoSource(source.source)
-      ) {
+      if (sourceType === 'externalVideo') {
         source.shouldUpdate = true
       }
 

@@ -6,6 +6,8 @@ import { MeshBaseOptions, MeshBaseRenderParams } from '../meshes/mixins/MeshBase
 import { Texture } from '../textures/Texture';
 /** Base parameters used to create a {@link ShaderPass}. */
 export interface ShaderPassBaseParams {
+    /** {@link core/textures/Texture.TextureBaseParams | Texture name} to use for the {@link ShaderPass.renderTexture | ShaderPass renderTexture}. Default to `'renderTexture'`. */
+    renderTextureName?: string;
     /** Whether the result of this {@link ShaderPass} should be copied to the {@link ShaderPass#renderTexture | renderTexture} after each render. Default to false. */
     copyOutputToRenderTexture?: boolean;
     /** Whether this {@link ShaderPass} should be rendered to the main buffer using the {@link Renderer#renderPass | renderer renderPass} before drawing the other objects to the main buffer. Useful for "blit" passes using the content of an {@link ShaderPass#inputTarget | inputTarget}. */
@@ -51,6 +53,8 @@ export interface ShaderPassOptions extends MeshBaseOptions, ShaderPassBaseParams
 export declare class ShaderPass extends FullscreenPlane {
     /** Optional input {@link RenderTarget} to assign to the {@link ShaderPass}. Used to automatically copy the content of the given {@link RenderTarget} texture into the {@link ShaderPass#renderTexture | ShaderPass renderTexture}. */
     inputTarget: RenderTarget | undefined;
+    /** The {@link Texture} that contains the input content to be used by the {@link ShaderPass}. Can also contain the ouputted content if {@link ShaderPassOptions#copyOutputToRenderTexture | copyOutputToRenderTexture} is set to true. */
+    renderTexture: Texture;
     /** Options used to create this {@link ShaderPass} */
     options: ShaderPassOptions;
     /**
@@ -65,11 +69,6 @@ export declare class ShaderPass extends FullscreenPlane {
      * @returns - cleaned parameters
      */
     cleanupRenderMaterialParameters(parameters: ShaderPassParams): MeshBaseRenderParams;
-    /**
-     * Get our main {@link Texture} that contains the input content to be used by the {@link ShaderPass}. Can also contain the ouputted content if {@link ShaderPassOptions#copyOutputToRenderTexture | copyOutputToRenderTexture} is set to true.
-     * @readonly
-     */
-    get renderTexture(): Texture | undefined;
     /**
      * Assign or remove an input {@link RenderTarget} to this {@link ShaderPass}, which can be different from what has just been drawn to the {@link core/renderers/GPURenderer.GPURenderer#context | context} current texture.
      *

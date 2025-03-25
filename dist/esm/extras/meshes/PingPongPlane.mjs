@@ -5,8 +5,8 @@ import { FullscreenPlane } from '../../core/meshes/FullscreenPlane.mjs';
 class PingPongPlane extends FullscreenPlane {
   /**
    * PingPongPlane constructor
-   * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link PingPongPlane}
-   * @param parameters - {@link MeshBaseRenderParams | parameters} use to create this {@link PingPongPlane}
+   * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link PingPongPlane}.
+   * @param parameters - {@link PingPongPlaneParams | parameters} use to create this {@link PingPongPlane}.
    */
   constructor(renderer, parameters = {}) {
     renderer = isRenderer(renderer, parameters.label ? parameters.label + " PingPongPlane" : "PingPongPlane");
@@ -25,23 +25,16 @@ class PingPongPlane extends FullscreenPlane {
     parameters.label = parameters.label ?? "PingPongPlane " + renderer.pingPongPlanes?.length;
     super(renderer, parameters);
     this.type = "PingPongPlane";
-    this.createTexture({
+    this.renderTexture = this.createTexture({
       label: parameters.label ? `${parameters.label} render texture` : "PingPongPlane render texture",
-      name: "renderTexture",
+      name: parameters.renderTextureName ?? "renderTexture",
       ...parameters.targets && parameters.targets.length && { format: parameters.targets[0].format },
       usage: ["copyDst", "textureBinding"]
     });
   }
   /**
-   * Get our main {@link Texture}, the one that contains our ping pong content
-   * @readonly
-   */
-  get renderTexture() {
-    return this.textures.find((texture) => texture.options.name === "renderTexture");
-  }
-  /**
    * Add the {@link PingPongPlane} to the {@link core/scenes/Scene.Scene | Scene} and optionally to the renderer.
-   * @param addToRenderer - whether to add this {@link PingPongPlane} to the {@link Renderer#pingPongPlanes | Renderer pingPongPlanes array}
+   * @param addToRenderer - Whether to add this {@link PingPongPlane} to the {@link Renderer#pingPongPlanes | Renderer pingPongPlanes array}.
    */
   addToScene(addToRenderer = false) {
     if (addToRenderer) {
@@ -53,7 +46,7 @@ class PingPongPlane extends FullscreenPlane {
   }
   /**
    * Remove the {@link PingPongPlane} from the {@link core/scenes/Scene.Scene | Scene} and optionally from the renderer as well.
-   * @param removeFromRenderer - whether to remove this {@link PingPongPlane} from the {@link Renderer#pingPongPlanes | Renderer pingPongPlanes array}
+   * @param removeFromRenderer - Whether to remove this {@link PingPongPlane} from the {@link Renderer#pingPongPlanes | Renderer pingPongPlanes array}.
    */
   removeFromScene(removeFromRenderer = false) {
     if (this.outputTarget) {

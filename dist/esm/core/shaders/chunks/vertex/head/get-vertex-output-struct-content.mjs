@@ -21,11 +21,11 @@ const getVertexOutputStructContent = ({
   }
   const structAttributes = attributes.map((attribute, index) => {
     return `
-  @location(${index}) ${attribute.name}: ${attribute.type},`;
+  @location(${index}) ${attribute.type === "u32" || attribute.type === "i32" ? "@interpolate(flat) " : " "}${attribute.name}: ${attribute.type},`;
   }).join("");
   const additionalVaryingsOutput = additionalVaryings.map((attribute, index) => {
     return `
-  @location(${attributes.length + 3 + index}) ${attribute.name}: ${attribute.type},`;
+  @location(${attributes.length + 3 + index}) ${attribute.type === "u32" || attribute.type === "i32" ? "@interpolate(flat) " : " "}${attribute.name}: ${attribute.type},`;
   }).join("");
   return `
   @builtin(position) position: vec4f,

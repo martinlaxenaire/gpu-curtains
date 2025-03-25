@@ -359,6 +359,14 @@ export class Texture {
       return
     }
 
+    this.setSize(size)
+  }
+
+  /**
+   * Set our {@link Texture} {@link Texture.size | size}, recreate it/copy it again and tell the {@link core/bindGroups/TextureBindGroup.TextureBindGroup | texture bind group} to update.
+   * @param size - the new {@link TextureSize | size} to set.
+   */
+  setSize(size: TextureSize) {
     this.size = size
     this.createTexture()
   }

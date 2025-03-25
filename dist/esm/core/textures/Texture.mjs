@@ -226,6 +226,13 @@ class Texture {
     if (size.width === this.size.width && size.height === this.size.height && size.depth === this.size.depth) {
       return;
     }
+    this.setSize(size);
+  }
+  /**
+   * Set our {@link Texture} {@link Texture.size | size}, recreate it/copy it again and tell the {@link core/bindGroups/TextureBindGroup.TextureBindGroup | texture bind group} to update.
+   * @param size - the new {@link TextureSize | size} to set.
+   */
+  setSize(size) {
     this.size = size;
     this.createTexture();
   }

@@ -162,18 +162,22 @@ export class PipelineEntry {
   }
 
   /**
-   * Create the {@link PipelineEntry} descriptor
+   * Create the {@link PipelineEntry} descriptor.
    */
   createPipelineDescriptor() {
     /* will be overriden */
   }
 
   /**
-   * Flush a {@link PipelineEntry}, i.e. reset its {@link bindGroups | bind groups}, {@link layout} and descriptor and recompile the {@link pipeline}
-   * Used when one of the bind group or rendering property has changed
-   * @param newBindGroups - new {@link bindGroups | bind groups} in case they have changed
+   * Flush a {@link PipelineEntry}, i.e. reset its {@link bindGroups | bind groups}, {@link layout} and descriptor and recompile the {@link pipeline}.
+   * Used when one of the bind group or rendering property has changed.
+   * @param newBindGroups - new {@link bindGroups | bind groups} in case they have changed.
+   * @param cacheKey - new {@link core/materials/Material.Material#cacheKey | Material cacheKey} in case it has changed.
    */
-  flushPipelineEntry(newBindGroups: AllowedBindGroups[] = []) {
+  flushPipelineEntry(newBindGroups: AllowedBindGroups[] = [], cacheKey = '') {
+    this.options.bindGroups = newBindGroups
+    this.options.cacheKey = cacheKey
+
     this.status.compiling = false
     this.status.compiled = false
     this.status.error = null

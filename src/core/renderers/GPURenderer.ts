@@ -932,17 +932,12 @@ export class GPURenderer {
 
   /**
    * Import a {@link GPUExternalTexture}.
-   * @param video - {@link HTMLVideoElement} source.
+   * @param source - {@link HTMLVideoElement} or {@link VideoFrame} source.
    * @param label - Optional label of the texture.
    * @returns - {@link GPUExternalTexture}.
    */
-  importExternalTexture(video: HTMLVideoElement, label = ''): GPUExternalTexture {
-    // TODO WebCodecs may be the way to go when time comes!
-    // https://developer.chrome.com/blog/new-in-webgpu-113/#use-webcodecs-videoframe-source-in-importexternaltexture
-    // see onVideoFrameCallback method in MediaTexture class
-    // const videoFrame = new VideoFrame(video)
-    // return this.deviceManager.device?.importExternalTexture({ source: videoFrame })
-    return this.deviceManager.device?.importExternalTexture({ label, source: video })
+  importExternalTexture(source: HTMLVideoElement | VideoFrame, label = ''): GPUExternalTexture {
+    return this.deviceManager.device?.importExternalTexture({ label, source })
   }
 
   /**
@@ -952,6 +947,14 @@ export class GPURenderer {
    * @param commandEncoder - {@link GPUCommandEncoder} to use for copy operation.
    */
   copyGPUTextureToTexture(gpuTexture: GPUTexture, texture: Texture, commandEncoder: GPUCommandEncoder) {
+    if (
+      gpuTexture.width !== texture.texture.width ||
+      gpuTexture.height !== texture.texture.height ||
+      gpuTexture.depthOrArrayLayers !== texture.texture.depthOrArrayLayers
+    ) {
+      return
+    }
+
     commandEncoder.copyTextureToTexture(
       {
         texture: gpuTexture,
@@ -968,12 +971,30 @@ export class GPURenderer {
   }
 
   /**
+   * Copy a {@link Texture} to a {@link Texture} using a {@link GPUCommandEncoder}. Automatically generate mips after copy if the destination {@link Texture} needs it.
+   * @param texture1 - {@link Texture} source to copy from.
+   * @param texture2 - {@link Texture} destination to copy onto.
+   * @param commandEncoder - {@link GPUCommandEncoder} to use for copy operation.
+   */
+  copyTextureToTexture(texture1: Texture, texture2: Texture, commandEncoder: GPUCommandEncoder) {
+    this.copyGPUTextureToTexture(texture1.texture, texture2, commandEncoder)
+  }
+
+  /**
    * Copy a {@link Texture} to a {@link GPUTexture} using a {@link GPUCommandEncoder}.
    * @param texture - {@link Texture} source to copy from.
    * @param gpuTexture - {@link GPUTexture} destination to copy onto.
    * @param commandEncoder - {@link GPUCommandEncoder} to use for copy operation.
    */
   copyTextureToGPUTexture(texture: Texture, gpuTexture: GPUTexture, commandEncoder: GPUCommandEncoder) {
+    if (
+      gpuTexture.width !== texture.texture.width ||
+      gpuTexture.height !== texture.texture.height ||
+      gpuTexture.depthOrArrayLayers !== texture.texture.depthOrArrayLayers
+    ) {
+      return
+    }
+
     commandEncoder.copyTextureToTexture(
       {
         texture: texture.texture,
@@ -1244,6 +1265,12 @@ export class GPURenderer {
    */
   onAfterCommandEncoder() {
     if (!this.ready) return
+
+    this.textures.forEach((texture) => {
+      if (texture instanceof MediaTexture) {
+        texture.closeVideoFrame()
+      }
+    })
 
     this.onAfterCommandEncoderSubmission.execute()
   }

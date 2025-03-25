@@ -118,9 +118,6 @@ window.addEventListener('load', async () => {
     canvas.width = htmlPlaneWidth * canvasResolution
     canvas.height = htmlPlaneHeight * canvasResolution
 
-    context.width = htmlPlaneWidth
-    context.height = htmlPlaneHeight
-
     context.scale(canvasResolution, canvasResolution)
 
     const textStyle = window.getComputedStyle(htmlPlane.querySelector('h1'))
