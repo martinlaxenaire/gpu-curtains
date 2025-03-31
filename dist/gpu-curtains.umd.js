@@ -1589,7 +1589,7 @@
       this.applyLookAt(target, this.actualPosition);
     }
     /**
-     * Apply a look at rotation based on a target, a position and our {link up} vectors.
+     * Apply a look at rotation based on a target, a position and our {@link up} vectors.
      * @param target - {@link Vec3} target to look at.
      * @param position - {@link Vec3} position from which to look at.
      */
@@ -6940,10 +6940,10 @@
     throw TypeError(msg);
   };
   var __accessCheck$o = (obj, member, msg) => member.has(obj) || __typeError$o("Cannot " + msg);
-  var __privateGet$m = (obj, member, getter) => (__accessCheck$o(obj, member, "read from private field"), member.get(obj));
+  var __privateGet$m = (obj, member, getter) => (__accessCheck$o(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
   var __privateAdd$o = (obj, member, value) => member.has(obj) ? __typeError$o("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   var __privateSet$m = (obj, member, value, setter) => (__accessCheck$o(obj, member, "write to private field"), member.set(obj, value), value);
-  var _autoRender$2;
+  var _autoRender$2, _active;
   let computePassIndex = 0;
   class ComputePass {
     /**
@@ -6957,6 +6957,8 @@
        * @private
        */
       __privateAdd$o(this, _autoRender$2, true);
+      /** Flag indicating whether this {@link ComputePass} should run or not, much like the {@link core/meshes/Mesh.Mesh#visible | Mesh visible} flag. */
+      __privateAdd$o(this, _active, true);
       // callbacks / events
       /** function assigned to the {@link onReady} callback. */
       this._onReadyCallback = () => {
@@ -6991,6 +6993,7 @@
         samplers,
         textures,
         autoRender,
+        active,
         useAsyncPipeline,
         texturesOptions,
         dispatchSize
@@ -6999,6 +7002,7 @@
         label,
         shaders,
         ...autoRender !== void 0 && { autoRender },
+        ...active !== void 0 && { active },
         ...renderOrder !== void 0 && { renderOrder },
         ...dispatchSize !== void 0 && { dispatchSize },
         useAsyncPipeline: useAsyncPipeline === void 0 ? true : useAsyncPipeline,
@@ -7008,6 +7012,9 @@
       this.renderOrder = renderOrder ?? 0;
       if (autoRender !== void 0) {
         __privateSet$m(this, _autoRender$2, autoRender);
+      }
+      if (active !== void 0) {
+        __privateSet$m(this, _active, active);
       }
       this.userData = {};
       this.ready = false;
@@ -7026,7 +7033,7 @@
       this.addToScene(true);
     }
     /**
-     * Get or set whether the compute pass is ready to render (the material has been successfully compiled)
+     * Get or set whether the compute pass is ready to render (the material has been successfully compiled).
      * @readonly
      */
     get ready() {
@@ -7040,7 +7047,7 @@
     }
     /**
      * Add our {@link ComputePass} to the scene and optionally to the renderer.
-     * @param addToRenderer - whether to add this {@link ComputePass} to the {@link Renderer#computePasses | Renderer computePasses array}
+     * @param addToRenderer - Whether to add this {@link ComputePass} to the {@link Renderer#computePasses | Renderer computePasses array}.
      */
     addToScene(addToRenderer = false) {
       if (addToRenderer) {
@@ -7074,31 +7081,44 @@
       this.addToScene(true);
     }
     /**
-     * Create the compute pass material
-     * @param computeParameters - {@link ComputeMaterial} parameters
+     * Create the compute pass material.
+     * @param computeParameters - {@link ComputeMaterial} parameters.
      */
     setMaterial(computeParameters) {
       this.useMaterial(new ComputeMaterial(this.renderer, computeParameters));
     }
     /**
-     * Set or update the {@link ComputePass} {@link ComputeMaterial}
-     * @param material - new {@link ComputeMaterial} to use
+     * Set or update the {@link ComputePass} {@link ComputeMaterial}.
+     * @param material - New {@link ComputeMaterial} to use.
      */
     useMaterial(material) {
       this.material = material;
     }
     /**
      * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been lost to prepare everything for restoration.
-     * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to render
+     * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to render.
      */
     loseContext() {
       this.material.loseContext();
     }
     /**
-     * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored
+     * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored.
      */
     restoreContext() {
       this.material.restoreContext();
+    }
+    /**
+     * Get the active property value.
+     */
+    get active() {
+      return __privateGet$m(this, _active);
+    }
+    /**
+     * Set the active property value.
+     * @param value - New active value.
+     */
+    set active(value) {
+      __privateSet$m(this, _active, value);
     }
     /* TEXTURES */
     /**
@@ -7111,7 +7131,7 @@
     /**
      * Create a new {@link MediaTexture}.
      * @param options - {@link MediaTextureParams | MediaTexture parameters}.
-     * @returns - newly created {@link MediaTexture}.
+     * @returns - Newly created {@link MediaTexture}.
      */
     createMediaTexture(options) {
       if (!options.name) {
@@ -7166,8 +7186,9 @@
     }
     /** EVENTS **/
     /**
-     * Callback to run when the {@link ComputePass} is ready
-     * @param callback - callback to run when {@link ComputePass} is ready
+     * Callback to run when the {@link ComputePass} is ready.
+     * @param callback - Callback to run when {@link ComputePass} is ready.
+     * @returns - Our {@link ComputePass}.
      */
     onReady(callback) {
       if (callback) {
@@ -7176,8 +7197,9 @@
       return this;
     }
     /**
-     * Callback to run before the {@link ComputePass} is rendered
-     * @param callback - callback to run just before {@link ComputePass} will be rendered
+     * Callback to run before the {@link ComputePass} is rendered.
+     * @param callback - Callback to run just before {@link ComputePass} will be rendered. The callback won't be called if the {@link Renderer} is not ready or the {@link ComputePass} itself is neither {@link ready} nor {@link active}.
+     * @returns - Our {@link ComputePass}.
      */
     onBeforeRender(callback) {
       if (callback) {
@@ -7186,8 +7208,9 @@
       return this;
     }
     /**
-     * Callback to run when the {@link ComputePass} is rendered
-     * @param callback - callback to run when {@link ComputePass} is rendered
+     * Callback to run when the {@link ComputePass} is rendered.
+     * @param callback - Callback to run when {@link ComputePass} is rendered. The callback won't be called if the {@link Renderer} is not ready or the {@link ComputePass} itself is neither {@link ready} nor {@link active}.
+     * @returns - Our {@link ComputePass}.
      */
     onRender(callback) {
       if (callback) {
@@ -7196,8 +7219,9 @@
       return this;
     }
     /**
-     * Callback to run after the {@link ComputePass} has been rendered
-     * @param callback - callback to run just after {@link ComputePass} has been rendered
+     * Callback to run after the {@link ComputePass} has been rendered.
+     * @param callback - Callback to run just after {@link ComputePass} has been rendered. The callback won't be called if the {@link Renderer} is not ready or the {@link ComputePass} itself is neither {@link ready} nor {@link active}.
+     * @returns - Our {@link ComputePass}.
      */
     onAfterRender(callback) {
       if (callback) {
@@ -7206,16 +7230,18 @@
       return this;
     }
     /**
-     * Callback used to run a custom render function instead of the default one.
+     * Callback used to run a custom render function instead of the default one. This won't be called if the {@link Renderer} is not ready or the {@link ComputePass} itself is neither {@link ready} nor {@link active}.
      * @param callback - Your custom render function where you will have to set all the {@link core/bindGroups/BindGroup.BindGroup | bind groups} and dispatch the workgroups by yourself.
+     * @returns - Our {@link ComputePass}.
      */
     useCustomRender(callback) {
       this.material.useCustomRender(callback);
       return this;
     }
     /**
-     * Callback to run after the {@link core/renderers/GPURenderer.GPURenderer | renderer} has been resized
-     * @param callback - callback to run just after {@link core/renderers/GPURenderer.GPURenderer | renderer} has been resized
+     * Callback to run after the {@link core/renderers/GPURenderer.GPURenderer | renderer} has been resized.
+     * @param callback - Callback to run just after {@link core/renderers/GPURenderer.GPURenderer | renderer} has been resized.
+     * @returns - Our {@link ComputePass}.
      */
     onAfterResize(callback) {
       if (callback) {
@@ -7224,20 +7250,22 @@
       return this;
     }
     /**
-     * Called before rendering the ComputePass
-     * Checks if the material is ready and eventually update its struct
+     * Called before rendering the {@link ComputePass}.
+     * Checks if the material is ready and eventually update its bindings.
      */
     onBeforeRenderPass() {
       if (!this.renderer.ready) return;
-      this._onBeforeRenderCallback && this._onBeforeRenderCallback();
+      if (this.active) {
+        this._onBeforeRenderCallback && this._onBeforeRenderCallback();
+      }
       this.material.onBeforeRender();
       if (this.material && this.material.ready && !this.ready) {
         this.ready = true;
       }
     }
     /**
-     * Render our {@link ComputeMaterial}
-     * @param pass - current compute pass encoder
+     * Render our {@link ComputeMaterial}.
+     * @param pass - Current compute pass encoder.
      */
     onRenderPass(pass) {
       if (!this.material.ready) return;
@@ -7245,37 +7273,37 @@
       this.material.render(pass);
     }
     /**
-     * Called after having rendered the ComputePass
+     * Called after having rendered the {@link ComputePass}.
      */
     onAfterRenderPass() {
       this._onAfterRenderCallback && this._onAfterRenderCallback();
     }
     /**
-     * Render our compute pass
-     * Basically just check if our {@link core/renderers/GPURenderer.GPURenderer | renderer} is ready, and then render our {@link ComputeMaterial}
-     * @param pass
+     * Render our compute pass.
+     * Basically just check if our {@link core/renderers/GPURenderer.GPURenderer | renderer} is ready, and then render our {@link ComputeMaterial}.
+     * @param pass - Current compute pass encoder.
      */
     render(pass) {
       this.onBeforeRenderPass();
-      if (!this.renderer.ready) return;
+      if (!this.renderer.ready || !this.active) return;
       !this.renderer.production && pass.pushDebugGroup(this.options.label);
       this.onRenderPass(pass);
       !this.renderer.production && pass.popDebugGroup();
       this.onAfterRenderPass();
     }
     /**
-     * Copy the result of our read/write GPUBuffer into our result binding array
-     * @param commandEncoder - current GPU command encoder
+     * Copy the result of our read/write GPUBuffer into our result binding array.
+     * @param commandEncoder - Current GPU command encoder.
      */
     copyBufferToResult(commandEncoder) {
       this.material?.copyBufferToResult(commandEncoder);
     }
     /**
-     * Get the {@link core/bindings/WritableBufferBinding.WritableBufferBinding#resultBuffer | result GPU buffer} content by {@link core/bindings/WritableBufferBinding.WritableBufferBinding | binding} and {@link core/bindings/bufferElements/BufferElement.BufferElement | buffer element} names
-     * @param parameters - parameters used to get the result
-     * @param parameters.bindingName - {@link core/bindings/WritableBufferBinding.WritableBufferBinding#name | binding name} from which to get the result
-     * @param parameters.bufferElementName - optional {@link core/bindings/bufferElements/BufferElement.BufferElement | buffer element} (i.e. struct member) name if the result needs to be restrained to only one element
-     * @returns - the mapped content of the {@link GPUBuffer} as a {@link Float32Array}
+     * Get the {@link core/bindings/WritableBufferBinding.WritableBufferBinding#resultBuffer | result GPU buffer} content by {@link core/bindings/WritableBufferBinding.WritableBufferBinding | binding} and {@link core/bindings/bufferElements/BufferElement.BufferElement | buffer element} names.
+     * @param parameters - Parameters used to get the result
+     * @param parameters.bindingName - {@link core/bindings/WritableBufferBinding.WritableBufferBinding#name | binding name} from which to get the result.
+     * @param parameters.bufferElementName - Optional {@link core/bindings/bufferElements/BufferElement.BufferElement | buffer element} (i.e. struct member) name if the result needs to be restrained to only one element.
+     * @returns - The mapped content of the {@link GPUBuffer} as a {@link Float32Array}.
      */
     async getComputeResult({
       bindingName,
@@ -7284,20 +7312,21 @@
       return await this.material?.getComputeResult({ bindingName, bufferElementName });
     }
     /**
-     * Remove the ComputePass from the scene and destroy it
+     * Remove the {@link ComputePass} from the {@link core/scenes/Scene.Scene | Scene} and destroy it.
      */
     remove() {
       this.removeFromScene(true);
       this.destroy();
     }
     /**
-     * Destroy the ComputePass
+     * Destroy the {@link ComputePass}.
      */
     destroy() {
       this.material?.destroy();
     }
   }
   _autoRender$2 = new WeakMap();
+  _active = new WeakMap();
 
   const points = [new Vec3(), new Vec3(), new Vec3(), new Vec3(), new Vec3(), new Vec3(), new Vec3(), new Vec3()];
   class Box3 {
@@ -10647,8 +10676,8 @@ ${geometry.wgslStructFragment}`
       /* EVENTS */
       /**
        * Callback to execute when a Mesh is ready - i.e. its {@link material} and {@link geometry} are ready.
-       * @param callback - callback to run when {@link MeshBase} is ready
-       * @returns - our Mesh
+       * @param callback - Callback to run when {@link MeshBase} is ready.
+       * @returns - Our Mesh.
        */
       onReady(callback) {
         if (callback) {
@@ -10658,8 +10687,8 @@ ${geometry.wgslStructFragment}`
       }
       /**
        * Callback to execute before updating the {@link core/scenes/Scene.Scene | Scene} matrix stack. This means it is called early and allows to update transformations values before actually setting the Mesh matrices (if any). This also means it won't be called if the Mesh has not been added to the {@link core/scenes/Scene.Scene | Scene}. The callback won't be called if the {@link Renderer} is not ready or the Mesh itself is neither {@link ready} nor {@link visible}.
-       * @param callback - callback to run just before updating the {@link core/scenes/Scene.Scene | Scene} matrix stack.
-       * @returns - our Mesh
+       * @param callback - Callback to run just before updating the {@link core/scenes/Scene.Scene | Scene} matrix stack.
+       * @returns - Our Mesh
        */
       onBeforeRender(callback) {
         if (callback) {
@@ -10669,8 +10698,8 @@ ${geometry.wgslStructFragment}`
       }
       /**
        * Callback to execute right before actually rendering the Mesh. Useful to update uniforms for example. The callback won't be called if the {@link Renderer} is not ready or the Mesh itself is neither {@link ready} nor {@link visible}.
-       * @param callback - callback to run just before rendering the {@link MeshBase}
-       * @returns - our Mesh
+       * @param callback - Callback to run just before rendering the {@link MeshBase}.
+       * @returns - Our Mesh.
        */
       onRender(callback) {
         if (callback) {
@@ -10680,8 +10709,8 @@ ${geometry.wgslStructFragment}`
       }
       /**
        * Callback to execute just after a Mesh has been rendered. The callback won't be called if the {@link Renderer} is not ready or the Mesh itself is neither {@link ready} nor {@link visible}.
-       * @param callback - callback to run just after {@link MeshBase} has been rendered
-       * @returns - our Mesh
+       * @param callback - Callback to run just after {@link MeshBase} has been rendered.
+       * @returns - Our Mesh.
        */
       onAfterRender(callback) {
         if (callback) {
@@ -10691,8 +10720,8 @@ ${geometry.wgslStructFragment}`
       }
       /**
        * Callback to execute just after a Mesh has been resized.
-       * @param callback - callback to run just after {@link MeshBase} has been resized
-       * @returns - our Mesh
+       * @param callback - Callback to run just after {@link MeshBase} has been resized.
+       * @returns - Our Mesh.
        */
       onAfterResize(callback) {
         if (callback) {
@@ -10709,9 +10738,9 @@ ${geometry.wgslStructFragment}`
         this._onBeforeRenderCallback && this._onBeforeRenderCallback();
       }
       /**
-       * Called before rendering the Mesh
-       * Set the geometry if needed (create buffers and add attributes to the {@link RenderMaterial})
-       * Then executes {@link RenderMaterial#onBeforeRender}: create its bind groups and pipeline if needed and eventually update its bindings
+       * Called before rendering the Mesh.
+       * Set the geometry if needed (create buffers and add attributes to the {@link RenderMaterial}).
+       * Then executes {@link RenderMaterial#onBeforeRender}: create its bind groups and pipeline if needed and eventually update its bindings.
        */
       onBeforeRenderPass() {
         if (!this.renderer.ready) return;
@@ -10723,7 +10752,7 @@ ${geometry.wgslStructFragment}`
         this.ready = this.material && this.material.ready && this.geometry && this.geometry.ready;
       }
       /**
-       * Render our {@link MeshBase} if the {@link RenderMaterial} is ready
+       * Render our {@link MeshBase} if the {@link RenderMaterial} is ready.
        * @param pass - Current render pass encoder.
        */
       onRenderPass(pass) {
@@ -10739,19 +10768,19 @@ ${geometry.wgslStructFragment}`
         this.geometry.render(pass);
       }
       /**
-       * Called after having rendered the Mesh
+       * Called after having rendered the Mesh.
        */
       onAfterRenderPass() {
         this._onAfterRenderCallback && this._onAfterRenderCallback();
       }
       /**
-       * Render our Mesh
-       * - Execute {@link onBeforeRenderPass}
-       * - Stop here if {@link Renderer} is not ready or Mesh is not {@link visible}
-       * - Execute super render call if it exists
-       * - {@link onRenderPass | render} our {@link material} and {@link geometry}
-       * - Execute {@link onAfterRenderPass}
-       * @param pass - current render pass encoder
+       * Render our Mesh:
+       * - Execute {@link onBeforeRenderPass}.
+       * - Stop here if {@link Renderer} is not ready or Mesh is not {@link visible}.
+       * - Execute super render call if it exists.
+       * - {@link onRenderPass | render} our {@link material} and {@link geometry}.
+       * - Execute {@link onAfterRenderPass}.
+       * @param pass - Current render pass encoder.
        */
       render(pass) {
         this.onBeforeRenderPass();
@@ -10763,7 +10792,7 @@ ${geometry.wgslStructFragment}`
       }
       /* DESTROY */
       /**
-       * Remove the Mesh from the {@link core/scenes/Scene.Scene | Scene} and destroy it
+       * Remove the Mesh from the {@link core/scenes/Scene.Scene | Scene} and destroy it.
        */
       remove() {
         this.removeFromScene(true);
@@ -10778,7 +10807,7 @@ ${geometry.wgslStructFragment}`
         }
       }
       /**
-       * Destroy the Mesh
+       * Destroy the Mesh.
        */
       destroy() {
         if (super.destroy) {
@@ -11562,10 +11591,647 @@ fn getPCFBaseShadowContribution(
     throw TypeError(msg);
   };
   var __accessCheck$j = (obj, member, msg) => member.has(obj) || __typeError$j("Cannot " + msg);
-  var __privateGet$h = (obj, member, getter) => (__accessCheck$j(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
   var __privateAdd$j = (obj, member, value) => member.has(obj) ? __typeError$j("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  var __privateSet$h = (obj, member, value, setter) => (__accessCheck$j(obj, member, "write to private field"), member.set(obj, value), value);
   var __privateMethod$a = (obj, member, method) => (__accessCheck$j(obj, member, "access private method"), method);
+  var _IndirectBuffer_instances, createIndirectBuffer_fn, addGeometryToIndirectMappedBuffer_fn;
+  const indirectBufferEntrySize = 5;
+  class IndirectBuffer {
+    /**
+     * IndirectBuffer constructor.
+     * @param renderer - {@link Renderer} or {@link GPUCurtains} class object used to create this {@link IndirectBuffer}.
+     * @param parameters - {@link IndirectBufferParams | parameters} used to create this {@link IndirectBuffer}.
+     */
+    constructor(renderer, { label = "Indirect buffer", geometries = [], minEntrySize = indirectBufferEntrySize } = {}) {
+      __privateAdd$j(this, _IndirectBuffer_instances);
+      this.type = "IndirectBuffer";
+      this.setRenderer(renderer);
+      this.uuid = generateUUID();
+      this.options = {
+        label,
+        geometries,
+        minEntrySize
+      };
+      this.geometries = /* @__PURE__ */ new Map();
+      this.buffer = null;
+      this.addGeometries(geometries);
+      this.renderer.indirectBuffers.set(this.uuid, this);
+    }
+    /**
+     * Set or reset this {@link IndirectBuffer} {@link IndirectBuffer.renderer | renderer}.
+     * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
+     */
+    setRenderer(renderer) {
+      renderer = isRenderer(renderer, this.type);
+      this.renderer = renderer;
+    }
+    /**
+     * Get the number of unique {@link Geometry} and {@link IndexedGeometry} added to this {@link IndirectBuffer}.
+     * @returns - Number of unique {@link Geometry} and {@link IndexedGeometry} added to this {@link IndirectBuffer}.
+     * @readonly
+     */
+    get size() {
+      return this.geometries.size;
+    }
+    /**
+     * Add multiple {@link Geometry} or {@link IndexedGeometry} to this {@link IndirectBuffer}.
+     * @param geometries - Array of {@link Geometry} or {@link IndexedGeometry} to add to this {@link IndirectBuffer}.
+     */
+    addGeometries(geometries = []) {
+      geometries.forEach((geometry) => this.addGeometry(geometry));
+    }
+    /**
+     * Add a {@link Geometry} or {@link IndexedGeometry} to this {@link IndirectBuffer}.
+     * @param geometry - A {@link Geometry} or {@link IndexedGeometry} to add to this {@link IndirectBuffer}.
+     */
+    addGeometry(geometry) {
+      this.geometries.set(geometry.uuid, geometry);
+    }
+    /**
+     * Get the byte offset in the {@link buffer} at a given index.
+     * @param index - Index to get the byte offset from.
+     * @returns - Byte offset in the {@link buffer} at a given index.
+     */
+    getByteOffsetAtIndex(index = 0) {
+      return index * this.options.minEntrySize * Uint32Array.BYTES_PER_ELEMENT;
+    }
+    /**
+     * Create the {@link buffer} as soon as the {@link Renderer#device | device} is ready.
+     */
+    create() {
+      if (this.renderer.ready) {
+        __privateMethod$a(this, _IndirectBuffer_instances, createIndirectBuffer_fn).call(this);
+      } else {
+        const taskId = this.renderer.onBeforeCommandEncoderCreation.add(
+          () => {
+            if (this.renderer.device) {
+              this.renderer.onBeforeCommandEncoderCreation.remove(taskId);
+              __privateMethod$a(this, _IndirectBuffer_instances, createIndirectBuffer_fn).call(this);
+            }
+          },
+          { once: false }
+        );
+      }
+    }
+    /**
+     * Destroy this {@link IndirectBuffer}. Reset all {@link geometries} {@link Geometry#indirectDraw | indirectDraw} properties and destroy the {@link Buffer}.
+     */
+    destroy() {
+      this.renderer.removeBuffer(this.buffer);
+      this.renderer.indirectBuffers.delete(this.uuid);
+      this.geometries.forEach((geometry) => geometry.indirectDraw = null);
+      this.buffer?.destroy();
+      this.buffer = null;
+      this.geometries = null;
+    }
+  }
+  _IndirectBuffer_instances = new WeakSet();
+  /**
+   * Create the {@link buffer} (or destroy it if it already exists) with the right size, create its {@link GPUBuffer} in a mapped state, add all {@link geometries} attributes to the mapped buffer and tell the {@link geometries} to use this {@link IndirectBuffer}.
+   * @private
+   */
+  createIndirectBuffer_fn = function() {
+    const size = this.getByteOffsetAtIndex(this.geometries.size);
+    if (this.buffer) {
+      this.buffer.destroy();
+      this.buffer.options.size = size;
+    } else {
+      this.buffer = new Buffer({
+        label: this.options.label,
+        size,
+        usage: ["copyDst", "indirect", "storage"],
+        mappedAtCreation: true
+      });
+    }
+    this.buffer.consumers.add(this.uuid);
+    this.buffer.createBuffer(this.renderer);
+    const indirectMappedBuffer = new Uint32Array(this.buffer.GPUBuffer.getMappedRange());
+    let offset = 0;
+    this.geometries.forEach((geometry) => {
+      __privateMethod$a(this, _IndirectBuffer_instances, addGeometryToIndirectMappedBuffer_fn).call(this, geometry, indirectMappedBuffer, offset * this.options.minEntrySize);
+      geometry.useIndirectBuffer({ buffer: this.buffer, offset: this.getByteOffsetAtIndex(offset) });
+      offset++;
+    });
+    this.buffer.GPUBuffer.unmap();
+  };
+  /**
+   * Add a {@link Geometry} or {@link IndexedGeometry} attributes to the {@link buffer} mapped array buffer.
+   * @param geometry - {@link Geometry} or {@link IndexedGeometry} to add the attributes from
+   * @param mappedBuffer - The {@link buffer} mapped array buffer
+   * @param index - Index in the {@link buffer} mapped array buffer at which to add the attributes.
+   * @private
+   */
+  addGeometryToIndirectMappedBuffer_fn = function(geometry, mappedBuffer, index = 0) {
+    if ("indexBuffer" in geometry && geometry.indexBuffer) {
+      mappedBuffer[index] = geometry.indexBuffer.bufferLength;
+      mappedBuffer[index + 1] = geometry.instancesCount;
+      mappedBuffer[index + 2] = 0;
+      mappedBuffer[index + 3] = 0;
+      mappedBuffer[index + 4] = 0;
+    } else {
+      mappedBuffer[index] = geometry.verticesCount;
+      mappedBuffer[index + 1] = geometry.instancesCount;
+      mappedBuffer[index + 2] = 0;
+      mappedBuffer[index + 3] = 0;
+      mappedBuffer[index + 4] = 0;
+    }
+  };
+
+  var __typeError$i = (msg) => {
+    throw TypeError(msg);
+  };
+  var __accessCheck$i = (obj, member, msg) => member.has(obj) || __typeError$i("Cannot " + msg);
+  var __privateGet$h = (obj, member, getter) => (__accessCheck$i(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$i = (obj, member, value) => member.has(obj) ? __typeError$i("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$h = (obj, member, value, setter) => (__accessCheck$i(obj, member, "write to private field"), member.set(obj, value), value);
+  var __privateMethod$9 = (obj, member, method) => (__accessCheck$i(obj, member, "access private method"), method);
+  var _useProjection, _ready, _RenderBundle_instances, setBinding_fn, patchBindingOffset_fn, onSizeChanged_fn, setDescriptor_fn, encodeRenderCommands_fn, cleanUp_fn;
+  let bundleIndex = 0;
+  class RenderBundle {
+    /**
+     * RenderBundle constructor
+     * @param renderer - {@link Renderer} or {@link GPUCurtains} class object used to create this {@link RenderBundle}.
+     * @param parameters - {@link RenderBundleParams | parameters} use to create this {@link RenderBundle}.
+     */
+    constructor(renderer, {
+      label,
+      renderPass = null,
+      renderOrder = 0,
+      transparent = null,
+      visible = true,
+      size = 0,
+      useBuffer = false,
+      useIndirectDraw = false
+    } = {}) {
+      __privateAdd$i(this, _RenderBundle_instances);
+      /** @ignore */
+      // whether this render bundle should be added to the 'projected' or 'unProjected' Scene stacks.
+      __privateAdd$i(this, _useProjection);
+      /** @ignore */
+      __privateAdd$i(this, _ready);
+      this.type = "RenderBundle";
+      renderer = isRenderer(renderer, this.type);
+      this.uuid = generateUUID();
+      Object.defineProperty(this, "index", { value: bundleIndex++ });
+      this.renderOrder = renderOrder;
+      this.transparent = transparent;
+      this.visible = visible;
+      label = label ?? this.type + this.index;
+      this.options = {
+        label,
+        renderPass,
+        useBuffer,
+        size,
+        useIndirectDraw
+      };
+      this.meshes = /* @__PURE__ */ new Map();
+      this.encoder = null;
+      this.bundle = null;
+      __privateSet$h(this, _ready, false);
+      this.binding = null;
+      this.indirectBuffer = null;
+      this.setRenderer(renderer);
+      if (this.options.useIndirectDraw) {
+        this.indirectBuffer = new IndirectBuffer(this.renderer);
+      }
+      if (this.options.useBuffer) {
+        __privateSet$h(this, _useProjection, true);
+        if (this.options.size !== 0) {
+          __privateMethod$9(this, _RenderBundle_instances, setBinding_fn).call(this);
+        } else {
+          this.options.useBuffer = false;
+          if (!this.renderer.production) {
+            throwWarning(
+              `${this.options.label} (${this.type}): Cannot use a single transformation buffer if the size parameter has not been set upon creation.`
+            );
+          }
+        }
+      }
+    }
+    /**
+     * Set the {@link RenderBundle} {@link RenderBundle.renderer | renderer} and eventually remove/add to the {@link core/scenes/Scene.Scene | Scene}.
+     * @param renderer - new {@link Renderer} to use.
+     */
+    setRenderer(renderer) {
+      if (this.renderer) {
+        this.removeFromScene();
+        this.renderer.renderBundles.delete(this.uuid);
+      }
+      this.renderer = renderer;
+      this.renderer.renderBundles.set(this.uuid, this);
+      if (this.meshes.size >= 1) {
+        this.addToScene();
+      }
+    }
+    /**
+     * Add our {@link RenderBundle} to the {@link core/scenes/Scene.Scene | Scene}.
+     * Once we have at least one mesh in our {@link meshes} Map, we can add the {@link RenderBundle} to the {@link core/scenes/Scene.Scene | Scene} at the right place.
+     */
+    addToScene() {
+      const firstEntry = this.meshes.entries().next();
+      if (firstEntry && firstEntry.value && firstEntry.value.length && firstEntry.value[1]) {
+        const mesh = firstEntry.value[1];
+        const isTransparent = !!mesh.transparent;
+        if (this.transparent === null) {
+          this.transparent = isTransparent;
+        }
+        if (mesh.constructor.name !== "ShaderPass" && mesh.constructor.name !== "PingPongPlane") {
+          const { useProjection } = mesh.material.options.rendering;
+          if (this.useProjection === null) {
+            this.useProjection = useProjection;
+          }
+          const projectionStack = this.renderer.scene.getMeshProjectionStack(mesh);
+          this.renderer.scene.addRenderBundle(this, projectionStack);
+        } else {
+          this.size = 1;
+          mesh.renderOrder = this.renderOrder;
+          this.useProjection = false;
+        }
+      }
+    }
+    /**
+     * Remove our {@link RenderBundle} from the {@link core/scenes/Scene.Scene | Scene}.
+     */
+    removeFromScene() {
+      this.renderer.scene.removeRenderBundle(this);
+    }
+    /**
+     * Get whether our {@link RenderBundle} handles {@link core/renderers/GPURenderer.ProjectedMesh | projected meshes} or not (useful to know in which {@link core/scenes/Scene.Scene | Scene} stack it has been added.
+     * @readonly
+     * @returns - Whether our {@link RenderBundle} handles {@link core/renderers/GPURenderer.ProjectedMesh | projected meshes} or not.
+     */
+    get useProjection() {
+      return __privateGet$h(this, _useProjection);
+    }
+    /**
+     * Set whether our {@link RenderBundle} handles {@link core/renderers/GPURenderer.ProjectedMesh | projected meshes} or not.
+     * @param value - New projection value.
+     */
+    set useProjection(value) {
+      __privateSet$h(this, _useProjection, value);
+    }
+    /**
+     * Set the new {@link RenderBundle} size. Should be used before adding or removing {@link meshes} to the {@link RenderBundle} if the {@link bundle} has already been created (especially if it's using a {@link binding}).
+     * @param value - New size to set.
+     */
+    set size(value) {
+      if (value !== this.options.size) {
+        if (this.ready && !this.renderer.production) {
+          throwWarning(
+            `${this.options.label} (${this.type}): The content of a render bundle is meant to be static. You should not change its size after it has been created.`
+          );
+        }
+        this.ready = false;
+        __privateMethod$9(this, _RenderBundle_instances, onSizeChanged_fn).call(this, value);
+        this.options.size = value;
+      }
+    }
+    /**
+     * Get whether our {@link RenderBundle} is ready.
+     * @readonly
+     * @returns - Whether our {@link RenderBundle} is ready.
+     */
+    get ready() {
+      return this.renderer.ready && __privateGet$h(this, _ready);
+    }
+    /**
+     * Set whether our {@link RenderBundle} is ready and encode it if needed.
+     * @param value - New ready state.
+     */
+    set ready(value) {
+      if (value && !this.ready) {
+        const init = () => {
+          this.size = this.meshes.size;
+          if (this.options.useIndirectDraw) {
+            this.meshes.forEach((mesh) => {
+              this.indirectBuffer.addGeometry(mesh.geometry);
+            });
+            this.indirectBuffer.create();
+          }
+          __privateMethod$9(this, _RenderBundle_instances, encodeRenderCommands_fn).call(this);
+          __privateSet$h(this, _ready, value);
+        };
+        if (this.renderer.device) {
+          init();
+        } else {
+          const taskId = this.renderer.onBeforeCommandEncoderCreation.add(
+            () => {
+              if (this.renderer.device) {
+                this.renderer.onBeforeCommandEncoderCreation.remove(taskId);
+                init();
+              }
+            },
+            { once: false }
+          );
+        }
+      } else if (!value && this.ready) {
+        this.bundle = null;
+        __privateSet$h(this, _ready, value);
+      }
+    }
+    /**
+     * Called by the {@link core/scenes/Scene.Scene | Scene} to eventually add a {@link RenderedMesh | mesh} to this {@link RenderBundle}. Can set the {@link RenderBundleOptions#renderPass | render pass} if needed. If the {@link RenderBundleOptions#renderPass | render pass} is already set and the mesh output {@link RenderPass} does not match, it won't be added.
+     * @param mesh - {@link RenderedMesh | Mesh} to eventually add.
+     * @param outputPass - The mesh output {@link RenderPass}.
+     */
+    addMesh(mesh, outputPass) {
+      if (!this.options.renderPass) {
+        this.options.renderPass = outputPass;
+      } else if (outputPass.uuid !== this.options.renderPass.uuid) {
+        if (!this.renderer.production) {
+          throwWarning(
+            `${this.options.label} (${this.type}): Cannot add Mesh ${mesh.options.label} to this render bundle because the output render passes do not match.`
+          );
+        }
+        mesh.renderBundle = null;
+        return;
+      }
+      if (mesh.options.stencil) {
+        if (!this.renderer.production) {
+          throwWarning(
+            `${this.options.label} (${this.type}): Cannot add Mesh ${mesh.options.label} to this render bundle because stencil operations are not supported by render bundles.`
+          );
+        }
+        mesh.renderBundle = null;
+        return;
+      }
+      if (this.ready && !this.renderer.production) {
+        throwWarning(
+          `${this.options.label} (${this.type}): The content of a render bundle is meant to be static. You should not add meshes to it after it has been created (mesh added: ${mesh.options.label}).`
+        );
+      }
+      this.ready = false;
+      this.meshes.set(mesh.uuid, mesh);
+      if (this.meshes.size === 1) {
+        this.addToScene();
+      }
+    }
+    /**
+     * Remove any {@link RenderedMesh | rendered mesh} from this {@link RenderBundle}.
+     * @param mesh - {@link RenderedMesh | Mesh} to remove.
+     */
+    removeSceneObject(mesh) {
+      if (this.ready && !this.renderer.production) {
+        throwWarning(
+          `${this.options.label} (${this.type}): The content of a render bundle is meant to be static. You should not remove meshes from it after it has been created (mesh removed: ${mesh.options.label}).`
+        );
+      }
+      this.ready = false;
+      this.meshes.delete(mesh.uuid);
+      mesh.setRenderBundle(null, false);
+      if (this.options.useIndirectDraw) {
+        mesh.geometry.indirectDraw = null;
+      }
+    }
+    /**
+     * Remove a {@link SceneStackedMesh | scene stacked mesh} from this {@link RenderBundle}.
+     * @param mesh - {@link SceneStackedMesh | Scene stacked mesh} to remove.
+     * @param keepMesh - Whether to preserve the mesh in order to render it normally again. Default to `true`.
+     */
+    removeMesh(mesh, keepMesh = true) {
+      this.removeSceneObject(mesh);
+      if (keepMesh && mesh.type !== "ShaderPass" && mesh.type !== "PingPongPlane") {
+        this.renderer.scene.addMesh(mesh);
+      }
+      if (this.meshes.size === 0) {
+        this.renderer.scene.removeRenderBundle(this);
+      }
+    }
+    /**
+     * Update the {@link binding} buffer if needed.
+     */
+    updateBinding() {
+      if (this.binding && this.binding.shouldUpdate && this.binding.buffer.GPUBuffer) {
+        this.renderer.queueWriteBuffer(this.binding.buffer.GPUBuffer, 0, this.binding.arrayBuffer);
+        this.binding.shouldUpdate = false;
+      }
+    }
+    /**
+     * If one of the {@link meshes} is using a {@link core/textures/Texture.Texture | Texture} dependent of the {@link renderer}, invalidate the {@link RenderBundle} in order to resize the {@link core/textures/Texture.Texture | Texture}.
+     */
+    resize() {
+      for (const [_uuid, mesh] of this.meshes) {
+        const hasRenderTexture = mesh.textures.find((texture) => !texture.options.fixedSize);
+        if (hasRenderTexture) {
+          this.ready = false;
+          break;
+        }
+      }
+    }
+    /**
+     * Render the {@link RenderBundle}.
+     *
+     * If it is ready, execute each {@link core/meshes/Mesh.Mesh.onBeforeRenderPass | mesh onBeforeRenderPass method}, {@link updateBinding | update the binding} if needed, execute the {@link bundle} and finally execute each {@link core/meshes/Mesh.Mesh.onAfterRenderPass | mesh onAfterRenderPass method}.
+     *
+     * If not, just render its {@link meshes} as usual and check whether they are all ready and if we can therefore encode our {@link RenderBundle}.
+     * @param pass - {@link GPURenderPassEncoder} to use.
+     */
+    render(pass) {
+      if (!this.renderer.ready) return;
+      if (this.ready && this.bundle && this.visible) {
+        this.meshes.forEach((mesh) => {
+          mesh.onBeforeRenderPass();
+        });
+        this.updateBinding();
+        this.renderer.pipelineManager.resetCurrentPipeline();
+        if (!this.renderer.production) {
+          pass.pushDebugGroup(`${this.options.label}: execute bundle`);
+        }
+        pass.executeBundles([this.bundle]);
+        if (!this.renderer.production) {
+          pass.popDebugGroup();
+        }
+        this.renderer.pipelineManager.resetCurrentPipeline();
+        this.meshes.forEach((mesh) => {
+          mesh.onAfterRenderPass();
+        });
+      }
+      if (!this.ready) {
+        let isReady = true;
+        for (const [_key, mesh] of this.meshes) {
+          mesh.render(pass);
+          if (!mesh.ready) {
+            isReady = false;
+          }
+          for (const texture of mesh.textures) {
+            if (texture instanceof MediaTexture && !texture.sourcesUploaded) {
+              isReady = false;
+            }
+          }
+        }
+        this.updateBinding();
+        this.ready = isReady;
+      }
+    }
+    /**
+     * Called when the {@link Renderer#device | WebGPU device} has been lost.
+     * Just set the {@link ready} flag to `false` to eventually invalidate the {@link bundle}.
+     */
+    loseContext() {
+      this.ready = false;
+    }
+    /**
+     * Empty the {@link RenderBundle}. Can eventually re-add the {@link SceneStackedMesh | scene stacked meshes} to the {@link core/scenes/Scene.Scene | Scene} in order to render them normally again.
+     * @param keepMeshes - Whether to preserve the {@link meshes} in order to render them normally again. Default to `true`.
+     */
+    empty(keepMeshes = true) {
+      this.ready = false;
+      this.meshes.forEach((mesh) => {
+        this.removeMesh(mesh, keepMeshes);
+      });
+      this.size = 0;
+    }
+    /**
+     * Remove the {@link RenderBundle}, i.e. destroy it while preserving the {@link SceneStackedMesh | scene stacked meshes} by re-adding them to the {@link core/scenes/Scene.Scene | Scene}.
+     */
+    remove() {
+      this.empty(true);
+      __privateMethod$9(this, _RenderBundle_instances, cleanUp_fn).call(this);
+    }
+    /**
+     * Remove the {@link RenderBundle} from our {@link core/scenes/Scene.Scene | Scene}, {@link RenderedMesh#remove | remove the meshes}, eventually destroy the {@link binding} and remove the {@link RenderBundle} from the {@link Renderer}.
+     */
+    destroy() {
+      this.ready = false;
+      this.meshes.forEach((mesh) => {
+        mesh.remove();
+      });
+      this.size = 0;
+      __privateMethod$9(this, _RenderBundle_instances, cleanUp_fn).call(this);
+    }
+  }
+  _useProjection = new WeakMap();
+  _ready = new WeakMap();
+  _RenderBundle_instances = new WeakSet();
+  /**
+   * Set the {@link binding} and patches its array and buffer size if needed.
+   * @private
+   */
+  setBinding_fn = function() {
+    this.binding = new BufferBinding({
+      label: this.options.label + " matrices",
+      name: "matrices",
+      visibility: ["vertex", "fragment"],
+      struct: {
+        model: {
+          type: "array<mat4x4f>",
+          value: new Float32Array(16 * this.options.size)
+        },
+        modelView: {
+          type: "array<mat4x4f>",
+          value: new Float32Array(16 * this.options.size)
+        },
+        normal: {
+          type: "array<mat3x3f>",
+          value: new Float32Array(12 * this.options.size)
+        }
+      }
+    });
+    __privateMethod$9(this, _RenderBundle_instances, patchBindingOffset_fn).call(this, this.options.size);
+  };
+  /**
+   * Path the {@link binding} array and buffer size with the minimum {@link Renderer#device | device} buffer offset alignment.
+   * @param size - new {@link binding} size to use.
+   * @private
+   */
+  patchBindingOffset_fn = function(size) {
+    const minOffset = this.renderer.device?.limits.minUniformBufferOffsetAlignment || 256;
+    if (this.binding.arrayBufferSize < size * minOffset) {
+      this.binding.arrayBufferSize = size * minOffset;
+      this.binding.arrayBuffer = new ArrayBuffer(this.binding.arrayBufferSize);
+      this.binding.arrayView = new DataView(this.binding.arrayBuffer, 0, this.binding.arrayBufferSize);
+      this.binding.buffer.size = this.binding.arrayBuffer.byteLength;
+    }
+  };
+  /**
+   * Called each time the {@link RenderBundle} size has actually changed.
+   * @param newSize - new {@link RenderBundle} size to set.
+   * @private
+   */
+  onSizeChanged_fn = function(newSize) {
+    if (newSize > this.options.size && this.binding) {
+      __privateMethod$9(this, _RenderBundle_instances, patchBindingOffset_fn).call(this, newSize);
+      let offset = 0;
+      this.meshes.forEach((mesh) => {
+        mesh.patchRenderBundleBinding(offset);
+        offset++;
+      });
+      if (this.binding.buffer.GPUBuffer) {
+        this.binding.buffer.GPUBuffer.destroy();
+        this.binding.buffer.createBuffer(this.renderer, {
+          label: this.binding.options.label,
+          usage: [
+            ...["copySrc", "copyDst", this.binding.bindingType],
+            ...this.binding.options.usage
+          ]
+        });
+        this.binding.shouldUpdate = true;
+      }
+    }
+  };
+  /**
+   * Set the {@link descriptor} based on the {@link RenderBundleOptions#renderPass | render pass}.
+   * @private
+   */
+  setDescriptor_fn = function() {
+    this.descriptor = {
+      ...this.options.renderPass.options.colorAttachments && {
+        colorFormats: this.options.renderPass.options.colorAttachments.map(
+          (colorAttachment) => colorAttachment.targetFormat
+        )
+      },
+      ...this.options.renderPass.options.useDepth && {
+        depthStencilFormat: this.options.renderPass.options.depthFormat
+      },
+      sampleCount: this.options.renderPass.options.sampleCount
+    };
+  };
+  /**
+   * Create the {@link descriptor}, {@link encoder} and {@link bundle} used by this {@link RenderBundle}.
+   * @private
+   */
+  encodeRenderCommands_fn = function() {
+    __privateMethod$9(this, _RenderBundle_instances, setDescriptor_fn).call(this);
+    this.renderer.pipelineManager.resetCurrentPipeline();
+    this.encoder = this.renderer.device.createRenderBundleEncoder({
+      ...this.descriptor,
+      label: this.options.label + " (encoder)"
+    });
+    if (!this.renderer.production) {
+      this.encoder.pushDebugGroup(`${this.options.label}: create encoder`);
+    }
+    this.meshes.forEach((mesh) => {
+      mesh.material.render(this.encoder);
+      mesh.geometry.render(this.encoder);
+    });
+    if (!this.renderer.production) {
+      this.encoder.popDebugGroup();
+    }
+    this.bundle = this.encoder.finish({ label: this.options.label + " (bundle)" });
+    this.renderer.pipelineManager.resetCurrentPipeline();
+  };
+  /**
+   * Destroy the {@link binding} buffer if needed and remove the {@link RenderBundle} from the {@link Renderer}.
+   * @private
+   */
+  cleanUp_fn = function() {
+    if (this.binding) {
+      this.renderer.removeBuffer(this.binding.buffer);
+      this.binding.buffer.destroy();
+    }
+    if (this.indirectBuffer) {
+      this.indirectBuffer.destroy();
+    }
+    this.renderer.renderBundles.delete(this.uuid);
+  };
+
+  var __typeError$h = (msg) => {
+    throw TypeError(msg);
+  };
+  var __accessCheck$h = (obj, member, msg) => member.has(obj) || __typeError$h("Cannot " + msg);
+  var __privateGet$g = (obj, member, getter) => (__accessCheck$h(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$h = (obj, member, value) => member.has(obj) ? __typeError$h("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$g = (obj, member, value, setter) => (__accessCheck$h(obj, member, "write to private field"), member.set(obj, value), value);
+  var __privateMethod$8 = (obj, member, method) => (__accessCheck$h(obj, member, "access private method"), method);
   var _intensity, _bias, _normalBias, _pcfSamples, _isActive, _autoRender, _receivingMeshes, _Shadow_instances, setParameters_fn;
   const shadowStruct = {
     isActive: {
@@ -11603,23 +12269,24 @@ fn getPCFBaseShadowContribution(
       pcfSamples = 1,
       depthTextureSize = new Vec2(512),
       depthTextureFormat = "depth24plus",
-      autoRender = true
+      autoRender = true,
+      useRenderBundle = true
     } = {}) {
-      __privateAdd$j(this, _Shadow_instances);
+      __privateAdd$h(this, _Shadow_instances);
       /** @ignore */
-      __privateAdd$j(this, _intensity);
+      __privateAdd$h(this, _intensity);
       /** @ignore */
-      __privateAdd$j(this, _bias);
+      __privateAdd$h(this, _bias);
       /** @ignore */
-      __privateAdd$j(this, _normalBias);
+      __privateAdd$h(this, _normalBias);
       /** @ignore */
-      __privateAdd$j(this, _pcfSamples);
+      __privateAdd$h(this, _pcfSamples);
       /** @ignore */
-      __privateAdd$j(this, _isActive);
+      __privateAdd$h(this, _isActive);
       /** @ignore */
-      __privateAdd$j(this, _autoRender);
+      __privateAdd$h(this, _autoRender);
       /** Map of all the shadow receiving {@link Mesh}. */
-      __privateAdd$j(this, _receivingMeshes);
+      __privateAdd$h(this, _receivingMeshes);
       this.setRenderer(renderer);
       this.light = light;
       this.index = this.light.index;
@@ -11630,13 +12297,24 @@ fn getPCFBaseShadowContribution(
         normalBias,
         pcfSamples,
         depthTextureSize,
-        depthTextureFormat
+        depthTextureFormat,
+        useRenderBundle
       };
       this.sampleCount = 1;
       this.castingMeshes = /* @__PURE__ */ new Map();
-      __privateSet$h(this, _receivingMeshes, /* @__PURE__ */ new Map());
+      __privateSet$g(this, _receivingMeshes, /* @__PURE__ */ new Map());
       this.depthMeshes = /* @__PURE__ */ new Map();
-      __privateMethod$a(this, _Shadow_instances, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
+      this.renderBundle = null;
+      __privateMethod$8(this, _Shadow_instances, setParameters_fn).call(this, {
+        intensity,
+        bias,
+        normalBias,
+        pcfSamples,
+        depthTextureSize,
+        depthTextureFormat,
+        autoRender,
+        useRenderBundle
+      });
       this.isActive = false;
     }
     /**
@@ -11651,6 +12329,9 @@ fn getPCFBaseShadowContribution(
       if (this.depthPassTarget) {
         this.depthPassTarget.setRenderer(this.renderer);
       }
+      if (this.renderBundle) {
+        this.renderBundle.setRenderer(this.renderer);
+      }
       this.castingMeshes = /* @__PURE__ */ new Map();
       this.renderer.meshes.forEach((mesh) => {
         if ("castShadows" in mesh.options && mesh.options.castShadows) {
@@ -11662,7 +12343,7 @@ fn getPCFBaseShadowContribution(
       });
       if (oldRenderer) {
         this.reset();
-        if (__privateGet$h(this, _autoRender)) {
+        if (__privateGet$g(this, _autoRender)) {
           this.setDepthPass();
         }
       }
@@ -11674,10 +12355,28 @@ fn getPCFBaseShadowContribution(
     /**
      * Set the parameters and start casting shadows by setting the {@link isActive} setter to `true`.<br>
      * Called internally by the associated {@link core/lights/Light.Light | Light} if any shadow parameters are specified when creating it. Can also be called directly.
-     * @param parameters - parameters to use for this {@link Shadow}.
+     * @param parameters - Parameters to use for this {@link Shadow}.
      */
-    cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender } = {}) {
-      __privateMethod$a(this, _Shadow_instances, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
+    cast({
+      intensity,
+      bias,
+      normalBias,
+      pcfSamples,
+      depthTextureSize,
+      depthTextureFormat,
+      autoRender,
+      useRenderBundle
+    } = {}) {
+      __privateMethod$8(this, _Shadow_instances, setParameters_fn).call(this, {
+        intensity,
+        bias,
+        normalBias,
+        pcfSamples,
+        depthTextureSize,
+        depthTextureFormat,
+        autoRender,
+        useRenderBundle
+      });
       this.isActive = true;
     }
     /**
@@ -11720,7 +12419,7 @@ fn getPCFBaseShadowContribution(
      * @returns - Whether this {@link Shadow} is actually casting shadows.
      */
     get isActive() {
-      return __privateGet$h(this, _isActive);
+      return __privateGet$g(this, _isActive);
     }
     /**
      * Start or stop casting shadows.
@@ -11744,21 +12443,21 @@ fn getPCFBaseShadowContribution(
           );
         }
       }
-      __privateSet$h(this, _isActive, value);
+      __privateSet$g(this, _isActive, value);
     }
     /**
      * Get this {@link Shadow} intensity.
      * @returns - The {@link Shadow} intensity.
      */
     get intensity() {
-      return __privateGet$h(this, _intensity);
+      return __privateGet$g(this, _intensity);
     }
     /**
      * Set this {@link Shadow} intensity and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      * @param value - The new {@link Shadow} intensity.
      */
     set intensity(value) {
-      __privateSet$h(this, _intensity, value);
+      __privateSet$g(this, _intensity, value);
       this.onPropertyChanged("intensity", this.intensity);
     }
     /**
@@ -11766,14 +12465,14 @@ fn getPCFBaseShadowContribution(
      * @returns - The {@link Shadow} bias.
      */
     get bias() {
-      return __privateGet$h(this, _bias);
+      return __privateGet$g(this, _bias);
     }
     /**
      * Set this {@link Shadow} bias and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      * @param value - The new {@link Shadow} bias.
      */
     set bias(value) {
-      __privateSet$h(this, _bias, value);
+      __privateSet$g(this, _bias, value);
       this.onPropertyChanged("bias", this.bias);
     }
     /**
@@ -11781,14 +12480,14 @@ fn getPCFBaseShadowContribution(
      * @returns - The {@link Shadow} normal bias.
      */
     get normalBias() {
-      return __privateGet$h(this, _normalBias);
+      return __privateGet$g(this, _normalBias);
     }
     /**
      * Set this {@link Shadow} normal bias and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      * @param value - The new {@link Shadow} normal bias.
      */
     set normalBias(value) {
-      __privateSet$h(this, _normalBias, value);
+      __privateSet$g(this, _normalBias, value);
       this.onPropertyChanged("normalBias", this.normalBias);
     }
     /**
@@ -11796,14 +12495,14 @@ fn getPCFBaseShadowContribution(
      * @returns - The {@link Shadow} PCF samples count.
      */
     get pcfSamples() {
-      return __privateGet$h(this, _pcfSamples);
+      return __privateGet$g(this, _pcfSamples);
     }
     /**
      * Set this {@link Shadow} PCF samples count and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      * @param value - The new {@link Shadow} PCF samples count.
      */
     set pcfSamples(value) {
-      __privateSet$h(this, _pcfSamples, Math.max(1, Math.ceil(value)));
+      __privateSet$g(this, _pcfSamples, Math.max(1, Math.ceil(value)));
       this.onPropertyChanged("pcfSamples", this.pcfSamples);
     }
     /**
@@ -11829,7 +12528,16 @@ fn getPCFBaseShadowContribution(
       if (!this.depthPassTarget) {
         this.createDepthPassTarget();
       }
-      if (__privateGet$h(this, _autoRender)) {
+      if (this.options.useRenderBundle && !this.renderBundle) {
+        this.renderBundle = new RenderBundle(this.renderer, {
+          label: `Depth render bundle for ${this.constructor.name} ${this.index}`,
+          renderPass: this.depthPassTarget.renderPass,
+          transparent: false,
+          useBuffer: true,
+          size: 1
+        });
+      }
+      if (__privateGet$g(this, _autoRender)) {
         this.setDepthPass();
         this.onPropertyChanged("isActive", 1);
       }
@@ -11904,7 +12612,7 @@ fn getPCFBaseShadowContribution(
         useColorAttachments: false,
         depthTexture: this.depthTexture,
         sampleCount: this.sampleCount,
-        autoRender: __privateGet$h(this, _autoRender)
+        autoRender: __privateGet$g(this, _autoRender)
       });
     }
     /**
@@ -11943,7 +12651,7 @@ fn getPCFBaseShadowContribution(
      * Render the shadow map only once. Useful with static scenes if autoRender has been set to `false` to only take one snapshot of the shadow map.
      */
     async renderOnce() {
-      if (!__privateGet$h(this, _autoRender)) {
+      if (!__privateGet$g(this, _autoRender)) {
         this.onPropertyChanged("isActive", 1);
         await Promise.all(
           [...this.depthMeshes.values()].map(async (depthMesh) => {
@@ -11970,11 +12678,15 @@ fn getPCFBaseShadowContribution(
       const depthPass = this.depthPassTarget.renderPass.beginRenderPass(commandEncoder);
       if (!this.renderer.production)
         depthPass.pushDebugGroup(`${this.constructor.name} (index: ${this.index}): depth pass`);
-      for (const [uuid, depthMesh] of this.depthMeshes) {
-        if (!this.castingMeshes.get(uuid)?.visible) {
-          continue;
+      if (this.renderBundle) {
+        this.renderBundle.render(depthPass);
+      } else {
+        for (const [uuid, depthMesh] of this.depthMeshes) {
+          if (!this.castingMeshes.get(uuid)?.visible) {
+            continue;
+          }
+          depthMesh.render(depthPass);
         }
-        depthMesh.render(depthPass);
       }
       if (!this.renderer.production) depthPass.popDebugGroup();
       depthPass.end();
@@ -12005,6 +12717,7 @@ fn getPCFBaseShadowContribution(
      */
     patchShadowCastingMeshParams(mesh, parameters = {}) {
       parameters = { ...mesh.material.options.rendering, ...parameters };
+      parameters.targets = [];
       const bindings = [];
       mesh.material.inputsBindings.forEach((binding) => {
         if (binding.name.includes("skin") || binding.name.includes("morphTarget")) {
@@ -12044,6 +12757,9 @@ fn getPCFBaseShadowContribution(
         this.depthMeshes.get(mesh.uuid).remove();
         this.depthMeshes.delete(mesh.uuid);
       }
+      if (this.renderBundle) {
+        this.renderBundle.size = this.depthMeshes.size + 1;
+      }
       const depthMesh = new Mesh(this.renderer, {
         label: `${this.constructor.name} (index: ${this.index}) ${mesh.options.label} depth mesh`,
         ...parameters,
@@ -12054,8 +12770,12 @@ fn getPCFBaseShadowContribution(
         outputTarget: this.depthPassTarget,
         frustumCulling: false,
         // draw shadow even if original mesh is hidden
-        autoRender: __privateGet$h(this, _autoRender)
+        autoRender: __privateGet$g(this, _autoRender),
+        ...this.renderBundle && { renderBundle: this.renderBundle }
       });
+      if (!__privateGet$g(this, _autoRender) && this.renderBundle) {
+        this.renderBundle.meshes.set(depthMesh.uuid, depthMesh);
+      }
       depthMesh.parent = mesh;
       this.depthMeshes.set(mesh.uuid, depthMesh);
       this.castingMeshes.set(mesh.uuid, mesh);
@@ -12065,15 +12785,15 @@ fn getPCFBaseShadowContribution(
      * @param mesh - Shadow receiving {@link Mesh} to add.
      */
     addShadowReceivingMesh(mesh) {
-      __privateGet$h(this, _receivingMeshes).set(mesh.uuid, mesh);
+      __privateGet$g(this, _receivingMeshes).set(mesh.uuid, mesh);
     }
     /**
      * Remove a shadow receiving {@link Mesh} from the #receivingMeshes {@link Map}.
      * @param mesh - Shadow receiving {@link Mesh} to remove.
      */
     removeShadowReceivingMesh(mesh) {
-      __privateGet$h(this, _receivingMeshes).delete(mesh.uuid);
-      if (__privateGet$h(this, _receivingMeshes).size === 0 && !this.isActive) {
+      __privateGet$g(this, _receivingMeshes).delete(mesh.uuid);
+      if (__privateGet$g(this, _receivingMeshes).size === 0 && !this.isActive) {
         this.destroyDepthTexture();
       }
     }
@@ -12108,12 +12828,15 @@ fn getPCFBaseShadowContribution(
      */
     destroy() {
       this.onPropertyChanged("isActive", 0);
-      __privateSet$h(this, _isActive, false);
+      __privateSet$g(this, _isActive, false);
+      if (this.renderBundle) {
+        this.renderBundle.destroy();
+      }
       this.castingMeshes.forEach((mesh) => this.removeMesh(mesh));
       this.castingMeshes = /* @__PURE__ */ new Map();
       this.depthMeshes = /* @__PURE__ */ new Map();
       this.depthPassTarget?.destroy();
-      if (__privateGet$h(this, _receivingMeshes).size === 0) {
+      if (__privateGet$g(this, _receivingMeshes).size === 0) {
         this.destroyDepthTexture();
       }
     }
@@ -12138,7 +12861,7 @@ fn getPCFBaseShadowContribution(
   // }
   /**
    * Set the {@link Shadow} parameters.
-   * @param parameters - parameters to use for this {@link Shadow}.
+   * @param parameters - Parameters to use for this {@link Shadow}.
    * @private
    */
   setParameters_fn = function({
@@ -12148,7 +12871,8 @@ fn getPCFBaseShadowContribution(
     pcfSamples = 1,
     depthTextureSize = new Vec2(512),
     depthTextureFormat = "depth24plus",
-    autoRender = true
+    autoRender = true,
+    useRenderBundle = true
   } = {}) {
     this.intensity = intensity;
     this.bias = bias;
@@ -12156,7 +12880,8 @@ fn getPCFBaseShadowContribution(
     this.pcfSamples = pcfSamples;
     this.depthTextureSize = depthTextureSize;
     this.depthTextureFormat = depthTextureFormat;
-    __privateSet$h(this, _autoRender, autoRender);
+    __privateSet$g(this, _autoRender, autoRender);
+    this.options.useRenderBundle = useRenderBundle;
   };
 
   const declareAttributesVars$1 = ({ geometry }) => {
@@ -12321,19 +13046,6 @@ fn getPCFBaseShadowContribution(
   ${declareAttributesVars$1({ geometry })}
   ${getVertexTransformedPositionNormal({ bindings, geometry })}
   
-  /*
-  let worldPos = worldPosition.xyz / worldPosition.w;
-  
-  let lightDirection: vec3f = -directionalShadow.direction;
-  let NdotL: f32 = dot(normal, lightDirection);
-  let sinNdotL = sqrt(1.0 - NdotL * NdotL);
-  let normalBias: f32 = directionalShadow.normalBias * sinNdotL;
-  
-  worldPosition = vec4(worldPos - normal * normalBias, 1.0);
-  
-  return directionalShadow.projectionMatrix * directionalShadow.viewMatrix * worldPosition;
-  */
-  
   // shadows calculations in view space instead of world space
   // prevents world-space scaling issues for normal bias
   let viewMatrix: mat4x4f = directionalShadow.viewMatrix;
@@ -12357,13 +13069,13 @@ fn getPCFBaseShadowContribution(
 }`
   );
 
-  var __typeError$i = (msg) => {
+  var __typeError$g = (msg) => {
     throw TypeError(msg);
   };
-  var __accessCheck$i = (obj, member, msg) => member.has(obj) || __typeError$i("Cannot " + msg);
-  var __privateGet$g = (obj, member, getter) => (__accessCheck$i(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
-  var __privateAdd$i = (obj, member, value) => member.has(obj) ? __typeError$i("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  var __privateSet$g = (obj, member, value, setter) => (__accessCheck$i(obj, member, "write to private field"), member.set(obj, value), value);
+  var __accessCheck$g = (obj, member, msg) => member.has(obj) || __typeError$g("Cannot " + msg);
+  var __privateGet$f = (obj, member, getter) => (__accessCheck$g(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$g = (obj, member, value) => member.has(obj) ? __typeError$g("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$f = (obj, member, value, setter) => (__accessCheck$g(obj, member, "write to private field"), member.set(obj, value), value);
   var _direction$2;
   const directionalShadowStruct = {
     ...shadowStruct,
@@ -12395,6 +13107,7 @@ fn getPCFBaseShadowContribution(
       depthTextureSize,
       depthTextureFormat,
       autoRender,
+      useRenderBundle,
       camera = {
         left: -10,
         right: 10,
@@ -12412,13 +13125,14 @@ fn getPCFBaseShadowContribution(
         pcfSamples,
         depthTextureSize,
         depthTextureFormat,
-        autoRender
+        autoRender,
+        useRenderBundle
       });
       /**
        * Direction of the parent {@link DirectionalLight}. Duplicate to avoid adding the {@link DirectionalLight} binding to vertex shaders.
        * @private
        */
-      __privateAdd$i(this, _direction$2);
+      __privateAdd$g(this, _direction$2);
       this.options = {
         ...this.options,
         camera
@@ -12437,7 +13151,7 @@ fn getPCFBaseShadowContribution(
       });
       this.camera.position.set(0);
       this.camera.parent = this.light;
-      __privateSet$g(this, _direction$2, new Vec3());
+      __privateSet$f(this, _direction$2, new Vec3());
     }
     /**
      * Set or reset this {@link DirectionalShadow} {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
@@ -12450,7 +13164,17 @@ fn getPCFBaseShadowContribution(
      * Called internally by the associated {@link DirectionalLight} if any shadow parameters are specified when creating it. Can also be called directly.
      * @param parameters - parameters to use for this {@link DirectionalShadow}.
      */
-    cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender, camera } = {}) {
+    cast({
+      intensity,
+      bias,
+      normalBias,
+      pcfSamples,
+      depthTextureSize,
+      depthTextureFormat,
+      autoRender,
+      useRenderBundle,
+      camera
+    } = {}) {
       if (camera) {
         this.camera.left = camera.left ?? -10;
         this.camera.right = camera.right ?? 10;
@@ -12459,7 +13183,16 @@ fn getPCFBaseShadowContribution(
         this.camera.near = camera.near ?? 0.1;
         this.camera.far = camera.far ?? 150;
       }
-      super.cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
+      super.cast({
+        intensity,
+        bias,
+        normalBias,
+        pcfSamples,
+        depthTextureSize,
+        depthTextureFormat,
+        autoRender,
+        useRenderBundle
+      });
     }
     /**
      * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link DirectionalLight} has been overflowed or when the {@link renderer} has changed.
@@ -12469,15 +13202,15 @@ fn getPCFBaseShadowContribution(
       super.reset();
       this.onPropertyChanged("projectionMatrix", this.camera.projectionMatrix);
       this.onPropertyChanged("viewMatrix", this.camera.viewMatrix);
-      this.onPropertyChanged("direction", __privateGet$g(this, _direction$2));
+      this.onPropertyChanged("direction", __privateGet$f(this, _direction$2));
     }
     /**
      * Copy the {@link DirectionalLight} direction and update binding.
      * @param direction - {@link DirectionalLight} direction to copy.
      */
     setDirection(direction = new Vec3()) {
-      __privateGet$g(this, _direction$2).copy(direction);
-      this.onPropertyChanged("direction", __privateGet$g(this, _direction$2));
+      __privateGet$f(this, _direction$2).copy(direction);
+      this.onPropertyChanged("direction", __privateGet$f(this, _direction$2));
     }
     /**
      * Create the {@link depthTexture}.
@@ -12511,13 +13244,13 @@ fn getPCFBaseShadowContribution(
   }
   _direction$2 = new WeakMap();
 
-  var __typeError$h = (msg) => {
+  var __typeError$f = (msg) => {
     throw TypeError(msg);
   };
-  var __accessCheck$h = (obj, member, msg) => member.has(obj) || __typeError$h("Cannot " + msg);
-  var __privateGet$f = (obj, member, getter) => (__accessCheck$h(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
-  var __privateAdd$h = (obj, member, value) => member.has(obj) ? __typeError$h("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  var __privateSet$f = (obj, member, value, setter) => (__accessCheck$h(obj, member, "write to private field"), member.set(obj, value), value);
+  var __accessCheck$f = (obj, member, msg) => member.has(obj) || __typeError$f("Cannot " + msg);
+  var __privateGet$e = (obj, member, getter) => (__accessCheck$f(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$f = (obj, member, value) => member.has(obj) ? __typeError$f("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$e = (obj, member, value, setter) => (__accessCheck$f(obj, member, "write to private field"), member.set(obj, value), value);
   var _direction$1;
   class DirectionalLight extends Light {
     /**
@@ -12539,14 +13272,14 @@ fn getPCFBaseShadowContribution(
        * The {@link Vec3 | direction} of the {@link DirectionalLight} is the {@link target} minus the actual {@link position}.
        * @private
        */
-      __privateAdd$h(this, _direction$1);
+      __privateAdd$f(this, _direction$1);
       this.options = {
         ...this.options,
         position,
         target,
         shadow
       };
-      __privateSet$f(this, _direction$1, new Vec3());
+      __privateSet$e(this, _direction$1, new Vec3());
       this.position.copy(position);
       this.target = new Vec3();
       this.target.onChange(() => {
@@ -12556,6 +13289,9 @@ fn getPCFBaseShadowContribution(
       this.position.onChange(() => {
         this.lookAt(this.target);
       });
+      if (this.target.lengthSq() === 0) {
+        this.lookAt(this.target);
+      }
       this.parent = this.renderer.scene;
       this.shadow = new DirectionalShadow(this.renderer, {
         autoRender: false,
@@ -12582,7 +13318,7 @@ fn getPCFBaseShadowContribution(
      */
     reset(resetShadow = true) {
       super.reset();
-      this.onPropertyChanged("direction", __privateGet$f(this, _direction$1));
+      this.onPropertyChanged("direction", __privateGet$e(this, _direction$1));
       if (this.shadow && resetShadow) {
         this.shadow.reset();
       }
@@ -12608,10 +13344,10 @@ fn getPCFBaseShadowContribution(
      * Set the {@link DirectionalLight} direction based on the {@link target} and the {@link worldMatrix} translation.
      */
     setDirection() {
-      __privateGet$f(this, _direction$1).copy(this.target).sub(this.actualPosition).normalize();
-      this.onPropertyChanged("direction", __privateGet$f(this, _direction$1));
+      __privateGet$e(this, _direction$1).copy(this.target).sub(this.actualPosition).normalize();
+      this.onPropertyChanged("direction", __privateGet$e(this, _direction$1));
       if (this.shadow) {
-        this.shadow.setDirection(__privateGet$f(this, _direction$1));
+        this.shadow.setDirection(__privateGet$e(this, _direction$1));
       }
     }
     /**
@@ -12722,13 +13458,13 @@ struct PointShadowVSOutput {
 }`
   );
 
-  var __typeError$g = (msg) => {
+  var __typeError$e = (msg) => {
     throw TypeError(msg);
   };
-  var __accessCheck$g = (obj, member, msg) => member.has(obj) || __typeError$g("Cannot " + msg);
-  var __privateGet$e = (obj, member, getter) => (__accessCheck$g(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
-  var __privateAdd$g = (obj, member, value) => member.has(obj) ? __typeError$g("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  var __privateSet$e = (obj, member, value, setter) => (__accessCheck$g(obj, member, "write to private field"), member.set(obj, value), value);
+  var __accessCheck$e = (obj, member, msg) => member.has(obj) || __typeError$e("Cannot " + msg);
+  var __privateGet$d = (obj, member, getter) => (__accessCheck$e(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$e = (obj, member, value) => member.has(obj) ? __typeError$e("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$d = (obj, member, value, setter) => (__accessCheck$e(obj, member, "write to private field"), member.set(obj, value), value);
   var _tempCubeDirection, _viewMatrices;
   const pointShadowStruct = {
     ...shadowStruct,
@@ -12777,18 +13513,19 @@ struct PointShadowVSOutput {
         pcfSamples,
         depthTextureSize,
         depthTextureFormat,
-        autoRender
+        autoRender,
+        useRenderBundle: false
       });
       /**
        * {@link Vec3} used to calculate the actual current direction based on the {@link PointLight} position.
        * @private
        */
-      __privateAdd$g(this, _tempCubeDirection);
+      __privateAdd$e(this, _tempCubeDirection);
       /**
        * Array of {@link Mat4} view matrices to use for cube map faces rendering.
        * @private
        */
-      __privateAdd$g(this, _viewMatrices);
+      __privateAdd$e(this, _viewMatrices);
       this.cubeDirections = [
         new Vec3(-1, 0, 0),
         new Vec3(1, 0, 0),
@@ -12797,7 +13534,7 @@ struct PointShadowVSOutput {
         new Vec3(0, 0, -1),
         new Vec3(0, 0, 1)
       ];
-      __privateSet$e(this, _tempCubeDirection, new Vec3());
+      __privateSet$d(this, _tempCubeDirection, new Vec3());
       this.cubeUps = [
         new Vec3(0, -1, 0),
         new Vec3(0, -1, 0),
@@ -12806,9 +13543,9 @@ struct PointShadowVSOutput {
         new Vec3(0, -1, 0),
         new Vec3(0, -1, 0)
       ];
-      __privateSet$e(this, _viewMatrices, []);
+      __privateSet$d(this, _viewMatrices, []);
       for (let i = 0; i < 6; i++) {
-        __privateGet$e(this, _viewMatrices).push(new Mat4());
+        __privateGet$d(this, _viewMatrices).push(new Mat4());
       }
       this.camera = new PerspectiveCamera({
         fov: 90,
@@ -12831,6 +13568,13 @@ struct PointShadowVSOutput {
      */
     setRendererBinding() {
       this.rendererBinding = this.renderer.bindings.pointShadows;
+    }
+    /**
+     * Set the parameters and start casting shadows. Force not using a {@link core/renderPasses/RenderBundle.RenderBundle | RenderBundle} since we'll need to swap faces bind groups during render.
+     * @param parameters - Parameters to use for this {@link PointShadow}.
+     */
+    cast(parameters = {}) {
+      super.cast({ ...parameters, useRenderBundle: false });
     }
     /**
      * Set the {@link depthComparisonSampler}, {@link depthTexture}, {@link depthPassTarget}, compute the {@link PointShadow#camera.projectionMatrix | camera projection matrix} and start rendering to the shadow map.
@@ -12868,10 +13612,10 @@ struct PointShadowVSOutput {
      */
     updateViewMatrices() {
       for (let i = 0; i < 6; i++) {
-        __privateGet$e(this, _tempCubeDirection).copy(this.cubeDirections[i]).add(this.camera.actualPosition);
-        __privateGet$e(this, _viewMatrices)[i].makeView(this.camera.actualPosition, __privateGet$e(this, _tempCubeDirection), this.cubeUps[i]);
+        __privateGet$d(this, _tempCubeDirection).copy(this.cubeDirections[i]).add(this.camera.actualPosition);
+        __privateGet$d(this, _viewMatrices)[i].makeView(this.camera.actualPosition, __privateGet$d(this, _tempCubeDirection), this.cubeUps[i]);
         for (let j = 0; j < 16; j++) {
-          this.rendererBinding.childrenBindings[this.index].inputs.viewMatrices.value[i * 16 + j] = __privateGet$e(this, _viewMatrices)[i].elements[j];
+          this.rendererBinding.childrenBindings[this.index].inputs.viewMatrices.value[i * 16 + j] = __privateGet$d(this, _viewMatrices)[i].elements[j];
         }
       }
       this.onViewMatricesChanged();
@@ -13002,7 +13746,12 @@ struct PointShadowVSOutput {
         const cubeFaceBindGroupIndex = depthMesh.material.bindGroups.length - 1;
         this.renderer.pointShadowsCubeFaceBindGroups[face].setIndex(cubeFaceBindGroupIndex);
         depthMesh.material.bindGroups[cubeFaceBindGroupIndex] = this.renderer.pointShadowsCubeFaceBindGroups[face];
-        depthMesh.render(depthPass);
+        if (face === 0) {
+          depthMesh.render(depthPass);
+        } else {
+          depthMesh.material.onBeforeRender();
+          depthMesh.onRenderPass(depthPass);
+        }
       }
       if (!this.renderer.production) depthPass.popDebugGroup();
       depthPass.end();
@@ -13045,13 +13794,13 @@ struct PointShadowVSOutput {
   _tempCubeDirection = new WeakMap();
   _viewMatrices = new WeakMap();
 
-  var __typeError$f = (msg) => {
+  var __typeError$d = (msg) => {
     throw TypeError(msg);
   };
-  var __accessCheck$f = (obj, member, msg) => member.has(obj) || __typeError$f("Cannot " + msg);
-  var __privateGet$d = (obj, member, getter) => (__accessCheck$f(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
-  var __privateAdd$f = (obj, member, value) => member.has(obj) ? __typeError$f("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  var __privateSet$d = (obj, member, value, setter) => (__accessCheck$f(obj, member, "write to private field"), member.set(obj, value), value);
+  var __accessCheck$d = (obj, member, msg) => member.has(obj) || __typeError$d("Cannot " + msg);
+  var __privateGet$c = (obj, member, getter) => (__accessCheck$d(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$d = (obj, member, value) => member.has(obj) ? __typeError$d("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$c = (obj, member, value, setter) => (__accessCheck$d(obj, member, "write to private field"), member.set(obj, value), value);
   var _range$1;
   class PointLight extends Light {
     /**
@@ -13070,7 +13819,7 @@ struct PointShadowVSOutput {
       const type = "pointLights";
       super(renderer, { label, color, intensity, type });
       /** @ignore */
-      __privateAdd$f(this, _range$1);
+      __privateAdd$d(this, _range$1);
       this.options = {
         ...this.options,
         position,
@@ -13133,14 +13882,14 @@ struct PointShadowVSOutput {
      * @returns - The {@link PointLight} range.
      */
     get range() {
-      return __privateGet$d(this, _range$1);
+      return __privateGet$c(this, _range$1);
     }
     /**
      * Set this {@link PointLight} range and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      * @param value - The new {@link PointLight} range.
      */
     set range(value) {
-      __privateSet$d(this, _range$1, Math.max(0, value));
+      __privateSet$c(this, _range$1, Math.max(0, value));
       this.onPropertyChanged("range", this.range);
       if (this.shadow && this.range !== 0) {
         this.shadow.camera.far = this.range;
@@ -13245,13 +13994,14 @@ struct SpotShadowVSOutput {
      */
     constructor(renderer, {
       light,
-      intensity = 1,
-      bias = 0,
-      normalBias = 0,
-      pcfSamples = 1,
-      depthTextureSize = new Vec2(512),
-      depthTextureFormat = "depth24plus",
-      autoRender = true
+      intensity,
+      bias,
+      normalBias,
+      pcfSamples,
+      depthTextureSize,
+      depthTextureFormat,
+      autoRender,
+      useRenderBundle
     } = {}) {
       super(renderer, {
         light,
@@ -13261,7 +14011,8 @@ struct SpotShadowVSOutput {
         pcfSamples,
         depthTextureSize,
         depthTextureFormat,
-        autoRender
+        autoRender,
+        useRenderBundle
       });
       this.focus = 1;
       this.camera = new PerspectiveCamera({
@@ -13347,13 +14098,13 @@ struct SpotShadowVSOutput {
     }
   }
 
-  var __typeError$e = (msg) => {
+  var __typeError$c = (msg) => {
     throw TypeError(msg);
   };
-  var __accessCheck$e = (obj, member, msg) => member.has(obj) || __typeError$e("Cannot " + msg);
-  var __privateGet$c = (obj, member, getter) => (__accessCheck$e(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
-  var __privateAdd$e = (obj, member, value) => member.has(obj) ? __typeError$e("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  var __privateSet$c = (obj, member, value, setter) => (__accessCheck$e(obj, member, "write to private field"), member.set(obj, value), value);
+  var __accessCheck$c = (obj, member, msg) => member.has(obj) || __typeError$c("Cannot " + msg);
+  var __privateGet$b = (obj, member, getter) => (__accessCheck$c(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$c = (obj, member, value) => member.has(obj) ? __typeError$c("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$b = (obj, member, value, setter) => (__accessCheck$c(obj, member, "write to private field"), member.set(obj, value), value);
   var _direction, _angle, _penumbra, _range;
   class SpotLight extends Light {
     /**
@@ -13378,13 +14129,13 @@ struct SpotShadowVSOutput {
        * The {@link Vec3 | direction} of the {@link SpotLight} is the {@link target} minus the actual {@link position}.
        * @private
        */
-      __privateAdd$e(this, _direction);
+      __privateAdd$c(this, _direction);
       /** @ignore */
-      __privateAdd$e(this, _angle);
+      __privateAdd$c(this, _angle);
       /** @ignore */
-      __privateAdd$e(this, _penumbra);
+      __privateAdd$c(this, _penumbra);
       /** @ignore */
-      __privateAdd$e(this, _range);
+      __privateAdd$c(this, _range);
       this.options = {
         ...this.options,
         position,
@@ -13394,7 +14145,7 @@ struct SpotShadowVSOutput {
         target,
         shadow
       };
-      __privateSet$c(this, _direction, new Vec3());
+      __privateSet$b(this, _direction, new Vec3());
       this.position.copy(position);
       this.target = new Vec3();
       this.target.onChange(() => {
@@ -13404,6 +14155,9 @@ struct SpotShadowVSOutput {
       this.position.onChange(() => {
         this.lookAt(this.target);
       });
+      if (this.target.lengthSq() === 0) {
+        this.lookAt(this.target);
+      }
       this.angle = angle;
       this.penumbra = penumbra;
       this.range = range;
@@ -13437,7 +14191,7 @@ struct SpotShadowVSOutput {
       this.onPropertyChanged("coneCos", Math.cos(this.angle));
       this.onPropertyChanged("penumbraCos", Math.cos(this.angle * (1 - this.penumbra)));
       this.onPropertyChanged("position", this.actualPosition);
-      this.onPropertyChanged("direction", __privateGet$c(this, _direction));
+      this.onPropertyChanged("direction", __privateGet$b(this, _direction));
       if (this.shadow && resetShadow) {
         this.shadow.reset();
       }
@@ -13464,8 +14218,8 @@ struct SpotShadowVSOutput {
      */
     setPositionDirection() {
       this.onPropertyChanged("position", this.actualPosition);
-      __privateGet$c(this, _direction).copy(this.target).sub(this.actualPosition).normalize();
-      this.onPropertyChanged("direction", __privateGet$c(this, _direction));
+      __privateGet$b(this, _direction).copy(this.target).sub(this.actualPosition).normalize();
+      this.onPropertyChanged("direction", __privateGet$b(this, _direction));
       if (this.shadow) {
         this.shadow.setPosition();
       }
@@ -13475,14 +14229,14 @@ struct SpotShadowVSOutput {
      * @returns - The {@link SpotLight} angle.
      */
     get angle() {
-      return __privateGet$c(this, _angle);
+      return __privateGet$b(this, _angle);
     }
     /**
      * Set this {@link SpotLight} angle and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      * @param value - The new {@link SpotLight} angle in the `[0, PI / 2]` range.
      */
     set angle(value) {
-      __privateSet$c(this, _angle, Math.min(Math.PI / 2, Math.max(0, value)));
+      __privateSet$b(this, _angle, Math.min(Math.PI / 2, Math.max(0, value)));
       this.onPropertyChanged("coneCos", Math.cos(this.angle));
       this.onPropertyChanged("penumbraCos", Math.cos(this.angle * (1 - this.penumbra)));
       this.shadow?.setCameraFov();
@@ -13492,14 +14246,14 @@ struct SpotShadowVSOutput {
      * @returns - The {@link SpotLight} penumbra.
      */
     get penumbra() {
-      return __privateGet$c(this, _penumbra);
+      return __privateGet$b(this, _penumbra);
     }
     /**
      * Set this {@link SpotLight} penumbra and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      * @param value - The new {@link SpotLight} penumbra in the `[0, 1]` range.
      */
     set penumbra(value) {
-      __privateSet$c(this, _penumbra, Math.min(1, Math.max(0, value)));
+      __privateSet$b(this, _penumbra, Math.min(1, Math.max(0, value)));
       this.onPropertyChanged("penumbraCos", Math.cos(this.angle * (1 - this.penumbra)));
     }
     /**
@@ -13507,14 +14261,14 @@ struct SpotShadowVSOutput {
      * @returns - The {@link SpotLight} range.
      */
     get range() {
-      return __privateGet$c(this, _range);
+      return __privateGet$b(this, _range);
     }
     /**
      * Set this {@link SpotLight} range and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      * @param value - The new {@link SpotLight} range.
      */
     set range(value) {
-      __privateSet$c(this, _range, Math.max(0, value));
+      __privateSet$b(this, _range, Math.max(0, value));
       this.onPropertyChanged("range", this.range);
       if (this.shadow && this.range !== 0) {
         this.shadow.camera.far = this.range;
@@ -14126,13 +14880,13 @@ ${this.shaders.compute.head}`;
     }
   }
 
-  var __typeError$d = (msg) => {
+  var __typeError$b = (msg) => {
     throw TypeError(msg);
   };
-  var __accessCheck$d = (obj, member, msg) => member.has(obj) || __typeError$d("Cannot " + msg);
-  var __privateGet$b = (obj, member, getter) => (__accessCheck$d(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
-  var __privateAdd$d = (obj, member, value) => member.has(obj) ? __typeError$d("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  var __privateSet$b = (obj, member, value, setter) => (__accessCheck$d(obj, member, "write to private field"), member.set(obj, value), value);
+  var __accessCheck$b = (obj, member, msg) => member.has(obj) || __typeError$b("Cannot " + msg);
+  var __privateGet$a = (obj, member, getter) => (__accessCheck$b(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$b = (obj, member, value) => member.has(obj) ? __typeError$b("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$a = (obj, member, value, setter) => (__accessCheck$b(obj, member, "write to private field"), member.set(obj, value), value);
   var _shouldLoadColors, _shouldLoadDepth;
   const camPosA = new Vec3();
   const camPosB = new Vec3();
@@ -14149,16 +14903,16 @@ ${this.shaders.compute.head}`;
        * Keep track of whether the next render pass should set its `loadOp` to `'load'` when rendering.
        * @private
        */
-      __privateAdd$d(this, _shouldLoadColors);
+      __privateAdd$b(this, _shouldLoadColors);
       /**
        * Keep track of whether the next render pass should set its `depthLoadOp` to `'load'` when rendering.
        * @private
        */
-      __privateAdd$d(this, _shouldLoadDepth);
+      __privateAdd$b(this, _shouldLoadDepth);
       renderer = isRenderer(renderer, "Scene");
       this.renderer = renderer;
-      __privateSet$b(this, _shouldLoadColors, false);
-      __privateSet$b(this, _shouldLoadDepth, false);
+      __privateSet$a(this, _shouldLoadColors, false);
+      __privateSet$a(this, _shouldLoadDepth, false);
       this.computePassEntries = [];
       this.renderPassEntries = {
         /** Array of {@link RenderPassEntry} that will handle {@link PingPongPlane}. Each {@link PingPongPlane} will be added as a distinct {@link RenderPassEntry} here. */
@@ -14665,7 +15419,7 @@ ${this.shaders.compute.head}`;
       renderPassEntry.onAfterRenderPass && renderPassEntry.onAfterRenderPass(commandEncoder, swapChainTexture);
       this.renderer.pipelineManager.resetCurrentPipeline();
       if (renderPassEntry.renderPass.options.useDepth && !renderPassEntry.renderPass.options.depthReadOnly && renderPassEntry.renderPass.options.depthStoreOp === "store" && renderPassEntry.renderPass.depthTexture.uuid === this.renderer.renderPass.depthTexture?.uuid) {
-        __privateSet$b(this, _shouldLoadDepth, true);
+        __privateSet$a(this, _shouldLoadDepth, true);
       }
     }
     /**
@@ -14706,13 +15460,13 @@ ${this.shaders.compute.head}`;
         computePass.copyBufferToResult(commandEncoder);
         this.renderer.pipelineManager.resetCurrentPipeline();
       }
-      __privateSet$b(this, _shouldLoadColors, false);
-      __privateSet$b(this, _shouldLoadDepth, false);
+      __privateSet$a(this, _shouldLoadColors, false);
+      __privateSet$a(this, _shouldLoadDepth, false);
       for (const renderPassEntryType in this.renderPassEntries) {
         if (renderPassEntryType === "postProPass") {
           this.renderer.renderPass.setDepthReadOnly(false);
           this.renderer.renderPass.setDepthLoadOp("clear");
-          __privateSet$b(this, _shouldLoadColors, true);
+          __privateSet$a(this, _shouldLoadColors, true);
         }
         this.renderPassEntries[renderPassEntryType].forEach((renderPassEntry) => {
           if (!this.getRenderPassEntryLength(renderPassEntry)) return;
@@ -14721,13 +15475,13 @@ ${this.shaders.compute.head}`;
           } else {
             renderPassEntry.renderPass.setDepthReadOnly(false);
           }
-          renderPassEntry.renderPass.setLoadOp(__privateGet$b(this, _shouldLoadColors) ? "load" : "clear");
+          renderPassEntry.renderPass.setLoadOp(__privateGet$a(this, _shouldLoadColors) ? "load" : "clear");
           renderPassEntry.renderPass.setDepthLoadOp(
-            __privateGet$b(this, _shouldLoadDepth) && !renderPassEntry.renderPass.options.depthReadOnly ? "load" : "clear"
+            __privateGet$a(this, _shouldLoadDepth) && !renderPassEntry.renderPass.options.depthReadOnly ? "load" : "clear"
           );
           this.renderSinglePassEntry(commandEncoder, renderPassEntry);
           if (renderPassEntryType !== "renderTarget") {
-            __privateSet$b(this, _shouldLoadColors, true);
+            __privateSet$a(this, _shouldLoadColors, true);
           }
         });
       }
@@ -14736,19 +15490,19 @@ ${this.shaders.compute.head}`;
   _shouldLoadColors = new WeakMap();
   _shouldLoadDepth = new WeakMap();
 
-  var __typeError$c = (msg) => {
+  var __typeError$a = (msg) => {
     throw TypeError(msg);
   };
-  var __accessCheck$c = (obj, member, msg) => member.has(obj) || __typeError$c("Cannot " + msg);
-  var __privateGet$a = (obj, member, getter) => (__accessCheck$c(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
-  var __privateAdd$c = (obj, member, value) => member.has(obj) ? __typeError$c("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  var __privateSet$a = (obj, member, value, setter) => (__accessCheck$c(obj, member, "write to private field"), member.set(obj, value), value);
+  var __accessCheck$a = (obj, member, msg) => member.has(obj) || __typeError$a("Cannot " + msg);
+  var __privateGet$9 = (obj, member, getter) => (__accessCheck$a(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$a = (obj, member, value) => member.has(obj) ? __typeError$a("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$9 = (obj, member, value, setter) => (__accessCheck$a(obj, member, "write to private field"), member.set(obj, value), value);
   var __privateWrapper = (obj, member, setter, getter) => ({
     set _(value) {
-      __privateSet$a(obj, member, value);
+      __privateSet$9(obj, member, value);
     },
     get _() {
-      return __privateGet$a(obj, member, getter);
+      return __privateGet$9(obj, member, getter);
     }
   });
   var _taskCount;
@@ -14758,7 +15512,7 @@ ${this.shaders.compute.head}`;
      */
     constructor() {
       /** Private number to assign a unique id to each {@link TaskQueueItem | task queue item} */
-      __privateAdd$c(this, _taskCount, 0);
+      __privateAdd$a(this, _taskCount, 0);
       this.queue = [];
     }
     /**
@@ -14773,7 +15527,7 @@ ${this.shaders.compute.head}`;
         callback,
         order,
         once,
-        id: __privateGet$a(this, _taskCount)
+        id: __privateGet$9(this, _taskCount)
       };
       __privateWrapper(this, _taskCount)._++;
       this.queue.push(task);
@@ -15747,14 +16501,14 @@ ${this.shaders.compute.head}`;
     }
   }
 
-  var __typeError$b = (msg) => {
+  var __typeError$9 = (msg) => {
     throw TypeError(msg);
   };
-  var __accessCheck$b = (obj, member, msg) => member.has(obj) || __typeError$b("Cannot " + msg);
-  var __privateGet$9 = (obj, member, getter) => (__accessCheck$b(obj, member, "read from private field"), member.get(obj));
-  var __privateAdd$b = (obj, member, value) => member.has(obj) ? __typeError$b("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  var __privateSet$9 = (obj, member, value, setter) => (__accessCheck$b(obj, member, "write to private field"), member.set(obj, value), value);
-  var __privateMethod$9 = (obj, member, method) => (__accessCheck$b(obj, member, "access private method"), method);
+  var __accessCheck$9 = (obj, member, msg) => member.has(obj) || __typeError$9("Cannot " + msg);
+  var __privateGet$8 = (obj, member, getter) => (__accessCheck$9(obj, member, "read from private field"), member.get(obj));
+  var __privateAdd$9 = (obj, member, value) => member.has(obj) ? __typeError$9("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$8 = (obj, member, value, setter) => (__accessCheck$9(obj, member, "write to private field"), member.set(obj, value), value);
+  var __privateMethod$7 = (obj, member, method) => (__accessCheck$9(obj, member, "access private method"), method);
   var _shouldUpdateCameraLightsBindGroup, _GPUCameraRenderer_instances, initLights_fn, updateLightsCount_fn;
   class GPUCameraRenderer extends GPURenderer {
     /**
@@ -15781,9 +16535,9 @@ ${this.shaders.compute.head}`;
         context,
         renderPass
       });
-      __privateAdd$b(this, _GPUCameraRenderer_instances);
+      __privateAdd$9(this, _GPUCameraRenderer_instances);
       /** @ignore */
-      __privateAdd$b(this, _shouldUpdateCameraLightsBindGroup);
+      __privateAdd$9(this, _shouldUpdateCameraLightsBindGroup);
       this.type = "GPUCameraRenderer";
       camera = { ...{ fov: 50, near: 0.1, far: 1e3 }, ...camera };
       if (lights !== false) {
@@ -15804,13 +16558,13 @@ ${this.shaders.compute.head}`;
         lights
       };
       this.bindings = {};
-      __privateSet$9(this, _shouldUpdateCameraLightsBindGroup, true);
+      __privateSet$8(this, _shouldUpdateCameraLightsBindGroup, true);
       this.lights = [];
       this.cameraViewport = null;
       this.setCamera(camera);
       this.setCameraBinding();
       if (this.options.lights) {
-        __privateMethod$9(this, _GPUCameraRenderer_instances, initLights_fn).call(this);
+        __privateMethod$7(this, _GPUCameraRenderer_instances, initLights_fn).call(this);
       }
       this.setCameraLightsBindGroup();
     }
@@ -16018,7 +16772,7 @@ ${this.shaders.compute.head}`;
      */
     addLight(light) {
       this.lights.push(light);
-      __privateMethod$9(this, _GPUCameraRenderer_instances, updateLightsCount_fn).call(this, light.type);
+      __privateMethod$7(this, _GPUCameraRenderer_instances, updateLightsCount_fn).call(this, light.type);
     }
     /**
      * Remove a {@link Light} from the {@link lights} array.
@@ -16026,7 +16780,7 @@ ${this.shaders.compute.head}`;
      */
     removeLight(light) {
       this.lights = this.lights.filter((l) => l.uuid !== light.uuid);
-      __privateMethod$9(this, _GPUCameraRenderer_instances, updateLightsCount_fn).call(this, light.type);
+      __privateMethod$7(this, _GPUCameraRenderer_instances, updateLightsCount_fn).call(this, light.type);
     }
     /**
      * Set the lights {@link BufferBinding} based on the {@link lightsBindingParams}.
@@ -16162,7 +16916,7 @@ ${this.shaders.compute.head}`;
             `${this.options.label} (${this.type}): You are adding a light (${lightsType}) to a renderer that should not initially handle lights. The renderer bind group will be re-created. This should be avoided.`
           );
         }
-        __privateMethod$9(this, _GPUCameraRenderer_instances, initLights_fn).call(this);
+        __privateMethod$7(this, _GPUCameraRenderer_instances, initLights_fn).call(this);
         this.cameraLightsBindGroup.destroy();
         this.setCameraLightsBindGroup();
       } else {
@@ -16317,7 +17071,7 @@ ${this.shaders.compute.head}`;
      * Tell our  {@link cameraLightsBindGroup | camera, lights and shadows bind group} to update.
      */
     shouldUpdateCameraLightsBindGroup() {
-      __privateSet$9(this, _shouldUpdateCameraLightsBindGroup, true);
+      __privateSet$8(this, _shouldUpdateCameraLightsBindGroup, true);
     }
     /**
      * Tell our {@link GPUCameraRenderer#bindings.camera | camera buffer binding} that we should update its bindings and update the bind group. Called each time the camera matrices change.
@@ -16332,9 +17086,9 @@ ${this.shaders.compute.head}`;
      * Update the {@link cameraLightsBindGroup | camera and lights BindGroup}.
      */
     updateCameraLightsBindGroup() {
-      if (this.cameraLightsBindGroup && __privateGet$9(this, _shouldUpdateCameraLightsBindGroup)) {
+      if (this.cameraLightsBindGroup && __privateGet$8(this, _shouldUpdateCameraLightsBindGroup)) {
         this.cameraLightsBindGroup.update();
-        __privateSet$9(this, _shouldUpdateCameraLightsBindGroup, false);
+        __privateSet$8(this, _shouldUpdateCameraLightsBindGroup, false);
       }
     }
     /**
@@ -16463,14 +17217,14 @@ ${this.shaders.compute.head}`;
     this.bindings[lightsType].inputs.count.shouldUpdate = true;
   };
 
-  var __typeError$a = (msg) => {
+  var __typeError$8 = (msg) => {
     throw TypeError(msg);
   };
-  var __accessCheck$a = (obj, member, msg) => member.has(obj) || __typeError$a("Cannot " + msg);
-  var __privateGet$8 = (obj, member, getter) => (__accessCheck$a(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
-  var __privateAdd$a = (obj, member, value) => member.has(obj) ? __typeError$a("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  var __privateSet$8 = (obj, member, value, setter) => (__accessCheck$a(obj, member, "write to private field"), member.set(obj, value), value);
-  var __privateMethod$8 = (obj, member, method) => (__accessCheck$a(obj, member, "access private method"), method);
+  var __accessCheck$8 = (obj, member, msg) => member.has(obj) || __typeError$8("Cannot " + msg);
+  var __privateGet$7 = (obj, member, getter) => (__accessCheck$8(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$8 = (obj, member, value) => member.has(obj) ? __typeError$8("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$7 = (obj, member, value, setter) => (__accessCheck$8(obj, member, "write to private field"), member.set(obj, value), value);
+  var __privateMethod$6 = (obj, member, method) => (__accessCheck$8(obj, member, "access private method"), method);
   var _mipsGeneration, _GPUDeviceManager_instances, createSamplers_fn;
   class GPUDeviceManager {
     /**
@@ -16491,7 +17245,7 @@ ${this.shaders.compute.head}`;
       onDeviceDestroyed = (info) => {
       }
     } = {}) {
-      __privateAdd$a(this, _GPUDeviceManager_instances);
+      __privateAdd$8(this, _GPUDeviceManager_instances);
       /** function assigned to the {@link onBeforeRender} callback. */
       this._onBeforeRenderCallback = () => {
       };
@@ -16500,7 +17254,7 @@ ${this.shaders.compute.head}`;
       };
       /** @ignore */
       // mips generation cache handling
-      __privateAdd$a(this, _mipsGeneration);
+      __privateAdd$8(this, _mipsGeneration);
       this.index = 0;
       this.ready = false;
       this.options = {
@@ -16517,7 +17271,7 @@ ${this.shaders.compute.head}`;
       this.gpu = navigator.gpu;
       this.setPipelineManager();
       this.setDeviceObjects();
-      __privateSet$8(this, _mipsGeneration, {
+      __privateSet$7(this, _mipsGeneration, {
         sampler: null,
         module: null,
         pipelineByFormat: {}
@@ -16541,7 +17295,7 @@ ${this.shaders.compute.head}`;
     async init({ adapter = null, device = null } = {}) {
       await this.setAdapterAndDevice({ adapter, device });
       if (this.device) {
-        __privateMethod$8(this, _GPUDeviceManager_instances, createSamplers_fn).call(this);
+        __privateMethod$6(this, _GPUDeviceManager_instances, createSamplers_fn).call(this);
         for (const renderer of this.renderers) {
           if (!renderer.context) {
             renderer.setContext();
@@ -16644,7 +17398,7 @@ ${this.shaders.compute.head}`;
       this.renderers.forEach((renderer) => renderer.loseContext());
       this.bindGroupLayouts.clear();
       this.buffers.clear();
-      __privateSet$8(this, _mipsGeneration, {
+      __privateSet$7(this, _mipsGeneration, {
         sampler: null,
         module: null,
         pipelineByFormat: {}
@@ -16658,7 +17412,7 @@ ${this.shaders.compute.head}`;
     async restoreDevice({ adapter = null, device = null } = {}) {
       await this.setAdapterAndDevice({ adapter, device });
       if (this.device) {
-        __privateMethod$8(this, _GPUDeviceManager_instances, createSamplers_fn).call(this);
+        __privateMethod$6(this, _GPUDeviceManager_instances, createSamplers_fn).call(this);
         this.indirectBuffers.forEach((indirectBuffer) => indirectBuffer.create());
         this.renderers.forEach((renderer) => renderer.restoreContext());
       }
@@ -16799,8 +17553,8 @@ ${this.shaders.compute.head}`;
      */
     generateMips(texture, commandEncoder = null) {
       if (!this.device) return;
-      if (!__privateGet$8(this, _mipsGeneration).module) {
-        __privateGet$8(this, _mipsGeneration).module = this.device.createShaderModule({
+      if (!__privateGet$7(this, _mipsGeneration).module) {
+        __privateGet$7(this, _mipsGeneration).module = this.device.createShaderModule({
           label: "textured quad shaders for mip level generation",
           code: `
             struct VSOutput {
@@ -16838,25 +17592,25 @@ ${this.shaders.compute.head}`;
             }
           `
         });
-        __privateGet$8(this, _mipsGeneration).sampler = this.device.createSampler({
+        __privateGet$7(this, _mipsGeneration).sampler = this.device.createSampler({
           minFilter: "linear",
           magFilter: "linear"
         });
       }
-      if (!__privateGet$8(this, _mipsGeneration).pipelineByFormat[texture.texture.format]) {
-        __privateGet$8(this, _mipsGeneration).pipelineByFormat[texture.texture.format] = this.device.createRenderPipeline({
+      if (!__privateGet$7(this, _mipsGeneration).pipelineByFormat[texture.texture.format]) {
+        __privateGet$7(this, _mipsGeneration).pipelineByFormat[texture.texture.format] = this.device.createRenderPipeline({
           label: "Mip level generator pipeline",
           layout: "auto",
           vertex: {
-            module: __privateGet$8(this, _mipsGeneration).module
+            module: __privateGet$7(this, _mipsGeneration).module
           },
           fragment: {
-            module: __privateGet$8(this, _mipsGeneration).module,
+            module: __privateGet$7(this, _mipsGeneration).module,
             targets: [{ format: texture.texture.format }]
           }
         });
       }
-      const pipeline = __privateGet$8(this, _mipsGeneration).pipelineByFormat[texture.texture.format];
+      const pipeline = __privateGet$7(this, _mipsGeneration).pipelineByFormat[texture.texture.format];
       const encoder = commandEncoder || this.device.createCommandEncoder({
         label: "Mip gen encoder"
       });
@@ -16870,7 +17624,7 @@ ${this.shaders.compute.head}`;
           const bindGroup = this.device.createBindGroup({
             layout: pipeline.getBindGroupLayout(0),
             entries: [
-              { binding: 0, resource: __privateGet$8(this, _mipsGeneration).sampler },
+              { binding: 0, resource: __privateGet$7(this, _mipsGeneration).sampler },
               {
                 binding: 1,
                 resource: texture.texture.createView({
@@ -17002,643 +17756,6 @@ ${this.shaders.compute.head}`;
     this.samplers.forEach((sampler) => {
       sampler.createSampler();
     });
-  };
-
-  var __typeError$9 = (msg) => {
-    throw TypeError(msg);
-  };
-  var __accessCheck$9 = (obj, member, msg) => member.has(obj) || __typeError$9("Cannot " + msg);
-  var __privateAdd$9 = (obj, member, value) => member.has(obj) ? __typeError$9("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  var __privateMethod$7 = (obj, member, method) => (__accessCheck$9(obj, member, "access private method"), method);
-  var _IndirectBuffer_instances, createIndirectBuffer_fn, addGeometryToIndirectMappedBuffer_fn;
-  const indirectBufferEntrySize = 5;
-  class IndirectBuffer {
-    /**
-     * IndirectBuffer constructor.
-     * @param renderer - {@link Renderer} or {@link GPUCurtains} class object used to create this {@link IndirectBuffer}.
-     * @param parameters - {@link IndirectBufferParams | parameters} used to create this {@link IndirectBuffer}.
-     */
-    constructor(renderer, { label = "Indirect buffer", geometries = [], minEntrySize = indirectBufferEntrySize } = {}) {
-      __privateAdd$9(this, _IndirectBuffer_instances);
-      this.type = "IndirectBuffer";
-      this.setRenderer(renderer);
-      this.uuid = generateUUID();
-      this.options = {
-        label,
-        geometries,
-        minEntrySize
-      };
-      this.geometries = /* @__PURE__ */ new Map();
-      this.buffer = null;
-      this.addGeometries(geometries);
-      this.renderer.indirectBuffers.set(this.uuid, this);
-    }
-    /**
-     * Set or reset this {@link IndirectBuffer} {@link IndirectBuffer.renderer | renderer}.
-     * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
-     */
-    setRenderer(renderer) {
-      renderer = isRenderer(renderer, this.type);
-      this.renderer = renderer;
-    }
-    /**
-     * Get the number of unique {@link Geometry} and {@link IndexedGeometry} added to this {@link IndirectBuffer}.
-     * @returns - Number of unique {@link Geometry} and {@link IndexedGeometry} added to this {@link IndirectBuffer}.
-     * @readonly
-     */
-    get size() {
-      return this.geometries.size;
-    }
-    /**
-     * Add multiple {@link Geometry} or {@link IndexedGeometry} to this {@link IndirectBuffer}.
-     * @param geometries - Array of {@link Geometry} or {@link IndexedGeometry} to add to this {@link IndirectBuffer}.
-     */
-    addGeometries(geometries = []) {
-      geometries.forEach((geometry) => this.addGeometry(geometry));
-    }
-    /**
-     * Add a {@link Geometry} or {@link IndexedGeometry} to this {@link IndirectBuffer}.
-     * @param geometry - A {@link Geometry} or {@link IndexedGeometry} to add to this {@link IndirectBuffer}.
-     */
-    addGeometry(geometry) {
-      this.geometries.set(geometry.uuid, geometry);
-    }
-    /**
-     * Get the byte offset in the {@link buffer} at a given index.
-     * @param index - Index to get the byte offset from.
-     * @returns - Byte offset in the {@link buffer} at a given index.
-     */
-    getByteOffsetAtIndex(index = 0) {
-      return index * this.options.minEntrySize * Uint32Array.BYTES_PER_ELEMENT;
-    }
-    /**
-     * Create the {@link buffer} as soon as the {@link Renderer#device | device} is ready.
-     */
-    create() {
-      if (this.renderer.ready) {
-        __privateMethod$7(this, _IndirectBuffer_instances, createIndirectBuffer_fn).call(this);
-      } else {
-        const taskId = this.renderer.onBeforeCommandEncoderCreation.add(
-          () => {
-            if (this.renderer.device) {
-              this.renderer.onBeforeCommandEncoderCreation.remove(taskId);
-              __privateMethod$7(this, _IndirectBuffer_instances, createIndirectBuffer_fn).call(this);
-            }
-          },
-          { once: false }
-        );
-      }
-    }
-    /**
-     * Destroy this {@link IndirectBuffer}. Reset all {@link geometries} {@link Geometry#indirectDraw | indirectDraw} properties and destroy the {@link Buffer}.
-     */
-    destroy() {
-      this.renderer.removeBuffer(this.buffer);
-      this.renderer.indirectBuffers.delete(this.uuid);
-      this.geometries.forEach((geometry) => geometry.indirectDraw = null);
-      this.buffer?.destroy();
-      this.buffer = null;
-      this.geometries = null;
-    }
-  }
-  _IndirectBuffer_instances = new WeakSet();
-  /**
-   * Create the {@link buffer} (or destroy it if it already exists) with the right size, create its {@link GPUBuffer} in a mapped state, add all {@link geometries} attributes to the mapped buffer and tell the {@link geometries} to use this {@link IndirectBuffer}.
-   * @private
-   */
-  createIndirectBuffer_fn = function() {
-    const size = this.getByteOffsetAtIndex(this.geometries.size);
-    if (this.buffer) {
-      this.buffer.destroy();
-      this.buffer.options.size = size;
-    } else {
-      this.buffer = new Buffer({
-        label: this.options.label,
-        size,
-        usage: ["copyDst", "indirect", "storage"],
-        mappedAtCreation: true
-      });
-    }
-    this.buffer.consumers.add(this.uuid);
-    this.buffer.createBuffer(this.renderer);
-    const indirectMappedBuffer = new Uint32Array(this.buffer.GPUBuffer.getMappedRange());
-    let offset = 0;
-    this.geometries.forEach((geometry) => {
-      __privateMethod$7(this, _IndirectBuffer_instances, addGeometryToIndirectMappedBuffer_fn).call(this, geometry, indirectMappedBuffer, offset * this.options.minEntrySize);
-      geometry.useIndirectBuffer({ buffer: this.buffer, offset: this.getByteOffsetAtIndex(offset) });
-      offset++;
-    });
-    this.buffer.GPUBuffer.unmap();
-  };
-  /**
-   * Add a {@link Geometry} or {@link IndexedGeometry} attributes to the {@link buffer} mapped array buffer.
-   * @param geometry - {@link Geometry} or {@link IndexedGeometry} to add the attributes from
-   * @param mappedBuffer - The {@link buffer} mapped array buffer
-   * @param index - Index in the {@link buffer} mapped array buffer at which to add the attributes.
-   * @private
-   */
-  addGeometryToIndirectMappedBuffer_fn = function(geometry, mappedBuffer, index = 0) {
-    if ("indexBuffer" in geometry && geometry.indexBuffer) {
-      mappedBuffer[index] = geometry.indexBuffer.bufferLength;
-      mappedBuffer[index + 1] = geometry.instancesCount;
-      mappedBuffer[index + 2] = 0;
-      mappedBuffer[index + 3] = 0;
-      mappedBuffer[index + 4] = 0;
-    } else {
-      mappedBuffer[index] = geometry.verticesCount;
-      mappedBuffer[index + 1] = geometry.instancesCount;
-      mappedBuffer[index + 2] = 0;
-      mappedBuffer[index + 3] = 0;
-      mappedBuffer[index + 4] = 0;
-    }
-  };
-
-  var __typeError$8 = (msg) => {
-    throw TypeError(msg);
-  };
-  var __accessCheck$8 = (obj, member, msg) => member.has(obj) || __typeError$8("Cannot " + msg);
-  var __privateGet$7 = (obj, member, getter) => (__accessCheck$8(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
-  var __privateAdd$8 = (obj, member, value) => member.has(obj) ? __typeError$8("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  var __privateSet$7 = (obj, member, value, setter) => (__accessCheck$8(obj, member, "write to private field"), member.set(obj, value), value);
-  var __privateMethod$6 = (obj, member, method) => (__accessCheck$8(obj, member, "access private method"), method);
-  var _useProjection, _ready, _RenderBundle_instances, setBinding_fn, patchBindingOffset_fn, onSizeChanged_fn, setDescriptor_fn, encodeRenderCommands_fn, cleanUp_fn;
-  let bundleIndex = 0;
-  class RenderBundle {
-    /**
-     * RenderBundle constructor
-     * @param renderer - {@link Renderer} or {@link GPUCurtains} class object used to create this {@link RenderBundle}.
-     * @param parameters - {@link RenderBundleParams | parameters} use to create this {@link RenderBundle}.
-     */
-    constructor(renderer, {
-      label,
-      renderPass = null,
-      renderOrder = 0,
-      transparent = null,
-      visible = true,
-      size = 0,
-      useBuffer = false,
-      useIndirectDraw = false
-    } = {}) {
-      __privateAdd$8(this, _RenderBundle_instances);
-      /** @ignore */
-      // whether this render bundle should be added to the 'projected' or 'unProjected' Scene stacks.
-      __privateAdd$8(this, _useProjection);
-      /** @ignore */
-      __privateAdd$8(this, _ready);
-      this.type = "RenderBundle";
-      renderer = isRenderer(renderer, this.type);
-      this.uuid = generateUUID();
-      Object.defineProperty(this, "index", { value: bundleIndex++ });
-      this.renderOrder = renderOrder;
-      this.transparent = transparent;
-      this.visible = visible;
-      label = label ?? this.type + this.index;
-      this.options = {
-        label,
-        renderPass,
-        useBuffer,
-        size,
-        useIndirectDraw
-      };
-      this.meshes = /* @__PURE__ */ new Map();
-      this.encoder = null;
-      this.bundle = null;
-      __privateSet$7(this, _ready, false);
-      this.binding = null;
-      this.indirectBuffer = null;
-      this.setRenderer(renderer);
-      if (this.options.useIndirectDraw) {
-        this.indirectBuffer = new IndirectBuffer(this.renderer);
-      }
-      if (this.options.useBuffer) {
-        __privateSet$7(this, _useProjection, true);
-        if (this.options.size !== 0) {
-          __privateMethod$6(this, _RenderBundle_instances, setBinding_fn).call(this);
-        } else {
-          this.options.useBuffer = false;
-          if (!this.renderer.production) {
-            throwWarning(
-              `${this.options.label} (${this.type}): Cannot use a single transformation buffer if the size parameter has not been set upon creation.`
-            );
-          }
-        }
-      }
-    }
-    /**
-     * Set the {@link RenderBundle} {@link RenderBundle.renderer | renderer} and eventually remove/add to the {@link core/scenes/Scene.Scene | Scene}.
-     * @param renderer - new {@link Renderer} to use.
-     */
-    setRenderer(renderer) {
-      if (this.renderer) {
-        this.removeFromScene();
-        this.renderer.renderBundles.delete(this.uuid);
-      }
-      this.renderer = renderer;
-      this.renderer.renderBundles.set(this.uuid, this);
-      if (this.meshes.size >= 1) {
-        this.addToScene();
-      }
-    }
-    /**
-     * Add our {@link RenderBundle} to the {@link core/scenes/Scene.Scene | Scene}.
-     * Once we have at least one mesh in our {@link meshes} Map, we can add the {@link RenderBundle} to the {@link core/scenes/Scene.Scene | Scene} at the right place.
-     */
-    addToScene() {
-      const firstEntry = this.meshes.entries().next();
-      if (firstEntry && firstEntry.value && firstEntry.value.length && firstEntry.value[1]) {
-        const mesh = firstEntry.value[1];
-        const isTransparent = !!mesh.transparent;
-        if (this.transparent === null) {
-          this.transparent = isTransparent;
-        }
-        if (mesh.constructor.name !== "ShaderPass" && mesh.constructor.name !== "PingPongPlane") {
-          const { useProjection } = mesh.material.options.rendering;
-          if (this.useProjection === null) {
-            this.useProjection = useProjection;
-          }
-          const projectionStack = this.renderer.scene.getMeshProjectionStack(mesh);
-          this.renderer.scene.addRenderBundle(this, projectionStack);
-        } else {
-          this.size = 1;
-          mesh.renderOrder = this.renderOrder;
-          this.useProjection = false;
-        }
-      }
-    }
-    /**
-     * Remove our {@link RenderBundle} from the {@link core/scenes/Scene.Scene | Scene}.
-     */
-    removeFromScene() {
-      this.renderer.scene.removeRenderBundle(this);
-    }
-    /**
-     * Get whether our {@link RenderBundle} handles {@link core/renderers/GPURenderer.ProjectedMesh | projected meshes} or not (useful to know in which {@link core/scenes/Scene.Scene | Scene} stack it has been added.
-     * @readonly
-     * @returns - Whether our {@link RenderBundle} handles {@link core/renderers/GPURenderer.ProjectedMesh | projected meshes} or not.
-     */
-    get useProjection() {
-      return __privateGet$7(this, _useProjection);
-    }
-    /**
-     * Set whether our {@link RenderBundle} handles {@link core/renderers/GPURenderer.ProjectedMesh | projected meshes} or not.
-     * @param value - New projection value.
-     */
-    set useProjection(value) {
-      __privateSet$7(this, _useProjection, value);
-    }
-    /**
-     * Set the new {@link RenderBundle} size. Should be used before adding or removing {@link meshes} to the {@link RenderBundle} if the {@link bundle} has already been created (especially if it's using a {@link binding}).
-     * @param value - New size to set.
-     */
-    set size(value) {
-      if (value !== this.options.size) {
-        if (this.ready && !this.renderer.production) {
-          throwWarning(
-            `${this.options.label} (${this.type}): The content of a render bundle is meant to be static. You should not change its size after it has been created.`
-          );
-        }
-        this.ready = false;
-        __privateMethod$6(this, _RenderBundle_instances, onSizeChanged_fn).call(this, value);
-        this.options.size = value;
-      }
-    }
-    /**
-     * Get whether our {@link RenderBundle} is ready.
-     * @readonly
-     * @returns - Whether our {@link RenderBundle} is ready.
-     */
-    get ready() {
-      return this.renderer.ready && __privateGet$7(this, _ready);
-    }
-    /**
-     * Set whether our {@link RenderBundle} is ready and encode it if needed.
-     * @param value - New ready state.
-     */
-    set ready(value) {
-      if (value && !this.ready) {
-        const init = () => {
-          this.size = this.meshes.size;
-          if (this.options.useIndirectDraw) {
-            this.meshes.forEach((mesh) => {
-              this.indirectBuffer.addGeometry(mesh.geometry);
-            });
-            this.indirectBuffer.create();
-          }
-          __privateMethod$6(this, _RenderBundle_instances, encodeRenderCommands_fn).call(this);
-          __privateSet$7(this, _ready, value);
-        };
-        if (this.renderer.device) {
-          init();
-        } else {
-          const taskId = this.renderer.onBeforeCommandEncoderCreation.add(
-            () => {
-              if (this.renderer.device) {
-                this.renderer.onBeforeCommandEncoderCreation.remove(taskId);
-                init();
-              }
-            },
-            { once: false }
-          );
-        }
-      } else if (!value && this.ready) {
-        this.bundle = null;
-        __privateSet$7(this, _ready, value);
-      }
-    }
-    /**
-     * Called by the {@link core/scenes/Scene.Scene | Scene} to eventually add a {@link RenderedMesh | mesh} to this {@link RenderBundle}. Can set the {@link RenderBundleOptions#renderPass | render pass} if needed. If the {@link RenderBundleOptions#renderPass | render pass} is already set and the mesh output {@link RenderPass} does not match, it won't be added.
-     * @param mesh - {@link RenderedMesh | Mesh} to eventually add.
-     * @param outputPass - The mesh output {@link RenderPass}.
-     */
-    addMesh(mesh, outputPass) {
-      if (!this.options.renderPass) {
-        this.options.renderPass = outputPass;
-      } else if (outputPass.uuid !== this.options.renderPass.uuid) {
-        if (!this.renderer.production) {
-          throwWarning(
-            `${this.options.label} (${this.type}): Cannot add Mesh ${mesh.options.label} to this render bundle because the output render passes do not match.`
-          );
-        }
-        mesh.renderBundle = null;
-        return;
-      }
-      if (mesh.options.stencil) {
-        if (!this.renderer.production) {
-          throwWarning(
-            `${this.options.label} (${this.type}): Cannot add Mesh ${mesh.options.label} to this render bundle because stencil operations are not supported by render bundles.`
-          );
-        }
-        mesh.renderBundle = null;
-        return;
-      }
-      if (this.ready && !this.renderer.production) {
-        throwWarning(
-          `${this.options.label} (${this.type}): The content of a render bundle is meant to be static. You should not add meshes to it after it has been created (mesh added: ${mesh.options.label}).`
-        );
-      }
-      this.ready = false;
-      this.meshes.set(mesh.uuid, mesh);
-      if (this.meshes.size === 1) {
-        this.addToScene();
-      }
-    }
-    /**
-     * Remove any {@link RenderedMesh | rendered mesh} from this {@link RenderBundle}.
-     * @param mesh - {@link RenderedMesh | Mesh} to remove.
-     */
-    removeSceneObject(mesh) {
-      if (this.ready && !this.renderer.production) {
-        throwWarning(
-          `${this.options.label} (${this.type}): The content of a render bundle is meant to be static. You should not remove meshes from it after it has been created (mesh removed: ${mesh.options.label}).`
-        );
-      }
-      this.ready = false;
-      this.meshes.delete(mesh.uuid);
-      mesh.setRenderBundle(null, false);
-      if (this.options.useIndirectDraw) {
-        mesh.geometry.indirectDraw = null;
-      }
-    }
-    /**
-     * Remove a {@link SceneStackedMesh | scene stacked mesh} from this {@link RenderBundle}.
-     * @param mesh - {@link SceneStackedMesh | Scene stacked mesh} to remove.
-     * @param keepMesh - Whether to preserve the mesh in order to render it normally again. Default to `true`.
-     */
-    removeMesh(mesh, keepMesh = true) {
-      this.removeSceneObject(mesh);
-      if (keepMesh && mesh.type !== "ShaderPass" && mesh.type !== "PingPongPlane") {
-        this.renderer.scene.addMesh(mesh);
-      }
-      if (this.meshes.size === 0) {
-        this.renderer.scene.removeRenderBundle(this);
-      }
-    }
-    /**
-     * Update the {@link binding} buffer if needed.
-     */
-    updateBinding() {
-      if (this.binding && this.binding.shouldUpdate && this.binding.buffer.GPUBuffer) {
-        this.renderer.queueWriteBuffer(this.binding.buffer.GPUBuffer, 0, this.binding.arrayBuffer);
-        this.binding.shouldUpdate = false;
-      }
-    }
-    /**
-     * If one of the {@link meshes} is using a {@link core/textures/Texture.Texture | Texture} dependent of the {@link renderer}, invalidate the {@link RenderBundle} in order to resize the {@link core/textures/Texture.Texture | Texture}.
-     */
-    resize() {
-      for (const [_uuid, mesh] of this.meshes) {
-        const hasRenderTexture = mesh.textures.find((texture) => !texture.options.fixedSize);
-        if (hasRenderTexture) {
-          this.ready = false;
-          break;
-        }
-      }
-    }
-    /**
-     * Render the {@link RenderBundle}.
-     *
-     * If it is ready, execute each {@link core/meshes/Mesh.Mesh.onBeforeRenderPass | mesh onBeforeRenderPass method}, {@link updateBinding | update the binding} if needed, execute the {@link bundle} and finally execute each {@link core/meshes/Mesh.Mesh.onAfterRenderPass | mesh onAfterRenderPass method}.
-     *
-     * If not, just render its {@link meshes} as usual and check whether they are all ready and if we can therefore encode our {@link RenderBundle}.
-     * @param pass - {@link GPURenderPassEncoder} to use.
-     */
-    render(pass) {
-      if (!this.renderer.ready) return;
-      if (this.ready && this.bundle && this.visible) {
-        this.meshes.forEach((mesh) => {
-          mesh.onBeforeRenderPass();
-        });
-        this.updateBinding();
-        this.renderer.pipelineManager.resetCurrentPipeline();
-        if (!this.renderer.production) {
-          pass.pushDebugGroup(`${this.options.label}: execute bundle`);
-        }
-        pass.executeBundles([this.bundle]);
-        if (!this.renderer.production) {
-          pass.popDebugGroup();
-        }
-        this.renderer.pipelineManager.resetCurrentPipeline();
-        this.meshes.forEach((mesh) => {
-          mesh.onAfterRenderPass();
-        });
-      }
-      if (!this.ready) {
-        let isReady = true;
-        for (const [_key, mesh] of this.meshes) {
-          mesh.render(pass);
-          if (!mesh.ready) {
-            isReady = false;
-            break;
-          }
-          for (const texture of mesh.textures) {
-            if (texture instanceof MediaTexture && !texture.sourcesUploaded) {
-              isReady = false;
-              break;
-            }
-          }
-        }
-        this.ready = isReady;
-      }
-    }
-    /**
-     * Called when the {@link Renderer#device | WebGPU device} has been lost.
-     * Just set the {@link ready} flag to `false` to eventually invalidate the {@link bundle}.
-     */
-    loseContext() {
-      this.ready = false;
-    }
-    /**
-     * Empty the {@link RenderBundle}. Can eventually re-add the {@link SceneStackedMesh | scene stacked meshes} to the {@link core/scenes/Scene.Scene | Scene} in order to render them normally again.
-     * @param keepMeshes - Whether to preserve the {@link meshes} in order to render them normally again. Default to `true`.
-     */
-    empty(keepMeshes = true) {
-      this.ready = false;
-      this.meshes.forEach((mesh) => {
-        this.removeMesh(mesh, keepMeshes);
-      });
-      this.size = 0;
-    }
-    /**
-     * Remove the {@link RenderBundle}, i.e. destroy it while preserving the {@link SceneStackedMesh | scene stacked meshes} by re-adding them to the {@link core/scenes/Scene.Scene | Scene}.
-     */
-    remove() {
-      this.empty(true);
-      __privateMethod$6(this, _RenderBundle_instances, cleanUp_fn).call(this);
-    }
-    /**
-     * Remove the {@link RenderBundle} from our {@link core/scenes/Scene.Scene | Scene}, {@link RenderedMesh#remove | remove the meshes}, eventually destroy the {@link binding} and remove the {@link RenderBundle} from the {@link Renderer}.
-     */
-    destroy() {
-      this.ready = false;
-      this.meshes.forEach((mesh) => {
-        mesh.remove();
-      });
-      this.size = 0;
-      __privateMethod$6(this, _RenderBundle_instances, cleanUp_fn).call(this);
-    }
-  }
-  _useProjection = new WeakMap();
-  _ready = new WeakMap();
-  _RenderBundle_instances = new WeakSet();
-  /**
-   * Set the {@link binding} and patches its array and buffer size if needed.
-   * @private
-   */
-  setBinding_fn = function() {
-    this.binding = new BufferBinding({
-      label: this.options.label + " matrices",
-      name: "matrices",
-      visibility: ["vertex", "fragment"],
-      struct: {
-        model: {
-          type: "array<mat4x4f>",
-          value: new Float32Array(16 * this.options.size)
-        },
-        modelView: {
-          type: "array<mat4x4f>",
-          value: new Float32Array(16 * this.options.size)
-        },
-        normal: {
-          type: "array<mat3x3f>",
-          value: new Float32Array(12 * this.options.size)
-        }
-      }
-    });
-    __privateMethod$6(this, _RenderBundle_instances, patchBindingOffset_fn).call(this, this.options.size);
-  };
-  /**
-   * Path the {@link binding} array and buffer size with the minimum {@link Renderer#device | device} buffer offset alignment.
-   * @param size - new {@link binding} size to use.
-   * @private
-   */
-  patchBindingOffset_fn = function(size) {
-    const minOffset = this.renderer.device?.limits.minUniformBufferOffsetAlignment || 256;
-    if (this.binding.arrayBufferSize < size * minOffset) {
-      this.binding.arrayBufferSize = size * minOffset;
-      this.binding.arrayBuffer = new ArrayBuffer(this.binding.arrayBufferSize);
-      this.binding.buffer.size = this.binding.arrayBuffer.byteLength;
-    }
-  };
-  /**
-   * Called each time the {@link RenderBundle} size has actually changed.
-   * @param newSize - new {@link RenderBundle} size to set.
-   * @private
-   */
-  onSizeChanged_fn = function(newSize) {
-    if (newSize > this.options.size && this.binding) {
-      __privateMethod$6(this, _RenderBundle_instances, patchBindingOffset_fn).call(this, newSize);
-      if (this.binding.buffer.GPUBuffer) {
-        this.binding.buffer.GPUBuffer.destroy();
-        this.binding.buffer.createBuffer(this.renderer, {
-          label: this.binding.options.label,
-          usage: [
-            ...["copySrc", "copyDst", this.binding.bindingType],
-            ...this.binding.options.usage
-          ]
-        });
-        let offset = 0;
-        this.meshes.forEach((mesh) => {
-          mesh.patchRenderBundleBinding(offset);
-          offset++;
-        });
-        this.binding.shouldUpdate = true;
-      }
-    }
-  };
-  /**
-   * Set the {@link descriptor} based on the {@link RenderBundleOptions#renderPass | render pass}.
-   * @private
-   */
-  setDescriptor_fn = function() {
-    this.descriptor = {
-      ...this.options.renderPass.options.colorAttachments && {
-        colorFormats: this.options.renderPass.options.colorAttachments.map(
-          (colorAttachment) => colorAttachment.targetFormat
-        )
-      },
-      ...this.options.renderPass.options.useDepth && {
-        depthStencilFormat: this.options.renderPass.options.depthFormat
-      },
-      sampleCount: this.options.renderPass.options.sampleCount
-    };
-  };
-  /**
-   * Create the {@link descriptor}, {@link encoder} and {@link bundle} used by this {@link RenderBundle}.
-   * @private
-   */
-  encodeRenderCommands_fn = function() {
-    __privateMethod$6(this, _RenderBundle_instances, setDescriptor_fn).call(this);
-    this.renderer.pipelineManager.resetCurrentPipeline();
-    this.encoder = this.renderer.device.createRenderBundleEncoder({
-      ...this.descriptor,
-      label: this.options.label + " (encoder)"
-    });
-    if (!this.renderer.production) {
-      this.encoder.pushDebugGroup(`${this.options.label}: create encoder`);
-    }
-    this.meshes.forEach((mesh) => {
-      mesh.material.render(this.encoder);
-      mesh.geometry.render(this.encoder);
-    });
-    if (!this.renderer.production) {
-      this.encoder.popDebugGroup();
-    }
-    this.bundle = this.encoder.finish({ label: this.options.label + " (bundle)" });
-    this.renderer.pipelineManager.resetCurrentPipeline();
-  };
-  /**
-   * Destroy the {@link binding} buffer if needed and remove the {@link RenderBundle} from the {@link Renderer}.
-   * @private
-   */
-  cleanUp_fn = function() {
-    if (this.binding) {
-      this.renderer.removeBuffer(this.binding.buffer);
-      this.binding.buffer.destroy();
-    }
-    if (this.indirectBuffer) {
-      this.indirectBuffer.destroy();
-    }
-    this.renderer.renderBundles.delete(this.uuid);
   };
 
   const getDefaultShaderPassFragmentCode = (
@@ -20039,21 +20156,21 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
   class DOMObject3D extends ProjectedObject3D {
     /**
      * DOMObject3D constructor
-     * @param renderer - {@link GPUCurtainsRenderer} object or {@link GPUCurtains} class object used to create this {@link DOMObject3D}
-     * @param element - {@link HTMLElement} or string representing an {@link HTMLElement} selector used to scale and position the {@link DOMObject3D}
-     * @param parameters - {@link DOMObject3DParams | parameters} used to create this {@link DOMObject3D}
+     * @param renderer - {@link GPUCurtainsRenderer} object or {@link GPUCurtains} class object used to create this {@link DOMObject3D}.
+     * @param element - {@link HTMLElement} or string representing an {@link HTMLElement} selector used to scale and position the {@link DOMObject3D}.
+     * @param parameters - {@link DOMObject3DParams | parameters} used to create this {@link DOMObject3D}.
      */
     constructor(renderer, element, parameters = {}) {
       super(renderer);
-      /** Private {@link Vec3 | vector} used to keep track of the actual {@link DOMObject3DTransforms#position.world | world position} accounting the {@link DOMObject3DTransforms#position.document | additional document translation} converted into world space */
+      /** Private {@link Vec3 | vector} used to keep track of the actual {@link DOMObject3DTransforms#position.world | world position} accounting the {@link DOMObject3DTransforms#position.document | additional document translation} converted into world space. */
       __privateAdd$7(this, _DOMObjectWorldPosition, new Vec3());
-      /** Private {@link Vec3 | vector} used to keep track of the actual {@link DOMObject3D} world scale accounting the {@link DOMObject3D#size.world | DOMObject3D world size} */
+      /** Private {@link Vec3 | vector} used to keep track of the actual {@link DOMObject3D} world scale accounting the {@link DOMObject3D#size.world | DOMObject3D world size}. */
       __privateAdd$7(this, _DOMObjectWorldScale, new Vec3(1));
       /** Private number representing the scale ratio of the {@link DOMObject3D} along Z axis to apply. Since it can be difficult to guess the most accurate scale along the Z axis of an object mapped to 2D coordinates, this helps with adjusting the scale along the Z axis. */
       __privateAdd$7(this, _DOMObjectDepthScaleRatio, 1);
       /** Helper {@link Box3 | bounding box} used to map the 3D object onto the 2D DOM element. */
       this.boundingBox = new Box3(new Vec3(-1), new Vec3(1));
-      /** function assigned to the {@link onAfterDOMElementResize} callback */
+      /** function assigned to the {@link onAfterDOMElementResize} callback. */
       this._onAfterDOMElementResizeCallback = () => {
       };
       renderer = isCurtainsRenderer(renderer, "DOMObject3D");
@@ -20094,8 +20211,8 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       this.renderer.domObjects.push(this);
     }
     /**
-     * Set the {@link domElement | DOM Element}
-     * @param element - {@link HTMLElement} or string representing an {@link HTMLElement} selector to use
+     * Set the {@link domElement | DOM Element}.
+     * @param element - {@link HTMLElement} or string representing an {@link HTMLElement} selector to use.
      */
     setDOMElement(element) {
       this.domElement = new DOMElement({
@@ -20106,7 +20223,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       this.updateSizeAndPosition();
     }
     /**
-     * Update size and position when the {@link domElement | DOM Element} position changed
+     * Update size and position when the {@link domElement | DOM Element} position changed.
      */
     onPositionChanged() {
       if (this.watchScroll) {
@@ -20114,8 +20231,8 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       }
     }
     /**
-     * Reset the {@link domElement | DOMElement}
-     * @param element - the new {@link HTMLElement} or string representing an {@link HTMLElement} selector to use
+     * Reset the {@link domElement | DOMElement}.
+     * @param element - The new {@link HTMLElement} or string representing an {@link HTMLElement} selector to use.
      */
     resetDOMElement(element) {
       if (this.domElement) {
@@ -20124,8 +20241,8 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       this.setDOMElement(element);
     }
     /**
-     * Resize the {@link DOMObject3D}
-     * @param boundingRect - new {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}
+     * Resize the {@link DOMObject3D}.
+     * @param boundingRect - New {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}.
      */
     resize(boundingRect = null) {
       if (!boundingRect && (!this.domElement || this.domElement?.isResizing)) return;
@@ -20134,7 +20251,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
     }
     /* BOUNDING BOXES GETTERS */
     /**
-     * Get the {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}
+     * Get the {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}.
      * @readonly
      */
     get boundingRect() {
@@ -20151,7 +20268,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
     }
     /* TRANSFOMS */
     /**
-     * Set our transforms properties and {@link Vec3#onChange | onChange vector} callbacks
+     * Set our transforms properties and {@link Vec3#onChange | onChange vector} callbacks.
      */
     setTransforms() {
       super.setTransforms();
@@ -20162,69 +20279,69 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       this.transformOrigin.onChange(() => this.setWorldTransformOrigin());
     }
     /**
-     * Get the {@link DOMObject3DTransforms#position.document | additional translation relative to the document}
+     * Get the {@link DOMObject3DTransforms#position.document | additional translation relative to the document}.
      */
     get documentPosition() {
       return this.transforms.position.document;
     }
     /**
-     * Set the {@link DOMObject3DTransforms#position.document | additional translation relative to the document}
-     * @param value - additional translation relative to the document to apply
+     * Set the {@link DOMObject3DTransforms#position.document | additional translation relative to the document}.
+     * @param value - Additional translation relative to the document to apply.
      */
     set documentPosition(value) {
       this.transforms.position.document = value;
       this.applyPosition();
     }
     /**
-     * Get the {@link domElement | DOM element} scale in world space
+     * Get the {@link domElement | DOM element} scale in world space.
      * @readonly
      */
     get DOMObjectWorldScale() {
       return __privateGet$6(this, _DOMObjectWorldScale).clone();
     }
     /**
-     * Get the {@link DOMObject3D} scale in world space (accounting for {@link scale})
+     * Get the {@link DOMObject3D} scale in world space (accounting for {@link scale}).
      * @readonly
      */
     get worldScale() {
       return this.DOMObjectWorldScale.multiply(this.scale);
     }
     /**
-     * Get the {@link DOMObject3D} position in world space
+     * Get the {@link DOMObject3D} position in world space.
      * @readonly
      */
     get worldPosition() {
       return __privateGet$6(this, _DOMObjectWorldPosition).clone();
     }
     /**
-     * Get the {@link DOMObject3D} transform origin relative to the {@link DOMObject3D}
+     * Get the {@link DOMObject3D} transform origin relative to the {@link DOMObject3D}.
      */
     get transformOrigin() {
       return this.transforms.origin.model;
     }
     /**
-     * Set the {@link DOMObject3D} transform origin relative to the {@link DOMObject3D}
-     * @param value - new transform origin
+     * Set the {@link DOMObject3D} transform origin relative to the {@link DOMObject3D}.
+     * @param value - New transform origin.
      */
     set transformOrigin(value) {
       this.transforms.origin.model = value;
       this.setWorldTransformOrigin();
     }
     /**
-     * Get the {@link DOMObject3D} transform origin in world space
+     * Get the {@link DOMObject3D} transform origin in world space.
      */
     get worldTransformOrigin() {
       return this.transforms.origin.world;
     }
     /**
-     * Set the {@link DOMObject3D} transform origin in world space
-     * @param value - new world space transform origin
+     * Set the {@link DOMObject3D} transform origin in world space.
+     * @param value - New world space transform origin.
      */
     set worldTransformOrigin(value) {
       this.transforms.origin.world = value;
     }
     /**
-     * Check whether at least one of the matrix should be updated
+     * Check whether at least one of the matrix should be updated.
      */
     shouldUpdateMatrices() {
       super.shouldUpdateMatrices();
@@ -20241,7 +20358,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       this.size.shouldUpdate = true;
     }
     /**
-     * Update the {@link DOMObject3D} sizes and position
+     * Update the {@link DOMObject3D} sizes and position.
      */
     updateSizeAndPosition() {
       this.setWorldSizes();
@@ -20249,7 +20366,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       this.shouldUpdateModelMatrix();
     }
     /**
-     * Compute the {@link DOMObject3D} world position using its world position and document translation converted to world space
+     * Compute the {@link DOMObject3D} world position using its world position and document translation converted to world space.
      */
     applyDocumentPosition() {
       let worldPosition = new Vec3(0, 0, 0);
@@ -20263,7 +20380,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       );
     }
     /**
-     * Apply the transform origin and set the {@link DOMObject3D} world transform origin
+     * Apply the transform origin and set the {@link DOMObject3D} world transform origin.
      */
     applyTransformOrigin() {
       if (!this.size) return;
@@ -20272,7 +20389,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
     }
     /* MATRICES */
     /**
-     * Update the {@link modelMatrix | model matrix} accounting the {@link DOMObject3D} world position and {@link DOMObject3D} world scale
+     * Update the {@link modelMatrix | model matrix} accounting the {@link DOMObject3D} world position and {@link DOMObject3D} world scale.
      */
     updateModelMatrix() {
       this.modelMatrix.composeFromOrigin(
@@ -20285,8 +20402,8 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       this.shouldUpdateWorldMatrix();
     }
     /**
-     * Convert a document position {@link Vec3 | vector} to a world position {@link Vec3 | vector}
-     * @param vector - document position {@link Vec3 | vector} converted to world space
+     * Convert a document position {@link Vec3 | vector} to a world position {@link Vec3 | vector}.
+     * @param vector - Document position {@link Vec3 | vector} converted to world space.
      */
     documentToWorldSpace(vector = new Vec3()) {
       return new Vec3(
@@ -20296,7 +20413,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       );
     }
     /**
-     * Compute the {@link DOMObject3D#size | world sizes}
+     * Compute the {@link DOMObject3D#size | world sizes}.
      */
     computeWorldSizes() {
       const containerBoundingRect = this.renderer.boundingRect;
@@ -20333,7 +20450,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       );
     }
     /**
-     * Compute and set the {@link DOMObject3D#size.world | world size} and set the {@link DOMObject3D} world transform origin
+     * Compute and set the {@link DOMObject3D#size.world | world size} and set the {@link DOMObject3D} world transform origin.
      */
     setWorldSizes() {
       this.computeWorldSizes();
@@ -20341,7 +20458,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       this.setWorldTransformOrigin();
     }
     /**
-     * Set the {@link worldScale} accounting for scaled world size and {@link DOMObjectDepthScaleRatio}
+     * Set the {@link worldScale} accounting for scaled world size and {@link DOMObjectDepthScaleRatio}.
      */
     setWorldScale() {
       __privateGet$6(this, _DOMObjectWorldScale).set(
@@ -20353,14 +20470,14 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
     }
     /**
      * Set {@link DOMObjectDepthScaleRatio}. Since it can be difficult to guess the most accurate scale along the Z axis of an object mapped to 2D coordinates, this helps with adjusting the scale along the Z axis.
-     * @param value - depth scale ratio value to use
+     * @param value - Depth scale ratio value to use.
      */
     set DOMObjectDepthScaleRatio(value) {
       __privateSet$6(this, _DOMObjectDepthScaleRatio, value);
       this.setWorldScale();
     }
     /**
-     * Set the {@link DOMObject3D} world transform origin and tell the matrices to update
+     * Set the {@link DOMObject3D} world transform origin and tell the matrices to update.
      */
     setWorldTransformOrigin() {
       this.transforms.origin.world = new Vec3(
@@ -20373,8 +20490,8 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       this.shouldUpdateMatrixStack();
     }
     /**
-     * Update the {@link domElement | DOM Element} scroll position
-     * @param delta - last {@link utils/ScrollManager.ScrollManager.delta | scroll delta values}
+     * Update the {@link domElement | DOM Element} scroll position.
+     * @param delta - Last {@link utils/ScrollManager.ScrollManager.delta | scroll delta values}.
      */
     updateScrollPosition(delta = { x: 0, y: 0 }) {
       if (delta.x || delta.y) {
@@ -20383,8 +20500,8 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
     }
     /**
      * Callback to execute just after the {@link domElement} has been resized.
-     * @param callback - callback to run just after {@link domElement} has been resized
-     * @returns - our {@link DOMObject3D}
+     * @param callback - Callback to run just after {@link domElement} has been resized.
+     * @returns - Our {@link DOMObject3D}.
      */
     onAfterDOMElementResize(callback) {
       if (callback) {
@@ -20393,7 +20510,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       return this;
     }
     /**
-     * Destroy our {@link DOMObject3D}
+     * Destroy our {@link DOMObject3D}.
      */
     destroy() {
       super.destroy();

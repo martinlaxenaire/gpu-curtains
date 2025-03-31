@@ -12,7 +12,7 @@ import { Mesh } from '../meshes/Mesh';
 /**
  * Base parameters used to create a {@link PointShadow}.
  */
-export interface PointShadowParams extends ShadowBaseParams {
+export interface PointShadowParams extends Omit<ShadowBaseParams, 'useRenderBundle'> {
     /** {@link PointLight} used to create the {@link PointShadow}. */
     light: PointLight;
 }
@@ -45,6 +45,11 @@ export declare class PointShadow extends Shadow {
      * Set or reset this {@link PointShadow} {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      */
     setRendererBinding(): void;
+    /**
+     * Set the parameters and start casting shadows. Force not using a {@link core/renderPasses/RenderBundle.RenderBundle | RenderBundle} since we'll need to swap faces bind groups during render.
+     * @param parameters - Parameters to use for this {@link PointShadow}.
+     */
+    cast(parameters?: Omit<PointShadowParams, "light">): void;
     /**
      * Set the {@link depthComparisonSampler}, {@link depthTexture}, {@link depthPassTarget}, compute the {@link PointShadow#camera.projectionMatrix | camera projection matrix} and start rendering to the shadow map.
      */

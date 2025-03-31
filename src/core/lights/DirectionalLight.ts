@@ -115,6 +115,11 @@ export class DirectionalLight extends Light {
       this.lookAt(this.target)
     })
 
+    // if target is at origin, force look at
+    if (this.target.lengthSq() === 0) {
+      this.lookAt(this.target)
+    }
+
     this.parent = this.renderer.scene
 
     this.shadow = new DirectionalShadow(this.renderer, {

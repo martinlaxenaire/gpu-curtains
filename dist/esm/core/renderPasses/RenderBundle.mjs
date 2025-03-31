@@ -319,15 +319,14 @@ class RenderBundle {
         mesh.render(pass);
         if (!mesh.ready) {
           isReady = false;
-          break;
         }
         for (const texture of mesh.textures) {
           if (texture instanceof MediaTexture && !texture.sourcesUploaded) {
             isReady = false;
-            break;
           }
         }
       }
+      this.updateBinding();
       this.ready = isReady;
     }
   }
@@ -407,6 +406,7 @@ patchBindingOffset_fn = function(size) {
   if (this.binding.arrayBufferSize < size * minOffset) {
     this.binding.arrayBufferSize = size * minOffset;
     this.binding.arrayBuffer = new ArrayBuffer(this.binding.arrayBufferSize);
+    this.binding.arrayView = new DataView(this.binding.arrayBuffer, 0, this.binding.arrayBufferSize);
     this.binding.buffer.size = this.binding.arrayBuffer.byteLength;
   }
 };
@@ -418,6 +418,11 @@ patchBindingOffset_fn = function(size) {
 onSizeChanged_fn = function(newSize) {
   if (newSize > this.options.size && this.binding) {
     __privateMethod(this, _RenderBundle_instances, patchBindingOffset_fn).call(this, newSize);
+    let offset = 0;
+    this.meshes.forEach((mesh) => {
+      mesh.patchRenderBundleBinding(offset);
+      offset++;
+    });
     if (this.binding.buffer.GPUBuffer) {
       this.binding.buffer.GPUBuffer.destroy();
       this.binding.buffer.createBuffer(this.renderer, {
@@ -426,11 +431,6 @@ onSizeChanged_fn = function(newSize) {
           ...["copySrc", "copyDst", this.binding.bindingType],
           ...this.binding.options.usage
         ]
-      });
-      let offset = 0;
-      this.meshes.forEach((mesh) => {
-        mesh.patchRenderBundleBinding(offset);
-        offset++;
       });
       this.binding.shouldUpdate = true;
     }

@@ -14,6 +14,7 @@ import { VertexShaderInputBaseParams } from '../shaders/full/vertex/get-vertex-s
 import { Mesh } from '../meshes/Mesh';
 import { Geometry } from '../geometries/Geometry';
 import { Vec3 } from '../../math/Vec3';
+import { RenderBundle } from '../renderPasses/RenderBundle';
 /** Defines all types of shadows. */
 export type ShadowsType = 'directionalShadows' | 'pointShadows' | 'spotShadows';
 /** @ignore */
@@ -36,6 +37,8 @@ export interface ShadowBaseParams {
     depthTextureFormat?: GPUTextureFormat;
     /** Whether the shadow should be automatically rendered each frame or not. Should be set to `false` if the scene is static and be rendered manually instead. Default to `true`. */
     autoRender?: boolean;
+    /** Whether the shadow casting meshes should be rendered using a {@link RenderBundle}. Default to `true`. */
+    useRenderBundle?: boolean;
     /** The {@link core/lights/Light.Light | light} that will be used to cast shadows. */
     light: ShadowCastingLights;
 }
@@ -62,6 +65,8 @@ export declare class Shadow {
     depthTextureSize: Vec2;
     /** Format of the  depth {@link Texture} to use. Default to `depth24plus`. */
     depthTextureFormat: GPUTextureFormat;
+    /** Optional {@link RenderBundle} to use for rendering the depth meshes. */
+    renderBundle: RenderBundle | null;
     /** Depth {@link Texture} used to create the shadow map. */
     depthTexture: null | Texture;
     /** Depth {@link RenderTarget} onto which the {@link castingMeshes} will be rendered. */
@@ -79,7 +84,7 @@ export declare class Shadow {
      * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link Shadow}.
      * @param parameters - {@link ShadowBaseParams} used to create this {@link Shadow}.
      */
-    constructor(renderer: CameraRenderer | GPUCurtains, { light, intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender, }?: ShadowBaseParams);
+    constructor(renderer: CameraRenderer | GPUCurtains, { light, intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender, useRenderBundle, }?: ShadowBaseParams);
     /**
      * Set or reset this shadow {@link CameraRenderer}.
      * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
@@ -90,9 +95,9 @@ export declare class Shadow {
     /**
      * Set the parameters and start casting shadows by setting the {@link isActive} setter to `true`.<br>
      * Called internally by the associated {@link core/lights/Light.Light | Light} if any shadow parameters are specified when creating it. Can also be called directly.
-     * @param parameters - parameters to use for this {@link Shadow}.
+     * @param parameters - Parameters to use for this {@link Shadow}.
      */
-    cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender }?: Omit<ShadowBaseParams, "light">): void;
+    cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender, useRenderBundle, }?: Omit<ShadowBaseParams, "light">): void;
     /**
      * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link core/lights/Light.Light | lights} has been overflowed or when the {@link renderer} has changed.
      */

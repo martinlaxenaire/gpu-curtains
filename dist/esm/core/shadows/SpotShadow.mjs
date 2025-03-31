@@ -1,5 +1,4 @@
 import { shadowStruct, Shadow } from './Shadow.mjs';
-import { Vec2 } from '../../math/Vec2.mjs';
 import { PerspectiveCamera } from '../cameras/PerspectiveCamera.mjs';
 import { Texture } from '../textures/Texture.mjs';
 import { getDefaultSpotShadowDepthVs } from '../shaders/full/vertex/get-default-spot-shadow-depth-vertex-shader-code.mjs';
@@ -28,13 +27,14 @@ class SpotShadow extends Shadow {
    */
   constructor(renderer, {
     light,
-    intensity = 1,
-    bias = 0,
-    normalBias = 0,
-    pcfSamples = 1,
-    depthTextureSize = new Vec2(512),
-    depthTextureFormat = "depth24plus",
-    autoRender = true
+    intensity,
+    bias,
+    normalBias,
+    pcfSamples,
+    depthTextureSize,
+    depthTextureFormat,
+    autoRender,
+    useRenderBundle
   } = {}) {
     super(renderer, {
       light,
@@ -44,7 +44,8 @@ class SpotShadow extends Shadow {
       pcfSamples,
       depthTextureSize,
       depthTextureFormat,
-      autoRender
+      autoRender,
+      useRenderBundle
     });
     this.focus = 1;
     this.camera = new PerspectiveCamera({

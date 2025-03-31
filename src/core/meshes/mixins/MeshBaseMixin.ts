@@ -1124,8 +1124,8 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
 
     /**
      * Callback to execute when a Mesh is ready - i.e. its {@link material} and {@link geometry} are ready.
-     * @param callback - callback to run when {@link MeshBase} is ready
-     * @returns - our Mesh
+     * @param callback - Callback to run when {@link MeshBase} is ready.
+     * @returns - Our Mesh.
      */
     onReady(callback: () => void): MeshBase | ProjectedMeshBaseClass {
       if (callback) {
@@ -1137,8 +1137,8 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
 
     /**
      * Callback to execute before updating the {@link core/scenes/Scene.Scene | Scene} matrix stack. This means it is called early and allows to update transformations values before actually setting the Mesh matrices (if any). This also means it won't be called if the Mesh has not been added to the {@link core/scenes/Scene.Scene | Scene}. The callback won't be called if the {@link Renderer} is not ready or the Mesh itself is neither {@link ready} nor {@link visible}.
-     * @param callback - callback to run just before updating the {@link core/scenes/Scene.Scene | Scene} matrix stack.
-     * @returns - our Mesh
+     * @param callback - Callback to run just before updating the {@link core/scenes/Scene.Scene | Scene} matrix stack.
+     * @returns - Our Mesh
      */
     onBeforeRender(callback: () => void): MeshBase | ProjectedMeshBaseClass {
       if (callback) {
@@ -1150,8 +1150,8 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
 
     /**
      * Callback to execute right before actually rendering the Mesh. Useful to update uniforms for example. The callback won't be called if the {@link Renderer} is not ready or the Mesh itself is neither {@link ready} nor {@link visible}.
-     * @param callback - callback to run just before rendering the {@link MeshBase}
-     * @returns - our Mesh
+     * @param callback - Callback to run just before rendering the {@link MeshBase}.
+     * @returns - Our Mesh.
      */
     onRender(callback: () => void): MeshBase | ProjectedMeshBaseClass {
       if (callback) {
@@ -1163,8 +1163,8 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
 
     /**
      * Callback to execute just after a Mesh has been rendered. The callback won't be called if the {@link Renderer} is not ready or the Mesh itself is neither {@link ready} nor {@link visible}.
-     * @param callback - callback to run just after {@link MeshBase} has been rendered
-     * @returns - our Mesh
+     * @param callback - Callback to run just after {@link MeshBase} has been rendered.
+     * @returns - Our Mesh.
      */
     onAfterRender(callback: () => void): MeshBase | ProjectedMeshBaseClass {
       if (callback) {
@@ -1176,8 +1176,8 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
 
     /**
      * Callback to execute just after a Mesh has been resized.
-     * @param callback - callback to run just after {@link MeshBase} has been resized
-     * @returns - our Mesh
+     * @param callback - Callback to run just after {@link MeshBase} has been resized.
+     * @returns - Our Mesh.
      */
     onAfterResize(callback: () => void): MeshBase | ProjectedMeshBaseClass {
       if (callback) {
@@ -1199,9 +1199,9 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     }
 
     /**
-     * Called before rendering the Mesh
-     * Set the geometry if needed (create buffers and add attributes to the {@link RenderMaterial})
-     * Then executes {@link RenderMaterial#onBeforeRender}: create its bind groups and pipeline if needed and eventually update its bindings
+     * Called before rendering the Mesh.
+     * Set the geometry if needed (create buffers and add attributes to the {@link RenderMaterial}).
+     * Then executes {@link RenderMaterial#onBeforeRender}: create its bind groups and pipeline if needed and eventually update its bindings.
      */
     onBeforeRenderPass() {
       if (!this.renderer.ready) return
@@ -1218,7 +1218,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     }
 
     /**
-     * Render our {@link MeshBase} if the {@link RenderMaterial} is ready
+     * Render our {@link MeshBase} if the {@link RenderMaterial} is ready.
      * @param pass - Current render pass encoder.
      */
     onRenderPass(pass: GPURenderPassEncoder) {
@@ -1239,20 +1239,20 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     }
 
     /**
-     * Called after having rendered the Mesh
+     * Called after having rendered the Mesh.
      */
     onAfterRenderPass() {
       this._onAfterRenderCallback && this._onAfterRenderCallback()
     }
 
     /**
-     * Render our Mesh
-     * - Execute {@link onBeforeRenderPass}
-     * - Stop here if {@link Renderer} is not ready or Mesh is not {@link visible}
-     * - Execute super render call if it exists
-     * - {@link onRenderPass | render} our {@link material} and {@link geometry}
-     * - Execute {@link onAfterRenderPass}
-     * @param pass - current render pass encoder
+     * Render our Mesh:
+     * - Execute {@link onBeforeRenderPass}.
+     * - Stop here if {@link Renderer} is not ready or Mesh is not {@link visible}.
+     * - Execute super render call if it exists.
+     * - {@link onRenderPass | render} our {@link material} and {@link geometry}.
+     * - Execute {@link onAfterRenderPass}.
+     * @param pass - Current render pass encoder.
      */
     render(pass: GPURenderPassEncoder) {
       this.onBeforeRenderPass()
@@ -1272,7 +1272,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     /* DESTROY */
 
     /**
-     * Remove the Mesh from the {@link core/scenes/Scene.Scene | Scene} and destroy it
+     * Remove the Mesh from the {@link core/scenes/Scene.Scene | Scene} and destroy it.
      */
     remove() {
       this.removeFromScene(true)
@@ -1291,7 +1291,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     }
 
     /**
-     * Destroy the Mesh
+     * Destroy the Mesh.
      */
     destroy() {
       // @ts-ignore

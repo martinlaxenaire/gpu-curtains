@@ -14,6 +14,8 @@ export interface ComputePassOptions {
     renderOrder?: number;
     /** Whether the {@link ComputePass} should be added to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically. */
     autoRender?: boolean;
+    /** Flag indicating whether this {@link ComputePass} should run or not, much like the {@link core/meshes/Mesh.Mesh#visible | Mesh visible} flag. Default to `true`. */
+    active?: boolean;
     /** Compute shader passed to the {@link ComputePass} following the {@link types/Materials.ShaderOptions | shader object} notation. */
     shaders: MaterialShaders;
     /** whether the {@link core/pipelines/ComputePipelineEntry.ComputePipelineEntry#pipeline | compute pipeline} should be compiled asynchronously. */
@@ -108,14 +110,14 @@ export declare class ComputePass {
      */
     constructor(renderer: Renderer | GPUCurtains, parameters?: ComputePassParams);
     /**
-     * Get or set whether the compute pass is ready to render (the material has been successfully compiled)
+     * Get or set whether the compute pass is ready to render (the material has been successfully compiled).
      * @readonly
      */
     get ready(): boolean;
     set ready(value: boolean);
     /**
      * Add our {@link ComputePass} to the scene and optionally to the renderer.
-     * @param addToRenderer - whether to add this {@link ComputePass} to the {@link Renderer#computePasses | Renderer computePasses array}
+     * @param addToRenderer - Whether to add this {@link ComputePass} to the {@link Renderer#computePasses | Renderer computePasses array}.
      */
     addToScene(addToRenderer?: boolean): void;
     /**
@@ -129,24 +131,33 @@ export declare class ComputePass {
      */
     setRenderer(renderer: Renderer | GPUCurtains): void;
     /**
-     * Create the compute pass material
-     * @param computeParameters - {@link ComputeMaterial} parameters
+     * Create the compute pass material.
+     * @param computeParameters - {@link ComputeMaterial} parameters.
      */
     setMaterial(computeParameters: ComputeMaterialParams): void;
     /**
-     * Set or update the {@link ComputePass} {@link ComputeMaterial}
-     * @param material - new {@link ComputeMaterial} to use
+     * Set or update the {@link ComputePass} {@link ComputeMaterial}.
+     * @param material - New {@link ComputeMaterial} to use.
      */
     useMaterial(material: ComputeMaterial): void;
     /**
      * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been lost to prepare everything for restoration.
-     * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to render
+     * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to render.
      */
     loseContext(): void;
     /**
-     * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored
+     * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored.
      */
     restoreContext(): void;
+    /**
+     * Get the active property value.
+     */
+    get active(): boolean;
+    /**
+     * Set the active property value.
+     * @param value - New active value.
+     */
+    set active(value: boolean);
     /**
      * Get our {@link ComputeMaterial#textures | ComputeMaterial textures array}
      * @readonly
@@ -155,7 +166,7 @@ export declare class ComputePass {
     /**
      * Create a new {@link MediaTexture}.
      * @param options - {@link MediaTextureParams | MediaTexture parameters}.
-     * @returns - newly created {@link MediaTexture}.
+     * @returns - Newly created {@link MediaTexture}.
      */
     createMediaTexture(options: MediaTextureParams): MediaTexture;
     /**
@@ -185,77 +196,83 @@ export declare class ComputePass {
     resize(): void;
     /** EVENTS **/
     /**
-     * Callback to run when the {@link ComputePass} is ready
-     * @param callback - callback to run when {@link ComputePass} is ready
+     * Callback to run when the {@link ComputePass} is ready.
+     * @param callback - Callback to run when {@link ComputePass} is ready.
+     * @returns - Our {@link ComputePass}.
      */
     onReady(callback: () => void): ComputePass;
     /**
-     * Callback to run before the {@link ComputePass} is rendered
-     * @param callback - callback to run just before {@link ComputePass} will be rendered
+     * Callback to run before the {@link ComputePass} is rendered.
+     * @param callback - Callback to run just before {@link ComputePass} will be rendered. The callback won't be called if the {@link Renderer} is not ready or the {@link ComputePass} itself is neither {@link ready} nor {@link active}.
+     * @returns - Our {@link ComputePass}.
      */
     onBeforeRender(callback: () => void): ComputePass;
     /**
-     * Callback to run when the {@link ComputePass} is rendered
-     * @param callback - callback to run when {@link ComputePass} is rendered
+     * Callback to run when the {@link ComputePass} is rendered.
+     * @param callback - Callback to run when {@link ComputePass} is rendered. The callback won't be called if the {@link Renderer} is not ready or the {@link ComputePass} itself is neither {@link ready} nor {@link active}.
+     * @returns - Our {@link ComputePass}.
      */
     onRender(callback: () => void): ComputePass;
     /**
-     * Callback to run after the {@link ComputePass} has been rendered
-     * @param callback - callback to run just after {@link ComputePass} has been rendered
+     * Callback to run after the {@link ComputePass} has been rendered.
+     * @param callback - Callback to run just after {@link ComputePass} has been rendered. The callback won't be called if the {@link Renderer} is not ready or the {@link ComputePass} itself is neither {@link ready} nor {@link active}.
+     * @returns - Our {@link ComputePass}.
      */
     onAfterRender(callback: () => void): ComputePass;
     /**
-     * Callback used to run a custom render function instead of the default one.
+     * Callback used to run a custom render function instead of the default one. This won't be called if the {@link Renderer} is not ready or the {@link ComputePass} itself is neither {@link ready} nor {@link active}.
      * @param callback - Your custom render function where you will have to set all the {@link core/bindGroups/BindGroup.BindGroup | bind groups} and dispatch the workgroups by yourself.
+     * @returns - Our {@link ComputePass}.
      */
     useCustomRender(callback: (pass: GPUComputePassEncoder) => void): ComputePass;
     /**
-     * Callback to run after the {@link core/renderers/GPURenderer.GPURenderer | renderer} has been resized
-     * @param callback - callback to run just after {@link core/renderers/GPURenderer.GPURenderer | renderer} has been resized
+     * Callback to run after the {@link core/renderers/GPURenderer.GPURenderer | renderer} has been resized.
+     * @param callback - Callback to run just after {@link core/renderers/GPURenderer.GPURenderer | renderer} has been resized.
+     * @returns - Our {@link ComputePass}.
      */
     onAfterResize(callback: () => void): ComputePass;
     /**
-     * Called before rendering the ComputePass
-     * Checks if the material is ready and eventually update its struct
+     * Called before rendering the {@link ComputePass}.
+     * Checks if the material is ready and eventually update its bindings.
      */
     onBeforeRenderPass(): void;
     /**
-     * Render our {@link ComputeMaterial}
-     * @param pass - current compute pass encoder
+     * Render our {@link ComputeMaterial}.
+     * @param pass - Current compute pass encoder.
      */
     onRenderPass(pass: GPUComputePassEncoder): void;
     /**
-     * Called after having rendered the ComputePass
+     * Called after having rendered the {@link ComputePass}.
      */
     onAfterRenderPass(): void;
     /**
-     * Render our compute pass
-     * Basically just check if our {@link core/renderers/GPURenderer.GPURenderer | renderer} is ready, and then render our {@link ComputeMaterial}
-     * @param pass
+     * Render our compute pass.
+     * Basically just check if our {@link core/renderers/GPURenderer.GPURenderer | renderer} is ready, and then render our {@link ComputeMaterial}.
+     * @param pass - Current compute pass encoder.
      */
     render(pass: GPUComputePassEncoder): void;
     /**
-     * Copy the result of our read/write GPUBuffer into our result binding array
-     * @param commandEncoder - current GPU command encoder
+     * Copy the result of our read/write GPUBuffer into our result binding array.
+     * @param commandEncoder - Current GPU command encoder.
      */
     copyBufferToResult(commandEncoder: GPUCommandEncoder): void;
     /**
-     * Get the {@link core/bindings/WritableBufferBinding.WritableBufferBinding#resultBuffer | result GPU buffer} content by {@link core/bindings/WritableBufferBinding.WritableBufferBinding | binding} and {@link core/bindings/bufferElements/BufferElement.BufferElement | buffer element} names
-     * @param parameters - parameters used to get the result
-     * @param parameters.bindingName - {@link core/bindings/WritableBufferBinding.WritableBufferBinding#name | binding name} from which to get the result
-     * @param parameters.bufferElementName - optional {@link core/bindings/bufferElements/BufferElement.BufferElement | buffer element} (i.e. struct member) name if the result needs to be restrained to only one element
-     * @returns - the mapped content of the {@link GPUBuffer} as a {@link Float32Array}
+     * Get the {@link core/bindings/WritableBufferBinding.WritableBufferBinding#resultBuffer | result GPU buffer} content by {@link core/bindings/WritableBufferBinding.WritableBufferBinding | binding} and {@link core/bindings/bufferElements/BufferElement.BufferElement | buffer element} names.
+     * @param parameters - Parameters used to get the result
+     * @param parameters.bindingName - {@link core/bindings/WritableBufferBinding.WritableBufferBinding#name | binding name} from which to get the result.
+     * @param parameters.bufferElementName - Optional {@link core/bindings/bufferElements/BufferElement.BufferElement | buffer element} (i.e. struct member) name if the result needs to be restrained to only one element.
+     * @returns - The mapped content of the {@link GPUBuffer} as a {@link Float32Array}.
      */
     getComputeResult({ bindingName, bufferElementName, }: {
         bindingName?: string;
         bufferElementName?: string;
     }): Promise<Float32Array>;
     /**
-     * Remove the ComputePass from the scene and destroy it
+     * Remove the {@link ComputePass} from the {@link core/scenes/Scene.Scene | Scene} and destroy it.
      */
     remove(): void;
     /**
-     * Destroy the ComputePass
+     * Destroy the {@link ComputePass}.
      */
     destroy(): void;
 }

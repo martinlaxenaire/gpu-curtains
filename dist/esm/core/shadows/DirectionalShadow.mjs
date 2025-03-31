@@ -42,6 +42,7 @@ class DirectionalShadow extends Shadow {
     depthTextureSize,
     depthTextureFormat,
     autoRender,
+    useRenderBundle,
     camera = {
       left: -10,
       right: 10,
@@ -59,7 +60,8 @@ class DirectionalShadow extends Shadow {
       pcfSamples,
       depthTextureSize,
       depthTextureFormat,
-      autoRender
+      autoRender,
+      useRenderBundle
     });
     /**
      * Direction of the parent {@link DirectionalLight}. Duplicate to avoid adding the {@link DirectionalLight} binding to vertex shaders.
@@ -97,7 +99,17 @@ class DirectionalShadow extends Shadow {
    * Called internally by the associated {@link DirectionalLight} if any shadow parameters are specified when creating it. Can also be called directly.
    * @param parameters - parameters to use for this {@link DirectionalShadow}.
    */
-  cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender, camera } = {}) {
+  cast({
+    intensity,
+    bias,
+    normalBias,
+    pcfSamples,
+    depthTextureSize,
+    depthTextureFormat,
+    autoRender,
+    useRenderBundle,
+    camera
+  } = {}) {
     if (camera) {
       this.camera.left = camera.left ?? -10;
       this.camera.right = camera.right ?? 10;
@@ -106,7 +118,16 @@ class DirectionalShadow extends Shadow {
       this.camera.near = camera.near ?? 0.1;
       this.camera.far = camera.far ?? 150;
     }
-    super.cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
+    super.cast({
+      intensity,
+      bias,
+      normalBias,
+      pcfSamples,
+      depthTextureSize,
+      depthTextureFormat,
+      autoRender,
+      useRenderBundle
+    });
   }
   /**
    * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link DirectionalLight} has been overflowed or when the {@link renderer} has changed.

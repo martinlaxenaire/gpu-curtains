@@ -137,6 +137,11 @@ export class SpotLight extends Light {
       this.lookAt(this.target)
     })
 
+    // if target is at origin, force look at
+    if (this.target.lengthSq() === 0) {
+      this.lookAt(this.target)
+    }
+
     this.angle = angle
     this.penumbra = penumbra
     this.range = range

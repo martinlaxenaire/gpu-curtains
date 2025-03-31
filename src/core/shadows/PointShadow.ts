@@ -17,7 +17,7 @@ import { Mesh } from '../meshes/Mesh'
 /**
  * Base parameters used to create a {@link PointShadow}.
  */
-export interface PointShadowParams extends ShadowBaseParams {
+export interface PointShadowParams extends Omit<ShadowBaseParams, 'useRenderBundle'> {
   /** {@link PointLight} used to create the {@link PointShadow}. */
   light: PointLight
 }
@@ -105,6 +105,7 @@ export class PointShadow extends Shadow {
       depthTextureSize,
       depthTextureFormat,
       autoRender,
+      useRenderBundle: false,
     })
 
     this.cubeDirections = [
@@ -159,6 +160,14 @@ export class PointShadow extends Shadow {
    */
   setRendererBinding() {
     this.rendererBinding = this.renderer.bindings.pointShadows
+  }
+
+  /**
+   * Set the parameters and start casting shadows. Force not using a {@link core/renderPasses/RenderBundle.RenderBundle | RenderBundle} since we'll need to swap faces bind groups during render.
+   * @param parameters - Parameters to use for this {@link PointShadow}.
+   */
+  cast(parameters = {} as Omit<PointShadowParams, 'light'>) {
+    super.cast({ ...parameters, useRenderBundle: false })
   }
 
   /**
@@ -379,7 +388,13 @@ export class PointShadow extends Shadow {
       // swap with bind group containing current face
       depthMesh.material.bindGroups[cubeFaceBindGroupIndex] = this.renderer.pointShadowsCubeFaceBindGroups[face]
 
-      depthMesh.render(depthPass)
+      if (face === 0) {
+        depthMesh.render(depthPass)
+      } else {
+        // avoid writing matrices buffers for subsequent faces passes
+        depthMesh.material.onBeforeRender()
+        depthMesh.onRenderPass(depthPass)
+      }
     }
 
     if (!this.renderer.production) depthPass.popDebugGroup()

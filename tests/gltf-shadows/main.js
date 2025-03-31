@@ -113,6 +113,8 @@ window.addEventListener('load', async () => {
     },
   })
 
+  console.log(directionalLight.shadow)
+
   const pointLights = []
   const pointLightsSettings = {
     color: new Vec3(0.85, 0.25, 0),
