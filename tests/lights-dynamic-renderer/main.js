@@ -107,6 +107,12 @@ window.addEventListener('load', async () => {
       intensity: 0.5,
       shadow: {
         intensity: 1,
+        camera: {
+          left: -20,
+          right: 20,
+          top: 20,
+          bottom: -20,
+        },
       },
     })
   )

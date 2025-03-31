@@ -83,6 +83,8 @@ window.addEventListener('load', async () => {
     },
   })
 
+  console.log(directionalLight.shadow.renderBundle)
+
   directionalLights.push(directionalLight)
 
   const directionalLight2 = new DirectionalLight(gpuCameraRenderer, {
@@ -92,6 +94,7 @@ window.addEventListener('load', async () => {
       bias: 0.0005,
       normalBias: 0.05,
       pcfSamples: 2,
+      useRenderBundle: false,
       //depthTextureSize: new Vec2(512, 512),
     },
   })

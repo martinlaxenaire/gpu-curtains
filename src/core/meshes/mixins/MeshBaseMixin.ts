@@ -1199,9 +1199,9 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     }
 
     /**
-     * Called before rendering the Mesh
-     * Set the geometry if needed (create buffers and add attributes to the {@link RenderMaterial})
-     * Then executes {@link RenderMaterial#onBeforeRender}: create its bind groups and pipeline if needed and eventually update its bindings
+     * Called before rendering the Mesh.
+     * Set the geometry if needed (create buffers and add attributes to the {@link RenderMaterial}).
+     * Then executes {@link RenderMaterial#onBeforeRender}: create its bind groups and pipeline if needed and eventually update its bindings.
      */
     onBeforeRenderPass() {
       if (!this.renderer.ready) return
@@ -1218,7 +1218,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     }
 
     /**
-     * Render our {@link MeshBase} if the {@link RenderMaterial} is ready
+     * Render our {@link MeshBase} if the {@link RenderMaterial} is ready.
      * @param pass - Current render pass encoder.
      */
     onRenderPass(pass: GPURenderPassEncoder) {
@@ -1239,14 +1239,14 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     }
 
     /**
-     * Called after having rendered the Mesh
+     * Called after having rendered the Mesh.
      */
     onAfterRenderPass() {
       this._onAfterRenderCallback && this._onAfterRenderCallback()
     }
 
     /**
-     * Render our Mesh
+     * Render our Mesh:
      * - Execute {@link onBeforeRenderPass}.
      * - Stop here if {@link Renderer} is not ready or Mesh is not {@link visible}.
      * - Execute super render call if it exists.

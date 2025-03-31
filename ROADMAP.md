@@ -34,6 +34,7 @@
 
 - Improve/add more GLTFScenesManager extensions
 - MSDF fonts
+- Compute skinning?
 - Clustered shading?
 - Eventual shader custom preprocessor?
 - Improve typedoc documentation?

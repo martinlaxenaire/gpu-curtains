@@ -59,6 +59,9 @@ class SpotLight extends Light {
     this.position.onChange(() => {
       this.lookAt(this.target);
     });
+    if (this.target.lengthSq() === 0) {
+      this.lookAt(this.target);
+    }
     this.angle = angle;
     this.penumbra = penumbra;
     this.range = range;

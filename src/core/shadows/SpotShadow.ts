@@ -60,13 +60,14 @@ export class SpotShadow extends Shadow {
     renderer: CameraRenderer | GPUCurtains,
     {
       light,
-      intensity = 1,
-      bias = 0,
-      normalBias = 0,
-      pcfSamples = 1,
-      depthTextureSize = new Vec2(512),
-      depthTextureFormat = 'depth24plus' as GPUTextureFormat,
-      autoRender = true,
+      intensity,
+      bias,
+      normalBias,
+      pcfSamples,
+      depthTextureSize,
+      depthTextureFormat,
+      autoRender,
+      useRenderBundle,
     } = {} as SpotShadowParams
   ) {
     super(renderer, {
@@ -78,6 +79,7 @@ export class SpotShadow extends Shadow {
       depthTextureSize,
       depthTextureFormat,
       autoRender,
+      useRenderBundle,
     })
 
     // arbitrary

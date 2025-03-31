@@ -34,7 +34,7 @@ export declare class DirectionalShadow extends Shadow {
      * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link DirectionalShadow}.
      * @param parameters - {@link DirectionalShadowParams} used to create this {@link DirectionalShadow}.
      */
-    constructor(renderer: CameraRenderer | GPUCurtains, { light, intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender, camera, }?: DirectionalShadowParams);
+    constructor(renderer: CameraRenderer | GPUCurtains, { light, intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender, useRenderBundle, camera, }?: DirectionalShadowParams);
     /**
      * Set or reset this {@link DirectionalShadow} {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      */
@@ -44,7 +44,7 @@ export declare class DirectionalShadow extends Shadow {
      * Called internally by the associated {@link DirectionalLight} if any shadow parameters are specified when creating it. Can also be called directly.
      * @param parameters - parameters to use for this {@link DirectionalShadow}.
      */
-    cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender, camera }?: Omit<DirectionalShadowParams, "light">): void;
+    cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender, useRenderBundle, camera, }?: Omit<DirectionalShadowParams, "light">): void;
     /**
      * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link DirectionalLight} has been overflowed or when the {@link renderer} has changed.
      */

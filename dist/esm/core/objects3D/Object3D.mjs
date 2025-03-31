@@ -229,7 +229,7 @@ class Object3D {
     this.applyLookAt(target, this.actualPosition);
   }
   /**
-   * Apply a look at rotation based on a target, a position and our {link up} vectors.
+   * Apply a look at rotation based on a target, a position and our {@link up} vectors.
    * @param target - {@link Vec3} target to look at.
    * @param position - {@link Vec3} position from which to look at.
    */

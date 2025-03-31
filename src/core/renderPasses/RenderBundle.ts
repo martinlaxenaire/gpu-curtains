@@ -301,6 +301,7 @@ export class RenderBundle {
     if (this.binding.arrayBufferSize < size * minOffset) {
       this.binding.arrayBufferSize = size * minOffset
       this.binding.arrayBuffer = new ArrayBuffer(this.binding.arrayBufferSize)
+      this.binding.arrayView = new DataView(this.binding.arrayBuffer, 0, this.binding.arrayBufferSize)
       this.binding.buffer.size = this.binding.arrayBuffer.byteLength
     }
   }
@@ -314,6 +315,14 @@ export class RenderBundle {
     if (newSize > this.options.size && this.binding) {
       this.#patchBindingOffset(newSize)
 
+      // now re add all the meshes matrices bindings to the new array buffer
+      let offset = 0
+      this.meshes.forEach((mesh: ProjectedMesh) => {
+        mesh.patchRenderBundleBinding(offset)
+
+        offset++
+      })
+
       if (this.binding.buffer.GPUBuffer) {
         this.binding.buffer.GPUBuffer.destroy()
 
@@ -323,13 +332,6 @@ export class RenderBundle {
             ...(['copySrc', 'copyDst', this.binding.bindingType] as BufferUsageKeys[]),
             ...this.binding.options.usage,
           ],
-        })
-
-        let offset = 0
-        this.meshes.forEach((mesh: ProjectedMesh) => {
-          mesh.patchRenderBundleBinding(offset)
-
-          offset++
         })
 
         this.binding.shouldUpdate = true
@@ -623,7 +625,6 @@ export class RenderBundle {
 
         if (!mesh.ready) {
           isReady = false
-          break
         }
 
         // media textures should be ready
@@ -631,7 +632,6 @@ export class RenderBundle {
         for (const texture of mesh.textures) {
           if (texture instanceof MediaTexture && !texture.sourcesUploaded) {
             isReady = false
-            break
           }
         }
 

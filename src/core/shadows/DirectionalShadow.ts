@@ -73,6 +73,7 @@ export class DirectionalShadow extends Shadow {
       depthTextureSize,
       depthTextureFormat,
       autoRender,
+      useRenderBundle,
       camera = {
         left: -10,
         right: 10,
@@ -92,6 +93,7 @@ export class DirectionalShadow extends Shadow {
       depthTextureSize,
       depthTextureFormat,
       autoRender,
+      useRenderBundle,
     })
 
     this.options = {
@@ -132,10 +134,17 @@ export class DirectionalShadow extends Shadow {
    * @param parameters - parameters to use for this {@link DirectionalShadow}.
    */
   cast(
-    { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender, camera } = {} as Omit<
-      DirectionalShadowParams,
-      'light'
-    >
+    {
+      intensity,
+      bias,
+      normalBias,
+      pcfSamples,
+      depthTextureSize,
+      depthTextureFormat,
+      autoRender,
+      useRenderBundle,
+      camera,
+    } = {} as Omit<DirectionalShadowParams, 'light'>
   ) {
     if (camera) {
       this.camera.left = camera.left ?? -10
@@ -146,7 +155,16 @@ export class DirectionalShadow extends Shadow {
       this.camera.far = camera.far ?? 150
     }
 
-    super.cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender })
+    super.cast({
+      intensity,
+      bias,
+      normalBias,
+      pcfSamples,
+      depthTextureSize,
+      depthTextureFormat,
+      autoRender,
+      useRenderBundle,
+    })
   }
 
   /**

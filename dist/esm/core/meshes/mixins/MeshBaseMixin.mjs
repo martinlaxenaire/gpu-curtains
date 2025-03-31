@@ -618,9 +618,9 @@ ${geometry.wgslStructFragment}`
       this._onBeforeRenderCallback && this._onBeforeRenderCallback();
     }
     /**
-     * Called before rendering the Mesh
-     * Set the geometry if needed (create buffers and add attributes to the {@link RenderMaterial})
-     * Then executes {@link RenderMaterial#onBeforeRender}: create its bind groups and pipeline if needed and eventually update its bindings
+     * Called before rendering the Mesh.
+     * Set the geometry if needed (create buffers and add attributes to the {@link RenderMaterial}).
+     * Then executes {@link RenderMaterial#onBeforeRender}: create its bind groups and pipeline if needed and eventually update its bindings.
      */
     onBeforeRenderPass() {
       if (!this.renderer.ready) return;
@@ -632,7 +632,7 @@ ${geometry.wgslStructFragment}`
       this.ready = this.material && this.material.ready && this.geometry && this.geometry.ready;
     }
     /**
-     * Render our {@link MeshBase} if the {@link RenderMaterial} is ready
+     * Render our {@link MeshBase} if the {@link RenderMaterial} is ready.
      * @param pass - Current render pass encoder.
      */
     onRenderPass(pass) {
@@ -648,13 +648,13 @@ ${geometry.wgslStructFragment}`
       this.geometry.render(pass);
     }
     /**
-     * Called after having rendered the Mesh
+     * Called after having rendered the Mesh.
      */
     onAfterRenderPass() {
       this._onAfterRenderCallback && this._onAfterRenderCallback();
     }
     /**
-     * Render our Mesh
+     * Render our Mesh:
      * - Execute {@link onBeforeRenderPass}.
      * - Stop here if {@link Renderer} is not ready or Mesh is not {@link visible}.
      * - Execute super render call if it exists.

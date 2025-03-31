@@ -61,7 +61,8 @@ class PointShadow extends Shadow {
       pcfSamples,
       depthTextureSize,
       depthTextureFormat,
-      autoRender
+      autoRender,
+      useRenderBundle: false
     });
     /**
      * {@link Vec3} used to calculate the actual current direction based on the {@link PointLight} position.
@@ -115,6 +116,13 @@ class PointShadow extends Shadow {
    */
   setRendererBinding() {
     this.rendererBinding = this.renderer.bindings.pointShadows;
+  }
+  /**
+   * Set the parameters and start casting shadows. Force not using a {@link core/renderPasses/RenderBundle.RenderBundle | RenderBundle} since we'll need to swap faces bind groups during render.
+   * @param parameters - Parameters to use for this {@link PointShadow}.
+   */
+  cast(parameters = {}) {
+    super.cast({ ...parameters, useRenderBundle: false });
   }
   /**
    * Set the {@link depthComparisonSampler}, {@link depthTexture}, {@link depthPassTarget}, compute the {@link PointShadow#camera.projectionMatrix | camera projection matrix} and start rendering to the shadow map.
@@ -286,7 +294,12 @@ class PointShadow extends Shadow {
       const cubeFaceBindGroupIndex = depthMesh.material.bindGroups.length - 1;
       this.renderer.pointShadowsCubeFaceBindGroups[face].setIndex(cubeFaceBindGroupIndex);
       depthMesh.material.bindGroups[cubeFaceBindGroupIndex] = this.renderer.pointShadowsCubeFaceBindGroups[face];
-      depthMesh.render(depthPass);
+      if (face === 0) {
+        depthMesh.render(depthPass);
+      } else {
+        depthMesh.material.onBeforeRender();
+        depthMesh.onRenderPass(depthPass);
+      }
     }
     if (!this.renderer.production) depthPass.popDebugGroup();
     depthPass.end();

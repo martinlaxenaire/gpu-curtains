@@ -5,6 +5,7 @@ import { RenderTarget } from '../renderPasses/RenderTarget.mjs';
 import { Sampler } from '../samplers/Sampler.mjs';
 import { Mesh } from '../meshes/Mesh.mjs';
 import { Vec3 } from '../../math/Vec3.mjs';
+import { RenderBundle } from '../renderPasses/RenderBundle.mjs';
 
 var __typeError = (msg) => {
   throw TypeError(msg);
@@ -51,7 +52,8 @@ class Shadow {
     pcfSamples = 1,
     depthTextureSize = new Vec2(512),
     depthTextureFormat = "depth24plus",
-    autoRender = true
+    autoRender = true,
+    useRenderBundle = true
   } = {}) {
     __privateAdd(this, _Shadow_instances);
     /** @ignore */
@@ -78,13 +80,24 @@ class Shadow {
       normalBias,
       pcfSamples,
       depthTextureSize,
-      depthTextureFormat
+      depthTextureFormat,
+      useRenderBundle
     };
     this.sampleCount = 1;
     this.castingMeshes = /* @__PURE__ */ new Map();
     __privateSet(this, _receivingMeshes, /* @__PURE__ */ new Map());
     this.depthMeshes = /* @__PURE__ */ new Map();
-    __privateMethod(this, _Shadow_instances, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
+    this.renderBundle = null;
+    __privateMethod(this, _Shadow_instances, setParameters_fn).call(this, {
+      intensity,
+      bias,
+      normalBias,
+      pcfSamples,
+      depthTextureSize,
+      depthTextureFormat,
+      autoRender,
+      useRenderBundle
+    });
     this.isActive = false;
   }
   /**
@@ -98,6 +111,9 @@ class Shadow {
     this.setRendererBinding();
     if (this.depthPassTarget) {
       this.depthPassTarget.setRenderer(this.renderer);
+    }
+    if (this.renderBundle) {
+      this.renderBundle.setRenderer(this.renderer);
     }
     this.castingMeshes = /* @__PURE__ */ new Map();
     this.renderer.meshes.forEach((mesh) => {
@@ -122,10 +138,28 @@ class Shadow {
   /**
    * Set the parameters and start casting shadows by setting the {@link isActive} setter to `true`.<br>
    * Called internally by the associated {@link core/lights/Light.Light | Light} if any shadow parameters are specified when creating it. Can also be called directly.
-   * @param parameters - parameters to use for this {@link Shadow}.
+   * @param parameters - Parameters to use for this {@link Shadow}.
    */
-  cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender } = {}) {
-    __privateMethod(this, _Shadow_instances, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
+  cast({
+    intensity,
+    bias,
+    normalBias,
+    pcfSamples,
+    depthTextureSize,
+    depthTextureFormat,
+    autoRender,
+    useRenderBundle
+  } = {}) {
+    __privateMethod(this, _Shadow_instances, setParameters_fn).call(this, {
+      intensity,
+      bias,
+      normalBias,
+      pcfSamples,
+      depthTextureSize,
+      depthTextureFormat,
+      autoRender,
+      useRenderBundle
+    });
     this.isActive = true;
   }
   /**
@@ -277,6 +311,14 @@ class Shadow {
     if (!this.depthPassTarget) {
       this.createDepthPassTarget();
     }
+    if (this.options.useRenderBundle && !this.renderBundle) {
+      this.renderBundle = new RenderBundle(this.renderer, {
+        label: `Depth render bundle for ${this.constructor.name} ${this.index}`,
+        transparent: false,
+        useBuffer: true,
+        size: 1
+      });
+    }
     if (__privateGet(this, _autoRender)) {
       this.setDepthPass();
       this.onPropertyChanged("isActive", 1);
@@ -418,11 +460,15 @@ class Shadow {
     const depthPass = this.depthPassTarget.renderPass.beginRenderPass(commandEncoder);
     if (!this.renderer.production)
       depthPass.pushDebugGroup(`${this.constructor.name} (index: ${this.index}): depth pass`);
-    for (const [uuid, depthMesh] of this.depthMeshes) {
-      if (!this.castingMeshes.get(uuid)?.visible) {
-        continue;
+    if (this.renderBundle) {
+      this.renderBundle.render(depthPass);
+    } else {
+      for (const [uuid, depthMesh] of this.depthMeshes) {
+        if (!this.castingMeshes.get(uuid)?.visible) {
+          continue;
+        }
+        depthMesh.render(depthPass);
       }
-      depthMesh.render(depthPass);
     }
     if (!this.renderer.production) depthPass.popDebugGroup();
     depthPass.end();
@@ -492,6 +538,9 @@ class Shadow {
       this.depthMeshes.get(mesh.uuid).remove();
       this.depthMeshes.delete(mesh.uuid);
     }
+    if (this.renderBundle && this.renderBundle.options.size < this.depthMeshes.size + 1) {
+      this.renderBundle.size = this.depthMeshes.size + 1;
+    }
     const depthMesh = new Mesh(this.renderer, {
       label: `${this.constructor.name} (index: ${this.index}) ${mesh.options.label} depth mesh`,
       ...parameters,
@@ -502,7 +551,8 @@ class Shadow {
       outputTarget: this.depthPassTarget,
       frustumCulling: false,
       // draw shadow even if original mesh is hidden
-      autoRender: __privateGet(this, _autoRender)
+      autoRender: __privateGet(this, _autoRender),
+      ...this.renderBundle && { renderBundle: this.renderBundle }
     });
     depthMesh.parent = mesh;
     this.depthMeshes.set(mesh.uuid, depthMesh);
@@ -557,6 +607,9 @@ class Shadow {
   destroy() {
     this.onPropertyChanged("isActive", 0);
     __privateSet(this, _isActive, false);
+    if (this.renderBundle) {
+      this.renderBundle.destroy();
+    }
     this.castingMeshes.forEach((mesh) => this.removeMesh(mesh));
     this.castingMeshes = /* @__PURE__ */ new Map();
     this.depthMeshes = /* @__PURE__ */ new Map();
@@ -586,7 +639,7 @@ _Shadow_instances = new WeakSet();
 // }
 /**
  * Set the {@link Shadow} parameters.
- * @param parameters - parameters to use for this {@link Shadow}.
+ * @param parameters - Parameters to use for this {@link Shadow}.
  * @private
  */
 setParameters_fn = function({
@@ -596,7 +649,8 @@ setParameters_fn = function({
   pcfSamples = 1,
   depthTextureSize = new Vec2(512),
   depthTextureFormat = "depth24plus",
-  autoRender = true
+  autoRender = true,
+  useRenderBundle = true
 } = {}) {
   this.intensity = intensity;
   this.bias = bias;
@@ -605,6 +659,7 @@ setParameters_fn = function({
   this.depthTextureSize = depthTextureSize;
   this.depthTextureFormat = depthTextureFormat;
   __privateSet(this, _autoRender, autoRender);
+  this.options.useRenderBundle = useRenderBundle;
 };
 
 export { Shadow, shadowStruct };
