@@ -556,8 +556,8 @@ ${geometry.wgslStructFragment}`
     /* EVENTS */
     /**
      * Callback to execute when a Mesh is ready - i.e. its {@link material} and {@link geometry} are ready.
-     * @param callback - callback to run when {@link MeshBase} is ready
-     * @returns - our Mesh
+     * @param callback - Callback to run when {@link MeshBase} is ready.
+     * @returns - Our Mesh.
      */
     onReady(callback) {
       if (callback) {
@@ -567,8 +567,8 @@ ${geometry.wgslStructFragment}`
     }
     /**
      * Callback to execute before updating the {@link core/scenes/Scene.Scene | Scene} matrix stack. This means it is called early and allows to update transformations values before actually setting the Mesh matrices (if any). This also means it won't be called if the Mesh has not been added to the {@link core/scenes/Scene.Scene | Scene}. The callback won't be called if the {@link Renderer} is not ready or the Mesh itself is neither {@link ready} nor {@link visible}.
-     * @param callback - callback to run just before updating the {@link core/scenes/Scene.Scene | Scene} matrix stack.
-     * @returns - our Mesh
+     * @param callback - Callback to run just before updating the {@link core/scenes/Scene.Scene | Scene} matrix stack.
+     * @returns - Our Mesh
      */
     onBeforeRender(callback) {
       if (callback) {
@@ -578,8 +578,8 @@ ${geometry.wgslStructFragment}`
     }
     /**
      * Callback to execute right before actually rendering the Mesh. Useful to update uniforms for example. The callback won't be called if the {@link Renderer} is not ready or the Mesh itself is neither {@link ready} nor {@link visible}.
-     * @param callback - callback to run just before rendering the {@link MeshBase}
-     * @returns - our Mesh
+     * @param callback - Callback to run just before rendering the {@link MeshBase}.
+     * @returns - Our Mesh.
      */
     onRender(callback) {
       if (callback) {
@@ -589,8 +589,8 @@ ${geometry.wgslStructFragment}`
     }
     /**
      * Callback to execute just after a Mesh has been rendered. The callback won't be called if the {@link Renderer} is not ready or the Mesh itself is neither {@link ready} nor {@link visible}.
-     * @param callback - callback to run just after {@link MeshBase} has been rendered
-     * @returns - our Mesh
+     * @param callback - Callback to run just after {@link MeshBase} has been rendered.
+     * @returns - Our Mesh.
      */
     onAfterRender(callback) {
       if (callback) {
@@ -600,8 +600,8 @@ ${geometry.wgslStructFragment}`
     }
     /**
      * Callback to execute just after a Mesh has been resized.
-     * @param callback - callback to run just after {@link MeshBase} has been resized
-     * @returns - our Mesh
+     * @param callback - Callback to run just after {@link MeshBase} has been resized.
+     * @returns - Our Mesh.
      */
     onAfterResize(callback) {
       if (callback) {
@@ -655,12 +655,12 @@ ${geometry.wgslStructFragment}`
     }
     /**
      * Render our Mesh
-     * - Execute {@link onBeforeRenderPass}
-     * - Stop here if {@link Renderer} is not ready or Mesh is not {@link visible}
-     * - Execute super render call if it exists
-     * - {@link onRenderPass | render} our {@link material} and {@link geometry}
-     * - Execute {@link onAfterRenderPass}
-     * @param pass - current render pass encoder
+     * - Execute {@link onBeforeRenderPass}.
+     * - Stop here if {@link Renderer} is not ready or Mesh is not {@link visible}.
+     * - Execute super render call if it exists.
+     * - {@link onRenderPass | render} our {@link material} and {@link geometry}.
+     * - Execute {@link onAfterRenderPass}.
+     * @param pass - Current render pass encoder.
      */
     render(pass) {
       this.onBeforeRenderPass();
@@ -672,7 +672,7 @@ ${geometry.wgslStructFragment}`
     }
     /* DESTROY */
     /**
-     * Remove the Mesh from the {@link core/scenes/Scene.Scene | Scene} and destroy it
+     * Remove the Mesh from the {@link core/scenes/Scene.Scene | Scene} and destroy it.
      */
     remove() {
       this.removeFromScene(true);
@@ -687,7 +687,7 @@ ${geometry.wgslStructFragment}`
       }
     }
     /**
-     * Destroy the Mesh
+     * Destroy the Mesh.
      */
     destroy() {
       if (super.destroy) {

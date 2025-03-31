@@ -8,10 +8,10 @@ var __typeError = (msg) => {
   throw TypeError(msg);
 };
 var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
-var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), member.get(obj));
+var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
 var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
 var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
-var _autoRender;
+var _autoRender, _active;
 let computePassIndex = 0;
 class ComputePass {
   /**
@@ -25,6 +25,8 @@ class ComputePass {
      * @private
      */
     __privateAdd(this, _autoRender, true);
+    /** Flag indicating whether this {@link ComputePass} should run or not, much like the {@link core/meshes/Mesh.Mesh#visible | Mesh visible} flag. */
+    __privateAdd(this, _active, true);
     // callbacks / events
     /** function assigned to the {@link onReady} callback. */
     this._onReadyCallback = () => {
@@ -59,6 +61,7 @@ class ComputePass {
       samplers,
       textures,
       autoRender,
+      active,
       useAsyncPipeline,
       texturesOptions,
       dispatchSize
@@ -67,6 +70,7 @@ class ComputePass {
       label,
       shaders,
       ...autoRender !== void 0 && { autoRender },
+      ...active !== void 0 && { active },
       ...renderOrder !== void 0 && { renderOrder },
       ...dispatchSize !== void 0 && { dispatchSize },
       useAsyncPipeline: useAsyncPipeline === void 0 ? true : useAsyncPipeline,
@@ -76,6 +80,9 @@ class ComputePass {
     this.renderOrder = renderOrder ?? 0;
     if (autoRender !== void 0) {
       __privateSet(this, _autoRender, autoRender);
+    }
+    if (active !== void 0) {
+      __privateSet(this, _active, active);
     }
     this.userData = {};
     this.ready = false;
@@ -94,7 +101,7 @@ class ComputePass {
     this.addToScene(true);
   }
   /**
-   * Get or set whether the compute pass is ready to render (the material has been successfully compiled)
+   * Get or set whether the compute pass is ready to render (the material has been successfully compiled).
    * @readonly
    */
   get ready() {
@@ -108,7 +115,7 @@ class ComputePass {
   }
   /**
    * Add our {@link ComputePass} to the scene and optionally to the renderer.
-   * @param addToRenderer - whether to add this {@link ComputePass} to the {@link Renderer#computePasses | Renderer computePasses array}
+   * @param addToRenderer - Whether to add this {@link ComputePass} to the {@link Renderer#computePasses | Renderer computePasses array}.
    */
   addToScene(addToRenderer = false) {
     if (addToRenderer) {
@@ -142,31 +149,44 @@ class ComputePass {
     this.addToScene(true);
   }
   /**
-   * Create the compute pass material
-   * @param computeParameters - {@link ComputeMaterial} parameters
+   * Create the compute pass material.
+   * @param computeParameters - {@link ComputeMaterial} parameters.
    */
   setMaterial(computeParameters) {
     this.useMaterial(new ComputeMaterial(this.renderer, computeParameters));
   }
   /**
-   * Set or update the {@link ComputePass} {@link ComputeMaterial}
-   * @param material - new {@link ComputeMaterial} to use
+   * Set or update the {@link ComputePass} {@link ComputeMaterial}.
+   * @param material - New {@link ComputeMaterial} to use.
    */
   useMaterial(material) {
     this.material = material;
   }
   /**
    * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been lost to prepare everything for restoration.
-   * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to render
+   * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to render.
    */
   loseContext() {
     this.material.loseContext();
   }
   /**
-   * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored
+   * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored.
    */
   restoreContext() {
     this.material.restoreContext();
+  }
+  /**
+   * Get the active property value.
+   */
+  get active() {
+    return __privateGet(this, _active);
+  }
+  /**
+   * Set the active property value.
+   * @param value - New active value.
+   */
+  set active(value) {
+    __privateSet(this, _active, value);
   }
   /* TEXTURES */
   /**
@@ -179,7 +199,7 @@ class ComputePass {
   /**
    * Create a new {@link MediaTexture}.
    * @param options - {@link MediaTextureParams | MediaTexture parameters}.
-   * @returns - newly created {@link MediaTexture}.
+   * @returns - Newly created {@link MediaTexture}.
    */
   createMediaTexture(options) {
     if (!options.name) {
@@ -234,8 +254,9 @@ class ComputePass {
   }
   /** EVENTS **/
   /**
-   * Callback to run when the {@link ComputePass} is ready
-   * @param callback - callback to run when {@link ComputePass} is ready
+   * Callback to run when the {@link ComputePass} is ready.
+   * @param callback - Callback to run when {@link ComputePass} is ready.
+   * @returns - Our {@link ComputePass}.
    */
   onReady(callback) {
     if (callback) {
@@ -244,8 +265,9 @@ class ComputePass {
     return this;
   }
   /**
-   * Callback to run before the {@link ComputePass} is rendered
-   * @param callback - callback to run just before {@link ComputePass} will be rendered
+   * Callback to run before the {@link ComputePass} is rendered.
+   * @param callback - Callback to run just before {@link ComputePass} will be rendered. The callback won't be called if the {@link Renderer} is not ready or the {@link ComputePass} itself is neither {@link ready} nor {@link active}.
+   * @returns - Our {@link ComputePass}.
    */
   onBeforeRender(callback) {
     if (callback) {
@@ -254,8 +276,9 @@ class ComputePass {
     return this;
   }
   /**
-   * Callback to run when the {@link ComputePass} is rendered
-   * @param callback - callback to run when {@link ComputePass} is rendered
+   * Callback to run when the {@link ComputePass} is rendered.
+   * @param callback - Callback to run when {@link ComputePass} is rendered. The callback won't be called if the {@link Renderer} is not ready or the {@link ComputePass} itself is neither {@link ready} nor {@link active}.
+   * @returns - Our {@link ComputePass}.
    */
   onRender(callback) {
     if (callback) {
@@ -264,8 +287,9 @@ class ComputePass {
     return this;
   }
   /**
-   * Callback to run after the {@link ComputePass} has been rendered
-   * @param callback - callback to run just after {@link ComputePass} has been rendered
+   * Callback to run after the {@link ComputePass} has been rendered.
+   * @param callback - Callback to run just after {@link ComputePass} has been rendered. The callback won't be called if the {@link Renderer} is not ready or the {@link ComputePass} itself is neither {@link ready} nor {@link active}.
+   * @returns - Our {@link ComputePass}.
    */
   onAfterRender(callback) {
     if (callback) {
@@ -274,16 +298,18 @@ class ComputePass {
     return this;
   }
   /**
-   * Callback used to run a custom render function instead of the default one.
+   * Callback used to run a custom render function instead of the default one. This won't be called if the {@link Renderer} is not ready or the {@link ComputePass} itself is neither {@link ready} nor {@link active}.
    * @param callback - Your custom render function where you will have to set all the {@link core/bindGroups/BindGroup.BindGroup | bind groups} and dispatch the workgroups by yourself.
+   * @returns - Our {@link ComputePass}.
    */
   useCustomRender(callback) {
     this.material.useCustomRender(callback);
     return this;
   }
   /**
-   * Callback to run after the {@link core/renderers/GPURenderer.GPURenderer | renderer} has been resized
-   * @param callback - callback to run just after {@link core/renderers/GPURenderer.GPURenderer | renderer} has been resized
+   * Callback to run after the {@link core/renderers/GPURenderer.GPURenderer | renderer} has been resized.
+   * @param callback - Callback to run just after {@link core/renderers/GPURenderer.GPURenderer | renderer} has been resized.
+   * @returns - Our {@link ComputePass}.
    */
   onAfterResize(callback) {
     if (callback) {
@@ -292,20 +318,22 @@ class ComputePass {
     return this;
   }
   /**
-   * Called before rendering the ComputePass
-   * Checks if the material is ready and eventually update its struct
+   * Called before rendering the {@link ComputePass}.
+   * Checks if the material is ready and eventually update its bindings.
    */
   onBeforeRenderPass() {
     if (!this.renderer.ready) return;
-    this._onBeforeRenderCallback && this._onBeforeRenderCallback();
+    if (this.active) {
+      this._onBeforeRenderCallback && this._onBeforeRenderCallback();
+    }
     this.material.onBeforeRender();
     if (this.material && this.material.ready && !this.ready) {
       this.ready = true;
     }
   }
   /**
-   * Render our {@link ComputeMaterial}
-   * @param pass - current compute pass encoder
+   * Render our {@link ComputeMaterial}.
+   * @param pass - Current compute pass encoder.
    */
   onRenderPass(pass) {
     if (!this.material.ready) return;
@@ -313,37 +341,37 @@ class ComputePass {
     this.material.render(pass);
   }
   /**
-   * Called after having rendered the ComputePass
+   * Called after having rendered the {@link ComputePass}.
    */
   onAfterRenderPass() {
     this._onAfterRenderCallback && this._onAfterRenderCallback();
   }
   /**
-   * Render our compute pass
-   * Basically just check if our {@link core/renderers/GPURenderer.GPURenderer | renderer} is ready, and then render our {@link ComputeMaterial}
-   * @param pass
+   * Render our compute pass.
+   * Basically just check if our {@link core/renderers/GPURenderer.GPURenderer | renderer} is ready, and then render our {@link ComputeMaterial}.
+   * @param pass - Current compute pass encoder.
    */
   render(pass) {
     this.onBeforeRenderPass();
-    if (!this.renderer.ready) return;
+    if (!this.renderer.ready || !this.active) return;
     !this.renderer.production && pass.pushDebugGroup(this.options.label);
     this.onRenderPass(pass);
     !this.renderer.production && pass.popDebugGroup();
     this.onAfterRenderPass();
   }
   /**
-   * Copy the result of our read/write GPUBuffer into our result binding array
-   * @param commandEncoder - current GPU command encoder
+   * Copy the result of our read/write GPUBuffer into our result binding array.
+   * @param commandEncoder - Current GPU command encoder.
    */
   copyBufferToResult(commandEncoder) {
     this.material?.copyBufferToResult(commandEncoder);
   }
   /**
-   * Get the {@link core/bindings/WritableBufferBinding.WritableBufferBinding#resultBuffer | result GPU buffer} content by {@link core/bindings/WritableBufferBinding.WritableBufferBinding | binding} and {@link core/bindings/bufferElements/BufferElement.BufferElement | buffer element} names
-   * @param parameters - parameters used to get the result
-   * @param parameters.bindingName - {@link core/bindings/WritableBufferBinding.WritableBufferBinding#name | binding name} from which to get the result
-   * @param parameters.bufferElementName - optional {@link core/bindings/bufferElements/BufferElement.BufferElement | buffer element} (i.e. struct member) name if the result needs to be restrained to only one element
-   * @returns - the mapped content of the {@link GPUBuffer} as a {@link Float32Array}
+   * Get the {@link core/bindings/WritableBufferBinding.WritableBufferBinding#resultBuffer | result GPU buffer} content by {@link core/bindings/WritableBufferBinding.WritableBufferBinding | binding} and {@link core/bindings/bufferElements/BufferElement.BufferElement | buffer element} names.
+   * @param parameters - Parameters used to get the result
+   * @param parameters.bindingName - {@link core/bindings/WritableBufferBinding.WritableBufferBinding#name | binding name} from which to get the result.
+   * @param parameters.bufferElementName - Optional {@link core/bindings/bufferElements/BufferElement.BufferElement | buffer element} (i.e. struct member) name if the result needs to be restrained to only one element.
+   * @returns - The mapped content of the {@link GPUBuffer} as a {@link Float32Array}.
    */
   async getComputeResult({
     bindingName,
@@ -352,19 +380,20 @@ class ComputePass {
     return await this.material?.getComputeResult({ bindingName, bufferElementName });
   }
   /**
-   * Remove the ComputePass from the scene and destroy it
+   * Remove the {@link ComputePass} from the {@link core/scenes/Scene.Scene | Scene} and destroy it.
    */
   remove() {
     this.removeFromScene(true);
     this.destroy();
   }
   /**
-   * Destroy the ComputePass
+   * Destroy the {@link ComputePass}.
    */
   destroy() {
     this.material?.destroy();
   }
 }
 _autoRender = new WeakMap();
+_active = new WeakMap();
 
 export { ComputePass };

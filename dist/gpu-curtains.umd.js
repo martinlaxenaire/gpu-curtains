@@ -6940,10 +6940,10 @@
     throw TypeError(msg);
   };
   var __accessCheck$o = (obj, member, msg) => member.has(obj) || __typeError$o("Cannot " + msg);
-  var __privateGet$m = (obj, member, getter) => (__accessCheck$o(obj, member, "read from private field"), member.get(obj));
+  var __privateGet$m = (obj, member, getter) => (__accessCheck$o(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
   var __privateAdd$o = (obj, member, value) => member.has(obj) ? __typeError$o("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   var __privateSet$m = (obj, member, value, setter) => (__accessCheck$o(obj, member, "write to private field"), member.set(obj, value), value);
-  var _autoRender$2;
+  var _autoRender$2, _active;
   let computePassIndex = 0;
   class ComputePass {
     /**
@@ -6957,6 +6957,8 @@
        * @private
        */
       __privateAdd$o(this, _autoRender$2, true);
+      /** Flag indicating whether this {@link ComputePass} should run or not, much like the {@link core/meshes/Mesh.Mesh#visible | Mesh visible} flag. */
+      __privateAdd$o(this, _active, true);
       // callbacks / events
       /** function assigned to the {@link onReady} callback. */
       this._onReadyCallback = () => {
@@ -6991,6 +6993,7 @@
         samplers,
         textures,
         autoRender,
+        active,
         useAsyncPipeline,
         texturesOptions,
         dispatchSize
@@ -6999,6 +7002,7 @@
         label,
         shaders,
         ...autoRender !== void 0 && { autoRender },
+        ...active !== void 0 && { active },
         ...renderOrder !== void 0 && { renderOrder },
         ...dispatchSize !== void 0 && { dispatchSize },
         useAsyncPipeline: useAsyncPipeline === void 0 ? true : useAsyncPipeline,
@@ -7008,6 +7012,9 @@
       this.renderOrder = renderOrder ?? 0;
       if (autoRender !== void 0) {
         __privateSet$m(this, _autoRender$2, autoRender);
+      }
+      if (active !== void 0) {
+        __privateSet$m(this, _active, active);
       }
       this.userData = {};
       this.ready = false;
@@ -7026,7 +7033,7 @@
       this.addToScene(true);
     }
     /**
-     * Get or set whether the compute pass is ready to render (the material has been successfully compiled)
+     * Get or set whether the compute pass is ready to render (the material has been successfully compiled).
      * @readonly
      */
     get ready() {
@@ -7040,7 +7047,7 @@
     }
     /**
      * Add our {@link ComputePass} to the scene and optionally to the renderer.
-     * @param addToRenderer - whether to add this {@link ComputePass} to the {@link Renderer#computePasses | Renderer computePasses array}
+     * @param addToRenderer - Whether to add this {@link ComputePass} to the {@link Renderer#computePasses | Renderer computePasses array}.
      */
     addToScene(addToRenderer = false) {
       if (addToRenderer) {
@@ -7074,31 +7081,44 @@
       this.addToScene(true);
     }
     /**
-     * Create the compute pass material
-     * @param computeParameters - {@link ComputeMaterial} parameters
+     * Create the compute pass material.
+     * @param computeParameters - {@link ComputeMaterial} parameters.
      */
     setMaterial(computeParameters) {
       this.useMaterial(new ComputeMaterial(this.renderer, computeParameters));
     }
     /**
-     * Set or update the {@link ComputePass} {@link ComputeMaterial}
-     * @param material - new {@link ComputeMaterial} to use
+     * Set or update the {@link ComputePass} {@link ComputeMaterial}.
+     * @param material - New {@link ComputeMaterial} to use.
      */
     useMaterial(material) {
       this.material = material;
     }
     /**
      * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been lost to prepare everything for restoration.
-     * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to render
+     * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to render.
      */
     loseContext() {
       this.material.loseContext();
     }
     /**
-     * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored
+     * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored.
      */
     restoreContext() {
       this.material.restoreContext();
+    }
+    /**
+     * Get the active property value.
+     */
+    get active() {
+      return __privateGet$m(this, _active);
+    }
+    /**
+     * Set the active property value.
+     * @param value - New active value.
+     */
+    set active(value) {
+      __privateSet$m(this, _active, value);
     }
     /* TEXTURES */
     /**
@@ -7111,7 +7131,7 @@
     /**
      * Create a new {@link MediaTexture}.
      * @param options - {@link MediaTextureParams | MediaTexture parameters}.
-     * @returns - newly created {@link MediaTexture}.
+     * @returns - Newly created {@link MediaTexture}.
      */
     createMediaTexture(options) {
       if (!options.name) {
@@ -7166,8 +7186,9 @@
     }
     /** EVENTS **/
     /**
-     * Callback to run when the {@link ComputePass} is ready
-     * @param callback - callback to run when {@link ComputePass} is ready
+     * Callback to run when the {@link ComputePass} is ready.
+     * @param callback - Callback to run when {@link ComputePass} is ready.
+     * @returns - Our {@link ComputePass}.
      */
     onReady(callback) {
       if (callback) {
@@ -7176,8 +7197,9 @@
       return this;
     }
     /**
-     * Callback to run before the {@link ComputePass} is rendered
-     * @param callback - callback to run just before {@link ComputePass} will be rendered
+     * Callback to run before the {@link ComputePass} is rendered.
+     * @param callback - Callback to run just before {@link ComputePass} will be rendered. The callback won't be called if the {@link Renderer} is not ready or the {@link ComputePass} itself is neither {@link ready} nor {@link active}.
+     * @returns - Our {@link ComputePass}.
      */
     onBeforeRender(callback) {
       if (callback) {
@@ -7186,8 +7208,9 @@
       return this;
     }
     /**
-     * Callback to run when the {@link ComputePass} is rendered
-     * @param callback - callback to run when {@link ComputePass} is rendered
+     * Callback to run when the {@link ComputePass} is rendered.
+     * @param callback - Callback to run when {@link ComputePass} is rendered. The callback won't be called if the {@link Renderer} is not ready or the {@link ComputePass} itself is neither {@link ready} nor {@link active}.
+     * @returns - Our {@link ComputePass}.
      */
     onRender(callback) {
       if (callback) {
@@ -7196,8 +7219,9 @@
       return this;
     }
     /**
-     * Callback to run after the {@link ComputePass} has been rendered
-     * @param callback - callback to run just after {@link ComputePass} has been rendered
+     * Callback to run after the {@link ComputePass} has been rendered.
+     * @param callback - Callback to run just after {@link ComputePass} has been rendered. The callback won't be called if the {@link Renderer} is not ready or the {@link ComputePass} itself is neither {@link ready} nor {@link active}.
+     * @returns - Our {@link ComputePass}.
      */
     onAfterRender(callback) {
       if (callback) {
@@ -7206,16 +7230,18 @@
       return this;
     }
     /**
-     * Callback used to run a custom render function instead of the default one.
+     * Callback used to run a custom render function instead of the default one. This won't be called if the {@link Renderer} is not ready or the {@link ComputePass} itself is neither {@link ready} nor {@link active}.
      * @param callback - Your custom render function where you will have to set all the {@link core/bindGroups/BindGroup.BindGroup | bind groups} and dispatch the workgroups by yourself.
+     * @returns - Our {@link ComputePass}.
      */
     useCustomRender(callback) {
       this.material.useCustomRender(callback);
       return this;
     }
     /**
-     * Callback to run after the {@link core/renderers/GPURenderer.GPURenderer | renderer} has been resized
-     * @param callback - callback to run just after {@link core/renderers/GPURenderer.GPURenderer | renderer} has been resized
+     * Callback to run after the {@link core/renderers/GPURenderer.GPURenderer | renderer} has been resized.
+     * @param callback - Callback to run just after {@link core/renderers/GPURenderer.GPURenderer | renderer} has been resized.
+     * @returns - Our {@link ComputePass}.
      */
     onAfterResize(callback) {
       if (callback) {
@@ -7224,20 +7250,22 @@
       return this;
     }
     /**
-     * Called before rendering the ComputePass
-     * Checks if the material is ready and eventually update its struct
+     * Called before rendering the {@link ComputePass}.
+     * Checks if the material is ready and eventually update its bindings.
      */
     onBeforeRenderPass() {
       if (!this.renderer.ready) return;
-      this._onBeforeRenderCallback && this._onBeforeRenderCallback();
+      if (this.active) {
+        this._onBeforeRenderCallback && this._onBeforeRenderCallback();
+      }
       this.material.onBeforeRender();
       if (this.material && this.material.ready && !this.ready) {
         this.ready = true;
       }
     }
     /**
-     * Render our {@link ComputeMaterial}
-     * @param pass - current compute pass encoder
+     * Render our {@link ComputeMaterial}.
+     * @param pass - Current compute pass encoder.
      */
     onRenderPass(pass) {
       if (!this.material.ready) return;
@@ -7245,37 +7273,37 @@
       this.material.render(pass);
     }
     /**
-     * Called after having rendered the ComputePass
+     * Called after having rendered the {@link ComputePass}.
      */
     onAfterRenderPass() {
       this._onAfterRenderCallback && this._onAfterRenderCallback();
     }
     /**
-     * Render our compute pass
-     * Basically just check if our {@link core/renderers/GPURenderer.GPURenderer | renderer} is ready, and then render our {@link ComputeMaterial}
-     * @param pass
+     * Render our compute pass.
+     * Basically just check if our {@link core/renderers/GPURenderer.GPURenderer | renderer} is ready, and then render our {@link ComputeMaterial}.
+     * @param pass - Current compute pass encoder.
      */
     render(pass) {
       this.onBeforeRenderPass();
-      if (!this.renderer.ready) return;
+      if (!this.renderer.ready || !this.active) return;
       !this.renderer.production && pass.pushDebugGroup(this.options.label);
       this.onRenderPass(pass);
       !this.renderer.production && pass.popDebugGroup();
       this.onAfterRenderPass();
     }
     /**
-     * Copy the result of our read/write GPUBuffer into our result binding array
-     * @param commandEncoder - current GPU command encoder
+     * Copy the result of our read/write GPUBuffer into our result binding array.
+     * @param commandEncoder - Current GPU command encoder.
      */
     copyBufferToResult(commandEncoder) {
       this.material?.copyBufferToResult(commandEncoder);
     }
     /**
-     * Get the {@link core/bindings/WritableBufferBinding.WritableBufferBinding#resultBuffer | result GPU buffer} content by {@link core/bindings/WritableBufferBinding.WritableBufferBinding | binding} and {@link core/bindings/bufferElements/BufferElement.BufferElement | buffer element} names
-     * @param parameters - parameters used to get the result
-     * @param parameters.bindingName - {@link core/bindings/WritableBufferBinding.WritableBufferBinding#name | binding name} from which to get the result
-     * @param parameters.bufferElementName - optional {@link core/bindings/bufferElements/BufferElement.BufferElement | buffer element} (i.e. struct member) name if the result needs to be restrained to only one element
-     * @returns - the mapped content of the {@link GPUBuffer} as a {@link Float32Array}
+     * Get the {@link core/bindings/WritableBufferBinding.WritableBufferBinding#resultBuffer | result GPU buffer} content by {@link core/bindings/WritableBufferBinding.WritableBufferBinding | binding} and {@link core/bindings/bufferElements/BufferElement.BufferElement | buffer element} names.
+     * @param parameters - Parameters used to get the result
+     * @param parameters.bindingName - {@link core/bindings/WritableBufferBinding.WritableBufferBinding#name | binding name} from which to get the result.
+     * @param parameters.bufferElementName - Optional {@link core/bindings/bufferElements/BufferElement.BufferElement | buffer element} (i.e. struct member) name if the result needs to be restrained to only one element.
+     * @returns - The mapped content of the {@link GPUBuffer} as a {@link Float32Array}.
      */
     async getComputeResult({
       bindingName,
@@ -7284,20 +7312,21 @@
       return await this.material?.getComputeResult({ bindingName, bufferElementName });
     }
     /**
-     * Remove the ComputePass from the scene and destroy it
+     * Remove the {@link ComputePass} from the {@link core/scenes/Scene.Scene | Scene} and destroy it.
      */
     remove() {
       this.removeFromScene(true);
       this.destroy();
     }
     /**
-     * Destroy the ComputePass
+     * Destroy the {@link ComputePass}.
      */
     destroy() {
       this.material?.destroy();
     }
   }
   _autoRender$2 = new WeakMap();
+  _active = new WeakMap();
 
   const points = [new Vec3(), new Vec3(), new Vec3(), new Vec3(), new Vec3(), new Vec3(), new Vec3(), new Vec3()];
   class Box3 {
@@ -10647,8 +10676,8 @@ ${geometry.wgslStructFragment}`
       /* EVENTS */
       /**
        * Callback to execute when a Mesh is ready - i.e. its {@link material} and {@link geometry} are ready.
-       * @param callback - callback to run when {@link MeshBase} is ready
-       * @returns - our Mesh
+       * @param callback - Callback to run when {@link MeshBase} is ready.
+       * @returns - Our Mesh.
        */
       onReady(callback) {
         if (callback) {
@@ -10658,8 +10687,8 @@ ${geometry.wgslStructFragment}`
       }
       /**
        * Callback to execute before updating the {@link core/scenes/Scene.Scene | Scene} matrix stack. This means it is called early and allows to update transformations values before actually setting the Mesh matrices (if any). This also means it won't be called if the Mesh has not been added to the {@link core/scenes/Scene.Scene | Scene}. The callback won't be called if the {@link Renderer} is not ready or the Mesh itself is neither {@link ready} nor {@link visible}.
-       * @param callback - callback to run just before updating the {@link core/scenes/Scene.Scene | Scene} matrix stack.
-       * @returns - our Mesh
+       * @param callback - Callback to run just before updating the {@link core/scenes/Scene.Scene | Scene} matrix stack.
+       * @returns - Our Mesh
        */
       onBeforeRender(callback) {
         if (callback) {
@@ -10669,8 +10698,8 @@ ${geometry.wgslStructFragment}`
       }
       /**
        * Callback to execute right before actually rendering the Mesh. Useful to update uniforms for example. The callback won't be called if the {@link Renderer} is not ready or the Mesh itself is neither {@link ready} nor {@link visible}.
-       * @param callback - callback to run just before rendering the {@link MeshBase}
-       * @returns - our Mesh
+       * @param callback - Callback to run just before rendering the {@link MeshBase}.
+       * @returns - Our Mesh.
        */
       onRender(callback) {
         if (callback) {
@@ -10680,8 +10709,8 @@ ${geometry.wgslStructFragment}`
       }
       /**
        * Callback to execute just after a Mesh has been rendered. The callback won't be called if the {@link Renderer} is not ready or the Mesh itself is neither {@link ready} nor {@link visible}.
-       * @param callback - callback to run just after {@link MeshBase} has been rendered
-       * @returns - our Mesh
+       * @param callback - Callback to run just after {@link MeshBase} has been rendered.
+       * @returns - Our Mesh.
        */
       onAfterRender(callback) {
         if (callback) {
@@ -10691,8 +10720,8 @@ ${geometry.wgslStructFragment}`
       }
       /**
        * Callback to execute just after a Mesh has been resized.
-       * @param callback - callback to run just after {@link MeshBase} has been resized
-       * @returns - our Mesh
+       * @param callback - Callback to run just after {@link MeshBase} has been resized.
+       * @returns - Our Mesh.
        */
       onAfterResize(callback) {
         if (callback) {
@@ -10746,12 +10775,12 @@ ${geometry.wgslStructFragment}`
       }
       /**
        * Render our Mesh
-       * - Execute {@link onBeforeRenderPass}
-       * - Stop here if {@link Renderer} is not ready or Mesh is not {@link visible}
-       * - Execute super render call if it exists
-       * - {@link onRenderPass | render} our {@link material} and {@link geometry}
-       * - Execute {@link onAfterRenderPass}
-       * @param pass - current render pass encoder
+       * - Execute {@link onBeforeRenderPass}.
+       * - Stop here if {@link Renderer} is not ready or Mesh is not {@link visible}.
+       * - Execute super render call if it exists.
+       * - {@link onRenderPass | render} our {@link material} and {@link geometry}.
+       * - Execute {@link onAfterRenderPass}.
+       * @param pass - Current render pass encoder.
        */
       render(pass) {
         this.onBeforeRenderPass();
@@ -10763,7 +10792,7 @@ ${geometry.wgslStructFragment}`
       }
       /* DESTROY */
       /**
-       * Remove the Mesh from the {@link core/scenes/Scene.Scene | Scene} and destroy it
+       * Remove the Mesh from the {@link core/scenes/Scene.Scene | Scene} and destroy it.
        */
       remove() {
         this.removeFromScene(true);
@@ -10778,7 +10807,7 @@ ${geometry.wgslStructFragment}`
         }
       }
       /**
-       * Destroy the Mesh
+       * Destroy the Mesh.
        */
       destroy() {
         if (super.destroy) {
@@ -20039,21 +20068,21 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
   class DOMObject3D extends ProjectedObject3D {
     /**
      * DOMObject3D constructor
-     * @param renderer - {@link GPUCurtainsRenderer} object or {@link GPUCurtains} class object used to create this {@link DOMObject3D}
-     * @param element - {@link HTMLElement} or string representing an {@link HTMLElement} selector used to scale and position the {@link DOMObject3D}
-     * @param parameters - {@link DOMObject3DParams | parameters} used to create this {@link DOMObject3D}
+     * @param renderer - {@link GPUCurtainsRenderer} object or {@link GPUCurtains} class object used to create this {@link DOMObject3D}.
+     * @param element - {@link HTMLElement} or string representing an {@link HTMLElement} selector used to scale and position the {@link DOMObject3D}.
+     * @param parameters - {@link DOMObject3DParams | parameters} used to create this {@link DOMObject3D}.
      */
     constructor(renderer, element, parameters = {}) {
       super(renderer);
-      /** Private {@link Vec3 | vector} used to keep track of the actual {@link DOMObject3DTransforms#position.world | world position} accounting the {@link DOMObject3DTransforms#position.document | additional document translation} converted into world space */
+      /** Private {@link Vec3 | vector} used to keep track of the actual {@link DOMObject3DTransforms#position.world | world position} accounting the {@link DOMObject3DTransforms#position.document | additional document translation} converted into world space. */
       __privateAdd$7(this, _DOMObjectWorldPosition, new Vec3());
-      /** Private {@link Vec3 | vector} used to keep track of the actual {@link DOMObject3D} world scale accounting the {@link DOMObject3D#size.world | DOMObject3D world size} */
+      /** Private {@link Vec3 | vector} used to keep track of the actual {@link DOMObject3D} world scale accounting the {@link DOMObject3D#size.world | DOMObject3D world size}. */
       __privateAdd$7(this, _DOMObjectWorldScale, new Vec3(1));
       /** Private number representing the scale ratio of the {@link DOMObject3D} along Z axis to apply. Since it can be difficult to guess the most accurate scale along the Z axis of an object mapped to 2D coordinates, this helps with adjusting the scale along the Z axis. */
       __privateAdd$7(this, _DOMObjectDepthScaleRatio, 1);
       /** Helper {@link Box3 | bounding box} used to map the 3D object onto the 2D DOM element. */
       this.boundingBox = new Box3(new Vec3(-1), new Vec3(1));
-      /** function assigned to the {@link onAfterDOMElementResize} callback */
+      /** function assigned to the {@link onAfterDOMElementResize} callback. */
       this._onAfterDOMElementResizeCallback = () => {
       };
       renderer = isCurtainsRenderer(renderer, "DOMObject3D");
@@ -20094,8 +20123,8 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       this.renderer.domObjects.push(this);
     }
     /**
-     * Set the {@link domElement | DOM Element}
-     * @param element - {@link HTMLElement} or string representing an {@link HTMLElement} selector to use
+     * Set the {@link domElement | DOM Element}.
+     * @param element - {@link HTMLElement} or string representing an {@link HTMLElement} selector to use.
      */
     setDOMElement(element) {
       this.domElement = new DOMElement({
@@ -20106,7 +20135,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       this.updateSizeAndPosition();
     }
     /**
-     * Update size and position when the {@link domElement | DOM Element} position changed
+     * Update size and position when the {@link domElement | DOM Element} position changed.
      */
     onPositionChanged() {
       if (this.watchScroll) {
@@ -20114,8 +20143,8 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       }
     }
     /**
-     * Reset the {@link domElement | DOMElement}
-     * @param element - the new {@link HTMLElement} or string representing an {@link HTMLElement} selector to use
+     * Reset the {@link domElement | DOMElement}.
+     * @param element - The new {@link HTMLElement} or string representing an {@link HTMLElement} selector to use.
      */
     resetDOMElement(element) {
       if (this.domElement) {
@@ -20124,8 +20153,8 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       this.setDOMElement(element);
     }
     /**
-     * Resize the {@link DOMObject3D}
-     * @param boundingRect - new {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}
+     * Resize the {@link DOMObject3D}.
+     * @param boundingRect - New {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}.
      */
     resize(boundingRect = null) {
       if (!boundingRect && (!this.domElement || this.domElement?.isResizing)) return;
@@ -20134,7 +20163,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
     }
     /* BOUNDING BOXES GETTERS */
     /**
-     * Get the {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}
+     * Get the {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}.
      * @readonly
      */
     get boundingRect() {
@@ -20151,7 +20180,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
     }
     /* TRANSFOMS */
     /**
-     * Set our transforms properties and {@link Vec3#onChange | onChange vector} callbacks
+     * Set our transforms properties and {@link Vec3#onChange | onChange vector} callbacks.
      */
     setTransforms() {
       super.setTransforms();
@@ -20162,69 +20191,69 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       this.transformOrigin.onChange(() => this.setWorldTransformOrigin());
     }
     /**
-     * Get the {@link DOMObject3DTransforms#position.document | additional translation relative to the document}
+     * Get the {@link DOMObject3DTransforms#position.document | additional translation relative to the document}.
      */
     get documentPosition() {
       return this.transforms.position.document;
     }
     /**
-     * Set the {@link DOMObject3DTransforms#position.document | additional translation relative to the document}
-     * @param value - additional translation relative to the document to apply
+     * Set the {@link DOMObject3DTransforms#position.document | additional translation relative to the document}.
+     * @param value - Additional translation relative to the document to apply.
      */
     set documentPosition(value) {
       this.transforms.position.document = value;
       this.applyPosition();
     }
     /**
-     * Get the {@link domElement | DOM element} scale in world space
+     * Get the {@link domElement | DOM element} scale in world space.
      * @readonly
      */
     get DOMObjectWorldScale() {
       return __privateGet$6(this, _DOMObjectWorldScale).clone();
     }
     /**
-     * Get the {@link DOMObject3D} scale in world space (accounting for {@link scale})
+     * Get the {@link DOMObject3D} scale in world space (accounting for {@link scale}).
      * @readonly
      */
     get worldScale() {
       return this.DOMObjectWorldScale.multiply(this.scale);
     }
     /**
-     * Get the {@link DOMObject3D} position in world space
+     * Get the {@link DOMObject3D} position in world space.
      * @readonly
      */
     get worldPosition() {
       return __privateGet$6(this, _DOMObjectWorldPosition).clone();
     }
     /**
-     * Get the {@link DOMObject3D} transform origin relative to the {@link DOMObject3D}
+     * Get the {@link DOMObject3D} transform origin relative to the {@link DOMObject3D}.
      */
     get transformOrigin() {
       return this.transforms.origin.model;
     }
     /**
-     * Set the {@link DOMObject3D} transform origin relative to the {@link DOMObject3D}
-     * @param value - new transform origin
+     * Set the {@link DOMObject3D} transform origin relative to the {@link DOMObject3D}.
+     * @param value - New transform origin.
      */
     set transformOrigin(value) {
       this.transforms.origin.model = value;
       this.setWorldTransformOrigin();
     }
     /**
-     * Get the {@link DOMObject3D} transform origin in world space
+     * Get the {@link DOMObject3D} transform origin in world space.
      */
     get worldTransformOrigin() {
       return this.transforms.origin.world;
     }
     /**
-     * Set the {@link DOMObject3D} transform origin in world space
-     * @param value - new world space transform origin
+     * Set the {@link DOMObject3D} transform origin in world space.
+     * @param value - New world space transform origin.
      */
     set worldTransformOrigin(value) {
       this.transforms.origin.world = value;
     }
     /**
-     * Check whether at least one of the matrix should be updated
+     * Check whether at least one of the matrix should be updated.
      */
     shouldUpdateMatrices() {
       super.shouldUpdateMatrices();
@@ -20241,7 +20270,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       this.size.shouldUpdate = true;
     }
     /**
-     * Update the {@link DOMObject3D} sizes and position
+     * Update the {@link DOMObject3D} sizes and position.
      */
     updateSizeAndPosition() {
       this.setWorldSizes();
@@ -20249,7 +20278,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       this.shouldUpdateModelMatrix();
     }
     /**
-     * Compute the {@link DOMObject3D} world position using its world position and document translation converted to world space
+     * Compute the {@link DOMObject3D} world position using its world position and document translation converted to world space.
      */
     applyDocumentPosition() {
       let worldPosition = new Vec3(0, 0, 0);
@@ -20263,7 +20292,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       );
     }
     /**
-     * Apply the transform origin and set the {@link DOMObject3D} world transform origin
+     * Apply the transform origin and set the {@link DOMObject3D} world transform origin.
      */
     applyTransformOrigin() {
       if (!this.size) return;
@@ -20272,7 +20301,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
     }
     /* MATRICES */
     /**
-     * Update the {@link modelMatrix | model matrix} accounting the {@link DOMObject3D} world position and {@link DOMObject3D} world scale
+     * Update the {@link modelMatrix | model matrix} accounting the {@link DOMObject3D} world position and {@link DOMObject3D} world scale.
      */
     updateModelMatrix() {
       this.modelMatrix.composeFromOrigin(
@@ -20285,8 +20314,8 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       this.shouldUpdateWorldMatrix();
     }
     /**
-     * Convert a document position {@link Vec3 | vector} to a world position {@link Vec3 | vector}
-     * @param vector - document position {@link Vec3 | vector} converted to world space
+     * Convert a document position {@link Vec3 | vector} to a world position {@link Vec3 | vector}.
+     * @param vector - Document position {@link Vec3 | vector} converted to world space.
      */
     documentToWorldSpace(vector = new Vec3()) {
       return new Vec3(
@@ -20296,7 +20325,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       );
     }
     /**
-     * Compute the {@link DOMObject3D#size | world sizes}
+     * Compute the {@link DOMObject3D#size | world sizes}.
      */
     computeWorldSizes() {
       const containerBoundingRect = this.renderer.boundingRect;
@@ -20333,7 +20362,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       );
     }
     /**
-     * Compute and set the {@link DOMObject3D#size.world | world size} and set the {@link DOMObject3D} world transform origin
+     * Compute and set the {@link DOMObject3D#size.world | world size} and set the {@link DOMObject3D} world transform origin.
      */
     setWorldSizes() {
       this.computeWorldSizes();
@@ -20341,7 +20370,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       this.setWorldTransformOrigin();
     }
     /**
-     * Set the {@link worldScale} accounting for scaled world size and {@link DOMObjectDepthScaleRatio}
+     * Set the {@link worldScale} accounting for scaled world size and {@link DOMObjectDepthScaleRatio}.
      */
     setWorldScale() {
       __privateGet$6(this, _DOMObjectWorldScale).set(
@@ -20353,14 +20382,14 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
     }
     /**
      * Set {@link DOMObjectDepthScaleRatio}. Since it can be difficult to guess the most accurate scale along the Z axis of an object mapped to 2D coordinates, this helps with adjusting the scale along the Z axis.
-     * @param value - depth scale ratio value to use
+     * @param value - Depth scale ratio value to use.
      */
     set DOMObjectDepthScaleRatio(value) {
       __privateSet$6(this, _DOMObjectDepthScaleRatio, value);
       this.setWorldScale();
     }
     /**
-     * Set the {@link DOMObject3D} world transform origin and tell the matrices to update
+     * Set the {@link DOMObject3D} world transform origin and tell the matrices to update.
      */
     setWorldTransformOrigin() {
       this.transforms.origin.world = new Vec3(
@@ -20373,8 +20402,8 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       this.shouldUpdateMatrixStack();
     }
     /**
-     * Update the {@link domElement | DOM Element} scroll position
-     * @param delta - last {@link utils/ScrollManager.ScrollManager.delta | scroll delta values}
+     * Update the {@link domElement | DOM Element} scroll position.
+     * @param delta - Last {@link utils/ScrollManager.ScrollManager.delta | scroll delta values}.
      */
     updateScrollPosition(delta = { x: 0, y: 0 }) {
       if (delta.x || delta.y) {
@@ -20383,8 +20412,8 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
     }
     /**
      * Callback to execute just after the {@link domElement} has been resized.
-     * @param callback - callback to run just after {@link domElement} has been resized
-     * @returns - our {@link DOMObject3D}
+     * @param callback - Callback to run just after {@link domElement} has been resized.
+     * @returns - Our {@link DOMObject3D}.
      */
     onAfterDOMElementResize(callback) {
       if (callback) {
@@ -20393,7 +20422,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
       return this;
     }
     /**
-     * Destroy our {@link DOMObject3D}
+     * Destroy our {@link DOMObject3D}.
      */
     destroy() {
       super.destroy();
