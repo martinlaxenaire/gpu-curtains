@@ -16,21 +16,21 @@ var _DOMObjectWorldPosition, _DOMObjectWorldScale, _DOMObjectDepthScaleRatio;
 class DOMObject3D extends ProjectedObject3D {
   /**
    * DOMObject3D constructor
-   * @param renderer - {@link GPUCurtainsRenderer} object or {@link GPUCurtains} class object used to create this {@link DOMObject3D}
-   * @param element - {@link HTMLElement} or string representing an {@link HTMLElement} selector used to scale and position the {@link DOMObject3D}
-   * @param parameters - {@link DOMObject3DParams | parameters} used to create this {@link DOMObject3D}
+   * @param renderer - {@link GPUCurtainsRenderer} object or {@link GPUCurtains} class object used to create this {@link DOMObject3D}.
+   * @param element - {@link HTMLElement} or string representing an {@link HTMLElement} selector used to scale and position the {@link DOMObject3D}.
+   * @param parameters - {@link DOMObject3DParams | parameters} used to create this {@link DOMObject3D}.
    */
   constructor(renderer, element, parameters = {}) {
     super(renderer);
-    /** Private {@link Vec3 | vector} used to keep track of the actual {@link DOMObject3DTransforms#position.world | world position} accounting the {@link DOMObject3DTransforms#position.document | additional document translation} converted into world space */
+    /** Private {@link Vec3 | vector} used to keep track of the actual {@link DOMObject3DTransforms#position.world | world position} accounting the {@link DOMObject3DTransforms#position.document | additional document translation} converted into world space. */
     __privateAdd(this, _DOMObjectWorldPosition, new Vec3());
-    /** Private {@link Vec3 | vector} used to keep track of the actual {@link DOMObject3D} world scale accounting the {@link DOMObject3D#size.world | DOMObject3D world size} */
+    /** Private {@link Vec3 | vector} used to keep track of the actual {@link DOMObject3D} world scale accounting the {@link DOMObject3D#size.world | DOMObject3D world size}. */
     __privateAdd(this, _DOMObjectWorldScale, new Vec3(1));
     /** Private number representing the scale ratio of the {@link DOMObject3D} along Z axis to apply. Since it can be difficult to guess the most accurate scale along the Z axis of an object mapped to 2D coordinates, this helps with adjusting the scale along the Z axis. */
     __privateAdd(this, _DOMObjectDepthScaleRatio, 1);
     /** Helper {@link Box3 | bounding box} used to map the 3D object onto the 2D DOM element. */
     this.boundingBox = new Box3(new Vec3(-1), new Vec3(1));
-    /** function assigned to the {@link onAfterDOMElementResize} callback */
+    /** function assigned to the {@link onAfterDOMElementResize} callback. */
     this._onAfterDOMElementResizeCallback = () => {
     };
     renderer = isCurtainsRenderer(renderer, "DOMObject3D");
@@ -71,8 +71,8 @@ class DOMObject3D extends ProjectedObject3D {
     this.renderer.domObjects.push(this);
   }
   /**
-   * Set the {@link domElement | DOM Element}
-   * @param element - {@link HTMLElement} or string representing an {@link HTMLElement} selector to use
+   * Set the {@link domElement | DOM Element}.
+   * @param element - {@link HTMLElement} or string representing an {@link HTMLElement} selector to use.
    */
   setDOMElement(element) {
     this.domElement = new DOMElement({
@@ -83,7 +83,7 @@ class DOMObject3D extends ProjectedObject3D {
     this.updateSizeAndPosition();
   }
   /**
-   * Update size and position when the {@link domElement | DOM Element} position changed
+   * Update size and position when the {@link domElement | DOM Element} position changed.
    */
   onPositionChanged() {
     if (this.watchScroll) {
@@ -91,8 +91,8 @@ class DOMObject3D extends ProjectedObject3D {
     }
   }
   /**
-   * Reset the {@link domElement | DOMElement}
-   * @param element - the new {@link HTMLElement} or string representing an {@link HTMLElement} selector to use
+   * Reset the {@link domElement | DOMElement}.
+   * @param element - The new {@link HTMLElement} or string representing an {@link HTMLElement} selector to use.
    */
   resetDOMElement(element) {
     if (this.domElement) {
@@ -101,8 +101,8 @@ class DOMObject3D extends ProjectedObject3D {
     this.setDOMElement(element);
   }
   /**
-   * Resize the {@link DOMObject3D}
-   * @param boundingRect - new {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}
+   * Resize the {@link DOMObject3D}.
+   * @param boundingRect - New {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}.
    */
   resize(boundingRect = null) {
     if (!boundingRect && (!this.domElement || this.domElement?.isResizing)) return;
@@ -111,7 +111,7 @@ class DOMObject3D extends ProjectedObject3D {
   }
   /* BOUNDING BOXES GETTERS */
   /**
-   * Get the {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}
+   * Get the {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}.
    * @readonly
    */
   get boundingRect() {
@@ -128,7 +128,7 @@ class DOMObject3D extends ProjectedObject3D {
   }
   /* TRANSFOMS */
   /**
-   * Set our transforms properties and {@link Vec3#onChange | onChange vector} callbacks
+   * Set our transforms properties and {@link Vec3#onChange | onChange vector} callbacks.
    */
   setTransforms() {
     super.setTransforms();
@@ -139,69 +139,69 @@ class DOMObject3D extends ProjectedObject3D {
     this.transformOrigin.onChange(() => this.setWorldTransformOrigin());
   }
   /**
-   * Get the {@link DOMObject3DTransforms#position.document | additional translation relative to the document}
+   * Get the {@link DOMObject3DTransforms#position.document | additional translation relative to the document}.
    */
   get documentPosition() {
     return this.transforms.position.document;
   }
   /**
-   * Set the {@link DOMObject3DTransforms#position.document | additional translation relative to the document}
-   * @param value - additional translation relative to the document to apply
+   * Set the {@link DOMObject3DTransforms#position.document | additional translation relative to the document}.
+   * @param value - Additional translation relative to the document to apply.
    */
   set documentPosition(value) {
     this.transforms.position.document = value;
     this.applyPosition();
   }
   /**
-   * Get the {@link domElement | DOM element} scale in world space
+   * Get the {@link domElement | DOM element} scale in world space.
    * @readonly
    */
   get DOMObjectWorldScale() {
     return __privateGet(this, _DOMObjectWorldScale).clone();
   }
   /**
-   * Get the {@link DOMObject3D} scale in world space (accounting for {@link scale})
+   * Get the {@link DOMObject3D} scale in world space (accounting for {@link scale}).
    * @readonly
    */
   get worldScale() {
     return this.DOMObjectWorldScale.multiply(this.scale);
   }
   /**
-   * Get the {@link DOMObject3D} position in world space
+   * Get the {@link DOMObject3D} position in world space.
    * @readonly
    */
   get worldPosition() {
     return __privateGet(this, _DOMObjectWorldPosition).clone();
   }
   /**
-   * Get the {@link DOMObject3D} transform origin relative to the {@link DOMObject3D}
+   * Get the {@link DOMObject3D} transform origin relative to the {@link DOMObject3D}.
    */
   get transformOrigin() {
     return this.transforms.origin.model;
   }
   /**
-   * Set the {@link DOMObject3D} transform origin relative to the {@link DOMObject3D}
-   * @param value - new transform origin
+   * Set the {@link DOMObject3D} transform origin relative to the {@link DOMObject3D}.
+   * @param value - New transform origin.
    */
   set transformOrigin(value) {
     this.transforms.origin.model = value;
     this.setWorldTransformOrigin();
   }
   /**
-   * Get the {@link DOMObject3D} transform origin in world space
+   * Get the {@link DOMObject3D} transform origin in world space.
    */
   get worldTransformOrigin() {
     return this.transforms.origin.world;
   }
   /**
-   * Set the {@link DOMObject3D} transform origin in world space
-   * @param value - new world space transform origin
+   * Set the {@link DOMObject3D} transform origin in world space.
+   * @param value - New world space transform origin.
    */
   set worldTransformOrigin(value) {
     this.transforms.origin.world = value;
   }
   /**
-   * Check whether at least one of the matrix should be updated
+   * Check whether at least one of the matrix should be updated.
    */
   shouldUpdateMatrices() {
     super.shouldUpdateMatrices();
@@ -218,7 +218,7 @@ class DOMObject3D extends ProjectedObject3D {
     this.size.shouldUpdate = true;
   }
   /**
-   * Update the {@link DOMObject3D} sizes and position
+   * Update the {@link DOMObject3D} sizes and position.
    */
   updateSizeAndPosition() {
     this.setWorldSizes();
@@ -226,7 +226,7 @@ class DOMObject3D extends ProjectedObject3D {
     this.shouldUpdateModelMatrix();
   }
   /**
-   * Compute the {@link DOMObject3D} world position using its world position and document translation converted to world space
+   * Compute the {@link DOMObject3D} world position using its world position and document translation converted to world space.
    */
   applyDocumentPosition() {
     let worldPosition = new Vec3(0, 0, 0);
@@ -240,7 +240,7 @@ class DOMObject3D extends ProjectedObject3D {
     );
   }
   /**
-   * Apply the transform origin and set the {@link DOMObject3D} world transform origin
+   * Apply the transform origin and set the {@link DOMObject3D} world transform origin.
    */
   applyTransformOrigin() {
     if (!this.size) return;
@@ -249,7 +249,7 @@ class DOMObject3D extends ProjectedObject3D {
   }
   /* MATRICES */
   /**
-   * Update the {@link modelMatrix | model matrix} accounting the {@link DOMObject3D} world position and {@link DOMObject3D} world scale
+   * Update the {@link modelMatrix | model matrix} accounting the {@link DOMObject3D} world position and {@link DOMObject3D} world scale.
    */
   updateModelMatrix() {
     this.modelMatrix.composeFromOrigin(
@@ -262,8 +262,8 @@ class DOMObject3D extends ProjectedObject3D {
     this.shouldUpdateWorldMatrix();
   }
   /**
-   * Convert a document position {@link Vec3 | vector} to a world position {@link Vec3 | vector}
-   * @param vector - document position {@link Vec3 | vector} converted to world space
+   * Convert a document position {@link Vec3 | vector} to a world position {@link Vec3 | vector}.
+   * @param vector - Document position {@link Vec3 | vector} converted to world space.
    */
   documentToWorldSpace(vector = new Vec3()) {
     return new Vec3(
@@ -273,7 +273,7 @@ class DOMObject3D extends ProjectedObject3D {
     );
   }
   /**
-   * Compute the {@link DOMObject3D#size | world sizes}
+   * Compute the {@link DOMObject3D#size | world sizes}.
    */
   computeWorldSizes() {
     const containerBoundingRect = this.renderer.boundingRect;
@@ -310,7 +310,7 @@ class DOMObject3D extends ProjectedObject3D {
     );
   }
   /**
-   * Compute and set the {@link DOMObject3D#size.world | world size} and set the {@link DOMObject3D} world transform origin
+   * Compute and set the {@link DOMObject3D#size.world | world size} and set the {@link DOMObject3D} world transform origin.
    */
   setWorldSizes() {
     this.computeWorldSizes();
@@ -318,7 +318,7 @@ class DOMObject3D extends ProjectedObject3D {
     this.setWorldTransformOrigin();
   }
   /**
-   * Set the {@link worldScale} accounting for scaled world size and {@link DOMObjectDepthScaleRatio}
+   * Set the {@link worldScale} accounting for scaled world size and {@link DOMObjectDepthScaleRatio}.
    */
   setWorldScale() {
     __privateGet(this, _DOMObjectWorldScale).set(
@@ -330,14 +330,14 @@ class DOMObject3D extends ProjectedObject3D {
   }
   /**
    * Set {@link DOMObjectDepthScaleRatio}. Since it can be difficult to guess the most accurate scale along the Z axis of an object mapped to 2D coordinates, this helps with adjusting the scale along the Z axis.
-   * @param value - depth scale ratio value to use
+   * @param value - Depth scale ratio value to use.
    */
   set DOMObjectDepthScaleRatio(value) {
     __privateSet(this, _DOMObjectDepthScaleRatio, value);
     this.setWorldScale();
   }
   /**
-   * Set the {@link DOMObject3D} world transform origin and tell the matrices to update
+   * Set the {@link DOMObject3D} world transform origin and tell the matrices to update.
    */
   setWorldTransformOrigin() {
     this.transforms.origin.world = new Vec3(
@@ -350,8 +350,8 @@ class DOMObject3D extends ProjectedObject3D {
     this.shouldUpdateMatrixStack();
   }
   /**
-   * Update the {@link domElement | DOM Element} scroll position
-   * @param delta - last {@link utils/ScrollManager.ScrollManager.delta | scroll delta values}
+   * Update the {@link domElement | DOM Element} scroll position.
+   * @param delta - Last {@link utils/ScrollManager.ScrollManager.delta | scroll delta values}.
    */
   updateScrollPosition(delta = { x: 0, y: 0 }) {
     if (delta.x || delta.y) {
@@ -360,8 +360,8 @@ class DOMObject3D extends ProjectedObject3D {
   }
   /**
    * Callback to execute just after the {@link domElement} has been resized.
-   * @param callback - callback to run just after {@link domElement} has been resized
-   * @returns - our {@link DOMObject3D}
+   * @param callback - Callback to run just after {@link domElement} has been resized.
+   * @returns - Our {@link DOMObject3D}.
    */
   onAfterDOMElementResize(callback) {
     if (callback) {
@@ -370,7 +370,7 @@ class DOMObject3D extends ProjectedObject3D {
     return this;
   }
   /**
-   * Destroy our {@link DOMObject3D}
+   * Destroy our {@link DOMObject3D}.
    */
   destroy() {
     super.destroy();

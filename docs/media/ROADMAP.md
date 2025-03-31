@@ -34,6 +34,7 @@
 
 - Improve/add more GLTFScenesManager extensions
 - MSDF fonts
+- Clustered shading?
 - Eventual shader custom preprocessor?
 - Improve typedoc documentation?
 - Cascaded shadow maps/Variance shadow maps?
