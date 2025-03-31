@@ -12058,6 +12058,7 @@ fn getPCFBaseShadowContribution(
             }
           }
         }
+        this.updateBinding();
         this.ready = isReady;
       }
     }
@@ -12530,6 +12531,7 @@ fn getPCFBaseShadowContribution(
       if (this.options.useRenderBundle && !this.renderBundle) {
         this.renderBundle = new RenderBundle(this.renderer, {
           label: `Depth render bundle for ${this.constructor.name} ${this.index}`,
+          renderPass: this.depthPassTarget.renderPass,
           transparent: false,
           useBuffer: true,
           size: 1
@@ -12715,6 +12717,7 @@ fn getPCFBaseShadowContribution(
      */
     patchShadowCastingMeshParams(mesh, parameters = {}) {
       parameters = { ...mesh.material.options.rendering, ...parameters };
+      parameters.targets = [];
       const bindings = [];
       mesh.material.inputsBindings.forEach((binding) => {
         if (binding.name.includes("skin") || binding.name.includes("morphTarget")) {
@@ -12754,7 +12757,7 @@ fn getPCFBaseShadowContribution(
         this.depthMeshes.get(mesh.uuid).remove();
         this.depthMeshes.delete(mesh.uuid);
       }
-      if (this.renderBundle && this.renderBundle.options.size < this.depthMeshes.size + 1) {
+      if (this.renderBundle) {
         this.renderBundle.size = this.depthMeshes.size + 1;
       }
       const depthMesh = new Mesh(this.renderer, {
@@ -12770,6 +12773,9 @@ fn getPCFBaseShadowContribution(
         autoRender: __privateGet$g(this, _autoRender),
         ...this.renderBundle && { renderBundle: this.renderBundle }
       });
+      if (!__privateGet$g(this, _autoRender) && this.renderBundle) {
+        this.renderBundle.meshes.set(depthMesh.uuid, depthMesh);
+      }
       depthMesh.parent = mesh;
       this.depthMeshes.set(mesh.uuid, depthMesh);
       this.castingMeshes.set(mesh.uuid, mesh);

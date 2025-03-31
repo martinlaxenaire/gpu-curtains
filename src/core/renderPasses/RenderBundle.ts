@@ -638,6 +638,9 @@ export class RenderBundle {
         index++
       }
 
+      // update transformations binding if needed
+      this.updateBinding()
+
       this.ready = isReady
     }
   }

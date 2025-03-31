@@ -326,6 +326,7 @@ class RenderBundle {
           }
         }
       }
+      this.updateBinding();
       this.ready = isReady;
     }
   }

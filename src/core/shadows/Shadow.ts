@@ -479,6 +479,7 @@ export class Shadow {
     if (this.options.useRenderBundle && !this.renderBundle) {
       this.renderBundle = new RenderBundle(this.renderer, {
         label: `Depth render bundle for ${this.constructor.name} ${this.index}`,
+        renderPass: this.depthPassTarget.renderPass,
         transparent: false,
         useBuffer: true,
         size: 1,
@@ -712,6 +713,8 @@ export class Shadow {
   patchShadowCastingMeshParams(mesh: Mesh, parameters: RenderMaterialParams = {}): RenderMaterialParams {
     parameters = { ...mesh.material.options.rendering, ...parameters }
 
+    parameters.targets = []
+
     // eventual internal bindings
     const bindings: BufferBinding[] = []
 
@@ -765,7 +768,7 @@ export class Shadow {
       this.depthMeshes.delete(mesh.uuid)
     }
 
-    if (this.renderBundle && this.renderBundle.options.size < this.depthMeshes.size + 1) {
+    if (this.renderBundle) {
       this.renderBundle.size = this.depthMeshes.size + 1
     }
 
@@ -781,6 +784,10 @@ export class Shadow {
       autoRender: this.#autoRender,
       ...(this.renderBundle && { renderBundle: this.renderBundle }),
     })
+
+    if (!this.#autoRender && this.renderBundle) {
+      this.renderBundle.meshes.set(depthMesh.uuid, depthMesh)
+    }
 
     depthMesh.parent = mesh
 
