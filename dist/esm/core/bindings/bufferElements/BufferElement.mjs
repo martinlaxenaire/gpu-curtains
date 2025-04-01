@@ -7,7 +7,7 @@ const bytesPerRow = slotsPerRow * bytesPerSlot;
 class BufferElement {
   /**
    * BufferElement constructor
-   * @param parameters - {@link BufferElementParams | parameters} used to create our {@link BufferElement}
+   * @param parameters - {@link BufferElementParams | parameters} used to create our {@link BufferElement}.
    */
   constructor({ name, key, type = "f32" }) {
     this.name = name;
@@ -46,57 +46,57 @@ class BufferElement {
     );
   }
   /**
-   * Get the total number of rows used by this {@link BufferElement}
+   * Get the total number of rows used by this {@link BufferElement}.
    * @readonly
    */
   get rowCount() {
     return this.alignment.end.row - this.alignment.start.row + 1;
   }
   /**
-   * Get the total number of bytes used by this {@link BufferElement} based on {@link BufferElementAlignment | alignment} start and end offsets
+   * Get the total number of bytes used by this {@link BufferElement} based on {@link BufferElementAlignment | alignment} start and end offsets.
    * @readonly
    */
   get byteCount() {
     return Math.abs(this.endOffset - this.startOffset) + 1;
   }
   /**
-   * Get the total number of bytes used by this {@link BufferElement}, including final padding
+   * Get the total number of bytes used by this {@link BufferElement}, including final padding.
    * @readonly
    */
   get paddedByteCount() {
     return (this.alignment.end.row + 1) * bytesPerRow;
   }
   /**
-   * Get the offset (i.e. byte index) at which our {@link BufferElement} starts
+   * Get the offset (i.e. byte index) at which our {@link BufferElement} starts.
    * @readonly
    */
   get startOffset() {
     return this.getByteCountAtPosition(this.alignment.start);
   }
   /**
-   * Get the array offset (i.e. array index) at which our {@link BufferElement} starts
+   * Get the array offset (i.e. array index) at which our {@link BufferElement} starts.
    * @readonly
    */
   get startOffsetToIndex() {
     return this.startOffset / bytesPerSlot;
   }
   /**
-   * Get the offset (i.e. byte index) at which our {@link BufferElement} ends
+   * Get the offset (i.e. byte index) at which our {@link BufferElement} ends.
    * @readonly
    */
   get endOffset() {
     return this.getByteCountAtPosition(this.alignment.end);
   }
   /**
-   * Get the array offset (i.e. array index) at which our {@link BufferElement} ends
+   * Get the array offset (i.e. array index) at which our {@link BufferElement} ends.
    * @readonly
    */
   get endOffsetToIndex() {
     return Math.floor(this.endOffset / bytesPerSlot);
   }
   /**
-   * Get the position at given offset (i.e. byte index)
-   * @param offset - byte index to use
+   * Get the position at given offset (i.e. byte index).
+   * @param offset - Byte index to use.
    */
   getPositionAtOffset(offset = 0) {
     return {
@@ -105,17 +105,17 @@ class BufferElement {
     };
   }
   /**
-   * Get the number of bytes at a given {@link BufferElementAlignmentPosition | position}
-   * @param position - {@link BufferElementAlignmentPosition | position} from which to count
-   * @returns - byte count at the given {@link BufferElementAlignmentPosition | position}
+   * Get the number of bytes at a given {@link BufferElementAlignmentPosition | position}.
+   * @param position - {@link BufferElementAlignmentPosition | Position} from which to count.
+   * @returns - Byte count at the given {@link BufferElementAlignmentPosition | position}.
    */
   getByteCountAtPosition(position = { row: 0, byte: 0 }) {
     return position.row * bytesPerRow + position.byte;
   }
   /**
-   * Check that a {@link BufferElementAlignmentPosition#byte | byte position} does not overflow its max value (16)
-   * @param position - {@link BufferElementAlignmentPosition | position}
-   * @returns - updated {@link BufferElementAlignmentPosition | position}
+   * Check that a {@link BufferElementAlignmentPosition#byte | byte position} does not overflow its max value (16).
+   * @param position - {@link BufferElementAlignmentPosition | Position}.
+   * @returns - Updated {@link BufferElementAlignmentPosition | position}.
    */
   applyOverflowToPosition(position = { row: 0, byte: 0 }) {
     if (position.byte > bytesPerRow - 1) {
@@ -126,18 +126,18 @@ class BufferElement {
     return position;
   }
   /**
-   * Get the number of bytes between two {@link BufferElementAlignmentPosition | positions}
-   * @param p1 - first {@link BufferElementAlignmentPosition | position}
-   * @param p2 - second {@link BufferElementAlignmentPosition | position}
-   * @returns - number of bytes
+   * Get the number of bytes between two {@link BufferElementAlignmentPosition | positions}.
+   * @param p1 - First {@link BufferElementAlignmentPosition | position}.
+   * @param p2 - Second {@link BufferElementAlignmentPosition | position}.
+   * @returns - Number of bytes.
    */
   getByteCountBetweenPositions(p1 = { row: 0, byte: 0 }, p2 = { row: 0, byte: 0 }) {
     return Math.abs(this.getByteCountAtPosition(p2) - this.getByteCountAtPosition(p1));
   }
   /**
-   * Compute the right alignment (i.e. start and end rows and bytes) given the size and align properties and the next available {@link BufferElementAlignmentPosition | position}
-   * @param nextPositionAvailable - next {@link BufferElementAlignmentPosition | position} at which we should insert this element
-   * @returns - computed {@link BufferElementAlignment | alignment}
+   * Compute the right alignment (i.e. start and end rows and bytes) given the size and align properties and the next available {@link BufferElementAlignmentPosition | position}.
+   * @param nextPositionAvailable - next {@link BufferElementAlignmentPosition | position} at which we should insert this element.
+   * @returns - Computed {@link BufferElementAlignment | alignment}.
    */
   getElementAlignment(nextPositionAvailable = { row: 0, byte: 0 }) {
     const alignment = {
@@ -164,23 +164,23 @@ class BufferElement {
     return alignment;
   }
   /**
-   * Set the {@link BufferElementAlignment | alignment} from a {@link BufferElementAlignmentPosition | position}
-   * @param position - {@link BufferElementAlignmentPosition | position} at which to start inserting the values in the {@link !core/bindings/BufferBinding.BufferBinding#arrayBuffer | buffer binding array}
+   * Set the {@link BufferElementAlignment | alignment} from a {@link BufferElementAlignmentPosition | position}.
+   * @param position - {@link BufferElementAlignmentPosition | position} at which to start inserting the values in the {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer}.
    */
   setAlignmentFromPosition(position = { row: 0, byte: 0 }) {
     this.alignment = this.getElementAlignment(position);
   }
   /**
-   * Set the {@link BufferElementAlignment | alignment} from an offset (byte count)
-   * @param startOffset - offset at which to start inserting the values in the {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | buffer binding array}
+   * Set the {@link BufferElementAlignment | alignment} from an offset (byte count).
+   * @param startOffset - Offset at which to start inserting the values in the parent {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer}.
    */
   setAlignment(startOffset = 0) {
     this.setAlignmentFromPosition(this.getPositionAtOffset(startOffset));
   }
   /**
-   * Set the {@link view}
-   * @param arrayBuffer - the {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | buffer binding array}
-   * @param arrayView - the {@link core/bindings/BufferBinding.BufferBinding#arrayView | buffer binding array view}
+   * Set this {@link BufferElement} {@link view} into a parent {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer}.
+   * @param arrayBuffer - The parent {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer}.
+   * @param arrayView - The parent {@link core/bindings/BufferBinding.BufferBinding#arrayView | BufferBinding arrayView}.
    */
   setView(arrayBuffer, arrayView) {
     this.view = new this.bufferLayout.View(
@@ -190,23 +190,23 @@ class BufferElement {
     );
   }
   /**
-   * Set the {@link view} value from a float or an int
-   * @param value - float or int to use
+   * Set the {@link view} value from a float or an int.
+   * @param value - Float or int to use.
    */
   setValueFromNumber(value) {
     this.view[0] = value;
   }
   /**
-   * Set the {@link view} value from a {@link Vec2} or an array
-   * @param value - {@link Vec2} or array to use
+   * Set the {@link view} value from a {@link Vec2} or an array.
+   * @param value - {@link Vec2} or array to use.
    */
   setValueFromVec2(value) {
     this.view[0] = value.x ?? value[0] ?? 0;
     this.view[1] = value.y ?? value[1] ?? 0;
   }
   /**
-   * Set the {@link view} value from a {@link Vec3} or an array
-   * @param value - {@link Vec3} or array to use
+   * Set the {@link view} value from a {@link Vec3} or an array.
+   * @param value - {@link Vec3} or array to use.
    */
   setValueFromVec3(value) {
     this.view[0] = value.x ?? value[0] ?? 0;
@@ -214,29 +214,29 @@ class BufferElement {
     this.view[2] = value.z ?? value[2] ?? 0;
   }
   /**
-   * Set the {@link view} value from a {@link Mat4} or {@link Quat}
-   * @param value - {@link Mat4} or {@link Quat} to use
+   * Set the {@link view} value from a {@link Mat4} or {@link Quat}.
+   * @param value - {@link Mat4} or {@link Quat} to use.
    */
   setValueFromMat4OrQuat(value) {
     this.view.set(value.elements);
   }
   /**
-   * Set the {@link view} value from a {@link Mat3}
-   * @param value - {@link Mat3} to use
+   * Set the {@link view} value from a {@link Mat3}.
+   * @param value - {@link Mat3} to use.
    */
   setValueFromMat3(value) {
     this.setValueFromArrayWithPad(value.elements);
   }
   /**
-   * Set the {@link view} value from an array
-   * @param value - array to use
+   * Set the {@link view} value from an array.
+   * @param value - Array to use.
    */
   setValueFromArray(value) {
     this.view.set(value);
   }
   /**
-   * Set the {@link view} value from an array with pad applied
-   * @param value - array to use
+   * Set the {@link view} value from an array with pad applied.
+   * @param value - Array to use.
    */
   setValueFromArrayWithPad(value) {
     for (let i = 0, offset = 0; i < this.view.length; i += this.bufferLayout.pad[0] + this.bufferLayout.pad[1], offset++) {
@@ -246,8 +246,8 @@ class BufferElement {
     }
   }
   /**
-   * Update the {@link view} based on the new value
-   * @param value - new value to use
+   * Update the {@link view} based on the new value.
+   * @param value - New value to use.
    */
   update(value) {
     if (!this.setValue) {
@@ -276,9 +276,9 @@ class BufferElement {
     this.setValue(value);
   }
   /**
-   * Extract the data corresponding to this specific {@link BufferElement} from a {@link Float32Array} holding the {@link GPUBuffer} data of the parentMesh {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}
-   * @param result - {@link Float32Array} holding {@link GPUBuffer} data
-   * @returns - extracted data from the {@link Float32Array}
+   * Extract the data corresponding to this specific {@link BufferElement} from a {@link Float32Array} holding the {@link GPUBuffer} data of the parentMesh {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
+   * @param result - {@link Float32Array} holding {@link GPUBuffer} data.
+   * @returns - Extracted data from the {@link Float32Array}.
    */
   extractDataFromBufferResult(result) {
     return result.slice(this.startOffsetToIndex, this.endOffsetToIndex);

@@ -137,7 +137,6 @@ class TextureBindGroup extends BindGroup {
       });
       this.texturesMatricesBinding.childrenBindings.forEach((childrenBinding, i) => {
         childrenBinding.inputs.matrix.value = texturesBindings[i].inputs.matrix.value;
-        texturesBindings[i].inputs.matrix.shouldUpdate = true;
       });
       this.texturesMatricesBinding.buffer.consumers.add(this.uuid);
       const hasMatricesBinding = this.bindings.find((binding) => binding.name === name);
