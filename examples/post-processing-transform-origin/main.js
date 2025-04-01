@@ -151,7 +151,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   })
 
   // post processing
-  const rotationFs = `
+  const rotationFs = /* wgsl */ `
       struct VSOutput {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,

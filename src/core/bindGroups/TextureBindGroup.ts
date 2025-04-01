@@ -231,8 +231,6 @@ export class TextureBindGroup extends BindGroup {
       // since they have been actually cloned
       this.texturesMatricesBinding.childrenBindings.forEach((childrenBinding, i) => {
         childrenBinding.inputs.matrix.value = texturesBindings[i].inputs.matrix.value
-        // force update for init
-        texturesBindings[i].inputs.matrix.shouldUpdate = true
       })
 
       this.texturesMatricesBinding.buffer.consumers.add(this.uuid)

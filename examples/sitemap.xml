@@ -70,6 +70,9 @@
         <loc>https://martinlaxenaire.github.io/gpu-curtains/examples/ping-pong-plane/index.html</loc>
     </url>
     <url>
+        <loc>https://martinlaxenaire.github.io/gpu-curtains/examples/webcam-media-stream-ping-pong/index.html</loc>
+    </url>
+    <url>
         <loc>https://martinlaxenaire.github.io/gpu-curtains/examples/camera-renderer-transforms-bloom-pass/index.html</loc>
     </url>
     <url>
