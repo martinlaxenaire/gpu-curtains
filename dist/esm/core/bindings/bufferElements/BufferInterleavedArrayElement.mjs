@@ -30,9 +30,9 @@ class BufferInterleavedArrayElement extends BufferArrayElement {
     this.alignment.end = this.getPositionAtOffset(this.endOffset + stride * (this.numElements - 1));
   }
   /**
-   * Set the {@link view} and {@link viewSetFunction}
-   * @param arrayBuffer - the {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | buffer binding array}
-   * @param arrayView - the {@link core/bindings/BufferBinding.BufferBinding#arrayView | buffer binding array view}
+   * Set the {@link viewSetFunction} and {@link view} into a parent {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer}.
+   * @param arrayBuffer - The {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer}.
+   * @param arrayView - The {@link core/bindings/BufferBinding.BufferBinding#arrayView | BufferBinding arrayView}.
    */
   setView(arrayBuffer, arrayView) {
     this.view = new this.bufferLayout.View(this.bufferLayout.numElements * this.numElements);
@@ -51,8 +51,8 @@ class BufferInterleavedArrayElement extends BufferArrayElement {
     })(arrayView);
   }
   /**
-   * Update the {@link view} based on the new value, and then update the {@link core/bindings/BufferBinding.BufferBinding#arrayView | buffer binding array view} using sub arrays
-   * @param value - new value to use
+   * Update the {@link view} based on the new value, and then update the {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer} using sub arrays.
+   * @param value - New value to use.
    */
   update(value) {
     super.update(value);
@@ -68,8 +68,8 @@ class BufferInterleavedArrayElement extends BufferArrayElement {
     }
   }
   /**
-   * Extract the data corresponding to this specific {@link BufferInterleavedArrayElement} from a {@link Float32Array} holding the {@link GPUBuffer} data of the parentMesh {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}
-   * @param result - {@link Float32Array} holding {@link GPUBuffer} data
+   * Extract the data corresponding to this specific {@link BufferInterleavedArrayElement} from a {@link Float32Array} holding the {@link GPUBuffer} data of the parentMesh {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
+   * @param result - {@link Float32Array} holding {@link GPUBuffer} data.
    */
   extractDataFromBufferResult(result) {
     const interleavedResult = new Float32Array(this.arrayLength);

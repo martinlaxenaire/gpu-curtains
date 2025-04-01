@@ -182,7 +182,7 @@ const _MediaTexture = class _MediaTexture extends Texture {
         this.transformOrigin.x,
         this.transformOrigin.y
       );
-      this.transformBinding.shouldUpdate = true;
+      this.transformBinding.inputs.matrix.shouldUpdate = true;
     } else {
       throwWarning(
         `Texture: Cannot update ${this.options.name} transformation since its useTransform property has been set to false. You should set it to true when creating the Texture.`
