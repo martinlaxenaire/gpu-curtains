@@ -5,6 +5,7 @@ const declareAttributesVars = ({
   let attributeVars = (
     /* wgsl */
     `
+  let fragmentPosition: vec4f = fsInput.position;
   let frontFacing: bool = fsInput.frontFacing;
   `
   );

@@ -541,7 +541,7 @@ class Scene extends Object3D {
     }
     renderPassEntry.onAfterRenderPass && renderPassEntry.onAfterRenderPass(commandEncoder, swapChainTexture);
     this.renderer.pipelineManager.resetCurrentPipeline();
-    if (renderPassEntry.renderPass.options.useDepth && !renderPassEntry.renderPass.options.depthReadOnly && renderPassEntry.renderPass.options.depthStoreOp === "store" && renderPassEntry.renderPass.depthTexture.uuid === this.renderer.renderPass.depthTexture?.uuid) {
+    if (renderPassEntry.renderPass.options.useDepth && renderPassEntry.renderPass.options.renderToSwapChain && !renderPassEntry.renderPass.options.depthReadOnly && renderPassEntry.renderPass.options.depthStoreOp === "store" && renderPassEntry.renderPass.depthTexture.uuid === this.renderer.renderPass.depthTexture?.uuid) {
       __privateSet(this, _shouldLoadDepth, true);
     }
   }

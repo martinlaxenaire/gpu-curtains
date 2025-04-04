@@ -26,6 +26,7 @@ import { Texture } from '../../textures/Texture'
 import { getPCFSpotShadows } from '../../shaders/chunks/fragment/head/get-PCF-spot-shadows'
 import { getPCFSpotShadowContribution } from '../../shaders/chunks/fragment/head/get-PCF-spot-shadow-contribution'
 import { getPCFBaseShadowContribution } from '../../shaders/chunks/fragment/head/get-PCF-base-shadow-contribution'
+import { BindGroup } from '../../bindGroups/BindGroup'
 
 /** Define all possible frustum culling checks. */
 export type FrustumCullingCheck = 'OBB' | 'sphere' | false
@@ -625,6 +626,16 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
       meshParameters.bindings.unshift(meshTransformationBinding)
 
       super.setMaterial(meshParameters)
+    }
+
+    /**
+     * Update this Mesh camera {@link BindGroup}. Useful if the Mesh needs to be rendered with a different {@link Camera} than the {@link CameraRenderer} one.
+     * @param cameraBindGroup - New camera {@link BindGroup} to use. Should be a clon from the {@link CameraRenderer} one.
+     */
+    setCameraBindGroup(cameraBindGroup: BindGroup) {
+      if (this.material && this.material.useCameraBindGroup && this.material.bindGroups.length) {
+        this.material.bindGroups[0] = cameraBindGroup
+      }
     }
 
     /**

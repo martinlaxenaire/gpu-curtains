@@ -14,7 +14,8 @@ class LitMesh extends Mesh {
    */
   constructor(renderer, parameters = {}) {
     renderer = isCameraRenderer(renderer, "LitMesh");
-    const { material, ...defaultParams } = parameters;
+    let { material, ...defaultParams } = parameters;
+    if (!material) material = {};
     let { colorSpace } = material;
     if (!colorSpace) {
       colorSpace = "srgb";
