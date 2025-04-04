@@ -247,34 +247,40 @@ class GPUCameraRenderer extends GPURenderer {
     }
   }
   /**
-   * Set the {@link GPUCameraRenderer#bindings.camera | camera buffer binding} and {@link cameraLightsBindGroup | camera bind group}
+   * Create a {@link BufferBinding} from a given {@link Camera}. Used internally but can also be used to create a new {@link BufferBinding} from a different camera than this renderer's {@link GPUCameraRenderer.camera | camera}.
+   * @param camera - {@link Camera} to use to create the {@link BufferBinding}.
+   * @param label - Optional label to use for the {@link BufferBinding}.
+   * @returns - Newly created {@link BufferBinding}.
    */
-  setCameraBinding() {
-    this.bindings.camera = new BufferBinding({
-      label: "Camera",
+  createCameraBinding(camera, label = "Camera") {
+    return new BufferBinding({
+      label,
       name: "camera",
       visibility: ["vertex", "fragment"],
       struct: {
         view: {
           // camera view matrix
           type: "mat4x4f",
-          value: this.camera.viewMatrix
+          value: camera.viewMatrix
         },
         projection: {
           // camera projection matrix
           type: "mat4x4f",
-          value: this.camera.projectionMatrix
+          value: camera.projectionMatrix
         },
         position: {
           // camera world position
           type: "vec3f",
-          value: this.camera.position.clone().setFromMatrixPosition(this.camera.worldMatrix),
-          onBeforeUpdate: () => {
-            this.bindings.camera.inputs.position.value.copy(this.camera.position).setFromMatrixPosition(this.camera.worldMatrix);
-          }
+          value: camera.actualPosition
         }
       }
     });
+  }
+  /**
+   * Set the {@link GPUCameraRenderer#bindings.camera | camera BufferBinding}.
+   */
+  setCameraBinding() {
+    this.bindings.camera = this.createCameraBinding(this.camera);
   }
   /**
    * Add a {@link Light} to the {@link lights} array.

@@ -720,6 +720,8 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       } else {
         this.renderBundle = renderBundle
       }
+
+      console.log(renderBundle)
     }
 
     /**

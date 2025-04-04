@@ -250,7 +250,9 @@ export class LitMesh extends Mesh {
   constructor(renderer: CameraRenderer | GPUCurtains, parameters: LitMeshParameters = {}) {
     renderer = isCameraRenderer(renderer, 'LitMesh')
 
-    const { material, ...defaultParams } = parameters
+    let { material, ...defaultParams } = parameters
+
+    if (!material) material = {}
 
     let { colorSpace } = material
 
