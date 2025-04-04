@@ -10346,6 +10346,7 @@ New rendering options: ${JSON.stringify(
         } else {
           this.renderBundle = renderBundle;
         }
+        console.log(renderBundle);
       }
       /**
        * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been lost to prepare everything for restoration.
@@ -19118,6 +19119,7 @@ struct FSInput {
     let attributeVars = (
       /* wgsl */
       `
+  let fragmentPosition: vec4f = fsInput.position;
   let frontFacing: bool = fsInput.frontFacing;
   `
     );

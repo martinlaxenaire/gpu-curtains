@@ -255,7 +255,7 @@ window.addEventListener('load', async () => {
       roughness: 0.4,
       fragmentChunks: {
         preliminaryContribution: /* wgsl */ `
-        var reflectionUv = fsInput.position.xy * params.reflectionQuality / vec2f(textureDimensions(reflectionTexture));
+        var reflectionUv = fragmentPosition.xy * params.reflectionQuality / vec2f(textureDimensions(reflectionTexture));
         reflectionUv.y = 1.0 - reflectionUv.y;
 
         // Sample the reflection texture
@@ -266,8 +266,11 @@ window.addEventListener('load', async () => {
         // Compute F0 based on metallic
         let F0 = mix(vec3(0.04), outputColor.rgb, metallic);
 
-        // Apply Schlick's Fresnel approximation
-        let fresnelFactor = F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
+        // Schlick fresnel's
+        let H = normalize(viewDirection + normal);
+        let VdotH = saturate(dot(viewDirection, H));
+        let F90 = 1.0;
+        let fresnelFactor = F_Schlick(F0, F90, VdotH);
 
         // Reduce reflections for rough surfaces
         let reflectionStrength = 1.0 - roughness * roughness; // Adjust reflection intensity
