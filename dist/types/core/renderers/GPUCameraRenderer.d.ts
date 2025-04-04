@@ -162,7 +162,14 @@ export declare class GPUCameraRenderer extends GPURenderer {
      */
     onCameraMatricesChanged(): void;
     /**
-     * Set the {@link GPUCameraRenderer#bindings.camera | camera buffer binding} and {@link cameraLightsBindGroup | camera bind group}
+     * Create a {@link BufferBinding} from a given {@link Camera}. Used internally but can also be used to create a new {@link BufferBinding} from a different camera than this renderer's {@link GPUCameraRenderer.camera | camera}.
+     * @param camera - {@link Camera} to use to create the {@link BufferBinding}.
+     * @param label - Optional label to use for the {@link BufferBinding}.
+     * @returns - Newly created {@link BufferBinding}.
+     */
+    createCameraBinding(camera: Camera, label?: string): BufferBinding;
+    /**
+     * Set the {@link GPUCameraRenderer#bindings.camera | camera BufferBinding}.
      */
     setCameraBinding(): void;
     /**

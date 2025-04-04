@@ -327,6 +327,15 @@ function ProjectedMeshBaseMixin(Base) {
       super.setMaterial(meshParameters);
     }
     /**
+     * Update this Mesh camera {@link BindGroup}. Useful if the Mesh needs to be rendered with a different {@link Camera} than the {@link CameraRenderer} one.
+     * @param cameraBindGroup - New camera {@link BindGroup} to use. Should be a clon from the {@link CameraRenderer} one.
+     */
+    setCameraBindGroup(cameraBindGroup) {
+      if (this.material && this.material.useCameraBindGroup && this.material.bindGroups.length) {
+        this.material.bindGroups[0] = cameraBindGroup;
+      }
+    }
+    /**
      * Get the visible property value
      */
     get visible() {

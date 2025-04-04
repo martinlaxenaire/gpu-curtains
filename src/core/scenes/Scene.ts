@@ -786,6 +786,7 @@ export class Scene extends Object3D {
     // we'll need to load its depth next time
     if (
       renderPassEntry.renderPass.options.useDepth &&
+      renderPassEntry.renderPass.options.renderToSwapChain &&
       !renderPassEntry.renderPass.options.depthReadOnly &&
       renderPassEntry.renderPass.options.depthStoreOp === 'store' &&
       renderPassEntry.renderPass.depthTexture.uuid === this.renderer.renderPass.depthTexture?.uuid

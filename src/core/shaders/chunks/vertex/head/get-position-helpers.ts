@@ -5,5 +5,5 @@ fn getWorldPosition(position: vec3f) -> vec4f {
 }
 
 fn getOutputPosition(position: vec3f) -> vec4f {
-  return camera.projection * matrices.modelView * vec4f(position, 1.0);
+  return camera.projection * camera.view * matrices.model * vec4f(position, 1.0);
 }`

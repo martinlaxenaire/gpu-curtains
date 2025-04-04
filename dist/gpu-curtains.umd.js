@@ -9358,7 +9358,7 @@ fn getWorldPosition(position: vec3f) -> vec4f {
 }
 
 fn getOutputPosition(position: vec3f) -> vec4f {
-  return camera.projection * matrices.modelView * vec4f(position, 1.0);
+  return camera.projection * camera.view * matrices.model * vec4f(position, 1.0);
 }`
   );
 
@@ -11414,6 +11414,15 @@ fn getPCFBaseShadowContribution(
         if (!meshParameters.bindings) meshParameters.bindings = [];
         meshParameters.bindings.unshift(meshTransformationBinding);
         super.setMaterial(meshParameters);
+      }
+      /**
+       * Update this Mesh camera {@link BindGroup}. Useful if the Mesh needs to be rendered with a different {@link Camera} than the {@link CameraRenderer} one.
+       * @param cameraBindGroup - New camera {@link BindGroup} to use. Should be a clon from the {@link CameraRenderer} one.
+       */
+      setCameraBindGroup(cameraBindGroup) {
+        if (this.material && this.material.useCameraBindGroup && this.material.bindGroups.length) {
+          this.material.bindGroups[0] = cameraBindGroup;
+        }
       }
       /**
        * Get the visible property value
@@ -15417,7 +15426,7 @@ ${this.shaders.compute.head}`;
       }
       renderPassEntry.onAfterRenderPass && renderPassEntry.onAfterRenderPass(commandEncoder, swapChainTexture);
       this.renderer.pipelineManager.resetCurrentPipeline();
-      if (renderPassEntry.renderPass.options.useDepth && !renderPassEntry.renderPass.options.depthReadOnly && renderPassEntry.renderPass.options.depthStoreOp === "store" && renderPassEntry.renderPass.depthTexture.uuid === this.renderer.renderPass.depthTexture?.uuid) {
+      if (renderPassEntry.renderPass.options.useDepth && renderPassEntry.renderPass.options.renderToSwapChain && !renderPassEntry.renderPass.options.depthReadOnly && renderPassEntry.renderPass.options.depthStoreOp === "store" && renderPassEntry.renderPass.depthTexture.uuid === this.renderer.renderPass.depthTexture?.uuid) {
         __privateSet$a(this, _shouldLoadDepth, true);
       }
     }
@@ -16736,34 +16745,40 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Set the {@link GPUCameraRenderer#bindings.camera | camera buffer binding} and {@link cameraLightsBindGroup | camera bind group}
+     * Create a {@link BufferBinding} from a given {@link Camera}. Used internally but can also be used to create a new {@link BufferBinding} from a different camera than this renderer's {@link GPUCameraRenderer.camera | camera}.
+     * @param camera - {@link Camera} to use to create the {@link BufferBinding}.
+     * @param label - Optional label to use for the {@link BufferBinding}.
+     * @returns - Newly created {@link BufferBinding}.
      */
-    setCameraBinding() {
-      this.bindings.camera = new BufferBinding({
-        label: "Camera",
+    createCameraBinding(camera, label = "Camera") {
+      return new BufferBinding({
+        label,
         name: "camera",
         visibility: ["vertex", "fragment"],
         struct: {
           view: {
             // camera view matrix
             type: "mat4x4f",
-            value: this.camera.viewMatrix
+            value: camera.viewMatrix
           },
           projection: {
             // camera projection matrix
             type: "mat4x4f",
-            value: this.camera.projectionMatrix
+            value: camera.projectionMatrix
           },
           position: {
             // camera world position
             type: "vec3f",
-            value: this.camera.position.clone().setFromMatrixPosition(this.camera.worldMatrix),
-            onBeforeUpdate: () => {
-              this.bindings.camera.inputs.position.value.copy(this.camera.position).setFromMatrixPosition(this.camera.worldMatrix);
-            }
+            value: camera.actualPosition
           }
         }
       });
+    }
+    /**
+     * Set the {@link GPUCameraRenderer#bindings.camera | camera BufferBinding}.
+     */
+    setCameraBinding() {
+      this.bindings.camera = this.createCameraBinding(this.camera);
     }
     /**
      * Add a {@link Light} to the {@link lights} array.
@@ -22985,7 +23000,8 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
      */
     constructor(renderer, parameters = {}) {
       renderer = isCameraRenderer(renderer, "LitMesh");
-      const { material, ...defaultParams } = parameters;
+      let { material, ...defaultParams } = parameters;
+      if (!material) material = {};
       let { colorSpace } = material;
       if (!colorSpace) {
         colorSpace = "srgb";
