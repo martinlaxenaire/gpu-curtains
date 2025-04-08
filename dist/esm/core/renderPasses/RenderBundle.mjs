@@ -331,7 +331,7 @@ class RenderBundle {
     }
   }
   /**
-   * Called when the {@link Renderer#device | WebGPU device} has been lost.
+   * Called when the {@link core/renderers/GPURenderer.GPURenderer#device | WebGPU device} has been lost.
    * Just set the {@link ready} flag to `false` to eventually invalidate the {@link bundle}.
    */
   loseContext() {
@@ -397,7 +397,7 @@ setBinding_fn = function() {
   __privateMethod(this, _RenderBundle_instances, patchBindingOffset_fn).call(this, this.options.size);
 };
 /**
- * Path the {@link binding} array and buffer size with the minimum {@link Renderer#device | device} buffer offset alignment.
+ * Path the {@link binding} array and buffer size with the minimum {@link core/renderers/GPURenderer.GPURenderer#device | device} buffer offset alignment.
  * @param size - new {@link binding} size to use.
  * @private
  */

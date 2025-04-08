@@ -84,7 +84,7 @@ export declare class IndirectBuffer {
      */
     getByteOffsetAtIndex(index?: number): number;
     /**
-     * Create the {@link buffer} as soon as the {@link Renderer#device | device} is ready.
+     * Create the {@link buffer} as soon as the {@link core/renderers/GPURenderer.GPURenderer#device | device} is ready.
      */
     create(): void;
     /**

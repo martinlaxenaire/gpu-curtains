@@ -169,7 +169,7 @@ export class IndirectBuffer {
   }
 
   /**
-   * Create the {@link buffer} as soon as the {@link Renderer#device | device} is ready.
+   * Create the {@link buffer} as soon as the {@link core/renderers/GPURenderer.GPURenderer#device | device} is ready.
    */
   create() {
     if (this.renderer.ready) {

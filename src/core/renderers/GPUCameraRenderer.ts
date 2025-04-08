@@ -19,6 +19,9 @@ import { RenderPassEntry } from '../scenes/Scene'
 import { OrthographicCamera } from '../cameras/OrthographicCamera'
 import { RenderPassViewport } from '../renderPasses/RenderPass'
 
+/** Defines the allowed {@link Camera} types for a {@link GPUCameraRenderer}. */
+export type RendererCamera = OrthographicCamera | PerspectiveCamera
+
 /** Defines the parameters used to build the {@link BufferBinding} of each type of lights. */
 export interface LightParams {
   /** Maximum number for a given type of light. */
@@ -59,7 +62,7 @@ export interface GPUCameraRendererLightParams {
   useUniformsForShadows?: boolean
 }
 
-/** Extra parameters used to define the {@link Camera} and various lights options. */
+/** Extra parameters used to define the {@link RendererCamera} and various lights options. */
 export interface GPUCameraLightsRendererParams {
   /** An object defining {@link PerspectiveCameraBaseOptions | camera perspective parameters} */
   camera?: PerspectiveCameraBaseOptions
@@ -74,7 +77,7 @@ export interface GPUCameraRendererParams extends GPURendererParams, GPUCameraLig
 export interface GPUCameraRendererOptions extends GPURendererOptions, GPUCameraLightsRendererParams {}
 
 /**
- * This renderer is meant to render meshes projected by a {@link Camera}. It therefore creates a {@link Camera} with its associated {@link bindings} as well as lights and shadows {@link bindings} used for lighting and their associated {@link cameraLightsBindGroup | bind group}.<br>
+ * This renderer is meant to render meshes projected by a {@link RendererCamera}. It therefore creates a {@link RendererCamera} with its associated {@link bindings} as well as lights and shadows {@link bindings} used for lighting and their associated {@link cameraLightsBindGroup | bind group}.<br>
  * Can be safely used to render compute passes and meshes if they do not need to be tied to the DOM.
  *
  * @example
@@ -93,13 +96,14 @@ export interface GPUCameraRendererOptions extends GPURendererOptions, GPUCameraL
  *   container: document.querySelector('#canvas'),
  * })
  * ```
+ * @template TCamera - The camera type parameter which extends {@link RendererCamera}. Default is {@link PerspectiveCamera}.
  */
-export class GPUCameraRenderer extends GPURenderer {
-  /** {@link Camera} used by this {@link GPUCameraRenderer}. */
-  camera: Camera
+export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamera> extends GPURenderer {
+  /** {@link RendererCamera} used by this {@link GPUCameraRenderer}. Default to a {@link PerspectiveCamera}. */
+  camera: TCamera
   /** {@link BindGroup | bind group} handling the camera, lights and shadows {@link BufferBinding}. */
   cameraLightsBindGroup: BindGroup
-  /** Additional {@link RenderPassViewport} from the {@link Camera} to use if any. Will be contained inside the {@link viewport} if any. */
+  /** Additional {@link RenderPassViewport} from the {@link RendererCamera} to use if any. Will be contained inside the {@link viewport} if any. */
   cameraViewport: RenderPassViewport | null
 
   /** Array of all the created {@link Light}. */
@@ -240,8 +244,8 @@ export class GPUCameraRenderer extends GPURenderer {
   /* CAMERA */
 
   /**
-   * Set the {@link camera}
-   * @param cameraParameters - {@link PerspectiveCameraBaseOptions | parameters} used to create the {@link camera}
+   * Set the default {@link camera}.
+   * @param cameraParameters - {@link PerspectiveCameraBaseOptions | parameters} used to create the {@link camera}.
    */
   setCamera(cameraParameters: PerspectiveCameraBaseOptions) {
     const { width, height } = this.rectBBox
@@ -257,15 +261,16 @@ export class GPUCameraRenderer extends GPURenderer {
         onMatricesChanged: () => {
           this.onCameraMatricesChanged()
         },
-      })
+      }) as TCamera
     )
   }
 
   /**
-   * Tell our {@link GPUCameraRenderer} to use this {@link Camera}. If a {@link camera} has already been set, reset the {@link GPUCameraRenderer#bindings.camera | camera binding} inputs view values and the {@link meshes} {@link Camera} object.
-   * @param camera - new {@link Camera} to use.
+   * Tell our {@link GPUCameraRenderer} to use this {@link RendererCamera}. If a {@link RendererCamera | camera} has already been set, reset the {@link GPUCameraRenderer#bindings.camera | camera binding} inputs view values and the {@link meshes} {@link RendererCamera} object.
+   * @param camera - New {@link RendererCamera} to use.
+   * @returns - This {@link GPUCameraRenderer} with its {@link RendererCamera | camera} type updated.
    */
-  useCamera(camera: Camera) {
+  useCamera<NewCamera extends RendererCamera>(camera: NewCamera): GPUCameraRenderer<NewCamera> {
     if (this.camera && camera && this.camera.uuid === camera.uuid) return
 
     if (this.camera) {
@@ -273,7 +278,7 @@ export class GPUCameraRenderer extends GPURenderer {
       this.camera.onMatricesChanged = () => {}
     }
 
-    this.camera = camera
+    this.camera = camera as any
     this.camera.parent = this.scene
 
     this.resizeCamera()
@@ -281,10 +286,10 @@ export class GPUCameraRenderer extends GPURenderer {
     if (this.bindings.camera) {
       this.camera.onMatricesChanged = () => this.onCameraMatricesChanged()
 
-      // replace the 2 matrices inputs view values
-      // position will be computed before updating the binding anyway
+      // replace the inputs values
       this.bindings.camera.inputs.view.value = this.camera.viewMatrix
       this.bindings.camera.inputs.projection.value = this.camera.projectionMatrix
+      this.bindings.camera.inputs.position.value = this.camera.actualPosition
 
       for (const mesh of this.meshes) {
         if ('modelViewMatrix' in mesh) {
@@ -292,6 +297,8 @@ export class GPUCameraRenderer extends GPURenderer {
         }
       }
     }
+
+    return this as unknown as GPUCameraRenderer<NewCamera>
   }
 
   /**
@@ -349,7 +356,7 @@ export class GPUCameraRenderer extends GPURenderer {
   }
 
   /**
-   * Set the {@link cameraViewport} (that should be contained within the renderer {@link viewport} if any) and update the {@link renderPass} and {@link postProcessingPass} {@link viewport} values.
+   * Set the {@link cameraViewport} (that should be contained within the renderer {@link GPURenderer#viewport | viewport} if any) and update the {@link renderPass} and {@link postProcessingPass} {@link GPURenderer#viewport | viewport} values.
    * @param viewport - {@link RenderPassViewport} settings to use if any.
    */
   setCameraViewport(viewport: RenderPassViewport | null = null) {
@@ -374,8 +381,8 @@ export class GPUCameraRenderer extends GPURenderer {
   }
 
   /**
-   * Resize the {@link camera} whenever the {@link viewport} is updated.
-   * @param viewport - {@link RenderPassViewport} settings to use if any. Can be set to `null` to cancel the {@link viewport}.
+   * Resize the {@link camera} whenever the {@link GPURenderer#viewport | viewport} is updated.
+   * @param viewport - {@link RenderPassViewport} settings to use if any. Can be set to `null` to cancel the {@link GPURenderer#viewport | viewport}.
    */
   setViewport(viewport: RenderPassViewport | null = null) {
     super.setViewport(viewport)
@@ -396,7 +403,7 @@ export class GPUCameraRenderer extends GPURenderer {
   }
 
   /**
-   * Create a {@link BufferBinding} from a given {@link Camera}. Used internally but can also be used to create a new {@link BufferBinding} from a different camera than this renderer's {@link GPUCameraRenderer.camera | camera}.
+   * Create a {@link BufferBinding} from a given {@link Camera}. Used internally but can also be used to create a new {@link BufferBinding} from a different camera than this renderer's {@link RendererCamera | camera}.
    * @param camera - {@link Camera} to use to create the {@link BufferBinding}.
    * @param label - Optional label to use for the {@link BufferBinding}.
    * @returns - Newly created {@link BufferBinding}.
@@ -871,14 +878,6 @@ export class GPUCameraRenderer extends GPURenderer {
         this.cameraLightsBindGroup,
       ].some((bG) => bG.uuid === bindGroup.uuid)
     })
-  }
-
-  /**
-   * Set our {@link camera} {@link Camera#position | position}
-   * @param position - new {@link Camera#position | position}
-   */
-  setCameraPosition(position: Vec3 = new Vec3(0, 0, 1)) {
-    this.camera.position.copy(position)
   }
 
   /* TRANSMISSIVE */

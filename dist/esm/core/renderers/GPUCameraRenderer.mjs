@@ -2,7 +2,6 @@ import { GPURenderer } from './GPURenderer.mjs';
 import { PerspectiveCamera } from '../cameras/PerspectiveCamera.mjs';
 import { BufferBinding } from '../bindings/BufferBinding.mjs';
 import { BindGroup } from '../bindGroups/BindGroup.mjs';
-import { Vec3 } from '../../math/Vec3.mjs';
 import { throwWarning } from '../../utils/utils.mjs';
 import { directionalShadowStruct } from '../shadows/DirectionalShadow.mjs';
 import { pointShadowStruct } from '../shadows/PointShadow.mjs';
@@ -116,8 +115,8 @@ class GPUCameraRenderer extends GPURenderer {
   }
   /* CAMERA */
   /**
-   * Set the {@link camera}
-   * @param cameraParameters - {@link PerspectiveCameraBaseOptions | parameters} used to create the {@link camera}
+   * Set the default {@link camera}.
+   * @param cameraParameters - {@link PerspectiveCameraBaseOptions | parameters} used to create the {@link camera}.
    */
   setCamera(cameraParameters) {
     const { width, height } = this.rectBBox;
@@ -136,8 +135,9 @@ class GPUCameraRenderer extends GPURenderer {
     );
   }
   /**
-   * Tell our {@link GPUCameraRenderer} to use this {@link Camera}. If a {@link camera} has already been set, reset the {@link GPUCameraRenderer#bindings.camera | camera binding} inputs view values and the {@link meshes} {@link Camera} object.
-   * @param camera - new {@link Camera} to use.
+   * Tell our {@link GPUCameraRenderer} to use this {@link RendererCamera}. If a {@link RendererCamera | camera} has already been set, reset the {@link GPUCameraRenderer#bindings.camera | camera binding} inputs view values and the {@link meshes} {@link RendererCamera} object.
+   * @param camera - New {@link RendererCamera} to use.
+   * @returns - This {@link GPUCameraRenderer} with its {@link RendererCamera | camera} type updated.
    */
   useCamera(camera) {
     if (this.camera && camera && this.camera.uuid === camera.uuid) return;
@@ -153,12 +153,14 @@ class GPUCameraRenderer extends GPURenderer {
       this.camera.onMatricesChanged = () => this.onCameraMatricesChanged();
       this.bindings.camera.inputs.view.value = this.camera.viewMatrix;
       this.bindings.camera.inputs.projection.value = this.camera.projectionMatrix;
+      this.bindings.camera.inputs.position.value = this.camera.actualPosition;
       for (const mesh of this.meshes) {
         if ("modelViewMatrix" in mesh) {
           mesh.camera = this.camera;
         }
       }
     }
+    return this;
   }
   /**
    * Update the {@link cameraViewport} if needed (i.e. if the camera use a different aspect ratio than the renderer).
@@ -207,7 +209,7 @@ class GPUCameraRenderer extends GPURenderer {
     }
   }
   /**
-   * Set the {@link cameraViewport} (that should be contained within the renderer {@link viewport} if any) and update the {@link renderPass} and {@link postProcessingPass} {@link viewport} values.
+   * Set the {@link cameraViewport} (that should be contained within the renderer {@link GPURenderer#viewport | viewport} if any) and update the {@link renderPass} and {@link postProcessingPass} {@link GPURenderer#viewport | viewport} values.
    * @param viewport - {@link RenderPassViewport} settings to use if any.
    */
   setCameraViewport(viewport = null) {
@@ -228,8 +230,8 @@ class GPUCameraRenderer extends GPURenderer {
     }
   }
   /**
-   * Resize the {@link camera} whenever the {@link viewport} is updated.
-   * @param viewport - {@link RenderPassViewport} settings to use if any. Can be set to `null` to cancel the {@link viewport}.
+   * Resize the {@link camera} whenever the {@link GPURenderer#viewport | viewport} is updated.
+   * @param viewport - {@link RenderPassViewport} settings to use if any. Can be set to `null` to cancel the {@link GPURenderer#viewport | viewport}.
    */
   setViewport(viewport = null) {
     super.setViewport(viewport);
@@ -247,7 +249,7 @@ class GPUCameraRenderer extends GPURenderer {
     }
   }
   /**
-   * Create a {@link BufferBinding} from a given {@link Camera}. Used internally but can also be used to create a new {@link BufferBinding} from a different camera than this renderer's {@link GPUCameraRenderer.camera | camera}.
+   * Create a {@link BufferBinding} from a given {@link Camera}. Used internally but can also be used to create a new {@link BufferBinding} from a different camera than this renderer's {@link RendererCamera | camera}.
    * @param camera - {@link Camera} to use to create the {@link BufferBinding}.
    * @param label - Optional label to use for the {@link BufferBinding}.
    * @returns - Newly created {@link BufferBinding}.
@@ -621,13 +623,6 @@ class GPUCameraRenderer extends GPURenderer {
         this.cameraLightsBindGroup
       ].some((bG) => bG.uuid === bindGroup.uuid);
     });
-  }
-  /**
-   * Set our {@link camera} {@link Camera#position | position}
-   * @param position - new {@link Camera#position | position}
-   */
-  setCameraPosition(position = new Vec3(0, 0, 1)) {
-    this.camera.position.copy(position);
   }
   /* TRANSMISSIVE */
   /**

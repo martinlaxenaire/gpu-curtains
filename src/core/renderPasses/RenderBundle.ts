@@ -4,8 +4,6 @@ import { generateUUID, throwWarning } from '../../utils/utils'
 import { BufferBinding } from '../bindings/BufferBinding'
 import { BufferUsageKeys } from '../buffers/utils'
 import { RenderPass } from './RenderPass'
-import { ShaderPass } from './ShaderPass'
-import { PingPongPlane } from '../../extras/meshes/PingPongPlane'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { IndirectBuffer } from '../../extras/buffers/IndirectBuffer'
 import { MediaTexture } from '../textures/MediaTexture'
@@ -290,7 +288,7 @@ export class RenderBundle {
   }
 
   /**
-   * Path the {@link binding} array and buffer size with the minimum {@link Renderer#device | device} buffer offset alignment.
+   * Path the {@link binding} array and buffer size with the minimum {@link core/renderers/GPURenderer.GPURenderer#device | device} buffer offset alignment.
    * @param size - new {@link binding} size to use.
    * @private
    */
@@ -646,7 +644,7 @@ export class RenderBundle {
   }
 
   /**
-   * Called when the {@link Renderer#device | WebGPU device} has been lost.
+   * Called when the {@link core/renderers/GPURenderer.GPURenderer#device | WebGPU device} has been lost.
    * Just set the {@link ready} flag to `false` to eventually invalidate the {@link bundle}.
    */
   loseContext() {
