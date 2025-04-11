@@ -444,7 +444,11 @@ class Scene extends Object3D {
     } else if (object.type === "PingPongPlane") {
       return this.renderPassEntries.pingPong.find((entry) => entry.element.uuid === object.uuid);
     } else if (object.type === "ShaderPass") {
-      return this.renderPassEntries.screen.find((entry) => entry.element?.uuid === object.uuid);
+      if (object.options.isPrePass) {
+        return this.renderPassEntries.prePass.find((entry) => entry.element?.uuid === object.uuid);
+      } else {
+        return this.renderPassEntries.postProPass.find((entry) => entry.element?.uuid === object.uuid);
+      }
     } else {
       const entryType = object.outputTarget ? "renderTarget" : "screen";
       if (object.renderBundle) {
