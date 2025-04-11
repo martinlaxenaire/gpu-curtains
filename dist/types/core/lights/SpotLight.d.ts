@@ -19,7 +19,7 @@ export interface SpotLightBaseParams extends LightBaseParams {
     /** The {@link SpotLight} range, used to compute the {@link SpotLight} attenuation over distance. Default to `0`. */
     range?: number;
     /** The {@link SpotLight} shadow parameters used to create a {@link SpotShadow}. If not set, the {@link SpotShadow} won't be set as active and won't cast any shadows. On the other hand, if anything is passed (even an empty object), the {@link SpotShadow} will start casting shadows, so use with caution. Default to `null` (which means the {@link SpotLight} will not cast shadows). */
-    shadow?: ShadowBaseParams;
+    shadow?: Omit<ShadowBaseParams, 'light'>;
 }
 /**
  * Create a spot light, that is emitted from a single point in one direction, along a cone that increases in size the further from the light it gets.
