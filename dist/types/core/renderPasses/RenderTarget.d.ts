@@ -3,13 +3,18 @@ import { RenderPass, RenderPassParams } from './RenderPass';
 import { Texture } from '../textures/Texture';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
 /**
- * Parameters used to create a {@link RenderTarget}
+ * Options used to create a {@link RenderTarget}.
  */
-export interface RenderTargetParams extends RenderPassParams {
-    /** Whether we should add this {@link RenderTarget} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
-    autoRender?: boolean;
+export interface RenderTargetOptions extends RenderPassParams {
+    /** Whether we should add this {@link RenderTarget} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically. Default to `true`. */
+    autoRender: boolean;
     /** {@link core/textures/Texture.TextureBaseParams | Texture name} to use for the {@link RenderTarget} render texture. Default to `'renderTexture'`. */
-    renderTextureName?: string;
+    renderTextureName: string;
+}
+/**
+ * Parameters used to create a {@link RenderTarget}.
+ */
+export interface RenderTargetParams extends Partial<RenderTargetOptions> {
 }
 /**
  * Used to draw to {@link RenderPass#viewTextures | RenderPass view textures} (and eventually {@link RenderPass#depthTexture | depth texture}) instead of directly to screen.
@@ -38,22 +43,22 @@ export interface RenderTargetParams extends RenderPassParams {
  */
 export declare class RenderTarget {
     #private;
-    /** {@link Renderer} used by this {@link RenderTarget} */
+    /** {@link Renderer} used by this {@link RenderTarget}. */
     renderer: Renderer;
-    /** The type of the {@link RenderTarget} */
+    /** The type of the {@link RenderTarget}. */
     type: string;
-    /** The universal unique id of this {@link RenderTarget} */
+    /** The universal unique id of this {@link RenderTarget}. */
     readonly uuid: string;
-    /** Options used to create this {@link RenderTarget} */
-    options: RenderTargetParams;
-    /** {@link RenderPass} used by this {@link RenderTarget} */
+    /** Options used to create this {@link RenderTarget}. */
+    options: RenderTargetOptions;
+    /** {@link RenderPass} used by this {@link RenderTarget}. */
     renderPass: RenderPass;
-    /** {@link Texture} that will be resolved by the {@link renderPass} when {@link RenderPass#updateView | setting the current texture} */
+    /** {@link Texture} that will be resolved by the {@link renderPass} when {@link RenderPass#updateView | setting the current texture}. */
     renderTexture?: Texture;
     /**
      * RenderTarget constructor
-     * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link RenderTarget}
-     * @param parameters - {@link RenderTargetParams | parameters} use to create this {@link RenderTarget}
+     * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link RenderTarget}.
+     * @param parameters - {@link RenderTargetParams | parameters} use to create this {@link RenderTarget}.
      */
     constructor(renderer: Renderer | GPUCurtains, parameters?: RenderTargetParams);
     /**
@@ -78,15 +83,20 @@ export declare class RenderTarget {
      */
     removeFromScene(): void;
     /**
-     * Resize our {@link renderPass}
+     * Update our {@link RenderTarget} {@link renderTexture} and {@link renderPass} quality ratio.
+     * @param qualityRatio - New quality ratio to use.
+     */
+    setQualityRatio(qualityRatio?: number): void;
+    /**
+     * Resize our {@link renderPass}.
      */
     resize(): void;
     /**
-     * Remove our {@link RenderTarget}. Alias of {@link RenderTarget#destroy}
+     * Remove our {@link RenderTarget}. Alias of {@link RenderTarget#destroy}.
      */
     remove(): void;
     /**
-     * Destroy our {@link RenderTarget}
+     * Destroy our {@link RenderTarget}.
      */
     destroy(): void;
 }

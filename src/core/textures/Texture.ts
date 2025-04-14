@@ -338,6 +338,16 @@ export class Texture {
   }
 
   /**
+   * Update our {@link Texture} quality ratio and resize it.
+   * @param qualityRatio - New quality ratio to use.
+   */
+  setQualityRatio(qualityRatio = 1) {
+    this.options.qualityRatio = qualityRatio
+
+    this.resize()
+  }
+
+  /**
    * Resize our {@link Texture}, which means recreate it/copy it again and tell the {@link core/bindGroups/TextureBindGroup.TextureBindGroup | texture bind group} to update.
    * @param size - the optional new {@link TextureSize | size} to set.
    */
@@ -350,7 +360,7 @@ export class Texture {
       size = {
         width: Math.floor(width * this.options.qualityRatio),
         height: Math.floor(height * this.options.qualityRatio),
-        depth: 1,
+        depth: this.size.depth,
       }
     }
 

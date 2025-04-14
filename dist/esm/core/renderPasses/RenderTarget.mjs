@@ -14,11 +14,11 @@ var _autoRender;
 class RenderTarget {
   /**
    * RenderTarget constructor
-   * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link RenderTarget}
-   * @param parameters - {@link RenderTargetParams | parameters} use to create this {@link RenderTarget}
+   * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link RenderTarget}.
+   * @param parameters - {@link RenderTargetParams | parameters} use to create this {@link RenderTarget}.
    */
   constructor(renderer, parameters = {}) {
-    /** Whether we should add this {@link RenderTarget} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
+    /** Whether we should add this {@link RenderTarget} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically. */
     __privateAdd(this, _autoRender, true);
     this.type = "RenderTarget";
     renderer = isRenderer(renderer, this.type);
@@ -31,6 +31,7 @@ class RenderTarget {
       ...renderPassParams,
       ...depthTextureToUse && { depthTexture: depthTextureToUse },
       ...colorAttachments && { colorAttachments },
+      renderTextureName: renderTextureName ?? "renderTexture",
       autoRender: autoRender === void 0 ? true : autoRender
     };
     if (autoRender !== void 0) {
@@ -45,7 +46,7 @@ class RenderTarget {
     if (renderPassParams.useColorAttachments !== false) {
       this.renderTexture = new Texture(this.renderer, {
         label: this.options.label ? `${this.options.label} Render Texture` : "Render Target render texture",
-        name: renderTextureName ?? "renderTexture",
+        name: this.options.renderTextureName,
         format: colorAttachments && colorAttachments.length && colorAttachments[0].targetFormat ? colorAttachments[0].targetFormat : this.renderer.options.context.format,
         ...this.options.qualityRatio !== void 0 && { qualityRatio: this.options.qualityRatio },
         ...this.options.fixedSize !== void 0 && { fixedSize: this.options.fixedSize },
@@ -104,7 +105,16 @@ class RenderTarget {
     this.renderer.renderTargets = this.renderer.renderTargets.filter((renderTarget) => renderTarget.uuid !== this.uuid);
   }
   /**
-   * Resize our {@link renderPass}
+   * Update our {@link RenderTarget} {@link renderTexture} and {@link renderPass} quality ratio.
+   * @param qualityRatio - New quality ratio to use.
+   */
+  setQualityRatio(qualityRatio = 1) {
+    this.options.qualityRatio = qualityRatio;
+    this.renderTexture?.setQualityRatio(qualityRatio);
+    this.renderPass?.setQualityRatio(qualityRatio);
+  }
+  /**
+   * Resize our {@link renderPass}.
    */
   resize() {
     if (this.options.depthTexture) {
@@ -113,13 +123,13 @@ class RenderTarget {
     this.renderPass?.resize();
   }
   /**
-   * Remove our {@link RenderTarget}. Alias of {@link RenderTarget#destroy}
+   * Remove our {@link RenderTarget}. Alias of {@link RenderTarget#destroy}.
    */
   remove() {
     this.destroy();
   }
   /**
-   * Destroy our {@link RenderTarget}
+   * Destroy our {@link RenderTarget}.
    */
   destroy() {
     this.renderer.meshes.forEach((mesh) => {

@@ -814,10 +814,24 @@ window.addEventListener('load', async () => {
     ssaoPass.uniforms.camera.inverseViewProjectionMatrix.shouldUpdate = true
   })
 
-  // debug buttons
-  const toggleSSAOButton = document.querySelector('#show-ssao')
-  toggleSSAOButton.addEventListener('click', () => {
-    toggleSSAOButton.classList.toggle('active')
-    ssaoPass.uniforms.params.displaySSAOResult.value = ssaoPass.uniforms.params.displaySSAOResult.value === 0 ? 1 : 0
+  // GUI
+  const gui = new lil.GUI({
+    title: 'SSAO',
   })
+
+  gui
+    .add({ qualityRatio: ssaoTarget.renderPass.options.qualityRatio }, 'qualityRatio', 0.1, 1, 0.05)
+    .onChange((value) => {
+      ssaoTarget.setQualityRatio(value)
+      occlusionPass.renderTexture.setQualityRatio(value)
+      blurOcclusionPass.renderTexture.copy(ssaoTarget.renderTexture)
+    })
+    .name('SSAO texture quality')
+
+  gui
+    .add({ displaySSAO: false }, 'displaySSAO')
+    .onChange((value) => {
+      ssaoPass.uniforms.params.displaySSAOResult.value = value ? 1 : 0
+    })
+    .name('Display SSAO texture')
 })

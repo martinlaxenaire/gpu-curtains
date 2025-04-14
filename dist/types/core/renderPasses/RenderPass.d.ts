@@ -25,45 +25,50 @@ export interface RenderPassViewport extends RectBBox {
     maxDepth: number;
 }
 /**
- * Parameters used to create this {@link RenderPass}.
+ * Options used to create this {@link RenderPass}.
  */
-export interface RenderPassParams {
+export interface RenderPassOptions {
     /** The label of the {@link RenderPass}, sent to various GPU objects for debugging purpose. */
-    label?: string;
-    /** Whether the {@link RenderPass | view and depth textures} should use multisampling or not. */
-    sampleCount?: GPUSize32;
-    /** Force all the {@link RenderPass} textures size to be set to the given ratio of the {@link core/renderers/GPURenderer.GPURenderer#canvas | renderer canvas} size. Used mainly to lower the rendered definition. */
-    qualityRatio?: number;
-    /** Force the all the {@link RenderPass} textures to be set at given size. Used mainly to lower the rendered definition. */
-    fixedSize?: TextureSize;
-    /** Whether this {@link RenderPass} should handle a view texture. */
-    useColorAttachments?: boolean;
-    /** Whether the main (first {@link colorAttachments}) view texture should use the content of the swap chain and render to it each frame. */
-    renderToSwapChain?: boolean;
-    /** Array of one or multiple (Multiple Render Targets) color attachments parameters. */
-    colorAttachments?: ColorAttachmentParams[];
-    /** Whether this {@link RenderPass} should handle a depth texture. */
-    useDepth?: boolean;
+    label: string;
+    /** Whether the {@link RenderPass | view and depth textures} should use multisampling or not. Default to `4`. */
+    sampleCount: GPUSize32;
+    /** Force all the {@link RenderPass} textures size to be set to the given ratio of the {@link core/renderers/GPURenderer.GPURenderer#canvas | renderer canvas} size. Used mainly to lower the rendered definition. Default to `1`. */
+    qualityRatio: number;
+    /** Force the all the {@link RenderPass} textures to be set at given size. Used mainly to force a lower rendered definition at a given size. Default to `null`. */
+    fixedSize: TextureSize | null;
+    /** Whether this {@link RenderPass} should handle a view texture. Default to `true`. */
+    useColorAttachments: boolean;
+    /** Whether the main (first {@link colorAttachments}) view texture should use the content of the swap chain and render to it each frame. Default to `true`. */
+    renderToSwapChain: boolean;
+    /** Array of one or multiple (Multiple Render Targets) color attachments parameters. Default to `[]`. */
+    colorAttachments: ColorAttachmentParams[];
+    /** Whether this {@link RenderPass} should handle a depth texture. Default to `true`. */
+    useDepth: boolean;
     /** Whether this {@link RenderPass} should use an already created depth texture. */
     depthTexture?: Texture;
     /** The {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#depthloadop | depth load operation} to perform while drawing this {@link RenderPass}. Default to `'clear`. */
-    depthLoadOp?: GPULoadOp;
+    depthLoadOp: GPULoadOp;
     /** The {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#depthstoreop | depth store operation} to perform while drawing this {@link RenderPass}. Default to `'store'`. */
-    depthStoreOp?: GPUStoreOp;
-    /** The depth clear value to clear to before drawing this {@link RenderPass}. */
-    depthClearValue?: number;
-    /** Optional format of the depth texture. */
-    depthFormat?: GPUTextureFormat;
+    depthStoreOp: GPUStoreOp;
+    /** The depth clear value to clear to before drawing this {@link RenderPass}. Default to `1`. */
+    depthClearValue: number;
+    /** Optional format of the depth texture. Default to `'depth24plus'`. */
+    depthFormat: GPUTextureFormat;
     /** Indicates that the depth component of the depth texture view is read only. Default to `false`. */
-    depthReadOnly?: boolean;
+    depthReadOnly: boolean;
     /** A number indicating the value to clear view's stencil component to prior to executing the render pass. This is ignored if stencilLoadOp is not set to "clear". Default to `0`. */
-    stencilClearValue?: number;
+    stencilClearValue: number;
     /** The {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#stencilloadop | stencil load operation} to perform while drawing this {@link RenderPass}. Default to `'clear`. */
-    stencilLoadOp?: GPULoadOp;
+    stencilLoadOp: GPULoadOp;
     /** The {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#stencilstoreop | stencil store operation} to perform while drawing this {@link RenderPass}. Default to `'store'`. */
-    stencilStoreOp?: GPUStoreOp;
+    stencilStoreOp: GPUStoreOp;
     /** Indicates that the stencil component of the depth texture view is read only. Default to `false`. */
-    stencilReadOnly?: boolean;
+    stencilReadOnly: boolean;
+}
+/**
+ * Parameters used to create this {@link RenderPass}.
+ */
+export interface RenderPassParams extends Partial<RenderPassOptions> {
 }
 /**
  * Used by {@link core/renderPasses/RenderTarget.RenderTarget | RenderTarget} and the {@link Renderer} to render to one or multiple {@link RenderPass#viewTextures | view textures} (and optionally a {@link RenderPass#depthTexture | depth texture}), using a specific {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#descriptor | GPURenderPassDescriptor}.
@@ -77,7 +82,7 @@ export declare class RenderPass {
     /** The universal unique id of this {@link RenderPass}. */
     readonly uuid: string;
     /** Options used to create this {@link RenderPass}. */
-    options: RenderPassParams;
+    options: RenderPassOptions;
     /** Depth {@link Texture} to use with this {@link RenderPass} if it should handle depth .*/
     depthTexture: Texture | undefined;
     /** Array of {@link Texture} used for this {@link RenderPass} color attachments view textures. */
@@ -150,6 +155,11 @@ export declare class RenderPass {
      * @returns - The created {@link GPURenderPassEncoder}.
      */
     beginRenderPass(commandEncoder: GPUCommandEncoder, descriptor?: GPURenderPassDescriptor): GPURenderPassEncoder;
+    /**
+     * Update our {@link RenderPass} textures quality ratio.
+     * @param qualityRatio - New quality ratio to use.
+     */
+    setQualityRatio(qualityRatio?: number): void;
     /**
      * Resize our {@link RenderPass}: reset its {@link Texture}.
      */

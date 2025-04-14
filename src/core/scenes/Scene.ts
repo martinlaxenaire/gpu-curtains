@@ -890,6 +890,7 @@ export class Scene extends Object3D {
         this.renderSinglePassEntry(commandEncoder, renderPassEntry)
 
         // if we're rendering to the screen, we'll need to load colors next time
+        // TODO what about post pro passes with an output target?
         if (renderPassEntryType !== 'renderTarget') {
           this.#shouldLoadColors = true
         }
