@@ -327,7 +327,7 @@ function ProjectedMeshBaseMixin(Base) {
       super.setMaterial(meshParameters);
     }
     /**
-     * Update this Mesh camera {@link BindGroup}. Useful if the Mesh needs to be rendered with a different {@link Camera} than the {@link CameraRenderer} one.
+     * Update this Mesh camera {@link BindGroup}. Useful if the Mesh needs to be rendered with a different {@link core/renderers/GPUCameraRenderer.GPUCameraRenderer#camera | camera} than the {@link CameraRenderer} one.
      * @param cameraBindGroup - New camera {@link BindGroup} to use. Should be a clon from the {@link CameraRenderer} one.
      */
     setCameraBindGroup(cameraBindGroup) {

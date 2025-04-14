@@ -170,7 +170,7 @@ export declare class RenderBundle {
      */
     render(pass: GPURenderPassEncoder): void;
     /**
-     * Called when the {@link Renderer#device | WebGPU device} has been lost.
+     * Called when the {@link core/renderers/GPURenderer.GPURenderer#device | WebGPU device} has been lost.
      * Just set the {@link ready} flag to `false` to eventually invalidate the {@link bundle}.
      */
     loseContext(): void;

@@ -1,18 +1,23 @@
 import { isRenderer, Renderer } from '../renderers/utils'
-import { RenderPass, RenderPassParams } from './RenderPass'
+import { RenderPass, RenderPassOptions, RenderPassParams } from './RenderPass'
 import { Texture } from '../textures/Texture'
 import { generateUUID } from '../../utils/utils'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 
 /**
- * Parameters used to create a {@link RenderTarget}
+ * Options used to create a {@link RenderTarget}.
  */
-export interface RenderTargetParams extends RenderPassParams {
-  /** Whether we should add this {@link RenderTarget} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
-  autoRender?: boolean
+export interface RenderTargetOptions extends RenderPassParams {
+  /** Whether we should add this {@link RenderTarget} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically. Default to `true`. */
+  autoRender: boolean
   /** {@link core/textures/Texture.TextureBaseParams | Texture name} to use for the {@link RenderTarget} render texture. Default to `'renderTexture'`. */
-  renderTextureName?: string
+  renderTextureName: string
 }
+
+/**
+ * Parameters used to create a {@link RenderTarget}.
+ */
+export interface RenderTargetParams extends Partial<RenderTargetOptions> {}
 
 /**
  * Used to draw to {@link RenderPass#viewTextures | RenderPass view textures} (and eventually {@link RenderPass#depthTexture | depth texture}) instead of directly to screen.
@@ -40,28 +45,28 @@ export interface RenderTargetParams extends RenderPassParams {
  * ```
  */
 export class RenderTarget {
-  /** {@link Renderer} used by this {@link RenderTarget} */
+  /** {@link Renderer} used by this {@link RenderTarget}. */
   renderer: Renderer
-  /** The type of the {@link RenderTarget} */
+  /** The type of the {@link RenderTarget}. */
   type: string
-  /** The universal unique id of this {@link RenderTarget} */
+  /** The universal unique id of this {@link RenderTarget}. */
   readonly uuid: string
 
-  /** Options used to create this {@link RenderTarget} */
-  options: RenderTargetParams
+  /** Options used to create this {@link RenderTarget}. */
+  options: RenderTargetOptions
 
-  /** {@link RenderPass} used by this {@link RenderTarget} */
+  /** {@link RenderPass} used by this {@link RenderTarget}. */
   renderPass: RenderPass
-  /** {@link Texture} that will be resolved by the {@link renderPass} when {@link RenderPass#updateView | setting the current texture} */
+  /** {@link Texture} that will be resolved by the {@link renderPass} when {@link RenderPass#updateView | setting the current texture}. */
   renderTexture?: Texture
 
-  /** Whether we should add this {@link RenderTarget} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
+  /** Whether we should add this {@link RenderTarget} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically. */
   #autoRender = true
 
   /**
    * RenderTarget constructor
-   * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link RenderTarget}
-   * @param parameters - {@link RenderTargetParams | parameters} use to create this {@link RenderTarget}
+   * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link RenderTarget}.
+   * @param parameters - {@link RenderTargetParams | parameters} use to create this {@link RenderTarget}.
    */
   constructor(renderer: Renderer | GPUCurtains, parameters = {} as RenderTargetParams) {
     this.type = 'RenderTarget'
@@ -89,8 +94,9 @@ export class RenderTarget {
       ...renderPassParams,
       ...(depthTextureToUse && { depthTexture: depthTextureToUse }),
       ...(colorAttachments && { colorAttachments }),
+      renderTextureName: renderTextureName ?? 'renderTexture',
       autoRender: autoRender === undefined ? true : autoRender,
-    } as RenderTargetParams
+    }
 
     if (autoRender !== undefined) {
       this.#autoRender = autoRender
@@ -107,7 +113,7 @@ export class RenderTarget {
       // this is the texture that will be resolved when setting the current render pass texture
       this.renderTexture = new Texture(this.renderer, {
         label: this.options.label ? `${this.options.label} Render Texture` : 'Render Target render texture',
-        name: renderTextureName ?? 'renderTexture',
+        name: this.options.renderTextureName,
         format:
           colorAttachments && colorAttachments.length && colorAttachments[0].targetFormat
             ? colorAttachments[0].targetFormat
@@ -186,7 +192,17 @@ export class RenderTarget {
   }
 
   /**
-   * Resize our {@link renderPass}
+   * Update our {@link RenderTarget} {@link renderTexture} and {@link renderPass} quality ratio.
+   * @param qualityRatio - New quality ratio to use.
+   */
+  setQualityRatio(qualityRatio = 1) {
+    this.options.qualityRatio = qualityRatio
+    this.renderTexture?.setQualityRatio(qualityRatio)
+    this.renderPass?.setQualityRatio(qualityRatio)
+  }
+
+  /**
+   * Resize our {@link renderPass}.
    */
   resize() {
     // reset the newly created depth texture
@@ -198,14 +214,14 @@ export class RenderTarget {
   }
 
   /**
-   * Remove our {@link RenderTarget}. Alias of {@link RenderTarget#destroy}
+   * Remove our {@link RenderTarget}. Alias of {@link RenderTarget#destroy}.
    */
   remove() {
     this.destroy()
   }
 
   /**
-   * Destroy our {@link RenderTarget}
+   * Destroy our {@link RenderTarget}.
    */
   destroy() {
     // release mesh struct

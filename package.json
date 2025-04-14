@@ -12,10 +12,10 @@
     "typedoc": "^0.27.6",
     "typedoc-plugin-mdn-links": "^4.0.7",
     "typescript": "^5.1.3",
-    "vite": "^6.1.0"
+    "vite": "^6.1.5"
   },
   "name": "gpu-curtains",
-  "version": "0.12.9",
+  "version": "0.12.10",
   "description": "gpu-curtains is a 3D WebGPU rendering engine. It can be used as a standalone 3D engine, but also includes extra classes focused on mapping 3d objects to DOM elements; It allows users to synchronize values such as position, sizing, or scale between them.",
   "keywords": [
     "webgpu",

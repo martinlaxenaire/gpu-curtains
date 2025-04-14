@@ -6,21 +6,19 @@ import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { Object3D } from '../objects3D/Object3D'
 
 /**
- * A Renderer could be either a {@link GPURenderer}, a {@link GPUCameraRenderer} or a {@link GPUCurtainsRenderer}
- * @type {Renderer}
+ * A Renderer could be either a {@link GPURenderer}, a {@link GPUCameraRenderer} or a {@link GPUCurtainsRenderer}.
  */
 export type Renderer = GPUCurtainsRenderer | GPUCameraRenderer | GPURenderer
 /**
- * A CameraRenderer could be either a {@link GPUCameraRenderer} or a {@link GPUCurtainsRenderer}
- * @type {CameraRenderer}
+ * A CameraRenderer could be either a {@link GPUCameraRenderer} or a {@link GPUCurtainsRenderer}.
  */
 export type CameraRenderer = GPUCurtainsRenderer | GPUCameraRenderer
 
 /**
- * Format a renderer error based on given renderer, renderer type and object type
- * @param renderer - renderer that failed the test
- * @param rendererType - expected renderer type
- * @param type - object type
+ * Format a renderer error based on given renderer, renderer type and object type.
+ * @param renderer - Renderer that failed the test.
+ * @param rendererType - Expected renderer type.
+ * @param type - Object type.
  */
 const formatRendererError = (renderer: Renderer, rendererType = 'GPURenderer', type: string | null): void => {
   const error = type
@@ -30,10 +28,10 @@ const formatRendererError = (renderer: Renderer, rendererType = 'GPURenderer', t
 }
 
 /**
- * Check if the given renderer is a {@link Renderer}
- * @param renderer - renderer to test
- * @param type - object type used to format the error if needed
- * @returns - the {@link Renderer} if correctly set
+ * Check if the given renderer is a {@link Renderer}.
+ * @param renderer - Renderer to test.
+ * @param type - Object type used to format the error if needed.
+ * @returns - The {@link Renderer} if correctly set.
  */
 export const isRenderer = (renderer: GPUCurtains | Renderer | undefined, type: string | null): Renderer => {
   renderer = ((renderer && (renderer as GPUCurtains).renderer) || renderer) as Renderer
@@ -52,10 +50,10 @@ export const isRenderer = (renderer: GPUCurtains | Renderer | undefined, type: s
 }
 
 /**
- * Check if the given renderer is a {@link CameraRenderer}
- * @param renderer - renderer to test
- * @param type - object type used to format the error if needed
- * @returns - the {@link CameraRenderer} if correctly set
+ * Check if the given renderer is a {@link CameraRenderer}.
+ * @param renderer - Renderer to test.
+ * @param type - Object type used to format the error if needed.
+ * @returns - The {@link CameraRenderer} if correctly set.
  */
 export const isCameraRenderer = (
   renderer: GPUCurtains | CameraRenderer | undefined,
@@ -74,10 +72,10 @@ export const isCameraRenderer = (
 }
 
 /**
- * Check if the given renderer is a {@link GPUCurtainsRenderer}
- * @param renderer - renderer to test
- * @param type - object type used to format the error if needed
- * @returns - the {@link GPUCurtainsRenderer} if correctly set
+ * Check if the given renderer is a {@link GPUCurtainsRenderer}.
+ * @param renderer - Renderer to test.
+ * @param type - Object type used to format the error if needed.
+ * @returns - The {@link GPUCurtainsRenderer} if correctly set.
  */
 export const isCurtainsRenderer = (
   renderer: GPUCurtains | GPUCurtainsRenderer | undefined,

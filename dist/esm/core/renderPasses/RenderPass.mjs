@@ -300,6 +300,24 @@ class RenderPass {
     return pass;
   }
   /**
+   * Update our {@link RenderPass} textures quality ratio.
+   * @param qualityRatio - New quality ratio to use.
+   */
+  setQualityRatio(qualityRatio = 1) {
+    if (this.options.qualityRatio === qualityRatio) return;
+    this.options.qualityRatio = qualityRatio;
+    this.viewTextures.forEach((viewTexture) => {
+      viewTexture.setQualityRatio(this.options.qualityRatio);
+    });
+    this.resolveTargets.forEach((resolveTarget) => {
+      resolveTarget?.setQualityRatio(this.options.qualityRatio);
+    });
+    if (!this.options.depthTexture && this.options.useDepth) {
+      this.depthTexture.setQualityRatio(this.options.qualityRatio);
+    }
+    this.resize();
+  }
+  /**
    * Resize our {@link RenderPass}: reset its {@link Texture}.
    */
   resize() {

@@ -642,7 +642,11 @@ export class Scene extends Object3D {
     } else if (object.type === 'PingPongPlane') {
       return this.renderPassEntries.pingPong.find((entry) => entry.element.uuid === object.uuid)
     } else if (object.type === 'ShaderPass') {
-      return this.renderPassEntries.screen.find((entry) => entry.element?.uuid === object.uuid)
+      if ((object as ShaderPass).options.isPrePass) {
+        return this.renderPassEntries.prePass.find((entry) => entry.element?.uuid === object.uuid)
+      } else {
+        return this.renderPassEntries.postProPass.find((entry) => entry.element?.uuid === object.uuid)
+      }
     } else {
       const entryType = (object as RenderedMesh).outputTarget ? 'renderTarget' : 'screen'
 
@@ -886,6 +890,7 @@ export class Scene extends Object3D {
         this.renderSinglePassEntry(commandEncoder, renderPassEntry)
 
         // if we're rendering to the screen, we'll need to load colors next time
+        // TODO what about post pro passes with an output target?
         if (renderPassEntryType !== 'renderTarget') {
           this.#shouldLoadColors = true
         }

@@ -1,10 +1,9 @@
 /// <reference types="@webgpu/types" />
 import { GPURenderer, GPURendererOptions, GPURendererParams, SceneObject } from './GPURenderer';
 import { Camera } from '../cameras/Camera';
-import { PerspectiveCameraBaseOptions } from '../cameras/PerspectiveCamera';
+import { PerspectiveCamera, PerspectiveCameraBaseOptions } from '../cameras/PerspectiveCamera';
 import { BufferBinding } from '../bindings/BufferBinding';
 import { BindGroup } from '../bindGroups/BindGroup';
-import { Vec3 } from '../../math/Vec3';
 import { AllowedBindGroups, Input } from '../../types/BindGroups';
 import { RectBBox } from '../DOM/DOMElement';
 import type { Light, LightsType, ShadowCastingLights } from '../lights/Light';
@@ -13,7 +12,10 @@ import { ShadowsType } from '../shadows/Shadow';
 import { Texture } from '../textures/Texture';
 import { Sampler } from '../samplers/Sampler';
 import { RenderPassEntry } from '../scenes/Scene';
+import { OrthographicCamera } from '../cameras/OrthographicCamera';
 import { RenderPassViewport } from '../renderPasses/RenderPass';
+/** Defines the allowed {@link Camera} types for a {@link GPUCameraRenderer}. */
+export type RendererCamera = OrthographicCamera | PerspectiveCamera;
 /** Defines the parameters used to build the {@link BufferBinding} of each type of lights. */
 export interface LightParams {
     /** Maximum number for a given type of light. */
@@ -47,7 +49,7 @@ export interface GPUCameraRendererLightParams {
     /** Whether to use `uniform` instead of `storage` binding type for the shadows bindings. In some case, for example when using models with skinning or morph targets, the maximum number of `storage` bindings can be reached in the vertex shader. This allows to bypass this limit by switching the shadows binding from `storage` to `uniforms`, but restrict the flexibility by removing the ability to overflow lights. Default to `false`. */
     useUniformsForShadows?: boolean;
 }
-/** Extra parameters used to define the {@link Camera} and various lights options. */
+/** Extra parameters used to define the {@link RendererCamera} and various lights options. */
 export interface GPUCameraLightsRendererParams {
     /** An object defining {@link PerspectiveCameraBaseOptions | camera perspective parameters} */
     camera?: PerspectiveCameraBaseOptions;
@@ -61,7 +63,7 @@ export interface GPUCameraRendererParams extends GPURendererParams, GPUCameraLig
 export interface GPUCameraRendererOptions extends GPURendererOptions, GPUCameraLightsRendererParams {
 }
 /**
- * This renderer is meant to render meshes projected by a {@link Camera}. It therefore creates a {@link Camera} with its associated {@link bindings} as well as lights and shadows {@link bindings} used for lighting and their associated {@link cameraLightsBindGroup | bind group}.<br>
+ * This renderer is meant to render meshes projected by a {@link RendererCamera}. It therefore creates a {@link RendererCamera} with its associated {@link bindings} as well as lights and shadows {@link bindings} used for lighting and their associated {@link cameraLightsBindGroup | bind group}.<br>
  * Can be safely used to render compute passes and meshes if they do not need to be tied to the DOM.
  *
  * @example
@@ -80,14 +82,15 @@ export interface GPUCameraRendererOptions extends GPURendererOptions, GPUCameraL
  *   container: document.querySelector('#canvas'),
  * })
  * ```
+ * @template TCamera - The camera type parameter which extends {@link RendererCamera}. Default is {@link PerspectiveCamera}.
  */
-export declare class GPUCameraRenderer extends GPURenderer {
+export declare class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamera> extends GPURenderer {
     #private;
-    /** {@link Camera} used by this {@link GPUCameraRenderer}. */
-    camera: Camera;
+    /** {@link RendererCamera} used by this {@link GPUCameraRenderer}. Default to a {@link PerspectiveCamera}. */
+    camera: TCamera;
     /** {@link BindGroup | bind group} handling the camera, lights and shadows {@link BufferBinding}. */
     cameraLightsBindGroup: BindGroup;
-    /** Additional {@link RenderPassViewport} from the {@link Camera} to use if any. Will be contained inside the {@link viewport} if any. */
+    /** Additional {@link RenderPassViewport} from the {@link RendererCamera} to use if any. Will be contained inside the {@link viewport} if any. */
     cameraViewport: RenderPassViewport | null;
     /** Array of all the created {@link Light}. */
     lights: Light[];
@@ -130,15 +133,16 @@ export declare class GPUCameraRenderer extends GPURenderer {
      */
     setMainRenderPasses(): void;
     /**
-     * Set the {@link camera}
-     * @param cameraParameters - {@link PerspectiveCameraBaseOptions | parameters} used to create the {@link camera}
+     * Set the default {@link camera}.
+     * @param cameraParameters - {@link PerspectiveCameraBaseOptions | parameters} used to create the {@link camera}.
      */
     setCamera(cameraParameters: PerspectiveCameraBaseOptions): void;
     /**
-     * Tell our {@link GPUCameraRenderer} to use this {@link Camera}. If a {@link camera} has already been set, reset the {@link GPUCameraRenderer#bindings.camera | camera binding} inputs view values and the {@link meshes} {@link Camera} object.
-     * @param camera - new {@link Camera} to use.
+     * Tell our {@link GPUCameraRenderer} to use this {@link RendererCamera}. If a {@link RendererCamera | camera} has already been set, reset the {@link GPUCameraRenderer#bindings.camera | camera binding} inputs view values and the {@link meshes} {@link RendererCamera} object.
+     * @param camera - New {@link RendererCamera} to use.
+     * @returns - This {@link GPUCameraRenderer} with its {@link RendererCamera | camera} type updated.
      */
-    useCamera(camera: Camera): void;
+    useCamera<NewCamera extends RendererCamera>(camera: NewCamera): GPUCameraRenderer<NewCamera>;
     /**
      * Update the {@link cameraViewport} if needed (i.e. if the camera use a different aspect ratio than the renderer).
      */
@@ -148,13 +152,13 @@ export declare class GPUCameraRenderer extends GPURenderer {
      */
     resizeCamera(): void;
     /**
-     * Set the {@link cameraViewport} (that should be contained within the renderer {@link viewport} if any) and update the {@link renderPass} and {@link postProcessingPass} {@link viewport} values.
+     * Set the {@link cameraViewport} (that should be contained within the renderer {@link GPURenderer#viewport | viewport} if any) and update the {@link renderPass} and {@link postProcessingPass} {@link GPURenderer#viewport | viewport} values.
      * @param viewport - {@link RenderPassViewport} settings to use if any.
      */
     setCameraViewport(viewport?: RenderPassViewport | null): void;
     /**
-     * Resize the {@link camera} whenever the {@link viewport} is updated.
-     * @param viewport - {@link RenderPassViewport} settings to use if any. Can be set to `null` to cancel the {@link viewport}.
+     * Resize the {@link camera} whenever the {@link GPURenderer#viewport | viewport} is updated.
+     * @param viewport - {@link RenderPassViewport} settings to use if any. Can be set to `null` to cancel the {@link GPURenderer#viewport | viewport}.
      */
     setViewport(viewport?: RenderPassViewport | null): void;
     /**
@@ -162,7 +166,7 @@ export declare class GPUCameraRenderer extends GPURenderer {
      */
     onCameraMatricesChanged(): void;
     /**
-     * Create a {@link BufferBinding} from a given {@link Camera}. Used internally but can also be used to create a new {@link BufferBinding} from a different camera than this renderer's {@link GPUCameraRenderer.camera | camera}.
+     * Create a {@link BufferBinding} from a given {@link Camera}. Used internally but can also be used to create a new {@link BufferBinding} from a different camera than this renderer's {@link RendererCamera | camera}.
      * @param camera - {@link Camera} to use to create the {@link BufferBinding}.
      * @param label - Optional label to use for the {@link BufferBinding}.
      * @returns - Newly created {@link BufferBinding}.
@@ -237,11 +241,6 @@ export declare class GPUCameraRenderer extends GPURenderer {
      * @param bindGroup - {@link AllowedBindGroups | bind group} to check
      */
     getObjectsByBindGroup(bindGroup: AllowedBindGroups): undefined | SceneObject[];
-    /**
-     * Set our {@link camera} {@link Camera#position | position}
-     * @param position - new {@link Camera#position | position}
-     */
-    setCameraPosition(position?: Vec3): void;
     /**
      * Create the {@link transmissionTarget} {@link Texture} and {@link RenderPassEntry} if not already created.
      */

@@ -13,7 +13,7 @@ export interface PointLightBaseParams extends LightBaseParams {
   /** The {@link PointLight} range, used to compute the {@link PointLight} attenuation over distance. Default to `0`. */
   range?: number
   /** The {@link PointLight} shadow parameters used to create a {@link PointShadow}. If not set, the {@link PointShadow} won't be set as active and won't cast any shadows. On the other hand, if anything is passed (even an empty object), the {@link PointShadow} will start casting shadows, so use with caution. Default to `null` (which means the {@link PointLight} will not cast shadows). */
-  shadow?: PointShadowParams
+  shadow?: Omit<PointShadowParams, 'light'>
 }
 
 /**

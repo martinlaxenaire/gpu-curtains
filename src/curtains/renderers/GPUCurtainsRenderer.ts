@@ -1,4 +1,5 @@
-import { GPUCameraRenderer, GPUCameraRendererParams } from '../../core/renderers/GPUCameraRenderer'
+import { PerspectiveCamera } from '../../core/cameras/PerspectiveCamera'
+import { GPUCameraRenderer, GPUCameraRendererParams, RendererCamera } from '../../core/renderers/GPUCameraRenderer'
 import { DOMProjectedMesh } from '../../core/renderers/GPURenderer'
 import { DOMObject3D } from '../objects3D/DOMObject3D'
 import { DOMTexture } from '../textures/DOMTexture'
@@ -22,8 +23,11 @@ import { DOMTexture } from '../textures/DOMTexture'
  *   container: document.querySelector('#canvas'),
  * })
  * ```
+ * @template TCamera - The camera type parameter which extends {@link RendererCamera}. Default is {@link PerspectiveCamera}.
  */
-export class GPUCurtainsRenderer extends GPUCameraRenderer {
+export class GPUCurtainsRenderer<
+  TCamera extends RendererCamera = PerspectiveCamera
+> extends GPUCameraRenderer<TCamera> {
   /** All created {@link curtains/meshes/DOMMesh.DOMMesh | DOM Meshes} and {@link curtains/meshes/Plane.Plane | planes}. */
   domMeshes: DOMProjectedMesh[]
   /** All created {@link curtains/objects3D/DOMObject3D.DOMObject3D | DOMObject3D} which position should be updated on scroll. */

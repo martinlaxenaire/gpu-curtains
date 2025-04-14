@@ -12,7 +12,7 @@ export interface DirectionalLightBaseParams extends LightBaseParams {
     /** The {@link DirectionalLight} {@link Vec3 | target}. Default to `Vec3(0)`. */
     target?: Vec3;
     /** The {@link DirectionalLight} shadow parameters used to create a {@link DirectionalShadow}. If not set, the {@link DirectionalShadow} won't be set as active and won't cast any shadows. On the other hand, if anything is passed (even an empty object), the {@link DirectionalShadow} will start casting shadows, so use with caution. Default to `null` (which means the {@link DirectionalLight} will not cast shadows). */
-    shadow?: DirectionalShadowParams;
+    shadow?: Omit<DirectionalShadowParams, 'light'>;
 }
 /**
  * Create a directional light, that is emitted in a single direction without any attenuation. A common use case for this type of light is to simulate the sun.

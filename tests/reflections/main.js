@@ -121,7 +121,7 @@ window.addEventListener('load', async () => {
 
   const originalRenderBundle = new RenderBundle(renderer, {
     label: 'Reflected objects original render bundle',
-    size: NB_MESHES,
+    size: NB_MESHES + 1, // we'll add the floor
     useBuffer: true,
   })
 
@@ -248,6 +248,7 @@ window.addEventListener('load', async () => {
     geometry: planeGeometry,
     textures: [reflectionTarget.renderTexture], // use the reflection target texture
     receiveShadows: true,
+    renderBundle: originalRenderBundle,
     material: {
       ...baseMaterialOptions,
       color: new Vec3(0.5),

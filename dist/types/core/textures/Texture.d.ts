@@ -135,6 +135,11 @@ export declare class Texture {
         data?: Float32Array;
     }): void;
     /**
+     * Update our {@link Texture} quality ratio and resize it.
+     * @param qualityRatio - New quality ratio to use.
+     */
+    setQualityRatio(qualityRatio?: number): void;
+    /**
      * Resize our {@link Texture}, which means recreate it/copy it again and tell the {@link core/bindGroups/TextureBindGroup.TextureBindGroup | texture bind group} to update.
      * @param size - the optional new {@link TextureSize | size} to set.
      */

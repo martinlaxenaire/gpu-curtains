@@ -45,7 +45,7 @@ export interface ProjectedMeshBaseParams {
   /** Whether the mesh should cast shadows from shadow casting lights. If set to `true`, the mesh will be automatically added to all shadow maps. If you want to cast only specific shadows, see {@link core/shadows/Shadow.Shadow#addShadowCastingMesh | shadow's addShadowCastingMesh} method. Default to `false`. */
   castShadows?: boolean
 
-  /** Whether the mesh should be considered as transmissive, like glass or transparent plastic. Will be rendered after the non transmissive meshes and have the {@link CameraRenderer#transmissionTarget | camera renderer transmissionTarget} texture and sampler properties attached to it to handle transmission effect. */
+  /** Whether the mesh should be considered as transmissive, like glass or transparent plastic. Will be rendered after the non transmissive meshes and have the {@link core/renderers/GPUCameraRenderer.GPUCameraRenderer#transmissionTarget | camera renderer transmissionTarget} texture and sampler properties attached to it to handle transmission effect. */
   transmissive?: boolean
 }
 
@@ -135,7 +135,7 @@ export declare class ProjectedMeshBaseClass extends MeshBaseClass {
   setDOMFrustum(): void
 
   /**
-   * Get whether the Mesh is currently in the {@link CameraRenderer#camera | camera} frustum.
+   * Get whether the Mesh is currently in the {@link core/renderers/GPUCameraRenderer.GPUCameraRenderer#camera | camera} frustum.
    * @readonly
    */
   get isInFrustum(): boolean
@@ -145,6 +145,12 @@ export declare class ProjectedMeshBaseClass extends MeshBaseClass {
    * @param meshParameters - {@link RenderMaterialParams | RenderMaterial parameters}
    */
   setMaterial(meshParameters: ProjectedRenderMaterialParams): void
+
+  /**
+   * Update this Mesh camera {@link BindGroup}. Useful if the Mesh needs to be rendered with a different {@link core/renderers/GPUCameraRenderer.GPUCameraRenderer#camera | camera} than the {@link CameraRenderer} one.
+   * @param cameraBindGroup - New camera {@link BindGroup} to use. Should be a clon from the {@link CameraRenderer} one.
+   */
+  setCameraBindGroup(cameraBindGroup: BindGroup): void
 
   /**
    * Get the visible property value
@@ -200,7 +206,7 @@ export declare class ProjectedMeshBaseClass extends MeshBaseClass {
   }
 
   /**
-   * Check if the Mesh lies inside the {@link CameraRenderer#camera | camera} view frustum or not.
+   * Check if the Mesh lies inside the {@link core/renderers/GPUCameraRenderer.GPUCameraRenderer#camera | camera} view frustum or not.
    */
   checkFrustumCulling(): void
 
@@ -629,7 +635,7 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
     }
 
     /**
-     * Update this Mesh camera {@link BindGroup}. Useful if the Mesh needs to be rendered with a different {@link Camera} than the {@link CameraRenderer} one.
+     * Update this Mesh camera {@link BindGroup}. Useful if the Mesh needs to be rendered with a different {@link core/renderers/GPUCameraRenderer.GPUCameraRenderer#camera | camera} than the {@link CameraRenderer} one.
      * @param cameraBindGroup - New camera {@link BindGroup} to use. Should be a clon from the {@link CameraRenderer} one.
      */
     setCameraBindGroup(cameraBindGroup: BindGroup) {
