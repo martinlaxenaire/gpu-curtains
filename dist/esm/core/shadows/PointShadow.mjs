@@ -252,7 +252,7 @@ class PointShadow extends Shadow {
    * @param commandEncoder - {@link GPUCommandEncoder} to use.
    */
   render(commandEncoder) {
-    if (!this.castingMeshes.size || !this.light.intensity) return;
+    if (!this.castingMeshes.size || !this.light.intensity || !this.intensity) return;
     let shouldRender = false;
     for (const [_uuid, mesh] of this.castingMeshes) {
       if (mesh.visible) {
