@@ -339,8 +339,6 @@ export class Shadow {
       }
 
       this.renderer.shouldUpdateCameraLightsBindGroup()
-    } else {
-      console.log('bail for property', propertyKey, this.constructor.name, this.rendererBinding)
     }
   }
 

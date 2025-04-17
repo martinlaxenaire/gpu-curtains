@@ -193,8 +193,6 @@ class Shadow {
         this.rendererBinding.childrenBindings[this.index].inputs[propertyKey].value = value;
       }
       this.renderer.shouldUpdateCameraLightsBindGroup();
-    } else {
-      console.log("bail for property", propertyKey, this.constructor.name, this.rendererBinding);
     }
   }
   /**

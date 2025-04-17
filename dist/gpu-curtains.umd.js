@@ -10382,7 +10382,6 @@ New rendering options: ${JSON.stringify(
         } else {
           this.renderBundle = renderBundle;
         }
-        console.log(renderBundle);
       }
       /**
        * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been lost to prepare everything for restoration.
@@ -12455,8 +12454,6 @@ fn getPCFBaseShadowContribution(
           this.rendererBinding.childrenBindings[this.index].inputs[propertyKey].value = value;
         }
         this.renderer.shouldUpdateCameraLightsBindGroup();
-      } else {
-        console.log("bail for property", propertyKey, this.constructor.name, this.rendererBinding);
       }
     }
     /**

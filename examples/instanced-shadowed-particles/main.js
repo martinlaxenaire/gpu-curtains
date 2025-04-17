@@ -92,8 +92,6 @@ window.addEventListener('load', async () => {
     },
   })
 
-  console.log(directionalLight)
-
   //--------------------
   // INTERACTION
   //--------------------

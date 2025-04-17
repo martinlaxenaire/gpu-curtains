@@ -227,7 +227,6 @@ function MeshBaseMixin(Base) {
       } else {
         this.renderBundle = renderBundle;
       }
-      console.log(renderBundle);
     }
     /**
      * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been lost to prepare everything for restoration.
