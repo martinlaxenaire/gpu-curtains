@@ -15233,7 +15233,7 @@ ${this.shaders.compute.head}`;
         }
         this.renderer.postProcessingPass.setLoadOp("clear");
       };
-      const onAfterRenderPass = !shaderPass.outputTarget && shaderPass.options.copyOutputToRenderTexture ? (commandEncoder, swapChainTexture) => {
+      const onAfterRenderPass = shaderPass.options.copyOutputToRenderTexture ? (commandEncoder, swapChainTexture) => {
         if (shaderPass.renderTexture && swapChainTexture) {
           this.renderer.copyGPUTextureToTexture(swapChainTexture, shaderPass.renderTexture, commandEncoder);
         }
@@ -15523,6 +15523,9 @@ ${this.shaders.compute.head}`;
             renderPassEntry.renderPass.setDepthReadOnly(true);
           } else {
             renderPassEntry.renderPass.setDepthReadOnly(false);
+          }
+          if (renderPassEntryType === "postProPass" && renderPassEntry.renderPass.uuid !== this.renderer.postProcessingPass.uuid) {
+            __privateSet$a(this, _shouldLoadColors, false);
           }
           renderPassEntry.renderPass.setLoadOp(__privateGet$a(this, _shouldLoadColors) ? "load" : "clear");
           renderPassEntry.renderPass.setDepthLoadOp(
@@ -17941,7 +17944,7 @@ struct VSOutput {
      * @param removeFromRenderer - whether to remove this {@link ShaderPass} from the {@link Renderer#shaderPasses | Renderer shaderPasses array}
      */
     removeFromScene(removeFromRenderer = false) {
-      if (this.outputTarget) {
+      if (this.outputTarget && removeFromRenderer) {
         this.outputTarget.destroy();
       }
       if (this.autoRender) {
