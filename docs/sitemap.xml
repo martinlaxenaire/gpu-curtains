@@ -2,2890 +2,2890 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/index.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/hierarchy.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/documents/Getting_started.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/documents/Getting_started.3D_engine_usage.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/documents/Getting_started.DOM_syncing_usage.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/documents/Core_concepts.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/documents/Core_concepts.The_renderers,_scene_rendering_and_camera.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/documents/Core_concepts.Bindings_and_bind_groups.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_DOM_DOMElement.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_DOM_DOMElement.RectCoords.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_DOM_DOMElement.RectSize.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_DOM_DOMElement.RectBBox.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_DOM_DOMElement.DOMPosition.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_DOM_DOMElement.DOMElementBoundingRect.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_DOM_DOMElement.DOMElementParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_DOM_DOMElement.DOMElement.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_DOM_DOMFrustum.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_DOM_DOMFrustum.DOMFrustumParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_DOM_DOMFrustum.DOMFrustum.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_bindGroups_BindGroup.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_bindGroups_BindGroup.BindGroup.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_bindGroups_TextureBindGroup.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_bindGroups_TextureBindGroup.TextureBindGroupParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_bindGroups_TextureBindGroup.TextureBindGroup.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_bindings_Binding.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_bindings_Binding.BufferBindingType.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_bindings_Binding.TextureBindingType.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_bindings_Binding.DOMTextureBindingType.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_bindings_Binding.SamplerBindingType.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_bindings_Binding.BindingType.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_bindings_Binding.BufferBindingMemoryAccessType.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_bindings_Binding.BindingMemoryAccessType.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_bindings_Binding.TextureSamplerBindings.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_bindings_Binding.BindingParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_bindings_Binding.Binding.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_bindings_BufferBinding.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_bindings_BufferBinding.BufferBindingInput.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_bindings_BufferBinding.BufferBindingBaseParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_bindings_BufferBinding.BufferBindingChildrenBinding.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_bindings_BufferBinding.BufferBindingParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_bindings_BufferBinding.AllowedBufferElement.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_bindings_BufferBinding.DataViewSetFunction.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_bindings_BufferBinding.BufferBinding.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_bindings_SamplerBinding.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_bindings_SamplerBinding.SamplerBindingResource.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_bindings_SamplerBinding.SamplerBindingParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_bindings_SamplerBinding.SamplerBinding.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_bindings_TextureBinding.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_bindings_TextureBinding.TextureBindingResource.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_bindings_TextureBinding.TextureBindingParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_bindings_TextureBinding.TextureBinding.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_bindings_WritableBufferBinding.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_bindings_WritableBufferBinding.WritableBufferBindingParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_bindings_WritableBufferBinding.WritableBufferBinding.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_bindings_bufferElements_BufferArrayElement.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_bindings_bufferElements_BufferArrayElement.BufferArrayElementParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_bindings_bufferElements_BufferArrayElement.BufferArrayElement.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_bindings_bufferElements_BufferElement.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/variables/core_bindings_bufferElements_BufferElement.slotsPerRow.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/variables/core_bindings_bufferElements_BufferElement.bytesPerSlot.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/variables/core_bindings_bufferElements_BufferElement.bytesPerRow.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_bindings_bufferElements_BufferElement.BufferElementAlignmentPosition.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_bindings_bufferElements_BufferElement.BufferElementAlignment.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_bindings_bufferElements_BufferElement.BufferElementParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_bindings_bufferElements_BufferElement.BufferElement.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_bindings_bufferElements_BufferInterleavedArrayElement.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_bindings_bufferElements_BufferInterleavedArrayElement.BufferInterleavedArrayElement.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_bindings_utils.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_bindings_utils.getBindingVisibility.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_bindings_utils.TypedArray.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_bindings_utils.TypedArrayConstructor.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_bindings_utils.WGSLBaseVariableType.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_bindings_utils.WGSLVariableType.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_bindings_utils.BufferLayout.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_bindings_utils.getBufferLayout.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_bindings_utils.getBindingWGSLVarType.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_bindings_utils.getTextureBindingWGSLVarType.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_bindings_utils.getBindGroupLayoutBindingType.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_bindings_utils.getBindGroupLayoutTextureBindingType.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_bindings_utils.getBindGroupLayoutTextureBindingCacheKey.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_buffers_Buffer.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_buffers_Buffer.BufferParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_buffers_Buffer.Buffer.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_buffers_utils.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_buffers_utils.BufferUsageKeys.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_buffers_utils.getBufferUsages.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_cameras_Camera.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_cameras_Camera.CameraBaseOptions.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_cameras_Camera.CameraOptions.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_cameras_Camera.CameraParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_cameras_Camera.CameraObject3DMatricesType.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_cameras_Camera.CameraObject3DMatrices.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_cameras_Camera.Camera.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_cameras_OrthographicCamera.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_cameras_OrthographicCamera.OrthographicCameraBaseOptions.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_cameras_OrthographicCamera.OrthographicCameraOptions.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_cameras_OrthographicCamera.OrthographicCameraParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_cameras_OrthographicCamera.OrthographicCamera.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_cameras_PerspectiveCamera.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_cameras_PerspectiveCamera.PerspectiveCameraBaseOptions.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_cameras_PerspectiveCamera.PerspectiveCameraOptions.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_cameras_PerspectiveCamera.PerspectiveCameraParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_cameras_PerspectiveCamera.PerspectiveCamera.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_computePasses_ComputePass.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_computePasses_ComputePass.ComputePassOptions.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_computePasses_ComputePass.ComputePassParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_computePasses_ComputePass.ComputePass.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_geometries_Geometry.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_geometries_Geometry.Geometry.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_geometries_IndexedGeometry.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_geometries_IndexedGeometry.IndexedGeometryIndexBufferOptions.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_geometries_IndexedGeometry.IndexBuffer.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_geometries_IndexedGeometry.IndexedGeometry.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_geometries_PlaneGeometry.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_geometries_PlaneGeometry.PlaneGeometryParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_geometries_PlaneGeometry.PlaneGeometry.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_lights_AmbientLight.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_lights_AmbientLight.AmbientLight.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_lights_DirectionalLight.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_lights_DirectionalLight.DirectionalLightBaseParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_lights_DirectionalLight.DirectionalLight.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_lights_Light.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_lights_Light.LightsType.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_lights_Light.ShadowCastingLights.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_lights_Light.LightBaseParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_lights_Light.LightParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_lights_Light.Light.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_lights_PointLight.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_lights_PointLight.PointLightBaseParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_lights_PointLight.PointLight.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_lights_SpotLight.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_lights_SpotLight.SpotLightBaseParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_lights_SpotLight.SpotLight.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_materials_ComputeMaterial.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_materials_ComputeMaterial.ComputeMaterial.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_materials_Material.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_materials_Material.Material.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_materials_RenderMaterial.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_materials_RenderMaterial.RenderMaterial.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_materials_utils.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_materials_utils.compareRenderingOptions.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_meshes_FullscreenPlane.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_meshes_FullscreenPlane.FullscreenPlane.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_meshes_Mesh.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_meshes_Mesh.Mesh.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_meshes_mixins_MeshBaseMixin.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_meshes_mixins_MeshBaseMixin.MeshBaseRenderParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_meshes_mixins_MeshBaseMixin.MeshBaseParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_meshes_mixins_MeshBaseMixin.MeshBaseOptions.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_meshes_mixins_MeshBaseMixin.MeshBaseClass.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_meshes_mixins_MeshBaseMixin.MeshBaseMixin.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_meshes_mixins_ProjectedMeshBaseMixin.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_meshes_mixins_ProjectedMeshBaseMixin.FrustumCullingCheck.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_meshes_mixins_ProjectedMeshBaseMixin.ProjectedMeshBaseParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_meshes_mixins_ProjectedMeshBaseMixin.ProjectedMeshParameters.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_meshes_mixins_ProjectedMeshBaseMixin.ProjectedRenderMaterialParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_meshes_mixins_ProjectedMeshBaseMixin.ProjectedMeshBaseOptions.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_meshes_mixins_ProjectedMeshBaseMixin.ProjectedMeshBaseClass.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_meshes_mixins_ProjectedMeshBaseMixin.ProjectedMeshBaseMixin.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_objects3D_Object3D.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_objects3D_Object3D.Object3DMatricesType.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_objects3D_Object3D.Object3DTransformMatrix.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_objects3D_Object3D.Object3DMatrices.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_objects3D_Object3D.Object3DTransforms.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_objects3D_Object3D.Object3D.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_objects3D_ProjectedObject3D.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_objects3D_ProjectedObject3D.Object3DNormalMatrix.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_objects3D_ProjectedObject3D.ProjectedObject3DMatricesType.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_objects3D_ProjectedObject3D.ProjectedObject3DNormalMatrix.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_objects3D_ProjectedObject3D.ProjectedObject3DMatrices.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_objects3D_ProjectedObject3D.ProjectedObject3D.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_pipelines_ComputePipelineEntry.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_pipelines_ComputePipelineEntry.ComputePipelineEntry.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_pipelines_PipelineEntry.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_pipelines_PipelineEntry.PipelineEntry.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_pipelines_PipelineManager.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_pipelines_PipelineManager.AllowedPipelineEntries.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_pipelines_PipelineManager.GPURenderPassTypes.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_pipelines_PipelineManager.GPUPassTypes.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_pipelines_PipelineManager.PipelineManager.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_pipelines_RenderPipelineEntry.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_pipelines_RenderPipelineEntry.RenderPipelineEntry.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_renderPasses_RenderBundle.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_renderPasses_RenderBundle.RenderBundleOptions.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_renderPasses_RenderBundle.RenderBundleParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_renderPasses_RenderBundle.RenderBundle.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_renderPasses_RenderPass.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_renderPasses_RenderPass.ColorAttachmentParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_renderPasses_RenderPass.RenderPassViewport.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_renderPasses_RenderPass.RenderPassOptions.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_renderPasses_RenderPass.RenderPassParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_renderPasses_RenderPass.RenderPass.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_renderPasses_RenderTarget.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_renderPasses_RenderTarget.RenderTargetOptions.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_renderPasses_RenderTarget.RenderTargetParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_renderPasses_RenderTarget.RenderTarget.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_renderPasses_ShaderPass.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_renderPasses_ShaderPass.ShaderPassBaseParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_renderPasses_ShaderPass.ShaderPassParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_renderPasses_ShaderPass.ShaderPassOptions.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_renderPasses_ShaderPass.ShaderPass.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_renderers_GPUCameraRenderer.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_renderers_GPUCameraRenderer.RendererCamera.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_renderers_GPUCameraRenderer.LightParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_renderers_GPUCameraRenderer.LightsBindingParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_renderers_GPUCameraRenderer.GPUCameraRendererBindings.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_renderers_GPUCameraRenderer.GPUCameraRendererLightParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_renderers_GPUCameraRenderer.GPUCameraLightsRendererParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_renderers_GPUCameraRenderer.GPUCameraRendererParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_renderers_GPUCameraRenderer.GPUCameraRendererOptions.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_renderers_GPUCameraRenderer.GPUCameraRenderer.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_renderers_GPUDeviceManager.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_renderers_GPUDeviceManager.GPUDeviceManagerBaseParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_renderers_GPUDeviceManager.GPUDeviceManagerParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_renderers_GPUDeviceManager.GPUDeviceManagerSetupParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_renderers_GPUDeviceManager.GPUDeviceManager.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_renderers_GPURenderer.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_renderers_GPURenderer.GPURendererContextOptions.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_renderers_GPURenderer.GPURendererContextParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_renderers_GPURenderer.GPURendererParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_renderers_GPURenderer.GPURendererOptions.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_renderers_GPURenderer.DOMProjectedMesh.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_renderers_GPURenderer.ProjectedMesh.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_renderers_GPURenderer.SceneStackedMesh.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_renderers_GPURenderer.SceneStackedObject.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_renderers_GPURenderer.FullscreenPass.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_renderers_GPURenderer.RenderedMesh.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_renderers_GPURenderer.SceneObject.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_renderers_GPURenderer.GPURenderer.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_renderers_utils.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_renderers_utils.Renderer.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_renderers_utils.CameraRenderer.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_renderers_utils.isRenderer.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_renderers_utils.isCameraRenderer.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_renderers_utils.isCurtainsRenderer.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_renderers_utils.isProjectedMesh.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_samplers_Sampler.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_samplers_Sampler.SamplerOptions.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_samplers_Sampler.SamplerParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_samplers_Sampler.Sampler.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_scenes_Scene.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_scenes_Scene.ProjectionStack.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_scenes_Scene.ProjectionType.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_scenes_Scene.Stack.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_scenes_Scene.RenderPassEntry.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_scenes_Scene.RenderPassEntriesType.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_scenes_Scene.RenderPassEntries.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_scenes_Scene.Scene.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_fragment_body_apply-directional-shadows.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/variables/core_shaders_chunks_fragment_body_apply-directional-shadows.applyDirectionalShadows.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_fragment_body_apply-point-shadows.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/variables/core_shaders_chunks_fragment_body_apply-point-shadows.applyPointShadows.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_fragment_body_apply-spot-shadows.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/variables/core_shaders_chunks_fragment_body_apply-spot-shadows.applySpotShadows.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_fragment_body_apply-tone-mapping.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_shaders_chunks_fragment_body_apply-tone-mapping.applyToneMapping.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_fragment_body_declare-attributes-vars.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_shaders_chunks_fragment_body_declare-attributes-vars.declareAttributesVars.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_fragment_body_declare-material-vars.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_shaders_chunks_fragment_body_declare-material-vars.DeclareMaterialVarsParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_shaders_chunks_fragment_body_declare-material-vars.declareMaterialVars.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_fragment_body_get-IBL-GGX-Fresnel.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_shaders_chunks_fragment_body_get-IBL-GGX-Fresnel.getIBLGGXFresnel.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_fragment_body_get-IBL-indirect-irradiance.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_shaders_chunks_fragment_body_get-IBL-indirect-irradiance.getIBLIndirectIrradiance.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_fragment_body_get-IBL-indirect-radiance.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_shaders_chunks_fragment_body_get-IBL-indirect-radiance.getIBLIndirectRadiance.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_fragment_body_get-IBL-volume-refraction.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_shaders_chunks_fragment_body_get-IBL-volume-refraction.getIBLVolumeRefraction.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_fragment_body_get-PBR-shading.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_shaders_chunks_fragment_body_get-PBR-shading.getPBRShading.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_fragment_body_get-PCF-shadows.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/variables/core_shaders_chunks_fragment_body_get-PCF-shadows.getPCFShadows.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_fragment_body_get-base-color.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_shaders_chunks_fragment_body_get-base-color.getBaseColor.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_fragment_body_get-emissive-occlusion.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_shaders_chunks_fragment_body_get-emissive-occlusion.getEmissiveOcclusion.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_fragment_body_get-lambert-shading.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_shaders_chunks_fragment_body_get-lambert-shading.getLambertShading.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_fragment_body_get-metallic-roughness.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_shaders_chunks_fragment_body_get-metallic-roughness.getMetallicRoughness.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_fragment_body_get-normal-tangent-bitangent.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_shaders_chunks_fragment_body_get-normal-tangent-bitangent.getNormalTangentBitangent.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_fragment_body_get-phong-shading.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_shaders_chunks_fragment_body_get-phong-shading.getPhongShading.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_fragment_body_get-specular.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_shaders_chunks_fragment_body_get-specular.getSpecular.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_fragment_body_get-transmission-thickness.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_shaders_chunks_fragment_body_get-transmission-thickness.getTransmissionThickness.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_fragment_head_RE-indirect-diffuse.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/variables/core_shaders_chunks_fragment_head_RE-indirect-diffuse.REIndirectDiffuse.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_fragment_head_RE-indirect-specular.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/variables/core_shaders_chunks_fragment_head_RE-indirect-specular.REIndirectSpecular.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_fragment_head_get-IBL-GGX-Fresnel.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/variables/core_shaders_chunks_fragment_head_get-IBL-GGX-Fresnel.getIBLGGXFresnel.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_fragment_head_get-IBL-indirect-irradiance.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/variables/core_shaders_chunks_fragment_head_get-IBL-indirect-irradiance.getIBLIndirectIrradiance.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_fragment_head_get-IBL-indirect-radiance.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/variables/core_shaders_chunks_fragment_head_get-IBL-indirect-radiance.getIBLIndirectRadiance.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_fragment_head_get-IBL-transmission.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/variables/core_shaders_chunks_fragment_head_get-IBL-transmission.getIBLTransmission.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_fragment_head_get-PBR-direct.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/variables/core_shaders_chunks_fragment_head_get-PBR-direct.getPBRDirect.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_fragment_head_get-PCF-base-shadow-contribution.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/variables/core_shaders_chunks_fragment_head_get-PCF-base-shadow-contribution.getPCFBaseShadowContribution.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_fragment_head_get-PCF-directional-shadow-contribution.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/variables/core_shaders_chunks_fragment_head_get-PCF-directional-shadow-contribution.getPCFDirectionalShadowContribution.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_fragment_head_get-PCF-directional-shadows.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_shaders_chunks_fragment_head_get-PCF-directional-shadows.getPCFDirectionalShadows.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_fragment_head_get-PCF-point-shadow-contribution.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/variables/core_shaders_chunks_fragment_head_get-PCF-point-shadow-contribution.getPCFPointShadowContribution.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_fragment_head_get-PCF-point-shadows.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_shaders_chunks_fragment_head_get-PCF-point-shadows.getPCFPointShadows.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_fragment_head_get-PCF-spot-shadow-contribution.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/variables/core_shaders_chunks_fragment_head_get-PCF-spot-shadow-contribution.getPCFSpotShadowContribution.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_fragment_head_get-PCF-spot-shadows.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_shaders_chunks_fragment_head_get-PCF-spot-shadows.getPCFSpotShadows.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_fragment_head_get-fragment-input-struct.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_shaders_chunks_fragment_head_get-fragment-input-struct.getFragmentInputStruct.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_fragment_head_get-lambert-direct.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/variables/core_shaders_chunks_fragment_head_get-lambert-direct.getLambertDirect.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_fragment_head_get-lights-infos.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/variables/core_shaders_chunks_fragment_head_get-lights-infos.getLightsInfos.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_fragment_head_get-phong-direct.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/variables/core_shaders_chunks_fragment_head_get-phong-direct.getPhongDirect.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_fragment_head_get-uv-cover-helper.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/variables/core_shaders_chunks_fragment_head_get-uv-cover-helper.getUVCover.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_fragment_head_get-vertex-to-UV-coords-helpers.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/variables/core_shaders_chunks_fragment_head_get-vertex-to-UV-coords-helpers.getVertexToUVCoords.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_shading_PBR-shading.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_shaders_chunks_shading_PBR-shading.GetPBRShadingParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_shaders_chunks_shading_PBR-shading.getPBR.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_shading_lambert-shading.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_shaders_chunks_shading_lambert-shading.GetShadingParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/variables/core_shaders_chunks_shading_lambert-shading.lambertUtils.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_shaders_chunks_shading_lambert-shading.getLambert.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_shading_phong-shading.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_shaders_chunks_shading_phong-shading.getPhong.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_utils_BRDF_GGX.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/variables/core_shaders_chunks_utils_BRDF_GGX.BRDF_GGX.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_utils_common.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/variables/core_shaders_chunks_utils_common.common.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_utils_constants.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/variables/core_shaders_chunks_utils_constants.constants.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_utils_generate-TBN.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/variables/core_shaders_chunks_utils_generate-TBN.generateTBN.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_utils_hammersley-2D.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/variables/core_shaders_chunks_utils_hammersley-2D.hammersley2D.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_utils_tone-mapping-utils.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/variables/core_shaders_chunks_utils_tone-mapping-utils.toneMappingUtils.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_vertex_body_declare-attributes-vars.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_shaders_chunks_vertex_body_declare-attributes-vars.declareAttributesVars.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_vertex_body_get-morph-targets.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_shaders_chunks_vertex_body_get-morph-targets.getMorphTargets.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_vertex_body_get-vertex-output.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_shaders_chunks_vertex_body_get-vertex-output.getVertexOutput.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_vertex_body_get-vertex-skinned-position-normal.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_shaders_chunks_vertex_body_get-vertex-skinned-position-normal.getVertexSkinnedPositionNormal.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_vertex_body_get-vertex-transformed-position-normal.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_shaders_chunks_vertex_body_get-vertex-transformed-position-normal.getVertexTransformedPositionNormal.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_vertex_head_get-normal-helpers.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/variables/core_shaders_chunks_vertex_head_get-normal-helpers.getNormalHelpers.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_vertex_head_get-position-helpers.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/variables/core_shaders_chunks_vertex_head_get-position-helpers.getPositionHelpers.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_vertex_head_get-vertex-output-struct-content.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_shaders_chunks_vertex_head_get-vertex-output-struct-content.getVertexOutputStructContent.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_chunks_vertex_head_get-vertex-output-struct.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_shaders_chunks_vertex_head_get-vertex-output-struct.getVertexOutputStruct.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_default-material-helpers.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_shaders_default-material-helpers.AdditionalChunks.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_shaders_default-material-helpers.patchAdditionalChunks.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_full_compute_compute-BRDF-LUT.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/variables/core_shaders_full_compute_compute-BRDF-LUT.computeBRDFLUT.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_full_compute_compute-diffuse-from-specular-cubemap.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_shaders_full_compute_compute-diffuse-from-specular-cubemap.computeDiffuseFromSpecularCubemap.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_full_compute_compute-specular-cubemap-from-HDR.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/variables/core_shaders_full_compute_compute-specular-cubemap-from-HDR.computeSpecularCubemapFromHDR.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_full_fragment_get-PBR-fragment-shader-code.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_shaders_full_fragment_get-PBR-fragment-shader-code.getPBRFragmentShaderCode.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_full_fragment_get-default-fragment-code.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/variables/core_shaders_full_fragment_get-default-fragment-code.getDefaultFragmentCode.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_full_fragment_get-default-normal-fragment-code.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/variables/core_shaders_full_fragment_get-default-normal-fragment-code.getDefaultNormalFragmentCode.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_full_fragment_get-default-point-shadow-depth-fragment-code.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_shaders_full_fragment_get-default-point-shadow-depth-fragment-code.getDefaultPointShadowDepthFs.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_full_fragment_get-default-shader-pass-fragment-code.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/variables/core_shaders_full_fragment_get-default-shader-pass-fragment-code.getDefaultShaderPassFragmentCode.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_full_fragment_get-fragment-shader-code.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_shaders_full_fragment_get-fragment-shader-code.FragmentShaderInputBaseParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_shaders_full_fragment_get-fragment-shader-code.UnlitFragmentShaderInputParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_shaders_full_fragment_get-fragment-shader-code.LambertFragmentShaderInputParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_shaders_full_fragment_get-fragment-shader-code.PhongFragmentShaderInputParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_shaders_full_fragment_get-fragment-shader-code.PBRFragmentShaderInputParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_shaders_full_fragment_get-fragment-shader-code.FragmentShaderInputParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_shaders_full_fragment_get-fragment-shader-code.getFragmentShaderCode.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_full_fragment_get-lambert-fragment-shader-code.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_shaders_full_fragment_get-lambert-fragment-shader-code.getLambertFragmentShaderCode.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_full_fragment_get-phong-fragment-shader-code.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_shaders_full_fragment_get-phong-fragment-shader-code.getPhongFragmentShaderCode.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_full_fragment_get-unlit-fragment-shader-code.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_shaders_full_fragment_get-unlit-fragment-shader-code.getUnlitFragmentShaderCode.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_full_vertex_get-default-directional-shadow-depth-vertex-shader-code.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_shaders_full_vertex_get-default-directional-shadow-depth-vertex-shader-code.getDefaultDirectionalShadowDepthVs.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_full_vertex_get-default-point-shadow-depth-vertex-shader-code.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_shaders_full_vertex_get-default-point-shadow-depth-vertex-shader-code.getDefaultPointShadowDepthVs.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_full_vertex_get-default-projected-vertex-shader-code.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/variables/core_shaders_full_vertex_get-default-projected-vertex-shader-code.getDefaultProjectedVertexShaderCode.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_full_vertex_get-default-spot-shadow-depth-vertex-shader-code.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_shaders_full_vertex_get-default-spot-shadow-depth-vertex-shader-code.getDefaultSpotShadowDepthVs.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_full_vertex_get-default-vertex-shader-code.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/variables/core_shaders_full_vertex_get-default-vertex-shader-code.getDefaultVertexShaderCode.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_full_vertex_get-vertex-shader-code.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_shaders_full_vertex_get-vertex-shader-code.VertexShaderInputBaseParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_shaders_full_vertex_get-vertex-shader-code.VertexShaderInputParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_shaders_full_vertex_get-vertex-shader-code.getVertexShaderCode.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shaders_shader-chunks.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_shaders_shader-chunks.ShaderChunks.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/variables/core_shaders_shader-chunks.ProjectedShaderChunks.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_shaders_shader-chunks.ProjectedShaderChunks-1.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/variables/core_shaders_shader-chunks.shaderChunks-1.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shadows_DirectionalShadow.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_shadows_DirectionalShadow.DirectionalShadowParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_shadows_DirectionalShadow.DirectionalShadow.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shadows_PointShadow.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_shadows_PointShadow.PointShadowParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_shadows_PointShadow.PointShadow.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shadows_Shadow.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_shadows_Shadow.ShadowsType.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_shadows_Shadow.ShadowBaseParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_shadows_Shadow.Shadow.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_shadows_SpotShadow.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_shadows_SpotShadow.SpotShadowParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_shadows_SpotShadow.SpotShadow.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_textures_MediaTexture.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_textures_MediaTexture.MediaTextureParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_textures_MediaTexture.MediaTextureOptions.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_textures_MediaTexture.MediaTextureSource.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_textures_MediaTexture.MediaTexture.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_textures_Texture.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_textures_Texture.TextureBaseParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/core_textures_Texture.TextureParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/core_textures_Texture.Texture.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/core_textures_utils.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/core_textures_utils.TextureUsageKeys.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_textures_utils.getTextureUsages.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_textures_utils.getDefaultTextureUsage.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_textures_utils.getDefaultMediaTextureUsage.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/core_textures_utils.getNumMipLevels.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/curtains_GPUCurtains.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/curtains_GPUCurtains.GPUCurtainsOptions.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/curtains_GPUCurtains.GPUCurtainsParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/curtains_GPUCurtains.GPUCurtains.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/curtains_meshes_DOMMesh.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/curtains_meshes_DOMMesh.DOMMeshBaseParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/curtains_meshes_DOMMesh.DOMMeshParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/curtains_meshes_DOMMesh.DOMMesh.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/curtains_meshes_Plane.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/curtains_meshes_Plane.PlaneParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/curtains_meshes_Plane.Plane.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/curtains_objects3D_DOMObject3D.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/curtains_objects3D_DOMObject3D.DOMObject3DSize.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/curtains_objects3D_DOMObject3D.DOMObject3DTransforms.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/curtains_objects3D_DOMObject3D.DOMObject3DParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/curtains_objects3D_DOMObject3D.DOMObject3D.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/curtains_renderers_GPUCurtainsRenderer.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/curtains_renderers_GPUCurtainsRenderer.GPUCurtainsRenderer.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/curtains_textures_DOMTexture.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/curtains_textures_DOMTexture.DOMTextureParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/curtains_textures_DOMTexture.DOMTexture.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/extras_animations_KeyframesAnimation.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/extras_animations_KeyframesAnimation.KeyframesAnimationParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/extras_animations_KeyframesAnimation.KeyframesAnimation.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/extras_animations_TargetsAnimationsManager.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/extras_animations_TargetsAnimationsManager.Target.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/extras_animations_TargetsAnimationsManager.TargetsAnimationsManagerParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/extras_animations_TargetsAnimationsManager.TargetsAnimationsManager.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/extras_buffers_IndirectBuffer.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/extras_buffers_IndirectBuffer.IndirectBufferOptions.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/extras_buffers_IndirectBuffer.IndirectBufferParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/extras_buffers_IndirectBuffer.IndirectBuffer.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/extras_controls_OrbitControls.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/extras_controls_OrbitControls.OrbitControlsBaseParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/extras_controls_OrbitControls.OrbitControlsParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/extras_controls_OrbitControls.OrbitControls.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/extras_environmentMap_EnvironmentMap.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/extras_environmentMap_EnvironmentMap.ComputePassTextureParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/extras_environmentMap_EnvironmentMap.ComputeTextureBaseParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/extras_environmentMap_EnvironmentMap.LUTTextureParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/extras_environmentMap_EnvironmentMap.DiffuseTextureParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/extras_environmentMap_EnvironmentMap.SpecularTextureParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/extras_environmentMap_EnvironmentMap.EnvironmentMapOptions.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/extras_environmentMap_EnvironmentMap.EnvironmentMapParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/extras_environmentMap_EnvironmentMap.EnvironmentMap.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/extras_geometries_BoxGeometry.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/extras_geometries_BoxGeometry.BoxGeometryParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/extras_geometries_BoxGeometry.BoxGeometry.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/extras_geometries_SphereGeometry.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/extras_geometries_SphereGeometry.SphereGeometryParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/extras_geometries_SphereGeometry.SphereGeometry.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/extras_gltf_GLTFScenesManager.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/extras_gltf_GLTFScenesManager.GLTFScenesManager.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/extras_loaders_GLTFLoader.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/extras_loaders_GLTFLoader.GPUCurtainsGLTF.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/extras_loaders_GLTFLoader.GLTFLoader.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/extras_loaders_HDRLoader.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/extras_loaders_HDRLoader.HDRImageData.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/extras_loaders_HDRLoader.HDRLoader.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/extras_meshes_LitMesh.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/extras_meshes_LitMesh.ShadingModels.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/extras_meshes_LitMesh.ToneMappings.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/extras_meshes_LitMesh.ShaderTextureDescriptor.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/extras_meshes_LitMesh.ColorSpace.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/extras_meshes_LitMesh.LitMeshMaterialUniformParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/extras_meshes_LitMesh.GetLitMeshMaterialUniform.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/extras_meshes_LitMesh.UnlitTexturesDescriptors.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/extras_meshes_LitMesh.LambertTexturesDescriptors.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/extras_meshes_LitMesh.PhongTexturesDescriptors.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/extras_meshes_LitMesh.PBRTexturesDescriptors.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/extras_meshes_LitMesh.GetMaterialTexturesDescriptors.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/extras_meshes_LitMesh.LitMeshMaterialParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/extras_meshes_LitMesh.LitMeshParameters.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/extras_meshes_LitMesh.LitMesh.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/extras_meshes_PingPongPlane.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/extras_meshes_PingPongPlane.PingPongPlaneParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/extras_meshes_PingPongPlane.PingPongPlane.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/extras_raycaster_Raycaster.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/extras_raycaster_Raycaster.Intersection.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/extras_raycaster_Raycaster.Raycaster.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/math_Box3.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/math_Box3.Box3.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/math_Mat3.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/math_Mat3.Mat3.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/math_Mat4.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/math_Mat4.PerspectiveProjectionParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/math_Mat4.Mat4.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/math_Quat.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/math_Quat.AxisOrder.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/math_Quat.Quat.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/math_Vec2.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/math_Vec2.Vec2.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/math_Vec3.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/math_Vec3.Vec3.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/math_color-utils.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/math_color-utils.sRGBToLinearFloat.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/math_color-utils.linearTosRGBFloat.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/math_color-utils.sRGBToLinear.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/math_color-utils.linearTosRGB.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/types_BindGroups.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_BindGroups.InputValue.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_BindGroups.InputBase.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_BindGroups.Input.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_BindGroups.ReadOnlyInputBindings.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_BindGroups.ReadWriteInputBindings.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_BindGroups.BindGroupBufferBindingElement.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_BindGroups.BindGroupTextureSamplerElement.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_BindGroups.BindGroupBindingElement.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_BindGroups.AllowedBindGroups.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_BindGroups.BindGroupInputs.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_BindGroups.BindGroupParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_BindGroups.BindGroupEntries.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/types_Geometries.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_Geometries.VertexBufferAttributeParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_Geometries.VertexBufferAttribute.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_Geometries.GeometryBuffer.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_Geometries.VertexBuffer.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_Geometries.VertexBufferParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_Geometries.IndirectDrawParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_Geometries.GeometryOptions.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_Geometries.GeometryParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_Geometries.GeometryBaseParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/types_Materials.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_Materials.RenderMaterialShadersType.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_Materials.ComputeMaterialShadersType.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_Materials.MaterialShadersType.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_Materials.FullShadersType.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_Materials.ShaderOptions.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_Materials.MaterialShaders.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_Materials.MaterialTexture.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_Materials.MaterialBaseOptions.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_Materials.MaterialBaseParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_Materials.MaterialBindGroups.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_Materials.MaterialInputBindingsParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_Materials.MaterialParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_Materials.MaterialOptions.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_Materials.ComputeMaterialParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_Materials.ComputeMaterialOptions.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_Materials.RenderMaterialAttributes.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_Materials.AllowedGeometries.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_Materials.RenderMaterialBaseRenderingOptions.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_Materials.RenderMaterialRenderingOptions.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_Materials.RenderMaterialBaseParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_Materials.RenderMaterialParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_Materials.RenderMaterialOptions.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/types_PipelineEntries.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_PipelineEntries.PipelineEntryShader.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_PipelineEntries.PipelineEntryShaders.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_PipelineEntries.PipelineEntryOptions.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_PipelineEntries.PipelineEntryBaseParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_PipelineEntries.PipelineEntryParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_PipelineEntries.PipelineEntryStatus.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_PipelineEntries.RenderPipelineRenderingOptions.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_PipelineEntries.RenderPipelineEntryOptions.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_PipelineEntries.RenderPipelineEntryParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/types_Textures.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_Textures.TextureSize.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_Textures.TextureSource.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_Textures.TextureSourceType.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_Textures.ExternalTextureParamsBase.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_Textures.TextureVisibility.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_Textures.MediaTextureBaseParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_Textures.SceneObjectTextureOptions.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/types_gltf_GLTF.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/types_gltf_GLTF.GLTF.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_gltf_GLTF.GLTF.AccessorComponentType.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_gltf_GLTF.GLTF.AccessorType.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_gltf_GLTF.GLTF.AnimationChannelTargetPath.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_gltf_GLTF.GLTF.AnimationSamplerInterpolation.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_gltf_GLTF.GLTF.CameraType.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_gltf_GLTF.GLTF.MaterialAlphaMode.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_gltf_GLTF.GLTF.MeshPrimitiveMode.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_gltf_GLTF.GLTF.TextureMagFilter.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_gltf_GLTF.GLTF.TextureMinFilter.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_gltf_GLTF.GLTF.TextureWrapMode.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTF.GLTF.IProperty.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTF.GLTF.IChildRootProperty.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTF.GLTF.IAccessorSparseIndices.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTF.GLTF.IAccessorSparseValues.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTF.GLTF.IAccessorSparse.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTF.GLTF.IAccessor.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTF.GLTF.IAnimationChannel.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTF.GLTF.IAnimationChannelTarget.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTF.GLTF.IAnimationSampler.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTF.GLTF.IAnimation.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTF.GLTF.IAsset.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTF.GLTF.IBuffer.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTF.GLTF.IBufferView.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTF.GLTF.ICameraOrthographic.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTF.GLTF.ICameraPerspective.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTF.GLTF.ICamera.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTF.GLTF.IImage.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTF.GLTF.IMaterialNormalTextureInfo.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTF.GLTF.IMaterialOcclusionTextureInfo.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTF.GLTF.IMaterialPbrMetallicRoughness.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTF.GLTF.IMaterial.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTF.GLTF.IMeshPrimitive.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTF.GLTF.IMesh.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTF.GLTF.INode.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTF.GLTF.ISampler.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTF.GLTF.IScene.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTF.GLTF.ISkin.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTF.GLTF.ITexture.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTF.GLTF.ITextureInfo.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTF.GLTF.IGLTF.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/types_gltf_GLTFExtensions.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_gltf_GLTFExtensions.GLTFExtensionsTypes.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_gltf_GLTFExtensions.GLTFExtensionsUsed.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTFExtensions.GLTFLightsPunctual.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTFExtensions.GLTFVariants.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_gltf_GLTFExtensions.GLTFExtensionsMapping.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_gltf_GLTFExtensions.ExtensionKeys.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_gltf_GLTFExtensions.GLTFExtensions.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTFExtensions.GLTFLightsPunctualExtension.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTFExtensions.GLTFMeshGPUInstancingExtension.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_gltf_GLTFExtensions.GLTFNodesExtensionsMapping.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_gltf_GLTFExtensions.NodesExtensionKeys.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_gltf_GLTFExtensions.GLTFNodesExtensions.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTFExtensions.GLTFMaterialsVariants.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_gltf_GLTFExtensions.GLTFPrimitivesExtensionsMapping.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_gltf_GLTFExtensions.PrimitivesExtensionKeys.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_gltf_GLTFExtensions.GLTFPrimitivesExtensions.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTFExtensions.GLTFTextureWebP.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_gltf_GLTFExtensions.GLTFTexturesExtensionsMapping.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_gltf_GLTFExtensions.TexturesExtensionKeys.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_gltf_GLTFExtensions.GLTFTexturesExtensions.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTFExtensions.GLTFTextureTransform.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_gltf_GLTFExtensions.GLTFTexturesInfosExtensionsMapping.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_gltf_GLTFExtensions.TexturesInfosExtensionKeys.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_gltf_GLTFExtensions.GLTFTexturesInfosExtensions.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTFExtensions.GLTFMaterialsDispersionExtension.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTFExtensions.GLTFMaterialsEmissiveStrengthExtension.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTFExtensions.GLTFMaterialsIorExtension.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTFExtensions.GLTFMaterialsSpecularExtension.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTFExtensions.GLTFMaterialsTransmissionExtension.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTFExtensions.GLTFMaterialsVolumeExtension.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_gltf_GLTFExtensions.GLTFMaterialsExtensionsMapping.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_gltf_GLTFExtensions.MaterialExtensionKeys.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_gltf_GLTFExtensions.GLTFMaterialsExtensions.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/types_gltf_GLTFScenesManager.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTFScenesManager.MeshDescriptorMaterialParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTFScenesManager.MeshDescriptor.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTFScenesManager.MaterialTextureDescriptor.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTFScenesManager.PrimitiveInstanceDescriptor.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/types_gltf_GLTFScenesManager.PrimitiveInstances.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTFScenesManager.ChildDescriptor.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTFScenesManager.SkinDefinition.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/types_gltf_GLTFScenesManager.ScenesManager.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/types.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/utils_CacheManager.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/utils_CacheManager.CacheManager.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/variables/utils_CacheManager.cacheManager-1.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/utils_ResizeManager.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/utils_ResizeManager.ResizeManagerEntry.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/utils_ResizeManager.ResizeManager.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/variables/utils_ResizeManager.resizeManager-1.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/utils_ScrollManager.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/utils_ScrollManager.ScrollManagerParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/utils_ScrollManager.ScrollManager.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/utils_TasksQueueManager.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/interfaces/utils_TasksQueueManager.TaskQueueItem.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/types/utils_TasksQueueManager.TaskQueueItemParams.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/classes/utils_TasksQueueManager.TasksQueueManager.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/utils_utils.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/utils_utils.generateUUID.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/utils_utils.toCamelCase.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/utils_utils.toKebabCase.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/utils_utils.throwWarning.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/functions/utils_utils.throwError.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/modules/utils_webgpu-constants.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/variables/utils_webgpu-constants.WebGPUShaderStageConstants.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/variables/utils_webgpu-constants.WebGPUBufferUsageConstants.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 	<url>
 		<loc>https://martinlaxenaire.github.io/gpu-curtains/docs/variables/utils_webgpu-constants.WebGPUTextureUsageConstants.html</loc>
-		<lastmod>2025-04-28T15:13:23.396Z</lastmod>
+		<lastmod>2025-05-05T10:15:10.536Z</lastmod>
 	</url>
 </urlset>
