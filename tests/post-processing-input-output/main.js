@@ -78,7 +78,7 @@ window.addEventListener('load', async () => {
   // post pro chain
 
   // first we will convert colors of cube1 to grayscale
-  const bwPass = new ShaderPass(renderer, {
+  const grayscalePass = new ShaderPass(renderer, {
     label: 'Invert colors pass',
     inputTarget: grayscaleInputTarget, // use our grayscale input target as input
     outputTarget: grayscaleOutputTarget, // use our grayscale output target as output
@@ -119,6 +119,7 @@ window.addEventListener('load', async () => {
   // taking the grayscale colors output target as input
 
   const gaussianSigma = 3
+  const radius = 1
 
   const gaussianBlurPassFs = /* wgsl */ `
     struct VSOutput {
@@ -128,41 +129,61 @@ window.addEventListener('load', async () => {
 
     @fragment
     fn main(fsInput: VSOutput) -> @location(0) vec4f {
-        let textureSize = vec2f(textureDimensions(${outputTargetRenderTextureName}));
+        //let textureSize = vec2f(textureDimensions(${outputTargetRenderTextureName}));
+        let textureSize = params.resolution;
         let texelSize: vec2f = 1.0 / textureSize;
 
-        var totalWeight = 0.0;
         var color = vec4f(0.0);
+        var totalWeight = 0.0;
 
-        let sigma: f32 = params.sigma;
-        let kernelRadius = i32(ceil(sigma * 3.0));
+        // // computed weights
+        // let sigma: f32 = params.sigma;
+        // let kernelRadius = i32(ceil(sigma * 3.0));
 
-        for (var i = -kernelRadius; i <= kernelRadius; i++) {
-            let offset = f32(i);
-            let weight = exp(-0.5 * (offset / sigma) * (offset / sigma));
-            let sampleUv = fsInput.uv + params.direction * texelSize * offset;
+        // for (var i = -kernelRadius; i <= kernelRadius; i++) {
+        //     let offset = f32(i);
+        //     let weight = exp(-0.5 * (offset / sigma) * (offset / sigma));
+        //     let sampleUv = fsInput.uv + params.direction * texelSize * offset;
 
-            color += textureSample(${outputTargetRenderTextureName}, defaultSampler, sampleUv) * weight;
-            totalWeight += weight;
-        }
-
-        // let offsets = array<i32, 13>(-6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6);
-        // let weights = array<f32, 13>(
-        //     0.00916, 0.01979, 0.03877, 0.07030, 0.11588,
-        //     0.16311, 0.18367,
-        //     0.16311, 0.11588, 0.07030, 0.03877, 0.01979, 0.00916
-        //   );
-
-        // // let offsets = array<i32, 5>(-2, -1, 0, 1, 2);
-        // // let weights = array<f32, 5>(0.06136, 0.24477, 0.38774, 0.24477, 0.06136);
-
-        // for (var i = -6; i <= 6; i++) {
-        //     let sampleUv = fsInput.uv + params.direction * f32(offsets[i]) * texelSize;
-        //     color += textureSample(${outputTargetRenderTextureName}, defaultSampler, sampleUv) * weights[i];
-        //     totalWeight += weights[i];
+        //     color += textureSample(${outputTargetRenderTextureName}, defaultSampler, sampleUv) * weight;
+        //     totalWeight += weight;
         // }
 
+        // fixed weights
+        const numSamples = 13;
+        let offsets = array<i32, numSamples>(-6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6);
+        let weights = array<f32, numSamples>(
+            0.00916, 0.01979, 0.03877, 0.07030, 0.11588,
+            0.16311, 0.18367,
+            0.16311, 0.11588, 0.07030, 0.03877, 0.01979, 0.00916
+          );
+
+        // let offsets = array<i32, 5>(-2, -1, 0, 1, 2);
+        // let weights = array<f32, 5>(0.06136, 0.24477, 0.38774, 0.24477, 0.06136);
+
+        for (var i = 0; i <= numSamples; i++) {
+            let sampleUv = fsInput.uv + params.direction * f32(offsets[i]) * texelSize;
+            color += textureSample(${outputTargetRenderTextureName}, defaultSampler, sampleUv) * weights[i];
+            totalWeight += weights[i];
+        }
+
         return color / totalWeight;
+
+        // from https://github.com/Experience-Monks/glsl-fast-gaussian-blur/blob/master/13.glsl
+        // let uv = fsInput.uv;
+        // let off1 = vec2(1.411764705882353) * params.direction;
+        // let off2 = vec2(3.2941176470588234) * params.direction;
+        // let off3 = vec2(5.176470588235294) * params.direction;
+        // color += textureSample(${outputTargetRenderTextureName}, defaultSampler, uv) * 0.1964825501511404;
+        // color += textureSample(${outputTargetRenderTextureName}, defaultSampler, uv + (off1 / textureSize)) * 0.2969069646728344;
+        // color += textureSample(${outputTargetRenderTextureName}, defaultSampler, uv - (off1 / textureSize)) * 0.2969069646728344;
+        // color += textureSample(${outputTargetRenderTextureName}, defaultSampler, uv + (off2 / textureSize)) * 0.09447039785044732;
+        // color += textureSample(${outputTargetRenderTextureName}, defaultSampler, uv - (off2 / textureSize)) * 0.09447039785044732;
+        // color += textureSample(${outputTargetRenderTextureName}, defaultSampler, uv + (off3 / textureSize)) * 0.010381362401148057;
+        // color += textureSample(${outputTargetRenderTextureName}, defaultSampler, uv - (off3 / textureSize)) * 0.010381362401148057;
+        
+        // return color;
+
     }`
 
   // first pass
@@ -177,11 +198,15 @@ window.addEventListener('load', async () => {
         struct: {
           direction: {
             type: 'vec2f',
-            value: new Vec2(1, 0),
+            value: new Vec2(radius, 0),
           },
           sigma: {
             type: 'f32',
             value: gaussianSigma,
+          },
+          resolution: {
+            type: 'vec2f',
+            value: new Vec2(renderer.boundingRect.width, renderer.boundingRect.height),
           },
         },
       },
@@ -203,11 +228,15 @@ window.addEventListener('load', async () => {
         struct: {
           direction: {
             type: 'vec2f',
-            value: new Vec2(0, 1),
+            value: new Vec2(0, radius),
           },
           sigma: {
             type: 'f32',
             value: gaussianSigma,
+          },
+          resolution: {
+            type: 'vec2f',
+            value: new Vec2(renderer.boundingRect.width, renderer.boundingRect.height),
           },
         },
       },
@@ -217,6 +246,14 @@ window.addEventListener('load', async () => {
         code: gaussianBlurPassFs,
       },
     },
+  })
+
+  horizontalBlurPass.onAfterResize(() => {
+    horizontalBlurPass.uniforms.params.resolution.value.set(renderer.boundingRect.width, renderer.boundingRect.height)
+  })
+
+  verticalBlurPass.onAfterResize(() => {
+    verticalBlurPass.uniforms.params.resolution.value.set(renderer.boundingRect.width, renderer.boundingRect.height)
   })
 
   // final pass to blend original unmodified cube (main scene) with our grayscale blurred one
@@ -243,7 +280,7 @@ window.addEventListener('load', async () => {
     },
   })
 
-  console.log(grayscaleOutputTarget, bwPass, finalPass)
+  console.log(grayscaleOutputTarget, grayscalePass, finalPass)
 
   const gui = new lil.GUI({
     title: 'Chaining input/output passes',
@@ -264,11 +301,19 @@ window.addEventListener('load', async () => {
       renderer.setPixelRatio(value)
     })
 
+  // gui
+  //   .add({ sigma: gaussianSigma }, 'sigma', 1, 10, 1)
+  //   .name('Blur strength')
+  //   .onChange((value) => {
+  //     horizontalBlurPass.uniforms.params.sigma.value = value
+  //     verticalBlurPass.uniforms.params.sigma.value = value
+  //   })
+
   gui
-    .add({ sigma: gaussianSigma }, 'sigma', 1, 6, 1)
-    .name('Blur strength')
+    .add({ radius }, 'radius', 0.5, 3, 0.25)
+    .name('Blur radius')
     .onChange((value) => {
-      horizontalBlurPass.uniforms.params.sigma.value = value
-      verticalBlurPass.uniforms.params.sigma.value = value
+      horizontalBlurPass.uniforms.params.direction.value.x = value
+      verticalBlurPass.uniforms.params.direction.value.y = value
     })
 })
