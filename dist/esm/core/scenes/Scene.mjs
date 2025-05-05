@@ -311,7 +311,7 @@ class Scene extends Object3D {
       }
       this.renderer.postProcessingPass.setLoadOp("clear");
     };
-    const onAfterRenderPass = !shaderPass.outputTarget && shaderPass.options.copyOutputToRenderTexture ? (commandEncoder, swapChainTexture) => {
+    const onAfterRenderPass = shaderPass.options.copyOutputToRenderTexture ? (commandEncoder, swapChainTexture) => {
       if (shaderPass.renderTexture && swapChainTexture) {
         this.renderer.copyGPUTextureToTexture(swapChainTexture, shaderPass.renderTexture, commandEncoder);
       }
@@ -601,6 +601,9 @@ class Scene extends Object3D {
           renderPassEntry.renderPass.setDepthReadOnly(true);
         } else {
           renderPassEntry.renderPass.setDepthReadOnly(false);
+        }
+        if (renderPassEntryType === "postProPass" && renderPassEntry.renderPass.uuid !== this.renderer.postProcessingPass.uuid) {
+          __privateSet(this, _shouldLoadColors, false);
         }
         renderPassEntry.renderPass.setLoadOp(__privateGet(this, _shouldLoadColors) ? "load" : "clear");
         renderPassEntry.renderPass.setDepthLoadOp(

@@ -327,7 +327,7 @@ export class PointShadow extends Shadow {
     // we'll be able to use a single render pass
     // to render to all 6 faces of the cube depth map
     // see https://kidrigger.dev/post/vulkan-render-to-cubemap-using-multiview/
-    if (!this.castingMeshes.size || !this.light.intensity) return
+    if (!this.castingMeshes.size || !this.light.intensity || !this.intensity) return
 
     let shouldRender = false
     for (const [_uuid, mesh] of this.castingMeshes) {

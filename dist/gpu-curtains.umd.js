@@ -10382,7 +10382,6 @@ New rendering options: ${JSON.stringify(
         } else {
           this.renderBundle = renderBundle;
         }
-        console.log(renderBundle);
       }
       /**
        * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been lost to prepare everything for restoration.
@@ -12455,8 +12454,6 @@ fn getPCFBaseShadowContribution(
           this.rendererBinding.childrenBindings[this.index].inputs[propertyKey].value = value;
         }
         this.renderer.shouldUpdateCameraLightsBindGroup();
-      } else {
-        console.log("bail for property", propertyKey, this.constructor.name, this.rendererBinding);
       }
     }
     /**
@@ -12504,6 +12501,9 @@ fn getPCFBaseShadowContribution(
     set intensity(value) {
       __privateSet$g(this, _intensity, value);
       this.onPropertyChanged("intensity", this.intensity);
+      if (!value) {
+        this.clearDepthTexture();
+      }
     }
     /**
      * Get this {@link Shadow} bias.
@@ -12677,7 +12677,7 @@ fn getPCFBaseShadowContribution(
      * @param commandEncoder - {@link GPUCommandEncoder} to use.
      */
     render(commandEncoder) {
-      if (!this.castingMeshes.size || !this.light.intensity) return;
+      if (!this.castingMeshes.size || !this.light.intensity || !this.intensity) return;
       let shouldRender = false;
       for (const [_uuid, mesh] of this.castingMeshes) {
         if (mesh.visible) {
@@ -13749,7 +13749,7 @@ struct PointShadowVSOutput {
      * @param commandEncoder - {@link GPUCommandEncoder} to use.
      */
     render(commandEncoder) {
-      if (!this.castingMeshes.size || !this.light.intensity) return;
+      if (!this.castingMeshes.size || !this.light.intensity || !this.intensity) return;
       let shouldRender = false;
       for (const [_uuid, mesh] of this.castingMeshes) {
         if (mesh.visible) {
@@ -15233,7 +15233,7 @@ ${this.shaders.compute.head}`;
         }
         this.renderer.postProcessingPass.setLoadOp("clear");
       };
-      const onAfterRenderPass = !shaderPass.outputTarget && shaderPass.options.copyOutputToRenderTexture ? (commandEncoder, swapChainTexture) => {
+      const onAfterRenderPass = shaderPass.options.copyOutputToRenderTexture ? (commandEncoder, swapChainTexture) => {
         if (shaderPass.renderTexture && swapChainTexture) {
           this.renderer.copyGPUTextureToTexture(swapChainTexture, shaderPass.renderTexture, commandEncoder);
         }
@@ -15523,6 +15523,9 @@ ${this.shaders.compute.head}`;
             renderPassEntry.renderPass.setDepthReadOnly(true);
           } else {
             renderPassEntry.renderPass.setDepthReadOnly(false);
+          }
+          if (renderPassEntryType === "postProPass" && renderPassEntry.renderPass.uuid !== this.renderer.postProcessingPass.uuid) {
+            __privateSet$a(this, _shouldLoadColors, false);
           }
           renderPassEntry.renderPass.setLoadOp(__privateGet$a(this, _shouldLoadColors) ? "load" : "clear");
           renderPassEntry.renderPass.setDepthLoadOp(
@@ -17941,7 +17944,7 @@ struct VSOutput {
      * @param removeFromRenderer - whether to remove this {@link ShaderPass} from the {@link Renderer#shaderPasses | Renderer shaderPasses array}
      */
     removeFromScene(removeFromRenderer = false) {
-      if (this.outputTarget) {
+      if (this.outputTarget && removeFromRenderer) {
         this.outputTarget.destroy();
       }
       if (this.autoRender) {

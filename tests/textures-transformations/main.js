@@ -74,4 +74,15 @@ window.addEventListener('load', async () => {
       })
     }
   })
+
+  const gui = new lil.GUI({
+    title: 'Debug',
+  })
+
+  gui
+    .add({ pixelRatio: gpuCurtains.renderer.pixelRatio }, 'pixelRatio', 0.5, window.devicePixelRatio, 0.05)
+    .name('Renderer pixel ratio')
+    .onChange((value) => {
+      gpuCurtains.renderer.setPixelRatio(value)
+    })
 })

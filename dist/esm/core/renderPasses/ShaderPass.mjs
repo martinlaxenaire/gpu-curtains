@@ -122,7 +122,7 @@ class ShaderPass extends FullscreenPlane {
    * @param removeFromRenderer - whether to remove this {@link ShaderPass} from the {@link Renderer#shaderPasses | Renderer shaderPasses array}
    */
   removeFromScene(removeFromRenderer = false) {
-    if (this.outputTarget) {
+    if (this.outputTarget && removeFromRenderer) {
       this.outputTarget.destroy();
     }
     if (this.autoRender) {

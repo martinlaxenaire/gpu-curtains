@@ -474,16 +474,15 @@ export class Scene extends Object3D {
             this.renderer.postProcessingPass.setLoadOp('clear')
           }
 
-    const onAfterRenderPass =
-      !shaderPass.outputTarget && shaderPass.options.copyOutputToRenderTexture
-        ? (commandEncoder, swapChainTexture) => {
-            // if we rendered to the screen,
-            // copy the context current texture result back into the shaderPass renderTexture
-            if (shaderPass.renderTexture && swapChainTexture) {
-              this.renderer.copyGPUTextureToTexture(swapChainTexture, shaderPass.renderTexture, commandEncoder)
-            }
+    const onAfterRenderPass = shaderPass.options.copyOutputToRenderTexture
+      ? (commandEncoder, swapChainTexture) => {
+          // if we rendered to the screen,
+          // copy the context current texture result back into the shaderPass renderTexture
+          if (shaderPass.renderTexture && swapChainTexture) {
+            this.renderer.copyGPUTextureToTexture(swapChainTexture, shaderPass.renderTexture, commandEncoder)
           }
-        : null
+        }
+      : null
 
     const outputPass = shaderPass.outputTarget
       ? shaderPass.outputTarget.renderPass
@@ -867,6 +866,7 @@ export class Scene extends Object3D {
         this.renderer.renderPass.setDepthLoadOp('clear')
 
         // load colors for post processing pass
+        // might be modified below if it's outputted to a custom output target
         this.#shouldLoadColors = true
       }
 
@@ -881,6 +881,14 @@ export class Scene extends Object3D {
           renderPassEntry.renderPass.setDepthReadOnly(false)
         }
 
+        // if it's a post pro pass with a custom output target, clear
+        if (
+          renderPassEntryType === 'postProPass' &&
+          renderPassEntry.renderPass.uuid !== this.renderer.postProcessingPass.uuid
+        ) {
+          this.#shouldLoadColors = false
+        }
+
         // post processing scene pass will clear content inside onBeforeRenderPass anyway
         renderPassEntry.renderPass.setLoadOp(this.#shouldLoadColors ? 'load' : 'clear')
         renderPassEntry.renderPass.setDepthLoadOp(
@@ -890,7 +898,6 @@ export class Scene extends Object3D {
         this.renderSinglePassEntry(commandEncoder, renderPassEntry)
 
         // if we're rendering to the screen, we'll need to load colors next time
-        // TODO what about post pro passes with an output target?
         if (renderPassEntryType !== 'renderTarget') {
           this.#shouldLoadColors = true
         }

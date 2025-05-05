@@ -1,6 +1,7 @@
 import {
   GPUDeviceManager,
   GPUCameraRenderer,
+  OrbitControls,
   AmbientLight,
   PointLight,
   getLambert,
@@ -52,7 +53,7 @@ window.addEventListener('load', async () => {
     camera: {
       fov: 65,
       near: systemSize.z * 0.25,
-      far: systemSize.z * 4,
+      far: systemSize.z * 8,
     },
     lights: {
       maxPointLights: nbLights,
@@ -62,20 +63,23 @@ window.addEventListener('load', async () => {
   // get the camera
   const { scene, camera } = gpuCameraRenderer
 
-  // create a camera pivot
-  // so we can make the camera orbit while preserving a custom lookAt
-  const cameraPivot = new Object3D()
-  cameraPivot.parent = scene
-
   const objectsPivot = new Object3D()
   objectsPivot.parent = scene
 
-  camera.parent = cameraPivot
   camera.position.z = systemSize.z * 3
+
+  const orbitControls = new OrbitControls({
+    camera,
+    element: gpuCameraRenderer.domElement.element,
+    enablePan: false,
+    zoomSpeed: systemSize.z / 10,
+    minZoom: systemSize.z * 1.5,
+    maxZoom: systemSize.z * 5,
+  })
 
   gpuDeviceManager.onBeforeRender(() => {
     // rotate our camera pivot
-    cameraPivot.rotation.y += 0.005
+    objectsPivot.rotation.y -= 0.005
   })
 
   // ------------------------------------
@@ -446,10 +450,11 @@ window.addEventListener('load', async () => {
   }
 
   // 32 vec4f
-  const kernelSize = 32
+  const kernelSize = 64
   const sampleKernels = new Float32Array(kernelSize * 3)
+  const sample = new Vec3()
   for (let i = 0, j = 0; i < kernelSize; i++, j += 3) {
-    const sample = new Vec3(Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random())
+    sample.set(Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random())
 
     sample.normalize()
     sample.multiplyScalar(Math.random())
@@ -530,7 +535,7 @@ window.addEventListener('load', async () => {
 				
 				var occlusion = 0.0;
 
-				for (var i = 0u; i < arrayLength(&kernel.samples); i++) {
+				for (var i = 0u; i < params.nbKernelSamples; i++) {
 
 					var sampleVector: vec3f = kernelMatrix * kernel.samples[i].xyz; // reorient sample vector in view space
 					var samplePoint: vec3f = viewPosition + ( sampleVector * params.radius ); // calculate sample point
@@ -572,7 +577,7 @@ window.addEventListener('load', async () => {
           }
 				}
 
-				occlusion = clamp( occlusion / f32( arrayLength(&kernel.samples) ), 0.0, 1.0 );
+				occlusion = clamp( occlusion / f32( params.nbKernelSamples ), 0.0, 1.0 );
 
 				return vec4( vec3( 1.0 - occlusion ), 1.0 );
 			}
@@ -595,11 +600,15 @@ window.addEventListener('load', async () => {
         struct: {
           radius: {
             type: 'f32',
-            value: systemSize.z / 12.5,
+            value: systemSize.z / 2.5,
           },
           bias: {
             type: 'f32',
             value: systemSize.z / 200,
+          },
+          nbKernelSamples: {
+            type: 'u32',
+            value: Math.min(16, kernelSize),
           },
         },
       },
@@ -816,19 +825,39 @@ window.addEventListener('load', async () => {
 
   // GUI
   const gui = new lil.GUI({
-    title: 'SSAO',
+    title: 'Debug',
   })
 
   gui
+    .add({ nbLights: nbLights }, 'nbLights', 0, nbLights, 1)
+    .onChange((value) => {
+      lights.forEach((light, i) => {
+        if (i < value) {
+          light.intensity = systemLengthSq
+        } else {
+          light.intensity = 0
+        }
+      })
+    })
+    .name('Number of active point lights')
+
+  const ssaoFolder = gui.addFolder('SSAO')
+
+  ssaoFolder
     .add({ qualityRatio: ssaoTarget.renderPass.options.qualityRatio }, 'qualityRatio', 0.1, 1, 0.05)
     .onChange((value) => {
       ssaoTarget.setQualityRatio(value)
       occlusionPass.renderTexture.setQualityRatio(value)
       blurOcclusionPass.renderTexture.copy(ssaoTarget.renderTexture)
     })
-    .name('SSAO texture quality')
+    .name('Texture quality')
 
-  gui
+  ssaoFolder.add(occlusionPass.uniforms.params.radius, 'value', systemSize.z / 100, systemSize.z, 1).name('Radius')
+  ssaoFolder
+    .add(occlusionPass.uniforms.params.nbKernelSamples, 'value', 1, kernelSize, 1)
+    .name('Number of kernel samples')
+
+  ssaoFolder
     .add({ displaySSAO: false }, 'displaySSAO')
     .onChange((value) => {
       ssaoPass.uniforms.params.displaySSAOResult.value = value ? 1 : 0
