@@ -535,7 +535,7 @@ export class GPURenderer {
    * @readonly
    */
   get ready(): boolean {
-    return this.deviceManager.ready && !!this.context && !!this.canvas.width && !!this.canvas.height
+    return this.deviceManager.ready && !!this.context && !!this.boundingRect.width && !!this.boundingRect.height
   }
 
   /**
