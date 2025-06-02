@@ -50,7 +50,7 @@ class Light extends Object3D {
     if (this.renderer) {
       this.renderer.removeLight(this);
     }
-    renderer = isCameraRenderer(renderer, this.constructor.name);
+    renderer = isCameraRenderer(renderer, this.type);
     this.renderer = renderer;
     if (this.index === void 0) {
       this.index = this.renderer.lights.filter((light) => light.type === this.type).length;

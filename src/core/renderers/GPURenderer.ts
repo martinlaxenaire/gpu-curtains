@@ -202,11 +202,15 @@ export class GPURenderer {
     this.type = 'GPURenderer'
     this.uuid = generateUUID()
 
-    if (!deviceManager || deviceManager.constructor.name !== 'GPUDeviceManager') {
+    if (!deviceManager || !(deviceManager instanceof GPUDeviceManager)) {
       throwError(
         label
-          ? `${label} (${this.type}): no device manager or wrong device manager provided: ${deviceManager}`
-          : `${this.type}: no device manager or wrong device manager provided: ${deviceManager}`
+          ? `${label} (${this.type}): no device manager or wrong device manager provided: ${typeof deviceManager} (${
+              deviceManager?.constructor.name
+            })`
+          : `${this.type}: no device manager or wrong device manager provided: ${typeof deviceManager} (${
+              deviceManager?.constructor.name
+            })`
       )
     }
 
@@ -531,7 +535,7 @@ export class GPURenderer {
    * @readonly
    */
   get ready(): boolean {
-    return this.deviceManager.ready && !!this.context && !!this.canvas.width && !!this.canvas.height
+    return this.deviceManager.ready && !!this.context && !!this.boundingRect.width && !!this.boundingRect.height
   }
 
   /**

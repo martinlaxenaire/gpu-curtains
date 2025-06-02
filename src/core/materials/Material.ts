@@ -591,6 +591,10 @@ export class Material {
     ) {
       this.texturesBindGroup.addTexture(texture)
     }
+
+    if (texture instanceof MediaTexture && texture.options.useTransform) {
+      texture.transformBinding.inputs.matrix.shouldUpdate = true
+    }
   }
 
   /**

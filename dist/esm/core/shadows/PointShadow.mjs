@@ -286,7 +286,7 @@ class PointShadow extends Shadow {
     this.renderer.pipelineManager.resetCurrentPipeline();
     const depthPass = commandEncoder.beginRenderPass(this.depthPassTarget.renderPass.descriptor);
     if (!this.renderer.production)
-      depthPass.pushDebugGroup(`${this.constructor.name} (index: ${this.index}): depth pass for face ${face}`);
+      depthPass.pushDebugGroup(`${this.light.type}Shadow (index: ${this.index}): depth pass for face ${face}`);
     for (const [uuid, depthMesh] of this.depthMeshes) {
       if (!this.castingMeshes.get(uuid)?.visible) {
         continue;

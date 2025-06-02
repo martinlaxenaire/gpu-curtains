@@ -102,7 +102,7 @@ class RenderBundle {
       if (this.transparent === null) {
         this.transparent = isTransparent;
       }
-      if (mesh.constructor.name !== "ShaderPass" && mesh.constructor.name !== "PingPongPlane") {
+      if (mesh.type !== "ShaderPass" && mesh.type !== "PingPongPlane") {
         const { useProjection } = mesh.material.options.rendering;
         if (this.useProjection === null) {
           this.useProjection = useProjection;

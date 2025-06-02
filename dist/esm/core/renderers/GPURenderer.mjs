@@ -3,6 +3,7 @@ import { Scene } from '../scenes/Scene.mjs';
 import { RenderPass } from '../renderPasses/RenderPass.mjs';
 import { generateUUID, throwError, throwWarning } from '../../utils/utils.mjs';
 import { TasksQueueManager } from '../../utils/TasksQueueManager.mjs';
+import { GPUDeviceManager } from './GPUDeviceManager.mjs';
 import { Buffer } from '../buffers/Buffer.mjs';
 import { MediaTexture } from '../textures/MediaTexture.mjs';
 
@@ -35,9 +36,9 @@ class GPURenderer {
     };
     this.type = "GPURenderer";
     this.uuid = generateUUID();
-    if (!deviceManager || deviceManager.constructor.name !== "GPUDeviceManager") {
+    if (!deviceManager || !(deviceManager instanceof GPUDeviceManager)) {
       throwError(
-        label ? `${label} (${this.type}): no device manager or wrong device manager provided: ${deviceManager}` : `${this.type}: no device manager or wrong device manager provided: ${deviceManager}`
+        label ? `${label} (${this.type}): no device manager or wrong device manager provided: ${typeof deviceManager} (${deviceManager?.constructor.name})` : `${this.type}: no device manager or wrong device manager provided: ${typeof deviceManager} (${deviceManager?.constructor.name})`
       );
     }
     if (!label) {
@@ -296,7 +297,7 @@ class GPURenderer {
    * @readonly
    */
   get ready() {
-    return this.deviceManager.ready && !!this.context && !!this.canvas.width && !!this.canvas.height;
+    return this.deviceManager.ready && !!this.context && !!this.boundingRect.width && !!this.boundingRect.height;
   }
   /**
    * Get our {@link core/renderers/GPUDeviceManager.GPUDeviceManagerBaseParams#production | GPUDeviceManager production flag}.

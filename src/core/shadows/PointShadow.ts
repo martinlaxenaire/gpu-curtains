@@ -373,7 +373,7 @@ export class PointShadow extends Shadow {
     const depthPass = commandEncoder.beginRenderPass(this.depthPassTarget.renderPass.descriptor)
 
     if (!this.renderer.production)
-      depthPass.pushDebugGroup(`${this.constructor.name} (index: ${this.index}): depth pass for face ${face}`)
+      depthPass.pushDebugGroup(`${this.light.type}Shadow (index: ${this.index}): depth pass for face ${face}`)
 
     // render depth meshes
     for (const [uuid, depthMesh] of this.depthMeshes) {

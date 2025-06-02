@@ -22,18 +22,6 @@ const getNormalTangentBitangent = ({
     if (!hasTangent) {
       normalTangentBitangent += /* wgsl */
       `
-  // TODO decide whether we're computing tangent and bitangent
-  // with normal or with derivatives
-  /*
-  let Q1: vec3f = dpdx(worldPosition);
-  let Q2: vec3f = dpdy(worldPosition);
-  let st1: vec2f = dpdx(normalUV);
-  let st2: vec2f = dpdy(normalUV);
-  
-  tangent = normalize(Q1 * st2.y - Q2 * st1.y);
-  bitangent = normalize(-Q1 * st2.x + Q2 * st1.x);
-  */
-  
   bitangent = vec3(0.0, 1.0, 0.0);
 
   let NdotUp: f32 = dot(normal, vec3(0.0, 1.0, 0.0));
