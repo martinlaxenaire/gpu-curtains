@@ -423,6 +423,9 @@ window.addEventListener('load', async () => {
     useTransform: true,
   })
 
+  normalTexture.scale.set(4, 2)
+  normalTexture.offset.set(0.5, 0.5)
+
   normalTexture.loadImage(normalTextureUrl)
 
   // GUI

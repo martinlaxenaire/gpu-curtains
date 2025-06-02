@@ -235,6 +235,10 @@ export class Material {
             source.shouldUpdate = true
           }
         })
+
+        if (texture.options.useTransform) {
+          texture.transformBinding.inputs.matrix.shouldUpdate = true
+        }
       }
 
       texture.resize(texture.size)
@@ -590,6 +594,10 @@ export class Material {
       (this.options.shaders.compute && this.options.shaders.compute.code.indexOf(texture.options.name) !== -1)
     ) {
       this.texturesBindGroup.addTexture(texture)
+    }
+
+    if (texture instanceof MediaTexture && texture.options.useTransform) {
+      texture.transformBinding.inputs.matrix.shouldUpdate = true
     }
   }
 
