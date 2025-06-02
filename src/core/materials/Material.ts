@@ -235,10 +235,6 @@ export class Material {
             source.shouldUpdate = true
           }
         })
-
-        if (texture.options.useTransform) {
-          texture.transformBinding.inputs.matrix.shouldUpdate = true
-        }
       }
 
       texture.resize(texture.size)
