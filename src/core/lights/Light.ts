@@ -8,7 +8,6 @@ import { PointLight } from './PointLight'
 import { SpotLight } from './SpotLight'
 import type { GPUCurtains } from '../../curtains/GPUCurtains'
 import { sRGBToLinear } from '../../math/color-utils'
-import { ProjectedMeshBaseClass } from '../meshes/mixins/ProjectedMeshBaseMixin'
 
 /** Defines all types of lights. */
 export type LightsType = 'ambientLights' | 'directionalLights' | 'pointLights' | 'spotLights'
@@ -115,7 +114,7 @@ export class Light extends Object3D {
     }
 
     // set new renderer
-    renderer = isCameraRenderer(renderer, this.constructor.name)
+    renderer = isCameraRenderer(renderer, this.type)
     this.renderer = renderer
 
     // set index only on first init

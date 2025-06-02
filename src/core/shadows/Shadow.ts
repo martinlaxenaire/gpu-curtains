@@ -243,7 +243,7 @@ export class Shadow {
   //   this.index = index
   //
   //   if (shouldUpdateIndex) {
-  //     throwWarning(`This ${this.constructor.name} index has changed, the shaders need to be recreated`)
+  //     throwWarning(`This ${this.light.type}Shadow index has changed, the shaders need to be recreated`)
   //   }
   // }
 
@@ -480,7 +480,7 @@ export class Shadow {
 
     if (this.options.useRenderBundle && !this.renderBundle) {
       this.renderBundle = new RenderBundle(this.renderer, {
-        label: `Depth render bundle for ${this.constructor.name} ${this.index}`,
+        label: `Depth render bundle for ${this.light.type}Shadow ${this.index}`,
         renderPass: this.depthPassTarget.renderPass,
         transparent: false,
         useBuffer: true,
@@ -578,7 +578,7 @@ export class Shadow {
    */
   createDepthPassTarget() {
     this.depthPassTarget = new RenderTarget(this.renderer, {
-      label: 'Depth pass render target for ' + this.constructor.name + ' ' + this.index,
+      label: `Depth pass render target for ${this.light.type}Shadow ${this.index}`,
       useColorAttachments: false,
       depthTexture: this.depthTexture,
       sampleCount: this.sampleCount,
@@ -665,7 +665,7 @@ export class Shadow {
     const depthPass = this.depthPassTarget.renderPass.beginRenderPass(commandEncoder)
 
     if (!this.renderer.production)
-      depthPass.pushDebugGroup(`${this.constructor.name} (index: ${this.index}): depth pass`)
+      depthPass.pushDebugGroup(`${this.light.type}Shadow (index: ${this.index}): depth pass`)
 
     // render depth meshes
     if (this.renderBundle) {
@@ -775,7 +775,7 @@ export class Shadow {
     }
 
     const depthMesh = new Mesh(this.renderer, {
-      label: `${this.constructor.name} (index: ${this.index}) ${mesh.options.label} depth mesh`,
+      label: `${this.light.type}Shadow (index: ${this.index}) ${mesh.options.label} depth mesh`,
       ...parameters,
       geometry: mesh.geometry,
       // explicitly set empty output targets

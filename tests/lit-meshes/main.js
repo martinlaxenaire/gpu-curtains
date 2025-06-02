@@ -404,15 +404,10 @@ window.addEventListener('load', async () => {
 
   baseColorTexture.scale.set(2, 1)
 
-  //baseColorTexture.uploadSource({ source: baseColorImage })
   baseColorTexture.loadImage(baseColorTextureUrl)
 
   const normalTextureUrl =
     'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/CompareNormal/glTF/Compare_Normal_img0.jpg'
-
-  // const normalRes = await fetch(normalTextureUrl)
-  // const normalBlob = await normalRes.blob()
-  // const normalImage = await createImageBitmap(normalBlob, { colorSpaceConversion: 'none' })
 
   normalTexture = new MediaTexture(gpuCameraRenderer, {
     label: 'Normal texture',
@@ -428,7 +423,6 @@ window.addEventListener('load', async () => {
     useTransform: true,
   })
 
-  //normalTexture.uploadSource({ source: normalImage })
   normalTexture.loadImage(normalTextureUrl)
 
   // GUI
