@@ -117,34 +117,56 @@ export class EnvironmentMap {
 
     this.setRenderer(renderer)
 
+    // patch params with defaults
+    const lutTextureDefaultParams: LUTTextureParams = {
+      size: 256,
+      computeSampleCount: 1024,
+      label: 'Environment LUT texture',
+      name: 'lutTexture',
+      format: 'rgba16float',
+    }
+
+    const diffuseTextureDefaultParams: DiffuseTextureParams = {
+      size: 128,
+      computeSampleCount: 2048,
+      label: 'Environment diffuse texture',
+      name: 'envDiffuseTexture',
+      format: 'rgba16float',
+    }
+
+    const specularTextureDefaultParams: SpecularTextureParams = {
+      label: 'Environment specular texture',
+      name: 'envSpecularTexture',
+      format: 'rgba16float',
+      generateMips: true,
+    }
+
     params = {
       ...{
-        lutTextureParams: {
-          size: 256,
-          computeSampleCount: 1024,
-          label: 'Environment LUT texture',
-          name: 'lutTexture',
-          format: 'rgba16float',
-        },
-        diffuseTextureParams: {
-          size: 128,
-          computeSampleCount: 2048,
-          label: 'Environment diffuse texture',
-          name: 'envDiffuseTexture',
-          format: 'rgba16float',
-        },
-        specularTextureParams: {
-          label: 'Environment specular texture',
-          name: 'envSpecularTexture',
-          format: 'rgba16float',
-          generateMips: true,
-        },
         diffuseIntensity: 1,
         specularIntensity: 1,
         rotation: Math.PI / 2,
       },
       ...params,
     } as EnvironmentMapParams
+
+    if (params.lutTextureParams) {
+      params.lutTextureParams = { ...lutTextureDefaultParams, ...params.lutTextureParams }
+    } else {
+      params.lutTextureParams = lutTextureDefaultParams
+    }
+
+    if (params.diffuseTextureParams) {
+      params.diffuseTextureParams = { ...diffuseTextureDefaultParams, ...params.diffuseTextureParams }
+    } else {
+      params.diffuseTextureParams = diffuseTextureDefaultParams
+    }
+
+    if (params.specularTextureParams) {
+      params.specularTextureParams = { ...specularTextureDefaultParams, ...params.specularTextureParams }
+    } else {
+      params.specularTextureParams = specularTextureDefaultParams
+    }
 
     this.options = params as EnvironmentMapOptions
 
