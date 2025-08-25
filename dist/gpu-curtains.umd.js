@@ -18510,10 +18510,10 @@ fn applyIorToRoughness(roughness: f32, ior: f32) -> f32 {
   return roughness * saturate(ior * 2.0 - 2.0);
 }
 
-fn getTransmissionSample( fragCoord: vec2f, roughness: f32, ior: f32, transmissionSceneTexture: texture_2d<f32>, sampler: sampler ) -> vec4f {
+fn getTransmissionSample( fragCoord: vec2f, roughness: f32, ior: f32, transmissionSceneTexture: texture_2d<f32>, transmissionSampler: sampler ) -> vec4f {
   let transmissionSamplerSize: vec2f = vec2f(textureDimensions(transmissionSceneTexture));
   let lod: f32 = log2( transmissionSamplerSize.x ) * applyIorToRoughness( roughness, ior );
-  return textureSampleLevel( transmissionSceneTexture, sampler, fragCoord.xy, lod );
+  return textureSampleLevel( transmissionSceneTexture, transmissionSampler, fragCoord.xy, lod );
 }
 
 fn volumeAttenuation(transmissionDistance: f32, attenuationColor: vec3f, attenuationDistance: f32) -> vec3f {
