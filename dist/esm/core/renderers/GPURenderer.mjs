@@ -359,7 +359,21 @@ class GPURenderer {
   setContext() {
     this.context = this.canvas.getContext("webgpu");
     if (this.device) {
-      this.configureContext();
+      try {
+        this.configureContext();
+      } catch (e) {
+        const preferredFormat = this.deviceManager.gpu.getPreferredCanvasFormat();
+        if (this.options.context.format !== preferredFormat) {
+          this.options.context.format = preferredFormat;
+          if (this.renderPass && this.renderPass.options.colorAttachments?.length) {
+            this.renderPass.options.colorAttachments[0].targetFormat = preferredFormat;
+          }
+          this.configureContext();
+        } else {
+          this.context = null;
+          console.error(e);
+        }
+      }
       this.textures.forEach((texture) => {
         if (!texture.texture) {
           texture.createTexture();

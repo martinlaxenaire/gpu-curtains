@@ -28,9 +28,7 @@ export const getIBLGGXFresnel = ({
     ${environmentMap.lutTexture.options.name},
   );`
   } else {
-    // should not happen
-    // but again, if we'd want to remove LUT texture from environment map one day
-    // this would be used
+    // if the environment map hasn't created a LUT texture
     iblIGGXFresnel += /* wgsl */ `
   computeMultiscattering(
     normal,

@@ -107,7 +107,7 @@ window.addEventListener('load', async () => {
 
     mesh.scale.set(1.25)
 
-    console.log(mesh)
+    // console.log(mesh)
   }
 
   const postProRenderBundle = new RenderBundle(gpuCameraRenderer, {
@@ -185,7 +185,7 @@ window.addEventListener('load', async () => {
       }
   `
 
-  console.log(gpuCameraRenderer, postProRenderBundle)
+  // console.log(gpuCameraRenderer, postProRenderBundle)
 
   const postProPass = new ShaderPass(gpuCameraRenderer, {
     label: 'Post processing pass',
@@ -221,7 +221,7 @@ window.addEventListener('load', async () => {
     },
   })
 
-  console.log(postProPass)
+  console.log(postProRenderBundle, postProPass, gpuCameraRenderer.scene)
 
   postProPass.onRender(() => {
     postProPass.uniforms.params.frames.value++
@@ -231,29 +231,23 @@ window.addEventListener('load', async () => {
     //renderBundle.removeMesh(meshes[1])
     // console.log(renderBundle)
     //meshes[1].remove()
-
     // meshes.forEach((mesh) => {
     //   //mesh.remove()
     //   renderBundle.removeMesh(mesh)
     // })
-
     //renderBundle.destroy()
     //renderBundle.empty()
-
     //console.log(gpuCameraRenderer.scene.getObjectRenderPassEntry(meshes[0]))
     //gpuCameraRenderer.destroy()
     //console.log(gpuCameraRenderer)
-
     //postProRenderBundle.destroy()
     //postProPass.remove()
-
     // regularMeshes[0].setRenderBundle(renderBundle)
     // console.log(regularMeshes[0], renderBundle)
-
-    console.log(gpuCameraRenderer.scene)
+    // console.log(gpuCameraRenderer.scene)
   }, 2000)
 
-  console.log(renderBundle, meshes, gpuCameraRenderer.scene)
+  // console.log(renderBundle, meshes, gpuCameraRenderer.scene)
 
   // lost context
 

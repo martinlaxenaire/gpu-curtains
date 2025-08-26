@@ -606,7 +606,25 @@ export class GPURenderer {
     this.context = this.canvas.getContext('webgpu')
 
     if (this.device) {
-      this.configureContext()
+      try {
+        this.configureContext()
+      } catch (e) {
+        // patch for Firefox currently not supporting 'rgba16float' canvas context texture format
+        // see https://bugzilla.mozilla.org/show_bug.cgi?id=1834395
+        const preferredFormat = this.deviceManager.gpu.getPreferredCanvasFormat()
+        if (this.options.context.format !== preferredFormat) {
+          this.options.context.format = preferredFormat
+          // patch render pass color attachment as well
+          if (this.renderPass && this.renderPass.options.colorAttachments?.length) {
+            this.renderPass.options.colorAttachments[0].targetFormat = preferredFormat
+          }
+
+          this.configureContext()
+        } else {
+          this.context = null
+          console.error(e)
+        }
+      }
 
       // init everything that was waiting for it
       this.textures.forEach((texture) => {

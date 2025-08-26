@@ -7,6 +7,7 @@ import { RenderPass } from './RenderPass'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { IndirectBuffer } from '../../extras/buffers/IndirectBuffer'
 import { MediaTexture } from '../textures/MediaTexture'
+import { FullscreenPlane } from '../meshes/FullscreenPlane'
 
 let bundleIndex = 0
 
@@ -216,7 +217,9 @@ export class RenderBundle {
         this.transparent = isTransparent
       }
 
-      if (mesh.type !== 'ShaderPass' && mesh.type !== 'PingPongPlane') {
+      const isPostOrPingPongPass = mesh instanceof FullscreenPlane && mesh.constructor !== FullscreenPlane
+
+      if (!isPostOrPingPongPass) {
         const { useProjection } = mesh.material.options.rendering
 
         if (this.useProjection === null) {
@@ -486,7 +489,9 @@ export class RenderBundle {
   removeMesh(mesh: SceneStackedMesh, keepMesh = true) {
     this.removeSceneObject(mesh)
 
-    if (keepMesh && mesh.type !== 'ShaderPass' && mesh.type !== 'PingPongPlane') {
+    const isPostOrPingPongPass = mesh instanceof FullscreenPlane && mesh.constructor !== FullscreenPlane
+
+    if (keepMesh && !isPostOrPingPongPass) {
       this.renderer.scene.addMesh(mesh)
     }
 
