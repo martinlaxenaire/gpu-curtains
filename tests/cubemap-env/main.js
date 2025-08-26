@@ -56,12 +56,12 @@ window.addEventListener('load', async () => {
   const currentEnvMapKey = 'cannon'
   let currentEnvMap = envMaps[currentEnvMapKey]
 
-  const environmentMap = new EnvironmentMap(gpuCameraRenderer)
-  environmentMap.loadAndComputeFromHDR(currentEnvMap.url, {
+  const environmentMap = new EnvironmentMap(gpuCameraRenderer, {
     specularTextureParams: {
       generateMips: false, // should be overriden
     },
   })
+  environmentMap.loadAndComputeFromHDR(currentEnvMap.url)
 
   console.log(environmentMap)
 

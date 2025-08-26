@@ -382,10 +382,14 @@ export class LitMesh extends Mesh {
 
       defaultParams.textures = [
         ...defaultParams.textures,
-        environmentMap.lutTexture,
         environmentMap.diffuseTexture,
         environmentMap.specularTexture,
       ]
+
+      // if environment map has a LUT texture
+      if (environmentMap.lutTexture) {
+        defaultParams.textures = [...defaultParams.textures, environmentMap.lutTexture]
+      }
 
       if (!defaultParams.samplers) {
         defaultParams.samplers = []

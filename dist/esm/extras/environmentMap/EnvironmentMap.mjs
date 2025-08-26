@@ -37,34 +37,50 @@ class EnvironmentMap {
     };
     this.uuid = generateUUID();
     this.setRenderer(renderer);
+    const lutTextureDefaultParams = {
+      size: 256,
+      computeSampleCount: 1024,
+      label: "Environment LUT texture",
+      name: "lutTexture",
+      format: "rgba16float"
+    };
+    const diffuseTextureDefaultParams = {
+      size: 128,
+      computeSampleCount: 2048,
+      label: "Environment diffuse texture",
+      name: "envDiffuseTexture",
+      format: "rgba16float"
+    };
+    const specularTextureDefaultParams = {
+      label: "Environment specular texture",
+      name: "envSpecularTexture",
+      format: "rgba16float",
+      generateMips: true
+    };
     params = {
       ...{
-        lutTextureParams: {
-          size: 256,
-          computeSampleCount: 1024,
-          label: "Environment LUT texture",
-          name: "lutTexture",
-          format: "rgba16float"
-        },
-        diffuseTextureParams: {
-          size: 128,
-          computeSampleCount: 2048,
-          label: "Environment diffuse texture",
-          name: "envDiffuseTexture",
-          format: "rgba16float"
-        },
-        specularTextureParams: {
-          label: "Environment specular texture",
-          name: "envSpecularTexture",
-          format: "rgba16float",
-          generateMips: true
-        },
+        useLutTexture: true,
         diffuseIntensity: 1,
         specularIntensity: 1,
         rotation: Math.PI / 2
       },
       ...params
     };
+    if (params.lutTextureParams) {
+      params.lutTextureParams = { ...lutTextureDefaultParams, ...params.lutTextureParams };
+    } else {
+      params.lutTextureParams = lutTextureDefaultParams;
+    }
+    if (params.diffuseTextureParams) {
+      params.diffuseTextureParams = { ...diffuseTextureDefaultParams, ...params.diffuseTextureParams };
+    } else {
+      params.diffuseTextureParams = diffuseTextureDefaultParams;
+    }
+    if (params.specularTextureParams) {
+      params.specularTextureParams = { ...specularTextureDefaultParams, ...params.specularTextureParams };
+    } else {
+      params.specularTextureParams = specularTextureDefaultParams;
+    }
     this.options = params;
     this.sampler = new Sampler(this.renderer, {
       label: "Clamp sampler",
@@ -77,9 +93,11 @@ class EnvironmentMap {
     });
     this.rotationMatrix = new Mat3().rotateByAngleY(-Math.PI / 2);
     this.hdrLoader = new HDRLoader();
-    this.createLUTTextures();
+    if (this.options.useLutTexture) {
+      this.createLUTTextures();
+      this.computeBRDFLUTTexture();
+    }
     this.createSpecularDiffuseTextures();
-    this.computeBRDFLUTTexture();
   }
   /**
    * Set or reset this {@link EnvironmentMap} {@link EnvironmentMap.renderer | renderer}.

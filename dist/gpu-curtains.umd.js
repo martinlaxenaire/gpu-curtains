@@ -4535,7 +4535,7 @@
         useTransform,
         placeholderColor,
         cache,
-        useExternalTextures: !!useExternalTextures,
+        useExternalTextures: typeof this.renderer.device.importExternalTexture !== "undefined" && !!useExternalTextures,
         ...{
           sources: [],
           sourcesTypes: []
@@ -11783,6 +11783,103 @@ fn getPCFBaseShadowContribution(
     }
   };
 
+  class CacheManager {
+    /**
+     * CacheManager constructor
+     */
+    constructor() {
+      this.planeGeometries = [];
+    }
+    /**
+     * Check if a given {@link PlaneGeometry} is already cached based on its {@link PlaneGeometry#definition.id | definition id}
+     * @param planeGeometry - {@link PlaneGeometry} to check
+     * @returns - {@link PlaneGeometry} found or null if not found
+     */
+    getPlaneGeometry(planeGeometry) {
+      return this.planeGeometries.find((element) => element.definition.id === planeGeometry.definition.id);
+    }
+    /**
+     * Check if a given {@link PlaneGeometry} is already cached based on its {@link PlaneGeometry#definition | definition id}
+     * @param planeGeometryID - {@link PlaneGeometry#definition.id | PlaneGeometry definition id}
+     * @returns - {@link PlaneGeometry} found or null if not found
+     */
+    getPlaneGeometryByID(planeGeometryID) {
+      return this.planeGeometries.find((element) => element.definition.id === planeGeometryID);
+    }
+    /**
+     * Add a {@link PlaneGeometry} to our cache {@link planeGeometries} array
+     * @param planeGeometry
+     */
+    addPlaneGeometry(planeGeometry) {
+      this.planeGeometries.push(planeGeometry);
+    }
+    /**
+     * Destroy our {@link CacheManager}
+     */
+    destroy() {
+      this.planeGeometries = [];
+    }
+  }
+  const cacheManager = new CacheManager();
+
+  class FullscreenPlane extends MeshBaseMixin(class {
+  }) {
+    /**
+     * FullscreenPlane constructor
+     * @param renderer - {@link Renderer} or {@link GPUCurtains} class object used to create this {@link FullscreenPlane}.
+     * @param parameters - {@link MeshBaseRenderParams | parameters} use to create this {@link FullscreenPlane}.
+     */
+    constructor(renderer, parameters = {}) {
+      renderer = isRenderer(renderer, parameters.label ? parameters.label + " FullscreenQuadMesh" : "FullscreenQuadMesh");
+      let geometry = cacheManager.getPlaneGeometryByID(2);
+      if (!geometry) {
+        geometry = new PlaneGeometry({ widthSegments: 1, heightSegments: 1 });
+        cacheManager.addPlaneGeometry(geometry);
+      }
+      if (!parameters.shaders || !parameters.shaders.vertex) {
+        ["uniforms", "storages"].forEach((bindingType) => {
+          Object.values(parameters[bindingType] ?? {}).forEach(
+            (binding) => binding.visibility = ["fragment"]
+          );
+        });
+      }
+      parameters.depthWriteEnabled = false;
+      if (!parameters.label) {
+        parameters.label = "FullscreenQuadMesh";
+      }
+      super(renderer, null, { geometry, ...parameters });
+      this.size = {
+        document: {
+          width: this.renderer.boundingRect.width,
+          height: this.renderer.boundingRect.height,
+          top: this.renderer.boundingRect.top,
+          left: this.renderer.boundingRect.left
+        }
+      };
+      this.type = "FullscreenQuadMesh";
+    }
+    /**
+     * Resize our {@link FullscreenPlane}.
+     * @param boundingRect - the new bounding rectangle.
+     */
+    resize(boundingRect = null) {
+      this.size.document = boundingRect ?? this.renderer.boundingRect;
+      super.resize(boundingRect);
+    }
+    /**
+     * Take the pointer {@link Vec2} position relative to the document and returns it relative to our {@link FullscreenPlane}.
+     * It ranges from -1 to 1 on both axis.
+     * @param mouseCoords - pointer {@link Vec2} coordinates.
+     * @returns - the mapped {@link Vec2} coordinates in the [-1, 1] range.
+     */
+    mouseToPlaneCoords(mouseCoords = new Vec2()) {
+      return new Vec2(
+        (mouseCoords.x - this.size.document.left) / this.size.document.width * 2 - 1,
+        1 - (mouseCoords.y - this.size.document.top) / this.size.document.height * 2
+      );
+    }
+  }
+
   var __typeError$i = (msg) => {
     throw TypeError(msg);
   };
@@ -11881,7 +11978,8 @@ fn getPCFBaseShadowContribution(
         if (this.transparent === null) {
           this.transparent = isTransparent;
         }
-        if (mesh.type !== "ShaderPass" && mesh.type !== "PingPongPlane") {
+        const isPostOrPingPongPass = mesh instanceof FullscreenPlane && mesh.constructor !== FullscreenPlane;
+        if (!isPostOrPingPongPass) {
           const { useProjection } = mesh.material.options.rendering;
           if (this.useProjection === null) {
             this.useProjection = useProjection;
@@ -12036,7 +12134,8 @@ fn getPCFBaseShadowContribution(
      */
     removeMesh(mesh, keepMesh = true) {
       this.removeSceneObject(mesh);
-      if (keepMesh && mesh.type !== "ShaderPass" && mesh.type !== "PingPongPlane") {
+      const isPostOrPingPongPass = mesh instanceof FullscreenPlane && mesh.constructor !== FullscreenPlane;
+      if (keepMesh && !isPostOrPingPongPass) {
         this.renderer.scene.addMesh(mesh);
       }
       if (this.meshes.size === 0) {
@@ -14366,103 +14465,6 @@ struct SpotShadowVSOutput {
   _penumbra = new WeakMap();
   _range = new WeakMap();
 
-  class CacheManager {
-    /**
-     * CacheManager constructor
-     */
-    constructor() {
-      this.planeGeometries = [];
-    }
-    /**
-     * Check if a given {@link PlaneGeometry} is already cached based on its {@link PlaneGeometry#definition.id | definition id}
-     * @param planeGeometry - {@link PlaneGeometry} to check
-     * @returns - {@link PlaneGeometry} found or null if not found
-     */
-    getPlaneGeometry(planeGeometry) {
-      return this.planeGeometries.find((element) => element.definition.id === planeGeometry.definition.id);
-    }
-    /**
-     * Check if a given {@link PlaneGeometry} is already cached based on its {@link PlaneGeometry#definition | definition id}
-     * @param planeGeometryID - {@link PlaneGeometry#definition.id | PlaneGeometry definition id}
-     * @returns - {@link PlaneGeometry} found or null if not found
-     */
-    getPlaneGeometryByID(planeGeometryID) {
-      return this.planeGeometries.find((element) => element.definition.id === planeGeometryID);
-    }
-    /**
-     * Add a {@link PlaneGeometry} to our cache {@link planeGeometries} array
-     * @param planeGeometry
-     */
-    addPlaneGeometry(planeGeometry) {
-      this.planeGeometries.push(planeGeometry);
-    }
-    /**
-     * Destroy our {@link CacheManager}
-     */
-    destroy() {
-      this.planeGeometries = [];
-    }
-  }
-  const cacheManager = new CacheManager();
-
-  class FullscreenPlane extends MeshBaseMixin(class {
-  }) {
-    /**
-     * FullscreenPlane constructor
-     * @param renderer - {@link Renderer} or {@link GPUCurtains} class object used to create this {@link FullscreenPlane}.
-     * @param parameters - {@link MeshBaseRenderParams | parameters} use to create this {@link FullscreenPlane}.
-     */
-    constructor(renderer, parameters = {}) {
-      renderer = isRenderer(renderer, parameters.label ? parameters.label + " FullscreenQuadMesh" : "FullscreenQuadMesh");
-      let geometry = cacheManager.getPlaneGeometryByID(2);
-      if (!geometry) {
-        geometry = new PlaneGeometry({ widthSegments: 1, heightSegments: 1 });
-        cacheManager.addPlaneGeometry(geometry);
-      }
-      if (!parameters.shaders || !parameters.shaders.vertex) {
-        ["uniforms", "storages"].forEach((bindingType) => {
-          Object.values(parameters[bindingType] ?? {}).forEach(
-            (binding) => binding.visibility = ["fragment"]
-          );
-        });
-      }
-      parameters.depthWriteEnabled = false;
-      if (!parameters.label) {
-        parameters.label = "FullscreenQuadMesh";
-      }
-      super(renderer, null, { geometry, ...parameters });
-      this.size = {
-        document: {
-          width: this.renderer.boundingRect.width,
-          height: this.renderer.boundingRect.height,
-          top: this.renderer.boundingRect.top,
-          left: this.renderer.boundingRect.left
-        }
-      };
-      this.type = "FullscreenQuadMesh";
-    }
-    /**
-     * Resize our {@link FullscreenPlane}.
-     * @param boundingRect - the new bounding rectangle.
-     */
-    resize(boundingRect = null) {
-      this.size.document = boundingRect ?? this.renderer.boundingRect;
-      super.resize(boundingRect);
-    }
-    /**
-     * Take the pointer {@link Vec2} position relative to the document and returns it relative to our {@link FullscreenPlane}.
-     * It ranges from -1 to 1 on both axis.
-     * @param mouseCoords - pointer {@link Vec2} coordinates.
-     * @returns - the mapped {@link Vec2} coordinates in the [-1, 1] range.
-     */
-    mouseToPlaneCoords(mouseCoords = new Vec2()) {
-      return new Vec2(
-        (mouseCoords.x - this.size.document.left) / this.size.document.width * 2 - 1,
-        1 - (mouseCoords.y - this.size.document.top) / this.size.document.height * 2
-      );
-    }
-  }
-
   class ComputePipelineEntry extends PipelineEntry {
     /**
      * ComputePipelineEntry constructor
@@ -16505,7 +16507,21 @@ ${this.shaders.compute.head}`;
     setContext() {
       this.context = this.canvas.getContext("webgpu");
       if (this.device) {
-        this.configureContext();
+        try {
+          this.configureContext();
+        } catch (e) {
+          const preferredFormat = this.deviceManager.gpu.getPreferredCanvasFormat();
+          if (this.options.context.format !== preferredFormat) {
+            this.options.context.format = preferredFormat;
+            if (this.renderPass && this.renderPass.options.colorAttachments?.length) {
+              this.renderPass.options.colorAttachments[0].targetFormat = preferredFormat;
+            }
+            this.configureContext();
+          } else {
+            this.context = null;
+            console.error(e);
+          }
+        }
         this.textures.forEach((texture) => {
           if (!texture.texture) {
             texture.createTexture();
@@ -18510,10 +18526,10 @@ fn applyIorToRoughness(roughness: f32, ior: f32) -> f32 {
   return roughness * saturate(ior * 2.0 - 2.0);
 }
 
-fn getTransmissionSample( fragCoord: vec2f, roughness: f32, ior: f32, transmissionSceneTexture: texture_2d<f32>, sampler: sampler ) -> vec4f {
+fn getTransmissionSample( fragCoord: vec2f, roughness: f32, ior: f32, transmissionSceneTexture: texture_2d<f32>, transmissionSampler: sampler ) -> vec4f {
   let transmissionSamplerSize: vec2f = vec2f(textureDimensions(transmissionSceneTexture));
   let lod: f32 = log2( transmissionSamplerSize.x ) * applyIorToRoughness( roughness, ior );
-  return textureSampleLevel( transmissionSceneTexture, sampler, fragCoord.xy, lod );
+  return textureSampleLevel( transmissionSceneTexture, transmissionSampler, fragCoord.xy, lod );
 }
 
 fn volumeAttenuation(transmissionDistance: f32, attenuationColor: vec3f, attenuationDistance: f32) -> vec3f {
@@ -19840,8 +19856,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
     /*  */
     `
 // multi scattering equations
-// not used for now since our IBL GGX Fresnel already handles energy conseervation
-// could be used if we dropped the environment map LUT texture
+// if the environment map has not created a LUT texture
 fn DFGApprox(
   normal: vec3f,
   viewDirection: vec3f,
@@ -22435,34 +22450,50 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
       };
       this.uuid = generateUUID();
       this.setRenderer(renderer);
+      const lutTextureDefaultParams = {
+        size: 256,
+        computeSampleCount: 1024,
+        label: "Environment LUT texture",
+        name: "lutTexture",
+        format: "rgba16float"
+      };
+      const diffuseTextureDefaultParams = {
+        size: 128,
+        computeSampleCount: 2048,
+        label: "Environment diffuse texture",
+        name: "envDiffuseTexture",
+        format: "rgba16float"
+      };
+      const specularTextureDefaultParams = {
+        label: "Environment specular texture",
+        name: "envSpecularTexture",
+        format: "rgba16float",
+        generateMips: true
+      };
       params = {
         ...{
-          lutTextureParams: {
-            size: 256,
-            computeSampleCount: 1024,
-            label: "Environment LUT texture",
-            name: "lutTexture",
-            format: "rgba16float"
-          },
-          diffuseTextureParams: {
-            size: 128,
-            computeSampleCount: 2048,
-            label: "Environment diffuse texture",
-            name: "envDiffuseTexture",
-            format: "rgba16float"
-          },
-          specularTextureParams: {
-            label: "Environment specular texture",
-            name: "envSpecularTexture",
-            format: "rgba16float",
-            generateMips: true
-          },
+          useLutTexture: true,
           diffuseIntensity: 1,
           specularIntensity: 1,
           rotation: Math.PI / 2
         },
         ...params
       };
+      if (params.lutTextureParams) {
+        params.lutTextureParams = { ...lutTextureDefaultParams, ...params.lutTextureParams };
+      } else {
+        params.lutTextureParams = lutTextureDefaultParams;
+      }
+      if (params.diffuseTextureParams) {
+        params.diffuseTextureParams = { ...diffuseTextureDefaultParams, ...params.diffuseTextureParams };
+      } else {
+        params.diffuseTextureParams = diffuseTextureDefaultParams;
+      }
+      if (params.specularTextureParams) {
+        params.specularTextureParams = { ...specularTextureDefaultParams, ...params.specularTextureParams };
+      } else {
+        params.specularTextureParams = specularTextureDefaultParams;
+      }
       this.options = params;
       this.sampler = new Sampler(this.renderer, {
         label: "Clamp sampler",
@@ -22475,9 +22506,11 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
       });
       this.rotationMatrix = new Mat3().rotateByAngleY(-Math.PI / 2);
       this.hdrLoader = new HDRLoader();
-      this.createLUTTextures();
+      if (this.options.useLutTexture) {
+        this.createLUTTextures();
+        this.computeBRDFLUTTexture();
+      }
       this.createSpecularDiffuseTextures();
-      this.computeBRDFLUTTexture();
     }
     /**
      * Set or reset this {@link EnvironmentMap} {@link EnvironmentMap.renderer | renderer}.
@@ -23146,10 +23179,12 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         }
         defaultParams.textures = [
           ...defaultParams.textures,
-          environmentMap.lutTexture,
           environmentMap.diffuseTexture,
           environmentMap.specularTexture
         ];
+        if (environmentMap.lutTexture) {
+          defaultParams.textures = [...defaultParams.textures, environmentMap.lutTexture];
+        }
         if (!defaultParams.samplers) {
           defaultParams.samplers = [];
         }

@@ -3,6 +3,7 @@ import { generateUUID, throwWarning } from '../../utils/utils.mjs';
 import { BufferBinding } from '../bindings/BufferBinding.mjs';
 import { IndirectBuffer } from '../../extras/buffers/IndirectBuffer.mjs';
 import { MediaTexture } from '../textures/MediaTexture.mjs';
+import { FullscreenPlane } from '../meshes/FullscreenPlane.mjs';
 
 var __typeError = (msg) => {
   throw TypeError(msg);
@@ -102,7 +103,8 @@ class RenderBundle {
       if (this.transparent === null) {
         this.transparent = isTransparent;
       }
-      if (mesh.type !== "ShaderPass" && mesh.type !== "PingPongPlane") {
+      const isPostOrPingPongPass = mesh instanceof FullscreenPlane && mesh.constructor !== FullscreenPlane;
+      if (!isPostOrPingPongPass) {
         const { useProjection } = mesh.material.options.rendering;
         if (this.useProjection === null) {
           this.useProjection = useProjection;
@@ -257,7 +259,8 @@ class RenderBundle {
    */
   removeMesh(mesh, keepMesh = true) {
     this.removeSceneObject(mesh);
-    if (keepMesh && mesh.type !== "ShaderPass" && mesh.type !== "PingPongPlane") {
+    const isPostOrPingPongPass = mesh instanceof FullscreenPlane && mesh.constructor !== FullscreenPlane;
+    if (keepMesh && !isPostOrPingPongPass) {
       this.renderer.scene.addMesh(mesh);
     }
     if (this.meshes.size === 0) {
