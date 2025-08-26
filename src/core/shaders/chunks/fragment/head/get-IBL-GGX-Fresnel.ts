@@ -1,11 +1,10 @@
 /**
  * Helper to implement multi-scattering that compensates for the energy loss in rough surfaces due to multiple reflections.
- * The IBL LUT texture is used to compute multi-scattering in `getIBLGGXFresnel`, however we could fall back to manually calculate it in case it's missing.
+ * The IBL LUT texture is used to compute multi-scattering in `getIBLGGXFresnel`, however it can fall back to manually calculate it in case it's missing.
  */
 export const getIBLGGXFresnel = /*  */ `
 // multi scattering equations
-// not used for now since our IBL GGX Fresnel already handles energy conseervation
-// could be used if we dropped the environment map LUT texture
+// if the environment map has not created a LUT texture
 fn DFGApprox(
   normal: vec3f,
   viewDirection: vec3f,

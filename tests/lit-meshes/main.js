@@ -85,6 +85,7 @@ window.addEventListener('load', async () => {
     diffuseIntensity: 0.5,
     specularIntensity: 0.5,
   })
+
   environmentMap.loadAndComputeFromHDR(currentEnvMap.url)
 
   const ambientLight = new AmbientLight(gpuCameraRenderer, {

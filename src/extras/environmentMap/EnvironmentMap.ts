@@ -41,6 +41,8 @@ export interface SpecularTextureParams extends ComputeTextureBaseParams {
 
 /** Define the options used to create the textures by the {@link EnvironmentMap}. */
 export interface EnvironmentMapOptions {
+  /** Whether to create a LUT {@link Texture}. Default to `true`. */
+  useLutTexture: boolean
   /** Define the parameters used to create the LUT {@link Texture}. */
   lutTextureParams: LUTTextureParams
   /** Define the parameters used to create the diffuse cube map {@link Texture}. */
@@ -143,6 +145,7 @@ export class EnvironmentMap {
 
     params = {
       ...{
+        useLutTexture: true,
         diffuseIntensity: 1,
         specularIntensity: 1,
         rotation: Math.PI / 2,
@@ -184,11 +187,13 @@ export class EnvironmentMap {
 
     this.hdrLoader = new HDRLoader()
 
-    this.createLUTTextures()
-    this.createSpecularDiffuseTextures()
+    if (this.options.useLutTexture) {
+      this.createLUTTextures()
+      // generate LUT texture right now
+      this.computeBRDFLUTTexture()
+    }
 
-    // generate LUT texture right now
-    this.computeBRDFLUTTexture()
+    this.createSpecularDiffuseTextures()
   }
 
   /**
