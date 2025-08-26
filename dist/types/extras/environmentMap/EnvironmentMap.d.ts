@@ -33,6 +33,8 @@ export interface SpecularTextureParams extends ComputeTextureBaseParams {
 }
 /** Define the options used to create the textures by the {@link EnvironmentMap}. */
 export interface EnvironmentMapOptions {
+    /** Whether to create a LUT {@link Texture}. Default to `true`. */
+    useLutTexture: boolean;
     /** Define the parameters used to create the LUT {@link Texture}. */
     lutTextureParams: LUTTextureParams;
     /** Define the parameters used to create the diffuse cube map {@link Texture}. */

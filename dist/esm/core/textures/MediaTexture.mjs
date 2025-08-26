@@ -83,7 +83,7 @@ const _MediaTexture = class _MediaTexture extends Texture {
       useTransform,
       placeholderColor,
       cache,
-      useExternalTextures: !!useExternalTextures,
+      useExternalTextures: typeof this.renderer.device.importExternalTexture !== "undefined" && !!useExternalTextures,
       ...{
         sources: [],
         sourcesTypes: []

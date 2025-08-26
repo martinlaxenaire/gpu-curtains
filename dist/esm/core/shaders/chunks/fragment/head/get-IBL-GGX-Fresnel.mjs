@@ -2,8 +2,7 @@ const getIBLGGXFresnel = (
   /*  */
   `
 // multi scattering equations
-// not used for now since our IBL GGX Fresnel already handles energy conseervation
-// could be used if we dropped the environment map LUT texture
+// if the environment map has not created a LUT texture
 fn DFGApprox(
   normal: vec3f,
   viewDirection: vec3f,
