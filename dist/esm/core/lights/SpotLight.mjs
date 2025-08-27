@@ -174,8 +174,8 @@ class SpotLight extends Light {
   set range(value) {
     __privateSet(this, _range, Math.max(0, value));
     this.onPropertyChanged("range", this.range);
-    if (this.shadow && this.range !== 0) {
-      this.shadow.camera.far = this.range;
+    if (this.shadow) {
+      this.shadow.camera.far = this.range ? this.range : this.shadow.options.camera.far;
     }
   }
   /**

@@ -17,6 +17,13 @@ import { Vec3 } from '../../math/Vec3'
 export interface SpotShadowParams extends ShadowBaseParams {
   /** {@link SpotLight} used to create the {@link SpotShadow}. */
   light: SpotLight
+  /** Optional {@link PerspectiveCamera} near and far values to use. */
+  camera?: {
+    /** Optional {@link PerspectiveCamera} near value to use. Default to `0.1`. */
+    near: number
+    /** Optional {@link PerspectiveCamera} far value to use, if the {@link SpotLight#range | SpotLight `range`} is `0`. If the light `range` is greater than `0`, then the `range` value will be used instead. Default to `150`. */
+    far: number
+  }
 }
 
 /** @ignore */
@@ -68,6 +75,10 @@ export class SpotShadow extends Shadow {
       depthTextureFormat,
       autoRender,
       useRenderBundle,
+      camera = {
+        near: 0.1,
+        far: 150,
+      },
     } = {} as SpotShadowParams
   ) {
     super(renderer, {
@@ -82,12 +93,17 @@ export class SpotShadow extends Shadow {
       useRenderBundle,
     })
 
+    this.options = {
+      ...this.options,
+      camera,
+    }
+
     // arbitrary
     this.focus = 1
 
     this.camera = new PerspectiveCamera({
-      near: 0.1,
-      far: this.light.range !== 0 ? this.light.range : 150,
+      near: this.options.camera.near,
+      far: this.light.range !== 0 ? this.light.range : this.options.camera.far,
       fov: (180 / Math.PI) * 2 * this.light.angle * this.focus,
       width: this.options.depthTextureSize.x,
       height: this.options.depthTextureSize.y,
@@ -107,6 +123,26 @@ export class SpotShadow extends Shadow {
    */
   setRendererBinding() {
     this.rendererBinding = this.renderer.bindings.spotShadows
+  }
+
+  /**
+   * Set the parameters and start casting shadows.
+   * @param parameters - Parameters to use for this {@link SpotShadow}.
+   */
+  cast(parameters = {} as Omit<SpotShadowParams, 'light'>) {
+    super.cast(parameters)
+
+    if (parameters.camera) {
+      if (parameters.camera.near) {
+        this.options.camera.near = parameters.camera.near
+        this.camera.near = this.options.camera.near
+      }
+
+      if (parameters.camera.far) {
+        this.options.camera.far = parameters.camera.far
+        this.camera.far = this.light.range !== 0 ? this.light.range : this.options.camera.far
+      }
+    }
   }
 
   /**

@@ -149,6 +149,7 @@ window.addEventListener('load', async () => {
     penumbra: 0,
     shadow: {
       intensity: 1,
+      normalBias: 0.01,
       // depthTextureSize: new Vec2(2048),
       // pcfSamples: 3,
     },
@@ -403,8 +404,8 @@ window.addEventListener('load', async () => {
     ) -> VSOutput {
       var vsOutput: VSOutput;
 
-      // just use the world matrix here, do not take the projection into account
-      vsOutput.position = vec4(attributes.position, 1.0);
+     // just use the world matrix here, do not take the projection into account
+      vsOutput.position = matrices.model * vec4(attributes.position, 1.0);
       vsOutput.uv = attributes.uv;
       
       return vsOutput;
@@ -418,22 +419,17 @@ window.addEventListener('load', async () => {
     };
 
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-      var uv = fsInput.uv;
-      
-      uv = uv * 2.0 - 1.0;
-      uv *= 0.5;
-      uv = uv * 0.5 + 0.5;
-          
-      let rawDepth = textureSample(
+      let rawDepth = textureSampleCompare(
         depthTexture,
-        defaultSampler,
-        uv
+        debugDepthSampler,
+        fsInput.uv,
+        0.99
       );
       
       // remap depth into something a bit more visible
       let depth = (1.0 - rawDepth);
       
-      var color: vec4f = vec4(vec3(depth) * 10.0, 1.0);
+      var color: vec4f = vec4(vec3(depth), 1.0);
 
       return color;
     }
@@ -469,6 +465,16 @@ window.addEventListener('load', async () => {
     name: 'depthTexture',
     type: 'depth',
     fromTexture: spotLight.shadow.depthTexture,
+  })
+
+  const scale = new Vec3(0.5, 0.5 * (leftRenderer.boundingRect.width / leftRenderer.boundingRect.height), 1)
+
+  debugPlane.transformOrigin.set(-1, -1, 0)
+  debugPlane.scale.copy(scale)
+
+  debugPlane.onAfterResize(() => {
+    scale.set(0.5, 0.5 * (leftRenderer.boundingRect.width / leftRenderer.boundingRect.height), 1)
+    debugPlane.scale.copy(scale)
   })
 
   // GUI

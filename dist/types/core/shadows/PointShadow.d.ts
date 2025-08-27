@@ -15,6 +15,13 @@ import { Mesh } from '../meshes/Mesh';
 export interface PointShadowParams extends Omit<ShadowBaseParams, 'useRenderBundle'> {
     /** {@link PointLight} used to create the {@link PointShadow}. */
     light: PointLight;
+    /** Optional {@link PerspectiveCamera} near and far values to use. */
+    camera?: {
+        /** Optional {@link PerspectiveCamera} near value to use. Default to `0.1`. */
+        near: number;
+        /** Optional {@link PerspectiveCamera} far value to use, if the {@link PointLight#range | PointLight `range`} is `0`. If the light `range` is greater than `0`, then the `range` value will be used instead. Default to `150`. */
+        far: number;
+    };
 }
 /** @ignore */
 export declare const pointShadowStruct: Record<string, Input>;
@@ -40,7 +47,7 @@ export declare class PointShadow extends Shadow {
      * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link PointShadow}.
      * @param parameters - {@link PointShadowParams} used to create this {@link PointShadow}.
      */
-    constructor(renderer: CameraRenderer | GPUCurtains, { light, intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender, }?: PointShadowParams);
+    constructor(renderer: CameraRenderer | GPUCurtains, { light, intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender, camera, }?: PointShadowParams);
     /**
      * Set or reset this {@link PointShadow} {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      */

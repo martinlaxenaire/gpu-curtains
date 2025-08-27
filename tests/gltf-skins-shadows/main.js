@@ -69,6 +69,7 @@ window.addEventListener('load', async () => {
   let currentEnvMap = envMaps[currentEnvMapKey]
 
   const environmentMap = new EnvironmentMap(gpuCameraRenderer, {
+    useLutTexture: false,
     diffuseIntensity: 0.25,
     specularIntensity: 0.25,
   })
@@ -338,6 +339,7 @@ window.addEventListener('load', async () => {
 
     // directional light
     directionalLight.position.set(radius * 4)
+    directionalLight.intensity = currentLight === 'DirectionalLight' ? 2 : 0
     directionalLight.target.y = radius * 0.5
     directionalLight.shadow.bias = radius * 0.00001
     directionalLight.shadow.camera.near = radius * 0.1
@@ -350,9 +352,13 @@ window.addEventListener('load', async () => {
     // point light
     pointLight.position.set(radius * 1.5)
     pointLight.intensity = currentLight === 'PointLight' ? pointLight.position.lengthSq() * 6 : 0
-    pointLight.range = radius * 6
+    // pointLight.range = radius * 6
+    pointLight.range = 0
     pointLight.shadow.camera.near = radius * 0.75
+    pointLight.shadow.camera.far = radius * 15
     pointLight.shadow.bias = radius * 0.00001
+
+    console.log(pointLight, pointLight.intensity, pointLight.actualColor)
 
     // spot light
     spotLight.position.set(radius * 1.5)
