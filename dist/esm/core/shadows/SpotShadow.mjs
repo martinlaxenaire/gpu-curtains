@@ -34,7 +34,11 @@ class SpotShadow extends Shadow {
     depthTextureSize,
     depthTextureFormat,
     autoRender,
-    useRenderBundle
+    useRenderBundle,
+    camera = {
+      near: 0.1,
+      far: 150
+    }
   } = {}) {
     super(renderer, {
       light,
@@ -47,10 +51,14 @@ class SpotShadow extends Shadow {
       autoRender,
       useRenderBundle
     });
+    this.options = {
+      ...this.options,
+      camera
+    };
     this.focus = 1;
     this.camera = new PerspectiveCamera({
-      near: 0.1,
-      far: this.light.range !== 0 ? this.light.range : 150,
+      near: this.options.camera.near,
+      far: this.light.range !== 0 ? this.light.range : this.options.camera.far,
       fov: 180 / Math.PI * 2 * this.light.angle * this.focus,
       width: this.options.depthTextureSize.x,
       height: this.options.depthTextureSize.y,
@@ -67,6 +75,23 @@ class SpotShadow extends Shadow {
    */
   setRendererBinding() {
     this.rendererBinding = this.renderer.bindings.spotShadows;
+  }
+  /**
+   * Set the parameters and start casting shadows.
+   * @param parameters - Parameters to use for this {@link SpotShadow}.
+   */
+  cast(parameters = {}) {
+    super.cast(parameters);
+    if (parameters.camera) {
+      if (parameters.camera.near) {
+        this.options.camera.near = parameters.camera.near;
+        this.camera.near = this.options.camera.near;
+      }
+      if (parameters.camera.far) {
+        this.options.camera.far = parameters.camera.far;
+        this.camera.far = this.light.range !== 0 ? this.light.range : this.options.camera.far;
+      }
+    }
   }
   /**
    * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link SpotLight} has been overflowed or when the {@link renderer} has changed.

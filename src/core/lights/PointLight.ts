@@ -10,7 +10,7 @@ import { GPUCurtains } from '../../curtains/GPUCurtains'
 export interface PointLightBaseParams extends LightBaseParams {
   /** The {@link PointLight} {@link Vec3 | position}. Default to `Vec3(0)`. */
   position?: Vec3
-  /** The {@link PointLight} range, used to compute the {@link PointLight} attenuation over distance. Default to `0`. */
+  /** The {@link PointLight} range, used to compute the {@link PointLight} attenuation over distance. When range is zero, light will attenuate according to inverse-square law to infinite distance. When range is non-zero, light will attenuate according to inverse-square law until near the distance cutoff, where it will then attenuate quickly and smoothly to 0. Inherently, cutoffs are not physically correct. Default to `0`. */
   range?: number
   /** The {@link PointLight} shadow parameters used to create a {@link PointShadow}. If not set, the {@link PointShadow} won't be set as active and won't cast any shadows. On the other hand, if anything is passed (even an empty object), the {@link PointShadow} will start casting shadows, so use with caution. Default to `null` (which means the {@link PointLight} will not cast shadows). */
   shadow?: Omit<PointShadowParams, 'light'>
@@ -178,8 +178,8 @@ export class PointLight extends Light {
     this.#range = Math.max(0, value)
     this.onPropertyChanged('range', this.range)
 
-    if (this.shadow && this.range !== 0) {
-      this.shadow.camera.far = this.range
+    if (this.shadow) {
+      this.shadow.camera.far = this.range ? this.range : this.shadow.options.camera.far
     }
   }
 

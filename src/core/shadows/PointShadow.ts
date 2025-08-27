@@ -8,7 +8,6 @@ import { PointLight } from '../lights/PointLight'
 import { Input } from '../../types/BindGroups'
 import { RenderMaterialParams, ShaderOptions } from '../../types/Materials'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { BufferBinding } from '../bindings/BufferBinding'
 import { VertexShaderInputBaseParams } from '../shaders/full/vertex/get-vertex-shader-code'
 import { getDefaultPointShadowDepthVs } from '../shaders/full/vertex/get-default-point-shadow-depth-vertex-shader-code'
 import { getDefaultPointShadowDepthFs } from '../shaders/full/fragment/get-default-point-shadow-depth-fragment-code'
@@ -20,6 +19,13 @@ import { Mesh } from '../meshes/Mesh'
 export interface PointShadowParams extends Omit<ShadowBaseParams, 'useRenderBundle'> {
   /** {@link PointLight} used to create the {@link PointShadow}. */
   light: PointLight
+  /** Optional {@link PerspectiveCamera} near and far values to use. */
+  camera?: {
+    /** Optional {@link PerspectiveCamera} near value to use. Default to `0.1`. */
+    near: number
+    /** Optional {@link PerspectiveCamera} far value to use, if the {@link PointLight#range | PointLight `range`} is `0`. If the light `range` is greater than `0`, then the `range` value will be used instead. Default to `150`. */
+    far: number
+  }
 }
 
 /** @ignore */
@@ -94,6 +100,10 @@ export class PointShadow extends Shadow {
       depthTextureSize,
       depthTextureFormat,
       autoRender,
+      camera = {
+        near: 0.1,
+        far: 150,
+      },
     } = {} as PointShadowParams
   ) {
     super(renderer, {
@@ -107,6 +117,11 @@ export class PointShadow extends Shadow {
       autoRender,
       useRenderBundle: false,
     })
+
+    this.options = {
+      ...this.options,
+      camera,
+    }
 
     this.cubeDirections = [
       new Vec3(-1, 0, 0),
@@ -136,8 +151,8 @@ export class PointShadow extends Shadow {
 
     this.camera = new PerspectiveCamera({
       fov: 90,
-      near: 0.1,
-      far: this.light.range !== 0 ? this.light.range : 150,
+      near: camera.near,
+      far: camera.far,
       width: this.depthTextureSize.x,
       height: this.depthTextureSize.y,
       onMatricesChanged: () => {
@@ -168,6 +183,18 @@ export class PointShadow extends Shadow {
    */
   cast(parameters = {} as Omit<PointShadowParams, 'light'>) {
     super.cast({ ...parameters, useRenderBundle: false })
+
+    if (parameters.camera) {
+      if (parameters.camera.near) {
+        this.options.camera.near = parameters.camera.near
+        this.camera.near = this.options.camera.near
+      }
+
+      if (parameters.camera.far) {
+        this.options.camera.far = parameters.camera.far
+        this.camera.far = this.light.range !== 0 ? this.light.range : this.options.camera.far
+      }
+    }
   }
 
   /**
