@@ -87,6 +87,7 @@ window.addEventListener('load', async () => {
     intensity: 40,
     shadow: {
       intensity: 1,
+      // depthTextureFormat: 'depth32float',
       camera: {
         near: 0.01,
         far: 200,
@@ -303,8 +304,12 @@ window.addEventListener('load', async () => {
     pointShadow.add(pointLight.shadow, 'bias', 0, 0.01, 0.0001)
     pointShadow.add(pointLight.shadow, 'normalBias', 0, 0.01, 0.0001)
     pointShadow.add(pointLight.shadow, 'pcfSamples', 1, 5, 1)
-    // pointShadow.add(pointLight.shadow.depthTextureSize, 'x', 128, 1024, 64).name('Texture width')
-    // pointShadow.add(pointLight.shadow.depthTextureSize, 'y', 128, 1024, 64).name('Texture height')
+    pointShadow
+      .add(pointLight.shadow.depthTextureSize, 'x', 128, 1024, 64)
+      .name('Texture size')
+      .onChange(() => {
+        depthTexture.copy(pointLight.shadow.depthTexture)
+      })
 
     const debugFolder = pointShadow.addFolder('Debug shadow depth cube texture')
     debugFolder.add(debugPlane, 'visible').name('Visible')

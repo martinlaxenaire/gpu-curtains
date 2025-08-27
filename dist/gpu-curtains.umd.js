@@ -3167,7 +3167,7 @@
         const additionalBindings = this.childrenBindings.length ? this.options.childrenBindings.map((child) => child.binding.wgslStructFragment).join("\n\n") + "\n\n" : "";
         this.wgslStructFragment = additionalBindings + Object.keys(structs).reverse().map((struct) => {
           return `struct ${struct} {
-	${Object.keys(structs[struct]).map((binding) => `${binding}: ${structs[struct][binding]}`).join(",\n	")}
+  ${Object.keys(structs[struct]).map((binding) => `${binding}: ${structs[struct][binding]}`).join(",\n  ")}
 };`;
         }).join("\n\n");
       } else {
@@ -7910,12 +7910,12 @@
     setWGSLFragment() {
       let locationIndex = -1;
       this.wgslStructFragment = `struct Attributes {
-	@builtin(vertex_index) vertexIndex : u32,
-	@builtin(instance_index) instanceIndex : u32,${this.vertexBuffers.map((vertexBuffer) => {
+  @builtin(vertex_index) vertexIndex : u32,
+  @builtin(instance_index) instanceIndex : u32,${this.vertexBuffers.map((vertexBuffer) => {
       return vertexBuffer.attributes.map((attribute) => {
         locationIndex++;
         return `
-	@location(${locationIndex}) ${attribute.name}: ${attribute.type}`;
+  @location(${locationIndex}) ${attribute.name}: ${attribute.type}`;
       });
     }).join(",")}
 };`;
