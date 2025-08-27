@@ -193,7 +193,7 @@ class RenderBundle {
           { once: false }
         );
       }
-    } else if (!value && this.ready) {
+    } else if (!value && __privateGet(this, _ready)) {
       this.bundle = null;
       __privateSet(this, _ready, value);
     }

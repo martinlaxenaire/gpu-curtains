@@ -406,7 +406,7 @@ export class RenderBundle {
           { once: false }
         )
       }
-    } else if (!value && this.ready) {
+    } else if (!value && this.#ready) {
       // invalidate
       this.bundle = null
       this.#ready = value

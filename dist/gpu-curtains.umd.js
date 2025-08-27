@@ -4530,12 +4530,13 @@
       this._onAllSourcesUploadedCallback = () => {
       };
       this.type = "MediaTexture";
+      const supportExternalTexture = this.renderer.device ? typeof this.renderer.device.importExternalTexture !== "undefined" : true;
       this.options = {
         ...this.options,
         useTransform,
         placeholderColor,
         cache,
-        useExternalTextures: typeof this.renderer.device.importExternalTexture !== "undefined" && !!useExternalTextures,
+        useExternalTextures: supportExternalTexture && !!useExternalTextures,
         ...{
           sources: [],
           sourcesTypes: []
@@ -12068,7 +12069,7 @@ fn getPCFBaseShadowContribution(
             { once: false }
           );
         }
-      } else if (!value && this.ready) {
+      } else if (!value && __privateGet$h(this, _ready)) {
         this.bundle = null;
         __privateSet$h(this, _ready, value);
       }
