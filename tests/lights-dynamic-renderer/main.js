@@ -27,7 +27,6 @@ window.addEventListener('load', async () => {
     LitMesh,
     PlaneGeometry,
     Object3D,
-    FullscreenPlane,
     Sampler,
   } = await import(/* @vite-ignore */ path)
 
@@ -149,6 +148,8 @@ window.addEventListener('load', async () => {
     penumbra: 0,
     shadow: {
       intensity: 1,
+      normalBias: 0.01,
+      // depthTextureFormat: 'depth32float',
       // depthTextureSize: new Vec2(2048),
       // pcfSamples: 3,
     },
@@ -390,87 +391,6 @@ window.addEventListener('load', async () => {
     custom: customGeometry,
   }
 
-  // DEBUG SPOT DEPTH
-
-  const debugDepthVs = /* wgsl */ `
-    struct VSOutput {
-      @builtin(position) position: vec4f,
-      @location(0) uv: vec2f,
-    };
-
-    @vertex fn main(
-      attributes: Attributes,
-    ) -> VSOutput {
-      var vsOutput: VSOutput;
-
-      // just use the world matrix here, do not take the projection into account
-      vsOutput.position = vec4(attributes.position, 1.0);
-      vsOutput.uv = attributes.uv;
-      
-      return vsOutput;
-    }
-  `
-
-  const debugDepthFs = /* wgsl */ `
-    struct VSOutput {
-      @builtin(position) position: vec4f,
-      @location(0) uv: vec2f,
-    };
-
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-      var uv = fsInput.uv;
-      
-      uv = uv * 2.0 - 1.0;
-      uv *= 0.5;
-      uv = uv * 0.5 + 0.5;
-          
-      let rawDepth = textureSample(
-        depthTexture,
-        defaultSampler,
-        uv
-      );
-      
-      // remap depth into something a bit more visible
-      let depth = (1.0 - rawDepth);
-      
-      var color: vec4f = vec4(vec3(depth) * 10.0, 1.0);
-
-      return color;
-    }
-  `
-
-  const debugPlane = new Mesh(leftRenderer, {
-    label: 'Debug depth plane',
-    geometry: new PlaneGeometry(),
-    depthWriteEnabled: false,
-    frustumCulling: false,
-    visible: false,
-    renderOrder: 10,
-    samplers: [
-      new Sampler(leftRenderer, {
-        label: 'Debug depth sampler',
-        name: 'debugDepthSampler',
-        type: 'comparison',
-        compare: 'less',
-      }),
-    ],
-    shaders: {
-      vertex: {
-        code: debugDepthVs,
-      },
-      fragment: {
-        code: debugDepthFs,
-      },
-    },
-  })
-
-  const depthTexture = debugPlane.createTexture({
-    label: 'Debug depth texture',
-    name: 'depthTexture',
-    type: 'depth',
-    fromTexture: spotLight.shadow.depthTexture,
-  })
-
   // GUI
   const gui = new lil.GUI({
     title: 'Lights test',
@@ -671,8 +591,6 @@ window.addEventListener('load', async () => {
   pointLightsFolder.close()
 
   const spotLightsFolder = gui.addFolder('Spot lights')
-
-  spotLightsFolder.add(debugPlane, 'visible').name('Debug spot shadow depth')
 
   spotLights.forEach((spotLight, index) => {
     const spotLightFolder = spotLightsFolder.addFolder('Spot light ' + index)

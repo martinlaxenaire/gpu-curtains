@@ -3167,7 +3167,7 @@
         const additionalBindings = this.childrenBindings.length ? this.options.childrenBindings.map((child) => child.binding.wgslStructFragment).join("\n\n") + "\n\n" : "";
         this.wgslStructFragment = additionalBindings + Object.keys(structs).reverse().map((struct) => {
           return `struct ${struct} {
-	${Object.keys(structs[struct]).map((binding) => `${binding}: ${structs[struct][binding]}`).join(",\n	")}
+  ${Object.keys(structs[struct]).map((binding) => `${binding}: ${structs[struct][binding]}`).join(",\n  ")}
 };`;
         }).join("\n\n");
       } else {
@@ -3648,7 +3648,11 @@
           binding.update();
           if (binding.shouldUpdate && binding.buffer.GPUBuffer) {
             if (!binding.useStruct && binding.bufferElements.length > 1) {
-              this.renderer.queueWriteBuffer(binding.buffer.GPUBuffer, 0, binding.bufferElements[index].view);
+              this.renderer.queueWriteBuffer(
+                binding.buffer.GPUBuffer,
+                0,
+                binding.bufferElements[index].view
+              );
             } else {
               this.renderer.queueWriteBuffer(binding.buffer.GPUBuffer, 0, binding.arrayBuffer);
             }
@@ -4530,12 +4534,13 @@
       this._onAllSourcesUploadedCallback = () => {
       };
       this.type = "MediaTexture";
+      const supportExternalTexture = this.renderer.device ? typeof this.renderer.device.importExternalTexture !== "undefined" : true;
       this.options = {
         ...this.options,
         useTransform,
         placeholderColor,
         cache,
-        useExternalTextures: typeof this.renderer.device.importExternalTexture !== "undefined" && !!useExternalTextures,
+        useExternalTextures: supportExternalTexture && !!useExternalTextures,
         ...{
           sources: [],
           sourcesTypes: []
@@ -7909,12 +7914,12 @@
     setWGSLFragment() {
       let locationIndex = -1;
       this.wgslStructFragment = `struct Attributes {
-	@builtin(vertex_index) vertexIndex : u32,
-	@builtin(instance_index) instanceIndex : u32,${this.vertexBuffers.map((vertexBuffer) => {
+  @builtin(vertex_index) vertexIndex : u32,
+  @builtin(instance_index) instanceIndex : u32,${this.vertexBuffers.map((vertexBuffer) => {
       return vertexBuffer.attributes.map((attribute) => {
         locationIndex++;
         return `
-	@location(${locationIndex}) ${attribute.name}: ${attribute.type}`;
+  @location(${locationIndex}) ${attribute.name}: ${attribute.type}`;
       });
     }).join(",")}
 };`;
@@ -12068,7 +12073,7 @@ fn getPCFBaseShadowContribution(
             { once: false }
           );
         }
-      } else if (!value && this.ready) {
+      } else if (!value && __privateGet$h(this, _ready)) {
         this.bundle = null;
         __privateSet$h(this, _ready, value);
       }
@@ -13556,10 +13561,14 @@ struct PointShadowVSOutput {
   ${getVertexTransformedPositionNormal({ bindings, geometry })}
   
   let worldPos = worldPosition.xyz / worldPosition.w;
+
+  // TODO accessing viewMatrices from our pointShadow reference makes Firefox bug?!
+  // let viewMatrix: mat4x4f = pointShadow.viewMatrices[cubeFace.face];
+  // we need to access it directly instead!
+  let viewMatrix: mat4x4f = pointShadows.pointShadowsElements[${lightIndex}].viewMatrices[cubeFace.face];
   
   // shadows calculations in view space instead of world space
   // prevents world-space scaling issues for normal bias
-  let viewMatrix: mat4x4f = pointShadow.viewMatrices[cubeFace.face];
   var shadowViewPos: vec3f = (viewMatrix * worldPosition).xyz;
   let lightViewPos: vec3f = (viewMatrix * vec4(pointShadow.position, 1.0)).xyz;
 
@@ -13615,10 +13624,6 @@ struct PointShadowVSOutput {
   var _tempCubeDirection, _viewMatrices;
   const pointShadowStruct = {
     ...shadowStruct,
-    position: {
-      type: "vec3f",
-      value: new Vec3()
-    },
     cameraNear: {
       type: "f32",
       value: 0
@@ -13626,6 +13631,10 @@ struct PointShadowVSOutput {
     cameraFar: {
       type: "f32",
       value: 0
+    },
+    position: {
+      type: "vec3f",
+      value: new Vec3()
     },
     projectionMatrix: {
       type: "mat4x4f",
@@ -13650,7 +13659,11 @@ struct PointShadowVSOutput {
       pcfSamples,
       depthTextureSize,
       depthTextureFormat,
-      autoRender
+      autoRender,
+      camera = {
+        near: 0.1,
+        far: 150
+      }
     } = {}) {
       super(renderer, {
         light,
@@ -13673,6 +13686,10 @@ struct PointShadowVSOutput {
        * @private
        */
       __privateAdd$e(this, _viewMatrices);
+      this.options = {
+        ...this.options,
+        camera
+      };
       this.cubeDirections = [
         new Vec3(-1, 0, 0),
         new Vec3(1, 0, 0),
@@ -13696,8 +13713,8 @@ struct PointShadowVSOutput {
       }
       this.camera = new PerspectiveCamera({
         fov: 90,
-        near: 0.1,
-        far: this.light.range !== 0 ? this.light.range : 150,
+        near: camera.near,
+        far: camera.far,
         width: this.depthTextureSize.x,
         height: this.depthTextureSize.y,
         onMatricesChanged: () => {
@@ -13722,6 +13739,16 @@ struct PointShadowVSOutput {
      */
     cast(parameters = {}) {
       super.cast({ ...parameters, useRenderBundle: false });
+      if (parameters.camera) {
+        if (parameters.camera.near) {
+          this.options.camera.near = parameters.camera.near;
+          this.camera.near = this.options.camera.near;
+        }
+        if (parameters.camera.far) {
+          this.options.camera.far = parameters.camera.far;
+          this.camera.far = this.light.range !== 0 ? this.light.range : this.options.camera.far;
+        }
+      }
     }
     /**
      * Set the {@link depthComparisonSampler}, {@link depthTexture}, {@link depthPassTarget}, compute the {@link PointShadow#camera.projectionMatrix | camera projection matrix} and start rendering to the shadow map.
@@ -14038,8 +14065,8 @@ struct PointShadowVSOutput {
     set range(value) {
       __privateSet$c(this, _range$1, Math.max(0, value));
       this.onPropertyChanged("range", this.range);
-      if (this.shadow && this.range !== 0) {
-        this.shadow.camera.far = this.range;
+      if (this.shadow) {
+        this.shadow.camera.far = this.range ? this.range : this.shadow.options.camera.far;
       }
     }
     /**
@@ -14148,7 +14175,11 @@ struct SpotShadowVSOutput {
       depthTextureSize,
       depthTextureFormat,
       autoRender,
-      useRenderBundle
+      useRenderBundle,
+      camera = {
+        near: 0.1,
+        far: 150
+      }
     } = {}) {
       super(renderer, {
         light,
@@ -14161,10 +14192,14 @@ struct SpotShadowVSOutput {
         autoRender,
         useRenderBundle
       });
+      this.options = {
+        ...this.options,
+        camera
+      };
       this.focus = 1;
       this.camera = new PerspectiveCamera({
-        near: 0.1,
-        far: this.light.range !== 0 ? this.light.range : 150,
+        near: this.options.camera.near,
+        far: this.light.range !== 0 ? this.light.range : this.options.camera.far,
         fov: 180 / Math.PI * 2 * this.light.angle * this.focus,
         width: this.options.depthTextureSize.x,
         height: this.options.depthTextureSize.y,
@@ -14181,6 +14216,23 @@ struct SpotShadowVSOutput {
      */
     setRendererBinding() {
       this.rendererBinding = this.renderer.bindings.spotShadows;
+    }
+    /**
+     * Set the parameters and start casting shadows.
+     * @param parameters - Parameters to use for this {@link SpotShadow}.
+     */
+    cast(parameters = {}) {
+      super.cast(parameters);
+      if (parameters.camera) {
+        if (parameters.camera.near) {
+          this.options.camera.near = parameters.camera.near;
+          this.camera.near = this.options.camera.near;
+        }
+        if (parameters.camera.far) {
+          this.options.camera.far = parameters.camera.far;
+          this.camera.far = this.light.range !== 0 ? this.light.range : this.options.camera.far;
+        }
+      }
     }
     /**
      * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link SpotLight} has been overflowed or when the {@link renderer} has changed.
@@ -14417,8 +14469,8 @@ struct SpotShadowVSOutput {
     set range(value) {
       __privateSet$b(this, _range, Math.max(0, value));
       this.onPropertyChanged("range", this.range);
-      if (this.shadow && this.range !== 0) {
-        this.shadow.camera.far = this.range;
+      if (this.shadow) {
+        this.shadow.camera.far = this.range ? this.range : this.shadow.options.camera.far;
       }
     }
     /**

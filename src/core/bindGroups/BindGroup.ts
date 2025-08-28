@@ -559,7 +559,11 @@ export class BindGroup {
           if (!binding.useStruct && binding.bufferElements.length > 1) {
             // we're in a non struct buffer binding with multiple entries
             // that should not happen but that way we're covered
-            this.renderer.queueWriteBuffer(binding.buffer.GPUBuffer, 0, binding.bufferElements[index].view)
+            this.renderer.queueWriteBuffer(
+              binding.buffer.GPUBuffer,
+              0,
+              binding.bufferElements[index].view as BufferSource
+            )
           } else {
             this.renderer.queueWriteBuffer(binding.buffer.GPUBuffer, 0, binding.arrayBuffer)
           }

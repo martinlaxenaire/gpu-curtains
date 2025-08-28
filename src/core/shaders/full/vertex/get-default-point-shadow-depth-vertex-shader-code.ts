@@ -26,10 +26,14 @@ struct PointShadowVSOutput {
   ${getVertexTransformedPositionNormal({ bindings, geometry })}
   
   let worldPos = worldPosition.xyz / worldPosition.w;
+
+  // TODO accessing viewMatrices from our pointShadow reference makes Firefox bug?!
+  // let viewMatrix: mat4x4f = pointShadow.viewMatrices[cubeFace.face];
+  // we need to access it directly instead!
+  let viewMatrix: mat4x4f = pointShadows.pointShadowsElements[${lightIndex}].viewMatrices[cubeFace.face];
   
   // shadows calculations in view space instead of world space
   // prevents world-space scaling issues for normal bias
-  let viewMatrix: mat4x4f = pointShadow.viewMatrices[cubeFace.face];
   var shadowViewPos: vec3f = (viewMatrix * worldPosition).xyz;
   let lightViewPos: vec3f = (viewMatrix * vec4(pointShadow.position, 1.0)).xyz;
 

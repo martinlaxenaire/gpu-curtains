@@ -78,12 +78,13 @@ const _MediaTexture = class _MediaTexture extends Texture {
     this._onAllSourcesUploadedCallback = () => {
     };
     this.type = "MediaTexture";
+    const supportExternalTexture = this.renderer.device ? typeof this.renderer.device.importExternalTexture !== "undefined" : true;
     this.options = {
       ...this.options,
       useTransform,
       placeholderColor,
       cache,
-      useExternalTextures: typeof this.renderer.device.importExternalTexture !== "undefined" && !!useExternalTextures,
+      useExternalTextures: supportExternalTexture && !!useExternalTextures,
       ...{
         sources: [],
         sourcesTypes: []

@@ -200,7 +200,7 @@ window.addEventListener('load', async () => {
         depthTexture,
         debugDepthSampler,
         fsInput.uv,
-        fsInput.uv.y * 0.5 + 0.5
+        0.5
       );
       
       // remap depth into something a bit more visible

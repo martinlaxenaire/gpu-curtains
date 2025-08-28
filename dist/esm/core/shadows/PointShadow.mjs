@@ -16,10 +16,6 @@ var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "
 var _tempCubeDirection, _viewMatrices;
 const pointShadowStruct = {
   ...shadowStruct,
-  position: {
-    type: "vec3f",
-    value: new Vec3()
-  },
   cameraNear: {
     type: "f32",
     value: 0
@@ -27,6 +23,10 @@ const pointShadowStruct = {
   cameraFar: {
     type: "f32",
     value: 0
+  },
+  position: {
+    type: "vec3f",
+    value: new Vec3()
   },
   projectionMatrix: {
     type: "mat4x4f",
@@ -51,7 +51,11 @@ class PointShadow extends Shadow {
     pcfSamples,
     depthTextureSize,
     depthTextureFormat,
-    autoRender
+    autoRender,
+    camera = {
+      near: 0.1,
+      far: 150
+    }
   } = {}) {
     super(renderer, {
       light,
@@ -74,6 +78,10 @@ class PointShadow extends Shadow {
      * @private
      */
     __privateAdd(this, _viewMatrices);
+    this.options = {
+      ...this.options,
+      camera
+    };
     this.cubeDirections = [
       new Vec3(-1, 0, 0),
       new Vec3(1, 0, 0),
@@ -97,8 +105,8 @@ class PointShadow extends Shadow {
     }
     this.camera = new PerspectiveCamera({
       fov: 90,
-      near: 0.1,
-      far: this.light.range !== 0 ? this.light.range : 150,
+      near: camera.near,
+      far: camera.far,
       width: this.depthTextureSize.x,
       height: this.depthTextureSize.y,
       onMatricesChanged: () => {
@@ -123,6 +131,16 @@ class PointShadow extends Shadow {
    */
   cast(parameters = {}) {
     super.cast({ ...parameters, useRenderBundle: false });
+    if (parameters.camera) {
+      if (parameters.camera.near) {
+        this.options.camera.near = parameters.camera.near;
+        this.camera.near = this.options.camera.near;
+      }
+      if (parameters.camera.far) {
+        this.options.camera.far = parameters.camera.far;
+        this.camera.far = this.light.range !== 0 ? this.light.range : this.options.camera.far;
+      }
+    }
   }
   /**
    * Set the {@link depthComparisonSampler}, {@link depthTexture}, {@link depthPassTarget}, compute the {@link PointShadow#camera.projectionMatrix | camera projection matrix} and start rendering to the shadow map.

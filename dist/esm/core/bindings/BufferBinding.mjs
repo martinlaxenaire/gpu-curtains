@@ -536,7 +536,7 @@ const _BufferBinding = class _BufferBinding extends Binding {
       const additionalBindings = this.childrenBindings.length ? this.options.childrenBindings.map((child) => child.binding.wgslStructFragment).join("\n\n") + "\n\n" : "";
       this.wgslStructFragment = additionalBindings + Object.keys(structs).reverse().map((struct) => {
         return `struct ${struct} {
-	${Object.keys(structs[struct]).map((binding) => `${binding}: ${structs[struct][binding]}`).join(",\n	")}
+  ${Object.keys(structs[struct]).map((binding) => `${binding}: ${structs[struct][binding]}`).join(",\n  ")}
 };`;
       }).join("\n\n");
     } else {

@@ -910,9 +910,9 @@ export class BufferBinding extends Binding {
         Object.keys(structs)
           .reverse()
           .map((struct) => {
-            return `struct ${struct} {\n\t${Object.keys(structs[struct])
+            return `struct ${struct} {\n  ${Object.keys(structs[struct])
               .map((binding) => `${binding}: ${structs[struct][binding]}`)
-              .join(',\n\t')}\n};`
+              .join(',\n  ')}\n};`
           })
           .join('\n\n')
     } else {

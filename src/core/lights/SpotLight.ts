@@ -17,7 +17,7 @@ export interface SpotLightBaseParams extends LightBaseParams {
   angle?: number
   /** Percent of the spotlight cone that is attenuated due to penumbra. Takes values between `0` and `1`. Default is `0`. */
   penumbra?: number
-  /** The {@link SpotLight} range, used to compute the {@link SpotLight} attenuation over distance. Default to `0`. */
+  /** The {@link SpotLight} range, used to compute the {@link SpotLight} attenuation over distance.  When range is zero, light will attenuate according to inverse-square law to infinite distance. When range is non-zero, light will attenuate according to inverse-square law until near the distance cutoff, where it will then attenuate quickly and smoothly to 0. Inherently, cutoffs are not physically correct. Default to `0`. */
   range?: number
   /** The {@link SpotLight} shadow parameters used to create a {@link SpotShadow}. If not set, the {@link SpotShadow} won't be set as active and won't cast any shadows. On the other hand, if anything is passed (even an empty object), the {@link SpotShadow} will start casting shadows, so use with caution. Default to `null` (which means the {@link SpotLight} will not cast shadows). */
   shadow?: Omit<ShadowBaseParams, 'light'>
@@ -275,8 +275,8 @@ export class SpotLight extends Light {
     this.#range = Math.max(0, value)
     this.onPropertyChanged('range', this.range)
 
-    if (this.shadow && this.range !== 0) {
-      this.shadow.camera.far = this.range
+    if (this.shadow) {
+      this.shadow.camera.far = this.range ? this.range : this.shadow.options.camera.far
     }
   }
 

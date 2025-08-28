@@ -12,6 +12,13 @@ import { ShaderOptions } from '../../types/Materials';
 export interface SpotShadowParams extends ShadowBaseParams {
     /** {@link SpotLight} used to create the {@link SpotShadow}. */
     light: SpotLight;
+    /** Optional {@link PerspectiveCamera} near and far values to use. */
+    camera?: {
+        /** Optional {@link PerspectiveCamera} near value to use. Default to `0.1`. */
+        near: number;
+        /** Optional {@link PerspectiveCamera} far value to use, if the {@link SpotLight#range | SpotLight `range`} is `0`. If the light `range` is greater than `0`, then the `range` value will be used instead. Default to `150`. */
+        far: number;
+    };
 }
 /** @ignore */
 export declare const spotShadowStruct: Record<string, Input>;
@@ -32,11 +39,16 @@ export declare class SpotShadow extends Shadow {
      * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link SpotShadow}.
      * @param parameters - {@link SpotShadowParams} used to create this {@link SpotShadow}.
      */
-    constructor(renderer: CameraRenderer | GPUCurtains, { light, intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender, useRenderBundle, }?: SpotShadowParams);
+    constructor(renderer: CameraRenderer | GPUCurtains, { light, intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender, useRenderBundle, camera, }?: SpotShadowParams);
     /**
      * Set or reset this {@link SpotShadow} {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      */
     setRendererBinding(): void;
+    /**
+     * Set the parameters and start casting shadows.
+     * @param parameters - Parameters to use for this {@link SpotShadow}.
+     */
+    cast(parameters?: Omit<SpotShadowParams, "light">): void;
     /**
      * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link SpotLight} has been overflowed or when the {@link renderer} has changed.
      */
