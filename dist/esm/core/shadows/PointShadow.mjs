@@ -16,10 +16,6 @@ var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "
 var _tempCubeDirection, _viewMatrices;
 const pointShadowStruct = {
   ...shadowStruct,
-  position: {
-    type: "vec3f",
-    value: new Vec3()
-  },
   cameraNear: {
     type: "f32",
     value: 0
@@ -27,6 +23,10 @@ const pointShadowStruct = {
   cameraFar: {
     type: "f32",
     value: 0
+  },
+  position: {
+    type: "vec3f",
+    value: new Vec3()
   },
   projectionMatrix: {
     type: "mat4x4f",

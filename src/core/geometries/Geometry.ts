@@ -491,11 +491,11 @@ export class Geometry {
    */
   setWGSLFragment() {
     let locationIndex = -1
-    this.wgslStructFragment = `struct Attributes {\n\t@builtin(vertex_index) vertexIndex : u32,\n\t@builtin(instance_index) instanceIndex : u32,${this.vertexBuffers
+    this.wgslStructFragment = `struct Attributes {\n  @builtin(vertex_index) vertexIndex : u32,\n  @builtin(instance_index) instanceIndex : u32,${this.vertexBuffers
       .map((vertexBuffer) => {
         return vertexBuffer.attributes.map((attribute) => {
           locationIndex++
-          return `\n\t@location(${locationIndex}) ${attribute.name}: ${attribute.type}`
+          return `\n  @location(${locationIndex}) ${attribute.name}: ${attribute.type}`
         })
       })
       .join(',')}\n};`
@@ -560,7 +560,7 @@ export class Geometry {
 
       buffer.buffer.GPUBuffer.unmap()
     } else {
-      renderer.queueWriteBuffer(buffer.buffer.GPUBuffer, 0, buffer.array)
+      renderer.queueWriteBuffer(buffer.buffer.GPUBuffer, 0, buffer.array as BufferSource)
     }
   }
 

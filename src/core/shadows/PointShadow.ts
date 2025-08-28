@@ -31,10 +31,6 @@ export interface PointShadowParams extends Omit<ShadowBaseParams, 'useRenderBund
 /** @ignore */
 export const pointShadowStruct: Record<string, Input> = {
   ...shadowStruct,
-  position: {
-    type: 'vec3f',
-    value: new Vec3(),
-  },
   cameraNear: {
     type: 'f32',
     value: 0,
@@ -42,6 +38,10 @@ export const pointShadowStruct: Record<string, Input> = {
   cameraFar: {
     type: 'f32',
     value: 0,
+  },
+  position: {
+    type: 'vec3f',
+    value: new Vec3(),
   },
   projectionMatrix: {
     type: 'mat4x4f',

@@ -354,7 +354,11 @@ class BindGroup {
         binding.update();
         if (binding.shouldUpdate && binding.buffer.GPUBuffer) {
           if (!binding.useStruct && binding.bufferElements.length > 1) {
-            this.renderer.queueWriteBuffer(binding.buffer.GPUBuffer, 0, binding.bufferElements[index].view);
+            this.renderer.queueWriteBuffer(
+              binding.buffer.GPUBuffer,
+              0,
+              binding.bufferElements[index].view
+            );
           } else {
             this.renderer.queueWriteBuffer(binding.buffer.GPUBuffer, 0, binding.arrayBuffer);
           }

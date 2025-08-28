@@ -18,6 +18,7 @@ window.addEventListener('load', async () => {
     BoxGeometry,
     Vec3,
     Object3D,
+    BufferBinding,
   } = await import(/* @vite-ignore */ path)
 
   const stats = new Stats()
@@ -39,6 +40,10 @@ window.addEventListener('load', async () => {
     deviceManager: gpuDeviceManager, // the renderer is going to use our WebGPU device to create its context
     container: document.querySelector('#canvas'),
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
+    // lights: {
+    //   maxPointLights: 1,
+    //   useUniformsForShadows: true,
+    // },
   })
 
   gpuDeviceManager
@@ -53,7 +58,7 @@ window.addEventListener('load', async () => {
   const { camera } = gpuCameraRenderer
 
   camera.position.y = 5
-  camera.position.z = 15
+  camera.position.z = 12.5
 
   const orbitControls = new OrbitControls({
     camera: gpuCameraRenderer.camera,
@@ -69,7 +74,7 @@ window.addEventListener('load', async () => {
   const directionalLight = new DirectionalLight(gpuCameraRenderer, {
     label: 'White directional light',
     position: new Vec3(10, 5, 10),
-    target: new Vec3(0, 0.5, 0),
+    target: new Vec3(0, 1, 0),
     intensity: 1,
   })
 
@@ -82,11 +87,12 @@ window.addEventListener('load', async () => {
 
   const pointLight = new PointLight(gpuCameraRenderer, {
     label: 'Pink point light',
-    position: new Vec3(0, 0.5, 0),
+    position: new Vec3(0, 1, 0),
     color: pink,
     intensity: 40,
     shadow: {
       intensity: 1,
+      // depthTextureFormat: 'depth32float',
       camera: {
         near: 0.01,
         far: 200,
@@ -95,8 +101,6 @@ window.addEventListener('load', async () => {
   })
 
   pointLight.parent = pointLightPivot
-
-  console.log(pointLight.shadow)
 
   const pointLightHelper = new LitMesh(gpuCameraRenderer, {
     label: 'Point light helper',
@@ -126,7 +130,6 @@ window.addEventListener('load', async () => {
   })
 
   floor.parent = floorPivot
-  floor.position.set(0, -0.5, 0)
   floor.rotation.set(-Math.PI / 2, 0, 0)
   floor.scale.set(100)
 
@@ -144,15 +147,13 @@ window.addEventListener('load', async () => {
     },
   })
 
-  mesh.position.y = 0.5
   mesh.position.x = -3
+  mesh.position.y = 1
 
-  pointLight.shadow.depthMeshes.forEach(async (depthMesh) => {
-    console.log('DEPTH VERTEX SHADER >>>\n\n', await depthMesh.material.getShaderCode('vertex'))
-    console.log('DEPTH FRAGMENT SHADER >>>\n\n', await depthMesh.material.getShaderCode('fragment'))
-  })
-
-  // DEBUG PLANE
+  // pointLight.shadow.depthMeshes.forEach(async (depthMesh) => {
+  //   console.log('DEPTH VERTEX SHADER >>>\n\n', await depthMesh.material.getShaderCode('vertex'))
+  //   console.log('DEPTH FRAGMENT SHADER >>>\n\n', await depthMesh.material.getShaderCode('fragment'))
+  // })
 
   // DEBUG DEPTH
 
@@ -221,6 +222,7 @@ window.addEventListener('load', async () => {
     depthWriteEnabled: false,
     frustumCulling: false,
     visible: true,
+    lighting: false,
     samplers: [
       new Sampler(gpuCameraRenderer, {
         label: 'Debug depth sampler',
@@ -303,8 +305,12 @@ window.addEventListener('load', async () => {
     pointShadow.add(pointLight.shadow, 'bias', 0, 0.01, 0.0001)
     pointShadow.add(pointLight.shadow, 'normalBias', 0, 0.01, 0.0001)
     pointShadow.add(pointLight.shadow, 'pcfSamples', 1, 5, 1)
-    // pointShadow.add(pointLight.shadow.depthTextureSize, 'x', 128, 1024, 64).name('Texture width')
-    // pointShadow.add(pointLight.shadow.depthTextureSize, 'y', 128, 1024, 64).name('Texture height')
+    pointShadow
+      .add(pointLight.shadow.depthTextureSize, 'x', 128, 1024, 64)
+      .name('Texture size')
+      .onChange(() => {
+        depthTexture.copy(pointLight.shadow.depthTexture)
+      })
 
     const debugFolder = pointShadow.addFolder('Debug shadow depth cube texture')
     debugFolder.add(debugPlane, 'visible').name('Visible')

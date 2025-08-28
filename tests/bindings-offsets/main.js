@@ -400,6 +400,55 @@ window.addEventListener('load', async () => {
 
   debugBindings.push(lightsShadowsBinding)
 
+  const pointShadowBinding = new BufferBinding({
+    label: 'Point shadow binding',
+    name: 'pointShadowBinding',
+    struct: {
+      isActive: {
+        type: 'i32',
+        value: 0,
+      },
+      pcfSamples: {
+        type: 'i32',
+        value: 0,
+      },
+      bias: {
+        type: 'f32',
+        value: 0,
+      },
+      normalBias: {
+        type: 'f32',
+        value: 0,
+      },
+      intensity: {
+        type: 'f32',
+        value: 0,
+      },
+      cameraNear: {
+        type: 'f32',
+        value: 0,
+      },
+      cameraFar: {
+        type: 'f32',
+        value: 0,
+      },
+      position: {
+        type: 'vec3f',
+        value: new Float32Array(3),
+      },
+      projectionMatrix: {
+        type: 'mat4x4f',
+        value: new Float32Array(16),
+      },
+      viewMatrices: {
+        type: 'array<mat4x4f>',
+        value: new Float32Array(16 * 6),
+      },
+    },
+  })
+
+  debugBindings.push(pointShadowBinding)
+
   const multipleChildrenBinding = new BufferBinding({
     label: 'Multiple bindings children',
     name: 'multipleBindingsChildren',

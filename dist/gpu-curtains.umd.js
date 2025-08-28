@@ -3167,7 +3167,7 @@
         const additionalBindings = this.childrenBindings.length ? this.options.childrenBindings.map((child) => child.binding.wgslStructFragment).join("\n\n") + "\n\n" : "";
         this.wgslStructFragment = additionalBindings + Object.keys(structs).reverse().map((struct) => {
           return `struct ${struct} {
-	${Object.keys(structs[struct]).map((binding) => `${binding}: ${structs[struct][binding]}`).join(",\n	")}
+  ${Object.keys(structs[struct]).map((binding) => `${binding}: ${structs[struct][binding]}`).join(",\n  ")}
 };`;
         }).join("\n\n");
       } else {
@@ -3648,7 +3648,11 @@
           binding.update();
           if (binding.shouldUpdate && binding.buffer.GPUBuffer) {
             if (!binding.useStruct && binding.bufferElements.length > 1) {
-              this.renderer.queueWriteBuffer(binding.buffer.GPUBuffer, 0, binding.bufferElements[index].view);
+              this.renderer.queueWriteBuffer(
+                binding.buffer.GPUBuffer,
+                0,
+                binding.bufferElements[index].view
+              );
             } else {
               this.renderer.queueWriteBuffer(binding.buffer.GPUBuffer, 0, binding.arrayBuffer);
             }
@@ -7910,12 +7914,12 @@
     setWGSLFragment() {
       let locationIndex = -1;
       this.wgslStructFragment = `struct Attributes {
-	@builtin(vertex_index) vertexIndex : u32,
-	@builtin(instance_index) instanceIndex : u32,${this.vertexBuffers.map((vertexBuffer) => {
+  @builtin(vertex_index) vertexIndex : u32,
+  @builtin(instance_index) instanceIndex : u32,${this.vertexBuffers.map((vertexBuffer) => {
       return vertexBuffer.attributes.map((attribute) => {
         locationIndex++;
         return `
-	@location(${locationIndex}) ${attribute.name}: ${attribute.type}`;
+  @location(${locationIndex}) ${attribute.name}: ${attribute.type}`;
       });
     }).join(",")}
 };`;
@@ -13557,10 +13561,14 @@ struct PointShadowVSOutput {
   ${getVertexTransformedPositionNormal({ bindings, geometry })}
   
   let worldPos = worldPosition.xyz / worldPosition.w;
+
+  // TODO accessing viewMatrices from our pointShadow reference makes Firefox bug?!
+  // let viewMatrix: mat4x4f = pointShadow.viewMatrices[cubeFace.face];
+  // we need to access it directly instead!
+  let viewMatrix: mat4x4f = pointShadows.pointShadowsElements[${lightIndex}].viewMatrices[cubeFace.face];
   
   // shadows calculations in view space instead of world space
   // prevents world-space scaling issues for normal bias
-  let viewMatrix: mat4x4f = pointShadow.viewMatrices[cubeFace.face];
   var shadowViewPos: vec3f = (viewMatrix * worldPosition).xyz;
   let lightViewPos: vec3f = (viewMatrix * vec4(pointShadow.position, 1.0)).xyz;
 
@@ -13616,10 +13624,6 @@ struct PointShadowVSOutput {
   var _tempCubeDirection, _viewMatrices;
   const pointShadowStruct = {
     ...shadowStruct,
-    position: {
-      type: "vec3f",
-      value: new Vec3()
-    },
     cameraNear: {
       type: "f32",
       value: 0
@@ -13627,6 +13631,10 @@ struct PointShadowVSOutput {
     cameraFar: {
       type: "f32",
       value: 0
+    },
+    position: {
+      type: "vec3f",
+      value: new Vec3()
     },
     projectionMatrix: {
       type: "mat4x4f",
