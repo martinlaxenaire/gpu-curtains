@@ -27,7 +27,7 @@
     "Examples": "https://martinlaxenaire.github.io/gpu-curtains/examples/"
   },
   "hostedBaseUrl": "https://martinlaxenaire.github.io/gpu-curtains/docs",
-  "plugin": ["typedoc-plugin-mdn-links"],
+  "plugin": ["typedoc-plugin-mdn-links", "./umami-typedoc-plugin/index.js"],
   "defaultCategory": "API",
   "categoryOrder": ["Tutorials", "About", "API"],
   "projectDocuments": ["guides/getting-started.md", "guides/core-concepts.md"],
@@ -38,5 +38,5 @@
     "notExported": true,
     "invalidLink": true,
     "notDocumented": true
-  }
+  },
 }
