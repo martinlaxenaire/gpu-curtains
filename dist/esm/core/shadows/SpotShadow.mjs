@@ -51,6 +51,7 @@ class SpotShadow extends Shadow {
       autoRender,
       useRenderBundle
     });
+    camera.far = this.light.range !== 0 ? this.light.range : camera.far;
     this.options = {
       ...this.options,
       camera
@@ -58,7 +59,7 @@ class SpotShadow extends Shadow {
     this.focus = 1;
     this.camera = new PerspectiveCamera({
       near: this.options.camera.near,
-      far: this.light.range !== 0 ? this.light.range : this.options.camera.far,
+      far: this.options.camera.far,
       fov: 180 / Math.PI * 2 * this.light.angle * this.focus,
       width: this.options.depthTextureSize.x,
       height: this.options.depthTextureSize.y,
@@ -88,8 +89,8 @@ class SpotShadow extends Shadow {
         this.camera.near = this.options.camera.near;
       }
       if (parameters.camera.far) {
-        this.options.camera.far = parameters.camera.far;
-        this.camera.far = this.light.range !== 0 ? this.light.range : this.options.camera.far;
+        this.options.camera.far = this.light.range !== 0 ? this.light.range : parameters.camera.far;
+        this.camera.far = this.options.camera.far;
       }
     }
   }
