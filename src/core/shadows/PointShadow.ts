@@ -22,9 +22,9 @@ export interface PointShadowParams extends Omit<ShadowBaseParams, 'useRenderBund
   /** Optional {@link PerspectiveCamera} near and far values to use. */
   camera?: {
     /** Optional {@link PerspectiveCamera} near value to use. Default to `0.1`. */
-    near: number
+    near?: number
     /** Optional {@link PerspectiveCamera} far value to use, if the {@link PointLight#range | PointLight `range`} is `0`. If the light `range` is greater than `0`, then the `range` value will be used instead. Default to `150`. */
-    far: number
+    far?: number
   }
 }
 
@@ -118,6 +118,8 @@ export class PointShadow extends Shadow {
       useRenderBundle: false,
     })
 
+    camera.far = this.light.range !== 0 ? this.light.range : camera.far
+
     this.options = {
       ...this.options,
       camera,
@@ -151,8 +153,8 @@ export class PointShadow extends Shadow {
 
     this.camera = new PerspectiveCamera({
       fov: 90,
-      near: camera.near,
-      far: camera.far,
+      near: this.options.camera.near,
+      far: this.options.camera.far,
       width: this.depthTextureSize.x,
       height: this.depthTextureSize.y,
       onMatricesChanged: () => {
@@ -191,8 +193,8 @@ export class PointShadow extends Shadow {
       }
 
       if (parameters.camera.far) {
-        this.options.camera.far = parameters.camera.far
-        this.camera.far = this.light.range !== 0 ? this.light.range : this.options.camera.far
+        this.options.camera.far = this.light.range !== 0 ? this.light.range : parameters.camera.far
+        this.camera.far = this.options.camera.far
       }
     }
   }

@@ -90,6 +90,7 @@ window.addEventListener('load', async () => {
     position: new Vec3(0, 1, 0),
     color: pink,
     intensity: 40,
+    // range: 50,
     shadow: {
       intensity: 1,
       // depthTextureFormat: 'depth32float',
