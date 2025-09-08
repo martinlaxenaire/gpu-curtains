@@ -15,9 +15,9 @@ export interface SpotShadowParams extends ShadowBaseParams {
     /** Optional {@link PerspectiveCamera} near and far values to use. */
     camera?: {
         /** Optional {@link PerspectiveCamera} near value to use. Default to `0.1`. */
-        near: number;
+        near?: number;
         /** Optional {@link PerspectiveCamera} far value to use, if the {@link SpotLight#range | SpotLight `range`} is `0`. If the light `range` is greater than `0`, then the `range` value will be used instead. Default to `150`. */
-        far: number;
+        far?: number;
     };
 }
 /** @ignore */
