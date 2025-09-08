@@ -13686,6 +13686,7 @@ struct PointShadowVSOutput {
        * @private
        */
       __privateAdd$e(this, _viewMatrices);
+      camera.far = this.light.range !== 0 ? this.light.range : camera.far;
       this.options = {
         ...this.options,
         camera
@@ -13713,8 +13714,8 @@ struct PointShadowVSOutput {
       }
       this.camera = new PerspectiveCamera({
         fov: 90,
-        near: camera.near,
-        far: camera.far,
+        near: this.options.camera.near,
+        far: this.options.camera.far,
         width: this.depthTextureSize.x,
         height: this.depthTextureSize.y,
         onMatricesChanged: () => {
@@ -13745,8 +13746,8 @@ struct PointShadowVSOutput {
           this.camera.near = this.options.camera.near;
         }
         if (parameters.camera.far) {
-          this.options.camera.far = parameters.camera.far;
-          this.camera.far = this.light.range !== 0 ? this.light.range : this.options.camera.far;
+          this.options.camera.far = this.light.range !== 0 ? this.light.range : parameters.camera.far;
+          this.camera.far = this.options.camera.far;
         }
       }
     }
@@ -14192,6 +14193,7 @@ struct SpotShadowVSOutput {
         autoRender,
         useRenderBundle
       });
+      camera.far = this.light.range !== 0 ? this.light.range : camera.far;
       this.options = {
         ...this.options,
         camera
@@ -14199,7 +14201,7 @@ struct SpotShadowVSOutput {
       this.focus = 1;
       this.camera = new PerspectiveCamera({
         near: this.options.camera.near,
-        far: this.light.range !== 0 ? this.light.range : this.options.camera.far,
+        far: this.options.camera.far,
         fov: 180 / Math.PI * 2 * this.light.angle * this.focus,
         width: this.options.depthTextureSize.x,
         height: this.options.depthTextureSize.y,
@@ -14229,8 +14231,8 @@ struct SpotShadowVSOutput {
           this.camera.near = this.options.camera.near;
         }
         if (parameters.camera.far) {
-          this.options.camera.far = parameters.camera.far;
-          this.camera.far = this.light.range !== 0 ? this.light.range : this.options.camera.far;
+          this.options.camera.far = this.light.range !== 0 ? this.light.range : parameters.camera.far;
+          this.camera.far = this.options.camera.far;
         }
       }
     }

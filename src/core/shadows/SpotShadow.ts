@@ -20,9 +20,9 @@ export interface SpotShadowParams extends ShadowBaseParams {
   /** Optional {@link PerspectiveCamera} near and far values to use. */
   camera?: {
     /** Optional {@link PerspectiveCamera} near value to use. Default to `0.1`. */
-    near: number
+    near?: number
     /** Optional {@link PerspectiveCamera} far value to use, if the {@link SpotLight#range | SpotLight `range`} is `0`. If the light `range` is greater than `0`, then the `range` value will be used instead. Default to `150`. */
-    far: number
+    far?: number
   }
 }
 
@@ -93,6 +93,8 @@ export class SpotShadow extends Shadow {
       useRenderBundle,
     })
 
+    camera.far = this.light.range !== 0 ? this.light.range : camera.far
+
     this.options = {
       ...this.options,
       camera,
@@ -103,7 +105,7 @@ export class SpotShadow extends Shadow {
 
     this.camera = new PerspectiveCamera({
       near: this.options.camera.near,
-      far: this.light.range !== 0 ? this.light.range : this.options.camera.far,
+      far: this.options.camera.far,
       fov: (180 / Math.PI) * 2 * this.light.angle * this.focus,
       width: this.options.depthTextureSize.x,
       height: this.options.depthTextureSize.y,
@@ -139,8 +141,8 @@ export class SpotShadow extends Shadow {
       }
 
       if (parameters.camera.far) {
-        this.options.camera.far = parameters.camera.far
-        this.camera.far = this.light.range !== 0 ? this.light.range : this.options.camera.far
+        this.options.camera.far = this.light.range !== 0 ? this.light.range : parameters.camera.far
+        this.camera.far = this.options.camera.far
       }
     }
   }

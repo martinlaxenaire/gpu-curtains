@@ -78,6 +78,7 @@ class PointShadow extends Shadow {
      * @private
      */
     __privateAdd(this, _viewMatrices);
+    camera.far = this.light.range !== 0 ? this.light.range : camera.far;
     this.options = {
       ...this.options,
       camera
@@ -105,8 +106,8 @@ class PointShadow extends Shadow {
     }
     this.camera = new PerspectiveCamera({
       fov: 90,
-      near: camera.near,
-      far: camera.far,
+      near: this.options.camera.near,
+      far: this.options.camera.far,
       width: this.depthTextureSize.x,
       height: this.depthTextureSize.y,
       onMatricesChanged: () => {
@@ -137,8 +138,8 @@ class PointShadow extends Shadow {
         this.camera.near = this.options.camera.near;
       }
       if (parameters.camera.far) {
-        this.options.camera.far = parameters.camera.far;
-        this.camera.far = this.light.range !== 0 ? this.light.range : this.options.camera.far;
+        this.options.camera.far = this.light.range !== 0 ? this.light.range : parameters.camera.far;
+        this.camera.far = this.options.camera.far;
       }
     }
   }
