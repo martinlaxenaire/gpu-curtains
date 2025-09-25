@@ -57,8 +57,12 @@ export interface RenderPassOptions {
   depthTexture?: Texture
   /** The {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#depthloadop | depth load operation} to perform while drawing this {@link RenderPass}. Default to `'clear`. */
   depthLoadOp: GPULoadOp
+  /** Force the `depthLoadOp` behaviour of this {@link RenderPass} instead on relying on the {@link core/scenes/Scene | Scene} default one. Default to `null`. */
+  forceDepthLoadOp: GPULoadOp | null
   /** The {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#depthstoreop | depth store operation} to perform while drawing this {@link RenderPass}. Default to `'store'`. */
   depthStoreOp: GPUStoreOp
+  /** Force the `depthStoreOp` behaviour of this {@link RenderPass} instead on relying on the {@link core/scenes/Scene | Scene} default one. Default to `null`. */
+  forceDepthStoreOp: GPUStoreOp | null
   /** The depth clear value to clear to before drawing this {@link RenderPass}. Default to `1`. */
   depthClearValue: number
   /** Optional format of the depth texture. Default to `'depth24plus'`. */
@@ -66,20 +70,35 @@ export interface RenderPassOptions {
 
   /** Indicates that the depth component of the depth texture view is read only. Default to `false`. */
   depthReadOnly: boolean
+  /** Force the `depthReadOnly` behaviour of this {@link RenderPass} instead on relying on the {@link core/scenes/Scene | Scene} default one. Default to `null`. */
+  forceDepthReadOnly: boolean | null
+
   /** A number indicating the value to clear view's stencil component to prior to executing the render pass. This is ignored if stencilLoadOp is not set to "clear". Default to `0`. */
   stencilClearValue: number
   /** The {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#stencilloadop | stencil load operation} to perform while drawing this {@link RenderPass}. Default to `'clear`. */
   stencilLoadOp: GPULoadOp
+  /** Force the `stencilLoadOp` behaviour of this {@link RenderPass} instead on relying on the {@link core/scenes/Scene | Scene} default one. Default to `null`. */
+  forceStencilLoadOp: GPULoadOp | null
   /** The {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#stencilstoreop | stencil store operation} to perform while drawing this {@link RenderPass}. Default to `'store'`. */
   stencilStoreOp: GPUStoreOp
+  /** Force the `stencilStoreOp` behaviour of this {@link RenderPass} instead on relying on the {@link core/scenes/Scene | Scene} default one. Default to `null`. */
+  forceStencilStoreOp: GPUStoreOp | null
   /** Indicates that the stencil component of the depth texture view is read only. Default to `false`. */
   stencilReadOnly: boolean
+  /** Force the `stencilReadOnly` behaviour of this {@link RenderPass} instead on relying on the {@link core/scenes/Scene | Scene} default one. Default to `null`. */
+  forceStencilReadOnly: boolean | null
 }
 
 /**
  * Parameters used to create this {@link RenderPass}.
  */
-export interface RenderPassParams extends Partial<RenderPassOptions> {}
+export interface RenderPassParams
+  extends Partial<
+    Omit<
+      RenderPassOptions,
+      'depthLoadOp' | 'depthStoreOp' | 'depthReadOnly' | 'stencilLoadOp' | 'stencilStoreOp' | 'stencilReadOnly'
+    >
+  > {}
 
 /**
  * Used by {@link core/renderPasses/RenderTarget.RenderTarget | RenderTarget} and the {@link Renderer} to render to one or multiple {@link RenderPass#viewTextures | view textures} (and optionally a {@link RenderPass#depthTexture | depth texture}), using a specific {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#descriptor | GPURenderPassDescriptor}.
@@ -135,15 +154,16 @@ export class RenderPass {
       // depth
       useDepth = true,
       depthTexture = null,
-      depthLoadOp = 'clear' as GPULoadOp,
-      depthStoreOp = 'store' as GPUStoreOp,
+      forceDepthLoadOp = null as GPULoadOp | null,
+      forceDepthStoreOp = null as GPUStoreOp | null,
       depthClearValue = 1,
       depthFormat = 'depth24plus' as GPUTextureFormat,
-      depthReadOnly = false,
+      forceDepthReadOnly = null as boolean | null,
+      // stencil
       stencilClearValue = 0,
-      stencilLoadOp = 'clear' as GPULoadOp,
-      stencilStoreOp = 'store' as GPUStoreOp,
-      stencilReadOnly = false,
+      forceStencilLoadOp = null as GPULoadOp | null,
+      forceStencilStoreOp = null as GPUStoreOp | null,
+      forceStencilReadOnly = null as boolean | null,
     } = {} as RenderPassParams
   ) {
     this.type = 'RenderPass'
@@ -187,15 +207,21 @@ export class RenderPass {
       // depth
       useDepth,
       ...(depthTexture !== undefined && { depthTexture }),
-      depthLoadOp,
-      depthStoreOp,
+      depthLoadOp: forceDepthLoadOp ?? 'clear',
+      forceDepthLoadOp,
+      depthStoreOp: forceDepthStoreOp ?? 'store',
+      forceDepthStoreOp,
       depthClearValue,
       depthFormat,
-      depthReadOnly,
+      depthReadOnly: forceDepthReadOnly === null ? false : forceDepthReadOnly,
+      forceDepthReadOnly,
       stencilClearValue,
-      stencilLoadOp,
-      stencilStoreOp,
-      stencilReadOnly,
+      stencilLoadOp: forceStencilLoadOp ?? 'clear',
+      forceStencilLoadOp,
+      stencilStoreOp: forceStencilStoreOp ?? 'store',
+      forceStencilStoreOp,
+      stencilReadOnly: forceStencilReadOnly === null ? false : forceStencilReadOnly,
+      forceStencilReadOnly,
     }
 
     this.renderer.renderPasses.set(this.uuid, this)
@@ -513,8 +539,8 @@ export class RenderPass {
 
   /**
    * Set the {@link descriptor} {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#loadop | load operation}.
-   * @param loadOp - new {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#loadop | load operation} to use.
-   * @param colorAttachmentIndex - index of the color attachment for which to use this load operation.
+   * @param loadOp - New {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#loadop | load operation} to use.
+   * @param colorAttachmentIndex - Index of the color attachment for which to use this load operation.
    */
   setLoadOp(loadOp: GPULoadOp = 'clear', colorAttachmentIndex = 0) {
     if (this.options.useColorAttachments) {
@@ -531,28 +557,73 @@ export class RenderPass {
   }
 
   /**
-   * Set the {@link descriptor} {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#depthloadop | depth load operation}.
-   * @param depthLoadOp - new {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#depthloadop | depth load operation} to use.
+   * Set the {@link descriptor} {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#depthloadop | depth load operation} if {@link RenderPassOptions#forceDepthLoadOp | forceDepthLoadOp options} has not been defined.
+   * @param depthLoadOp - New {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#depthloadop | depth load operation} to use.
+   * @param force - Force the update of the `depthLoadOp` setting regardless of {@link RenderPassOptions#forceDepthLoadOp | forceDepthLoadOp option} value.
    */
-  setDepthLoadOp(depthLoadOp: GPULoadOp = 'clear') {
+  setDepthLoadOp(depthLoadOp: GPULoadOp = 'clear', force = false) {
+    if (this.options.forceDepthLoadOp && !force) return
+
     this.options.depthLoadOp = depthLoadOp
     this.#updateDepthAttachmentSettings()
   }
 
   /**
-   * Set the new {@link RenderPassParams.depthReadOnly | depthReadOnly} setting.
-   * @param value - Whether the depth buffer should be read-only or not.
+   * Set the {@link descriptor} {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#depthstoreop | depth store operation} if {@link RenderPassOptions#forceDepthStoreOp | forceDepthStoreOp option} has not been defined.
+   * @param depthStoreOp - New {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#depthstoreop | depth store operation} to use.
+   * @param force - Force the update of the `depthStoreOp` setting regardless of {@link RenderPassOptions#forceDepthStoreOp | forceDepthStoreOp option} value.
    */
-  setDepthReadOnly(value: boolean) {
+  setDepthStoreOp(depthStoreOp: GPUStoreOp = 'store', force = false) {
+    if (this.options.forceDepthStoreOp && !force) return
+
+    this.options.depthStoreOp = depthStoreOp
+    this.#updateDepthAttachmentSettings()
+  }
+
+  /**
+   * Set the new {@link RenderPassOptions.depthReadOnly | depthReadOnly} setting if {@link RenderPassOptions#forceDepthReandOnly | forceDepthReadOnly options} has not been defined.
+   * @param value - Whether the depth buffer should be read-only or not.
+   * @param force - Force the update of the `depthReadOnly` setting regardless of {@link RenderPassOptions#forceDepthReandOnly | forceDepthReadOnly option} value.
+   */
+  setDepthReadOnly(value: boolean, force = false) {
+    if (this.options.forceDepthReadOnly !== null && !force) return
+
     this.options.depthReadOnly = value
     this.#updateDepthAttachmentSettings()
   }
 
   /**
-   * Set the new {@link RenderPassParams.stencilReadOnly | stencilReadOnly} setting.
-   * @param value - Whether the stencil buffer should be read-only or not.
+   * Set the {@link descriptor} {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#stencilloadop | stencil load operation} if {@link RenderPassOptions#forceStencilLoadOp | forceStencilLoadOp options} has not been defined.
+   * @param stencilLoadOp - New {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#stencilloadop | stencil load operation} to use.
+   * @param force - Force the update of the `stencilLoadOp` setting regardless of {@link RenderPassOptions#forceStencilLoadOp | forceStencilLoadOp option} value.
    */
-  setStencilReadOnly(value: boolean) {
+  setStencilLoadOp(stencilLoadOp: GPULoadOp = 'clear', force = false) {
+    if (this.options.forceStencilLoadOp && !force) return
+
+    this.options.stencilLoadOp = stencilLoadOp
+    this.#updateDepthAttachmentSettings()
+  }
+
+  /**
+   * Set the {@link descriptor} {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#stencilstoreop | stencil store operation} if {@link RenderPassOptions#forceStencilStoreOp | forceStencilStoreOp options} has not been defined.
+   * @param stencilStoreOp - New {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#stencilstoreop | stencil store operation} to use.
+   * @param force - Force the update of the `stencilStoreOp` setting regardless of {@link RenderPassOptions#forceStencilStoreOp | forceStencilStoreOp option} value.
+   */
+  setStencilStoreOp(stencilStoreOp: GPUStoreOp = 'store', force = false) {
+    if (this.options.forceStencilStoreOp && !force) return
+
+    this.options.stencilStoreOp = stencilStoreOp
+    this.#updateDepthAttachmentSettings()
+  }
+
+  /**
+   * Set the new {@link RenderPassOptions.stencilReadOnly | stencilReadOnly} setting if {@link RenderPassOptions#forceStencilReadOnly | forceStencilReadOnly options} has not been defined.
+   * @param value - Whether the stencil buffer should be read-only or not.
+   * @param force - Force the update of the `stencilReadOnly` setting regardless of {@link RenderPassOptions#forceStencilReandOnly | forceStencilReadOnly option} value.
+   */
+  setStencilReadOnly(value: boolean, force = false) {
+    if (this.options.forceStencilReadOnly !== null && !force) return
+
     this.options.stencilReadOnly = value
     this.#updateDepthAttachmentSettings()
   }

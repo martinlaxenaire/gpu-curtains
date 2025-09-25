@@ -87,7 +87,6 @@ window.addEventListener('load', async () => {
         targetFormat: 'r8unorm', // revealage
       },
     ],
-    depthLoadOp: 'load', // read from opaque depth!
   })
 
   const opaquePlane = new Mesh(gpuCameraRenderer, {

@@ -50,7 +50,7 @@ window.addEventListener('load', async () => {
     stencilRenderTarget = new RenderTarget(gpuCameraRenderer, {
       label: 'Stencil render target',
       depthFormat: depthStencilFormat,
-      depthStoreOp: 'discard',
+      forceDepthStoreOp: 'discard',
     })
   }
 
@@ -97,7 +97,7 @@ window.addEventListener('load', async () => {
     geometry: new PlaneGeometry(),
     shaders: {
       fragment: {
-        code: `
+        code: /* wgsl */ `
           @fragment fn main() -> @location(0) vec4f {
             return vec4(0.0, 0.0, 0.0, 1.0); // black portal
           }
@@ -110,7 +110,7 @@ window.addEventListener('load', async () => {
   backPortal.parent = portalPivot
 
   // our stenciled scene
-  const floorVs = `
+  const floorVs = /* wgsl */ `
     struct VertexOutput {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
@@ -132,7 +132,7 @@ window.addEventListener('load', async () => {
     }
   `
 
-  const floorFs = `
+  const floorFs = /* wgsl */ `
     struct VSOutput {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
@@ -240,7 +240,7 @@ window.addEventListener('load', async () => {
       mipmapFilter: 'linear',
     })
 
-    const portalVs = `
+    const portalVs = /* wgsl */ `
       struct VSOutput {
         @builtin(position) position: vec4f,
         @location(0) @interpolate(perspective, sample) uv: vec3f, // Homogeneous UV coordinates
@@ -259,7 +259,7 @@ window.addEventListener('load', async () => {
       }
     `
 
-    const portalFs = `
+    const portalFs = /* wgsl */ `
       struct VSOutput {
         @builtin(position) position: vec4f,
         @location(0) @interpolate(perspective, sample) uv: vec3f,
@@ -310,7 +310,7 @@ window.addEventListener('load', async () => {
           blue: 0.325,
           useConstants: false,
         },
-        code: `
+        code: /* wgsl */ `
           @fragment fn main() -> @location(0) vec4f {
             var color: vec4f;
             if(useConstants) {
