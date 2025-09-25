@@ -18,12 +18,10 @@ import { Texture } from '../../core/textures/Texture'
 import { MediaTexture } from '../../core/textures/MediaTexture'
 import { Sampler } from '../../core/samplers/Sampler'
 import { EnvironmentMap } from '../environmentMap/EnvironmentMap'
+import { ColorSpace } from '../../types/shading'
 
 /** Defines all kinds of shading models available. */
 export type ShadingModels = 'Unlit' | 'Lambert' | 'Phong' | 'PBR'
-
-/** Defines all kinds of tone mappings available. */
-export type ToneMappings = 'Khronos' | 'Reinhard' | 'Cineon' | false
 
 /**
  * Define a {@link ShaderTextureDescriptor} used to associate a {@link core/textures/Texture.Texture | Texture} with the corresponding {@link Sampler} and UV names.
@@ -36,9 +34,6 @@ export interface ShaderTextureDescriptor {
   /** Texture coordinate attribute name to use to map this texture. Default to `'uv'`. */
   texCoordAttributeName?: string
 }
-
-/** Define the color space in which the colors parameters are passed to the {@link LitMeshMaterialParams}. */
-export type ColorSpace = 'linear' | 'srgb'
 
 // MATERIAL UNIFORM
 
@@ -153,6 +148,8 @@ export interface LitMeshMaterialParams
     LitMeshMaterialUniformParams {
   /** {@link ShadingModels} to use for lighting. Default to `PBR`. */
   shading?: ShadingModels
+  /** In which {@link ColorSpace} the output should be done. `srgb` should be used most of the time, except for some post processing effects that need input colors in `linear` space (such as bloom). Default to `srgb`. */
+  outputColorSpace?: ColorSpace
   /** {@link AdditionalChunks | Additional WGSL chunks} to add to the vertex shaders. */
   vertexChunks?: AdditionalChunks
   /** {@link AdditionalChunks | Additional WGSL chunks} to add to the fragment shaders. */
@@ -160,7 +157,7 @@ export interface LitMeshMaterialParams
 }
 
 /** Parameters used to create a {@link LitMesh}. */
-export interface LitMeshParameters extends Omit<ProjectedMeshParameters, 'shaders'> {
+export interface LitMeshParameters extends Omit<ProjectedMeshParameters, 'shaders' | 'useProjection'> {
   /** Material parameters of the {@link LitMesh}. */
   material?: LitMeshMaterialParams
 }
@@ -254,10 +251,15 @@ export class LitMesh extends Mesh {
 
     if (!material) material = {}
 
-    let { colorSpace } = material
+    // color spaces
+    let { colorSpace, outputColorSpace } = material
 
     if (!colorSpace) {
       colorSpace = 'srgb'
+    }
+
+    if (!outputColorSpace) {
+      outputColorSpace = 'srgb'
     }
 
     const {
@@ -433,6 +435,7 @@ export class LitMesh extends Mesh {
 
     const fs = LitMesh.getFragmentShaderCode({
       shadingModel: shading,
+      outputColorSpace,
       chunks: fragmentChunks,
       extensionsUsed,
       receiveShadows: defaultParams.receiveShadows,

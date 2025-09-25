@@ -23,6 +23,7 @@ import { patchAdditionalChunks } from '../../default-material-helpers'
 export const getLambertFragmentShaderCode = ({
   chunks = null,
   toneMapping = 'Khronos',
+  outputColorSpace = 'srgb',
   geometry,
   additionalVaryings = [],
   materialUniform = null,
@@ -70,7 +71,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
   // user defined additional contribution
   ${chunks.additionalContribution}
   
-  ${applyToneMapping({ toneMapping })}
+  ${applyToneMapping({ toneMapping, outputColorSpace })}
   return outputColor;
 }`
 }

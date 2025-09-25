@@ -1,4 +1,5 @@
-import { ToneMappings } from '../../../../../extras/meshes/LitMesh'
+import { ColorSpace } from '../../../../../types/shading'
+import { ToneMappings } from '../../../../../types/shading'
 
 // Add more tone mappings? Handle exposure?
 
@@ -7,9 +8,12 @@ import { ToneMappings } from '../../../../../extras/meshes/LitMesh'
  * @param parameters - Parameters to use for applying tone mapping.
  * @param parameters.toneMapping - {@link ToneMappings} to apply if any. Default to `'Khronos'`.
  */
-export const applyToneMapping = ({ toneMapping = 'Khronos' }: { toneMapping?: ToneMappings } = {}) => {
+export const applyToneMapping = ({
+  toneMapping = 'Khronos',
+  outputColorSpace = 'srgb',
+}: { toneMapping?: ToneMappings; outputColorSpace?: ColorSpace } = {}) => {
   let toneMappingOutput = /* wgsl */ `
-  let exposure: f32 = 1.0; // TODO
+  let exposure: f32 = 1.0; // TODO?
   outputColor *= exposure;
   `
 
@@ -20,24 +24,26 @@ export const applyToneMapping = ({ toneMapping = 'Khronos' }: { toneMapping?: To
   outputColor = vec4(KhronosToneMapping(outputColor.rgb), outputColor.a);
   `
       case 'Reinhard':
-        return `
+        return /* wgsl */ `
   outputColor = vec4(ReinhardToneMapping(outputColor.rgb), outputColor.a);
         `
       case 'Cineon':
-        return `
+        return /* wgsl */ `
   outputColor = vec4(CineonToneMapping(outputColor.rgb), outputColor.a);
         `
       case false:
       default:
-        return `
+        return /* wgsl */ `
   outputColor = saturate(outputColor);
         `
     }
   })()
 
-  toneMappingOutput += /* wgsl */ `
+  if (outputColorSpace === 'srgb') {
+    toneMappingOutput += /* wgsl */ `
   outputColor = linearTosRGB_4(outputColor);
-  `
+    `
+  }
 
   return toneMappingOutput
 }

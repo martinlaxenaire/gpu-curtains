@@ -6,7 +6,7 @@ import { REIndirectDiffuse } from '../fragment/head/RE-indirect-diffuse'
 import { getLambertDirect } from '../fragment/head/get-lambert-direct'
 import { getLambertShading } from '../fragment/body/get-lambert-shading'
 import { applyToneMapping } from '../fragment/body/apply-tone-mapping'
-import { ToneMappings } from '../../../../extras/meshes/LitMesh'
+import { ToneMappings, ColorSpace } from '../../../../types/shading'
 
 /** Defines the basic parameters available for the various shading getter functions. */
 export interface GetShadingParams {
@@ -16,6 +16,8 @@ export interface GetShadingParams {
   receiveShadows?: boolean
   /** Whether the shading function should apply tone mapping to the resulting color and if so, which one. Default to `'Khronos'`. */
   toneMapping?: ToneMappings
+  /** In which {@link ColorSpace} the output should be done. `srgb` should be used most of the time, except for some post processing effects that need input colors in `linear` space (such as bloom). Default to `srgb`. */
+  outputColorSpace?: ColorSpace
   /** Whether ambient occlusion should be accounted when calculating the shading. Default to `false`. If set to `true`, a float `f32` ambient occlusion value should be passed as the last shading function parameter. */
   useOcclusion?: boolean
 }
@@ -40,7 +42,13 @@ ${toneMappingUtils}
  * ```
  */
 export const getLambert = (
-  { addUtils = true, receiveShadows = false, toneMapping, useOcclusion = false } = {} as GetShadingParams
+  {
+    addUtils = true,
+    receiveShadows = false,
+    toneMapping,
+    outputColorSpace,
+    useOcclusion = false,
+  } = {} as GetShadingParams
 ) => /* wgsl */ `
 ${addUtils ? lambertUtils : ''}
 ${getLambertDirect}
@@ -59,7 +67,7 @@ fn getLambert(
   
   outputColor = vec4(outgoingLight, outputColor.a);
   
-  ${applyToneMapping({ toneMapping })}
+  ${applyToneMapping({ toneMapping, outputColorSpace })}
     
   return outputColor;
 }
