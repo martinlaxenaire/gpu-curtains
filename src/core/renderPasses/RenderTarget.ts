@@ -12,6 +12,8 @@ export interface RenderTargetOptions extends RenderPassParams {
   autoRender: boolean
   /** {@link core/textures/Texture.TextureBaseParams | Texture name} to use for the {@link RenderTarget} render texture. Default to `'renderTexture'`. */
   renderTextureName: string
+  /** Whether we should draw into this {@link RenderTarget} after having rendered to the screen first. Default to `false`. */
+  isPostTarget: boolean
 }
 
 /**
@@ -76,7 +78,8 @@ export class RenderTarget {
 
     this.uuid = generateUUID()
 
-    const { label, colorAttachments, depthTexture, autoRender, renderTextureName, ...renderPassParams } = parameters
+    const { label, colorAttachments, depthTexture, autoRender, renderTextureName, isPostTarget, ...renderPassParams } =
+      parameters
 
     // use depth texture from params
     // OR renderer render pass depth texture if options match
@@ -96,6 +99,7 @@ export class RenderTarget {
       ...(colorAttachments && { colorAttachments }),
       renderTextureName: renderTextureName ?? 'renderTexture',
       autoRender: autoRender === undefined ? true : autoRender,
+      isPostTarget: !!isPostTarget,
     }
 
     if (autoRender !== undefined) {
