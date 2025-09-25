@@ -3,6 +3,9 @@ import { ProjectedObject3D } from '../objects3D/ProjectedObject3D'
 import { ProjectedMeshBaseMixin, ProjectedMeshParameters } from './mixins/ProjectedMeshBaseMixin'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 
+/** Parameters used to create a {@link Mesh}. */
+export interface MeshParams extends Omit<ProjectedMeshParameters, 'useProjection'> {}
+
 /**
  * Create a 3D Mesh.
  *
@@ -83,9 +86,9 @@ export class Mesh extends ProjectedMeshBaseMixin(ProjectedObject3D) {
   /**
    * Mesh constructor
    * @param renderer - {@link CameraRenderer} object or {@link GPUCurtains} class object used to create this {@link Mesh}.
-   * @param parameters - {@link ProjectedMeshParameters | parameters} use to create this {@link Mesh}.
+   * @param parameters - {@link MeshParams | parameters} use to create this {@link Mesh}.
    */
-  constructor(renderer: CameraRenderer | GPUCurtains, parameters: ProjectedMeshParameters = {}) {
+  constructor(renderer: CameraRenderer | GPUCurtains, parameters: MeshParams = {}) {
     // we could pass our curtains object OR our curtains renderer object
     renderer = isCameraRenderer(renderer, parameters.label ? parameters.label + ' Mesh' : 'Mesh')
 
