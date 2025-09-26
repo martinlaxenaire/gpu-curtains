@@ -24,6 +24,7 @@ export class CurtainsClothSim {
         .set(this.computeForcesPass.uniforms.interaction.wind.value, {
           z: -3,
         })
+        .call(() => this.plane.domElement.element.classList.add('canvas-texture-ready'))
         .to(this.plane.uniforms.global.opacity, {
           value: 1,
           duration: 1,
@@ -221,7 +222,7 @@ export class CurtainsClothSim {
       // now if the compute passes are not ready, do not render them
       if (!this.computeForcesPass.ready || !this.computeUpdatePass.ready || !this.computeNormalPass.ready) return
 
-      this.ready = true
+      this.ready = this.plane && this.plane.ready
 
       for (let i = 0; i < nbSimsComputePerRender; i++) {
         const forcePass = commandEncoder.beginComputePass()
@@ -347,8 +348,6 @@ export class CurtainsClothSim {
     writeCanvasText()
 
     canvasTexture.loadCanvas(canvas)
-
-    this.plane.domElement.element.classList.add('canvas-texture-ready')
 
     this.plane
       .onReady(() => {
