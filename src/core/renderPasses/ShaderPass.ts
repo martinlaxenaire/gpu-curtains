@@ -22,7 +22,12 @@ export interface ShaderPassBaseParams {
 /**
  * Parameters used to create a {@link ShaderPass}.
  */
-export interface ShaderPassParams extends MeshBaseRenderParams, ShaderPassBaseParams {
+export interface ShaderPassParams
+  extends Omit<
+      MeshBaseRenderParams,
+      'additionalOutputTargets' | 'useCustomScenePassEntry' | 'useProjection' | 'cullMode'
+    >,
+    ShaderPassBaseParams {
   /** Optional input {@link RenderTarget} to assign to the {@link ShaderPass}. Used to automatically copy the content of the given {@link RenderTarget} texture into the {@link ShaderPass#renderTexture | ShaderPass renderTexture}. */
   inputTarget?: RenderTarget
 }
@@ -132,6 +137,7 @@ export class ShaderPass extends FullscreenPlane {
       ...this.options,
       copyOutputToRenderTexture: parameters.copyOutputToRenderTexture,
       isPrePass: parameters.isPrePass,
+      renderTextureName: parameters.renderTextureName ?? 'renderTexture',
     }
 
     if (parameters.inputTarget) {
@@ -147,7 +153,7 @@ export class ShaderPass extends FullscreenPlane {
 
     this.renderTexture = this.createTexture({
       label: parameters.label ? `${parameters.label} render texture` : 'Shader pass render texture',
-      name: parameters.renderTextureName ?? 'renderTexture',
+      name: this.options.renderTextureName,
       fromTexture: this.inputTarget ? this.inputTarget.renderTexture : null,
       usage: ['copySrc', 'copyDst', 'textureBinding'],
       ...(this.outputTarget &&

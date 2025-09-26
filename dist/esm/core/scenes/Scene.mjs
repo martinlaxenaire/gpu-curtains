@@ -40,12 +40,14 @@ class Scene extends Object3D {
     this.renderPassEntries = {
       /** Array of {@link RenderPassEntry} that will handle {@link PingPongPlane}. Each {@link PingPongPlane} will be added as a distinct {@link RenderPassEntry} here. */
       pingPong: [],
-      /** Array of {@link RenderPassEntry} that will render to a specific {@link RenderTarget}. Each {@link RenderTarget} will be added as a distinct {@link RenderPassEntry} here. */
+      /** Array of {@link RenderPassEntry} that will render to a specific {@link RenderTarget} before rendering to the screen. Each {@link RenderTarget} not using `isPostTarget` option will be added as a distinct {@link RenderPassEntry} here. */
       renderTarget: [],
       /** Array of {@link RenderPassEntry} containing {@link ShaderPass} that will render directly to the screen before rendering any other pass to the screen. Useful to perform "blit" pass before actually rendering the usual scene content. */
       prePass: [],
       /** Array of {@link RenderPassEntry} that will render directly to the screen. Our first and default entry will contain all the Meshes that do not have any {@link RenderTarget} assigned. You can create following entries for custom scene rendering management process. */
       screen: [],
+      /** Array of {@link RenderPassEntry} that will render to a specific {@link RenderTarget} after the screen passes have been rendered. Each {@link RenderTarget} using the `isPostTarget` option will be added as a distinct {@link RenderPassEntry} here. */
+      postRenderTarget: [],
       /**Array of {@link RenderPassEntry} containing post processing {@link ShaderPass} that will render directly to the screen after everything has been drawn. */
       postProPass: []
     };
@@ -128,8 +130,9 @@ class Scene extends Object3D {
    * @param renderTarget - {@link RenderTarget} to add.
    */
   addRenderTarget(renderTarget) {
-    if (!this.renderPassEntries.renderTarget.find((entry) => entry.renderPass.uuid === renderTarget.renderPass.uuid))
-      this.renderPassEntries.renderTarget.push({
+    const targetPassEntries = renderTarget.options.isPostTarget ? this.renderPassEntries.postRenderTarget : this.renderPassEntries.renderTarget;
+    if (!targetPassEntries.find((entry) => entry.renderPass.uuid === renderTarget.renderPass.uuid)) {
+      targetPassEntries.push({
         label: renderTarget.options.label ? `${renderTarget.options.label} pass entry` : `RenderTarget ${renderTarget.uuid} pass entry`,
         renderPass: renderTarget.renderPass,
         renderTexture: renderTarget.renderTexture,
@@ -149,15 +152,15 @@ class Scene extends Object3D {
           }
         }
       });
+    }
   }
   /**
    * Remove a {@link RenderTarget} from our scene {@link renderPassEntries} outputTarget array.
    * @param renderTarget - {@link RenderTarget} to add.
    */
   removeRenderTarget(renderTarget) {
-    this.renderPassEntries.renderTarget = this.renderPassEntries.renderTarget.filter(
-      (entry) => entry.renderPass.uuid !== renderTarget.renderPass.uuid
-    );
+    let targetPassEntries = renderTarget.options.isPostTarget ? this.renderPassEntries.postRenderTarget : this.renderPassEntries.renderTarget;
+    targetPassEntries = targetPassEntries.filter((entry) => entry.renderPass.uuid !== renderTarget.renderPass.uuid);
   }
   /**
    * Get the {@link RenderPassEntry} in the {@link renderPassEntries} `renderTarget` array (or `screen` array if no {@link RenderTarget} is passed) corresponding to the given {@link RenderTarget}.
@@ -165,9 +168,14 @@ class Scene extends Object3D {
    * @returns - {@link RenderPassEntry} found.
    */
   getRenderTargetPassEntry(renderTarget = null) {
-    return renderTarget ? this.renderPassEntries.renderTarget.find(
-      (passEntry) => passEntry.renderPass.uuid === renderTarget.renderPass.uuid
-    ) : this.renderPassEntries.screen.find((passEntry) => passEntry.renderPass.uuid === this.renderer.renderPass.uuid);
+    if (renderTarget) {
+      const targetPassEntries = renderTarget.options.isPostTarget ? this.renderPassEntries.postRenderTarget : this.renderPassEntries.renderTarget;
+      return targetPassEntries.find((passEntry) => passEntry.renderPass.uuid === renderTarget.renderPass.uuid);
+    } else {
+      return this.renderPassEntries.screen.find(
+        (passEntry) => passEntry.renderPass.uuid === this.renderer.renderPass.uuid
+      );
+    }
   }
   /**
    * Get the correct {@link renderPassEntries | render pass entry} (either {@link renderPassEntries} outputTarget or {@link renderPassEntries} screen) {@link Stack} onto which this Mesh should be added, depending on whether it's projected or not.
@@ -280,7 +288,7 @@ class Scene extends Object3D {
     const projectionType = isProjected ? "projected" : "unProjected";
     const isTransparent = !!renderBundle.transparent;
     const transparencyType = isTransparent ? "transparent" : "opaque";
-    const renderPassEntry = this.renderPassEntries.renderTarget.find(
+    const renderPassEntry = [...this.renderPassEntries.renderTarget, ...this.renderPassEntries.postRenderTarget].find(
       (passEntry) => passEntry.renderPass.uuid === renderBundle.options.renderPass?.uuid
     );
     if (renderPassEntry) {
@@ -438,9 +446,8 @@ class Scene extends Object3D {
    */
   getObjectRenderPassEntry(object) {
     if (object.type === "RenderTarget") {
-      return this.renderPassEntries.renderTarget.find(
-        (entry) => entry.renderPass.uuid === object.renderPass.uuid
-      );
+      const targetPassEntries = object.options.isPostTarget ? this.renderPassEntries.postRenderTarget : this.renderPassEntries.renderTarget;
+      return targetPassEntries.find((entry) => entry.renderPass.uuid === object.renderPass.uuid);
     } else if (object.type === "PingPongPlane") {
       return this.renderPassEntries.pingPong.find((entry) => entry.element.uuid === object.uuid);
     } else if (object.type === "ShaderPass") {
@@ -602,6 +609,10 @@ class Scene extends Object3D {
         } else {
           renderPassEntry.renderPass.setDepthReadOnly(false);
         }
+        if (renderPassEntryType === "postRenderTarget") {
+          __privateSet(this, _shouldLoadColors, false);
+          __privateSet(this, _shouldLoadDepth, false);
+        }
         if (renderPassEntryType === "postProPass" && renderPassEntry.renderPass.uuid !== this.renderer.postProcessingPass.uuid) {
           __privateSet(this, _shouldLoadColors, false);
         }
@@ -610,7 +621,7 @@ class Scene extends Object3D {
           __privateGet(this, _shouldLoadDepth) && !renderPassEntry.renderPass.options.depthReadOnly ? "load" : "clear"
         );
         this.renderSinglePassEntry(commandEncoder, renderPassEntry);
-        if (renderPassEntryType !== "renderTarget") {
+        if (renderPassEntryType !== "renderTarget" && renderPassEntryType !== "postRenderTarget") {
           __privateSet(this, _shouldLoadColors, true);
         }
       });

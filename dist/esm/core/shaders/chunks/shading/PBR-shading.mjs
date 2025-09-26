@@ -9,6 +9,7 @@ const getPBR = ({
   addUtils = true,
   receiveShadows = false,
   toneMapping,
+  outputColorSpace,
   useOcclusion = false,
   environmentMap = null,
   transmissionBackgroundTexture = null,
@@ -46,7 +47,7 @@ fn getPBR(
   
   outputColor = vec4(outgoingLight, outputColor.a);
   
-  ${applyToneMapping({ toneMapping })}
+  ${applyToneMapping({ toneMapping, outputColorSpace })}
     
   return outputColor;
 }

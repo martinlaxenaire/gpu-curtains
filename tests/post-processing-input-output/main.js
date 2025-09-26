@@ -56,6 +56,7 @@ window.addEventListener('load', async () => {
     label: 'Cube 1',
     geometry: new BoxGeometry(),
     outputTarget: grayscaleInputTarget, // render to input target
+    // additionalOutputTargets: [grayscaleInputTarget], // render to input target
   })
 
   cube1.position.x = -3

@@ -581,9 +581,9 @@ export class RenderPass {
   }
 
   /**
-   * Set the new {@link RenderPassOptions.depthReadOnly | depthReadOnly} setting if {@link RenderPassOptions#forceDepthReandOnly | forceDepthReadOnly options} has not been defined.
+   * Set the new {@link RenderPassOptions.depthReadOnly | depthReadOnly} setting if {@link RenderPassOptions#forceDepthReadOnly | forceDepthReadOnly options} has not been defined.
    * @param value - Whether the depth buffer should be read-only or not.
-   * @param force - Force the update of the `depthReadOnly` setting regardless of {@link RenderPassOptions#forceDepthReandOnly | forceDepthReadOnly option} value.
+   * @param force - Force the update of the `depthReadOnly` setting regardless of {@link RenderPassOptions#forceDepthReadOnly | forceDepthReadOnly option} value.
    */
   setDepthReadOnly(value: boolean, force = false) {
     if (this.options.forceDepthReadOnly !== null && !force) return
@@ -619,7 +619,7 @@ export class RenderPass {
   /**
    * Set the new {@link RenderPassOptions.stencilReadOnly | stencilReadOnly} setting if {@link RenderPassOptions#forceStencilReadOnly | forceStencilReadOnly options} has not been defined.
    * @param value - Whether the stencil buffer should be read-only or not.
-   * @param force - Force the update of the `stencilReadOnly` setting regardless of {@link RenderPassOptions#forceStencilReandOnly | forceStencilReadOnly option} value.
+   * @param force - Force the update of the `stencilReadOnly` setting regardless of {@link RenderPassOptions#forceStencilReadOnly | forceStencilReadOnly option} value.
    */
   setStencilReadOnly(value: boolean, force = false) {
     if (this.options.forceStencilReadOnly !== null && !force) return

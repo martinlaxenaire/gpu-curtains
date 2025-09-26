@@ -12,6 +12,7 @@ import { getIBLIndirectRadiance } from '../../chunks/fragment/head/get-IBL-indir
 import { getIBLTransmission } from '../../chunks/fragment/head/get-IBL-transmission'
 import { getPBRShading } from '../../chunks/fragment/body/get-PBR-shading'
 import { getFragmentInputStruct } from '../../chunks/fragment/head/get-fragment-input-struct'
+import { getFragmentOutputStruct } from '../../chunks/fragment/head/get-fragment-output-struct'
 import { declareAttributesVars } from '../../chunks/fragment/body/declare-attributes-vars'
 import { declareMaterialVars } from '../../chunks/fragment/body/declare-material-vars'
 import { getBaseColor } from '../../chunks/fragment/body/get-base-color'
@@ -32,6 +33,18 @@ export const getPBRFragmentShaderCode = ({
   chunks = null,
   toneMapping = 'Khronos',
   outputColorSpace = 'srgb',
+  fragmentOutput = {
+    struct: [
+      {
+        type: 'vec4f',
+        name: 'color',
+      },
+    ],
+    output: /* wgsl */ `
+  var output: FSOutput;
+  output.color = outputColor;
+  return output;`,
+  },
   geometry,
   additionalVaryings = [],
   materialUniform = null,
@@ -71,7 +84,9 @@ ${getIBLTransmission}
 
 ${getFragmentInputStruct({ geometry, additionalVaryings })}
 
-@fragment fn main(fsInput: FSInput) -> @location(0) vec4f {
+${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
+
+@fragment fn main(fsInput: FSInput) -> FSOutput {
   var outputColor: vec4f = vec4();
   
   ${declareAttributesVars({ geometry, additionalVaryings })}
@@ -97,6 +112,7 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
   ${chunks.additionalContribution}
   
   ${applyToneMapping({ toneMapping, outputColorSpace })}
-  return outputColor;
+
+  ${fragmentOutput.output}
 }`
 }

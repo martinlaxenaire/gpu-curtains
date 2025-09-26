@@ -30,7 +30,7 @@ window.addEventListener('load', async () => {
   })
 
   // now our scene
-  const floorVs = `
+  const floorVs = /* wgsl */ `
     struct VertexOutput {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
@@ -52,7 +52,7 @@ window.addEventListener('load', async () => {
     }
   `
 
-  const floorFs = `
+  const floorFs = /* wgsl */ `
     struct VSOutput {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,

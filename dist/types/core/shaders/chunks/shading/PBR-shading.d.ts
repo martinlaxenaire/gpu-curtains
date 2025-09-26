@@ -45,4 +45,4 @@ export interface GetPBRShadingParams extends GetShadingParams {
  * );
  * ```
  */
-export declare const getPBR: ({ addUtils, receiveShadows, toneMapping, useOcclusion, environmentMap, transmissionBackgroundTexture, extensionsUsed, }?: GetPBRShadingParams) => string;
+export declare const getPBR: ({ addUtils, receiveShadows, toneMapping, outputColorSpace, useOcclusion, environmentMap, transmissionBackgroundTexture, extensionsUsed, }?: GetPBRShadingParams) => string;

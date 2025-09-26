@@ -15,6 +15,7 @@ import {
   ShadingModels,
   UnlitTexturesDescriptors,
 } from '../../../../extras/meshes/LitMesh'
+import { FragmentOutput } from '../../../../types/shading'
 import { ToneMappings, ColorSpace } from '../../../../types/shading'
 
 /** Base parameters used to build a fragment shader. */
@@ -25,6 +26,8 @@ export interface FragmentShaderInputBaseParams {
   outputColorSpace?: ColorSpace
   /** Optional additional {@link VertexShaderInputParams.additionalVaryings | varyings} to pass from the vertex shader to the fragment shader. */
   additionalVaryings?: VertexShaderInputParams['additionalVaryings']
+  /** Custom fragment shader output structure members and returned values to use if needed. Useful when rendering to a Multiple Render Target for example. */
+  fragmentOutput?: FragmentOutput
 }
 
 /** Parameters used to build an unlit fragment shader. */
@@ -70,6 +73,18 @@ export interface FragmentShaderInputParams extends PBRFragmentShaderInputParams 
 export const getFragmentShaderCode = ({
   shadingModel = 'PBR',
   outputColorSpace = 'srgb',
+  fragmentOutput = {
+    struct: [
+      {
+        type: 'vec4f',
+        name: 'color',
+      },
+    ],
+    output: /* wgsl */ `
+  var output: FSOutput;
+  output.color = outputColor;
+  return output;`,
+  },
   chunks = null,
   toneMapping = 'Khronos',
   geometry,
@@ -98,6 +113,7 @@ export const getFragmentShaderCode = ({
           chunks,
           toneMapping,
           outputColorSpace,
+          fragmentOutput,
           geometry,
           additionalVaryings,
           materialUniform,
@@ -109,6 +125,7 @@ export const getFragmentShaderCode = ({
           chunks,
           toneMapping,
           outputColorSpace,
+          fragmentOutput,
           geometry,
           additionalVaryings,
           materialUniform,
@@ -124,6 +141,7 @@ export const getFragmentShaderCode = ({
           chunks,
           toneMapping,
           outputColorSpace,
+          fragmentOutput,
           geometry,
           additionalVaryings,
           materialUniform,
@@ -144,6 +162,7 @@ export const getFragmentShaderCode = ({
           chunks,
           toneMapping,
           outputColorSpace,
+          fragmentOutput,
           geometry,
           additionalVaryings,
           materialUniform,

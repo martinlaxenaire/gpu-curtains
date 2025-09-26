@@ -6654,7 +6654,7 @@
      */
     addTexture(texture) {
       this.textures.push(texture);
-      if (this.options.shaders.vertex && this.options.shaders.vertex.code.indexOf(texture.options.name) !== -1 || this.options.shaders.fragment && this.options.shaders.fragment.code.indexOf(texture.options.name) !== -1 || this.options.shaders.compute && this.options.shaders.compute.code.indexOf(texture.options.name) !== -1) {
+      if (this.options.shaders && (this.options.shaders.vertex && this.options.shaders.vertex.code.indexOf(texture.options.name) !== -1 || this.options.shaders.fragment && this.options.shaders.fragment.code.indexOf(texture.options.name) !== -1 || this.options.shaders.compute && this.options.shaders.compute.code.indexOf(texture.options.name) !== -1)) {
         this.texturesBindGroup.addTexture(texture);
       }
       if (texture instanceof MediaTexture && texture.options.useTransform) {
@@ -7028,9 +7028,7 @@
       if (autoRender !== void 0) {
         __privateSet$m(this, _autoRender$2, autoRender);
       }
-      if (active !== void 0) {
-        __privateSet$m(this, _active, active);
-      }
+      __privateSet$m(this, _active, active === void 0 ? true : active);
       this.userData = {};
       this.ready = false;
       this.setMaterial({
@@ -8527,15 +8525,16 @@
       // depth
       useDepth = true,
       depthTexture = null,
-      depthLoadOp = "clear",
-      depthStoreOp = "store",
+      forceDepthLoadOp = null,
+      forceDepthStoreOp = null,
       depthClearValue = 1,
       depthFormat = "depth24plus",
-      depthReadOnly = false,
+      forceDepthReadOnly = null,
+      // stencil
       stencilClearValue = 0,
-      stencilLoadOp = "clear",
-      stencilStoreOp = "store",
-      stencilReadOnly = false
+      forceStencilLoadOp = null,
+      forceStencilStoreOp = null,
+      forceStencilReadOnly = null
     } = {}) {
       __privateAdd$m(this, _RenderPass_instances);
       /** Whether the {@link RenderPass} should handle stencil. Default to `false`, eventually set to `true` based on the {@link depthTexture} format. */
@@ -8574,15 +8573,21 @@
         // depth
         useDepth,
         ...depthTexture !== void 0 && { depthTexture },
-        depthLoadOp,
-        depthStoreOp,
+        depthLoadOp: forceDepthLoadOp ?? "clear",
+        forceDepthLoadOp,
+        depthStoreOp: forceDepthStoreOp ?? "store",
+        forceDepthStoreOp,
         depthClearValue,
         depthFormat,
-        depthReadOnly,
+        depthReadOnly: forceDepthReadOnly === null ? false : forceDepthReadOnly,
+        forceDepthReadOnly,
         stencilClearValue,
-        stencilLoadOp,
-        stencilStoreOp,
-        stencilReadOnly
+        stencilLoadOp: forceStencilLoadOp ?? "clear",
+        forceStencilLoadOp,
+        stencilStoreOp: forceStencilStoreOp ?? "store",
+        forceStencilStoreOp,
+        stencilReadOnly: forceStencilReadOnly === null ? false : forceStencilReadOnly,
+        forceStencilReadOnly
       };
       this.renderer.renderPasses.set(this.uuid, this);
       if (this.renderer.device) {
@@ -8840,8 +8845,8 @@
     }
     /**
      * Set the {@link descriptor} {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#loadop | load operation}.
-     * @param loadOp - new {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#loadop | load operation} to use.
-     * @param colorAttachmentIndex - index of the color attachment for which to use this load operation.
+     * @param loadOp - New {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#loadop | load operation} to use.
+     * @param colorAttachmentIndex - Index of the color attachment for which to use this load operation.
      */
     setLoadOp(loadOp = "clear", colorAttachmentIndex = 0) {
       if (this.options.useColorAttachments) {
@@ -8856,26 +8861,62 @@
       }
     }
     /**
-     * Set the {@link descriptor} {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#depthloadop | depth load operation}.
-     * @param depthLoadOp - new {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#depthloadop | depth load operation} to use.
+     * Set the {@link descriptor} {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#depthloadop | depth load operation} if {@link RenderPassOptions#forceDepthLoadOp | forceDepthLoadOp options} has not been defined.
+     * @param depthLoadOp - New {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#depthloadop | depth load operation} to use.
+     * @param force - Force the update of the `depthLoadOp` setting regardless of {@link RenderPassOptions#forceDepthLoadOp | forceDepthLoadOp option} value.
      */
-    setDepthLoadOp(depthLoadOp = "clear") {
+    setDepthLoadOp(depthLoadOp = "clear", force = false) {
+      if (this.options.forceDepthLoadOp && !force) return;
       this.options.depthLoadOp = depthLoadOp;
       __privateMethod$b(this, _RenderPass_instances, updateDepthAttachmentSettings_fn).call(this);
     }
     /**
-     * Set the new {@link RenderPassParams.depthReadOnly | depthReadOnly} setting.
-     * @param value - Whether the depth buffer should be read-only or not.
+     * Set the {@link descriptor} {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#depthstoreop | depth store operation} if {@link RenderPassOptions#forceDepthStoreOp | forceDepthStoreOp option} has not been defined.
+     * @param depthStoreOp - New {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#depthstoreop | depth store operation} to use.
+     * @param force - Force the update of the `depthStoreOp` setting regardless of {@link RenderPassOptions#forceDepthStoreOp | forceDepthStoreOp option} value.
      */
-    setDepthReadOnly(value) {
+    setDepthStoreOp(depthStoreOp = "store", force = false) {
+      if (this.options.forceDepthStoreOp && !force) return;
+      this.options.depthStoreOp = depthStoreOp;
+      __privateMethod$b(this, _RenderPass_instances, updateDepthAttachmentSettings_fn).call(this);
+    }
+    /**
+     * Set the new {@link RenderPassOptions.depthReadOnly | depthReadOnly} setting if {@link RenderPassOptions#forceDepthReadOnly | forceDepthReadOnly options} has not been defined.
+     * @param value - Whether the depth buffer should be read-only or not.
+     * @param force - Force the update of the `depthReadOnly` setting regardless of {@link RenderPassOptions#forceDepthReadOnly | forceDepthReadOnly option} value.
+     */
+    setDepthReadOnly(value, force = false) {
+      if (this.options.forceDepthReadOnly !== null && !force) return;
       this.options.depthReadOnly = value;
       __privateMethod$b(this, _RenderPass_instances, updateDepthAttachmentSettings_fn).call(this);
     }
     /**
-     * Set the new {@link RenderPassParams.stencilReadOnly | stencilReadOnly} setting.
-     * @param value - Whether the stencil buffer should be read-only or not.
+     * Set the {@link descriptor} {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#stencilloadop | stencil load operation} if {@link RenderPassOptions#forceStencilLoadOp | forceStencilLoadOp options} has not been defined.
+     * @param stencilLoadOp - New {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#stencilloadop | stencil load operation} to use.
+     * @param force - Force the update of the `stencilLoadOp` setting regardless of {@link RenderPassOptions#forceStencilLoadOp | forceStencilLoadOp option} value.
      */
-    setStencilReadOnly(value) {
+    setStencilLoadOp(stencilLoadOp = "clear", force = false) {
+      if (this.options.forceStencilLoadOp && !force) return;
+      this.options.stencilLoadOp = stencilLoadOp;
+      __privateMethod$b(this, _RenderPass_instances, updateDepthAttachmentSettings_fn).call(this);
+    }
+    /**
+     * Set the {@link descriptor} {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#stencilstoreop | stencil store operation} if {@link RenderPassOptions#forceStencilStoreOp | forceStencilStoreOp options} has not been defined.
+     * @param stencilStoreOp - New {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#stencilstoreop | stencil store operation} to use.
+     * @param force - Force the update of the `stencilStoreOp` setting regardless of {@link RenderPassOptions#forceStencilStoreOp | forceStencilStoreOp option} value.
+     */
+    setStencilStoreOp(stencilStoreOp = "store", force = false) {
+      if (this.options.forceStencilStoreOp && !force) return;
+      this.options.stencilStoreOp = stencilStoreOp;
+      __privateMethod$b(this, _RenderPass_instances, updateDepthAttachmentSettings_fn).call(this);
+    }
+    /**
+     * Set the new {@link RenderPassOptions.stencilReadOnly | stencilReadOnly} setting if {@link RenderPassOptions#forceStencilReadOnly | forceStencilReadOnly options} has not been defined.
+     * @param value - Whether the stencil buffer should be read-only or not.
+     * @param force - Force the update of the `stencilReadOnly` setting regardless of {@link RenderPassOptions#forceStencilReadOnly | forceStencilReadOnly option} value.
+     */
+    setStencilReadOnly(value, force = false) {
+      if (this.options.forceStencilReadOnly !== null && !force) return;
       this.options.stencilReadOnly = value;
       __privateMethod$b(this, _RenderPass_instances, updateDepthAttachmentSettings_fn).call(this);
     }
@@ -8978,7 +9019,7 @@
       renderer = isRenderer(renderer, this.type);
       this.renderer = renderer;
       this.uuid = generateUUID();
-      const { label, colorAttachments, depthTexture, autoRender, renderTextureName, ...renderPassParams } = parameters;
+      const { label, colorAttachments, depthTexture, autoRender, renderTextureName, isPostTarget, ...renderPassParams } = parameters;
       const depthTextureToUse = !!depthTexture ? depthTexture : this.renderer.renderPass.options.sampleCount === (parameters.sampleCount ?? 4) && (!renderPassParams.qualityRatio || renderPassParams.qualityRatio === 1) && !renderPassParams.fixedSize && (!parameters.depthFormat || parameters.depthFormat === this.renderer.renderPass.depthTexture.options.format) ? this.renderer.renderPass.depthTexture : null;
       this.options = {
         label,
@@ -8986,7 +9027,8 @@
         ...depthTextureToUse && { depthTexture: depthTextureToUse },
         ...colorAttachments && { colorAttachments },
         renderTextureName: renderTextureName ?? "renderTexture",
-        autoRender: autoRender === void 0 ? true : autoRender
+        autoRender: autoRender === void 0 ? true : autoRender,
+        isPostTarget: !!isPostTarget
       };
       if (autoRender !== void 0) {
         __privateSet$j(this, _autoRender$1, autoRender);
@@ -11630,7 +11672,7 @@ fn getPCFBaseShadowContribution(
     /**
      * Mesh constructor
      * @param renderer - {@link CameraRenderer} object or {@link GPUCurtains} class object used to create this {@link Mesh}.
-     * @param parameters - {@link ProjectedMeshParameters | parameters} use to create this {@link Mesh}.
+     * @param parameters - {@link MeshParams | parameters} use to create this {@link Mesh}.
      */
     constructor(renderer, parameters = {}) {
       renderer = isCameraRenderer(renderer, parameters.label ? parameters.label + " Mesh" : "Mesh");
@@ -11832,7 +11874,7 @@ fn getPCFBaseShadowContribution(
     /**
      * FullscreenPlane constructor
      * @param renderer - {@link Renderer} or {@link GPUCurtains} class object used to create this {@link FullscreenPlane}.
-     * @param parameters - {@link MeshBaseRenderParams | parameters} use to create this {@link FullscreenPlane}.
+     * @param parameters - {@link FullscreenPlaneParams | parameters} use to create this {@link FullscreenPlane}.
      */
     constructor(renderer, parameters = {}) {
       renderer = isRenderer(renderer, parameters.label ? parameters.label + " FullscreenQuadMesh" : "FullscreenQuadMesh");
@@ -12705,17 +12747,30 @@ fn getPCFBaseShadowContribution(
      */
     setDepthTexture() {
       if (this.depthTexture && (this.depthTexture.size.width !== this.depthTextureSize.x || this.depthTexture.size.height !== this.depthTextureSize.y)) {
-        this.depthTexture.options.fixedSize.width = this.depthTextureSize.x;
-        this.depthTexture.options.fixedSize.height = this.depthTextureSize.y;
-        this.depthTexture.size.width = this.depthTextureSize.x;
-        this.depthTexture.size.height = this.depthTextureSize.y;
-        this.depthTexture.createTexture();
-        if (this.depthPassTarget) {
-          this.depthPassTarget.resize();
-        }
+        this.resizeDepthTexture(this.depthTextureSize.x, this.depthTextureSize.y);
       } else if (!this.depthTexture) {
         this.createDepthTexture();
       }
+    }
+    /**
+     * Resize the {@link depthTexture} and eventually resize the {@link depthPassTarget} as well.
+     * @param width - New width to use for the {@link depthTexture}.
+     * @param height - New height to use for the {@link depthTexture}.
+     */
+    resizeDepthTexture(width = this.depthTextureSize.x, height = this.depthTextureSize.y) {
+      this.depthTexture.options.fixedSize.width = width;
+      this.depthTexture.options.fixedSize.height = height;
+      this.depthTexture.size.width = width;
+      this.depthTexture.size.height = height;
+      this.depthTexture.createTexture();
+      if (this.depthPassTarget) {
+        this.depthPassTarget.resize();
+      }
+      __privateGet$g(this, _receivingMeshes).forEach((mesh) => {
+        if (mesh.renderBundle) {
+          mesh.renderBundle.ready = false;
+        }
+      });
     }
     /**
      * Create the {@link depthTexture}.
@@ -13807,14 +13862,7 @@ struct PointShadowVSOutput {
     setDepthTexture() {
       if (this.depthTexture && (this.depthTexture.size.width !== this.depthTextureSize.x || this.depthTexture.size.height !== this.depthTextureSize.y)) {
         const maxSize = Math.max(this.depthTextureSize.x, this.depthTextureSize.y);
-        this.depthTexture.options.fixedSize.width = maxSize;
-        this.depthTexture.options.fixedSize.height = maxSize;
-        this.depthTexture.size.width = maxSize;
-        this.depthTexture.size.height = maxSize;
-        this.depthTexture.createTexture();
-        if (this.depthPassTarget) {
-          this.depthPassTarget.resize();
-        }
+        this.resizeDepthTexture(maxSize, maxSize);
       } else if (!this.depthTexture) {
         this.createDepthTexture();
       }
@@ -15021,12 +15069,14 @@ ${this.shaders.compute.head}`;
       this.renderPassEntries = {
         /** Array of {@link RenderPassEntry} that will handle {@link PingPongPlane}. Each {@link PingPongPlane} will be added as a distinct {@link RenderPassEntry} here. */
         pingPong: [],
-        /** Array of {@link RenderPassEntry} that will render to a specific {@link RenderTarget}. Each {@link RenderTarget} will be added as a distinct {@link RenderPassEntry} here. */
+        /** Array of {@link RenderPassEntry} that will render to a specific {@link RenderTarget} before rendering to the screen. Each {@link RenderTarget} not using `isPostTarget` option will be added as a distinct {@link RenderPassEntry} here. */
         renderTarget: [],
         /** Array of {@link RenderPassEntry} containing {@link ShaderPass} that will render directly to the screen before rendering any other pass to the screen. Useful to perform "blit" pass before actually rendering the usual scene content. */
         prePass: [],
         /** Array of {@link RenderPassEntry} that will render directly to the screen. Our first and default entry will contain all the Meshes that do not have any {@link RenderTarget} assigned. You can create following entries for custom scene rendering management process. */
         screen: [],
+        /** Array of {@link RenderPassEntry} that will render to a specific {@link RenderTarget} after the screen passes have been rendered. Each {@link RenderTarget} using the `isPostTarget` option will be added as a distinct {@link RenderPassEntry} here. */
+        postRenderTarget: [],
         /**Array of {@link RenderPassEntry} containing post processing {@link ShaderPass} that will render directly to the screen after everything has been drawn. */
         postProPass: []
       };
@@ -15109,8 +15159,9 @@ ${this.shaders.compute.head}`;
      * @param renderTarget - {@link RenderTarget} to add.
      */
     addRenderTarget(renderTarget) {
-      if (!this.renderPassEntries.renderTarget.find((entry) => entry.renderPass.uuid === renderTarget.renderPass.uuid))
-        this.renderPassEntries.renderTarget.push({
+      const targetPassEntries = renderTarget.options.isPostTarget ? this.renderPassEntries.postRenderTarget : this.renderPassEntries.renderTarget;
+      if (!targetPassEntries.find((entry) => entry.renderPass.uuid === renderTarget.renderPass.uuid)) {
+        targetPassEntries.push({
           label: renderTarget.options.label ? `${renderTarget.options.label} pass entry` : `RenderTarget ${renderTarget.uuid} pass entry`,
           renderPass: renderTarget.renderPass,
           renderTexture: renderTarget.renderTexture,
@@ -15130,15 +15181,15 @@ ${this.shaders.compute.head}`;
             }
           }
         });
+      }
     }
     /**
      * Remove a {@link RenderTarget} from our scene {@link renderPassEntries} outputTarget array.
      * @param renderTarget - {@link RenderTarget} to add.
      */
     removeRenderTarget(renderTarget) {
-      this.renderPassEntries.renderTarget = this.renderPassEntries.renderTarget.filter(
-        (entry) => entry.renderPass.uuid !== renderTarget.renderPass.uuid
-      );
+      let targetPassEntries = renderTarget.options.isPostTarget ? this.renderPassEntries.postRenderTarget : this.renderPassEntries.renderTarget;
+      targetPassEntries = targetPassEntries.filter((entry) => entry.renderPass.uuid !== renderTarget.renderPass.uuid);
     }
     /**
      * Get the {@link RenderPassEntry} in the {@link renderPassEntries} `renderTarget` array (or `screen` array if no {@link RenderTarget} is passed) corresponding to the given {@link RenderTarget}.
@@ -15146,9 +15197,14 @@ ${this.shaders.compute.head}`;
      * @returns - {@link RenderPassEntry} found.
      */
     getRenderTargetPassEntry(renderTarget = null) {
-      return renderTarget ? this.renderPassEntries.renderTarget.find(
-        (passEntry) => passEntry.renderPass.uuid === renderTarget.renderPass.uuid
-      ) : this.renderPassEntries.screen.find((passEntry) => passEntry.renderPass.uuid === this.renderer.renderPass.uuid);
+      if (renderTarget) {
+        const targetPassEntries = renderTarget.options.isPostTarget ? this.renderPassEntries.postRenderTarget : this.renderPassEntries.renderTarget;
+        return targetPassEntries.find((passEntry) => passEntry.renderPass.uuid === renderTarget.renderPass.uuid);
+      } else {
+        return this.renderPassEntries.screen.find(
+          (passEntry) => passEntry.renderPass.uuid === this.renderer.renderPass.uuid
+        );
+      }
     }
     /**
      * Get the correct {@link renderPassEntries | render pass entry} (either {@link renderPassEntries} outputTarget or {@link renderPassEntries} screen) {@link Stack} onto which this Mesh should be added, depending on whether it's projected or not.
@@ -15261,7 +15317,7 @@ ${this.shaders.compute.head}`;
       const projectionType = isProjected ? "projected" : "unProjected";
       const isTransparent = !!renderBundle.transparent;
       const transparencyType = isTransparent ? "transparent" : "opaque";
-      const renderPassEntry = this.renderPassEntries.renderTarget.find(
+      const renderPassEntry = [...this.renderPassEntries.renderTarget, ...this.renderPassEntries.postRenderTarget].find(
         (passEntry) => passEntry.renderPass.uuid === renderBundle.options.renderPass?.uuid
       );
       if (renderPassEntry) {
@@ -15419,9 +15475,8 @@ ${this.shaders.compute.head}`;
      */
     getObjectRenderPassEntry(object) {
       if (object.type === "RenderTarget") {
-        return this.renderPassEntries.renderTarget.find(
-          (entry) => entry.renderPass.uuid === object.renderPass.uuid
-        );
+        const targetPassEntries = object.options.isPostTarget ? this.renderPassEntries.postRenderTarget : this.renderPassEntries.renderTarget;
+        return targetPassEntries.find((entry) => entry.renderPass.uuid === object.renderPass.uuid);
       } else if (object.type === "PingPongPlane") {
         return this.renderPassEntries.pingPong.find((entry) => entry.element.uuid === object.uuid);
       } else if (object.type === "ShaderPass") {
@@ -15583,6 +15638,10 @@ ${this.shaders.compute.head}`;
           } else {
             renderPassEntry.renderPass.setDepthReadOnly(false);
           }
+          if (renderPassEntryType === "postRenderTarget") {
+            __privateSet$a(this, _shouldLoadColors, false);
+            __privateSet$a(this, _shouldLoadDepth, false);
+          }
           if (renderPassEntryType === "postProPass" && renderPassEntry.renderPass.uuid !== this.renderer.postProcessingPass.uuid) {
             __privateSet$a(this, _shouldLoadColors, false);
           }
@@ -15591,7 +15650,7 @@ ${this.shaders.compute.head}`;
             __privateGet$a(this, _shouldLoadDepth) && !renderPassEntry.renderPass.options.depthReadOnly ? "load" : "clear"
           );
           this.renderSinglePassEntry(commandEncoder, renderPassEntry);
-          if (renderPassEntryType !== "renderTarget") {
+          if (renderPassEntryType !== "renderTarget" && renderPassEntryType !== "postRenderTarget") {
             __privateSet$a(this, _shouldLoadColors, true);
           }
         });
@@ -17944,7 +18003,8 @@ struct VSOutput {
       this.options = {
         ...this.options,
         copyOutputToRenderTexture: parameters.copyOutputToRenderTexture,
-        isPrePass: parameters.isPrePass
+        isPrePass: parameters.isPrePass,
+        renderTextureName: parameters.renderTextureName ?? "renderTexture"
       };
       if (parameters.inputTarget) {
         this.setInputTarget(parameters.inputTarget);
@@ -17955,7 +18015,7 @@ struct VSOutput {
       this.type = "ShaderPass";
       this.renderTexture = this.createTexture({
         label: parameters.label ? `${parameters.label} render texture` : "Shader pass render texture",
-        name: parameters.renderTextureName ?? "renderTexture",
+        name: this.options.renderTextureName,
         fromTexture: this.inputTarget ? this.inputTarget.renderTexture : null,
         usage: ["copySrc", "copyDst", "textureBinding"],
         ...this.outputTarget && this.outputTarget.options.qualityRatio && { qualityRatio: this.outputTarget.options.qualityRatio }
@@ -18322,11 +18382,14 @@ fn getLambertDirect(
     );
   };
 
-  const applyToneMapping = ({ toneMapping = "Khronos" } = {}) => {
+  const applyToneMapping = ({
+    toneMapping = "Khronos",
+    outputColorSpace = "srgb"
+  } = {}) => {
     let toneMappingOutput = (
       /* wgsl */
       `
-  let exposure: f32 = 1.0; // TODO
+  let exposure: f32 = 1.0; // TODO?
   outputColor *= exposure;
   `
     );
@@ -18340,24 +18403,35 @@ fn getLambertDirect(
   `
           );
         case "Reinhard":
-          return `
+          return (
+            /* wgsl */
+            `
   outputColor = vec4(ReinhardToneMapping(outputColor.rgb), outputColor.a);
-        `;
+        `
+          );
         case "Cineon":
-          return `
+          return (
+            /* wgsl */
+            `
   outputColor = vec4(CineonToneMapping(outputColor.rgb), outputColor.a);
-        `;
+        `
+          );
         case false:
         default:
-          return `
+          return (
+            /* wgsl */
+            `
   outputColor = saturate(outputColor);
-        `;
+        `
+          );
       }
     })();
-    toneMappingOutput += /* wgsl */
-    `
+    if (outputColorSpace === "srgb") {
+      toneMappingOutput += /* wgsl */
+      `
   outputColor = linearTosRGB_4(outputColor);
-  `;
+    `;
+    }
     return toneMappingOutput;
   };
 
@@ -18371,7 +18445,13 @@ ${REIndirectDiffuse}
 ${toneMappingUtils}
 `
   );
-  const getLambert = ({ addUtils = true, receiveShadows = false, toneMapping, useOcclusion = false } = {}) => (
+  const getLambert = ({
+    addUtils = true,
+    receiveShadows = false,
+    toneMapping,
+    outputColorSpace,
+    useOcclusion = false
+  } = {}) => (
     /* wgsl */
     `
 ${addUtils ? lambertUtils : ""}
@@ -18391,7 +18471,7 @@ fn getLambert(
   
   outputColor = vec4(outgoingLight, outputColor.a);
   
-  ${applyToneMapping({ toneMapping })}
+  ${applyToneMapping({ toneMapping, outputColorSpace })}
     
   return outputColor;
 }
@@ -18503,7 +18583,13 @@ fn getPhongDirect(
     );
   };
 
-  const getPhong = ({ addUtils = true, receiveShadows = false, toneMapping, useOcclusion = false } = {}) => (
+  const getPhong = ({
+    addUtils = true,
+    receiveShadows = false,
+    toneMapping,
+    outputColorSpace,
+    useOcclusion = false
+  } = {}) => (
     /* wgsl */
     `
 ${addUtils ? lambertUtils : ""}
@@ -18527,7 +18613,7 @@ fn getPhong(
   
   outputColor = vec4(outgoingLight, outputColor.a);
   
-  ${applyToneMapping({ toneMapping })}
+  ${applyToneMapping({ toneMapping, outputColorSpace })}
     
   return outputColor;
 }
@@ -19023,6 +19109,7 @@ fn getPBRDirect(
     addUtils = true,
     receiveShadows = false,
     toneMapping,
+    outputColorSpace,
     useOcclusion = false,
     environmentMap = null,
     transmissionBackgroundTexture = null,
@@ -19060,7 +19147,7 @@ fn getPBR(
   
   outputColor = vec4(outgoingLight, outputColor.a);
   
-  ${applyToneMapping({ toneMapping })}
+  ${applyToneMapping({ toneMapping, outputColorSpace })}
     
   return outputColor;
 }
@@ -19089,20 +19176,29 @@ fn getPBR(
       });
     }
     const structAttributes = attributes.map((attribute, index) => {
-      return `
-  @location(${index}) ${attribute.type === "u32" || attribute.type === "i32" ? "@interpolate(flat) " : " "}${attribute.name}: ${attribute.type},`;
+      return (
+        /* wgsl */
+        `
+  @location(${index}) ${attribute.type === "u32" || attribute.type === "i32" ? "@interpolate(flat) " : " "}${attribute.name}: ${attribute.type},`
+      );
     }).join("");
     const additionalVaryingsOutput = additionalVaryings.map((attribute, index) => {
-      return `
-  @location(${attributes.length + 3 + index}) ${attribute.type === "u32" || attribute.type === "i32" ? "@interpolate(flat) " : " "}${attribute.name}: ${attribute.type},`;
+      return (
+        /* wgsl */
+        `
+  @location(${attributes.length + 3 + index}) ${attribute.type === "u32" || attribute.type === "i32" ? "@interpolate(flat) " : " "}${attribute.name}: ${attribute.type},`
+      );
     }).join("");
-    return `
+    return (
+      /* wgsl */
+      `
   @builtin(position) position: vec4f,
   ${structAttributes}
   @location(${attributes.length}) viewDirection: vec3f,
   @location(${attributes.length + 1}) worldPosition: vec3f,
   @location(${attributes.length + 2}) modelScale: vec3f,
-  ${additionalVaryingsOutput}`;
+  ${additionalVaryingsOutput}`
+    );
   };
 
   const getVertexOutputStruct = ({
@@ -19221,6 +19317,28 @@ struct FSInput {
   @builtin(front_facing) frontFacing: bool,
   ${getVertexOutputStructContent({ geometry, additionalVaryings })}
 };`
+    );
+  };
+
+  const getFragmentOutputStruct = ({
+    struct = [
+      {
+        type: "vec4f",
+        name: "color"
+      }
+    ]
+  }) => {
+    const outputStructContent = struct.map((s, i) => {
+      return (
+        /* wgsl */
+        `
+  @location(${i}) ${s.name}: ${s.type},`
+      );
+    }).join("");
+    return (
+      /* wgsl */
+      `struct FSOutput {${outputStructContent}
+}`
     );
   };
 
@@ -19566,6 +19684,22 @@ struct FSInput {
   const getUnlitFragmentShaderCode = ({
     chunks = null,
     toneMapping = "Khronos",
+    outputColorSpace = "srgb",
+    fragmentOutput = {
+      struct: [
+        {
+          type: "vec4f",
+          name: "color"
+        }
+      ],
+      output: (
+        /* wgsl */
+        `
+  var output: FSOutput;
+  output.color = outputColor;
+  return output;`
+      )
+    },
     geometry,
     additionalVaryings = [],
     materialUniform = null,
@@ -19584,7 +19718,9 @@ ${toneMappingUtils}
 
 ${getFragmentInputStruct({ geometry, additionalVaryings })}
 
-@fragment fn main(fsInput: FSInput) -> @location(0) vec4f {       
+${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
+
+@fragment fn main(fsInput: FSInput) -> FSOutput {       
   var outputColor: vec4f = vec4();
   
   ${declareAttributesVars({ geometry, additionalVaryings })}
@@ -19597,8 +19733,9 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
   // user defined additional contribution
   ${chunks.additionalContribution}
   
-  ${applyToneMapping({ toneMapping })}
-  return outputColor;
+  ${applyToneMapping({ toneMapping, outputColorSpace })}
+
+  ${fragmentOutput.output}
 }`
     );
   };
@@ -19706,6 +19843,22 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
   const getLambertFragmentShaderCode = ({
     chunks = null,
     toneMapping = "Khronos",
+    outputColorSpace = "srgb",
+    fragmentOutput = {
+      struct: [
+        {
+          type: "vec4f",
+          name: "color"
+        }
+      ],
+      output: (
+        /* wgsl */
+        `
+  var output: FSOutput;
+  output.color = outputColor;
+  return output;`
+      )
+    },
     geometry,
     additionalVaryings = [],
     materialUniform = null,
@@ -19731,7 +19884,9 @@ ${getLambertDirect}
 
 ${getFragmentInputStruct({ geometry, additionalVaryings })}
 
-@fragment fn main(fsInput: FSInput) -> @location(0) vec4f {
+${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
+
+@fragment fn main(fsInput: FSInput) -> FSOutput {
   var outputColor: vec4f = vec4();
   
   ${declareAttributesVars({ geometry, additionalVaryings })}
@@ -19753,8 +19908,9 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
   // user defined additional contribution
   ${chunks.additionalContribution}
   
-  ${applyToneMapping({ toneMapping })}
-  return outputColor;
+  ${applyToneMapping({ toneMapping, outputColorSpace })}
+
+  ${fragmentOutput.output}
 }`
     );
   };
@@ -19847,6 +20003,22 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
   const getPhongFragmentShaderCode = ({
     chunks = null,
     toneMapping = "Khronos",
+    outputColorSpace = "srgb",
+    fragmentOutput = {
+      struct: [
+        {
+          type: "vec4f",
+          name: "color"
+        }
+      ],
+      output: (
+        /* wgsl */
+        `
+  var output: FSOutput;
+  output.color = outputColor;
+  return output;`
+      )
+    },
     geometry,
     additionalVaryings = [],
     materialUniform = null,
@@ -19876,7 +20048,9 @@ ${getPhongDirect}
 
 ${getFragmentInputStruct({ geometry, additionalVaryings })}
 
-@fragment fn main(fsInput: FSInput) -> @location(0) vec4f {       
+${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
+
+@fragment fn main(fsInput: FSInput) -> FSOutput {       
   var outputColor: vec4f = vec4();
   
   ${declareAttributesVars({ geometry, additionalVaryings })}
@@ -19900,8 +20074,9 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
   // user defined additional contribution
   ${chunks.additionalContribution}
   
-  ${applyToneMapping({ toneMapping })}
-  return outputColor;
+  ${applyToneMapping({ toneMapping, outputColorSpace })}
+
+  ${fragmentOutput.output}
 }`
     );
   };
@@ -20095,6 +20270,22 @@ fn getIBLIndirectRadiance(
   const getPBRFragmentShaderCode = ({
     chunks = null,
     toneMapping = "Khronos",
+    outputColorSpace = "srgb",
+    fragmentOutput = {
+      struct: [
+        {
+          type: "vec4f",
+          name: "color"
+        }
+      ],
+      output: (
+        /* wgsl */
+        `
+  var output: FSOutput;
+  output.color = outputColor;
+  return output;`
+      )
+    },
     geometry,
     additionalVaryings = [],
     materialUniform = null,
@@ -20134,7 +20325,9 @@ ${getIBLTransmission}
 
 ${getFragmentInputStruct({ geometry, additionalVaryings })}
 
-@fragment fn main(fsInput: FSInput) -> @location(0) vec4f {
+${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
+
+@fragment fn main(fsInput: FSInput) -> FSOutput {
   var outputColor: vec4f = vec4();
   
   ${declareAttributesVars({ geometry, additionalVaryings })}
@@ -20159,14 +20352,31 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
   // user defined additional contribution
   ${chunks.additionalContribution}
   
-  ${applyToneMapping({ toneMapping })}
-  return outputColor;
+  ${applyToneMapping({ toneMapping, outputColorSpace })}
+
+  ${fragmentOutput.output}
 }`
     );
   };
 
   const getFragmentShaderCode = ({
     shadingModel = "PBR",
+    outputColorSpace = "srgb",
+    fragmentOutput = {
+      struct: [
+        {
+          type: "vec4f",
+          name: "color"
+        }
+      ],
+      output: (
+        /* wgsl */
+        `
+  var output: FSOutput;
+  output.color = outputColor;
+  return output;`
+      )
+    },
     chunks = null,
     toneMapping = "Khronos",
     geometry,
@@ -20194,6 +20404,8 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
           return getUnlitFragmentShaderCode({
             chunks,
             toneMapping,
+            outputColorSpace,
+            fragmentOutput,
             geometry,
             additionalVaryings,
             materialUniform,
@@ -20204,6 +20416,8 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
           return getLambertFragmentShaderCode({
             chunks,
             toneMapping,
+            outputColorSpace,
+            fragmentOutput,
             geometry,
             additionalVaryings,
             materialUniform,
@@ -20218,6 +20432,8 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
           return getPhongFragmentShaderCode({
             chunks,
             toneMapping,
+            outputColorSpace,
+            fragmentOutput,
             geometry,
             additionalVaryings,
             materialUniform,
@@ -20237,6 +20453,8 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
           return getPBRFragmentShaderCode({
             chunks,
             toneMapping,
+            outputColorSpace,
+            fragmentOutput,
             geometry,
             additionalVaryings,
             materialUniform,
@@ -20645,9 +20863,9 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
   class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
     /**
      * DOMMesh constructor
-     * @param renderer - {@link GPUCurtainsRenderer} object or {@link GPUCurtains} class object used to create this {@link DOMMesh}
-     * @param element - {@link HTMLElement} or string representing an {@link HTMLElement} selector used to scale and position the {@link DOMMesh}
-     * @param parameters - {@link DOMMeshParams | parameters} used to create this {@link DOMMesh}
+     * @param renderer - {@link GPUCurtainsRenderer} object or {@link GPUCurtains} class object used to create this {@link DOMMesh}.
+     * @param element - {@link HTMLElement} or string representing an {@link HTMLElement} selector used to scale and position the {@link DOMMesh}.
+     * @param parameters - {@link DOMMeshParams | parameters} used to create this {@link DOMMesh}.
      */
     constructor(renderer, element, parameters) {
       parameters = { ...defaultDOMMeshParams, ...parameters };
@@ -21417,6 +21635,159 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
     destroy() {
       this.deviceManager.destroy();
       this.scrollManager?.destroy();
+    }
+  }
+
+  class ComputeShaderPass extends ComputePass {
+    /**
+     * ComputeShaderPass constructor
+     * @param renderer - {@link Renderer} class object or {@link GPUCurtains} class object used to create this {@link ComputeShaderPass}.
+     * @param parameters - {@link ComputeShaderPassParams | parameters} used to create our {@link ComputeShaderPass}.
+     */
+    constructor(renderer, parameters = {}) {
+      const {
+        label,
+        shaders,
+        useAsyncPipeline,
+        texturesOptions,
+        uniforms,
+        storages,
+        bindings,
+        bindGroups,
+        samplers,
+        ...shaderPassParams
+      } = parameters;
+      const { targets, renderOrder, autoRender, inputTarget, outputTarget, isPrePass, ...otherParams } = shaderPassParams;
+      let { textures, textureDispatchSize, visible, storageRenderTextureName } = otherParams;
+      visible = visible === void 0 ? true : visible;
+      storageRenderTextureName = storageRenderTextureName ?? "storageRenderTexture";
+      if (!textureDispatchSize) {
+        textureDispatchSize = [16, 16];
+      }
+      if (Array.isArray(textureDispatchSize)) {
+        textureDispatchSize[0] = Math.ceil(textureDispatchSize[0] ?? 16);
+        textureDispatchSize[1] = Math.ceil(textureDispatchSize[1] ?? 16);
+      } else if (!isNaN(textureDispatchSize)) {
+        textureDispatchSize = [Math.ceil(textureDispatchSize), Math.ceil(textureDispatchSize)];
+      } else {
+        textureDispatchSize = [16, 16];
+      }
+      const storageTexture = new Texture(renderer, {
+        name: storageRenderTextureName,
+        type: "storage",
+        visibility: ["compute"],
+        usage: ["copySrc", "copyDst", "textureBinding", "storageBinding"],
+        format: "rgba8unorm"
+      });
+      const renderTexture = new Texture(renderer, {
+        name: storageRenderTextureName,
+        visibility: ["fragment"],
+        fromTexture: storageTexture
+      });
+      const { shaderPassSampler } = otherParams;
+      const shaderPass = new ShaderPass(renderer, {
+        label: label ? `${label} ShaderPass` : "Compute ShaderPass",
+        autoRender,
+        shaders: {
+          fragment: {
+            code: (
+              /* wgsl */
+              `
+            struct VSOutput {
+                @builtin(position) position: vec4f,
+                @location(0) uv: vec2f,
+            };
+
+            @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
+                return textureSample(${storageRenderTextureName ?? "storageRenderTexture"}, ${shaderPassSampler ? shaderPassSampler.name : "defaultSampler"}, fsInput.uv);
+            }`
+            )
+          }
+        },
+        renderOrder,
+        textures: [renderTexture],
+        ...shaderPassSampler && { samplers: [shaderPassSampler] },
+        visible,
+        targets,
+        inputTarget,
+        outputTarget,
+        isPrePass
+      });
+      if (textures && textures.length) {
+        textures = [storageTexture, shaderPass.renderTexture, ...textures];
+      } else {
+        textures = [storageTexture, shaderPass.renderTexture];
+      }
+      const params = {
+        label,
+        shaders,
+        useAsyncPipeline,
+        texturesOptions,
+        uniforms,
+        storages,
+        bindings,
+        bindGroups,
+        textures,
+        samplers,
+        autoRender: false,
+        // will be dispatched before rendering the shader pass
+        active: visible,
+        dispatchSize: [
+          Math.ceil(storageTexture.size.width / textureDispatchSize[0]),
+          Math.ceil(storageTexture.size.height / textureDispatchSize[1])
+        ]
+      };
+      super(renderer, params);
+      this.options = {
+        ...this.options,
+        storageRenderTextureName,
+        textureDispatchSize,
+        ...shaderPassSampler && { shaderPassSampler }
+      };
+      this.textureDispatchSize = textureDispatchSize;
+      this.shaderPass = shaderPass;
+      this.storageTexture = storageTexture;
+      this.renderTexture = renderTexture;
+      const scenePassEntry = this.renderer.scene.getObjectRenderPassEntry(this.shaderPass);
+      if (scenePassEntry) {
+        const _onBeforeRenderPass = scenePassEntry.onBeforeRenderPass;
+        scenePassEntry.onBeforeRenderPass = (commandEncoder, swapChainTexture) => {
+          _onBeforeRenderPass && _onBeforeRenderPass(commandEncoder, swapChainTexture);
+          this.renderer.renderSingleComputePass(commandEncoder, this, false);
+        };
+      }
+    }
+    /**
+     * Get whether the {@link ComputePass} and {@link ShaderPass} should run.
+     */
+    get visible() {
+      return this.active;
+    }
+    /**
+     * Set whether the {@link ComputePass} and {@link ShaderPass} should run.
+     */
+    set visible(value) {
+      this.active = value;
+      this.shaderPass.visible = value;
+    }
+    /**
+     * Update the dispatch size and resize.
+     */
+    resize() {
+      this.material.dispatchSize = [
+        Math.ceil(this.storageTexture.size.width / this.textureDispatchSize[0]),
+        Math.ceil(this.storageTexture.size.height / this.textureDispatchSize[1])
+      ];
+      super.resize();
+    }
+    /**
+     * Destroy the {@link ComputeShaderPass}.
+     */
+    destroy() {
+      this.shaderPass.remove();
+      this.storageTexture.destroy();
+      this.renderTexture.destroy();
+      super.destroy();
     }
   }
 
@@ -23121,9 +23492,29 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
       renderer = isCameraRenderer(renderer, "LitMesh");
       let { material, ...defaultParams } = parameters;
       if (!material) material = {};
-      let { colorSpace } = material;
+      let { colorSpace, outputColorSpace, fragmentOutput } = material;
       if (!colorSpace) {
         colorSpace = "srgb";
+      }
+      if (!outputColorSpace) {
+        outputColorSpace = "srgb";
+      }
+      if (!fragmentOutput) {
+        fragmentOutput = {
+          struct: [
+            {
+              type: "vec4f",
+              name: "color"
+            }
+          ],
+          output: (
+            /* wgsl */
+            `
+  var output: FSOutput;
+  output.color = outputColor;
+  return output;`
+          )
+        };
       }
       const {
         shading,
@@ -23268,6 +23659,8 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
       });
       const fs = LitMesh.getFragmentShaderCode({
         shadingModel: shading,
+        outputColorSpace,
+        fragmentOutput,
         chunks: fragmentChunks,
         extensionsUsed,
         receiveShadows: defaultParams.receiveShadows,
@@ -26101,6 +26494,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
   exports.ComputeMaterial = ComputeMaterial;
   exports.ComputePass = ComputePass;
   exports.ComputePipelineEntry = ComputePipelineEntry;
+  exports.ComputeShaderPass = ComputeShaderPass;
   exports.DOMElement = DOMElement;
   exports.DOMFrustum = DOMFrustum;
   exports.DOMMesh = DOMMesh;

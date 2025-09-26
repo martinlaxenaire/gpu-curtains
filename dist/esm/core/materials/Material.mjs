@@ -421,7 +421,7 @@ class Material {
    */
   addTexture(texture) {
     this.textures.push(texture);
-    if (this.options.shaders.vertex && this.options.shaders.vertex.code.indexOf(texture.options.name) !== -1 || this.options.shaders.fragment && this.options.shaders.fragment.code.indexOf(texture.options.name) !== -1 || this.options.shaders.compute && this.options.shaders.compute.code.indexOf(texture.options.name) !== -1) {
+    if (this.options.shaders && (this.options.shaders.vertex && this.options.shaders.vertex.code.indexOf(texture.options.name) !== -1 || this.options.shaders.fragment && this.options.shaders.fragment.code.indexOf(texture.options.name) !== -1 || this.options.shaders.compute && this.options.shaders.compute.code.indexOf(texture.options.name) !== -1)) {
       this.texturesBindGroup.addTexture(texture);
     }
     if (texture instanceof MediaTexture && texture.options.useTransform) {

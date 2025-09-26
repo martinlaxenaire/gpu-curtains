@@ -171,6 +171,12 @@ export declare class Shadow {
      */
     setDepthTexture(): void;
     /**
+     * Resize the {@link depthTexture} and eventually resize the {@link depthPassTarget} as well.
+     * @param width - New width to use for the {@link depthTexture}.
+     * @param height - New height to use for the {@link depthTexture}.
+     */
+    resizeDepthTexture(width?: number, height?: number): void;
+    /**
      * Create the {@link depthTexture}.
      */
     createDepthTexture(): void;

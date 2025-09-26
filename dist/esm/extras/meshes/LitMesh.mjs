@@ -16,9 +16,29 @@ class LitMesh extends Mesh {
     renderer = isCameraRenderer(renderer, "LitMesh");
     let { material, ...defaultParams } = parameters;
     if (!material) material = {};
-    let { colorSpace } = material;
+    let { colorSpace, outputColorSpace, fragmentOutput } = material;
     if (!colorSpace) {
       colorSpace = "srgb";
+    }
+    if (!outputColorSpace) {
+      outputColorSpace = "srgb";
+    }
+    if (!fragmentOutput) {
+      fragmentOutput = {
+        struct: [
+          {
+            type: "vec4f",
+            name: "color"
+          }
+        ],
+        output: (
+          /* wgsl */
+          `
+  var output: FSOutput;
+  output.color = outputColor;
+  return output;`
+        )
+      };
     }
     const {
       shading,
@@ -163,6 +183,8 @@ class LitMesh extends Mesh {
     });
     const fs = LitMesh.getFragmentShaderCode({
       shadingModel: shading,
+      outputColorSpace,
+      fragmentOutput,
       chunks: fragmentChunks,
       extensionsUsed,
       receiveShadows: defaultParams.receiveShadows,

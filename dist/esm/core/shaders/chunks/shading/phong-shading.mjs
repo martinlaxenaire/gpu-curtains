@@ -3,7 +3,13 @@ import { getPhongDirect } from '../fragment/head/get-phong-direct.mjs';
 import { getPhongShading } from '../fragment/body/get-phong-shading.mjs';
 import { applyToneMapping } from '../fragment/body/apply-tone-mapping.mjs';
 
-const getPhong = ({ addUtils = true, receiveShadows = false, toneMapping, useOcclusion = false } = {}) => (
+const getPhong = ({
+  addUtils = true,
+  receiveShadows = false,
+  toneMapping,
+  outputColorSpace,
+  useOcclusion = false
+} = {}) => (
   /* wgsl */
   `
 ${addUtils ? lambertUtils : ""}
@@ -27,7 +33,7 @@ fn getPhong(
   
   outputColor = vec4(outgoingLight, outputColor.a);
   
-  ${applyToneMapping({ toneMapping })}
+  ${applyToneMapping({ toneMapping, outputColorSpace })}
     
   return outputColor;
 }

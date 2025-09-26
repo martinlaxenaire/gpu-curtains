@@ -18,7 +18,7 @@ import { Texture } from '../../core/textures/Texture'
 import { MediaTexture } from '../../core/textures/MediaTexture'
 import { Sampler } from '../../core/samplers/Sampler'
 import { EnvironmentMap } from '../environmentMap/EnvironmentMap'
-import { ColorSpace } from '../../types/shading'
+import { ColorSpace, FragmentOutput } from '../../types/shading'
 
 /** Defines all kinds of shading models available. */
 export type ShadingModels = 'Unlit' | 'Lambert' | 'Phong' | 'PBR'
@@ -154,6 +154,8 @@ export interface LitMeshMaterialParams
   vertexChunks?: AdditionalChunks
   /** {@link AdditionalChunks | Additional WGSL chunks} to add to the fragment shaders. */
   fragmentChunks?: AdditionalChunks
+  /** Custom fragment shader output structure members and returned values to use if needed. Useful when rendering to a Multiple Render Target for example. */
+  fragmentOutput?: FragmentOutput
 }
 
 /** Parameters used to create a {@link LitMesh}. */
@@ -252,7 +254,7 @@ export class LitMesh extends Mesh {
     if (!material) material = {}
 
     // color spaces
-    let { colorSpace, outputColorSpace } = material
+    let { colorSpace, outputColorSpace, fragmentOutput } = material
 
     if (!colorSpace) {
       colorSpace = 'srgb'
@@ -260,6 +262,21 @@ export class LitMesh extends Mesh {
 
     if (!outputColorSpace) {
       outputColorSpace = 'srgb'
+    }
+
+    if (!fragmentOutput) {
+      fragmentOutput = {
+        struct: [
+          {
+            type: 'vec4f',
+            name: 'color',
+          },
+        ],
+        output: /* wgsl */ `
+  var output: FSOutput;
+  output.color = outputColor;
+  return output;`,
+      }
     }
 
     const {
@@ -436,6 +453,7 @@ export class LitMesh extends Mesh {
     const fs = LitMesh.getFragmentShaderCode({
       shadingModel: shading,
       outputColorSpace,
+      fragmentOutput,
       chunks: fragmentChunks,
       extensionsUsed,
       receiveShadows: defaultParams.receiveShadows,
