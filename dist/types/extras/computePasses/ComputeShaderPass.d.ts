@@ -1,3 +1,4 @@
+/// <reference types="@webgpu/types" />
 import { ComputePass, ComputePassOptions, ComputePassParams } from '../../core/computePasses/ComputePass';
 import { Renderer } from '../../core/renderers/utils';
 import { ShaderPass, ShaderPassParams } from '../../core/renderPasses/ShaderPass';
@@ -8,8 +9,10 @@ import { GPUCurtains } from '../../curtains/GPUCurtains';
 export interface ComputeShaderPassSpecificOptions {
     /** Workgroup size of the compute shader to use. Divided internally by the storage texture `[width, height]`. Default to `[16, 16]`. */
     textureDispatchSize: number | number[];
-    /** Name of the {@link Texture | storage texture} used in the compute shader. */
+    /** Name of the {@link Texture | storage texture} used in the compute shader. Default to `storageRenderTexture`. */
     storageRenderTextureName: string;
+    /** Format of the {@link Texture | storage texture} used in the compute shader, must be compatible with storage textures. Default to `rgba8unorm`. */
+    storageRenderTextureFormat: GPUTextureFormat;
     /** Optional {@link Sampler} to use in the {@link ShaderPass} to sample the result. */
     shaderPassSampler: Sampler;
 }

@@ -21688,9 +21688,10 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
         ...shaderPassParams
       } = parameters;
       const { targets, renderOrder, autoRender, inputTarget, outputTarget, isPrePass, ...otherParams } = shaderPassParams;
-      let { textures, textureDispatchSize, visible, storageRenderTextureName } = otherParams;
+      let { textures, textureDispatchSize, visible, storageRenderTextureName, storageRenderTextureFormat } = otherParams;
       visible = visible === void 0 ? true : visible;
       storageRenderTextureName = storageRenderTextureName ?? "storageRenderTexture";
+      storageRenderTextureFormat = storageRenderTextureFormat ?? "rgba8unorm";
       if (!textureDispatchSize) {
         textureDispatchSize = [16, 16];
       }
@@ -21707,7 +21708,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
         type: "storage",
         visibility: ["compute"],
         usage: ["copySrc", "copyDst", "textureBinding", "storageBinding"],
-        format: texturesOptions && texturesOptions.format ? texturesOptions.format : "rgba8unorm"
+        format: storageRenderTextureFormat
       });
       const renderTexture = new Texture(renderer, {
         name: storageRenderTextureName,
@@ -21771,6 +21772,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
       this.options = {
         ...this.options,
         storageRenderTextureName,
+        storageRenderTextureFormat,
         textureDispatchSize,
         ...shaderPassSampler && { shaderPassSampler }
       };

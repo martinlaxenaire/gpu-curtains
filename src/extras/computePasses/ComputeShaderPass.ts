@@ -9,8 +9,10 @@ import { GPUCurtains } from '../../curtains/GPUCurtains'
 export interface ComputeShaderPassSpecificOptions {
   /** Workgroup size of the compute shader to use. Divided internally by the storage texture `[width, height]`. Default to `[16, 16]`. */
   textureDispatchSize: number | number[]
-  /** Name of the {@link Texture | storage texture} used in the compute shader. */
+  /** Name of the {@link Texture | storage texture} used in the compute shader. Default to `storageRenderTexture`. */
   storageRenderTextureName: string
+  /** Format of the {@link Texture | storage texture} used in the compute shader, must be compatible with storage textures. Default to `rgba8unorm`. */
+  storageRenderTextureFormat: GPUTextureFormat
   /** Optional {@link Sampler} to use in the {@link ShaderPass} to sample the result. */
   shaderPassSampler: Sampler
 }
@@ -87,11 +89,12 @@ export class ComputeShaderPass extends ComputePass {
 
     const { targets, renderOrder, autoRender, inputTarget, outputTarget, isPrePass, ...otherParams } = shaderPassParams
 
-    let { textures, textureDispatchSize, visible, storageRenderTextureName } = otherParams
+    let { textures, textureDispatchSize, visible, storageRenderTextureName, storageRenderTextureFormat } = otherParams
 
     // patch parameters
     visible = visible === undefined ? true : visible
     storageRenderTextureName = storageRenderTextureName ?? 'storageRenderTexture'
+    storageRenderTextureFormat = storageRenderTextureFormat ?? 'rgba8unorm'
 
     if (!textureDispatchSize) {
       textureDispatchSize = [16, 16]
@@ -113,7 +116,7 @@ export class ComputeShaderPass extends ComputePass {
       type: 'storage',
       visibility: ['compute'],
       usage: ['copySrc', 'copyDst', 'textureBinding', 'storageBinding'],
-      format: texturesOptions && texturesOptions.format ? texturesOptions.format : 'rgba8unorm',
+      format: storageRenderTextureFormat,
     })
 
     const renderTexture = new Texture(renderer, {
@@ -182,6 +185,7 @@ export class ComputeShaderPass extends ComputePass {
     this.options = {
       ...this.options,
       storageRenderTextureName,
+      storageRenderTextureFormat,
       textureDispatchSize,
       ...(shaderPassSampler && { shaderPassSampler }),
     }

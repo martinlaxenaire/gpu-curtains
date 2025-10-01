@@ -247,9 +247,7 @@ window.addEventListener('load', async () => {
         code: brightnessComputeShader,
       },
     },
-    texturesOptions: {
-      format: 'rgba16float',
-    },
+    storageRenderTextureFormat: 'rgba16float',
     uniforms: {
       params: {
         struct: {
@@ -333,9 +331,7 @@ window.addEventListener('load', async () => {
       },
     },
     textureDispatchSize: [16, 8],
-    texturesOptions: {
-      format: 'rgba16float',
-    },
+    storageRenderTextureFormat: 'rgba16float',
     storages: {
       params: {
         struct: {
@@ -374,9 +370,7 @@ window.addEventListener('load', async () => {
       },
     },
     textureDispatchSize: [8, 16],
-    texturesOptions: {
-      format: 'rgba16float',
-    },
+    storageRenderTextureFormat: 'rgba16float',
     storages: {
       params: {
         struct: {
@@ -446,9 +440,7 @@ window.addEventListener('load', async () => {
         },
       },
       textureDispatchSize: [16, 8],
-      texturesOptions: {
-        format: 'rgba16float',
-      },
+      storageRenderTextureFormat: 'rgba16float',
       storages: {
         params: {
           struct: {
@@ -487,9 +479,7 @@ window.addEventListener('load', async () => {
         },
       },
       textureDispatchSize: [8, 16],
-      texturesOptions: {
-        format: 'rgba16float',
-      },
+      storageRenderTextureFormat: 'rgba16float',
       storages: {
         params: {
           struct: {
