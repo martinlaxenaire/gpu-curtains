@@ -2296,8 +2296,9 @@
     /**
      * Set the {@link BufferElementAlignment | alignment} from an offset (byte count).
      * @param startOffset - Offset at which to start inserting the values in the parent {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer}.
+     * @param minStride - Minimum stride to use for the values in the parent {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer}.
      */
-    setAlignment(startOffset = 0) {
+    setAlignment(startOffset = 0, minStride = 0) {
       this.setAlignmentFromPosition(this.getPositionAtOffset(startOffset));
     }
     /**
@@ -2429,12 +2430,20 @@
      * Set the {@link core/bindings/bufferElements/BufferElement.BufferElementAlignment | alignment}.
      * To compute how arrays are packed, we get the second item alignment as well and use it to calculate the arrayStride between two array elements. Using the arrayStride and the total number of elements, we can easily get the end alignment position.
      * @param startOffset - Offset at which to start inserting the values in the {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer}.
+     * @param minStride - Minimum stride to use for the values in the parent {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer}. Uniform buffers array elements have a minimum stride of `16`.
      */
-    setAlignment(startOffset = 0) {
+    setAlignment(startOffset = 0, minStride = 0) {
+      if (minStride !== 0) {
+        startOffset = Math.ceil(startOffset / minStride) * minStride;
+      }
       super.setAlignment(startOffset);
-      const nextAlignment = this.getElementAlignment(this.getPositionAtOffset(this.endOffset + 1));
+      const endOffset = minStride !== 0 ? Math.ceil(this.endOffset / minStride) * minStride - 1 : this.endOffset;
+      const nextAlignment = this.getElementAlignment(this.getPositionAtOffset(endOffset + 1));
       this.arrayStride = this.getByteCountBetweenPositions(this.alignment.end, nextAlignment.end);
       this.alignment.end = this.getPositionAtOffset(this.endOffset + this.arrayStride * (this.numElements - 1));
+      if (minStride !== 0) {
+        this.alignment.end.byte = Math.max(this.alignment.end.byte, minStride - 1);
+      }
     }
     /**
      * Set the strided {@link view} value from an array.
@@ -3020,7 +3029,8 @@
       }
       this.bufferElements.forEach((bufferElement, index) => {
         const startOffset = index === 0 ? 0 : this.bufferElements[index - 1].endOffset + 1;
-        bufferElement.setAlignment(startOffset);
+        const minStride = "numElements" in bufferElement && this.bindingType === "uniform" ? 16 : 0;
+        bufferElement.setAlignment(startOffset, minStride);
       });
       if (arrayBindings.length > 1) {
         const arraySizes = arrayBindings.map((bindingKey) => {
@@ -3153,8 +3163,20 @@
           }
         } else {
           bufferElements.forEach((binding) => {
-            const bindingType = this.bindingType === "uniform" && "numElements" in binding ? `array<${BufferElement.getType(binding.type)}, ${binding.numElements}>` : binding.type;
-            structs[kebabCaseLabel][binding.name] = bindingType;
+            if (this.bindingType === "uniform" && "numElements" in binding) {
+              if (binding.bufferLayout.align < 16) {
+                const separateStructLabel = toKebabCase(binding.name) + "Elements";
+                structs[separateStructLabel] = {};
+                structs[separateStructLabel][`@size(${binding.arrayStride}) element`] = BufferElement.getType(
+                  binding.type
+                );
+                structs[kebabCaseLabel][`@align(${binding.startOffset}) ${binding.name}`] = `array<${separateStructLabel}, ${binding.numElements}>`;
+              } else {
+                structs[kebabCaseLabel][binding.name] = `array<${BufferElement.getType(binding.type)}, ${binding.numElements}>`;
+              }
+            } else {
+              structs[kebabCaseLabel][binding.name] = binding.type;
+            }
           });
           const varType = getBindingWGSLVarType(this);
           this.wgslGroupFragment = [`${varType} ${this.name}: ${kebabCaseLabel};`];
@@ -3903,6 +3925,7 @@
     qualityRatio: 1,
     // copy external texture options
     generateMips: false,
+    useMips: false,
     flipY: false,
     premultipliedAlpha: false,
     aspect: "all",
@@ -3923,6 +3946,9 @@
       this.renderer = renderer;
       this.uuid = generateUUID();
       this.options = { ...defaultTextureParams, ...parameters };
+      if (this.options.generateMips) {
+        this.options.useMips = true;
+      }
       if (this.options.format === "rgba32float" && this.renderer.device && !this.renderer.device.features.has("float32-filterable")) {
         this.options.format = "rgba16float";
       }
@@ -4032,7 +4058,7 @@
         size: [this.size.width, this.size.height, this.size.depth ?? 1],
         dimensions: this.options.viewDimension,
         sampleCount: this.options.sampleCount,
-        mipLevelCount: this.options.generateMips ? getNumMipLevels(this.size.width, this.size.height, this.size.depth ?? 1) : 1,
+        mipLevelCount: this.options.useMips ? getNumMipLevels(this.size.width, this.size.height, this.size.depth ?? 1) : 1,
         usage: getDefaultTextureUsage(this.options.usage, this.options.type)
       });
       this.textureBinding.resource = this.texture;
@@ -6353,6 +6379,7 @@
         (bindGroup) => bindGroup.loseContext()
       );
       this.pipelineEntry.pipeline = null;
+      this.pipelineEntry.status.compiled = false;
     }
     /**
      * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored to recreate our samplers, textures and bind groups.
@@ -16066,7 +16093,9 @@ ${this.shaders.compute.head}`;
       if (!__privateGet$8(this, _mipsGeneration).module) {
         __privateGet$8(this, _mipsGeneration).module = this.device.createShaderModule({
           label: "textured quad shaders for mip level generation",
-          code: `
+          code: (
+            /* wgsl */
+            `
             struct VSOutput {
               @builtin(position) position: vec4f,
               @location(0) texcoord: vec2f,
@@ -16101,6 +16130,7 @@ ${this.shaders.compute.head}`;
               return textureSample(ourTexture, ourSampler, fsInput.texcoord);
             }
           `
+          )
         });
         __privateGet$8(this, _mipsGeneration).sampler = this.device.createSampler({
           minFilter: "linear",
@@ -21677,7 +21707,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
         type: "storage",
         visibility: ["compute"],
         usage: ["copySrc", "copyDst", "textureBinding", "storageBinding"],
-        format: "rgba8unorm"
+        format: texturesOptions && texturesOptions.format ? texturesOptions.format : "rgba8unorm"
       });
       const renderTexture = new Texture(renderer, {
         name: storageRenderTextureName,

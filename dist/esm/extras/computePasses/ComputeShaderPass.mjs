@@ -41,7 +41,7 @@ class ComputeShaderPass extends ComputePass {
       type: "storage",
       visibility: ["compute"],
       usage: ["copySrc", "copyDst", "textureBinding", "storageBinding"],
-      format: "rgba8unorm"
+      format: texturesOptions && texturesOptions.format ? texturesOptions.format : "rgba8unorm"
     });
     const renderTexture = new Texture(renderer, {
       name: storageRenderTextureName,

@@ -18,7 +18,7 @@ export interface ComputeShaderPassSpecificOptions {
 /** Define the parameters used to create a {@link ComputeShaderPass}. */
 export interface ComputeShaderPassParams
   extends Omit<ComputePassParams, 'dispatchSize' | 'autoRender' | 'renderOrder' | 'active'>,
-    Omit<ShaderPassParams, 'label' | 'textures' | 'shaders' | 'samplers'>,
+    Omit<ShaderPassParams, 'label' | 'textures' | 'shaders' | 'samplers' | 'texturesOptions'>,
     Partial<ComputeShaderPassSpecificOptions> {}
 
 /** Define the {@link ComputeShaderPass} options */
@@ -113,7 +113,7 @@ export class ComputeShaderPass extends ComputePass {
       type: 'storage',
       visibility: ['compute'],
       usage: ['copySrc', 'copyDst', 'textureBinding', 'storageBinding'],
-      format: 'rgba8unorm',
+      format: texturesOptions && texturesOptions.format ? texturesOptions.format : 'rgba8unorm',
     })
 
     const renderTexture = new Texture(renderer, {

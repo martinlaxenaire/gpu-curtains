@@ -173,8 +173,9 @@ class BufferElement {
   /**
    * Set the {@link BufferElementAlignment | alignment} from an offset (byte count).
    * @param startOffset - Offset at which to start inserting the values in the parent {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer}.
+   * @param minStride - Minimum stride to use for the values in the parent {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer}.
    */
-  setAlignment(startOffset = 0) {
+  setAlignment(startOffset = 0, minStride = 0) {
     this.setAlignmentFromPosition(this.getPositionAtOffset(startOffset));
   }
   /**

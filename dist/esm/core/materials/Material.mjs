@@ -120,6 +120,7 @@ class Material {
       (bindGroup) => bindGroup.loseContext()
     );
     this.pipelineEntry.pipeline = null;
+    this.pipelineEntry.status.compiled = false;
   }
   /**
    * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored to recreate our samplers, textures and bind groups.

@@ -14,7 +14,7 @@ export interface ComputeShaderPassSpecificOptions {
     shaderPassSampler: Sampler;
 }
 /** Define the parameters used to create a {@link ComputeShaderPass}. */
-export interface ComputeShaderPassParams extends Omit<ComputePassParams, 'dispatchSize' | 'autoRender' | 'renderOrder' | 'active'>, Omit<ShaderPassParams, 'label' | 'textures' | 'shaders' | 'samplers'>, Partial<ComputeShaderPassSpecificOptions> {
+export interface ComputeShaderPassParams extends Omit<ComputePassParams, 'dispatchSize' | 'autoRender' | 'renderOrder' | 'active'>, Omit<ShaderPassParams, 'label' | 'textures' | 'shaders' | 'samplers' | 'texturesOptions'>, Partial<ComputeShaderPassSpecificOptions> {
 }
 /** Define the {@link ComputeShaderPass} options */
 export interface ComputeShaderPassOptions extends ComputePassOptions, ComputeShaderPassSpecificOptions {
