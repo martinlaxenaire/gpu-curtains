@@ -212,6 +212,7 @@ export class Material {
 
     // reset pipeline as well
     this.pipelineEntry.pipeline = null
+    this.pipelineEntry.status.compiled = false
   }
 
   /**
