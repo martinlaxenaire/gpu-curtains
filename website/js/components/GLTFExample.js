@@ -3,6 +3,7 @@ import {
   Raycaster,
   AmbientLight,
   DirectionalLight,
+  EnvironmentMap,
   GLTFScenesManager,
   DOMObject3D,
   Vec3,
@@ -20,18 +21,25 @@ export class GLTFExample {
     this.raycaster = new Raycaster(this.gpuCurtains)
 
     // LIGHTS
+    this.environmentMap = new EnvironmentMap(this.gpuCurtains, {
+      diffuseIntensity: 1,
+      specularIntensity: 0.325,
+    })
+
+    this.environmentMap.loadAndComputeFromHDR('./website/assets/hdr/cannon_1k.hdr')
+
     this.ambientLight = new AmbientLight(this.gpuCurtains, {
       intensity: 0.1,
     })
 
     this.blueDirectionalLight = new DirectionalLight(this.gpuCurtains, {
-      position: new Vec3(3, 3, 0),
+      position: new Vec3(50, 50, 12.5),
       intensity: 0.375,
       color: new Vec3(0, 1, 1),
     })
 
     this.pinkDirectionalLight = new DirectionalLight(this.gpuCurtains, {
-      position: new Vec3(-3, -3, 1.5),
+      position: new Vec3(-50, -50, 25),
       intensity: 0.5,
       color: new Vec3(1, 0, 1),
     })
@@ -85,6 +93,8 @@ export class GLTFExample {
         isHovered: false,
         scaleTween: null,
       }
+
+      parameters.material.environmentMap = this.environmentMap
 
       parameters.material.opacity = 0
       // for a better result we won't use transparency blending
