@@ -90,6 +90,9 @@ window.addEventListener('load', async () => {
         code: computeShader,
       },
     },
+    storageTextureParams: {
+      format: 'rgba16float',
+    },
     uniforms: {
       params: {
         struct: {

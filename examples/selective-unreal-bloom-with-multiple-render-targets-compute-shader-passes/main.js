@@ -247,7 +247,9 @@ window.addEventListener('load', async () => {
         code: brightnessComputeShader,
       },
     },
-    storageRenderTextureFormat: 'rgba16float',
+    storageTextureParams: {
+      format: 'rgba16float',
+    },
     uniforms: {
       params: {
         struct: {
@@ -331,7 +333,9 @@ window.addEventListener('load', async () => {
       },
     },
     textureDispatchSize: [16, 8],
-    storageRenderTextureFormat: 'rgba16float',
+    storageTextureParams: {
+      format: 'rgba16float',
+    },
     storages: {
       params: {
         struct: {
@@ -370,7 +374,9 @@ window.addEventListener('load', async () => {
       },
     },
     textureDispatchSize: [8, 16],
-    storageRenderTextureFormat: 'rgba16float',
+    storageTextureParams: {
+      format: 'rgba16float',
+    },
     storages: {
       params: {
         struct: {
@@ -440,7 +446,9 @@ window.addEventListener('load', async () => {
         },
       },
       textureDispatchSize: [16, 8],
-      storageRenderTextureFormat: 'rgba16float',
+      storageTextureParams: {
+        format: 'rgba16float',
+      },
       storages: {
         params: {
           struct: {
@@ -479,7 +487,9 @@ window.addEventListener('load', async () => {
         },
       },
       textureDispatchSize: [8, 16],
-      storageRenderTextureFormat: 'rgba16float',
+      storageTextureParams: {
+        format: 'rgba16float',
+      },
       storages: {
         params: {
           struct: {
@@ -649,7 +659,7 @@ window.addEventListener('load', async () => {
     }
   }
 
-  window.addEventListener('pointerdown', onPointerDown)
+  gpuCameraRenderer.canvas.addEventListener('pointerdown', onPointerDown)
 
   // debug
   const gui = new lil.GUI({

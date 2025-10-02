@@ -1,18 +1,24 @@
 import { ComputePass, ComputePassOptions, ComputePassParams } from '../../core/computePasses/ComputePass'
-import { Renderer } from '../../core/renderers/utils'
+import { isRenderer, Renderer } from '../../core/renderers/utils'
 import { ShaderPass, ShaderPassParams } from '../../core/renderPasses/ShaderPass'
 import { Sampler } from '../../core/samplers/Sampler'
-import { Texture } from '../../core/textures/Texture'
-import { GPUCurtains } from '../../curtains/GPUCurtains'
+import { Texture, TextureParams } from '../../core/textures/Texture'
+import type { GPUCurtains } from '../../curtains/GPUCurtains'
+
+/** Define the {@link Texture | storage texture} parameters used in the compute shader. */
+export interface ComputeStorageTextureParams {
+  /** Name of the {@link Texture | storage texture} used in the compute shader. Default to `storageRenderTexture`. */
+  name?: TextureParams['name']
+  /** Format of the {@link Texture | storage texture} used in the compute shader, must be compatible with storage textures. Default to `rgba8unorm`. */
+  format?: TextureParams['format']
+}
 
 /** Define the specific additional options to use with a {@link ComputeShaderPass}. */
 export interface ComputeShaderPassSpecificOptions {
-  /** Workgroup size of the compute shader to use. Divided internally by the storage texture `[width, height]`. Default to `[16, 16]`. */
+  /** Options used to create the {@link Texture | storage texture} used in the compute shader. */
+  storageTextureParams: ComputeStorageTextureParams
+  /** Workgroup size of the compute shader to use. Divided internally by the {@link Texture | storage texture} `[width, height]`. Default to `[16, 16]`. */
   textureDispatchSize: number | number[]
-  /** Name of the {@link Texture | storage texture} used in the compute shader. Default to `storageRenderTexture`. */
-  storageRenderTextureName: string
-  /** Format of the {@link Texture | storage texture} used in the compute shader, must be compatible with storage textures. Default to `rgba8unorm`. */
-  storageRenderTextureFormat: GPUTextureFormat
   /** Optional {@link Sampler} to use in the {@link ShaderPass} to sample the result. */
   shaderPassSampler: Sampler
 }
@@ -73,9 +79,10 @@ export class ComputeShaderPass extends ComputePass {
    * @param parameters - {@link ComputeShaderPassParams | parameters} used to create our {@link ComputeShaderPass}.
    */
   constructor(renderer: Renderer | GPUCurtains, parameters: ComputeShaderPassParams = {}) {
+    renderer = isRenderer(renderer, parameters.label ? `${parameters.label} ComputeShaderPass` : 'ComputeShaderPass')
+
     // isolate compute pass params
     const {
-      label,
       shaders,
       useAsyncPipeline,
       texturesOptions,
@@ -89,12 +96,22 @@ export class ComputeShaderPass extends ComputePass {
 
     const { targets, renderOrder, autoRender, inputTarget, outputTarget, isPrePass, ...otherParams } = shaderPassParams
 
-    let { textures, textureDispatchSize, visible, storageRenderTextureName, storageRenderTextureFormat } = otherParams
+    let { label, textures, textureDispatchSize, visible, storageTextureParams } = otherParams
 
     // patch parameters
+    label = label ?? 'ComputeShaderPass ' + renderer.computePasses?.length
     visible = visible === undefined ? true : visible
-    storageRenderTextureName = storageRenderTextureName ?? 'storageRenderTexture'
-    storageRenderTextureFormat = storageRenderTextureFormat ?? 'rgba8unorm'
+
+    const defaultStorageTextureParams: ComputeStorageTextureParams = {
+      name: 'storageRenderTexture',
+      format: 'rgba8unorm',
+    }
+
+    if (storageTextureParams) {
+      storageTextureParams = { ...defaultStorageTextureParams, ...storageTextureParams }
+    } else {
+      storageTextureParams = defaultStorageTextureParams
+    }
 
     if (!textureDispatchSize) {
       textureDispatchSize = [16, 16]
@@ -112,15 +129,16 @@ export class ComputeShaderPass extends ComputePass {
     // create a storage texture used in the compute shader
     // and a copy using a regular texture binding type to use in the shader pass
     const storageTexture = new Texture(renderer, {
-      name: storageRenderTextureName,
+      label: `${label} storage render texture`,
+      ...storageTextureParams,
       type: 'storage',
       visibility: ['compute'],
       usage: ['copySrc', 'copyDst', 'textureBinding', 'storageBinding'],
-      format: storageRenderTextureFormat,
     })
 
     const renderTexture = new Texture(renderer, {
-      name: storageRenderTextureName,
+      label: `${label} render texture`,
+      name: storageTextureParams.name,
       visibility: ['fragment'],
       fromTexture: storageTexture,
     })
@@ -128,7 +146,7 @@ export class ComputeShaderPass extends ComputePass {
     const { shaderPassSampler } = otherParams
 
     const shaderPass = new ShaderPass(renderer, {
-      label: label ? `${label} ShaderPass` : 'Compute ShaderPass',
+      label: `${label} ShaderPass`,
       autoRender,
       shaders: {
         fragment: {
@@ -139,7 +157,7 @@ export class ComputeShaderPass extends ComputePass {
             };
 
             @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-                return textureSample(${storageRenderTextureName ?? 'storageRenderTexture'}, ${
+                return textureSample(${storageTextureParams.name}, ${
             shaderPassSampler ? shaderPassSampler.name : 'defaultSampler'
           }, fsInput.uv);
             }`,
@@ -161,7 +179,7 @@ export class ComputeShaderPass extends ComputePass {
       textures = [storageTexture, shaderPass.renderTexture]
     }
 
-    const params = {
+    const computeParams = {
       label,
       shaders,
       useAsyncPipeline,
@@ -180,12 +198,11 @@ export class ComputeShaderPass extends ComputePass {
       ],
     }
 
-    super(renderer, params)
+    super(renderer, computeParams)
 
     this.options = {
       ...this.options,
-      storageRenderTextureName,
-      storageRenderTextureFormat,
+      storageTextureParams,
       textureDispatchSize,
       ...(shaderPassSampler && { shaderPassSampler }),
     }

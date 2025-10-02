@@ -1,4 +1,5 @@
 import { ComputePass } from '../../core/computePasses/ComputePass.mjs';
+import { isRenderer } from '../../core/renderers/utils.mjs';
 import { ShaderPass } from '../../core/renderPasses/ShaderPass.mjs';
 import { Texture } from '../../core/textures/Texture.mjs';
 
@@ -9,8 +10,8 @@ class ComputeShaderPass extends ComputePass {
    * @param parameters - {@link ComputeShaderPassParams | parameters} used to create our {@link ComputeShaderPass}.
    */
   constructor(renderer, parameters = {}) {
+    renderer = isRenderer(renderer, parameters.label ? `${parameters.label} ComputeShaderPass` : "ComputeShaderPass");
     const {
-      label,
       shaders,
       useAsyncPipeline,
       texturesOptions,
@@ -22,10 +23,18 @@ class ComputeShaderPass extends ComputePass {
       ...shaderPassParams
     } = parameters;
     const { targets, renderOrder, autoRender, inputTarget, outputTarget, isPrePass, ...otherParams } = shaderPassParams;
-    let { textures, textureDispatchSize, visible, storageRenderTextureName, storageRenderTextureFormat } = otherParams;
+    let { label, textures, textureDispatchSize, visible, storageTextureParams } = otherParams;
+    label = label ?? "ComputeShaderPass " + renderer.computePasses?.length;
     visible = visible === void 0 ? true : visible;
-    storageRenderTextureName = storageRenderTextureName ?? "storageRenderTexture";
-    storageRenderTextureFormat = storageRenderTextureFormat ?? "rgba8unorm";
+    const defaultStorageTextureParams = {
+      name: "storageRenderTexture",
+      format: "rgba8unorm"
+    };
+    if (storageTextureParams) {
+      storageTextureParams = { ...defaultStorageTextureParams, ...storageTextureParams };
+    } else {
+      storageTextureParams = defaultStorageTextureParams;
+    }
     if (!textureDispatchSize) {
       textureDispatchSize = [16, 16];
     }
@@ -38,20 +47,21 @@ class ComputeShaderPass extends ComputePass {
       textureDispatchSize = [16, 16];
     }
     const storageTexture = new Texture(renderer, {
-      name: storageRenderTextureName,
+      label: `${label} storage render texture`,
+      ...storageTextureParams,
       type: "storage",
       visibility: ["compute"],
-      usage: ["copySrc", "copyDst", "textureBinding", "storageBinding"],
-      format: storageRenderTextureFormat
+      usage: ["copySrc", "copyDst", "textureBinding", "storageBinding"]
     });
     const renderTexture = new Texture(renderer, {
-      name: storageRenderTextureName,
+      label: `${label} render texture`,
+      name: storageTextureParams.name,
       visibility: ["fragment"],
       fromTexture: storageTexture
     });
     const { shaderPassSampler } = otherParams;
     const shaderPass = new ShaderPass(renderer, {
-      label: label ? `${label} ShaderPass` : "Compute ShaderPass",
+      label: `${label} ShaderPass`,
       autoRender,
       shaders: {
         fragment: {
@@ -64,7 +74,7 @@ class ComputeShaderPass extends ComputePass {
             };
 
             @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-                return textureSample(${storageRenderTextureName ?? "storageRenderTexture"}, ${shaderPassSampler ? shaderPassSampler.name : "defaultSampler"}, fsInput.uv);
+                return textureSample(${storageTextureParams.name}, ${shaderPassSampler ? shaderPassSampler.name : "defaultSampler"}, fsInput.uv);
             }`
           )
         }
@@ -83,7 +93,7 @@ class ComputeShaderPass extends ComputePass {
     } else {
       textures = [storageTexture, shaderPass.renderTexture];
     }
-    const params = {
+    const computeParams = {
       label,
       shaders,
       useAsyncPipeline,
@@ -102,11 +112,10 @@ class ComputeShaderPass extends ComputePass {
         Math.ceil(storageTexture.size.height / textureDispatchSize[1])
       ]
     };
-    super(renderer, params);
+    super(renderer, computeParams);
     this.options = {
       ...this.options,
-      storageRenderTextureName,
-      storageRenderTextureFormat,
+      storageTextureParams,
       textureDispatchSize,
       ...shaderPassSampler && { shaderPassSampler }
     };
