@@ -77,6 +77,7 @@ export * from './math/color-utils'
 
 // extras
 export { IndirectBuffer } from './extras/buffers/IndirectBuffer'
+export { ComputeShaderPass } from './extras/computePasses/ComputeShaderPass'
 export { OrbitControls } from './extras/controls/OrbitControls'
 export { EnvironmentMap } from './extras/environmentMap/EnvironmentMap'
 export { BoxGeometry } from './extras/geometries/BoxGeometry'

@@ -37,7 +37,7 @@ export const getVertexOutputStructContent = ({
 
   const structAttributes = attributes
     .map((attribute, index) => {
-      return `
+      return /* wgsl */ `
   @location(${index}) ${attribute.type === 'u32' || attribute.type === 'i32' ? '@interpolate(flat) ' : ' '}${
         attribute.name
       }: ${attribute.type},`
@@ -46,14 +46,14 @@ export const getVertexOutputStructContent = ({
 
   const additionalVaryingsOutput = additionalVaryings
     .map((attribute, index) => {
-      return `
+      return /* wgsl */ `
   @location(${attributes.length + 3 + index}) ${
         attribute.type === 'u32' || attribute.type === 'i32' ? '@interpolate(flat) ' : ' '
       }${attribute.name}: ${attribute.type},`
     })
     .join('')
 
-  return `
+  return /* wgsl */ `
   @builtin(position) position: vec4f,
   ${structAttributes}
   @location(${attributes.length}) viewDirection: vec3f,

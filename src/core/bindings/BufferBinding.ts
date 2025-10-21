@@ -681,7 +681,10 @@ export class BufferBinding extends Binding {
     this.bufferElements.forEach((bufferElement, index) => {
       const startOffset = index === 0 ? 0 : this.bufferElements[index - 1].endOffset + 1
 
-      bufferElement.setAlignment(startOffset)
+      // minimum stride for uniform array elements
+      const minStride = 'numElements' in bufferElement && this.bindingType === 'uniform' ? 16 : 0
+
+      bufferElement.setAlignment(startOffset, minStride)
     })
 
     // now create our interleaved buffer elements
@@ -878,12 +881,28 @@ export class BufferBinding extends Binding {
         }
       } else {
         bufferElements.forEach((binding) => {
-          const bindingType =
-            this.bindingType === 'uniform' && 'numElements' in binding
-              ? `array<${BufferElement.getType(binding.type)}, ${binding.numElements}>`
-              : binding.type
+          // uniform array elements
+          if (this.bindingType === 'uniform' && 'numElements' in binding) {
+            if (binding.bufferLayout.align < 16) {
+              // special elements that need a 16 bytes stride
+              // we'll use a separate struct with fixed @size and @align properties for them
+              const separateStructLabel = toKebabCase(binding.name) + 'Elements'
+              structs[separateStructLabel] = {}
+              structs[separateStructLabel][`@size(${binding.arrayStride}) element`] = BufferElement.getType(
+                binding.type
+              )
 
-          structs[kebabCaseLabel][binding.name] = bindingType
+              structs[kebabCaseLabel][
+                `@align(${binding.startOffset}) ${binding.name}`
+              ] = `array<${separateStructLabel}, ${binding.numElements}>`
+            } else {
+              structs[kebabCaseLabel][binding.name] = `array<${BufferElement.getType(binding.type)}, ${
+                binding.numElements
+              }>`
+            }
+          } else {
+            structs[kebabCaseLabel][binding.name] = binding.type
+          }
         })
 
         const varType = getBindingWGSLVarType(this)

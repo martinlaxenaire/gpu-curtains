@@ -81,9 +81,7 @@ class ComputePass {
     if (autoRender !== void 0) {
       __privateSet(this, _autoRender, autoRender);
     }
-    if (active !== void 0) {
-      __privateSet(this, _active, active);
-    }
+    __privateSet(this, _active, active === void 0 ? true : active);
     this.userData = {};
     this.ready = false;
     this.setMaterial({

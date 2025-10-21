@@ -6,7 +6,7 @@ import { Texture, TextureParams } from '../../core/textures/Texture'
 import { MeshBaseRenderParams } from '../../core/meshes/mixins/MeshBaseMixin'
 
 /** Parameters used to create a {@link PingPongPlane}. */
-export interface PingPongPlaneParams extends MeshBaseRenderParams {
+export interface PingPongPlaneParams extends Omit<MeshBaseRenderParams, 'useProjection'> {
   /** {@link core/textures/Texture.TextureBaseParams | Texture name} to use for the {@link PingPongPlane.renderTexture | PingPongPlane renderTexture}. Default to `'renderTexture'`. */
   renderTextureName?: string
 }

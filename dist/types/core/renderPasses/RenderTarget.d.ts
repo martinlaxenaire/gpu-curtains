@@ -10,6 +10,8 @@ export interface RenderTargetOptions extends RenderPassParams {
     autoRender: boolean;
     /** {@link core/textures/Texture.TextureBaseParams | Texture name} to use for the {@link RenderTarget} render texture. Default to `'renderTexture'`. */
     renderTextureName: string;
+    /** Whether we should draw into this {@link RenderTarget} after having rendered to the screen first. Default to `false`. */
+    isPostTarget: boolean;
 }
 /**
  * Parameters used to create a {@link RenderTarget}.

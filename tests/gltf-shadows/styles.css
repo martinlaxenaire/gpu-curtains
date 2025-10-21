@@ -1,6 +1,7 @@
 .stats {
   transform-origin: 0 0;
   transform: scale3d(2, 2, 1);
+  display: none;
 }
 
 #canvas::after {

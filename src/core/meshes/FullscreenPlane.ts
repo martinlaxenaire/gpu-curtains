@@ -7,6 +7,9 @@ import { cacheManager } from '../../utils/CacheManager'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { BufferBindingParams } from '../bindings/BufferBinding'
 
+/** Parameters used to create a {@link FullscreenPlane}. */
+export interface FullscreenPlaneParams extends Omit<MeshBaseRenderParams, 'useProjection'> {}
+
 /**
  * Create a 1x1 quad (or plane) covering the full viewport, useful for postprocessing or background effects.
  *
@@ -78,9 +81,9 @@ export class FullscreenPlane extends MeshBaseMixin(class {}) {
   /**
    * FullscreenPlane constructor
    * @param renderer - {@link Renderer} or {@link GPUCurtains} class object used to create this {@link FullscreenPlane}.
-   * @param parameters - {@link MeshBaseRenderParams | parameters} use to create this {@link FullscreenPlane}.
+   * @param parameters - {@link FullscreenPlaneParams | parameters} use to create this {@link FullscreenPlane}.
    */
-  constructor(renderer: Renderer | GPUCurtains, parameters = {} as MeshBaseRenderParams) {
+  constructor(renderer: Renderer | GPUCurtains, parameters = {} as FullscreenPlaneParams) {
     renderer = isRenderer(renderer, parameters.label ? parameters.label + ' FullscreenQuadMesh' : 'FullscreenQuadMesh')
 
     // can we get a cached geometry?

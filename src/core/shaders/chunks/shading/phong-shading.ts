@@ -18,7 +18,13 @@ import { applyToneMapping } from '../fragment/body/apply-tone-mapping'
  * ```
  */
 export const getPhong = (
-  { addUtils = true, receiveShadows = false, toneMapping, useOcclusion = false } = {} as GetShadingParams
+  {
+    addUtils = true,
+    receiveShadows = false,
+    toneMapping,
+    outputColorSpace,
+    useOcclusion = false,
+  } = {} as GetShadingParams
 ) => /* wgsl */ `
 ${addUtils ? lambertUtils : ''}
 ${getPhongDirect}
@@ -41,7 +47,7 @@ fn getPhong(
   
   outputColor = vec4(outgoingLight, outputColor.a);
   
-  ${applyToneMapping({ toneMapping })}
+  ${applyToneMapping({ toneMapping, outputColorSpace })}
     
   return outputColor;
 }

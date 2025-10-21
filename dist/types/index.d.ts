@@ -66,6 +66,7 @@ export { Vec2 } from './math/Vec2';
 export { Vec3 } from './math/Vec3';
 export * from './math/color-utils';
 export { IndirectBuffer } from './extras/buffers/IndirectBuffer';
+export { ComputeShaderPass } from './extras/computePasses/ComputeShaderPass';
 export { OrbitControls } from './extras/controls/OrbitControls';
 export { EnvironmentMap } from './extras/environmentMap/EnvironmentMap';
 export { BoxGeometry } from './extras/geometries/BoxGeometry';

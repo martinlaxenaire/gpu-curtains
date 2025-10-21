@@ -13,16 +13,21 @@ import {
   PBRTexturesDescriptors,
   PhongTexturesDescriptors,
   ShadingModels,
-  ToneMappings,
   UnlitTexturesDescriptors,
 } from '../../../../extras/meshes/LitMesh'
+import { FragmentOutput } from '../../../../types/shading'
+import { ToneMappings, ColorSpace } from '../../../../types/shading'
 
 /** Base parameters used to build a fragment shader. */
 export interface FragmentShaderInputBaseParams {
   /** Whether the shading function should apply tone mapping to the resulting color and if so, which one. Default to `'Khronos'`. */
   toneMapping?: ToneMappings
+  /** In which {@link ColorSpace} the output should be done. `srgb` should be used most of the time, except for some post processing effects that need input colors in `linear` space (such as bloom). Default to `srgb`. */
+  outputColorSpace?: ColorSpace
   /** Optional additional {@link VertexShaderInputParams.additionalVaryings | varyings} to pass from the vertex shader to the fragment shader. */
   additionalVaryings?: VertexShaderInputParams['additionalVaryings']
+  /** Custom fragment shader output structure members and returned values to use if needed. Useful when rendering to a Multiple Render Target for example. */
+  fragmentOutput?: FragmentOutput
 }
 
 /** Parameters used to build an unlit fragment shader. */
@@ -67,6 +72,19 @@ export interface FragmentShaderInputParams extends PBRFragmentShaderInputParams 
  */
 export const getFragmentShaderCode = ({
   shadingModel = 'PBR',
+  outputColorSpace = 'srgb',
+  fragmentOutput = {
+    struct: [
+      {
+        type: 'vec4f',
+        name: 'color',
+      },
+    ],
+    output: /* wgsl */ `
+  var output: FSOutput;
+  output.color = outputColor;
+  return output;`,
+  },
   chunks = null,
   toneMapping = 'Khronos',
   geometry,
@@ -94,6 +112,8 @@ export const getFragmentShaderCode = ({
         return getUnlitFragmentShaderCode({
           chunks,
           toneMapping,
+          outputColorSpace,
+          fragmentOutput,
           geometry,
           additionalVaryings,
           materialUniform,
@@ -104,6 +124,8 @@ export const getFragmentShaderCode = ({
         return getLambertFragmentShaderCode({
           chunks,
           toneMapping,
+          outputColorSpace,
+          fragmentOutput,
           geometry,
           additionalVaryings,
           materialUniform,
@@ -118,6 +140,8 @@ export const getFragmentShaderCode = ({
         return getPhongFragmentShaderCode({
           chunks,
           toneMapping,
+          outputColorSpace,
+          fragmentOutput,
           geometry,
           additionalVaryings,
           materialUniform,
@@ -137,6 +161,8 @@ export const getFragmentShaderCode = ({
         return getPBRFragmentShaderCode({
           chunks,
           toneMapping,
+          outputColorSpace,
+          fragmentOutput,
           geometry,
           additionalVaryings,
           materialUniform,

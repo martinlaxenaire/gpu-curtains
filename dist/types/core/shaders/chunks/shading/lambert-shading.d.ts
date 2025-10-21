@@ -1,4 +1,4 @@
-import { ToneMappings } from '../../../../extras/meshes/LitMesh';
+import { ToneMappings, ColorSpace } from '../../../../types/shading';
 /** Defines the basic parameters available for the various shading getter functions. */
 export interface GetShadingParams {
     /** Whether to add the utils functions such as constants or helper functions. Default to `true`. */
@@ -7,6 +7,8 @@ export interface GetShadingParams {
     receiveShadows?: boolean;
     /** Whether the shading function should apply tone mapping to the resulting color and if so, which one. Default to `'Khronos'`. */
     toneMapping?: ToneMappings;
+    /** In which {@link ColorSpace} the output should be done. `srgb` should be used most of the time, except for some post processing effects that need input colors in `linear` space (such as bloom). Default to `srgb`. */
+    outputColorSpace?: ColorSpace;
     /** Whether ambient occlusion should be accounted when calculating the shading. Default to `false`. If set to `true`, a float `f32` ambient occlusion value should be passed as the last shading function parameter. */
     useOcclusion?: boolean;
 }
@@ -22,4 +24,4 @@ export declare const lambertUtils: string;
  * color = getLambert(normal, worldPosition, color);
  * ```
  */
-export declare const getLambert: ({ addUtils, receiveShadows, toneMapping, useOcclusion }?: GetShadingParams) => string;
+export declare const getLambert: ({ addUtils, receiveShadows, toneMapping, outputColorSpace, useOcclusion, }?: GetShadingParams) => string;

@@ -16,7 +16,7 @@ export interface ShaderPassBaseParams {
 /**
  * Parameters used to create a {@link ShaderPass}.
  */
-export interface ShaderPassParams extends MeshBaseRenderParams, ShaderPassBaseParams {
+export interface ShaderPassParams extends Omit<MeshBaseRenderParams, 'additionalOutputTargets' | 'useCustomScenePassEntry' | 'useProjection' | 'cullMode'>, ShaderPassBaseParams {
     /** Optional input {@link RenderTarget} to assign to the {@link ShaderPass}. Used to automatically copy the content of the given {@link RenderTarget} texture into the {@link ShaderPass#renderTexture | ShaderPass renderTexture}. */
     inputTarget?: RenderTarget;
 }

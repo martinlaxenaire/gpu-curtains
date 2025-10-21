@@ -267,7 +267,6 @@ window.addEventListener('load', async () => {
         targetFormat: 'r8unorm', // reveal
       },
     ],
-    depthLoadOp: 'load', // we need to read from opaque depth!
   })
 
   // select your favorite weighting function here.

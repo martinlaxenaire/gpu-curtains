@@ -43,6 +43,9 @@ window.addEventListener('load', async () => {
       far: 150,
       fov: 75,
     },
+    renderPass: {
+      sampleCount: 1,
+    },
   })
 
   gpuDeviceManager
@@ -97,9 +100,9 @@ window.addEventListener('load', async () => {
     //intensity: 6,
     intensity: 3,
     shadow: {
-      bias: 0.0001,
+      bias: 0.0003,
       normalBias: 0.0001,
-      depthTextureSize: new Vec2(1500),
+      depthTextureSize: new Vec2(512),
       pcfSamples: 2,
       camera: {
         left: -20,

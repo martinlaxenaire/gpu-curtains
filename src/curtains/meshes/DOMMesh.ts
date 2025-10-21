@@ -10,9 +10,9 @@ import { AllowedGeometries } from '../../types/Materials'
 import { DOMElementBoundingRect, DOMElementParams } from '../../core/DOM/DOMElement'
 
 /**
- * Base parameters to create a {@link DOMMesh}
+ * Base parameters to create a {@link DOMMesh}.
  */
-export interface DOMMeshBaseParams extends MeshBaseRenderParams {
+export interface DOMMeshBaseParams extends Omit<MeshBaseRenderParams, 'useProjection'> {
   /** Whether to automatically create a {@link DOMTexture} for all {@link HTMLImageElement}, {@link HTMLVideoElement} and {@link HTMLCanvasElement} child of the specified {@link DOMMesh} {@link HTMLElement} */
   autoloadSources?: boolean
   /** Whether to automatically update the {@link DOMMesh} position on scroll */
@@ -22,14 +22,14 @@ export interface DOMMeshBaseParams extends MeshBaseRenderParams {
 }
 
 /**
- * Parameters to create a {@link DOMMesh}
+ * Parameters to create a {@link DOMMesh}.
  */
 export interface DOMMeshParams extends DOMMeshBaseParams {
   /** {@link core/geometries/Geometry.Geometry | Geometry} to use with the {@link DOMMesh} */
   geometry: AllowedGeometries
 }
 
-/** @const - default {@link DOMMesh} parameters */
+/** @const - default {@link DOMMesh} parameters. */
 const defaultDOMMeshParams = {
   autoloadSources: true,
   watchScroll: true,
@@ -60,11 +60,11 @@ const defaultDOMMeshParams = {
  * ```
  */
 export class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
-  /** {@link GPUCurtainsRenderer} used to create this {@link DOMObject3D} */
+  /** {@link GPUCurtainsRenderer} used to create this {@link DOMObject3D}. */
   renderer: GPUCurtainsRenderer
-  /** Whether to automatically create a {@link DOMTexture} for all {@link HTMLImageElement}, {@link HTMLVideoElement} and {@link HTMLCanvasElement} child of the specified {@link DOMMesh} {@link HTMLElement} */
+  /** Whether to automatically create a {@link DOMTexture} for all {@link HTMLImageElement}, {@link HTMLVideoElement} and {@link HTMLCanvasElement} child of the specified {@link DOMMesh} {@link HTMLElement}? */
   autoloadSources: boolean
-  /** Whether all the sources have been successfully loaded */
+  /** Whether all the sources have been successfully loaded. */
   _sourcesReady: boolean
   /** Array of {@link DOMTexture} handled by this {@link DOMMesh}. */
   domTextures: DOMTexture[]
@@ -77,9 +77,9 @@ export class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
 
   /**
    * DOMMesh constructor
-   * @param renderer - {@link GPUCurtainsRenderer} object or {@link GPUCurtains} class object used to create this {@link DOMMesh}
-   * @param element - {@link HTMLElement} or string representing an {@link HTMLElement} selector used to scale and position the {@link DOMMesh}
-   * @param parameters - {@link DOMMeshParams | parameters} used to create this {@link DOMMesh}
+   * @param renderer - {@link GPUCurtainsRenderer} object or {@link GPUCurtains} class object used to create this {@link DOMMesh}.
+   * @param element - {@link HTMLElement} or string representing an {@link HTMLElement} selector used to scale and position the {@link DOMMesh}.
+   * @param parameters - {@link DOMMeshParams | parameters} used to create this {@link DOMMesh}.
    */
   constructor(
     renderer: GPUCurtainsRenderer | GPUCurtains,

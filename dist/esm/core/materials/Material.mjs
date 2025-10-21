@@ -120,6 +120,7 @@ class Material {
       (bindGroup) => bindGroup.loseContext()
     );
     this.pipelineEntry.pipeline = null;
+    this.pipelineEntry.status.compiled = false;
   }
   /**
    * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored to recreate our samplers, textures and bind groups.
@@ -421,7 +422,7 @@ class Material {
    */
   addTexture(texture) {
     this.textures.push(texture);
-    if (this.options.shaders.vertex && this.options.shaders.vertex.code.indexOf(texture.options.name) !== -1 || this.options.shaders.fragment && this.options.shaders.fragment.code.indexOf(texture.options.name) !== -1 || this.options.shaders.compute && this.options.shaders.compute.code.indexOf(texture.options.name) !== -1) {
+    if (this.options.shaders && (this.options.shaders.vertex && this.options.shaders.vertex.code.indexOf(texture.options.name) !== -1 || this.options.shaders.fragment && this.options.shaders.fragment.code.indexOf(texture.options.name) !== -1 || this.options.shaders.compute && this.options.shaders.compute.code.indexOf(texture.options.name) !== -1)) {
       this.texturesBindGroup.addTexture(texture);
     }
     if (texture instanceof MediaTexture && texture.options.useTransform) {

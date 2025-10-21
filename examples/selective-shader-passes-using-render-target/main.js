@@ -87,6 +87,7 @@ window.addEventListener('load', async () => {
   // first we're going to render large planes into a grayscale pass
   const grayscaleTarget = new RenderTarget(gpuCurtains, {
     label: 'Large planes distortion render target',
+    useDepth: false,
     //sampleCount: 1,
   })
 
@@ -125,8 +126,8 @@ window.addEventListener('load', async () => {
 
   const grayscalePass = new ShaderPass(gpuCurtains, {
     label: 'Large plane shader pass',
-    //inputTarget: grayscaleTarget, // we could do that directly
-    //renderOrder: 1, // uncomment to draw large planes above small planes
+    // inputTarget: grayscaleTarget, // we could do that directly
+    // renderOrder: 1, // uncomment to draw large planes above small planes
     shaders: {
       fragment: {
         code: grayscaleFs,
@@ -158,6 +159,7 @@ window.addEventListener('load', async () => {
   // now render the small planes into a RGB shift pass
   const rgbShiftTarget = new RenderTarget(gpuCurtains, {
     label: 'Small planes RGB render target',
+    useDepth: false,
     //sampleCount: 1,
   })
 
@@ -265,6 +267,7 @@ window.addEventListener('load', async () => {
 
   const finalShaderPass = new ShaderPass(gpuCurtains, {
     label: 'Final shader pass',
+    renderOrder: 2,
     shaders: {
       fragment: {
         code: finalShaderPassFs,

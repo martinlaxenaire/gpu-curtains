@@ -122,6 +122,9 @@
         <loc>https://martinlaxenaire.github.io/gpu-curtains/examples/order-independent-transparency-galaxy/index.html</loc>
     </url>
     <url>
+        <loc>https://martinlaxenaire.github.io/gpu-curtains/examples/selective-unreal-bloom-with-multiple-render-targets-compute-shader-passes/index.html</loc>
+    </url>
+    <url>
         <loc>https://martinlaxenaire.github.io/gpu-curtains/examples/render-bundle-indirect-drawing-gpu-culling/index.html</loc>
     </url>
     <url>

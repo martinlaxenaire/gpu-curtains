@@ -17,7 +17,13 @@ ${REIndirectDiffuse}
 ${toneMappingUtils}
 `
 );
-const getLambert = ({ addUtils = true, receiveShadows = false, toneMapping, useOcclusion = false } = {}) => (
+const getLambert = ({
+  addUtils = true,
+  receiveShadows = false,
+  toneMapping,
+  outputColorSpace,
+  useOcclusion = false
+} = {}) => (
   /* wgsl */
   `
 ${addUtils ? lambertUtils : ""}
@@ -37,7 +43,7 @@ fn getLambert(
   
   outputColor = vec4(outgoingLight, outputColor.a);
   
-  ${applyToneMapping({ toneMapping })}
+  ${applyToneMapping({ toneMapping, outputColorSpace })}
     
   return outputColor;
 }

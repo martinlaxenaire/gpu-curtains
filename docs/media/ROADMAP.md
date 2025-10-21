@@ -18,7 +18,7 @@
 - RenderTarget (render to textures)
 - RenderPass (render pass descriptors) with MRT support
 - Lights & Shadows
-- Shader passes
+- Shader passes and Compute shader passes
 - PingPongPlane
 - RenderBundle
 - IndirectBuffer (indirect drawing)

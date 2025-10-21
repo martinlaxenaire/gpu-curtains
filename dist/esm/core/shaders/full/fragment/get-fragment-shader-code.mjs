@@ -5,6 +5,22 @@ import { getPBRFragmentShaderCode } from './get-PBR-fragment-shader-code.mjs';
 
 const getFragmentShaderCode = ({
   shadingModel = "PBR",
+  outputColorSpace = "srgb",
+  fragmentOutput = {
+    struct: [
+      {
+        type: "vec4f",
+        name: "color"
+      }
+    ],
+    output: (
+      /* wgsl */
+      `
+  var output: FSOutput;
+  output.color = outputColor;
+  return output;`
+    )
+  },
   chunks = null,
   toneMapping = "Khronos",
   geometry,
@@ -32,6 +48,8 @@ const getFragmentShaderCode = ({
         return getUnlitFragmentShaderCode({
           chunks,
           toneMapping,
+          outputColorSpace,
+          fragmentOutput,
           geometry,
           additionalVaryings,
           materialUniform,
@@ -42,6 +60,8 @@ const getFragmentShaderCode = ({
         return getLambertFragmentShaderCode({
           chunks,
           toneMapping,
+          outputColorSpace,
+          fragmentOutput,
           geometry,
           additionalVaryings,
           materialUniform,
@@ -56,6 +76,8 @@ const getFragmentShaderCode = ({
         return getPhongFragmentShaderCode({
           chunks,
           toneMapping,
+          outputColorSpace,
+          fragmentOutput,
           geometry,
           additionalVaryings,
           materialUniform,
@@ -75,6 +97,8 @@ const getFragmentShaderCode = ({
         return getPBRFragmentShaderCode({
           chunks,
           toneMapping,
+          outputColorSpace,
+          fragmentOutput,
           geometry,
           additionalVaryings,
           materialUniform,

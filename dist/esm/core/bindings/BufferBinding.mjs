@@ -389,7 +389,8 @@ const _BufferBinding = class _BufferBinding extends Binding {
     }
     this.bufferElements.forEach((bufferElement, index) => {
       const startOffset = index === 0 ? 0 : this.bufferElements[index - 1].endOffset + 1;
-      bufferElement.setAlignment(startOffset);
+      const minStride = "numElements" in bufferElement && this.bindingType === "uniform" ? 16 : 0;
+      bufferElement.setAlignment(startOffset, minStride);
     });
     if (arrayBindings.length > 1) {
       const arraySizes = arrayBindings.map((bindingKey) => {
@@ -522,8 +523,20 @@ const _BufferBinding = class _BufferBinding extends Binding {
         }
       } else {
         bufferElements.forEach((binding) => {
-          const bindingType = this.bindingType === "uniform" && "numElements" in binding ? `array<${BufferElement.getType(binding.type)}, ${binding.numElements}>` : binding.type;
-          structs[kebabCaseLabel][binding.name] = bindingType;
+          if (this.bindingType === "uniform" && "numElements" in binding) {
+            if (binding.bufferLayout.align < 16) {
+              const separateStructLabel = toKebabCase(binding.name) + "Elements";
+              structs[separateStructLabel] = {};
+              structs[separateStructLabel][`@size(${binding.arrayStride}) element`] = BufferElement.getType(
+                binding.type
+              );
+              structs[kebabCaseLabel][`@align(${binding.startOffset}) ${binding.name}`] = `array<${separateStructLabel}, ${binding.numElements}>`;
+            } else {
+              structs[kebabCaseLabel][binding.name] = `array<${BufferElement.getType(binding.type)}, ${binding.numElements}>`;
+            }
+          } else {
+            structs[kebabCaseLabel][binding.name] = binding.type;
+          }
         });
         const varType = getBindingWGSLVarType(this);
         this.wgslGroupFragment = [`${varType} ${this.name}: ${kebabCaseLabel};`];

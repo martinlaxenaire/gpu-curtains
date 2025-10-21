@@ -24,7 +24,7 @@ class RenderTarget {
     renderer = isRenderer(renderer, this.type);
     this.renderer = renderer;
     this.uuid = generateUUID();
-    const { label, colorAttachments, depthTexture, autoRender, renderTextureName, ...renderPassParams } = parameters;
+    const { label, colorAttachments, depthTexture, autoRender, renderTextureName, isPostTarget, ...renderPassParams } = parameters;
     const depthTextureToUse = !!depthTexture ? depthTexture : this.renderer.renderPass.options.sampleCount === (parameters.sampleCount ?? 4) && (!renderPassParams.qualityRatio || renderPassParams.qualityRatio === 1) && !renderPassParams.fixedSize && (!parameters.depthFormat || parameters.depthFormat === this.renderer.renderPass.depthTexture.options.format) ? this.renderer.renderPass.depthTexture : null;
     this.options = {
       label,
@@ -32,7 +32,8 @@ class RenderTarget {
       ...depthTextureToUse && { depthTexture: depthTextureToUse },
       ...colorAttachments && { colorAttachments },
       renderTextureName: renderTextureName ?? "renderTexture",
-      autoRender: autoRender === void 0 ? true : autoRender
+      autoRender: autoRender === void 0 ? true : autoRender,
+      isPostTarget: !!isPostTarget
     };
     if (autoRender !== void 0) {
       __privateSet(this, _autoRender, autoRender);

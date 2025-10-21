@@ -337,17 +337,30 @@ class Shadow {
    */
   setDepthTexture() {
     if (this.depthTexture && (this.depthTexture.size.width !== this.depthTextureSize.x || this.depthTexture.size.height !== this.depthTextureSize.y)) {
-      this.depthTexture.options.fixedSize.width = this.depthTextureSize.x;
-      this.depthTexture.options.fixedSize.height = this.depthTextureSize.y;
-      this.depthTexture.size.width = this.depthTextureSize.x;
-      this.depthTexture.size.height = this.depthTextureSize.y;
-      this.depthTexture.createTexture();
-      if (this.depthPassTarget) {
-        this.depthPassTarget.resize();
-      }
+      this.resizeDepthTexture(this.depthTextureSize.x, this.depthTextureSize.y);
     } else if (!this.depthTexture) {
       this.createDepthTexture();
     }
+  }
+  /**
+   * Resize the {@link depthTexture} and eventually resize the {@link depthPassTarget} as well.
+   * @param width - New width to use for the {@link depthTexture}.
+   * @param height - New height to use for the {@link depthTexture}.
+   */
+  resizeDepthTexture(width = this.depthTextureSize.x, height = this.depthTextureSize.y) {
+    this.depthTexture.options.fixedSize.width = width;
+    this.depthTexture.options.fixedSize.height = height;
+    this.depthTexture.size.width = width;
+    this.depthTexture.size.height = height;
+    this.depthTexture.createTexture();
+    if (this.depthPassTarget) {
+      this.depthPassTarget.resize();
+    }
+    __privateGet(this, _receivingMeshes).forEach((mesh) => {
+      if (mesh.renderBundle) {
+        mesh.renderBundle.ready = false;
+      }
+    });
   }
   /**
    * Create the {@link depthTexture}.

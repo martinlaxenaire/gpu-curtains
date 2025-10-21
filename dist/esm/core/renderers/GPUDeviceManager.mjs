@@ -340,7 +340,9 @@ class GPUDeviceManager {
     if (!__privateGet(this, _mipsGeneration).module) {
       __privateGet(this, _mipsGeneration).module = this.device.createShaderModule({
         label: "textured quad shaders for mip level generation",
-        code: `
+        code: (
+          /* wgsl */
+          `
             struct VSOutput {
               @builtin(position) position: vec4f,
               @location(0) texcoord: vec2f,
@@ -375,6 +377,7 @@ class GPUDeviceManager {
               return textureSample(ourTexture, ourSampler, fsInput.texcoord);
             }
           `
+        )
       });
       __privateGet(this, _mipsGeneration).sampler = this.device.createSampler({
         minFilter: "linear",

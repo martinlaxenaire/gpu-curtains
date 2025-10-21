@@ -12,9 +12,9 @@ const defaultDOMMeshParams = {
 class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
   /**
    * DOMMesh constructor
-   * @param renderer - {@link GPUCurtainsRenderer} object or {@link GPUCurtains} class object used to create this {@link DOMMesh}
-   * @param element - {@link HTMLElement} or string representing an {@link HTMLElement} selector used to scale and position the {@link DOMMesh}
-   * @param parameters - {@link DOMMeshParams | parameters} used to create this {@link DOMMesh}
+   * @param renderer - {@link GPUCurtainsRenderer} object or {@link GPUCurtains} class object used to create this {@link DOMMesh}.
+   * @param element - {@link HTMLElement} or string representing an {@link HTMLElement} selector used to scale and position the {@link DOMMesh}.
+   * @param parameters - {@link DOMMeshParams | parameters} used to create this {@link DOMMesh}.
    */
   constructor(renderer, element, parameters) {
     parameters = { ...defaultDOMMeshParams, ...parameters };
