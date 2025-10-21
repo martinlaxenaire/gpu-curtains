@@ -59,7 +59,13 @@ export interface RenderPassEntry {
 }
 
 /** Defines all our possible render targets. */
-export type RenderPassEntriesType = 'pingPong' | 'renderTarget' | 'prePass' | 'screen' | 'postProPass'
+export type RenderPassEntriesType =
+  | 'pingPong'
+  | 'renderTarget'
+  | 'prePass'
+  | 'screen'
+  | 'postRenderTarget'
+  | 'postProPass'
 /** Defines our render pass entries object. */
 export type RenderPassEntries = Record<RenderPassEntriesType, RenderPassEntry[]>
 
@@ -85,7 +91,7 @@ export class Scene extends Object3D {
   /** Array of {@link ComputePass} to render, ordered by {@link ComputePass#renderOrder | renderOrder} */
   computePassEntries: ComputePass[]
   /**
-   * A {@link RenderPassEntries} object that will contain every Meshes or {@link RenderBundle} that need to be drawn, put inside each one of our three entries type arrays: `pingPong`, `renderTarget` and `screen`.
+   * A {@link RenderPassEntries} object that will contain every Meshes or {@link RenderBundle} that need to be drawn, put inside each one of our six entries type arrays: `pingPong`, `renderTarget`, `prePass`, `screen`, `postRenderTarget` and `postProPass`.
    * - The {@link Scene} will first render all {@link renderPassEntries} pingPong entries Meshes.
    * - Then all Meshes that need to be rendered into specific {@link renderPassEntries} renderTarget entries.
    * - Finally all Meshes that need to be rendered to the {@link renderPassEntries} screen.
@@ -122,12 +128,14 @@ export class Scene extends Object3D {
     this.renderPassEntries = {
       /** Array of {@link RenderPassEntry} that will handle {@link PingPongPlane}. Each {@link PingPongPlane} will be added as a distinct {@link RenderPassEntry} here. */
       pingPong: [] as RenderPassEntry[],
-      /** Array of {@link RenderPassEntry} that will render to a specific {@link RenderTarget}. Each {@link RenderTarget} will be added as a distinct {@link RenderPassEntry} here. */
+      /** Array of {@link RenderPassEntry} that will render to a specific {@link RenderTarget} before rendering to the screen. Each {@link RenderTarget} not using `isPostTarget` option will be added as a distinct {@link RenderPassEntry} here. */
       renderTarget: [] as RenderPassEntry[],
       /** Array of {@link RenderPassEntry} containing {@link ShaderPass} that will render directly to the screen before rendering any other pass to the screen. Useful to perform "blit" pass before actually rendering the usual scene content. */
       prePass: [] as RenderPassEntry[],
       /** Array of {@link RenderPassEntry} that will render directly to the screen. Our first and default entry will contain all the Meshes that do not have any {@link RenderTarget} assigned. You can create following entries for custom scene rendering management process. */
       screen: [] as RenderPassEntry[],
+      /** Array of {@link RenderPassEntry} that will render to a specific {@link RenderTarget} after the screen passes have been rendered. Each {@link RenderTarget} using the `isPostTarget` option will be added as a distinct {@link RenderPassEntry} here. */
+      postRenderTarget: [] as RenderPassEntry[],
       /**Array of {@link RenderPassEntry} containing post processing {@link ShaderPass} that will render directly to the screen after everything has been drawn. */
       postProPass: [] as RenderPassEntry[],
     }
@@ -225,9 +233,13 @@ export class Scene extends Object3D {
    * @param renderTarget - {@link RenderTarget} to add.
    */
   addRenderTarget(renderTarget: RenderTarget) {
+    const targetPassEntries = renderTarget.options.isPostTarget
+      ? this.renderPassEntries.postRenderTarget
+      : this.renderPassEntries.renderTarget
+
     // if RT is not already in the render pass entries
-    if (!this.renderPassEntries.renderTarget.find((entry) => entry.renderPass.uuid === renderTarget.renderPass.uuid))
-      this.renderPassEntries.renderTarget.push({
+    if (!targetPassEntries.find((entry) => entry.renderPass.uuid === renderTarget.renderPass.uuid)) {
+      targetPassEntries.push({
         label: renderTarget.options.label
           ? `${renderTarget.options.label} pass entry`
           : `RenderTarget ${renderTarget.uuid} pass entry`,
@@ -248,6 +260,7 @@ export class Scene extends Object3D {
           },
         },
       } as RenderPassEntry)
+    }
   }
 
   /**
@@ -255,9 +268,11 @@ export class Scene extends Object3D {
    * @param renderTarget - {@link RenderTarget} to add.
    */
   removeRenderTarget(renderTarget: RenderTarget) {
-    this.renderPassEntries.renderTarget = this.renderPassEntries.renderTarget.filter(
-      (entry) => entry.renderPass.uuid !== renderTarget.renderPass.uuid
-    )
+    let targetPassEntries = renderTarget.options.isPostTarget
+      ? this.renderPassEntries.postRenderTarget
+      : this.renderPassEntries.renderTarget
+
+    targetPassEntries = targetPassEntries.filter((entry) => entry.renderPass.uuid !== renderTarget.renderPass.uuid)
   }
 
   /**
@@ -266,11 +281,17 @@ export class Scene extends Object3D {
    * @returns - {@link RenderPassEntry} found.
    */
   getRenderTargetPassEntry(renderTarget: RenderTarget | null = null): RenderPassEntry {
-    return renderTarget
-      ? this.renderPassEntries.renderTarget.find(
-          (passEntry) => passEntry.renderPass.uuid === renderTarget.renderPass.uuid
-        )
-      : this.renderPassEntries.screen.find((passEntry) => passEntry.renderPass.uuid === this.renderer.renderPass.uuid)
+    if (renderTarget) {
+      const targetPassEntries = renderTarget.options.isPostTarget
+        ? this.renderPassEntries.postRenderTarget
+        : this.renderPassEntries.renderTarget
+
+      return targetPassEntries.find((passEntry) => passEntry.renderPass.uuid === renderTarget.renderPass.uuid)
+    } else {
+      return this.renderPassEntries.screen.find(
+        (passEntry) => passEntry.renderPass.uuid === this.renderer.renderPass.uuid
+      )
+    }
   }
 
   /**
@@ -425,8 +446,8 @@ export class Scene extends Object3D {
     const isTransparent = !!renderBundle.transparent
     const transparencyType = isTransparent ? 'transparent' : 'opaque'
 
-    // first get correct render pass enty and stack
-    const renderPassEntry = this.renderPassEntries.renderTarget.find(
+    // first get correct render pass entry and stack
+    const renderPassEntry = [...this.renderPassEntries.renderTarget, ...this.renderPassEntries.postRenderTarget].find(
       (passEntry) => passEntry.renderPass.uuid === renderBundle.options.renderPass?.uuid
     )
 
@@ -635,9 +656,11 @@ export class Scene extends Object3D {
    */
   getObjectRenderPassEntry(object: RenderedMesh | RenderTarget): RenderPassEntry | undefined {
     if (object.type === 'RenderTarget') {
-      return this.renderPassEntries.renderTarget.find(
-        (entry) => entry.renderPass.uuid === (object as RenderTarget).renderPass.uuid
-      )
+      const targetPassEntries = (object as RenderTarget).options.isPostTarget
+        ? this.renderPassEntries.postRenderTarget
+        : this.renderPassEntries.renderTarget
+
+      return targetPassEntries.find((entry) => entry.renderPass.uuid === (object as RenderTarget).renderPass.uuid)
     } else if (object.type === 'PingPongPlane') {
       return this.renderPassEntries.pingPong.find((entry) => entry.element.uuid === object.uuid)
     } else if (object.type === 'ShaderPass') {
@@ -881,6 +904,12 @@ export class Scene extends Object3D {
           renderPassEntry.renderPass.setDepthReadOnly(false)
         }
 
+        // if it's a post target pass, clear all
+        if (renderPassEntryType === 'postRenderTarget') {
+          this.#shouldLoadColors = false
+          this.#shouldLoadDepth = false
+        }
+
         // if it's a post pro pass with a custom output target, clear
         if (
           renderPassEntryType === 'postProPass' &&
@@ -898,7 +927,7 @@ export class Scene extends Object3D {
         this.renderSinglePassEntry(commandEncoder, renderPassEntry)
 
         // if we're rendering to the screen, we'll need to load colors next time
-        if (renderPassEntryType !== 'renderTarget') {
+        if (renderPassEntryType !== 'renderTarget' && renderPassEntryType !== 'postRenderTarget') {
           this.#shouldLoadColors = true
         }
       })

@@ -69,8 +69,8 @@ window.addEventListener('load', async () => {
   // using the depth from our cube scene
   const selectiveDitheringTarget = new RenderTarget(gpuCameraRenderer, {
     label: 'Selective dithering render target',
-    // load the depth buffer from the cube scene into this pass
-    depthLoadOp: 'load',
+    isPostTarget: true, // render after the cube scene
+    forceDepthLoadOp: 'load', // load the depth buffer from the cube scene into this pass
   })
 
   // our dither pass where we'll render the spheres with a dithering effect
@@ -195,6 +195,9 @@ window.addEventListener('load', async () => {
         shading: 'Lambert',
         color: isCube ? cubeColor : Math.random() > 0.5 ? sphereColor1 : sphereColor2,
       },
+      ...(!isCube && {
+        depthCompare: 'less-equal',
+      }),
     })
 
     mesh.position.x = Math.random() * systemSize * 2 - systemSize

@@ -127,6 +127,62 @@ window.addEventListener('load', async () => {
 
   debugBindings.push(arrayTest)
 
+  const floatArrayTestValue = new Float32Array(5)
+
+  for (let i = 0; i < floatArrayTestValue.length; i++) {
+    floatArrayTestValue[i] = 99
+  }
+
+  const floatArrayTest = new BufferBinding({
+    label: 'Float array test',
+    name: 'floatArrayTest',
+    bindingType: 'uniform',
+    struct: {
+      arrayTest: {
+        type: 'array<f32>',
+        value: floatArrayTestValue,
+      },
+      floatValue: {
+        type: 'f32',
+        value: 0,
+      },
+    },
+  })
+
+  floatArrayTest.update()
+
+  console.log(floatArrayTest)
+
+  debugBindings.push(floatArrayTest)
+
+  const vec2ArrayTestValue = new Float32Array(5 * 2)
+
+  for (let i = 0; i < vec2ArrayTestValue.length; i++) {
+    vec2ArrayTestValue[i] = i
+  }
+
+  const vec2ArrayTest = new BufferBinding({
+    label: 'Vec2 array test',
+    name: 'vec2ArrayTest',
+    bindingType: 'uniform',
+    struct: {
+      arrayTest: {
+        type: 'array<vec2f>',
+        value: vec2ArrayTestValue,
+      },
+      floatValue: {
+        type: 'f32',
+        value: 0,
+      },
+    },
+  })
+
+  vec2ArrayTest.update()
+
+  console.log(vec2ArrayTest)
+
+  debugBindings.push(vec2ArrayTest)
+
   const computePassExample = new BufferBinding({
     label: 'interleaved vec2 arrays',
     name: 'interleavedVec2Arrays',

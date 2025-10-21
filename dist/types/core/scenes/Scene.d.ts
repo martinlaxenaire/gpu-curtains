@@ -45,7 +45,7 @@ export interface RenderPassEntry {
     stack: Stack | null;
 }
 /** Defines all our possible render targets. */
-export type RenderPassEntriesType = 'pingPong' | 'renderTarget' | 'prePass' | 'screen' | 'postProPass';
+export type RenderPassEntriesType = 'pingPong' | 'renderTarget' | 'prePass' | 'screen' | 'postRenderTarget' | 'postProPass';
 /** Defines our render pass entries object. */
 export type RenderPassEntries = Record<RenderPassEntriesType, RenderPassEntry[]>;
 /**
@@ -71,7 +71,7 @@ export declare class Scene extends Object3D {
     /** Array of {@link ComputePass} to render, ordered by {@link ComputePass#renderOrder | renderOrder} */
     computePassEntries: ComputePass[];
     /**
-     * A {@link RenderPassEntries} object that will contain every Meshes or {@link RenderBundle} that need to be drawn, put inside each one of our three entries type arrays: `pingPong`, `renderTarget` and `screen`.
+     * A {@link RenderPassEntries} object that will contain every Meshes or {@link RenderBundle} that need to be drawn, put inside each one of our six entries type arrays: `pingPong`, `renderTarget`, `prePass`, `screen`, `postRenderTarget` and `postProPass`.
      * - The {@link Scene} will first render all {@link renderPassEntries} pingPong entries Meshes.
      * - Then all Meshes that need to be rendered into specific {@link renderPassEntries} renderTarget entries.
      * - Finally all Meshes that need to be rendered to the {@link renderPassEntries} screen.

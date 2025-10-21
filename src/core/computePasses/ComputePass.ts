@@ -183,9 +183,7 @@ export class ComputePass {
       this.#autoRender = autoRender
     }
 
-    if (active !== undefined) {
-      this.#active = active
-    }
+    this.#active = active === undefined ? true : active
 
     this.userData = {}
 

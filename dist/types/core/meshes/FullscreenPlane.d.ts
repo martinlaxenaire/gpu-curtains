@@ -3,6 +3,9 @@ import { Renderer } from '../renderers/utils';
 import { DOMElementBoundingRect, RectBBox } from '../DOM/DOMElement';
 import { Vec2 } from '../../math/Vec2';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
+/** Parameters used to create a {@link FullscreenPlane}. */
+export interface FullscreenPlaneParams extends Omit<MeshBaseRenderParams, 'useProjection'> {
+}
 declare const FullscreenPlane_base: import("./mixins/MeshBaseMixin").MixinConstructor<import("./mixins/MeshBaseMixin").MeshBaseClass> & {
     new (): {};
 };
@@ -76,9 +79,9 @@ export declare class FullscreenPlane extends FullscreenPlane_base {
     /**
      * FullscreenPlane constructor
      * @param renderer - {@link Renderer} or {@link GPUCurtains} class object used to create this {@link FullscreenPlane}.
-     * @param parameters - {@link MeshBaseRenderParams | parameters} use to create this {@link FullscreenPlane}.
+     * @param parameters - {@link FullscreenPlaneParams | parameters} use to create this {@link FullscreenPlane}.
      */
-    constructor(renderer: Renderer | GPUCurtains, parameters?: MeshBaseRenderParams);
+    constructor(renderer: Renderer | GPUCurtains, parameters?: FullscreenPlaneParams);
     /**
      * Resize our {@link FullscreenPlane}.
      * @param boundingRect - the new bounding rectangle.

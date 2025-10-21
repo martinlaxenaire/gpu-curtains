@@ -49,7 +49,8 @@ class ShaderPass extends FullscreenPlane {
     this.options = {
       ...this.options,
       copyOutputToRenderTexture: parameters.copyOutputToRenderTexture,
-      isPrePass: parameters.isPrePass
+      isPrePass: parameters.isPrePass,
+      renderTextureName: parameters.renderTextureName ?? "renderTexture"
     };
     if (parameters.inputTarget) {
       this.setInputTarget(parameters.inputTarget);
@@ -60,7 +61,7 @@ class ShaderPass extends FullscreenPlane {
     this.type = "ShaderPass";
     this.renderTexture = this.createTexture({
       label: parameters.label ? `${parameters.label} render texture` : "Shader pass render texture",
-      name: parameters.renderTextureName ?? "renderTexture",
+      name: this.options.renderTextureName,
       fromTexture: this.inputTarget ? this.inputTarget.renderTexture : null,
       usage: ["copySrc", "copyDst", "textureBinding"],
       ...this.outputTarget && this.outputTarget.options.qualityRatio && { qualityRatio: this.outputTarget.options.qualityRatio }

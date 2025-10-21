@@ -4,13 +4,19 @@ import { GLTFExtensionsUsed } from '../../../../types/gltf/GLTFExtensions';
 import { AdditionalChunks } from '../../default-material-helpers';
 import { BufferBindingBaseParams } from '../../../bindings/BufferBinding';
 import { VertexShaderInputParams } from '../vertex/get-vertex-shader-code';
-import { LambertTexturesDescriptors, PBRTexturesDescriptors, PhongTexturesDescriptors, ShadingModels, ToneMappings, UnlitTexturesDescriptors } from '../../../../extras/meshes/LitMesh';
+import { LambertTexturesDescriptors, PBRTexturesDescriptors, PhongTexturesDescriptors, ShadingModels, UnlitTexturesDescriptors } from '../../../../extras/meshes/LitMesh';
+import { FragmentOutput } from '../../../../types/shading';
+import { ToneMappings, ColorSpace } from '../../../../types/shading';
 /** Base parameters used to build a fragment shader. */
 export interface FragmentShaderInputBaseParams {
     /** Whether the shading function should apply tone mapping to the resulting color and if so, which one. Default to `'Khronos'`. */
     toneMapping?: ToneMappings;
+    /** In which {@link ColorSpace} the output should be done. `srgb` should be used most of the time, except for some post processing effects that need input colors in `linear` space (such as bloom). Default to `srgb`. */
+    outputColorSpace?: ColorSpace;
     /** Optional additional {@link VertexShaderInputParams.additionalVaryings | varyings} to pass from the vertex shader to the fragment shader. */
     additionalVaryings?: VertexShaderInputParams['additionalVaryings'];
+    /** Custom fragment shader output structure members and returned values to use if needed. Useful when rendering to a Multiple Render Target for example. */
+    fragmentOutput?: FragmentOutput;
 }
 /** Parameters used to build an unlit fragment shader. */
 export interface UnlitFragmentShaderInputParams extends FragmentShaderInputBaseParams, UnlitTexturesDescriptors {
@@ -48,4 +54,4 @@ export interface FragmentShaderInputParams extends PBRFragmentShaderInputParams 
  * @param parameters - {@link FragmentShaderInputParams} used to build the fragment shader.
  * @returns - The fragment shader generated based on the provided parameters.
  */
-export declare const getFragmentShaderCode: ({ shadingModel, chunks, toneMapping, geometry, additionalVaryings, materialUniform, materialUniformName, extensionsUsed, receiveShadows, baseColorTexture, normalTexture, emissiveTexture, occlusionTexture, metallicRoughnessTexture, specularTexture, specularFactorTexture, specularColorTexture, transmissionTexture, thicknessTexture, transmissionBackgroundTexture, environmentMap, }: FragmentShaderInputParams) => string;
+export declare const getFragmentShaderCode: ({ shadingModel, outputColorSpace, fragmentOutput, chunks, toneMapping, geometry, additionalVaryings, materialUniform, materialUniformName, extensionsUsed, receiveShadows, baseColorTexture, normalTexture, emissiveTexture, occlusionTexture, metallicRoughnessTexture, specularTexture, specularFactorTexture, specularColorTexture, transmissionTexture, thicknessTexture, transmissionBackgroundTexture, environmentMap, }: FragmentShaderInputParams) => string;

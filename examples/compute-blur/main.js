@@ -23,7 +23,7 @@ import {
 // Specifically, with 128 x 128 tiles, we can only compute and write out
 // square blocks of size 128 - (filterSize - 1). We compute the number of blocks
 // needed in Javascript and dispatch that amount.
-const computeBlur = `
+const computeBlur = /* wgsl */ `
 var<workgroup> tile : array<array<vec4<f32>, 128>, 4>;
 
 @compute @workgroup_size(32, 1, 1)

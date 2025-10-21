@@ -32,7 +32,7 @@ export interface MeshBaseRenderParams extends Omit<RenderMaterialParams, 'target
     useCustomScenePassEntry?: RenderPassEntry;
     /** Parameters used by this Mesh to create a {@link MediaTexture}. */
     texturesOptions?: SceneObjectTextureOptions;
-    /** Optional {@link GPUDevice.createRenderPipeline().targets | targets} properties. */
+    /** Optional {@link GPUDevice.createRenderPipeline | targets} properties. */
     targets?: Partial<GPUColorTargetState>[];
     /** Optional {@link RenderBundle} into which this Mesh should be added. */
     renderBundle?: RenderBundle;

@@ -78,6 +78,7 @@ export class TestRenderTargets {
     // first we're going to render large planes into a grayscale pass
     this.grayscaleTarget = new RenderTarget(this.gpuCurtains, {
       label: 'Large planes distortion render target',
+      useDepth: false,
       //sampleCount: 1,
     })
     this.largePlanes = []
@@ -156,6 +157,7 @@ export class TestRenderTargets {
     // now render the small planes into a RGB shift pass
     this.rgbShiftTarget = new RenderTarget(this.gpuCurtains, {
       label: 'Small planes RGB render target',
+      useDepth: false,
       //sampleCount: 1,
     })
 
@@ -267,6 +269,7 @@ export class TestRenderTargets {
 
     this.finalShaderPass = new ShaderPass(this.gpuCurtains, {
       label: 'Final shader pass',
+      renderOrder: 2,
       shaders: {
         fragment: {
           code: finalShaderPassFs,

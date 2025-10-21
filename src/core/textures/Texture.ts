@@ -17,6 +17,8 @@ export interface TextureBaseParams extends ExternalTextureParamsBase, TextureVis
   name?: string
   /** Optional fixed size of the {@link Texture#texture | texture}. If set, the {@link Texture} will never be resized and always keep that size. */
   fixedSize?: TextureSize
+  /** Whether the {@link Texture} should be created with `mipLevelCount`. Useful to manually generate the mips. Default to `false`, but automatically set to true if {@link ExternalTextureParamsBase#generateMips | generateMips} has been set to `true`. */
+  useMips?: boolean
   /** Allowed usages for the {@link Texture#texture | GPU texture} as an array of {@link TextureUsageKeys | texture usages names}. */
   usage?: TextureUsageKeys[]
   /** Whether any {@link core/materials/Material.Material | Material} using this {@link Texture} should automatically destroy it upon destruction. Default to `true`. */
@@ -49,6 +51,7 @@ const defaultTextureParams: TextureParams = {
   qualityRatio: 1,
   // copy external texture options
   generateMips: false,
+  useMips: false,
   flipY: false,
   premultipliedAlpha: false,
   aspect: 'all',
@@ -111,6 +114,11 @@ export class Texture {
     this.uuid = generateUUID()
 
     this.options = { ...defaultTextureParams, ...parameters }
+
+    // mips
+    if (this.options.generateMips) {
+      this.options.useMips = true
+    }
 
     if (
       this.options.format === 'rgba32float' &&
@@ -258,7 +266,7 @@ export class Texture {
       size: [this.size.width, this.size.height, this.size.depth ?? 1],
       dimensions: this.options.viewDimension,
       sampleCount: this.options.sampleCount,
-      mipLevelCount: this.options.generateMips
+      mipLevelCount: this.options.useMips
         ? getNumMipLevels(this.size.width, this.size.height, this.size.depth ?? 1)
         : 1,
       usage: getDefaultTextureUsage(this.options.usage, this.options.type),

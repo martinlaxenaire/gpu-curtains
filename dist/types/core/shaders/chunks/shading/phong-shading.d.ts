@@ -13,4 +13,4 @@ import { GetShadingParams } from './lambert-shading';
  * color = getPhong(normal, worldPosition, color, viewDirection, specularIntensity, specularColor, shininess);
  * ```
  */
-export declare const getPhong: ({ addUtils, receiveShadows, toneMapping, useOcclusion }?: GetShadingParams) => string;
+export declare const getPhong: ({ addUtils, receiveShadows, toneMapping, outputColorSpace, useOcclusion, }?: GetShadingParams) => string;

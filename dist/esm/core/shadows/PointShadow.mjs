@@ -199,14 +199,7 @@ class PointShadow extends Shadow {
   setDepthTexture() {
     if (this.depthTexture && (this.depthTexture.size.width !== this.depthTextureSize.x || this.depthTexture.size.height !== this.depthTextureSize.y)) {
       const maxSize = Math.max(this.depthTextureSize.x, this.depthTextureSize.y);
-      this.depthTexture.options.fixedSize.width = maxSize;
-      this.depthTexture.options.fixedSize.height = maxSize;
-      this.depthTexture.size.width = maxSize;
-      this.depthTexture.size.height = maxSize;
-      this.depthTexture.createTexture();
-      if (this.depthPassTarget) {
-        this.depthPassTarget.resize();
-      }
+      this.resizeDepthTexture(maxSize, maxSize);
     } else if (!this.depthTexture) {
       this.createDepthTexture();
     }

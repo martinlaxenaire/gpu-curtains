@@ -139,7 +139,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    transition: opacity 0.5s 0.5s ease-in;
+    transition: opacity 0.75s ease-in;
     background: rgb(128, 128, 255);
     background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
   }

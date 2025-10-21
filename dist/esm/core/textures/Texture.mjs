@@ -23,6 +23,7 @@ const defaultTextureParams = {
   qualityRatio: 1,
   // copy external texture options
   generateMips: false,
+  useMips: false,
   flipY: false,
   premultipliedAlpha: false,
   aspect: "all",
@@ -43,6 +44,9 @@ class Texture {
     this.renderer = renderer;
     this.uuid = generateUUID();
     this.options = { ...defaultTextureParams, ...parameters };
+    if (this.options.generateMips) {
+      this.options.useMips = true;
+    }
     if (this.options.format === "rgba32float" && this.renderer.device && !this.renderer.device.features.has("float32-filterable")) {
       this.options.format = "rgba16float";
     }
@@ -152,7 +156,7 @@ class Texture {
       size: [this.size.width, this.size.height, this.size.depth ?? 1],
       dimensions: this.options.viewDimension,
       sampleCount: this.options.sampleCount,
-      mipLevelCount: this.options.generateMips ? getNumMipLevels(this.size.width, this.size.height, this.size.depth ?? 1) : 1,
+      mipLevelCount: this.options.useMips ? getNumMipLevels(this.size.width, this.size.height, this.size.depth ?? 1) : 1,
       usage: getDefaultTextureUsage(this.options.usage, this.options.type)
     });
     this.textureBinding.resource = this.texture;

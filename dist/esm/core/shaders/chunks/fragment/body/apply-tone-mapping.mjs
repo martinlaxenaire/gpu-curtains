@@ -1,8 +1,11 @@
-const applyToneMapping = ({ toneMapping = "Khronos" } = {}) => {
+const applyToneMapping = ({
+  toneMapping = "Khronos",
+  outputColorSpace = "srgb"
+} = {}) => {
   let toneMappingOutput = (
     /* wgsl */
     `
-  let exposure: f32 = 1.0; // TODO
+  let exposure: f32 = 1.0; // TODO?
   outputColor *= exposure;
   `
   );
@@ -16,24 +19,35 @@ const applyToneMapping = ({ toneMapping = "Khronos" } = {}) => {
   `
         );
       case "Reinhard":
-        return `
+        return (
+          /* wgsl */
+          `
   outputColor = vec4(ReinhardToneMapping(outputColor.rgb), outputColor.a);
-        `;
+        `
+        );
       case "Cineon":
-        return `
+        return (
+          /* wgsl */
+          `
   outputColor = vec4(CineonToneMapping(outputColor.rgb), outputColor.a);
-        `;
+        `
+        );
       case false:
       default:
-        return `
+        return (
+          /* wgsl */
+          `
   outputColor = saturate(outputColor);
-        `;
+        `
+        );
     }
   })();
-  toneMappingOutput += /* wgsl */
-  `
+  if (outputColorSpace === "srgb") {
+    toneMappingOutput += /* wgsl */
+    `
   outputColor = linearTosRGB_4(outputColor);
-  `;
+    `;
+  }
   return toneMappingOutput;
 };
 

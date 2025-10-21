@@ -166,8 +166,9 @@ export declare class BufferElement {
     /**
      * Set the {@link BufferElementAlignment | alignment} from an offset (byte count).
      * @param startOffset - Offset at which to start inserting the values in the parent {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer}.
+     * @param minStride - Minimum stride to use for the values in the parent {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer}.
      */
-    setAlignment(startOffset?: number): void;
+    setAlignment(startOffset?: number, minStride?: number): void;
     /**
      * Set this {@link BufferElement} {@link view} into a parent {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer}.
      * @param arrayBuffer - The parent {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer}.
