@@ -563,7 +563,7 @@ window.addEventListener('load', async () => {
         if(params.outputResult == 1) {
           result = originalScene;
         } else if(params.outputResult == 2) {
-          result = vec4(bloomScene, outA);
+          result = vec4(bloomScene, bloomA) * params.bloomStrength;
         }
 
         // tone mapping
@@ -650,12 +650,6 @@ window.addEventListener('load', async () => {
       } else {
         intersections[0].object.uniforms.material.color.value.set(0.4)
       }
-    } else {
-      // reset every mesh isMasked value
-      cubeMeshes.forEach((mesh) => {
-        mesh.uniforms.params.isMasked.value = 1
-        mesh.uniforms.material.color.value.set(0.4)
-      })
     }
   }
 
