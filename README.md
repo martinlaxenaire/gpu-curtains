@@ -4,14 +4,11 @@
     <img src="https://raw.githubusercontent.com/martinlaxenaire/gpu-curtains/main/website/assets/gpu-curtains-logo-1080-720.jpg" width="500" alt="gpu-curtains" />
 </div>
 
-
 [Website](https://martinlaxenaire.github.io/gpu-curtains/) - [Documentation](https://martinlaxenaire.github.io/gpu-curtains/docs/) - [Examples](https://martinlaxenaire.github.io/gpu-curtains/examples/)
 
 ---
 
->
 > :warning: WIP
->
 
 ---
 
@@ -47,7 +44,7 @@ window.addEventListener('load', async () => {
   // a WebGPU device and a renderer with its scene,
   // requestAnimationFrame, resize and scroll events...
   const gpuCurtains = new GPUCurtains({
-    container: '#canvas'
+    container: '#canvas',
   })
 
   // set the GPU device
@@ -107,8 +104,8 @@ Or use a CDN:
 
 ```html
 <body>
-    <!-- div that will hold our WebGPU canvas -->
-    <div id="canvas"></div>
+  <!-- div that will hold our WebGPU canvas -->
+  <div id="canvas"></div>
 </body>
 ```
 
@@ -136,7 +133,7 @@ body {
 ### Javascript
 
 ```javascript
-import { GPUDeviceManager, GPUCameraRenderer, Mesh } from 'gpu-curtains';
+import { GPUDeviceManager, GPUCameraRenderer, Mesh } from 'gpu-curtains'
 
 window.addEventListener('load', async () => {
   // first, we need a WebGPU device, that's what GPUDeviceManager is for
@@ -158,7 +155,7 @@ window.addEventListener('load', async () => {
   const mesh = new Mesh(gpuCameraRenderer, {
     geometry: new BoxGeometry(),
   })
-  
+
   // this callback is executed
   // before the scene actually updates the matrix stack
   mesh.onBeforeRender(() => {
@@ -173,7 +170,7 @@ window.addEventListener('load', async () => {
 
 gpu-curtains is a slowly evolving 3D engine and still is a work in progress.
 
-It can now handle built-in lights (`AmbientLight`, `DirectionalLight`, `PointLight` and `SpotLight`) with shadows, `EnvironmentMap` and standard mesh lighting materials out of the box (such as `Lambert`, `Phong` and `PBR` - although there are still a few things missing in the `PBR` material, such as `sheen`, `clearcoat`, `iridescence` and `anisotropy`).
+It can now handle built-in lights (`AmbientLight`, `DirectionalLight`, `PointLight` and `SpotLight`) with shadows, `EnvironmentMap` and standard mesh lighting materials out of the box (such as `Lambert`, `Phong` and `PBR`).
 
 glTF support is also coming along nicely. All the core features are supported, and a bunch of extensions are also available.
 

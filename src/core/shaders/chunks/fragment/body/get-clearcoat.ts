@@ -79,12 +79,10 @@ export const getClearcoat = ({
 
 export const getClearcoatNormal = ({
   extensionsUsed = [],
-  geometry = null,
   normalTexture = null,
   clearcoatNormalTexture = null,
 }: {
   extensionsUsed?: PBRFragmentShaderInputParams['extensionsUsed']
-  geometry?: Geometry
   normalTexture?: ShaderTextureDescriptor
   clearcoatNormalTexture?: ShaderTextureDescriptor
 }): string => {
@@ -95,30 +93,21 @@ export const getClearcoatNormal = ({
     return clearcoatNormal
   }
 
-  const tangentAttribute = geometry && geometry.getAttributeByName('tangent')
-  const hasTangent = !!(normalTexture && tangentAttribute)
-
   if (clearcoatNormalTexture) {
     if (normalTexture) {
       clearcoatNormal += /* wgsl */ `
   let clearcoatNormalSample = textureSample(${clearcoatNormalTexture.texture.options.name}, ${
         clearcoatNormalTexture.sampler?.name ?? 'defaultSampler'
-      }, normalUV);
-  let clearcoatTbn = tbn;`
+      }, normalUV);`
     } else {
       clearcoatNormal += getTextureSample(clearcoatNormalTexture, 'clearcoatNormal')
-
-      if (!hasTangent) {
-        clearcoatNormal += /* wgsl */ `
-  let clearcoatTbn = generateTBN(clearcoatNormal);`
-      } else {
-        clearcoatNormal += /* wgsl */ `
-  let clearcoatTbn = mat3x3f(tangent, bitangent, clearcoatNormal);`
-      }
     }
 
     clearcoatNormal += /* wgsl */ `
-  clearcoatNormal = normalize(clearcoatTbn * (2.0 * clearcoatNormalSample.rgb - vec3(vec2(clearcoatNormalScale), 1.0)));`
+  var clearcoatMapN: vec3f = clearcoatNormalSample.rgb * 2.0 - 1.0;
+  clearcoatMapN = vec3(clearcoatMapN.x * clearcoatNormalScale.x, clearcoatMapN.y * clearcoatNormalScale.y, clearcoatMapN.z);
+  clearcoatNormal = normalize(tbn * clearcoatMapN);
+  `
   }
 
   return clearcoatNormal

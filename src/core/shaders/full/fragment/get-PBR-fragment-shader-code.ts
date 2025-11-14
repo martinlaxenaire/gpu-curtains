@@ -17,7 +17,7 @@ import { getFragmentOutputStruct } from '../../chunks/fragment/head/get-fragment
 import { declareAttributesVars } from '../../chunks/fragment/body/declare-attributes-vars'
 import { declareMaterialVars } from '../../chunks/fragment/body/declare-material-vars'
 import { getBaseColor } from '../../chunks/fragment/body/get-base-color'
-import { getNormalTangentBitangent } from '../../chunks/fragment/body/get-normal-tangent-bitangent'
+import { getNormal } from '../../chunks/fragment/body/get-normal'
 import { getMetallicRoughness } from '../../chunks/fragment/body/get-metallic-roughness'
 import { getSpecular } from '../../chunks/fragment/body/get-specular'
 import { getTransmissionThickness } from '../../chunks/fragment/body/get-transmission-thickness'
@@ -31,6 +31,10 @@ import { getPBRClearcoatDirect } from '../../chunks/fragment/head/get-PBR-clearc
 import { generateTBN } from '../../chunks/utils/generate-TBN'
 import { getIridescence } from '../../chunks/fragment/body/get-iridescence'
 import { getPBRIridescence } from '../../chunks/fragment/head/get-PBR-iridescence'
+import { BRDF_GGX_Anisotropic } from '../../chunks/fragment/head/BRDF_GGX_Anisotropic'
+import { getAnisotropy } from '../../chunks/fragment/body/get-anisotropy'
+import { getTangentBitangent } from '../../chunks/fragment/body/get-tangent-bitangent'
+import { getIBLIndirectAnisotropyRadiance } from '../../chunks/fragment/head/get-IBL-indirect-anisotropy-radiance'
 
 /**
  * Build a PBR fragment shader using the provided options.
@@ -104,6 +108,8 @@ ${extensionsUsed.includes('KHR_materials_sheen') ? getIBLSheen : ''}
 ${extensionsUsed.includes('KHR_materials_sheen') ? getPBRSheenDirect : ''}
 ${extensionsUsed.includes('KHR_materials_clearcoat') ? getPBRClearcoatDirect : ''}
 ${extensionsUsed.includes('KHR_materials_iridescence') ? getPBRIridescence : ''}
+${extensionsUsed.includes('KHR_materials_anisotropy') ? BRDF_GGX_Anisotropic : ''}
+${extensionsUsed.includes('KHR_materials_anisotropy') ? getIBLIndirectAnisotropyRadiance : ''}
 
 ${getFragmentInputStruct({ geometry, additionalVaryings })}
 
@@ -118,8 +124,9 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   
   // user defined preliminary contribution
   ${chunks.preliminaryContribution}
-  
-  ${getNormalTangentBitangent({ geometry, normalTexture })}
+
+  ${getTangentBitangent({ extensionsUsed, geometry, normalTexture, clearcoatNormalTexture })}  
+  ${getNormal({ normalTexture })}
   ${getMetallicRoughness({ metallicRoughnessTexture })}
   ${getSpecular({ specularTexture, specularFactorTexture, specularColorTexture })}
   ${getTransmissionThickness({ transmissionTexture, thicknessTexture })}
@@ -127,8 +134,9 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 
   ${getSheen({ extensionsUsed, sheenTexture, sheenColorTexture, sheenRoughnessTexture })}
   ${getClearcoat({ extensionsUsed, clearcoatTexture, clearcoatRoughnessTexture })}
-  ${getClearcoatNormal({ extensionsUsed, geometry, normalTexture, clearcoatNormalTexture })}
+  ${getClearcoatNormal({ extensionsUsed, normalTexture, clearcoatNormalTexture })}
   ${getIridescence({ extensionsUsed, iridescenceTexture, iridescenceThicknessTexture })}
+  ${getAnisotropy({ extensionsUsed, anisotropyTexture })}
   
   // lights
   ${getPBRShading({ receiveShadows, environmentMap, transmissionBackgroundTexture, extensionsUsed })}

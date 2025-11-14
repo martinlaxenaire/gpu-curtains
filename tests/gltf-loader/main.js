@@ -327,6 +327,11 @@ window.addEventListener('load', async () => {
       name: 'Iridescence Metallic Spheres',
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/master/Models/IridescenceMetallicSpheres/glTF/IridescenceMetallicSpheres.gltf',
     },
+    // anisotropy
+    anisotropyStrengthTest: {
+      name: 'Anisotropy Strength Test',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/master/Models/AnisotropyStrengthTest/glTF/AnisotropyStrengthTest.gltf',
+    },
   }
 
   let toneMapping = 'Khronos' // 'Khronos', 'Reinhard', 'Cineon' or false
@@ -334,7 +339,7 @@ window.addEventListener('load', async () => {
   const lightType = 'DirectionalLight' // or 'PointLight'
 
   // const currentModelKey = 'damagedHelmet'
-  const currentModelKey = 'iridescenceDielectricSpheres'
+  const currentModelKey = 'anisotropyStrengthTest'
   let currentModel = models[currentModelKey]
 
   const ambientLight = new AmbientLight(gpuCameraRenderer, {

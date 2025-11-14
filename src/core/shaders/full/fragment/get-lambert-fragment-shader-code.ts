@@ -12,7 +12,7 @@ import { getFragmentOutputStruct } from '../../chunks/fragment/head/get-fragment
 import { declareAttributesVars } from '../../chunks/fragment/body/declare-attributes-vars'
 import { declareMaterialVars } from '../../chunks/fragment/body/declare-material-vars'
 import { getBaseColor } from '../../chunks/fragment/body/get-base-color'
-import { getNormalTangentBitangent } from '../../chunks/fragment/body/get-normal-tangent-bitangent'
+import { getNormal } from '../../chunks/fragment/body/get-normal'
 import { getEmissiveOcclusion } from '../../chunks/fragment/body/get-emissive-occlusion'
 import { patchAdditionalChunks } from '../../default-material-helpers'
 import { generateTBN } from '../../chunks/utils/generate-TBN'
@@ -76,7 +76,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   // user defined preliminary contribution
   ${chunks.preliminaryContribution}
   
-  ${getNormalTangentBitangent({ geometry, normalTexture })}  
+  ${getNormal({ geometry, normalTexture })}  
   ${getEmissiveOcclusion({ emissiveTexture, occlusionTexture })}
   
   // lights

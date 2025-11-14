@@ -9,6 +9,23 @@ export const getPBRDirectContribution = ({
   let pbrDirect = ''
 
   if (extensionsUsed.includes('KHR_materials_anisotropy')) {
+    pbrDirect += /* wgsl */ `
+  getPBRDirect_Anisotropic(
+    normal,
+    baseDiffuseColor.rgb,
+    viewDirection,
+    specularF90,
+    specularColor,
+    metallic,
+    roughness,
+    iridescenceFresnel,
+    iridescence,
+    alphaT,
+    anisotropyT,
+    anisotropyB,
+    directLight,
+    &reflectedLight
+  );`
   } else {
     pbrDirect += /* wgsl */ `
   getPBRDirect(

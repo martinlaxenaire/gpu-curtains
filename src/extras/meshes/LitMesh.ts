@@ -85,8 +85,8 @@ export interface LitMeshMaterialUniformParams {
 
   /** Anisotropy strength. Default to `0`, but anisotropy is not taken into account if not set or equal to `0`. */
   anisotropy?: number
-  /** Anisotropy rotation. Default to `0`. */
-  anisotropyRotation?: number
+  /** Anisotropy vector based on a rotation value, where `x` component is `cos(rotation)` and `y` component is `sin(rotation)`. Default to `new Vec2(1, 0)`. */
+  anisotropyVector?: Vec2
 
   /** Clearcoat layer intensity. Default to `0`, but clearcoat is not taken into account if not set or equal to `0`. */
   clearcoat?: number
@@ -353,7 +353,7 @@ export class LitMesh extends Mesh {
       sheenColor,
       sheenRoughness,
       anisotropy,
-      anisotropyRotation,
+      anisotropyVector,
       clearcoat,
       clearcoatRoughness,
       clearcoatNormalScale,
@@ -409,7 +409,7 @@ export class LitMesh extends Mesh {
       sheenColor,
       sheenRoughness,
       anisotropy,
-      anisotropyRotation,
+      anisotropyVector,
       clearcoat,
       clearcoatRoughness,
       clearcoatNormalScale,
@@ -525,7 +525,7 @@ export class LitMesh extends Mesh {
       extensionsUsed.push('KHR_materials_sheen')
     }
 
-    if (anisotropy) {
+    if (anisotropy !== undefined) {
       extensionsUsed.push('KHR_materials_anisotropy')
     }
 
@@ -587,6 +587,8 @@ export class LitMesh extends Mesh {
       environmentMap,
     })
 
+    // console.log(fs)
+
     const shaders = {
       vertex: {
         code: vs,
@@ -637,7 +639,7 @@ export class LitMesh extends Mesh {
       sheenColor,
       sheenRoughness,
       anisotropy,
-      anisotropyRotation,
+      anisotropyVector,
       clearcoat,
       clearcoatRoughness,
       clearcoatNormalScale,
@@ -777,9 +779,9 @@ export class LitMesh extends Mesh {
         type: 'f32',
         value: anisotropy !== undefined ? anisotropy : 0,
       },
-      anisotropyRotation: {
-        type: 'f32',
-        value: anisotropyRotation !== undefined ? anisotropyRotation : 0,
+      anisotropyVector: {
+        type: 'vec2f',
+        value: anisotropyVector !== undefined ? anisotropyVector.clone() : new Vec2(1, 0),
       },
       // clearcoat
       clearcoat: {

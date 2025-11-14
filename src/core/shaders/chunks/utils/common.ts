@@ -20,6 +20,10 @@ fn max3( v: vec3f ) -> f32 {
   return max( max( v.x, v.y ), v.z );
 }
 
+fn inverseSqrt (x: f32) -> f32 {
+  return 1.0 / sqrt(x);
+}
+
 fn isinf(value: f32) -> bool {
   return value > 1.0e38 || value < -1.0e38;
 }

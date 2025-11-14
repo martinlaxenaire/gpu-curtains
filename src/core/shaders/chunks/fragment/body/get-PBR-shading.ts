@@ -86,7 +86,7 @@ export const getPBRShading = ({
   // IBL indirect contributions
   ${computeMultiScattering({ environmentMap })}
   ${getIBLIndirectIrradiance({ environmentMap })}
-  ${getIBLIndirectRadiance({ environmentMap })}
+  ${getIBLIndirectRadiance({ extensionsUsed, environmentMap })}
   
   // ambient lights
   RE_IndirectDiffuse(irradiance, baseDiffuseColor.rgb, &reflectedLight);

@@ -52,8 +52,9 @@ fn getPBRDirect(
   ptr_reflectedLight: ptr<function, ReflectedLight>
 ) {
   let NdotL: f32 = saturate(dot(normal, directLight.direction));
+  let alpha: f32 = pow2(roughness); // UE4's roughness
 
-  let ggx: vec3f = getGGX(normal, viewDirection, NdotL, roughness, specularFactor, specularColor, iridescenceFresnel, iridescence, directLight);
+  let ggx: vec3f = getGGX(normal, viewDirection, NdotL, alpha, specularFactor, specularColor, iridescenceFresnel, iridescence, directLight);
 
   let irradiance: vec3f = NdotL * directLight.color;
   

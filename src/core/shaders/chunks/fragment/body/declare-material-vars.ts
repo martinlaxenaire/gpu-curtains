@@ -147,6 +147,14 @@ export const declareMaterialVars = ({
       type: 'vec2f',
       value: 'vec2(100, 400)',
     },
+    anisotropy: {
+      type: 'f32',
+      value: '0.0',
+    },
+    anisotropyVector: {
+      type: 'vec2f',
+      value: 'vec2(1.0, 0.0)',
+    },
   }
 
   const defaultEnvMaterialVars = {

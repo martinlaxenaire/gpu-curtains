@@ -796,7 +796,7 @@ export class GLTFScenesManager {
           anisotropy: anisotropy.anisotropyStrength,
         }),
         ...(anisotropy.anisotropyRotation !== undefined && {
-          anisotropyRotation: anisotropy.anisotropyRotation,
+          anisotropyVector: new Vec2(Math.cos(anisotropy.anisotropyRotation), Math.sin(anisotropy.anisotropyRotation)),
         }),
       }),
       // clearcoat

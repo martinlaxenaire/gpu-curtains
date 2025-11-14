@@ -18,7 +18,6 @@ fn RE_IndirectSpecular(
 	let diffuse: vec3f = diffuseColor * ( 1.0 - max( max( totalScattering.r, totalScattering.g ), totalScattering.b ) );
 
   // we just add radiance and irradiance to the indirect contributions using iBLGGXFresnel
-  // we might need to adjust when implementing clearcoat, sheen or iridescence
 
   // we remove RECIPROCAL_PI multiplication since the LUT already ensures energy conservation
   // let cosineWeightedIrradiance: vec3f = irradiance * RECIPROCAL_PI;
