@@ -587,8 +587,6 @@ export class LitMesh extends Mesh {
       environmentMap,
     })
 
-    // console.log(fs)
-
     const shaders = {
       vertex: {
         code: vs,
