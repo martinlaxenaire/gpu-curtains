@@ -6,8 +6,13 @@ import { getIBLIndirectIrradiance } from './get-IBL-indirect-irradiance'
 import { getIBLIndirectRadiance } from './get-IBL-indirect-radiance'
 import { getIBLVolumeRefraction } from './get-IBL-volume-refraction'
 import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh'
-import { getIBLGGXFresnel } from './get-IBL-GGX-Fresnel'
+import { computeMultiScattering } from './get-multi-scattering'
 import { applySpotShadows } from './apply-spot-shadows'
+import { applySheenClearcoatContribution } from './apply-sheen-clearcoat-contribution'
+import { getIBLClearCoatIndirectRadiance } from './get-IBL-clearcoart-indirect-radiance'
+import { getClearcoatIndirectSpecular } from './get-clearcoat-indirect-specular'
+import { getSheenIndirectSpecular } from './get-sheen-indirect-specular'
+import { getPBRDirectContribution } from './get-PBR-direct-contribution'
 
 /**
  * Set the `outgoingLight` (`vec3f`) using PBR shading.
@@ -36,9 +41,6 @@ export const getPBRShading = ({
   ${receiveShadows ? getPCFShadows : ''}
   
   let baseDiffuseColor: vec4f = outputColor * ( 1.0 - metallic );
-  
-  let specularF90: f32 = mix(specularIntensity, 1.0, metallic);
-  specularColor = mix( min( pow2( ( ior - 1.0 ) / ( ior + 1.0 ) ) * specularColor, vec3( 1.0 ) ) * specularIntensity, outputColor.rgb, metallic );
 
   // point lights
   for(var i = 0; i < pointLights.count; i++) {
@@ -49,7 +51,7 @@ export const getPBRShading = ({
     }
     
     ${receiveShadows ? applyPointShadows : ''}
-    getPBRDirect(normal, baseDiffuseColor.rgb, viewDirection, specularF90, specularColor, metallic, roughness, directLight, &reflectedLight);
+    ${getPBRDirectContribution({ extensionsUsed })}
   }
   
   // spot lights
@@ -61,7 +63,7 @@ export const getPBRShading = ({
     }
     
     ${receiveShadows ? applySpotShadows : ''}
-    getPBRDirect(normal, baseDiffuseColor.rgb, viewDirection, specularF90, specularColor, metallic, roughness, directLight, &reflectedLight);
+    ${getPBRDirectContribution({ extensionsUsed })}
   }
   
   // directional lights
@@ -73,15 +75,16 @@ export const getPBRShading = ({
     }
     
     ${receiveShadows ? applyDirectionalShadows : ''}
-    getPBRDirect(normal, baseDiffuseColor.rgb, viewDirection, specularF90, specularColor, metallic, roughness, directLight, &reflectedLight);
+    ${getPBRDirectContribution({ extensionsUsed })}
   }
   
   var irradiance: vec3f = vec3(0.0);
-  var iblIrradiance: vec3f = vec3(0.0);
   var radiance: vec3f = vec3(0.0);
+  var iblIrradiance: vec3f = vec3(0.0);
+  var iblRadiance: vec3f = vec3(0.0);
   
   // IBL indirect contributions
-  ${getIBLGGXFresnel({ environmentMap })}
+  ${computeMultiScattering({ environmentMap })}
   ${getIBLIndirectIrradiance({ environmentMap })}
   ${getIBLIndirectRadiance({ environmentMap })}
   
@@ -102,8 +105,15 @@ export const getPBRShading = ({
     iBLGGXFresnel,
     &reflectedLight
   );
+
+  ${getIBLClearCoatIndirectRadiance({ extensionsUsed, environmentMap })}
+  ${getClearcoatIndirectSpecular({ extensionsUsed })}
+  ${getSheenIndirectSpecular({ extensionsUsed })}
   
   reflectedLight.indirectDiffuse *= occlusion;
+
+  clearcoatSpecularIndirect *= occlusion;
+  sheenSpecularIndirect *= occlusion;
   
   let NdotV: f32 = saturate(dot(geometryNormal, viewDirection));
   reflectedLight.indirectSpecular *= computeSpecularOcclusion(NdotV, occlusion, roughness);
@@ -113,5 +123,8 @@ export const getPBRShading = ({
   
   ${getIBLVolumeRefraction({ transmissionBackgroundTexture, extensionsUsed })}
   
-  var outgoingLight: vec3f = totalDiffuse + totalSpecular;`
+  var outgoingLight: vec3f = totalDiffuse + totalSpecular;
+  
+  ${applySheenClearcoatContribution({ extensionsUsed })}
+  `
 }

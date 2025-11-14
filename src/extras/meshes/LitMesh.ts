@@ -77,6 +77,30 @@ export interface LitMeshMaterialUniformParams {
   attenuationDistance?: number
   /** The color as a {@link Vec3} that white light turns into due to absorption when reaching the attenuation distance. Only applicable to `PBR` shading if `transmissive` parameter is set to `true`. Default to `new Vec3(1)`. */
   attenuationColor?: Vec3
+
+  /** Sheen color to use. Default to `new Vec3(0)`, but sheen is not taken into account if this and `sheenRoughness` are not set. */
+  sheenColor?: Vec3
+  /** Sheen roughness to use. Default to `0`, but sheen is not taken into account if this and `sheenColor` are not set. */
+  sheenRoughness?: number
+
+  /** Anisotropy strength. Default to `0`, but anisotropy is not taken into account if not set or equal to `0`. */
+  anisotropy?: number
+  /** Anisotropy rotation. Default to `0`. */
+  anisotropyRotation?: number
+
+  /** Clearcoat layer intensity. Default to `0`, but clearcoat is not taken into account if not set or equal to `0`. */
+  clearcoat?: number
+  /** Clearcoat layer roughness. Default to `0`. */
+  clearcoatRoughness?: number
+  /** Clearcoat normal map scale if any clearcoat normal texture is defined. Default to `new Vec2(1).` */
+  clearcoatNormalScale?: Vec2
+
+  /** Iridescence intensity factor. Default to `0`, but iridescence is not taken into account if not set or equal to `0`. */
+  iridescence?: number
+  /** Index of refraction of the dielectric thin-film layer. Default to `1.3`. */
+  iridescenceIOR?: number
+  /** Minimum and maximum thickness of the iridescence layer. Default to `new Vec2(100, 400)`. */
+  iridescenceThicknessRange?: Vec2
 }
 
 /** Parameters used to get the {@link LitMesh} material uniforms. */
@@ -125,6 +149,28 @@ export interface PBRTexturesDescriptors extends PhongTexturesDescriptors {
   thicknessTexture?: ShaderTextureDescriptor
   /** {@link ShaderTextureDescriptor | Transmission scene background texture descriptor} to use if any. */
   transmissionBackgroundTexture?: ShaderTextureDescriptor
+
+  /** {@link ShaderTextureDescriptor | Sheen texture descriptor} (mixing both sheen color in the `RGB` channels and roughness in the `A` channel) to use if any. */
+  sheenTexture?: ShaderTextureDescriptor
+  /** {@link ShaderTextureDescriptor | Sheen color texture descriptor} (using the `RGB` channels) to use if any. */
+  sheenColorTexture?: ShaderTextureDescriptor
+  /** {@link ShaderTextureDescriptor | Sheen roughness texture descriptor} (using the `A` channel) to use if any. */
+  sheenRoughnessTexture?: ShaderTextureDescriptor
+
+  /** {@link ShaderTextureDescriptor | Anisotropy texture descriptor} to use if any. */
+  anisotropyTexture?: ShaderTextureDescriptor
+
+  /** {@link ShaderTextureDescriptor | Clearcoat texture descriptor} (using the `R` channel) to use if any. */
+  clearcoatTexture?: ShaderTextureDescriptor
+  /** {@link ShaderTextureDescriptor | Clearcoat  roughness texture descriptor} (using the `G` channel) to use if any. */
+  clearcoatRoughnessTexture?: ShaderTextureDescriptor
+  /** {@link ShaderTextureDescriptor | Clearcoat normal texture descriptor} to use if any. */
+  clearcoatNormalTexture?: ShaderTextureDescriptor
+
+  /** {@link ShaderTextureDescriptor | Iridescence texture descriptor} (using the `R` channel) to use if any. */
+  iridescenceTexture?: ShaderTextureDescriptor
+  /** {@link ShaderTextureDescriptor | Iridescence thickness texture descriptor} (using the `G` channel) to use if any. */
+  iridescenceThicknessTexture?: ShaderTextureDescriptor
 }
 
 /** Parameters used to get all the {@link LitMesh} {@link ShaderTextureDescriptor} as an array. */
@@ -304,6 +350,16 @@ export class LitMesh extends Mesh {
       thickness,
       attenuationDistance,
       attenuationColor,
+      sheenColor,
+      sheenRoughness,
+      anisotropy,
+      anisotropyRotation,
+      clearcoat,
+      clearcoatRoughness,
+      clearcoatNormalScale,
+      iridescence,
+      iridescenceIOR,
+      iridescenceThicknessRange,
       // texture descriptors
       baseColorTexture,
       normalTexture,
@@ -315,6 +371,16 @@ export class LitMesh extends Mesh {
       specularColorTexture,
       transmissionTexture,
       thicknessTexture,
+      sheenTexture,
+      sheenColorTexture,
+      sheenRoughnessTexture,
+      anisotropyTexture,
+      clearcoatTexture,
+      clearcoatRoughnessTexture,
+      clearcoatNormalTexture,
+      iridescenceTexture,
+      iridescenceThicknessTexture,
+      // environment map
       environmentMap,
     } = material
 
@@ -340,6 +406,16 @@ export class LitMesh extends Mesh {
       thickness,
       attenuationDistance,
       attenuationColor,
+      sheenColor,
+      sheenRoughness,
+      anisotropy,
+      anisotropyRotation,
+      clearcoat,
+      clearcoatRoughness,
+      clearcoatNormalScale,
+      iridescence,
+      iridescenceIOR,
+      iridescenceThicknessRange,
       environmentMap,
     })
 
@@ -377,6 +453,15 @@ export class LitMesh extends Mesh {
       specularColorTexture,
       transmissionTexture,
       thicknessTexture,
+      sheenTexture,
+      sheenColorTexture,
+      sheenRoughnessTexture,
+      anisotropyTexture,
+      clearcoatTexture,
+      clearcoatRoughnessTexture,
+      clearcoatNormalTexture,
+      iridescenceTexture,
+      iridescenceThicknessTexture,
     })
 
     materialTextures.forEach((textureDescriptor) => {
@@ -417,9 +502,14 @@ export class LitMesh extends Mesh {
       defaultParams.samplers = [...defaultParams.samplers, environmentMap.sampler]
     }
 
+    // PBR extensions
+    const extensionsUsed = []
+
     // transmission background texture for transmissive objects
     let transmissionBackgroundTexture = null
     if (parameters.transmissive) {
+      extensionsUsed.push('KHR_materials_transmission')
+
       renderer.createTransmissionTarget()
       transmissionBackgroundTexture = {
         texture: renderer.transmissionTarget.texture,
@@ -427,11 +517,24 @@ export class LitMesh extends Mesh {
       }
     }
 
-    const extensionsUsed = []
-
-    // dispersion extension
     if (dispersion) {
       extensionsUsed.push('KHR_materials_dispersion')
+    }
+
+    if (sheenColor || sheenRoughness) {
+      extensionsUsed.push('KHR_materials_sheen')
+    }
+
+    if (anisotropy) {
+      extensionsUsed.push('KHR_materials_anisotropy')
+    }
+
+    if (clearcoat) {
+      extensionsUsed.push('KHR_materials_clearcoat')
+    }
+
+    if (iridescence) {
+      extensionsUsed.push('KHR_materials_iridescence')
     }
 
     const hasNormal = defaultParams.geometry && defaultParams.geometry.getAttributeByName('normal')
@@ -471,6 +574,15 @@ export class LitMesh extends Mesh {
       thicknessTexture,
       emissiveTexture,
       occlusionTexture,
+      sheenTexture,
+      sheenColorTexture,
+      sheenRoughnessTexture,
+      anisotropyTexture,
+      clearcoatTexture,
+      clearcoatRoughnessTexture,
+      clearcoatNormalTexture,
+      iridescenceTexture,
+      iridescenceThicknessTexture,
       transmissionBackgroundTexture,
       environmentMap,
     })
@@ -522,6 +634,16 @@ export class LitMesh extends Mesh {
       thickness,
       attenuationDistance,
       attenuationColor,
+      sheenColor,
+      sheenRoughness,
+      anisotropy,
+      anisotropyRotation,
+      clearcoat,
+      clearcoatRoughness,
+      clearcoatNormalScale,
+      iridescence,
+      iridescenceIOR,
+      iridescenceThicknessRange,
       environmentMap,
     } = parameters
 
@@ -636,6 +758,55 @@ export class LitMesh extends Mesh {
               : attenuationColor.clone()
             : new Vec3(1),
       },
+      // sheen
+      sheenColor: {
+        type: 'vec3f',
+        value:
+          sheenColor !== undefined
+            ? colorSpace === 'srgb'
+              ? sRGBToLinear(sheenColor.clone())
+              : sheenColor.clone()
+            : new Vec3(0),
+      },
+      sheenRoughness: {
+        type: 'f32',
+        value: sheenRoughness !== undefined ? sheenRoughness : 0,
+      },
+      // anisotropy
+      anisotropy: {
+        type: 'f32',
+        value: anisotropy !== undefined ? anisotropy : 0,
+      },
+      anisotropyRotation: {
+        type: 'f32',
+        value: anisotropyRotation !== undefined ? anisotropyRotation : 0,
+      },
+      // clearcoat
+      clearcoat: {
+        type: 'f32',
+        value: clearcoat !== undefined ? clearcoat : 0,
+      },
+      clearcoatRoughness: {
+        type: 'f32',
+        value: clearcoatRoughness !== undefined ? clearcoatRoughness : 0,
+      },
+      clearcoatNormalScale: {
+        type: 'vec2f',
+        value: clearcoatNormalScale !== undefined ? clearcoatNormalScale.clone() : new Vec2(1),
+      },
+      // iridescence
+      iridescence: {
+        type: 'f32',
+        value: iridescence !== undefined ? iridescence : 0,
+      },
+      iridescenceIOR: {
+        type: 'f32',
+        value: iridescenceIOR !== undefined ? iridescenceIOR : 1.3,
+      },
+      iridescenceThicknessRange: {
+        type: 'vec2f',
+        value: iridescenceThicknessRange !== undefined ? iridescenceThicknessRange.clone() : new Vec2(100, 400),
+      },
       ...(environmentMap && {
         envRotation: {
           type: 'mat3x3f',
@@ -691,6 +862,15 @@ export class LitMesh extends Mesh {
       specularFactorTexture,
       specularColorTexture,
       transmissionTexture,
+      sheenTexture,
+      sheenColorTexture,
+      sheenRoughnessTexture,
+      anisotropyTexture,
+      clearcoatTexture,
+      clearcoatRoughnessTexture,
+      clearcoatNormalTexture,
+      iridescenceTexture,
+      iridescenceThicknessTexture,
       thicknessTexture,
     } = parameters
 
@@ -711,7 +891,20 @@ export class LitMesh extends Mesh {
     ]
 
     // PBR textures
-    const pbrTextures = [...specularTextures, transmissionTexture, thicknessTexture]
+    const pbrTextures = [
+      ...specularTextures,
+      transmissionTexture,
+      thicknessTexture,
+      sheenTexture,
+      sheenColorTexture,
+      sheenRoughnessTexture,
+      anisotropyTexture,
+      clearcoatTexture,
+      clearcoatRoughnessTexture,
+      clearcoatNormalTexture,
+      iridescenceTexture,
+      iridescenceThicknessTexture,
+    ]
 
     const materialTextures = (() => {
       switch (shading) {

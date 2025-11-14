@@ -92,7 +92,9 @@ window.addEventListener('load', async () => {
   const currentEnvMapKey = 'cannon'
   let currentEnvMap = envMaps[currentEnvMapKey]
 
-  const environmentMap = new EnvironmentMap(gpuCameraRenderer)
+  const environmentMap = new EnvironmentMap(gpuCameraRenderer, {
+    // useLutTexture: true,
+  })
   environmentMap.loadAndComputeFromHDR(currentEnvMap.url)
   let useEnvMap = true
 
@@ -248,10 +250,18 @@ window.addEventListener('load', async () => {
       name: 'Attenuation Test',
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/AttenuationTest/glTF/AttenuationTest.gltf',
     },
+    dragonAttenuation: {
+      name: 'Dragon Attenuation',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/DragonAttenuation/glTF/DragonAttenuation.gltf',
+    },
     // specular
     compareSpecular: {
       name: 'Compare Specular',
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/CompareSpecular/glTF/CompareSpecular.gltf',
+    },
+    specularTest: {
+      name: 'Specular Test',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/SpecularTest/glTF/SpecularTest.gltf',
     },
     // unlit
     unlitTest: {
@@ -268,10 +278,6 @@ window.addEventListener('load', async () => {
       name: 'Materials Variants Shoe',
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/MaterialsVariantsShoe/glTF/MaterialsVariantsShoe.gltf',
     },
-    dragonAttenuation: {
-      name: 'Dragon Attenuation',
-      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/DragonAttenuation/glTF/DragonAttenuation.gltf',
-    },
     // lights
     directionalLight: {
       name: 'Directional Light',
@@ -281,15 +287,55 @@ window.addEventListener('load', async () => {
       name: 'Lights Punctual Lamp',
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/LightsPunctualLamp/glTF/LightsPunctualLamp.gltf',
     },
+    // sheen
+    sheenTestGrid: {
+      name: 'Sheen Test Grid',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/master/Models/SheenTestGrid/glTF/SheenTestGrid.gltf',
+    },
+    compareSheen: {
+      name: 'Compare Sheen',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/master/Models/CompareSheen/glTF/CompareSheen.gltf',
+    },
+    sheenCloth: {
+      name: 'Sheen Cloth',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/master/Models/SheenCloth/glTF/SheenCloth.gltf',
+    },
+    sheenChair: {
+      name: 'Sheen Chair',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/master/Models/SheenChair/glTF/SheenChair.gltf',
+    },
     // texture transform
     sheenWoodLeatherSofa: {
       name: 'Sheen Wood Leather Sofa',
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/SheenWoodLeatherSofa/glTF/SheenWoodLeatherSofa.gltf',
     },
+    // clearcoat
+    clearcoatTest: {
+      name: 'Clearcoat Test',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/master/Models/ClearCoatTest/glTF/ClearCoatTest.gltf',
+    },
+    compareClearcoat: {
+      name: 'Compare Clearcoat',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/master/Models/CompareClearcoat/glTF/CompareClearcoat.gltf',
+    },
+    // iridescence
+    iridescenceDielectricSpheres: {
+      name: 'Iridescence Dielectric Spheres',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/master/Models/IridescenceDielectricSpheres/glTF/IridescenceDielectricSpheres.gltf',
+    },
+    iridescenceMetallicSpheres: {
+      name: 'Iridescence Metallic Spheres',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/master/Models/IridescenceMetallicSpheres/glTF/IridescenceMetallicSpheres.gltf',
+    },
   }
 
+  let toneMapping = 'Khronos' // 'Khronos', 'Reinhard', 'Cineon' or false
   let shadingModel = 'PBR' // 'PBR', 'Phong' or 'Lambert'
   const lightType = 'DirectionalLight' // or 'PointLight'
+
+  // const currentModelKey = 'damagedHelmet'
+  const currentModelKey = 'iridescenceDielectricSpheres'
+  let currentModel = models[currentModelKey]
 
   const ambientLight = new AmbientLight(gpuCameraRenderer, {
     intensity: 0, // will be updated
@@ -319,9 +365,6 @@ window.addEventListener('load', async () => {
   let transmissiveRenderBundle = null
 
   const renderBundlesField = gui.add({ useRenderBundles }, 'useRenderBundles').name('Use render bundles')
-
-  const currentModelKey = 'damagedHelmet'
-  let currentModel = models[currentModelKey]
 
   const modelField = gui
     .add(
@@ -354,6 +397,9 @@ window.addEventListener('load', async () => {
     .name('Skybox background')
 
   const shadingField = gui.add({ shadingModel }, 'shadingModel', ['PBR', 'Phong', 'Lambert', 'Unlit']).name('Shading')
+  const toneMappingField = gui
+    .add({ toneMapping }, 'toneMapping', { Khronos: 'Khronos', Reinhard: 'Reinhard', Cineon: 'Cineon', None: false })
+    .name('Tone mapping')
 
   const debugChannels = [
     'None',
@@ -373,11 +419,11 @@ window.addEventListener('load', async () => {
     'Specular Color',
   ]
 
-  const defaultDebugChannel = 0
+  let debugChannel = 0
 
   const debugField = gui
     .add(
-      { ['None']: defaultDebugChannel },
+      { ['None']: debugChannel },
       'None',
       debugChannels.reduce((acc, v, index) => {
         return { ...acc, [debugChannels[index]]: index }
@@ -545,7 +591,7 @@ window.addEventListener('load', async () => {
             struct: {
               channel: {
                 type: 'f32',
-                value: defaultDebugChannel,
+                value: debugChannel,
               },
             },
           },
@@ -571,7 +617,7 @@ window.addEventListener('load', async () => {
         } else if(debug.channel == 3.0) {
           ${
             meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === 'normalTexture') && !isUnlit
-              ? 'outputColor = vec4(normalMap, 1.0);'
+              ? 'outputColor = vec4(normalSample.rgb, 1.0);'
               : 'outputColor = vec4(0.0, 0.0, 0.0, 1.0);'
           }
         } else if(debug.channel == 4.0) {
@@ -629,6 +675,7 @@ window.addEventListener('load', async () => {
         }
       `
 
+      parameters.material.toneMapping = toneMapping
       parameters.material.shading = shadingModel
       parameters.material.fragmentChunks = {
         additionalContribution,
@@ -898,7 +945,19 @@ window.addEventListener('load', async () => {
     }
   })
 
+  toneMappingField.onChange(async (value) => {
+    if (value !== toneMapping) {
+      toneMapping = value
+
+      cleanUpScene()
+
+      await loadGLTF(currentModel.url)
+    }
+  })
+
   debugField.onChange((value) => {
+    debugChannel = value
+
     gltfScenesManager?.scenesManager?.meshes?.forEach((mesh) => {
       mesh.uniforms.debug.channel.value = value
     })

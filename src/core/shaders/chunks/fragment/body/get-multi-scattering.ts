@@ -1,12 +1,12 @@
 import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code'
 
 /**
- * Get the environment map IBL GGX Fresnel from the environment map LUT Texture, used for multi-scattering.
+ * Get the IBL GGX Fresnel from the environment map LUT Texture or DFG approximation, used for multi-scattering.
  * @param parameters - Parameters to use to apply PBR shading.
  * @param parameters.environmentMap - {@link extras/environmentMap/EnvironmentMap.EnvironmentMap | EnvironmentMap} to use for IBL GGX Fresnel any.
  * @returns - String with IBL GGX Fresnel applied to `iBLGGXFresnel` (`IBLGGXFresnel`).
  */
-export const getIBLGGXFresnel = ({
+export const computeMultiScattering = ({
   environmentMap = null,
 }: {
   environmentMap?: PBRFragmentShaderInputParams['environmentMap']
@@ -18,27 +18,32 @@ export const getIBLGGXFresnel = ({
   // we do not need to manually compute multi scattering here
   if (environmentMap && environmentMap.lutTexture) {
     iblIGGXFresnel += /* wgsl */ `
-  iBLGGXFresnel = getIBLGGXFresnel(
+  let fab: vec2f = LUT_DFGA(
     normal,
     viewDirection,
     roughness,
-    specularColor,
-    specularIntensity,
     ${environmentMap.sampler.name},
     ${environmentMap.lutTexture.options.name},
   );`
   } else {
     // if the environment map hasn't created a LUT texture
     iblIGGXFresnel += /* wgsl */ `
-  computeMultiscattering(
+  let fab: vec2f = DFGApprox(
     normal,
     viewDirection,
-    specularColor,
-    specularIntensity,
     roughness,
-    &iBLGGXFresnel
   );`
   }
+
+  iblIGGXFresnel += /* wgsl */ `
+  computeMultiscattering(
+    fab,
+    specularColor,
+    specularIntensity,
+    iridescenceF0,
+    iridescence,
+    &iBLGGXFresnel
+  );`
 
   return iblIGGXFresnel
 }

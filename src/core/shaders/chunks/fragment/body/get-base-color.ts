@@ -1,5 +1,6 @@
 import { Geometry } from '../../../../geometries/Geometry'
 import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh'
+import { getTextureSample } from './get-texture-sample'
 
 /**
  * Get the base color from the `material` binding `baseColorFactor` value, {@link Geometry} colors attributes if any and `baseColorTexture` if any, and apply it to our `outputColor`. Can also discard fragments based on `material` binding `alphaCutoff` value.
@@ -42,18 +43,8 @@ export const getBaseColor = ({
   })
 
   if (baseColorTexture) {
+    baseColor += getTextureSample(baseColorTexture, 'baseColor')
     baseColor += /* wgsl */ `
-  var baseColorUV: vec2f = ${baseColorTexture.texCoordAttributeName ?? 'uv'};`
-
-    if ('useTransform' in baseColorTexture.texture.options && baseColorTexture.texture.options.useTransform) {
-      baseColor += /* wgsl */ `
-  baseColorUV = (texturesMatrices.${baseColorTexture.texture.options.name}.matrix * vec3(baseColorUV, 1.0)).xy;`
-    }
-
-    baseColor += /* wgsl */ `
-  let baseColorSample: vec4f = textureSample(${baseColorTexture.texture.options.name}, ${
-      baseColorTexture.sampler?.name ?? 'defaultSampler'
-    }, baseColorUV);
   baseColor *= baseColorSample;
   `
   }

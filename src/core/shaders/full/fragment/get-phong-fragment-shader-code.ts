@@ -17,6 +17,7 @@ import { getSpecular } from '../../chunks/fragment/body/get-specular'
 import { getEmissiveOcclusion } from '../../chunks/fragment/body/get-emissive-occlusion'
 import { applyToneMapping } from '../../chunks/fragment/body/apply-tone-mapping'
 import { patchAdditionalChunks } from '../../default-material-helpers'
+import { generateTBN } from '../../chunks/utils/generate-TBN'
 
 /**
  * Build a Phong fragment shader using the provided options.
@@ -62,6 +63,7 @@ ${chunks.additionalHead}
 ${constants}
 ${common}
 ${toneMappingUtils}
+${generateTBN}
 ${getLightsInfos}
 ${REIndirectDiffuse}
 ${getPhongDirect}

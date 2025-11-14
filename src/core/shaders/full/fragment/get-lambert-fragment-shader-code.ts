@@ -15,6 +15,7 @@ import { getBaseColor } from '../../chunks/fragment/body/get-base-color'
 import { getNormalTangentBitangent } from '../../chunks/fragment/body/get-normal-tangent-bitangent'
 import { getEmissiveOcclusion } from '../../chunks/fragment/body/get-emissive-occlusion'
 import { patchAdditionalChunks } from '../../default-material-helpers'
+import { generateTBN } from '../../chunks/utils/generate-TBN'
 
 /**
  * Build a Lambert fragment shader using the provided options.
@@ -56,6 +57,7 @@ ${chunks.additionalHead}
 ${constants}
 ${common}
 ${toneMappingUtils}
+${generateTBN}
 ${getLightsInfos}
 ${REIndirectDiffuse}
 ${getLambertDirect}

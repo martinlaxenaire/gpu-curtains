@@ -226,6 +226,58 @@ export interface GLTFMaterialsVolumeExtension {
   attenuationColor?: [number, number, number]
 }
 
+/** Define the `KHR_materials_sheen` extension materials options. */
+export interface GLTFMaterialsSheenExtension {
+  /** The sheen color in linear space. Default to `[0, 0, 0]`. */
+  sheenColorFactor?: [number, number, number]
+  /** The sheen color (RGB). The sheen color is in sRGB transfer function. */
+  sheenColorTexture?: GLTF.ITextureInfo
+  /** The sheen roughness. Default to `0`. */
+  sheenRoughnessFactor?: number
+  /** The sheen roughness (Alpha) texture. */
+  sheenRoughnessTexture?: GLTF.ITextureInfo
+}
+
+/** Define the `KHR_materials_clearcoat` extension materials options. */
+export interface GLTFMaterialsClearcoatExtension {
+  /** The clearcoat layer intensity. Default to `0`. */
+  clearcoatFactor?: number
+  /** The clearcoat layer intensity texture (RGB in linear space). */
+  clearcoatTexture?: GLTF.ITextureInfo
+  /** The clearcoat layer roughness. Default to `0`. */
+  clearcoatRoughnessFactor?: number
+  /** The clearcoat layer roughness texture (RGB in linear space). */
+  clearcoatRoughnessTexture?: GLTF.ITextureInfo
+  /** The clearcoat normal map texture. */
+  clearcoatNormalTexture?: GLTF.IMaterialNormalTextureInfo
+}
+
+/** Define the `KHR_materials_anisotropy` extension materials options. */
+export interface GLTFMaterialsAnisotropyExtension {
+  /** The anisotropy strength. When the `anisotropyTexture` is present, this value is multiplied by the texture's `B` channel. Default to `0`. */
+  anisotropyStrength?: number
+  /** The rotation of the anisotropy in tangent, bitangent space, measured in radians counter-clockwise from the tangent. When the `anisotropyTexture` is present, this value provides additional rotation to the vectors in the texture. Default to `0`. */
+  anisotropyRotation?: number
+  /** The anisotropy texture. `R` and `G` channels represent the anisotropy direction in `[-1, 1]` tangent, bitangent space to be rotated by the anisotropy rotation. The `B` channel contains strength as `[0, 1]` to be multiplied by the `anisotropyStrength`. */
+  anisotropyTexture?: GLTF.ITextureInfo
+}
+
+/** Define the `KHR_materials_iridescence` extension materials options. */
+export interface GLTFMaterialsIridescenceExtension {
+  /** The iridescence intensity factor. Default to `0`. */
+  iridescenceFactor?: number
+  /** The iridescence intensity texture, stored in the `R` channel. */
+  iridescenceTexture?: GLTF.ITextureInfo
+  /** The index of refraction of the dielectric thin-film layer. Default to `1.3`. */
+  iridescenceIor?: number
+  /** The minimum thickness of the thin-film layer given in nanometers. Default to `100`. */
+  iridescenceThicknessMinimum?: number
+  /** The maximum thickness of the thin-film layer given in nanometers. Default to `400`. */
+  iridescenceThicknessMaximum?: number
+  /** The thickness texture of the thin-film layer, stored in the `G` channel. */
+  iridescenceThicknessTexture?: GLTF.ITextureInfo
+}
+
 /** Base mapping for all potential GLTF materials extensions types. */
 export type GLTFMaterialsExtensionsMapping = {
   /** Define the `KHR_materials_dispersion` extension materials options. */
@@ -242,6 +294,14 @@ export type GLTFMaterialsExtensionsMapping = {
   KHR_materials_unlit: Record<string, never>
   /** Define the `KHR_materials_volume` extension materials options. */
   KHR_materials_volume: GLTFMaterialsVolumeExtension
+  /** Define the `KHR_materials_sheen` extension materials options. */
+  KHR_materials_sheen: GLTFMaterialsSheenExtension
+  /** Define the `KHR_materials_clearcoat` extension materials options. */
+  KHR_materials_clearcoat: GLTFMaterialsClearcoatExtension
+  /** Define the `KHR_materials_anisotropy` extension materials options. */
+  KHR_materials_anisotropy: GLTFMaterialsAnisotropyExtension
+  /** Define the `KHR_materials_iridescence` extension materials options. */
+  KHR_materials_iridescence: GLTFMaterialsIridescenceExtension
 }
 
 /** Extract keys from GLTFExtensionsTypes that are present in GLTFMaterialsExtensionsMapping. */

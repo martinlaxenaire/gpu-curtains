@@ -14,8 +14,8 @@ export const getIBLIndirectRadiance = ({
   let iblIndirectSpecular = ''
 
   if (environmentMap) {
-    iblIndirectSpecular += /* wgs */ `
-  radiance += getIBLIndirectRadiance(
+    iblIndirectSpecular += /* wgsl */ `
+  iblRadiance += getIBLIndirectRadiance(
     normal,
     viewDirection,
     roughness,
@@ -26,7 +26,9 @@ export const getIBLIndirectRadiance = ({
     ${environmentMap.specularTexture.options.name},
     envRotation,
     envSpecularIntensity,
-  );`
+  );
+  
+  radiance += iblRadiance;`
   }
 
   return iblIndirectSpecular

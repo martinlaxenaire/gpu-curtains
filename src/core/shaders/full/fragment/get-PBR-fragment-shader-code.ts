@@ -6,10 +6,11 @@ import { getLightsInfos } from '../../chunks/fragment/head/get-lights-infos'
 import { REIndirectDiffuse } from '../../chunks/fragment/head/RE-indirect-diffuse'
 import { REIndirectSpecular } from '../../chunks/fragment/head/RE-indirect-specular'
 import { getPBRDirect } from '../../chunks/fragment/head/get-PBR-direct'
-import { getIBLGGXFresnel } from '../../chunks/fragment/head/get-IBL-GGX-Fresnel'
+import { computeMultiScattering } from '../../chunks/fragment/head/compute-multi-scattering'
 import { getIBLIndirectIrradiance } from '../../chunks/fragment/head/get-IBL-indirect-irradiance'
 import { getIBLIndirectRadiance } from '../../chunks/fragment/head/get-IBL-indirect-radiance'
 import { getIBLTransmission } from '../../chunks/fragment/head/get-IBL-transmission'
+import { getIBLSheen } from '../../chunks/fragment/head/get-IBL-sheen'
 import { getPBRShading } from '../../chunks/fragment/body/get-PBR-shading'
 import { getFragmentInputStruct } from '../../chunks/fragment/head/get-fragment-input-struct'
 import { getFragmentOutputStruct } from '../../chunks/fragment/head/get-fragment-output-struct'
@@ -23,6 +24,13 @@ import { getTransmissionThickness } from '../../chunks/fragment/body/get-transmi
 import { getEmissiveOcclusion } from '../../chunks/fragment/body/get-emissive-occlusion'
 import { applyToneMapping } from '../../chunks/fragment/body/apply-tone-mapping'
 import { patchAdditionalChunks } from '../../default-material-helpers'
+import { getPBRSheenDirect } from '../../chunks/fragment/head/get-PBR-sheen-direct'
+import { getSheen } from '../../chunks/fragment/body/get-sheen'
+import { getClearcoat, getClearcoatNormal } from '../../chunks/fragment/body/get-clearcoat'
+import { getPBRClearcoatDirect } from '../../chunks/fragment/head/get-PBR-clearcoat-direct'
+import { generateTBN } from '../../chunks/utils/generate-TBN'
+import { getIridescence } from '../../chunks/fragment/body/get-iridescence'
+import { getPBRIridescence } from '../../chunks/fragment/head/get-PBR-iridescence'
 
 /**
  * Build a PBR fragment shader using the provided options.
@@ -61,6 +69,15 @@ export const getPBRFragmentShaderCode = ({
   specularColorTexture = null,
   transmissionTexture = null,
   thicknessTexture = null,
+  sheenTexture = null,
+  sheenColorTexture = null,
+  sheenRoughnessTexture = null,
+  anisotropyTexture = null,
+  clearcoatTexture = null,
+  clearcoatRoughnessTexture = null,
+  clearcoatNormalTexture = null,
+  iridescenceTexture = null,
+  iridescenceThicknessTexture = null,
   transmissionBackgroundTexture = null,
   environmentMap = null,
 }: PBRFragmentShaderInputParams): string => {
@@ -73,14 +90,20 @@ ${chunks.additionalHead}
 ${constants}
 ${common}
 ${toneMappingUtils}
+${generateTBN}
 ${getLightsInfos}
 ${REIndirectDiffuse}
 ${REIndirectSpecular}
 ${getPBRDirect}
-${getIBLGGXFresnel}
+${computeMultiScattering}
 ${getIBLIndirectIrradiance}
 ${getIBLIndirectRadiance}
 ${getIBLTransmission}
+
+${extensionsUsed.includes('KHR_materials_sheen') ? getIBLSheen : ''}
+${extensionsUsed.includes('KHR_materials_sheen') ? getPBRSheenDirect : ''}
+${extensionsUsed.includes('KHR_materials_clearcoat') ? getPBRClearcoatDirect : ''}
+${extensionsUsed.includes('KHR_materials_iridescence') ? getPBRIridescence : ''}
 
 ${getFragmentInputStruct({ geometry, additionalVaryings })}
 
@@ -101,6 +124,11 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   ${getSpecular({ specularTexture, specularFactorTexture, specularColorTexture })}
   ${getTransmissionThickness({ transmissionTexture, thicknessTexture })}
   ${getEmissiveOcclusion({ emissiveTexture, occlusionTexture })}
+
+  ${getSheen({ extensionsUsed, sheenTexture, sheenColorTexture, sheenRoughnessTexture })}
+  ${getClearcoat({ extensionsUsed, clearcoatTexture, clearcoatRoughnessTexture })}
+  ${getClearcoatNormal({ extensionsUsed, geometry, normalTexture, clearcoatNormalTexture })}
+  ${getIridescence({ extensionsUsed, iridescenceTexture, iridescenceThicknessTexture })}
   
   // lights
   ${getPBRShading({ receiveShadows, environmentMap, transmissionBackgroundTexture, extensionsUsed })}

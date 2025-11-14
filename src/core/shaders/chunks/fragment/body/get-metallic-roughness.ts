@@ -1,4 +1,5 @@
 import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh'
+import { getTextureSample } from './get-texture-sample'
 
 /**
  * Set the `metallic` (`f32`) and `roughness` (`f32`) values using the `material` binding `metallicFactor`, `roughnessFactor` values and the metallic roughness texture if any.
@@ -14,24 +15,10 @@ export const getMetallicRoughness = ({
   let metallicRoughness = ''
 
   if (metallicRoughnessTexture) {
+    metallicRoughness += getTextureSample(metallicRoughnessTexture, 'metallicRoughness')
     metallicRoughness += /* wgsl */ `
-  var metallicRoughnessUV: vec2f = ${metallicRoughnessTexture.texCoordAttributeName ?? 'uv'};`
-
-    if (
-      'useTransform' in metallicRoughnessTexture.texture.options &&
-      metallicRoughnessTexture.texture.options.useTransform
-    ) {
-      metallicRoughness += /* wgsl */ `
-  metallicRoughnessUV = (${metallicRoughnessTexture.texture.options.name}Matrix * vec3(metallicRoughnessUV, 1.0)).xy;`
-    }
-
-    metallicRoughness += /* wgsl */ `
-  let metallicRoughness = textureSample(${metallicRoughnessTexture.texture.options.name}, ${
-      metallicRoughnessTexture.sampler?.name ?? 'defaultSampler'
-    }, metallicRoughnessUV);
-  
-  metallic = metallic * metallicRoughness.b;
-  roughness = roughness * metallicRoughness.g;
+  metallic = metallic * metallicRoughnessSample.b;
+  roughness = roughness * metallicRoughnessSample.g;
   `
   }
 
