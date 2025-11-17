@@ -231,6 +231,10 @@ export const models = {
     name: 'Iridescence Abalone',
     url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/master/Models/IridescenceAbalone/glTF/IridescenceAbalone.gltf',
   },
+  iridescenceSuzanne: {
+    name: 'Iridescence Suzanne',
+    url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/master/Models/IridescenceSuzanne/glTF/IridescenceSuzanne.gltf',
+  },
   compareIridescence: {
     name: 'Compare Iridescence',
     url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/master/Models/CompareIridescence/glTF/CompareIridescence.gltf',
