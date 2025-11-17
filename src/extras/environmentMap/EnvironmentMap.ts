@@ -145,7 +145,7 @@ export class EnvironmentMap {
 
     params = {
       ...{
-        useLutTexture: true,
+        useLutTexture: false,
         diffuseIntensity: 1,
         specularIntensity: 1,
         rotation: Math.PI / 2,

@@ -31,7 +31,6 @@ fn CineonToneMapping( color: vec3f ) -> vec3f {
 	// filmic operator by Jim Hejl and Richard Burgess-Dawson
 	let maxColor = max( vec3( 0.0 ), color - 0.004 );
 	return pow( ( maxColor * ( 6.2 * maxColor + 0.5 ) ) / ( maxColor * ( 6.2 * maxColor + 1.7 ) + 0.06 ), vec3( 2.2 ) );
-
 }
 
 // https://modelviewer.dev/examples/tone-mapping

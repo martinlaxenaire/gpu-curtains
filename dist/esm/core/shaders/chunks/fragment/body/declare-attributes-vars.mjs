@@ -55,6 +55,7 @@ const declareAttributesVars = ({
   `
   let worldPosition: vec3f = fsInput.worldPosition;
   let viewDirection: vec3f = normalize(fsInput.viewDirection);
+  let modelPosition: vec3f = fsInput.modelPosition;
   let modelScale: vec3f = fsInput.modelScale;
   `;
   attributeVars += additionalVaryings.map((attribute) => {

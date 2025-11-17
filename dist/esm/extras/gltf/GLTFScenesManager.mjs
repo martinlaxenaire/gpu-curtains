@@ -311,11 +311,19 @@ const _GLTFScenesManager = class _GLTFScenesManager {
         case "emissiveTexture":
         case "specularTexture":
         case "specularColorTexture":
+        case "sheenTexture":
+        case "sheenColorTexture":
+        case "sheenRoughnessTexture":
           return "rgba8unorm-srgb";
         case "occlusionTexture":
         case "transmissionTexture":
+        case "clearcoatTexture":
+        case "iridescenceFactorTexture":
           return "r8unorm";
         case "thicknessTexture":
+        case "clearcoatRoughnessTexture":
+        case "iridescenceTexture":
+        case "iridescenceThicknessTexture":
           return "rg8unorm";
         default:
           return "rgba8unorm";
@@ -430,26 +438,69 @@ const _GLTFScenesManager = class _GLTFScenesManager {
         const transmission = extensions && extensions.KHR_materials_transmission || null;
         const specular = extensions && extensions.KHR_materials_specular || null;
         const volume = extensions && extensions.KHR_materials_volume || null;
+        const sheen = extensions && extensions.KHR_materials_sheen || null;
+        const anisotropy = extensions && extensions.KHR_materials_anisotropy || null;
+        const clearcoat = extensions && extensions.KHR_materials_clearcoat || null;
+        const iridescence = extensions && extensions.KHR_materials_iridescence || null;
         if (transmission && transmission.transmissionTexture && transmission.transmissionTexture.index !== void 0) {
           createTexture(transmission.transmissionTexture, "transmissionTexture");
         }
         if (specular && (specular.specularTexture || specular.specularColorTexture)) {
           const { specularTexture, specularColorTexture } = specular;
-          if (specularTexture && specularColorTexture) {
-            if (specularTexture.index !== void 0 && specularColorTexture.index !== void 0 && specularTexture.index === specularColorTexture.index) {
-              createTexture(specular.specularTexture, "specularTexture");
-            } else {
-              if (specularTexture && specularTexture.index !== void 0) {
-                createTexture(specular.specularTexture, "specularFactorTexture");
-              }
-              if (specularColorTexture && specularColorTexture.index !== void 0) {
-                createTexture(specular.specularColorTexture, "specularColorTexture");
-              }
+          if (specularTexture && specularColorTexture && specularTexture.index !== void 0 && specularTexture.index === specularColorTexture.index) {
+            createTexture(specularTexture, "specularTexture");
+          } else {
+            if (specularTexture && specularTexture.index !== void 0) {
+              createTexture(specularTexture, "specularFactorTexture");
+            }
+            if (specularColorTexture && specularColorTexture.index !== void 0) {
+              createTexture(specularColorTexture, "specularColorTexture");
             }
           }
         }
         if (volume && volume.thicknessTexture && volume.thicknessTexture.index !== void 0) {
           createTexture(volume.thicknessTexture, "thicknessTexture");
+        }
+        if (sheen && (sheen.sheenColorTexture || sheen.sheenRoughnessTexture)) {
+          const { sheenColorTexture, sheenRoughnessTexture } = sheen;
+          if (sheenColorTexture && sheenRoughnessTexture && sheenColorTexture.index !== void 0 && sheenColorTexture.index === sheenRoughnessTexture.index) {
+            createTexture(sheenColorTexture, "sheenTexture");
+          } else {
+            if (sheenColorTexture && sheenColorTexture.index !== void 0) {
+              createTexture(sheenColorTexture, "sheenColorTexture");
+            }
+            if (sheenRoughnessTexture && sheenRoughnessTexture.index !== void 0) {
+              createTexture(sheenRoughnessTexture, "sheenRoughnessTexture");
+            }
+          }
+        }
+        if (anisotropy && anisotropy.anisotropyTexture && anisotropy.anisotropyTexture.index !== void 0) {
+          createTexture(anisotropy.anisotropyTexture, "anisotropyTexture");
+        }
+        if (clearcoat && (clearcoat.clearcoatTexture || clearcoat.clearcoatRoughnessTexture || clearcoat.clearcoatNormalTexture)) {
+          const { clearcoatTexture, clearcoatRoughnessTexture, clearcoatNormalTexture } = clearcoat;
+          if (clearcoatTexture && clearcoatTexture.index !== void 0) {
+            createTexture(clearcoatTexture, "clearcoatTexture");
+          }
+          if (clearcoatRoughnessTexture && clearcoatRoughnessTexture.index !== void 0) {
+            createTexture(clearcoatRoughnessTexture, "clearcoatRoughnessTexture");
+          }
+          if (clearcoatNormalTexture && clearcoatNormalTexture.index !== void 0) {
+            createTexture(clearcoatNormalTexture, "clearcoatNormalTexture");
+          }
+        }
+        if (iridescence && (iridescence.iridescenceTexture || iridescence.iridescenceThicknessTexture)) {
+          const { iridescenceTexture, iridescenceThicknessTexture } = iridescence;
+          if (iridescenceTexture && iridescenceThicknessTexture && iridescenceTexture.index !== void 0 && iridescenceTexture.index === iridescenceThicknessTexture.index) {
+            createTexture(iridescenceTexture, "iridescenceTexture");
+          } else {
+            if (iridescenceTexture && iridescenceTexture.index !== void 0) {
+              createTexture(iridescenceTexture, "iridescenceFactorTexture");
+            }
+            if (iridescenceThicknessTexture && iridescenceThicknessTexture.index !== void 0) {
+              createTexture(iridescenceThicknessTexture, "iridescenceThicknessTexture");
+            }
+          }
         }
       }
     }
@@ -475,6 +526,10 @@ const _GLTFScenesManager = class _GLTFScenesManager {
     const transmission = extensions && extensions.KHR_materials_transmission || null;
     const specular = extensions && extensions.KHR_materials_specular || null;
     const volume = extensions && extensions.KHR_materials_volume || null;
+    const sheen = extensions && extensions.KHR_materials_sheen || null;
+    const anisotropy = extensions && extensions.KHR_materials_anisotropy || null;
+    const clearcoat = extensions && extensions.KHR_materials_clearcoat || null;
+    const iridescence = extensions && extensions.KHR_materials_iridescence || null;
     const litMeshMaterialParams = {
       colorSpace: "linear",
       color: material.pbrMetallicRoughness && material.pbrMetallicRoughness.baseColorFactor !== void 0 ? new Vec3(
@@ -490,15 +545,61 @@ const _GLTFScenesManager = class _GLTFScenesManager {
       occlusionIntensity: material.occlusionTexture?.strength === void 0 ? 1 : material.occlusionTexture.strength,
       emissiveIntensity: emissiveStrength && emissiveStrength.emissiveStrength !== void 0 ? emissiveStrength.emissiveStrength : 1,
       emissiveColor: material.emissiveFactor !== void 0 ? new Vec3(material.emissiveFactor[0], material.emissiveFactor[1], material.emissiveFactor[2]) : new Vec3(0),
+      // specular
       specularIntensity: specular && specular.specularFactor !== void 0 ? specular.specularFactor : 1,
       specularColor: specular && specular.specularColorFactor !== void 0 ? new Vec3(specular.specularColorFactor[0], specular.specularColorFactor[1], specular.specularColorFactor[2]) : new Vec3(1),
+      // transmission
       transmission: transmission && transmission.transmissionFactor !== void 0 ? transmission.transmissionFactor : 0,
+      // ior
       ior: ior && ior.ior !== void 0 ? ior.ior : 1.5,
+      // dispersion
       dispersion: dispersion && dispersion.dispersion !== void 0 ? dispersion.dispersion : 0,
+      // volume
       thickness: volume && volume.thicknessFactor !== void 0 ? volume.thicknessFactor : 0,
       attenuationDistance: volume && volume.attenuationDistance !== void 0 ? volume.attenuationDistance : Infinity,
-      attenuationColor: volume && volume.attenuationColor !== void 0 ? new Vec3(volume.attenuationColor[0], volume.attenuationColor[1], volume.attenuationColor[2]) : new Vec3(1)
+      attenuationColor: volume && volume.attenuationColor !== void 0 ? new Vec3(volume.attenuationColor[0], volume.attenuationColor[1], volume.attenuationColor[2]) : new Vec3(1),
+      // sheen
+      ...sheen && {
+        ...sheen.sheenColorFactor !== void 0 && {
+          sheenColor: new Vec3(sheen.sheenColorFactor[0], sheen.sheenColorFactor[1], sheen.sheenColorFactor[2])
+        },
+        ...sheen.sheenRoughnessFactor !== void 0 !== void 0 && {
+          sheenRoughness: sheen.sheenRoughnessFactor
+        }
+      },
+      // anisotropy
+      ...anisotropy && {
+        ...anisotropy.anisotropyStrength !== void 0 && {
+          anisotropy: anisotropy.anisotropyStrength
+        },
+        ...anisotropy.anisotropyRotation !== void 0 && {
+          anisotropyVector: new Vec2(Math.cos(anisotropy.anisotropyRotation), Math.sin(anisotropy.anisotropyRotation))
+        }
+      },
+      // clearcoat
+      ...clearcoat && {
+        ...clearcoat.clearcoatFactor !== void 0 && {
+          clearcoat: clearcoat.clearcoatFactor
+        },
+        ...clearcoat.clearcoatRoughnessFactor !== void 0 && {
+          clearcoatRoughness: clearcoat.clearcoatRoughnessFactor
+        }
+      },
+      // iridescene
+      ...iridescence && {
+        ...iridescence.iridescenceFactor !== void 0 && {
+          iridescence: iridescence.iridescenceFactor
+        },
+        iridescenceIOR: iridescence.iridescenceIor !== void 0 ? iridescence.iridescenceIor : 1.3,
+        iridescenceThicknessRange: new Vec2(
+          iridescence.iridescenceThicknessMinimum !== void 0 ? iridescence.iridescenceThicknessMinimum : 100,
+          iridescence.iridescenceThicknessMaximum !== void 0 ? iridescence.iridescenceThicknessMaximum : 400
+        )
+      }
     };
+    if (clearcoat && clearcoat.clearcoatNormalTexture && clearcoat.clearcoatNormalTexture.scale) {
+      litMeshMaterialParams.clearcoatNormalScale = new Vec2(clearcoat.clearcoatNormalTexture.scale);
+    }
     materialParams.material = litMeshMaterialParams;
     materialParams.cullMode = material.doubleSided ? "none" : "back";
     if (material.alphaMode === "BLEND") {
@@ -1511,44 +1612,37 @@ parsePrimitiveProperty_fn = function(primitiveProperty, attributes) {
     );
     if (!accessorsBufferViews.every((val) => val === accessorsBufferViews[0])) {
       let totalStride = 0;
-      const mainBufferStrides = {};
-      const arrayLength = primitiveAttributesValues.reduce((acc, accessorIndex) => {
+      const arrayLength = Object.values(primitiveProperty).reduce((acc, accessorIndex) => {
         const accessor = this.gltf.accessors[accessorIndex];
         const attrSize = _GLTFScenesManager.getVertexAttributeParamsFromType(accessor.type).size;
-        if (!mainBufferStrides[accessor.bufferView]) {
-          mainBufferStrides[accessor.bufferView] = 0;
-        }
-        mainBufferStrides[accessor.bufferView] = Math.max(
-          mainBufferStrides[accessor.bufferView],
-          accessor.byteOffset + attrSize * Float32Array.BYTES_PER_ELEMENT
-        );
         totalStride += attrSize * Float32Array.BYTES_PER_ELEMENT;
         return acc + accessor.count * attrSize;
       }, 0);
       interleavedArray = new Float32Array(Math.ceil(arrayLength / 4) * 4);
-      primitiveAttributesValues.forEach((accessorIndex) => {
+      let startWriteOffset = 0;
+      const cleanAttributeNames = Object.entries(primitiveProperty).map(
+        (prop) => _GLTFScenesManager.getCleanAttributeName(prop[0])
+      );
+      Object.values(primitiveProperty).forEach((accessorIndex, index) => {
         const accessor = this.gltf.accessors[accessorIndex];
         const bufferView = this.gltf.bufferViews[accessor.bufferView];
+        const attribute = attributes.find((attr) => attr.name === cleanAttributeNames[index]);
         const attrSize = _GLTFScenesManager.getVertexAttributeParamsFromType(accessor.type).size;
         const { indices, values } = __privateMethod(this, _GLTFScenesManager_instances, getSparseAccessorIndicesAndValues_fn).call(this, accessor);
         for (let i = 0; i < accessor.count; i++) {
-          const startOffset = accessor.byteOffset / Float32Array.BYTES_PER_ELEMENT + i * totalStride / Float32Array.BYTES_PER_ELEMENT;
-          const subarray = new Float32Array(
-            this.gltf.arrayBuffers[bufferView.buffer],
-            bufferView.byteOffset + accessor.byteOffset + i * mainBufferStrides[accessor.bufferView],
-            attrSize
-          );
+          const bufferOffset = bufferView.byteOffset + accessor.byteOffset + i * bufferView.byteStride;
+          const subarray = new Float32Array(this.gltf.arrayBuffers[bufferView.buffer], bufferOffset, attrSize);
           if (indices && values && indices.includes(i)) {
             for (let j = 0; i < attrSize; j++) {
               subarray[j] = values[i * attrSize + j];
             }
           }
+          const startOffset = startWriteOffset + i * totalStride / Float32Array.BYTES_PER_ELEMENT;
           interleavedArray.subarray(startOffset, startOffset + attrSize).set(subarray);
+          attribute.array.subarray(i * attrSize, i * attrSize + attrSize).set(subarray);
         }
+        startWriteOffset += attrSize;
       });
-      const cleanAttributeNames = Object.entries(primitiveProperty).map(
-        (prop) => _GLTFScenesManager.getCleanAttributeName(prop[0])
-      );
       this.sortAttributesByNames(cleanAttributeNames, attributes);
     } else {
       interleavedArray = new Float32Array(

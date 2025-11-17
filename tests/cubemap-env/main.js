@@ -57,6 +57,7 @@ window.addEventListener('load', async () => {
   let currentEnvMap = envMaps[currentEnvMapKey]
 
   const environmentMap = new EnvironmentMap(gpuCameraRenderer, {
+    useLutTexture: true,
     specularTextureParams: {
       generateMips: false, // should be overriden
     },

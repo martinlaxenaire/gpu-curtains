@@ -20,6 +20,7 @@ export interface GetPBRShadingParams extends GetShadingParams {
  * let specularIntensity: f32 = 1.0;
  * let metallic: f32 = 0.5;
  * let roughness: f32 = 0.5;
+ * let emissive: vec3f = vec3(0.0);
  * let ior: f32 = 1.5;
  * let transmission: f32 = 0.0;
  * let dispersion: f32 = 0.0;
@@ -34,6 +35,7 @@ export interface GetPBRShadingParams extends GetShadingParams {
  *   viewDirection,
  *   metallic,
  *   roughness,
+ *   emissive,
  *   specularIntensity,
  *   specularColor,
  *   ior,

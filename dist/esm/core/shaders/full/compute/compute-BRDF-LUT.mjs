@@ -2,7 +2,7 @@ import { constants } from '../../chunks/utils/constants.mjs';
 import { common } from '../../chunks/utils/common.mjs';
 import { hammersley2D } from '../../chunks/utils/hammersley-2D.mjs';
 import { generateTBN } from '../../chunks/utils/generate-TBN.mjs';
-import { BRDF_GGX } from '../../chunks/utils/BRDF_GGX.mjs';
+import { BRDF_GGX } from '../../chunks/fragment/head/BRDF_GGX.mjs';
 
 const computeBRDFLUT = (
   /* wgsl */

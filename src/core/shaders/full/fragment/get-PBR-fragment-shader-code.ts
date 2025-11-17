@@ -6,23 +6,35 @@ import { getLightsInfos } from '../../chunks/fragment/head/get-lights-infos'
 import { REIndirectDiffuse } from '../../chunks/fragment/head/RE-indirect-diffuse'
 import { REIndirectSpecular } from '../../chunks/fragment/head/RE-indirect-specular'
 import { getPBRDirect } from '../../chunks/fragment/head/get-PBR-direct'
-import { getIBLGGXFresnel } from '../../chunks/fragment/head/get-IBL-GGX-Fresnel'
+import { computeMultiScattering } from '../../chunks/fragment/head/compute-multi-scattering'
 import { getIBLIndirectIrradiance } from '../../chunks/fragment/head/get-IBL-indirect-irradiance'
 import { getIBLIndirectRadiance } from '../../chunks/fragment/head/get-IBL-indirect-radiance'
 import { getIBLTransmission } from '../../chunks/fragment/head/get-IBL-transmission'
+import { getIBLSheen } from '../../chunks/fragment/head/get-IBL-sheen'
 import { getPBRShading } from '../../chunks/fragment/body/get-PBR-shading'
 import { getFragmentInputStruct } from '../../chunks/fragment/head/get-fragment-input-struct'
 import { getFragmentOutputStruct } from '../../chunks/fragment/head/get-fragment-output-struct'
 import { declareAttributesVars } from '../../chunks/fragment/body/declare-attributes-vars'
 import { declareMaterialVars } from '../../chunks/fragment/body/declare-material-vars'
 import { getBaseColor } from '../../chunks/fragment/body/get-base-color'
-import { getNormalTangentBitangent } from '../../chunks/fragment/body/get-normal-tangent-bitangent'
+import { getNormal } from '../../chunks/fragment/body/get-normal'
 import { getMetallicRoughness } from '../../chunks/fragment/body/get-metallic-roughness'
 import { getSpecular } from '../../chunks/fragment/body/get-specular'
 import { getTransmissionThickness } from '../../chunks/fragment/body/get-transmission-thickness'
 import { getEmissiveOcclusion } from '../../chunks/fragment/body/get-emissive-occlusion'
 import { applyToneMapping } from '../../chunks/fragment/body/apply-tone-mapping'
 import { patchAdditionalChunks } from '../../default-material-helpers'
+import { getPBRSheenDirect } from '../../chunks/fragment/head/get-PBR-sheen-direct'
+import { getSheen } from '../../chunks/fragment/body/get-sheen'
+import { getClearcoat, getClearcoatNormal } from '../../chunks/fragment/body/get-clearcoat'
+import { getPBRClearcoatDirect } from '../../chunks/fragment/head/get-PBR-clearcoat-direct'
+import { generateTBN } from '../../chunks/utils/generate-TBN'
+import { getIridescence } from '../../chunks/fragment/body/get-iridescence'
+import { getPBRIridescence } from '../../chunks/fragment/head/get-PBR-iridescence'
+import { BRDF_GGX_Anisotropic } from '../../chunks/fragment/head/BRDF_GGX_Anisotropic'
+import { getAnisotropy } from '../../chunks/fragment/body/get-anisotropy'
+import { getTangentBitangent } from '../../chunks/fragment/body/get-tangent-bitangent'
+import { getIBLIndirectAnisotropyRadiance } from '../../chunks/fragment/head/get-IBL-indirect-anisotropy-radiance'
 
 /**
  * Build a PBR fragment shader using the provided options.
@@ -61,6 +73,16 @@ export const getPBRFragmentShaderCode = ({
   specularColorTexture = null,
   transmissionTexture = null,
   thicknessTexture = null,
+  sheenTexture = null,
+  sheenColorTexture = null,
+  sheenRoughnessTexture = null,
+  anisotropyTexture = null,
+  clearcoatTexture = null,
+  clearcoatRoughnessTexture = null,
+  clearcoatNormalTexture = null,
+  iridescenceTexture = null,
+  iridescenceFactorTexture = null,
+  iridescenceThicknessTexture = null,
   transmissionBackgroundTexture = null,
   environmentMap = null,
 }: PBRFragmentShaderInputParams): string => {
@@ -73,14 +95,22 @@ ${chunks.additionalHead}
 ${constants}
 ${common}
 ${toneMappingUtils}
+${generateTBN}
 ${getLightsInfos}
 ${REIndirectDiffuse}
 ${REIndirectSpecular}
 ${getPBRDirect}
-${getIBLGGXFresnel}
+${computeMultiScattering}
 ${getIBLIndirectIrradiance}
 ${getIBLIndirectRadiance}
 ${getIBLTransmission}
+
+${extensionsUsed.includes('KHR_materials_sheen') ? getIBLSheen : ''}
+${extensionsUsed.includes('KHR_materials_sheen') ? getPBRSheenDirect : ''}
+${extensionsUsed.includes('KHR_materials_clearcoat') ? getPBRClearcoatDirect : ''}
+${extensionsUsed.includes('KHR_materials_iridescence') ? getPBRIridescence : ''}
+${extensionsUsed.includes('KHR_materials_anisotropy') ? BRDF_GGX_Anisotropic : ''}
+${extensionsUsed.includes('KHR_materials_anisotropy') ? getIBLIndirectAnisotropyRadiance : ''}
 
 ${getFragmentInputStruct({ geometry, additionalVaryings })}
 
@@ -95,14 +125,21 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   
   // user defined preliminary contribution
   ${chunks.preliminaryContribution}
-  
-  ${getNormalTangentBitangent({ geometry, normalTexture })}
+
+  // material infos
+  ${getTangentBitangent({ extensionsUsed, geometry, normalTexture, clearcoatNormalTexture })}  
+  ${getNormal({ normalTexture })}
   ${getMetallicRoughness({ metallicRoughnessTexture })}
   ${getSpecular({ specularTexture, specularFactorTexture, specularColorTexture })}
   ${getTransmissionThickness({ transmissionTexture, thicknessTexture })}
   ${getEmissiveOcclusion({ emissiveTexture, occlusionTexture })}
+  ${getSheen({ extensionsUsed, sheenTexture, sheenColorTexture, sheenRoughnessTexture })}
+  ${getClearcoat({ extensionsUsed, clearcoatTexture, clearcoatRoughnessTexture })}
+  ${getClearcoatNormal({ extensionsUsed, normalTexture, clearcoatNormalTexture })}
+  ${getIridescence({ extensionsUsed, iridescenceTexture, iridescenceFactorTexture, iridescenceThicknessTexture })}
+  ${getAnisotropy({ extensionsUsed, anisotropyTexture })}
   
-  // lights
+  // shading
   ${getPBRShading({ receiveShadows, environmentMap, transmissionBackgroundTexture, extensionsUsed })}
   
   outputColor = vec4(outgoingLight, outputColor.a);

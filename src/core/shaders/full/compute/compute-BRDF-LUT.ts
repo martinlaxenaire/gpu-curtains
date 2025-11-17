@@ -2,7 +2,7 @@ import { constants } from '../../chunks/utils/constants'
 import { common } from '../../chunks/utils/common'
 import { hammersley2D } from '../../chunks/utils/hammersley-2D'
 import { generateTBN } from '../../chunks/utils/generate-TBN'
-import { BRDF_GGX } from '../../chunks/utils/BRDF_GGX'
+import { BRDF_GGX } from '../../chunks/fragment/head/BRDF_GGX'
 
 // LUT for GGX distribution
 // ported from https://github.com/KhronosGroup/glTF-Sample-Viewer/blob/9940e4b4f4a2a296351bcd35035cc518deadc298/source/shaders/ibl_filtering.frag
