@@ -19664,13 +19664,6 @@ struct FSInput {
       alphaCutoff: {
         type: "f32",
         value: "0.0"
-      }
-    };
-    const defaultLambertMaterialVars = {
-      ...defaultMaterialVars,
-      normalScale: {
-        type: "vec2f",
-        value: "vec2(1.0)"
       },
       occlusionIntensity: {
         type: "f32",
@@ -19685,6 +19678,13 @@ struct FSInput {
         name: "emissiveIntensity",
         type: "f32",
         value: "1.0"
+      }
+    };
+    const defaultLambertMaterialVars = {
+      ...defaultMaterialVars,
+      normalScale: {
+        type: "vec2f",
+        value: "vec2(1.0)"
       }
     };
     const defaultPhongMaterialVars = {
@@ -19704,14 +19704,14 @@ struct FSInput {
       specularColor: {
         type: "vec3f",
         value: "vec3(1.0)"
+      },
+      ior: {
+        type: "f32",
+        value: "1.5"
       }
     };
     const defaultPBRMaterialVars = {
       ...defaultPhongMaterialVars,
-      ior: {
-        type: "f32",
-        value: "1.5"
-      },
       transmission: {
         type: "f32",
         value: "0.0"
@@ -19895,85 +19895,6 @@ struct FSInput {
     return baseColor;
   };
 
-  const getUnlitFragmentShaderCode = ({
-    chunks = null,
-    toneMapping = "Khronos",
-    outputColorSpace = "srgb",
-    fragmentOutput = {
-      struct: [
-        {
-          type: "vec4f",
-          name: "color"
-        }
-      ],
-      output: (
-        /* wgsl */
-        `
-  var output: FSOutput;
-  output.color = outputColor;
-  return output;`
-      )
-    },
-    geometry,
-    additionalVaryings = [],
-    materialUniform = null,
-    materialUniformName = "material",
-    baseColorTexture = null
-  }) => {
-    chunks = patchAdditionalChunks(chunks);
-    return (
-      /* wgsl */
-      `  
-${chunks.additionalHead}
-
-${constants}
-${common}
-${toneMappingUtils}
-
-${getFragmentInputStruct({ geometry, additionalVaryings })}
-
-${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
-
-@fragment fn main(fsInput: FSInput) -> FSOutput {       
-  var outputColor: vec4f = vec4();
-  
-  ${declareAttributesVars({ geometry, additionalVaryings })}
-  ${declareMaterialVars({ materialUniform, materialUniformName, shadingModel: "Unlit" })}
-  ${getBaseColor({ geometry, baseColorTexture })}
-  
-  // user defined preliminary contribution
-  ${chunks.preliminaryContribution}
-  
-  // user defined additional contribution
-  ${chunks.additionalContribution}
-  
-  ${applyToneMapping({ toneMapping, outputColorSpace })}
-
-  ${fragmentOutput.output}
-}`
-    );
-  };
-
-  const getNormal = ({
-    normalTexture = null
-  } = {}) => {
-    let normal = "";
-    if (normalTexture) {
-      normal += getTextureSample(normalTexture, "normal");
-      normal += /* wgsl */
-      `
-  var mapN: vec3f = normalSample.rgb * 2.0 - 1.0;
-  mapN = vec3(mapN.x * normalScale.x, mapN.y * normalScale.y, mapN.z);
-  normal = normalize(tbn * mapN);
-  `;
-    } else {
-      normal += /* wgsl */
-      `
-  normal = geometryNormal;`;
-    }
-    return normal;
-  };
-
   const getEmissiveOcclusion = ({
     emissiveTexture = null,
     occlusionTexture = null
@@ -20017,6 +19938,90 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
     `
   occlusion = 1.0 + occlusionIntensity * (occlusion - 1.0);`;
     return emissiveOcclusion;
+  };
+
+  const getUnlitFragmentShaderCode = ({
+    chunks = null,
+    toneMapping = "Khronos",
+    outputColorSpace = "srgb",
+    fragmentOutput = {
+      struct: [
+        {
+          type: "vec4f",
+          name: "color"
+        }
+      ],
+      output: (
+        /* wgsl */
+        `
+  var output: FSOutput;
+  output.color = outputColor;
+  return output;`
+      )
+    },
+    geometry,
+    additionalVaryings = [],
+    materialUniform = null,
+    materialUniformName = "material",
+    baseColorTexture = null,
+    emissiveTexture = null,
+    occlusionTexture = null
+  }) => {
+    chunks = patchAdditionalChunks(chunks);
+    return (
+      /* wgsl */
+      `  
+${chunks.additionalHead}
+
+${constants}
+${common}
+${toneMappingUtils}
+
+${getFragmentInputStruct({ geometry, additionalVaryings })}
+
+${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
+
+@fragment fn main(fsInput: FSInput) -> FSOutput {       
+  var outputColor: vec4f = vec4();
+  
+  ${declareAttributesVars({ geometry, additionalVaryings })}
+  ${declareMaterialVars({ materialUniform, materialUniformName, shadingModel: "Unlit" })}
+  ${getBaseColor({ geometry, baseColorTexture })}
+  ${getEmissiveOcclusion({ emissiveTexture, occlusionTexture })}
+  
+  // user defined preliminary contribution
+  ${chunks.preliminaryContribution}
+
+  outputColor = vec4(outputColor.rgb * occlusion + emissive, outputColor.a);
+  
+  // user defined additional contribution
+  ${chunks.additionalContribution}
+  
+  ${applyToneMapping({ toneMapping, outputColorSpace })}
+
+  ${fragmentOutput.output}
+}`
+    );
+  };
+
+  const getNormal = ({
+    normalTexture = null
+  } = {}) => {
+    let normal = "";
+    if (normalTexture) {
+      normal += getTextureSample(normalTexture, "normal");
+      normal += /* wgsl */
+      `
+  var mapN: vec3f = normalSample.rgb * 2.0 - 1.0;
+  mapN = vec3(mapN.x * normalScale.x, mapN.y * normalScale.y, mapN.z);
+  normal = normalize(tbn * mapN);
+  `;
+    } else {
+      normal += /* wgsl */
+      `
+  normal = geometryNormal;`;
+    }
+    return normal;
   };
 
   const generateTBN = (
@@ -20459,10 +20464,8 @@ fn getIBLIndirectRadiance(
   let reflection: vec3f = normalize(reflect(-V, N));
 
   let maxLevel: f32 = f32(textureNumLevels(envSpecularTexture) - 1);
-  // compensate/approximation for non PMREM generation
-  let perceptualRoughness: f32 = sqrt(roughness);
-
-  let lod: f32 = perceptualRoughness * maxLevel;
+  // not physically accurate until we generate actual PMREM env maps
+  let lod: f32 = roughness * maxLevel;
 
   let specularLight: vec4f = textureSampleLevel(
     envSpecularTexture,
@@ -21295,7 +21298,9 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
             additionalVaryings,
             materialUniform,
             materialUniformName,
-            baseColorTexture
+            baseColorTexture,
+            emissiveTexture,
+            occlusionTexture
           });
         case "Lambert":
           return getLambertFragmentShaderCode({
@@ -24689,13 +24694,6 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         alphaCutoff: {
           type: "f32",
           value: alphaCutoff !== void 0 ? alphaCutoff : 0.5
-        }
-      };
-      const diffuseUniformStruct = {
-        ...baseUniformStruct,
-        normalScale: {
-          type: "vec2f",
-          value: normalScale !== void 0 ? normalScale : new Vec2(1)
         },
         occlusionIntensity: {
           type: "f32",
@@ -24708,6 +24706,13 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         emissiveColor: {
           type: "vec3f",
           value: emissiveColor !== void 0 ? colorSpace === "srgb" ? sRGBToLinear(emissiveColor.clone()) : emissiveColor.clone() : new Vec3()
+        }
+      };
+      const diffuseUniformStruct = {
+        ...baseUniformStruct,
+        normalScale: {
+          type: "vec2f",
+          value: normalScale !== void 0 ? normalScale : new Vec2(1)
         }
       };
       const specularUniformStruct = {
@@ -24868,8 +24873,8 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         iridescenceThicknessTexture,
         thicknessTexture
       } = parameters;
-      const baseTextures = [baseColorTexture];
-      const diffuseTextures = [...baseTextures, normalTexture, emissiveTexture, occlusionTexture];
+      const baseTextures = [baseColorTexture, emissiveTexture, occlusionTexture];
+      const diffuseTextures = [...baseTextures, normalTexture];
       const specularTextures = [
         ...diffuseTextures,
         metallicRoughnessTexture,

@@ -17,10 +17,8 @@ fn getIBLIndirectRadiance(
   let reflection: vec3f = normalize(reflect(-V, N));
 
   let maxLevel: f32 = f32(textureNumLevels(envSpecularTexture) - 1);
-  // compensate/approximation for non PMREM generation
-  let perceptualRoughness: f32 = sqrt(roughness);
-
-  let lod: f32 = perceptualRoughness * maxLevel;
+  // not physically accurate until we generate actual PMREM env maps
+  let lod: f32 = roughness * maxLevel;
 
   let specularLight: vec4f = textureSampleLevel(
     envSpecularTexture,

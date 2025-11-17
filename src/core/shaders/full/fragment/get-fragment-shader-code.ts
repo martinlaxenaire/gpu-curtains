@@ -128,6 +128,8 @@ export const getFragmentShaderCode = ({
           materialUniform,
           materialUniformName,
           baseColorTexture,
+          emissiveTexture,
+          occlusionTexture,
         })
       case 'Lambert':
         return getLambertFragmentShaderCode({

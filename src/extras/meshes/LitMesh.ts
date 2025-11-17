@@ -117,16 +117,16 @@ export interface GetLitMeshMaterialUniform extends LitMeshMaterialUniformParams 
 export interface UnlitTexturesDescriptors {
   /** {@link ShaderTextureDescriptor | Base color texture descriptor} to use if any. */
   baseColorTexture?: ShaderTextureDescriptor
+  /** {@link ShaderTextureDescriptor | Emissive texture descriptor} to use if any. */
+  emissiveTexture?: ShaderTextureDescriptor
+  /** {@link ShaderTextureDescriptor | Occlusion texture descriptor} to use if any. */
+  occlusionTexture?: ShaderTextureDescriptor
 }
 
 /** {@link ShaderTextureDescriptor} used for a {@link LitMesh} with `Lambert` shading. */
 export interface LambertTexturesDescriptors extends UnlitTexturesDescriptors {
   /** {@link ShaderTextureDescriptor | Normal texture descriptor} to use if any. */
   normalTexture?: ShaderTextureDescriptor
-  /** {@link ShaderTextureDescriptor | Emissive texture descriptor} to use if any. */
-  emissiveTexture?: ShaderTextureDescriptor
-  /** {@link ShaderTextureDescriptor | Occlusion texture descriptor} to use if any. */
-  occlusionTexture?: ShaderTextureDescriptor
 }
 
 /** {@link ShaderTextureDescriptor} used for a {@link LitMesh} with `Phong` shading. */
@@ -668,15 +668,6 @@ export class LitMesh extends Mesh {
         type: 'f32',
         value: alphaCutoff !== undefined ? alphaCutoff : 0.5,
       },
-    }
-
-    // diffuse struct (lambert)
-    const diffuseUniformStruct: Record<string, Input> = {
-      ...baseUniformStruct,
-      normalScale: {
-        type: 'vec2f',
-        value: normalScale !== undefined ? normalScale : new Vec2(1),
-      },
       occlusionIntensity: {
         type: 'f32',
         value: occlusionIntensity !== undefined ? occlusionIntensity : 1,
@@ -693,6 +684,15 @@ export class LitMesh extends Mesh {
               ? sRGBToLinear(emissiveColor.clone())
               : emissiveColor.clone()
             : new Vec3(),
+      },
+    }
+
+    // diffuse struct (lambert)
+    const diffuseUniformStruct: Record<string, Input> = {
+      ...baseUniformStruct,
+      normalScale: {
+        type: 'vec2f',
+        value: normalScale !== undefined ? normalScale : new Vec2(1),
       },
     }
 
@@ -881,10 +881,10 @@ export class LitMesh extends Mesh {
     } = parameters
 
     // base textures (unlit)
-    const baseTextures = [baseColorTexture]
+    const baseTextures = [baseColorTexture, emissiveTexture, occlusionTexture]
 
     // diffuse textures (lambert)
-    const diffuseTextures = [...baseTextures, normalTexture, emissiveTexture, occlusionTexture]
+    const diffuseTextures = [...baseTextures, normalTexture]
 
     // specular textures (phong)
     // adding metallic roughness texture in phong because from glTF assets we'd need it to compute the shininess

@@ -94,7 +94,7 @@ window.addEventListener('load', async () => {
   let currentEnvMap = envMaps[currentEnvMapKey]
 
   const environmentMap = new EnvironmentMap(gpuCameraRenderer, {
-    // useLutTexture: true,
+    useLutTexture: true,
   })
   environmentMap.loadAndComputeFromHDR(currentEnvMap.url)
   let useEnvMap = true
@@ -186,6 +186,16 @@ window.addEventListener('load', async () => {
     'Roughness',
     'Specular Intensity',
     'Specular Color',
+    // PBR only
+    'Clearcoat Strength',
+    'Clearcoat roughness',
+    'Clearcoat normal',
+    'Sheen Color',
+    'Sheen Roughness',
+    'Iridescence Strength',
+    'Iridescence Thickness',
+    'Anisotropy Strength',
+    'Anisotropy Direction',
   ]
 
   let debugChannel = 0
@@ -439,6 +449,60 @@ window.addEventListener('load', async () => {
           ${
             !isUnlit && shadingModel !== 'Lambert'
               ? 'outputColor = vec4(specularColor, 1.0);'
+              : 'outputColor = vec4(vec3(0.0), 1.0);'
+          }
+        } else if(debug.channel == 15.0) {
+          ${
+            !isUnlit && shadingModel === 'PBR'
+              ? 'outputColor = vec4(vec3(clearcoat), 1.0);'
+              : 'outputColor = vec4(vec3(0.0), 1.0);'
+          }
+        } else if(debug.channel == 16.0) {
+          ${
+            !isUnlit && shadingModel === 'PBR'
+              ? 'outputColor = vec4(vec3(clearcoatRoughness), 1.0);'
+              : 'outputColor = vec4(vec3(0.0), 1.0);'
+          }
+        } else if(debug.channel == 17.0) {
+          ${
+            !isUnlit && shadingModel === 'PBR'
+              ? 'outputColor = vec4(clearcoatNormal * 0.5 + 0.5, 1.0);'
+              : 'outputColor = vec4(vec3(0.0), 1.0);'
+          }
+        } else if(debug.channel == 18.0) {
+          ${
+            !isUnlit && shadingModel === 'PBR'
+              ? 'outputColor = vec4(sheenColor, 1.0);'
+              : 'outputColor = vec4(vec3(0.0), 1.0);'
+          }
+        } else if(debug.channel == 19.0) {
+          ${
+            !isUnlit && shadingModel === 'PBR'
+              ? 'outputColor = vec4(vec3(sheenRoughness), 1.0);'
+              : 'outputColor = vec4(vec3(0.0), 1.0);'
+          }
+        } else if(debug.channel == 20.0) {
+          ${
+            !isUnlit && shadingModel === 'PBR'
+              ? 'outputColor = vec4(vec3(iridescence), 1.0);'
+              : 'outputColor = vec4(vec3(0.0), 1.0);'
+          }
+        } else if(debug.channel == 21.0) {
+          ${
+            !isUnlit && shadingModel === 'PBR'
+              ? 'outputColor = vec4(vec3(iridescenceThickness / 1200.0), 1.0);'
+              : 'outputColor = vec4(vec3(0.0), 1.0);'
+          }
+        } else if(debug.channel == 22.0) {
+          ${
+            !isUnlit && shadingModel === 'PBR'
+              ? 'outputColor = vec4(vec3(anisotropy), 1.0);'
+              : 'outputColor = vec4(vec3(0.0), 1.0);'
+          }
+        } else if(debug.channel == 23.0) {
+          ${
+            !isUnlit && shadingModel === 'PBR'
+              ? 'outputColor = vec4(vec2((anisotropyVector + vec2(1.0)) * 0.5), 0.0, 1.0);'
               : 'outputColor = vec4(vec3(0.0), 1.0);'
           }
         }

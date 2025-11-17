@@ -43,14 +43,6 @@ export const declareMaterialVars = ({
       type: 'f32',
       value: '0.0',
     },
-  }
-
-  const defaultLambertMaterialVars = {
-    ...defaultMaterialVars,
-    normalScale: {
-      type: 'vec2f',
-      value: 'vec2(1.0)',
-    },
     occlusionIntensity: {
       type: 'f32',
       value: '1.0',
@@ -64,6 +56,14 @@ export const declareMaterialVars = ({
       name: 'emissiveIntensity',
       type: 'f32',
       value: '1.0',
+    },
+  }
+
+  const defaultLambertMaterialVars = {
+    ...defaultMaterialVars,
+    normalScale: {
+      type: 'vec2f',
+      value: 'vec2(1.0)',
     },
   }
 
@@ -85,16 +85,14 @@ export const declareMaterialVars = ({
       type: 'vec3f',
       value: 'vec3(1.0)',
     },
-  }
-
-  // TODO phong shininess
-
-  const defaultPBRMaterialVars = {
-    ...defaultPhongMaterialVars,
     ior: {
       type: 'f32',
       value: '1.5',
     },
+  }
+
+  const defaultPBRMaterialVars = {
+    ...defaultPhongMaterialVars,
     transmission: {
       type: 'f32',
       value: '0.0',

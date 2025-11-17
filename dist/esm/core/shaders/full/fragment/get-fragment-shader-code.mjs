@@ -63,7 +63,9 @@ const getFragmentShaderCode = ({
           additionalVaryings,
           materialUniform,
           materialUniformName,
-          baseColorTexture
+          baseColorTexture,
+          emissiveTexture,
+          occlusionTexture
         });
       case "Lambert":
         return getLambertFragmentShaderCode({

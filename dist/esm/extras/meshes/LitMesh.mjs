@@ -337,13 +337,6 @@ class LitMesh extends Mesh {
       alphaCutoff: {
         type: "f32",
         value: alphaCutoff !== void 0 ? alphaCutoff : 0.5
-      }
-    };
-    const diffuseUniformStruct = {
-      ...baseUniformStruct,
-      normalScale: {
-        type: "vec2f",
-        value: normalScale !== void 0 ? normalScale : new Vec2(1)
       },
       occlusionIntensity: {
         type: "f32",
@@ -356,6 +349,13 @@ class LitMesh extends Mesh {
       emissiveColor: {
         type: "vec3f",
         value: emissiveColor !== void 0 ? colorSpace === "srgb" ? sRGBToLinear(emissiveColor.clone()) : emissiveColor.clone() : new Vec3()
+      }
+    };
+    const diffuseUniformStruct = {
+      ...baseUniformStruct,
+      normalScale: {
+        type: "vec2f",
+        value: normalScale !== void 0 ? normalScale : new Vec2(1)
       }
     };
     const specularUniformStruct = {
@@ -516,8 +516,8 @@ class LitMesh extends Mesh {
       iridescenceThicknessTexture,
       thicknessTexture
     } = parameters;
-    const baseTextures = [baseColorTexture];
-    const diffuseTextures = [...baseTextures, normalTexture, emissiveTexture, occlusionTexture];
+    const baseTextures = [baseColorTexture, emissiveTexture, occlusionTexture];
+    const diffuseTextures = [...baseTextures, normalTexture];
     const specularTextures = [
       ...diffuseTextures,
       metallicRoughnessTexture,

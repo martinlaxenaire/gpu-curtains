@@ -9,6 +9,7 @@ import { declareMaterialVars } from '../../chunks/fragment/body/declare-material
 import { getBaseColor } from '../../chunks/fragment/body/get-base-color'
 import { applyToneMapping } from '../../chunks/fragment/body/apply-tone-mapping'
 import { patchAdditionalChunks } from '../../default-material-helpers'
+import { getEmissiveOcclusion } from '../../chunks/fragment/body/get-emissive-occlusion'
 
 /**
  * Build an unlit fragment shader using the provided options.
@@ -36,6 +37,8 @@ export const getUnlitFragmentShaderCode = ({
   materialUniform = null,
   materialUniformName = 'material',
   baseColorTexture = null,
+  emissiveTexture = null,
+  occlusionTexture = null,
 }: UnlitFragmentShaderInputParams): string => {
   // patch chunks
   chunks = patchAdditionalChunks(chunks)
@@ -57,9 +60,12 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   ${declareAttributesVars({ geometry, additionalVaryings })}
   ${declareMaterialVars({ materialUniform, materialUniformName, shadingModel: 'Unlit' })}
   ${getBaseColor({ geometry, baseColorTexture })}
+  ${getEmissiveOcclusion({ emissiveTexture, occlusionTexture })}
   
   // user defined preliminary contribution
   ${chunks.preliminaryContribution}
+
+  outputColor = vec4(outputColor.rgb * occlusion + emissive, outputColor.a);
   
   // user defined additional contribution
   ${chunks.additionalContribution}

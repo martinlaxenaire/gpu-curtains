@@ -98,15 +98,15 @@ export interface GetLitMeshMaterialUniform extends LitMeshMaterialUniformParams 
 export interface UnlitTexturesDescriptors {
     /** {@link ShaderTextureDescriptor | Base color texture descriptor} to use if any. */
     baseColorTexture?: ShaderTextureDescriptor;
+    /** {@link ShaderTextureDescriptor | Emissive texture descriptor} to use if any. */
+    emissiveTexture?: ShaderTextureDescriptor;
+    /** {@link ShaderTextureDescriptor | Occlusion texture descriptor} to use if any. */
+    occlusionTexture?: ShaderTextureDescriptor;
 }
 /** {@link ShaderTextureDescriptor} used for a {@link LitMesh} with `Lambert` shading. */
 export interface LambertTexturesDescriptors extends UnlitTexturesDescriptors {
     /** {@link ShaderTextureDescriptor | Normal texture descriptor} to use if any. */
     normalTexture?: ShaderTextureDescriptor;
-    /** {@link ShaderTextureDescriptor | Emissive texture descriptor} to use if any. */
-    emissiveTexture?: ShaderTextureDescriptor;
-    /** {@link ShaderTextureDescriptor | Occlusion texture descriptor} to use if any. */
-    occlusionTexture?: ShaderTextureDescriptor;
 }
 /** {@link ShaderTextureDescriptor} used for a {@link LitMesh} with `Phong` shading. */
 export interface PhongTexturesDescriptors extends LambertTexturesDescriptors {
