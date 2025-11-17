@@ -65,6 +65,16 @@ class LitMesh extends Mesh {
       thickness,
       attenuationDistance,
       attenuationColor,
+      sheenColor,
+      sheenRoughness,
+      anisotropy,
+      anisotropyVector,
+      clearcoat,
+      clearcoatRoughness,
+      clearcoatNormalScale,
+      iridescence,
+      iridescenceIOR,
+      iridescenceThicknessRange,
       // texture descriptors
       baseColorTexture,
       normalTexture,
@@ -76,6 +86,16 @@ class LitMesh extends Mesh {
       specularColorTexture,
       transmissionTexture,
       thicknessTexture,
+      sheenTexture,
+      sheenColorTexture,
+      sheenRoughnessTexture,
+      anisotropyTexture,
+      clearcoatTexture,
+      clearcoatRoughnessTexture,
+      clearcoatNormalTexture,
+      iridescenceTexture,
+      iridescenceThicknessTexture,
+      // environment map
       environmentMap
     } = material;
     const materialUniform = LitMesh.getMaterialUniform({
@@ -99,6 +119,16 @@ class LitMesh extends Mesh {
       thickness,
       attenuationDistance,
       attenuationColor,
+      sheenColor,
+      sheenRoughness,
+      anisotropy,
+      anisotropyVector,
+      clearcoat,
+      clearcoatRoughness,
+      clearcoatNormalScale,
+      iridescence,
+      iridescenceIOR,
+      iridescenceThicknessRange,
       environmentMap
     });
     if (defaultParams.uniforms) {
@@ -130,7 +160,16 @@ class LitMesh extends Mesh {
       specularFactorTexture,
       specularColorTexture,
       transmissionTexture,
-      thicknessTexture
+      thicknessTexture,
+      sheenTexture,
+      sheenColorTexture,
+      sheenRoughnessTexture,
+      anisotropyTexture,
+      clearcoatTexture,
+      clearcoatRoughnessTexture,
+      clearcoatNormalTexture,
+      iridescenceTexture,
+      iridescenceThicknessTexture
     });
     materialTextures.forEach((textureDescriptor) => {
       if (textureDescriptor.sampler) {
@@ -159,17 +198,30 @@ class LitMesh extends Mesh {
       }
       defaultParams.samplers = [...defaultParams.samplers, environmentMap.sampler];
     }
+    const extensionsUsed = [];
     let transmissionBackgroundTexture = null;
     if (parameters.transmissive) {
+      extensionsUsed.push("KHR_materials_transmission");
       renderer.createTransmissionTarget();
       transmissionBackgroundTexture = {
         texture: renderer.transmissionTarget.texture,
         sampler: renderer.transmissionTarget.sampler
       };
     }
-    const extensionsUsed = [];
     if (dispersion) {
       extensionsUsed.push("KHR_materials_dispersion");
+    }
+    if (sheenColor || sheenRoughness) {
+      extensionsUsed.push("KHR_materials_sheen");
+    }
+    if (anisotropy !== void 0) {
+      extensionsUsed.push("KHR_materials_anisotropy");
+    }
+    if (clearcoat) {
+      extensionsUsed.push("KHR_materials_clearcoat");
+    }
+    if (iridescence) {
+      extensionsUsed.push("KHR_materials_iridescence");
     }
     const hasNormal = defaultParams.geometry && defaultParams.geometry.getAttributeByName("normal");
     if (defaultParams.geometry && !hasNormal) {
@@ -202,9 +254,19 @@ class LitMesh extends Mesh {
       thicknessTexture,
       emissiveTexture,
       occlusionTexture,
+      sheenTexture,
+      sheenColorTexture,
+      sheenRoughnessTexture,
+      anisotropyTexture,
+      clearcoatTexture,
+      clearcoatRoughnessTexture,
+      clearcoatNormalTexture,
+      iridescenceTexture,
+      iridescenceThicknessTexture,
       transmissionBackgroundTexture,
       environmentMap
     });
+    console.log(fs);
     const shaders = {
       vertex: {
         code: vs,
@@ -249,6 +311,16 @@ class LitMesh extends Mesh {
       thickness,
       attenuationDistance,
       attenuationColor,
+      sheenColor,
+      sheenRoughness,
+      anisotropy,
+      anisotropyVector,
+      clearcoat,
+      clearcoatRoughness,
+      clearcoatNormalScale,
+      iridescence,
+      iridescenceIOR,
+      iridescenceThicknessRange,
       environmentMap
     } = parameters;
     const baseUniformStruct = {
@@ -336,6 +408,50 @@ class LitMesh extends Mesh {
         type: "vec3f",
         value: attenuationColor !== void 0 ? colorSpace === "srgb" ? sRGBToLinear(attenuationColor.clone()) : attenuationColor.clone() : new Vec3(1)
       },
+      // sheen
+      sheenColor: {
+        type: "vec3f",
+        value: sheenColor !== void 0 ? colorSpace === "srgb" ? sRGBToLinear(sheenColor.clone()) : sheenColor.clone() : new Vec3(0)
+      },
+      sheenRoughness: {
+        type: "f32",
+        value: sheenRoughness !== void 0 ? sheenRoughness : 0
+      },
+      // anisotropy
+      anisotropy: {
+        type: "f32",
+        value: anisotropy !== void 0 ? anisotropy : 0
+      },
+      anisotropyVector: {
+        type: "vec2f",
+        value: anisotropyVector !== void 0 ? anisotropyVector.clone() : new Vec2(1, 0)
+      },
+      // clearcoat
+      clearcoat: {
+        type: "f32",
+        value: clearcoat !== void 0 ? clearcoat : 0
+      },
+      clearcoatRoughness: {
+        type: "f32",
+        value: clearcoatRoughness !== void 0 ? clearcoatRoughness : 0
+      },
+      clearcoatNormalScale: {
+        type: "vec2f",
+        value: clearcoatNormalScale !== void 0 ? clearcoatNormalScale.clone() : new Vec2(1)
+      },
+      // iridescence
+      iridescence: {
+        type: "f32",
+        value: iridescence !== void 0 ? iridescence : 0
+      },
+      iridescenceIOR: {
+        type: "f32",
+        value: iridescenceIOR !== void 0 ? iridescenceIOR : 1.3
+      },
+      iridescenceThicknessRange: {
+        type: "vec2f",
+        value: iridescenceThicknessRange !== void 0 ? iridescenceThicknessRange.clone() : new Vec2(100, 400)
+      },
       ...environmentMap && {
         envRotation: {
           type: "mat3x3f",
@@ -386,6 +502,15 @@ class LitMesh extends Mesh {
       specularFactorTexture,
       specularColorTexture,
       transmissionTexture,
+      sheenTexture,
+      sheenColorTexture,
+      sheenRoughnessTexture,
+      anisotropyTexture,
+      clearcoatTexture,
+      clearcoatRoughnessTexture,
+      clearcoatNormalTexture,
+      iridescenceTexture,
+      iridescenceThicknessTexture,
       thicknessTexture
     } = parameters;
     const baseTextures = [baseColorTexture];
@@ -397,7 +522,20 @@ class LitMesh extends Mesh {
       specularFactorTexture,
       specularColorTexture
     ];
-    const pbrTextures = [...specularTextures, transmissionTexture, thicknessTexture];
+    const pbrTextures = [
+      ...specularTextures,
+      transmissionTexture,
+      thicknessTexture,
+      sheenTexture,
+      sheenColorTexture,
+      sheenRoughnessTexture,
+      anisotropyTexture,
+      clearcoatTexture,
+      clearcoatRoughnessTexture,
+      clearcoatNormalTexture,
+      iridescenceTexture,
+      iridescenceThicknessTexture
+    ];
     const materialTextures = (() => {
       switch (shading) {
         case "Unlit":

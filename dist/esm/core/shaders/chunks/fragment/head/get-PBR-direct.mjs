@@ -1,4 +1,4 @@
-import { BRDF_GGX } from '../../utils/BRDF_GGX.mjs';
+import { BRDF_GGX } from './BRDF_GGX.mjs';
 
 const getPBRDirect = (
   /* wgsl */
@@ -20,25 +20,43 @@ fn computeSpecularOcclusion( NdotV: f32, occlusion: f32, roughness: f32 ) -> f32
 	return saturate(pow(NdotV + occlusion, exp2(- 16.0 * roughness - 1.0)) - 1.0 + occlusion);
 }
 
+fn getGGX(
+  normal: vec3f,
+  viewDirection: vec3f,
+  NdotL: f32,
+  roughness: f32,
+  specularFactor: f32,
+  specularColor: vec3f,
+  iridescenceFresnel: vec3f,
+  iridescence: f32,
+  directLight: DirectLight,
+) -> vec3f {
+  let H: vec3f = normalize(viewDirection + directLight.direction);
+  let NdotV: f32 = saturate(dot(normal, viewDirection));
+  let NdotH: f32 = saturate(dot(normal, H));
+  let VdotH: f32 = saturate(dot(viewDirection, H));
+
+  return BRDF_GGX(NdotV, NdotL, NdotH, VdotH, roughness, specularFactor, specularColor, iridescenceFresnel, iridescence);
+}
+
 fn getPBRDirect(
   normal: vec3f,
   diffuseColor: vec3f,
   viewDirection: vec3f,
   specularFactor: f32,
   specularColor: vec3f,
-  metallic: f32,
   roughness: f32,
+  iridescenceFresnel: vec3f,
+  iridescence: f32,
   directLight: DirectLight,
   ptr_reflectedLight: ptr<function, ReflectedLight>
 ) {
-  let H: vec3f = normalize(viewDirection + directLight.direction);
-  let NdotV: f32 = saturate(dot(normal, viewDirection));
   let NdotL: f32 = saturate(dot(normal, directLight.direction));
-  let NdotH: f32 = saturate(dot(normal, H));
-  let VdotH: f32 = saturate(dot(viewDirection, H));
+  let alpha: f32 = pow2(roughness); // UE4's roughness
+
+  let ggx: vec3f = getGGX(normal, viewDirection, NdotL, alpha, specularFactor, specularColor, iridescenceFresnel, iridescence, directLight);
 
   let irradiance: vec3f = NdotL * directLight.color;
-  let ggx: vec3f = BRDF_GGX(NdotV, NdotL, NdotH, VdotH, roughness, specularFactor, specularColor);
   
   let diffuseContribution: vec3f = BRDF_Lambert(diffuseColor);
   

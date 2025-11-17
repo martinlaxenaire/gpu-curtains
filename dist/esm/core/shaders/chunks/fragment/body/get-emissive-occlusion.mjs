@@ -31,7 +31,7 @@ const getEmissiveOcclusion = ({
     if ("useTransform" in occlusionTexture.texture.options && occlusionTexture.texture.options.useTransform) {
       emissiveOcclusion += /* wgsl */
       `
-  occlusionUV = (${occlusionTexture.texture.options.name}Matrix * vec3(occlusionUV, 1.0)).xy;`;
+  occlusionUV = (texturesMatrices.${occlusionTexture.texture.options.name}.matrix * vec3(occlusionUV, 1.0)).xy;`;
     }
     emissiveOcclusion += /* wgsl */
     `

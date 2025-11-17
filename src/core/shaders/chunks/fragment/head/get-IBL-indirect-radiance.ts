@@ -1,4 +1,6 @@
-/** Helper function chunk appended internally and used to compute IBL indirect radiance, based on environment specular map. */
+/**
+ * Helper function chunk appended internally and used to compute IBL indirect radiance, based on environment specular map.
+ */
 export const getIBLIndirectRadiance = /* wgsl */ `
 fn getIBLIndirectRadiance(
   normal: vec3f,
@@ -14,7 +16,11 @@ fn getIBLIndirectRadiance(
 
   let reflection: vec3f = normalize(reflect(-V, N));
 
-  let lod: f32 = roughness * f32(textureNumLevels(envSpecularTexture) - 1);
+  let maxLevel: f32 = f32(textureNumLevels(envSpecularTexture) - 1);
+  // compensate/approximation for non PMREM generation
+  let perceptualRoughness: f32 = sqrt(roughness);
+
+  let lod: f32 = perceptualRoughness * maxLevel;
 
   let specularLight: vec4f = textureSampleLevel(
     envSpecularTexture,

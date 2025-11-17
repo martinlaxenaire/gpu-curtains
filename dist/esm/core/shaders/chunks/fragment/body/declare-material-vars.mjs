@@ -4,127 +4,174 @@ const declareMaterialVars = ({
   shadingModel = "PBR",
   environmentMap = null
 } = {}) => {
-  var materialStruct = materialUniform && materialUniform.struct || {};
-  var materialVars = "";
-  if (materialStruct.color) {
-    materialVars += /* wgsl */
-    `
-  var baseColorFactor: vec3f = ${materialUniformName}.color;`;
-  } else {
-    materialVars += /* wgsl */
-    `
-  var baseColorFactor: vec3f = vec3(1.0);`;
+  const materialStruct = materialUniform && materialUniform.struct || {};
+  const defaultMaterialVars = {
+    baseColorFactor: {
+      name: "color",
+      type: "vec3f",
+      default: "vec3(1.0)"
+    },
+    baseOpacityFactor: {
+      name: "opacity",
+      type: "f32",
+      value: "1.0"
+    },
+    alphaCutoff: {
+      type: "f32",
+      value: "0.0"
+    }
+  };
+  const defaultLambertMaterialVars = {
+    ...defaultMaterialVars,
+    normalScale: {
+      type: "vec2f",
+      value: "vec2(1.0)"
+    },
+    occlusionIntensity: {
+      type: "f32",
+      value: "1.0"
+    },
+    emissive: {
+      name: "emissiveColor",
+      type: "vec3f",
+      value: "vec3(0.0)"
+    },
+    emissiveStrength: {
+      name: "emissiveIntensity",
+      type: "f32",
+      value: "1.0"
+    }
+  };
+  const defaultPhongMaterialVars = {
+    ...defaultLambertMaterialVars,
+    metallic: {
+      type: "f32",
+      value: "0.0"
+    },
+    roughness: {
+      type: "f32",
+      value: "1.0"
+    },
+    specularIntensity: {
+      type: "f32",
+      value: "1.0"
+    },
+    specularColor: {
+      type: "vec3f",
+      value: "vec3(1.0)"
+    }
+  };
+  const defaultPBRMaterialVars = {
+    ...defaultPhongMaterialVars,
+    ior: {
+      type: "f32",
+      value: "1.5"
+    },
+    transmission: {
+      type: "f32",
+      value: "0.0"
+    },
+    dispersion: {
+      type: "f32",
+      value: "0.0"
+    },
+    thickness: {
+      type: "f32",
+      value: "0.0"
+    },
+    attenuationDistance: {
+      type: "f32",
+      value: "1.0e38"
+    },
+    attenuationColor: {
+      type: "vec3f",
+      value: "vec3(1.0)"
+    },
+    sheenColor: {
+      type: "vec3f",
+      value: "vec3(0.0)"
+    },
+    sheenRoughness: {
+      type: "f32",
+      value: "0.0"
+    },
+    clearcoat: {
+      type: "f32",
+      value: "0.0"
+    },
+    clearcoatRoughness: {
+      type: "f32",
+      value: "0.0"
+    },
+    clearcoatNormalScale: {
+      type: "vec2f",
+      value: "vec2(1.0)"
+    },
+    iridescence: {
+      type: "f32",
+      value: "0"
+    },
+    iridescenceIOR: {
+      type: "f32",
+      value: "1.3"
+    },
+    iridescenceThicknessRange: {
+      type: "vec2f",
+      value: "vec2(100, 400)"
+    },
+    anisotropy: {
+      type: "f32",
+      value: "0.0"
+    },
+    anisotropyVector: {
+      type: "vec2f",
+      value: "vec2(1.0, 0.0)"
+    }
+  };
+  const defaultEnvMaterialVars = {
+    envRotation: {
+      type: "mat3x3f",
+      value: "mat3x3f()"
+    },
+    envDiffuseIntensity: {
+      type: "f32",
+      value: "1.0"
+    },
+    envSpecularIntensity: {
+      type: "f32",
+      value: "1.0"
+    }
+  };
+  let usedMaterialVars = (() => {
+    switch (shadingModel) {
+      case "Unlit":
+        return defaultMaterialVars;
+      case "Lambert":
+        return defaultLambertMaterialVars;
+      case "Phong":
+        return defaultPhongMaterialVars;
+      case "PBR":
+      default:
+        return defaultPBRMaterialVars;
+    }
+  })();
+  if (!!environmentMap && shadingModel === "PBR") {
+    usedMaterialVars = { ...usedMaterialVars, ...defaultEnvMaterialVars };
   }
-  if (materialStruct.opacity) {
-    materialVars += /* wgsl */
-    `
-  var baseOpacityFactor: f32 = ${materialUniformName}.opacity;`;
-  } else {
-    materialVars += /* wgsl */
-    `
-  var baseOpacityFactor: f32 = 1.0;`;
-  }
-  if (materialStruct.alphaCutoff) {
-    materialVars += /* wgsl */
-    `
-  var alphaCutoff: f32 = ${materialUniformName}.alphaCutoff;`;
-  } else {
-    materialVars += /* wgsl */
-    `
-  var alphaCutoff: f32 = 0.0;`;
-  }
-  if (shadingModel !== "Unlit") {
-    if (materialStruct.normalScale) {
+  let materialVars = Object.keys(usedMaterialVars).map((key) => {
+    const name = usedMaterialVars[key].name ?? key;
+    return materialStruct[name] ? `
+  var ${key}: ${usedMaterialVars[key].type} = ${materialUniformName}.${name};` : `
+  var ${key}: ${usedMaterialVars[key].type} = ${usedMaterialVars[key].value};`;
+  }).join("");
+  if (shadingModel === "Phong") {
+    if (materialStruct.shininess) {
       materialVars += /* wgsl */
       `
-  var normalScale: vec2f = ${materialUniformName}.normalScale;`;
-    } else {
-      materialVars += /* wgsl */
-      `
-  var normalScale: vec2f = vec2(1.0);`;
-    }
-    if (materialStruct.occlusionIntensity) {
-      materialVars += /* wgsl */
-      `
-  var occlusionIntensity: f32 = ${materialUniformName}.occlusionIntensity;`;
-    } else {
-      materialVars += /* wgsl */
-      `
-  var occlusionIntensity: f32 = 1.0;`;
-    }
-    if (materialStruct.emissiveColor) {
-      materialVars += /* wgsl */
-      `
-  var emissive: vec3f = ${materialUniformName}.emissiveColor;`;
-    } else {
-      materialVars += /* wgsl */
-      `
-  var emissive: vec3f = vec3(0.0);`;
-    }
-    if (materialStruct.emissiveIntensity) {
-      materialVars += /* wgsl */
-      `
-  var emissiveStrength: f32 = ${materialUniformName}.emissiveIntensity;`;
-    } else {
-      materialVars += /* wgsl */
-      `
-  var emissiveStrength: f32 = 1.0;`;
-    }
-  }
-  if (shadingModel === "Phong" || shadingModel === "PBR") {
-    if (materialStruct.metallic) {
-      materialVars += /* wgsl */
-      `
-  var metallic: f32 = ${materialUniformName}.metallic;`;
-    } else {
-      materialVars += /* wgsl */
-      `
-  var metallic: f32 = 1.0;`;
-    }
-    if (materialStruct.roughness) {
-      materialVars += /* wgsl */
-      `
-  var roughness: f32 = ${materialUniformName}.roughness;`;
-    } else {
-      materialVars += /* wgsl */
-      `
-  var roughness: f32 = 1.0;`;
-    }
-    if (materialStruct.specularIntensity) {
-      materialVars += /* wgsl */
-      `
-  var specularIntensity: f32 = ${materialUniformName}.specularIntensity;`;
-    } else {
-      materialVars += /* wgsl */
-      `
-  var specularIntensity: f32 = 1.0;`;
-    }
-    if (materialStruct.specularColor) {
-      materialVars += /* wgsl */
-      `
-  var specularColor: vec3f = ${materialUniformName}.specularColor;`;
-    } else {
-      materialVars += /* wgsl */
-      `
-  var specularColor: vec3f = vec3(1.0);`;
-    }
-    if (materialStruct.ior) {
-      materialVars += /* wgsl */
-      `
-  var ior: f32 = ${materialUniformName}.ior;`;
-    } else {
-      materialVars += /* wgsl */
-      `
-  var ior: f32 = 1.5;`;
-    }
-    if (shadingModel === "Phong") {
-      if (materialStruct.shininess) {
-        materialVars += /* wgsl */
-        `
   var shininess: f32 = ${materialUniformName}.shininess;`;
-      } else {
-        materialVars += /* wgsl */
-        `
+    } else {
+      materialVars += /* wgsl */
+      `
   // approximating phong shading from PBR properties
   // arbitrary computation of diffuse, shininess and specular color from roughness and metallic  
   baseColorFactor = mix(baseColorFactor, vec3(0.0), metallic);
@@ -132,83 +179,6 @@ const declareMaterialVars = ({
   // from https://graphicrants.blogspot.com/2013/08/specular-brdf-reference.html
   var shininess: f32 = clamp(2.0 / (roughness * roughness * roughness * roughness) - 2.0, 1000.0);
   `;
-      }
-    }
-  }
-  if (shadingModel === "PBR") {
-    if (materialStruct.transmission) {
-      materialVars += /* wgsl */
-      `
-  var transmission: f32 = ${materialUniformName}.transmission;`;
-    } else {
-      materialVars += /* wgsl */
-      `
-  var transmission: f32 = 0.0;`;
-    }
-    if (materialStruct.dispersion) {
-      materialVars += /* wgsl */
-      `
-  var dispersion: f32 = ${materialUniformName}.dispersion;`;
-    } else {
-      materialVars += /* wgsl */
-      `
-  var dispersion: f32 = 0.0;`;
-    }
-    if (materialStruct.thickness) {
-      materialVars += /* wgsl */
-      `
-  var thickness: f32 = ${materialUniformName}.thickness;`;
-    } else {
-      materialVars += /* wgsl */
-      `
-  var thickness: f32 = 0.0;`;
-    }
-    if (materialStruct.attenuationDistance) {
-      materialVars += /* wgsl */
-      `
-  var attenuationDistance: f32 = ${materialUniformName}.attenuationDistance;`;
-    } else {
-      materialVars += /* wgsl */
-      `
-  var attenuationDistance: f32 = 1.0e38;`;
-    }
-    if (materialStruct.attenuationColor) {
-      materialVars += /* wgsl */
-      `
-  var attenuationColor: vec3f = ${materialUniformName}.attenuationColor;`;
-    } else {
-      materialVars += /* wgsl */
-      `
-  var attenuationColor: vec3f = vec3(1.0);`;
-    }
-    if (!!environmentMap) {
-      if (materialStruct.envRotation) {
-        materialVars += /* wgsl */
-        `
-  var envRotation: mat3x3f = ${materialUniformName}.envRotation;`;
-      } else {
-        materialVars += /* wgsl */
-        `
-  var envRotation: mat3x3f = mat3x3f();`;
-      }
-      if (materialStruct.envDiffuseIntensity) {
-        materialVars += /* wgsl */
-        `
-  var envDiffuseIntensity: f32 = ${materialUniformName}.envDiffuseIntensity;`;
-      } else {
-        materialVars += /* wgsl */
-        `
-  var envDiffuseIntensity: f32 = 1.0;`;
-      }
-      if (materialStruct.envSpecularIntensity) {
-        materialVars += /* wgsl */
-        `
-  var envSpecularIntensity: f32 = ${materialUniformName}.envSpecularIntensity;`;
-      } else {
-        materialVars += /* wgsl */
-        `
-  var envSpecularIntensity: f32 = 1.0;`;
-      }
     }
   }
   return materialVars;

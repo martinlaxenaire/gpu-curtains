@@ -39,6 +39,15 @@ const getFragmentShaderCode = ({
   specularColorTexture = null,
   transmissionTexture = null,
   thicknessTexture = null,
+  sheenTexture = null,
+  sheenColorTexture = null,
+  sheenRoughnessTexture = null,
+  anisotropyTexture = null,
+  clearcoatTexture = null,
+  clearcoatRoughnessTexture = null,
+  clearcoatNormalTexture = null,
+  iridescenceTexture = null,
+  iridescenceThicknessTexture = null,
   transmissionBackgroundTexture = null,
   environmentMap = null
 }) => {
@@ -115,6 +124,15 @@ const getFragmentShaderCode = ({
           specularColorTexture,
           transmissionTexture,
           thicknessTexture,
+          sheenTexture,
+          sheenColorTexture,
+          sheenRoughnessTexture,
+          anisotropyTexture,
+          clearcoatTexture,
+          clearcoatRoughnessTexture,
+          clearcoatNormalTexture,
+          iridescenceTexture,
+          iridescenceThicknessTexture,
           transmissionBackgroundTexture,
           environmentMap
         });

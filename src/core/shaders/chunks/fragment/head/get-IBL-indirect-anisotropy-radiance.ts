@@ -1,4 +1,6 @@
-/** Helper function chunk appended internally and used to compute IBL indirect anisotropy radiance, based on environment specular map. */
+/**
+ * Helper function chunk appended internally and used to compute IBL indirect anisotropy radiance, based on environment specular map.
+ */
 export const getIBLIndirectAnisotropyRadiance = /* wgsl */ `
 fn getIBLIndirectAnisotropyRadiance(
   normal: vec3f,

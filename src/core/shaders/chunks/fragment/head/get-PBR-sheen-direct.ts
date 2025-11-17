@@ -1,4 +1,6 @@
-/** WGSL functions to calculate sheen BRDF specular direct contribution. */
+/**
+ * WGSL functions to calculate sheen BRDF specular direct contribution.
+ */
 export const getPBRSheenDirect = /* wgsl */ `
 // https://github.com/google/filament/blob/master/shaders/src/brdf.fs
 fn D_Charlie( roughness: f32, dotNH: f32 ) -> f32 {

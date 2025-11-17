@@ -1,4 +1,6 @@
-/** WGSL functions to calculate sheen specular indirect IBL contribution.  */
+/**
+ * WGSL functions to calculate sheen specular indirect IBL contribution.
+ */
 export const getIBLSheen = /* wgsl */ `
 // This is a curve-fit approxmation to the "Charlie sheen" BRDF integrated over the hemisphere from 
 // Estevez and Kulla 2017, "Production Friendly Microfacet Sheen BRDF". The analysis can be found

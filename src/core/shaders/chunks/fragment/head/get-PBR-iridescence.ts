@@ -1,3 +1,6 @@
+/**
+ * Helper WGSL functions to get the PBR direct iridescence contribution.
+ */
 export const getPBRIridescence = /* wgsl */ `
 // XYZ to linear-sRGB color space
 const XYZ_TO_REC709: mat3x3f = mat3x3f(

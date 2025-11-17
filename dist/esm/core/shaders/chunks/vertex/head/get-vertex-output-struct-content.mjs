@@ -30,7 +30,7 @@ const getVertexOutputStructContent = ({
     return (
       /* wgsl */
       `
-  @location(${attributes.length + 3 + index}) ${attribute.type === "u32" || attribute.type === "i32" ? "@interpolate(flat) " : " "}${attribute.name}: ${attribute.type},`
+  @location(${attributes.length + 4 + index}) ${attribute.type === "u32" || attribute.type === "i32" ? "@interpolate(flat) " : " "}${attribute.name}: ${attribute.type},`
     );
   }).join("");
   return (
@@ -40,7 +40,8 @@ const getVertexOutputStructContent = ({
   ${structAttributes}
   @location(${attributes.length}) viewDirection: vec3f,
   @location(${attributes.length + 1}) worldPosition: vec3f,
-  @location(${attributes.length + 2}) modelScale: vec3f,
+  @location(${attributes.length + 2}) modelPosition: vec3f,
+  @location(${attributes.length + 3}) modelScale: vec3f,
   ${additionalVaryingsOutput}`
   );
 };

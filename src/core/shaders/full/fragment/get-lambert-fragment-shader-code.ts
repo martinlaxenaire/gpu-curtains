@@ -16,6 +16,7 @@ import { getNormal } from '../../chunks/fragment/body/get-normal'
 import { getEmissiveOcclusion } from '../../chunks/fragment/body/get-emissive-occlusion'
 import { patchAdditionalChunks } from '../../default-material-helpers'
 import { generateTBN } from '../../chunks/utils/generate-TBN'
+import { getTangentBitangent } from '../../chunks/fragment/body/get-tangent-bitangent'
 
 /**
  * Build a Lambert fragment shader using the provided options.
@@ -76,7 +77,8 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   // user defined preliminary contribution
   ${chunks.preliminaryContribution}
   
-  ${getNormal({ geometry, normalTexture })}  
+  ${getTangentBitangent({ geometry, normalTexture })}  
+  ${getNormal({ normalTexture })}  
   ${getEmissiveOcclusion({ emissiveTexture, occlusionTexture })}
   
   // lights

@@ -11,9 +11,11 @@ import { getFragmentOutputStruct } from '../../chunks/fragment/head/get-fragment
 import { declareAttributesVars } from '../../chunks/fragment/body/declare-attributes-vars.mjs';
 import { declareMaterialVars } from '../../chunks/fragment/body/declare-material-vars.mjs';
 import { getBaseColor } from '../../chunks/fragment/body/get-base-color.mjs';
-import { getNormalTangentBitangent } from '../../chunks/fragment/body/get-normal-tangent-bitangent.mjs';
+import { getNormal } from '../../chunks/fragment/body/get-normal.mjs';
 import { getEmissiveOcclusion } from '../../chunks/fragment/body/get-emissive-occlusion.mjs';
 import { patchAdditionalChunks } from '../../default-material-helpers.mjs';
+import { generateTBN } from '../../chunks/utils/generate-TBN.mjs';
+import { getTangentBitangent } from '../../chunks/fragment/body/get-tangent-bitangent.mjs';
 
 const getLambertFragmentShaderCode = ({
   chunks = null,
@@ -53,6 +55,7 @@ ${chunks.additionalHead}
 ${constants}
 ${common}
 ${toneMappingUtils}
+${generateTBN}
 ${getLightsInfos}
 ${REIndirectDiffuse}
 ${getLambertDirect}
@@ -71,7 +74,8 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   // user defined preliminary contribution
   ${chunks.preliminaryContribution}
   
-  ${getNormalTangentBitangent({ geometry, normalTexture })}  
+  ${getTangentBitangent({ geometry, normalTexture })}  
+  ${getNormal({ normalTexture })}  
   ${getEmissiveOcclusion({ emissiveTexture, occlusionTexture })}
   
   // lights

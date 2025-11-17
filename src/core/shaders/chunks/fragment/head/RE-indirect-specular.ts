@@ -4,13 +4,7 @@ export const REIndirectSpecular = /* wgsl */ `
 fn RE_IndirectSpecular(
   radiance: vec3f,
   irradiance: vec3f,
-  normal: vec3f,
   diffuseColor: vec3f,
-  specularFactor: f32,
-  specularColorFactor: vec3f,
-  viewDirection: vec3f,
-  metallic: f32,
-  roughness: f32,
   iBLGGXFresnel: IBLGGXFresnel,
   ptr_reflectedLight: ptr<function, ReflectedLight>
 ) {

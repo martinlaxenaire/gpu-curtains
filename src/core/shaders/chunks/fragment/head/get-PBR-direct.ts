@@ -44,7 +44,6 @@ fn getPBRDirect(
   viewDirection: vec3f,
   specularFactor: f32,
   specularColor: vec3f,
-  metallic: f32,
   roughness: f32,
   iridescenceFresnel: vec3f,
   iridescence: f32,
