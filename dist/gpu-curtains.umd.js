@@ -19358,6 +19358,7 @@ fn getPBR(
   viewDirection: vec3f,
   metallic: f32,
   roughness: f32,
+  emissive: vec3f,
   specularIntensity: f32,
   specularColor: vec3f,
   ior: f32,
@@ -19375,6 +19376,7 @@ fn getPBR(
   ${getPBRShading({ receiveShadows, environmentMap, transmissionBackgroundTexture, extensionsUsed })}
   
   outputColor = vec4(outgoingLight, outputColor.a);
+  outputColor = vec4(outputColor.rgb + emissive, outputColor.a);
   
   ${applyToneMapping({ toneMapping, outputColorSpace })}
     
