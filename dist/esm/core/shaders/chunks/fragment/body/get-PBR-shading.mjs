@@ -7,7 +7,7 @@ import { getIBLVolumeRefraction } from './get-IBL-volume-refraction.mjs';
 import { computeMultiScattering } from './get-multi-scattering.mjs';
 import { applySpotShadows } from './apply-spot-shadows.mjs';
 import { applySheenClearcoatContribution } from './apply-sheen-clearcoat-contribution.mjs';
-import { getIBLClearCoatIndirectRadiance } from './get-IBL-clearcoat-indirect-radiance.mjs';
+import { getIBLClearcoatIndirectRadiance } from './get-IBL-clearcoat-indirect-radiance.mjs';
 import { getClearcoatIndirectSpecular } from './get-clearcoat-indirect-specular.mjs';
 import { getSheenIndirectSpecular } from './get-sheen-indirect-specular.mjs';
 import { getPBRDirectContribution } from './get-PBR-direct-contribution.mjs';
@@ -86,7 +86,7 @@ const getPBRShading = ({
     &reflectedLight
   );
 
-  ${getIBLClearCoatIndirectRadiance({ extensionsUsed, environmentMap })}
+  ${getIBLClearcoatIndirectRadiance({ extensionsUsed, environmentMap })}
   ${getClearcoatIndirectSpecular({ extensionsUsed })}
   ${getSheenIndirectSpecular({ extensionsUsed })}
   

@@ -1,4 +1,4 @@
-const getIBLClearCoatIndirectRadiance = ({
+const getIBLClearcoatIndirectRadiance = ({
   extensionsUsed = [],
   environmentMap = null
 }) => {
@@ -25,4 +25,4 @@ const getIBLClearCoatIndirectRadiance = ({
   return iblClearcoatIndirectSpecular;
 };
 
-export { getIBLClearCoatIndirectRadiance };
+export { getIBLClearcoatIndirectRadiance };

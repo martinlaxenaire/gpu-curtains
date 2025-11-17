@@ -9,7 +9,7 @@ import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh'
 import { computeMultiScattering } from './get-multi-scattering'
 import { applySpotShadows } from './apply-spot-shadows'
 import { applySheenClearcoatContribution } from './apply-sheen-clearcoat-contribution'
-import { getIBLClearCoatIndirectRadiance } from './get-IBL-clearcoat-indirect-radiance'
+import { getIBLClearcoatIndirectRadiance } from './get-IBL-clearcoat-indirect-radiance'
 import { getClearcoatIndirectSpecular } from './get-clearcoat-indirect-specular'
 import { getSheenIndirectSpecular } from './get-sheen-indirect-specular'
 import { getPBRDirectContribution } from './get-PBR-direct-contribution'
@@ -100,7 +100,7 @@ export const getPBRShading = ({
     &reflectedLight
   );
 
-  ${getIBLClearCoatIndirectRadiance({ extensionsUsed, environmentMap })}
+  ${getIBLClearcoatIndirectRadiance({ extensionsUsed, environmentMap })}
   ${getClearcoatIndirectSpecular({ extensionsUsed })}
   ${getSheenIndirectSpecular({ extensionsUsed })}
   

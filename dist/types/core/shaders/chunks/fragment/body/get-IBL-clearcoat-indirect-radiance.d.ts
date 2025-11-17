@@ -7,7 +7,7 @@ import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragmen
  * @param parameters.environmentMap - {@link extras/environmentMap/EnvironmentMap.EnvironmentMap | EnvironmentMap} to use for indirect irradiance if any.
  * @returns - String with the `clearcoatRadiance` (`vec3f`) value set.
  */
-export declare const getIBLClearCoatIndirectRadiance: ({ extensionsUsed, environmentMap, }: {
+export declare const getIBLClearcoatIndirectRadiance: ({ extensionsUsed, environmentMap, }: {
     extensionsUsed?: PBRFragmentShaderInputParams['extensionsUsed'];
     environmentMap: PBRFragmentShaderInputParams['environmentMap'];
 }) => string;
