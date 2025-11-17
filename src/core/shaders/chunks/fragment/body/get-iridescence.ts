@@ -7,16 +7,19 @@ import { getTextureSample } from './get-texture-sample'
  *
  * @param parameters - Parameters used to create the shader chunk.
  * @param parameters.extensionsUsed - {@link PBRFragmentShaderInputParams.extensionsUsed | extensionsUsed} to check if iridescence is enabled.
- * @param parameters.iridescenceTexture - {@link ShaderTextureDescriptor | Iridescence texture descriptor} (using the `R channel`) to use if any.
+ * @param parameters.iridescenceTexture - {@link ShaderTextureDescriptor | Iridescence texture descriptor} (using the `R` channel for intensity and `G` channel for thickness) to use if any.
+ * @param parameters.iridescenceFactorTexture - {@link ShaderTextureDescriptor | Iridescence factor texture descriptor} (using the `R` channel) to use if any.
  * @param parameters.iridescenceThicknessTexture - {@link ShaderTextureDescriptor | Iridescence thickness texture descriptor} (using the `G` channel) to use if any.
  */
 export const getIridescence = ({
   extensionsUsed = [],
   iridescenceTexture = null,
+  iridescenceFactorTexture = null,
   iridescenceThicknessTexture = null,
 }: {
   extensionsUsed?: PBRFragmentShaderInputParams['extensionsUsed']
   iridescenceTexture?: ShaderTextureDescriptor
+  iridescenceFactorTexture?: ShaderTextureDescriptor
   iridescenceThicknessTexture?: ShaderTextureDescriptor
 } = {}): string => {
   let iridescence = /* wgsl */ `
@@ -31,17 +34,24 @@ export const getIridescence = ({
   if (iridescenceTexture) {
     iridescence += getTextureSample(iridescenceTexture, 'iridescence')
     iridescence += /* wgsl */ `
-  iridescence = iridescence * iridescenceSample.r;`
-  }
-
-  if (iridescenceThicknessTexture) {
-    iridescence += getTextureSample(iridescenceThicknessTexture, 'iridescenceThickness')
-    iridescence += /* wgsl */ `
-  iridescenceThickness = (iridescenceThicknessRange.y - iridescenceThicknessRange.x) * iridescenceThicknessSample.g + iridescenceThicknessRange.x;`
+  iridescence = iridescence * iridescenceSample.r;
+  iridescenceThickness = (iridescenceThicknessRange.y - iridescenceThicknessRange.x) * iridescenceSample.g + iridescenceThicknessRange.x;`
   } else {
-    iridescence += /* wgsl */ `
+    if (iridescenceFactorTexture) {
+      iridescence += getTextureSample(iridescenceFactorTexture, 'iridescenceFactor')
+      iridescence += /* wgsl */ `
+  iridescence = iridescence * iridescenceFactorSample.r;`
+    }
+
+    if (iridescenceThicknessTexture) {
+      iridescence += getTextureSample(iridescenceThicknessTexture, 'iridescenceThickness')
+      iridescence += /* wgsl */ `
+  iridescenceThickness = (iridescenceThicknessRange.y - iridescenceThicknessRange.x) * iridescenceThicknessSample.g + iridescenceThicknessRange.x;`
+    } else {
+      iridescence += /* wgsl */ `
   iridescenceThickness = iridescenceThicknessRange.y;
     `
+    }
   }
 
   iridescence += /* wgsl */ `

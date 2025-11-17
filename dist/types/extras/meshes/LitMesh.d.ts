@@ -141,8 +141,10 @@ export interface PBRTexturesDescriptors extends PhongTexturesDescriptors {
     clearcoatRoughnessTexture?: ShaderTextureDescriptor;
     /** {@link ShaderTextureDescriptor | Clearcoat normal texture descriptor} to use if any. */
     clearcoatNormalTexture?: ShaderTextureDescriptor;
-    /** {@link ShaderTextureDescriptor | Iridescence texture descriptor} (using the `R` channel) to use if any. */
+    /** {@link ShaderTextureDescriptor | Iridescence texture descriptor} (using the `R` channel for intensity and `G` channel for thickness) to use if any. */
     iridescenceTexture?: ShaderTextureDescriptor;
+    /** {@link ShaderTextureDescriptor | Iridescence texture descriptor} (using the `R` channel) to use if any. */
+    iridescenceFactorTexture?: ShaderTextureDescriptor;
     /** {@link ShaderTextureDescriptor | Iridescence thickness texture descriptor} (using the `G` channel) to use if any. */
     iridescenceThicknessTexture?: ShaderTextureDescriptor;
 }

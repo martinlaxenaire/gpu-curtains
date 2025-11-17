@@ -429,10 +429,11 @@ export class GLTFScenesManager {
         case 'occlusionTexture':
         case 'transmissionTexture':
         case 'clearcoatTexture':
-        case 'iridescenceTexture':
+        case 'iridescenceFactorTexture':
           return 'r8unorm'
         case 'thicknessTexture':
         case 'clearcoatRoughnessTexture':
+        case 'iridescenceTexture':
         case 'iridescenceThicknessTexture':
           return 'rg8unorm'
         default:
@@ -602,22 +603,13 @@ export class GLTFScenesManager {
         // specular
         if (specular && (specular.specularTexture || specular.specularColorTexture)) {
           const { specularTexture, specularColorTexture } = specular
-          if (specularTexture && specularColorTexture) {
-            if (
-              specularTexture.index !== undefined &&
-              specularColorTexture.index !== undefined &&
-              specularTexture.index === specularColorTexture.index
-            ) {
-              createTexture(specularTexture, 'specularTexture')
-            } else {
-              if (specularTexture.index !== undefined) {
-                createTexture(specularTexture, 'specularFactorTexture')
-              }
-
-              if (specularColorTexture.index !== undefined) {
-                createTexture(specularColorTexture, 'specularColorTexture')
-              }
-            }
+          if (
+            specularTexture &&
+            specularColorTexture &&
+            specularTexture.index !== undefined &&
+            specularTexture.index === specularColorTexture.index
+          ) {
+            createTexture(specularTexture, 'specularTexture')
           } else {
             if (specularTexture && specularTexture.index !== undefined) {
               createTexture(specularTexture, 'specularFactorTexture')
@@ -637,21 +629,13 @@ export class GLTFScenesManager {
         // sheen
         if (sheen && (sheen.sheenColorTexture || sheen.sheenRoughnessTexture)) {
           const { sheenColorTexture, sheenRoughnessTexture } = sheen
-          if (sheenColorTexture && sheenRoughnessTexture) {
-            if (
-              sheenColorTexture.index !== undefined &&
-              sheenRoughnessTexture.index !== undefined &&
-              sheenColorTexture.index === sheenRoughnessTexture.index
-            ) {
-              createTexture(sheenColorTexture, 'sheenTexture')
-            } else {
-              if (sheenColorTexture.index !== undefined) {
-                createTexture(sheenColorTexture, 'sheenColorTexture')
-              }
-              if (sheenRoughnessTexture.index !== undefined) {
-                createTexture(sheenRoughnessTexture, 'sheenRoughnessTexture')
-              }
-            }
+          if (
+            sheenColorTexture &&
+            sheenRoughnessTexture &&
+            sheenColorTexture.index !== undefined &&
+            sheenColorTexture.index === sheenRoughnessTexture.index
+          ) {
+            createTexture(sheenColorTexture, 'sheenTexture')
           } else {
             if (sheenColorTexture && sheenColorTexture.index !== undefined) {
               createTexture(sheenColorTexture, 'sheenColorTexture')
@@ -688,11 +672,20 @@ export class GLTFScenesManager {
         // iridescence
         if (iridescence && (iridescence.iridescenceTexture || iridescence.iridescenceThicknessTexture)) {
           const { iridescenceTexture, iridescenceThicknessTexture } = iridescence
-          if (iridescenceTexture && iridescenceTexture.index !== undefined) {
+          if (
+            iridescenceTexture &&
+            iridescenceThicknessTexture &&
+            iridescenceTexture.index !== undefined &&
+            iridescenceTexture.index === iridescenceThicknessTexture.index
+          ) {
             createTexture(iridescenceTexture, 'iridescenceTexture')
-          }
-          if (iridescenceThicknessTexture && iridescenceThicknessTexture.index !== undefined) {
-            createTexture(iridescenceThicknessTexture, 'iridescenceThicknessTexture')
+          } else {
+            if (iridescenceTexture && iridescenceTexture.index !== undefined) {
+              createTexture(iridescenceTexture, 'iridescenceFactorTexture')
+            }
+            if (iridescenceThicknessTexture && iridescenceThicknessTexture.index !== undefined) {
+              createTexture(iridescenceThicknessTexture, 'iridescenceThicknessTexture')
+            }
           }
         }
       }

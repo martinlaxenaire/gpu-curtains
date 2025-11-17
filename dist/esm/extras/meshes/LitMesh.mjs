@@ -94,6 +94,7 @@ class LitMesh extends Mesh {
       clearcoatRoughnessTexture,
       clearcoatNormalTexture,
       iridescenceTexture,
+      iridescenceFactorTexture,
       iridescenceThicknessTexture,
       // environment map
       environmentMap
@@ -169,6 +170,7 @@ class LitMesh extends Mesh {
       clearcoatRoughnessTexture,
       clearcoatNormalTexture,
       iridescenceTexture,
+      iridescenceFactorTexture,
       iridescenceThicknessTexture
     });
     materialTextures.forEach((textureDescriptor) => {
@@ -262,11 +264,11 @@ class LitMesh extends Mesh {
       clearcoatRoughnessTexture,
       clearcoatNormalTexture,
       iridescenceTexture,
+      iridescenceFactorTexture,
       iridescenceThicknessTexture,
       transmissionBackgroundTexture,
       environmentMap
     });
-    console.log(fs);
     const shaders = {
       vertex: {
         code: vs,
@@ -510,6 +512,7 @@ class LitMesh extends Mesh {
       clearcoatRoughnessTexture,
       clearcoatNormalTexture,
       iridescenceTexture,
+      iridescenceFactorTexture,
       iridescenceThicknessTexture,
       thicknessTexture
     } = parameters;
@@ -534,6 +537,7 @@ class LitMesh extends Mesh {
       clearcoatRoughnessTexture,
       clearcoatNormalTexture,
       iridescenceTexture,
+      iridescenceFactorTexture,
       iridescenceThicknessTexture
     ];
     const materialTextures = (() => {

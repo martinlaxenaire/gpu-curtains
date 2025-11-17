@@ -20760,6 +20760,7 @@ fn getPBRClearcoatDirect(
   const getIridescence = ({
     extensionsUsed = [],
     iridescenceTexture = null,
+    iridescenceFactorTexture = null,
     iridescenceThicknessTexture = null
   } = {}) => {
     let iridescence = (
@@ -20776,18 +20777,26 @@ fn getPBRClearcoatDirect(
       iridescence += getTextureSample(iridescenceTexture, "iridescence");
       iridescence += /* wgsl */
       `
-  iridescence = iridescence * iridescenceSample.r;`;
-    }
-    if (iridescenceThicknessTexture) {
-      iridescence += getTextureSample(iridescenceThicknessTexture, "iridescenceThickness");
-      iridescence += /* wgsl */
-      `
-  iridescenceThickness = (iridescenceThicknessRange.y - iridescenceThicknessRange.x) * iridescenceThicknessSample.g + iridescenceThicknessRange.x;`;
+  iridescence = iridescence * iridescenceSample.r;
+  iridescenceThickness = (iridescenceThicknessRange.y - iridescenceThicknessRange.x) * iridescenceSample.g + iridescenceThicknessRange.x;`;
     } else {
-      iridescence += /* wgsl */
-      `
+      if (iridescenceFactorTexture) {
+        iridescence += getTextureSample(iridescenceFactorTexture, "iridescenceFactor");
+        iridescence += /* wgsl */
+        `
+  iridescence = iridescence * iridescenceFactorSample.r;`;
+      }
+      if (iridescenceThicknessTexture) {
+        iridescence += getTextureSample(iridescenceThicknessTexture, "iridescenceThickness");
+        iridescence += /* wgsl */
+        `
+  iridescenceThickness = (iridescenceThicknessRange.y - iridescenceThicknessRange.x) * iridescenceThicknessSample.g + iridescenceThicknessRange.x;`;
+      } else {
+        iridescence += /* wgsl */
+        `
   iridescenceThickness = iridescenceThicknessRange.y;
     `;
+      }
     }
     iridescence += /* wgsl */
     `
@@ -21150,6 +21159,7 @@ fn getIBLIndirectAnisotropyRadiance(
     clearcoatRoughnessTexture = null,
     clearcoatNormalTexture = null,
     iridescenceTexture = null,
+    iridescenceFactorTexture = null,
     iridescenceThicknessTexture = null,
     transmissionBackgroundTexture = null,
     environmentMap = null
@@ -21204,7 +21214,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   ${getSheen({ extensionsUsed, sheenTexture, sheenColorTexture, sheenRoughnessTexture })}
   ${getClearcoat({ extensionsUsed, clearcoatTexture, clearcoatRoughnessTexture })}
   ${getClearcoatNormal({ extensionsUsed, normalTexture, clearcoatNormalTexture })}
-  ${getIridescence({ extensionsUsed, iridescenceTexture, iridescenceThicknessTexture })}
+  ${getIridescence({ extensionsUsed, iridescenceTexture, iridescenceFactorTexture, iridescenceThicknessTexture })}
   ${getAnisotropy({ extensionsUsed, anisotropyTexture })}
   
   // lights
@@ -24434,6 +24444,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         clearcoatRoughnessTexture,
         clearcoatNormalTexture,
         iridescenceTexture,
+        iridescenceFactorTexture,
         iridescenceThicknessTexture,
         // environment map
         environmentMap
@@ -24509,6 +24520,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         clearcoatRoughnessTexture,
         clearcoatNormalTexture,
         iridescenceTexture,
+        iridescenceFactorTexture,
         iridescenceThicknessTexture
       });
       materialTextures.forEach((textureDescriptor) => {
@@ -24602,11 +24614,11 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         clearcoatRoughnessTexture,
         clearcoatNormalTexture,
         iridescenceTexture,
+        iridescenceFactorTexture,
         iridescenceThicknessTexture,
         transmissionBackgroundTexture,
         environmentMap
       });
-      console.log(fs);
       const shaders = {
         vertex: {
           code: vs,
@@ -24850,6 +24862,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         clearcoatRoughnessTexture,
         clearcoatNormalTexture,
         iridescenceTexture,
+        iridescenceFactorTexture,
         iridescenceThicknessTexture,
         thicknessTexture
       } = parameters;
@@ -24874,6 +24887,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         clearcoatRoughnessTexture,
         clearcoatNormalTexture,
         iridescenceTexture,
+        iridescenceFactorTexture,
         iridescenceThicknessTexture
       ];
       const materialTextures = (() => {
@@ -26019,10 +26033,11 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
           case "occlusionTexture":
           case "transmissionTexture":
           case "clearcoatTexture":
-          case "iridescenceTexture":
+          case "iridescenceFactorTexture":
             return "r8unorm";
           case "thicknessTexture":
           case "clearcoatRoughnessTexture":
+          case "iridescenceTexture":
           case "iridescenceThicknessTexture":
             return "rg8unorm";
           default:
@@ -26147,17 +26162,8 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
           }
           if (specular && (specular.specularTexture || specular.specularColorTexture)) {
             const { specularTexture, specularColorTexture } = specular;
-            if (specularTexture && specularColorTexture) {
-              if (specularTexture.index !== void 0 && specularColorTexture.index !== void 0 && specularTexture.index === specularColorTexture.index) {
-                createTexture(specularTexture, "specularTexture");
-              } else {
-                if (specularTexture.index !== void 0) {
-                  createTexture(specularTexture, "specularFactorTexture");
-                }
-                if (specularColorTexture.index !== void 0) {
-                  createTexture(specularColorTexture, "specularColorTexture");
-                }
-              }
+            if (specularTexture && specularColorTexture && specularTexture.index !== void 0 && specularTexture.index === specularColorTexture.index) {
+              createTexture(specularTexture, "specularTexture");
             } else {
               if (specularTexture && specularTexture.index !== void 0) {
                 createTexture(specularTexture, "specularFactorTexture");
@@ -26172,17 +26178,8 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
           }
           if (sheen && (sheen.sheenColorTexture || sheen.sheenRoughnessTexture)) {
             const { sheenColorTexture, sheenRoughnessTexture } = sheen;
-            if (sheenColorTexture && sheenRoughnessTexture) {
-              if (sheenColorTexture.index !== void 0 && sheenRoughnessTexture.index !== void 0 && sheenColorTexture.index === sheenRoughnessTexture.index) {
-                createTexture(sheenColorTexture, "sheenTexture");
-              } else {
-                if (sheenColorTexture.index !== void 0) {
-                  createTexture(sheenColorTexture, "sheenColorTexture");
-                }
-                if (sheenRoughnessTexture.index !== void 0) {
-                  createTexture(sheenRoughnessTexture, "sheenRoughnessTexture");
-                }
-              }
+            if (sheenColorTexture && sheenRoughnessTexture && sheenColorTexture.index !== void 0 && sheenColorTexture.index === sheenRoughnessTexture.index) {
+              createTexture(sheenColorTexture, "sheenTexture");
             } else {
               if (sheenColorTexture && sheenColorTexture.index !== void 0) {
                 createTexture(sheenColorTexture, "sheenColorTexture");
@@ -26209,11 +26206,15 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
           }
           if (iridescence && (iridescence.iridescenceTexture || iridescence.iridescenceThicknessTexture)) {
             const { iridescenceTexture, iridescenceThicknessTexture } = iridescence;
-            if (iridescenceTexture && iridescenceTexture.index !== void 0) {
+            if (iridescenceTexture && iridescenceThicknessTexture && iridescenceTexture.index !== void 0 && iridescenceTexture.index === iridescenceThicknessTexture.index) {
               createTexture(iridescenceTexture, "iridescenceTexture");
-            }
-            if (iridescenceThicknessTexture && iridescenceThicknessTexture.index !== void 0) {
-              createTexture(iridescenceThicknessTexture, "iridescenceThicknessTexture");
+            } else {
+              if (iridescenceTexture && iridescenceTexture.index !== void 0) {
+                createTexture(iridescenceTexture, "iridescenceFactorTexture");
+              }
+              if (iridescenceThicknessTexture && iridescenceThicknessTexture.index !== void 0) {
+                createTexture(iridescenceThicknessTexture, "iridescenceThicknessTexture");
+              }
             }
           }
         }

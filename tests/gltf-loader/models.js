@@ -227,6 +227,14 @@ export const models = {
     name: 'Iridescence Metallic Spheres',
     url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/master/Models/IridescenceMetallicSpheres/glTF/IridescenceMetallicSpheres.gltf',
   },
+  iridescenceAbalone: {
+    name: 'Iridescence Abalone',
+    url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/master/Models/IridescenceAbalone/glTF/IridescenceAbalone.gltf',
+  },
+  compareIridescence: {
+    name: 'Compare Iridescence',
+    url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/master/Models/CompareIridescence/glTF/CompareIridescence.gltf',
+  },
   // anisotropy
   anisotropyStrengthTest: {
     name: 'Anisotropy Strength Test',

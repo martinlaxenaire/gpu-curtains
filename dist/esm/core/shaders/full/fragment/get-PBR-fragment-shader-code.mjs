@@ -78,6 +78,7 @@ const getPBRFragmentShaderCode = ({
   clearcoatRoughnessTexture = null,
   clearcoatNormalTexture = null,
   iridescenceTexture = null,
+  iridescenceFactorTexture = null,
   iridescenceThicknessTexture = null,
   transmissionBackgroundTexture = null,
   environmentMap = null
@@ -132,7 +133,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   ${getSheen({ extensionsUsed, sheenTexture, sheenColorTexture, sheenRoughnessTexture })}
   ${getClearcoat({ extensionsUsed, clearcoatTexture, clearcoatRoughnessTexture })}
   ${getClearcoatNormal({ extensionsUsed, normalTexture, clearcoatNormalTexture })}
-  ${getIridescence({ extensionsUsed, iridescenceTexture, iridescenceThicknessTexture })}
+  ${getIridescence({ extensionsUsed, iridescenceTexture, iridescenceFactorTexture, iridescenceThicknessTexture })}
   ${getAnisotropy({ extensionsUsed, anisotropyTexture })}
   
   // lights

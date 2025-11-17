@@ -104,7 +104,7 @@ window.addEventListener('load', async () => {
   const lightType = 'DirectionalLight' // or 'PointLight'
 
   // const currentModelKey = 'damagedHelmet'
-  const currentModelKey = 'metalRoughSpheresTextureless'
+  const currentModelKey = 'iridescenceAbalone'
   let currentModel = models[currentModelKey]
 
   const ambientLight = new AmbientLight(gpuCameraRenderer, {

@@ -318,10 +318,11 @@ const _GLTFScenesManager = class _GLTFScenesManager {
         case "occlusionTexture":
         case "transmissionTexture":
         case "clearcoatTexture":
-        case "iridescenceTexture":
+        case "iridescenceFactorTexture":
           return "r8unorm";
         case "thicknessTexture":
         case "clearcoatRoughnessTexture":
+        case "iridescenceTexture":
         case "iridescenceThicknessTexture":
           return "rg8unorm";
         default:
@@ -446,17 +447,8 @@ const _GLTFScenesManager = class _GLTFScenesManager {
         }
         if (specular && (specular.specularTexture || specular.specularColorTexture)) {
           const { specularTexture, specularColorTexture } = specular;
-          if (specularTexture && specularColorTexture) {
-            if (specularTexture.index !== void 0 && specularColorTexture.index !== void 0 && specularTexture.index === specularColorTexture.index) {
-              createTexture(specularTexture, "specularTexture");
-            } else {
-              if (specularTexture.index !== void 0) {
-                createTexture(specularTexture, "specularFactorTexture");
-              }
-              if (specularColorTexture.index !== void 0) {
-                createTexture(specularColorTexture, "specularColorTexture");
-              }
-            }
+          if (specularTexture && specularColorTexture && specularTexture.index !== void 0 && specularTexture.index === specularColorTexture.index) {
+            createTexture(specularTexture, "specularTexture");
           } else {
             if (specularTexture && specularTexture.index !== void 0) {
               createTexture(specularTexture, "specularFactorTexture");
@@ -471,17 +463,8 @@ const _GLTFScenesManager = class _GLTFScenesManager {
         }
         if (sheen && (sheen.sheenColorTexture || sheen.sheenRoughnessTexture)) {
           const { sheenColorTexture, sheenRoughnessTexture } = sheen;
-          if (sheenColorTexture && sheenRoughnessTexture) {
-            if (sheenColorTexture.index !== void 0 && sheenRoughnessTexture.index !== void 0 && sheenColorTexture.index === sheenRoughnessTexture.index) {
-              createTexture(sheenColorTexture, "sheenTexture");
-            } else {
-              if (sheenColorTexture.index !== void 0) {
-                createTexture(sheenColorTexture, "sheenColorTexture");
-              }
-              if (sheenRoughnessTexture.index !== void 0) {
-                createTexture(sheenRoughnessTexture, "sheenRoughnessTexture");
-              }
-            }
+          if (sheenColorTexture && sheenRoughnessTexture && sheenColorTexture.index !== void 0 && sheenColorTexture.index === sheenRoughnessTexture.index) {
+            createTexture(sheenColorTexture, "sheenTexture");
           } else {
             if (sheenColorTexture && sheenColorTexture.index !== void 0) {
               createTexture(sheenColorTexture, "sheenColorTexture");
@@ -508,11 +491,15 @@ const _GLTFScenesManager = class _GLTFScenesManager {
         }
         if (iridescence && (iridescence.iridescenceTexture || iridescence.iridescenceThicknessTexture)) {
           const { iridescenceTexture, iridescenceThicknessTexture } = iridescence;
-          if (iridescenceTexture && iridescenceTexture.index !== void 0) {
+          if (iridescenceTexture && iridescenceThicknessTexture && iridescenceTexture.index !== void 0 && iridescenceTexture.index === iridescenceThicknessTexture.index) {
             createTexture(iridescenceTexture, "iridescenceTexture");
-          }
-          if (iridescenceThicknessTexture && iridescenceThicknessTexture.index !== void 0) {
-            createTexture(iridescenceThicknessTexture, "iridescenceThicknessTexture");
+          } else {
+            if (iridescenceTexture && iridescenceTexture.index !== void 0) {
+              createTexture(iridescenceTexture, "iridescenceFactorTexture");
+            }
+            if (iridescenceThicknessTexture && iridescenceThicknessTexture.index !== void 0) {
+              createTexture(iridescenceThicknessTexture, "iridescenceThicknessTexture");
+            }
           }
         }
       }

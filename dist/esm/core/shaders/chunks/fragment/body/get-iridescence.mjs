@@ -3,6 +3,7 @@ import { getTextureSample } from './get-texture-sample.mjs';
 const getIridescence = ({
   extensionsUsed = [],
   iridescenceTexture = null,
+  iridescenceFactorTexture = null,
   iridescenceThicknessTexture = null
 } = {}) => {
   let iridescence = (
@@ -19,18 +20,26 @@ const getIridescence = ({
     iridescence += getTextureSample(iridescenceTexture, "iridescence");
     iridescence += /* wgsl */
     `
-  iridescence = iridescence * iridescenceSample.r;`;
-  }
-  if (iridescenceThicknessTexture) {
-    iridescence += getTextureSample(iridescenceThicknessTexture, "iridescenceThickness");
-    iridescence += /* wgsl */
-    `
-  iridescenceThickness = (iridescenceThicknessRange.y - iridescenceThicknessRange.x) * iridescenceThicknessSample.g + iridescenceThicknessRange.x;`;
+  iridescence = iridescence * iridescenceSample.r;
+  iridescenceThickness = (iridescenceThicknessRange.y - iridescenceThicknessRange.x) * iridescenceSample.g + iridescenceThicknessRange.x;`;
   } else {
-    iridescence += /* wgsl */
-    `
+    if (iridescenceFactorTexture) {
+      iridescence += getTextureSample(iridescenceFactorTexture, "iridescenceFactor");
+      iridescence += /* wgsl */
+      `
+  iridescence = iridescence * iridescenceFactorSample.r;`;
+    }
+    if (iridescenceThicknessTexture) {
+      iridescence += getTextureSample(iridescenceThicknessTexture, "iridescenceThickness");
+      iridescence += /* wgsl */
+      `
+  iridescenceThickness = (iridescenceThicknessRange.y - iridescenceThicknessRange.x) * iridescenceThicknessSample.g + iridescenceThicknessRange.x;`;
+    } else {
+      iridescence += /* wgsl */
+      `
   iridescenceThickness = iridescenceThicknessRange.y;
     `;
+    }
   }
   iridescence += /* wgsl */
   `
