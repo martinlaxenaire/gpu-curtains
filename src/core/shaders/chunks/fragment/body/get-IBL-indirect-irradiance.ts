@@ -14,10 +14,10 @@ export const getIBLIndirectIrradiance = ({
   let iblIndirectDiffuse = ''
 
   if (environmentMap) {
-    iblIndirectDiffuse += /* wgs */ `    
+    iblIndirectDiffuse += /* wgsl */ `    
   iblIrradiance += getIBLIndirectIrradiance(
     normal,
-    baseDiffuseColor.rgb,
+    diffuseContribution,
     ${environmentMap.sampler.name},
     ${environmentMap.diffuseTexture.options.name},
     envRotation,

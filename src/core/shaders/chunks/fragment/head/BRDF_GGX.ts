@@ -40,7 +40,7 @@ fn BRDF_GGX(
 ) -> vec3f {
   // cook-torrance brdf
   var F: vec3f = F_Schlick(specularColor, specularFactor, VdotH);
-  F = mix( F, iridescenceFresnel, iridescence );
+  F = mix(F, iridescenceFresnel, iridescence);
 
   let G: f32 = GeometrySmith(NdotL, NdotV, roughness);
   let D: f32 = DistributionGGX(NdotH, roughness);

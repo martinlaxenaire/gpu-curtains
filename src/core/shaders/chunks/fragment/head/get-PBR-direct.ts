@@ -19,10 +19,11 @@ fn computeSpecularOcclusion( NdotV: f32, occlusion: f32, roughness: f32 ) -> f32
 	return saturate(pow(NdotV + occlusion, exp2(- 16.0 * roughness - 1.0)) - 1.0 + occlusion);
 }
 
-fn getGGX(
+fn BRDF_GGX_Singlescatter(
   normal: vec3f,
   viewDirection: vec3f,
   NdotL: f32,
+  NdotV: f32,
   roughness: f32,
   specularFactor: f32,
   specularColor: vec3f,
@@ -30,36 +31,101 @@ fn getGGX(
   iridescence: f32,
   directLight: DirectLight,
 ) -> vec3f {
+  let alpha: f32 = pow2(roughness); // UE4's roughness
+
   let H: vec3f = normalize(viewDirection + directLight.direction);
-  let NdotV: f32 = saturate(dot(normal, viewDirection));
   let NdotH: f32 = saturate(dot(normal, H));
   let VdotH: f32 = saturate(dot(viewDirection, H));
 
-  return BRDF_GGX(NdotV, NdotL, NdotH, VdotH, roughness, specularFactor, specularColor, iridescenceFresnel, iridescence);
+  return BRDF_GGX(NdotV, NdotL, NdotH, VdotH, alpha, specularFactor, specularColor, iridescenceFresnel, iridescence);
+}
+
+// GGX BRDF with multi-scattering energy compensation for direct lighting
+// Based on "Practical Multiple Scattering Compensation for Microfacet Models"
+// https://blog.selfshadow.com/publications/turquin/ms_comp_final.pdf
+fn BRDF_GGX_Multiscatter(
+  normal: vec3f,
+  viewDirection: vec3f,
+  NdotL: f32,
+  NdotV: f32,
+  dfgV: vec2f,
+  dfgL: vec2f,
+  specularF90: f32,
+  specularColorBlended: vec3f,
+  roughness: f32,
+) -> vec3f {
+  // Multi-scattering compensation
+
+	// Single-scattering energy for view and light
+	let FssEss_V: vec3f = specularColorBlended * dfgV.x + specularF90 * dfgV.y;
+	let FssEss_L: vec3f = specularColorBlended * dfgL.x + specularF90 * dfgL.y;
+
+	let Ess_V: f32 = dfgV.x + dfgV.y;
+	let Ess_L: f32 = dfgL.x + dfgL.y;
+
+	// Energy lost to multiple scattering
+	let Ems_V: f32 = 1.0 - Ess_V;
+	let Ems_L: f32 = 1.0 - Ess_L;
+
+	// Average Fresnel reflectance
+	let Favg: vec3f = specularColorBlended + ( 1.0 - specularColorBlended ) * 0.047619; // 1/21
+
+	// Multiple scattering contribution
+	let Fms: vec3f = FssEss_V * FssEss_L * Favg / ( 1.0 - Ems_V * Ems_L * Favg * Favg + EPSILON );
+
+	// Energy compensation factor
+	let compensationFactor: f32 = Ems_V * Ems_L;
+
+	return Fms * compensationFactor;
 }
 
 fn getPBRDirect(
   normal: vec3f,
-  diffuseColor: vec3f,
   viewDirection: vec3f,
-  specularFactor: f32,
-  specularColor: vec3f,
+  NdotL: f32,
+  NdotV: f32,
+  dfgV: vec2f,
+  dfgL: vec2f,
+  diffuseContribution: vec3f,
+  specularF90: f32,
+  specularColorBlended: vec3f,
   roughness: f32,
   iridescenceFresnel: vec3f,
   iridescence: f32,
   directLight: DirectLight,
   ptr_reflectedLight: ptr<function, ReflectedLight>
 ) {
-  let NdotL: f32 = saturate(dot(normal, directLight.direction));
-  let alpha: f32 = pow2(roughness); // UE4's roughness
+  // let ggx: vec3f = getGGX(normal, viewDirection, NdotL, alpha, specularF90, specularColorBlended, iridescenceFresnel, iridescence, directLight);
+  let ggxSingleScatter: vec3f = BRDF_GGX_Singlescatter(
+    normal,
+    viewDirection,
+    NdotL,
+    NdotV,
+    roughness,
+    specularF90,
+    specularColorBlended,
+    iridescenceFresnel,
+    iridescence,
+    directLight
+  );
 
-  let ggx: vec3f = getGGX(normal, viewDirection, NdotL, alpha, specularFactor, specularColor, iridescenceFresnel, iridescence, directLight);
+  let ggxMultiScatter: vec3f = BRDF_GGX_Multiscatter(
+    normal,
+    viewDirection,
+    NdotL,
+    NdotV,
+    dfgV,
+    dfgL,
+    specularF90,
+    specularColorBlended,
+    roughness,
+  );
+
+  let ggx: vec3f = ggxSingleScatter + ggxMultiScatter;
 
   let irradiance: vec3f = NdotL * directLight.color;
-  
-  let diffuseContribution: vec3f = BRDF_Lambert(diffuseColor);
-  
-  (*ptr_reflectedLight).directDiffuse += irradiance * diffuseContribution;
+    
+  (*ptr_reflectedLight).directDiffuse += irradiance * BRDF_Lambert(diffuseContribution);
   (*ptr_reflectedLight).directSpecular += irradiance * ggx;
 }
 `

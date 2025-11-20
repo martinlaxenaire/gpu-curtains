@@ -10,19 +10,60 @@ import { getPBRSheenClearcoatDirect } from './get-PBR-sheen-clearcoat-direct'
  */
 export const getPBRDirectContribution = ({
   extensionsUsed = [],
+  environmentMap = null,
 }: {
   extensionsUsed?: PBRFragmentShaderInputParams['extensionsUsed']
+  environmentMap?: PBRFragmentShaderInputParams['environmentMap']
 } = {}): string => {
-  let pbrDirect = ''
+  let pbrDirect = /* wgsl */ `
+  let NdotL: f32 = saturate(dot(normal, directLight.direction));
+  let NdotV: f32 = saturate(dot(normal, viewDirection));`
+
+  if (environmentMap && environmentMap.lutTexture) {
+    pbrDirect += /* wgsl */ `
+  // Precomputed DFG values for view and light directions from LUT
+  let dfgV: vec2f = DFGFromLUT(
+    vec3(0.0, 0.0, 1.0),
+    vec3(sqrt(1.0 - NdotV * NdotV), 0.0, NdotV),
+    roughness,
+    ${environmentMap.sampler.name},
+    ${environmentMap.lutTexture.options.name},
+  );
+  let dfgL: vec2f = DFGFromLUT(
+    vec3(0.0, 0.0, 1.0),
+    vec3(sqrt(1.0 - NdotL * NdotL), 0.0, NdotL),
+    roughness,
+    ${environmentMap.sampler.name},
+    ${environmentMap.lutTexture.options.name},
+  );`
+  } else {
+    // if the environment map hasn't created a LUT texture
+    pbrDirect += /* wgsl */ `
+  // Precomputed DFG values for view and light directions from approximation
+  let dfgV: vec2f = DFGApprox(
+    vec3(0.0, 0.0, 1.0),
+    vec3(sqrt(1.0 - NdotV * NdotV), 0.0, NdotV),
+    roughness,
+  );
+  let dfgL: vec2f = DFGApprox(
+    vec3(0.0, 0.0, 1.0),
+    vec3(sqrt(1.0 - NdotL * NdotL), 0.0, NdotL),
+    roughness,
+  );`
+  }
 
   if (extensionsUsed.includes('KHR_materials_anisotropy')) {
     pbrDirect += /* wgsl */ `
     getPBRDirect_Anisotropic(
       normal,
-      baseDiffuseColor.rgb,
       viewDirection,
+      NdotL,
+      NdotV,
+      dfgV,
+      dfgL,
+      diffuseContribution,
       specularF90,
-      specularColor,
+      specularColorBlended,
       roughness,
       iridescenceFresnel,
       iridescence,
@@ -36,10 +77,14 @@ export const getPBRDirectContribution = ({
     pbrDirect += /* wgsl */ `
     getPBRDirect(
       normal,
-      baseDiffuseColor.rgb,
       viewDirection,
+      NdotL,
+      NdotV,
+      dfgV,
+      dfgL,
+      diffuseContribution,
       specularF90,
-      specularColor,
+      specularColorBlended,
       roughness,
       iridescenceFresnel,
       iridescence,

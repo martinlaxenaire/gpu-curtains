@@ -197,6 +197,11 @@ window.addEventListener('load', async () => {
     'Iridescence Thickness',
     'Anisotropy Strength',
     'Anisotropy Direction',
+    // multi scattering
+    'Dielectric single scattering',
+    'Dielectric multi scattering',
+    'Metallic single scattering',
+    'Metallic multi scattering',
   ]
 
   let debugChannel = 0
@@ -504,6 +509,30 @@ window.addEventListener('load', async () => {
           ${
             !isUnlit && shadingModel === 'PBR'
               ? 'outputColor = vec4(vec2((anisotropyVector + vec2(1.0)) * 0.5), 0.0, 1.0);'
+              : 'outputColor = vec4(vec3(0.0), 1.0);'
+          }
+        } else if(debug.channel == 24.0) {
+          ${
+            !isUnlit && shadingModel === 'PBR'
+              ? 'outputColor = vec4(dielectricScattering.singleScattering, 1.0);'
+              : 'outputColor = vec4(vec3(0.0), 1.0);'
+          }
+        } else if(debug.channel == 25.0) {
+          ${
+            !isUnlit && shadingModel === 'PBR'
+              ? 'outputColor = vec4(dielectricScattering.multiScattering, 1.0);'
+              : 'outputColor = vec4(vec3(0.0), 1.0);'
+          }
+        } else if(debug.channel == 26.0) {
+          ${
+            !isUnlit && shadingModel === 'PBR'
+              ? 'outputColor = vec4(metallicScattering.singleScattering, 1.0);'
+              : 'outputColor = vec4(vec3(0.0), 1.0);'
+          }
+        } else if(debug.channel == 27.0) {
+          ${
+            !isUnlit && shadingModel === 'PBR'
+              ? 'outputColor = vec4(metallicScattering.multiScattering, 1.0);'
               : 'outputColor = vec4(vec3(0.0), 1.0);'
           }
         }

@@ -40,8 +40,6 @@ export const getPBRShading = ({
   
   ${receiveShadows ? getPCFShadows : ''}
   
-  let baseDiffuseColor: vec4f = outputColor * ( 1.0 - metallic );
-
   // point lights
   for(var i = 0; i < pointLights.count; i++) {
     getPointLightInfo(pointLights.elements[i], worldPosition, &directLight);
@@ -51,7 +49,7 @@ export const getPBRShading = ({
     }
     
     ${receiveShadows ? applyPointShadows : ''}
-    ${getPBRDirectContribution({ extensionsUsed })}
+    ${getPBRDirectContribution({ extensionsUsed, environmentMap })}
   }
   
   // spot lights
@@ -63,7 +61,7 @@ export const getPBRShading = ({
     }
     
     ${receiveShadows ? applySpotShadows : ''}
-    ${getPBRDirectContribution({ extensionsUsed })}
+    ${getPBRDirectContribution({ extensionsUsed, environmentMap })}
   }
   
   // directional lights
@@ -75,13 +73,16 @@ export const getPBRShading = ({
     }
     
     ${receiveShadows ? applyDirectionalShadows : ''}
-    ${getPBRDirectContribution({ extensionsUsed })}
+    ${getPBRDirectContribution({ extensionsUsed, environmentMap })}
   }
   
   var irradiance: vec3f = vec3(0.0);
   var radiance: vec3f = vec3(0.0);
   var iblIrradiance: vec3f = vec3(0.0);
   var iblRadiance: vec3f = vec3(0.0);
+
+  var dielectricScattering: MultiScattering;
+  var metallicScattering: MultiScattering;
   
   // IBL indirect contributions
   ${computeMultiScattering({ environmentMap })}
@@ -89,14 +90,17 @@ export const getPBRShading = ({
   ${getIBLIndirectRadiance({ extensionsUsed, environmentMap })}
   
   // ambient lights
-  RE_IndirectDiffuse(irradiance, baseDiffuseColor.rgb, &reflectedLight);
   
+  RE_IndirectDiffuse(irradiance, diffuseContribution, &reflectedLight);
+
   // indirect specular (and diffuse) from IBL
   RE_IndirectSpecular(
     radiance,
     iblIrradiance,
-    baseDiffuseColor.rgb,
-    iBLGGXFresnel,
+    diffuseContribution,
+    metallic,
+    dielectricScattering,
+    metallicScattering,
     &reflectedLight
   );
 

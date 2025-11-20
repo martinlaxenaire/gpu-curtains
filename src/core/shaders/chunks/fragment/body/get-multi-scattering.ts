@@ -4,21 +4,18 @@ import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragmen
  * Get the IBL GGX Fresnel from the environment map LUT Texture or DFG approximation, used for multi-scattering.
  * @param parameters - Parameters to use to apply PBR shading.
  * @param parameters.environmentMap - {@link extras/environmentMap/EnvironmentMap.EnvironmentMap | EnvironmentMap} to use for IBL GGX Fresnel any.
- * @returns - String with IBL GGX Fresnel applied to `iBLGGXFresnel` (`IBLGGXFresnel`).
+ * @returns - String with IBL GGX Fresnel applied to `dielectricScattering` (`MultiScattering`) and `metallicScattering` (`MultiScattering`).
  */
 export const computeMultiScattering = ({
   environmentMap = null,
 }: {
   environmentMap?: PBRFragmentShaderInputParams['environmentMap']
 }): string => {
-  let iblIGGXFresnel = /* wgsl */ `
-  var iBLGGXFresnel: IBLGGXFresnel;`
+  let multiScattering = ''
 
-  // since the LUT-based IBL GGX Fresnel approach is already handling energy conservation
-  // we do not need to manually compute multi scattering here
   if (environmentMap && environmentMap.lutTexture) {
-    iblIGGXFresnel += /* wgsl */ `
-  let fab: vec2f = LUT_DFGA(
+    multiScattering += /* wgsl */ `
+  let fab: vec2f = DFGFromLUT(
     normal,
     viewDirection,
     roughness,
@@ -27,7 +24,7 @@ export const computeMultiScattering = ({
   );`
   } else {
     // if the environment map hasn't created a LUT texture
-    iblIGGXFresnel += /* wgsl */ `
+    multiScattering += /* wgsl */ `
   let fab: vec2f = DFGApprox(
     normal,
     viewDirection,
@@ -35,15 +32,26 @@ export const computeMultiScattering = ({
   );`
   }
 
-  iblIGGXFresnel += /* wgsl */ `
+  multiScattering += /* wgsl */ `
+  // Both indirect specular and indirect diffuse light accumulate here
+	// Compute multiscattering separately for dielectric and metallic, then mix
   computeMultiscattering(
     fab,
     specularColor,
-    specularIntensity,
-    iridescenceF0,
+    specularF90,
     iridescence,
-    &iBLGGXFresnel
+    iridescenceFresnelDielectric,
+    &dielectricScattering
+  );
+  
+  computeMultiscattering(
+    fab,
+    diffuseColor,
+    specularF90,
+    iridescence,
+    iridescenceFresnelMetallic,
+    &metallicScattering
   );`
 
-  return iblIGGXFresnel
+  return multiScattering
 }

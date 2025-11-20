@@ -31,10 +31,11 @@ import { getPBRClearcoatDirect } from '../../chunks/fragment/head/get-PBR-clearc
 import { generateTBN } from '../../chunks/utils/generate-TBN'
 import { getIridescence } from '../../chunks/fragment/body/get-iridescence'
 import { getPBRIridescence } from '../../chunks/fragment/head/get-PBR-iridescence'
-import { BRDF_GGX_Anisotropic } from '../../chunks/fragment/head/BRDF_GGX_Anisotropic'
+import { getPBRDirectAnisotropic } from '../../chunks/fragment/head/get-PBR-direct-anisotropic'
 import { getAnisotropy } from '../../chunks/fragment/body/get-anisotropy'
 import { getTangentBitangent } from '../../chunks/fragment/body/get-tangent-bitangent'
 import { getIBLIndirectAnisotropyRadiance } from '../../chunks/fragment/head/get-IBL-indirect-anisotropy-radiance'
+import { getDiffuse } from '../../chunks/fragment/body/get-diffuse'
 
 /**
  * Build a PBR fragment shader using the provided options.
@@ -109,7 +110,7 @@ ${extensionsUsed.includes('KHR_materials_sheen') ? getIBLSheen : ''}
 ${extensionsUsed.includes('KHR_materials_sheen') ? getPBRSheenDirect : ''}
 ${extensionsUsed.includes('KHR_materials_clearcoat') ? getPBRClearcoatDirect : ''}
 ${extensionsUsed.includes('KHR_materials_iridescence') ? getPBRIridescence : ''}
-${extensionsUsed.includes('KHR_materials_anisotropy') ? BRDF_GGX_Anisotropic : ''}
+${extensionsUsed.includes('KHR_materials_anisotropy') ? getPBRDirectAnisotropic : ''}
 ${extensionsUsed.includes('KHR_materials_anisotropy') ? getIBLIndirectAnisotropyRadiance : ''}
 
 ${getFragmentInputStruct({ geometry, additionalVaryings })}
@@ -130,6 +131,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   ${getTangentBitangent({ extensionsUsed, geometry, normalTexture, clearcoatNormalTexture })}  
   ${getNormal({ normalTexture })}
   ${getMetallicRoughness({ metallicRoughnessTexture })}
+  ${getDiffuse}
   ${getSpecular({ specularTexture, specularFactorTexture, specularColorTexture })}
   ${getTransmissionThickness({ transmissionTexture, thicknessTexture })}
   ${getEmissiveOcclusion({ emissiveTexture, occlusionTexture })}

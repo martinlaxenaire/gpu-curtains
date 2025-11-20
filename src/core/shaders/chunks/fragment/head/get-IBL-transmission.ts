@@ -29,7 +29,7 @@ fn getIBLVolumeRefraction(
   normal: vec3f,
   viewDirection: vec3f,
   roughness: f32,
-  diffuseColor: vec4f,
+  diffuseContribution: vec3f,
   specularColor: vec3f,
   specularF90: f32,
   position: vec3f,
@@ -63,7 +63,7 @@ fn getIBLVolumeRefraction(
     transmittedLight = getTransmissionSample(refractionCoords, roughness, ior, transmissionBackgroundTexture, defaultSampler);
 
     // Compute transmittance
-    transmittance = diffuseColor.rgb * volumeAttenuation(length(transmissionRay), attenuationColor, attenuationDistance);
+    transmittance = diffuseContribution * volumeAttenuation(length(transmissionRay), attenuationColor, attenuationDistance);
 
     // Apply attenuation to transmitted light
     let attenuatedColor = transmittance * transmittedLight.rgb;
@@ -85,7 +85,7 @@ fn getIBLVolumeRefractionWithDispersion(
   normal: vec3f,
   viewDirection: vec3f,
   roughness: f32,
-  diffuseColor: vec4f,
+  diffuseContribution: vec3f,
   specularColor: vec3f,
   specularF90: f32,
   position: vec3f,
@@ -124,7 +124,7 @@ fn getIBLVolumeRefractionWithDispersion(
       transmittedLight.a += transmissionSample.a;
       
       // Compute transmittance
-      let diffuse: vec3f = diffuseColor.rgb;
+      let diffuse: vec3f = diffuseContribution;
       transmittance[i] = diffuse[i] * volumeAttenuation(length(transmissionRay), attenuationColor, attenuationDistance)[i];
     }
     

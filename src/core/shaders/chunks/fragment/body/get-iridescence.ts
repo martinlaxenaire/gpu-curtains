@@ -25,6 +25,8 @@ export const getIridescence = ({
   let iridescence = /* wgsl */ `
   var iridescenceThickness: f32 = 0.0;
   var iridescenceF0: vec3f = vec3(0.0);
+  var iridescenceFresnelDielectric: vec3f = vec3(0.0);
+  var iridescenceFresnelMetallic: vec3f = vec3(0.0);
   var iridescenceFresnel: vec3f = vec3(0.0);`
 
   if (!extensionsUsed.includes('KHR_materials_iridescence')) {
@@ -64,7 +66,9 @@ export const getIridescence = ({
   }
 
   if ( iridescence > 0.0 ) {
-    iridescenceFresnel = evalIridescence( 1.0, iridescenceIOR, dotNVi, iridescenceThickness, specularColor );
+    iridescenceFresnelDielectric = evalIridescence( 1.0, iridescenceIOR, dotNVi, iridescenceThickness, specularColor );
+		iridescenceFresnelMetallic = evalIridescence( 1.0, iridescenceIOR, dotNVi, iridescenceThickness, diffuseColor );
+    iridescenceFresnel = mix( iridescenceFresnelDielectric, iridescenceFresnelMetallic, metallic );
 
     // Iridescence F0 approximation
     iridescenceF0 = Schlick_to_F0( iridescenceFresnel, 1.0, dotNVi );
