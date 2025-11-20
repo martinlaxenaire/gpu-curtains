@@ -335,7 +335,7 @@ export class Texture {
   }) {
     this.renderer.device.queue.writeTexture(
       { texture: this.texture, origin },
-      data,
+      data as BufferSource,
       { bytesPerRow: width * data.BYTES_PER_ELEMENT * 4, rowsPerImage: height },
       [width, height, depth]
     )

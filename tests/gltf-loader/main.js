@@ -94,7 +94,7 @@ window.addEventListener('load', async () => {
   let currentEnvMap = envMaps[currentEnvMapKey]
 
   const environmentMap = new EnvironmentMap(gpuCameraRenderer, {
-    useLutTexture: true,
+    // useLutTexture: false,
   })
   environmentMap.loadAndComputeFromHDR(currentEnvMap.url)
   let useEnvMap = true
@@ -103,7 +103,8 @@ window.addEventListener('load', async () => {
   let shadingModel = 'PBR' // 'PBR', 'Phong' or 'Lambert'
   const lightType = 'DirectionalLight' // or 'PointLight'
 
-  const currentModelKey = 'damagedHelmet'
+  // const currentModelKey = 'damagedHelmet'
+  const currentModelKey = 'metalRoughSpheresTextureless'
   let currentModel = models[currentModelKey]
 
   const ambientLight = new AmbientLight(gpuCameraRenderer, {

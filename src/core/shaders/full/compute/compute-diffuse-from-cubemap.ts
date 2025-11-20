@@ -6,9 +6,9 @@ import { generateTBN } from '../../chunks/utils/generate-TBN'
 // ported from https://github.com/KhronosGroup/glTF-Sample-Viewer/blob/9940e4b4f4a2a296351bcd35035cc518deadc298/source/shaders/ibl_filtering.frag
 /**
  * Compute a diffuse cube map texture from a specular cube map {@link Texture}.
- * @param specularTexture - Specular cube map {@link Texture} to use.
+ * @param cubemapTexture - Cube map {@link Texture} to use.
  */
-export const computeDiffuseFromSpecularCubemap = (specularTexture: Texture) => /* wgsl */ `
+export const computeDiffuseFromCubemap = (cubemapTexture: Texture) => /* wgsl */ `
 ${constants}
 ${hammersley2D}
 ${generateTBN}
@@ -110,7 +110,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
 
     // Convert sampleVec to texture coordinates of the specular env map
     irradiance += textureSampleLevel(
-      ${specularTexture.options.name},
+      ${cubemapTexture.options.name},
       clampSampler,
       direction,
       sampleLevel

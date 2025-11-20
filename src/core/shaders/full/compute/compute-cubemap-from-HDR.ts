@@ -1,9 +1,9 @@
 import { constants } from '../../chunks/utils/constants'
 
 /**
- * Compute a specular cube map texture from HDR image data.
+ * Compute a cube map texture from HDR image data.
  */
-export const computeSpecularCubemapFromHDR = /* wgsl */ `
+export const computeCubemapFromHDR = /* wgsl */ `
 ${constants}
 
 // Cube face lookup vectors
@@ -67,7 +67,7 @@ fn main(@builtin(global_invocation_id) global_id : vec3<u32>) {
   
   // Correct cube face order in texture store (fix for reversed face indices)
   textureStore(
-    specularStorageCubemap,
+    storageCubemap,
     vec2<u32>(x, y),
     cubeFaceIndex,
     sampledColor

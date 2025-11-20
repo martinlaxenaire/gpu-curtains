@@ -14,10 +14,14 @@ fn getIBLIndirectRadiance(
   let N: vec3f = normal;
   let V: vec3f = viewDirection;
 
-  let reflection: vec3f = normalize(reflect(-V, N));
+  var reflection: vec3f = normalize(reflect(-V, N));
+
+  // Mixing the reflection with the normal is more accurate and keeps rough objects from gathering light from behind their tangent plane.
+  // reflection = normalize( mix( reflection, normal, pow4(roughness)) );
+  // reflection = normalize( mix( reflection, normal, pow2(roughness)) );
 
   let maxLevel: f32 = f32(textureNumLevels(envSpecularTexture) - 1);
-  // not physically accurate until we generate actual PMREM env maps
+
   let lod: f32 = roughness * maxLevel;
 
   let specularLight: vec4f = textureSampleLevel(
