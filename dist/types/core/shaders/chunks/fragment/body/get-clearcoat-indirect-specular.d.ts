@@ -4,8 +4,10 @@ import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragmen
  *
  * @param parameters - Parameters used to create the shader chunk.
  * @param parameters.extensionsUsed - {@link PBRFragmentShaderInputParams.extensionsUsed | extensionsUsed} to check if clearcoat is enabled.
+ * @param parameters.environmentMap - {@link extras/environmentMap/EnvironmentMap.EnvironmentMap | EnvironmentMap} to use for GGX Fresnel if any.
  * @returns - String with the `clearcoatSpecularIndirect` (`vec3f`) value set.
  */
-export declare const getClearcoatIndirectSpecular: ({ extensionsUsed, }?: {
+export declare const getClearcoatIndirectSpecular: ({ extensionsUsed, environmentMap, }?: {
     extensionsUsed?: PBRFragmentShaderInputParams['extensionsUsed'];
+    environmentMap?: PBRFragmentShaderInputParams['environmentMap'];
 }) => string;
