@@ -78,7 +78,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
   
   uv = uv * 2.0 - 1.0;
 
-  let normal: vec3<f32> = transformDirection(face, uv);
+  let normal: vec3f = transformDirection(face, uv);
   
   var irradiance: vec3f = vec3f(0.0, 0.0, 0.0);
 

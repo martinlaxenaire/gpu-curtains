@@ -1,5 +1,8 @@
+import { BRDF_GGX } from '../fragment/head/BRDF_GGX'
+import { common } from './common'
 import { constants } from './constants'
 import { generateTBN } from './generate-TBN'
+import { getImportanceSamples } from './get-importance-samples'
 import { hammersley2D } from './hammersley-2D'
 
 // from https://github.com/KhronosGroup/glTF-Sample-Renderer/blob/4deade77ce977dcd1e7918c949c2289e80eac365/source/shaders/ibl_filtering.frag
@@ -7,6 +10,13 @@ import { hammersley2D } from './hammersley-2D'
  * WGSL code to generate the mip levels of a PMREM cube texture based on a environment cubemap texture (with mips).
  */
 export const PMREMGeneration = /* wgsl */ `
+${constants}
+${common}
+${hammersley2D}
+${generateTBN}
+${BRDF_GGX}
+${getImportanceSamples}
+
 struct VSOutput {
     @builtin(position) position: vec4f,
     @location(0) direction: vec3f,
@@ -14,16 +24,16 @@ struct VSOutput {
 
 // Cube face lookup vectors
 // positive and negative Y need to be inverted
-const faceVectors = array<array<vec3<f32>, 2>, 6>(
-  array<vec3<f32>, 2>(vec3<f32>(1.0, 0.0, 0.0), vec3<f32>(0.0, 1.0, 0.0)), // +X
-  array<vec3<f32>, 2>(vec3<f32>(-1.0, 0.0, 0.0), vec3<f32>(0.0, 1.0, 0.0)), // -X
-  array<vec3<f32>, 2>(vec3<f32>(0.0, 1.0, 0.0), vec3<f32>(0.0, 0.0, -1.0)), // +Y
-  array<vec3<f32>, 2>(vec3<f32>(0.0, -1.0, 0.0), vec3<f32>(0.0, 0.0, 1.0)),  // -Y
-  array<vec3<f32>, 2>(vec3<f32>(0.0, 0.0, 1.0), vec3<f32>(0.0, 1.0, 0.0)), // +Z
-  array<vec3<f32>, 2>(vec3<f32>(0.0, 0.0, -1.0), vec3<f32>(0.0, 1.0, 0.0)) // -Z
+const faceVectors = array<array<vec3f, 2>, 6>(
+  array<vec3f, 2>(vec3f(1.0, 0.0, 0.0), vec3f(0.0, 1.0, 0.0)), // +X
+  array<vec3f, 2>(vec3f(-1.0, 0.0, 0.0), vec3f(0.0, 1.0, 0.0)), // -X
+  array<vec3f, 2>(vec3f(0.0, 1.0, 0.0), vec3f(0.0, 0.0, -1.0)), // +Y
+  array<vec3f, 2>(vec3f(0.0, -1.0, 0.0), vec3f(0.0, 0.0, 1.0)),  // -Y
+  array<vec3f, 2>(vec3f(0.0, 0.0, 1.0), vec3f(0.0, 1.0, 0.0)), // +Z
+  array<vec3f, 2>(vec3f(0.0, 0.0, -1.0), vec3f(0.0, 1.0, 0.0)) // -Z
 );
 
-fn texelDirection(faceIndex : u32, u : f32, v : f32) -> vec3<f32> {
+fn texelDirection(faceIndex : u32, u : f32, v : f32) -> vec3f {
   let forward = faceVectors[faceIndex][0];
   let up = faceVectors[faceIndex][1];
   let right = normalize(cross(up, forward));
@@ -34,15 +44,14 @@ fn texelDirection(faceIndex : u32, u : f32, v : f32) -> vec3<f32> {
     @builtin(vertex_index) vertexIndex : u32
 ) -> VSOutput {
     let pos = array(
+      vec2f(0.0, 0.0),  // center
+      vec2f(1.0, 0.0),  // right, center
+      vec2f(0.0, 1.0),  // center, top
 
-    vec2f( 0.0,  0.0),  // center
-    vec2f( 1.0,  0.0),  // right, center
-    vec2f( 0.0,  1.0),  // center, top
-
-    // 2st triangle
-    vec2f( 0.0,  1.0),  // center, top
-    vec2f( 1.0,  0.0),  // right, center
-    vec2f( 1.0,  1.0),  // right, top
+      // 2nd triangle
+      vec2f(0.0, 1.0),  // center, top
+      vec2f(1.0, 0.0),  // right, center
+      vec2f(1.0, 1.0),  // right, top
     );
 
     var vsOutput: VSOutput;
@@ -54,88 +63,18 @@ fn texelDirection(faceIndex : u32, u : f32, v : f32) -> vec3<f32> {
     return vsOutput;
 }
 
-${constants}
-${hammersley2D}
-${generateTBN}
-
-// glTF-Sample-Viewer
-struct MicrofacetDistributionSample {
-    pdf: f32,
-    cosTheta: f32,
-    sinTheta: f32,
-    phi: f32
-}
-
-fn D_GGX(NdotH: f32, roughness: f32) -> f32 {
-  let a: f32 = NdotH * roughness;
-  let k: f32 = roughness / (1.0 - NdotH * NdotH + a * a);
-  return k * k * (1.0 / PI);
-}
-
-// GGX microfacet distribution
-// https://www.cs.cornell.edu/~srm/publications/EGSR07-btdf.html
-// This implementation is based on https://bruop.github.io/ibl/,
-//  https://www.tobias-franke.eu/log/2014/03/30/notes_on_importance_sampling.html
-// and https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch20.html
-fn GGX(xi: vec2f, roughness: f32) -> MicrofacetDistributionSample {
-  var ggx: MicrofacetDistributionSample;
-
-  // evaluate sampling equations
-  let alpha: f32 = roughness * roughness;
-  ggx.cosTheta = saturate(sqrt((1.0 - xi.y) / (1.0 + (alpha * alpha - 1.0) * xi.y)));
-  ggx.sinTheta = sqrt(1.0 - ggx.cosTheta * ggx.cosTheta);
-  ggx.phi = 2.0 * PI * xi.x;
-
-  // evaluate GGX pdf (for half vector)
-  ggx.pdf = D_GGX(ggx.cosTheta, alpha);
-
-  // Apply the Jacobian to obtain a pdf that is parameterized by l
-  // see https://bruop.github.io/ibl/
-  // Typically you'd have the following:
-  // float pdf = D_GGX(NoH, roughness) * NoH / (4.0 * VoH);
-  // but since V = N => VoH == NoH
-  ggx.pdf /= 4.0;
-
-  return ggx;
-}
-
-// getImportanceSample returns an importance sample direction with pdf in the .w component
-fn getImportanceSample(sampleIndex: u32, N: vec3f, roughness: f32) -> vec4f {
-  // generate a quasi monte carlo point in the unit square [0.1)^2
-  let xi: vec2f = hammersley2d(sampleIndex, params.numSamples);
-
-  var importanceSample: MicrofacetDistributionSample;
-
-  // Trowbridge-Reitz / GGX microfacet model (Walter et al)
-  // https://www.cs.cornell.edu/~srm/publications/EGSR07-btdf.html
-  importanceSample = GGX(xi, roughness);
-
-  // transform the hemisphere sample to the normal coordinate frame
-  // i.e. rotate the hemisphere to the normal direction
-  let localSpaceDirection: vec3f = normalize(vec3(
-    importanceSample.sinTheta * cos(importanceSample.phi), 
-    importanceSample.sinTheta * sin(importanceSample.phi), 
-    importanceSample.cosTheta
-  ));
-
-  let TBN = generateTBN(N);
-  let direction: vec3f = TBN * localSpaceDirection;
-
-  return vec4(direction, importanceSample.pdf);
-}
-
 // Mipmap Filtered Samples (GPU Gems 3, 20.4)
 // https://developer.nvidia.com/gpugems/gpugems3/part-iii-rendering/chapter-20-gpu-based-importance-sampling
 // https://cgg.mff.cuni.cz/~jaroslav/papers/2007-sketch-fis/Final_sap_0073.pdf
-fn computeLod(pdf: f32) -> f32 {
+fn computeLod(pdf: f32, faceSize: u32, numSamples: u32) -> f32 {
   // // Solid angle of current sample -- bigger for less likely samples
-  // float omegaS = 1.0 / (float(u_sampleCount) * pdf);
+  // let omegaS: f32 = 1.0 / (f32(numSamples) * pdf);
   // // Solid angle of texel
-  // // note: the factor of 4.0 * MATH_PI 
-  // float omegaP = 4.0 * MATH_PI / (6.0 * float(u_width) * float(u_width));
+  // // note: the factor of 4.0 * PI 
+  // let omegaP: f32 = 4.0 * PI / (6.0 * f32(faceSize) * f32(faceSize));
   // // Mip level is determined by the ratio of our sample's solid angle to a texel's solid angle 
   // // note that 0.5 * log2 is equivalent to log4
-  // float lod = 0.5 * log2(omegaS / omegaP);
+  // let lod: f32 = 0.5 * log2(omegaS / omegaP);
 
   // babylon introduces a factor of K (=4) to the solid angle ratio
   // this helps to avoid undersampling the environment map
@@ -146,7 +85,7 @@ fn computeLod(pdf: f32) -> f32 {
   // We achieved good results by using the original formulation from Krivanek & Colbert adapted to cubemaps
 
   // https://cgg.mff.cuni.cz/~jaroslav/papers/2007-sketch-fis/Final_sap_0073.pdf
-  let lod: f32 = 0.5 * log2( 6.0 * f32(params.faceSize) * f32(params.faceSize) / (f32(params.numSamples) * pdf));
+  let lod: f32 = 0.5 * log2( 6.0 * f32(faceSize) * f32(faceSize) / (f32(numSamples) * pdf));
 
   return lod;
 }
@@ -168,12 +107,14 @@ struct Params {
   let currentMipLevel: u32 = params.mipLevel;
   let maxMipLevel: u32 = params.maxMipLevel;
   let numSamples: u32 = params.numSamples;
+  let faceSize: u32 = params.faceSize;
 
   // determine roughness for this mip.
   let maxMipF: f32 = f32(max(1u, maxMipLevel - 1u));
   let roughness = saturate( f32(currentMipLevel) / maxMipF );
 
   let N: vec3f = normalize(fsInput.direction);
+  let TBN = generateTBN(N);
 
   var color: vec3f = vec3(0.0);
   var weight: f32 = 0.0;
@@ -185,13 +126,16 @@ struct Params {
   }
 
   for(var i = 0u; i < numSamples; i++) {
-    let importanceSample: vec4f = getImportanceSample(i, N, roughness);
+    // generate a quasi monte carlo point in the unit square [0.1)^2
+    let Xi: vec2f = hammersley2d(i, numSamples);
 
-    let H: vec3f = vec3(importanceSample.xyz);
+    let importanceSample: vec4f = getImportanceSampleGGX(Xi, N, roughness);
+
+    let H: vec3f = normalize(TBN * importanceSample.xyz);
     let pdf: f32 = importanceSample.w;
 
     // mipmap filtered samples (GPU Gems 3, 20.4)
-    let lod: f32 = computeLod(pdf);
+    let lod: f32 = computeLod(pdf, faceSize, numSamples);
 
     // Note: reflect takes incident vector.
     let V: vec3f = N;
@@ -199,7 +143,7 @@ struct Params {
     let NdotL: f32 = dot(N, L);
 
     if (NdotL > 0.0) {
-        let intensityScale: f32 = 1.0; // TODO
+        let intensityScale: f32 = 1.0; // TODO?
         let sampleColor = textureSampleLevel(cubeTexture, clampSampler, L, lod).rgb * intensityScale;
         color += sampleColor * NdotL;
         weight += NdotL;

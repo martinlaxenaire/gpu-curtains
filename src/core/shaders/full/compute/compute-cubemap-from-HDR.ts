@@ -8,17 +8,17 @@ ${constants}
 
 // Cube face lookup vectors
 // positive and negative Y need to be inverted
-const faceVectors = array<array<vec3<f32>, 2>, 6>(
-  array<vec3<f32>, 2>(vec3<f32>(1.0, 0.0, 0.0), vec3<f32>(0.0, 1.0, 0.0)), // +X
-  array<vec3<f32>, 2>(vec3<f32>(-1.0, 0.0, 0.0), vec3<f32>(0.0, 1.0, 0.0)), // -X
-  array<vec3<f32>, 2>(vec3<f32>(0.0, -1.0, 0.0), vec3<f32>(0.0, 0.0, 1.0)),  // -Y
-  array<vec3<f32>, 2>(vec3<f32>(0.0, 1.0, 0.0), vec3<f32>(0.0, 0.0, -1.0)), // +Y
-  array<vec3<f32>, 2>(vec3<f32>(0.0, 0.0, 1.0), vec3<f32>(0.0, 1.0, 0.0)), // +Z
-  array<vec3<f32>, 2>(vec3<f32>(0.0, 0.0, -1.0), vec3<f32>(0.0, 1.0, 0.0)) // -Z
+const faceVectors = array<array<vec3f, 2>, 6>(
+  array<vec3f, 2>(vec3f(1.0, 0.0, 0.0), vec3f(0.0, 1.0, 0.0)), // +X
+  array<vec3f, 2>(vec3f(-1.0, 0.0, 0.0), vec3f(0.0, 1.0, 0.0)), // -X
+  array<vec3f, 2>(vec3f(0.0, -1.0, 0.0), vec3f(0.0, 0.0, 1.0)),  // -Y
+  array<vec3f, 2>(vec3f(0.0, 1.0, 0.0), vec3f(0.0, 0.0, -1.0)), // +Y
+  array<vec3f, 2>(vec3f(0.0, 0.0, 1.0), vec3f(0.0, 1.0, 0.0)), // +Z
+  array<vec3f, 2>(vec3f(0.0, 0.0, -1.0), vec3f(0.0, 1.0, 0.0)) // -Z
 );
 
 // Utility to calculate 3D direction for a given cube face pixel
-fn texelDirection(faceIndex : u32, u : f32, v : f32) -> vec3<f32> {
+fn texelDirection(faceIndex : u32, u : f32, v : f32) -> vec3f {
   let forward = faceVectors[faceIndex][0];
   let up = faceVectors[faceIndex][1];
   let right = normalize(cross(up, forward));
@@ -26,16 +26,16 @@ fn texelDirection(faceIndex : u32, u : f32, v : f32) -> vec3<f32> {
 }
 
 // Map 3D direction to equirectangular coordinates
-fn dirToEquirect(dir : vec3<f32>) -> vec2<f32> {
+fn dirToEquirect(dir : vec3f) -> vec2f {
   let phi = atan2(dir.z, dir.x);
   let theta = asin(dir.y);
   let u = 0.5 + 0.5 * phi / PI;
   let v = 0.5 - theta / PI;
-  return vec2<f32>(u, v);
+  return vec2f(u, v);
 }
 
 @compute @workgroup_size(8, 8, 1)
-fn main(@builtin(global_invocation_id) global_id : vec3<u32>) {
+fn main(@builtin(global_invocation_id) global_id : vec3u) {
   let faceSize = params.faceSize;
   let cubeFaceIndex = global_id.z;
   let x = global_id.x;
@@ -45,8 +45,8 @@ fn main(@builtin(global_invocation_id) global_id : vec3<u32>) {
     return;
   }
 
-  let u = f32(x) / f32(faceSize);
-  let v = f32(y) / f32(faceSize);
+  let u = f32(x) / f32(faceSize - 1);
+  let v = f32(y) / f32(faceSize - 1);
 
   // Get the 3D direction for this cube face texel
   let dir = texelDirection(cubeFaceIndex, u, v);
@@ -68,7 +68,7 @@ fn main(@builtin(global_invocation_id) global_id : vec3<u32>) {
   // Correct cube face order in texture store (fix for reversed face indices)
   textureStore(
     storageCubemap,
-    vec2<u32>(x, y),
+    vec2u(x, y),
     cubeFaceIndex,
     sampledColor
   );
