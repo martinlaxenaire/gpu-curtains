@@ -153,22 +153,43 @@ window.addEventListener('load', async () => {
       visible: false,
       shaders: {
         fragment: {
-          code: `
+          code: /* wgsl */ `
           struct VSOutput {
             @builtin(position) position: vec4f,
             @location(0) uv: vec2f,
           };
           
-          @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {            
-            return textureSample(lutTexture, clampSampler, fsInput.uv);
+          @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
+            let lutSample: vec4f = textureSample(lutTexture, clampSampler, fsInput.uv);
+            var color: vec4f;
+
+            if(params.displayTexture == 0.0) {        
+              color = lutSample;
+            } else if(params.displayTexture == 1.0) {        
+              color = vec4(lutSample.rg, 0.0, 1.0);
+            } else if(params.displayTexture == 2.0) {        
+              color = vec4(0.0, 0.0, lutSample.b, 1.0);
+            }
+
+            return color;
           }
         `,
+        },
+      },
+      uniforms: {
+        params: {
+          struct: {
+            displayTexture: {
+              type: 'f32',
+              value: 0,
+            },
+          },
         },
       },
     })
 
     lutPlane.position.z = -0.5
-    lutPlane.scale.set(0.075)
+    lutPlane.scale.set(0.25)
   }
 
   console.log(cubeMap)
@@ -264,13 +285,10 @@ window.addEventListener('load', async () => {
   const envTexturesFolder = gui.addFolder('Environment textures')
 
   envTexturesFolder
-    .add({ displayTexture: 0 }, 'displayTexture', {
+    .add(cubeMap.uniforms.params.displayTexture, 'value', {
       'Cubemap texture': 0,
       'Specular PMREM texture': 1,
       'Diffuse texture': 2,
-    })
-    .onChange((value) => {
-      cubeMap.uniforms.params.displayTexture.value = value
     })
     .name('Display diffuse cubemap')
 
@@ -284,5 +302,13 @@ window.addEventListener('load', async () => {
   if (lutPlane) {
     const lutTextureFolder = gui.addFolder('LUT texture')
     lutTextureFolder.add(lutPlane, 'visible').name('Show LUT texture')
+
+    lutTextureFolder
+      .add(lutPlane.uniforms.params.displayTexture, 'value', {
+        'Combined LUT': 0,
+        'BRDF LUT': 1,
+        'Charlie LUT': 2,
+      })
+      .name('LUT texture type')
   }
 })

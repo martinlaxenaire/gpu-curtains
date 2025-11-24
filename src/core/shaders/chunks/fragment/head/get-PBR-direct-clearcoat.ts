@@ -1,7 +1,7 @@
 /**
  * Helper WGSL functions to get the PBR direct clearcoat contribution.
  */
-export const getPBRClearcoatDirect = /* wgsl */ `
+export const getPBRDirectClearcoat = /* wgsl */ `
 // GGX Distribution, Schlick Fresnel, GGX_SmithCorrelated Visibility
 fn BRDF_GGX_Clearcoat(
   lightDirection: vec3f,
@@ -30,7 +30,7 @@ fn BRDF_GGX_Clearcoat(
 
 }
 
-fn getPBRClearcoatDirect(
+fn getPBRDirectClearcoat(
   clearcoatNormal: vec3f,
   viewDirection: vec3f,
   clearcoatF0: vec3f,

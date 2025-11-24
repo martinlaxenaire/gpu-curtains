@@ -3,6 +3,9 @@ import { generateTBN } from './generate-TBN'
 import { hammersley2D } from './hammersley-2D'
 
 // from https://github.com/KhronosGroup/glTF-Sample-Renderer/blob/4deade77ce977dcd1e7918c949c2289e80eac365/source/shaders/ibl_filtering.frag
+/**
+ * WGSL code to generate the mip levels of a PMREM cube texture based on a environment cubemap texture (with mips).
+ */
 export const PMREMGeneration = /* wgsl */ `
 struct VSOutput {
     @builtin(position) position: vec4f,
@@ -189,7 +192,6 @@ struct Params {
 
     // mipmap filtered samples (GPU Gems 3, 20.4)
     let lod: f32 = computeLod(pdf);
-    // let lod: f32 = min(computeLod(pdf), f32(currentMipLevel) - 1.0);
 
     // Note: reflect takes incident vector.
     let V: vec3f = N;

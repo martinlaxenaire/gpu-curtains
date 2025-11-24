@@ -11,7 +11,7 @@ import { applySpotShadows } from './apply-spot-shadows'
 import { applySheenClearcoatContribution } from './apply-sheen-clearcoat-contribution'
 import { getIBLClearcoatIndirectRadiance } from './get-IBL-clearcoat-indirect-radiance'
 import { getClearcoatIndirectSpecular } from './get-clearcoat-indirect-specular'
-import { getSheenIndirectSpecular } from './get-sheen-indirect-specular'
+import { getIBLSheenIndirectRadiance } from './get-IBL-sheen-indirect-radiance'
 import { getPBRDirectContribution } from './get-PBR-direct-contribution'
 
 /**
@@ -106,7 +106,7 @@ export const getPBRShading = ({
 
   ${getIBLClearcoatIndirectRadiance({ extensionsUsed, environmentMap })}
   ${getClearcoatIndirectSpecular({ extensionsUsed })}
-  ${getSheenIndirectSpecular({ extensionsUsed })}
+  ${getIBLSheenIndirectRadiance({ extensionsUsed, environmentMap })}
   
   reflectedLight.indirectDiffuse *= occlusion;
 

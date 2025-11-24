@@ -95,7 +95,6 @@ fn getPBRDirect(
   directLight: DirectLight,
   ptr_reflectedLight: ptr<function, ReflectedLight>
 ) {
-  // let ggx: vec3f = getGGX(normal, viewDirection, NdotL, alpha, specularF90, specularColorBlended, iridescenceFresnel, iridescence, directLight);
   let ggxSingleScatter: vec3f = BRDF_GGX_Singlescatter(
     normal,
     viewDirection,

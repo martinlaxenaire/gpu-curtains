@@ -72,7 +72,7 @@ fn BRDF_GGX_Anisotropic(
   return G * D * F;
 }
 
-fn getPBRDirect_Anisotropic(
+fn getPBRDirectAnisotropic(
   normal: vec3f,
   viewDirection: vec3f,
   NdotL: f32,

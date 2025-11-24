@@ -1,4 +1,6 @@
-/** WGSL BRDF GGX functions. Need the `constants` and `common` chunks. */
+/**
+ * WGSL BRDF GGX functions. Need the `constants` and `common` chunks.
+ */
 export const BRDF_GGX = /* wgsl */ `
 fn Schlick_to_F0( f: vec3f, f90: f32, dotVH: f32 ) -> vec3f {
     let x: f32 = clamp( 1.0 - dotVH, 0.0, 1.0 );
@@ -17,6 +19,7 @@ fn DistributionGGX(NdotH: f32, roughness: f32) -> f32 {
   return RECIPROCAL_PI * a2 / ( pow2( denom ) );
 }
 
+// Geometric Shadowing function
 fn GeometrySmith(NdotL: f32, NdotV: f32, roughness: f32) -> f32 {
   let a: f32 = pow2( roughness );
   let a2: f32 = pow2( a );

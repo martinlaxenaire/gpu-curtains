@@ -24,10 +24,10 @@ import { getTransmissionThickness } from '../../chunks/fragment/body/get-transmi
 import { getEmissiveOcclusion } from '../../chunks/fragment/body/get-emissive-occlusion'
 import { applyToneMapping } from '../../chunks/fragment/body/apply-tone-mapping'
 import { patchAdditionalChunks } from '../../default-material-helpers'
-import { getPBRSheenDirect } from '../../chunks/fragment/head/get-PBR-sheen-direct'
+import { getPBRDirectSheen } from '../../chunks/fragment/head/get-PBR-direct-sheen'
 import { getSheen } from '../../chunks/fragment/body/get-sheen'
 import { getClearcoat, getClearcoatNormal } from '../../chunks/fragment/body/get-clearcoat'
-import { getPBRClearcoatDirect } from '../../chunks/fragment/head/get-PBR-clearcoat-direct'
+import { getPBRDirectClearcoat } from '../../chunks/fragment/head/get-PBR-direct-clearcoat'
 import { generateTBN } from '../../chunks/utils/generate-TBN'
 import { getIridescence } from '../../chunks/fragment/body/get-iridescence'
 import { getPBRIridescence } from '../../chunks/fragment/head/get-PBR-iridescence'
@@ -107,8 +107,8 @@ ${getIBLIndirectRadiance}
 ${getIBLTransmission}
 
 ${extensionsUsed.includes('KHR_materials_sheen') ? getIBLSheen : ''}
-${extensionsUsed.includes('KHR_materials_sheen') ? getPBRSheenDirect : ''}
-${extensionsUsed.includes('KHR_materials_clearcoat') ? getPBRClearcoatDirect : ''}
+${extensionsUsed.includes('KHR_materials_sheen') ? getPBRDirectSheen : ''}
+${extensionsUsed.includes('KHR_materials_clearcoat') ? getPBRDirectClearcoat : ''}
 ${extensionsUsed.includes('KHR_materials_iridescence') ? getPBRIridescence : ''}
 ${extensionsUsed.includes('KHR_materials_anisotropy') ? getPBRDirectAnisotropic : ''}
 ${extensionsUsed.includes('KHR_materials_anisotropy') ? getIBLIndirectAnisotropyRadiance : ''}

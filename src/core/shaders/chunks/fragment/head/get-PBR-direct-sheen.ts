@@ -1,7 +1,7 @@
 /**
  * WGSL functions to calculate sheen BRDF specular direct contribution.
  */
-export const getPBRSheenDirect = /* wgsl */ `
+export const getPBRDirectSheen = /* wgsl */ `
 // https://github.com/google/filament/blob/master/shaders/src/brdf.fs
 fn D_Charlie( roughness: f32, dotNH: f32 ) -> f32 {
   let alpha: f32 = pow2( roughness );
@@ -39,7 +39,7 @@ fn BRDF_Sheen(
   return sheenColor * ( D * V );
 }
 
-fn getPBRSheenDirect(
+fn getPBRDirectSheen(
   normal: vec3f,
   viewDirection: vec3f,
   sheenColor: vec3f,

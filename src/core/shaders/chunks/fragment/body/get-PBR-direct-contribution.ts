@@ -1,5 +1,4 @@
 import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code'
-import { getPBRSheenClearcoatDirect } from './get-PBR-sheen-clearcoat-direct'
 
 /**
  * Get the PBR direct light contribution.
@@ -54,7 +53,7 @@ export const getPBRDirectContribution = ({
 
   if (extensionsUsed.includes('KHR_materials_anisotropy')) {
     pbrDirect += /* wgsl */ `
-    getPBRDirect_Anisotropic(
+    getPBRDirectAnisotropic(
       normal,
       viewDirection,
       NdotL,
@@ -93,8 +92,17 @@ export const getPBRDirectContribution = ({
     );`
   }
 
-  // sheen + clearcoat
-  pbrDirect += getPBRSheenClearcoatDirect({ extensionsUsed })
+  // clearcoat
+  if (extensionsUsed.includes('KHR_materials_clearcoat')) {
+    pbrDirect += /* wgsl */ `
+  clearcoatSpecularDirect += getPBRDirectClearcoat(clearcoatNormal, viewDirection, clearcoatF0, clearcoatF90, clearcoatRoughness, directLight, &reflectedLight);`
+  }
+
+  // sheen
+  if (extensionsUsed.includes('KHR_materials_sheen')) {
+    pbrDirect += /* wgsl */ `
+  sheenSpecularDirect += getPBRDirectSheen(normal, viewDirection, sheenColor, sheenRoughness, directLight, &reflectedLight);`
+  }
 
   return pbrDirect
 }

@@ -5,9 +5,9 @@ import { generateTBN } from '../../chunks/utils/generate-TBN'
 import { BRDF_GGX } from '../../chunks/fragment/head/BRDF_GGX'
 
 // LUT for GGX distribution
-// ported from https://github.com/KhronosGroup/glTF-Sample-Viewer/blob/9940e4b4f4a2a296351bcd35035cc518deadc298/source/shaders/ibl_filtering.frag
+// ported from https://github.com/KhronosGroup/glTF-Sample-Renderer/blob/main/source/shaders/ibl_filtering.frag
 /**
- * Compute a BRDF LUT (look up table) texture.
+ * Compute a BRDF LUT (look up table) texture. `RG` channels are used for BRDF GGX, `B` channel is used for BRDF "Charlie" sheen.
  */
 export const computeBRDFLUT = /* wgsl */ `
 ${constants}
@@ -22,7 +22,16 @@ struct MicrofacetDistributionSample {
   cosTheta: f32,
   sinTheta: f32,
   phi: f32
-};
+}
+
+struct ImportanceSampleVars {
+  H: vec3f,
+  pdf: f32,
+  L: vec3f,
+  NdotL: f32,
+  NdotH: f32,
+  VdotH: f32
+}
 
 // https://www.cs.cornell.edu/~srm/publications/EGSR07-btdf.html
 // This implementation is based on https://bruop.github.io/ibl/,
@@ -32,13 +41,13 @@ fn GGX(xi: vec2f, roughness: f32) -> MicrofacetDistributionSample {
   var ggx: MicrofacetDistributionSample;
 
   // evaluate sampling equations
-  let alpha: f32 = roughness * roughness;
-  ggx.cosTheta = clamp(sqrt((1.0 - xi.y) / (1.0 + (alpha * alpha - 1.0) * xi.y)), 0.0, 1.0);
+  let alpha: f32 = max(roughness * roughness, EPSILON);
+  ggx.cosTheta = sqrt((1.0 - xi.y) / (1.0 + (alpha * alpha - 1.0) * xi.y));
   ggx.sinTheta = sqrt(1.0 - ggx.cosTheta * ggx.cosTheta);
   ggx.phi = 2.0 * PI * xi.x;
 
   // evaluate GGX pdf (for half vector)
-  ggx.pdf = DistributionGGX(ggx.cosTheta, alpha);
+  // ggx.pdf = DistributionGGX(ggx.cosTheta, roughness);
 
   // Apply the Jacobian to obtain a pdf that is parameterized by l
   // see https://bruop.github.io/ibl/
@@ -50,43 +59,92 @@ fn GGX(xi: vec2f, roughness: f32) -> MicrofacetDistributionSample {
   return ggx;
 }
 
-fn Lambertian(xi: vec2f, roughness: f32) -> MicrofacetDistributionSample {
-    var lambertian: MicrofacetDistributionSample;
+fn Charlie(xi: vec2f, roughness: f32) -> MicrofacetDistributionSample {
+  var charlie: MicrofacetDistributionSample;
 
-  // Cosine weighted hemisphere sampling
-  // http://www.pbr-book.org/3ed-2018/Monte_Carlo_Integration/2D_Sampling_with_Multidimensional_Transformations.html#Cosine-WeightedHemisphereSampling
-  lambertian.cosTheta = sqrt(1.0 - xi.y);
-  lambertian.sinTheta = sqrt(xi.y); // equivalent to \`sqrt(1.0 - cosTheta*cosTheta)\`;
-  lambertian.phi = 2.0 * PI * xi.x;
+  let alpha = max(roughness * roughness, EPSILON);
+  charlie.sinTheta = pow(xi.y, alpha / (2.0 * alpha + 1.0));
+  charlie.cosTheta = sqrt(1.0 - charlie.sinTheta * charlie.sinTheta);
+  charlie.phi = 2.0 * PI * xi.x;
 
-  lambertian.pdf = lambertian.cosTheta / PI; // evaluation for solid angle, therefore drop the sinTheta
+  // evaluate Charlie pdf (for half vector)
+  // charlie.pdf = D_Charlie(roughness, charlie.cosTheta);
 
-  return lambertian;
+  // Apply the Jacobian to obtain a pdf that is parameterized by l
+  charlie.pdf /= 4.0;
+
+  return charlie;
 }
 
-// getImportanceSample returns an importance sample direction with pdf in the .w component
-fn getImportanceSample(Xi: vec2<f32>, N: vec3f, roughness: f32) -> vec4f {
+// getImportanceSampleGGX returns an importance sample direction with pdf in the .w component
+fn getImportanceSampleGGX(Xi: vec2f, N: vec3f, roughness: f32) -> vec4f {
   var importanceSample: MicrofacetDistributionSample;
   
   importanceSample = GGX(Xi, roughness);
   
-   // transform the hemisphere sample to the normal coordinate frame
+  // transform the hemisphere sample to the normal coordinate frame
   // i.e. rotate the hemisphere to the normal direction
-  let localSpaceDirection: vec3f = normalize(vec3(
+  let H: vec3f = normalize(vec3(
     importanceSample.sinTheta * cos(importanceSample.phi), 
     importanceSample.sinTheta * sin(importanceSample.phi), 
     importanceSample.cosTheta
   ));
-  
-  let TBN: mat3x3f = generateTBN(N);
-  let direction: vec3f = TBN * localSpaceDirection;
 
-  return vec4(direction, importanceSample.pdf);
+  return vec4(H, importanceSample.pdf);
 }
 
-@compute @workgroup_size(16, 16, 1)
-fn main(@builtin(global_invocation_id) global_id : vec3<u32>) {  
-  let texelSize: vec2<u32> = textureDimensions(lutStorageTexture);
+fn getImportanceSampleCharlie(Xi: vec2f, N: vec3f, roughness: f32) -> vec4f {
+  var importanceSample: MicrofacetDistributionSample;
+
+  importanceSample = Charlie(Xi, roughness);
+
+  // transform the hemisphere sample to the normal coordinate frame
+  // i.e. rotate the hemisphere to the normal direction
+  let H: vec3f = normalize(vec3(
+    importanceSample.sinTheta * cos(importanceSample.phi), 
+    importanceSample.sinTheta * sin(importanceSample.phi), 
+    importanceSample.cosTheta
+  ));
+
+  return vec4(H, importanceSample.pdf);
+}
+
+fn getImportanceSampleVars(importanceSample: vec4f, V: vec3f, TBN: mat3x3f) -> ImportanceSampleVars {
+  var importanceSampleVars: ImportanceSampleVars;
+  let H: vec3f = normalize(TBN * importanceSample.xyz);
+  let L: vec3f = normalize(reflect(-V, H));
+
+  importanceSampleVars.H = H;
+  importanceSampleVars.pdf = importanceSample.w;
+
+  importanceSampleVars.L = L;
+
+  importanceSampleVars.NdotL = saturate(L.z);
+  importanceSampleVars.NdotH = saturate(H.z);
+  importanceSampleVars.VdotH = saturate(dot(V, H));
+
+  return importanceSampleVars;
+}
+
+// NDF
+// https://github.com/google/filament/blob/master/shaders/src/brdf.fs#L136
+fn V_Ashikhmin(NdotL: f32, NdotV: f32) -> f32 {
+  return saturate(1.0 / (4.0 * clamp(NdotL + NdotV - NdotL * NdotV, EPSILON, 1.0)));
+}
+
+// NDF
+// https://github.com/google/filament/blob/main/shaders/src/surface_brdf.fs#L94
+fn D_Charlie(sheenRoughness: f32, NdotH: f32) -> f32 {
+  // Estevez and Kulla 2017, "Production Friendly Microfacet Sheen BRDF"
+  let invAlpha: f32  = 1.0 / max(sheenRoughness * sheenRoughness, EPSILON);
+  let cos2h: f32 = NdotH * NdotH;
+  let sin2h: f32 = max(1.0 - cos2h, 0.0078125); // 2^(-14/2), so sin2h^2 > 0 in fp16
+  return (2.0 + invAlpha) * pow(sin2h, invAlpha * 0.5) / (2.0 * PI);
+}
+
+@compute @workgroup_size(8, 8, 1)
+fn main(@builtin(global_invocation_id) global_id : vec3u) {  
+  let texelSize: vec2u = textureDimensions(lutStorageTexture);
 
   let x: u32 = global_id.x;
   let y: u32 = global_id.y;
@@ -96,49 +154,51 @@ fn main(@builtin(global_invocation_id) global_id : vec3<u32>) {
      return;
   }
   
-  let epsilon: f32 = 1e-6;
-
   // Compute roughness and N·V from texture coordinates
-  let NdotV: f32 = max(f32(x) / f32(texelSize.x - 1), epsilon);    // Maps x-axis to N·V (0.0 to 1.0)
-  let roughness: f32 = max(f32(y) / f32(texelSize.y - 1), epsilon);  // Maps y-axis to roughness (0.0 to 1.0)
+  let NdotV: f32 = f32(x) / f32(texelSize.x - 1);    // Maps x-axis to N·V (0.0 to 1.0)
+  let roughness: f32 = f32(y) / f32(texelSize.y - 1);  // Maps y-axis to roughness (0.0 to 1.0)
 
   // Calculate view vector and normal vector
-  let V: vec3<f32> = vec3<f32>(sqrt(1.0 - NdotV * NdotV), 0.0, NdotV);  // Normalized view vector
-  let N: vec3<f32> = vec3<f32>(0.0, 0.0, 1.0);                          // Normal is along z-axis
+  let V: vec3f = vec3(sqrt(1.0 - NdotV * NdotV), 0.0, NdotV);  // Normalized view vector
+  let N: vec3f = vec3(0.0, 0.0, 1.0);                          // Normal is along z-axis
 
   // Initialize integration variables
   var A: f32 = 0.0;
   var B: f32 = 0.0;
   var C: f32 = 0.0;
 
+  let TBN: mat3x3f = generateTBN(N);
+
   // Monte Carlo integration to calculate A and B factors
   let sampleCount: u32 = params.sampleCount;
   for (var i: u32 = 0; i < sampleCount; i++) {
-    let Xi: vec2<f32> = hammersley2d(i, sampleCount);  // Importance sampling (Hammersley sequence)
+    let Xi: vec2f = hammersley2d(i, sampleCount);  // Importance sampling (Hammersley sequence)
     
-    //let H: vec3<f32> = importanceSampleGGX(Xi, N, roughness);
-    let importanceSample: vec4f = getImportanceSample(Xi, N, roughness);
-    let H: vec3f = importanceSample.xyz;
-    // let pdf: f32 = importanceSample.w;
-    
-    let L: vec3<f32> = normalize(reflect(-V, H));
-    
-    let NdotL: f32 = clamp(L.z, 0.0, 1.0);
-    let NdotH: f32 = clamp(H.z, 0.0, 1.0);
-    let VdotH: f32 = clamp(dot(V, H), 0.0, 1.0);
+    let importanceSampleGGX: vec4f = getImportanceSampleGGX(Xi, N, max(roughness, 0.0525));
+    let sampleGGX: ImportanceSampleVars = getImportanceSampleVars(importanceSampleGGX, V, TBN);
 
     // Ensure valid light direction
-    if (NdotL > 0.0) {     
+    if (sampleGGX.NdotL > 0.0) {     
       // LUT for GGX distribution.
 
       // Taken from: https://bruop.github.io/ibl
       // Shadertoy: https://www.shadertoy.com/view/3lXXDB
       // Terms besides V are from the GGX PDF we're dividing by.
-      let V_pdf: f32 = GeometrySmith(NdotV, NdotL, roughness) * VdotH * NdotL / max(NdotH, epsilon);
-      let Fc: f32 = pow(1.0 - VdotH, 5.0);
+      let geometryV: f32 = GeometrySmith(NdotV, sampleGGX.NdotL, max(roughness, 0.0525));
+      let V_pdf: f32 = geometryV * sampleGGX.VdotH * sampleGGX.NdotL / max(sampleGGX.NdotH, EPSILON);
+      let Fc: f32 = pow(1.0 - sampleGGX.VdotH, 5.0);
       A += (1.0 - Fc) * V_pdf;
       B += Fc * V_pdf;
-      C += 0.0;
+    }
+
+    let importanceSampleCharlie: vec4f = getImportanceSampleCharlie(Xi, N, roughness);
+    let sampleCharlie: ImportanceSampleVars = getImportanceSampleVars(importanceSampleCharlie, V, TBN);
+
+    if(sampleCharlie.NdotL > 0.0) {
+      // LUT for Charlie distribution.
+      let sheenDistribution: f32 = D_Charlie(roughness, sampleCharlie.NdotH);
+      let sheenVisibility: f32 = V_Ashikhmin(sampleCharlie.NdotL, NdotV);
+      C += sheenVisibility * sheenDistribution * sampleCharlie.NdotL * sampleCharlie.VdotH;
     }
   }
 

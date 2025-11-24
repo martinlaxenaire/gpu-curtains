@@ -18,7 +18,8 @@ export const applySheenClearcoatContribution = ({
     sheenClearcoatContribution += /* wgsl */ `
   // Sheen energy compensation approximation calculation can be found at the end of
   // https://drive.google.com/file/d/1T0D1VSyR4AllqIJTQAraEIzjlb5h4FKH/view?usp=sharing
-  let sheenEnergyComp: f32 = 1.0 - 0.157 * max3( sheenColor );
+  // let sheenEnergyComp: f32 = 1.0 - 0.157 * max3( sheenColor );
+  let sheenEnergyComp: f32 = 1.0 - max3(sheenColor) * sheenAlbedoScale;
 
   outgoingLight = outgoingLight * sheenEnergyComp + sheenSpecularDirect + sheenSpecularIndirect;
     `

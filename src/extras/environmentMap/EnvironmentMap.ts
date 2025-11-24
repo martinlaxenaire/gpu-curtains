@@ -64,7 +64,7 @@ export interface EnvironmentMapParams extends Partial<EnvironmentMapOptions> {}
 /**
  * Utility to create environment maps specular, diffuse and LUT textures using an HDR file.
  *
- * Create a LUT texture on init using a {@link ComputePass}. Can load an HDR file and then create the specular and diffuse textures using two separate {@link ComputePass}.
+ * Create a LUT texture on init using a {@link ComputePass}. Can load an HDR file and then create the cubemap and diffuse textures using two separate {@link ComputePass} and the PMREM texture using custom mips.
  *
  * Especially useful for IBL shading with {@link extras/meshes/LitMesh.LitMesh | LitMesh}.
  *
@@ -97,7 +97,7 @@ export class EnvironmentMap {
   /** BRDF GGX LUT storage {@link Texture} used in the compute shader. */
   #lutStorageTexture: Texture
 
-  /** BRDF GGX LUT {@link Texture} used for IBL shading. */
+  /** LUT {@link Texture} used for IBL shading, containing BRDF GGX in the `RG` channels and BRDF "Charlie" sheen in the `B` channel. */
   lutTexture: Texture | null
 
   /** Environment cube map  {@link Texture}. */
@@ -126,7 +126,7 @@ export class EnvironmentMap {
     // patch params with defaults
     const lutTextureDefaultParams: LUTTextureParams = {
       size: 256,
-      computeSampleCount: 1024,
+      computeSampleCount: 512,
       label: 'Environment LUT texture',
       name: 'lutTexture',
       format: 'rgba16float',
@@ -144,7 +144,7 @@ export class EnvironmentMap {
       label: 'Environment specular texture',
       name: 'envSpecularTexture',
       format: 'rgba16float',
-      numSamples: 1024,
+      numSamples: 512,
     }
 
     params = {
@@ -378,7 +378,7 @@ export class EnvironmentMap {
   }
 
   /**
-   * Create the {@link lutTexture | BRDF GGX LUT texture} using the provided {@link LUTTextureParams | LUT texture options} and a {@link ComputePass} that runs once.
+   * Create the {@link lutTexture | BRDF GGX and sheen LUT texture} using the provided {@link LUTTextureParams | LUT texture options} and a {@link ComputePass} that runs once.
    */
   async computeBRDFLUTTexture() {
     // could we get one from another env map?
@@ -404,8 +404,8 @@ export class EnvironmentMap {
       label: 'Compute LUT texture',
       autoRender: false, // we're going to render only on demand
       dispatchSize: [
-        Math.ceil(this.#lutStorageTexture.size.width / 16),
-        Math.ceil(this.#lutStorageTexture.size.height / 16),
+        Math.ceil(this.#lutStorageTexture.size.width / 8),
+        Math.ceil(this.#lutStorageTexture.size.height / 8),
         1,
       ],
       shaders: {
