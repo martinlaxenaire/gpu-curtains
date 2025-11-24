@@ -306,7 +306,7 @@ window.addEventListener('load', async () => {
     lutTextureFolder
       .add(lutPlane.uniforms.params.displayTexture, 'value', {
         'Combined LUT': 0,
-        'BRDF LUT': 1,
+        'GGX LUT': 1,
         'Charlie LUT': 2,
       })
       .name('LUT texture type')

@@ -18732,7 +18732,8 @@ fn getIBLVolumeRefraction(
   viewDirection: vec3f,
   roughness: f32,
   diffuseContribution: vec3f,
-  specularColor: vec3f,
+  fab: vec2f,
+  specularColorBlended: vec3f,
   specularF90: f32,
   position: vec3f,
   modelScale: vec3f,
@@ -18746,41 +18747,40 @@ fn getIBLVolumeRefraction(
   transmissionBackgroundTexture: texture_2d<f32>,
   defaultSampler: sampler,
 ) -> vec4f {
-    // TODO dispersion
-    var transmittedLight: vec4f;
-    var transmissionRayLength: f32;
-    var transmittance: vec3f;
-    
-    // Calculate the transmission ray
-    let transmissionRay: vec3f = getVolumeTransmissionRay(normal, viewDirection, thickness, ior, modelScale);
-    let refractedRayExit = position + transmissionRay;
+  var transmittedLight: vec4f;
+  var transmissionRayLength: f32;
+  var transmittance: vec3f;
+  
+  // Calculate the transmission ray
+  let transmissionRay: vec3f = getVolumeTransmissionRay(normal, viewDirection, thickness, ior, modelScale);
+  let refractedRayExit = position + transmissionRay;
 
-    // Transform to NDC space
-    let ndcPos = projMatrix * viewMatrix * vec4(refractedRayExit, 1.0);
-    var refractionCoords = ndcPos.xy / ndcPos.w;
-    refractionCoords = (refractionCoords + 1.0) / 2.0;
-    refractionCoords = vec2(refractionCoords.x, 1.0 - refractionCoords.y); // webgpu Y flip
+  // Transform to NDC space
+  let ndcPos = projMatrix * viewMatrix * vec4(refractedRayExit, 1.0);
+  var refractionCoords = ndcPos.xy / ndcPos.w;
+  refractionCoords = (refractionCoords + 1.0) / 2.0;
+  refractionCoords = vec2(refractionCoords.x, 1.0 - refractionCoords.y); // webgpu Y flip
 
-    // Sample the transmission texture
-    transmittedLight = getTransmissionSample(refractionCoords, roughness, ior, transmissionBackgroundTexture, defaultSampler);
+  // Sample the transmission texture
+  transmittedLight = getTransmissionSample(refractionCoords, roughness, ior, transmissionBackgroundTexture, defaultSampler);
 
-    // Compute transmittance
-    transmittance = diffuseContribution * volumeAttenuation(length(transmissionRay), attenuationColor, attenuationDistance);
+  // Compute transmittance
+  transmittance = diffuseContribution * volumeAttenuation(length(transmissionRay), attenuationColor, attenuationDistance);
 
-    // Apply attenuation to transmitted light
-    let attenuatedColor = transmittance * transmittedLight.rgb;
+  // Apply attenuation to transmitted light
+  let attenuatedColor = transmittance * transmittedLight.rgb;
 
-    // Compute Fresnel term using an environment BRDF
-    let F = EnvironmentBRDF(normal, viewDirection, specularColor, specularF90, roughness);
+  // Compute Fresnel term using an environment BRDF
+  let F = specularColorBlended * fab.x + specularF90 * fab.y;
 
-    // Average the transmittance for a single factor
-    let transmittanceFactor = (transmittance.r + transmittance.g + transmittance.b) / 3.0;
+  // Average the transmittance for a single factor
+  let transmittanceFactor = (transmittance.r + transmittance.g + transmittance.b) / 3.0;
 
-    // Combine results into the final color
-    return vec4(
-      (1.0 - F) * attenuatedColor,
-      1.0 - (1.0 - transmittedLight.a) * transmittanceFactor
-    );
+  // Combine results into the final color
+  return vec4(
+    (1.0 - F) * attenuatedColor,
+    1.0 - (1.0 - transmittedLight.a) * transmittanceFactor
+  );
 }
 
 fn getIBLVolumeRefractionWithDispersion(
@@ -18788,7 +18788,8 @@ fn getIBLVolumeRefractionWithDispersion(
   viewDirection: vec3f,
   roughness: f32,
   diffuseContribution: vec3f,
-  specularColor: vec3f,
+  fab: vec2f,
+  specularColorBlended: vec3f,
   specularF90: f32,
   position: vec3f,
   modelScale: vec3f,
@@ -18802,85 +18803,57 @@ fn getIBLVolumeRefractionWithDispersion(
   transmissionBackgroundTexture: texture_2d<f32>,
   defaultSampler: sampler,
 ) -> vec4f {
-    var transmittedLight: vec4f;
-    var transmissionRayLength: f32;
-    var transmittance: vec3f;
+  var transmittedLight: vec4f;
+  var transmissionRayLength: f32;
+  var transmittance: vec3f;
+  
+  let halfSpread: f32 = (ior - 1.0) * 0.025 * dispersion;
+  let iors: vec3f = vec3(ior - halfSpread, ior, ior + halfSpread);
+  
+  for(var i: i32 = 0; i < 3; i++) {
+    let transmissionRay: vec3f = getVolumeTransmissionRay(normal, viewDirection, thickness, iors[i], modelScale);
+    transmissionRayLength = length(transmissionRay);
+    let refractedRayExit = position + transmissionRay;
+
+    // Transform to NDC space
+    let ndcPos = projMatrix * viewMatrix * vec4(refractedRayExit, 1.0);
+    var refractionCoords = ndcPos.xy / ndcPos.w;
+    refractionCoords = (refractionCoords + 1.0) / 2.0;
+    refractionCoords = vec2(refractionCoords.x, 1.0 - refractionCoords.y); // webgpu Y flip
     
-    let halfSpread: f32 = (ior - 1.0) * 0.025 * dispersion;
-    let iors: vec3f = vec3(ior - halfSpread, ior, ior + halfSpread);
+    let transmissionSample: vec4f = getTransmissionSample(refractionCoords, roughness, iors[i], transmissionBackgroundTexture, defaultSampler);
     
-    for(var i: i32 = 0; i < 3; i++) {
-      let transmissionRay: vec3f = getVolumeTransmissionRay(normal, viewDirection, thickness, iors[i], modelScale);
-      transmissionRayLength = length(transmissionRay);
-      let refractedRayExit = position + transmissionRay;
-
-      // Transform to NDC space
-      let ndcPos = projMatrix * viewMatrix * vec4(refractedRayExit, 1.0);
-      var refractionCoords = ndcPos.xy / ndcPos.w;
-      refractionCoords = (refractionCoords + 1.0) / 2.0;
-      refractionCoords = vec2(refractionCoords.x, 1.0 - refractionCoords.y); // webgpu Y flip
-      
-      let transmissionSample: vec4f = getTransmissionSample(refractionCoords, roughness, iors[i], transmissionBackgroundTexture, defaultSampler);
-      
-      transmittedLight[i] = transmissionSample[i];
-      transmittedLight.a += transmissionSample.a;
-      
-      // Compute transmittance
-      let diffuse: vec3f = diffuseContribution;
-      transmittance[i] = diffuse[i] * volumeAttenuation(length(transmissionRay), attenuationColor, attenuationDistance)[i];
-    }
+    transmittedLight[i] = transmissionSample[i];
+    transmittedLight.a += transmissionSample.a;
     
-    transmittedLight.a /= 3.0;
+    // Compute transmittance
+    let diffuse: vec3f = diffuseContribution;
+    transmittance[i] = diffuse[i] * volumeAttenuation(length(transmissionRay), attenuationColor, attenuationDistance)[i];
+  }
+  
+  transmittedLight.a /= 3.0;
 
-    // Apply attenuation to transmitted light
-    let attenuatedColor = transmittance * transmittedLight.rgb;
+  // Apply attenuation to transmitted light
+  let attenuatedColor = transmittance * transmittedLight.rgb;
 
-    // Compute Fresnel term using an environment BRDF
-    let F = EnvironmentBRDF(normal, viewDirection, specularColor, specularF90, roughness);
+  // Compute Fresnel term using an environment BRDF
+  let F = specularColorBlended * fab.x + specularF90 * fab.y;
 
-    // Average the transmittance for a single factor
-    let transmittanceFactor = (transmittance.r + transmittance.g + transmittance.b) / 3.0;
+  // Average the transmittance for a single factor
+  let transmittanceFactor = (transmittance.r + transmittance.g + transmittance.b) / 3.0;
 
-    // Combine results into the final color
-    return vec4(
-      (1.0 - F) * attenuatedColor,
-      1.0 - (1.0 - transmittedLight.a) * transmittanceFactor
-    );
+  // Combine results into the final color
+  return vec4(
+    (1.0 - F) * attenuatedColor,
+    1.0 - (1.0 - transmittedLight.a) * transmittanceFactor
+  );
 }
 `
   );
 
-  const BRDF_GGX = (
+  const getPBRDirect = (
     /* wgsl */
     `
-fn Schlick_to_F0( f: vec3f, f90: f32, dotVH: f32 ) -> vec3f {
-    let x: f32 = clamp( 1.0 - dotVH, 0.0, 1.0 );
-    let x2: f32 = x * x;
-    let x5: f32 = clamp( x * x2 * x2, 0.0, 0.9999 );
-
-    return ( f - vec3( f90 ) * x5 ) / ( 1.0 - x5 );
-}
-
-fn DistributionGGX(NdotH: f32, roughness: f32) -> f32 {
-  let a: f32 = pow2( roughness );
-  let a2: f32 = pow2( a );
-
-  let denom: f32 = (pow2( NdotH ) * (a2 - 1.0) + 1.0);
-
-  return RECIPROCAL_PI * a2 / ( pow2( denom ) );
-}
-
-// Geometric Shadowing function
-fn GeometrySmith(NdotL: f32, NdotV: f32, roughness: f32) -> f32 {
-  let a: f32 = pow2( roughness );
-  let a2: f32 = pow2( a );
-  
-  let gv: f32 = NdotL * sqrt( a2 + ( 1.0 - a2 ) * pow2( NdotV ) );
-  let gl: f32 = NdotV * sqrt( a2 + ( 1.0 - a2 ) * pow2( NdotL ) );
-
-  return 0.5 / max( gv + gl, EPSILON );
-}
-
 fn BRDF_GGX(
   NdotV: f32,
   NdotL: f32,
@@ -18901,26 +18874,9 @@ fn BRDF_GGX(
   
   return G * D * F;
 }
-`
-  );
 
-  const getPBRDirect = (
-    /* wgsl */
-    `
-${BRDF_GGX}
-
-fn EnvironmentBRDF(
-  normal: vec3<f32>, 
-  viewDir: vec3<f32>, 
-  specularColor: vec3<f32>, 
-  specularF90: f32, 
-  roughness: f32
-) -> vec3<f32> {
-  let fab = DFGApprox(normal, viewDir, roughness);
-  return specularColor * fab.x + specularF90 * fab.y;
-}
-
-fn computeSpecularOcclusion( NdotV: f32, occlusion: f32, roughness: f32 ) -> f32 {
+fn computeSpecularOcclusion(geometryNormal: vec3f, viewDirection: vec3f, occlusion: f32, roughness: f32) -> f32 {
+  let NdotV: f32 = saturate(dot(geometryNormal, viewDirection));
 	return saturate(pow(NdotV + occlusion, exp2(- 16.0 * roughness - 1.0)) - 1.0 + occlusion);
 }
 
@@ -18953,13 +18909,14 @@ fn BRDF_GGX_Multiscatter(
   viewDirection: vec3f,
   NdotL: f32,
   NdotV: f32,
-  dfgV: vec2f,
-  dfgL: vec2f,
+  dfgDirect: DFGDirect,
   specularF90: f32,
   specularColorBlended: vec3f,
   roughness: f32,
 ) -> vec3f {
   // Multi-scattering compensation
+  let dfgV: vec2f = dfgDirect.dfgV;
+  let dfgL: vec2f = dfgDirect.dfgL;
 
 	// Single-scattering energy for view and light
 	let FssEss_V: vec3f = specularColorBlended * dfgV.x + specularF90 * dfgV.y;
@@ -18987,10 +18944,7 @@ fn BRDF_GGX_Multiscatter(
 fn getPBRDirect(
   normal: vec3f,
   viewDirection: vec3f,
-  NdotL: f32,
-  NdotV: f32,
-  dfgV: vec2f,
-  dfgL: vec2f,
+  dfgDirect: DFGDirect,
   diffuseContribution: vec3f,
   specularF90: f32,
   specularColorBlended: vec3f,
@@ -19000,6 +18954,9 @@ fn getPBRDirect(
   directLight: DirectLight,
   ptr_reflectedLight: ptr<function, ReflectedLight>
 ) {
+  let NdotL: f32 = saturate(dot(normal, directLight.direction));
+  let NdotV: f32 = saturate(dot(normal, viewDirection));
+
   let ggxSingleScatter: vec3f = BRDF_GGX_Singlescatter(
     normal,
     viewDirection,
@@ -19018,8 +18975,7 @@ fn getPBRDirect(
     viewDirection,
     NdotL,
     NdotV,
-    dfgV,
-    dfgL,
+    dfgDirect,
     specularF90,
     specularColorBlended,
     roughness,
@@ -19108,9 +19064,10 @@ fn getPBRDirect(
   
   var transmitted: vec4f = ${iblVolumeRefractionFunction}(
     normal,
-    normalize(viewDirection),
+    viewDirection,
     roughness, 
     diffuseContribution,
+    fab,
     specularColorBlended,
     specularF90,
     worldPosition,
@@ -19146,7 +19103,8 @@ fn getPBRDirect(
     roughness,
     ${environmentMap.sampler.name},
     ${environmentMap.lutTexture.options.name},
-  );`;
+  );
+  `;
     } else {
       multiScattering += /* wgsl */
       `
@@ -19154,7 +19112,8 @@ fn getPBRDirect(
     normal,
     viewDirection,
     roughness,
-  );`;
+  );
+  `;
     }
     multiScattering += /* wgsl */
     `
@@ -19275,12 +19234,14 @@ fn getPBRDirect(
     ${environmentMap.sampler.name},
     ${environmentMap.lutTexture.options.name}
   );
+
   sheenSpecularIndirect += sheenIblIrradiance * sheenColor * sheenBRDFCharlie;
   let sheenAlbedoScale: f32 = sheenBRDFCharlie;`;
       } else {
         sheenIndirect += /* wgsl */
         `
-  let sheenBRDFCharlie: f32 = getBRDFCharlieApprox( normal, viewDirection, sheenRoughness );
+  let sheenBRDFCharlie: f32 = getBRDFCharlieApprox(normal, viewDirection, sheenRoughness);
+
   sheenSpecularIndirect += irradiance * sheenColor * sheenBRDFCharlie;
   // we could also use 0.157 as approximation
   let sheenAlbedoScale: f32 = getSheenAlbedoScaleApprox(normal, viewDirection, sheenRoughness);`;
@@ -19293,44 +19254,31 @@ fn getPBRDirect(
     extensionsUsed = [],
     environmentMap = null
   } = {}) => {
-    let pbrDirect = (
-      /* wgsl */
-      `
-  let NdotL: f32 = saturate(dot(normal, directLight.direction));
-  let NdotV: f32 = saturate(dot(normal, viewDirection));`
-    );
+    let pbrDirect = "";
     if (environmentMap && environmentMap.lutTexture) {
       pbrDirect += /* wgsl */
       `
-  // Precomputed DFG values for view and light directions from LUT
-  let dfgV: vec2f = DFGFromLUT(
-    vec3(0.0, 0.0, 1.0),
-    vec3(sqrt(1.0 - NdotV * NdotV), 0.0, NdotV),
-    roughness,
-    ${environmentMap.sampler.name},
-    ${environmentMap.lutTexture.options.name},
-  );
-  let dfgL: vec2f = DFGFromLUT(
-    vec3(0.0, 0.0, 1.0),
-    vec3(sqrt(1.0 - NdotL * NdotL), 0.0, NdotL),
-    roughness,
-    ${environmentMap.sampler.name},
-    ${environmentMap.lutTexture.options.name},
-  );`;
+    // Precomputed DFG values for view and light directions from LUT
+    let dfgDirect: DFGDirect = DFGDirectFromLUT(
+      normal,
+      viewDirection,
+      directLight.direction,
+      roughness,
+      ${environmentMap.sampler.name},
+      ${environmentMap.lutTexture.options.name},
+    );
+    `;
     } else {
       pbrDirect += /* wgsl */
       `
-  // Precomputed DFG values for view and light directions from approximation
-  let dfgV: vec2f = DFGApprox(
-    vec3(0.0, 0.0, 1.0),
-    vec3(sqrt(1.0 - NdotV * NdotV), 0.0, NdotV),
-    roughness,
-  );
-  let dfgL: vec2f = DFGApprox(
-    vec3(0.0, 0.0, 1.0),
-    vec3(sqrt(1.0 - NdotL * NdotL), 0.0, NdotL),
-    roughness,
-  );`;
+    // Precomputed DFG values for view and light directions from approximation
+    let dfgDirect: DFGDirect = DFGDirectApprox(
+      normal,
+      viewDirection,
+      directLight.direction,
+      roughness,
+    );
+    `;
     }
     if (extensionsUsed.includes("KHR_materials_anisotropy")) {
       pbrDirect += /* wgsl */
@@ -19338,10 +19286,7 @@ fn getPBRDirect(
     getPBRDirectAnisotropic(
       normal,
       viewDirection,
-      NdotL,
-      NdotV,
-      dfgV,
-      dfgL,
+      dfgDirect,
       diffuseContribution,
       specularF90,
       specularColorBlended,
@@ -19360,10 +19305,7 @@ fn getPBRDirect(
     getPBRDirect(
       normal,
       viewDirection,
-      NdotL,
-      NdotV,
-      dfgV,
-      dfgL,
+      dfgDirect,
       diffuseContribution,
       specularF90,
       specularColorBlended,
@@ -19377,12 +19319,12 @@ fn getPBRDirect(
     if (extensionsUsed.includes("KHR_materials_clearcoat")) {
       pbrDirect += /* wgsl */
       `
-  clearcoatSpecularDirect += getPBRDirectClearcoat(clearcoatNormal, viewDirection, clearcoatF0, clearcoatF90, clearcoatRoughness, directLight, &reflectedLight);`;
+    clearcoatSpecularDirect += getPBRDirectClearcoat(clearcoatNormal, viewDirection, clearcoatF0, clearcoatF90, clearcoatRoughness, directLight, &reflectedLight);`;
     }
     if (extensionsUsed.includes("KHR_materials_sheen")) {
       pbrDirect += /* wgsl */
       `
-  sheenSpecularDirect += getPBRDirectSheen(normal, viewDirection, sheenColor, sheenRoughness, directLight, &reflectedLight);`;
+    sheenSpecularDirect += getPBRDirectSheen(normal, viewDirection, sheenColor, sheenRoughness, directLight, &reflectedLight);`;
     }
     return pbrDirect;
   };
@@ -19470,12 +19412,11 @@ fn getPBRDirect(
   ${getIBLSheenIndirectRadiance({ extensionsUsed, environmentMap })}
   
   reflectedLight.indirectDiffuse *= occlusion;
-
+  
   clearcoatSpecularIndirect *= occlusion;
   sheenSpecularIndirect *= occlusion;
   
-  let NdotV: f32 = saturate(dot(geometryNormal, viewDirection));
-  reflectedLight.indirectSpecular *= computeSpecularOcclusion(NdotV, occlusion, roughness);
+  reflectedLight.indirectSpecular *= computeSpecularOcclusion(geometryNormal, viewDirection, occlusion, roughness);
   
   var totalDiffuse: vec3f = reflectedLight.indirectDiffuse + reflectedLight.directDiffuse;
   let totalSpecular: vec3f = reflectedLight.indirectSpecular + reflectedLight.directSpecular;
@@ -19488,6 +19429,39 @@ fn getPBRDirect(
   `
     );
   };
+
+  const BRDF_GGX = (
+    /* wgsl */
+    `
+fn Schlick_to_F0( f: vec3f, f90: f32, dotVH: f32 ) -> vec3f {
+  let x: f32 = clamp( 1.0 - dotVH, 0.0, 1.0 );
+  let x2: f32 = x * x;
+  let x5: f32 = clamp( x * x2 * x2, 0.0, 0.9999 );
+
+  return ( f - vec3( f90 ) * x5 ) / ( 1.0 - x5 );
+}
+
+fn DistributionGGX(NdotH: f32, roughness: f32) -> f32 {
+  let a: f32 = pow2( roughness );
+  let a2: f32 = pow2( a );
+
+  let denom: f32 = (pow2( NdotH ) * (a2 - 1.0) + 1.0);
+
+  return RECIPROCAL_PI * a2 / ( pow2( denom ) );
+}
+
+// Geometric Shadowing function
+fn GeometrySmith(NdotL: f32, NdotV: f32, roughness: f32) -> f32 {
+  let a: f32 = pow2( roughness );
+  let a2: f32 = pow2( a );
+  
+  let gv: f32 = NdotL * sqrt( a2 + ( 1.0 - a2 ) * pow2( NdotV ) );
+  let gl: f32 = NdotV * sqrt( a2 + ( 1.0 - a2 ) * pow2( NdotL ) );
+
+  return 0.5 / max( gv + gl, EPSILON );
+}
+`
+  );
 
   const getPBR = ({
     addUtils = true,
@@ -19504,6 +19478,7 @@ fn getPBRDirect(
 ${addUtils ? lambertUtils : ""}
 ${REIndirectSpecular}
 ${getIBLTransmission}
+${BRDF_GGX}
 ${getPBRDirect}
 
 fn getPBR(
@@ -20551,6 +20526,69 @@ fn DFGFromLUT(
   ).rg;
 }
 
+struct DFGDirect {
+  dfgV: vec2f,
+  dfgL: vec2f
+}
+
+fn DFGDirectApprox(
+  normal: vec3f,
+  viewDirection: vec3f,
+  lightDirection: vec3f,
+  roughness: f32
+) -> DFGDirect {
+  var dfgDirect: DFGDirect;
+
+  let NdotL: f32 = saturate(dot(normal, lightDirection));
+  let NdotV: f32 = saturate(dot(normal, viewDirection));
+
+  dfgDirect.dfgV = DFGApprox(
+    vec3(0.0, 0.0, 1.0),
+    vec3(sqrt(1.0 - NdotV * NdotV), 0.0, NdotV),
+    roughness,
+  );
+
+  dfgDirect.dfgL = DFGApprox(
+    vec3(0.0, 0.0, 1.0),
+    vec3(sqrt(1.0 - NdotL * NdotL), 0.0, NdotL),
+    roughness,
+  );
+
+  return dfgDirect;
+}
+
+fn DFGDirectFromLUT(
+  normal: vec3f,
+  viewDirection: vec3f,
+  lightDirection: vec3f,
+  roughness: f32,
+  clampSampler: sampler,
+  lutTexture: texture_2d<f32>
+) -> DFGDirect {
+  var dfgDirect: DFGDirect;
+
+  let NdotL: f32 = saturate(dot(normal, lightDirection));
+  let NdotV: f32 = saturate(dot(normal, viewDirection));
+
+  dfgDirect.dfgV = DFGFromLUT(
+    vec3(0.0, 0.0, 1.0),
+    vec3(sqrt(1.0 - NdotV * NdotV), 0.0, NdotV),
+    roughness,
+    clampSampler,
+    lutTexture
+  );
+
+  dfgDirect.dfgL = DFGFromLUT(
+    vec3(0.0, 0.0, 1.0),
+    vec3(sqrt(1.0 - NdotL * NdotL), 0.0, NdotL),
+    roughness,
+    clampSampler,
+    lutTexture
+  );
+
+  return dfgDirect;
+}
+
 struct MultiScattering {
   singleScattering: vec3f,
   multiScattering: vec3f,
@@ -20719,24 +20757,6 @@ fn getBRDFCharlieApprox( normal: vec3f, viewDirection: vec3f, roughness: f32 ) -
   const getPBRDirectSheen = (
     /* wgsl */
     `
-// https://github.com/google/filament/blob/master/shaders/src/brdf.fs
-fn D_Charlie( roughness: f32, dotNH: f32 ) -> f32 {
-  let alpha: f32 = pow2( roughness );
-
-  // Estevez and Kulla 2017, "Production Friendly Microfacet Sheen BRDF"
-  let invAlpha: f32 = 1.0 / alpha;
-  let cos2h: f32 = dotNH * dotNH;
-  let sin2h: f32 = max( 1.0 - cos2h, 0.0078125 ); // 2^(-14/2), so sin2h^2 > 0 in fp16
-
-  return ( 2.0 + invAlpha ) * pow( sin2h, invAlpha * 0.5 ) / ( 2.0 * PI );
-}
-
-// https://github.com/google/filament/blob/master/shaders/src/brdf.fs
-fn V_Neubelt( dotNV: f32, dotNL: f32 ) -> f32 {
-  // Neubelt and Pettineo 2013, "Crafting a Next-gen Material Pipeline for The Order: 1886"
-  return saturate( 1.0 / ( 4.0 * ( dotNL + dotNV - dotNL * dotNV ) ) );
-}
-
 fn BRDF_Sheen(
   lightDirection: vec3f,
   viewDirection: vec3f,
@@ -21199,10 +21219,7 @@ fn BRDF_GGX_Anisotropic(
 fn getPBRDirectAnisotropic(
   normal: vec3f,
   viewDirection: vec3f,
-  NdotL: f32,
-  NdotV: f32,
-  dfgV: vec2f,
-  dfgL: vec2f,
+  dfgDirect: DFGDirect,
   diffuseContribution: vec3f,
   specularF90: f32,
   specularColorBlended: vec3f,
@@ -21215,6 +21232,9 @@ fn getPBRDirectAnisotropic(
   directLight: DirectLight,
   ptr_reflectedLight: ptr<function, ReflectedLight>
 ) {
+  let NdotL: f32 = saturate(dot(normal, directLight.direction));
+  let NdotV: f32 = saturate(dot(normal, viewDirection));
+
   let ggxSingleScatter: vec3f = BRDF_GGX_Anisotropic(
     normal,
     viewDirection,
@@ -21236,8 +21256,7 @@ fn getPBRDirectAnisotropic(
     viewDirection,
     NdotL,
     NdotV,
-    dfgV,
-    dfgL,
+    dfgDirect,
     specularF90,
     specularColorBlended,
     roughness,
@@ -21333,6 +21352,29 @@ fn getIBLIndirectAnisotropyRadiance(
   let diffuseContribution: vec3f = outputColor.rgb * (1.0 - metallic);`
   );
 
+  const BRDFCharlie = (
+    /* wgsl */
+    `
+// https://github.com/google/filament/blob/main/shaders/src/surface_brdf.fs#L94
+fn D_Charlie( roughness: f32, NdotH: f32 ) -> f32 {
+  let alpha: f32 = pow2( roughness );
+
+  // Estevez and Kulla 2017, "Production Friendly Microfacet Sheen BRDF"
+  let invAlpha: f32 = 1.0 / max(alpha, EPSILON);
+  let cos2h: f32 = NdotH * NdotH;
+  let sin2h: f32 = max( 1.0 - cos2h, 0.0078125 ); // 2^(-14/2), so sin2h^2 > 0 in fp16
+
+  return ( 2.0 + invAlpha ) * pow( sin2h, invAlpha * 0.5 ) / ( 2.0 * PI );
+}
+
+// https://github.com/google/filament/blob/main/shaders/src/surface_brdf.fs#L139
+fn V_Neubelt( NdotL: f32, NdotV: f32 ) -> f32 {
+  // Neubelt and Pettineo 2013, "Crafting a Next-gen Material Pipeline for The Order: 1886"
+  return saturate( 1.0 / ( 4.0 * max( NdotL + NdotV - NdotL * NdotV, EPSILON ) ) );
+}
+`
+  );
+
   const getPBRFragmentShaderCode = ({
     chunks = null,
     toneMapping = "Khronos",
@@ -21392,19 +21434,20 @@ ${common}
 ${toneMappingUtils}
 ${generateTBN}
 ${getLightsInfos}
-${REIndirectDiffuse}
-${REIndirectSpecular}
+${BRDF_GGX}
 ${getPBRDirect}
-${computeMultiScattering}
-${getIBLIndirectIrradiance}
-${getIBLIndirectRadiance}
-${getIBLTransmission}
-
-${extensionsUsed.includes("KHR_materials_sheen") ? getIBLSheen : ""}
+${extensionsUsed.includes("KHR_materials_sheen") ? BRDFCharlie : ""}
 ${extensionsUsed.includes("KHR_materials_sheen") ? getPBRDirectSheen : ""}
 ${extensionsUsed.includes("KHR_materials_clearcoat") ? getPBRDirectClearcoat : ""}
 ${extensionsUsed.includes("KHR_materials_iridescence") ? getPBRIridescence : ""}
 ${extensionsUsed.includes("KHR_materials_anisotropy") ? getPBRDirectAnisotropic : ""}
+${REIndirectDiffuse}
+${REIndirectSpecular}
+${computeMultiScattering}
+${getIBLIndirectIrradiance}
+${getIBLIndirectRadiance}
+${getIBLTransmission}
+${extensionsUsed.includes("KHR_materials_sheen") ? getIBLSheen : ""}
 ${extensionsUsed.includes("KHR_materials_anisotropy") ? getIBLIndirectAnisotropyRadiance : ""}
 
 ${getFragmentInputStruct({ geometry, additionalVaryings })}
@@ -23637,16 +23680,6 @@ fn GGX(xi: vec2f, roughness: f32) -> MicrofacetDistributionSample {
   return ggx;
 }
 
-// NDF
-// https://github.com/google/filament/blob/main/shaders/src/surface_brdf.fs#L94
-fn D_Charlie(sheenRoughness: f32, NdotH: f32) -> f32 {
-  // Estevez and Kulla 2017, "Production Friendly Microfacet Sheen BRDF"
-  let invAlpha: f32  = 1.0 / max(sheenRoughness * sheenRoughness, EPSILON);
-  let cos2h: f32 = NdotH * NdotH;
-  let sin2h: f32 = max(1.0 - cos2h, 0.0078125); // 2^(-14/2), so sin2h^2 > 0 in fp16
-  return (2.0 + invAlpha) * pow(sin2h, invAlpha * 0.5) / (2.0 * PI);
-}
-
 fn Charlie(xi: vec2f, roughness: f32) -> MicrofacetDistributionSample {
   var charlie: MicrofacetDistributionSample;
 
@@ -23707,6 +23740,7 @@ ${common}
 ${hammersley2D}
 ${generateTBN}
 ${BRDF_GGX}
+${BRDFCharlie}
 ${getImportanceSamples}
 
 struct ImportanceSampleVars {
@@ -23733,12 +23767,6 @@ fn getImportanceSampleVars(importanceSample: vec4f, V: vec3f, TBN: mat3x3f) -> I
   importanceSampleVars.VdotH = saturate(dot(V, H));
 
   return importanceSampleVars;
-}
-
-// NDF
-// https://github.com/google/filament/blob/master/shaders/src/brdf.fs#L136
-fn V_Ashikhmin(NdotL: f32, NdotV: f32) -> f32 {
-  return saturate(1.0 / (4.0 * clamp(NdotL + NdotV - NdotL * NdotV, EPSILON, 1.0)));
 }
 
 @compute @workgroup_size(8, 8, 1)
@@ -23796,7 +23824,7 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
     if(sampleCharlie.NdotL > 0.0) {
       // LUT for Charlie distribution.
       let sheenDistribution: f32 = D_Charlie(roughness, sampleCharlie.NdotH);
-      let sheenVisibility: f32 = V_Ashikhmin(sampleCharlie.NdotL, NdotV);
+      let sheenVisibility: f32 = V_Neubelt(sampleCharlie.NdotL, NdotV);
       C += sheenVisibility * sheenDistribution * sampleCharlie.NdotL * sampleCharlie.VdotH;
     }
   }
@@ -24016,6 +24044,7 @@ ${common}
 ${hammersley2D}
 ${generateTBN}
 ${BRDF_GGX}
+${BRDFCharlie}
 ${getImportanceSamples}
 
 struct VSOutput {

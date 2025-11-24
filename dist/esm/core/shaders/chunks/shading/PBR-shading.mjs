@@ -4,6 +4,7 @@ import { getIBLTransmission } from '../fragment/head/get-IBL-transmission.mjs';
 import { getPBRDirect } from '../fragment/head/get-PBR-direct.mjs';
 import { getPBRShading } from '../fragment/body/get-PBR-shading.mjs';
 import { applyToneMapping } from '../fragment/body/apply-tone-mapping.mjs';
+import { BRDF_GGX } from '../utils/BRDF_GGX.mjs';
 
 const getPBR = ({
   addUtils = true,
@@ -20,6 +21,7 @@ const getPBR = ({
 ${addUtils ? lambertUtils : ""}
 ${REIndirectSpecular}
 ${getIBLTransmission}
+${BRDF_GGX}
 ${getPBRDirect}
 
 fn getPBR(

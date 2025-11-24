@@ -1,5 +1,5 @@
 /**
- * Importance sample helper functions for GGX and Charlie sheen. Must be used with the `common`, `constants` and `BRDF_GGX` chunks.
+ * Importance sample helper functions for GGX and Charlie sheen. Must be used with the `common`, `constants`, `BRDF_GGX` and `BRDFCharlie` chunks.
  */
 export const getImportanceSamples = /* wgsl */ `
 // microfacet distribution (GGX and Charlie)
@@ -34,16 +34,6 @@ fn GGX(xi: vec2f, roughness: f32) -> MicrofacetDistributionSample {
   ggx.pdf /= 4.0;
 
   return ggx;
-}
-
-// NDF
-// https://github.com/google/filament/blob/main/shaders/src/surface_brdf.fs#L94
-fn D_Charlie(sheenRoughness: f32, NdotH: f32) -> f32 {
-  // Estevez and Kulla 2017, "Production Friendly Microfacet Sheen BRDF"
-  let invAlpha: f32  = 1.0 / max(sheenRoughness * sheenRoughness, EPSILON);
-  let cos2h: f32 = NdotH * NdotH;
-  let sin2h: f32 = max(1.0 - cos2h, 0.0078125); // 2^(-14/2), so sin2h^2 > 0 in fp16
-  return (2.0 + invAlpha) * pow(sin2h, invAlpha * 0.5) / (2.0 * PI);
 }
 
 fn Charlie(xi: vec2f, roughness: f32) -> MicrofacetDistributionSample {

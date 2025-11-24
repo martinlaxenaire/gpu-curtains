@@ -109,12 +109,11 @@ export const getPBRShading = ({
   ${getIBLSheenIndirectRadiance({ extensionsUsed, environmentMap })}
   
   reflectedLight.indirectDiffuse *= occlusion;
-
+  
   clearcoatSpecularIndirect *= occlusion;
   sheenSpecularIndirect *= occlusion;
   
-  let NdotV: f32 = saturate(dot(geometryNormal, viewDirection));
-  reflectedLight.indirectSpecular *= computeSpecularOcclusion(NdotV, occlusion, roughness);
+  reflectedLight.indirectSpecular *= computeSpecularOcclusion(geometryNormal, viewDirection, occlusion, roughness);
   
   var totalDiffuse: vec3f = reflectedLight.indirectDiffuse + reflectedLight.directDiffuse;
   let totalSpecular: vec3f = reflectedLight.indirectSpecular + reflectedLight.directSpecular;

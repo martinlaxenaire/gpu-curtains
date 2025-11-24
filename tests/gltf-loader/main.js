@@ -103,8 +103,32 @@ window.addEventListener('load', async () => {
   let shadingModel = 'PBR' // 'PBR', 'Phong' or 'Lambert'
   const lightType = 'DirectionalLight' // or 'PointLight'
 
-  const currentModelKey = 'damagedHelmet'
-  let currentModel = models[currentModelKey]
+  // load model from 'model' query params if defined
+  const url = new URL(window.location)
+  const searchParams = new URLSearchParams(url.search)
+  const modelUrl = searchParams.get('model')
+  let modelUrlName = null
+
+  let availableModels = { ...models }
+
+  if (modelUrl) {
+    const modelName = modelUrl
+      .substring(modelUrl.lastIndexOf('/') + 1)
+      .replace('.gltf', '')
+      .replace('.glb', '')
+    modelUrlName = modelName + 'FromURL' //  avoid duplicate keys
+
+    availableModels = {
+      ...availableModels,
+      [modelUrlName]: {
+        name: modelName + ' (from URL)',
+        url: modelUrl,
+      },
+    }
+  }
+
+  const currentModelKey = modelUrlName ?? 'damagedHelmet'
+  let currentModel = availableModels[currentModelKey]
 
   const ambientLight = new AmbientLight(gpuCameraRenderer, {
     intensity: 0, // will be updated
@@ -139,8 +163,8 @@ window.addEventListener('load', async () => {
     .add(
       { [currentModel.name]: currentModelKey },
       currentModel.name,
-      Object.keys(models).reduce((acc, v) => {
-        return { ...acc, [models[v].name]: v }
+      Object.keys(availableModels).reduce((acc, v) => {
+        return { ...acc, [availableModels[v].name]: v }
       }, {})
     )
     .name('Models')
@@ -628,7 +652,10 @@ window.addEventListener('load', async () => {
 
     console.log(gpuCameraRenderer, meshes)
 
-    // meshes[0].onReady(() => console.log(meshes[0].material.getShaderCode('fragment')))
+    // meshes[0].onReady(async () => {
+    //   console.log('VS', await meshes[0].material.getShaderCode('vertex'))
+    //   console.log('FS', await meshes[0].material.getShaderCode('fragment'))
+    // })
   }
 
   // sky box
@@ -741,7 +768,7 @@ window.addEventListener('load', async () => {
   })
 
   modelField.onChange(async (value) => {
-    if (models[value].name !== currentModel.name) {
+    if (availableModels[value].name !== currentModel.name) {
       cleanUpScene()
 
       if (animationsFields.length) {
@@ -750,7 +777,7 @@ window.addEventListener('load', async () => {
 
       animationsFields = []
 
-      currentModel = models[value]
+      currentModel = availableModels[value]
 
       useCamera(defaultCamera)
 

@@ -14,41 +14,31 @@ export const getPBRDirectContribution = ({
   extensionsUsed?: PBRFragmentShaderInputParams['extensionsUsed']
   environmentMap?: PBRFragmentShaderInputParams['environmentMap']
 } = {}): string => {
-  let pbrDirect = /* wgsl */ `
-  let NdotL: f32 = saturate(dot(normal, directLight.direction));
-  let NdotV: f32 = saturate(dot(normal, viewDirection));`
+  let pbrDirect = ''
 
   if (environmentMap && environmentMap.lutTexture) {
     pbrDirect += /* wgsl */ `
-  // Precomputed DFG values for view and light directions from LUT
-  let dfgV: vec2f = DFGFromLUT(
-    vec3(0.0, 0.0, 1.0),
-    vec3(sqrt(1.0 - NdotV * NdotV), 0.0, NdotV),
-    roughness,
-    ${environmentMap.sampler.name},
-    ${environmentMap.lutTexture.options.name},
-  );
-  let dfgL: vec2f = DFGFromLUT(
-    vec3(0.0, 0.0, 1.0),
-    vec3(sqrt(1.0 - NdotL * NdotL), 0.0, NdotL),
-    roughness,
-    ${environmentMap.sampler.name},
-    ${environmentMap.lutTexture.options.name},
-  );`
+    // Precomputed DFG values for view and light directions from LUT
+    let dfgDirect: DFGDirect = DFGDirectFromLUT(
+      normal,
+      viewDirection,
+      directLight.direction,
+      roughness,
+      ${environmentMap.sampler.name},
+      ${environmentMap.lutTexture.options.name},
+    );
+    `
   } else {
     // if the environment map hasn't created a LUT texture
     pbrDirect += /* wgsl */ `
-  // Precomputed DFG values for view and light directions from approximation
-  let dfgV: vec2f = DFGApprox(
-    vec3(0.0, 0.0, 1.0),
-    vec3(sqrt(1.0 - NdotV * NdotV), 0.0, NdotV),
-    roughness,
-  );
-  let dfgL: vec2f = DFGApprox(
-    vec3(0.0, 0.0, 1.0),
-    vec3(sqrt(1.0 - NdotL * NdotL), 0.0, NdotL),
-    roughness,
-  );`
+    // Precomputed DFG values for view and light directions from approximation
+    let dfgDirect: DFGDirect = DFGDirectApprox(
+      normal,
+      viewDirection,
+      directLight.direction,
+      roughness,
+    );
+    `
   }
 
   if (extensionsUsed.includes('KHR_materials_anisotropy')) {
@@ -56,10 +46,7 @@ export const getPBRDirectContribution = ({
     getPBRDirectAnisotropic(
       normal,
       viewDirection,
-      NdotL,
-      NdotV,
-      dfgV,
-      dfgL,
+      dfgDirect,
       diffuseContribution,
       specularF90,
       specularColorBlended,
@@ -77,10 +64,7 @@ export const getPBRDirectContribution = ({
     getPBRDirect(
       normal,
       viewDirection,
-      NdotL,
-      NdotV,
-      dfgV,
-      dfgL,
+      dfgDirect,
       diffuseContribution,
       specularF90,
       specularColorBlended,
@@ -95,13 +79,13 @@ export const getPBRDirectContribution = ({
   // clearcoat
   if (extensionsUsed.includes('KHR_materials_clearcoat')) {
     pbrDirect += /* wgsl */ `
-  clearcoatSpecularDirect += getPBRDirectClearcoat(clearcoatNormal, viewDirection, clearcoatF0, clearcoatF90, clearcoatRoughness, directLight, &reflectedLight);`
+    clearcoatSpecularDirect += getPBRDirectClearcoat(clearcoatNormal, viewDirection, clearcoatF0, clearcoatF90, clearcoatRoughness, directLight, &reflectedLight);`
   }
 
   // sheen
   if (extensionsUsed.includes('KHR_materials_sheen')) {
     pbrDirect += /* wgsl */ `
-  sheenSpecularDirect += getPBRDirectSheen(normal, viewDirection, sheenColor, sheenRoughness, directLight, &reflectedLight);`
+    sheenSpecularDirect += getPBRDirectSheen(normal, viewDirection, sheenColor, sheenRoughness, directLight, &reflectedLight);`
   }
 
   return pbrDirect

@@ -35,6 +35,8 @@ import { getAnisotropy } from '../../chunks/fragment/body/get-anisotropy.mjs';
 import { getTangentBitangent } from '../../chunks/fragment/body/get-tangent-bitangent.mjs';
 import { getIBLIndirectAnisotropyRadiance } from '../../chunks/fragment/head/get-IBL-indirect-anisotropy-radiance.mjs';
 import { getDiffuse } from '../../chunks/fragment/body/get-diffuse.mjs';
+import { BRDFCharlie } from '../../chunks/utils/BRDF-Charlie.mjs';
+import { BRDF_GGX } from '../../chunks/utils/BRDF_GGX.mjs';
 
 const getPBRFragmentShaderCode = ({
   chunks = null,
@@ -95,19 +97,20 @@ ${common}
 ${toneMappingUtils}
 ${generateTBN}
 ${getLightsInfos}
-${REIndirectDiffuse}
-${REIndirectSpecular}
+${BRDF_GGX}
 ${getPBRDirect}
-${computeMultiScattering}
-${getIBLIndirectIrradiance}
-${getIBLIndirectRadiance}
-${getIBLTransmission}
-
-${extensionsUsed.includes("KHR_materials_sheen") ? getIBLSheen : ""}
+${extensionsUsed.includes("KHR_materials_sheen") ? BRDFCharlie : ""}
 ${extensionsUsed.includes("KHR_materials_sheen") ? getPBRDirectSheen : ""}
 ${extensionsUsed.includes("KHR_materials_clearcoat") ? getPBRDirectClearcoat : ""}
 ${extensionsUsed.includes("KHR_materials_iridescence") ? getPBRIridescence : ""}
 ${extensionsUsed.includes("KHR_materials_anisotropy") ? getPBRDirectAnisotropic : ""}
+${REIndirectDiffuse}
+${REIndirectSpecular}
+${computeMultiScattering}
+${getIBLIndirectIrradiance}
+${getIBLIndirectRadiance}
+${getIBLTransmission}
+${extensionsUsed.includes("KHR_materials_sheen") ? getIBLSheen : ""}
 ${extensionsUsed.includes("KHR_materials_anisotropy") ? getIBLIndirectAnisotropyRadiance : ""}
 
 ${getFragmentInputStruct({ geometry, additionalVaryings })}

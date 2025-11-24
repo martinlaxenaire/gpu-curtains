@@ -21,7 +21,8 @@ export const computeMultiScattering = ({
     roughness,
     ${environmentMap.sampler.name},
     ${environmentMap.lutTexture.options.name},
-  );`
+  );
+  `
   } else {
     // if the environment map hasn't created a LUT texture
     multiScattering += /* wgsl */ `
@@ -29,7 +30,8 @@ export const computeMultiScattering = ({
     normal,
     viewDirection,
     roughness,
-  );`
+  );
+  `
   }
 
   multiScattering += /* wgsl */ `

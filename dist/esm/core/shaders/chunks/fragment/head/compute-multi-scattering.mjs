@@ -41,6 +41,69 @@ fn DFGFromLUT(
   ).rg;
 }
 
+struct DFGDirect {
+  dfgV: vec2f,
+  dfgL: vec2f
+}
+
+fn DFGDirectApprox(
+  normal: vec3f,
+  viewDirection: vec3f,
+  lightDirection: vec3f,
+  roughness: f32
+) -> DFGDirect {
+  var dfgDirect: DFGDirect;
+
+  let NdotL: f32 = saturate(dot(normal, lightDirection));
+  let NdotV: f32 = saturate(dot(normal, viewDirection));
+
+  dfgDirect.dfgV = DFGApprox(
+    vec3(0.0, 0.0, 1.0),
+    vec3(sqrt(1.0 - NdotV * NdotV), 0.0, NdotV),
+    roughness,
+  );
+
+  dfgDirect.dfgL = DFGApprox(
+    vec3(0.0, 0.0, 1.0),
+    vec3(sqrt(1.0 - NdotL * NdotL), 0.0, NdotL),
+    roughness,
+  );
+
+  return dfgDirect;
+}
+
+fn DFGDirectFromLUT(
+  normal: vec3f,
+  viewDirection: vec3f,
+  lightDirection: vec3f,
+  roughness: f32,
+  clampSampler: sampler,
+  lutTexture: texture_2d<f32>
+) -> DFGDirect {
+  var dfgDirect: DFGDirect;
+
+  let NdotL: f32 = saturate(dot(normal, lightDirection));
+  let NdotV: f32 = saturate(dot(normal, viewDirection));
+
+  dfgDirect.dfgV = DFGFromLUT(
+    vec3(0.0, 0.0, 1.0),
+    vec3(sqrt(1.0 - NdotV * NdotV), 0.0, NdotV),
+    roughness,
+    clampSampler,
+    lutTexture
+  );
+
+  dfgDirect.dfgL = DFGFromLUT(
+    vec3(0.0, 0.0, 1.0),
+    vec3(sqrt(1.0 - NdotL * NdotL), 0.0, NdotL),
+    roughness,
+    clampSampler,
+    lutTexture
+  );
+
+  return dfgDirect;
+}
+
 struct MultiScattering {
   singleScattering: vec3f,
   multiScattering: vec3f,

@@ -30,7 +30,8 @@ fn getIBLVolumeRefraction(
   viewDirection: vec3f,
   roughness: f32,
   diffuseContribution: vec3f,
-  specularColor: vec3f,
+  fab: vec2f,
+  specularColorBlended: vec3f,
   specularF90: f32,
   position: vec3f,
   modelScale: vec3f,
@@ -44,41 +45,40 @@ fn getIBLVolumeRefraction(
   transmissionBackgroundTexture: texture_2d<f32>,
   defaultSampler: sampler,
 ) -> vec4f {
-    // TODO dispersion
-    var transmittedLight: vec4f;
-    var transmissionRayLength: f32;
-    var transmittance: vec3f;
-    
-    // Calculate the transmission ray
-    let transmissionRay: vec3f = getVolumeTransmissionRay(normal, viewDirection, thickness, ior, modelScale);
-    let refractedRayExit = position + transmissionRay;
+  var transmittedLight: vec4f;
+  var transmissionRayLength: f32;
+  var transmittance: vec3f;
+  
+  // Calculate the transmission ray
+  let transmissionRay: vec3f = getVolumeTransmissionRay(normal, viewDirection, thickness, ior, modelScale);
+  let refractedRayExit = position + transmissionRay;
 
-    // Transform to NDC space
-    let ndcPos = projMatrix * viewMatrix * vec4(refractedRayExit, 1.0);
-    var refractionCoords = ndcPos.xy / ndcPos.w;
-    refractionCoords = (refractionCoords + 1.0) / 2.0;
-    refractionCoords = vec2(refractionCoords.x, 1.0 - refractionCoords.y); // webgpu Y flip
+  // Transform to NDC space
+  let ndcPos = projMatrix * viewMatrix * vec4(refractedRayExit, 1.0);
+  var refractionCoords = ndcPos.xy / ndcPos.w;
+  refractionCoords = (refractionCoords + 1.0) / 2.0;
+  refractionCoords = vec2(refractionCoords.x, 1.0 - refractionCoords.y); // webgpu Y flip
 
-    // Sample the transmission texture
-    transmittedLight = getTransmissionSample(refractionCoords, roughness, ior, transmissionBackgroundTexture, defaultSampler);
+  // Sample the transmission texture
+  transmittedLight = getTransmissionSample(refractionCoords, roughness, ior, transmissionBackgroundTexture, defaultSampler);
 
-    // Compute transmittance
-    transmittance = diffuseContribution * volumeAttenuation(length(transmissionRay), attenuationColor, attenuationDistance);
+  // Compute transmittance
+  transmittance = diffuseContribution * volumeAttenuation(length(transmissionRay), attenuationColor, attenuationDistance);
 
-    // Apply attenuation to transmitted light
-    let attenuatedColor = transmittance * transmittedLight.rgb;
+  // Apply attenuation to transmitted light
+  let attenuatedColor = transmittance * transmittedLight.rgb;
 
-    // Compute Fresnel term using an environment BRDF
-    let F = EnvironmentBRDF(normal, viewDirection, specularColor, specularF90, roughness);
+  // Compute Fresnel term using an environment BRDF
+  let F = specularColorBlended * fab.x + specularF90 * fab.y;
 
-    // Average the transmittance for a single factor
-    let transmittanceFactor = (transmittance.r + transmittance.g + transmittance.b) / 3.0;
+  // Average the transmittance for a single factor
+  let transmittanceFactor = (transmittance.r + transmittance.g + transmittance.b) / 3.0;
 
-    // Combine results into the final color
-    return vec4(
-      (1.0 - F) * attenuatedColor,
-      1.0 - (1.0 - transmittedLight.a) * transmittanceFactor
-    );
+  // Combine results into the final color
+  return vec4(
+    (1.0 - F) * attenuatedColor,
+    1.0 - (1.0 - transmittedLight.a) * transmittanceFactor
+  );
 }
 
 fn getIBLVolumeRefractionWithDispersion(
@@ -86,7 +86,8 @@ fn getIBLVolumeRefractionWithDispersion(
   viewDirection: vec3f,
   roughness: f32,
   diffuseContribution: vec3f,
-  specularColor: vec3f,
+  fab: vec2f,
+  specularColorBlended: vec3f,
   specularF90: f32,
   position: vec3f,
   modelScale: vec3f,
@@ -100,49 +101,49 @@ fn getIBLVolumeRefractionWithDispersion(
   transmissionBackgroundTexture: texture_2d<f32>,
   defaultSampler: sampler,
 ) -> vec4f {
-    var transmittedLight: vec4f;
-    var transmissionRayLength: f32;
-    var transmittance: vec3f;
+  var transmittedLight: vec4f;
+  var transmissionRayLength: f32;
+  var transmittance: vec3f;
+  
+  let halfSpread: f32 = (ior - 1.0) * 0.025 * dispersion;
+  let iors: vec3f = vec3(ior - halfSpread, ior, ior + halfSpread);
+  
+  for(var i: i32 = 0; i < 3; i++) {
+    let transmissionRay: vec3f = getVolumeTransmissionRay(normal, viewDirection, thickness, iors[i], modelScale);
+    transmissionRayLength = length(transmissionRay);
+    let refractedRayExit = position + transmissionRay;
+
+    // Transform to NDC space
+    let ndcPos = projMatrix * viewMatrix * vec4(refractedRayExit, 1.0);
+    var refractionCoords = ndcPos.xy / ndcPos.w;
+    refractionCoords = (refractionCoords + 1.0) / 2.0;
+    refractionCoords = vec2(refractionCoords.x, 1.0 - refractionCoords.y); // webgpu Y flip
     
-    let halfSpread: f32 = (ior - 1.0) * 0.025 * dispersion;
-    let iors: vec3f = vec3(ior - halfSpread, ior, ior + halfSpread);
+    let transmissionSample: vec4f = getTransmissionSample(refractionCoords, roughness, iors[i], transmissionBackgroundTexture, defaultSampler);
     
-    for(var i: i32 = 0; i < 3; i++) {
-      let transmissionRay: vec3f = getVolumeTransmissionRay(normal, viewDirection, thickness, iors[i], modelScale);
-      transmissionRayLength = length(transmissionRay);
-      let refractedRayExit = position + transmissionRay;
-
-      // Transform to NDC space
-      let ndcPos = projMatrix * viewMatrix * vec4(refractedRayExit, 1.0);
-      var refractionCoords = ndcPos.xy / ndcPos.w;
-      refractionCoords = (refractionCoords + 1.0) / 2.0;
-      refractionCoords = vec2(refractionCoords.x, 1.0 - refractionCoords.y); // webgpu Y flip
-      
-      let transmissionSample: vec4f = getTransmissionSample(refractionCoords, roughness, iors[i], transmissionBackgroundTexture, defaultSampler);
-      
-      transmittedLight[i] = transmissionSample[i];
-      transmittedLight.a += transmissionSample.a;
-      
-      // Compute transmittance
-      let diffuse: vec3f = diffuseContribution;
-      transmittance[i] = diffuse[i] * volumeAttenuation(length(transmissionRay), attenuationColor, attenuationDistance)[i];
-    }
+    transmittedLight[i] = transmissionSample[i];
+    transmittedLight.a += transmissionSample.a;
     
-    transmittedLight.a /= 3.0;
+    // Compute transmittance
+    let diffuse: vec3f = diffuseContribution;
+    transmittance[i] = diffuse[i] * volumeAttenuation(length(transmissionRay), attenuationColor, attenuationDistance)[i];
+  }
+  
+  transmittedLight.a /= 3.0;
 
-    // Apply attenuation to transmitted light
-    let attenuatedColor = transmittance * transmittedLight.rgb;
+  // Apply attenuation to transmitted light
+  let attenuatedColor = transmittance * transmittedLight.rgb;
 
-    // Compute Fresnel term using an environment BRDF
-    let F = EnvironmentBRDF(normal, viewDirection, specularColor, specularF90, roughness);
+  // Compute Fresnel term using an environment BRDF
+  let F = specularColorBlended * fab.x + specularF90 * fab.y;
 
-    // Average the transmittance for a single factor
-    let transmittanceFactor = (transmittance.r + transmittance.g + transmittance.b) / 3.0;
+  // Average the transmittance for a single factor
+  let transmittanceFactor = (transmittance.r + transmittance.g + transmittance.b) / 3.0;
 
-    // Combine results into the final color
-    return vec4(
-      (1.0 - F) * attenuatedColor,
-      1.0 - (1.0 - transmittedLight.a) * transmittanceFactor
-    );
+  // Combine results into the final color
+  return vec4(
+    (1.0 - F) * attenuatedColor,
+    1.0 - (1.0 - transmittedLight.a) * transmittanceFactor
+  );
 }
 `

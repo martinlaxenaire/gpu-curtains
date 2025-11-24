@@ -11,7 +11,8 @@ const computeMultiScattering = ({
     roughness,
     ${environmentMap.sampler.name},
     ${environmentMap.lutTexture.options.name},
-  );`;
+  );
+  `;
   } else {
     multiScattering += /* wgsl */
     `
@@ -19,7 +20,8 @@ const computeMultiScattering = ({
     normal,
     viewDirection,
     roughness,
-  );`;
+  );
+  `;
   }
   multiScattering += /* wgsl */
   `

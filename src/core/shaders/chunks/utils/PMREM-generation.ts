@@ -1,4 +1,5 @@
-import { BRDF_GGX } from '../fragment/head/BRDF_GGX'
+import { BRDF_GGX } from './BRDF_GGX'
+import { BRDFCharlie } from './BRDF-Charlie'
 import { common } from './common'
 import { constants } from './constants'
 import { generateTBN } from './generate-TBN'
@@ -15,6 +16,7 @@ ${common}
 ${hammersley2D}
 ${generateTBN}
 ${BRDF_GGX}
+${BRDFCharlie}
 ${getImportanceSamples}
 
 struct VSOutput {

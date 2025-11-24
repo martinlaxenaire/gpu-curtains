@@ -75,10 +75,7 @@ fn BRDF_GGX_Anisotropic(
 fn getPBRDirectAnisotropic(
   normal: vec3f,
   viewDirection: vec3f,
-  NdotL: f32,
-  NdotV: f32,
-  dfgV: vec2f,
-  dfgL: vec2f,
+  dfgDirect: DFGDirect,
   diffuseContribution: vec3f,
   specularF90: f32,
   specularColorBlended: vec3f,
@@ -91,6 +88,9 @@ fn getPBRDirectAnisotropic(
   directLight: DirectLight,
   ptr_reflectedLight: ptr<function, ReflectedLight>
 ) {
+  let NdotL: f32 = saturate(dot(normal, directLight.direction));
+  let NdotV: f32 = saturate(dot(normal, viewDirection));
+
   let ggxSingleScatter: vec3f = BRDF_GGX_Anisotropic(
     normal,
     viewDirection,
@@ -112,8 +112,7 @@ fn getPBRDirectAnisotropic(
     viewDirection,
     NdotL,
     NdotV,
-    dfgV,
-    dfgL,
+    dfgDirect,
     specularF90,
     specularColorBlended,
     roughness,

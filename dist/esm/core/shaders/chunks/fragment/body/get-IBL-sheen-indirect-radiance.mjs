@@ -28,12 +28,14 @@ const getIBLSheenIndirectRadiance = ({
     ${environmentMap.sampler.name},
     ${environmentMap.lutTexture.options.name}
   );
+
   sheenSpecularIndirect += sheenIblIrradiance * sheenColor * sheenBRDFCharlie;
   let sheenAlbedoScale: f32 = sheenBRDFCharlie;`;
     } else {
       sheenIndirect += /* wgsl */
       `
-  let sheenBRDFCharlie: f32 = getBRDFCharlieApprox( normal, viewDirection, sheenRoughness );
+  let sheenBRDFCharlie: f32 = getBRDFCharlieApprox(normal, viewDirection, sheenRoughness);
+
   sheenSpecularIndirect += irradiance * sheenColor * sheenBRDFCharlie;
   // we could also use 0.157 as approximation
   let sheenAlbedoScale: f32 = getSheenAlbedoScaleApprox(normal, viewDirection, sheenRoughness);`;

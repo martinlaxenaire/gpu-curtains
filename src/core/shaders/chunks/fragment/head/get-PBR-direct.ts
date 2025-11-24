@@ -1,21 +1,28 @@
-import { BRDF_GGX } from './BRDF_GGX'
-
 /** Helper function chunk appended internally and used to compute PBR direct light contributions. */
 export const getPBRDirect = /* wgsl */ `
-${BRDF_GGX}
+fn BRDF_GGX(
+  NdotV: f32,
+  NdotL: f32,
+  NdotH: f32,
+  VdotH: f32,
+  roughness: f32,
+  specularFactor: f32,
+  specularColor: vec3f,
+  iridescenceFresnel: vec3f,
+  iridescence: f32
+) -> vec3f {
+  // cook-torrance brdf
+  var F: vec3f = F_Schlick(specularColor, specularFactor, VdotH);
+  F = mix(F, iridescenceFresnel, iridescence);
 
-fn EnvironmentBRDF(
-  normal: vec3<f32>, 
-  viewDir: vec3<f32>, 
-  specularColor: vec3<f32>, 
-  specularF90: f32, 
-  roughness: f32
-) -> vec3<f32> {
-  let fab = DFGApprox(normal, viewDir, roughness);
-  return specularColor * fab.x + specularF90 * fab.y;
+  let G: f32 = GeometrySmith(NdotL, NdotV, roughness);
+  let D: f32 = DistributionGGX(NdotH, roughness);
+  
+  return G * D * F;
 }
 
-fn computeSpecularOcclusion( NdotV: f32, occlusion: f32, roughness: f32 ) -> f32 {
+fn computeSpecularOcclusion(geometryNormal: vec3f, viewDirection: vec3f, occlusion: f32, roughness: f32) -> f32 {
+  let NdotV: f32 = saturate(dot(geometryNormal, viewDirection));
 	return saturate(pow(NdotV + occlusion, exp2(- 16.0 * roughness - 1.0)) - 1.0 + occlusion);
 }
 
@@ -48,13 +55,14 @@ fn BRDF_GGX_Multiscatter(
   viewDirection: vec3f,
   NdotL: f32,
   NdotV: f32,
-  dfgV: vec2f,
-  dfgL: vec2f,
+  dfgDirect: DFGDirect,
   specularF90: f32,
   specularColorBlended: vec3f,
   roughness: f32,
 ) -> vec3f {
   // Multi-scattering compensation
+  let dfgV: vec2f = dfgDirect.dfgV;
+  let dfgL: vec2f = dfgDirect.dfgL;
 
 	// Single-scattering energy for view and light
 	let FssEss_V: vec3f = specularColorBlended * dfgV.x + specularF90 * dfgV.y;
@@ -82,10 +90,7 @@ fn BRDF_GGX_Multiscatter(
 fn getPBRDirect(
   normal: vec3f,
   viewDirection: vec3f,
-  NdotL: f32,
-  NdotV: f32,
-  dfgV: vec2f,
-  dfgL: vec2f,
+  dfgDirect: DFGDirect,
   diffuseContribution: vec3f,
   specularF90: f32,
   specularColorBlended: vec3f,
@@ -95,6 +100,9 @@ fn getPBRDirect(
   directLight: DirectLight,
   ptr_reflectedLight: ptr<function, ReflectedLight>
 ) {
+  let NdotL: f32 = saturate(dot(normal, directLight.direction));
+  let NdotV: f32 = saturate(dot(normal, viewDirection));
+
   let ggxSingleScatter: vec3f = BRDF_GGX_Singlescatter(
     normal,
     viewDirection,
@@ -113,8 +121,7 @@ fn getPBRDirect(
     viewDirection,
     NdotL,
     NdotV,
-    dfgV,
-    dfgL,
+    dfgDirect,
     specularF90,
     specularColorBlended,
     roughness,

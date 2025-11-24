@@ -2,8 +2,9 @@ import { constants } from '../../chunks/utils/constants'
 import { common } from '../../chunks/utils/common'
 import { hammersley2D } from '../../chunks/utils/hammersley-2D'
 import { generateTBN } from '../../chunks/utils/generate-TBN'
-import { BRDF_GGX } from '../../chunks/fragment/head/BRDF_GGX'
+import { BRDF_GGX } from '../../chunks/utils/BRDF_GGX'
 import { getImportanceSamples } from '../../chunks/utils/get-importance-samples'
+import { BRDFCharlie } from '../../chunks/utils/BRDF-Charlie'
 
 // LUT for GGX distribution
 // ported from https://github.com/KhronosGroup/glTF-Sample-Renderer/blob/main/source/shaders/ibl_filtering.frag
@@ -16,6 +17,7 @@ ${common}
 ${hammersley2D}
 ${generateTBN}
 ${BRDF_GGX}
+${BRDFCharlie}
 ${getImportanceSamples}
 
 struct ImportanceSampleVars {
@@ -42,12 +44,6 @@ fn getImportanceSampleVars(importanceSample: vec4f, V: vec3f, TBN: mat3x3f) -> I
   importanceSampleVars.VdotH = saturate(dot(V, H));
 
   return importanceSampleVars;
-}
-
-// NDF
-// https://github.com/google/filament/blob/master/shaders/src/brdf.fs#L136
-fn V_Ashikhmin(NdotL: f32, NdotV: f32) -> f32 {
-  return saturate(1.0 / (4.0 * clamp(NdotL + NdotV - NdotL * NdotV, EPSILON, 1.0)));
 }
 
 @compute @workgroup_size(8, 8, 1)
@@ -105,7 +101,7 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
     if(sampleCharlie.NdotL > 0.0) {
       // LUT for Charlie distribution.
       let sheenDistribution: f32 = D_Charlie(roughness, sampleCharlie.NdotH);
-      let sheenVisibility: f32 = V_Ashikhmin(sampleCharlie.NdotL, NdotV);
+      let sheenVisibility: f32 = V_Neubelt(sampleCharlie.NdotL, NdotV);
       C += sheenVisibility * sheenDistribution * sampleCharlie.NdotL * sampleCharlie.VdotH;
     }
   }
