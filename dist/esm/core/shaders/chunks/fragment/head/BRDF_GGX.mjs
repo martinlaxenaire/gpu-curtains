@@ -18,6 +18,7 @@ fn DistributionGGX(NdotH: f32, roughness: f32) -> f32 {
   return RECIPROCAL_PI * a2 / ( pow2( denom ) );
 }
 
+// Geometric Shadowing function
 fn GeometrySmith(NdotL: f32, NdotV: f32, roughness: f32) -> f32 {
   let a: f32 = pow2( roughness );
   let a2: f32 = pow2( a );
@@ -41,7 +42,7 @@ fn BRDF_GGX(
 ) -> vec3f {
   // cook-torrance brdf
   var F: vec3f = F_Schlick(specularColor, specularFactor, VdotH);
-  F = mix( F, iridescenceFresnel, iridescence );
+  F = mix(F, iridescenceFresnel, iridescence);
 
   let G: f32 = GeometrySmith(NdotL, NdotV, roughness);
   let D: f32 = DistributionGGX(NdotH, roughness);

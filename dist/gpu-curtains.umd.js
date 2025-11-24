@@ -18302,19 +18302,19 @@ fn getSpotLightInfo(spotLight: SpotLightsElement, worldPosition: vec3f, ptr_ligh
   const REIndirectDiffuse = (
     /* wgsl */
     `
-fn getIndirectDiffuse(irradiance: vec3f, diffuseColor: vec3f, ptr_reflectedLight: ptr<function, ReflectedLight>) {
-  (*ptr_reflectedLight).indirectDiffuse += irradiance * BRDF_Lambert( diffuseColor );
+fn getIndirectDiffuse(irradiance: vec3f, diffuseContribution: vec3f, ptr_reflectedLight: ptr<function, ReflectedLight>) {
+  (*ptr_reflectedLight).indirectDiffuse += irradiance * BRDF_Lambert( diffuseContribution );
 }
 
 // Indirect Diffuse RenderEquations
-fn RE_IndirectDiffuse(irradiance: vec3f, diffuseColor: vec3f, ptr_reflectedLight: ptr<function, ReflectedLight>) {
+fn RE_IndirectDiffuse(irradiance: vec3f, diffuseContribution: vec3f, ptr_reflectedLight: ptr<function, ReflectedLight>) {
   var totalAmbientIrradiance: vec3f = irradiance;
   
   for(var i: i32 = 0; i < ambientLights.count; i++) {
     totalAmbientIrradiance += ambientLights.color[i];
   }
   
-  getIndirectDiffuse(totalAmbientIrradiance, diffuseColor, ptr_reflectedLight);
+  getIndirectDiffuse(totalAmbientIrradiance, diffuseContribution, ptr_reflectedLight);
 }
 `
   );
@@ -18669,12 +18669,21 @@ fn getPhong(
 fn RE_IndirectSpecular(
   radiance: vec3f,
   irradiance: vec3f,
-  diffuseColor: vec3f,
-  iBLGGXFresnel: IBLGGXFresnel,
+  diffuseContribution: vec3f,
+  metallic: f32,
+  //iBLGGXFresnel: IBLGGXFresnel,
+  dielectricScattering: MultiScattering,
+  metallicScattering: MultiScattering,
   ptr_reflectedLight: ptr<function, ReflectedLight>
 ) {
-  let totalScattering: vec3f = iBLGGXFresnel.FssEss + iBLGGXFresnel.FmsEms;
-	let diffuse: vec3f = diffuseColor * ( 1.0 - max( max( totalScattering.r, totalScattering.g ), totalScattering.b ) );
+  // Mix based on metalness
+	let singleScattering: vec3f = mix(dielectricScattering.singleScattering, metallicScattering.singleScattering, metallic);
+	let multiScattering: vec3f = mix(dielectricScattering.multiScattering, metallicScattering.multiScattering, metallic);
+
+	// Diffuse energy conservation uses dielectric path
+	let totalScatteringDielectric: vec3f = dielectricScattering.singleScattering + dielectricScattering.multiScattering;
+
+	let diffuse: vec3f = diffuseContribution * (1.0 - max3(totalScatteringDielectric));
 
   // we just add radiance and irradiance to the indirect contributions using iBLGGXFresnel
 
@@ -18682,8 +18691,8 @@ fn RE_IndirectSpecular(
   // let cosineWeightedIrradiance: vec3f = irradiance * RECIPROCAL_PI;
   let cosineWeightedIrradiance: vec3f = irradiance;  
 
-  (*ptr_reflectedLight).indirectSpecular += iBLGGXFresnel.FssEss * radiance;
-  (*ptr_reflectedLight).indirectSpecular += iBLGGXFresnel.FmsEms * cosineWeightedIrradiance;
+  (*ptr_reflectedLight).indirectSpecular += singleScattering * radiance;
+  (*ptr_reflectedLight).indirectSpecular += multiScattering * cosineWeightedIrradiance;
   
   (*ptr_reflectedLight).indirectDiffuse += diffuse * cosineWeightedIrradiance;
 }
@@ -18722,7 +18731,7 @@ fn getIBLVolumeRefraction(
   normal: vec3f,
   viewDirection: vec3f,
   roughness: f32,
-  diffuseColor: vec4f,
+  diffuseContribution: vec3f,
   specularColor: vec3f,
   specularF90: f32,
   position: vec3f,
@@ -18756,7 +18765,7 @@ fn getIBLVolumeRefraction(
     transmittedLight = getTransmissionSample(refractionCoords, roughness, ior, transmissionBackgroundTexture, defaultSampler);
 
     // Compute transmittance
-    transmittance = diffuseColor.rgb * volumeAttenuation(length(transmissionRay), attenuationColor, attenuationDistance);
+    transmittance = diffuseContribution * volumeAttenuation(length(transmissionRay), attenuationColor, attenuationDistance);
 
     // Apply attenuation to transmitted light
     let attenuatedColor = transmittance * transmittedLight.rgb;
@@ -18778,7 +18787,7 @@ fn getIBLVolumeRefractionWithDispersion(
   normal: vec3f,
   viewDirection: vec3f,
   roughness: f32,
-  diffuseColor: vec4f,
+  diffuseContribution: vec3f,
   specularColor: vec3f,
   specularF90: f32,
   position: vec3f,
@@ -18817,7 +18826,7 @@ fn getIBLVolumeRefractionWithDispersion(
       transmittedLight.a += transmissionSample.a;
       
       // Compute transmittance
-      let diffuse: vec3f = diffuseColor.rgb;
+      let diffuse: vec3f = diffuseContribution;
       transmittance[i] = diffuse[i] * volumeAttenuation(length(transmissionRay), attenuationColor, attenuationDistance)[i];
     }
     
@@ -18861,6 +18870,7 @@ fn DistributionGGX(NdotH: f32, roughness: f32) -> f32 {
   return RECIPROCAL_PI * a2 / ( pow2( denom ) );
 }
 
+// Geometric Shadowing function
 fn GeometrySmith(NdotL: f32, NdotV: f32, roughness: f32) -> f32 {
   let a: f32 = pow2( roughness );
   let a2: f32 = pow2( a );
@@ -18884,7 +18894,7 @@ fn BRDF_GGX(
 ) -> vec3f {
   // cook-torrance brdf
   var F: vec3f = F_Schlick(specularColor, specularFactor, VdotH);
-  F = mix( F, iridescenceFresnel, iridescence );
+  F = mix(F, iridescenceFresnel, iridescence);
 
   let G: f32 = GeometrySmith(NdotL, NdotV, roughness);
   let D: f32 = DistributionGGX(NdotH, roughness);
@@ -18914,10 +18924,11 @@ fn computeSpecularOcclusion( NdotV: f32, occlusion: f32, roughness: f32 ) -> f32
 	return saturate(pow(NdotV + occlusion, exp2(- 16.0 * roughness - 1.0)) - 1.0 + occlusion);
 }
 
-fn getGGX(
+fn BRDF_GGX_Singlescatter(
   normal: vec3f,
   viewDirection: vec3f,
   NdotL: f32,
+  NdotV: f32,
   roughness: f32,
   specularFactor: f32,
   specularColor: vec3f,
@@ -18925,36 +18936,100 @@ fn getGGX(
   iridescence: f32,
   directLight: DirectLight,
 ) -> vec3f {
+  let alpha: f32 = pow2(roughness); // UE4's roughness
+
   let H: vec3f = normalize(viewDirection + directLight.direction);
-  let NdotV: f32 = saturate(dot(normal, viewDirection));
   let NdotH: f32 = saturate(dot(normal, H));
   let VdotH: f32 = saturate(dot(viewDirection, H));
 
-  return BRDF_GGX(NdotV, NdotL, NdotH, VdotH, roughness, specularFactor, specularColor, iridescenceFresnel, iridescence);
+  return BRDF_GGX(NdotV, NdotL, NdotH, VdotH, alpha, specularFactor, specularColor, iridescenceFresnel, iridescence);
+}
+
+// GGX BRDF with multi-scattering energy compensation for direct lighting
+// Based on "Practical Multiple Scattering Compensation for Microfacet Models"
+// https://blog.selfshadow.com/publications/turquin/ms_comp_final.pdf
+fn BRDF_GGX_Multiscatter(
+  normal: vec3f,
+  viewDirection: vec3f,
+  NdotL: f32,
+  NdotV: f32,
+  dfgV: vec2f,
+  dfgL: vec2f,
+  specularF90: f32,
+  specularColorBlended: vec3f,
+  roughness: f32,
+) -> vec3f {
+  // Multi-scattering compensation
+
+	// Single-scattering energy for view and light
+	let FssEss_V: vec3f = specularColorBlended * dfgV.x + specularF90 * dfgV.y;
+	let FssEss_L: vec3f = specularColorBlended * dfgL.x + specularF90 * dfgL.y;
+
+	let Ess_V: f32 = dfgV.x + dfgV.y;
+	let Ess_L: f32 = dfgL.x + dfgL.y;
+
+	// Energy lost to multiple scattering
+	let Ems_V: f32 = 1.0 - Ess_V;
+	let Ems_L: f32 = 1.0 - Ess_L;
+
+	// Average Fresnel reflectance
+	let Favg: vec3f = specularColorBlended + ( 1.0 - specularColorBlended ) * 0.047619; // 1/21
+
+	// Multiple scattering contribution
+	let Fms: vec3f = FssEss_V * FssEss_L * Favg / ( 1.0 - Ems_V * Ems_L * Favg * Favg + EPSILON );
+
+	// Energy compensation factor
+	let compensationFactor: f32 = Ems_V * Ems_L;
+
+	return Fms * compensationFactor;
 }
 
 fn getPBRDirect(
   normal: vec3f,
-  diffuseColor: vec3f,
   viewDirection: vec3f,
-  specularFactor: f32,
-  specularColor: vec3f,
+  NdotL: f32,
+  NdotV: f32,
+  dfgV: vec2f,
+  dfgL: vec2f,
+  diffuseContribution: vec3f,
+  specularF90: f32,
+  specularColorBlended: vec3f,
   roughness: f32,
   iridescenceFresnel: vec3f,
   iridescence: f32,
   directLight: DirectLight,
   ptr_reflectedLight: ptr<function, ReflectedLight>
 ) {
-  let NdotL: f32 = saturate(dot(normal, directLight.direction));
-  let alpha: f32 = pow2(roughness); // UE4's roughness
+  let ggxSingleScatter: vec3f = BRDF_GGX_Singlescatter(
+    normal,
+    viewDirection,
+    NdotL,
+    NdotV,
+    roughness,
+    specularF90,
+    specularColorBlended,
+    iridescenceFresnel,
+    iridescence,
+    directLight
+  );
 
-  let ggx: vec3f = getGGX(normal, viewDirection, NdotL, alpha, specularFactor, specularColor, iridescenceFresnel, iridescence, directLight);
+  let ggxMultiScatter: vec3f = BRDF_GGX_Multiscatter(
+    normal,
+    viewDirection,
+    NdotL,
+    NdotV,
+    dfgV,
+    dfgL,
+    specularF90,
+    specularColorBlended,
+    roughness,
+  );
+
+  let ggx: vec3f = ggxSingleScatter + ggxMultiScatter;
 
   let irradiance: vec3f = NdotL * directLight.color;
-  
-  let diffuseContribution: vec3f = BRDF_Lambert(diffuseColor);
-  
-  (*ptr_reflectedLight).directDiffuse += irradiance * diffuseContribution;
+    
+  (*ptr_reflectedLight).directDiffuse += irradiance * BRDF_Lambert(diffuseContribution);
   (*ptr_reflectedLight).directSpecular += irradiance * ggx;
 }
 `
@@ -18965,11 +19040,11 @@ fn getPBRDirect(
   }) => {
     let iblIndirectDiffuse = "";
     if (environmentMap) {
-      iblIndirectDiffuse += /* wgs */
+      iblIndirectDiffuse += /* wgsl */
       `    
   iblIrradiance += getIBLIndirectIrradiance(
     normal,
-    baseDiffuseColor.rgb,
+    diffuseContribution,
     ${environmentMap.sampler.name},
     ${environmentMap.diffuseTexture.options.name},
     envRotation,
@@ -19035,8 +19110,8 @@ fn getPBRDirect(
     normal,
     normalize(viewDirection),
     roughness, 
-    baseDiffuseColor,
-    specularColor,
+    diffuseContribution,
+    specularColorBlended,
     specularF90,
     worldPosition,
     modelScale,
@@ -19061,15 +19136,11 @@ fn getPBRDirect(
   const computeMultiScattering$1 = ({
     environmentMap = null
   }) => {
-    let iblIGGXFresnel = (
-      /* wgsl */
-      `
-  var iBLGGXFresnel: IBLGGXFresnel;`
-    );
+    let multiScattering = "";
     if (environmentMap && environmentMap.lutTexture) {
-      iblIGGXFresnel += /* wgsl */
+      multiScattering += /* wgsl */
       `
-  let fab: vec2f = LUT_DFGA(
+  let fab: vec2f = DFGFromLUT(
     normal,
     viewDirection,
     roughness,
@@ -19077,7 +19148,7 @@ fn getPBRDirect(
     ${environmentMap.lutTexture.options.name},
   );`;
     } else {
-      iblIGGXFresnel += /* wgsl */
+      multiScattering += /* wgsl */
       `
   let fab: vec2f = DFGApprox(
     normal,
@@ -19085,17 +19156,28 @@ fn getPBRDirect(
     roughness,
   );`;
     }
-    iblIGGXFresnel += /* wgsl */
+    multiScattering += /* wgsl */
     `
+  // Both indirect specular and indirect diffuse light accumulate here
+	// Compute multiscattering separately for dielectric and metallic, then mix
   computeMultiscattering(
     fab,
     specularColor,
-    specularIntensity,
-    iridescenceF0,
+    specularF90,
     iridescence,
-    &iBLGGXFresnel
+    iridescenceFresnelDielectric,
+    &dielectricScattering
+  );
+  
+  computeMultiscattering(
+    fab,
+    diffuseColor,
+    specularF90,
+    iridescence,
+    iridescenceFresnelMetallic,
+    &metallicScattering
   );`;
-    return iblIGGXFresnel;
+    return multiScattering;
   };
 
   const applySheenClearcoatContribution = ({
@@ -19105,9 +19187,7 @@ fn getPBRDirect(
     if (extensionsUsed.includes("KHR_materials_sheen")) {
       sheenClearcoatContribution += /* wgsl */
       `
-  // Sheen energy compensation approximation calculation can be found at the end of
-  // https://drive.google.com/file/d/1T0D1VSyR4AllqIJTQAraEIzjlb5h4FKH/view?usp=sharing
-  let sheenEnergyComp: f32 = 1.0 - 0.157 * max3( sheenColor );
+  let sheenEnergyComp: f32 = 1.0 - max3(sheenColor) * sheenAlbedoScale;
 
   outgoingLight = outgoingLight * sheenEnergyComp + sheenSpecularDirect + sheenSpecularIndirect;
     `;
@@ -19165,48 +19245,106 @@ fn getPBRDirect(
     return clearcoatIndirect;
   };
 
-  const getSheenIndirectSpecular = ({
-    extensionsUsed = []
+  const getIBLSheenIndirectRadiance = ({
+    extensionsUsed = [],
+    environmentMap = null
   } = {}) => {
     let sheenIndirect = "";
     if (extensionsUsed.includes("KHR_materials_sheen")) {
-      sheenIndirect += /* wgsl */
-      `
-  sheenSpecularIndirect += getIBLSheenSpecularIndirect(normal, viewDirection, iblIrradiance, sheenColor, sheenRoughness);`;
+      if (environmentMap && environmentMap.lutTexture) {
+        sheenIndirect += /* wgsl */
+        `
+  // remap sheen roughness so we get only high mips
+  // to sample from in the PMREM (helps approximate Charlie cubemap convolutions)
+  // let remappedSheenRoughness = 0.2 + sheenRoughness * 0.8;
+  let remappedSheenRoughness = saturate(0.2 + sheenRoughness);
+  var sheenIblIrradiance: vec3f = getIBLIndirectRadiance(
+    normal,
+    viewDirection,
+    remappedSheenRoughness,
+    ${environmentMap.sampler.name},
+    ${environmentMap.specularTexture.options.name},
+    envRotation,
+    envSpecularIntensity,
+  );
+
+  let sheenBRDFCharlie: f32 = getBRDFCharlie(
+    normal,
+    viewDirection,
+    sheenRoughness,
+    ${environmentMap.sampler.name},
+    ${environmentMap.lutTexture.options.name}
+  );
+  sheenSpecularIndirect += sheenIblIrradiance * sheenColor * sheenBRDFCharlie;
+  let sheenAlbedoScale: f32 = sheenBRDFCharlie;`;
+      } else {
+        sheenIndirect += /* wgsl */
+        `
+  let sheenBRDFCharlie: f32 = getBRDFCharlieApprox( normal, viewDirection, sheenRoughness );
+  sheenSpecularIndirect += irradiance * sheenColor * sheenBRDFCharlie;
+  // we could also use 0.157 as approximation
+  let sheenAlbedoScale: f32 = getSheenAlbedoScaleApprox(normal, viewDirection, sheenRoughness);`;
+      }
     }
     return sheenIndirect;
   };
 
-  const getPBRSheenClearcoatDirect = ({
-    extensionsUsed = []
-  } = {}) => {
-    let sheenClearcoatDirect = "";
-    if (extensionsUsed.includes("KHR_materials_clearcoat")) {
-      sheenClearcoatDirect += /* wgsl */
-      `
-  clearcoatSpecularDirect += getPBRClearcoatDirect(clearcoatNormal, viewDirection, clearcoatF0, clearcoatF90, clearcoatRoughness, directLight, &reflectedLight);`;
-    }
-    if (extensionsUsed.includes("KHR_materials_sheen")) {
-      sheenClearcoatDirect += /* wgsl */
-      `
-  sheenSpecularDirect += getPBRSheenDirect(normal, viewDirection, sheenColor, sheenRoughness, directLight, &reflectedLight);`;
-    }
-    return sheenClearcoatDirect;
-  };
-
   const getPBRDirectContribution = ({
-    extensionsUsed = []
+    extensionsUsed = [],
+    environmentMap = null
   } = {}) => {
-    let pbrDirect = "";
+    let pbrDirect = (
+      /* wgsl */
+      `
+  let NdotL: f32 = saturate(dot(normal, directLight.direction));
+  let NdotV: f32 = saturate(dot(normal, viewDirection));`
+    );
+    if (environmentMap && environmentMap.lutTexture) {
+      pbrDirect += /* wgsl */
+      `
+  // Precomputed DFG values for view and light directions from LUT
+  let dfgV: vec2f = DFGFromLUT(
+    vec3(0.0, 0.0, 1.0),
+    vec3(sqrt(1.0 - NdotV * NdotV), 0.0, NdotV),
+    roughness,
+    ${environmentMap.sampler.name},
+    ${environmentMap.lutTexture.options.name},
+  );
+  let dfgL: vec2f = DFGFromLUT(
+    vec3(0.0, 0.0, 1.0),
+    vec3(sqrt(1.0 - NdotL * NdotL), 0.0, NdotL),
+    roughness,
+    ${environmentMap.sampler.name},
+    ${environmentMap.lutTexture.options.name},
+  );`;
+    } else {
+      pbrDirect += /* wgsl */
+      `
+  // Precomputed DFG values for view and light directions from approximation
+  let dfgV: vec2f = DFGApprox(
+    vec3(0.0, 0.0, 1.0),
+    vec3(sqrt(1.0 - NdotV * NdotV), 0.0, NdotV),
+    roughness,
+  );
+  let dfgL: vec2f = DFGApprox(
+    vec3(0.0, 0.0, 1.0),
+    vec3(sqrt(1.0 - NdotL * NdotL), 0.0, NdotL),
+    roughness,
+  );`;
+    }
     if (extensionsUsed.includes("KHR_materials_anisotropy")) {
       pbrDirect += /* wgsl */
       `
-    getPBRDirect_Anisotropic(
+    getPBRDirectAnisotropic(
       normal,
-      baseDiffuseColor.rgb,
       viewDirection,
+      NdotL,
+      NdotV,
+      dfgV,
+      dfgL,
+      diffuseContribution,
       specularF90,
-      specularColor,
+      specularColorBlended,
       roughness,
       iridescenceFresnel,
       iridescence,
@@ -19221,10 +19359,14 @@ fn getPBRDirect(
       `
     getPBRDirect(
       normal,
-      baseDiffuseColor.rgb,
       viewDirection,
+      NdotL,
+      NdotV,
+      dfgV,
+      dfgL,
+      diffuseContribution,
       specularF90,
-      specularColor,
+      specularColorBlended,
       roughness,
       iridescenceFresnel,
       iridescence,
@@ -19232,7 +19374,16 @@ fn getPBRDirect(
       &reflectedLight
     );`;
     }
-    pbrDirect += getPBRSheenClearcoatDirect({ extensionsUsed });
+    if (extensionsUsed.includes("KHR_materials_clearcoat")) {
+      pbrDirect += /* wgsl */
+      `
+  clearcoatSpecularDirect += getPBRDirectClearcoat(clearcoatNormal, viewDirection, clearcoatF0, clearcoatF90, clearcoatRoughness, directLight, &reflectedLight);`;
+    }
+    if (extensionsUsed.includes("KHR_materials_sheen")) {
+      pbrDirect += /* wgsl */
+      `
+  sheenSpecularDirect += getPBRDirectSheen(normal, viewDirection, sheenColor, sheenRoughness, directLight, &reflectedLight);`;
+    }
     return pbrDirect;
   };
 
@@ -19250,8 +19401,6 @@ fn getPBRDirect(
   
   ${receiveShadows ? getPCFShadows : ""}
   
-  let baseDiffuseColor: vec4f = outputColor * ( 1.0 - metallic );
-
   // point lights
   for(var i = 0; i < pointLights.count; i++) {
     getPointLightInfo(pointLights.elements[i], worldPosition, &directLight);
@@ -19261,7 +19410,7 @@ fn getPBRDirect(
     }
     
     ${receiveShadows ? applyPointShadows : ""}
-    ${getPBRDirectContribution({ extensionsUsed })}
+    ${getPBRDirectContribution({ extensionsUsed, environmentMap })}
   }
   
   // spot lights
@@ -19273,7 +19422,7 @@ fn getPBRDirect(
     }
     
     ${receiveShadows ? applySpotShadows : ""}
-    ${getPBRDirectContribution({ extensionsUsed })}
+    ${getPBRDirectContribution({ extensionsUsed, environmentMap })}
   }
   
   // directional lights
@@ -19285,13 +19434,16 @@ fn getPBRDirect(
     }
     
     ${receiveShadows ? applyDirectionalShadows : ""}
-    ${getPBRDirectContribution({ extensionsUsed })}
+    ${getPBRDirectContribution({ extensionsUsed, environmentMap })}
   }
   
   var irradiance: vec3f = vec3(0.0);
   var radiance: vec3f = vec3(0.0);
   var iblIrradiance: vec3f = vec3(0.0);
   var iblRadiance: vec3f = vec3(0.0);
+
+  var dielectricScattering: MultiScattering;
+  var metallicScattering: MultiScattering;
   
   // IBL indirect contributions
   ${computeMultiScattering$1({ environmentMap })}
@@ -19299,20 +19451,23 @@ fn getPBRDirect(
   ${getIBLIndirectRadiance$1({ extensionsUsed, environmentMap })}
   
   // ambient lights
-  RE_IndirectDiffuse(irradiance, baseDiffuseColor.rgb, &reflectedLight);
   
+  RE_IndirectDiffuse(irradiance, diffuseContribution, &reflectedLight);
+
   // indirect specular (and diffuse) from IBL
   RE_IndirectSpecular(
     radiance,
     iblIrradiance,
-    baseDiffuseColor.rgb,
-    iBLGGXFresnel,
+    diffuseContribution,
+    metallic,
+    dielectricScattering,
+    metallicScattering,
     &reflectedLight
   );
 
   ${getIBLClearcoatIndirectRadiance({ extensionsUsed, environmentMap })}
   ${getClearcoatIndirectSpecular({ extensionsUsed })}
-  ${getSheenIndirectSpecular({ extensionsUsed })}
+  ${getIBLSheenIndirectRadiance({ extensionsUsed, environmentMap })}
   
   reflectedLight.indirectDiffuse *= occlusion;
 
@@ -20221,7 +20376,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
     `
   metallic = saturate(metallic);
 
-  //roughness = clamp(roughness, 0.0525, 1.0);
+  // roughness = clamp(roughness, 0.0525, 1.0);
   let dxy: vec3f = max( abs( dpdx( geometryNormal ) ), abs( dpdy( geometryNormal ) ) );
   let geometryRoughness: f32 = max( max( dxy.x, dxy.y ), dxy.z );
   roughness = max( roughness, 0.0525 );
@@ -20264,7 +20419,8 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
     specular += /* wgsl */
     `
   specularF90 = mix(specularIntensity, 1.0, metallic);
-  specularColor = mix( min( pow2( ( ior - 1.0 ) / ( ior + 1.0 ) ) * specularColor, vec3( 1.0 ) ) * specularIntensity, outputColor.rgb, metallic );
+  specularColor = min( pow2( ( ior - 1.0 ) / ( ior + 1.0 ) ) * specularColor, vec3( 1.0 ) ) * specularIntensity;
+  let specularColorBlended: vec3f = mix(specularColor, diffuseColor, metallic);
   `;
     return specular;
   };
@@ -20356,7 +20512,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
     /* wgsl */
     `
 // multi scattering equations
-// if the environment map has not created a LUT texture
+// DFG approximation if the environment map has not created a LUT texture
 fn DFGApprox(
   normal: vec3f,
   viewDirection: vec3f,
@@ -20364,18 +20520,19 @@ fn DFGApprox(
 ) -> vec2f {
   let dotNV: f32 = saturate(dot( normal, viewDirection ));
 
-	let c0: vec4f = vec4( - 1, - 0.0275, - 0.572, 0.022 );
-	let c1: vec4f = vec4( 1, 0.0425, 1.04, - 0.04 );
+	let c0: vec4f = vec4( -1, -0.0275, -0.572, 0.022 );
+	let c1: vec4f = vec4( 1, 0.0425, 1.04, -0.04 );
 
 	let r: vec4f = roughness * c0 + c1;
-	let a004: f32 = min( r.x * r.x, exp2( - 9.28 * dotNV ) ) * r.x + r.y;
+	let a004: f32 = min( r.x * r.x, exp2( -9.28 * dotNV ) ) * r.x + r.y;
 	
-	let fab: vec2f = vec2( - 1.04, 1.04 ) * a004 + r.zw;
+	let fab: vec2f = vec2( -1.04, 1.04 ) * a004 + r.zw;
 
 	return fab;
 }
 
-fn LUT_DFGA(
+// DFG from LUT texture
+fn DFGFromLUT(
   normal: vec3f,
   viewDirection: vec3f,
   roughness: f32,
@@ -20386,25 +20543,26 @@ fn LUT_DFGA(
   
   let brdfSamplePoint: vec2f = saturate(vec2(NdotV, roughness));
   
-  return textureSample(
+  return textureSampleLevel(
     lutTexture,
     clampSampler,
-    brdfSamplePoint
+    brdfSamplePoint,
+    0.0
   ).rg;
 }
 
-struct IBLGGXFresnel {
-  FssEss: vec3f,
-  FmsEms: vec3f
+struct MultiScattering {
+  singleScattering: vec3f,
+  multiScattering: vec3f,
 }
 
 fn computeMultiscattering(
   fab: vec2f,
   specularColor: vec3f,
   f90: f32,
-  iridescenceF0: vec3f,
   iridescence: f32,
-  ptr_totalScattering: ptr<function, IBLGGXFresnel>
+  iridescenceF0: vec3f,
+  ptr_multiScattering: ptr<function, MultiScattering>
 ) {
 	var Fr: vec3f = specularColor;
   Fr = mix(Fr, iridescenceF0, iridescence);
@@ -20417,8 +20575,8 @@ fn computeMultiscattering(
 	let Favg: vec3f = Fr + ( 1.0 - Fr ) * 0.047619; // 1/21
 	let Fms: vec3f = FssEss * Favg / ( 1.0 - Ems * Favg );
 
-	(*ptr_totalScattering).FssEss += FssEss;
-	(*ptr_totalScattering).FmsEms += Fms * Ems;
+  (*ptr_multiScattering).singleScattering += FssEss;
+	(*ptr_multiScattering).multiScattering += Fms * Ems;
 }
 `
   );
@@ -20461,10 +20619,14 @@ fn getIBLIndirectRadiance(
   let N: vec3f = normal;
   let V: vec3f = viewDirection;
 
-  let reflection: vec3f = normalize(reflect(-V, N));
+  var reflection: vec3f = normalize(reflect(-V, N));
+
+  // Mixing the reflection with the normal is more accurate and keeps rough objects from gathering light from behind their tangent plane.
+  // reflection = normalize( mix( reflection, normal, pow4(roughness)) );
+  // reflection = normalize( mix( reflection, normal, pow2(roughness)) );
 
   let maxLevel: f32 = f32(textureNumLevels(envSpecularTexture) - 1);
-  // not physically accurate until we generate actual PMREM env maps
+
   let lod: f32 = roughness * maxLevel;
 
   let specularLight: vec4f = textureSampleLevel(
@@ -20482,11 +20644,44 @@ fn getIBLIndirectRadiance(
   const getIBLSheen = (
     /* wgsl */
     `
+fn getSheenAlbedoScaleApprox(normal: vec3f, viewDirection: vec3f, sheenRoughness: f32) -> f32 {
+  let NdotV: f32 = saturate( dot( normal, viewDirection ) );
+  let s = saturate(sheenRoughness);
+
+  // amplitude (stronger compensation for sharper sheen)
+  let A = 0.28 + 0.6 * (1.0 - s);   // in [0.28 .. 0.88]
+
+  // exponent (controls how fast it falls off away from grazing)
+  let B = 1.8 + 3.2 * s;            // in [1.8 .. 5.0]
+
+  // (1 - x) is high at grazing; raising to B shapes the falloff
+  return A * pow(1.0 - NdotV, B);
+}
+
+fn getBRDFCharlie(
+  normal: vec3f,
+  viewDirection: vec3f,
+  sheenRoughness: f32,
+  clampSampler: sampler,
+  lutTexture: texture_2d<f32>
+) -> f32 {
+  let NdotV: f32 = saturate(dot(normal, viewDirection));
+  
+  let brdfSamplePoint: vec2f = saturate(vec2(NdotV, sheenRoughness));
+  
+  return textureSampleLevel(
+    lutTexture,
+    clampSampler,
+    brdfSamplePoint,
+    0.0
+  ).b;
+}
+
 // This is a curve-fit approxmation to the "Charlie sheen" BRDF integrated over the hemisphere from 
 // Estevez and Kulla 2017, "Production Friendly Microfacet Sheen BRDF". The analysis can be found
 // in the Sheen section of https://drive.google.com/file/d/1T0D1VSyR4AllqIJTQAraEIzjlb5h4FKH/view?usp=sharing
-fn IBLSheenBRDF( normal: vec3f, viewDirection: vec3f, roughness: f32 ) -> f32 {
-  let dotNV: f32 = saturate( dot( normal, viewDirection ) );
+fn getBRDFCharlieApprox( normal: vec3f, viewDirection: vec3f, roughness: f32 ) -> f32 {
+  let NdotV: f32 = saturate( dot( normal, viewDirection ) );
 
   let r2: f32 = roughness * roughness;
 
@@ -20494,19 +20689,9 @@ fn IBLSheenBRDF( normal: vec3f, viewDirection: vec3f, roughness: f32 ) -> f32 {
   let b: f32 = select(1.97 * r2 - 3.27 * roughness + 0.72, 44.0 * r2 - 23.7 * roughness + 3.26, roughness < 0.25);
   let roughnessAdditionalContribution: f32 = select(0.1 * ( roughness - 0.25 ), 0.0, roughness < 0.25);
 
-  let DG: f32 = exp( a * dotNV + b ) + roughnessAdditionalContribution;
+  let DG: f32 = exp( a * NdotV + b ) + roughnessAdditionalContribution;
 
   return saturate( DG );
-}
-
-fn getIBLSheenSpecularIndirect(
-  normal: vec3f,
-  viewDirection: vec3f,
-  irradiance: vec3f,
-  sheenColor: vec3f,
-  sheenRoughness: f32
-) -> vec3f {
-  return irradiance * sheenColor * IBLSheenBRDF( normal, viewDirection, sheenRoughness );
 }
 `
   );
@@ -20531,7 +20716,7 @@ fn getIBLSheenSpecularIndirect(
     return transmissionThickness;
   };
 
-  const getPBRSheenDirect = (
+  const getPBRDirectSheen = (
     /* wgsl */
     `
 // https://github.com/google/filament/blob/master/shaders/src/brdf.fs
@@ -20571,7 +20756,7 @@ fn BRDF_Sheen(
   return sheenColor * ( D * V );
 }
 
-fn getPBRSheenDirect(
+fn getPBRDirectSheen(
   normal: vec3f,
   viewDirection: vec3f,
   sheenColor: vec3f,
@@ -20713,7 +20898,7 @@ fn getPBRSheenDirect(
     return clearcoatNormal;
   };
 
-  const getPBRClearcoatDirect = (
+  const getPBRDirectClearcoat = (
     /* wgsl */
     `
 // GGX Distribution, Schlick Fresnel, GGX_SmithCorrelated Visibility
@@ -20744,7 +20929,7 @@ fn BRDF_GGX_Clearcoat(
 
 }
 
-fn getPBRClearcoatDirect(
+fn getPBRDirectClearcoat(
   clearcoatNormal: vec3f,
   viewDirection: vec3f,
   clearcoatF0: vec3f,
@@ -20773,6 +20958,8 @@ fn getPBRClearcoatDirect(
       `
   var iridescenceThickness: f32 = 0.0;
   var iridescenceF0: vec3f = vec3(0.0);
+  var iridescenceFresnelDielectric: vec3f = vec3(0.0);
+  var iridescenceFresnelMetallic: vec3f = vec3(0.0);
   var iridescenceFresnel: vec3f = vec3(0.0);`
     );
     if (!extensionsUsed.includes("KHR_materials_iridescence")) {
@@ -20814,7 +21001,9 @@ fn getPBRClearcoatDirect(
   }
 
   if ( iridescence > 0.0 ) {
-    iridescenceFresnel = evalIridescence( 1.0, iridescenceIOR, dotNVi, iridescenceThickness, specularColor );
+    iridescenceFresnelDielectric = evalIridescence( 1.0, iridescenceIOR, dotNVi, iridescenceThickness, specularColor );
+		iridescenceFresnelMetallic = evalIridescence( 1.0, iridescenceIOR, dotNVi, iridescenceThickness, diffuseColor );
+    iridescenceFresnel = mix( iridescenceFresnelDielectric, iridescenceFresnelMetallic, metallic );
 
     // Iridescence F0 approximation
     iridescenceF0 = Schlick_to_F0( iridescenceFresnel, 1.0, dotNVi );
@@ -20934,21 +21123,21 @@ fn evalIridescence( outsideIOR: f32, eta2: f32, cosTheta1: f32, thinFilmThicknes
 }`
   );
 
-  const BRDF_GGX_Anisotropic = (
+  const getPBRDirectAnisotropic = (
     /* wgsl */
     `
 fn GeometrySmith_Anisotropic(
   alphaT: f32, 
   alphaB: f32,
-  dotTV: f32,
-  dotBV: f32,
-  dotTL: f32,
-  dotBL: f32,
-  dotNV: f32,
-  dotNL: f32
+  TdotV: f32,
+  BdotV: f32,
+  TdotL: f32,
+  BdotL: f32,
+  NdotV: f32,
+  NdotL: f32
 ) -> f32 {
-  let gv: f32 = dotNL * length( vec3( alphaT * dotTV, alphaB * dotBV, dotNV ) );
-  let gl: f32 = dotNV * length( vec3( alphaT * dotTL, alphaB * dotBL, dotNL ) );
+  let gv: f32 = NdotL * length( vec3( alphaT * TdotV, alphaB * BdotV, NdotV ) );
+  let gl: f32 = NdotV * length( vec3( alphaT * TdotL, alphaB * BdotL, NdotL ) );
   let v: f32 = 0.5 / ( gv + gl );
 
   return saturate(v);
@@ -20957,12 +21146,12 @@ fn GeometrySmith_Anisotropic(
 fn DistributionGGX_Anisotropic(
   alphaT: f32,
   alphaB: f32,
-  dotNH: f32,
-  dotTH: f32,
-  dotBH: f32
+  NdotH: f32,
+  TdotH: f32,
+  BdotH: f32
 ) -> f32 {
   let a2: f32 = alphaT * alphaB;
-  let v: vec3f = vec3( alphaB * dotTH, alphaT * dotBH, a2 * dotNH );
+  let v: vec3f = vec3( alphaB * TdotH, alphaT * BdotH, a2 * NdotH );
   let v2: f32 = dot( v, v );
   let w2: f32 = a2 / v2;
 
@@ -20972,10 +21161,11 @@ fn DistributionGGX_Anisotropic(
 fn BRDF_GGX_Anisotropic(
   normal: vec3f,
   viewDirection: vec3f,
-  dotNL: f32,
+  NdotL: f32,
+  NdotV: f32,
   roughness: f32,
-  specularFactor: f32,
-  specularColor: vec3f,
+  specularF90: f32,
+  specularColorBlended: vec3f,
   iridescenceFresnel: vec3f,
   iridescence: f32,
   alphaT: f32,
@@ -20983,34 +21173,39 @@ fn BRDF_GGX_Anisotropic(
   anisotropyB: vec3f,
   directLight: DirectLight,
 ) -> vec3f {
+  let alpha: f32 = pow2(roughness); // UE4's roughness
+
   let H: vec3f = normalize(viewDirection + directLight.direction);
   let VdotH: f32 = saturate(dot(viewDirection, H));
-  let dotNV: f32 = saturate( dot( normal, viewDirection ) );
-  let dotNH: f32 = saturate(dot(normal, H));
+  let NdotH: f32 = saturate(dot(normal, H));
 
   // cook-torrance brdf
-  var F: vec3f = F_Schlick(specularColor, specularFactor, VdotH);
+  var F: vec3f = F_Schlick(specularColorBlended, specularF90, VdotH);
   F = mix( F, iridescenceFresnel, iridescence );
 
-  let dotTL: f32 = dot( anisotropyT, directLight.direction );
-  let dotTV: f32 = dot( anisotropyT, viewDirection );
-  let dotTH: f32 = dot( anisotropyT, H );
-  let dotBL: f32 = dot( anisotropyB, directLight.direction );
-  let dotBV: f32 = dot( anisotropyB, viewDirection );
-  let dotBH: f32 = dot( anisotropyB, H );
+  let TdotL: f32 = dot( anisotropyT, directLight.direction );
+  let TdotV: f32 = dot( anisotropyT, viewDirection );
+  let TdotH: f32 = dot( anisotropyT, H );
+  let BdotL: f32 = dot( anisotropyB, directLight.direction );
+  let BdotV: f32 = dot( anisotropyB, viewDirection );
+  let BdotH: f32 = dot( anisotropyB, H );
 
-  let G: f32 = GeometrySmith_Anisotropic( alphaT, roughness, dotTV, dotBV, dotTL, dotBL, dotNV, dotNL );
-  let D: f32 = DistributionGGX_Anisotropic( alphaT, roughness, dotNH, dotTH, dotBH );
+  let G: f32 = GeometrySmith_Anisotropic( alphaT, alpha, TdotV, BdotV, TdotL, BdotL, NdotV, NdotL );
+  let D: f32 = DistributionGGX_Anisotropic( alphaT, alpha, NdotH, TdotH, BdotH );
   
   return G * D * F;
 }
 
-fn getPBRDirect_Anisotropic(
+fn getPBRDirectAnisotropic(
   normal: vec3f,
-  diffuseColor: vec3f,
   viewDirection: vec3f,
-  specularFactor: f32,
-  specularColor: vec3f,
+  NdotL: f32,
+  NdotV: f32,
+  dfgV: vec2f,
+  dfgL: vec2f,
+  diffuseContribution: vec3f,
+  specularF90: f32,
+  specularColorBlended: vec3f,
   roughness: f32,
   iridescenceFresnel: vec3f,
   iridescence: f32,
@@ -21020,16 +21215,14 @@ fn getPBRDirect_Anisotropic(
   directLight: DirectLight,
   ptr_reflectedLight: ptr<function, ReflectedLight>
 ) {
-  let NdotL: f32 = saturate(dot(normal, directLight.direction));
-  let alpha: f32 = pow2(roughness); // UE4's roughness
-
-  let ggx: vec3f = BRDF_GGX_Anisotropic(
+  let ggxSingleScatter: vec3f = BRDF_GGX_Anisotropic(
     normal,
     viewDirection,
     NdotL,
-    alpha,
-    specularFactor,
-    specularColor,
+    NdotV,
+    roughness,
+    specularF90,
+    specularColorBlended,
     iridescenceFresnel,
     iridescence,
     alphaT,
@@ -21038,11 +21231,23 @@ fn getPBRDirect_Anisotropic(
     directLight
   );
 
+  let ggxMultiScatter: vec3f = BRDF_GGX_Multiscatter(
+    normal,
+    viewDirection,
+    NdotL,
+    NdotV,
+    dfgV,
+    dfgL,
+    specularF90,
+    specularColorBlended,
+    roughness,
+  );
+
+  let ggx: vec3f = ggxSingleScatter + ggxMultiScatter;
+
   let irradiance: vec3f = NdotL * directLight.color;
   
-  let diffuseContribution: vec3f = BRDF_Lambert(diffuseColor);
-  
-  (*ptr_reflectedLight).directDiffuse += irradiance * diffuseContribution;
+  (*ptr_reflectedLight).directDiffuse += irradiance * BRDF_Lambert(diffuseContribution);
   (*ptr_reflectedLight).directSpecular += irradiance * ggx;
 }
 `
@@ -21121,6 +21326,13 @@ fn getIBLIndirectAnisotropyRadiance(
 `
   );
 
+  const getDiffuse = (
+    /* wgsl */
+    `
+  let diffuseColor: vec3f = outputColor.rgb;
+  let diffuseContribution: vec3f = outputColor.rgb * (1.0 - metallic);`
+  );
+
   const getPBRFragmentShaderCode = ({
     chunks = null,
     toneMapping = "Khronos",
@@ -21189,10 +21401,10 @@ ${getIBLIndirectRadiance}
 ${getIBLTransmission}
 
 ${extensionsUsed.includes("KHR_materials_sheen") ? getIBLSheen : ""}
-${extensionsUsed.includes("KHR_materials_sheen") ? getPBRSheenDirect : ""}
-${extensionsUsed.includes("KHR_materials_clearcoat") ? getPBRClearcoatDirect : ""}
+${extensionsUsed.includes("KHR_materials_sheen") ? getPBRDirectSheen : ""}
+${extensionsUsed.includes("KHR_materials_clearcoat") ? getPBRDirectClearcoat : ""}
 ${extensionsUsed.includes("KHR_materials_iridescence") ? getPBRIridescence : ""}
-${extensionsUsed.includes("KHR_materials_anisotropy") ? BRDF_GGX_Anisotropic : ""}
+${extensionsUsed.includes("KHR_materials_anisotropy") ? getPBRDirectAnisotropic : ""}
 ${extensionsUsed.includes("KHR_materials_anisotropy") ? getIBLIndirectAnisotropyRadiance : ""}
 
 ${getFragmentInputStruct({ geometry, additionalVaryings })}
@@ -21213,6 +21425,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   ${getTangentBitangent({ extensionsUsed, geometry, normalTexture, clearcoatNormalTexture })}  
   ${getNormal({ normalTexture })}
   ${getMetallicRoughness({ metallicRoughnessTexture })}
+  ${getDiffuse}
   ${getSpecular({ specularTexture, specularFactorTexture, specularColorTexture })}
   ${getTransmissionThickness({ transmissionTexture, thicknessTexture })}
   ${getEmissiveOcclusion({ emissiveTexture, occlusionTexture })}
@@ -23387,22 +23600,16 @@ fn hammersley2d(i: u32, N: u32) -> vec2f {
 `
   );
 
-  const computeBRDFLUT = (
+  const getImportanceSamples = (
     /* wgsl */
     `
-${constants}
-${common}
-${hammersley2D}
-${generateTBN}
-${BRDF_GGX}
-
-// GGX microfacet distribution
+// microfacet distribution (GGX and Charlie)
 struct MicrofacetDistributionSample {
   pdf: f32,
   cosTheta: f32,
   sinTheta: f32,
   phi: f32
-};
+}
 
 // https://www.cs.cornell.edu/~srm/publications/EGSR07-btdf.html
 // This implementation is based on https://bruop.github.io/ibl/,
@@ -23412,13 +23619,13 @@ fn GGX(xi: vec2f, roughness: f32) -> MicrofacetDistributionSample {
   var ggx: MicrofacetDistributionSample;
 
   // evaluate sampling equations
-  let alpha: f32 = roughness * roughness;
-  ggx.cosTheta = clamp(sqrt((1.0 - xi.y) / (1.0 + (alpha * alpha - 1.0) * xi.y)), 0.0, 1.0);
+  let alpha: f32 = max(roughness * roughness, EPSILON);
+  ggx.cosTheta = sqrt((1.0 - xi.y) / (1.0 + (alpha * alpha - 1.0) * xi.y));
   ggx.sinTheta = sqrt(1.0 - ggx.cosTheta * ggx.cosTheta);
   ggx.phi = 2.0 * PI * xi.x;
 
   // evaluate GGX pdf (for half vector)
-  ggx.pdf = DistributionGGX(ggx.cosTheta, alpha);
+  ggx.pdf = DistributionGGX(ggx.cosTheta, roughness);
 
   // Apply the Jacobian to obtain a pdf that is parameterized by l
   // see https://bruop.github.io/ibl/
@@ -23430,43 +23637,113 @@ fn GGX(xi: vec2f, roughness: f32) -> MicrofacetDistributionSample {
   return ggx;
 }
 
-fn Lambertian(xi: vec2f, roughness: f32) -> MicrofacetDistributionSample {
-    var lambertian: MicrofacetDistributionSample;
-
-  // Cosine weighted hemisphere sampling
-  // http://www.pbr-book.org/3ed-2018/Monte_Carlo_Integration/2D_Sampling_with_Multidimensional_Transformations.html#Cosine-WeightedHemisphereSampling
-  lambertian.cosTheta = sqrt(1.0 - xi.y);
-  lambertian.sinTheta = sqrt(xi.y); // equivalent to \`sqrt(1.0 - cosTheta*cosTheta)\`;
-  lambertian.phi = 2.0 * PI * xi.x;
-
-  lambertian.pdf = lambertian.cosTheta / PI; // evaluation for solid angle, therefore drop the sinTheta
-
-  return lambertian;
+// NDF
+// https://github.com/google/filament/blob/main/shaders/src/surface_brdf.fs#L94
+fn D_Charlie(sheenRoughness: f32, NdotH: f32) -> f32 {
+  // Estevez and Kulla 2017, "Production Friendly Microfacet Sheen BRDF"
+  let invAlpha: f32  = 1.0 / max(sheenRoughness * sheenRoughness, EPSILON);
+  let cos2h: f32 = NdotH * NdotH;
+  let sin2h: f32 = max(1.0 - cos2h, 0.0078125); // 2^(-14/2), so sin2h^2 > 0 in fp16
+  return (2.0 + invAlpha) * pow(sin2h, invAlpha * 0.5) / (2.0 * PI);
 }
 
-// getImportanceSample returns an importance sample direction with pdf in the .w component
-fn getImportanceSample(Xi: vec2<f32>, N: vec3f, roughness: f32) -> vec4f {
+fn Charlie(xi: vec2f, roughness: f32) -> MicrofacetDistributionSample {
+  var charlie: MicrofacetDistributionSample;
+
+  let alpha = max(roughness * roughness, EPSILON);
+  charlie.sinTheta = pow(xi.y, alpha / (2.0 * alpha + 1.0));
+  charlie.cosTheta = sqrt(1.0 - charlie.sinTheta * charlie.sinTheta);
+  charlie.phi = 2.0 * PI * xi.x;
+
+  // evaluate Charlie pdf (for half vector)
+  charlie.pdf = D_Charlie(roughness, charlie.cosTheta);
+
+  // Apply the Jacobian to obtain a pdf that is parameterized by l
+  charlie.pdf /= 4.0;
+
+  return charlie;
+}
+
+// getImportanceSampleGGX returns an importance sample direction with pdf in the .w component
+fn getImportanceSampleGGX(Xi: vec2f, N: vec3f, roughness: f32) -> vec4f {
   var importanceSample: MicrofacetDistributionSample;
   
   importanceSample = GGX(Xi, roughness);
   
-   // transform the hemisphere sample to the normal coordinate frame
+  // transform the hemisphere sample to the normal coordinate frame
   // i.e. rotate the hemisphere to the normal direction
-  let localSpaceDirection: vec3f = normalize(vec3(
+  let H: vec3f = normalize(vec3(
     importanceSample.sinTheta * cos(importanceSample.phi), 
     importanceSample.sinTheta * sin(importanceSample.phi), 
     importanceSample.cosTheta
   ));
-  
-  let TBN: mat3x3f = generateTBN(N);
-  let direction: vec3f = TBN * localSpaceDirection;
 
-  return vec4(direction, importanceSample.pdf);
+  return vec4(H, importanceSample.pdf);
 }
 
-@compute @workgroup_size(16, 16, 1)
-fn main(@builtin(global_invocation_id) global_id : vec3<u32>) {  
-  let texelSize: vec2<u32> = textureDimensions(lutStorageTexture);
+fn getImportanceSampleCharlie(Xi: vec2f, N: vec3f, roughness: f32) -> vec4f {
+  var importanceSample: MicrofacetDistributionSample;
+
+  importanceSample = Charlie(Xi, roughness);
+
+  // transform the hemisphere sample to the normal coordinate frame
+  // i.e. rotate the hemisphere to the normal direction
+  let H: vec3f = normalize(vec3(
+    importanceSample.sinTheta * cos(importanceSample.phi), 
+    importanceSample.sinTheta * sin(importanceSample.phi), 
+    importanceSample.cosTheta
+  ));
+
+  return vec4(H, importanceSample.pdf);
+}
+`
+  );
+
+  const computeBRDFLUT = (
+    /* wgsl */
+    `
+${constants}
+${common}
+${hammersley2D}
+${generateTBN}
+${BRDF_GGX}
+${getImportanceSamples}
+
+struct ImportanceSampleVars {
+  H: vec3f,
+  pdf: f32,
+  L: vec3f,
+  NdotL: f32,
+  NdotH: f32,
+  VdotH: f32
+}
+
+fn getImportanceSampleVars(importanceSample: vec4f, V: vec3f, TBN: mat3x3f) -> ImportanceSampleVars {
+  var importanceSampleVars: ImportanceSampleVars;
+  let H: vec3f = normalize(TBN * importanceSample.xyz);
+  let L: vec3f = normalize(reflect(-V, H));
+
+  importanceSampleVars.H = H;
+  importanceSampleVars.pdf = importanceSample.w;
+
+  importanceSampleVars.L = L;
+
+  importanceSampleVars.NdotL = saturate(L.z);
+  importanceSampleVars.NdotH = saturate(H.z);
+  importanceSampleVars.VdotH = saturate(dot(V, H));
+
+  return importanceSampleVars;
+}
+
+// NDF
+// https://github.com/google/filament/blob/master/shaders/src/brdf.fs#L136
+fn V_Ashikhmin(NdotL: f32, NdotV: f32) -> f32 {
+  return saturate(1.0 / (4.0 * clamp(NdotL + NdotV - NdotL * NdotV, EPSILON, 1.0)));
+}
+
+@compute @workgroup_size(8, 8, 1)
+fn main(@builtin(global_invocation_id) global_id : vec3u) {  
+  let texelSize: vec2u = textureDimensions(lutStorageTexture);
 
   let x: u32 = global_id.x;
   let y: u32 = global_id.y;
@@ -23476,49 +23753,51 @@ fn main(@builtin(global_invocation_id) global_id : vec3<u32>) {
      return;
   }
   
-  let epsilon: f32 = 1e-6;
-
   // Compute roughness and N\xB7V from texture coordinates
-  let NdotV: f32 = max(f32(x) / f32(texelSize.x - 1), epsilon);    // Maps x-axis to N\xB7V (0.0 to 1.0)
-  let roughness: f32 = max(f32(y) / f32(texelSize.y - 1), epsilon);  // Maps y-axis to roughness (0.0 to 1.0)
+  let NdotV: f32 = f32(x) / f32(texelSize.x - 1);    // Maps x-axis to N\xB7V (0.0 to 1.0)
+  let roughness: f32 = f32(y) / f32(texelSize.y - 1);  // Maps y-axis to roughness (0.0 to 1.0)
 
   // Calculate view vector and normal vector
-  let V: vec3<f32> = vec3<f32>(sqrt(1.0 - NdotV * NdotV), 0.0, NdotV);  // Normalized view vector
-  let N: vec3<f32> = vec3<f32>(0.0, 0.0, 1.0);                          // Normal is along z-axis
+  let V: vec3f = vec3(sqrt(1.0 - NdotV * NdotV), 0.0, NdotV);  // Normalized view vector
+  let N: vec3f = vec3(0.0, 0.0, 1.0);                          // Normal is along z-axis
 
   // Initialize integration variables
   var A: f32 = 0.0;
   var B: f32 = 0.0;
   var C: f32 = 0.0;
 
+  let TBN: mat3x3f = generateTBN(N);
+
   // Monte Carlo integration to calculate A and B factors
   let sampleCount: u32 = params.sampleCount;
   for (var i: u32 = 0; i < sampleCount; i++) {
-    let Xi: vec2<f32> = hammersley2d(i, sampleCount);  // Importance sampling (Hammersley sequence)
+    let Xi: vec2f = hammersley2d(i, sampleCount);  // Importance sampling (Hammersley sequence)
     
-    //let H: vec3<f32> = importanceSampleGGX(Xi, N, roughness);
-    let importanceSample: vec4f = getImportanceSample(Xi, N, roughness);
-    let H: vec3f = importanceSample.xyz;
-    // let pdf: f32 = importanceSample.w;
-    
-    let L: vec3<f32> = normalize(reflect(-V, H));
-    
-    let NdotL: f32 = clamp(L.z, 0.0, 1.0);
-    let NdotH: f32 = clamp(H.z, 0.0, 1.0);
-    let VdotH: f32 = clamp(dot(V, H), 0.0, 1.0);
+    let importanceSampleGGX: vec4f = getImportanceSampleGGX(Xi, N, max(roughness, 0.0525));
+    let sampleGGX: ImportanceSampleVars = getImportanceSampleVars(importanceSampleGGX, V, TBN);
 
     // Ensure valid light direction
-    if (NdotL > 0.0) {     
+    if (sampleGGX.NdotL > 0.0) {     
       // LUT for GGX distribution.
 
       // Taken from: https://bruop.github.io/ibl
       // Shadertoy: https://www.shadertoy.com/view/3lXXDB
       // Terms besides V are from the GGX PDF we're dividing by.
-      let V_pdf: f32 = GeometrySmith(NdotV, NdotL, roughness) * VdotH * NdotL / max(NdotH, epsilon);
-      let Fc: f32 = pow(1.0 - VdotH, 5.0);
+      let geometryV: f32 = GeometrySmith(NdotV, sampleGGX.NdotL, max(roughness, 0.0525));
+      let V_pdf: f32 = geometryV * sampleGGX.VdotH * sampleGGX.NdotL / max(sampleGGX.NdotH, EPSILON);
+      let Fc: f32 = pow(1.0 - sampleGGX.VdotH, 5.0);
       A += (1.0 - Fc) * V_pdf;
       B += Fc * V_pdf;
-      C += 0.0;
+    }
+
+    let importanceSampleCharlie: vec4f = getImportanceSampleCharlie(Xi, N, roughness);
+    let sampleCharlie: ImportanceSampleVars = getImportanceSampleVars(importanceSampleCharlie, V, TBN);
+
+    if(sampleCharlie.NdotL > 0.0) {
+      // LUT for Charlie distribution.
+      let sheenDistribution: f32 = D_Charlie(roughness, sampleCharlie.NdotH);
+      let sheenVisibility: f32 = V_Ashikhmin(sampleCharlie.NdotL, NdotV);
+      C += sheenVisibility * sheenDistribution * sampleCharlie.NdotL * sampleCharlie.VdotH;
     }
   }
 
@@ -23536,24 +23815,24 @@ fn main(@builtin(global_invocation_id) global_id : vec3<u32>) {
 `
   );
 
-  const computeSpecularCubemapFromHDR = (
+  const computeCubemapFromHDR = (
     /* wgsl */
     `
 ${constants}
 
 // Cube face lookup vectors
 // positive and negative Y need to be inverted
-const faceVectors = array<array<vec3<f32>, 2>, 6>(
-  array<vec3<f32>, 2>(vec3<f32>(1.0, 0.0, 0.0), vec3<f32>(0.0, 1.0, 0.0)), // +X
-  array<vec3<f32>, 2>(vec3<f32>(-1.0, 0.0, 0.0), vec3<f32>(0.0, 1.0, 0.0)), // -X
-  array<vec3<f32>, 2>(vec3<f32>(0.0, -1.0, 0.0), vec3<f32>(0.0, 0.0, 1.0)),  // -Y
-  array<vec3<f32>, 2>(vec3<f32>(0.0, 1.0, 0.0), vec3<f32>(0.0, 0.0, -1.0)), // +Y
-  array<vec3<f32>, 2>(vec3<f32>(0.0, 0.0, 1.0), vec3<f32>(0.0, 1.0, 0.0)), // +Z
-  array<vec3<f32>, 2>(vec3<f32>(0.0, 0.0, -1.0), vec3<f32>(0.0, 1.0, 0.0)) // -Z
+const faceVectors = array<array<vec3f, 2>, 6>(
+  array<vec3f, 2>(vec3f(1.0, 0.0, 0.0), vec3f(0.0, 1.0, 0.0)), // +X
+  array<vec3f, 2>(vec3f(-1.0, 0.0, 0.0), vec3f(0.0, 1.0, 0.0)), // -X
+  array<vec3f, 2>(vec3f(0.0, -1.0, 0.0), vec3f(0.0, 0.0, 1.0)),  // -Y
+  array<vec3f, 2>(vec3f(0.0, 1.0, 0.0), vec3f(0.0, 0.0, -1.0)), // +Y
+  array<vec3f, 2>(vec3f(0.0, 0.0, 1.0), vec3f(0.0, 1.0, 0.0)), // +Z
+  array<vec3f, 2>(vec3f(0.0, 0.0, -1.0), vec3f(0.0, 1.0, 0.0)) // -Z
 );
 
 // Utility to calculate 3D direction for a given cube face pixel
-fn texelDirection(faceIndex : u32, u : f32, v : f32) -> vec3<f32> {
+fn texelDirection(faceIndex : u32, u : f32, v : f32) -> vec3f {
   let forward = faceVectors[faceIndex][0];
   let up = faceVectors[faceIndex][1];
   let right = normalize(cross(up, forward));
@@ -23561,16 +23840,16 @@ fn texelDirection(faceIndex : u32, u : f32, v : f32) -> vec3<f32> {
 }
 
 // Map 3D direction to equirectangular coordinates
-fn dirToEquirect(dir : vec3<f32>) -> vec2<f32> {
+fn dirToEquirect(dir : vec3f) -> vec2f {
   let phi = atan2(dir.z, dir.x);
   let theta = asin(dir.y);
   let u = 0.5 + 0.5 * phi / PI;
   let v = 0.5 - theta / PI;
-  return vec2<f32>(u, v);
+  return vec2f(u, v);
 }
 
 @compute @workgroup_size(8, 8, 1)
-fn main(@builtin(global_invocation_id) global_id : vec3<u32>) {
+fn main(@builtin(global_invocation_id) global_id : vec3u) {
   let faceSize = params.faceSize;
   let cubeFaceIndex = global_id.z;
   let x = global_id.x;
@@ -23580,8 +23859,8 @@ fn main(@builtin(global_invocation_id) global_id : vec3<u32>) {
     return;
   }
 
-  let u = f32(x) / f32(faceSize);
-  let v = f32(y) / f32(faceSize);
+  let u = f32(x) / f32(faceSize - 1);
+  let v = f32(y) / f32(faceSize - 1);
 
   // Get the 3D direction for this cube face texel
   let dir = texelDirection(cubeFaceIndex, u, v);
@@ -23602,8 +23881,8 @@ fn main(@builtin(global_invocation_id) global_id : vec3<u32>) {
   
   // Correct cube face order in texture store (fix for reversed face indices)
   textureStore(
-    specularStorageCubemap,
-    vec2<u32>(x, y),
+    storageCubemap,
+    vec2u(x, y),
     cubeFaceIndex,
     sampledColor
   );
@@ -23611,7 +23890,7 @@ fn main(@builtin(global_invocation_id) global_id : vec3<u32>) {
 `
   );
 
-  const computeDiffuseFromSpecularCubemap = (specularTexture) => (
+  const computeDiffuseFromCubemap = (cubemapTexture) => (
     /* wgsl */
     `
 ${constants}
@@ -23683,7 +23962,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
   
   uv = uv * 2.0 - 1.0;
 
-  let normal: vec3<f32> = transformDirection(face, uv);
+  let normal: vec3f = transformDirection(face, uv);
   
   var irradiance: vec3f = vec3f(0.0, 0.0, 0.0);
 
@@ -23715,7 +23994,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
 
     // Convert sampleVec to texture coordinates of the specular env map
     irradiance += textureSampleLevel(
-      ${specularTexture.options.name},
+      ${cubemapTexture.options.name},
       clampSampler,
       direction,
       sampleLevel
@@ -23725,6 +24004,160 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
   irradiance /= f32(sampleCount);
 
   textureStore(diffuseEnvMap, vec2(x, y), face, vec4f(irradiance, 1.0));
+}
+`
+  );
+
+  const PMREMGeneration = (
+    /* wgsl */
+    `
+${constants}
+${common}
+${hammersley2D}
+${generateTBN}
+${BRDF_GGX}
+${getImportanceSamples}
+
+struct VSOutput {
+    @builtin(position) position: vec4f,
+    @location(0) direction: vec3f,
+};
+
+// Cube face lookup vectors
+// positive and negative Y need to be inverted
+const faceVectors = array<array<vec3f, 2>, 6>(
+  array<vec3f, 2>(vec3f(1.0, 0.0, 0.0), vec3f(0.0, 1.0, 0.0)), // +X
+  array<vec3f, 2>(vec3f(-1.0, 0.0, 0.0), vec3f(0.0, 1.0, 0.0)), // -X
+  array<vec3f, 2>(vec3f(0.0, 1.0, 0.0), vec3f(0.0, 0.0, -1.0)), // +Y
+  array<vec3f, 2>(vec3f(0.0, -1.0, 0.0), vec3f(0.0, 0.0, 1.0)),  // -Y
+  array<vec3f, 2>(vec3f(0.0, 0.0, 1.0), vec3f(0.0, 1.0, 0.0)), // +Z
+  array<vec3f, 2>(vec3f(0.0, 0.0, -1.0), vec3f(0.0, 1.0, 0.0)) // -Z
+);
+
+fn texelDirection(faceIndex : u32, u : f32, v : f32) -> vec3f {
+  let forward = faceVectors[faceIndex][0];
+  let up = faceVectors[faceIndex][1];
+  let right = normalize(cross(up, forward));
+  return normalize(forward + (2.0 * u - 1.0) * right + (2.0 * v - 1.0) * up);
+}
+
+@vertex fn vs(
+    @builtin(vertex_index) vertexIndex : u32
+) -> VSOutput {
+    let pos = array(
+      vec2f(0.0, 0.0),  // center
+      vec2f(1.0, 0.0),  // right, center
+      vec2f(0.0, 1.0),  // center, top
+
+      // 2nd triangle
+      vec2f(0.0, 1.0),  // center, top
+      vec2f(1.0, 0.0),  // right, center
+      vec2f(1.0, 1.0),  // right, top
+    );
+
+    var vsOutput: VSOutput;
+    let xy = pos[vertexIndex];
+    vsOutput.position = vec4f(xy * 2.0 - 1.0, 0.0, 1.0);
+    let uv: vec2f = vec2f(xy.x, 1.0 - xy.y);
+    let direction = texelDirection(params.faceIndex, uv.x, 1.0 - uv.y);
+    vsOutput.direction = direction;
+    return vsOutput;
+}
+
+// Mipmap Filtered Samples (GPU Gems 3, 20.4)
+// https://developer.nvidia.com/gpugems/gpugems3/part-iii-rendering/chapter-20-gpu-based-importance-sampling
+// https://cgg.mff.cuni.cz/~jaroslav/papers/2007-sketch-fis/Final_sap_0073.pdf
+fn computeLod(pdf: f32, faceSize: u32, numSamples: u32) -> f32 {
+  // // Solid angle of current sample -- bigger for less likely samples
+  // let omegaS: f32 = 1.0 / (f32(numSamples) * pdf);
+  // // Solid angle of texel
+  // // note: the factor of 4.0 * PI 
+  // let omegaP: f32 = 4.0 * PI / (6.0 * f32(faceSize) * f32(faceSize));
+  // // Mip level is determined by the ratio of our sample's solid angle to a texel's solid angle 
+  // // note that 0.5 * log2 is equivalent to log4
+  // let lod: f32 = 0.5 * log2(omegaS / omegaP);
+
+  // babylon introduces a factor of K (=4) to the solid angle ratio
+  // this helps to avoid undersampling the environment map
+  // this does not appear in the original formulation by Jaroslav Krivanek and Mark Colbert
+  // log4(4) == 1
+  // lod += 1.0;
+
+  // We achieved good results by using the original formulation from Krivanek & Colbert adapted to cubemaps
+
+  // https://cgg.mff.cuni.cz/~jaroslav/papers/2007-sketch-fis/Final_sap_0073.pdf
+  let lod: f32 = 0.5 * log2( 6.0 * f32(faceSize) * f32(faceSize) / (f32(numSamples) * pdf));
+
+  return lod;
+}
+
+struct Params {
+  faceIndex: u32,
+  mipLevel: u32,
+  maxMipLevel: u32,
+  numSamples: u32,
+  faceSize: u32
+}
+
+@group(0) @binding(0) var clampSampler: sampler;
+@group(0) @binding(1) var cubeTexture: texture_cube<f32>;
+@group(0) @binding(2) var<uniform> params: Params;
+
+@fragment fn fs(fsInput: VSOutput) -> @location(0) vec4f {
+  let faceIndex: u32 = params.faceIndex;
+  let currentMipLevel: u32 = params.mipLevel;
+  let maxMipLevel: u32 = params.maxMipLevel;
+  let numSamples: u32 = params.numSamples;
+  let faceSize: u32 = params.faceSize;
+
+  // determine roughness for this mip.
+  let maxMipF: f32 = f32(max(1u, maxMipLevel - 1u));
+  let roughness = saturate( f32(currentMipLevel) / maxMipF );
+
+  let N: vec3f = normalize(fsInput.direction);
+  let TBN = generateTBN(N);
+
+  var color: vec3f = vec3(0.0);
+  var weight: f32 = 0.0;
+
+  // For very low roughness, just sample the environment directly
+  if (roughness < 0.001) {
+    color = textureSampleLevel(cubeTexture, clampSampler, N, 0.0).rgb;
+    return vec4(color, 1.0);
+  }
+
+  for(var i = 0u; i < numSamples; i++) {
+    // generate a quasi monte carlo point in the unit square [0.1)^2
+    let Xi: vec2f = hammersley2d(i, numSamples);
+
+    let importanceSample: vec4f = getImportanceSampleGGX(Xi, N, roughness);
+
+    let H: vec3f = normalize(TBN * importanceSample.xyz);
+    let pdf: f32 = importanceSample.w;
+
+    // mipmap filtered samples (GPU Gems 3, 20.4)
+    let lod: f32 = computeLod(pdf, faceSize, numSamples);
+
+    // Note: reflect takes incident vector.
+    let V: vec3f = N;
+    let L: vec3f = normalize(reflect(-V, H));
+    let NdotL: f32 = dot(N, L);
+
+    if (NdotL > 0.0) {
+        let intensityScale: f32 = 1.0; // TODO?
+        let sampleColor = textureSampleLevel(cubeTexture, clampSampler, L, lod).rgb * intensityScale;
+        color += sampleColor * NdotL;
+        weight += NdotL;
+    }
+  }
+
+  color = select(
+    color / f32(numSamples),
+    color / weight,
+    weight > 0.0
+  );
+
+  return vec4(color, 1.0);
 }
 `
   );
@@ -23758,7 +24191,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
       this.setRenderer(renderer);
       const lutTextureDefaultParams = {
         size: 256,
-        computeSampleCount: 1024,
+        computeSampleCount: 512,
         label: "Environment LUT texture",
         name: "lutTexture",
         format: "rgba16float"
@@ -23774,11 +24207,11 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         label: "Environment specular texture",
         name: "envSpecularTexture",
         format: "rgba16float",
-        generateMips: true
+        numSamples: 512
       };
       params = {
         ...{
-          useLutTexture: false,
+          useLutTexture: true,
           diffuseIntensity: 1,
           specularIntensity: 1,
           rotation: Math.PI / 2
@@ -23808,7 +24241,8 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         minFilter: "linear",
         mipmapFilter: "linear",
         addressModeU: "clamp-to-edge",
-        addressModeV: "clamp-to-edge"
+        addressModeV: "clamp-to-edge",
+        addressModeW: "clamp-to-edge"
       });
       this.rotationMatrix = new Mat3().rotateByAngleY(-Math.PI / 2);
       this.hdrLoader = new HDRLoader();
@@ -23895,8 +24329,27 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         autoDestroy: false
         // keep alive when changing mesh
       };
+      this.cubemapTexture = new Texture(this.renderer, {
+        label: "Environment cube map texture",
+        name: "cubemapTexture",
+        format: this.options.specularTextureParams.format,
+        generateMips: true,
+        ...{
+          visibility: ["fragment", "compute"],
+          // could be resized later
+          fixedSize: {
+            width: 256,
+            height: 256
+          }
+        },
+        ...textureDefaultOptions
+      });
       this.specularTexture = new Texture(this.renderer, {
         ...this.options.specularTextureParams,
+        generateMips: false,
+        // do not automatically generate mips
+        useMips: true,
+        // we'll generate them ourselves for PMREM
         ...{
           visibility: ["fragment", "compute"],
           // could be resized later
@@ -23922,7 +24375,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
       });
     }
     /**
-     * Create the {@link lutTexture | BRDF GGX LUT texture} using the provided {@link LUTTextureParams | LUT texture options} and a {@link ComputePass} that runs once.
+     * Create the {@link lutTexture | BRDF GGX and sheen LUT texture} using the provided {@link LUTTextureParams | LUT texture options} and a {@link ComputePass} that runs once.
      */
     async computeBRDFLUTTexture() {
       let cachedLUT = null;
@@ -23945,8 +24398,8 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         autoRender: false,
         // we're going to render only on demand
         dispatchSize: [
-          Math.ceil(__privateGet$3(this, _lutStorageTexture).size.width / 16),
-          Math.ceil(__privateGet$3(this, _lutStorageTexture).size.height / 16),
+          Math.ceil(__privateGet$3(this, _lutStorageTexture).size.width / 8),
+          Math.ceil(__privateGet$3(this, _lutStorageTexture).size.height / 8),
           1
         ],
         shaders: {
@@ -23973,36 +24426,32 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
       computeLUTPass = null;
     }
     /**
-     * Create the {@link specularTexture | specular cube map texture} from a loaded {@link HDRImageData} using the provided {@link SpecularTextureParams | specular texture options} and a {@link ComputePass} that runs once.
+     * Create the {@link cubemapTexture | cube map texture} from a loaded {@link HDRImageData} using a {@link ComputePass} that runs once.
      * @param parsedHdr - parsed {@link HDRImageData} loaded by the {@link hdrLoader}.
      */
     async computeSpecularCubemapFromHDRData(parsedHdr) {
       let cubeStorageTexture = new Texture(this.renderer, {
-        label: "Specular storage cubemap",
-        name: "specularStorageCubemap",
-        format: this.specularTexture.options.format,
+        label: "Cubemap storage",
+        name: "storageCubemap",
+        format: this.cubemapTexture.options.format,
         visibility: ["compute"],
-        usage: ["copySrc", "storageBinding"],
+        usage: ["copySrc", "storageBinding", "textureBinding"],
         type: "storage",
         fixedSize: {
-          width: this.specularTexture.size.width,
-          height: this.specularTexture.size.height,
+          width: this.cubemapTexture.size.width,
+          height: this.cubemapTexture.size.height,
           depth: 6
         },
         viewDimension: "2d-array"
       });
       let computeCubeMapPass = new ComputePass(this.renderer, {
-        label: "Compute specular cubemap from equirectangular",
+        label: "Compute cubemap from equirectangular",
         autoRender: false,
         // we're going to render only on demand
-        dispatchSize: [
-          Math.ceil(this.specularTexture.size.width / 8),
-          Math.ceil(this.specularTexture.size.height / 8),
-          6
-        ],
+        dispatchSize: [Math.ceil(this.cubemapTexture.size.width / 8), Math.ceil(this.cubemapTexture.size.height / 8), 6],
         shaders: {
           compute: {
-            code: computeSpecularCubemapFromHDR
+            code: computeCubemapFromHDR
           }
         },
         storages: {
@@ -24018,7 +24467,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
               },
               faceSize: {
                 type: "u32",
-                value: this.specularTexture.size.width
+                value: this.cubemapTexture.size.width
               }
             }
           }
@@ -24026,27 +24475,140 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         textures: [cubeStorageTexture]
       });
       await computeCubeMapPass.material.compileMaterial();
+      let mipBuffers = [];
       __privateMethod$3(this, _EnvironmentMap_instances, runComputePass_fn).call(this, {
         computePass: computeCubeMapPass,
         label: "Compute specular cube map command encoder",
         onAfterCompute: (commandEncoder) => {
-          this.renderer.copyGPUTextureToTexture(cubeStorageTexture.texture, this.specularTexture, commandEncoder);
-          this.specularTexture.textureBinding.resource = this.specularTexture.texture;
+          this.renderer.copyGPUTextureToTexture(cubeStorageTexture.texture, this.cubemapTexture, commandEncoder);
+          this.generateSpecularPMREMTexture(commandEncoder, mipBuffers);
         }
       });
       computeCubeMapPass.remove();
       cubeStorageTexture.destroy();
+      mipBuffers.forEach((buffer) => buffer.destroy());
       cubeStorageTexture = null;
       computeCubeMapPass = null;
+      mipBuffers = [];
     }
     /**
-     * Compute the {@link diffuseTexture | diffuse cube map texture} from the {@link specularTexture | specular cube map texture } using the provided {@link DiffuseTextureParams | diffuse texture options} and a {@link ComputePass} that runs once.
+     * Generates the {@link specularTexture} Prefiltered, Mipmapped Radiance Environment Map (PMREM).
+     * We manually generate the {@link specularTexture} prefiltered mips from our original {@link cubemapTexture}.
+     *
+     * @param commandEncoder - {@link GPUCommandEncoder} to use for mips generation.
+     * @param mipBuffers - Array of {@link GPUBuffer} that will be created for each mips. Will be destroyed later.
      */
-    async computeDiffuseFromSpecular() {
-      if (this.specularTexture.options.viewDimension !== "cube") {
-        throwWarning(
-          "Could not compute the diffuse texture because the specular texture is not a cube map:" + this.specularTexture.options.viewDimension
-        );
+    generateSpecularPMREMTexture(commandEncoder, mipBuffers) {
+      if (!this.cubemapTexture.texture) {
+        if (!this.renderer.production) {
+          throwWarning(
+            "EnvironmentMap: Could not generate the PMREM mips because the cubemap texture is not set:" + this.cubemapTexture
+          );
+        }
+        return;
+      }
+      const shaderModule = this.renderer.device.createShaderModule({
+        label: "PMREM generation",
+        code: PMREMGeneration
+      });
+      const pipeline = this.renderer.device.createRenderPipeline({
+        label: "Mip level generator pipeline",
+        layout: "auto",
+        vertex: {
+          module: shaderModule
+        },
+        fragment: {
+          module: shaderModule,
+          targets: [{ format: this.specularTexture.texture.format }]
+        }
+      });
+      let width = this.specularTexture.texture.width;
+      let height = this.specularTexture.texture.height;
+      const mipCount = this.specularTexture.texture.mipLevelCount;
+      const nbFaces = this.specularTexture.texture.depthOrArrayLayers;
+      let baseMipLevel = 0;
+      const generateMips = (baseMipLevel2 = 0) => {
+        for (let layer = 0; layer < nbFaces; layer++) {
+          const faceMipArray = new Uint32Array([
+            layer,
+            baseMipLevel2 + 1,
+            mipCount,
+            this.options.specularTextureParams.numSamples,
+            this.specularTexture.texture.width,
+            0,
+            // pad
+            0,
+            0
+          ]);
+          const paramsBuffer = this.renderer.device.createBuffer({
+            size: faceMipArray.byteLength,
+            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+            mappedAtCreation: true
+          });
+          new Uint32Array(paramsBuffer.getMappedRange()).set(faceMipArray);
+          paramsBuffer.unmap();
+          mipBuffers.push(paramsBuffer);
+          const bindGroup = this.renderer.device.createBindGroup({
+            layout: pipeline.getBindGroupLayout(0),
+            entries: [
+              { binding: 0, resource: this.sampler.sampler },
+              {
+                binding: 1,
+                resource: this.cubemapTexture.texture.createView({
+                  dimension: "cube",
+                  arrayLayerCount: 6
+                })
+              },
+              {
+                binding: 2,
+                resource: {
+                  buffer: paramsBuffer
+                }
+              }
+            ]
+          });
+          const renderPassDescriptor = {
+            label: "PMREM generation render pass",
+            colorAttachments: [
+              {
+                view: this.specularTexture.texture.createView({
+                  dimension: "2d",
+                  baseMipLevel: baseMipLevel2 + 1,
+                  mipLevelCount: 1,
+                  baseArrayLayer: layer,
+                  arrayLayerCount: 1
+                }),
+                loadOp: "clear",
+                storeOp: "store"
+              }
+            ]
+          };
+          const pass = commandEncoder.beginRenderPass(renderPassDescriptor);
+          pass.setPipeline(pipeline);
+          pass.setBindGroup(0, bindGroup);
+          pass.draw(6);
+          pass.end();
+        }
+      };
+      generateMips(-1);
+      while (width > 1 || height > 1) {
+        width = Math.max(1, width / 2 | 0);
+        height = Math.max(1, height / 2 | 0);
+        generateMips(baseMipLevel);
+        baseMipLevel++;
+      }
+      this.specularTexture.textureBinding.resource = this.specularTexture.texture;
+    }
+    /**
+     * Compute the {@link diffuseTexture | diffuse cube map texture} from the {@link cubemapTexture | cube map texture } using the provided {@link DiffuseTextureParams | diffuse texture options} and a {@link ComputePass} that runs once.
+     */
+    async computeDiffuseFromCubemap() {
+      if (!this.cubemapTexture.texture) {
+        if (!this.renderer.production) {
+          throwWarning(
+            "EnvironmentMap: Could not generate the diffuse texture because the cube map texture is not set:" + this.cubemapTexture
+          );
+        }
         return;
       }
       let diffuseStorageTexture = new Texture(this.renderer, {
@@ -24070,7 +24632,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
         dispatchSize: [Math.ceil(this.diffuseTexture.size.width / 8), Math.ceil(this.diffuseTexture.size.height / 8), 6],
         shaders: {
           compute: {
-            code: computeDiffuseFromSpecularCubemap(this.specularTexture)
+            code: computeDiffuseFromCubemap(this.cubemapTexture)
           }
         },
         uniforms: {
@@ -24082,7 +24644,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
               },
               maxMipLevel: {
                 type: "u32",
-                value: this.specularTexture.texture.mipLevelCount
+                value: this.cubemapTexture.texture.mipLevelCount
               },
               sampleCount: {
                 type: "u32",
@@ -24092,7 +24654,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
           }
         },
         samplers: [this.sampler],
-        textures: [this.specularTexture, diffuseStorageTexture]
+        textures: [this.cubemapTexture, diffuseStorageTexture]
       });
       await computeDiffusePass.material.compileMaterial();
       __privateMethod$3(this, _EnvironmentMap_instances, runComputePass_fn).call(this, {
@@ -24116,6 +24678,13 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
       __privateSet$3(this, _hdrData, await this.hdrLoader.loadFromUrl(url));
       const { width, height } = __privateGet$3(this, _hdrData) ? __privateGet$3(this, _hdrData) : { width: 1024, height: 512 };
       const faceSize = Math.max(width / 4, height / 2);
+      if (this.cubemapTexture.size.width !== faceSize || this.cubemapTexture.size.height !== faceSize) {
+        this.cubemapTexture.options.fixedSize.width = faceSize;
+        this.cubemapTexture.options.fixedSize.height = faceSize;
+        this.cubemapTexture.size.width = faceSize;
+        this.cubemapTexture.size.height = faceSize;
+        this.cubemapTexture.createTexture();
+      }
       if (this.specularTexture.size.width !== faceSize || this.specularTexture.size.height !== faceSize) {
         this.specularTexture.options.fixedSize.width = faceSize;
         this.specularTexture.options.fixedSize.height = faceSize;
@@ -24140,7 +24709,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
     computeFromHDR() {
       if (__privateGet$3(this, _hdrData)) {
         this.computeSpecularCubemapFromHDRData(__privateGet$3(this, _hdrData)).then(() => {
-          this.computeDiffuseFromSpecular();
+          this.computeDiffuseFromCubemap();
         });
       }
     }
@@ -24148,6 +24717,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
      * Destroy the {@link EnvironmentMap} and its associated textures.
      */
     destroy() {
+      this.cubemapTexture?.destroy();
       this.diffuseTexture?.destroy();
       this.specularTexture?.destroy();
       this.lutTexture?.destroy();

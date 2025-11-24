@@ -6,6 +6,7 @@ import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragmen
  * @param parameters.extensionsUsed - {@link PBRFragmentShaderInputParams.extensionsUsed | extensionsUsed} to check if anisotropy is enabled.
  * @returns - The PBR direct light contribution, accounting for anisotropy, sheen and clearcoat contributions.
  */
-export declare const getPBRDirectContribution: ({ extensionsUsed, }?: {
+export declare const getPBRDirectContribution: ({ extensionsUsed, environmentMap, }?: {
     extensionsUsed?: PBRFragmentShaderInputParams['extensionsUsed'];
+    environmentMap?: PBRFragmentShaderInputParams['environmentMap'];
 }) => string;

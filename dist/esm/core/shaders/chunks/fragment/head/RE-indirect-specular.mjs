@@ -5,12 +5,21 @@ const REIndirectSpecular = (
 fn RE_IndirectSpecular(
   radiance: vec3f,
   irradiance: vec3f,
-  diffuseColor: vec3f,
-  iBLGGXFresnel: IBLGGXFresnel,
+  diffuseContribution: vec3f,
+  metallic: f32,
+  //iBLGGXFresnel: IBLGGXFresnel,
+  dielectricScattering: MultiScattering,
+  metallicScattering: MultiScattering,
   ptr_reflectedLight: ptr<function, ReflectedLight>
 ) {
-  let totalScattering: vec3f = iBLGGXFresnel.FssEss + iBLGGXFresnel.FmsEms;
-	let diffuse: vec3f = diffuseColor * ( 1.0 - max( max( totalScattering.r, totalScattering.g ), totalScattering.b ) );
+  // Mix based on metalness
+	let singleScattering: vec3f = mix(dielectricScattering.singleScattering, metallicScattering.singleScattering, metallic);
+	let multiScattering: vec3f = mix(dielectricScattering.multiScattering, metallicScattering.multiScattering, metallic);
+
+	// Diffuse energy conservation uses dielectric path
+	let totalScatteringDielectric: vec3f = dielectricScattering.singleScattering + dielectricScattering.multiScattering;
+
+	let diffuse: vec3f = diffuseContribution * (1.0 - max3(totalScatteringDielectric));
 
   // we just add radiance and irradiance to the indirect contributions using iBLGGXFresnel
 
@@ -18,8 +27,8 @@ fn RE_IndirectSpecular(
   // let cosineWeightedIrradiance: vec3f = irradiance * RECIPROCAL_PI;
   let cosineWeightedIrradiance: vec3f = irradiance;  
 
-  (*ptr_reflectedLight).indirectSpecular += iBLGGXFresnel.FssEss * radiance;
-  (*ptr_reflectedLight).indirectSpecular += iBLGGXFresnel.FmsEms * cosineWeightedIrradiance;
+  (*ptr_reflectedLight).indirectSpecular += singleScattering * radiance;
+  (*ptr_reflectedLight).indirectSpecular += multiScattering * cosineWeightedIrradiance;
   
   (*ptr_reflectedLight).indirectDiffuse += diffuse * cosineWeightedIrradiance;
 }

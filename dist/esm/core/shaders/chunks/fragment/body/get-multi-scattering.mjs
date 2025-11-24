@@ -1,15 +1,11 @@
 const computeMultiScattering = ({
   environmentMap = null
 }) => {
-  let iblIGGXFresnel = (
-    /* wgsl */
-    `
-  var iBLGGXFresnel: IBLGGXFresnel;`
-  );
+  let multiScattering = "";
   if (environmentMap && environmentMap.lutTexture) {
-    iblIGGXFresnel += /* wgsl */
+    multiScattering += /* wgsl */
     `
-  let fab: vec2f = LUT_DFGA(
+  let fab: vec2f = DFGFromLUT(
     normal,
     viewDirection,
     roughness,
@@ -17,7 +13,7 @@ const computeMultiScattering = ({
     ${environmentMap.lutTexture.options.name},
   );`;
   } else {
-    iblIGGXFresnel += /* wgsl */
+    multiScattering += /* wgsl */
     `
   let fab: vec2f = DFGApprox(
     normal,
@@ -25,17 +21,28 @@ const computeMultiScattering = ({
     roughness,
   );`;
   }
-  iblIGGXFresnel += /* wgsl */
+  multiScattering += /* wgsl */
   `
+  // Both indirect specular and indirect diffuse light accumulate here
+	// Compute multiscattering separately for dielectric and metallic, then mix
   computeMultiscattering(
     fab,
     specularColor,
-    specularIntensity,
-    iridescenceF0,
+    specularF90,
     iridescence,
-    &iBLGGXFresnel
+    iridescenceFresnelDielectric,
+    &dielectricScattering
+  );
+  
+  computeMultiscattering(
+    fab,
+    diffuseColor,
+    specularF90,
+    iridescence,
+    iridescenceFresnelMetallic,
+    &metallicScattering
   );`;
-  return iblIGGXFresnel;
+  return multiScattering;
 };
 
 export { computeMultiScattering };
