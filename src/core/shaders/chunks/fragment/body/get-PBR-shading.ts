@@ -105,7 +105,7 @@ export const getPBRShading = ({
   );
 
   ${getIBLClearcoatIndirectRadiance({ extensionsUsed, environmentMap })}
-  ${getClearcoatIndirectSpecular({ extensionsUsed })}
+  ${getClearcoatIndirectSpecular({ extensionsUsed, environmentMap })}
   ${getIBLSheenIndirectRadiance({ extensionsUsed, environmentMap })}
   
   reflectedLight.indirectDiffuse *= occlusion;

@@ -20,16 +20,16 @@ export const getClearcoatIndirectSpecular = ({
   if (extensionsUsed.includes('KHR_materials_clearcoat')) {
     if (environmentMap && environmentMap.lutTexture) {
       clearcoatIndirect += /* wgsl */ `
-  let clearcoatFab: vec2f = DFGFromLut(
+  let clearcoatFab: vec2f = DFGFromLUT(
     clearcoatNormal,
     viewDirection,
-    roughness,
+    clearcoatRoughness,
     ${environmentMap.sampler.name},
     ${environmentMap.lutTexture.options.name},
   );`
     } else {
       clearcoatIndirect += /* wgsl */ `
-  let clearcoatFab: vec2f = DFGApprox(clearcoatNormal, viewDirection, roughness);`
+  let clearcoatFab: vec2f = DFGApprox(clearcoatNormal, viewDirection, clearcoatRoughness);`
     }
 
     clearcoatIndirect += /* wgsl */ `

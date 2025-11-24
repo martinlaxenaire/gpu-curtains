@@ -19154,7 +19154,7 @@ fn getPBRDirect(
     if (extensionsUsed.includes("KHR_materials_clearcoat")) {
       sheenClearcoatContribution += /* wgsl */
       `
-  let dotNVcc: f32 = clamp( dot( clearcoatNormal, viewDirection ), 0.0, 1.0 );
+  let dotNVcc: f32 = saturate( dot( clearcoatNormal, viewDirection ));
   let Fcc: vec3f = F_Schlick( clearcoatF0, clearcoatF90, dotNVcc );
   let clearcoatEnergyComp: vec3f = ( 1.0 - clearcoat * Fcc );
   let clearcoatContribution: vec3f = ( clearcoatSpecularDirect + clearcoatSpecularIndirect ) * clearcoat;
@@ -19201,17 +19201,17 @@ fn getPBRDirect(
       if (environmentMap && environmentMap.lutTexture) {
         clearcoatIndirect += /* wgsl */
         `
-  let clearcoatFab: vec2f = DFGFromLut(
+  let clearcoatFab: vec2f = DFGFromLUT(
     clearcoatNormal,
     viewDirection,
-    roughness,
+    clearcoatRoughness,
     ${environmentMap.sampler.name},
     ${environmentMap.lutTexture.options.name},
   );`;
       } else {
         clearcoatIndirect += /* wgsl */
         `
-  let clearcoatFab: vec2f = DFGApprox(clearcoatNormal, viewDirection, roughness);`;
+  let clearcoatFab: vec2f = DFGApprox(clearcoatNormal, viewDirection, clearcoatRoughness);`;
       }
       clearcoatIndirect += /* wgsl */
       `
@@ -19425,7 +19425,7 @@ fn getPBRDirect(
   );
 
   ${getIBLClearcoatIndirectRadiance({ extensionsUsed, environmentMap })}
-  ${getClearcoatIndirectSpecular({ extensionsUsed })}
+  ${getClearcoatIndirectSpecular({ extensionsUsed, environmentMap })}
   ${getIBLSheenIndirectRadiance({ extensionsUsed, environmentMap })}
   
   reflectedLight.indirectDiffuse *= occlusion;
@@ -20846,6 +20846,9 @@ fn getPBRDirectSheen(
   `;
       }
     }
+    sheen += /* wgsl */
+    `
+  sheenRoughness = clamp(sheenRoughness, 0.07, 1.0);`;
     return sheen;
   };
 
@@ -20857,7 +20860,7 @@ fn getPBRDirectSheen(
     let clearcoat = (
       /* wgsl */
       `
-  var clearcoatF0: vec3f = vec3( 0.04 );
+  var clearcoatF0: vec3f = vec3(pow((ior - 1.0) / (ior + 1.0), 2.0));
   var clearcoatF90: f32 = 1.0;
   
   var clearcoatSpecularDirect: vec3f = vec3( 0.0 );
@@ -20867,40 +20870,24 @@ fn getPBRDirectSheen(
       return clearcoat;
     }
     if (clearcoatTexture) {
+      clearcoat += getTextureSample(clearcoatTexture, "clearcoat");
       clearcoat += /* wgsl */
       `
-  var clearcoatUV: vec2f = ${clearcoatTexture.texCoordAttributeName ?? "uv"};`;
-      if ("useTransform" in clearcoatTexture.texture.options && clearcoatTexture.texture.options.useTransform) {
-        clearcoat += /* wgsl */
-        `
-  clearcoatUV = (texturesMatrices.${clearcoatTexture.texture.options.name}.matrix * vec3(clearcoatUV, 1.0)).xy;`;
-      }
-      clearcoat += /* wgsl */
-      `
-  let clearcoatSample: vec4f = textureSample(${clearcoatTexture.texture.options.name}, ${clearcoatTexture.sampler?.name ?? "defaultSampler"}, clearcoatUV);
-
   clearcoat = clearcoat * clearcoatSample.r;
     `;
     }
     if (clearcoatRoughnessTexture) {
+      clearcoat += getTextureSample(clearcoatRoughnessTexture, "clearcoatRoughness");
       clearcoat += /* wgsl */
       `
-  var clearcoatRoughnessUV: vec2f = ${clearcoatRoughnessTexture.texCoordAttributeName ?? "uv"};`;
-      if ("useTransform" in clearcoatRoughnessTexture.texture.options && clearcoatRoughnessTexture.texture.options.useTransform) {
-        clearcoat += /* wgsl */
-        `
-  clearcoatRoughnessUV = (texturesMatrices.${clearcoatRoughnessTexture.texture.options.name}.matrix * vec3(clearcoatRoughnessUV, 1.0)).xy;`;
-      }
-      clearcoat += /* wgsl */
-      `
-  let clearcoatRoughnessSample: vec4f = textureSample(${clearcoatRoughnessTexture.texture.options.name}, ${clearcoatRoughnessTexture.sampler?.name ?? "defaultSampler"}, clearcoatRoughnessUV);
-
   clearcoatRoughness = clearcoatRoughness * clearcoatRoughnessSample.g;
     `;
     }
     clearcoat += /* wgsl */
     `
-  clearcoatRoughness = clamp(clearcoatRoughness, 0.0525, 1.0);
+  clearcoatRoughness = max( clearcoatRoughness, 0.0525 );
+  clearcoatRoughness += geometryRoughness;
+  clearcoatRoughness = min( clearcoatRoughness, 1.0 );
   `;
     return clearcoat;
   };

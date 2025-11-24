@@ -8,7 +8,7 @@ const getClearcoat = ({
   let clearcoat = (
     /* wgsl */
     `
-  var clearcoatF0: vec3f = vec3( 0.04 );
+  var clearcoatF0: vec3f = vec3(pow((ior - 1.0) / (ior + 1.0), 2.0));
   var clearcoatF90: f32 = 1.0;
   
   var clearcoatSpecularDirect: vec3f = vec3( 0.0 );
@@ -18,40 +18,24 @@ const getClearcoat = ({
     return clearcoat;
   }
   if (clearcoatTexture) {
+    clearcoat += getTextureSample(clearcoatTexture, "clearcoat");
     clearcoat += /* wgsl */
     `
-  var clearcoatUV: vec2f = ${clearcoatTexture.texCoordAttributeName ?? "uv"};`;
-    if ("useTransform" in clearcoatTexture.texture.options && clearcoatTexture.texture.options.useTransform) {
-      clearcoat += /* wgsl */
-      `
-  clearcoatUV = (texturesMatrices.${clearcoatTexture.texture.options.name}.matrix * vec3(clearcoatUV, 1.0)).xy;`;
-    }
-    clearcoat += /* wgsl */
-    `
-  let clearcoatSample: vec4f = textureSample(${clearcoatTexture.texture.options.name}, ${clearcoatTexture.sampler?.name ?? "defaultSampler"}, clearcoatUV);
-
   clearcoat = clearcoat * clearcoatSample.r;
     `;
   }
   if (clearcoatRoughnessTexture) {
+    clearcoat += getTextureSample(clearcoatRoughnessTexture, "clearcoatRoughness");
     clearcoat += /* wgsl */
     `
-  var clearcoatRoughnessUV: vec2f = ${clearcoatRoughnessTexture.texCoordAttributeName ?? "uv"};`;
-    if ("useTransform" in clearcoatRoughnessTexture.texture.options && clearcoatRoughnessTexture.texture.options.useTransform) {
-      clearcoat += /* wgsl */
-      `
-  clearcoatRoughnessUV = (texturesMatrices.${clearcoatRoughnessTexture.texture.options.name}.matrix * vec3(clearcoatRoughnessUV, 1.0)).xy;`;
-    }
-    clearcoat += /* wgsl */
-    `
-  let clearcoatRoughnessSample: vec4f = textureSample(${clearcoatRoughnessTexture.texture.options.name}, ${clearcoatRoughnessTexture.sampler?.name ?? "defaultSampler"}, clearcoatRoughnessUV);
-
   clearcoatRoughness = clearcoatRoughness * clearcoatRoughnessSample.g;
     `;
   }
   clearcoat += /* wgsl */
   `
-  clearcoatRoughness = clamp(clearcoatRoughness, 0.0525, 1.0);
+  clearcoatRoughness = max( clearcoatRoughness, 0.0525 );
+  clearcoatRoughness += geometryRoughness;
+  clearcoatRoughness = min( clearcoatRoughness, 1.0 );
   `;
   return clearcoat;
 };

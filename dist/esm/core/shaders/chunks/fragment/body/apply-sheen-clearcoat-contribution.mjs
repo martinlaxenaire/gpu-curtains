@@ -13,7 +13,7 @@ const applySheenClearcoatContribution = ({
   if (extensionsUsed.includes("KHR_materials_clearcoat")) {
     sheenClearcoatContribution += /* wgsl */
     `
-  let dotNVcc: f32 = clamp( dot( clearcoatNormal, viewDirection ), 0.0, 1.0 );
+  let dotNVcc: f32 = saturate( dot( clearcoatNormal, viewDirection ));
   let Fcc: vec3f = F_Schlick( clearcoatF0, clearcoatF90, dotNVcc );
   let clearcoatEnergyComp: vec3f = ( 1.0 - clearcoat * Fcc );
   let clearcoatContribution: vec3f = ( clearcoatSpecularDirect + clearcoatSpecularIndirect ) * clearcoat;
