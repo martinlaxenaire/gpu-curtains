@@ -19,11 +19,11 @@ const getClearcoatIndirectSpecular = ({
       `
   let clearcoatFab: vec2f = DFGApprox(clearcoatNormal, viewDirection, roughness);`;
     }
-  }
-  clearcoatIndirect += /* wgsl */
-  `
+    clearcoatIndirect += /* wgsl */
+    `
   let clearcoatBRDF: vec3f = clearcoatF0 * clearcoatFab.x + clearcoatF90 * clearcoatFab.y;
   clearcoatSpecularIndirect += clearcoatRadiance * clearcoatBRDF;`;
+  }
   return clearcoatIndirect;
 };
 
