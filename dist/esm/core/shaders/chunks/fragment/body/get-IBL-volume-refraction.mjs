@@ -11,10 +11,11 @@ const getIBLVolumeRefraction = ({
   
   var transmitted: vec4f = ${iblVolumeRefractionFunction}(
     normal,
-    normalize(viewDirection),
+    viewDirection,
     roughness, 
-    baseDiffuseColor,
-    specularColor,
+    diffuseContribution,
+    fab,
+    specularColorBlended,
     specularF90,
     worldPosition,
     modelScale,

@@ -94,7 +94,7 @@ window.addEventListener('load', async () => {
   let currentEnvMap = envMaps[currentEnvMapKey]
 
   const environmentMap = new EnvironmentMap(gpuCameraRenderer, {
-    useLutTexture: true,
+    // useLutTexture: false,
   })
   environmentMap.loadAndComputeFromHDR(currentEnvMap.url)
   let useEnvMap = true
@@ -103,8 +103,32 @@ window.addEventListener('load', async () => {
   let shadingModel = 'PBR' // 'PBR', 'Phong' or 'Lambert'
   const lightType = 'DirectionalLight' // or 'PointLight'
 
-  const currentModelKey = 'damagedHelmet'
-  let currentModel = models[currentModelKey]
+  // load model from 'model' query params if defined
+  const url = new URL(window.location)
+  const searchParams = new URLSearchParams(url.search)
+  const modelUrl = searchParams.get('model')
+  let modelUrlName = null
+
+  let availableModels = { ...models }
+
+  if (modelUrl) {
+    const modelName = modelUrl
+      .substring(modelUrl.lastIndexOf('/') + 1)
+      .replace('.gltf', '')
+      .replace('.glb', '')
+    modelUrlName = modelName + 'FromURL' //  avoid duplicate keys
+
+    availableModels = {
+      ...availableModels,
+      [modelUrlName]: {
+        name: modelName + ' (from URL)',
+        url: modelUrl,
+      },
+    }
+  }
+
+  const currentModelKey = modelUrlName ?? 'damagedHelmet'
+  let currentModel = availableModels[currentModelKey]
 
   const ambientLight = new AmbientLight(gpuCameraRenderer, {
     intensity: 0, // will be updated
@@ -139,8 +163,8 @@ window.addEventListener('load', async () => {
     .add(
       { [currentModel.name]: currentModelKey },
       currentModel.name,
-      Object.keys(models).reduce((acc, v) => {
-        return { ...acc, [models[v].name]: v }
+      Object.keys(availableModels).reduce((acc, v) => {
+        return { ...acc, [availableModels[v].name]: v }
       }, {})
     )
     .name('Models')
@@ -196,6 +220,11 @@ window.addEventListener('load', async () => {
     'Iridescence Thickness',
     'Anisotropy Strength',
     'Anisotropy Direction',
+    // multi scattering
+    'Dielectric single scattering',
+    'Dielectric multi scattering',
+    'Metallic single scattering',
+    'Metallic multi scattering',
   ]
 
   let debugChannel = 0
@@ -505,6 +534,30 @@ window.addEventListener('load', async () => {
               ? 'outputColor = vec4(vec2((anisotropyVector + vec2(1.0)) * 0.5), 0.0, 1.0);'
               : 'outputColor = vec4(vec3(0.0), 1.0);'
           }
+        } else if(debug.channel == 24.0) {
+          ${
+            !isUnlit && shadingModel === 'PBR'
+              ? 'outputColor = vec4(dielectricScattering.singleScattering, 1.0);'
+              : 'outputColor = vec4(vec3(0.0), 1.0);'
+          }
+        } else if(debug.channel == 25.0) {
+          ${
+            !isUnlit && shadingModel === 'PBR'
+              ? 'outputColor = vec4(dielectricScattering.multiScattering, 1.0);'
+              : 'outputColor = vec4(vec3(0.0), 1.0);'
+          }
+        } else if(debug.channel == 26.0) {
+          ${
+            !isUnlit && shadingModel === 'PBR'
+              ? 'outputColor = vec4(metallicScattering.singleScattering, 1.0);'
+              : 'outputColor = vec4(vec3(0.0), 1.0);'
+          }
+        } else if(debug.channel == 27.0) {
+          ${
+            !isUnlit && shadingModel === 'PBR'
+              ? 'outputColor = vec4(metallicScattering.multiScattering, 1.0);'
+              : 'outputColor = vec4(vec3(0.0), 1.0);'
+          }
         }
       `
 
@@ -599,7 +652,10 @@ window.addEventListener('load', async () => {
 
     console.log(gpuCameraRenderer, meshes)
 
-    // meshes[0].onReady(() => console.log(meshes[0].material.getShaderCode('fragment')))
+    // meshes[0].onReady(async () => {
+    //   console.log('VS', await meshes[0].material.getShaderCode('vertex'))
+    //   console.log('FS', await meshes[0].material.getShaderCode('fragment'))
+    // })
   }
 
   // sky box
@@ -712,7 +768,7 @@ window.addEventListener('load', async () => {
   })
 
   modelField.onChange(async (value) => {
-    if (models[value].name !== currentModel.name) {
+    if (availableModels[value].name !== currentModel.name) {
       cleanUpScene()
 
       if (animationsFields.length) {
@@ -721,7 +777,7 @@ window.addEventListener('load', async () => {
 
       animationsFields = []
 
-      currentModel = models[value]
+      currentModel = availableModels[value]
 
       useCamera(defaultCamera)
 

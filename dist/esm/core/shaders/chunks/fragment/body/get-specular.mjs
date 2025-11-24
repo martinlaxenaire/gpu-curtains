@@ -33,7 +33,8 @@ const getSpecular = ({
   specular += /* wgsl */
   `
   specularF90 = mix(specularIntensity, 1.0, metallic);
-  specularColor = mix( min( pow2( ( ior - 1.0 ) / ( ior + 1.0 ) ) * specularColor, vec3( 1.0 ) ) * specularIntensity, outputColor.rgb, metallic );
+  specularColor = min( pow2( ( ior - 1.0 ) / ( ior + 1.0 ) ) * specularColor, vec3( 1.0 ) ) * specularIntensity;
+  let specularColorBlended: vec3f = mix(specularColor, diffuseColor, metallic);
   `;
   return specular;
 };

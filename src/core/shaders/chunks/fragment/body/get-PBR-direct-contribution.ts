@@ -1,5 +1,4 @@
 import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code'
-import { getPBRSheenClearcoatDirect } from './get-PBR-sheen-clearcoat-direct'
 
 /**
  * Get the PBR direct light contribution.
@@ -10,19 +9,47 @@ import { getPBRSheenClearcoatDirect } from './get-PBR-sheen-clearcoat-direct'
  */
 export const getPBRDirectContribution = ({
   extensionsUsed = [],
+  environmentMap = null,
 }: {
   extensionsUsed?: PBRFragmentShaderInputParams['extensionsUsed']
+  environmentMap?: PBRFragmentShaderInputParams['environmentMap']
 } = {}): string => {
   let pbrDirect = ''
 
+  if (environmentMap && environmentMap.lutTexture) {
+    pbrDirect += /* wgsl */ `
+    // Precomputed DFG values for view and light directions from LUT
+    let dfgDirect: DFGDirect = DFGDirectFromLUT(
+      normal,
+      viewDirection,
+      directLight.direction,
+      roughness,
+      ${environmentMap.sampler.name},
+      ${environmentMap.lutTexture.options.name},
+    );
+    `
+  } else {
+    // if the environment map hasn't created a LUT texture
+    pbrDirect += /* wgsl */ `
+    // Precomputed DFG values for view and light directions from approximation
+    let dfgDirect: DFGDirect = DFGDirectApprox(
+      normal,
+      viewDirection,
+      directLight.direction,
+      roughness,
+    );
+    `
+  }
+
   if (extensionsUsed.includes('KHR_materials_anisotropy')) {
     pbrDirect += /* wgsl */ `
-    getPBRDirect_Anisotropic(
+    getPBRDirectAnisotropic(
       normal,
-      baseDiffuseColor.rgb,
       viewDirection,
+      dfgDirect,
+      diffuseContribution,
       specularF90,
-      specularColor,
+      specularColorBlended,
       roughness,
       iridescenceFresnel,
       iridescence,
@@ -36,10 +63,11 @@ export const getPBRDirectContribution = ({
     pbrDirect += /* wgsl */ `
     getPBRDirect(
       normal,
-      baseDiffuseColor.rgb,
       viewDirection,
+      dfgDirect,
+      diffuseContribution,
       specularF90,
-      specularColor,
+      specularColorBlended,
       roughness,
       iridescenceFresnel,
       iridescence,
@@ -48,8 +76,17 @@ export const getPBRDirectContribution = ({
     );`
   }
 
-  // sheen + clearcoat
-  pbrDirect += getPBRSheenClearcoatDirect({ extensionsUsed })
+  // clearcoat
+  if (extensionsUsed.includes('KHR_materials_clearcoat')) {
+    pbrDirect += /* wgsl */ `
+    clearcoatSpecularDirect += getPBRDirectClearcoat(clearcoatNormal, viewDirection, clearcoatF0, clearcoatF90, clearcoatRoughness, directLight, &reflectedLight);`
+  }
+
+  // sheen
+  if (extensionsUsed.includes('KHR_materials_sheen')) {
+    pbrDirect += /* wgsl */ `
+    sheenSpecularDirect += getPBRDirectSheen(normal, viewDirection, sheenColor, sheenRoughness, directLight, &reflectedLight);`
+  }
 
   return pbrDirect
 }

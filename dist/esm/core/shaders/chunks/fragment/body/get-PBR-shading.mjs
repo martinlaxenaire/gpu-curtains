@@ -9,7 +9,7 @@ import { applySpotShadows } from './apply-spot-shadows.mjs';
 import { applySheenClearcoatContribution } from './apply-sheen-clearcoat-contribution.mjs';
 import { getIBLClearcoatIndirectRadiance } from './get-IBL-clearcoat-indirect-radiance.mjs';
 import { getClearcoatIndirectSpecular } from './get-clearcoat-indirect-specular.mjs';
-import { getSheenIndirectSpecular } from './get-sheen-indirect-specular.mjs';
+import { getIBLSheenIndirectRadiance } from './get-IBL-sheen-indirect-radiance.mjs';
 import { getPBRDirectContribution } from './get-PBR-direct-contribution.mjs';
 
 const getPBRShading = ({
@@ -26,8 +26,6 @@ const getPBRShading = ({
   
   ${receiveShadows ? getPCFShadows : ""}
   
-  let baseDiffuseColor: vec4f = outputColor * ( 1.0 - metallic );
-
   // point lights
   for(var i = 0; i < pointLights.count; i++) {
     getPointLightInfo(pointLights.elements[i], worldPosition, &directLight);
@@ -37,7 +35,7 @@ const getPBRShading = ({
     }
     
     ${receiveShadows ? applyPointShadows : ""}
-    ${getPBRDirectContribution({ extensionsUsed })}
+    ${getPBRDirectContribution({ extensionsUsed, environmentMap })}
   }
   
   // spot lights
@@ -49,7 +47,7 @@ const getPBRShading = ({
     }
     
     ${receiveShadows ? applySpotShadows : ""}
-    ${getPBRDirectContribution({ extensionsUsed })}
+    ${getPBRDirectContribution({ extensionsUsed, environmentMap })}
   }
   
   // directional lights
@@ -61,13 +59,16 @@ const getPBRShading = ({
     }
     
     ${receiveShadows ? applyDirectionalShadows : ""}
-    ${getPBRDirectContribution({ extensionsUsed })}
+    ${getPBRDirectContribution({ extensionsUsed, environmentMap })}
   }
   
   var irradiance: vec3f = vec3(0.0);
   var radiance: vec3f = vec3(0.0);
   var iblIrradiance: vec3f = vec3(0.0);
   var iblRadiance: vec3f = vec3(0.0);
+
+  var dielectricScattering: MultiScattering;
+  var metallicScattering: MultiScattering;
   
   // IBL indirect contributions
   ${computeMultiScattering({ environmentMap })}
@@ -75,28 +76,30 @@ const getPBRShading = ({
   ${getIBLIndirectRadiance({ extensionsUsed, environmentMap })}
   
   // ambient lights
-  RE_IndirectDiffuse(irradiance, baseDiffuseColor.rgb, &reflectedLight);
   
+  RE_IndirectDiffuse(irradiance, diffuseContribution, &reflectedLight);
+
   // indirect specular (and diffuse) from IBL
   RE_IndirectSpecular(
     radiance,
     iblIrradiance,
-    baseDiffuseColor.rgb,
-    iBLGGXFresnel,
+    diffuseContribution,
+    metallic,
+    dielectricScattering,
+    metallicScattering,
     &reflectedLight
   );
 
   ${getIBLClearcoatIndirectRadiance({ extensionsUsed, environmentMap })}
   ${getClearcoatIndirectSpecular({ extensionsUsed })}
-  ${getSheenIndirectSpecular({ extensionsUsed })}
+  ${getIBLSheenIndirectRadiance({ extensionsUsed, environmentMap })}
   
   reflectedLight.indirectDiffuse *= occlusion;
-
+  
   clearcoatSpecularIndirect *= occlusion;
   sheenSpecularIndirect *= occlusion;
   
-  let NdotV: f32 = saturate(dot(geometryNormal, viewDirection));
-  reflectedLight.indirectSpecular *= computeSpecularOcclusion(NdotV, occlusion, roughness);
+  reflectedLight.indirectSpecular *= computeSpecularOcclusion(geometryNormal, viewDirection, occlusion, roughness);
   
   var totalDiffuse: vec3f = reflectedLight.indirectDiffuse + reflectedLight.directDiffuse;
   let totalSpecular: vec3f = reflectedLight.indirectSpecular + reflectedLight.directSpecular;

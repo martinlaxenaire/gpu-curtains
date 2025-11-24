@@ -1,18 +1,43 @@
-import { getPBRSheenClearcoatDirect } from './get-PBR-sheen-clearcoat-direct.mjs';
-
 const getPBRDirectContribution = ({
-  extensionsUsed = []
+  extensionsUsed = [],
+  environmentMap = null
 } = {}) => {
   let pbrDirect = "";
+  if (environmentMap && environmentMap.lutTexture) {
+    pbrDirect += /* wgsl */
+    `
+    // Precomputed DFG values for view and light directions from LUT
+    let dfgDirect: DFGDirect = DFGDirectFromLUT(
+      normal,
+      viewDirection,
+      directLight.direction,
+      roughness,
+      ${environmentMap.sampler.name},
+      ${environmentMap.lutTexture.options.name},
+    );
+    `;
+  } else {
+    pbrDirect += /* wgsl */
+    `
+    // Precomputed DFG values for view and light directions from approximation
+    let dfgDirect: DFGDirect = DFGDirectApprox(
+      normal,
+      viewDirection,
+      directLight.direction,
+      roughness,
+    );
+    `;
+  }
   if (extensionsUsed.includes("KHR_materials_anisotropy")) {
     pbrDirect += /* wgsl */
     `
-    getPBRDirect_Anisotropic(
+    getPBRDirectAnisotropic(
       normal,
-      baseDiffuseColor.rgb,
       viewDirection,
+      dfgDirect,
+      diffuseContribution,
       specularF90,
-      specularColor,
+      specularColorBlended,
       roughness,
       iridescenceFresnel,
       iridescence,
@@ -27,10 +52,11 @@ const getPBRDirectContribution = ({
     `
     getPBRDirect(
       normal,
-      baseDiffuseColor.rgb,
       viewDirection,
+      dfgDirect,
+      diffuseContribution,
       specularF90,
-      specularColor,
+      specularColorBlended,
       roughness,
       iridescenceFresnel,
       iridescence,
@@ -38,7 +64,16 @@ const getPBRDirectContribution = ({
       &reflectedLight
     );`;
   }
-  pbrDirect += getPBRSheenClearcoatDirect({ extensionsUsed });
+  if (extensionsUsed.includes("KHR_materials_clearcoat")) {
+    pbrDirect += /* wgsl */
+    `
+    clearcoatSpecularDirect += getPBRDirectClearcoat(clearcoatNormal, viewDirection, clearcoatF0, clearcoatF90, clearcoatRoughness, directLight, &reflectedLight);`;
+  }
+  if (extensionsUsed.includes("KHR_materials_sheen")) {
+    pbrDirect += /* wgsl */
+    `
+    sheenSpecularDirect += getPBRDirectSheen(normal, viewDirection, sheenColor, sheenRoughness, directLight, &reflectedLight);`;
+  }
   return pbrDirect;
 };
 

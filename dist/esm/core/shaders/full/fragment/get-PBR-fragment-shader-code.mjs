@@ -23,17 +23,20 @@ import { getTransmissionThickness } from '../../chunks/fragment/body/get-transmi
 import { getEmissiveOcclusion } from '../../chunks/fragment/body/get-emissive-occlusion.mjs';
 import { applyToneMapping } from '../../chunks/fragment/body/apply-tone-mapping.mjs';
 import { patchAdditionalChunks } from '../../default-material-helpers.mjs';
-import { getPBRSheenDirect } from '../../chunks/fragment/head/get-PBR-sheen-direct.mjs';
+import { getPBRDirectSheen } from '../../chunks/fragment/head/get-PBR-direct-sheen.mjs';
 import { getSheen } from '../../chunks/fragment/body/get-sheen.mjs';
 import { getClearcoat, getClearcoatNormal } from '../../chunks/fragment/body/get-clearcoat.mjs';
-import { getPBRClearcoatDirect } from '../../chunks/fragment/head/get-PBR-clearcoat-direct.mjs';
+import { getPBRDirectClearcoat } from '../../chunks/fragment/head/get-PBR-direct-clearcoat.mjs';
 import { generateTBN } from '../../chunks/utils/generate-TBN.mjs';
 import { getIridescence } from '../../chunks/fragment/body/get-iridescence.mjs';
 import { getPBRIridescence } from '../../chunks/fragment/head/get-PBR-iridescence.mjs';
-import { BRDF_GGX_Anisotropic } from '../../chunks/fragment/head/BRDF_GGX_Anisotropic.mjs';
+import { getPBRDirectAnisotropic } from '../../chunks/fragment/head/get-PBR-direct-anisotropic.mjs';
 import { getAnisotropy } from '../../chunks/fragment/body/get-anisotropy.mjs';
 import { getTangentBitangent } from '../../chunks/fragment/body/get-tangent-bitangent.mjs';
 import { getIBLIndirectAnisotropyRadiance } from '../../chunks/fragment/head/get-IBL-indirect-anisotropy-radiance.mjs';
+import { getDiffuse } from '../../chunks/fragment/body/get-diffuse.mjs';
+import { BRDFCharlie } from '../../chunks/utils/BRDF-Charlie.mjs';
+import { BRDF_GGX } from '../../chunks/utils/BRDF_GGX.mjs';
 
 const getPBRFragmentShaderCode = ({
   chunks = null,
@@ -94,19 +97,20 @@ ${common}
 ${toneMappingUtils}
 ${generateTBN}
 ${getLightsInfos}
+${BRDF_GGX}
+${getPBRDirect}
+${extensionsUsed.includes("KHR_materials_sheen") ? BRDFCharlie : ""}
+${extensionsUsed.includes("KHR_materials_sheen") ? getPBRDirectSheen : ""}
+${extensionsUsed.includes("KHR_materials_clearcoat") ? getPBRDirectClearcoat : ""}
+${extensionsUsed.includes("KHR_materials_iridescence") ? getPBRIridescence : ""}
+${extensionsUsed.includes("KHR_materials_anisotropy") ? getPBRDirectAnisotropic : ""}
 ${REIndirectDiffuse}
 ${REIndirectSpecular}
-${getPBRDirect}
 ${computeMultiScattering}
 ${getIBLIndirectIrradiance}
 ${getIBLIndirectRadiance}
 ${getIBLTransmission}
-
 ${extensionsUsed.includes("KHR_materials_sheen") ? getIBLSheen : ""}
-${extensionsUsed.includes("KHR_materials_sheen") ? getPBRSheenDirect : ""}
-${extensionsUsed.includes("KHR_materials_clearcoat") ? getPBRClearcoatDirect : ""}
-${extensionsUsed.includes("KHR_materials_iridescence") ? getPBRIridescence : ""}
-${extensionsUsed.includes("KHR_materials_anisotropy") ? BRDF_GGX_Anisotropic : ""}
 ${extensionsUsed.includes("KHR_materials_anisotropy") ? getIBLIndirectAnisotropyRadiance : ""}
 
 ${getFragmentInputStruct({ geometry, additionalVaryings })}
@@ -127,6 +131,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   ${getTangentBitangent({ extensionsUsed, geometry, normalTexture, clearcoatNormalTexture })}  
   ${getNormal({ normalTexture })}
   ${getMetallicRoughness({ metallicRoughnessTexture })}
+  ${getDiffuse}
   ${getSpecular({ specularTexture, specularFactorTexture, specularColorTexture })}
   ${getTransmissionThickness({ transmissionTexture, thicknessTexture })}
   ${getEmissiveOcclusion({ emissiveTexture, occlusionTexture })}

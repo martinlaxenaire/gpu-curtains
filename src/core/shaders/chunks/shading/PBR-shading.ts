@@ -6,6 +6,7 @@ import { getPBRShading } from '../fragment/body/get-PBR-shading'
 import { PBRFragmentShaderInputParams } from '../../full/fragment/get-fragment-shader-code'
 import { applyToneMapping } from '../fragment/body/apply-tone-mapping'
 import { ShaderTextureDescriptor } from '../../../../extras/meshes/LitMesh'
+import { BRDF_GGX } from '../utils/BRDF_GGX'
 
 /** Defines the basic parameters available for the PBR shading getter function. */
 export interface GetPBRShadingParams extends GetShadingParams {
@@ -70,6 +71,7 @@ export const getPBR = (
 ${addUtils ? lambertUtils : ''}
 ${REIndirectSpecular}
 ${getIBLTransmission}
+${BRDF_GGX}
 ${getPBRDirect}
 
 fn getPBR(

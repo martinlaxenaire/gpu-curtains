@@ -8,8 +8,9 @@ import { generateUUID, throwWarning } from '../../utils/utils'
 import { Sampler } from '../../core/samplers/Sampler'
 import { Mat3 } from '../../math/Mat3'
 import { computeBRDFLUT } from '../../core/shaders/full/compute/compute-BRDF-LUT'
-import { computeSpecularCubemapFromHDR } from '../../core/shaders/full/compute/compute-specular-cubemap-from-HDR'
-import { computeDiffuseFromSpecularCubemap } from '../../core/shaders/full/compute/compute-diffuse-from-specular-cubemap'
+import { computeCubemapFromHDR } from '../../core/shaders/full/compute/compute-cubemap-from-HDR'
+import { computeDiffuseFromCubemap } from '../../core/shaders/full/compute/compute-diffuse-from-cubemap'
+import { PMREMGeneration } from '../../core/shaders/chunks/utils/PMREM-generation'
 
 /** Define the base parameters for the {@link ComputePass} {@link Texture} writing. */
 export interface ComputePassTextureParams {
@@ -35,8 +36,8 @@ export interface LUTTextureParams extends ComputePassTextureParams, ComputeTextu
 export interface DiffuseTextureParams extends ComputePassTextureParams, ComputeTextureBaseParams {}
 /** Define the parameters used to create the specular cube map {@link Texture}. */
 export interface SpecularTextureParams extends ComputeTextureBaseParams {
-  /** Whether to generate mips for this {@link Texture} or not. */
-  generateMips?: TextureParams['generateMips']
+  /** Number of samples to use for the mips PMREM generation. */
+  numSamples?: number
 }
 
 /** Define the options used to create the textures by the {@link EnvironmentMap}. */
@@ -63,7 +64,7 @@ export interface EnvironmentMapParams extends Partial<EnvironmentMapOptions> {}
 /**
  * Utility to create environment maps specular, diffuse and LUT textures using an HDR file.
  *
- * Create a LUT texture on init using a {@link ComputePass}. Can load an HDR file and then create the specular and diffuse textures using two separate {@link ComputePass}.
+ * Create a LUT texture on init using a {@link ComputePass}. Can load an HDR file and then create the cubemap and diffuse textures using two separate {@link ComputePass} and the PMREM texture using custom mips.
  *
  * Especially useful for IBL shading with {@link extras/meshes/LitMesh.LitMesh | LitMesh}.
  *
@@ -96,11 +97,14 @@ export class EnvironmentMap {
   /** BRDF GGX LUT storage {@link Texture} used in the compute shader. */
   #lutStorageTexture: Texture
 
-  /** BRDF GGX LUT {@link Texture} used for IBL shading. */
+  /** LUT {@link Texture} used for IBL shading, containing BRDF GGX in the `RG` channels and BRDF "Charlie" sheen in the `B` channel. */
   lutTexture: Texture | null
+
+  /** Environment cube map  {@link Texture}. */
+  cubemapTexture: Texture | null
   /** Diffuse environment cube map {@link Texture}. */
   diffuseTexture: Texture | null
-  /** Specular environment cube map {@link Texture}. */
+  /** Specular/PMREM environment cube map {@link Texture}. */
   specularTexture: Texture | null
 
   // callbacks / events
@@ -122,7 +126,7 @@ export class EnvironmentMap {
     // patch params with defaults
     const lutTextureDefaultParams: LUTTextureParams = {
       size: 256,
-      computeSampleCount: 1024,
+      computeSampleCount: 512,
       label: 'Environment LUT texture',
       name: 'lutTexture',
       format: 'rgba16float',
@@ -140,12 +144,12 @@ export class EnvironmentMap {
       label: 'Environment specular texture',
       name: 'envSpecularTexture',
       format: 'rgba16float',
-      generateMips: true,
+      numSamples: 512,
     }
 
     params = {
       ...{
-        useLutTexture: false,
+        useLutTexture: true,
         diffuseIntensity: 1,
         specularIntensity: 1,
         rotation: Math.PI / 2,
@@ -181,6 +185,7 @@ export class EnvironmentMap {
       mipmapFilter: 'linear',
       addressModeU: 'clamp-to-edge',
       addressModeV: 'clamp-to-edge',
+      addressModeW: 'clamp-to-edge',
     })
 
     this.rotationMatrix = new Mat3().rotateByAngleY(-Math.PI / 2)
@@ -287,8 +292,26 @@ export class EnvironmentMap {
       autoDestroy: false, // keep alive when changing mesh
     }
 
+    this.cubemapTexture = new Texture(this.renderer, {
+      label: 'Environment cube map texture',
+      name: 'cubemapTexture',
+      format: this.options.specularTextureParams.format,
+      generateMips: true,
+      ...{
+        visibility: ['fragment', 'compute'],
+        // could be resized later
+        fixedSize: {
+          width: 256,
+          height: 256,
+        },
+      },
+      ...textureDefaultOptions,
+    })
+
     this.specularTexture = new Texture(this.renderer, {
       ...this.options.specularTextureParams,
+      generateMips: false, // do not automatically generate mips
+      useMips: true, // we'll generate them ourselves for PMREM
       ...{
         visibility: ['fragment', 'compute'],
         // could be resized later
@@ -355,7 +378,7 @@ export class EnvironmentMap {
   }
 
   /**
-   * Create the {@link lutTexture | BRDF GGX LUT texture} using the provided {@link LUTTextureParams | LUT texture options} and a {@link ComputePass} that runs once.
+   * Create the {@link lutTexture | BRDF GGX and sheen LUT texture} using the provided {@link LUTTextureParams | LUT texture options} and a {@link ComputePass} that runs once.
    */
   async computeBRDFLUTTexture() {
     // could we get one from another env map?
@@ -381,8 +404,8 @@ export class EnvironmentMap {
       label: 'Compute LUT texture',
       autoRender: false, // we're going to render only on demand
       dispatchSize: [
-        Math.ceil(this.#lutStorageTexture.size.width / 16),
-        Math.ceil(this.#lutStorageTexture.size.height / 16),
+        Math.ceil(this.#lutStorageTexture.size.width / 8),
+        Math.ceil(this.#lutStorageTexture.size.height / 8),
         1,
       ],
       shaders: {
@@ -415,36 +438,32 @@ export class EnvironmentMap {
   }
 
   /**
-   * Create the {@link specularTexture | specular cube map texture} from a loaded {@link HDRImageData} using the provided {@link SpecularTextureParams | specular texture options} and a {@link ComputePass} that runs once.
+   * Create the {@link cubemapTexture | cube map texture} from a loaded {@link HDRImageData} using a {@link ComputePass} that runs once.
    * @param parsedHdr - parsed {@link HDRImageData} loaded by the {@link hdrLoader}.
    */
   async computeSpecularCubemapFromHDRData(parsedHdr: HDRImageData) {
     let cubeStorageTexture = new Texture(this.renderer, {
-      label: 'Specular storage cubemap',
-      name: 'specularStorageCubemap',
-      format: this.specularTexture.options.format,
+      label: 'Cubemap storage',
+      name: 'storageCubemap',
+      format: this.cubemapTexture.options.format,
       visibility: ['compute'],
-      usage: ['copySrc', 'storageBinding'],
+      usage: ['copySrc', 'storageBinding', 'textureBinding'],
       type: 'storage',
       fixedSize: {
-        width: this.specularTexture.size.width,
-        height: this.specularTexture.size.height,
+        width: this.cubemapTexture.size.width,
+        height: this.cubemapTexture.size.height,
         depth: 6,
       },
       viewDimension: '2d-array',
     })
 
     let computeCubeMapPass = new ComputePass(this.renderer, {
-      label: 'Compute specular cubemap from equirectangular',
+      label: 'Compute cubemap from equirectangular',
       autoRender: false, // we're going to render only on demand
-      dispatchSize: [
-        Math.ceil(this.specularTexture.size.width / 8),
-        Math.ceil(this.specularTexture.size.height / 8),
-        6,
-      ],
+      dispatchSize: [Math.ceil(this.cubemapTexture.size.width / 8), Math.ceil(this.cubemapTexture.size.height / 8), 6],
       shaders: {
         compute: {
-          code: computeSpecularCubemapFromHDR,
+          code: computeCubemapFromHDR,
         },
       },
       storages: {
@@ -460,7 +479,7 @@ export class EnvironmentMap {
             },
             faceSize: {
               type: 'u32',
-              value: this.specularTexture.size.width,
+              value: this.cubemapTexture.size.width,
             },
           },
         },
@@ -470,34 +489,166 @@ export class EnvironmentMap {
 
     await computeCubeMapPass.material.compileMaterial()
 
+    let mipBuffers = []
+
     // do it right now
     // before computing the diffuse texture
     this.#runComputePass({
       computePass: computeCubeMapPass,
       label: 'Compute specular cube map command encoder',
       onAfterCompute: (commandEncoder) => {
-        // copy the result to our specular texture
-        this.renderer.copyGPUTextureToTexture(cubeStorageTexture.texture, this.specularTexture, commandEncoder)
-        this.specularTexture.textureBinding.resource = this.specularTexture.texture
+        // copy the result to our cubemap texture
+        this.renderer.copyGPUTextureToTexture(cubeStorageTexture.texture, this.cubemapTexture, commandEncoder)
+        // generate PMREM right away
+        this.generateSpecularPMREMTexture(commandEncoder, mipBuffers)
       },
     })
 
     // once command encoder has been submitted, free the resources
     computeCubeMapPass.remove()
     cubeStorageTexture.destroy()
+    mipBuffers.forEach((buffer) => buffer.destroy())
     cubeStorageTexture = null
     computeCubeMapPass = null
+    mipBuffers = []
   }
 
   /**
-   * Compute the {@link diffuseTexture | diffuse cube map texture} from the {@link specularTexture | specular cube map texture } using the provided {@link DiffuseTextureParams | diffuse texture options} and a {@link ComputePass} that runs once.
+   * Generates the {@link specularTexture} Prefiltered, Mipmapped Radiance Environment Map (PMREM).
+   * We manually generate the {@link specularTexture} prefiltered mips from our original {@link cubemapTexture}.
+   *
+   * @param commandEncoder - {@link GPUCommandEncoder} to use for mips generation.
+   * @param mipBuffers - Array of {@link GPUBuffer} that will be created for each mips. Will be destroyed later.
    */
-  async computeDiffuseFromSpecular() {
-    if (this.specularTexture.options.viewDimension !== 'cube') {
-      throwWarning(
-        'Could not compute the diffuse texture because the specular texture is not a cube map:' +
-          this.specularTexture.options.viewDimension
-      )
+  generateSpecularPMREMTexture(commandEncoder: GPUCommandEncoder, mipBuffers: GPUBuffer[]) {
+    if (!this.cubemapTexture.texture) {
+      if (!this.renderer.production) {
+        throwWarning(
+          'EnvironmentMap: Could not generate the PMREM mips because the cubemap texture is not set:' +
+            this.cubemapTexture
+        )
+      }
+      return
+    }
+
+    const shaderModule = this.renderer.device.createShaderModule({
+      label: 'PMREM generation',
+      code: PMREMGeneration,
+    })
+
+    const pipeline = this.renderer.device.createRenderPipeline({
+      label: 'Mip level generator pipeline',
+      layout: 'auto',
+      vertex: {
+        module: shaderModule,
+      },
+      fragment: {
+        module: shaderModule,
+        targets: [{ format: this.specularTexture.texture.format }],
+      },
+    })
+
+    let width = this.specularTexture.texture.width
+    let height = this.specularTexture.texture.height
+    const mipCount = this.specularTexture.texture.mipLevelCount
+    const nbFaces = this.specularTexture.texture.depthOrArrayLayers
+    let baseMipLevel = 0
+
+    const generateMips = (baseMipLevel = 0) => {
+      for (let layer = 0; layer < nbFaces; layer++) {
+        // cube face index, mip level to write to, total mip counts, number of samples, face size
+        const faceMipArray = new Uint32Array([
+          layer,
+          baseMipLevel + 1,
+          mipCount,
+          this.options.specularTextureParams.numSamples,
+          this.specularTexture.texture.width,
+          0, // pad
+          0,
+          0,
+        ])
+
+        const paramsBuffer = this.renderer.device.createBuffer({
+          size: faceMipArray.byteLength,
+          usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+          mappedAtCreation: true,
+        })
+        new Uint32Array(paramsBuffer.getMappedRange()).set(faceMipArray)
+        paramsBuffer.unmap()
+
+        mipBuffers.push(paramsBuffer)
+
+        const bindGroup = this.renderer.device.createBindGroup({
+          layout: pipeline.getBindGroupLayout(0),
+          entries: [
+            { binding: 0, resource: this.sampler.sampler },
+            {
+              binding: 1,
+              resource: this.cubemapTexture.texture.createView({
+                dimension: 'cube',
+                arrayLayerCount: 6,
+              }),
+            },
+            {
+              binding: 2,
+              resource: {
+                buffer: paramsBuffer,
+              },
+            },
+          ],
+        })
+
+        const renderPassDescriptor = {
+          label: 'PMREM generation render pass',
+          colorAttachments: [
+            {
+              view: this.specularTexture.texture.createView({
+                dimension: '2d',
+                baseMipLevel: baseMipLevel + 1,
+                mipLevelCount: 1,
+                baseArrayLayer: layer,
+                arrayLayerCount: 1,
+              }),
+              loadOp: 'clear',
+              storeOp: 'store',
+            },
+          ],
+        }
+
+        const pass = commandEncoder.beginRenderPass(renderPassDescriptor as GPURenderPassDescriptor)
+        pass.setPipeline(pipeline)
+        pass.setBindGroup(0, bindGroup)
+        pass.draw(6) // call our vertex shader 6 times
+        pass.end()
+      }
+    }
+
+    // generate mips at level 0 (basically a copy)
+    generateMips(-1)
+
+    while (width > 1 || height > 1) {
+      width = Math.max(1, (width / 2) | 0)
+      height = Math.max(1, (height / 2) | 0)
+      generateMips(baseMipLevel)
+
+      baseMipLevel++
+    }
+
+    // update specular texture binding resource
+    this.specularTexture.textureBinding.resource = this.specularTexture.texture
+  }
+
+  /**
+   * Compute the {@link diffuseTexture | diffuse cube map texture} from the {@link cubemapTexture | cube map texture } using the provided {@link DiffuseTextureParams | diffuse texture options} and a {@link ComputePass} that runs once.
+   */
+  async computeDiffuseFromCubemap() {
+    if (!this.cubemapTexture.texture) {
+      if (!this.renderer.production) {
+        throwWarning(
+          'EnvironmentMap: Could not generate the diffuse texture because the cube map texture is not set:' +
+            this.cubemapTexture
+        )
+      }
       return
     }
 
@@ -522,7 +673,7 @@ export class EnvironmentMap {
       dispatchSize: [Math.ceil(this.diffuseTexture.size.width / 8), Math.ceil(this.diffuseTexture.size.height / 8), 6],
       shaders: {
         compute: {
-          code: computeDiffuseFromSpecularCubemap(this.specularTexture),
+          code: computeDiffuseFromCubemap(this.cubemapTexture),
         },
       },
       uniforms: {
@@ -534,7 +685,7 @@ export class EnvironmentMap {
             },
             maxMipLevel: {
               type: 'u32',
-              value: this.specularTexture.texture.mipLevelCount,
+              value: this.cubemapTexture.texture.mipLevelCount,
             },
             sampleCount: {
               type: 'u32',
@@ -544,7 +695,7 @@ export class EnvironmentMap {
         },
       },
       samplers: [this.sampler],
-      textures: [this.specularTexture, diffuseStorageTexture],
+      textures: [this.cubemapTexture, diffuseStorageTexture],
     })
 
     await computeDiffusePass.material.compileMaterial()
@@ -579,6 +730,15 @@ export class EnvironmentMap {
 
     // now resize the textures if needed
 
+    // cubemap texture
+    if (this.cubemapTexture.size.width !== faceSize || this.cubemapTexture.size.height !== faceSize) {
+      this.cubemapTexture.options.fixedSize.width = faceSize
+      this.cubemapTexture.options.fixedSize.height = faceSize
+      this.cubemapTexture.size.width = faceSize
+      this.cubemapTexture.size.height = faceSize
+      this.cubemapTexture.createTexture()
+    }
+
     // specular texture
     if (this.specularTexture.size.width !== faceSize || this.specularTexture.size.height !== faceSize) {
       this.specularTexture.options.fixedSize.width = faceSize
@@ -610,7 +770,7 @@ export class EnvironmentMap {
   computeFromHDR() {
     if (this.#hdrData) {
       this.computeSpecularCubemapFromHDRData(this.#hdrData).then(() => {
-        this.computeDiffuseFromSpecular()
+        this.computeDiffuseFromCubemap()
       })
     }
   }
@@ -619,6 +779,7 @@ export class EnvironmentMap {
    * Destroy the {@link EnvironmentMap} and its associated textures.
    */
   destroy() {
+    this.cubemapTexture?.destroy()
     this.diffuseTexture?.destroy()
     this.specularTexture?.destroy()
 
