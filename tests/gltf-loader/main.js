@@ -103,8 +103,7 @@ window.addEventListener('load', async () => {
   let shadingModel = 'PBR' // 'PBR', 'Phong' or 'Lambert'
   const lightType = 'DirectionalLight' // or 'PointLight'
 
-  // const currentModelKey = 'damagedHelmet'
-  const currentModelKey = 'sheenTestGrid'
+  const currentModelKey = 'damagedHelmet'
   let currentModel = models[currentModelKey]
 
   const ambientLight = new AmbientLight(gpuCameraRenderer, {
