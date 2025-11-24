@@ -6,6 +6,7 @@ import { getPBRShading } from '../fragment/body/get-PBR-shading'
 import { PBRFragmentShaderInputParams } from '../../full/fragment/get-fragment-shader-code'
 import { applyToneMapping } from '../fragment/body/apply-tone-mapping'
 import { ShaderTextureDescriptor } from '../../../../extras/meshes/LitMesh'
+import { BRDF_GGX } from '../utils/BRDF_GGX'
 
 /** Defines the basic parameters available for the PBR shading getter function. */
 export interface GetPBRShadingParams extends GetShadingParams {
@@ -28,6 +29,7 @@ export interface GetPBRShadingParams extends GetShadingParams {
  * let specularIntensity: f32 = 1.0;
  * let metallic: f32 = 0.5;
  * let roughness: f32 = 0.5;
+ * let emissive: vec3f = vec3(0.0);
  * let ior: f32 = 1.5;
  * let transmission: f32 = 0.0;
  * let dispersion: f32 = 0.0;
@@ -42,6 +44,7 @@ export interface GetPBRShadingParams extends GetShadingParams {
  *   viewDirection,
  *   metallic,
  *   roughness,
+ *   emissive,
  *   specularIntensity,
  *   specularColor,
  *   ior,
@@ -68,6 +71,7 @@ export const getPBR = (
 ${addUtils ? lambertUtils : ''}
 ${REIndirectSpecular}
 ${getIBLTransmission}
+${BRDF_GGX}
 ${getPBRDirect}
 
 fn getPBR(
@@ -77,6 +81,7 @@ fn getPBR(
   viewDirection: vec3f,
   metallic: f32,
   roughness: f32,
+  emissive: vec3f,
   specularIntensity: f32,
   specularColor: vec3f,
   ior: f32,
@@ -94,6 +99,7 @@ fn getPBR(
   ${getPBRShading({ receiveShadows, environmentMap, transmissionBackgroundTexture, extensionsUsed })}
   
   outputColor = vec4(outgoingLight, outputColor.a);
+  outputColor = vec4(outputColor.rgb + emissive, outputColor.a);
   
   ${applyToneMapping({ toneMapping, outputColorSpace })}
     

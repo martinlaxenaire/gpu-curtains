@@ -1,3 +1,4 @@
+/// <reference types="@webgpu/types" />
 import { Renderer } from '../../core/renderers/utils';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
 import { HDRImageData, HDRLoader } from '../loaders/HDRLoader';
@@ -28,8 +29,8 @@ export interface DiffuseTextureParams extends ComputePassTextureParams, ComputeT
 }
 /** Define the parameters used to create the specular cube map {@link Texture}. */
 export interface SpecularTextureParams extends ComputeTextureBaseParams {
-    /** Whether to generate mips for this {@link Texture} or not. */
-    generateMips?: TextureParams['generateMips'];
+    /** Number of samples to use for the mips PMREM generation. */
+    numSamples?: number;
 }
 /** Define the options used to create the textures by the {@link EnvironmentMap}. */
 export interface EnvironmentMapOptions {
@@ -54,7 +55,7 @@ export interface EnvironmentMapParams extends Partial<EnvironmentMapOptions> {
 /**
  * Utility to create environment maps specular, diffuse and LUT textures using an HDR file.
  *
- * Create a LUT texture on init using a {@link ComputePass}. Can load an HDR file and then create the specular and diffuse textures using two separate {@link ComputePass}.
+ * Create a LUT texture on init using a {@link ComputePass}. Can load an HDR file and then create the cubemap and diffuse textures using two separate {@link ComputePass} and the PMREM texture using custom mips.
  *
  * Especially useful for IBL shading with {@link extras/meshes/LitMesh.LitMesh | LitMesh}.
  *
@@ -79,11 +80,13 @@ export declare class EnvironmentMap {
     options: EnvironmentMapOptions;
     /** Define the default environment maps rotation {@link Mat3}. */
     rotationMatrix: Mat3;
-    /** BRDF GGX LUT {@link Texture} used for IBL shading. */
+    /** LUT {@link Texture} used for IBL shading, containing BRDF GGX in the `RG` channels and BRDF "Charlie" sheen in the `B` channel. */
     lutTexture: Texture | null;
+    /** Environment cube map  {@link Texture}. */
+    cubemapTexture: Texture | null;
     /** Diffuse environment cube map {@link Texture}. */
     diffuseTexture: Texture | null;
-    /** Specular environment cube map {@link Texture}. */
+    /** Specular/PMREM environment cube map {@link Texture}. */
     specularTexture: Texture | null;
     /** function assigned to the {@link onRotationAxisChanged} callback */
     _onRotationAxisChangedCallback: () => void;
@@ -121,18 +124,26 @@ export declare class EnvironmentMap {
      */
     createSpecularDiffuseTextures(): void;
     /**
-     * Create the {@link lutTexture | BRDF GGX LUT texture} using the provided {@link LUTTextureParams | LUT texture options} and a {@link ComputePass} that runs once.
+     * Create the {@link lutTexture | BRDF GGX and sheen LUT texture} using the provided {@link LUTTextureParams | LUT texture options} and a {@link ComputePass} that runs once.
      */
     computeBRDFLUTTexture(): Promise<void>;
     /**
-     * Create the {@link specularTexture | specular cube map texture} from a loaded {@link HDRImageData} using the provided {@link SpecularTextureParams | specular texture options} and a {@link ComputePass} that runs once.
+     * Create the {@link cubemapTexture | cube map texture} from a loaded {@link HDRImageData} using a {@link ComputePass} that runs once.
      * @param parsedHdr - parsed {@link HDRImageData} loaded by the {@link hdrLoader}.
      */
     computeSpecularCubemapFromHDRData(parsedHdr: HDRImageData): Promise<void>;
     /**
-     * Compute the {@link diffuseTexture | diffuse cube map texture} from the {@link specularTexture | specular cube map texture } using the provided {@link DiffuseTextureParams | diffuse texture options} and a {@link ComputePass} that runs once.
+     * Generates the {@link specularTexture} Prefiltered, Mipmapped Radiance Environment Map (PMREM).
+     * We manually generate the {@link specularTexture} prefiltered mips from our original {@link cubemapTexture}.
+     *
+     * @param commandEncoder - {@link GPUCommandEncoder} to use for mips generation.
+     * @param mipBuffers - Array of {@link GPUBuffer} that will be created for each mips. Will be destroyed later.
      */
-    computeDiffuseFromSpecular(): Promise<void>;
+    generateSpecularPMREMTexture(commandEncoder: GPUCommandEncoder, mipBuffers: GPUBuffer[]): void;
+    /**
+     * Compute the {@link diffuseTexture | diffuse cube map texture} from the {@link cubemapTexture | cube map texture } using the provided {@link DiffuseTextureParams | diffuse texture options} and a {@link ComputePass} that runs once.
+     */
+    computeDiffuseFromCubemap(): Promise<void>;
     /**
      * Load an HDR environment map and then generate the {@link specularTexture} and {@link diffuseTexture} using two separate {@link ComputePass}.
      * @param url - The url of the .hdr file to load.

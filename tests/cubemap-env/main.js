@@ -56,11 +56,7 @@ window.addEventListener('load', async () => {
   const currentEnvMapKey = 'cannon'
   let currentEnvMap = envMaps[currentEnvMapKey]
 
-  const environmentMap = new EnvironmentMap(gpuCameraRenderer, {
-    specularTextureParams: {
-      generateMips: false, // should be overriden
-    },
-  })
+  const environmentMap = new EnvironmentMap(gpuCameraRenderer)
   environmentMap.loadAndComputeFromHDR(currentEnvMap.url)
 
   console.log(environmentMap)
@@ -97,11 +93,15 @@ window.addEventListener('load', async () => {
     ${toneMappingUtils}
 
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-      var color: vec4f = select(
-        textureSample(${environmentMap.specularTexture.options.name}, clampSampler, fsInput.direction),
-        textureSample(${environmentMap.diffuseTexture.options.name}, clampSampler, fsInput.direction),
-        params.useDiffuse > 0.0
-      );
+      var color: vec4f;
+
+      if(params.displayTexture == 0.0) {
+        color = textureSampleLevel(${environmentMap.cubemapTexture.options.name}, clampSampler, fsInput.direction, params.mipsLevel);
+      } else if(params.displayTexture == 1.0) {
+        color = textureSampleLevel(${environmentMap.specularTexture.options.name}, clampSampler, fsInput.direction, params.mipsLevel);
+      } else if(params.displayTexture == 2.0) {
+        color = textureSampleLevel(${environmentMap.diffuseTexture.options.name}, clampSampler, fsInput.direction, 0.0);
+      }
       
       color = vec4(KhronosToneMapping(color.rgb), color.a);
       color = linearTosRGB_4(color);
@@ -112,7 +112,7 @@ window.addEventListener('load', async () => {
 
   const cubeMap = new Mesh(gpuCameraRenderer, {
     geometry: cubeGeometry,
-    textures: [environmentMap.diffuseTexture, environmentMap.specularTexture],
+    textures: [environmentMap.diffuseTexture, environmentMap.specularTexture, environmentMap.cubemapTexture],
     samplers: [environmentMap.sampler],
     cullMode: 'front',
     shaders: {
@@ -130,7 +130,11 @@ window.addEventListener('load', async () => {
             type: 'mat3x3f',
             value: environmentMap.rotationMatrix,
           },
-          useDiffuse: {
+          mipsLevel: {
+            type: 'f32',
+            value: 0,
+          },
+          displayTexture: {
             type: 'f32',
             value: 0,
           },
@@ -139,29 +143,54 @@ window.addEventListener('load', async () => {
     },
   })
 
-  const lutPlane = new Mesh(gpuCameraRenderer, {
-    geometry: new PlaneGeometry(),
-    textures: [environmentMap.lutTexture],
-    samplers: [environmentMap.sampler],
-    visible: false,
-    shaders: {
-      fragment: {
-        code: `
+  // LUT
+  let lutPlane = null
+  if (environmentMap.options.useLutTexture) {
+    lutPlane = new Mesh(gpuCameraRenderer, {
+      geometry: new PlaneGeometry(),
+      textures: [environmentMap.lutTexture],
+      samplers: [environmentMap.sampler],
+      visible: false,
+      shaders: {
+        fragment: {
+          code: /* wgsl */ `
           struct VSOutput {
             @builtin(position) position: vec4f,
             @location(0) uv: vec2f,
           };
           
-          @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {            
-            return textureSample(lutTexture, clampSampler, fsInput.uv);
+          @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
+            let lutSample: vec4f = textureSample(lutTexture, clampSampler, fsInput.uv);
+            var color: vec4f;
+
+            if(params.displayTexture == 0.0) {        
+              color = lutSample;
+            } else if(params.displayTexture == 1.0) {        
+              color = vec4(lutSample.rg, 0.0, 1.0);
+            } else if(params.displayTexture == 2.0) {        
+              color = vec4(0.0, 0.0, lutSample.b, 1.0);
+            }
+
+            return color;
           }
         `,
+        },
       },
-    },
-  })
+      uniforms: {
+        params: {
+          struct: {
+            displayTexture: {
+              type: 'f32',
+              value: 0,
+            },
+          },
+        },
+      },
+    })
 
-  lutPlane.position.z = -0.5
-  lutPlane.scale.set(0.075)
+    lutPlane.position.z = -0.5
+    lutPlane.scale.set(0.25)
+  }
 
   console.log(cubeMap)
 
@@ -256,12 +285,30 @@ window.addEventListener('load', async () => {
   const envTexturesFolder = gui.addFolder('Environment textures')
 
   envTexturesFolder
-    .add({ useDiffuse: false }, 'useDiffuse')
-    .onChange((value) => {
-      cubeMap.uniforms.params.useDiffuse.value = value ? 1 : 0
+    .add(cubeMap.uniforms.params.displayTexture, 'value', {
+      'Cubemap texture': 0,
+      'Specular PMREM texture': 1,
+      'Diffuse texture': 2,
     })
     .name('Display diffuse cubemap')
 
-  const lutTextureFolder = gui.addFolder('LUT texture')
-  lutTextureFolder.add(lutPlane, 'visible').name('Show LUT texture')
+  envTexturesFolder
+    .add({ mipsLevel: 0 }, 'mipsLevel', [...Array(environmentMap.specularTexture.texture.mipLevelCount).keys()])
+    .name('Specular mip level / PMREM')
+    .onChange((value) => {
+      cubeMap.uniforms.params.mipsLevel.value = value
+    })
+
+  if (lutPlane) {
+    const lutTextureFolder = gui.addFolder('LUT texture')
+    lutTextureFolder.add(lutPlane, 'visible').name('Show LUT texture')
+
+    lutTextureFolder
+      .add(lutPlane.uniforms.params.displayTexture, 'value', {
+        'Combined LUT': 0,
+        'GGX LUT': 1,
+        'Charlie LUT': 2,
+      })
+      .name('LUT texture type')
+  }
 })

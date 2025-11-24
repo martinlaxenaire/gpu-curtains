@@ -103,6 +103,15 @@ export const getFragmentShaderCode = ({
   specularColorTexture = null,
   transmissionTexture = null,
   thicknessTexture = null,
+  sheenTexture = null,
+  sheenColorTexture = null,
+  sheenRoughnessTexture = null,
+  anisotropyTexture = null,
+  clearcoatTexture = null,
+  clearcoatRoughnessTexture = null,
+  clearcoatNormalTexture = null,
+  iridescenceTexture = null,
+  iridescenceThicknessTexture = null,
   transmissionBackgroundTexture = null,
   environmentMap = null,
 }: FragmentShaderInputParams): string => {
@@ -119,6 +128,8 @@ export const getFragmentShaderCode = ({
           materialUniform,
           materialUniformName,
           baseColorTexture,
+          emissiveTexture,
+          occlusionTexture,
         })
       case 'Lambert':
         return getLambertFragmentShaderCode({
@@ -179,6 +190,15 @@ export const getFragmentShaderCode = ({
           specularColorTexture,
           transmissionTexture,
           thicknessTexture,
+          sheenTexture,
+          sheenColorTexture,
+          sheenRoughnessTexture,
+          anisotropyTexture,
+          clearcoatTexture,
+          clearcoatRoughnessTexture,
+          clearcoatNormalTexture,
+          iridescenceTexture,
+          iridescenceThicknessTexture,
           transmissionBackgroundTexture,
           environmentMap,
         })

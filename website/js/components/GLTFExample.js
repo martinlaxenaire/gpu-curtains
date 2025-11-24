@@ -96,6 +96,10 @@ export class GLTFExample {
 
       parameters.material.environmentMap = this.environmentMap
 
+      // add iridescence and clearcoat
+      parameters.material.iridescence = 0.5
+      parameters.material.clearcoat = 1
+
       parameters.material.opacity = 0
       // for a better result we won't use transparency blending
       // but rather multiply the rgb values with opacity

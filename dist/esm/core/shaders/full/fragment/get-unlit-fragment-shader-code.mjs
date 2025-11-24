@@ -8,6 +8,7 @@ import { declareMaterialVars } from '../../chunks/fragment/body/declare-material
 import { getBaseColor } from '../../chunks/fragment/body/get-base-color.mjs';
 import { applyToneMapping } from '../../chunks/fragment/body/apply-tone-mapping.mjs';
 import { patchAdditionalChunks } from '../../default-material-helpers.mjs';
+import { getEmissiveOcclusion } from '../../chunks/fragment/body/get-emissive-occlusion.mjs';
 
 const getUnlitFragmentShaderCode = ({
   chunks = null,
@@ -32,7 +33,9 @@ const getUnlitFragmentShaderCode = ({
   additionalVaryings = [],
   materialUniform = null,
   materialUniformName = "material",
-  baseColorTexture = null
+  baseColorTexture = null,
+  emissiveTexture = null,
+  occlusionTexture = null
 }) => {
   chunks = patchAdditionalChunks(chunks);
   return (
@@ -54,9 +57,12 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   ${declareAttributesVars({ geometry, additionalVaryings })}
   ${declareMaterialVars({ materialUniform, materialUniformName, shadingModel: "Unlit" })}
   ${getBaseColor({ geometry, baseColorTexture })}
+  ${getEmissiveOcclusion({ emissiveTexture, occlusionTexture })}
   
   // user defined preliminary contribution
   ${chunks.preliminaryContribution}
+
+  outputColor = vec4(outputColor.rgb * occlusion + emissive, outputColor.a);
   
   // user defined additional contribution
   ${chunks.additionalContribution}

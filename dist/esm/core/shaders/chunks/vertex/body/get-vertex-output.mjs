@@ -2,10 +2,12 @@ const getVertexOutput = ({ geometry }) => {
   let output = (
     /* wgsl */
     `
-  vsOutput.position = camera.projection * camera.view * worldPosition;
+  let mvPosition: vec4f = camera.view * worldPosition;
+  vsOutput.position = camera.projection * mvPosition;
   vsOutput.normal = normal;
   vsOutput.worldPosition = worldPosition.xyz / worldPosition.w;
   vsOutput.viewDirection = camera.position - vsOutput.worldPosition;
+  vsOutput.modelPosition = worldPosition.xyz;
   vsOutput.modelScale = vec3(
     length(modelMatrix[0].xyz),
     length(modelMatrix[1].xyz),
@@ -17,8 +19,8 @@ const getVertexOutput = ({ geometry }) => {
   if (tangentAttribute) {
     output += /* wgsl */
     `
-  vsOutput.tangent = normalize(modelMatrix * tangent);
-  vsOutput.bitangent = cross(vsOutput.normal, vsOutput.tangent.xyz) * vsOutput.tangent.w;
+  vsOutput.tangent = normalize(modelMatrix * vec4(tangent.xyz, 0.0));
+  vsOutput.bitangent = cross(vsOutput.normal, vsOutput.tangent.xyz) * tangent.w;
     `;
   }
   output += geometry.vertexBuffers.map(

@@ -14,7 +14,7 @@ export interface HDRImageData {
     data: Float32Array;
 }
 /**
- * Basic glTF loader class.
+ * Basic HDR loader class. This loader is not intended to be used as is, but is used internally by the {@link extras/environmentMap/EnvironmentMap.EnvironmentMap | EnvironmentMap} class.
  *
  * Allow to load an HDR file from an URI and returns a {@link HDRImageData} object containing the {@link Float32Array} data alongside width, height and other useful information.
  *
@@ -29,7 +29,6 @@ export interface HDRImageData {
  *   name: 'envTexture',
  *   visibility: ['fragment'],
  *   format: 'rgba16float',
- *   generateMips: true,
  *   fixedSize: {
  *     width: hdr.width,
  *     height: hdr.height,

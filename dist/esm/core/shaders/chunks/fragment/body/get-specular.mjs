@@ -1,56 +1,41 @@
+import { getTextureSample } from './get-texture-sample.mjs';
+
 const getSpecular = ({
   specularTexture = null,
   specularFactorTexture = null,
   specularColorTexture = null
 } = {}) => {
-  let specular = "";
+  let specular = (
+    /* wgsl */
+    `
+  var specularF90: f32 = 1.0;`
+  );
   if (specularTexture) {
+    specular += getTextureSample(specularTexture, "specular");
     specular += /* wgsl */
     `
-  var specularUV: vec2f = ${specularTexture.texCoordAttributeName ?? "uv"};`;
-    if ("useTransform" in specularTexture.texture.options && specularTexture.texture.options.useTransform) {
-      specular += /* wgsl */
-      `
-  specularUV = (${specularTexture.texture.options.name}Matrix * vec3(specularUV, 1.0)).xy;`;
-    }
-    specular += /* wgsl */
-    `
-  let specularSample: vec4f = textureSample(${specularTexture.texture.options.name}, ${specularTexture.sampler?.name ?? "defaultSampler"}, specularUV);
-  
   specularIntensity = specularIntensity * specularSample.a;
   specularColor = specularColor * specularSample.rgb;`;
   } else {
     if (specularFactorTexture) {
+      specular += getTextureSample(specularFactorTexture, "specularFactor");
       specular += /* wgsl */
       `
-  var specularFactorUV: vec2f = ${specularFactorTexture.texCoordAttributeName ?? "uv"};`;
-      if ("useTransform" in specularFactorTexture.texture.options && specularFactorTexture.texture.options.useTransform) {
-        specular += /* wgsl */
-        `
-  specularFactorUV = (${specularFactorTexture.texture.options.name}Matrix * vec3(specularFactorUV, 1.0)).xy;`;
-      }
-      specular += /* wgsl */
-      `
-  let specularFactorSample: vec4f = textureSample(${specularFactorTexture.texture.options.name}, ${specularFactorTexture.sampler?.name ?? "defaultSampler"}, specularFactorUV);
-  
-  specularIntensity = specularIntensity * specularSample.a;`;
+  specularIntensity = specularIntensity * specularFactorSample.a;`;
     }
     if (specularColorTexture) {
+      specular += getTextureSample(specularColorTexture, "specularColor");
       specular += /* wgsl */
       `
-  var specularColorUV: vec2f = ${specularColorTexture.texCoordAttributeName ?? "uv"};`;
-      if ("useTransform" in specularColorTexture.texture.options && specularColorTexture.texture.options.useTransform) {
-        specular += /* wgsl */
-        `
-  specularColorUV = (${specularColorTexture.texture.options.name}Matrix * vec3(specularColorUV, 1.0)).xy;`;
-      }
-      specular += /* wgsl */
-      `
-  let specularColorSample: vec4f = textureSample(${specularColorTexture.texture.options.name}, ${specularColorTexture.sampler?.name ?? "defaultSampler"}, specularColorUV);
-  
-  specularColor = specularColor * specularSample.rgb;`;
+  specularColor = specularColor * specularColorSample.rgb;`;
     }
   }
+  specular += /* wgsl */
+  `
+  specularF90 = mix(specularIntensity, 1.0, metallic);
+  specularColor = min( pow2( ( ior - 1.0 ) / ( ior + 1.0 ) ) * specularColor, vec3( 1.0 ) ) * specularIntensity;
+  let specularColorBlended: vec3f = mix(specularColor, diffuseColor, metallic);
+  `;
   return specular;
 };
 

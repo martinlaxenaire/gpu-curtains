@@ -3,23 +3,15 @@ import { Texture } from '../../core/textures/Texture'
 import { Sampler } from '../../core/samplers/Sampler'
 import { ProjectedMeshParameters } from '../../core/meshes/mixins/ProjectedMeshBaseMixin'
 import { Object3D } from '../../core/objects3D/Object3D'
-import { Mesh } from '../../core/meshes/Mesh'
 import { Box3 } from '../../math/Box3'
 import { Camera } from '../../core/cameras/Camera'
 import { BufferBinding } from '../../core/bindings/BufferBinding'
 import { TargetsAnimationsManager } from '../../extras/animations/TargetsAnimationsManager'
 import { Mat4 } from '../../math/Mat4'
-import {
-  LitMesh,
-  LitMeshMaterialParams,
-  LitMeshMaterialUniformParams,
-  LitMeshParameters,
-  ShaderTextureDescriptor,
-} from '../../extras/meshes/LitMesh'
+import { LitMesh, LitMeshMaterialParams, LitMeshParameters, ShaderTextureDescriptor } from '../../extras/meshes/LitMesh'
 import { GLTFExtensionsUsed } from './GLTFExtensions'
 import { RenderMaterialParams } from '../Materials'
 import { RenderMaterial } from '../../core/materials/RenderMaterial'
-import { Geometry } from '../../core/geometries/Geometry'
 import { Light } from '../../core/lights/Light'
 
 /** Parameters parsed from a {@link GLTF.IMaterial | glTF material} entry. */

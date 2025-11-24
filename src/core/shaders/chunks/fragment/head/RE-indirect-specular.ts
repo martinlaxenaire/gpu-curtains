@@ -4,28 +4,31 @@ export const REIndirectSpecular = /* wgsl */ `
 fn RE_IndirectSpecular(
   radiance: vec3f,
   irradiance: vec3f,
-  normal: vec3f,
-  diffuseColor: vec3f,
-  specularFactor: f32,
-  specularColorFactor: vec3f,
-  viewDirection: vec3f,
+  diffuseContribution: vec3f,
   metallic: f32,
-  roughness: f32,
-  iBLGGXFresnel: IBLGGXFresnel,
+  //iBLGGXFresnel: IBLGGXFresnel,
+  dielectricScattering: MultiScattering,
+  metallicScattering: MultiScattering,
   ptr_reflectedLight: ptr<function, ReflectedLight>
 ) {
-  let k_D: vec3f = diffuseColor * (1.0 - iBLGGXFresnel.FssEss + iBLGGXFresnel.FmsEms);
+  // Mix based on metalness
+	let singleScattering: vec3f = mix(dielectricScattering.singleScattering, metallicScattering.singleScattering, metallic);
+	let multiScattering: vec3f = mix(dielectricScattering.multiScattering, metallicScattering.multiScattering, metallic);
+
+	// Diffuse energy conservation uses dielectric path
+	let totalScatteringDielectric: vec3f = dielectricScattering.singleScattering + dielectricScattering.multiScattering;
+
+	let diffuse: vec3f = diffuseContribution * (1.0 - max3(totalScatteringDielectric));
 
   // we just add radiance and irradiance to the indirect contributions using iBLGGXFresnel
-  // we might need to adjust when implementing clearcoat, sheen or iridescence
 
   // we remove RECIPROCAL_PI multiplication since the LUT already ensures energy conservation
-  let cosineWeightedIrradiance: vec3f = irradiance;
-  // let cosineWeightedIrradiance: vec3f = irradiance * RECIPROCAL_PI;  
+  // let cosineWeightedIrradiance: vec3f = irradiance * RECIPROCAL_PI;
+  let cosineWeightedIrradiance: vec3f = irradiance;  
 
-  (*ptr_reflectedLight).indirectSpecular += iBLGGXFresnel.FssEss * radiance;
-  (*ptr_reflectedLight).indirectSpecular += iBLGGXFresnel.FmsEms * cosineWeightedIrradiance;
+  (*ptr_reflectedLight).indirectSpecular += singleScattering * radiance;
+  (*ptr_reflectedLight).indirectSpecular += multiScattering * cosineWeightedIrradiance;
   
-  (*ptr_reflectedLight).indirectDiffuse += k_D * cosineWeightedIrradiance;
+  (*ptr_reflectedLight).indirectDiffuse += diffuse * cosineWeightedIrradiance;
 }
 `

@@ -1,3 +1,5 @@
+import { getTextureSample } from './get-texture-sample.mjs';
+
 const getBaseColor = ({
   geometry = null,
   baseColorTexture = null
@@ -30,17 +32,9 @@ const getBaseColor = ({
     }
   });
   if (baseColorTexture) {
+    baseColor += getTextureSample(baseColorTexture, "baseColor");
     baseColor += /* wgsl */
     `
-  var baseColorUV: vec2f = ${baseColorTexture.texCoordAttributeName ?? "uv"};`;
-    if ("useTransform" in baseColorTexture.texture.options && baseColorTexture.texture.options.useTransform) {
-      baseColor += /* wgsl */
-      `
-  baseColorUV = (texturesMatrices.${baseColorTexture.texture.options.name}.matrix * vec3(baseColorUV, 1.0)).xy;`;
-    }
-    baseColor += /* wgsl */
-    `
-  let baseColorSample: vec4f = textureSample(${baseColorTexture.texture.options.name}, ${baseColorTexture.sampler?.name ?? "defaultSampler"}, baseColorUV);
   baseColor *= baseColorSample;
   `;
   }

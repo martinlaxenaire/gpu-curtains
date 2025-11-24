@@ -259,7 +259,7 @@ window.addEventListener('load', async () => {
       material: {
         shading: 'PBR',
         color: gold,
-        metallic: 1,
+        metallic: 0.5,
         roughness: 0.5,
         ...(hasBaseColorTexture && {
           baseColorTexture: {

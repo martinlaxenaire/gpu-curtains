@@ -4,6 +4,7 @@ import { getIBLTransmission } from '../fragment/head/get-IBL-transmission.mjs';
 import { getPBRDirect } from '../fragment/head/get-PBR-direct.mjs';
 import { getPBRShading } from '../fragment/body/get-PBR-shading.mjs';
 import { applyToneMapping } from '../fragment/body/apply-tone-mapping.mjs';
+import { BRDF_GGX } from '../utils/BRDF_GGX.mjs';
 
 const getPBR = ({
   addUtils = true,
@@ -20,6 +21,7 @@ const getPBR = ({
 ${addUtils ? lambertUtils : ""}
 ${REIndirectSpecular}
 ${getIBLTransmission}
+${BRDF_GGX}
 ${getPBRDirect}
 
 fn getPBR(
@@ -29,6 +31,7 @@ fn getPBR(
   viewDirection: vec3f,
   metallic: f32,
   roughness: f32,
+  emissive: vec3f,
   specularIntensity: f32,
   specularColor: vec3f,
   ior: f32,
@@ -46,6 +49,7 @@ fn getPBR(
   ${getPBRShading({ receiveShadows, environmentMap, transmissionBackgroundTexture, extensionsUsed })}
   
   outputColor = vec4(outgoingLight, outputColor.a);
+  outputColor = vec4(outputColor.rgb + emissive, outputColor.a);
   
   ${applyToneMapping({ toneMapping, outputColorSpace })}
     
