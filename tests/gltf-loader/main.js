@@ -146,6 +146,8 @@ window.addEventListener('load', async () => {
           range: -1,
         })
 
+  let usePunctualLighting = true
+
   // GUI
   const gui = new lil.GUI({
     title: 'GLTF loader',
@@ -188,6 +190,10 @@ window.addEventListener('load', async () => {
   const envMapBackgroundField = envMapFolder
     .add({ background: 0 }, 'background', { Diffuse: 0, Specular: 1 })
     .name('Skybox background')
+
+  // gltf lights
+  let lightIntensities = []
+  const usePunctualLightingField = gui.add({ usePunctualLighting }, 'usePunctualLighting').name('Punctual lighting')
 
   const shadingField = gui.add({ shadingModel }, 'shadingModel', ['PBR', 'Phong', 'Lambert', 'Unlit']).name('Shading')
   const toneMappingField = gui
@@ -586,6 +592,20 @@ window.addEventListener('load', async () => {
       }
     })
 
+    // punctual lighting
+    if (scenesManager.lights.length) {
+      scenesManager.lights.forEach((light) => {
+        lightIntensities.push(light.intensity)
+        if (!usePunctualLighting) {
+          light.intensity = 0
+        }
+      })
+      usePunctualLightingField.enable()
+    } else {
+      lightIntensities = []
+      usePunctualLightingField.disable()
+    }
+
     // variants
     variantsFolder.children.forEach((child) => child.destroy())
 
@@ -836,6 +856,15 @@ window.addEventListener('load', async () => {
 
   envMapBackgroundField.onChange((value) => {
     skybox.uniforms.params.useSpecular.value = value
+  })
+
+  usePunctualLightingField.onChange((value) => {
+    usePunctualLighting = value
+    if (gltfScenesManager && gltfScenesManager.scenesManager) {
+      gltfScenesManager.scenesManager.lights.forEach((light, index) => {
+        light.intensity = value ? lightIntensities[index] : 0
+      })
+    }
   })
 
   shadingField.onChange(async (value) => {

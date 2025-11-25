@@ -2140,6 +2140,16 @@ export class GLTFScenesManager {
     // because the main node or children transformations might have changed
     this.scenesManager.node.updateMatrixStack()
 
+    // update directional and spot light targets based on light world matrix
+    this.gltf.nodes.forEach((node) => {
+      if (node.extensions && node.extensions.KHR_lights_punctual) {
+        const light = this.scenesManager.lights[node.extensions.KHR_lights_punctual.light]
+        if (light instanceof DirectionalLight || light instanceof SpotLight) {
+          light.target.applyMat4(light.worldMatrix)
+        }
+      }
+    })
+
     return this.scenesManager.meshesDescriptors.map((meshDescriptor) => {
       const { geometry } = meshDescriptor.parameters
 

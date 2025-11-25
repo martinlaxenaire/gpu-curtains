@@ -33,7 +33,7 @@ fn spotAttenuation(coneCosine: f32, penumbraCosine: f32, angleCosine: f32) -> f3
 
 fn getDirectionalLightInfo(directionalLight: DirectionalLightsElement, ptr_light: ptr<function, DirectLight>) {
   (*ptr_light).color = directionalLight.color;
-  (*ptr_light).direction = -directionalLight.direction;
+  (*ptr_light).direction = normalize(-directionalLight.direction);
   (*ptr_light).visible = length((*ptr_light).color) > EPSILON;
 }
 
