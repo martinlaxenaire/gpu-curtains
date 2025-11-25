@@ -38,6 +38,7 @@ import { getIBLIndirectAnisotropyRadiance } from '../../chunks/fragment/head/get
 import { getDiffuse } from '../../chunks/fragment/body/get-diffuse'
 import { BRDFCharlie } from '../../chunks/utils/BRDF-Charlie'
 import { BRDF_GGX } from '../../chunks/utils/BRDF_GGX'
+import { getDiffuseTransmission } from '../../chunks/fragment/body/get-diffuse-transmission'
 
 /**
  * Build a PBR fragment shader using the provided options.
@@ -86,6 +87,9 @@ export const getPBRFragmentShaderCode = ({
   iridescenceTexture = null,
   iridescenceFactorTexture = null,
   iridescenceThicknessTexture = null,
+  diffuseTransmissionTexture = null,
+  diffuseTransmissionFactorTexture = null,
+  diffuseTransmissionColorTexture = null,
   transmissionBackgroundTexture = null,
   environmentMap = null,
 }: PBRFragmentShaderInputParams): string => {
@@ -143,6 +147,12 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   ${getClearcoatNormal({ extensionsUsed, normalTexture, clearcoatNormalTexture })}
   ${getIridescence({ extensionsUsed, iridescenceTexture, iridescenceFactorTexture, iridescenceThicknessTexture })}
   ${getAnisotropy({ extensionsUsed, anisotropyTexture })}
+  ${getDiffuseTransmission({
+    extensionsUsed,
+    diffuseTransmissionTexture,
+    diffuseTransmissionFactorTexture,
+    diffuseTransmissionColorTexture,
+  })}
   
   // shading
   ${getPBRShading({ receiveShadows, environmentMap, transmissionBackgroundTexture, extensionsUsed })}

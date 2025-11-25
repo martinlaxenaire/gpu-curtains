@@ -220,6 +220,8 @@ window.addEventListener('load', async () => {
     'Iridescence Thickness',
     'Anisotropy Strength',
     'Anisotropy Direction',
+    'Diffuse Transmission Strength',
+    'Diffuse Transmission Color',
     // multi scattering
     'Dielectric single scattering',
     'Dielectric multi scattering',
@@ -537,22 +539,34 @@ window.addEventListener('load', async () => {
         } else if(debug.channel == 24.0) {
           ${
             !isUnlit && shadingModel === 'PBR'
-              ? 'outputColor = vec4(dielectricScattering.singleScattering, 1.0);'
+              ? 'outputColor = vec4(vec3(diffuseTransmission), 1.0);'
               : 'outputColor = vec4(vec3(0.0), 1.0);'
           }
         } else if(debug.channel == 25.0) {
           ${
             !isUnlit && shadingModel === 'PBR'
-              ? 'outputColor = vec4(dielectricScattering.multiScattering, 1.0);'
+              ? 'outputColor = vec4(diffuseTransmissionColor, 1.0);'
               : 'outputColor = vec4(vec3(0.0), 1.0);'
           }
         } else if(debug.channel == 26.0) {
           ${
             !isUnlit && shadingModel === 'PBR'
-              ? 'outputColor = vec4(metallicScattering.singleScattering, 1.0);'
+              ? 'outputColor = vec4(dielectricScattering.singleScattering, 1.0);'
               : 'outputColor = vec4(vec3(0.0), 1.0);'
           }
         } else if(debug.channel == 27.0) {
+          ${
+            !isUnlit && shadingModel === 'PBR'
+              ? 'outputColor = vec4(dielectricScattering.multiScattering, 1.0);'
+              : 'outputColor = vec4(vec3(0.0), 1.0);'
+          }
+        } else if(debug.channel == 28.0) {
+          ${
+            !isUnlit && shadingModel === 'PBR'
+              ? 'outputColor = vec4(metallicScattering.singleScattering, 1.0);'
+              : 'outputColor = vec4(vec3(0.0), 1.0);'
+          }
+        } else if(debug.channel == 29.0) {
           ${
             !isUnlit && shadingModel === 'PBR'
               ? 'outputColor = vec4(metallicScattering.multiScattering, 1.0);'

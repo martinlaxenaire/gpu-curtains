@@ -1,5 +1,10 @@
 /** WGSL functions to get the {@link core/lights/DirectionalLight.DirectionalLight | DirectionalLight} or {@link core/lights/PointLight.PointLight | PointLight} informations. */
 export const getLightsInfos = /* wgsl */ `
+struct LightContribution {
+  diffuse: vec3f,
+  specular: vec3f
+}
+
 struct ReflectedLight {
   directDiffuse: vec3f,
   directSpecular: vec3f,

@@ -51,14 +51,9 @@ fn BRDF_GGX_Singlescatter(
 // Based on "Practical Multiple Scattering Compensation for Microfacet Models"
 // https://blog.selfshadow.com/publications/turquin/ms_comp_final.pdf
 fn BRDF_GGX_Multiscatter(
-  normal: vec3f,
-  viewDirection: vec3f,
-  NdotL: f32,
-  NdotV: f32,
   dfgDirect: DFGDirect,
   specularF90: f32,
   specularColorBlended: vec3f,
-  roughness: f32,
 ) -> vec3f {
   // Multi-scattering compensation
   let dfgV: vec2f = dfgDirect.dfgV;
@@ -90,6 +85,8 @@ fn BRDF_GGX_Multiscatter(
 fn getPBRDirect(
   normal: vec3f,
   viewDirection: vec3f,
+  NdotL: f32,
+  irradiance: vec3f,
   dfgDirect: DFGDirect,
   diffuseContribution: vec3f,
   specularF90: f32,
@@ -97,10 +94,10 @@ fn getPBRDirect(
   roughness: f32,
   iridescenceFresnel: vec3f,
   iridescence: f32,
-  directLight: DirectLight,
-  ptr_reflectedLight: ptr<function, ReflectedLight>
-) {
-  let NdotL: f32 = saturate(dot(normal, directLight.direction));
+  directLight: DirectLight
+) -> LightContribution {
+  var lightContribution: LightContribution;
+
   let NdotV: f32 = saturate(dot(normal, viewDirection));
 
   let ggxSingleScatter: vec3f = BRDF_GGX_Singlescatter(
@@ -117,21 +114,16 @@ fn getPBRDirect(
   );
 
   let ggxMultiScatter: vec3f = BRDF_GGX_Multiscatter(
-    normal,
-    viewDirection,
-    NdotL,
-    NdotV,
     dfgDirect,
     specularF90,
     specularColorBlended,
-    roughness,
   );
 
   let ggx: vec3f = ggxSingleScatter + ggxMultiScatter;
-
-  let irradiance: vec3f = NdotL * directLight.color;
     
-  (*ptr_reflectedLight).directDiffuse += irradiance * BRDF_Lambert(diffuseContribution);
-  (*ptr_reflectedLight).directSpecular += irradiance * ggx;
+  lightContribution.diffuse += irradiance * BRDF_Lambert(diffuseContribution);
+  lightContribution.specular += irradiance * ggx;
+
+  return lightContribution;
 }
 `

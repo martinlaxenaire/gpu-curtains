@@ -1,5 +1,4 @@
 import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh'
-import { Geometry } from '../../../../geometries/Geometry'
 import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code'
 import { getTextureSample } from './get-texture-sample'
 

@@ -36,12 +36,11 @@ fn getPBRDirectClearcoat(
   clearcoatF0: vec3f,
   clearcoatF90: f32,
   clearcoatRoughness: f32,
-  directLight: DirectLight,
-  ptr_reflectedLight: ptr<function, ReflectedLight>
+  directLight: DirectLight
 ) -> vec3f {
-  let dotNLcc: f32 = saturate( dot( clearcoatNormal, directLight.direction ) );
+  let NdotLcc: f32 = saturate( dot( clearcoatNormal, directLight.direction ) );
 
-  let ccIrradiance: vec3f = dotNLcc * directLight.color;
+  let ccIrradiance: vec3f = NdotLcc * directLight.color;
 
   return ccIrradiance * BRDF_GGX_Clearcoat( directLight.direction, viewDirection, clearcoatNormal, clearcoatF0, clearcoatF90, clearcoatRoughness );
 }

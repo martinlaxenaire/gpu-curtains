@@ -101,6 +101,7 @@ const GL = (typeof window !== 'undefined' && WebGLRenderingContext) || {
  * - [x] KHR_lights_punctual
  * - [x] KHR_materials_anisotropy
  * - [x] KHR_materials_clearcoat
+ * - [x] KHR_materials_diffuse_transmission
  * - [x] KHR_materials_dispersion
  * - [x] KHR_materials_emissive_strength
  * - [x] KHR_materials_ior
@@ -425,6 +426,9 @@ export class GLTFScenesManager {
         case 'sheenTexture':
         case 'sheenColorTexture':
         case 'sheenRoughnessTexture':
+        case 'diffuseTransmissionTexture':
+        case 'diffuseTransmissionFactorTexture':
+        case 'diffuseTransmissionColorTexture':
           return 'rgba8unorm-srgb'
         case 'occlusionTexture':
         case 'transmissionTexture':
@@ -594,6 +598,7 @@ export class GLTFScenesManager {
         const anisotropy = (extensions && extensions.KHR_materials_anisotropy) || null
         const clearcoat = (extensions && extensions.KHR_materials_clearcoat) || null
         const iridescence = (extensions && extensions.KHR_materials_iridescence) || null
+        const diffuseTransmission = (extensions && extensions.KHR_materials_diffuse_transmission) || null
 
         // transmission
         if (transmission && transmission.transmissionTexture && transmission.transmissionTexture.index !== undefined) {
@@ -688,6 +693,29 @@ export class GLTFScenesManager {
             }
           }
         }
+
+        // diffuse transmission
+        if (
+          diffuseTransmission &&
+          (diffuseTransmission.diffuseTransmissionTexture || diffuseTransmission.diffuseTransmissionColorTexture)
+        ) {
+          const { diffuseTransmissionTexture, diffuseTransmissionColorTexture } = diffuseTransmission
+          if (
+            diffuseTransmissionTexture &&
+            diffuseTransmissionColorTexture &&
+            diffuseTransmissionTexture.index !== undefined &&
+            diffuseTransmissionTexture.index === diffuseTransmissionColorTexture.index
+          ) {
+            createTexture(diffuseTransmissionTexture, 'diffuseTransmissionTexture')
+          } else {
+            if (diffuseTransmissionTexture && diffuseTransmissionTexture.index !== undefined) {
+              createTexture(diffuseTransmissionTexture, 'diffuseTransmissionFactorTexture')
+            }
+            if (diffuseTransmissionColorTexture && diffuseTransmissionColorTexture.index !== undefined) {
+              createTexture(diffuseTransmissionColorTexture, 'diffuseTransmissionColorTexture')
+            }
+          }
+        }
       }
     }
   }
@@ -725,6 +753,7 @@ export class GLTFScenesManager {
     const anisotropy = (extensions && extensions.KHR_materials_anisotropy) || null
     const clearcoat = (extensions && extensions.KHR_materials_clearcoat) || null
     const iridescence = (extensions && extensions.KHR_materials_iridescence) || null
+    const diffuseTransmission = (extensions && extensions.KHR_materials_diffuse_transmission) || null
 
     const litMeshMaterialParams: LitMeshMaterialUniformParams = {
       colorSpace: 'linear',
@@ -811,6 +840,20 @@ export class GLTFScenesManager {
           iridescence.iridescenceThicknessMinimum !== undefined ? iridescence.iridescenceThicknessMinimum : 100,
           iridescence.iridescenceThicknessMaximum !== undefined ? iridescence.iridescenceThicknessMaximum : 400
         ),
+      }),
+      ...(diffuseTransmission && {
+        diffuseTransmission:
+          diffuseTransmission.diffuseTransmissionFactor !== undefined
+            ? diffuseTransmission.diffuseTransmissionFactor
+            : 0,
+        diffuseTransmissionColor:
+          diffuseTransmission.diffuseTransmissionColorFactor !== undefined
+            ? new Vec3(
+                diffuseTransmission.diffuseTransmissionColorFactor[0],
+                diffuseTransmission.diffuseTransmissionColorFactor[1],
+                diffuseTransmission.diffuseTransmissionColorFactor[2]
+              )
+            : new Vec3(1),
       }),
     }
 
