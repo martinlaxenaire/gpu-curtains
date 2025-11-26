@@ -1528,7 +1528,10 @@ export class GLTFScenesManager {
 
       const arrayOffset = accessor.byteOffset + bufferView.byteOffset
       const arrayBuffer = this.gltf.arrayBuffers[bufferView.buffer]
-      const arrayLength = Math.ceil(accessor.count / bytesPerElement) * bytesPerElement
+      const arrayLength = Math.min(
+        Math.ceil(accessor.count / bytesPerElement) * bytesPerElement,
+        Math.ceil((arrayBuffer.byteLength - arrayOffset) / bytesPerElement)
+      )
 
       // do not allow Uint8Array arrays
       indicesArray =
