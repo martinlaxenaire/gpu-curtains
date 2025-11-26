@@ -363,7 +363,7 @@ export class GLTFScenesManager {
     if (this.gltf.samplers) {
       for (const [index, sampler] of Object.entries(this.gltf.samplers)) {
         const descriptor = {
-          label: 'glTF sampler ' + index,
+          label: sampler.name ?? 'glTF sampler ' + index,
           name: 'gltfSampler' + index, // TODO better name?
           addressModeU: GLTFScenesManager.gpuAddressModeForWrap(sampler.wrapS),
           addressModeV: GLTFScenesManager.gpuAddressModeForWrap(sampler.wrapT),
@@ -492,13 +492,17 @@ export class GLTFScenesManager {
               ? gltfTexture.extensions['EXT_texture_webp'].source
               : gltfTexture.source
 
-          const samplerIndex = this.gltf.textures.find((t) => {
-            const src =
-              t.extensions && t.extensions['EXT_texture_webp'] ? t.extensions['EXT_texture_webp'].source : t.source
-            return src === index
-          })?.sampler
+          const samplerIndex =
+            (gltfTextureInfo.index !== undefined && this.gltf.textures[gltfTextureInfo.index].sampler) ??
+            this.gltf.textures.find((t) => {
+              const src =
+                t.extensions && t.extensions['EXT_texture_webp'] ? t.extensions['EXT_texture_webp'].source : t.source
+              return src === index
+            })?.sampler
 
           const sampler = this.scenesManager.samplers[samplerIndex ?? 0]
+
+          console.log(gltfTextureInfo, samplerIndex, sampler)
 
           const textureTransform = gltfTextureInfo.extensions && gltfTextureInfo.extensions['KHR_texture_transform']
 
@@ -876,9 +880,8 @@ export class GLTFScenesManager {
               dstFactor: 'one-minus-src-alpha',
             },
             alpha: {
-              // This just prevents the canvas from having alpha "holes" in it.
               srcFactor: 'one',
-              dstFactor: 'one',
+              dstFactor: 'one-minus-src-alpha',
             },
           },
         },
