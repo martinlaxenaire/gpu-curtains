@@ -11,8 +11,6 @@ fn BRDF_GGX_Clearcoat(
   clearcoatF90: f32,
   clearcoatRoughness: f32
 ) -> vec3f {
-  let alpha: f32 = pow2( clearcoatRoughness ); // UE4's roughness
-
   let halfDir: vec3f = normalize( lightDirection + viewDirection );
 
   let dotNL: f32 = saturate( dot( normal, lightDirection ) );
@@ -22,9 +20,8 @@ fn BRDF_GGX_Clearcoat(
 
   let F: vec3f = F_Schlick( clearcoatF0, clearcoatF90, dotVH );
 
-  let V: f32 = GeometrySmith( alpha, dotNL, dotNV );
-
-  let D: f32 = DistributionGGX( alpha, dotNH );
+  let V: f32 = GeometrySmith( clearcoatRoughness, dotNL, dotNV );
+  let D: f32 = DistributionGGX( clearcoatRoughness, dotNH );
 
   return F * ( V * D );
 

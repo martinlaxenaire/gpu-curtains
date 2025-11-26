@@ -1,4 +1,6 @@
-/** WGSL functions to calculate the indirect diffuse contribution of lights. */
+/**
+ * WGSL functions to calculate the indirect diffuse contribution of lights.
+ */
 export const REIndirectDiffuse = /* wgsl */ `
 fn getAmbientLightIrradiance() -> vec3f {
   var totalAmbientIrradiance: vec3f = vec3(0.0);
