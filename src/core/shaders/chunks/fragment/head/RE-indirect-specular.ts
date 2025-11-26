@@ -20,7 +20,7 @@ fn RE_IndirectSpecular(
 	// Diffuse energy conservation uses dielectric path
 	let totalScatteringDielectric: vec3f = dielectricScattering.singleScattering + dielectricScattering.multiScattering;
 
-	let diffuse: vec3f = diffuseContribution * (1.0 - max3(totalScatteringDielectric));
+	let diffuse: vec3f = diffuseContribution * (1.0 - totalScatteringDielectric);
 
   // we remove RECIPROCAL_PI multiplication since the LUT already ensures energy conservation
   // let cosineWeightedIrradiance: vec3f = irradiance * RECIPROCAL_PI;
