@@ -1,5 +1,10 @@
 /** WGSL functions to get the {@link core/lights/DirectionalLight.DirectionalLight | DirectionalLight} or {@link core/lights/PointLight.PointLight | PointLight} informations. */
 export const getLightsInfos = /* wgsl */ `
+struct LightContribution {
+  diffuse: vec3f,
+  specular: vec3f
+}
+
 struct ReflectedLight {
   directDiffuse: vec3f,
   directSpecular: vec3f,
@@ -14,7 +19,7 @@ struct DirectLight {
 }
 
 fn rangeAttenuation(range: f32, distance: f32, decay: f32) -> f32 {
-  var distanceFalloff: f32 = 1.0 / max( pow( distance, decay ), 0.01 );
+  var distanceFalloff: f32 = 1.0 / max( pow( distance, decay ), EPSILON );
   if ( range > 0.0 ) {
     distanceFalloff *= pow2( saturate( 1.0 - pow4( distance / range )) );
   }
@@ -28,7 +33,7 @@ fn spotAttenuation(coneCosine: f32, penumbraCosine: f32, angleCosine: f32) -> f3
 
 fn getDirectionalLightInfo(directionalLight: DirectionalLightsElement, ptr_light: ptr<function, DirectLight>) {
   (*ptr_light).color = directionalLight.color;
-  (*ptr_light).direction = -directionalLight.direction;
+  (*ptr_light).direction = -directionalLight.direction; // already normalized on the CPU
   (*ptr_light).visible = length((*ptr_light).color) > EPSILON;
 }
 

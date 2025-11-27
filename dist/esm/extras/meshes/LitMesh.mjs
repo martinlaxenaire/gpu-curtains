@@ -75,6 +75,8 @@ class LitMesh extends Mesh {
       iridescence,
       iridescenceIOR,
       iridescenceThicknessRange,
+      diffuseTransmission,
+      diffuseTransmissionColor,
       // texture descriptors
       baseColorTexture,
       normalTexture,
@@ -96,6 +98,9 @@ class LitMesh extends Mesh {
       iridescenceTexture,
       iridescenceFactorTexture,
       iridescenceThicknessTexture,
+      diffuseTransmissionTexture,
+      diffuseTransmissionFactorTexture,
+      diffuseTransmissionColorTexture,
       // environment map
       environmentMap
     } = material;
@@ -130,6 +135,8 @@ class LitMesh extends Mesh {
       iridescence,
       iridescenceIOR,
       iridescenceThicknessRange,
+      diffuseTransmission,
+      diffuseTransmissionColor,
       environmentMap
     });
     if (defaultParams.uniforms) {
@@ -171,7 +178,10 @@ class LitMesh extends Mesh {
       clearcoatNormalTexture,
       iridescenceTexture,
       iridescenceFactorTexture,
-      iridescenceThicknessTexture
+      iridescenceThicknessTexture,
+      diffuseTransmissionTexture,
+      diffuseTransmissionFactorTexture,
+      diffuseTransmissionColorTexture
     });
     materialTextures.forEach((textureDescriptor) => {
       if (textureDescriptor.sampler) {
@@ -225,6 +235,9 @@ class LitMesh extends Mesh {
     if (iridescence) {
       extensionsUsed.push("KHR_materials_iridescence");
     }
+    if (diffuseTransmission !== void 0) {
+      extensionsUsed.push("KHR_materials_diffuse_transmission");
+    }
     const hasNormal = defaultParams.geometry && defaultParams.geometry.getAttributeByName("normal");
     if (defaultParams.geometry && !hasNormal) {
       defaultParams.geometry.computeGeometry();
@@ -266,6 +279,9 @@ class LitMesh extends Mesh {
       iridescenceTexture,
       iridescenceFactorTexture,
       iridescenceThicknessTexture,
+      diffuseTransmissionTexture,
+      diffuseTransmissionFactorTexture,
+      diffuseTransmissionColorTexture,
       transmissionBackgroundTexture,
       environmentMap
     });
@@ -323,6 +339,8 @@ class LitMesh extends Mesh {
       iridescence,
       iridescenceIOR,
       iridescenceThicknessRange,
+      diffuseTransmission,
+      diffuseTransmissionColor,
       environmentMap
     } = parameters;
     const baseUniformStruct = {
@@ -454,6 +472,14 @@ class LitMesh extends Mesh {
         type: "vec2f",
         value: iridescenceThicknessRange !== void 0 ? iridescenceThicknessRange.clone() : new Vec2(100, 400)
       },
+      diffuseTransmission: {
+        type: "f32",
+        value: diffuseTransmission !== void 0 ? diffuseTransmission : 0
+      },
+      diffuseTransmissionColor: {
+        type: "vec3f",
+        value: diffuseTransmissionColor !== void 0 ? colorSpace === "srgb" ? sRGBToLinear(diffuseTransmissionColor.clone()) : diffuseTransmissionColor.clone() : new Vec3(1)
+      },
       ...environmentMap && {
         envRotation: {
           type: "mat3x3f",
@@ -504,6 +530,7 @@ class LitMesh extends Mesh {
       specularFactorTexture,
       specularColorTexture,
       transmissionTexture,
+      thicknessTexture,
       sheenTexture,
       sheenColorTexture,
       sheenRoughnessTexture,
@@ -514,7 +541,9 @@ class LitMesh extends Mesh {
       iridescenceTexture,
       iridescenceFactorTexture,
       iridescenceThicknessTexture,
-      thicknessTexture
+      diffuseTransmissionTexture,
+      diffuseTransmissionFactorTexture,
+      diffuseTransmissionColorTexture
     } = parameters;
     const baseTextures = [baseColorTexture, emissiveTexture, occlusionTexture];
     const diffuseTextures = [...baseTextures, normalTexture];
@@ -538,7 +567,10 @@ class LitMesh extends Mesh {
       clearcoatNormalTexture,
       iridescenceTexture,
       iridescenceFactorTexture,
-      iridescenceThicknessTexture
+      iridescenceThicknessTexture,
+      diffuseTransmissionTexture,
+      diffuseTransmissionFactorTexture,
+      diffuseTransmissionColorTexture
     ];
     const materialTextures = (() => {
       switch (shading) {

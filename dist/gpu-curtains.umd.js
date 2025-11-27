@@ -7786,6 +7786,7 @@
           );
         }
       }
+      const bufferOffset = attributesLength ? attributes[attributesLength - 1].bufferOffset + attributes[attributesLength - 1].size * 4 : 0;
       const attribute = {
         name,
         type,
@@ -7795,7 +7796,7 @@
         offset: attributesLength ? attributes.reduce((accumulator, currentValue) => {
           return accumulator + currentValue.bufferLength;
         }, 0) : 0,
-        bufferOffset: attributesLength ? attributes[attributesLength - 1].bufferOffset + attributes[attributesLength - 1].size * 4 : 0,
+        bufferOffset,
         array,
         verticesStride
       };
@@ -7909,7 +7910,7 @@
           for (let j = 0; j < vertexBuffer.attributes.length; j++) {
             const { name, size, array, verticesStride } = vertexBuffer.attributes[j];
             for (let s = 0; s < size; s++) {
-              const attributeValue = array[Math.floor(attributeIndex / verticesStride) * size + s];
+              let attributeValue = array[Math.floor(attributeIndex / verticesStride) * size + s];
               vertexBuffer.array[currentIndex] = attributeValue ?? 0;
               if (name === "position") {
                 if (s % 3 === 0) {
@@ -9781,16 +9782,15 @@ ${this.shaders.full.head}`;
           module: this.shaders.vertex.module,
           entryPoint: this.options.shaders.vertex.entryPoint,
           buffers: this.attributes.vertexBuffers.map((vertexBuffer) => {
+            const arrayStride = vertexBuffer.arrayStride * 4;
             return {
               stepMode: vertexBuffer.stepMode,
-              arrayStride: vertexBuffer.arrayStride * 4,
-              // 4 bytes each
+              arrayStride,
               attributes: vertexBuffer.attributes.map((attribute) => {
                 vertexLocationIndex++;
                 return {
                   shaderLocation: vertexLocationIndex,
                   offset: attribute.bufferOffset,
-                  // previous attribute size * 4
                   format: attribute.bufferFormat
                 };
               })
@@ -18151,10 +18151,6 @@ fn max3( v: vec3f ) -> f32 {
   return max( max( v.x, v.y ), v.z );
 }
 
-fn inverseSqrt (x: f32) -> f32 {
-  return 1.0 / sqrt(x);
-}
-
 fn isinf(value: f32) -> bool {
   return value > 1.0e38 || value < -1.0e38;
 }
@@ -18234,6 +18230,11 @@ fn KhronosToneMapping( color: vec3f ) -> vec3f {
   const getLightsInfos = (
     /* wgsl */
     `
+struct LightContribution {
+  diffuse: vec3f,
+  specular: vec3f
+}
+
 struct ReflectedLight {
   directDiffuse: vec3f,
   directSpecular: vec3f,
@@ -18248,7 +18249,7 @@ struct DirectLight {
 }
 
 fn rangeAttenuation(range: f32, distance: f32, decay: f32) -> f32 {
-  var distanceFalloff: f32 = 1.0 / max( pow( distance, decay ), 0.01 );
+  var distanceFalloff: f32 = 1.0 / max( pow( distance, decay ), EPSILON );
   if ( range > 0.0 ) {
     distanceFalloff *= pow2( saturate( 1.0 - pow4( distance / range )) );
   }
@@ -18262,7 +18263,7 @@ fn spotAttenuation(coneCosine: f32, penumbraCosine: f32, angleCosine: f32) -> f3
 
 fn getDirectionalLightInfo(directionalLight: DirectionalLightsElement, ptr_light: ptr<function, DirectLight>) {
   (*ptr_light).color = directionalLight.color;
-  (*ptr_light).direction = -directionalLight.direction;
+  (*ptr_light).direction = -directionalLight.direction; // already normalized on the CPU
   (*ptr_light).visible = length((*ptr_light).color) > EPSILON;
 }
 
@@ -18302,19 +18303,19 @@ fn getSpotLightInfo(spotLight: SpotLightsElement, worldPosition: vec3f, ptr_ligh
   const REIndirectDiffuse = (
     /* wgsl */
     `
-fn getIndirectDiffuse(irradiance: vec3f, diffuseContribution: vec3f, ptr_reflectedLight: ptr<function, ReflectedLight>) {
-  (*ptr_reflectedLight).indirectDiffuse += irradiance * BRDF_Lambert( diffuseContribution );
-}
-
-// Indirect Diffuse RenderEquations
-fn RE_IndirectDiffuse(irradiance: vec3f, diffuseContribution: vec3f, ptr_reflectedLight: ptr<function, ReflectedLight>) {
-  var totalAmbientIrradiance: vec3f = irradiance;
+fn getAmbientLightIrradiance() -> vec3f {
+  var totalAmbientIrradiance: vec3f = vec3(0.0);
   
   for(var i: i32 = 0; i < ambientLights.count; i++) {
     totalAmbientIrradiance += ambientLights.color[i];
   }
-  
-  getIndirectDiffuse(totalAmbientIrradiance, diffuseContribution, ptr_reflectedLight);
+
+  return totalAmbientIrradiance;
+}
+
+// Indirect Diffuse RenderEquations
+fn RE_IndirectDiffuse(irradiance: vec3f, diffuseContribution: vec3f, ptr_reflectedLight: ptr<function, ReflectedLight>) {
+  (*ptr_reflectedLight).indirectDiffuse += irradiance * BRDF_Lambert( diffuseContribution );
 }
 `
   );
@@ -18412,7 +18413,7 @@ fn getLambertDirect(
   }
   
   // ambient lights
-  var irradiance: vec3f = vec3(0.0);
+  var irradiance: vec3f = getAmbientLightIrradiance();
   RE_IndirectDiffuse(irradiance, outputColor.rgb, &reflectedLight);
   
   let totalDirect: vec3f = reflectedLight.directDiffuse + reflectedLight.directSpecular;
@@ -18613,7 +18614,7 @@ fn getPhongDirect(
   }
   
   // ambient lights
-  var irradiance: vec3f = vec3(0.0);
+  var irradiance: vec3f = getAmbientLightIrradiance();
   RE_IndirectDiffuse(irradiance, outputColor.rgb, &reflectedLight);
   
   let totalDirect: vec3f = reflectedLight.directDiffuse + reflectedLight.directSpecular;
@@ -18671,7 +18672,7 @@ fn RE_IndirectSpecular(
   irradiance: vec3f,
   diffuseContribution: vec3f,
   metallic: f32,
-  //iBLGGXFresnel: IBLGGXFresnel,
+  sheenEnergyComp: f32,
   dielectricScattering: MultiScattering,
   metallicScattering: MultiScattering,
   ptr_reflectedLight: ptr<function, ReflectedLight>
@@ -18683,18 +18684,21 @@ fn RE_IndirectSpecular(
 	// Diffuse energy conservation uses dielectric path
 	let totalScatteringDielectric: vec3f = dielectricScattering.singleScattering + dielectricScattering.multiScattering;
 
-	let diffuse: vec3f = diffuseContribution * (1.0 - max3(totalScatteringDielectric));
-
-  // we just add radiance and irradiance to the indirect contributions using iBLGGXFresnel
+	let diffuse: vec3f = diffuseContribution * (1.0 - totalScatteringDielectric);
 
   // we remove RECIPROCAL_PI multiplication since the LUT already ensures energy conservation
   // let cosineWeightedIrradiance: vec3f = irradiance * RECIPROCAL_PI;
-  let cosineWeightedIrradiance: vec3f = irradiance;  
 
-  (*ptr_reflectedLight).indirectSpecular += singleScattering * radiance;
-  (*ptr_reflectedLight).indirectSpecular += multiScattering * cosineWeightedIrradiance;
-  
-  (*ptr_reflectedLight).indirectDiffuse += diffuse * cosineWeightedIrradiance;
+  var indirectSpecular: vec3f = radiance * singleScattering;
+	indirectSpecular += multiScattering * irradiance;
+
+	var indirectDiffuse: vec3f = diffuse * irradiance;
+
+  indirectSpecular *= sheenEnergyComp;
+  indirectDiffuse *= sheenEnergyComp;
+
+  (*ptr_reflectedLight).indirectSpecular += indirectSpecular;  
+  (*ptr_reflectedLight).indirectDiffuse += indirectDiffuse;
 }
 `
   );
@@ -18860,13 +18864,13 @@ fn BRDF_GGX(
   NdotH: f32,
   VdotH: f32,
   roughness: f32,
-  specularFactor: f32,
-  specularColor: vec3f,
+  specularF90: f32,
+  specularColorBlended: vec3f,
   iridescenceFresnel: vec3f,
   iridescence: f32
 ) -> vec3f {
   // cook-torrance brdf
-  var F: vec3f = F_Schlick(specularColor, specularFactor, VdotH);
+  var F: vec3f = F_Schlick(specularColorBlended, specularF90, VdotH);
   F = mix(F, iridescenceFresnel, iridescence);
 
   let G: f32 = GeometrySmith(NdotL, NdotV, roughness);
@@ -18886,33 +18890,26 @@ fn BRDF_GGX_Singlescatter(
   NdotL: f32,
   NdotV: f32,
   roughness: f32,
-  specularFactor: f32,
-  specularColor: vec3f,
+  specularF90: f32,
+  specularColorBlended: vec3f,
   iridescenceFresnel: vec3f,
   iridescence: f32,
   directLight: DirectLight,
 ) -> vec3f {
-  let alpha: f32 = pow2(roughness); // UE4's roughness
-
   let H: vec3f = normalize(viewDirection + directLight.direction);
   let NdotH: f32 = saturate(dot(normal, H));
   let VdotH: f32 = saturate(dot(viewDirection, H));
 
-  return BRDF_GGX(NdotV, NdotL, NdotH, VdotH, alpha, specularFactor, specularColor, iridescenceFresnel, iridescence);
+  return BRDF_GGX(NdotV, NdotL, NdotH, VdotH, roughness, specularF90, specularColorBlended, iridescenceFresnel, iridescence);
 }
 
 // GGX BRDF with multi-scattering energy compensation for direct lighting
 // Based on "Practical Multiple Scattering Compensation for Microfacet Models"
 // https://blog.selfshadow.com/publications/turquin/ms_comp_final.pdf
 fn BRDF_GGX_Multiscatter(
-  normal: vec3f,
-  viewDirection: vec3f,
-  NdotL: f32,
-  NdotV: f32,
   dfgDirect: DFGDirect,
   specularF90: f32,
   specularColorBlended: vec3f,
-  roughness: f32,
 ) -> vec3f {
   // Multi-scattering compensation
   let dfgV: vec2f = dfgDirect.dfgV;
@@ -18933,7 +18930,7 @@ fn BRDF_GGX_Multiscatter(
 	let Favg: vec3f = specularColorBlended + ( 1.0 - specularColorBlended ) * 0.047619; // 1/21
 
 	// Multiple scattering contribution
-	let Fms: vec3f = FssEss_V * FssEss_L * Favg / ( 1.0 - Ems_V * Ems_L * Favg * Favg + EPSILON );
+	let Fms: vec3f = FssEss_V * FssEss_L * Favg / ( 1.0 - Ems_V * Ems_L * Favg + EPSILON );
 
 	// Energy compensation factor
 	let compensationFactor: f32 = Ems_V * Ems_L;
@@ -18944,6 +18941,8 @@ fn BRDF_GGX_Multiscatter(
 fn getPBRDirect(
   normal: vec3f,
   viewDirection: vec3f,
+  NdotL: f32,
+  irradiance: vec3f,
   dfgDirect: DFGDirect,
   diffuseContribution: vec3f,
   specularF90: f32,
@@ -18951,10 +18950,10 @@ fn getPBRDirect(
   roughness: f32,
   iridescenceFresnel: vec3f,
   iridescence: f32,
-  directLight: DirectLight,
-  ptr_reflectedLight: ptr<function, ReflectedLight>
-) {
-  let NdotL: f32 = saturate(dot(normal, directLight.direction));
+  directLight: DirectLight
+) -> LightContribution {
+  var lightContribution: LightContribution;
+
   let NdotV: f32 = saturate(dot(normal, viewDirection));
 
   let ggxSingleScatter: vec3f = BRDF_GGX_Singlescatter(
@@ -18971,27 +18970,23 @@ fn getPBRDirect(
   );
 
   let ggxMultiScatter: vec3f = BRDF_GGX_Multiscatter(
-    normal,
-    viewDirection,
-    NdotL,
-    NdotV,
     dfgDirect,
     specularF90,
     specularColorBlended,
-    roughness,
   );
 
   let ggx: vec3f = ggxSingleScatter + ggxMultiScatter;
-
-  let irradiance: vec3f = NdotL * directLight.color;
     
-  (*ptr_reflectedLight).directDiffuse += irradiance * BRDF_Lambert(diffuseContribution);
-  (*ptr_reflectedLight).directSpecular += irradiance * ggx;
+  lightContribution.diffuse += irradiance * BRDF_Lambert(diffuseContribution);
+  lightContribution.specular += irradiance * ggx;
+
+  return lightContribution;
 }
 `
   );
 
   const getIBLIndirectIrradiance$1 = ({
+    extensionsUsed = [],
     environmentMap = null
   }) => {
     let iblIndirectDiffuse = "";
@@ -19000,12 +18995,24 @@ fn getPBRDirect(
       `    
   iblIrradiance += getIBLIndirectIrradiance(
     normal,
-    diffuseContribution,
     ${environmentMap.sampler.name},
     ${environmentMap.diffuseTexture.options.name},
     envRotation,
     envDiffuseIntensity,
-  );`;
+  ) ;`;
+      if (extensionsUsed.includes("KHR_materials_diffuse_transmission")) {
+        iblIndirectDiffuse += /* wgsl */
+        `    
+  let diffuseTransmissionIblIrradiance: vec3f = getIBLIndirectIrradiance(
+    -1.0 * normal,
+    ${environmentMap.sampler.name},
+    ${environmentMap.diffuseTexture.options.name},
+    envRotation,
+    envDiffuseIntensity,
+  );
+  
+  iblIrradiance = mix(iblIrradiance, diffuseTransmissionIblIrradiance, diffuseTransmission);`;
+      }
     }
     return iblIndirectDiffuse;
   };
@@ -19146,9 +19153,7 @@ fn getPBRDirect(
     if (extensionsUsed.includes("KHR_materials_sheen")) {
       sheenClearcoatContribution += /* wgsl */
       `
-  let sheenEnergyComp: f32 = 1.0 - max3(sheenColor) * sheenAlbedoScale;
-
-  outgoingLight = outgoingLight * sheenEnergyComp + sheenSpecularDirect + sheenSpecularIndirect;
+  outgoingLight = outgoingLight + sheenSpecularDirect + sheenSpecularIndirect;
     `;
     }
     if (extensionsUsed.includes("KHR_materials_clearcoat")) {
@@ -19225,15 +19230,18 @@ fn getPBRDirect(
     extensionsUsed = [],
     environmentMap = null
   } = {}) => {
-    let sheenIndirect = "";
+    let sheenIndirect = (
+      /* wgsl */
+      `
+  var sheenEnergyComp: f32 = 1.0;`
+    );
     if (extensionsUsed.includes("KHR_materials_sheen")) {
       if (environmentMap && environmentMap.lutTexture) {
         sheenIndirect += /* wgsl */
         `
   // remap sheen roughness so we get only high mips
   // to sample from in the PMREM (helps approximate Charlie cubemap convolutions)
-  // let remappedSheenRoughness = 0.2 + sheenRoughness * 0.8;
-  let remappedSheenRoughness = saturate(0.2 + sheenRoughness);
+  let remappedSheenRoughness = saturate(0.25 + sheenRoughness * 0.75);
   var sheenIblIrradiance: vec3f = getIBLIndirectRadiance(
     normal,
     viewDirection,
@@ -19259,10 +19267,13 @@ fn getPBRDirect(
         `
   let sheenBRDFCharlie: f32 = getBRDFCharlieApprox(normal, viewDirection, sheenRoughness);
 
-  sheenSpecularIndirect += irradiance * sheenColor * sheenBRDFCharlie;
+  sheenSpecularIndirect += iblIrradiance * sheenColor * sheenBRDFCharlie;
   // we could also use 0.157 as approximation
   let sheenAlbedoScale: f32 = getSheenAlbedoScaleApprox(normal, viewDirection, sheenRoughness);`;
       }
+      sheenIndirect += /* wgsl */
+      `
+  sheenEnergyComp = 1.0 - max3(sheenColor) * sheenAlbedoScale;`;
     }
     return sheenIndirect;
   };
@@ -19271,7 +19282,59 @@ fn getPBRDirect(
     extensionsUsed = [],
     environmentMap = null
   } = {}) => {
-    let pbrDirect = "";
+    let pbrDirect = (
+      /* wgsl */
+      `
+    let NdotL: f32 = saturate(dot(normal, directLight.direction));
+    var irradiance: vec3f = NdotL * directLight.color;`
+    );
+    if (extensionsUsed.includes("KHR_materials_clearcoat")) {
+      pbrDirect += /* wgsl */
+      `
+    clearcoatSpecularDirect += getPBRDirectClearcoat(clearcoatNormal, viewDirection, clearcoatF0, clearcoatF90, clearcoatRoughness, directLight);`;
+    }
+    if (extensionsUsed.includes("KHR_materials_sheen")) {
+      pbrDirect += /* wgsl */
+      `
+    sheenSpecularDirect += irradiance * BRDF_Sheen(directLight.direction, viewDirection, normal, sheenColor, sheenRoughness);`;
+      if (environmentMap && environmentMap.lutTexture) {
+        pbrDirect += /* wgsl */
+        `
+    let sheenAlbedoV: f32 = getBRDFCharlie(
+      normal,
+      viewDirection,
+      sheenRoughness,
+      ${environmentMap.sampler.name},
+      ${environmentMap.lutTexture.options.name}
+    );
+    
+    let sheenAlbedoL: f32 = getBRDFCharlie(
+      normal,
+      directLight.direction,
+      sheenRoughness,
+      ${environmentMap.sampler.name},
+      ${environmentMap.lutTexture.options.name}
+    );`;
+      } else {
+        pbrDirect += /* wgsl */
+        `
+    let sheenAlbedoV: f32 = getSheenAlbedoScaleApprox(
+      normal,
+      viewDirection,
+      sheenRoughness
+    );
+    
+    let sheenAlbedoL: f32 = getSheenAlbedoScaleApprox(
+      normal,
+      directLight.direction,
+      sheenRoughness
+    );`;
+      }
+      pbrDirect += /* wgsl */
+      `
+    let sheenEnergyComp: f32 = 1.0 - max3( sheenColor ) * max( sheenAlbedoV, sheenAlbedoL );
+ 		irradiance *= sheenEnergyComp;`;
+    }
     if (environmentMap && environmentMap.lutTexture) {
       pbrDirect += /* wgsl */
       `
@@ -19300,9 +19363,11 @@ fn getPBRDirect(
     if (extensionsUsed.includes("KHR_materials_anisotropy")) {
       pbrDirect += /* wgsl */
       `
-    getPBRDirectAnisotropic(
+    var lightContribution: LightContribution = getPBRDirectAnisotropic(
       normal,
       viewDirection,
+      NdotL,
+      irradiance,
       dfgDirect,
       diffuseContribution,
       specularF90,
@@ -19313,15 +19378,16 @@ fn getPBRDirect(
       alphaT,
       anisotropyT,
       anisotropyB,
-      directLight,
-      &reflectedLight
+      directLight
     );`;
     } else {
       pbrDirect += /* wgsl */
       `
-    getPBRDirect(
+    var lightContribution: LightContribution = getPBRDirect(
       normal,
       viewDirection,
+      NdotL,
+      irradiance,
       dfgDirect,
       diffuseContribution,
       specularF90,
@@ -19329,21 +19395,40 @@ fn getPBRDirect(
       roughness,
       iridescenceFresnel,
       iridescence,
-      directLight,
-      &reflectedLight
+      directLight
     );`;
     }
-    if (extensionsUsed.includes("KHR_materials_clearcoat")) {
+    if (extensionsUsed.includes("KHR_materials_diffuse_transmission")) {
       pbrDirect += /* wgsl */
       `
-    clearcoatSpecularDirect += getPBRDirectClearcoat(clearcoatNormal, viewDirection, clearcoatF0, clearcoatF90, clearcoatRoughness, directLight, &reflectedLight);`;
+    lightContribution.diffuse = lightContribution.diffuse * (1.0 - diffuseTransmission);
+    let diffuseNdotL: f32 = saturate(dot(-1.0 * normal, directLight.direction));
+    let lightDiffuseTransmission: vec3f = directLight.color * diffuseNdotL * BRDF_Lambert(diffuseTransmissionContribution);
+    lightContribution.diffuse += lightDiffuseTransmission * diffuseTransmission;
+    `;
     }
-    if (extensionsUsed.includes("KHR_materials_sheen")) {
-      pbrDirect += /* wgsl */
-      `
-    sheenSpecularDirect += getPBRDirectSheen(normal, viewDirection, sheenColor, sheenRoughness, directLight, &reflectedLight);`;
-    }
+    pbrDirect += /* wgsl */
+    `
+    reflectedLight.directDiffuse += lightContribution.diffuse;
+    reflectedLight.directSpecular += lightContribution.specular;
+  `;
     return pbrDirect;
+  };
+
+  const getIndirectDiffuse = ({
+    extensionsUsed = []
+  }) => {
+    let indirectDiffuse = "";
+    if (extensionsUsed.includes("KHR_materials_sheen")) {
+      indirectDiffuse += /* wgsl */
+      `
+  RE_IndirectDiffuseSheen(irradiance, diffuseContribution, sheenEnergyComp, &reflectedLight);`;
+    } else {
+      indirectDiffuse += /* wgsl */
+      `
+  RE_IndirectDiffuse(irradiance, diffuseContribution, &reflectedLight);`;
+    }
+    return indirectDiffuse;
   };
 
   const getPBRShading = ({
@@ -19391,12 +19476,12 @@ fn getPBRDirect(
     if(!directLight.visible) {
       continue;
     }
-    
+
     ${receiveShadows ? applyDirectionalShadows : ""}
     ${getPBRDirectContribution({ extensionsUsed, environmentMap })}
   }
   
-  var irradiance: vec3f = vec3(0.0);
+  var irradiance: vec3f = getAmbientLightIrradiance();
   var radiance: vec3f = vec3(0.0);
   var iblIrradiance: vec3f = vec3(0.0);
   var iblRadiance: vec3f = vec3(0.0);
@@ -19406,12 +19491,15 @@ fn getPBRDirect(
   
   // IBL indirect contributions
   ${computeMultiScattering$1({ environmentMap })}
-  ${getIBLIndirectIrradiance$1({ environmentMap })}
+  ${getIBLIndirectIrradiance$1({ extensionsUsed, environmentMap })}
   ${getIBLIndirectRadiance$1({ extensionsUsed, environmentMap })}
+
+  diffuseColor = mix(diffuseColor, diffuseTransmissionColor, diffuseTransmission);
+  diffuseContribution = mix(diffuseContribution, diffuseTransmissionContribution, diffuseTransmission);
   
-  // ambient lights
-  
-  RE_IndirectDiffuse(irradiance, diffuseContribution, &reflectedLight);
+  // indirect diffuse
+  ${getIBLSheenIndirectRadiance({ extensionsUsed, environmentMap })}
+  ${getIndirectDiffuse({ extensionsUsed })}
 
   // indirect specular (and diffuse) from IBL
   RE_IndirectSpecular(
@@ -19419,6 +19507,7 @@ fn getPBRDirect(
     iblIrradiance,
     diffuseContribution,
     metallic,
+    sheenEnergyComp,
     dielectricScattering,
     metallicScattering,
     &reflectedLight
@@ -19426,13 +19515,12 @@ fn getPBRDirect(
 
   ${getIBLClearcoatIndirectRadiance({ extensionsUsed, environmentMap })}
   ${getClearcoatIndirectSpecular({ extensionsUsed, environmentMap })}
-  ${getIBLSheenIndirectRadiance({ extensionsUsed, environmentMap })}
   
-  reflectedLight.indirectDiffuse *= occlusion;
-  
+  // occlusion  
   clearcoatSpecularIndirect *= occlusion;
   sheenSpecularIndirect *= occlusion;
-  
+
+  reflectedLight.indirectDiffuse *= occlusion;
   reflectedLight.indirectSpecular *= computeSpecularOcclusion(geometryNormal, viewDirection, occlusion, roughness);
   
   var totalDiffuse: vec3f = reflectedLight.indirectDiffuse + reflectedLight.directDiffuse;
@@ -19918,6 +20006,14 @@ struct FSInput {
       anisotropyVector: {
         type: "vec2f",
         value: "vec2(1.0, 0.0)"
+      },
+      diffuseTransmission: {
+        type: "f32",
+        value: "0.0"
+      },
+      diffuseTransmissionColor: {
+        type: "vec3f",
+        value: "vec3(1.0)"
       }
     };
     const defaultEnvMaterialVars = {
@@ -20191,7 +20287,6 @@ fn getTangentFrame( modelPosition: vec3f, normal: vec3f, uv: vec2f ) -> mat3x3f 
   let B: vec3f = q1perp * st0.y + q0perp * st1.y;
 
   let det: f32 = max( dot( T, T ), dot( B, B ) );
-  // let scale: f32 = ( det == 0.0 ) ? 0.0 : inversesqrt( det );
   let scale: f32 = select(inverseSqrt( det ), 0.0, det == 0.0);
 
   return mat3x3f( T * scale, B * scale, N );
@@ -20641,7 +20736,6 @@ fn computeMultiscattering(
     `
 fn getIBLIndirectIrradiance(
   normal: vec3f,
-  diffuseColor: vec3f,
   clampSampler: sampler,
   envDiffuseTexture: texture_cube<f32>,
   envRotation: mat3x3f,
@@ -20748,6 +20842,18 @@ fn getBRDFCharlieApprox( normal: vec3f, viewDirection: vec3f, roughness: f32 ) -
 
   return saturate( DG );
 }
+
+// Indirect Diffuse RenderEquations with sheen albedo scaling
+fn RE_IndirectDiffuseSheen(
+  irradiance: vec3f,
+  diffuseContribution: vec3f,
+  sheenEnergyComp: f32,
+  ptr_reflectedLight: ptr<function, ReflectedLight>
+) {
+  var diffuse: vec3f = irradiance * BRDF_Lambert( diffuseContribution );
+	diffuse *= sheenEnergyComp;
+  (*ptr_reflectedLight).indirectDiffuse += diffuse;
+}
 `
   );
 
@@ -20792,19 +20898,6 @@ fn BRDF_Sheen(
 
   return sheenColor * ( D * V );
 }
-
-fn getPBRDirectSheen(
-  normal: vec3f,
-  viewDirection: vec3f,
-  sheenColor: vec3f,
-  sheenRoughness: f32,
-  directLight: DirectLight,
-  ptr_reflectedLight: ptr<function, ReflectedLight>
-) -> vec3f {
-  let NdotL: f32 = saturate(dot(normal, directLight.direction));
-  let irradiance: vec3f = NdotL * directLight.color;
-  return irradiance * BRDF_Sheen( directLight.direction, viewDirection, normal, sheenColor, sheenRoughness );
-}
 `
   );
 
@@ -20848,7 +20941,7 @@ fn getPBRDirectSheen(
     }
     sheen += /* wgsl */
     `
-  sheenRoughness = clamp(sheenRoughness, 0.07, 1.0);`;
+  sheenRoughness = clamp(sheenRoughness, 0.0001, 1.0);`;
     return sheen;
   };
 
@@ -20934,8 +21027,6 @@ fn BRDF_GGX_Clearcoat(
   clearcoatF90: f32,
   clearcoatRoughness: f32
 ) -> vec3f {
-  let alpha: f32 = pow2( clearcoatRoughness ); // UE4's roughness
-
   let halfDir: vec3f = normalize( lightDirection + viewDirection );
 
   let dotNL: f32 = saturate( dot( normal, lightDirection ) );
@@ -20945,9 +21036,8 @@ fn BRDF_GGX_Clearcoat(
 
   let F: vec3f = F_Schlick( clearcoatF0, clearcoatF90, dotVH );
 
-  let V: f32 = GeometrySmith( alpha, dotNL, dotNV );
-
-  let D: f32 = DistributionGGX( alpha, dotNH );
+  let V: f32 = GeometrySmith( clearcoatRoughness, dotNL, dotNV );
+  let D: f32 = DistributionGGX( clearcoatRoughness, dotNH );
 
   return F * ( V * D );
 
@@ -20959,12 +21049,11 @@ fn getPBRDirectClearcoat(
   clearcoatF0: vec3f,
   clearcoatF90: f32,
   clearcoatRoughness: f32,
-  directLight: DirectLight,
-  ptr_reflectedLight: ptr<function, ReflectedLight>
+  directLight: DirectLight
 ) -> vec3f {
-  let dotNLcc: f32 = saturate( dot( clearcoatNormal, directLight.direction ) );
+  let NdotLcc: f32 = saturate( dot( clearcoatNormal, directLight.direction ) );
 
-  let ccIrradiance: vec3f = dotNLcc * directLight.color;
+  let ccIrradiance: vec3f = NdotLcc * directLight.color;
 
   return ccIrradiance * BRDF_GGX_Clearcoat( directLight.direction, viewDirection, clearcoatNormal, clearcoatF0, clearcoatF90, clearcoatRoughness );
 }
@@ -21223,6 +21312,8 @@ fn BRDF_GGX_Anisotropic(
 fn getPBRDirectAnisotropic(
   normal: vec3f,
   viewDirection: vec3f,
+  NdotL: f32,
+  irradiance: vec3f,
   dfgDirect: DFGDirect,
   diffuseContribution: vec3f,
   specularF90: f32,
@@ -21233,10 +21324,10 @@ fn getPBRDirectAnisotropic(
   alphaT: f32,
   anisotropyT: vec3f,
   anisotropyB: vec3f,
-  directLight: DirectLight,
-  ptr_reflectedLight: ptr<function, ReflectedLight>
-) {
-  let NdotL: f32 = saturate(dot(normal, directLight.direction));
+  directLight: DirectLight
+) -> LightContribution {
+  var lightContribution: LightContribution;
+
   let NdotV: f32 = saturate(dot(normal, viewDirection));
 
   let ggxSingleScatter: vec3f = BRDF_GGX_Anisotropic(
@@ -21256,22 +21347,17 @@ fn getPBRDirectAnisotropic(
   );
 
   let ggxMultiScatter: vec3f = BRDF_GGX_Multiscatter(
-    normal,
-    viewDirection,
-    NdotL,
-    NdotV,
     dfgDirect,
     specularF90,
-    specularColorBlended,
-    roughness,
+    specularColorBlended
   );
 
   let ggx: vec3f = ggxSingleScatter + ggxMultiScatter;
 
-  let irradiance: vec3f = NdotL * directLight.color;
-  
-  (*ptr_reflectedLight).directDiffuse += irradiance * BRDF_Lambert(diffuseContribution);
-  (*ptr_reflectedLight).directSpecular += irradiance * ggx;
+  lightContribution.diffuse += irradiance * BRDF_Lambert(diffuseContribution);
+  lightContribution.specular += irradiance * ggx;
+
+  return lightContribution;
 }
 `
   );
@@ -21352,8 +21438,8 @@ fn getIBLIndirectAnisotropyRadiance(
   const getDiffuse = (
     /* wgsl */
     `
-  let diffuseColor: vec3f = outputColor.rgb;
-  let diffuseContribution: vec3f = outputColor.rgb * (1.0 - metallic);`
+  var diffuseColor: vec3f = outputColor.rgb;
+  var diffuseContribution: vec3f = outputColor.rgb * (1.0 - metallic);`
   );
 
   const BRDFCharlie = (
@@ -21378,6 +21464,49 @@ fn V_Neubelt( NdotL: f32, NdotV: f32 ) -> f32 {
 }
 `
   );
+
+  const getDiffuseTransmission = ({
+    extensionsUsed = [],
+    diffuseTransmissionTexture = null,
+    diffuseTransmissionFactorTexture = null,
+    diffuseTransmissionColorTexture = null
+  }) => {
+    let diffuseTransmission = (
+      /* wgsl */
+      `
+  var diffuseTransmissionContribution: vec3f = vec3(1.0);`
+    );
+    if (!extensionsUsed.includes("KHR_materials_diffuse_transmission")) {
+      return diffuseTransmission;
+    }
+    if (diffuseTransmissionTexture) {
+      diffuseTransmission += getTextureSample(diffuseTransmissionTexture, "diffuseTransmission");
+      diffuseTransmission += /* wgsl */
+      `
+  diffuseTransmission = diffuseTransmission * diffuseTransmissionSample.a;
+  diffuseTransmissionColor = diffuseTransmissionColor * diffuseTransmissionSample.rgb;
+      `;
+    } else {
+      if (diffuseTransmissionFactorTexture) {
+        diffuseTransmission += getTextureSample(diffuseTransmissionFactorTexture, "diffuseTransmissionFactor");
+        diffuseTransmission += /* wgsl */
+        `
+  diffuseTransmission = diffuseTransmission * diffuseTransmissionFactorSample.a;
+      `;
+      }
+      if (diffuseTransmissionColorTexture) {
+        diffuseTransmission += getTextureSample(diffuseTransmissionColorTexture, "diffuseTransmissionColor");
+        diffuseTransmission += /* wgsl */
+        `
+  diffuseTransmissionColor = diffuseTransmissionColor * diffuseTransmissionColorSample.rgb;
+      `;
+      }
+    }
+    diffuseTransmission += /* wgsl */
+    `
+  diffuseTransmissionContribution = diffuseTransmissionColor * (1.0 - metallic);`;
+    return diffuseTransmission;
+  };
 
   const getPBRFragmentShaderCode = ({
     chunks = null,
@@ -21424,6 +21553,9 @@ fn V_Neubelt( NdotL: f32, NdotV: f32 ) -> f32 {
     iridescenceTexture = null,
     iridescenceFactorTexture = null,
     iridescenceThicknessTexture = null,
+    diffuseTransmissionTexture = null,
+    diffuseTransmissionFactorTexture = null,
+    diffuseTransmissionColorTexture = null,
     transmissionBackgroundTexture = null,
     environmentMap = null
   }) => {
@@ -21481,6 +21613,12 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   ${getClearcoatNormal({ extensionsUsed, normalTexture, clearcoatNormalTexture })}
   ${getIridescence({ extensionsUsed, iridescenceTexture, iridescenceFactorTexture, iridescenceThicknessTexture })}
   ${getAnisotropy({ extensionsUsed, anisotropyTexture })}
+  ${getDiffuseTransmission({
+      extensionsUsed,
+      diffuseTransmissionTexture,
+      diffuseTransmissionFactorTexture,
+      diffuseTransmissionColorTexture
+    })}
   
   // shading
   ${getPBRShading({ receiveShadows, environmentMap, transmissionBackgroundTexture, extensionsUsed })}
@@ -21543,6 +21681,9 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
     clearcoatNormalTexture = null,
     iridescenceTexture = null,
     iridescenceThicknessTexture = null,
+    diffuseTransmissionTexture = null,
+    diffuseTransmissionFactorTexture = null,
+    diffuseTransmissionColorTexture = null,
     transmissionBackgroundTexture = null,
     environmentMap = null
   }) => {
@@ -21630,6 +21771,9 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
             clearcoatNormalTexture,
             iridescenceTexture,
             iridescenceThicknessTexture,
+            diffuseTransmissionTexture,
+            diffuseTransmissionFactorTexture,
+            diffuseTransmissionColorTexture,
             transmissionBackgroundTexture,
             environmentMap
           });
@@ -25035,6 +25179,8 @@ struct Params {
         iridescence,
         iridescenceIOR,
         iridescenceThicknessRange,
+        diffuseTransmission,
+        diffuseTransmissionColor,
         // texture descriptors
         baseColorTexture,
         normalTexture,
@@ -25056,6 +25202,9 @@ struct Params {
         iridescenceTexture,
         iridescenceFactorTexture,
         iridescenceThicknessTexture,
+        diffuseTransmissionTexture,
+        diffuseTransmissionFactorTexture,
+        diffuseTransmissionColorTexture,
         // environment map
         environmentMap
       } = material;
@@ -25090,6 +25239,8 @@ struct Params {
         iridescence,
         iridescenceIOR,
         iridescenceThicknessRange,
+        diffuseTransmission,
+        diffuseTransmissionColor,
         environmentMap
       });
       if (defaultParams.uniforms) {
@@ -25131,7 +25282,10 @@ struct Params {
         clearcoatNormalTexture,
         iridescenceTexture,
         iridescenceFactorTexture,
-        iridescenceThicknessTexture
+        iridescenceThicknessTexture,
+        diffuseTransmissionTexture,
+        diffuseTransmissionFactorTexture,
+        diffuseTransmissionColorTexture
       });
       materialTextures.forEach((textureDescriptor) => {
         if (textureDescriptor.sampler) {
@@ -25185,6 +25339,9 @@ struct Params {
       if (iridescence) {
         extensionsUsed.push("KHR_materials_iridescence");
       }
+      if (diffuseTransmission !== void 0) {
+        extensionsUsed.push("KHR_materials_diffuse_transmission");
+      }
       const hasNormal = defaultParams.geometry && defaultParams.geometry.getAttributeByName("normal");
       if (defaultParams.geometry && !hasNormal) {
         defaultParams.geometry.computeGeometry();
@@ -25226,6 +25383,9 @@ struct Params {
         iridescenceTexture,
         iridescenceFactorTexture,
         iridescenceThicknessTexture,
+        diffuseTransmissionTexture,
+        diffuseTransmissionFactorTexture,
+        diffuseTransmissionColorTexture,
         transmissionBackgroundTexture,
         environmentMap
       });
@@ -25283,6 +25443,8 @@ struct Params {
         iridescence,
         iridescenceIOR,
         iridescenceThicknessRange,
+        diffuseTransmission,
+        diffuseTransmissionColor,
         environmentMap
       } = parameters;
       const baseUniformStruct = {
@@ -25414,6 +25576,14 @@ struct Params {
           type: "vec2f",
           value: iridescenceThicknessRange !== void 0 ? iridescenceThicknessRange.clone() : new Vec2(100, 400)
         },
+        diffuseTransmission: {
+          type: "f32",
+          value: diffuseTransmission !== void 0 ? diffuseTransmission : 0
+        },
+        diffuseTransmissionColor: {
+          type: "vec3f",
+          value: diffuseTransmissionColor !== void 0 ? colorSpace === "srgb" ? sRGBToLinear(diffuseTransmissionColor.clone()) : diffuseTransmissionColor.clone() : new Vec3(1)
+        },
         ...environmentMap && {
           envRotation: {
             type: "mat3x3f",
@@ -25464,6 +25634,7 @@ struct Params {
         specularFactorTexture,
         specularColorTexture,
         transmissionTexture,
+        thicknessTexture,
         sheenTexture,
         sheenColorTexture,
         sheenRoughnessTexture,
@@ -25474,7 +25645,9 @@ struct Params {
         iridescenceTexture,
         iridescenceFactorTexture,
         iridescenceThicknessTexture,
-        thicknessTexture
+        diffuseTransmissionTexture,
+        diffuseTransmissionFactorTexture,
+        diffuseTransmissionColorTexture
       } = parameters;
       const baseTextures = [baseColorTexture, emissiveTexture, occlusionTexture];
       const diffuseTextures = [...baseTextures, normalTexture];
@@ -25498,7 +25671,10 @@ struct Params {
         clearcoatNormalTexture,
         iridescenceTexture,
         iridescenceFactorTexture,
-        iridescenceThicknessTexture
+        iridescenceThicknessTexture,
+        diffuseTransmissionTexture,
+        diffuseTransmissionFactorTexture,
+        diffuseTransmissionColorTexture
       ];
       const materialTextures = (() => {
         switch (shading) {
@@ -26496,8 +26672,6 @@ struct Params {
      */
     static gpuPrimitiveTopologyForMode(mode) {
       switch (mode) {
-        case GL$1.TRIANGLES:
-          return "triangle-list";
         case GL$1.TRIANGLE_STRIP:
           return "triangle-strip";
         case GL$1.LINES:
@@ -26506,6 +26680,10 @@ struct Params {
           return "line-strip";
         case GL$1.POINTS:
           return "point-list";
+        case GL$1.TRIANGLES:
+        // GL.TRIANGLES
+        default:
+          return "triangle-list";
       }
     }
     /**
@@ -26582,7 +26760,7 @@ struct Params {
       if (this.gltf.samplers) {
         for (const [index, sampler] of Object.entries(this.gltf.samplers)) {
           const descriptor = {
-            label: "glTF sampler " + index,
+            label: sampler.name ?? "glTF sampler " + index,
             name: "gltfSampler" + index,
             // TODO better name?
             addressModeU: _GLTFScenesManager.gpuAddressModeForWrap(sampler.wrapS),
@@ -26639,6 +26817,9 @@ struct Params {
           case "sheenTexture":
           case "sheenColorTexture":
           case "sheenRoughnessTexture":
+          case "diffuseTransmissionTexture":
+          case "diffuseTransmissionFactorTexture":
+          case "diffuseTransmissionColorTexture":
             return "rgba8unorm-srgb";
           case "occlusionTexture":
           case "transmissionTexture":
@@ -26690,7 +26871,7 @@ struct Params {
             const index = gltfTextureInfo.index;
             const gltfTexture = this.gltf.textures[index];
             const source = gltfTexture.extensions && gltfTexture.extensions["EXT_texture_webp"] ? gltfTexture.extensions["EXT_texture_webp"].source : gltfTexture.source;
-            const samplerIndex = this.gltf.textures.find((t) => {
+            const samplerIndex = (gltfTextureInfo.index !== void 0 && this.gltf.textures[gltfTextureInfo.index].sampler) ?? this.gltf.textures.find((t) => {
               const src = t.extensions && t.extensions["EXT_texture_webp"] ? t.extensions["EXT_texture_webp"].source : t.source;
               return src === index;
             })?.sampler;
@@ -26767,6 +26948,7 @@ struct Params {
           const anisotropy = extensions && extensions.KHR_materials_anisotropy || null;
           const clearcoat = extensions && extensions.KHR_materials_clearcoat || null;
           const iridescence = extensions && extensions.KHR_materials_iridescence || null;
+          const diffuseTransmission = extensions && extensions.KHR_materials_diffuse_transmission || null;
           if (transmission && transmission.transmissionTexture && transmission.transmissionTexture.index !== void 0) {
             createTexture(transmission.transmissionTexture, "transmissionTexture");
           }
@@ -26827,6 +27009,19 @@ struct Params {
               }
             }
           }
+          if (diffuseTransmission && (diffuseTransmission.diffuseTransmissionTexture || diffuseTransmission.diffuseTransmissionColorTexture)) {
+            const { diffuseTransmissionTexture, diffuseTransmissionColorTexture } = diffuseTransmission;
+            if (diffuseTransmissionTexture && diffuseTransmissionColorTexture && diffuseTransmissionTexture.index !== void 0 && diffuseTransmissionTexture.index === diffuseTransmissionColorTexture.index) {
+              createTexture(diffuseTransmissionTexture, "diffuseTransmissionTexture");
+            } else {
+              if (diffuseTransmissionTexture && diffuseTransmissionTexture.index !== void 0) {
+                createTexture(diffuseTransmissionTexture, "diffuseTransmissionFactorTexture");
+              }
+              if (diffuseTransmissionColorTexture && diffuseTransmissionColorTexture.index !== void 0) {
+                createTexture(diffuseTransmissionColorTexture, "diffuseTransmissionColorTexture");
+              }
+            }
+          }
         }
       }
     }
@@ -26855,6 +27050,7 @@ struct Params {
       const anisotropy = extensions && extensions.KHR_materials_anisotropy || null;
       const clearcoat = extensions && extensions.KHR_materials_clearcoat || null;
       const iridescence = extensions && extensions.KHR_materials_iridescence || null;
+      const diffuseTransmission = extensions && extensions.KHR_materials_diffuse_transmission || null;
       const litMeshMaterialParams = {
         colorSpace: "linear",
         color: material.pbrMetallicRoughness && material.pbrMetallicRoughness.baseColorFactor !== void 0 ? new Vec3(
@@ -26920,6 +27116,14 @@ struct Params {
             iridescence.iridescenceThicknessMinimum !== void 0 ? iridescence.iridescenceThicknessMinimum : 100,
             iridescence.iridescenceThicknessMaximum !== void 0 ? iridescence.iridescenceThicknessMaximum : 400
           )
+        },
+        ...diffuseTransmission && {
+          diffuseTransmission: diffuseTransmission.diffuseTransmissionFactor !== void 0 ? diffuseTransmission.diffuseTransmissionFactor : 0,
+          diffuseTransmissionColor: diffuseTransmission.diffuseTransmissionColorFactor !== void 0 ? new Vec3(
+            diffuseTransmission.diffuseTransmissionColorFactor[0],
+            diffuseTransmission.diffuseTransmissionColorFactor[1],
+            diffuseTransmission.diffuseTransmissionColorFactor[2]
+          ) : new Vec3(1)
         }
       };
       if (clearcoat && clearcoat.clearcoatNormalTexture && clearcoat.clearcoatNormalTexture.scale) {
@@ -26937,9 +27141,8 @@ struct Params {
                 dstFactor: "one-minus-src-alpha"
               },
               alpha: {
-                // This just prevents the canvas from having alpha "holes" in it.
                 srcFactor: "one",
-                dstFactor: "one"
+                dstFactor: "one-minus-src-alpha"
               }
             }
           }
@@ -27176,7 +27379,10 @@ struct Params {
         const bytesPerElement = indicesConstructor.name === "Uint8Array" ? Uint16Array.BYTES_PER_ELEMENT : indicesConstructor.BYTES_PER_ELEMENT;
         const arrayOffset = accessor.byteOffset + bufferView.byteOffset;
         const arrayBuffer = this.gltf.arrayBuffers[bufferView.buffer];
-        const arrayLength = Math.ceil(accessor.count / bytesPerElement) * bytesPerElement;
+        const arrayLength = Math.min(
+          Math.ceil(accessor.count / bytesPerElement) * bytesPerElement,
+          Math.ceil((arrayBuffer.byteLength - arrayOffset) / bytesPerElement)
+        );
         indicesArray = indicesConstructor.name === "Uint8Array" ? Uint16Array.from(new indicesConstructor(arrayBuffer, arrayOffset, arrayLength)) : new indicesConstructor(arrayBuffer, arrayOffset, arrayLength);
         if (accessor.sparse) {
           const { indices, values } = __privateMethod(this, _GLTFScenesManager_instances, getSparseAccessorIndicesAndValues_fn).call(this, accessor);
@@ -27193,9 +27399,13 @@ struct Params {
       if (!interleavedArray) {
         this.sortAttributesByNames(["position", "uv", "normal"], defaultAttributes);
       }
+      const topology = _GLTFScenesManager.gpuPrimitiveTopologyForMode(primitive.mode);
+      if (!hasNormal && (topology.includes("line") || topology.includes("point"))) {
+        meshDescriptor.extensionsUsed.push("KHR_materials_unlit");
+      }
       const geometryAttributes = {
         instancesCount: instances.length,
-        topology: _GLTFScenesManager.gpuPrimitiveTopologyForMode(primitive.mode),
+        topology,
         vertexBuffers: [
           {
             name: "attributes",
@@ -27610,6 +27820,14 @@ struct Params {
     addMeshes(patchMeshesParameters = (meshDescriptor) => {
     }) {
       this.scenesManager.node.updateMatrixStack();
+      this.gltf.nodes.forEach((node) => {
+        if (node.extensions && node.extensions.KHR_lights_punctual) {
+          const light = this.scenesManager.lights[node.extensions.KHR_lights_punctual.light];
+          if (light instanceof DirectionalLight || light instanceof SpotLight) {
+            light.target.applyMat4(light.worldMatrix);
+          }
+        }
+      });
       return this.scenesManager.meshesDescriptors.map((meshDescriptor) => {
         const { geometry } = meshDescriptor.parameters;
         if (geometry) {
@@ -27929,6 +28147,7 @@ struct Params {
         ...attributeParams,
         array
       };
+      if (name.includes("color") && accessor.normalized && size === 4) ;
       attributes.push(attribute);
     }
     if (maxByteOffset > 0) {
@@ -28102,6 +28321,10 @@ struct Params {
         }
       }
       const pendingImages = [];
+      const bitmapOptions = {
+        colorSpaceConversion: "none",
+        premultiplyAlpha: "none"
+      };
       for (let index = 0; index < json.images?.length || 0; ++index) {
         const image = json.images[index];
         if (image.uri) {
@@ -28110,16 +28333,14 @@ struct Params {
               const img = new Image();
               img.crossOrigin = "anonymous";
               img.onload = () => {
-                createImageBitmap(img, { colorSpaceConversion: "none" }).then(resolve).catch(reject);
+                createImageBitmap(img, bitmapOptions).then(resolve).catch(reject);
               };
               img.onerror = reject;
               img.src = GLTFLoader.resolveUri(image.uri, baseUrl);
             });
           } else {
             pendingImages[index] = fetch(GLTFLoader.resolveUri(image.uri, baseUrl)).then(async (response) => {
-              return createImageBitmap(await response.blob(), {
-                colorSpaceConversion: "none"
-              });
+              return createImageBitmap(await response.blob(), bitmapOptions);
             });
           }
         } else {
@@ -28134,7 +28355,7 @@ struct Params {
                 img.crossOrigin = "anonymous";
                 img.src = URL.createObjectURL(blob);
                 img.onload = () => {
-                  createImageBitmap(img, { colorSpaceConversion: "none" }).then((bitmap) => {
+                  createImageBitmap(img, bitmapOptions).then((bitmap) => {
                     URL.revokeObjectURL(img.src);
                     resolve(bitmap);
                   }).catch(reject);
@@ -28145,9 +28366,7 @@ struct Params {
                 };
               });
             } else {
-              return createImageBitmap(blob, {
-                colorSpaceConversion: "none"
-              });
+              return createImageBitmap(blob, bitmapOptions);
             }
           });
         }

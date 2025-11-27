@@ -101,6 +101,7 @@ const GL = (typeof window !== 'undefined' && WebGLRenderingContext) || {
  * - [x] KHR_lights_punctual
  * - [x] KHR_materials_anisotropy
  * - [x] KHR_materials_clearcoat
+ * - [x] KHR_materials_diffuse_transmission
  * - [x] KHR_materials_dispersion
  * - [x] KHR_materials_emissive_strength
  * - [x] KHR_materials_ior
@@ -268,8 +269,6 @@ export class GLTFScenesManager {
    */
   static gpuPrimitiveTopologyForMode(mode: GLTF.MeshPrimitiveMode): GPUPrimitiveTopology {
     switch (mode) {
-      case GL.TRIANGLES: // GL.TRIANGLES
-        return 'triangle-list'
       case GL.TRIANGLE_STRIP: // GL.TRIANGLE_STRIP
         return 'triangle-strip'
       case GL.LINES: // GL.LINES
@@ -278,6 +277,9 @@ export class GLTFScenesManager {
         return 'line-strip'
       case GL.POINTS: // GL.POINTS
         return 'point-list'
+      case GL.TRIANGLES: // GL.TRIANGLES
+      default:
+        return 'triangle-list'
     }
   }
 
@@ -362,7 +364,7 @@ export class GLTFScenesManager {
     if (this.gltf.samplers) {
       for (const [index, sampler] of Object.entries(this.gltf.samplers)) {
         const descriptor = {
-          label: 'glTF sampler ' + index,
+          label: sampler.name ?? 'glTF sampler ' + index,
           name: 'gltfSampler' + index, // TODO better name?
           addressModeU: GLTFScenesManager.gpuAddressModeForWrap(sampler.wrapS),
           addressModeV: GLTFScenesManager.gpuAddressModeForWrap(sampler.wrapT),
@@ -425,6 +427,9 @@ export class GLTFScenesManager {
         case 'sheenTexture':
         case 'sheenColorTexture':
         case 'sheenRoughnessTexture':
+        case 'diffuseTransmissionTexture':
+        case 'diffuseTransmissionFactorTexture':
+        case 'diffuseTransmissionColorTexture':
           return 'rgba8unorm-srgb'
         case 'occlusionTexture':
         case 'transmissionTexture':
@@ -488,11 +493,13 @@ export class GLTFScenesManager {
               ? gltfTexture.extensions['EXT_texture_webp'].source
               : gltfTexture.source
 
-          const samplerIndex = this.gltf.textures.find((t) => {
-            const src =
-              t.extensions && t.extensions['EXT_texture_webp'] ? t.extensions['EXT_texture_webp'].source : t.source
-            return src === index
-          })?.sampler
+          const samplerIndex =
+            (gltfTextureInfo.index !== undefined && this.gltf.textures[gltfTextureInfo.index].sampler) ??
+            this.gltf.textures.find((t) => {
+              const src =
+                t.extensions && t.extensions['EXT_texture_webp'] ? t.extensions['EXT_texture_webp'].source : t.source
+              return src === index
+            })?.sampler
 
           const sampler = this.scenesManager.samplers[samplerIndex ?? 0]
 
@@ -594,6 +601,7 @@ export class GLTFScenesManager {
         const anisotropy = (extensions && extensions.KHR_materials_anisotropy) || null
         const clearcoat = (extensions && extensions.KHR_materials_clearcoat) || null
         const iridescence = (extensions && extensions.KHR_materials_iridescence) || null
+        const diffuseTransmission = (extensions && extensions.KHR_materials_diffuse_transmission) || null
 
         // transmission
         if (transmission && transmission.transmissionTexture && transmission.transmissionTexture.index !== undefined) {
@@ -688,6 +696,29 @@ export class GLTFScenesManager {
             }
           }
         }
+
+        // diffuse transmission
+        if (
+          diffuseTransmission &&
+          (diffuseTransmission.diffuseTransmissionTexture || diffuseTransmission.diffuseTransmissionColorTexture)
+        ) {
+          const { diffuseTransmissionTexture, diffuseTransmissionColorTexture } = diffuseTransmission
+          if (
+            diffuseTransmissionTexture &&
+            diffuseTransmissionColorTexture &&
+            diffuseTransmissionTexture.index !== undefined &&
+            diffuseTransmissionTexture.index === diffuseTransmissionColorTexture.index
+          ) {
+            createTexture(diffuseTransmissionTexture, 'diffuseTransmissionTexture')
+          } else {
+            if (diffuseTransmissionTexture && diffuseTransmissionTexture.index !== undefined) {
+              createTexture(diffuseTransmissionTexture, 'diffuseTransmissionFactorTexture')
+            }
+            if (diffuseTransmissionColorTexture && diffuseTransmissionColorTexture.index !== undefined) {
+              createTexture(diffuseTransmissionColorTexture, 'diffuseTransmissionColorTexture')
+            }
+          }
+        }
       }
     }
   }
@@ -725,6 +756,7 @@ export class GLTFScenesManager {
     const anisotropy = (extensions && extensions.KHR_materials_anisotropy) || null
     const clearcoat = (extensions && extensions.KHR_materials_clearcoat) || null
     const iridescence = (extensions && extensions.KHR_materials_iridescence) || null
+    const diffuseTransmission = (extensions && extensions.KHR_materials_diffuse_transmission) || null
 
     const litMeshMaterialParams: LitMeshMaterialUniformParams = {
       colorSpace: 'linear',
@@ -812,6 +844,20 @@ export class GLTFScenesManager {
           iridescence.iridescenceThicknessMaximum !== undefined ? iridescence.iridescenceThicknessMaximum : 400
         ),
       }),
+      ...(diffuseTransmission && {
+        diffuseTransmission:
+          diffuseTransmission.diffuseTransmissionFactor !== undefined
+            ? diffuseTransmission.diffuseTransmissionFactor
+            : 0,
+        diffuseTransmissionColor:
+          diffuseTransmission.diffuseTransmissionColorFactor !== undefined
+            ? new Vec3(
+                diffuseTransmission.diffuseTransmissionColorFactor[0],
+                diffuseTransmission.diffuseTransmissionColorFactor[1],
+                diffuseTransmission.diffuseTransmissionColorFactor[2]
+              )
+            : new Vec3(1),
+      }),
     }
 
     if (clearcoat && clearcoat.clearcoatNormalTexture && clearcoat.clearcoatNormalTexture.scale) {
@@ -833,9 +879,8 @@ export class GLTFScenesManager {
               dstFactor: 'one-minus-src-alpha',
             },
             alpha: {
-              // This just prevents the canvas from having alpha "holes" in it.
               srcFactor: 'one',
-              dstFactor: 'one',
+              dstFactor: 'one-minus-src-alpha',
             },
           },
         },
@@ -1309,6 +1354,13 @@ export class GLTFScenesManager {
         array,
       }
 
+      if (name.includes('color') && accessor.normalized && size === 4) {
+        // attribute.bufferFormat = 'snorm16x4'
+        // attribute.bufferFormat = 'unorm8x4'
+        // attribute.normalized = true
+        // console.log('NORMALIZE COLOR!!', attribute, accessor)
+      }
+
       attributes.push(attribute)
     }
 
@@ -1482,7 +1534,10 @@ export class GLTFScenesManager {
 
       const arrayOffset = accessor.byteOffset + bufferView.byteOffset
       const arrayBuffer = this.gltf.arrayBuffers[bufferView.buffer]
-      const arrayLength = Math.ceil(accessor.count / bytesPerElement) * bytesPerElement
+      const arrayLength = Math.min(
+        Math.ceil(accessor.count / bytesPerElement) * bytesPerElement,
+        Math.ceil((arrayBuffer.byteLength - arrayOffset) / bytesPerElement)
+      )
 
       // do not allow Uint8Array arrays
       indicesArray =
@@ -1519,9 +1574,17 @@ export class GLTFScenesManager {
       this.sortAttributesByNames(['position', 'uv', 'normal'], defaultAttributes)
     }
 
+    const topology = GLTFScenesManager.gpuPrimitiveTopologyForMode(primitive.mode)
+
+    // gltf states that points or lines gemoetries without normals
+    // should be rendered as unlit
+    if (!hasNormal && (topology.includes('line') || topology.includes('point'))) {
+      meshDescriptor.extensionsUsed.push('KHR_materials_unlit')
+    }
+
     const geometryAttributes: GeometryParams = {
       instancesCount: instances.length,
-      topology: GLTFScenesManager.gpuPrimitiveTopologyForMode(primitive.mode),
+      topology,
       vertexBuffers: [
         {
           name: 'attributes',
@@ -2096,6 +2159,16 @@ export class GLTFScenesManager {
     // once again, update all the matrix stack eagerly
     // because the main node or children transformations might have changed
     this.scenesManager.node.updateMatrixStack()
+
+    // update directional and spot light targets based on light world matrix
+    this.gltf.nodes.forEach((node) => {
+      if (node.extensions && node.extensions.KHR_lights_punctual) {
+        const light = this.scenesManager.lights[node.extensions.KHR_lights_punctual.light]
+        if (light instanceof DirectionalLight || light instanceof SpotLight) {
+          light.target.applyMat4(light.worldMatrix)
+        }
+      }
+    })
 
     return this.scenesManager.meshesDescriptors.map((meshDescriptor) => {
       const { geometry } = meshDescriptor.parameters

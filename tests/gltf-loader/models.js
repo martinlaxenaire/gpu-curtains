@@ -256,4 +256,13 @@ export const models = {
     name: 'Anisotropy Barn Lamp',
     url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/master/Models/AnisotropyBarnLamp/glTF/AnisotropyBarnLamp.gltf',
   },
+  // diffuse transmission
+  diffuseTransmissionTest: {
+    name: 'Diffuse Transmission Test',
+    url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/master/Models/DiffuseTransmissionTest/glTF/DiffuseTransmissionTest.gltf',
+  },
+  mandarinOrange: {
+    name: 'Mandarin Orange',
+    url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/master/Models/MandarinOrange/glTF/MandarinOrange.gltf',
+  },
 }

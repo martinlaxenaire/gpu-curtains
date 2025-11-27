@@ -48,6 +48,9 @@ const getFragmentShaderCode = ({
   clearcoatNormalTexture = null,
   iridescenceTexture = null,
   iridescenceThicknessTexture = null,
+  diffuseTransmissionTexture = null,
+  diffuseTransmissionFactorTexture = null,
+  diffuseTransmissionColorTexture = null,
   transmissionBackgroundTexture = null,
   environmentMap = null
 }) => {
@@ -135,6 +138,9 @@ const getFragmentShaderCode = ({
           clearcoatNormalTexture,
           iridescenceTexture,
           iridescenceThicknessTexture,
+          diffuseTransmissionTexture,
+          diffuseTransmissionFactorTexture,
+          diffuseTransmissionColorTexture,
           transmissionBackgroundTexture,
           environmentMap
         });

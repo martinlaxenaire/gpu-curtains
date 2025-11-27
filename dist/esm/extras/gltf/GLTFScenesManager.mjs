@@ -171,8 +171,6 @@ const _GLTFScenesManager = class _GLTFScenesManager {
    */
   static gpuPrimitiveTopologyForMode(mode) {
     switch (mode) {
-      case GL.TRIANGLES:
-        return "triangle-list";
       case GL.TRIANGLE_STRIP:
         return "triangle-strip";
       case GL.LINES:
@@ -181,6 +179,10 @@ const _GLTFScenesManager = class _GLTFScenesManager {
         return "line-strip";
       case GL.POINTS:
         return "point-list";
+      case GL.TRIANGLES:
+      // GL.TRIANGLES
+      default:
+        return "triangle-list";
     }
   }
   /**
@@ -257,7 +259,7 @@ const _GLTFScenesManager = class _GLTFScenesManager {
     if (this.gltf.samplers) {
       for (const [index, sampler] of Object.entries(this.gltf.samplers)) {
         const descriptor = {
-          label: "glTF sampler " + index,
+          label: sampler.name ?? "glTF sampler " + index,
           name: "gltfSampler" + index,
           // TODO better name?
           addressModeU: _GLTFScenesManager.gpuAddressModeForWrap(sampler.wrapS),
@@ -314,6 +316,9 @@ const _GLTFScenesManager = class _GLTFScenesManager {
         case "sheenTexture":
         case "sheenColorTexture":
         case "sheenRoughnessTexture":
+        case "diffuseTransmissionTexture":
+        case "diffuseTransmissionFactorTexture":
+        case "diffuseTransmissionColorTexture":
           return "rgba8unorm-srgb";
         case "occlusionTexture":
         case "transmissionTexture":
@@ -365,7 +370,7 @@ const _GLTFScenesManager = class _GLTFScenesManager {
           const index = gltfTextureInfo.index;
           const gltfTexture = this.gltf.textures[index];
           const source = gltfTexture.extensions && gltfTexture.extensions["EXT_texture_webp"] ? gltfTexture.extensions["EXT_texture_webp"].source : gltfTexture.source;
-          const samplerIndex = this.gltf.textures.find((t) => {
+          const samplerIndex = (gltfTextureInfo.index !== void 0 && this.gltf.textures[gltfTextureInfo.index].sampler) ?? this.gltf.textures.find((t) => {
             const src = t.extensions && t.extensions["EXT_texture_webp"] ? t.extensions["EXT_texture_webp"].source : t.source;
             return src === index;
           })?.sampler;
@@ -442,6 +447,7 @@ const _GLTFScenesManager = class _GLTFScenesManager {
         const anisotropy = extensions && extensions.KHR_materials_anisotropy || null;
         const clearcoat = extensions && extensions.KHR_materials_clearcoat || null;
         const iridescence = extensions && extensions.KHR_materials_iridescence || null;
+        const diffuseTransmission = extensions && extensions.KHR_materials_diffuse_transmission || null;
         if (transmission && transmission.transmissionTexture && transmission.transmissionTexture.index !== void 0) {
           createTexture(transmission.transmissionTexture, "transmissionTexture");
         }
@@ -502,6 +508,19 @@ const _GLTFScenesManager = class _GLTFScenesManager {
             }
           }
         }
+        if (diffuseTransmission && (diffuseTransmission.diffuseTransmissionTexture || diffuseTransmission.diffuseTransmissionColorTexture)) {
+          const { diffuseTransmissionTexture, diffuseTransmissionColorTexture } = diffuseTransmission;
+          if (diffuseTransmissionTexture && diffuseTransmissionColorTexture && diffuseTransmissionTexture.index !== void 0 && diffuseTransmissionTexture.index === diffuseTransmissionColorTexture.index) {
+            createTexture(diffuseTransmissionTexture, "diffuseTransmissionTexture");
+          } else {
+            if (diffuseTransmissionTexture && diffuseTransmissionTexture.index !== void 0) {
+              createTexture(diffuseTransmissionTexture, "diffuseTransmissionFactorTexture");
+            }
+            if (diffuseTransmissionColorTexture && diffuseTransmissionColorTexture.index !== void 0) {
+              createTexture(diffuseTransmissionColorTexture, "diffuseTransmissionColorTexture");
+            }
+          }
+        }
       }
     }
   }
@@ -530,6 +549,7 @@ const _GLTFScenesManager = class _GLTFScenesManager {
     const anisotropy = extensions && extensions.KHR_materials_anisotropy || null;
     const clearcoat = extensions && extensions.KHR_materials_clearcoat || null;
     const iridescence = extensions && extensions.KHR_materials_iridescence || null;
+    const diffuseTransmission = extensions && extensions.KHR_materials_diffuse_transmission || null;
     const litMeshMaterialParams = {
       colorSpace: "linear",
       color: material.pbrMetallicRoughness && material.pbrMetallicRoughness.baseColorFactor !== void 0 ? new Vec3(
@@ -595,6 +615,14 @@ const _GLTFScenesManager = class _GLTFScenesManager {
           iridescence.iridescenceThicknessMinimum !== void 0 ? iridescence.iridescenceThicknessMinimum : 100,
           iridescence.iridescenceThicknessMaximum !== void 0 ? iridescence.iridescenceThicknessMaximum : 400
         )
+      },
+      ...diffuseTransmission && {
+        diffuseTransmission: diffuseTransmission.diffuseTransmissionFactor !== void 0 ? diffuseTransmission.diffuseTransmissionFactor : 0,
+        diffuseTransmissionColor: diffuseTransmission.diffuseTransmissionColorFactor !== void 0 ? new Vec3(
+          diffuseTransmission.diffuseTransmissionColorFactor[0],
+          diffuseTransmission.diffuseTransmissionColorFactor[1],
+          diffuseTransmission.diffuseTransmissionColorFactor[2]
+        ) : new Vec3(1)
       }
     };
     if (clearcoat && clearcoat.clearcoatNormalTexture && clearcoat.clearcoatNormalTexture.scale) {
@@ -612,9 +640,8 @@ const _GLTFScenesManager = class _GLTFScenesManager {
               dstFactor: "one-minus-src-alpha"
             },
             alpha: {
-              // This just prevents the canvas from having alpha "holes" in it.
               srcFactor: "one",
-              dstFactor: "one"
+              dstFactor: "one-minus-src-alpha"
             }
           }
         }
@@ -851,7 +878,10 @@ const _GLTFScenesManager = class _GLTFScenesManager {
       const bytesPerElement = indicesConstructor.name === "Uint8Array" ? Uint16Array.BYTES_PER_ELEMENT : indicesConstructor.BYTES_PER_ELEMENT;
       const arrayOffset = accessor.byteOffset + bufferView.byteOffset;
       const arrayBuffer = this.gltf.arrayBuffers[bufferView.buffer];
-      const arrayLength = Math.ceil(accessor.count / bytesPerElement) * bytesPerElement;
+      const arrayLength = Math.min(
+        Math.ceil(accessor.count / bytesPerElement) * bytesPerElement,
+        Math.ceil((arrayBuffer.byteLength - arrayOffset) / bytesPerElement)
+      );
       indicesArray = indicesConstructor.name === "Uint8Array" ? Uint16Array.from(new indicesConstructor(arrayBuffer, arrayOffset, arrayLength)) : new indicesConstructor(arrayBuffer, arrayOffset, arrayLength);
       if (accessor.sparse) {
         const { indices, values } = __privateMethod(this, _GLTFScenesManager_instances, getSparseAccessorIndicesAndValues_fn).call(this, accessor);
@@ -868,9 +898,13 @@ const _GLTFScenesManager = class _GLTFScenesManager {
     if (!interleavedArray) {
       this.sortAttributesByNames(["position", "uv", "normal"], defaultAttributes);
     }
+    const topology = _GLTFScenesManager.gpuPrimitiveTopologyForMode(primitive.mode);
+    if (!hasNormal && (topology.includes("line") || topology.includes("point"))) {
+      meshDescriptor.extensionsUsed.push("KHR_materials_unlit");
+    }
     const geometryAttributes = {
       instancesCount: instances.length,
-      topology: _GLTFScenesManager.gpuPrimitiveTopologyForMode(primitive.mode),
+      topology,
       vertexBuffers: [
         {
           name: "attributes",
@@ -1285,6 +1319,14 @@ const _GLTFScenesManager = class _GLTFScenesManager {
   addMeshes(patchMeshesParameters = (meshDescriptor) => {
   }) {
     this.scenesManager.node.updateMatrixStack();
+    this.gltf.nodes.forEach((node) => {
+      if (node.extensions && node.extensions.KHR_lights_punctual) {
+        const light = this.scenesManager.lights[node.extensions.KHR_lights_punctual.light];
+        if (light instanceof DirectionalLight || light instanceof SpotLight) {
+          light.target.applyMat4(light.worldMatrix);
+        }
+      }
+    });
     return this.scenesManager.meshesDescriptors.map((meshDescriptor) => {
       const { geometry } = meshDescriptor.parameters;
       if (geometry) {
@@ -1604,6 +1646,7 @@ parsePrimitiveProperty_fn = function(primitiveProperty, attributes) {
       ...attributeParams,
       array
     };
+    if (name.includes("color") && accessor.normalized && size === 4) ;
     attributes.push(attribute);
   }
   if (maxByteOffset > 0) {

@@ -459,14 +459,15 @@ export class RenderPipelineEntry extends PipelineEntry {
         module: this.shaders.vertex.module,
         entryPoint: this.options.shaders.vertex.entryPoint,
         buffers: this.attributes.vertexBuffers.map((vertexBuffer) => {
+          const arrayStride = vertexBuffer.arrayStride * 4
           return {
             stepMode: vertexBuffer.stepMode,
-            arrayStride: vertexBuffer.arrayStride * 4, // 4 bytes each
+            arrayStride,
             attributes: vertexBuffer.attributes.map((attribute) => {
               vertexLocationIndex++
               return {
                 shaderLocation: vertexLocationIndex,
-                offset: attribute.bufferOffset, // previous attribute size * 4
+                offset: attribute.bufferOffset,
                 format: attribute.bufferFormat,
               }
             }),

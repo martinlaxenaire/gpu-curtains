@@ -126,6 +126,14 @@ const declareMaterialVars = ({
     anisotropyVector: {
       type: "vec2f",
       value: "vec2(1.0, 0.0)"
+    },
+    diffuseTransmission: {
+      type: "f32",
+      value: "0.0"
+    },
+    diffuseTransmissionColor: {
+      type: "vec3f",
+      value: "vec3(1.0)"
     }
   };
   const defaultEnvMaterialVars = {

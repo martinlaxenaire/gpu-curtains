@@ -13,6 +13,7 @@ import { getIBLClearcoatIndirectRadiance } from './get-IBL-clearcoat-indirect-ra
 import { getClearcoatIndirectSpecular } from './get-clearcoat-indirect-specular'
 import { getIBLSheenIndirectRadiance } from './get-IBL-sheen-indirect-radiance'
 import { getPBRDirectContribution } from './get-PBR-direct-contribution'
+import { getIndirectDiffuse } from './get-indirect-diffuse'
 
 /**
  * Set the `outgoingLight` (`vec3f`) using PBR shading.
@@ -71,12 +72,12 @@ export const getPBRShading = ({
     if(!directLight.visible) {
       continue;
     }
-    
+
     ${receiveShadows ? applyDirectionalShadows : ''}
     ${getPBRDirectContribution({ extensionsUsed, environmentMap })}
   }
   
-  var irradiance: vec3f = vec3(0.0);
+  var irradiance: vec3f = getAmbientLightIrradiance();
   var radiance: vec3f = vec3(0.0);
   var iblIrradiance: vec3f = vec3(0.0);
   var iblRadiance: vec3f = vec3(0.0);
@@ -86,12 +87,15 @@ export const getPBRShading = ({
   
   // IBL indirect contributions
   ${computeMultiScattering({ environmentMap })}
-  ${getIBLIndirectIrradiance({ environmentMap })}
+  ${getIBLIndirectIrradiance({ extensionsUsed, environmentMap })}
   ${getIBLIndirectRadiance({ extensionsUsed, environmentMap })}
+
+  diffuseColor = mix(diffuseColor, diffuseTransmissionColor, diffuseTransmission);
+  diffuseContribution = mix(diffuseContribution, diffuseTransmissionContribution, diffuseTransmission);
   
-  // ambient lights
-  
-  RE_IndirectDiffuse(irradiance, diffuseContribution, &reflectedLight);
+  // indirect diffuse
+  ${getIBLSheenIndirectRadiance({ extensionsUsed, environmentMap })}
+  ${getIndirectDiffuse({ extensionsUsed })}
 
   // indirect specular (and diffuse) from IBL
   RE_IndirectSpecular(
@@ -99,6 +103,7 @@ export const getPBRShading = ({
     iblIrradiance,
     diffuseContribution,
     metallic,
+    sheenEnergyComp,
     dielectricScattering,
     metallicScattering,
     &reflectedLight
@@ -106,13 +111,12 @@ export const getPBRShading = ({
 
   ${getIBLClearcoatIndirectRadiance({ extensionsUsed, environmentMap })}
   ${getClearcoatIndirectSpecular({ extensionsUsed, environmentMap })}
-  ${getIBLSheenIndirectRadiance({ extensionsUsed, environmentMap })}
   
-  reflectedLight.indirectDiffuse *= occlusion;
-  
+  // occlusion  
   clearcoatSpecularIndirect *= occlusion;
   sheenSpecularIndirect *= occlusion;
-  
+
+  reflectedLight.indirectDiffuse *= occlusion;
   reflectedLight.indirectSpecular *= computeSpecularOcclusion(geometryNormal, viewDirection, occlusion, roughness);
   
   var totalDiffuse: vec3f = reflectedLight.indirectDiffuse + reflectedLight.directDiffuse;

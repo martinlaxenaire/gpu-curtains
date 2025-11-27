@@ -2,7 +2,59 @@ const getPBRDirectContribution = ({
   extensionsUsed = [],
   environmentMap = null
 } = {}) => {
-  let pbrDirect = "";
+  let pbrDirect = (
+    /* wgsl */
+    `
+    let NdotL: f32 = saturate(dot(normal, directLight.direction));
+    var irradiance: vec3f = NdotL * directLight.color;`
+  );
+  if (extensionsUsed.includes("KHR_materials_clearcoat")) {
+    pbrDirect += /* wgsl */
+    `
+    clearcoatSpecularDirect += getPBRDirectClearcoat(clearcoatNormal, viewDirection, clearcoatF0, clearcoatF90, clearcoatRoughness, directLight);`;
+  }
+  if (extensionsUsed.includes("KHR_materials_sheen")) {
+    pbrDirect += /* wgsl */
+    `
+    sheenSpecularDirect += irradiance * BRDF_Sheen(directLight.direction, viewDirection, normal, sheenColor, sheenRoughness);`;
+    if (environmentMap && environmentMap.lutTexture) {
+      pbrDirect += /* wgsl */
+      `
+    let sheenAlbedoV: f32 = getBRDFCharlie(
+      normal,
+      viewDirection,
+      sheenRoughness,
+      ${environmentMap.sampler.name},
+      ${environmentMap.lutTexture.options.name}
+    );
+    
+    let sheenAlbedoL: f32 = getBRDFCharlie(
+      normal,
+      directLight.direction,
+      sheenRoughness,
+      ${environmentMap.sampler.name},
+      ${environmentMap.lutTexture.options.name}
+    );`;
+    } else {
+      pbrDirect += /* wgsl */
+      `
+    let sheenAlbedoV: f32 = getSheenAlbedoScaleApprox(
+      normal,
+      viewDirection,
+      sheenRoughness
+    );
+    
+    let sheenAlbedoL: f32 = getSheenAlbedoScaleApprox(
+      normal,
+      directLight.direction,
+      sheenRoughness
+    );`;
+    }
+    pbrDirect += /* wgsl */
+    `
+    let sheenEnergyComp: f32 = 1.0 - max3( sheenColor ) * max( sheenAlbedoV, sheenAlbedoL );
+ 		irradiance *= sheenEnergyComp;`;
+  }
   if (environmentMap && environmentMap.lutTexture) {
     pbrDirect += /* wgsl */
     `
@@ -31,9 +83,11 @@ const getPBRDirectContribution = ({
   if (extensionsUsed.includes("KHR_materials_anisotropy")) {
     pbrDirect += /* wgsl */
     `
-    getPBRDirectAnisotropic(
+    var lightContribution: LightContribution = getPBRDirectAnisotropic(
       normal,
       viewDirection,
+      NdotL,
+      irradiance,
       dfgDirect,
       diffuseContribution,
       specularF90,
@@ -44,15 +98,16 @@ const getPBRDirectContribution = ({
       alphaT,
       anisotropyT,
       anisotropyB,
-      directLight,
-      &reflectedLight
+      directLight
     );`;
   } else {
     pbrDirect += /* wgsl */
     `
-    getPBRDirect(
+    var lightContribution: LightContribution = getPBRDirect(
       normal,
       viewDirection,
+      NdotL,
+      irradiance,
       dfgDirect,
       diffuseContribution,
       specularF90,
@@ -60,20 +115,23 @@ const getPBRDirectContribution = ({
       roughness,
       iridescenceFresnel,
       iridescence,
-      directLight,
-      &reflectedLight
+      directLight
     );`;
   }
-  if (extensionsUsed.includes("KHR_materials_clearcoat")) {
+  if (extensionsUsed.includes("KHR_materials_diffuse_transmission")) {
     pbrDirect += /* wgsl */
     `
-    clearcoatSpecularDirect += getPBRDirectClearcoat(clearcoatNormal, viewDirection, clearcoatF0, clearcoatF90, clearcoatRoughness, directLight, &reflectedLight);`;
+    lightContribution.diffuse = lightContribution.diffuse * (1.0 - diffuseTransmission);
+    let diffuseNdotL: f32 = saturate(dot(-1.0 * normal, directLight.direction));
+    let lightDiffuseTransmission: vec3f = directLight.color * diffuseNdotL * BRDF_Lambert(diffuseTransmissionContribution);
+    lightContribution.diffuse += lightDiffuseTransmission * diffuseTransmission;
+    `;
   }
-  if (extensionsUsed.includes("KHR_materials_sheen")) {
-    pbrDirect += /* wgsl */
-    `
-    sheenSpecularDirect += getPBRDirectSheen(normal, viewDirection, sheenColor, sheenRoughness, directLight, &reflectedLight);`;
-  }
+  pbrDirect += /* wgsl */
+  `
+    reflectedLight.directDiffuse += lightContribution.diffuse;
+    reflectedLight.directSpecular += lightContribution.specular;
+  `;
   return pbrDirect;
 };
 

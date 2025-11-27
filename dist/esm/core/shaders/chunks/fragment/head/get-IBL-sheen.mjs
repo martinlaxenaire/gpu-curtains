@@ -50,6 +50,18 @@ fn getBRDFCharlieApprox( normal: vec3f, viewDirection: vec3f, roughness: f32 ) -
 
   return saturate( DG );
 }
+
+// Indirect Diffuse RenderEquations with sheen albedo scaling
+fn RE_IndirectDiffuseSheen(
+  irradiance: vec3f,
+  diffuseContribution: vec3f,
+  sheenEnergyComp: f32,
+  ptr_reflectedLight: ptr<function, ReflectedLight>
+) {
+  var diffuse: vec3f = irradiance * BRDF_Lambert( diffuseContribution );
+	diffuse *= sheenEnergyComp;
+  (*ptr_reflectedLight).indirectDiffuse += diffuse;
+}
 `
 );
 

@@ -172,6 +172,7 @@ class Geometry {
         );
       }
     }
+    const bufferOffset = attributesLength ? attributes[attributesLength - 1].bufferOffset + attributes[attributesLength - 1].size * 4 : 0;
     const attribute = {
       name,
       type,
@@ -181,7 +182,7 @@ class Geometry {
       offset: attributesLength ? attributes.reduce((accumulator, currentValue) => {
         return accumulator + currentValue.bufferLength;
       }, 0) : 0,
-      bufferOffset: attributesLength ? attributes[attributesLength - 1].bufferOffset + attributes[attributesLength - 1].size * 4 : 0,
+      bufferOffset,
       array,
       verticesStride
     };
@@ -295,7 +296,7 @@ class Geometry {
         for (let j = 0; j < vertexBuffer.attributes.length; j++) {
           const { name, size, array, verticesStride } = vertexBuffer.attributes[j];
           for (let s = 0; s < size; s++) {
-            const attributeValue = array[Math.floor(attributeIndex / verticesStride) * size + s];
+            let attributeValue = array[Math.floor(attributeIndex / verticesStride) * size + s];
             vertexBuffer.array[currentIndex] = attributeValue ?? 0;
             if (name === "position") {
               if (s % 3 === 0) {

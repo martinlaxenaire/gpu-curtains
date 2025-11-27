@@ -101,6 +101,11 @@ export interface LitMeshMaterialUniformParams {
   iridescenceIOR?: number
   /** Minimum and maximum thickness of the iridescence layer. Default to `new Vec2(100, 400)`. */
   iridescenceThicknessRange?: Vec2
+
+  /** The percentage of non-specularly reflected light that is diffusely transmitted through the surface. Default to `0`. */
+  diffuseTransmission?: number
+  /** The color that modulates the transmitted light. Default to `new Vec3(1)`. */
+  diffuseTransmissionColor?: Vec3
 }
 
 /** Parameters used to get the {@link LitMesh} material uniforms. */
@@ -173,6 +178,13 @@ export interface PBRTexturesDescriptors extends PhongTexturesDescriptors {
   iridescenceFactorTexture?: ShaderTextureDescriptor
   /** {@link ShaderTextureDescriptor | Iridescence thickness texture descriptor} (using the `G` channel) to use if any. */
   iridescenceThicknessTexture?: ShaderTextureDescriptor
+
+  /** {@link ShaderTextureDescriptor | Diffuse transmission texture descriptor} (using the `RGB` channels for color and `A` channel for intensity) to use if any. */
+  diffuseTransmissionTexture?: ShaderTextureDescriptor
+  /** {@link ShaderTextureDescriptor | Diffuse transmission intensity texture descriptor} (using the `A` channel) to use if any. */
+  diffuseTransmissionFactorTexture?: ShaderTextureDescriptor
+  /** {@link ShaderTextureDescriptor | Diffuse transmission texture descriptor} (using the `RGB` channels) to use if any. */
+  diffuseTransmissionColorTexture?: ShaderTextureDescriptor
 }
 
 /** Parameters used to get all the {@link LitMesh} {@link ShaderTextureDescriptor} as an array. */
@@ -362,6 +374,8 @@ export class LitMesh extends Mesh {
       iridescence,
       iridescenceIOR,
       iridescenceThicknessRange,
+      diffuseTransmission,
+      diffuseTransmissionColor,
       // texture descriptors
       baseColorTexture,
       normalTexture,
@@ -383,6 +397,9 @@ export class LitMesh extends Mesh {
       iridescenceTexture,
       iridescenceFactorTexture,
       iridescenceThicknessTexture,
+      diffuseTransmissionTexture,
+      diffuseTransmissionFactorTexture,
+      diffuseTransmissionColorTexture,
       // environment map
       environmentMap,
     } = material
@@ -419,6 +436,8 @@ export class LitMesh extends Mesh {
       iridescence,
       iridescenceIOR,
       iridescenceThicknessRange,
+      diffuseTransmission,
+      diffuseTransmissionColor,
       environmentMap,
     })
 
@@ -466,6 +485,9 @@ export class LitMesh extends Mesh {
       iridescenceTexture,
       iridescenceFactorTexture,
       iridescenceThicknessTexture,
+      diffuseTransmissionTexture,
+      diffuseTransmissionFactorTexture,
+      diffuseTransmissionColorTexture,
     })
 
     materialTextures.forEach((textureDescriptor) => {
@@ -541,6 +563,10 @@ export class LitMesh extends Mesh {
       extensionsUsed.push('KHR_materials_iridescence')
     }
 
+    if (diffuseTransmission !== undefined) {
+      extensionsUsed.push('KHR_materials_diffuse_transmission')
+    }
+
     const hasNormal = defaultParams.geometry && defaultParams.geometry.getAttributeByName('normal')
 
     if (defaultParams.geometry && !hasNormal) {
@@ -588,6 +614,9 @@ export class LitMesh extends Mesh {
       iridescenceTexture,
       iridescenceFactorTexture,
       iridescenceThicknessTexture,
+      diffuseTransmissionTexture,
+      diffuseTransmissionFactorTexture,
+      diffuseTransmissionColorTexture,
       transmissionBackgroundTexture,
       environmentMap,
     })
@@ -649,6 +678,8 @@ export class LitMesh extends Mesh {
       iridescence,
       iridescenceIOR,
       iridescenceThicknessRange,
+      diffuseTransmission,
+      diffuseTransmissionColor,
       environmentMap,
     } = parameters
 
@@ -812,6 +843,19 @@ export class LitMesh extends Mesh {
         type: 'vec2f',
         value: iridescenceThicknessRange !== undefined ? iridescenceThicknessRange.clone() : new Vec2(100, 400),
       },
+      diffuseTransmission: {
+        type: 'f32',
+        value: diffuseTransmission !== undefined ? diffuseTransmission : 0,
+      },
+      diffuseTransmissionColor: {
+        type: 'vec3f',
+        value:
+          diffuseTransmissionColor !== undefined
+            ? colorSpace === 'srgb'
+              ? sRGBToLinear(diffuseTransmissionColor.clone())
+              : diffuseTransmissionColor.clone()
+            : new Vec3(1),
+      },
       ...(environmentMap && {
         envRotation: {
           type: 'mat3x3f',
@@ -867,6 +911,7 @@ export class LitMesh extends Mesh {
       specularFactorTexture,
       specularColorTexture,
       transmissionTexture,
+      thicknessTexture,
       sheenTexture,
       sheenColorTexture,
       sheenRoughnessTexture,
@@ -877,7 +922,9 @@ export class LitMesh extends Mesh {
       iridescenceTexture,
       iridescenceFactorTexture,
       iridescenceThicknessTexture,
-      thicknessTexture,
+      diffuseTransmissionTexture,
+      diffuseTransmissionFactorTexture,
+      diffuseTransmissionColorTexture,
     } = parameters
 
     // base textures (unlit)
@@ -911,6 +958,9 @@ export class LitMesh extends Mesh {
       iridescenceTexture,
       iridescenceFactorTexture,
       iridescenceThicknessTexture,
+      diffuseTransmissionTexture,
+      diffuseTransmissionFactorTexture,
+      diffuseTransmissionColorTexture,
     ]
 
     const materialTextures = (() => {

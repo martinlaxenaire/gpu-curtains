@@ -7,6 +7,7 @@ export type GLTFExtensionsTypes =
   | 'KHR_lights_punctual'
   | 'KHR_materials_anisotropy'
   | 'KHR_materials_clearcoat'
+  | 'KHR_materials_diffuse_transmission'
   | 'KHR_materials_dispersion'
   | 'KHR_materials_emissive_strength'
   | 'KHR_materials_ior'
@@ -230,11 +231,11 @@ export interface GLTFMaterialsVolumeExtension {
 export interface GLTFMaterialsSheenExtension {
   /** The sheen color in linear space. Default to `[0, 0, 0]`. */
   sheenColorFactor?: [number, number, number]
-  /** The sheen color (RGB). The sheen color is in sRGB transfer function. */
+  /** The sheen color, stored in the `RGB` channels. The sheen color is in sRGB transfer function. */
   sheenColorTexture?: GLTF.ITextureInfo
   /** The sheen roughness. Default to `0`. */
   sheenRoughnessFactor?: number
-  /** The sheen roughness (Alpha) texture. */
+  /** The sheen roughness texture, stored in the alpha `A` channel. */
   sheenRoughnessTexture?: GLTF.ITextureInfo
 }
 
@@ -278,6 +279,18 @@ export interface GLTFMaterialsIridescenceExtension {
   iridescenceThicknessTexture?: GLTF.ITextureInfo
 }
 
+/** Define the `KHR_materials_diffuse_transmission` extension materials options. */
+export interface GLTFMaterialsDiffuseTransmissionExtension {
+  /** The percentage of non-specularly reflected light that is diffusely transmitted through the surface. Default to `0`. */
+  diffuseTransmissionFactor?: number
+  /** A texture that defines the percentage of non-specularly reflected light that is diffusely transmitted through the surface. Stored in the alpha `A` channel. */
+  diffuseTransmissionTexture?: GLTF.ITextureInfo
+  /** The color that modulates the transmitted light. Default to `[1, 1, 1]`. */
+  diffuseTransmissionColorFactor?: [number, number, number]
+  /** A texture that defines the color that modulates the diffusely transmitted light, stored in the `RGB` channels. */
+  diffuseTransmissionColorTexture?: GLTF.ITextureInfo
+}
+
 /** Base mapping for all potential GLTF materials extensions types. */
 export type GLTFMaterialsExtensionsMapping = {
   /** Define the `KHR_materials_dispersion` extension materials options. */
@@ -302,6 +315,8 @@ export type GLTFMaterialsExtensionsMapping = {
   KHR_materials_anisotropy: GLTFMaterialsAnisotropyExtension
   /** Define the `KHR_materials_iridescence` extension materials options. */
   KHR_materials_iridescence: GLTFMaterialsIridescenceExtension
+  /** Define the `KHR_materials_diffuse_transmission` extension materials options. */
+  KHR_materials_diffuse_transmission: GLTFMaterialsDiffuseTransmissionExtension
 }
 
 /** Extract keys from GLTFExtensionsTypes that are present in GLTFMaterialsExtensionsMapping. */

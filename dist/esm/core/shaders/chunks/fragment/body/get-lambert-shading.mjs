@@ -49,7 +49,7 @@ const getLambertShading = ({ receiveShadows = false } = {}) => {
   }
   
   // ambient lights
-  var irradiance: vec3f = vec3(0.0);
+  var irradiance: vec3f = getAmbientLightIrradiance();
   RE_IndirectDiffuse(irradiance, outputColor.rgb, &reflectedLight);
   
   let totalDirect: vec3f = reflectedLight.directDiffuse + reflectedLight.directSpecular;

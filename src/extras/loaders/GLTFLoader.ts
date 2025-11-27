@@ -168,6 +168,11 @@ export class GLTFLoader {
 
     // Images
     const pendingImages = []
+    const bitmapOptions: ImageBitmapOptions = {
+      colorSpaceConversion: 'none',
+      premultiplyAlpha: 'none',
+    }
+
     for (let index = 0; index < json.images?.length || 0; ++index) {
       const image = json.images[index]
       if (image.uri) {
@@ -177,7 +182,7 @@ export class GLTFLoader {
             img.crossOrigin = 'anonymous' // Ensure CORS is handled properly if needed
 
             img.onload = () => {
-              createImageBitmap(img, { colorSpaceConversion: 'none' }).then(resolve).catch(reject)
+              createImageBitmap(img, bitmapOptions).then(resolve).catch(reject)
             }
 
             img.onerror = reject
@@ -185,9 +190,7 @@ export class GLTFLoader {
           })
         } else {
           pendingImages[index] = fetch(GLTFLoader.resolveUri(image.uri, baseUrl)).then(async (response) => {
-            return createImageBitmap(await response.blob(), {
-              colorSpaceConversion: 'none',
-            })
+            return createImageBitmap(await response.blob(), bitmapOptions)
           })
         }
       } else {
@@ -204,7 +207,7 @@ export class GLTFLoader {
               img.src = URL.createObjectURL(blob) // Create an object URL for the blob
 
               img.onload = () => {
-                createImageBitmap(img, { colorSpaceConversion: 'none' })
+                createImageBitmap(img, bitmapOptions)
                   .then((bitmap) => {
                     URL.revokeObjectURL(img.src) // Cleanup the object URL
                     resolve(bitmap)
@@ -218,9 +221,7 @@ export class GLTFLoader {
               }
             })
           } else {
-            return createImageBitmap(blob, {
-              colorSpaceConversion: 'none',
-            })
+            return createImageBitmap(blob, bitmapOptions)
           }
         })
       }
