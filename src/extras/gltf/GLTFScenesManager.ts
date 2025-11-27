@@ -184,7 +184,7 @@ export class GLTFScenesManager {
   /**
    * Get an attribute size and eventual bufferFormat from its {@link GLTF.AccessorType | accessor type}.
    * @param type - {@link GLTF.AccessorType | Accessor type} to use.
-   * @returns - Corresponding size and eventual bufferFormat.
+   * @returns - Corresponding size eventual bufferFormat.
    */
   static getVertexAttributeParamsFromType(type: GLTF.AccessorType): {
     /** Corresponding attribute size */
@@ -192,6 +192,7 @@ export class GLTFScenesManager {
     /** Corresponding attribute bufferFormat */
     bufferFormat?: VertexBufferAttribute['bufferFormat']
   } {
+    console.log(type)
     switch (type) {
       case 'VEC2':
         return {
@@ -1800,11 +1801,12 @@ export class GLTFScenesManager {
 
         const struct = targetAttributes.reduce(
           (acc, attribute) => {
+            const type = attribute.size > 1 ? `vec${attribute.size}f` : 'f32'
             return (acc = {
               ...acc,
               ...{
                 [attribute.name]: {
-                  type: `array<${attribute.type}>`,
+                  type: `array<${type}>`,
                   value: attribute.array,
                 },
               },
