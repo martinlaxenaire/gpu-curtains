@@ -38,84 +38,84 @@ import { Vec3 } from '../../math/Vec3';
  * ```
  */
 export declare class Geometry {
-    /** Number of vertices defined by this geometry */
+    /** Number of vertices defined by this geometry. */
     verticesCount: number;
-    /** Vertices order to be drawn by the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | render pipeline} */
+    /** Vertices order to be drawn by the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | render pipeline}. */
     verticesOrder: GPUFrontFace;
-    /** {@link https://www.w3.org/TR/webgpu/#enumdef-gpuprimitivetopology | Topology} to use with this {@link Geometry}, i.e. whether to draw triangles or points */
+    /** {@link https://www.w3.org/TR/webgpu/#enumdef-gpuprimitivetopology | Topology} to use with this {@link Geometry}, i.e. whether to draw triangles or points. */
     topology: GPUPrimitiveTopology;
-    /** Number of instances of this geometry to draw */
+    /** Number of instances of this geometry to draw. */
     instancesCount: number;
-    /** Array of {@link VertexBuffer | vertex buffers} to use with this geometry */
+    /** Array of {@link VertexBuffer | vertex buffers} to use with this geometry. */
     vertexBuffers: VertexBuffer[];
-    /** Options used to create this geometry */
+    /** Options used to create this geometry. */
     options: GeometryOptions;
-    /** The type of the geometry */
+    /** The type of the geometry. */
     type: string;
-    /** The universal unique id of the geometry */
+    /** The universal unique id of the geometry. */
     uuid: string;
     /** Allow to draw this {@link Geometry} with an {@link extras/buffers/IndirectBuffer.IndirectBuffer | IndirectBuffer} if set. */
     indirectDraw: IndirectDrawParams | null;
-    /** The bounding box of the geometry, i.e. two {@link math/Vec3.Vec3 | Vec3} defining the min and max positions to wrap this geometry in a cube */
+    /** The bounding box of the geometry, i.e. two {@link math/Vec3.Vec3 | Vec3} defining the min and max positions to wrap this geometry in a cube. */
     boundingBox: Box3;
-    /** A string to append to our shaders code describing the WGSL structure representing this geometry attributes */
+    /** A string to append to our shaders code describing the WGSL structure representing this geometry attributes. */
     wgslStructFragment: string;
-    /** A string representing the {@link vertexBuffers} layout, used for pipelines caching */
+    /** A string representing the {@link vertexBuffers} layout, used for pipelines caching. */
     layoutCacheKey: string;
-    /** A Set to store this {@link Geometry} consumers (Mesh uuid) */
+    /** A Set to store this {@link Geometry} consumers (Mesh uuid). */
     consumers: Set<string>;
-    /** Whether this geometry is ready to be drawn, i.e. it has been computed and all its vertex buffers have been created */
+    /** Whether this geometry is ready to be drawn, i.e. it has been computed and all its vertex buffers have been created. */
     ready: boolean;
     /**
      * Geometry constructor
-     * @param parameters - {@link GeometryParams | parameters} used to create our Geometry
+     * @param parameters - {@link GeometryParams | parameters} used to create our Geometry.
      */
     constructor({ verticesOrder, topology, instancesCount, vertexBuffers, mapBuffersAtCreation, }?: GeometryParams);
     /**
-     * Reset all the {@link vertexBuffers | vertex buffers} when the device is lost
+     * Reset all the {@link vertexBuffers | vertex buffers} when the device is lost.
      */
     loseContext(): void;
     /**
-     * Restore the {@link Geometry} buffers on context restoration
-     * @param renderer - The {@link Renderer} used to recreate the buffers
+     * Restore the {@link Geometry} buffers on context restoration.
+     * @param renderer - The {@link Renderer} used to recreate the buffers.
      */
     restoreContext(renderer: Renderer): void;
     /**
-     * Add a vertex buffer to our Geometry, set its attributes and return it
-     * @param parameters - vertex buffer {@link VertexBufferParams | parameters}
-     * @returns - newly created {@link VertexBuffer | vertex buffer}
+     * Add a vertex buffer to our Geometry, set its attributes and return it.
+     * @param parameters - Vertex buffer {@link VertexBufferParams | parameters}.
+     * @returns - Newly created {@link VertexBuffer | vertex buffer}.
      */
-    addVertexBuffer({ stepMode, name, attributes, buffer, array, bufferOffset, bufferSize, }?: VertexBufferParams): VertexBuffer;
+    addVertexBuffer({ stepMode, name, attributes, array, arrayBuffer, buffer, bufferOffset, bufferSize, }?: VertexBufferParams): VertexBuffer;
     /**
-     * Get a vertex buffer by name
-     * @param name - our vertex buffer name
-     * @returns - found {@link VertexBuffer | vertex buffer} or null if not found
+     * Get a vertex buffer by name.
+     * @param name - Our vertex buffer name.
+     * @returns - Found {@link VertexBuffer | vertex buffer} or null if not found.
      */
     getVertexBufferByName(name?: string): VertexBuffer | null;
     /**
-     * Set a vertex buffer attribute
-     * @param parameters - attributes {@link VertexBufferAttributeParams | parameters}
+     * Set a vertex buffer attribute.
+     * @param parameters - Attributes {@link VertexBufferAttributeParams | parameters}.
      */
-    setAttribute({ vertexBuffer, name, type, bufferFormat, size, array, verticesStride, }: VertexBufferAttributeParams): void;
+    setAttribute({ vertexBuffer, name, type, bufferFormat, size, array, normalized, verticesStride, }: VertexBufferAttributeParams): void;
     /**
-     * Get whether this Geometry is ready to compute, i.e. if its first vertex buffer array has not been created yet
+     * Get whether this Geometry is ready to compute, i.e. if its first vertex buffer array has not been created yet.
      * @readonly
      */
     get shouldCompute(): boolean;
     /**
-     * Get an attribute by name
-     * @param name - name of the attribute to find
-     * @returns - found {@link VertexBufferAttribute | attribute} or null if not found
+     * Get an attribute by name.
+     * @param name - Name of the attribute to find.
+     * @returns - Found {@link VertexBufferAttribute | attribute} or null if not found.
      */
     getAttributeByName(name: string): VertexBufferAttribute | null;
     /**
      * Compute the normal {@link Vec3} from a triangle defined by three {@link Vec3} by computing edges {@link Vec3}.
-     * @param vertex1 - first triangle position
-     * @param vertex2 - second triangle position
-     * @param vertex3 - third triangle position
-     * @param edge1 - first edge
-     * @param edge2 - second edge
-     * @param normal - flat normal generated.
+     * @param vertex1 - First triangle position.
+     * @param vertex2 - Second triangle position.
+     * @param vertex3 - Third triangle position.
+     * @param edge1 - First edge.
+     * @param edge2 - Second edge.
+     * @param normal - Flat normal generated.
      */
     computeNormalFromTriangle(vertex1: Vec3, vertex2: Vec3, vertex3: Vec3, edge1: Vec3, edge2: Vec3, normal: Vec3): void;
     /**
@@ -133,9 +133,9 @@ export declare class Geometry {
     setWGSLFragment(): void;
     /**
      * Create the {@link Geometry} {@link vertexBuffers | vertex buffers}.
-     * @param parameters - parameters used to create the vertex buffers.
+     * @param parameters - Parameters used to create the vertex buffers.
      * @param parameters.renderer - {@link Renderer} used to create the vertex buffers.
-     * @param parameters.label - label to use for the vertex buffers.
+     * @param parameters.label - Label to use for the vertex buffers.
      */
     createBuffers({ renderer, label }: {
         renderer: Renderer;
@@ -154,8 +154,8 @@ export declare class Geometry {
     useIndirectBuffer({ buffer, offset }: IndirectDrawParams): void;
     /** RENDER **/
     /**
-     * Set our render pass geometry vertex buffers
-     * @param pass - current render pass
+     * Set our render pass geometry vertex buffers.
+     * @param pass - Current render pass.
      */
     setGeometryBuffers(pass: GPURenderPassTypes): void;
     /**

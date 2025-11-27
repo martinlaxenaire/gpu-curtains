@@ -38,7 +38,9 @@ const GL = typeof window !== "undefined" && WebGLRenderingContext || {
   FLOAT: 5126,
   TRIANGLES: 4,
   TRIANGLE_STRIP: 5,
+  TRIANGLE_FAN: 6,
   LINES: 1,
+  LINE_LOOP: 2,
   LINE_STRIP: 3,
   POINTS: 0,
   CLAMP_TO_EDGE: 33071,
@@ -87,56 +89,27 @@ const _GLTFScenesManager = class _GLTFScenesManager {
     this.createScenes();
   }
   /**
-   * Get an attribute type, bufferFormat and size from its {@link GLTF.AccessorType | accessor type}.
-   * @param type - {@link GLTF.AccessorType | accessor type} to use.
-   * @returns - corresponding type, bufferFormat and size.
+   * Get an attribute size from its {@link GLTF.AccessorType | accessor type}.
+   * @param type - {@link GLTF.AccessorType | Accessor type} to use.
+   * @returns - Corresponding size.
    */
   static getVertexAttributeParamsFromType(type) {
     switch (type) {
       case "VEC2":
         return {
-          type: "vec2f",
-          bufferFormat: "float32x2",
           size: 2
         };
       case "VEC3":
         return {
-          type: "vec3f",
-          bufferFormat: "float32x3",
           size: 3
         };
       case "VEC4":
         return {
-          type: "vec4f",
-          bufferFormat: "float32x4",
           size: 4
-        };
-      case "MAT2":
-        return {
-          type: "mat2x2f",
-          bufferFormat: "float32x2",
-          // not used
-          size: 6
-        };
-      case "MAT3":
-        return {
-          type: "mat3x3f",
-          bufferFormat: "float32x3",
-          // not used
-          size: 9
-        };
-      case "MAT4":
-        return {
-          type: "mat4x4f",
-          bufferFormat: "float32x4",
-          // not used
-          size: 16
         };
       case "SCALAR":
       default:
         return {
-          type: "f32",
-          bufferFormat: "float32",
           size: 1
         };
     }
@@ -172,10 +145,14 @@ const _GLTFScenesManager = class _GLTFScenesManager {
   static gpuPrimitiveTopologyForMode(mode) {
     switch (mode) {
       case GL.TRIANGLE_STRIP:
+      // GL.TRIANGLE_STRIP
+      case GL.TRIANGLE_FAN:
         return "triangle-strip";
       case GL.LINES:
         return "line-list";
       case GL.LINE_STRIP:
+      // GL.LINE_STRIP
+      case GL.LINE_LOOP:
         return "line-strip";
       case GL.POINTS:
         return "point-list";
@@ -1644,9 +1621,9 @@ parsePrimitiveProperty_fn = function(primitiveProperty, attributes) {
     const attribute = {
       name,
       ...attributeParams,
-      array
+      array,
+      normalized: !!accessor.normalized
     };
-    if (name.includes("color") && accessor.normalized && size === 4) ;
     attributes.push(attribute);
   }
   if (maxByteOffset > 0) {
