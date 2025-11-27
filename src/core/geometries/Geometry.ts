@@ -265,11 +265,6 @@ export class Geometry {
 
     if (!name) name = 'geometryAttribute' + attributesLength
 
-    if (name.includes('joints')) {
-      array = new Float32Array(array)
-      console.log(this)
-    }
-
     const attributeLayout = getVertexBufferAttributeLayout({
       size,
       array,

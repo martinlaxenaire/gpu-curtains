@@ -182,13 +182,15 @@ export class GLTFScenesManager {
   }
 
   /**
-   * Get an attribute size from its {@link GLTF.AccessorType | accessor type}.
+   * Get an attribute size and eventual bufferFormat from its {@link GLTF.AccessorType | accessor type}.
    * @param type - {@link GLTF.AccessorType | Accessor type} to use.
-   * @returns - Corresponding size.
+   * @returns - Corresponding size and eventual bufferFormat.
    */
   static getVertexAttributeParamsFromType(type: GLTF.AccessorType): {
     /** Corresponding attribute size */
     size: VertexBufferAttribute['size']
+    /** Corresponding attribute bufferFormat */
+    bufferFormat?: VertexBufferAttribute['bufferFormat']
   } {
     switch (type) {
       case 'VEC2':
@@ -202,6 +204,21 @@ export class GLTFScenesManager {
       case 'VEC4':
         return {
           size: 4,
+        }
+      case 'MAT2':
+        return {
+          bufferFormat: 'float32x2',
+          size: 6,
+        }
+      case 'MAT3':
+        return {
+          bufferFormat: 'float32x3',
+          size: 9,
+        }
+      case 'MAT4':
+        return {
+          bufferFormat: 'float32x4',
+          size: 16,
         }
       case 'SCALAR':
       default: // treat default as f32
