@@ -269,8 +269,6 @@ export class GLTFScenesManager {
    */
   static gpuPrimitiveTopologyForMode(mode: GLTF.MeshPrimitiveMode): GPUPrimitiveTopology {
     switch (mode) {
-      case GL.TRIANGLES: // GL.TRIANGLES
-        return 'triangle-list'
       case GL.TRIANGLE_STRIP: // GL.TRIANGLE_STRIP
         return 'triangle-strip'
       case GL.LINES: // GL.LINES
@@ -279,6 +277,9 @@ export class GLTFScenesManager {
         return 'line-strip'
       case GL.POINTS: // GL.POINTS
         return 'point-list'
+      case GL.TRIANGLES: // GL.TRIANGLES
+      default:
+        return 'triangle-list'
     }
   }
 
@@ -501,8 +502,6 @@ export class GLTFScenesManager {
             })?.sampler
 
           const sampler = this.scenesManager.samplers[samplerIndex ?? 0]
-
-          console.log(gltfTextureInfo, samplerIndex, sampler)
 
           const textureTransform = gltfTextureInfo.extensions && gltfTextureInfo.extensions['KHR_texture_transform']
 
@@ -1355,6 +1354,13 @@ export class GLTFScenesManager {
         array,
       }
 
+      if (name.includes('color') && accessor.normalized && size === 4) {
+        // attribute.bufferFormat = 'snorm16x4'
+        // attribute.bufferFormat = 'unorm8x4'
+        // attribute.normalized = true
+        // console.log('NORMALIZE COLOR!!', attribute, accessor)
+      }
+
       attributes.push(attribute)
     }
 
@@ -1568,9 +1574,17 @@ export class GLTFScenesManager {
       this.sortAttributesByNames(['position', 'uv', 'normal'], defaultAttributes)
     }
 
+    const topology = GLTFScenesManager.gpuPrimitiveTopologyForMode(primitive.mode)
+
+    // gltf states that points or lines gemoetries without normals
+    // should be rendered as unlit
+    if (!hasNormal && (topology.includes('line') || topology.includes('point'))) {
+      meshDescriptor.extensionsUsed.push('KHR_materials_unlit')
+    }
+
     const geometryAttributes: GeometryParams = {
       instancesCount: instances.length,
-      topology: GLTFScenesManager.gpuPrimitiveTopologyForMode(primitive.mode),
+      topology,
       vertexBuffers: [
         {
           name: 'attributes',

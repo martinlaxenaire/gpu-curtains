@@ -49,6 +49,7 @@ import { ChildDescriptor, MeshDescriptor, MeshDescriptorMaterialParams, Primitiv
  * - [x] KHR_lights_punctual
  * - [x] KHR_materials_anisotropy
  * - [x] KHR_materials_clearcoat
+ * - [x] KHR_materials_diffuse_transmission
  * - [x] KHR_materials_dispersion
  * - [x] KHR_materials_emissive_strength
  * - [x] KHR_materials_ior

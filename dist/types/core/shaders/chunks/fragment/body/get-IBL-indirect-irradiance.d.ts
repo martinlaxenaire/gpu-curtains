@@ -2,9 +2,11 @@ import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragmen
 /**
  * Get the environment map indirect irradiance (diffuse).
  * @param parameters - Parameters to use to apply PBR shading.
+ * @param parameters.extensionsUsed - {@link PBRFragmentShaderInputParams.extensionsUsed | extensionsUsed} to check if diffuse transmission is enabled.
  * @param parameters.environmentMap - {@link extras/environmentMap/EnvironmentMap.EnvironmentMap | EnvironmentMap} to use for indirect irradiance if any.
  * @returns - String with environment map indirect irradiance applied to `iblIrradiance` (`vec3f`).
  */
-export declare const getIBLIndirectIrradiance: ({ environmentMap, }: {
+export declare const getIBLIndirectIrradiance: ({ extensionsUsed, environmentMap, }: {
+    extensionsUsed?: PBRFragmentShaderInputParams['extensionsUsed'];
     environmentMap?: PBRFragmentShaderInputParams['environmentMap'];
 }) => string;

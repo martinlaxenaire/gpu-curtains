@@ -5,9 +5,7 @@ const applySheenClearcoatContribution = ({
   if (extensionsUsed.includes("KHR_materials_sheen")) {
     sheenClearcoatContribution += /* wgsl */
     `
-  let sheenEnergyComp: f32 = 1.0 - max3(sheenColor) * sheenAlbedoScale;
-
-  outgoingLight = outgoingLight * sheenEnergyComp + sheenSpecularDirect + sheenSpecularIndirect;
+  outgoingLight = outgoingLight + sheenSpecularDirect + sheenSpecularIndirect;
     `;
   }
   if (extensionsUsed.includes("KHR_materials_clearcoat")) {

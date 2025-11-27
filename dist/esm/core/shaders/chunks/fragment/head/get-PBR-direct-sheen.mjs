@@ -19,19 +19,6 @@ fn BRDF_Sheen(
 
   return sheenColor * ( D * V );
 }
-
-fn getPBRDirectSheen(
-  normal: vec3f,
-  viewDirection: vec3f,
-  sheenColor: vec3f,
-  sheenRoughness: f32,
-  directLight: DirectLight,
-  ptr_reflectedLight: ptr<function, ReflectedLight>
-) -> vec3f {
-  let NdotL: f32 = saturate(dot(normal, directLight.direction));
-  let irradiance: vec3f = NdotL * directLight.color;
-  return irradiance * BRDF_Sheen( directLight.direction, viewDirection, normal, sheenColor, sheenRoughness );
-}
 `
 );
 

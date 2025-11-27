@@ -1,6 +1,6 @@
 // Goals of this test:
 // - test various capacities of the gltf loader
-import { models } from './models'
+// import { models } from './models'
 
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
@@ -109,7 +109,26 @@ window.addEventListener('load', async () => {
   const modelUrl = searchParams.get('model')
   let modelUrlName = null
 
-  let availableModels = { ...models }
+  const gltFSampleModelsRes = await fetch(
+    'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/model-index.json'
+  )
+  const gltfSampleModels = await gltFSampleModelsRes.json()
+  let availableSampleModels = gltfSampleModels.reduce((acc, current) => {
+    const variants = current.variants
+    const variant = variants['glTF-Binary'] || variants['glTF']
+
+    return {
+      ...acc,
+      [current.name]: {
+        name: current.label,
+        url: `https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/${current.name}/${
+          variant.endsWith('.glb') ? 'glTF-Binary' : 'glTF'
+        }/${variant}`,
+      },
+    }
+  }, {})
+
+  // let availableModels = { ...models }
 
   if (modelUrl) {
     const modelName = modelUrl
@@ -118,8 +137,8 @@ window.addEventListener('load', async () => {
       .replace('.glb', '')
     modelUrlName = modelName + 'FromURL' //  avoid duplicate keys
 
-    availableModels = {
-      ...availableModels,
+    availableSampleModels = {
+      ...availableSampleModels,
       [modelUrlName]: {
         name: modelName + ' (from URL)',
         url: modelUrl,
@@ -127,8 +146,8 @@ window.addEventListener('load', async () => {
     }
   }
 
-  const currentModelKey = modelUrlName ?? 'damagedHelmet'
-  let currentModel = availableModels[currentModelKey]
+  const currentModelKey = modelUrlName ?? 'DamagedHelmet'
+  let currentModel = availableSampleModels[currentModelKey]
 
   const ambientLight = new AmbientLight(gpuCameraRenderer, {
     intensity: 0, // will be updated
@@ -165,8 +184,8 @@ window.addEventListener('load', async () => {
     .add(
       { [currentModel.name]: currentModelKey },
       currentModel.name,
-      Object.keys(availableModels).reduce((acc, v) => {
-        return { ...acc, [availableModels[v].name]: v }
+      Object.keys(availableSampleModels).reduce((acc, v) => {
+        return { ...acc, [availableSampleModels[v].name]: v }
       }, {})
     )
     .name('Models')
@@ -209,6 +228,7 @@ window.addEventListener('load', async () => {
     'Geometry Tangent',
     'Geometry Bitangent',
     'Shading Normal',
+    'Alpha',
     'Occlusion',
     'Emissive',
     'Base Color',
@@ -257,6 +277,8 @@ window.addEventListener('load', async () => {
   let variantsFolder = gui.addFolder('Variants')
 
   const animationsFolder = gui.addFolder('Animations')
+  let pausedAnimations = false
+  let pausedAnimationsField = animationsFolder.add({ pausedAnimations }, 'pausedAnimations').name('Pause')
 
   let animationsFields = []
 
@@ -459,120 +481,122 @@ window.addEventListener('load', async () => {
         } else if(debug.channel == 7.0) {
           outputColor = vec4(normal * 0.5 + 0.5, 1.0);
         } else if(debug.channel == 8.0) {
-          ${!isUnlit ? 'outputColor = vec4(vec3(occlusion), 1.0);' : 'outputColor = vec4(vec3(0.0), 1.0);'}
+          outputColor = vec4(vec3(outputColor.a), 1.0);
         } else if(debug.channel == 9.0) {
-          ${!isUnlit ? 'outputColor = vec4(emissive, 1.0);' : 'outputColor = vec4(vec3(0.0), 1.0);'}
+          ${!isUnlit ? 'outputColor = vec4(vec3(occlusion), 1.0);' : 'outputColor = vec4(vec3(0.0), 1.0);'}
         } else if(debug.channel == 10.0) {
-          outputColor = baseColor;
+          ${!isUnlit ? 'outputColor = vec4(emissive, 1.0);' : 'outputColor = vec4(vec3(0.0), 1.0);'}
         } else if(debug.channel == 11.0) {
+          outputColor = baseColor;
+        } else if(debug.channel == 12.0) {
           ${
             !isUnlit && shadingModel !== 'Lambert'
               ? 'outputColor = vec4(vec3(metallic), 1.0);'
               : 'outputColor = vec4(vec3(0.0), 1.0);'
           }
-        } else if(debug.channel == 12.0) {
+        } else if(debug.channel == 13.0) {
           ${
             !isUnlit && shadingModel !== 'Lambert'
               ? 'outputColor = vec4(vec3(roughness), 1.0);'
               : 'outputColor = vec4(vec3(0.0), 1.0);'
           }
-        } else if(debug.channel == 13.0) {
+        } else if(debug.channel == 14.0) {
           ${
             !isUnlit && shadingModel !== 'Lambert'
               ? 'outputColor = vec4(vec3(specularIntensity), 1.0);'
               : 'outputColor = vec4(vec3(0.0), 1.0);'
           }
-        } else if(debug.channel == 14.0) {
+        } else if(debug.channel == 15.0) {
           ${
             !isUnlit && shadingModel !== 'Lambert'
               ? 'outputColor = vec4(specularColor, 1.0);'
               : 'outputColor = vec4(vec3(0.0), 1.0);'
           }
-        } else if(debug.channel == 15.0) {
+        } else if(debug.channel == 16.0) {
           ${
             !isUnlit && shadingModel === 'PBR'
               ? 'outputColor = vec4(vec3(clearcoat), 1.0);'
               : 'outputColor = vec4(vec3(0.0), 1.0);'
           }
-        } else if(debug.channel == 16.0) {
+        } else if(debug.channel == 17.0) {
           ${
             !isUnlit && shadingModel === 'PBR'
               ? 'outputColor = vec4(vec3(clearcoatRoughness), 1.0);'
               : 'outputColor = vec4(vec3(0.0), 1.0);'
           }
-        } else if(debug.channel == 17.0) {
+        } else if(debug.channel == 18.0) {
           ${
             !isUnlit && shadingModel === 'PBR'
               ? 'outputColor = vec4(clearcoatNormal * 0.5 + 0.5, 1.0);'
               : 'outputColor = vec4(vec3(0.0), 1.0);'
           }
-        } else if(debug.channel == 18.0) {
+        } else if(debug.channel == 19.0) {
           ${
             !isUnlit && shadingModel === 'PBR'
               ? 'outputColor = vec4(sheenColor, 1.0);'
               : 'outputColor = vec4(vec3(0.0), 1.0);'
           }
-        } else if(debug.channel == 19.0) {
+        } else if(debug.channel == 20.0) {
           ${
             !isUnlit && shadingModel === 'PBR'
               ? 'outputColor = vec4(vec3(sheenRoughness), 1.0);'
               : 'outputColor = vec4(vec3(0.0), 1.0);'
           }
-        } else if(debug.channel == 20.0) {
+        } else if(debug.channel == 21.0) {
           ${
             !isUnlit && shadingModel === 'PBR'
               ? 'outputColor = vec4(vec3(iridescence), 1.0);'
               : 'outputColor = vec4(vec3(0.0), 1.0);'
           }
-        } else if(debug.channel == 21.0) {
+        } else if(debug.channel == 22.0) {
           ${
             !isUnlit && shadingModel === 'PBR'
               ? 'outputColor = vec4(vec3(iridescenceThickness / 1200.0), 1.0);'
               : 'outputColor = vec4(vec3(0.0), 1.0);'
           }
-        } else if(debug.channel == 22.0) {
+        } else if(debug.channel == 23.0) {
           ${
             !isUnlit && shadingModel === 'PBR'
               ? 'outputColor = vec4(vec3(anisotropy), 1.0);'
               : 'outputColor = vec4(vec3(0.0), 1.0);'
           }
-        } else if(debug.channel == 23.0) {
+        } else if(debug.channel == 24.0) {
           ${
             !isUnlit && shadingModel === 'PBR'
               ? 'outputColor = vec4(vec2((anisotropyVector + vec2(1.0)) * 0.5), 0.0, 1.0);'
               : 'outputColor = vec4(vec3(0.0), 1.0);'
           }
-        } else if(debug.channel == 24.0) {
+        } else if(debug.channel == 25.0) {
           ${
             !isUnlit && shadingModel === 'PBR'
               ? 'outputColor = vec4(vec3(diffuseTransmission), 1.0);'
               : 'outputColor = vec4(vec3(0.0), 1.0);'
           }
-        } else if(debug.channel == 25.0) {
+        } else if(debug.channel == 26.0) {
           ${
             !isUnlit && shadingModel === 'PBR'
               ? 'outputColor = vec4(diffuseTransmissionColor, 1.0);'
               : 'outputColor = vec4(vec3(0.0), 1.0);'
           }
-        } else if(debug.channel == 26.0) {
+        } else if(debug.channel == 27.0) {
           ${
             !isUnlit && shadingModel === 'PBR'
               ? 'outputColor = vec4(dielectricScattering.singleScattering, 1.0);'
               : 'outputColor = vec4(vec3(0.0), 1.0);'
           }
-        } else if(debug.channel == 27.0) {
+        } else if(debug.channel == 28.0) {
           ${
             !isUnlit && shadingModel === 'PBR'
               ? 'outputColor = vec4(dielectricScattering.multiScattering, 1.0);'
               : 'outputColor = vec4(vec3(0.0), 1.0);'
           }
-        } else if(debug.channel == 28.0) {
+        } else if(debug.channel == 29.0) {
           ${
             !isUnlit && shadingModel === 'PBR'
               ? 'outputColor = vec4(metallicScattering.singleScattering, 1.0);'
               : 'outputColor = vec4(vec3(0.0), 1.0);'
           }
-        } else if(debug.channel == 29.0) {
+        } else if(debug.channel == 30.0) {
           ${
             !isUnlit && shadingModel === 'PBR'
               ? 'outputColor = vec4(metallicScattering.multiScattering, 1.0);'
@@ -634,11 +658,15 @@ window.addEventListener('load', async () => {
 
     // animations
     if (scenesManager.animations.length) {
+      pausedAnimationsField.enable()
+
       const hasSkins = gltf.skins && gltf.skins.length
-      if (hasSkins) {
-        scenesManager.animations[0].play()
-      } else {
-        scenesManager.animations.forEach((animation) => animation.play())
+      if (!pausedAnimations) {
+        if (hasSkins) {
+          scenesManager.animations[0].play()
+        } else {
+          scenesManager.animations.forEach((animation) => animation.play())
+        }
       }
 
       scenesManager.animations.forEach((animation, id) => {
@@ -664,6 +692,8 @@ window.addEventListener('load', async () => {
 
         animationsFields.push(animationField)
       })
+    } else {
+      pausedAnimationsField.disable()
     }
 
     // cameras
@@ -802,7 +832,7 @@ window.addEventListener('load', async () => {
   })
 
   modelField.onChange(async (value) => {
-    if (availableModels[value].name !== currentModel.name) {
+    if (availableSampleModels[value].name !== currentModel.name) {
       cleanUpScene()
 
       if (animationsFields.length) {
@@ -811,7 +841,7 @@ window.addEventListener('load', async () => {
 
       animationsFields = []
 
-      currentModel = availableModels[value]
+      currentModel = availableSampleModels[value]
 
       useCamera(defaultCamera)
 
@@ -892,6 +922,18 @@ window.addEventListener('load', async () => {
 
     gltfScenesManager?.scenesManager?.meshes?.forEach((mesh) => {
       mesh.uniforms.debug.channel.value = value
+    })
+  })
+
+  pausedAnimationsField.onChange((value) => {
+    pausedAnimations = value
+
+    gltfScenesManager?.scenesManager?.animations.forEach((animation) => {
+      if (pausedAnimations) {
+        animation.pause()
+      } else {
+        animation.play()
+      }
     })
   })
 

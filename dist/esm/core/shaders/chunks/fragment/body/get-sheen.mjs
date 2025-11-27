@@ -40,7 +40,7 @@ const getSheen = ({
   }
   sheen += /* wgsl */
   `
-  sheenRoughness = clamp(sheenRoughness, 0.07, 1.0);`;
+  sheenRoughness = clamp(sheenRoughness, 0.0001, 1.0);`;
   return sheen;
 };
 

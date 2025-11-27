@@ -301,6 +301,15 @@ export class Geometry {
     // and use an offset inside the setVertexBuffer call instead
     // it might be needed in some edge cases with glTF geometries
     // see https://toji.dev/webgpu-gltf-case-study/#handling-large-attribute-offsets
+    // const bufferOffset = attributesLength
+    //   ? attributes[attributesLength - 1].bufferOffset +
+    //     attributes[attributesLength - 1].size * attributes[attributesLength - 1].array.BYTES_PER_ELEMENT
+    //   : 0
+
+    const bufferOffset = attributesLength
+      ? attributes[attributesLength - 1].bufferOffset + attributes[attributesLength - 1].size * 4
+      : 0
+
     const attribute = {
       name,
       type,
@@ -312,14 +321,13 @@ export class Geometry {
             return accumulator + currentValue.bufferLength
           }, 0)
         : 0,
-      bufferOffset: attributesLength
-        ? attributes[attributesLength - 1].bufferOffset + attributes[attributesLength - 1].size * 4
-        : 0,
+      bufferOffset,
       array,
       verticesStride: verticesStride,
     }
 
     vertexBuffer.bufferLength += attribute.bufferLength * verticesStride
+    // vertexBuffer.arrayStride += attribute.size * array.BYTES_PER_ELEMENT
     vertexBuffer.arrayStride += attribute.size
     vertexBuffer.attributes.push(attribute)
   }
@@ -453,7 +461,10 @@ export class Geometry {
           const { name, size, array, verticesStride } = vertexBuffer.attributes[j]
 
           for (let s = 0; s < size; s++) {
-            const attributeValue = array[Math.floor(attributeIndex / verticesStride) * size + s]
+            let attributeValue = array[Math.floor(attributeIndex / verticesStride) * size + s]
+            // if (normalized) {
+            //   attributeValue /= 255
+            // }
             vertexBuffer.array[currentIndex] = attributeValue ?? 0
 
             // compute bounding box

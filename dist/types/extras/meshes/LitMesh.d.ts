@@ -86,6 +86,10 @@ export interface LitMeshMaterialUniformParams {
     iridescenceIOR?: number;
     /** Minimum and maximum thickness of the iridescence layer. Default to `new Vec2(100, 400)`. */
     iridescenceThicknessRange?: Vec2;
+    /** The percentage of non-specularly reflected light that is diffusely transmitted through the surface. Default to `0`. */
+    diffuseTransmission?: number;
+    /** The color that modulates the transmitted light. Default to `new Vec3(1)`. */
+    diffuseTransmissionColor?: Vec3;
 }
 /** Parameters used to get the {@link LitMesh} material uniforms. */
 export interface GetLitMeshMaterialUniform extends LitMeshMaterialUniformParams {
@@ -147,6 +151,12 @@ export interface PBRTexturesDescriptors extends PhongTexturesDescriptors {
     iridescenceFactorTexture?: ShaderTextureDescriptor;
     /** {@link ShaderTextureDescriptor | Iridescence thickness texture descriptor} (using the `G` channel) to use if any. */
     iridescenceThicknessTexture?: ShaderTextureDescriptor;
+    /** {@link ShaderTextureDescriptor | Diffuse transmission texture descriptor} (using the `RGB` channels for color and `A` channel for intensity) to use if any. */
+    diffuseTransmissionTexture?: ShaderTextureDescriptor;
+    /** {@link ShaderTextureDescriptor | Diffuse transmission intensity texture descriptor} (using the `A` channel) to use if any. */
+    diffuseTransmissionFactorTexture?: ShaderTextureDescriptor;
+    /** {@link ShaderTextureDescriptor | Diffuse transmission texture descriptor} (using the `RGB` channels) to use if any. */
+    diffuseTransmissionColorTexture?: ShaderTextureDescriptor;
 }
 /** Parameters used to get all the {@link LitMesh} {@link ShaderTextureDescriptor} as an array. */
 export interface GetMaterialTexturesDescriptors extends PBRTexturesDescriptors {

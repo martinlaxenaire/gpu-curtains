@@ -1,8 +1,8 @@
 const getDiffuse = (
   /* wgsl */
   `
-  let diffuseColor: vec3f = outputColor.rgb;
-  let diffuseContribution: vec3f = outputColor.rgb * (1.0 - metallic);`
+  var diffuseColor: vec3f = outputColor.rgb;
+  var diffuseContribution: vec3f = outputColor.rgb * (1.0 - metallic);`
 );
 
 export { getDiffuse };
