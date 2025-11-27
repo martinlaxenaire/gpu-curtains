@@ -265,6 +265,11 @@ export class Geometry {
 
     if (!name) name = 'geometryAttribute' + attributesLength
 
+    if (name.includes('joints')) {
+      array = new Float32Array(array)
+      console.log(this)
+    }
+
     const attributeLayout = getVertexBufferAttributeLayout({
       size,
       array,
@@ -468,8 +473,6 @@ export class Geometry {
         vertexBuffer.arrayBuffer = new ArrayBuffer(vertexBuffer.bufferLength)
         const arrayView = new DataView(vertexBuffer.arrayBuffer)
 
-        const isDebug = vertexBuffer.attributes.find((attr) => attr.name.includes('joints'))
-
         for (let a = 0; a < vertexBuffer.attributes.length; a++) {
           const attribute = vertexBuffer.attributes[a]
           const { name, array, size, bufferOffset, verticesStride } = attribute
@@ -508,16 +511,10 @@ export class Geometry {
                 const startOffset = verticesStrideOffset + attrStrideOffset + bufferOffset + attrOffset
 
                 setFunction(startOffset, attrValue, true)
-
-                if (isDebug && attrIndex < 3) {
-                  console.log(name, startOffset, attrValue)
-                }
               }
             }
           }
         }
-
-        console.log(vertexBuffer, new Float32Array(vertexBuffer.arrayBuffer, 0, 28))
       }
     })
 
