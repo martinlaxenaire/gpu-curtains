@@ -277,8 +277,8 @@ window.addEventListener('load', async () => {
   let variantsFolder = gui.addFolder('Variants')
 
   const animationsFolder = gui.addFolder('Animations')
-  let pausedAnimations = false
-  let pausedAnimationsField = animationsFolder.add({ pausedAnimations }, 'pausedAnimations').name('Pause')
+  let playAnimations = true
+  let playAnimationsField = animationsFolder.add({ playAnimations }, 'playAnimations').name('Play animations')
 
   let animationsFields = []
 
@@ -658,10 +658,10 @@ window.addEventListener('load', async () => {
 
     // animations
     if (scenesManager.animations.length) {
-      pausedAnimationsField.enable()
+      playAnimationsField.enable()
 
       const hasSkins = gltf.skins && gltf.skins.length
-      if (!pausedAnimations) {
+      if (playAnimations) {
         if (hasSkins) {
           scenesManager.animations[0].play()
         } else {
@@ -693,7 +693,7 @@ window.addEventListener('load', async () => {
         animationsFields.push(animationField)
       })
     } else {
-      pausedAnimationsField.disable()
+      playAnimationsField.disable()
     }
 
     // cameras
@@ -925,14 +925,14 @@ window.addEventListener('load', async () => {
     })
   })
 
-  pausedAnimationsField.onChange((value) => {
-    pausedAnimations = value
+  playAnimationsField.onChange((value) => {
+    playAnimations = value
 
     gltfScenesManager?.scenesManager?.animations.forEach((animation) => {
-      if (pausedAnimations) {
-        animation.pause()
-      } else {
+      if (playAnimations) {
         animation.play()
+      } else {
+        animation.pause()
       }
     })
   })

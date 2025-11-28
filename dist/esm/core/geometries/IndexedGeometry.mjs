@@ -79,7 +79,7 @@ class IndexedGeometry extends Geometry {
     });
   }
   /**
-   * If we have less than 65.536 vertices, we should use a Uin16Array to hold our index buffer values
+   * If we have less than 65.536 vertices, we should use a Uin16Array to hold our index buffer values.
    * @readonly
    */
   get useUint16IndexArray() {
@@ -96,13 +96,16 @@ class IndexedGeometry extends Geometry {
     bufferOffset = 0,
     bufferSize = null
   }) {
+    const arrayBuffer = new ArrayBuffer(array.byteLength);
+    new Uint8Array(arrayBuffer).set(new Uint8Array(array.buffer, array.byteOffset, array.byteLength));
     this.indexBuffer = {
       array,
       bufferFormat,
       bufferLength: array.length,
       buffer,
+      arrayBuffer,
       bufferOffset,
-      bufferSize: bufferSize !== null ? bufferSize : array.length * array.constructor.BYTES_PER_ELEMENT
+      bufferSize: bufferSize !== null ? bufferSize : array.byteLength
     };
   }
   /**
@@ -166,6 +169,8 @@ class IndexedGeometry extends Geometry {
   destroy(renderer = null) {
     super.destroy(renderer);
     if (this.indexBuffer) {
+      this.indexBuffer.array = null;
+      this.indexBuffer.arrayBuffer = null;
       this.indexBuffer.buffer.consumers.delete(this.uuid);
       this.indexBuffer.buffer.destroy();
       if (renderer) renderer.removeBuffer(this.indexBuffer.buffer);

@@ -100,14 +100,14 @@ export declare class GLTFScenesManager {
     /**
      * Get an attribute type, bufferFormat and size from its {@link GLTF.AccessorType | accessor type}.
      * @param type - {@link GLTF.AccessorType | accessor type} to use.
-     * @returns - corresponding type, bufferFormat and size.
+     * @returns - Corresponding type, bufferFormat and size.
      */
     static getVertexAttributeParamsFromType(type: GLTF.AccessorType): {
-        /** Corresponding attribute type */
+        /** Corresponding attribute type. */
         type: VertexBufferAttribute['type'];
-        /** Corresponding attribute bufferFormat */
+        /** Corresponding attribute bufferFormat. */
         bufferFormat: VertexBufferAttribute['bufferFormat'];
-        /** Corresponding attribute size */
+        /** Corresponding attribute size. */
         size: VertexBufferAttribute['size'];
     };
     /**

@@ -38,7 +38,9 @@ const GL = typeof window !== "undefined" && WebGLRenderingContext || {
   FLOAT: 5126,
   TRIANGLES: 4,
   TRIANGLE_STRIP: 5,
+  TRIANGLE_FAN: 6,
   LINES: 1,
+  LINE_LOOP: 2,
   LINE_STRIP: 3,
   POINTS: 0,
   CLAMP_TO_EDGE: 33071,
@@ -89,7 +91,7 @@ const _GLTFScenesManager = class _GLTFScenesManager {
   /**
    * Get an attribute type, bufferFormat and size from its {@link GLTF.AccessorType | accessor type}.
    * @param type - {@link GLTF.AccessorType | accessor type} to use.
-   * @returns - corresponding type, bufferFormat and size.
+   * @returns - Corresponding type, bufferFormat and size.
    */
   static getVertexAttributeParamsFromType(type) {
     switch (type) {
@@ -159,7 +161,6 @@ const _GLTFScenesManager = class _GLTFScenesManager {
       case GL.UNSIGNED_INT:
         return Uint32Array;
       case GL.FLOAT:
-      // GL.FLOAT
       default:
         return Float32Array;
     }
@@ -172,15 +173,18 @@ const _GLTFScenesManager = class _GLTFScenesManager {
   static gpuPrimitiveTopologyForMode(mode) {
     switch (mode) {
       case GL.TRIANGLE_STRIP:
+      // not supported by WebGPU, default to triangle-strip
+      case GL.TRIANGLE_FAN:
         return "triangle-strip";
       case GL.LINES:
         return "line-list";
       case GL.LINE_STRIP:
+      // not supported by WebGPU, default to line-strip
+      case GL.LINE_LOOP:
         return "line-strip";
       case GL.POINTS:
         return "point-list";
       case GL.TRIANGLES:
-      // GL.TRIANGLES
       default:
         return "triangle-list";
     }
@@ -605,7 +609,7 @@ const _GLTFScenesManager = class _GLTFScenesManager {
           clearcoatRoughness: clearcoat.clearcoatRoughnessFactor
         }
       },
-      // iridescene
+      // iridescence
       ...iridescence && {
         ...iridescence.iridescenceFactor !== void 0 && {
           iridescence: iridescence.iridescenceFactor
@@ -902,6 +906,10 @@ const _GLTFScenesManager = class _GLTFScenesManager {
     if (!hasNormal && (topology.includes("line") || topology.includes("point"))) {
       meshDescriptor.extensionsUsed.push("KHR_materials_unlit");
     }
+    defaultAttributes.forEach((attribute) => {
+      attribute.type = null;
+      attribute.bufferFormat = null;
+    });
     const geometryAttributes = {
       instancesCount: instances.length,
       topology,
@@ -1644,9 +1652,9 @@ parsePrimitiveProperty_fn = function(primitiveProperty, attributes) {
     const attribute = {
       name,
       ...attributeParams,
-      array
+      array,
+      normalized: !!accessor.normalized
     };
-    if (name.includes("color") && accessor.normalized && size === 4) ;
     attributes.push(attribute);
   }
   if (maxByteOffset > 0) {

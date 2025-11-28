@@ -47,7 +47,9 @@ const GL = (typeof window !== 'undefined' && WebGLRenderingContext) || {
   FLOAT: 5126,
   TRIANGLES: 4,
   TRIANGLE_STRIP: 5,
+  TRIANGLE_FAN: 6,
   LINES: 1,
+  LINE_LOOP: 2,
   LINE_STRIP: 3,
   POINTS: 0,
   CLAMP_TO_EDGE: 33071,
@@ -182,14 +184,14 @@ export class GLTFScenesManager {
   /**
    * Get an attribute type, bufferFormat and size from its {@link GLTF.AccessorType | accessor type}.
    * @param type - {@link GLTF.AccessorType | accessor type} to use.
-   * @returns - corresponding type, bufferFormat and size.
+   * @returns - Corresponding type, bufferFormat and size.
    */
   static getVertexAttributeParamsFromType(type: GLTF.AccessorType): {
-    /** Corresponding attribute type */
+    /** Corresponding attribute type. */
     type: VertexBufferAttribute['type']
-    /** Corresponding attribute bufferFormat */
+    /** Corresponding attribute bufferFormat. */
     bufferFormat: VertexBufferAttribute['bufferFormat']
-    /** Corresponding attribute size */
+    /** Corresponding attribute size. */
     size: VertexBufferAttribute['size']
   } {
     switch (type) {
@@ -246,17 +248,17 @@ export class GLTFScenesManager {
    */
   static getTypedArrayConstructorFromComponentType(componentType: GLTF.AccessorComponentType): TypedArrayConstructor {
     switch (componentType) {
-      case GL.BYTE: // GL.BYTE
+      case GL.BYTE:
         return Int8Array
-      case GL.UNSIGNED_BYTE: // GL.UNSIGNED_BYTE
+      case GL.UNSIGNED_BYTE:
         return Uint8Array
-      case GL.SHORT: // GL.SHORT
+      case GL.SHORT:
         return Int16Array
-      case GL.UNSIGNED_SHORT: // GL.UNSIGNED_SHORT
+      case GL.UNSIGNED_SHORT:
         return Uint16Array
-      case GL.UNSIGNED_INT: // GL.UNSIGNED_INT
+      case GL.UNSIGNED_INT:
         return Uint32Array
-      case GL.FLOAT: // GL.FLOAT
+      case GL.FLOAT:
       default:
         return Float32Array
     }
@@ -269,15 +271,19 @@ export class GLTFScenesManager {
    */
   static gpuPrimitiveTopologyForMode(mode: GLTF.MeshPrimitiveMode): GPUPrimitiveTopology {
     switch (mode) {
-      case GL.TRIANGLE_STRIP: // GL.TRIANGLE_STRIP
+      case GL.TRIANGLE_STRIP:
+      // not supported by WebGPU, default to triangle-strip
+      case GL.TRIANGLE_FAN:
         return 'triangle-strip'
-      case GL.LINES: // GL.LINES
+      case GL.LINES:
         return 'line-list'
-      case GL.LINE_STRIP: // GL.LINE_STRIP
+      case GL.LINE_STRIP:
+      // not supported by WebGPU, default to line-strip
+      case GL.LINE_LOOP:
         return 'line-strip'
-      case GL.POINTS: // GL.POINTS
+      case GL.POINTS:
         return 'point-list'
-      case GL.TRIANGLES: // GL.TRIANGLES
+      case GL.TRIANGLES:
       default:
         return 'triangle-list'
     }
@@ -833,7 +839,7 @@ export class GLTFScenesManager {
           clearcoatRoughness: clearcoat.clearcoatRoughnessFactor,
         }),
       }),
-      // iridescene
+      // iridescence
       ...(iridescence && {
         ...(iridescence.iridescenceFactor !== undefined && {
           iridescence: iridescence.iridescenceFactor,
@@ -1352,13 +1358,7 @@ export class GLTFScenesManager {
         name,
         ...attributeParams,
         array,
-      }
-
-      if (name.includes('color') && accessor.normalized && size === 4) {
-        // attribute.bufferFormat = 'snorm16x4'
-        // attribute.bufferFormat = 'unorm8x4'
-        // attribute.normalized = true
-        // console.log('NORMALIZE COLOR!!', attribute, accessor)
+        normalized: !!accessor.normalized,
       }
 
       attributes.push(attribute)
@@ -1581,6 +1581,14 @@ export class GLTFScenesManager {
     if (!hasNormal && (topology.includes('line') || topology.includes('point'))) {
       meshDescriptor.extensionsUsed.push('KHR_materials_unlit')
     }
+
+    // drop default attributes type and bufferFormat
+    // let the geometry handle it internally
+    // useful for special uint cases
+    defaultAttributes.forEach((attribute) => {
+      attribute.type = null
+      attribute.bufferFormat = null
+    })
 
     const geometryAttributes: GeometryParams = {
       instancesCount: instances.length,

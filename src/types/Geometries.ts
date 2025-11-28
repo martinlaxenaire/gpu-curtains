@@ -19,6 +19,8 @@ export interface VertexBufferAttributeParams {
   array?: Float32Array
   /** Use this {@link VertexBufferAttribute} for every X vertices. Useful for vertex/face color, etc. */
   verticesStride?: number
+  /** Whether this attribute should be normalized from [0, 255] range to [0, 1] range. */
+  normalized?: boolean
 }
 
 /**
@@ -29,12 +31,8 @@ export interface VertexBufferAttribute extends VertexBufferAttributeParams {
   type: WGSLBaseVariableType
   /** The buffer format of the {@link VertexBufferAttribute}, i.e. `"float32"`, `"float32x2"`, `"float32x3"`, etc. */
   bufferFormat: GPUVertexFormat
-  /** The length of the {@link array}. */
-  bufferLength: number
   /** The size of the {@link VertexBufferAttribute}. A `"f32"` is of size `1`, a `"vec2f"` of size `2`, a `"vec3f"` of size `3`, etc. */
   size: number
-  /** Offset of the {@link array} inside the {@link VertexBuffer#array | VertexBuffer array}. */
-  offset: number
   /** Bytes offset of the {@link array} inside the {@link VertexBuffer#array | VertexBuffer array}. */
   bufferOffset: GPUSize64
   /** Use this {@link VertexBufferAttribute} for every X vertices. Useful for vertex/face color, etc. */
@@ -45,8 +43,10 @@ export interface VertexBufferAttribute extends VertexBufferAttributeParams {
  * Describe the base of a geometry buffer, which is made of a {@link core/buffers/Buffer.Buffer | Buffer} and a typed array.
  */
 export interface GeometryBuffer {
-  /** {@link VertexBuffer} data array to be used by the {@link GPUBuffer}. */
-  array: TypedArray
+  /** {@link VertexBuffer} data array with already interleaved values to be used to fill the {@link ArrayBuffer}. */
+  array?: TypedArray
+  /** {@link VertexBuffer} data {@link ArrayBuffer} to be used by the {@link GPUBuffer}. */
+  arrayBuffer?: null | ArrayBuffer
   /** {@link GPUBuffer} sent to the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline}. */
   buffer: Buffer
   /** Number representing the offset at which the data begins in the {@link GPUBuffer}. */
@@ -63,14 +63,12 @@ export interface VertexBuffer extends GeometryBuffer {
   name: string
   /** Whether this {@link VertexBuffer} holds data relative to vertices or instances. */
   stepMode: GPUVertexStepMode
-  /** Total {@link VertexBufferAttribute#size | VertexBufferAttribute size}. */
+  /** Total {@link VertexBufferAttribute#size | VertexBufferAttribute size} in bytes. */
   arrayStride: number
-  /** Total {@link VertexBufferAttribute#bufferLength | VertexBufferAttribute buffer length}. */
+  /** Total buffer length in bytes. */
   bufferLength: number
   /** Array of {@link VertexBufferAttribute} used by this {@link VertexBuffer}. */
   attributes: VertexBufferAttribute[]
-  /** {@link VertexBuffer} data array to be used by the {@link GPUBuffer}. */
-  array: null | TypedArray
 }
 
 /**

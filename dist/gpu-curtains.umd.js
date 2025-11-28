@@ -7617,10 +7617,77 @@
     }
   }
 
+  const vertexBufferAttributeLayouts = [
+    { size: 2, typedArrayConstructor: Uint8Array, normalized: false, format: "uint8x2", type: "vec2u" },
+    { size: 4, typedArrayConstructor: Uint8Array, normalized: false, format: "uint8x4", type: "vec4u" },
+    { size: 2, typedArrayConstructor: Int8Array, normalized: false, format: "sint8x2", type: "vec2i" },
+    { size: 4, typedArrayConstructor: Int8Array, normalized: false, format: "sint8x4", type: "vec4i" },
+    { size: 2, typedArrayConstructor: Uint8Array, normalized: true, format: "unorm8x2", type: "vec2f" },
+    { size: 4, typedArrayConstructor: Uint8Array, normalized: true, format: "unorm8x4", type: "vec4f" },
+    { size: 2, typedArrayConstructor: Int8Array, normalized: true, format: "snorm8x2", type: "vec2f" },
+    { size: 4, typedArrayConstructor: Int8Array, normalized: true, format: "snorm8x4", type: "vec4f" },
+    { size: 2, typedArrayConstructor: Uint16Array, normalized: false, format: "uint16x2", type: "vec2u" },
+    { size: 4, typedArrayConstructor: Uint16Array, normalized: false, format: "uint16x4", type: "vec4u" },
+    { size: 2, typedArrayConstructor: Int16Array, normalized: false, format: "sint16x2", type: "vec2i" },
+    { size: 4, typedArrayConstructor: Int16Array, normalized: false, format: "sint16x4", type: "vec4i" },
+    { size: 2, typedArrayConstructor: Uint16Array, normalized: true, format: "unorm16x2", type: "vec2f" },
+    { size: 4, typedArrayConstructor: Uint16Array, normalized: true, format: "unorm16x4", type: "vec4f" },
+    { size: 2, typedArrayConstructor: Int16Array, normalized: true, format: "snorm16x2", type: "vec2f" },
+    { size: 4, typedArrayConstructor: Int16Array, normalized: true, format: "snorm16x4", type: "vec4f" },
+    //   { size: 2, typedArrayConstructor: Float16Array, normalized: false, format: 'float16x2', type: 'vec2h' },
+    //   { size: 4, typedArrayConstructor: Float16Array, normalized: false, format: 'float16x4', type: 'vec4h' },
+    { size: 1, typedArrayConstructor: Float32Array, normalized: false, format: "float32", type: "f32" },
+    { size: 2, typedArrayConstructor: Float32Array, normalized: false, format: "float32x2", type: "vec2f" },
+    { size: 3, typedArrayConstructor: Float32Array, normalized: false, format: "float32x3", type: "vec3f" },
+    { size: 4, typedArrayConstructor: Float32Array, normalized: false, format: "float32x4", type: "vec4f" },
+    { size: 1, typedArrayConstructor: Uint32Array, normalized: false, format: "uint32", type: "u32" },
+    { size: 2, typedArrayConstructor: Uint32Array, normalized: false, format: "uint32x2", type: "vec2u" },
+    { size: 3, typedArrayConstructor: Uint32Array, normalized: false, format: "uint32x3", type: "vec3u" },
+    { size: 4, typedArrayConstructor: Uint32Array, normalized: false, format: "uint32x4", type: "vec4u" },
+    { size: 1, typedArrayConstructor: Int32Array, normalized: false, format: "sint32", type: "i32" },
+    { size: 2, typedArrayConstructor: Int32Array, normalized: false, format: "sint32x2", type: "vec2i" },
+    { size: 3, typedArrayConstructor: Int32Array, normalized: false, format: "sint32x3", type: "vec3i" },
+    { size: 4, typedArrayConstructor: Int32Array, normalized: false, format: "sint32x4", type: "vec4i" }
+  ];
+  const getVertexBufferAttributeLayout = ({
+    size = 4,
+    array = new Float32Array(),
+    normalized = false
+  }) => {
+    let layout = vertexBufferAttributeLayouts.find(
+      (l) => l.size === size && l.typedArrayConstructor === array.constructor && l.normalized === normalized
+    );
+    if (!layout) {
+      layout = vertexBufferAttributeLayouts.find(
+        (l) => l.size === 4 && l.typedArrayConstructor === Float32Array && l.normalized === false
+      );
+    }
+    return layout;
+  };
+  const vertexBufferViewSetFunction = (arrayView, typedArray) => {
+    switch (typedArray.constructor) {
+      case Uint8Array:
+        return arrayView.setUint8.bind(arrayView);
+      case Int8Array:
+        return arrayView.setInt8.bind(arrayView);
+      case Uint16Array:
+        return arrayView.setUint16.bind(arrayView);
+      case Int16Array:
+        return arrayView.setInt16.bind(arrayView);
+      case Uint32Array:
+        return arrayView.setUint32.bind(arrayView);
+      case Int32Array:
+        return arrayView.setInt32.bind(arrayView);
+      case Float32Array:
+      default:
+        return arrayView.setFloat32.bind(arrayView);
+    }
+  };
+
   class Geometry {
     /**
      * Geometry constructor
-     * @param parameters - {@link GeometryParams | parameters} used to create our Geometry
+     * @param parameters - {@link GeometryParams | parameters} used to create our Geometry.
      */
     constructor({
       verticesOrder = "ccw",
@@ -7665,6 +7732,7 @@
           name: vertexBuffer.name,
           attributes: vertexBuffer.attributes,
           ...vertexBuffer.array && { array: vertexBuffer.array },
+          ...vertexBuffer.arrayBuffer && { arrayBuffer: vertexBuffer.arrayBuffer },
           ...vertexBuffer.buffer && { buffer: vertexBuffer.buffer },
           ...vertexBuffer.bufferOffset && { bufferOffset: vertexBuffer.bufferOffset },
           ...vertexBuffer.bufferSize && { bufferSize: vertexBuffer.bufferSize }
@@ -7675,7 +7743,7 @@
       }
     }
     /**
-     * Reset all the {@link vertexBuffers | vertex buffers} when the device is lost
+     * Reset all the {@link vertexBuffers | vertex buffers} when the device is lost.
      */
     loseContext() {
       this.ready = false;
@@ -7684,8 +7752,8 @@
       }
     }
     /**
-     * Restore the {@link Geometry} buffers on context restoration
-     * @param renderer - The {@link Renderer} used to recreate the buffers
+     * Restore the {@link Geometry} buffers on context restoration.
+     * @param renderer - The {@link Renderer} used to recreate the buffers.
      */
     restoreContext(renderer) {
       if (this.ready) return;
@@ -7699,9 +7767,9 @@
       this.ready = true;
     }
     /**
-     * Add a vertex buffer to our Geometry, set its attributes and return it
-     * @param parameters - vertex buffer {@link VertexBufferParams | parameters}
-     * @returns - newly created {@link VertexBuffer | vertex buffer}
+     * Add a vertex buffer to our Geometry, set its attributes and return it.
+     * @param parameters - Vertex buffer {@link VertexBufferParams | parameters}.
+     * @returns - Newly created {@link VertexBuffer | vertex buffer}.
      */
     addVertexBuffer({
       stepMode = "vertex",
@@ -7709,6 +7777,7 @@
       attributes = [],
       buffer = null,
       array = null,
+      arrayBuffer = null,
       bufferOffset = 0,
       bufferSize = null
     } = {}) {
@@ -7719,8 +7788,9 @@
         arrayStride: 0,
         bufferLength: 0,
         attributes: [],
-        buffer,
         array,
+        arrayBuffer,
+        buffer,
         bufferOffset,
         bufferSize
       };
@@ -7734,29 +7804,37 @@
       return vertexBuffer;
     }
     /**
-     * Get a vertex buffer by name
-     * @param name - our vertex buffer name
-     * @returns - found {@link VertexBuffer | vertex buffer} or null if not found
+     * Get a vertex buffer by name.
+     * @param name - Our vertex buffer name.
+     * @returns - Found {@link VertexBuffer | vertex buffer} or null if not found.
      */
     getVertexBufferByName(name = "") {
       return this.vertexBuffers.find((vertexBuffer) => vertexBuffer.name === name);
     }
     /**
-     * Set a vertex buffer attribute
-     * @param parameters - attributes {@link VertexBufferAttributeParams | parameters}
+     * Set a vertex buffer attribute.
+     * @param parameters - Attributes {@link VertexBufferAttributeParams | parameters}.
      */
     setAttribute({
       vertexBuffer = this.vertexBuffers[0],
       name,
-      type = "vec3f",
-      bufferFormat = "float32x3",
+      type,
+      bufferFormat,
       size = 3,
       array = new Float32Array(this.verticesCount * size),
+      normalized = false,
       verticesStride = 1
     }) {
       const attributes = vertexBuffer.attributes;
       const attributesLength = attributes.length;
       if (!name) name = "geometryAttribute" + attributesLength;
+      const attributeLayout = getVertexBufferAttributeLayout({
+        size,
+        array,
+        normalized
+      });
+      bufferFormat = bufferFormat ?? attributeLayout.format;
+      type = type ?? attributeLayout.type;
       if (name === "position" && (type !== "vec3f" || bufferFormat !== "float32x3" || size !== 3)) {
         throwWarning(
           `Geometry 'position' attribute must have this exact properties set:
@@ -7786,35 +7864,32 @@
           );
         }
       }
-      const bufferOffset = attributesLength ? attributes[attributesLength - 1].bufferOffset + attributes[attributesLength - 1].size * 4 : 0;
+      const bufferOffset = attributesLength ? attributes[attributesLength - 1].bufferOffset + attributes[attributesLength - 1].size * attributes[attributesLength - 1].array.BYTES_PER_ELEMENT : 0;
       const attribute = {
         name,
         type,
         bufferFormat,
         size,
-        bufferLength: arrayLength,
-        offset: attributesLength ? attributes.reduce((accumulator, currentValue) => {
-          return accumulator + currentValue.bufferLength;
-        }, 0) : 0,
         bufferOffset,
         array,
-        verticesStride
+        verticesStride,
+        normalized
       };
-      vertexBuffer.bufferLength += attribute.bufferLength * verticesStride;
-      vertexBuffer.arrayStride += attribute.size;
+      vertexBuffer.bufferLength += arrayLength * array.BYTES_PER_ELEMENT * verticesStride;
+      vertexBuffer.arrayStride += attribute.size * array.BYTES_PER_ELEMENT;
       vertexBuffer.attributes.push(attribute);
     }
     /**
-     * Get whether this Geometry is ready to compute, i.e. if its first vertex buffer array has not been created yet
+     * Get whether this Geometry is ready to compute, i.e. if its first vertex buffer array has not been created yet.
      * @readonly
      */
     get shouldCompute() {
-      return this.vertexBuffers.length && !this.vertexBuffers[0].array;
+      return this.vertexBuffers.length && !this.vertexBuffers[0].arrayBuffer;
     }
     /**
-     * Get an attribute by name
-     * @param name - name of the attribute to find
-     * @returns - found {@link VertexBufferAttribute | attribute} or null if not found
+     * Get an attribute by name.
+     * @param name - Name of the attribute to find.
+     * @returns - Found {@link VertexBufferAttribute | attribute} or null if not found.
      */
     getAttributeByName(name) {
       let attribute;
@@ -7826,12 +7901,12 @@
     }
     /**
      * Compute the normal {@link Vec3} from a triangle defined by three {@link Vec3} by computing edges {@link Vec3}.
-     * @param vertex1 - first triangle position
-     * @param vertex2 - second triangle position
-     * @param vertex3 - third triangle position
-     * @param edge1 - first edge
-     * @param edge2 - second edge
-     * @param normal - flat normal generated.
+     * @param vertex1 - First triangle position.
+     * @param vertex2 - Second triangle position.
+     * @param vertex3 - Third triangle position.
+     * @param edge1 - First edge.
+     * @param edge2 - Second edge.
+     * @param normal - Flat normal generated.
      */
     computeNormalFromTriangle(vertex1, vertex2, vertex3, edge1, edge2, normal) {
       edge1.copy(vertex2).sub(vertex1);
@@ -7903,31 +7978,45 @@
             this.setWGSLFragment();
           }
         }
-        vertexBuffer.array = new Float32Array(vertexBuffer.bufferLength);
-        let currentIndex = 0;
-        let attributeIndex = 0;
-        for (let i = 0; i < vertexBuffer.bufferLength; i += vertexBuffer.arrayStride) {
-          for (let j = 0; j < vertexBuffer.attributes.length; j++) {
-            const { name, size, array, verticesStride } = vertexBuffer.attributes[j];
-            for (let s = 0; s < size; s++) {
-              let attributeValue = array[Math.floor(attributeIndex / verticesStride) * size + s];
-              vertexBuffer.array[currentIndex] = attributeValue ?? 0;
-              if (name === "position") {
-                if (s % 3 === 0) {
-                  if (this.boundingBox.min.x > attributeValue) this.boundingBox.min.x = attributeValue;
-                  if (this.boundingBox.max.x < attributeValue) this.boundingBox.max.x = attributeValue;
-                } else if (s % 3 === 1) {
-                  if (this.boundingBox.min.y > attributeValue) this.boundingBox.min.y = attributeValue;
-                  if (this.boundingBox.max.y < attributeValue) this.boundingBox.max.y = attributeValue;
-                } else if (s % 3 === 2) {
-                  if (this.boundingBox.min.z > attributeValue) this.boundingBox.min.z = attributeValue;
-                  if (this.boundingBox.max.z < attributeValue) this.boundingBox.max.z = attributeValue;
+        if (vertexBuffer.array && vertexBuffer.array.byteLength === vertexBuffer.bufferLength) {
+          vertexBuffer.arrayBuffer = new ArrayBuffer(vertexBuffer.bufferLength);
+          new Uint8Array(vertexBuffer.arrayBuffer).set(
+            new Uint8Array(vertexBuffer.array.buffer, vertexBuffer.array.byteOffset, vertexBuffer.array.byteLength)
+          );
+        } else if (!vertexBuffer.arrayBuffer || vertexBuffer.arrayBuffer.byteLength !== vertexBuffer.bufferLength) {
+          vertexBuffer.arrayBuffer = new ArrayBuffer(vertexBuffer.bufferLength);
+          const arrayView = new DataView(vertexBuffer.arrayBuffer);
+          for (let a = 0; a < vertexBuffer.attributes.length; a++) {
+            const attribute = vertexBuffer.attributes[a];
+            const { name, array, size, bufferOffset, verticesStride } = attribute;
+            const setFunction = vertexBufferViewSetFunction(arrayView, array);
+            const arrayLength = array.length;
+            for (let i = 0; i < arrayLength; i += size) {
+              for (let s = 0; s < size; s++) {
+                const attrValue = array[i + s];
+                if (name === "position") {
+                  if (s % 3 === 0) {
+                    this.boundingBox.min.x = Math.min(this.boundingBox.min.x, attrValue);
+                    this.boundingBox.max.x = Math.max(this.boundingBox.max.x, attrValue);
+                  } else if (s % 3 === 1) {
+                    this.boundingBox.min.y = Math.min(this.boundingBox.min.y, attrValue);
+                    this.boundingBox.max.y = Math.max(this.boundingBox.max.y, attrValue);
+                  } else if (s % 3 === 2) {
+                    this.boundingBox.min.z = Math.min(this.boundingBox.min.z, attrValue);
+                    this.boundingBox.max.z = Math.max(this.boundingBox.max.z, attrValue);
+                  }
+                }
+                const attrIndex = i / size;
+                for (let vs = 0; vs < verticesStride; vs++) {
+                  const attrOffset = s * array.BYTES_PER_ELEMENT;
+                  const attrStrideOffset = attrIndex * vertexBuffer.arrayStride;
+                  const verticesStrideOffset = (vs + (verticesStride - 1) * attrIndex) * vertexBuffer.arrayStride;
+                  const startOffset = verticesStrideOffset + attrStrideOffset + bufferOffset + attrOffset;
+                  setFunction(startOffset, attrValue, true);
                 }
               }
-              currentIndex++;
             }
           }
-          attributeIndex++;
         }
       });
       if (!this.wgslStructFragment) {
@@ -7957,15 +8046,15 @@
     }
     /**
      * Create the {@link Geometry} {@link vertexBuffers | vertex buffers}.
-     * @param parameters - parameters used to create the vertex buffers.
+     * @param parameters - Parameters used to create the vertex buffers.
      * @param parameters.renderer - {@link Renderer} used to create the vertex buffers.
-     * @param parameters.label - label to use for the vertex buffers.
+     * @param parameters.label - Label to use for the vertex buffers.
      */
     createBuffers({ renderer, label = this.type }) {
       if (this.ready) return;
       for (const vertexBuffer of this.vertexBuffers) {
         if (!vertexBuffer.bufferSize) {
-          vertexBuffer.bufferSize = vertexBuffer.array.length * vertexBuffer.array.constructor.BYTES_PER_ELEMENT;
+          vertexBuffer.bufferSize = vertexBuffer.arrayBuffer.byteLength;
         }
         if (!vertexBuffer.buffer.GPUBuffer && !vertexBuffer.buffer.consumers.size) {
           vertexBuffer.buffer.createBuffer(renderer, {
@@ -7987,12 +8076,18 @@
      */
     uploadBuffer(renderer, buffer) {
       if (this.options.mapBuffersAtCreation) {
-        new buffer.array.constructor(buffer.buffer.GPUBuffer.getMappedRange()).set(
-          buffer.array
-        );
+        if (buffer.arrayBuffer) {
+          const src = new Uint8Array(buffer.arrayBuffer);
+          const mappedRange = buffer.buffer.GPUBuffer.getMappedRange();
+          new Uint8Array(mappedRange).set(src);
+        } else if (buffer.array) {
+          new buffer.array.constructor(buffer.buffer.GPUBuffer.getMappedRange()).set(
+            buffer.array
+          );
+        }
         buffer.buffer.GPUBuffer.unmap();
       } else {
-        renderer.queueWriteBuffer(buffer.buffer.GPUBuffer, 0, buffer.array);
+        renderer.queueWriteBuffer(buffer.buffer.GPUBuffer, 0, buffer.arrayBuffer ?? buffer.array);
       }
     }
     /**
@@ -8007,8 +8102,8 @@
     }
     /** RENDER **/
     /**
-     * Set our render pass geometry vertex buffers
-     * @param pass - current render pass
+     * Set our render pass geometry vertex buffers.
+     * @param pass - Current render pass.
      */
     setGeometryBuffers(pass) {
       this.vertexBuffers.forEach((vertexBuffer, index) => {
@@ -8047,6 +8142,7 @@
           vertexBuffer.buffer.destroy();
         }
         vertexBuffer.array = null;
+        vertexBuffer.arrayBuffer = null;
         if (renderer) renderer.removeBuffer(vertexBuffer.buffer);
       }
     }
@@ -8129,7 +8225,7 @@
       });
     }
     /**
-     * If we have less than 65.536 vertices, we should use a Uin16Array to hold our index buffer values
+     * If we have less than 65.536 vertices, we should use a Uin16Array to hold our index buffer values.
      * @readonly
      */
     get useUint16IndexArray() {
@@ -8146,13 +8242,16 @@
       bufferOffset = 0,
       bufferSize = null
     }) {
+      const arrayBuffer = new ArrayBuffer(array.byteLength);
+      new Uint8Array(arrayBuffer).set(new Uint8Array(array.buffer, array.byteOffset, array.byteLength));
       this.indexBuffer = {
         array,
         bufferFormat,
         bufferLength: array.length,
         buffer,
+        arrayBuffer,
         bufferOffset,
-        bufferSize: bufferSize !== null ? bufferSize : array.length * array.constructor.BYTES_PER_ELEMENT
+        bufferSize: bufferSize !== null ? bufferSize : array.byteLength
       };
     }
     /**
@@ -8216,6 +8315,8 @@
     destroy(renderer = null) {
       super.destroy(renderer);
       if (this.indexBuffer) {
+        this.indexBuffer.array = null;
+        this.indexBuffer.arrayBuffer = null;
         this.indexBuffer.buffer.consumers.delete(this.uuid);
         this.indexBuffer.buffer.destroy();
         if (renderer) renderer.removeBuffer(this.indexBuffer.buffer);
@@ -9782,11 +9883,11 @@ ${this.shaders.full.head}`;
           module: this.shaders.vertex.module,
           entryPoint: this.options.shaders.vertex.entryPoint,
           buffers: this.attributes.vertexBuffers.map((vertexBuffer) => {
-            const arrayStride = vertexBuffer.arrayStride * 4;
+            const { arrayStride, stepMode, attributes } = vertexBuffer;
             return {
-              stepMode: vertexBuffer.stepMode,
+              stepMode,
               arrayStride,
-              attributes: vertexBuffer.attributes.map((attribute) => {
+              attributes: attributes.map((attribute) => {
                 vertexLocationIndex++;
                 return {
                   shaderLocation: vertexLocationIndex,
@@ -13186,9 +13287,9 @@ fn getPCFBaseShadowContribution(
   var instancesNormal = array<vec3f, ${geometry.instancesCount}>();
       ` : "";
       output += `
-  let skinJoints: vec4f = ${skinJoints.map((skinJoint) => skinJoint.name).join(" + ")};`;
+  let skinJoints: vec4u = vec4u(${skinJoints.map((skinJoint) => skinJoint.name).join(" + ")});`;
       output += `
-  var skinWeights: vec4f = ${skinWeights.map((skinWeight) => skinWeight.name).join(" + ")};
+  var skinWeights: vec4f = vec4f(${skinWeights.map((skinWeight) => skinWeight.name).join(" + ")});
   
   let skinWeightsSum = dot(skinWeights, vec4(1.0));
   if(skinWeightsSum > 0.0) {
@@ -13201,19 +13302,19 @@ fn getPCFBaseShadowContribution(
   ${hasInstances ? "// instancing with different skins: joints calculations for skin " + bindingIndex + "\n" : ""}
   // position
   let skinMatrix_${bindingIndex}: mat4x4f = 
-    skinWeights.x * ${binding.name}.joints[u32(skinJoints.x)].jointMatrix +
-    skinWeights.y * ${binding.name}.joints[u32(skinJoints.y)].jointMatrix +
-    skinWeights.z * ${binding.name}.joints[u32(skinJoints.z)].jointMatrix +
-    skinWeights.w * ${binding.name}.joints[u32(skinJoints.w)].jointMatrix;
+    skinWeights.x * ${binding.name}.joints[skinJoints.x].jointMatrix +
+    skinWeights.y * ${binding.name}.joints[skinJoints.y].jointMatrix +
+    skinWeights.z * ${binding.name}.joints[skinJoints.z].jointMatrix +
+    skinWeights.w * ${binding.name}.joints[skinJoints.w].jointMatrix;
       
   ${hasInstances ? "instancesWorldPosition[" + bindingIndex + "] = skinMatrix_" + bindingIndex + " * worldPosition;" : "worldPosition = skinMatrix_" + bindingIndex + " * worldPosition;"}
       
   // normal
   let skinNormalMatrix_${bindingIndex}: mat4x4f = 
-    skinWeights.x * ${binding.name}.joints[u32(skinJoints.x)].normalMatrix +
-    skinWeights.y * ${binding.name}.joints[u32(skinJoints.y)].normalMatrix +
-    skinWeights.z * ${binding.name}.joints[u32(skinJoints.z)].normalMatrix +
-    skinWeights.w * ${binding.name}.joints[u32(skinJoints.w)].normalMatrix;
+    skinWeights.x * ${binding.name}.joints[skinJoints.x].normalMatrix +
+    skinWeights.y * ${binding.name}.joints[skinJoints.y].normalMatrix +
+    skinWeights.z * ${binding.name}.joints[skinJoints.z].normalMatrix +
+    skinWeights.w * ${binding.name}.joints[skinJoints.w].normalMatrix;
     
   let skinNormalMatrix_${bindingIndex}_3: mat3x3f = mat3x3f(
     vec3(skinNormalMatrix_${bindingIndex}[0].xyz),
@@ -19645,7 +19746,7 @@ fn getPBR(
       return (
         /* wgsl */
         `
-  @location(${index}) ${attribute.type === "u32" || attribute.type === "i32" ? "@interpolate(flat) " : " "}${attribute.name}: ${attribute.type},`
+  @location(${index}) ${attribute.type.includes("i") || attribute.type.includes("u") ? "@interpolate(flat) " : " "}${attribute.name}: ${attribute.type},`
       );
     }).join("");
     const additionalVaryingsOutput = additionalVaryings.map((attribute, index) => {
@@ -26539,7 +26640,9 @@ struct Params {
     FLOAT: 5126,
     TRIANGLES: 4,
     TRIANGLE_STRIP: 5,
+    TRIANGLE_FAN: 6,
     LINES: 1,
+    LINE_LOOP: 2,
     LINE_STRIP: 3,
     POINTS: 0,
     CLAMP_TO_EDGE: 33071,
@@ -26590,7 +26693,7 @@ struct Params {
     /**
      * Get an attribute type, bufferFormat and size from its {@link GLTF.AccessorType | accessor type}.
      * @param type - {@link GLTF.AccessorType | accessor type} to use.
-     * @returns - corresponding type, bufferFormat and size.
+     * @returns - Corresponding type, bufferFormat and size.
      */
     static getVertexAttributeParamsFromType(type) {
       switch (type) {
@@ -26660,7 +26763,6 @@ struct Params {
         case GL$1.UNSIGNED_INT:
           return Uint32Array;
         case GL$1.FLOAT:
-        // GL.FLOAT
         default:
           return Float32Array;
       }
@@ -26673,15 +26775,18 @@ struct Params {
     static gpuPrimitiveTopologyForMode(mode) {
       switch (mode) {
         case GL$1.TRIANGLE_STRIP:
+        // not supported by WebGPU, default to triangle-strip
+        case GL$1.TRIANGLE_FAN:
           return "triangle-strip";
         case GL$1.LINES:
           return "line-list";
         case GL$1.LINE_STRIP:
+        // not supported by WebGPU, default to line-strip
+        case GL$1.LINE_LOOP:
           return "line-strip";
         case GL$1.POINTS:
           return "point-list";
         case GL$1.TRIANGLES:
-        // GL.TRIANGLES
         default:
           return "triangle-list";
       }
@@ -27106,7 +27211,7 @@ struct Params {
             clearcoatRoughness: clearcoat.clearcoatRoughnessFactor
           }
         },
-        // iridescene
+        // iridescence
         ...iridescence && {
           ...iridescence.iridescenceFactor !== void 0 && {
             iridescence: iridescence.iridescenceFactor
@@ -27403,6 +27508,10 @@ struct Params {
       if (!hasNormal && (topology.includes("line") || topology.includes("point"))) {
         meshDescriptor.extensionsUsed.push("KHR_materials_unlit");
       }
+      defaultAttributes.forEach((attribute) => {
+        attribute.type = null;
+        attribute.bufferFormat = null;
+      });
       const geometryAttributes = {
         instancesCount: instances.length,
         topology,
@@ -28145,9 +28254,9 @@ struct Params {
       const attribute = {
         name,
         ...attributeParams,
-        array
+        array,
+        normalized: !!accessor.normalized
       };
-      if (name.includes("color") && accessor.normalized && size === 4) ;
       attributes.push(attribute);
     }
     if (maxByteOffset > 0) {
