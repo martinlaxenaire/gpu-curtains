@@ -22,6 +22,7 @@ import {
   MeshDescriptorMaterialParams,
   PrimitiveInstanceDescriptor,
   PrimitiveInstances,
+  SceneDescriptor,
   ScenesManager,
   SkinDefinition,
 } from '../../types/gltf/GLTFScenesManager'
@@ -976,6 +977,20 @@ export class GLTFScenesManager {
 
       // each primitive is in fact a mesh
       mesh.primitives.forEach((primitive, primitiveIndex) => {
+        const scenes: SceneDescriptor[] = []
+        if (this.gltf.scenes) {
+          this.gltf.scenes.forEach((scene, i) => {
+            if (scene.nodes.includes(index)) {
+              scenes.push({
+                name: scene.name ?? `scene${i}`,
+                index: i,
+              })
+            }
+            console.log(scene, scene.nodes.includes(index))
+          })
+        }
+        console.log(scenes)
+
         const meshDescriptor: MeshDescriptor = {
           parent: child.node,
           texturesDescriptors: [],
@@ -984,6 +999,7 @@ export class GLTFScenesManager {
             label: mesh.name ? mesh.name + ' ' + primitiveIndex : 'glTF mesh ' + primitiveIndex,
           },
           nodes: [],
+          scenes,
           extensionsUsed: [],
           alternateDescriptors: new Map(),
           alternateMaterials: new Map(),
@@ -2109,6 +2125,7 @@ export class GLTFScenesManager {
               variantName: variant.name,
               parent: meshDescriptor.parent,
               nodes: meshDescriptor.nodes,
+              scenes: meshDescriptor.scenes,
               extensionsUsed: [...meshDescriptor.extensionsUsed, ...extensionsUsed],
               texturesDescriptors,
               parameters: {
@@ -2227,6 +2244,17 @@ export class GLTFScenesManager {
         })
 
         meshDescriptor.alternateMaterials.set('Default', mesh.material)
+
+        // scenes
+        if (this.gltf.scenes && this.gltf.scenes.length) {
+          const activeScene = this.gltf.scene || 0
+          const isInActiveScene = meshDescriptor.scenes.find((scene) => scene.index === activeScene)
+          if (isInActiveScene) {
+            mesh.visible = true
+          } else {
+            mesh.visible = false
+          }
+        }
 
         // variants
         meshDescriptor.alternateDescriptors.forEach((descriptor) => {

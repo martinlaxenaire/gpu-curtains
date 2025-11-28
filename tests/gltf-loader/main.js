@@ -272,6 +272,8 @@ window.addEventListener('load', async () => {
     )
     .name('Debug channels')
 
+  const scenesFolder = gui.addFolder('Scenes')
+
   const camerasFolder = gui.addFolder('Cameras')
 
   const useCamera = (camera) => {
@@ -302,7 +304,19 @@ window.addEventListener('load', async () => {
     container.classList.remove('loading')
     console.log({ gltf, scenesManager, scenes, boundingBox })
 
-    if (useRenderBundles) {
+    const hasScenes = gltf.scenes.length > 1
+
+    if (hasScenes) {
+      renderBundlesFolder.hide()
+      renderBundlesField.disable()
+      transparentRenderBundlesField.disable()
+    } else {
+      renderBundlesFolder.show()
+      renderBundlesField.enable()
+      transparentRenderBundlesField.enable()
+    }
+
+    if (useRenderBundles && !hasScenes) {
       const nbRegularMeshes = scenesManager.meshesDescriptors.filter(
         (meshDescriptor) => !meshDescriptor.parameters.transmissive && !meshDescriptor.parameters.transparent
       ).length
@@ -722,6 +736,29 @@ window.addEventListener('load', async () => {
         useCamera(value)
       })
       .name('Active camera')
+
+    // scenes
+    scenesFolder.children.forEach((child) => child.destroy())
+
+    const availableScenes = []
+    if (gltf.scenes) {
+      gltf.scenes.forEach((scene, index) => availableScenes.push(scene.name ?? 'Scene ' + index))
+      const activeScene = gltf.scene ?? 0
+      scenesFolder
+        .add({ scene: availableScenes[activeScene] }, 'scene', availableScenes)
+        .onChange((value) => {
+          const sceneIndex = availableScenes.findIndex((s) => s === value)
+          scenesManager.meshesDescriptors.forEach((meshDescriptor, index) => {
+            const mesh = meshes[index]
+            if (meshDescriptor.scenes.find((s) => s.index === sceneIndex)) {
+              mesh.visible = true
+            } else {
+              mesh.visible = false
+            }
+          })
+        })
+        .name('Active scene')
+    }
 
     console.log(gpuCameraRenderer, meshes)
 
