@@ -7731,8 +7731,8 @@
           stepMode: vertexBuffer.stepMode ?? "vertex",
           name: vertexBuffer.name,
           attributes: vertexBuffer.attributes,
-          ...vertexBuffer.array && { buffer: vertexBuffer.array },
-          ...vertexBuffer.arrayBuffer && { buffer: vertexBuffer.arrayBuffer },
+          ...vertexBuffer.array && { array: vertexBuffer.array },
+          ...vertexBuffer.arrayBuffer && { arrayBuffer: vertexBuffer.arrayBuffer },
           ...vertexBuffer.buffer && { buffer: vertexBuffer.buffer },
           ...vertexBuffer.bufferOffset && { bufferOffset: vertexBuffer.bufferOffset },
           ...vertexBuffer.bufferSize && { bufferSize: vertexBuffer.bufferSize }
@@ -7775,9 +7775,9 @@
       stepMode = "vertex",
       name,
       attributes = [],
+      buffer = null,
       array = null,
       arrayBuffer = null,
-      buffer = null,
       bufferOffset = 0,
       bufferSize = null
     } = {}) {
@@ -8251,7 +8251,7 @@
         buffer,
         arrayBuffer,
         bufferOffset,
-        bufferSize: bufferSize !== null ? bufferSize : array.length * array.constructor.BYTES_PER_ELEMENT
+        bufferSize: bufferSize !== null ? bufferSize : array.byteLength
       };
     }
     /**
@@ -13287,9 +13287,9 @@ fn getPCFBaseShadowContribution(
   var instancesNormal = array<vec3f, ${geometry.instancesCount}>();
       ` : "";
       output += `
-  let skinJoints: vec4f = ${skinJoints.map((skinJoint) => skinJoint.name).join(" + ")};`;
+  let skinJoints: vec4u = vec4u(${skinJoints.map((skinJoint) => skinJoint.name).join(" + ")});`;
       output += `
-  var skinWeights: vec4f = ${skinWeights.map((skinWeight) => skinWeight.name).join(" + ")};
+  var skinWeights: vec4f = vec4f(${skinWeights.map((skinWeight) => skinWeight.name).join(" + ")});
   
   let skinWeightsSum = dot(skinWeights, vec4(1.0));
   if(skinWeightsSum > 0.0) {
@@ -13302,19 +13302,19 @@ fn getPCFBaseShadowContribution(
   ${hasInstances ? "// instancing with different skins: joints calculations for skin " + bindingIndex + "\n" : ""}
   // position
   let skinMatrix_${bindingIndex}: mat4x4f = 
-    skinWeights.x * ${binding.name}.joints[u32(skinJoints.x)].jointMatrix +
-    skinWeights.y * ${binding.name}.joints[u32(skinJoints.y)].jointMatrix +
-    skinWeights.z * ${binding.name}.joints[u32(skinJoints.z)].jointMatrix +
-    skinWeights.w * ${binding.name}.joints[u32(skinJoints.w)].jointMatrix;
+    skinWeights.x * ${binding.name}.joints[skinJoints.x].jointMatrix +
+    skinWeights.y * ${binding.name}.joints[skinJoints.y].jointMatrix +
+    skinWeights.z * ${binding.name}.joints[skinJoints.z].jointMatrix +
+    skinWeights.w * ${binding.name}.joints[skinJoints.w].jointMatrix;
       
   ${hasInstances ? "instancesWorldPosition[" + bindingIndex + "] = skinMatrix_" + bindingIndex + " * worldPosition;" : "worldPosition = skinMatrix_" + bindingIndex + " * worldPosition;"}
       
   // normal
   let skinNormalMatrix_${bindingIndex}: mat4x4f = 
-    skinWeights.x * ${binding.name}.joints[u32(skinJoints.x)].normalMatrix +
-    skinWeights.y * ${binding.name}.joints[u32(skinJoints.y)].normalMatrix +
-    skinWeights.z * ${binding.name}.joints[u32(skinJoints.z)].normalMatrix +
-    skinWeights.w * ${binding.name}.joints[u32(skinJoints.w)].normalMatrix;
+    skinWeights.x * ${binding.name}.joints[skinJoints.x].normalMatrix +
+    skinWeights.y * ${binding.name}.joints[skinJoints.y].normalMatrix +
+    skinWeights.z * ${binding.name}.joints[skinJoints.z].normalMatrix +
+    skinWeights.w * ${binding.name}.joints[skinJoints.w].normalMatrix;
     
   let skinNormalMatrix_${bindingIndex}_3: mat3x3f = mat3x3f(
     vec3(skinNormalMatrix_${bindingIndex}[0].xyz),
@@ -19746,7 +19746,7 @@ fn getPBR(
       return (
         /* wgsl */
         `
-  @location(${index}) ${attribute.type === "u32" || attribute.type === "i32" ? "@interpolate(flat) " : " "}${attribute.name}: ${attribute.type},`
+  @location(${index}) ${attribute.type.includes("i") || attribute.type.includes("u") ? "@interpolate(flat) " : " "}${attribute.name}: ${attribute.type},`
       );
     }).join("");
     const additionalVaryingsOutput = additionalVaryings.map((attribute, index) => {
@@ -26691,27 +26691,56 @@ struct Params {
       this.createScenes();
     }
     /**
-     * Get an attribute size from its {@link GLTF.AccessorType | accessor type}.
-     * @param type - {@link GLTF.AccessorType | Accessor type} to use.
-     * @returns - Corresponding size.
+     * Get an attribute type, bufferFormat and size from its {@link GLTF.AccessorType | accessor type}.
+     * @param type - {@link GLTF.AccessorType | accessor type} to use.
+     * @returns - Corresponding type, bufferFormat and size.
      */
     static getVertexAttributeParamsFromType(type) {
       switch (type) {
         case "VEC2":
           return {
+            type: "vec2f",
+            bufferFormat: "float32x2",
             size: 2
           };
         case "VEC3":
           return {
+            type: "vec3f",
+            bufferFormat: "float32x3",
             size: 3
           };
         case "VEC4":
           return {
+            type: "vec4f",
+            bufferFormat: "float32x4",
             size: 4
+          };
+        case "MAT2":
+          return {
+            type: "mat2x2f",
+            bufferFormat: "float32x2",
+            // not used
+            size: 6
+          };
+        case "MAT3":
+          return {
+            type: "mat3x3f",
+            bufferFormat: "float32x3",
+            // not used
+            size: 9
+          };
+        case "MAT4":
+          return {
+            type: "mat4x4f",
+            bufferFormat: "float32x4",
+            // not used
+            size: 16
           };
         case "SCALAR":
         default:
           return {
+            type: "f32",
+            bufferFormat: "float32",
             size: 1
           };
       }
@@ -26734,7 +26763,6 @@ struct Params {
         case GL$1.UNSIGNED_INT:
           return Uint32Array;
         case GL$1.FLOAT:
-        // GL.FLOAT
         default:
           return Float32Array;
       }
@@ -26747,19 +26775,18 @@ struct Params {
     static gpuPrimitiveTopologyForMode(mode) {
       switch (mode) {
         case GL$1.TRIANGLE_STRIP:
-        // GL.TRIANGLE_STRIP
+        // not supported by WebGPU, default to triangle-strip
         case GL$1.TRIANGLE_FAN:
           return "triangle-strip";
         case GL$1.LINES:
           return "line-list";
         case GL$1.LINE_STRIP:
-        // GL.LINE_STRIP
+        // not supported by WebGPU, default to line-strip
         case GL$1.LINE_LOOP:
           return "line-strip";
         case GL$1.POINTS:
           return "point-list";
         case GL$1.TRIANGLES:
-        // GL.TRIANGLES
         default:
           return "triangle-list";
       }
@@ -27184,7 +27211,7 @@ struct Params {
             clearcoatRoughness: clearcoat.clearcoatRoughnessFactor
           }
         },
-        // iridescene
+        // iridescence
         ...iridescence && {
           ...iridescence.iridescenceFactor !== void 0 && {
             iridescence: iridescence.iridescenceFactor
@@ -27481,6 +27508,10 @@ struct Params {
       if (!hasNormal && (topology.includes("line") || topology.includes("point"))) {
         meshDescriptor.extensionsUsed.push("KHR_materials_unlit");
       }
+      defaultAttributes.forEach((attribute) => {
+        attribute.type = null;
+        attribute.bufferFormat = null;
+      });
       const geometryAttributes = {
         instancesCount: instances.length,
         topology,

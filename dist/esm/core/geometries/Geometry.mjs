@@ -51,8 +51,8 @@ class Geometry {
         stepMode: vertexBuffer.stepMode ?? "vertex",
         name: vertexBuffer.name,
         attributes: vertexBuffer.attributes,
-        ...vertexBuffer.array && { buffer: vertexBuffer.array },
-        ...vertexBuffer.arrayBuffer && { buffer: vertexBuffer.arrayBuffer },
+        ...vertexBuffer.array && { array: vertexBuffer.array },
+        ...vertexBuffer.arrayBuffer && { arrayBuffer: vertexBuffer.arrayBuffer },
         ...vertexBuffer.buffer && { buffer: vertexBuffer.buffer },
         ...vertexBuffer.bufferOffset && { bufferOffset: vertexBuffer.bufferOffset },
         ...vertexBuffer.bufferSize && { bufferSize: vertexBuffer.bufferSize }
@@ -95,9 +95,9 @@ class Geometry {
     stepMode = "vertex",
     name,
     attributes = [],
+    buffer = null,
     array = null,
     arrayBuffer = null,
-    buffer = null,
     bufferOffset = 0,
     bufferSize = null
   } = {}) {

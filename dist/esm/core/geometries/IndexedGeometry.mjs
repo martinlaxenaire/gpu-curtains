@@ -105,7 +105,7 @@ class IndexedGeometry extends Geometry {
       buffer,
       arrayBuffer,
       bufferOffset,
-      bufferSize: bufferSize !== null ? bufferSize : array.length * array.constructor.BYTES_PER_ELEMENT
+      bufferSize: bufferSize !== null ? bufferSize : array.byteLength
     };
   }
   /**

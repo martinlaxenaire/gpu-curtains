@@ -89,27 +89,56 @@ const _GLTFScenesManager = class _GLTFScenesManager {
     this.createScenes();
   }
   /**
-   * Get an attribute size from its {@link GLTF.AccessorType | accessor type}.
-   * @param type - {@link GLTF.AccessorType | Accessor type} to use.
-   * @returns - Corresponding size.
+   * Get an attribute type, bufferFormat and size from its {@link GLTF.AccessorType | accessor type}.
+   * @param type - {@link GLTF.AccessorType | accessor type} to use.
+   * @returns - Corresponding type, bufferFormat and size.
    */
   static getVertexAttributeParamsFromType(type) {
     switch (type) {
       case "VEC2":
         return {
+          type: "vec2f",
+          bufferFormat: "float32x2",
           size: 2
         };
       case "VEC3":
         return {
+          type: "vec3f",
+          bufferFormat: "float32x3",
           size: 3
         };
       case "VEC4":
         return {
+          type: "vec4f",
+          bufferFormat: "float32x4",
           size: 4
+        };
+      case "MAT2":
+        return {
+          type: "mat2x2f",
+          bufferFormat: "float32x2",
+          // not used
+          size: 6
+        };
+      case "MAT3":
+        return {
+          type: "mat3x3f",
+          bufferFormat: "float32x3",
+          // not used
+          size: 9
+        };
+      case "MAT4":
+        return {
+          type: "mat4x4f",
+          bufferFormat: "float32x4",
+          // not used
+          size: 16
         };
       case "SCALAR":
       default:
         return {
+          type: "f32",
+          bufferFormat: "float32",
           size: 1
         };
     }
@@ -132,7 +161,6 @@ const _GLTFScenesManager = class _GLTFScenesManager {
       case GL.UNSIGNED_INT:
         return Uint32Array;
       case GL.FLOAT:
-      // GL.FLOAT
       default:
         return Float32Array;
     }
@@ -145,19 +173,18 @@ const _GLTFScenesManager = class _GLTFScenesManager {
   static gpuPrimitiveTopologyForMode(mode) {
     switch (mode) {
       case GL.TRIANGLE_STRIP:
-      // GL.TRIANGLE_STRIP
+      // not supported by WebGPU, default to triangle-strip
       case GL.TRIANGLE_FAN:
         return "triangle-strip";
       case GL.LINES:
         return "line-list";
       case GL.LINE_STRIP:
-      // GL.LINE_STRIP
+      // not supported by WebGPU, default to line-strip
       case GL.LINE_LOOP:
         return "line-strip";
       case GL.POINTS:
         return "point-list";
       case GL.TRIANGLES:
-      // GL.TRIANGLES
       default:
         return "triangle-list";
     }
@@ -582,7 +609,7 @@ const _GLTFScenesManager = class _GLTFScenesManager {
           clearcoatRoughness: clearcoat.clearcoatRoughnessFactor
         }
       },
-      // iridescene
+      // iridescence
       ...iridescence && {
         ...iridescence.iridescenceFactor !== void 0 && {
           iridescence: iridescence.iridescenceFactor
@@ -879,6 +906,10 @@ const _GLTFScenesManager = class _GLTFScenesManager {
     if (!hasNormal && (topology.includes("line") || topology.includes("point"))) {
       meshDescriptor.extensionsUsed.push("KHR_materials_unlit");
     }
+    defaultAttributes.forEach((attribute) => {
+      attribute.type = null;
+      attribute.bufferFormat = null;
+    });
     const geometryAttributes = {
       instancesCount: instances.length,
       topology,

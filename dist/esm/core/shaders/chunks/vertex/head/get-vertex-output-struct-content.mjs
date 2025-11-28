@@ -23,7 +23,7 @@ const getVertexOutputStructContent = ({
     return (
       /* wgsl */
       `
-  @location(${index}) ${attribute.type === "u32" || attribute.type === "i32" ? "@interpolate(flat) " : " "}${attribute.name}: ${attribute.type},`
+  @location(${index}) ${attribute.type.includes("i") || attribute.type.includes("u") ? "@interpolate(flat) " : " "}${attribute.name}: ${attribute.type},`
     );
   }).join("");
   const additionalVaryingsOutput = additionalVaryings.map((attribute, index) => {

@@ -85,7 +85,7 @@ export declare class Geometry {
      * @param parameters - Vertex buffer {@link VertexBufferParams | parameters}.
      * @returns - Newly created {@link VertexBuffer | vertex buffer}.
      */
-    addVertexBuffer({ stepMode, name, attributes, array, arrayBuffer, buffer, bufferOffset, bufferSize, }?: VertexBufferParams): VertexBuffer;
+    addVertexBuffer({ stepMode, name, attributes, buffer, array, arrayBuffer, bufferOffset, bufferSize, }?: VertexBufferParams): VertexBuffer;
     /**
      * Get a vertex buffer by name.
      * @param name - Our vertex buffer name.
