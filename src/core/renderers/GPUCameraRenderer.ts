@@ -119,7 +119,7 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
   pointShadowsCubeFaceBindGroups: BindGroup[]
 
   /** Options used to create this {@link GPUCameraRenderer}. */
-  options: GPUCameraRendererOptions
+  declare options: GPUCameraRendererOptions
 
   /** @ignore */
   #shouldUpdateCameraLightsBindGroup: boolean
@@ -898,9 +898,15 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
 
       this.transmissionTarget.passEntry.onBeforeRenderPass = (commandEncoder, swapChainTexture) => {
         // Copy background scene texture to the output, because the output texture needs mips
-        // and we can't have mips on a rendered texture
+        // and we can't have mips on a rendered swap chain texture
         this.copyGPUTextureToTexture(swapChainTexture, this.transmissionTarget.texture, commandEncoder)
       }
+
+      // copy transparent objects to the transmission stack as well
+      // to render them again on top of transmissive objects
+      const mainPassEntry = this.scene.getRenderTargetPassEntry()
+      this.transmissionTarget.passEntry.stack.projected.transparent = mainPassEntry.stack.projected.transparent
+      mainPassEntry.stack.projected.transparent = []
     }
   }
 

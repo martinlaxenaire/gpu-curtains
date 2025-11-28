@@ -12,6 +12,7 @@ import { Vec3 } from '../../math/Vec3'
 import { RenderBundle } from '../renderPasses/RenderBundle'
 import { throwWarning } from '../../utils/utils'
 import { GPUCameraRenderer } from '../renderers/GPUCameraRenderer'
+import { Mesh } from '../meshes/Mesh'
 
 // used to sort transparent meshes
 const camPosA = new Vec3()
@@ -23,9 +24,9 @@ const posB = new Vec3()
  * Meshes rendering order is dependant of their transparency setting.
  */
 export interface ProjectionStack {
-  /** opaque Meshes or {@link RenderBundle} will be drawn first */
+  /** opaque Meshes or {@link RenderBundle} will be drawn first. */
   opaque: SceneStackedObject[]
-  /** transparent Meshes or {@link RenderBundle} will be drawn last */
+  /** transparent Meshes or {@link RenderBundle} will be drawn last. */
   transparent: SceneStackedObject[]
 }
 
@@ -300,10 +301,17 @@ export class Scene extends Object3D {
    * @returns - The corresponding render pass entry {@link Stack}.
    */
   getMeshProjectionStack(mesh: RenderedMesh): ProjectionStack {
+    const isTransparent = mesh.transparent
+    const hasRendererTransmissionPassEntry =
+      'transmissionTarget' in this.renderer &&
+      this.renderer.transmissionTarget &&
+      this.renderer.transmissionTarget.passEntry
+    const isTransmissive = 'transmissive' in mesh.options && mesh.options.transmissive
+
     // first get correct render pass enty and stack
     const renderPassEntry = mesh.options.useCustomScenePassEntry
       ? mesh.options.useCustomScenePassEntry
-      : 'transmissive' in mesh.options && mesh.options.transmissive
+      : isTransmissive || (hasRendererTransmissionPassEntry && isTransparent)
       ? (this.renderer as GPUCameraRenderer).transmissionTarget.passEntry
       : this.getRenderTargetPassEntry(mesh.outputTarget)
 
@@ -343,8 +351,14 @@ export class Scene extends Object3D {
 
     const { stack } = renderPassEntry
 
-    const projectionStack = mesh.material.options.rendering.useProjection ? stack.projected : stack.unProjected
     const isTransparent = !!mesh.transparent
+    const projectionStack = mesh.material.options.rendering.useProjection ? stack.projected : stack.unProjected
+
+    // const renderPassEntry = mesh.options.useCustomScenePassEntry
+    //   ? mesh.options.useCustomScenePassEntry
+    //   : ('transmissive' in mesh.options && mesh.options.transmissive) || mesh.transparent
+    //   ? (this.renderer as GPUCameraRenderer).transmissionTarget.passEntry
+    //   : this.getRenderTargetPassEntry(mesh.outputTarget)
 
     // rebuild stack
     const similarMeshes = isTransparent ? projectionStack.transparent : projectionStack.opaque
@@ -702,7 +716,7 @@ export class Scene extends Object3D {
    * Sort transparent projected meshes by their render order or distance to the camera (farther meshes should be drawn first).
    * @param meshes - Transparent projected meshes array to sort.
    */
-  sortTransparentMeshes(meshes: Array<ProjectedMesh | RenderBundle>) {
+  sortTransparentMeshes(meshes: ProjectedMesh[]) {
     meshes.sort((meshA, meshB) => {
       if (meshA.renderOrder !== meshB.renderOrder) {
         return meshA.renderOrder - meshB.renderOrder
@@ -732,6 +746,66 @@ export class Scene extends Object3D {
       )
     })
   }
+
+  // TODO just an idea, but does not work very well for now.
+  // see https://github.com/KhronosGroup/glTF-Sample-Viewer/commit/f4cd6b11de9787db0cd35c06dfa46be7b5440aab
+  /**
+   * Sort transparent and transmissive meshes and eventually swap transparent meshes stack so they are drawn before or after transmissive meshes based on their distance to camera.
+   */
+  // sortTransparentTransmissiveMeshes() {
+  //   if (
+  //     'transmissionTarget' in this.renderer &&
+  //     this.renderer.transmissionTarget &&
+  //     this.renderer.transmissionTarget.passEntry
+  //   ) {
+  //     const mainPassEntry = this.getRenderTargetPassEntry()
+  //     const transmissiveEntry = this.renderer.transmissionTarget.passEntry
+
+  //     if (!transmissiveEntry.stack.projected.opaque.length) return
+
+  //     // get all transparent meshes, only if they're not in a render bundle
+  //     const transparentMeshes = [
+  //       ...mainPassEntry.stack.projected.transparent,
+  //       ...transmissiveEntry.stack.projected.transparent,
+  //     ]
+  //       .map((obj) => (obj instanceof Mesh ? obj : null))
+  //       .filter(Boolean)
+
+  //     // get all transmissive meshes, render bundle or not
+  //     const transmissiveMeshes = transmissiveEntry.stack.projected.opaque
+  //       .map((obj) => {
+  //         return obj instanceof RenderBundle ? Array.from(obj.meshes).map(([k, m]) => m) : obj
+  //       })
+  //       .flat()
+
+  //     // bail if no transparent or transmissive meshes
+  //     if (!transparentMeshes.length || !transmissiveMeshes.length) return
+
+  //     const meshesToSort = [...transparentMeshes, ...transmissiveMeshes] as ProjectedMesh[]
+
+  //     // if only one mesh, no need to sort
+  //     if (meshesToSort.length <= 1) return
+
+  //     // sort
+  //     this.sortTransparentMeshes(meshesToSort)
+
+  //     // find first transmissive index mesh
+  //     const firstTransmissiveIndex = meshesToSort.findIndex(
+  //       (m) => 'transmissive' in m.options && m.options.transmissive
+  //     )
+
+  //     mainPassEntry.stack.projected.transparent = []
+  //     transmissiveEntry.stack.projected.transparent = []
+
+  //     for (let i = 0; i < firstTransmissiveIndex; i++) {
+  //       mainPassEntry.stack.projected.transparent.push(meshesToSort[i])
+  //     }
+
+  //     for (let i = firstTransmissiveIndex + 1; i < meshesToSort.length; i++) {
+  //       if (meshesToSort[i].transparent) transmissiveEntry.stack.projected.transparent.push(meshesToSort[i])
+  //     }
+  //   }
+  // }
 
   /**
    * Here we render a {@link RenderPassEntry}:
@@ -791,7 +865,9 @@ export class Scene extends Object3D {
           }
 
           // transparent
-          this.sortTransparentMeshes(renderPassEntry.stack.projected.transparent as Array<ProjectedMesh | RenderBundle>)
+          this.sortTransparentMeshes(
+            renderPassEntry.stack.projected.transparent.filter((o) => o instanceof Mesh) as ProjectedMesh[]
+          )
 
           for (const mesh of renderPassEntry.stack.projected.transparent) {
             mesh.render(pass)
@@ -882,6 +958,10 @@ export class Scene extends Object3D {
     this.#shouldLoadDepth = false
 
     for (const renderPassEntryType in this.renderPassEntries) {
+      // if (renderPassEntryType === 'screen') {
+      //   this.sortTransparentTransmissiveMeshes()
+      // }
+
       // force clearing the renderPass depth buffer before drawing any post processing pass
       // reset it even if there's no post processing pass
       if (renderPassEntryType === 'postProPass') {

@@ -174,11 +174,16 @@ window.addEventListener('load', async () => {
 
   // render bundles
   let useRenderBundles = true
+  let useTransparentRenderBundles = true
   let regularRenderBundle = null
   let transparentRenderBundle = null
   let transmissiveRenderBundle = null
 
-  const renderBundlesField = gui.add({ useRenderBundles }, 'useRenderBundles').name('Use render bundles')
+  const renderBundlesFolder = gui.addFolder('Render bundles')
+  const renderBundlesField = renderBundlesFolder.add({ useRenderBundles }, 'useRenderBundles').name('Active')
+  const transparentRenderBundlesField = renderBundlesFolder
+    .add({ useTransparentRenderBundles }, 'useTransparentRenderBundles')
+    .name('Active for transparent objects')
 
   const modelField = gui
     .add(
@@ -318,7 +323,7 @@ window.addEventListener('load', async () => {
         })
       }
 
-      if (nbTransparentMeshes > 0) {
+      if (nbTransparentMeshes > 0 && useTransparentRenderBundles) {
         transparentRenderBundle = new RenderBundle(gpuCameraRenderer, {
           label: 'glTF non transmissive transparent render bundle',
           size: nbTransparentMeshes,
@@ -412,7 +417,11 @@ window.addEventListener('load', async () => {
         if (parameters.transmissive) {
           parameters.renderBundle = transmissiveRenderBundle
         } else if (parameters.transparent) {
-          parameters.renderBundle = transparentRenderBundle
+          if (transparentRenderBundle) {
+            parameters.renderBundle = transparentRenderBundle
+          } else {
+            parameters.renderBundle = null
+          }
         } else {
           parameters.renderBundle = regularRenderBundle
         }
@@ -825,6 +834,20 @@ window.addEventListener('load', async () => {
 
   renderBundlesField.onChange(async (value) => {
     useRenderBundles = value
+
+    if (!useRenderBundles) {
+      transparentRenderBundlesField.disable()
+    } else {
+      transparentRenderBundlesField.enable()
+    }
+
+    cleanUpScene()
+
+    await loadGLTF(currentModel.url)
+  })
+
+  transparentRenderBundlesField.onChange(async (value) => {
+    useTransparentRenderBundles = value
 
     cleanUpScene()
 

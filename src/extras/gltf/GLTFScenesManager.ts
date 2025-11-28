@@ -1963,8 +1963,6 @@ export class GLTFScenesManager {
       }, {}),
     }
 
-    console.log(primitiveInstance.nodes, instancesCount)
-
     // instances matrices storage
     if (instancesCount > 1) {
       const instanceMatricesBinding = new BufferBinding({
@@ -2056,7 +2054,7 @@ export class GLTFScenesManager {
     const hasTangent = !!geometry.getAttributeByName('tangent')
 
     // negate normal scale y component if no tangent
-    if (!hasTangent) {
+    if (!hasTangent && meshDescriptor.parameters.material.normalScale) {
       meshDescriptor.parameters.material.normalScale.y *= -1
     }
 
@@ -2132,7 +2130,7 @@ export class GLTFScenesManager {
               } as LitMeshParameters,
             }
 
-            if (!hasTangent) {
+            if (!hasTangent && variantDescriptor.parameters.material.normalScale) {
               variantDescriptor.parameters.material.normalScale.y *= -1
             }
 
