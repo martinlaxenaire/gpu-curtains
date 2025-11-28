@@ -34,6 +34,7 @@ import { RenderMaterial } from '../../core/materials/RenderMaterial'
 import { DirectionalLight } from '../../core/lights/DirectionalLight'
 import { PointLight } from '../../core/lights/PointLight'
 import { SpotLight } from '../../core/lights/SpotLight'
+import { throwWarning } from '../../utils/utils'
 
 // https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Constants
 // To make it easier to reference the WebGL enums that glTF uses.
@@ -764,6 +765,12 @@ export class GLTFScenesManager {
     const iridescence = (extensions && extensions.KHR_materials_iridescence) || null
     const diffuseTransmission = (extensions && extensions.KHR_materials_diffuse_transmission) || null
 
+    // @ts-ignore
+    const pbrSpecularGlossiness = (extensions && extensions.KHR_materials_pbrSpecularGlossiness) || null
+    if (pbrSpecularGlossiness && !this.renderer.production) {
+      throwWarning('GLTFScenesManager: KHR_materials_pbrSpecularGlossiness is deprecated and therefore not supported.')
+    }
+
     const litMeshMaterialParams: LitMeshMaterialUniformParams = {
       colorSpace: 'linear',
       color:
@@ -780,11 +787,11 @@ export class GLTFScenesManager {
           : 1,
       alphaCutoff: material.alphaCutoff !== undefined ? material.alphaCutoff : material.alphaMode === 'MASK' ? 0.5 : 0,
       metallic:
-        material.pbrMetallicRoughness?.metallicFactor === undefined ? 1 : material.pbrMetallicRoughness.metallicFactor,
+        material.pbrMetallicRoughness?.metallicFactor !== undefined ? material.pbrMetallicRoughness.metallicFactor : 1,
       roughness:
-        material.pbrMetallicRoughness?.roughnessFactor === undefined
-          ? 1
-          : material.pbrMetallicRoughness.roughnessFactor,
+        material.pbrMetallicRoughness?.roughnessFactor !== undefined
+          ? material.pbrMetallicRoughness.roughnessFactor
+          : 1,
       normalScale: material.normalTexture?.scale === undefined ? new Vec2(1) : new Vec2(material.normalTexture.scale),
       occlusionIntensity: material.occlusionTexture?.strength === undefined ? 1 : material.occlusionTexture.strength,
       emissiveIntensity:
@@ -1956,6 +1963,8 @@ export class GLTFScenesManager {
       }, {}),
     }
 
+    console.log(primitiveInstance.nodes, instancesCount)
+
     // instances matrices storage
     if (instancesCount > 1) {
       const instanceMatricesBinding = new BufferBinding({
@@ -1971,6 +1980,10 @@ export class GLTFScenesManager {
           normal: {
             type: 'mat3x3f',
             value: new Mat3(),
+          },
+          handedness: {
+            type: 'f32',
+            value: 1,
           },
         },
       })
@@ -1994,6 +2007,10 @@ export class GLTFScenesManager {
         // we compute and update the corresponding matrices bindings
         const instanceNode = nodes[index]
 
+        const determinant = instanceNode.worldMatrix.determinant()
+        // if determinant is negative, handedness will multiply instance normals by -1
+        binding.inputs.handedness.value = determinant > 0 ? 1 : -1
+
         const updateInstanceMatrices = () => {
           ;(binding.inputs.model.value as Mat4).copy(instanceNode.worldMatrix)
           ;(binding.inputs.normal.value as Mat3).getNormalMatrix(instanceNode.worldMatrix)
@@ -2016,6 +2033,12 @@ export class GLTFScenesManager {
       }
 
       meshDescriptor.parameters.bindings.push(instancesBinding)
+    } else {
+      const determinant = primitiveInstance.nodes[0].worldMatrix.determinant()
+      if (determinant < 0) {
+        // negative scale changes vertices order
+        meshDescriptor.parameters.geometry.verticesOrder = 'cw'
+      }
     }
 
     // computed transformed bbox

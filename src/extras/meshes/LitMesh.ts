@@ -584,7 +584,6 @@ export class LitMesh extends Mesh {
     })
 
     const cullMode = parameters.cullMode ?? 'back'
-    console.log(cullMode)
 
     const fs = LitMesh.getFragmentShaderCode({
       shadingModel: shading,
