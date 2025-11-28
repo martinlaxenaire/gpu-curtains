@@ -182,48 +182,60 @@ export class GLTFScenesManager {
   }
 
   /**
-   * Get an attribute size and eventual bufferFormat from its {@link GLTF.AccessorType | accessor type}.
-   * @param type - {@link GLTF.AccessorType | Accessor type} to use.
-   * @returns - Corresponding size eventual bufferFormat.
+   * Get an attribute type, bufferFormat and size from its {@link GLTF.AccessorType | accessor type}.
+   * @param type - {@link GLTF.AccessorType | accessor type} to use.
+   * @returns - Corresponding type, bufferFormat and size.
    */
   static getVertexAttributeParamsFromType(type: GLTF.AccessorType): {
-    /** Corresponding attribute size */
+    /** Corresponding attribute type. */
+    type: VertexBufferAttribute['type']
+    /** Corresponding attribute bufferFormat. */
+    bufferFormat: VertexBufferAttribute['bufferFormat']
+    /** Corresponding attribute size. */
     size: VertexBufferAttribute['size']
-    /** Corresponding attribute bufferFormat */
-    bufferFormat?: VertexBufferAttribute['bufferFormat']
   } {
-    console.log(type)
     switch (type) {
       case 'VEC2':
         return {
+          type: 'vec2f',
+          bufferFormat: 'float32x2',
           size: 2,
         }
       case 'VEC3':
         return {
+          type: 'vec3f',
+          bufferFormat: 'float32x3',
           size: 3,
         }
       case 'VEC4':
         return {
+          type: 'vec4f',
+          bufferFormat: 'float32x4',
           size: 4,
         }
       case 'MAT2':
         return {
-          bufferFormat: 'float32x2',
+          type: 'mat2x2f',
+          bufferFormat: 'float32x2', // not used
           size: 6,
         }
       case 'MAT3':
         return {
-          bufferFormat: 'float32x3',
+          type: 'mat3x3f',
+          bufferFormat: 'float32x3', // not used
           size: 9,
         }
       case 'MAT4':
         return {
-          bufferFormat: 'float32x4',
+          type: 'mat4x4f',
+          bufferFormat: 'float32x4', // not used
           size: 16,
         }
       case 'SCALAR':
       default: // treat default as f32
         return {
+          type: 'f32',
+          bufferFormat: 'float32',
           size: 1,
         }
     }
@@ -236,17 +248,17 @@ export class GLTFScenesManager {
    */
   static getTypedArrayConstructorFromComponentType(componentType: GLTF.AccessorComponentType): TypedArrayConstructor {
     switch (componentType) {
-      case GL.BYTE: // GL.BYTE
+      case GL.BYTE:
         return Int8Array
-      case GL.UNSIGNED_BYTE: // GL.UNSIGNED_BYTE
+      case GL.UNSIGNED_BYTE:
         return Uint8Array
-      case GL.SHORT: // GL.SHORT
+      case GL.SHORT:
         return Int16Array
-      case GL.UNSIGNED_SHORT: // GL.UNSIGNED_SHORT
+      case GL.UNSIGNED_SHORT:
         return Uint16Array
-      case GL.UNSIGNED_INT: // GL.UNSIGNED_INT
+      case GL.UNSIGNED_INT:
         return Uint32Array
-      case GL.FLOAT: // GL.FLOAT
+      case GL.FLOAT:
       default:
         return Float32Array
     }
@@ -259,17 +271,19 @@ export class GLTFScenesManager {
    */
   static gpuPrimitiveTopologyForMode(mode: GLTF.MeshPrimitiveMode): GPUPrimitiveTopology {
     switch (mode) {
-      case GL.TRIANGLE_STRIP: // GL.TRIANGLE_STRIP
-      case GL.TRIANGLE_FAN: // GL.TRIANGLE_FAN
+      case GL.TRIANGLE_STRIP:
+      // not supported by WebGPU, default to triangle-strip
+      case GL.TRIANGLE_FAN:
         return 'triangle-strip'
-      case GL.LINES: // GL.LINES
+      case GL.LINES:
         return 'line-list'
-      case GL.LINE_STRIP: // GL.LINE_STRIP
-      case GL.LINE_LOOP: // GL.LINE_LOOP
+      case GL.LINE_STRIP:
+      // not supported by WebGPU, default to line-strip
+      case GL.LINE_LOOP:
         return 'line-strip'
-      case GL.POINTS: // GL.POINTS
+      case GL.POINTS:
         return 'point-list'
-      case GL.TRIANGLES: // GL.TRIANGLES
+      case GL.TRIANGLES:
       default:
         return 'triangle-list'
     }
@@ -825,7 +839,7 @@ export class GLTFScenesManager {
           clearcoatRoughness: clearcoat.clearcoatRoughnessFactor,
         }),
       }),
-      // iridescene
+      // iridescence
       ...(iridescence && {
         ...(iridescence.iridescenceFactor !== undefined && {
           iridescence: iridescence.iridescenceFactor,
@@ -1568,6 +1582,14 @@ export class GLTFScenesManager {
       meshDescriptor.extensionsUsed.push('KHR_materials_unlit')
     }
 
+    // drop default attributes type and bufferFormat
+    // let the geometry handle it internally
+    // useful for special uint cases
+    defaultAttributes.forEach((attribute) => {
+      attribute.type = null
+      attribute.bufferFormat = null
+    })
+
     const geometryAttributes: GeometryParams = {
       instancesCount: instances.length,
       topology,
@@ -1801,12 +1823,11 @@ export class GLTFScenesManager {
 
         const struct = targetAttributes.reduce(
           (acc, attribute) => {
-            const type = attribute.size > 1 ? `vec${attribute.size}f` : 'f32'
             return (acc = {
               ...acc,
               ...{
                 [attribute.name]: {
-                  type: `array<${type}>`,
+                  type: `array<${attribute.type}>`,
                   value: attribute.array,
                 },
               },
