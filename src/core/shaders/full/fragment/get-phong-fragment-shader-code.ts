@@ -42,6 +42,7 @@ export const getPhongFragmentShaderCode = ({
   return output;`,
   },
   geometry,
+  cullMode = 'back',
   additionalVaryings = [],
   materialUniform = null,
   materialUniformName = 'material',
@@ -83,7 +84,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   // user defined preliminary contribution
   ${chunks.preliminaryContribution}
   
-  ${getTangentBitangent({ geometry, normalTexture })}  
+  ${getTangentBitangent({ geometry, cullMode, normalTexture })}  
   ${getNormal({ normalTexture })}
   ${getMetallicRoughness({ metallicRoughnessTexture })}
   ${getSpecular({ specularTexture, specularFactorTexture, specularColorTexture })}

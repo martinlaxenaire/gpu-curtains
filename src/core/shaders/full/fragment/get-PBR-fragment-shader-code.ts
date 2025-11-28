@@ -62,6 +62,7 @@ export const getPBRFragmentShaderCode = ({
   return output;`,
   },
   geometry,
+  cullMode = 'back',
   additionalVaryings = [],
   materialUniform = null,
   materialUniformName = 'material',
@@ -135,7 +136,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   ${chunks.preliminaryContribution}
 
   // material infos
-  ${getTangentBitangent({ extensionsUsed, geometry, normalTexture, clearcoatNormalTexture })}  
+  ${getTangentBitangent({ extensionsUsed, geometry, cullMode, normalTexture, clearcoatNormalTexture })}  
   ${getNormal({ normalTexture })}
   ${getMetallicRoughness({ metallicRoughnessTexture })}
   ${getDiffuse}

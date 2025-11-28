@@ -46,6 +46,8 @@ export interface UnlitFragmentShaderInputParams extends FragmentShaderInputBaseP
 export interface LambertFragmentShaderInputParams extends UnlitFragmentShaderInputParams, LambertTexturesDescriptors {
   /** Whether the shading function should account for current shadows. Default to `false`. */
   receiveShadows?: boolean
+  /** Culling mode to use for normal and tangent calculations. Default to `back`. */
+  cullMode?: GPUCullMode
 }
 
 /** Parameters used to build a phong fragment shader. */
@@ -88,6 +90,7 @@ export const getFragmentShaderCode = ({
   chunks = null,
   toneMapping = 'Khronos',
   geometry,
+  cullMode = 'back',
   additionalVaryings = [],
   materialUniform = null,
   materialUniformName = 'material',
@@ -141,6 +144,7 @@ export const getFragmentShaderCode = ({
           outputColorSpace,
           fragmentOutput,
           geometry,
+          cullMode,
           additionalVaryings,
           materialUniform,
           materialUniformName,
@@ -157,6 +161,7 @@ export const getFragmentShaderCode = ({
           outputColorSpace,
           fragmentOutput,
           geometry,
+          cullMode,
           additionalVaryings,
           materialUniform,
           materialUniformName,
@@ -178,6 +183,7 @@ export const getFragmentShaderCode = ({
           outputColorSpace,
           fragmentOutput,
           geometry,
+          cullMode,
           additionalVaryings,
           materialUniform,
           materialUniformName,

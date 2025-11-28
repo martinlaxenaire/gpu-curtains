@@ -1799,6 +1799,7 @@ export class GLTFScenesManager {
    */
   createMaterial(primitive: GLTF.IMeshPrimitive, primitiveInstance: PrimitiveInstanceDescriptor) {
     const { instances, nodes, meshDescriptor } = primitiveInstance
+    const { geometry } = meshDescriptor.parameters
 
     const instancesCount = instances.length
 
@@ -1880,7 +1881,7 @@ export class GLTFScenesManager {
             // real dirty way to get a better approximate bounding box
             // should use https://discourse.threejs.org/t/accurate-gltf-bounding-box/45410/4
             if (instanceIndex > 0) {
-              const tempBbox = meshDescriptor.parameters.geometry.boundingBox.clone()
+              const tempBbox = geometry.boundingBox.clone()
               const tempMat4 = new Mat4()
               skinDef.joints.forEach((object, jointIndex) => {
                 tempMat4.setFromArray(skinDef.inverseBindMatrices, jointIndex * 16)
@@ -2019,7 +2020,7 @@ export class GLTFScenesManager {
 
     // computed transformed bbox
     for (let i = 0; i < nodes.length; i++) {
-      const tempBbox = meshDescriptor.parameters.geometry.boundingBox.clone()
+      const tempBbox = geometry.boundingBox.clone()
       const transformedBbox = tempBbox.applyMat4(meshDescriptor.nodes[i].worldMatrix)
 
       this.scenesManager.boundingBox.min.min(transformedBbox.min)
@@ -2028,6 +2029,13 @@ export class GLTFScenesManager {
 
     // avoid having a bounding box max component equal to 0
     this.scenesManager.boundingBox.max.max(new Vec3(0.001))
+
+    const hasTangent = !!geometry.getAttributeByName('tangent')
+
+    // negate normal scale y component if no tangent
+    if (!hasTangent) {
+      meshDescriptor.parameters.material.normalScale.y *= -1
+    }
 
     // variants
     if (primitive.extensions) {
@@ -2099,6 +2107,10 @@ export class GLTFScenesManager {
 
                 ...(variantMaterialParams.targets && { targets: variantMaterialParams.targets }),
               } as LitMeshParameters,
+            }
+
+            if (!hasTangent) {
+              variantDescriptor.parameters.material.normalScale.y *= -1
             }
 
             meshDescriptor.alternateDescriptors.set(variant.name, variantDescriptor)

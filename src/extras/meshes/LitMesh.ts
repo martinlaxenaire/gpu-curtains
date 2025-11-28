@@ -583,6 +583,9 @@ export class LitMesh extends Mesh {
       additionalVaryings,
     })
 
+    const cullMode = parameters.cullMode ?? 'back'
+    console.log(cullMode)
+
     const fs = LitMesh.getFragmentShaderCode({
       shadingModel: shading,
       outputColorSpace,
@@ -590,6 +593,7 @@ export class LitMesh extends Mesh {
       chunks: fragmentChunks,
       extensionsUsed,
       receiveShadows: defaultParams.receiveShadows,
+      cullMode,
       toneMapping,
       geometry: defaultParams.geometry,
       additionalVaryings,
