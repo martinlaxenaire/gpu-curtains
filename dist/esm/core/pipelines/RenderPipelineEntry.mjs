@@ -285,7 +285,7 @@ ${this.shaders.full.head}`;
           depthBias: this.options.rendering.depthBias,
           depthBiasClamp: this.options.rendering.depthBiasClamp,
           depthBiasSlopeScale: this.options.rendering.depthBiasSlopeScale,
-          depthWriteEnabled: this.options.rendering.depthWriteEnabled,
+          depthWriteEnabled: this.options.rendering.transparent ? false : this.options.rendering.depthWriteEnabled,
           depthCompare: this.options.rendering.depthCompare,
           format: this.options.rendering.depthFormat,
           ...this.options.rendering.stencil && {

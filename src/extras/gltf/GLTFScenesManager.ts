@@ -2072,6 +2072,10 @@ export class GLTFScenesManager {
       meshDescriptor.parameters.material.normalScale.y *= -1
     }
 
+    // flat shading
+    const hasNormal = primitive.attributes['NORMAL'] !== undefined
+    meshDescriptor.parameters.material.flatShading = !hasNormal
+
     // variants
     if (primitive.extensions) {
       if (
@@ -2136,6 +2140,7 @@ export class GLTFScenesManager {
 
                 material: {
                   ...variantMaterialParams.material,
+                  flatShading: meshDescriptor.parameters.material.flatShading,
                   ...texturesDescriptors.reduce((acc, descriptor) => {
                     return { ...acc, [descriptor.texture.options.name]: descriptor }
                   }, {}),
@@ -2246,7 +2251,9 @@ export class GLTFScenesManager {
         // scenes
         if (this.gltf.scenes && this.gltf.scenes.length) {
           const activeScene = this.gltf.scene || 0
-          const isInActiveScene = meshDescriptor.scenes.find((scene) => scene.index === activeScene)
+          const isInActiveScene = meshDescriptor.scenes.length
+            ? meshDescriptor.scenes.find((scene) => scene.index === activeScene)
+            : true
           if (isInActiveScene) {
             mesh.visible = true
           } else {

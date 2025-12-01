@@ -17,6 +17,8 @@ const getPBRShading = ({
   receiveShadows = false,
   environmentMap = null,
   transmissionBackgroundTexture = null,
+  transmissiveInputColorSpace = "srgb",
+  transmissiveInputToneMapping = "Khronos",
   extensionsUsed = []
 } = {}) => {
   return (
@@ -108,7 +110,12 @@ const getPBRShading = ({
   var totalDiffuse: vec3f = reflectedLight.indirectDiffuse + reflectedLight.directDiffuse;
   let totalSpecular: vec3f = reflectedLight.indirectSpecular + reflectedLight.directSpecular;
   
-  ${getIBLVolumeRefraction({ transmissionBackgroundTexture, extensionsUsed })}
+  ${getIBLVolumeRefraction({
+      transmissionBackgroundTexture,
+      transmissiveInputColorSpace,
+      transmissiveInputToneMapping,
+      extensionsUsed
+    })}
   
   var outgoingLight: vec3f = totalDiffuse + totalSpecular;
   

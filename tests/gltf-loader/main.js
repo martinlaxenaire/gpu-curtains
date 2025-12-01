@@ -472,6 +472,10 @@ window.addEventListener('load', async () => {
 
       // debug output
       const isUnlit = shadingModel === 'Unlit' || meshDescriptor.extensionsUsed.includes('KHR_materials_unlit')
+      const hasTBN =
+        meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === 'normalTexture') ||
+        meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === 'clearcoatNormalTexture') ||
+        meshDescriptor.extensionsUsed.includes('KHR_materials_anisotropy')
 
       let output = `
         if(debug.channel == 1.0) {
@@ -499,19 +503,9 @@ window.addEventListener('load', async () => {
               : 'outputColor = vec4(normal * 0.5 + 0.5, 1.0);'
           }
         } else if(debug.channel == 5.0) {
-          ${
-            parameters.geometry.getAttributeByName('tangent') ||
-            (meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === 'normalTexture') && !isUnlit)
-              ? 'outputColor = vec4(tangent * 0.5 + 0.5, 1.0);'
-              : 'outputColor = vec4(vec3(0.0), 1.0);'
-          }
+          ${hasTBN && !isUnlit ? 'outputColor = vec4(tbn[0] * 0.5 + 0.5, 1.0);' : 'outputColor = vec4(vec3(0.0), 1.0);'}
         } else if(debug.channel == 6.0) {
-          ${
-            parameters.geometry.getAttributeByName('tangent') ||
-            (meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === 'normalTexture') && !isUnlit)
-              ? 'outputColor = vec4(bitangent * 0.5 + 0.5, 1.0);'
-              : 'outputColor = vec4(vec3(0.0), 1.0);'
-          }
+          ${hasTBN && !isUnlit ? 'outputColor = vec4(tbn[1] * 0.5 + 0.5, 1.0);' : 'outputColor = vec4(vec3(0.0), 1.0);'}
         } else if(debug.channel == 7.0) {
           outputColor = vec4(normal * 0.5 + 0.5, 1.0);
         } else if(debug.channel == 8.0) {

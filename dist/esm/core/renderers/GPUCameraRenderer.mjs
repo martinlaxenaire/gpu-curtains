@@ -642,6 +642,9 @@ class GPUCameraRenderer extends GPURenderer {
       this.transmissionTarget.passEntry.onBeforeRenderPass = (commandEncoder, swapChainTexture) => {
         this.copyGPUTextureToTexture(swapChainTexture, this.transmissionTarget.texture, commandEncoder);
       };
+      const mainPassEntry = this.scene.getRenderTargetPassEntry();
+      this.transmissionTarget.passEntry.stack.projected.transparent = mainPassEntry.stack.projected.transparent;
+      mainPassEntry.stack.projected.transparent = [];
     }
   }
   /**

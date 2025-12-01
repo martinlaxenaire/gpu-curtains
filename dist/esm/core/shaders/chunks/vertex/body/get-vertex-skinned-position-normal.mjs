@@ -78,8 +78,7 @@ const getVertexSkinnedPositionNormal = ({ bindings = [], geometry }) => {
     `
   modelMatrix = instances.matrices[instanceIndex].model;
   worldPosition = modelMatrix * worldPosition;
-  
-  normal = normalize(instances.matrices[instanceIndex].normal * normal);
+  normal = normalize(instances.matrices[instanceIndex].normal * normal) * instances.matrices[instanceIndex].handedness;
     `;
   } else {
     output += /* wgsl */

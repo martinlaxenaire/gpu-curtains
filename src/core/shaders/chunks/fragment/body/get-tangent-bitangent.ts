@@ -10,6 +10,7 @@ import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragmen
  * @param parameters.extensionsUsed - {@link PBRFragmentShaderInputParams.extensionsUsed | extensionsUsed} to check if anisotropy is enabled.
  * @param parameters.geometry - {@link Geometry} to use to check for `tangent` and `bitangent` attributes.
  * @param parameters.cullMode - Culling mode used to update normal and TBN if needed.
+ * @param parameters.flatShading - Whether to calculate flat normals.
  * @param parameters.normalTexture - {@link ShaderTextureDescriptor | Normal texture descriptor} to use if any.
  * @param parameters.clearcoatNormalTexture - {@link ShaderTextureDescriptor | Clearcoat normal texture descriptor} to use if any.
  */
@@ -17,12 +18,14 @@ export const getTangentBitangent = ({
   extensionsUsed = [],
   geometry = null,
   cullMode = 'back',
+  flatShading = false,
   normalTexture = null,
   clearcoatNormalTexture = null,
 }: {
   extensionsUsed?: PBRFragmentShaderInputParams['extensionsUsed']
   geometry?: Geometry
   cullMode?: GPUCullMode
+  flatShading?: PBRFragmentShaderInputParams['flatShading']
   normalTexture?: ShaderTextureDescriptor
   clearcoatNormalTexture?: ShaderTextureDescriptor
 } = {}): string => {
@@ -30,7 +33,14 @@ export const getTangentBitangent = ({
   let faceDirection = select(-1.0, 1.0, frontFacing);
   var geometryNormal: vec3f = normal;`
 
-  if (cullMode !== 'back') {
+  if (flatShading) {
+    tangentBitangent += /* wgsl */ `
+  let fdx: vec3f = dpdx( modelPosition );
+	let fdy: vec3f = dpdy( modelPosition );
+	geometryNormal = normalize( cross( fdx, -fdy ) );`
+  }
+
+  if (cullMode !== 'back' && !flatShading) {
     tangentBitangent += /* wgsl */ `
   geometryNormal = geometryNormal * faceDirection;
     `
@@ -72,7 +82,7 @@ export const getTangentBitangent = ({
   `
     }
 
-    if (cullMode !== 'back') {
+    if (cullMode !== 'back' && !flatShading) {
       tangentBitangent += /* wgsl */ `
   tbn[0] *= faceDirection;
   tbn[1] *= faceDirection;

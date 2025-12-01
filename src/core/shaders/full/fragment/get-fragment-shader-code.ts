@@ -49,6 +49,8 @@ export interface LambertFragmentShaderInputParams extends UnlitFragmentShaderInp
   receiveShadows?: boolean
   /** Culling mode to use for normal and tangent calculations. Default to `back`. */
   cullMode?: GPUCullMode
+  /** Whether the material should be rendered using flat shading. Default to `false`. */
+  flatShading?: boolean
 }
 
 /** Parameters used to build a phong fragment shader. */
@@ -61,7 +63,9 @@ export interface PBRFragmentShaderInputParams extends PhongFragmentShaderInputPa
   /** {@link EnvironmentMap} to use for IBL shading. */
   environmentMap?: EnvironmentMap
 
+  /** Whether the opaque objects sampled by the transmission texture have been drawn in `linear` or `srgb` color space. Default to `srgb`. */
   transmissiveInputColorSpace?: ColorSpace
+  /** The tone mapping applied to the opaque objects sampled by the transmission texture, if any. Default to `Khronos`. */
   transmissiveInputToneMapping?: ToneMappings
 }
 
@@ -97,6 +101,7 @@ export const getFragmentShaderCode = ({
   transmissiveInputToneMapping = 'Khronos',
   geometry,
   cullMode = 'back',
+  flatShading = false,
   additionalVaryings = [],
   materialUniform = null,
   materialUniformName = 'material',
@@ -151,6 +156,7 @@ export const getFragmentShaderCode = ({
           fragmentOutput,
           geometry,
           cullMode,
+          flatShading,
           additionalVaryings,
           materialUniform,
           materialUniformName,
@@ -168,6 +174,7 @@ export const getFragmentShaderCode = ({
           fragmentOutput,
           geometry,
           cullMode,
+          flatShading,
           additionalVaryings,
           materialUniform,
           materialUniformName,
@@ -192,6 +199,7 @@ export const getFragmentShaderCode = ({
           fragmentOutput,
           geometry,
           cullMode,
+          flatShading,
           additionalVaryings,
           materialUniform,
           materialUniformName,

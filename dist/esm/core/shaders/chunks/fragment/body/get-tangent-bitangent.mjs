@@ -1,6 +1,7 @@
 const getTangentBitangent = ({
   extensionsUsed = [],
   geometry = null,
+  cullMode = "back",
   normalTexture = null,
   clearcoatNormalTexture = null
 } = {}) => {
@@ -8,15 +9,21 @@ const getTangentBitangent = ({
     /* wgsl */
     `
   let faceDirection = select(-1.0, 1.0, frontFacing);
-  let geometryNormal: vec3f = faceDirection * normal;`
+  var geometryNormal: vec3f = normal;`
   );
+  if (cullMode !== "back") {
+    tangentBitangent += /* wgsl */
+    `
+  geometryNormal = geometryNormal * faceDirection;
+    `;
+  }
   const tangentAttribute = geometry && geometry.getAttributeByName("tangent");
   const needsTangentBitangent = !!normalTexture || !!clearcoatNormalTexture || extensionsUsed.includes("KHR_materials_anisotropy");
   if (needsTangentBitangent) {
     if (tangentAttribute) {
       tangentBitangent += /* wgsl */
       `
-  let tbn = mat3x3f(normalize(tangent), normalize(bitangent), geometryNormal);`;
+  var tbn = mat3x3f(normalize(tangent), normalize(bitangent), geometryNormal);`;
     } else {
       if (normalTexture) {
         tangentBitangent += /* wgsl */
@@ -43,8 +50,15 @@ const getTangentBitangent = ({
       }
       tangentBitangent += /* wgsl */
       `
-  let tbn = getTangentFrame(modelPosition, normal, tbnUV);
+  var tbn = getTangentFrame(-modelPosition, normal, tbnUV);
   `;
+    }
+    if (cullMode !== "back") {
+      tangentBitangent += /* wgsl */
+      `
+  tbn[0] *= faceDirection;
+  tbn[1] *= faceDirection;
+    `;
     }
   }
   return tangentBitangent;

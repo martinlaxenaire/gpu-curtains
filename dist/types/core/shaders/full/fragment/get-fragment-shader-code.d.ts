@@ -1,3 +1,4 @@
+/// <reference types="@webgpu/types" />
 import { EnvironmentMap } from '../../../../extras/environmentMap/EnvironmentMap';
 import { Geometry } from '../../../geometries/Geometry';
 import { GLTFExtensionsUsed } from '../../../../types/gltf/GLTFExtensions';
@@ -33,6 +34,8 @@ export interface UnlitFragmentShaderInputParams extends FragmentShaderInputBaseP
 export interface LambertFragmentShaderInputParams extends UnlitFragmentShaderInputParams, LambertTexturesDescriptors {
     /** Whether the shading function should account for current shadows. Default to `false`. */
     receiveShadows?: boolean;
+    /** Culling mode to use for normal and tangent calculations. Default to `back`. */
+    cullMode?: GPUCullMode;
 }
 /** Parameters used to build a phong fragment shader. */
 export interface PhongFragmentShaderInputParams extends LambertFragmentShaderInputParams, PhongTexturesDescriptors {
@@ -43,6 +46,10 @@ export interface PBRFragmentShaderInputParams extends PhongFragmentShaderInputPa
     extensionsUsed?: GLTFExtensionsUsed;
     /** {@link EnvironmentMap} to use for IBL shading. */
     environmentMap?: EnvironmentMap;
+    /** Whether the opaque objects sampled by the transmission texture have been drawn in `linear` or `srgb` color space. Default to `srgb`. */
+    transmissiveInputColorSpace?: ColorSpace;
+    /** The tone mapping applied to the opaque objects sampled by the transmission texture, if any. Default to `Khronos`. */
+    transmissiveInputToneMapping?: ToneMappings;
 }
 /** Parameters used to build a lit fragment shader. */
 export interface FragmentShaderInputParams extends PBRFragmentShaderInputParams {
@@ -54,4 +61,4 @@ export interface FragmentShaderInputParams extends PBRFragmentShaderInputParams 
  * @param parameters - {@link FragmentShaderInputParams} used to build the fragment shader.
  * @returns - The fragment shader generated based on the provided parameters.
  */
-export declare const getFragmentShaderCode: ({ shadingModel, outputColorSpace, fragmentOutput, chunks, toneMapping, geometry, additionalVaryings, materialUniform, materialUniformName, extensionsUsed, receiveShadows, baseColorTexture, normalTexture, emissiveTexture, occlusionTexture, metallicRoughnessTexture, specularTexture, specularFactorTexture, specularColorTexture, transmissionTexture, thicknessTexture, sheenTexture, sheenColorTexture, sheenRoughnessTexture, anisotropyTexture, clearcoatTexture, clearcoatRoughnessTexture, clearcoatNormalTexture, iridescenceTexture, iridescenceThicknessTexture, diffuseTransmissionTexture, diffuseTransmissionFactorTexture, diffuseTransmissionColorTexture, transmissionBackgroundTexture, environmentMap, }: FragmentShaderInputParams) => string;
+export declare const getFragmentShaderCode: ({ shadingModel, outputColorSpace, fragmentOutput, chunks, toneMapping, transmissiveInputColorSpace, transmissiveInputToneMapping, geometry, cullMode, additionalVaryings, materialUniform, materialUniformName, extensionsUsed, receiveShadows, baseColorTexture, normalTexture, emissiveTexture, occlusionTexture, metallicRoughnessTexture, specularTexture, specularFactorTexture, specularColorTexture, transmissionTexture, thicknessTexture, sheenTexture, sheenColorTexture, sheenRoughnessTexture, anisotropyTexture, clearcoatTexture, clearcoatRoughnessTexture, clearcoatNormalTexture, iridescenceTexture, iridescenceThicknessTexture, diffuseTransmissionTexture, diffuseTransmissionFactorTexture, diffuseTransmissionColorTexture, transmissionBackgroundTexture, environmentMap, }: FragmentShaderInputParams) => string;

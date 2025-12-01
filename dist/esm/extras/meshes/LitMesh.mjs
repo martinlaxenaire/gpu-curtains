@@ -16,12 +16,18 @@ class LitMesh extends Mesh {
     renderer = isCameraRenderer(renderer, "LitMesh");
     let { material, ...defaultParams } = parameters;
     if (!material) material = {};
-    let { colorSpace, outputColorSpace, fragmentOutput } = material;
+    let { colorSpace, transmissiveInputColorSpace, transmissiveInputToneMapping, outputColorSpace, fragmentOutput } = material;
     if (!colorSpace) {
       colorSpace = "srgb";
     }
     if (!outputColorSpace) {
       outputColorSpace = "srgb";
+    }
+    if (!transmissiveInputColorSpace) {
+      transmissiveInputColorSpace = "srgb";
+    }
+    if (transmissiveInputToneMapping === void 0) {
+      transmissiveInputToneMapping = "Khronos";
     }
     if (!fragmentOutput) {
       fragmentOutput = {
@@ -248,6 +254,7 @@ class LitMesh extends Mesh {
       chunks: vertexChunks,
       additionalVaryings
     });
+    const cullMode = parameters.cullMode ?? "back";
     const fs = LitMesh.getFragmentShaderCode({
       shadingModel: shading,
       outputColorSpace,
@@ -255,7 +262,10 @@ class LitMesh extends Mesh {
       chunks: fragmentChunks,
       extensionsUsed,
       receiveShadows: defaultParams.receiveShadows,
+      cullMode,
       toneMapping,
+      transmissiveInputColorSpace,
+      transmissiveInputToneMapping,
       geometry: defaultParams.geometry,
       additionalVaryings,
       materialUniform,

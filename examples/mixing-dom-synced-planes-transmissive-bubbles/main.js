@@ -12,17 +12,6 @@ import {
 
 // use 'DOMContentLoaded' so we don't wait for the images to be loaded
 window.addEventListener('DOMContentLoaded', async () => {
-  // lerp
-  const lerp = (start = 0, end = 1, amount = 0.1) => {
-    return (1 - amount) * start + amount * end
-  }
-
-  let scrollEffect = 0
-  const maxScrollEffect = 60
-
-  // get our planes elements
-  let planeElements = document.querySelectorAll('.plane')
-
   // set our main GPUCurtains instance it will handle everything we need
   // a WebGPU device and a renderer with its scene, requestAnimationFrame, resize and scroll events...
   const gpuCurtains = new GPUCurtains({
@@ -36,29 +25,6 @@ window.addEventListener('DOMContentLoaded', async () => {
   })
 
   await gpuCurtains.setDevice()
-
-  gpuCurtains
-    .onBeforeRender(() => {
-      // update our planes deformation
-      // increase/decrease the effect
-      scrollEffect = lerp(scrollEffect, 0, 0.075)
-    })
-    .onScroll(() => {
-      // get scroll deltas to apply the effect on scroll
-      const delta = gpuCurtains.scrollDelta
-
-      // invert value for the effect
-      delta.y = -delta.y
-
-      // threshold
-      if (delta.y > maxScrollEffect) {
-        delta.y = maxScrollEffect
-      } else if (delta.y < -maxScrollEffect) {
-        delta.y = -maxScrollEffect
-      }
-
-      scrollEffect = lerp(scrollEffect, delta.y, 0.05)
-    })
 
   // give some room to the bubbles
   gpuCurtains.renderer.camera.position.z = 15
@@ -113,28 +79,6 @@ window.addEventListener('DOMContentLoaded', async () => {
         entryPoint: 'main',
       },
     },
-    DOMFrustumMargins: {
-      top: 200,
-      right: 0,
-      bottom: 200,
-      left: 0,
-    },
-    transparent: true,
-    uniforms: {
-      scroll: {
-        label: 'Scroll',
-        struct: {
-          strength: {
-            type: 'f32',
-            value: 0,
-          },
-          max: {
-            type: 'f32',
-            value: maxScrollEffect,
-          },
-        },
-      },
-    },
     samplers: [
       // Use mipmap nearest filter
       new Sampler(gpuCurtains, {
@@ -148,16 +92,13 @@ window.addEventListener('DOMContentLoaded', async () => {
     },
   }
 
+  // get our planes elements
+  let planeElements = document.querySelectorAll('.plane')
+
   // add our planes and handle them
   planeElements.forEach((planeEl, planeIndex) => {
     params.label = 'Plane' + planeIndex
     const plane = new Plane(gpuCurtains, planeEl, params)
-
-    // check if our plane is defined and use it
-    plane.onRender(() => {
-      // update the uniform
-      plane.uniforms.scroll.strength.value = scrollEffect
-    })
   })
 
   // transmissive bubbles

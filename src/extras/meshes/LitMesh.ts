@@ -354,6 +354,7 @@ export class LitMesh extends Mesh {
       vertexChunks,
       fragmentChunks,
       toneMapping,
+      flatShading,
       // material uniform values
       color,
       opacity,
@@ -602,6 +603,7 @@ export class LitMesh extends Mesh {
       extensionsUsed,
       receiveShadows: defaultParams.receiveShadows,
       cullMode,
+      flatShading,
       toneMapping,
       transmissiveInputColorSpace,
       transmissiveInputToneMapping,

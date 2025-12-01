@@ -27,6 +27,13 @@ export interface MeshDescriptorMaterialParams {
     /** Specific {@link LitMeshMaterialParams} used to build the {@link LitMesh} material. */
     material?: LitMeshMaterialParams;
 }
+/** Defines a glTF scenes. */
+export interface SceneDescriptor {
+    /** Name of the scene. */
+    name: string;
+    /** Index of the scene. */
+    index: number;
+}
 /**
  * Define a {@link MeshDescriptor} object, which helps creating a {@link LitMesh} and its shaders based on the various properties.
  */
@@ -39,6 +46,8 @@ export interface MeshDescriptor {
     texturesDescriptors: ShaderTextureDescriptor[];
     /** All the {@link core/geometries/Geometry.Geometry | Geometry} instances {@link Object3D} nodes used to calculate the eventual instances world and normal matrices. */
     nodes: Object3D[];
+    /** Eventual scene to which the {@link MeshDescriptor} belongs. */
+    scenes: SceneDescriptor[];
     /** {@link GLTFExtensionsUsed} that should be used when creating the shaders. */
     extensionsUsed: GLTFExtensionsUsed;
     /** Name of the {@link MeshDescriptor} variant. Default to `Default`. */

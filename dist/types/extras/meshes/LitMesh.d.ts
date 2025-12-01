@@ -167,8 +167,6 @@ export interface GetMaterialTexturesDescriptors extends PBRTexturesDescriptors {
 export interface LitMeshMaterialParams extends Omit<PBRFragmentShaderInputParams, 'chunks' | 'geometry' | 'receiveShadows' | 'extensionsUsed' | 'materialUniform' | 'materialUniformName' | 'transmissionBackgroundTexture'>, LitMeshMaterialUniformParams {
     /** {@link ShadingModels} to use for lighting. Default to `PBR`. */
     shading?: ShadingModels;
-    /** In which {@link ColorSpace} the output should be done. `srgb` should be used most of the time, except for some post processing effects that need input colors in `linear` space (such as bloom). Default to `srgb`. */
-    outputColorSpace?: ColorSpace;
     /** {@link AdditionalChunks | Additional WGSL chunks} to add to the vertex shaders. */
     vertexChunks?: AdditionalChunks;
     /** {@link AdditionalChunks | Additional WGSL chunks} to add to the fragment shaders. */

@@ -43,6 +43,8 @@ const getPBRFragmentShaderCode = ({
   chunks = null,
   toneMapping = "Khronos",
   outputColorSpace = "srgb",
+  transmissiveInputColorSpace = "srgb",
+  transmissiveInputToneMapping = "Khronos",
   fragmentOutput = {
     struct: [
       {
@@ -59,6 +61,7 @@ const getPBRFragmentShaderCode = ({
     )
   },
   geometry,
+  cullMode = "back",
   additionalVaryings = [],
   materialUniform = null,
   materialUniformName = "material",
@@ -132,7 +135,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   ${chunks.preliminaryContribution}
 
   // material infos
-  ${getTangentBitangent({ extensionsUsed, geometry, normalTexture, clearcoatNormalTexture })}  
+  ${getTangentBitangent({ extensionsUsed, geometry, cullMode, normalTexture, clearcoatNormalTexture })}  
   ${getNormal({ normalTexture })}
   ${getMetallicRoughness({ metallicRoughnessTexture })}
   ${getDiffuse}
@@ -152,7 +155,14 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
     })}
   
   // shading
-  ${getPBRShading({ receiveShadows, environmentMap, transmissionBackgroundTexture, extensionsUsed })}
+  ${getPBRShading({
+      receiveShadows,
+      environmentMap,
+      transmissionBackgroundTexture,
+      transmissiveInputColorSpace,
+      transmissiveInputToneMapping,
+      extensionsUsed
+    })}
   
   outputColor = vec4(outgoingLight, outputColor.a);
   outputColor = vec4(outputColor.rgb + emissive, outputColor.a);

@@ -37,6 +37,7 @@ const getLambertFragmentShaderCode = ({
     )
   },
   geometry,
+  cullMode = "back",
   additionalVaryings = [],
   materialUniform = null,
   materialUniformName = "material",
@@ -74,7 +75,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   // user defined preliminary contribution
   ${chunks.preliminaryContribution}
   
-  ${getTangentBitangent({ geometry, normalTexture })}  
+  ${getTangentBitangent({ geometry, cullMode, normalTexture })}  
   ${getNormal({ normalTexture })}  
   ${getEmissiveOcclusion({ emissiveTexture, occlusionTexture })}
   
