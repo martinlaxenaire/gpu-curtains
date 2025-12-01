@@ -986,10 +986,8 @@ export class GLTFScenesManager {
                 index: i,
               })
             }
-            console.log(scene, scene.nodes.includes(index))
           })
         }
-        console.log(scenes)
 
         const meshDescriptor: MeshDescriptor = {
           parent: child.node,

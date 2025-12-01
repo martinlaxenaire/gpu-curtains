@@ -42,12 +42,12 @@ fn getBRDFCharlieApprox( normal: vec3f, viewDirection: vec3f, roughness: f32 ) -
   let NdotV: f32 = saturate( dot( normal, viewDirection ) );
 
   let r2: f32 = roughness * roughness;
+  let rInv: f32 = 1.0 / ( roughness + 0.1 );
 
-  let a: f32 = select(-8.48 * r2 + 14.3 * roughness - 9.95, -339.2 * r2 + 161.4 * roughness - 25.9, roughness < 0.25);
-  let b: f32 = select(1.97 * r2 - 3.27 * roughness + 0.72, 44.0 * r2 - 23.7 * roughness + 3.26, roughness < 0.25);
-  let roughnessAdditionalContribution: f32 = select(0.1 * ( roughness - 0.25 ), 0.0, roughness < 0.25);
+  let a: f32 = a = -1.9362 + 1.0678 * roughness + 0.4573 * r2 - 0.8469 * rInv;
+  let b: f32 = -0.6014 + 0.5538 * roughness - 0.4670 * r2 - 0.1255 * rInv;
 
-  let DG: f32 = exp( a * NdotV + b ) + roughnessAdditionalContribution;
+  let DG: f32 = exp( a * NdotV + b );
 
   return saturate( DG );
 }
