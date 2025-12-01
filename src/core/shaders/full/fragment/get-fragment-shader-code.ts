@@ -24,6 +24,7 @@ export interface FragmentShaderInputBaseParams {
   toneMapping?: ToneMappings
   /** In which {@link ColorSpace} the output should be done. `srgb` should be used most of the time, except for some post processing effects that need input colors in `linear` space (such as bloom). Default to `srgb`. */
   outputColorSpace?: ColorSpace
+
   /** Optional additional {@link VertexShaderInputParams.additionalVaryings | varyings} to pass from the vertex shader to the fragment shader. */
   additionalVaryings?: VertexShaderInputParams['additionalVaryings']
   /** Custom fragment shader output structure members and returned values to use if needed. Useful when rendering to a Multiple Render Target for example. */
@@ -59,6 +60,9 @@ export interface PBRFragmentShaderInputParams extends PhongFragmentShaderInputPa
   extensionsUsed?: GLTFExtensionsUsed
   /** {@link EnvironmentMap} to use for IBL shading. */
   environmentMap?: EnvironmentMap
+
+  transmissiveInputColorSpace?: ColorSpace
+  transmissiveInputToneMapping?: ToneMappings
 }
 
 /** Parameters used to build a lit fragment shader. */
@@ -89,6 +93,8 @@ export const getFragmentShaderCode = ({
   },
   chunks = null,
   toneMapping = 'Khronos',
+  transmissiveInputColorSpace = 'srgb',
+  transmissiveInputToneMapping = 'Khronos',
   geometry,
   cullMode = 'back',
   additionalVaryings = [],
@@ -181,6 +187,8 @@ export const getFragmentShaderCode = ({
           chunks,
           toneMapping,
           outputColorSpace,
+          transmissiveInputColorSpace,
+          transmissiveInputToneMapping,
           fragmentOutput,
           geometry,
           cullMode,

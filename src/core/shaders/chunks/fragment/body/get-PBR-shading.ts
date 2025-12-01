@@ -28,11 +28,15 @@ export const getPBRShading = ({
   receiveShadows = false,
   environmentMap = null,
   transmissionBackgroundTexture = null,
+  transmissiveInputColorSpace = 'srgb',
+  transmissiveInputToneMapping = 'Khronos',
   extensionsUsed = [],
 }: {
   receiveShadows?: boolean
   environmentMap?: PBRFragmentShaderInputParams['environmentMap']
   transmissionBackgroundTexture?: ShaderTextureDescriptor
+  transmissiveInputColorSpace?: PBRFragmentShaderInputParams['transmissiveInputColorSpace']
+  transmissiveInputToneMapping?: PBRFragmentShaderInputParams['transmissiveInputToneMapping']
   extensionsUsed?: PBRFragmentShaderInputParams['extensionsUsed']
 } = {}): string => {
   return /* wgsl */ `
@@ -122,7 +126,12 @@ export const getPBRShading = ({
   var totalDiffuse: vec3f = reflectedLight.indirectDiffuse + reflectedLight.directDiffuse;
   let totalSpecular: vec3f = reflectedLight.indirectSpecular + reflectedLight.directSpecular;
   
-  ${getIBLVolumeRefraction({ transmissionBackgroundTexture, extensionsUsed })}
+  ${getIBLVolumeRefraction({
+    transmissionBackgroundTexture,
+    transmissiveInputColorSpace,
+    transmissiveInputToneMapping,
+    extensionsUsed,
+  })}
   
   var outgoingLight: vec3f = totalDiffuse + totalSpecular;
   

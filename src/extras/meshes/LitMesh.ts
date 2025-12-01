@@ -18,7 +18,7 @@ import { Texture } from '../../core/textures/Texture'
 import { MediaTexture } from '../../core/textures/MediaTexture'
 import { Sampler } from '../../core/samplers/Sampler'
 import { EnvironmentMap } from '../environmentMap/EnvironmentMap'
-import { ColorSpace, FragmentOutput } from '../../types/shading'
+import { ColorSpace, FragmentOutput, ToneMappings } from '../../types/shading'
 
 /** Defines all kinds of shading models available. */
 export type ShadingModels = 'Unlit' | 'Lambert' | 'Phong' | 'PBR'
@@ -67,6 +67,7 @@ export interface LitMeshMaterialUniformParams {
   shininess?: number
   /** The base percentage of light that is transmitted through the surface of the {@link LitMesh}. Only applicable to `PBR` shading if `transmissive` parameter is set to `true`. Default to `0`. */
   transmission?: number
+
   /** The index of refraction of the {@link LitMesh}. Default to `1.5`. */
   ior?: number
   /** The strength of the dispersion effect, specified as 20/Abbe number. Only applicable to `PBR` shading if `transmissive` parameter is set to `true`. Default to `0`. */
@@ -208,8 +209,7 @@ export interface LitMeshMaterialParams
     LitMeshMaterialUniformParams {
   /** {@link ShadingModels} to use for lighting. Default to `PBR`. */
   shading?: ShadingModels
-  /** In which {@link ColorSpace} the output should be done. `srgb` should be used most of the time, except for some post processing effects that need input colors in `linear` space (such as bloom). Default to `srgb`. */
-  outputColorSpace?: ColorSpace
+
   /** {@link AdditionalChunks | Additional WGSL chunks} to add to the vertex shaders. */
   vertexChunks?: AdditionalChunks
   /** {@link AdditionalChunks | Additional WGSL chunks} to add to the fragment shaders. */
@@ -314,7 +314,8 @@ export class LitMesh extends Mesh {
     if (!material) material = {}
 
     // color spaces
-    let { colorSpace, outputColorSpace, fragmentOutput } = material
+    let { colorSpace, transmissiveInputColorSpace, transmissiveInputToneMapping, outputColorSpace, fragmentOutput } =
+      material
 
     if (!colorSpace) {
       colorSpace = 'srgb'
@@ -322,6 +323,14 @@ export class LitMesh extends Mesh {
 
     if (!outputColorSpace) {
       outputColorSpace = 'srgb'
+    }
+
+    if (!transmissiveInputColorSpace) {
+      transmissiveInputColorSpace = 'srgb'
+    }
+
+    if (transmissiveInputToneMapping === undefined) {
+      transmissiveInputToneMapping = 'Khronos'
     }
 
     if (!fragmentOutput) {
@@ -594,6 +603,8 @@ export class LitMesh extends Mesh {
       receiveShadows: defaultParams.receiveShadows,
       cullMode,
       toneMapping,
+      transmissiveInputColorSpace,
+      transmissiveInputToneMapping,
       geometry: defaultParams.geometry,
       additionalVaryings,
       materialUniform,

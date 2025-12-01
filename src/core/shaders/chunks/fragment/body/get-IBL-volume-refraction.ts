@@ -1,5 +1,6 @@
 import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code'
 import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh'
+import { ToneMappings } from '../../../../../types/shading'
 
 /**
  * Apply transmission volume refraction to `totalDiffuse` light component if applicable.
@@ -10,17 +11,28 @@ import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh'
  */
 export const getIBLVolumeRefraction = ({
   transmissionBackgroundTexture = null,
+  transmissiveInputColorSpace = 'srgb',
+  transmissiveInputToneMapping = 'Khronos',
   extensionsUsed = [],
 }: {
   transmissionBackgroundTexture?: ShaderTextureDescriptor
+  transmissiveInputColorSpace?: PBRFragmentShaderInputParams['transmissiveInputColorSpace']
+  transmissiveInputToneMapping?: PBRFragmentShaderInputParams['transmissiveInputToneMapping']
   extensionsUsed?: PBRFragmentShaderInputParams['extensionsUsed']
 }): string => {
   const hasDispersion = extensionsUsed.includes('KHR_materials_dispersion')
   const iblVolumeRefractionFunction = hasDispersion ? 'getIBLVolumeRefractionWithDispersion' : 'getIBLVolumeRefraction'
 
+  const availableToneMappings: ToneMappings[] = [false, 'Khronos', 'Reinhard', 'Cineon']
+  const transmissiveToneMapping = availableToneMappings.findIndex((t) => t === transmissiveInputToneMapping)
+  
+
   return transmissionBackgroundTexture
     ? /* wgsl */ `
   var transmissionAlpha: f32 = 1.0;
+
+  let isTransmissiveLinear: bool = ${transmissiveInputColorSpace === 'linear' ? 'true' : 'false'};
+  let transmissiveToneMapping: u32 = ${transmissiveToneMapping};
   
   var transmitted: vec4f = ${iblVolumeRefractionFunction}(
     normal,
@@ -39,6 +51,8 @@ export const getIBLVolumeRefraction = ({
     thickness,
     attenuationColor,
     attenuationDistance,
+    isTransmissiveLinear,
+    transmissiveToneMapping,
     ${transmissionBackgroundTexture.texture.options.name},
     ${transmissionBackgroundTexture.sampler.name},
   );

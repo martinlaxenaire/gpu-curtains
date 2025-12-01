@@ -49,6 +49,8 @@ export const getPBRFragmentShaderCode = ({
   chunks = null,
   toneMapping = 'Khronos',
   outputColorSpace = 'srgb',
+  transmissiveInputColorSpace = 'srgb',
+  transmissiveInputToneMapping = 'Khronos',
   fragmentOutput = {
     struct: [
       {
@@ -156,7 +158,14 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   })}
   
   // shading
-  ${getPBRShading({ receiveShadows, environmentMap, transmissionBackgroundTexture, extensionsUsed })}
+  ${getPBRShading({
+    receiveShadows,
+    environmentMap,
+    transmissionBackgroundTexture,
+    transmissiveInputColorSpace,
+    transmissiveInputToneMapping,
+    extensionsUsed,
+  })}
   
   outputColor = vec4(outgoingLight, outputColor.a);
   outputColor = vec4(outputColor.rgb + emissive, outputColor.a);

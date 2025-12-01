@@ -459,10 +459,21 @@ window.addEventListener('load', async () => {
         },
       }
 
+      parameters.material.toneMapping = toneMapping
+      parameters.material.shading = shadingModel
+
+      if (parameters.material.transmissive) {
+        parameters.material.transmissiveInputToneMapping = toneMapping
+      }
+
+      if (useEnvMap) {
+        parameters.material.environmentMap = environmentMap
+      }
+
+      // debug output
       const isUnlit = shadingModel === 'Unlit' || meshDescriptor.extensionsUsed.includes('KHR_materials_unlit')
 
-      // debug
-      const additionalContribution = `
+      let output = `
         if(debug.channel == 1.0) {
           ${
             parameters.geometry.getAttributeByName('uv')
@@ -628,14 +639,13 @@ window.addEventListener('load', async () => {
         }
       `
 
-      parameters.material.toneMapping = toneMapping
-      parameters.material.shading = shadingModel
-      parameters.material.fragmentChunks = {
-        additionalContribution,
-      }
+      output += `
+      var output: FSOutput;
+      output.color = outputColor;
+      return output;`
 
-      if (useEnvMap) {
-        parameters.material.environmentMap = environmentMap
+      parameters.material.fragmentOutput = {
+        output,
       }
     })
 

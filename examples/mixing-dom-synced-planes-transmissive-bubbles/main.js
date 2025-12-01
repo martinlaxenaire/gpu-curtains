@@ -178,6 +178,8 @@ window.addEventListener('DOMContentLoaded', async () => {
       material: {
         shading: 'PBR',
         toneMapping: 'Khronos',
+        transmissiveInputColorSpace: 'linear', // planes are drawn in linear color space
+        transmissiveInputToneMapping: false, // planes are not tone mapped
         metallic: 0.01, // if we'd set it to 0, we'd lose specular on transparent background
         roughness: 0,
         specularColor: new Vec3(0.1),
