@@ -515,7 +515,7 @@ window.addEventListener('load', async () => {
         } else if(debug.channel == 10.0) {
           ${!isUnlit ? 'outputColor = vec4(emissive, 1.0);' : 'outputColor = vec4(vec3(0.0), 1.0);'}
         } else if(debug.channel == 11.0) {
-          outputColor = baseColor;
+          outputColor = linearTosRGB_4(baseColor);
         } else if(debug.channel == 12.0) {
           ${
             !isUnlit && shadingModel !== 'Lambert'

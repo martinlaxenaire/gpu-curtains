@@ -314,8 +314,14 @@ export class LitMesh extends Mesh {
     if (!material) material = {}
 
     // color spaces
-    let { colorSpace, transmissiveInputColorSpace, transmissiveInputToneMapping, outputColorSpace, fragmentOutput } =
-      material
+    let {
+      colorSpace,
+      transmissiveInputColorSpace,
+      transmissiveInputToneMapping,
+      outputColorSpace,
+      flatShading,
+      fragmentOutput,
+    } = material
 
     if (!colorSpace) {
       colorSpace = 'srgb'
@@ -354,7 +360,6 @@ export class LitMesh extends Mesh {
       vertexChunks,
       fragmentChunks,
       toneMapping,
-      flatShading,
       // material uniform values
       color,
       opacity,
@@ -583,6 +588,8 @@ export class LitMesh extends Mesh {
       // compute geometry right away
       // so we have fresh attributes to send to the shaders' generation helper functions
       defaultParams.geometry.computeGeometry()
+      // no normals? use flat shading
+      flatShading = true
     }
 
     // shaders
