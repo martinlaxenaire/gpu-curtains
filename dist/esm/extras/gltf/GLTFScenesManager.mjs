@@ -550,6 +550,7 @@ const _GLTFScenesManager = class _GLTFScenesManager {
     const transmission = extensions && extensions.KHR_materials_transmission || null;
     const specular = extensions && extensions.KHR_materials_specular || null;
     const volume = extensions && extensions.KHR_materials_volume || null;
+    const volumeScatter = extensions && extensions.KHR_materials_volume_scatter || null;
     const sheen = extensions && extensions.KHR_materials_sheen || null;
     const anisotropy = extensions && extensions.KHR_materials_anisotropy || null;
     const clearcoat = extensions && extensions.KHR_materials_clearcoat || null;
@@ -587,6 +588,19 @@ const _GLTFScenesManager = class _GLTFScenesManager {
       thickness: volume && volume.thicknessFactor !== void 0 ? volume.thicknessFactor : 0,
       attenuationDistance: volume && volume.attenuationDistance !== void 0 ? volume.attenuationDistance : Infinity,
       attenuationColor: volume && volume.attenuationColor !== void 0 ? new Vec3(volume.attenuationColor[0], volume.attenuationColor[1], volume.attenuationColor[2]) : new Vec3(1),
+      // volume scatter
+      ...volumeScatter && {
+        ...volumeScatter.multiscatterColor !== void 0 && {
+          multiscatterColor: new Vec3(
+            volumeScatter.multiscatterColor[0],
+            volumeScatter.multiscatterColor[1],
+            volumeScatter.multiscatterColor[2]
+          )
+        },
+        ...volumeScatter.scatterAnisotropy !== void 0 !== void 0 && {
+          sheenRoughness: volumeScatter.scatterAnisotropy
+        }
+      },
       // sheen
       ...sheen && {
         ...sheen.sheenColorFactor !== void 0 && {
@@ -1267,6 +1281,8 @@ const _GLTFScenesManager = class _GLTFScenesManager {
     if (!hasTangent && meshDescriptor.parameters.material.normalScale) {
       meshDescriptor.parameters.material.normalScale.y *= -1;
     }
+    const hasNormal = primitive.attributes["NORMAL"] !== void 0;
+    meshDescriptor.parameters.material.flatShading = !hasNormal;
     if (primitive.extensions) {
       if (primitive.extensions["KHR_materials_variants"] && this.gltf.extensionsUsed && this.gltf.extensionsUsed.includes("KHR_materials_variants")) {
         meshDescriptor.extensionsUsed.push("KHR_materials_variants");
@@ -1312,6 +1328,7 @@ const _GLTFScenesManager = class _GLTFScenesManager {
                 cullMode: variantMaterialParams.cullMode,
                 material: {
                   ...variantMaterialParams.material,
+                  flatShading: meshDescriptor.parameters.material.flatShading,
                   ...texturesDescriptors.reduce((acc, descriptor) => {
                     return { ...acc, [descriptor.texture.options.name]: descriptor };
                   }, {})
@@ -1385,7 +1402,7 @@ const _GLTFScenesManager = class _GLTFScenesManager {
         meshDescriptor.alternateMaterials.set("Default", mesh.material);
         if (this.gltf.scenes && this.gltf.scenes.length) {
           const activeScene = this.gltf.scene || 0;
-          const isInActiveScene = meshDescriptor.scenes.find((scene) => scene.index === activeScene);
+          const isInActiveScene = meshDescriptor.scenes.length ? meshDescriptor.scenes.find((scene) => scene.index === activeScene) : true;
           if (isInActiveScene) {
             mesh.visible = true;
           } else {

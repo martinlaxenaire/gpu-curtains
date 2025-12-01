@@ -1,6 +1,6 @@
 import { GLTF } from './GLTF';
 /** List of available glTF extensions. */
-export type GLTFExtensionsTypes = 'KHR_animation_pointer' | 'KHR_draco_mesh_compression' | 'KHR_lights_punctual' | 'KHR_materials_anisotropy' | 'KHR_materials_clearcoat' | 'KHR_materials_diffuse_transmission' | 'KHR_materials_dispersion' | 'KHR_materials_emissive_strength' | 'KHR_materials_ior' | 'KHR_materials_iridescence' | 'KHR_materials_sheen' | 'KHR_materials_specular' | 'KHR_materials_transmission' | 'KHR_materials_unlit' | 'KHR_materials_variants' | 'KHR_materials_volume' | 'KHR_mesh_quantization' | 'KHR_texture_basisu' | 'KHR_texture_transform' | 'KHR_xmp_json_ld' | 'KHR_xmp' | 'EXT_mesh_gpu_instancing' | 'EXT_meshopt_compression' | 'EXT_texture_webp';
+export type GLTFExtensionsTypes = 'KHR_animation_pointer' | 'KHR_draco_mesh_compression' | 'KHR_lights_punctual' | 'KHR_materials_anisotropy' | 'KHR_materials_clearcoat' | 'KHR_materials_diffuse_transmission' | 'KHR_materials_dispersion' | 'KHR_materials_emissive_strength' | 'KHR_materials_ior' | 'KHR_materials_iridescence' | 'KHR_materials_sheen' | 'KHR_materials_specular' | 'KHR_materials_transmission' | 'KHR_materials_unlit' | 'KHR_materials_variants' | 'KHR_materials_volume' | 'KHR_materials_volume_scatter' | 'KHR_mesh_quantization' | 'KHR_texture_basisu' | 'KHR_texture_transform' | 'KHR_xmp_json_ld' | 'KHR_xmp' | 'EXT_mesh_gpu_instancing' | 'EXT_meshopt_compression' | 'EXT_texture_webp';
 /** Array of all available glTF extensions. */
 export type GLTFExtensionsUsed = Array<GLTFExtensionsTypes>;
 /** Define the `KHR_lights_punctual` extension top level options. */
@@ -160,6 +160,13 @@ export interface GLTFMaterialsVolumeExtension {
     /** The color that white light turns into due to absorption when reaching the attenuation distance. Default to `[1, 1, 1]`. */
     attenuationColor?: [number, number, number];
 }
+/** Define the `KHR_materials_volume_scatter` extension materials options. */
+export interface GLTFMaterialsVolumeScatterExtension {
+    /** The multi-scatter albedo. Default to `[0, 0, 0]`. */
+    multiscatterColor?: [number, number, number];
+    /** The anisotropy of scatter events. Range is (-1, 1).	 Default to `0`. */
+    scatterAnisotropy?: number;
+}
 /** Define the `KHR_materials_sheen` extension materials options. */
 export interface GLTFMaterialsSheenExtension {
     /** The sheen color in linear space. Default to `[0, 0, 0]`. */
@@ -235,6 +242,8 @@ export type GLTFMaterialsExtensionsMapping = {
     KHR_materials_unlit: Record<string, never>;
     /** Define the `KHR_materials_volume` extension materials options. */
     KHR_materials_volume: GLTFMaterialsVolumeExtension;
+    /** Define the `KHR_materials_volume_scatter` extension materials options. */
+    KHR_materials_volume_scatter: GLTFMaterialsVolumeScatterExtension;
     /** Define the `KHR_materials_sheen` extension materials options. */
     KHR_materials_sheen: GLTFMaterialsSheenExtension;
     /** Define the `KHR_materials_clearcoat` extension materials options. */

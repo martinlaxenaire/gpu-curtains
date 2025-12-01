@@ -19254,14 +19254,28 @@ fn getPBRDirect(
       if (extensionsUsed.includes("KHR_materials_diffuse_transmission")) {
         iblIndirectDiffuse += /* wgsl */
         `    
-  let diffuseTransmissionIblIrradiance: vec3f = getIBLIndirectIrradiance(
+  var diffuseTransmissionIblIrradiance: vec3f = getIBLIndirectIrradiance(
     -1.0 * normal,
     ${environmentMap.sampler.name},
     ${environmentMap.diffuseTexture.options.name},
     envRotation,
     envDiffuseIntensity,
-  );
-  
+  );`;
+        if (extensionsUsed.includes("KHR_materials_volume")) {
+          iblIndirectDiffuse += /* wgsl */
+          `
+  diffuseTransmissionIblIrradiance *= volumeAttenuation(diffuseTransmissionThickness, attenuationColor, attenuationDistance);
+    `;
+        }
+        if (extensionsUsed.includes("KHR_materials_volume_scatter")) {
+          iblIndirectDiffuse += /* wgsl */
+          `
+  // diffuseTransmissionIblIrradiance *= 1.0 - singleVolumeScatter;
+  diffuseTransmissionIblIrradiance *= singleVolumeScatter;
+    `;
+        }
+        iblIndirectDiffuse += /* wgsl */
+        `    
   iblIrradiance = mix(iblIrradiance, diffuseTransmissionIblIrradiance, diffuseTransmission);`;
       }
     }
@@ -19650,7 +19664,17 @@ fn getPBRDirect(
       `
     lightContribution.diffuse = lightContribution.diffuse * (1.0 - diffuseTransmission);
     let diffuseNdotL: f32 = saturate(dot(-1.0 * normal, directLight.direction));
-    let lightDiffuseTransmission: vec3f = directLight.color * diffuseNdotL * BRDF_Lambert(diffuseTransmissionContribution);
+    var lightDiffuseTransmission: vec3f = directLight.color * diffuseNdotL * BRDF_Lambert(diffuseTransmissionContribution);`;
+      if (extensionsUsed.includes("KHR_materials_volume")) {
+        pbrDirect += /* wgsl */
+        `
+    lightDiffuseTransmission *= volumeAttenuation(diffuseTransmissionThickness, attenuationColor, attenuationDistance);
+    `;
+      }
+      pbrDirect += /* wgsl */
+      `
+    // lightDiffuseTransmission *= 1.0 - singleVolumeScatter;
+    lightDiffuseTransmission *= singleVolumeScatter;
     lightContribution.diffuse += lightDiffuseTransmission * diffuseTransmission;
     `;
     }
@@ -20221,6 +20245,14 @@ struct FSInput {
         type: "vec3f",
         value: "vec3(1.0)"
       },
+      multiscatterColor: {
+        type: "vec3f",
+        value: "vec3(0.0)"
+      },
+      scatterAnisotropy: {
+        type: "f32",
+        value: "0.0"
+      },
       sheenColor: {
         type: "vec3f",
         value: "vec3(0.0)"
@@ -20576,6 +20608,7 @@ fn generateTBN(normal: vec3f) -> mat3x3f {
     extensionsUsed = [],
     geometry = null,
     cullMode = "back",
+    flatShading = false,
     normalTexture = null,
     clearcoatNormalTexture = null
   } = {}) => {
@@ -20585,7 +20618,14 @@ fn generateTBN(normal: vec3f) -> mat3x3f {
   let faceDirection = select(-1.0, 1.0, frontFacing);
   var geometryNormal: vec3f = normal;`
     );
-    if (cullMode !== "back") {
+    if (flatShading) {
+      tangentBitangent += /* wgsl */
+      `
+  let fdx: vec3f = dpdx( modelPosition );
+	let fdy: vec3f = dpdy( modelPosition );
+	geometryNormal = normalize( cross( fdx, -fdy ) );`;
+    }
+    if (cullMode !== "back" && !flatShading) {
       tangentBitangent += /* wgsl */
       `
   geometryNormal = geometryNormal * faceDirection;
@@ -20627,7 +20667,7 @@ fn generateTBN(normal: vec3f) -> mat3x3f {
   var tbn = getTangentFrame(-modelPosition, normal, tbnUV);
   `;
       }
-      if (cullMode !== "back") {
+      if (cullMode !== "back" && !flatShading) {
         tangentBitangent += /* wgsl */
         `
   tbn[0] *= faceDirection;
@@ -20659,6 +20699,7 @@ fn generateTBN(normal: vec3f) -> mat3x3f {
     },
     geometry,
     cullMode = "back",
+    flatShading = false,
     additionalVaryings = [],
     materialUniform = null,
     materialUniformName = "material",
@@ -20696,7 +20737,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   // user defined preliminary contribution
   ${chunks.preliminaryContribution}
   
-  ${getTangentBitangent({ geometry, cullMode, normalTexture })}  
+  ${getTangentBitangent({ geometry, cullMode, flatShading, normalTexture })}  
   ${getNormal({ normalTexture })}  
   ${getEmissiveOcclusion({ emissiveTexture, occlusionTexture })}
   
@@ -20781,6 +20822,13 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
     return specular;
   };
 
+  const getDiffuse = (
+    /* wgsl */
+    `
+  var diffuseColor: vec3f = outputColor.rgb;
+  var diffuseContribution: vec3f = outputColor.rgb * (1.0 - metallic);`
+  );
+
   const getPhongFragmentShaderCode = ({
     chunks = null,
     toneMapping = "Khronos",
@@ -20802,6 +20850,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
     },
     geometry,
     cullMode = "back",
+    flatShading = false,
     additionalVaryings = [],
     materialUniform = null,
     materialUniformName = "material",
@@ -20843,9 +20892,10 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   // user defined preliminary contribution
   ${chunks.preliminaryContribution}
   
-  ${getTangentBitangent({ geometry, cullMode, normalTexture })}  
+  ${getTangentBitangent({ geometry, cullMode, flatShading, normalTexture })}  
   ${getNormal({ normalTexture })}
   ${getMetallicRoughness({ metallicRoughnessTexture })}
+  ${getDiffuse}
   ${getSpecular({ specularTexture, specularFactorTexture, specularColorTexture })}
   ${getEmissiveOcclusion({ emissiveTexture, occlusionTexture })}
   
@@ -21105,7 +21155,7 @@ fn getBRDFCharlieApprox( normal: vec3f, viewDirection: vec3f, roughness: f32 ) -
   let r2: f32 = roughness * roughness;
   let rInv: f32 = 1.0 / ( roughness + 0.1 );
 
-  let a: f32 = a = -1.9362 + 1.0678 * roughness + 0.4573 * r2 - 0.8469 * rInv;
+  let a: f32 = -1.9362 + 1.0678 * roughness + 0.4573 * r2 - 0.8469 * rInv;
   let b: f32 = -0.6014 + 0.5538 * roughness - 0.4670 * r2 - 0.1255 * rInv;
 
   let DG: f32 = exp( a * NdotV + b );
@@ -21705,13 +21755,6 @@ fn getIBLIndirectAnisotropyRadiance(
 `
   );
 
-  const getDiffuse = (
-    /* wgsl */
-    `
-  var diffuseColor: vec3f = outputColor.rgb;
-  var diffuseContribution: vec3f = outputColor.rgb * (1.0 - metallic);`
-  );
-
   const BRDFCharlie = (
     /* wgsl */
     `
@@ -21744,7 +21787,8 @@ fn V_Neubelt( NdotL: f32, NdotV: f32 ) -> f32 {
     let diffuseTransmission = (
       /* wgsl */
       `
-  var diffuseTransmissionContribution: vec3f = vec3(1.0);`
+  var diffuseTransmissionContribution: vec3f = vec3(1.0);
+  var diffuseTransmissionThickness: f32 = 1.0;`
     );
     if (!extensionsUsed.includes("KHR_materials_diffuse_transmission")) {
       return diffuseTransmission;
@@ -21775,7 +21819,39 @@ fn V_Neubelt( NdotL: f32, NdotV: f32 ) -> f32 {
     diffuseTransmission += /* wgsl */
     `
   diffuseTransmissionContribution = diffuseTransmissionColor * (1.0 - metallic);`;
+    if (extensionsUsed.includes("KHR_materials_volume")) {
+      diffuseTransmission += /* wgsl */
+      `
+  diffuseTransmissionThickness = thickness * (modelScale.x + modelScale.y + modelScale.z) / 3.0;`;
+    }
     return diffuseTransmission;
+  };
+
+  const getVolumeMultiToSingleScatter = (
+    /* wgsl */
+    `
+fn getVolumeMultiToSingleScatter(multiscatterColor: vec3f) -> vec3f {
+    let s: vec3f = 4.09712 + 4.20863 * multiscatterColor - sqrt(9.59217 + 41.6808 * multiscatterColor + 17.7126 * multiscatterColor * multiscatterColor);
+    return 1.0 - s * s;
+}
+`
+  );
+
+  const getVolumeMultiScatter = ({
+    extensionsUsed = []
+  }) => {
+    let volumeScatter = (
+      /* wgsl */
+      `
+  var singleVolumeScatter: vec3f = vec3(0.0);`
+    );
+    if (!extensionsUsed.includes("KHR_materials_volume_scatter")) {
+      return volumeScatter;
+    }
+    volumeScatter += /* wgsl */
+    `
+  singleVolumeScatter = getVolumeMultiToSingleScatter(multiscatterColor);`;
+    return volumeScatter;
   };
 
   const getPBRFragmentShaderCode = ({
@@ -21801,6 +21877,7 @@ fn V_Neubelt( NdotL: f32, NdotV: f32 ) -> f32 {
     },
     geometry,
     cullMode = "back",
+    flatShading = false,
     additionalVaryings = [],
     materialUniform = null,
     materialUniformName = "material",
@@ -21858,6 +21935,7 @@ ${getIBLIndirectRadiance}
 ${getIBLTransmission}
 ${extensionsUsed.includes("KHR_materials_sheen") ? getIBLSheen : ""}
 ${extensionsUsed.includes("KHR_materials_anisotropy") ? getIBLIndirectAnisotropyRadiance : ""}
+${extensionsUsed.includes("KHR_materials_volume_scatter") ? getVolumeMultiToSingleScatter : ""}
 
 ${getFragmentInputStruct({ geometry, additionalVaryings })}
 
@@ -21874,7 +21952,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   ${chunks.preliminaryContribution}
 
   // material infos
-  ${getTangentBitangent({ extensionsUsed, geometry, cullMode, normalTexture, clearcoatNormalTexture })}  
+  ${getTangentBitangent({ extensionsUsed, geometry, cullMode, flatShading, normalTexture, clearcoatNormalTexture })}  
   ${getNormal({ normalTexture })}
   ${getMetallicRoughness({ metallicRoughnessTexture })}
   ${getDiffuse}
@@ -21892,6 +21970,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
       diffuseTransmissionFactorTexture,
       diffuseTransmissionColorTexture
     })}
+  ${getVolumeMultiScatter({ extensionsUsed })}
   
   // shading
   ${getPBRShading({
@@ -21940,6 +22019,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
     transmissiveInputToneMapping = "Khronos",
     geometry,
     cullMode = "back",
+    flatShading = false,
     additionalVaryings = [],
     materialUniform = null,
     materialUniformName = "material",
@@ -21994,6 +22074,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
             fragmentOutput,
             geometry,
             cullMode,
+            flatShading,
             additionalVaryings,
             materialUniform,
             materialUniformName,
@@ -22011,6 +22092,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
             fragmentOutput,
             geometry,
             cullMode,
+            flatShading,
             additionalVaryings,
             materialUniform,
             materialUniformName,
@@ -22035,6 +22117,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
             fragmentOutput,
             geometry,
             cullMode,
+            flatShading,
             additionalVaryings,
             materialUniform,
             materialUniformName,
@@ -25408,7 +25491,14 @@ struct Params {
       renderer = isCameraRenderer(renderer, "LitMesh");
       let { material, ...defaultParams } = parameters;
       if (!material) material = {};
-      let { colorSpace, transmissiveInputColorSpace, transmissiveInputToneMapping, outputColorSpace, fragmentOutput } = material;
+      let {
+        colorSpace,
+        transmissiveInputColorSpace,
+        transmissiveInputToneMapping,
+        outputColorSpace,
+        flatShading,
+        fragmentOutput
+      } = material;
       if (!colorSpace) {
         colorSpace = "srgb";
       }
@@ -25463,6 +25553,8 @@ struct Params {
         thickness,
         attenuationDistance,
         attenuationColor,
+        multiscatterColor,
+        scatterAnisotropy,
         sheenColor,
         sheenRoughness,
         anisotropy,
@@ -25523,6 +25615,8 @@ struct Params {
         thickness,
         attenuationDistance,
         attenuationColor,
+        multiscatterColor,
+        scatterAnisotropy,
         sheenColor,
         sheenRoughness,
         anisotropy,
@@ -25618,6 +25712,9 @@ struct Params {
           sampler: renderer.transmissionTarget.sampler
         };
       }
+      if (thickness) {
+        extensionsUsed.push("KHR_materials_volume");
+      }
       if (dispersion) {
         extensionsUsed.push("KHR_materials_dispersion");
       }
@@ -25636,9 +25733,13 @@ struct Params {
       if (diffuseTransmission !== void 0) {
         extensionsUsed.push("KHR_materials_diffuse_transmission");
       }
+      if (multiscatterColor !== void 0 || scatterAnisotropy !== void 0) {
+        extensionsUsed.push("KHR_materials_volume_scatter");
+      }
       const hasNormal = defaultParams.geometry && defaultParams.geometry.getAttributeByName("normal");
       if (defaultParams.geometry && !hasNormal) {
         defaultParams.geometry.computeGeometry();
+        flatShading = true;
       }
       const vs = LitMesh.getVertexShaderCode({
         bindings: defaultParams.bindings,
@@ -25655,6 +25756,7 @@ struct Params {
         extensionsUsed,
         receiveShadows: defaultParams.receiveShadows,
         cullMode,
+        flatShading,
         toneMapping,
         transmissiveInputColorSpace,
         transmissiveInputToneMapping,
@@ -25731,6 +25833,8 @@ struct Params {
         thickness,
         attenuationDistance,
         attenuationColor,
+        multiscatterColor,
+        scatterAnisotropy,
         sheenColor,
         sheenRoughness,
         anisotropy,
@@ -25829,6 +25933,14 @@ struct Params {
         attenuationColor: {
           type: "vec3f",
           value: attenuationColor !== void 0 ? colorSpace === "srgb" ? sRGBToLinear(attenuationColor.clone()) : attenuationColor.clone() : new Vec3(1)
+        },
+        multiscatterColor: {
+          type: "vec3f",
+          value: multiscatterColor !== void 0 ? colorSpace === "srgb" ? sRGBToLinear(multiscatterColor.clone()) : multiscatterColor.clone() : new Vec3(0)
+        },
+        scatterAnisotropy: {
+          type: "f32",
+          value: scatterAnisotropy !== void 0 ? scatterAnisotropy : 0
         },
         // sheen
         sheenColor: {
@@ -27348,6 +27460,7 @@ struct Params {
       const transmission = extensions && extensions.KHR_materials_transmission || null;
       const specular = extensions && extensions.KHR_materials_specular || null;
       const volume = extensions && extensions.KHR_materials_volume || null;
+      const volumeScatter = extensions && extensions.KHR_materials_volume_scatter || null;
       const sheen = extensions && extensions.KHR_materials_sheen || null;
       const anisotropy = extensions && extensions.KHR_materials_anisotropy || null;
       const clearcoat = extensions && extensions.KHR_materials_clearcoat || null;
@@ -27385,6 +27498,19 @@ struct Params {
         thickness: volume && volume.thicknessFactor !== void 0 ? volume.thicknessFactor : 0,
         attenuationDistance: volume && volume.attenuationDistance !== void 0 ? volume.attenuationDistance : Infinity,
         attenuationColor: volume && volume.attenuationColor !== void 0 ? new Vec3(volume.attenuationColor[0], volume.attenuationColor[1], volume.attenuationColor[2]) : new Vec3(1),
+        // volume scatter
+        ...volumeScatter && {
+          ...volumeScatter.multiscatterColor !== void 0 && {
+            multiscatterColor: new Vec3(
+              volumeScatter.multiscatterColor[0],
+              volumeScatter.multiscatterColor[1],
+              volumeScatter.multiscatterColor[2]
+            )
+          },
+          ...volumeScatter.scatterAnisotropy !== void 0 !== void 0 && {
+            sheenRoughness: volumeScatter.scatterAnisotropy
+          }
+        },
         // sheen
         ...sheen && {
           ...sheen.sheenColorFactor !== void 0 && {
@@ -28065,6 +28191,8 @@ struct Params {
       if (!hasTangent && meshDescriptor.parameters.material.normalScale) {
         meshDescriptor.parameters.material.normalScale.y *= -1;
       }
+      const hasNormal = primitive.attributes["NORMAL"] !== void 0;
+      meshDescriptor.parameters.material.flatShading = !hasNormal;
       if (primitive.extensions) {
         if (primitive.extensions["KHR_materials_variants"] && this.gltf.extensionsUsed && this.gltf.extensionsUsed.includes("KHR_materials_variants")) {
           meshDescriptor.extensionsUsed.push("KHR_materials_variants");
@@ -28110,6 +28238,7 @@ struct Params {
                   cullMode: variantMaterialParams.cullMode,
                   material: {
                     ...variantMaterialParams.material,
+                    flatShading: meshDescriptor.parameters.material.flatShading,
                     ...texturesDescriptors.reduce((acc, descriptor) => {
                       return { ...acc, [descriptor.texture.options.name]: descriptor };
                     }, {})
@@ -28183,7 +28312,7 @@ struct Params {
           meshDescriptor.alternateMaterials.set("Default", mesh.material);
           if (this.gltf.scenes && this.gltf.scenes.length) {
             const activeScene = this.gltf.scene || 0;
-            const isInActiveScene = meshDescriptor.scenes.find((scene) => scene.index === activeScene);
+            const isInActiveScene = meshDescriptor.scenes.length ? meshDescriptor.scenes.find((scene) => scene.index === activeScene) : true;
             if (isInActiveScene) {
               mesh.visible = true;
             } else {

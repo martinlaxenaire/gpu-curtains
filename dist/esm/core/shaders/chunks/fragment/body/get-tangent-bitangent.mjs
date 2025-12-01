@@ -2,6 +2,7 @@ const getTangentBitangent = ({
   extensionsUsed = [],
   geometry = null,
   cullMode = "back",
+  flatShading = false,
   normalTexture = null,
   clearcoatNormalTexture = null
 } = {}) => {
@@ -11,7 +12,14 @@ const getTangentBitangent = ({
   let faceDirection = select(-1.0, 1.0, frontFacing);
   var geometryNormal: vec3f = normal;`
   );
-  if (cullMode !== "back") {
+  if (flatShading) {
+    tangentBitangent += /* wgsl */
+    `
+  let fdx: vec3f = dpdx( modelPosition );
+	let fdy: vec3f = dpdy( modelPosition );
+	geometryNormal = normalize( cross( fdx, -fdy ) );`;
+  }
+  if (cullMode !== "back" && !flatShading) {
     tangentBitangent += /* wgsl */
     `
   geometryNormal = geometryNormal * faceDirection;
@@ -53,7 +61,7 @@ const getTangentBitangent = ({
   var tbn = getTangentFrame(-modelPosition, normal, tbnUV);
   `;
     }
-    if (cullMode !== "back") {
+    if (cullMode !== "back" && !flatShading) {
       tangentBitangent += /* wgsl */
       `
   tbn[0] *= faceDirection;

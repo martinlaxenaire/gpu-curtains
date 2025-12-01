@@ -18,6 +18,7 @@ import { applyToneMapping } from '../../chunks/fragment/body/apply-tone-mapping.
 import { patchAdditionalChunks } from '../../default-material-helpers.mjs';
 import { generateTBN } from '../../chunks/utils/generate-TBN.mjs';
 import { getTangentBitangent } from '../../chunks/fragment/body/get-tangent-bitangent.mjs';
+import { getDiffuse } from '../../chunks/fragment/body/get-diffuse.mjs';
 
 const getPhongFragmentShaderCode = ({
   chunks = null,
@@ -40,6 +41,7 @@ const getPhongFragmentShaderCode = ({
   },
   geometry,
   cullMode = "back",
+  flatShading = false,
   additionalVaryings = [],
   materialUniform = null,
   materialUniformName = "material",
@@ -81,9 +83,10 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   // user defined preliminary contribution
   ${chunks.preliminaryContribution}
   
-  ${getTangentBitangent({ geometry, cullMode, normalTexture })}  
+  ${getTangentBitangent({ geometry, cullMode, flatShading, normalTexture })}  
   ${getNormal({ normalTexture })}
   ${getMetallicRoughness({ metallicRoughnessTexture })}
+  ${getDiffuse}
   ${getSpecular({ specularTexture, specularFactorTexture, specularColorTexture })}
   ${getEmissiveOcclusion({ emissiveTexture, occlusionTexture })}
   

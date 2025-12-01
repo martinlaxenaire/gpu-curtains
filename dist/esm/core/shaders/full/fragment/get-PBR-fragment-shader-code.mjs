@@ -38,6 +38,8 @@ import { getDiffuse } from '../../chunks/fragment/body/get-diffuse.mjs';
 import { BRDFCharlie } from '../../chunks/utils/BRDF-Charlie.mjs';
 import { BRDF_GGX } from '../../chunks/utils/BRDF_GGX.mjs';
 import { getDiffuseTransmission } from '../../chunks/fragment/body/get-diffuse-transmission.mjs';
+import { getVolumeMultiToSingleScatter } from '../../chunks/fragment/head/get-volume-multi-to-single-scatter.mjs';
+import { getVolumeMultiScatter } from '../../chunks/fragment/body/get-volume-multi-scatter.mjs';
 
 const getPBRFragmentShaderCode = ({
   chunks = null,
@@ -62,6 +64,7 @@ const getPBRFragmentShaderCode = ({
   },
   geometry,
   cullMode = "back",
+  flatShading = false,
   additionalVaryings = [],
   materialUniform = null,
   materialUniformName = "material",
@@ -119,6 +122,7 @@ ${getIBLIndirectRadiance}
 ${getIBLTransmission}
 ${extensionsUsed.includes("KHR_materials_sheen") ? getIBLSheen : ""}
 ${extensionsUsed.includes("KHR_materials_anisotropy") ? getIBLIndirectAnisotropyRadiance : ""}
+${extensionsUsed.includes("KHR_materials_volume_scatter") ? getVolumeMultiToSingleScatter : ""}
 
 ${getFragmentInputStruct({ geometry, additionalVaryings })}
 
@@ -135,7 +139,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   ${chunks.preliminaryContribution}
 
   // material infos
-  ${getTangentBitangent({ extensionsUsed, geometry, cullMode, normalTexture, clearcoatNormalTexture })}  
+  ${getTangentBitangent({ extensionsUsed, geometry, cullMode, flatShading, normalTexture, clearcoatNormalTexture })}  
   ${getNormal({ normalTexture })}
   ${getMetallicRoughness({ metallicRoughnessTexture })}
   ${getDiffuse}
@@ -153,6 +157,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
       diffuseTransmissionFactorTexture,
       diffuseTransmissionColorTexture
     })}
+  ${getVolumeMultiScatter({ extensionsUsed })}
   
   // shading
   ${getPBRShading({

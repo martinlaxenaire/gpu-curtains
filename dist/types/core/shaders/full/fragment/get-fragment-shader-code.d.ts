@@ -36,6 +36,8 @@ export interface LambertFragmentShaderInputParams extends UnlitFragmentShaderInp
     receiveShadows?: boolean;
     /** Culling mode to use for normal and tangent calculations. Default to `back`. */
     cullMode?: GPUCullMode;
+    /** Whether the material should be rendered using flat shading. Default to `false`. */
+    flatShading?: boolean;
 }
 /** Parameters used to build a phong fragment shader. */
 export interface PhongFragmentShaderInputParams extends LambertFragmentShaderInputParams, PhongTexturesDescriptors {
@@ -61,4 +63,4 @@ export interface FragmentShaderInputParams extends PBRFragmentShaderInputParams 
  * @param parameters - {@link FragmentShaderInputParams} used to build the fragment shader.
  * @returns - The fragment shader generated based on the provided parameters.
  */
-export declare const getFragmentShaderCode: ({ shadingModel, outputColorSpace, fragmentOutput, chunks, toneMapping, transmissiveInputColorSpace, transmissiveInputToneMapping, geometry, cullMode, additionalVaryings, materialUniform, materialUniformName, extensionsUsed, receiveShadows, baseColorTexture, normalTexture, emissiveTexture, occlusionTexture, metallicRoughnessTexture, specularTexture, specularFactorTexture, specularColorTexture, transmissionTexture, thicknessTexture, sheenTexture, sheenColorTexture, sheenRoughnessTexture, anisotropyTexture, clearcoatTexture, clearcoatRoughnessTexture, clearcoatNormalTexture, iridescenceTexture, iridescenceThicknessTexture, diffuseTransmissionTexture, diffuseTransmissionFactorTexture, diffuseTransmissionColorTexture, transmissionBackgroundTexture, environmentMap, }: FragmentShaderInputParams) => string;
+export declare const getFragmentShaderCode: ({ shadingModel, outputColorSpace, fragmentOutput, chunks, toneMapping, transmissiveInputColorSpace, transmissiveInputToneMapping, geometry, cullMode, flatShading, additionalVaryings, materialUniform, materialUniformName, extensionsUsed, receiveShadows, baseColorTexture, normalTexture, emissiveTexture, occlusionTexture, metallicRoughnessTexture, specularTexture, specularFactorTexture, specularColorTexture, transmissionTexture, thicknessTexture, sheenTexture, sheenColorTexture, sheenRoughnessTexture, anisotropyTexture, clearcoatTexture, clearcoatRoughnessTexture, clearcoatNormalTexture, iridescenceTexture, iridescenceThicknessTexture, diffuseTransmissionTexture, diffuseTransmissionFactorTexture, diffuseTransmissionColorTexture, transmissionBackgroundTexture, environmentMap, }: FragmentShaderInputParams) => string;
