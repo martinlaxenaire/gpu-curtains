@@ -24,6 +24,7 @@ export interface FragmentShaderInputBaseParams {
   toneMapping?: ToneMappings
   /** In which {@link ColorSpace} the output should be done. `srgb` should be used most of the time, except for some post processing effects that need input colors in `linear` space (such as bloom). Default to `srgb`. */
   outputColorSpace?: ColorSpace
+
   /** Optional additional {@link VertexShaderInputParams.additionalVaryings | varyings} to pass from the vertex shader to the fragment shader. */
   additionalVaryings?: VertexShaderInputParams['additionalVaryings']
   /** Custom fragment shader output structure members and returned values to use if needed. Useful when rendering to a Multiple Render Target for example. */
@@ -46,6 +47,10 @@ export interface UnlitFragmentShaderInputParams extends FragmentShaderInputBaseP
 export interface LambertFragmentShaderInputParams extends UnlitFragmentShaderInputParams, LambertTexturesDescriptors {
   /** Whether the shading function should account for current shadows. Default to `false`. */
   receiveShadows?: boolean
+  /** Culling mode to use for normal and tangent calculations. Default to `back`. */
+  cullMode?: GPUCullMode
+  /** Whether the material should be rendered using flat shading. Default to `false`. */
+  flatShading?: boolean
 }
 
 /** Parameters used to build a phong fragment shader. */
@@ -57,6 +62,11 @@ export interface PBRFragmentShaderInputParams extends PhongFragmentShaderInputPa
   extensionsUsed?: GLTFExtensionsUsed
   /** {@link EnvironmentMap} to use for IBL shading. */
   environmentMap?: EnvironmentMap
+
+  /** Whether the opaque objects sampled by the transmission texture have been drawn in `linear` or `srgb` color space. Default to `srgb`. */
+  transmissiveInputColorSpace?: ColorSpace
+  /** The tone mapping applied to the opaque objects sampled by the transmission texture, if any. Default to `Khronos`. */
+  transmissiveInputToneMapping?: ToneMappings
 }
 
 /** Parameters used to build a lit fragment shader. */
@@ -87,7 +97,11 @@ export const getFragmentShaderCode = ({
   },
   chunks = null,
   toneMapping = 'Khronos',
+  transmissiveInputColorSpace = 'srgb',
+  transmissiveInputToneMapping = 'Khronos',
   geometry,
+  cullMode = 'back',
+  flatShading = false,
   additionalVaryings = [],
   materialUniform = null,
   materialUniformName = 'material',
@@ -141,6 +155,8 @@ export const getFragmentShaderCode = ({
           outputColorSpace,
           fragmentOutput,
           geometry,
+          cullMode,
+          flatShading,
           additionalVaryings,
           materialUniform,
           materialUniformName,
@@ -157,6 +173,8 @@ export const getFragmentShaderCode = ({
           outputColorSpace,
           fragmentOutput,
           geometry,
+          cullMode,
+          flatShading,
           additionalVaryings,
           materialUniform,
           materialUniformName,
@@ -176,8 +194,12 @@ export const getFragmentShaderCode = ({
           chunks,
           toneMapping,
           outputColorSpace,
+          transmissiveInputColorSpace,
+          transmissiveInputToneMapping,
           fragmentOutput,
           geometry,
+          cullMode,
+          flatShading,
           additionalVaryings,
           materialUniform,
           materialUniformName,

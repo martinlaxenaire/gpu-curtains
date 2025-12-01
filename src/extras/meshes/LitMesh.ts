@@ -18,7 +18,8 @@ import { Texture } from '../../core/textures/Texture'
 import { MediaTexture } from '../../core/textures/MediaTexture'
 import { Sampler } from '../../core/samplers/Sampler'
 import { EnvironmentMap } from '../environmentMap/EnvironmentMap'
-import { ColorSpace, FragmentOutput } from '../../types/shading'
+import { ColorSpace, FragmentOutput, ToneMappings } from '../../types/shading'
+import { MaterialExtensionKeys } from '../../types/gltf/GLTFExtensions'
 
 /** Defines all kinds of shading models available. */
 export type ShadingModels = 'Unlit' | 'Lambert' | 'Phong' | 'PBR'
@@ -67,6 +68,7 @@ export interface LitMeshMaterialUniformParams {
   shininess?: number
   /** The base percentage of light that is transmitted through the surface of the {@link LitMesh}. Only applicable to `PBR` shading if `transmissive` parameter is set to `true`. Default to `0`. */
   transmission?: number
+
   /** The index of refraction of the {@link LitMesh}. Default to `1.5`. */
   ior?: number
   /** The strength of the dispersion effect, specified as 20/Abbe number. Only applicable to `PBR` shading if `transmissive` parameter is set to `true`. Default to `0`. */
@@ -77,6 +79,11 @@ export interface LitMeshMaterialUniformParams {
   attenuationDistance?: number
   /** The color as a {@link Vec3} that white light turns into due to absorption when reaching the attenuation distance. Only applicable to `PBR` shading if `transmissive` parameter is set to `true`. Default to `new Vec3(1)`. */
   attenuationColor?: Vec3
+
+  /** The multi-scatter albedo. Default to `new Vec3(0)`. */
+  multiscatterColor?: Vec3
+  /** The anisotropy of scatter events. Range is (-1, 1).	 Default to `0`. */
+  scatterAnisotropy?: number
 
   /** Sheen color to use. Default to `new Vec3(0)`, but sheen is not taken into account if this and `sheenRoughness` are not set. */
   sheenColor?: Vec3
@@ -208,8 +215,7 @@ export interface LitMeshMaterialParams
     LitMeshMaterialUniformParams {
   /** {@link ShadingModels} to use for lighting. Default to `PBR`. */
   shading?: ShadingModels
-  /** In which {@link ColorSpace} the output should be done. `srgb` should be used most of the time, except for some post processing effects that need input colors in `linear` space (such as bloom). Default to `srgb`. */
-  outputColorSpace?: ColorSpace
+
   /** {@link AdditionalChunks | Additional WGSL chunks} to add to the vertex shaders. */
   vertexChunks?: AdditionalChunks
   /** {@link AdditionalChunks | Additional WGSL chunks} to add to the fragment shaders. */
@@ -314,7 +320,14 @@ export class LitMesh extends Mesh {
     if (!material) material = {}
 
     // color spaces
-    let { colorSpace, outputColorSpace, fragmentOutput } = material
+    let {
+      colorSpace,
+      transmissiveInputColorSpace,
+      transmissiveInputToneMapping,
+      outputColorSpace,
+      flatShading,
+      fragmentOutput,
+    } = material
 
     if (!colorSpace) {
       colorSpace = 'srgb'
@@ -322,6 +335,14 @@ export class LitMesh extends Mesh {
 
     if (!outputColorSpace) {
       outputColorSpace = 'srgb'
+    }
+
+    if (!transmissiveInputColorSpace) {
+      transmissiveInputColorSpace = 'srgb'
+    }
+
+    if (transmissiveInputToneMapping === undefined) {
+      transmissiveInputToneMapping = 'Khronos'
     }
 
     if (!fragmentOutput) {
@@ -364,6 +385,8 @@ export class LitMesh extends Mesh {
       thickness,
       attenuationDistance,
       attenuationColor,
+      multiscatterColor,
+      scatterAnisotropy,
       sheenColor,
       sheenRoughness,
       anisotropy,
@@ -426,6 +449,8 @@ export class LitMesh extends Mesh {
       thickness,
       attenuationDistance,
       attenuationColor,
+      multiscatterColor,
+      scatterAnisotropy,
       sheenColor,
       sheenRoughness,
       anisotropy,
@@ -529,7 +554,7 @@ export class LitMesh extends Mesh {
     }
 
     // PBR extensions
-    const extensionsUsed = []
+    const extensionsUsed: MaterialExtensionKeys[] = []
 
     // transmission background texture for transmissive objects
     let transmissionBackgroundTexture = null
@@ -541,6 +566,10 @@ export class LitMesh extends Mesh {
         texture: renderer.transmissionTarget.texture,
         sampler: renderer.transmissionTarget.sampler,
       }
+    }
+
+    if (thickness) {
+      extensionsUsed.push('KHR_materials_volume')
     }
 
     if (dispersion) {
@@ -567,12 +596,18 @@ export class LitMesh extends Mesh {
       extensionsUsed.push('KHR_materials_diffuse_transmission')
     }
 
+    if (multiscatterColor !== undefined || scatterAnisotropy !== undefined) {
+      extensionsUsed.push('KHR_materials_volume_scatter')
+    }
+
     const hasNormal = defaultParams.geometry && defaultParams.geometry.getAttributeByName('normal')
 
     if (defaultParams.geometry && !hasNormal) {
       // compute geometry right away
       // so we have fresh attributes to send to the shaders' generation helper functions
       defaultParams.geometry.computeGeometry()
+      // no normals? use flat shading
+      flatShading = true
     }
 
     // shaders
@@ -583,6 +618,8 @@ export class LitMesh extends Mesh {
       additionalVaryings,
     })
 
+    const cullMode = parameters.cullMode ?? 'back'
+
     const fs = LitMesh.getFragmentShaderCode({
       shadingModel: shading,
       outputColorSpace,
@@ -590,7 +627,11 @@ export class LitMesh extends Mesh {
       chunks: fragmentChunks,
       extensionsUsed,
       receiveShadows: defaultParams.receiveShadows,
+      cullMode,
+      flatShading,
       toneMapping,
+      transmissiveInputColorSpace,
+      transmissiveInputToneMapping,
       geometry: defaultParams.geometry,
       additionalVaryings,
       materialUniform,
@@ -668,6 +709,8 @@ export class LitMesh extends Mesh {
       thickness,
       attenuationDistance,
       attenuationColor,
+      multiscatterColor,
+      scatterAnisotropy,
       sheenColor,
       sheenRoughness,
       anisotropy,
@@ -793,6 +836,19 @@ export class LitMesh extends Mesh {
               ? sRGBToLinear(attenuationColor.clone())
               : attenuationColor.clone()
             : new Vec3(1),
+      },
+      multiscatterColor: {
+        type: 'vec3f',
+        value:
+          multiscatterColor !== undefined
+            ? colorSpace === 'srgb'
+              ? sRGBToLinear(multiscatterColor.clone())
+              : multiscatterColor.clone()
+            : new Vec3(0),
+      },
+      scatterAnisotropy: {
+        type: 'f32',
+        value: scatterAnisotropy !== undefined ? scatterAnisotropy : 0,
       },
       // sheen
       sheenColor: {

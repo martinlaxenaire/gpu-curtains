@@ -282,9 +282,9 @@
   class Vec3 {
     /**
      * Vec3 constructor
-     * @param x - X component of our {@link Vec3}
-     * @param y - Y component of our {@link Vec3}
-     * @param z - Z component of our {@link Vec3}
+     * @param x - X component of our {@link Vec3}.
+     * @param y - Y component of our {@link Vec3}.
+     * @param z - Z component of our {@link Vec3}.
      */
     constructor(x = 0, y = x, z = x) {
       this.type = "Vec3";
@@ -293,15 +293,15 @@
       this._z = z;
     }
     /**
-     * Get the X component of the {@link Vec3}
+     * Get the X component of the {@link Vec3}.
      */
     get x() {
       return this._x;
     }
     /**
-     * Set the X component of the {@link Vec3}
-     * Can trigger {@link onChange} callback
-     * @param value - X component to set
+     * Set the X component of the {@link Vec3}.
+     * Can trigger {@link onChange} callback.
+     * @param value - X component to set.
      */
     set x(value) {
       const changed = value !== this._x;
@@ -309,15 +309,15 @@
       changed && this._onChangeCallback && this._onChangeCallback();
     }
     /**
-     * Get the Y component of the {@link Vec3}
+     * Get the Y component of the {@link Vec3}.
      */
     get y() {
       return this._y;
     }
     /**
-     * Set the Y component of the {@link Vec3}
-     * Can trigger {@link onChange} callback
-     * @param value - Y component to set
+     * Set the Y component of the {@link Vec3}.
+     * Can trigger {@link onChange} callback.
+     * @param value - Y component to set.
      */
     set y(value) {
       const changed = value !== this._y;
@@ -325,15 +325,15 @@
       changed && this._onChangeCallback && this._onChangeCallback();
     }
     /**
-     * Get the Z component of the {@link Vec3}
+     * Get the Z component of the {@link Vec3}.
      */
     get z() {
       return this._z;
     }
     /**
-     * Set the Z component of the {@link Vec3}
-     * Can trigger {@link onChange} callback
-     * @param value - Z component to set
+     * Set the Z component of the {@link Vec3}.
+     * Can trigger {@link onChange} callback.
+     * @param value - Z component to set.
      */
     set z(value) {
       const changed = value !== this._z;
@@ -341,9 +341,9 @@
       changed && this._onChangeCallback && this._onChangeCallback();
     }
     /**
-     * Called when at least one component of the {@link Vec3} has changed
-     * @param callback - callback to run when at least one component of the {@link Vec3} has changed
-     * @returns - our {@link Vec3}
+     * Called when at least one component of the {@link Vec3} has changed.
+     * @param callback - Callback to run when at least one component of the {@link Vec3} has changed.
+     * @returns - Our {@link Vec3}.
      */
     onChange(callback) {
       if (callback) {
@@ -352,11 +352,11 @@
       return this;
     }
     /**
-     * Set the {@link Vec3} from values
-     * @param x - new X component to set
-     * @param y - new Y component to set
-     * @param z - new Z component to set
-     * @returns - this {@link Vec3} after being set
+     * Set the {@link Vec3} from values.
+     * @param x - New X component to set.
+     * @param y - New Y component to set.
+     * @param z - New Z component to set.
+     * @returns - This {@link Vec3} after being set.
      */
     set(x = 0, y = x, z = x) {
       this.x = x;
@@ -365,9 +365,9 @@
       return this;
     }
     /**
-     * Add a {@link Vec3} to this {@link Vec3}
-     * @param vector - {@link Vec3} to add
-     * @returns - this {@link Vec3} after addition
+     * Add a {@link Vec3} to this {@link Vec3}.
+     * @param vector - {@link Vec3} to add.
+     * @returns - This {@link Vec3} after addition.
      */
     add(vector = new Vec3()) {
       this.x += vector.x;
@@ -376,9 +376,9 @@
       return this;
     }
     /**
-     * Add a scalar to all the components of this {@link Vec3}
-     * @param value - number to add
-     * @returns - this {@link Vec3} after addition
+     * Add a scalar to all the components of this {@link Vec3}.
+     * @param value - Number to add.
+     * @returns - This {@link Vec3} after addition.
      */
     addScalar(value = 0) {
       this.x += value;
@@ -387,9 +387,9 @@
       return this;
     }
     /**
-     * Subtract a {@link Vec3} from this {@link Vec3}
-     * @param vector - {@link Vec3} to subtract
-     * @returns - this {@link Vec3} after subtraction
+     * Subtract a {@link Vec3} from this {@link Vec3}.
+     * @param vector - {@link Vec3} to subtract.
+     * @returns - This {@link Vec3} after subtraction.
      */
     sub(vector = new Vec3()) {
       this.x -= vector.x;
@@ -398,9 +398,9 @@
       return this;
     }
     /**
-     * Subtract a scalar to all the components of this {@link Vec3}
-     * @param value - number to subtract
-     * @returns - this {@link Vec3} after subtraction
+     * Subtract a scalar to all the components of this {@link Vec3}.
+     * @param value - Number to subtract.
+     * @returns - This {@link Vec3} after subtraction.
      */
     subScalar(value = 0) {
       this.x -= value;
@@ -409,9 +409,9 @@
       return this;
     }
     /**
-     * Multiply a {@link Vec3} with this {@link Vec3}
-     * @param vector - {@link Vec3} to multiply with
-     * @returns - this {@link Vec3} after multiplication
+     * Multiply a {@link Vec3} with this {@link Vec3}.
+     * @param vector - {@link Vec3} to multiply with.
+     * @returns - This {@link Vec3} after multiplication.
      */
     multiply(vector = new Vec3(1)) {
       this.x *= vector.x;
@@ -420,9 +420,9 @@
       return this;
     }
     /**
-     * Multiply all components of this {@link Vec3} with a scalar
-     * @param value - number to multiply with
-     * @returns - this {@link Vec3} after multiplication
+     * Multiply all components of this {@link Vec3} with a scalar.
+     * @param value - Number to multiply with.
+     * @returns - This {@link Vec3} after multiplication.
      */
     multiplyScalar(value = 1) {
       this.x *= value;
@@ -431,9 +431,9 @@
       return this;
     }
     /**
-     * Divide a {@link Vec3} with this {@link Vec3}
-     * @param vector - {@link Vec3} to divide with
-     * @returns - this {@link Vec3} after division
+     * Divide a {@link Vec3} with this {@link Vec3}.
+     * @param vector - {@link Vec3} to divide with.
+     * @returns - This {@link Vec3} after division.
      */
     divide(vector = new Vec3(1)) {
       this.x /= vector.x;
@@ -442,9 +442,9 @@
       return this;
     }
     /**
-     * Divide all components of this {@link Vec3} with a scalar
-     * @param value - number to divide with
-     * @returns - this {@link Vec3} after division
+     * Divide all components of this {@link Vec3} with a scalar.
+     * @param value - number to divide with.
+     * @returns - This {@link Vec3} after division.
      */
     divideScalar(value = 1) {
       this.x /= value;
@@ -453,9 +453,9 @@
       return this;
     }
     /**
-     * Copy a {@link Vec3} into this {@link Vec3}
-     * @param vector - {@link Vec3} to copy
-     * @returns - this {@link Vec3} after copy
+     * Copy a {@link Vec3} into this {@link Vec3}.
+     * @param vector - {@link Vec3} to copy.
+     * @returns - This {@link Vec3} after copy.
      */
     copy(vector = new Vec3()) {
       this.x = vector.x;
@@ -464,16 +464,16 @@
       return this;
     }
     /**
-     * Clone this {@link Vec3}
-     * @returns - cloned {@link Vec3}
+     * Clone this {@link Vec3}.
+     * @returns - Cloned {@link Vec3}.
      */
     clone() {
       return new Vec3(this.x, this.y, this.z);
     }
     /**
-     * Apply max values to this {@link Vec3} components
-     * @param vector - {@link Vec3} representing max values
-     * @returns - {@link Vec3} with max values applied
+     * Apply max values to this {@link Vec3} components.
+     * @param vector - {@link Vec3} representing max values.
+     * @returns - {@link Vec3} with max values applied.
      */
     max(vector = new Vec3()) {
       this.x = Math.max(this.x, vector.x);
@@ -482,9 +482,9 @@
       return this;
     }
     /**
-     * Apply min values to this {@link Vec3} components
-     * @param vector - {@link Vec3} representing min values
-     * @returns - {@link Vec3} with min values applied
+     * Apply min values to this {@link Vec3} components.
+     * @param vector - {@link Vec3} representing min values.
+     * @returns - {@link Vec3} with min values applied.
      */
     min(vector = new Vec3()) {
       this.x = Math.min(this.x, vector.x);
@@ -493,10 +493,10 @@
       return this;
     }
     /**
-     * Clamp this {@link Vec3} components by min and max {@link Vec3} vectors
-     * @param min - minimum {@link Vec3} components to compare with
-     * @param max - maximum {@link Vec3} components to compare with
-     * @returns - clamped {@link Vec3}
+     * Clamp this {@link Vec3} components by min and max {@link Vec3} vectors.
+     * @param min - Minimum {@link Vec3} components to compare with.
+     * @param max - Maximum {@link Vec3} components to compare with.
+     * @returns - Clamped {@link Vec3}.
      */
     clamp(min = new Vec3(), max = new Vec3()) {
       this.x = Math.max(min.x, Math.min(max.x, this.x));
@@ -505,38 +505,38 @@
       return this;
     }
     /**
-     * Check if 2 {@link Vec3} are equal
-     * @param vector - {@link Vec3} to compare
-     * @returns - whether the {@link Vec3} are equals or not
+     * Check if 2 {@link Vec3} are equal.
+     * @param vector - {@link Vec3} to compare.
+     * @returns - Whether the {@link Vec3} are equals or not.
      */
     equals(vector = new Vec3()) {
       return this.x === vector.x && this.y === vector.y && this.z === vector.z;
     }
     /**
-     * Get the square length of this {@link Vec3}
-     * @returns - square length of this {@link Vec3}
+     * Get the square length of this {@link Vec3}.
+     * @returns - Square length of this {@link Vec3}.
      */
     lengthSq() {
       return this.x * this.x + this.y * this.y + this.z * this.z;
     }
     /**
-     * Get the length of this {@link Vec3}
-     * @returns - length of this {@link Vec3}
+     * Get the length of this {@link Vec3}.
+     * @returns - Length of this {@link Vec3}.
      */
     length() {
       return Math.sqrt(this.lengthSq());
     }
     /**
-     * Get the euclidian distance between this {@link Vec3} and another {@link Vec3}
-     * @param vector - {@link Vec3} to use for distance calculation
-     * @returns - euclidian distance
+     * Get the euclidian distance between this {@link Vec3} and another {@link Vec3}.
+     * @param vector - {@link Vec3} to use for distance calculation.
+     * @returns - Euclidian distance.
      */
     distance(vector = new Vec3()) {
       return Math.hypot(vector.x - this.x, vector.y - this.y, vector.z - this.z);
     }
     /**
-     * Normalize this {@link Vec3}
-     * @returns - normalized {@link Vec3}
+     * Normalize this {@link Vec3}.
+     * @returns - Normalized {@link Vec3}.
      */
     normalize() {
       let len = this.lengthSq();
@@ -549,26 +549,26 @@
       return this;
     }
     /**
-     * Calculate the dot product of 2 {@link Vec3}
-     * @param vector - {@link Vec3} to use for dot product
-     * @returns - dot product of the 2 {@link Vec3}
+     * Calculate the dot product of 2 {@link Vec3}.
+     * @param vector - {@link Vec3} to use for dot product.
+     * @returns - Dot product of the 2 {@link Vec3}.
      */
     dot(vector = new Vec3()) {
       return this.x * vector.x + this.y * vector.y + this.z * vector.z;
     }
     /**
-     * Get the cross product of this {@link Vec3} with another {@link Vec3}
-     * @param vector - {@link Vec3} to use for cross product
-     * @returns - this {@link Vec3} after cross product
+     * Get the cross product of this {@link Vec3} with another {@link Vec3}.
+     * @param vector - {@link Vec3} to use for cross product.
+     * @returns - This {@link Vec3} after cross product.
      */
     cross(vector = new Vec3()) {
       return this.crossVectors(this, vector);
     }
     /**
-     * Set this {@link Vec3} as the result of the cross product of two {@link Vec3}
-     * @param a - first {@link Vec3} to use for cross product
-     * @param b - second {@link Vec3} to use for cross product
-     * @returns - this {@link Vec3} after cross product
+     * Set this {@link Vec3} as the result of the cross product of two {@link Vec3}.
+     * @param a - First {@link Vec3} to use for cross product.
+     * @param b - Second {@link Vec3} to use for cross product.
+     * @returns - This {@link Vec3} after cross product.
      */
     crossVectors(a = new Vec3(), b = new Vec3()) {
       const ax = a.x, ay = a.y, az = a.z;
@@ -579,10 +579,10 @@
       return this;
     }
     /**
-     * Calculate the linear interpolation of this {@link Vec3} by given {@link Vec3} and alpha, where alpha is the percent distance along the line
-     * @param vector - {@link Vec3} to interpolate towards
-     * @param alpha - interpolation factor in the [0, 1] interval
-     * @returns - this {@link Vec3} after linear interpolation
+     * Calculate the linear interpolation of this {@link Vec3} by given {@link Vec3} and alpha, where alpha is the percent distance along the line.
+     * @param vector - {@link Vec3} to interpolate towards.
+     * @param alpha - Interpolation factor in the [0, 1] interval.
+     * @returns - This {@link Vec3} after linear interpolation.
      */
     lerp(vector = new Vec3(), alpha = 1) {
       this.x += (vector.x - this.x) * alpha;
@@ -591,11 +591,11 @@
       return this;
     }
     /**
-     * Apply a {@link Mat4 | matrix} to a {@link Vec3}
-     * Useful to convert a position {@link Vec3} from plane local world to webgl space using projection view matrix for example
+     * Apply a {@link Mat4 | matrix} to a {@link Vec3}.
+     * Useful to convert a position {@link Vec3} from plane local world to webgl space using projection view matrix for example.
      * Source code from: http://glmatrix.net/docs/vec3.js.html
-     * @param matrix - {@link Mat4 | matrix} to use
-     * @returns - this {@link Vec3} after {@link Mat4 | matrix} application
+     * @param matrix - {@link Mat4 | matrix} to use.
+     * @returns - This {@link Vec3} after {@link Mat4 | matrix} application.
      */
     applyMat4(matrix) {
       const x = this._x, y = this._y, z = this._z;
@@ -609,8 +609,8 @@
     }
     /**
      * Set this {@link Vec3} to the translation component of a {@link Mat4 | matrix}.
-     * @param matrix - {@link Mat4 | matrix} to use
-     * @returns - this {@link Vec3} after {@link Mat4 | matrix} application.
+     * @param matrix - {@link Mat4 | matrix} to use.
+     * @returns - This {@link Vec3} after {@link Mat4 | matrix} application.
      */
     setFromMatrixPosition(matrix) {
       const e = matrix.elements;
@@ -620,9 +620,9 @@
       return this;
     }
     /**
-     * Apply a {@link Quat | quaternion} (rotation in 3D space) to this {@link Vec3}
-     * @param quaternion - {@link Quat | quaternion} to use
-     * @returns - this {@link Vec3} with the transformation applied
+     * Apply a {@link Quat | quaternion} (rotation in 3D space) to this {@link Vec3}.
+     * @param quaternion - {@link Quat | quaternion} to use.
+     * @returns - This {@link Vec3} with the transformation applied.
      */
     applyQuat(quaternion = new Quat()) {
       const x = this.x, y = this.y, z = this.z;
@@ -636,11 +636,11 @@
       return this;
     }
     /**
-     * Rotate a {@link Vec3} around and axis by a given angle
-     * @param axis - normalized {@link Vec3} around which to rotate
-     * @param angle - angle (in radians) to rotate
-     * @param quaternion - optional {@link Quat | quaternion} to use for rotation computations
-     * @returns - this {@link Vec3} with the rotation applied
+     * Rotate a {@link Vec3} around and axis by a given angle.
+     * @param axis - Normalized {@link Vec3} around which to rotate.
+     * @param angle - Angle (in radians) to rotate.
+     * @param quaternion - Optional {@link Quat | quaternion} to use for rotation computations.
+     * @returns - This {@link Vec3} with the rotation applied.
      */
     applyAxisAngle(axis = new Vec3(), angle = 0, quaternion = new Quat()) {
       return this.applyQuat(quaternion.setFromAxisAngle(axis, angle));
@@ -648,7 +648,7 @@
     /**
      * Transforms the direction of this vector by a {@link Mat4} (the upper left 3 x 3 subset) and then normalizes the result.
      * @param matrix - {@link Mat4} to use for transformation.
-     * @returns - this {@link Vec3} with the transformation applied.
+     * @returns - This {@link Vec3} with the transformation applied.
      */
     transformDirection(matrix) {
       const x = this.x, y = this.y, z = this.z;
@@ -659,18 +659,18 @@
       return this.normalize();
     }
     /**
-     * Project a 3D coordinate {@link Vec3} to a 2D coordinate {@link Vec3}
-     * @param camera - {@link Camera} to use for projection
-     * @returns - projected {@link Vec3}
+     * Project a 3D coordinate {@link Vec3} to a 2D coordinate {@link Vec3}.
+     * @param camera - {@link Camera} to use for projection.
+     * @returns - Projected {@link Vec3}.
      */
     project(camera) {
       this.applyMat4(camera.viewMatrix).applyMat4(camera.projectionMatrix);
       return this;
     }
     /**
-     * Unproject a 2D coordinate {@link Vec3} to 3D coordinate {@link Vec3}
-     * @param camera - {@link Camera} to use for projection
-     * @returns - unprojected {@link Vec3}
+     * Unproject a 2D coordinate {@link Vec3} to 3D coordinate {@link Vec3}.
+     * @param camera - {@link Camera} to use for projection.
+     * @returns - Unprojected {@link Vec3}.
      */
     unproject(camera) {
       this.applyMat4(camera.projectionMatrix.getInverse()).applyMat4(camera.modelMatrix);
@@ -685,7 +685,7 @@
     // prettier-ignore
     /**
      * Mat4 constructor
-     * @param elements - initial array to use, default to identity matrix
+     * @param elements - Initial array to use, default to identity matrix.
      */
     constructor(elements = new Float32Array([
       1,
@@ -709,7 +709,7 @@
       this.elements = elements;
     }
     /***
-     * Sets the matrix from 16 numbers
+     * Sets the matrix from 16 numbers.
      *
      * @param n11 - number
      * @param n12 - number
@@ -728,7 +728,7 @@
      * @param n43 - number
      * @param n44 - number
      *
-     * @returns - this {@link Mat4} after being set
+     * @returns - This {@link Mat4} after being set.
      */
     set(n11, n12, n13, n14, n21, n22, n23, n24, n31, n32, n33, n34, n41, n42, n43, n44) {
       const te = this.elements;
@@ -751,8 +751,8 @@
       return this;
     }
     /**
-     * Sets the {@link Mat4} to an identity matrix
-     * @returns - this {@link Mat4} after being set
+     * Sets the {@link Mat4} to an identity matrix.
+     * @returns - This {@link Mat4} after being set.
      */
     identity() {
       this.set(
@@ -776,10 +776,10 @@
       return this;
     }
     /**
-     * Sets the {@link Mat4} values from an array
-     * @param array - array to use
-     * @param offset - optional offset in the array to use
-     * @returns - this {@link Mat4} after being set
+     * Sets the {@link Mat4} values from an array.
+     * @param array - Array to use.
+     * @param offset - Optional offset in the array to use.
+     * @returns - This {@link Mat4} after being set.
      */
     // prettier-ignore
     setFromArray(array = new Float32Array([
@@ -806,9 +806,9 @@
       return this;
     }
     /**
-     * Copy another {@link Mat4}
-     * @param matrix - matrix to copy
-     * @returns - this {@link Mat4} after being set
+     * Copy another {@link Mat4}.
+     * @param matrix - Matrix to copy.
+     * @returns - This {@link Mat4} after being set.
      */
     copy(matrix = new Mat4()) {
       const array = matrix.elements;
@@ -831,8 +831,8 @@
       return this;
     }
     /**
-     * Clone a {@link Mat4}
-     * @returns - cloned {@link Mat4}
+     * Clone a {@link Mat4}.
+     * @returns - Cloned {@link Mat4}.
      */
     clone() {
       return new Mat4().copy(this);
@@ -840,7 +840,7 @@
     /**
      * Multiply this {@link Mat4} with another {@link Mat4}.
      * @param matrix - {@link Mat4} to multiply with.
-     * @returns - this {@link Mat4} after multiplication.
+     * @returns - This {@link Mat4} after multiplication.
      */
     multiply(matrix = new Mat4()) {
       return this.multiplyMatrices(this, matrix);
@@ -848,15 +848,15 @@
     /**
      * Multiply another {@link Mat4} with this {@link Mat4}.
      * @param matrix - {@link Mat4} to multiply with.
-     * @returns - this {@link Mat4} after multiplication.
+     * @returns - This {@link Mat4} after multiplication.
      */
     premultiply(matrix = new Mat4()) {
       return this.multiplyMatrices(matrix, this);
     }
     /**
      * Multiply two {@link Mat4}.
-     * @param a - first {@link Mat4}.
-     * @param b - second {@link Mat4}.
+     * @param a - First {@link Mat4}.
+     * @param b - Second {@link Mat4}.
      * @returns - {@link Mat4} resulting from the multiplication.
      */
     multiplyMatrices(a = new Mat4(), b = new Mat4()) {
@@ -891,8 +891,8 @@
     }
     /**
      * {@link premultiply} this {@link Mat4} by a translate matrix (i.e. translateMatrix = new Mat4().translate(vector)).
-     * @param vector - translation {@link Vec3} to use.
-     * @returns - this {@link Mat4} after the premultiply translate operation.
+     * @param vector - Translation {@link Vec3} to use.
+     * @returns - This {@link Mat4} after the premultiply translate operation.
      */
     premultiplyTranslate(vector = new Vec3()) {
       const a11 = 1;
@@ -928,8 +928,8 @@
     }
     /**
      * {@link premultiply} this {@link Mat4} by a scale matrix (i.e. translateMatrix = new Mat4().scale(vector)).
-     * @param vector - scale {@link Vec3 | vector} to use.
-     * @returns - this {@link Mat4} after the premultiply scale operation.
+     * @param vector - Scale {@link Vec3 | vector} to use.
+     * @returns - This {@link Mat4} after the premultiply scale operation.
      */
     premultiplyScale(vector = new Vec3()) {
       const be = this.elements;
@@ -961,8 +961,17 @@
       return this;
     }
     /**
-     * Get the {@link Mat4} inverse
-     * @returns - the inverted {@link Mat4}
+     * Computes and returns the determinant of this {@link Mat4}.
+     * Based on the method outlined [here](http://www.euclideanspace.com/maths/algebra/matrix/functions/inverse/fourD/index.html).
+     * @return - The determinant.
+     */
+    determinant() {
+      const te = this.elements, n11 = te[0], n21 = te[1], n31 = te[2], n41 = te[3], n12 = te[4], n22 = te[5], n32 = te[6], n42 = te[7], n13 = te[8], n23 = te[9], n33 = te[10], n43 = te[11], n14 = te[12], n24 = te[13], n34 = te[14], n44 = te[15], t11 = n23 * n34 * n42 - n24 * n33 * n42 + n24 * n32 * n43 - n22 * n34 * n43 - n23 * n32 * n44 + n22 * n33 * n44, t12 = n14 * n33 * n42 - n13 * n34 * n42 - n14 * n32 * n43 + n12 * n34 * n43 + n13 * n32 * n44 - n12 * n33 * n44, t13 = n13 * n24 * n42 - n14 * n23 * n42 + n14 * n22 * n43 - n12 * n24 * n43 - n13 * n22 * n44 + n12 * n23 * n44, t14 = n14 * n23 * n32 - n13 * n24 * n32 - n14 * n22 * n33 + n12 * n24 * n33 + n13 * n22 * n34 - n12 * n23 * n34;
+      return n11 * t11 + n21 * t12 + n31 * t13 + n41 * t14;
+    }
+    /**
+     * Get the {@link Mat4} inverse.
+     * @returns - the inverted {@link Mat4}.
      */
     invert() {
       const te = this.elements, n11 = te[0], n21 = te[1], n31 = te[2], n41 = te[3], n12 = te[4], n22 = te[5], n32 = te[6], n42 = te[7], n13 = te[8], n23 = te[9], n33 = te[10], n43 = te[11], n14 = te[12], n24 = te[13], n34 = te[14], n44 = te[15], t11 = n23 * n34 * n42 - n24 * n33 * n42 + n24 * n32 * n43 - n22 * n34 * n43 - n23 * n32 * n44 + n22 * n33 * n44, t12 = n14 * n33 * n42 - n13 * n34 * n42 - n14 * n32 * n43 + n12 * n34 * n43 + n13 * n32 * n44 - n12 * n33 * n44, t13 = n13 * n24 * n42 - n14 * n23 * n42 + n14 * n22 * n43 - n12 * n24 * n43 - n13 * n22 * n44 + n12 * n23 * n44, t14 = n14 * n23 * n32 - n13 * n24 * n32 - n14 * n22 * n33 + n12 * n24 * n33 + n13 * n22 * n34 - n12 * n23 * n34;
@@ -988,15 +997,15 @@
       return this;
     }
     /**
-     * Clone and invert the {@link Mat4}
-     * @returns - inverted cloned {@link Mat4}
+     * Clone and invert the {@link Mat4}.
+     * @returns - Inverted cloned {@link Mat4}.
      */
     getInverse() {
       return this.clone().invert();
     }
     /**
-     * Transpose this {@link Mat4}
-     * @returns - the transposed {@link Mat4}
+     * Transpose this {@link Mat4}.
+     * @returns - The transposed {@link Mat4}.
      */
     transpose() {
       let t;
@@ -1023,8 +1032,8 @@
     }
     /**
      * Translate a {@link Mat4}.
-     * @param vector - translation {@link Vec3} to use.
-     * @returns - translated {@link Mat4}.
+     * @param vector - Translation {@link Vec3} to use.
+     * @returns - Translated {@link Mat4}.
      */
     translate(vector = new Vec3()) {
       const a = this.elements;
@@ -1035,17 +1044,17 @@
       return this;
     }
     /**
-     * Get the translation {@link Vec3} component of a {@link Mat4}
-     * @param position - {@link Vec3} to set
-     * @returns - translation {@link Vec3} component of this {@link Mat4}
+     * Get the translation {@link Vec3} component of a {@link Mat4}.
+     * @param position - {@link Vec3} to set.
+     * @returns - Translation {@link Vec3} component of this {@link Mat4}.
      */
     getTranslation(position = new Vec3()) {
       return position.set(this.elements[12], this.elements[13], this.elements[14]);
     }
     /**
-     * Scale a {@link Mat4}
-     * @param vector - scale {@link Vec3 | vector} to use
-     * @returns - scaled {@link Mat4}
+     * Scale a {@link Mat4}.
+     * @param vector - Scale {@link Vec3 | vector} to use.
+     * @returns - Scaled {@link Mat4}.
      */
     scale(vector = new Vec3()) {
       const a = this.elements;
@@ -1064,9 +1073,9 @@
       return this;
     }
     /**
-     * Rotate a {@link Mat4} from a {@link Quat | quaternion}
-     * @param quaternion - {@link Quat | quaternion} to use
-     * @returns - rotated {@link Mat4}
+     * Rotate a {@link Mat4} from a {@link Quat | quaternion}.
+     * @param quaternion - {@link Quat | quaternion} to use.
+     * @returns - Rotated {@link Mat4}.
      */
     rotateFromQuaternion(quaternion = new Quat()) {
       const te = this.elements;
@@ -1087,8 +1096,8 @@
       return this;
     }
     /**
-     * Get the maximum scale of the {@link Mat4} on all axes
-     * @returns - maximum scale of the {@link Mat4}
+     * Get the maximum scale of the {@link Mat4} on all axes.
+     * @returns - Maximum scale of the {@link Mat4}.
      */
     getMaxScaleOnAxis() {
       const te = this.elements;
@@ -1098,14 +1107,14 @@
       return Math.sqrt(Math.max(scaleXSq, scaleYSq, scaleZSq));
     }
     /**
-     * Creates a {@link Mat4} from a {@link Quat | quaternion} rotation, {@link Vec3 | vector} translation and {@link Vec3 | vector} scale
-     * Equivalent for applying translation, rotation and scale matrices but much faster
+     * Creates a {@link Mat4} from a {@link Quat | quaternion} rotation, {@link Vec3 | vector} translation and {@link Vec3 | vector} scale.
+     * Equivalent for applying translation, rotation and scale matrices but much faster.
      * Source code from: http://glmatrix.net/docs/mat4.js.html
      *
-     * @param translation - translation {@link Vec3 | vector} to use
-     * @param quaternion - {@link Quat | quaternion} to use
-     * @param scale - translation {@link Vec3 | vector} to use
-     * @returns - transformed {@link Mat4}
+     * @param translation - Translation {@link Vec3 | vector} to use.
+     * @param quaternion - {@link Quat | quaternion} to use.
+     * @param scale - Translation {@link Vec3 | vector} to use.
+     * @returns - Transformed {@link Mat4}.
      */
     compose(translation = new Vec3(), quaternion = new Quat(), scale = new Vec3(1)) {
       const matrix = this.elements;
@@ -1144,15 +1153,15 @@
       return this;
     }
     /**
-     * Creates a {@link Mat4} from a {@link Quat | quaternion} rotation, {@link Vec3 | vector} translation and {@link Vec3 | vector} scale, rotating and scaling around the given {@link Vec3 | origin vector}
-     * Equivalent for applying translation, rotation and scale matrices but much faster
+     * Creates a {@link Mat4} from a {@link Quat | quaternion} rotation, {@link Vec3 | vector} translation and {@link Vec3 | vector} scale, rotating and scaling around the given {@link Vec3 | origin vector}.
+     * Equivalent for applying translation, rotation and scale matrices but much faster.
      * Source code from: http://glmatrix.net/docs/mat4.js.html
      *
-     * @param translation - translation {@link Vec3 | vector} to use
-     * @param quaternion - {@link Quat | quaternion} to use
-     * @param scale - translation {@link Vec3 | vector} to use
-     * @param origin - origin {@link Vec3 | vector} around which to scale and rotate
-     * @returns - transformed {@link Mat4}
+     * @param translation - Translation {@link Vec3 | vector} to use.
+     * @param quaternion - {@link Quat | quaternion} to use.
+     * @param scale - Translation {@link Vec3 | vector} to use.
+     * @param origin - Origin {@link Vec3 | vector} around which to scale and rotate.
+     * @returns - Transformed {@link Mat4}.
      */
     composeFromOrigin(translation = new Vec3(), quaternion = new Quat(), scale = new Vec3(1), origin = new Vec3()) {
       const matrix = this.elements;
@@ -1203,11 +1212,11 @@
       return this;
     }
     /**
-     * Set this {@link Mat4} as a rotation matrix based on an eye, target and up {@link Vec3 | vectors}
-     * @param eye - {@link Vec3 | position vector} of the object that should be rotated
-     * @param target - {@link Vec3 | target vector} to look at
-     * @param up - up {@link Vec3 | vector}
-     * @returns - rotated {@link Mat4}
+     * Set this {@link Mat4} as a rotation matrix based on an eye, target and up {@link Vec3 | vectors}.
+     * @param eye - {@link Vec3 | position vector} of the object that should be rotated.
+     * @param target - {@link Vec3 | target vector} to look at.
+     * @param up - Up {@link Vec3 | vector}.
+     * @returns - Rotated {@link Mat4}.
      */
     lookAt(eye = new Vec3(), target = new Vec3(), up = new Vec3(0, 1, 0)) {
       const te = this.elements;
@@ -1254,10 +1263,10 @@
      *
      * Equivalent to `matrix.lookAt(eye, target, up).invert()` but faster.
      *
-     * @param eye - the position of the object.
-     * @param target - the position meant to be aimed at.
-     * @param up - a vector pointing up.
-     * @returns - the view {@link Mat4} matrix.
+     * @param eye - The position of the object.
+     * @param target - The position meant to be aimed at.
+     * @param up - A vector pointing up.
+     * @returns - The view {@link Mat4} matrix.
      */
     makeView(eye = new Vec3(), target = new Vec3(), up = new Vec3(0, 1, 0)) {
       const te = this.elements;
@@ -1288,7 +1297,7 @@
      *  * and 0 to +1 in z.
      *
      * @param parameters - {@link OrthographicCameraBaseOptions | parameters} used to create the camera orthographic matrix.
-     * @returns - the camera orthographic {@link Mat4} matrix.
+     * @returns - The camera orthographic {@link Mat4} matrix.
      */
     makeOrthographic({
       left = -1,
@@ -1325,7 +1334,7 @@
      * from -1 to 1 in the z dimension, as three.js and more generally WebGL handles it.
      *
      * @param parameters - {@link PerspectiveProjectionParams | parameters} used to create the camera perspective matrix.
-     * @returns - the camera perspective {@link Mat4} matrix.
+     * @returns - The camera perspective {@link Mat4} matrix.
      */
     makePerspective({ fov = 90, aspect = 1, near = 0.1, far = 150 }) {
       const top = near * Math.tan(Math.PI / 180 * 0.5 * fov);
@@ -9921,7 +9930,7 @@ ${this.shaders.full.head}`;
             depthBias: this.options.rendering.depthBias,
             depthBiasClamp: this.options.rendering.depthBiasClamp,
             depthBiasSlopeScale: this.options.rendering.depthBiasSlopeScale,
-            depthWriteEnabled: this.options.rendering.depthWriteEnabled,
+            depthWriteEnabled: this.options.rendering.transparent ? false : this.options.rendering.depthWriteEnabled,
             depthCompare: this.options.rendering.depthCompare,
             format: this.options.rendering.depthFormat,
             ...this.options.rendering.stencil && {
@@ -12348,7 +12357,14 @@ fn getPCFBaseShadowContribution(
      */
     render(pass) {
       if (!this.renderer.ready) return;
-      if (this.ready && this.bundle && this.visible) {
+      let shouldRender = false;
+      for (const [_uuid, mesh] of this.meshes) {
+        if (mesh.visible) {
+          shouldRender = true;
+          break;
+        }
+      }
+      if (this.ready && this.bundle && this.visible && shouldRender) {
         this.meshes.forEach((mesh) => {
           mesh.onBeforeRenderPass();
         });
@@ -13342,8 +13358,7 @@ fn getPCFBaseShadowContribution(
       `
   modelMatrix = instances.matrices[instanceIndex].model;
   worldPosition = modelMatrix * worldPosition;
-  
-  normal = normalize(instances.matrices[instanceIndex].normal * normal);
+  normal = normalize(instances.matrices[instanceIndex].normal * normal) * instances.matrices[instanceIndex].handedness;
     `;
     } else {
       output += /* wgsl */
@@ -15340,7 +15355,10 @@ ${this.shaders.compute.head}`;
      * @returns - The corresponding render pass entry {@link Stack}.
      */
     getMeshProjectionStack(mesh) {
-      const renderPassEntry = mesh.options.useCustomScenePassEntry ? mesh.options.useCustomScenePassEntry : "transmissive" in mesh.options && mesh.options.transmissive ? this.renderer.transmissionTarget.passEntry : this.getRenderTargetPassEntry(mesh.outputTarget);
+      const isTransparent = mesh.transparent;
+      const hasRendererTransmissionPassEntry = "transmissionTarget" in this.renderer && this.renderer.transmissionTarget && this.renderer.transmissionTarget.passEntry;
+      const isTransmissive = "transmissive" in mesh.options && mesh.options.transmissive;
+      const renderPassEntry = mesh.options.useCustomScenePassEntry ? mesh.options.useCustomScenePassEntry : isTransmissive || hasRendererTransmissionPassEntry && isTransparent ? this.renderer.transmissionTarget.passEntry : this.getRenderTargetPassEntry(mesh.outputTarget);
       const { stack } = renderPassEntry;
       return mesh.material.options.rendering.useProjection ? stack.projected : stack.unProjected;
     }
@@ -15369,8 +15387,8 @@ ${this.shaders.compute.head}`;
     addMeshToRenderTargetStack(mesh, renderTarget = null) {
       const renderPassEntry = this.getRenderTargetPassEntry(renderTarget);
       const { stack } = renderPassEntry;
-      const projectionStack = mesh.material.options.rendering.useProjection ? stack.projected : stack.unProjected;
       const isTransparent = !!mesh.transparent;
+      const projectionStack = mesh.material.options.rendering.useProjection ? stack.projected : stack.unProjected;
       const similarMeshes = isTransparent ? projectionStack.transparent : projectionStack.opaque;
       similarMeshes.push(mesh);
       this.orderStack(similarMeshes);
@@ -15657,6 +15675,54 @@ ${this.shaders.compute.head}`;
         return meshB.camera.worldMatrix.getTranslation(camPosB).distance(posB) - radiusB - (meshA.camera.worldMatrix.getTranslation(camPosA).distance(posA) - radiusA);
       });
     }
+    // TODO just an idea, but does not work very well for now.
+    // see https://github.com/KhronosGroup/glTF-Sample-Viewer/commit/f4cd6b11de9787db0cd35c06dfa46be7b5440aab
+    /**
+     * Sort transparent and transmissive meshes and eventually swap transparent meshes stack so they are drawn before or after transmissive meshes based on their distance to camera.
+     */
+    // sortTransparentTransmissiveMeshes() {
+    //   if (
+    //     'transmissionTarget' in this.renderer &&
+    //     this.renderer.transmissionTarget &&
+    //     this.renderer.transmissionTarget.passEntry
+    //   ) {
+    //     const mainPassEntry = this.getRenderTargetPassEntry()
+    //     const transmissiveEntry = this.renderer.transmissionTarget.passEntry
+    //     if (!transmissiveEntry.stack.projected.opaque.length) return
+    //     // get all transparent meshes, only if they're not in a render bundle
+    //     const transparentMeshes = [
+    //       ...mainPassEntry.stack.projected.transparent,
+    //       ...transmissiveEntry.stack.projected.transparent,
+    //     ]
+    //       .map((obj) => (obj instanceof Mesh ? obj : null))
+    //       .filter(Boolean)
+    //     // get all transmissive meshes, render bundle or not
+    //     const transmissiveMeshes = transmissiveEntry.stack.projected.opaque
+    //       .map((obj) => {
+    //         return obj instanceof RenderBundle ? Array.from(obj.meshes).map(([k, m]) => m) : obj
+    //       })
+    //       .flat()
+    //     // bail if no transparent or transmissive meshes
+    //     if (!transparentMeshes.length || !transmissiveMeshes.length) return
+    //     const meshesToSort = [...transparentMeshes, ...transmissiveMeshes] as ProjectedMesh[]
+    //     // if only one mesh, no need to sort
+    //     if (meshesToSort.length <= 1) return
+    //     // sort
+    //     this.sortTransparentMeshes(meshesToSort)
+    //     // find first transmissive index mesh
+    //     const firstTransmissiveIndex = meshesToSort.findIndex(
+    //       (m) => 'transmissive' in m.options && m.options.transmissive
+    //     )
+    //     mainPassEntry.stack.projected.transparent = []
+    //     transmissiveEntry.stack.projected.transparent = []
+    //     for (let i = 0; i < firstTransmissiveIndex; i++) {
+    //       mainPassEntry.stack.projected.transparent.push(meshesToSort[i])
+    //     }
+    //     for (let i = firstTransmissiveIndex + 1; i < meshesToSort.length; i++) {
+    //       if (meshesToSort[i].transparent) transmissiveEntry.stack.projected.transparent.push(meshesToSort[i])
+    //     }
+    //   }
+    // }
     /**
      * Here we render a {@link RenderPassEntry}:
      * - Set its {@link RenderPass#descriptor | renderPass descriptor} view or resolveTarget and get it at as swap chain texture.
@@ -15698,7 +15764,9 @@ ${this.shaders.compute.head}`;
             for (const mesh of renderPassEntry.stack.projected.opaque) {
               mesh.render(pass);
             }
-            this.sortTransparentMeshes(renderPassEntry.stack.projected.transparent);
+            this.sortTransparentMeshes(
+              renderPassEntry.stack.projected.transparent.filter((o) => o instanceof Mesh)
+            );
             for (const mesh of renderPassEntry.stack.projected.transparent) {
               mesh.render(pass);
             }
@@ -17989,6 +18057,9 @@ ${this.shaders.compute.head}`;
         this.transmissionTarget.passEntry.onBeforeRenderPass = (commandEncoder, swapChainTexture) => {
           this.copyGPUTextureToTexture(swapChainTexture, this.transmissionTarget.texture, commandEncoder);
         };
+        const mainPassEntry = this.scene.getRenderTargetPassEntry();
+        this.transmissionTarget.passEntry.stack.projected.transparent = mainPassEntry.stack.projected.transparent;
+        mainPassEntry.stack.projected.transparent = [];
       }
     }
     /**
@@ -18295,9 +18366,45 @@ fn sRGBToLinear_4(srgb: vec4f) -> vec4f {
   return vec4( sRGBToLinear(srgb.rgb), srgb.a );
 }
 
+// forward: color / (1 + color)
+fn inverseReinhardToneMapping(color: vec3f) -> vec3f {
+    return color / max(vec3(1e-5), vec3(1.0) - color);
+}
+
 // source: https://www.cs.utah.edu/docs/techreports/2002/pdf/UUCS-02-001.pdf
 fn ReinhardToneMapping( color: vec3f ) -> vec3f {
 	return saturate( color / ( vec3( 1.0 ) + color ) );
+}
+
+fn inverseCineonToneMapping(color: vec3f) -> vec3f {
+  // Step 1: undo gamma
+  let T = pow(color, vec3f(1.0 / 2.2));
+
+  // Invert the rational polynomial per channel
+  var x = vec3f(0.0);
+  for (var i = 0; i < 3; i = i + 1) {
+    let t = T[i];
+
+    // If t >= 1 \u2192 clipped \u2192 cannot recover, return max guess
+    if (t >= 1.0) {
+        x[i] = 1e6; // just put a very large HDR value
+        continue;
+    }
+
+    let A = 6.2 * (t - 1.0);
+    let B = 1.7 * t - 0.5;
+    let C = 0.06 * t;
+
+    let disc = B * B - 4.0 * A * C;
+
+    // Solve quadratic (positive root)
+    let xval = (-B + sqrt(max(disc, 0.0))) / (2.0 * A);
+
+    x[i] = xval;
+  }
+
+  // Step 3: undo the initial offset clamp
+  return x + vec3f(0.004);
 }
 
 // source: http://filmicworlds.com/blog/filmic-tonemapping-operators/
@@ -18305,6 +18412,24 @@ fn CineonToneMapping( color: vec3f ) -> vec3f {
 	// filmic operator by Jim Hejl and Richard Burgess-Dawson
 	let maxColor = max( vec3( 0.0 ), color - 0.004 );
 	return pow( ( maxColor * ( 6.2 * maxColor + 0.5 ) ) / ( maxColor * ( 6.2 * maxColor + 1.7 ) + 0.06 ), vec3( 2.2 ) );
+}
+
+fn inverseKhronosToneMapping(color: vec3f) -> vec3f {
+  // iterative solve: approximate original HDR color
+  var c = color; // initial guess: LDR
+
+  // Do 4\u20136 iterations (cheap and stable)
+  for (var i = 0; i < 5; i = i + 1) {
+    let f = KhronosToneMapping(c);
+    let error = color - f;
+
+    // Step factor (empirically tuned)
+    let step = 0.75;
+
+    c = c + error * step;
+  }
+
+  return max(c, vec3f(0.0));
 }
 
 // https://modelviewer.dev/examples/tone-mapping
@@ -18816,10 +18941,29 @@ fn applyIorToRoughness(roughness: f32, ior: f32) -> f32 {
   return roughness * saturate(ior * 2.0 - 2.0);
 }
 
+// since opaque objects are rendered only once before transmissive objects
+// the transmission sample might be tone mapped and in sRGB space
+// so we try to invert this here
+fn patchTransmissionSample(transmissionSample: vec4f, isTransmissiveLinear: bool, transmissiveToneMapping: u32) -> vec4f {
+  var color = transmissionSample;
+  color = select(sRGBToLinear_4(color), color, isTransmissiveLinear);
+
+  if(transmissiveToneMapping == 1u) {
+    color = vec4(inverseKhronosToneMapping(color.rgb), color.a);
+  } else if(transmissiveToneMapping == 2u) {
+    color = vec4(inverseReinhardToneMapping(color.rgb), color.a);
+  } else if(transmissiveToneMapping == 3u) {
+    color = vec4(inverseCineonToneMapping(color.rgb), color.a);
+  }
+  
+  return color;
+}
+
 fn getTransmissionSample( fragCoord: vec2f, roughness: f32, ior: f32, transmissionSceneTexture: texture_2d<f32>, transmissionSampler: sampler ) -> vec4f {
   let transmissionSamplerSize: vec2f = vec2f(textureDimensions(transmissionSceneTexture));
   let lod: f32 = log2( transmissionSamplerSize.x ) * applyIorToRoughness( roughness, ior );
-  return sRGBToLinear_4(textureSampleLevel( transmissionSceneTexture, transmissionSampler, fragCoord.xy, lod ));
+
+  return textureSampleLevel( transmissionSceneTexture, transmissionSampler, fragCoord.xy, lod );
 }
 
 fn volumeAttenuation(transmissionDistance: f32, attenuationColor: vec3f, attenuationDistance: f32) -> vec3f {
@@ -18849,6 +18993,8 @@ fn getIBLVolumeRefraction(
   thickness: f32,
   attenuationColor: vec3f,
   attenuationDistance: f32,
+  isTransmissiveLinear: bool,
+  transmissiveToneMapping: u32,
   transmissionBackgroundTexture: texture_2d<f32>,
   defaultSampler: sampler,
 ) -> vec4f {
@@ -18868,6 +19014,7 @@ fn getIBLVolumeRefraction(
 
   // Sample the transmission texture
   transmittedLight = getTransmissionSample(refractionCoords, roughness, ior, transmissionBackgroundTexture, defaultSampler);
+  transmittedLight = patchTransmissionSample(transmittedLight, isTransmissiveLinear, transmissiveToneMapping);
 
   // Compute transmittance
   transmittance = diffuseContribution * volumeAttenuation(length(transmissionRay), attenuationColor, attenuationDistance);
@@ -18905,6 +19052,8 @@ fn getIBLVolumeRefractionWithDispersion(
   thickness: f32,
   attenuationColor: vec3f,
   attenuationDistance: f32,
+  isTransmissiveLinear: bool,
+  transmissiveToneMapping: u32,
   transmissionBackgroundTexture: texture_2d<f32>,
   defaultSampler: sampler,
 ) -> vec4f {
@@ -18926,7 +19075,8 @@ fn getIBLVolumeRefractionWithDispersion(
     refractionCoords = (refractionCoords + 1.0) / 2.0;
     refractionCoords = vec2(refractionCoords.x, 1.0 - refractionCoords.y); // webgpu Y flip
     
-    let transmissionSample: vec4f = getTransmissionSample(refractionCoords, roughness, iors[i], transmissionBackgroundTexture, defaultSampler);
+    var transmissionSample: vec4f = getTransmissionSample(refractionCoords, roughness, iors[i], transmissionBackgroundTexture, defaultSampler);
+    transmissionSample = patchTransmissionSample(transmissionSample, isTransmissiveLinear, transmissiveToneMapping);
     
     transmittedLight[i] = transmissionSample[i];
     transmittedLight.a += transmissionSample.a;
@@ -19104,14 +19254,28 @@ fn getPBRDirect(
       if (extensionsUsed.includes("KHR_materials_diffuse_transmission")) {
         iblIndirectDiffuse += /* wgsl */
         `    
-  let diffuseTransmissionIblIrradiance: vec3f = getIBLIndirectIrradiance(
+  var diffuseTransmissionIblIrradiance: vec3f = getIBLIndirectIrradiance(
     -1.0 * normal,
     ${environmentMap.sampler.name},
     ${environmentMap.diffuseTexture.options.name},
     envRotation,
     envDiffuseIntensity,
-  );
-  
+  );`;
+        if (extensionsUsed.includes("KHR_materials_volume")) {
+          iblIndirectDiffuse += /* wgsl */
+          `
+  diffuseTransmissionIblIrradiance *= volumeAttenuation(diffuseTransmissionThickness, attenuationColor, attenuationDistance);
+    `;
+        }
+        if (extensionsUsed.includes("KHR_materials_volume_scatter")) {
+          iblIndirectDiffuse += /* wgsl */
+          `
+  // diffuseTransmissionIblIrradiance *= 1.0 - singleVolumeScatter;
+  diffuseTransmissionIblIrradiance *= singleVolumeScatter;
+    `;
+        }
+        iblIndirectDiffuse += /* wgsl */
+        `    
   iblIrradiance = mix(iblIrradiance, diffuseTransmissionIblIrradiance, diffuseTransmission);`;
       }
     }
@@ -19161,14 +19325,21 @@ fn getPBRDirect(
 
   const getIBLVolumeRefraction = ({
     transmissionBackgroundTexture = null,
+    transmissiveInputColorSpace = "srgb",
+    transmissiveInputToneMapping = "Khronos",
     extensionsUsed = []
   }) => {
     const hasDispersion = extensionsUsed.includes("KHR_materials_dispersion");
     const iblVolumeRefractionFunction = hasDispersion ? "getIBLVolumeRefractionWithDispersion" : "getIBLVolumeRefraction";
+    const availableToneMappings = [false, "Khronos", "Reinhard", "Cineon"];
+    const transmissiveToneMapping = availableToneMappings.findIndex((t) => t === transmissiveInputToneMapping);
     return transmissionBackgroundTexture ? (
       /* wgsl */
       `
   var transmissionAlpha: f32 = 1.0;
+
+  let isTransmissiveLinear: bool = ${transmissiveInputColorSpace === "linear" ? "true" : "false"};
+  let transmissiveToneMapping: u32 = ${transmissiveToneMapping};
   
   var transmitted: vec4f = ${iblVolumeRefractionFunction}(
     normal,
@@ -19187,6 +19358,8 @@ fn getPBRDirect(
     thickness,
     attenuationColor,
     attenuationDistance,
+    isTransmissiveLinear,
+    transmissiveToneMapping,
     ${transmissionBackgroundTexture.texture.options.name},
     ${transmissionBackgroundTexture.sampler.name},
   );
@@ -19340,19 +19513,6 @@ fn getPBRDirect(
       if (environmentMap && environmentMap.lutTexture) {
         sheenIndirect += /* wgsl */
         `
-  // remap sheen roughness so we get only high mips
-  // to sample from in the PMREM (helps approximate Charlie cubemap convolutions)
-  let remappedSheenRoughness = saturate(0.25 + sheenRoughness * 0.75);
-  var sheenIblIrradiance: vec3f = getIBLIndirectRadiance(
-    normal,
-    viewDirection,
-    remappedSheenRoughness,
-    ${environmentMap.sampler.name},
-    ${environmentMap.specularTexture.options.name},
-    envRotation,
-    envSpecularIntensity,
-  );
-
   let sheenBRDFCharlie: f32 = getBRDFCharlie(
     normal,
     viewDirection,
@@ -19361,7 +19521,7 @@ fn getPBRDirect(
     ${environmentMap.lutTexture.options.name}
   );
 
-  sheenSpecularIndirect += sheenIblIrradiance * sheenColor * sheenBRDFCharlie;
+  sheenSpecularIndirect += iblIrradiance * sheenColor * sheenBRDFCharlie;
   let sheenAlbedoScale: f32 = sheenBRDFCharlie;`;
       } else {
         sheenIndirect += /* wgsl */
@@ -19504,7 +19664,17 @@ fn getPBRDirect(
       `
     lightContribution.diffuse = lightContribution.diffuse * (1.0 - diffuseTransmission);
     let diffuseNdotL: f32 = saturate(dot(-1.0 * normal, directLight.direction));
-    let lightDiffuseTransmission: vec3f = directLight.color * diffuseNdotL * BRDF_Lambert(diffuseTransmissionContribution);
+    var lightDiffuseTransmission: vec3f = directLight.color * diffuseNdotL * BRDF_Lambert(diffuseTransmissionContribution);`;
+      if (extensionsUsed.includes("KHR_materials_volume")) {
+        pbrDirect += /* wgsl */
+        `
+    lightDiffuseTransmission *= volumeAttenuation(diffuseTransmissionThickness, attenuationColor, attenuationDistance);
+    `;
+      }
+      pbrDirect += /* wgsl */
+      `
+    // lightDiffuseTransmission *= 1.0 - singleVolumeScatter;
+    lightDiffuseTransmission *= singleVolumeScatter;
     lightContribution.diffuse += lightDiffuseTransmission * diffuseTransmission;
     `;
     }
@@ -19536,6 +19706,8 @@ fn getPBRDirect(
     receiveShadows = false,
     environmentMap = null,
     transmissionBackgroundTexture = null,
+    transmissiveInputColorSpace = "srgb",
+    transmissiveInputToneMapping = "Khronos",
     extensionsUsed = []
   } = {}) => {
     return (
@@ -19627,7 +19799,12 @@ fn getPBRDirect(
   var totalDiffuse: vec3f = reflectedLight.indirectDiffuse + reflectedLight.directDiffuse;
   let totalSpecular: vec3f = reflectedLight.indirectSpecular + reflectedLight.directSpecular;
   
-  ${getIBLVolumeRefraction({ transmissionBackgroundTexture, extensionsUsed })}
+  ${getIBLVolumeRefraction({
+      transmissionBackgroundTexture,
+      transmissiveInputColorSpace,
+      transmissiveInputToneMapping,
+      extensionsUsed
+    })}
   
   var outgoingLight: vec3f = totalDiffuse + totalSpecular;
   
@@ -20068,6 +20245,14 @@ struct FSInput {
         type: "vec3f",
         value: "vec3(1.0)"
       },
+      multiscatterColor: {
+        type: "vec3f",
+        value: "vec3(0.0)"
+      },
+      scatterAnisotropy: {
+        type: "f32",
+        value: "0.0"
+      },
       sheenColor: {
         type: "vec3f",
         value: "vec3(0.0)"
@@ -20422,6 +20607,8 @@ fn generateTBN(normal: vec3f) -> mat3x3f {
   const getTangentBitangent = ({
     extensionsUsed = [],
     geometry = null,
+    cullMode = "back",
+    flatShading = false,
     normalTexture = null,
     clearcoatNormalTexture = null
   } = {}) => {
@@ -20429,15 +20616,28 @@ fn generateTBN(normal: vec3f) -> mat3x3f {
       /* wgsl */
       `
   let faceDirection = select(-1.0, 1.0, frontFacing);
-  let geometryNormal: vec3f = faceDirection * normal;`
+  var geometryNormal: vec3f = normal;`
     );
+    if (flatShading) {
+      tangentBitangent += /* wgsl */
+      `
+  let fdx: vec3f = dpdx( modelPosition );
+	let fdy: vec3f = dpdy( modelPosition );
+	geometryNormal = normalize( cross( fdx, -fdy ) );`;
+    }
+    if (cullMode !== "back" && !flatShading) {
+      tangentBitangent += /* wgsl */
+      `
+  geometryNormal = geometryNormal * faceDirection;
+    `;
+    }
     const tangentAttribute = geometry && geometry.getAttributeByName("tangent");
     const needsTangentBitangent = !!normalTexture || !!clearcoatNormalTexture || extensionsUsed.includes("KHR_materials_anisotropy");
     if (needsTangentBitangent) {
       if (tangentAttribute) {
         tangentBitangent += /* wgsl */
         `
-  let tbn = mat3x3f(normalize(tangent), normalize(bitangent), geometryNormal);`;
+  var tbn = mat3x3f(normalize(tangent), normalize(bitangent), geometryNormal);`;
       } else {
         if (normalTexture) {
           tangentBitangent += /* wgsl */
@@ -20464,8 +20664,15 @@ fn generateTBN(normal: vec3f) -> mat3x3f {
         }
         tangentBitangent += /* wgsl */
         `
-  let tbn = getTangentFrame(modelPosition, normal, tbnUV);
+  var tbn = getTangentFrame(-modelPosition, normal, tbnUV);
   `;
+      }
+      if (cullMode !== "back" && !flatShading) {
+        tangentBitangent += /* wgsl */
+        `
+  tbn[0] *= faceDirection;
+  tbn[1] *= faceDirection;
+    `;
       }
     }
     return tangentBitangent;
@@ -20491,6 +20698,8 @@ fn generateTBN(normal: vec3f) -> mat3x3f {
       )
     },
     geometry,
+    cullMode = "back",
+    flatShading = false,
     additionalVaryings = [],
     materialUniform = null,
     materialUniformName = "material",
@@ -20528,7 +20737,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   // user defined preliminary contribution
   ${chunks.preliminaryContribution}
   
-  ${getTangentBitangent({ geometry, normalTexture })}  
+  ${getTangentBitangent({ geometry, cullMode, flatShading, normalTexture })}  
   ${getNormal({ normalTexture })}  
   ${getEmissiveOcclusion({ emissiveTexture, occlusionTexture })}
   
@@ -20613,6 +20822,13 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
     return specular;
   };
 
+  const getDiffuse = (
+    /* wgsl */
+    `
+  var diffuseColor: vec3f = outputColor.rgb;
+  var diffuseContribution: vec3f = outputColor.rgb * (1.0 - metallic);`
+  );
+
   const getPhongFragmentShaderCode = ({
     chunks = null,
     toneMapping = "Khronos",
@@ -20633,6 +20849,8 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
       )
     },
     geometry,
+    cullMode = "back",
+    flatShading = false,
     additionalVaryings = [],
     materialUniform = null,
     materialUniformName = "material",
@@ -20674,9 +20892,10 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   // user defined preliminary contribution
   ${chunks.preliminaryContribution}
   
-  ${getTangentBitangent({ geometry, normalTexture })}  
+  ${getTangentBitangent({ geometry, cullMode, flatShading, normalTexture })}  
   ${getNormal({ normalTexture })}
   ${getMetallicRoughness({ metallicRoughnessTexture })}
+  ${getDiffuse}
   ${getSpecular({ specularTexture, specularFactorTexture, specularColorTexture })}
   ${getEmissiveOcclusion({ emissiveTexture, occlusionTexture })}
   
@@ -20934,12 +21153,12 @@ fn getBRDFCharlieApprox( normal: vec3f, viewDirection: vec3f, roughness: f32 ) -
   let NdotV: f32 = saturate( dot( normal, viewDirection ) );
 
   let r2: f32 = roughness * roughness;
+  let rInv: f32 = 1.0 / ( roughness + 0.1 );
 
-  let a: f32 = select(-8.48 * r2 + 14.3 * roughness - 9.95, -339.2 * r2 + 161.4 * roughness - 25.9, roughness < 0.25);
-  let b: f32 = select(1.97 * r2 - 3.27 * roughness + 0.72, 44.0 * r2 - 23.7 * roughness + 3.26, roughness < 0.25);
-  let roughnessAdditionalContribution: f32 = select(0.1 * ( roughness - 0.25 ), 0.0, roughness < 0.25);
+  let a: f32 = -1.9362 + 1.0678 * roughness + 0.4573 * r2 - 0.8469 * rInv;
+  let b: f32 = -0.6014 + 0.5538 * roughness - 0.4670 * r2 - 0.1255 * rInv;
 
-  let DG: f32 = exp( a * NdotV + b ) + roughnessAdditionalContribution;
+  let DG: f32 = exp( a * NdotV + b );
 
   return saturate( DG );
 }
@@ -21536,13 +21755,6 @@ fn getIBLIndirectAnisotropyRadiance(
 `
   );
 
-  const getDiffuse = (
-    /* wgsl */
-    `
-  var diffuseColor: vec3f = outputColor.rgb;
-  var diffuseContribution: vec3f = outputColor.rgb * (1.0 - metallic);`
-  );
-
   const BRDFCharlie = (
     /* wgsl */
     `
@@ -21575,7 +21787,8 @@ fn V_Neubelt( NdotL: f32, NdotV: f32 ) -> f32 {
     let diffuseTransmission = (
       /* wgsl */
       `
-  var diffuseTransmissionContribution: vec3f = vec3(1.0);`
+  var diffuseTransmissionContribution: vec3f = vec3(1.0);
+  var diffuseTransmissionThickness: f32 = 1.0;`
     );
     if (!extensionsUsed.includes("KHR_materials_diffuse_transmission")) {
       return diffuseTransmission;
@@ -21606,13 +21819,47 @@ fn V_Neubelt( NdotL: f32, NdotV: f32 ) -> f32 {
     diffuseTransmission += /* wgsl */
     `
   diffuseTransmissionContribution = diffuseTransmissionColor * (1.0 - metallic);`;
+    if (extensionsUsed.includes("KHR_materials_volume")) {
+      diffuseTransmission += /* wgsl */
+      `
+  diffuseTransmissionThickness = thickness * (modelScale.x + modelScale.y + modelScale.z) / 3.0;`;
+    }
     return diffuseTransmission;
+  };
+
+  const getVolumeMultiToSingleScatter = (
+    /* wgsl */
+    `
+fn getVolumeMultiToSingleScatter(multiscatterColor: vec3f) -> vec3f {
+    let s: vec3f = 4.09712 + 4.20863 * multiscatterColor - sqrt(9.59217 + 41.6808 * multiscatterColor + 17.7126 * multiscatterColor * multiscatterColor);
+    return 1.0 - s * s;
+}
+`
+  );
+
+  const getVolumeMultiScatter = ({
+    extensionsUsed = []
+  }) => {
+    let volumeScatter = (
+      /* wgsl */
+      `
+  var singleVolumeScatter: vec3f = vec3(0.0);`
+    );
+    if (!extensionsUsed.includes("KHR_materials_volume_scatter")) {
+      return volumeScatter;
+    }
+    volumeScatter += /* wgsl */
+    `
+  singleVolumeScatter = getVolumeMultiToSingleScatter(multiscatterColor);`;
+    return volumeScatter;
   };
 
   const getPBRFragmentShaderCode = ({
     chunks = null,
     toneMapping = "Khronos",
     outputColorSpace = "srgb",
+    transmissiveInputColorSpace = "srgb",
+    transmissiveInputToneMapping = "Khronos",
     fragmentOutput = {
       struct: [
         {
@@ -21629,6 +21876,8 @@ fn V_Neubelt( NdotL: f32, NdotV: f32 ) -> f32 {
       )
     },
     geometry,
+    cullMode = "back",
+    flatShading = false,
     additionalVaryings = [],
     materialUniform = null,
     materialUniformName = "material",
@@ -21686,6 +21935,7 @@ ${getIBLIndirectRadiance}
 ${getIBLTransmission}
 ${extensionsUsed.includes("KHR_materials_sheen") ? getIBLSheen : ""}
 ${extensionsUsed.includes("KHR_materials_anisotropy") ? getIBLIndirectAnisotropyRadiance : ""}
+${extensionsUsed.includes("KHR_materials_volume_scatter") ? getVolumeMultiToSingleScatter : ""}
 
 ${getFragmentInputStruct({ geometry, additionalVaryings })}
 
@@ -21702,7 +21952,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   ${chunks.preliminaryContribution}
 
   // material infos
-  ${getTangentBitangent({ extensionsUsed, geometry, normalTexture, clearcoatNormalTexture })}  
+  ${getTangentBitangent({ extensionsUsed, geometry, cullMode, flatShading, normalTexture, clearcoatNormalTexture })}  
   ${getNormal({ normalTexture })}
   ${getMetallicRoughness({ metallicRoughnessTexture })}
   ${getDiffuse}
@@ -21720,9 +21970,17 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
       diffuseTransmissionFactorTexture,
       diffuseTransmissionColorTexture
     })}
+  ${getVolumeMultiScatter({ extensionsUsed })}
   
   // shading
-  ${getPBRShading({ receiveShadows, environmentMap, transmissionBackgroundTexture, extensionsUsed })}
+  ${getPBRShading({
+      receiveShadows,
+      environmentMap,
+      transmissionBackgroundTexture,
+      transmissiveInputColorSpace,
+      transmissiveInputToneMapping,
+      extensionsUsed
+    })}
   
   outputColor = vec4(outgoingLight, outputColor.a);
   outputColor = vec4(outputColor.rgb + emissive, outputColor.a);
@@ -21757,7 +22015,11 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
     },
     chunks = null,
     toneMapping = "Khronos",
+    transmissiveInputColorSpace = "srgb",
+    transmissiveInputToneMapping = "Khronos",
     geometry,
+    cullMode = "back",
+    flatShading = false,
     additionalVaryings = [],
     materialUniform = null,
     materialUniformName = "material",
@@ -21811,6 +22073,8 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
             outputColorSpace,
             fragmentOutput,
             geometry,
+            cullMode,
+            flatShading,
             additionalVaryings,
             materialUniform,
             materialUniformName,
@@ -21827,6 +22091,8 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
             outputColorSpace,
             fragmentOutput,
             geometry,
+            cullMode,
+            flatShading,
             additionalVaryings,
             materialUniform,
             materialUniformName,
@@ -21846,8 +22112,12 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
             chunks,
             toneMapping,
             outputColorSpace,
+            transmissiveInputColorSpace,
+            transmissiveInputToneMapping,
             fragmentOutput,
             geometry,
+            cullMode,
+            flatShading,
             additionalVaryings,
             materialUniform,
             materialUniformName,
@@ -25221,12 +25491,25 @@ struct Params {
       renderer = isCameraRenderer(renderer, "LitMesh");
       let { material, ...defaultParams } = parameters;
       if (!material) material = {};
-      let { colorSpace, outputColorSpace, fragmentOutput } = material;
+      let {
+        colorSpace,
+        transmissiveInputColorSpace,
+        transmissiveInputToneMapping,
+        outputColorSpace,
+        flatShading,
+        fragmentOutput
+      } = material;
       if (!colorSpace) {
         colorSpace = "srgb";
       }
       if (!outputColorSpace) {
         outputColorSpace = "srgb";
+      }
+      if (!transmissiveInputColorSpace) {
+        transmissiveInputColorSpace = "srgb";
+      }
+      if (transmissiveInputToneMapping === void 0) {
+        transmissiveInputToneMapping = "Khronos";
       }
       if (!fragmentOutput) {
         fragmentOutput = {
@@ -25270,6 +25553,8 @@ struct Params {
         thickness,
         attenuationDistance,
         attenuationColor,
+        multiscatterColor,
+        scatterAnisotropy,
         sheenColor,
         sheenRoughness,
         anisotropy,
@@ -25330,6 +25615,8 @@ struct Params {
         thickness,
         attenuationDistance,
         attenuationColor,
+        multiscatterColor,
+        scatterAnisotropy,
         sheenColor,
         sheenRoughness,
         anisotropy,
@@ -25425,6 +25712,9 @@ struct Params {
           sampler: renderer.transmissionTarget.sampler
         };
       }
+      if (thickness) {
+        extensionsUsed.push("KHR_materials_volume");
+      }
       if (dispersion) {
         extensionsUsed.push("KHR_materials_dispersion");
       }
@@ -25443,9 +25733,13 @@ struct Params {
       if (diffuseTransmission !== void 0) {
         extensionsUsed.push("KHR_materials_diffuse_transmission");
       }
+      if (multiscatterColor !== void 0 || scatterAnisotropy !== void 0) {
+        extensionsUsed.push("KHR_materials_volume_scatter");
+      }
       const hasNormal = defaultParams.geometry && defaultParams.geometry.getAttributeByName("normal");
       if (defaultParams.geometry && !hasNormal) {
         defaultParams.geometry.computeGeometry();
+        flatShading = true;
       }
       const vs = LitMesh.getVertexShaderCode({
         bindings: defaultParams.bindings,
@@ -25453,6 +25747,7 @@ struct Params {
         chunks: vertexChunks,
         additionalVaryings
       });
+      const cullMode = parameters.cullMode ?? "back";
       const fs = LitMesh.getFragmentShaderCode({
         shadingModel: shading,
         outputColorSpace,
@@ -25460,7 +25755,11 @@ struct Params {
         chunks: fragmentChunks,
         extensionsUsed,
         receiveShadows: defaultParams.receiveShadows,
+        cullMode,
+        flatShading,
         toneMapping,
+        transmissiveInputColorSpace,
+        transmissiveInputToneMapping,
         geometry: defaultParams.geometry,
         additionalVaryings,
         materialUniform,
@@ -25534,6 +25833,8 @@ struct Params {
         thickness,
         attenuationDistance,
         attenuationColor,
+        multiscatterColor,
+        scatterAnisotropy,
         sheenColor,
         sheenRoughness,
         anisotropy,
@@ -25632,6 +25933,14 @@ struct Params {
         attenuationColor: {
           type: "vec3f",
           value: attenuationColor !== void 0 ? colorSpace === "srgb" ? sRGBToLinear(attenuationColor.clone()) : attenuationColor.clone() : new Vec3(1)
+        },
+        multiscatterColor: {
+          type: "vec3f",
+          value: multiscatterColor !== void 0 ? colorSpace === "srgb" ? sRGBToLinear(multiscatterColor.clone()) : multiscatterColor.clone() : new Vec3(0)
+        },
+        scatterAnisotropy: {
+          type: "f32",
+          value: scatterAnisotropy !== void 0 ? scatterAnisotropy : 0
         },
         // sheen
         sheenColor: {
@@ -27151,11 +27460,16 @@ struct Params {
       const transmission = extensions && extensions.KHR_materials_transmission || null;
       const specular = extensions && extensions.KHR_materials_specular || null;
       const volume = extensions && extensions.KHR_materials_volume || null;
+      const volumeScatter = extensions && extensions.KHR_materials_volume_scatter || null;
       const sheen = extensions && extensions.KHR_materials_sheen || null;
       const anisotropy = extensions && extensions.KHR_materials_anisotropy || null;
       const clearcoat = extensions && extensions.KHR_materials_clearcoat || null;
       const iridescence = extensions && extensions.KHR_materials_iridescence || null;
       const diffuseTransmission = extensions && extensions.KHR_materials_diffuse_transmission || null;
+      const pbrSpecularGlossiness = extensions && extensions.KHR_materials_pbrSpecularGlossiness || null;
+      if (pbrSpecularGlossiness && !this.renderer.production) {
+        throwWarning("GLTFScenesManager: KHR_materials_pbrSpecularGlossiness is deprecated and therefore not supported.");
+      }
       const litMeshMaterialParams = {
         colorSpace: "linear",
         color: material.pbrMetallicRoughness && material.pbrMetallicRoughness.baseColorFactor !== void 0 ? new Vec3(
@@ -27165,8 +27479,8 @@ struct Params {
         ) : new Vec3(1),
         opacity: material.pbrMetallicRoughness && material.pbrMetallicRoughness.baseColorFactor !== void 0 ? material.pbrMetallicRoughness.baseColorFactor[3] : 1,
         alphaCutoff: material.alphaCutoff !== void 0 ? material.alphaCutoff : material.alphaMode === "MASK" ? 0.5 : 0,
-        metallic: material.pbrMetallicRoughness?.metallicFactor === void 0 ? 1 : material.pbrMetallicRoughness.metallicFactor,
-        roughness: material.pbrMetallicRoughness?.roughnessFactor === void 0 ? 1 : material.pbrMetallicRoughness.roughnessFactor,
+        metallic: material.pbrMetallicRoughness?.metallicFactor !== void 0 ? material.pbrMetallicRoughness.metallicFactor : 1,
+        roughness: material.pbrMetallicRoughness?.roughnessFactor !== void 0 ? material.pbrMetallicRoughness.roughnessFactor : 1,
         normalScale: material.normalTexture?.scale === void 0 ? new Vec2(1) : new Vec2(material.normalTexture.scale),
         occlusionIntensity: material.occlusionTexture?.strength === void 0 ? 1 : material.occlusionTexture.strength,
         emissiveIntensity: emissiveStrength && emissiveStrength.emissiveStrength !== void 0 ? emissiveStrength.emissiveStrength : 1,
@@ -27184,6 +27498,19 @@ struct Params {
         thickness: volume && volume.thicknessFactor !== void 0 ? volume.thicknessFactor : 0,
         attenuationDistance: volume && volume.attenuationDistance !== void 0 ? volume.attenuationDistance : Infinity,
         attenuationColor: volume && volume.attenuationColor !== void 0 ? new Vec3(volume.attenuationColor[0], volume.attenuationColor[1], volume.attenuationColor[2]) : new Vec3(1),
+        // volume scatter
+        ...volumeScatter && {
+          ...volumeScatter.multiscatterColor !== void 0 && {
+            multiscatterColor: new Vec3(
+              volumeScatter.multiscatterColor[0],
+              volumeScatter.multiscatterColor[1],
+              volumeScatter.multiscatterColor[2]
+            )
+          },
+          ...volumeScatter.scatterAnisotropy !== void 0 !== void 0 && {
+            sheenRoughness: volumeScatter.scatterAnisotropy
+          }
+        },
         // sheen
         ...sheen && {
           ...sheen.sheenColorFactor !== void 0 && {
@@ -27311,6 +27638,17 @@ struct Params {
         }
         const mesh = this.gltf.meshes[node.mesh];
         mesh.primitives.forEach((primitive, primitiveIndex) => {
+          const scenes = [];
+          if (this.gltf.scenes) {
+            this.gltf.scenes.forEach((scene, i) => {
+              if (scene.nodes.includes(index)) {
+                scenes.push({
+                  name: scene.name ?? `scene${i}`,
+                  index: i
+                });
+              }
+            });
+          }
           const meshDescriptor = {
             parent: child.node,
             texturesDescriptors: [],
@@ -27319,6 +27657,7 @@ struct Params {
               label: mesh.name ? mesh.name + " " + primitiveIndex : "glTF mesh " + primitiveIndex
             },
             nodes: [],
+            scenes,
             extensionsUsed: [],
             alternateDescriptors: /* @__PURE__ */ new Map(),
             alternateMaterials: /* @__PURE__ */ new Map()
@@ -27671,6 +28010,7 @@ struct Params {
      */
     createMaterial(primitive, primitiveInstance) {
       const { instances, nodes, meshDescriptor } = primitiveInstance;
+      const { geometry } = meshDescriptor.parameters;
       const instancesCount = instances.length;
       const meshIndex = instances[0].mesh;
       if (primitive.targets) {
@@ -27730,7 +28070,7 @@ struct Params {
               const skinDef = this.scenesManager.skins[skinIndex];
               meshDescriptor.parameters.bindings = [...meshDescriptor.parameters.bindings, skinDef.binding];
               if (instanceIndex > 0) {
-                const tempBbox = meshDescriptor.parameters.geometry.boundingBox.clone();
+                const tempBbox = geometry.boundingBox.clone();
                 const tempMat4 = new Mat4();
                 skinDef.joints.forEach((object, jointIndex) => {
                   tempMat4.setFromArray(skinDef.inverseBindMatrices, jointIndex * 16);
@@ -27793,6 +28133,10 @@ struct Params {
             normal: {
               type: "mat3x3f",
               value: new Mat3()
+            },
+            handedness: {
+              type: "f32",
+              value: 1
             }
           }
         });
@@ -27811,6 +28155,8 @@ struct Params {
         });
         instancesBinding.childrenBindings.forEach((binding, index) => {
           const instanceNode = nodes[index];
+          const determinant = instanceNode.worldMatrix.determinant();
+          binding.inputs.handedness.value = determinant > 0 ? 1 : -1;
           const updateInstanceMatrices = () => {
             binding.inputs.model.value.copy(instanceNode.worldMatrix);
             binding.inputs.normal.value.getNormalMatrix(instanceNode.worldMatrix);
@@ -27828,14 +28174,25 @@ struct Params {
           meshDescriptor.parameters.bindings = [];
         }
         meshDescriptor.parameters.bindings.push(instancesBinding);
+      } else {
+        const determinant = primitiveInstance.nodes[0].worldMatrix.determinant();
+        if (determinant < 0) {
+          meshDescriptor.parameters.geometry.verticesOrder = "cw";
+        }
       }
       for (let i = 0; i < nodes.length; i++) {
-        const tempBbox = meshDescriptor.parameters.geometry.boundingBox.clone();
+        const tempBbox = geometry.boundingBox.clone();
         const transformedBbox = tempBbox.applyMat4(meshDescriptor.nodes[i].worldMatrix);
         this.scenesManager.boundingBox.min.min(transformedBbox.min);
         this.scenesManager.boundingBox.max.max(transformedBbox.max);
       }
       this.scenesManager.boundingBox.max.max(new Vec3(1e-3));
+      const hasTangent = !!geometry.getAttributeByName("tangent");
+      if (!hasTangent && meshDescriptor.parameters.material.normalScale) {
+        meshDescriptor.parameters.material.normalScale.y *= -1;
+      }
+      const hasNormal = primitive.attributes["NORMAL"] !== void 0;
+      meshDescriptor.parameters.material.flatShading = !hasNormal;
       if (primitive.extensions) {
         if (primitive.extensions["KHR_materials_variants"] && this.gltf.extensionsUsed && this.gltf.extensionsUsed.includes("KHR_materials_variants")) {
           meshDescriptor.extensionsUsed.push("KHR_materials_variants");
@@ -27869,6 +28226,7 @@ struct Params {
                 variantName: variant.name,
                 parent: meshDescriptor.parent,
                 nodes: meshDescriptor.nodes,
+                scenes: meshDescriptor.scenes,
                 extensionsUsed: [...meshDescriptor.extensionsUsed, ...extensionsUsed],
                 texturesDescriptors,
                 parameters: {
@@ -27880,6 +28238,7 @@ struct Params {
                   cullMode: variantMaterialParams.cullMode,
                   material: {
                     ...variantMaterialParams.material,
+                    flatShading: meshDescriptor.parameters.material.flatShading,
                     ...texturesDescriptors.reduce((acc, descriptor) => {
                       return { ...acc, [descriptor.texture.options.name]: descriptor };
                     }, {})
@@ -27887,6 +28246,9 @@ struct Params {
                   ...variantMaterialParams.targets && { targets: variantMaterialParams.targets }
                 }
               };
+              if (!hasTangent && variantDescriptor.parameters.material.normalScale) {
+                variantDescriptor.parameters.material.normalScale.y *= -1;
+              }
               meshDescriptor.alternateDescriptors.set(variant.name, variantDescriptor);
             }
           });
@@ -27948,6 +28310,15 @@ struct Params {
             ...meshDescriptor.parameters
           });
           meshDescriptor.alternateMaterials.set("Default", mesh.material);
+          if (this.gltf.scenes && this.gltf.scenes.length) {
+            const activeScene = this.gltf.scene || 0;
+            const isInActiveScene = meshDescriptor.scenes.length ? meshDescriptor.scenes.find((scene) => scene.index === activeScene) : true;
+            if (isInActiveScene) {
+              mesh.visible = true;
+            } else {
+              mesh.visible = false;
+            }
+          }
           meshDescriptor.alternateDescriptors.forEach((descriptor) => {
             const { material: originalMaterial } = meshDescriptor.parameters;
             const { environmentMap, shading, vertexChunks, additionalVaryings, fragmentChunks, toneMapping } = originalMaterial;

@@ -19,6 +19,7 @@ import { RenderMaterial } from '../../core/materials/RenderMaterial.mjs';
 import { DirectionalLight } from '../../core/lights/DirectionalLight.mjs';
 import { PointLight } from '../../core/lights/PointLight.mjs';
 import { SpotLight } from '../../core/lights/SpotLight.mjs';
+import { throwWarning } from '../../utils/utils.mjs';
 
 var __typeError = (msg) => {
   throw TypeError(msg);
@@ -549,11 +550,16 @@ const _GLTFScenesManager = class _GLTFScenesManager {
     const transmission = extensions && extensions.KHR_materials_transmission || null;
     const specular = extensions && extensions.KHR_materials_specular || null;
     const volume = extensions && extensions.KHR_materials_volume || null;
+    const volumeScatter = extensions && extensions.KHR_materials_volume_scatter || null;
     const sheen = extensions && extensions.KHR_materials_sheen || null;
     const anisotropy = extensions && extensions.KHR_materials_anisotropy || null;
     const clearcoat = extensions && extensions.KHR_materials_clearcoat || null;
     const iridescence = extensions && extensions.KHR_materials_iridescence || null;
     const diffuseTransmission = extensions && extensions.KHR_materials_diffuse_transmission || null;
+    const pbrSpecularGlossiness = extensions && extensions.KHR_materials_pbrSpecularGlossiness || null;
+    if (pbrSpecularGlossiness && !this.renderer.production) {
+      throwWarning("GLTFScenesManager: KHR_materials_pbrSpecularGlossiness is deprecated and therefore not supported.");
+    }
     const litMeshMaterialParams = {
       colorSpace: "linear",
       color: material.pbrMetallicRoughness && material.pbrMetallicRoughness.baseColorFactor !== void 0 ? new Vec3(
@@ -563,8 +569,8 @@ const _GLTFScenesManager = class _GLTFScenesManager {
       ) : new Vec3(1),
       opacity: material.pbrMetallicRoughness && material.pbrMetallicRoughness.baseColorFactor !== void 0 ? material.pbrMetallicRoughness.baseColorFactor[3] : 1,
       alphaCutoff: material.alphaCutoff !== void 0 ? material.alphaCutoff : material.alphaMode === "MASK" ? 0.5 : 0,
-      metallic: material.pbrMetallicRoughness?.metallicFactor === void 0 ? 1 : material.pbrMetallicRoughness.metallicFactor,
-      roughness: material.pbrMetallicRoughness?.roughnessFactor === void 0 ? 1 : material.pbrMetallicRoughness.roughnessFactor,
+      metallic: material.pbrMetallicRoughness?.metallicFactor !== void 0 ? material.pbrMetallicRoughness.metallicFactor : 1,
+      roughness: material.pbrMetallicRoughness?.roughnessFactor !== void 0 ? material.pbrMetallicRoughness.roughnessFactor : 1,
       normalScale: material.normalTexture?.scale === void 0 ? new Vec2(1) : new Vec2(material.normalTexture.scale),
       occlusionIntensity: material.occlusionTexture?.strength === void 0 ? 1 : material.occlusionTexture.strength,
       emissiveIntensity: emissiveStrength && emissiveStrength.emissiveStrength !== void 0 ? emissiveStrength.emissiveStrength : 1,
@@ -582,6 +588,19 @@ const _GLTFScenesManager = class _GLTFScenesManager {
       thickness: volume && volume.thicknessFactor !== void 0 ? volume.thicknessFactor : 0,
       attenuationDistance: volume && volume.attenuationDistance !== void 0 ? volume.attenuationDistance : Infinity,
       attenuationColor: volume && volume.attenuationColor !== void 0 ? new Vec3(volume.attenuationColor[0], volume.attenuationColor[1], volume.attenuationColor[2]) : new Vec3(1),
+      // volume scatter
+      ...volumeScatter && {
+        ...volumeScatter.multiscatterColor !== void 0 && {
+          multiscatterColor: new Vec3(
+            volumeScatter.multiscatterColor[0],
+            volumeScatter.multiscatterColor[1],
+            volumeScatter.multiscatterColor[2]
+          )
+        },
+        ...volumeScatter.scatterAnisotropy !== void 0 !== void 0 && {
+          sheenRoughness: volumeScatter.scatterAnisotropy
+        }
+      },
       // sheen
       ...sheen && {
         ...sheen.sheenColorFactor !== void 0 && {
@@ -709,6 +728,17 @@ const _GLTFScenesManager = class _GLTFScenesManager {
       }
       const mesh = this.gltf.meshes[node.mesh];
       mesh.primitives.forEach((primitive, primitiveIndex) => {
+        const scenes = [];
+        if (this.gltf.scenes) {
+          this.gltf.scenes.forEach((scene, i) => {
+            if (scene.nodes.includes(index)) {
+              scenes.push({
+                name: scene.name ?? `scene${i}`,
+                index: i
+              });
+            }
+          });
+        }
         const meshDescriptor = {
           parent: child.node,
           texturesDescriptors: [],
@@ -717,6 +747,7 @@ const _GLTFScenesManager = class _GLTFScenesManager {
             label: mesh.name ? mesh.name + " " + primitiveIndex : "glTF mesh " + primitiveIndex
           },
           nodes: [],
+          scenes,
           extensionsUsed: [],
           alternateDescriptors: /* @__PURE__ */ new Map(),
           alternateMaterials: /* @__PURE__ */ new Map()
@@ -1069,6 +1100,7 @@ const _GLTFScenesManager = class _GLTFScenesManager {
    */
   createMaterial(primitive, primitiveInstance) {
     const { instances, nodes, meshDescriptor } = primitiveInstance;
+    const { geometry } = meshDescriptor.parameters;
     const instancesCount = instances.length;
     const meshIndex = instances[0].mesh;
     if (primitive.targets) {
@@ -1128,7 +1160,7 @@ const _GLTFScenesManager = class _GLTFScenesManager {
             const skinDef = this.scenesManager.skins[skinIndex];
             meshDescriptor.parameters.bindings = [...meshDescriptor.parameters.bindings, skinDef.binding];
             if (instanceIndex > 0) {
-              const tempBbox = meshDescriptor.parameters.geometry.boundingBox.clone();
+              const tempBbox = geometry.boundingBox.clone();
               const tempMat4 = new Mat4();
               skinDef.joints.forEach((object, jointIndex) => {
                 tempMat4.setFromArray(skinDef.inverseBindMatrices, jointIndex * 16);
@@ -1191,6 +1223,10 @@ const _GLTFScenesManager = class _GLTFScenesManager {
           normal: {
             type: "mat3x3f",
             value: new Mat3()
+          },
+          handedness: {
+            type: "f32",
+            value: 1
           }
         }
       });
@@ -1209,6 +1245,8 @@ const _GLTFScenesManager = class _GLTFScenesManager {
       });
       instancesBinding.childrenBindings.forEach((binding, index) => {
         const instanceNode = nodes[index];
+        const determinant = instanceNode.worldMatrix.determinant();
+        binding.inputs.handedness.value = determinant > 0 ? 1 : -1;
         const updateInstanceMatrices = () => {
           binding.inputs.model.value.copy(instanceNode.worldMatrix);
           binding.inputs.normal.value.getNormalMatrix(instanceNode.worldMatrix);
@@ -1226,14 +1264,25 @@ const _GLTFScenesManager = class _GLTFScenesManager {
         meshDescriptor.parameters.bindings = [];
       }
       meshDescriptor.parameters.bindings.push(instancesBinding);
+    } else {
+      const determinant = primitiveInstance.nodes[0].worldMatrix.determinant();
+      if (determinant < 0) {
+        meshDescriptor.parameters.geometry.verticesOrder = "cw";
+      }
     }
     for (let i = 0; i < nodes.length; i++) {
-      const tempBbox = meshDescriptor.parameters.geometry.boundingBox.clone();
+      const tempBbox = geometry.boundingBox.clone();
       const transformedBbox = tempBbox.applyMat4(meshDescriptor.nodes[i].worldMatrix);
       this.scenesManager.boundingBox.min.min(transformedBbox.min);
       this.scenesManager.boundingBox.max.max(transformedBbox.max);
     }
     this.scenesManager.boundingBox.max.max(new Vec3(1e-3));
+    const hasTangent = !!geometry.getAttributeByName("tangent");
+    if (!hasTangent && meshDescriptor.parameters.material.normalScale) {
+      meshDescriptor.parameters.material.normalScale.y *= -1;
+    }
+    const hasNormal = primitive.attributes["NORMAL"] !== void 0;
+    meshDescriptor.parameters.material.flatShading = !hasNormal;
     if (primitive.extensions) {
       if (primitive.extensions["KHR_materials_variants"] && this.gltf.extensionsUsed && this.gltf.extensionsUsed.includes("KHR_materials_variants")) {
         meshDescriptor.extensionsUsed.push("KHR_materials_variants");
@@ -1267,6 +1316,7 @@ const _GLTFScenesManager = class _GLTFScenesManager {
               variantName: variant.name,
               parent: meshDescriptor.parent,
               nodes: meshDescriptor.nodes,
+              scenes: meshDescriptor.scenes,
               extensionsUsed: [...meshDescriptor.extensionsUsed, ...extensionsUsed],
               texturesDescriptors,
               parameters: {
@@ -1278,6 +1328,7 @@ const _GLTFScenesManager = class _GLTFScenesManager {
                 cullMode: variantMaterialParams.cullMode,
                 material: {
                   ...variantMaterialParams.material,
+                  flatShading: meshDescriptor.parameters.material.flatShading,
                   ...texturesDescriptors.reduce((acc, descriptor) => {
                     return { ...acc, [descriptor.texture.options.name]: descriptor };
                   }, {})
@@ -1285,6 +1336,9 @@ const _GLTFScenesManager = class _GLTFScenesManager {
                 ...variantMaterialParams.targets && { targets: variantMaterialParams.targets }
               }
             };
+            if (!hasTangent && variantDescriptor.parameters.material.normalScale) {
+              variantDescriptor.parameters.material.normalScale.y *= -1;
+            }
             meshDescriptor.alternateDescriptors.set(variant.name, variantDescriptor);
           }
         });
@@ -1346,6 +1400,15 @@ const _GLTFScenesManager = class _GLTFScenesManager {
           ...meshDescriptor.parameters
         });
         meshDescriptor.alternateMaterials.set("Default", mesh.material);
+        if (this.gltf.scenes && this.gltf.scenes.length) {
+          const activeScene = this.gltf.scene || 0;
+          const isInActiveScene = meshDescriptor.scenes.length ? meshDescriptor.scenes.find((scene) => scene.index === activeScene) : true;
+          if (isInActiveScene) {
+            mesh.visible = true;
+          } else {
+            mesh.visible = false;
+          }
+        }
         meshDescriptor.alternateDescriptors.forEach((descriptor) => {
           const { material: originalMaterial } = meshDescriptor.parameters;
           const { environmentMap, shading, vertexChunks, additionalVaryings, fragmentChunks, toneMapping } = originalMaterial;

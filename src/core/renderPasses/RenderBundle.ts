@@ -589,7 +589,15 @@ export class RenderBundle {
     if (!this.renderer.ready) return
 
     // render bundle ready, render meshes
-    if (this.ready && this.bundle && this.visible) {
+    let shouldRender = false
+    for (const [_uuid, mesh] of this.meshes) {
+      if (mesh.visible) {
+        shouldRender = true
+        break
+      }
+    }
+
+    if (this.ready && this.bundle && this.visible && shouldRender) {
       this.meshes.forEach((mesh) => {
         mesh.onBeforeRenderPass()
       })

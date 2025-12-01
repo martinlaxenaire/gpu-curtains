@@ -11,19 +11,6 @@ const getIBLSheenIndirectRadiance = ({
     if (environmentMap && environmentMap.lutTexture) {
       sheenIndirect += /* wgsl */
       `
-  // remap sheen roughness so we get only high mips
-  // to sample from in the PMREM (helps approximate Charlie cubemap convolutions)
-  let remappedSheenRoughness = saturate(0.25 + sheenRoughness * 0.75);
-  var sheenIblIrradiance: vec3f = getIBLIndirectRadiance(
-    normal,
-    viewDirection,
-    remappedSheenRoughness,
-    ${environmentMap.sampler.name},
-    ${environmentMap.specularTexture.options.name},
-    envRotation,
-    envSpecularIntensity,
-  );
-
   let sheenBRDFCharlie: f32 = getBRDFCharlie(
     normal,
     viewDirection,
@@ -32,7 +19,7 @@ const getIBLSheenIndirectRadiance = ({
     ${environmentMap.lutTexture.options.name}
   );
 
-  sheenSpecularIndirect += sheenIblIrradiance * sheenColor * sheenBRDFCharlie;
+  sheenSpecularIndirect += iblIrradiance * sheenColor * sheenBRDFCharlie;
   let sheenAlbedoScale: f32 = sheenBRDFCharlie;`;
     } else {
       sheenIndirect += /* wgsl */

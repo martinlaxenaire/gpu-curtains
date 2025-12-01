@@ -16,12 +16,25 @@ class LitMesh extends Mesh {
     renderer = isCameraRenderer(renderer, "LitMesh");
     let { material, ...defaultParams } = parameters;
     if (!material) material = {};
-    let { colorSpace, outputColorSpace, fragmentOutput } = material;
+    let {
+      colorSpace,
+      transmissiveInputColorSpace,
+      transmissiveInputToneMapping,
+      outputColorSpace,
+      flatShading,
+      fragmentOutput
+    } = material;
     if (!colorSpace) {
       colorSpace = "srgb";
     }
     if (!outputColorSpace) {
       outputColorSpace = "srgb";
+    }
+    if (!transmissiveInputColorSpace) {
+      transmissiveInputColorSpace = "srgb";
+    }
+    if (transmissiveInputToneMapping === void 0) {
+      transmissiveInputToneMapping = "Khronos";
     }
     if (!fragmentOutput) {
       fragmentOutput = {
@@ -65,6 +78,8 @@ class LitMesh extends Mesh {
       thickness,
       attenuationDistance,
       attenuationColor,
+      multiscatterColor,
+      scatterAnisotropy,
       sheenColor,
       sheenRoughness,
       anisotropy,
@@ -125,6 +140,8 @@ class LitMesh extends Mesh {
       thickness,
       attenuationDistance,
       attenuationColor,
+      multiscatterColor,
+      scatterAnisotropy,
       sheenColor,
       sheenRoughness,
       anisotropy,
@@ -220,6 +237,9 @@ class LitMesh extends Mesh {
         sampler: renderer.transmissionTarget.sampler
       };
     }
+    if (thickness) {
+      extensionsUsed.push("KHR_materials_volume");
+    }
     if (dispersion) {
       extensionsUsed.push("KHR_materials_dispersion");
     }
@@ -238,9 +258,13 @@ class LitMesh extends Mesh {
     if (diffuseTransmission !== void 0) {
       extensionsUsed.push("KHR_materials_diffuse_transmission");
     }
+    if (multiscatterColor !== void 0 || scatterAnisotropy !== void 0) {
+      extensionsUsed.push("KHR_materials_volume_scatter");
+    }
     const hasNormal = defaultParams.geometry && defaultParams.geometry.getAttributeByName("normal");
     if (defaultParams.geometry && !hasNormal) {
       defaultParams.geometry.computeGeometry();
+      flatShading = true;
     }
     const vs = LitMesh.getVertexShaderCode({
       bindings: defaultParams.bindings,
@@ -248,6 +272,7 @@ class LitMesh extends Mesh {
       chunks: vertexChunks,
       additionalVaryings
     });
+    const cullMode = parameters.cullMode ?? "back";
     const fs = LitMesh.getFragmentShaderCode({
       shadingModel: shading,
       outputColorSpace,
@@ -255,7 +280,11 @@ class LitMesh extends Mesh {
       chunks: fragmentChunks,
       extensionsUsed,
       receiveShadows: defaultParams.receiveShadows,
+      cullMode,
+      flatShading,
       toneMapping,
+      transmissiveInputColorSpace,
+      transmissiveInputToneMapping,
       geometry: defaultParams.geometry,
       additionalVaryings,
       materialUniform,
@@ -329,6 +358,8 @@ class LitMesh extends Mesh {
       thickness,
       attenuationDistance,
       attenuationColor,
+      multiscatterColor,
+      scatterAnisotropy,
       sheenColor,
       sheenRoughness,
       anisotropy,
@@ -427,6 +458,14 @@ class LitMesh extends Mesh {
       attenuationColor: {
         type: "vec3f",
         value: attenuationColor !== void 0 ? colorSpace === "srgb" ? sRGBToLinear(attenuationColor.clone()) : attenuationColor.clone() : new Vec3(1)
+      },
+      multiscatterColor: {
+        type: "vec3f",
+        value: multiscatterColor !== void 0 ? colorSpace === "srgb" ? sRGBToLinear(multiscatterColor.clone()) : multiscatterColor.clone() : new Vec3(0)
+      },
+      scatterAnisotropy: {
+        type: "f32",
+        value: scatterAnisotropy !== void 0 ? scatterAnisotropy : 0
       },
       // sheen
       sheenColor: {

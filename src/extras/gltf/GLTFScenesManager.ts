@@ -22,6 +22,7 @@ import {
   MeshDescriptorMaterialParams,
   PrimitiveInstanceDescriptor,
   PrimitiveInstances,
+  SceneDescriptor,
   ScenesManager,
   SkinDefinition,
 } from '../../types/gltf/GLTFScenesManager'
@@ -34,6 +35,7 @@ import { RenderMaterial } from '../../core/materials/RenderMaterial'
 import { DirectionalLight } from '../../core/lights/DirectionalLight'
 import { PointLight } from '../../core/lights/PointLight'
 import { SpotLight } from '../../core/lights/SpotLight'
+import { throwWarning } from '../../utils/utils'
 
 // https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Constants
 // To make it easier to reference the WebGL enums that glTF uses.
@@ -758,11 +760,18 @@ export class GLTFScenesManager {
     const transmission = (extensions && extensions.KHR_materials_transmission) || null
     const specular = (extensions && extensions.KHR_materials_specular) || null
     const volume = (extensions && extensions.KHR_materials_volume) || null
+    const volumeScatter = (extensions && extensions.KHR_materials_volume_scatter) || null
     const sheen = (extensions && extensions.KHR_materials_sheen) || null
     const anisotropy = (extensions && extensions.KHR_materials_anisotropy) || null
     const clearcoat = (extensions && extensions.KHR_materials_clearcoat) || null
     const iridescence = (extensions && extensions.KHR_materials_iridescence) || null
     const diffuseTransmission = (extensions && extensions.KHR_materials_diffuse_transmission) || null
+
+    // @ts-ignore
+    const pbrSpecularGlossiness = (extensions && extensions.KHR_materials_pbrSpecularGlossiness) || null
+    if (pbrSpecularGlossiness && !this.renderer.production) {
+      throwWarning('GLTFScenesManager: KHR_materials_pbrSpecularGlossiness is deprecated and therefore not supported.')
+    }
 
     const litMeshMaterialParams: LitMeshMaterialUniformParams = {
       colorSpace: 'linear',
@@ -780,11 +789,11 @@ export class GLTFScenesManager {
           : 1,
       alphaCutoff: material.alphaCutoff !== undefined ? material.alphaCutoff : material.alphaMode === 'MASK' ? 0.5 : 0,
       metallic:
-        material.pbrMetallicRoughness?.metallicFactor === undefined ? 1 : material.pbrMetallicRoughness.metallicFactor,
+        material.pbrMetallicRoughness?.metallicFactor !== undefined ? material.pbrMetallicRoughness.metallicFactor : 1,
       roughness:
-        material.pbrMetallicRoughness?.roughnessFactor === undefined
-          ? 1
-          : material.pbrMetallicRoughness.roughnessFactor,
+        material.pbrMetallicRoughness?.roughnessFactor !== undefined
+          ? material.pbrMetallicRoughness.roughnessFactor
+          : 1,
       normalScale: material.normalTexture?.scale === undefined ? new Vec2(1) : new Vec2(material.normalTexture.scale),
       occlusionIntensity: material.occlusionTexture?.strength === undefined ? 1 : material.occlusionTexture.strength,
       emissiveIntensity:
@@ -812,6 +821,19 @@ export class GLTFScenesManager {
         volume && volume.attenuationColor !== undefined
           ? new Vec3(volume.attenuationColor[0], volume.attenuationColor[1], volume.attenuationColor[2])
           : new Vec3(1),
+      // volume scatter
+      ...(volumeScatter && {
+        ...(volumeScatter.multiscatterColor !== undefined && {
+          multiscatterColor: new Vec3(
+            volumeScatter.multiscatterColor[0],
+            volumeScatter.multiscatterColor[1],
+            volumeScatter.multiscatterColor[2]
+          ),
+        }),
+        ...((volumeScatter.scatterAnisotropy !== undefined) !== undefined && {
+          sheenRoughness: volumeScatter.scatterAnisotropy,
+        }),
+      }),
       // sheen
       ...(sheen && {
         ...(sheen.sheenColorFactor !== undefined && {
@@ -969,6 +991,18 @@ export class GLTFScenesManager {
 
       // each primitive is in fact a mesh
       mesh.primitives.forEach((primitive, primitiveIndex) => {
+        const scenes: SceneDescriptor[] = []
+        if (this.gltf.scenes) {
+          this.gltf.scenes.forEach((scene, i) => {
+            if (scene.nodes.includes(index)) {
+              scenes.push({
+                name: scene.name ?? `scene${i}`,
+                index: i,
+              })
+            }
+          })
+        }
+
         const meshDescriptor: MeshDescriptor = {
           parent: child.node,
           texturesDescriptors: [],
@@ -977,6 +1011,7 @@ export class GLTFScenesManager {
             label: mesh.name ? mesh.name + ' ' + primitiveIndex : 'glTF mesh ' + primitiveIndex,
           },
           nodes: [],
+          scenes,
           extensionsUsed: [],
           alternateDescriptors: new Map(),
           alternateMaterials: new Map(),
@@ -1799,6 +1834,7 @@ export class GLTFScenesManager {
    */
   createMaterial(primitive: GLTF.IMeshPrimitive, primitiveInstance: PrimitiveInstanceDescriptor) {
     const { instances, nodes, meshDescriptor } = primitiveInstance
+    const { geometry } = meshDescriptor.parameters
 
     const instancesCount = instances.length
 
@@ -1880,7 +1916,7 @@ export class GLTFScenesManager {
             // real dirty way to get a better approximate bounding box
             // should use https://discourse.threejs.org/t/accurate-gltf-bounding-box/45410/4
             if (instanceIndex > 0) {
-              const tempBbox = meshDescriptor.parameters.geometry.boundingBox.clone()
+              const tempBbox = geometry.boundingBox.clone()
               const tempMat4 = new Mat4()
               skinDef.joints.forEach((object, jointIndex) => {
                 tempMat4.setFromArray(skinDef.inverseBindMatrices, jointIndex * 16)
@@ -1971,6 +2007,10 @@ export class GLTFScenesManager {
             type: 'mat3x3f',
             value: new Mat3(),
           },
+          handedness: {
+            type: 'f32',
+            value: 1,
+          },
         },
       })
 
@@ -1992,6 +2032,10 @@ export class GLTFScenesManager {
         // each time the instance node world matrix is updated
         // we compute and update the corresponding matrices bindings
         const instanceNode = nodes[index]
+
+        const determinant = instanceNode.worldMatrix.determinant()
+        // if determinant is negative, handedness will multiply instance normals by -1
+        binding.inputs.handedness.value = determinant > 0 ? 1 : -1
 
         const updateInstanceMatrices = () => {
           ;(binding.inputs.model.value as Mat4).copy(instanceNode.worldMatrix)
@@ -2015,11 +2059,17 @@ export class GLTFScenesManager {
       }
 
       meshDescriptor.parameters.bindings.push(instancesBinding)
+    } else {
+      const determinant = primitiveInstance.nodes[0].worldMatrix.determinant()
+      if (determinant < 0) {
+        // negative scale changes vertices order
+        meshDescriptor.parameters.geometry.verticesOrder = 'cw'
+      }
     }
 
     // computed transformed bbox
     for (let i = 0; i < nodes.length; i++) {
-      const tempBbox = meshDescriptor.parameters.geometry.boundingBox.clone()
+      const tempBbox = geometry.boundingBox.clone()
       const transformedBbox = tempBbox.applyMat4(meshDescriptor.nodes[i].worldMatrix)
 
       this.scenesManager.boundingBox.min.min(transformedBbox.min)
@@ -2028,6 +2078,17 @@ export class GLTFScenesManager {
 
     // avoid having a bounding box max component equal to 0
     this.scenesManager.boundingBox.max.max(new Vec3(0.001))
+
+    const hasTangent = !!geometry.getAttributeByName('tangent')
+
+    // negate normal scale y component if no tangent
+    if (!hasTangent && meshDescriptor.parameters.material.normalScale) {
+      meshDescriptor.parameters.material.normalScale.y *= -1
+    }
+
+    // flat shading
+    const hasNormal = primitive.attributes['NORMAL'] !== undefined
+    meshDescriptor.parameters.material.flatShading = !hasNormal
 
     // variants
     if (primitive.extensions) {
@@ -2080,6 +2141,7 @@ export class GLTFScenesManager {
               variantName: variant.name,
               parent: meshDescriptor.parent,
               nodes: meshDescriptor.nodes,
+              scenes: meshDescriptor.scenes,
               extensionsUsed: [...meshDescriptor.extensionsUsed, ...extensionsUsed],
               texturesDescriptors,
               parameters: {
@@ -2092,6 +2154,7 @@ export class GLTFScenesManager {
 
                 material: {
                   ...variantMaterialParams.material,
+                  flatShading: meshDescriptor.parameters.material.flatShading,
                   ...texturesDescriptors.reduce((acc, descriptor) => {
                     return { ...acc, [descriptor.texture.options.name]: descriptor }
                   }, {}),
@@ -2099,6 +2162,10 @@ export class GLTFScenesManager {
 
                 ...(variantMaterialParams.targets && { targets: variantMaterialParams.targets }),
               } as LitMeshParameters,
+            }
+
+            if (!hasTangent && variantDescriptor.parameters.material.normalScale) {
+              variantDescriptor.parameters.material.normalScale.y *= -1
             }
 
             meshDescriptor.alternateDescriptors.set(variant.name, variantDescriptor)
@@ -2194,6 +2261,19 @@ export class GLTFScenesManager {
         })
 
         meshDescriptor.alternateMaterials.set('Default', mesh.material)
+
+        // scenes
+        if (this.gltf.scenes && this.gltf.scenes.length) {
+          const activeScene = this.gltf.scene || 0
+          const isInActiveScene = meshDescriptor.scenes.length
+            ? meshDescriptor.scenes.find((scene) => scene.index === activeScene)
+            : true
+          if (isInActiveScene) {
+            mesh.visible = true
+          } else {
+            mesh.visible = false
+          }
+        }
 
         // variants
         meshDescriptor.alternateDescriptors.forEach((descriptor) => {

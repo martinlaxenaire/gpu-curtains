@@ -123,7 +123,17 @@ const getPBRDirectContribution = ({
     `
     lightContribution.diffuse = lightContribution.diffuse * (1.0 - diffuseTransmission);
     let diffuseNdotL: f32 = saturate(dot(-1.0 * normal, directLight.direction));
-    let lightDiffuseTransmission: vec3f = directLight.color * diffuseNdotL * BRDF_Lambert(diffuseTransmissionContribution);
+    var lightDiffuseTransmission: vec3f = directLight.color * diffuseNdotL * BRDF_Lambert(diffuseTransmissionContribution);`;
+    if (extensionsUsed.includes("KHR_materials_volume")) {
+      pbrDirect += /* wgsl */
+      `
+    lightDiffuseTransmission *= volumeAttenuation(diffuseTransmissionThickness, attenuationColor, attenuationDistance);
+    `;
+    }
+    pbrDirect += /* wgsl */
+    `
+    // lightDiffuseTransmission *= 1.0 - singleVolumeScatter;
+    lightDiffuseTransmission *= singleVolumeScatter;
     lightContribution.diffuse += lightDiffuseTransmission * diffuseTransmission;
     `;
   }

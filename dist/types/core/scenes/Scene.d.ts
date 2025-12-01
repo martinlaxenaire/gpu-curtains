@@ -14,9 +14,9 @@ import { RenderBundle } from '../renderPasses/RenderBundle';
  * Meshes rendering order is dependant of their transparency setting.
  */
 export interface ProjectionStack {
-    /** opaque Meshes or {@link RenderBundle} will be drawn first */
+    /** opaque Meshes or {@link RenderBundle} will be drawn first. */
     opaque: SceneStackedObject[];
-    /** transparent Meshes or {@link RenderBundle} will be drawn last */
+    /** transparent Meshes or {@link RenderBundle} will be drawn last. */
     transparent: SceneStackedObject[];
 }
 /** Meshes or render bundles will be stacked in 2 different objects whether they are projected (use a {@link core/cameras/Camera.Camera | Camera}) or not. */
@@ -207,7 +207,10 @@ export declare class Scene extends Object3D {
      * Sort transparent projected meshes by their render order or distance to the camera (farther meshes should be drawn first).
      * @param meshes - Transparent projected meshes array to sort.
      */
-    sortTransparentMeshes(meshes: Array<ProjectedMesh | RenderBundle>): void;
+    sortTransparentMeshes(meshes: ProjectedMesh[]): void;
+    /**
+     * Sort transparent and transmissive meshes and eventually swap transparent meshes stack so they are drawn before or after transmissive meshes based on their distance to camera.
+     */
     /**
      * Here we render a {@link RenderPassEntry}:
      * - Set its {@link RenderPass#descriptor | renderPass descriptor} view or resolveTarget and get it at as swap chain texture.

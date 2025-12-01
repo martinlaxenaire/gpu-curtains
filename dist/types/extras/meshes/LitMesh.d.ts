@@ -66,6 +66,10 @@ export interface LitMeshMaterialUniformParams {
     attenuationDistance?: number;
     /** The color as a {@link Vec3} that white light turns into due to absorption when reaching the attenuation distance. Only applicable to `PBR` shading if `transmissive` parameter is set to `true`. Default to `new Vec3(1)`. */
     attenuationColor?: Vec3;
+    /** The multi-scatter albedo. Default to `new Vec3(0)`. */
+    multiscatterColor?: Vec3;
+    /** The anisotropy of scatter events. Range is (-1, 1).	 Default to `0`. */
+    scatterAnisotropy?: number;
     /** Sheen color to use. Default to `new Vec3(0)`, but sheen is not taken into account if this and `sheenRoughness` are not set. */
     sheenColor?: Vec3;
     /** Sheen roughness to use. Default to `0`, but sheen is not taken into account if this and `sheenColor` are not set. */
@@ -167,8 +171,6 @@ export interface GetMaterialTexturesDescriptors extends PBRTexturesDescriptors {
 export interface LitMeshMaterialParams extends Omit<PBRFragmentShaderInputParams, 'chunks' | 'geometry' | 'receiveShadows' | 'extensionsUsed' | 'materialUniform' | 'materialUniformName' | 'transmissionBackgroundTexture'>, LitMeshMaterialUniformParams {
     /** {@link ShadingModels} to use for lighting. Default to `PBR`. */
     shading?: ShadingModels;
-    /** In which {@link ColorSpace} the output should be done. `srgb` should be used most of the time, except for some post processing effects that need input colors in `linear` space (such as bloom). Default to `srgb`. */
-    outputColorSpace?: ColorSpace;
     /** {@link AdditionalChunks | Additional WGSL chunks} to add to the vertex shaders. */
     vertexChunks?: AdditionalChunks;
     /** {@link AdditionalChunks | Additional WGSL chunks} to add to the fragment shaders. */

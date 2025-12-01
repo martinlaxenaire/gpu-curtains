@@ -19,6 +19,7 @@ import { applyToneMapping } from '../../chunks/fragment/body/apply-tone-mapping'
 import { patchAdditionalChunks } from '../../default-material-helpers'
 import { generateTBN } from '../../chunks/utils/generate-TBN'
 import { getTangentBitangent } from '../../chunks/fragment/body/get-tangent-bitangent'
+import { getDiffuse } from '../../chunks/fragment/body/get-diffuse'
 
 /**
  * Build a Phong fragment shader using the provided options.
@@ -42,6 +43,8 @@ export const getPhongFragmentShaderCode = ({
   return output;`,
   },
   geometry,
+  cullMode = 'back',
+  flatShading = false,
   additionalVaryings = [],
   materialUniform = null,
   materialUniformName = 'material',
@@ -83,9 +86,10 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   // user defined preliminary contribution
   ${chunks.preliminaryContribution}
   
-  ${getTangentBitangent({ geometry, normalTexture })}  
+  ${getTangentBitangent({ geometry, cullMode, flatShading, normalTexture })}  
   ${getNormal({ normalTexture })}
   ${getMetallicRoughness({ metallicRoughnessTexture })}
+  ${getDiffuse}
   ${getSpecular({ specularTexture, specularFactorTexture, specularColorTexture })}
   ${getEmissiveOcclusion({ emissiveTexture, occlusionTexture })}
   

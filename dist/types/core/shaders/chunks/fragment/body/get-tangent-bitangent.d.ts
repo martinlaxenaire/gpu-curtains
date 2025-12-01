@@ -1,3 +1,4 @@
+/// <reference types="@webgpu/types" />
 import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh';
 import { Geometry } from '../../../../geometries/Geometry';
 import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code';
@@ -8,12 +9,16 @@ import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragmen
  * @param parameters - Parameters used to create the shader chunk.
  * @param parameters.extensionsUsed - {@link PBRFragmentShaderInputParams.extensionsUsed | extensionsUsed} to check if anisotropy is enabled.
  * @param parameters.geometry - {@link Geometry} to use to check for `tangent` and `bitangent` attributes.
+ * @param parameters.cullMode - Culling mode used to update normal and TBN if needed.
+ * @param parameters.flatShading - Whether to calculate flat normals.
  * @param parameters.normalTexture - {@link ShaderTextureDescriptor | Normal texture descriptor} to use if any.
  * @param parameters.clearcoatNormalTexture - {@link ShaderTextureDescriptor | Clearcoat normal texture descriptor} to use if any.
  */
-export declare const getTangentBitangent: ({ extensionsUsed, geometry, normalTexture, clearcoatNormalTexture, }?: {
+export declare const getTangentBitangent: ({ extensionsUsed, geometry, cullMode, flatShading, normalTexture, clearcoatNormalTexture, }?: {
     extensionsUsed?: PBRFragmentShaderInputParams['extensionsUsed'];
     geometry?: Geometry;
+    cullMode?: GPUCullMode;
+    flatShading?: PBRFragmentShaderInputParams['flatShading'];
     normalTexture?: ShaderTextureDescriptor;
     clearcoatNormalTexture?: ShaderTextureDescriptor;
 }) => string;

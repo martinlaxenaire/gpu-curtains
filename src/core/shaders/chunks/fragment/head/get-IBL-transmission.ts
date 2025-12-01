@@ -9,10 +9,29 @@ fn applyIorToRoughness(roughness: f32, ior: f32) -> f32 {
   return roughness * saturate(ior * 2.0 - 2.0);
 }
 
+// since opaque objects are rendered only once before transmissive objects
+// the transmission sample might be tone mapped and in sRGB space
+// so we try to invert this here
+fn patchTransmissionSample(transmissionSample: vec4f, isTransmissiveLinear: bool, transmissiveToneMapping: u32) -> vec4f {
+  var color = transmissionSample;
+  color = select(sRGBToLinear_4(color), color, isTransmissiveLinear);
+
+  if(transmissiveToneMapping == 1u) {
+    color = vec4(inverseKhronosToneMapping(color.rgb), color.a);
+  } else if(transmissiveToneMapping == 2u) {
+    color = vec4(inverseReinhardToneMapping(color.rgb), color.a);
+  } else if(transmissiveToneMapping == 3u) {
+    color = vec4(inverseCineonToneMapping(color.rgb), color.a);
+  }
+  
+  return color;
+}
+
 fn getTransmissionSample( fragCoord: vec2f, roughness: f32, ior: f32, transmissionSceneTexture: texture_2d<f32>, transmissionSampler: sampler ) -> vec4f {
   let transmissionSamplerSize: vec2f = vec2f(textureDimensions(transmissionSceneTexture));
   let lod: f32 = log2( transmissionSamplerSize.x ) * applyIorToRoughness( roughness, ior );
-  return sRGBToLinear_4(textureSampleLevel( transmissionSceneTexture, transmissionSampler, fragCoord.xy, lod ));
+
+  return textureSampleLevel( transmissionSceneTexture, transmissionSampler, fragCoord.xy, lod );
 }
 
 fn volumeAttenuation(transmissionDistance: f32, attenuationColor: vec3f, attenuationDistance: f32) -> vec3f {
@@ -42,6 +61,8 @@ fn getIBLVolumeRefraction(
   thickness: f32,
   attenuationColor: vec3f,
   attenuationDistance: f32,
+  isTransmissiveLinear: bool,
+  transmissiveToneMapping: u32,
   transmissionBackgroundTexture: texture_2d<f32>,
   defaultSampler: sampler,
 ) -> vec4f {
@@ -61,6 +82,7 @@ fn getIBLVolumeRefraction(
 
   // Sample the transmission texture
   transmittedLight = getTransmissionSample(refractionCoords, roughness, ior, transmissionBackgroundTexture, defaultSampler);
+  transmittedLight = patchTransmissionSample(transmittedLight, isTransmissiveLinear, transmissiveToneMapping);
 
   // Compute transmittance
   transmittance = diffuseContribution * volumeAttenuation(length(transmissionRay), attenuationColor, attenuationDistance);
@@ -98,6 +120,8 @@ fn getIBLVolumeRefractionWithDispersion(
   thickness: f32,
   attenuationColor: vec3f,
   attenuationDistance: f32,
+  isTransmissiveLinear: bool,
+  transmissiveToneMapping: u32,
   transmissionBackgroundTexture: texture_2d<f32>,
   defaultSampler: sampler,
 ) -> vec4f {
@@ -119,7 +143,8 @@ fn getIBLVolumeRefractionWithDispersion(
     refractionCoords = (refractionCoords + 1.0) / 2.0;
     refractionCoords = vec2(refractionCoords.x, 1.0 - refractionCoords.y); // webgpu Y flip
     
-    let transmissionSample: vec4f = getTransmissionSample(refractionCoords, roughness, iors[i], transmissionBackgroundTexture, defaultSampler);
+    var transmissionSample: vec4f = getTransmissionSample(refractionCoords, roughness, iors[i], transmissionBackgroundTexture, defaultSampler);
+    transmissionSample = patchTransmissionSample(transmissionSample, isTransmissiveLinear, transmissiveToneMapping);
     
     transmittedLight[i] = transmissionSample[i];
     transmittedLight.a += transmissionSample.a;
