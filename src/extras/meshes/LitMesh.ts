@@ -19,6 +19,7 @@ import { MediaTexture } from '../../core/textures/MediaTexture'
 import { Sampler } from '../../core/samplers/Sampler'
 import { EnvironmentMap } from '../environmentMap/EnvironmentMap'
 import { ColorSpace, FragmentOutput, ToneMappings } from '../../types/shading'
+import { MaterialExtensionKeys } from '../../types/gltf/GLTFExtensions'
 
 /** Defines all kinds of shading models available. */
 export type ShadingModels = 'Unlit' | 'Lambert' | 'Phong' | 'PBR'
@@ -78,6 +79,11 @@ export interface LitMeshMaterialUniformParams {
   attenuationDistance?: number
   /** The color as a {@link Vec3} that white light turns into due to absorption when reaching the attenuation distance. Only applicable to `PBR` shading if `transmissive` parameter is set to `true`. Default to `new Vec3(1)`. */
   attenuationColor?: Vec3
+
+  /** The multi-scatter albedo. Default to `new Vec3(0)`. */
+  multiscatterColor?: Vec3
+  /** The anisotropy of scatter events. Range is (-1, 1).	 Default to `0`. */
+  scatterAnisotropy?: number
 
   /** Sheen color to use. Default to `new Vec3(0)`, but sheen is not taken into account if this and `sheenRoughness` are not set. */
   sheenColor?: Vec3
@@ -379,6 +385,8 @@ export class LitMesh extends Mesh {
       thickness,
       attenuationDistance,
       attenuationColor,
+      multiscatterColor,
+      scatterAnisotropy,
       sheenColor,
       sheenRoughness,
       anisotropy,
@@ -441,6 +449,8 @@ export class LitMesh extends Mesh {
       thickness,
       attenuationDistance,
       attenuationColor,
+      multiscatterColor,
+      scatterAnisotropy,
       sheenColor,
       sheenRoughness,
       anisotropy,
@@ -544,7 +554,7 @@ export class LitMesh extends Mesh {
     }
 
     // PBR extensions
-    const extensionsUsed = []
+    const extensionsUsed: MaterialExtensionKeys[] = []
 
     // transmission background texture for transmissive objects
     let transmissionBackgroundTexture = null
@@ -556,6 +566,10 @@ export class LitMesh extends Mesh {
         texture: renderer.transmissionTarget.texture,
         sampler: renderer.transmissionTarget.sampler,
       }
+    }
+
+    if (thickness) {
+      extensionsUsed.push('KHR_materials_volume')
     }
 
     if (dispersion) {
@@ -580,6 +594,10 @@ export class LitMesh extends Mesh {
 
     if (diffuseTransmission !== undefined) {
       extensionsUsed.push('KHR_materials_diffuse_transmission')
+    }
+
+    if (multiscatterColor !== undefined || scatterAnisotropy !== undefined) {
+      extensionsUsed.push('KHR_materials_volume_scatter')
     }
 
     const hasNormal = defaultParams.geometry && defaultParams.geometry.getAttributeByName('normal')
@@ -691,6 +709,8 @@ export class LitMesh extends Mesh {
       thickness,
       attenuationDistance,
       attenuationColor,
+      multiscatterColor,
+      scatterAnisotropy,
       sheenColor,
       sheenRoughness,
       anisotropy,
@@ -816,6 +836,19 @@ export class LitMesh extends Mesh {
               ? sRGBToLinear(attenuationColor.clone())
               : attenuationColor.clone()
             : new Vec3(1),
+      },
+      multiscatterColor: {
+        type: 'vec3f',
+        value:
+          multiscatterColor !== undefined
+            ? colorSpace === 'srgb'
+              ? sRGBToLinear(multiscatterColor.clone())
+              : multiscatterColor.clone()
+            : new Vec3(0),
+      },
+      scatterAnisotropy: {
+        type: 'f32',
+        value: scatterAnisotropy !== undefined ? scatterAnisotropy : 0,
       },
       // sheen
       sheenColor: {

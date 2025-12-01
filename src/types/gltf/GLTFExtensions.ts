@@ -18,6 +18,7 @@ export type GLTFExtensionsTypes =
   | 'KHR_materials_unlit'
   | 'KHR_materials_variants'
   | 'KHR_materials_volume'
+  | 'KHR_materials_volume_scatter'
   | 'KHR_mesh_quantization'
   | 'KHR_texture_basisu'
   | 'KHR_texture_transform'
@@ -227,6 +228,14 @@ export interface GLTFMaterialsVolumeExtension {
   attenuationColor?: [number, number, number]
 }
 
+/** Define the `KHR_materials_volume_scatter` extension materials options. */
+export interface GLTFMaterialsVolumeScatterExtension {
+  /** The multi-scatter albedo. Default to `[0, 0, 0]`. */
+  multiscatterColor?: [number, number, number]
+  /** The anisotropy of scatter events. Range is (-1, 1).	 Default to `0`. */
+  scatterAnisotropy?: number
+}
+
 /** Define the `KHR_materials_sheen` extension materials options. */
 export interface GLTFMaterialsSheenExtension {
   /** The sheen color in linear space. Default to `[0, 0, 0]`. */
@@ -307,6 +316,8 @@ export type GLTFMaterialsExtensionsMapping = {
   KHR_materials_unlit: Record<string, never>
   /** Define the `KHR_materials_volume` extension materials options. */
   KHR_materials_volume: GLTFMaterialsVolumeExtension
+  /** Define the `KHR_materials_volume_scatter` extension materials options. */
+  KHR_materials_volume_scatter: GLTFMaterialsVolumeScatterExtension
   /** Define the `KHR_materials_sheen` extension materials options. */
   KHR_materials_sheen: GLTFMaterialsSheenExtension
   /** Define the `KHR_materials_clearcoat` extension materials options. */

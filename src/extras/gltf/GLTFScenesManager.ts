@@ -760,6 +760,7 @@ export class GLTFScenesManager {
     const transmission = (extensions && extensions.KHR_materials_transmission) || null
     const specular = (extensions && extensions.KHR_materials_specular) || null
     const volume = (extensions && extensions.KHR_materials_volume) || null
+    const volumeScatter = (extensions && extensions.KHR_materials_volume_scatter) || null
     const sheen = (extensions && extensions.KHR_materials_sheen) || null
     const anisotropy = (extensions && extensions.KHR_materials_anisotropy) || null
     const clearcoat = (extensions && extensions.KHR_materials_clearcoat) || null
@@ -820,6 +821,19 @@ export class GLTFScenesManager {
         volume && volume.attenuationColor !== undefined
           ? new Vec3(volume.attenuationColor[0], volume.attenuationColor[1], volume.attenuationColor[2])
           : new Vec3(1),
+      // volume scatter
+      ...(volumeScatter && {
+        ...(volumeScatter.multiscatterColor !== undefined && {
+          multiscatterColor: new Vec3(
+            volumeScatter.multiscatterColor[0],
+            volumeScatter.multiscatterColor[1],
+            volumeScatter.multiscatterColor[2]
+          ),
+        }),
+        ...((volumeScatter.scatterAnisotropy !== undefined) !== undefined && {
+          sheenRoughness: volumeScatter.scatterAnisotropy,
+        }),
+      }),
       // sheen
       ...(sheen && {
         ...(sheen.sheenColorFactor !== undefined && {

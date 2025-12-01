@@ -24,7 +24,8 @@ export const getDiffuseTransmission = ({
   diffuseTransmissionColorTexture?: ShaderTextureDescriptor
 }): string => {
   let diffuseTransmission = /* wgsl */ `
-  var diffuseTransmissionContribution: vec3f = vec3(1.0);`
+  var diffuseTransmissionContribution: vec3f = vec3(1.0);
+  var diffuseTransmissionThickness: f32 = 1.0;`
 
   if (!extensionsUsed.includes('KHR_materials_diffuse_transmission')) {
     return diffuseTransmission
@@ -53,6 +54,11 @@ export const getDiffuseTransmission = ({
 
   diffuseTransmission += /* wgsl */ `
   diffuseTransmissionContribution = diffuseTransmissionColor * (1.0 - metallic);`
+
+  if (extensionsUsed.includes('KHR_materials_volume')) {
+    diffuseTransmission += /* wgsl */ `
+  diffuseTransmissionThickness = thickness * (modelScale.x + modelScale.y + modelScale.z) / 3.0;`
+  }
 
   return diffuseTransmission
 }

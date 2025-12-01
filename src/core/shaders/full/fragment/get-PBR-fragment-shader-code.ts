@@ -39,6 +39,8 @@ import { getDiffuse } from '../../chunks/fragment/body/get-diffuse'
 import { BRDFCharlie } from '../../chunks/utils/BRDF-Charlie'
 import { BRDF_GGX } from '../../chunks/utils/BRDF_GGX'
 import { getDiffuseTransmission } from '../../chunks/fragment/body/get-diffuse-transmission'
+import { getVolumeMultiToSingleScatter } from '../../chunks/fragment/head/get-volume-multi-to-single-scatter'
+import { getVolumeMultiScatter } from '../../chunks/fragment/body/get-volume-multi-scatter'
 
 /**
  * Build a PBR fragment shader using the provided options.
@@ -123,6 +125,7 @@ ${getIBLIndirectRadiance}
 ${getIBLTransmission}
 ${extensionsUsed.includes('KHR_materials_sheen') ? getIBLSheen : ''}
 ${extensionsUsed.includes('KHR_materials_anisotropy') ? getIBLIndirectAnisotropyRadiance : ''}
+${extensionsUsed.includes('KHR_materials_volume_scatter') ? getVolumeMultiToSingleScatter : ''}
 
 ${getFragmentInputStruct({ geometry, additionalVaryings })}
 
@@ -157,6 +160,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
     diffuseTransmissionFactorTexture,
     diffuseTransmissionColorTexture,
   })}
+  ${getVolumeMultiScatter({ extensionsUsed })}
   
   // shading
   ${getPBRShading({
