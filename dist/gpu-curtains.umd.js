@@ -17429,7 +17429,7 @@ ${this.shaders.compute.head}`;
     throw TypeError(msg);
   };
   var __accessCheck$8 = (obj, member, msg) => member.has(obj) || __typeError$8("Cannot " + msg);
-  var __privateGet$7 = (obj, member, getter) => (__accessCheck$8(obj, member, "read from private field"), member.get(obj));
+  var __privateGet$7 = (obj, member, getter) => (__accessCheck$8(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
   var __privateAdd$8 = (obj, member, value) => member.has(obj) ? __typeError$8("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   var __privateSet$7 = (obj, member, value, setter) => (__accessCheck$8(obj, member, "write to private field"), member.set(obj, value), value);
   var __privateMethod$6 = (obj, member, method) => (__accessCheck$8(obj, member, "access private method"), method);
@@ -26702,7 +26702,7 @@ struct Params {
     throw TypeError(msg);
   };
   var __accessCheck$1 = (obj, member, msg) => member.has(obj) || __typeError$1("Cannot " + msg);
-  var __privateGet$1 = (obj, member, getter) => (__accessCheck$1(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateGet$1 = (obj, member, getter) => (__accessCheck$1(obj, member, "read from private field"), member.get(obj));
   var __privateAdd$1 = (obj, member, value) => member.has(obj) ? __typeError$1("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   var __privateSet$1 = (obj, member, value, setter) => (__accessCheck$1(obj, member, "write to private field"), member.set(obj, value), value);
   var __privateMethod$1 = (obj, member, method) => (__accessCheck$1(obj, member, "access private method"), method);

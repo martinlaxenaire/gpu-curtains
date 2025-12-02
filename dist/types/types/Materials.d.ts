@@ -1,4 +1,3 @@
-/// <reference types="@webgpu/types" />
 import { AllowedBindGroups, BindGroupInputs } from './BindGroups';
 import { BindGroup } from '../core/bindGroups/BindGroup';
 import { Texture } from '../core/textures/Texture';

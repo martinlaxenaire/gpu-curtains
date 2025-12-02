@@ -13,9 +13,9 @@ import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh';
  */
 export declare const getPBRShading: ({ receiveShadows, environmentMap, transmissionBackgroundTexture, transmissiveInputColorSpace, transmissiveInputToneMapping, extensionsUsed, }?: {
     receiveShadows?: boolean;
-    environmentMap?: PBRFragmentShaderInputParams['environmentMap'];
+    environmentMap?: PBRFragmentShaderInputParams["environmentMap"];
     transmissionBackgroundTexture?: ShaderTextureDescriptor;
-    transmissiveInputColorSpace?: PBRFragmentShaderInputParams['transmissiveInputColorSpace'];
-    transmissiveInputToneMapping?: PBRFragmentShaderInputParams['transmissiveInputToneMapping'];
-    extensionsUsed?: PBRFragmentShaderInputParams['extensionsUsed'];
+    transmissiveInputColorSpace?: PBRFragmentShaderInputParams["transmissiveInputColorSpace"];
+    transmissiveInputToneMapping?: PBRFragmentShaderInputParams["transmissiveInputToneMapping"];
+    extensionsUsed?: PBRFragmentShaderInputParams["extensionsUsed"];
 }) => string;

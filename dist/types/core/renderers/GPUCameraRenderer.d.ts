@@ -1,4 +1,3 @@
-/// <reference types="@webgpu/types" />
 import { GPURenderer, GPURendererOptions, GPURendererParams, SceneObject } from './GPURenderer';
 import { Camera } from '../cameras/Camera';
 import { PerspectiveCamera, PerspectiveCameraBaseOptions } from '../cameras/PerspectiveCamera';

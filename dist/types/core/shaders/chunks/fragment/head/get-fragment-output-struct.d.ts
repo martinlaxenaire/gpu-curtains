@@ -6,5 +6,5 @@ import { FragmentOutput } from '../../../../../types/shading';
  * @returns - String with the fragment shader WGSL output struct.
  */
 export declare const getFragmentOutputStruct: ({ struct, }: {
-    struct?: FragmentOutput['struct'];
+    struct?: FragmentOutput["struct"];
 }) => string;

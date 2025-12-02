@@ -1,4 +1,3 @@
-/// <reference types="@webgpu/types" />
 import { Renderer } from './utils';
 import { Sampler } from '../samplers/Sampler';
 import { PipelineManager } from '../pipelines/PipelineManager';

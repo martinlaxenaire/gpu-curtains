@@ -7,5 +7,5 @@ import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragmen
  * @returns - Updated `outgoingLight` (`vec3f`) with the sheen and/or clearcoat specular contributions.
  */
 export declare const applySheenClearcoatContribution: ({ extensionsUsed, }?: {
-    extensionsUsed?: PBRFragmentShaderInputParams['extensionsUsed'];
+    extensionsUsed?: PBRFragmentShaderInputParams["extensionsUsed"];
 }) => string;

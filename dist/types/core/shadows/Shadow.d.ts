@@ -1,4 +1,3 @@
-/// <reference types="@webgpu/types" />
 import { CameraRenderer } from '../renderers/utils';
 import { Vec2 } from '../../math/Vec2';
 import { Mat4 } from '../../math/Mat4';

@@ -1,7 +1,7 @@
 /**
  * GPUShaderStage constants with fallbacks.
  */
-export const WebGPUShaderStageConstants: Record<string, number> =
+export const WebGPUShaderStageConstants: GPUShaderStage =
   typeof GPUShaderStage !== 'undefined'
     ? GPUShaderStage
     : {
@@ -13,7 +13,7 @@ export const WebGPUShaderStageConstants: Record<string, number> =
 /**
  * GPUBufferUsage constants with fallbacks.
  */
-export const WebGPUBufferUsageConstants: Record<string, number> =
+export const WebGPUBufferUsageConstants: GPUBufferUsage =
   typeof GPUBufferUsage !== 'undefined'
     ? GPUBufferUsage
     : {
@@ -32,7 +32,7 @@ export const WebGPUBufferUsageConstants: Record<string, number> =
 /**
  * GPUTextureUsage constants with fallbacks.
  */
-export const WebGPUTextureUsageConstants: Record<string, number> =
+export const WebGPUTextureUsageConstants: GPUTextureUsage =
   typeof GPUTextureUsage !== 'undefined'
     ? GPUTextureUsage
     : {

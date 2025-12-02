@@ -7,5 +7,5 @@ import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragmen
  * @returns - Correct Render Equations function.
  */
 export declare const getIndirectDiffuse: ({ extensionsUsed, }: {
-    extensionsUsed?: PBRFragmentShaderInputParams['extensionsUsed'];
+    extensionsUsed?: PBRFragmentShaderInputParams["extensionsUsed"];
 }) => string;

@@ -10,7 +10,7 @@ import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragmen
  * @param parameters.iridescenceThicknessTexture - {@link ShaderTextureDescriptor | Iridescence thickness texture descriptor} (using the `G` channel) to use if any.
  */
 export declare const getIridescence: ({ extensionsUsed, iridescenceTexture, iridescenceFactorTexture, iridescenceThicknessTexture, }?: {
-    extensionsUsed?: PBRFragmentShaderInputParams['extensionsUsed'];
+    extensionsUsed?: PBRFragmentShaderInputParams["extensionsUsed"];
     iridescenceTexture?: ShaderTextureDescriptor;
     iridescenceFactorTexture?: ShaderTextureDescriptor;
     iridescenceThicknessTexture?: ShaderTextureDescriptor;

@@ -7,6 +7,6 @@ import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragmen
  * @returns - The PBR direct light contribution, accounting for anisotropy, sheen and clearcoat contributions.
  */
 export declare const getPBRDirectContribution: ({ extensionsUsed, environmentMap, }?: {
-    extensionsUsed?: PBRFragmentShaderInputParams['extensionsUsed'];
-    environmentMap?: PBRFragmentShaderInputParams['environmentMap'];
+    extensionsUsed?: PBRFragmentShaderInputParams["extensionsUsed"];
+    environmentMap?: PBRFragmentShaderInputParams["environmentMap"];
 }) => string;

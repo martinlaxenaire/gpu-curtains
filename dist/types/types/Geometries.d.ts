@@ -1,4 +1,3 @@
-/// <reference types="@webgpu/types" />
 import { TypedArray, WGSLBaseVariableType } from '../core/bindings/utils';
 import { Buffer } from '../core/buffers/Buffer';
 /**

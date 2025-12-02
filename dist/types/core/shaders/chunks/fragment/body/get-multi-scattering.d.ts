@@ -6,5 +6,5 @@ import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragmen
  * @returns - String with GGX Fresnel applied to `dielectricScattering` (`MultiScattering`) and `metallicScattering` (`MultiScattering`).
  */
 export declare const computeMultiScattering: ({ environmentMap, }: {
-    environmentMap?: PBRFragmentShaderInputParams['environmentMap'];
+    environmentMap?: PBRFragmentShaderInputParams["environmentMap"];
 }) => string;

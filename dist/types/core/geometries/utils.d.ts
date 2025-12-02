@@ -1,4 +1,3 @@
-/// <reference types="@webgpu/types" />
 import { DataViewSetFunction } from '../bindings/BufferBinding';
 import { TypedArray, TypedArrayConstructor, WGSLBaseVariableType } from '../bindings/utils';
 /**

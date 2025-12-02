@@ -39,4 +39,11 @@
     "invalidLink": true,
     "notDocumented": true
   },
+  "externalSymbolLinkMappings": {
+    "@webgpu/types": { 
+      "GPUCanvasToneMapping": "#",
+      "GPUCanvasConfiguration": "#",
+      "GPUAddressMode": "#"
+    }
+  }
 }

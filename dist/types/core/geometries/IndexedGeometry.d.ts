@@ -1,4 +1,3 @@
-/// <reference types="@webgpu/types" />
 import { Geometry } from './Geometry';
 import { GeometryBuffer, GeometryParams } from '../../types/Geometries';
 import { Renderer } from '../renderers/utils';

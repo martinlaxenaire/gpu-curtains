@@ -1,4 +1,3 @@
-/// <reference types="@webgpu/types" />
 import { CameraRenderer } from '../../core/renderers/utils';
 import { GLTF } from '../../types/gltf/GLTF';
 import { GLTFLoader } from '../loaders/GLTFLoader';
