@@ -360,7 +360,6 @@ window.addEventListener('load', async () => {
     node.position.sub(center)
 
     const isSponza = url.includes('Sponza')
-    const isTransmissionTest = url.includes('TransmissionTest')
 
     if (isSponza) {
       node.position.y = 0
@@ -373,18 +372,6 @@ window.addEventListener('load', async () => {
         maxZoom: radius * 2,
         position: new Vec3(radius * 0.25, center.y * 0.25, 0),
         target: new Vec3(0, center.y * 0.1, 0),
-      })
-    } else if (isTransmissionTest) {
-      camera.fov = 50
-      camera.far = radius * 6
-      camera.near = radius * 0.01
-
-      orbitControls.reset({
-        zoomSpeed: radius * 0.15,
-        minZoom: radius * 0.25,
-        maxZoom: radius * 4,
-        position: new Vec3(0, 0, radius * 0.75),
-        target: new Vec3(),
       })
     } else {
       camera.fov = 50

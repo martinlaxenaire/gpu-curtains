@@ -3,9 +3,9 @@ export const additionalVertexParticle = /* wgsl */ `
     
   // billboarding
   worldPosition = matrices.model * vec4(attributes.particlePosition.xyz, 1.0);
-  var mvPosition: vec4f = camera.view * worldPosition;
-  mvPosition += vec4(attributes.position, 0.0) * size;
-  vsOutput.position = camera.projection * mvPosition;
+  var particleMvPosition: vec4f = camera.view * worldPosition;
+  particleMvPosition += vec4(attributes.position, 0.0) * size;
+  vsOutput.position = camera.projection * particleMvPosition;
   
   vsOutput.worldPosition = (worldPosition.xyz / worldPosition.w) + attributes.position * size;
   vsOutput.viewDirection = camera.position - vsOutput.worldPosition;

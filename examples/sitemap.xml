@@ -130,4 +130,7 @@
     <url>
         <loc>https://martinlaxenaire.github.io/gpu-curtains/examples/buffer-binding-wgsl-helper/index.html</loc>
     </url>
+    <url>
+        <loc>https://martinlaxenaire.github.io/gpu-curtains/examples/gltf-model-viewer/index.html</loc>
+    </url>
 </urlset>

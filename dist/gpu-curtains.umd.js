@@ -21843,7 +21843,9 @@ fn getVolumeMultiToSingleScatter(multiscatterColor: vec3f) -> vec3f {
     let volumeScatter = (
       /* wgsl */
       `
-  var singleVolumeScatter: vec3f = vec3(0.0);`
+  // var singleVolumeScatter: vec3f = vec3(0.0);
+  var singleVolumeScatter: vec3f = vec3(1.0);
+  `
     );
     if (!extensionsUsed.includes("KHR_materials_volume_scatter")) {
       return volumeScatter;
