@@ -1,4 +1,3 @@
-/// <reference types="@webgpu/types" />
 import { Binding, BindingParams, BufferBindingMemoryAccessType, BufferBindingType } from './Binding';
 import { Input, InputBase, InputValue } from '../../types/BindGroups';
 import { BufferElement } from './bufferElements/BufferElement';
@@ -198,7 +197,7 @@ export declare class BufferBinding extends Binding {
      * Clone this {@link BufferBinding} into a new one. Allows to skip buffer layout alignment computations.
      * @param params - params to use for cloning
      */
-    clone(params?: WritableBufferBindingParams | BufferBindingParams): BufferBinding | WritableBufferBinding;
+    clone(params?: BufferBindingParams | WritableBufferBindingParams): BufferBinding | WritableBufferBinding;
     /**
      * Format bindings struct and set our {@link inputs}
      * @param bindings - bindings inputs

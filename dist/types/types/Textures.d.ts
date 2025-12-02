@@ -1,4 +1,3 @@
-/// <reference types="@webgpu/types" />
 import { RectSize } from '../core/DOM/DOMElement';
 import { BindingParams } from '../core/bindings/Binding';
 /** Define the {@link GPUTexture} size. Depth default to `1` and could also be used for array layers. */

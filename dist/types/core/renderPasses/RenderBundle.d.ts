@@ -1,4 +1,3 @@
-/// <reference types="@webgpu/types" />
 import { Renderer } from '../renderers/utils';
 import { RenderedMesh, SceneStackedMesh } from '../renderers/GPURenderer';
 import { BufferBinding } from '../bindings/BufferBinding';

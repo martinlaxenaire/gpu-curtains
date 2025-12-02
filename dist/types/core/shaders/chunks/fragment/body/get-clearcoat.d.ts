@@ -10,7 +10,7 @@ import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragmen
  * @returns - String with the `clearcoat` (`f32`) and `clearcoatRoughness` (`f32`) values set.
  */
 export declare const getClearcoat: ({ extensionsUsed, clearcoatTexture, clearcoatRoughnessTexture, }: {
-    extensionsUsed?: PBRFragmentShaderInputParams['extensionsUsed'];
+    extensionsUsed?: PBRFragmentShaderInputParams["extensionsUsed"];
     clearcoatTexture?: ShaderTextureDescriptor;
     clearcoatRoughnessTexture?: ShaderTextureDescriptor;
 }) => string;
@@ -24,7 +24,7 @@ export declare const getClearcoat: ({ extensionsUsed, clearcoatTexture, clearcoa
  * @returns - String with the `clearcoatNormal` (`vec3f`) value set.
  */
 export declare const getClearcoatNormal: ({ extensionsUsed, normalTexture, clearcoatNormalTexture, }: {
-    extensionsUsed?: PBRFragmentShaderInputParams['extensionsUsed'];
+    extensionsUsed?: PBRFragmentShaderInputParams["extensionsUsed"];
     normalTexture?: ShaderTextureDescriptor;
     clearcoatNormalTexture?: ShaderTextureDescriptor;
 }) => string;

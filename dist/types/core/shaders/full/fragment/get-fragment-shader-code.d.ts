@@ -1,4 +1,3 @@
-/// <reference types="@webgpu/types" />
 import { EnvironmentMap } from '../../../../extras/environmentMap/EnvironmentMap';
 import { Geometry } from '../../../geometries/Geometry';
 import { GLTFExtensionsUsed } from '../../../../types/gltf/GLTFExtensions';

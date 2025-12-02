@@ -11,7 +11,7 @@ import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragmen
  * @returns - String with the `diffuseTransmission` (`f32`) and `diffuseTransmissionColor` (`vec3f`) values set.
  */
 export declare const getDiffuseTransmission: ({ extensionsUsed, diffuseTransmissionTexture, diffuseTransmissionFactorTexture, diffuseTransmissionColorTexture, }: {
-    extensionsUsed?: PBRFragmentShaderInputParams['extensionsUsed'];
+    extensionsUsed?: PBRFragmentShaderInputParams["extensionsUsed"];
     diffuseTransmissionTexture?: ShaderTextureDescriptor;
     diffuseTransmissionFactorTexture?: ShaderTextureDescriptor;
     diffuseTransmissionColorTexture?: ShaderTextureDescriptor;

@@ -1,4 +1,3 @@
-/// <reference types="@webgpu/types" />
 import { MaterialShadersType } from '../../types/Materials';
 import { TextureBinding } from './TextureBinding';
 import { SamplerBinding } from './SamplerBinding';

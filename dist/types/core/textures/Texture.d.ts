@@ -1,4 +1,3 @@
-/// <reference types="@webgpu/types" />
 import { Renderer } from '../renderers/utils';
 import { TextureBinding } from '../bindings/TextureBinding';
 import { BindGroupBindingElement } from '../../types/BindGroups';

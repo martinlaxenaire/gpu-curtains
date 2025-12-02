@@ -8,6 +8,6 @@ import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragmen
  * @returns - String with the `clearcoatSpecularIndirect` (`vec3f`) value set.
  */
 export declare const getClearcoatIndirectSpecular: ({ extensionsUsed, environmentMap, }?: {
-    extensionsUsed?: PBRFragmentShaderInputParams['extensionsUsed'];
-    environmentMap?: PBRFragmentShaderInputParams['environmentMap'];
+    extensionsUsed?: PBRFragmentShaderInputParams["extensionsUsed"];
+    environmentMap?: PBRFragmentShaderInputParams["environmentMap"];
 }) => string;

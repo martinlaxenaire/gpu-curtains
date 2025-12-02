@@ -1,4 +1,3 @@
-/// <reference types="@webgpu/types" />
 import { Renderer } from '../renderers/utils';
 import { PipelineEntryOptions, PipelineEntryParams, PipelineEntryStatus } from '../../types/PipelineEntries';
 import { AllowedBindGroups } from '../../types/BindGroups';

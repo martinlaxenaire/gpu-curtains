@@ -1,4 +1,3 @@
-/// <reference types="@webgpu/types" />
 import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh';
 import { Geometry } from '../../../../geometries/Geometry';
 import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code';
@@ -15,10 +14,10 @@ import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragmen
  * @param parameters.clearcoatNormalTexture - {@link ShaderTextureDescriptor | Clearcoat normal texture descriptor} to use if any.
  */
 export declare const getTangentBitangent: ({ extensionsUsed, geometry, cullMode, flatShading, normalTexture, clearcoatNormalTexture, }?: {
-    extensionsUsed?: PBRFragmentShaderInputParams['extensionsUsed'];
+    extensionsUsed?: PBRFragmentShaderInputParams["extensionsUsed"];
     geometry?: Geometry;
     cullMode?: GPUCullMode;
-    flatShading?: PBRFragmentShaderInputParams['flatShading'];
+    flatShading?: PBRFragmentShaderInputParams["flatShading"];
     normalTexture?: ShaderTextureDescriptor;
     clearcoatNormalTexture?: ShaderTextureDescriptor;
 }) => string;

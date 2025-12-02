@@ -1,4 +1,3 @@
-/// <reference types="@webgpu/types" />
 import { MaterialBindGroups, MaterialShaders, RenderMaterialAttributes, RenderMaterialRenderingOptions, ShaderOptions } from './Materials';
 import { Renderer } from '../core/renderers/utils';
 import { GPUCurtains } from '../curtains/GPUCurtains';

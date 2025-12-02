@@ -11,7 +11,7 @@ import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh';
  */
 export declare const getIBLVolumeRefraction: ({ transmissionBackgroundTexture, transmissiveInputColorSpace, transmissiveInputToneMapping, extensionsUsed, }: {
     transmissionBackgroundTexture?: ShaderTextureDescriptor;
-    transmissiveInputColorSpace?: PBRFragmentShaderInputParams['transmissiveInputColorSpace'];
-    transmissiveInputToneMapping?: PBRFragmentShaderInputParams['transmissiveInputToneMapping'];
-    extensionsUsed?: PBRFragmentShaderInputParams['extensionsUsed'];
+    transmissiveInputColorSpace?: PBRFragmentShaderInputParams["transmissiveInputColorSpace"];
+    transmissiveInputToneMapping?: PBRFragmentShaderInputParams["transmissiveInputToneMapping"];
+    extensionsUsed?: PBRFragmentShaderInputParams["extensionsUsed"];
 }) => string;

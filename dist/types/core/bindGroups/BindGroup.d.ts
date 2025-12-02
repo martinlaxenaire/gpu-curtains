@@ -1,4 +1,3 @@
-/// <reference types="@webgpu/types" />
 import { Renderer } from '../renderers/utils';
 import { BufferBindingInput } from '../bindings/BufferBinding';
 import { AllowedBindGroups, BindGroupBindingElement, BindGroupBufferBindingElement, BindGroupEntries, BindGroupParams, ReadOnlyInputBindings } from '../../types/BindGroups';

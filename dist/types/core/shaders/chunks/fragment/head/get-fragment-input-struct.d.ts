@@ -9,5 +9,5 @@ import { VertexShaderInputParams } from '../../../full/vertex/get-vertex-shader-
  */
 export declare const getFragmentInputStruct: ({ geometry, additionalVaryings, }: {
     geometry: Geometry;
-    additionalVaryings?: VertexShaderInputParams['additionalVaryings'];
+    additionalVaryings?: VertexShaderInputParams["additionalVaryings"];
 }) => string;

@@ -7,5 +7,5 @@ import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragmen
  * @returns - String with the `singleVolumeScatter` (`vec3f`) value set.
  */
 export declare const getVolumeMultiScatter: ({ extensionsUsed, }: {
-    extensionsUsed?: PBRFragmentShaderInputParams['extensionsUsed'];
+    extensionsUsed?: PBRFragmentShaderInputParams["extensionsUsed"];
 }) => string;

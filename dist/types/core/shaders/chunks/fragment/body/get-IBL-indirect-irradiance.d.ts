@@ -7,6 +7,6 @@ import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragmen
  * @returns - String with environment map indirect irradiance applied to `iblIrradiance` (`vec3f`).
  */
 export declare const getIBLIndirectIrradiance: ({ extensionsUsed, environmentMap, }: {
-    extensionsUsed?: PBRFragmentShaderInputParams['extensionsUsed'];
-    environmentMap?: PBRFragmentShaderInputParams['environmentMap'];
+    extensionsUsed?: PBRFragmentShaderInputParams["extensionsUsed"];
+    environmentMap?: PBRFragmentShaderInputParams["environmentMap"];
 }) => string;
