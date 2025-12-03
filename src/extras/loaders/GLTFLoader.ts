@@ -112,7 +112,7 @@ export class GLTFLoader {
     baseUrl: string,
     binaryChunk: Record<string, ArrayBuffer> = null
   ): Promise<GPUCurtainsGLTF> {
-    if (!baseUrl) {
+    if (baseUrl === undefined) {
       throw new Error('baseUrl must be specified.')
     }
 

@@ -81,6 +81,7 @@ class OrbitControls {
       throwWarning("OrbitControls: cannot initialize without a camera.");
       return;
     }
+    this.enabled = true;
     __privateMethod(this, _OrbitControls_instances, setBaseParams_fn).call(this, {
       target,
       enableZoom,
@@ -292,6 +293,7 @@ removeEvents_fn = function() {
  * @private
  */
 onMouseDown_fn = function(e) {
+  if (!this.enabled) return;
   if (e.button === 0 && this.enableRotate) {
     __privateSet(this, _isOrbiting, true);
     __privateGet(this, _rotateStart).set(e.clientX, e.clientY);
@@ -308,6 +310,7 @@ onMouseDown_fn = function(e) {
  * @private
  */
 onTouchStart_fn = function(e) {
+  if (!this.enabled) return;
   if (e.touches.length === 1 && this.enableRotate) {
     __privateSet(this, _isOrbiting, true);
     __privateGet(this, _rotateStart).set(e.touches[0].pageX, e.touches[0].pageY);
@@ -318,6 +321,7 @@ onTouchStart_fn = function(e) {
  * @param e - {@link MouseEvent}.
  */
 onMouseMove_fn = function(e) {
+  if (!this.enabled) return;
   if (__privateGet(this, _isOrbiting) && this.enableRotate) {
     __privateMethod(this, _OrbitControls_instances, rotate_fn).call(this, e.clientX, e.clientY);
   } else if (__privateGet(this, _isPaning) && this.enablePan) {
@@ -330,6 +334,7 @@ onMouseMove_fn = function(e) {
  * @private
  */
 onTouchMove_fn = function(e) {
+  if (!this.enabled) return;
   if (__privateGet(this, _isOrbiting) && this.enableRotate) {
     __privateMethod(this, _OrbitControls_instances, rotate_fn).call(this, e.touches[0].pageX, e.touches[0].pageY);
   }
@@ -358,7 +363,7 @@ onTouchEnd_fn = function(e) {
  * @private
  */
 onMouseWheel_fn = function(e) {
-  if (this.enableZoom) {
+  if (this.enabled && this.enableZoom) {
     __privateMethod(this, _OrbitControls_instances, zoom_fn).call(this, e.deltaY);
     e.preventDefault();
   }
@@ -369,6 +374,7 @@ onMouseWheel_fn = function(e) {
  * @private
  */
 onContextMenu_fn = function(e) {
+  if (!this.enabled) return;
   e.preventDefault();
 };
 /**

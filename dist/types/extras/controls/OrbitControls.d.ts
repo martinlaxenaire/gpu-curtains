@@ -52,6 +52,8 @@ export declare class OrbitControls {
     camera: Camera;
     /** The {@link Vec3 | focus point} or the {@link OrbitControls}. Default to `Vec3(0)`. */
     target: Vec3;
+    /** Whether the {@link OrbitControls} are enabled or not. Default to `true`. */
+    enabled: boolean;
     /** Whether to allow zooming or not. Default to `true`. */
     enableZoom: boolean;
     /** Minimum zoom value to use. Default to `0`. */

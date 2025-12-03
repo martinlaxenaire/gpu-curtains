@@ -17557,18 +17557,26 @@ ${this.shaders.compute.head}`;
     useCamera(camera) {
       if (this.camera && camera && this.camera.uuid === camera.uuid) return;
       if (this.camera) {
-        this.camera.parent = null;
+        if (this.camera.parent && this.camera.parent.object3DIndex === this.scene.object3DIndex) {
+          this.camera.parent = null;
+        }
         this.camera.onMatricesChanged = () => {
         };
       }
       this.camera = camera;
-      this.camera.parent = this.scene;
+      if (!this.camera.parent) {
+        this.camera.parent = this.scene;
+      }
       this.resizeCamera();
+      this.camera.shouldUpdateProjectionMatrices();
       if (this.bindings.camera) {
         this.camera.onMatricesChanged = () => this.onCameraMatricesChanged();
         this.bindings.camera.inputs.view.value = this.camera.viewMatrix;
         this.bindings.camera.inputs.projection.value = this.camera.projectionMatrix;
         this.bindings.camera.inputs.position.value = this.camera.actualPosition;
+        this.bindings.camera.inputs.view.shouldUpdate = true;
+        this.bindings.camera.inputs.projection.shouldUpdate = true;
+        this.bindings.camera.inputs.position.shouldUpdate = true;
         for (const mesh of this.meshes) {
           if ("modelViewMatrix" in mesh) {
             mesh.camera = this.camera;
@@ -23554,6 +23562,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
         throwWarning("OrbitControls: cannot initialize without a camera.");
         return;
       }
+      this.enabled = true;
       __privateMethod$5(this, _OrbitControls_instances, setBaseParams_fn).call(this, {
         target,
         enableZoom,
@@ -23765,6 +23774,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
    * @private
    */
   onMouseDown_fn = function(e) {
+    if (!this.enabled) return;
     if (e.button === 0 && this.enableRotate) {
       __privateSet$4(this, _isOrbiting, true);
       __privateGet$4(this, _rotateStart).set(e.clientX, e.clientY);
@@ -23781,6 +23791,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
    * @private
    */
   onTouchStart_fn = function(e) {
+    if (!this.enabled) return;
     if (e.touches.length === 1 && this.enableRotate) {
       __privateSet$4(this, _isOrbiting, true);
       __privateGet$4(this, _rotateStart).set(e.touches[0].pageX, e.touches[0].pageY);
@@ -23791,6 +23802,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
    * @param e - {@link MouseEvent}.
    */
   onMouseMove_fn = function(e) {
+    if (!this.enabled) return;
     if (__privateGet$4(this, _isOrbiting) && this.enableRotate) {
       __privateMethod$5(this, _OrbitControls_instances, rotate_fn).call(this, e.clientX, e.clientY);
     } else if (__privateGet$4(this, _isPaning) && this.enablePan) {
@@ -23803,6 +23815,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
    * @private
    */
   onTouchMove_fn = function(e) {
+    if (!this.enabled) return;
     if (__privateGet$4(this, _isOrbiting) && this.enableRotate) {
       __privateMethod$5(this, _OrbitControls_instances, rotate_fn).call(this, e.touches[0].pageX, e.touches[0].pageY);
     }
@@ -23831,7 +23844,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
    * @private
    */
   onMouseWheel_fn = function(e) {
-    if (this.enableZoom) {
+    if (this.enabled && this.enableZoom) {
       __privateMethod$5(this, _OrbitControls_instances, zoom_fn).call(this, e.deltaY);
       e.preventDefault();
     }
@@ -23842,6 +23855,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
    * @private
    */
   onContextMenu_fn = function(e) {
+    if (!this.enabled) return;
     e.preventDefault();
   };
   /**
@@ -27710,9 +27724,10 @@ struct Params {
         light.parent = child.node;
       }
       if (node.camera !== void 0) {
+        child.node.scale.set(1);
         const gltfCamera = this.gltf.cameras[node.camera];
         if (gltfCamera.type === "perspective") {
-          let width, height;
+          let width = 0, height = 0;
           if (gltfCamera.perspective.aspectRatio !== void 0) {
             const minSize = Math.min(this.renderer.boundingRect.width, this.renderer.boundingRect.height);
             width = minSize / gltfCamera.perspective.aspectRatio;
@@ -27724,24 +27739,26 @@ struct Params {
           const fov = gltfCamera.perspective.yfov * 180 / Math.PI;
           const camera = new PerspectiveCamera({
             fov,
-            near: gltfCamera.perspective.znear,
-            far: gltfCamera.perspective.zfar,
+            near: gltfCamera.perspective.znear ?? 0.01,
+            far: gltfCamera.perspective.zfar ?? 1e3,
             width,
             height,
             pixelRatio: this.renderer.pixelRatio,
             ...gltfCamera.perspective.aspectRatio !== void 0 && { forceAspect: gltfCamera.perspective.aspectRatio }
           });
+          camera.position.set(0);
           camera.parent = child.node;
           this.scenesManager.cameras.push(camera);
         } else if (gltfCamera.type === "orthographic") {
           const camera = new OrthographicCamera({
-            near: gltfCamera.orthographic.znear,
-            far: gltfCamera.orthographic.zfar,
+            near: gltfCamera.orthographic.znear ?? 0.01,
+            far: gltfCamera.orthographic.zfar ?? 1e3,
             left: -gltfCamera.orthographic.xmag,
             right: gltfCamera.orthographic.xmag,
             top: gltfCamera.orthographic.ymag,
             bottom: -gltfCamera.orthographic.ymag
           });
+          camera.position.set(0);
           camera.parent = child.node;
           this.scenesManager.cameras.push(camera);
         }
@@ -28763,7 +28780,7 @@ struct Params {
      * @returns - {@link gltf} base object.
      */
     async loadFromJsonBase(json, baseUrl, binaryChunk = null) {
-      if (!baseUrl) {
+      if (baseUrl === void 0) {
         throw new Error("baseUrl must be specified.");
       }
       if (!json.asset) {

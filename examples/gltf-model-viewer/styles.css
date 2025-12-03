@@ -18,6 +18,11 @@
   opacity: 1;
 }
 
+#load-gltf,
+#load-hdr {
+  display: none;
+}
+
 #credits {
   position: absolute;
   left: 1rem;

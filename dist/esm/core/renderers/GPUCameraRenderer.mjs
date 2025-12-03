@@ -142,18 +142,26 @@ class GPUCameraRenderer extends GPURenderer {
   useCamera(camera) {
     if (this.camera && camera && this.camera.uuid === camera.uuid) return;
     if (this.camera) {
-      this.camera.parent = null;
+      if (this.camera.parent && this.camera.parent.object3DIndex === this.scene.object3DIndex) {
+        this.camera.parent = null;
+      }
       this.camera.onMatricesChanged = () => {
       };
     }
     this.camera = camera;
-    this.camera.parent = this.scene;
+    if (!this.camera.parent) {
+      this.camera.parent = this.scene;
+    }
     this.resizeCamera();
+    this.camera.shouldUpdateProjectionMatrices();
     if (this.bindings.camera) {
       this.camera.onMatricesChanged = () => this.onCameraMatricesChanged();
       this.bindings.camera.inputs.view.value = this.camera.viewMatrix;
       this.bindings.camera.inputs.projection.value = this.camera.projectionMatrix;
       this.bindings.camera.inputs.position.value = this.camera.actualPosition;
+      this.bindings.camera.inputs.view.shouldUpdate = true;
+      this.bindings.camera.inputs.projection.shouldUpdate = true;
+      this.bindings.camera.inputs.position.shouldUpdate = true;
       for (const mesh of this.meshes) {
         if ("modelViewMatrix" in mesh) {
           mesh.camera = this.camera;

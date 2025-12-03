@@ -274,14 +274,23 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
     if (this.camera && camera && this.camera.uuid === camera.uuid) return
 
     if (this.camera) {
-      this.camera.parent = null
+      // if camera parent is scene, remove from scene
+      if (this.camera.parent && this.camera.parent.object3DIndex === this.scene.object3DIndex) {
+        this.camera.parent = null
+      }
       this.camera.onMatricesChanged = () => {}
     }
 
     this.camera = camera as any
-    this.camera.parent = this.scene
+    // if camera has no parent, set scene as parent
+    if (!this.camera.parent) {
+      this.camera.parent = this.scene
+    }
 
     this.resizeCamera()
+
+    // force update of projection matrices
+    this.camera.shouldUpdateProjectionMatrices()
 
     if (this.bindings.camera) {
       this.camera.onMatricesChanged = () => this.onCameraMatricesChanged()
@@ -290,6 +299,10 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
       this.bindings.camera.inputs.view.value = this.camera.viewMatrix
       this.bindings.camera.inputs.projection.value = this.camera.projectionMatrix
       this.bindings.camera.inputs.position.value = this.camera.actualPosition
+
+      this.bindings.camera.inputs.view.shouldUpdate = true
+      this.bindings.camera.inputs.projection.shouldUpdate = true
+      this.bindings.camera.inputs.position.shouldUpdate = true
 
       for (const mesh of this.meshes) {
         if ('modelViewMatrix' in mesh) {

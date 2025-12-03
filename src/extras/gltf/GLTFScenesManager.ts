@@ -1073,10 +1073,12 @@ export class GLTFScenesManager {
     }
 
     if (node.camera !== undefined) {
+      child.node.scale.set(1)
       const gltfCamera = this.gltf.cameras[node.camera]
 
       if (gltfCamera.type === 'perspective') {
-        let width, height
+        let width = 0,
+          height = 0
 
         if (gltfCamera.perspective.aspectRatio !== undefined) {
           const minSize = Math.min(this.renderer.boundingRect.width, this.renderer.boundingRect.height)
@@ -1091,27 +1093,29 @@ export class GLTFScenesManager {
 
         const camera = new PerspectiveCamera({
           fov,
-          near: gltfCamera.perspective.znear,
-          far: gltfCamera.perspective.zfar,
+          near: gltfCamera.perspective.znear ?? 0.01,
+          far: gltfCamera.perspective.zfar ?? 1000,
           width,
           height,
           pixelRatio: this.renderer.pixelRatio,
           ...(gltfCamera.perspective.aspectRatio !== undefined && { forceAspect: gltfCamera.perspective.aspectRatio }),
         })
 
+        camera.position.set(0)
         camera.parent = child.node
 
         this.scenesManager.cameras.push(camera)
       } else if (gltfCamera.type === 'orthographic') {
         const camera = new OrthographicCamera({
-          near: gltfCamera.orthographic.znear,
-          far: gltfCamera.orthographic.zfar,
+          near: gltfCamera.orthographic.znear ?? 0.01,
+          far: gltfCamera.orthographic.zfar ?? 1000,
           left: -gltfCamera.orthographic.xmag,
           right: gltfCamera.orthographic.xmag,
           top: gltfCamera.orthographic.ymag,
           bottom: -gltfCamera.orthographic.ymag,
         })
 
+        camera.position.set(0)
         camera.parent = child.node
 
         this.scenesManager.cameras.push(camera)

@@ -4,9 +4,6 @@ import {
   EnvironmentMap,
   GLTFLoader,
   GLTFScenesManager,
-  AmbientLight,
-  PointLight,
-  DirectionalLight,
   OrbitControls,
   Vec3,
   RenderBundle,
@@ -16,6 +13,8 @@ import {
   toneMappingUtils,
   Mat4,
 } from '../../dist/esm/index.mjs'
+
+import { loadGLTFFromFileInput } from './loading-helpers.js'
 
 // glTF loader with environment maps and IBL shaders
 window.addEventListener('load', async () => {
@@ -61,7 +60,11 @@ window.addEventListener('load', async () => {
     element: container,
   })
 
-  const envMaps = {
+  let envMaps = {
+    none: {
+      name: 'None',
+      url: null,
+    },
     cannon: {
       name: 'Cannon',
       url: '../../website/assets/hdr/cannon_1k.hdr',
@@ -150,13 +153,17 @@ window.addEventListener('load', async () => {
     )
     .name('Available models')
 
+  const loadGLTFInput = document.querySelector('#load-gltf')
+  gltfFolder.add({ loadGLTF: () => loadGLTFInput.click() }, 'loadGLTF').name('Load model')
+
   const scenesFolder = gltfFolder.addFolder('Scenes')
 
   const camerasFolder = gltfFolder.addFolder('Cameras')
 
   const useCamera = (camera) => {
     gpuCameraRenderer.useCamera(camera)
-    orbitControls.useCamera(camera)
+    // enable orbit controls only for default camera
+    orbitControls.enabled = camera.uuid === defaultCamera.uuid
   }
 
   const animationsFolder = gltfFolder.addFolder('Animations')
@@ -181,14 +188,14 @@ window.addEventListener('load', async () => {
     .add(
       { [currentEnvMap.name]: currentEnvMapKey },
       currentEnvMap.name,
-      Object.keys(envMaps).reduce(
-        (acc, v) => {
-          return { ...acc, [envMaps[v].name]: v }
-        },
-        { None: null }
-      )
+      Object.keys(envMaps).reduce((acc, v) => {
+        return { ...acc, [envMaps[v].name]: v }
+      }, {})
     )
     .name('Current')
+
+  const loadHDRInput = document.querySelector('#load-hdr')
+  envMapFolder.add({ loadHDR: () => loadHDRInput.click() }, 'loadHDR').name('Load HDR')
 
   const envMapRotationField = envMapFolder.add({ rotation: 90 }, 'rotation', 0, 360, 1).name('Rotation')
   const envMapBackgroundField = envMapFolder
@@ -265,9 +272,21 @@ window.addEventListener('load', async () => {
 
   let gltfScenesManager = null
 
-  const loadGLTF = async (url) => {
+  const loadGLTF = async (currentModel) => {
+    const { url, json, arrayBuffer } = currentModel
     container.classList.add('loading')
-    const gltf = await gltfLoader.loadFromUrl(url)
+    let gltf
+    if (url) {
+      gltf = await gltfLoader.loadFromUrl(url)
+    } else if (json) {
+      gltf = await gltfLoader.loadFromJson(json, '')
+    } else if (arrayBuffer) {
+      gltf = await gltfLoader.loadFromBinary(arrayBuffer, '')
+    } else {
+      // bail
+      return
+    }
+
     gltfScenesManager = new GLTFScenesManager({ renderer: gpuCameraRenderer, gltf })
 
     const { scenesManager } = gltfScenesManager
@@ -330,7 +349,7 @@ window.addEventListener('load', async () => {
     // center model
     node.position.sub(center)
 
-    const isSponza = url.includes('Sponza')
+    const isSponza = url && url.includes('Sponza')
 
     if (isSponza) {
       node.position.y = 0
@@ -797,7 +816,7 @@ window.addEventListener('load', async () => {
 
     cleanUpScene()
 
-    await loadGLTF(currentModel.url)
+    await loadGLTF(currentModel)
   })
 
   transparentRenderBundlesField.onChange(async (value) => {
@@ -805,7 +824,7 @@ window.addEventListener('load', async () => {
 
     cleanUpScene()
 
-    await loadGLTF(currentModel.url)
+    await loadGLTF(currentModel)
   })
 
   modelField.onChange(async (value) => {
@@ -822,12 +841,12 @@ window.addEventListener('load', async () => {
 
       useCamera(defaultCamera)
 
-      await loadGLTF(currentModel.url)
+      await loadGLTF(currentModel)
     }
   })
 
   envMapField.onChange(async (value) => {
-    if (envMaps[value]) {
+    if (envMaps[value] && envMaps[value].url) {
       if (envMaps[value].name !== currentEnvMap.name) {
         currentEnvMap = envMaps[value]
         await environmentMap.loadAndComputeFromHDR(envMaps[value].url)
@@ -841,7 +860,7 @@ window.addEventListener('load', async () => {
 
         cleanUpScene()
 
-        await loadGLTF(currentModel.url)
+        await loadGLTF(currentModel)
       }
     } else if (useEnvMap) {
       useEnvMap = false
@@ -851,7 +870,7 @@ window.addEventListener('load', async () => {
 
       cleanUpScene()
 
-      await loadGLTF(currentModel.url)
+      await loadGLTF(currentModel)
     }
   })
 
@@ -880,7 +899,7 @@ window.addEventListener('load', async () => {
 
       cleanUpScene()
 
-      await loadGLTF(currentModel.url)
+      await loadGLTF(currentModel)
     }
   })
 
@@ -904,5 +923,81 @@ window.addEventListener('load', async () => {
     })
   })
 
-  await loadGLTF(currentModel.url)
+  // file inputs
+  // glTF
+  loadGLTFInput.addEventListener('change', async () => {
+    let loadedGLTFFile = null
+    for (const file of loadGLTFInput.files) {
+      if (file.name.includes('.gltf') || file.name.includes('.glb')) {
+        loadedGLTFFile = file
+      }
+    }
+
+    if (loadedGLTFFile) {
+      const loadedModelName = loadedGLTFFile.name.replace('.gltf', '').replace('.glb', '')
+      const loadedModelUrlName = loadedModelName + 'FromFile' //  avoid duplicate keys
+
+      const files = Array.from(loadGLTFInput.files)
+      const result = await loadGLTFFromFileInput(files)
+
+      let data = {}
+      if (result instanceof ArrayBuffer) {
+        data.arrayBuffer = result
+      } else {
+        data.json = result
+      }
+
+      availableSampleModels = {
+        ...availableSampleModels,
+        [loadedModelUrlName]: {
+          name: loadedModelName + ' (from files)',
+          ...data,
+        },
+      }
+
+      modelField
+        .options(
+          Object.keys(availableSampleModels).reduce((acc, v) => {
+            return { ...acc, [availableSampleModels[v].name]: v }
+          }, {})
+        )
+        .setValue(loadedModelUrlName)
+    }
+  })
+
+  // HDR
+  loadHDRInput.addEventListener('change', () => {
+    console.log(loadHDRInput.files)
+    let loadedHDRFile = null
+    for (const file of loadHDRInput.files) {
+      if (file.name.includes('.hdr')) {
+        loadedHDRFile = file
+      }
+    }
+
+    if (loadedHDRFile) {
+      const loadedHDRBlob = URL.createObjectURL(loadedHDRFile)
+
+      const loadedHDRName = loadedHDRFile.name.replace('.hdr', '')
+      const loadedHDRUrlName = loadedHDRName + 'FromFile' //  avoid duplicate keys
+
+      envMaps = {
+        ...envMaps,
+        [loadedHDRUrlName]: {
+          name: loadedHDRName + ' (from files)',
+          url: loadedHDRBlob,
+        },
+      }
+
+      envMapField
+        .options(
+          Object.keys(envMaps).reduce((acc, v) => {
+            return { ...acc, [envMaps[v].name]: v }
+          }, {})
+        )
+        .setValue(loadedHDRUrlName)
+    }
+  })
+
+  await loadGLTF(currentModel)
 })

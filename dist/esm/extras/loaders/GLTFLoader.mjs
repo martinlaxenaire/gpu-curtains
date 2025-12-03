@@ -55,7 +55,7 @@ class GLTFLoader {
    * @returns - {@link gltf} base object.
    */
   async loadFromJsonBase(json, baseUrl, binaryChunk = null) {
-    if (!baseUrl) {
+    if (baseUrl === void 0) {
       throw new Error("baseUrl must be specified.");
     }
     if (!json.asset) {

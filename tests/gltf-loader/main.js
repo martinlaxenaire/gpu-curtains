@@ -278,7 +278,8 @@ window.addEventListener('load', async () => {
 
   const useCamera = (camera) => {
     gpuCameraRenderer.useCamera(camera)
-    orbitControls.useCamera(camera)
+    // enable orbit controls only for default camera
+    orbitControls.enabled = camera.uuid === defaultCamera.uuid
   }
 
   let variantsFolder = gui.addFolder('Variants')
