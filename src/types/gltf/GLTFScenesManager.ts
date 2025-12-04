@@ -8,11 +8,19 @@ import { Camera } from '../../core/cameras/Camera'
 import { BufferBinding } from '../../core/bindings/BufferBinding'
 import { TargetsAnimationsManager } from '../../extras/animations/TargetsAnimationsManager'
 import { Mat4 } from '../../math/Mat4'
-import { LitMesh, LitMeshMaterialParams, LitMeshParameters, ShaderTextureDescriptor } from '../../extras/meshes/LitMesh'
+import {
+  LitMesh,
+  LitMeshMaterialParams,
+  LitMeshMaterialUniformParams,
+  LitMeshParameters,
+  ShaderTextureDescriptor,
+} from '../../extras/meshes/LitMesh'
 import { GLTFExtensionsUsed } from './GLTFExtensions'
 import { RenderMaterialParams } from '../Materials'
 import { RenderMaterial } from '../../core/materials/RenderMaterial'
 import { Light } from '../../core/lights/Light'
+import { KeyframesAnimation } from '../../extras/animations/KeyframesAnimation'
+import { MediaTexture } from '../../core/textures/MediaTexture'
 
 /** Parameters parsed from a {@link GLTF.IMaterial | glTF material} entry. */
 export interface MeshDescriptorMaterialParams {

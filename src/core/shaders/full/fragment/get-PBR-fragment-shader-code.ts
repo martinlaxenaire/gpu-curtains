@@ -81,6 +81,7 @@ export const getPBRFragmentShaderCode = ({
   specularTexture = null,
   specularFactorTexture = null,
   specularColorTexture = null,
+  transmissionThicknessTexture = null,
   transmissionTexture = null,
   thicknessTexture = null,
   sheenTexture = null,
@@ -88,6 +89,7 @@ export const getPBRFragmentShaderCode = ({
   sheenRoughnessTexture = null,
   anisotropyTexture = null,
   clearcoatTexture = null,
+  clearcoatFactorTexture = null,
   clearcoatRoughnessTexture = null,
   clearcoatNormalTexture = null,
   iridescenceTexture = null,
@@ -147,10 +149,10 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   ${getMetallicRoughness({ metallicRoughnessTexture })}
   ${getDiffuse}
   ${getSpecular({ specularTexture, specularFactorTexture, specularColorTexture })}
-  ${getTransmissionThickness({ transmissionTexture, thicknessTexture })}
+  ${getTransmissionThickness({ transmissionThicknessTexture, transmissionTexture, thicknessTexture })}
   ${getEmissiveOcclusion({ emissiveTexture, occlusionTexture })}
   ${getSheen({ extensionsUsed, sheenTexture, sheenColorTexture, sheenRoughnessTexture })}
-  ${getClearcoat({ extensionsUsed, clearcoatTexture, clearcoatRoughnessTexture })}
+  ${getClearcoat({ extensionsUsed, clearcoatTexture, clearcoatFactorTexture, clearcoatRoughnessTexture })}
   ${getClearcoatNormal({ extensionsUsed, normalTexture, clearcoatNormalTexture })}
   ${getIridescence({ extensionsUsed, iridescenceTexture, iridescenceFactorTexture, iridescenceThicknessTexture })}
   ${getAnisotropy({ extensionsUsed, anisotropyTexture })}

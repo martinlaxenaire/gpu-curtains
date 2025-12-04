@@ -4,10 +4,15 @@ import { Vec3 } from '../../math/Vec3'
 import { Quat } from '../../math/Quat'
 import { BufferBindingInput } from '../../core/bindings/BufferBinding'
 import { Object3D } from '../../core/objects3D/Object3D'
+import { Vec2 } from '../../math/Vec2'
 
 // temp values to use during calcs
+const tempVec2 = new Vec2()
 const tempVec3 = new Vec3()
 const tempQuat = new Quat()
+
+export type KeyframesAnimationValueType = 'scalar' | 'vec2' | 'vec3' | 'vec4' | 'quaternion' | 'array'
+export type KeyframesAnimationInputValue = number | Vec2 | Vec3 | Quat | number[] | BufferBindingInput[]
 
 /** Parameters used to create a {@link KeyframesAnimation}. */
 export interface KeyframesAnimationParams {
@@ -21,6 +26,10 @@ export interface KeyframesAnimationParams {
   values?: TypedArray
   /** {@link GLTF.AnimationChannelTargetPath | glTF animation path} to use, i.e. what component should be animated between 'translation', 'rotation', 'scale' and 'weights'. Could be omitted when used for a skin joint matrices animation. */
   path?: GLTF.AnimationChannelTargetPath
+
+  type?: KeyframesAnimationValueType
+  inputValue?: KeyframesAnimationInputValue
+
   /** {@link GLTF.AnimationSamplerInterpolation | glTF sampler interpolation} to use, i.e. how the animated values should be computed. Default to `LINEAR` . */
   interpolation?: GLTF.AnimationSamplerInterpolation
 }
@@ -47,11 +56,12 @@ export class KeyframesAnimation {
 
   /** {@link GLTF.AnimationChannelTargetPath | glTF animation path} to use, i.e. what component should be animated between 'translation', 'rotation', 'scale' and 'weights'. Could be omitted when used for a skin joint matrices animation. */
   path: GLTF.AnimationChannelTargetPath | null
+
+  type: KeyframesAnimationValueType | null
+  inputValue: KeyframesAnimationInputValue | null
+
   /** {@link GLTF.AnimationSamplerInterpolation | glTF sampler interpolation} to use, i.e. how the animated values should be computed. Default to `LINEAR` . */
   interpolation: GLTF.AnimationSamplerInterpolation
-
-  /** Optional {@link BufferBindingInput} array to update a weight binding. */
-  weightsBindingInputs: BufferBindingInput[]
 
   /** Callback to run after the animated value has been updated. Used for skin joints animations to update joint matrices. */
   onAfterUpdate: () => void | null // used for skins
@@ -67,6 +77,8 @@ export class KeyframesAnimation {
       keyframes = null,
       values = null,
       path = null,
+      type = null,
+      inputValue = null,
       interpolation = 'LINEAR' as GLTF.AnimationSamplerInterpolation,
     } = {} as KeyframesAnimationParams
   ) {
@@ -75,22 +87,26 @@ export class KeyframesAnimation {
     this.values = values
 
     this.path = path
+    this.type = type
+    this.inputValue = inputValue
     this.interpolation = interpolation
 
     this.inputIndex = inputIndex
 
-    this.weightsBindingInputs = []
     this.onAfterUpdate = null
 
     this.duration = this.keyframes ? this.keyframes[this.keyframes.length - 1] : 0
   }
 
   /**
-   * Add a weight {@link BufferBindingInput} to the {@link weightsBindingInputs} array.
+   * Add a weight {@link BufferBindingInput} to the {@link inputValue} array.
    * @param input - Weight {@link BufferBindingInput}.
    */
   addWeightBindingInput(input: BufferBindingInput) {
-    this.weightsBindingInputs.push(input)
+    if (!this.inputValue) {
+      this.inputValue = []
+    }
+    ;(this.inputValue as BufferBindingInput[]).push(input)
   }
 
   /**
@@ -129,13 +145,13 @@ export class KeyframesAnimation {
   }
 
   /**
-   * Update an {@link Object3D} transformation property or eventually the {@link weightsBindingInputs} based on the current time given, the {@link path} and {@link interpolation} used and the {@link keyframes} and {@link values}.
+   * Update an {@link Object3D} transformation property or eventually the {@link weightsBindingInputs} based on the current time given, the {@link path}, {@link type} and {@link interpolation} used and the {@link keyframes} and {@link values}.
    * @param target - {@link Object3D} to update.
    * @param currentTime - Current time in seconds.
    */
   update(target: Object3D, currentTime = 0) {
     // do not run for empty animations
-    if (!this.keyframes || !this.values || !this.path) return
+    if (!this.keyframes || !this.values || !this.path || !this.type || this.inputValue === null) return
 
     const nextTimeIndex = this.keyframes.findIndex((t) => t >= currentTime)
     if (nextTimeIndex === -1) return
@@ -149,11 +165,37 @@ export class KeyframesAnimation {
     const interpolatedTime = (currentTime - previousTime) / (nextTime - previousTime)
     const deltaTime = nextTime - previousTime
 
-    if (this.path === 'rotation') {
+    if (this.type === 'scalar') {
+      const prevIndex = this.getIndexFromInterpolation(previousTimeIndex, 1)
+      const nextIndex = this.getIndexFromInterpolation(nextTimeIndex, 1)
+
+      const value = this.values[prevIndex]
+      this.inputValue = value
+
+      if (this.interpolation === 'LINEAR') {
+        const nextValue = this.values[nextIndex]
+
+        this.inputValue += (nextValue - value) * interpolatedTime
+      } else if (this.interpolation === 'CUBICSPLINE') {
+        const nextValue = this.values[nextIndex]
+
+        // get previous output tangent
+        const previousOutputTangent = this.values[prevIndex + 1]
+        const nextInputTangent = this.values[nextIndex - 1]
+
+        this.inputValue = this.getCubicSplineComponentValue(
+          interpolatedTime,
+          value,
+          nextValue,
+          deltaTime * previousOutputTangent[0],
+          deltaTime * nextInputTangent[0]
+        )
+      }
+    } else if (this.inputValue instanceof Quat) {
       const prevIndex = this.getIndexFromInterpolation(previousTimeIndex, 4)
       const nextIndex = this.getIndexFromInterpolation(nextTimeIndex, 4)
 
-      target.quaternion.setFromArray([
+      this.inputValue.setFromArray([
         this.values[prevIndex],
         this.values[prevIndex + 1],
         this.values[prevIndex + 2],
@@ -187,49 +229,86 @@ export class KeyframesAnimation {
           const cubicValue = [
             this.getCubicSplineComponentValue(
               interpolatedTime,
-              target.quaternion.elements[0],
+              this.inputValue.elements[0],
               tempQuat.elements[0],
               deltaTime * previousOutputTangent[0],
               deltaTime * nextInputTangent[0]
             ),
             this.getCubicSplineComponentValue(
               interpolatedTime,
-              target.quaternion.elements[1],
+              this.inputValue.elements[1],
               tempQuat.elements[1],
               deltaTime * previousOutputTangent[1],
               deltaTime * nextInputTangent[1]
             ),
             this.getCubicSplineComponentValue(
               interpolatedTime,
-              target.quaternion.elements[2],
+              this.inputValue.elements[2],
               tempQuat.elements[2],
               deltaTime * previousOutputTangent[2],
               deltaTime * nextInputTangent[2]
             ),
             this.getCubicSplineComponentValue(
               interpolatedTime,
-              target.quaternion.elements[3],
+              this.inputValue.elements[3],
               tempQuat.elements[3],
               deltaTime * previousOutputTangent[3],
               deltaTime * nextInputTangent[3]
             ),
           ]
 
-          target.quaternion.setFromArray(cubicValue).normalize()
+          this.inputValue.setFromArray(cubicValue).normalize()
         } else {
-          target.quaternion.slerp(tempQuat, interpolatedTime)
+          this.inputValue.slerp(tempQuat, interpolatedTime)
         }
       }
 
-      // update model matrix since we modified the quaternion
-      target.shouldUpdateModelMatrix()
-    } else if (this.path === 'translation' || this.path === 'scale') {
-      const vectorName = this.path === 'translation' ? 'position' : this.path
+      if (this.path === 'rotation') {
+        // update model matrix since we modified the quaternion
+        target.shouldUpdateModelMatrix()
+      }
+    } else if (this.inputValue instanceof Vec2) {
+      const prevIndex = this.getIndexFromInterpolation(previousTimeIndex, 2)
+      const nextIndex = this.getIndexFromInterpolation(nextTimeIndex, 2)
 
+      this.inputValue.set(this.values[prevIndex], this.values[prevIndex + 1])
+
+      if (this.interpolation === 'LINEAR' || this.interpolation === 'CUBICSPLINE') {
+        tempVec2.set(this.values[nextIndex], this.values[nextIndex + 1])
+
+        if (this.interpolation === 'CUBICSPLINE') {
+          // get previous output tangent
+          const previousOutputTangent = [this.values[prevIndex + 2], this.values[prevIndex + 3]]
+
+          const nextInputTangent = [this.values[nextIndex - 2], this.values[nextIndex - 1]]
+
+          const cubicValue = [
+            this.getCubicSplineComponentValue(
+              interpolatedTime,
+              this.inputValue.x,
+              tempVec2.x,
+              deltaTime * previousOutputTangent[0],
+              deltaTime * nextInputTangent[0]
+            ),
+            this.getCubicSplineComponentValue(
+              interpolatedTime,
+              this.inputValue.y,
+              tempVec2.y,
+              deltaTime * previousOutputTangent[1],
+              deltaTime * nextInputTangent[1]
+            ),
+          ]
+
+          this.inputValue.set(cubicValue[0], cubicValue[1])
+        } else {
+          this.inputValue.lerp(tempVec2, interpolatedTime)
+        }
+      }
+    } else if (this.inputValue instanceof Vec3) {
       const prevIndex = this.getIndexFromInterpolation(previousTimeIndex, 3)
       const nextIndex = this.getIndexFromInterpolation(nextTimeIndex, 3)
 
-      target[vectorName].set(this.values[prevIndex], this.values[prevIndex + 1], this.values[prevIndex + 2])
+      this.inputValue.set(this.values[prevIndex], this.values[prevIndex + 1], this.values[prevIndex + 2])
 
       if (this.interpolation === 'LINEAR' || this.interpolation === 'CUBICSPLINE') {
         tempVec3.set(this.values[nextIndex], this.values[nextIndex + 1], this.values[nextIndex + 2])
@@ -247,44 +326,45 @@ export class KeyframesAnimation {
           const cubicValue = [
             this.getCubicSplineComponentValue(
               interpolatedTime,
-              target[vectorName].x,
+              this.inputValue.x,
               tempVec3.x,
               deltaTime * previousOutputTangent[0],
               deltaTime * nextInputTangent[0]
             ),
             this.getCubicSplineComponentValue(
               interpolatedTime,
-              target[vectorName].y,
+              this.inputValue.y,
               tempVec3.y,
               deltaTime * previousOutputTangent[1],
               deltaTime * nextInputTangent[1]
             ),
             this.getCubicSplineComponentValue(
               interpolatedTime,
-              target[vectorName].z,
+              this.inputValue.z,
               tempVec3.z,
               deltaTime * previousOutputTangent[2],
               deltaTime * nextInputTangent[2]
             ),
           ]
 
-          target[vectorName].set(cubicValue[0], cubicValue[1], cubicValue[2])
+          this.inputValue.set(cubicValue[0], cubicValue[1], cubicValue[2])
         } else {
-          target[vectorName].lerp(tempVec3, interpolatedTime)
+          this.inputValue.lerp(tempVec3, interpolatedTime)
         }
       }
-    } else if (this.path === 'weights') {
-      const prevIndex = this.getIndexFromInterpolation(previousTimeIndex, this.weightsBindingInputs.length)
-      const nextIndex = this.getIndexFromInterpolation(nextTimeIndex, this.weightsBindingInputs.length)
+    } else if (this.path === 'weights' && (this.inputValue as BufferBindingInput[]).length) {
+      const inputLength = (this.inputValue as BufferBindingInput[]).length
+      const prevIndex = this.getIndexFromInterpolation(previousTimeIndex, inputLength)
+      const nextIndex = this.getIndexFromInterpolation(nextTimeIndex, inputLength)
 
-      for (let i = 0; i < this.weightsBindingInputs.length; i++) {
+      for (let i = 0; i < inputLength; i++) {
         const value = this.values[prevIndex + i]
-        this.weightsBindingInputs[i].value = value
+        this.inputValue[i].value = value
 
         if (this.interpolation === 'LINEAR') {
           const nextValue = this.values[nextIndex + i]
 
-          ;(this.weightsBindingInputs[i].value as number) += (nextValue - value) * interpolatedTime
+          ;(this.inputValue[i].value as number) += (nextValue - value) * interpolatedTime
         } else if (this.interpolation === 'CUBICSPLINE') {
           const nextValue = this.values[nextIndex + i]
 
@@ -292,7 +372,36 @@ export class KeyframesAnimation {
           const previousOutputTangent = this.values[prevIndex + i + 1]
           const nextInputTangent = this.values[nextIndex + i - 1]
 
-          this.weightsBindingInputs[i].value = this.getCubicSplineComponentValue(
+          this.inputValue[i].value = this.getCubicSplineComponentValue(
+            interpolatedTime,
+            value,
+            nextValue,
+            deltaTime * previousOutputTangent[0],
+            deltaTime * nextInputTangent[0]
+          )
+        }
+      }
+    } else if ((this.inputValue as number[]).length) {
+      const inputLength = (this.inputValue as number[]).length
+      const prevIndex = this.getIndexFromInterpolation(previousTimeIndex, inputLength)
+      const nextIndex = this.getIndexFromInterpolation(nextTimeIndex, inputLength)
+
+      for (let i = 0; i < inputLength; i++) {
+        const value = this.values[prevIndex + i]
+        this.inputValue[i] = value
+
+        if (this.interpolation === 'LINEAR') {
+          const nextValue = this.values[nextIndex + i]
+
+          ;(this.inputValue[i] as number) += (nextValue - value) * interpolatedTime
+        } else if (this.interpolation === 'CUBICSPLINE') {
+          const nextValue = this.values[nextIndex + i]
+
+          // get previous output tangent
+          const previousOutputTangent = this.values[prevIndex + i + 1]
+          const nextInputTangent = this.values[nextIndex + i - 1]
+
+          this.inputValue[i] = this.getCubicSplineComponentValue(
             interpolatedTime,
             value,
             nextValue,

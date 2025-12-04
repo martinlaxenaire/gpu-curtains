@@ -9,6 +9,7 @@ window.addEventListener('load', async () => {
     GPUCameraRenderer,
     EnvironmentMap,
     GLTFLoader,
+    GLTFPointerAnimationsManager,
     GLTFScenesManager,
     AmbientLight,
     PointLight,
@@ -292,6 +293,8 @@ window.addEventListener('load', async () => {
 
   // gltf
   const gltfLoader = new GLTFLoader()
+  // pointer animations
+  const gltfPointerAnimationsManager = new GLTFPointerAnimationsManager()
 
   let gltfScenesManager = null
 
@@ -299,6 +302,9 @@ window.addEventListener('load', async () => {
     container.classList.add('loading')
     const gltf = await gltfLoader.loadFromUrl(url)
     gltfScenesManager = new GLTFScenesManager({ renderer: gpuCameraRenderer, gltf })
+
+    // create pointer animations if any
+    gltfPointerAnimationsManager.createPointerAnimations(gltfScenesManager)
 
     const { scenesManager } = gltfScenesManager
     const { scenes, boundingBox, node } = scenesManager
@@ -381,7 +387,7 @@ window.addEventListener('load', async () => {
 
       orbitControls.reset({
         zoomSpeed: radius * 0.25,
-        minZoom: radius * 0.5,
+        minZoom: radius * 0.25,
         maxZoom: radius * 4,
         position: new Vec3(0, 0, radius * 2.5),
         target: new Vec3(),

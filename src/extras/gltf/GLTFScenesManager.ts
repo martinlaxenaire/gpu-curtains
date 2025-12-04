@@ -27,7 +27,11 @@ import {
   SkinDefinition,
 } from '../../types/gltf/GLTFScenesManager'
 import { BufferBinding } from '../../core/bindings/BufferBinding'
-import { KeyframesAnimation } from '../animations/KeyframesAnimation'
+import {
+  KeyframesAnimation,
+  KeyframesAnimationInputValue,
+  KeyframesAnimationValueType,
+} from '../animations/KeyframesAnimation'
 import { TargetsAnimationsManager } from '../animations/TargetsAnimationsManager'
 import { GLTFExtensionsTypes } from '../../types/gltf/GLTFExtensions'
 import { Vec2 } from '../../math/Vec2'
@@ -36,6 +40,7 @@ import { DirectionalLight } from '../../core/lights/DirectionalLight'
 import { PointLight } from '../../core/lights/PointLight'
 import { SpotLight } from '../../core/lights/SpotLight'
 import { throwWarning } from '../../utils/utils'
+import type { GLTFPointerAnimationsManager } from './GLTFPointerAnimationsManager'
 
 // https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Constants
 // To make it easier to reference the WebGL enums that glTF uses.
@@ -100,7 +105,7 @@ const GL = (typeof window !== 'undefined' && WebGLRenderingContext) || {
  * - [x] Morph targets
  *
  * ## Extensions
- * - [ ] KHR_animation_pointer
+ * - [x] KHR_animation_pointer (using GLTFPointerAnimationsManager extra class)
  * - [ ] KHR_draco_mesh_compression
  * - [x] KHR_lights_punctual
  * - [x] KHR_materials_anisotropy
@@ -145,6 +150,8 @@ export class GLTFScenesManager {
   /** The {@link PrimitiveInstances} Map, to group similar {@link LitMesh} by instances. */
   #primitiveInstances: PrimitiveInstances
 
+  pointerAnimationsManager: GLTFPointerAnimationsManager | null
+
   /**
    * {@link GLTFScenesManager} constructor.
    * @param parameters - parameters used to create our {@link GLTFScenesManager}.
@@ -158,6 +165,8 @@ export class GLTFScenesManager {
     this.gltf = gltf
 
     this.#primitiveInstances = new Map()
+
+    this.pointerAnimationsManager = null
 
     this.scenesManager = {
       node: new Object3D(),
@@ -320,6 +329,58 @@ export class GLTFScenesManager {
     })
   }
 
+  getAnimationKeyframesValues(sampler: GLTF.IAnimationSampler): {
+    keyframes: TypedArray
+    values: TypedArray
+  } {
+    const inputAccessor = this.gltf.accessors[sampler.input]
+    const keyframes = this.#getAccessorArray(inputAccessor)
+
+    const outputAccessor = this.gltf.accessors[sampler.output]
+    const values = this.#getAccessorArray(outputAccessor)
+
+    return { keyframes, values }
+  }
+
+  // TODO useless?
+  createKeyframeAnimation({
+    animation,
+    targetsAnimation,
+    channel,
+    type = null,
+    inputValue = null,
+    childNode,
+    label = '',
+  }: {
+    animation: GLTF.IAnimation
+    targetsAnimation: TargetsAnimationsManager
+    channel: GLTF.IAnimationChannel
+    type?: KeyframesAnimationValueType
+    inputValue?: KeyframesAnimationInputValue
+    childNode: Object3D
+    label?: string
+  }) {
+    const sampler = animation.samplers[channel.sampler]
+    const path = channel.target.path
+
+    const { keyframes, values } = this.getAnimationKeyframesValues(sampler)
+
+    const keyframesAnimation = new KeyframesAnimation({
+      label,
+      inputIndex: sampler.input,
+      keyframes,
+      values,
+      path,
+      type,
+      inputValue,
+      interpolation: sampler.interpolation,
+    })
+
+    targetsAnimation.addTargetAnimation(childNode, keyframesAnimation)
+
+    return keyframesAnimation
+  }
+
   /**
    * Create the {@link ScenesManager.lights | lights} defined by the `KHR_lights_punctual` extension if any.
    */
@@ -441,10 +502,12 @@ export class GLTFScenesManager {
           return 'rgba8unorm-srgb'
         case 'occlusionTexture':
         case 'transmissionTexture':
-        case 'clearcoatTexture':
+        case 'clearcoatFactorTexture':
         case 'iridescenceFactorTexture':
           return 'r8unorm'
         case 'thicknessTexture':
+        case 'transmissionThicknessTexture':
+        case 'clearcoatTexture':
         case 'clearcoatRoughnessTexture':
         case 'iridescenceTexture':
         case 'iridescenceThicknessTexture':
@@ -511,7 +574,12 @@ export class GLTFScenesManager {
 
           const sampler = this.scenesManager.samplers[samplerIndex ?? 0]
 
-          const textureTransform = gltfTextureInfo.extensions && gltfTextureInfo.extensions['KHR_texture_transform']
+          let textureTransform = gltfTextureInfo.extensions && gltfTextureInfo.extensions['KHR_texture_transform']
+
+          // TODO check if they should be animated?
+          if (!textureTransform && this.gltf.extensionsUsed.includes('KHR_animation_pointer')) {
+            textureTransform = {}
+          }
 
           const texCoordAttributeName = getUVAttributeName(
             textureTransform && textureTransform.texCoord !== undefined ? textureTransform : gltfTextureInfo
@@ -611,11 +679,6 @@ export class GLTFScenesManager {
         const iridescence = (extensions && extensions.KHR_materials_iridescence) || null
         const diffuseTransmission = (extensions && extensions.KHR_materials_diffuse_transmission) || null
 
-        // transmission
-        if (transmission && transmission.transmissionTexture && transmission.transmissionTexture.index !== undefined) {
-          createTexture(transmission.transmissionTexture, 'transmissionTexture')
-        }
-
         // specular
         if (specular && (specular.specularTexture || specular.specularColorTexture)) {
           const { specularTexture, specularColorTexture } = specular
@@ -637,9 +700,29 @@ export class GLTFScenesManager {
           }
         }
 
-        // volume
-        if (volume && volume.thicknessTexture && volume.thicknessTexture.index !== undefined) {
-          createTexture(volume.thicknessTexture, 'thicknessTexture')
+        // transmission & volume
+        if (
+          transmission &&
+          volume &&
+          transmission.transmissionTexture &&
+          volume.thicknessTexture &&
+          transmission.transmissionTexture.index !== undefined &&
+          transmission.transmissionTexture.index === volume.thicknessTexture.index
+        ) {
+          createTexture(transmission.transmissionTexture, 'transmissionThicknessTexture')
+        } else {
+          if (
+            transmission &&
+            transmission.transmissionTexture &&
+            transmission.transmissionTexture.index !== undefined
+          ) {
+            createTexture(transmission.transmissionTexture, 'transmissionTexture')
+          }
+
+          // volume
+          if (volume && volume.thicknessTexture && volume.thicknessTexture.index !== undefined) {
+            createTexture(volume.thicknessTexture, 'thicknessTexture')
+          }
         }
 
         // sheen
@@ -674,12 +757,22 @@ export class GLTFScenesManager {
           (clearcoat.clearcoatTexture || clearcoat.clearcoatRoughnessTexture || clearcoat.clearcoatNormalTexture)
         ) {
           const { clearcoatTexture, clearcoatRoughnessTexture, clearcoatNormalTexture } = clearcoat
-          if (clearcoatTexture && clearcoatTexture.index !== undefined) {
+          if (
+            clearcoatTexture &&
+            clearcoatRoughnessTexture &&
+            clearcoatTexture.index !== undefined &&
+            clearcoatTexture.index === clearcoatRoughnessTexture.index
+          ) {
             createTexture(clearcoatTexture, 'clearcoatTexture')
+          } else {
+            if (clearcoatTexture && clearcoatTexture.index !== undefined) {
+              createTexture(clearcoatTexture, 'clearcoatFactorTexture')
+            }
+            if (clearcoatRoughnessTexture && clearcoatRoughnessTexture.index !== undefined) {
+              createTexture(clearcoatRoughnessTexture, 'clearcoatRoughnessTexture')
+            }
           }
-          if (clearcoatRoughnessTexture && clearcoatRoughnessTexture.index !== undefined) {
-            createTexture(clearcoatRoughnessTexture, 'clearcoatRoughnessTexture')
-          }
+
           if (clearcoatNormalTexture && clearcoatNormalTexture.index !== undefined) {
             createTexture(clearcoatNormalTexture, 'clearcoatNormalTexture')
           }
@@ -831,7 +924,7 @@ export class GLTFScenesManager {
           ),
         }),
         ...((volumeScatter.scatterAnisotropy !== undefined) !== undefined && {
-          sheenRoughness: volumeScatter.scatterAnisotropy,
+          scatterAnisotropy: volumeScatter.scatterAnisotropy,
         }),
       }),
       // sheen
@@ -1064,6 +1157,7 @@ export class GLTFScenesManager {
       const light = this.scenesManager.lights[node.extensions.KHR_lights_punctual.light]
 
       light.position.set(0, 0, 0)
+      child.node.scale.set(1)
 
       if (light instanceof DirectionalLight || light instanceof SpotLight) {
         light.target.set(0, 0, -1)
@@ -1122,6 +1216,7 @@ export class GLTFScenesManager {
       }
     }
 
+    // add core transform animations
     if (this.gltf.animations) {
       this.scenesManager.animations.forEach((targetsAnimation, i) => {
         const animation = this.gltf.animations[i]
@@ -1132,27 +1227,48 @@ export class GLTFScenesManager {
           targetsAnimation.addTarget(child.node)
 
           channels.forEach((channel) => {
-            const sampler = animation.samplers[channel.sampler]
-            const path = channel.target.path
-
-            const inputAccessor = this.gltf.accessors[sampler.input]
-            const keyframes = this.#getAccessorArray(inputAccessor)
-
-            const outputAccessor = this.gltf.accessors[sampler.output]
-            const values = this.#getAccessorArray(outputAccessor)
-
             const animName = node.name ? `${node.name} animation` : `${channel.target.path} animation ${index}`
+            const label = animation.name ? `${animation.name} ${animName}` : `Animation ${i} ${animName}`
 
-            const keyframesAnimation = new KeyframesAnimation({
-              label: animation.name ? `${animation.name} ${animName}` : `Animation ${i} ${animName}`,
-              inputIndex: sampler.input,
-              keyframes,
-              values,
-              path,
-              interpolation: sampler.interpolation,
+            const input: { type: KeyframesAnimationValueType; value: KeyframesAnimationInputValue } = (() => {
+              switch (channel.target.path) {
+                case 'rotation':
+                  return {
+                    type: 'quaternion',
+                    value: child.node.quaternion,
+                  }
+                case 'translation':
+                  return {
+                    type: 'vec3',
+                    value: child.node.position,
+                  }
+                case 'scale':
+                  return {
+                    type: 'vec3',
+                    value: child.node.scale,
+                  }
+                case 'weights':
+                  return {
+                    type: 'array',
+                    value: null,
+                  }
+                default:
+                  return {
+                    type: null,
+                    value: null,
+                  }
+              }
+            })()
+
+            this.createKeyframeAnimation({
+              animation,
+              targetsAnimation,
+              channel,
+              type: input.type,
+              inputValue: input.value,
+              childNode: child.node,
+              label,
             })
-
-            targetsAnimation.addTargetAnimation(child.node, keyframesAnimation)
           })
         }
       })
@@ -1890,6 +2006,7 @@ export class GLTFScenesManager {
         })
 
         if (weightAnimation) {
+          console.log(targetBinding.inputs.weight)
           weightAnimation.addWeightBindingInput(targetBinding.inputs.weight)
         }
 
@@ -2088,6 +2205,9 @@ export class GLTFScenesManager {
     // negate normal scale y component if no tangent
     if (!hasTangent && meshDescriptor.parameters.material.normalScale) {
       meshDescriptor.parameters.material.normalScale.y *= -1
+      if (meshDescriptor.parameters.material.clearcoatNormalScale) {
+        meshDescriptor.parameters.material.clearcoatNormalScale.y *= -1
+      }
     }
 
     // flat shading
@@ -2170,6 +2290,9 @@ export class GLTFScenesManager {
 
             if (!hasTangent && variantDescriptor.parameters.material.normalScale) {
               variantDescriptor.parameters.material.normalScale.y *= -1
+              if (variantDescriptor.parameters.material.clearcoatNormalScale) {
+                variantDescriptor.parameters.material.clearcoatNormalScale.y *= -1
+              }
             }
 
             meshDescriptor.alternateDescriptors.set(variant.name, variantDescriptor)
@@ -2229,6 +2352,15 @@ export class GLTFScenesManager {
     }
   }
 
+  getPrimitiveInstanceFromGLTFMaterial(
+    materialIndex: GLTF.IMeshPrimitive['material']
+  ): PrimitiveInstanceDescriptor | null {
+    const primitiveInstancesKey = Array.from(this.#primitiveInstances.keys())
+    const primitive = primitiveInstancesKey.find((k) => k.material === materialIndex)
+    const primitiveInstance = this.#primitiveInstances.get(primitive)
+    return primitiveInstance ?? null
+  }
+
   /**
    * Add all the needed {@link LitMesh} based on the {@link ScenesManager#meshesDescriptors | ScenesManager meshesDescriptors} array.
    * @param patchMeshesParameters - allow to optionally patch the {@link LitMesh} parameters before creating it (can be used to add custom shaders chunks, uniforms or storages, change rendering options, etc.)
@@ -2244,7 +2376,13 @@ export class GLTFScenesManager {
       if (node.extensions && node.extensions.KHR_lights_punctual) {
         const light = this.scenesManager.lights[node.extensions.KHR_lights_punctual.light]
         if (light instanceof DirectionalLight || light instanceof SpotLight) {
-          light.target.applyMat4(light.worldMatrix)
+          // from https://github.com/KhronosGroup/glTF-Sample-Renderer/blob/main/source/gltf/light.js#L32
+          const quat = light.worldMatrix.getRotation()
+          quat.normalize()
+          const direction = new Vec3(0, 0, -1)
+          direction.applyQuat(quat)
+
+          light.target.copy(light.actualPosition).add(direction)
         }
       }
     })
@@ -2265,6 +2403,11 @@ export class GLTFScenesManager {
         })
 
         meshDescriptor.alternateMaterials.set('Default', mesh.material)
+
+        // animations
+        if (this.pointerAnimationsManager) {
+          this.pointerAnimationsManager.registerMeshAnimations(meshDescriptor, mesh)
+        }
 
         // scenes
         if (this.gltf.scenes && this.gltf.scenes.length) {
