@@ -102,7 +102,7 @@ window.addEventListener('load', async () => {
 
   let toneMapping = 'Khronos' // 'Khronos', 'Reinhard', 'Cineon' or false
   let shadingModel = 'PBR' // 'PBR', 'Phong' or 'Lambert'
-  const lightType = 'DirectionalLight' // or 'PointLight'
+  // const lightType = 'DirectionalLight' // or 'PointLight'
 
   // load model from 'model' query params if defined
   const url = new URL(window.location)
@@ -150,21 +150,21 @@ window.addEventListener('load', async () => {
   const currentModelKey = modelUrlName ?? 'DamagedHelmet'
   let currentModel = availableSampleModels[currentModelKey]
 
-  const ambientLight = new AmbientLight(gpuCameraRenderer, {
-    intensity: 0, // will be updated
-  })
+  // const ambientLight = new AmbientLight(gpuCameraRenderer, {
+  //   intensity: 0, // will be updated
+  // })
 
-  const light =
-    lightType === 'DirectionalLight'
-      ? new DirectionalLight(gpuCameraRenderer, {
-          position: new Vec3(), // will be updated when model changes
-          intensity: 2,
-        })
-      : new PointLight(gpuCameraRenderer, {
-          position: new Vec3(), // will be updated when model changes
-          intensity: 1,
-          range: -1,
-        })
+  // const light =
+  //   lightType === 'DirectionalLight'
+  //     ? new DirectionalLight(gpuCameraRenderer, {
+  //         position: new Vec3(), // will be updated when model changes
+  //         intensity: 2,
+  //       })
+  //     : new PointLight(gpuCameraRenderer, {
+  //         position: new Vec3(), // will be updated when model changes
+  //         intensity: 1,
+  //         range: -1,
+  //       })
 
   let usePunctualLighting = true
 
@@ -394,26 +394,26 @@ window.addEventListener('load', async () => {
       })
     }
 
-    light.position.set(radius * 2, radius * 2, radius * 4)
+    // light.position.set(radius * 2, radius * 2, radius * 4)
+    //
+    // if (useEnvMap && shadingModel === 'PBR') {
+    //   ambientLight.intensity = 0
+    //   light.intensity = 0
+    // } else {
+    //   ambientLight.intensity = 0.2
 
-    if (useEnvMap && shadingModel === 'PBR') {
-      ambientLight.intensity = 0
-      light.intensity = 0
-    } else {
-      ambientLight.intensity = 0.2
-
-      if (scenesManager.lights.length) {
-        // already lit by the scenes manager lights
-        light.intensity = 0
-      } else {
-        if (light instanceof PointLight) {
-          const lightPositionLengthSq = light.position.lengthSq()
-          light.intensity = lightPositionLengthSq * 6
-        } else {
-          light.intensity = 3
-        }
-      }
-    }
+    //   if (scenesManager.lights.length) {
+    //     // already lit by the scenes manager lights
+    //     light.intensity = 0
+    //   } else {
+    //     if (light instanceof PointLight) {
+    //       const lightPositionLengthSq = light.position.lengthSq()
+    //       light.intensity = lightPositionLengthSq * 6
+    //     } else {
+    //       light.intensity = 3
+    //     }
+    //   }
+    // }
 
     const meshes = gltfScenesManager.addMeshes((meshDescriptor) => {
       const { parameters } = meshDescriptor
@@ -638,6 +638,7 @@ window.addEventListener('load', async () => {
     })
 
     // punctual lighting
+    lightIntensities = []
     if (scenesManager.lights.length) {
       scenesManager.lights.forEach((light) => {
         lightIntensities.push(light.intensity)
@@ -724,7 +725,7 @@ window.addEventListener('load', async () => {
     availableCameras['Default camera'] = defaultCamera
     if (scenesManager.cameras.length) {
       scenesManager.cameras.forEach((gltfCamera, index) => {
-        availableCameras['Camera ' + index] = gltfCamera
+        availableCameras[`Camera ${index} - ${gltfCamera.label}`] = gltfCamera
       })
     }
 

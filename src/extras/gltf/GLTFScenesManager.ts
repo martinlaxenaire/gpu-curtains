@@ -1210,8 +1210,6 @@ export class GLTFScenesManager {
         camera.position.set(0)
         camera.parent = child.node
 
-        camera.label = gltfCamera.name
-
         this.scenesManager.cameras.push(camera)
       } else if (gltfCamera.type === 'orthographic') {
         const camera = new OrthographicCamera({
@@ -1237,6 +1235,33 @@ export class GLTFScenesManager {
         const animation = this.gltf.animations[i]
 
         const channels = animation.channels.filter((channel) => channel.target.node === index)
+
+        // add pointer weights here
+        const pointerChannels = animation.channels.filter(
+          (channel) =>
+            channel.target.path === 'pointer' &&
+            channel.target.extensions &&
+            channel.target.extensions.KHR_animation_pointer &&
+            (channel.target.extensions.KHR_animation_pointer as unknown as any).pointer &&
+            (channel.target.extensions.KHR_animation_pointer as unknown as any).pointer.includes('weights')
+        )
+
+        pointerChannels.forEach((pointerChannel) => {
+          const pointerWeightChannel: GLTF.IAnimationChannel = {
+            sampler: pointerChannel.sampler,
+            target: {
+              node: null,
+              path: 'weights',
+            },
+          }
+
+          const pointerPath = (pointerChannel.target.extensions.KHR_animation_pointer as unknown as any).pointer
+          const splitedPointerPaths = pointerPath.split('/')
+          splitedPointerPaths.shift()
+
+          pointerWeightChannel.target.node = parseInt(splitedPointerPaths[1])
+          channels.push(pointerWeightChannel)
+        })
 
         if (channels && channels.length) {
           targetsAnimation.addTarget(child.node)
@@ -1274,6 +1299,10 @@ export class GLTFScenesManager {
                   }
               }
             })()
+
+            if (channel.target.path === 'weights') {
+              console.log(child.node)
+            }
 
             this.createKeyframeAnimation({
               animation,
