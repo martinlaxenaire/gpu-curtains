@@ -41,6 +41,7 @@ import { PointLight } from '../../core/lights/PointLight'
 import { SpotLight } from '../../core/lights/SpotLight'
 import { throwWarning } from '../../utils/utils'
 import type { GLTFPointerAnimationsManager } from './GLTFPointerAnimationsManager'
+import { Quat } from '../../math/Quat'
 
 // https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Constants
 // To make it easier to reference the WebGL enums that glTF uses.
@@ -390,13 +391,15 @@ export class GLTFScenesManager {
       for (const light of this.gltf.extensions['KHR_lights_punctual'].lights) {
         lightIndex++
 
+        const label = light.name ?? `glTF ${light.type} light ${lightIndex}`
+
         if (light.type === 'spot') {
           const innerConeAngle = light.spot.innerConeAngle !== undefined ? light.spot.innerConeAngle : 0
           const outerConeAngle = light.spot.outerConeAngle !== undefined ? light.spot.outerConeAngle : Math.PI / 4.0
 
           this.scenesManager.lights.push(
             new SpotLight(this.renderer, {
-              ...(light.name !== undefined && { label: light.name }),
+              label,
               color: light.color !== undefined ? new Vec3(light.color[0], light.color[1], light.color[2]) : new Vec3(1),
               intensity: light.intensity !== undefined ? light.intensity : 1,
               range: light.range !== undefined ? light.range : 0,
@@ -407,7 +410,7 @@ export class GLTFScenesManager {
         } else if (light.type === 'directional') {
           this.scenesManager.lights.push(
             new DirectionalLight(this.renderer, {
-              ...(light.name !== undefined && { label: light.name }),
+              label,
               color: light.color !== undefined ? new Vec3(light.color[0], light.color[1], light.color[2]) : new Vec3(1),
               intensity: light.intensity !== undefined ? light.intensity : 1,
             })
@@ -415,7 +418,7 @@ export class GLTFScenesManager {
         } else if (light.type === 'point') {
           this.scenesManager.lights.push(
             new PointLight(this.renderer, {
-              ...(light.name !== undefined && { label: light.name }),
+              label,
               color: light.color !== undefined ? new Vec3(light.color[0], light.color[1], light.color[2]) : new Vec3(1),
               intensity: light.intensity !== undefined ? light.intensity : 1,
               range: light.range !== undefined ? light.range : 0,
@@ -1161,6 +1164,14 @@ export class GLTFScenesManager {
 
       if (light instanceof DirectionalLight || light instanceof SpotLight) {
         light.target.set(0, 0, -1)
+
+        // update light target when parent world matrix changes
+        const _updateWorldMatrix = child.node.updateWorldMatrix.bind(child.node)
+
+        child.node.updateWorldMatrix = (updateParents, updateChildren) => {
+          _updateWorldMatrix(updateParents, updateChildren)
+          light.updateTargetFromWorldMatrix()
+        }
       }
 
       light.parent = child.node
@@ -1186,6 +1197,7 @@ export class GLTFScenesManager {
         const fov = (gltfCamera.perspective.yfov * 180) / Math.PI
 
         const camera = new PerspectiveCamera({
+          label: gltfCamera.name ?? `glTF Perspective camera ${node.camera}`,
           fov,
           near: gltfCamera.perspective.znear ?? 0.01,
           far: gltfCamera.perspective.zfar ?? 1000,
@@ -1198,9 +1210,12 @@ export class GLTFScenesManager {
         camera.position.set(0)
         camera.parent = child.node
 
+        camera.label = gltfCamera.name
+
         this.scenesManager.cameras.push(camera)
       } else if (gltfCamera.type === 'orthographic') {
         const camera = new OrthographicCamera({
+          label: gltfCamera.name ?? `glTF Orthographic camera ${node.camera}`,
           near: gltfCamera.orthographic.znear ?? 0.01,
           far: gltfCamera.orthographic.zfar ?? 1000,
           left: -gltfCamera.orthographic.xmag,
@@ -2370,22 +2385,6 @@ export class GLTFScenesManager {
     // once again, update all the matrix stack eagerly
     // because the main node or children transformations might have changed
     this.scenesManager.node.updateMatrixStack()
-
-    // update directional and spot light targets based on light world matrix
-    this.gltf.nodes.forEach((node) => {
-      if (node.extensions && node.extensions.KHR_lights_punctual) {
-        const light = this.scenesManager.lights[node.extensions.KHR_lights_punctual.light]
-        if (light instanceof DirectionalLight || light instanceof SpotLight) {
-          // from https://github.com/KhronosGroup/glTF-Sample-Renderer/blob/main/source/gltf/light.js#L32
-          const quat = light.worldMatrix.getRotation()
-          quat.normalize()
-          const direction = new Vec3(0, 0, -1)
-          direction.applyQuat(quat)
-
-          light.target.copy(light.actualPosition).add(direction)
-        }
-      }
-    })
 
     return this.scenesManager.meshesDescriptors.map((meshDescriptor) => {
       const { geometry } = meshDescriptor.parameters
