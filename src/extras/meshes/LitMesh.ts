@@ -127,74 +127,74 @@ export interface GetLitMeshMaterialUniform extends LitMeshMaterialUniformParams 
 
 /** {@link ShaderTextureDescriptor} used for a {@link LitMesh} with `Unlit` shading. */
 export interface UnlitTexturesDescriptors {
-  /** {@link ShaderTextureDescriptor | Base color texture descriptor} to use if any. */
+  /** {@link ShaderTextureDescriptor | Base color texture descriptor} to use if any. Format should be `rgba8unorm-srgb`. */
   baseColorTexture?: ShaderTextureDescriptor
-  /** {@link ShaderTextureDescriptor | Emissive texture descriptor} to use if any. */
+  /** {@link ShaderTextureDescriptor | Emissive texture descriptor} to use if any. Format should be `rgba8unorm-srgb`. */
   emissiveTexture?: ShaderTextureDescriptor
-  /** {@link ShaderTextureDescriptor | Occlusion texture descriptor} to use if any. */
+  /** {@link ShaderTextureDescriptor | Occlusion texture descriptor} to use if any. Format must be at least `r8unorm`. */
   occlusionTexture?: ShaderTextureDescriptor
 }
 
 /** {@link ShaderTextureDescriptor} used for a {@link LitMesh} with `Lambert` shading. */
 export interface LambertTexturesDescriptors extends UnlitTexturesDescriptors {
-  /** {@link ShaderTextureDescriptor | Normal texture descriptor} to use if any. */
+  /** {@link ShaderTextureDescriptor | Normal texture descriptor} to use if any. Format should be `rgba8unorm`. */
   normalTexture?: ShaderTextureDescriptor
 }
 
 /** {@link ShaderTextureDescriptor} used for a {@link LitMesh} with `Phong` shading. */
 export interface PhongTexturesDescriptors extends LambertTexturesDescriptors {
-  /** {@link ShaderTextureDescriptor | Metallic roughness texture descriptor} to use if any. */
+  /** {@link ShaderTextureDescriptor | Metallic roughness texture descriptor} to use if any. Format should be `rgba8unorm`. */
   metallicRoughnessTexture?: ShaderTextureDescriptor
-  /** {@link ShaderTextureDescriptor | Specular texture descriptor} (mixing both specular color in the `RGB` channels and specular intensity in the `A` channel) to use if any. */
+  /** {@link ShaderTextureDescriptor | Specular texture descriptor} (mixing both specular color in the `RGB` channels and specular intensity in the `A` channel) to use if any. Format should be `rgba8unorm-srgb`. */
   specularTexture?: ShaderTextureDescriptor
-  /** {@link ShaderTextureDescriptor | Specular intensity texture descriptor} (using the `A` channel) to use if any. */
+  /** {@link ShaderTextureDescriptor | Specular intensity texture descriptor} (using the `A` channel) to use if any. Format should be `rgba8unorm-srgb` or `rgba8unorm`. */
   specularFactorTexture?: ShaderTextureDescriptor
-  /** {@link ShaderTextureDescriptor | Specular color texture descriptor} (using the `RGB` channels) to use if any. */
+  /** {@link ShaderTextureDescriptor | Specular color texture descriptor} (using the `RGB` channels) to use if any. Format should be `rgba8unorm-srgb`. */
   specularColorTexture?: ShaderTextureDescriptor
 }
 
 /** {@link ShaderTextureDescriptor} used for a {@link LitMesh} with `PBR` shading. */
 export interface PBRTexturesDescriptors extends PhongTexturesDescriptors {
-  /** {@link ShaderTextureDescriptor | Transmission thickness texture descriptor} (using the `R` channel for transmission and the `G` channel for thickness) to use if any. */
+  /** {@link ShaderTextureDescriptor | Transmission thickness texture descriptor} (using the `R` channel for transmission and the `G` channel for thickness) to use if any. Format must be at least `rg8unorm`. */
   transmissionThicknessTexture?: ShaderTextureDescriptor
-  /** {@link ShaderTextureDescriptor | Transmission texture descriptor} (using the `R` channel) to use if any. */
+  /** {@link ShaderTextureDescriptor | Transmission texture descriptor} (using the `R` channel) to use if any. Format must be at least `r8unorm`. */
   transmissionTexture?: ShaderTextureDescriptor
-  /** {@link ShaderTextureDescriptor | Thickness texture descriptor} (using the `G` channel) to use if any. */
+  /** {@link ShaderTextureDescriptor | Thickness texture descriptor} (using the `G` channel) to use if any. Format must be at least `rg8unorm`. */
   thicknessTexture?: ShaderTextureDescriptor
-  /** {@link ShaderTextureDescriptor | Transmission scene background texture descriptor} to use if any. */
+  /** {@link ShaderTextureDescriptor | Transmission scene background texture descriptor} to use if any. Handled internally by the renderer. */
   transmissionBackgroundTexture?: ShaderTextureDescriptor
 
-  /** {@link ShaderTextureDescriptor | Sheen texture descriptor} (mixing both sheen color in the `RGB` channels and roughness in the `A` channel) to use if any. */
+  /** {@link ShaderTextureDescriptor | Sheen texture descriptor} (mixing both sheen color in the `RGB` channels and roughness in the `A` channel) to use if any. Format should be `rgba8unorm-srgb`. */
   sheenTexture?: ShaderTextureDescriptor
-  /** {@link ShaderTextureDescriptor | Sheen color texture descriptor} (using the `RGB` channels) to use if any. */
+  /** {@link ShaderTextureDescriptor | Sheen color texture descriptor} (using the `RGB` channels) to use if any. Format should be `rgba8unorm-srgb`. */
   sheenColorTexture?: ShaderTextureDescriptor
-  /** {@link ShaderTextureDescriptor | Sheen roughness texture descriptor} (using the `A` channel) to use if any. */
+  /** {@link ShaderTextureDescriptor | Sheen roughness texture descriptor} (using the `A` channel) to use if any. Format should be `rgba8unorm-srgb` or `rgba8unorm`. */
   sheenRoughnessTexture?: ShaderTextureDescriptor
 
-  /** {@link ShaderTextureDescriptor | Anisotropy texture descriptor} to use if any. */
+  /** {@link ShaderTextureDescriptor | Anisotropy texture descriptor} to use if any. Format should be `rgba8unorm`. */
   anisotropyTexture?: ShaderTextureDescriptor
 
-  /** {@link ShaderTextureDescriptor | Clearcoat texture descriptor} (mixing both clearcoat factor in the `R` channel and roughness in the `G` channel) to use if any. */
+  /** {@link ShaderTextureDescriptor | Clearcoat texture descriptor} (mixing both clearcoat factor in the `R` channel and roughness in the `G` channel) to use if any. Format must be at least `rg8unorm`. */
   clearcoatTexture?: ShaderTextureDescriptor
-  /** {@link ShaderTextureDescriptor | Clearcoat factor texture descriptor} (using the `R` channel) to use if any. */
+  /** {@link ShaderTextureDescriptor | Clearcoat factor texture descriptor} (using the `R` channel) to use if any. Format must be at least `r8unorm`. */
   clearcoatFactorTexture?: ShaderTextureDescriptor
-  /** {@link ShaderTextureDescriptor | Clearcoat  roughness texture descriptor} (using the `G` channel) to use if any. */
+  /** {@link ShaderTextureDescriptor | Clearcoat  roughness texture descriptor} (using the `G` channel) to use if any. Format must be at least `rg8unorm`. */
   clearcoatRoughnessTexture?: ShaderTextureDescriptor
-  /** {@link ShaderTextureDescriptor | Clearcoat normal texture descriptor} to use if any. */
+  /** {@link ShaderTextureDescriptor | Clearcoat normal texture descriptor} to use if any. Format should be `rgba8unorm`. */
   clearcoatNormalTexture?: ShaderTextureDescriptor
 
-  /** {@link ShaderTextureDescriptor | Iridescence texture descriptor} (using the `R` channel for intensity and `G` channel for thickness) to use if any. */
+  /** {@link ShaderTextureDescriptor | Iridescence texture descriptor} (using the `R` channel for intensity and `G` channel for thickness) to use if any. Format must be at least `rg8unorm`. */
   iridescenceTexture?: ShaderTextureDescriptor
-  /** {@link ShaderTextureDescriptor | Iridescence texture descriptor} (using the `R` channel) to use if any. */
+  /** {@link ShaderTextureDescriptor | Iridescence texture descriptor} (using the `R` channel) to use if any. Format must be at least `r8unorm`. */
   iridescenceFactorTexture?: ShaderTextureDescriptor
-  /** {@link ShaderTextureDescriptor | Iridescence thickness texture descriptor} (using the `G` channel) to use if any. */
+  /** {@link ShaderTextureDescriptor | Iridescence thickness texture descriptor} (using the `G` channel) to use if any. Format must be at least `rg8unorm`. */
   iridescenceThicknessTexture?: ShaderTextureDescriptor
 
-  /** {@link ShaderTextureDescriptor | Diffuse transmission texture descriptor} (using the `RGB` channels for color and `A` channel for intensity) to use if any. */
+  /** {@link ShaderTextureDescriptor | Diffuse transmission texture descriptor} (using the `RGB` channels for color and `A` channel for intensity) to use if any. Format should be `rgba8unorm-srgb`. */
   diffuseTransmissionTexture?: ShaderTextureDescriptor
-  /** {@link ShaderTextureDescriptor | Diffuse transmission intensity texture descriptor} (using the `A` channel) to use if any. */
+  /** {@link ShaderTextureDescriptor | Diffuse transmission intensity texture descriptor} (using the `A` channel) to use if any. Format should be `rgba8unorm-srgb` or `rgba8unorm`. */
   diffuseTransmissionFactorTexture?: ShaderTextureDescriptor
-  /** {@link ShaderTextureDescriptor | Diffuse transmission texture descriptor} (using the `RGB` channels) to use if any. */
+  /** {@link ShaderTextureDescriptor | Diffuse transmission texture descriptor} (using the `RGB` channels) to use if any. Format should be `rgba8unorm-srgb`. */
   diffuseTransmissionColorTexture?: ShaderTextureDescriptor
 }
 
