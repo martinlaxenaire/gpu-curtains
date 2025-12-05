@@ -560,6 +560,7 @@ window.addEventListener('load', async () => {
     })
 
     // punctual lighting
+    lightIntensities = []
     if (scenesManager.lights.length) {
       scenesManager.lights.forEach((light) => {
         lightIntensities.push(light.intensity)
@@ -570,7 +571,6 @@ window.addEventListener('load', async () => {
       gltfPunctualLightingFolder.open()
       usePunctualLightingField.enable()
     } else {
-      lightIntensities = []
       gltfPunctualLightingFolder.close()
       usePunctualLightingField.disable()
     }

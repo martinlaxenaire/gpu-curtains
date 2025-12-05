@@ -648,7 +648,6 @@ window.addEventListener('load', async () => {
       })
       usePunctualLightingField.enable()
     } else {
-      lightIntensities = []
       usePunctualLightingField.disable()
     }
 
