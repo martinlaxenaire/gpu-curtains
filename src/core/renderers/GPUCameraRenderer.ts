@@ -252,6 +252,7 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
 
     this.useCamera(
       new PerspectiveCamera({
+        label: `${this.options.label} default perspective camera`,
         fov: cameraParameters.fov,
         near: cameraParameters.near,
         far: cameraParameters.far,

@@ -43,6 +43,7 @@ export class OrthographicCamera extends Camera {
    */
   constructor(
     {
+      label = 'Orthographic camera',
       near = 0.1,
       far = 150,
       left = -1,
@@ -55,7 +56,7 @@ export class OrthographicCamera extends Camera {
       },
     } = {} as OrthographicCameraParams
   ) {
-    super({ near, far, pixelRatio, onMatricesChanged })
+    super({ label, near, far, pixelRatio, onMatricesChanged })
 
     // whatever
     this.position.set(0, 0, 10)
