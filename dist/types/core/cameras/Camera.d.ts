@@ -6,6 +6,8 @@ import { Vec3 } from '../../math/Vec3';
  * Defines Camera basic perspective options.
  */
 export interface CameraBaseOptions {
+    /** {@link Camera} default label. */
+    label?: string;
     /** {@link Camera} near plane, the closest point where a mesh vertex is drawn. */
     near?: number;
     /** {@link Camera} far plane, the farthest point where a mesh vertex is drawn. */
@@ -40,6 +42,8 @@ export declare class Camera extends Object3D {
     uuid: string;
     /** {@link CameraObject3DMatrices | Matrices object} of the {@link Camera}. */
     matrices: CameraObject3DMatrices;
+    /** {@link Camera} default label. */
+    label: string;
     /** Callback to execute when one of the camera {@link matrices} changed. */
     onMatricesChanged?: () => void;
     /** A number representing what CSS perspective value (in pixel) should be used to obtain the same perspective effect as this {@link Camera}. Useful only with {@link core/cameras/PerspectiveCamera.PerspectiveCamera | PerspectiveCamera}. */
@@ -50,7 +54,7 @@ export declare class Camera extends Object3D {
      * Camera constructor
      * @param parameters - {@link CameraParams} used to create our {@link Camera}.
      */
-    constructor({ near, far, pixelRatio, onMatricesChanged, }?: CameraParams);
+    constructor({ label, near, far, pixelRatio, onMatricesChanged, }?: CameraParams);
     /**
      * Set our transform and projection matrices.
      */

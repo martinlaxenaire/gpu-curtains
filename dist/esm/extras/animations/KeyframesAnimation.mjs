@@ -1,6 +1,8 @@
 import { Vec3 } from '../../math/Vec3.mjs';
 import { Quat } from '../../math/Quat.mjs';
+import { Vec2 } from '../../math/Vec2.mjs';
 
+const tempVec2 = new Vec2();
 const tempVec3 = new Vec3();
 const tempQuat = new Quat();
 class KeyframesAnimation {
@@ -15,24 +17,30 @@ class KeyframesAnimation {
     keyframes = null,
     values = null,
     path = null,
+    type = null,
+    inputValue = null,
     interpolation = "LINEAR"
   } = {}) {
     this.label = label;
     this.keyframes = keyframes;
     this.values = values;
     this.path = path;
+    this.type = type;
+    this.inputValue = inputValue;
     this.interpolation = interpolation;
     this.inputIndex = inputIndex;
-    this.weightsBindingInputs = [];
     this.onAfterUpdate = null;
     this.duration = this.keyframes ? this.keyframes[this.keyframes.length - 1] : 0;
   }
   /**
-   * Add a weight {@link BufferBindingInput} to the {@link weightsBindingInputs} array.
-   * @param input - Weight {@link BufferBindingInput}.
+   * Add a {@link BufferBindingInput} to the {@link inputValue} array. Use for weights animations.
+   * @param input - {@link BufferBindingInput} to add.
    */
-  addWeightBindingInput(input) {
-    this.weightsBindingInputs.push(input);
+  addBindingInput(input) {
+    if (!this.inputValue) {
+      this.inputValue = [];
+    }
+    this.inputValue.push(input);
   }
   /**
    * Get a cubic spline interpolation value.
@@ -56,12 +64,12 @@ class KeyframesAnimation {
     return this.interpolation === "CUBICSPLINE" ? index * 3 * size + size : index * size;
   }
   /**
-   * Update an {@link Object3D} transformation property or eventually the {@link weightsBindingInputs} based on the current time given, the {@link path} and {@link interpolation} used and the {@link keyframes} and {@link values}.
+   * Update the {@link inputValue} based on the current time given, the {@link path}, {@link type} and {@link interpolation} used and the {@link keyframes} and {@link values}.
    * @param target - {@link Object3D} to update.
    * @param currentTime - Current time in seconds.
    */
   update(target, currentTime = 0) {
-    if (!this.keyframes || !this.values || !this.path) return;
+    if (!this.keyframes || !this.values || !this.path || !this.type || this.inputValue === null) return;
     const nextTimeIndex = this.keyframes.findIndex((t) => t >= currentTime);
     if (nextTimeIndex === -1) return;
     const previousTimeIndex = nextTimeIndex - 1;
@@ -70,10 +78,30 @@ class KeyframesAnimation {
     const previousTime = this.keyframes[previousTimeIndex];
     const interpolatedTime = (currentTime - previousTime) / (nextTime - previousTime);
     const deltaTime = nextTime - previousTime;
-    if (this.path === "rotation") {
+    if (this.type === "scalar") {
+      const prevIndex = this.getIndexFromInterpolation(previousTimeIndex, 1);
+      const nextIndex = this.getIndexFromInterpolation(nextTimeIndex, 1);
+      const value = this.values[prevIndex];
+      this.inputValue = value;
+      if (this.interpolation === "LINEAR") {
+        const nextValue = this.values[nextIndex];
+        this.inputValue += (nextValue - value) * interpolatedTime;
+      } else if (this.interpolation === "CUBICSPLINE") {
+        const nextValue = this.values[nextIndex];
+        const previousOutputTangent = this.values[prevIndex + 1];
+        const nextInputTangent = this.values[nextIndex - 1];
+        this.inputValue = this.getCubicSplineComponentValue(
+          interpolatedTime,
+          value,
+          nextValue,
+          deltaTime * previousOutputTangent[0],
+          deltaTime * nextInputTangent[0]
+        );
+      }
+    } else if (this.inputValue instanceof Quat) {
       const prevIndex = this.getIndexFromInterpolation(previousTimeIndex, 4);
       const nextIndex = this.getIndexFromInterpolation(nextTimeIndex, 4);
-      target.quaternion.setFromArray([
+      this.inputValue.setFromArray([
         this.values[prevIndex],
         this.values[prevIndex + 1],
         this.values[prevIndex + 2],
@@ -102,44 +130,75 @@ class KeyframesAnimation {
           const cubicValue = [
             this.getCubicSplineComponentValue(
               interpolatedTime,
-              target.quaternion.elements[0],
+              this.inputValue.elements[0],
               tempQuat.elements[0],
               deltaTime * previousOutputTangent[0],
               deltaTime * nextInputTangent[0]
             ),
             this.getCubicSplineComponentValue(
               interpolatedTime,
-              target.quaternion.elements[1],
+              this.inputValue.elements[1],
               tempQuat.elements[1],
               deltaTime * previousOutputTangent[1],
               deltaTime * nextInputTangent[1]
             ),
             this.getCubicSplineComponentValue(
               interpolatedTime,
-              target.quaternion.elements[2],
+              this.inputValue.elements[2],
               tempQuat.elements[2],
               deltaTime * previousOutputTangent[2],
               deltaTime * nextInputTangent[2]
             ),
             this.getCubicSplineComponentValue(
               interpolatedTime,
-              target.quaternion.elements[3],
+              this.inputValue.elements[3],
               tempQuat.elements[3],
               deltaTime * previousOutputTangent[3],
               deltaTime * nextInputTangent[3]
             )
           ];
-          target.quaternion.setFromArray(cubicValue).normalize();
+          this.inputValue.setFromArray(cubicValue).normalize();
         } else {
-          target.quaternion.slerp(tempQuat, interpolatedTime);
+          this.inputValue.slerp(tempQuat, interpolatedTime);
         }
       }
-      target.shouldUpdateModelMatrix();
-    } else if (this.path === "translation" || this.path === "scale") {
-      const vectorName = this.path === "translation" ? "position" : this.path;
+      if (this.path === "rotation") {
+        target.shouldUpdateModelMatrix();
+      }
+    } else if (this.inputValue instanceof Vec2) {
+      const prevIndex = this.getIndexFromInterpolation(previousTimeIndex, 2);
+      const nextIndex = this.getIndexFromInterpolation(nextTimeIndex, 2);
+      this.inputValue.set(this.values[prevIndex], this.values[prevIndex + 1]);
+      if (this.interpolation === "LINEAR" || this.interpolation === "CUBICSPLINE") {
+        tempVec2.set(this.values[nextIndex], this.values[nextIndex + 1]);
+        if (this.interpolation === "CUBICSPLINE") {
+          const previousOutputTangent = [this.values[prevIndex + 2], this.values[prevIndex + 3]];
+          const nextInputTangent = [this.values[nextIndex - 2], this.values[nextIndex - 1]];
+          const cubicValue = [
+            this.getCubicSplineComponentValue(
+              interpolatedTime,
+              this.inputValue.x,
+              tempVec2.x,
+              deltaTime * previousOutputTangent[0],
+              deltaTime * nextInputTangent[0]
+            ),
+            this.getCubicSplineComponentValue(
+              interpolatedTime,
+              this.inputValue.y,
+              tempVec2.y,
+              deltaTime * previousOutputTangent[1],
+              deltaTime * nextInputTangent[1]
+            )
+          ];
+          this.inputValue.set(cubicValue[0], cubicValue[1]);
+        } else {
+          this.inputValue.lerp(tempVec2, interpolatedTime);
+        }
+      }
+    } else if (this.inputValue instanceof Vec3) {
       const prevIndex = this.getIndexFromInterpolation(previousTimeIndex, 3);
       const nextIndex = this.getIndexFromInterpolation(nextTimeIndex, 3);
-      target[vectorName].set(this.values[prevIndex], this.values[prevIndex + 1], this.values[prevIndex + 2]);
+      this.inputValue.set(this.values[prevIndex], this.values[prevIndex + 1], this.values[prevIndex + 2]);
       if (this.interpolation === "LINEAR" || this.interpolation === "CUBICSPLINE") {
         tempVec3.set(this.values[nextIndex], this.values[nextIndex + 1], this.values[nextIndex + 2]);
         if (this.interpolation === "CUBICSPLINE") {
@@ -152,45 +211,69 @@ class KeyframesAnimation {
           const cubicValue = [
             this.getCubicSplineComponentValue(
               interpolatedTime,
-              target[vectorName].x,
+              this.inputValue.x,
               tempVec3.x,
               deltaTime * previousOutputTangent[0],
               deltaTime * nextInputTangent[0]
             ),
             this.getCubicSplineComponentValue(
               interpolatedTime,
-              target[vectorName].y,
+              this.inputValue.y,
               tempVec3.y,
               deltaTime * previousOutputTangent[1],
               deltaTime * nextInputTangent[1]
             ),
             this.getCubicSplineComponentValue(
               interpolatedTime,
-              target[vectorName].z,
+              this.inputValue.z,
               tempVec3.z,
               deltaTime * previousOutputTangent[2],
               deltaTime * nextInputTangent[2]
             )
           ];
-          target[vectorName].set(cubicValue[0], cubicValue[1], cubicValue[2]);
+          this.inputValue.set(cubicValue[0], cubicValue[1], cubicValue[2]);
         } else {
-          target[vectorName].lerp(tempVec3, interpolatedTime);
+          this.inputValue.lerp(tempVec3, interpolatedTime);
         }
       }
-    } else if (this.path === "weights") {
-      const prevIndex = this.getIndexFromInterpolation(previousTimeIndex, this.weightsBindingInputs.length);
-      const nextIndex = this.getIndexFromInterpolation(nextTimeIndex, this.weightsBindingInputs.length);
-      for (let i = 0; i < this.weightsBindingInputs.length; i++) {
+    } else if (this.path === "weights" && this.inputValue.length) {
+      const inputLength = this.inputValue.length;
+      const prevIndex = this.getIndexFromInterpolation(previousTimeIndex, inputLength);
+      const nextIndex = this.getIndexFromInterpolation(nextTimeIndex, inputLength);
+      for (let i = 0; i < inputLength; i++) {
         const value = this.values[prevIndex + i];
-        this.weightsBindingInputs[i].value = value;
+        this.inputValue[i].value = value;
         if (this.interpolation === "LINEAR") {
           const nextValue = this.values[nextIndex + i];
-          this.weightsBindingInputs[i].value += (nextValue - value) * interpolatedTime;
+          this.inputValue[i].value += (nextValue - value) * interpolatedTime;
         } else if (this.interpolation === "CUBICSPLINE") {
           const nextValue = this.values[nextIndex + i];
           const previousOutputTangent = this.values[prevIndex + i + 1];
           const nextInputTangent = this.values[nextIndex + i - 1];
-          this.weightsBindingInputs[i].value = this.getCubicSplineComponentValue(
+          this.inputValue[i].value = this.getCubicSplineComponentValue(
+            interpolatedTime,
+            value,
+            nextValue,
+            deltaTime * previousOutputTangent[0],
+            deltaTime * nextInputTangent[0]
+          );
+        }
+      }
+    } else if (this.inputValue.length) {
+      const inputLength = this.inputValue.length;
+      const prevIndex = this.getIndexFromInterpolation(previousTimeIndex, inputLength);
+      const nextIndex = this.getIndexFromInterpolation(nextTimeIndex, inputLength);
+      for (let i = 0; i < inputLength; i++) {
+        const value = this.values[prevIndex + i];
+        this.inputValue[i] = value;
+        if (this.interpolation === "LINEAR") {
+          const nextValue = this.values[nextIndex + i];
+          this.inputValue[i] += (nextValue - value) * interpolatedTime;
+        } else if (this.interpolation === "CUBICSPLINE") {
+          const nextValue = this.values[nextIndex + i];
+          const previousOutputTangent = this.values[prevIndex + i + 1];
+          const nextInputTangent = this.values[nextIndex + i - 1];
+          this.inputValue[i] = this.getCubicSplineComponentValue(
             interpolatedTime,
             value,
             nextValue,

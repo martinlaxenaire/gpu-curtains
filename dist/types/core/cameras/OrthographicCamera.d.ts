@@ -29,7 +29,7 @@ export declare class OrthographicCamera extends Camera {
      * OrthographicCamera constructor
      * @param parameters - {@link OrthographicCameraParams} used to create our {@link OrthographicCamera}.
      */
-    constructor({ near, far, left, right, top, bottom, pixelRatio, onMatricesChanged, }?: OrthographicCameraParams);
+    constructor({ label, near, far, left, right, top, bottom, pixelRatio, onMatricesChanged, }?: OrthographicCameraParams);
     /**
      * Get the {@link OrthographicCamera.left | left} frustum plane value.
      */

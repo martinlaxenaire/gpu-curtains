@@ -129,9 +129,11 @@ export interface PhongTexturesDescriptors extends LambertTexturesDescriptors {
 }
 /** {@link ShaderTextureDescriptor} used for a {@link LitMesh} with `PBR` shading. */
 export interface PBRTexturesDescriptors extends PhongTexturesDescriptors {
-    /** {@link ShaderTextureDescriptor | Transmission texture descriptor} to use if any. */
+    /** {@link ShaderTextureDescriptor | Transmission thickness texture descriptor} (using the `R` channel for transmission and the `G` channel for thickness) to use if any. */
+    transmissionThicknessTexture?: ShaderTextureDescriptor;
+    /** {@link ShaderTextureDescriptor | Transmission texture descriptor} (using the `R` channel) to use if any. */
     transmissionTexture?: ShaderTextureDescriptor;
-    /** {@link ShaderTextureDescriptor | Thickness texture descriptor} to use if any. */
+    /** {@link ShaderTextureDescriptor | Thickness texture descriptor} (using the `G` channel) to use if any. */
     thicknessTexture?: ShaderTextureDescriptor;
     /** {@link ShaderTextureDescriptor | Transmission scene background texture descriptor} to use if any. */
     transmissionBackgroundTexture?: ShaderTextureDescriptor;
@@ -143,8 +145,10 @@ export interface PBRTexturesDescriptors extends PhongTexturesDescriptors {
     sheenRoughnessTexture?: ShaderTextureDescriptor;
     /** {@link ShaderTextureDescriptor | Anisotropy texture descriptor} to use if any. */
     anisotropyTexture?: ShaderTextureDescriptor;
-    /** {@link ShaderTextureDescriptor | Clearcoat texture descriptor} (using the `R` channel) to use if any. */
+    /** {@link ShaderTextureDescriptor | Clearcoat texture descriptor} (mixing both clearcoat factor in the `R` channel and roughness in the `G` channel) to use if any. */
     clearcoatTexture?: ShaderTextureDescriptor;
+    /** {@link ShaderTextureDescriptor | Clearcoat factor texture descriptor} (using the `R` channel) to use if any. */
+    clearcoatFactorTexture?: ShaderTextureDescriptor;
     /** {@link ShaderTextureDescriptor | Clearcoat  roughness texture descriptor} (using the `G` channel) to use if any. */
     clearcoatRoughnessTexture?: ShaderTextureDescriptor;
     /** {@link ShaderTextureDescriptor | Clearcoat normal texture descriptor} to use if any. */

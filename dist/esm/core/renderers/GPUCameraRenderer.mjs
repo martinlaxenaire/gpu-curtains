@@ -122,6 +122,7 @@ class GPUCameraRenderer extends GPURenderer {
     const { width, height } = this.rectBBox;
     this.useCamera(
       new PerspectiveCamera({
+        label: `${this.options.label} default perspective camera`,
         fov: cameraParameters.fov,
         near: cameraParameters.near,
         far: cameraParameters.far,
@@ -182,6 +183,18 @@ class GPUCameraRenderer extends GPURenderer {
     if (this.camera instanceof PerspectiveCamera && this.camera.forceAspect) {
       width = Math.min(width, height * this.camera.forceAspect);
       height = Math.min(width / this.camera.forceAspect, height);
+      this.setCameraViewport({
+        width,
+        height,
+        top: (this.canvas.height - height) * 0.5,
+        left: (this.canvas.width - width) * 0.5,
+        minDepth: 0,
+        maxDepth: 1
+      });
+    } else if (this.camera instanceof OrthographicCamera) {
+      const aspectRatio = (this.camera.right - this.camera.left) / (this.camera.top - this.camera.bottom);
+      width = Math.min(width, height * aspectRatio);
+      height = Math.min(width / aspectRatio, height);
       this.setCameraViewport({
         width,
         height,

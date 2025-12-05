@@ -123,6 +123,7 @@ const GL = (typeof window !== 'undefined' && WebGLRenderingContext) || {
  * - [x] KHR_materials_variants
  * - [x] KHR_materials_volume
  * - [ ] KHR_mesh_quantization
+ * - [ ] KHR_node_visibility
  * - [ ] KHR_texture_basisu
  * - [x] KHR_texture_transform
  * - [ ] KHR_xmp_json_ld
@@ -151,6 +152,7 @@ export class GLTFScenesManager {
   /** The {@link PrimitiveInstances} Map, to group similar {@link LitMesh} by instances. */
   #primitiveInstances: PrimitiveInstances
 
+  /** Optional {@link GLTFPointerAnimationsManager} used to handle pointer animations, if any. */
   pointerAnimationsManager: GLTFPointerAnimationsManager | null
 
   /**
@@ -330,8 +332,15 @@ export class GLTFScenesManager {
     })
   }
 
+  /**
+   * Get a glTF animation keyframes and values {@link TypedArray} from the given {@link GLTF.IAnimationSampler | glTF animation sampler}.
+   * @param sampler - {@link GLTF.IAnimationSampler | glTF animation sampler} to retrieve from.
+   * @returns - Corresponding keyframes and values {@link TypedArray}.
+   */
   getAnimationKeyframesValues(sampler: GLTF.IAnimationSampler): {
+    /** Corresponding keyframes {@link TypedArray}. */
     keyframes: TypedArray
+    /** Corresponding values {@link TypedArray}. */
     values: TypedArray
   } {
     const inputAccessor = this.gltf.accessors[sampler.input]
@@ -341,45 +350,6 @@ export class GLTFScenesManager {
     const values = this.#getAccessorArray(outputAccessor)
 
     return { keyframes, values }
-  }
-
-  // TODO useless?
-  createKeyframeAnimation({
-    animation,
-    targetsAnimation,
-    channel,
-    type = null,
-    inputValue = null,
-    childNode,
-    label = '',
-  }: {
-    animation: GLTF.IAnimation
-    targetsAnimation: TargetsAnimationsManager
-    channel: GLTF.IAnimationChannel
-    type?: KeyframesAnimationValueType
-    inputValue?: KeyframesAnimationInputValue
-    childNode: Object3D
-    label?: string
-  }) {
-    const sampler = animation.samplers[channel.sampler]
-    const path = channel.target.path
-
-    const { keyframes, values } = this.getAnimationKeyframesValues(sampler)
-
-    const keyframesAnimation = new KeyframesAnimation({
-      label,
-      inputIndex: sampler.input,
-      keyframes,
-      values,
-      path,
-      type,
-      inputValue,
-      interpolation: sampler.interpolation,
-    })
-
-    targetsAnimation.addTargetAnimation(childNode, keyframesAnimation)
-
-    return keyframesAnimation
   }
 
   /**
@@ -1300,19 +1270,23 @@ export class GLTFScenesManager {
               }
             })()
 
-            if (channel.target.path === 'weights') {
-              console.log(child.node)
-            }
+            const sampler = animation.samplers[channel.sampler]
+            const path = channel.target.path
 
-            this.createKeyframeAnimation({
-              animation,
-              targetsAnimation,
-              channel,
+            const { keyframes, values } = this.getAnimationKeyframesValues(sampler)
+
+            const keyframesAnimation = new KeyframesAnimation({
+              label,
+              inputIndex: sampler.input,
+              keyframes,
+              values,
+              path,
               type: input.type,
               inputValue: input.value,
-              childNode: child.node,
-              label,
+              interpolation: sampler.interpolation,
             })
+
+            targetsAnimation.addTargetAnimation(child.node, keyframesAnimation)
           })
         }
       })
@@ -2010,7 +1984,7 @@ export class GLTFScenesManager {
 
       const weights = this.gltf.meshes[meshIndex].weights
 
-      let weightAnimation
+      let weightAnimation: KeyframesAnimation | null = null
       for (const animation of this.scenesManager.animations) {
         weightAnimation = animation.getAnimationByObject3DAndPath(meshDescriptor.parent, 'weights')
 
@@ -2050,8 +2024,7 @@ export class GLTFScenesManager {
         })
 
         if (weightAnimation) {
-          console.log(targetBinding.inputs.weight)
-          weightAnimation.addWeightBindingInput(targetBinding.inputs.weight)
+          weightAnimation.addBindingInput(targetBinding.inputs.weight)
         }
 
         bindings.push(targetBinding)
@@ -2396,6 +2369,11 @@ export class GLTFScenesManager {
     }
   }
 
+  /**
+   * Return the {@link PrimitiveInstanceDescriptor} corresponding the given glTF material index, if any.
+   * @param materialIndex - glTF material index.
+   * @returns - {@link PrimitiveInstanceDescriptor} found if any.
+   */
   getPrimitiveInstanceFromGLTFMaterial(
     materialIndex: GLTF.IMeshPrimitive['material']
   ): PrimitiveInstanceDescriptor | null {
@@ -2432,7 +2410,7 @@ export class GLTFScenesManager {
 
         meshDescriptor.alternateMaterials.set('Default', mesh.material)
 
-        // animations
+        // register eventual pointer animations
         if (this.pointerAnimationsManager) {
           this.pointerAnimationsManager.registerMeshAnimations(meshDescriptor, mesh)
         }

@@ -3,6 +3,7 @@ import { getTextureSample } from './get-texture-sample.mjs';
 const getClearcoat = ({
   extensionsUsed = [],
   clearcoatTexture = null,
+  clearcoatFactorTexture = null,
   clearcoatRoughnessTexture = null
 }) => {
   let clearcoat = (
@@ -22,14 +23,23 @@ const getClearcoat = ({
     clearcoat += /* wgsl */
     `
   clearcoat = clearcoat * clearcoatSample.r;
+  clearcoatRoughness = clearcoatRoughness * clearcoatSample.g;
     `;
-  }
-  if (clearcoatRoughnessTexture) {
-    clearcoat += getTextureSample(clearcoatRoughnessTexture, "clearcoatRoughness");
-    clearcoat += /* wgsl */
-    `
+  } else {
+    if (clearcoatFactorTexture) {
+      clearcoat += getTextureSample(clearcoatFactorTexture, "clearcoatFactor");
+      clearcoat += /* wgsl */
+      `
+  clearcoat = clearcoat * clearcoatFactorSample.r;
+    `;
+    }
+    if (clearcoatRoughnessTexture) {
+      clearcoat += getTextureSample(clearcoatRoughnessTexture, "clearcoatRoughness");
+      clearcoat += /* wgsl */
+      `
   clearcoatRoughness = clearcoatRoughness * clearcoatRoughnessSample.g;
     `;
+    }
   }
   clearcoat += /* wgsl */
   `
@@ -56,7 +66,7 @@ const getClearcoatNormal = ({
     if (normalTexture) {
       clearcoatNormal += /* wgsl */
       `
-  let clearcoatNormalSample = textureSample(${clearcoatNormalTexture.texture.options.name}, ${clearcoatNormalTexture.sampler?.name ?? "defaultSampler"}, normalUV);`;
+    let clearcoatNormalSample = textureSample(${clearcoatNormalTexture.texture.options.name}, ${clearcoatNormalTexture.sampler?.name ?? "defaultSampler"}, normalUV);`;
     } else {
       clearcoatNormal += getTextureSample(clearcoatNormalTexture, "clearcoatNormal");
     }

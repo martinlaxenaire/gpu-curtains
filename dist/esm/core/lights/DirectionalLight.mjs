@@ -1,6 +1,8 @@
 import { Light } from './Light.mjs';
 import { Vec3 } from '../../math/Vec3.mjs';
 import { DirectionalShadow } from '../shadows/DirectionalShadow.mjs';
+import { Quat } from '../../math/Quat.mjs';
+import { Mat4 } from '../../math/Mat4.mjs';
 
 var __typeError = (msg) => {
   throw TypeError(msg);
@@ -10,6 +12,9 @@ var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read fr
 var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
 var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
 var _direction;
+const tempVec3 = new Vec3();
+const tempQuat = new Quat();
+const tempMat4 = new Mat4();
 class DirectionalLight extends Light {
   /**
    * DirectionalLight constructor
@@ -121,6 +126,28 @@ class DirectionalLight extends Light {
       this.up.set(0, 1, 0);
     }
     this.applyLookAt(this.actualPosition, target);
+  }
+  /**
+   * Update the {@link target} and therefore direction directly from the {@link worldMatrix}, in case a transformation (especially rotation) has been applied to a parent of this {@link DirectionalLight} instead of updating the {@link target} directly.
+   */
+  updateTargetFromWorldMatrix() {
+    tempVec3.set(1);
+    this.worldMatrix.getScale(tempVec3);
+    tempMat4.identity();
+    for (const col of [0, 1, 2]) {
+      tempMat4.elements[col] = this.worldMatrix.elements[col] / tempVec3.x;
+      tempMat4.elements[col + 4] = this.worldMatrix.elements[col + 4] / tempVec3.y;
+      tempMat4.elements[col + 8] = this.worldMatrix.elements[col + 8] / tempVec3.z;
+    }
+    tempMat4.getRotation(tempQuat);
+    tempQuat.normalize();
+    tempVec3.set(0, 0, -1);
+    tempVec3.applyQuat(tempQuat);
+    tempVec3.add(this.actualPosition);
+    this.target._x = tempVec3.x;
+    this.target._y = tempVec3.y;
+    this.target._z = tempVec3.z;
+    this.setDirection();
   }
   /**
    * If the {@link modelMatrix | model matrix} has been updated, set the new direction from the {@link worldMatrix} translation.

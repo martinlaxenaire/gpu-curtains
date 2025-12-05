@@ -1,13 +1,11 @@
 import { TypedArrayConstructor } from '../../core/bindings/utils'
-import { Camera } from '../../core/cameras/Camera'
 import { OrthographicCamera } from '../../core/cameras/OrthographicCamera'
 import { PerspectiveCamera } from '../../core/cameras/PerspectiveCamera'
-import { Light } from '../../core/lights/Light'
 import { SpotLight } from '../../core/lights/SpotLight'
 import { Object3D } from '../../core/objects3D/Object3D'
 import { MediaTexture } from '../../core/textures/MediaTexture'
 import { Vec2 } from '../../math/Vec2'
-import { GLTF, MeshDescriptor } from '../../types'
+import { MeshDescriptor } from '../../types'
 import {
   KeyframesAnimation,
   KeyframesAnimationInputValue,
@@ -17,51 +15,70 @@ import { TargetsAnimationsManager } from '../animations/TargetsAnimationsManager
 import { LitMesh, LitMeshMaterialUniformParams, ShaderTextureDescriptor } from '../meshes/LitMesh'
 import { GLTFScenesManager } from './GLTFScenesManager'
 
+/** Defines the pointer animation types. */
 export type PointerAnimationType = 'nodes' | 'materials' | 'textures' | 'cameras' | 'lights'
 
+/** Defines the allowed pointer material animations properties. */
 export type PointerAnimatedMaterialProperty =
   | keyof LitMeshMaterialUniformParams
   | 'iridescenceThicknessMinimum'
   | 'iridescenceThicknessMaximum'
 
+/** Defines the allowed pointer texture animation properties. */
 export type PointerAnimatedTextureProperty = 'rotation' | 'scale' | 'offset'
 
+/** Map of the pointer material animations using {@link PointerAnimatedMaterialProperty} and {@link KeyframesAnimation} as key/values. */
 export type PointerMaterialAnimations = Map<PointerAnimatedMaterialProperty, KeyframesAnimation>
-export type PointerTextureAnimations = Map<
-  { texture: MediaTexture; property: PointerAnimatedTextureProperty },
-  KeyframesAnimation
->
-export type MeshDescriptorPointerAnimations = Map<
-  MeshDescriptor,
-  {
-    textures: PointerTextureAnimations
-    materials: PointerMaterialAnimations
-  }
->
 
+/** Map of the mesh descriptor pointer materials animations using {@link MeshDescriptor} and {@link PointerMaterialAnimations} as key/values. */
+export type MeshDescriptorPointerMaterialAnimations = Map<MeshDescriptor, PointerMaterialAnimations>
+
+/**
+ * Additional class to help manage glTF pointer animations defined by the [KHR_animation_pointer](https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Khronos/KHR_animation_pointer) extension.
+ *
+ * @example
+ * ```javascript
+ * const gltfLoader = new GLTFLoader()
+ * const pointerAnimationsManager = new GLTFPointerAnimationsManager()
+ * const gltf = await gltfLoader.loadFromUrl('path/to/model.gltf')
+ *
+ * // create a gltfScenesManager from the resulting 'gltf' object
+ * // assuming 'renderer' is a valid camera renderer or curtains instance
+ * const gltfScenesManager = new GLTFScenesManager({ renderer, gltf })
+ *
+ * // create the pointer animations
+ * pointerAnimationsManager.createPointerAnimations(gltfScenesManager)
+ *
+ * // add the meshes
+ * gltfScenesManager.addMeshes()
+ * ```
+ */
 export class GLTFPointerAnimationsManager {
+  /** Current {@link GLTFScenesManager} instance to add the pointer animations to. */
   gltfScenesManager: GLTFScenesManager | null
 
-  animations: {
-    cameras: Map<Camera, KeyframesAnimation>
-    lights: Map<Light, KeyframesAnimation>
-    meshDescriptors: MeshDescriptorPointerAnimations
-  }
+  /** Specific map of the mesh descriptor pointer materials animations. */
+  materialAnimations: MeshDescriptorPointerMaterialAnimations
 
+  /**
+   * {@link GLTFPointerAnimationsManager} constructor.
+   */
   constructor() {
     this.gltfScenesManager = null
 
     this.resetAnimationsMaps()
   }
 
+  /** Reset the {@link materialAnimations} map. */
   resetAnimationsMaps() {
-    this.animations = {
-      cameras: new Map(),
-      lights: new Map(),
-      meshDescriptors: new Map(),
-    }
+    this.materialAnimations = new Map()
   }
 
+  /**
+   * Add an {@link Object3D} as a {@link TargetsAnimationsManager} target.
+   * @param object - {@link Object3D} to add.
+   * @param targetsAnimation - {@link TargetsAnimationsManager} to add to.
+   */
   addObjectToTargetAnimation(object: Object3D, targetsAnimation: TargetsAnimationsManager) {
     const hasTargetObject = targetsAnimation.targets.find((t) => t.object.object3DIndex === object.object3DIndex)
     if (!hasTargetObject) {
@@ -69,8 +86,15 @@ export class GLTFPointerAnimationsManager {
     }
   }
 
+  /**
+   * Get the {@link PointerAnimationType | animation type} and animated property from a given pointer animation channel.
+   * @param propertyPaths - Array of strings parsed from the pointer channel extension path.
+   * @returns - The correct animation type and property.
+   */
   getAnimationTypeAndProperty(propertyPaths: string[]): {
+    /** Animated property. */
     animatedProperty: string
+    /** {@link PointerAnimationType | Animation type}. */
     animationType: PointerAnimationType
   } {
     // TODO handle KHR_node_visibility/visible
@@ -111,8 +135,15 @@ export class GLTFPointerAnimationsManager {
     return { animationType, animatedProperty }
   }
 
+  /**
+   * Get any camera animations {@link KeyframesAnimationValueType | value type} and key (property) to use for the {@link KeyframesAnimation}.
+   * @param animatedProperty - Animated property from the pointer channel extension path.
+   * @returns - The camera animations {@link KeyframesAnimationValueType | value type} and key (property) to animate.
+   */
   getCleanCameraProperties(animatedProperty: string): {
+    /** Animation {@link KeyframesAnimationValueType | value type}. */
     type: KeyframesAnimationValueType
+    /** Camera key (property) to animate. */
     key: keyof OrthographicCamera | keyof PerspectiveCamera
   } {
     return (() => {
@@ -156,8 +187,15 @@ export class GLTFPointerAnimationsManager {
     })()
   }
 
+  /**
+   * Get any light animations {@link KeyframesAnimationValueType | value type} and key (property) to use for the {@link KeyframesAnimation}.
+   * @param animatedProperty - Animated property from the pointer channel extension path.
+   * @returns - The light animations {@link KeyframesAnimationValueType | value type} and key (property) to animate.
+   */
   getCleanLightProperties(animatedProperty: string): {
+    /** Animation {@link KeyframesAnimationValueType | value type}. */
     type: KeyframesAnimationValueType
+    /** Light key (property) to animate. */
     key: string
   } {
     return (() => {
@@ -184,8 +222,15 @@ export class GLTFPointerAnimationsManager {
     })()
   }
 
+  /**
+   * Get any material animations {@link KeyframesAnimationValueType | value type} and key (property) to use for the {@link KeyframesAnimation}.
+   * @param animatedProperty - Animated property from the pointer channel extension path.
+   * @returns - The material animations {@link KeyframesAnimationValueType | value type} and {@link PointerAnimatedMaterialProperty | material key (property)} to animate.
+   */
   getCleanMaterialProperties(animatedProperty: string): {
+    /** Animation {@link KeyframesAnimationValueType | value type}. */
     type: KeyframesAnimationValueType
+    /** {@link PointerAnimatedMaterialProperty | Material key (property)} to animate. */
     key: PointerAnimatedMaterialProperty
   } {
     return (() => {
@@ -238,11 +283,6 @@ export class GLTFPointerAnimationsManager {
           return {
             type: 'scalar',
             key: 'clearcoat',
-          }
-        case 'emissiveStrength':
-          return {
-            type: 'scalar',
-            key: 'emissive',
           }
         case 'iridescenceFactor':
           return {
@@ -302,125 +342,136 @@ export class GLTFPointerAnimationsManager {
     }
   }
 
-  getMixedTextures(textureName: string, texturesDescriptors: ShaderTextureDescriptor[]): MediaTexture[] {
-    const descriptor = texturesDescriptors.find((t) => t.texture.options.name === textureName)
-    const textures = []
+  /**
+   * Get an array of {@link MediaTexture} from a given array of available {@link ShaderTextureDescriptor} corresponding to the given glTF texture name input.
+   * @param textureName - glTF texture name to use to retrieve the textures.
+   * @param texturesDescriptors - Array of available {@link ShaderTextureDescriptor}.
+   * @returns - Array of matching {@link MediaTexture}.
+   */
+  getCleanTextures(textureName: string, texturesDescriptors: ShaderTextureDescriptor[]): MediaTexture[] {
+    // since we sometimes pack mutliple glTF textures into one, we must unpack here
+    const getMixedTextures = (textureName: string, texturesDescriptors: ShaderTextureDescriptor[]): MediaTexture[] => {
+      const descriptor = texturesDescriptors.find((t) => t.texture.options.name === textureName)
+      const textures = []
 
-    if (descriptor) {
-      textures.push(descriptor.texture)
-    } else {
-      if (textureName === 'specularTexture' || textureName === 'specularColorTexture') {
-        const specDesc = texturesDescriptors.find((t) => t.texture.options.name === 'specularTexture')
-        if (specDesc) {
-          textures.push(specDesc)
-        } else {
-          if (textureName === 'specularTexture') {
-            const specFactorDesc = texturesDescriptors.find((t) => t.texture.options.name === 'specularFactorTexture')
-            if (specFactorDesc) textures.push(specFactorDesc.texture)
+      if (descriptor) {
+        textures.push(descriptor.texture)
+      } else {
+        if (textureName === 'specularTexture' || textureName === 'specularColorTexture') {
+          const specDesc = texturesDescriptors.find((t) => t.texture.options.name === 'specularTexture')
+          if (specDesc) {
+            textures.push(specDesc)
+          } else {
+            if (textureName === 'specularTexture') {
+              const specFactorDesc = texturesDescriptors.find((t) => t.texture.options.name === 'specularFactorTexture')
+              if (specFactorDesc) textures.push(specFactorDesc.texture)
+            }
+
+            if (textureName === 'specularColorTexture') {
+              const specColorDesc = texturesDescriptors.find((t) => t.texture.options.name === 'specularColorTexture')
+              if (specColorDesc) textures.push(specColorDesc.texture)
+            }
           }
+        }
 
-          if (textureName === 'specularColorTexture') {
-            const specColorDesc = texturesDescriptors.find((t) => t.texture.options.name === 'specularColorTexture')
-            if (specColorDesc) textures.push(specColorDesc.texture)
+        if (textureName === 'transmissionTexture' || textureName === 'thicknessTexture') {
+          const trthDesc = texturesDescriptors.find((t) => t.texture.options.name === 'transmissionThicknessTexture')
+          if (trthDesc) {
+            textures.push(trthDesc.texture)
+          } else {
+            if (textureName === 'transmissionTexture') {
+              const trDesc = texturesDescriptors.find((t) => t.texture.options.name === 'transmissionTexture')
+              if (trDesc) textures.push(trDesc.texture)
+            }
+
+            if (textureName === 'thicknessTexture') {
+              const thDesc = texturesDescriptors.find((t) => t.texture.options.name === 'thicknessTexture')
+              if (thDesc) textures.push(thDesc.texture)
+            }
+          }
+        }
+
+        if (textureName === 'sheenColorTexture' || textureName === 'sheenRoughnessTexture') {
+          const sheenDesc = texturesDescriptors.find((t) => t.texture.options.name === 'sheenTexture')
+          if (sheenDesc) {
+            textures.push(sheenDesc.texture)
+          } else {
+            if (textureName === 'sheenColorTexture') {
+              const sheenColorDesc = texturesDescriptors.find((t) => t.texture.options.name === 'sheenColorTexture')
+              if (sheenColorDesc) textures.push(sheenColorDesc.texture)
+            }
+
+            if (textureName === 'sheenRoughnessTexture') {
+              const sheenRoughDesc = texturesDescriptors.find((t) => t.texture.options.name === 'sheenRoughnessTexture')
+              if (sheenRoughDesc) textures.push(sheenRoughDesc.texture)
+            }
+          }
+        }
+
+        if (textureName === 'clearcoatTexture' || textureName === 'clearcoatRoughnessTexture') {
+          const ccDesc = texturesDescriptors.find((t) => t.texture.options.name === 'clearcoatTexture')
+          if (ccDesc) {
+            textures.push(ccDesc.texture)
+          } else {
+            if (textureName === 'clearcoatTexture') {
+              const ccFactorDesc = texturesDescriptors.find((t) => t.texture.options.name === 'clearcoatFactorTexture')
+              if (ccFactorDesc) textures.push(ccFactorDesc.texture)
+            }
+            if (textureName === 'clearcoatRoughnessTexture') {
+              const ccRoughDesc = texturesDescriptors.find(
+                (t) => t.texture.options.name === 'clearcoatRoughnessTexture'
+              )
+              if (ccRoughDesc) textures.push(ccRoughDesc.texture)
+            }
+          }
+        }
+
+        if (textureName === 'iridescenceTexture' || textureName === 'iridescenceThicknessTexture') {
+          const irDesc = texturesDescriptors.find((t) => t.texture.options.name === 'iridescenceTexture')
+          if (irDesc) {
+            textures.push(irDesc.texture)
+          } else {
+            if (textureName === 'iridescenceTexture') {
+              const irFactorDesc = texturesDescriptors.find(
+                (t) => t.texture.options.name === 'iridescenceFactorTexture'
+              )
+              if (irFactorDesc) textures.push(irFactorDesc.texture)
+            }
+
+            if (textureName === 'iridescenceThicknessTexture') {
+              const irThickDesc = texturesDescriptors.find(
+                (t) => t.texture.options.name === 'iridescenceThicknessTexture'
+              )
+              if (irThickDesc) textures.push(irThickDesc.texture)
+            }
+          }
+        }
+
+        if (textureName === 'diffuseTransmissionTexture' || textureName === 'diffuseTransmissionColorTexture') {
+          const difDesc = texturesDescriptors.find((t) => t.texture.options.name === 'diffuseTransmissionTexture')
+          if (difDesc) {
+            textures.push(difDesc.texture)
+          } else {
+            if (textureName === 'diffuseTransmissionTexture') {
+              const difFactorDesc = texturesDescriptors.find(
+                (t) => t.texture.options.name === 'diffuseTransmissionFactorTexture'
+              )
+              if (difFactorDesc) textures.push(difFactorDesc.texture)
+            }
+
+            if (textureName === 'diffuseTransmissionColorTexture') {
+              const difColorDesc = texturesDescriptors.find(
+                (t) => t.texture.options.name === 'diffuseTransmissionColorTexture'
+              )
+              if (difColorDesc) textures.push(difColorDesc.texture)
+            }
           }
         }
       }
 
-      if (textureName === 'transmissionTexture' || textureName === 'thicknessTexture') {
-        const trthDesc = texturesDescriptors.find((t) => t.texture.options.name === 'transmissionThicknessTexture')
-        if (trthDesc) {
-          textures.push(trthDesc.texture)
-        } else {
-          if (textureName === 'transmissionTexture') {
-            const trDesc = texturesDescriptors.find((t) => t.texture.options.name === 'transmissionTexture')
-            if (trDesc) textures.push(trDesc.texture)
-          }
-
-          if (textureName === 'thicknessTexture') {
-            const thDesc = texturesDescriptors.find((t) => t.texture.options.name === 'thicknessTexture')
-            if (thDesc) textures.push(thDesc.texture)
-          }
-        }
-      }
-
-      if (textureName === 'sheenColorTexture' || textureName === 'sheenRoughnessTexture') {
-        const sheenDesc = texturesDescriptors.find((t) => t.texture.options.name === 'sheenTexture')
-        if (sheenDesc) {
-          textures.push(sheenDesc.texture)
-        } else {
-          if (textureName === 'sheenColorTexture') {
-            const sheenColorDesc = texturesDescriptors.find((t) => t.texture.options.name === 'sheenColorTexture')
-            if (sheenColorDesc) textures.push(sheenColorDesc.texture)
-          }
-
-          if (textureName === 'sheenRoughnessTexture') {
-            const sheenRoughDesc = texturesDescriptors.find((t) => t.texture.options.name === 'sheenRoughnessTexture')
-            if (sheenRoughDesc) textures.push(sheenRoughDesc.texture)
-          }
-        }
-      }
-
-      if (textureName === 'clearcoatTexture' || textureName === 'clearcoatRoughnessTexture') {
-        const ccDesc = texturesDescriptors.find((t) => t.texture.options.name === 'clearcoatTexture')
-        if (ccDesc) {
-          textures.push(ccDesc.texture)
-        } else {
-          if (textureName === 'clearcoatTexture') {
-            const ccFactorDesc = texturesDescriptors.find((t) => t.texture.options.name === 'clearcoatFactorTexture')
-            if (ccFactorDesc) textures.push(ccFactorDesc.texture)
-          }
-          if (textureName === 'clearcoatRoughnessTexture') {
-            const ccRoughDesc = texturesDescriptors.find((t) => t.texture.options.name === 'clearcoatRoughnessTexture')
-            if (ccRoughDesc) textures.push(ccRoughDesc.texture)
-          }
-        }
-      }
-
-      if (textureName === 'iridescenceTexture' || textureName === 'iridescenceThicknessTexture') {
-        const irDesc = texturesDescriptors.find((t) => t.texture.options.name === 'iridescenceTexture')
-        if (irDesc) {
-          textures.push(irDesc.texture)
-        } else {
-          if (textureName === 'iridescenceTexture') {
-            const irFactorDesc = texturesDescriptors.find((t) => t.texture.options.name === 'iridescenceFactorTexture')
-            if (irFactorDesc) textures.push(irFactorDesc.texture)
-          }
-
-          if (textureName === 'iridescenceThicknessTexture') {
-            const irThickDesc = texturesDescriptors.find(
-              (t) => t.texture.options.name === 'iridescenceThicknessTexture'
-            )
-            if (irThickDesc) textures.push(irThickDesc.texture)
-          }
-        }
-      }
-
-      if (textureName === 'diffuseTransmissionTexture' || textureName === 'diffuseTransmissionColorTexture') {
-        const difDesc = texturesDescriptors.find((t) => t.texture.options.name === 'diffuseTransmissionTexture')
-        if (difDesc) {
-          textures.push(difDesc.texture)
-        } else {
-          if (textureName === 'diffuseTransmissionTexture') {
-            const difFactorDesc = texturesDescriptors.find(
-              (t) => t.texture.options.name === 'diffuseTransmissionFactorTexture'
-            )
-            if (difFactorDesc) textures.push(difFactorDesc.texture)
-          }
-
-          if (textureName === 'diffuseTransmissionColorTexture') {
-            const difColorDesc = texturesDescriptors.find(
-              (t) => t.texture.options.name === 'diffuseTransmissionColorTexture'
-            )
-            if (difColorDesc) textures.push(difColorDesc.texture)
-          }
-        }
-      }
+      return textures
     }
 
-    return textures
-  }
-
-  getCleanTextures(textureName: string, texturesDescriptors: ShaderTextureDescriptor[]): MediaTexture[] {
     return (() => {
       switch (textureName) {
         case 'baseColorTexture':
@@ -444,15 +495,24 @@ export class GLTFPointerAnimationsManager {
         case 'iridescenceThicknessTexture':
         case 'diffuseTransmissionTexture':
         case 'diffuseTransmissionColorTexture':
-          return this.getMixedTextures(textureName, texturesDescriptors)
+          return getMixedTextures(textureName, texturesDescriptors)
         default:
           return []
       }
     })()
   }
 
-  //https://github.com/KhronosGroup/glTF/blob/main/specification/2.0/ObjectModel.adoc#4-core-pointers
+  /**
+   * Create all the necessary pointer {@link KeyframesAnimation} for a given {@link GLTFScenesManager} instance.
+   *
+   * Parse the animations channels, and for each one:
+   * - Get the animation path and use it to extract the {@link PointerAnimationType | animation type} and animated property.
+   * - Based on the {@link PointerAnimationType | animation type}, create the corresponding {@link KeyframesAnimation} and handle the actual value update (except for materials, where it's done inside {@link registerMeshAnimations} method).
+   *
+   * @param gltfScenesManager - {@link GLTFScenesManager} instance to parse for pointer animations.
+   */
   createPointerAnimations(gltfScenesManager = null) {
+    // handling the pointers listed here
     if (!gltfScenesManager) return
 
     if (this.gltfScenesManager) {
@@ -460,15 +520,19 @@ export class GLTFPointerAnimationsManager {
     }
 
     this.gltfScenesManager = gltfScenesManager
+    // attach our pointer animations manager to the glTF scenes manager instance
     this.gltfScenesManager.pointerAnimationsManager = this
 
     this.resetAnimationsMaps()
 
+    // following the specs here
+    //  https://github.com/KhronosGroup/glTF/blob/main/specification/2.0/ObjectModel.adoc#4-core-pointers
     // animations pointers can concern
-    // 1. cameras props (far, near, ortho x and y, perspective fov and aspect ratio)
-    // 2. lights props (color, intensity, range, spot cone inner/outer radii)
-    // 3. all textures transformations (scale, offset, rotation)
-    // 4. any material  properties (beware of baseColorFactor and normalScale)
+    // 1. nodes props (translation, rotation, scale, weights and visibility - not yet supported)
+    // 2. cameras props (far, near, ortho x and y, perspective fov and aspect ratio)
+    // 3. lights props (color, intensity, range, spot cone inner/outer radii)
+    // 4. all textures transformations (scale, offset, rotation)
+    // 5. any material properties
     if (this.gltfScenesManager.gltf.animations) {
       this.gltfScenesManager.scenesManager.animations.forEach((targetsAnimation, i) => {
         const animation = this.gltfScenesManager.gltf.animations[i]
@@ -491,7 +555,7 @@ export class GLTFPointerAnimationsManager {
             const propertyIndex = parseInt(splitedPropertyPaths[1])
 
             if (animationType === 'nodes') {
-              // from https://github.com/KhronosGroup/glTF/blob/main/specification/2.0/ObjectModel.adoc#4-core-pointers
+              // nodes weights are handled by GLTFScenesManager directly
               if (
                 animatedProperty === 'rotation' ||
                 animatedProperty === 'scale' ||
@@ -578,9 +642,11 @@ export class GLTFPointerAnimationsManager {
                       if (cameraProperties.key === 'left') {
                         camera.left = -value
                         camera.right = value
+                        this.gltfScenesManager.renderer.updateCameraViewport()
                       } else if (cameraProperties.key === 'top') {
                         camera.top = value
                         camera.bottom = -value
+                        this.gltfScenesManager.renderer.updateCameraViewport()
                       } else {
                         camera[cameraProperties.key as 'near' | 'far'] = value
                       }
@@ -716,15 +782,6 @@ export class GLTFPointerAnimationsManager {
 
               if (primitiveInstance) {
                 const { meshDescriptor } = primitiveInstance
-                let animationMap = this.animations.meshDescriptors.get(meshDescriptor)
-                if (!animationMap) {
-                  animationMap = {
-                    textures: new Map(),
-                    materials: new Map(),
-                  }
-
-                  this.animations.meshDescriptors.set(meshDescriptor, animationMap)
-                }
 
                 const targetObject = meshDescriptor.nodes[0] // whatever
                 this.addObjectToTargetAnimation(targetObject, targetsAnimation)
@@ -735,6 +792,13 @@ export class GLTFPointerAnimationsManager {
                 const { keyframes, values } = this.gltfScenesManager.getAnimationKeyframesValues(sampler)
 
                 if (animationType === 'materials') {
+                  let animationMap = this.materialAnimations.get(meshDescriptor)
+                  if (!animationMap) {
+                    animationMap = new Map()
+
+                    this.materialAnimations.set(meshDescriptor, animationMap)
+                  }
+
                   if (animatedProperty === 'baseColorFactor') {
                     const colorValues = new (values.constructor as TypedArrayConstructor)(keyframes.length * 3)
                     const alphaValues = new (values.constructor as TypedArrayConstructor)(keyframes.length)
@@ -763,7 +827,7 @@ export class GLTFPointerAnimationsManager {
                     })
 
                     targetsAnimation.addTargetAnimation(targetObject, colorKeyframesAnimation)
-                    animationMap.materials.set('color', colorKeyframesAnimation)
+                    animationMap.set('color', colorKeyframesAnimation)
 
                     const alphaAnimName = `${meshDescriptor.parameters.label} opacity animation`
                     const alphaLabel = animation.name
@@ -782,7 +846,7 @@ export class GLTFPointerAnimationsManager {
                     })
 
                     targetsAnimation.addTargetAnimation(targetObject, alphaKeyframesAnimation)
-                    animationMap.materials.set('opacity', alphaKeyframesAnimation)
+                    animationMap.set('opacity', alphaKeyframesAnimation)
                   } else {
                     const materialProperties = this.getCleanMaterialProperties(animatedProperty)
 
@@ -805,7 +869,7 @@ export class GLTFPointerAnimationsManager {
                       })
 
                       targetsAnimation.addTargetAnimation(meshDescriptor.nodes[0], keyframesAnimation)
-                      animationMap.materials.set(materialProperties.key, keyframesAnimation)
+                      animationMap.set(materialProperties.key, keyframesAnimation)
                     }
                   }
                 } else {
@@ -845,15 +909,17 @@ export class GLTFPointerAnimationsManager {
                           }),
                         })
 
-                        targetsAnimation.addTargetAnimation(targetObject, keyframesAnimation)
+                        // for scalar values, the setter does not work
+                        // we need to manually update the value inside onAfterUpdate
+                        if (keyframesAnimation.type === 'scalar') {
+                          keyframesAnimation.onAfterUpdate = () => {
+                            ;(texture[animatedProperty] as number) = keyframesAnimation.inputValue as number
+                          }
+                        } else {
+                          keyframesAnimation.inputValue = texture[animatedProperty]
+                        }
 
-                        animationMap.textures.set(
-                          {
-                            texture: texture,
-                            property: animatedProperty as PointerAnimatedTextureProperty,
-                          },
-                          keyframesAnimation
-                        )
+                        targetsAnimation.addTargetAnimation(targetObject, keyframesAnimation)
                       }
                     })
                   }
@@ -866,59 +932,51 @@ export class GLTFPointerAnimationsManager {
     }
   }
 
+  /**
+   * Handle the {@link PointerMaterialAnimations | pointer material animations} from the {@link materialAnimations} map after the {@link GLTFScenesManager} meshes have been created.
+   *
+   * Since material animations need an actual {@link LitMesh} to apply the animation, they actually need to be registered once the mesh has been created.
+   *
+   * This method is called internally by {@link GLTFScenesManager}.
+   *
+   * @param meshDescriptor - Reference {@link MeshDescriptor} to use as {@link materialAnimations} Map key.
+   * @param mesh - {@link LitMesh} that will have its material uniform animated.
+   */
   registerMeshAnimations(meshDescriptor: MeshDescriptor, mesh: LitMesh) {
-    const meshDescriptorAnimationMap = this.animations.meshDescriptors.get(meshDescriptor)
-    if (meshDescriptorAnimationMap) {
-      const { textures, materials } = meshDescriptorAnimationMap
-      if (materials && materials.size && mesh) {
-        const geometry = meshDescriptor.parameters.geometry
-        const hasTangent = geometry && !!geometry.getAttributeByName('tangent')
-        const normalYMultiplier = hasTangent ? 1 : -1
+    const meshDescriptorAnimationMap = this.materialAnimations.get(meshDescriptor)
+    if (meshDescriptorAnimationMap && meshDescriptorAnimationMap.size) {
+      const geometry = meshDescriptor.parameters.geometry
+      const hasTangent = geometry && !!geometry.getAttributeByName('tangent')
+      const normalYMultiplier = hasTangent ? 1 : -1
 
-        materials.forEach((animation, property) => {
-          // for scalar values, the setter does not work
-          // we need to manually update the value inside onAfterUpdate
-          if (animation.type === 'scalar') {
-            animation.onAfterUpdate = () => {
-              const value = animation.inputValue as number
-              if (mesh.uniforms.material[property]) {
-                if (property === 'normalScale') {
-                  ;(mesh.uniforms.material.normalScale.value as Vec2).set(value, value * normalYMultiplier)
-                } else if (property === 'clearcoatNormalScale') {
-                  ;(mesh.uniforms.material.clearcoatNormalScale.value as Vec2).set(value, value * normalYMultiplier)
-                } else if (property === 'anisotropyVector') {
-                  ;(mesh.uniforms.material.anisotropyVector.value as Vec2).set(Math.cos(value), Math.sin(value))
-                } else {
-                  ;(mesh.uniforms.material[property].value as number) = value
-                }
-              } else if (mesh.uniforms.material.iridescenceThicknessRange) {
-                if (property === 'iridescenceThicknessMinimum') {
-                  ;(mesh.uniforms.material.iridescenceThicknessRange.value as Vec2).x = value
-                } else if (property === 'iridescenceThicknessMaximum') {
-                  ;(mesh.uniforms.material.iridescenceThicknessRange.value as Vec2).y = value
-                }
+      meshDescriptorAnimationMap.forEach((animation, property) => {
+        // for scalar values, the setter does not work
+        // we need to manually update the value inside onAfterUpdate
+        if (animation.type === 'scalar') {
+          animation.onAfterUpdate = () => {
+            const value = animation.inputValue as number
+            if (mesh.uniforms.material[property]) {
+              if (property === 'normalScale') {
+                ;(mesh.uniforms.material.normalScale.value as Vec2).set(value, value * normalYMultiplier)
+              } else if (property === 'clearcoatNormalScale') {
+                ;(mesh.uniforms.material.clearcoatNormalScale.value as Vec2).set(value, value * normalYMultiplier)
+              } else if (property === 'anisotropyVector') {
+                ;(mesh.uniforms.material.anisotropyVector.value as Vec2).set(Math.cos(value), Math.sin(value))
+              } else {
+                ;(mesh.uniforms.material[property].value as number) = value
+              }
+            } else if (mesh.uniforms.material.iridescenceThicknessRange) {
+              if (property === 'iridescenceThicknessMinimum') {
+                ;(mesh.uniforms.material.iridescenceThicknessRange.value as Vec2).x = value
+              } else if (property === 'iridescenceThicknessMaximum') {
+                ;(mesh.uniforms.material.iridescenceThicknessRange.value as Vec2).y = value
               }
             }
-          } else if (mesh.uniforms.material[property]) {
-            animation.inputValue = mesh.uniforms.material[property].value as KeyframesAnimationInputValue
           }
-        })
-      }
-
-      if (textures && textures.size) {
-        textures.forEach((animation, descriptor) => {
-          const { texture, property } = descriptor
-          // for scalar values, the setter does not work
-          // we need to manually update the value inside onAfterUpdate
-          if (animation.type === 'scalar') {
-            animation.onAfterUpdate = () => {
-              ;(texture[property] as number) = animation.inputValue as number
-            }
-          } else {
-            animation.inputValue = texture[property]
-          }
-        })
-      }
+        } else if (mesh.uniforms.material[property]) {
+          animation.inputValue = mesh.uniforms.material[property].value as KeyframesAnimationInputValue
+        }
+      })
     }
   }
 }

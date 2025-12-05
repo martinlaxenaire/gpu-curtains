@@ -16,6 +16,7 @@ class PerspectiveCamera extends Camera {
    * @param parameters - {@link PerspectiveCameraParams} used to create our {@link PerspectiveCamera}.
    */
   constructor({
+    label = "Perspective camera",
     fov = 50,
     near = 0.1,
     far = 150,
@@ -26,7 +27,7 @@ class PerspectiveCamera extends Camera {
     onMatricesChanged = () => {
     }
   } = {}) {
-    super({ near, far, pixelRatio, onMatricesChanged });
+    super({ label, near, far, pixelRatio, onMatricesChanged });
     /** @ignore */
     __privateAdd(this, _fov);
     this.forceAspect = forceAspect;
