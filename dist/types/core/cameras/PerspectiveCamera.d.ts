@@ -45,7 +45,7 @@ export declare class PerspectiveCamera extends Camera {
      * PerspectiveCamera constructor
      * @param parameters - {@link PerspectiveCameraParams} used to create our {@link PerspectiveCamera}.
      */
-    constructor({ fov, near, far, width, height, pixelRatio, forceAspect, onMatricesChanged, }?: PerspectiveCameraParams);
+    constructor({ label, fov, near, far, width, height, pixelRatio, forceAspect, onMatricesChanged, }?: PerspectiveCameraParams);
     /**
      * Get the {@link PerspectiveCamera.fov | field of view}.
      */

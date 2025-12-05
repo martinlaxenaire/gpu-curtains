@@ -108,6 +108,10 @@ export declare class SpotLight extends Light {
      */
     setPositionDirection(): void;
     /**
+     * Update the {@link target} and therefore direction directly from the {@link worldMatrix}, in case a transformation (especially rotation) has been applied to a parent of this {@link SpotLight} instead of updating the {@link target} directly.
+     */
+    updateTargetFromWorldMatrix(): void;
+    /**
      * Get this {@link SpotLight} angle.
      * @returns - The {@link SpotLight} angle.
      */

@@ -52,10 +52,11 @@ window.addEventListener('load', async () => {
     right: (frustumSize * aspect) / 2,
     top: frustumSize / 2,
     bottom: -frustumSize / 2,
-    near: 0.0001,
+    near: 0.001,
+    far: 1000,
   })
 
-  orthoCamera.position.set(0, 2, 5)
+  orthoCamera.position.set(0, 3, 5)
   orthoCamera.lookAt(lookAt)
 
   const cameras = {
@@ -102,7 +103,7 @@ window.addEventListener('load', async () => {
       var color: vec4f = vec4(vec3(checker) * 0.5, 1.0);
       
       // check for camera pos
-      if(fsInput.cameraPos.y > 2.0) {
+      if(fsInput.cameraPos.y > 5.0) {
         color.r = 1.0;
       }
       

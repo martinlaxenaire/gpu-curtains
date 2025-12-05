@@ -8,6 +8,8 @@ import { generateUUID } from '../../utils/utils'
  * Defines Camera basic perspective options.
  */
 export interface CameraBaseOptions {
+  /** {@link Camera} default label. */
+  label?: string
   /** {@link Camera} near plane, the closest point where a mesh vertex is drawn. */
   near?: number
   /** {@link Camera} far plane, the farthest point where a mesh vertex is drawn. */
@@ -46,6 +48,9 @@ export class Camera extends Object3D {
   /** {@link CameraObject3DMatrices | Matrices object} of the {@link Camera}. */
   matrices: CameraObject3DMatrices
 
+  /** {@link Camera} default label. */
+  label: string
+
   /** @ignore */
   #near: number
   /** @ignore */
@@ -68,6 +73,7 @@ export class Camera extends Object3D {
    */
   constructor(
     {
+      label = 'Camera',
       near = 0.1,
       far = 150,
       pixelRatio = 1,
@@ -78,6 +84,8 @@ export class Camera extends Object3D {
   ) {
     // Object3D
     super()
+
+    this.label = label
 
     this.uuid = generateUUID()
 

@@ -3,6 +3,7 @@ import {
   GPUCameraRenderer,
   EnvironmentMap,
   GLTFLoader,
+  GLTFPointerAnimationsManager,
   GLTFScenesManager,
   OrbitControls,
   Vec3,
@@ -168,7 +169,7 @@ window.addEventListener('load', async () => {
 
   const animationsFolder = gltfFolder.addFolder('Animations')
   let playAnimations = true
-  let playAnimationsField = animationsFolder.add({ playAnimations }, 'playAnimations').name('Play animations')
+  let playAnimationsField = animationsFolder.add({ playAnimations }, 'playAnimations').name('Play/pause animations')
 
   let animationsFields = []
 
@@ -198,6 +199,12 @@ window.addEventListener('load', async () => {
   envMapFolder.add({ loadHDR: () => loadHDRInput.click() }, 'loadHDR').name('Load HDR')
 
   const envMapRotationField = envMapFolder.add({ rotation: 90 }, 'rotation', 0, 360, 1).name('Rotation')
+  const envMapDiffuseField = envMapFolder
+    .add(environmentMap.options, 'diffuseIntensity', 0, 1.25, 0.05)
+    .name('Diffuse intensity')
+  const envMapSpecularField = envMapFolder
+    .add(environmentMap.options, 'specularIntensity', 0, 1.25, 0.05)
+    .name('Specular intensity')
   const envMapBackgroundField = envMapFolder
     .add({ background: 0 }, 'background', { Diffuse: 0, Specular: 1 })
     .name('Skybox background')
@@ -269,6 +276,8 @@ window.addEventListener('load', async () => {
 
   // gltf
   const gltfLoader = new GLTFLoader()
+  // pointer animations
+  const gltfPointerAnimationsManager = new GLTFPointerAnimationsManager()
 
   let gltfScenesManager = null
 
@@ -288,6 +297,9 @@ window.addEventListener('load', async () => {
     }
 
     gltfScenesManager = new GLTFScenesManager({ renderer: gpuCameraRenderer, gltf })
+
+    // create pointer animations if any
+    gltfPointerAnimationsManager.createPointerAnimations(gltfScenesManager)
 
     const { scenesManager } = gltfScenesManager
     const { scenes, boundingBox, node } = scenesManager
@@ -548,6 +560,7 @@ window.addEventListener('load', async () => {
     })
 
     // punctual lighting
+    lightIntensities = []
     if (scenesManager.lights.length) {
       scenesManager.lights.forEach((light) => {
         lightIntensities.push(light.intensity)
@@ -558,7 +571,6 @@ window.addEventListener('load', async () => {
       gltfPunctualLightingFolder.open()
       usePunctualLightingField.enable()
     } else {
-      lightIntensities = []
       gltfPunctualLightingFolder.close()
       usePunctualLightingField.disable()
     }
@@ -646,7 +658,7 @@ window.addEventListener('load', async () => {
     availableCameras['Default camera'] = defaultCamera
     if (scenesManager.cameras.length) {
       scenesManager.cameras.forEach((gltfCamera, index) => {
-        availableCameras['Camera ' + index] = gltfCamera
+        availableCameras[`Camera ${index} - ${gltfCamera.label}`] = gltfCamera
       })
     }
 
@@ -857,6 +869,8 @@ window.addEventListener('load', async () => {
         skybox.visible = true
 
         envMapRotationField.enable()
+        envMapDiffuseField.enable()
+        envMapSpecularField.enable()
 
         cleanUpScene()
 
@@ -867,6 +881,8 @@ window.addEventListener('load', async () => {
       skybox.visible = false
 
       envMapRotationField.disable()
+      envMapDiffuseField.disable()
+      envMapSpecularField.disable()
 
       cleanUpScene()
 
@@ -877,6 +893,26 @@ window.addEventListener('load', async () => {
   envMapRotationField.onChange((value) => {
     if (useEnvMap) {
       environmentMap.rotation = value * (Math.PI / 180)
+    }
+  })
+
+  envMapDiffuseField.onChange(() => {
+    if (useEnvMap && gltfScenesManager && gltfScenesManager.scenesManager) {
+      gltfScenesManager.scenesManager.meshes.forEach((mesh) => {
+        if (mesh.uniforms.material.envDiffuseIntensity) {
+          mesh.uniforms.material.envDiffuseIntensity.value = environmentMap.options.diffuseIntensity
+        }
+      })
+    }
+  })
+
+  envMapSpecularField.onChange(() => {
+    if (useEnvMap && gltfScenesManager && gltfScenesManager.scenesManager) {
+      gltfScenesManager.scenesManager.meshes.forEach((mesh) => {
+        if (mesh.uniforms.material.envSpecularIntensity) {
+          mesh.uniforms.material.envSpecularIntensity.value = environmentMap.options.specularIntensity
+        }
+      })
     }
   })
 

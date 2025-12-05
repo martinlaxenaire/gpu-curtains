@@ -1096,6 +1096,79 @@
       return this;
     }
     /**
+     * Get the scale {@link Vec3} component of a {@link Mat4}.
+     * @param scale - {@link Vec3} to set.
+     * @returns - Scale {@link Vec3} component of this {@link Mat4}.
+     */
+    getScale(scale = new Vec3()) {
+      const te = this.elements;
+      let m11 = te[0];
+      let m12 = te[1];
+      let m13 = te[2];
+      let m21 = te[4];
+      let m22 = te[5];
+      let m23 = te[6];
+      let m31 = te[8];
+      let m32 = te[9];
+      let m33 = te[10];
+      scale.set(
+        Math.sqrt(m11 * m11 + m12 * m12 + m13 * m13),
+        Math.sqrt(m21 * m21 + m22 * m22 + m23 * m23),
+        Math.sqrt(m31 * m31 + m32 * m32 + m33 * m33)
+      );
+      return scale;
+    }
+    /**
+     * Get the rotation {@link Quat} component of a {@link Mat4}.
+     * @param quat - {@link Quat} to set.
+     * @returns - Rotation {@link Quat} component of this {@link Mat4}.
+     */
+    getRotation(quat = new Quat()) {
+      const scale = this.getScale();
+      let is1 = 1 / scale.x;
+      let is2 = 1 / scale.y;
+      let is3 = 1 / scale.z;
+      const te = this.elements;
+      const qe = quat.elements;
+      let sm11 = te[0] * is1;
+      let sm12 = te[1] * is2;
+      let sm13 = te[2] * is3;
+      let sm21 = te[4] * is1;
+      let sm22 = te[5] * is2;
+      let sm23 = te[6] * is3;
+      let sm31 = te[8] * is1;
+      let sm32 = te[9] * is2;
+      let sm33 = te[10] * is3;
+      let trace = sm11 + sm22 + sm33;
+      let S = 0;
+      if (trace > 0) {
+        S = Math.sqrt(trace + 1) * 2;
+        qe[3] = 0.25 * S;
+        qe[0] = (sm23 - sm32) / S;
+        qe[1] = (sm31 - sm13) / S;
+        qe[2] = (sm12 - sm21) / S;
+      } else if (sm11 > sm22 && sm11 > sm33) {
+        S = Math.sqrt(1 + sm11 - sm22 - sm33) * 2;
+        qe[3] = (sm23 - sm32) / S;
+        qe[0] = 0.25 * S;
+        qe[1] = (sm12 + sm21) / S;
+        qe[2] = (sm31 + sm13) / S;
+      } else if (sm22 > sm33) {
+        S = Math.sqrt(1 + sm22 - sm11 - sm33) * 2;
+        qe[3] = (sm31 - sm13) / S;
+        qe[0] = (sm12 + sm21) / S;
+        qe[1] = 0.25 * S;
+        qe[2] = (sm23 + sm32) / S;
+      } else {
+        S = Math.sqrt(1 + sm33 - sm11 - sm22) * 2;
+        qe[3] = (sm12 - sm21) / S;
+        qe[0] = (sm31 + sm13) / S;
+        qe[1] = (sm23 + sm32) / S;
+        qe[2] = 0.25 * S;
+      }
+      return quat;
+    }
+    /**
      * Get the maximum scale of the {@link Mat4} on all axes.
      * @returns - Maximum scale of the {@link Mat4}.
      */
@@ -5631,6 +5704,7 @@
      * @param parameters - {@link CameraParams} used to create our {@link Camera}.
      */
     constructor({
+      label = "Camera",
       near = 0.1,
       far = 150,
       pixelRatio = 1,
@@ -5644,6 +5718,7 @@
       __privateAdd$r(this, _far);
       /** @ignore */
       __privateAdd$r(this, _pixelRatio);
+      this.label = label;
       this.uuid = generateUUID();
       this.onMatricesChanged = onMatricesChanged;
     }
@@ -5847,6 +5922,7 @@
      * @param parameters - {@link OrthographicCameraParams} used to create our {@link OrthographicCamera}.
      */
     constructor({
+      label = "Orthographic camera",
       near = 0.1,
       far = 150,
       left = -1,
@@ -5857,7 +5933,7 @@
       onMatricesChanged = () => {
       }
     } = {}) {
-      super({ near, far, pixelRatio, onMatricesChanged });
+      super({ label, near, far, pixelRatio, onMatricesChanged });
       /** @ignore */
       __privateAdd$q(this, _left);
       /** @ignore */
@@ -6025,6 +6101,7 @@
      * @param parameters - {@link PerspectiveCameraParams} used to create our {@link PerspectiveCamera}.
      */
     constructor({
+      label = "Perspective camera",
       fov = 50,
       near = 0.1,
       far = 150,
@@ -6035,7 +6112,7 @@
       onMatricesChanged = () => {
       }
     } = {}) {
-      super({ near, far, pixelRatio, onMatricesChanged });
+      super({ label, near, far, pixelRatio, onMatricesChanged });
       /** @ignore */
       __privateAdd$p(this, _fov);
       this.forceAspect = forceAspect;
@@ -13602,6 +13679,9 @@ fn getPCFBaseShadowContribution(
   var __privateAdd$f = (obj, member, value) => member.has(obj) ? __typeError$f("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   var __privateSet$e = (obj, member, value, setter) => (__accessCheck$f(obj, member, "write to private field"), member.set(obj, value), value);
   var _direction$1;
+  const tempVec3$3 = new Vec3();
+  const tempQuat$2 = new Quat();
+  const tempMat4$1 = new Mat4();
   class DirectionalLight extends Light {
     /**
      * DirectionalLight constructor
@@ -13713,6 +13793,28 @@ fn getPCFBaseShadowContribution(
         this.up.set(0, 1, 0);
       }
       this.applyLookAt(this.actualPosition, target);
+    }
+    /**
+     * Update the {@link target} and therefore direction directly from the {@link worldMatrix}, in case a transformation (especially rotation) has been applied to a parent of this {@link DirectionalLight} instead of updating the {@link target} directly.
+     */
+    updateTargetFromWorldMatrix() {
+      tempVec3$3.set(1);
+      this.worldMatrix.getScale(tempVec3$3);
+      tempMat4$1.identity();
+      for (const col of [0, 1, 2]) {
+        tempMat4$1.elements[col] = this.worldMatrix.elements[col] / tempVec3$3.x;
+        tempMat4$1.elements[col + 4] = this.worldMatrix.elements[col + 4] / tempVec3$3.y;
+        tempMat4$1.elements[col + 8] = this.worldMatrix.elements[col + 8] / tempVec3$3.z;
+      }
+      tempMat4$1.getRotation(tempQuat$2);
+      tempQuat$2.normalize();
+      tempVec3$3.set(0, 0, -1);
+      tempVec3$3.applyQuat(tempQuat$2);
+      tempVec3$3.add(this.actualPosition);
+      this.target._x = tempVec3$3.x;
+      this.target._y = tempVec3$3.y;
+      this.target._z = tempVec3$3.z;
+      this.setDirection();
     }
     /**
      * If the {@link modelMatrix | model matrix} has been updated, set the new direction from the {@link worldMatrix} translation.
@@ -14498,6 +14600,9 @@ struct SpotShadowVSOutput {
   var __privateAdd$c = (obj, member, value) => member.has(obj) ? __typeError$c("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   var __privateSet$b = (obj, member, value, setter) => (__accessCheck$c(obj, member, "write to private field"), member.set(obj, value), value);
   var _direction, _angle, _penumbra, _range;
+  const tempVec3$2 = new Vec3();
+  const tempQuat$1 = new Quat();
+  const tempMat4 = new Mat4();
   class SpotLight extends Light {
     /**
      * SpotLight constructor
@@ -14615,6 +14720,28 @@ struct SpotShadowVSOutput {
       if (this.shadow) {
         this.shadow.setPosition();
       }
+    }
+    /**
+     * Update the {@link target} and therefore direction directly from the {@link worldMatrix}, in case a transformation (especially rotation) has been applied to a parent of this {@link SpotLight} instead of updating the {@link target} directly.
+     */
+    updateTargetFromWorldMatrix() {
+      tempVec3$2.set(1);
+      this.worldMatrix.getScale(tempVec3$2);
+      tempMat4.identity();
+      for (const col of [0, 1, 2]) {
+        tempMat4.elements[col] = this.worldMatrix.elements[col] / tempVec3$2.x;
+        tempMat4.elements[col + 4] = this.worldMatrix.elements[col + 4] / tempVec3$2.y;
+        tempMat4.elements[col + 8] = this.worldMatrix.elements[col + 8] / tempVec3$2.z;
+      }
+      tempMat4.getRotation(tempQuat$1);
+      tempQuat$1.normalize();
+      tempVec3$2.set(0, 0, -1);
+      tempVec3$2.applyQuat(tempQuat$1);
+      tempVec3$2.add(this.actualPosition);
+      this.target._x = tempVec3$2.x;
+      this.target._y = tempVec3$2.y;
+      this.target._z = tempVec3$2.z;
+      this.setPositionDirection();
     }
     /**
      * Get this {@link SpotLight} angle.
@@ -17537,6 +17664,7 @@ ${this.shaders.compute.head}`;
       const { width, height } = this.rectBBox;
       this.useCamera(
         new PerspectiveCamera({
+          label: `${this.options.label} default perspective camera`,
           fov: cameraParameters.fov,
           near: cameraParameters.near,
           far: cameraParameters.far,
@@ -17597,6 +17725,18 @@ ${this.shaders.compute.head}`;
       if (this.camera instanceof PerspectiveCamera && this.camera.forceAspect) {
         width = Math.min(width, height * this.camera.forceAspect);
         height = Math.min(width / this.camera.forceAspect, height);
+        this.setCameraViewport({
+          width,
+          height,
+          top: (this.canvas.height - height) * 0.5,
+          left: (this.canvas.width - width) * 0.5,
+          minDepth: 0,
+          maxDepth: 1
+        });
+      } else if (this.camera instanceof OrthographicCamera) {
+        const aspectRatio = (this.camera.right - this.camera.left) / (this.camera.top - this.camera.bottom);
+        width = Math.min(width, height * aspectRatio);
+        height = Math.min(width / aspectRatio, height);
         this.setCameraViewport({
           width,
           height,
@@ -21186,21 +21326,30 @@ fn RE_IndirectDiffuseSheen(
   );
 
   const getTransmissionThickness = ({
+    transmissionThicknessTexture = null,
     transmissionTexture = null,
     thicknessTexture = null
   } = {}) => {
     let transmissionThickness = "";
-    if (transmissionTexture) {
-      transmissionThickness += getTextureSample(transmissionTexture, "transmission");
+    if (transmissionThicknessTexture) {
+      transmissionThickness += getTextureSample(transmissionThicknessTexture, "transmissionThickness");
       transmissionThickness += /* wgsl */
       `
+    transmission = clamp(transmission * transmissionThicknessSample.r, 0.0, 1.0);
+    thickness *= transmissionThicknessSample.g;`;
+    } else {
+      if (transmissionTexture) {
+        transmissionThickness += getTextureSample(transmissionTexture, "transmission");
+        transmissionThickness += /* wgsl */
+        `
     transmission = clamp(transmission * transmissionSample.r, 0.0, 1.0);`;
-    }
-    if (thicknessTexture) {
-      transmissionThickness += getTextureSample(thicknessTexture, "thickness");
-      transmissionThickness += /* wgsl */
-      `
+      }
+      if (thicknessTexture) {
+        transmissionThickness += getTextureSample(thicknessTexture, "thickness");
+        transmissionThickness += /* wgsl */
+        `
   thickness *= thicknessSample.g;`;
+      }
     }
     return transmissionThickness;
   };
@@ -21276,6 +21425,7 @@ fn BRDF_Sheen(
   const getClearcoat = ({
     extensionsUsed = [],
     clearcoatTexture = null,
+    clearcoatFactorTexture = null,
     clearcoatRoughnessTexture = null
   }) => {
     let clearcoat = (
@@ -21295,14 +21445,23 @@ fn BRDF_Sheen(
       clearcoat += /* wgsl */
       `
   clearcoat = clearcoat * clearcoatSample.r;
+  clearcoatRoughness = clearcoatRoughness * clearcoatSample.g;
     `;
-    }
-    if (clearcoatRoughnessTexture) {
-      clearcoat += getTextureSample(clearcoatRoughnessTexture, "clearcoatRoughness");
-      clearcoat += /* wgsl */
-      `
+    } else {
+      if (clearcoatFactorTexture) {
+        clearcoat += getTextureSample(clearcoatFactorTexture, "clearcoatFactor");
+        clearcoat += /* wgsl */
+        `
+  clearcoat = clearcoat * clearcoatFactorSample.r;
+    `;
+      }
+      if (clearcoatRoughnessTexture) {
+        clearcoat += getTextureSample(clearcoatRoughnessTexture, "clearcoatRoughness");
+        clearcoat += /* wgsl */
+        `
   clearcoatRoughness = clearcoatRoughness * clearcoatRoughnessSample.g;
     `;
+      }
     }
     clearcoat += /* wgsl */
     `
@@ -21329,7 +21488,7 @@ fn BRDF_Sheen(
       if (normalTexture) {
         clearcoatNormal += /* wgsl */
         `
-  let clearcoatNormalSample = textureSample(${clearcoatNormalTexture.texture.options.name}, ${clearcoatNormalTexture.sampler?.name ?? "defaultSampler"}, normalUV);`;
+    let clearcoatNormalSample = textureSample(${clearcoatNormalTexture.texture.options.name}, ${clearcoatNormalTexture.sampler?.name ?? "defaultSampler"}, normalUV);`;
       } else {
         clearcoatNormal += getTextureSample(clearcoatNormalTexture, "clearcoatNormal");
       }
@@ -21901,6 +22060,7 @@ fn getVolumeMultiToSingleScatter(multiscatterColor: vec3f) -> vec3f {
     specularTexture = null,
     specularFactorTexture = null,
     specularColorTexture = null,
+    transmissionThicknessTexture = null,
     transmissionTexture = null,
     thicknessTexture = null,
     sheenTexture = null,
@@ -21908,6 +22068,7 @@ fn getVolumeMultiToSingleScatter(multiscatterColor: vec3f) -> vec3f {
     sheenRoughnessTexture = null,
     anisotropyTexture = null,
     clearcoatTexture = null,
+    clearcoatFactorTexture = null,
     clearcoatRoughnessTexture = null,
     clearcoatNormalTexture = null,
     iridescenceTexture = null,
@@ -21967,10 +22128,10 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   ${getMetallicRoughness({ metallicRoughnessTexture })}
   ${getDiffuse}
   ${getSpecular({ specularTexture, specularFactorTexture, specularColorTexture })}
-  ${getTransmissionThickness({ transmissionTexture, thicknessTexture })}
+  ${getTransmissionThickness({ transmissionThicknessTexture, transmissionTexture, thicknessTexture })}
   ${getEmissiveOcclusion({ emissiveTexture, occlusionTexture })}
   ${getSheen({ extensionsUsed, sheenTexture, sheenColorTexture, sheenRoughnessTexture })}
-  ${getClearcoat({ extensionsUsed, clearcoatTexture, clearcoatRoughnessTexture })}
+  ${getClearcoat({ extensionsUsed, clearcoatTexture, clearcoatFactorTexture, clearcoatRoughnessTexture })}
   ${getClearcoatNormal({ extensionsUsed, normalTexture, clearcoatNormalTexture })}
   ${getIridescence({ extensionsUsed, iridescenceTexture, iridescenceFactorTexture, iridescenceThicknessTexture })}
   ${getAnisotropy({ extensionsUsed, anisotropyTexture })}
@@ -22043,6 +22204,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
     specularTexture = null,
     specularFactorTexture = null,
     specularColorTexture = null,
+    transmissionThicknessTexture = null,
     transmissionTexture = null,
     thicknessTexture = null,
     sheenTexture = null,
@@ -22050,9 +22212,11 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
     sheenRoughnessTexture = null,
     anisotropyTexture = null,
     clearcoatTexture = null,
+    clearcoatFactorTexture = null,
     clearcoatRoughnessTexture = null,
     clearcoatNormalTexture = null,
     iridescenceTexture = null,
+    iridescenceFactorTexture = null,
     iridescenceThicknessTexture = null,
     diffuseTransmissionTexture = null,
     diffuseTransmissionFactorTexture = null,
@@ -22141,6 +22305,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
             specularTexture,
             specularFactorTexture,
             specularColorTexture,
+            transmissionThicknessTexture,
             transmissionTexture,
             thicknessTexture,
             sheenTexture,
@@ -22148,9 +22313,11 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
             sheenRoughnessTexture,
             anisotropyTexture,
             clearcoatTexture,
+            clearcoatFactorTexture,
             clearcoatRoughnessTexture,
             clearcoatNormalTexture,
             iridescenceTexture,
+            iridescenceFactorTexture,
             iridescenceThicknessTexture,
             diffuseTransmissionTexture,
             diffuseTransmissionFactorTexture,
@@ -25592,6 +25759,7 @@ struct Params {
         specularTexture,
         specularFactorTexture,
         specularColorTexture,
+        transmissionThicknessTexture,
         transmissionTexture,
         thicknessTexture,
         sheenTexture,
@@ -25599,6 +25767,7 @@ struct Params {
         sheenRoughnessTexture,
         anisotropyTexture,
         clearcoatTexture,
+        clearcoatFactorTexture,
         clearcoatRoughnessTexture,
         clearcoatNormalTexture,
         iridescenceTexture,
@@ -25675,6 +25844,7 @@ struct Params {
         specularTexture,
         specularFactorTexture,
         specularColorTexture,
+        transmissionThicknessTexture,
         transmissionTexture,
         thicknessTexture,
         sheenTexture,
@@ -25682,6 +25852,7 @@ struct Params {
         sheenRoughnessTexture,
         anisotropyTexture,
         clearcoatTexture,
+        clearcoatFactorTexture,
         clearcoatRoughnessTexture,
         clearcoatNormalTexture,
         iridescenceTexture,
@@ -25785,6 +25956,7 @@ struct Params {
         specularTexture,
         specularFactorTexture,
         specularColorTexture,
+        transmissionThicknessTexture,
         transmissionTexture,
         thicknessTexture,
         emissiveTexture,
@@ -25794,6 +25966,7 @@ struct Params {
         sheenRoughnessTexture,
         anisotropyTexture,
         clearcoatTexture,
+        clearcoatFactorTexture,
         clearcoatRoughnessTexture,
         clearcoatNormalTexture,
         iridescenceTexture,
@@ -26059,6 +26232,7 @@ struct Params {
         specularTexture,
         specularFactorTexture,
         specularColorTexture,
+        transmissionThicknessTexture,
         transmissionTexture,
         thicknessTexture,
         sheenTexture,
@@ -26066,6 +26240,7 @@ struct Params {
         sheenRoughnessTexture,
         anisotropyTexture,
         clearcoatTexture,
+        clearcoatFactorTexture,
         clearcoatRoughnessTexture,
         clearcoatNormalTexture,
         iridescenceTexture,
@@ -26086,6 +26261,7 @@ struct Params {
       ];
       const pbrTextures = [
         ...specularTextures,
+        transmissionThicknessTexture,
         transmissionTexture,
         thicknessTexture,
         sheenTexture,
@@ -26093,6 +26269,7 @@ struct Params {
         sheenRoughnessTexture,
         anisotropyTexture,
         clearcoatTexture,
+        clearcoatFactorTexture,
         clearcoatRoughnessTexture,
         clearcoatNormalTexture,
         iridescenceTexture,
@@ -26512,6 +26689,7 @@ struct Params {
     return intersections;
   };
 
+  const tempVec2 = new Vec2();
   const tempVec3 = new Vec3();
   const tempQuat = new Quat();
   class KeyframesAnimation {
@@ -26526,24 +26704,30 @@ struct Params {
       keyframes = null,
       values = null,
       path = null,
+      type = null,
+      inputValue = null,
       interpolation = "LINEAR"
     } = {}) {
       this.label = label;
       this.keyframes = keyframes;
       this.values = values;
       this.path = path;
+      this.type = type;
+      this.inputValue = inputValue;
       this.interpolation = interpolation;
       this.inputIndex = inputIndex;
-      this.weightsBindingInputs = [];
       this.onAfterUpdate = null;
       this.duration = this.keyframes ? this.keyframes[this.keyframes.length - 1] : 0;
     }
     /**
-     * Add a weight {@link BufferBindingInput} to the {@link weightsBindingInputs} array.
-     * @param input - Weight {@link BufferBindingInput}.
+     * Add a {@link BufferBindingInput} to the {@link inputValue} array. Use for weights animations.
+     * @param input - {@link BufferBindingInput} to add.
      */
-    addWeightBindingInput(input) {
-      this.weightsBindingInputs.push(input);
+    addBindingInput(input) {
+      if (!this.inputValue) {
+        this.inputValue = [];
+      }
+      this.inputValue.push(input);
     }
     /**
      * Get a cubic spline interpolation value.
@@ -26567,12 +26751,12 @@ struct Params {
       return this.interpolation === "CUBICSPLINE" ? index * 3 * size + size : index * size;
     }
     /**
-     * Update an {@link Object3D} transformation property or eventually the {@link weightsBindingInputs} based on the current time given, the {@link path} and {@link interpolation} used and the {@link keyframes} and {@link values}.
+     * Update the {@link inputValue} based on the current time given, the {@link path}, {@link type} and {@link interpolation} used and the {@link keyframes} and {@link values}.
      * @param target - {@link Object3D} to update.
      * @param currentTime - Current time in seconds.
      */
     update(target, currentTime = 0) {
-      if (!this.keyframes || !this.values || !this.path) return;
+      if (!this.keyframes || !this.values || !this.path || !this.type || this.inputValue === null) return;
       const nextTimeIndex = this.keyframes.findIndex((t) => t >= currentTime);
       if (nextTimeIndex === -1) return;
       const previousTimeIndex = nextTimeIndex - 1;
@@ -26581,10 +26765,30 @@ struct Params {
       const previousTime = this.keyframes[previousTimeIndex];
       const interpolatedTime = (currentTime - previousTime) / (nextTime - previousTime);
       const deltaTime = nextTime - previousTime;
-      if (this.path === "rotation") {
+      if (this.type === "scalar") {
+        const prevIndex = this.getIndexFromInterpolation(previousTimeIndex, 1);
+        const nextIndex = this.getIndexFromInterpolation(nextTimeIndex, 1);
+        const value = this.values[prevIndex];
+        this.inputValue = value;
+        if (this.interpolation === "LINEAR") {
+          const nextValue = this.values[nextIndex];
+          this.inputValue += (nextValue - value) * interpolatedTime;
+        } else if (this.interpolation === "CUBICSPLINE") {
+          const nextValue = this.values[nextIndex];
+          const previousOutputTangent = this.values[prevIndex + 1];
+          const nextInputTangent = this.values[nextIndex - 1];
+          this.inputValue = this.getCubicSplineComponentValue(
+            interpolatedTime,
+            value,
+            nextValue,
+            deltaTime * previousOutputTangent[0],
+            deltaTime * nextInputTangent[0]
+          );
+        }
+      } else if (this.inputValue instanceof Quat) {
         const prevIndex = this.getIndexFromInterpolation(previousTimeIndex, 4);
         const nextIndex = this.getIndexFromInterpolation(nextTimeIndex, 4);
-        target.quaternion.setFromArray([
+        this.inputValue.setFromArray([
           this.values[prevIndex],
           this.values[prevIndex + 1],
           this.values[prevIndex + 2],
@@ -26613,44 +26817,75 @@ struct Params {
             const cubicValue = [
               this.getCubicSplineComponentValue(
                 interpolatedTime,
-                target.quaternion.elements[0],
+                this.inputValue.elements[0],
                 tempQuat.elements[0],
                 deltaTime * previousOutputTangent[0],
                 deltaTime * nextInputTangent[0]
               ),
               this.getCubicSplineComponentValue(
                 interpolatedTime,
-                target.quaternion.elements[1],
+                this.inputValue.elements[1],
                 tempQuat.elements[1],
                 deltaTime * previousOutputTangent[1],
                 deltaTime * nextInputTangent[1]
               ),
               this.getCubicSplineComponentValue(
                 interpolatedTime,
-                target.quaternion.elements[2],
+                this.inputValue.elements[2],
                 tempQuat.elements[2],
                 deltaTime * previousOutputTangent[2],
                 deltaTime * nextInputTangent[2]
               ),
               this.getCubicSplineComponentValue(
                 interpolatedTime,
-                target.quaternion.elements[3],
+                this.inputValue.elements[3],
                 tempQuat.elements[3],
                 deltaTime * previousOutputTangent[3],
                 deltaTime * nextInputTangent[3]
               )
             ];
-            target.quaternion.setFromArray(cubicValue).normalize();
+            this.inputValue.setFromArray(cubicValue).normalize();
           } else {
-            target.quaternion.slerp(tempQuat, interpolatedTime);
+            this.inputValue.slerp(tempQuat, interpolatedTime);
           }
         }
-        target.shouldUpdateModelMatrix();
-      } else if (this.path === "translation" || this.path === "scale") {
-        const vectorName = this.path === "translation" ? "position" : this.path;
+        if (this.path === "rotation") {
+          target.shouldUpdateModelMatrix();
+        }
+      } else if (this.inputValue instanceof Vec2) {
+        const prevIndex = this.getIndexFromInterpolation(previousTimeIndex, 2);
+        const nextIndex = this.getIndexFromInterpolation(nextTimeIndex, 2);
+        this.inputValue.set(this.values[prevIndex], this.values[prevIndex + 1]);
+        if (this.interpolation === "LINEAR" || this.interpolation === "CUBICSPLINE") {
+          tempVec2.set(this.values[nextIndex], this.values[nextIndex + 1]);
+          if (this.interpolation === "CUBICSPLINE") {
+            const previousOutputTangent = [this.values[prevIndex + 2], this.values[prevIndex + 3]];
+            const nextInputTangent = [this.values[nextIndex - 2], this.values[nextIndex - 1]];
+            const cubicValue = [
+              this.getCubicSplineComponentValue(
+                interpolatedTime,
+                this.inputValue.x,
+                tempVec2.x,
+                deltaTime * previousOutputTangent[0],
+                deltaTime * nextInputTangent[0]
+              ),
+              this.getCubicSplineComponentValue(
+                interpolatedTime,
+                this.inputValue.y,
+                tempVec2.y,
+                deltaTime * previousOutputTangent[1],
+                deltaTime * nextInputTangent[1]
+              )
+            ];
+            this.inputValue.set(cubicValue[0], cubicValue[1]);
+          } else {
+            this.inputValue.lerp(tempVec2, interpolatedTime);
+          }
+        }
+      } else if (this.inputValue instanceof Vec3) {
         const prevIndex = this.getIndexFromInterpolation(previousTimeIndex, 3);
         const nextIndex = this.getIndexFromInterpolation(nextTimeIndex, 3);
-        target[vectorName].set(this.values[prevIndex], this.values[prevIndex + 1], this.values[prevIndex + 2]);
+        this.inputValue.set(this.values[prevIndex], this.values[prevIndex + 1], this.values[prevIndex + 2]);
         if (this.interpolation === "LINEAR" || this.interpolation === "CUBICSPLINE") {
           tempVec3.set(this.values[nextIndex], this.values[nextIndex + 1], this.values[nextIndex + 2]);
           if (this.interpolation === "CUBICSPLINE") {
@@ -26663,45 +26898,69 @@ struct Params {
             const cubicValue = [
               this.getCubicSplineComponentValue(
                 interpolatedTime,
-                target[vectorName].x,
+                this.inputValue.x,
                 tempVec3.x,
                 deltaTime * previousOutputTangent[0],
                 deltaTime * nextInputTangent[0]
               ),
               this.getCubicSplineComponentValue(
                 interpolatedTime,
-                target[vectorName].y,
+                this.inputValue.y,
                 tempVec3.y,
                 deltaTime * previousOutputTangent[1],
                 deltaTime * nextInputTangent[1]
               ),
               this.getCubicSplineComponentValue(
                 interpolatedTime,
-                target[vectorName].z,
+                this.inputValue.z,
                 tempVec3.z,
                 deltaTime * previousOutputTangent[2],
                 deltaTime * nextInputTangent[2]
               )
             ];
-            target[vectorName].set(cubicValue[0], cubicValue[1], cubicValue[2]);
+            this.inputValue.set(cubicValue[0], cubicValue[1], cubicValue[2]);
           } else {
-            target[vectorName].lerp(tempVec3, interpolatedTime);
+            this.inputValue.lerp(tempVec3, interpolatedTime);
           }
         }
-      } else if (this.path === "weights") {
-        const prevIndex = this.getIndexFromInterpolation(previousTimeIndex, this.weightsBindingInputs.length);
-        const nextIndex = this.getIndexFromInterpolation(nextTimeIndex, this.weightsBindingInputs.length);
-        for (let i = 0; i < this.weightsBindingInputs.length; i++) {
+      } else if (this.path === "weights" && this.inputValue.length) {
+        const inputLength = this.inputValue.length;
+        const prevIndex = this.getIndexFromInterpolation(previousTimeIndex, inputLength);
+        const nextIndex = this.getIndexFromInterpolation(nextTimeIndex, inputLength);
+        for (let i = 0; i < inputLength; i++) {
           const value = this.values[prevIndex + i];
-          this.weightsBindingInputs[i].value = value;
+          this.inputValue[i].value = value;
           if (this.interpolation === "LINEAR") {
             const nextValue = this.values[nextIndex + i];
-            this.weightsBindingInputs[i].value += (nextValue - value) * interpolatedTime;
+            this.inputValue[i].value += (nextValue - value) * interpolatedTime;
           } else if (this.interpolation === "CUBICSPLINE") {
             const nextValue = this.values[nextIndex + i];
             const previousOutputTangent = this.values[prevIndex + i + 1];
             const nextInputTangent = this.values[nextIndex + i - 1];
-            this.weightsBindingInputs[i].value = this.getCubicSplineComponentValue(
+            this.inputValue[i].value = this.getCubicSplineComponentValue(
+              interpolatedTime,
+              value,
+              nextValue,
+              deltaTime * previousOutputTangent[0],
+              deltaTime * nextInputTangent[0]
+            );
+          }
+        }
+      } else if (this.inputValue.length) {
+        const inputLength = this.inputValue.length;
+        const prevIndex = this.getIndexFromInterpolation(previousTimeIndex, inputLength);
+        const nextIndex = this.getIndexFromInterpolation(nextTimeIndex, inputLength);
+        for (let i = 0; i < inputLength; i++) {
+          const value = this.values[prevIndex + i];
+          this.inputValue[i] = value;
+          if (this.interpolation === "LINEAR") {
+            const nextValue = this.values[nextIndex + i];
+            this.inputValue[i] += (nextValue - value) * interpolatedTime;
+          } else if (this.interpolation === "CUBICSPLINE") {
+            const nextValue = this.values[nextIndex + i];
+            const previousOutputTangent = this.values[prevIndex + i + 1];
+            const nextInputTangent = this.values[nextIndex + i - 1];
+            this.inputValue[i] = this.getCubicSplineComponentValue(
               interpolatedTime,
               value,
               nextValue,
@@ -26993,6 +27252,7 @@ struct Params {
       this.renderer = renderer;
       this.gltf = gltf;
       __privateSet(this, _primitiveInstances, /* @__PURE__ */ new Map());
+      this.pointerAnimationsManager = null;
       this.scenesManager = {
         node: new Object3D(),
         nodes: /* @__PURE__ */ new Map(),
@@ -27144,17 +27404,32 @@ struct Params {
       });
     }
     /**
+     * Get a glTF animation keyframes and values {@link TypedArray} from the given {@link GLTF.IAnimationSampler | glTF animation sampler}.
+     * @param sampler - {@link GLTF.IAnimationSampler | glTF animation sampler} to retrieve from.
+     * @returns - Corresponding keyframes and values {@link TypedArray}.
+     */
+    getAnimationKeyframesValues(sampler) {
+      const inputAccessor = this.gltf.accessors[sampler.input];
+      const keyframes = __privateMethod(this, _GLTFScenesManager_instances, getAccessorArray_fn).call(this, inputAccessor);
+      const outputAccessor = this.gltf.accessors[sampler.output];
+      const values = __privateMethod(this, _GLTFScenesManager_instances, getAccessorArray_fn).call(this, outputAccessor);
+      return { keyframes, values };
+    }
+    /**
      * Create the {@link ScenesManager.lights | lights} defined by the `KHR_lights_punctual` extension if any.
      */
     createLights() {
       if (this.gltf.extensions && this.gltf.extensions["KHR_lights_punctual"]) {
+        let lightIndex = 0;
         for (const light of this.gltf.extensions["KHR_lights_punctual"].lights) {
+          lightIndex++;
+          const label = light.name ?? `glTF ${light.type} light ${lightIndex}`;
           if (light.type === "spot") {
             const innerConeAngle = light.spot.innerConeAngle !== void 0 ? light.spot.innerConeAngle : 0;
             const outerConeAngle = light.spot.outerConeAngle !== void 0 ? light.spot.outerConeAngle : Math.PI / 4;
             this.scenesManager.lights.push(
               new SpotLight(this.renderer, {
-                ...light.name !== void 0 && { label: light.name },
+                label,
                 color: light.color !== void 0 ? new Vec3(light.color[0], light.color[1], light.color[2]) : new Vec3(1),
                 intensity: light.intensity !== void 0 ? light.intensity : 1,
                 range: light.range !== void 0 ? light.range : 0,
@@ -27165,7 +27440,7 @@ struct Params {
           } else if (light.type === "directional") {
             this.scenesManager.lights.push(
               new DirectionalLight(this.renderer, {
-                ...light.name !== void 0 && { label: light.name },
+                label,
                 color: light.color !== void 0 ? new Vec3(light.color[0], light.color[1], light.color[2]) : new Vec3(1),
                 intensity: light.intensity !== void 0 ? light.intensity : 1
               })
@@ -27173,7 +27448,7 @@ struct Params {
           } else if (light.type === "point") {
             this.scenesManager.lights.push(
               new PointLight(this.renderer, {
-                ...light.name !== void 0 && { label: light.name },
+                label,
                 color: light.color !== void 0 ? new Vec3(light.color[0], light.color[1], light.color[2]) : new Vec3(1),
                 intensity: light.intensity !== void 0 ? light.intensity : 1,
                 range: light.range !== void 0 ? light.range : 0
@@ -27253,10 +27528,12 @@ struct Params {
             return "rgba8unorm-srgb";
           case "occlusionTexture":
           case "transmissionTexture":
-          case "clearcoatTexture":
+          case "clearcoatFactorTexture":
           case "iridescenceFactorTexture":
             return "r8unorm";
           case "thicknessTexture":
+          case "transmissionThicknessTexture":
+          case "clearcoatTexture":
           case "clearcoatRoughnessTexture":
           case "iridescenceTexture":
           case "iridescenceThicknessTexture":
@@ -27306,7 +27583,10 @@ struct Params {
               return src === index;
             })?.sampler;
             const sampler = this.scenesManager.samplers[samplerIndex ?? 0];
-            const textureTransform = gltfTextureInfo.extensions && gltfTextureInfo.extensions["KHR_texture_transform"];
+            let textureTransform = gltfTextureInfo.extensions && gltfTextureInfo.extensions["KHR_texture_transform"];
+            if (!textureTransform && this.gltf.extensionsUsed && this.gltf.extensionsUsed.includes("KHR_animation_pointer")) {
+              textureTransform = {};
+            }
             const texCoordAttributeName = getUVAttributeName(
               textureTransform && textureTransform.texCoord !== void 0 ? textureTransform : gltfTextureInfo
             );
@@ -27379,9 +27659,6 @@ struct Params {
           const clearcoat = extensions && extensions.KHR_materials_clearcoat || null;
           const iridescence = extensions && extensions.KHR_materials_iridescence || null;
           const diffuseTransmission = extensions && extensions.KHR_materials_diffuse_transmission || null;
-          if (transmission && transmission.transmissionTexture && transmission.transmissionTexture.index !== void 0) {
-            createTexture(transmission.transmissionTexture, "transmissionTexture");
-          }
           if (specular && (specular.specularTexture || specular.specularColorTexture)) {
             const { specularTexture, specularColorTexture } = specular;
             if (specularTexture && specularColorTexture && specularTexture.index !== void 0 && specularTexture.index === specularColorTexture.index) {
@@ -27395,8 +27672,15 @@ struct Params {
               }
             }
           }
-          if (volume && volume.thicknessTexture && volume.thicknessTexture.index !== void 0) {
-            createTexture(volume.thicknessTexture, "thicknessTexture");
+          if (transmission && volume && transmission.transmissionTexture && volume.thicknessTexture && transmission.transmissionTexture.index !== void 0 && transmission.transmissionTexture.index === volume.thicknessTexture.index) {
+            createTexture(transmission.transmissionTexture, "transmissionThicknessTexture");
+          } else {
+            if (transmission && transmission.transmissionTexture && transmission.transmissionTexture.index !== void 0) {
+              createTexture(transmission.transmissionTexture, "transmissionTexture");
+            }
+            if (volume && volume.thicknessTexture && volume.thicknessTexture.index !== void 0) {
+              createTexture(volume.thicknessTexture, "thicknessTexture");
+            }
           }
           if (sheen && (sheen.sheenColorTexture || sheen.sheenRoughnessTexture)) {
             const { sheenColorTexture, sheenRoughnessTexture } = sheen;
@@ -27416,11 +27700,15 @@ struct Params {
           }
           if (clearcoat && (clearcoat.clearcoatTexture || clearcoat.clearcoatRoughnessTexture || clearcoat.clearcoatNormalTexture)) {
             const { clearcoatTexture, clearcoatRoughnessTexture, clearcoatNormalTexture } = clearcoat;
-            if (clearcoatTexture && clearcoatTexture.index !== void 0) {
+            if (clearcoatTexture && clearcoatRoughnessTexture && clearcoatTexture.index !== void 0 && clearcoatTexture.index === clearcoatRoughnessTexture.index) {
               createTexture(clearcoatTexture, "clearcoatTexture");
-            }
-            if (clearcoatRoughnessTexture && clearcoatRoughnessTexture.index !== void 0) {
-              createTexture(clearcoatRoughnessTexture, "clearcoatRoughnessTexture");
+            } else {
+              if (clearcoatTexture && clearcoatTexture.index !== void 0) {
+                createTexture(clearcoatTexture, "clearcoatFactorTexture");
+              }
+              if (clearcoatRoughnessTexture && clearcoatRoughnessTexture.index !== void 0) {
+                createTexture(clearcoatRoughnessTexture, "clearcoatRoughnessTexture");
+              }
             }
             if (clearcoatNormalTexture && clearcoatNormalTexture.index !== void 0) {
               createTexture(clearcoatNormalTexture, "clearcoatNormalTexture");
@@ -27524,7 +27812,7 @@ struct Params {
             )
           },
           ...volumeScatter.scatterAnisotropy !== void 0 !== void 0 && {
-            sheenRoughness: volumeScatter.scatterAnisotropy
+            scatterAnisotropy: volumeScatter.scatterAnisotropy
           }
         },
         // sheen
@@ -27718,8 +28006,14 @@ struct Params {
       if (node.extensions && node.extensions.KHR_lights_punctual) {
         const light = this.scenesManager.lights[node.extensions.KHR_lights_punctual.light];
         light.position.set(0, 0, 0);
+        child.node.scale.set(1);
         if (light instanceof DirectionalLight || light instanceof SpotLight) {
           light.target.set(0, 0, -1);
+          const _updateWorldMatrix = child.node.updateWorldMatrix.bind(child.node);
+          child.node.updateWorldMatrix = (updateParents, updateChildren) => {
+            _updateWorldMatrix(updateParents, updateChildren);
+            light.updateTargetFromWorldMatrix();
+          };
         }
         light.parent = child.node;
       }
@@ -27738,6 +28032,7 @@ struct Params {
           }
           const fov = gltfCamera.perspective.yfov * 180 / Math.PI;
           const camera = new PerspectiveCamera({
+            label: gltfCamera.name ?? `glTF Perspective camera ${node.camera}`,
             fov,
             near: gltfCamera.perspective.znear ?? 0.01,
             far: gltfCamera.perspective.zfar ?? 1e3,
@@ -27751,6 +28046,7 @@ struct Params {
           this.scenesManager.cameras.push(camera);
         } else if (gltfCamera.type === "orthographic") {
           const camera = new OrthographicCamera({
+            label: gltfCamera.name ?? `glTF Orthographic camera ${node.camera}`,
             near: gltfCamera.orthographic.znear ?? 0.01,
             far: gltfCamera.orthographic.zfar ?? 1e3,
             left: -gltfCamera.orthographic.xmag,
@@ -27767,22 +28063,68 @@ struct Params {
         this.scenesManager.animations.forEach((targetsAnimation, i) => {
           const animation = this.gltf.animations[i];
           const channels = animation.channels.filter((channel) => channel.target.node === index);
+          const pointerChannels = animation.channels.filter(
+            (channel) => channel.target.path === "pointer" && channel.target.extensions && channel.target.extensions.KHR_animation_pointer && channel.target.extensions.KHR_animation_pointer.pointer && channel.target.extensions.KHR_animation_pointer.pointer.includes("weights")
+          );
+          pointerChannels.forEach((pointerChannel) => {
+            const pointerWeightChannel = {
+              sampler: pointerChannel.sampler,
+              target: {
+                node: null,
+                path: "weights"
+              }
+            };
+            const pointerPath = pointerChannel.target.extensions.KHR_animation_pointer.pointer;
+            const splitedPointerPaths = pointerPath.split("/");
+            splitedPointerPaths.shift();
+            pointerWeightChannel.target.node = parseInt(splitedPointerPaths[1]);
+            channels.push(pointerWeightChannel);
+          });
           if (channels && channels.length) {
             targetsAnimation.addTarget(child.node);
             channels.forEach((channel) => {
+              const animName = node.name ? `${node.name} animation` : `${channel.target.path} animation ${index}`;
+              const label = animation.name ? `${animation.name} ${animName}` : `Animation ${i} ${animName}`;
+              const input = (() => {
+                switch (channel.target.path) {
+                  case "rotation":
+                    return {
+                      type: "quaternion",
+                      value: child.node.quaternion
+                    };
+                  case "translation":
+                    return {
+                      type: "vec3",
+                      value: child.node.position
+                    };
+                  case "scale":
+                    return {
+                      type: "vec3",
+                      value: child.node.scale
+                    };
+                  case "weights":
+                    return {
+                      type: "array",
+                      value: null
+                    };
+                  default:
+                    return {
+                      type: null,
+                      value: null
+                    };
+                }
+              })();
               const sampler = animation.samplers[channel.sampler];
               const path = channel.target.path;
-              const inputAccessor = this.gltf.accessors[sampler.input];
-              const keyframes = __privateMethod(this, _GLTFScenesManager_instances, getAccessorArray_fn).call(this, inputAccessor);
-              const outputAccessor = this.gltf.accessors[sampler.output];
-              const values = __privateMethod(this, _GLTFScenesManager_instances, getAccessorArray_fn).call(this, outputAccessor);
-              const animName = node.name ? `${node.name} animation` : `${channel.target.path} animation ${index}`;
+              const { keyframes, values } = this.getAnimationKeyframesValues(sampler);
               const keyframesAnimation = new KeyframesAnimation({
-                label: animation.name ? `${animation.name} ${animName}` : `Animation ${i} ${animName}`,
+                label,
                 inputIndex: sampler.input,
                 keyframes,
                 values,
                 path,
+                type: input.type,
+                inputValue: input.value,
                 interpolation: sampler.interpolation
               });
               targetsAnimation.addTargetAnimation(child.node, keyframesAnimation);
@@ -28035,7 +28377,7 @@ struct Params {
       if (primitive.targets) {
         const bindings = [];
         const weights = this.gltf.meshes[meshIndex].weights;
-        let weightAnimation;
+        let weightAnimation = null;
         for (const animation of this.scenesManager.animations) {
           weightAnimation = animation.getAnimationByObject3DAndPath(meshDescriptor.parent, "weights");
           if (weightAnimation) break;
@@ -28070,7 +28412,7 @@ struct Params {
             struct
           });
           if (weightAnimation) {
-            weightAnimation.addWeightBindingInput(targetBinding.inputs.weight);
+            weightAnimation.addBindingInput(targetBinding.inputs.weight);
           }
           bindings.push(targetBinding);
         });
@@ -28209,6 +28551,9 @@ struct Params {
       const hasTangent = !!geometry.getAttributeByName("tangent");
       if (!hasTangent && meshDescriptor.parameters.material.normalScale) {
         meshDescriptor.parameters.material.normalScale.y *= -1;
+        if (meshDescriptor.parameters.material.clearcoatNormalScale) {
+          meshDescriptor.parameters.material.clearcoatNormalScale.y *= -1;
+        }
       }
       const hasNormal = primitive.attributes["NORMAL"] !== void 0;
       meshDescriptor.parameters.material.flatShading = !hasNormal;
@@ -28267,6 +28612,9 @@ struct Params {
               };
               if (!hasTangent && variantDescriptor.parameters.material.normalScale) {
                 variantDescriptor.parameters.material.normalScale.y *= -1;
+                if (variantDescriptor.parameters.material.clearcoatNormalScale) {
+                  variantDescriptor.parameters.material.clearcoatNormalScale.y *= -1;
+                }
               }
               meshDescriptor.alternateDescriptors.set(variant.name, variantDescriptor);
             }
@@ -28303,6 +28651,17 @@ struct Params {
       }
     }
     /**
+     * Return the {@link PrimitiveInstanceDescriptor} corresponding the given glTF material index, if any.
+     * @param materialIndex - glTF material index.
+     * @returns - {@link PrimitiveInstanceDescriptor} found if any.
+     */
+    getPrimitiveInstanceFromGLTFMaterial(materialIndex) {
+      const primitiveInstancesKey = Array.from(__privateGet(this, _primitiveInstances).keys());
+      const primitive = primitiveInstancesKey.find((k) => k.material === materialIndex);
+      const primitiveInstance = __privateGet(this, _primitiveInstances).get(primitive);
+      return primitiveInstance ?? null;
+    }
+    /**
      * Add all the needed {@link LitMesh} based on the {@link ScenesManager#meshesDescriptors | ScenesManager meshesDescriptors} array.
      * @param patchMeshesParameters - allow to optionally patch the {@link LitMesh} parameters before creating it (can be used to add custom shaders chunks, uniforms or storages, change rendering options, etc.)
      * @returns - Array of created {@link LitMesh}.
@@ -28310,14 +28669,6 @@ struct Params {
     addMeshes(patchMeshesParameters = (meshDescriptor) => {
     }) {
       this.scenesManager.node.updateMatrixStack();
-      this.gltf.nodes.forEach((node) => {
-        if (node.extensions && node.extensions.KHR_lights_punctual) {
-          const light = this.scenesManager.lights[node.extensions.KHR_lights_punctual.light];
-          if (light instanceof DirectionalLight || light instanceof SpotLight) {
-            light.target.applyMat4(light.worldMatrix);
-          }
-        }
-      });
       return this.scenesManager.meshesDescriptors.map((meshDescriptor) => {
         const { geometry } = meshDescriptor.parameters;
         if (geometry) {
@@ -28329,6 +28680,9 @@ struct Params {
             ...meshDescriptor.parameters
           });
           meshDescriptor.alternateMaterials.set("Default", mesh.material);
+          if (this.pointerAnimationsManager) {
+            this.pointerAnimationsManager.registerMeshAnimations(meshDescriptor, mesh);
+          }
           if (this.gltf.scenes && this.gltf.scenes.length) {
             const activeScene = this.gltf.scene || 0;
             const isInActiveScene = meshDescriptor.scenes.length ? meshDescriptor.scenes.find((scene) => scene.index === activeScene) : true;
@@ -28723,6 +29077,755 @@ struct Params {
   };
   let GLTFScenesManager = _GLTFScenesManager;
 
+  class GLTFPointerAnimationsManager {
+    /**
+     * {@link GLTFPointerAnimationsManager} constructor.
+     */
+    constructor() {
+      this.gltfScenesManager = null;
+      this.resetAnimationsMaps();
+    }
+    /** Reset the {@link materialAnimations} map. */
+    resetAnimationsMaps() {
+      this.materialAnimations = /* @__PURE__ */ new Map();
+    }
+    /**
+     * Add an {@link Object3D} as a {@link TargetsAnimationsManager} target.
+     * @param object - {@link Object3D} to add.
+     * @param targetsAnimation - {@link TargetsAnimationsManager} to add to.
+     */
+    addObjectToTargetAnimation(object, targetsAnimation) {
+      const hasTargetObject = targetsAnimation.targets.find((t) => t.object.object3DIndex === object.object3DIndex);
+      if (!hasTargetObject) {
+        targetsAnimation.addTarget(object);
+      }
+    }
+    /**
+     * Get the {@link PointerAnimationType | animation type} and animated property from a given pointer animation channel.
+     * @param propertyPaths - Array of strings parsed from the pointer channel extension path.
+     * @returns - The correct animation type and property.
+     */
+    getAnimationTypeAndProperty(propertyPaths) {
+      let animatedProperty = propertyPaths[propertyPaths.length - 1];
+      let animationType = "materials";
+      if (propertyPaths.includes("nodes")) {
+        animationType = "nodes";
+      } else if (propertyPaths.includes("cameras")) {
+        animationType = "cameras";
+      } else if (propertyPaths.includes("lights")) {
+        animationType = "lights";
+      } else if (propertyPaths.includes("normalTexture") && animatedProperty === "scale" && !propertyPaths.includes("KHR_texture_transform")) {
+        animationType = "materials";
+        animatedProperty = "normalScale";
+      } else if (propertyPaths.includes("clearcoatNormalTexture") && animatedProperty === "scale" && !propertyPaths.includes("KHR_texture_transform")) {
+        animationType = "materials";
+        animatedProperty = "clearcoatNormalScale";
+      } else if (propertyPaths.includes("occlusionTexture") && animatedProperty === "strength") {
+        animationType = "materials";
+        animatedProperty = "occlusionIntensity";
+      } else if (propertyPaths.find((p) => p.indexOf("texture") !== -1) || propertyPaths.find((p) => p.indexOf("Texture") !== -1)) {
+        animationType = "textures";
+      }
+      return { animationType, animatedProperty };
+    }
+    /**
+     * Get any camera animations {@link KeyframesAnimationValueType | value type} and key (property) to use for the {@link KeyframesAnimation}.
+     * @param animatedProperty - Animated property from the pointer channel extension path.
+     * @returns - The camera animations {@link KeyframesAnimationValueType | value type} and key (property) to animate.
+     */
+    getCleanCameraProperties(animatedProperty) {
+      return (() => {
+        switch (animatedProperty) {
+          case "znear":
+            return {
+              type: "scalar",
+              key: "near"
+            };
+          case "zfar":
+            return {
+              type: "scalar",
+              key: "far"
+            };
+          case "yfov":
+            return {
+              type: "scalar",
+              key: "fov"
+            };
+          case "aspectRatio":
+            return {
+              type: "scalar",
+              key: "forceAspect"
+            };
+          case "xmag":
+            return {
+              type: "scalar",
+              key: "left"
+            };
+          case "ymag":
+            return {
+              type: "scalar",
+              key: "top"
+            };
+          default:
+            return {
+              type: null,
+              key: null
+            };
+        }
+      })();
+    }
+    /**
+     * Get any light animations {@link KeyframesAnimationValueType | value type} and key (property) to use for the {@link KeyframesAnimation}.
+     * @param animatedProperty - Animated property from the pointer channel extension path.
+     * @returns - The light animations {@link KeyframesAnimationValueType | value type} and key (property) to animate.
+     */
+    getCleanLightProperties(animatedProperty) {
+      return (() => {
+        switch (animatedProperty) {
+          case "color":
+            return {
+              type: "vec3",
+              key: animatedProperty
+            };
+          case "intensity":
+          case "range":
+          case "innerConeAngle":
+          case "outerConeAngle":
+            return {
+              type: "scalar",
+              key: animatedProperty
+            };
+          default:
+            return {
+              type: null,
+              key: null
+            };
+        }
+      })();
+    }
+    /**
+     * Get any material animations {@link KeyframesAnimationValueType | value type} and key (property) to use for the {@link KeyframesAnimation}.
+     * @param animatedProperty - Animated property from the pointer channel extension path.
+     * @returns - The material animations {@link KeyframesAnimationValueType | value type} and {@link PointerAnimatedMaterialProperty | material key (property)} to animate.
+     */
+    getCleanMaterialProperties(animatedProperty) {
+      return (() => {
+        switch (animatedProperty) {
+          case "alphaCutoff":
+          case "occlusionIntensity":
+          case "clearcoatRoughness":
+          case "dispersion":
+          case "ior":
+          case "attenuationDistance":
+          case "normalScale":
+          case "clearcoatNormalScale":
+          case "iridescenceThicknessMinimum":
+          case "iridescenceThicknessMaximum":
+            return {
+              type: "scalar",
+              key: animatedProperty
+            };
+          case "attenuationColor":
+            return {
+              type: "vec3",
+              key: animatedProperty
+            };
+          case "emissiveFactor":
+            return {
+              type: "vec3",
+              key: "emissiveColor"
+            };
+          case "emissiveStrength":
+            return {
+              type: "scalar",
+              key: "emissiveIntensity"
+            };
+          case "metallicFactor":
+            return {
+              type: "scalar",
+              key: "metallic"
+            };
+          case "roughnessFactor":
+            return {
+              type: "scalar",
+              key: "roughness"
+            };
+          case "anisotropyStrength":
+            return {
+              type: "scalar",
+              key: "anisotropy"
+            };
+          case "clearcoatFactor":
+            return {
+              type: "scalar",
+              key: "clearcoat"
+            };
+          case "iridescenceFactor":
+            return {
+              type: "scalar",
+              key: "iridescence"
+            };
+          case "iridescenceIor":
+            return {
+              type: "scalar",
+              key: "iridescenceIOR"
+            };
+          case "sheenColorFactor":
+            return {
+              type: "vec3",
+              key: "sheenColor"
+            };
+          case "sheenRoughnessFactor":
+            return {
+              type: "scalar",
+              key: "sheenRoughness"
+            };
+          case "specularFactor":
+            return {
+              type: "scalar",
+              key: "specular"
+            };
+          case "specularColorFactor":
+            return {
+              type: "vec3",
+              key: "specularColor"
+            };
+          case "transmissionFactor":
+            return {
+              type: "scalar",
+              key: "transmission"
+            };
+          case "thicknessFactor":
+            return {
+              type: "scalar",
+              key: "thickness"
+            };
+          case "anisotropyRotation": {
+            return {
+              type: "scalar",
+              key: "anisotropyVector"
+            };
+          }
+          default:
+            return {
+              type: null,
+              key: null
+            };
+        }
+      })();
+    }
+    /**
+     * Get an array of {@link MediaTexture} from a given array of available {@link ShaderTextureDescriptor} corresponding to the given glTF texture name input.
+     * @param textureName - glTF texture name to use to retrieve the textures.
+     * @param texturesDescriptors - Array of available {@link ShaderTextureDescriptor}.
+     * @returns - Array of matching {@link MediaTexture}.
+     */
+    getCleanTextures(textureName, texturesDescriptors) {
+      const getMixedTextures = (textureName2, texturesDescriptors2) => {
+        const descriptor = texturesDescriptors2.find((t) => t.texture.options.name === textureName2);
+        const textures = [];
+        if (descriptor) {
+          textures.push(descriptor.texture);
+        } else {
+          if (textureName2 === "specularTexture" || textureName2 === "specularColorTexture") {
+            const specDesc = texturesDescriptors2.find((t) => t.texture.options.name === "specularTexture");
+            if (specDesc) {
+              textures.push(specDesc);
+            } else {
+              if (textureName2 === "specularTexture") {
+                const specFactorDesc = texturesDescriptors2.find((t) => t.texture.options.name === "specularFactorTexture");
+                if (specFactorDesc) textures.push(specFactorDesc.texture);
+              }
+              if (textureName2 === "specularColorTexture") {
+                const specColorDesc = texturesDescriptors2.find((t) => t.texture.options.name === "specularColorTexture");
+                if (specColorDesc) textures.push(specColorDesc.texture);
+              }
+            }
+          }
+          if (textureName2 === "transmissionTexture" || textureName2 === "thicknessTexture") {
+            const trthDesc = texturesDescriptors2.find((t) => t.texture.options.name === "transmissionThicknessTexture");
+            if (trthDesc) {
+              textures.push(trthDesc.texture);
+            } else {
+              if (textureName2 === "transmissionTexture") {
+                const trDesc = texturesDescriptors2.find((t) => t.texture.options.name === "transmissionTexture");
+                if (trDesc) textures.push(trDesc.texture);
+              }
+              if (textureName2 === "thicknessTexture") {
+                const thDesc = texturesDescriptors2.find((t) => t.texture.options.name === "thicknessTexture");
+                if (thDesc) textures.push(thDesc.texture);
+              }
+            }
+          }
+          if (textureName2 === "sheenColorTexture" || textureName2 === "sheenRoughnessTexture") {
+            const sheenDesc = texturesDescriptors2.find((t) => t.texture.options.name === "sheenTexture");
+            if (sheenDesc) {
+              textures.push(sheenDesc.texture);
+            } else {
+              if (textureName2 === "sheenColorTexture") {
+                const sheenColorDesc = texturesDescriptors2.find((t) => t.texture.options.name === "sheenColorTexture");
+                if (sheenColorDesc) textures.push(sheenColorDesc.texture);
+              }
+              if (textureName2 === "sheenRoughnessTexture") {
+                const sheenRoughDesc = texturesDescriptors2.find((t) => t.texture.options.name === "sheenRoughnessTexture");
+                if (sheenRoughDesc) textures.push(sheenRoughDesc.texture);
+              }
+            }
+          }
+          if (textureName2 === "clearcoatTexture" || textureName2 === "clearcoatRoughnessTexture") {
+            const ccDesc = texturesDescriptors2.find((t) => t.texture.options.name === "clearcoatTexture");
+            if (ccDesc) {
+              textures.push(ccDesc.texture);
+            } else {
+              if (textureName2 === "clearcoatTexture") {
+                const ccFactorDesc = texturesDescriptors2.find((t) => t.texture.options.name === "clearcoatFactorTexture");
+                if (ccFactorDesc) textures.push(ccFactorDesc.texture);
+              }
+              if (textureName2 === "clearcoatRoughnessTexture") {
+                const ccRoughDesc = texturesDescriptors2.find(
+                  (t) => t.texture.options.name === "clearcoatRoughnessTexture"
+                );
+                if (ccRoughDesc) textures.push(ccRoughDesc.texture);
+              }
+            }
+          }
+          if (textureName2 === "iridescenceTexture" || textureName2 === "iridescenceThicknessTexture") {
+            const irDesc = texturesDescriptors2.find((t) => t.texture.options.name === "iridescenceTexture");
+            if (irDesc) {
+              textures.push(irDesc.texture);
+            } else {
+              if (textureName2 === "iridescenceTexture") {
+                const irFactorDesc = texturesDescriptors2.find(
+                  (t) => t.texture.options.name === "iridescenceFactorTexture"
+                );
+                if (irFactorDesc) textures.push(irFactorDesc.texture);
+              }
+              if (textureName2 === "iridescenceThicknessTexture") {
+                const irThickDesc = texturesDescriptors2.find(
+                  (t) => t.texture.options.name === "iridescenceThicknessTexture"
+                );
+                if (irThickDesc) textures.push(irThickDesc.texture);
+              }
+            }
+          }
+          if (textureName2 === "diffuseTransmissionTexture" || textureName2 === "diffuseTransmissionColorTexture") {
+            const difDesc = texturesDescriptors2.find((t) => t.texture.options.name === "diffuseTransmissionTexture");
+            if (difDesc) {
+              textures.push(difDesc.texture);
+            } else {
+              if (textureName2 === "diffuseTransmissionTexture") {
+                const difFactorDesc = texturesDescriptors2.find(
+                  (t) => t.texture.options.name === "diffuseTransmissionFactorTexture"
+                );
+                if (difFactorDesc) textures.push(difFactorDesc.texture);
+              }
+              if (textureName2 === "diffuseTransmissionColorTexture") {
+                const difColorDesc = texturesDescriptors2.find(
+                  (t) => t.texture.options.name === "diffuseTransmissionColorTexture"
+                );
+                if (difColorDesc) textures.push(difColorDesc.texture);
+              }
+            }
+          }
+        }
+        return textures;
+      };
+      return (() => {
+        switch (textureName) {
+          case "baseColorTexture":
+          case "metallicRoughnessTexture":
+          case "normalTexture":
+          case "occlusionTexture":
+          case "emissiveTexture":
+          case "anisotropyTexture":
+          case "clearcoatNormalTexture":
+            const descriptor = texturesDescriptors.find((t) => t.texture.options.name === textureName);
+            return descriptor ? [descriptor.texture] : [];
+          case "specularTexture":
+          case "specularColorTexture":
+          case "transmissionTexture":
+          case "thicknessTexture":
+          case "sheenColorTexture":
+          case "sheenRoughnessTexture":
+          case "clearcoatTexture":
+          case "clearcoatRoughnessTexture":
+          case "iridescenceTexture":
+          case "iridescenceThicknessTexture":
+          case "diffuseTransmissionTexture":
+          case "diffuseTransmissionColorTexture":
+            return getMixedTextures(textureName, texturesDescriptors);
+          default:
+            return [];
+        }
+      })();
+    }
+    /**
+     * Create all the necessary pointer {@link KeyframesAnimation} for a given {@link GLTFScenesManager} instance.
+     *
+     * Parse the animations channels, and for each one:
+     * - Get the animation path and use it to extract the {@link PointerAnimationType | animation type} and animated property.
+     * - Based on the {@link PointerAnimationType | animation type}, create the corresponding {@link KeyframesAnimation} and handle the actual value update (except for materials, where it's done inside {@link registerMeshAnimations} method).
+     *
+     * @param gltfScenesManager - {@link GLTFScenesManager} instance to parse for pointer animations.
+     */
+    createPointerAnimations(gltfScenesManager = null) {
+      if (!gltfScenesManager) return;
+      if (this.gltfScenesManager) {
+        this.gltfScenesManager.pointerAnimationsManager = null;
+      }
+      this.gltfScenesManager = gltfScenesManager;
+      this.gltfScenesManager.pointerAnimationsManager = this;
+      this.resetAnimationsMaps();
+      if (this.gltfScenesManager.gltf.animations) {
+        this.gltfScenesManager.scenesManager.animations.forEach((targetsAnimation, i) => {
+          const animation = this.gltfScenesManager.gltf.animations[i];
+          const channels = animation.channels.filter((channel) => channel.target.path === "pointer");
+          if (channels && channels.length) {
+            channels.forEach((channel) => {
+              let propertyPath = channel.target.extensions.KHR_animation_pointer.pointer;
+              if (propertyPath.startsWith("/extensions/KHR_lights_punctual/")) {
+                const suffix = propertyPath.substring("/extensions/KHR_lights_punctual/".length);
+                propertyPath = "/" + suffix;
+              }
+              const splitedPropertyPaths = propertyPath.split("/");
+              splitedPropertyPaths.shift();
+              const { animatedProperty, animationType } = this.getAnimationTypeAndProperty(splitedPropertyPaths);
+              const propertyIndex = parseInt(splitedPropertyPaths[1]);
+              if (animationType === "nodes") {
+                if (animatedProperty === "rotation" || animatedProperty === "scale" || animatedProperty === "translation") {
+                  const node = this.gltfScenesManager.gltf.nodes[propertyIndex];
+                  const sceneNode = this.gltfScenesManager.scenesManager.nodes.get(propertyIndex);
+                  this.addObjectToTargetAnimation(sceneNode, targetsAnimation);
+                  const animName = node.name ? `${node.name} pointer animation` : `${channel.target.path} pointer animation ${propertyIndex}`;
+                  const label = animation.name ? `${animation.name} ${animName}` : `Animation ${i} ${animName}`;
+                  const sampler = animation.samplers[channel.sampler];
+                  const { keyframes, values } = this.gltfScenesManager.getAnimationKeyframesValues(sampler);
+                  const inputValue = (() => {
+                    switch (animatedProperty) {
+                      case "translation":
+                        return sceneNode.position;
+                      case "rotation":
+                        return sceneNode.quaternion;
+                      case "scale":
+                        return sceneNode.scale;
+                      default:
+                        return null;
+                    }
+                  })();
+                  const keyframesAnimation = new KeyframesAnimation({
+                    label,
+                    inputIndex: sampler.input,
+                    keyframes,
+                    values,
+                    path: animatedProperty,
+                    type: animatedProperty === "rotation" ? "quaternion" : "vec3",
+                    interpolation: sampler.interpolation,
+                    inputValue
+                  });
+                  targetsAnimation.addTargetAnimation(sceneNode, keyframesAnimation);
+                }
+              } else if (animationType === "cameras") {
+                const isOrthographic = splitedPropertyPaths.includes("orthographic");
+                const gltfCamera = this.gltfScenesManager.gltf.cameras[propertyIndex];
+                const sampler = animation.samplers[channel.sampler];
+                const path = channel.target.path;
+                const { keyframes, values } = this.gltfScenesManager.getAnimationKeyframesValues(sampler);
+                const cameraProperties = this.getCleanCameraProperties(animatedProperty);
+                if (cameraProperties.key) {
+                  if (isOrthographic) {
+                    const camera = this.gltfScenesManager.scenesManager.cameras[propertyIndex];
+                    this.addObjectToTargetAnimation(camera, targetsAnimation);
+                    const animName = gltfCamera.name ? `${gltfCamera.name} animation` : `Orthographic camera ${propertyIndex} animation`;
+                    const label = animation.name ? `${animation.name} ${animName}` : `Animation ${i} ${animName}`;
+                    const keyframesAnimation = new KeyframesAnimation({
+                      label,
+                      inputIndex: sampler.input,
+                      keyframes,
+                      values,
+                      path,
+                      type: cameraProperties.type,
+                      interpolation: sampler.interpolation,
+                      ...cameraProperties.type === "scalar" && {
+                        inputValue: 0
+                      }
+                    });
+                    if (keyframesAnimation.type === "scalar") {
+                      keyframesAnimation.onAfterUpdate = () => {
+                        const value = keyframesAnimation.inputValue;
+                        if (cameraProperties.key === "left") {
+                          camera.left = -value;
+                          camera.right = value;
+                          this.gltfScenesManager.renderer.updateCameraViewport();
+                        } else if (cameraProperties.key === "top") {
+                          camera.top = value;
+                          camera.bottom = -value;
+                          this.gltfScenesManager.renderer.updateCameraViewport();
+                        } else {
+                          camera[cameraProperties.key] = value;
+                        }
+                      };
+                    } else {
+                      keyframesAnimation.inputValue = camera[cameraProperties.key];
+                    }
+                    targetsAnimation.addTargetAnimation(camera, keyframesAnimation);
+                  } else {
+                    const camera = this.gltfScenesManager.scenesManager.cameras[propertyIndex];
+                    this.addObjectToTargetAnimation(camera, targetsAnimation);
+                    const animName = gltfCamera.name ? `${gltfCamera.name} animation` : `Perspective camera ${propertyIndex} animation`;
+                    const label = animation.name ? `${animation.name} ${animName}` : `Animation ${i} ${animName}`;
+                    const keyframesAnimation = new KeyframesAnimation({
+                      label,
+                      inputIndex: sampler.input,
+                      keyframes,
+                      values,
+                      path,
+                      type: cameraProperties.type,
+                      interpolation: sampler.interpolation,
+                      ...cameraProperties.type === "scalar" && {
+                        inputValue: 0
+                      }
+                    });
+                    if (keyframesAnimation.type === "scalar") {
+                      keyframesAnimation.onAfterUpdate = () => {
+                        const value = keyframesAnimation.inputValue;
+                        if (cameraProperties.key === "fov") {
+                          camera.fov = value * 180 / Math.PI;
+                        } else if (cameraProperties.key === "forceAspect") {
+                          camera[cameraProperties.key] = value;
+                          this.gltfScenesManager.renderer.updateCameraViewport();
+                        } else {
+                          camera[cameraProperties.key] = value;
+                        }
+                      };
+                    } else {
+                      keyframesAnimation.inputValue = camera[cameraProperties.key];
+                    }
+                    targetsAnimation.addTargetAnimation(camera, keyframesAnimation);
+                  }
+                }
+              } else if (animationType === "lights") {
+                const light = this.gltfScenesManager.scenesManager.lights[propertyIndex];
+                const gltfLight = this.gltfScenesManager.gltf.extensions["KHR_lights_punctual"].lights[propertyIndex];
+                this.addObjectToTargetAnimation(light, targetsAnimation);
+                const lightProperties = this.getCleanLightProperties(animatedProperty);
+                const animName = `${light.options.label} ${lightProperties.key} animation`;
+                const label = animation.name ? `${animation.name} ${animName}` : `Animation ${i} ${animName}`;
+                const sampler = animation.samplers[channel.sampler];
+                const path = channel.target.path;
+                const { keyframes, values } = this.gltfScenesManager.getAnimationKeyframesValues(sampler);
+                if (lightProperties.key) {
+                  const keyframesAnimation = new KeyframesAnimation({
+                    label,
+                    inputIndex: sampler.input,
+                    keyframes,
+                    values,
+                    path,
+                    type: lightProperties.type,
+                    interpolation: sampler.interpolation,
+                    ...lightProperties.type === "scalar" && {
+                      inputValue: 0
+                    }
+                  });
+                  const innerConeAngle = gltfLight.type === "spot" ? gltfLight.spot.innerConeAngle !== void 0 ? gltfLight.spot.innerConeAngle : 0 : 0;
+                  const outerConeAngle = gltfLight.type === "spot" ? gltfLight.spot.outerConeAngle !== void 0 ? gltfLight.spot.outerConeAngle : Math.PI / 4 : Math.PI / 4;
+                  const getPenumbra = (innerConeAngle2, outerConeAngle2) => {
+                    return 1 - innerConeAngle2 / outerConeAngle2;
+                  };
+                  light.userData.innerConeAngle = innerConeAngle;
+                  light.userData.outerConeAngle = outerConeAngle;
+                  if (keyframesAnimation.type === "scalar") {
+                    keyframesAnimation.onAfterUpdate = () => {
+                      const value = keyframesAnimation.inputValue;
+                      if (lightProperties.key === "innerConeAngle") {
+                        light.userData.innerConeAngle = value;
+                        light.penumbra = getPenumbra(
+                          light.userData.innerConeAngle,
+                          light.userData.outerConeAngle
+                        );
+                      } else if (lightProperties.key === "outerConeAngle") {
+                        light.userData.outerConeAngle = value;
+                        light.penumbra = getPenumbra(
+                          light.userData.innerConeAngle,
+                          light.userData.outerConeAngle
+                        );
+                        light.angle = value;
+                      } else {
+                        light[lightProperties.key] = value;
+                      }
+                    };
+                  } else {
+                    keyframesAnimation.inputValue = light[lightProperties.key];
+                  }
+                  targetsAnimation.addTargetAnimation(light, keyframesAnimation);
+                }
+              } else if (animationType === "materials" || animationType === "textures") {
+                const primitiveInstance = this.gltfScenesManager.getPrimitiveInstanceFromGLTFMaterial(propertyIndex);
+                if (primitiveInstance) {
+                  const { meshDescriptor } = primitiveInstance;
+                  const targetObject = meshDescriptor.nodes[0];
+                  this.addObjectToTargetAnimation(targetObject, targetsAnimation);
+                  const sampler = animation.samplers[channel.sampler];
+                  const path = channel.target.path;
+                  const { keyframes, values } = this.gltfScenesManager.getAnimationKeyframesValues(sampler);
+                  if (animationType === "materials") {
+                    let animationMap = this.materialAnimations.get(meshDescriptor);
+                    if (!animationMap) {
+                      animationMap = /* @__PURE__ */ new Map();
+                      this.materialAnimations.set(meshDescriptor, animationMap);
+                    }
+                    if (animatedProperty === "baseColorFactor") {
+                      const colorValues = new values.constructor(keyframes.length * 3);
+                      const alphaValues = new values.constructor(keyframes.length);
+                      for (let i2 = 0, c = 0, a = 0; i2 < values.length; i2 += 4, c += 3, a++) {
+                        colorValues[c] = values[i2];
+                        colorValues[c + 1] = values[i2 + 1];
+                        colorValues[c + 2] = values[i2 + 2];
+                        alphaValues[a] = values[i2 + 3];
+                      }
+                      const colorAnimName = `${meshDescriptor.parameters.label} color animation`;
+                      const colorLabel = animation.name ? `${animation.name} ${colorAnimName}` : `Animation ${i} ${colorAnimName}`;
+                      const colorKeyframesAnimation = new KeyframesAnimation({
+                        label: colorLabel,
+                        inputIndex: sampler.input,
+                        keyframes,
+                        values: colorValues,
+                        path,
+                        type: "vec3",
+                        interpolation: sampler.interpolation
+                      });
+                      targetsAnimation.addTargetAnimation(targetObject, colorKeyframesAnimation);
+                      animationMap.set("color", colorKeyframesAnimation);
+                      const alphaAnimName = `${meshDescriptor.parameters.label} opacity animation`;
+                      const alphaLabel = animation.name ? `${animation.name} ${alphaAnimName}` : `Animation ${i} ${alphaAnimName}`;
+                      const alphaKeyframesAnimation = new KeyframesAnimation({
+                        label: alphaLabel,
+                        inputIndex: sampler.input,
+                        keyframes,
+                        values: alphaValues,
+                        path,
+                        type: "scalar",
+                        interpolation: sampler.interpolation,
+                        inputValue: 0
+                      });
+                      targetsAnimation.addTargetAnimation(targetObject, alphaKeyframesAnimation);
+                      animationMap.set("opacity", alphaKeyframesAnimation);
+                    } else {
+                      const materialProperties = this.getCleanMaterialProperties(animatedProperty);
+                      const animName = `${meshDescriptor.parameters.label} ${materialProperties.key} animation`;
+                      const label = animation.name ? `${animation.name} ${animName}` : `Animation ${i} ${animName}`;
+                      if (materialProperties.key) {
+                        const keyframesAnimation = new KeyframesAnimation({
+                          label,
+                          inputIndex: sampler.input,
+                          keyframes,
+                          values,
+                          path,
+                          type: materialProperties.type,
+                          interpolation: sampler.interpolation,
+                          ...materialProperties.type === "scalar" && {
+                            inputValue: 0
+                          }
+                        });
+                        targetsAnimation.addTargetAnimation(meshDescriptor.nodes[0], keyframesAnimation);
+                        animationMap.set(materialProperties.key, keyframesAnimation);
+                      }
+                    }
+                  } else {
+                    const textureName = splitedPropertyPaths.find((s) => s.indexOf("Texture") !== -1);
+                    const animatedTextures = this.getCleanTextures(textureName, meshDescriptor.texturesDescriptors);
+                    const normalTextureDesc = meshDescriptor.texturesDescriptors.find(
+                      (desc) => desc.texture.options.name === "normalTexture"
+                    );
+                    const clearcoatNormalTextureDesc = meshDescriptor.texturesDescriptors.find(
+                      (desc) => desc.texture.options.name === "clearcoatNormalTexture"
+                    );
+                    if (textureName === "normalTexture" && clearcoatNormalTextureDesc) {
+                      animatedTextures.push(clearcoatNormalTextureDesc.texture);
+                    } else if (textureName === "clearcoatNormalTexture" && normalTextureDesc) {
+                      animatedTextures.push(normalTextureDesc.texture);
+                    }
+                    if (animatedTextures.length) {
+                      animatedTextures.forEach((texture) => {
+                        if (texture.options.useTransform) {
+                          const animName = `${texture.options.label} ${animatedProperty} animation`;
+                          const label = animation.name ? `${animation.name} ${animName}` : `Animation ${i} ${animName}`;
+                          const keyframesAnimation = new KeyframesAnimation({
+                            label,
+                            inputIndex: sampler.input,
+                            keyframes,
+                            values,
+                            path,
+                            type: animatedProperty === "rotation" ? "scalar" : "vec2",
+                            interpolation: sampler.interpolation,
+                            ...animatedProperty === "rotation" && {
+                              inputValue: 0
+                            }
+                          });
+                          if (keyframesAnimation.type === "scalar") {
+                            keyframesAnimation.onAfterUpdate = () => {
+                              texture[animatedProperty] = keyframesAnimation.inputValue;
+                            };
+                          } else {
+                            keyframesAnimation.inputValue = texture[animatedProperty];
+                          }
+                          targetsAnimation.addTargetAnimation(targetObject, keyframesAnimation);
+                        }
+                      });
+                    }
+                  }
+                }
+              }
+            });
+          }
+        });
+      }
+    }
+    /**
+     * Handle the {@link PointerMaterialAnimations | pointer material animations} from the {@link materialAnimations} map after the {@link GLTFScenesManager} meshes have been created.
+     *
+     * Since material animations need an actual {@link LitMesh} to apply the animation, they actually need to be registered once the mesh has been created.
+     *
+     * This method is called internally by {@link GLTFScenesManager}.
+     *
+     * @param meshDescriptor - Reference {@link MeshDescriptor} to use as {@link materialAnimations} Map key.
+     * @param mesh - {@link LitMesh} that will have its material uniform animated.
+     */
+    registerMeshAnimations(meshDescriptor, mesh) {
+      const meshDescriptorAnimationMap = this.materialAnimations.get(meshDescriptor);
+      if (meshDescriptorAnimationMap && meshDescriptorAnimationMap.size) {
+        const geometry = meshDescriptor.parameters.geometry;
+        const hasTangent = geometry && !!geometry.getAttributeByName("tangent");
+        const normalYMultiplier = hasTangent ? 1 : -1;
+        meshDescriptorAnimationMap.forEach((animation, property) => {
+          if (animation.type === "scalar") {
+            animation.onAfterUpdate = () => {
+              const value = animation.inputValue;
+              if (mesh.uniforms.material[property]) {
+                if (property === "normalScale") {
+                  mesh.uniforms.material.normalScale.value.set(value, value * normalYMultiplier);
+                } else if (property === "clearcoatNormalScale") {
+                  mesh.uniforms.material.clearcoatNormalScale.value.set(value, value * normalYMultiplier);
+                } else if (property === "anisotropyVector") {
+                  mesh.uniforms.material.anisotropyVector.value.set(Math.cos(value), Math.sin(value));
+                } else {
+                  mesh.uniforms.material[property].value = value;
+                }
+              } else if (mesh.uniforms.material.iridescenceThicknessRange) {
+                if (property === "iridescenceThicknessMinimum") {
+                  mesh.uniforms.material.iridescenceThicknessRange.value.x = value;
+                } else if (property === "iridescenceThicknessMaximum") {
+                  mesh.uniforms.material.iridescenceThicknessRange.value.y = value;
+                }
+              }
+            };
+          } else if (mesh.uniforms.material[property]) {
+            animation.inputValue = mesh.uniforms.material[property].value;
+          }
+        });
+      }
+    }
+  }
+
   const GL = typeof window !== "undefined" && WebGLRenderingContext || {
     REPEAT: 10497
   };
@@ -28942,6 +30045,7 @@ struct Params {
   exports.EnvironmentMap = EnvironmentMap;
   exports.FullscreenPlane = FullscreenPlane;
   exports.GLTFLoader = GLTFLoader;
+  exports.GLTFPointerAnimationsManager = GLTFPointerAnimationsManager;
   exports.GLTFScenesManager = GLTFScenesManager;
   exports.GPUCameraRenderer = GPUCameraRenderer;
   exports.GPUCurtains = GPUCurtains;

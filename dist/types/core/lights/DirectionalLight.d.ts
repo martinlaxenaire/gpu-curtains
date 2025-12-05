@@ -104,6 +104,10 @@ export declare class DirectionalLight extends Light {
      */
     lookAt(target?: Vec3): void;
     /**
+     * Update the {@link target} and therefore direction directly from the {@link worldMatrix}, in case a transformation (especially rotation) has been applied to a parent of this {@link DirectionalLight} instead of updating the {@link target} directly.
+     */
+    updateTargetFromWorldMatrix(): void;
+    /**
      * If the {@link modelMatrix | model matrix} has been updated, set the new direction from the {@link worldMatrix} translation.
      */
     updateMatrixStack(): void;

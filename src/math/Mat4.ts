@@ -630,6 +630,88 @@ export class Mat4 {
   }
 
   /**
+   * Get the scale {@link Vec3} component of a {@link Mat4}.
+   * @param scale - {@link Vec3} to set.
+   * @returns - Scale {@link Vec3} component of this {@link Mat4}.
+   */
+  getScale(scale = new Vec3()): Vec3 {
+    const te = this.elements
+
+    let m11 = te[0]
+    let m12 = te[1]
+    let m13 = te[2]
+    let m21 = te[4]
+    let m22 = te[5]
+    let m23 = te[6]
+    let m31 = te[8]
+    let m32 = te[9]
+    let m33 = te[10]
+    scale.set(
+      Math.sqrt(m11 * m11 + m12 * m12 + m13 * m13),
+      Math.sqrt(m21 * m21 + m22 * m22 + m23 * m23),
+      Math.sqrt(m31 * m31 + m32 * m32 + m33 * m33)
+    )
+
+    return scale
+  }
+
+  /**
+   * Get the rotation {@link Quat} component of a {@link Mat4}.
+   * @param quat - {@link Quat} to set.
+   * @returns - Rotation {@link Quat} component of this {@link Mat4}.
+   */
+  getRotation(quat = new Quat()): Quat {
+    const scale = this.getScale()
+    // this.getScale(xAxis)
+
+    let is1 = 1 / scale.x
+    let is2 = 1 / scale.y
+    let is3 = 1 / scale.z
+
+    const te = this.elements
+    const qe = quat.elements
+
+    let sm11 = te[0] * is1
+    let sm12 = te[1] * is2
+    let sm13 = te[2] * is3
+    let sm21 = te[4] * is1
+    let sm22 = te[5] * is2
+    let sm23 = te[6] * is3
+    let sm31 = te[8] * is1
+    let sm32 = te[9] * is2
+    let sm33 = te[10] * is3
+    let trace = sm11 + sm22 + sm33
+    let S = 0
+    if (trace > 0) {
+      S = Math.sqrt(trace + 1.0) * 2
+      qe[3] = 0.25 * S
+      qe[0] = (sm23 - sm32) / S
+      qe[1] = (sm31 - sm13) / S
+      qe[2] = (sm12 - sm21) / S
+    } else if (sm11 > sm22 && sm11 > sm33) {
+      S = Math.sqrt(1.0 + sm11 - sm22 - sm33) * 2
+      qe[3] = (sm23 - sm32) / S
+      qe[0] = 0.25 * S
+      qe[1] = (sm12 + sm21) / S
+      qe[2] = (sm31 + sm13) / S
+    } else if (sm22 > sm33) {
+      S = Math.sqrt(1.0 + sm22 - sm11 - sm33) * 2
+      qe[3] = (sm31 - sm13) / S
+      qe[0] = (sm12 + sm21) / S
+      qe[1] = 0.25 * S
+      qe[2] = (sm23 + sm32) / S
+    } else {
+      S = Math.sqrt(1.0 + sm33 - sm11 - sm22) * 2
+      qe[3] = (sm12 - sm21) / S
+      qe[0] = (sm31 + sm13) / S
+      qe[1] = (sm23 + sm32) / S
+      qe[2] = 0.25 * S
+    }
+
+    return quat
+  }
+
+  /**
    * Get the maximum scale of the {@link Mat4} on all axes.
    * @returns - Maximum scale of the {@link Mat4}.
    */

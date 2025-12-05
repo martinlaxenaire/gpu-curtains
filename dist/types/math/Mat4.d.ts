@@ -148,6 +148,18 @@ export declare class Mat4 {
      */
     rotateFromQuaternion(quaternion?: Quat): Mat4;
     /**
+     * Get the scale {@link Vec3} component of a {@link Mat4}.
+     * @param scale - {@link Vec3} to set.
+     * @returns - Scale {@link Vec3} component of this {@link Mat4}.
+     */
+    getScale(scale?: Vec3): Vec3;
+    /**
+     * Get the rotation {@link Quat} component of a {@link Mat4}.
+     * @param quat - {@link Quat} to set.
+     * @returns - Rotation {@link Quat} component of this {@link Mat4}.
+     */
+    getRotation(quat?: Quat): Quat;
+    /**
      * Get the maximum scale of the {@link Mat4} on all axes.
      * @returns - Maximum scale of the {@link Mat4}.
      */

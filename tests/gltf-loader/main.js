@@ -9,6 +9,7 @@ window.addEventListener('load', async () => {
     GPUCameraRenderer,
     EnvironmentMap,
     GLTFLoader,
+    GLTFPointerAnimationsManager,
     GLTFScenesManager,
     AmbientLight,
     PointLight,
@@ -127,8 +128,6 @@ window.addEventListener('load', async () => {
       },
     }
   }, {})
-
-  // let availableModels = { ...models }
 
   if (modelUrl) {
     const modelName = modelUrl
@@ -292,6 +291,8 @@ window.addEventListener('load', async () => {
 
   // gltf
   const gltfLoader = new GLTFLoader()
+  // pointer animations
+  const gltfPointerAnimationsManager = new GLTFPointerAnimationsManager()
 
   let gltfScenesManager = null
 
@@ -299,6 +300,9 @@ window.addEventListener('load', async () => {
     container.classList.add('loading')
     const gltf = await gltfLoader.loadFromUrl(url)
     gltfScenesManager = new GLTFScenesManager({ renderer: gpuCameraRenderer, gltf })
+
+    // create pointer animations if any
+    gltfPointerAnimationsManager.createPointerAnimations(gltfScenesManager)
 
     const { scenesManager } = gltfScenesManager
     const { scenes, boundingBox, node } = scenesManager
@@ -381,7 +385,7 @@ window.addEventListener('load', async () => {
 
       orbitControls.reset({
         zoomSpeed: radius * 0.25,
-        minZoom: radius * 0.5,
+        minZoom: radius * 0.25,
         maxZoom: radius * 4,
         position: new Vec3(0, 0, radius * 2.5),
         target: new Vec3(),
@@ -632,6 +636,7 @@ window.addEventListener('load', async () => {
     })
 
     // punctual lighting
+    lightIntensities = []
     if (scenesManager.lights.length) {
       scenesManager.lights.forEach((light) => {
         lightIntensities.push(light.intensity)
@@ -641,7 +646,6 @@ window.addEventListener('load', async () => {
       })
       usePunctualLightingField.enable()
     } else {
-      lightIntensities = []
       usePunctualLightingField.disable()
     }
 
@@ -718,7 +722,7 @@ window.addEventListener('load', async () => {
     availableCameras['Default camera'] = defaultCamera
     if (scenesManager.cameras.length) {
       scenesManager.cameras.forEach((gltfCamera, index) => {
-        availableCameras['Camera ' + index] = gltfCamera
+        availableCameras[`Camera ${index} - ${gltfCamera.label}`] = gltfCamera
       })
     }
 

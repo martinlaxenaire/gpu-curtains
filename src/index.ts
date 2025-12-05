@@ -88,6 +88,7 @@ export { Raycaster } from './extras/raycaster/Raycaster'
 
 // gltf extras
 export { GLTFScenesManager } from './extras/gltf/GLTFScenesManager'
+export { GLTFPointerAnimationsManager } from './extras/gltf/GLTFPointerAnimationsManager'
 
 // loaders
 export { GLTFLoader } from './extras/loaders/GLTFLoader'
