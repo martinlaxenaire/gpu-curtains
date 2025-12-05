@@ -338,6 +338,20 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
         minDepth: 0,
         maxDepth: 1,
       })
+    } else if (this.camera instanceof OrthographicCamera) {
+      const aspectRatio = (this.camera.right - this.camera.left) / (this.camera.top - this.camera.bottom)
+
+      width = Math.min(width, height * aspectRatio)
+      height = Math.min(width / aspectRatio, height)
+
+      this.setCameraViewport({
+        width,
+        height,
+        top: (this.canvas.height - height) * 0.5,
+        left: (this.canvas.width - width) * 0.5,
+        minDepth: 0,
+        maxDepth: 1,
+      })
     } else {
       this.setCameraViewport()
     }
