@@ -27584,7 +27584,7 @@ struct Params {
             })?.sampler;
             const sampler = this.scenesManager.samplers[samplerIndex ?? 0];
             let textureTransform = gltfTextureInfo.extensions && gltfTextureInfo.extensions["KHR_texture_transform"];
-            if (!textureTransform && this.gltf.extensionsUsed.includes("KHR_animation_pointer")) {
+            if (!textureTransform && this.gltf.extensionsUsed && this.gltf.extensionsUsed.includes("KHR_animation_pointer")) {
               textureTransform = {};
             }
             const texCoordAttributeName = getUVAttributeName(

@@ -550,7 +550,11 @@ export class GLTFScenesManager {
           let textureTransform = gltfTextureInfo.extensions && gltfTextureInfo.extensions['KHR_texture_transform']
 
           // TODO check if they should be animated?
-          if (!textureTransform && this.gltf.extensionsUsed.includes('KHR_animation_pointer')) {
+          if (
+            !textureTransform &&
+            this.gltf.extensionsUsed &&
+            this.gltf.extensionsUsed.includes('KHR_animation_pointer')
+          ) {
             textureTransform = {}
           }
 
