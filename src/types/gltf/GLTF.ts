@@ -1,4 +1,5 @@
 import {
+  GLTFAnimationsTargetsExtensions,
   GLTFExtensionsUsed,
   GLTFMaterialsExtensions,
   GLTFNodesExtensions,
@@ -178,6 +179,10 @@ export declare module GLTF {
      * instantiates
      */
     path: AnimationChannelTargetPath
+    /**
+     * Dictionary object with animations targets extension-specific objects
+     */
+    extensions?: GLTFAnimationsTargetsExtensions
   }
   /**
    * Combines input and output accessors with an interpolation algorithm to define a keyframe

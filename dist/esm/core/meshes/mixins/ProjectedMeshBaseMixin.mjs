@@ -336,18 +336,34 @@ function ProjectedMeshBaseMixin(Base) {
       }
     }
     /**
-     * Get the visible property value
+     * Get the visible property value.
      */
     get visible() {
-      return this._visible;
+      return super.visible;
     }
     /**
-     * Set the visible property value
-     * @param value - new visibility value
+     * Set the visible property value.
+     * @param value - New visibility value.
      */
     set visible(value) {
       this.shouldUpdateMatrixStack();
-      this._visible = value;
+      super.visible = value;
+    }
+    /**
+     * Get the parent visibilty property value.
+     */
+    get parentVisibility() {
+      return super.parentVisibility;
+    }
+    /**
+     * Set the parent visibilty property value. Should not be used directly.
+     * @param value - New parent visibility value.
+     */
+    set parentVisibility(value) {
+      super.parentVisibility = value;
+      if (this.renderBundle) {
+        this.renderBundle.ready = false;
+      }
     }
     /* SIZE & TRANSFORMS */
     /**

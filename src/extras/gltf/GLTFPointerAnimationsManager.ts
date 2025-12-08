@@ -5,7 +5,7 @@ import { SpotLight } from '../../core/lights/SpotLight'
 import { Object3D } from '../../core/objects3D/Object3D'
 import { MediaTexture } from '../../core/textures/MediaTexture'
 import { Vec2 } from '../../math/Vec2'
-import { MeshDescriptor } from '../../types'
+import { GLTF, MeshDescriptor } from '../../types'
 import {
   KeyframesAnimation,
   KeyframesAnimationInputValue,
@@ -541,7 +541,7 @@ export class GLTFPointerAnimationsManager {
 
         if (channels && channels.length) {
           channels.forEach((channel) => {
-            let propertyPath: string = (channel.target.extensions.KHR_animation_pointer as unknown as any).pointer
+            let propertyPath: string = channel.target.extensions.KHR_animation_pointer.pointer
 
             if (propertyPath.startsWith('/extensions/KHR_lights_punctual/')) {
               const suffix = propertyPath.substring('/extensions/KHR_lights_punctual/'.length)
@@ -559,7 +559,8 @@ export class GLTFPointerAnimationsManager {
               if (
                 animatedProperty === 'rotation' ||
                 animatedProperty === 'scale' ||
-                animatedProperty === 'translation'
+                animatedProperty === 'translation' ||
+                animatedProperty === 'visible'
               ) {
                 const node = this.gltfScenesManager.gltf.nodes[propertyIndex]
                 const sceneNode = this.gltfScenesManager.scenesManager.nodes.get(propertyIndex)
@@ -568,22 +569,48 @@ export class GLTFPointerAnimationsManager {
 
                 const animName = node.name
                   ? `${node.name} pointer animation`
-                  : `${channel.target.path} pointer animation ${propertyIndex}`
+                  : `${animatedProperty} pointer animation ${propertyIndex}`
                 const label = animation.name ? `${animation.name} ${animName}` : `Animation ${i} ${animName}`
 
                 const sampler = animation.samplers[channel.sampler]
                 const { keyframes, values } = this.gltfScenesManager.getAnimationKeyframesValues(sampler)
 
-                const inputValue = (() => {
+                const nodeProperties: {
+                  inputValue: KeyframesAnimationInputValue
+                  type: KeyframesAnimationValueType
+                  path: GLTF.AnimationChannelTargetPath
+                } = (() => {
                   switch (animatedProperty) {
                     case 'translation':
-                      return sceneNode.position
+                      return {
+                        inputValue: sceneNode.position,
+                        type: 'vec3',
+                        path: animatedProperty,
+                      }
                     case 'rotation':
-                      return sceneNode.quaternion
+                      return {
+                        inputValue: sceneNode.quaternion,
+                        type: 'quaternion',
+                        path: animatedProperty,
+                      }
                     case 'scale':
-                      return sceneNode.scale
+                      return {
+                        inputValue: sceneNode.scale,
+                        type: 'vec3',
+                        path: animatedProperty,
+                      }
+                    case 'visible':
+                      return {
+                        inputValue: 0,
+                        type: 'scalar',
+                        path: 'pointer',
+                      }
                     default:
-                      return null
+                      return {
+                        inputValue: null,
+                        type: null,
+                        path: null,
+                      }
                   }
                 })()
 
@@ -592,13 +619,20 @@ export class GLTFPointerAnimationsManager {
                   inputIndex: sampler.input,
                   keyframes,
                   values,
-                  path: animatedProperty,
-                  type: animatedProperty === 'rotation' ? 'quaternion' : 'vec3',
+                  path: nodeProperties.path,
+                  type: nodeProperties.type,
                   interpolation: sampler.interpolation,
-                  inputValue,
+                  inputValue: nodeProperties.inputValue,
                 })
 
                 targetsAnimation.addTargetAnimation(sceneNode, keyframesAnimation)
+
+                if (animatedProperty === 'visible') {
+                  keyframesAnimation.onAfterUpdate = () => {
+                    const value = keyframesAnimation.inputValue as number
+                    sceneNode.visible = !!value
+                  }
+                }
               }
             } else if (animationType === 'cameras') {
               // test model

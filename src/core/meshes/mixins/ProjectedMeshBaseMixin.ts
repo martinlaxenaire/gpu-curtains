@@ -645,19 +645,38 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
     }
 
     /**
-     * Get the visible property value
+     * Get the visible property value.
      */
     get visible(): boolean {
-      return this._visible
+      return super.visible
     }
 
     /**
-     * Set the visible property value
-     * @param value - new visibility value
+     * Set the visible property value.
+     * @param value - New visibility value.
      */
     set visible(value: boolean) {
       this.shouldUpdateMatrixStack()
-      this._visible = value
+      super.visible = value
+    }
+
+    /**
+     * Get the parent visibilty property value.
+     */
+    get parentVisibility(): boolean {
+      return super.parentVisibility
+    }
+
+    /**
+     * Set the parent visibilty property value. Should not be used directly.
+     * @param value - New parent visibility value.
+     */
+    set parentVisibility(value: boolean) {
+      super.parentVisibility = value
+
+      if (this.renderBundle) {
+        this.renderBundle.ready = false
+      }
     }
 
     /* SIZE & TRANSFORMS */

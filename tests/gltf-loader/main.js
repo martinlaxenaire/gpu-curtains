@@ -215,7 +215,7 @@ window.addEventListener('load', async () => {
     .name('Skybox background')
 
   // gltf lights
-  let lightIntensities = []
+  let lightVisibilities = []
   const usePunctualLightingField = gui.add({ usePunctualLighting }, 'usePunctualLighting').name('Punctual lighting')
 
   const shadingField = gui.add({ shadingModel }, 'shadingModel', ['PBR', 'Phong', 'Lambert', 'Unlit']).name('Shading')
@@ -286,6 +286,7 @@ window.addEventListener('load', async () => {
   const animationsFolder = gui.addFolder('Animations')
   let playAnimations = true
   let playAnimationsField = animationsFolder.add({ playAnimations }, 'playAnimations').name('Play animations')
+  const availableAnimationsFolder = animationsFolder.addFolder('Available animations')
 
   let animationsFields = []
 
@@ -636,12 +637,12 @@ window.addEventListener('load', async () => {
     })
 
     // punctual lighting
-    lightIntensities = []
+    lightVisibilities = []
     if (scenesManager.lights.length) {
       scenesManager.lights.forEach((light) => {
-        lightIntensities.push(light.intensity)
+        lightVisibilities.push(light.visible)
         if (!usePunctualLighting) {
-          light.intensity = 0
+          light.visible = false
         }
       })
       usePunctualLightingField.enable()
@@ -676,6 +677,7 @@ window.addEventListener('load', async () => {
       })
 
     // animations
+    availableAnimationsFolder.children.forEach((child) => child.destroy())
     if (scenesManager.animations.length) {
       playAnimationsField.enable()
 
@@ -689,7 +691,7 @@ window.addEventListener('load', async () => {
       }
 
       scenesManager.animations.forEach((animation, id) => {
-        const animationField = animationsFolder
+        const animationField = availableAnimationsFolder
           .add(animation, 'isPlaying')
           .name(animation.label)
           .onChange((value) => {
@@ -948,7 +950,7 @@ window.addEventListener('load', async () => {
     usePunctualLighting = value
     if (gltfScenesManager && gltfScenesManager.scenesManager) {
       gltfScenesManager.scenesManager.lights.forEach((light, index) => {
-        light.intensity = value ? lightIntensities[index] : 0
+        light.visible = value ? lightVisibilities[index] : false
       })
     }
   })
@@ -984,11 +986,13 @@ window.addEventListener('load', async () => {
   playAnimationsField.onChange((value) => {
     playAnimations = value
 
-    gltfScenesManager?.scenesManager?.animations.forEach((animation) => {
+    gltfScenesManager?.scenesManager?.animations.forEach((animation, i) => {
       if (playAnimations) {
         animation.play()
+        availableAnimationsFolder.children.forEach((child) => child.enable())
       } else {
         animation.pause()
+        availableAnimationsFolder.children.forEach((child) => child.disable())
       }
     })
   })

@@ -1444,6 +1444,14 @@
     }
   }
 
+  var __typeError$x = (msg) => {
+    throw TypeError(msg);
+  };
+  var __accessCheck$x = (obj, member, msg) => member.has(obj) || __typeError$x("Cannot " + msg);
+  var __privateGet$v = (obj, member, getter) => (__accessCheck$x(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$x = (obj, member, value) => member.has(obj) ? __typeError$x("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$u = (obj, member, value, setter) => (__accessCheck$x(obj, member, "write to private field"), member.set(obj, value), value);
+  var _parent$1, _visible, _parentVisibility;
   let objectIndex = 0;
   const tempMatrix = new Mat4();
   class Object3D {
@@ -1451,7 +1459,13 @@
      * Object3D constructor
      */
     constructor() {
-      this._parent = null;
+      /** Parent {@link Object3D} in the scene graph, used to compute the {@link worldMatrix}. */
+      __privateAdd$x(this, _parent$1);
+      /** Whether this {@link Object3D} and all its {@link children} should be considered as visible. Default to `true`. */
+      __privateAdd$x(this, _visible);
+      /** Set to `false` if at least one of the {@link Object3D} parent is not visible. */
+      __privateAdd$x(this, _parentVisibility);
+      __privateSet$u(this, _parent$1, null);
       this.children = [];
       this.matricesNeedUpdate = false;
       this.up = new Vec3(0, 1, 0);
@@ -1459,30 +1473,61 @@
       Object.defineProperty(this, "object3DIndex", { value: objectIndex++ });
       this.setMatrices();
       this.setTransforms();
+      __privateSet$u(this, _visible, true);
+      __privateSet$u(this, _parentVisibility, true);
+    }
+    /**
+     * Get whether this {@link Object3D} is visible (if it is itself visible, and all its parents are visible as well).
+     */
+    get visible() {
+      return __privateGet$v(this, _visible) && __privateGet$v(this, _parentVisibility);
+    }
+    /**
+     * Set this {@link Object3D} visible property, and its children `parentVisibility` property.
+     * @param value - New visibility value.
+     */
+    set visible(value) {
+      __privateSet$u(this, _visible, value);
+      this.children.forEach((c) => c.parentVisibility = this.parentVisibility && value);
     }
     /* PARENT */
+    /**
+     * Get whether all this {@link Object3D} parents are visible or not. Should not be used directly.
+     */
+    get parentVisibility() {
+      return __privateGet$v(this, _parentVisibility);
+    }
+    /**
+     * Set to `false` if at least one of this {@link Object3D} parent is not visible, `true` otherwise. Should not be used directly.
+     * @param value - New parent visibility value.
+     */
+    set parentVisibility(value) {
+      __privateSet$u(this, _parentVisibility, value);
+      this.children.forEach((child) => child.parentVisibility = this.visible && value);
+    }
     /**
      * Get the parent of this {@link Object3D} if any
      */
     get parent() {
-      return this._parent;
+      return __privateGet$v(this, _parent$1);
     }
     /**
      * Set the parent of this {@link Object3D}
      * @param value - new parent to set, could be an {@link Object3D} or null
      */
     set parent(value) {
-      if (this._parent && value && this._parent.object3DIndex === value.object3DIndex) {
+      if (__privateGet$v(this, _parent$1) && value && __privateGet$v(this, _parent$1).object3DIndex === value.object3DIndex) {
         return;
       }
-      if (this._parent) {
-        this._parent.children = this._parent.children.filter((child) => child.object3DIndex !== this.object3DIndex);
+      if (__privateGet$v(this, _parent$1)) {
+        __privateGet$v(this, _parent$1).children = __privateGet$v(this, _parent$1).children.filter((child) => child.object3DIndex !== this.object3DIndex);
       }
       if (value) {
         this.shouldUpdateWorldMatrix();
       }
-      this._parent = value;
-      this._parent?.children.push(this);
+      __privateSet$u(this, _parent$1, value);
+      __privateGet$v(this, _parent$1)?.children.push(this);
+      this.parentVisibility = __privateGet$v(this, _parent$1) ? __privateGet$v(this, _parent$1).visible : true;
     }
     /* TRANSFORMS */
     /**
@@ -1746,6 +1791,9 @@
       this.parent = null;
     }
   }
+  _parent$1 = new WeakMap();
+  _visible = new WeakMap();
+  _parentVisibility = new WeakMap();
 
   const formatRendererError = (renderer, rendererType = "GPURenderer", type) => {
     const error = type ? `Unable to create ${type} because the ${rendererType} is not defined: ${renderer}` : `The ${rendererType} is not defined: ${renderer}`;
@@ -8535,6 +8583,7 @@
   var __privateAdd$n = (obj, member, value) => member.has(obj) ? __typeError$n("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   var __privateSet$l = (obj, member, value, setter) => (__accessCheck$n(obj, member, "write to private field"), member.set(obj, value), value);
   var _intensity$1, _intensityColor;
+  const nullVec3 = new Vec3();
   class Light extends Object3D {
     /**
      * Light constructor
@@ -8616,7 +8665,33 @@
      */
     set intensity(value) {
       __privateSet$l(this, _intensity$1, value);
-      this.onPropertyChanged("color", this.actualColor);
+      this.onPropertyChanged("color", this.visible ? this.actualColor : nullVec3);
+    }
+    /**
+     * Get whether this {@link Light} is visible or not.
+     */
+    get visible() {
+      return super.visible;
+    }
+    /**
+     * Set this {@link Light} visible value, and update its {@link actualColor} property accordingly.
+     */
+    set visible(value) {
+      super.visible = value;
+      this.onPropertyChanged("color", value ? this.actualColor : nullVec3);
+    }
+    /**
+     * Get whether all this {@link Light} parents are visible or not. Should not be used directly.
+     */
+    get parentVisibility() {
+      return super.parentVisibility;
+    }
+    /**
+     * Set this {@link Light} parent visiblity, and update its {@link actualColor} property accordingly. Should not be used directly.
+     */
+    set parentVisibility(value) {
+      super.parentVisibility = value;
+      this.onPropertyChanged("color", this.visible ? this.actualColor : nullVec3);
     }
     /**
      * Get the actual {@link Vec3} color used in the shader: convert {@link color} to linear space, then multiply by {@link intensity}.
@@ -10452,7 +10527,7 @@ New rendering options: ${JSON.stringify(
     renderBundle: null
   };
   function MeshBaseMixin(Base) {
-    var _autoRender, _a;
+    var _visible, _autoRender, _a;
     return _a = class extends Base {
       /**
        * MeshBase constructor
@@ -10471,6 +10546,8 @@ New rendering options: ${JSON.stringify(
           params[1],
           { ...defaultMeshBaseParams, ...params[2] }
         );
+        /** Flag indicating whether to draw this {@link MeshBase} or not */
+        __privateAdd$k(this, _visible);
         /** Whether we should add this {@link MeshBase} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
         __privateAdd$k(this, _autoRender, true);
         // callbacks / events
@@ -10852,7 +10929,7 @@ ${geometry.wgslStructFragment}`
         }
       }
       /**
-       * Get the transparent property value
+       * Get the transparent property value.
        */
       get transparent() {
         return this._transparent;
@@ -10872,17 +10949,28 @@ ${geometry.wgslStructFragment}`
         }
       }
       /**
-       * Get the visible property value
+       * Get the visible property value.
        */
       get visible() {
-        return this._visible;
+        if (super.visible !== void 0) {
+          return super.visible;
+        } else {
+          return __privateGet$i(this, _visible);
+        }
       }
       /**
-       * Set the visible property value
-       * @param value - new visibility value
+       * Set the visible property value.
+       * @param value - New visibility value.
        */
       set visible(value) {
-        this._visible = value;
+        if (super.visible !== void 0) {
+          super.visible = value;
+        } else {
+          __privateSet$i(this, _visible, value);
+        }
+        if (this.renderBundle) {
+          this.renderBundle.ready = false;
+        }
       }
       /* TEXTURES */
       /**
@@ -10895,7 +10983,7 @@ ${geometry.wgslStructFragment}`
       /**
        * Create a new {@link MediaTexture}.
        * @param options - {@link MediaTextureParams | MediaTexture parameters}.
-       * @returns - newly created {@link MediaTexture}.
+       * @returns - Newly created {@link MediaTexture}.
        */
       createMediaTexture(options) {
         if (!options.name) {
@@ -11118,7 +11206,7 @@ ${geometry.wgslStructFragment}`
           this.geometry?.destroy(this.renderer);
         }
       }
-    }, _autoRender = new WeakMap(), _a;
+    }, _visible = new WeakMap(), _autoRender = new WeakMap(), _a;
   }
 
   const getDefaultNormalFragmentCode = (
@@ -11725,18 +11813,34 @@ fn getPCFBaseShadowContribution(
         }
       }
       /**
-       * Get the visible property value
+       * Get the visible property value.
        */
       get visible() {
-        return this._visible;
+        return super.visible;
       }
       /**
-       * Set the visible property value
-       * @param value - new visibility value
+       * Set the visible property value.
+       * @param value - New visibility value.
        */
       set visible(value) {
         this.shouldUpdateMatrixStack();
-        this._visible = value;
+        super.visible = value;
+      }
+      /**
+       * Get the parent visibilty property value.
+       */
+      get parentVisibility() {
+        return super.parentVisibility;
+      }
+      /**
+       * Set the parent visibilty property value. Should not be used directly.
+       * @param value - New parent visibility value.
+       */
+      set parentVisibility(value) {
+        super.parentVisibility = value;
+        if (this.renderBundle) {
+          this.renderBundle.ready = false;
+        }
       }
       /* SIZE & TRANSFORMS */
       /**
@@ -12614,8 +12718,10 @@ fn getPCFBaseShadowContribution(
       this.encoder.pushDebugGroup(`${this.options.label}: create encoder`);
     }
     this.meshes.forEach((mesh) => {
-      mesh.material.render(this.encoder);
-      mesh.geometry.render(this.encoder);
+      if (mesh.visible) {
+        mesh.material.render(this.encoder);
+        mesh.geometry.render(this.encoder);
+      }
     });
     if (!this.renderer.production) {
       this.encoder.popDebugGroup();
@@ -28132,6 +28238,10 @@ struct Params {
           }
         });
       }
+      if (node.extensions && node.extensions.KHR_node_visibility) {
+        const visible = node.extensions.KHR_node_visibility.visible !== void 0 ? node.extensions.KHR_node_visibility.visible : true;
+        child.node.visible = visible;
+      }
     }
     /**
      * Get a clean attribute name based on a glTF attribute name.
@@ -29492,24 +29602,46 @@ struct Params {
               const { animatedProperty, animationType } = this.getAnimationTypeAndProperty(splitedPropertyPaths);
               const propertyIndex = parseInt(splitedPropertyPaths[1]);
               if (animationType === "nodes") {
-                if (animatedProperty === "rotation" || animatedProperty === "scale" || animatedProperty === "translation") {
+                if (animatedProperty === "rotation" || animatedProperty === "scale" || animatedProperty === "translation" || animatedProperty === "visible") {
                   const node = this.gltfScenesManager.gltf.nodes[propertyIndex];
                   const sceneNode = this.gltfScenesManager.scenesManager.nodes.get(propertyIndex);
                   this.addObjectToTargetAnimation(sceneNode, targetsAnimation);
-                  const animName = node.name ? `${node.name} pointer animation` : `${channel.target.path} pointer animation ${propertyIndex}`;
+                  const animName = node.name ? `${node.name} pointer animation` : `${animatedProperty} pointer animation ${propertyIndex}`;
                   const label = animation.name ? `${animation.name} ${animName}` : `Animation ${i} ${animName}`;
                   const sampler = animation.samplers[channel.sampler];
                   const { keyframes, values } = this.gltfScenesManager.getAnimationKeyframesValues(sampler);
-                  const inputValue = (() => {
+                  const nodeProperties = (() => {
                     switch (animatedProperty) {
                       case "translation":
-                        return sceneNode.position;
+                        return {
+                          inputValue: sceneNode.position,
+                          type: "vec3",
+                          path: animatedProperty
+                        };
                       case "rotation":
-                        return sceneNode.quaternion;
+                        return {
+                          inputValue: sceneNode.quaternion,
+                          type: "quaternion",
+                          path: animatedProperty
+                        };
                       case "scale":
-                        return sceneNode.scale;
+                        return {
+                          inputValue: sceneNode.scale,
+                          type: "vec3",
+                          path: animatedProperty
+                        };
+                      case "visible":
+                        return {
+                          inputValue: 0,
+                          type: "scalar",
+                          path: "pointer"
+                        };
                       default:
-                        return null;
+                        return {
+                          inputValue: null,
+                          type: null,
+                          path: null
+                        };
                     }
                   })();
                   const keyframesAnimation = new KeyframesAnimation({
@@ -29517,12 +29649,18 @@ struct Params {
                     inputIndex: sampler.input,
                     keyframes,
                     values,
-                    path: animatedProperty,
-                    type: animatedProperty === "rotation" ? "quaternion" : "vec3",
+                    path: nodeProperties.path,
+                    type: nodeProperties.type,
                     interpolation: sampler.interpolation,
-                    inputValue
+                    inputValue: nodeProperties.inputValue
                   });
                   targetsAnimation.addTargetAnimation(sceneNode, keyframesAnimation);
+                  if (animatedProperty === "visible") {
+                    keyframesAnimation.onAfterUpdate = () => {
+                      const value = keyframesAnimation.inputValue;
+                      sceneNode.visible = !!value;
+                    };
+                  }
                 }
               } else if (animationType === "cameras") {
                 const isOrthographic = splitedPropertyPaths.includes("orthographic");

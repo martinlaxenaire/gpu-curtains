@@ -170,6 +170,7 @@ window.addEventListener('load', async () => {
   const animationsFolder = gltfFolder.addFolder('Animations')
   let playAnimations = true
   let playAnimationsField = animationsFolder.add({ playAnimations }, 'playAnimations').name('Play/pause animations')
+  const availableAnimationsFolder = animationsFolder.addFolder('Available animations')
 
   let animationsFields = []
 
@@ -177,7 +178,7 @@ window.addEventListener('load', async () => {
 
   // lighting
   // gltf lights
-  let lightIntensities = []
+  let lightVisibilities = []
   const gltfPunctualLightingFolder = lightingFolder.addFolder('glTF asset punctual lights')
   const usePunctualLightingField = gltfPunctualLightingFolder
     .add({ usePunctualLighting }, 'usePunctualLighting')
@@ -560,12 +561,12 @@ window.addEventListener('load', async () => {
     })
 
     // punctual lighting
-    lightIntensities = []
+    lightVisibilities = []
     if (scenesManager.lights.length) {
       scenesManager.lights.forEach((light) => {
-        lightIntensities.push(light.intensity)
+        lightVisibilities.push(light.visible)
         if (!usePunctualLighting) {
-          light.intensity = 0
+          light.visible = false
         }
       })
       gltfPunctualLightingFolder.open()
@@ -610,6 +611,7 @@ window.addEventListener('load', async () => {
     }
 
     // animations
+    availableAnimationsFolder.children.forEach((child) => child.destroy())
     if (scenesManager.animations.length) {
       animationsFolder.open()
       playAnimationsField.enable()
@@ -624,7 +626,7 @@ window.addEventListener('load', async () => {
       }
 
       scenesManager.animations.forEach((animation, id) => {
-        const animationField = animationsFolder
+        const animationField = availableAnimationsFolder
           .add(animation, 'isPlaying')
           .name(animation.label)
           .onChange((value) => {
@@ -924,7 +926,7 @@ window.addEventListener('load', async () => {
     usePunctualLighting = value
     if (gltfScenesManager && gltfScenesManager.scenesManager) {
       gltfScenesManager.scenesManager.lights.forEach((light, index) => {
-        light.intensity = value ? lightIntensities[index] : 0
+        light.visible = value ? lightVisibilities[index] : false
       })
     }
   })
@@ -953,8 +955,10 @@ window.addEventListener('load', async () => {
     gltfScenesManager?.scenesManager?.animations.forEach((animation) => {
       if (playAnimations) {
         animation.play()
+        availableAnimationsFolder.children.forEach((child) => child.enable())
       } else {
         animation.pause()
+        availableAnimationsFolder.children.forEach((child) => child.disable())
       }
     })
   })

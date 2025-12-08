@@ -947,6 +947,10 @@ const _GLTFScenesManager = class _GLTFScenesManager {
         }
       });
     }
+    if (node.extensions && node.extensions.KHR_node_visibility) {
+      const visible = node.extensions.KHR_node_visibility.visible !== void 0 ? node.extensions.KHR_node_visibility.visible : true;
+      child.node.visible = visible;
+    }
   }
   /**
    * Get a clean attribute name based on a glTF attribute name.

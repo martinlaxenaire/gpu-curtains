@@ -1,6 +1,6 @@
 import { GLTF } from './GLTF';
 /** List of available glTF extensions. */
-export type GLTFExtensionsTypes = 'KHR_animation_pointer' | 'KHR_draco_mesh_compression' | 'KHR_lights_punctual' | 'KHR_materials_anisotropy' | 'KHR_materials_clearcoat' | 'KHR_materials_diffuse_transmission' | 'KHR_materials_dispersion' | 'KHR_materials_emissive_strength' | 'KHR_materials_ior' | 'KHR_materials_iridescence' | 'KHR_materials_sheen' | 'KHR_materials_specular' | 'KHR_materials_transmission' | 'KHR_materials_unlit' | 'KHR_materials_variants' | 'KHR_materials_volume' | 'KHR_materials_volume_scatter' | 'KHR_mesh_quantization' | 'KHR_texture_basisu' | 'KHR_texture_transform' | 'KHR_xmp_json_ld' | 'KHR_xmp' | 'EXT_mesh_gpu_instancing' | 'EXT_meshopt_compression' | 'EXT_texture_webp';
+export type GLTFExtensionsTypes = 'KHR_animation_pointer' | 'KHR_draco_mesh_compression' | 'KHR_lights_punctual' | 'KHR_materials_anisotropy' | 'KHR_materials_clearcoat' | 'KHR_materials_diffuse_transmission' | 'KHR_materials_dispersion' | 'KHR_materials_emissive_strength' | 'KHR_materials_ior' | 'KHR_materials_iridescence' | 'KHR_materials_sheen' | 'KHR_materials_specular' | 'KHR_materials_transmission' | 'KHR_materials_unlit' | 'KHR_materials_variants' | 'KHR_materials_volume' | 'KHR_materials_volume_scatter' | 'KHR_mesh_quantization' | 'KHR_node_visibility' | 'KHR_texture_basisu' | 'KHR_texture_transform' | 'KHR_xmp_json_ld' | 'KHR_xmp' | 'EXT_mesh_gpu_instancing' | 'EXT_meshopt_compression' | 'EXT_texture_webp';
 /** Array of all available glTF extensions. */
 export type GLTFExtensionsUsed = Array<GLTFExtensionsTypes>;
 /** Define the `KHR_lights_punctual` extension top level options. */
@@ -49,8 +49,13 @@ export interface GLTFLightsPunctualExtension {
 }
 /** Define the `EXT_mesh_gpu_instancing` extension nodes options. */
 export interface GLTFMeshGPUInstancingExtension {
-    /** contains accessor ids for the `TRANSLATION`, `ROTATION`, and `SCALE` attribute buffers, all of which are optional. */
+    /** Contains accessor ids for the `TRANSLATION`, `ROTATION`, and `SCALE` attribute buffers, all of which are optional. */
     attributes?: GLTF.IMeshPrimitive['attributes'];
+}
+/** Defines the `KHR_node_visibility` extension nodes options. */
+export interface GLTFNodeVisibilityExtension {
+    /** Specifies whether the node is visible. */
+    visible?: boolean;
 }
 /** Base mapping for all potential nodes GLTF extensions types. */
 export type GLTFNodesExtensionsMapping = {
@@ -58,11 +63,27 @@ export type GLTFNodesExtensionsMapping = {
     KHR_lights_punctual: GLTFLightsPunctualExtension;
     /** Define the `EXT_mesh_gpu_instancing` extension node options. */
     EXT_mesh_gpu_instancing: GLTFMeshGPUInstancingExtension;
+    /** Define the `KHR_node_visibility` extension node options. */
+    KHR_node_visibility: GLTFNodeVisibilityExtension;
 };
 /** Extract keys from GLTFExtensionsTypes that are present in GLTFNodesExtensionsMapping. */
 export type NodesExtensionKeys = Extract<keyof GLTFNodesExtensionsMapping, GLTFExtensionsTypes>;
 /**  All the glTF nodes extensions properties. */
 export type GLTFNodesExtensions = Pick<GLTFNodesExtensionsMapping, NodesExtensionKeys>;
+/** Defines the `KHR_animation_pointer` extension animations targets options. */
+export interface GLTFAnimationPointerExtension {
+    /** Pointer path to the specific glTF asset property to animate. */
+    pointer: string;
+}
+/** Base mapping for all potential animstions targets GLTF extensions types. */
+export type GLTFAnimationsTargetsExtensionsMapping = {
+    /** Define the `KHR_animation_pointer` extension animation target options. */
+    KHR_animation_pointer: GLTFAnimationPointerExtension;
+};
+/** Extract keys from GLTFExtensionsTypes that are present in GLTFAnimationsTargetsExtensionsMapping. */
+export type AnimationsTargetsExtensionKeys = Extract<keyof GLTFAnimationsTargetsExtensionsMapping, GLTFExtensionsTypes>;
+/**  All the glTF animations targets extensions properties. */
+export type GLTFAnimationsTargetsExtensions = Pick<GLTFAnimationsTargetsExtensionsMapping, AnimationsTargetsExtensionKeys>;
 /** Define the `KHR_materials_variants` extension primitives options. */
 export interface GLTFMaterialsVariants {
     /** Defines the mappings between the registered material variants in the glTF extension declared at top level and a {@link GLTF.IMeshPrimitive.material | glTF material index}. */

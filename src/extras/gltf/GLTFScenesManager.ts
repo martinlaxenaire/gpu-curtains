@@ -123,7 +123,7 @@ const GL = (typeof window !== 'undefined' && WebGLRenderingContext) || {
  * - [x] KHR_materials_variants
  * - [x] KHR_materials_volume
  * - [ ] KHR_mesh_quantization
- * - [ ] KHR_node_visibility
+ * - [x] KHR_node_visibility
  * - [ ] KHR_texture_basisu
  * - [x] KHR_texture_transform
  * - [ ] KHR_xmp_json_ld
@@ -1216,8 +1216,8 @@ export class GLTFScenesManager {
             channel.target.path === 'pointer' &&
             channel.target.extensions &&
             channel.target.extensions.KHR_animation_pointer &&
-            (channel.target.extensions.KHR_animation_pointer as unknown as any).pointer &&
-            (channel.target.extensions.KHR_animation_pointer as unknown as any).pointer.includes('weights')
+            channel.target.extensions.KHR_animation_pointer.pointer &&
+            channel.target.extensions.KHR_animation_pointer.pointer.includes('weights')
         )
 
         pointerChannels.forEach((pointerChannel) => {
@@ -1229,7 +1229,7 @@ export class GLTFScenesManager {
             },
           }
 
-          const pointerPath = (pointerChannel.target.extensions.KHR_animation_pointer as unknown as any).pointer
+          const pointerPath = pointerChannel.target.extensions.KHR_animation_pointer.pointer
           const splitedPointerPaths = pointerPath.split('/')
           splitedPointerPaths.shift()
 
@@ -1294,6 +1294,13 @@ export class GLTFScenesManager {
           })
         }
       })
+    }
+
+    // visibility
+    if (node.extensions && node.extensions.KHR_node_visibility) {
+      const visible =
+        node.extensions.KHR_node_visibility.visible !== undefined ? node.extensions.KHR_node_visibility.visible : true
+      child.node.visible = visible
     }
   }
 

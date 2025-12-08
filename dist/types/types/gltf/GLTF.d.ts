@@ -1,4 +1,4 @@
-import { GLTFExtensionsUsed, GLTFMaterialsExtensions, GLTFNodesExtensions, GLTFPrimitivesExtensions, GLTFTexturesExtensions, GLTFTexturesInfosExtensions } from './GLTFExtensions';
+import { GLTFAnimationsTargetsExtensions, GLTFExtensionsUsed, GLTFMaterialsExtensions, GLTFNodesExtensions, GLTFPrimitivesExtensions, GLTFTexturesExtensions, GLTFTexturesInfosExtensions } from './GLTFExtensions';
 /**
  * Module for glTF 2.0 Interface
  */
@@ -168,6 +168,10 @@ export declare namespace GLTF {
          * instantiates
          */
         path: AnimationChannelTargetPath;
+        /**
+         * Dictionary object with animations targets extension-specific objects
+         */
+        extensions?: GLTFAnimationsTargetsExtensions;
     }
     /**
      * Combines input and output accessors with an interpolation algorithm to define a keyframe

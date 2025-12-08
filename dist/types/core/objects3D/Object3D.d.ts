@@ -45,6 +45,7 @@ export interface Object3DTransforms {
  * The transformations {@link Vec3 | vectors} are reactive to changes, which mean that updating one of their components will automatically update the {@link Object3D#modelMatrix | model matrix} and {@link Object3D#worldMatrix | world matrix}.
  */
 export declare class Object3D {
+    #private;
     /** {@link Object3DTransforms | Transformation object} of the {@link Object3D} */
     transforms: Object3DTransforms;
     /** {@link Object3DMatrices | Matrices object} of the {@link Object3D} */
@@ -53,8 +54,6 @@ export declare class Object3D {
     up: Vec3;
     /** {@link Vec3} holding the actual position of this {@link Object3D} from its {@link worldMatrix}. */
     actualPosition: Vec3;
-    /** Parent {@link Object3D} in the scene graph, used to compute the {@link worldMatrix}. */
-    private _parent;
     /** Children {@link Object3D} in the scene graph, used to compute their own {@link worldMatrix}. */
     children: Object3D[];
     /** Index (order of creation) of this {@link Object3D}. Used in the {@link parent} / {@link children} relation. */
@@ -65,6 +64,24 @@ export declare class Object3D {
      * Object3D constructor
      */
     constructor();
+    /**
+     * Get whether this {@link Object3D} is visible (if it is itself visible, and all its parents are visible as well).
+     */
+    get visible(): boolean;
+    /**
+     * Set this {@link Object3D} visible property, and its children `parentVisibility` property.
+     * @param value - New visibility value.
+     */
+    set visible(value: boolean);
+    /**
+     * Get whether all this {@link Object3D} parents are visible or not. Should not be used directly.
+     */
+    get parentVisibility(): boolean;
+    /**
+     * Set to `false` if at least one of this {@link Object3D} parent is not visible, `true` otherwise. Should not be used directly.
+     * @param value - New parent visibility value.
+     */
+    set parentVisibility(value: boolean);
     /**
      * Get the parent of this {@link Object3D} if any
      */

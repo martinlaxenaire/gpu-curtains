@@ -478,8 +478,10 @@ encodeRenderCommands_fn = function() {
     this.encoder.pushDebugGroup(`${this.options.label}: create encoder`);
   }
   this.meshes.forEach((mesh) => {
-    mesh.material.render(this.encoder);
-    mesh.geometry.render(this.encoder);
+    if (mesh.visible) {
+      mesh.material.render(this.encoder);
+      mesh.geometry.render(this.encoder);
+    }
   });
   if (!this.renderer.production) {
     this.encoder.popDebugGroup();

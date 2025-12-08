@@ -20,6 +20,7 @@ export type GLTFExtensionsTypes =
   | 'KHR_materials_volume'
   | 'KHR_materials_volume_scatter'
   | 'KHR_mesh_quantization'
+  | 'KHR_node_visibility'
   | 'KHR_texture_basisu'
   | 'KHR_texture_transform'
   | 'KHR_xmp_json_ld'
@@ -87,8 +88,14 @@ export interface GLTFLightsPunctualExtension {
 
 /** Define the `EXT_mesh_gpu_instancing` extension nodes options. */
 export interface GLTFMeshGPUInstancingExtension {
-  /** contains accessor ids for the `TRANSLATION`, `ROTATION`, and `SCALE` attribute buffers, all of which are optional. */
+  /** Contains accessor ids for the `TRANSLATION`, `ROTATION`, and `SCALE` attribute buffers, all of which are optional. */
   attributes?: GLTF.IMeshPrimitive['attributes']
+}
+
+/** Defines the `KHR_node_visibility` extension nodes options. */
+export interface GLTFNodeVisibilityExtension {
+  /** Specifies whether the node is visible. */
+  visible?: boolean
 }
 
 /** Base mapping for all potential nodes GLTF extensions types. */
@@ -97,6 +104,8 @@ export type GLTFNodesExtensionsMapping = {
   KHR_lights_punctual: GLTFLightsPunctualExtension
   /** Define the `EXT_mesh_gpu_instancing` extension node options. */
   EXT_mesh_gpu_instancing: GLTFMeshGPUInstancingExtension
+  /** Define the `KHR_node_visibility` extension node options. */
+  KHR_node_visibility: GLTFNodeVisibilityExtension
 }
 
 /** Extract keys from GLTFExtensionsTypes that are present in GLTFNodesExtensionsMapping. */
@@ -104,6 +113,29 @@ export type NodesExtensionKeys = Extract<keyof GLTFNodesExtensionsMapping, GLTFE
 
 /**  All the glTF nodes extensions properties. */
 export type GLTFNodesExtensions = Pick<GLTFNodesExtensionsMapping, NodesExtensionKeys>
+
+/* ANIMATION TARGETS EXTENSION */
+
+/** Defines the `KHR_animation_pointer` extension animations targets options. */
+export interface GLTFAnimationPointerExtension {
+  /** Pointer path to the specific glTF asset property to animate. */
+  pointer: string
+}
+
+/** Base mapping for all potential animstions targets GLTF extensions types. */
+export type GLTFAnimationsTargetsExtensionsMapping = {
+  /** Define the `KHR_animation_pointer` extension animation target options. */
+  KHR_animation_pointer: GLTFAnimationPointerExtension
+}
+
+/** Extract keys from GLTFExtensionsTypes that are present in GLTFAnimationsTargetsExtensionsMapping. */
+export type AnimationsTargetsExtensionKeys = Extract<keyof GLTFAnimationsTargetsExtensionsMapping, GLTFExtensionsTypes>
+
+/**  All the glTF animations targets extensions properties. */
+export type GLTFAnimationsTargetsExtensions = Pick<
+  GLTFAnimationsTargetsExtensionsMapping,
+  AnimationsTargetsExtensionKeys
+>
 
 /* PRIMITIVE EXTENSIONS */
 
