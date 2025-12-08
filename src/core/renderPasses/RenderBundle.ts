@@ -539,8 +539,10 @@ export class RenderBundle {
     // render commands
     let offset = 0
     this.meshes.forEach((mesh) => {
-      mesh.material.render(this.encoder)
-      mesh.geometry.render(this.encoder)
+      if (mesh.visible) {
+        mesh.material.render(this.encoder)
+        mesh.geometry.render(this.encoder)
+      }
 
       offset++
     })
