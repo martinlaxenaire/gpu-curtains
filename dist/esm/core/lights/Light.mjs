@@ -12,6 +12,7 @@ var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read fr
 var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
 var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
 var _intensity, _intensityColor;
+const nullVec3 = new Vec3();
 class Light extends Object3D {
   /**
    * Light constructor
@@ -93,7 +94,33 @@ class Light extends Object3D {
    */
   set intensity(value) {
     __privateSet(this, _intensity, value);
-    this.onPropertyChanged("color", this.actualColor);
+    this.onPropertyChanged("color", this.visible ? this.actualColor : nullVec3);
+  }
+  /**
+   * Get whether this {@link Light} is visible or not.
+   */
+  get visible() {
+    return super.visible;
+  }
+  /**
+   * Set this {@link Light} visible value, and update its {@link actualColor} property accordingly.
+   */
+  set visible(value) {
+    super.visible = value;
+    this.onPropertyChanged("color", value ? this.actualColor : nullVec3);
+  }
+  /**
+   * Get whether all this {@link Light} parents are visible or not. Should not be used directly.
+   */
+  get parentVisibility() {
+    return super.parentVisibility;
+  }
+  /**
+   * Set this {@link Light} parent visiblity, and update its {@link actualColor} property accordingly. Should not be used directly.
+   */
+  set parentVisibility(value) {
+    super.parentVisibility = value;
+    this.onPropertyChanged("color", this.visible ? this.actualColor : nullVec3);
   }
   /**
    * Get the actual {@link Vec3} color used in the shader: convert {@link color} to linear space, then multiply by {@link intensity}.

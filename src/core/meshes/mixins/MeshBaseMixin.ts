@@ -122,8 +122,6 @@ export declare class MeshBaseClass {
   /** Whether this {@link MeshBaseClass} should be treated as transparent. Impacts the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} blend properties */
   _transparent: boolean
 
-  /** Flag indicating whether to draw this {@link MeshBaseClass} or not */
-  _visible: boolean
   /** Flag indicating whether this {@link MeshBaseClass} is ready to be drawn */
   _ready: boolean
 
@@ -463,7 +461,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     _transparent: boolean
 
     /** Flag indicating whether to draw this {@link MeshBase} or not */
-    _visible: boolean
+    #visible: boolean
     /** Flag indicating whether this {@link MeshBase} is ready to be drawn */
     _ready: boolean
 
@@ -965,7 +963,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     }
 
     /**
-     * Get the transparent property value
+     * Get the transparent property value.
      */
     get transparent(): boolean | undefined {
       return this._transparent
@@ -990,18 +988,34 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     }
 
     /**
-     * Get the visible property value
+     * Get the visible property value.
      */
     get visible(): boolean {
-      return this._visible
+      // @ts-ignore
+      if (super.visible !== undefined) {
+        // @ts-ignore
+        return super.visible
+      } else {
+        return this.#visible
+      }
     }
 
     /**
-     * Set the visible property value
-     * @param value - new visibility value
+     * Set the visible property value.
+     * @param value - New visibility value.
      */
     set visible(value: boolean) {
-      this._visible = value
+      // @ts-ignore
+      if (super.visible !== undefined) {
+        // @ts-ignore
+        super.visible = value
+      } else {
+        this.#visible = value
+      }
+
+      if (this.renderBundle) {
+        this.renderBundle.ready = false
+      }
     }
 
     /* TEXTURES */
@@ -1017,7 +1031,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     /**
      * Create a new {@link MediaTexture}.
      * @param options - {@link MediaTextureParams | MediaTexture parameters}.
-     * @returns - newly created {@link MediaTexture}.
+     * @returns - Newly created {@link MediaTexture}.
      */
     createMediaTexture(options: MediaTextureParams): MediaTexture {
       if (!options.name) {

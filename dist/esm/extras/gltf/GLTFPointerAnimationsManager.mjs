@@ -415,24 +415,46 @@ class GLTFPointerAnimationsManager {
             const { animatedProperty, animationType } = this.getAnimationTypeAndProperty(splitedPropertyPaths);
             const propertyIndex = parseInt(splitedPropertyPaths[1]);
             if (animationType === "nodes") {
-              if (animatedProperty === "rotation" || animatedProperty === "scale" || animatedProperty === "translation") {
+              if (animatedProperty === "rotation" || animatedProperty === "scale" || animatedProperty === "translation" || animatedProperty === "visible") {
                 const node = this.gltfScenesManager.gltf.nodes[propertyIndex];
                 const sceneNode = this.gltfScenesManager.scenesManager.nodes.get(propertyIndex);
                 this.addObjectToTargetAnimation(sceneNode, targetsAnimation);
-                const animName = node.name ? `${node.name} pointer animation` : `${channel.target.path} pointer animation ${propertyIndex}`;
+                const animName = node.name ? `${node.name} pointer animation` : `${animatedProperty} pointer animation ${propertyIndex}`;
                 const label = animation.name ? `${animation.name} ${animName}` : `Animation ${i} ${animName}`;
                 const sampler = animation.samplers[channel.sampler];
                 const { keyframes, values } = this.gltfScenesManager.getAnimationKeyframesValues(sampler);
-                const inputValue = (() => {
+                const nodeProperties = (() => {
                   switch (animatedProperty) {
                     case "translation":
-                      return sceneNode.position;
+                      return {
+                        inputValue: sceneNode.position,
+                        type: "vec3",
+                        path: animatedProperty
+                      };
                     case "rotation":
-                      return sceneNode.quaternion;
+                      return {
+                        inputValue: sceneNode.quaternion,
+                        type: "quaternion",
+                        path: animatedProperty
+                      };
                     case "scale":
-                      return sceneNode.scale;
+                      return {
+                        inputValue: sceneNode.scale,
+                        type: "vec3",
+                        path: animatedProperty
+                      };
+                    case "visible":
+                      return {
+                        inputValue: 0,
+                        type: "scalar",
+                        path: "pointer"
+                      };
                     default:
-                      return null;
+                      return {
+                        inputValue: null,
+                        type: null,
+                        path: null
+                      };
                   }
                 })();
                 const keyframesAnimation = new KeyframesAnimation({
@@ -440,12 +462,18 @@ class GLTFPointerAnimationsManager {
                   inputIndex: sampler.input,
                   keyframes,
                   values,
-                  path: animatedProperty,
-                  type: animatedProperty === "rotation" ? "quaternion" : "vec3",
+                  path: nodeProperties.path,
+                  type: nodeProperties.type,
                   interpolation: sampler.interpolation,
-                  inputValue
+                  inputValue: nodeProperties.inputValue
                 });
                 targetsAnimation.addTargetAnimation(sceneNode, keyframesAnimation);
+                if (animatedProperty === "visible") {
+                  keyframesAnimation.onAfterUpdate = () => {
+                    const value = keyframesAnimation.inputValue;
+                    sceneNode.visible = !!value;
+                  };
+                }
               }
             } else if (animationType === "cameras") {
               const isOrthographic = splitedPropertyPaths.includes("orthographic");

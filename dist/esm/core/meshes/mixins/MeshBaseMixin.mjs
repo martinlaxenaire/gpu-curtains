@@ -33,7 +33,7 @@ const defaultMeshBaseParams = {
   renderBundle: null
 };
 function MeshBaseMixin(Base) {
-  var _autoRender, _a;
+  var _visible, _autoRender, _a;
   return _a = class extends Base {
     /**
      * MeshBase constructor
@@ -52,6 +52,8 @@ function MeshBaseMixin(Base) {
         params[1],
         { ...defaultMeshBaseParams, ...params[2] }
       );
+      /** Flag indicating whether to draw this {@link MeshBase} or not */
+      __privateAdd(this, _visible);
       /** Whether we should add this {@link MeshBase} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
       __privateAdd(this, _autoRender, true);
       // callbacks / events
@@ -433,7 +435,7 @@ ${geometry.wgslStructFragment}`
       }
     }
     /**
-     * Get the transparent property value
+     * Get the transparent property value.
      */
     get transparent() {
       return this._transparent;
@@ -453,17 +455,28 @@ ${geometry.wgslStructFragment}`
       }
     }
     /**
-     * Get the visible property value
+     * Get the visible property value.
      */
     get visible() {
-      return this._visible;
+      if (super.visible !== void 0) {
+        return super.visible;
+      } else {
+        return __privateGet(this, _visible);
+      }
     }
     /**
-     * Set the visible property value
-     * @param value - new visibility value
+     * Set the visible property value.
+     * @param value - New visibility value.
      */
     set visible(value) {
-      this._visible = value;
+      if (super.visible !== void 0) {
+        super.visible = value;
+      } else {
+        __privateSet(this, _visible, value);
+      }
+      if (this.renderBundle) {
+        this.renderBundle.ready = false;
+      }
     }
     /* TEXTURES */
     /**
@@ -476,7 +489,7 @@ ${geometry.wgslStructFragment}`
     /**
      * Create a new {@link MediaTexture}.
      * @param options - {@link MediaTextureParams | MediaTexture parameters}.
-     * @returns - newly created {@link MediaTexture}.
+     * @returns - Newly created {@link MediaTexture}.
      */
     createMediaTexture(options) {
       if (!options.name) {
@@ -699,7 +712,7 @@ ${geometry.wgslStructFragment}`
         this.geometry?.destroy(this.renderer);
       }
     }
-  }, _autoRender = new WeakMap(), _a;
+  }, _visible = new WeakMap(), _autoRender = new WeakMap(), _a;
 }
 
 export { MeshBaseMixin };

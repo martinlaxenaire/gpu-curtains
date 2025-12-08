@@ -9,6 +9,8 @@ import { SpotLight } from './SpotLight'
 import type { GPUCurtains } from '../../curtains/GPUCurtains'
 import { sRGBToLinear } from '../../math/color-utils'
 
+const nullVec3 = new Vec3()
+
 /** Defines all types of lights. */
 export type LightsType = 'ambientLights' | 'directionalLights' | 'pointLights' | 'spotLights'
 /** Defines all types of shadow casting lights. */
@@ -170,7 +172,37 @@ export class Light extends Object3D {
    */
   set intensity(value: number) {
     this.#intensity = value
-    this.onPropertyChanged('color', this.actualColor)
+    this.onPropertyChanged('color', this.visible ? this.actualColor : nullVec3)
+  }
+
+  /**
+   * Get whether this {@link Light} is visible or not.
+   */
+  get visible(): boolean {
+    return super.visible
+  }
+
+  /**
+   * Set this {@link Light} visible value, and update its {@link actualColor} property accordingly.
+   */
+  set visible(value: boolean) {
+    super.visible = value
+    this.onPropertyChanged('color', value ? this.actualColor : nullVec3)
+  }
+
+  /**
+   * Get whether all this {@link Light} parents are visible or not. Should not be used directly.
+   */
+  get parentVisibility(): boolean {
+    return super.parentVisibility
+  }
+
+  /**
+   * Set this {@link Light} parent visiblity, and update its {@link actualColor} property accordingly. Should not be used directly.
+   */
+  set parentVisibility(value: boolean) {
+    super.parentVisibility = value
+    this.onPropertyChanged('color', this.visible ? this.actualColor : nullVec3)
   }
 
   /**
