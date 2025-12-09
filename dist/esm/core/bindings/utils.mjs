@@ -51,15 +51,13 @@ const getBufferLayout = (bufferType) => {
   return bufferLayouts[bufferType];
 };
 const getBindingWGSLVarType = (binding) => {
-  return (() => {
-    switch (binding.bindingType) {
-      case "storage":
-        return `var<${binding.bindingType}, ${binding.options.access}>`;
-      case "uniform":
-      default:
-        return "var<uniform>";
-    }
-  })();
+  switch (binding.bindingType) {
+    case "storage":
+      return `var<${binding.bindingType}, ${binding.options.access}>`;
+    case "uniform":
+    default:
+      return "var<uniform>";
+  }
 };
 const getTextureBindingWGSLVarType = (binding) => {
   if (binding.bindingType === "externalTexture") {
@@ -77,53 +75,49 @@ const getBindGroupLayoutBindingType = (binding) => {
   }
 };
 const getBindGroupLayoutTextureBindingType = (binding) => {
-  return (() => {
-    switch (binding.bindingType) {
-      case "externalTexture":
-        return { externalTexture: {} };
-      case "storage":
-        return {
-          storageTexture: {
-            format: binding.options.format,
-            viewDimension: binding.options.viewDimension
-          }
-        };
-      case "texture":
-        return {
-          texture: {
-            multisampled: binding.options.multisampled,
-            viewDimension: binding.options.viewDimension,
-            sampleType: binding.options.multisampled ? "unfilterable-float" : "float"
-          }
-        };
-      case "depth":
-        return {
-          texture: {
-            multisampled: binding.options.multisampled,
-            viewDimension: binding.options.viewDimension,
-            sampleType: "depth"
-          }
-        };
-      default:
-        return null;
-    }
-  })();
+  switch (binding.bindingType) {
+    case "externalTexture":
+      return { externalTexture: {} };
+    case "storage":
+      return {
+        storageTexture: {
+          format: binding.options.format,
+          viewDimension: binding.options.viewDimension
+        }
+      };
+    case "texture":
+      return {
+        texture: {
+          multisampled: binding.options.multisampled,
+          viewDimension: binding.options.viewDimension,
+          sampleType: binding.options.multisampled ? "unfilterable-float" : "float"
+        }
+      };
+    case "depth":
+      return {
+        texture: {
+          multisampled: binding.options.multisampled,
+          viewDimension: binding.options.viewDimension,
+          sampleType: "depth"
+        }
+      };
+    default:
+      return null;
+  }
 };
 const getBindGroupLayoutTextureBindingCacheKey = (binding) => {
-  return (() => {
-    switch (binding.bindingType) {
-      case "externalTexture":
-        return `externalTexture,${binding.visibility},`;
-      case "storage":
-        return `storageTexture,${binding.options.format},${binding.options.viewDimension},${binding.visibility},`;
-      case "texture":
-        return `texture,${binding.options.multisampled},${binding.options.viewDimension},${binding.options.multisampled ? "unfilterable-float" : "float"},${binding.visibility},`;
-      case "depth":
-        return `depthTexture,${binding.options.format},${binding.options.viewDimension},${binding.visibility},`;
-      default:
-        return `${binding.visibility},`;
-    }
-  })();
+  switch (binding.bindingType) {
+    case "externalTexture":
+      return `externalTexture,${binding.visibility},`;
+    case "storage":
+      return `storageTexture,${binding.options.format},${binding.options.viewDimension},${binding.visibility},`;
+    case "texture":
+      return `texture,${binding.options.multisampled},${binding.options.viewDimension},${binding.options.multisampled ? "unfilterable-float" : "float"},${binding.visibility},`;
+    case "depth":
+      return `depthTexture,${binding.options.format},${binding.options.viewDimension},${binding.visibility},`;
+    default:
+      return `${binding.visibility},`;
+  }
 };
 
 export { getBindGroupLayoutBindingType, getBindGroupLayoutTextureBindingCacheKey, getBindGroupLayoutTextureBindingType, getBindingVisibility, getBindingWGSLVarType, getBufferLayout, getTextureBindingWGSLVarType };

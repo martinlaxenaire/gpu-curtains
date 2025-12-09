@@ -282,9 +282,9 @@
   class Vec3 {
     /**
      * Vec3 constructor
-     * @param x - X component of our {@link Vec3}
-     * @param y - Y component of our {@link Vec3}
-     * @param z - Z component of our {@link Vec3}
+     * @param x - X component of our {@link Vec3}.
+     * @param y - Y component of our {@link Vec3}.
+     * @param z - Z component of our {@link Vec3}.
      */
     constructor(x = 0, y = x, z = x) {
       this.type = "Vec3";
@@ -293,15 +293,15 @@
       this._z = z;
     }
     /**
-     * Get the X component of the {@link Vec3}
+     * Get the X component of the {@link Vec3}.
      */
     get x() {
       return this._x;
     }
     /**
-     * Set the X component of the {@link Vec3}
-     * Can trigger {@link onChange} callback
-     * @param value - X component to set
+     * Set the X component of the {@link Vec3}.
+     * Can trigger {@link onChange} callback.
+     * @param value - X component to set.
      */
     set x(value) {
       const changed = value !== this._x;
@@ -309,15 +309,15 @@
       changed && this._onChangeCallback && this._onChangeCallback();
     }
     /**
-     * Get the Y component of the {@link Vec3}
+     * Get the Y component of the {@link Vec3}.
      */
     get y() {
       return this._y;
     }
     /**
-     * Set the Y component of the {@link Vec3}
-     * Can trigger {@link onChange} callback
-     * @param value - Y component to set
+     * Set the Y component of the {@link Vec3}.
+     * Can trigger {@link onChange} callback.
+     * @param value - Y component to set.
      */
     set y(value) {
       const changed = value !== this._y;
@@ -325,15 +325,15 @@
       changed && this._onChangeCallback && this._onChangeCallback();
     }
     /**
-     * Get the Z component of the {@link Vec3}
+     * Get the Z component of the {@link Vec3}.
      */
     get z() {
       return this._z;
     }
     /**
-     * Set the Z component of the {@link Vec3}
-     * Can trigger {@link onChange} callback
-     * @param value - Z component to set
+     * Set the Z component of the {@link Vec3}.
+     * Can trigger {@link onChange} callback.
+     * @param value - Z component to set.
      */
     set z(value) {
       const changed = value !== this._z;
@@ -341,9 +341,9 @@
       changed && this._onChangeCallback && this._onChangeCallback();
     }
     /**
-     * Called when at least one component of the {@link Vec3} has changed
-     * @param callback - callback to run when at least one component of the {@link Vec3} has changed
-     * @returns - our {@link Vec3}
+     * Called when at least one component of the {@link Vec3} has changed.
+     * @param callback - Callback to run when at least one component of the {@link Vec3} has changed.
+     * @returns - Our {@link Vec3}.
      */
     onChange(callback) {
       if (callback) {
@@ -352,11 +352,11 @@
       return this;
     }
     /**
-     * Set the {@link Vec3} from values
-     * @param x - new X component to set
-     * @param y - new Y component to set
-     * @param z - new Z component to set
-     * @returns - this {@link Vec3} after being set
+     * Set the {@link Vec3} from values.
+     * @param x - New X component to set.
+     * @param y - New Y component to set.
+     * @param z - New Z component to set.
+     * @returns - This {@link Vec3} after being set.
      */
     set(x = 0, y = x, z = x) {
       this.x = x;
@@ -365,9 +365,9 @@
       return this;
     }
     /**
-     * Add a {@link Vec3} to this {@link Vec3}
-     * @param vector - {@link Vec3} to add
-     * @returns - this {@link Vec3} after addition
+     * Add a {@link Vec3} to this {@link Vec3}.
+     * @param vector - {@link Vec3} to add.
+     * @returns - This {@link Vec3} after addition.
      */
     add(vector = new Vec3()) {
       this.x += vector.x;
@@ -376,9 +376,9 @@
       return this;
     }
     /**
-     * Add a scalar to all the components of this {@link Vec3}
-     * @param value - number to add
-     * @returns - this {@link Vec3} after addition
+     * Add a scalar to all the components of this {@link Vec3}.
+     * @param value - Number to add.
+     * @returns - This {@link Vec3} after addition.
      */
     addScalar(value = 0) {
       this.x += value;
@@ -387,9 +387,9 @@
       return this;
     }
     /**
-     * Subtract a {@link Vec3} from this {@link Vec3}
-     * @param vector - {@link Vec3} to subtract
-     * @returns - this {@link Vec3} after subtraction
+     * Subtract a {@link Vec3} from this {@link Vec3}.
+     * @param vector - {@link Vec3} to subtract.
+     * @returns - This {@link Vec3} after subtraction.
      */
     sub(vector = new Vec3()) {
       this.x -= vector.x;
@@ -398,9 +398,9 @@
       return this;
     }
     /**
-     * Subtract a scalar to all the components of this {@link Vec3}
-     * @param value - number to subtract
-     * @returns - this {@link Vec3} after subtraction
+     * Subtract a scalar to all the components of this {@link Vec3}.
+     * @param value - Number to subtract.
+     * @returns - This {@link Vec3} after subtraction.
      */
     subScalar(value = 0) {
       this.x -= value;
@@ -409,9 +409,9 @@
       return this;
     }
     /**
-     * Multiply a {@link Vec3} with this {@link Vec3}
-     * @param vector - {@link Vec3} to multiply with
-     * @returns - this {@link Vec3} after multiplication
+     * Multiply a {@link Vec3} with this {@link Vec3}.
+     * @param vector - {@link Vec3} to multiply with.
+     * @returns - This {@link Vec3} after multiplication.
      */
     multiply(vector = new Vec3(1)) {
       this.x *= vector.x;
@@ -420,9 +420,9 @@
       return this;
     }
     /**
-     * Multiply all components of this {@link Vec3} with a scalar
-     * @param value - number to multiply with
-     * @returns - this {@link Vec3} after multiplication
+     * Multiply all components of this {@link Vec3} with a scalar.
+     * @param value - Number to multiply with.
+     * @returns - This {@link Vec3} after multiplication.
      */
     multiplyScalar(value = 1) {
       this.x *= value;
@@ -431,9 +431,9 @@
       return this;
     }
     /**
-     * Divide a {@link Vec3} with this {@link Vec3}
-     * @param vector - {@link Vec3} to divide with
-     * @returns - this {@link Vec3} after division
+     * Divide a {@link Vec3} with this {@link Vec3}.
+     * @param vector - {@link Vec3} to divide with.
+     * @returns - This {@link Vec3} after division.
      */
     divide(vector = new Vec3(1)) {
       this.x /= vector.x;
@@ -442,9 +442,9 @@
       return this;
     }
     /**
-     * Divide all components of this {@link Vec3} with a scalar
-     * @param value - number to divide with
-     * @returns - this {@link Vec3} after division
+     * Divide all components of this {@link Vec3} with a scalar.
+     * @param value - number to divide with.
+     * @returns - This {@link Vec3} after division.
      */
     divideScalar(value = 1) {
       this.x /= value;
@@ -453,9 +453,9 @@
       return this;
     }
     /**
-     * Copy a {@link Vec3} into this {@link Vec3}
-     * @param vector - {@link Vec3} to copy
-     * @returns - this {@link Vec3} after copy
+     * Copy a {@link Vec3} into this {@link Vec3}.
+     * @param vector - {@link Vec3} to copy.
+     * @returns - This {@link Vec3} after copy.
      */
     copy(vector = new Vec3()) {
       this.x = vector.x;
@@ -464,16 +464,16 @@
       return this;
     }
     /**
-     * Clone this {@link Vec3}
-     * @returns - cloned {@link Vec3}
+     * Clone this {@link Vec3}.
+     * @returns - Cloned {@link Vec3}.
      */
     clone() {
       return new Vec3(this.x, this.y, this.z);
     }
     /**
-     * Apply max values to this {@link Vec3} components
-     * @param vector - {@link Vec3} representing max values
-     * @returns - {@link Vec3} with max values applied
+     * Apply max values to this {@link Vec3} components.
+     * @param vector - {@link Vec3} representing max values.
+     * @returns - {@link Vec3} with max values applied.
      */
     max(vector = new Vec3()) {
       this.x = Math.max(this.x, vector.x);
@@ -482,9 +482,9 @@
       return this;
     }
     /**
-     * Apply min values to this {@link Vec3} components
-     * @param vector - {@link Vec3} representing min values
-     * @returns - {@link Vec3} with min values applied
+     * Apply min values to this {@link Vec3} components.
+     * @param vector - {@link Vec3} representing min values.
+     * @returns - {@link Vec3} with min values applied.
      */
     min(vector = new Vec3()) {
       this.x = Math.min(this.x, vector.x);
@@ -493,10 +493,10 @@
       return this;
     }
     /**
-     * Clamp this {@link Vec3} components by min and max {@link Vec3} vectors
-     * @param min - minimum {@link Vec3} components to compare with
-     * @param max - maximum {@link Vec3} components to compare with
-     * @returns - clamped {@link Vec3}
+     * Clamp this {@link Vec3} components by min and max {@link Vec3} vectors.
+     * @param min - Minimum {@link Vec3} components to compare with.
+     * @param max - Maximum {@link Vec3} components to compare with.
+     * @returns - Clamped {@link Vec3}.
      */
     clamp(min = new Vec3(), max = new Vec3()) {
       this.x = Math.max(min.x, Math.min(max.x, this.x));
@@ -505,38 +505,38 @@
       return this;
     }
     /**
-     * Check if 2 {@link Vec3} are equal
-     * @param vector - {@link Vec3} to compare
-     * @returns - whether the {@link Vec3} are equals or not
+     * Check if 2 {@link Vec3} are equal.
+     * @param vector - {@link Vec3} to compare.
+     * @returns - Whether the {@link Vec3} are equals or not.
      */
     equals(vector = new Vec3()) {
       return this.x === vector.x && this.y === vector.y && this.z === vector.z;
     }
     /**
-     * Get the square length of this {@link Vec3}
-     * @returns - square length of this {@link Vec3}
+     * Get the square length of this {@link Vec3}.
+     * @returns - Square length of this {@link Vec3}.
      */
     lengthSq() {
       return this.x * this.x + this.y * this.y + this.z * this.z;
     }
     /**
-     * Get the length of this {@link Vec3}
-     * @returns - length of this {@link Vec3}
+     * Get the length of this {@link Vec3}.
+     * @returns - Length of this {@link Vec3}.
      */
     length() {
       return Math.sqrt(this.lengthSq());
     }
     /**
-     * Get the euclidian distance between this {@link Vec3} and another {@link Vec3}
-     * @param vector - {@link Vec3} to use for distance calculation
-     * @returns - euclidian distance
+     * Get the euclidian distance between this {@link Vec3} and another {@link Vec3}.
+     * @param vector - {@link Vec3} to use for distance calculation.
+     * @returns - Euclidian distance.
      */
     distance(vector = new Vec3()) {
       return Math.hypot(vector.x - this.x, vector.y - this.y, vector.z - this.z);
     }
     /**
-     * Normalize this {@link Vec3}
-     * @returns - normalized {@link Vec3}
+     * Normalize this {@link Vec3}.
+     * @returns - Normalized {@link Vec3}.
      */
     normalize() {
       let len = this.lengthSq();
@@ -549,26 +549,26 @@
       return this;
     }
     /**
-     * Calculate the dot product of 2 {@link Vec3}
-     * @param vector - {@link Vec3} to use for dot product
-     * @returns - dot product of the 2 {@link Vec3}
+     * Calculate the dot product of 2 {@link Vec3}.
+     * @param vector - {@link Vec3} to use for dot product.
+     * @returns - Dot product of the 2 {@link Vec3}.
      */
     dot(vector = new Vec3()) {
       return this.x * vector.x + this.y * vector.y + this.z * vector.z;
     }
     /**
-     * Get the cross product of this {@link Vec3} with another {@link Vec3}
-     * @param vector - {@link Vec3} to use for cross product
-     * @returns - this {@link Vec3} after cross product
+     * Get the cross product of this {@link Vec3} with another {@link Vec3}.
+     * @param vector - {@link Vec3} to use for cross product.
+     * @returns - This {@link Vec3} after cross product.
      */
     cross(vector = new Vec3()) {
       return this.crossVectors(this, vector);
     }
     /**
-     * Set this {@link Vec3} as the result of the cross product of two {@link Vec3}
-     * @param a - first {@link Vec3} to use for cross product
-     * @param b - second {@link Vec3} to use for cross product
-     * @returns - this {@link Vec3} after cross product
+     * Set this {@link Vec3} as the result of the cross product of two {@link Vec3}.
+     * @param a - First {@link Vec3} to use for cross product.
+     * @param b - Second {@link Vec3} to use for cross product.
+     * @returns - This {@link Vec3} after cross product.
      */
     crossVectors(a = new Vec3(), b = new Vec3()) {
       const ax = a.x, ay = a.y, az = a.z;
@@ -579,10 +579,10 @@
       return this;
     }
     /**
-     * Calculate the linear interpolation of this {@link Vec3} by given {@link Vec3} and alpha, where alpha is the percent distance along the line
-     * @param vector - {@link Vec3} to interpolate towards
-     * @param alpha - interpolation factor in the [0, 1] interval
-     * @returns - this {@link Vec3} after linear interpolation
+     * Calculate the linear interpolation of this {@link Vec3} by given {@link Vec3} and alpha, where alpha is the percent distance along the line.
+     * @param vector - {@link Vec3} to interpolate towards.
+     * @param alpha - Interpolation factor in the [0, 1] interval.
+     * @returns - This {@link Vec3} after linear interpolation.
      */
     lerp(vector = new Vec3(), alpha = 1) {
       this.x += (vector.x - this.x) * alpha;
@@ -591,11 +591,11 @@
       return this;
     }
     /**
-     * Apply a {@link Mat4 | matrix} to a {@link Vec3}
-     * Useful to convert a position {@link Vec3} from plane local world to webgl space using projection view matrix for example
+     * Apply a {@link Mat4 | matrix} to a {@link Vec3}.
+     * Useful to convert a position {@link Vec3} from plane local world to webgl space using projection view matrix for example.
      * Source code from: http://glmatrix.net/docs/vec3.js.html
-     * @param matrix - {@link Mat4 | matrix} to use
-     * @returns - this {@link Vec3} after {@link Mat4 | matrix} application
+     * @param matrix - {@link Mat4 | matrix} to use.
+     * @returns - This {@link Vec3} after {@link Mat4 | matrix} application.
      */
     applyMat4(matrix) {
       const x = this._x, y = this._y, z = this._z;
@@ -609,8 +609,8 @@
     }
     /**
      * Set this {@link Vec3} to the translation component of a {@link Mat4 | matrix}.
-     * @param matrix - {@link Mat4 | matrix} to use
-     * @returns - this {@link Vec3} after {@link Mat4 | matrix} application.
+     * @param matrix - {@link Mat4 | matrix} to use.
+     * @returns - This {@link Vec3} after {@link Mat4 | matrix} application.
      */
     setFromMatrixPosition(matrix) {
       const e = matrix.elements;
@@ -620,9 +620,9 @@
       return this;
     }
     /**
-     * Apply a {@link Quat | quaternion} (rotation in 3D space) to this {@link Vec3}
-     * @param quaternion - {@link Quat | quaternion} to use
-     * @returns - this {@link Vec3} with the transformation applied
+     * Apply a {@link Quat | quaternion} (rotation in 3D space) to this {@link Vec3}.
+     * @param quaternion - {@link Quat | quaternion} to use.
+     * @returns - This {@link Vec3} with the transformation applied.
      */
     applyQuat(quaternion = new Quat()) {
       const x = this.x, y = this.y, z = this.z;
@@ -636,11 +636,11 @@
       return this;
     }
     /**
-     * Rotate a {@link Vec3} around and axis by a given angle
-     * @param axis - normalized {@link Vec3} around which to rotate
-     * @param angle - angle (in radians) to rotate
-     * @param quaternion - optional {@link Quat | quaternion} to use for rotation computations
-     * @returns - this {@link Vec3} with the rotation applied
+     * Rotate a {@link Vec3} around and axis by a given angle.
+     * @param axis - Normalized {@link Vec3} around which to rotate.
+     * @param angle - Angle (in radians) to rotate.
+     * @param quaternion - Optional {@link Quat | quaternion} to use for rotation computations.
+     * @returns - This {@link Vec3} with the rotation applied.
      */
     applyAxisAngle(axis = new Vec3(), angle = 0, quaternion = new Quat()) {
       return this.applyQuat(quaternion.setFromAxisAngle(axis, angle));
@@ -648,7 +648,7 @@
     /**
      * Transforms the direction of this vector by a {@link Mat4} (the upper left 3 x 3 subset) and then normalizes the result.
      * @param matrix - {@link Mat4} to use for transformation.
-     * @returns - this {@link Vec3} with the transformation applied.
+     * @returns - This {@link Vec3} with the transformation applied.
      */
     transformDirection(matrix) {
       const x = this.x, y = this.y, z = this.z;
@@ -659,18 +659,18 @@
       return this.normalize();
     }
     /**
-     * Project a 3D coordinate {@link Vec3} to a 2D coordinate {@link Vec3}
-     * @param camera - {@link Camera} to use for projection
-     * @returns - projected {@link Vec3}
+     * Project a 3D coordinate {@link Vec3} to a 2D coordinate {@link Vec3}.
+     * @param camera - {@link Camera} to use for projection.
+     * @returns - Projected {@link Vec3}.
      */
     project(camera) {
       this.applyMat4(camera.viewMatrix).applyMat4(camera.projectionMatrix);
       return this;
     }
     /**
-     * Unproject a 2D coordinate {@link Vec3} to 3D coordinate {@link Vec3}
-     * @param camera - {@link Camera} to use for projection
-     * @returns - unprojected {@link Vec3}
+     * Unproject a 2D coordinate {@link Vec3} to 3D coordinate {@link Vec3}.
+     * @param camera - {@link Camera} to use for projection.
+     * @returns - Unprojected {@link Vec3}.
      */
     unproject(camera) {
       this.applyMat4(camera.projectionMatrix.getInverse()).applyMat4(camera.modelMatrix);
@@ -685,7 +685,7 @@
     // prettier-ignore
     /**
      * Mat4 constructor
-     * @param elements - initial array to use, default to identity matrix
+     * @param elements - Initial array to use, default to identity matrix.
      */
     constructor(elements = new Float32Array([
       1,
@@ -709,7 +709,7 @@
       this.elements = elements;
     }
     /***
-     * Sets the matrix from 16 numbers
+     * Sets the matrix from 16 numbers.
      *
      * @param n11 - number
      * @param n12 - number
@@ -728,7 +728,7 @@
      * @param n43 - number
      * @param n44 - number
      *
-     * @returns - this {@link Mat4} after being set
+     * @returns - This {@link Mat4} after being set.
      */
     set(n11, n12, n13, n14, n21, n22, n23, n24, n31, n32, n33, n34, n41, n42, n43, n44) {
       const te = this.elements;
@@ -751,8 +751,8 @@
       return this;
     }
     /**
-     * Sets the {@link Mat4} to an identity matrix
-     * @returns - this {@link Mat4} after being set
+     * Sets the {@link Mat4} to an identity matrix.
+     * @returns - This {@link Mat4} after being set.
      */
     identity() {
       this.set(
@@ -776,10 +776,10 @@
       return this;
     }
     /**
-     * Sets the {@link Mat4} values from an array
-     * @param array - array to use
-     * @param offset - optional offset in the array to use
-     * @returns - this {@link Mat4} after being set
+     * Sets the {@link Mat4} values from an array.
+     * @param array - Array to use.
+     * @param offset - Optional offset in the array to use.
+     * @returns - This {@link Mat4} after being set.
      */
     // prettier-ignore
     setFromArray(array = new Float32Array([
@@ -806,9 +806,9 @@
       return this;
     }
     /**
-     * Copy another {@link Mat4}
-     * @param matrix - matrix to copy
-     * @returns - this {@link Mat4} after being set
+     * Copy another {@link Mat4}.
+     * @param matrix - Matrix to copy.
+     * @returns - This {@link Mat4} after being set.
      */
     copy(matrix = new Mat4()) {
       const array = matrix.elements;
@@ -831,8 +831,8 @@
       return this;
     }
     /**
-     * Clone a {@link Mat4}
-     * @returns - cloned {@link Mat4}
+     * Clone a {@link Mat4}.
+     * @returns - Cloned {@link Mat4}.
      */
     clone() {
       return new Mat4().copy(this);
@@ -840,7 +840,7 @@
     /**
      * Multiply this {@link Mat4} with another {@link Mat4}.
      * @param matrix - {@link Mat4} to multiply with.
-     * @returns - this {@link Mat4} after multiplication.
+     * @returns - This {@link Mat4} after multiplication.
      */
     multiply(matrix = new Mat4()) {
       return this.multiplyMatrices(this, matrix);
@@ -848,15 +848,15 @@
     /**
      * Multiply another {@link Mat4} with this {@link Mat4}.
      * @param matrix - {@link Mat4} to multiply with.
-     * @returns - this {@link Mat4} after multiplication.
+     * @returns - This {@link Mat4} after multiplication.
      */
     premultiply(matrix = new Mat4()) {
       return this.multiplyMatrices(matrix, this);
     }
     /**
      * Multiply two {@link Mat4}.
-     * @param a - first {@link Mat4}.
-     * @param b - second {@link Mat4}.
+     * @param a - First {@link Mat4}.
+     * @param b - Second {@link Mat4}.
      * @returns - {@link Mat4} resulting from the multiplication.
      */
     multiplyMatrices(a = new Mat4(), b = new Mat4()) {
@@ -891,8 +891,8 @@
     }
     /**
      * {@link premultiply} this {@link Mat4} by a translate matrix (i.e. translateMatrix = new Mat4().translate(vector)).
-     * @param vector - translation {@link Vec3} to use.
-     * @returns - this {@link Mat4} after the premultiply translate operation.
+     * @param vector - Translation {@link Vec3} to use.
+     * @returns - This {@link Mat4} after the premultiply translate operation.
      */
     premultiplyTranslate(vector = new Vec3()) {
       const a11 = 1;
@@ -928,8 +928,8 @@
     }
     /**
      * {@link premultiply} this {@link Mat4} by a scale matrix (i.e. translateMatrix = new Mat4().scale(vector)).
-     * @param vector - scale {@link Vec3 | vector} to use.
-     * @returns - this {@link Mat4} after the premultiply scale operation.
+     * @param vector - Scale {@link Vec3 | vector} to use.
+     * @returns - This {@link Mat4} after the premultiply scale operation.
      */
     premultiplyScale(vector = new Vec3()) {
       const be = this.elements;
@@ -961,8 +961,17 @@
       return this;
     }
     /**
-     * Get the {@link Mat4} inverse
-     * @returns - the inverted {@link Mat4}
+     * Computes and returns the determinant of this {@link Mat4}.
+     * Based on the method outlined [here](http://www.euclideanspace.com/maths/algebra/matrix/functions/inverse/fourD/index.html).
+     * @return - The determinant.
+     */
+    determinant() {
+      const te = this.elements, n11 = te[0], n21 = te[1], n31 = te[2], n41 = te[3], n12 = te[4], n22 = te[5], n32 = te[6], n42 = te[7], n13 = te[8], n23 = te[9], n33 = te[10], n43 = te[11], n14 = te[12], n24 = te[13], n34 = te[14], n44 = te[15], t11 = n23 * n34 * n42 - n24 * n33 * n42 + n24 * n32 * n43 - n22 * n34 * n43 - n23 * n32 * n44 + n22 * n33 * n44, t12 = n14 * n33 * n42 - n13 * n34 * n42 - n14 * n32 * n43 + n12 * n34 * n43 + n13 * n32 * n44 - n12 * n33 * n44, t13 = n13 * n24 * n42 - n14 * n23 * n42 + n14 * n22 * n43 - n12 * n24 * n43 - n13 * n22 * n44 + n12 * n23 * n44, t14 = n14 * n23 * n32 - n13 * n24 * n32 - n14 * n22 * n33 + n12 * n24 * n33 + n13 * n22 * n34 - n12 * n23 * n34;
+      return n11 * t11 + n21 * t12 + n31 * t13 + n41 * t14;
+    }
+    /**
+     * Get the {@link Mat4} inverse.
+     * @returns - the inverted {@link Mat4}.
      */
     invert() {
       const te = this.elements, n11 = te[0], n21 = te[1], n31 = te[2], n41 = te[3], n12 = te[4], n22 = te[5], n32 = te[6], n42 = te[7], n13 = te[8], n23 = te[9], n33 = te[10], n43 = te[11], n14 = te[12], n24 = te[13], n34 = te[14], n44 = te[15], t11 = n23 * n34 * n42 - n24 * n33 * n42 + n24 * n32 * n43 - n22 * n34 * n43 - n23 * n32 * n44 + n22 * n33 * n44, t12 = n14 * n33 * n42 - n13 * n34 * n42 - n14 * n32 * n43 + n12 * n34 * n43 + n13 * n32 * n44 - n12 * n33 * n44, t13 = n13 * n24 * n42 - n14 * n23 * n42 + n14 * n22 * n43 - n12 * n24 * n43 - n13 * n22 * n44 + n12 * n23 * n44, t14 = n14 * n23 * n32 - n13 * n24 * n32 - n14 * n22 * n33 + n12 * n24 * n33 + n13 * n22 * n34 - n12 * n23 * n34;
@@ -988,15 +997,15 @@
       return this;
     }
     /**
-     * Clone and invert the {@link Mat4}
-     * @returns - inverted cloned {@link Mat4}
+     * Clone and invert the {@link Mat4}.
+     * @returns - Inverted cloned {@link Mat4}.
      */
     getInverse() {
       return this.clone().invert();
     }
     /**
-     * Transpose this {@link Mat4}
-     * @returns - the transposed {@link Mat4}
+     * Transpose this {@link Mat4}.
+     * @returns - The transposed {@link Mat4}.
      */
     transpose() {
       let t;
@@ -1023,8 +1032,8 @@
     }
     /**
      * Translate a {@link Mat4}.
-     * @param vector - translation {@link Vec3} to use.
-     * @returns - translated {@link Mat4}.
+     * @param vector - Translation {@link Vec3} to use.
+     * @returns - Translated {@link Mat4}.
      */
     translate(vector = new Vec3()) {
       const a = this.elements;
@@ -1035,17 +1044,17 @@
       return this;
     }
     /**
-     * Get the translation {@link Vec3} component of a {@link Mat4}
-     * @param position - {@link Vec3} to set
-     * @returns - translation {@link Vec3} component of this {@link Mat4}
+     * Get the translation {@link Vec3} component of a {@link Mat4}.
+     * @param position - {@link Vec3} to set.
+     * @returns - Translation {@link Vec3} component of this {@link Mat4}.
      */
     getTranslation(position = new Vec3()) {
       return position.set(this.elements[12], this.elements[13], this.elements[14]);
     }
     /**
-     * Scale a {@link Mat4}
-     * @param vector - scale {@link Vec3 | vector} to use
-     * @returns - scaled {@link Mat4}
+     * Scale a {@link Mat4}.
+     * @param vector - Scale {@link Vec3 | vector} to use.
+     * @returns - Scaled {@link Mat4}.
      */
     scale(vector = new Vec3()) {
       const a = this.elements;
@@ -1064,9 +1073,9 @@
       return this;
     }
     /**
-     * Rotate a {@link Mat4} from a {@link Quat | quaternion}
-     * @param quaternion - {@link Quat | quaternion} to use
-     * @returns - rotated {@link Mat4}
+     * Rotate a {@link Mat4} from a {@link Quat | quaternion}.
+     * @param quaternion - {@link Quat | quaternion} to use.
+     * @returns - Rotated {@link Mat4}.
      */
     rotateFromQuaternion(quaternion = new Quat()) {
       const te = this.elements;
@@ -1087,8 +1096,81 @@
       return this;
     }
     /**
-     * Get the maximum scale of the {@link Mat4} on all axes
-     * @returns - maximum scale of the {@link Mat4}
+     * Get the scale {@link Vec3} component of a {@link Mat4}.
+     * @param scale - {@link Vec3} to set.
+     * @returns - Scale {@link Vec3} component of this {@link Mat4}.
+     */
+    getScale(scale = new Vec3()) {
+      const te = this.elements;
+      let m11 = te[0];
+      let m12 = te[1];
+      let m13 = te[2];
+      let m21 = te[4];
+      let m22 = te[5];
+      let m23 = te[6];
+      let m31 = te[8];
+      let m32 = te[9];
+      let m33 = te[10];
+      scale.set(
+        Math.sqrt(m11 * m11 + m12 * m12 + m13 * m13),
+        Math.sqrt(m21 * m21 + m22 * m22 + m23 * m23),
+        Math.sqrt(m31 * m31 + m32 * m32 + m33 * m33)
+      );
+      return scale;
+    }
+    /**
+     * Get the rotation {@link Quat} component of a {@link Mat4}.
+     * @param quat - {@link Quat} to set.
+     * @returns - Rotation {@link Quat} component of this {@link Mat4}.
+     */
+    getRotation(quat = new Quat()) {
+      const scale = this.getScale();
+      let is1 = 1 / scale.x;
+      let is2 = 1 / scale.y;
+      let is3 = 1 / scale.z;
+      const te = this.elements;
+      const qe = quat.elements;
+      let sm11 = te[0] * is1;
+      let sm12 = te[1] * is2;
+      let sm13 = te[2] * is3;
+      let sm21 = te[4] * is1;
+      let sm22 = te[5] * is2;
+      let sm23 = te[6] * is3;
+      let sm31 = te[8] * is1;
+      let sm32 = te[9] * is2;
+      let sm33 = te[10] * is3;
+      let trace = sm11 + sm22 + sm33;
+      let S = 0;
+      if (trace > 0) {
+        S = Math.sqrt(trace + 1) * 2;
+        qe[3] = 0.25 * S;
+        qe[0] = (sm23 - sm32) / S;
+        qe[1] = (sm31 - sm13) / S;
+        qe[2] = (sm12 - sm21) / S;
+      } else if (sm11 > sm22 && sm11 > sm33) {
+        S = Math.sqrt(1 + sm11 - sm22 - sm33) * 2;
+        qe[3] = (sm23 - sm32) / S;
+        qe[0] = 0.25 * S;
+        qe[1] = (sm12 + sm21) / S;
+        qe[2] = (sm31 + sm13) / S;
+      } else if (sm22 > sm33) {
+        S = Math.sqrt(1 + sm22 - sm11 - sm33) * 2;
+        qe[3] = (sm31 - sm13) / S;
+        qe[0] = (sm12 + sm21) / S;
+        qe[1] = 0.25 * S;
+        qe[2] = (sm23 + sm32) / S;
+      } else {
+        S = Math.sqrt(1 + sm33 - sm11 - sm22) * 2;
+        qe[3] = (sm12 - sm21) / S;
+        qe[0] = (sm31 + sm13) / S;
+        qe[1] = (sm23 + sm32) / S;
+        qe[2] = 0.25 * S;
+      }
+      return quat;
+    }
+    /**
+     * Get the maximum scale of the {@link Mat4} on all axes.
+     * @returns - Maximum scale of the {@link Mat4}.
      */
     getMaxScaleOnAxis() {
       const te = this.elements;
@@ -1098,14 +1180,14 @@
       return Math.sqrt(Math.max(scaleXSq, scaleYSq, scaleZSq));
     }
     /**
-     * Creates a {@link Mat4} from a {@link Quat | quaternion} rotation, {@link Vec3 | vector} translation and {@link Vec3 | vector} scale
-     * Equivalent for applying translation, rotation and scale matrices but much faster
+     * Creates a {@link Mat4} from a {@link Quat | quaternion} rotation, {@link Vec3 | vector} translation and {@link Vec3 | vector} scale.
+     * Equivalent for applying translation, rotation and scale matrices but much faster.
      * Source code from: http://glmatrix.net/docs/mat4.js.html
      *
-     * @param translation - translation {@link Vec3 | vector} to use
-     * @param quaternion - {@link Quat | quaternion} to use
-     * @param scale - translation {@link Vec3 | vector} to use
-     * @returns - transformed {@link Mat4}
+     * @param translation - Translation {@link Vec3 | vector} to use.
+     * @param quaternion - {@link Quat | quaternion} to use.
+     * @param scale - Translation {@link Vec3 | vector} to use.
+     * @returns - Transformed {@link Mat4}.
      */
     compose(translation = new Vec3(), quaternion = new Quat(), scale = new Vec3(1)) {
       const matrix = this.elements;
@@ -1144,15 +1226,15 @@
       return this;
     }
     /**
-     * Creates a {@link Mat4} from a {@link Quat | quaternion} rotation, {@link Vec3 | vector} translation and {@link Vec3 | vector} scale, rotating and scaling around the given {@link Vec3 | origin vector}
-     * Equivalent for applying translation, rotation and scale matrices but much faster
+     * Creates a {@link Mat4} from a {@link Quat | quaternion} rotation, {@link Vec3 | vector} translation and {@link Vec3 | vector} scale, rotating and scaling around the given {@link Vec3 | origin vector}.
+     * Equivalent for applying translation, rotation and scale matrices but much faster.
      * Source code from: http://glmatrix.net/docs/mat4.js.html
      *
-     * @param translation - translation {@link Vec3 | vector} to use
-     * @param quaternion - {@link Quat | quaternion} to use
-     * @param scale - translation {@link Vec3 | vector} to use
-     * @param origin - origin {@link Vec3 | vector} around which to scale and rotate
-     * @returns - transformed {@link Mat4}
+     * @param translation - Translation {@link Vec3 | vector} to use.
+     * @param quaternion - {@link Quat | quaternion} to use.
+     * @param scale - Translation {@link Vec3 | vector} to use.
+     * @param origin - Origin {@link Vec3 | vector} around which to scale and rotate.
+     * @returns - Transformed {@link Mat4}.
      */
     composeFromOrigin(translation = new Vec3(), quaternion = new Quat(), scale = new Vec3(1), origin = new Vec3()) {
       const matrix = this.elements;
@@ -1203,11 +1285,11 @@
       return this;
     }
     /**
-     * Set this {@link Mat4} as a rotation matrix based on an eye, target and up {@link Vec3 | vectors}
-     * @param eye - {@link Vec3 | position vector} of the object that should be rotated
-     * @param target - {@link Vec3 | target vector} to look at
-     * @param up - up {@link Vec3 | vector}
-     * @returns - rotated {@link Mat4}
+     * Set this {@link Mat4} as a rotation matrix based on an eye, target and up {@link Vec3 | vectors}.
+     * @param eye - {@link Vec3 | position vector} of the object that should be rotated.
+     * @param target - {@link Vec3 | target vector} to look at.
+     * @param up - Up {@link Vec3 | vector}.
+     * @returns - Rotated {@link Mat4}.
      */
     lookAt(eye = new Vec3(), target = new Vec3(), up = new Vec3(0, 1, 0)) {
       const te = this.elements;
@@ -1254,10 +1336,10 @@
      *
      * Equivalent to `matrix.lookAt(eye, target, up).invert()` but faster.
      *
-     * @param eye - the position of the object.
-     * @param target - the position meant to be aimed at.
-     * @param up - a vector pointing up.
-     * @returns - the view {@link Mat4} matrix.
+     * @param eye - The position of the object.
+     * @param target - The position meant to be aimed at.
+     * @param up - A vector pointing up.
+     * @returns - The view {@link Mat4} matrix.
      */
     makeView(eye = new Vec3(), target = new Vec3(), up = new Vec3(0, 1, 0)) {
       const te = this.elements;
@@ -1288,7 +1370,7 @@
      *  * and 0 to +1 in z.
      *
      * @param parameters - {@link OrthographicCameraBaseOptions | parameters} used to create the camera orthographic matrix.
-     * @returns - the camera orthographic {@link Mat4} matrix.
+     * @returns - The camera orthographic {@link Mat4} matrix.
      */
     makeOrthographic({
       left = -1,
@@ -1325,7 +1407,7 @@
      * from -1 to 1 in the z dimension, as three.js and more generally WebGL handles it.
      *
      * @param parameters - {@link PerspectiveProjectionParams | parameters} used to create the camera perspective matrix.
-     * @returns - the camera perspective {@link Mat4} matrix.
+     * @returns - The camera perspective {@link Mat4} matrix.
      */
     makePerspective({ fov = 90, aspect = 1, near = 0.1, far = 150 }) {
       const top = near * Math.tan(Math.PI / 180 * 0.5 * fov);
@@ -1362,6 +1444,14 @@
     }
   }
 
+  var __typeError$x = (msg) => {
+    throw TypeError(msg);
+  };
+  var __accessCheck$x = (obj, member, msg) => member.has(obj) || __typeError$x("Cannot " + msg);
+  var __privateGet$v = (obj, member, getter) => (__accessCheck$x(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateAdd$x = (obj, member, value) => member.has(obj) ? __typeError$x("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateSet$u = (obj, member, value, setter) => (__accessCheck$x(obj, member, "write to private field"), member.set(obj, value), value);
+  var _parent$1, _visible, _parentVisibility;
   let objectIndex = 0;
   const tempMatrix = new Mat4();
   class Object3D {
@@ -1369,7 +1459,13 @@
      * Object3D constructor
      */
     constructor() {
-      this._parent = null;
+      /** Parent {@link Object3D} in the scene graph, used to compute the {@link worldMatrix}. */
+      __privateAdd$x(this, _parent$1);
+      /** Whether this {@link Object3D} and all its {@link children} should be considered as visible. Default to `true`. */
+      __privateAdd$x(this, _visible);
+      /** Set to `false` if at least one of the {@link Object3D} parent is not visible. */
+      __privateAdd$x(this, _parentVisibility);
+      __privateSet$u(this, _parent$1, null);
       this.children = [];
       this.matricesNeedUpdate = false;
       this.up = new Vec3(0, 1, 0);
@@ -1377,30 +1473,61 @@
       Object.defineProperty(this, "object3DIndex", { value: objectIndex++ });
       this.setMatrices();
       this.setTransforms();
+      __privateSet$u(this, _visible, true);
+      __privateSet$u(this, _parentVisibility, true);
+    }
+    /**
+     * Get whether this {@link Object3D} is visible (if it is itself visible, and all its parents are visible as well).
+     */
+    get visible() {
+      return __privateGet$v(this, _visible) && __privateGet$v(this, _parentVisibility);
+    }
+    /**
+     * Set this {@link Object3D} visible property, and its children `parentVisibility` property.
+     * @param value - New visibility value.
+     */
+    set visible(value) {
+      __privateSet$u(this, _visible, value);
+      this.children.forEach((c) => c.parentVisibility = this.parentVisibility && value);
     }
     /* PARENT */
+    /**
+     * Get whether all this {@link Object3D} parents are visible or not. Should not be used directly.
+     */
+    get parentVisibility() {
+      return __privateGet$v(this, _parentVisibility);
+    }
+    /**
+     * Set to `false` if at least one of this {@link Object3D} parent is not visible, `true` otherwise. Should not be used directly.
+     * @param value - New parent visibility value.
+     */
+    set parentVisibility(value) {
+      __privateSet$u(this, _parentVisibility, value);
+      this.children.forEach((child) => child.parentVisibility = this.visible && value);
+    }
     /**
      * Get the parent of this {@link Object3D} if any
      */
     get parent() {
-      return this._parent;
+      return __privateGet$v(this, _parent$1);
     }
     /**
      * Set the parent of this {@link Object3D}
      * @param value - new parent to set, could be an {@link Object3D} or null
      */
     set parent(value) {
-      if (this._parent && value && this._parent.object3DIndex === value.object3DIndex) {
+      if (__privateGet$v(this, _parent$1) && value && __privateGet$v(this, _parent$1).object3DIndex === value.object3DIndex) {
         return;
       }
-      if (this._parent) {
-        this._parent.children = this._parent.children.filter((child) => child.object3DIndex !== this.object3DIndex);
+      if (__privateGet$v(this, _parent$1)) {
+        __privateGet$v(this, _parent$1).children = __privateGet$v(this, _parent$1).children.filter((child) => child.object3DIndex !== this.object3DIndex);
       }
       if (value) {
         this.shouldUpdateWorldMatrix();
       }
-      this._parent = value;
-      this._parent?.children.push(this);
+      __privateSet$u(this, _parent$1, value);
+      __privateGet$v(this, _parent$1)?.children.push(this);
+      this.parentVisibility = __privateGet$v(this, _parent$1) ? __privateGet$v(this, _parent$1).visible : true;
     }
     /* TRANSFORMS */
     /**
@@ -1664,6 +1791,9 @@
       this.parent = null;
     }
   }
+  _parent$1 = new WeakMap();
+  _visible = new WeakMap();
+  _parentVisibility = new WeakMap();
 
   const formatRendererError = (renderer, rendererType = "GPURenderer", type) => {
     const error = type ? `Unable to create ${type} because the ${rendererType} is not defined: ${renderer}` : `The ${rendererType} is not defined: ${renderer}`;
@@ -1773,15 +1903,13 @@
     return bufferLayouts[bufferType];
   };
   const getBindingWGSLVarType = (binding) => {
-    return (() => {
-      switch (binding.bindingType) {
-        case "storage":
-          return `var<${binding.bindingType}, ${binding.options.access}>`;
-        case "uniform":
-        default:
-          return "var<uniform>";
-      }
-    })();
+    switch (binding.bindingType) {
+      case "storage":
+        return `var<${binding.bindingType}, ${binding.options.access}>`;
+      case "uniform":
+      default:
+        return "var<uniform>";
+    }
   };
   const getTextureBindingWGSLVarType = (binding) => {
     if (binding.bindingType === "externalTexture") {
@@ -1799,53 +1927,49 @@
     }
   };
   const getBindGroupLayoutTextureBindingType = (binding) => {
-    return (() => {
-      switch (binding.bindingType) {
-        case "externalTexture":
-          return { externalTexture: {} };
-        case "storage":
-          return {
-            storageTexture: {
-              format: binding.options.format,
-              viewDimension: binding.options.viewDimension
-            }
-          };
-        case "texture":
-          return {
-            texture: {
-              multisampled: binding.options.multisampled,
-              viewDimension: binding.options.viewDimension,
-              sampleType: binding.options.multisampled ? "unfilterable-float" : "float"
-            }
-          };
-        case "depth":
-          return {
-            texture: {
-              multisampled: binding.options.multisampled,
-              viewDimension: binding.options.viewDimension,
-              sampleType: "depth"
-            }
-          };
-        default:
-          return null;
-      }
-    })();
+    switch (binding.bindingType) {
+      case "externalTexture":
+        return { externalTexture: {} };
+      case "storage":
+        return {
+          storageTexture: {
+            format: binding.options.format,
+            viewDimension: binding.options.viewDimension
+          }
+        };
+      case "texture":
+        return {
+          texture: {
+            multisampled: binding.options.multisampled,
+            viewDimension: binding.options.viewDimension,
+            sampleType: binding.options.multisampled ? "unfilterable-float" : "float"
+          }
+        };
+      case "depth":
+        return {
+          texture: {
+            multisampled: binding.options.multisampled,
+            viewDimension: binding.options.viewDimension,
+            sampleType: "depth"
+          }
+        };
+      default:
+        return null;
+    }
   };
   const getBindGroupLayoutTextureBindingCacheKey = (binding) => {
-    return (() => {
-      switch (binding.bindingType) {
-        case "externalTexture":
-          return `externalTexture,${binding.visibility},`;
-        case "storage":
-          return `storageTexture,${binding.options.format},${binding.options.viewDimension},${binding.visibility},`;
-        case "texture":
-          return `texture,${binding.options.multisampled},${binding.options.viewDimension},${binding.options.multisampled ? "unfilterable-float" : "float"},${binding.visibility},`;
-        case "depth":
-          return `depthTexture,${binding.options.format},${binding.options.viewDimension},${binding.visibility},`;
-        default:
-          return `${binding.visibility},`;
-      }
-    })();
+    switch (binding.bindingType) {
+      case "externalTexture":
+        return `externalTexture,${binding.visibility},`;
+      case "storage":
+        return `storageTexture,${binding.options.format},${binding.options.viewDimension},${binding.visibility},`;
+      case "texture":
+        return `texture,${binding.options.multisampled},${binding.options.viewDimension},${binding.options.multisampled ? "unfilterable-float" : "float"},${binding.visibility},`;
+      case "depth":
+        return `depthTexture,${binding.options.format},${binding.options.viewDimension},${binding.visibility},`;
+      default:
+        return `${binding.visibility},`;
+    }
   };
 
   class Binding {
@@ -5622,6 +5746,7 @@
      * @param parameters - {@link CameraParams} used to create our {@link Camera}.
      */
     constructor({
+      label = "Camera",
       near = 0.1,
       far = 150,
       pixelRatio = 1,
@@ -5635,6 +5760,7 @@
       __privateAdd$r(this, _far);
       /** @ignore */
       __privateAdd$r(this, _pixelRatio);
+      this.label = label;
       this.uuid = generateUUID();
       this.onMatricesChanged = onMatricesChanged;
     }
@@ -5838,6 +5964,7 @@
      * @param parameters - {@link OrthographicCameraParams} used to create our {@link OrthographicCamera}.
      */
     constructor({
+      label = "Orthographic camera",
       near = 0.1,
       far = 150,
       left = -1,
@@ -5848,7 +5975,7 @@
       onMatricesChanged = () => {
       }
     } = {}) {
-      super({ near, far, pixelRatio, onMatricesChanged });
+      super({ label, near, far, pixelRatio, onMatricesChanged });
       /** @ignore */
       __privateAdd$q(this, _left);
       /** @ignore */
@@ -6016,6 +6143,7 @@
      * @param parameters - {@link PerspectiveCameraParams} used to create our {@link PerspectiveCamera}.
      */
     constructor({
+      label = "Perspective camera",
       fov = 50,
       near = 0.1,
       far = 150,
@@ -6026,7 +6154,7 @@
       onMatricesChanged = () => {
       }
     } = {}) {
-      super({ near, far, pixelRatio, onMatricesChanged });
+      super({ label, near, far, pixelRatio, onMatricesChanged });
       /** @ignore */
       __privateAdd$p(this, _fov);
       this.forceAspect = forceAspect;
@@ -7617,10 +7745,77 @@
     }
   }
 
+  const vertexBufferAttributeLayouts = [
+    { size: 2, typedArrayConstructor: Uint8Array, normalized: false, format: "uint8x2", type: "vec2u" },
+    { size: 4, typedArrayConstructor: Uint8Array, normalized: false, format: "uint8x4", type: "vec4u" },
+    { size: 2, typedArrayConstructor: Int8Array, normalized: false, format: "sint8x2", type: "vec2i" },
+    { size: 4, typedArrayConstructor: Int8Array, normalized: false, format: "sint8x4", type: "vec4i" },
+    { size: 2, typedArrayConstructor: Uint8Array, normalized: true, format: "unorm8x2", type: "vec2f" },
+    { size: 4, typedArrayConstructor: Uint8Array, normalized: true, format: "unorm8x4", type: "vec4f" },
+    { size: 2, typedArrayConstructor: Int8Array, normalized: true, format: "snorm8x2", type: "vec2f" },
+    { size: 4, typedArrayConstructor: Int8Array, normalized: true, format: "snorm8x4", type: "vec4f" },
+    { size: 2, typedArrayConstructor: Uint16Array, normalized: false, format: "uint16x2", type: "vec2u" },
+    { size: 4, typedArrayConstructor: Uint16Array, normalized: false, format: "uint16x4", type: "vec4u" },
+    { size: 2, typedArrayConstructor: Int16Array, normalized: false, format: "sint16x2", type: "vec2i" },
+    { size: 4, typedArrayConstructor: Int16Array, normalized: false, format: "sint16x4", type: "vec4i" },
+    { size: 2, typedArrayConstructor: Uint16Array, normalized: true, format: "unorm16x2", type: "vec2f" },
+    { size: 4, typedArrayConstructor: Uint16Array, normalized: true, format: "unorm16x4", type: "vec4f" },
+    { size: 2, typedArrayConstructor: Int16Array, normalized: true, format: "snorm16x2", type: "vec2f" },
+    { size: 4, typedArrayConstructor: Int16Array, normalized: true, format: "snorm16x4", type: "vec4f" },
+    //   { size: 2, typedArrayConstructor: Float16Array, normalized: false, format: 'float16x2', type: 'vec2h' },
+    //   { size: 4, typedArrayConstructor: Float16Array, normalized: false, format: 'float16x4', type: 'vec4h' },
+    { size: 1, typedArrayConstructor: Float32Array, normalized: false, format: "float32", type: "f32" },
+    { size: 2, typedArrayConstructor: Float32Array, normalized: false, format: "float32x2", type: "vec2f" },
+    { size: 3, typedArrayConstructor: Float32Array, normalized: false, format: "float32x3", type: "vec3f" },
+    { size: 4, typedArrayConstructor: Float32Array, normalized: false, format: "float32x4", type: "vec4f" },
+    { size: 1, typedArrayConstructor: Uint32Array, normalized: false, format: "uint32", type: "u32" },
+    { size: 2, typedArrayConstructor: Uint32Array, normalized: false, format: "uint32x2", type: "vec2u" },
+    { size: 3, typedArrayConstructor: Uint32Array, normalized: false, format: "uint32x3", type: "vec3u" },
+    { size: 4, typedArrayConstructor: Uint32Array, normalized: false, format: "uint32x4", type: "vec4u" },
+    { size: 1, typedArrayConstructor: Int32Array, normalized: false, format: "sint32", type: "i32" },
+    { size: 2, typedArrayConstructor: Int32Array, normalized: false, format: "sint32x2", type: "vec2i" },
+    { size: 3, typedArrayConstructor: Int32Array, normalized: false, format: "sint32x3", type: "vec3i" },
+    { size: 4, typedArrayConstructor: Int32Array, normalized: false, format: "sint32x4", type: "vec4i" }
+  ];
+  const getVertexBufferAttributeLayout = ({
+    size = 4,
+    array = new Float32Array(),
+    normalized = false
+  }) => {
+    let layout = vertexBufferAttributeLayouts.find(
+      (l) => l.size === size && l.typedArrayConstructor === array.constructor && l.normalized === normalized
+    );
+    if (!layout) {
+      layout = vertexBufferAttributeLayouts.find(
+        (l) => l.size === 4 && l.typedArrayConstructor === Float32Array && l.normalized === false
+      );
+    }
+    return layout;
+  };
+  const vertexBufferViewSetFunction = (arrayView, typedArray) => {
+    switch (typedArray.constructor) {
+      case Uint8Array:
+        return arrayView.setUint8.bind(arrayView);
+      case Int8Array:
+        return arrayView.setInt8.bind(arrayView);
+      case Uint16Array:
+        return arrayView.setUint16.bind(arrayView);
+      case Int16Array:
+        return arrayView.setInt16.bind(arrayView);
+      case Uint32Array:
+        return arrayView.setUint32.bind(arrayView);
+      case Int32Array:
+        return arrayView.setInt32.bind(arrayView);
+      case Float32Array:
+      default:
+        return arrayView.setFloat32.bind(arrayView);
+    }
+  };
+
   class Geometry {
     /**
      * Geometry constructor
-     * @param parameters - {@link GeometryParams | parameters} used to create our Geometry
+     * @param parameters - {@link GeometryParams | parameters} used to create our Geometry.
      */
     constructor({
       verticesOrder = "ccw",
@@ -7665,6 +7860,7 @@
           name: vertexBuffer.name,
           attributes: vertexBuffer.attributes,
           ...vertexBuffer.array && { array: vertexBuffer.array },
+          ...vertexBuffer.arrayBuffer && { arrayBuffer: vertexBuffer.arrayBuffer },
           ...vertexBuffer.buffer && { buffer: vertexBuffer.buffer },
           ...vertexBuffer.bufferOffset && { bufferOffset: vertexBuffer.bufferOffset },
           ...vertexBuffer.bufferSize && { bufferSize: vertexBuffer.bufferSize }
@@ -7675,7 +7871,26 @@
       }
     }
     /**
-     * Reset all the {@link vertexBuffers | vertex buffers} when the device is lost
+     * Helper to decode and normalize integer values to float values based on the data type.
+     * @param typedArrayConstructor - {@link TypedArrayConstructor} used to know the data type.
+     * @returns - Decoded and normalized value.
+     */
+    static dequantize(typedArrayConstructor) {
+      switch (typedArrayConstructor) {
+        case Int8Array:
+          return (v) => Math.max(v / 127, -1);
+        case Uint8Array:
+          return (v) => v / 255;
+        case Int16Array:
+          return (v) => Math.max(v / 32767, -1);
+        case Uint16Array:
+          return (v) => v / 65535;
+        default:
+          return (v) => v;
+      }
+    }
+    /**
+     * Reset all the {@link vertexBuffers | vertex buffers} when the device is lost.
      */
     loseContext() {
       this.ready = false;
@@ -7684,8 +7899,8 @@
       }
     }
     /**
-     * Restore the {@link Geometry} buffers on context restoration
-     * @param renderer - The {@link Renderer} used to recreate the buffers
+     * Restore the {@link Geometry} buffers on context restoration.
+     * @param renderer - The {@link Renderer} used to recreate the buffers.
      */
     restoreContext(renderer) {
       if (this.ready) return;
@@ -7699,9 +7914,9 @@
       this.ready = true;
     }
     /**
-     * Add a vertex buffer to our Geometry, set its attributes and return it
-     * @param parameters - vertex buffer {@link VertexBufferParams | parameters}
-     * @returns - newly created {@link VertexBuffer | vertex buffer}
+     * Add a vertex buffer to our Geometry, set its attributes and return it.
+     * @param parameters - Vertex buffer {@link VertexBufferParams | parameters}.
+     * @returns - Newly created {@link VertexBuffer | vertex buffer}.
      */
     addVertexBuffer({
       stepMode = "vertex",
@@ -7709,6 +7924,7 @@
       attributes = [],
       buffer = null,
       array = null,
+      arrayBuffer = null,
       bufferOffset = 0,
       bufferSize = null
     } = {}) {
@@ -7719,8 +7935,9 @@
         arrayStride: 0,
         bufferLength: 0,
         attributes: [],
-        buffer,
         array,
+        arrayBuffer,
+        buffer,
         bufferOffset,
         bufferSize
       };
@@ -7734,40 +7951,37 @@
       return vertexBuffer;
     }
     /**
-     * Get a vertex buffer by name
-     * @param name - our vertex buffer name
-     * @returns - found {@link VertexBuffer | vertex buffer} or null if not found
+     * Get a vertex buffer by name.
+     * @param name - Our vertex buffer name.
+     * @returns - Found {@link VertexBuffer | vertex buffer} or null if not found.
      */
     getVertexBufferByName(name = "") {
       return this.vertexBuffers.find((vertexBuffer) => vertexBuffer.name === name);
     }
     /**
-     * Set a vertex buffer attribute
-     * @param parameters - attributes {@link VertexBufferAttributeParams | parameters}
+     * Set a vertex buffer attribute.
+     * @param parameters - Attributes {@link VertexBufferAttributeParams | parameters}.
      */
     setAttribute({
       vertexBuffer = this.vertexBuffers[0],
       name,
-      type = "vec3f",
-      bufferFormat = "float32x3",
+      type,
+      bufferFormat,
       size = 3,
       array = new Float32Array(this.verticesCount * size),
+      normalized = false,
       verticesStride = 1
     }) {
       const attributes = vertexBuffer.attributes;
       const attributesLength = attributes.length;
       if (!name) name = "geometryAttribute" + attributesLength;
-      if (name === "position" && (type !== "vec3f" || bufferFormat !== "float32x3" || size !== 3)) {
-        throwWarning(
-          `Geometry 'position' attribute must have this exact properties set:
-	type: 'vec3f',
-	bufferFormat: 'float32x3',
-	size: 3`
-        );
-        type = "vec3f";
-        bufferFormat = "float32x3";
-        size = 3;
-      }
+      const attributeLayout = getVertexBufferAttributeLayout({
+        size,
+        array,
+        normalized
+      });
+      bufferFormat = bufferFormat ?? attributeLayout.format;
+      type = type ?? attributeLayout.type;
       let arrayLength = array.length;
       const attributeCount = arrayLength / size;
       if (name === "position") {
@@ -7775,7 +7989,7 @@
       }
       if (vertexBuffer.stepMode === "vertex" && this.verticesCount && this.verticesCount !== attributeCount * verticesStride) {
         throwError(
-          `Geometry vertex attribute error. Attribute array of size ${size} must be of length: ${this.verticesCount * size}, current given: ${array.length}. (${this.verticesCount} vertices).`
+          `Geometry vertex attribute error. Attribute ${name} array of size ${size} must be of length: ${this.verticesCount * size}, current given: ${array.length}. (${this.verticesCount} vertices).`
         );
       } else if (vertexBuffer.stepMode === "instance" && attributeCount !== this.instancesCount) {
         if (vertexBuffer.buffer) {
@@ -7786,34 +8000,32 @@
           );
         }
       }
+      const bufferOffset = attributesLength ? attributes[attributesLength - 1].bufferOffset + attributes[attributesLength - 1].size * attributes[attributesLength - 1].array.BYTES_PER_ELEMENT : 0;
       const attribute = {
         name,
         type,
         bufferFormat,
         size,
-        bufferLength: arrayLength,
-        offset: attributesLength ? attributes.reduce((accumulator, currentValue) => {
-          return accumulator + currentValue.bufferLength;
-        }, 0) : 0,
-        bufferOffset: attributesLength ? attributes[attributesLength - 1].bufferOffset + attributes[attributesLength - 1].size * 4 : 0,
+        bufferOffset,
         array,
-        verticesStride
+        verticesStride,
+        normalized
       };
-      vertexBuffer.bufferLength += attribute.bufferLength * verticesStride;
-      vertexBuffer.arrayStride += attribute.size;
+      vertexBuffer.bufferLength += arrayLength * array.BYTES_PER_ELEMENT * verticesStride;
+      vertexBuffer.arrayStride += attribute.size * array.BYTES_PER_ELEMENT;
       vertexBuffer.attributes.push(attribute);
     }
     /**
-     * Get whether this Geometry is ready to compute, i.e. if its first vertex buffer array has not been created yet
+     * Get whether this Geometry is ready to compute, i.e. if its first vertex buffer array has not been created yet.
      * @readonly
      */
     get shouldCompute() {
-      return this.vertexBuffers.length && !this.vertexBuffers[0].array;
+      return this.vertexBuffers.length && !this.vertexBuffers[0].arrayBuffer;
     }
     /**
-     * Get an attribute by name
-     * @param name - name of the attribute to find
-     * @returns - found {@link VertexBufferAttribute | attribute} or null if not found
+     * Get an attribute by name.
+     * @param name - Name of the attribute to find.
+     * @returns - Found {@link VertexBufferAttribute | attribute} or null if not found.
      */
     getAttributeByName(name) {
       let attribute;
@@ -7825,12 +8037,12 @@
     }
     /**
      * Compute the normal {@link Vec3} from a triangle defined by three {@link Vec3} by computing edges {@link Vec3}.
-     * @param vertex1 - first triangle position
-     * @param vertex2 - second triangle position
-     * @param vertex3 - third triangle position
-     * @param edge1 - first edge
-     * @param edge2 - second edge
-     * @param normal - flat normal generated.
+     * @param vertex1 - First triangle position.
+     * @param vertex2 - Second triangle position.
+     * @param vertex3 - Third triangle position.
+     * @param edge1 - First edge.
+     * @param edge2 - Second edge.
+     * @param normal - Flat normal generated.
      */
     computeNormalFromTriangle(vertex1, vertex2, vertex3, edge1, edge2, normal) {
       edge1.copy(vertex2).sub(vertex1);
@@ -7876,23 +8088,12 @@
     computeGeometry() {
       if (this.ready) return;
       this.vertexBuffers.forEach((vertexBuffer, index) => {
+        const hasPositionAttribute = vertexBuffer.attributes.find(
+          (attribute) => attribute.name === "position"
+        );
         if (index === 0) {
-          const hasPositionAttribute = vertexBuffer.attributes.find(
-            (attribute) => attribute.name === "position"
-          );
           if (!hasPositionAttribute) {
             throwError(`Geometry must have a 'position' attribute`);
-          }
-          if (hasPositionAttribute.type !== "vec3f" || hasPositionAttribute.bufferFormat !== "float32x3" || hasPositionAttribute.size !== 3) {
-            throwWarning(
-              `Geometry 'position' attribute must have this exact properties set:
-	type: 'vec3f',
-	bufferFormat: 'float32x3',
-	size: 3`
-            );
-            hasPositionAttribute.type = "vec3f";
-            hasPositionAttribute.bufferFormat = "float32x3";
-            hasPositionAttribute.size = 3;
           }
           const hasNormalAttribute = vertexBuffer.attributes.find(
             (attribute) => attribute.name === "normal"
@@ -7902,31 +8103,56 @@
             this.setWGSLFragment();
           }
         }
-        vertexBuffer.array = new Float32Array(vertexBuffer.bufferLength);
-        let currentIndex = 0;
-        let attributeIndex = 0;
-        for (let i = 0; i < vertexBuffer.bufferLength; i += vertexBuffer.arrayStride) {
-          for (let j = 0; j < vertexBuffer.attributes.length; j++) {
-            const { name, size, array, verticesStride } = vertexBuffer.attributes[j];
-            for (let s = 0; s < size; s++) {
-              const attributeValue = array[Math.floor(attributeIndex / verticesStride) * size + s];
-              vertexBuffer.array[currentIndex] = attributeValue ?? 0;
-              if (name === "position") {
-                if (s % 3 === 0) {
-                  if (this.boundingBox.min.x > attributeValue) this.boundingBox.min.x = attributeValue;
-                  if (this.boundingBox.max.x < attributeValue) this.boundingBox.max.x = attributeValue;
-                } else if (s % 3 === 1) {
-                  if (this.boundingBox.min.y > attributeValue) this.boundingBox.min.y = attributeValue;
-                  if (this.boundingBox.max.y < attributeValue) this.boundingBox.max.y = attributeValue;
-                } else if (s % 3 === 2) {
-                  if (this.boundingBox.min.z > attributeValue) this.boundingBox.min.z = attributeValue;
-                  if (this.boundingBox.max.z < attributeValue) this.boundingBox.max.z = attributeValue;
+        if (vertexBuffer.array && vertexBuffer.array.byteLength === vertexBuffer.bufferLength) {
+          vertexBuffer.arrayBuffer = new ArrayBuffer(vertexBuffer.bufferLength);
+          new Uint8Array(vertexBuffer.arrayBuffer).set(
+            new Uint8Array(vertexBuffer.array.buffer, vertexBuffer.array.byteOffset, vertexBuffer.array.byteLength)
+          );
+        } else if (!vertexBuffer.arrayBuffer || vertexBuffer.arrayBuffer.byteLength !== vertexBuffer.bufferLength) {
+          vertexBuffer.arrayBuffer = new ArrayBuffer(vertexBuffer.bufferLength);
+          const arrayView = new DataView(vertexBuffer.arrayBuffer);
+          for (let a = 0; a < vertexBuffer.attributes.length; a++) {
+            const attribute = vertexBuffer.attributes[a];
+            const { name, array, size, bufferOffset, verticesStride } = attribute;
+            const setFunction = vertexBufferViewSetFunction(arrayView, array);
+            const arrayLength = array.length;
+            for (let i = 0; i < arrayLength; i += size) {
+              for (let s = 0; s < size; s++) {
+                const attrValue = array[i + s];
+                if (name === "position") {
+                  if (s % 3 === 0) {
+                    this.boundingBox.min.x = Math.min(this.boundingBox.min.x, attrValue);
+                    this.boundingBox.max.x = Math.max(this.boundingBox.max.x, attrValue);
+                  } else if (s % 3 === 1) {
+                    this.boundingBox.min.y = Math.min(this.boundingBox.min.y, attrValue);
+                    this.boundingBox.max.y = Math.max(this.boundingBox.max.y, attrValue);
+                  } else if (s % 3 === 2) {
+                    this.boundingBox.min.z = Math.min(this.boundingBox.min.z, attrValue);
+                    this.boundingBox.max.z = Math.max(this.boundingBox.max.z, attrValue);
+                  }
+                }
+                const attrIndex = i / size;
+                for (let vs = 0; vs < verticesStride; vs++) {
+                  const attrOffset = s * array.BYTES_PER_ELEMENT;
+                  const attrStrideOffset = attrIndex * vertexBuffer.arrayStride;
+                  const verticesStrideOffset = (vs + (verticesStride - 1) * attrIndex) * vertexBuffer.arrayStride;
+                  const startOffset = verticesStrideOffset + attrStrideOffset + bufferOffset + attrOffset;
+                  setFunction(startOffset, attrValue, true);
                 }
               }
-              currentIndex++;
             }
           }
-          attributeIndex++;
+          if (hasPositionAttribute && hasPositionAttribute.array && hasPositionAttribute.normalized) {
+            const dequantizePositions = Geometry.dequantize(
+              hasPositionAttribute.array.constructor
+            );
+            this.boundingBox.min.x = dequantizePositions(this.boundingBox.min.x);
+            this.boundingBox.min.y = dequantizePositions(this.boundingBox.min.y);
+            this.boundingBox.min.z = dequantizePositions(this.boundingBox.min.z);
+            this.boundingBox.max.x = dequantizePositions(this.boundingBox.max.x);
+            this.boundingBox.max.y = dequantizePositions(this.boundingBox.max.y);
+            this.boundingBox.max.z = dequantizePositions(this.boundingBox.max.z);
+          }
         }
       });
       if (!this.wgslStructFragment) {
@@ -7956,15 +8182,15 @@
     }
     /**
      * Create the {@link Geometry} {@link vertexBuffers | vertex buffers}.
-     * @param parameters - parameters used to create the vertex buffers.
+     * @param parameters - Parameters used to create the vertex buffers.
      * @param parameters.renderer - {@link Renderer} used to create the vertex buffers.
-     * @param parameters.label - label to use for the vertex buffers.
+     * @param parameters.label - Label to use for the vertex buffers.
      */
     createBuffers({ renderer, label = this.type }) {
       if (this.ready) return;
       for (const vertexBuffer of this.vertexBuffers) {
         if (!vertexBuffer.bufferSize) {
-          vertexBuffer.bufferSize = vertexBuffer.array.length * vertexBuffer.array.constructor.BYTES_PER_ELEMENT;
+          vertexBuffer.bufferSize = vertexBuffer.arrayBuffer.byteLength;
         }
         if (!vertexBuffer.buffer.GPUBuffer && !vertexBuffer.buffer.consumers.size) {
           vertexBuffer.buffer.createBuffer(renderer, {
@@ -7986,12 +8212,18 @@
      */
     uploadBuffer(renderer, buffer) {
       if (this.options.mapBuffersAtCreation) {
-        new buffer.array.constructor(buffer.buffer.GPUBuffer.getMappedRange()).set(
-          buffer.array
-        );
+        if (buffer.arrayBuffer) {
+          const src = new Uint8Array(buffer.arrayBuffer);
+          const mappedRange = buffer.buffer.GPUBuffer.getMappedRange();
+          new Uint8Array(mappedRange).set(src);
+        } else if (buffer.array) {
+          new buffer.array.constructor(buffer.buffer.GPUBuffer.getMappedRange()).set(
+            buffer.array
+          );
+        }
         buffer.buffer.GPUBuffer.unmap();
       } else {
-        renderer.queueWriteBuffer(buffer.buffer.GPUBuffer, 0, buffer.array);
+        renderer.queueWriteBuffer(buffer.buffer.GPUBuffer, 0, buffer.arrayBuffer ?? buffer.array);
       }
     }
     /**
@@ -8006,8 +8238,8 @@
     }
     /** RENDER **/
     /**
-     * Set our render pass geometry vertex buffers
-     * @param pass - current render pass
+     * Set our render pass geometry vertex buffers.
+     * @param pass - Current render pass.
      */
     setGeometryBuffers(pass) {
       this.vertexBuffers.forEach((vertexBuffer, index) => {
@@ -8046,6 +8278,7 @@
           vertexBuffer.buffer.destroy();
         }
         vertexBuffer.array = null;
+        vertexBuffer.arrayBuffer = null;
         if (renderer) renderer.removeBuffer(vertexBuffer.buffer);
       }
     }
@@ -8128,7 +8361,7 @@
       });
     }
     /**
-     * If we have less than 65.536 vertices, we should use a Uin16Array to hold our index buffer values
+     * If we have less than 65.536 vertices, we should use a Uin16Array to hold our index buffer values.
      * @readonly
      */
     get useUint16IndexArray() {
@@ -8145,13 +8378,16 @@
       bufferOffset = 0,
       bufferSize = null
     }) {
+      const arrayBuffer = new ArrayBuffer(array.byteLength);
+      new Uint8Array(arrayBuffer).set(new Uint8Array(array.buffer, array.byteOffset, array.byteLength));
       this.indexBuffer = {
         array,
         bufferFormat,
         bufferLength: array.length,
         buffer,
+        arrayBuffer,
         bufferOffset,
-        bufferSize: bufferSize !== null ? bufferSize : array.length * array.constructor.BYTES_PER_ELEMENT
+        bufferSize: bufferSize !== null ? bufferSize : array.byteLength
       };
     }
     /**
@@ -8215,6 +8451,8 @@
     destroy(renderer = null) {
       super.destroy(renderer);
       if (this.indexBuffer) {
+        this.indexBuffer.array = null;
+        this.indexBuffer.arrayBuffer = null;
         this.indexBuffer.buffer.consumers.delete(this.uuid);
         this.indexBuffer.buffer.destroy();
         if (renderer) renderer.removeBuffer(this.indexBuffer.buffer);
@@ -8347,6 +8585,7 @@
   var __privateAdd$n = (obj, member, value) => member.has(obj) ? __typeError$n("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   var __privateSet$l = (obj, member, value, setter) => (__accessCheck$n(obj, member, "write to private field"), member.set(obj, value), value);
   var _intensity$1, _intensityColor;
+  const nullVec3 = new Vec3();
   class Light extends Object3D {
     /**
      * Light constructor
@@ -8428,7 +8667,33 @@
      */
     set intensity(value) {
       __privateSet$l(this, _intensity$1, value);
-      this.onPropertyChanged("color", this.actualColor);
+      this.onPropertyChanged("color", this.visible ? this.actualColor : nullVec3);
+    }
+    /**
+     * Get whether this {@link Light} is visible or not.
+     */
+    get visible() {
+      return super.visible;
+    }
+    /**
+     * Set this {@link Light} visible value, and update its {@link actualColor} property accordingly.
+     */
+    set visible(value) {
+      super.visible = value;
+      this.onPropertyChanged("color", value ? this.actualColor : nullVec3);
+    }
+    /**
+     * Get whether all this {@link Light} parents are visible or not. Should not be used directly.
+     */
+    get parentVisibility() {
+      return super.parentVisibility;
+    }
+    /**
+     * Set this {@link Light} parent visiblity, and update its {@link actualColor} property accordingly. Should not be used directly.
+     */
+    set parentVisibility(value) {
+      super.parentVisibility = value;
+      this.onPropertyChanged("color", this.visible ? this.actualColor : nullVec3);
     }
     /**
      * Get the actual {@link Vec3} color used in the shader: convert {@link color} to linear space, then multiply by {@link intensity}.
@@ -9781,16 +10046,15 @@ ${this.shaders.full.head}`;
           module: this.shaders.vertex.module,
           entryPoint: this.options.shaders.vertex.entryPoint,
           buffers: this.attributes.vertexBuffers.map((vertexBuffer) => {
+            const { arrayStride, stepMode, attributes } = vertexBuffer;
             return {
-              stepMode: vertexBuffer.stepMode,
-              arrayStride: vertexBuffer.arrayStride * 4,
-              // 4 bytes each
-              attributes: vertexBuffer.attributes.map((attribute) => {
+              stepMode,
+              arrayStride,
+              attributes: attributes.map((attribute) => {
                 vertexLocationIndex++;
                 return {
                   shaderLocation: vertexLocationIndex,
                   offset: attribute.bufferOffset,
-                  // previous attribute size * 4
                   format: attribute.bufferFormat
                 };
               })
@@ -9820,7 +10084,7 @@ ${this.shaders.full.head}`;
             depthBias: this.options.rendering.depthBias,
             depthBiasClamp: this.options.rendering.depthBiasClamp,
             depthBiasSlopeScale: this.options.rendering.depthBiasSlopeScale,
-            depthWriteEnabled: this.options.rendering.depthWriteEnabled,
+            depthWriteEnabled: this.options.rendering.transparent ? false : this.options.rendering.depthWriteEnabled,
             depthCompare: this.options.rendering.depthCompare,
             format: this.options.rendering.depthFormat,
             ...this.options.rendering.stencil && {
@@ -10265,7 +10529,7 @@ New rendering options: ${JSON.stringify(
     renderBundle: null
   };
   function MeshBaseMixin(Base) {
-    var _autoRender, _a;
+    var _visible, _autoRender, _a;
     return _a = class extends Base {
       /**
        * MeshBase constructor
@@ -10284,6 +10548,8 @@ New rendering options: ${JSON.stringify(
           params[1],
           { ...defaultMeshBaseParams, ...params[2] }
         );
+        /** Flag indicating whether to draw this {@link MeshBase} or not */
+        __privateAdd$k(this, _visible);
         /** Whether we should add this {@link MeshBase} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
         __privateAdd$k(this, _autoRender, true);
         // callbacks / events
@@ -10665,7 +10931,7 @@ ${geometry.wgslStructFragment}`
         }
       }
       /**
-       * Get the transparent property value
+       * Get the transparent property value.
        */
       get transparent() {
         return this._transparent;
@@ -10685,17 +10951,28 @@ ${geometry.wgslStructFragment}`
         }
       }
       /**
-       * Get the visible property value
+       * Get the visible property value.
        */
       get visible() {
-        return this._visible;
+        if (super.visible !== void 0) {
+          return super.visible;
+        } else {
+          return __privateGet$i(this, _visible);
+        }
       }
       /**
-       * Set the visible property value
-       * @param value - new visibility value
+       * Set the visible property value.
+       * @param value - New visibility value.
        */
       set visible(value) {
-        this._visible = value;
+        if (super.visible !== void 0) {
+          super.visible = value;
+        } else {
+          __privateSet$i(this, _visible, value);
+        }
+        if (this.renderBundle) {
+          this.renderBundle.ready = false;
+        }
       }
       /* TEXTURES */
       /**
@@ -10708,7 +10985,7 @@ ${geometry.wgslStructFragment}`
       /**
        * Create a new {@link MediaTexture}.
        * @param options - {@link MediaTextureParams | MediaTexture parameters}.
-       * @returns - newly created {@link MediaTexture}.
+       * @returns - Newly created {@link MediaTexture}.
        */
       createMediaTexture(options) {
         if (!options.name) {
@@ -10931,7 +11208,7 @@ ${geometry.wgslStructFragment}`
           this.geometry?.destroy(this.renderer);
         }
       }
-    }, _autoRender = new WeakMap(), _a;
+    }, _visible = new WeakMap(), _autoRender = new WeakMap(), _a;
   }
 
   const getDefaultNormalFragmentCode = (
@@ -11538,18 +11815,34 @@ fn getPCFBaseShadowContribution(
         }
       }
       /**
-       * Get the visible property value
+       * Get the visible property value.
        */
       get visible() {
-        return this._visible;
+        return super.visible;
       }
       /**
-       * Set the visible property value
-       * @param value - new visibility value
+       * Set the visible property value.
+       * @param value - New visibility value.
        */
       set visible(value) {
         this.shouldUpdateMatrixStack();
-        this._visible = value;
+        super.visible = value;
+      }
+      /**
+       * Get the parent visibilty property value.
+       */
+      get parentVisibility() {
+        return super.parentVisibility;
+      }
+      /**
+       * Set the parent visibilty property value. Should not be used directly.
+       * @param value - New parent visibility value.
+       */
+      set parentVisibility(value) {
+        super.parentVisibility = value;
+        if (this.renderBundle) {
+          this.renderBundle.ready = false;
+        }
       }
       /* SIZE & TRANSFORMS */
       /**
@@ -12247,7 +12540,14 @@ fn getPCFBaseShadowContribution(
      */
     render(pass) {
       if (!this.renderer.ready) return;
-      if (this.ready && this.bundle && this.visible) {
+      let shouldRender = false;
+      for (const [_uuid, mesh] of this.meshes) {
+        if (mesh.visible) {
+          shouldRender = true;
+          break;
+        }
+      }
+      if (this.ready && this.bundle && this.visible && shouldRender) {
         this.meshes.forEach((mesh) => {
           mesh.onBeforeRenderPass();
         });
@@ -12420,8 +12720,10 @@ fn getPCFBaseShadowContribution(
       this.encoder.pushDebugGroup(`${this.options.label}: create encoder`);
     }
     this.meshes.forEach((mesh) => {
-      mesh.material.render(this.encoder);
-      mesh.geometry.render(this.encoder);
+      if (mesh.visible) {
+        mesh.material.render(this.encoder);
+        mesh.geometry.render(this.encoder);
+      }
     });
     if (!this.renderer.production) {
       this.encoder.popDebugGroup();
@@ -13121,10 +13423,20 @@ fn getPCFBaseShadowContribution(
   const declareAttributesVars$1 = ({ geometry }) => {
     let attributeVars = geometry.vertexBuffers.map(
       (vertexBuffer) => vertexBuffer.attributes.map((attribute) => {
+        let { name, type } = attribute;
+        let swizzle = "";
+        if (name === "position" || name === "normal") {
+          type = "vec3f";
+          swizzle = ".xyz";
+        } else if (name === "tangent") {
+          type = "vec4f";
+        } else if (name.indexOf("uv") !== -1) {
+          type = "vec2f";
+        }
         return (
           /* wgsl */
           `
-  var ${attribute.name}: ${attribute.type} = attributes.${attribute.name};`
+  var ${name}: ${type} = ${type}(attributes.${name}${swizzle});`
         );
       }).join("")
     ).join("\n");
@@ -13181,14 +13493,19 @@ fn getPCFBaseShadowContribution(
     const skinBindings = bindings.filter((binding) => binding.name.includes("skin"));
     const hasSkin = skinJoints.length && skinWeights.length && skinBindings.length;
     if (hasSkin) {
-      output += hasInstances ? `
+      output += hasInstances ? (
+        /* wgsl */
+        `
   var instancesWorldPosition = array<vec4f, ${geometry.instancesCount}>();
   var instancesNormal = array<vec3f, ${geometry.instancesCount}>();
-      ` : "";
-      output += `
-  let skinJoints: vec4f = ${skinJoints.map((skinJoint) => skinJoint.name).join(" + ")};`;
-      output += `
-  var skinWeights: vec4f = ${skinWeights.map((skinWeight) => skinWeight.name).join(" + ")};
+      `
+      ) : "";
+      output += /* wgsl */
+      `
+  let skinJoints: vec4u = vec4u(${skinJoints.map((skinJoint) => skinJoint.name).join(" + ")});`;
+      output += /* wgsl */
+      `
+  var skinWeights: vec4f = vec4f(${skinWeights.map((skinWeight) => skinWeight.name).join(" + ")});
   
   let skinWeightsSum = dot(skinWeights, vec4(1.0));
   if(skinWeightsSum > 0.0) {
@@ -13201,19 +13518,19 @@ fn getPCFBaseShadowContribution(
   ${hasInstances ? "// instancing with different skins: joints calculations for skin " + bindingIndex + "\n" : ""}
   // position
   let skinMatrix_${bindingIndex}: mat4x4f = 
-    skinWeights.x * ${binding.name}.joints[u32(skinJoints.x)].jointMatrix +
-    skinWeights.y * ${binding.name}.joints[u32(skinJoints.y)].jointMatrix +
-    skinWeights.z * ${binding.name}.joints[u32(skinJoints.z)].jointMatrix +
-    skinWeights.w * ${binding.name}.joints[u32(skinJoints.w)].jointMatrix;
+    skinWeights.x * ${binding.name}.joints[skinJoints.x].jointMatrix +
+    skinWeights.y * ${binding.name}.joints[skinJoints.y].jointMatrix +
+    skinWeights.z * ${binding.name}.joints[skinJoints.z].jointMatrix +
+    skinWeights.w * ${binding.name}.joints[skinJoints.w].jointMatrix;
       
   ${hasInstances ? "instancesWorldPosition[" + bindingIndex + "] = skinMatrix_" + bindingIndex + " * worldPosition;" : "worldPosition = skinMatrix_" + bindingIndex + " * worldPosition;"}
       
   // normal
   let skinNormalMatrix_${bindingIndex}: mat4x4f = 
-    skinWeights.x * ${binding.name}.joints[u32(skinJoints.x)].normalMatrix +
-    skinWeights.y * ${binding.name}.joints[u32(skinJoints.y)].normalMatrix +
-    skinWeights.z * ${binding.name}.joints[u32(skinJoints.z)].normalMatrix +
-    skinWeights.w * ${binding.name}.joints[u32(skinJoints.w)].normalMatrix;
+    skinWeights.x * ${binding.name}.joints[skinJoints.x].normalMatrix +
+    skinWeights.y * ${binding.name}.joints[skinJoints.y].normalMatrix +
+    skinWeights.z * ${binding.name}.joints[skinJoints.z].normalMatrix +
+    skinWeights.w * ${binding.name}.joints[skinJoints.w].normalMatrix;
     
   let skinNormalMatrix_${bindingIndex}_3: mat3x3f = mat3x3f(
     vec3(skinNormalMatrix_${bindingIndex}[0].xyz),
@@ -13241,8 +13558,7 @@ fn getPCFBaseShadowContribution(
       `
   modelMatrix = instances.matrices[instanceIndex].model;
   worldPosition = modelMatrix * worldPosition;
-  
-  normal = normalize(instances.matrices[instanceIndex].normal * normal);
+  normal = normalize(instances.matrices[instanceIndex].normal * normal) * instances.matrices[instanceIndex].handedness;
     `;
     } else {
       output += /* wgsl */
@@ -13486,6 +13802,9 @@ fn getPCFBaseShadowContribution(
   var __privateAdd$f = (obj, member, value) => member.has(obj) ? __typeError$f("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   var __privateSet$e = (obj, member, value, setter) => (__accessCheck$f(obj, member, "write to private field"), member.set(obj, value), value);
   var _direction$1;
+  const tempVec3$3 = new Vec3();
+  const tempQuat$2 = new Quat();
+  const tempMat4$1 = new Mat4();
   class DirectionalLight extends Light {
     /**
      * DirectionalLight constructor
@@ -13597,6 +13916,28 @@ fn getPCFBaseShadowContribution(
         this.up.set(0, 1, 0);
       }
       this.applyLookAt(this.actualPosition, target);
+    }
+    /**
+     * Update the {@link target} and therefore direction directly from the {@link worldMatrix}, in case a transformation (especially rotation) has been applied to a parent of this {@link DirectionalLight} instead of updating the {@link target} directly.
+     */
+    updateTargetFromWorldMatrix() {
+      tempVec3$3.set(1);
+      this.worldMatrix.getScale(tempVec3$3);
+      tempMat4$1.identity();
+      for (const col of [0, 1, 2]) {
+        tempMat4$1.elements[col] = this.worldMatrix.elements[col] / tempVec3$3.x;
+        tempMat4$1.elements[col + 4] = this.worldMatrix.elements[col + 4] / tempVec3$3.y;
+        tempMat4$1.elements[col + 8] = this.worldMatrix.elements[col + 8] / tempVec3$3.z;
+      }
+      tempMat4$1.getRotation(tempQuat$2);
+      tempQuat$2.normalize();
+      tempVec3$3.set(0, 0, -1);
+      tempVec3$3.applyQuat(tempQuat$2);
+      tempVec3$3.add(this.actualPosition);
+      this.target._x = tempVec3$3.x;
+      this.target._y = tempVec3$3.y;
+      this.target._z = tempVec3$3.z;
+      this.setDirection();
     }
     /**
      * If the {@link modelMatrix | model matrix} has been updated, set the new direction from the {@link worldMatrix} translation.
@@ -14382,6 +14723,9 @@ struct SpotShadowVSOutput {
   var __privateAdd$c = (obj, member, value) => member.has(obj) ? __typeError$c("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   var __privateSet$b = (obj, member, value, setter) => (__accessCheck$c(obj, member, "write to private field"), member.set(obj, value), value);
   var _direction, _angle, _penumbra, _range;
+  const tempVec3$2 = new Vec3();
+  const tempQuat$1 = new Quat();
+  const tempMat4 = new Mat4();
   class SpotLight extends Light {
     /**
      * SpotLight constructor
@@ -14499,6 +14843,28 @@ struct SpotShadowVSOutput {
       if (this.shadow) {
         this.shadow.setPosition();
       }
+    }
+    /**
+     * Update the {@link target} and therefore direction directly from the {@link worldMatrix}, in case a transformation (especially rotation) has been applied to a parent of this {@link SpotLight} instead of updating the {@link target} directly.
+     */
+    updateTargetFromWorldMatrix() {
+      tempVec3$2.set(1);
+      this.worldMatrix.getScale(tempVec3$2);
+      tempMat4.identity();
+      for (const col of [0, 1, 2]) {
+        tempMat4.elements[col] = this.worldMatrix.elements[col] / tempVec3$2.x;
+        tempMat4.elements[col + 4] = this.worldMatrix.elements[col + 4] / tempVec3$2.y;
+        tempMat4.elements[col + 8] = this.worldMatrix.elements[col + 8] / tempVec3$2.z;
+      }
+      tempMat4.getRotation(tempQuat$1);
+      tempQuat$1.normalize();
+      tempVec3$2.set(0, 0, -1);
+      tempVec3$2.applyQuat(tempQuat$1);
+      tempVec3$2.add(this.actualPosition);
+      this.target._x = tempVec3$2.x;
+      this.target._y = tempVec3$2.y;
+      this.target._z = tempVec3$2.z;
+      this.setPositionDirection();
     }
     /**
      * Get this {@link SpotLight} angle.
@@ -15239,7 +15605,10 @@ ${this.shaders.compute.head}`;
      * @returns - The corresponding render pass entry {@link Stack}.
      */
     getMeshProjectionStack(mesh) {
-      const renderPassEntry = mesh.options.useCustomScenePassEntry ? mesh.options.useCustomScenePassEntry : "transmissive" in mesh.options && mesh.options.transmissive ? this.renderer.transmissionTarget.passEntry : this.getRenderTargetPassEntry(mesh.outputTarget);
+      const isTransparent = mesh.transparent;
+      const hasRendererTransmissionPassEntry = "transmissionTarget" in this.renderer && this.renderer.transmissionTarget && this.renderer.transmissionTarget.passEntry;
+      const isTransmissive = "transmissive" in mesh.options && mesh.options.transmissive;
+      const renderPassEntry = mesh.options.useCustomScenePassEntry ? mesh.options.useCustomScenePassEntry : isTransmissive || hasRendererTransmissionPassEntry && isTransparent ? this.renderer.transmissionTarget.passEntry : this.getRenderTargetPassEntry(mesh.outputTarget);
       const { stack } = renderPassEntry;
       return mesh.material.options.rendering.useProjection ? stack.projected : stack.unProjected;
     }
@@ -15268,8 +15637,8 @@ ${this.shaders.compute.head}`;
     addMeshToRenderTargetStack(mesh, renderTarget = null) {
       const renderPassEntry = this.getRenderTargetPassEntry(renderTarget);
       const { stack } = renderPassEntry;
-      const projectionStack = mesh.material.options.rendering.useProjection ? stack.projected : stack.unProjected;
       const isTransparent = !!mesh.transparent;
+      const projectionStack = mesh.material.options.rendering.useProjection ? stack.projected : stack.unProjected;
       const similarMeshes = isTransparent ? projectionStack.transparent : projectionStack.opaque;
       similarMeshes.push(mesh);
       this.orderStack(similarMeshes);
@@ -15556,6 +15925,54 @@ ${this.shaders.compute.head}`;
         return meshB.camera.worldMatrix.getTranslation(camPosB).distance(posB) - radiusB - (meshA.camera.worldMatrix.getTranslation(camPosA).distance(posA) - radiusA);
       });
     }
+    // TODO just an idea, but does not work very well for now.
+    // see https://github.com/KhronosGroup/glTF-Sample-Viewer/commit/f4cd6b11de9787db0cd35c06dfa46be7b5440aab
+    /**
+     * Sort transparent and transmissive meshes and eventually swap transparent meshes stack so they are drawn before or after transmissive meshes based on their distance to camera.
+     */
+    // sortTransparentTransmissiveMeshes() {
+    //   if (
+    //     'transmissionTarget' in this.renderer &&
+    //     this.renderer.transmissionTarget &&
+    //     this.renderer.transmissionTarget.passEntry
+    //   ) {
+    //     const mainPassEntry = this.getRenderTargetPassEntry()
+    //     const transmissiveEntry = this.renderer.transmissionTarget.passEntry
+    //     if (!transmissiveEntry.stack.projected.opaque.length) return
+    //     // get all transparent meshes, only if they're not in a render bundle
+    //     const transparentMeshes = [
+    //       ...mainPassEntry.stack.projected.transparent,
+    //       ...transmissiveEntry.stack.projected.transparent,
+    //     ]
+    //       .map((obj) => (obj instanceof Mesh ? obj : null))
+    //       .filter(Boolean)
+    //     // get all transmissive meshes, render bundle or not
+    //     const transmissiveMeshes = transmissiveEntry.stack.projected.opaque
+    //       .map((obj) => {
+    //         return obj instanceof RenderBundle ? Array.from(obj.meshes).map(([k, m]) => m) : obj
+    //       })
+    //       .flat()
+    //     // bail if no transparent or transmissive meshes
+    //     if (!transparentMeshes.length || !transmissiveMeshes.length) return
+    //     const meshesToSort = [...transparentMeshes, ...transmissiveMeshes] as ProjectedMesh[]
+    //     // if only one mesh, no need to sort
+    //     if (meshesToSort.length <= 1) return
+    //     // sort
+    //     this.sortTransparentMeshes(meshesToSort)
+    //     // find first transmissive index mesh
+    //     const firstTransmissiveIndex = meshesToSort.findIndex(
+    //       (m) => 'transmissive' in m.options && m.options.transmissive
+    //     )
+    //     mainPassEntry.stack.projected.transparent = []
+    //     transmissiveEntry.stack.projected.transparent = []
+    //     for (let i = 0; i < firstTransmissiveIndex; i++) {
+    //       mainPassEntry.stack.projected.transparent.push(meshesToSort[i])
+    //     }
+    //     for (let i = firstTransmissiveIndex + 1; i < meshesToSort.length; i++) {
+    //       if (meshesToSort[i].transparent) transmissiveEntry.stack.projected.transparent.push(meshesToSort[i])
+    //     }
+    //   }
+    // }
     /**
      * Here we render a {@link RenderPassEntry}:
      * - Set its {@link RenderPass#descriptor | renderPass descriptor} view or resolveTarget and get it at as swap chain texture.
@@ -15597,7 +16014,9 @@ ${this.shaders.compute.head}`;
             for (const mesh of renderPassEntry.stack.projected.opaque) {
               mesh.render(pass);
             }
-            this.sortTransparentMeshes(renderPassEntry.stack.projected.transparent);
+            this.sortTransparentMeshes(
+              renderPassEntry.stack.projected.transparent.filter((o) => o instanceof Mesh)
+            );
             for (const mesh of renderPassEntry.stack.projected.transparent) {
               mesh.render(pass);
             }
@@ -17260,7 +17679,7 @@ ${this.shaders.compute.head}`;
     throw TypeError(msg);
   };
   var __accessCheck$8 = (obj, member, msg) => member.has(obj) || __typeError$8("Cannot " + msg);
-  var __privateGet$7 = (obj, member, getter) => (__accessCheck$8(obj, member, "read from private field"), member.get(obj));
+  var __privateGet$7 = (obj, member, getter) => (__accessCheck$8(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
   var __privateAdd$8 = (obj, member, value) => member.has(obj) ? __typeError$8("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   var __privateSet$7 = (obj, member, value, setter) => (__accessCheck$8(obj, member, "write to private field"), member.set(obj, value), value);
   var __privateMethod$6 = (obj, member, method) => (__accessCheck$8(obj, member, "access private method"), method);
@@ -17368,6 +17787,7 @@ ${this.shaders.compute.head}`;
       const { width, height } = this.rectBBox;
       this.useCamera(
         new PerspectiveCamera({
+          label: `${this.options.label} default perspective camera`,
           fov: cameraParameters.fov,
           near: cameraParameters.near,
           far: cameraParameters.far,
@@ -17388,18 +17808,26 @@ ${this.shaders.compute.head}`;
     useCamera(camera) {
       if (this.camera && camera && this.camera.uuid === camera.uuid) return;
       if (this.camera) {
-        this.camera.parent = null;
+        if (this.camera.parent && this.camera.parent.object3DIndex === this.scene.object3DIndex) {
+          this.camera.parent = null;
+        }
         this.camera.onMatricesChanged = () => {
         };
       }
       this.camera = camera;
-      this.camera.parent = this.scene;
+      if (!this.camera.parent) {
+        this.camera.parent = this.scene;
+      }
       this.resizeCamera();
+      this.camera.shouldUpdateProjectionMatrices();
       if (this.bindings.camera) {
         this.camera.onMatricesChanged = () => this.onCameraMatricesChanged();
         this.bindings.camera.inputs.view.value = this.camera.viewMatrix;
         this.bindings.camera.inputs.projection.value = this.camera.projectionMatrix;
         this.bindings.camera.inputs.position.value = this.camera.actualPosition;
+        this.bindings.camera.inputs.view.shouldUpdate = true;
+        this.bindings.camera.inputs.projection.shouldUpdate = true;
+        this.bindings.camera.inputs.position.shouldUpdate = true;
         for (const mesh of this.meshes) {
           if ("modelViewMatrix" in mesh) {
             mesh.camera = this.camera;
@@ -17420,6 +17848,18 @@ ${this.shaders.compute.head}`;
       if (this.camera instanceof PerspectiveCamera && this.camera.forceAspect) {
         width = Math.min(width, height * this.camera.forceAspect);
         height = Math.min(width / this.camera.forceAspect, height);
+        this.setCameraViewport({
+          width,
+          height,
+          top: (this.canvas.height - height) * 0.5,
+          left: (this.canvas.width - width) * 0.5,
+          minDepth: 0,
+          maxDepth: 1
+        });
+      } else if (this.camera instanceof OrthographicCamera) {
+        const aspectRatio = (this.camera.right - this.camera.left) / (this.camera.top - this.camera.bottom);
+        width = Math.min(width, height * aspectRatio);
+        height = Math.min(width / aspectRatio, height);
         this.setCameraViewport({
           width,
           height,
@@ -17888,6 +18328,9 @@ ${this.shaders.compute.head}`;
         this.transmissionTarget.passEntry.onBeforeRenderPass = (commandEncoder, swapChainTexture) => {
           this.copyGPUTextureToTexture(swapChainTexture, this.transmissionTarget.texture, commandEncoder);
         };
+        const mainPassEntry = this.scene.getRenderTargetPassEntry();
+        this.transmissionTarget.passEntry.stack.projected.transparent = mainPassEntry.stack.projected.transparent;
+        mainPassEntry.stack.projected.transparent = [];
       }
     }
     /**
@@ -18151,10 +18594,6 @@ fn max3( v: vec3f ) -> f32 {
   return max( max( v.x, v.y ), v.z );
 }
 
-fn inverseSqrt (x: f32) -> f32 {
-  return 1.0 / sqrt(x);
-}
-
 fn isinf(value: f32) -> bool {
   return value > 1.0e38 || value < -1.0e38;
 }
@@ -18198,9 +18637,45 @@ fn sRGBToLinear_4(srgb: vec4f) -> vec4f {
   return vec4( sRGBToLinear(srgb.rgb), srgb.a );
 }
 
+// forward: color / (1 + color)
+fn inverseReinhardToneMapping(color: vec3f) -> vec3f {
+    return color / max(vec3(1e-5), vec3(1.0) - color);
+}
+
 // source: https://www.cs.utah.edu/docs/techreports/2002/pdf/UUCS-02-001.pdf
 fn ReinhardToneMapping( color: vec3f ) -> vec3f {
 	return saturate( color / ( vec3( 1.0 ) + color ) );
+}
+
+fn inverseCineonToneMapping(color: vec3f) -> vec3f {
+  // Step 1: undo gamma
+  let T = pow(color, vec3f(1.0 / 2.2));
+
+  // Invert the rational polynomial per channel
+  var x = vec3f(0.0);
+  for (var i = 0; i < 3; i = i + 1) {
+    let t = T[i];
+
+    // If t >= 1 \u2192 clipped \u2192 cannot recover, return max guess
+    if (t >= 1.0) {
+        x[i] = 1e6; // just put a very large HDR value
+        continue;
+    }
+
+    let A = 6.2 * (t - 1.0);
+    let B = 1.7 * t - 0.5;
+    let C = 0.06 * t;
+
+    let disc = B * B - 4.0 * A * C;
+
+    // Solve quadratic (positive root)
+    let xval = (-B + sqrt(max(disc, 0.0))) / (2.0 * A);
+
+    x[i] = xval;
+  }
+
+  // Step 3: undo the initial offset clamp
+  return x + vec3f(0.004);
 }
 
 // source: http://filmicworlds.com/blog/filmic-tonemapping-operators/
@@ -18208,6 +18683,24 @@ fn CineonToneMapping( color: vec3f ) -> vec3f {
 	// filmic operator by Jim Hejl and Richard Burgess-Dawson
 	let maxColor = max( vec3( 0.0 ), color - 0.004 );
 	return pow( ( maxColor * ( 6.2 * maxColor + 0.5 ) ) / ( maxColor * ( 6.2 * maxColor + 1.7 ) + 0.06 ), vec3( 2.2 ) );
+}
+
+fn inverseKhronosToneMapping(color: vec3f) -> vec3f {
+  // iterative solve: approximate original HDR color
+  var c = color; // initial guess: LDR
+
+  // Do 4\u20136 iterations (cheap and stable)
+  for (var i = 0; i < 5; i = i + 1) {
+    let f = KhronosToneMapping(c);
+    let error = color - f;
+
+    // Step factor (empirically tuned)
+    let step = 0.75;
+
+    c = c + error * step;
+  }
+
+  return max(c, vec3f(0.0));
 }
 
 // https://modelviewer.dev/examples/tone-mapping
@@ -18234,6 +18727,11 @@ fn KhronosToneMapping( color: vec3f ) -> vec3f {
   const getLightsInfos = (
     /* wgsl */
     `
+struct LightContribution {
+  diffuse: vec3f,
+  specular: vec3f
+}
+
 struct ReflectedLight {
   directDiffuse: vec3f,
   directSpecular: vec3f,
@@ -18248,7 +18746,7 @@ struct DirectLight {
 }
 
 fn rangeAttenuation(range: f32, distance: f32, decay: f32) -> f32 {
-  var distanceFalloff: f32 = 1.0 / max( pow( distance, decay ), 0.01 );
+  var distanceFalloff: f32 = 1.0 / max( pow( distance, decay ), EPSILON );
   if ( range > 0.0 ) {
     distanceFalloff *= pow2( saturate( 1.0 - pow4( distance / range )) );
   }
@@ -18262,7 +18760,7 @@ fn spotAttenuation(coneCosine: f32, penumbraCosine: f32, angleCosine: f32) -> f3
 
 fn getDirectionalLightInfo(directionalLight: DirectionalLightsElement, ptr_light: ptr<function, DirectLight>) {
   (*ptr_light).color = directionalLight.color;
-  (*ptr_light).direction = -directionalLight.direction;
+  (*ptr_light).direction = -directionalLight.direction; // already normalized on the CPU
   (*ptr_light).visible = length((*ptr_light).color) > EPSILON;
 }
 
@@ -18302,19 +18800,19 @@ fn getSpotLightInfo(spotLight: SpotLightsElement, worldPosition: vec3f, ptr_ligh
   const REIndirectDiffuse = (
     /* wgsl */
     `
-fn getIndirectDiffuse(irradiance: vec3f, diffuseContribution: vec3f, ptr_reflectedLight: ptr<function, ReflectedLight>) {
-  (*ptr_reflectedLight).indirectDiffuse += irradiance * BRDF_Lambert( diffuseContribution );
-}
-
-// Indirect Diffuse RenderEquations
-fn RE_IndirectDiffuse(irradiance: vec3f, diffuseContribution: vec3f, ptr_reflectedLight: ptr<function, ReflectedLight>) {
-  var totalAmbientIrradiance: vec3f = irradiance;
+fn getAmbientLightIrradiance() -> vec3f {
+  var totalAmbientIrradiance: vec3f = vec3(0.0);
   
   for(var i: i32 = 0; i < ambientLights.count; i++) {
     totalAmbientIrradiance += ambientLights.color[i];
   }
-  
-  getIndirectDiffuse(totalAmbientIrradiance, diffuseContribution, ptr_reflectedLight);
+
+  return totalAmbientIrradiance;
+}
+
+// Indirect Diffuse RenderEquations
+fn RE_IndirectDiffuse(irradiance: vec3f, diffuseContribution: vec3f, ptr_reflectedLight: ptr<function, ReflectedLight>) {
+  (*ptr_reflectedLight).indirectDiffuse += irradiance * BRDF_Lambert( diffuseContribution );
 }
 `
   );
@@ -18412,7 +18910,7 @@ fn getLambertDirect(
   }
   
   // ambient lights
-  var irradiance: vec3f = vec3(0.0);
+  var irradiance: vec3f = getAmbientLightIrradiance();
   RE_IndirectDiffuse(irradiance, outputColor.rgb, &reflectedLight);
   
   let totalDirect: vec3f = reflectedLight.directDiffuse + reflectedLight.directSpecular;
@@ -18613,7 +19111,7 @@ fn getPhongDirect(
   }
   
   // ambient lights
-  var irradiance: vec3f = vec3(0.0);
+  var irradiance: vec3f = getAmbientLightIrradiance();
   RE_IndirectDiffuse(irradiance, outputColor.rgb, &reflectedLight);
   
   let totalDirect: vec3f = reflectedLight.directDiffuse + reflectedLight.directSpecular;
@@ -18671,7 +19169,7 @@ fn RE_IndirectSpecular(
   irradiance: vec3f,
   diffuseContribution: vec3f,
   metallic: f32,
-  //iBLGGXFresnel: IBLGGXFresnel,
+  sheenEnergyComp: f32,
   dielectricScattering: MultiScattering,
   metallicScattering: MultiScattering,
   ptr_reflectedLight: ptr<function, ReflectedLight>
@@ -18683,18 +19181,21 @@ fn RE_IndirectSpecular(
 	// Diffuse energy conservation uses dielectric path
 	let totalScatteringDielectric: vec3f = dielectricScattering.singleScattering + dielectricScattering.multiScattering;
 
-	let diffuse: vec3f = diffuseContribution * (1.0 - max3(totalScatteringDielectric));
-
-  // we just add radiance and irradiance to the indirect contributions using iBLGGXFresnel
+	let diffuse: vec3f = diffuseContribution * (1.0 - totalScatteringDielectric);
 
   // we remove RECIPROCAL_PI multiplication since the LUT already ensures energy conservation
   // let cosineWeightedIrradiance: vec3f = irradiance * RECIPROCAL_PI;
-  let cosineWeightedIrradiance: vec3f = irradiance;  
 
-  (*ptr_reflectedLight).indirectSpecular += singleScattering * radiance;
-  (*ptr_reflectedLight).indirectSpecular += multiScattering * cosineWeightedIrradiance;
-  
-  (*ptr_reflectedLight).indirectDiffuse += diffuse * cosineWeightedIrradiance;
+  var indirectSpecular: vec3f = radiance * singleScattering;
+	indirectSpecular += multiScattering * irradiance;
+
+	var indirectDiffuse: vec3f = diffuse * irradiance;
+
+  indirectSpecular *= sheenEnergyComp;
+  indirectDiffuse *= sheenEnergyComp;
+
+  (*ptr_reflectedLight).indirectSpecular += indirectSpecular;  
+  (*ptr_reflectedLight).indirectDiffuse += indirectDiffuse;
 }
 `
   );
@@ -18711,10 +19212,29 @@ fn applyIorToRoughness(roughness: f32, ior: f32) -> f32 {
   return roughness * saturate(ior * 2.0 - 2.0);
 }
 
+// since opaque objects are rendered only once before transmissive objects
+// the transmission sample might be tone mapped and in sRGB space
+// so we try to invert this here
+fn patchTransmissionSample(transmissionSample: vec4f, isTransmissiveLinear: bool, transmissiveToneMapping: u32) -> vec4f {
+  var color = transmissionSample;
+  color = select(sRGBToLinear_4(color), color, isTransmissiveLinear);
+
+  if(transmissiveToneMapping == 1u) {
+    color = vec4(inverseKhronosToneMapping(color.rgb), color.a);
+  } else if(transmissiveToneMapping == 2u) {
+    color = vec4(inverseReinhardToneMapping(color.rgb), color.a);
+  } else if(transmissiveToneMapping == 3u) {
+    color = vec4(inverseCineonToneMapping(color.rgb), color.a);
+  }
+  
+  return color;
+}
+
 fn getTransmissionSample( fragCoord: vec2f, roughness: f32, ior: f32, transmissionSceneTexture: texture_2d<f32>, transmissionSampler: sampler ) -> vec4f {
   let transmissionSamplerSize: vec2f = vec2f(textureDimensions(transmissionSceneTexture));
   let lod: f32 = log2( transmissionSamplerSize.x ) * applyIorToRoughness( roughness, ior );
-  return sRGBToLinear_4(textureSampleLevel( transmissionSceneTexture, transmissionSampler, fragCoord.xy, lod ));
+
+  return textureSampleLevel( transmissionSceneTexture, transmissionSampler, fragCoord.xy, lod );
 }
 
 fn volumeAttenuation(transmissionDistance: f32, attenuationColor: vec3f, attenuationDistance: f32) -> vec3f {
@@ -18744,6 +19264,8 @@ fn getIBLVolumeRefraction(
   thickness: f32,
   attenuationColor: vec3f,
   attenuationDistance: f32,
+  isTransmissiveLinear: bool,
+  transmissiveToneMapping: u32,
   transmissionBackgroundTexture: texture_2d<f32>,
   defaultSampler: sampler,
 ) -> vec4f {
@@ -18763,6 +19285,7 @@ fn getIBLVolumeRefraction(
 
   // Sample the transmission texture
   transmittedLight = getTransmissionSample(refractionCoords, roughness, ior, transmissionBackgroundTexture, defaultSampler);
+  transmittedLight = patchTransmissionSample(transmittedLight, isTransmissiveLinear, transmissiveToneMapping);
 
   // Compute transmittance
   transmittance = diffuseContribution * volumeAttenuation(length(transmissionRay), attenuationColor, attenuationDistance);
@@ -18800,6 +19323,8 @@ fn getIBLVolumeRefractionWithDispersion(
   thickness: f32,
   attenuationColor: vec3f,
   attenuationDistance: f32,
+  isTransmissiveLinear: bool,
+  transmissiveToneMapping: u32,
   transmissionBackgroundTexture: texture_2d<f32>,
   defaultSampler: sampler,
 ) -> vec4f {
@@ -18821,7 +19346,8 @@ fn getIBLVolumeRefractionWithDispersion(
     refractionCoords = (refractionCoords + 1.0) / 2.0;
     refractionCoords = vec2(refractionCoords.x, 1.0 - refractionCoords.y); // webgpu Y flip
     
-    let transmissionSample: vec4f = getTransmissionSample(refractionCoords, roughness, iors[i], transmissionBackgroundTexture, defaultSampler);
+    var transmissionSample: vec4f = getTransmissionSample(refractionCoords, roughness, iors[i], transmissionBackgroundTexture, defaultSampler);
+    transmissionSample = patchTransmissionSample(transmissionSample, isTransmissiveLinear, transmissiveToneMapping);
     
     transmittedLight[i] = transmissionSample[i];
     transmittedLight.a += transmissionSample.a;
@@ -18860,13 +19386,13 @@ fn BRDF_GGX(
   NdotH: f32,
   VdotH: f32,
   roughness: f32,
-  specularFactor: f32,
-  specularColor: vec3f,
+  specularF90: f32,
+  specularColorBlended: vec3f,
   iridescenceFresnel: vec3f,
   iridescence: f32
 ) -> vec3f {
   // cook-torrance brdf
-  var F: vec3f = F_Schlick(specularColor, specularFactor, VdotH);
+  var F: vec3f = F_Schlick(specularColorBlended, specularF90, VdotH);
   F = mix(F, iridescenceFresnel, iridescence);
 
   let G: f32 = GeometrySmith(NdotL, NdotV, roughness);
@@ -18886,33 +19412,26 @@ fn BRDF_GGX_Singlescatter(
   NdotL: f32,
   NdotV: f32,
   roughness: f32,
-  specularFactor: f32,
-  specularColor: vec3f,
+  specularF90: f32,
+  specularColorBlended: vec3f,
   iridescenceFresnel: vec3f,
   iridescence: f32,
   directLight: DirectLight,
 ) -> vec3f {
-  let alpha: f32 = pow2(roughness); // UE4's roughness
-
   let H: vec3f = normalize(viewDirection + directLight.direction);
   let NdotH: f32 = saturate(dot(normal, H));
   let VdotH: f32 = saturate(dot(viewDirection, H));
 
-  return BRDF_GGX(NdotV, NdotL, NdotH, VdotH, alpha, specularFactor, specularColor, iridescenceFresnel, iridescence);
+  return BRDF_GGX(NdotV, NdotL, NdotH, VdotH, roughness, specularF90, specularColorBlended, iridescenceFresnel, iridescence);
 }
 
 // GGX BRDF with multi-scattering energy compensation for direct lighting
 // Based on "Practical Multiple Scattering Compensation for Microfacet Models"
 // https://blog.selfshadow.com/publications/turquin/ms_comp_final.pdf
 fn BRDF_GGX_Multiscatter(
-  normal: vec3f,
-  viewDirection: vec3f,
-  NdotL: f32,
-  NdotV: f32,
   dfgDirect: DFGDirect,
   specularF90: f32,
   specularColorBlended: vec3f,
-  roughness: f32,
 ) -> vec3f {
   // Multi-scattering compensation
   let dfgV: vec2f = dfgDirect.dfgV;
@@ -18933,7 +19452,7 @@ fn BRDF_GGX_Multiscatter(
 	let Favg: vec3f = specularColorBlended + ( 1.0 - specularColorBlended ) * 0.047619; // 1/21
 
 	// Multiple scattering contribution
-	let Fms: vec3f = FssEss_V * FssEss_L * Favg / ( 1.0 - Ems_V * Ems_L * Favg * Favg + EPSILON );
+	let Fms: vec3f = FssEss_V * FssEss_L * Favg / ( 1.0 - Ems_V * Ems_L * Favg + EPSILON );
 
 	// Energy compensation factor
 	let compensationFactor: f32 = Ems_V * Ems_L;
@@ -18944,6 +19463,8 @@ fn BRDF_GGX_Multiscatter(
 fn getPBRDirect(
   normal: vec3f,
   viewDirection: vec3f,
+  NdotL: f32,
+  irradiance: vec3f,
   dfgDirect: DFGDirect,
   diffuseContribution: vec3f,
   specularF90: f32,
@@ -18951,10 +19472,10 @@ fn getPBRDirect(
   roughness: f32,
   iridescenceFresnel: vec3f,
   iridescence: f32,
-  directLight: DirectLight,
-  ptr_reflectedLight: ptr<function, ReflectedLight>
-) {
-  let NdotL: f32 = saturate(dot(normal, directLight.direction));
+  directLight: DirectLight
+) -> LightContribution {
+  var lightContribution: LightContribution;
+
   let NdotV: f32 = saturate(dot(normal, viewDirection));
 
   let ggxSingleScatter: vec3f = BRDF_GGX_Singlescatter(
@@ -18971,27 +19492,23 @@ fn getPBRDirect(
   );
 
   let ggxMultiScatter: vec3f = BRDF_GGX_Multiscatter(
-    normal,
-    viewDirection,
-    NdotL,
-    NdotV,
     dfgDirect,
     specularF90,
     specularColorBlended,
-    roughness,
   );
 
   let ggx: vec3f = ggxSingleScatter + ggxMultiScatter;
-
-  let irradiance: vec3f = NdotL * directLight.color;
     
-  (*ptr_reflectedLight).directDiffuse += irradiance * BRDF_Lambert(diffuseContribution);
-  (*ptr_reflectedLight).directSpecular += irradiance * ggx;
+  lightContribution.diffuse += irradiance * BRDF_Lambert(diffuseContribution);
+  lightContribution.specular += irradiance * ggx;
+
+  return lightContribution;
 }
 `
   );
 
   const getIBLIndirectIrradiance$1 = ({
+    extensionsUsed = [],
     environmentMap = null
   }) => {
     let iblIndirectDiffuse = "";
@@ -19000,12 +19517,38 @@ fn getPBRDirect(
       `    
   iblIrradiance += getIBLIndirectIrradiance(
     normal,
-    diffuseContribution,
+    ${environmentMap.sampler.name},
+    ${environmentMap.diffuseTexture.options.name},
+    envRotation,
+    envDiffuseIntensity,
+  ) ;`;
+      if (extensionsUsed.includes("KHR_materials_diffuse_transmission")) {
+        iblIndirectDiffuse += /* wgsl */
+        `    
+  var diffuseTransmissionIblIrradiance: vec3f = getIBLIndirectIrradiance(
+    -1.0 * normal,
     ${environmentMap.sampler.name},
     ${environmentMap.diffuseTexture.options.name},
     envRotation,
     envDiffuseIntensity,
   );`;
+        if (extensionsUsed.includes("KHR_materials_volume")) {
+          iblIndirectDiffuse += /* wgsl */
+          `
+  diffuseTransmissionIblIrradiance *= volumeAttenuation(diffuseTransmissionThickness, attenuationColor, attenuationDistance);
+    `;
+        }
+        if (extensionsUsed.includes("KHR_materials_volume_scatter")) {
+          iblIndirectDiffuse += /* wgsl */
+          `
+  // diffuseTransmissionIblIrradiance *= 1.0 - singleVolumeScatter;
+  diffuseTransmissionIblIrradiance *= singleVolumeScatter;
+    `;
+        }
+        iblIndirectDiffuse += /* wgsl */
+        `    
+  iblIrradiance = mix(iblIrradiance, diffuseTransmissionIblIrradiance, diffuseTransmission);`;
+      }
     }
     return iblIndirectDiffuse;
   };
@@ -19053,14 +19596,21 @@ fn getPBRDirect(
 
   const getIBLVolumeRefraction = ({
     transmissionBackgroundTexture = null,
+    transmissiveInputColorSpace = "srgb",
+    transmissiveInputToneMapping = "Khronos",
     extensionsUsed = []
   }) => {
     const hasDispersion = extensionsUsed.includes("KHR_materials_dispersion");
     const iblVolumeRefractionFunction = hasDispersion ? "getIBLVolumeRefractionWithDispersion" : "getIBLVolumeRefraction";
+    const availableToneMappings = [false, "Khronos", "Reinhard", "Cineon"];
+    const transmissiveToneMapping = availableToneMappings.findIndex((t) => t === transmissiveInputToneMapping);
     return transmissionBackgroundTexture ? (
       /* wgsl */
       `
   var transmissionAlpha: f32 = 1.0;
+
+  let isTransmissiveLinear: bool = ${transmissiveInputColorSpace === "linear" ? "true" : "false"};
+  let transmissiveToneMapping: u32 = ${transmissiveToneMapping};
   
   var transmitted: vec4f = ${iblVolumeRefractionFunction}(
     normal,
@@ -19079,6 +19629,8 @@ fn getPBRDirect(
     thickness,
     attenuationColor,
     attenuationDistance,
+    isTransmissiveLinear,
+    transmissiveToneMapping,
     ${transmissionBackgroundTexture.texture.options.name},
     ${transmissionBackgroundTexture.sampler.name},
   );
@@ -19146,9 +19698,7 @@ fn getPBRDirect(
     if (extensionsUsed.includes("KHR_materials_sheen")) {
       sheenClearcoatContribution += /* wgsl */
       `
-  let sheenEnergyComp: f32 = 1.0 - max3(sheenColor) * sheenAlbedoScale;
-
-  outgoingLight = outgoingLight * sheenEnergyComp + sheenSpecularDirect + sheenSpecularIndirect;
+  outgoingLight = outgoingLight + sheenSpecularDirect + sheenSpecularIndirect;
     `;
     }
     if (extensionsUsed.includes("KHR_materials_clearcoat")) {
@@ -19225,25 +19775,15 @@ fn getPBRDirect(
     extensionsUsed = [],
     environmentMap = null
   } = {}) => {
-    let sheenIndirect = "";
+    let sheenIndirect = (
+      /* wgsl */
+      `
+  var sheenEnergyComp: f32 = 1.0;`
+    );
     if (extensionsUsed.includes("KHR_materials_sheen")) {
       if (environmentMap && environmentMap.lutTexture) {
         sheenIndirect += /* wgsl */
         `
-  // remap sheen roughness so we get only high mips
-  // to sample from in the PMREM (helps approximate Charlie cubemap convolutions)
-  // let remappedSheenRoughness = 0.2 + sheenRoughness * 0.8;
-  let remappedSheenRoughness = saturate(0.2 + sheenRoughness);
-  var sheenIblIrradiance: vec3f = getIBLIndirectRadiance(
-    normal,
-    viewDirection,
-    remappedSheenRoughness,
-    ${environmentMap.sampler.name},
-    ${environmentMap.specularTexture.options.name},
-    envRotation,
-    envSpecularIntensity,
-  );
-
   let sheenBRDFCharlie: f32 = getBRDFCharlie(
     normal,
     viewDirection,
@@ -19252,17 +19792,20 @@ fn getPBRDirect(
     ${environmentMap.lutTexture.options.name}
   );
 
-  sheenSpecularIndirect += sheenIblIrradiance * sheenColor * sheenBRDFCharlie;
+  sheenSpecularIndirect += iblIrradiance * sheenColor * sheenBRDFCharlie;
   let sheenAlbedoScale: f32 = sheenBRDFCharlie;`;
       } else {
         sheenIndirect += /* wgsl */
         `
   let sheenBRDFCharlie: f32 = getBRDFCharlieApprox(normal, viewDirection, sheenRoughness);
 
-  sheenSpecularIndirect += irradiance * sheenColor * sheenBRDFCharlie;
+  sheenSpecularIndirect += iblIrradiance * sheenColor * sheenBRDFCharlie;
   // we could also use 0.157 as approximation
   let sheenAlbedoScale: f32 = getSheenAlbedoScaleApprox(normal, viewDirection, sheenRoughness);`;
       }
+      sheenIndirect += /* wgsl */
+      `
+  sheenEnergyComp = 1.0 - max3(sheenColor) * sheenAlbedoScale;`;
     }
     return sheenIndirect;
   };
@@ -19271,7 +19814,59 @@ fn getPBRDirect(
     extensionsUsed = [],
     environmentMap = null
   } = {}) => {
-    let pbrDirect = "";
+    let pbrDirect = (
+      /* wgsl */
+      `
+    let NdotL: f32 = saturate(dot(normal, directLight.direction));
+    var irradiance: vec3f = NdotL * directLight.color;`
+    );
+    if (extensionsUsed.includes("KHR_materials_clearcoat")) {
+      pbrDirect += /* wgsl */
+      `
+    clearcoatSpecularDirect += getPBRDirectClearcoat(clearcoatNormal, viewDirection, clearcoatF0, clearcoatF90, clearcoatRoughness, directLight);`;
+    }
+    if (extensionsUsed.includes("KHR_materials_sheen")) {
+      pbrDirect += /* wgsl */
+      `
+    sheenSpecularDirect += irradiance * BRDF_Sheen(directLight.direction, viewDirection, normal, sheenColor, sheenRoughness);`;
+      if (environmentMap && environmentMap.lutTexture) {
+        pbrDirect += /* wgsl */
+        `
+    let sheenAlbedoV: f32 = getBRDFCharlie(
+      normal,
+      viewDirection,
+      sheenRoughness,
+      ${environmentMap.sampler.name},
+      ${environmentMap.lutTexture.options.name}
+    );
+    
+    let sheenAlbedoL: f32 = getBRDFCharlie(
+      normal,
+      directLight.direction,
+      sheenRoughness,
+      ${environmentMap.sampler.name},
+      ${environmentMap.lutTexture.options.name}
+    );`;
+      } else {
+        pbrDirect += /* wgsl */
+        `
+    let sheenAlbedoV: f32 = getSheenAlbedoScaleApprox(
+      normal,
+      viewDirection,
+      sheenRoughness
+    );
+    
+    let sheenAlbedoL: f32 = getSheenAlbedoScaleApprox(
+      normal,
+      directLight.direction,
+      sheenRoughness
+    );`;
+      }
+      pbrDirect += /* wgsl */
+      `
+    let sheenEnergyComp: f32 = 1.0 - max3( sheenColor ) * max( sheenAlbedoV, sheenAlbedoL );
+ 		irradiance *= sheenEnergyComp;`;
+    }
     if (environmentMap && environmentMap.lutTexture) {
       pbrDirect += /* wgsl */
       `
@@ -19300,9 +19895,11 @@ fn getPBRDirect(
     if (extensionsUsed.includes("KHR_materials_anisotropy")) {
       pbrDirect += /* wgsl */
       `
-    getPBRDirectAnisotropic(
+    var lightContribution: LightContribution = getPBRDirectAnisotropic(
       normal,
       viewDirection,
+      NdotL,
+      irradiance,
       dfgDirect,
       diffuseContribution,
       specularF90,
@@ -19313,15 +19910,16 @@ fn getPBRDirect(
       alphaT,
       anisotropyT,
       anisotropyB,
-      directLight,
-      &reflectedLight
+      directLight
     );`;
     } else {
       pbrDirect += /* wgsl */
       `
-    getPBRDirect(
+    var lightContribution: LightContribution = getPBRDirect(
       normal,
       viewDirection,
+      NdotL,
+      irradiance,
       dfgDirect,
       diffuseContribution,
       specularF90,
@@ -19329,27 +19927,58 @@ fn getPBRDirect(
       roughness,
       iridescenceFresnel,
       iridescence,
-      directLight,
-      &reflectedLight
+      directLight
     );`;
     }
-    if (extensionsUsed.includes("KHR_materials_clearcoat")) {
+    if (extensionsUsed.includes("KHR_materials_diffuse_transmission")) {
       pbrDirect += /* wgsl */
       `
-    clearcoatSpecularDirect += getPBRDirectClearcoat(clearcoatNormal, viewDirection, clearcoatF0, clearcoatF90, clearcoatRoughness, directLight, &reflectedLight);`;
-    }
-    if (extensionsUsed.includes("KHR_materials_sheen")) {
+    lightContribution.diffuse = lightContribution.diffuse * (1.0 - diffuseTransmission);
+    let diffuseNdotL: f32 = saturate(dot(-1.0 * normal, directLight.direction));
+    var lightDiffuseTransmission: vec3f = directLight.color * diffuseNdotL * BRDF_Lambert(diffuseTransmissionContribution);`;
+      if (extensionsUsed.includes("KHR_materials_volume")) {
+        pbrDirect += /* wgsl */
+        `
+    lightDiffuseTransmission *= volumeAttenuation(diffuseTransmissionThickness, attenuationColor, attenuationDistance);
+    `;
+      }
       pbrDirect += /* wgsl */
       `
-    sheenSpecularDirect += getPBRDirectSheen(normal, viewDirection, sheenColor, sheenRoughness, directLight, &reflectedLight);`;
+    // lightDiffuseTransmission *= 1.0 - singleVolumeScatter;
+    lightDiffuseTransmission *= singleVolumeScatter;
+    lightContribution.diffuse += lightDiffuseTransmission * diffuseTransmission;
+    `;
     }
+    pbrDirect += /* wgsl */
+    `
+    reflectedLight.directDiffuse += lightContribution.diffuse;
+    reflectedLight.directSpecular += lightContribution.specular;
+  `;
     return pbrDirect;
+  };
+
+  const getIndirectDiffuse = ({
+    extensionsUsed = []
+  }) => {
+    let indirectDiffuse = "";
+    if (extensionsUsed.includes("KHR_materials_sheen")) {
+      indirectDiffuse += /* wgsl */
+      `
+  RE_IndirectDiffuseSheen(irradiance, diffuseContribution, sheenEnergyComp, &reflectedLight);`;
+    } else {
+      indirectDiffuse += /* wgsl */
+      `
+  RE_IndirectDiffuse(irradiance, diffuseContribution, &reflectedLight);`;
+    }
+    return indirectDiffuse;
   };
 
   const getPBRShading = ({
     receiveShadows = false,
     environmentMap = null,
     transmissionBackgroundTexture = null,
+    transmissiveInputColorSpace = "srgb",
+    transmissiveInputToneMapping = "Khronos",
     extensionsUsed = []
   } = {}) => {
     return (
@@ -19391,12 +20020,12 @@ fn getPBRDirect(
     if(!directLight.visible) {
       continue;
     }
-    
+
     ${receiveShadows ? applyDirectionalShadows : ""}
     ${getPBRDirectContribution({ extensionsUsed, environmentMap })}
   }
   
-  var irradiance: vec3f = vec3(0.0);
+  var irradiance: vec3f = getAmbientLightIrradiance();
   var radiance: vec3f = vec3(0.0);
   var iblIrradiance: vec3f = vec3(0.0);
   var iblRadiance: vec3f = vec3(0.0);
@@ -19406,12 +20035,15 @@ fn getPBRDirect(
   
   // IBL indirect contributions
   ${computeMultiScattering$1({ environmentMap })}
-  ${getIBLIndirectIrradiance$1({ environmentMap })}
+  ${getIBLIndirectIrradiance$1({ extensionsUsed, environmentMap })}
   ${getIBLIndirectRadiance$1({ extensionsUsed, environmentMap })}
+
+  diffuseColor = mix(diffuseColor, diffuseTransmissionColor, diffuseTransmission);
+  diffuseContribution = mix(diffuseContribution, diffuseTransmissionContribution, diffuseTransmission);
   
-  // ambient lights
-  
-  RE_IndirectDiffuse(irradiance, diffuseContribution, &reflectedLight);
+  // indirect diffuse
+  ${getIBLSheenIndirectRadiance({ extensionsUsed, environmentMap })}
+  ${getIndirectDiffuse({ extensionsUsed })}
 
   // indirect specular (and diffuse) from IBL
   RE_IndirectSpecular(
@@ -19419,6 +20051,7 @@ fn getPBRDirect(
     iblIrradiance,
     diffuseContribution,
     metallic,
+    sheenEnergyComp,
     dielectricScattering,
     metallicScattering,
     &reflectedLight
@@ -19426,19 +20059,23 @@ fn getPBRDirect(
 
   ${getIBLClearcoatIndirectRadiance({ extensionsUsed, environmentMap })}
   ${getClearcoatIndirectSpecular({ extensionsUsed, environmentMap })}
-  ${getIBLSheenIndirectRadiance({ extensionsUsed, environmentMap })}
   
-  reflectedLight.indirectDiffuse *= occlusion;
-  
+  // occlusion  
   clearcoatSpecularIndirect *= occlusion;
   sheenSpecularIndirect *= occlusion;
-  
+
+  reflectedLight.indirectDiffuse *= occlusion;
   reflectedLight.indirectSpecular *= computeSpecularOcclusion(geometryNormal, viewDirection, occlusion, roughness);
   
   var totalDiffuse: vec3f = reflectedLight.indirectDiffuse + reflectedLight.directDiffuse;
   let totalSpecular: vec3f = reflectedLight.indirectSpecular + reflectedLight.directSpecular;
   
-  ${getIBLVolumeRefraction({ transmissionBackgroundTexture, extensionsUsed })}
+  ${getIBLVolumeRefraction({
+      transmissionBackgroundTexture,
+      transmissiveInputColorSpace,
+      transmissiveInputToneMapping,
+      extensionsUsed
+    })}
   
   var outgoingLight: vec3f = totalDiffuse + totalSpecular;
   
@@ -19541,8 +20178,16 @@ fn getPBR(
     if (geometry.vertexBuffers && geometry.vertexBuffers.length) {
       geometry.vertexBuffers.forEach((vertexBuffer) => {
         vertexBuffer.attributes.forEach((attribute) => {
-          if (attribute.name !== "position") {
-            attributes.push(attribute);
+          const attr = { ...attribute };
+          if (attr.name !== "position") {
+            if (attr.name === "normal") {
+              attr.type = "vec3f";
+            } else if (attr.name === "tangent") {
+              attr.type.replace("u", "f").replace("i", "f");
+            } else if (attr.name.indexOf("uv") !== -1) {
+              attr.type = "vec2f";
+            }
+            attributes.push(attr);
           }
         });
       });
@@ -19557,7 +20202,7 @@ fn getPBR(
       return (
         /* wgsl */
         `
-  @location(${index}) ${attribute.type === "u32" || attribute.type === "i32" ? "@interpolate(flat) " : " "}${attribute.name}: ${attribute.type},`
+  @location(${index}) ${attribute.type.includes("i") || attribute.type.includes("u") ? "@interpolate(flat) " : " "}${attribute.name}: ${attribute.type},`
       );
     }).join("");
     const additionalVaryingsOutput = additionalVaryings.map((attribute, index) => {
@@ -19742,7 +20387,11 @@ struct FSInput {
       geometry.vertexBuffers.forEach((vertexBuffer) => {
         vertexBuffer.attributes.forEach((attribute) => {
           if (!disabledAttributes.some((attr) => attribute.name.includes(attr))) {
-            attributes.push(attribute);
+            const attr = { ...attribute };
+            if (attr.name.indexOf("uv") !== -1) {
+              attr.type = "vec2f";
+            }
+            attributes.push(attr);
           }
         });
       });
@@ -19879,6 +20528,14 @@ struct FSInput {
         type: "vec3f",
         value: "vec3(1.0)"
       },
+      multiscatterColor: {
+        type: "vec3f",
+        value: "vec3(0.0)"
+      },
+      scatterAnisotropy: {
+        type: "f32",
+        value: "0.0"
+      },
       sheenColor: {
         type: "vec3f",
         value: "vec3(0.0)"
@@ -19918,6 +20575,14 @@ struct FSInput {
       anisotropyVector: {
         type: "vec2f",
         value: "vec2(1.0, 0.0)"
+      },
+      diffuseTransmission: {
+        type: "f32",
+        value: "0.0"
+      },
+      diffuseTransmissionColor: {
+        type: "vec3f",
+        value: "vec3(1.0)"
       }
     };
     const defaultEnvMaterialVars = {
@@ -20191,7 +20856,6 @@ fn getTangentFrame( modelPosition: vec3f, normal: vec3f, uv: vec2f ) -> mat3x3f 
   let B: vec3f = q1perp * st0.y + q0perp * st1.y;
 
   let det: f32 = max( dot( T, T ), dot( B, B ) );
-  // let scale: f32 = ( det == 0.0 ) ? 0.0 : inversesqrt( det );
   let scale: f32 = select(inverseSqrt( det ), 0.0, det == 0.0);
 
   return mat3x3f( T * scale, B * scale, N );
@@ -20226,6 +20890,8 @@ fn generateTBN(normal: vec3f) -> mat3x3f {
   const getTangentBitangent = ({
     extensionsUsed = [],
     geometry = null,
+    cullMode = "back",
+    flatShading = false,
     normalTexture = null,
     clearcoatNormalTexture = null
   } = {}) => {
@@ -20233,15 +20899,28 @@ fn generateTBN(normal: vec3f) -> mat3x3f {
       /* wgsl */
       `
   let faceDirection = select(-1.0, 1.0, frontFacing);
-  let geometryNormal: vec3f = faceDirection * normal;`
+  var geometryNormal: vec3f = normal;`
     );
+    if (flatShading) {
+      tangentBitangent += /* wgsl */
+      `
+  let fdx: vec3f = dpdx( modelPosition );
+	let fdy: vec3f = dpdy( modelPosition );
+	geometryNormal = normalize( cross( fdx, -fdy ) );`;
+    }
+    if (cullMode !== "back" && !flatShading) {
+      tangentBitangent += /* wgsl */
+      `
+  geometryNormal = geometryNormal * faceDirection;
+    `;
+    }
     const tangentAttribute = geometry && geometry.getAttributeByName("tangent");
     const needsTangentBitangent = !!normalTexture || !!clearcoatNormalTexture || extensionsUsed.includes("KHR_materials_anisotropy");
     if (needsTangentBitangent) {
       if (tangentAttribute) {
         tangentBitangent += /* wgsl */
         `
-  let tbn = mat3x3f(normalize(tangent), normalize(bitangent), geometryNormal);`;
+  var tbn = mat3x3f(normalize(tangent), normalize(bitangent), geometryNormal);`;
       } else {
         if (normalTexture) {
           tangentBitangent += /* wgsl */
@@ -20268,8 +20947,15 @@ fn generateTBN(normal: vec3f) -> mat3x3f {
         }
         tangentBitangent += /* wgsl */
         `
-  let tbn = getTangentFrame(modelPosition, normal, tbnUV);
+  var tbn = getTangentFrame(-modelPosition, normal, tbnUV);
   `;
+      }
+      if (cullMode !== "back" && !flatShading) {
+        tangentBitangent += /* wgsl */
+        `
+  tbn[0] *= faceDirection;
+  tbn[1] *= faceDirection;
+    `;
       }
     }
     return tangentBitangent;
@@ -20295,6 +20981,8 @@ fn generateTBN(normal: vec3f) -> mat3x3f {
       )
     },
     geometry,
+    cullMode = "back",
+    flatShading = false,
     additionalVaryings = [],
     materialUniform = null,
     materialUniformName = "material",
@@ -20332,7 +21020,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   // user defined preliminary contribution
   ${chunks.preliminaryContribution}
   
-  ${getTangentBitangent({ geometry, normalTexture })}  
+  ${getTangentBitangent({ geometry, cullMode, flatShading, normalTexture })}  
   ${getNormal({ normalTexture })}  
   ${getEmissiveOcclusion({ emissiveTexture, occlusionTexture })}
   
@@ -20417,6 +21105,13 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
     return specular;
   };
 
+  const getDiffuse = (
+    /* wgsl */
+    `
+  var diffuseColor: vec3f = outputColor.rgb;
+  var diffuseContribution: vec3f = outputColor.rgb * (1.0 - metallic);`
+  );
+
   const getPhongFragmentShaderCode = ({
     chunks = null,
     toneMapping = "Khronos",
@@ -20437,6 +21132,8 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
       )
     },
     geometry,
+    cullMode = "back",
+    flatShading = false,
     additionalVaryings = [],
     materialUniform = null,
     materialUniformName = "material",
@@ -20478,9 +21175,10 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   // user defined preliminary contribution
   ${chunks.preliminaryContribution}
   
-  ${getTangentBitangent({ geometry, normalTexture })}  
+  ${getTangentBitangent({ geometry, cullMode, flatShading, normalTexture })}  
   ${getNormal({ normalTexture })}
   ${getMetallicRoughness({ metallicRoughnessTexture })}
+  ${getDiffuse}
   ${getSpecular({ specularTexture, specularFactorTexture, specularColorTexture })}
   ${getEmissiveOcclusion({ emissiveTexture, occlusionTexture })}
   
@@ -20641,7 +21339,6 @@ fn computeMultiscattering(
     `
 fn getIBLIndirectIrradiance(
   normal: vec3f,
-  diffuseColor: vec3f,
   clampSampler: sampler,
   envDiffuseTexture: texture_cube<f32>,
   envRotation: mat3x3f,
@@ -20739,34 +21436,55 @@ fn getBRDFCharlieApprox( normal: vec3f, viewDirection: vec3f, roughness: f32 ) -
   let NdotV: f32 = saturate( dot( normal, viewDirection ) );
 
   let r2: f32 = roughness * roughness;
+  let rInv: f32 = 1.0 / ( roughness + 0.1 );
 
-  let a: f32 = select(-8.48 * r2 + 14.3 * roughness - 9.95, -339.2 * r2 + 161.4 * roughness - 25.9, roughness < 0.25);
-  let b: f32 = select(1.97 * r2 - 3.27 * roughness + 0.72, 44.0 * r2 - 23.7 * roughness + 3.26, roughness < 0.25);
-  let roughnessAdditionalContribution: f32 = select(0.1 * ( roughness - 0.25 ), 0.0, roughness < 0.25);
+  let a: f32 = -1.9362 + 1.0678 * roughness + 0.4573 * r2 - 0.8469 * rInv;
+  let b: f32 = -0.6014 + 0.5538 * roughness - 0.4670 * r2 - 0.1255 * rInv;
 
-  let DG: f32 = exp( a * NdotV + b ) + roughnessAdditionalContribution;
+  let DG: f32 = exp( a * NdotV + b );
 
   return saturate( DG );
+}
+
+// Indirect Diffuse RenderEquations with sheen albedo scaling
+fn RE_IndirectDiffuseSheen(
+  irradiance: vec3f,
+  diffuseContribution: vec3f,
+  sheenEnergyComp: f32,
+  ptr_reflectedLight: ptr<function, ReflectedLight>
+) {
+  var diffuse: vec3f = irradiance * BRDF_Lambert( diffuseContribution );
+	diffuse *= sheenEnergyComp;
+  (*ptr_reflectedLight).indirectDiffuse += diffuse;
 }
 `
   );
 
   const getTransmissionThickness = ({
+    transmissionThicknessTexture = null,
     transmissionTexture = null,
     thicknessTexture = null
   } = {}) => {
     let transmissionThickness = "";
-    if (transmissionTexture) {
-      transmissionThickness += getTextureSample(transmissionTexture, "transmission");
+    if (transmissionThicknessTexture) {
+      transmissionThickness += getTextureSample(transmissionThicknessTexture, "transmissionThickness");
       transmissionThickness += /* wgsl */
       `
+    transmission = clamp(transmission * transmissionThicknessSample.r, 0.0, 1.0);
+    thickness *= transmissionThicknessSample.g;`;
+    } else {
+      if (transmissionTexture) {
+        transmissionThickness += getTextureSample(transmissionTexture, "transmission");
+        transmissionThickness += /* wgsl */
+        `
     transmission = clamp(transmission * transmissionSample.r, 0.0, 1.0);`;
-    }
-    if (thicknessTexture) {
-      transmissionThickness += getTextureSample(thicknessTexture, "thickness");
-      transmissionThickness += /* wgsl */
-      `
+      }
+      if (thicknessTexture) {
+        transmissionThickness += getTextureSample(thicknessTexture, "thickness");
+        transmissionThickness += /* wgsl */
+        `
   thickness *= thicknessSample.g;`;
+      }
     }
     return transmissionThickness;
   };
@@ -20791,19 +21509,6 @@ fn BRDF_Sheen(
   let V: f32 = V_Neubelt( dotNV, dotNL );
 
   return sheenColor * ( D * V );
-}
-
-fn getPBRDirectSheen(
-  normal: vec3f,
-  viewDirection: vec3f,
-  sheenColor: vec3f,
-  sheenRoughness: f32,
-  directLight: DirectLight,
-  ptr_reflectedLight: ptr<function, ReflectedLight>
-) -> vec3f {
-  let NdotL: f32 = saturate(dot(normal, directLight.direction));
-  let irradiance: vec3f = NdotL * directLight.color;
-  return irradiance * BRDF_Sheen( directLight.direction, viewDirection, normal, sheenColor, sheenRoughness );
 }
 `
   );
@@ -20848,13 +21553,14 @@ fn getPBRDirectSheen(
     }
     sheen += /* wgsl */
     `
-  sheenRoughness = clamp(sheenRoughness, 0.07, 1.0);`;
+  sheenRoughness = clamp(sheenRoughness, 0.0001, 1.0);`;
     return sheen;
   };
 
   const getClearcoat = ({
     extensionsUsed = [],
     clearcoatTexture = null,
+    clearcoatFactorTexture = null,
     clearcoatRoughnessTexture = null
   }) => {
     let clearcoat = (
@@ -20874,14 +21580,23 @@ fn getPBRDirectSheen(
       clearcoat += /* wgsl */
       `
   clearcoat = clearcoat * clearcoatSample.r;
+  clearcoatRoughness = clearcoatRoughness * clearcoatSample.g;
     `;
-    }
-    if (clearcoatRoughnessTexture) {
-      clearcoat += getTextureSample(clearcoatRoughnessTexture, "clearcoatRoughness");
-      clearcoat += /* wgsl */
-      `
+    } else {
+      if (clearcoatFactorTexture) {
+        clearcoat += getTextureSample(clearcoatFactorTexture, "clearcoatFactor");
+        clearcoat += /* wgsl */
+        `
+  clearcoat = clearcoat * clearcoatFactorSample.r;
+    `;
+      }
+      if (clearcoatRoughnessTexture) {
+        clearcoat += getTextureSample(clearcoatRoughnessTexture, "clearcoatRoughness");
+        clearcoat += /* wgsl */
+        `
   clearcoatRoughness = clearcoatRoughness * clearcoatRoughnessSample.g;
     `;
+      }
     }
     clearcoat += /* wgsl */
     `
@@ -20908,7 +21623,7 @@ fn getPBRDirectSheen(
       if (normalTexture) {
         clearcoatNormal += /* wgsl */
         `
-  let clearcoatNormalSample = textureSample(${clearcoatNormalTexture.texture.options.name}, ${clearcoatNormalTexture.sampler?.name ?? "defaultSampler"}, normalUV);`;
+    let clearcoatNormalSample = textureSample(${clearcoatNormalTexture.texture.options.name}, ${clearcoatNormalTexture.sampler?.name ?? "defaultSampler"}, normalUV);`;
       } else {
         clearcoatNormal += getTextureSample(clearcoatNormalTexture, "clearcoatNormal");
       }
@@ -20934,8 +21649,6 @@ fn BRDF_GGX_Clearcoat(
   clearcoatF90: f32,
   clearcoatRoughness: f32
 ) -> vec3f {
-  let alpha: f32 = pow2( clearcoatRoughness ); // UE4's roughness
-
   let halfDir: vec3f = normalize( lightDirection + viewDirection );
 
   let dotNL: f32 = saturate( dot( normal, lightDirection ) );
@@ -20945,9 +21658,8 @@ fn BRDF_GGX_Clearcoat(
 
   let F: vec3f = F_Schlick( clearcoatF0, clearcoatF90, dotVH );
 
-  let V: f32 = GeometrySmith( alpha, dotNL, dotNV );
-
-  let D: f32 = DistributionGGX( alpha, dotNH );
+  let V: f32 = GeometrySmith( clearcoatRoughness, dotNL, dotNV );
+  let D: f32 = DistributionGGX( clearcoatRoughness, dotNH );
 
   return F * ( V * D );
 
@@ -20959,12 +21671,11 @@ fn getPBRDirectClearcoat(
   clearcoatF0: vec3f,
   clearcoatF90: f32,
   clearcoatRoughness: f32,
-  directLight: DirectLight,
-  ptr_reflectedLight: ptr<function, ReflectedLight>
+  directLight: DirectLight
 ) -> vec3f {
-  let dotNLcc: f32 = saturate( dot( clearcoatNormal, directLight.direction ) );
+  let NdotLcc: f32 = saturate( dot( clearcoatNormal, directLight.direction ) );
 
-  let ccIrradiance: vec3f = dotNLcc * directLight.color;
+  let ccIrradiance: vec3f = NdotLcc * directLight.color;
 
   return ccIrradiance * BRDF_GGX_Clearcoat( directLight.direction, viewDirection, clearcoatNormal, clearcoatF0, clearcoatF90, clearcoatRoughness );
 }
@@ -21223,6 +21934,8 @@ fn BRDF_GGX_Anisotropic(
 fn getPBRDirectAnisotropic(
   normal: vec3f,
   viewDirection: vec3f,
+  NdotL: f32,
+  irradiance: vec3f,
   dfgDirect: DFGDirect,
   diffuseContribution: vec3f,
   specularF90: f32,
@@ -21233,10 +21946,10 @@ fn getPBRDirectAnisotropic(
   alphaT: f32,
   anisotropyT: vec3f,
   anisotropyB: vec3f,
-  directLight: DirectLight,
-  ptr_reflectedLight: ptr<function, ReflectedLight>
-) {
-  let NdotL: f32 = saturate(dot(normal, directLight.direction));
+  directLight: DirectLight
+) -> LightContribution {
+  var lightContribution: LightContribution;
+
   let NdotV: f32 = saturate(dot(normal, viewDirection));
 
   let ggxSingleScatter: vec3f = BRDF_GGX_Anisotropic(
@@ -21256,22 +21969,17 @@ fn getPBRDirectAnisotropic(
   );
 
   let ggxMultiScatter: vec3f = BRDF_GGX_Multiscatter(
-    normal,
-    viewDirection,
-    NdotL,
-    NdotV,
     dfgDirect,
     specularF90,
-    specularColorBlended,
-    roughness,
+    specularColorBlended
   );
 
   let ggx: vec3f = ggxSingleScatter + ggxMultiScatter;
 
-  let irradiance: vec3f = NdotL * directLight.color;
-  
-  (*ptr_reflectedLight).directDiffuse += irradiance * BRDF_Lambert(diffuseContribution);
-  (*ptr_reflectedLight).directSpecular += irradiance * ggx;
+  lightContribution.diffuse += irradiance * BRDF_Lambert(diffuseContribution);
+  lightContribution.specular += irradiance * ggx;
+
+  return lightContribution;
 }
 `
   );
@@ -21349,13 +22057,6 @@ fn getIBLIndirectAnisotropyRadiance(
 `
   );
 
-  const getDiffuse = (
-    /* wgsl */
-    `
-  let diffuseColor: vec3f = outputColor.rgb;
-  let diffuseContribution: vec3f = outputColor.rgb * (1.0 - metallic);`
-  );
-
   const BRDFCharlie = (
     /* wgsl */
     `
@@ -21379,10 +22080,90 @@ fn V_Neubelt( NdotL: f32, NdotV: f32 ) -> f32 {
 `
   );
 
+  const getDiffuseTransmission = ({
+    extensionsUsed = [],
+    diffuseTransmissionTexture = null,
+    diffuseTransmissionFactorTexture = null,
+    diffuseTransmissionColorTexture = null
+  }) => {
+    let diffuseTransmission = (
+      /* wgsl */
+      `
+  var diffuseTransmissionContribution: vec3f = vec3(1.0);
+  var diffuseTransmissionThickness: f32 = 1.0;`
+    );
+    if (!extensionsUsed.includes("KHR_materials_diffuse_transmission")) {
+      return diffuseTransmission;
+    }
+    if (diffuseTransmissionTexture) {
+      diffuseTransmission += getTextureSample(diffuseTransmissionTexture, "diffuseTransmission");
+      diffuseTransmission += /* wgsl */
+      `
+  diffuseTransmission = diffuseTransmission * diffuseTransmissionSample.a;
+  diffuseTransmissionColor = diffuseTransmissionColor * diffuseTransmissionSample.rgb;
+      `;
+    } else {
+      if (diffuseTransmissionFactorTexture) {
+        diffuseTransmission += getTextureSample(diffuseTransmissionFactorTexture, "diffuseTransmissionFactor");
+        diffuseTransmission += /* wgsl */
+        `
+  diffuseTransmission = diffuseTransmission * diffuseTransmissionFactorSample.a;
+      `;
+      }
+      if (diffuseTransmissionColorTexture) {
+        diffuseTransmission += getTextureSample(diffuseTransmissionColorTexture, "diffuseTransmissionColor");
+        diffuseTransmission += /* wgsl */
+        `
+  diffuseTransmissionColor = diffuseTransmissionColor * diffuseTransmissionColorSample.rgb;
+      `;
+      }
+    }
+    diffuseTransmission += /* wgsl */
+    `
+  diffuseTransmissionContribution = diffuseTransmissionColor * (1.0 - metallic);`;
+    if (extensionsUsed.includes("KHR_materials_volume")) {
+      diffuseTransmission += /* wgsl */
+      `
+  diffuseTransmissionThickness = thickness * (modelScale.x + modelScale.y + modelScale.z) / 3.0;`;
+    }
+    return diffuseTransmission;
+  };
+
+  const getVolumeMultiToSingleScatter = (
+    /* wgsl */
+    `
+fn getVolumeMultiToSingleScatter(multiscatterColor: vec3f) -> vec3f {
+    let s: vec3f = 4.09712 + 4.20863 * multiscatterColor - sqrt(9.59217 + 41.6808 * multiscatterColor + 17.7126 * multiscatterColor * multiscatterColor);
+    return 1.0 - s * s;
+}
+`
+  );
+
+  const getVolumeMultiScatter = ({
+    extensionsUsed = []
+  }) => {
+    let volumeScatter = (
+      /* wgsl */
+      `
+  // var singleVolumeScatter: vec3f = vec3(0.0);
+  var singleVolumeScatter: vec3f = vec3(1.0);
+  `
+    );
+    if (!extensionsUsed.includes("KHR_materials_volume_scatter")) {
+      return volumeScatter;
+    }
+    volumeScatter += /* wgsl */
+    `
+  singleVolumeScatter = getVolumeMultiToSingleScatter(multiscatterColor);`;
+    return volumeScatter;
+  };
+
   const getPBRFragmentShaderCode = ({
     chunks = null,
     toneMapping = "Khronos",
     outputColorSpace = "srgb",
+    transmissiveInputColorSpace = "srgb",
+    transmissiveInputToneMapping = "Khronos",
     fragmentOutput = {
       struct: [
         {
@@ -21399,6 +22180,8 @@ fn V_Neubelt( NdotL: f32, NdotV: f32 ) -> f32 {
       )
     },
     geometry,
+    cullMode = "back",
+    flatShading = false,
     additionalVaryings = [],
     materialUniform = null,
     materialUniformName = "material",
@@ -21412,6 +22195,7 @@ fn V_Neubelt( NdotL: f32, NdotV: f32 ) -> f32 {
     specularTexture = null,
     specularFactorTexture = null,
     specularColorTexture = null,
+    transmissionThicknessTexture = null,
     transmissionTexture = null,
     thicknessTexture = null,
     sheenTexture = null,
@@ -21419,11 +22203,15 @@ fn V_Neubelt( NdotL: f32, NdotV: f32 ) -> f32 {
     sheenRoughnessTexture = null,
     anisotropyTexture = null,
     clearcoatTexture = null,
+    clearcoatFactorTexture = null,
     clearcoatRoughnessTexture = null,
     clearcoatNormalTexture = null,
     iridescenceTexture = null,
     iridescenceFactorTexture = null,
     iridescenceThicknessTexture = null,
+    diffuseTransmissionTexture = null,
+    diffuseTransmissionFactorTexture = null,
+    diffuseTransmissionColorTexture = null,
     transmissionBackgroundTexture = null,
     environmentMap = null
   }) => {
@@ -21453,6 +22241,7 @@ ${getIBLIndirectRadiance}
 ${getIBLTransmission}
 ${extensionsUsed.includes("KHR_materials_sheen") ? getIBLSheen : ""}
 ${extensionsUsed.includes("KHR_materials_anisotropy") ? getIBLIndirectAnisotropyRadiance : ""}
+${extensionsUsed.includes("KHR_materials_volume_scatter") ? getVolumeMultiToSingleScatter : ""}
 
 ${getFragmentInputStruct({ geometry, additionalVaryings })}
 
@@ -21469,21 +22258,35 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   ${chunks.preliminaryContribution}
 
   // material infos
-  ${getTangentBitangent({ extensionsUsed, geometry, normalTexture, clearcoatNormalTexture })}  
+  ${getTangentBitangent({ extensionsUsed, geometry, cullMode, flatShading, normalTexture, clearcoatNormalTexture })}  
   ${getNormal({ normalTexture })}
   ${getMetallicRoughness({ metallicRoughnessTexture })}
   ${getDiffuse}
   ${getSpecular({ specularTexture, specularFactorTexture, specularColorTexture })}
-  ${getTransmissionThickness({ transmissionTexture, thicknessTexture })}
+  ${getTransmissionThickness({ transmissionThicknessTexture, transmissionTexture, thicknessTexture })}
   ${getEmissiveOcclusion({ emissiveTexture, occlusionTexture })}
   ${getSheen({ extensionsUsed, sheenTexture, sheenColorTexture, sheenRoughnessTexture })}
-  ${getClearcoat({ extensionsUsed, clearcoatTexture, clearcoatRoughnessTexture })}
+  ${getClearcoat({ extensionsUsed, clearcoatTexture, clearcoatFactorTexture, clearcoatRoughnessTexture })}
   ${getClearcoatNormal({ extensionsUsed, normalTexture, clearcoatNormalTexture })}
   ${getIridescence({ extensionsUsed, iridescenceTexture, iridescenceFactorTexture, iridescenceThicknessTexture })}
   ${getAnisotropy({ extensionsUsed, anisotropyTexture })}
+  ${getDiffuseTransmission({
+      extensionsUsed,
+      diffuseTransmissionTexture,
+      diffuseTransmissionFactorTexture,
+      diffuseTransmissionColorTexture
+    })}
+  ${getVolumeMultiScatter({ extensionsUsed })}
   
   // shading
-  ${getPBRShading({ receiveShadows, environmentMap, transmissionBackgroundTexture, extensionsUsed })}
+  ${getPBRShading({
+      receiveShadows,
+      environmentMap,
+      transmissionBackgroundTexture,
+      transmissiveInputColorSpace,
+      transmissiveInputToneMapping,
+      extensionsUsed
+    })}
   
   outputColor = vec4(outgoingLight, outputColor.a);
   outputColor = vec4(outputColor.rgb + emissive, outputColor.a);
@@ -21518,7 +22321,11 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
     },
     chunks = null,
     toneMapping = "Khronos",
+    transmissiveInputColorSpace = "srgb",
+    transmissiveInputToneMapping = "Khronos",
     geometry,
+    cullMode = "back",
+    flatShading = false,
     additionalVaryings = [],
     materialUniform = null,
     materialUniformName = "material",
@@ -21532,6 +22339,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
     specularTexture = null,
     specularFactorTexture = null,
     specularColorTexture = null,
+    transmissionThicknessTexture = null,
     transmissionTexture = null,
     thicknessTexture = null,
     sheenTexture = null,
@@ -21539,102 +22347,119 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
     sheenRoughnessTexture = null,
     anisotropyTexture = null,
     clearcoatTexture = null,
+    clearcoatFactorTexture = null,
     clearcoatRoughnessTexture = null,
     clearcoatNormalTexture = null,
     iridescenceTexture = null,
+    iridescenceFactorTexture = null,
     iridescenceThicknessTexture = null,
+    diffuseTransmissionTexture = null,
+    diffuseTransmissionFactorTexture = null,
+    diffuseTransmissionColorTexture = null,
     transmissionBackgroundTexture = null,
     environmentMap = null
   }) => {
-    return (() => {
-      switch (shadingModel) {
-        case "Unlit":
-          return getUnlitFragmentShaderCode({
-            chunks,
-            toneMapping,
-            outputColorSpace,
-            fragmentOutput,
-            geometry,
-            additionalVaryings,
-            materialUniform,
-            materialUniformName,
-            baseColorTexture,
-            emissiveTexture,
-            occlusionTexture
-          });
-        case "Lambert":
-          return getLambertFragmentShaderCode({
-            chunks,
-            toneMapping,
-            outputColorSpace,
-            fragmentOutput,
-            geometry,
-            additionalVaryings,
-            materialUniform,
-            materialUniformName,
-            receiveShadows,
-            baseColorTexture,
-            normalTexture,
-            emissiveTexture,
-            occlusionTexture
-          });
-        case "Phong":
-          return getPhongFragmentShaderCode({
-            chunks,
-            toneMapping,
-            outputColorSpace,
-            fragmentOutput,
-            geometry,
-            additionalVaryings,
-            materialUniform,
-            materialUniformName,
-            receiveShadows,
-            baseColorTexture,
-            normalTexture,
-            emissiveTexture,
-            occlusionTexture,
-            metallicRoughnessTexture,
-            specularTexture,
-            specularFactorTexture,
-            specularColorTexture
-          });
-        case "PBR":
-        default:
-          return getPBRFragmentShaderCode({
-            chunks,
-            toneMapping,
-            outputColorSpace,
-            fragmentOutput,
-            geometry,
-            additionalVaryings,
-            materialUniform,
-            materialUniformName,
-            extensionsUsed,
-            receiveShadows,
-            baseColorTexture,
-            normalTexture,
-            emissiveTexture,
-            occlusionTexture,
-            metallicRoughnessTexture,
-            specularTexture,
-            specularFactorTexture,
-            specularColorTexture,
-            transmissionTexture,
-            thicknessTexture,
-            sheenTexture,
-            sheenColorTexture,
-            sheenRoughnessTexture,
-            anisotropyTexture,
-            clearcoatTexture,
-            clearcoatRoughnessTexture,
-            clearcoatNormalTexture,
-            iridescenceTexture,
-            iridescenceThicknessTexture,
-            transmissionBackgroundTexture,
-            environmentMap
-          });
-      }
-    })();
+    switch (shadingModel) {
+      case "Unlit":
+        return getUnlitFragmentShaderCode({
+          chunks,
+          toneMapping,
+          outputColorSpace,
+          fragmentOutput,
+          geometry,
+          additionalVaryings,
+          materialUniform,
+          materialUniformName,
+          baseColorTexture,
+          emissiveTexture,
+          occlusionTexture
+        });
+      case "Lambert":
+        return getLambertFragmentShaderCode({
+          chunks,
+          toneMapping,
+          outputColorSpace,
+          fragmentOutput,
+          geometry,
+          cullMode,
+          flatShading,
+          additionalVaryings,
+          materialUniform,
+          materialUniformName,
+          receiveShadows,
+          baseColorTexture,
+          normalTexture,
+          emissiveTexture,
+          occlusionTexture
+        });
+      case "Phong":
+        return getPhongFragmentShaderCode({
+          chunks,
+          toneMapping,
+          outputColorSpace,
+          fragmentOutput,
+          geometry,
+          cullMode,
+          flatShading,
+          additionalVaryings,
+          materialUniform,
+          materialUniformName,
+          receiveShadows,
+          baseColorTexture,
+          normalTexture,
+          emissiveTexture,
+          occlusionTexture,
+          metallicRoughnessTexture,
+          specularTexture,
+          specularFactorTexture,
+          specularColorTexture
+        });
+      case "PBR":
+      default:
+        return getPBRFragmentShaderCode({
+          chunks,
+          toneMapping,
+          outputColorSpace,
+          transmissiveInputColorSpace,
+          transmissiveInputToneMapping,
+          fragmentOutput,
+          geometry,
+          cullMode,
+          flatShading,
+          additionalVaryings,
+          materialUniform,
+          materialUniformName,
+          extensionsUsed,
+          receiveShadows,
+          baseColorTexture,
+          normalTexture,
+          emissiveTexture,
+          occlusionTexture,
+          metallicRoughnessTexture,
+          specularTexture,
+          specularFactorTexture,
+          specularColorTexture,
+          transmissionThicknessTexture,
+          transmissionTexture,
+          thicknessTexture,
+          sheenTexture,
+          sheenColorTexture,
+          sheenRoughnessTexture,
+          anisotropyTexture,
+          clearcoatTexture,
+          clearcoatFactorTexture,
+          clearcoatRoughnessTexture,
+          clearcoatNormalTexture,
+          iridescenceTexture,
+          iridescenceFactorTexture,
+          iridescenceThicknessTexture,
+          diffuseTransmissionTexture,
+          diffuseTransmissionFactorTexture,
+          diffuseTransmissionColorTexture,
+          transmissionBackgroundTexture,
+          environmentMap
+        });
+    }
   };
 
   var __typeError$7 = (msg) => {
@@ -23037,6 +23862,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
         throwWarning("OrbitControls: cannot initialize without a camera.");
         return;
       }
+      this.enabled = true;
       __privateMethod$5(this, _OrbitControls_instances, setBaseParams_fn).call(this, {
         target,
         enableZoom,
@@ -23248,6 +24074,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
    * @private
    */
   onMouseDown_fn = function(e) {
+    if (!this.enabled) return;
     if (e.button === 0 && this.enableRotate) {
       __privateSet$4(this, _isOrbiting, true);
       __privateGet$4(this, _rotateStart).set(e.clientX, e.clientY);
@@ -23264,6 +24091,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
    * @private
    */
   onTouchStart_fn = function(e) {
+    if (!this.enabled) return;
     if (e.touches.length === 1 && this.enableRotate) {
       __privateSet$4(this, _isOrbiting, true);
       __privateGet$4(this, _rotateStart).set(e.touches[0].pageX, e.touches[0].pageY);
@@ -23274,6 +24102,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
    * @param e - {@link MouseEvent}.
    */
   onMouseMove_fn = function(e) {
+    if (!this.enabled) return;
     if (__privateGet$4(this, _isOrbiting) && this.enableRotate) {
       __privateMethod$5(this, _OrbitControls_instances, rotate_fn).call(this, e.clientX, e.clientY);
     } else if (__privateGet$4(this, _isPaning) && this.enablePan) {
@@ -23286,6 +24115,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
    * @private
    */
   onTouchMove_fn = function(e) {
+    if (!this.enabled) return;
     if (__privateGet$4(this, _isOrbiting) && this.enableRotate) {
       __privateMethod$5(this, _OrbitControls_instances, rotate_fn).call(this, e.touches[0].pageX, e.touches[0].pageY);
     }
@@ -23314,7 +24144,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
    * @private
    */
   onMouseWheel_fn = function(e) {
-    if (this.enableZoom) {
+    if (this.enabled && this.enableZoom) {
       __privateMethod$5(this, _OrbitControls_instances, zoom_fn).call(this, e.deltaY);
       e.preventDefault();
     }
@@ -23325,6 +24155,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
    * @private
    */
   onContextMenu_fn = function(e) {
+    if (!this.enabled) return;
     e.preventDefault();
   };
   /**
@@ -24976,12 +25807,25 @@ struct Params {
       renderer = isCameraRenderer(renderer, "LitMesh");
       let { material, ...defaultParams } = parameters;
       if (!material) material = {};
-      let { colorSpace, outputColorSpace, fragmentOutput } = material;
+      let {
+        colorSpace,
+        transmissiveInputColorSpace,
+        transmissiveInputToneMapping,
+        outputColorSpace,
+        flatShading,
+        fragmentOutput
+      } = material;
       if (!colorSpace) {
         colorSpace = "srgb";
       }
       if (!outputColorSpace) {
         outputColorSpace = "srgb";
+      }
+      if (!transmissiveInputColorSpace) {
+        transmissiveInputColorSpace = "srgb";
+      }
+      if (transmissiveInputToneMapping === void 0) {
+        transmissiveInputToneMapping = "Khronos";
       }
       if (!fragmentOutput) {
         fragmentOutput = {
@@ -25025,6 +25869,8 @@ struct Params {
         thickness,
         attenuationDistance,
         attenuationColor,
+        multiscatterColor,
+        scatterAnisotropy,
         sheenColor,
         sheenRoughness,
         anisotropy,
@@ -25035,6 +25881,8 @@ struct Params {
         iridescence,
         iridescenceIOR,
         iridescenceThicknessRange,
+        diffuseTransmission,
+        diffuseTransmissionColor,
         // texture descriptors
         baseColorTexture,
         normalTexture,
@@ -25044,6 +25892,7 @@ struct Params {
         specularTexture,
         specularFactorTexture,
         specularColorTexture,
+        transmissionThicknessTexture,
         transmissionTexture,
         thicknessTexture,
         sheenTexture,
@@ -25051,11 +25900,15 @@ struct Params {
         sheenRoughnessTexture,
         anisotropyTexture,
         clearcoatTexture,
+        clearcoatFactorTexture,
         clearcoatRoughnessTexture,
         clearcoatNormalTexture,
         iridescenceTexture,
         iridescenceFactorTexture,
         iridescenceThicknessTexture,
+        diffuseTransmissionTexture,
+        diffuseTransmissionFactorTexture,
+        diffuseTransmissionColorTexture,
         // environment map
         environmentMap
       } = material;
@@ -25080,6 +25933,8 @@ struct Params {
         thickness,
         attenuationDistance,
         attenuationColor,
+        multiscatterColor,
+        scatterAnisotropy,
         sheenColor,
         sheenRoughness,
         anisotropy,
@@ -25090,6 +25945,8 @@ struct Params {
         iridescence,
         iridescenceIOR,
         iridescenceThicknessRange,
+        diffuseTransmission,
+        diffuseTransmissionColor,
         environmentMap
       });
       if (defaultParams.uniforms) {
@@ -25120,6 +25977,7 @@ struct Params {
         specularTexture,
         specularFactorTexture,
         specularColorTexture,
+        transmissionThicknessTexture,
         transmissionTexture,
         thicknessTexture,
         sheenTexture,
@@ -25127,11 +25985,15 @@ struct Params {
         sheenRoughnessTexture,
         anisotropyTexture,
         clearcoatTexture,
+        clearcoatFactorTexture,
         clearcoatRoughnessTexture,
         clearcoatNormalTexture,
         iridescenceTexture,
         iridescenceFactorTexture,
-        iridescenceThicknessTexture
+        iridescenceThicknessTexture,
+        diffuseTransmissionTexture,
+        diffuseTransmissionFactorTexture,
+        diffuseTransmissionColorTexture
       });
       materialTextures.forEach((textureDescriptor) => {
         if (textureDescriptor.sampler) {
@@ -25170,6 +26032,9 @@ struct Params {
           sampler: renderer.transmissionTarget.sampler
         };
       }
+      if (thickness) {
+        extensionsUsed.push("KHR_materials_volume");
+      }
       if (dispersion) {
         extensionsUsed.push("KHR_materials_dispersion");
       }
@@ -25185,9 +26050,16 @@ struct Params {
       if (iridescence) {
         extensionsUsed.push("KHR_materials_iridescence");
       }
+      if (diffuseTransmission !== void 0) {
+        extensionsUsed.push("KHR_materials_diffuse_transmission");
+      }
+      if (multiscatterColor !== void 0 || scatterAnisotropy !== void 0) {
+        extensionsUsed.push("KHR_materials_volume_scatter");
+      }
       const hasNormal = defaultParams.geometry && defaultParams.geometry.getAttributeByName("normal");
       if (defaultParams.geometry && !hasNormal) {
         defaultParams.geometry.computeGeometry();
+        flatShading = true;
       }
       const vs = LitMesh.getVertexShaderCode({
         bindings: defaultParams.bindings,
@@ -25195,6 +26067,7 @@ struct Params {
         chunks: vertexChunks,
         additionalVaryings
       });
+      const cullMode = parameters.cullMode ?? "back";
       const fs = LitMesh.getFragmentShaderCode({
         shadingModel: shading,
         outputColorSpace,
@@ -25202,7 +26075,11 @@ struct Params {
         chunks: fragmentChunks,
         extensionsUsed,
         receiveShadows: defaultParams.receiveShadows,
+        cullMode,
+        flatShading,
         toneMapping,
+        transmissiveInputColorSpace,
+        transmissiveInputToneMapping,
         geometry: defaultParams.geometry,
         additionalVaryings,
         materialUniform,
@@ -25212,6 +26089,7 @@ struct Params {
         specularTexture,
         specularFactorTexture,
         specularColorTexture,
+        transmissionThicknessTexture,
         transmissionTexture,
         thicknessTexture,
         emissiveTexture,
@@ -25221,11 +26099,15 @@ struct Params {
         sheenRoughnessTexture,
         anisotropyTexture,
         clearcoatTexture,
+        clearcoatFactorTexture,
         clearcoatRoughnessTexture,
         clearcoatNormalTexture,
         iridescenceTexture,
         iridescenceFactorTexture,
         iridescenceThicknessTexture,
+        diffuseTransmissionTexture,
+        diffuseTransmissionFactorTexture,
+        diffuseTransmissionColorTexture,
         transmissionBackgroundTexture,
         environmentMap
       });
@@ -25273,6 +26155,8 @@ struct Params {
         thickness,
         attenuationDistance,
         attenuationColor,
+        multiscatterColor,
+        scatterAnisotropy,
         sheenColor,
         sheenRoughness,
         anisotropy,
@@ -25283,6 +26167,8 @@ struct Params {
         iridescence,
         iridescenceIOR,
         iridescenceThicknessRange,
+        diffuseTransmission,
+        diffuseTransmissionColor,
         environmentMap
       } = parameters;
       const baseUniformStruct = {
@@ -25370,6 +26256,14 @@ struct Params {
           type: "vec3f",
           value: attenuationColor !== void 0 ? colorSpace === "srgb" ? sRGBToLinear(attenuationColor.clone()) : attenuationColor.clone() : new Vec3(1)
         },
+        multiscatterColor: {
+          type: "vec3f",
+          value: multiscatterColor !== void 0 ? colorSpace === "srgb" ? sRGBToLinear(multiscatterColor.clone()) : multiscatterColor.clone() : new Vec3(0)
+        },
+        scatterAnisotropy: {
+          type: "f32",
+          value: scatterAnisotropy !== void 0 ? scatterAnisotropy : 0
+        },
         // sheen
         sheenColor: {
           type: "vec3f",
@@ -25413,6 +26307,14 @@ struct Params {
         iridescenceThicknessRange: {
           type: "vec2f",
           value: iridescenceThicknessRange !== void 0 ? iridescenceThicknessRange.clone() : new Vec2(100, 400)
+        },
+        diffuseTransmission: {
+          type: "f32",
+          value: diffuseTransmission !== void 0 ? diffuseTransmission : 0
+        },
+        diffuseTransmissionColor: {
+          type: "vec3f",
+          value: diffuseTransmissionColor !== void 0 ? colorSpace === "srgb" ? sRGBToLinear(diffuseTransmissionColor.clone()) : diffuseTransmissionColor.clone() : new Vec3(1)
         },
         ...environmentMap && {
           envRotation: {
@@ -25463,18 +26365,23 @@ struct Params {
         specularTexture,
         specularFactorTexture,
         specularColorTexture,
+        transmissionThicknessTexture,
         transmissionTexture,
+        thicknessTexture,
         sheenTexture,
         sheenColorTexture,
         sheenRoughnessTexture,
         anisotropyTexture,
         clearcoatTexture,
+        clearcoatFactorTexture,
         clearcoatRoughnessTexture,
         clearcoatNormalTexture,
         iridescenceTexture,
         iridescenceFactorTexture,
         iridescenceThicknessTexture,
-        thicknessTexture
+        diffuseTransmissionTexture,
+        diffuseTransmissionFactorTexture,
+        diffuseTransmissionColorTexture
       } = parameters;
       const baseTextures = [baseColorTexture, emissiveTexture, occlusionTexture];
       const diffuseTextures = [...baseTextures, normalTexture];
@@ -25487,6 +26394,7 @@ struct Params {
       ];
       const pbrTextures = [
         ...specularTextures,
+        transmissionThicknessTexture,
         transmissionTexture,
         thicknessTexture,
         sheenTexture,
@@ -25494,11 +26402,15 @@ struct Params {
         sheenRoughnessTexture,
         anisotropyTexture,
         clearcoatTexture,
+        clearcoatFactorTexture,
         clearcoatRoughnessTexture,
         clearcoatNormalTexture,
         iridescenceTexture,
         iridescenceFactorTexture,
-        iridescenceThicknessTexture
+        iridescenceThicknessTexture,
+        diffuseTransmissionTexture,
+        diffuseTransmissionFactorTexture,
+        diffuseTransmissionColorTexture
       ];
       const materialTextures = (() => {
         switch (shading) {
@@ -25910,6 +26822,7 @@ struct Params {
     return intersections;
   };
 
+  const tempVec2 = new Vec2();
   const tempVec3 = new Vec3();
   const tempQuat = new Quat();
   class KeyframesAnimation {
@@ -25924,24 +26837,30 @@ struct Params {
       keyframes = null,
       values = null,
       path = null,
+      type = null,
+      inputValue = null,
       interpolation = "LINEAR"
     } = {}) {
       this.label = label;
       this.keyframes = keyframes;
       this.values = values;
       this.path = path;
+      this.type = type;
+      this.inputValue = inputValue;
       this.interpolation = interpolation;
       this.inputIndex = inputIndex;
-      this.weightsBindingInputs = [];
       this.onAfterUpdate = null;
       this.duration = this.keyframes ? this.keyframes[this.keyframes.length - 1] : 0;
     }
     /**
-     * Add a weight {@link BufferBindingInput} to the {@link weightsBindingInputs} array.
-     * @param input - Weight {@link BufferBindingInput}.
+     * Add a {@link BufferBindingInput} to the {@link inputValue} array. Use for weights animations.
+     * @param input - {@link BufferBindingInput} to add.
      */
-    addWeightBindingInput(input) {
-      this.weightsBindingInputs.push(input);
+    addBindingInput(input) {
+      if (!this.inputValue) {
+        this.inputValue = [];
+      }
+      this.inputValue.push(input);
     }
     /**
      * Get a cubic spline interpolation value.
@@ -25965,12 +26884,12 @@ struct Params {
       return this.interpolation === "CUBICSPLINE" ? index * 3 * size + size : index * size;
     }
     /**
-     * Update an {@link Object3D} transformation property or eventually the {@link weightsBindingInputs} based on the current time given, the {@link path} and {@link interpolation} used and the {@link keyframes} and {@link values}.
+     * Update the {@link inputValue} based on the current time given, the {@link path}, {@link type} and {@link interpolation} used and the {@link keyframes} and {@link values}.
      * @param target - {@link Object3D} to update.
      * @param currentTime - Current time in seconds.
      */
     update(target, currentTime = 0) {
-      if (!this.keyframes || !this.values || !this.path) return;
+      if (!this.keyframes || !this.values || !this.path || !this.type || this.inputValue === null) return;
       const nextTimeIndex = this.keyframes.findIndex((t) => t >= currentTime);
       if (nextTimeIndex === -1) return;
       const previousTimeIndex = nextTimeIndex - 1;
@@ -25979,10 +26898,30 @@ struct Params {
       const previousTime = this.keyframes[previousTimeIndex];
       const interpolatedTime = (currentTime - previousTime) / (nextTime - previousTime);
       const deltaTime = nextTime - previousTime;
-      if (this.path === "rotation") {
+      if (this.type === "scalar") {
+        const prevIndex = this.getIndexFromInterpolation(previousTimeIndex, 1);
+        const nextIndex = this.getIndexFromInterpolation(nextTimeIndex, 1);
+        const value = this.values[prevIndex];
+        this.inputValue = value;
+        if (this.interpolation === "LINEAR") {
+          const nextValue = this.values[nextIndex];
+          this.inputValue += (nextValue - value) * interpolatedTime;
+        } else if (this.interpolation === "CUBICSPLINE") {
+          const nextValue = this.values[nextIndex];
+          const previousOutputTangent = this.values[prevIndex + 1];
+          const nextInputTangent = this.values[nextIndex - 1];
+          this.inputValue = this.getCubicSplineComponentValue(
+            interpolatedTime,
+            value,
+            nextValue,
+            deltaTime * previousOutputTangent[0],
+            deltaTime * nextInputTangent[0]
+          );
+        }
+      } else if (this.inputValue instanceof Quat) {
         const prevIndex = this.getIndexFromInterpolation(previousTimeIndex, 4);
         const nextIndex = this.getIndexFromInterpolation(nextTimeIndex, 4);
-        target.quaternion.setFromArray([
+        this.inputValue.setFromArray([
           this.values[prevIndex],
           this.values[prevIndex + 1],
           this.values[prevIndex + 2],
@@ -26011,44 +26950,75 @@ struct Params {
             const cubicValue = [
               this.getCubicSplineComponentValue(
                 interpolatedTime,
-                target.quaternion.elements[0],
+                this.inputValue.elements[0],
                 tempQuat.elements[0],
                 deltaTime * previousOutputTangent[0],
                 deltaTime * nextInputTangent[0]
               ),
               this.getCubicSplineComponentValue(
                 interpolatedTime,
-                target.quaternion.elements[1],
+                this.inputValue.elements[1],
                 tempQuat.elements[1],
                 deltaTime * previousOutputTangent[1],
                 deltaTime * nextInputTangent[1]
               ),
               this.getCubicSplineComponentValue(
                 interpolatedTime,
-                target.quaternion.elements[2],
+                this.inputValue.elements[2],
                 tempQuat.elements[2],
                 deltaTime * previousOutputTangent[2],
                 deltaTime * nextInputTangent[2]
               ),
               this.getCubicSplineComponentValue(
                 interpolatedTime,
-                target.quaternion.elements[3],
+                this.inputValue.elements[3],
                 tempQuat.elements[3],
                 deltaTime * previousOutputTangent[3],
                 deltaTime * nextInputTangent[3]
               )
             ];
-            target.quaternion.setFromArray(cubicValue).normalize();
+            this.inputValue.setFromArray(cubicValue).normalize();
           } else {
-            target.quaternion.slerp(tempQuat, interpolatedTime);
+            this.inputValue.slerp(tempQuat, interpolatedTime);
           }
         }
-        target.shouldUpdateModelMatrix();
-      } else if (this.path === "translation" || this.path === "scale") {
-        const vectorName = this.path === "translation" ? "position" : this.path;
+        if (this.path === "rotation") {
+          target.shouldUpdateModelMatrix();
+        }
+      } else if (this.inputValue instanceof Vec2) {
+        const prevIndex = this.getIndexFromInterpolation(previousTimeIndex, 2);
+        const nextIndex = this.getIndexFromInterpolation(nextTimeIndex, 2);
+        this.inputValue.set(this.values[prevIndex], this.values[prevIndex + 1]);
+        if (this.interpolation === "LINEAR" || this.interpolation === "CUBICSPLINE") {
+          tempVec2.set(this.values[nextIndex], this.values[nextIndex + 1]);
+          if (this.interpolation === "CUBICSPLINE") {
+            const previousOutputTangent = [this.values[prevIndex + 2], this.values[prevIndex + 3]];
+            const nextInputTangent = [this.values[nextIndex - 2], this.values[nextIndex - 1]];
+            const cubicValue = [
+              this.getCubicSplineComponentValue(
+                interpolatedTime,
+                this.inputValue.x,
+                tempVec2.x,
+                deltaTime * previousOutputTangent[0],
+                deltaTime * nextInputTangent[0]
+              ),
+              this.getCubicSplineComponentValue(
+                interpolatedTime,
+                this.inputValue.y,
+                tempVec2.y,
+                deltaTime * previousOutputTangent[1],
+                deltaTime * nextInputTangent[1]
+              )
+            ];
+            this.inputValue.set(cubicValue[0], cubicValue[1]);
+          } else {
+            this.inputValue.lerp(tempVec2, interpolatedTime);
+          }
+        }
+      } else if (this.inputValue instanceof Vec3) {
         const prevIndex = this.getIndexFromInterpolation(previousTimeIndex, 3);
         const nextIndex = this.getIndexFromInterpolation(nextTimeIndex, 3);
-        target[vectorName].set(this.values[prevIndex], this.values[prevIndex + 1], this.values[prevIndex + 2]);
+        this.inputValue.set(this.values[prevIndex], this.values[prevIndex + 1], this.values[prevIndex + 2]);
         if (this.interpolation === "LINEAR" || this.interpolation === "CUBICSPLINE") {
           tempVec3.set(this.values[nextIndex], this.values[nextIndex + 1], this.values[nextIndex + 2]);
           if (this.interpolation === "CUBICSPLINE") {
@@ -26061,45 +27031,69 @@ struct Params {
             const cubicValue = [
               this.getCubicSplineComponentValue(
                 interpolatedTime,
-                target[vectorName].x,
+                this.inputValue.x,
                 tempVec3.x,
                 deltaTime * previousOutputTangent[0],
                 deltaTime * nextInputTangent[0]
               ),
               this.getCubicSplineComponentValue(
                 interpolatedTime,
-                target[vectorName].y,
+                this.inputValue.y,
                 tempVec3.y,
                 deltaTime * previousOutputTangent[1],
                 deltaTime * nextInputTangent[1]
               ),
               this.getCubicSplineComponentValue(
                 interpolatedTime,
-                target[vectorName].z,
+                this.inputValue.z,
                 tempVec3.z,
                 deltaTime * previousOutputTangent[2],
                 deltaTime * nextInputTangent[2]
               )
             ];
-            target[vectorName].set(cubicValue[0], cubicValue[1], cubicValue[2]);
+            this.inputValue.set(cubicValue[0], cubicValue[1], cubicValue[2]);
           } else {
-            target[vectorName].lerp(tempVec3, interpolatedTime);
+            this.inputValue.lerp(tempVec3, interpolatedTime);
           }
         }
-      } else if (this.path === "weights") {
-        const prevIndex = this.getIndexFromInterpolation(previousTimeIndex, this.weightsBindingInputs.length);
-        const nextIndex = this.getIndexFromInterpolation(nextTimeIndex, this.weightsBindingInputs.length);
-        for (let i = 0; i < this.weightsBindingInputs.length; i++) {
+      } else if (this.path === "weights" && this.inputValue.length) {
+        const inputLength = this.inputValue.length;
+        const prevIndex = this.getIndexFromInterpolation(previousTimeIndex, inputLength);
+        const nextIndex = this.getIndexFromInterpolation(nextTimeIndex, inputLength);
+        for (let i = 0; i < inputLength; i++) {
           const value = this.values[prevIndex + i];
-          this.weightsBindingInputs[i].value = value;
+          this.inputValue[i].value = value;
           if (this.interpolation === "LINEAR") {
             const nextValue = this.values[nextIndex + i];
-            this.weightsBindingInputs[i].value += (nextValue - value) * interpolatedTime;
+            this.inputValue[i].value += (nextValue - value) * interpolatedTime;
           } else if (this.interpolation === "CUBICSPLINE") {
             const nextValue = this.values[nextIndex + i];
             const previousOutputTangent = this.values[prevIndex + i + 1];
             const nextInputTangent = this.values[nextIndex + i - 1];
-            this.weightsBindingInputs[i].value = this.getCubicSplineComponentValue(
+            this.inputValue[i].value = this.getCubicSplineComponentValue(
+              interpolatedTime,
+              value,
+              nextValue,
+              deltaTime * previousOutputTangent[0],
+              deltaTime * nextInputTangent[0]
+            );
+          }
+        }
+      } else if (this.inputValue.length) {
+        const inputLength = this.inputValue.length;
+        const prevIndex = this.getIndexFromInterpolation(previousTimeIndex, inputLength);
+        const nextIndex = this.getIndexFromInterpolation(nextTimeIndex, inputLength);
+        for (let i = 0; i < inputLength; i++) {
+          const value = this.values[prevIndex + i];
+          this.inputValue[i] = value;
+          if (this.interpolation === "LINEAR") {
+            const nextValue = this.values[nextIndex + i];
+            this.inputValue[i] += (nextValue - value) * interpolatedTime;
+          } else if (this.interpolation === "CUBICSPLINE") {
+            const nextValue = this.values[nextIndex + i];
+            const previousOutputTangent = this.values[prevIndex + i + 1];
+            const nextInputTangent = this.values[nextIndex + i - 1];
+            this.inputValue[i] = this.getCubicSplineComponentValue(
               interpolatedTime,
               value,
               nextValue,
@@ -26116,7 +27110,7 @@ struct Params {
     throw TypeError(msg);
   };
   var __accessCheck$1 = (obj, member, msg) => member.has(obj) || __typeError$1("Cannot " + msg);
-  var __privateGet$1 = (obj, member, getter) => (__accessCheck$1(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+  var __privateGet$1 = (obj, member, getter) => (__accessCheck$1(obj, member, "read from private field"), member.get(obj));
   var __privateAdd$1 = (obj, member, value) => member.has(obj) ? __typeError$1("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   var __privateSet$1 = (obj, member, value, setter) => (__accessCheck$1(obj, member, "write to private field"), member.set(obj, value), value);
   var __privateMethod$1 = (obj, member, method) => (__accessCheck$1(obj, member, "access private method"), method);
@@ -26363,7 +27357,9 @@ struct Params {
     FLOAT: 5126,
     TRIANGLES: 4,
     TRIANGLE_STRIP: 5,
+    TRIANGLE_FAN: 6,
     LINES: 1,
+    LINE_LOOP: 2,
     LINE_STRIP: 3,
     POINTS: 0,
     CLAMP_TO_EDGE: 33071,
@@ -26389,6 +27385,7 @@ struct Params {
       this.renderer = renderer;
       this.gltf = gltf;
       __privateSet(this, _primitiveInstances, /* @__PURE__ */ new Map());
+      this.pointerAnimationsManager = null;
       this.scenesManager = {
         node: new Object3D(),
         nodes: /* @__PURE__ */ new Map(),
@@ -26414,7 +27411,7 @@ struct Params {
     /**
      * Get an attribute type, bufferFormat and size from its {@link GLTF.AccessorType | accessor type}.
      * @param type - {@link GLTF.AccessorType | accessor type} to use.
-     * @returns - corresponding type, bufferFormat and size.
+     * @returns - Corresponding type, bufferFormat and size.
      */
     static getVertexAttributeParamsFromType(type) {
       switch (type) {
@@ -26484,7 +27481,6 @@ struct Params {
         case GL$1.UNSIGNED_INT:
           return Uint32Array;
         case GL$1.FLOAT:
-        // GL.FLOAT
         default:
           return Float32Array;
       }
@@ -26496,16 +27492,21 @@ struct Params {
      */
     static gpuPrimitiveTopologyForMode(mode) {
       switch (mode) {
-        case GL$1.TRIANGLES:
-          return "triangle-list";
         case GL$1.TRIANGLE_STRIP:
+        // not supported by WebGPU, default to triangle-strip
+        case GL$1.TRIANGLE_FAN:
           return "triangle-strip";
         case GL$1.LINES:
           return "line-list";
         case GL$1.LINE_STRIP:
+        // not supported by WebGPU, default to line-strip
+        case GL$1.LINE_LOOP:
           return "line-strip";
         case GL$1.POINTS:
           return "point-list";
+        case GL$1.TRIANGLES:
+        default:
+          return "triangle-list";
       }
     }
     /**
@@ -26536,17 +27537,32 @@ struct Params {
       });
     }
     /**
+     * Get a glTF animation keyframes and values {@link TypedArray} from the given {@link GLTF.IAnimationSampler | glTF animation sampler}.
+     * @param sampler - {@link GLTF.IAnimationSampler | glTF animation sampler} to retrieve from.
+     * @returns - Corresponding keyframes and values {@link TypedArray}.
+     */
+    getAnimationKeyframesValues(sampler) {
+      const inputAccessor = this.gltf.accessors[sampler.input];
+      const keyframes = __privateMethod(this, _GLTFScenesManager_instances, getAccessorArray_fn).call(this, inputAccessor);
+      const outputAccessor = this.gltf.accessors[sampler.output];
+      const values = __privateMethod(this, _GLTFScenesManager_instances, getAccessorArray_fn).call(this, outputAccessor);
+      return { keyframes, values };
+    }
+    /**
      * Create the {@link ScenesManager.lights | lights} defined by the `KHR_lights_punctual` extension if any.
      */
     createLights() {
       if (this.gltf.extensions && this.gltf.extensions["KHR_lights_punctual"]) {
+        let lightIndex = 0;
         for (const light of this.gltf.extensions["KHR_lights_punctual"].lights) {
+          lightIndex++;
+          const label = light.name ?? `glTF ${light.type} light ${lightIndex}`;
           if (light.type === "spot") {
             const innerConeAngle = light.spot.innerConeAngle !== void 0 ? light.spot.innerConeAngle : 0;
             const outerConeAngle = light.spot.outerConeAngle !== void 0 ? light.spot.outerConeAngle : Math.PI / 4;
             this.scenesManager.lights.push(
               new SpotLight(this.renderer, {
-                ...light.name !== void 0 && { label: light.name },
+                label,
                 color: light.color !== void 0 ? new Vec3(light.color[0], light.color[1], light.color[2]) : new Vec3(1),
                 intensity: light.intensity !== void 0 ? light.intensity : 1,
                 range: light.range !== void 0 ? light.range : 0,
@@ -26557,7 +27573,7 @@ struct Params {
           } else if (light.type === "directional") {
             this.scenesManager.lights.push(
               new DirectionalLight(this.renderer, {
-                ...light.name !== void 0 && { label: light.name },
+                label,
                 color: light.color !== void 0 ? new Vec3(light.color[0], light.color[1], light.color[2]) : new Vec3(1),
                 intensity: light.intensity !== void 0 ? light.intensity : 1
               })
@@ -26565,7 +27581,7 @@ struct Params {
           } else if (light.type === "point") {
             this.scenesManager.lights.push(
               new PointLight(this.renderer, {
-                ...light.name !== void 0 && { label: light.name },
+                label,
                 color: light.color !== void 0 ? new Vec3(light.color[0], light.color[1], light.color[2]) : new Vec3(1),
                 intensity: light.intensity !== void 0 ? light.intensity : 1,
                 range: light.range !== void 0 ? light.range : 0
@@ -26582,7 +27598,7 @@ struct Params {
       if (this.gltf.samplers) {
         for (const [index, sampler] of Object.entries(this.gltf.samplers)) {
           const descriptor = {
-            label: "glTF sampler " + index,
+            label: sampler.name ?? "glTF sampler " + index,
             name: "gltfSampler" + index,
             // TODO better name?
             addressModeU: _GLTFScenesManager.gpuAddressModeForWrap(sampler.wrapS),
@@ -26639,13 +27655,18 @@ struct Params {
           case "sheenTexture":
           case "sheenColorTexture":
           case "sheenRoughnessTexture":
+          case "diffuseTransmissionTexture":
+          case "diffuseTransmissionFactorTexture":
+          case "diffuseTransmissionColorTexture":
             return "rgba8unorm-srgb";
           case "occlusionTexture":
           case "transmissionTexture":
-          case "clearcoatTexture":
+          case "clearcoatFactorTexture":
           case "iridescenceFactorTexture":
             return "r8unorm";
           case "thicknessTexture":
+          case "transmissionThicknessTexture":
+          case "clearcoatTexture":
           case "clearcoatRoughnessTexture":
           case "iridescenceTexture":
           case "iridescenceThicknessTexture":
@@ -26690,12 +27711,36 @@ struct Params {
             const index = gltfTextureInfo.index;
             const gltfTexture = this.gltf.textures[index];
             const source = gltfTexture.extensions && gltfTexture.extensions["EXT_texture_webp"] ? gltfTexture.extensions["EXT_texture_webp"].source : gltfTexture.source;
-            const samplerIndex = this.gltf.textures.find((t) => {
+            const basisTexture = gltfTexture.extensions && gltfTexture.extensions.KHR_texture_basisu;
+            if (source === void 0) {
+              if (!this.renderer.production) {
+                if (basisTexture) {
+                  throwWarning(
+                    `GLTFScenesManager: Basis/compressed textures not supported. This texture could not be created: ${name}`
+                  );
+                } else {
+                  throwWarning(
+                    `GLTFScenesManager: No texture source provided. This texture could not be created: ${name}`
+                  );
+                }
+              }
+              return;
+            }
+            const image = this.gltf.imagesBitmaps[source];
+            if (!this.renderer.production && basisTexture) {
+              throwWarning(
+                `GLTFScenesManager: Basis/compressed textures not supported. This texture will use a fallback image: '${name}'`
+              );
+            }
+            const samplerIndex = (gltfTextureInfo.index !== void 0 && this.gltf.textures[gltfTextureInfo.index].sampler) ?? this.gltf.textures.find((t) => {
               const src = t.extensions && t.extensions["EXT_texture_webp"] ? t.extensions["EXT_texture_webp"].source : t.source;
               return src === index;
             })?.sampler;
             const sampler = this.scenesManager.samplers[samplerIndex ?? 0];
-            const textureTransform = gltfTextureInfo.extensions && gltfTextureInfo.extensions["KHR_texture_transform"];
+            let textureTransform = gltfTextureInfo.extensions && gltfTextureInfo.extensions["KHR_texture_transform"];
+            if (!textureTransform && this.gltf.extensionsUsed && this.gltf.extensionsUsed.includes("KHR_animation_pointer")) {
+              textureTransform = {};
+            }
             const texCoordAttributeName = getUVAttributeName(
               textureTransform && textureTransform.texCoord !== void 0 ? textureTransform : gltfTextureInfo
             );
@@ -26723,7 +27768,6 @@ struct Params {
               });
               return;
             }
-            const image = this.gltf.imagesBitmaps[source];
             const texture = this.createTexture(material, image, name, !!textureTransform);
             if (textureTransform) {
               const { offset, rotation, scale } = textureTransform;
@@ -26767,9 +27811,7 @@ struct Params {
           const anisotropy = extensions && extensions.KHR_materials_anisotropy || null;
           const clearcoat = extensions && extensions.KHR_materials_clearcoat || null;
           const iridescence = extensions && extensions.KHR_materials_iridescence || null;
-          if (transmission && transmission.transmissionTexture && transmission.transmissionTexture.index !== void 0) {
-            createTexture(transmission.transmissionTexture, "transmissionTexture");
-          }
+          const diffuseTransmission = extensions && extensions.KHR_materials_diffuse_transmission || null;
           if (specular && (specular.specularTexture || specular.specularColorTexture)) {
             const { specularTexture, specularColorTexture } = specular;
             if (specularTexture && specularColorTexture && specularTexture.index !== void 0 && specularTexture.index === specularColorTexture.index) {
@@ -26783,8 +27825,15 @@ struct Params {
               }
             }
           }
-          if (volume && volume.thicknessTexture && volume.thicknessTexture.index !== void 0) {
-            createTexture(volume.thicknessTexture, "thicknessTexture");
+          if (transmission && volume && transmission.transmissionTexture && volume.thicknessTexture && transmission.transmissionTexture.index !== void 0 && transmission.transmissionTexture.index === volume.thicknessTexture.index) {
+            createTexture(transmission.transmissionTexture, "transmissionThicknessTexture");
+          } else {
+            if (transmission && transmission.transmissionTexture && transmission.transmissionTexture.index !== void 0) {
+              createTexture(transmission.transmissionTexture, "transmissionTexture");
+            }
+            if (volume && volume.thicknessTexture && volume.thicknessTexture.index !== void 0) {
+              createTexture(volume.thicknessTexture, "thicknessTexture");
+            }
           }
           if (sheen && (sheen.sheenColorTexture || sheen.sheenRoughnessTexture)) {
             const { sheenColorTexture, sheenRoughnessTexture } = sheen;
@@ -26804,11 +27853,15 @@ struct Params {
           }
           if (clearcoat && (clearcoat.clearcoatTexture || clearcoat.clearcoatRoughnessTexture || clearcoat.clearcoatNormalTexture)) {
             const { clearcoatTexture, clearcoatRoughnessTexture, clearcoatNormalTexture } = clearcoat;
-            if (clearcoatTexture && clearcoatTexture.index !== void 0) {
+            if (clearcoatTexture && clearcoatRoughnessTexture && clearcoatTexture.index !== void 0 && clearcoatTexture.index === clearcoatRoughnessTexture.index) {
               createTexture(clearcoatTexture, "clearcoatTexture");
-            }
-            if (clearcoatRoughnessTexture && clearcoatRoughnessTexture.index !== void 0) {
-              createTexture(clearcoatRoughnessTexture, "clearcoatRoughnessTexture");
+            } else {
+              if (clearcoatTexture && clearcoatTexture.index !== void 0) {
+                createTexture(clearcoatTexture, "clearcoatFactorTexture");
+              }
+              if (clearcoatRoughnessTexture && clearcoatRoughnessTexture.index !== void 0) {
+                createTexture(clearcoatRoughnessTexture, "clearcoatRoughnessTexture");
+              }
             }
             if (clearcoatNormalTexture && clearcoatNormalTexture.index !== void 0) {
               createTexture(clearcoatNormalTexture, "clearcoatNormalTexture");
@@ -26824,6 +27877,19 @@ struct Params {
               }
               if (iridescenceThicknessTexture && iridescenceThicknessTexture.index !== void 0) {
                 createTexture(iridescenceThicknessTexture, "iridescenceThicknessTexture");
+              }
+            }
+          }
+          if (diffuseTransmission && (diffuseTransmission.diffuseTransmissionTexture || diffuseTransmission.diffuseTransmissionColorTexture)) {
+            const { diffuseTransmissionTexture, diffuseTransmissionColorTexture } = diffuseTransmission;
+            if (diffuseTransmissionTexture && diffuseTransmissionColorTexture && diffuseTransmissionTexture.index !== void 0 && diffuseTransmissionTexture.index === diffuseTransmissionColorTexture.index) {
+              createTexture(diffuseTransmissionTexture, "diffuseTransmissionTexture");
+            } else {
+              if (diffuseTransmissionTexture && diffuseTransmissionTexture.index !== void 0) {
+                createTexture(diffuseTransmissionTexture, "diffuseTransmissionFactorTexture");
+              }
+              if (diffuseTransmissionColorTexture && diffuseTransmissionColorTexture.index !== void 0) {
+                createTexture(diffuseTransmissionColorTexture, "diffuseTransmissionColorTexture");
               }
             }
           }
@@ -26851,10 +27917,16 @@ struct Params {
       const transmission = extensions && extensions.KHR_materials_transmission || null;
       const specular = extensions && extensions.KHR_materials_specular || null;
       const volume = extensions && extensions.KHR_materials_volume || null;
+      const volumeScatter = extensions && extensions.KHR_materials_volume_scatter || null;
       const sheen = extensions && extensions.KHR_materials_sheen || null;
       const anisotropy = extensions && extensions.KHR_materials_anisotropy || null;
       const clearcoat = extensions && extensions.KHR_materials_clearcoat || null;
       const iridescence = extensions && extensions.KHR_materials_iridescence || null;
+      const diffuseTransmission = extensions && extensions.KHR_materials_diffuse_transmission || null;
+      const pbrSpecularGlossiness = extensions && extensions.KHR_materials_pbrSpecularGlossiness || null;
+      if (pbrSpecularGlossiness && !this.renderer.production) {
+        throwWarning("GLTFScenesManager: KHR_materials_pbrSpecularGlossiness is deprecated and therefore not supported.");
+      }
       const litMeshMaterialParams = {
         colorSpace: "linear",
         color: material.pbrMetallicRoughness && material.pbrMetallicRoughness.baseColorFactor !== void 0 ? new Vec3(
@@ -26864,8 +27936,8 @@ struct Params {
         ) : new Vec3(1),
         opacity: material.pbrMetallicRoughness && material.pbrMetallicRoughness.baseColorFactor !== void 0 ? material.pbrMetallicRoughness.baseColorFactor[3] : 1,
         alphaCutoff: material.alphaCutoff !== void 0 ? material.alphaCutoff : material.alphaMode === "MASK" ? 0.5 : 0,
-        metallic: material.pbrMetallicRoughness?.metallicFactor === void 0 ? 1 : material.pbrMetallicRoughness.metallicFactor,
-        roughness: material.pbrMetallicRoughness?.roughnessFactor === void 0 ? 1 : material.pbrMetallicRoughness.roughnessFactor,
+        metallic: material.pbrMetallicRoughness?.metallicFactor !== void 0 ? material.pbrMetallicRoughness.metallicFactor : 1,
+        roughness: material.pbrMetallicRoughness?.roughnessFactor !== void 0 ? material.pbrMetallicRoughness.roughnessFactor : 1,
         normalScale: material.normalTexture?.scale === void 0 ? new Vec2(1) : new Vec2(material.normalTexture.scale),
         occlusionIntensity: material.occlusionTexture?.strength === void 0 ? 1 : material.occlusionTexture.strength,
         emissiveIntensity: emissiveStrength && emissiveStrength.emissiveStrength !== void 0 ? emissiveStrength.emissiveStrength : 1,
@@ -26883,6 +27955,19 @@ struct Params {
         thickness: volume && volume.thicknessFactor !== void 0 ? volume.thicknessFactor : 0,
         attenuationDistance: volume && volume.attenuationDistance !== void 0 ? volume.attenuationDistance : Infinity,
         attenuationColor: volume && volume.attenuationColor !== void 0 ? new Vec3(volume.attenuationColor[0], volume.attenuationColor[1], volume.attenuationColor[2]) : new Vec3(1),
+        // volume scatter
+        ...volumeScatter && {
+          ...volumeScatter.multiscatterColor !== void 0 && {
+            multiscatterColor: new Vec3(
+              volumeScatter.multiscatterColor[0],
+              volumeScatter.multiscatterColor[1],
+              volumeScatter.multiscatterColor[2]
+            )
+          },
+          ...volumeScatter.scatterAnisotropy !== void 0 !== void 0 && {
+            scatterAnisotropy: volumeScatter.scatterAnisotropy
+          }
+        },
         // sheen
         ...sheen && {
           ...sheen.sheenColorFactor !== void 0 && {
@@ -26910,7 +27995,7 @@ struct Params {
             clearcoatRoughness: clearcoat.clearcoatRoughnessFactor
           }
         },
-        // iridescene
+        // iridescence
         ...iridescence && {
           ...iridescence.iridescenceFactor !== void 0 && {
             iridescence: iridescence.iridescenceFactor
@@ -26920,6 +28005,14 @@ struct Params {
             iridescence.iridescenceThicknessMinimum !== void 0 ? iridescence.iridescenceThicknessMinimum : 100,
             iridescence.iridescenceThicknessMaximum !== void 0 ? iridescence.iridescenceThicknessMaximum : 400
           )
+        },
+        ...diffuseTransmission && {
+          diffuseTransmission: diffuseTransmission.diffuseTransmissionFactor !== void 0 ? diffuseTransmission.diffuseTransmissionFactor : 0,
+          diffuseTransmissionColor: diffuseTransmission.diffuseTransmissionColorFactor !== void 0 ? new Vec3(
+            diffuseTransmission.diffuseTransmissionColorFactor[0],
+            diffuseTransmission.diffuseTransmissionColorFactor[1],
+            diffuseTransmission.diffuseTransmissionColorFactor[2]
+          ) : new Vec3(1)
         }
       };
       if (clearcoat && clearcoat.clearcoatNormalTexture && clearcoat.clearcoatNormalTexture.scale) {
@@ -26937,9 +28030,8 @@ struct Params {
                 dstFactor: "one-minus-src-alpha"
               },
               alpha: {
-                // This just prevents the canvas from having alpha "holes" in it.
                 srcFactor: "one",
-                dstFactor: "one"
+                dstFactor: "one-minus-src-alpha"
               }
             }
           }
@@ -27003,6 +28095,17 @@ struct Params {
         }
         const mesh = this.gltf.meshes[node.mesh];
         mesh.primitives.forEach((primitive, primitiveIndex) => {
+          const scenes = [];
+          if (this.gltf.scenes) {
+            this.gltf.scenes.forEach((scene, i) => {
+              if (scene.nodes.includes(index)) {
+                scenes.push({
+                  name: scene.name ?? `scene${i}`,
+                  index: i
+                });
+              }
+            });
+          }
           const meshDescriptor = {
             parent: child.node,
             texturesDescriptors: [],
@@ -27011,6 +28114,7 @@ struct Params {
               label: mesh.name ? mesh.name + " " + primitiveIndex : "glTF mesh " + primitiveIndex
             },
             nodes: [],
+            scenes,
             extensionsUsed: [],
             alternateDescriptors: /* @__PURE__ */ new Map(),
             alternateMaterials: /* @__PURE__ */ new Map()
@@ -27055,15 +28159,22 @@ struct Params {
       if (node.extensions && node.extensions.KHR_lights_punctual) {
         const light = this.scenesManager.lights[node.extensions.KHR_lights_punctual.light];
         light.position.set(0, 0, 0);
+        child.node.scale.set(1);
         if (light instanceof DirectionalLight || light instanceof SpotLight) {
           light.target.set(0, 0, -1);
+          const _updateWorldMatrix = child.node.updateWorldMatrix.bind(child.node);
+          child.node.updateWorldMatrix = (updateParents, updateChildren) => {
+            _updateWorldMatrix(updateParents, updateChildren);
+            light.updateTargetFromWorldMatrix();
+          };
         }
         light.parent = child.node;
       }
       if (node.camera !== void 0) {
+        child.node.scale.set(1);
         const gltfCamera = this.gltf.cameras[node.camera];
         if (gltfCamera.type === "perspective") {
-          let width, height;
+          let width = 0, height = 0;
           if (gltfCamera.perspective.aspectRatio !== void 0) {
             const minSize = Math.min(this.renderer.boundingRect.width, this.renderer.boundingRect.height);
             width = minSize / gltfCamera.perspective.aspectRatio;
@@ -27074,25 +28185,29 @@ struct Params {
           }
           const fov = gltfCamera.perspective.yfov * 180 / Math.PI;
           const camera = new PerspectiveCamera({
+            label: gltfCamera.name ?? `glTF Perspective camera ${node.camera}`,
             fov,
-            near: gltfCamera.perspective.znear,
-            far: gltfCamera.perspective.zfar,
+            near: gltfCamera.perspective.znear ?? 0.01,
+            far: gltfCamera.perspective.zfar ?? 1e3,
             width,
             height,
             pixelRatio: this.renderer.pixelRatio,
             ...gltfCamera.perspective.aspectRatio !== void 0 && { forceAspect: gltfCamera.perspective.aspectRatio }
           });
+          camera.position.set(0);
           camera.parent = child.node;
           this.scenesManager.cameras.push(camera);
         } else if (gltfCamera.type === "orthographic") {
           const camera = new OrthographicCamera({
-            near: gltfCamera.orthographic.znear,
-            far: gltfCamera.orthographic.zfar,
+            label: gltfCamera.name ?? `glTF Orthographic camera ${node.camera}`,
+            near: gltfCamera.orthographic.znear ?? 0.01,
+            far: gltfCamera.orthographic.zfar ?? 1e3,
             left: -gltfCamera.orthographic.xmag,
             right: gltfCamera.orthographic.xmag,
             top: gltfCamera.orthographic.ymag,
             bottom: -gltfCamera.orthographic.ymag
           });
+          camera.position.set(0);
           camera.parent = child.node;
           this.scenesManager.cameras.push(camera);
         }
@@ -27101,28 +28216,78 @@ struct Params {
         this.scenesManager.animations.forEach((targetsAnimation, i) => {
           const animation = this.gltf.animations[i];
           const channels = animation.channels.filter((channel) => channel.target.node === index);
+          const pointerChannels = animation.channels.filter(
+            (channel) => channel.target.path === "pointer" && channel.target.extensions && channel.target.extensions.KHR_animation_pointer && channel.target.extensions.KHR_animation_pointer.pointer && channel.target.extensions.KHR_animation_pointer.pointer.includes("weights")
+          );
+          pointerChannels.forEach((pointerChannel) => {
+            const pointerWeightChannel = {
+              sampler: pointerChannel.sampler,
+              target: {
+                node: null,
+                path: "weights"
+              }
+            };
+            const pointerPath = pointerChannel.target.extensions.KHR_animation_pointer.pointer;
+            const splitedPointerPaths = pointerPath.split("/");
+            splitedPointerPaths.shift();
+            pointerWeightChannel.target.node = parseInt(splitedPointerPaths[1]);
+            channels.push(pointerWeightChannel);
+          });
           if (channels && channels.length) {
             targetsAnimation.addTarget(child.node);
             channels.forEach((channel) => {
+              const animName = node.name ? `${node.name} animation` : `${channel.target.path} animation ${index}`;
+              const label = animation.name ? `${animation.name} ${animName}` : `Animation ${i} ${animName}`;
+              const input = (() => {
+                switch (channel.target.path) {
+                  case "rotation":
+                    return {
+                      type: "quaternion",
+                      value: child.node.quaternion
+                    };
+                  case "translation":
+                    return {
+                      type: "vec3",
+                      value: child.node.position
+                    };
+                  case "scale":
+                    return {
+                      type: "vec3",
+                      value: child.node.scale
+                    };
+                  case "weights":
+                    return {
+                      type: "array",
+                      value: null
+                    };
+                  default:
+                    return {
+                      type: null,
+                      value: null
+                    };
+                }
+              })();
               const sampler = animation.samplers[channel.sampler];
               const path = channel.target.path;
-              const inputAccessor = this.gltf.accessors[sampler.input];
-              const keyframes = __privateMethod(this, _GLTFScenesManager_instances, getAccessorArray_fn).call(this, inputAccessor);
-              const outputAccessor = this.gltf.accessors[sampler.output];
-              const values = __privateMethod(this, _GLTFScenesManager_instances, getAccessorArray_fn).call(this, outputAccessor);
-              const animName = node.name ? `${node.name} animation` : `${channel.target.path} animation ${index}`;
+              const { keyframes, values } = this.getAnimationKeyframesValues(sampler);
               const keyframesAnimation = new KeyframesAnimation({
-                label: animation.name ? `${animation.name} ${animName}` : `Animation ${i} ${animName}`,
+                label,
                 inputIndex: sampler.input,
                 keyframes,
                 values,
                 path,
+                type: input.type,
+                inputValue: input.value,
                 interpolation: sampler.interpolation
               });
               targetsAnimation.addTargetAnimation(child.node, keyframesAnimation);
             });
           }
         });
+      }
+      if (node.extensions && node.extensions.KHR_node_visibility) {
+        const visible = node.extensions.KHR_node_visibility.visible !== void 0 ? node.extensions.KHR_node_visibility.visible : true;
+        child.node.visible = visible;
       }
     }
     /**
@@ -27154,19 +28319,45 @@ struct Params {
      */
     createGeometry(primitive, primitiveInstance) {
       const { instances, meshDescriptor } = primitiveInstance;
+      let defaultAttributes = [];
+      const isIndexedGeometry = "indices" in primitive;
+      const topology = _GLTFScenesManager.gpuPrimitiveTopologyForMode(primitive.mode);
+      const dracoCompression = primitive.extensions && primitive.extensions.KHR_draco_mesh_compression;
+      if (dracoCompression) {
+        meshDescriptor.extensionsUsed.push("KHR_draco_mesh_compression");
+        if (!this.renderer.production) {
+          throwWarning("GLTFScenesManager: Draco compression is not supported.");
+          console.warn("This primitive instance geometry could not be created", primitiveInstance);
+        }
+        return;
+      }
+      let interleavedArray = __privateMethod(this, _GLTFScenesManager_instances, parsePrimitiveProperty_fn).call(this, primitive.attributes, defaultAttributes);
       const geometryBBox = new Box3();
       for (const [attribName, accessorIndex] of Object.entries(primitive.attributes)) {
         if (attribName === "POSITION") {
           const accessor = this.gltf.accessors[accessorIndex];
+          const positionAttr = defaultAttributes.find((attr) => attr.name === "position");
+          const dequantizePositions = Geometry.dequantize(
+            positionAttr && positionAttr.normalized && positionAttr.array && positionAttr.array.constructor || Float32Array
+          );
           if (geometryBBox) {
-            geometryBBox.min.min(new Vec3(accessor.min[0], accessor.min[1], accessor.min[2]));
-            geometryBBox.max.max(new Vec3(accessor.max[0], accessor.max[1], accessor.max[2]));
+            geometryBBox.min.min(
+              new Vec3(
+                dequantizePositions(accessor.min[0]),
+                dequantizePositions(accessor.min[1]),
+                dequantizePositions(accessor.min[2])
+              )
+            );
+            geometryBBox.max.max(
+              new Vec3(
+                dequantizePositions(accessor.max[0]),
+                dequantizePositions(accessor.max[1]),
+                dequantizePositions(accessor.max[2])
+              )
+            );
           }
         }
       }
-      let defaultAttributes = [];
-      let interleavedArray = __privateMethod(this, _GLTFScenesManager_instances, parsePrimitiveProperty_fn).call(this, primitive.attributes, defaultAttributes);
-      const isIndexedGeometry = "indices" in primitive;
       let indicesArray = null;
       let indicesConstructor = null;
       if (isIndexedGeometry) {
@@ -27176,7 +28367,10 @@ struct Params {
         const bytesPerElement = indicesConstructor.name === "Uint8Array" ? Uint16Array.BYTES_PER_ELEMENT : indicesConstructor.BYTES_PER_ELEMENT;
         const arrayOffset = accessor.byteOffset + bufferView.byteOffset;
         const arrayBuffer = this.gltf.arrayBuffers[bufferView.buffer];
-        const arrayLength = Math.ceil(accessor.count / bytesPerElement) * bytesPerElement;
+        const arrayLength = Math.min(
+          Math.ceil(accessor.count / bytesPerElement) * bytesPerElement,
+          Math.ceil((arrayBuffer.byteLength - arrayOffset) / bytesPerElement)
+        );
         indicesArray = indicesConstructor.name === "Uint8Array" ? Uint16Array.from(new indicesConstructor(arrayBuffer, arrayOffset, arrayLength)) : new indicesConstructor(arrayBuffer, arrayOffset, arrayLength);
         if (accessor.sparse) {
           const { indices, values } = __privateMethod(this, _GLTFScenesManager_instances, getSparseAccessorIndicesAndValues_fn).call(this, accessor);
@@ -27193,9 +28387,12 @@ struct Params {
       if (!interleavedArray) {
         this.sortAttributesByNames(["position", "uv", "normal"], defaultAttributes);
       }
+      if (!hasNormal && (topology.includes("line") || topology.includes("point"))) {
+        meshDescriptor.extensionsUsed.push("KHR_materials_unlit");
+      }
       const geometryAttributes = {
         instancesCount: instances.length,
-        topology: _GLTFScenesManager.gpuPrimitiveTopologyForMode(primitive.mode),
+        topology,
         vertexBuffers: [
           {
             name: "attributes",
@@ -27352,12 +28549,13 @@ struct Params {
      */
     createMaterial(primitive, primitiveInstance) {
       const { instances, nodes, meshDescriptor } = primitiveInstance;
+      const { geometry } = meshDescriptor.parameters;
       const instancesCount = instances.length;
       const meshIndex = instances[0].mesh;
       if (primitive.targets) {
         const bindings = [];
         const weights = this.gltf.meshes[meshIndex].weights;
-        let weightAnimation;
+        let weightAnimation = null;
         for (const animation of this.scenesManager.animations) {
           weightAnimation = animation.getAnimationByObject3DAndPath(meshDescriptor.parent, "weights");
           if (weightAnimation) break;
@@ -27392,7 +28590,7 @@ struct Params {
             struct
           });
           if (weightAnimation) {
-            weightAnimation.addWeightBindingInput(targetBinding.inputs.weight);
+            weightAnimation.addBindingInput(targetBinding.inputs.weight);
           }
           bindings.push(targetBinding);
         });
@@ -27411,7 +28609,7 @@ struct Params {
               const skinDef = this.scenesManager.skins[skinIndex];
               meshDescriptor.parameters.bindings = [...meshDescriptor.parameters.bindings, skinDef.binding];
               if (instanceIndex > 0) {
-                const tempBbox = meshDescriptor.parameters.geometry.boundingBox.clone();
+                const tempBbox = geometry.boundingBox.clone();
                 const tempMat4 = new Mat4();
                 skinDef.joints.forEach((object, jointIndex) => {
                   tempMat4.setFromArray(skinDef.inverseBindMatrices, jointIndex * 16);
@@ -27474,6 +28672,10 @@ struct Params {
             normal: {
               type: "mat3x3f",
               value: new Mat3()
+            },
+            handedness: {
+              type: "f32",
+              value: 1
             }
           }
         });
@@ -27492,6 +28694,8 @@ struct Params {
         });
         instancesBinding.childrenBindings.forEach((binding, index) => {
           const instanceNode = nodes[index];
+          const determinant = instanceNode.worldMatrix.determinant();
+          binding.inputs.handedness.value = determinant > 0 ? 1 : -1;
           const updateInstanceMatrices = () => {
             binding.inputs.model.value.copy(instanceNode.worldMatrix);
             binding.inputs.normal.value.getNormalMatrix(instanceNode.worldMatrix);
@@ -27509,14 +28713,28 @@ struct Params {
           meshDescriptor.parameters.bindings = [];
         }
         meshDescriptor.parameters.bindings.push(instancesBinding);
+      } else {
+        const determinant = primitiveInstance.nodes[0].worldMatrix.determinant();
+        if (determinant < 0) {
+          meshDescriptor.parameters.geometry.verticesOrder = "cw";
+        }
       }
       for (let i = 0; i < nodes.length; i++) {
-        const tempBbox = meshDescriptor.parameters.geometry.boundingBox.clone();
+        const tempBbox = geometry ? geometry.boundingBox.clone() : new Box3();
         const transformedBbox = tempBbox.applyMat4(meshDescriptor.nodes[i].worldMatrix);
         this.scenesManager.boundingBox.min.min(transformedBbox.min);
         this.scenesManager.boundingBox.max.max(transformedBbox.max);
       }
       this.scenesManager.boundingBox.max.max(new Vec3(1e-3));
+      const hasTangent = geometry && !!geometry.getAttributeByName("tangent");
+      if (!hasTangent && meshDescriptor.parameters.material.normalScale) {
+        meshDescriptor.parameters.material.normalScale.y *= -1;
+        if (meshDescriptor.parameters.material.clearcoatNormalScale) {
+          meshDescriptor.parameters.material.clearcoatNormalScale.y *= -1;
+        }
+      }
+      const hasNormal = primitive.attributes["NORMAL"] !== void 0;
+      meshDescriptor.parameters.material.flatShading = !hasNormal;
       if (primitive.extensions) {
         if (primitive.extensions["KHR_materials_variants"] && this.gltf.extensionsUsed && this.gltf.extensionsUsed.includes("KHR_materials_variants")) {
           meshDescriptor.extensionsUsed.push("KHR_materials_variants");
@@ -27550,6 +28768,7 @@ struct Params {
                 variantName: variant.name,
                 parent: meshDescriptor.parent,
                 nodes: meshDescriptor.nodes,
+                scenes: meshDescriptor.scenes,
                 extensionsUsed: [...meshDescriptor.extensionsUsed, ...extensionsUsed],
                 texturesDescriptors,
                 parameters: {
@@ -27561,6 +28780,7 @@ struct Params {
                   cullMode: variantMaterialParams.cullMode,
                   material: {
                     ...variantMaterialParams.material,
+                    flatShading: meshDescriptor.parameters.material.flatShading,
                     ...texturesDescriptors.reduce((acc, descriptor) => {
                       return { ...acc, [descriptor.texture.options.name]: descriptor };
                     }, {})
@@ -27568,6 +28788,12 @@ struct Params {
                   ...variantMaterialParams.targets && { targets: variantMaterialParams.targets }
                 }
               };
+              if (!hasTangent && variantDescriptor.parameters.material.normalScale) {
+                variantDescriptor.parameters.material.normalScale.y *= -1;
+                if (variantDescriptor.parameters.material.clearcoatNormalScale) {
+                  variantDescriptor.parameters.material.clearcoatNormalScale.y *= -1;
+                }
+              }
               meshDescriptor.alternateDescriptors.set(variant.name, variantDescriptor);
             }
           });
@@ -27603,6 +28829,17 @@ struct Params {
       }
     }
     /**
+     * Return the {@link PrimitiveInstanceDescriptor} corresponding the given glTF material index, if any.
+     * @param materialIndex - glTF material index.
+     * @returns - {@link PrimitiveInstanceDescriptor} found if any.
+     */
+    getPrimitiveInstanceFromGLTFMaterial(materialIndex) {
+      const primitiveInstancesKey = Array.from(__privateGet(this, _primitiveInstances).keys());
+      const primitive = primitiveInstancesKey.find((k) => k.material === materialIndex);
+      const primitiveInstance = __privateGet(this, _primitiveInstances).get(primitive);
+      return primitiveInstance ?? null;
+    }
+    /**
      * Add all the needed {@link LitMesh} based on the {@link ScenesManager#meshesDescriptors | ScenesManager meshesDescriptors} array.
      * @param patchMeshesParameters - allow to optionally patch the {@link LitMesh} parameters before creating it (can be used to add custom shaders chunks, uniforms or storages, change rendering options, etc.)
      * @returns - Array of created {@link LitMesh}.
@@ -27621,6 +28858,18 @@ struct Params {
             ...meshDescriptor.parameters
           });
           meshDescriptor.alternateMaterials.set("Default", mesh.material);
+          if (this.pointerAnimationsManager) {
+            this.pointerAnimationsManager.registerMeshAnimations(meshDescriptor, mesh);
+          }
+          if (this.gltf.scenes && this.gltf.scenes.length) {
+            const activeScene = this.gltf.scene || 0;
+            const isInActiveScene = meshDescriptor.scenes.length ? meshDescriptor.scenes.find((scene) => scene.index === activeScene) : true;
+            if (isInActiveScene) {
+              mesh.visible = true;
+            } else {
+              mesh.visible = false;
+            }
+          }
           meshDescriptor.alternateDescriptors.forEach((descriptor) => {
             const { material: originalMaterial } = meshDescriptor.parameters;
             const { environmentMap, shading, vertexChunks, additionalVaryings, fragmentChunks, toneMapping } = originalMaterial;
@@ -27849,7 +29098,11 @@ struct Params {
       const name = _GLTFScenesManager.getCleanAttributeName(attribName);
       const accessor = this.gltf.accessors[accessorIndex];
       const constructor = accessor.componentType ? _GLTFScenesManager.getTypedArrayConstructorFromComponentType(accessor.componentType) : Float32Array;
-      const bufferView = this.gltf.bufferViews[accessor.bufferView];
+      let bufferViewIndex = accessor.bufferView;
+      if (bufferViewIndex === void 0) {
+        continue;
+      }
+      const bufferView = this.gltf.bufferViews[bufferViewIndex];
       const byteStride = bufferView.byteStride;
       const accessorByteOffset = accessor.byteOffset;
       const isInterleaved = byteStride !== void 0 && accessorByteOffset !== void 0 && accessorByteOffset < byteStride;
@@ -27863,7 +29116,7 @@ struct Params {
       }
       const attributeParams = _GLTFScenesManager.getVertexAttributeParamsFromType(accessor.type);
       const { size } = attributeParams;
-      let array;
+      let array = null;
       if (maxByteOffset > 0) {
         const parentArray = new constructor(
           this.gltf.arrayBuffers[bufferView.buffer],
@@ -27924,10 +29177,29 @@ struct Params {
           array[i + 3] *= len;
         }
       }
+      let normalized = !!accessor.normalized;
+      const patchedAttributeParams = vertexBufferAttributeLayouts.find(
+        (vb) => size <= vb.size && vb.typedArrayConstructor === array.constructor && vb.normalized === normalized
+      );
+      if (this.gltf.extensionsRequired?.includes("KHR_mesh_quantization") && array.constructor !== Float32Array && (name === "position" || name === "normal" || name === "tangent" || name.indexOf("uv") !== -1)) {
+        const stride = patchedAttributeParams.size;
+        if (stride !== size) {
+          const newArray = new array.constructor(accessor.count * stride);
+          for (let i = 0; i < newArray.length; i++) {
+            const si = i * size;
+            const di = i * stride;
+            for (let c = 0; c < size; c++) {
+              newArray[di + c] = array[si + c];
+            }
+          }
+          array = newArray;
+        }
+      }
       const attribute = {
         name,
-        ...attributeParams,
-        array
+        ...patchedAttributeParams,
+        array,
+        normalized
       };
       attributes.push(attribute);
     }
@@ -28005,6 +29277,779 @@ struct Params {
   };
   let GLTFScenesManager = _GLTFScenesManager;
 
+  class GLTFPointerAnimationsManager {
+    /**
+     * {@link GLTFPointerAnimationsManager} constructor.
+     */
+    constructor() {
+      this.gltfScenesManager = null;
+      this.resetAnimationsMaps();
+    }
+    /** Reset the {@link materialAnimations} map. */
+    resetAnimationsMaps() {
+      this.materialAnimations = /* @__PURE__ */ new Map();
+    }
+    /**
+     * Add an {@link Object3D} as a {@link TargetsAnimationsManager} target.
+     * @param object - {@link Object3D} to add.
+     * @param targetsAnimation - {@link TargetsAnimationsManager} to add to.
+     */
+    addObjectToTargetAnimation(object, targetsAnimation) {
+      const hasTargetObject = targetsAnimation.targets.find((t) => t.object.object3DIndex === object.object3DIndex);
+      if (!hasTargetObject) {
+        targetsAnimation.addTarget(object);
+      }
+    }
+    /**
+     * Get the {@link PointerAnimationType | animation type} and animated property from a given pointer animation channel.
+     * @param propertyPaths - Array of strings parsed from the pointer channel extension path.
+     * @returns - The correct animation type and property.
+     */
+    getAnimationTypeAndProperty(propertyPaths) {
+      let animatedProperty = propertyPaths[propertyPaths.length - 1];
+      let animationType = "materials";
+      if (propertyPaths.includes("nodes")) {
+        animationType = "nodes";
+      } else if (propertyPaths.includes("cameras")) {
+        animationType = "cameras";
+      } else if (propertyPaths.includes("lights")) {
+        animationType = "lights";
+      } else if (propertyPaths.includes("normalTexture") && animatedProperty === "scale" && !propertyPaths.includes("KHR_texture_transform")) {
+        animationType = "materials";
+        animatedProperty = "normalScale";
+      } else if (propertyPaths.includes("clearcoatNormalTexture") && animatedProperty === "scale" && !propertyPaths.includes("KHR_texture_transform")) {
+        animationType = "materials";
+        animatedProperty = "clearcoatNormalScale";
+      } else if (propertyPaths.includes("occlusionTexture") && animatedProperty === "strength") {
+        animationType = "materials";
+        animatedProperty = "occlusionIntensity";
+      } else if (propertyPaths.find((p) => p.indexOf("texture") !== -1) || propertyPaths.find((p) => p.indexOf("Texture") !== -1)) {
+        animationType = "textures";
+      }
+      return { animationType, animatedProperty };
+    }
+    /**
+     * Get any camera animations {@link KeyframesAnimationValueType | value type} and key (property) to use for the {@link KeyframesAnimation}.
+     * @param animatedProperty - Animated property from the pointer channel extension path.
+     * @returns - The camera animations {@link KeyframesAnimationValueType | value type} and key (property) to animate.
+     */
+    getCleanCameraProperties(animatedProperty) {
+      switch (animatedProperty) {
+        case "znear":
+          return {
+            type: "scalar",
+            key: "near"
+          };
+        case "zfar":
+          return {
+            type: "scalar",
+            key: "far"
+          };
+        case "yfov":
+          return {
+            type: "scalar",
+            key: "fov"
+          };
+        case "aspectRatio":
+          return {
+            type: "scalar",
+            key: "forceAspect"
+          };
+        case "xmag":
+          return {
+            type: "scalar",
+            key: "left"
+          };
+        case "ymag":
+          return {
+            type: "scalar",
+            key: "top"
+          };
+        default:
+          return {
+            type: null,
+            key: null
+          };
+      }
+    }
+    /**
+     * Get any light animations {@link KeyframesAnimationValueType | value type} and key (property) to use for the {@link KeyframesAnimation}.
+     * @param animatedProperty - Animated property from the pointer channel extension path.
+     * @returns - The light animations {@link KeyframesAnimationValueType | value type} and key (property) to animate.
+     */
+    getCleanLightProperties(animatedProperty) {
+      switch (animatedProperty) {
+        case "color":
+          return {
+            type: "vec3",
+            key: animatedProperty
+          };
+        case "intensity":
+        case "range":
+        case "innerConeAngle":
+        case "outerConeAngle":
+          return {
+            type: "scalar",
+            key: animatedProperty
+          };
+        default:
+          return {
+            type: null,
+            key: null
+          };
+      }
+    }
+    /**
+     * Get any material animations {@link KeyframesAnimationValueType | value type} and key (property) to use for the {@link KeyframesAnimation}.
+     * @param animatedProperty - Animated property from the pointer channel extension path.
+     * @returns - The material animations {@link KeyframesAnimationValueType | value type} and {@link PointerAnimatedMaterialProperty | material key (property)} to animate.
+     */
+    getCleanMaterialProperties(animatedProperty) {
+      return (() => {
+        switch (animatedProperty) {
+          case "alphaCutoff":
+          case "occlusionIntensity":
+          case "clearcoatRoughness":
+          case "dispersion":
+          case "ior":
+          case "attenuationDistance":
+          case "normalScale":
+          case "clearcoatNormalScale":
+          case "iridescenceThicknessMinimum":
+          case "iridescenceThicknessMaximum":
+            return {
+              type: "scalar",
+              key: animatedProperty
+            };
+          case "attenuationColor":
+            return {
+              type: "vec3",
+              key: animatedProperty
+            };
+          case "emissiveFactor":
+            return {
+              type: "vec3",
+              key: "emissiveColor"
+            };
+          case "emissiveStrength":
+            return {
+              type: "scalar",
+              key: "emissiveIntensity"
+            };
+          case "metallicFactor":
+            return {
+              type: "scalar",
+              key: "metallic"
+            };
+          case "roughnessFactor":
+            return {
+              type: "scalar",
+              key: "roughness"
+            };
+          case "anisotropyStrength":
+            return {
+              type: "scalar",
+              key: "anisotropy"
+            };
+          case "clearcoatFactor":
+            return {
+              type: "scalar",
+              key: "clearcoat"
+            };
+          case "iridescenceFactor":
+            return {
+              type: "scalar",
+              key: "iridescence"
+            };
+          case "iridescenceIor":
+            return {
+              type: "scalar",
+              key: "iridescenceIOR"
+            };
+          case "sheenColorFactor":
+            return {
+              type: "vec3",
+              key: "sheenColor"
+            };
+          case "sheenRoughnessFactor":
+            return {
+              type: "scalar",
+              key: "sheenRoughness"
+            };
+          case "specularFactor":
+            return {
+              type: "scalar",
+              key: "specular"
+            };
+          case "specularColorFactor":
+            return {
+              type: "vec3",
+              key: "specularColor"
+            };
+          case "transmissionFactor":
+            return {
+              type: "scalar",
+              key: "transmission"
+            };
+          case "thicknessFactor":
+            return {
+              type: "scalar",
+              key: "thickness"
+            };
+          case "anisotropyRotation": {
+            return {
+              type: "scalar",
+              key: "anisotropyVector"
+            };
+          }
+          default:
+            return {
+              type: null,
+              key: null
+            };
+        }
+      })();
+    }
+    /**
+     * Get an array of {@link MediaTexture} from a given array of available {@link ShaderTextureDescriptor} corresponding to the given glTF texture name input.
+     * @param textureName - glTF texture name to use to retrieve the textures.
+     * @param texturesDescriptors - Array of available {@link ShaderTextureDescriptor}.
+     * @returns - Array of matching {@link MediaTexture}.
+     */
+    getCleanTextures(textureName, texturesDescriptors) {
+      const getMixedTextures = (textureName2, texturesDescriptors2) => {
+        const descriptor = texturesDescriptors2.find((t) => t.texture.options.name === textureName2);
+        const textures = [];
+        if (descriptor) {
+          textures.push(descriptor.texture);
+        } else {
+          if (textureName2 === "specularTexture" || textureName2 === "specularColorTexture") {
+            const specDesc = texturesDescriptors2.find((t) => t.texture.options.name === "specularTexture");
+            if (specDesc) {
+              textures.push(specDesc);
+            } else {
+              if (textureName2 === "specularTexture") {
+                const specFactorDesc = texturesDescriptors2.find((t) => t.texture.options.name === "specularFactorTexture");
+                if (specFactorDesc) textures.push(specFactorDesc.texture);
+              }
+              if (textureName2 === "specularColorTexture") {
+                const specColorDesc = texturesDescriptors2.find((t) => t.texture.options.name === "specularColorTexture");
+                if (specColorDesc) textures.push(specColorDesc.texture);
+              }
+            }
+          }
+          if (textureName2 === "transmissionTexture" || textureName2 === "thicknessTexture") {
+            const trthDesc = texturesDescriptors2.find((t) => t.texture.options.name === "transmissionThicknessTexture");
+            if (trthDesc) {
+              textures.push(trthDesc.texture);
+            } else {
+              if (textureName2 === "transmissionTexture") {
+                const trDesc = texturesDescriptors2.find((t) => t.texture.options.name === "transmissionTexture");
+                if (trDesc) textures.push(trDesc.texture);
+              }
+              if (textureName2 === "thicknessTexture") {
+                const thDesc = texturesDescriptors2.find((t) => t.texture.options.name === "thicknessTexture");
+                if (thDesc) textures.push(thDesc.texture);
+              }
+            }
+          }
+          if (textureName2 === "sheenColorTexture" || textureName2 === "sheenRoughnessTexture") {
+            const sheenDesc = texturesDescriptors2.find((t) => t.texture.options.name === "sheenTexture");
+            if (sheenDesc) {
+              textures.push(sheenDesc.texture);
+            } else {
+              if (textureName2 === "sheenColorTexture") {
+                const sheenColorDesc = texturesDescriptors2.find((t) => t.texture.options.name === "sheenColorTexture");
+                if (sheenColorDesc) textures.push(sheenColorDesc.texture);
+              }
+              if (textureName2 === "sheenRoughnessTexture") {
+                const sheenRoughDesc = texturesDescriptors2.find((t) => t.texture.options.name === "sheenRoughnessTexture");
+                if (sheenRoughDesc) textures.push(sheenRoughDesc.texture);
+              }
+            }
+          }
+          if (textureName2 === "clearcoatTexture" || textureName2 === "clearcoatRoughnessTexture") {
+            const ccDesc = texturesDescriptors2.find((t) => t.texture.options.name === "clearcoatTexture");
+            if (ccDesc) {
+              textures.push(ccDesc.texture);
+            } else {
+              if (textureName2 === "clearcoatTexture") {
+                const ccFactorDesc = texturesDescriptors2.find((t) => t.texture.options.name === "clearcoatFactorTexture");
+                if (ccFactorDesc) textures.push(ccFactorDesc.texture);
+              }
+              if (textureName2 === "clearcoatRoughnessTexture") {
+                const ccRoughDesc = texturesDescriptors2.find(
+                  (t) => t.texture.options.name === "clearcoatRoughnessTexture"
+                );
+                if (ccRoughDesc) textures.push(ccRoughDesc.texture);
+              }
+            }
+          }
+          if (textureName2 === "iridescenceTexture" || textureName2 === "iridescenceThicknessTexture") {
+            const irDesc = texturesDescriptors2.find((t) => t.texture.options.name === "iridescenceTexture");
+            if (irDesc) {
+              textures.push(irDesc.texture);
+            } else {
+              if (textureName2 === "iridescenceTexture") {
+                const irFactorDesc = texturesDescriptors2.find(
+                  (t) => t.texture.options.name === "iridescenceFactorTexture"
+                );
+                if (irFactorDesc) textures.push(irFactorDesc.texture);
+              }
+              if (textureName2 === "iridescenceThicknessTexture") {
+                const irThickDesc = texturesDescriptors2.find(
+                  (t) => t.texture.options.name === "iridescenceThicknessTexture"
+                );
+                if (irThickDesc) textures.push(irThickDesc.texture);
+              }
+            }
+          }
+          if (textureName2 === "diffuseTransmissionTexture" || textureName2 === "diffuseTransmissionColorTexture") {
+            const difDesc = texturesDescriptors2.find((t) => t.texture.options.name === "diffuseTransmissionTexture");
+            if (difDesc) {
+              textures.push(difDesc.texture);
+            } else {
+              if (textureName2 === "diffuseTransmissionTexture") {
+                const difFactorDesc = texturesDescriptors2.find(
+                  (t) => t.texture.options.name === "diffuseTransmissionFactorTexture"
+                );
+                if (difFactorDesc) textures.push(difFactorDesc.texture);
+              }
+              if (textureName2 === "diffuseTransmissionColorTexture") {
+                const difColorDesc = texturesDescriptors2.find(
+                  (t) => t.texture.options.name === "diffuseTransmissionColorTexture"
+                );
+                if (difColorDesc) textures.push(difColorDesc.texture);
+              }
+            }
+          }
+        }
+        return textures;
+      };
+      return (() => {
+        switch (textureName) {
+          case "baseColorTexture":
+          case "metallicRoughnessTexture":
+          case "normalTexture":
+          case "occlusionTexture":
+          case "emissiveTexture":
+          case "anisotropyTexture":
+          case "clearcoatNormalTexture":
+            const descriptor = texturesDescriptors.find((t) => t.texture.options.name === textureName);
+            return descriptor ? [descriptor.texture] : [];
+          case "specularTexture":
+          case "specularColorTexture":
+          case "transmissionTexture":
+          case "thicknessTexture":
+          case "sheenColorTexture":
+          case "sheenRoughnessTexture":
+          case "clearcoatTexture":
+          case "clearcoatRoughnessTexture":
+          case "iridescenceTexture":
+          case "iridescenceThicknessTexture":
+          case "diffuseTransmissionTexture":
+          case "diffuseTransmissionColorTexture":
+            return getMixedTextures(textureName, texturesDescriptors);
+          default:
+            return [];
+        }
+      })();
+    }
+    /**
+     * Create all the necessary pointer {@link KeyframesAnimation} for a given {@link GLTFScenesManager} instance.
+     *
+     * Parse the animations channels, and for each one:
+     * - Get the animation path and use it to extract the {@link PointerAnimationType | animation type} and animated property.
+     * - Based on the {@link PointerAnimationType | animation type}, create the corresponding {@link KeyframesAnimation} and handle the actual value update (except for materials, where it's done inside {@link registerMeshAnimations} method).
+     *
+     * @param gltfScenesManager - {@link GLTFScenesManager} instance to parse for pointer animations.
+     */
+    createPointerAnimations(gltfScenesManager = null) {
+      if (!gltfScenesManager) return;
+      if (this.gltfScenesManager) {
+        this.gltfScenesManager.pointerAnimationsManager = null;
+      }
+      this.gltfScenesManager = gltfScenesManager;
+      this.gltfScenesManager.pointerAnimationsManager = this;
+      this.resetAnimationsMaps();
+      if (this.gltfScenesManager.gltf.animations) {
+        this.gltfScenesManager.scenesManager.animations.forEach((targetsAnimation, i) => {
+          const animation = this.gltfScenesManager.gltf.animations[i];
+          const channels = animation.channels.filter((channel) => channel.target.path === "pointer");
+          if (channels && channels.length) {
+            channels.forEach((channel) => {
+              let propertyPath = channel.target.extensions.KHR_animation_pointer.pointer;
+              if (propertyPath.startsWith("/extensions/KHR_lights_punctual/")) {
+                const suffix = propertyPath.substring("/extensions/KHR_lights_punctual/".length);
+                propertyPath = "/" + suffix;
+              }
+              const splitedPropertyPaths = propertyPath.split("/");
+              splitedPropertyPaths.shift();
+              const { animatedProperty, animationType } = this.getAnimationTypeAndProperty(splitedPropertyPaths);
+              const propertyIndex = parseInt(splitedPropertyPaths[1]);
+              if (animationType === "nodes") {
+                if (animatedProperty === "rotation" || animatedProperty === "scale" || animatedProperty === "translation" || animatedProperty === "visible") {
+                  const node = this.gltfScenesManager.gltf.nodes[propertyIndex];
+                  const sceneNode = this.gltfScenesManager.scenesManager.nodes.get(propertyIndex);
+                  this.addObjectToTargetAnimation(sceneNode, targetsAnimation);
+                  const animName = node.name ? `${node.name} pointer animation` : `${animatedProperty} pointer animation ${propertyIndex}`;
+                  const label = animation.name ? `${animation.name} ${animName}` : `Animation ${i} ${animName}`;
+                  const sampler = animation.samplers[channel.sampler];
+                  const { keyframes, values } = this.gltfScenesManager.getAnimationKeyframesValues(sampler);
+                  const nodeProperties = (() => {
+                    switch (animatedProperty) {
+                      case "translation":
+                        return {
+                          inputValue: sceneNode.position,
+                          type: "vec3",
+                          path: animatedProperty
+                        };
+                      case "rotation":
+                        return {
+                          inputValue: sceneNode.quaternion,
+                          type: "quaternion",
+                          path: animatedProperty
+                        };
+                      case "scale":
+                        return {
+                          inputValue: sceneNode.scale,
+                          type: "vec3",
+                          path: animatedProperty
+                        };
+                      case "visible":
+                        return {
+                          inputValue: 0,
+                          type: "scalar",
+                          path: "pointer"
+                        };
+                      default:
+                        return {
+                          inputValue: null,
+                          type: null,
+                          path: null
+                        };
+                    }
+                  })();
+                  const keyframesAnimation = new KeyframesAnimation({
+                    label,
+                    inputIndex: sampler.input,
+                    keyframes,
+                    values,
+                    path: nodeProperties.path,
+                    type: nodeProperties.type,
+                    interpolation: sampler.interpolation,
+                    inputValue: nodeProperties.inputValue
+                  });
+                  targetsAnimation.addTargetAnimation(sceneNode, keyframesAnimation);
+                  if (animatedProperty === "visible") {
+                    keyframesAnimation.onAfterUpdate = () => {
+                      const value = keyframesAnimation.inputValue;
+                      sceneNode.visible = !!value;
+                    };
+                  }
+                }
+              } else if (animationType === "cameras") {
+                const isOrthographic = splitedPropertyPaths.includes("orthographic");
+                const gltfCamera = this.gltfScenesManager.gltf.cameras[propertyIndex];
+                const sampler = animation.samplers[channel.sampler];
+                const path = channel.target.path;
+                const { keyframes, values } = this.gltfScenesManager.getAnimationKeyframesValues(sampler);
+                const cameraProperties = this.getCleanCameraProperties(animatedProperty);
+                if (cameraProperties.key) {
+                  if (isOrthographic) {
+                    const camera = this.gltfScenesManager.scenesManager.cameras[propertyIndex];
+                    this.addObjectToTargetAnimation(camera, targetsAnimation);
+                    const animName = gltfCamera.name ? `${gltfCamera.name} animation` : `Orthographic camera ${propertyIndex} animation`;
+                    const label = animation.name ? `${animation.name} ${animName}` : `Animation ${i} ${animName}`;
+                    const keyframesAnimation = new KeyframesAnimation({
+                      label,
+                      inputIndex: sampler.input,
+                      keyframes,
+                      values,
+                      path,
+                      type: cameraProperties.type,
+                      interpolation: sampler.interpolation,
+                      ...cameraProperties.type === "scalar" && {
+                        inputValue: 0
+                      }
+                    });
+                    if (keyframesAnimation.type === "scalar") {
+                      keyframesAnimation.onAfterUpdate = () => {
+                        const value = keyframesAnimation.inputValue;
+                        if (cameraProperties.key === "left") {
+                          camera.left = -value;
+                          camera.right = value;
+                          this.gltfScenesManager.renderer.updateCameraViewport();
+                        } else if (cameraProperties.key === "top") {
+                          camera.top = value;
+                          camera.bottom = -value;
+                          this.gltfScenesManager.renderer.updateCameraViewport();
+                        } else {
+                          camera[cameraProperties.key] = value;
+                        }
+                      };
+                    } else {
+                      keyframesAnimation.inputValue = camera[cameraProperties.key];
+                    }
+                    targetsAnimation.addTargetAnimation(camera, keyframesAnimation);
+                  } else {
+                    const camera = this.gltfScenesManager.scenesManager.cameras[propertyIndex];
+                    this.addObjectToTargetAnimation(camera, targetsAnimation);
+                    const animName = gltfCamera.name ? `${gltfCamera.name} animation` : `Perspective camera ${propertyIndex} animation`;
+                    const label = animation.name ? `${animation.name} ${animName}` : `Animation ${i} ${animName}`;
+                    const keyframesAnimation = new KeyframesAnimation({
+                      label,
+                      inputIndex: sampler.input,
+                      keyframes,
+                      values,
+                      path,
+                      type: cameraProperties.type,
+                      interpolation: sampler.interpolation,
+                      ...cameraProperties.type === "scalar" && {
+                        inputValue: 0
+                      }
+                    });
+                    if (keyframesAnimation.type === "scalar") {
+                      keyframesAnimation.onAfterUpdate = () => {
+                        const value = keyframesAnimation.inputValue;
+                        if (cameraProperties.key === "fov") {
+                          camera.fov = value * 180 / Math.PI;
+                        } else if (cameraProperties.key === "forceAspect") {
+                          camera[cameraProperties.key] = value;
+                          this.gltfScenesManager.renderer.updateCameraViewport();
+                        } else {
+                          camera[cameraProperties.key] = value;
+                        }
+                      };
+                    } else {
+                      keyframesAnimation.inputValue = camera[cameraProperties.key];
+                    }
+                    targetsAnimation.addTargetAnimation(camera, keyframesAnimation);
+                  }
+                }
+              } else if (animationType === "lights") {
+                const light = this.gltfScenesManager.scenesManager.lights[propertyIndex];
+                const gltfLight = this.gltfScenesManager.gltf.extensions["KHR_lights_punctual"].lights[propertyIndex];
+                this.addObjectToTargetAnimation(light, targetsAnimation);
+                const lightProperties = this.getCleanLightProperties(animatedProperty);
+                const animName = `${light.options.label} ${lightProperties.key} animation`;
+                const label = animation.name ? `${animation.name} ${animName}` : `Animation ${i} ${animName}`;
+                const sampler = animation.samplers[channel.sampler];
+                const path = channel.target.path;
+                const { keyframes, values } = this.gltfScenesManager.getAnimationKeyframesValues(sampler);
+                if (lightProperties.key) {
+                  const keyframesAnimation = new KeyframesAnimation({
+                    label,
+                    inputIndex: sampler.input,
+                    keyframes,
+                    values,
+                    path,
+                    type: lightProperties.type,
+                    interpolation: sampler.interpolation,
+                    ...lightProperties.type === "scalar" && {
+                      inputValue: 0
+                    }
+                  });
+                  const innerConeAngle = gltfLight.type === "spot" ? gltfLight.spot.innerConeAngle !== void 0 ? gltfLight.spot.innerConeAngle : 0 : 0;
+                  const outerConeAngle = gltfLight.type === "spot" ? gltfLight.spot.outerConeAngle !== void 0 ? gltfLight.spot.outerConeAngle : Math.PI / 4 : Math.PI / 4;
+                  const getPenumbra = (innerConeAngle2, outerConeAngle2) => {
+                    return 1 - innerConeAngle2 / outerConeAngle2;
+                  };
+                  light.userData.innerConeAngle = innerConeAngle;
+                  light.userData.outerConeAngle = outerConeAngle;
+                  if (keyframesAnimation.type === "scalar") {
+                    keyframesAnimation.onAfterUpdate = () => {
+                      const value = keyframesAnimation.inputValue;
+                      if (lightProperties.key === "innerConeAngle") {
+                        light.userData.innerConeAngle = value;
+                        light.penumbra = getPenumbra(
+                          light.userData.innerConeAngle,
+                          light.userData.outerConeAngle
+                        );
+                      } else if (lightProperties.key === "outerConeAngle") {
+                        light.userData.outerConeAngle = value;
+                        light.penumbra = getPenumbra(
+                          light.userData.innerConeAngle,
+                          light.userData.outerConeAngle
+                        );
+                        light.angle = value;
+                      } else {
+                        light[lightProperties.key] = value;
+                      }
+                    };
+                  } else {
+                    keyframesAnimation.inputValue = light[lightProperties.key];
+                  }
+                  targetsAnimation.addTargetAnimation(light, keyframesAnimation);
+                }
+              } else if (animationType === "materials" || animationType === "textures") {
+                const primitiveInstance = this.gltfScenesManager.getPrimitiveInstanceFromGLTFMaterial(propertyIndex);
+                if (primitiveInstance) {
+                  const { meshDescriptor } = primitiveInstance;
+                  const targetObject = meshDescriptor.nodes[0];
+                  this.addObjectToTargetAnimation(targetObject, targetsAnimation);
+                  const sampler = animation.samplers[channel.sampler];
+                  const path = channel.target.path;
+                  const { keyframes, values } = this.gltfScenesManager.getAnimationKeyframesValues(sampler);
+                  if (animationType === "materials") {
+                    let animationMap = this.materialAnimations.get(meshDescriptor);
+                    if (!animationMap) {
+                      animationMap = /* @__PURE__ */ new Map();
+                      this.materialAnimations.set(meshDescriptor, animationMap);
+                    }
+                    if (animatedProperty === "baseColorFactor") {
+                      const colorValues = new values.constructor(keyframes.length * 3);
+                      const alphaValues = new values.constructor(keyframes.length);
+                      for (let i2 = 0, c = 0, a = 0; i2 < values.length; i2 += 4, c += 3, a++) {
+                        colorValues[c] = values[i2];
+                        colorValues[c + 1] = values[i2 + 1];
+                        colorValues[c + 2] = values[i2 + 2];
+                        alphaValues[a] = values[i2 + 3];
+                      }
+                      const colorAnimName = `${meshDescriptor.parameters.label} color animation`;
+                      const colorLabel = animation.name ? `${animation.name} ${colorAnimName}` : `Animation ${i} ${colorAnimName}`;
+                      const colorKeyframesAnimation = new KeyframesAnimation({
+                        label: colorLabel,
+                        inputIndex: sampler.input,
+                        keyframes,
+                        values: colorValues,
+                        path,
+                        type: "vec3",
+                        interpolation: sampler.interpolation
+                      });
+                      targetsAnimation.addTargetAnimation(targetObject, colorKeyframesAnimation);
+                      animationMap.set("color", colorKeyframesAnimation);
+                      const alphaAnimName = `${meshDescriptor.parameters.label} opacity animation`;
+                      const alphaLabel = animation.name ? `${animation.name} ${alphaAnimName}` : `Animation ${i} ${alphaAnimName}`;
+                      const alphaKeyframesAnimation = new KeyframesAnimation({
+                        label: alphaLabel,
+                        inputIndex: sampler.input,
+                        keyframes,
+                        values: alphaValues,
+                        path,
+                        type: "scalar",
+                        interpolation: sampler.interpolation,
+                        inputValue: 0
+                      });
+                      targetsAnimation.addTargetAnimation(targetObject, alphaKeyframesAnimation);
+                      animationMap.set("opacity", alphaKeyframesAnimation);
+                    } else {
+                      const materialProperties = this.getCleanMaterialProperties(animatedProperty);
+                      const animName = `${meshDescriptor.parameters.label} ${materialProperties.key} animation`;
+                      const label = animation.name ? `${animation.name} ${animName}` : `Animation ${i} ${animName}`;
+                      if (materialProperties.key) {
+                        const keyframesAnimation = new KeyframesAnimation({
+                          label,
+                          inputIndex: sampler.input,
+                          keyframes,
+                          values,
+                          path,
+                          type: materialProperties.type,
+                          interpolation: sampler.interpolation,
+                          ...materialProperties.type === "scalar" && {
+                            inputValue: 0
+                          }
+                        });
+                        targetsAnimation.addTargetAnimation(meshDescriptor.nodes[0], keyframesAnimation);
+                        animationMap.set(materialProperties.key, keyframesAnimation);
+                      }
+                    }
+                  } else {
+                    const textureName = splitedPropertyPaths.find((s) => s.indexOf("Texture") !== -1);
+                    const animatedTextures = this.getCleanTextures(textureName, meshDescriptor.texturesDescriptors);
+                    const normalTextureDesc = meshDescriptor.texturesDescriptors.find(
+                      (desc) => desc.texture.options.name === "normalTexture"
+                    );
+                    const clearcoatNormalTextureDesc = meshDescriptor.texturesDescriptors.find(
+                      (desc) => desc.texture.options.name === "clearcoatNormalTexture"
+                    );
+                    if (textureName === "normalTexture" && clearcoatNormalTextureDesc) {
+                      animatedTextures.push(clearcoatNormalTextureDesc.texture);
+                    } else if (textureName === "clearcoatNormalTexture" && normalTextureDesc) {
+                      animatedTextures.push(normalTextureDesc.texture);
+                    }
+                    if (animatedTextures.length) {
+                      animatedTextures.forEach((texture) => {
+                        if (texture.options.useTransform) {
+                          const animName = `${texture.options.label} ${animatedProperty} animation`;
+                          const label = animation.name ? `${animation.name} ${animName}` : `Animation ${i} ${animName}`;
+                          const keyframesAnimation = new KeyframesAnimation({
+                            label,
+                            inputIndex: sampler.input,
+                            keyframes,
+                            values,
+                            path,
+                            type: animatedProperty === "rotation" ? "scalar" : "vec2",
+                            interpolation: sampler.interpolation,
+                            ...animatedProperty === "rotation" && {
+                              inputValue: 0
+                            }
+                          });
+                          if (keyframesAnimation.type === "scalar") {
+                            keyframesAnimation.onAfterUpdate = () => {
+                              texture[animatedProperty] = keyframesAnimation.inputValue;
+                            };
+                          } else {
+                            keyframesAnimation.inputValue = texture[animatedProperty];
+                          }
+                          targetsAnimation.addTargetAnimation(targetObject, keyframesAnimation);
+                        }
+                      });
+                    }
+                  }
+                }
+              }
+            });
+          }
+        });
+      }
+    }
+    /**
+     * Handle the {@link PointerMaterialAnimations | pointer material animations} from the {@link materialAnimations} map after the {@link GLTFScenesManager} meshes have been created.
+     *
+     * Since material animations need an actual {@link LitMesh} to apply the animation, they actually need to be registered once the mesh has been created.
+     *
+     * This method is called internally by {@link GLTFScenesManager}.
+     *
+     * @param meshDescriptor - Reference {@link MeshDescriptor} to use as {@link materialAnimations} Map key.
+     * @param mesh - {@link LitMesh} that will have its material uniform animated.
+     */
+    registerMeshAnimations(meshDescriptor, mesh) {
+      const meshDescriptorAnimationMap = this.materialAnimations.get(meshDescriptor);
+      if (meshDescriptorAnimationMap && meshDescriptorAnimationMap.size) {
+        const geometry = meshDescriptor.parameters.geometry;
+        const hasTangent = geometry && !!geometry.getAttributeByName("tangent");
+        const normalYMultiplier = hasTangent ? 1 : -1;
+        meshDescriptorAnimationMap.forEach((animation, property) => {
+          if (animation.type === "scalar") {
+            animation.onAfterUpdate = () => {
+              const value = animation.inputValue;
+              if (mesh.uniforms.material[property]) {
+                if (property === "normalScale") {
+                  mesh.uniforms.material.normalScale.value.set(value, value * normalYMultiplier);
+                } else if (property === "clearcoatNormalScale") {
+                  mesh.uniforms.material.clearcoatNormalScale.value.set(value, value * normalYMultiplier);
+                } else if (property === "anisotropyVector") {
+                  mesh.uniforms.material.anisotropyVector.value.set(Math.cos(value), Math.sin(value));
+                } else {
+                  mesh.uniforms.material[property].value = value;
+                }
+              } else if (mesh.uniforms.material.iridescenceThicknessRange) {
+                if (property === "iridescenceThicknessMinimum") {
+                  mesh.uniforms.material.iridescenceThicknessRange.value.x = value;
+                } else if (property === "iridescenceThicknessMaximum") {
+                  mesh.uniforms.material.iridescenceThicknessRange.value.y = value;
+                }
+              }
+            };
+          } else if (mesh.uniforms.material[property]) {
+            animation.inputValue = mesh.uniforms.material[property].value;
+          }
+        });
+      }
+    }
+  }
+
   const GL = typeof window !== "undefined" && WebGLRenderingContext || {
     REPEAT: 10497
   };
@@ -28062,7 +30107,7 @@ struct Params {
      * @returns - {@link gltf} base object.
      */
     async loadFromJsonBase(json, baseUrl, binaryChunk = null) {
-      if (!baseUrl) {
+      if (baseUrl === void 0) {
         throw new Error("baseUrl must be specified.");
       }
       if (!json.asset) {
@@ -28102,24 +30147,30 @@ struct Params {
         }
       }
       const pendingImages = [];
+      const bitmapOptions = {
+        colorSpaceConversion: "none",
+        premultiplyAlpha: "none"
+      };
       for (let index = 0; index < json.images?.length || 0; ++index) {
         const image = json.images[index];
         if (image.uri) {
-          if (image.uri.includes(".webp")) {
+          if (image.uri.includes(".ktx2") || image.uri.includes(".basis")) {
+            throwWarning(
+              `GLTFLoader: Basis/compressed textures not supported. This file could not be loaded: ${image.uri}`
+            );
+          } else if (image.uri.includes(".webp")) {
             pendingImages[index] = new Promise((resolve, reject) => {
               const img = new Image();
               img.crossOrigin = "anonymous";
               img.onload = () => {
-                createImageBitmap(img, { colorSpaceConversion: "none" }).then(resolve).catch(reject);
+                createImageBitmap(img, bitmapOptions).then(resolve).catch(reject);
               };
               img.onerror = reject;
               img.src = GLTFLoader.resolveUri(image.uri, baseUrl);
             });
           } else {
             pendingImages[index] = fetch(GLTFLoader.resolveUri(image.uri, baseUrl)).then(async (response) => {
-              return createImageBitmap(await response.blob(), {
-                colorSpaceConversion: "none"
-              });
+              return createImageBitmap(await response.blob(), bitmapOptions);
             });
           }
         } else {
@@ -28134,7 +30185,7 @@ struct Params {
                 img.crossOrigin = "anonymous";
                 img.src = URL.createObjectURL(blob);
                 img.onload = () => {
-                  createImageBitmap(img, { colorSpaceConversion: "none" }).then((bitmap) => {
+                  createImageBitmap(img, bitmapOptions).then((bitmap) => {
                     URL.revokeObjectURL(img.src);
                     resolve(bitmap);
                   }).catch(reject);
@@ -28145,9 +30196,7 @@ struct Params {
                 };
               });
             } else {
-              return createImageBitmap(blob, {
-                colorSpaceConversion: "none"
-              });
+              return createImageBitmap(blob, bitmapOptions);
             }
           });
         }
@@ -28224,6 +30273,7 @@ struct Params {
   exports.EnvironmentMap = EnvironmentMap;
   exports.FullscreenPlane = FullscreenPlane;
   exports.GLTFLoader = GLTFLoader;
+  exports.GLTFPointerAnimationsManager = GLTFPointerAnimationsManager;
   exports.GLTFScenesManager = GLTFScenesManager;
   exports.GPUCameraRenderer = GPUCameraRenderer;
   exports.GPUCurtains = GPUCurtains;

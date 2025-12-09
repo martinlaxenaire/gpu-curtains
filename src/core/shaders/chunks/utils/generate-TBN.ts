@@ -1,4 +1,6 @@
-/** WGSL function to generate a tangent bitangent normal coordinate frame from the normal. */
+/**
+ * WGSL function to generate a tangent bitangent normal coordinate frame from the normal.
+ */
 export const generateTBN = /* wgsl */ `
 // Normal Mapping Without Precomputed Tangents in world space
 // http://www.thetenthplanet.de/archives/1180
@@ -17,7 +19,6 @@ fn getTangentFrame( modelPosition: vec3f, normal: vec3f, uv: vec2f ) -> mat3x3f 
   let B: vec3f = q1perp * st0.y + q0perp * st1.y;
 
   let det: f32 = max( dot( T, T ), dot( B, B ) );
-  // let scale: f32 = ( det == 0.0 ) ? 0.0 : inversesqrt( det );
   let scale: f32 = select(inverseSqrt( det ), 0.0, det == 0.0);
 
   return mat3x3f( T * scale, B * scale, N );

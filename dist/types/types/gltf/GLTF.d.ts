@@ -1,14 +1,14 @@
-import { GLTFExtensionsUsed, GLTFMaterialsExtensions, GLTFNodesExtensions, GLTFPrimitivesExtensions, GLTFTexturesExtensions, GLTFTexturesInfosExtensions } from './GLTFExtensions';
+import { GLTFAnimationsTargetsExtensions, GLTFExtensionsUsed, GLTFMaterialsExtensions, GLTFNodesExtensions, GLTFPrimitivesExtensions, GLTFTexturesExtensions, GLTFTexturesInfosExtensions } from './GLTFExtensions';
 /**
  * Module for glTF 2.0 Interface
  */
-export declare module GLTF {
+export declare namespace GLTF {
     /** Data type of the values composing each element in the accessor. */
     type AccessorComponentType = 5120 | 5121 | 5122 | 5123 | 5125 | 5126;
     /** Element type contained by the accessor (SCALAR, VEC2, ...). */
     type AccessorType = 'SCALAR' | 'VEC2' | 'VEC3' | 'VEC4' | 'MAT2' | 'MAT3' | 'MAT4';
     /** Name of the property to be modified by an animation channel. */
-    type AnimationChannelTargetPath = 'translation' | 'rotation' | 'scale' | 'weights';
+    type AnimationChannelTargetPath = 'translation' | 'rotation' | 'scale' | 'weights' | 'pointer';
     /** Interpolation method. */
     type AnimationSamplerInterpolation = 'LINEAR' | 'STEP' | 'CUBICSPLINE';
     /** Projection type used by a camera. */
@@ -168,6 +168,10 @@ export declare module GLTF {
          * instantiates
          */
         path: AnimationChannelTargetPath;
+        /**
+         * Dictionary object with animations targets extension-specific objects
+         */
+        extensions?: GLTFAnimationsTargetsExtensions;
     }
     /**
      * Combines input and output accessors with an interpolation algorithm to define a keyframe

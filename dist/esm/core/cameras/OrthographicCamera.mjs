@@ -14,6 +14,7 @@ class OrthographicCamera extends Camera {
    * @param parameters - {@link OrthographicCameraParams} used to create our {@link OrthographicCamera}.
    */
   constructor({
+    label = "Orthographic camera",
     near = 0.1,
     far = 150,
     left = -1,
@@ -24,7 +25,7 @@ class OrthographicCamera extends Camera {
     onMatricesChanged = () => {
     }
   } = {}) {
-    super({ near, far, pixelRatio, onMatricesChanged });
+    super({ label, near, far, pixelRatio, onMatricesChanged });
     /** @ignore */
     __privateAdd(this, _left);
     /** @ignore */

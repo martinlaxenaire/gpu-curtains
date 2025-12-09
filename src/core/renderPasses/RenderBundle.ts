@@ -539,8 +539,10 @@ export class RenderBundle {
     // render commands
     let offset = 0
     this.meshes.forEach((mesh) => {
-      mesh.material.render(this.encoder)
-      mesh.geometry.render(this.encoder)
+      if (mesh.visible) {
+        mesh.material.render(this.encoder)
+        mesh.geometry.render(this.encoder)
+      }
 
       offset++
     })
@@ -589,7 +591,15 @@ export class RenderBundle {
     if (!this.renderer.ready) return
 
     // render bundle ready, render meshes
-    if (this.ready && this.bundle && this.visible) {
+    let shouldRender = false
+    for (const [_uuid, mesh] of this.meshes) {
+      if (mesh.visible) {
+        shouldRender = true
+        break
+      }
+    }
+
+    if (this.ready && this.bundle && this.visible && shouldRender) {
       this.meshes.forEach((mesh) => {
         mesh.onBeforeRenderPass()
       })

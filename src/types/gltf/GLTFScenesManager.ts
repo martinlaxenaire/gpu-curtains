@@ -8,11 +8,19 @@ import { Camera } from '../../core/cameras/Camera'
 import { BufferBinding } from '../../core/bindings/BufferBinding'
 import { TargetsAnimationsManager } from '../../extras/animations/TargetsAnimationsManager'
 import { Mat4 } from '../../math/Mat4'
-import { LitMesh, LitMeshMaterialParams, LitMeshParameters, ShaderTextureDescriptor } from '../../extras/meshes/LitMesh'
+import {
+  LitMesh,
+  LitMeshMaterialParams,
+  LitMeshMaterialUniformParams,
+  LitMeshParameters,
+  ShaderTextureDescriptor,
+} from '../../extras/meshes/LitMesh'
 import { GLTFExtensionsUsed } from './GLTFExtensions'
 import { RenderMaterialParams } from '../Materials'
 import { RenderMaterial } from '../../core/materials/RenderMaterial'
 import { Light } from '../../core/lights/Light'
+import { KeyframesAnimation } from '../../extras/animations/KeyframesAnimation'
+import { MediaTexture } from '../../core/textures/MediaTexture'
 
 /** Parameters parsed from a {@link GLTF.IMaterial | glTF material} entry. */
 export interface MeshDescriptorMaterialParams {
@@ -30,6 +38,14 @@ export interface MeshDescriptorMaterialParams {
   material?: LitMeshMaterialParams
 }
 
+/** Defines a glTF scenes. */
+export interface SceneDescriptor {
+  /** Name of the scene. */
+  name: string
+  /** Index of the scene. */
+  index: number
+}
+
 /**
  * Define a {@link MeshDescriptor} object, which helps creating a {@link LitMesh} and its shaders based on the various properties.
  */
@@ -44,6 +60,8 @@ export interface MeshDescriptor {
   texturesDescriptors: ShaderTextureDescriptor[]
   /** All the {@link core/geometries/Geometry.Geometry | Geometry} instances {@link Object3D} nodes used to calculate the eventual instances world and normal matrices. */
   nodes: Object3D[]
+  /** Eventual scene to which the {@link MeshDescriptor} belongs. */
+  scenes: SceneDescriptor[]
   /** {@link GLTFExtensionsUsed} that should be used when creating the shaders. */
   extensionsUsed: GLTFExtensionsUsed
   /** Name of the {@link MeshDescriptor} variant. Default to `Default`. */

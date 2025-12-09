@@ -119,7 +119,7 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
   pointShadowsCubeFaceBindGroups: BindGroup[]
 
   /** Options used to create this {@link GPUCameraRenderer}. */
-  options: GPUCameraRendererOptions
+  declare options: GPUCameraRendererOptions
 
   /** @ignore */
   #shouldUpdateCameraLightsBindGroup: boolean
@@ -252,6 +252,7 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
 
     this.useCamera(
       new PerspectiveCamera({
+        label: `${this.options.label} default perspective camera`,
         fov: cameraParameters.fov,
         near: cameraParameters.near,
         far: cameraParameters.far,
@@ -274,14 +275,23 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
     if (this.camera && camera && this.camera.uuid === camera.uuid) return
 
     if (this.camera) {
-      this.camera.parent = null
+      // if camera parent is scene, remove from scene
+      if (this.camera.parent && this.camera.parent.object3DIndex === this.scene.object3DIndex) {
+        this.camera.parent = null
+      }
       this.camera.onMatricesChanged = () => {}
     }
 
     this.camera = camera as any
-    this.camera.parent = this.scene
+    // if camera has no parent, set scene as parent
+    if (!this.camera.parent) {
+      this.camera.parent = this.scene
+    }
 
     this.resizeCamera()
+
+    // force update of projection matrices
+    this.camera.shouldUpdateProjectionMatrices()
 
     if (this.bindings.camera) {
       this.camera.onMatricesChanged = () => this.onCameraMatricesChanged()
@@ -290,6 +300,10 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
       this.bindings.camera.inputs.view.value = this.camera.viewMatrix
       this.bindings.camera.inputs.projection.value = this.camera.projectionMatrix
       this.bindings.camera.inputs.position.value = this.camera.actualPosition
+
+      this.bindings.camera.inputs.view.shouldUpdate = true
+      this.bindings.camera.inputs.projection.shouldUpdate = true
+      this.bindings.camera.inputs.position.shouldUpdate = true
 
       for (const mesh of this.meshes) {
         if ('modelViewMatrix' in mesh) {
@@ -315,6 +329,20 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
     if (this.camera instanceof PerspectiveCamera && this.camera.forceAspect) {
       width = Math.min(width, height * this.camera.forceAspect)
       height = Math.min(width / this.camera.forceAspect, height)
+
+      this.setCameraViewport({
+        width,
+        height,
+        top: (this.canvas.height - height) * 0.5,
+        left: (this.canvas.width - width) * 0.5,
+        minDepth: 0,
+        maxDepth: 1,
+      })
+    } else if (this.camera instanceof OrthographicCamera) {
+      const aspectRatio = (this.camera.right - this.camera.left) / (this.camera.top - this.camera.bottom)
+
+      width = Math.min(width, height * aspectRatio)
+      height = Math.min(width / aspectRatio, height)
 
       this.setCameraViewport({
         width,
@@ -898,9 +926,15 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
 
       this.transmissionTarget.passEntry.onBeforeRenderPass = (commandEncoder, swapChainTexture) => {
         // Copy background scene texture to the output, because the output texture needs mips
-        // and we can't have mips on a rendered texture
+        // and we can't have mips on a rendered swap chain texture
         this.copyGPUTextureToTexture(swapChainTexture, this.transmissionTarget.texture, commandEncoder)
       }
+
+      // copy transparent objects to the transmission stack as well
+      // to render them again on top of transmissive objects
+      const mainPassEntry = this.scene.getRenderTargetPassEntry()
+      this.transmissionTarget.passEntry.stack.projected.transparent = mainPassEntry.stack.projected.transparent
+      mainPassEntry.stack.projected.transparent = []
     }
   }
 

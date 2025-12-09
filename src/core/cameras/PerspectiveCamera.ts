@@ -55,6 +55,7 @@ export class PerspectiveCamera extends Camera {
    */
   constructor(
     {
+      label = 'Perspective camera',
       fov = 50,
       near = 0.1,
       far = 150,
@@ -67,7 +68,7 @@ export class PerspectiveCamera extends Camera {
       },
     } = {} as PerspectiveCameraParams
   ) {
-    super({ near, far, pixelRatio, onMatricesChanged })
+    super({ label, near, far, pixelRatio, onMatricesChanged })
 
     this.forceAspect = forceAspect
 

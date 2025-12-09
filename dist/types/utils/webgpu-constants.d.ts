@@ -1,12 +1,12 @@
 /**
  * GPUShaderStage constants with fallbacks.
  */
-export declare const WebGPUShaderStageConstants: Record<string, number>;
+export declare const WebGPUShaderStageConstants: GPUShaderStage;
 /**
  * GPUBufferUsage constants with fallbacks.
  */
-export declare const WebGPUBufferUsageConstants: Record<string, number>;
+export declare const WebGPUBufferUsageConstants: GPUBufferUsage;
 /**
  * GPUTextureUsage constants with fallbacks.
  */
-export declare const WebGPUTextureUsageConstants: Record<string, number>;
+export declare const WebGPUTextureUsageConstants: GPUTextureUsage;

@@ -1,4 +1,4 @@
-import { Geometry, GPUCameraRenderer, GPUCurtains, GPUDeviceManager, Mesh, Vec3 } from '../../dist/esm/index.mjs'
+import { Geometry, GPUCameraRenderer, GPUDeviceManager, Mesh, Vec3 } from '../../dist/esm/index.mjs'
 
 window.addEventListener('load', async () => {
   // first, we need a WebGPU device, that's what GPUDeviceManager is for
@@ -30,7 +30,7 @@ window.addEventListener('load', async () => {
   const meshVs = /* wgsl */ `  
     struct VSOutput {
       @builtin(position) position: vec4f,
-      @location(0) color: vec3f,
+      @location(0) color: vec4f,
     };
     
     fn rotationMatrix(axis: vec3f, angle: f32) -> mat4x4f {
@@ -93,12 +93,12 @@ window.addEventListener('load', async () => {
   const meshFs = /* wgsl */ `
     struct VSOutput {
       @builtin(position) position: vec4f,
-      @location(0) color: vec3f,
+      @location(0) color: vec4f,
     };
   
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       // use our color attribute
-      return vec4(fsInput.color, 1.0);
+      return fsInput.color;
     }
   `
 
@@ -135,16 +135,16 @@ window.addEventListener('load', async () => {
   ])
 
   // prettier-ignore
-  const colors = [
-    26, 200, 237, // front face color
-    175, 117, 149, // right face color
-    140, 33, 85, // back face color
-    92, 26, 27, // left face color
-    174, 212, 23, // bottom face color
-    174, 212, 23 // bottom face color
-  ]
-
-  const verticesColors = new Float32Array(colors.map((value) => value / 255))
+  // use one color per face
+  // RGBA colors in [0, 255] range
+  const verticesColors = new Uint8Array([
+    26, 200, 237, 255, // front face color
+    175, 117, 149, 255, // right face color
+    140, 33, 85, 255, // back face color
+    92, 26, 27, 255, // left face color
+    174, 212, 23, 255, // bottom face color
+    174, 212, 23, 255 // bottom face color
+  ])
 
   const geometry = new Geometry({
     instancesCount: instancesGrid.x * instancesGrid.y * instancesGrid.z,
@@ -152,19 +152,16 @@ window.addEventListener('load', async () => {
 
   geometry.setAttribute({
     name: 'position',
-    type: 'vec3f',
-    bufferFormat: 'float32x3',
     size: 3,
     array: vertices,
   })
 
   geometry.setAttribute({
     name: 'color',
-    type: 'vec3f',
-    bufferFormat: 'float32x3',
-    size: 3,
+    size: 4,
     array: verticesColors,
     verticesStride: 3, // insert one face color for every 3 vertices
+    normalized: true, // normalize colors from the [0, 255] range to [0, 1] range
   })
 
   const params = {

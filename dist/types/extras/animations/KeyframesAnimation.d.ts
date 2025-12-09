@@ -1,7 +1,14 @@
 import { TypedArray } from '../../core/bindings/utils';
 import { GLTF } from '../../types/gltf/GLTF';
+import { Vec3 } from '../../math/Vec3';
+import { Quat } from '../../math/Quat';
 import { BufferBindingInput } from '../../core/bindings/BufferBinding';
 import { Object3D } from '../../core/objects3D/Object3D';
+import { Vec2 } from '../../math/Vec2';
+/** Defines the different value types that can be animated. */
+export type KeyframesAnimationValueType = 'scalar' | 'vec2' | 'vec3' | 'vec4' | 'quaternion' | 'array';
+/** Defines the different input values types. */
+export type KeyframesAnimationInputValue = number | Vec2 | Vec3 | Quat | number[] | BufferBindingInput[];
 /** Parameters used to create a {@link KeyframesAnimation}. */
 export interface KeyframesAnimationParams {
     /** Optional label of the {@link KeyframesAnimation}. */
@@ -12,8 +19,12 @@ export interface KeyframesAnimationParams {
     keyframes?: TypedArray;
     /** Values {@link Float32Array} of the {@link KeyframesAnimation} to use for animation, mapped to the {@link keyframes} array. Could be omitted when used for a skin joint matrices animation. */
     values?: TypedArray;
-    /** {@link GLTF.AnimationChannelTargetPath | glTF animation path} to use, i.e. what component should be animated between 'translation', 'rotation', 'scale' and 'weights'. Could be omitted when used for a skin joint matrices animation. */
+    /** {@link GLTF.AnimationChannelTargetPath | glTF animation path} to use, i.e. what component should be animated between 'translation', 'rotation', 'scale', 'weights' and 'pointer'. Could be omitted when used for a skin joint matrices animation. */
     path?: GLTF.AnimationChannelTargetPath;
+    /** Type of the value being animated. Could be omitted when used for a skin joint matrices animation. */
+    type?: KeyframesAnimationValueType;
+    /** Input value being animated. Could be omitted when used for a skin joint matrices animation. */
+    inputValue?: KeyframesAnimationInputValue;
     /** {@link GLTF.AnimationSamplerInterpolation | glTF sampler interpolation} to use, i.e. how the animated values should be computed. Default to `LINEAR` . */
     interpolation?: GLTF.AnimationSamplerInterpolation;
 }
@@ -35,22 +46,24 @@ export declare class KeyframesAnimation {
     duration: number;
     /** {@link GLTF.AnimationChannelTargetPath | glTF animation path} to use, i.e. what component should be animated between 'translation', 'rotation', 'scale' and 'weights'. Could be omitted when used for a skin joint matrices animation. */
     path: GLTF.AnimationChannelTargetPath | null;
+    /** Type of the value being animated. Could be omitted when used for a skin joint matrices animation. */
+    type: KeyframesAnimationValueType | null;
+    /** Input value being animated. Could be omitted when used for a skin joint matrices animation. */
+    inputValue: KeyframesAnimationInputValue | null;
     /** {@link GLTF.AnimationSamplerInterpolation | glTF sampler interpolation} to use, i.e. how the animated values should be computed. Default to `LINEAR` . */
     interpolation: GLTF.AnimationSamplerInterpolation;
-    /** Optional {@link BufferBindingInput} array to update a weight binding. */
-    weightsBindingInputs: BufferBindingInput[];
     /** Callback to run after the animated value has been updated. Used for skin joints animations to update joint matrices. */
     onAfterUpdate: () => void | null;
     /**
      * KeyframesAnimation constructor
      * @param parameters - {@link KeyframesAnimationParams | Parameters} used to create this {@link KeyframesAnimation}.
      */
-    constructor({ label, inputIndex, keyframes, values, path, interpolation, }?: KeyframesAnimationParams);
+    constructor({ label, inputIndex, keyframes, values, path, type, inputValue, interpolation, }?: KeyframesAnimationParams);
     /**
-     * Add a weight {@link BufferBindingInput} to the {@link weightsBindingInputs} array.
-     * @param input - Weight {@link BufferBindingInput}.
+     * Add a {@link BufferBindingInput} to the {@link inputValue} array. Use for weights animations.
+     * @param input - {@link BufferBindingInput} to add.
      */
-    addWeightBindingInput(input: BufferBindingInput): void;
+    addBindingInput(input: BufferBindingInput): void;
     /**
      * Get a cubic spline interpolation value.
      * @param t - Current time value to use in the [0, 1] range.
@@ -67,7 +80,7 @@ export declare class KeyframesAnimation {
      */
     getIndexFromInterpolation(index?: number, size?: number): number;
     /**
-     * Update an {@link Object3D} transformation property or eventually the {@link weightsBindingInputs} based on the current time given, the {@link path} and {@link interpolation} used and the {@link keyframes} and {@link values}.
+     * Update the {@link inputValue} based on the current time given, the {@link path}, {@link type} and {@link interpolation} used and the {@link keyframes} and {@link values}.
      * @param target - {@link Object3D} to update.
      * @param currentTime - Current time in seconds.
      */

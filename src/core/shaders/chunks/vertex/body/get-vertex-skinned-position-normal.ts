@@ -32,17 +32,17 @@ export const getVertexSkinnedPositionNormal = ({ bindings = [], geometry }: Vert
 
   if (hasSkin) {
     output += hasInstances
-      ? `
+      ? /* wgsl */ `
   var instancesWorldPosition = array<vec4f, ${geometry.instancesCount}>();
   var instancesNormal = array<vec3f, ${geometry.instancesCount}>();
       `
       : ''
 
-    output += `
-  let skinJoints: vec4f = ${skinJoints.map((skinJoint) => skinJoint.name).join(' + ')};`
+    output += /* wgsl */ `
+  let skinJoints: vec4u = vec4u(${skinJoints.map((skinJoint) => skinJoint.name).join(' + ')});`
 
-    output += `
-  var skinWeights: vec4f = ${skinWeights.map((skinWeight) => skinWeight.name).join(' + ')};
+    output += /* wgsl */ `
+  var skinWeights: vec4f = vec4f(${skinWeights.map((skinWeight) => skinWeight.name).join(' + ')});
   
   let skinWeightsSum = dot(skinWeights, vec4(1.0));
   if(skinWeightsSum > 0.0) {
@@ -55,10 +55,10 @@ export const getVertexSkinnedPositionNormal = ({ bindings = [], geometry }: Vert
   ${hasInstances ? '// instancing with different skins: joints calculations for skin ' + bindingIndex + '\n' : ''}
   // position
   let skinMatrix_${bindingIndex}: mat4x4f = 
-    skinWeights.x * ${binding.name}.joints[u32(skinJoints.x)].jointMatrix +
-    skinWeights.y * ${binding.name}.joints[u32(skinJoints.y)].jointMatrix +
-    skinWeights.z * ${binding.name}.joints[u32(skinJoints.z)].jointMatrix +
-    skinWeights.w * ${binding.name}.joints[u32(skinJoints.w)].jointMatrix;
+    skinWeights.x * ${binding.name}.joints[skinJoints.x].jointMatrix +
+    skinWeights.y * ${binding.name}.joints[skinJoints.y].jointMatrix +
+    skinWeights.z * ${binding.name}.joints[skinJoints.z].jointMatrix +
+    skinWeights.w * ${binding.name}.joints[skinJoints.w].jointMatrix;
       
   ${
     hasInstances
@@ -68,10 +68,10 @@ export const getVertexSkinnedPositionNormal = ({ bindings = [], geometry }: Vert
       
   // normal
   let skinNormalMatrix_${bindingIndex}: mat4x4f = 
-    skinWeights.x * ${binding.name}.joints[u32(skinJoints.x)].normalMatrix +
-    skinWeights.y * ${binding.name}.joints[u32(skinJoints.y)].normalMatrix +
-    skinWeights.z * ${binding.name}.joints[u32(skinJoints.z)].normalMatrix +
-    skinWeights.w * ${binding.name}.joints[u32(skinJoints.w)].normalMatrix;
+    skinWeights.x * ${binding.name}.joints[skinJoints.x].normalMatrix +
+    skinWeights.y * ${binding.name}.joints[skinJoints.y].normalMatrix +
+    skinWeights.z * ${binding.name}.joints[skinJoints.z].normalMatrix +
+    skinWeights.w * ${binding.name}.joints[skinJoints.w].normalMatrix;
     
   let skinNormalMatrix_${bindingIndex}_3: mat3x3f = mat3x3f(
     vec3(skinNormalMatrix_${bindingIndex}[0].xyz),
@@ -103,8 +103,7 @@ export const getVertexSkinnedPositionNormal = ({ bindings = [], geometry }: Vert
     output += /* wgsl */ `
   modelMatrix = instances.matrices[instanceIndex].model;
   worldPosition = modelMatrix * worldPosition;
-  
-  normal = normalize(instances.matrices[instanceIndex].normal * normal);
+  normal = normalize(instances.matrices[instanceIndex].normal * normal) * instances.matrices[instanceIndex].handedness;
     `
   } else {
     output += /* wgsl */ `

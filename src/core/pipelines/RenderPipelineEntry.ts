@@ -158,7 +158,7 @@ export class RenderPipelineEntry extends PipelineEntry {
   /** {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createRenderPipeline#descriptor | GPURenderPipelineDescriptor} based on {@link layout} and {@link shaders} */
   descriptor: GPURenderPipelineDescriptor | null
   /** Options used to create this {@link RenderPipelineEntry} */
-  options: RenderPipelineEntryOptions
+  declare options: RenderPipelineEntryOptions
 
   /**
    * RenderPipelineEntry constructor
@@ -459,14 +459,15 @@ export class RenderPipelineEntry extends PipelineEntry {
         module: this.shaders.vertex.module,
         entryPoint: this.options.shaders.vertex.entryPoint,
         buffers: this.attributes.vertexBuffers.map((vertexBuffer) => {
+          const { arrayStride, stepMode, attributes } = vertexBuffer
           return {
-            stepMode: vertexBuffer.stepMode,
-            arrayStride: vertexBuffer.arrayStride * 4, // 4 bytes each
-            attributes: vertexBuffer.attributes.map((attribute) => {
+            stepMode,
+            arrayStride,
+            attributes: attributes.map((attribute) => {
               vertexLocationIndex++
               return {
                 shaderLocation: vertexLocationIndex,
-                offset: attribute.bufferOffset, // previous attribute size * 4
+                offset: attribute.bufferOffset,
                 format: attribute.bufferFormat,
               }
             }),
@@ -496,7 +497,7 @@ export class RenderPipelineEntry extends PipelineEntry {
           depthBias: this.options.rendering.depthBias,
           depthBiasClamp: this.options.rendering.depthBiasClamp,
           depthBiasSlopeScale: this.options.rendering.depthBiasSlopeScale,
-          depthWriteEnabled: this.options.rendering.depthWriteEnabled,
+          depthWriteEnabled: this.options.rendering.transparent ? false : this.options.rendering.depthWriteEnabled,
           depthCompare: this.options.rendering.depthCompare,
           format: this.options.rendering.depthFormat,
           ...(this.options.rendering.stencil && {

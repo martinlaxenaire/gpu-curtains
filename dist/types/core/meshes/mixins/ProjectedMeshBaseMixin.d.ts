@@ -1,4 +1,3 @@
-/// <reference types="@webgpu/types" />
 import { CameraRenderer } from '../../renderers/utils';
 import { DOMFrustum } from '../../DOM/DOMFrustum';
 import { MeshBaseClass, MeshBaseOptions, MeshBaseParams, MixinConstructor } from './MeshBaseMixin';

@@ -23,7 +23,11 @@ const getFragmentShaderCode = ({
   },
   chunks = null,
   toneMapping = "Khronos",
+  transmissiveInputColorSpace = "srgb",
+  transmissiveInputToneMapping = "Khronos",
   geometry,
+  cullMode = "back",
+  flatShading = false,
   additionalVaryings = [],
   materialUniform = null,
   materialUniformName = "material",
@@ -37,6 +41,7 @@ const getFragmentShaderCode = ({
   specularTexture = null,
   specularFactorTexture = null,
   specularColorTexture = null,
+  transmissionThicknessTexture = null,
   transmissionTexture = null,
   thicknessTexture = null,
   sheenTexture = null,
@@ -44,102 +49,119 @@ const getFragmentShaderCode = ({
   sheenRoughnessTexture = null,
   anisotropyTexture = null,
   clearcoatTexture = null,
+  clearcoatFactorTexture = null,
   clearcoatRoughnessTexture = null,
   clearcoatNormalTexture = null,
   iridescenceTexture = null,
+  iridescenceFactorTexture = null,
   iridescenceThicknessTexture = null,
+  diffuseTransmissionTexture = null,
+  diffuseTransmissionFactorTexture = null,
+  diffuseTransmissionColorTexture = null,
   transmissionBackgroundTexture = null,
   environmentMap = null
 }) => {
-  return (() => {
-    switch (shadingModel) {
-      case "Unlit":
-        return getUnlitFragmentShaderCode({
-          chunks,
-          toneMapping,
-          outputColorSpace,
-          fragmentOutput,
-          geometry,
-          additionalVaryings,
-          materialUniform,
-          materialUniformName,
-          baseColorTexture,
-          emissiveTexture,
-          occlusionTexture
-        });
-      case "Lambert":
-        return getLambertFragmentShaderCode({
-          chunks,
-          toneMapping,
-          outputColorSpace,
-          fragmentOutput,
-          geometry,
-          additionalVaryings,
-          materialUniform,
-          materialUniformName,
-          receiveShadows,
-          baseColorTexture,
-          normalTexture,
-          emissiveTexture,
-          occlusionTexture
-        });
-      case "Phong":
-        return getPhongFragmentShaderCode({
-          chunks,
-          toneMapping,
-          outputColorSpace,
-          fragmentOutput,
-          geometry,
-          additionalVaryings,
-          materialUniform,
-          materialUniformName,
-          receiveShadows,
-          baseColorTexture,
-          normalTexture,
-          emissiveTexture,
-          occlusionTexture,
-          metallicRoughnessTexture,
-          specularTexture,
-          specularFactorTexture,
-          specularColorTexture
-        });
-      case "PBR":
-      default:
-        return getPBRFragmentShaderCode({
-          chunks,
-          toneMapping,
-          outputColorSpace,
-          fragmentOutput,
-          geometry,
-          additionalVaryings,
-          materialUniform,
-          materialUniformName,
-          extensionsUsed,
-          receiveShadows,
-          baseColorTexture,
-          normalTexture,
-          emissiveTexture,
-          occlusionTexture,
-          metallicRoughnessTexture,
-          specularTexture,
-          specularFactorTexture,
-          specularColorTexture,
-          transmissionTexture,
-          thicknessTexture,
-          sheenTexture,
-          sheenColorTexture,
-          sheenRoughnessTexture,
-          anisotropyTexture,
-          clearcoatTexture,
-          clearcoatRoughnessTexture,
-          clearcoatNormalTexture,
-          iridescenceTexture,
-          iridescenceThicknessTexture,
-          transmissionBackgroundTexture,
-          environmentMap
-        });
-    }
-  })();
+  switch (shadingModel) {
+    case "Unlit":
+      return getUnlitFragmentShaderCode({
+        chunks,
+        toneMapping,
+        outputColorSpace,
+        fragmentOutput,
+        geometry,
+        additionalVaryings,
+        materialUniform,
+        materialUniformName,
+        baseColorTexture,
+        emissiveTexture,
+        occlusionTexture
+      });
+    case "Lambert":
+      return getLambertFragmentShaderCode({
+        chunks,
+        toneMapping,
+        outputColorSpace,
+        fragmentOutput,
+        geometry,
+        cullMode,
+        flatShading,
+        additionalVaryings,
+        materialUniform,
+        materialUniformName,
+        receiveShadows,
+        baseColorTexture,
+        normalTexture,
+        emissiveTexture,
+        occlusionTexture
+      });
+    case "Phong":
+      return getPhongFragmentShaderCode({
+        chunks,
+        toneMapping,
+        outputColorSpace,
+        fragmentOutput,
+        geometry,
+        cullMode,
+        flatShading,
+        additionalVaryings,
+        materialUniform,
+        materialUniformName,
+        receiveShadows,
+        baseColorTexture,
+        normalTexture,
+        emissiveTexture,
+        occlusionTexture,
+        metallicRoughnessTexture,
+        specularTexture,
+        specularFactorTexture,
+        specularColorTexture
+      });
+    case "PBR":
+    default:
+      return getPBRFragmentShaderCode({
+        chunks,
+        toneMapping,
+        outputColorSpace,
+        transmissiveInputColorSpace,
+        transmissiveInputToneMapping,
+        fragmentOutput,
+        geometry,
+        cullMode,
+        flatShading,
+        additionalVaryings,
+        materialUniform,
+        materialUniformName,
+        extensionsUsed,
+        receiveShadows,
+        baseColorTexture,
+        normalTexture,
+        emissiveTexture,
+        occlusionTexture,
+        metallicRoughnessTexture,
+        specularTexture,
+        specularFactorTexture,
+        specularColorTexture,
+        transmissionThicknessTexture,
+        transmissionTexture,
+        thicknessTexture,
+        sheenTexture,
+        sheenColorTexture,
+        sheenRoughnessTexture,
+        anisotropyTexture,
+        clearcoatTexture,
+        clearcoatFactorTexture,
+        clearcoatRoughnessTexture,
+        clearcoatNormalTexture,
+        iridescenceTexture,
+        iridescenceFactorTexture,
+        iridescenceThicknessTexture,
+        diffuseTransmissionTexture,
+        diffuseTransmissionFactorTexture,
+        diffuseTransmissionColorTexture,
+        transmissionBackgroundTexture,
+        environmentMap
+      });
+  }
 };
 
 export { getFragmentShaderCode };

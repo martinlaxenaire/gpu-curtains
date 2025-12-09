@@ -82,6 +82,22 @@ export declare class Light extends Object3D {
      */
     set intensity(value: number);
     /**
+     * Get whether this {@link Light} is visible or not.
+     */
+    get visible(): boolean;
+    /**
+     * Set this {@link Light} visible value, and update its {@link actualColor} property accordingly.
+     */
+    set visible(value: boolean);
+    /**
+     * Get whether all this {@link Light} parents are visible or not. Should not be used directly.
+     */
+    get parentVisibility(): boolean;
+    /**
+     * Set this {@link Light} parent visiblity, and update its {@link actualColor} property accordingly. Should not be used directly.
+     */
+    set parentVisibility(value: boolean);
+    /**
      * Get the actual {@link Vec3} color used in the shader: convert {@link color} to linear space, then multiply by {@link intensity}.
      * @returns - Actual {@link Vec3} color used in the shader.
      */

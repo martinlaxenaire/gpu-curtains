@@ -247,16 +247,15 @@ ${this.shaders.full.head}`;
         module: this.shaders.vertex.module,
         entryPoint: this.options.shaders.vertex.entryPoint,
         buffers: this.attributes.vertexBuffers.map((vertexBuffer) => {
+          const { arrayStride, stepMode, attributes } = vertexBuffer;
           return {
-            stepMode: vertexBuffer.stepMode,
-            arrayStride: vertexBuffer.arrayStride * 4,
-            // 4 bytes each
-            attributes: vertexBuffer.attributes.map((attribute) => {
+            stepMode,
+            arrayStride,
+            attributes: attributes.map((attribute) => {
               vertexLocationIndex++;
               return {
                 shaderLocation: vertexLocationIndex,
                 offset: attribute.bufferOffset,
-                // previous attribute size * 4
                 format: attribute.bufferFormat
               };
             })
@@ -286,7 +285,7 @@ ${this.shaders.full.head}`;
           depthBias: this.options.rendering.depthBias,
           depthBiasClamp: this.options.rendering.depthBiasClamp,
           depthBiasSlopeScale: this.options.rendering.depthBiasSlopeScale,
-          depthWriteEnabled: this.options.rendering.depthWriteEnabled,
+          depthWriteEnabled: this.options.rendering.transparent ? false : this.options.rendering.depthWriteEnabled,
           depthCompare: this.options.rendering.depthCompare,
           format: this.options.rendering.depthFormat,
           ...this.options.rendering.stencil && {

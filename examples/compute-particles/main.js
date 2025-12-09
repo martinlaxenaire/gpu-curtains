@@ -339,9 +339,9 @@ window.addEventListener('load', async () => {
 
   // orbit controls
   const orbitControls = new OrbitControls(gpuCameraRenderer)
-  orbitControls.zoomStep = systemSize.z * 0.002
+  orbitControls.zoomSpeed = systemSize.z * 0.05
   orbitControls.minZoom = systemSize.z * -1.5
-  orbitControls.maxZoom = systemSize.z * 1.5
+  orbitControls.maxZoom = systemSize.z * 5
 
   const particlesVs = /* wgsl */ `  
     struct VSOutput {

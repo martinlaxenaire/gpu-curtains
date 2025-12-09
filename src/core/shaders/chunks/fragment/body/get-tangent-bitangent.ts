@@ -9,23 +9,42 @@ import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragmen
  * @param parameters - Parameters used to create the shader chunk.
  * @param parameters.extensionsUsed - {@link PBRFragmentShaderInputParams.extensionsUsed | extensionsUsed} to check if anisotropy is enabled.
  * @param parameters.geometry - {@link Geometry} to use to check for `tangent` and `bitangent` attributes.
+ * @param parameters.cullMode - Culling mode used to update normal and TBN if needed.
+ * @param parameters.flatShading - Whether to calculate flat normals.
  * @param parameters.normalTexture - {@link ShaderTextureDescriptor | Normal texture descriptor} to use if any.
  * @param parameters.clearcoatNormalTexture - {@link ShaderTextureDescriptor | Clearcoat normal texture descriptor} to use if any.
  */
 export const getTangentBitangent = ({
   extensionsUsed = [],
   geometry = null,
+  cullMode = 'back',
+  flatShading = false,
   normalTexture = null,
   clearcoatNormalTexture = null,
 }: {
   extensionsUsed?: PBRFragmentShaderInputParams['extensionsUsed']
   geometry?: Geometry
+  cullMode?: GPUCullMode
+  flatShading?: PBRFragmentShaderInputParams['flatShading']
   normalTexture?: ShaderTextureDescriptor
   clearcoatNormalTexture?: ShaderTextureDescriptor
 } = {}): string => {
   let tangentBitangent = /* wgsl */ `
   let faceDirection = select(-1.0, 1.0, frontFacing);
-  let geometryNormal: vec3f = faceDirection * normal;`
+  var geometryNormal: vec3f = normal;`
+
+  if (flatShading) {
+    tangentBitangent += /* wgsl */ `
+  let fdx: vec3f = dpdx( modelPosition );
+	let fdy: vec3f = dpdy( modelPosition );
+	geometryNormal = normalize( cross( fdx, -fdy ) );`
+  }
+
+  if (cullMode !== 'back' && !flatShading) {
+    tangentBitangent += /* wgsl */ `
+  geometryNormal = geometryNormal * faceDirection;
+    `
+  }
 
   const tangentAttribute = geometry && geometry.getAttributeByName('tangent')
   const needsTangentBitangent =
@@ -34,7 +53,7 @@ export const getTangentBitangent = ({
   if (needsTangentBitangent) {
     if (tangentAttribute) {
       tangentBitangent += /* wgsl */ `
-  let tbn = mat3x3f(normalize(tangent), normalize(bitangent), geometryNormal);`
+  var tbn = mat3x3f(normalize(tangent), normalize(bitangent), geometryNormal);`
     } else {
       if (normalTexture) {
         tangentBitangent += /* wgsl */ `
@@ -59,8 +78,15 @@ export const getTangentBitangent = ({
       }
 
       tangentBitangent += /* wgsl */ `
-  let tbn = getTangentFrame(modelPosition, normal, tbnUV);
+  var tbn = getTangentFrame(-modelPosition, normal, tbnUV);
   `
+    }
+
+    if (cullMode !== 'back' && !flatShading) {
+      tangentBitangent += /* wgsl */ `
+  tbn[0] *= faceDirection;
+  tbn[1] *= faceDirection;
+    `
     }
   }
 

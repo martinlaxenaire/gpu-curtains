@@ -1,12 +1,13 @@
 import { Box3 } from '../../math/Box3.mjs';
-import { generateUUID, throwWarning, throwError } from '../../utils/utils.mjs';
+import { generateUUID, throwError } from '../../utils/utils.mjs';
 import { Buffer } from '../buffers/Buffer.mjs';
 import { Vec3 } from '../../math/Vec3.mjs';
+import { getVertexBufferAttributeLayout, vertexBufferViewSetFunction } from './utils.mjs';
 
 class Geometry {
   /**
    * Geometry constructor
-   * @param parameters - {@link GeometryParams | parameters} used to create our Geometry
+   * @param parameters - {@link GeometryParams | parameters} used to create our Geometry.
    */
   constructor({
     verticesOrder = "ccw",
@@ -51,6 +52,7 @@ class Geometry {
         name: vertexBuffer.name,
         attributes: vertexBuffer.attributes,
         ...vertexBuffer.array && { array: vertexBuffer.array },
+        ...vertexBuffer.arrayBuffer && { arrayBuffer: vertexBuffer.arrayBuffer },
         ...vertexBuffer.buffer && { buffer: vertexBuffer.buffer },
         ...vertexBuffer.bufferOffset && { bufferOffset: vertexBuffer.bufferOffset },
         ...vertexBuffer.bufferSize && { bufferSize: vertexBuffer.bufferSize }
@@ -61,7 +63,26 @@ class Geometry {
     }
   }
   /**
-   * Reset all the {@link vertexBuffers | vertex buffers} when the device is lost
+   * Helper to decode and normalize integer values to float values based on the data type.
+   * @param typedArrayConstructor - {@link TypedArrayConstructor} used to know the data type.
+   * @returns - Decoded and normalized value.
+   */
+  static dequantize(typedArrayConstructor) {
+    switch (typedArrayConstructor) {
+      case Int8Array:
+        return (v) => Math.max(v / 127, -1);
+      case Uint8Array:
+        return (v) => v / 255;
+      case Int16Array:
+        return (v) => Math.max(v / 32767, -1);
+      case Uint16Array:
+        return (v) => v / 65535;
+      default:
+        return (v) => v;
+    }
+  }
+  /**
+   * Reset all the {@link vertexBuffers | vertex buffers} when the device is lost.
    */
   loseContext() {
     this.ready = false;
@@ -70,8 +91,8 @@ class Geometry {
     }
   }
   /**
-   * Restore the {@link Geometry} buffers on context restoration
-   * @param renderer - The {@link Renderer} used to recreate the buffers
+   * Restore the {@link Geometry} buffers on context restoration.
+   * @param renderer - The {@link Renderer} used to recreate the buffers.
    */
   restoreContext(renderer) {
     if (this.ready) return;
@@ -85,9 +106,9 @@ class Geometry {
     this.ready = true;
   }
   /**
-   * Add a vertex buffer to our Geometry, set its attributes and return it
-   * @param parameters - vertex buffer {@link VertexBufferParams | parameters}
-   * @returns - newly created {@link VertexBuffer | vertex buffer}
+   * Add a vertex buffer to our Geometry, set its attributes and return it.
+   * @param parameters - Vertex buffer {@link VertexBufferParams | parameters}.
+   * @returns - Newly created {@link VertexBuffer | vertex buffer}.
    */
   addVertexBuffer({
     stepMode = "vertex",
@@ -95,6 +116,7 @@ class Geometry {
     attributes = [],
     buffer = null,
     array = null,
+    arrayBuffer = null,
     bufferOffset = 0,
     bufferSize = null
   } = {}) {
@@ -105,8 +127,9 @@ class Geometry {
       arrayStride: 0,
       bufferLength: 0,
       attributes: [],
-      buffer,
       array,
+      arrayBuffer,
+      buffer,
       bufferOffset,
       bufferSize
     };
@@ -120,40 +143,37 @@ class Geometry {
     return vertexBuffer;
   }
   /**
-   * Get a vertex buffer by name
-   * @param name - our vertex buffer name
-   * @returns - found {@link VertexBuffer | vertex buffer} or null if not found
+   * Get a vertex buffer by name.
+   * @param name - Our vertex buffer name.
+   * @returns - Found {@link VertexBuffer | vertex buffer} or null if not found.
    */
   getVertexBufferByName(name = "") {
     return this.vertexBuffers.find((vertexBuffer) => vertexBuffer.name === name);
   }
   /**
-   * Set a vertex buffer attribute
-   * @param parameters - attributes {@link VertexBufferAttributeParams | parameters}
+   * Set a vertex buffer attribute.
+   * @param parameters - Attributes {@link VertexBufferAttributeParams | parameters}.
    */
   setAttribute({
     vertexBuffer = this.vertexBuffers[0],
     name,
-    type = "vec3f",
-    bufferFormat = "float32x3",
+    type,
+    bufferFormat,
     size = 3,
     array = new Float32Array(this.verticesCount * size),
+    normalized = false,
     verticesStride = 1
   }) {
     const attributes = vertexBuffer.attributes;
     const attributesLength = attributes.length;
     if (!name) name = "geometryAttribute" + attributesLength;
-    if (name === "position" && (type !== "vec3f" || bufferFormat !== "float32x3" || size !== 3)) {
-      throwWarning(
-        `Geometry 'position' attribute must have this exact properties set:
-	type: 'vec3f',
-	bufferFormat: 'float32x3',
-	size: 3`
-      );
-      type = "vec3f";
-      bufferFormat = "float32x3";
-      size = 3;
-    }
+    const attributeLayout = getVertexBufferAttributeLayout({
+      size,
+      array,
+      normalized
+    });
+    bufferFormat = bufferFormat ?? attributeLayout.format;
+    type = type ?? attributeLayout.type;
     let arrayLength = array.length;
     const attributeCount = arrayLength / size;
     if (name === "position") {
@@ -161,7 +181,7 @@ class Geometry {
     }
     if (vertexBuffer.stepMode === "vertex" && this.verticesCount && this.verticesCount !== attributeCount * verticesStride) {
       throwError(
-        `Geometry vertex attribute error. Attribute array of size ${size} must be of length: ${this.verticesCount * size}, current given: ${array.length}. (${this.verticesCount} vertices).`
+        `Geometry vertex attribute error. Attribute ${name} array of size ${size} must be of length: ${this.verticesCount * size}, current given: ${array.length}. (${this.verticesCount} vertices).`
       );
     } else if (vertexBuffer.stepMode === "instance" && attributeCount !== this.instancesCount) {
       if (vertexBuffer.buffer) {
@@ -172,34 +192,32 @@ class Geometry {
         );
       }
     }
+    const bufferOffset = attributesLength ? attributes[attributesLength - 1].bufferOffset + attributes[attributesLength - 1].size * attributes[attributesLength - 1].array.BYTES_PER_ELEMENT : 0;
     const attribute = {
       name,
       type,
       bufferFormat,
       size,
-      bufferLength: arrayLength,
-      offset: attributesLength ? attributes.reduce((accumulator, currentValue) => {
-        return accumulator + currentValue.bufferLength;
-      }, 0) : 0,
-      bufferOffset: attributesLength ? attributes[attributesLength - 1].bufferOffset + attributes[attributesLength - 1].size * 4 : 0,
+      bufferOffset,
       array,
-      verticesStride
+      verticesStride,
+      normalized
     };
-    vertexBuffer.bufferLength += attribute.bufferLength * verticesStride;
-    vertexBuffer.arrayStride += attribute.size;
+    vertexBuffer.bufferLength += arrayLength * array.BYTES_PER_ELEMENT * verticesStride;
+    vertexBuffer.arrayStride += attribute.size * array.BYTES_PER_ELEMENT;
     vertexBuffer.attributes.push(attribute);
   }
   /**
-   * Get whether this Geometry is ready to compute, i.e. if its first vertex buffer array has not been created yet
+   * Get whether this Geometry is ready to compute, i.e. if its first vertex buffer array has not been created yet.
    * @readonly
    */
   get shouldCompute() {
-    return this.vertexBuffers.length && !this.vertexBuffers[0].array;
+    return this.vertexBuffers.length && !this.vertexBuffers[0].arrayBuffer;
   }
   /**
-   * Get an attribute by name
-   * @param name - name of the attribute to find
-   * @returns - found {@link VertexBufferAttribute | attribute} or null if not found
+   * Get an attribute by name.
+   * @param name - Name of the attribute to find.
+   * @returns - Found {@link VertexBufferAttribute | attribute} or null if not found.
    */
   getAttributeByName(name) {
     let attribute;
@@ -211,12 +229,12 @@ class Geometry {
   }
   /**
    * Compute the normal {@link Vec3} from a triangle defined by three {@link Vec3} by computing edges {@link Vec3}.
-   * @param vertex1 - first triangle position
-   * @param vertex2 - second triangle position
-   * @param vertex3 - third triangle position
-   * @param edge1 - first edge
-   * @param edge2 - second edge
-   * @param normal - flat normal generated.
+   * @param vertex1 - First triangle position.
+   * @param vertex2 - Second triangle position.
+   * @param vertex3 - Third triangle position.
+   * @param edge1 - First edge.
+   * @param edge2 - Second edge.
+   * @param normal - Flat normal generated.
    */
   computeNormalFromTriangle(vertex1, vertex2, vertex3, edge1, edge2, normal) {
     edge1.copy(vertex2).sub(vertex1);
@@ -262,23 +280,12 @@ class Geometry {
   computeGeometry() {
     if (this.ready) return;
     this.vertexBuffers.forEach((vertexBuffer, index) => {
+      const hasPositionAttribute = vertexBuffer.attributes.find(
+        (attribute) => attribute.name === "position"
+      );
       if (index === 0) {
-        const hasPositionAttribute = vertexBuffer.attributes.find(
-          (attribute) => attribute.name === "position"
-        );
         if (!hasPositionAttribute) {
           throwError(`Geometry must have a 'position' attribute`);
-        }
-        if (hasPositionAttribute.type !== "vec3f" || hasPositionAttribute.bufferFormat !== "float32x3" || hasPositionAttribute.size !== 3) {
-          throwWarning(
-            `Geometry 'position' attribute must have this exact properties set:
-	type: 'vec3f',
-	bufferFormat: 'float32x3',
-	size: 3`
-          );
-          hasPositionAttribute.type = "vec3f";
-          hasPositionAttribute.bufferFormat = "float32x3";
-          hasPositionAttribute.size = 3;
         }
         const hasNormalAttribute = vertexBuffer.attributes.find(
           (attribute) => attribute.name === "normal"
@@ -288,31 +295,56 @@ class Geometry {
           this.setWGSLFragment();
         }
       }
-      vertexBuffer.array = new Float32Array(vertexBuffer.bufferLength);
-      let currentIndex = 0;
-      let attributeIndex = 0;
-      for (let i = 0; i < vertexBuffer.bufferLength; i += vertexBuffer.arrayStride) {
-        for (let j = 0; j < vertexBuffer.attributes.length; j++) {
-          const { name, size, array, verticesStride } = vertexBuffer.attributes[j];
-          for (let s = 0; s < size; s++) {
-            const attributeValue = array[Math.floor(attributeIndex / verticesStride) * size + s];
-            vertexBuffer.array[currentIndex] = attributeValue ?? 0;
-            if (name === "position") {
-              if (s % 3 === 0) {
-                if (this.boundingBox.min.x > attributeValue) this.boundingBox.min.x = attributeValue;
-                if (this.boundingBox.max.x < attributeValue) this.boundingBox.max.x = attributeValue;
-              } else if (s % 3 === 1) {
-                if (this.boundingBox.min.y > attributeValue) this.boundingBox.min.y = attributeValue;
-                if (this.boundingBox.max.y < attributeValue) this.boundingBox.max.y = attributeValue;
-              } else if (s % 3 === 2) {
-                if (this.boundingBox.min.z > attributeValue) this.boundingBox.min.z = attributeValue;
-                if (this.boundingBox.max.z < attributeValue) this.boundingBox.max.z = attributeValue;
+      if (vertexBuffer.array && vertexBuffer.array.byteLength === vertexBuffer.bufferLength) {
+        vertexBuffer.arrayBuffer = new ArrayBuffer(vertexBuffer.bufferLength);
+        new Uint8Array(vertexBuffer.arrayBuffer).set(
+          new Uint8Array(vertexBuffer.array.buffer, vertexBuffer.array.byteOffset, vertexBuffer.array.byteLength)
+        );
+      } else if (!vertexBuffer.arrayBuffer || vertexBuffer.arrayBuffer.byteLength !== vertexBuffer.bufferLength) {
+        vertexBuffer.arrayBuffer = new ArrayBuffer(vertexBuffer.bufferLength);
+        const arrayView = new DataView(vertexBuffer.arrayBuffer);
+        for (let a = 0; a < vertexBuffer.attributes.length; a++) {
+          const attribute = vertexBuffer.attributes[a];
+          const { name, array, size, bufferOffset, verticesStride } = attribute;
+          const setFunction = vertexBufferViewSetFunction(arrayView, array);
+          const arrayLength = array.length;
+          for (let i = 0; i < arrayLength; i += size) {
+            for (let s = 0; s < size; s++) {
+              const attrValue = array[i + s];
+              if (name === "position") {
+                if (s % 3 === 0) {
+                  this.boundingBox.min.x = Math.min(this.boundingBox.min.x, attrValue);
+                  this.boundingBox.max.x = Math.max(this.boundingBox.max.x, attrValue);
+                } else if (s % 3 === 1) {
+                  this.boundingBox.min.y = Math.min(this.boundingBox.min.y, attrValue);
+                  this.boundingBox.max.y = Math.max(this.boundingBox.max.y, attrValue);
+                } else if (s % 3 === 2) {
+                  this.boundingBox.min.z = Math.min(this.boundingBox.min.z, attrValue);
+                  this.boundingBox.max.z = Math.max(this.boundingBox.max.z, attrValue);
+                }
+              }
+              const attrIndex = i / size;
+              for (let vs = 0; vs < verticesStride; vs++) {
+                const attrOffset = s * array.BYTES_PER_ELEMENT;
+                const attrStrideOffset = attrIndex * vertexBuffer.arrayStride;
+                const verticesStrideOffset = (vs + (verticesStride - 1) * attrIndex) * vertexBuffer.arrayStride;
+                const startOffset = verticesStrideOffset + attrStrideOffset + bufferOffset + attrOffset;
+                setFunction(startOffset, attrValue, true);
               }
             }
-            currentIndex++;
           }
         }
-        attributeIndex++;
+        if (hasPositionAttribute && hasPositionAttribute.array && hasPositionAttribute.normalized) {
+          const dequantizePositions = Geometry.dequantize(
+            hasPositionAttribute.array.constructor
+          );
+          this.boundingBox.min.x = dequantizePositions(this.boundingBox.min.x);
+          this.boundingBox.min.y = dequantizePositions(this.boundingBox.min.y);
+          this.boundingBox.min.z = dequantizePositions(this.boundingBox.min.z);
+          this.boundingBox.max.x = dequantizePositions(this.boundingBox.max.x);
+          this.boundingBox.max.y = dequantizePositions(this.boundingBox.max.y);
+          this.boundingBox.max.z = dequantizePositions(this.boundingBox.max.z);
+        }
       }
     });
     if (!this.wgslStructFragment) {
@@ -342,15 +374,15 @@ class Geometry {
   }
   /**
    * Create the {@link Geometry} {@link vertexBuffers | vertex buffers}.
-   * @param parameters - parameters used to create the vertex buffers.
+   * @param parameters - Parameters used to create the vertex buffers.
    * @param parameters.renderer - {@link Renderer} used to create the vertex buffers.
-   * @param parameters.label - label to use for the vertex buffers.
+   * @param parameters.label - Label to use for the vertex buffers.
    */
   createBuffers({ renderer, label = this.type }) {
     if (this.ready) return;
     for (const vertexBuffer of this.vertexBuffers) {
       if (!vertexBuffer.bufferSize) {
-        vertexBuffer.bufferSize = vertexBuffer.array.length * vertexBuffer.array.constructor.BYTES_PER_ELEMENT;
+        vertexBuffer.bufferSize = vertexBuffer.arrayBuffer.byteLength;
       }
       if (!vertexBuffer.buffer.GPUBuffer && !vertexBuffer.buffer.consumers.size) {
         vertexBuffer.buffer.createBuffer(renderer, {
@@ -372,12 +404,18 @@ class Geometry {
    */
   uploadBuffer(renderer, buffer) {
     if (this.options.mapBuffersAtCreation) {
-      new buffer.array.constructor(buffer.buffer.GPUBuffer.getMappedRange()).set(
-        buffer.array
-      );
+      if (buffer.arrayBuffer) {
+        const src = new Uint8Array(buffer.arrayBuffer);
+        const mappedRange = buffer.buffer.GPUBuffer.getMappedRange();
+        new Uint8Array(mappedRange).set(src);
+      } else if (buffer.array) {
+        new buffer.array.constructor(buffer.buffer.GPUBuffer.getMappedRange()).set(
+          buffer.array
+        );
+      }
       buffer.buffer.GPUBuffer.unmap();
     } else {
-      renderer.queueWriteBuffer(buffer.buffer.GPUBuffer, 0, buffer.array);
+      renderer.queueWriteBuffer(buffer.buffer.GPUBuffer, 0, buffer.arrayBuffer ?? buffer.array);
     }
   }
   /**
@@ -392,8 +430,8 @@ class Geometry {
   }
   /** RENDER **/
   /**
-   * Set our render pass geometry vertex buffers
-   * @param pass - current render pass
+   * Set our render pass geometry vertex buffers.
+   * @param pass - Current render pass.
    */
   setGeometryBuffers(pass) {
     this.vertexBuffers.forEach((vertexBuffer, index) => {
@@ -432,6 +470,7 @@ class Geometry {
         vertexBuffer.buffer.destroy();
       }
       vertexBuffer.array = null;
+      vertexBuffer.arrayBuffer = null;
       if (renderer) renderer.removeBuffer(vertexBuffer.buffer);
     }
   }

@@ -1,12 +1,12 @@
-/// <reference types="@webgpu/types" />
 import { CameraRenderer } from '../../core/renderers/utils';
 import { GLTF } from '../../types/gltf/GLTF';
 import { GLTFLoader } from '../loaders/GLTFLoader';
 import { MediaTexture } from '../../core/textures/MediaTexture';
-import { TypedArrayConstructor } from '../../core/bindings/utils';
+import { TypedArray, TypedArrayConstructor } from '../../core/bindings/utils';
 import { VertexBufferAttribute, VertexBufferAttributeParams } from '../../types/Geometries';
 import { LitMesh } from '../meshes/LitMesh';
 import { ChildDescriptor, MeshDescriptor, MeshDescriptorMaterialParams, PrimitiveInstanceDescriptor, ScenesManager } from '../../types/gltf/GLTFScenesManager';
+import type { GLTFPointerAnimationsManager } from './GLTFPointerAnimationsManager';
 /**
  * Used to create a {@link GLTFScenesManager} from a given {@link GLTFLoader.gltf | gltf} object.
  *
@@ -44,11 +44,12 @@ import { ChildDescriptor, MeshDescriptor, MeshDescriptorMaterialParams, Primitiv
  * - [x] Morph targets
  *
  * ## Extensions
- * - [ ] KHR_animation_pointer
+ * - [x] KHR_animation_pointer (using GLTFPointerAnimationsManager extra class)
  * - [ ] KHR_draco_mesh_compression
  * - [x] KHR_lights_punctual
  * - [x] KHR_materials_anisotropy
  * - [x] KHR_materials_clearcoat
+ * - [x] KHR_materials_diffuse_transmission
  * - [x] KHR_materials_dispersion
  * - [x] KHR_materials_emissive_strength
  * - [x] KHR_materials_ior
@@ -59,7 +60,8 @@ import { ChildDescriptor, MeshDescriptor, MeshDescriptorMaterialParams, Primitiv
  * - [x] KHR_materials_unlit
  * - [x] KHR_materials_variants
  * - [x] KHR_materials_volume
- * - [ ] KHR_mesh_quantization
+ * - [x] KHR_mesh_quantization
+ * - [x] KHR_node_visibility
  * - [ ] KHR_texture_basisu
  * - [x] KHR_texture_transform
  * - [ ] KHR_xmp_json_ld
@@ -86,6 +88,8 @@ export declare class GLTFScenesManager {
     gltf: GLTFLoader['gltf'];
     /** The {@link ScenesManager} containing all the useful data. */
     scenesManager: ScenesManager;
+    /** Optional {@link GLTFPointerAnimationsManager} used to handle pointer animations, if any. */
+    pointerAnimationsManager: GLTFPointerAnimationsManager | null;
     /**
      * {@link GLTFScenesManager} constructor.
      * @param parameters - parameters used to create our {@link GLTFScenesManager}.
@@ -99,14 +103,14 @@ export declare class GLTFScenesManager {
     /**
      * Get an attribute type, bufferFormat and size from its {@link GLTF.AccessorType | accessor type}.
      * @param type - {@link GLTF.AccessorType | accessor type} to use.
-     * @returns - corresponding type, bufferFormat and size.
+     * @returns - Corresponding type, bufferFormat and size.
      */
     static getVertexAttributeParamsFromType(type: GLTF.AccessorType): {
-        /** Corresponding attribute type */
+        /** Corresponding attribute type. */
         type: VertexBufferAttribute['type'];
-        /** Corresponding attribute bufferFormat */
+        /** Corresponding attribute bufferFormat. */
         bufferFormat: VertexBufferAttribute['bufferFormat'];
-        /** Corresponding attribute size */
+        /** Corresponding attribute size. */
         size: VertexBufferAttribute['size'];
     };
     /**
@@ -131,6 +135,17 @@ export declare class GLTFScenesManager {
      * Create the {@link scenesManager} {@link TargetsAnimationsManager} if any animation is present in the {@link gltf}.
      */
     createAnimations(): void;
+    /**
+     * Get a glTF animation keyframes and values {@link TypedArray} from the given {@link GLTF.IAnimationSampler | glTF animation sampler}.
+     * @param sampler - {@link GLTF.IAnimationSampler | glTF animation sampler} to retrieve from.
+     * @returns - Corresponding keyframes and values {@link TypedArray}.
+     */
+    getAnimationKeyframesValues(sampler: GLTF.IAnimationSampler): {
+        /** Corresponding keyframes {@link TypedArray}. */
+        keyframes: TypedArray;
+        /** Corresponding values {@link TypedArray}. */
+        values: TypedArray;
+    };
     /**
      * Create the {@link ScenesManager.lights | lights} defined by the `KHR_lights_punctual` extension if any.
      */
@@ -202,6 +217,12 @@ export declare class GLTFScenesManager {
      * Create the {@link ScenesManager#scenes | ScenesManager scenes} based on the {@link gltf} object.
      */
     createScenes(): void;
+    /**
+     * Return the {@link PrimitiveInstanceDescriptor} corresponding the given glTF material index, if any.
+     * @param materialIndex - glTF material index.
+     * @returns - {@link PrimitiveInstanceDescriptor} found if any.
+     */
+    getPrimitiveInstanceFromGLTFMaterial(materialIndex: GLTF.IMeshPrimitive['material']): PrimitiveInstanceDescriptor | null;
     /**
      * Add all the needed {@link LitMesh} based on the {@link ScenesManager#meshesDescriptors | ScenesManager meshesDescriptors} array.
      * @param patchMeshesParameters - allow to optionally patch the {@link LitMesh} parameters before creating it (can be used to add custom shaders chunks, uniforms or storages, change rendering options, etc.)

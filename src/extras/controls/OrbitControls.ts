@@ -78,6 +78,9 @@ export class OrbitControls {
   /** @ignore */
   #offset = new Vec3()
 
+  /** Whether the {@link OrbitControls} are enabled or not. Default to `true`. */
+  enabled: boolean
+
   /** Whether to allow zooming or not. Default to `true`. */
   enableZoom: boolean
   /** Minimum zoom value to use. Default to `0`. */
@@ -162,6 +165,8 @@ export class OrbitControls {
       throwWarning('OrbitControls: cannot initialize without a camera.')
       return
     }
+
+    this.enabled = true
 
     // options
     this.#setBaseParams({
@@ -374,6 +379,8 @@ export class OrbitControls {
    * @private
    */
   #onMouseDown(e: MouseEvent) {
+    if (!this.enabled) return
+
     if (e.button === 0 && this.enableRotate) {
       this.#isOrbiting = true
       this.#rotateStart.set(e.clientX, e.clientY)
@@ -392,6 +399,8 @@ export class OrbitControls {
    * @private
    */
   #onTouchStart(e: TouchEvent) {
+    if (!this.enabled) return
+
     // TODO zoom / pan with 2 fingers
     if (e.touches.length === 1 && this.enableRotate) {
       this.#isOrbiting = true
@@ -404,6 +413,8 @@ export class OrbitControls {
    * @param e - {@link MouseEvent}.
    */
   #onMouseMove(e: MouseEvent) {
+    if (!this.enabled) return
+
     if (this.#isOrbiting && this.enableRotate) {
       this.#rotate(e.clientX, e.clientY)
     } else if (this.#isPaning && this.enablePan) {
@@ -417,6 +428,8 @@ export class OrbitControls {
    * @private
    */
   #onTouchMove(e: TouchEvent) {
+    if (!this.enabled) return
+
     if (this.#isOrbiting && this.enableRotate) {
       this.#rotate(e.touches[0].pageX, e.touches[0].pageY)
     }
@@ -448,7 +461,7 @@ export class OrbitControls {
    * @private
    */
   #onMouseWheel(e: WheelEvent) {
-    if (this.enableZoom) {
+    if (this.enabled && this.enableZoom) {
       this.#zoom(e.deltaY)
 
       e.preventDefault()
@@ -461,6 +474,8 @@ export class OrbitControls {
    * @private
    */
   #onContextMenu(e: MouseEvent) {
+    if (!this.enabled) return
+
     e.preventDefault()
   }
 

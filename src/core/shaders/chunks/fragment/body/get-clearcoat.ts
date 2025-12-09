@@ -1,5 +1,4 @@
 import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh'
-import { Geometry } from '../../../../geometries/Geometry'
 import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code'
 import { getTextureSample } from './get-texture-sample'
 
@@ -8,17 +7,20 @@ import { getTextureSample } from './get-texture-sample'
  *
  * @param parameters - Parameters used to set the `clearcoat` (`f32`) and `clearcoatRoughness` (`f32`) values.
  * @param parameters.extensionsUsed - {@link PBRFragmentShaderInputParams.extensionsUsed | extensionsUsed} to check if clearcoat is enabled.
- * @param parameters.clearcoatTexture - {@link ShaderTextureDescriptor | Clearcoat factor texture descriptor} (using the `R` channel) to use if any.
+ * @param parameters.clearcoatTexture - {@link ShaderTextureDescriptor | Clearcoat texture descriptor} (mixing both clearcoat factor in the `R` channel and roughness in the `G` channel) to use if any.
+ * @param parameters.clearcoatFactorTexture - {@link ShaderTextureDescriptor | Clearcoat factor texture descriptor} (using the `R` channel) to use if any.
  * @param parameters.clearcoatRoughnessTexture - {@link ShaderTextureDescriptor | Clearcoat roughness texture descriptor} (using the `G` channel) to use if any.
  * @returns - String with the `clearcoat` (`f32`) and `clearcoatRoughness` (`f32`) values set.
  */
 export const getClearcoat = ({
   extensionsUsed = [],
   clearcoatTexture = null,
+  clearcoatFactorTexture = null,
   clearcoatRoughnessTexture = null,
 }: {
   extensionsUsed?: PBRFragmentShaderInputParams['extensionsUsed']
   clearcoatTexture?: ShaderTextureDescriptor
+  clearcoatFactorTexture?: ShaderTextureDescriptor
   clearcoatRoughnessTexture?: ShaderTextureDescriptor
 }): string => {
   let clearcoat = /* wgsl */ `
@@ -36,14 +38,22 @@ export const getClearcoat = ({
     clearcoat += getTextureSample(clearcoatTexture, 'clearcoat')
     clearcoat += /* wgsl */ `
   clearcoat = clearcoat * clearcoatSample.r;
+  clearcoatRoughness = clearcoatRoughness * clearcoatSample.g;
     `
-  }
+  } else {
+    if (clearcoatFactorTexture) {
+      clearcoat += getTextureSample(clearcoatFactorTexture, 'clearcoatFactor')
+      clearcoat += /* wgsl */ `
+  clearcoat = clearcoat * clearcoatFactorSample.r;
+    `
+    }
 
-  if (clearcoatRoughnessTexture) {
-    clearcoat += getTextureSample(clearcoatRoughnessTexture, 'clearcoatRoughness')
-    clearcoat += /* wgsl */ `
+    if (clearcoatRoughnessTexture) {
+      clearcoat += getTextureSample(clearcoatRoughnessTexture, 'clearcoatRoughness')
+      clearcoat += /* wgsl */ `
   clearcoatRoughness = clearcoatRoughness * clearcoatRoughnessSample.g;
     `
+    }
   }
 
   clearcoat += /* wgsl */ `
@@ -83,7 +93,7 @@ export const getClearcoatNormal = ({
   if (clearcoatNormalTexture) {
     if (normalTexture) {
       clearcoatNormal += /* wgsl */ `
-  let clearcoatNormalSample = textureSample(${clearcoatNormalTexture.texture.options.name}, ${
+    let clearcoatNormalSample = textureSample(${clearcoatNormalTexture.texture.options.name}, ${
         clearcoatNormalTexture.sampler?.name ?? 'defaultSampler'
       }, normalUV);`
     } else {

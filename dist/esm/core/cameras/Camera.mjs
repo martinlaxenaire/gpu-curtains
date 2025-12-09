@@ -17,6 +17,7 @@ class Camera extends Object3D {
    * @param parameters - {@link CameraParams} used to create our {@link Camera}.
    */
   constructor({
+    label = "Camera",
     near = 0.1,
     far = 150,
     pixelRatio = 1,
@@ -30,6 +31,7 @@ class Camera extends Object3D {
     __privateAdd(this, _far);
     /** @ignore */
     __privateAdd(this, _pixelRatio);
+    this.label = label;
     this.uuid = generateUUID();
     this.onMatricesChanged = onMatricesChanged;
   }

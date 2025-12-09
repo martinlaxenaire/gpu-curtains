@@ -87,6 +87,14 @@ const declareMaterialVars = ({
       type: "vec3f",
       value: "vec3(1.0)"
     },
+    multiscatterColor: {
+      type: "vec3f",
+      value: "vec3(0.0)"
+    },
+    scatterAnisotropy: {
+      type: "f32",
+      value: "0.0"
+    },
     sheenColor: {
       type: "vec3f",
       value: "vec3(0.0)"
@@ -126,6 +134,14 @@ const declareMaterialVars = ({
     anisotropyVector: {
       type: "vec2f",
       value: "vec2(1.0, 0.0)"
+    },
+    diffuseTransmission: {
+      type: "f32",
+      value: "0.0"
+    },
+    diffuseTransmissionColor: {
+      type: "vec3f",
+      value: "vec3(1.0)"
     }
   };
   const defaultEnvMaterialVars = {

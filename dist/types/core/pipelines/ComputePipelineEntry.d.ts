@@ -1,4 +1,3 @@
-/// <reference types="@webgpu/types" />
 import { PipelineEntry } from './PipelineEntry';
 import { PipelineEntryParams, PipelineEntryShaders } from '../../types/PipelineEntries';
 /**

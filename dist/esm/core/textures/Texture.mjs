@@ -1,7 +1,7 @@
 import { isRenderer } from '../renderers/utils.mjs';
 import { TextureBinding } from '../bindings/TextureBinding.mjs';
 import { generateUUID } from '../../utils/utils.mjs';
-import { getNumMipLevels, getDefaultTextureUsage } from './utils.mjs';
+import { getDefaultTextureUsage, getNumMipLevels } from './utils.mjs';
 
 var __typeError = (msg) => {
   throw TypeError(msg);

@@ -298,7 +298,14 @@ class RenderBundle {
    */
   render(pass) {
     if (!this.renderer.ready) return;
-    if (this.ready && this.bundle && this.visible) {
+    let shouldRender = false;
+    for (const [_uuid, mesh] of this.meshes) {
+      if (mesh.visible) {
+        shouldRender = true;
+        break;
+      }
+    }
+    if (this.ready && this.bundle && this.visible && shouldRender) {
       this.meshes.forEach((mesh) => {
         mesh.onBeforeRenderPass();
       });
@@ -471,8 +478,10 @@ encodeRenderCommands_fn = function() {
     this.encoder.pushDebugGroup(`${this.options.label}: create encoder`);
   }
   this.meshes.forEach((mesh) => {
-    mesh.material.render(this.encoder);
-    mesh.geometry.render(this.encoder);
+    if (mesh.visible) {
+      mesh.material.render(this.encoder);
+      mesh.geometry.render(this.encoder);
+    }
   });
   if (!this.renderer.production) {
     this.encoder.popDebugGroup();

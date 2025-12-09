@@ -283,22 +283,22 @@ window.addEventListener('load', async () => {
         attributes: [
           {
             name: 'position',
-            type: 'vec3f',
+            // type: 'vec3f',
             bufferFormat: 'float32x3',
             size: 3,
             array: vertices,
           },
           {
             name: 'normal',
-            type: 'vec3f',
-            bufferFormat: 'float32x3',
+            // type: 'vec3f',
+            // bufferFormat: 'float32x3',
             size: 3,
             array: normals,
           },
           {
             name: 'uv',
-            type: 'vec2f',
-            bufferFormat: 'float32x2',
+            // type: 'vec2f',
+            // bufferFormat: 'float32x2',
             size: 2,
             array: uvs,
           },

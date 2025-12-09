@@ -220,5 +220,5 @@ export declare class BufferElement {
      * @param result - {@link Float32Array} holding {@link GPUBuffer} data.
      * @returns - Extracted data from the {@link Float32Array}.
      */
-    extractDataFromBufferResult(result: Float32Array): Float32Array;
+    extractDataFromBufferResult(result: Float32Array): Float32Array<ArrayBuffer>;
 }

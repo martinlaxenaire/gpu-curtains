@@ -1,4 +1,3 @@
-/// <reference types="@webgpu/types" />
 import { Binding, BindingMemoryAccessType, BindingParams, DOMTextureBindingType } from './Binding';
 /** Defines a {@link TextureBinding} {@link TextureBinding#resource | resource} */
 export type TextureBindingResource = GPUTexture | GPUExternalTexture | null;

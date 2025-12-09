@@ -21,8 +21,18 @@ export const getVertexOutputStructContent = ({
   if (geometry.vertexBuffers && geometry.vertexBuffers.length) {
     geometry.vertexBuffers.forEach((vertexBuffer) => {
       vertexBuffer.attributes.forEach((attribute) => {
-        if (attribute.name !== 'position') {
-          attributes.push(attribute)
+        // fixed quantization attribute types
+        const attr = { ...attribute }
+        if (attr.name !== 'position') {
+          if (attr.name === 'normal') {
+            attr.type = 'vec3f'
+          } else if (attr.name === 'tangent') {
+            attr.type.replace('u', 'f').replace('i', 'f')
+          } else if (attr.name.indexOf('uv') !== -1) {
+            attr.type = 'vec2f'
+          }
+
+          attributes.push(attr)
         }
       })
     })
@@ -38,7 +48,7 @@ export const getVertexOutputStructContent = ({
   const structAttributes = attributes
     .map((attribute, index) => {
       return /* wgsl */ `
-  @location(${index}) ${attribute.type === 'u32' || attribute.type === 'i32' ? '@interpolate(flat) ' : ' '}${
+  @location(${index}) ${attribute.type.includes('i') || attribute.type.includes('u') ? '@interpolate(flat) ' : ' '}${
         attribute.name
       }: ${attribute.type},`
     })

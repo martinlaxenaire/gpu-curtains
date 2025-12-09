@@ -607,28 +607,24 @@ window.addEventListener('load', async () => {
         type: 'vec4f',
         bufferFormat: 'float32x4',
         size: 4,
-        //array: vertexPositionArray,
       },
       {
         name: 'clothNormal',
         type: 'vec4f',
         bufferFormat: 'float32x4',
         size: 4,
-        //array: normalPositionArray,
       },
       {
         name: 'clothForce',
         type: 'vec4f',
         bufferFormat: 'float32x4',
         size: 4,
-        //array: vertexForceArray,
       },
       {
         name: 'clothVelocity',
         type: 'vec4f',
         bufferFormat: 'float32x4',
         size: 4,
-        //array: vertexVelocityArray,
       },
     ],
   })

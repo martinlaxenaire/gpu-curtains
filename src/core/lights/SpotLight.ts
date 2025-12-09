@@ -4,6 +4,12 @@ import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { Vec3 } from '../../math/Vec3'
 import { SpotShadow } from '../shadows/SpotShadow'
 import { ShadowBaseParams } from '../shadows/Shadow'
+import { Quat } from '../../math/Quat'
+import { Mat4 } from '../../math/Mat4'
+
+const tempVec3 = new Vec3()
+const tempQuat = new Quat()
+const tempMat4 = new Mat4()
 
 /**
  * Base parameters used to create a {@link SpotLight}.
@@ -220,6 +226,40 @@ export class SpotLight extends Light {
     if (this.shadow) {
       this.shadow.setPosition()
     }
+  }
+
+  /**
+   * Update the {@link target} and therefore direction directly from the {@link worldMatrix}, in case a transformation (especially rotation) has been applied to a parent of this {@link SpotLight} instead of updating the {@link target} directly.
+   */
+  updateTargetFromWorldMatrix() {
+    // from https://github.com/KhronosGroup/glTF-Sample-Renderer/blob/main/source/gltf/light.js#L32
+    // To extract a correct rotation, the scaling component must be eliminated.
+    tempVec3.set(1)
+    this.worldMatrix.getScale(tempVec3)
+    tempMat4.identity()
+    for (const col of [0, 1, 2]) {
+      tempMat4.elements[col] = this.worldMatrix.elements[col] / tempVec3.x
+      tempMat4.elements[col + 4] = this.worldMatrix.elements[col + 4] / tempVec3.y
+      tempMat4.elements[col + 8] = this.worldMatrix.elements[col + 8] / tempVec3.z
+    }
+
+    tempMat4.getRotation(tempQuat)
+
+    tempQuat.normalize()
+    tempVec3.set(0, 0, -1)
+    tempVec3.applyQuat(tempQuat)
+
+    tempVec3.add(this.actualPosition)
+
+    // update target
+    // @ts-ignore
+    this.target._x = tempVec3.x
+    // @ts-ignore
+    this.target._y = tempVec3.y
+    // @ts-ignore
+    this.target._z = tempVec3.z
+
+    this.setPositionDirection()
   }
 
   /**

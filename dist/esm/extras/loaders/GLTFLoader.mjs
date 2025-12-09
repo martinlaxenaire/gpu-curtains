@@ -1,3 +1,5 @@
+import { throwWarning } from '../../utils/utils.mjs';
+
 const GL = typeof window !== "undefined" && WebGLRenderingContext || {
   REPEAT: 10497
 };
@@ -55,7 +57,7 @@ class GLTFLoader {
    * @returns - {@link gltf} base object.
    */
   async loadFromJsonBase(json, baseUrl, binaryChunk = null) {
-    if (!baseUrl) {
+    if (baseUrl === void 0) {
       throw new Error("baseUrl must be specified.");
     }
     if (!json.asset) {
@@ -95,24 +97,30 @@ class GLTFLoader {
       }
     }
     const pendingImages = [];
+    const bitmapOptions = {
+      colorSpaceConversion: "none",
+      premultiplyAlpha: "none"
+    };
     for (let index = 0; index < json.images?.length || 0; ++index) {
       const image = json.images[index];
       if (image.uri) {
-        if (image.uri.includes(".webp")) {
+        if (image.uri.includes(".ktx2") || image.uri.includes(".basis")) {
+          throwWarning(
+            `GLTFLoader: Basis/compressed textures not supported. This file could not be loaded: ${image.uri}`
+          );
+        } else if (image.uri.includes(".webp")) {
           pendingImages[index] = new Promise((resolve, reject) => {
             const img = new Image();
             img.crossOrigin = "anonymous";
             img.onload = () => {
-              createImageBitmap(img, { colorSpaceConversion: "none" }).then(resolve).catch(reject);
+              createImageBitmap(img, bitmapOptions).then(resolve).catch(reject);
             };
             img.onerror = reject;
             img.src = GLTFLoader.resolveUri(image.uri, baseUrl);
           });
         } else {
           pendingImages[index] = fetch(GLTFLoader.resolveUri(image.uri, baseUrl)).then(async (response) => {
-            return createImageBitmap(await response.blob(), {
-              colorSpaceConversion: "none"
-            });
+            return createImageBitmap(await response.blob(), bitmapOptions);
           });
         }
       } else {
@@ -127,7 +135,7 @@ class GLTFLoader {
               img.crossOrigin = "anonymous";
               img.src = URL.createObjectURL(blob);
               img.onload = () => {
-                createImageBitmap(img, { colorSpaceConversion: "none" }).then((bitmap) => {
+                createImageBitmap(img, bitmapOptions).then((bitmap) => {
                   URL.revokeObjectURL(img.src);
                   resolve(bitmap);
                 }).catch(reject);
@@ -138,9 +146,7 @@ class GLTFLoader {
               };
             });
           } else {
-            return createImageBitmap(blob, {
-              colorSpaceConversion: "none"
-            });
+            return createImageBitmap(blob, bitmapOptions);
           }
         });
       }

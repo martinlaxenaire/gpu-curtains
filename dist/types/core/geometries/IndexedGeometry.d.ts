@@ -1,4 +1,3 @@
-/// <reference types="@webgpu/types" />
 import { Geometry } from './Geometry';
 import { GeometryBuffer, GeometryParams } from '../../types/Geometries';
 import { Renderer } from '../renderers/utils';
@@ -82,7 +81,7 @@ export declare class IndexedGeometry extends Geometry {
      */
     computeFlatNormals(): void;
     /**
-     * If we have less than 65.536 vertices, we should use a Uin16Array to hold our index buffer values
+     * If we have less than 65.536 vertices, we should use a Uin16Array to hold our index buffer values.
      * @readonly
      */
     get useUint16IndexArray(): boolean;

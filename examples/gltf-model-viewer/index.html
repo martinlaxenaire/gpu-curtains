@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+    <!-- Metas -->
+    <title>gpu-curtains | WebGPU glTF model viewer</title>
+    <meta name="description" content="WebGPU glTF model viewer with gpu-curtains" />
+
+    <meta property="og:title" content="gpu-curtains | WebGPU glTF model viewer" />
+    <meta property="og:type" content="article" />
+    <meta property="og:description" content="WebGPU glTF model viewer with gpu-curtains" />
+    <meta
+      property="og:image"
+      content="https://raw.githubusercontent.com/martinlaxenaire/gpu-curtains/main/website/assets/gpu-curtains-logo-1920-1280.jpg"
+    />
+    <meta property="og:url" content="https://martinlaxenaire.github.io/gpu-curtains/examples/gltf-model-viewer/" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link href="../../examples/common-styles.css" rel="stylesheet" />
+    <link href="styles.css" rel="stylesheet" />
+
+    <link
+      rel="icon"
+      type="image/png"
+      href="https://raw.githubusercontent.com/martinlaxenaire/gpu-curtains/main/website/assets/favicon.png"
+    />
+  </head>
+
+  <body>
+    <div id="canvas"></div>
+
+    <input id="load-gltf" type="file" accept=".glb,.gltf,.bin,.jpg,.jpeg,.png,.webp" multiple />
+    <input id="load-hdr" type="file" accept=".hdr" />
+
+    <div id="credits">
+      All models by
+      <a href="https://github.com/KhronosGroup/glTF-Sample-Assets" target="_blank">glTF Sample Assets</a>.<br />
+      Environment maps: <a href="https://polyhaven.com/a/cannon" target="_blank">Cannon</a> and
+      <a href="https://polyhaven.com/a/colorful_studio" target="_blank">Colorful Studio</a>.
+    </div>
+
+    <a
+      href="https://github.com/martinlaxenaire/gpu-curtains/blob/main/examples/gltf-model-viewer/main.js"
+      title="Show source code"
+      id="source-code-link"
+      class="primary-button"
+      target="_blank"
+      >&lt;/ &gt;</a
+    >
+
+    <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
+    <script src="main.js" type="module"></script>
+
+    <!-- Umami -->
+    <script
+      defer
+      src="https://cloud.umami.is/script.js"
+      data-website-id="5633e080-94cc-462b-9158-a45314c01630"
+      data-domains="martinlaxenaire.github.io"
+    ></script>
+  </body>
+</html>

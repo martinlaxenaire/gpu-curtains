@@ -1,4 +1,3 @@
-/// <reference types="@webgpu/types" />
 import { BufferUsageKeys } from './utils';
 /**
  * Parameters used to create a {@link Buffer}.
@@ -57,7 +56,7 @@ export declare class Buffer {
      * Map the {@link GPUBuffer} and put a copy of the data into a {@link Float32Array}.
      * @returns - {@link Float32Array} holding the {@link GPUBuffer} data.
      */
-    mapBufferAsync(): Promise<Float32Array>;
+    mapBufferAsync(): Promise<Float32Array<ArrayBuffer>>;
     /**
      * Destroy the {@link GPUBuffer} and {@link reset} its value.
      */

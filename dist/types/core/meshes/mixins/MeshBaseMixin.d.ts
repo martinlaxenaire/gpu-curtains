@@ -1,4 +1,3 @@
-/// <reference types="@webgpu/types" />
 import { Renderer } from '../../renderers/utils';
 import type { Material } from '../../materials/Material';
 import { RenderMaterial } from '../../materials/RenderMaterial';
@@ -82,8 +81,6 @@ export declare class MeshBaseClass {
     renderOrder: number;
     /** Whether this {@link MeshBaseClass} should be treated as transparent. Impacts the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} blend properties */
     _transparent: boolean;
-    /** Flag indicating whether to draw this {@link MeshBaseClass} or not */
-    _visible: boolean;
     /** Flag indicating whether this {@link MeshBaseClass} is ready to be drawn */
     _ready: boolean;
     /** Empty object to store any additional data or custom properties into your Mesh. */

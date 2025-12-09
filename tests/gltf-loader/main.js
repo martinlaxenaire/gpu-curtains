@@ -1,6 +1,6 @@
 // Goals of this test:
 // - test various capacities of the gltf loader
-import { models } from './models'
+// import { models } from './models'
 
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
@@ -9,6 +9,7 @@ window.addEventListener('load', async () => {
     GPUCameraRenderer,
     EnvironmentMap,
     GLTFLoader,
+    GLTFPointerAnimationsManager,
     GLTFScenesManager,
     AmbientLight,
     PointLight,
@@ -109,7 +110,24 @@ window.addEventListener('load', async () => {
   const modelUrl = searchParams.get('model')
   let modelUrlName = null
 
-  let availableModels = { ...models }
+  const gltFSampleModelsRes = await fetch(
+    'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/model-index.json'
+  )
+  const gltfSampleModels = await gltFSampleModelsRes.json()
+  let availableSampleModels = gltfSampleModels.reduce((acc, current) => {
+    const variants = current.variants
+    const variant = variants['glTF-Binary'] || variants['glTF']
+
+    return {
+      ...acc,
+      [current.name]: {
+        name: current.label,
+        url: `https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/${current.name}/${
+          variant.endsWith('.glb') ? 'glTF-Binary' : 'glTF'
+        }/${variant}`,
+      },
+    }
+  }, {})
 
   if (modelUrl) {
     const modelName = modelUrl
@@ -118,8 +136,8 @@ window.addEventListener('load', async () => {
       .replace('.glb', '')
     modelUrlName = modelName + 'FromURL' //  avoid duplicate keys
 
-    availableModels = {
-      ...availableModels,
+    availableSampleModels = {
+      ...availableSampleModels,
       [modelUrlName]: {
         name: modelName + ' (from URL)',
         url: modelUrl,
@@ -127,8 +145,8 @@ window.addEventListener('load', async () => {
     }
   }
 
-  const currentModelKey = modelUrlName ?? 'damagedHelmet'
-  let currentModel = availableModels[currentModelKey]
+  const currentModelKey = modelUrlName ?? 'DamagedHelmet'
+  let currentModel = availableSampleModels[currentModelKey]
 
   const ambientLight = new AmbientLight(gpuCameraRenderer, {
     intensity: 0, // will be updated
@@ -146,6 +164,8 @@ window.addEventListener('load', async () => {
           range: -1,
         })
 
+  let usePunctualLighting = true
+
   // GUI
   const gui = new lil.GUI({
     title: 'GLTF loader',
@@ -153,18 +173,23 @@ window.addEventListener('load', async () => {
 
   // render bundles
   let useRenderBundles = true
+  let useTransparentRenderBundles = true
   let regularRenderBundle = null
   let transparentRenderBundle = null
   let transmissiveRenderBundle = null
 
-  const renderBundlesField = gui.add({ useRenderBundles }, 'useRenderBundles').name('Use render bundles')
+  const renderBundlesFolder = gui.addFolder('Render bundles')
+  const renderBundlesField = renderBundlesFolder.add({ useRenderBundles }, 'useRenderBundles').name('Active')
+  const transparentRenderBundlesField = renderBundlesFolder
+    .add({ useTransparentRenderBundles }, 'useTransparentRenderBundles')
+    .name('Active for transparent objects')
 
   const modelField = gui
     .add(
       { [currentModel.name]: currentModelKey },
       currentModel.name,
-      Object.keys(availableModels).reduce((acc, v) => {
-        return { ...acc, [availableModels[v].name]: v }
+      Object.keys(availableSampleModels).reduce((acc, v) => {
+        return { ...acc, [availableSampleModels[v].name]: v }
       }, {})
     )
     .name('Models')
@@ -189,6 +214,10 @@ window.addEventListener('load', async () => {
     .add({ background: 0 }, 'background', { Diffuse: 0, Specular: 1 })
     .name('Skybox background')
 
+  // gltf lights
+  let lightVisibilities = []
+  const usePunctualLightingField = gui.add({ usePunctualLighting }, 'usePunctualLighting').name('Punctual lighting')
+
   const shadingField = gui.add({ shadingModel }, 'shadingModel', ['PBR', 'Phong', 'Lambert', 'Unlit']).name('Shading')
   const toneMappingField = gui
     .add({ toneMapping }, 'toneMapping', { Khronos: 'Khronos', Reinhard: 'Reinhard', Cineon: 'Cineon', None: false })
@@ -203,6 +232,7 @@ window.addEventListener('load', async () => {
     'Geometry Tangent',
     'Geometry Bitangent',
     'Shading Normal',
+    'Alpha',
     'Occlusion',
     'Emissive',
     'Base Color',
@@ -220,6 +250,8 @@ window.addEventListener('load', async () => {
     'Iridescence Thickness',
     'Anisotropy Strength',
     'Anisotropy Direction',
+    'Diffuse Transmission Strength',
+    'Diffuse Transmission Color',
     // multi scattering
     'Dielectric single scattering',
     'Dielectric multi scattering',
@@ -239,21 +271,29 @@ window.addEventListener('load', async () => {
     )
     .name('Debug channels')
 
+  const scenesFolder = gui.addFolder('Scenes')
+
   const camerasFolder = gui.addFolder('Cameras')
 
   const useCamera = (camera) => {
     gpuCameraRenderer.useCamera(camera)
-    orbitControls.useCamera(camera)
+    // enable orbit controls only for default camera
+    orbitControls.enabled = camera.uuid === defaultCamera.uuid
   }
 
   let variantsFolder = gui.addFolder('Variants')
 
   const animationsFolder = gui.addFolder('Animations')
+  let playAnimations = true
+  let playAnimationsField = animationsFolder.add({ playAnimations }, 'playAnimations').name('Play animations')
+  const availableAnimationsFolder = animationsFolder.addFolder('Available animations')
 
   let animationsFields = []
 
   // gltf
   const gltfLoader = new GLTFLoader()
+  // pointer animations
+  const gltfPointerAnimationsManager = new GLTFPointerAnimationsManager()
 
   let gltfScenesManager = null
 
@@ -262,12 +302,27 @@ window.addEventListener('load', async () => {
     const gltf = await gltfLoader.loadFromUrl(url)
     gltfScenesManager = new GLTFScenesManager({ renderer: gpuCameraRenderer, gltf })
 
+    // create pointer animations if any
+    gltfPointerAnimationsManager.createPointerAnimations(gltfScenesManager)
+
     const { scenesManager } = gltfScenesManager
     const { scenes, boundingBox, node } = scenesManager
     container.classList.remove('loading')
     console.log({ gltf, scenesManager, scenes, boundingBox })
 
-    if (useRenderBundles) {
+    const hasScenes = gltf.scenes.length > 1
+
+    if (hasScenes) {
+      renderBundlesFolder.hide()
+      renderBundlesField.disable()
+      transparentRenderBundlesField.disable()
+    } else {
+      renderBundlesFolder.show()
+      renderBundlesField.enable()
+      transparentRenderBundlesField.enable()
+    }
+
+    if (useRenderBundles && !hasScenes) {
       const nbRegularMeshes = scenesManager.meshesDescriptors.filter(
         (meshDescriptor) => !meshDescriptor.parameters.transmissive && !meshDescriptor.parameters.transparent
       ).length
@@ -288,7 +343,7 @@ window.addEventListener('load', async () => {
         })
       }
 
-      if (nbTransparentMeshes > 0) {
+      if (nbTransparentMeshes > 0 && useTransparentRenderBundles) {
         transparentRenderBundle = new RenderBundle(gpuCameraRenderer, {
           label: 'glTF non transmissive transparent render bundle',
           size: nbTransparentMeshes,
@@ -311,7 +366,6 @@ window.addEventListener('load', async () => {
     node.position.sub(center)
 
     const isSponza = url.includes('Sponza')
-    const isTransmissionTest = url.includes('TransmissionTest')
 
     if (isSponza) {
       node.position.y = 0
@@ -325,18 +379,6 @@ window.addEventListener('load', async () => {
         position: new Vec3(radius * 0.25, center.y * 0.25, 0),
         target: new Vec3(0, center.y * 0.1, 0),
       })
-    } else if (isTransmissionTest) {
-      camera.fov = 50
-      camera.far = radius * 6
-      camera.near = radius * 0.01
-
-      orbitControls.reset({
-        zoomSpeed: radius * 0.15,
-        minZoom: radius * 0.25,
-        maxZoom: radius * 4,
-        position: new Vec3(0, 0, radius * 0.75),
-        target: new Vec3(),
-      })
     } else {
       camera.fov = 50
       camera.far = radius * 6
@@ -344,7 +386,7 @@ window.addEventListener('load', async () => {
 
       orbitControls.reset({
         zoomSpeed: radius * 0.25,
-        minZoom: radius * 0.5,
+        minZoom: radius * 0.25,
         maxZoom: radius * 4,
         position: new Vec3(0, 0, radius * 2.5),
         target: new Vec3(),
@@ -382,7 +424,11 @@ window.addEventListener('load', async () => {
         if (parameters.transmissive) {
           parameters.renderBundle = transmissiveRenderBundle
         } else if (parameters.transparent) {
-          parameters.renderBundle = transparentRenderBundle
+          if (transparentRenderBundle) {
+            parameters.renderBundle = transparentRenderBundle
+          } else {
+            parameters.renderBundle = null
+          }
         } else {
           parameters.renderBundle = regularRenderBundle
         }
@@ -406,10 +452,25 @@ window.addEventListener('load', async () => {
         },
       }
 
-      const isUnlit = shadingModel === 'Unlit' || meshDescriptor.extensionsUsed.includes('KHR_materials_unlit')
+      parameters.material.toneMapping = toneMapping
+      parameters.material.shading = shadingModel
 
-      // debug
-      const additionalContribution = `
+      if (parameters.material.transmissive) {
+        parameters.material.transmissiveInputToneMapping = toneMapping
+      }
+
+      if (useEnvMap) {
+        parameters.material.environmentMap = environmentMap
+      }
+
+      // debug output
+      const isUnlit = shadingModel === 'Unlit' || meshDescriptor.extensionsUsed.includes('KHR_materials_unlit')
+      const hasTBN =
+        meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === 'normalTexture') ||
+        meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === 'clearcoatNormalTexture') ||
+        meshDescriptor.extensionsUsed.includes('KHR_materials_anisotropy')
+
+      let output = `
         if(debug.channel == 1.0) {
           ${
             parameters.geometry.getAttributeByName('uv')
@@ -435,124 +496,128 @@ window.addEventListener('load', async () => {
               : 'outputColor = vec4(normal * 0.5 + 0.5, 1.0);'
           }
         } else if(debug.channel == 5.0) {
-          ${
-            parameters.geometry.getAttributeByName('tangent') ||
-            (meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === 'normalTexture') && !isUnlit)
-              ? 'outputColor = vec4(tangent * 0.5 + 0.5, 1.0);'
-              : 'outputColor = vec4(vec3(0.0), 1.0);'
-          }
+          ${hasTBN && !isUnlit ? 'outputColor = vec4(tbn[0] * 0.5 + 0.5, 1.0);' : 'outputColor = vec4(vec3(0.0), 1.0);'}
         } else if(debug.channel == 6.0) {
-          ${
-            parameters.geometry.getAttributeByName('tangent') ||
-            (meshDescriptor.texturesDescriptors.find((t) => t.texture.options.name === 'normalTexture') && !isUnlit)
-              ? 'outputColor = vec4(bitangent * 0.5 + 0.5, 1.0);'
-              : 'outputColor = vec4(vec3(0.0), 1.0);'
-          }
+          ${hasTBN && !isUnlit ? 'outputColor = vec4(tbn[1] * 0.5 + 0.5, 1.0);' : 'outputColor = vec4(vec3(0.0), 1.0);'}
         } else if(debug.channel == 7.0) {
           outputColor = vec4(normal * 0.5 + 0.5, 1.0);
         } else if(debug.channel == 8.0) {
-          ${!isUnlit ? 'outputColor = vec4(vec3(occlusion), 1.0);' : 'outputColor = vec4(vec3(0.0), 1.0);'}
+          outputColor = vec4(vec3(outputColor.a), 1.0);
         } else if(debug.channel == 9.0) {
-          ${!isUnlit ? 'outputColor = vec4(emissive, 1.0);' : 'outputColor = vec4(vec3(0.0), 1.0);'}
+          ${!isUnlit ? 'outputColor = vec4(vec3(occlusion), 1.0);' : 'outputColor = vec4(vec3(0.0), 1.0);'}
         } else if(debug.channel == 10.0) {
-          outputColor = baseColor;
+          ${!isUnlit ? 'outputColor = vec4(emissive, 1.0);' : 'outputColor = vec4(vec3(0.0), 1.0);'}
         } else if(debug.channel == 11.0) {
+          outputColor = linearTosRGB_4(baseColor);
+        } else if(debug.channel == 12.0) {
           ${
             !isUnlit && shadingModel !== 'Lambert'
               ? 'outputColor = vec4(vec3(metallic), 1.0);'
               : 'outputColor = vec4(vec3(0.0), 1.0);'
           }
-        } else if(debug.channel == 12.0) {
+        } else if(debug.channel == 13.0) {
           ${
             !isUnlit && shadingModel !== 'Lambert'
               ? 'outputColor = vec4(vec3(roughness), 1.0);'
               : 'outputColor = vec4(vec3(0.0), 1.0);'
           }
-        } else if(debug.channel == 13.0) {
+        } else if(debug.channel == 14.0) {
           ${
             !isUnlit && shadingModel !== 'Lambert'
               ? 'outputColor = vec4(vec3(specularIntensity), 1.0);'
               : 'outputColor = vec4(vec3(0.0), 1.0);'
           }
-        } else if(debug.channel == 14.0) {
+        } else if(debug.channel == 15.0) {
           ${
             !isUnlit && shadingModel !== 'Lambert'
               ? 'outputColor = vec4(specularColor, 1.0);'
               : 'outputColor = vec4(vec3(0.0), 1.0);'
           }
-        } else if(debug.channel == 15.0) {
+        } else if(debug.channel == 16.0) {
           ${
             !isUnlit && shadingModel === 'PBR'
               ? 'outputColor = vec4(vec3(clearcoat), 1.0);'
               : 'outputColor = vec4(vec3(0.0), 1.0);'
           }
-        } else if(debug.channel == 16.0) {
+        } else if(debug.channel == 17.0) {
           ${
             !isUnlit && shadingModel === 'PBR'
               ? 'outputColor = vec4(vec3(clearcoatRoughness), 1.0);'
               : 'outputColor = vec4(vec3(0.0), 1.0);'
           }
-        } else if(debug.channel == 17.0) {
+        } else if(debug.channel == 18.0) {
           ${
             !isUnlit && shadingModel === 'PBR'
               ? 'outputColor = vec4(clearcoatNormal * 0.5 + 0.5, 1.0);'
               : 'outputColor = vec4(vec3(0.0), 1.0);'
           }
-        } else if(debug.channel == 18.0) {
+        } else if(debug.channel == 19.0) {
           ${
             !isUnlit && shadingModel === 'PBR'
               ? 'outputColor = vec4(sheenColor, 1.0);'
               : 'outputColor = vec4(vec3(0.0), 1.0);'
           }
-        } else if(debug.channel == 19.0) {
+        } else if(debug.channel == 20.0) {
           ${
             !isUnlit && shadingModel === 'PBR'
               ? 'outputColor = vec4(vec3(sheenRoughness), 1.0);'
               : 'outputColor = vec4(vec3(0.0), 1.0);'
           }
-        } else if(debug.channel == 20.0) {
+        } else if(debug.channel == 21.0) {
           ${
             !isUnlit && shadingModel === 'PBR'
               ? 'outputColor = vec4(vec3(iridescence), 1.0);'
               : 'outputColor = vec4(vec3(0.0), 1.0);'
           }
-        } else if(debug.channel == 21.0) {
+        } else if(debug.channel == 22.0) {
           ${
             !isUnlit && shadingModel === 'PBR'
               ? 'outputColor = vec4(vec3(iridescenceThickness / 1200.0), 1.0);'
               : 'outputColor = vec4(vec3(0.0), 1.0);'
           }
-        } else if(debug.channel == 22.0) {
+        } else if(debug.channel == 23.0) {
           ${
             !isUnlit && shadingModel === 'PBR'
               ? 'outputColor = vec4(vec3(anisotropy), 1.0);'
               : 'outputColor = vec4(vec3(0.0), 1.0);'
           }
-        } else if(debug.channel == 23.0) {
+        } else if(debug.channel == 24.0) {
           ${
             !isUnlit && shadingModel === 'PBR'
               ? 'outputColor = vec4(vec2((anisotropyVector + vec2(1.0)) * 0.5), 0.0, 1.0);'
               : 'outputColor = vec4(vec3(0.0), 1.0);'
           }
-        } else if(debug.channel == 24.0) {
-          ${
-            !isUnlit && shadingModel === 'PBR'
-              ? 'outputColor = vec4(dielectricScattering.singleScattering, 1.0);'
-              : 'outputColor = vec4(vec3(0.0), 1.0);'
-          }
         } else if(debug.channel == 25.0) {
           ${
             !isUnlit && shadingModel === 'PBR'
-              ? 'outputColor = vec4(dielectricScattering.multiScattering, 1.0);'
+              ? 'outputColor = vec4(vec3(diffuseTransmission), 1.0);'
               : 'outputColor = vec4(vec3(0.0), 1.0);'
           }
         } else if(debug.channel == 26.0) {
           ${
             !isUnlit && shadingModel === 'PBR'
-              ? 'outputColor = vec4(metallicScattering.singleScattering, 1.0);'
+              ? 'outputColor = vec4(diffuseTransmissionColor, 1.0);'
               : 'outputColor = vec4(vec3(0.0), 1.0);'
           }
         } else if(debug.channel == 27.0) {
+          ${
+            !isUnlit && shadingModel === 'PBR'
+              ? 'outputColor = vec4(dielectricScattering.singleScattering, 1.0);'
+              : 'outputColor = vec4(vec3(0.0), 1.0);'
+          }
+        } else if(debug.channel == 28.0) {
+          ${
+            !isUnlit && shadingModel === 'PBR'
+              ? 'outputColor = vec4(dielectricScattering.multiScattering, 1.0);'
+              : 'outputColor = vec4(vec3(0.0), 1.0);'
+          }
+        } else if(debug.channel == 29.0) {
+          ${
+            !isUnlit && shadingModel === 'PBR'
+              ? 'outputColor = vec4(metallicScattering.singleScattering, 1.0);'
+              : 'outputColor = vec4(vec3(0.0), 1.0);'
+          }
+        } else if(debug.channel == 30.0) {
           ${
             !isUnlit && shadingModel === 'PBR'
               ? 'outputColor = vec4(metallicScattering.multiScattering, 1.0);'
@@ -561,16 +626,29 @@ window.addEventListener('load', async () => {
         }
       `
 
-      parameters.material.toneMapping = toneMapping
-      parameters.material.shading = shadingModel
-      parameters.material.fragmentChunks = {
-        additionalContribution,
-      }
+      output += `
+      var output: FSOutput;
+      output.color = outputColor;
+      return output;`
 
-      if (useEnvMap) {
-        parameters.material.environmentMap = environmentMap
+      parameters.material.fragmentOutput = {
+        output,
       }
     })
+
+    // punctual lighting
+    lightVisibilities = []
+    if (scenesManager.lights.length) {
+      scenesManager.lights.forEach((light) => {
+        lightVisibilities.push(light.visible)
+        if (!usePunctualLighting) {
+          light.visible = false
+        }
+      })
+      usePunctualLightingField.enable()
+    } else {
+      usePunctualLightingField.disable()
+    }
 
     // variants
     variantsFolder.children.forEach((child) => child.destroy())
@@ -599,16 +677,21 @@ window.addEventListener('load', async () => {
       })
 
     // animations
+    availableAnimationsFolder.children.forEach((child) => child.destroy())
     if (scenesManager.animations.length) {
+      playAnimationsField.enable()
+
       const hasSkins = gltf.skins && gltf.skins.length
-      if (hasSkins) {
-        scenesManager.animations[0].play()
-      } else {
-        scenesManager.animations.forEach((animation) => animation.play())
+      if (playAnimations) {
+        if (hasSkins) {
+          scenesManager.animations[0].play()
+        } else {
+          scenesManager.animations.forEach((animation) => animation.play())
+        }
       }
 
       scenesManager.animations.forEach((animation, id) => {
-        const animationField = animationsFolder
+        const animationField = availableAnimationsFolder
           .add(animation, 'isPlaying')
           .name(animation.label)
           .onChange((value) => {
@@ -630,6 +713,8 @@ window.addEventListener('load', async () => {
 
         animationsFields.push(animationField)
       })
+    } else {
+      playAnimationsField.disable()
     }
 
     // cameras
@@ -639,7 +724,7 @@ window.addEventListener('load', async () => {
     availableCameras['Default camera'] = defaultCamera
     if (scenesManager.cameras.length) {
       scenesManager.cameras.forEach((gltfCamera, index) => {
-        availableCameras['Camera ' + index] = gltfCamera
+        availableCameras[`Camera ${index} - ${gltfCamera.label}`] = gltfCamera
       })
     }
 
@@ -649,6 +734,29 @@ window.addEventListener('load', async () => {
         useCamera(value)
       })
       .name('Active camera')
+
+    // scenes
+    scenesFolder.children.forEach((child) => child.destroy())
+
+    const availableScenes = []
+    if (gltf.scenes) {
+      gltf.scenes.forEach((scene, index) => availableScenes.push(scene.name ?? 'Scene ' + index))
+      const activeScene = gltf.scene ?? 0
+      scenesFolder
+        .add({ scene: availableScenes[activeScene] }, 'scene', availableScenes)
+        .onChange((value) => {
+          const sceneIndex = availableScenes.findIndex((s) => s === value)
+          scenesManager.meshesDescriptors.forEach((meshDescriptor, index) => {
+            const mesh = meshes[index]
+            if (meshDescriptor.scenes.find((s) => s.index === sceneIndex)) {
+              mesh.visible = true
+            } else {
+              mesh.visible = false
+            }
+          })
+        })
+        .name('Active scene')
+    }
 
     console.log(gpuCameraRenderer, meshes)
 
@@ -762,13 +870,27 @@ window.addEventListener('load', async () => {
   renderBundlesField.onChange(async (value) => {
     useRenderBundles = value
 
+    if (!useRenderBundles) {
+      transparentRenderBundlesField.disable()
+    } else {
+      transparentRenderBundlesField.enable()
+    }
+
+    cleanUpScene()
+
+    await loadGLTF(currentModel.url)
+  })
+
+  transparentRenderBundlesField.onChange(async (value) => {
+    useTransparentRenderBundles = value
+
     cleanUpScene()
 
     await loadGLTF(currentModel.url)
   })
 
   modelField.onChange(async (value) => {
-    if (availableModels[value].name !== currentModel.name) {
+    if (availableSampleModels[value].name !== currentModel.name) {
       cleanUpScene()
 
       if (animationsFields.length) {
@@ -777,7 +899,7 @@ window.addEventListener('load', async () => {
 
       animationsFields = []
 
-      currentModel = availableModels[value]
+      currentModel = availableSampleModels[value]
 
       useCamera(defaultCamera)
 
@@ -824,6 +946,15 @@ window.addEventListener('load', async () => {
     skybox.uniforms.params.useSpecular.value = value
   })
 
+  usePunctualLightingField.onChange((value) => {
+    usePunctualLighting = value
+    if (gltfScenesManager && gltfScenesManager.scenesManager) {
+      gltfScenesManager.scenesManager.lights.forEach((light, index) => {
+        light.visible = value ? lightVisibilities[index] : false
+      })
+    }
+  })
+
   shadingField.onChange(async (value) => {
     if (value !== shadingModel) {
       shadingModel = value
@@ -849,6 +980,20 @@ window.addEventListener('load', async () => {
 
     gltfScenesManager?.scenesManager?.meshes?.forEach((mesh) => {
       mesh.uniforms.debug.channel.value = value
+    })
+  })
+
+  playAnimationsField.onChange((value) => {
+    playAnimations = value
+
+    gltfScenesManager?.scenesManager?.animations.forEach((animation, i) => {
+      if (playAnimations) {
+        animation.play()
+        availableAnimationsFolder.children.forEach((child) => child.enable())
+      } else {
+        animation.pause()
+        availableAnimationsFolder.children.forEach((child) => child.disable())
+      }
     })
   })
 

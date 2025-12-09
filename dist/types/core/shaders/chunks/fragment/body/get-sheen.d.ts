@@ -10,7 +10,7 @@ import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragmen
  * @returns - String with the `sheenRoughness` (`f32`) and `sheenColor` (`vec3f`) values set.
  */
 export declare const getSheen: ({ extensionsUsed, sheenTexture, sheenColorTexture, sheenRoughnessTexture, }?: {
-    extensionsUsed?: PBRFragmentShaderInputParams['extensionsUsed'];
+    extensionsUsed?: PBRFragmentShaderInputParams["extensionsUsed"];
     sheenTexture?: ShaderTextureDescriptor;
     sheenColorTexture?: ShaderTextureDescriptor;
     sheenRoughnessTexture?: ShaderTextureDescriptor;

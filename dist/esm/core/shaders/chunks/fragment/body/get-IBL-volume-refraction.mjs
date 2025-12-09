@@ -1,13 +1,20 @@
 const getIBLVolumeRefraction = ({
   transmissionBackgroundTexture = null,
+  transmissiveInputColorSpace = "srgb",
+  transmissiveInputToneMapping = "Khronos",
   extensionsUsed = []
 }) => {
   const hasDispersion = extensionsUsed.includes("KHR_materials_dispersion");
   const iblVolumeRefractionFunction = hasDispersion ? "getIBLVolumeRefractionWithDispersion" : "getIBLVolumeRefraction";
+  const availableToneMappings = [false, "Khronos", "Reinhard", "Cineon"];
+  const transmissiveToneMapping = availableToneMappings.findIndex((t) => t === transmissiveInputToneMapping);
   return transmissionBackgroundTexture ? (
     /* wgsl */
     `
   var transmissionAlpha: f32 = 1.0;
+
+  let isTransmissiveLinear: bool = ${transmissiveInputColorSpace === "linear" ? "true" : "false"};
+  let transmissiveToneMapping: u32 = ${transmissiveToneMapping};
   
   var transmitted: vec4f = ${iblVolumeRefractionFunction}(
     normal,
@@ -26,6 +33,8 @@ const getIBLVolumeRefraction = ({
     thickness,
     attenuationColor,
     attenuationDistance,
+    isTransmissiveLinear,
+    transmissiveToneMapping,
     ${transmissionBackgroundTexture.texture.options.name},
     ${transmissionBackgroundTexture.sampler.name},
   );

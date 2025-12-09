@@ -37,11 +37,16 @@ import { getIBLIndirectAnisotropyRadiance } from '../../chunks/fragment/head/get
 import { getDiffuse } from '../../chunks/fragment/body/get-diffuse.mjs';
 import { BRDFCharlie } from '../../chunks/utils/BRDF-Charlie.mjs';
 import { BRDF_GGX } from '../../chunks/utils/BRDF_GGX.mjs';
+import { getDiffuseTransmission } from '../../chunks/fragment/body/get-diffuse-transmission.mjs';
+import { getVolumeMultiToSingleScatter } from '../../chunks/fragment/head/get-volume-multi-to-single-scatter.mjs';
+import { getVolumeMultiScatter } from '../../chunks/fragment/body/get-volume-multi-scatter.mjs';
 
 const getPBRFragmentShaderCode = ({
   chunks = null,
   toneMapping = "Khronos",
   outputColorSpace = "srgb",
+  transmissiveInputColorSpace = "srgb",
+  transmissiveInputToneMapping = "Khronos",
   fragmentOutput = {
     struct: [
       {
@@ -58,6 +63,8 @@ const getPBRFragmentShaderCode = ({
     )
   },
   geometry,
+  cullMode = "back",
+  flatShading = false,
   additionalVaryings = [],
   materialUniform = null,
   materialUniformName = "material",
@@ -71,6 +78,7 @@ const getPBRFragmentShaderCode = ({
   specularTexture = null,
   specularFactorTexture = null,
   specularColorTexture = null,
+  transmissionThicknessTexture = null,
   transmissionTexture = null,
   thicknessTexture = null,
   sheenTexture = null,
@@ -78,11 +86,15 @@ const getPBRFragmentShaderCode = ({
   sheenRoughnessTexture = null,
   anisotropyTexture = null,
   clearcoatTexture = null,
+  clearcoatFactorTexture = null,
   clearcoatRoughnessTexture = null,
   clearcoatNormalTexture = null,
   iridescenceTexture = null,
   iridescenceFactorTexture = null,
   iridescenceThicknessTexture = null,
+  diffuseTransmissionTexture = null,
+  diffuseTransmissionFactorTexture = null,
+  diffuseTransmissionColorTexture = null,
   transmissionBackgroundTexture = null,
   environmentMap = null
 }) => {
@@ -112,6 +124,7 @@ ${getIBLIndirectRadiance}
 ${getIBLTransmission}
 ${extensionsUsed.includes("KHR_materials_sheen") ? getIBLSheen : ""}
 ${extensionsUsed.includes("KHR_materials_anisotropy") ? getIBLIndirectAnisotropyRadiance : ""}
+${extensionsUsed.includes("KHR_materials_volume_scatter") ? getVolumeMultiToSingleScatter : ""}
 
 ${getFragmentInputStruct({ geometry, additionalVaryings })}
 
@@ -128,21 +141,35 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   ${chunks.preliminaryContribution}
 
   // material infos
-  ${getTangentBitangent({ extensionsUsed, geometry, normalTexture, clearcoatNormalTexture })}  
+  ${getTangentBitangent({ extensionsUsed, geometry, cullMode, flatShading, normalTexture, clearcoatNormalTexture })}  
   ${getNormal({ normalTexture })}
   ${getMetallicRoughness({ metallicRoughnessTexture })}
   ${getDiffuse}
   ${getSpecular({ specularTexture, specularFactorTexture, specularColorTexture })}
-  ${getTransmissionThickness({ transmissionTexture, thicknessTexture })}
+  ${getTransmissionThickness({ transmissionThicknessTexture, transmissionTexture, thicknessTexture })}
   ${getEmissiveOcclusion({ emissiveTexture, occlusionTexture })}
   ${getSheen({ extensionsUsed, sheenTexture, sheenColorTexture, sheenRoughnessTexture })}
-  ${getClearcoat({ extensionsUsed, clearcoatTexture, clearcoatRoughnessTexture })}
+  ${getClearcoat({ extensionsUsed, clearcoatTexture, clearcoatFactorTexture, clearcoatRoughnessTexture })}
   ${getClearcoatNormal({ extensionsUsed, normalTexture, clearcoatNormalTexture })}
   ${getIridescence({ extensionsUsed, iridescenceTexture, iridescenceFactorTexture, iridescenceThicknessTexture })}
   ${getAnisotropy({ extensionsUsed, anisotropyTexture })}
+  ${getDiffuseTransmission({
+      extensionsUsed,
+      diffuseTransmissionTexture,
+      diffuseTransmissionFactorTexture,
+      diffuseTransmissionColorTexture
+    })}
+  ${getVolumeMultiScatter({ extensionsUsed })}
   
   // shading
-  ${getPBRShading({ receiveShadows, environmentMap, transmissionBackgroundTexture, extensionsUsed })}
+  ${getPBRShading({
+      receiveShadows,
+      environmentMap,
+      transmissionBackgroundTexture,
+      transmissiveInputColorSpace,
+      transmissiveInputToneMapping,
+      extensionsUsed
+    })}
   
   outputColor = vec4(outgoingLight, outputColor.a);
   outputColor = vec4(outputColor.rgb + emissive, outputColor.a);

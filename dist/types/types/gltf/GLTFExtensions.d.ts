@@ -1,6 +1,6 @@
 import { GLTF } from './GLTF';
 /** List of available glTF extensions. */
-export type GLTFExtensionsTypes = 'KHR_animation_pointer' | 'KHR_draco_mesh_compression' | 'KHR_lights_punctual' | 'KHR_materials_anisotropy' | 'KHR_materials_clearcoat' | 'KHR_materials_dispersion' | 'KHR_materials_emissive_strength' | 'KHR_materials_ior' | 'KHR_materials_iridescence' | 'KHR_materials_sheen' | 'KHR_materials_specular' | 'KHR_materials_transmission' | 'KHR_materials_unlit' | 'KHR_materials_variants' | 'KHR_materials_volume' | 'KHR_mesh_quantization' | 'KHR_texture_basisu' | 'KHR_texture_transform' | 'KHR_xmp_json_ld' | 'KHR_xmp' | 'EXT_mesh_gpu_instancing' | 'EXT_meshopt_compression' | 'EXT_texture_webp';
+export type GLTFExtensionsTypes = 'KHR_animation_pointer' | 'KHR_draco_mesh_compression' | 'KHR_lights_punctual' | 'KHR_materials_anisotropy' | 'KHR_materials_clearcoat' | 'KHR_materials_diffuse_transmission' | 'KHR_materials_dispersion' | 'KHR_materials_emissive_strength' | 'KHR_materials_ior' | 'KHR_materials_iridescence' | 'KHR_materials_sheen' | 'KHR_materials_specular' | 'KHR_materials_transmission' | 'KHR_materials_unlit' | 'KHR_materials_variants' | 'KHR_materials_volume' | 'KHR_materials_volume_scatter' | 'KHR_mesh_quantization' | 'KHR_node_visibility' | 'KHR_texture_basisu' | 'KHR_texture_transform' | 'KHR_xmp_json_ld' | 'KHR_xmp' | 'EXT_mesh_gpu_instancing' | 'EXT_meshopt_compression' | 'EXT_texture_webp';
 /** Array of all available glTF extensions. */
 export type GLTFExtensionsUsed = Array<GLTFExtensionsTypes>;
 /** Define the `KHR_lights_punctual` extension top level options. */
@@ -49,8 +49,13 @@ export interface GLTFLightsPunctualExtension {
 }
 /** Define the `EXT_mesh_gpu_instancing` extension nodes options. */
 export interface GLTFMeshGPUInstancingExtension {
-    /** contains accessor ids for the `TRANSLATION`, `ROTATION`, and `SCALE` attribute buffers, all of which are optional. */
+    /** Contains accessor ids for the `TRANSLATION`, `ROTATION`, and `SCALE` attribute buffers, all of which are optional. */
     attributes?: GLTF.IMeshPrimitive['attributes'];
+}
+/** Defines the `KHR_node_visibility` extension nodes options. */
+export interface GLTFNodeVisibilityExtension {
+    /** Specifies whether the node is visible. */
+    visible?: boolean;
 }
 /** Base mapping for all potential nodes GLTF extensions types. */
 export type GLTFNodesExtensionsMapping = {
@@ -58,11 +63,27 @@ export type GLTFNodesExtensionsMapping = {
     KHR_lights_punctual: GLTFLightsPunctualExtension;
     /** Define the `EXT_mesh_gpu_instancing` extension node options. */
     EXT_mesh_gpu_instancing: GLTFMeshGPUInstancingExtension;
+    /** Define the `KHR_node_visibility` extension node options. */
+    KHR_node_visibility: GLTFNodeVisibilityExtension;
 };
 /** Extract keys from GLTFExtensionsTypes that are present in GLTFNodesExtensionsMapping. */
 export type NodesExtensionKeys = Extract<keyof GLTFNodesExtensionsMapping, GLTFExtensionsTypes>;
 /**  All the glTF nodes extensions properties. */
 export type GLTFNodesExtensions = Pick<GLTFNodesExtensionsMapping, NodesExtensionKeys>;
+/** Defines the `KHR_animation_pointer` extension animations targets options. */
+export interface GLTFAnimationPointerExtension {
+    /** Pointer path to the specific glTF asset property to animate. */
+    pointer: string;
+}
+/** Base mapping for all potential animstions targets GLTF extensions types. */
+export type GLTFAnimationsTargetsExtensionsMapping = {
+    /** Define the `KHR_animation_pointer` extension animation target options. */
+    KHR_animation_pointer: GLTFAnimationPointerExtension;
+};
+/** Extract keys from GLTFExtensionsTypes that are present in GLTFAnimationsTargetsExtensionsMapping. */
+export type AnimationsTargetsExtensionKeys = Extract<keyof GLTFAnimationsTargetsExtensionsMapping, GLTFExtensionsTypes>;
+/**  All the glTF animations targets extensions properties. */
+export type GLTFAnimationsTargetsExtensions = Pick<GLTFAnimationsTargetsExtensionsMapping, AnimationsTargetsExtensionKeys>;
 /** Define the `KHR_materials_variants` extension primitives options. */
 export interface GLTFMaterialsVariants {
     /** Defines the mappings between the registered material variants in the glTF extension declared at top level and a {@link GLTF.IMeshPrimitive.material | glTF material index}. */
@@ -73,10 +94,19 @@ export interface GLTFMaterialsVariants {
         variants?: number[];
     }>;
 }
+/** Define the `KHR_draco_mesh_compression` extension primitives options. */
+export interface GLTFDracoMeshCompression {
+    /** Index of the buffer containing compressed data. */
+    bufferView: number;
+    /** Attributes stored in the decompressed geometry. Each attribute is associated with an attribute id which is its unique id in the compressed data. */
+    attributes: GLTF.IMeshPrimitive['attributes'];
+}
 /** Base mapping for all potential primitives GLTF extensions types. */
 export type GLTFPrimitivesExtensionsMapping = {
     /** Define the `KHR_materials_variants` extension primitives options. */
     KHR_materials_variants: GLTFMaterialsVariants;
+    /** Define the `KHR_draco_mesh_compression` extension primitives options. */
+    KHR_draco_mesh_compression: GLTFDracoMeshCompression;
 };
 /** Extract keys from GLTFExtensionsTypes that are present in GLTFPrimitivesExtensionsMapping. */
 export type PrimitivesExtensionKeys = Extract<keyof GLTFPrimitivesExtensionsMapping, GLTFExtensionsTypes>;
@@ -87,10 +117,17 @@ export interface GLTFTextureWebP {
     /** Specifies a source property that contains the index of the WebP image object. */
     source: number;
 }
+/** Define the `KHR_texture_basisu` extension textures options. */
+export interface GLTFTextureBasisU {
+    /** Specifies a source property that contains the index of the Basis Universal image object. */
+    source: number;
+}
 /** Base mapping for all potential textures GLTF extensions types. */
 export type GLTFTexturesExtensionsMapping = {
     /** Define the `EXT_texture_webp` extension textures options. */
     EXT_texture_webp: GLTFTextureWebP;
+    /** Define the `KHR_texture_basisu` extension textures options. */
+    KHR_texture_basisu: GLTFTextureBasisU;
 };
 /** Extract keys from GLTFExtensionsTypes that are present in GLTFTexturesExtensions. */
 export type TexturesExtensionKeys = Extract<keyof GLTFTexturesExtensionsMapping, GLTFExtensionsTypes>;
@@ -160,15 +197,22 @@ export interface GLTFMaterialsVolumeExtension {
     /** The color that white light turns into due to absorption when reaching the attenuation distance. Default to `[1, 1, 1]`. */
     attenuationColor?: [number, number, number];
 }
+/** Define the `KHR_materials_volume_scatter` extension materials options. */
+export interface GLTFMaterialsVolumeScatterExtension {
+    /** The multi-scatter albedo. Default to `[0, 0, 0]`. */
+    multiscatterColor?: [number, number, number];
+    /** The anisotropy of scatter events. Range is (-1, 1).	 Default to `0`. */
+    scatterAnisotropy?: number;
+}
 /** Define the `KHR_materials_sheen` extension materials options. */
 export interface GLTFMaterialsSheenExtension {
     /** The sheen color in linear space. Default to `[0, 0, 0]`. */
     sheenColorFactor?: [number, number, number];
-    /** The sheen color (RGB). The sheen color is in sRGB transfer function. */
+    /** The sheen color, stored in the `RGB` channels. The sheen color is in sRGB transfer function. */
     sheenColorTexture?: GLTF.ITextureInfo;
     /** The sheen roughness. Default to `0`. */
     sheenRoughnessFactor?: number;
-    /** The sheen roughness (Alpha) texture. */
+    /** The sheen roughness texture, stored in the alpha `A` channel. */
     sheenRoughnessTexture?: GLTF.ITextureInfo;
 }
 /** Define the `KHR_materials_clearcoat` extension materials options. */
@@ -208,6 +252,17 @@ export interface GLTFMaterialsIridescenceExtension {
     /** The thickness texture of the thin-film layer, stored in the `G` channel. */
     iridescenceThicknessTexture?: GLTF.ITextureInfo;
 }
+/** Define the `KHR_materials_diffuse_transmission` extension materials options. */
+export interface GLTFMaterialsDiffuseTransmissionExtension {
+    /** The percentage of non-specularly reflected light that is diffusely transmitted through the surface. Default to `0`. */
+    diffuseTransmissionFactor?: number;
+    /** A texture that defines the percentage of non-specularly reflected light that is diffusely transmitted through the surface. Stored in the alpha `A` channel. */
+    diffuseTransmissionTexture?: GLTF.ITextureInfo;
+    /** The color that modulates the transmitted light. Default to `[1, 1, 1]`. */
+    diffuseTransmissionColorFactor?: [number, number, number];
+    /** A texture that defines the color that modulates the diffusely transmitted light, stored in the `RGB` channels. */
+    diffuseTransmissionColorTexture?: GLTF.ITextureInfo;
+}
 /** Base mapping for all potential GLTF materials extensions types. */
 export type GLTFMaterialsExtensionsMapping = {
     /** Define the `KHR_materials_dispersion` extension materials options. */
@@ -224,6 +279,8 @@ export type GLTFMaterialsExtensionsMapping = {
     KHR_materials_unlit: Record<string, never>;
     /** Define the `KHR_materials_volume` extension materials options. */
     KHR_materials_volume: GLTFMaterialsVolumeExtension;
+    /** Define the `KHR_materials_volume_scatter` extension materials options. */
+    KHR_materials_volume_scatter: GLTFMaterialsVolumeScatterExtension;
     /** Define the `KHR_materials_sheen` extension materials options. */
     KHR_materials_sheen: GLTFMaterialsSheenExtension;
     /** Define the `KHR_materials_clearcoat` extension materials options. */
@@ -232,6 +289,8 @@ export type GLTFMaterialsExtensionsMapping = {
     KHR_materials_anisotropy: GLTFMaterialsAnisotropyExtension;
     /** Define the `KHR_materials_iridescence` extension materials options. */
     KHR_materials_iridescence: GLTFMaterialsIridescenceExtension;
+    /** Define the `KHR_materials_diffuse_transmission` extension materials options. */
+    KHR_materials_diffuse_transmission: GLTFMaterialsDiffuseTransmissionExtension;
 };
 /** Extract keys from GLTFExtensionsTypes that are present in GLTFMaterialsExtensionsMapping. */
 export type MaterialExtensionKeys = Extract<keyof GLTFMaterialsExtensionsMapping, GLTFExtensionsTypes>;

@@ -2,6 +2,14 @@ import { Vec3 } from '../../math/Vec3.mjs';
 import { Quat } from '../../math/Quat.mjs';
 import { Mat4 } from '../../math/Mat4.mjs';
 
+var __typeError = (msg) => {
+  throw TypeError(msg);
+};
+var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
+var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
+var _parent, _visible, _parentVisibility;
 let objectIndex = 0;
 const tempMatrix = new Mat4();
 class Object3D {
@@ -9,7 +17,13 @@ class Object3D {
    * Object3D constructor
    */
   constructor() {
-    this._parent = null;
+    /** Parent {@link Object3D} in the scene graph, used to compute the {@link worldMatrix}. */
+    __privateAdd(this, _parent);
+    /** Whether this {@link Object3D} and all its {@link children} should be considered as visible. Default to `true`. */
+    __privateAdd(this, _visible);
+    /** Set to `false` if at least one of the {@link Object3D} parent is not visible. */
+    __privateAdd(this, _parentVisibility);
+    __privateSet(this, _parent, null);
     this.children = [];
     this.matricesNeedUpdate = false;
     this.up = new Vec3(0, 1, 0);
@@ -17,30 +31,61 @@ class Object3D {
     Object.defineProperty(this, "object3DIndex", { value: objectIndex++ });
     this.setMatrices();
     this.setTransforms();
+    __privateSet(this, _visible, true);
+    __privateSet(this, _parentVisibility, true);
+  }
+  /**
+   * Get whether this {@link Object3D} is visible (if it is itself visible, and all its parents are visible as well).
+   */
+  get visible() {
+    return __privateGet(this, _visible) && __privateGet(this, _parentVisibility);
+  }
+  /**
+   * Set this {@link Object3D} visible property, and its children `parentVisibility` property.
+   * @param value - New visibility value.
+   */
+  set visible(value) {
+    __privateSet(this, _visible, value);
+    this.children.forEach((c) => c.parentVisibility = this.parentVisibility && value);
   }
   /* PARENT */
+  /**
+   * Get whether all this {@link Object3D} parents are visible or not. Should not be used directly.
+   */
+  get parentVisibility() {
+    return __privateGet(this, _parentVisibility);
+  }
+  /**
+   * Set to `false` if at least one of this {@link Object3D} parent is not visible, `true` otherwise. Should not be used directly.
+   * @param value - New parent visibility value.
+   */
+  set parentVisibility(value) {
+    __privateSet(this, _parentVisibility, value);
+    this.children.forEach((child) => child.parentVisibility = this.visible && value);
+  }
   /**
    * Get the parent of this {@link Object3D} if any
    */
   get parent() {
-    return this._parent;
+    return __privateGet(this, _parent);
   }
   /**
    * Set the parent of this {@link Object3D}
    * @param value - new parent to set, could be an {@link Object3D} or null
    */
   set parent(value) {
-    if (this._parent && value && this._parent.object3DIndex === value.object3DIndex) {
+    if (__privateGet(this, _parent) && value && __privateGet(this, _parent).object3DIndex === value.object3DIndex) {
       return;
     }
-    if (this._parent) {
-      this._parent.children = this._parent.children.filter((child) => child.object3DIndex !== this.object3DIndex);
+    if (__privateGet(this, _parent)) {
+      __privateGet(this, _parent).children = __privateGet(this, _parent).children.filter((child) => child.object3DIndex !== this.object3DIndex);
     }
     if (value) {
       this.shouldUpdateWorldMatrix();
     }
-    this._parent = value;
-    this._parent?.children.push(this);
+    __privateSet(this, _parent, value);
+    __privateGet(this, _parent)?.children.push(this);
+    this.parentVisibility = __privateGet(this, _parent) ? __privateGet(this, _parent).visible : true;
   }
   /* TRANSFORMS */
   /**
@@ -304,5 +349,8 @@ class Object3D {
     this.parent = null;
   }
 }
+_parent = new WeakMap();
+_visible = new WeakMap();
+_parentVisibility = new WeakMap();
 
 export { Object3D };
