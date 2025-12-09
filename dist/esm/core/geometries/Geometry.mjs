@@ -1,5 +1,5 @@
 import { Box3 } from '../../math/Box3.mjs';
-import { generateUUID, throwWarning, throwError } from '../../utils/utils.mjs';
+import { generateUUID, throwError } from '../../utils/utils.mjs';
 import { Buffer } from '../buffers/Buffer.mjs';
 import { Vec3 } from '../../math/Vec3.mjs';
 import { getVertexBufferAttributeLayout, vertexBufferViewSetFunction } from './utils.mjs';
@@ -60,6 +60,25 @@ class Geometry {
     }
     if (attributesBuffer) {
       this.setWGSLFragment();
+    }
+  }
+  /**
+   * Helper to decode and normalize integer values to float values based on the data type.
+   * @param typedArrayConstructor - {@link TypedArrayConstructor} used to know the data type.
+   * @returns - Decoded and normalized value.
+   */
+  static dequantize(typedArrayConstructor) {
+    switch (typedArrayConstructor) {
+      case Int8Array:
+        return (v) => Math.max(v / 127, -1);
+      case Uint8Array:
+        return (v) => v / 255;
+      case Int16Array:
+        return (v) => Math.max(v / 32767, -1);
+      case Uint16Array:
+        return (v) => v / 65535;
+      default:
+        return (v) => v;
     }
   }
   /**
@@ -155,17 +174,6 @@ class Geometry {
     });
     bufferFormat = bufferFormat ?? attributeLayout.format;
     type = type ?? attributeLayout.type;
-    if (name === "position" && (type !== "vec3f" || bufferFormat !== "float32x3" || size !== 3)) {
-      throwWarning(
-        `Geometry 'position' attribute must have this exact properties set:
-	type: 'vec3f',
-	bufferFormat: 'float32x3',
-	size: 3`
-      );
-      type = "vec3f";
-      bufferFormat = "float32x3";
-      size = 3;
-    }
     let arrayLength = array.length;
     const attributeCount = arrayLength / size;
     if (name === "position") {
@@ -173,7 +181,7 @@ class Geometry {
     }
     if (vertexBuffer.stepMode === "vertex" && this.verticesCount && this.verticesCount !== attributeCount * verticesStride) {
       throwError(
-        `Geometry vertex attribute error. Attribute array of size ${size} must be of length: ${this.verticesCount * size}, current given: ${array.length}. (${this.verticesCount} vertices).`
+        `Geometry vertex attribute error. Attribute ${name} array of size ${size} must be of length: ${this.verticesCount * size}, current given: ${array.length}. (${this.verticesCount} vertices).`
       );
     } else if (vertexBuffer.stepMode === "instance" && attributeCount !== this.instancesCount) {
       if (vertexBuffer.buffer) {
@@ -272,23 +280,12 @@ class Geometry {
   computeGeometry() {
     if (this.ready) return;
     this.vertexBuffers.forEach((vertexBuffer, index) => {
+      const hasPositionAttribute = vertexBuffer.attributes.find(
+        (attribute) => attribute.name === "position"
+      );
       if (index === 0) {
-        const hasPositionAttribute = vertexBuffer.attributes.find(
-          (attribute) => attribute.name === "position"
-        );
         if (!hasPositionAttribute) {
           throwError(`Geometry must have a 'position' attribute`);
-        }
-        if (hasPositionAttribute.type !== "vec3f" || hasPositionAttribute.bufferFormat !== "float32x3" || hasPositionAttribute.size !== 3) {
-          throwWarning(
-            `Geometry 'position' attribute must have this exact properties set:
-	type: 'vec3f',
-	bufferFormat: 'float32x3',
-	size: 3`
-          );
-          hasPositionAttribute.type = "vec3f";
-          hasPositionAttribute.bufferFormat = "float32x3";
-          hasPositionAttribute.size = 3;
         }
         const hasNormalAttribute = vertexBuffer.attributes.find(
           (attribute) => attribute.name === "normal"
@@ -336,6 +333,17 @@ class Geometry {
               }
             }
           }
+        }
+        if (hasPositionAttribute && hasPositionAttribute.array && hasPositionAttribute.normalized) {
+          const dequantizePositions = Geometry.dequantize(
+            hasPositionAttribute.array.constructor
+          );
+          this.boundingBox.min.x = dequantizePositions(this.boundingBox.min.x);
+          this.boundingBox.min.y = dequantizePositions(this.boundingBox.min.y);
+          this.boundingBox.min.z = dequantizePositions(this.boundingBox.min.z);
+          this.boundingBox.max.x = dequantizePositions(this.boundingBox.max.x);
+          this.boundingBox.max.y = dequantizePositions(this.boundingBox.max.y);
+          this.boundingBox.max.z = dequantizePositions(this.boundingBox.max.z);
         }
       }
     });

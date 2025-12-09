@@ -11,8 +11,21 @@ export const declareAttributesVars = ({ geometry }: { geometry: Geometry }): str
     .map((vertexBuffer) =>
       vertexBuffer.attributes
         .map((attribute) => {
+          let { name, type } = attribute
+          let swizzle = ''
+
+          // dequantize and force correct type
+          if (name === 'position' || name === 'normal') {
+            type = 'vec3f'
+            swizzle = '.xyz'
+          } else if (name === 'tangent') {
+            type = 'vec4f'
+          } else if (name.indexOf('uv') !== -1) {
+            type = 'vec2f'
+          }
+
           return /* wgsl */ `
-  var ${attribute.name}: ${attribute.type} = attributes.${attribute.name};`
+  var ${name}: ${type} = ${type}(attributes.${name}${swizzle});`
         })
         .join('')
     )

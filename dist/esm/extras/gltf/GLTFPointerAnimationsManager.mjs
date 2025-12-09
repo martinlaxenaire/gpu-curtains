@@ -57,45 +57,43 @@ class GLTFPointerAnimationsManager {
    * @returns - The camera animations {@link KeyframesAnimationValueType | value type} and key (property) to animate.
    */
   getCleanCameraProperties(animatedProperty) {
-    return (() => {
-      switch (animatedProperty) {
-        case "znear":
-          return {
-            type: "scalar",
-            key: "near"
-          };
-        case "zfar":
-          return {
-            type: "scalar",
-            key: "far"
-          };
-        case "yfov":
-          return {
-            type: "scalar",
-            key: "fov"
-          };
-        case "aspectRatio":
-          return {
-            type: "scalar",
-            key: "forceAspect"
-          };
-        case "xmag":
-          return {
-            type: "scalar",
-            key: "left"
-          };
-        case "ymag":
-          return {
-            type: "scalar",
-            key: "top"
-          };
-        default:
-          return {
-            type: null,
-            key: null
-          };
-      }
-    })();
+    switch (animatedProperty) {
+      case "znear":
+        return {
+          type: "scalar",
+          key: "near"
+        };
+      case "zfar":
+        return {
+          type: "scalar",
+          key: "far"
+        };
+      case "yfov":
+        return {
+          type: "scalar",
+          key: "fov"
+        };
+      case "aspectRatio":
+        return {
+          type: "scalar",
+          key: "forceAspect"
+        };
+      case "xmag":
+        return {
+          type: "scalar",
+          key: "left"
+        };
+      case "ymag":
+        return {
+          type: "scalar",
+          key: "top"
+        };
+      default:
+        return {
+          type: null,
+          key: null
+        };
+    }
   }
   /**
    * Get any light animations {@link KeyframesAnimationValueType | value type} and key (property) to use for the {@link KeyframesAnimation}.
@@ -103,28 +101,26 @@ class GLTFPointerAnimationsManager {
    * @returns - The light animations {@link KeyframesAnimationValueType | value type} and key (property) to animate.
    */
   getCleanLightProperties(animatedProperty) {
-    return (() => {
-      switch (animatedProperty) {
-        case "color":
-          return {
-            type: "vec3",
-            key: animatedProperty
-          };
-        case "intensity":
-        case "range":
-        case "innerConeAngle":
-        case "outerConeAngle":
-          return {
-            type: "scalar",
-            key: animatedProperty
-          };
-        default:
-          return {
-            type: null,
-            key: null
-          };
-      }
-    })();
+    switch (animatedProperty) {
+      case "color":
+        return {
+          type: "vec3",
+          key: animatedProperty
+        };
+      case "intensity":
+      case "range":
+      case "innerConeAngle":
+      case "outerConeAngle":
+        return {
+          type: "scalar",
+          key: animatedProperty
+        };
+      default:
+        return {
+          type: null,
+          key: null
+        };
+    }
   }
   /**
    * Get any material animations {@link KeyframesAnimationValueType | value type} and key (property) to use for the {@link KeyframesAnimation}.

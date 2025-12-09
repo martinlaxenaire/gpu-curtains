@@ -1903,15 +1903,13 @@
     return bufferLayouts[bufferType];
   };
   const getBindingWGSLVarType = (binding) => {
-    return (() => {
-      switch (binding.bindingType) {
-        case "storage":
-          return `var<${binding.bindingType}, ${binding.options.access}>`;
-        case "uniform":
-        default:
-          return "var<uniform>";
-      }
-    })();
+    switch (binding.bindingType) {
+      case "storage":
+        return `var<${binding.bindingType}, ${binding.options.access}>`;
+      case "uniform":
+      default:
+        return "var<uniform>";
+    }
   };
   const getTextureBindingWGSLVarType = (binding) => {
     if (binding.bindingType === "externalTexture") {
@@ -1929,53 +1927,49 @@
     }
   };
   const getBindGroupLayoutTextureBindingType = (binding) => {
-    return (() => {
-      switch (binding.bindingType) {
-        case "externalTexture":
-          return { externalTexture: {} };
-        case "storage":
-          return {
-            storageTexture: {
-              format: binding.options.format,
-              viewDimension: binding.options.viewDimension
-            }
-          };
-        case "texture":
-          return {
-            texture: {
-              multisampled: binding.options.multisampled,
-              viewDimension: binding.options.viewDimension,
-              sampleType: binding.options.multisampled ? "unfilterable-float" : "float"
-            }
-          };
-        case "depth":
-          return {
-            texture: {
-              multisampled: binding.options.multisampled,
-              viewDimension: binding.options.viewDimension,
-              sampleType: "depth"
-            }
-          };
-        default:
-          return null;
-      }
-    })();
+    switch (binding.bindingType) {
+      case "externalTexture":
+        return { externalTexture: {} };
+      case "storage":
+        return {
+          storageTexture: {
+            format: binding.options.format,
+            viewDimension: binding.options.viewDimension
+          }
+        };
+      case "texture":
+        return {
+          texture: {
+            multisampled: binding.options.multisampled,
+            viewDimension: binding.options.viewDimension,
+            sampleType: binding.options.multisampled ? "unfilterable-float" : "float"
+          }
+        };
+      case "depth":
+        return {
+          texture: {
+            multisampled: binding.options.multisampled,
+            viewDimension: binding.options.viewDimension,
+            sampleType: "depth"
+          }
+        };
+      default:
+        return null;
+    }
   };
   const getBindGroupLayoutTextureBindingCacheKey = (binding) => {
-    return (() => {
-      switch (binding.bindingType) {
-        case "externalTexture":
-          return `externalTexture,${binding.visibility},`;
-        case "storage":
-          return `storageTexture,${binding.options.format},${binding.options.viewDimension},${binding.visibility},`;
-        case "texture":
-          return `texture,${binding.options.multisampled},${binding.options.viewDimension},${binding.options.multisampled ? "unfilterable-float" : "float"},${binding.visibility},`;
-        case "depth":
-          return `depthTexture,${binding.options.format},${binding.options.viewDimension},${binding.visibility},`;
-        default:
-          return `${binding.visibility},`;
-      }
-    })();
+    switch (binding.bindingType) {
+      case "externalTexture":
+        return `externalTexture,${binding.visibility},`;
+      case "storage":
+        return `storageTexture,${binding.options.format},${binding.options.viewDimension},${binding.visibility},`;
+      case "texture":
+        return `texture,${binding.options.multisampled},${binding.options.viewDimension},${binding.options.multisampled ? "unfilterable-float" : "float"},${binding.visibility},`;
+      case "depth":
+        return `depthTexture,${binding.options.format},${binding.options.viewDimension},${binding.visibility},`;
+      default:
+        return `${binding.visibility},`;
+    }
   };
 
   class Binding {
@@ -7877,6 +7871,25 @@
       }
     }
     /**
+     * Helper to decode and normalize integer values to float values based on the data type.
+     * @param typedArrayConstructor - {@link TypedArrayConstructor} used to know the data type.
+     * @returns - Decoded and normalized value.
+     */
+    static dequantize(typedArrayConstructor) {
+      switch (typedArrayConstructor) {
+        case Int8Array:
+          return (v) => Math.max(v / 127, -1);
+        case Uint8Array:
+          return (v) => v / 255;
+        case Int16Array:
+          return (v) => Math.max(v / 32767, -1);
+        case Uint16Array:
+          return (v) => v / 65535;
+        default:
+          return (v) => v;
+      }
+    }
+    /**
      * Reset all the {@link vertexBuffers | vertex buffers} when the device is lost.
      */
     loseContext() {
@@ -7969,17 +7982,6 @@
       });
       bufferFormat = bufferFormat ?? attributeLayout.format;
       type = type ?? attributeLayout.type;
-      if (name === "position" && (type !== "vec3f" || bufferFormat !== "float32x3" || size !== 3)) {
-        throwWarning(
-          `Geometry 'position' attribute must have this exact properties set:
-	type: 'vec3f',
-	bufferFormat: 'float32x3',
-	size: 3`
-        );
-        type = "vec3f";
-        bufferFormat = "float32x3";
-        size = 3;
-      }
       let arrayLength = array.length;
       const attributeCount = arrayLength / size;
       if (name === "position") {
@@ -7987,7 +7989,7 @@
       }
       if (vertexBuffer.stepMode === "vertex" && this.verticesCount && this.verticesCount !== attributeCount * verticesStride) {
         throwError(
-          `Geometry vertex attribute error. Attribute array of size ${size} must be of length: ${this.verticesCount * size}, current given: ${array.length}. (${this.verticesCount} vertices).`
+          `Geometry vertex attribute error. Attribute ${name} array of size ${size} must be of length: ${this.verticesCount * size}, current given: ${array.length}. (${this.verticesCount} vertices).`
         );
       } else if (vertexBuffer.stepMode === "instance" && attributeCount !== this.instancesCount) {
         if (vertexBuffer.buffer) {
@@ -8086,23 +8088,12 @@
     computeGeometry() {
       if (this.ready) return;
       this.vertexBuffers.forEach((vertexBuffer, index) => {
+        const hasPositionAttribute = vertexBuffer.attributes.find(
+          (attribute) => attribute.name === "position"
+        );
         if (index === 0) {
-          const hasPositionAttribute = vertexBuffer.attributes.find(
-            (attribute) => attribute.name === "position"
-          );
           if (!hasPositionAttribute) {
             throwError(`Geometry must have a 'position' attribute`);
-          }
-          if (hasPositionAttribute.type !== "vec3f" || hasPositionAttribute.bufferFormat !== "float32x3" || hasPositionAttribute.size !== 3) {
-            throwWarning(
-              `Geometry 'position' attribute must have this exact properties set:
-	type: 'vec3f',
-	bufferFormat: 'float32x3',
-	size: 3`
-            );
-            hasPositionAttribute.type = "vec3f";
-            hasPositionAttribute.bufferFormat = "float32x3";
-            hasPositionAttribute.size = 3;
           }
           const hasNormalAttribute = vertexBuffer.attributes.find(
             (attribute) => attribute.name === "normal"
@@ -8150,6 +8141,17 @@
                 }
               }
             }
+          }
+          if (hasPositionAttribute && hasPositionAttribute.array && hasPositionAttribute.normalized) {
+            const dequantizePositions = Geometry.dequantize(
+              hasPositionAttribute.array.constructor
+            );
+            this.boundingBox.min.x = dequantizePositions(this.boundingBox.min.x);
+            this.boundingBox.min.y = dequantizePositions(this.boundingBox.min.y);
+            this.boundingBox.min.z = dequantizePositions(this.boundingBox.min.z);
+            this.boundingBox.max.x = dequantizePositions(this.boundingBox.max.x);
+            this.boundingBox.max.y = dequantizePositions(this.boundingBox.max.y);
+            this.boundingBox.max.z = dequantizePositions(this.boundingBox.max.z);
           }
         }
       });
@@ -13421,10 +13423,20 @@ fn getPCFBaseShadowContribution(
   const declareAttributesVars$1 = ({ geometry }) => {
     let attributeVars = geometry.vertexBuffers.map(
       (vertexBuffer) => vertexBuffer.attributes.map((attribute) => {
+        let { name, type } = attribute;
+        let swizzle = "";
+        if (name === "position" || name === "normal") {
+          type = "vec3f";
+          swizzle = ".xyz";
+        } else if (name === "tangent") {
+          type = "vec4f";
+        } else if (name.indexOf("uv") !== -1) {
+          type = "vec2f";
+        }
         return (
           /* wgsl */
           `
-  var ${attribute.name}: ${attribute.type} = attributes.${attribute.name};`
+  var ${name}: ${type} = ${type}(attributes.${name}${swizzle});`
         );
       }).join("")
     ).join("\n");
@@ -13481,13 +13493,18 @@ fn getPCFBaseShadowContribution(
     const skinBindings = bindings.filter((binding) => binding.name.includes("skin"));
     const hasSkin = skinJoints.length && skinWeights.length && skinBindings.length;
     if (hasSkin) {
-      output += hasInstances ? `
+      output += hasInstances ? (
+        /* wgsl */
+        `
   var instancesWorldPosition = array<vec4f, ${geometry.instancesCount}>();
   var instancesNormal = array<vec3f, ${geometry.instancesCount}>();
-      ` : "";
-      output += `
+      `
+      ) : "";
+      output += /* wgsl */
+      `
   let skinJoints: vec4u = vec4u(${skinJoints.map((skinJoint) => skinJoint.name).join(" + ")});`;
-      output += `
+      output += /* wgsl */
+      `
   var skinWeights: vec4f = vec4f(${skinWeights.map((skinWeight) => skinWeight.name).join(" + ")});
   
   let skinWeightsSum = dot(skinWeights, vec4(1.0));
@@ -20161,8 +20178,16 @@ fn getPBR(
     if (geometry.vertexBuffers && geometry.vertexBuffers.length) {
       geometry.vertexBuffers.forEach((vertexBuffer) => {
         vertexBuffer.attributes.forEach((attribute) => {
-          if (attribute.name !== "position") {
-            attributes.push(attribute);
+          const attr = { ...attribute };
+          if (attr.name !== "position") {
+            if (attr.name === "normal") {
+              attr.type = "vec3f";
+            } else if (attr.name === "tangent") {
+              attr.type.replace("u", "f").replace("i", "f");
+            } else if (attr.name.indexOf("uv") !== -1) {
+              attr.type = "vec2f";
+            }
+            attributes.push(attr);
           }
         });
       });
@@ -20362,7 +20387,11 @@ struct FSInput {
       geometry.vertexBuffers.forEach((vertexBuffer) => {
         vertexBuffer.attributes.forEach((attribute) => {
           if (!disabledAttributes.some((attr) => attribute.name.includes(attr))) {
-            attributes.push(attribute);
+            const attr = { ...attribute };
+            if (attr.name.indexOf("uv") !== -1) {
+              attr.type = "vec2f";
+            }
+            attributes.push(attr);
           }
         });
       });
@@ -22330,109 +22359,107 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
     transmissionBackgroundTexture = null,
     environmentMap = null
   }) => {
-    return (() => {
-      switch (shadingModel) {
-        case "Unlit":
-          return getUnlitFragmentShaderCode({
-            chunks,
-            toneMapping,
-            outputColorSpace,
-            fragmentOutput,
-            geometry,
-            additionalVaryings,
-            materialUniform,
-            materialUniformName,
-            baseColorTexture,
-            emissiveTexture,
-            occlusionTexture
-          });
-        case "Lambert":
-          return getLambertFragmentShaderCode({
-            chunks,
-            toneMapping,
-            outputColorSpace,
-            fragmentOutput,
-            geometry,
-            cullMode,
-            flatShading,
-            additionalVaryings,
-            materialUniform,
-            materialUniformName,
-            receiveShadows,
-            baseColorTexture,
-            normalTexture,
-            emissiveTexture,
-            occlusionTexture
-          });
-        case "Phong":
-          return getPhongFragmentShaderCode({
-            chunks,
-            toneMapping,
-            outputColorSpace,
-            fragmentOutput,
-            geometry,
-            cullMode,
-            flatShading,
-            additionalVaryings,
-            materialUniform,
-            materialUniformName,
-            receiveShadows,
-            baseColorTexture,
-            normalTexture,
-            emissiveTexture,
-            occlusionTexture,
-            metallicRoughnessTexture,
-            specularTexture,
-            specularFactorTexture,
-            specularColorTexture
-          });
-        case "PBR":
-        default:
-          return getPBRFragmentShaderCode({
-            chunks,
-            toneMapping,
-            outputColorSpace,
-            transmissiveInputColorSpace,
-            transmissiveInputToneMapping,
-            fragmentOutput,
-            geometry,
-            cullMode,
-            flatShading,
-            additionalVaryings,
-            materialUniform,
-            materialUniformName,
-            extensionsUsed,
-            receiveShadows,
-            baseColorTexture,
-            normalTexture,
-            emissiveTexture,
-            occlusionTexture,
-            metallicRoughnessTexture,
-            specularTexture,
-            specularFactorTexture,
-            specularColorTexture,
-            transmissionThicknessTexture,
-            transmissionTexture,
-            thicknessTexture,
-            sheenTexture,
-            sheenColorTexture,
-            sheenRoughnessTexture,
-            anisotropyTexture,
-            clearcoatTexture,
-            clearcoatFactorTexture,
-            clearcoatRoughnessTexture,
-            clearcoatNormalTexture,
-            iridescenceTexture,
-            iridescenceFactorTexture,
-            iridescenceThicknessTexture,
-            diffuseTransmissionTexture,
-            diffuseTransmissionFactorTexture,
-            diffuseTransmissionColorTexture,
-            transmissionBackgroundTexture,
-            environmentMap
-          });
-      }
-    })();
+    switch (shadingModel) {
+      case "Unlit":
+        return getUnlitFragmentShaderCode({
+          chunks,
+          toneMapping,
+          outputColorSpace,
+          fragmentOutput,
+          geometry,
+          additionalVaryings,
+          materialUniform,
+          materialUniformName,
+          baseColorTexture,
+          emissiveTexture,
+          occlusionTexture
+        });
+      case "Lambert":
+        return getLambertFragmentShaderCode({
+          chunks,
+          toneMapping,
+          outputColorSpace,
+          fragmentOutput,
+          geometry,
+          cullMode,
+          flatShading,
+          additionalVaryings,
+          materialUniform,
+          materialUniformName,
+          receiveShadows,
+          baseColorTexture,
+          normalTexture,
+          emissiveTexture,
+          occlusionTexture
+        });
+      case "Phong":
+        return getPhongFragmentShaderCode({
+          chunks,
+          toneMapping,
+          outputColorSpace,
+          fragmentOutput,
+          geometry,
+          cullMode,
+          flatShading,
+          additionalVaryings,
+          materialUniform,
+          materialUniformName,
+          receiveShadows,
+          baseColorTexture,
+          normalTexture,
+          emissiveTexture,
+          occlusionTexture,
+          metallicRoughnessTexture,
+          specularTexture,
+          specularFactorTexture,
+          specularColorTexture
+        });
+      case "PBR":
+      default:
+        return getPBRFragmentShaderCode({
+          chunks,
+          toneMapping,
+          outputColorSpace,
+          transmissiveInputColorSpace,
+          transmissiveInputToneMapping,
+          fragmentOutput,
+          geometry,
+          cullMode,
+          flatShading,
+          additionalVaryings,
+          materialUniform,
+          materialUniformName,
+          extensionsUsed,
+          receiveShadows,
+          baseColorTexture,
+          normalTexture,
+          emissiveTexture,
+          occlusionTexture,
+          metallicRoughnessTexture,
+          specularTexture,
+          specularFactorTexture,
+          specularColorTexture,
+          transmissionThicknessTexture,
+          transmissionTexture,
+          thicknessTexture,
+          sheenTexture,
+          sheenColorTexture,
+          sheenRoughnessTexture,
+          anisotropyTexture,
+          clearcoatTexture,
+          clearcoatFactorTexture,
+          clearcoatRoughnessTexture,
+          clearcoatNormalTexture,
+          iridescenceTexture,
+          iridescenceFactorTexture,
+          iridescenceThicknessTexture,
+          diffuseTransmissionTexture,
+          diffuseTransmissionFactorTexture,
+          diffuseTransmissionColorTexture,
+          transmissionBackgroundTexture,
+          environmentMap
+        });
+    }
   };
 
   var __typeError$7 = (msg) => {
@@ -27684,6 +27711,27 @@ struct Params {
             const index = gltfTextureInfo.index;
             const gltfTexture = this.gltf.textures[index];
             const source = gltfTexture.extensions && gltfTexture.extensions["EXT_texture_webp"] ? gltfTexture.extensions["EXT_texture_webp"].source : gltfTexture.source;
+            const basisTexture = gltfTexture.extensions && gltfTexture.extensions.KHR_texture_basisu;
+            if (source === void 0) {
+              if (!this.renderer.production) {
+                if (basisTexture) {
+                  throwWarning(
+                    `GLTFScenesManager: Basis/compressed textures not supported. This texture could not be created: ${name}`
+                  );
+                } else {
+                  throwWarning(
+                    `GLTFScenesManager: No texture source provided. This texture could not be created: ${name}`
+                  );
+                }
+              }
+              return;
+            }
+            const image = this.gltf.imagesBitmaps[source];
+            if (!this.renderer.production && basisTexture) {
+              throwWarning(
+                `GLTFScenesManager: Basis/compressed textures not supported. This texture will use a fallback image: '${name}'`
+              );
+            }
             const samplerIndex = (gltfTextureInfo.index !== void 0 && this.gltf.textures[gltfTextureInfo.index].sampler) ?? this.gltf.textures.find((t) => {
               const src = t.extensions && t.extensions["EXT_texture_webp"] ? t.extensions["EXT_texture_webp"].source : t.source;
               return src === index;
@@ -27720,7 +27768,6 @@ struct Params {
               });
               return;
             }
-            const image = this.gltf.imagesBitmaps[source];
             const texture = this.createTexture(material, image, name, !!textureTransform);
             if (textureTransform) {
               const { offset, rotation, scale } = textureTransform;
@@ -28272,19 +28319,45 @@ struct Params {
      */
     createGeometry(primitive, primitiveInstance) {
       const { instances, meshDescriptor } = primitiveInstance;
+      let defaultAttributes = [];
+      const isIndexedGeometry = "indices" in primitive;
+      const topology = _GLTFScenesManager.gpuPrimitiveTopologyForMode(primitive.mode);
+      const dracoCompression = primitive.extensions && primitive.extensions.KHR_draco_mesh_compression;
+      if (dracoCompression) {
+        meshDescriptor.extensionsUsed.push("KHR_draco_mesh_compression");
+        if (!this.renderer.production) {
+          throwWarning("GLTFScenesManager: Draco compression is not supported.");
+          console.warn("This primitive instance geometry could not be created", primitiveInstance);
+        }
+        return;
+      }
+      let interleavedArray = __privateMethod(this, _GLTFScenesManager_instances, parsePrimitiveProperty_fn).call(this, primitive.attributes, defaultAttributes);
       const geometryBBox = new Box3();
       for (const [attribName, accessorIndex] of Object.entries(primitive.attributes)) {
         if (attribName === "POSITION") {
           const accessor = this.gltf.accessors[accessorIndex];
+          const positionAttr = defaultAttributes.find((attr) => attr.name === "position");
+          const dequantizePositions = Geometry.dequantize(
+            positionAttr && positionAttr.normalized && positionAttr.array && positionAttr.array.constructor || Float32Array
+          );
           if (geometryBBox) {
-            geometryBBox.min.min(new Vec3(accessor.min[0], accessor.min[1], accessor.min[2]));
-            geometryBBox.max.max(new Vec3(accessor.max[0], accessor.max[1], accessor.max[2]));
+            geometryBBox.min.min(
+              new Vec3(
+                dequantizePositions(accessor.min[0]),
+                dequantizePositions(accessor.min[1]),
+                dequantizePositions(accessor.min[2])
+              )
+            );
+            geometryBBox.max.max(
+              new Vec3(
+                dequantizePositions(accessor.max[0]),
+                dequantizePositions(accessor.max[1]),
+                dequantizePositions(accessor.max[2])
+              )
+            );
           }
         }
       }
-      let defaultAttributes = [];
-      let interleavedArray = __privateMethod(this, _GLTFScenesManager_instances, parsePrimitiveProperty_fn).call(this, primitive.attributes, defaultAttributes);
-      const isIndexedGeometry = "indices" in primitive;
       let indicesArray = null;
       let indicesConstructor = null;
       if (isIndexedGeometry) {
@@ -28314,14 +28387,9 @@ struct Params {
       if (!interleavedArray) {
         this.sortAttributesByNames(["position", "uv", "normal"], defaultAttributes);
       }
-      const topology = _GLTFScenesManager.gpuPrimitiveTopologyForMode(primitive.mode);
       if (!hasNormal && (topology.includes("line") || topology.includes("point"))) {
         meshDescriptor.extensionsUsed.push("KHR_materials_unlit");
       }
-      defaultAttributes.forEach((attribute) => {
-        attribute.type = null;
-        attribute.bufferFormat = null;
-      });
       const geometryAttributes = {
         instancesCount: instances.length,
         topology,
@@ -28652,13 +28720,13 @@ struct Params {
         }
       }
       for (let i = 0; i < nodes.length; i++) {
-        const tempBbox = geometry.boundingBox.clone();
+        const tempBbox = geometry ? geometry.boundingBox.clone() : new Box3();
         const transformedBbox = tempBbox.applyMat4(meshDescriptor.nodes[i].worldMatrix);
         this.scenesManager.boundingBox.min.min(transformedBbox.min);
         this.scenesManager.boundingBox.max.max(transformedBbox.max);
       }
       this.scenesManager.boundingBox.max.max(new Vec3(1e-3));
-      const hasTangent = !!geometry.getAttributeByName("tangent");
+      const hasTangent = geometry && !!geometry.getAttributeByName("tangent");
       if (!hasTangent && meshDescriptor.parameters.material.normalScale) {
         meshDescriptor.parameters.material.normalScale.y *= -1;
         if (meshDescriptor.parameters.material.clearcoatNormalScale) {
@@ -29030,7 +29098,11 @@ struct Params {
       const name = _GLTFScenesManager.getCleanAttributeName(attribName);
       const accessor = this.gltf.accessors[accessorIndex];
       const constructor = accessor.componentType ? _GLTFScenesManager.getTypedArrayConstructorFromComponentType(accessor.componentType) : Float32Array;
-      const bufferView = this.gltf.bufferViews[accessor.bufferView];
+      let bufferViewIndex = accessor.bufferView;
+      if (bufferViewIndex === void 0) {
+        continue;
+      }
+      const bufferView = this.gltf.bufferViews[bufferViewIndex];
       const byteStride = bufferView.byteStride;
       const accessorByteOffset = accessor.byteOffset;
       const isInterleaved = byteStride !== void 0 && accessorByteOffset !== void 0 && accessorByteOffset < byteStride;
@@ -29044,7 +29116,7 @@ struct Params {
       }
       const attributeParams = _GLTFScenesManager.getVertexAttributeParamsFromType(accessor.type);
       const { size } = attributeParams;
-      let array;
+      let array = null;
       if (maxByteOffset > 0) {
         const parentArray = new constructor(
           this.gltf.arrayBuffers[bufferView.buffer],
@@ -29105,11 +29177,29 @@ struct Params {
           array[i + 3] *= len;
         }
       }
+      let normalized = !!accessor.normalized;
+      const patchedAttributeParams = vertexBufferAttributeLayouts.find(
+        (vb) => size <= vb.size && vb.typedArrayConstructor === array.constructor && vb.normalized === normalized
+      );
+      if (this.gltf.extensionsRequired?.includes("KHR_mesh_quantization") && array.constructor !== Float32Array && (name === "position" || name === "normal" || name === "tangent" || name.indexOf("uv") !== -1)) {
+        const stride = patchedAttributeParams.size;
+        if (stride !== size) {
+          const newArray = new array.constructor(accessor.count * stride);
+          for (let i = 0; i < newArray.length; i++) {
+            const si = i * size;
+            const di = i * stride;
+            for (let c = 0; c < size; c++) {
+              newArray[di + c] = array[si + c];
+            }
+          }
+          array = newArray;
+        }
+      }
       const attribute = {
         name,
-        ...attributeParams,
+        ...patchedAttributeParams,
         array,
-        normalized: !!accessor.normalized
+        normalized
       };
       attributes.push(attribute);
     }
@@ -29244,45 +29334,43 @@ struct Params {
      * @returns - The camera animations {@link KeyframesAnimationValueType | value type} and key (property) to animate.
      */
     getCleanCameraProperties(animatedProperty) {
-      return (() => {
-        switch (animatedProperty) {
-          case "znear":
-            return {
-              type: "scalar",
-              key: "near"
-            };
-          case "zfar":
-            return {
-              type: "scalar",
-              key: "far"
-            };
-          case "yfov":
-            return {
-              type: "scalar",
-              key: "fov"
-            };
-          case "aspectRatio":
-            return {
-              type: "scalar",
-              key: "forceAspect"
-            };
-          case "xmag":
-            return {
-              type: "scalar",
-              key: "left"
-            };
-          case "ymag":
-            return {
-              type: "scalar",
-              key: "top"
-            };
-          default:
-            return {
-              type: null,
-              key: null
-            };
-        }
-      })();
+      switch (animatedProperty) {
+        case "znear":
+          return {
+            type: "scalar",
+            key: "near"
+          };
+        case "zfar":
+          return {
+            type: "scalar",
+            key: "far"
+          };
+        case "yfov":
+          return {
+            type: "scalar",
+            key: "fov"
+          };
+        case "aspectRatio":
+          return {
+            type: "scalar",
+            key: "forceAspect"
+          };
+        case "xmag":
+          return {
+            type: "scalar",
+            key: "left"
+          };
+        case "ymag":
+          return {
+            type: "scalar",
+            key: "top"
+          };
+        default:
+          return {
+            type: null,
+            key: null
+          };
+      }
     }
     /**
      * Get any light animations {@link KeyframesAnimationValueType | value type} and key (property) to use for the {@link KeyframesAnimation}.
@@ -29290,28 +29378,26 @@ struct Params {
      * @returns - The light animations {@link KeyframesAnimationValueType | value type} and key (property) to animate.
      */
     getCleanLightProperties(animatedProperty) {
-      return (() => {
-        switch (animatedProperty) {
-          case "color":
-            return {
-              type: "vec3",
-              key: animatedProperty
-            };
-          case "intensity":
-          case "range":
-          case "innerConeAngle":
-          case "outerConeAngle":
-            return {
-              type: "scalar",
-              key: animatedProperty
-            };
-          default:
-            return {
-              type: null,
-              key: null
-            };
-        }
-      })();
+      switch (animatedProperty) {
+        case "color":
+          return {
+            type: "vec3",
+            key: animatedProperty
+          };
+        case "intensity":
+        case "range":
+        case "innerConeAngle":
+        case "outerConeAngle":
+          return {
+            type: "scalar",
+            key: animatedProperty
+          };
+        default:
+          return {
+            type: null,
+            key: null
+          };
+      }
     }
     /**
      * Get any material animations {@link KeyframesAnimationValueType | value type} and key (property) to use for the {@link KeyframesAnimation}.
@@ -30068,7 +30154,11 @@ struct Params {
       for (let index = 0; index < json.images?.length || 0; ++index) {
         const image = json.images[index];
         if (image.uri) {
-          if (image.uri.includes(".webp")) {
+          if (image.uri.includes(".ktx2") || image.uri.includes(".basis")) {
+            throwWarning(
+              `GLTFLoader: Basis/compressed textures not supported. This file could not be loaded: ${image.uri}`
+            );
+          } else if (image.uri.includes(".webp")) {
             pendingImages[index] = new Promise((resolve, reject) => {
               const img = new Image();
               img.crossOrigin = "anonymous";

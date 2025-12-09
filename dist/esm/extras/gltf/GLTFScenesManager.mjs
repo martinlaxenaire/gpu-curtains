@@ -20,6 +20,7 @@ import { DirectionalLight } from '../../core/lights/DirectionalLight.mjs';
 import { PointLight } from '../../core/lights/PointLight.mjs';
 import { SpotLight } from '../../core/lights/SpotLight.mjs';
 import { throwWarning } from '../../utils/utils.mjs';
+import { vertexBufferAttributeLayouts } from '../../core/geometries/utils.mjs';
 
 var __typeError = (msg) => {
   throw TypeError(msg);
@@ -393,6 +394,27 @@ const _GLTFScenesManager = class _GLTFScenesManager {
           const index = gltfTextureInfo.index;
           const gltfTexture = this.gltf.textures[index];
           const source = gltfTexture.extensions && gltfTexture.extensions["EXT_texture_webp"] ? gltfTexture.extensions["EXT_texture_webp"].source : gltfTexture.source;
+          const basisTexture = gltfTexture.extensions && gltfTexture.extensions.KHR_texture_basisu;
+          if (source === void 0) {
+            if (!this.renderer.production) {
+              if (basisTexture) {
+                throwWarning(
+                  `GLTFScenesManager: Basis/compressed textures not supported. This texture could not be created: ${name}`
+                );
+              } else {
+                throwWarning(
+                  `GLTFScenesManager: No texture source provided. This texture could not be created: ${name}`
+                );
+              }
+            }
+            return;
+          }
+          const image = this.gltf.imagesBitmaps[source];
+          if (!this.renderer.production && basisTexture) {
+            throwWarning(
+              `GLTFScenesManager: Basis/compressed textures not supported. This texture will use a fallback image: '${name}'`
+            );
+          }
           const samplerIndex = (gltfTextureInfo.index !== void 0 && this.gltf.textures[gltfTextureInfo.index].sampler) ?? this.gltf.textures.find((t) => {
             const src = t.extensions && t.extensions["EXT_texture_webp"] ? t.extensions["EXT_texture_webp"].source : t.source;
             return src === index;
@@ -429,7 +451,6 @@ const _GLTFScenesManager = class _GLTFScenesManager {
             });
             return;
           }
-          const image = this.gltf.imagesBitmaps[source];
           const texture = this.createTexture(material, image, name, !!textureTransform);
           if (textureTransform) {
             const { offset, rotation, scale } = textureTransform;
@@ -981,19 +1002,45 @@ const _GLTFScenesManager = class _GLTFScenesManager {
    */
   createGeometry(primitive, primitiveInstance) {
     const { instances, meshDescriptor } = primitiveInstance;
+    let defaultAttributes = [];
+    const isIndexedGeometry = "indices" in primitive;
+    const topology = _GLTFScenesManager.gpuPrimitiveTopologyForMode(primitive.mode);
+    const dracoCompression = primitive.extensions && primitive.extensions.KHR_draco_mesh_compression;
+    if (dracoCompression) {
+      meshDescriptor.extensionsUsed.push("KHR_draco_mesh_compression");
+      if (!this.renderer.production) {
+        throwWarning("GLTFScenesManager: Draco compression is not supported.");
+        console.warn("This primitive instance geometry could not be created", primitiveInstance);
+      }
+      return;
+    }
+    let interleavedArray = __privateMethod(this, _GLTFScenesManager_instances, parsePrimitiveProperty_fn).call(this, primitive.attributes, defaultAttributes);
     const geometryBBox = new Box3();
     for (const [attribName, accessorIndex] of Object.entries(primitive.attributes)) {
       if (attribName === "POSITION") {
         const accessor = this.gltf.accessors[accessorIndex];
+        const positionAttr = defaultAttributes.find((attr) => attr.name === "position");
+        const dequantizePositions = Geometry.dequantize(
+          positionAttr && positionAttr.normalized && positionAttr.array && positionAttr.array.constructor || Float32Array
+        );
         if (geometryBBox) {
-          geometryBBox.min.min(new Vec3(accessor.min[0], accessor.min[1], accessor.min[2]));
-          geometryBBox.max.max(new Vec3(accessor.max[0], accessor.max[1], accessor.max[2]));
+          geometryBBox.min.min(
+            new Vec3(
+              dequantizePositions(accessor.min[0]),
+              dequantizePositions(accessor.min[1]),
+              dequantizePositions(accessor.min[2])
+            )
+          );
+          geometryBBox.max.max(
+            new Vec3(
+              dequantizePositions(accessor.max[0]),
+              dequantizePositions(accessor.max[1]),
+              dequantizePositions(accessor.max[2])
+            )
+          );
         }
       }
     }
-    let defaultAttributes = [];
-    let interleavedArray = __privateMethod(this, _GLTFScenesManager_instances, parsePrimitiveProperty_fn).call(this, primitive.attributes, defaultAttributes);
-    const isIndexedGeometry = "indices" in primitive;
     let indicesArray = null;
     let indicesConstructor = null;
     if (isIndexedGeometry) {
@@ -1023,14 +1070,9 @@ const _GLTFScenesManager = class _GLTFScenesManager {
     if (!interleavedArray) {
       this.sortAttributesByNames(["position", "uv", "normal"], defaultAttributes);
     }
-    const topology = _GLTFScenesManager.gpuPrimitiveTopologyForMode(primitive.mode);
     if (!hasNormal && (topology.includes("line") || topology.includes("point"))) {
       meshDescriptor.extensionsUsed.push("KHR_materials_unlit");
     }
-    defaultAttributes.forEach((attribute) => {
-      attribute.type = null;
-      attribute.bufferFormat = null;
-    });
     const geometryAttributes = {
       instancesCount: instances.length,
       topology,
@@ -1361,13 +1403,13 @@ const _GLTFScenesManager = class _GLTFScenesManager {
       }
     }
     for (let i = 0; i < nodes.length; i++) {
-      const tempBbox = geometry.boundingBox.clone();
+      const tempBbox = geometry ? geometry.boundingBox.clone() : new Box3();
       const transformedBbox = tempBbox.applyMat4(meshDescriptor.nodes[i].worldMatrix);
       this.scenesManager.boundingBox.min.min(transformedBbox.min);
       this.scenesManager.boundingBox.max.max(transformedBbox.max);
     }
     this.scenesManager.boundingBox.max.max(new Vec3(1e-3));
-    const hasTangent = !!geometry.getAttributeByName("tangent");
+    const hasTangent = geometry && !!geometry.getAttributeByName("tangent");
     if (!hasTangent && meshDescriptor.parameters.material.normalScale) {
       meshDescriptor.parameters.material.normalScale.y *= -1;
       if (meshDescriptor.parameters.material.clearcoatNormalScale) {
@@ -1739,7 +1781,11 @@ parsePrimitiveProperty_fn = function(primitiveProperty, attributes) {
     const name = _GLTFScenesManager.getCleanAttributeName(attribName);
     const accessor = this.gltf.accessors[accessorIndex];
     const constructor = accessor.componentType ? _GLTFScenesManager.getTypedArrayConstructorFromComponentType(accessor.componentType) : Float32Array;
-    const bufferView = this.gltf.bufferViews[accessor.bufferView];
+    let bufferViewIndex = accessor.bufferView;
+    if (bufferViewIndex === void 0) {
+      continue;
+    }
+    const bufferView = this.gltf.bufferViews[bufferViewIndex];
     const byteStride = bufferView.byteStride;
     const accessorByteOffset = accessor.byteOffset;
     const isInterleaved = byteStride !== void 0 && accessorByteOffset !== void 0 && accessorByteOffset < byteStride;
@@ -1753,7 +1799,7 @@ parsePrimitiveProperty_fn = function(primitiveProperty, attributes) {
     }
     const attributeParams = _GLTFScenesManager.getVertexAttributeParamsFromType(accessor.type);
     const { size } = attributeParams;
-    let array;
+    let array = null;
     if (maxByteOffset > 0) {
       const parentArray = new constructor(
         this.gltf.arrayBuffers[bufferView.buffer],
@@ -1814,11 +1860,29 @@ parsePrimitiveProperty_fn = function(primitiveProperty, attributes) {
         array[i + 3] *= len;
       }
     }
+    let normalized = !!accessor.normalized;
+    const patchedAttributeParams = vertexBufferAttributeLayouts.find(
+      (vb) => size <= vb.size && vb.typedArrayConstructor === array.constructor && vb.normalized === normalized
+    );
+    if (this.gltf.extensionsRequired?.includes("KHR_mesh_quantization") && array.constructor !== Float32Array && (name === "position" || name === "normal" || name === "tangent" || name.indexOf("uv") !== -1)) {
+      const stride = patchedAttributeParams.size;
+      if (stride !== size) {
+        const newArray = new array.constructor(accessor.count * stride);
+        for (let i = 0; i < newArray.length; i++) {
+          const si = i * size;
+          const di = i * stride;
+          for (let c = 0; c < size; c++) {
+            newArray[di + c] = array[si + c];
+          }
+        }
+        array = newArray;
+      }
+    }
     const attribute = {
       name,
-      ...attributeParams,
+      ...patchedAttributeParams,
       array,
-      normalized: !!accessor.normalized
+      normalized
     };
     attributes.push(attribute);
   }

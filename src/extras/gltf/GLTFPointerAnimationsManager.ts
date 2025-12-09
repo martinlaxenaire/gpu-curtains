@@ -146,45 +146,43 @@ export class GLTFPointerAnimationsManager {
     /** Camera key (property) to animate. */
     key: keyof OrthographicCamera | keyof PerspectiveCamera
   } {
-    return (() => {
-      switch (animatedProperty) {
-        case 'znear':
-          return {
-            type: 'scalar',
-            key: 'near',
-          }
-        case 'zfar':
-          return {
-            type: 'scalar',
-            key: 'far',
-          }
-        case 'yfov':
-          return {
-            type: 'scalar',
-            key: 'fov',
-          }
-        case 'aspectRatio':
-          return {
-            type: 'scalar',
-            key: 'forceAspect',
-          }
-        case 'xmag':
-          return {
-            type: 'scalar',
-            key: 'left',
-          }
-        case 'ymag':
-          return {
-            type: 'scalar',
-            key: 'top',
-          }
-        default:
-          return {
-            type: null,
-            key: null,
-          }
-      }
-    })()
+    switch (animatedProperty) {
+      case 'znear':
+        return {
+          type: 'scalar',
+          key: 'near',
+        }
+      case 'zfar':
+        return {
+          type: 'scalar',
+          key: 'far',
+        }
+      case 'yfov':
+        return {
+          type: 'scalar',
+          key: 'fov',
+        }
+      case 'aspectRatio':
+        return {
+          type: 'scalar',
+          key: 'forceAspect',
+        }
+      case 'xmag':
+        return {
+          type: 'scalar',
+          key: 'left',
+        }
+      case 'ymag':
+        return {
+          type: 'scalar',
+          key: 'top',
+        }
+      default:
+        return {
+          type: null,
+          key: null,
+        }
+    }
   }
 
   /**
@@ -198,28 +196,26 @@ export class GLTFPointerAnimationsManager {
     /** Light key (property) to animate. */
     key: string
   } {
-    return (() => {
-      switch (animatedProperty) {
-        case 'color':
-          return {
-            type: 'vec3',
-            key: animatedProperty,
-          }
-        case 'intensity':
-        case 'range':
-        case 'innerConeAngle':
-        case 'outerConeAngle':
-          return {
-            type: 'scalar',
-            key: animatedProperty,
-          }
-        default:
-          return {
-            type: null,
-            key: null,
-          }
-      }
-    })()
+    switch (animatedProperty) {
+      case 'color':
+        return {
+          type: 'vec3',
+          key: animatedProperty,
+        }
+      case 'intensity':
+      case 'range':
+      case 'innerConeAngle':
+      case 'outerConeAngle':
+        return {
+          type: 'scalar',
+          key: animatedProperty,
+        }
+      default:
+        return {
+          type: null,
+          key: null,
+        }
+    }
   }
 
   /**

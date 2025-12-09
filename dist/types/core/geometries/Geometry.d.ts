@@ -1,6 +1,7 @@
 import { Box3 } from '../../math/Box3';
 import { GeometryBuffer, GeometryOptions, GeometryParams, VertexBuffer, VertexBufferAttribute, VertexBufferAttributeParams, VertexBufferParams, IndirectDrawParams } from '../../types/Geometries';
 import { Renderer } from '../renderers/utils';
+import { TypedArrayConstructor } from '../bindings/utils';
 import { GPURenderPassTypes } from '../pipelines/PipelineManager';
 import { Vec3 } from '../../math/Vec3';
 /**
@@ -70,6 +71,12 @@ export declare class Geometry {
      * @param parameters - {@link GeometryParams | parameters} used to create our Geometry.
      */
     constructor({ verticesOrder, topology, instancesCount, vertexBuffers, mapBuffersAtCreation, }?: GeometryParams);
+    /**
+     * Helper to decode and normalize integer values to float values based on the data type.
+     * @param typedArrayConstructor - {@link TypedArrayConstructor} used to know the data type.
+     * @returns - Decoded and normalized value.
+     */
+    static dequantize(typedArrayConstructor: TypedArrayConstructor): (v: number) => number;
     /**
      * Reset all the {@link vertexBuffers | vertex buffers} when the device is lost.
      */

@@ -126,15 +126,13 @@ export const getBufferLayout = (bufferType: WGSLVariableType): BufferLayout => {
  * @returns - WGSL variable declaration code fragment.
  */
 export const getBindingWGSLVarType = (binding: BufferBinding): string => {
-  return (() => {
-    switch (binding.bindingType) {
-      case 'storage':
-        return `var<${binding.bindingType}, ${binding.options.access}>`
-      case 'uniform':
-      default:
-        return 'var<uniform>'
-    }
-  })()
+  switch (binding.bindingType) {
+    case 'storage':
+      return `var<${binding.bindingType}, ${binding.options.access}>`
+    case 'uniform':
+    default:
+      return 'var<uniform>'
+  }
 }
 
 /**
@@ -183,37 +181,35 @@ export const getBindGroupLayoutBindingType = (binding: BufferBinding): GPUBuffer
 export const getBindGroupLayoutTextureBindingType = (
   binding: TextureBinding
 ): GPUTextureBindingLayout | GPUExternalTextureBindingLayout | GPUStorageTextureBindingLayout | null => {
-  return (() => {
-    switch (binding.bindingType) {
-      case 'externalTexture':
-        return { externalTexture: {} }
-      case 'storage':
-        return {
-          storageTexture: {
-            format: binding.options.format,
-            viewDimension: binding.options.viewDimension,
-          } as GPUStorageTextureBindingLayout,
-        }
-      case 'texture':
-        return {
-          texture: {
-            multisampled: binding.options.multisampled,
-            viewDimension: binding.options.viewDimension,
-            sampleType: binding.options.multisampled ? 'unfilterable-float' : 'float',
-          } as GPUTextureBindingLayout,
-        }
-      case 'depth':
-        return {
-          texture: {
-            multisampled: binding.options.multisampled,
-            viewDimension: binding.options.viewDimension,
-            sampleType: 'depth',
-          } as GPUTextureBindingLayout,
-        }
-      default:
-        return null
-    }
-  })()
+  switch (binding.bindingType) {
+    case 'externalTexture':
+      return { externalTexture: {} }
+    case 'storage':
+      return {
+        storageTexture: {
+          format: binding.options.format,
+          viewDimension: binding.options.viewDimension,
+        } as GPUStorageTextureBindingLayout,
+      }
+    case 'texture':
+      return {
+        texture: {
+          multisampled: binding.options.multisampled,
+          viewDimension: binding.options.viewDimension,
+          sampleType: binding.options.multisampled ? 'unfilterable-float' : 'float',
+        } as GPUTextureBindingLayout,
+      }
+    case 'depth':
+      return {
+        texture: {
+          multisampled: binding.options.multisampled,
+          viewDimension: binding.options.viewDimension,
+          sampleType: 'depth',
+        } as GPUTextureBindingLayout,
+      }
+    default:
+      return null
+  }
 }
 
 /**
@@ -222,20 +218,18 @@ export const getBindGroupLayoutTextureBindingType = (
  * @returns - binding cache key.
  */
 export const getBindGroupLayoutTextureBindingCacheKey = (binding: TextureBinding): string => {
-  return (() => {
-    switch (binding.bindingType) {
-      case 'externalTexture':
-        return `externalTexture,${binding.visibility},`
-      case 'storage':
-        return `storageTexture,${binding.options.format},${binding.options.viewDimension},${binding.visibility},`
-      case 'texture':
-        return `texture,${binding.options.multisampled},${binding.options.viewDimension},${
-          binding.options.multisampled ? 'unfilterable-float' : 'float'
-        },${binding.visibility},`
-      case 'depth':
-        return `depthTexture,${binding.options.format},${binding.options.viewDimension},${binding.visibility},`
-      default:
-        return `${binding.visibility},`
-    }
-  })()
+  switch (binding.bindingType) {
+    case 'externalTexture':
+      return `externalTexture,${binding.visibility},`
+    case 'storage':
+      return `storageTexture,${binding.options.format},${binding.options.viewDimension},${binding.visibility},`
+    case 'texture':
+      return `texture,${binding.options.multisampled},${binding.options.viewDimension},${
+        binding.options.multisampled ? 'unfilterable-float' : 'float'
+      },${binding.visibility},`
+    case 'depth':
+      return `depthTexture,${binding.options.format},${binding.options.viewDimension},${binding.visibility},`
+    default:
+      return `${binding.visibility},`
+  }
 }

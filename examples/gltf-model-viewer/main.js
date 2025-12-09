@@ -101,13 +101,22 @@ window.addEventListener('load', async () => {
     const variants = current.variants
     const variant = variants['glTF-Binary'] || variants['glTF']
 
+    const baseUrl = 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models'
+
+    const availableVariants = Object.keys(variants).reduce((v, variantType) => {
+      // draco is not yet supported
+      return variantType === 'glTF-Draco'
+        ? { ...v }
+        : { ...v, [variantType]: `${baseUrl}/${current.name}/${variantType}/${variants[variantType]}` }
+    }, {})
+
     return {
       ...acc,
       [current.name]: {
         name: current.label,
-        url: `https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/${current.name}/${
-          variant.endsWith('.glb') ? 'glTF-Binary' : 'glTF'
-        }/${variant}`,
+        url: `${baseUrl}/${current.name}/${variant.endsWith('.glb') ? 'glTF-Binary' : 'glTF'}/${variant}`,
+        currentVariant: variants['glTF-Binary'] ? 'glTF-Binary' : 'glTF',
+        variants: availableVariants,
       },
     }
   }, {})
@@ -124,6 +133,8 @@ window.addEventListener('load', async () => {
       [modelUrlName]: {
         name: modelName + ' (from URL)',
         url: modelUrl,
+        currentVariant: 'From URL',
+        variants: { 'From URL': modelUrl },
       },
     }
   }
@@ -153,6 +164,17 @@ window.addEventListener('load', async () => {
       }, {})
     )
     .name('Available models')
+
+  const modelTypeField = gltfFolder
+    .add(
+      {
+        [currentModel.currentVariant]: currentModel.variants[currentModel.currentVariant],
+      },
+      currentModel.currentVariant,
+      currentModel.variants
+    )
+    .listen()
+    .name('File type')
 
   const loadGLTFInput = document.querySelector('#load-gltf')
   gltfFolder.add({ loadGLTF: () => loadGLTFInput.click() }, 'loadGLTF').name('Load model')
@@ -288,10 +310,17 @@ window.addEventListener('load', async () => {
     let gltf
     if (url) {
       gltf = await gltfLoader.loadFromUrl(url)
+      if (currentModel.currentVariant === 'From URL') {
+        modelTypeField.disable()
+      } else {
+        modelTypeField.enable()
+      }
     } else if (json) {
       gltf = await gltfLoader.loadFromJson(json, '')
+      modelTypeField.disable()
     } else if (arrayBuffer) {
       gltf = await gltfLoader.loadFromBinary(arrayBuffer, '')
+      modelTypeField.disable()
     } else {
       // bail
       return
@@ -611,6 +640,7 @@ window.addEventListener('load', async () => {
     }
 
     // animations
+    animationsFields = []
     availableAnimationsFolder.children.forEach((child) => child.destroy())
     if (scenesManager.animations.length) {
       animationsFolder.open()
@@ -811,6 +841,10 @@ window.addEventListener('load', async () => {
     }
     transmissiveRenderBundle = null
 
+    if (animationsFields.length) {
+      animationsFields.forEach((animationField) => animationField.destroy())
+    }
+
     // scenes manager
     if (gltfScenesManager) {
       gltfScenesManager.destroy()
@@ -843,20 +877,22 @@ window.addEventListener('load', async () => {
 
   modelField.onChange(async (value) => {
     if (availableSampleModels[value].name !== currentModel.name) {
-      cleanUpScene()
-
-      if (animationsFields.length) {
-        animationsFields.forEach((animationField) => animationField.destroy())
-      }
-
-      animationsFields = []
-
       currentModel = availableSampleModels[value]
+      const variant = Object.keys(currentModel.variants).find((v) => currentModel.variants[v] === value)
+      currentModel.currentVariant = variant
 
-      useCamera(defaultCamera)
-
-      await loadGLTF(currentModel)
+      await modelTypeField.options(currentModel.variants).setValue(currentModel.url)
     }
+  })
+
+  modelTypeField.onChange(async (value) => {
+    currentModel.url = value
+
+    cleanUpScene()
+
+    useCamera(defaultCamera)
+
+    await loadGLTF(currentModel)
   })
 
   envMapField.onChange(async (value) => {
@@ -992,6 +1028,8 @@ window.addEventListener('load', async () => {
         [loadedModelUrlName]: {
           name: loadedModelName + ' (from files)',
           ...data,
+          currentVariant: 'From File',
+          variants: { 'From File': data },
         },
       }
 
@@ -1007,7 +1045,6 @@ window.addEventListener('load', async () => {
 
   // HDR
   loadHDRInput.addEventListener('change', () => {
-    console.log(loadHDRInput.files)
     let loadedHDRFile = null
     for (const file of loadHDRInput.files) {
       if (file.name.includes('.hdr')) {
