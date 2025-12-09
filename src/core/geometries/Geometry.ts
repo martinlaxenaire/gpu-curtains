@@ -162,6 +162,27 @@ export class Geometry {
   }
 
   /**
+   * Helper to decode and normalize integer values to float values based on the data type.
+   * @param typedArrayConstructor - {@link TypedArrayConstructor} used to know the data type.
+   * @returns - Decoded and normalized value.
+   */
+  static dequantize(typedArrayConstructor: TypedArrayConstructor): (v: number) => number {
+    // see https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Khronos/KHR_mesh_quantization#encoding-quantized-data
+    switch (typedArrayConstructor) {
+      case Int8Array:
+        return (v) => Math.max(v / 127, -1)
+      case Uint8Array:
+        return (v) => v / 255
+      case Int16Array:
+        return (v) => Math.max(v / 32767, -1)
+      case Uint16Array:
+        return (v) => v / 65535
+      default:
+        return (v) => v
+    }
+  }
+
+  /**
    * Reset all the {@link vertexBuffers | vertex buffers} when the device is lost.
    */
   loseContext() {
@@ -274,15 +295,6 @@ export class Geometry {
     bufferFormat = bufferFormat ?? attributeLayout.format
     type = type ?? attributeLayout.type
 
-    if (name === 'position' && (type !== 'vec3f' || bufferFormat !== 'float32x3' || size !== 3)) {
-      throwWarning(
-        `Geometry 'position' attribute must have this exact properties set:\n\ttype: 'vec3f',\n\tbufferFormat: 'float32x3',\n\tsize: 3`
-      )
-      type = 'vec3f'
-      bufferFormat = 'float32x3'
-      size = 3
-    }
-
     let arrayLength = array.length
     const attributeCount = arrayLength / size
 
@@ -296,7 +308,7 @@ export class Geometry {
       this.verticesCount !== attributeCount * verticesStride
     ) {
       throwError(
-        `Geometry vertex attribute error. Attribute array of size ${size} must be of length: ${
+        `Geometry vertex attribute error. Attribute ${name} array of size ${size} must be of length: ${
           this.verticesCount * size
         }, current given: ${array.length}. (${this.verticesCount} vertices).`
       )
@@ -425,26 +437,13 @@ export class Geometry {
     if (this.ready) return
 
     this.vertexBuffers.forEach((vertexBuffer, index) => {
-      if (index === 0) {
-        const hasPositionAttribute = vertexBuffer.attributes.find(
-          (attribute) => attribute.name === 'position'
-        ) as VertexBufferAttribute | null
+      const hasPositionAttribute = vertexBuffer.attributes.find(
+        (attribute) => attribute.name === 'position'
+      ) as VertexBufferAttribute | null
 
+      if (index === 0) {
         if (!hasPositionAttribute) {
           throwError(`Geometry must have a 'position' attribute`)
-        }
-
-        if (
-          hasPositionAttribute.type !== 'vec3f' ||
-          hasPositionAttribute.bufferFormat !== 'float32x3' ||
-          hasPositionAttribute.size !== 3
-        ) {
-          throwWarning(
-            `Geometry 'position' attribute must have this exact properties set:\n\ttype: 'vec3f',\n\tbufferFormat: 'float32x3',\n\tsize: 3`
-          )
-          hasPositionAttribute.type = 'vec3f'
-          hasPositionAttribute.bufferFormat = 'float32x3'
-          hasPositionAttribute.size = 3
         }
 
         const hasNormalAttribute = vertexBuffer.attributes.find(
@@ -509,6 +508,20 @@ export class Geometry {
               }
             }
           }
+        }
+
+        // dequantize bbox
+        if (hasPositionAttribute && hasPositionAttribute.array && hasPositionAttribute.normalized) {
+          const dequantizePositions = Geometry.dequantize(
+            hasPositionAttribute.array.constructor as TypedArrayConstructor
+          )
+          this.boundingBox.min.x = dequantizePositions(this.boundingBox.min.x)
+          this.boundingBox.min.y = dequantizePositions(this.boundingBox.min.y)
+          this.boundingBox.min.z = dequantizePositions(this.boundingBox.min.z)
+
+          this.boundingBox.max.x = dequantizePositions(this.boundingBox.max.x)
+          this.boundingBox.max.y = dequantizePositions(this.boundingBox.max.y)
+          this.boundingBox.max.z = dequantizePositions(this.boundingBox.max.z)
         }
       }
     })

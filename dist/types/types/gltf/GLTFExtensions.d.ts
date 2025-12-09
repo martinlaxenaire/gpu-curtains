@@ -94,10 +94,19 @@ export interface GLTFMaterialsVariants {
         variants?: number[];
     }>;
 }
+/** Define the `KHR_draco_mesh_compression` extension primitives options. */
+export interface GLTFDracoMeshCompression {
+    /** Index of the buffer containing compressed data. */
+    bufferView: number;
+    /** Attributes stored in the decompressed geometry. Each attribute is associated with an attribute id which is its unique id in the compressed data. */
+    attributes: GLTF.IMeshPrimitive['attributes'];
+}
 /** Base mapping for all potential primitives GLTF extensions types. */
 export type GLTFPrimitivesExtensionsMapping = {
     /** Define the `KHR_materials_variants` extension primitives options. */
     KHR_materials_variants: GLTFMaterialsVariants;
+    /** Define the `KHR_draco_mesh_compression` extension primitives options. */
+    KHR_draco_mesh_compression: GLTFDracoMeshCompression;
 };
 /** Extract keys from GLTFExtensionsTypes that are present in GLTFPrimitivesExtensionsMapping. */
 export type PrimitivesExtensionKeys = Extract<keyof GLTFPrimitivesExtensionsMapping, GLTFExtensionsTypes>;
@@ -108,10 +117,17 @@ export interface GLTFTextureWebP {
     /** Specifies a source property that contains the index of the WebP image object. */
     source: number;
 }
+/** Define the `KHR_texture_basisu` extension textures options. */
+export interface GLTFTextureBasisU {
+    /** Specifies a source property that contains the index of the Basis Universal image object. */
+    source: number;
+}
 /** Base mapping for all potential textures GLTF extensions types. */
 export type GLTFTexturesExtensionsMapping = {
     /** Define the `EXT_texture_webp` extension textures options. */
     EXT_texture_webp: GLTFTextureWebP;
+    /** Define the `KHR_texture_basisu` extension textures options. */
+    KHR_texture_basisu: GLTFTextureBasisU;
 };
 /** Extract keys from GLTFExtensionsTypes that are present in GLTFTexturesExtensions. */
 export type TexturesExtensionKeys = Extract<keyof GLTFTexturesExtensionsMapping, GLTFExtensionsTypes>;

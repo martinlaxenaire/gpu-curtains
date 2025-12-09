@@ -16,7 +16,7 @@ export interface VertexBufferAttributeParams {
   /** The size of the {@link VertexBufferAttribute}. A `"f32"` is of size `1`, a `"vec2f"` of size `2`, a `"vec3f"` of size `3`, etc. */
   size?: number
   /** {@link VertexBufferAttribute} array that will be used by the {@link VertexBuffer}. */
-  array?: Float32Array
+  array?: TypedArray
   /** Use this {@link VertexBufferAttribute} for every X vertices. Useful for vertex/face color, etc. */
   verticesStride?: number
   /** Whether this attribute should be normalized from [0, 255] range to [0, 1] range. */

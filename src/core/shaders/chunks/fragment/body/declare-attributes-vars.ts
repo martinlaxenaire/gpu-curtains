@@ -33,7 +33,11 @@ export const declareAttributesVars = ({
     geometry.vertexBuffers.forEach((vertexBuffer) => {
       vertexBuffer.attributes.forEach((attribute) => {
         if (!disabledAttributes.some((attr) => attribute.name.includes(attr))) {
-          attributes.push(attribute)
+          const attr = { ...attribute }
+          if (attr.name.indexOf('uv') !== -1) {
+            attr.type = 'vec2f'
+          }
+          attributes.push(attr)
         }
       })
     })

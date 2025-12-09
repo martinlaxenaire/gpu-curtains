@@ -18,13 +18,18 @@ const getVertexSkinnedPositionNormal = ({ bindings = [], geometry }) => {
   const skinBindings = bindings.filter((binding) => binding.name.includes("skin"));
   const hasSkin = skinJoints.length && skinWeights.length && skinBindings.length;
   if (hasSkin) {
-    output += hasInstances ? `
+    output += hasInstances ? (
+      /* wgsl */
+      `
   var instancesWorldPosition = array<vec4f, ${geometry.instancesCount}>();
   var instancesNormal = array<vec3f, ${geometry.instancesCount}>();
-      ` : "";
-    output += `
+      `
+    ) : "";
+    output += /* wgsl */
+    `
   let skinJoints: vec4u = vec4u(${skinJoints.map((skinJoint) => skinJoint.name).join(" + ")});`;
-    output += `
+    output += /* wgsl */
+    `
   var skinWeights: vec4f = vec4f(${skinWeights.map((skinWeight) => skinWeight.name).join(" + ")});
   
   let skinWeightsSum = dot(skinWeights, vec4(1.0));

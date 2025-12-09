@@ -60,7 +60,7 @@ import type { GLTFPointerAnimationsManager } from './GLTFPointerAnimationsManage
  * - [x] KHR_materials_unlit
  * - [x] KHR_materials_variants
  * - [x] KHR_materials_volume
- * - [ ] KHR_mesh_quantization
+ * - [x] KHR_mesh_quantization
  * - [x] KHR_node_visibility
  * - [ ] KHR_texture_basisu
  * - [x] KHR_texture_transform

@@ -1,5 +1,6 @@
 import { GLTF } from '../../types/gltf/GLTF'
 import { GLTFExtensions } from '../../types/gltf/GLTFExtensions'
+import { throwWarning } from '../../utils/utils'
 
 /**
  * Defined the structure of the parsed result from the glTF json object.
@@ -176,7 +177,11 @@ export class GLTFLoader {
     for (let index = 0; index < json.images?.length || 0; ++index) {
       const image = json.images[index]
       if (image.uri) {
-        if (image.uri.includes('.webp')) {
+        if (image.uri.includes('.ktx2') || image.uri.includes('.basis')) {
+          throwWarning(
+            `GLTFLoader: Basis/compressed textures not supported. This file could not be loaded: ${image.uri}`
+          )
+        } else if (image.uri.includes('.webp')) {
           pendingImages[index] = new Promise((resolve, reject) => {
             const img = new Image()
             img.crossOrigin = 'anonymous' // Ensure CORS is handled properly if needed

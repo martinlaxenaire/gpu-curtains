@@ -61,109 +61,107 @@ const getFragmentShaderCode = ({
   transmissionBackgroundTexture = null,
   environmentMap = null
 }) => {
-  return (() => {
-    switch (shadingModel) {
-      case "Unlit":
-        return getUnlitFragmentShaderCode({
-          chunks,
-          toneMapping,
-          outputColorSpace,
-          fragmentOutput,
-          geometry,
-          additionalVaryings,
-          materialUniform,
-          materialUniformName,
-          baseColorTexture,
-          emissiveTexture,
-          occlusionTexture
-        });
-      case "Lambert":
-        return getLambertFragmentShaderCode({
-          chunks,
-          toneMapping,
-          outputColorSpace,
-          fragmentOutput,
-          geometry,
-          cullMode,
-          flatShading,
-          additionalVaryings,
-          materialUniform,
-          materialUniformName,
-          receiveShadows,
-          baseColorTexture,
-          normalTexture,
-          emissiveTexture,
-          occlusionTexture
-        });
-      case "Phong":
-        return getPhongFragmentShaderCode({
-          chunks,
-          toneMapping,
-          outputColorSpace,
-          fragmentOutput,
-          geometry,
-          cullMode,
-          flatShading,
-          additionalVaryings,
-          materialUniform,
-          materialUniformName,
-          receiveShadows,
-          baseColorTexture,
-          normalTexture,
-          emissiveTexture,
-          occlusionTexture,
-          metallicRoughnessTexture,
-          specularTexture,
-          specularFactorTexture,
-          specularColorTexture
-        });
-      case "PBR":
-      default:
-        return getPBRFragmentShaderCode({
-          chunks,
-          toneMapping,
-          outputColorSpace,
-          transmissiveInputColorSpace,
-          transmissiveInputToneMapping,
-          fragmentOutput,
-          geometry,
-          cullMode,
-          flatShading,
-          additionalVaryings,
-          materialUniform,
-          materialUniformName,
-          extensionsUsed,
-          receiveShadows,
-          baseColorTexture,
-          normalTexture,
-          emissiveTexture,
-          occlusionTexture,
-          metallicRoughnessTexture,
-          specularTexture,
-          specularFactorTexture,
-          specularColorTexture,
-          transmissionThicknessTexture,
-          transmissionTexture,
-          thicknessTexture,
-          sheenTexture,
-          sheenColorTexture,
-          sheenRoughnessTexture,
-          anisotropyTexture,
-          clearcoatTexture,
-          clearcoatFactorTexture,
-          clearcoatRoughnessTexture,
-          clearcoatNormalTexture,
-          iridescenceTexture,
-          iridescenceFactorTexture,
-          iridescenceThicknessTexture,
-          diffuseTransmissionTexture,
-          diffuseTransmissionFactorTexture,
-          diffuseTransmissionColorTexture,
-          transmissionBackgroundTexture,
-          environmentMap
-        });
-    }
-  })();
+  switch (shadingModel) {
+    case "Unlit":
+      return getUnlitFragmentShaderCode({
+        chunks,
+        toneMapping,
+        outputColorSpace,
+        fragmentOutput,
+        geometry,
+        additionalVaryings,
+        materialUniform,
+        materialUniformName,
+        baseColorTexture,
+        emissiveTexture,
+        occlusionTexture
+      });
+    case "Lambert":
+      return getLambertFragmentShaderCode({
+        chunks,
+        toneMapping,
+        outputColorSpace,
+        fragmentOutput,
+        geometry,
+        cullMode,
+        flatShading,
+        additionalVaryings,
+        materialUniform,
+        materialUniformName,
+        receiveShadows,
+        baseColorTexture,
+        normalTexture,
+        emissiveTexture,
+        occlusionTexture
+      });
+    case "Phong":
+      return getPhongFragmentShaderCode({
+        chunks,
+        toneMapping,
+        outputColorSpace,
+        fragmentOutput,
+        geometry,
+        cullMode,
+        flatShading,
+        additionalVaryings,
+        materialUniform,
+        materialUniformName,
+        receiveShadows,
+        baseColorTexture,
+        normalTexture,
+        emissiveTexture,
+        occlusionTexture,
+        metallicRoughnessTexture,
+        specularTexture,
+        specularFactorTexture,
+        specularColorTexture
+      });
+    case "PBR":
+    default:
+      return getPBRFragmentShaderCode({
+        chunks,
+        toneMapping,
+        outputColorSpace,
+        transmissiveInputColorSpace,
+        transmissiveInputToneMapping,
+        fragmentOutput,
+        geometry,
+        cullMode,
+        flatShading,
+        additionalVaryings,
+        materialUniform,
+        materialUniformName,
+        extensionsUsed,
+        receiveShadows,
+        baseColorTexture,
+        normalTexture,
+        emissiveTexture,
+        occlusionTexture,
+        metallicRoughnessTexture,
+        specularTexture,
+        specularFactorTexture,
+        specularColorTexture,
+        transmissionThicknessTexture,
+        transmissionTexture,
+        thicknessTexture,
+        sheenTexture,
+        sheenColorTexture,
+        sheenRoughnessTexture,
+        anisotropyTexture,
+        clearcoatTexture,
+        clearcoatFactorTexture,
+        clearcoatRoughnessTexture,
+        clearcoatNormalTexture,
+        iridescenceTexture,
+        iridescenceFactorTexture,
+        iridescenceThicknessTexture,
+        diffuseTransmissionTexture,
+        diffuseTransmissionFactorTexture,
+        diffuseTransmissionColorTexture,
+        transmissionBackgroundTexture,
+        environmentMap
+      });
+  }
 };
 
 export { getFragmentShaderCode };
