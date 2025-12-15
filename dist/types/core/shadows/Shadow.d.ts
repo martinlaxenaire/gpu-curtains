@@ -28,8 +28,10 @@ export interface ShadowBaseParams {
     bias?: number;
     /** Shadow map normal bias. Default to `0`. */
     normalBias?: number;
-    /** Number of samples to use for Percentage Closer Filtering calculations in the shader. Increase for smoother shadows, at the cost of performance. Default to `1`. */
+    /** Number of samples to use for Percentage Closer Filtering Vogel disk calculations in the shader. Increase for smoother shadows, at the cost of performance. Default to `3`. */
     pcfSamples?: number;
+    /** Setting this to values greater than `1` will blur the edges of the shadow. High values will cause unwanted banding effects in the shadows - a greater map size will allow for a higher value to be used here before these effects become visible. Default to `1`. */
+    radius?: number;
     /** Size of the depth {@link Texture} to use. Default to `Vec2(512)`. */
     depthTextureSize?: Vec2;
     /** Format of the  depth {@link Texture} to use. Default to `depth24plus`. */
@@ -83,7 +85,7 @@ export declare class Shadow {
      * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link Shadow}.
      * @param parameters - {@link ShadowBaseParams} used to create this {@link Shadow}.
      */
-    constructor(renderer: CameraRenderer | GPUCurtains, { light, intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender, useRenderBundle, }?: ShadowBaseParams);
+    constructor(renderer: CameraRenderer | GPUCurtains, { light, intensity, bias, normalBias, pcfSamples, radius, depthTextureSize, depthTextureFormat, autoRender, useRenderBundle, }?: ShadowBaseParams);
     /**
      * Set or reset this shadow {@link CameraRenderer}.
      * @param renderer - New {@link CameraRenderer} or {@link GPUCurtains} instance to use.
@@ -96,7 +98,7 @@ export declare class Shadow {
      * Called internally by the associated {@link core/lights/Light.Light | Light} if any shadow parameters are specified when creating it. Can also be called directly.
      * @param parameters - Parameters to use for this {@link Shadow}.
      */
-    cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender, useRenderBundle, }?: Omit<ShadowBaseParams, "light">): void;
+    cast({ intensity, bias, normalBias, pcfSamples, radius, depthTextureSize, depthTextureFormat, autoRender, useRenderBundle, }?: Omit<ShadowBaseParams, "light">): void;
     /**
      * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link core/lights/Light.Light | lights} has been overflowed or when the {@link renderer} has changed.
      */
@@ -148,15 +150,25 @@ export declare class Shadow {
      */
     set normalBias(value: number);
     /**
-     * Get this {@link Shadow} PCF samples count.
-     * @returns - The {@link Shadow} PCF samples count.
+     * Get this {@link Shadow} PCF Vogel disk samples count.
+     * @returns - The {@link Shadow} PCF Vogel disk samples count.
      */
     get pcfSamples(): number;
     /**
-     * Set this {@link Shadow} PCF samples count and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
-     * @param value - The new {@link Shadow} PCF samples count.
+     * Set this {@link Shadow} PCF Vogel disk samples count and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
+     * @param value - The new {@link Shadow} PCF Vogel disk samples count.
      */
     set pcfSamples(value: number);
+    /**
+     * Get this {@link Shadow} radius.
+     * @returns - The {@link Shadow} radius.
+     */
+    get radius(): number;
+    /**
+     * Set this {@link Shadow} radius and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
+     * @param value - The new {@link Shadow} radius.
+     */
+    set radius(value: number);
     /**
      * Set the {@link depthComparisonSampler}, {@link depthTexture}, {@link depthPassTarget} and start rendering to the shadow map.
      */

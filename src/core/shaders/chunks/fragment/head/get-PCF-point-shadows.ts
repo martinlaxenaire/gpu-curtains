@@ -11,7 +11,7 @@ export const getPCFPointShadows = (renderer: CameraRenderer): string => {
   const minPointLights = Math.max(renderer.lightsBindingParams.pointLights.max, 1)
 
   return /* wgsl */ `
-fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
+fn getPCFPointShadows(worldPosition: vec3f, fragmentPosition: vec2f) -> array<f32, ${minPointLights}> {
   var pointShadowContribution: array<f32, ${minPointLights}>;
   
   var lightDirection: vec3f;
@@ -20,7 +20,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
   
   ${pointLights
     .map((light, index) => {
-      return `lightDirection = pointLights.elements[${index}].position - worldPosition;
+      return /* wgsl */ `lightDirection = pointLights.elements[${index}].position - worldPosition;
       
       lightDistance = length(lightDirection);
       lightColor = pointLights.elements[${index}].color * rangeAttenuation(pointLights.elements[${index}].range, lightDistance, 2.0);
@@ -32,13 +32,14 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
         pointShadowContribution[${index}] = getPCFPointShadowContribution(
           ${index},
           vec4(lightDirection, length(lightDirection)),
+          fragmentPosition,
           pointShadowCubeDepthTexture${index}
         );
       } else {
         pointShadowContribution[${index}] = 1.0;
       }
             `
-          : `pointShadowContribution[${index}] = 1.0;`
+          : /* wgsl */ `pointShadowContribution[${index}] = 1.0;`
       }`
     })
     .join('\n')}
