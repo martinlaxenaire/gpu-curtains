@@ -11,14 +11,14 @@ export const getPCFSpotShadows = (renderer: CameraRenderer): string => {
   const minSpotLights = Math.max(renderer.lightsBindingParams.spotLights.max, 1)
 
   return /* wgsl */ `
-fn getPCFSpotShadows(worldPosition: vec3f) -> array<f32, ${minSpotLights}> {
+fn getPCFSpotShadows(worldPosition: vec3f, fragmentPosition: vec2f) -> array<f32, ${minSpotLights}> {
   var spotShadowContribution: array<f32, ${minSpotLights}>;
   
   var lightDirection: vec3f;
   
   ${spotLights
     .map((light, index) => {
-      return `lightDirection = worldPosition - spotLights.elements[${index}].direction;
+      return /* wgsl */ `lightDirection = worldPosition - spotLights.elements[${index}].direction;
       
       ${
         light.shadow.isActive
@@ -27,13 +27,14 @@ fn getPCFSpotShadows(worldPosition: vec3f) -> array<f32, ${minSpotLights}> {
         spotShadowContribution[${index}] = getPCFSpotShadowContribution(
           ${index},
           worldPosition,
+          fragmentPosition.xy,
           spotShadowDepthTexture${index}
         );
       } else {
         spotShadowContribution[${index}] = 1.0;
       }
           `
-          : `spotShadowContribution[${index}] = 1.0;`
+          : /* wgsl */ `spotShadowContribution[${index}] = 1.0;`
       }`
     })
     .join('\n')}

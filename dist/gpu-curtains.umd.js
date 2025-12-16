@@ -11229,7 +11229,7 @@ struct VSOutput {
   const getPCFDirectionalShadowContribution = (
     /* wgsl */
     `
-fn getPCFDirectionalShadowContribution(index: i32, worldPosition: vec3f, depthTexture: texture_depth_2d) -> f32 {
+fn getPCFDirectionalShadowContribution(index: i32, worldPosition: vec3f, fragmentPosition: vec2f, depthTexture: texture_depth_2d) -> f32 {
   let directionalShadow: DirectionalShadowsElement = directionalShadows.directionalShadowsElements[index];
   
   // get shadow coords
@@ -11245,7 +11245,9 @@ fn getPCFDirectionalShadowContribution(index: i32, worldPosition: vec3f, depthTe
   
   return getPCFBaseShadowContribution(
     shadowCoords,
+    fragmentPosition,
     directionalShadow.pcfSamples,
+    directionalShadow.radius,
     directionalShadow.bias,
     directionalShadow.intensity,
     depthTexture
@@ -11262,25 +11264,32 @@ fn getPCFDirectionalShadowContribution(index: i32, worldPosition: vec3f, depthTe
     return (
       /* wgsl */
       `
-fn getPCFDirectionalShadows(worldPosition: vec3f) -> array<f32, ${minDirectionalLights}> {
+fn getPCFDirectionalShadows(worldPosition: vec3f, fragmentPosition: vec2f) -> array<f32, ${minDirectionalLights}> {
   var directionalShadowContribution: array<f32, ${minDirectionalLights}>;
   
   var lightDirection: vec3f;
   
   ${directionalLights.map((light, index) => {
-      return `lightDirection = worldPosition - directionalLights.elements[${index}].direction;
+      return (
+        /* wgsl */
+        `lightDirection = worldPosition - directionalLights.elements[${index}].direction;
       
       ${light.shadow.isActive ? `
       if(directionalShadows.directionalShadowsElements[${index}].isActive > 0) {
         directionalShadowContribution[${index}] = getPCFDirectionalShadowContribution(
           ${index},
           worldPosition,
+          fragmentPosition,
           directionalShadowDepthTexture${index}
         );
       } else {
         directionalShadowContribution[${index}] = 1.0;
       }
-          ` : `directionalShadowContribution[${index}] = 1.0;`}`;
+          ` : (
+          /*wgsl */
+          `directionalShadowContribution[${index}] = 1.0;`
+        )}`
+      );
     }).join("\n")}
   
   return directionalShadowContribution;
@@ -11292,48 +11301,62 @@ fn getPCFDirectionalShadows(worldPosition: vec3f) -> array<f32, ${minDirectional
   const getPCFPointShadowContribution = (
     /* wgsl */
     `
-fn getPCFPointShadowContribution(index: i32, shadowPosition: vec4f, depthCubeTexture: texture_depth_cube) -> f32 {
+fn getPCFPointShadowContribution(index: i32, shadowPosition: vec4f, fragmentPosition: vec2f, depthCubeTexture: texture_depth_cube) -> f32 {
   let pointShadow: PointShadowsElement = pointShadows.pointShadowsElements[index];
 
-  // Percentage-closer filtering. Sample texels in the region
-  // to smooth the result.
   var visibility = 0.0;
-  var closestDepth = 0.0;
-  let currentDepth: f32 = shadowPosition.w;
-  let cameraRange: f32 = pointShadow.cameraFar - pointShadow.cameraNear;
-  let normalizedDepth: f32 = (shadowPosition.w - pointShadow.cameraNear) / cameraRange;
 
-  let maxSize: f32 = f32(max(textureDimensions(depthCubeTexture).x, textureDimensions(depthCubeTexture).y));
+  // for point lights, the uniform @vShadowCoord is re-purposed to hold
+  // the vector from the light to the world-space position of the fragment.
+  let lightToPosition: vec3f = shadowPosition.xyz;
 
-  let texelSize: vec3f = vec3(1.0 / maxSize);
-  let sampleCount: i32 = pointShadow.pcfSamples;
-  let maxSamples: f32 = f32(sampleCount) - 1.0;
-  
-  for (var x = 0; x < sampleCount; x++) {
-    for (var y = 0; y < sampleCount; y++) {
-      for (var z = 0; z < sampleCount; z++) {
-        let offset = texelSize * vec3(
-          f32(x) - maxSamples * 0.5,
-          f32(y) - maxSamples * 0.5,
-          f32(z) - maxSamples * 0.5
-        );
+  // Direction from light to fragment
+  // bd3D = base direction 3D
+  let bd3D: vec3f = normalize(lightToPosition);
 
-        closestDepth = textureSampleCompareLevel(
+  // For cube shadow maps, depth is stored as distance along each face's view axis, not radial distance
+  // The view-space depth is the maximum component of the direction vector (which face is sampled)
+  let absVec: vec3f = abs(lightToPosition);
+  let viewSpaceZ: f32 = max(max(absVec.x, absVec.y), absVec.z);
+
+  if (viewSpaceZ - pointShadow.cameraFar <= 0.0 && viewSpaceZ - pointShadow.cameraNear >= 0.0) {
+    let size: vec2u = textureDimensions(depthCubeTexture);
+    let maxSize: f32 = f32(max(size.x, size.y));
+    let texelSize: f32 = 1.0 / maxSize;
+
+    // Hardware PCF with LinearFilter gives us 4-tap filtering per sample
+    // 5 samples using Vogel disk + IGN = effectively 20 filtered taps with better distribution
+    let radius: f32 = pointShadow.radius * texelSize;
+
+    // Use IGN to rotate sampling pattern per pixel
+    let phi: f32 = interleavedGradientNoise(fragmentPosition.xy) * 6.28318530718; // 2*PI
+
+    // Calculate perspective depth for cube shadow map
+    // Standard perspective depth formula: depth = (far * (z - near)) / (z * (far - near))
+    var dp: f32 = (pointShadow.cameraFar * (viewSpaceZ - pointShadow.cameraNear)) / (viewSpaceZ * (pointShadow.cameraFar - pointShadow.cameraNear));
+    dp -= pointShadow.bias;
+
+    // Build a tangent-space coordinate system for applying offsets
+    let absDir: vec3f = abs(bd3D);
+    var tangent: vec3f = select(vec3(1.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0), absDir.x > absDir.z);
+    tangent = normalize(cross(bd3D, tangent));
+    let bitangent: vec3f = cross(bd3D, tangent);
+
+    let pcfSamples: i32 = pointShadow.pcfSamples;
+    for(var i: i32 = 0; i < pcfSamples; i++) {
+      let offset: vec2f = vogelDiskSample(i, pcfSamples, phi);
+
+      visibility += textureSampleCompareLevel(
           depthCubeTexture,
           depthComparisonSampler,
-          shadowPosition.xyz + offset,
-          normalizedDepth - pointShadow.bias
+          bd3D + (tangent * offset.x + bitangent * offset.y) * radius,
+          dp
         );
-
-        closestDepth *= cameraRange;
-
-        visibility += select(0.0, 1.0, currentDepth <= closestDepth);
-      }
     }
+
+    visibility /= f32(pcfSamples);
   }
-  
-  visibility /= f32(sampleCount * sampleCount * sampleCount);
-  
+
   visibility = mix(1.0, visibility, saturate(pointShadow.intensity));
   
   return visibility;
@@ -11346,7 +11369,7 @@ fn getPCFPointShadowContribution(index: i32, shadowPosition: vec4f, depthCubeTex
     return (
       /* wgsl */
       `
-fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
+fn getPCFPointShadows(worldPosition: vec3f, fragmentPosition: vec2f) -> array<f32, ${minPointLights}> {
   var pointShadowContribution: array<f32, ${minPointLights}>;
   
   var lightDirection: vec3f;
@@ -11354,7 +11377,9 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
   var lightColor: vec3f;
   
   ${pointLights.map((light, index) => {
-      return `lightDirection = pointLights.elements[${index}].position - worldPosition;
+      return (
+        /* wgsl */
+        `lightDirection = pointLights.elements[${index}].position - worldPosition;
       
       lightDistance = length(lightDirection);
       lightColor = pointLights.elements[${index}].color * rangeAttenuation(pointLights.elements[${index}].range, lightDistance, 2.0);
@@ -11364,12 +11389,17 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
         pointShadowContribution[${index}] = getPCFPointShadowContribution(
           ${index},
           vec4(lightDirection, length(lightDirection)),
+          fragmentPosition,
           pointShadowCubeDepthTexture${index}
         );
       } else {
         pointShadowContribution[${index}] = 1.0;
       }
-            ` : `pointShadowContribution[${index}] = 1.0;`}`;
+            ` : (
+          /* wgsl */
+          `pointShadowContribution[${index}] = 1.0;`
+        )}`
+      );
     }).join("\n")}
   
   return pointShadowContribution;
@@ -11384,25 +11414,32 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
     return (
       /* wgsl */
       `
-fn getPCFSpotShadows(worldPosition: vec3f) -> array<f32, ${minSpotLights}> {
+fn getPCFSpotShadows(worldPosition: vec3f, fragmentPosition: vec2f) -> array<f32, ${minSpotLights}> {
   var spotShadowContribution: array<f32, ${minSpotLights}>;
   
   var lightDirection: vec3f;
   
   ${spotLights.map((light, index) => {
-      return `lightDirection = worldPosition - spotLights.elements[${index}].direction;
+      return (
+        /* wgsl */
+        `lightDirection = worldPosition - spotLights.elements[${index}].direction;
       
       ${light.shadow.isActive ? `
       if(spotShadows.spotShadowsElements[${index}].isActive > 0) {
         spotShadowContribution[${index}] = getPCFSpotShadowContribution(
           ${index},
           worldPosition,
+          fragmentPosition.xy,
           spotShadowDepthTexture${index}
         );
       } else {
         spotShadowContribution[${index}] = 1.0;
       }
-          ` : `spotShadowContribution[${index}] = 1.0;`}`;
+          ` : (
+          /* wgsl */
+          `spotShadowContribution[${index}] = 1.0;`
+        )}`
+      );
     }).join("\n")}
   
   return spotShadowContribution;
@@ -11414,7 +11451,7 @@ fn getPCFSpotShadows(worldPosition: vec3f) -> array<f32, ${minSpotLights}> {
   const getPCFSpotShadowContribution = (
     /* wgsl */
     `
-fn getPCFSpotShadowContribution(index: i32, worldPosition: vec3f, depthTexture: texture_depth_2d) -> f32 {
+fn getPCFSpotShadowContribution(index: i32, worldPosition: vec3f, fragmentPosition: vec2f, depthTexture: texture_depth_2d) -> f32 {
   let spotShadow: SpotShadowsElement = spotShadows.spotShadowsElements[index];
   
   // get shadow coords
@@ -11430,7 +11467,9 @@ fn getPCFSpotShadowContribution(index: i32, worldPosition: vec3f, depthTexture: 
   
   return getPCFBaseShadowContribution(
     shadowCoords,
+    fragmentPosition,
     spotShadow.pcfSamples,
+    spotShadow.radius,
     spotShadow.bias,
     spotShadow.intensity,
     depthTexture
@@ -11442,9 +11481,24 @@ fn getPCFSpotShadowContribution(index: i32, worldPosition: vec3f, depthTexture: 
   const getPCFBaseShadowContribution = (
     /* wgsl */
     `
+// Interleaved Gradient Noise for randomizing sampling patterns
+fn interleavedGradientNoise(position: vec2f) -> f32 {
+  return fract(52.9829189 * fract(dot(position, vec2(0.06711056, 0.00583715))));
+}
+
+// Vogel disk sampling for uniform circular distribution
+fn vogelDiskSample(sampleIndex: i32, samplesCount: i32, phi: f32) -> vec2f {
+  let goldenAngle: f32 = 2.399963229728653;
+  let r: f32 = sqrt((f32(sampleIndex) + 0.5) / f32(samplesCount));
+  let theta: f32 = f32(sampleIndex) * goldenAngle + phi;
+  return vec2(cos(theta), sin(theta)) * r;
+}
+
 fn getPCFBaseShadowContribution(
   shadowCoords: vec3f,
+  fragmentPosition: vec2f,
   pcfSamples: i32,
+  shadowRadius: f32,
   bias: f32,
   intensity: f32,
   depthTexture: texture_depth_2d
@@ -11460,26 +11514,26 @@ fn getPCFBaseShadowContribution(
     let size: vec2f = vec2f(textureDimensions(depthTexture).xy);
   
     let texelSize: vec2f = 1.0 / size;
-    
-    let sampleCount: i32 = pcfSamples;
-    let maxSamples: f32 = f32(sampleCount) - 1.0;
-  
-    for (var x = 0; x < sampleCount; x++) {
-      for (var y = 0; y < sampleCount; y++) {
-        let offset = texelSize * vec2(
-          f32(x) - maxSamples * 0.5,
-          f32(y) - maxSamples * 0.5
-        );
-        
-        visibility += textureSampleCompareLevel(
+
+    // Hardware PCF with LinearFilter gives us 4-tap filtering per sample
+    // 5 samples using Vogel disk + IGN = effectively 20 filtered taps with better distribution
+    let radius: f32 = shadowRadius * texelSize.x;
+
+    // Use IGN to rotate sampling pattern per pixel
+    let phi: f32 = interleavedGradientNoise(fragmentPosition.xy) * 6.28318530718; // 2*PI
+
+    for(var i: i32 = 0; i < pcfSamples; i++) {
+      let offset: vec2f = vogelDiskSample(i, pcfSamples, phi) * radius;
+
+      visibility += textureSampleCompareLevel(
           depthTexture,
           depthComparisonSampler,
           shadowCoords.xy + offset,
           shadowCoords.z - bias
         );
-      }
     }
-    visibility /= f32(sampleCount * sampleCount);
+
+    visibility /= f32(pcfSamples);
     
     visibility = mix(1.0, visibility, saturate(intensity));
   }
@@ -12754,7 +12808,7 @@ fn getPCFBaseShadowContribution(
   var __privateAdd$h = (obj, member, value) => member.has(obj) ? __typeError$h("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   var __privateSet$g = (obj, member, value, setter) => (__accessCheck$h(obj, member, "write to private field"), member.set(obj, value), value);
   var __privateMethod$8 = (obj, member, method) => (__accessCheck$h(obj, member, "access private method"), method);
-  var _intensity, _bias, _normalBias, _pcfSamples, _isActive, _autoRender, _receivingMeshes, _Shadow_instances, setParameters_fn;
+  var _intensity, _bias, _normalBias, _pcfSamples, _radius, _isActive, _autoRender, _receivingMeshes, _Shadow_instances, setParameters_fn;
   const shadowStruct = {
     isActive: {
       type: "i32",
@@ -12772,6 +12826,10 @@ fn getPCFBaseShadowContribution(
       type: "f32",
       value: 0
     },
+    radius: {
+      type: "f32",
+      value: 1
+    },
     intensity: {
       type: "f32",
       value: 0
@@ -12788,7 +12846,8 @@ fn getPCFBaseShadowContribution(
       intensity = 1,
       bias = 0,
       normalBias = 0,
-      pcfSamples = 1,
+      pcfSamples = 3,
+      radius = 1,
       depthTextureSize = new Vec2(512),
       depthTextureFormat = "depth24plus",
       autoRender = true,
@@ -12804,6 +12863,8 @@ fn getPCFBaseShadowContribution(
       /** @ignore */
       __privateAdd$h(this, _pcfSamples);
       /** @ignore */
+      __privateAdd$h(this, _radius);
+      /** @ignore */
       __privateAdd$h(this, _isActive);
       /** @ignore */
       __privateAdd$h(this, _autoRender);
@@ -12818,6 +12879,7 @@ fn getPCFBaseShadowContribution(
         bias,
         normalBias,
         pcfSamples,
+        radius,
         depthTextureSize,
         depthTextureFormat,
         useRenderBundle
@@ -12832,6 +12894,7 @@ fn getPCFBaseShadowContribution(
         bias,
         normalBias,
         pcfSamples,
+        radius,
         depthTextureSize,
         depthTextureFormat,
         autoRender,
@@ -12884,6 +12947,7 @@ fn getPCFBaseShadowContribution(
       bias,
       normalBias,
       pcfSamples,
+      radius,
       depthTextureSize,
       depthTextureFormat,
       autoRender,
@@ -12894,6 +12958,7 @@ fn getPCFBaseShadowContribution(
         bias,
         normalBias,
         pcfSamples,
+        radius,
         depthTextureSize,
         depthTextureFormat,
         autoRender,
@@ -12911,6 +12976,7 @@ fn getPCFBaseShadowContribution(
         this.onPropertyChanged("bias", this.bias);
         this.onPropertyChanged("normalBias", this.normalBias);
         this.onPropertyChanged("pcfSamples", this.pcfSamples);
+        this.onPropertyChanged("radius", this.radius);
       }
     }
     /**
@@ -13014,19 +13080,34 @@ fn getPCFBaseShadowContribution(
       this.onPropertyChanged("normalBias", this.normalBias);
     }
     /**
-     * Get this {@link Shadow} PCF samples count.
-     * @returns - The {@link Shadow} PCF samples count.
+     * Get this {@link Shadow} PCF Vogel disk samples count.
+     * @returns - The {@link Shadow} PCF Vogel disk samples count.
      */
     get pcfSamples() {
       return __privateGet$g(this, _pcfSamples);
     }
     /**
-     * Set this {@link Shadow} PCF samples count and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
-     * @param value - The new {@link Shadow} PCF samples count.
+     * Set this {@link Shadow} PCF Vogel disk samples count and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
+     * @param value - The new {@link Shadow} PCF Vogel disk samples count.
      */
     set pcfSamples(value) {
       __privateSet$g(this, _pcfSamples, Math.max(1, Math.ceil(value)));
       this.onPropertyChanged("pcfSamples", this.pcfSamples);
+    }
+    /**
+     * Get this {@link Shadow} radius.
+     * @returns - The {@link Shadow} radius.
+     */
+    get radius() {
+      return __privateGet$g(this, _radius);
+    }
+    /**
+     * Set this {@link Shadow} radius and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
+     * @param value - The new {@link Shadow} radius.
+     */
+    set radius(value) {
+      __privateSet$g(this, _radius, Math.max(1, value));
+      this.onPropertyChanged("radius", this.radius);
     }
     /**
      * Set the {@link depthComparisonSampler}, {@link depthTexture}, {@link depthPassTarget} and start rendering to the shadow map.
@@ -13381,6 +13462,7 @@ fn getPCFBaseShadowContribution(
   _bias = new WeakMap();
   _normalBias = new WeakMap();
   _pcfSamples = new WeakMap();
+  _radius = new WeakMap();
   _isActive = new WeakMap();
   _autoRender = new WeakMap();
   _receivingMeshes = new WeakMap();
@@ -13404,7 +13486,8 @@ fn getPCFBaseShadowContribution(
     intensity = 1,
     bias = 0,
     normalBias = 0,
-    pcfSamples = 1,
+    pcfSamples = 3,
+    radius = 1,
     depthTextureSize = new Vec2(512),
     depthTextureFormat = "depth24plus",
     autoRender = true,
@@ -13414,6 +13497,7 @@ fn getPCFBaseShadowContribution(
     this.bias = bias;
     this.normalBias = normalBias;
     this.pcfSamples = pcfSamples;
+    this.radius = radius;
     this.depthTextureSize = depthTextureSize;
     this.depthTextureFormat = depthTextureFormat;
     __privateSet$g(this, _autoRender, autoRender);
@@ -13654,6 +13738,7 @@ fn getPCFBaseShadowContribution(
       bias,
       normalBias,
       pcfSamples,
+      radius,
       depthTextureSize,
       depthTextureFormat,
       autoRender,
@@ -13673,6 +13758,7 @@ fn getPCFBaseShadowContribution(
         bias,
         normalBias,
         pcfSamples,
+        radius,
         depthTextureSize,
         depthTextureFormat,
         autoRender,
@@ -13719,6 +13805,7 @@ fn getPCFBaseShadowContribution(
       bias,
       normalBias,
       pcfSamples,
+      radius,
       depthTextureSize,
       depthTextureFormat,
       autoRender,
@@ -13738,6 +13825,7 @@ fn getPCFBaseShadowContribution(
         bias,
         normalBias,
         pcfSamples,
+        radius,
         depthTextureSize,
         depthTextureFormat,
         autoRender,
@@ -14080,6 +14168,7 @@ struct PointShadowVSOutput {
       bias,
       normalBias,
       pcfSamples,
+      radius,
       depthTextureSize,
       depthTextureFormat,
       autoRender,
@@ -14094,6 +14183,7 @@ struct PointShadowVSOutput {
         bias,
         normalBias,
         pcfSamples,
+        radius,
         depthTextureSize,
         depthTextureFormat,
         autoRender,
@@ -14589,6 +14679,7 @@ struct SpotShadowVSOutput {
       bias,
       normalBias,
       pcfSamples,
+      radius,
       depthTextureSize,
       depthTextureFormat,
       autoRender,
@@ -14604,6 +14695,7 @@ struct SpotShadowVSOutput {
         bias,
         normalBias,
         pcfSamples,
+        radius,
         depthTextureSize,
         depthTextureFormat,
         autoRender,
@@ -18837,9 +18929,9 @@ fn getLambertDirect(
   const getPCFShadows = (
     /* wgsl */
     `
-  let pointShadows = getPCFPointShadows(worldPosition);
-  let directionalShadows = getPCFDirectionalShadows(worldPosition);
-  let spotShadows = getPCFSpotShadows(worldPosition);
+  let pointShadows = getPCFPointShadows(worldPosition, fragmentPosition.xy);
+  let directionalShadows = getPCFDirectionalShadows(worldPosition, fragmentPosition.xy);
+  let spotShadows = getPCFSpotShadows(worldPosition, fragmentPosition.xy);
 `
   );
 

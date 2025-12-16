@@ -15,7 +15,7 @@ var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read fr
 var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
 var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
 var __privateMethod = (obj, member, method) => (__accessCheck(obj, member, "access private method"), method);
-var _intensity, _bias, _normalBias, _pcfSamples, _isActive, _autoRender, _receivingMeshes, _Shadow_instances, setParameters_fn;
+var _intensity, _bias, _normalBias, _pcfSamples, _radius, _isActive, _autoRender, _receivingMeshes, _Shadow_instances, setParameters_fn;
 const shadowStruct = {
   isActive: {
     type: "i32",
@@ -33,6 +33,10 @@ const shadowStruct = {
     type: "f32",
     value: 0
   },
+  radius: {
+    type: "f32",
+    value: 1
+  },
   intensity: {
     type: "f32",
     value: 0
@@ -49,7 +53,8 @@ class Shadow {
     intensity = 1,
     bias = 0,
     normalBias = 0,
-    pcfSamples = 1,
+    pcfSamples = 3,
+    radius = 1,
     depthTextureSize = new Vec2(512),
     depthTextureFormat = "depth24plus",
     autoRender = true,
@@ -65,6 +70,8 @@ class Shadow {
     /** @ignore */
     __privateAdd(this, _pcfSamples);
     /** @ignore */
+    __privateAdd(this, _radius);
+    /** @ignore */
     __privateAdd(this, _isActive);
     /** @ignore */
     __privateAdd(this, _autoRender);
@@ -79,6 +86,7 @@ class Shadow {
       bias,
       normalBias,
       pcfSamples,
+      radius,
       depthTextureSize,
       depthTextureFormat,
       useRenderBundle
@@ -93,6 +101,7 @@ class Shadow {
       bias,
       normalBias,
       pcfSamples,
+      radius,
       depthTextureSize,
       depthTextureFormat,
       autoRender,
@@ -145,6 +154,7 @@ class Shadow {
     bias,
     normalBias,
     pcfSamples,
+    radius,
     depthTextureSize,
     depthTextureFormat,
     autoRender,
@@ -155,6 +165,7 @@ class Shadow {
       bias,
       normalBias,
       pcfSamples,
+      radius,
       depthTextureSize,
       depthTextureFormat,
       autoRender,
@@ -172,6 +183,7 @@ class Shadow {
       this.onPropertyChanged("bias", this.bias);
       this.onPropertyChanged("normalBias", this.normalBias);
       this.onPropertyChanged("pcfSamples", this.pcfSamples);
+      this.onPropertyChanged("radius", this.radius);
     }
   }
   /**
@@ -275,19 +287,34 @@ class Shadow {
     this.onPropertyChanged("normalBias", this.normalBias);
   }
   /**
-   * Get this {@link Shadow} PCF samples count.
-   * @returns - The {@link Shadow} PCF samples count.
+   * Get this {@link Shadow} PCF Vogel disk samples count.
+   * @returns - The {@link Shadow} PCF Vogel disk samples count.
    */
   get pcfSamples() {
     return __privateGet(this, _pcfSamples);
   }
   /**
-   * Set this {@link Shadow} PCF samples count and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
-   * @param value - The new {@link Shadow} PCF samples count.
+   * Set this {@link Shadow} PCF Vogel disk samples count and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
+   * @param value - The new {@link Shadow} PCF Vogel disk samples count.
    */
   set pcfSamples(value) {
     __privateSet(this, _pcfSamples, Math.max(1, Math.ceil(value)));
     this.onPropertyChanged("pcfSamples", this.pcfSamples);
+  }
+  /**
+   * Get this {@link Shadow} radius.
+   * @returns - The {@link Shadow} radius.
+   */
+  get radius() {
+    return __privateGet(this, _radius);
+  }
+  /**
+   * Set this {@link Shadow} radius and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
+   * @param value - The new {@link Shadow} radius.
+   */
+  set radius(value) {
+    __privateSet(this, _radius, Math.max(1, value));
+    this.onPropertyChanged("radius", this.radius);
   }
   /**
    * Set the {@link depthComparisonSampler}, {@link depthTexture}, {@link depthPassTarget} and start rendering to the shadow map.
@@ -642,6 +669,7 @@ _intensity = new WeakMap();
 _bias = new WeakMap();
 _normalBias = new WeakMap();
 _pcfSamples = new WeakMap();
+_radius = new WeakMap();
 _isActive = new WeakMap();
 _autoRender = new WeakMap();
 _receivingMeshes = new WeakMap();
@@ -665,7 +693,8 @@ setParameters_fn = function({
   intensity = 1,
   bias = 0,
   normalBias = 0,
-  pcfSamples = 1,
+  pcfSamples = 3,
+  radius = 1,
   depthTextureSize = new Vec2(512),
   depthTextureFormat = "depth24plus",
   autoRender = true,
@@ -675,6 +704,7 @@ setParameters_fn = function({
   this.bias = bias;
   this.normalBias = normalBias;
   this.pcfSamples = pcfSamples;
+  this.radius = radius;
   this.depthTextureSize = depthTextureSize;
   this.depthTextureFormat = depthTextureFormat;
   __privateSet(this, _autoRender, autoRender);

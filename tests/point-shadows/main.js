@@ -306,6 +306,7 @@ window.addEventListener('load', async () => {
     pointShadow.add(pointLight.shadow, 'bias', 0, 0.01, 0.0001)
     pointShadow.add(pointLight.shadow, 'normalBias', 0, 0.01, 0.0001)
     pointShadow.add(pointLight.shadow, 'pcfSamples', 1, 5, 1)
+    pointShadow.add(pointLight.shadow, 'radius', 1, 5, 0.01)
     pointShadow
       .add(pointLight.shadow.depthTextureSize, 'x', 128, 1024, 64)
       .name('Texture size')

@@ -1,9 +1,9 @@
 const getPCFShadows = (
   /* wgsl */
   `
-  let pointShadows = getPCFPointShadows(worldPosition);
-  let directionalShadows = getPCFDirectionalShadows(worldPosition);
-  let spotShadows = getPCFSpotShadows(worldPosition);
+  let pointShadows = getPCFPointShadows(worldPosition, fragmentPosition.xy);
+  let directionalShadows = getPCFDirectionalShadows(worldPosition, fragmentPosition.xy);
+  let spotShadows = getPCFSpotShadows(worldPosition, fragmentPosition.xy);
 `
 );
 

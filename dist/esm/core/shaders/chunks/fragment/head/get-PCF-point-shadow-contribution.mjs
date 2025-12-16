@@ -1,48 +1,62 @@
 const getPCFPointShadowContribution = (
   /* wgsl */
   `
-fn getPCFPointShadowContribution(index: i32, shadowPosition: vec4f, depthCubeTexture: texture_depth_cube) -> f32 {
+fn getPCFPointShadowContribution(index: i32, shadowPosition: vec4f, fragmentPosition: vec2f, depthCubeTexture: texture_depth_cube) -> f32 {
   let pointShadow: PointShadowsElement = pointShadows.pointShadowsElements[index];
 
-  // Percentage-closer filtering. Sample texels in the region
-  // to smooth the result.
   var visibility = 0.0;
-  var closestDepth = 0.0;
-  let currentDepth: f32 = shadowPosition.w;
-  let cameraRange: f32 = pointShadow.cameraFar - pointShadow.cameraNear;
-  let normalizedDepth: f32 = (shadowPosition.w - pointShadow.cameraNear) / cameraRange;
 
-  let maxSize: f32 = f32(max(textureDimensions(depthCubeTexture).x, textureDimensions(depthCubeTexture).y));
+  // for point lights, the uniform @vShadowCoord is re-purposed to hold
+  // the vector from the light to the world-space position of the fragment.
+  let lightToPosition: vec3f = shadowPosition.xyz;
 
-  let texelSize: vec3f = vec3(1.0 / maxSize);
-  let sampleCount: i32 = pointShadow.pcfSamples;
-  let maxSamples: f32 = f32(sampleCount) - 1.0;
-  
-  for (var x = 0; x < sampleCount; x++) {
-    for (var y = 0; y < sampleCount; y++) {
-      for (var z = 0; z < sampleCount; z++) {
-        let offset = texelSize * vec3(
-          f32(x) - maxSamples * 0.5,
-          f32(y) - maxSamples * 0.5,
-          f32(z) - maxSamples * 0.5
-        );
+  // Direction from light to fragment
+  // bd3D = base direction 3D
+  let bd3D: vec3f = normalize(lightToPosition);
 
-        closestDepth = textureSampleCompareLevel(
+  // For cube shadow maps, depth is stored as distance along each face's view axis, not radial distance
+  // The view-space depth is the maximum component of the direction vector (which face is sampled)
+  let absVec: vec3f = abs(lightToPosition);
+  let viewSpaceZ: f32 = max(max(absVec.x, absVec.y), absVec.z);
+
+  if (viewSpaceZ - pointShadow.cameraFar <= 0.0 && viewSpaceZ - pointShadow.cameraNear >= 0.0) {
+    let size: vec2u = textureDimensions(depthCubeTexture);
+    let maxSize: f32 = f32(max(size.x, size.y));
+    let texelSize: f32 = 1.0 / maxSize;
+
+    // Hardware PCF with LinearFilter gives us 4-tap filtering per sample
+    // 5 samples using Vogel disk + IGN = effectively 20 filtered taps with better distribution
+    let radius: f32 = pointShadow.radius * texelSize;
+
+    // Use IGN to rotate sampling pattern per pixel
+    let phi: f32 = interleavedGradientNoise(fragmentPosition.xy) * 6.28318530718; // 2*PI
+
+    // Calculate perspective depth for cube shadow map
+    // Standard perspective depth formula: depth = (far * (z - near)) / (z * (far - near))
+    var dp: f32 = (pointShadow.cameraFar * (viewSpaceZ - pointShadow.cameraNear)) / (viewSpaceZ * (pointShadow.cameraFar - pointShadow.cameraNear));
+    dp -= pointShadow.bias;
+
+    // Build a tangent-space coordinate system for applying offsets
+    let absDir: vec3f = abs(bd3D);
+    var tangent: vec3f = select(vec3(1.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0), absDir.x > absDir.z);
+    tangent = normalize(cross(bd3D, tangent));
+    let bitangent: vec3f = cross(bd3D, tangent);
+
+    let pcfSamples: i32 = pointShadow.pcfSamples;
+    for(var i: i32 = 0; i < pcfSamples; i++) {
+      let offset: vec2f = vogelDiskSample(i, pcfSamples, phi);
+
+      visibility += textureSampleCompareLevel(
           depthCubeTexture,
           depthComparisonSampler,
-          shadowPosition.xyz + offset,
-          normalizedDepth - pointShadow.bias
+          bd3D + (tangent * offset.x + bitangent * offset.y) * radius,
+          dp
         );
-
-        closestDepth *= cameraRange;
-
-        visibility += select(0.0, 1.0, currentDepth <= closestDepth);
-      }
     }
+
+    visibility /= f32(pcfSamples);
   }
-  
-  visibility /= f32(sampleCount * sampleCount * sampleCount);
-  
+
   visibility = mix(1.0, visibility, saturate(pointShadow.intensity));
   
   return visibility;
