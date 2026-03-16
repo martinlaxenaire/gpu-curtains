@@ -1859,8 +1859,7 @@
     COPY_DST: 2,
     TEXTURE_BINDING: 4,
     STORAGE_BINDING: 8,
-    RENDER_ATTACHMENT: 16
-  };
+    RENDER_ATTACHMENT: 16};
 
   const bindingVisibilities = /* @__PURE__ */ new Map([
     ["vertex", WebGPUShaderStageConstants.VERTEX],
