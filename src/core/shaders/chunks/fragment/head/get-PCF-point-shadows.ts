@@ -20,7 +20,8 @@ fn getPCFPointShadows(worldPosition: vec3f, fragmentPosition: vec2f) -> array<f3
   
   ${pointLights
     .map((light, index) => {
-      return /* wgsl */ `lightDirection = pointLights.elements[${index}].position - worldPosition;
+      return /* wgsl */ `
+      lightDirection = pointLights.elements[${index}].position - worldPosition;
       
       lightDistance = length(lightDirection);
       lightColor = pointLights.elements[${index}].color * rangeAttenuation(pointLights.elements[${index}].range, lightDistance, 2.0);
@@ -39,7 +40,8 @@ fn getPCFPointShadows(worldPosition: vec3f, fragmentPosition: vec2f) -> array<f3
         pointShadowContribution[${index}] = 1.0;
       }
             `
-          : /* wgsl */ `pointShadowContribution[${index}] = 1.0;`
+          : /* wgsl */ `
+      pointShadowContribution[${index}] = 1.0;`
       }`
     })
     .join('\n')}

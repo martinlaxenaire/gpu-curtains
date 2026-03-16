@@ -170,7 +170,8 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
           maxDirectionalLights: 5,
           maxPointLights: 5,
           maxSpotLights: 5,
-          useUniformsForShadows: false,
+          // On compatibility mode, some devices might not allow storage buffers in vertex shaders
+          useUniformsForShadows: this.device.limits.maxStorageBuffersInVertexStage === 0,
         },
         ...lights,
       }

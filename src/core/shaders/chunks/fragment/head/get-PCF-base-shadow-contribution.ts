@@ -39,7 +39,7 @@ fn getPCFBaseShadowContribution(
     let radius: f32 = shadowRadius * texelSize.x;
 
     // Use IGN to rotate sampling pattern per pixel
-    let phi: f32 = interleavedGradientNoise(fragmentPosition.xy) * 6.28318530718; // 2*PI
+    let phi: f32 = interleavedGradientNoise(fragmentPosition.xy) * PI2;
 
     for(var i: i32 = 0; i < pcfSamples; i++) {
       let offset: vec2f = vogelDiskSample(i, pcfSamples, phi) * radius;
