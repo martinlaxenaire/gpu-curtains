@@ -22,7 +22,7 @@ export class CurtainsClothSim {
       this.showTween = gsap
         .timeline()
         .set(this.computeForcesPass.uniforms.interaction.wind.value, {
-          z: -3,
+          z: -30,
         })
         .call(() => this.plane.domElement.element.classList.add('canvas-texture-ready'))
         .to(this.plane.uniforms.global.opacity, {
@@ -46,7 +46,7 @@ export class CurtainsClothSim {
 
     this.raycaster = new Raycaster(this.gpuCurtains)
 
-    this.simulationSpeed = 2
+    this.simulationSteps = 25
 
     this.clothDefinition = new Vec2(40)
 
@@ -95,15 +95,19 @@ export class CurtainsClothSim {
           struct: {
             deltaTime: {
               type: 'f32',
-              value: 0.002 * this.simulationSpeed,
+              value: 1 / 60 / this.simulationSteps,
             },
             mass: {
               type: 'f32',
               value: 1,
             },
+            springConstant: {
+              type: 'f32',
+              value: 130_000,
+            },
             dampingConstant: {
               type: 'f32',
-              value: 50,
+              value: 100,
             },
             floor: {
               type: 'f32',
@@ -111,7 +115,7 @@ export class CurtainsClothSim {
             },
             gravity: {
               type: 'vec3f',
-              value: new Vec3(0, -0.0981, 0),
+              value: new Vec3(0, -9.81, 0),
             },
           },
         },
@@ -131,7 +135,7 @@ export class CurtainsClothSim {
             },
             pointerStrength: {
               type: 'f32',
-              value: 250,
+              value: 2_000,
             },
             wind: {
               type: 'vec3f',
@@ -206,10 +210,6 @@ export class CurtainsClothSim {
       dispatchSize: [Math.ceil((this.clothDefinition.x + 1) / 14), Math.ceil((this.clothDefinition.y + 1) / 14)],
     })
 
-    // now use renderer onBeforeRender callback to render our compute passes
-    // nb sims compute per render impacts the speed at which the simulation runs
-    const nbSimsComputePerRender = Math.min(50, Math.ceil(75 / this.simulationSpeed))
-
     // add a task to our renderer onBeforeRenderScene tasks queue manager
     this.computeTaskId = this.gpuCurtains.renderer.onBeforeRenderScene.add((commandEncoder) => {
       if (!this.isActive) return
@@ -224,7 +224,7 @@ export class CurtainsClothSim {
 
       this.ready = this.plane && this.plane.ready
 
-      for (let i = 0; i < nbSimsComputePerRender; i++) {
+      for (let i = 0; i < this.simulationSteps; i++) {
         const forcePass = commandEncoder.beginComputePass()
         this.computeForcesPass.render(forcePass)
         forcePass.end()

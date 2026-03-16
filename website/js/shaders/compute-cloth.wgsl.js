@@ -50,69 +50,59 @@ export const computeClothSim = /* wgsl */ `
   const SQRT2 = 1.4142135623730951;
   const EPSIL = 0.0001;
   
-  fn spring_damper(p2: vec4<f32>, v2: vec4<f32>, rest_length: f32) {
-    // Empty padded point
-    if (v2.w < 0.0) {
-      return;
-    }
+  fn spring_damper(p: ClothPointShared, restLen: f32) {
+    if (p.velocity.w < 0.0) { return; }
 
-    let delta = p2.xyz - p1;
-    let len = length(delta);
+    let delta = p.position.xyz - p1;
+    let len   = length(delta);
+    if (len < EPSIL) { return; }
 
-    if (len < EPSIL) {
-      return;
-    }
+    let dir = delta / len;
 
-    let dir = normalize(delta);
+    let fs = params.springConstant * (len - restLen);
+    let dv = dot(v1 - p.velocity.xyz, dir);
+    let fd = params.dampingConstant * dv;
 
-    // Spring force
-    var springConstant: f32 = dimension.size.x * dimension.size.y;
-    force = force + springConstant * (len - rest_length) * dir;
-
-    // Damper force
-    let v_close = dot(v1 - v2.xyz, dir);
-    force = force - params.dampingConstant * v_close * dir;
+    force += (fs - fd) * dir;
   }
   
   const AIR_DENSITY = 1.225;
   const DRAG_COEFFI = 1.5;
   
   fn aerodynamic(p2: ClothPointShared, p3: ClothPointShared) {
-    // Empty padded points
-    if (p2.velocity.w < 0.0 || p3.velocity.w < 0.0) {
-      return;
-    }
+    if (p2.velocity.w < 0.0 || p3.velocity.w < 0.0) { return; }
 
-    let surf_v = (v1 + p2.velocity.xyz + p3.velocity.xyz) / 3.0;
-        
-    // add mouse interaction to wind
-    let distanceStrength = (1.0 - min(1.0, distance(interaction.pointerPosition, p1.xy) / interaction.pointerSize));
-    var pointerEffect = interaction.pointerStrength * pow(distanceStrength, 1.5);
-    
-    var interactionForce: vec3f =
-      interaction.wind
-      + pointerEffect * vec3(interaction.pointerVelocity, -1.0 * length(interaction.pointerVelocity));
-    
-    let delta_v = surf_v - interactionForce;
-    
-    let len = length(delta_v);
+    let vSurf = (v1 + p2.velocity.xyz + p3.velocity.xyz) / 3.0;
 
-    if (len < EPSIL) {
-      return;
-    }
+    let dist = distance(interaction.pointerPosition, p1.xy);
+    let w    = 1.0 - clamp(dist / interaction.pointerSize, 0.0, 1.0);
 
-    let dir = normalize(delta_v);
+    let pointerForce =
+      interaction.pointerStrength *
+      pow(w, 1.5) *
+      vec3(interaction.pointerVelocity, -length(interaction.pointerVelocity));
 
-    let prod = cross(p2.position.xyz - p1, p3.position.xyz - p1);
+    let wind = interaction.wind + pointerForce;
 
-    if (length(prod) < EPSIL) {
-      return;
-    }
+    let vRel = vSurf - wind;
+    let spd  = length(vRel);
+    if (spd < EPSIL) { return; }
 
-    let norm = normalize(prod);
-    let area = length(prod) / 2.0 * dot(norm, dir);
+    let dir = vRel / spd;
 
-    force = force + -0.5 * AIR_DENSITY * len * len * DRAG_COEFFI * area * norm / 3.9;
+    let e1 = p2.position.xyz - p1;
+    let e2 = p3.position.xyz - p1;
+    let cp = cross(e1, e2);
+    let a2 = length(cp);
+    if (a2 < EPSIL) { return; }
+
+    let n = cp / a2;
+    let projArea = abs(dot(n, dir)) * a2 * 0.5;
+
+    let drag =
+      0.5 * AIR_DENSITY * DRAG_COEFFI * spd * spd * projArea;
+
+    force += -drag * n / 3.0;
   }
   
   var<workgroup> tile : array<array<ClothPointShared, 16>, 16>;
@@ -165,16 +155,16 @@ export const computeClothSim = /* wgsl */ `
     let diag_len = rest_len * SQRT2;
 
     // 8x spring damper force accumulation 
-    spring_damper(tile[cy - 1u][cx - 1u].position, tile[cy - 1u][cx - 1u].velocity, diag_len);
-    spring_damper(tile[cy - 1u][cx - 0u].position, tile[cy - 1u][cx - 0u].velocity, rest_len);
-    spring_damper(tile[cy - 1u][cx + 1u].position, tile[cy - 1u][cx + 1u].velocity, diag_len);
+    spring_damper(tile[cy - 1u][cx - 1u], diag_len);
+    spring_damper(tile[cy - 1u][cx - 0u], rest_len);
+    spring_damper(tile[cy - 1u][cx + 1u], diag_len);
     
-    spring_damper(tile[cy][cx - 1u].position, tile[cy][cx - 1u].velocity, rest_len);
-    spring_damper(tile[cy][cx + 1u].position, tile[cy][cx + 1u].velocity, rest_len);
+    spring_damper(tile[cy][cx - 1u], rest_len);
+    spring_damper(tile[cy][cx + 1u], rest_len);
     
-    spring_damper(tile[cy + 1u][cx - 1u].position, tile[cy + 1u][cx - 1u].velocity, diag_len);
-    spring_damper(tile[cy + 1u][cx - 0u].position, tile[cy + 1u][cx - 0u].velocity, rest_len);
-    spring_damper(tile[cy + 1u][cx + 1u].position, tile[cy + 1u][cx + 1u].velocity, diag_len);
+    spring_damper(tile[cy + 1u][cx - 1u], diag_len);
+    spring_damper(tile[cy + 1u][cx - 0u], rest_len);
+    spring_damper(tile[cy + 1u][cx + 1u], diag_len);
     
     
     // 8 Triangles aerodynamic force accumulation
