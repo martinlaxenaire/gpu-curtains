@@ -41,4 +41,5 @@ export const WebGPUTextureUsageConstants: GPUTextureUsage =
         TEXTURE_BINDING: 4,
         STORAGE_BINDING: 8,
         RENDER_ATTACHMENT: 16,
+        TRANSIENT_ATTACHMENT: 32,
       }
