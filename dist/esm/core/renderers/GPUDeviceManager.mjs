@@ -58,7 +58,7 @@ class GPUDeviceManager {
     __privateSet(this, _mipsGeneration, {
       sampler: null,
       module: null,
-      pipelineByFormat: {}
+      pipelineByFormatAndView: {}
     });
     if (this.options.autoRender) {
       this.animate();
@@ -124,6 +124,15 @@ class GPUDeviceManager {
     } else {
       try {
         const { limits } = this.adapter;
+        const isCompatibilityMode = this.options.adapterOptions.featureLevel === "compatibility";
+        if (isCompatibilityMode) {
+          this.options.requestAdapterLimits.push(
+            "maxStorageBuffersInVertexStage",
+            "maxStorageTexturesInVertexStage",
+            "maxStorageBuffersInFragmentStage",
+            "maxStorageTexturesInFragmentStage"
+          );
+        }
         const requiredLimits = {};
         for (const key in limits) {
           if (this.options.requestAdapterLimits.includes(key)) {
@@ -185,7 +194,7 @@ class GPUDeviceManager {
     __privateSet(this, _mipsGeneration, {
       sampler: null,
       module: null,
-      pipelineByFormat: {}
+      pipelineByFormatAndView: {}
     });
   }
   /**
@@ -343,13 +352,24 @@ class GPUDeviceManager {
         code: (
           /* wgsl */
           `
+            const faceMat = array(
+              mat3x3f( 0,  0,  -2,  0, -2,   0,  1,  1,   1),   // pos-x
+              mat3x3f( 0,  0,   2,  0, -2,   0, -1,  1,  -1),   // neg-x
+              mat3x3f( 2,  0,   0,  0,  0,   2, -1,  1,  -1),   // pos-y
+              mat3x3f( 2,  0,   0,  0,  0,  -2, -1, -1,   1),   // neg-y
+              mat3x3f( 2,  0,   0,  0, -2,   0, -1,  1,   1),   // pos-z
+              mat3x3f(-2,  0,   0,  0, -2,   0,  1,  1,  -1)    // neg-z
+            );
+
             struct VSOutput {
               @builtin(position) position: vec4f,
               @location(0) texcoord: vec2f,
+              @location(1) @interpolate(flat, either) baseArrayLayer: u32,
             };
 
             @vertex fn vs(
-              @builtin(vertex_index) vertexIndex : u32
+              @builtin(vertex_index) vertexIndex : u32,
+              @builtin(instance_index) baseArrayLayer: u32,
             ) -> VSOutput {
               let pos = array(
 
@@ -367,14 +387,32 @@ class GPUDeviceManager {
               let xy = pos[vertexIndex];
               vsOutput.position = vec4f(xy * 2.0 - 1.0, 0.0, 1.0);
               vsOutput.texcoord = vec2f(xy.x, 1.0 - xy.y);
+              vsOutput.baseArrayLayer = baseArrayLayer;
               return vsOutput;
             }
 
             @group(0) @binding(0) var ourSampler: sampler;
-            @group(0) @binding(1) var ourTexture: texture_2d<f32>;
 
-            @fragment fn fs(fsInput: VSOutput) -> @location(0) vec4f {
-              return textureSample(ourTexture, ourSampler, fsInput.texcoord);
+            @group(0) @binding(1) var ourTexture2d: texture_2d<f32>;
+            @fragment fn fs2d(fsInput: VSOutput) -> @location(0) vec4f {
+              return textureSample(ourTexture2d, ourSampler, fsInput.texcoord);
+            }
+
+            @group(0) @binding(1) var ourTexture2dArray: texture_2d_array<f32>;
+            @fragment fn fs2darray(fsInput: VSOutput) -> @location(0) vec4f {
+              return textureSample(
+                ourTexture2dArray,
+                ourSampler,
+                fsInput.texcoord,
+                fsInput.baseArrayLayer);
+            }
+            
+            @group(0) @binding(1) var ourTextureCube: texture_cube<f32>;
+            @fragment fn fscube(fsInput: VSOutput) -> @location(0) vec4f {
+              return textureSample(
+                ourTextureCube,
+                ourSampler,
+                faceMat[fsInput.baseArrayLayer] * vec3f(fract(fsInput.texcoord), 1));
             }
           `
         )
@@ -384,29 +422,27 @@ class GPUDeviceManager {
         magFilter: "linear"
       });
     }
-    if (!__privateGet(this, _mipsGeneration).pipelineByFormat[texture.texture.format]) {
-      __privateGet(this, _mipsGeneration).pipelineByFormat[texture.texture.format] = this.device.createRenderPipeline({
-        label: "Mip level generator pipeline",
+    const textureBindingViewDimension = texture.texture.textureBindingViewDimension ?? "2d-array";
+    if (!__privateGet(this, _mipsGeneration).pipelineByFormatAndView[texture.texture.format + textureBindingViewDimension]) {
+      const entryPoint = `fs${textureBindingViewDimension.replace(/[\W]/, "")}`;
+      __privateGet(this, _mipsGeneration).pipelineByFormatAndView[texture.texture.format + textureBindingViewDimension] = this.device.createRenderPipeline({
+        label: `Mip level generator pipeline for ${textureBindingViewDimension}, format: ${texture.texture.format}`,
         layout: "auto",
         vertex: {
           module: __privateGet(this, _mipsGeneration).module
         },
         fragment: {
           module: __privateGet(this, _mipsGeneration).module,
+          entryPoint,
           targets: [{ format: texture.texture.format }]
         }
       });
     }
-    const pipeline = __privateGet(this, _mipsGeneration).pipelineByFormat[texture.texture.format];
+    const pipeline = __privateGet(this, _mipsGeneration).pipelineByFormatAndView[texture.texture.format + textureBindingViewDimension];
     const encoder = commandEncoder || this.device.createCommandEncoder({
       label: "Mip gen encoder"
     });
-    let width = texture.texture.width;
-    let height = texture.texture.height;
-    let baseMipLevel = 0;
-    while (width > 1 || height > 1) {
-      width = Math.max(1, width / 2 | 0);
-      height = Math.max(1, height / 2 | 0);
+    for (let baseMipLevel = 1; baseMipLevel < texture.texture.mipLevelCount; ++baseMipLevel) {
       for (let layer = 0; layer < texture.texture.depthOrArrayLayers; ++layer) {
         const bindGroup = this.device.createBindGroup({
           layout: pipeline.getBindGroupLayout(0),
@@ -415,11 +451,9 @@ class GPUDeviceManager {
             {
               binding: 1,
               resource: texture.texture.createView({
-                dimension: "2d",
-                baseMipLevel,
-                mipLevelCount: 1,
-                baseArrayLayer: layer,
-                arrayLayerCount: 1
+                dimension: textureBindingViewDimension,
+                baseMipLevel: baseMipLevel - 1,
+                mipLevelCount: 1
               })
             }
           ]
@@ -430,7 +464,7 @@ class GPUDeviceManager {
             {
               view: texture.texture.createView({
                 dimension: "2d",
-                baseMipLevel: baseMipLevel + 1,
+                baseMipLevel,
                 mipLevelCount: 1,
                 baseArrayLayer: layer,
                 arrayLayerCount: 1
@@ -443,10 +477,9 @@ class GPUDeviceManager {
         const pass = encoder.beginRenderPass(renderPassDescriptor);
         pass.setPipeline(pipeline);
         pass.setBindGroup(0, bindGroup);
-        pass.draw(6);
+        pass.draw(6, 1, 0, layer);
         pass.end();
       }
-      ++baseMipLevel;
     }
     if (!commandEncoder) {
       const commandBuffer = encoder.finish();

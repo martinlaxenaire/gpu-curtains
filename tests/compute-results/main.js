@@ -7,6 +7,9 @@ window.addEventListener('load', async () => {
 
   const deviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
+    adapterOptions: {
+      featureLevel: 'compatibility',
+    },
   })
 
   await deviceManager.init()

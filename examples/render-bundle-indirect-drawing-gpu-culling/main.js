@@ -56,6 +56,8 @@ window.addEventListener('load', async () => {
   document.body.appendChild(stats.dom)
 
   // create a device manager
+  // this example does not support compatibility mode
+  // due to vertex storage buffers
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
   })

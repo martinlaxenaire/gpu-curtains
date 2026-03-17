@@ -3,15 +3,16 @@ window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
   const { BoxGeometry, GPUDeviceManager, GPUCameraRenderer, Mesh } = await import(/* @vite-ignore */ path)
 
-  const deviceManager = new GPUDeviceManager()
+  const deviceManager = new GPUDeviceManager({
+    adapterOptions: {
+      featureLevel: 'compatibility',
+    },
+  })
 
   await deviceManager.init()
 
   const canvasContainers = document.querySelectorAll('.canvas')
   const geometry = new BoxGeometry()
-
-  const page = document.querySelector('#page')
-  console.log(page.getBoundingClientRect(), window.innerWidth, window.devicePixelRatio)
 
   canvasContainers.forEach((container, index) => {
     const autoResize = container.hasAttribute('data-auto-resize')

@@ -56,7 +56,5 @@ fn getPCFPointShadowContribution(index: i32, shadowPosition: vec4f, fragmentPosi
 
   visibility /= f32(pcfSamples);
 
-  visibility = mix(1.0, visibility, saturate(pointShadow.intensity));
-  
-  return visibility;
+  return mix(1.0, visibility, saturate(pointShadow.intensity));  
 }`

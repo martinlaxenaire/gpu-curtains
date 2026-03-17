@@ -89,6 +89,9 @@ window.addEventListener('load', async () => {
     renderPass: {
       sampleCount: 1, // no need for MSAA here!
     },
+    adapterOptions: {
+      featureLevel: 'compatibility',
+    },
   })
 
   gpuCurtains.onError(() => {

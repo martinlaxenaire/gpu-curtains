@@ -23,6 +23,9 @@ window.addEventListener('load', async () => {
   // create a device manager
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
+    adapterOptions: {
+      featureLevel: 'compatibility',
+    },
   })
 
   // wait for the device to be created
@@ -144,7 +147,6 @@ window.addEventListener('load', async () => {
   const reflectedMaterialOptions = {
     ...baseMaterialOptions,
     metallic: 1,
-    roughness: 0.5,
   }
 
   for (let i = 0; i < NB_MESHES; i++) {
@@ -156,7 +158,7 @@ window.addEventListener('load', async () => {
       ...(!useMeshCopy && { additionalOutputTargets: [reflectionTarget] }),
       renderBundle: originalRenderBundle,
       castShadows: true,
-      material: { ...reflectedMaterialOptions, color },
+      material: { ...reflectedMaterialOptions, color, roughness: i < NB_MESHES - 1 ? 0.5 : 0.1 },
     })
 
     if (i < NB_MESHES - 1) {
@@ -190,6 +192,7 @@ window.addEventListener('load', async () => {
         material: {
           ...reflectedMaterialOptions,
           color,
+          roughness: i < NB_MESHES - 1 ? 0.5 : 0.1,
         },
       })
 

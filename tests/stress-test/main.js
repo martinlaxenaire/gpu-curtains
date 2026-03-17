@@ -18,6 +18,9 @@ window.addEventListener('load', async () => {
   // create a device manager
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
+    adapterOptions: {
+      featureLevel: 'compatibility',
+    },
     // production: true, // you can always gain a couple fps by not tracking the errors
   })
 

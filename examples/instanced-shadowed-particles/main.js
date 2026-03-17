@@ -28,6 +28,9 @@ window.addEventListener('load', async () => {
   // create a device manager
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
+    adapterOptions: {
+      featureLevel: 'compatibility',
+    },
   })
 
   // wait for the device to be created
@@ -186,7 +189,7 @@ window.addEventListener('load', async () => {
         entryPoint: 'setInitData',
       },
     },
-    dispatchSize: Math.ceil(nbInstances / 256),
+    dispatchSize: Math.ceil(nbInstances / 128),
     bindGroups: [computeBindGroup],
     autoRender: false, // we don't want to run this pass each frame
   })
@@ -205,7 +208,7 @@ window.addEventListener('load', async () => {
         entryPoint: 'updateData',
       },
     },
-    dispatchSize: Math.ceil(nbInstances / 256),
+    dispatchSize: Math.ceil(nbInstances / 128),
     bindGroups: [computeBindGroup],
   })
 

@@ -215,7 +215,7 @@ export class IndexedGeometry extends Geometry {
     if (!this.indexBuffer.buffer.GPUBuffer) {
       this.indexBuffer.buffer.createBuffer(renderer, {
         label: label + ': index buffer',
-        size: this.indexBuffer.array.byteLength,
+        size: this.indexBuffer.array?.byteLength ?? this.indexBuffer.bufferSize,
         usage: this.options.mapBuffersAtCreation ? ['index'] : ['copyDst', 'index'],
         mappedAtCreation: this.options.mapBuffersAtCreation,
       })
@@ -266,7 +266,6 @@ export class IndexedGeometry extends Geometry {
     super.destroy(renderer)
 
     if (this.indexBuffer) {
-      this.indexBuffer.array = null
       this.indexBuffer.arrayBuffer = null
       this.indexBuffer.buffer.consumers.delete(this.uuid)
       this.indexBuffer.buffer.destroy()

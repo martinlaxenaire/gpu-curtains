@@ -25,7 +25,7 @@
 }
 
 .sphere-bounding-box::after {
-  content: 'sphere';
+  content: 'Sphere BBox';
 }
 
 .obb-bounding-box {
@@ -33,5 +33,5 @@
 }
 
 .obb-bounding-box::after {
-  content: 'OBB';
+  content: 'Oriented BBox';
 }

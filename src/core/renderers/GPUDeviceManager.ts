@@ -245,7 +245,7 @@ export class GPUDeviceManager {
       this.index++
     } else {
       try {
-        const { limits, features } = this.adapter as GPUAdapter
+        const { limits } = this.adapter as GPUAdapter
 
         const isCompatibilityMode = this.options.adapterOptions.featureLevel === 'compatibility'
 
@@ -682,7 +682,7 @@ export class GPUDeviceManager {
         const pass = encoder.beginRenderPass(renderPassDescriptor as GPURenderPassDescriptor)
         pass.setPipeline(pipeline)
         pass.setBindGroup(0, bindGroup)
-        pass.draw(6) // call our vertex shader 6 times
+        pass.draw(6, 1, 0, layer)
         pass.end()
       }
     }

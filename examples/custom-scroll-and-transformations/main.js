@@ -34,6 +34,9 @@ window.addEventListener('load', async () => {
     container: '#canvas',
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance,
     watchScroll: false, // we're going to do it manually with lenis 'scroll' callback
+    adapterOptions: {
+      featureLevel: 'compatibility',
+    },
   })
 
   gpuCurtains.onError(() => {

@@ -56,7 +56,8 @@ class GPUCameraRenderer extends GPURenderer {
           maxDirectionalLights: 5,
           maxPointLights: 5,
           maxSpotLights: 5,
-          useUniformsForShadows: false
+          // On compatibility mode, some devices might not allow storage buffers in vertex shaders
+          useUniformsForShadows: this.device?.limits.maxStorageBuffersInVertexStage === 0
         },
         ...lights
       };
@@ -542,7 +543,7 @@ class GPUCameraRenderer extends GPURenderer {
     this.bindings[shadowsType] = new BufferBinding({
       label,
       name: shadowsType,
-      bindingType: this.options.lights && this.options.lights.useUniformsForShadows ? "uniform" : "storage",
+      bindingType: this.options.lights && (this.options.lights.useUniformsForShadows || this.device?.limits.maxStorageBuffersInVertexStage === 0) ? "uniform" : "storage",
       visibility: ["vertex", "fragment", "compute"],
       // TODO needed in compute?
       childrenBindings: [
@@ -732,7 +733,7 @@ initLights_fn = function() {
       maxDirectionalLights: 5,
       maxPointLights: 5,
       maxSpotLights: 5,
-      useUniformsForShadows: false
+      useUniformsForShadows: this.device?.limits.maxStorageBuffersInVertexStage === 0 || false
     };
   }
   this.setLightsBinding();

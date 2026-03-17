@@ -4,7 +4,11 @@ export const init = async ({ canvas, label, width, height, top = 0, left = 0, pi
   const path = isLocal ? '../../src/index.ts' : '../../dist/esm/index.mjs'
   const { GPUDeviceManager, GPUCameraRenderer, BoxGeometry, Mesh } = await import(/* @vite-ignore */ path)
 
-  const deviceManager = new GPUDeviceManager()
+  const deviceManager = new GPUDeviceManager({
+    adapterOptions: {
+      featureLevel: 'compatibility',
+    },
+  })
 
   await deviceManager.init()
 

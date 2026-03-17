@@ -12,7 +12,7 @@ class FullscreenPlane extends MeshBaseMixin(class {
    * @param parameters - {@link FullscreenPlaneParams | parameters} use to create this {@link FullscreenPlane}.
    */
   constructor(renderer, parameters = {}) {
-    renderer = isRenderer(renderer, parameters.label ? parameters.label + " FullscreenQuadMesh" : "FullscreenQuadMesh");
+    renderer = isRenderer(renderer, parameters.label ? parameters.label + " FullscreenPlane" : "FullscreenPlane");
     let geometry = cacheManager.getPlaneGeometryByID(2);
     if (!geometry) {
       geometry = new PlaneGeometry({ widthSegments: 1, heightSegments: 1 });

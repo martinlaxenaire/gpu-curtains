@@ -25,6 +25,9 @@ window.addEventListener('load', async () => {
   // create a device manager
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
+    adapterOptions: {
+      featureLevel: 'compatibility',
+    },
     requestAdapterLimits: ['maxStorageBuffersPerShaderStage'], // test
   })
 
@@ -124,7 +127,7 @@ window.addEventListener('load', async () => {
       depthTextureSize: new Vec2(1024),
       pcfSamples: 3,
       bias: 0.0001, // will be updated when model changes
-      normalBias: 0.001,
+      normalBias: 0.01,
     },
   })
 
@@ -137,7 +140,7 @@ window.addEventListener('load', async () => {
       depthTextureSize: new Vec2(1024),
       pcfSamples: 3,
       bias: 0.0001, // will be updated when model changes
-      normalBias: 0.001,
+      normalBias: 0.01,
     },
   })
 

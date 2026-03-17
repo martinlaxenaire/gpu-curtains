@@ -12,13 +12,13 @@ import {
 // Port of https://github.com/Yuu6883/WebGPUDemo
 
 // cloth sim compute
-const computeClothSim = /* wgsl */ ` 
+const computeClothSim = (workgroupSize = 16) => /* wgsl */ ` 
 /* =========================
    CONSTANTS & HELPERS
    ========================= */
 
-const TILE_SIZE  = 16u;
-const INNER_TILE = 14u;
+const TILE_SIZE  = ${workgroupSize}u;
+const INNER_TILE = ${workgroupSize - 2}u;
 const SQRT2      = 1.41421356237;
 const EPSIL      = 1e-6;
 
@@ -191,12 +191,12 @@ fn calc_forces(
    VERLET UPDATE
    ========================= */
 
-@compute @workgroup_size(256)
+@compute @workgroup_size(${workgroupSize * workgroupSize})
 fn update_verlet(
   @builtin(workgroup_id) bid : vec3u,
   @builtin(local_invocation_id) tid : vec3u
 ) {
-  let i = i32(bid.x * 256u + tid.x);
+  let i = i32(bid.x * ${workgroupSize * workgroupSize}u + tid.x);
   let w = i32(dimension.size.x + 1);
   let h = i32(dimension.size.y + 1);
 
@@ -229,7 +229,7 @@ fn update_verlet(
    NORMAL PASS (ONCE / FRAME)
    ========================= */
 
-var<workgroup> p_tile : array<array<vec4f, 16>, 16>;
+var<workgroup> p_tile : array<array<vec4f, ${workgroupSize}>, ${workgroupSize}>;
 var<private> accum_norm : vec3f;
 
 fn triangle_normal(p2: vec4f, p3: vec4f) {
@@ -293,6 +293,11 @@ window.addEventListener('load', async () => {
     container: '#canvas',
     watchScroll: false, // no need to listen for the scroll in this example
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
+    adapterOptions: {
+      featureLevel: 'compatibility',
+    },
+    // Try requesting max limits
+    requestAdapterLimits: ['maxComputeInvocationsPerWorkgroup', 'maxComputeWorkgroupSizeX'],
   })
 
   gpuCurtains.onError(() => {
@@ -308,17 +313,15 @@ window.addEventListener('load', async () => {
   let mass = 0.5
   let springConstant = 65_000
   let dampingRatio = 0.8
+  const { maxComputeInvocationsPerWorkgroup } = gpuCurtains.deviceManager.device.limits
+  // Beware of actual compatibility mode limits
+  const workgroupSize = maxComputeInvocationsPerWorkgroup < 256 ? 8 : 16
 
   const dampingPerSteps = () => {
     return 1.0 - Math.pow(1.0 - dampingRatio, 1 / simulationSteps)
   }
 
   const dampingConstant = () => {
-    // return Math.min(
-    //   0.005 * (springConstant * mass * simulationSteps) * frameDt,
-    //   (2 * mass * -Math.log(1 - dampingPerSteps())) / (frameDt / simulationSteps)
-    // )
-    console.log((2 * mass * -Math.log(1 - dampingPerSteps())) / (frameDt / simulationSteps))
     return (2 * mass * -Math.log(1 - dampingPerSteps())) / (frameDt / simulationSteps)
   }
 
@@ -353,6 +356,7 @@ window.addEventListener('load', async () => {
     const isFixed = positionArray[j + 1] === 1 && xPosIndex % 4 === 0
 
     vertexPositionArray[i + 3] = isFixed ? -1 : 0 // fixed point
+    prevVertexPositionArray[i + 3] = isFixed ? -1 : 0 // fixed point
 
     // explicitly set normals
     normalPositionArray[i] = 0
@@ -459,39 +463,45 @@ window.addEventListener('load', async () => {
     label: 'Compute forces',
     shaders: {
       compute: {
-        code: computeClothSim,
+        code: computeClothSim(workgroupSize),
         entryPoint: 'calc_forces',
       },
     },
     autoRender: false, // we will manually take care of rendering
     bindGroups: [computeBindGroup],
-    dispatchSize: [Math.ceil((clothDefinition.x + 1) / 14), Math.ceil((clothDefinition.y + 1) / 14)],
+    dispatchSize: [
+      Math.ceil((clothDefinition.x + 1) / (workgroupSize - 2)),
+      Math.ceil((clothDefinition.y + 1) / (workgroupSize - 2)),
+    ],
   })
 
   const computeUpdatePass = new ComputePass(gpuCurtains, {
     label: 'Compute update',
     shaders: {
       compute: {
-        code: computeClothSim,
+        code: computeClothSim(workgroupSize),
         entryPoint: 'update_verlet',
       },
     },
     autoRender: false, // we will manually take care of rendering
     bindGroups: [computeBindGroup],
-    dispatchSize: [Math.ceil(((clothDefinition.x + 1) * (clothDefinition.y + 1)) / 256)],
+    dispatchSize: [Math.ceil(((clothDefinition.x + 1) * (clothDefinition.y + 1)) / (workgroupSize * workgroupSize))],
   })
 
   const computeNormalPass = new ComputePass(gpuCurtains, {
     label: 'Compute normal',
     shaders: {
       compute: {
-        code: computeClothSim,
+        code: computeClothSim(workgroupSize),
         entryPoint: 'calc_normal',
       },
     },
     autoRender: false, // we will manually take care of rendering
     bindGroups: [computeBindGroup],
-    dispatchSize: [Math.ceil((clothDefinition.x + 1) / 14), Math.ceil((clothDefinition.y + 1) / 14)],
+    dispatchSize: [
+      Math.ceil((clothDefinition.x + 1) / (workgroupSize - 2)),
+      Math.ceil((clothDefinition.y + 1) / (workgroupSize - 2)),
+    ],
   })
 
   // add a task to our renderer onBeforeRenderScene tasks queue manager

@@ -12,6 +12,8 @@ window.addEventListener('load', async () => {
     AmbientLight,
     DirectionalLight,
     PointLight,
+    LitMesh,
+    SphereGeometry,
     OrbitControls,
     Vec3,
     Vec2,
@@ -121,9 +123,13 @@ window.addEventListener('load', async () => {
 
   console.log(directionalLight.shadow)
 
+  const pointLightColor = new Vec3(0.85, 0.25, 0)
+
   const pointLights = []
+  const pointLightHelpers = []
+
   const pointLightsSettings = {
-    color: new Vec3(0.85, 0.25, 0),
+    color: pointLightColor,
     intensity: 7.5,
     range: 10,
     shadow: {
@@ -140,10 +146,10 @@ window.addEventListener('load', async () => {
 
   // put point lights on the torches
   const pointLightsPos = [
-    new Vec3(-4.45, 1.15, -1.45),
-    new Vec3(-4.45, 1.15, 1.45),
-    new Vec3(4.45, 1.15, -1.45),
-    new Vec3(4.45, 1.15, 1.45),
+    new Vec3(-4.425, 1.15, -1.445),
+    new Vec3(-4.425, 1.15, 1.445),
+    new Vec3(4.425, 1.15, -1.445),
+    new Vec3(4.425, 1.15, 1.445),
   ]
 
   pointLightsPos.forEach((position) => {
@@ -153,14 +159,32 @@ window.addEventListener('load', async () => {
     })
 
     pointLights.push(pointLight)
+
+    const pointLightHelper = new LitMesh(gpuCameraRenderer, {
+      geometry: new SphereGeometry(),
+      transparent: true,
+      material: {
+        shading: 'Unlit',
+        color: pointLightColor,
+      },
+    })
+
+    pointLightHelper.scale.set(0.05)
+
+    pointLightHelper.parent = pointLight
+    pointLightHelpers.push(pointLightHelper)
   })
 
+  // Flickering lights
   let time = 0
   gpuCameraRenderer.onBeforeRender(() => {
     time++
     pointLights.forEach((pointLight, i) => {
       const sinusoidal = i % 2 === 0 ? Math.cos : Math.sin
-      pointLight.intensity = 6 + (sinusoidal(time * 0.05) + 1) * 0.5 + (Math.random() * 2 + 1)
+      const sinusoid = sinusoidal(time * 0.05) + 1
+      const rand = Math.random()
+      pointLight.intensity = 6 + sinusoid * 0.5 + (rand * 2 + 1)
+      pointLightHelpers[i].uniforms.material.opacity.value = 0.5 + sinusoid * 0.375 + rand * 0.125
     })
   })
 

@@ -4192,7 +4192,8 @@
         dimensions: this.options.viewDimension,
         sampleCount: this.options.sampleCount,
         mipLevelCount: this.options.useMips ? getNumMipLevels(this.size.width, this.size.height, this.size.depth ?? 1) : 1,
-        usage: getDefaultTextureUsage(this.options.usage, this.options.type)
+        usage: getDefaultTextureUsage(this.options.usage, this.options.type),
+        textureBindingViewDimension: this.options.viewDimension
       });
       this.textureBinding.resource = this.texture;
     }
@@ -4865,7 +4866,8 @@
         size: [this.size.width, this.size.height, this.size.depth ?? 1],
         dimensions: this.options.viewDimension,
         sampleCount: this.options.sampleCount,
-        usage: getDefaultMediaTextureUsage(this.options.usage)
+        usage: getDefaultMediaTextureUsage(this.options.usage),
+        textureBindingViewDimension: this.options.viewDimension
       };
       if (!this.sources?.length) {
         options.mipLevelCount = 1;
@@ -8418,7 +8420,7 @@
       if (!this.indexBuffer.buffer.GPUBuffer) {
         this.indexBuffer.buffer.createBuffer(renderer, {
           label: label + ": index buffer",
-          size: this.indexBuffer.array.byteLength,
+          size: this.indexBuffer.array?.byteLength ?? this.indexBuffer.bufferSize,
           usage: this.options.mapBuffersAtCreation ? ["index"] : ["copyDst", "index"],
           mappedAtCreation: this.options.mapBuffersAtCreation
         });
@@ -8460,7 +8462,6 @@
     destroy(renderer = null) {
       super.destroy(renderer);
       if (this.indexBuffer) {
-        this.indexBuffer.array = null;
         this.indexBuffer.arrayBuffer = null;
         this.indexBuffer.buffer.consumers.delete(this.uuid);
         this.indexBuffer.buffer.destroy();
@@ -11319,56 +11320,54 @@ fn getPCFPointShadowContribution(index: i32, shadowPosition: vec4f, fragmentPosi
   // the vector from the light to the world-space position of the fragment.
   let lightToPosition: vec3f = shadowPosition.xyz;
 
+  // For cube shadow maps, depth is stored as radial distance
+  let distanceToLight: f32 = length(lightToPosition);
+
+  if (distanceToLight < pointShadow.cameraNear || distanceToLight > pointShadow.cameraFar) {
+    return 1.0;
+  }
+
   // Direction from light to fragment
   // bd3D = base direction 3D
   let bd3D: vec3f = normalize(lightToPosition);
 
-  // For cube shadow maps, depth is stored as distance along each face's view axis, not radial distance
-  // The view-space depth is the maximum component of the direction vector (which face is sampled)
-  let absVec: vec3f = abs(lightToPosition);
-  let viewSpaceZ: f32 = max(max(absVec.x, absVec.y), absVec.z);
+  let size: vec2u = textureDimensions(depthCubeTexture);
+  let maxSize: f32 = f32(max(size.x, size.y));
+  let texelSize: f32 = 1.0 / maxSize;
 
-  if (viewSpaceZ - pointShadow.cameraFar <= 0.0 && viewSpaceZ - pointShadow.cameraNear >= 0.0) {
-    let size: vec2u = textureDimensions(depthCubeTexture);
-    let maxSize: f32 = f32(max(size.x, size.y));
-    let texelSize: f32 = 1.0 / maxSize;
+  // Hardware PCF with LinearFilter gives us 4-tap filtering per sample
+  // 5 samples using Vogel disk + IGN = effectively 20 filtered taps with better distribution
+  let radius: f32 = pointShadow.radius * texelSize;
 
-    // Hardware PCF with LinearFilter gives us 4-tap filtering per sample
-    // 5 samples using Vogel disk + IGN = effectively 20 filtered taps with better distribution
-    let radius: f32 = pointShadow.radius * texelSize;
+  // Use IGN to rotate sampling pattern per pixel
+  let phi: f32 = interleavedGradientNoise(fragmentPosition.xy) * PI2;
 
-    // Use IGN to rotate sampling pattern per pixel
-    let phi: f32 = interleavedGradientNoise(fragmentPosition.xy) * 6.28318530718; // 2*PI
+  var dp = (distanceToLight - pointShadow.cameraNear) / (pointShadow.cameraFar - pointShadow.cameraNear);
+  dp = saturate(dp - pointShadow.bias);
 
-    // Calculate perspective depth for cube shadow map
-    // Standard perspective depth formula: depth = (far * (z - near)) / (z * (far - near))
-    var dp: f32 = (pointShadow.cameraFar * (viewSpaceZ - pointShadow.cameraNear)) / (viewSpaceZ * (pointShadow.cameraFar - pointShadow.cameraNear));
-    dp -= pointShadow.bias;
+  // Build a tangent-space coordinate system for applying offsets
+  let absDir: vec3f = abs(bd3D);
+  var tangent: vec3f = select(vec3(0.0, 1.0, 0.0), vec3(1.0, 0.0, 0.0), abs(bd3D.y) > 0.999);
+  tangent = normalize(cross(bd3D, tangent));
+  let bitangent: vec3f = cross(bd3D, tangent);
 
-    // Build a tangent-space coordinate system for applying offsets
-    let absDir: vec3f = abs(bd3D);
-    var tangent: vec3f = select(vec3(1.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0), absDir.x > absDir.z);
-    tangent = normalize(cross(bd3D, tangent));
-    let bitangent: vec3f = cross(bd3D, tangent);
+  let pcfSamples: i32 = pointShadow.pcfSamples;
+  for(var i: i32 = 0; i < pcfSamples; i++) {
+    let offset: vec2f = vogelDiskSample(i, pcfSamples, phi);
+    let offsetDir: vec3f = tangent * offset.x + bitangent * offset.y;
+    let sampleDir: vec3f = normalize(bd3D + offsetDir * radius);
 
-    let pcfSamples: i32 = pointShadow.pcfSamples;
-    for(var i: i32 = 0; i < pcfSamples; i++) {
-      let offset: vec2f = vogelDiskSample(i, pcfSamples, phi);
-
-      visibility += textureSampleCompareLevel(
-          depthCubeTexture,
-          depthComparisonSampler,
-          bd3D + (tangent * offset.x + bitangent * offset.y) * radius,
-          dp
-        );
-    }
-
-    visibility /= f32(pcfSamples);
+    visibility += textureSampleCompareLevel(
+        depthCubeTexture,
+        depthComparisonSampler,
+        sampleDir,
+        dp
+      );
   }
 
-  visibility = mix(1.0, visibility, saturate(pointShadow.intensity));
-  
-  return visibility;
+  visibility /= f32(pcfSamples);
+
+  return mix(1.0, visibility, saturate(pointShadow.intensity));  
 }`
   );
 
@@ -11388,7 +11387,8 @@ fn getPCFPointShadows(worldPosition: vec3f, fragmentPosition: vec2f) -> array<f3
   ${pointLights.map((light, index) => {
       return (
         /* wgsl */
-        `lightDirection = pointLights.elements[${index}].position - worldPosition;
+        `
+      lightDirection = pointLights.elements[${index}].position - worldPosition;
       
       lightDistance = length(lightDirection);
       lightColor = pointLights.elements[${index}].color * rangeAttenuation(pointLights.elements[${index}].range, lightDistance, 2.0);
@@ -11406,7 +11406,8 @@ fn getPCFPointShadows(worldPosition: vec3f, fragmentPosition: vec2f) -> array<f3
       }
             ` : (
           /* wgsl */
-          `pointShadowContribution[${index}] = 1.0;`
+          `
+      pointShadowContribution[${index}] = 1.0;`
         )}`
       );
     }).join("\n")}
@@ -11511,46 +11512,43 @@ fn getPCFBaseShadowContribution(
   bias: f32,
   intensity: f32,
   depthTexture: texture_depth_2d
-) -> f32 {
-  var visibility = 0.0;
-  
+) -> f32 {  
   let inFrustum: bool = shadowCoords.x >= 0.0 && shadowCoords.x <= 1.0 && shadowCoords.y >= 0.0 && shadowCoords.y <= 1.0;
   let frustumTest: bool = inFrustum && shadowCoords.z <= 1.0;
-  
-  if(frustumTest) {
-    // Percentage-closer filtering. Sample texels in the region
-    // to smooth the result.
-    let size: vec2f = vec2f(textureDimensions(depthTexture).xy);
-  
-    let texelSize: vec2f = 1.0 / size;
 
-    // Hardware PCF with LinearFilter gives us 4-tap filtering per sample
-    // 5 samples using Vogel disk + IGN = effectively 20 filtered taps with better distribution
-    let radius: f32 = shadowRadius * texelSize.x;
-
-    // Use IGN to rotate sampling pattern per pixel
-    let phi: f32 = interleavedGradientNoise(fragmentPosition.xy) * 6.28318530718; // 2*PI
-
-    for(var i: i32 = 0; i < pcfSamples; i++) {
-      let offset: vec2f = vogelDiskSample(i, pcfSamples, phi) * radius;
-
-      visibility += textureSampleCompareLevel(
-          depthTexture,
-          depthComparisonSampler,
-          shadowCoords.xy + offset,
-          shadowCoords.z - bias
-        );
-    }
-
-    visibility /= f32(pcfSamples);
-    
-    visibility = mix(1.0, visibility, saturate(intensity));
+  if(!frustumTest) {
+    return 1.0;
   }
-  else {
-    visibility = 1.0;
-  }
+
+  var visibility = 0.0;
   
-  return visibility;
+  // Percentage-closer filtering. Sample texels in the region
+  // to smooth the result.
+  let size: vec2f = vec2f(textureDimensions(depthTexture).xy);
+
+  let texelSize: vec2f = 1.0 / size;
+
+  // Hardware PCF with LinearFilter gives us 4-tap filtering per sample
+  // 5 samples using Vogel disk + IGN = effectively 20 filtered taps with better distribution
+  let radius: f32 = shadowRadius * texelSize.x;
+
+  // Use IGN to rotate sampling pattern per pixel
+  let phi: f32 = interleavedGradientNoise(fragmentPosition.xy) * PI2;
+
+  for(var i: i32 = 0; i < pcfSamples; i++) {
+    let offset: vec2f = vogelDiskSample(i, pcfSamples, phi) * radius;
+
+    visibility += textureSampleCompareLevel(
+      depthTexture,
+      depthComparisonSampler,
+      shadowCoords.xy + offset,
+      shadowCoords.z - bias
+    );
+  }
+
+  visibility /= f32(pcfSamples);
+  
+  return mix(1.0, visibility, saturate(intensity));  
 }
 `
   );
@@ -12260,7 +12258,7 @@ fn getPCFBaseShadowContribution(
      * @param parameters - {@link FullscreenPlaneParams | parameters} use to create this {@link FullscreenPlane}.
      */
     constructor(renderer, parameters = {}) {
-      renderer = isRenderer(renderer, parameters.label ? parameters.label + " FullscreenQuadMesh" : "FullscreenQuadMesh");
+      renderer = isRenderer(renderer, parameters.label ? parameters.label + " FullscreenPlane" : "FullscreenPlane");
       let geometry = cacheManager.getPlaneGeometryByID(2);
       if (!geometry) {
         geometry = new PlaneGeometry({ widthSegments: 1, heightSegments: 1 });
@@ -16331,7 +16329,7 @@ ${this.shaders.compute.head}`;
       __privateSet$8(this, _mipsGeneration, {
         sampler: null,
         module: null,
-        pipelineByFormat: {}
+        pipelineByFormatAndView: {}
       });
       if (this.options.autoRender) {
         this.animate();
@@ -16397,6 +16395,15 @@ ${this.shaders.compute.head}`;
       } else {
         try {
           const { limits } = this.adapter;
+          const isCompatibilityMode = this.options.adapterOptions.featureLevel === "compatibility";
+          if (isCompatibilityMode) {
+            this.options.requestAdapterLimits.push(
+              "maxStorageBuffersInVertexStage",
+              "maxStorageTexturesInVertexStage",
+              "maxStorageBuffersInFragmentStage",
+              "maxStorageTexturesInFragmentStage"
+            );
+          }
           const requiredLimits = {};
           for (const key in limits) {
             if (this.options.requestAdapterLimits.includes(key)) {
@@ -16458,7 +16465,7 @@ ${this.shaders.compute.head}`;
       __privateSet$8(this, _mipsGeneration, {
         sampler: null,
         module: null,
-        pipelineByFormat: {}
+        pipelineByFormatAndView: {}
       });
     }
     /**
@@ -16616,13 +16623,24 @@ ${this.shaders.compute.head}`;
           code: (
             /* wgsl */
             `
+            const faceMat = array(
+              mat3x3f( 0,  0,  -2,  0, -2,   0,  1,  1,   1),   // pos-x
+              mat3x3f( 0,  0,   2,  0, -2,   0, -1,  1,  -1),   // neg-x
+              mat3x3f( 2,  0,   0,  0,  0,   2, -1,  1,  -1),   // pos-y
+              mat3x3f( 2,  0,   0,  0,  0,  -2, -1, -1,   1),   // neg-y
+              mat3x3f( 2,  0,   0,  0, -2,   0, -1,  1,   1),   // pos-z
+              mat3x3f(-2,  0,   0,  0, -2,   0,  1,  1,  -1)    // neg-z
+            );
+
             struct VSOutput {
               @builtin(position) position: vec4f,
               @location(0) texcoord: vec2f,
+              @location(1) @interpolate(flat, either) baseArrayLayer: u32,
             };
 
             @vertex fn vs(
-              @builtin(vertex_index) vertexIndex : u32
+              @builtin(vertex_index) vertexIndex : u32,
+              @builtin(instance_index) baseArrayLayer: u32,
             ) -> VSOutput {
               let pos = array(
 
@@ -16640,14 +16658,32 @@ ${this.shaders.compute.head}`;
               let xy = pos[vertexIndex];
               vsOutput.position = vec4f(xy * 2.0 - 1.0, 0.0, 1.0);
               vsOutput.texcoord = vec2f(xy.x, 1.0 - xy.y);
+              vsOutput.baseArrayLayer = baseArrayLayer;
               return vsOutput;
             }
 
             @group(0) @binding(0) var ourSampler: sampler;
-            @group(0) @binding(1) var ourTexture: texture_2d<f32>;
 
-            @fragment fn fs(fsInput: VSOutput) -> @location(0) vec4f {
-              return textureSample(ourTexture, ourSampler, fsInput.texcoord);
+            @group(0) @binding(1) var ourTexture2d: texture_2d<f32>;
+            @fragment fn fs2d(fsInput: VSOutput) -> @location(0) vec4f {
+              return textureSample(ourTexture2d, ourSampler, fsInput.texcoord);
+            }
+
+            @group(0) @binding(1) var ourTexture2dArray: texture_2d_array<f32>;
+            @fragment fn fs2darray(fsInput: VSOutput) -> @location(0) vec4f {
+              return textureSample(
+                ourTexture2dArray,
+                ourSampler,
+                fsInput.texcoord,
+                fsInput.baseArrayLayer);
+            }
+            
+            @group(0) @binding(1) var ourTextureCube: texture_cube<f32>;
+            @fragment fn fscube(fsInput: VSOutput) -> @location(0) vec4f {
+              return textureSample(
+                ourTextureCube,
+                ourSampler,
+                faceMat[fsInput.baseArrayLayer] * vec3f(fract(fsInput.texcoord), 1));
             }
           `
           )
@@ -16657,29 +16693,27 @@ ${this.shaders.compute.head}`;
           magFilter: "linear"
         });
       }
-      if (!__privateGet$8(this, _mipsGeneration).pipelineByFormat[texture.texture.format]) {
-        __privateGet$8(this, _mipsGeneration).pipelineByFormat[texture.texture.format] = this.device.createRenderPipeline({
-          label: "Mip level generator pipeline",
+      const textureBindingViewDimension = texture.texture.textureBindingViewDimension ?? "2d-array";
+      if (!__privateGet$8(this, _mipsGeneration).pipelineByFormatAndView[texture.texture.format + textureBindingViewDimension]) {
+        const entryPoint = `fs${textureBindingViewDimension.replace(/[\W]/, "")}`;
+        __privateGet$8(this, _mipsGeneration).pipelineByFormatAndView[texture.texture.format + textureBindingViewDimension] = this.device.createRenderPipeline({
+          label: `Mip level generator pipeline for ${textureBindingViewDimension}, format: ${texture.texture.format}`,
           layout: "auto",
           vertex: {
             module: __privateGet$8(this, _mipsGeneration).module
           },
           fragment: {
             module: __privateGet$8(this, _mipsGeneration).module,
+            entryPoint,
             targets: [{ format: texture.texture.format }]
           }
         });
       }
-      const pipeline = __privateGet$8(this, _mipsGeneration).pipelineByFormat[texture.texture.format];
+      const pipeline = __privateGet$8(this, _mipsGeneration).pipelineByFormatAndView[texture.texture.format + textureBindingViewDimension];
       const encoder = commandEncoder || this.device.createCommandEncoder({
         label: "Mip gen encoder"
       });
-      let width = texture.texture.width;
-      let height = texture.texture.height;
-      let baseMipLevel = 0;
-      while (width > 1 || height > 1) {
-        width = Math.max(1, width / 2 | 0);
-        height = Math.max(1, height / 2 | 0);
+      for (let baseMipLevel = 1; baseMipLevel < texture.texture.mipLevelCount; ++baseMipLevel) {
         for (let layer = 0; layer < texture.texture.depthOrArrayLayers; ++layer) {
           const bindGroup = this.device.createBindGroup({
             layout: pipeline.getBindGroupLayout(0),
@@ -16688,11 +16722,9 @@ ${this.shaders.compute.head}`;
               {
                 binding: 1,
                 resource: texture.texture.createView({
-                  dimension: "2d",
-                  baseMipLevel,
-                  mipLevelCount: 1,
-                  baseArrayLayer: layer,
-                  arrayLayerCount: 1
+                  dimension: textureBindingViewDimension,
+                  baseMipLevel: baseMipLevel - 1,
+                  mipLevelCount: 1
                 })
               }
             ]
@@ -16703,7 +16735,7 @@ ${this.shaders.compute.head}`;
               {
                 view: texture.texture.createView({
                   dimension: "2d",
-                  baseMipLevel: baseMipLevel + 1,
+                  baseMipLevel,
                   mipLevelCount: 1,
                   baseArrayLayer: layer,
                   arrayLayerCount: 1
@@ -16716,10 +16748,9 @@ ${this.shaders.compute.head}`;
           const pass = encoder.beginRenderPass(renderPassDescriptor);
           pass.setPipeline(pipeline);
           pass.setBindGroup(0, bindGroup);
-          pass.draw(6);
+          pass.draw(6, 1, 0, layer);
           pass.end();
         }
-        ++baseMipLevel;
       }
       if (!commandEncoder) {
         const commandBuffer = encoder.finish();
@@ -17822,7 +17853,8 @@ ${this.shaders.compute.head}`;
             maxDirectionalLights: 5,
             maxPointLights: 5,
             maxSpotLights: 5,
-            useUniformsForShadows: false
+            // On compatibility mode, some devices might not allow storage buffers in vertex shaders
+            useUniformsForShadows: this.device?.limits.maxStorageBuffersInVertexStage === 0
           },
           ...lights
         };
@@ -18308,7 +18340,7 @@ ${this.shaders.compute.head}`;
       this.bindings[shadowsType] = new BufferBinding({
         label,
         name: shadowsType,
-        bindingType: this.options.lights && this.options.lights.useUniformsForShadows ? "uniform" : "storage",
+        bindingType: this.options.lights && (this.options.lights.useUniformsForShadows || this.device?.limits.maxStorageBuffersInVertexStage === 0) ? "uniform" : "storage",
         visibility: ["vertex", "fragment", "compute"],
         // TODO needed in compute?
         childrenBindings: [
@@ -18498,7 +18530,7 @@ ${this.shaders.compute.head}`;
         maxDirectionalLights: 5,
         maxPointLights: 5,
         maxSpotLights: 5,
-        useUniformsForShadows: false
+        useUniformsForShadows: this.device?.limits.maxStorageBuffersInVertexStage === 0 || false
       };
     }
     this.setLightsBinding();
@@ -18667,6 +18699,7 @@ struct VSOutput {
     /* wgsl */
     `
 const PI = ${Math.PI};
+const PI2 = ${Math.PI * 2};
 const RECIPROCAL_PI = ${1 / Math.PI};
 const RECIPROCAL_PI2 = ${0.5 / Math.PI};
 const EPSILON = 1e-6;`
@@ -20303,14 +20336,14 @@ fn getPBR(
       return (
         /* wgsl */
         `
-  @location(${index}) ${attribute.type.includes("i") || attribute.type.includes("u") ? "@interpolate(flat) " : " "}${attribute.name}: ${attribute.type},`
+  @location(${index}) ${attribute.type.includes("i") || attribute.type.includes("u") ? "@interpolate(flat, either) " : " "}${attribute.name}: ${attribute.type},`
       );
     }).join("");
     const additionalVaryingsOutput = additionalVaryings.map((attribute, index) => {
       return (
         /* wgsl */
         `
-  @location(${attributes.length + 4 + index}) ${attribute.type === "u32" || attribute.type === "i32" ? "@interpolate(flat) " : " "}${attribute.name}: ${attribute.type},`
+  @location(${attributes.length + 4 + index}) ${attribute.type === "u32" || attribute.type === "i32" ? "@interpolate(flat, either) " : " "}${attribute.name}: ${attribute.type},`
       );
     }).join("");
     return (
@@ -23376,6 +23409,8 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
       context = {},
       production = false,
       adapterOptions = {},
+      requiredFeatures = [],
+      requestAdapterLimits = [],
       renderPass,
       camera,
       lights,
@@ -23405,6 +23440,8 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
         lights,
         production,
         adapterOptions,
+        requiredFeatures,
+        requestAdapterLimits,
         context,
         renderPass,
         autoRender,
@@ -23502,6 +23539,8 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
         label: "GPUCurtains default device",
         production: this.options.production,
         adapterOptions: this.options.adapterOptions,
+        requiredFeatures: this.options.requiredFeatures,
+        requestAdapterLimits: this.options.requestAdapterLimits,
         autoRender: this.options.autoRender,
         onError: () => setTimeout(() => {
           this._onErrorCallback && this._onErrorCallback();
@@ -26562,6 +26601,8 @@ struct Params {
       parameters.outputTarget = new RenderTarget(renderer, {
         label: parameters.label ? parameters.label + " render target" : "Ping Pong render target",
         useDepth: false,
+        sampleCount: 1,
+        // Force sample count to 1, no need use multisampled here
         ...colorAttachments && { colorAttachments }
       });
       parameters.transparent = false;

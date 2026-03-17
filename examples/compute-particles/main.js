@@ -21,7 +21,7 @@ const computeParticles = /* wgsl */ `
   fn rand11(n: f32) -> f32 { return fract(sin(n) * 43758.5453123); }
   
   // set initial positions and data
-  @compute @workgroup_size(256) fn setInitData(
+  @compute @workgroup_size(128) fn setInitData(
     @builtin(global_invocation_id) GlobalInvocationID: vec3<u32>
   ) {
     let index = GlobalInvocationID.x;
@@ -176,7 +176,7 @@ const computeParticles = /* wgsl */ `
   }
   
   // update particle positions
-  @compute @workgroup_size(256) fn updatePos(
+  @compute @workgroup_size(128) fn updatePos(
     @builtin(global_invocation_id) GlobalInvocationID: vec3<u32>
   ) {
     let index = GlobalInvocationID.x;
@@ -215,6 +215,9 @@ window.addEventListener('load', async () => {
   // first, we need a WebGPU device, that's what GPUDeviceManager is for
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
+    adapterOptions: {
+      featureLevel: 'compatibility',
+    },
     onError: () => {
       document.body.classList.add('no-curtains')
     },
@@ -301,7 +304,7 @@ window.addEventListener('load', async () => {
         entryPoint: 'setInitData',
       },
     },
-    dispatchSize: Math.ceil(nbParticles / 256), //we divide the vertex count by the workgroup_size
+    dispatchSize: Math.ceil(nbParticles / 128), //we divide the vertex count by the workgroup_size
     bindGroups: [particlesBindGroup],
     autoRender: false, // we don't want to run this pass each frame
   })
@@ -321,7 +324,7 @@ window.addEventListener('load', async () => {
         entryPoint: 'updatePos',
       },
     },
-    dispatchSize: Math.ceil(nbParticles / 256),
+    dispatchSize: Math.ceil(nbParticles / 128),
     bindGroups: [particlesBindGroup],
   })
 

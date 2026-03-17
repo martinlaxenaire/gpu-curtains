@@ -10,6 +10,9 @@ window.addEventListener('load', async () => {
     renderPass: {
       depth: false, // we don't need depth here
     },
+    adapterOptions: {
+      featureLevel: 'compatibility',
+    },
   }).onError(() => {
     document.body.classList.add('no-curtains')
   })

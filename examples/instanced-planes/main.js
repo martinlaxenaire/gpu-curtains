@@ -17,7 +17,10 @@ window.addEventListener('DOMContentLoaded', async () => {
   // a WebGPU device and a renderer with its scene, requestAnimationFrame, resize and scroll events...
   const gpuCurtains = new GPUCurtains({
     container: '#canvas',
-    pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance,
+    pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
+    adapterOptions: {
+      featureLevel: 'compatibility',
+    },
   })
 
   gpuCurtains.onError(() => {
@@ -143,7 +146,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       bottom: 200,
       left: 0,
     },
-    transparent: true,
+    // transparent: true,
     uniforms: {
       scroll: {
         label: 'Scroll',
@@ -179,6 +182,21 @@ window.addEventListener('DOMContentLoaded', async () => {
     texturesOptions: {
       generateMips: true,
     },
+    targets: [
+      // Custom transparency blending
+      {
+        blend: {
+          color: {
+            srcFactor: 'src-alpha',
+            dstFactor: 'one-minus-src-alpha',
+          },
+          alpha: {
+            srcFactor: 'one',
+            dstFactor: 'one-minus-src-alpha',
+          },
+        },
+      },
+    ],
   }
 
   // add our planes and handle them
