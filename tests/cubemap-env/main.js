@@ -19,6 +19,9 @@ window.addEventListener('load', async () => {
   // create a device manager
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
+    adapterOptions: {
+      featureLevel: 'compatibility',
+    },
     requiredFeatures: ['float32-filterable'], // test
   })
 
@@ -35,6 +38,11 @@ window.addEventListener('load', async () => {
     context: {
       format: 'rgba16float', // allow HDR output
       toneMapping: { mode: 'extended' },
+    },
+    renderPass: {
+      // No need for multisample in this example
+      // Plus in compatibility mode, rendering to multisampled 'rgba16float' is not allowed
+      sampleCount: 1,
     },
   })
 

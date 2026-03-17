@@ -47,6 +47,9 @@ export class CurtainsClothSim {
     this.raycaster = new Raycaster(this.gpuCurtains)
 
     this.simulationSteps = 25
+    const { maxComputeInvocationsPerWorkgroup } = this.gpuCurtains.deviceManager.device.limits
+    // Beware of actual compatibility mode limits
+    this.workgroupSize = maxComputeInvocationsPerWorkgroup < 256 ? 8 : 16
 
     this.clothDefinition = new Vec2(40)
 
@@ -58,6 +61,7 @@ export class CurtainsClothSim {
     this.positionArray = this.clothGeometry.getAttributeByName('position').array.slice()
 
     this.vertexPositionArray = new Float32Array((this.positionArray.length * 4) / 3)
+    this.prevVertexPositionArray = new Float32Array((this.positionArray.length * 4) / 3)
 
     this.normalPositionArray = new Float32Array(this.vertexPositionArray.length)
     this.vertexVelocityArray = new Float32Array(this.vertexPositionArray.length)
@@ -69,16 +73,25 @@ export class CurtainsClothSim {
       this.vertexPositionArray[i + 1] = this.positionArray[j + 1]
       this.vertexPositionArray[i + 2] = this.positionArray[j + 2]
 
+      this.prevVertexPositionArray[i] = this.positionArray[j]
+      this.prevVertexPositionArray[i + 1] = this.positionArray[j + 1]
+      this.prevVertexPositionArray[i + 2] = this.positionArray[j + 2]
+
       const xPosIndex = Math.round((this.positionArray[j] + 1) * 0.5 * this.clothDefinition.x)
       const isFixed = this.positionArray[j + 1] === 1 && xPosIndex % 4 === 0
 
       this.vertexPositionArray[i + 3] = isFixed ? -1 : 0 // fixed point
+      this.prevVertexPositionArray[i + 3] = isFixed ? -1 : 0 // fixed point
 
       // explicitly set normals
       this.normalPositionArray[i] = 0
       this.normalPositionArray[i + 1] = 0
       this.normalPositionArray[i + 2] = 1
     }
+
+    const mass = 0.4
+    const springConstant = 90_000
+    const dampingConstant = 50
 
     this.computeBindGroup = new BindGroup(this.gpuCurtains.renderer, {
       label: 'Cloth simulation compute bind group',
@@ -99,15 +112,15 @@ export class CurtainsClothSim {
             },
             mass: {
               type: 'f32',
-              value: 1,
+              value: mass,
             },
             springConstant: {
               type: 'f32',
-              value: 130_000,
+              value: springConstant,
             },
             dampingConstant: {
               type: 'f32',
-              value: 100,
+              value: dampingConstant,
             },
             floor: {
               type: 'f32',
@@ -153,6 +166,10 @@ export class CurtainsClothSim {
               type: 'array<vec4f>',
               value: this.vertexPositionArray,
             },
+            prevPosition: {
+              type: 'array<vec4f>',
+              value: this.prevVertexPositionArray,
+            },
             normal: {
               type: 'array<vec4f>',
               value: this.normalPositionArray,
@@ -175,39 +192,49 @@ export class CurtainsClothSim {
       label: 'Compute forces',
       shaders: {
         compute: {
-          code: computeClothSim,
+          code: computeClothSim(this.workgroupSize),
           entryPoint: 'calc_forces',
         },
       },
       autoRender: false, // we will manually take care of rendering
       bindGroups: [this.computeBindGroup],
-      dispatchSize: [Math.ceil((this.clothDefinition.x + 1) / 14), Math.ceil((this.clothDefinition.y + 1) / 14)],
+      dispatchSize: [
+        Math.ceil((this.clothDefinition.x + 1) / (this.workgroupSize - 2)),
+        Math.ceil((this.clothDefinition.y + 1) / (this.workgroupSize - 2)),
+      ],
     })
 
     this.computeUpdatePass = new ComputePass(this.gpuCurtains, {
       label: 'Compute update',
       shaders: {
         compute: {
-          code: computeClothSim,
-          entryPoint: 'update',
+          code: computeClothSim(this.workgroupSize),
+          entryPoint: 'update_verlet',
         },
       },
       autoRender: false, // we will manually take care of rendering
       bindGroups: [this.computeBindGroup],
-      dispatchSize: [Math.ceil(((this.clothDefinition.x + 1) * (this.clothDefinition.y + 1)) / 256)],
+      dispatchSize: [
+        Math.ceil(
+          ((this.clothDefinition.x + 1) * (this.clothDefinition.y + 1)) / (this.workgroupSize * this.workgroupSize)
+        ),
+      ],
     })
 
     this.computeNormalPass = new ComputePass(this.gpuCurtains, {
       label: 'Compute normal',
       shaders: {
         compute: {
-          code: computeClothSim,
+          code: computeClothSim(this.workgroupSize),
           entryPoint: 'calc_normal',
         },
       },
       autoRender: false, // we will manually take care of rendering
       bindGroups: [this.computeBindGroup],
-      dispatchSize: [Math.ceil((this.clothDefinition.x + 1) / 14), Math.ceil((this.clothDefinition.y + 1) / 14)],
+      dispatchSize: [
+        Math.ceil((this.clothDefinition.x + 1) / (this.workgroupSize - 2)),
+        Math.ceil((this.clothDefinition.y + 1) / (this.workgroupSize - 2)),
+      ],
     })
 
     // add a task to our renderer onBeforeRenderScene tasks queue manager
@@ -246,6 +273,12 @@ export class CurtainsClothSim {
       attributes: [
         {
           name: 'clothPosition',
+          type: 'vec4f',
+          bufferFormat: 'float32x4',
+          size: 4,
+        },
+        {
+          name: 'clothPrevPosition',
           type: 'vec4f',
           bufferFormat: 'float32x4',
           size: 4,

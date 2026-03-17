@@ -38,7 +38,10 @@ window.addEventListener('load', async () => {
   // a WebGPU device and a renderer with its scene, requestAnimationFrame, resize and scroll events...
   const gpuCurtains = new GPUCurtains({
     container: '#canvas-front',
-    pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance,
+    pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
+    adapterOptions: {
+      featureLevel: 'compatibility',
+    },
   })
 
   gpuCurtains.onError(() => {

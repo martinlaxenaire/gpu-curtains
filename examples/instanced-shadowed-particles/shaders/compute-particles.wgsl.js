@@ -14,7 +14,7 @@ export const computeParticles = /* wgsl */ `
   const PI: f32 = 3.14159265359;
   
   // set initial positions and data
-  @compute @workgroup_size(256) fn setInitData(
+  @compute @workgroup_size(128) fn setInitData(
     @builtin(global_invocation_id) GlobalInvocationID: vec3<u32>
   ) {
     let index = GlobalInvocationID.x;
@@ -63,7 +63,7 @@ export const computeParticles = /* wgsl */ `
     }
   }
   
-  @compute @workgroup_size(256) fn updateData(
+  @compute @workgroup_size(128) fn updateData(
     @builtin(global_invocation_id) GlobalInvocationID: vec3<u32>
   ) {
     let index = GlobalInvocationID.x;

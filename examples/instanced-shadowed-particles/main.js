@@ -189,7 +189,7 @@ window.addEventListener('load', async () => {
         entryPoint: 'setInitData',
       },
     },
-    dispatchSize: Math.ceil(nbInstances / 256),
+    dispatchSize: Math.ceil(nbInstances / 128),
     bindGroups: [computeBindGroup],
     autoRender: false, // we don't want to run this pass each frame
   })
@@ -208,7 +208,7 @@ window.addEventListener('load', async () => {
         entryPoint: 'updateData',
       },
     },
-    dispatchSize: Math.ceil(nbInstances / 256),
+    dispatchSize: Math.ceil(nbInstances / 128),
     bindGroups: [computeBindGroup],
   })
 

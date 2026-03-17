@@ -11,6 +11,9 @@ window.addEventListener('load', async () => {
       sampleCount: 1, // no need for MSAA here!
       useDepth: false,
     },
+    adapterOptions: {
+      featureLevel: 'compatibility',
+    },
   })
 
   gpuCurtains.onError(() => {

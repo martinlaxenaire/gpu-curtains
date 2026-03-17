@@ -16,6 +16,10 @@ window.addEventListener('load', async () => {
     camera: {
       fov: 35,
     },
+    adapterOptions: {
+      featureLevel: 'compatibility',
+    },
+    requestAdapterLimits: ['maxComputeInvocationsPerWorkgroup', 'maxComputeWorkgroupSizeX'],
   })
 
   gpuCurtains.onError(() => {

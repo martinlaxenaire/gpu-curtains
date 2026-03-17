@@ -44,6 +44,7 @@ window.addEventListener('load', async () => {
   const centerHoleSize = baseRadius - halfGalaxySize
 
   // first, we need a WebGPU device, that's what GPUDeviceManager is for
+  // this example does not support compatibility mode
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
   })

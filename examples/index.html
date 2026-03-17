@@ -26,6 +26,10 @@
     />
 
     <style>
+      #canvas {
+        z-index: -2;
+      }
+
       #examples h2 {
         margin-top: 2rem;
       }
@@ -283,6 +287,10 @@
           container: '#canvas',
           watchScroll: false,
           pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
+          adapterOptions: {
+            featureLevel: 'compatibility',
+          },
+          lights: false, // We don't need lights
         })
 
         await gpuCurtains.setDevice()

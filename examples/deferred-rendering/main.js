@@ -19,6 +19,7 @@ import {
 // inspired by https://webgpu.github.io/webgpu-samples/samples/deferredRendering
 window.addEventListener('load', async () => {
   // first, we need a WebGPU device, that's what GPUDeviceManager is for
+  // This example does not support compatibility mode out of the box yet
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
   })

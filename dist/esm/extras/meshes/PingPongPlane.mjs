@@ -18,6 +18,8 @@ class PingPongPlane extends FullscreenPlane {
     parameters.outputTarget = new RenderTarget(renderer, {
       label: parameters.label ? parameters.label + " render target" : "Ping Pong render target",
       useDepth: false,
+      sampleCount: 1,
+      // Force sample count to 1, no need use multisampled here
       ...colorAttachments && { colorAttachments }
     });
     parameters.transparent = false;

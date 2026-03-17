@@ -270,6 +270,7 @@ export class Texture {
         ? getNumMipLevels(this.size.width, this.size.height, this.size.depth ?? 1)
         : 1,
       usage: getDefaultTextureUsage(this.options.usage, this.options.type),
+      textureBindingViewDimension: this.options.viewDimension,
     } as GPUTextureDescriptor)
 
     // update texture binding

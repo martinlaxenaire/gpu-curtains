@@ -9,6 +9,9 @@ window.addEventListener('load', async () => {
     container: '#canvas-back',
     watchScroll: false, // no need to listen for the scroll in this example
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
+    adapterOptions: {
+      featureLevel: 'compatibility',
+    },
   })
 
   await gpuCurtains.setDevice()

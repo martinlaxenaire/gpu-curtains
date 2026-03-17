@@ -394,6 +394,7 @@ export class MediaTexture extends Texture {
       dimensions: this.options.viewDimension,
       sampleCount: this.options.sampleCount,
       usage: getDefaultMediaTextureUsage(this.options.usage),
+      textureBindingViewDimension: this.options.viewDimension,
     } as GPUTextureDescriptor
 
     if (!this.sources?.length) {

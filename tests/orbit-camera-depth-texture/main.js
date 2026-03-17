@@ -21,6 +21,9 @@ window.addEventListener('load', async () => {
   // first, we need a WebGPU device, that's what GPUDeviceManager is for
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
+    adapterOptions: {
+      featureLevel: 'compatibility',
+    },
   })
 
   // we need to wait for the device to be created
@@ -87,7 +90,7 @@ window.addEventListener('load', async () => {
         depthTexture,
         vec2<i32>(floor(fsInput.position.xy)),
         0
-      );
+      ).x;
       
       // remap depth into something a bit more visible
       let depth = (1.0 - rawDepth) * 10.0 * params.systemSize;
@@ -117,7 +120,7 @@ window.addEventListener('load', async () => {
   const depthTexture = postProPass.createTexture({
     label: 'Depth texture',
     name: 'depthTexture',
-    type: 'depth',
+    // type: 'depth',
     fromTexture: gpuCameraRenderer.renderPass.depthTexture,
     //format: 'depth24plus',
     //sampleCount: gpuCameraRenderer.renderPass.options.sampleCount,

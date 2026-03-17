@@ -250,7 +250,8 @@ const _MediaTexture = class _MediaTexture extends Texture {
       size: [this.size.width, this.size.height, this.size.depth ?? 1],
       dimensions: this.options.viewDimension,
       sampleCount: this.options.sampleCount,
-      usage: getDefaultMediaTextureUsage(this.options.usage)
+      usage: getDefaultMediaTextureUsage(this.options.usage),
+      textureBindingViewDimension: this.options.viewDimension
     };
     if (!this.sources?.length) {
       options.mipLevelCount = 1;

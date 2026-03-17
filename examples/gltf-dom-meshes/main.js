@@ -20,6 +20,9 @@ window.addEventListener('load', async () => {
       fov: 35,
     },
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
+    adapterOptions: {
+      featureLevel: 'compatibility',
+    },
   })
 
   await gpuCurtains.setDevice()

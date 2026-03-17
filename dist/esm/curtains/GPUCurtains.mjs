@@ -17,6 +17,8 @@ class GPUCurtains {
     context = {},
     production = false,
     adapterOptions = {},
+    requiredFeatures = [],
+    requestAdapterLimits = [],
     renderPass,
     camera,
     lights,
@@ -46,6 +48,8 @@ class GPUCurtains {
       lights,
       production,
       adapterOptions,
+      requiredFeatures,
+      requestAdapterLimits,
       context,
       renderPass,
       autoRender,
@@ -143,6 +147,8 @@ class GPUCurtains {
       label: "GPUCurtains default device",
       production: this.options.production,
       adapterOptions: this.options.adapterOptions,
+      requiredFeatures: this.options.requiredFeatures,
+      requestAdapterLimits: this.options.requestAdapterLimits,
       autoRender: this.options.autoRender,
       onError: () => setTimeout(() => {
         this._onErrorCallback && this._onErrorCallback();
