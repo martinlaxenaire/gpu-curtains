@@ -48,9 +48,9 @@ export const getVertexOutputStructContent = ({
   const structAttributes = attributes
     .map((attribute, index) => {
       return /* wgsl */ `
-  @location(${index}) ${attribute.type.includes('i') || attribute.type.includes('u') ? '@interpolate(flat) ' : ' '}${
-        attribute.name
-      }: ${attribute.type},`
+  @location(${index}) ${
+        attribute.type.includes('i') || attribute.type.includes('u') ? '@interpolate(flat, either) ' : ' '
+      }${attribute.name}: ${attribute.type},`
     })
     .join('')
 
@@ -58,7 +58,7 @@ export const getVertexOutputStructContent = ({
     .map((attribute, index) => {
       return /* wgsl */ `
   @location(${attributes.length + 4 + index}) ${
-        attribute.type === 'u32' || attribute.type === 'i32' ? '@interpolate(flat) ' : ' '
+        attribute.type === 'u32' || attribute.type === 'i32' ? '@interpolate(flat, either) ' : ' '
       }${attribute.name}: ${attribute.type},`
     })
     .join('')

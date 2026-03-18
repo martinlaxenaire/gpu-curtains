@@ -157,7 +157,8 @@ class Texture {
       dimensions: this.options.viewDimension,
       sampleCount: this.options.sampleCount,
       mipLevelCount: this.options.useMips ? getNumMipLevels(this.size.width, this.size.height, this.size.depth ?? 1) : 1,
-      usage: getDefaultTextureUsage(this.options.usage, this.options.type)
+      usage: getDefaultTextureUsage(this.options.usage, this.options.type),
+      textureBindingViewDimension: this.options.viewDimension
     });
     this.textureBinding.resource = this.texture;
   }

@@ -30,6 +30,9 @@ window.addEventListener('load', async () => {
   // first, we need a WebGPU device, that's what GPUDeviceManager is for
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
+    adapterOptions: {
+      featureLevel: 'compatibility',
+    },
   })
 
   // we need to wait for the device to be created
@@ -55,7 +58,7 @@ window.addEventListener('load', async () => {
 
   const orbitControls = new OrbitControls({
     camera: gpuCameraRenderer.camera,
-    element: gpuCameraRenderer.container,
+    element: gpuCameraRenderer.domElement.element,
   })
   orbitControls.maxPolarAngle = Math.PI * 0.4875
   orbitControls.maxZoom = 20
@@ -77,7 +80,7 @@ window.addEventListener('load', async () => {
     shadow: {
       //intensity: 1,
       bias: 0.0005,
-      normalBias: 0.05,
+      normalBias: 0.03,
       depthTextureSize: new Vec2(256, 256),
       pcfSamples: 3,
     },
@@ -92,7 +95,7 @@ window.addEventListener('load', async () => {
     shadow: {
       //intensity: 1,
       bias: 0.0005,
-      normalBias: 0.05,
+      normalBias: 0.03,
       pcfSamples: 2,
       useRenderBundle: false,
       //depthTextureSize: new Vec2(512, 512),
@@ -106,7 +109,7 @@ window.addEventListener('load', async () => {
     shadow: {
       //intensity: 1,
       bias: 0.0005,
-      normalBias: 0.05,
+      normalBias: 0.03,
       depthTextureSize: new Vec2(1024, 1024),
     },
   })
@@ -118,7 +121,7 @@ window.addEventListener('load', async () => {
     shadow: {
       //intensity: 1,
       bias: 0.0005,
-      normalBias: 0.05,
+      normalBias: 0.03,
       pcfSamples: 3,
       //depthTextureSize: new Vec2(512, 512),
     },
@@ -135,7 +138,7 @@ window.addEventListener('load', async () => {
 
   pointLight.shadow.cast({
     bias: 0.0005,
-    normalBias: 0.05,
+    normalBias: 0.0005,
     //intensity: 1,
     //depthTextureSize: new Vec2(512, 512),
     // camera: {
@@ -169,13 +172,13 @@ window.addEventListener('load', async () => {
 
   // RENDER
 
-  let rotatePivot = true
+  let rotationSpeed = 1
 
   gpuDeviceManager
     .onBeforeRender(() => {
       stats.begin()
 
-      if (rotatePivot) scenePivot.rotation.y += 0.015
+      scenePivot.rotation.y += 0.015 * rotationSpeed
     })
     .onAfterRender(() => {
       stats.end()
@@ -326,10 +329,10 @@ window.addEventListener('load', async () => {
   })
 
   gui
-    .add({ rotatePivot }, 'rotatePivot')
-    .name('Rotate scene')
+    .add({ rotationSpeed }, 'rotationSpeed', 0, 1, 0.01)
+    .name('Scene rotation speed')
     .onChange((value) => {
-      rotatePivot = value
+      rotationSpeed = value
     })
 
   const shadowCastingMeshesFolder = gui.addFolder('Shadow casting meshes')
@@ -375,8 +378,9 @@ window.addEventListener('load', async () => {
       const directionalShadow = directionalLightFolder.addFolder('Shadow')
       directionalShadow.add(directionalLight.shadow, 'intensity', 0, 10, 0.01)
       directionalShadow.add(directionalLight.shadow, 'bias', 0, 0.01, 0.0001)
-      directionalShadow.add(directionalLight.shadow, 'normalBias', 0, 0.01, 0.0001)
+      directionalShadow.add(directionalLight.shadow, 'normalBias', 0, 0.1, 0.001)
       directionalShadow.add(directionalLight.shadow, 'pcfSamples', 1, 5, 1)
+      directionalShadow.add(directionalLight.shadow, 'radius', 1, 5, 0.1)
       directionalShadow.add(directionalLight.shadow.depthTextureSize, 'x', 128, 1024, 64).name('Texture width')
       directionalShadow.add(directionalLight.shadow.depthTextureSize, 'y', 128, 1024, 64).name('Texture height')
     }
@@ -405,8 +409,9 @@ window.addEventListener('load', async () => {
       const pointShadow = pointLightFolder.addFolder('Shadow')
       pointShadow.add(pointLight.shadow, 'intensity', 0, 10, 0.01)
       pointShadow.add(pointLight.shadow, 'bias', 0, 0.01, 0.0001)
-      pointShadow.add(pointLight.shadow, 'normalBias', 0, 0.01, 0.0001)
+      pointShadow.add(pointLight.shadow, 'normalBias', 0, 0.1, 0.001)
       pointShadow.add(pointLight.shadow, 'pcfSamples', 1, 5, 1)
+      pointShadow.add(pointLight.shadow, 'radius', 1, 5, 0.1)
       pointShadow.add(pointLight.shadow.depthTextureSize, 'x', 128, 1024, 64).name('Texture width')
       pointShadow.add(pointLight.shadow.depthTextureSize, 'y', 128, 1024, 64).name('Texture height')
     }

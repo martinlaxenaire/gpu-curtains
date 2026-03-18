@@ -37,6 +37,10 @@ export const shadowStruct: Record<string, Input> = {
     type: 'f32',
     value: 0,
   },
+  radius: {
+    type: 'f32',
+    value: 1,
+  },
   intensity: {
     type: 'f32',
     value: 0,
@@ -53,8 +57,10 @@ export interface ShadowBaseParams {
   bias?: number
   /** Shadow map normal bias. Default to `0`. */
   normalBias?: number
-  /** Number of samples to use for Percentage Closer Filtering calculations in the shader. Increase for smoother shadows, at the cost of performance. Default to `1`. */
+  /** Number of samples to use for Percentage Closer Filtering Vogel disk calculations in the shader. Increase for smoother shadows, at the cost of performance. Default to `3`. */
   pcfSamples?: number
+  /** Setting this to values greater than `1` will blur the edges of the shadow. High values will cause unwanted banding effects in the shadows - a greater map size will allow for a higher value to be used here before these effects become visible. Default to `1`. */
+  radius?: number
   /** Size of the depth {@link Texture} to use. Default to `Vec2(512)`. */
   depthTextureSize?: Vec2
   /** Format of the  depth {@link Texture} to use. Default to `depth24plus`. */
@@ -97,6 +103,8 @@ export class Shadow {
   #normalBias: number
   /** @ignore */
   #pcfSamples: number
+  /** @ignore */
+  #radius: number
   /** Size of the depth {@link Texture} to use. Default to `Vec2(512)`. */
   depthTextureSize: Vec2
   /** Format of the  depth {@link Texture} to use. Default to `depth24plus`. */
@@ -139,7 +147,8 @@ export class Shadow {
       intensity = 1,
       bias = 0,
       normalBias = 0,
-      pcfSamples = 1,
+      pcfSamples = 3,
+      radius = 1,
       depthTextureSize = new Vec2(512),
       depthTextureFormat = 'depth24plus' as GPUTextureFormat,
       autoRender = true,
@@ -158,6 +167,7 @@ export class Shadow {
       bias,
       normalBias,
       pcfSamples,
+      radius,
       depthTextureSize,
       depthTextureFormat,
       useRenderBundle,
@@ -179,6 +189,7 @@ export class Shadow {
       bias,
       normalBias,
       pcfSamples,
+      radius,
       depthTextureSize,
       depthTextureFormat,
       autoRender,
@@ -257,7 +268,8 @@ export class Shadow {
       intensity = 1,
       bias = 0,
       normalBias = 0,
-      pcfSamples = 1,
+      pcfSamples = 3,
+      radius = 1,
       depthTextureSize = new Vec2(512),
       depthTextureFormat = 'depth24plus',
       autoRender = true,
@@ -268,6 +280,7 @@ export class Shadow {
     this.bias = bias
     this.normalBias = normalBias
     this.pcfSamples = pcfSamples
+    this.radius = radius
     this.depthTextureSize = depthTextureSize
     this.depthTextureFormat = depthTextureFormat as GPUTextureFormat
     this.#autoRender = autoRender
@@ -286,6 +299,7 @@ export class Shadow {
       bias,
       normalBias,
       pcfSamples,
+      radius,
       depthTextureSize,
       depthTextureFormat,
       autoRender,
@@ -297,6 +311,7 @@ export class Shadow {
       bias,
       normalBias,
       pcfSamples,
+      radius,
       depthTextureSize,
       depthTextureFormat,
       autoRender,
@@ -315,6 +330,7 @@ export class Shadow {
       this.onPropertyChanged('bias', this.bias)
       this.onPropertyChanged('normalBias', this.normalBias)
       this.onPropertyChanged('pcfSamples', this.pcfSamples)
+      this.onPropertyChanged('radius', this.radius)
     }
   }
 
@@ -432,20 +448,37 @@ export class Shadow {
   }
 
   /**
-   * Get this {@link Shadow} PCF samples count.
-   * @returns - The {@link Shadow} PCF samples count.
+   * Get this {@link Shadow} PCF Vogel disk samples count.
+   * @returns - The {@link Shadow} PCF Vogel disk samples count.
    */
   get pcfSamples(): number {
     return this.#pcfSamples
   }
 
   /**
-   * Set this {@link Shadow} PCF samples count and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
-   * @param value - The new {@link Shadow} PCF samples count.
+   * Set this {@link Shadow} PCF Vogel disk samples count and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
+   * @param value - The new {@link Shadow} PCF Vogel disk samples count.
    */
   set pcfSamples(value: number) {
     this.#pcfSamples = Math.max(1, Math.ceil(value))
     this.onPropertyChanged('pcfSamples', this.pcfSamples)
+  }
+
+  /**
+   * Get this {@link Shadow} radius.
+   * @returns - The {@link Shadow} radius.
+   */
+  get radius(): number {
+    return this.#radius
+  }
+
+  /**
+   * Set this {@link Shadow} radius and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
+   * @param value - The new {@link Shadow} radius.
+   */
+  set radius(value: number) {
+    this.#radius = Math.max(1, value)
+    this.onPropertyChanged('radius', this.radius)
   }
 
   /**

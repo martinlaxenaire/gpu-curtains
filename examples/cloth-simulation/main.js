@@ -12,320 +12,278 @@ import {
 // Port of https://github.com/Yuu6883/WebGPUDemo
 
 // cloth sim compute
-const computeClothSim = /* wgsl */ ` 
-  // Get / set the position / velocity / force vectors at the given index
-  fn getPosition(index: i32) -> vec4f {
-    return clothVertex[index].position;
+const computeClothSim = (workgroupSize = 16) => /* wgsl */ ` 
+/* =========================
+   CONSTANTS & HELPERS
+   ========================= */
+
+const TILE_SIZE  = ${workgroupSize}u;
+const INNER_TILE = ${workgroupSize - 2}u;
+const SQRT2      = 1.41421356237;
+const EPSIL      = 1e-6;
+
+const AIR_DENSITY = 1.225;
+const DRAG_COEFFI = 1.0;
+
+/* =========================
+   DATA ACCESS
+   ========================= */
+
+fn getPosition(i: i32) -> vec4f { return clothVertex[i].position; }
+fn setPosition(i: i32, v: vec4f) { clothVertex[i].position = v; }
+
+fn getPrevPosition(i: i32) -> vec4f { return clothVertex[i].prevPosition; }
+fn setPrevPosition(i: i32, v: vec4f) { clothVertex[i].prevPosition = v; }
+
+fn getVelocity(i: i32) -> vec4f { return clothVertex[i].velocity; }
+fn setVelocity(i: i32, v: vec4f) { clothVertex[i].velocity = v; }
+
+fn getForce(i: i32) -> vec4f { return clothVertex[i].force; }
+fn setForce(i: i32, v: vec4f) { clothVertex[i].force = v; }
+
+fn getNormal(i: i32) -> vec4f { return clothVertex[i].normal; }
+fn setNormal(i: i32, v: vec4f) { clothVertex[i].normal = v; }
+
+/* =========================
+   SHARED TYPES
+   ========================= */
+
+struct ClothPointShared {
+  position : vec4f,
+  velocity : vec4f
+};
+
+var<workgroup> tile : array<array<ClothPointShared, 16>, 16>;
+
+var<private> p1    : vec3f;
+var<private> v1    : vec3f;
+var<private> force : vec3f;
+
+/* =========================
+   SPRING + DAMPER
+   ========================= */
+
+fn spring_damper(p: ClothPointShared, restLen: f32) {
+  if (p.velocity.w < 0.0) { return; }
+
+  let delta = p.position.xyz - p1;
+  let len   = length(delta);
+  if (len < EPSIL) { return; }
+
+  let dir = delta / len;
+
+  let fs = params.springConstant * (len - restLen);
+  let dv = dot(v1 - p.velocity.xyz, dir);
+  let fd = params.dampingConstant * dv;
+
+  force += (fs - fd) * dir;
+}
+
+/* =========================
+   AERODYNAMICS
+   ========================= */
+
+fn aerodynamic(p2: ClothPointShared, p3: ClothPointShared) {
+  if (p2.velocity.w < 0.0 || p3.velocity.w < 0.0) { return; }
+
+  let vSurf = (v1 + p2.velocity.xyz + p3.velocity.xyz) / 3.0;
+
+  let dist = distance(interaction.pointerPosition, p1.xy);
+  let w    = 1.0 - clamp(dist / interaction.pointerSize, 0.0, 1.0);
+
+  let pointerForce =
+    interaction.pointerStrength *
+    pow(w, 1.5) *
+    vec3(interaction.pointerVelocity, -length(interaction.pointerVelocity));
+
+  let wind = interaction.wind + pointerForce;
+
+  let vRel = vSurf - wind;
+  let spd  = length(vRel);
+  if (spd < EPSIL) { return; }
+
+  let dir = vRel / spd;
+
+  let e1 = p2.position.xyz - p1;
+  let e2 = p3.position.xyz - p1;
+  let cp = cross(e1, e2);
+  let a2 = length(cp);
+  if (a2 < EPSIL) { return; }
+
+  let n = cp / a2;
+  let projArea = abs(dot(n, dir)) * a2 * 0.5;
+
+  let drag =
+    0.5 * AIR_DENSITY * DRAG_COEFFI * spd * spd * projArea;
+
+  force += -drag * n / 3.0;
+}
+
+/* =========================
+   FORCE PASS
+   ========================= */
+
+@compute @workgroup_size(TILE_SIZE, TILE_SIZE)
+fn calc_forces(
+  @builtin(workgroup_id) bid : vec3u,
+  @builtin(local_invocation_id) tid : vec3u
+) {
+  let tx = tid.x;
+  let ty = tid.y;
+
+  let rowO = i32(bid.y * INNER_TILE + ty);
+  let colO = i32(bid.x * INNER_TILE + tx);
+
+  let rowI = rowO - 1;
+  let colI = colO - 1;
+
+  let w = i32(dimension.size.x + 1);
+  let h = i32(dimension.size.y + 1);
+
+  if (rowI >= 0 && rowI < h && colI >= 0 && colI < w) {
+    let i = rowI * w + colI;
+    tile[ty][tx].position = getPosition(i);
+    tile[ty][tx].velocity = getVelocity(i);
+  } else {
+    tile[ty][tx].position = vec4(0, 0, 0, -1);
+    tile[ty][tx].velocity = vec4(0, 0, 0, -1);
   }
-  
-  fn setPosition(index: i32, value: vec4f) {
-    clothVertex[index].position = value;
+
+  workgroupBarrier();
+
+  if (tx >= INNER_TILE || ty >= INNER_TILE ||
+      rowO >= h || colO >= w ||
+      tile[ty + 1u][tx + 1u].position.w < 0.0) {
+    return;
   }
-  
-  fn getNormal(index: i32) -> vec4f {
-    return clothVertex[index].normal;
+
+  p1 = tile[ty + 1u][tx + 1u].position.xyz;
+  v1 = tile[ty + 1u][tx + 1u].velocity.xyz;
+
+  force = params.gravity * params.mass;
+
+  let rest = 2.0 / min(dimension.size.x, dimension.size.y);
+  let diag = rest * SQRT2;
+
+  spring_damper(tile[ty + 1u][tx], rest);
+  spring_damper(tile[ty + 1u][tx + 2u], rest);
+  spring_damper(tile[ty][tx + 1u], rest);
+  spring_damper(tile[ty + 2u][tx + 1u], rest);
+
+  spring_damper(tile[ty][tx], diag);
+  spring_damper(tile[ty][tx + 2u], diag);
+  spring_damper(tile[ty + 2u][tx], diag);
+  spring_damper(tile[ty + 2u][tx + 2u], diag);
+
+  aerodynamic(tile[ty][tx], tile[ty][tx + 1u]);
+  aerodynamic(tile[ty][tx + 1u], tile[ty][tx + 2u]);
+  aerodynamic(tile[ty][tx + 2u], tile[ty + 1u][tx + 2u]);
+  aerodynamic(tile[ty + 1u][tx + 2u], tile[ty + 2u][tx + 2u]);
+  aerodynamic(tile[ty + 2u][tx + 2u], tile[ty + 2u][tx + 1u]);
+  aerodynamic(tile[ty + 2u][tx + 1u], tile[ty + 2u][tx]);
+  aerodynamic(tile[ty + 2u][tx], tile[ty + 1u][tx]);
+  aerodynamic(tile[ty + 1u][tx], tile[ty][tx]);
+
+  setForce(rowO * w + colO, vec4(force, 0));
+}
+
+/* =========================
+   VERLET UPDATE
+   ========================= */
+
+@compute @workgroup_size(${workgroupSize * workgroupSize})
+fn update_verlet(
+  @builtin(workgroup_id) bid : vec3u,
+  @builtin(local_invocation_id) tid : vec3u
+) {
+  let i = i32(bid.x * ${workgroupSize * workgroupSize}u + tid.x);
+  let w = i32(dimension.size.x + 1);
+  let h = i32(dimension.size.y + 1);
+
+  if (i >= w * h) { return; }
+
+  let pos  = getPosition(i);
+  if (pos.w < 0.0) { return; }
+
+  let prev = getPrevPosition(i);
+  let acc  = getForce(i).xyz / params.mass;
+  let dt2  = params.deltaTime * params.deltaTime;
+
+  let next =
+    pos.xyz +
+    (pos.xyz - prev.xyz) +
+    acc * dt2;
+
+  var finalPos = vec3(next.x, max(next.y, params.floor), next.z);
+
+  setPrevPosition(i, vec4(pos.xyz, 0));
+  setPosition(i, vec4(finalPos, pos.w));
+
+  setVelocity(
+    i,
+    vec4((finalPos - prev.xyz) / (2.0 * params.deltaTime), 0)
+  );
+}
+
+/* =========================
+   NORMAL PASS (ONCE / FRAME)
+   ========================= */
+
+var<workgroup> p_tile : array<array<vec4f, ${workgroupSize}>, ${workgroupSize}>;
+var<private> accum_norm : vec3f;
+
+fn triangle_normal(p2: vec4f, p3: vec4f) {
+  if (p2.w < 0.0 || p3.w < 0.0) { return; }
+  let n = cross(p3.xyz - p1, p2.xyz - p1);
+  if (length(n) > EPSIL) { accum_norm += normalize(n); }
+}
+
+@compute @workgroup_size(TILE_SIZE, TILE_SIZE)
+fn calc_normal(
+  @builtin(workgroup_id) bid : vec3u,
+  @builtin(local_invocation_id) tid : vec3u
+) {
+  let tx = tid.x;
+  let ty = tid.y;
+
+  let rowO = i32(bid.y * INNER_TILE + ty);
+  let colO = i32(bid.x * INNER_TILE + tx);
+
+  let rowI = rowO - 1;
+  let colI = colO - 1;
+
+  let w = i32(dimension.size.x + 1);
+  let h = i32(dimension.size.y + 1);
+
+  if (rowI >= 0 && rowI < h && colI >= 0 && colI < w) {
+    p_tile[ty][tx] = getPosition(rowI * w + colI);
+  } else {
+    p_tile[ty][tx] = vec4(0, 0, 0, -1);
   }
-  
-  fn setNormal(index: i32, value: vec4f) {
-    clothVertex[index].normal = value;
+
+  workgroupBarrier();
+
+  if (tx >= INNER_TILE || ty >= INNER_TILE ||
+      rowO >= h || colO >= w) {
+    return;
   }
-  
-  fn getVelocity(index: i32) -> vec4f {
-    return clothVertex[index].velocity;
+
+  p1 = p_tile[ty + 1u][tx + 1u].xyz;
+  accum_norm = vec3(0);
+
+  triangle_normal(p_tile[ty][tx],     p_tile[ty][tx + 1u]);
+  triangle_normal(p_tile[ty][tx + 1u], p_tile[ty][tx + 2u]);
+  triangle_normal(p_tile[ty][tx + 2u], p_tile[ty + 1u][tx + 2u]);
+  triangle_normal(p_tile[ty + 1u][tx + 2u], p_tile[ty + 2u][tx + 2u]);
+  triangle_normal(p_tile[ty + 2u][tx + 2u], p_tile[ty + 2u][tx + 1u]);
+  triangle_normal(p_tile[ty + 2u][tx + 1u], p_tile[ty + 2u][tx]);
+  triangle_normal(p_tile[ty + 2u][tx], p_tile[ty + 1u][tx]);
+  triangle_normal(p_tile[ty + 1u][tx], p_tile[ty][tx]);
+
+  if (length(accum_norm) > EPSIL) {
+    setNormal(rowO * w + colO, vec4(normalize(accum_norm), 0));
   }
-  
-  fn setVelocity(index: i32, value: vec4f) {
-    clothVertex[index].velocity = value;
-  }
-  
-  fn getForce(index: i32) -> vec4f {
-    return clothVertex[index].force;
-  }
-  
-  fn setForce(index: i32, value: vec4f) {
-    clothVertex[index].force = value;
-  }
-  
-  const TILE_SIZE = 16;
-  const INNER_TILE = 14u;
-  
-  /** FORCES **/
-  
-  struct ClothPointShared {
-    position: vec4<f32>,
-    velocity: vec4<f32>
-  }
-  
-  var<private> force: vec3<f32>;
-  var<private> p1: vec3<f32>;
-  var<private> v1: vec3<f32>;
-  
-  const SQRT2 = 1.4142135623730951;
-  const EPSIL = 0.0001;
-  
-  fn spring_damper(p2: vec4<f32>, v2: vec4<f32>, rest_length: f32) {
-    // Empty padded point
-    if (v2.w < 0.0) {
-      return;
-    }
-
-    let delta = p2.xyz - p1;
-    let len = length(delta);
-
-    if (len < EPSIL) {
-      return;
-    }
-
-    let dir = normalize(delta);
-
-    // Spring force
-    var springConstant: f32 = dimension.size.x * dimension.size.y;
-    force = force + springConstant * (len - rest_length) * dir;
-
-    // Damper force
-    let v_close = dot(v1 - v2.xyz, dir);
-    force = force - params.dampingConstant * v_close * dir;
-  }
-  
-  const AIR_DENSITY = 1.225;
-  const DRAG_COEFFI = 1.5;
-  
-  fn aerodynamic(p2: ClothPointShared, p3: ClothPointShared) {
-    // Empty padded points
-    if (p2.velocity.w < 0.0 || p3.velocity.w < 0.0) {
-      return;
-    }
-
-    let surf_v = (v1 + p2.velocity.xyz + p3.velocity.xyz) / 3.0;
-        
-    // add mouse interaction to wind
-    let distanceStrength = (1.0 - min(1.0, distance(interaction.pointerPosition, p1.xy) / interaction.pointerSize));
-    var pointerEffect = interaction.pointerStrength * pow(distanceStrength, 1.5);
-    
-    var interactionForce: vec3f =
-      interaction.wind
-      + pointerEffect * vec3(interaction.pointerVelocity, -1.0 * length(interaction.pointerVelocity));
-    
-    let delta_v = surf_v - interactionForce;
-    
-    let len = length(delta_v);
-
-    if (len < EPSIL) {
-      return;
-    }
-
-    let dir = normalize(delta_v);
-
-    let prod = cross(p2.position.xyz - p1, p3.position.xyz - p1);
-
-    if (length(prod) < EPSIL) {
-      return;
-    }
-
-    let norm = normalize(prod);
-    let area = length(prod) / 2.0 * dot(norm, dir);
-
-    force = force + -0.5 * AIR_DENSITY * len * len * DRAG_COEFFI * area * norm / 3.9;
-  }
-  
-  var<workgroup> tile : array<array<ClothPointShared, 16>, 16>;
-
-  @compute @workgroup_size(TILE_SIZE, TILE_SIZE, 1) fn calc_forces(
-    @builtin(workgroup_id)         blockIdx :  vec3<u32>,
-    @builtin(local_invocation_id)  threadIdx : vec3<u32>
-  ) {
-    let tx = threadIdx.x;
-    let ty = threadIdx.y;
-
-    let row_o = i32(blockIdx.y * INNER_TILE + ty);
-    let col_o = i32(blockIdx.x * INNER_TILE + tx);
-
-    // Could be -1 so it's all casted to signed
-    let row_i = i32(row_o) - 1;
-    let col_i = i32(col_o) - 1;
-
-    let out_w = i32(dimension.size.x + 1);
-    let out_h = i32(dimension.size.y + 1);
-    
-    // Load tile
-    if (row_i >= 0 && row_i < out_h && 
-      col_i >= 0 && col_i < out_w) {
-      tile[ty][tx].position = getPosition(row_i * out_w + col_i);
-      tile[ty][tx].velocity = getVelocity(row_i * out_w + col_i);
-    } else {          
-      tile[ty][tx].position = vec4<f32>(0.0, 0.0, 0.0, -1.0);
-      tile[ty][tx].velocity = vec4<f32>(0.0, 0.0, 0.0, -1.0);
-    }
-
-    workgroupBarrier();
-    
-    let cx = tx + 1u;
-    let cy = ty + 1u;
-
-    // Out of grid || out of tile || fixed point
-    if (row_o >= out_h || col_o >= out_w || 
-      tx >= INNER_TILE || ty >= INNER_TILE ||
-      tile[cy][cx].position.w < 0.0) {
-      return;
-    }
-    
-    force = params.gravity * params.mass;
-    
-    p1 = tile[cy][cx].position.xyz;
-    v1 = tile[cy][cx].velocity.xyz;
-    
-    let rest_len = 2.0 / min(dimension.size.x, dimension.size.y);
-    let diag_len = rest_len * SQRT2;
-
-    // 8x spring damper force accumulation 
-    spring_damper(tile[cy - 1u][cx - 1u].position, tile[cy - 1u][cx - 1u].velocity, diag_len);
-    spring_damper(tile[cy - 1u][cx - 0u].position, tile[cy - 1u][cx - 0u].velocity, rest_len);
-    spring_damper(tile[cy - 1u][cx + 1u].position, tile[cy - 1u][cx + 1u].velocity, diag_len);
-    
-    spring_damper(tile[cy][cx - 1u].position, tile[cy][cx - 1u].velocity, rest_len);
-    spring_damper(tile[cy][cx + 1u].position, tile[cy][cx + 1u].velocity, rest_len);
-    
-    spring_damper(tile[cy + 1u][cx - 1u].position, tile[cy + 1u][cx - 1u].velocity, diag_len);
-    spring_damper(tile[cy + 1u][cx - 0u].position, tile[cy + 1u][cx - 0u].velocity, rest_len);
-    spring_damper(tile[cy + 1u][cx + 1u].position, tile[cy + 1u][cx + 1u].velocity, diag_len);
-    
-    
-    // 8 Triangles aerodynamic force accumulation
-    aerodynamic(tile[cy - 1u][cx - 1u], tile[cy - 1u][cx - 0u]);
-    aerodynamic(tile[cy - 1u][cx - 0u], tile[cy - 1u][cx + 1u]);
-    aerodynamic(tile[cy - 1u][cx + 1u], tile[cy - 0u][cx + 1u]);
-    aerodynamic(tile[cy - 0u][cx + 1u], tile[cy + 1u][cx + 1u]);
-    aerodynamic(tile[cy + 1u][cx + 1u], tile[cy + 1u][cx + 0u]);
-    aerodynamic(tile[cy + 1u][cx + 0u], tile[cy + 1u][cx - 1u]);
-    aerodynamic(tile[cy + 1u][cx - 1u], tile[cy + 0u][cx - 1u]);
-    aerodynamic(tile[cy + 0u][cx - 1u], tile[cy - 1u][cx - 1u]);
-    
-    setForce(row_o * out_w + col_o, vec4<f32>(force, 0.0));
-  }
-  
-  /** NORMALS **/
-  
-  var<private> accum_norm: vec3<f32>;
-
-  fn triangle_normal(p2: vec4<f32>, p3: vec4<f32>) {
-    if (p2.w < 0.0 || p3.w < 0.0) {
-      return;
-    }
-
-    let prod = cross(p3.xyz - p1, p2.xyz - p1);
-
-    if (length(prod) < EPSIL) {
-      return;
-    }
-
-    let norm = normalize(prod);
-
-    accum_norm = accum_norm + norm;
-  }
-  
-  var<workgroup> p_tile : array<array<vec4<f32>, 16>, 16>;
-  
-  @compute @workgroup_size(TILE_SIZE, TILE_SIZE, 1) fn calc_normal(
-    @builtin(workgroup_id)        blockIdx :  vec3<u32>,
-    @builtin(local_invocation_id) threadIdx : vec3<u32>
-  ) {
-    let tx = threadIdx.x;
-    let ty = threadIdx.y;
-
-    let row_o = i32(blockIdx.y * INNER_TILE + ty);
-    let col_o = i32(blockIdx.x * INNER_TILE + tx);
-
-    // Could be -1 so it's all casted to signed
-    let row_i = i32(row_o) - 1;
-    let col_i = i32(col_o) - 1;
-
-    let out_w = i32(dimension.size.x + 1);
-    let out_h = i32(dimension.size.y + 1);
-    
-    // Load position tile
-    if (row_i >= 0 && row_i < out_h && 
-      col_i >= 0 && col_i < out_w) {
-      p_tile[ty][tx] = getPosition(row_i * out_w + col_i);
-    } else {
-      p_tile[ty][tx] = vec4<f32>(0.0, 0.0, 0.0, -1.0);
-    }
-
-    workgroupBarrier();
-
-    let cx = tx + 1u;
-    let cy = ty + 1u;
-
-    // Out of grid || out of tile
-    if (row_o >= out_h || col_o >= out_w || 
-      tx >= INNER_TILE || ty >= INNER_TILE) {
-      return;
-    }
-    
-    p1 = p_tile[cy][cx].xyz;
-
-    accum_norm = vec3<f32>(0.0);
-
-    // 8 Triangles normal accumulation
-    triangle_normal(p_tile[cy - 1u][cx - 1u], p_tile[cy - 1u][cx - 0u]);
-    triangle_normal(p_tile[cy - 1u][cx - 0u], p_tile[cy - 1u][cx + 1u]);
-    triangle_normal(p_tile[cy - 1u][cx + 1u], p_tile[cy - 0u][cx + 1u]);
-    triangle_normal(p_tile[cy - 0u][cx + 1u], p_tile[cy + 1u][cx + 1u]);
-    triangle_normal(p_tile[cy + 1u][cx + 1u], p_tile[cy + 1u][cx + 0u]);
-    triangle_normal(p_tile[cy + 1u][cx + 0u], p_tile[cy + 1u][cx - 1u]);
-    triangle_normal(p_tile[cy + 1u][cx - 1u], p_tile[cy + 0u][cx - 1u]);
-    triangle_normal(p_tile[cy + 0u][cx - 1u], p_tile[cy - 1u][cx - 1u]);
-
-    // 4 Triangle normal accumulation
-    // triangle_normal(p_tile[cy - 1u][cx], p_tile[cy][cx - 1u]);
-    // triangle_normal(p_tile[cy][cx - 1u], p_tile[cy + 1u][cx]);
-    // triangle_normal(p_tile[cy + 1u][cx], p_tile[cy][cx + 1u]);
-    // triangle_normal(p_tile[cy][cx + 1u], p_tile[cy - 1u][cx]);
-
-    accum_norm = accum_norm;
-
-    if (length(accum_norm) < EPSIL) {
-      return;
-    }
-
-    let norm = normalize(accum_norm);
-    setNormal(row_o * out_w + col_o, vec4<f32>(norm, 0.0));
-    
-    let position = getPosition(row_o * out_w + col_o);
-    setForce(row_o * out_w + col_o, position + vec4<f32>(norm, 0.0));
-  }
-  
-  /** UPDATE **/
-  
-  @compute @workgroup_size(256) fn update(
-    @builtin(workgroup_id)        blockIdx :  vec3<u32>,
-    @builtin(local_invocation_id) threadIdx : vec3<u32>
-  ) {
-    let offset = i32(blockIdx.x * 256u + threadIdx.x);
-    
-    let out_w = i32(dimension.size.x + 1);
-    let out_h = i32(dimension.size.y + 1);
-
-    if (offset >= out_w * out_w) {
-      return;
-    }
-
-    let pointPosition = getPosition(offset);
-    let pointVelocity = getVelocity(offset);
-
-    if (pointPosition.w < 0.0) {
-      setVelocity(offset, vec4<f32>(0.0));
-      // Not necessary but...
-      setForce(offset, vec4<f32>(0.0));
-      return;
-    }
-
-    let a = getForce(offset) / params.mass;
-            
-    setVelocity(offset, pointVelocity + a * params.deltaTime);
-    
-    let pos = pointPosition + getVelocity(offset) * params.deltaTime;
-    setPosition(offset, vec4<f32>(pos.x, max(pos.y, params.floor), pos.zw));
-  }
+}
 `
 
 window.addEventListener('load', async () => {
@@ -335,6 +293,11 @@ window.addEventListener('load', async () => {
     container: '#canvas',
     watchScroll: false, // no need to listen for the scroll in this example
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
+    adapterOptions: {
+      featureLevel: 'compatibility',
+    },
+    // Try requesting max limits
+    requestAdapterLimits: ['maxComputeInvocationsPerWorkgroup', 'maxComputeWorkgroupSizeX'],
   })
 
   gpuCurtains.onError(() => {
@@ -344,18 +307,36 @@ window.addEventListener('load', async () => {
 
   await gpuCurtains.setDevice()
 
-  const simulationSpeed = 2
+  const frameDt = 1 / 60
+  // number of compute dispatchs per frame
+  let simulationSteps = 25
+  let mass = 0.5
+  let springConstant = 65_000
+  let dampingRatio = 0.8
+  const { maxComputeInvocationsPerWorkgroup } = gpuCurtains.deviceManager.device.limits
+  // Beware of actual compatibility mode limits
+  const workgroupSize = maxComputeInvocationsPerWorkgroup < 256 ? 8 : 16
+
+  const dampingPerSteps = () => {
+    return 1.0 - Math.pow(1.0 - dampingRatio, 1 / simulationSteps)
+  }
+
+  const dampingConstant = () => {
+    return (2 * mass * -Math.log(1 - dampingPerSteps())) / (frameDt / simulationSteps)
+  }
 
   const clothDefinition = new Vec2(40)
 
   const clothGeometry = new PlaneGeometry({
     widthSegments: clothDefinition.x,
     heightSegments: clothDefinition.y,
+    // topology: 'line-list',
   })
 
   const positionArray = clothGeometry.getAttributeByName('position').array.slice()
 
   const vertexPositionArray = new Float32Array((positionArray.length * 4) / 3)
+  const prevVertexPositionArray = new Float32Array((positionArray.length * 4) / 3)
 
   const normalPositionArray = new Float32Array(vertexPositionArray.length)
   const vertexVelocityArray = new Float32Array(vertexPositionArray.length)
@@ -367,10 +348,15 @@ window.addEventListener('load', async () => {
     vertexPositionArray[i + 1] = positionArray[j + 1]
     vertexPositionArray[i + 2] = positionArray[j + 2]
 
+    prevVertexPositionArray[i] = positionArray[j]
+    prevVertexPositionArray[i + 1] = positionArray[j + 1]
+    prevVertexPositionArray[i + 2] = positionArray[j + 2]
+
     const xPosIndex = Math.round((positionArray[j] + 1) * 0.5 * clothDefinition.x)
     const isFixed = positionArray[j + 1] === 1 && xPosIndex % 4 === 0
 
     vertexPositionArray[i + 3] = isFixed ? -1 : 0 // fixed point
+    prevVertexPositionArray[i + 3] = isFixed ? -1 : 0 // fixed point
 
     // explicitly set normals
     normalPositionArray[i] = 0
@@ -393,15 +379,19 @@ window.addEventListener('load', async () => {
         struct: {
           deltaTime: {
             type: 'f32',
-            value: 0.001 * simulationSpeed,
+            value: frameDt / simulationSteps,
           },
           mass: {
             type: 'f32',
-            value: 1,
+            value: mass,
+          },
+          springConstant: {
+            type: 'f32',
+            value: springConstant,
           },
           dampingConstant: {
             type: 'f32',
-            value: 50,
+            value: dampingConstant(),
           },
           floor: {
             type: 'f32',
@@ -409,7 +399,7 @@ window.addEventListener('load', async () => {
           },
           gravity: {
             type: 'vec3f',
-            value: new Vec3(0, -0.0981, 0),
+            value: new Vec3(0, -9.81, 0),
           },
         },
       },
@@ -429,7 +419,7 @@ window.addEventListener('load', async () => {
           },
           pointerStrength: {
             type: 'f32',
-            value: 250,
+            value: 2_500,
           },
           wind: {
             type: 'vec3f',
@@ -446,6 +436,10 @@ window.addEventListener('load', async () => {
           position: {
             type: 'array<vec4f>',
             value: vertexPositionArray,
+          },
+          prevPosition: {
+            type: 'array<vec4f>',
+            value: prevVertexPositionArray,
           },
           normal: {
             type: 'array<vec4f>',
@@ -469,44 +463,46 @@ window.addEventListener('load', async () => {
     label: 'Compute forces',
     shaders: {
       compute: {
-        code: computeClothSim,
+        code: computeClothSim(workgroupSize),
         entryPoint: 'calc_forces',
       },
     },
     autoRender: false, // we will manually take care of rendering
     bindGroups: [computeBindGroup],
-    dispatchSize: [Math.ceil((clothDefinition.x + 1) / 14), Math.ceil((clothDefinition.y + 1) / 14)],
+    dispatchSize: [
+      Math.ceil((clothDefinition.x + 1) / (workgroupSize - 2)),
+      Math.ceil((clothDefinition.y + 1) / (workgroupSize - 2)),
+    ],
   })
 
   const computeUpdatePass = new ComputePass(gpuCurtains, {
     label: 'Compute update',
     shaders: {
       compute: {
-        code: computeClothSim,
-        entryPoint: 'update',
+        code: computeClothSim(workgroupSize),
+        entryPoint: 'update_verlet',
       },
     },
     autoRender: false, // we will manually take care of rendering
     bindGroups: [computeBindGroup],
-    dispatchSize: [Math.ceil(((clothDefinition.x + 1) * (clothDefinition.y + 1)) / 256)],
+    dispatchSize: [Math.ceil(((clothDefinition.x + 1) * (clothDefinition.y + 1)) / (workgroupSize * workgroupSize))],
   })
 
   const computeNormalPass = new ComputePass(gpuCurtains, {
     label: 'Compute normal',
     shaders: {
       compute: {
-        code: computeClothSim,
+        code: computeClothSim(workgroupSize),
         entryPoint: 'calc_normal',
       },
     },
     autoRender: false, // we will manually take care of rendering
     bindGroups: [computeBindGroup],
-    dispatchSize: [Math.ceil((clothDefinition.x + 1) / 14), Math.ceil((clothDefinition.y + 1) / 14)],
+    dispatchSize: [
+      Math.ceil((clothDefinition.x + 1) / (workgroupSize - 2)),
+      Math.ceil((clothDefinition.y + 1) / (workgroupSize - 2)),
+    ],
   })
-
-  // now use renderer onBeforeRender callback to render our compute passes
-  // nb sims compute per render impacts the speed at which the simulation runs
-  const nbSimsComputePerRender = Math.min(75, Math.ceil(150 / simulationSpeed))
 
   // add a task to our renderer onBeforeRenderScene tasks queue manager
   gpuCurtains.renderer.onBeforeRenderScene.add((commandEncoder) => {
@@ -518,7 +514,7 @@ window.addEventListener('load', async () => {
     // now if the compute passes are not ready, do not render them
     if (!computeForcesPass.ready || !computeUpdatePass.ready || !computeNormalPass.ready) return
 
-    for (let i = 0; i < nbSimsComputePerRender; i++) {
+    for (let i = 0; i < simulationSteps; i++) {
       const forcePass = commandEncoder.beginComputePass()
       computeForcesPass.render(forcePass)
       forcePass.end()
@@ -581,16 +577,27 @@ window.addEventListener('load', async () => {
       @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
         var color: vec4f;
       
-        var shading: vec3f = vec3(0.5);
-        
-        //var shadedColor: vec3f = applyLightning(shading, fsInput.normal, vec3(0.3, 0.3, 1.0));
-        //color: vec4f = vec4(shadedColor, 1.0);
+        // basic shading
+        let shadingColor: vec3f = vec3(0.65);
+        let lightPosition: vec3f = vec3(0.3, 0.3, 1.0);
+        let shadedColor: vec3f = applyLightning(shadingColor, fsInput.normal, lightPosition);
         
         // debug normals
-        color = vec4(normalize(fsInput.normal) * 0.5 + 0.5, 1.0);
-        
+        let normal: vec4f = vec4(normalize(fsInput.normal) * 0.5 + 0.5, 1.0);
         // debug force
-        //color = vec4(normalize(fsInput.force) * 0.5 + 0.5, 1.0);
+        let force: vec4f = vec4(normalize(fsInput.force) * 0.5 + 0.5, 1.0);
+        // debug velocity
+        let velocity: vec4f = vec4(normalize(fsInput.velocity) * 0.5 + 0.5, 1.0);
+
+        if(params.colorOutput == 0.0) {
+          color = normal;
+        } else if(params.colorOutput == 1.0) {
+          color = force;
+        } else if(params.colorOutput == 2.0) {
+          color = velocity;
+        } else if(params.colorOutput == 3.0) {
+          color = vec4(shadedColor, 1.0);
+        }
                       
         return color;
       }
@@ -604,6 +611,12 @@ window.addEventListener('load', async () => {
     attributes: [
       {
         name: 'clothPosition',
+        type: 'vec4f',
+        bufferFormat: 'float32x4',
+        size: 4,
+      },
+      {
+        name: 'clothPrevPosition',
         type: 'vec4f',
         bufferFormat: 'float32x4',
         size: 4,
@@ -642,6 +655,16 @@ window.addEventListener('load', async () => {
       },
     },
     cullMode: 'none',
+    uniforms: {
+      params: {
+        struct: {
+          colorOutput: {
+            type: 'f32',
+            value: 0,
+          },
+        },
+      },
+    },
   }
 
   const plane = new Plane(gpuCurtains, '#cloth', params)
@@ -701,4 +724,88 @@ window.addEventListener('load', async () => {
 
   window.addEventListener('mousemove', onPointerMove)
   window.addEventListener('touchmove', onPointerMove)
+
+  const updateDamping = () => {
+    computeForcesPass.uniforms.params.dampingConstant.value = dampingConstant()
+  }
+
+  // GUI
+  const gui = new lil.GUI({
+    title: 'Cloth simulation',
+  })
+
+  const computeFolder = gui.addFolder('Compute')
+
+  computeFolder
+    .add(
+      {
+        reset: () => {
+          computeForcesPass.storages.clothVertex.position.shouldUpdate = true
+          computeForcesPass.storages.clothVertex.prevPosition.shouldUpdate = true
+          computeForcesPass.storages.clothVertex.force.shouldUpdate = true
+          computeForcesPass.storages.clothVertex.velocity.shouldUpdate = true
+          computeForcesPass.storages.clothVertex.normal.shouldUpdate = true
+        },
+      },
+      'reset'
+    )
+    .name('Reset')
+
+  const stepsField = computeFolder.add({ simulationSteps }, 'simulationSteps', 15, 25, 1).name('Number of steps')
+
+  const paramsFolder = computeFolder.addFolder('Parameters')
+  paramsFolder
+    .add(computeForcesPass.uniforms.params.mass, 'value', 0.25, 1, 0.05)
+    .name('Mass')
+    .onChange((value) => {
+      mass = value
+      updateDamping()
+    })
+  paramsFolder
+    .add(computeForcesPass.uniforms.params.springConstant, 'value', 5_000, 100_000, 1)
+    .name('Spring constant')
+    .onChange((value) => {
+      springConstant = value
+      updateDamping()
+    })
+
+  paramsFolder
+    .add({ dampingRatio }, 'dampingRatio', 0, 0.6, 0.001)
+    .name('Damping ratio')
+    .onChange((value) => {
+      dampingRatio = value
+
+      updateDamping()
+    })
+
+  paramsFolder.add(computeForcesPass.uniforms.params.floor, 'value', -1.25, -0.5, 0.05).name('Floor position')
+
+  stepsField.onChange((value) => {
+    simulationSteps = value
+    computeForcesPass.uniforms.params.deltaTime.value = frameDt / simulationSteps
+
+    updateDamping()
+  })
+
+  const interactionFolder = computeFolder.addFolder('Interaction')
+
+  const pointerFolder = interactionFolder.addFolder('Pointer')
+  pointerFolder.add(computeForcesPass.uniforms.interaction.pointerSize, 'value', 0.25, 1, 0.05).name('Size')
+  pointerFolder.add(computeForcesPass.uniforms.interaction.pointerStrength, 'value', 200, 5_000, 1).name('Strength')
+
+  const windFolder = interactionFolder.addFolder('Wind strength')
+  windFolder.add(computeForcesPass.uniforms.interaction.wind.value, 'x', -60, 60, 1).name('Along X')
+  windFolder.add(computeForcesPass.uniforms.interaction.wind.value, 'y', -60, 60, 1).name('Along Y')
+  windFolder.add(computeForcesPass.uniforms.interaction.wind.value, 'z', -50, 50, 1).name('Along Z')
+
+  const output = ['Normal', 'Force', 'Velocity', 'Basic shading']
+
+  const outputFolder = gui.addFolder('Output')
+  outputFolder
+    .add({ output: 'Normal' }, 'output', output)
+    .name('Display')
+    .onChange((value) => {
+      const debugChannel = output.findIndex((v) => v === value)
+      plane.uniforms.params.colorOutput.value = debugChannel
+    })
 })

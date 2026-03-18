@@ -16,6 +16,10 @@ window.addEventListener('load', async () => {
   // wait for the device to be created
   await gpuDeviceManager.init()
 
+  const { maxComputeInvocationsPerWorkgroup } = gpuDeviceManager.device.limits
+  // Beware of actual compatibility mode limits
+  const workgroupSize = maxComputeInvocationsPerWorkgroup < 256 ? 8 : 16
+
   // create a camera renderer
   const gpuCameraRenderer = new GPUCameraRenderer({
     deviceManager: gpuDeviceManager,
@@ -35,7 +39,7 @@ window.addEventListener('load', async () => {
   console.log(mesh)
 
   const basicComputeShader = /* wgsl */ `
-    @compute @workgroup_size(16, 16) fn main(
+    @compute @workgroup_size(${workgroupSize}, ${workgroupSize}) fn main(
         @builtin(global_invocation_id) id: vec3<u32>
     ) {
       let dims = textureDimensions(renderTexture);
@@ -55,7 +59,7 @@ window.addEventListener('load', async () => {
     }`
 
   const computeShader = /* wgsl */ `
-    @compute @workgroup_size(16, 16) fn main(
+    @compute @workgroup_size(${workgroupSize}, ${workgroupSize}) fn main(
         @builtin(global_invocation_id) id: vec3<u32>
     ) {
       let dims = textureDimensions(renderTexture);
@@ -81,7 +85,10 @@ window.addEventListener('load', async () => {
         code: basicComputeShader,
       },
     },
+    textureDispatchSize: [workgroupSize, workgroupSize],
   })
+
+  console.log(firstComputeShaderPass)
 
   const computeShaderPass = new ComputeShaderPass(gpuCameraRenderer, {
     label: 'Compute shader pass',
@@ -90,6 +97,7 @@ window.addEventListener('load', async () => {
         code: computeShader,
       },
     },
+    textureDispatchSize: [workgroupSize, workgroupSize],
     storageTextureParams: {
       format: 'rgba16float',
     },

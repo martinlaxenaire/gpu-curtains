@@ -84,7 +84,7 @@ export class FullscreenPlane extends MeshBaseMixin(class {}) {
    * @param parameters - {@link FullscreenPlaneParams | parameters} use to create this {@link FullscreenPlane}.
    */
   constructor(renderer: Renderer | GPUCurtains, parameters = {} as FullscreenPlaneParams) {
-    renderer = isRenderer(renderer, parameters.label ? parameters.label + ' FullscreenQuadMesh' : 'FullscreenQuadMesh')
+    renderer = isRenderer(renderer, parameters.label ? parameters.label + ' FullscreenPlane' : 'FullscreenPlane')
 
     // can we get a cached geometry?
     let geometry = cacheManager.getPlaneGeometryByID(2) // 1 * 1 + 1

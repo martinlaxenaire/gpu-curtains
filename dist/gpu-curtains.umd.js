@@ -966,8 +966,18 @@
      * @return - The determinant.
      */
     determinant() {
-      const te = this.elements, n11 = te[0], n21 = te[1], n31 = te[2], n41 = te[3], n12 = te[4], n22 = te[5], n32 = te[6], n42 = te[7], n13 = te[8], n23 = te[9], n33 = te[10], n43 = te[11], n14 = te[12], n24 = te[13], n34 = te[14], n44 = te[15], t11 = n23 * n34 * n42 - n24 * n33 * n42 + n24 * n32 * n43 - n22 * n34 * n43 - n23 * n32 * n44 + n22 * n33 * n44, t12 = n14 * n33 * n42 - n13 * n34 * n42 - n14 * n32 * n43 + n12 * n34 * n43 + n13 * n32 * n44 - n12 * n33 * n44, t13 = n13 * n24 * n42 - n14 * n23 * n42 + n14 * n22 * n43 - n12 * n24 * n43 - n13 * n22 * n44 + n12 * n23 * n44, t14 = n14 * n23 * n32 - n13 * n24 * n32 - n14 * n22 * n33 + n12 * n24 * n33 + n13 * n22 * n34 - n12 * n23 * n34;
-      return n11 * t11 + n21 * t12 + n31 * t13 + n41 * t14;
+      const te = this.elements;
+      const n11 = te[0], n12 = te[4], n13 = te[8], n14 = te[12];
+      const n21 = te[1], n22 = te[5], n23 = te[9], n24 = te[13];
+      const n31 = te[2], n32 = te[6], n33 = te[10], n34 = te[14];
+      const n41 = te[3], n42 = te[7], n43 = te[11], n44 = te[15];
+      const t11 = n23 * n34 - n24 * n33;
+      const t12 = n22 * n34 - n24 * n32;
+      const t13 = n22 * n33 - n23 * n32;
+      const t21 = n21 * n34 - n24 * n31;
+      const t22 = n21 * n33 - n23 * n31;
+      const t23 = n21 * n32 - n22 * n31;
+      return n11 * (n42 * t11 - n43 * t12 + n44 * t13) - n12 * (n41 * t11 - n43 * t21 + n44 * t22) + n13 * (n41 * t12 - n42 * t21 + n44 * t23) - n14 * (n41 * t13 - n42 * t22 + n43 * t23);
     }
     /**
      * Get the {@link Mat4} inverse.
@@ -1849,7 +1859,8 @@
     COPY_DST: 2,
     TEXTURE_BINDING: 4,
     STORAGE_BINDING: 8,
-    RENDER_ATTACHMENT: 16
+    RENDER_ATTACHMENT: 16,
+    TRANSIENT_ATTACHMENT: 32
   };
 
   const bindingVisibilities = /* @__PURE__ */ new Map([
@@ -1942,7 +1953,7 @@
           texture: {
             multisampled: binding.options.multisampled,
             viewDimension: binding.options.viewDimension,
-            sampleType: binding.options.multisampled ? "unfilterable-float" : "float"
+            sampleType: binding.options.multisampled || binding.options.format.indexOf("depth") !== -1 ? "unfilterable-float" : "float"
           }
         };
       case "depth":
@@ -4008,7 +4019,8 @@
     ["copyDst", WebGPUTextureUsageConstants.COPY_DST],
     ["renderAttachment", WebGPUTextureUsageConstants.RENDER_ATTACHMENT],
     ["storageBinding", WebGPUTextureUsageConstants.STORAGE_BINDING],
-    ["textureBinding", WebGPUTextureUsageConstants.TEXTURE_BINDING]
+    ["textureBinding", WebGPUTextureUsageConstants.TEXTURE_BINDING],
+    ["transientAttachment", WebGPUTextureUsageConstants.TRANSIENT_ATTACHMENT]
   ]);
   const getTextureUsages = (usages = []) => {
     return usages.reduce((acc, v) => {
@@ -4183,7 +4195,8 @@
         dimensions: this.options.viewDimension,
         sampleCount: this.options.sampleCount,
         mipLevelCount: this.options.useMips ? getNumMipLevels(this.size.width, this.size.height, this.size.depth ?? 1) : 1,
-        usage: getDefaultTextureUsage(this.options.usage, this.options.type)
+        usage: getDefaultTextureUsage(this.options.usage, this.options.type),
+        textureBindingViewDimension: this.options.viewDimension
       });
       this.textureBinding.resource = this.texture;
     }
@@ -4856,7 +4869,8 @@
         size: [this.size.width, this.size.height, this.size.depth ?? 1],
         dimensions: this.options.viewDimension,
         sampleCount: this.options.sampleCount,
-        usage: getDefaultMediaTextureUsage(this.options.usage)
+        usage: getDefaultMediaTextureUsage(this.options.usage),
+        textureBindingViewDimension: this.options.viewDimension
       };
       if (!this.sources?.length) {
         options.mipLevelCount = 1;
@@ -8409,7 +8423,7 @@
       if (!this.indexBuffer.buffer.GPUBuffer) {
         this.indexBuffer.buffer.createBuffer(renderer, {
           label: label + ": index buffer",
-          size: this.indexBuffer.array.byteLength,
+          size: this.indexBuffer.array?.byteLength ?? this.indexBuffer.bufferSize,
           usage: this.options.mapBuffersAtCreation ? ["index"] : ["copyDst", "index"],
           mappedAtCreation: this.options.mapBuffersAtCreation
         });
@@ -8451,7 +8465,6 @@
     destroy(renderer = null) {
       super.destroy(renderer);
       if (this.indexBuffer) {
-        this.indexBuffer.array = null;
         this.indexBuffer.arrayBuffer = null;
         this.indexBuffer.buffer.consumers.delete(this.uuid);
         this.indexBuffer.buffer.destroy();
@@ -11229,7 +11242,7 @@ struct VSOutput {
   const getPCFDirectionalShadowContribution = (
     /* wgsl */
     `
-fn getPCFDirectionalShadowContribution(index: i32, worldPosition: vec3f, depthTexture: texture_depth_2d) -> f32 {
+fn getPCFDirectionalShadowContribution(index: i32, worldPosition: vec3f, fragmentPosition: vec2f, depthTexture: texture_depth_2d) -> f32 {
   let directionalShadow: DirectionalShadowsElement = directionalShadows.directionalShadowsElements[index];
   
   // get shadow coords
@@ -11245,7 +11258,9 @@ fn getPCFDirectionalShadowContribution(index: i32, worldPosition: vec3f, depthTe
   
   return getPCFBaseShadowContribution(
     shadowCoords,
+    fragmentPosition,
     directionalShadow.pcfSamples,
+    directionalShadow.radius,
     directionalShadow.bias,
     directionalShadow.intensity,
     depthTexture
@@ -11262,25 +11277,32 @@ fn getPCFDirectionalShadowContribution(index: i32, worldPosition: vec3f, depthTe
     return (
       /* wgsl */
       `
-fn getPCFDirectionalShadows(worldPosition: vec3f) -> array<f32, ${minDirectionalLights}> {
+fn getPCFDirectionalShadows(worldPosition: vec3f, fragmentPosition: vec2f) -> array<f32, ${minDirectionalLights}> {
   var directionalShadowContribution: array<f32, ${minDirectionalLights}>;
   
   var lightDirection: vec3f;
   
   ${directionalLights.map((light, index) => {
-      return `lightDirection = worldPosition - directionalLights.elements[${index}].direction;
+      return (
+        /* wgsl */
+        `lightDirection = worldPosition - directionalLights.elements[${index}].direction;
       
       ${light.shadow.isActive ? `
       if(directionalShadows.directionalShadowsElements[${index}].isActive > 0) {
         directionalShadowContribution[${index}] = getPCFDirectionalShadowContribution(
           ${index},
           worldPosition,
+          fragmentPosition,
           directionalShadowDepthTexture${index}
         );
       } else {
         directionalShadowContribution[${index}] = 1.0;
       }
-          ` : `directionalShadowContribution[${index}] = 1.0;`}`;
+          ` : (
+          /*wgsl */
+          `directionalShadowContribution[${index}] = 1.0;`
+        )}`
+      );
     }).join("\n")}
   
   return directionalShadowContribution;
@@ -11292,51 +11314,63 @@ fn getPCFDirectionalShadows(worldPosition: vec3f) -> array<f32, ${minDirectional
   const getPCFPointShadowContribution = (
     /* wgsl */
     `
-fn getPCFPointShadowContribution(index: i32, shadowPosition: vec4f, depthCubeTexture: texture_depth_cube) -> f32 {
+fn getPCFPointShadowContribution(index: i32, shadowPosition: vec4f, fragmentPosition: vec2f, depthCubeTexture: texture_depth_cube) -> f32 {
   let pointShadow: PointShadowsElement = pointShadows.pointShadowsElements[index];
 
-  // Percentage-closer filtering. Sample texels in the region
-  // to smooth the result.
   var visibility = 0.0;
-  var closestDepth = 0.0;
-  let currentDepth: f32 = shadowPosition.w;
-  let cameraRange: f32 = pointShadow.cameraFar - pointShadow.cameraNear;
-  let normalizedDepth: f32 = (shadowPosition.w - pointShadow.cameraNear) / cameraRange;
 
-  let maxSize: f32 = f32(max(textureDimensions(depthCubeTexture).x, textureDimensions(depthCubeTexture).y));
+  // for point lights, the uniform @vShadowCoord is re-purposed to hold
+  // the vector from the light to the world-space position of the fragment.
+  let lightToPosition: vec3f = shadowPosition.xyz;
 
-  let texelSize: vec3f = vec3(1.0 / maxSize);
-  let sampleCount: i32 = pointShadow.pcfSamples;
-  let maxSamples: f32 = f32(sampleCount) - 1.0;
-  
-  for (var x = 0; x < sampleCount; x++) {
-    for (var y = 0; y < sampleCount; y++) {
-      for (var z = 0; z < sampleCount; z++) {
-        let offset = texelSize * vec3(
-          f32(x) - maxSamples * 0.5,
-          f32(y) - maxSamples * 0.5,
-          f32(z) - maxSamples * 0.5
-        );
+  // For cube shadow maps, depth is stored as radial distance
+  let distanceToLight: f32 = length(lightToPosition);
 
-        closestDepth = textureSampleCompareLevel(
-          depthCubeTexture,
-          depthComparisonSampler,
-          shadowPosition.xyz + offset,
-          normalizedDepth - pointShadow.bias
-        );
-
-        closestDepth *= cameraRange;
-
-        visibility += select(0.0, 1.0, currentDepth <= closestDepth);
-      }
-    }
+  if (distanceToLight < pointShadow.cameraNear || distanceToLight > pointShadow.cameraFar) {
+    return 1.0;
   }
-  
-  visibility /= f32(sampleCount * sampleCount * sampleCount);
-  
-  visibility = mix(1.0, visibility, saturate(pointShadow.intensity));
-  
-  return visibility;
+
+  // Direction from light to fragment
+  // bd3D = base direction 3D
+  let bd3D: vec3f = normalize(lightToPosition);
+
+  let size: vec2u = textureDimensions(depthCubeTexture);
+  let maxSize: f32 = f32(max(size.x, size.y));
+  let texelSize: f32 = 1.0 / maxSize;
+
+  // Hardware PCF with LinearFilter gives us 4-tap filtering per sample
+  // 5 samples using Vogel disk + IGN = effectively 20 filtered taps with better distribution
+  let radius: f32 = pointShadow.radius * texelSize;
+
+  // Use IGN to rotate sampling pattern per pixel
+  let phi: f32 = interleavedGradientNoise(fragmentPosition.xy) * PI2;
+
+  var dp = (distanceToLight - pointShadow.cameraNear) / (pointShadow.cameraFar - pointShadow.cameraNear);
+  dp = saturate(dp - pointShadow.bias);
+
+  // Build a tangent-space coordinate system for applying offsets
+  let absDir: vec3f = abs(bd3D);
+  var tangent: vec3f = select(vec3(0.0, 1.0, 0.0), vec3(1.0, 0.0, 0.0), abs(bd3D.y) > 0.999);
+  tangent = normalize(cross(bd3D, tangent));
+  let bitangent: vec3f = cross(bd3D, tangent);
+
+  let pcfSamples: i32 = pointShadow.pcfSamples;
+  for(var i: i32 = 0; i < pcfSamples; i++) {
+    let offset: vec2f = vogelDiskSample(i, pcfSamples, phi);
+    let offsetDir: vec3f = tangent * offset.x + bitangent * offset.y;
+    let sampleDir: vec3f = normalize(bd3D + offsetDir * radius);
+
+    visibility += textureSampleCompareLevel(
+        depthCubeTexture,
+        depthComparisonSampler,
+        sampleDir,
+        dp
+      );
+  }
+
+  visibility /= f32(pcfSamples);
+
+  return mix(1.0, visibility, saturate(pointShadow.intensity));  
 }`
   );
 
@@ -11346,7 +11380,7 @@ fn getPCFPointShadowContribution(index: i32, shadowPosition: vec4f, depthCubeTex
     return (
       /* wgsl */
       `
-fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
+fn getPCFPointShadows(worldPosition: vec3f, fragmentPosition: vec2f) -> array<f32, ${minPointLights}> {
   var pointShadowContribution: array<f32, ${minPointLights}>;
   
   var lightDirection: vec3f;
@@ -11354,7 +11388,10 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
   var lightColor: vec3f;
   
   ${pointLights.map((light, index) => {
-      return `lightDirection = pointLights.elements[${index}].position - worldPosition;
+      return (
+        /* wgsl */
+        `
+      lightDirection = pointLights.elements[${index}].position - worldPosition;
       
       lightDistance = length(lightDirection);
       lightColor = pointLights.elements[${index}].color * rangeAttenuation(pointLights.elements[${index}].range, lightDistance, 2.0);
@@ -11364,12 +11401,18 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
         pointShadowContribution[${index}] = getPCFPointShadowContribution(
           ${index},
           vec4(lightDirection, length(lightDirection)),
+          fragmentPosition,
           pointShadowCubeDepthTexture${index}
         );
       } else {
         pointShadowContribution[${index}] = 1.0;
       }
-            ` : `pointShadowContribution[${index}] = 1.0;`}`;
+            ` : (
+          /* wgsl */
+          `
+      pointShadowContribution[${index}] = 1.0;`
+        )}`
+      );
     }).join("\n")}
   
   return pointShadowContribution;
@@ -11384,25 +11427,32 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${minPointLights}> {
     return (
       /* wgsl */
       `
-fn getPCFSpotShadows(worldPosition: vec3f) -> array<f32, ${minSpotLights}> {
+fn getPCFSpotShadows(worldPosition: vec3f, fragmentPosition: vec2f) -> array<f32, ${minSpotLights}> {
   var spotShadowContribution: array<f32, ${minSpotLights}>;
   
   var lightDirection: vec3f;
   
   ${spotLights.map((light, index) => {
-      return `lightDirection = worldPosition - spotLights.elements[${index}].direction;
+      return (
+        /* wgsl */
+        `lightDirection = worldPosition - spotLights.elements[${index}].direction;
       
       ${light.shadow.isActive ? `
       if(spotShadows.spotShadowsElements[${index}].isActive > 0) {
         spotShadowContribution[${index}] = getPCFSpotShadowContribution(
           ${index},
           worldPosition,
+          fragmentPosition.xy,
           spotShadowDepthTexture${index}
         );
       } else {
         spotShadowContribution[${index}] = 1.0;
       }
-          ` : `spotShadowContribution[${index}] = 1.0;`}`;
+          ` : (
+          /* wgsl */
+          `spotShadowContribution[${index}] = 1.0;`
+        )}`
+      );
     }).join("\n")}
   
   return spotShadowContribution;
@@ -11414,7 +11464,7 @@ fn getPCFSpotShadows(worldPosition: vec3f) -> array<f32, ${minSpotLights}> {
   const getPCFSpotShadowContribution = (
     /* wgsl */
     `
-fn getPCFSpotShadowContribution(index: i32, worldPosition: vec3f, depthTexture: texture_depth_2d) -> f32 {
+fn getPCFSpotShadowContribution(index: i32, worldPosition: vec3f, fragmentPosition: vec2f, depthTexture: texture_depth_2d) -> f32 {
   let spotShadow: SpotShadowsElement = spotShadows.spotShadowsElements[index];
   
   // get shadow coords
@@ -11430,7 +11480,9 @@ fn getPCFSpotShadowContribution(index: i32, worldPosition: vec3f, depthTexture: 
   
   return getPCFBaseShadowContribution(
     shadowCoords,
+    fragmentPosition,
     spotShadow.pcfSamples,
+    spotShadow.radius,
     spotShadow.bias,
     spotShadow.intensity,
     depthTexture
@@ -11442,52 +11494,64 @@ fn getPCFSpotShadowContribution(index: i32, worldPosition: vec3f, depthTexture: 
   const getPCFBaseShadowContribution = (
     /* wgsl */
     `
+// Interleaved Gradient Noise for randomizing sampling patterns
+fn interleavedGradientNoise(position: vec2f) -> f32 {
+  return fract(52.9829189 * fract(dot(position, vec2(0.06711056, 0.00583715))));
+}
+
+// Vogel disk sampling for uniform circular distribution
+fn vogelDiskSample(sampleIndex: i32, samplesCount: i32, phi: f32) -> vec2f {
+  let goldenAngle: f32 = 2.399963229728653;
+  let r: f32 = sqrt((f32(sampleIndex) + 0.5) / f32(samplesCount));
+  let theta: f32 = f32(sampleIndex) * goldenAngle + phi;
+  return vec2(cos(theta), sin(theta)) * r;
+}
+
 fn getPCFBaseShadowContribution(
   shadowCoords: vec3f,
+  fragmentPosition: vec2f,
   pcfSamples: i32,
+  shadowRadius: f32,
   bias: f32,
   intensity: f32,
   depthTexture: texture_depth_2d
-) -> f32 {
-  var visibility = 0.0;
-  
+) -> f32 {  
   let inFrustum: bool = shadowCoords.x >= 0.0 && shadowCoords.x <= 1.0 && shadowCoords.y >= 0.0 && shadowCoords.y <= 1.0;
   let frustumTest: bool = inFrustum && shadowCoords.z <= 1.0;
-  
-  if(frustumTest) {
-    // Percentage-closer filtering. Sample texels in the region
-    // to smooth the result.
-    let size: vec2f = vec2f(textureDimensions(depthTexture).xy);
-  
-    let texelSize: vec2f = 1.0 / size;
-    
-    let sampleCount: i32 = pcfSamples;
-    let maxSamples: f32 = f32(sampleCount) - 1.0;
-  
-    for (var x = 0; x < sampleCount; x++) {
-      for (var y = 0; y < sampleCount; y++) {
-        let offset = texelSize * vec2(
-          f32(x) - maxSamples * 0.5,
-          f32(y) - maxSamples * 0.5
-        );
-        
-        visibility += textureSampleCompareLevel(
-          depthTexture,
-          depthComparisonSampler,
-          shadowCoords.xy + offset,
-          shadowCoords.z - bias
-        );
-      }
-    }
-    visibility /= f32(sampleCount * sampleCount);
-    
-    visibility = mix(1.0, visibility, saturate(intensity));
+
+  if(!frustumTest) {
+    return 1.0;
   }
-  else {
-    visibility = 1.0;
-  }
+
+  var visibility = 0.0;
   
-  return visibility;
+  // Percentage-closer filtering. Sample texels in the region
+  // to smooth the result.
+  let size: vec2f = vec2f(textureDimensions(depthTexture).xy);
+
+  let texelSize: vec2f = 1.0 / size;
+
+  // Hardware PCF with LinearFilter gives us 4-tap filtering per sample
+  // 5 samples using Vogel disk + IGN = effectively 20 filtered taps with better distribution
+  let radius: f32 = shadowRadius * texelSize.x;
+
+  // Use IGN to rotate sampling pattern per pixel
+  let phi: f32 = interleavedGradientNoise(fragmentPosition.xy) * PI2;
+
+  for(var i: i32 = 0; i < pcfSamples; i++) {
+    let offset: vec2f = vogelDiskSample(i, pcfSamples, phi) * radius;
+
+    visibility += textureSampleCompareLevel(
+      depthTexture,
+      depthComparisonSampler,
+      shadowCoords.xy + offset,
+      shadowCoords.z - bias
+    );
+  }
+
+  visibility /= f32(pcfSamples);
+  
+  return mix(1.0, visibility, saturate(intensity));  
 }
 `
   );
@@ -12197,7 +12261,7 @@ fn getPCFBaseShadowContribution(
      * @param parameters - {@link FullscreenPlaneParams | parameters} use to create this {@link FullscreenPlane}.
      */
     constructor(renderer, parameters = {}) {
-      renderer = isRenderer(renderer, parameters.label ? parameters.label + " FullscreenQuadMesh" : "FullscreenQuadMesh");
+      renderer = isRenderer(renderer, parameters.label ? parameters.label + " FullscreenPlane" : "FullscreenPlane");
       let geometry = cacheManager.getPlaneGeometryByID(2);
       if (!geometry) {
         geometry = new PlaneGeometry({ widthSegments: 1, heightSegments: 1 });
@@ -12754,7 +12818,7 @@ fn getPCFBaseShadowContribution(
   var __privateAdd$h = (obj, member, value) => member.has(obj) ? __typeError$h("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   var __privateSet$g = (obj, member, value, setter) => (__accessCheck$h(obj, member, "write to private field"), member.set(obj, value), value);
   var __privateMethod$8 = (obj, member, method) => (__accessCheck$h(obj, member, "access private method"), method);
-  var _intensity, _bias, _normalBias, _pcfSamples, _isActive, _autoRender, _receivingMeshes, _Shadow_instances, setParameters_fn;
+  var _intensity, _bias, _normalBias, _pcfSamples, _radius, _isActive, _autoRender, _receivingMeshes, _Shadow_instances, setParameters_fn;
   const shadowStruct = {
     isActive: {
       type: "i32",
@@ -12772,6 +12836,10 @@ fn getPCFBaseShadowContribution(
       type: "f32",
       value: 0
     },
+    radius: {
+      type: "f32",
+      value: 1
+    },
     intensity: {
       type: "f32",
       value: 0
@@ -12788,7 +12856,8 @@ fn getPCFBaseShadowContribution(
       intensity = 1,
       bias = 0,
       normalBias = 0,
-      pcfSamples = 1,
+      pcfSamples = 3,
+      radius = 1,
       depthTextureSize = new Vec2(512),
       depthTextureFormat = "depth24plus",
       autoRender = true,
@@ -12804,6 +12873,8 @@ fn getPCFBaseShadowContribution(
       /** @ignore */
       __privateAdd$h(this, _pcfSamples);
       /** @ignore */
+      __privateAdd$h(this, _radius);
+      /** @ignore */
       __privateAdd$h(this, _isActive);
       /** @ignore */
       __privateAdd$h(this, _autoRender);
@@ -12818,6 +12889,7 @@ fn getPCFBaseShadowContribution(
         bias,
         normalBias,
         pcfSamples,
+        radius,
         depthTextureSize,
         depthTextureFormat,
         useRenderBundle
@@ -12832,6 +12904,7 @@ fn getPCFBaseShadowContribution(
         bias,
         normalBias,
         pcfSamples,
+        radius,
         depthTextureSize,
         depthTextureFormat,
         autoRender,
@@ -12884,6 +12957,7 @@ fn getPCFBaseShadowContribution(
       bias,
       normalBias,
       pcfSamples,
+      radius,
       depthTextureSize,
       depthTextureFormat,
       autoRender,
@@ -12894,6 +12968,7 @@ fn getPCFBaseShadowContribution(
         bias,
         normalBias,
         pcfSamples,
+        radius,
         depthTextureSize,
         depthTextureFormat,
         autoRender,
@@ -12911,6 +12986,7 @@ fn getPCFBaseShadowContribution(
         this.onPropertyChanged("bias", this.bias);
         this.onPropertyChanged("normalBias", this.normalBias);
         this.onPropertyChanged("pcfSamples", this.pcfSamples);
+        this.onPropertyChanged("radius", this.radius);
       }
     }
     /**
@@ -13014,19 +13090,34 @@ fn getPCFBaseShadowContribution(
       this.onPropertyChanged("normalBias", this.normalBias);
     }
     /**
-     * Get this {@link Shadow} PCF samples count.
-     * @returns - The {@link Shadow} PCF samples count.
+     * Get this {@link Shadow} PCF Vogel disk samples count.
+     * @returns - The {@link Shadow} PCF Vogel disk samples count.
      */
     get pcfSamples() {
       return __privateGet$g(this, _pcfSamples);
     }
     /**
-     * Set this {@link Shadow} PCF samples count and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
-     * @param value - The new {@link Shadow} PCF samples count.
+     * Set this {@link Shadow} PCF Vogel disk samples count and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
+     * @param value - The new {@link Shadow} PCF Vogel disk samples count.
      */
     set pcfSamples(value) {
       __privateSet$g(this, _pcfSamples, Math.max(1, Math.ceil(value)));
       this.onPropertyChanged("pcfSamples", this.pcfSamples);
+    }
+    /**
+     * Get this {@link Shadow} radius.
+     * @returns - The {@link Shadow} radius.
+     */
+    get radius() {
+      return __privateGet$g(this, _radius);
+    }
+    /**
+     * Set this {@link Shadow} radius and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
+     * @param value - The new {@link Shadow} radius.
+     */
+    set radius(value) {
+      __privateSet$g(this, _radius, Math.max(1, value));
+      this.onPropertyChanged("radius", this.radius);
     }
     /**
      * Set the {@link depthComparisonSampler}, {@link depthTexture}, {@link depthPassTarget} and start rendering to the shadow map.
@@ -13381,6 +13472,7 @@ fn getPCFBaseShadowContribution(
   _bias = new WeakMap();
   _normalBias = new WeakMap();
   _pcfSamples = new WeakMap();
+  _radius = new WeakMap();
   _isActive = new WeakMap();
   _autoRender = new WeakMap();
   _receivingMeshes = new WeakMap();
@@ -13404,7 +13496,8 @@ fn getPCFBaseShadowContribution(
     intensity = 1,
     bias = 0,
     normalBias = 0,
-    pcfSamples = 1,
+    pcfSamples = 3,
+    radius = 1,
     depthTextureSize = new Vec2(512),
     depthTextureFormat = "depth24plus",
     autoRender = true,
@@ -13414,6 +13507,7 @@ fn getPCFBaseShadowContribution(
     this.bias = bias;
     this.normalBias = normalBias;
     this.pcfSamples = pcfSamples;
+    this.radius = radius;
     this.depthTextureSize = depthTextureSize;
     this.depthTextureFormat = depthTextureFormat;
     __privateSet$g(this, _autoRender, autoRender);
@@ -13654,6 +13748,7 @@ fn getPCFBaseShadowContribution(
       bias,
       normalBias,
       pcfSamples,
+      radius,
       depthTextureSize,
       depthTextureFormat,
       autoRender,
@@ -13673,6 +13768,7 @@ fn getPCFBaseShadowContribution(
         bias,
         normalBias,
         pcfSamples,
+        radius,
         depthTextureSize,
         depthTextureFormat,
         autoRender,
@@ -13719,6 +13815,7 @@ fn getPCFBaseShadowContribution(
       bias,
       normalBias,
       pcfSamples,
+      radius,
       depthTextureSize,
       depthTextureFormat,
       autoRender,
@@ -13738,6 +13835,7 @@ fn getPCFBaseShadowContribution(
         bias,
         normalBias,
         pcfSamples,
+        radius,
         depthTextureSize,
         depthTextureFormat,
         autoRender,
@@ -14080,6 +14178,7 @@ struct PointShadowVSOutput {
       bias,
       normalBias,
       pcfSamples,
+      radius,
       depthTextureSize,
       depthTextureFormat,
       autoRender,
@@ -14094,6 +14193,7 @@ struct PointShadowVSOutput {
         bias,
         normalBias,
         pcfSamples,
+        radius,
         depthTextureSize,
         depthTextureFormat,
         autoRender,
@@ -14589,6 +14689,7 @@ struct SpotShadowVSOutput {
       bias,
       normalBias,
       pcfSamples,
+      radius,
       depthTextureSize,
       depthTextureFormat,
       autoRender,
@@ -14604,6 +14705,7 @@ struct SpotShadowVSOutput {
         bias,
         normalBias,
         pcfSamples,
+        radius,
         depthTextureSize,
         depthTextureFormat,
         autoRender,
@@ -16230,7 +16332,7 @@ ${this.shaders.compute.head}`;
       __privateSet$8(this, _mipsGeneration, {
         sampler: null,
         module: null,
-        pipelineByFormat: {}
+        pipelineByFormatAndView: {}
       });
       if (this.options.autoRender) {
         this.animate();
@@ -16296,6 +16398,15 @@ ${this.shaders.compute.head}`;
       } else {
         try {
           const { limits } = this.adapter;
+          const isCompatibilityMode = this.options.adapterOptions.featureLevel === "compatibility";
+          if (isCompatibilityMode) {
+            this.options.requestAdapterLimits.push(
+              "maxStorageBuffersInVertexStage",
+              "maxStorageTexturesInVertexStage",
+              "maxStorageBuffersInFragmentStage",
+              "maxStorageTexturesInFragmentStage"
+            );
+          }
           const requiredLimits = {};
           for (const key in limits) {
             if (this.options.requestAdapterLimits.includes(key)) {
@@ -16357,7 +16468,7 @@ ${this.shaders.compute.head}`;
       __privateSet$8(this, _mipsGeneration, {
         sampler: null,
         module: null,
-        pipelineByFormat: {}
+        pipelineByFormatAndView: {}
       });
     }
     /**
@@ -16515,13 +16626,24 @@ ${this.shaders.compute.head}`;
           code: (
             /* wgsl */
             `
+            const faceMat = array(
+              mat3x3f( 0,  0,  -2,  0, -2,   0,  1,  1,   1),   // pos-x
+              mat3x3f( 0,  0,   2,  0, -2,   0, -1,  1,  -1),   // neg-x
+              mat3x3f( 2,  0,   0,  0,  0,   2, -1,  1,  -1),   // pos-y
+              mat3x3f( 2,  0,   0,  0,  0,  -2, -1, -1,   1),   // neg-y
+              mat3x3f( 2,  0,   0,  0, -2,   0, -1,  1,   1),   // pos-z
+              mat3x3f(-2,  0,   0,  0, -2,   0,  1,  1,  -1)    // neg-z
+            );
+
             struct VSOutput {
               @builtin(position) position: vec4f,
               @location(0) texcoord: vec2f,
+              @location(1) @interpolate(flat, either) baseArrayLayer: u32,
             };
 
             @vertex fn vs(
-              @builtin(vertex_index) vertexIndex : u32
+              @builtin(vertex_index) vertexIndex : u32,
+              @builtin(instance_index) baseArrayLayer: u32,
             ) -> VSOutput {
               let pos = array(
 
@@ -16539,14 +16661,32 @@ ${this.shaders.compute.head}`;
               let xy = pos[vertexIndex];
               vsOutput.position = vec4f(xy * 2.0 - 1.0, 0.0, 1.0);
               vsOutput.texcoord = vec2f(xy.x, 1.0 - xy.y);
+              vsOutput.baseArrayLayer = baseArrayLayer;
               return vsOutput;
             }
 
             @group(0) @binding(0) var ourSampler: sampler;
-            @group(0) @binding(1) var ourTexture: texture_2d<f32>;
 
-            @fragment fn fs(fsInput: VSOutput) -> @location(0) vec4f {
-              return textureSample(ourTexture, ourSampler, fsInput.texcoord);
+            @group(0) @binding(1) var ourTexture2d: texture_2d<f32>;
+            @fragment fn fs2d(fsInput: VSOutput) -> @location(0) vec4f {
+              return textureSample(ourTexture2d, ourSampler, fsInput.texcoord);
+            }
+
+            @group(0) @binding(1) var ourTexture2dArray: texture_2d_array<f32>;
+            @fragment fn fs2darray(fsInput: VSOutput) -> @location(0) vec4f {
+              return textureSample(
+                ourTexture2dArray,
+                ourSampler,
+                fsInput.texcoord,
+                fsInput.baseArrayLayer);
+            }
+            
+            @group(0) @binding(1) var ourTextureCube: texture_cube<f32>;
+            @fragment fn fscube(fsInput: VSOutput) -> @location(0) vec4f {
+              return textureSample(
+                ourTextureCube,
+                ourSampler,
+                faceMat[fsInput.baseArrayLayer] * vec3f(fract(fsInput.texcoord), 1));
             }
           `
           )
@@ -16556,29 +16696,27 @@ ${this.shaders.compute.head}`;
           magFilter: "linear"
         });
       }
-      if (!__privateGet$8(this, _mipsGeneration).pipelineByFormat[texture.texture.format]) {
-        __privateGet$8(this, _mipsGeneration).pipelineByFormat[texture.texture.format] = this.device.createRenderPipeline({
-          label: "Mip level generator pipeline",
+      const textureBindingViewDimension = texture.texture.textureBindingViewDimension ?? "2d-array";
+      if (!__privateGet$8(this, _mipsGeneration).pipelineByFormatAndView[texture.texture.format + textureBindingViewDimension]) {
+        const entryPoint = `fs${textureBindingViewDimension.replace(/[\W]/, "")}`;
+        __privateGet$8(this, _mipsGeneration).pipelineByFormatAndView[texture.texture.format + textureBindingViewDimension] = this.device.createRenderPipeline({
+          label: `Mip level generator pipeline for ${textureBindingViewDimension}, format: ${texture.texture.format}`,
           layout: "auto",
           vertex: {
             module: __privateGet$8(this, _mipsGeneration).module
           },
           fragment: {
             module: __privateGet$8(this, _mipsGeneration).module,
+            entryPoint,
             targets: [{ format: texture.texture.format }]
           }
         });
       }
-      const pipeline = __privateGet$8(this, _mipsGeneration).pipelineByFormat[texture.texture.format];
+      const pipeline = __privateGet$8(this, _mipsGeneration).pipelineByFormatAndView[texture.texture.format + textureBindingViewDimension];
       const encoder = commandEncoder || this.device.createCommandEncoder({
         label: "Mip gen encoder"
       });
-      let width = texture.texture.width;
-      let height = texture.texture.height;
-      let baseMipLevel = 0;
-      while (width > 1 || height > 1) {
-        width = Math.max(1, width / 2 | 0);
-        height = Math.max(1, height / 2 | 0);
+      for (let baseMipLevel = 1; baseMipLevel < texture.texture.mipLevelCount; ++baseMipLevel) {
         for (let layer = 0; layer < texture.texture.depthOrArrayLayers; ++layer) {
           const bindGroup = this.device.createBindGroup({
             layout: pipeline.getBindGroupLayout(0),
@@ -16587,11 +16725,9 @@ ${this.shaders.compute.head}`;
               {
                 binding: 1,
                 resource: texture.texture.createView({
-                  dimension: "2d",
-                  baseMipLevel,
-                  mipLevelCount: 1,
-                  baseArrayLayer: layer,
-                  arrayLayerCount: 1
+                  dimension: textureBindingViewDimension,
+                  baseMipLevel: baseMipLevel - 1,
+                  mipLevelCount: 1
                 })
               }
             ]
@@ -16602,7 +16738,7 @@ ${this.shaders.compute.head}`;
               {
                 view: texture.texture.createView({
                   dimension: "2d",
-                  baseMipLevel: baseMipLevel + 1,
+                  baseMipLevel,
                   mipLevelCount: 1,
                   baseArrayLayer: layer,
                   arrayLayerCount: 1
@@ -16615,10 +16751,9 @@ ${this.shaders.compute.head}`;
           const pass = encoder.beginRenderPass(renderPassDescriptor);
           pass.setPipeline(pipeline);
           pass.setBindGroup(0, bindGroup);
-          pass.draw(6);
+          pass.draw(6, 1, 0, layer);
           pass.end();
         }
-        ++baseMipLevel;
       }
       if (!commandEncoder) {
         const commandBuffer = encoder.finish();
@@ -17721,7 +17856,8 @@ ${this.shaders.compute.head}`;
             maxDirectionalLights: 5,
             maxPointLights: 5,
             maxSpotLights: 5,
-            useUniformsForShadows: false
+            // On compatibility mode, some devices might not allow storage buffers in vertex shaders
+            useUniformsForShadows: this.device?.limits.maxStorageBuffersInVertexStage === 0
           },
           ...lights
         };
@@ -18207,7 +18343,7 @@ ${this.shaders.compute.head}`;
       this.bindings[shadowsType] = new BufferBinding({
         label,
         name: shadowsType,
-        bindingType: this.options.lights && this.options.lights.useUniformsForShadows ? "uniform" : "storage",
+        bindingType: this.options.lights && (this.options.lights.useUniformsForShadows || this.device?.limits.maxStorageBuffersInVertexStage === 0) ? "uniform" : "storage",
         visibility: ["vertex", "fragment", "compute"],
         // TODO needed in compute?
         childrenBindings: [
@@ -18397,7 +18533,7 @@ ${this.shaders.compute.head}`;
         maxDirectionalLights: 5,
         maxPointLights: 5,
         maxSpotLights: 5,
-        useUniformsForShadows: false
+        useUniformsForShadows: this.device?.limits.maxStorageBuffersInVertexStage === 0 || false
       };
     }
     this.setLightsBinding();
@@ -18566,6 +18702,7 @@ struct VSOutput {
     /* wgsl */
     `
 const PI = ${Math.PI};
+const PI2 = ${Math.PI * 2};
 const RECIPROCAL_PI = ${1 / Math.PI};
 const RECIPROCAL_PI2 = ${0.5 / Math.PI};
 const EPSILON = 1e-6;`
@@ -18837,9 +18974,9 @@ fn getLambertDirect(
   const getPCFShadows = (
     /* wgsl */
     `
-  let pointShadows = getPCFPointShadows(worldPosition);
-  let directionalShadows = getPCFDirectionalShadows(worldPosition);
-  let spotShadows = getPCFSpotShadows(worldPosition);
+  let pointShadows = getPCFPointShadows(worldPosition, fragmentPosition.xy);
+  let directionalShadows = getPCFDirectionalShadows(worldPosition, fragmentPosition.xy);
+  let spotShadows = getPCFSpotShadows(worldPosition, fragmentPosition.xy);
 `
   );
 
@@ -20202,14 +20339,14 @@ fn getPBR(
       return (
         /* wgsl */
         `
-  @location(${index}) ${attribute.type.includes("i") || attribute.type.includes("u") ? "@interpolate(flat) " : " "}${attribute.name}: ${attribute.type},`
+  @location(${index}) ${attribute.type.includes("i") || attribute.type.includes("u") ? "@interpolate(flat, either) " : " "}${attribute.name}: ${attribute.type},`
       );
     }).join("");
     const additionalVaryingsOutput = additionalVaryings.map((attribute, index) => {
       return (
         /* wgsl */
         `
-  @location(${attributes.length + 4 + index}) ${attribute.type === "u32" || attribute.type === "i32" ? "@interpolate(flat) " : " "}${attribute.name}: ${attribute.type},`
+  @location(${attributes.length + 4 + index}) ${attribute.type === "u32" || attribute.type === "i32" ? "@interpolate(flat, either) " : " "}${attribute.name}: ${attribute.type},`
       );
     }).join("");
     return (
@@ -23275,6 +23412,8 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
       context = {},
       production = false,
       adapterOptions = {},
+      requiredFeatures = [],
+      requestAdapterLimits = [],
       renderPass,
       camera,
       lights,
@@ -23304,6 +23443,8 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
         lights,
         production,
         adapterOptions,
+        requiredFeatures,
+        requestAdapterLimits,
         context,
         renderPass,
         autoRender,
@@ -23401,6 +23542,8 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
         label: "GPUCurtains default device",
         production: this.options.production,
         adapterOptions: this.options.adapterOptions,
+        requiredFeatures: this.options.requiredFeatures,
+        requestAdapterLimits: this.options.requestAdapterLimits,
         autoRender: this.options.autoRender,
         onError: () => setTimeout(() => {
           this._onErrorCallback && this._onErrorCallback();
@@ -26461,6 +26604,8 @@ struct Params {
       parameters.outputTarget = new RenderTarget(renderer, {
         label: parameters.label ? parameters.label + " render target" : "Ping Pong render target",
         useDepth: false,
+        sampleCount: 1,
+        // Force sample count to 1, no need use multisampled here
         ...colorAttachments && { colorAttachments }
       });
       parameters.transparent = false;

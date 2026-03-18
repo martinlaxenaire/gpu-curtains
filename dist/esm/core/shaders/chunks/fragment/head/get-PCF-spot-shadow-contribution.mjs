@@ -1,7 +1,7 @@
 const getPCFSpotShadowContribution = (
   /* wgsl */
   `
-fn getPCFSpotShadowContribution(index: i32, worldPosition: vec3f, depthTexture: texture_depth_2d) -> f32 {
+fn getPCFSpotShadowContribution(index: i32, worldPosition: vec3f, fragmentPosition: vec2f, depthTexture: texture_depth_2d) -> f32 {
   let spotShadow: SpotShadowsElement = spotShadows.spotShadowsElements[index];
   
   // get shadow coords
@@ -17,7 +17,9 @@ fn getPCFSpotShadowContribution(index: i32, worldPosition: vec3f, depthTexture: 
   
   return getPCFBaseShadowContribution(
     shadowCoords,
+    fragmentPosition,
     spotShadow.pcfSamples,
+    spotShadow.radius,
     spotShadow.bias,
     spotShadow.intensity,
     depthTexture

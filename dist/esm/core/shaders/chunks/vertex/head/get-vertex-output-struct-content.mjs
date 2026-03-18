@@ -31,14 +31,14 @@ const getVertexOutputStructContent = ({
     return (
       /* wgsl */
       `
-  @location(${index}) ${attribute.type.includes("i") || attribute.type.includes("u") ? "@interpolate(flat) " : " "}${attribute.name}: ${attribute.type},`
+  @location(${index}) ${attribute.type.includes("i") || attribute.type.includes("u") ? "@interpolate(flat, either) " : " "}${attribute.name}: ${attribute.type},`
     );
   }).join("");
   const additionalVaryingsOutput = additionalVaryings.map((attribute, index) => {
     return (
       /* wgsl */
       `
-  @location(${attributes.length + 4 + index}) ${attribute.type === "u32" || attribute.type === "i32" ? "@interpolate(flat) " : " "}${attribute.name}: ${attribute.type},`
+  @location(${attributes.length + 4 + index}) ${attribute.type === "u32" || attribute.type === "i32" ? "@interpolate(flat, either) " : " "}${attribute.name}: ${attribute.type},`
     );
   }).join("");
   return (

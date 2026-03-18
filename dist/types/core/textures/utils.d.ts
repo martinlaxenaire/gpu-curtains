@@ -1,6 +1,6 @@
 import { TextureBindingType } from '../bindings/Binding';
 /**  Defines all kinds of allowed texture usages as camel case strings. */
-export type TextureUsageKeys = 'copySrc' | 'copyDst' | 'renderAttachment' | 'storageBinding' | 'textureBinding';
+export type TextureUsageKeys = 'copySrc' | 'copyDst' | 'renderAttachment' | 'storageBinding' | 'textureBinding' | 'transientAttachment';
 /**
  * Get the corresponding {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUTexture/usage#value | GPUTextureUsageFlags} based on an array of {@link TextureUsageKeys | texture usage names}.
  * @param usages - array of {@link TextureUsageKeys | texture usage names}.

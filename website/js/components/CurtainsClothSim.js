@@ -22,7 +22,7 @@ export class CurtainsClothSim {
       this.showTween = gsap
         .timeline()
         .set(this.computeForcesPass.uniforms.interaction.wind.value, {
-          z: -3,
+          z: -30,
         })
         .call(() => this.plane.domElement.element.classList.add('canvas-texture-ready'))
         .to(this.plane.uniforms.global.opacity, {
@@ -46,7 +46,10 @@ export class CurtainsClothSim {
 
     this.raycaster = new Raycaster(this.gpuCurtains)
 
-    this.simulationSpeed = 2
+    this.simulationSteps = 25
+    const { maxComputeInvocationsPerWorkgroup } = this.gpuCurtains.deviceManager.device.limits
+    // Beware of actual compatibility mode limits
+    this.workgroupSize = maxComputeInvocationsPerWorkgroup < 256 ? 8 : 16
 
     this.clothDefinition = new Vec2(40)
 
@@ -58,6 +61,7 @@ export class CurtainsClothSim {
     this.positionArray = this.clothGeometry.getAttributeByName('position').array.slice()
 
     this.vertexPositionArray = new Float32Array((this.positionArray.length * 4) / 3)
+    this.prevVertexPositionArray = new Float32Array((this.positionArray.length * 4) / 3)
 
     this.normalPositionArray = new Float32Array(this.vertexPositionArray.length)
     this.vertexVelocityArray = new Float32Array(this.vertexPositionArray.length)
@@ -69,16 +73,25 @@ export class CurtainsClothSim {
       this.vertexPositionArray[i + 1] = this.positionArray[j + 1]
       this.vertexPositionArray[i + 2] = this.positionArray[j + 2]
 
+      this.prevVertexPositionArray[i] = this.positionArray[j]
+      this.prevVertexPositionArray[i + 1] = this.positionArray[j + 1]
+      this.prevVertexPositionArray[i + 2] = this.positionArray[j + 2]
+
       const xPosIndex = Math.round((this.positionArray[j] + 1) * 0.5 * this.clothDefinition.x)
       const isFixed = this.positionArray[j + 1] === 1 && xPosIndex % 4 === 0
 
       this.vertexPositionArray[i + 3] = isFixed ? -1 : 0 // fixed point
+      this.prevVertexPositionArray[i + 3] = isFixed ? -1 : 0 // fixed point
 
       // explicitly set normals
       this.normalPositionArray[i] = 0
       this.normalPositionArray[i + 1] = 0
       this.normalPositionArray[i + 2] = 1
     }
+
+    const mass = 0.4
+    const springConstant = 90_000
+    const dampingConstant = 50
 
     this.computeBindGroup = new BindGroup(this.gpuCurtains.renderer, {
       label: 'Cloth simulation compute bind group',
@@ -95,15 +108,19 @@ export class CurtainsClothSim {
           struct: {
             deltaTime: {
               type: 'f32',
-              value: 0.002 * this.simulationSpeed,
+              value: 1 / 60 / this.simulationSteps,
             },
             mass: {
               type: 'f32',
-              value: 1,
+              value: mass,
+            },
+            springConstant: {
+              type: 'f32',
+              value: springConstant,
             },
             dampingConstant: {
               type: 'f32',
-              value: 50,
+              value: dampingConstant,
             },
             floor: {
               type: 'f32',
@@ -111,7 +128,7 @@ export class CurtainsClothSim {
             },
             gravity: {
               type: 'vec3f',
-              value: new Vec3(0, -0.0981, 0),
+              value: new Vec3(0, -9.81, 0),
             },
           },
         },
@@ -131,7 +148,7 @@ export class CurtainsClothSim {
             },
             pointerStrength: {
               type: 'f32',
-              value: 250,
+              value: 2_000,
             },
             wind: {
               type: 'vec3f',
@@ -148,6 +165,10 @@ export class CurtainsClothSim {
             position: {
               type: 'array<vec4f>',
               value: this.vertexPositionArray,
+            },
+            prevPosition: {
+              type: 'array<vec4f>',
+              value: this.prevVertexPositionArray,
             },
             normal: {
               type: 'array<vec4f>',
@@ -171,44 +192,50 @@ export class CurtainsClothSim {
       label: 'Compute forces',
       shaders: {
         compute: {
-          code: computeClothSim,
+          code: computeClothSim(this.workgroupSize),
           entryPoint: 'calc_forces',
         },
       },
       autoRender: false, // we will manually take care of rendering
       bindGroups: [this.computeBindGroup],
-      dispatchSize: [Math.ceil((this.clothDefinition.x + 1) / 14), Math.ceil((this.clothDefinition.y + 1) / 14)],
+      dispatchSize: [
+        Math.ceil((this.clothDefinition.x + 1) / (this.workgroupSize - 2)),
+        Math.ceil((this.clothDefinition.y + 1) / (this.workgroupSize - 2)),
+      ],
     })
 
     this.computeUpdatePass = new ComputePass(this.gpuCurtains, {
       label: 'Compute update',
       shaders: {
         compute: {
-          code: computeClothSim,
-          entryPoint: 'update',
+          code: computeClothSim(this.workgroupSize),
+          entryPoint: 'update_verlet',
         },
       },
       autoRender: false, // we will manually take care of rendering
       bindGroups: [this.computeBindGroup],
-      dispatchSize: [Math.ceil(((this.clothDefinition.x + 1) * (this.clothDefinition.y + 1)) / 256)],
+      dispatchSize: [
+        Math.ceil(
+          ((this.clothDefinition.x + 1) * (this.clothDefinition.y + 1)) / (this.workgroupSize * this.workgroupSize)
+        ),
+      ],
     })
 
     this.computeNormalPass = new ComputePass(this.gpuCurtains, {
       label: 'Compute normal',
       shaders: {
         compute: {
-          code: computeClothSim,
+          code: computeClothSim(this.workgroupSize),
           entryPoint: 'calc_normal',
         },
       },
       autoRender: false, // we will manually take care of rendering
       bindGroups: [this.computeBindGroup],
-      dispatchSize: [Math.ceil((this.clothDefinition.x + 1) / 14), Math.ceil((this.clothDefinition.y + 1) / 14)],
+      dispatchSize: [
+        Math.ceil((this.clothDefinition.x + 1) / (this.workgroupSize - 2)),
+        Math.ceil((this.clothDefinition.y + 1) / (this.workgroupSize - 2)),
+      ],
     })
-
-    // now use renderer onBeforeRender callback to render our compute passes
-    // nb sims compute per render impacts the speed at which the simulation runs
-    const nbSimsComputePerRender = Math.min(50, Math.ceil(75 / this.simulationSpeed))
 
     // add a task to our renderer onBeforeRenderScene tasks queue manager
     this.computeTaskId = this.gpuCurtains.renderer.onBeforeRenderScene.add((commandEncoder) => {
@@ -224,7 +251,7 @@ export class CurtainsClothSim {
 
       this.ready = this.plane && this.plane.ready
 
-      for (let i = 0; i < nbSimsComputePerRender; i++) {
+      for (let i = 0; i < this.simulationSteps; i++) {
         const forcePass = commandEncoder.beginComputePass()
         this.computeForcesPass.render(forcePass)
         forcePass.end()
@@ -246,6 +273,12 @@ export class CurtainsClothSim {
       attributes: [
         {
           name: 'clothPosition',
+          type: 'vec4f',
+          bufferFormat: 'float32x4',
+          size: 4,
+        },
+        {
+          name: 'clothPrevPosition',
           type: 'vec4f',
           bufferFormat: 'float32x4',
           size: 4,
@@ -314,10 +347,17 @@ export class CurtainsClothSim {
     const writeCanvasText = () => {
       const htmlPlane = this.plane.domElement.element
 
+      const { maxTextureDimension2D } = this.gpuCurtains.deviceManager.device?.limits ?? 2048
+
       const htmlPlaneWidth = this.plane.boundingRect.width
       const htmlPlaneHeight = this.plane.boundingRect.height
 
-      const canvasResolution = window.devicePixelRatio * 2
+      // Max resolution to avoid texture to be too large
+      const canvasResolution = Math.min(
+        (maxTextureDimension2D * 0.75) / htmlPlaneWidth,
+        (maxTextureDimension2D * 0.75) / htmlPlaneHeight,
+        window.devicePixelRatio * 2
+      )
 
       // set sizes
       canvas.width = htmlPlaneWidth * canvasResolution

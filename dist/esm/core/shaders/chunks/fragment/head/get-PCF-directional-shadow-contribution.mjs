@@ -1,7 +1,7 @@
 const getPCFDirectionalShadowContribution = (
   /* wgsl */
   `
-fn getPCFDirectionalShadowContribution(index: i32, worldPosition: vec3f, depthTexture: texture_depth_2d) -> f32 {
+fn getPCFDirectionalShadowContribution(index: i32, worldPosition: vec3f, fragmentPosition: vec2f, depthTexture: texture_depth_2d) -> f32 {
   let directionalShadow: DirectionalShadowsElement = directionalShadows.directionalShadowsElements[index];
   
   // get shadow coords
@@ -17,7 +17,9 @@ fn getPCFDirectionalShadowContribution(index: i32, worldPosition: vec3f, depthTe
   
   return getPCFBaseShadowContribution(
     shadowCoords,
+    fragmentPosition,
     directionalShadow.pcfSamples,
+    directionalShadow.radius,
     directionalShadow.bias,
     directionalShadow.intensity,
     depthTexture

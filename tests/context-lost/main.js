@@ -11,6 +11,11 @@ window.addEventListener('load', async () => {
     container: '#canvas',
     watchScroll: false, // no need to listen for the scroll in this example
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
+    lights: {
+      // Needed in compatibility mode since we're requesting the device manually afterwards
+      // We could have set lights to false instead since we're not using them anyway
+      useUniformsForShadows: true,
+    },
   })
     .onError(() => {
       console.log('gpu curtains error!')
@@ -26,14 +31,13 @@ window.addEventListener('load', async () => {
     })
 
   //
-  const adapter = await navigator.gpu.requestAdapter()
+  const adapter = await navigator.gpu.requestAdapter({
+    featureLevel: 'compatibility',
+  })
   const device = await adapter.requestDevice()
 
   gpuCurtains.setDevice({ adapter, device })
   // await gpuCurtains.setDevice()
-  //
-
-  //await gpuCurtains.setDevice()
 
   // now add objects to our scene
   const cubeGeometry = new BoxGeometry()

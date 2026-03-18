@@ -17,6 +17,8 @@ import {
 // glTF loader with animated skinned meshes, shadows and environment maps
 window.addEventListener('load', async () => {
   // create a device manager
+  // Compatibility mode here would probably fail on older devices
+  // Due to skinning and morhp targets using vertex storage buffers
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
   })
@@ -93,6 +95,7 @@ window.addEventListener('load', async () => {
       depthTextureSize: new Vec2(1024),
       pcfSamples: 3,
       bias: 0.001,
+      normalBias: 0.01,
     },
   })
 

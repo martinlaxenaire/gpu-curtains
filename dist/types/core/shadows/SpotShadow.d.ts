@@ -39,7 +39,7 @@ export declare class SpotShadow extends Shadow {
      * @param renderer - {@link CameraRenderer} or {@link GPUCurtains} used to create this {@link SpotShadow}.
      * @param parameters - {@link SpotShadowParams} used to create this {@link SpotShadow}.
      */
-    constructor(renderer: CameraRenderer | GPUCurtains, { light, intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender, useRenderBundle, camera, }?: SpotShadowParams);
+    constructor(renderer: CameraRenderer | GPUCurtains, { light, intensity, bias, normalBias, pcfSamples, radius, depthTextureSize, depthTextureFormat, autoRender, useRenderBundle, camera, }?: SpotShadowParams);
     /**
      * Set or reset this {@link SpotShadow} {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      */

@@ -18,7 +18,6 @@ window.addEventListener('load', async () => {
     BoxGeometry,
     Vec3,
     Object3D,
-    BufferBinding,
   } = await import(/* @vite-ignore */ path)
 
   const stats = new Stats()
@@ -30,6 +29,9 @@ window.addEventListener('load', async () => {
   // first, we need a WebGPU device, that's what GPUDeviceManager is for
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
+    adapterOptions: {
+      featureLevel: 'compatibility',
+    },
   })
 
   // we need to wait for the device to be created
@@ -79,7 +81,7 @@ window.addEventListener('load', async () => {
   })
 
   // point light
-
+  const autoRenderPointLightShadow = false
   const pink = new Vec3(1, 0, 1)
 
   const pointLightPivot = new Object3D()
@@ -98,6 +100,7 @@ window.addEventListener('load', async () => {
         near: 0.01,
         far: 200,
       },
+      autoRender: autoRenderPointLightShadow,
     },
   })
 
@@ -139,6 +142,7 @@ window.addEventListener('load', async () => {
     label: 'Cube',
     geometry: new BoxGeometry(),
     castShadows: true,
+    cullMode: 'none',
     material: {
       shading: 'Phong',
       color: new Vec3(0.75),
@@ -155,6 +159,10 @@ window.addEventListener('load', async () => {
   //   console.log('DEPTH VERTEX SHADER >>>\n\n', await depthMesh.material.getShaderCode('vertex'))
   //   console.log('DEPTH FRAGMENT SHADER >>>\n\n', await depthMesh.material.getShaderCode('fragment'))
   // })
+
+  if (!autoRenderPointLightShadow) {
+    pointLight.shadow.renderOnce()
+  }
 
   // DEBUG DEPTH
 
@@ -279,9 +287,21 @@ window.addEventListener('load', async () => {
 
   const meshFolder = gui.addFolder('Mesh')
   const meshPosFolder = meshFolder.addFolder('Position')
-  meshPosFolder.add(mesh.position, 'x', -10, 10, 0.25)
-  meshPosFolder.add(mesh.position, 'y', -1, 10, 0.25)
-  meshPosFolder.add(mesh.position, 'z', -10, 10, 0.25)
+  meshPosFolder.add(mesh.position, 'x', -10, 10, 0.25).onChange(() => {
+    if (!autoRenderPointLightShadow) {
+      pointLight.shadow.renderOnce()
+    }
+  })
+  meshPosFolder.add(mesh.position, 'y', -1, 10, 0.25).onChange(() => {
+    if (!autoRenderPointLightShadow) {
+      pointLight.shadow.renderOnce()
+    }
+  })
+  meshPosFolder.add(mesh.position, 'z', -10, 10, 0.25).onChange(() => {
+    if (!autoRenderPointLightShadow) {
+      pointLight.shadow.renderOnce()
+    }
+  })
 
   const pointLightFolder = gui.addFolder('Point light')
 
@@ -295,9 +315,21 @@ window.addEventListener('load', async () => {
     })
 
   const pointLightPosFolder = pointLightFolder.addFolder('Position')
-  pointLightPosFolder.add(pointLight.position, 'x', -10, 10, 0.25)
-  pointLightPosFolder.add(pointLight.position, 'y', -1, 10, 0.25)
-  pointLightPosFolder.add(pointLight.position, 'z', -10, 10, 0.25)
+  pointLightPosFolder.add(pointLight.position, 'x', -10, 10, 0.25).onChange(() => {
+    if (!autoRenderPointLightShadow) {
+      pointLight.shadow.renderOnce()
+    }
+  })
+  pointLightPosFolder.add(pointLight.position, 'y', -1, 10, 0.25).onChange(() => {
+    if (!autoRenderPointLightShadow) {
+      pointLight.shadow.renderOnce()
+    }
+  })
+  pointLightPosFolder.add(pointLight.position, 'z', -10, 10, 0.25).onChange(() => {
+    if (!autoRenderPointLightShadow) {
+      pointLight.shadow.renderOnce()
+    }
+  })
 
   if (pointLight.shadow.isActive) {
     const pointShadow = pointLightFolder.addFolder('Shadow')
@@ -306,6 +338,7 @@ window.addEventListener('load', async () => {
     pointShadow.add(pointLight.shadow, 'bias', 0, 0.01, 0.0001)
     pointShadow.add(pointLight.shadow, 'normalBias', 0, 0.01, 0.0001)
     pointShadow.add(pointLight.shadow, 'pcfSamples', 1, 5, 1)
+    pointShadow.add(pointLight.shadow, 'radius', 1, 5, 0.01)
     pointShadow
       .add(pointLight.shadow.depthTextureSize, 'x', 128, 1024, 64)
       .name('Texture size')

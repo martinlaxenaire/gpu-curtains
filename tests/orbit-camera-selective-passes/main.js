@@ -23,6 +23,9 @@ window.addEventListener('load', async () => {
   // first, we need a WebGPU device, that's what GPUDeviceManager is for
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
+    adapterOptions: {
+      featureLevel: 'compatibility',
+    },
   })
 
   // we need to wait for the device to be created
@@ -498,13 +501,13 @@ window.addEventListener('load', async () => {
           cubeDepthTexture,
           vec2<i32>(floor(fsInput.position.xy)),
           0
-        );
+        ).x;
         
         let rawSphereDepth = textureLoad(
           sphereDepthTexture,
           vec2<i32>(floor(fsInput.position.xy)),
           0
-        );
+        ).x;
                 
         var color: vec4f = cubeColor * (1.0 - sphereColor.a) + sphereColor;
         color = select(color, cubeColor, rawSphereDepth > rawCubeDepth);
@@ -548,7 +551,7 @@ window.addEventListener('load', async () => {
 
   const cubeDepthTexture = blendPass.createTexture({
     name: 'cubeDepthTexture',
-    type: 'depth',
+    // type: 'depth',
     format: 'depth24plus',
     fromTexture: blankRenderTarget.options.depthTexture,
     sampleCount: gpuCameraRenderer.renderPass.options.sampleCount,
@@ -563,7 +566,7 @@ window.addEventListener('load', async () => {
 
   const sphereDepthTexture = blendPass.createTexture({
     name: 'sphereDepthTexture',
-    type: 'depth',
+    // type: 'depth',
     format: 'depth24plus',
     fromTexture: selectiveBloomTarget.options.depthTexture,
     sampleCount: gpuCameraRenderer.renderPass.options.sampleCount,

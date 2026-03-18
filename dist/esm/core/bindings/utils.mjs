@@ -90,7 +90,7 @@ const getBindGroupLayoutTextureBindingType = (binding) => {
         texture: {
           multisampled: binding.options.multisampled,
           viewDimension: binding.options.viewDimension,
-          sampleType: binding.options.multisampled ? "unfilterable-float" : "float"
+          sampleType: binding.options.multisampled || binding.options.format.indexOf("depth") !== -1 ? "unfilterable-float" : "float"
         }
       };
     case "depth":
