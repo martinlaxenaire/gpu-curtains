@@ -3,7 +3,13 @@ import { WebGPUTextureUsageConstants } from '../../utils/webgpu-constants'
 import { TextureBindingType } from '../bindings/Binding'
 
 /**  Defines all kinds of allowed texture usages as camel case strings. */
-export type TextureUsageKeys = 'copySrc' | 'copyDst' | 'renderAttachment' | 'storageBinding' | 'textureBinding'
+export type TextureUsageKeys =
+  | 'copySrc'
+  | 'copyDst'
+  | 'renderAttachment'
+  | 'storageBinding'
+  | 'textureBinding'
+  | 'transientAttachment'
 
 /**
  * Map {@link TextureUsageKeys | texture usage names} with actual {@link GPUDevice.createTexture.descriptor.usage | GPUTextureUsageFlags}.
@@ -14,6 +20,7 @@ const textureUsages: Map<TextureUsageKeys, GPUTextureUsageFlags> = new Map([
   ['renderAttachment', WebGPUTextureUsageConstants.RENDER_ATTACHMENT],
   ['storageBinding', WebGPUTextureUsageConstants.STORAGE_BINDING],
   ['textureBinding', WebGPUTextureUsageConstants.TEXTURE_BINDING],
+  ['transientAttachment', WebGPUTextureUsageConstants.TRANSIENT_ATTACHMENT],
 ])
 
 /**
