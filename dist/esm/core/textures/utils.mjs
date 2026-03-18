@@ -5,7 +5,8 @@ const textureUsages = /* @__PURE__ */ new Map([
   ["copyDst", WebGPUTextureUsageConstants.COPY_DST],
   ["renderAttachment", WebGPUTextureUsageConstants.RENDER_ATTACHMENT],
   ["storageBinding", WebGPUTextureUsageConstants.STORAGE_BINDING],
-  ["textureBinding", WebGPUTextureUsageConstants.TEXTURE_BINDING]
+  ["textureBinding", WebGPUTextureUsageConstants.TEXTURE_BINDING],
+  ["transientAttachment", WebGPUTextureUsageConstants.TRANSIENT_ATTACHMENT]
 ]);
 const getTextureUsages = (usages = []) => {
   return usages.reduce((acc, v) => {
