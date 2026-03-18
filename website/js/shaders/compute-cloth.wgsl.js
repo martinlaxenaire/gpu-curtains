@@ -195,7 +195,7 @@ fn update_verlet(
   let prev = getPrevPosition(i);
   let acc  = getForce(i).xyz / params.mass;
   let dt2  = params.deltaTime * params.deltaTime;
-  let forcedDamping = 0.999925;
+  let forcedDamping = 0.9999;
 
   let next =
     pos.xyz +
