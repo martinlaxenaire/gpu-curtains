@@ -18,10 +18,24 @@ import {
 
 // inspired by https://webgpu.github.io/webgpu-samples/samples/deferredRendering
 window.addEventListener('load', async () => {
+  // get sample count from url search params or default to 1
+  // beware that MSAA + deferred rendering can be quite expensive!
+  const url = new URL(window.location)
+  const searchParams = new URLSearchParams(url.search)
+  const urlSampleCount = searchParams.get('sampleCount') && parseInt(searchParams.get('sampleCount'))
+  const sampleCount = urlSampleCount && urlSampleCount === 4 ? urlSampleCount : 1
+
   // first, we need a WebGPU device, that's what GPUDeviceManager is for
-  // This example does not support compatibility mode out of the box yet
+  // This example does not support compatibility mode when multisampled
+  // Because we need rgba16float texture for normals for accurate lighting
+  // And they multisampled rgba16float are not supported by compatibility mode
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
+    ...(sampleCount === 1 && {
+      adapterOptions: {
+        featureLevel: 'compatibility',
+      },
+    }),
   })
 
   // we need to wait for the device to be created
@@ -61,13 +75,6 @@ window.addEventListener('load', async () => {
     cameraPivot.rotation.y += 0.005
   })
 
-  // get sample count from url search params or default to 1
-  // beware that MSAA + deferred rendering can be quite expensive!
-  const url = new URL(window.location)
-  const searchParams = new URLSearchParams(url.search)
-  const urlSampleCount = searchParams.get('sampleCount') && parseInt(searchParams.get('sampleCount'))
-  const sampleCount = urlSampleCount && urlSampleCount === 4 ? urlSampleCount : 1
-
   // Geometry buffer
   const gBufferDepthTexture = new Texture(gpuCameraRenderer, {
     label: 'GBuffer depth texture',
@@ -85,7 +92,7 @@ window.addEventListener('load', async () => {
       {
         loadOp: 'clear',
         clearValue: [0, 0, 0, 0],
-        targetFormat: 'bgra8unorm-srgb', // albedo
+        targetFormat: 'rgba8unorm-srgb', // albedo
       },
       {
         loadOp: 'clear',
@@ -99,29 +106,7 @@ window.addEventListener('load', async () => {
   // now add objects to our scene
   const cubeGeometry = new BoxGeometry()
 
-  const writeGBufferVs = /*wgsl */ `
-    struct VertexOutput {
-      @builtin(position) position: vec4f,
-      @location(0) uv: vec2f,
-      @location(1) normal: vec3f,
-    };
-    
-    @vertex fn main(
-      attributes: Attributes,
-    ) -> VertexOutput {
-      var vsOutput: VertexOutput;
-    
-      vsOutput.position = getOutputPosition(attributes.position);
-      vsOutput.uv = attributes.uv;
-      
-      // use view space normal when dealing using a geometry buffer
-      vsOutput.normal = getViewNormal(attributes.normal);
-      
-      return vsOutput;
-    }
-  `
-
-  const writeGBufferFs = /* wgsl */ `
+  const writeBufferShaders = /* wgsl */ `
     struct VSOutput {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
@@ -131,16 +116,24 @@ window.addEventListener('load', async () => {
     struct GBufferOutput {
       // Textures: diffuse color, specular color, smoothness, emissive etc. could go here
       @location(0) albedo : vec4<f32>,
-      
       @location(1) normal : vec4<f32>,
     };
+
+    @vertex fn mainVs(
+      attributes: Attributes,
+    ) -> VSOutput {
+      var vsOutput: VSOutput;
     
-    @fragment fn main(fsInput: VSOutput) -> GBufferOutput {
-      // faking some kind of checkerboard texture
-      //let uv = floor(params.checkerBoard * fsInput.uv);
-      //var c = 0.2 + 0.5 * ((uv.x + uv.y) - 2.0 * floor((uv.x + uv.y) / 2.0));
-      //c = 0.5;
+      vsOutput.position = getOutputPosition(attributes.position);
+      vsOutput.uv = attributes.uv;
       
+      // use view space normal when dealing using a geometry buffer
+      vsOutput.normal = getViewNormal(attributes.normal);
+      
+      return vsOutput;
+    }
+    
+    @fragment fn mainFs(fsInput: VSOutput) -> GBufferOutput {      
       var output : GBufferOutput;
       
       output.normal = vec4(normalize(fsInput.normal), 1.0);
@@ -166,7 +159,7 @@ window.addEventListener('load', async () => {
       // but they would be patched anyway if not set here
       targets: [
         {
-          format: 'bgra8unorm', // albedo
+          format: 'rgba8unorm-srgb', // albedo
         },
         {
           format: 'rgba16float', // normals
@@ -174,10 +167,12 @@ window.addEventListener('load', async () => {
       ],
       shaders: {
         vertex: {
-          code: writeGBufferVs,
+          code: writeBufferShaders,
+          entryPoint: 'mainVs',
         },
         fragment: {
-          code: writeGBufferFs,
+          code: writeBufferShaders,
+          entryPoint: 'mainFs',
         },
       },
       uniforms: {
@@ -221,7 +216,7 @@ window.addEventListener('load', async () => {
     // but they would be patched anyway if not set here
     targets: [
       {
-        format: 'bgra8unorm', // albedo
+        format: 'rgba8unorm-srgb', // albedo
       },
       {
         format: 'rgba16float', // normals
@@ -229,10 +224,12 @@ window.addEventListener('load', async () => {
     ],
     shaders: {
       vertex: {
-        code: writeGBufferVs,
+        code: writeBufferShaders,
+        entryPoint: 'mainVs',
       },
       fragment: {
-        code: writeGBufferFs,
+        code: writeBufferShaders,
+        entryPoint: 'mainFs',
       },
     },
     uniforms: {
@@ -263,6 +260,14 @@ window.addEventListener('load', async () => {
     name: 'gBufferNormalTexture',
     format: writeGBufferRenderTarget.outputTextures[1].format,
     fromTexture: writeGBufferRenderTarget.outputTextures[1],
+  })
+
+  // Use the original depth texture but with a standard texture2d binding
+  // So we can safely use textureLoad
+  const gBufferResultingDepthTexture = new Texture(gpuCameraRenderer, {
+    label: 'GBuffer resulting depth texture',
+    name: 'gBufferDepthTexture',
+    fromTexture: gBufferDepthTexture,
   })
 
   // we could eventually make the light move in a compute shader
@@ -299,7 +304,7 @@ window.addEventListener('load', async () => {
       @location(0) uv: vec2f,
     };
     
-    fn world_from_screen_coord(coord : vec2<f32>, depth_sample: f32) -> vec3<f32> {
+    fn worldPosFromScreenPos(coord : vec2<f32>, depth_sample: f32) -> vec3<f32> {
       // reconstruct world-space position from the screen coordinate.
       let posClip = vec4(coord.x * 2.0 - 1.0, (1.0 - coord.y) * 2.0 - 1.0, depth_sample, 1.0);
       let posWorldW = camera.inverseViewProjectionMatrix * posClip;
@@ -314,9 +319,9 @@ window.addEventListener('load', async () => {
 
       let depth = textureLoad(
         gBufferDepthTexture,
-        vec2<i32>(floor(fsInput.position.xy)),
+        vec2<i32>(fsInput.position.xy),
         0
-      );
+      ).x;
     
       // Don't light the sky.
       if (depth >= 1.0) {
@@ -325,17 +330,17 @@ window.addEventListener('load', async () => {
     
       let bufferSize = textureDimensions(gBufferDepthTexture);
       let coordUV = fsInput.position.xy / vec2<f32>(bufferSize);
-      let position = world_from_screen_coord(coordUV, depth);
+      let position = worldPosFromScreenPos(coordUV, depth);
     
       let normal = textureLoad(
         gBufferNormalTexture,
-        vec2<i32>(floor(fsInput.position.xy)),
+        vec2<i32>(fsInput.position.xy),
         0
       ).xyz;
     
       let albedo = textureLoad(
         gBufferAlbedoTexture,
-        vec2<i32>(floor(fsInput.position.xy)),
+        vec2<i32>(fsInput.position.xy),
         0
       ).rgb;
 
@@ -385,7 +390,7 @@ window.addEventListener('load', async () => {
         code: deferredPassFs,
       },
     },
-    textures: [gBufferDepthTexture, gBufferAlbedoTexture, gBufferNormalTexture],
+    textures: [gBufferResultingDepthTexture, gBufferAlbedoTexture, gBufferNormalTexture],
     // we need all the renderer lights bindings
     bindings: [
       gpuCameraRenderer.bindings.ambientLights,
@@ -448,16 +453,16 @@ window.addEventListener('load', async () => {
       if (fsInput.uv.x < 0.33333) {
         let rawDepth = textureLoad(
           gBufferDepthTexture,
-          vec2<i32>(floor(fsInput.position.xy)),
+          vec2<i32>(fsInput.position.xy),
           0
-        );
+        ).x;
         // remap depth into something a bit more visible
-        let depth = (1.0 - rawDepth) * 100.0;
+        let depth = (1.0 - rawDepth) * 200.0;
         result = vec4(depth);
       } else if (fsInput.uv.x < 0.66667) {
         result = textureLoad(
           gBufferNormalTexture,
-          vec2<i32>(floor(fsInput.position.xy)),
+          vec2<i32>(fsInput.position.xy),
           0
         );
         result.x = (result.x + 1.0) * 0.5;
@@ -466,7 +471,7 @@ window.addEventListener('load', async () => {
       } else {
         result = textureLoad(
           gBufferAlbedoTexture,
-          vec2<i32>(floor(fsInput.position.xy)),
+          vec2<i32>(fsInput.position.xy),
           0
         );
       }
@@ -481,8 +486,22 @@ window.addEventListener('load', async () => {
         code: debugPassFs,
       },
     },
-    textures: [gBufferDepthTexture, gBufferAlbedoTexture, gBufferNormalTexture],
+    textures: [gBufferResultingDepthTexture, gBufferAlbedoTexture, gBufferNormalTexture],
     visible: false,
+    targets: [
+      {
+        blend: {
+          color: {
+            srcFactor: 'src-alpha',
+            dstFactor: 'one-minus-src-alpha',
+          },
+          alpha: {
+            srcFactor: 'one',
+            dstFactor: 'one-minus-src-alpha',
+          },
+        },
+      },
+    ],
   })
 
   const debugViewButton = document.querySelector('#debug-view-button')

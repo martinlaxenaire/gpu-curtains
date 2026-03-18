@@ -1859,7 +1859,9 @@
     COPY_DST: 2,
     TEXTURE_BINDING: 4,
     STORAGE_BINDING: 8,
-    RENDER_ATTACHMENT: 16};
+    RENDER_ATTACHMENT: 16,
+    TRANSIENT_ATTACHMENT: 32
+  };
 
   const bindingVisibilities = /* @__PURE__ */ new Map([
     ["vertex", WebGPUShaderStageConstants.VERTEX],
@@ -1951,7 +1953,7 @@
           texture: {
             multisampled: binding.options.multisampled,
             viewDimension: binding.options.viewDimension,
-            sampleType: binding.options.multisampled ? "unfilterable-float" : "float"
+            sampleType: binding.options.multisampled || binding.options.format.indexOf("depth") !== -1 ? "unfilterable-float" : "float"
           }
         };
       case "depth":
@@ -4017,7 +4019,8 @@
     ["copyDst", WebGPUTextureUsageConstants.COPY_DST],
     ["renderAttachment", WebGPUTextureUsageConstants.RENDER_ATTACHMENT],
     ["storageBinding", WebGPUTextureUsageConstants.STORAGE_BINDING],
-    ["textureBinding", WebGPUTextureUsageConstants.TEXTURE_BINDING]
+    ["textureBinding", WebGPUTextureUsageConstants.TEXTURE_BINDING],
+    ["transientAttachment", WebGPUTextureUsageConstants.TRANSIENT_ATTACHMENT]
   ]);
   const getTextureUsages = (usages = []) => {
     return usages.reduce((acc, v) => {

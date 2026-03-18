@@ -20,6 +20,8 @@ const WebGPUTextureUsageConstants = typeof GPUTextureUsage !== "undefined" ? GPU
   COPY_DST: 2,
   TEXTURE_BINDING: 4,
   STORAGE_BINDING: 8,
-  RENDER_ATTACHMENT: 16};
+  RENDER_ATTACHMENT: 16,
+  TRANSIENT_ATTACHMENT: 32
+};
 
 export { WebGPUBufferUsageConstants, WebGPUShaderStageConstants, WebGPUTextureUsageConstants };
