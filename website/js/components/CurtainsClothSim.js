@@ -347,10 +347,17 @@ export class CurtainsClothSim {
     const writeCanvasText = () => {
       const htmlPlane = this.plane.domElement.element
 
+      const { maxTextureDimension2D } = this.gpuCurtains.deviceManager.device?.limits ?? 2048
+
       const htmlPlaneWidth = this.plane.boundingRect.width
       const htmlPlaneHeight = this.plane.boundingRect.height
 
-      const canvasResolution = window.devicePixelRatio * 2
+      // Max resolution to avoid texture to be too large
+      const canvasResolution = Math.min(
+        (maxTextureDimension2D * 0.75) / htmlPlaneWidth,
+        (maxTextureDimension2D * 0.75) / htmlPlaneHeight,
+        window.devicePixelRatio * 2
+      )
 
       // set sizes
       canvas.width = htmlPlaneWidth * canvasResolution

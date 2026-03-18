@@ -245,7 +245,7 @@ window.addEventListener('load', async () => {
       }
     })
 
-    console.log(plane)
+    // console.log(plane)
   })
 
   // SLIDES
@@ -439,4 +439,58 @@ window.addEventListener('load', async () => {
       // update our transition timer uniform
       plane.uniforms.transition.timer.value = slideshowState.transitionTimer
     })
+
+  // LARGE CANVAS
+  const largeCanvasPlane = new Plane(gpuCurtains, '#large-canvas', {
+    shaders: {
+      fragment: {
+        code: meshFs,
+      },
+    },
+  })
+
+  const canvasTexture = largeCanvasPlane.createDOMTexture({
+    label: 'Canvas texture',
+    name: 'meshTexture',
+  })
+
+  // create our text texture as soon as our plane has been created
+  // first we need a canvas
+  const canvas = document.createElement('canvas')
+  const context = canvas.getContext('2d')
+
+  const writeCanvasText = () => {
+    const { maxTextureDimension2D } = gpuCurtains.deviceManager.device.limits
+
+    const htmlPlaneWidth = largeCanvasPlane.boundingRect.width
+    const htmlPlaneHeight = largeCanvasPlane.boundingRect.height
+
+    const canvasResolution = Math.min(
+      (maxTextureDimension2D * 0.75) / htmlPlaneWidth,
+      (maxTextureDimension2D * 0.75) / htmlPlaneHeight,
+      window.devicePixelRatio * 2
+    )
+
+    // set sizes
+    canvas.width = htmlPlaneWidth * canvasResolution
+    canvas.height = htmlPlaneHeight * canvasResolution
+
+    context.width = htmlPlaneWidth
+    context.height = htmlPlaneHeight
+
+    context.scale(canvasResolution, canvasResolution)
+
+    // fill red
+    context.fillStyle = '#ff0000'
+    context.fillRect(0, 0, canvas.width, canvas.height)
+  }
+
+  writeCanvasText()
+
+  canvasTexture.loadCanvas(canvas)
+
+  largeCanvasPlane.onAfterResize(() => {
+    writeCanvasText()
+    canvasTexture.resize()
+  })
 })
