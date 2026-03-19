@@ -128,10 +128,8 @@ window.addEventListener('load', async () => {
     mouse.last.set(Infinity)
   })
 
-  window.addEventListener('pointermove', (e) => {
-    if (!mouse.isDown) return
-
-    mouse.current.set(e.clientX, e.clientY)
+  const onPointerMove = (x, y) => {
+    mouse.current.set(x, y)
 
     if (mouse.last.x === Infinity) {
       mouse.last.copy(mouse.current)
@@ -143,6 +141,16 @@ window.addEventListener('load', async () => {
     targetRotation.x = Math.min(Math.max(targetRotation.x - mouse.delta.y * 0.005, -Math.PI / 2), Math.PI / 2)
 
     mouse.last.copy(mouse.current)
+  }
+
+  window.addEventListener('mousemove', (e) => {
+    if (!mouse.isDown) return
+    onPointerMove(e.clientX, e.clientY)
+  })
+
+  window.addEventListener('touchmove', (e) => {
+    if (!mouse.isDown) return
+    onPointerMove(e.touches[0].pageX, e.touches[0].pageY)
   })
 
   cubeMap.onBeforeRender(() => {

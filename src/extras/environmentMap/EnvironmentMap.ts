@@ -468,6 +468,7 @@ export class EnvironmentMap {
       },
       storages: {
         params: {
+          visibility: ['compute'], // important for compatibility mode
           struct: {
             hdrImageData: {
               type: 'array<vec4f>',

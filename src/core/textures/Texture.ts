@@ -264,7 +264,12 @@ export class Texture {
       label: this.options.label,
       format: this.options.format,
       size: [this.size.width, this.size.height, this.size.depth ?? 1],
-      dimensions: this.options.viewDimension,
+      dimension:
+        this.options.viewDimension.indexOf('1d') !== -1
+          ? '1d'
+          : this.options.viewDimension.indexOf('3d') !== -1
+          ? '3d'
+          : '2d',
       sampleCount: this.options.sampleCount,
       mipLevelCount: this.options.useMips
         ? getNumMipLevels(this.size.width, this.size.height, this.size.depth ?? 1)

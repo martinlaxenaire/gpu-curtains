@@ -94,6 +94,12 @@ class GPUCurtains {
    * Set the default {@link GPUCurtainsRenderer | renderer}.
    */
   setMainRenderer() {
+    const isCompatibilityMode = this.options.adapterOptions.featureLevel === "compatibility";
+    if (isCompatibilityMode) {
+      if (this.options.lights === void 0 || this.options.lights && !this.options.lights.useUniformsForShadows) {
+        this.options.lights = { ...this.options.lights, useUniformsForShadows: true };
+      }
+    }
     this.createCurtainsRenderer({
       // TODO ...this.options?
       label: this.options.label || "GPUCurtains main GPUCurtainsRenderer",
