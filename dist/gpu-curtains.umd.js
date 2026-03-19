@@ -4192,7 +4192,7 @@
         label: this.options.label,
         format: this.options.format,
         size: [this.size.width, this.size.height, this.size.depth ?? 1],
-        dimensions: this.options.viewDimension,
+        dimension: this.options.viewDimension.indexOf("1d") !== -1 ? "1d" : this.options.viewDimension.indexOf("3d") !== -1 ? "3d" : "2d",
         sampleCount: this.options.sampleCount,
         mipLevelCount: this.options.useMips ? getNumMipLevels(this.size.width, this.size.height, this.size.depth ?? 1) : 1,
         usage: getDefaultTextureUsage(this.options.usage, this.options.type),
@@ -16397,7 +16397,7 @@ ${this.shaders.compute.head}`;
         this.index++;
       } else {
         try {
-          const { limits } = this.adapter;
+          const { limits, features } = this.adapter;
           const isCompatibilityMode = this.options.adapterOptions.featureLevel === "compatibility";
           if (isCompatibilityMode) {
             this.options.requestAdapterLimits.push(
@@ -16413,9 +16413,15 @@ ${this.shaders.compute.head}`;
               requiredLimits[key] = limits[key];
             }
           }
+          const requiredFeatures = [];
+          this.options.requiredFeatures.forEach((feature) => {
+            if (features.has(feature)) {
+              requiredFeatures.push(feature);
+            }
+          });
           this.device = await this.adapter?.requestDevice({
             label: this.options.label + " " + this.index,
-            requiredFeatures: this.options.requiredFeatures,
+            requiredFeatures,
             requiredLimits
           });
           if (this.device) {
@@ -25463,6 +25469,8 @@ struct Params {
         },
         storages: {
           params: {
+            visibility: ["compute"],
+            // important for compatibility mode
             struct: {
               hdrImageData: {
                 type: "array<vec4f>",

@@ -123,7 +123,7 @@ class GPUDeviceManager {
       this.index++;
     } else {
       try {
-        const { limits } = this.adapter;
+        const { limits, features } = this.adapter;
         const isCompatibilityMode = this.options.adapterOptions.featureLevel === "compatibility";
         if (isCompatibilityMode) {
           this.options.requestAdapterLimits.push(
@@ -139,9 +139,15 @@ class GPUDeviceManager {
             requiredLimits[key] = limits[key];
           }
         }
+        const requiredFeatures = [];
+        this.options.requiredFeatures.forEach((feature) => {
+          if (features.has(feature)) {
+            requiredFeatures.push(feature);
+          }
+        });
         this.device = await this.adapter?.requestDevice({
           label: this.options.label + " " + this.index,
-          requiredFeatures: this.options.requiredFeatures,
+          requiredFeatures,
           requiredLimits
         });
         if (this.device) {

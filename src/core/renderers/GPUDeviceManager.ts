@@ -245,7 +245,7 @@ export class GPUDeviceManager {
       this.index++
     } else {
       try {
-        const { limits } = this.adapter as GPUAdapter
+        const { limits, features } = this.adapter as GPUAdapter
 
         const isCompatibilityMode = this.options.adapterOptions.featureLevel === 'compatibility'
 
@@ -267,9 +267,16 @@ export class GPUDeviceManager {
           }
         }
 
+        const requiredFeatures = []
+        this.options.requiredFeatures.forEach((feature) => {
+          if (features.has(feature)) {
+            requiredFeatures.push(feature)
+          }
+        })
+
         this.device = await (this.adapter as GPUAdapter)?.requestDevice({
           label: this.options.label + ' ' + this.index,
-          requiredFeatures: this.options.requiredFeatures,
+          requiredFeatures,
           requiredLimits,
         })
 
