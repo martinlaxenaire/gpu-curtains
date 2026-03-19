@@ -89,6 +89,8 @@ export class OrbitControls {
   maxZoom: number
   /** Zoom speed value to use. Default to `1`. */
   zoomSpeed: number
+  /** @ignore */
+  #pinchDist: number
 
   /** Whether to allow rotating or not. Default to `true`. */
   enableRotate: boolean
@@ -401,10 +403,11 @@ export class OrbitControls {
   #onTouchStart(e: TouchEvent) {
     if (!this.enabled) return
 
-    // TODO zoom / pan with 2 fingers
+    this.#pinchDist = 0
+
     if (e.touches.length === 1 && this.enableRotate) {
       this.#isOrbiting = true
-      this.#rotateStart.set(e.touches[0].pageX, e.touches[0].pageY)
+      this.#rotateStart.set(e.touches[0].clientX, e.touches[0].clientY)
     }
   }
 
@@ -430,7 +433,16 @@ export class OrbitControls {
   #onTouchMove(e: TouchEvent) {
     if (!this.enabled) return
 
-    if (this.#isOrbiting && this.enableRotate) {
+    if (e.touches.length === 2 && this.enableZoom) {
+      const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY)
+      if (this.#pinchDist) {
+        const zoom = this.#pinchDist - dist
+        if (zoom) {
+          this.#zoom(zoom * 2)
+        }
+      }
+      this.#pinchDist = dist
+    } else if (this.#isOrbiting && this.enableRotate) {
       this.#rotate(e.touches[0].pageX, e.touches[0].pageY)
     }
   }

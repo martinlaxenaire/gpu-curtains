@@ -23942,7 +23942,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   var __privateAdd$5 = (obj, member, value) => member.has(obj) ? __typeError$5("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   var __privateSet$4 = (obj, member, value, setter) => (__accessCheck$5(obj, member, "write to private field"), member.set(obj, value), value);
   var __privateMethod$5 = (obj, member, method) => (__accessCheck$5(obj, member, "access private method"), method);
-  var _element, _offset, _isOrbiting, _spherical, _rotateStart, _isPaning, _panStart, _panDelta, __onContextMenu, __onMouseDown, __onMouseMove, __onMouseUp, __onTouchStart, __onTouchMove, __onTouchEnd, __onMouseWheel, _OrbitControls_instances, setBaseParams_fn, addEvents_fn, removeEvents_fn, onMouseDown_fn, onTouchStart_fn, onMouseMove_fn, onTouchMove_fn, onMouseUp_fn, onTouchEnd_fn, onMouseWheel_fn, onContextMenu_fn, update_fn, rotate_fn, pan_fn, zoom_fn;
+  var _element, _offset, _pinchDist, _isOrbiting, _spherical, _rotateStart, _isPaning, _panStart, _panDelta, __onContextMenu, __onMouseDown, __onMouseMove, __onMouseUp, __onTouchStart, __onTouchMove, __onTouchEnd, __onMouseWheel, _OrbitControls_instances, setBaseParams_fn, addEvents_fn, removeEvents_fn, onMouseDown_fn, onTouchStart_fn, onMouseMove_fn, onTouchMove_fn, onMouseUp_fn, onTouchEnd_fn, onMouseWheel_fn, onContextMenu_fn, update_fn, rotate_fn, pan_fn, zoom_fn;
   const tempVec2a = new Vec2();
   const tempVec2b = new Vec2();
   const tempVec3$1 = new Vec3();
@@ -23979,6 +23979,8 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
       __privateAdd$5(this, _element, null);
       /** @ignore */
       __privateAdd$5(this, _offset, new Vec3());
+      /** @ignore */
+      __privateAdd$5(this, _pinchDist);
       /** @ignore */
       __privateAdd$5(this, _isOrbiting, false);
       /** @ignore */
@@ -24136,6 +24138,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   }
   _element = new WeakMap();
   _offset = new WeakMap();
+  _pinchDist = new WeakMap();
   _isOrbiting = new WeakMap();
   _spherical = new WeakMap();
   _rotateStart = new WeakMap();
@@ -24241,9 +24244,10 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
    */
   onTouchStart_fn = function(e) {
     if (!this.enabled) return;
+    __privateSet$4(this, _pinchDist, 0);
     if (e.touches.length === 1 && this.enableRotate) {
       __privateSet$4(this, _isOrbiting, true);
-      __privateGet$4(this, _rotateStart).set(e.touches[0].pageX, e.touches[0].pageY);
+      __privateGet$4(this, _rotateStart).set(e.touches[0].clientX, e.touches[0].clientY);
     }
   };
   /**
@@ -24265,7 +24269,16 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
    */
   onTouchMove_fn = function(e) {
     if (!this.enabled) return;
-    if (__privateGet$4(this, _isOrbiting) && this.enableRotate) {
+    if (e.touches.length === 2 && this.enableZoom) {
+      const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+      if (__privateGet$4(this, _pinchDist)) {
+        const zoom = __privateGet$4(this, _pinchDist) - dist;
+        if (zoom) {
+          __privateMethod$5(this, _OrbitControls_instances, zoom_fn).call(this, zoom * 2);
+        }
+      }
+      __privateSet$4(this, _pinchDist, dist);
+    } else if (__privateGet$4(this, _isOrbiting) && this.enableRotate) {
       __privateMethod$5(this, _OrbitControls_instances, rotate_fn).call(this, e.touches[0].pageX, e.touches[0].pageY);
     }
   };
