@@ -149,6 +149,11 @@
     opacity: 0;
   }
 
+  .no-curtains #cloth,
+  .no-curtains #cloth.canvas-texture-ready {
+    opacity: 1;
+  }
+
   #cloth span {
     font-family: var(--script-font);
     font-size: 5rem;
