@@ -95,7 +95,9 @@ class GPUDeviceManager {
   async setAdapter(adapter = null) {
     if (!this.gpu) {
       this.onError();
-      throwError("GPUDeviceManager: WebGPU is not supported on your browser/OS. No 'gpu' object in 'navigator'.");
+      throwError(
+        `GPUDeviceManager (${this.options.label}): WebGPU is not supported on your browser/OS No 'gpu' object in 'navigator'.`
+      );
     }
     if (adapter) {
       this.adapter = adapter;
@@ -104,11 +106,13 @@ class GPUDeviceManager {
         this.adapter = await this.gpu?.requestAdapter(this.options.adapterOptions);
         if (!this.adapter) {
           this.onError();
-          throwError("GPUDeviceManager: WebGPU is not supported on your browser/OS. 'requestAdapter' failed.");
+          throwError(
+            `GPUDeviceManager (${this.options.label}): WebGPU is not supported on your browser/OS 'requestAdapter' failed.`
+          );
         }
       } catch (e) {
         this.onError();
-        throwError("GPUDeviceManager: " + e.message);
+        throwError(`GPUDeviceManager (${this.options.label}): Unabled to request an adapter: ${e.message}`);
       }
     }
   }
@@ -153,22 +157,32 @@ class GPUDeviceManager {
         if (this.device) {
           this.ready = true;
           this.index++;
+        } else {
+          this.onError();
+          throwError(
+            `GPUDeviceManager (${this.options.label}): WebGPU is not supported on your browser/OS 'requestDevice' failed.`
+          );
         }
       } catch (error) {
         this.onError();
         throwError(
-          `${this.options.label}: WebGPU is not supported on your browser/OS. 'requestDevice' failed: ${error}`
+          `GPUDeviceManager (${this.options.label}): WebGPU is not supported on your browser/OS. 'requestDevice' failed: ${error.message}`
         );
       }
     }
     this.device?.lost.then((info) => {
-      throwWarning(`${this.options.label}: WebGPU device was lost: ${info.message}`);
+      throwWarning(`GPUDeviceManager (${this.options.label}): WebGPU device was lost: ${info.message}`);
       this.loseDevice();
       if (info.reason !== "destroyed") {
         this.onDeviceLost(info);
       } else {
         this.onDeviceDestroyed(info);
       }
+    });
+    this.device.addEventListener("uncapturederror", (event) => {
+      this.ready = false;
+      this.onError();
+      throwError(`GPUDeviceManager (${this.options.label}): Uncaptured WebGPU device error: ${event.error.message}`);
     });
   }
   /**
@@ -331,7 +345,9 @@ class GPUDeviceManager {
           texture
         });
       } catch ({ message }) {
-        throwError(`GPUDeviceManager: could not upload texture: ${texture.options.name} because: ${message}`);
+        throwError(
+          `GPUDeviceManager (${this.options.label}): could not upload texture: ${texture.options.name} because: ${message}`
+        );
       }
     } else {
       for (let i = 0; i < texture.size.depth; i++) {
