@@ -1,6 +1,6 @@
-const getIBLTransmission = (
-  /* wgsl */
-  `
+//#region src/core/shaders/chunks/fragment/head/get-IBL-transmission.ts
+/** WGSL functions to calculate the transmission effect of transmissive meshes using the renderer scene background texture. */
+const getIBLTransmission = `
 fn getVolumeTransmissionRay(normal: vec3f, viewDirection: vec3f, thickness: f32, ior: f32, modelScale: vec3f) -> vec3f {
   let refractionVector = refract(-viewDirection, normal, 1.0 / ior);    
   return normalize(refractionVector) * thickness * modelScale;
@@ -172,7 +172,6 @@ fn getIBLVolumeRefractionWithDispersion(
     1.0 - (1.0 - transmittedLight.a) * transmittanceFactor
   );
 }
-`
-);
-
+`;
+//#endregion
 export { getIBLTransmission };

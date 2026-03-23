@@ -1,52 +1,43 @@
-import { getTextureSample } from './get-texture-sample.mjs';
-
-const getBaseColor = ({
-  geometry = null,
-  baseColorTexture = null
-} = {}) => {
-  let baseColor = (
-    /* wgsl */
-    `
+import { getTextureSample } from "./get-texture-sample.mjs";
+//#region src/core/shaders/chunks/fragment/body/get-base-color.ts
+/**
+* Get the base color from the `material` binding `baseColorFactor` value, {@link Geometry} colors attributes if any and `baseColorTexture` if any, and apply it to our `outputColor`. Can also discard fragments based on `material` binding `alphaCutoff` value.
+* {@link https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#reference-material-pbrmetallicroughness | See glTF PBR metallic roughness} definition and default values.
+* @param parameters - Parameters to use to set the base color.
+* @param parameters.geometry - {@link Geometry} to use to check for colors attributes.
+* @param parameters.baseColorTexture - {@link ShaderTextureDescriptor | Base color texture descriptor} to use if any.
+* @returns - A string with base color applied to `outputColor`.
+*/
+const getBaseColor = ({ geometry = null, baseColorTexture = null } = {}) => {
+	let baseColor = `
   var baseColor: vec4f = vec4(baseColorFactor, baseOpacityFactor);
-  `
-  );
-  const colorAttributes = [];
-  if (geometry && geometry.vertexBuffers && geometry.vertexBuffers.length) {
-    geometry.vertexBuffers.forEach((vertexBuffer) => {
-      vertexBuffer.attributes.forEach((attribute) => {
-        if (attribute.name.includes("color")) {
-          colorAttributes.push(attribute);
-        }
-      });
-    });
-  }
-  colorAttributes.forEach((colorAttribute) => {
-    if (colorAttribute.type === "vec3f") {
-      baseColor += /* wgsl */
-      `
+  `;
+	const colorAttributes = [];
+	if (geometry && geometry.vertexBuffers && geometry.vertexBuffers.length) geometry.vertexBuffers.forEach((vertexBuffer) => {
+		vertexBuffer.attributes.forEach((attribute) => {
+			if (attribute.name.includes("color")) colorAttributes.push(attribute);
+		});
+	});
+	colorAttributes.forEach((colorAttribute) => {
+		if (colorAttribute.type === "vec3f") baseColor += `
   baseColor *= vec4(fsInput.${colorAttribute.name}, 1.0);`;
-    } else {
-      baseColor += /* wgsl */
-      `
+		else baseColor += `
   baseColor *= fsInput.${colorAttribute.name};`;
-    }
-  });
-  if (baseColorTexture) {
-    baseColor += getTextureSample(baseColorTexture, "baseColor");
-    baseColor += /* wgsl */
-    `
+	});
+	if (baseColorTexture) {
+		baseColor += getTextureSample(baseColorTexture, "baseColor");
+		baseColor += `
   baseColor *= baseColorSample;
   `;
-  }
-  baseColor += /* wgsl */
-  `
+	}
+	baseColor += `
   if (baseColor.a < alphaCutoff) {
     discard;
   }
   
   outputColor = baseColor;
   `;
-  return baseColor;
+	return baseColor;
 };
-
+//#endregion
 export { getBaseColor };

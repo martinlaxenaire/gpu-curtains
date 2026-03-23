@@ -1,6 +1,6 @@
-const getDefaultVertexShaderCode = (
-  /* wgsl */
-  `
+//#region src/core/shaders/full/vertex/get-default-vertex-shader-code.ts
+/** Default vertex shader code for unprojected meshes (such as {@link core/meshes/FullscreenPlane.FullscreenPlane | FullscreenPlane} or {@link core/renderPasses/ShaderPass.ShaderPass | ShaderPass}). */
+const getDefaultVertexShaderCode = `
 struct VSOutput {
   @builtin(position) position: vec4f,
   @location(0) uv: vec2f,
@@ -15,7 +15,6 @@ struct VSOutput {
   vsOutput.uv = attributes.uv;
   
   return vsOutput;
-}`
-);
-
+}`;
+//#endregion
 export { getDefaultVertexShaderCode };

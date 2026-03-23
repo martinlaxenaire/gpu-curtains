@@ -1,107 +1,63 @@
-import { constants } from '../../chunks/utils/constants.mjs';
-import { common } from '../../chunks/utils/common.mjs';
-import { toneMappingUtils } from '../../chunks/utils/tone-mapping-utils.mjs';
-import { getLightsInfos } from '../../chunks/fragment/head/get-lights-infos.mjs';
-import { REIndirectDiffuse } from '../../chunks/fragment/head/RE-indirect-diffuse.mjs';
-import { REIndirectSpecular } from '../../chunks/fragment/head/RE-indirect-specular.mjs';
-import { getPBRDirect } from '../../chunks/fragment/head/get-PBR-direct.mjs';
-import { computeMultiScattering } from '../../chunks/fragment/head/compute-multi-scattering.mjs';
-import { getIBLIndirectIrradiance } from '../../chunks/fragment/head/get-IBL-indirect-irradiance.mjs';
-import { getIBLIndirectRadiance } from '../../chunks/fragment/head/get-IBL-indirect-radiance.mjs';
-import { getIBLTransmission } from '../../chunks/fragment/head/get-IBL-transmission.mjs';
-import { getIBLSheen } from '../../chunks/fragment/head/get-IBL-sheen.mjs';
-import { getPBRShading } from '../../chunks/fragment/body/get-PBR-shading.mjs';
-import { getFragmentInputStruct } from '../../chunks/fragment/head/get-fragment-input-struct.mjs';
-import { getFragmentOutputStruct } from '../../chunks/fragment/head/get-fragment-output-struct.mjs';
-import { declareAttributesVars } from '../../chunks/fragment/body/declare-attributes-vars.mjs';
-import { declareMaterialVars } from '../../chunks/fragment/body/declare-material-vars.mjs';
-import { getBaseColor } from '../../chunks/fragment/body/get-base-color.mjs';
-import { getNormal } from '../../chunks/fragment/body/get-normal.mjs';
-import { getMetallicRoughness } from '../../chunks/fragment/body/get-metallic-roughness.mjs';
-import { getSpecular } from '../../chunks/fragment/body/get-specular.mjs';
-import { getTransmissionThickness } from '../../chunks/fragment/body/get-transmission-thickness.mjs';
-import { getEmissiveOcclusion } from '../../chunks/fragment/body/get-emissive-occlusion.mjs';
-import { applyToneMapping } from '../../chunks/fragment/body/apply-tone-mapping.mjs';
-import { patchAdditionalChunks } from '../../default-material-helpers.mjs';
-import { getPBRDirectSheen } from '../../chunks/fragment/head/get-PBR-direct-sheen.mjs';
-import { getSheen } from '../../chunks/fragment/body/get-sheen.mjs';
-import { getClearcoat, getClearcoatNormal } from '../../chunks/fragment/body/get-clearcoat.mjs';
-import { getPBRDirectClearcoat } from '../../chunks/fragment/head/get-PBR-direct-clearcoat.mjs';
-import { generateTBN } from '../../chunks/utils/generate-TBN.mjs';
-import { getIridescence } from '../../chunks/fragment/body/get-iridescence.mjs';
-import { getPBRIridescence } from '../../chunks/fragment/head/get-PBR-iridescence.mjs';
-import { getPBRDirectAnisotropic } from '../../chunks/fragment/head/get-PBR-direct-anisotropic.mjs';
-import { getAnisotropy } from '../../chunks/fragment/body/get-anisotropy.mjs';
-import { getTangentBitangent } from '../../chunks/fragment/body/get-tangent-bitangent.mjs';
-import { getIBLIndirectAnisotropyRadiance } from '../../chunks/fragment/head/get-IBL-indirect-anisotropy-radiance.mjs';
-import { getDiffuse } from '../../chunks/fragment/body/get-diffuse.mjs';
-import { BRDFCharlie } from '../../chunks/utils/BRDF-Charlie.mjs';
-import { BRDF_GGX } from '../../chunks/utils/BRDF_GGX.mjs';
-import { getDiffuseTransmission } from '../../chunks/fragment/body/get-diffuse-transmission.mjs';
-import { getVolumeMultiToSingleScatter } from '../../chunks/fragment/head/get-volume-multi-to-single-scatter.mjs';
-import { getVolumeMultiScatter } from '../../chunks/fragment/body/get-volume-multi-scatter.mjs';
-
-const getPBRFragmentShaderCode = ({
-  chunks = null,
-  toneMapping = "Khronos",
-  outputColorSpace = "srgb",
-  transmissiveInputColorSpace = "srgb",
-  transmissiveInputToneMapping = "Khronos",
-  fragmentOutput = {
-    struct: [
-      {
-        type: "vec4f",
-        name: "color"
-      }
-    ],
-    output: (
-      /* wgsl */
-      `
+import { constants } from "../../chunks/utils/constants.mjs";
+import { common } from "../../chunks/utils/common.mjs";
+import { toneMappingUtils } from "../../chunks/utils/tone-mapping-utils.mjs";
+import { getLightsInfos } from "../../chunks/fragment/head/get-lights-infos.mjs";
+import { REIndirectDiffuse } from "../../chunks/fragment/head/RE-indirect-diffuse.mjs";
+import { applyToneMapping } from "../../chunks/fragment/body/apply-tone-mapping.mjs";
+import { REIndirectSpecular } from "../../chunks/fragment/head/RE-indirect-specular.mjs";
+import { getIBLTransmission } from "../../chunks/fragment/head/get-IBL-transmission.mjs";
+import { getPBRDirect } from "../../chunks/fragment/head/get-PBR-direct.mjs";
+import { getPBRShading } from "../../chunks/fragment/body/get-PBR-shading.mjs";
+import { BRDF_GGX } from "../../chunks/utils/BRDF_GGX.mjs";
+import { patchAdditionalChunks } from "../../default-material-helpers.mjs";
+import { getFragmentInputStruct } from "../../chunks/fragment/head/get-fragment-input-struct.mjs";
+import { getFragmentOutputStruct } from "../../chunks/fragment/head/get-fragment-output-struct.mjs";
+import { declareAttributesVars } from "../../chunks/fragment/body/declare-attributes-vars.mjs";
+import { declareMaterialVars } from "../../chunks/fragment/body/declare-material-vars.mjs";
+import { getBaseColor } from "../../chunks/fragment/body/get-base-color.mjs";
+import { getEmissiveOcclusion } from "../../chunks/fragment/body/get-emissive-occlusion.mjs";
+import { getNormal } from "../../chunks/fragment/body/get-normal.mjs";
+import { generateTBN } from "../../chunks/utils/generate-TBN.mjs";
+import { getTangentBitangent } from "../../chunks/fragment/body/get-tangent-bitangent.mjs";
+import { getMetallicRoughness } from "../../chunks/fragment/body/get-metallic-roughness.mjs";
+import { getSpecular } from "../../chunks/fragment/body/get-specular.mjs";
+import { getDiffuse } from "../../chunks/fragment/body/get-diffuse.mjs";
+import { computeMultiScattering } from "../../chunks/fragment/head/compute-multi-scattering.mjs";
+import { getIBLIndirectIrradiance } from "../../chunks/fragment/head/get-IBL-indirect-irradiance.mjs";
+import { getIBLIndirectRadiance } from "../../chunks/fragment/head/get-IBL-indirect-radiance.mjs";
+import { getIBLSheen } from "../../chunks/fragment/head/get-IBL-sheen.mjs";
+import { getTransmissionThickness } from "../../chunks/fragment/body/get-transmission-thickness.mjs";
+import { getPBRDirectSheen } from "../../chunks/fragment/head/get-PBR-direct-sheen.mjs";
+import { getSheen } from "../../chunks/fragment/body/get-sheen.mjs";
+import { getClearcoat, getClearcoatNormal } from "../../chunks/fragment/body/get-clearcoat.mjs";
+import { getPBRDirectClearcoat } from "../../chunks/fragment/head/get-PBR-direct-clearcoat.mjs";
+import { getIridescence } from "../../chunks/fragment/body/get-iridescence.mjs";
+import { getPBRIridescence } from "../../chunks/fragment/head/get-PBR-iridescence.mjs";
+import { getPBRDirectAnisotropic } from "../../chunks/fragment/head/get-PBR-direct-anisotropic.mjs";
+import { getAnisotropy } from "../../chunks/fragment/body/get-anisotropy.mjs";
+import { getIBLIndirectAnisotropyRadiance } from "../../chunks/fragment/head/get-IBL-indirect-anisotropy-radiance.mjs";
+import { BRDFCharlie } from "../../chunks/utils/BRDF-Charlie.mjs";
+import { getDiffuseTransmission } from "../../chunks/fragment/body/get-diffuse-transmission.mjs";
+import { getVolumeMultiToSingleScatter } from "../../chunks/fragment/head/get-volume-multi-to-single-scatter.mjs";
+import { getVolumeMultiScatter } from "../../chunks/fragment/body/get-volume-multi-scatter.mjs";
+//#region src/core/shaders/full/fragment/get-PBR-fragment-shader-code.ts
+/**
+* Build a PBR fragment shader using the provided options.
+* @param parameters - {@link PBRFragmentShaderInputParams} used to build the PBR fragment shader.
+* @returns - The PBR fragment shader generated based on the provided parameters.
+*/
+const getPBRFragmentShaderCode = ({ chunks = null, toneMapping = "Khronos", outputColorSpace = "srgb", transmissiveInputColorSpace = "srgb", transmissiveInputToneMapping = "Khronos", fragmentOutput = {
+	struct: [{
+		type: "vec4f",
+		name: "color"
+	}],
+	output: `
   var output: FSOutput;
   output.color = outputColor;
   return output;`
-    )
-  },
-  geometry,
-  cullMode = "back",
-  flatShading = false,
-  additionalVaryings = [],
-  materialUniform = null,
-  materialUniformName = "material",
-  extensionsUsed = [],
-  receiveShadows = false,
-  baseColorTexture = null,
-  normalTexture = null,
-  emissiveTexture = null,
-  occlusionTexture = null,
-  metallicRoughnessTexture = null,
-  specularTexture = null,
-  specularFactorTexture = null,
-  specularColorTexture = null,
-  transmissionThicknessTexture = null,
-  transmissionTexture = null,
-  thicknessTexture = null,
-  sheenTexture = null,
-  sheenColorTexture = null,
-  sheenRoughnessTexture = null,
-  anisotropyTexture = null,
-  clearcoatTexture = null,
-  clearcoatFactorTexture = null,
-  clearcoatRoughnessTexture = null,
-  clearcoatNormalTexture = null,
-  iridescenceTexture = null,
-  iridescenceFactorTexture = null,
-  iridescenceThicknessTexture = null,
-  diffuseTransmissionTexture = null,
-  diffuseTransmissionFactorTexture = null,
-  diffuseTransmissionColorTexture = null,
-  transmissionBackgroundTexture = null,
-  environmentMap = null
-}) => {
-  chunks = patchAdditionalChunks(chunks);
-  return (
-    /* wgsl */
-    `  
+}, geometry, cullMode = "back", flatShading = false, additionalVaryings = [], materialUniform = null, materialUniformName = "material", extensionsUsed = [], receiveShadows = false, baseColorTexture = null, normalTexture = null, emissiveTexture = null, occlusionTexture = null, metallicRoughnessTexture = null, specularTexture = null, specularFactorTexture = null, specularColorTexture = null, transmissionThicknessTexture = null, transmissionTexture = null, thicknessTexture = null, sheenTexture = null, sheenColorTexture = null, sheenRoughnessTexture = null, anisotropyTexture = null, clearcoatTexture = null, clearcoatFactorTexture = null, clearcoatRoughnessTexture = null, clearcoatNormalTexture = null, iridescenceTexture = null, iridescenceFactorTexture = null, iridescenceThicknessTexture = null, diffuseTransmissionTexture = null, diffuseTransmissionFactorTexture = null, diffuseTransmissionColorTexture = null, transmissionBackgroundTexture = null, environmentMap = null }) => {
+	chunks = patchAdditionalChunks(chunks);
+	return `  
 ${chunks.additionalHead}
 
 ${constants}
@@ -126,50 +82,104 @@ ${extensionsUsed.includes("KHR_materials_sheen") ? getIBLSheen : ""}
 ${extensionsUsed.includes("KHR_materials_anisotropy") ? getIBLIndirectAnisotropyRadiance : ""}
 ${extensionsUsed.includes("KHR_materials_volume_scatter") ? getVolumeMultiToSingleScatter : ""}
 
-${getFragmentInputStruct({ geometry, additionalVaryings })}
+${getFragmentInputStruct({
+		geometry,
+		additionalVaryings
+	})}
 
 ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 
 @fragment fn main(fsInput: FSInput) -> FSOutput {
   var outputColor: vec4f = vec4();
   
-  ${declareAttributesVars({ geometry, additionalVaryings })}
-  ${declareMaterialVars({ materialUniform, materialUniformName, shadingModel: "PBR", environmentMap })}
-  ${getBaseColor({ geometry, baseColorTexture })}
+  ${declareAttributesVars({
+		geometry,
+		additionalVaryings
+	})}
+  ${declareMaterialVars({
+		materialUniform,
+		materialUniformName,
+		shadingModel: "PBR",
+		environmentMap
+	})}
+  ${getBaseColor({
+		geometry,
+		baseColorTexture
+	})}
   
   // user defined preliminary contribution
   ${chunks.preliminaryContribution}
 
   // material infos
-  ${getTangentBitangent({ extensionsUsed, geometry, cullMode, flatShading, normalTexture, clearcoatNormalTexture })}  
+  ${getTangentBitangent({
+		extensionsUsed,
+		geometry,
+		cullMode,
+		flatShading,
+		normalTexture,
+		clearcoatNormalTexture
+	})}  
   ${getNormal({ normalTexture })}
   ${getMetallicRoughness({ metallicRoughnessTexture })}
   ${getDiffuse}
-  ${getSpecular({ specularTexture, specularFactorTexture, specularColorTexture })}
-  ${getTransmissionThickness({ transmissionThicknessTexture, transmissionTexture, thicknessTexture })}
-  ${getEmissiveOcclusion({ emissiveTexture, occlusionTexture })}
-  ${getSheen({ extensionsUsed, sheenTexture, sheenColorTexture, sheenRoughnessTexture })}
-  ${getClearcoat({ extensionsUsed, clearcoatTexture, clearcoatFactorTexture, clearcoatRoughnessTexture })}
-  ${getClearcoatNormal({ extensionsUsed, normalTexture, clearcoatNormalTexture })}
-  ${getIridescence({ extensionsUsed, iridescenceTexture, iridescenceFactorTexture, iridescenceThicknessTexture })}
-  ${getAnisotropy({ extensionsUsed, anisotropyTexture })}
+  ${getSpecular({
+		specularTexture,
+		specularFactorTexture,
+		specularColorTexture
+	})}
+  ${getTransmissionThickness({
+		transmissionThicknessTexture,
+		transmissionTexture,
+		thicknessTexture
+	})}
+  ${getEmissiveOcclusion({
+		emissiveTexture,
+		occlusionTexture
+	})}
+  ${getSheen({
+		extensionsUsed,
+		sheenTexture,
+		sheenColorTexture,
+		sheenRoughnessTexture
+	})}
+  ${getClearcoat({
+		extensionsUsed,
+		clearcoatTexture,
+		clearcoatFactorTexture,
+		clearcoatRoughnessTexture
+	})}
+  ${getClearcoatNormal({
+		extensionsUsed,
+		normalTexture,
+		clearcoatNormalTexture
+	})}
+  ${getIridescence({
+		extensionsUsed,
+		iridescenceTexture,
+		iridescenceFactorTexture,
+		iridescenceThicknessTexture
+	})}
+  ${getAnisotropy({
+		extensionsUsed,
+		anisotropyTexture
+	})}
   ${getDiffuseTransmission({
-      extensionsUsed,
-      diffuseTransmissionTexture,
-      diffuseTransmissionFactorTexture,
-      diffuseTransmissionColorTexture
-    })}
+		extensionsUsed,
+		diffuseTransmissionTexture,
+		diffuseTransmissionFactorTexture,
+		diffuseTransmissionColorTexture
+	})}
   ${getVolumeMultiScatter({ extensionsUsed })}
   
   // shading
   ${getPBRShading({
-      receiveShadows,
-      environmentMap,
-      transmissionBackgroundTexture,
-      transmissiveInputColorSpace,
-      transmissiveInputToneMapping,
-      extensionsUsed
-    })}
+		receiveShadows,
+		environmentMap,
+		transmissionBackgroundTexture,
+		transmissiveInputColorSpace,
+		transmissiveInputToneMapping,
+		extensionsUsed
+	})}
   
   outputColor = vec4(outgoingLight, outputColor.a);
   outputColor = vec4(outputColor.rgb + emissive, outputColor.a);
@@ -177,11 +187,13 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   // user defined additional contribution
   ${chunks.additionalContribution}
   
-  ${applyToneMapping({ toneMapping, outputColorSpace })}
+  ${applyToneMapping({
+		toneMapping,
+		outputColorSpace
+	})}
 
   ${fragmentOutput.output}
-}`
-  );
+}`;
 };
-
+//#endregion
 export { getPBRFragmentShaderCode };

@@ -1,6 +1,6 @@
-const getPhongDirect = (
-  /* wgsl */
-  `
+//#region src/core/shaders/chunks/fragment/head/get-phong-direct.ts
+/** Helper function chunk appended internally and used to compute Phong direct light contributions. */
+const getPhongDirect = `
 fn D_BlinnPhong( shininess: f32, NdotH: f32 ) -> f32 {
   return RECIPROCAL_PI * ( shininess * 0.5 + 1.0 ) * pow( NdotH, shininess );
 }
@@ -42,7 +42,6 @@ fn getPhongDirect(
   (*ptr_reflectedLight).directDiffuse += irradiance * BRDF_Lambert( diffuseColor );
   (*ptr_reflectedLight).directSpecular += irradiance * BRDF_BlinnPhong( normal, viewDirection, specularColor, shininess, directLight ) * specularStrength;
 }
-`
-);
-
+`;
+//#endregion
 export { getPhongDirect };

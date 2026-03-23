@@ -1,8 +1,9 @@
-import { constants } from '../../chunks/utils/constants.mjs';
-
-const computeCubemapFromHDR = (
-  /* wgsl */
-  `
+import { constants } from "../../chunks/utils/constants.mjs";
+//#region src/core/shaders/full/compute/compute-cubemap-from-HDR.ts
+/**
+* Compute a cube map texture from HDR image data.
+*/
+const computeCubemapFromHDR = `
 ${constants}
 
 // Cube face lookup vectors
@@ -72,7 +73,6 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
     sampledColor
   );
 }
-`
-);
-
+`;
+//#endregion
 export { computeCubemapFromHDR };

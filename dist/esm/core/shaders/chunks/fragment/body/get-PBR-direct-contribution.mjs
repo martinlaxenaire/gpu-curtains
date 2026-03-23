@@ -1,25 +1,21 @@
-const getPBRDirectContribution = ({
-  extensionsUsed = [],
-  environmentMap = null
-} = {}) => {
-  let pbrDirect = (
-    /* wgsl */
-    `
+//#region src/core/shaders/chunks/fragment/body/get-PBR-direct-contribution.ts
+/**
+* Get the PBR direct light contribution.
+*
+* @param parameters - Parameters used to create the shader chunk.
+* @param parameters.extensionsUsed - {@link PBRFragmentShaderInputParams.extensionsUsed | extensionsUsed} to check if anisotropy is enabled.
+* @returns - The PBR direct light contribution, accounting for anisotropy, sheen and clearcoat contributions.
+*/
+const getPBRDirectContribution = ({ extensionsUsed = [], environmentMap = null } = {}) => {
+	let pbrDirect = `
     let NdotL: f32 = saturate(dot(normal, directLight.direction));
-    var irradiance: vec3f = NdotL * directLight.color;`
-  );
-  if (extensionsUsed.includes("KHR_materials_clearcoat")) {
-    pbrDirect += /* wgsl */
-    `
+    var irradiance: vec3f = NdotL * directLight.color;`;
+	if (extensionsUsed.includes("KHR_materials_clearcoat")) pbrDirect += `
     clearcoatSpecularDirect += getPBRDirectClearcoat(clearcoatNormal, viewDirection, clearcoatF0, clearcoatF90, clearcoatRoughness, directLight);`;
-  }
-  if (extensionsUsed.includes("KHR_materials_sheen")) {
-    pbrDirect += /* wgsl */
-    `
+	if (extensionsUsed.includes("KHR_materials_sheen")) {
+		pbrDirect += `
     sheenSpecularDirect += irradiance * BRDF_Sheen(directLight.direction, viewDirection, normal, sheenColor, sheenRoughness);`;
-    if (environmentMap && environmentMap.lutTexture) {
-      pbrDirect += /* wgsl */
-      `
+		if (environmentMap && environmentMap.lutTexture) pbrDirect += `
     let sheenAlbedoV: f32 = getBRDFCharlie(
       normal,
       viewDirection,
@@ -35,9 +31,7 @@ const getPBRDirectContribution = ({
       ${environmentMap.sampler.name},
       ${environmentMap.lutTexture.options.name}
     );`;
-    } else {
-      pbrDirect += /* wgsl */
-      `
+		else pbrDirect += `
     let sheenAlbedoV: f32 = getSheenAlbedoScaleApprox(
       normal,
       viewDirection,
@@ -49,15 +43,11 @@ const getPBRDirectContribution = ({
       directLight.direction,
       sheenRoughness
     );`;
-    }
-    pbrDirect += /* wgsl */
-    `
+		pbrDirect += `
     let sheenEnergyComp: f32 = 1.0 - max3( sheenColor ) * max( sheenAlbedoV, sheenAlbedoL );
  		irradiance *= sheenEnergyComp;`;
-  }
-  if (environmentMap && environmentMap.lutTexture) {
-    pbrDirect += /* wgsl */
-    `
+	}
+	if (environmentMap && environmentMap.lutTexture) pbrDirect += `
     // Precomputed DFG values for view and light directions from LUT
     let dfgDirect: DFGDirect = DFGDirectFromLUT(
       normal,
@@ -68,9 +58,7 @@ const getPBRDirectContribution = ({
       ${environmentMap.lutTexture.options.name},
     );
     `;
-  } else {
-    pbrDirect += /* wgsl */
-    `
+	else pbrDirect += `
     // Precomputed DFG values for view and light directions from approximation
     let dfgDirect: DFGDirect = DFGDirectApprox(
       normal,
@@ -79,10 +67,7 @@ const getPBRDirectContribution = ({
       roughness,
     );
     `;
-  }
-  if (extensionsUsed.includes("KHR_materials_anisotropy")) {
-    pbrDirect += /* wgsl */
-    `
+	if (extensionsUsed.includes("KHR_materials_anisotropy")) pbrDirect += `
     var lightContribution: LightContribution = getPBRDirectAnisotropic(
       normal,
       viewDirection,
@@ -100,9 +85,7 @@ const getPBRDirectContribution = ({
       anisotropyB,
       directLight
     );`;
-  } else {
-    pbrDirect += /* wgsl */
-    `
+	else pbrDirect += `
     var lightContribution: LightContribution = getPBRDirect(
       normal,
       viewDirection,
@@ -117,32 +100,25 @@ const getPBRDirectContribution = ({
       iridescence,
       directLight
     );`;
-  }
-  if (extensionsUsed.includes("KHR_materials_diffuse_transmission")) {
-    pbrDirect += /* wgsl */
-    `
+	if (extensionsUsed.includes("KHR_materials_diffuse_transmission")) {
+		pbrDirect += `
     lightContribution.diffuse = lightContribution.diffuse * (1.0 - diffuseTransmission);
     let diffuseNdotL: f32 = saturate(dot(-1.0 * normal, directLight.direction));
     var lightDiffuseTransmission: vec3f = directLight.color * diffuseNdotL * BRDF_Lambert(diffuseTransmissionContribution);`;
-    if (extensionsUsed.includes("KHR_materials_volume")) {
-      pbrDirect += /* wgsl */
-      `
+		if (extensionsUsed.includes("KHR_materials_volume")) pbrDirect += `
     lightDiffuseTransmission *= volumeAttenuation(diffuseTransmissionThickness, attenuationColor, attenuationDistance);
     `;
-    }
-    pbrDirect += /* wgsl */
-    `
+		pbrDirect += `
     // lightDiffuseTransmission *= 1.0 - singleVolumeScatter;
     lightDiffuseTransmission *= singleVolumeScatter;
     lightContribution.diffuse += lightDiffuseTransmission * diffuseTransmission;
     `;
-  }
-  pbrDirect += /* wgsl */
-  `
+	}
+	pbrDirect += `
     reflectedLight.directDiffuse += lightContribution.diffuse;
     reflectedLight.directSpecular += lightContribution.specular;
   `;
-  return pbrDirect;
+	return pbrDirect;
 };
-
+//#endregion
 export { getPBRDirectContribution };

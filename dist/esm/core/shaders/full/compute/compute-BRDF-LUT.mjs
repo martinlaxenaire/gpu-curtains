@@ -1,14 +1,15 @@
-import { constants } from '../../chunks/utils/constants.mjs';
-import { common } from '../../chunks/utils/common.mjs';
-import { hammersley2D } from '../../chunks/utils/hammersley-2D.mjs';
-import { generateTBN } from '../../chunks/utils/generate-TBN.mjs';
-import { BRDF_GGX } from '../../chunks/utils/BRDF_GGX.mjs';
-import { getImportanceSamples } from '../../chunks/utils/get-importance-samples.mjs';
-import { BRDFCharlie } from '../../chunks/utils/BRDF-Charlie.mjs';
-
-const computeBRDFLUT = (
-  /* wgsl */
-  `
+import { constants } from "../../chunks/utils/constants.mjs";
+import { common } from "../../chunks/utils/common.mjs";
+import { BRDF_GGX } from "../../chunks/utils/BRDF_GGX.mjs";
+import { generateTBN } from "../../chunks/utils/generate-TBN.mjs";
+import { BRDFCharlie } from "../../chunks/utils/BRDF-Charlie.mjs";
+import { hammersley2D } from "../../chunks/utils/hammersley-2D.mjs";
+import { getImportanceSamples } from "../../chunks/utils/get-importance-samples.mjs";
+//#region src/core/shaders/full/compute/compute-BRDF-LUT.ts
+/**
+* Compute a BRDF LUT (look up table) texture. `RG` channels are used for BRDF GGX, `B` channel is used for BRDF "Charlie" sheen.
+*/
+const computeBRDFLUT = `
 ${constants}
 ${common}
 ${hammersley2D}
@@ -55,8 +56,8 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
      return;
   }
   
-  // Compute roughness and N\xB7V from texture coordinates
-  let NdotV: f32 = f32(x) / f32(texelSize.x - 1);    // Maps x-axis to N\xB7V (0.0 to 1.0)
+  // Compute roughness and N·V from texture coordinates
+  let NdotV: f32 = f32(x) / f32(texelSize.x - 1);    // Maps x-axis to N·V (0.0 to 1.0)
   let roughness: f32 = f32(y) / f32(texelSize.y - 1);  // Maps y-axis to roughness (0.0 to 1.0)
 
   // Calculate view vector and normal vector
@@ -114,7 +115,6 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
   // Store the result in the LUT texture
   textureStore(lutStorageTexture, vec2<u32>(x, y), vec4<f32>(A, B, C, 1.0));
 }
-`
-);
-
+`;
+//#endregion
 export { computeBRDFLUT };

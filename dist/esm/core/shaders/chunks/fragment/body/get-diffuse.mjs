@@ -1,8 +1,9 @@
-const getDiffuse = (
-  /* wgsl */
-  `
+//#region src/core/shaders/chunks/fragment/body/get-diffuse.ts
+/**
+* Set the `diffuseColor` (`vec3f`) and the diffuse component reduced by metalness `diffuseContribution` (`vec3f`) values.
+*/
+const getDiffuse = `
   var diffuseColor: vec3f = outputColor.rgb;
-  var diffuseContribution: vec3f = outputColor.rgb * (1.0 - metallic);`
-);
-
+  var diffuseContribution: vec3f = outputColor.rgb * (1.0 - metallic);`;
+//#endregion
 export { getDiffuse };

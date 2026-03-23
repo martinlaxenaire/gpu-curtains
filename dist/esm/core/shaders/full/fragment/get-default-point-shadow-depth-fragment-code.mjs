@@ -1,6 +1,9 @@
-const getDefaultPointShadowDepthFs = (lightIndex = 0) => (
-  /* wgsl */
-  `
+//#region src/core/shaders/full/fragment/get-default-point-shadow-depth-fragment-code.ts
+/**
+* Get {@link core/lights/PointLight.PointLight | PointLight} shadow map pass fragment shader.
+* @param lightIndex - Index of the {@link core/lights/PointLight.PointLight | PointLight} for which to render the depth pass.
+*/
+const getDefaultPointShadowDepthFs = (lightIndex = 0) => `
 struct PointShadowVSOutput {
   @builtin(position) position: vec4f,
   @location(0) worldPosition: vec3f,
@@ -17,7 +20,6 @@ struct PointShadowVSOutput {
   
   // write this as modified depth
   return saturate(lightDistance);
-}`
-);
-
+}`;
+//#endregion
 export { getDefaultPointShadowDepthFs };

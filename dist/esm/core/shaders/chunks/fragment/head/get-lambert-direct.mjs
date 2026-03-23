@@ -1,6 +1,6 @@
-const getLambertDirect = (
-  /* wgsl */
-  `
+//#region src/core/shaders/chunks/fragment/head/get-lambert-direct.ts
+/** Helper function chunk appended internally and used to compute Lambert direct light contributions. */
+const getLambertDirect = `
 fn getLambertDirect(
   normal: vec3f,
   diffuseColor: vec3f,
@@ -12,7 +12,6 @@ fn getLambertDirect(
   let irradiance: vec3f = NdotL * directLight.color;
   (*ptr_reflectedLight).directDiffuse += irradiance * BRDF_Lambert( diffuseColor );
 }
-`
-);
-
+`;
+//#endregion
 export { getLambertDirect };

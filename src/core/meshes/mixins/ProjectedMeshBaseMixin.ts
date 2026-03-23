@@ -1,13 +1,13 @@
 import { CameraRenderer, isCameraRenderer } from '../../renderers/utils'
 import { DOMFrustum } from '../../DOM/DOMFrustum'
-import {
+import type {
   MeshBaseClass,
-  MeshBaseMixin,
   MeshBaseOptions,
   MeshBaseParams,
   MeshBaseRenderParams,
   MixinConstructor,
 } from './MeshBaseMixin'
+import { MeshBaseMixin } from './MeshBaseMixin'
 import { GPUCurtains } from '../../../curtains/GPUCurtains'
 import { DOMElementBoundingRect, RectCoords } from '../../DOM/DOMElement'
 import { RenderMaterialParams, ShaderOptions } from '../../../types/Materials'

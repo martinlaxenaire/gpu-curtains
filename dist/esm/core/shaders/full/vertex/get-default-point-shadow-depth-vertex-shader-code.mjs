@@ -1,9 +1,12 @@
-import { declareAttributesVars } from '../../chunks/vertex/body/declare-attributes-vars.mjs';
-import { getVertexTransformedPositionNormal } from '../../chunks/vertex/body/get-vertex-transformed-position-normal.mjs';
-
-const getDefaultPointShadowDepthVs = (lightIndex = 0, { bindings = [], geometry }) => (
-  /* wgsl */
-  `
+import { declareAttributesVars } from "../../chunks/vertex/body/declare-attributes-vars.mjs";
+import { getVertexTransformedPositionNormal } from "../../chunks/vertex/body/get-vertex-transformed-position-normal.mjs";
+//#region src/core/shaders/full/vertex/get-default-point-shadow-depth-vertex-shader-code.ts
+/**
+* Get {@link core/lights/PointLight.PointLight | PointLight} shadow map pass vertex shader.
+* @param lightIndex - Index of the {@link core/lights/PointLight.PointLight | PointLight} for which to render the depth pass.
+* @param parameters - {@link VertexShaderInputParams} used to compute the output `worldPosition` and `normal` vectors.
+*/
+const getDefaultPointShadowDepthVs = (lightIndex = 0, { bindings = [], geometry }) => `
 struct PointShadowVSOutput {
   @builtin(position) position: vec4f,
   @location(0) worldPosition: vec3f,
@@ -16,7 +19,10 @@ struct PointShadowVSOutput {
   let pointShadow: PointShadowsElement = pointShadows.pointShadowsElements[${lightIndex}];
   
   ${declareAttributesVars({ geometry })}
-  ${getVertexTransformedPositionNormal({ bindings, geometry })}
+  ${getVertexTransformedPositionNormal({
+	bindings,
+	geometry
+})}
   
   let worldPos = worldPosition.xyz / worldPosition.w;
 
@@ -47,7 +53,6 @@ struct PointShadowVSOutput {
   pointShadowVSOutput.worldPosition = worldPos;
   
   return pointShadowVSOutput;
-}`
-);
-
+}`;
+//#endregion
 export { getDefaultPointShadowDepthVs };

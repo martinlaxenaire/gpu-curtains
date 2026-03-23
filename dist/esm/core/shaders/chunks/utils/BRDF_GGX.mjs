@@ -1,6 +1,8 @@
-const BRDF_GGX = (
-  /* wgsl */
-  `
+//#region src/core/shaders/chunks/utils/BRDF_GGX.ts
+/**
+* WGSL BRDF GGX functions. Need the `constants` and `common` chunks.
+*/
+const BRDF_GGX = `
 fn Schlick_to_F0( f: vec3f, f90: f32, dotVH: f32 ) -> vec3f {
   let x: f32 = clamp( 1.0 - dotVH, 0.0, 1.0 );
   let x2: f32 = x * x;
@@ -28,7 +30,6 @@ fn GeometrySmith(NdotL: f32, NdotV: f32, roughness: f32) -> f32 {
 
   return 0.5 / max( gv + gl, EPSILON );
 }
-`
-);
-
+`;
+//#endregion
 export { BRDF_GGX };
