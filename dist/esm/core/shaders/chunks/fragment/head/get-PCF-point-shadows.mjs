@@ -1,9 +1,12 @@
+//#region src/core/shaders/chunks/fragment/head/get-PCF-point-shadows.ts
+/**
+* Get the global PCF soft shadows contributions from all the current {@link CameraRenderer} {@link PointLight}.
+* @param renderer - {@link CameraRenderer} used by the {@link PointLight}.
+*/
 const getPCFPointShadows = (renderer) => {
-  const pointLights = renderer.shadowCastingLights.filter((light) => light.type === "pointLights");
-  const minPointLights = Math.max(renderer.lightsBindingParams.pointLights.max, 1);
-  return (
-    /* wgsl */
-    `
+	const pointLights = renderer.shadowCastingLights.filter((light) => light.type === "pointLights");
+	const minPointLights = Math.max(renderer.lightsBindingParams.pointLights.max, 1);
+	return `
 fn getPCFPointShadows(worldPosition: vec3f, fragmentPosition: vec2f) -> array<f32, ${minPointLights}> {
   var pointShadowContribution: array<f32, ${minPointLights}>;
   
@@ -12,9 +15,7 @@ fn getPCFPointShadows(worldPosition: vec3f, fragmentPosition: vec2f) -> array<f3
   var lightColor: vec3f;
   
   ${pointLights.map((light, index) => {
-      return (
-        /* wgsl */
-        `
+		return `
       lightDirection = pointLights.elements[${index}].position - worldPosition;
       
       lightDistance = length(lightDirection);
@@ -31,18 +32,13 @@ fn getPCFPointShadows(worldPosition: vec3f, fragmentPosition: vec2f) -> array<f3
       } else {
         pointShadowContribution[${index}] = 1.0;
       }
-            ` : (
-          /* wgsl */
-          `
-      pointShadowContribution[${index}] = 1.0;`
-        )}`
-      );
-    }).join("\n")}
+            ` : `
+      pointShadowContribution[${index}] = 1.0;`}`;
+	}).join("\n")}
   
   return pointShadowContribution;
 }
-`
-  );
+`;
 };
-
+//#endregion
 export { getPCFPointShadows };

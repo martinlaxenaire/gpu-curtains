@@ -1,9 +1,12 @@
-import { declareAttributesVars } from '../../chunks/vertex/body/declare-attributes-vars.mjs';
-import { getVertexTransformedPositionNormal } from '../../chunks/vertex/body/get-vertex-transformed-position-normal.mjs';
-
-const getDefaultSpotShadowDepthVs = (lightIndex = 0, { bindings = [], geometry }) => (
-  /* wgsl */
-  `
+import { declareAttributesVars } from "../../chunks/vertex/body/declare-attributes-vars.mjs";
+import { getVertexTransformedPositionNormal } from "../../chunks/vertex/body/get-vertex-transformed-position-normal.mjs";
+//#region src/core/shaders/full/vertex/get-default-spot-shadow-depth-vertex-shader-code.ts
+/**
+* Get default ({@link core/lights/SpotLight.SpotLight | SpotLight}) shadow map pass vertex shader.
+* @param lightIndex - Index of the {@link core/lights/SpotLight.SpotLight | SpotLight} for which to render the depth pass.
+* @param parameters - {@link VertexShaderInputBaseParams} used to compute the output `worldPosition` and `normal` vectors.
+*/
+const getDefaultSpotShadowDepthVs = (lightIndex = 0, { bindings = [], geometry }) => `
 struct SpotShadowVSOutput {
   @builtin(position) position: vec4f,
   @location(0) worldPosition: vec3f,
@@ -16,7 +19,10 @@ struct SpotShadowVSOutput {
   let spotShadow: SpotShadowsElement = spotShadows.spotShadowsElements[${lightIndex}];
   
   ${declareAttributesVars({ geometry })}
-  ${getVertexTransformedPositionNormal({ bindings, geometry })}
+  ${getVertexTransformedPositionNormal({
+	bindings,
+	geometry
+})}
   
   // shadows calculations in view space instead of world space
   // prevents world-space scaling issues for normal bias
@@ -38,7 +44,6 @@ struct SpotShadowVSOutput {
   shadowViewPos -= shadowNormal * normalBias;
   
   return spotShadow.projectionMatrix * vec4(shadowViewPos, 1.0);
-}`
-);
-
+}`;
+//#endregion
 export { getDefaultSpotShadowDepthVs };

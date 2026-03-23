@@ -1,6 +1,6 @@
-const getLightsInfos = (
-  /* wgsl */
-  `
+//#region src/core/shaders/chunks/fragment/head/get-lights-infos.ts
+/** WGSL functions to get the {@link core/lights/DirectionalLight.DirectionalLight | DirectionalLight} or {@link core/lights/PointLight.PointLight | PointLight} informations. */
+const getLightsInfos = `
 struct LightContribution {
   diffuse: vec3f,
   specular: vec3f
@@ -68,7 +68,6 @@ fn getSpotLightInfo(spotLight: SpotLightsElement, worldPosition: vec3f, ptr_ligh
     (*ptr_light).visible = false;
   }
 }
-`
-);
-
+`;
+//#endregion
 export { getLightsInfos };

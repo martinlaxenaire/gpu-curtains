@@ -1,63 +1,65 @@
-import { constants } from '../../chunks/utils/constants.mjs';
-import { common } from '../../chunks/utils/common.mjs';
-import { toneMappingUtils } from '../../chunks/utils/tone-mapping-utils.mjs';
-import { getFragmentInputStruct } from '../../chunks/fragment/head/get-fragment-input-struct.mjs';
-import { getFragmentOutputStruct } from '../../chunks/fragment/head/get-fragment-output-struct.mjs';
-import { declareAttributesVars } from '../../chunks/fragment/body/declare-attributes-vars.mjs';
-import { declareMaterialVars } from '../../chunks/fragment/body/declare-material-vars.mjs';
-import { getBaseColor } from '../../chunks/fragment/body/get-base-color.mjs';
-import { applyToneMapping } from '../../chunks/fragment/body/apply-tone-mapping.mjs';
-import { patchAdditionalChunks } from '../../default-material-helpers.mjs';
-import { getEmissiveOcclusion } from '../../chunks/fragment/body/get-emissive-occlusion.mjs';
-
-const getUnlitFragmentShaderCode = ({
-  chunks = null,
-  toneMapping = "Khronos",
-  outputColorSpace = "srgb",
-  fragmentOutput = {
-    struct: [
-      {
-        type: "vec4f",
-        name: "color"
-      }
-    ],
-    output: (
-      /* wgsl */
-      `
+import { constants } from "../../chunks/utils/constants.mjs";
+import { common } from "../../chunks/utils/common.mjs";
+import { toneMappingUtils } from "../../chunks/utils/tone-mapping-utils.mjs";
+import { applyToneMapping } from "../../chunks/fragment/body/apply-tone-mapping.mjs";
+import { patchAdditionalChunks } from "../../default-material-helpers.mjs";
+import { getFragmentInputStruct } from "../../chunks/fragment/head/get-fragment-input-struct.mjs";
+import { getFragmentOutputStruct } from "../../chunks/fragment/head/get-fragment-output-struct.mjs";
+import { declareAttributesVars } from "../../chunks/fragment/body/declare-attributes-vars.mjs";
+import { declareMaterialVars } from "../../chunks/fragment/body/declare-material-vars.mjs";
+import { getBaseColor } from "../../chunks/fragment/body/get-base-color.mjs";
+import { getEmissiveOcclusion } from "../../chunks/fragment/body/get-emissive-occlusion.mjs";
+//#region src/core/shaders/full/fragment/get-unlit-fragment-shader-code.ts
+/**
+* Build an unlit fragment shader using the provided options.
+* @param parameters - {@link UnlitFragmentShaderInputParams} used to build the unlit fragment shader.
+* @returns - The unlit fragment shader generated based on the provided parameters.
+*/
+const getUnlitFragmentShaderCode = ({ chunks = null, toneMapping = "Khronos", outputColorSpace = "srgb", fragmentOutput = {
+	struct: [{
+		type: "vec4f",
+		name: "color"
+	}],
+	output: `
   var output: FSOutput;
   output.color = outputColor;
   return output;`
-    )
-  },
-  geometry,
-  additionalVaryings = [],
-  materialUniform = null,
-  materialUniformName = "material",
-  baseColorTexture = null,
-  emissiveTexture = null,
-  occlusionTexture = null
-}) => {
-  chunks = patchAdditionalChunks(chunks);
-  return (
-    /* wgsl */
-    `  
+}, geometry, additionalVaryings = [], materialUniform = null, materialUniformName = "material", baseColorTexture = null, emissiveTexture = null, occlusionTexture = null }) => {
+	chunks = patchAdditionalChunks(chunks);
+	return `  
 ${chunks.additionalHead}
 
 ${constants}
 ${common}
 ${toneMappingUtils}
 
-${getFragmentInputStruct({ geometry, additionalVaryings })}
+${getFragmentInputStruct({
+		geometry,
+		additionalVaryings
+	})}
 
 ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 
 @fragment fn main(fsInput: FSInput) -> FSOutput {       
   var outputColor: vec4f = vec4();
   
-  ${declareAttributesVars({ geometry, additionalVaryings })}
-  ${declareMaterialVars({ materialUniform, materialUniformName, shadingModel: "Unlit" })}
-  ${getBaseColor({ geometry, baseColorTexture })}
-  ${getEmissiveOcclusion({ emissiveTexture, occlusionTexture })}
+  ${declareAttributesVars({
+		geometry,
+		additionalVaryings
+	})}
+  ${declareMaterialVars({
+		materialUniform,
+		materialUniformName,
+		shadingModel: "Unlit"
+	})}
+  ${getBaseColor({
+		geometry,
+		baseColorTexture
+	})}
+  ${getEmissiveOcclusion({
+		emissiveTexture,
+		occlusionTexture
+	})}
   
   // user defined preliminary contribution
   ${chunks.preliminaryContribution}
@@ -67,11 +69,13 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   // user defined additional contribution
   ${chunks.additionalContribution}
   
-  ${applyToneMapping({ toneMapping, outputColorSpace })}
+  ${applyToneMapping({
+		toneMapping,
+		outputColorSpace
+	})}
 
   ${fragmentOutput.output}
-}`
-  );
+}`;
 };
-
+//#endregion
 export { getUnlitFragmentShaderCode };

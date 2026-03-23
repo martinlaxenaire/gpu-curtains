@@ -1,6 +1,8 @@
-const BRDFCharlie = (
-  /* wgsl */
-  `
+//#region src/core/shaders/chunks/utils/BRDF-Charlie.ts
+/**
+* BRDF "Charlie" sheen Distribution and Visibility helper functions.
+*/
+const BRDFCharlie = `
 // https://github.com/google/filament/blob/main/shaders/src/surface_brdf.fs#L94
 fn D_Charlie( roughness: f32, NdotH: f32 ) -> f32 {
   let alpha: f32 = pow2( roughness );
@@ -18,7 +20,6 @@ fn V_Neubelt( NdotL: f32, NdotV: f32 ) -> f32 {
   // Neubelt and Pettineo 2013, "Crafting a Next-gen Material Pipeline for The Order: 1886"
   return saturate( 1.0 / ( 4.0 * max( NdotL + NdotV - NdotL * NdotV, EPSILON ) ) );
 }
-`
-);
-
+`;
+//#endregion
 export { BRDFCharlie };

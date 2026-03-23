@@ -1,78 +1,85 @@
-import { isRenderer } from '../renderers/utils.mjs';
-import { SamplerBinding } from '../bindings/SamplerBinding.mjs';
-import { generateUUID, throwWarning } from '../../utils/utils.mjs';
-
-class Sampler {
-  /**
-   * Sampler constructor
-   * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Sampler}.
-   * @param parameters - {@link SamplerParams | parameters} used to create this {@link Sampler}.
-   */
-  constructor(renderer, {
-    label = "Sampler",
-    name,
-    addressModeU = "repeat",
-    addressModeV = "repeat",
-    magFilter = "linear",
-    minFilter = "linear",
-    mipmapFilter = "linear",
-    maxAnisotropy = 1,
-    type = "filtering",
-    compare = null
-  } = {}) {
-    this.type = "Sampler";
-    this.uuid = generateUUID();
-    this.label = label;
-    this.setRenderer(renderer);
-    if (!name && !this.renderer.production) {
-      name = "sampler" + this.renderer.samplers.length;
-      throwWarning(
-        `Sampler: you are trying to create a sampler without the mandatory name parameter. A default name will be used instead: ${name}`
-      );
-    }
-    this.name = name;
-    this.options = {
-      addressModeU,
-      addressModeV,
-      magFilter,
-      minFilter,
-      mipmapFilter,
-      maxAnisotropy,
-      type,
-      ...compare !== null && { compare }
-    };
-    this.createSampler();
-    this.createBinding();
-  }
-  /**
-   * Set or reset this {@link Sampler} {@link Sampler.renderer | renderer}.
-   * @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
-   */
-  setRenderer(renderer) {
-    renderer = isRenderer(renderer, this.label + " " + this.type);
-    this.renderer = renderer;
-  }
-  /**
-   * Set the {@link GPUSampler}.
-   */
-  createSampler() {
-    this.sampler = this.renderer.createSampler(this);
-    if (this.binding) {
-      this.binding.resource = this.sampler;
-    }
-  }
-  /**
-   * Set the {@link SamplerBinding | binding}.
-   */
-  createBinding() {
-    this.binding = new SamplerBinding({
-      label: this.label,
-      name: this.name,
-      bindingType: "sampler",
-      sampler: this.sampler,
-      type: this.options.type
-    });
-  }
-}
-
+import { generateUUID, throwWarning } from "../../utils/utils.mjs";
+import { isRenderer } from "../renderers/utils.mjs";
+import { SamplerBinding } from "../bindings/SamplerBinding.mjs";
+//#region src/core/samplers/Sampler.ts
+/**
+* Used to create a {@link GPUSampler} and its associated {@link SamplerBinding}.
+*
+* @example
+* ```javascript
+* // set our main GPUCurtains instance
+* const gpuCurtains = new GPUCurtains({
+*   container: '#canvas' // selector of our WebGPU canvas container
+* })
+*
+* // set the GPU device
+* // note this is asynchronous
+* await gpuCurtains.setDevice()
+*
+* const mirrorSampler = new Sampler(gpuCurtains, {
+*   label: 'Mirror sampler',
+*   name: 'mirrorSampler',
+*   addressModeU: 'mirror-repeat',
+*   addressModeV: 'mirror-repeat',
+* })
+* ```
+*/
+var Sampler = class {
+	/**
+	* Sampler constructor
+	* @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Sampler}.
+	* @param parameters - {@link SamplerParams | parameters} used to create this {@link Sampler}.
+	*/
+	constructor(renderer, { label = "Sampler", name, addressModeU = "repeat", addressModeV = "repeat", magFilter = "linear", minFilter = "linear", mipmapFilter = "linear", maxAnisotropy = 1, type = "filtering", compare = null } = {}) {
+		this.type = "Sampler";
+		this.uuid = generateUUID();
+		this.label = label;
+		this.setRenderer(renderer);
+		if (!name && !this.renderer.production) {
+			name = "sampler" + this.renderer.samplers.length;
+			throwWarning(`Sampler: you are trying to create a sampler without the mandatory name parameter. A default name will be used instead: ${name}`);
+		}
+		this.name = name;
+		this.options = {
+			addressModeU,
+			addressModeV,
+			magFilter,
+			minFilter,
+			mipmapFilter,
+			maxAnisotropy,
+			type,
+			...compare !== null && { compare }
+		};
+		this.createSampler();
+		this.createBinding();
+	}
+	/**
+	* Set or reset this {@link Sampler} {@link Sampler.renderer | renderer}.
+	* @param renderer - New {@link Renderer} or {@link GPUCurtains} instance to use.
+	*/
+	setRenderer(renderer) {
+		renderer = isRenderer(renderer, this.label + " " + this.type);
+		this.renderer = renderer;
+	}
+	/**
+	* Set the {@link GPUSampler}.
+	*/
+	createSampler() {
+		this.sampler = this.renderer.createSampler(this);
+		if (this.binding) this.binding.resource = this.sampler;
+	}
+	/**
+	* Set the {@link SamplerBinding | binding}.
+	*/
+	createBinding() {
+		this.binding = new SamplerBinding({
+			label: this.label,
+			name: this.name,
+			bindingType: "sampler",
+			sampler: this.sampler,
+			type: this.options.type
+		});
+	}
+};
+//#endregion
 export { Sampler };

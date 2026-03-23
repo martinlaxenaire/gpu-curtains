@@ -1,14 +1,15 @@
-import { BRDF_GGX } from './BRDF_GGX.mjs';
-import { BRDFCharlie } from './BRDF-Charlie.mjs';
-import { common } from './common.mjs';
-import { constants } from './constants.mjs';
-import { generateTBN } from './generate-TBN.mjs';
-import { getImportanceSamples } from './get-importance-samples.mjs';
-import { hammersley2D } from './hammersley-2D.mjs';
-
-const PMREMGeneration = (
-  /* wgsl */
-  `
+import { constants } from "./constants.mjs";
+import { common } from "./common.mjs";
+import { BRDF_GGX } from "./BRDF_GGX.mjs";
+import { generateTBN } from "./generate-TBN.mjs";
+import { BRDFCharlie } from "./BRDF-Charlie.mjs";
+import { hammersley2D } from "./hammersley-2D.mjs";
+import { getImportanceSamples } from "./get-importance-samples.mjs";
+//#region src/core/shaders/chunks/utils/PMREM-generation.ts
+/**
+* WGSL code to generate the mip levels of a PMREM cube texture based on a environment cubemap texture (with mips).
+*/
+const PMREMGeneration = `
 ${constants}
 ${common}
 ${hammersley2D}
@@ -158,7 +159,6 @@ struct Params {
 
   return vec4(color, 1.0);
 }
-`
-);
-
+`;
+//#endregion
 export { PMREMGeneration };

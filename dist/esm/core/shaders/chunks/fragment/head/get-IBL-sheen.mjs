@@ -1,6 +1,8 @@
-const getIBLSheen = (
-  /* wgsl */
-  `
+//#region src/core/shaders/chunks/fragment/head/get-IBL-sheen.ts
+/**
+* WGSL functions to calculate sheen specular indirect IBL contribution.
+*/
+const getIBLSheen = `
 fn getSheenAlbedoScaleApprox(normal: vec3f, viewDirection: vec3f, sheenRoughness: f32) -> f32 {
   let NdotV: f32 = saturate( dot( normal, viewDirection ) );
   let s = saturate(sheenRoughness);
@@ -62,7 +64,6 @@ fn RE_IndirectDiffuseSheen(
 	diffuse *= sheenEnergyComp;
   (*ptr_reflectedLight).indirectDiffuse += diffuse;
 }
-`
-);
-
+`;
+//#endregion
 export { getIBLSheen };

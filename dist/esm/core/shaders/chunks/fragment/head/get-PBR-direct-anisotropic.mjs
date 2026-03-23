@@ -1,6 +1,8 @@
-const getPBRDirectAnisotropic = (
-  /* wgsl */
-  `
+//#region src/core/shaders/chunks/fragment/head/get-PBR-direct-anisotropic.ts
+/**
+* Helper WGSL functions to get the PBR direct anisotropic contribution.
+*/
+const getPBRDirectAnisotropic = `
 fn GeometrySmith_Anisotropic(
   alphaT: f32, 
   alphaB: f32,
@@ -121,7 +123,6 @@ fn getPBRDirectAnisotropic(
 
   return lightContribution;
 }
-`
-);
-
+`;
+//#endregion
 export { getPBRDirectAnisotropic };
