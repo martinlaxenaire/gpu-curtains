@@ -443,14 +443,14 @@ export class CurtainsClothSim {
           closestIntersection.localPoint.x,
           closestIntersection.localPoint.y
         )
+
+        this.computeForcesPass.uniforms.interaction.pointerVelocity.value.set(
+          this.velocity.x / this.plane.boundingRect.width,
+          this.velocity.y / this.plane.boundingRect.height
+        )
       } else {
         this.computeForcesPass.uniforms.interaction.pointerPosition.value.copy(Infinity)
       }
-
-      this.computeForcesPass.uniforms.interaction.pointerVelocity.value.set(
-        this.velocity.x / this.plane.boundingRect.width,
-        this.velocity.y / this.plane.boundingRect.height
-      )
 
       this.pointerTimer = setTimeout(() => {
         this.computeForcesPass.uniforms.interaction.pointerPosition.value.set(Infinity)

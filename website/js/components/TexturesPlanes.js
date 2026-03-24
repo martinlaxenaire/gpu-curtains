@@ -1,5 +1,5 @@
-import { Plane, RenderBundle } from '../../../dist/esm/index.mjs'
-import { imagePlaneFs, imagePlaneVs } from '../shaders/image-plane.wgsl.js'
+import { Plane } from '../../../dist/esm/index.mjs'
+import { imagePlaneFs, videoPlaneFs, imagePlaneVs } from '../shaders/image-plane.wgsl.js'
 
 export class TexturesPlanes {
   constructor({ gpuCurtains, scrollObserver }) {
@@ -32,7 +32,7 @@ export class TexturesPlanes {
             code: imagePlaneVs,
           },
           fragment: {
-            code: imagePlaneFs,
+            code: planeEl.classList.contains('video-plane') ? videoPlaneFs : imagePlaneFs,
           },
         },
         uniforms: {
@@ -55,7 +55,7 @@ export class TexturesPlanes {
         },
         texturesOptions: {
           generateMips: true,
-          useExternalTextures: false,
+          useExternalTextures: true,
           placeholderColor: Math.random() > 0.5 ? [0, 255, 255, 255] : [255, 0, 255, 255],
         },
       })

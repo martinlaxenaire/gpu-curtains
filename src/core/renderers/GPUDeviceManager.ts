@@ -33,7 +33,7 @@ export interface GPUDeviceManagerBaseParams {
  */
 export interface GPUDeviceManagerParams extends GPUDeviceManagerBaseParams {
   /** Callback to run if there's any error while trying to set up the {@link GPUAdapter | adapter} or {@link GPUDevice | device}. */
-  onError?: () => void
+  onError?: (message?: string) => void
   /** Callback to run whenever the {@link GPUDeviceManager#device | device} is lost. */
   onDeviceLost?: (info?: GPUDeviceLostInfo) => void
   /** Callback to run whenever the {@link GPUDeviceManager#device | device} has been intentionally destroyed. */
@@ -111,7 +111,7 @@ export class GPUDeviceManager {
   }
 
   /** Callback to run if there's any error while trying to set up the {@link GPUAdapter | adapter} or {@link GPUDevice | device} */
-  onError: () => void
+  onError: (message?: string) => void
   /** Callback to run whenever the {@link device} is lost. */
   onDeviceLost: (info?: GPUDeviceLostInfo) => void
   /** Callback to run whenever the {@link device} has been intentionally destroyed. */
@@ -136,7 +136,7 @@ export class GPUDeviceManager {
     requiredFeatures = [],
     requestAdapterLimits = [],
     autoRender = true,
-    onError = () => {
+    onError = (message?: string) => {
       /* allow empty callbacks */
     },
     onDeviceLost = (info?: GPUDeviceLostInfo) => {
@@ -213,10 +213,9 @@ export class GPUDeviceManager {
    */
   async setAdapter(adapter: GPUAdapter | null = null) {
     if (!this.gpu) {
-      this.onError()
-      throwError(
-        `GPUDeviceManager (${this.options.label}): WebGPU is not supported on your browser/OS No 'gpu' object in 'navigator'.`
-      )
+      const errorMessage = `GPUDeviceManager (${this.options.label}): WebGPU is not supported on your browser/OS No 'gpu' object in 'navigator'.`
+      this.onError(errorMessage)
+      throwError(errorMessage)
     }
 
     if (adapter) {
@@ -226,14 +225,12 @@ export class GPUDeviceManager {
         this.adapter = await this.gpu?.requestAdapter(this.options.adapterOptions)
 
         if (!this.adapter) {
-          this.onError()
           throwError(
             `GPUDeviceManager (${this.options.label}): WebGPU is not supported on your browser/OS 'requestAdapter' failed.`
           )
         }
       } catch (e) {
-        this.onError()
-        throwError(`GPUDeviceManager (${this.options.label}): Unabled to request an adapter: ${e.message}`)
+        this.onError(e.message)
       }
     }
   }
@@ -243,6 +240,8 @@ export class GPUDeviceManager {
    * @param device - {@link GPUDevice} to use if set.
    */
   async setDevice(device: GPUDevice | null = null) {
+    if (!this.adapter) return
+
     if (device) {
       this.device = device
       this.ready = true
@@ -285,42 +284,39 @@ export class GPUDeviceManager {
         })
 
         if (this.device) {
+          this.device.lost.then((info) => {
+            throwWarning(`GPUDeviceManager (${this.options.label}): WebGPU device was lost: ${info.message}`)
+
+            this.loseDevice()
+
+            // do not call onDeviceLost event if the device was intentionally destroyed
+            // call onDeviceDestroyed instead
+            if (info.reason !== 'destroyed') {
+              this.onDeviceLost(info)
+            } else {
+              this.onDeviceDestroyed(info)
+            }
+          })
+
+          // Uncaptured errors
+          this.device.addEventListener('uncapturederror', (event) => {
+            this.ready = false
+            const errorMessage = `GPUDeviceManager (${this.options.label}): Uncaptured WebGPU device error: ${event.error.message}`
+            this.onError(errorMessage)
+            throwError(errorMessage)
+          })
+
           this.ready = true
           this.index++
         } else {
-          this.onError()
           throwError(
             `GPUDeviceManager (${this.options.label}): WebGPU is not supported on your browser/OS 'requestDevice' failed.`
           )
         }
-      } catch (error) {
-        this.onError()
-        throwError(
-          `GPUDeviceManager (${this.options.label}): WebGPU is not supported on your browser/OS. 'requestDevice' failed: ${error.message}`
-        )
+      } catch (e) {
+        this.onError(e.message)
       }
     }
-
-    this.device?.lost.then((info) => {
-      throwWarning(`GPUDeviceManager (${this.options.label}): WebGPU device was lost: ${info.message}`)
-
-      this.loseDevice()
-
-      // do not call onDeviceLost event if the device was intentionally destroyed
-      // call onDeviceDestroyed instead
-      if (info.reason !== 'destroyed') {
-        this.onDeviceLost(info)
-      } else {
-        this.onDeviceDestroyed(info)
-      }
-    })
-
-    // Uncaptured errors
-    this.device.addEventListener('uncapturederror', (event) => {
-      this.ready = false
-      this.onError()
-      throwError(`GPUDeviceManager (${this.options.label}): Uncaptured WebGPU device error: ${event.error.message}`)
-    })
   }
 
   /**
@@ -513,6 +509,7 @@ export class GPUDeviceManager {
   uploadTexture(texture: MediaTexture, sourceIndex = 0) {
     if ('sources' in texture && texture.sources.length) {
       try {
+        console.log(texture.sources[sourceIndex].source)
         this.device?.queue.copyExternalImageToTexture(
           {
             source: texture.sources[sourceIndex].source as GPUCopyExternalImageSource,

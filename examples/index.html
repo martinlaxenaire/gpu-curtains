@@ -52,6 +52,10 @@
         transform: translate3d(-50%, -50%, 0);
       }
 
+      #canvas {
+        opacity: clamp(0.5, calc(100vw / 100vh), 1);
+      }
+
       @media screen and (orientation: portrait) {
         #sphere {
           left: 50%;

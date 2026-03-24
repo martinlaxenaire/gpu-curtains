@@ -15,7 +15,7 @@ var GPUDeviceManager = class {
 	* GPUDeviceManager constructor
 	* @param parameters - {@link GPUDeviceManagerParams | parameters} used to create this {@link GPUDeviceManager}.
 	*/
-	constructor({ label, production = false, adapterOptions = {}, requiredFeatures = [], requestAdapterLimits = [], autoRender = true, onError = () => {}, onDeviceLost = (info) => {}, onDeviceDestroyed = (info) => {} } = {}) {
+	constructor({ label, production = false, adapterOptions = {}, requiredFeatures = [], requestAdapterLimits = [], autoRender = true, onError = (message) => {}, onDeviceLost = (info) => {}, onDeviceDestroyed = (info) => {} } = {}) {
 		this._onBeforeRenderCallback = () => {};
 		this._onAfterRenderCallback = () => {};
 		this.index = 0;
@@ -70,19 +70,16 @@ var GPUDeviceManager = class {
 	*/
 	async setAdapter(adapter = null) {
 		if (!this.gpu) {
-			this.onError();
-			throwError(`GPUDeviceManager (${this.options.label}): WebGPU is not supported on your browser/OS No 'gpu' object in 'navigator'.`);
+			const errorMessage = `GPUDeviceManager (${this.options.label}): WebGPU is not supported on your browser/OS No 'gpu' object in 'navigator'.`;
+			this.onError(errorMessage);
+			throwError(errorMessage);
 		}
 		if (adapter) this.adapter = adapter;
 		else try {
 			this.adapter = await this.gpu?.requestAdapter(this.options.adapterOptions);
-			if (!this.adapter) {
-				this.onError();
-				throwError(`GPUDeviceManager (${this.options.label}): WebGPU is not supported on your browser/OS 'requestAdapter' failed.`);
-			}
+			if (!this.adapter) throwError(`GPUDeviceManager (${this.options.label}): WebGPU is not supported on your browser/OS 'requestAdapter' failed.`);
 		} catch (e) {
-			this.onError();
-			throwError(`GPUDeviceManager (${this.options.label}): Unabled to request an adapter: ${e.message}`);
+			this.onError(e.message);
 		}
 	}
 	/**
@@ -90,6 +87,7 @@ var GPUDeviceManager = class {
 	* @param device - {@link GPUDevice} to use if set.
 	*/
 	async setDevice(device = null) {
+		if (!this.adapter) return;
 		if (device) {
 			this.device = device;
 			this.ready = true;
@@ -109,27 +107,24 @@ var GPUDeviceManager = class {
 				requiredLimits
 			});
 			if (this.device) {
+				this.device.lost.then((info) => {
+					throwWarning(`GPUDeviceManager (${this.options.label}): WebGPU device was lost: ${info.message}`);
+					this.loseDevice();
+					if (info.reason !== "destroyed") this.onDeviceLost(info);
+					else this.onDeviceDestroyed(info);
+				});
+				this.device.addEventListener("uncapturederror", (event) => {
+					this.ready = false;
+					const errorMessage = `GPUDeviceManager (${this.options.label}): Uncaptured WebGPU device error: ${event.error.message}`;
+					this.onError(errorMessage);
+					throwError(errorMessage);
+				});
 				this.ready = true;
 				this.index++;
-			} else {
-				this.onError();
-				throwError(`GPUDeviceManager (${this.options.label}): WebGPU is not supported on your browser/OS 'requestDevice' failed.`);
-			}
-		} catch (error) {
-			this.onError();
-			throwError(`GPUDeviceManager (${this.options.label}): WebGPU is not supported on your browser/OS. 'requestDevice' failed: ${error.message}`);
+			} else throwError(`GPUDeviceManager (${this.options.label}): WebGPU is not supported on your browser/OS 'requestDevice' failed.`);
+		} catch (e) {
+			this.onError(e.message);
 		}
-		this.device?.lost.then((info) => {
-			throwWarning(`GPUDeviceManager (${this.options.label}): WebGPU device was lost: ${info.message}`);
-			this.loseDevice();
-			if (info.reason !== "destroyed") this.onDeviceLost(info);
-			else this.onDeviceDestroyed(info);
-		});
-		this.device.addEventListener("uncapturederror", (event) => {
-			this.ready = false;
-			this.onError();
-			throwError(`GPUDeviceManager (${this.options.label}): Uncaptured WebGPU device error: ${event.error.message}`);
-		});
 	}
 	/**
 	* Set our {@link pipelineManager | pipeline manager}.
@@ -276,6 +271,7 @@ var GPUDeviceManager = class {
 	*/
 	uploadTexture(texture, sourceIndex = 0) {
 		if ("sources" in texture && texture.sources.length) try {
+			console.log(texture.sources[sourceIndex].source);
 			this.device?.queue.copyExternalImageToTexture({
 				source: texture.sources[sourceIndex].source,
 				flipY: texture.options.flipY
