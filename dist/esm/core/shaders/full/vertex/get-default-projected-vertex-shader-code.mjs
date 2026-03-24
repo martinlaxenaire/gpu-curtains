@@ -1,6 +1,6 @@
-const getDefaultProjectedVertexShaderCode = (
-  /* wgsl */
-  `
+//#region src/core/shaders/full/vertex/get-default-projected-vertex-shader-code.ts
+/** Default vertex shader code for projected meshes. */
+const getDefaultProjectedVertexShaderCode = `
 struct VSOutput {
   @builtin(position) position: vec4f,
   @location(0) uv: vec2f,
@@ -22,7 +22,6 @@ struct VSOutput {
   vsOutput.viewDirection = camera.position - vsOutput.worldPosition;
   
   return vsOutput;
-}`
-);
-
+}`;
+//#endregion
 export { getDefaultProjectedVertexShaderCode };

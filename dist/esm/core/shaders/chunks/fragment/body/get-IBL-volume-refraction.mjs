@@ -1,16 +1,22 @@
-const getIBLVolumeRefraction = ({
-  transmissionBackgroundTexture = null,
-  transmissiveInputColorSpace = "srgb",
-  transmissiveInputToneMapping = "Khronos",
-  extensionsUsed = []
-}) => {
-  const hasDispersion = extensionsUsed.includes("KHR_materials_dispersion");
-  const iblVolumeRefractionFunction = hasDispersion ? "getIBLVolumeRefractionWithDispersion" : "getIBLVolumeRefraction";
-  const availableToneMappings = [false, "Khronos", "Reinhard", "Cineon"];
-  const transmissiveToneMapping = availableToneMappings.findIndex((t) => t === transmissiveInputToneMapping);
-  return transmissionBackgroundTexture ? (
-    /* wgsl */
-    `
+//#region src/core/shaders/chunks/fragment/body/get-IBL-volume-refraction.ts
+/**
+* Apply transmission volume refraction to `totalDiffuse` light component if applicable.
+* @param parameters - Parameters to use to apply transmission volume refraction.
+* @param parameters.transmissionBackgroundTexture - {@link ShaderTextureDescriptor | Transmission background texture descriptor} to use for transmission if any.
+* @param parameters.transmissiveInputColorSpace - Whether the opaque objects sampled by the transmission texture have been drawn in `linear` or `srgb` color space. Default to `srgb`.
+* @param parameters.transmissiveInputToneMapping - The tone mapping applied to the opaque objects sampled by the transmission texture, if any. Default to `Khronos`.
+* @param parameters.extensionsUsed - {@link types/gltf/GLTFExtensions.GLTFExtensionsUsed | glTF extensions used} by the material for specifing shading if any.
+* @returns - A string with transmission volume refraction applied to `totalDiffuse` light component.
+*/
+const getIBLVolumeRefraction = ({ transmissionBackgroundTexture = null, transmissiveInputColorSpace = "srgb", transmissiveInputToneMapping = "Khronos", extensionsUsed = [] }) => {
+	const iblVolumeRefractionFunction = extensionsUsed.includes("KHR_materials_dispersion") ? "getIBLVolumeRefractionWithDispersion" : "getIBLVolumeRefraction";
+	const transmissiveToneMapping = [
+		false,
+		"Khronos",
+		"Reinhard",
+		"Cineon"
+	].findIndex((t) => t === transmissiveInputToneMapping);
+	return transmissionBackgroundTexture ? `
   var transmissionAlpha: f32 = 1.0;
 
   let isTransmissiveLinear: bool = ${transmissiveInputColorSpace === "linear" ? "true" : "false"};
@@ -42,8 +48,7 @@ const getIBLVolumeRefraction = ({
   transmissionAlpha = mix( transmissionAlpha, transmitted.a, transmission );
   
   totalDiffuse = mix(totalDiffuse, transmitted.rgb, transmission);
-  outputColor.a *= transmissionAlpha;`
-  ) : "";
+  outputColor.a *= transmissionAlpha;` : "";
 };
-
+//#endregion
 export { getIBLVolumeRefraction };

@@ -1,6 +1,8 @@
-const getPBRDirectClearcoat = (
-  /* wgsl */
-  `
+//#region src/core/shaders/chunks/fragment/head/get-PBR-direct-clearcoat.ts
+/**
+* Helper WGSL functions to get the PBR direct clearcoat contribution.
+*/
+const getPBRDirectClearcoat = `
 // GGX Distribution, Schlick Fresnel, GGX_SmithCorrelated Visibility
 fn BRDF_GGX_Clearcoat(
   lightDirection: vec3f,
@@ -40,7 +42,6 @@ fn getPBRDirectClearcoat(
 
   return ccIrradiance * BRDF_GGX_Clearcoat( directLight.direction, viewDirection, clearcoatNormal, clearcoatF0, clearcoatF90, clearcoatRoughness );
 }
-`
-);
-
+`;
+//#endregion
 export { getPBRDirectClearcoat };

@@ -1,12 +1,16 @@
-import { getPCFShadows } from './get-PCF-shadows.mjs';
-import { applyDirectionalShadows } from './apply-directional-shadows.mjs';
-import { applyPointShadows } from './apply-point-shadows.mjs';
-import { applySpotShadows } from './apply-spot-shadows.mjs';
-
+import { getPCFShadows } from "./get-PCF-shadows.mjs";
+import { applyDirectionalShadows } from "./apply-directional-shadows.mjs";
+import { applyPointShadows } from "./apply-point-shadows.mjs";
+import { applySpotShadows } from "./apply-spot-shadows.mjs";
+//#region src/core/shaders/chunks/fragment/body/get-lambert-shading.ts
+/**
+* Set the `outgoingLight` (`vec3f`) using Lambert shading.
+* @param parameters - Parameters to use to apply Lambert shading.
+* @param parameters.receiveShadows - Whether the shading function should account for current shadows. Default to `false`.
+* @returns - A string with Lambert shading applied to `outgoingLight`.
+*/
 const getLambertShading = ({ receiveShadows = false } = {}) => {
-  return (
-    /* wgsl */
-    `
+	return `
   var directLight: DirectLight;
   var reflectedLight: ReflectedLight;
   
@@ -57,8 +61,7 @@ const getLambertShading = ({ receiveShadows = false } = {}) => {
   
   totalIndirect *= occlusion;
   
-  var outgoingLight: vec3f = totalDirect + totalIndirect;`
-  );
+  var outgoingLight: vec3f = totalDirect + totalIndirect;`;
 };
-
+//#endregion
 export { getLambertShading };

@@ -1,6 +1,8 @@
-const getImportanceSamples = (
-  /* wgsl */
-  `
+//#region src/core/shaders/chunks/utils/get-importance-samples.ts
+/**
+* Importance sample helper functions for GGX and Charlie sheen. Must be used with the `common`, `constants`, `BRDF_GGX` and `BRDFCharlie` chunks.
+*/
+const getImportanceSamples = `
 // microfacet distribution (GGX and Charlie)
 struct MicrofacetDistributionSample {
   pdf: f32,
@@ -84,7 +86,6 @@ fn getImportanceSampleCharlie(Xi: vec2f, N: vec3f, roughness: f32) -> vec4f {
 
   return vec4(H, importanceSample.pdf);
 }
-`
-);
-
+`;
+//#endregion
 export { getImportanceSamples };

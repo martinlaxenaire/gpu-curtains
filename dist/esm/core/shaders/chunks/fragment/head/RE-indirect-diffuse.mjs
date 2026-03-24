@@ -1,6 +1,8 @@
-const REIndirectDiffuse = (
-  /* wgsl */
-  `
+//#region src/core/shaders/chunks/fragment/head/RE-indirect-diffuse.ts
+/**
+* WGSL functions to calculate the indirect diffuse contribution of lights.
+*/
+const REIndirectDiffuse = `
 fn getAmbientLightIrradiance() -> vec3f {
   var totalAmbientIrradiance: vec3f = vec3(0.0);
   
@@ -15,7 +17,6 @@ fn getAmbientLightIrradiance() -> vec3f {
 fn RE_IndirectDiffuse(irradiance: vec3f, diffuseContribution: vec3f, ptr_reflectedLight: ptr<function, ReflectedLight>) {
   (*ptr_reflectedLight).indirectDiffuse += irradiance * BRDF_Lambert( diffuseContribution );
 }
-`
-);
-
+`;
+//#endregion
 export { REIndirectDiffuse };

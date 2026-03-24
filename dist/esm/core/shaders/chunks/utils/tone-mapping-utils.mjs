@@ -1,6 +1,6 @@
-const toneMappingUtils = (
-  /* wgsl */
-  `
+//#region src/core/shaders/chunks/utils/tone-mapping-utils.ts
+/** Tone mapping utils chunks. */
+const toneMappingUtils = `
 // linear <-> sRGB conversions
 fn linearTosRGB(linear: vec3f) -> vec3f {
   return vec3( mix( pow( linear.rgb, vec3( 0.41666 ) ) * 1.055 - vec3( 0.055 ), linear.rgb * 12.92, vec3( lessThan3( linear.rgb, vec3( 0.0031308 ) ) ) ) );
@@ -40,7 +40,7 @@ fn inverseCineonToneMapping(color: vec3f) -> vec3f {
   for (var i = 0; i < 3; i = i + 1) {
     let t = T[i];
 
-    // If t >= 1 \u2192 clipped \u2192 cannot recover, return max guess
+    // If t >= 1 → clipped → cannot recover, return max guess
     if (t >= 1.0) {
         x[i] = 1e6; // just put a very large HDR value
         continue;
@@ -73,7 +73,7 @@ fn inverseKhronosToneMapping(color: vec3f) -> vec3f {
   // iterative solve: approximate original HDR color
   var c = color; // initial guess: LDR
 
-  // Do 4\u20136 iterations (cheap and stable)
+  // Do 4–6 iterations (cheap and stable)
   for (var i = 0; i < 5; i = i + 1) {
     let f = KhronosToneMapping(c);
     let error = color - f;
@@ -105,7 +105,6 @@ fn KhronosToneMapping( color: vec3f ) -> vec3f {
   let g: f32 = 1. - 1. / (desaturation * (peak - newPeak) + 1.);
   return mix(toneMapColor, newPeak * vec3(1, 1, 1), g);
 }
-`
-);
-
+`;
+//#endregion
 export { toneMappingUtils };

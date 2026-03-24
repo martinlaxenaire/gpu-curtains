@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+    <!-- Metas -->
+    <title>gpu-curtains | Videos textures test</title>
+    <meta name="description" content="Videos textures test with gpu-curtains" />
+
+    <link href="../../examples/common-styles.css" rel="stylesheet" />
+    <link href="styles.css" rel="stylesheet" />
+
+    <link
+      rel="icon"
+      type="image/png"
+      href="https://raw.githubusercontent.com/martinlaxenaire/gpu-curtains/main/website/assets/favicon.png"
+    />
+  </head>
+
+  <body>
+    <div id="canvas" class="scrollable"></div>
+
+    <div id="page">
+      <h1>Video textures: external and regular</h1>
+
+      <div id="videos">
+        <div class="video-wrapper">
+          <h2>External video texture</h2>
+          <div id="external-video-plane" class="plane video-elements">
+            <video
+              crossorigin="anonymous"
+              muted=""
+              autoplay=""
+              playsinline=""
+              loop=""
+              preload="none"
+              src="https://cdn.coverr.co/videos/coverr-raglan-beach-in-new-zealand-958/1080p.mp4"
+              data-texture-name="videoTexture"
+            ></video>
+          </div>
+        </div>
+
+        <div class="video-wrapper">
+          <h2>Regular video texture</h2>
+          <div id="video-plane" class="plane video-elements">
+            <video
+              crossorigin="anonymous"
+              muted=""
+              autoplay=""
+              playsinline=""
+              loop=""
+              preload="none"
+              src="https://cdn.coverr.co/videos/coverr-raglan-beach-in-new-zealand-958/1080p.mp4"
+              data-texture-name="videoTexture"
+            ></video>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <a
+      href="https://github.com/martinlaxenaire/gpu-curtains/blob/main/examples/video-planes/main.js"
+      title="Show source code"
+      id="source-code-link"
+      class="primary-button"
+      target="_blank"
+      >&lt;/ &gt;</a
+    >
+
+    <script src="main.js" type="module"></script>
+
+    <!-- Umami -->
+    <script
+      defer
+      src="https://cloud.umami.is/script.js"
+      data-website-id="5633e080-94cc-462b-9158-a45314c01630"
+      data-domains="martinlaxenaire.github.io"
+    ></script>
+  </body>
+</html>

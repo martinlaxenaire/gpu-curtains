@@ -5,8 +5,7 @@
     --script-font: 'Permanent Marker', sans-serif;
     --text-font: 'Montserrat', Verdana, sans-serif;
 
-    /*--font-size: 18px;*/
-    --font-size: clamp(14px, max(1.75vw, 1.75vh), 22px);
+    --font-size: clamp(16px, max(1.75vw, 1.75vh), 22px);
 
     --light-color: #ffffff;
     --dark-color: #222222;
@@ -221,10 +220,7 @@
     padding: 0;
     display: flex;
     justify-content: flex-end;
-  }
-
-  #main-menu ul li {
-    margin: 0 0 0 1em;
+    gap: 0 1em;
   }
 
   #main-menu h1 {
@@ -342,5 +338,11 @@
   .medium-container,
   .small-container {
     padding: 2.25rem 1rem;
+  }
+}
+
+@media screen and (orientation: portrait) {
+  #header {
+    font-size: 0.71rem;
   }
 }

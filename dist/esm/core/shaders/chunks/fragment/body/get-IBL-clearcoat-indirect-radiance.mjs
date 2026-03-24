@@ -1,16 +1,19 @@
-const getIBLClearcoatIndirectRadiance = ({
-  extensionsUsed = [],
-  environmentMap = null
-}) => {
-  let iblClearcoatIndirectSpecular = "";
-  if (extensionsUsed.includes("KHR_materials_clearcoat")) {
-    iblClearcoatIndirectSpecular += /* wgsl */
-    `
+//#region src/core/shaders/chunks/fragment/body/get-IBL-clearcoat-indirect-radiance.ts
+/**
+* Get the environment map clearcoat indirect radiance (specular) contribution as `clearcoatRadiance` (`vec3f`).
+*
+* @param parameters - Parameters used to create the shader chunk.
+* @param parameters.extensionsUsed - {@link PBRFragmentShaderInputParams.extensionsUsed | extensionsUsed} to check if clearcoat is enabled.
+* @param parameters.environmentMap - {@link extras/environmentMap/EnvironmentMap.EnvironmentMap | EnvironmentMap} to use for indirect irradiance if any.
+* @returns - String with the `clearcoatRadiance` (`vec3f`) value set.
+*/
+const getIBLClearcoatIndirectRadiance = ({ extensionsUsed = [], environmentMap = null }) => {
+	let iblClearcoatIndirectSpecular = "";
+	if (extensionsUsed.includes("KHR_materials_clearcoat")) {
+		iblClearcoatIndirectSpecular += `
   var clearcoatRadiance = vec3(0.0);
   `;
-    if (environmentMap) {
-      iblClearcoatIndirectSpecular += /* wgsl */
-      `
+		if (environmentMap) iblClearcoatIndirectSpecular += `
   clearcoatRadiance += getIBLIndirectRadiance(
     clearcoatNormal,
     viewDirection,
@@ -20,9 +23,8 @@ const getIBLClearcoatIndirectRadiance = ({
     envRotation,
     envSpecularIntensity,
   );`;
-    }
-  }
-  return iblClearcoatIndirectSpecular;
+	}
+	return iblClearcoatIndirectSpecular;
 };
-
+//#endregion
 export { getIBLClearcoatIndirectRadiance };

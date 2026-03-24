@@ -1,6 +1,8 @@
-const generateTBN = (
-  /* wgsl */
-  `
+//#region src/core/shaders/chunks/utils/generate-TBN.ts
+/**
+* WGSL function to generate a tangent bitangent normal coordinate frame from the normal.
+*/
+const generateTBN = `
 // Normal Mapping Without Precomputed Tangents in world space
 // http://www.thetenthplanet.de/archives/1180
 fn getTangentFrame( modelPosition: vec3f, normal: vec3f, uv: vec2f ) -> mat3x3f {
@@ -46,7 +48,6 @@ fn generateTBN(normal: vec3f) -> mat3x3f {
 
   return mat3x3f(tangent, bitangent, normal);
 }
-`
-);
-
+`;
+//#endregion
 export { generateTBN };

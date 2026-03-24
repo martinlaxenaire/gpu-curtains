@@ -1,32 +1,33 @@
-import { getTextureSample } from './get-texture-sample.mjs';
-
-const getTransmissionThickness = ({
-  transmissionThicknessTexture = null,
-  transmissionTexture = null,
-  thicknessTexture = null
-} = {}) => {
-  let transmissionThickness = "";
-  if (transmissionThicknessTexture) {
-    transmissionThickness += getTextureSample(transmissionThicknessTexture, "transmissionThickness");
-    transmissionThickness += /* wgsl */
-    `
+import { getTextureSample } from "./get-texture-sample.mjs";
+//#region src/core/shaders/chunks/fragment/body/get-transmission-thickness.ts
+/**
+* Set the `transmission` (`f32`) and `thickness` (`f32`) values from the material variables and eventual textures.
+* @param parameters - Parameters used to set the `transmission` (`f32`) and `thickness` (`f32`) values
+* @param parameters.transmissionThicknessTexture - {@link ShaderTextureDescriptor | Transmission thickness texture descriptor} (using the `R` channel for transmission and the `G` channel for thickness) to use if any.
+* @param parameters.transmissionTexture - {@link ShaderTextureDescriptor | Transmission texture descriptor} (using the `R` channel) to use if any.
+* @param parameters.thicknessTexture - {@link ShaderTextureDescriptor | Thickness texture descriptor} (using the `G` channel) to use if any.
+* @returns - String with the `transmission` (`f32`) and `thickness` (`f32`) values set.
+*/
+const getTransmissionThickness = ({ transmissionThicknessTexture = null, transmissionTexture = null, thicknessTexture = null } = {}) => {
+	let transmissionThickness = "";
+	if (transmissionThicknessTexture) {
+		transmissionThickness += getTextureSample(transmissionThicknessTexture, "transmissionThickness");
+		transmissionThickness += `
     transmission = clamp(transmission * transmissionThicknessSample.r, 0.0, 1.0);
     thickness *= transmissionThicknessSample.g;`;
-  } else {
-    if (transmissionTexture) {
-      transmissionThickness += getTextureSample(transmissionTexture, "transmission");
-      transmissionThickness += /* wgsl */
-      `
+	} else {
+		if (transmissionTexture) {
+			transmissionThickness += getTextureSample(transmissionTexture, "transmission");
+			transmissionThickness += `
     transmission = clamp(transmission * transmissionSample.r, 0.0, 1.0);`;
-    }
-    if (thicknessTexture) {
-      transmissionThickness += getTextureSample(thicknessTexture, "thickness");
-      transmissionThickness += /* wgsl */
-      `
+		}
+		if (thicknessTexture) {
+			transmissionThickness += getTextureSample(thicknessTexture, "thickness");
+			transmissionThickness += `
   thickness *= thicknessSample.g;`;
-    }
-  }
-  return transmissionThickness;
+		}
+	}
+	return transmissionThickness;
 };
-
+//#endregion
 export { getTransmissionThickness };

@@ -1,6 +1,6 @@
-const getPCFBaseShadowContribution = (
-  /* wgsl */
-  `
+//#region src/core/shaders/chunks/fragment/head/get-PCF-base-shadow-contribution.ts
+/** Helper chunk to compute the shadow visibility of a fragment using `shadowCoords`, a 2D `depthTexture` and shadow properties using PCF. Returns `1` when fully visible and `0` when fully shadowed. */
+const getPCFBaseShadowContribution = `
 // Interleaved Gradient Noise for randomizing sampling patterns
 fn interleavedGradientNoise(position: vec2f) -> f32 {
   return fract(52.9829189 * fract(dot(position, vec2(0.06711056, 0.00583715))));
@@ -60,7 +60,6 @@ fn getPCFBaseShadowContribution(
   
   return mix(1.0, visibility, saturate(intensity));  
 }
-`
-);
-
+`;
+//#endregion
 export { getPCFBaseShadowContribution };

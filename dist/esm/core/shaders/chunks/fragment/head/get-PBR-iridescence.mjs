@@ -1,6 +1,8 @@
-const getPBRIridescence = (
-  /* wgsl */
-  `
+//#region src/core/shaders/chunks/fragment/head/get-PBR-iridescence.ts
+/**
+* Helper WGSL functions to get the PBR direct iridescence contribution.
+*/
+const getPBRIridescence = `
 // XYZ to linear-sRGB color space
 const XYZ_TO_REC709: mat3x3f = mat3x3f(
    3.2404542, -0.9692660,  0.0556434,
@@ -107,7 +109,6 @@ fn evalIridescence( outsideIOR: f32, eta2: f32, cosTheta1: f32, thinFilmThicknes
 
   // Since out of gamut colors might be produced, negative color values are clamped to 0.
   return max( I, vec3( 0.0 ) );
-}`
-);
-
+}`;
+//#endregion
 export { getPBRIridescence };

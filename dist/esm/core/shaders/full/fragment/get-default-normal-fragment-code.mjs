@@ -1,6 +1,6 @@
-const getDefaultNormalFragmentCode = (
-  /* wgsl */
-  `
+//#region src/core/shaders/full/fragment/get-default-normal-fragment-code.ts
+/** Default fragment shader code that outputs mesh's normal. */
+const getDefaultNormalFragmentCode = `
 struct VSOutput {
   @builtin(position) position: vec4f,
   @location(0) uv: vec2f,
@@ -10,7 +10,6 @@ struct VSOutput {
 @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
   // normals
   return vec4(normalize(fsInput.normal) * 0.5 + 0.5, 1.0);
-}`
-);
-
+}`;
+//#endregion
 export { getDefaultNormalFragmentCode };

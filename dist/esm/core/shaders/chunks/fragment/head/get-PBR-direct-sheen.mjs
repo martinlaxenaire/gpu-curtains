@@ -1,6 +1,8 @@
-const getPBRDirectSheen = (
-  /* wgsl */
-  `
+//#region src/core/shaders/chunks/fragment/head/get-PBR-direct-sheen.ts
+/**
+* WGSL functions to calculate sheen BRDF specular direct contribution.
+*/
+const getPBRDirectSheen = `
 fn BRDF_Sheen(
   lightDirection: vec3f,
   viewDirection: vec3f,
@@ -19,7 +21,6 @@ fn BRDF_Sheen(
 
   return sheenColor * ( D * V );
 }
-`
-);
-
+`;
+//#endregion
 export { getPBRDirectSheen };

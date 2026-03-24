@@ -1,6 +1,6 @@
-const getPBRDirect = (
-  /* wgsl */
-  `
+//#region src/core/shaders/chunks/fragment/head/get-PBR-direct.ts
+/** Helper function chunk appended internally and used to compute PBR direct light contributions. */
+const getPBRDirect = `
 fn BRDF_GGX(
   NdotV: f32,
   NdotL: f32,
@@ -125,7 +125,6 @@ fn getPBRDirect(
 
   return lightContribution;
 }
-`
-);
-
+`;
+//#endregion
 export { getPBRDirect };
