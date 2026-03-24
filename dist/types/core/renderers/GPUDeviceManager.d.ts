@@ -30,7 +30,7 @@ export interface GPUDeviceManagerBaseParams {
  */
 export interface GPUDeviceManagerParams extends GPUDeviceManagerBaseParams {
     /** Callback to run if there's any error while trying to set up the {@link GPUAdapter | adapter} or {@link GPUDevice | device}. */
-    onError?: () => void;
+    onError?: (message?: string) => void;
     /** Callback to run whenever the {@link GPUDeviceManager#device | device} is lost. */
     onDeviceLost?: (info?: GPUDeviceLostInfo) => void;
     /** Callback to run whenever the {@link GPUDeviceManager#device | device} has been intentionally destroyed. */
@@ -94,7 +94,7 @@ export declare class GPUDeviceManager {
     /** function assigned to the {@link onAfterRender} callback. */
     _onAfterRenderCallback: () => void;
     /** Callback to run if there's any error while trying to set up the {@link GPUAdapter | adapter} or {@link GPUDevice | device} */
-    onError: () => void;
+    onError: (message?: string) => void;
     /** Callback to run whenever the {@link device} is lost. */
     onDeviceLost: (info?: GPUDeviceLostInfo) => void;
     /** Callback to run whenever the {@link device} has been intentionally destroyed. */

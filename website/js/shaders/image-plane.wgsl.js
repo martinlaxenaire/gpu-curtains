@@ -33,3 +33,15 @@ struct VSOutput {
   return vec4(color.rgb, color.a * global.opacity);
 }
 `
+
+export const videoPlaneFs = /* wgsl */ `
+struct VSOutput {
+  @builtin(position) position: vec4f,
+  @location(0) uv: vec2f,
+};
+
+@fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
+  var color = textureSampleBaseClampToEdge(planeTexture, defaultSampler, fsInput.uv);
+  return vec4(color.rgb, color.a * global.opacity);
+}
+`

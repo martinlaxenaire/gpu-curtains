@@ -71,7 +71,7 @@ export class GPUCurtains {
     /* allow empty callback */
   }
   /** function assigned to the {@link onError} callback. */
-  _onErrorCallback: () => void = () => {
+  _onErrorCallback: (message?: string) => void = (message: string) => {
     /* allow empty callback */
   }
   /** function assigned to the {@link onContextLost} callback. */
@@ -241,9 +241,9 @@ export class GPUCurtains {
       requiredFeatures: this.options.requiredFeatures,
       requestAdapterLimits: this.options.requestAdapterLimits,
       autoRender: this.options.autoRender,
-      onError: () =>
+      onError: (message) =>
         setTimeout(() => {
-          this._onErrorCallback && this._onErrorCallback()
+          this._onErrorCallback && this._onErrorCallback(message)
         }, 0),
       onDeviceLost: (info) => this._onContextLostCallback && this._onContextLostCallback(info),
       onDeviceDestroyed: (info) => this._onContextDestroyedCallback && this._onContextDestroyedCallback(info),
@@ -453,7 +453,7 @@ export class GPUCurtains {
    * @param callback - callback to run if there's been an error while trying to create the {@link GPUDeviceManager#device | device}.
    * @returns - our {@link GPUCurtains}.
    */
-  onError(callback: () => void): GPUCurtains {
+  onError(callback: (message: string) => void): GPUCurtains {
     if (callback) {
       this._onErrorCallback = callback
     }

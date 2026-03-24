@@ -56,7 +56,7 @@ export declare class GPUCurtains {
     /** function assigned to the {@link onScroll} callback. */
     _onScrollCallback: () => void;
     /** function assigned to the {@link onError} callback. */
-    _onErrorCallback: () => void;
+    _onErrorCallback: (message?: string) => void;
     /** function assigned to the {@link onContextLost} callback. */
     _onContextLostCallback: (info?: GPUDeviceLostInfo) => void;
     /** function assigned to the {@link onContextLost} callback. */
@@ -204,7 +204,7 @@ export declare class GPUCurtains {
      * @param callback - callback to run if there's been an error while trying to create the {@link GPUDeviceManager#device | device}.
      * @returns - our {@link GPUCurtains}.
      */
-    onError(callback: () => void): GPUCurtains;
+    onError(callback: (message: string) => void): GPUCurtains;
     /**
      * Called whenever the {@link GPUDeviceManager#device | device} is lost.
      * @param callback - callback to run whenever the {@link GPUDeviceManager#device | device} is lost.

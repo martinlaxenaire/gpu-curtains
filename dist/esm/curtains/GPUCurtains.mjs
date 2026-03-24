@@ -27,7 +27,7 @@ var GPUCurtains = class {
 	*/
 	constructor({ container, label, pixelRatio = window.devicePixelRatio ?? 1, context = {}, production = false, adapterOptions = {}, requiredFeatures = [], requestAdapterLimits = [], renderPass, camera, lights, autoRender = true, autoResize = true, watchScroll = true } = {}) {
 		this._onScrollCallback = () => {};
-		this._onErrorCallback = () => {};
+		this._onErrorCallback = (message) => {};
 		this._onContextLostCallback = () => {};
 		this._onContextDestroyedCallback = () => {};
 		this.type = "CurtainsGPU";
@@ -147,8 +147,8 @@ var GPUCurtains = class {
 			requiredFeatures: this.options.requiredFeatures,
 			requestAdapterLimits: this.options.requestAdapterLimits,
 			autoRender: this.options.autoRender,
-			onError: () => setTimeout(() => {
-				this._onErrorCallback && this._onErrorCallback();
+			onError: (message) => setTimeout(() => {
+				this._onErrorCallback && this._onErrorCallback(message);
 			}, 0),
 			onDeviceLost: (info) => this._onContextLostCallback && this._onContextLostCallback(info),
 			onDeviceDestroyed: (info) => this._onContextDestroyedCallback && this._onContextDestroyedCallback(info)

@@ -549,4 +549,43 @@
   #compute-feature-canvas {
     aspect-ratio: 1.5;
   }
+
+  #footer {
+    font-size: 0.625rem;
+  }
+}
+
+@media screen and (orientation: portrait) {
+  :root {
+    --height-spacing: 10vh;
+    --height-spacing: 10svh;
+  }
+
+  #cloth {
+    margin-top: 3rem;
+  }
+
+  .text-section-main-title {
+    font-size: 1.75rem;
+  }
+
+  .text-section-sub,
+  .text-section.inverse-text-section .text-section-sub {
+    font-size: 0.925rem;
+  }
+
+  .intro-dom-mesh-grid-title,
+  #engine-3d-suzanne-helper,
+  #textures-planes-helper,
+  #features-particles-helper {
+    font-size: 0.925rem;
+  }
+
+  #compute-feature-canvas {
+    aspect-ratio: 1;
+  }
+
+  #footer {
+    font-size: 0.75rem;
+  }
 }
