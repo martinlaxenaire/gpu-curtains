@@ -1,13 +1,11 @@
 import { UnlitFragmentShaderInputParams } from './get-fragment-shader-code'
 import { constants } from '../../chunks/utils/constants'
 import { common } from '../../chunks/utils/common'
-import { toneMappingUtils } from '../../chunks/utils/tone-mapping-utils'
 import { getFragmentInputStruct } from '../../chunks/fragment/head/get-fragment-input-struct'
 import { getFragmentOutputStruct } from '../../chunks/fragment/head/get-fragment-output-struct'
 import { declareAttributesVars } from '../../chunks/fragment/body/declare-attributes-vars'
 import { declareMaterialVars } from '../../chunks/fragment/body/declare-material-vars'
 import { getBaseColor } from '../../chunks/fragment/body/get-base-color'
-import { applyToneMapping } from '../../chunks/fragment/body/apply-tone-mapping'
 import { patchAdditionalChunks } from '../../default-material-helpers'
 import { getEmissiveOcclusion } from '../../chunks/fragment/body/get-emissive-occlusion'
 
@@ -18,8 +16,6 @@ import { getEmissiveOcclusion } from '../../chunks/fragment/body/get-emissive-oc
  */
 export const getUnlitFragmentShaderCode = ({
   chunks = null,
-  toneMapping = 'Khronos',
-  outputColorSpace = 'srgb',
   fragmentOutput = {
     struct: [
       {
@@ -43,34 +39,31 @@ export const getUnlitFragmentShaderCode = ({
   // patch chunks
   chunks = patchAdditionalChunks(chunks)
 
-  return /* wgsl */ `  
+  return /* wgsl */ `
 ${chunks.additionalHead}
 
 ${constants}
 ${common}
-${toneMappingUtils}
 
 ${getFragmentInputStruct({ geometry, additionalVaryings })}
 
 ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 
-@fragment fn main(fsInput: FSInput) -> FSOutput {       
+@fragment fn main(fsInput: FSInput) -> FSOutput {
   var outputColor: vec4f = vec4();
-  
+
   ${declareAttributesVars({ geometry, additionalVaryings })}
   ${declareMaterialVars({ materialUniform, materialUniformName, shadingModel: 'Unlit' })}
   ${getBaseColor({ geometry, baseColorTexture })}
   ${getEmissiveOcclusion({ emissiveTexture, occlusionTexture })}
-  
+
   // user defined preliminary contribution
   ${chunks.preliminaryContribution}
 
   outputColor = vec4(outputColor.rgb * occlusion + emissive, outputColor.a);
-  
+
   // user defined additional contribution
   ${chunks.additionalContribution}
-  
-  ${applyToneMapping({ toneMapping, outputColorSpace })}
 
   ${fragmentOutput.output}
 }`

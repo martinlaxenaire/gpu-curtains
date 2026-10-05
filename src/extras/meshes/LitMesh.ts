@@ -630,14 +630,12 @@ export class LitMesh extends Mesh {
 
     const fs = LitMesh.getFragmentShaderCode({
       shadingModel: shading,
-      outputColorSpace,
       fragmentOutput,
       chunks: fragmentChunks,
       extensionsUsed,
       receiveShadows: defaultParams.receiveShadows,
       cullMode,
       flatShading,
-      toneMapping,
       transmissiveInputColorSpace,
       transmissiveInputToneMapping,
       geometry: defaultParams.geometry,

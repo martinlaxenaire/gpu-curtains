@@ -50,6 +50,9 @@ export class GPUCurtainsRenderer<
     renderPass,
     camera,
     lights,
+    exposure = 1,
+    colorSpace = 'linear',
+    toneMapping = false,
   }: GPUCameraRendererParams) {
     super({
       deviceManager,
@@ -61,6 +64,9 @@ export class GPUCurtainsRenderer<
       renderPass,
       camera,
       lights,
+      exposure,
+      colorSpace,
+      toneMapping,
     } as GPUCameraRendererParams)
 
     this.type = 'GPUCurtainsRenderer'

@@ -20,11 +20,6 @@ import { ToneMappings, ColorSpace } from '../../../../types/shading'
 
 /** Base parameters used to build a fragment shader. */
 export interface FragmentShaderInputBaseParams {
-  /** Whether the shading function should apply tone mapping to the resulting color and if so, which one. Default to `'Khronos'`. */
-  toneMapping?: ToneMappings
-  /** In which {@link ColorSpace} the output should be done. `srgb` should be used most of the time, except for some post processing effects that need input colors in `linear` space (such as bloom). Default to `srgb`. */
-  outputColorSpace?: ColorSpace
-
   /** Optional additional {@link VertexShaderInputParams.additionalVaryings | varyings} to pass from the vertex shader to the fragment shader. */
   additionalVaryings?: VertexShaderInputParams['additionalVaryings']
   /** Custom fragment shader output structure members and returned values to use if needed. Useful when rendering to a Multiple Render Target for example. */
@@ -82,7 +77,6 @@ export interface FragmentShaderInputParams extends PBRFragmentShaderInputParams 
  */
 export const getFragmentShaderCode = ({
   shadingModel = 'PBR',
-  outputColorSpace = 'srgb',
   fragmentOutput = {
     struct: [
       {
@@ -96,7 +90,6 @@ export const getFragmentShaderCode = ({
   return output;`,
   },
   chunks = null,
-  toneMapping = 'Khronos',
   transmissiveInputColorSpace = 'srgb',
   transmissiveInputToneMapping = 'Khronos',
   geometry,
@@ -139,8 +132,6 @@ export const getFragmentShaderCode = ({
     case 'Unlit':
       return getUnlitFragmentShaderCode({
         chunks,
-        toneMapping,
-        outputColorSpace,
         fragmentOutput,
         geometry,
         additionalVaryings,
@@ -153,8 +144,6 @@ export const getFragmentShaderCode = ({
     case 'Lambert':
       return getLambertFragmentShaderCode({
         chunks,
-        toneMapping,
-        outputColorSpace,
         fragmentOutput,
         geometry,
         cullMode,
@@ -171,8 +160,6 @@ export const getFragmentShaderCode = ({
     case 'Phong':
       return getPhongFragmentShaderCode({
         chunks,
-        toneMapping,
-        outputColorSpace,
         fragmentOutput,
         geometry,
         cullMode,
@@ -194,8 +181,6 @@ export const getFragmentShaderCode = ({
     default:
       return getPBRFragmentShaderCode({
         chunks,
-        toneMapping,
-        outputColorSpace,
         transmissiveInputColorSpace,
         transmissiveInputToneMapping,
         fragmentOutput,
