@@ -59,7 +59,7 @@
     "@typescript-eslint/eslint-plugin": "^8.24.0",
     "@typescript-eslint/parser": "^8.24.0",
     "@vitejs/plugin-basic-ssl": "^2.2.0",
-    "esbuild": "^0.27.0",
+    "esbuild": "^0.28.1",
     "eslint": "^9.39.1",
     "eslint-config-prettier": "^8.8.0",
     "prettier": "2.8.8",
