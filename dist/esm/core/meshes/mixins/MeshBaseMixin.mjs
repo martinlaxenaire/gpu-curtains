@@ -36,7 +36,7 @@ function MeshBaseMixin(Base) {
 		/** Flag indicating whether to draw this {@link MeshBase} or not */
 		#visible;
 		/** Whether we should add this {@link MeshBase} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
-		#autoRender = true;
+		#autoRender;
 		/**
 		* MeshBase constructor
 		*
@@ -53,6 +53,7 @@ function MeshBaseMixin(Base) {
 				...defaultMeshBaseParams,
 				...params[2]
 			});
+			this.#autoRender = true;
 			this._onReadyCallback = () => {};
 			this._onBeforeRenderCallback = () => {};
 			this._onRenderCallback = () => {};
@@ -72,7 +73,7 @@ function MeshBaseMixin(Base) {
 			this.outputTarget = outputTarget ?? null;
 			this.renderBundle = renderBundle ?? null;
 			this.additionalOutputTargets = additionalOutputTargets || [];
-			meshParameters.sampleCount = !!meshParameters.sampleCount ? meshParameters.sampleCount : this.outputTarget ? this.outputTarget.renderPass.options.sampleCount : this.renderer && this.renderer.renderPass ? this.renderer.renderPass.options.sampleCount : 1;
+			meshParameters.sampleCount = meshParameters.sampleCount ? meshParameters.sampleCount : this.outputTarget ? this.outputTarget.renderPass.options.sampleCount : this.renderer && this.renderer.renderPass ? this.renderer.renderPass.options.sampleCount : 1;
 			this.options = {
 				...this.options ?? {},
 				label: label ?? "Mesh " + this.renderer.meshes.length,

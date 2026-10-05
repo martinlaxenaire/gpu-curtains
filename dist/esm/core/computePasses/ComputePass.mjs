@@ -53,15 +53,17 @@ var ComputePass = class {
 	* Whether this {@link ComputePass} should be added to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically.
 	* @private
 	*/
-	#autoRender = true;
+	#autoRender;
 	/** Flag indicating whether this {@link ComputePass} should run or not, much like the {@link core/meshes/Mesh.Mesh#visible | Mesh visible} flag. */
-	#active = true;
+	#active;
 	/**
 	* ComputePass constructor
 	* @param renderer - {@link Renderer} class object or {@link GPUCurtains} class object used to create this {@link ComputePass}.
 	* @param parameters - {@link ComputePassParams | parameters} used to create our {@link ComputePass}.
 	*/
 	constructor(renderer, parameters = {}) {
+		this.#autoRender = true;
+		this.#active = true;
 		this._onReadyCallback = () => {};
 		this._onBeforeRenderCallback = () => {};
 		this._onRenderCallback = () => {};

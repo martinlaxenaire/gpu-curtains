@@ -190,7 +190,7 @@ var DOMMesh = class extends ProjectedMeshBaseMixin(DOMObject3D) {
 	* @param element - new {@link HTMLElement} or string representing an {@link HTMLElement} selector to use.
 	*/
 	resetDOMElement(element) {
-		if (!!element) {
+		if (element) {
 			super.resetDOMElement(element);
 			this.domTextures.forEach((texture) => texture.resize());
 		} else if (!element && !this.renderer.production) throwWarning(`${this.options.label}: You are trying to reset a ${this.type} with a HTML element that does not exist. The old HTML element will be kept instead.`);

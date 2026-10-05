@@ -147,7 +147,9 @@ var DirectionalShadow = class extends Shadow {
 	* @returns - Depth pass vertex shader.
 	*/
 	getDefaultShadowDepthVs({ bindings = [], geometry }) {
-		return { code: getDefaultDirectionalShadowDepthVs(this.index, {
+		return { 
+		/** Returned code. */
+code: getDefaultDirectionalShadowDepthVs(this.index, {
 			bindings,
 			geometry
 		}) };

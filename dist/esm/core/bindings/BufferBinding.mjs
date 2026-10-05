@@ -118,7 +118,7 @@ var BufferBinding = class BufferBinding extends Binding {
 	* @param value - New {@link BufferBinding} parent to set if any.
 	*/
 	set parent(value) {
-		if (!!value) {
+		if (value) {
 			this.parentView = new DataView(value.arrayBuffer, this.offset, this.getMinOffsetSize(this.arrayBufferSize));
 			const getAllBufferElements = (binding) => {
 				const getBufferElements = (binding) => {
@@ -126,7 +126,8 @@ var BufferBinding = class BufferBinding extends Binding {
 				};
 				return [...getBufferElements(binding), binding.childrenBindings.map((child) => getAllBufferElements(child)).flat()].flat();
 			};
-			this.parentViewSetBufferEls = getAllBufferElements(this).map((bufferElement) => {
+			const bufferElements = getAllBufferElements(this);
+			this.parentViewSetBufferEls = bufferElements.map((bufferElement) => {
 				switch (bufferElement.bufferLayout.View) {
 					case Int32Array: return {
 						bufferElement,
@@ -453,12 +454,14 @@ var BufferBinding = class BufferBinding extends Binding {
 					});
 					const interleavedBufferName = this.bufferElements.find((bufferElement) => bufferElement.name === "elements") ? `${this.name}Elements` : "elements";
 					structs[kebabCaseLabel][interleavedBufferName] = `array<${kebabCaseLabel}Element${arrayLength}>`;
-					this.wgslGroupFragment = [`${getBindingWGSLVarType(this)} ${this.name}: ${kebabCaseLabel};`];
+					const varType = getBindingWGSLVarType(this);
+					this.wgslGroupFragment = [`${varType} ${this.name}: ${kebabCaseLabel};`];
 				} else {
 					this.bufferElements.forEach((binding) => {
 						structs[kebabCaseLabel][binding.name] = BufferElement.getType(binding.type);
 					});
-					this.wgslGroupFragment = [`${getBindingWGSLVarType(this)} ${this.name}: array<${kebabCaseLabel}${arrayLength}>;`];
+					const varType = getBindingWGSLVarType(this);
+					this.wgslGroupFragment = [`${varType} ${this.name}: array<${kebabCaseLabel}${arrayLength}>;`];
 				}
 			} else {
 				bufferElements.forEach((binding) => {
@@ -470,12 +473,14 @@ var BufferBinding = class BufferBinding extends Binding {
 					} else structs[kebabCaseLabel][binding.name] = `array<${BufferElement.getType(binding.type)}, ${binding.numElements}>`;
 					else structs[kebabCaseLabel][binding.name] = binding.type;
 				});
-				this.wgslGroupFragment = [`${getBindingWGSLVarType(this)} ${this.name}: ${kebabCaseLabel};`];
+				const varType = getBindingWGSLVarType(this);
+				this.wgslGroupFragment = [`${varType} ${this.name}: ${kebabCaseLabel};`];
 			}
 			if (this.childrenBindings.length) this.options.childrenBindings.forEach((child) => {
 				structs[kebabCaseLabel][child.binding.name] = child.count && child.count > 1 || child.forceArray ? this.bindingType === "uniform" && child.binding.bindingType === "uniform" ? `array<${toKebabCase(child.binding.label)}, ${child.count}>` : `array<${toKebabCase(child.binding.label)}>` : toKebabCase(child.binding.label);
 			});
-			this.wgslStructFragment = (this.childrenBindings.length ? this.options.childrenBindings.map((child) => child.binding.wgslStructFragment).join("\n\n") + "\n\n" : "") + Object.keys(structs).reverse().map((struct) => {
+			const additionalBindings = this.childrenBindings.length ? this.options.childrenBindings.map((child) => child.binding.wgslStructFragment).join("\n\n") + "\n\n" : "";
+			this.wgslStructFragment = additionalBindings + Object.keys(structs).reverse().map((struct) => {
 				return `struct ${struct} {\n  ${Object.keys(structs[struct]).map((binding) => `${binding}: ${structs[struct][binding]}`).join(",\n  ")}\n};`;
 			}).join("\n\n");
 		} else {

@@ -45,7 +45,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
     };
-    
+
     @vertex fn main(
       attributes: Attributes,
     ) -> VSOutput {
@@ -53,7 +53,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
       vsOutput.position = getOutputPosition(attributes.position);
       vsOutput.uv = getUVCover(attributes.uv, texturesMatrices.planeTexture.matrix);
-    
+
       return vsOutput;
     }
   `
@@ -63,10 +63,10 @@ window.addEventListener('DOMContentLoaded', async () => {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
     };
-    
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {   
+
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var color: vec4f = textureSample(planeTexture, mipmapNearestSampler, fsInput.uv);
-      
+
       return color;
     }
   `
@@ -120,10 +120,6 @@ window.addEventListener('DOMContentLoaded', async () => {
       transmissive: true,
       renderBundle: transmissiveBundle,
       material: {
-        shading: 'PBR',
-        toneMapping: 'Khronos',
-        transmissiveInputColorSpace: 'linear', // planes are drawn in linear color space
-        transmissiveInputToneMapping: false, // planes are not tone mapped
         metallic: 0.01, // if we'd set it to 0, we'd lose specular on transparent background
         roughness: 0,
         specularColor: new Vec3(0.1),
@@ -133,6 +129,15 @@ window.addEventListener('DOMContentLoaded', async () => {
         ior: 1.33,
         environmentMap,
       },
+      fragmentChunks: {
+        // since GPUCurtains renderer does not include a default output pass
+        // and we don't want to activate it so the Planes stay in linear space
+        // apply tone mapping and sRGB conversion here
+        additionalContribution: /* wgsl */ `
+          outputColor = vec4(KhronosToneMapping(outputColor.rgb), outputColor.a);
+          outputColor = linearTosRGB_4(outputColor);
+        `
+      }
     })
 
     bubble.scale.set(Math.random() + 1)

@@ -13,6 +13,7 @@ import { Sampler } from '../samplers/Sampler';
 import { RenderPassEntry } from '../scenes/Scene';
 import { OrthographicCamera } from '../cameras/OrthographicCamera';
 import { RenderPassViewport } from '../renderPasses/RenderPass';
+import { ShaderPass } from '../renderPasses/ShaderPass';
 /** Defines the allowed {@link Camera} types for a {@link GPUCameraRenderer}. */
 export type RendererCamera = OrthographicCamera | PerspectiveCamera;
 /** Defines the parameters used to build the {@link BufferBinding} of each type of lights. */
@@ -48,6 +49,21 @@ export interface GPUCameraRendererLightParams {
     /** Whether to use `uniform` instead of `storage` binding type for the shadows bindings. In some case, for example when using models with skinning or morph targets, the maximum number of `storage` bindings can be reached in the vertex shader. This allows to bypass this limit by switching the shadows binding from `storage` to `uniforms`, but restrict the flexibility by removing the ability to overflow lights. Default to `false`. */
     useUniformsForShadows?: boolean;
 }
+/** Defines all kinds of tone mappings available. */
+export type ToneMappings = 'Khronos' | 'Reinhard' | 'Cineon' | false;
+/** Defines the available color spaces. */
+export type ColorSpace = 'linear' | 'srgb';
+/**
+ * Base parameters used to create the output pass, handling exposure, tone mapping and color space conversion.
+ */
+export interface GPUCameraRendererOutputParams {
+    /** Exposure to use. Default to `1`. */
+    exposure?: number;
+    /** Tone mapping to use if any. Default to `Khronos`. */
+    toneMapping?: ToneMappings;
+    /** Output {@link ColorSpace | color space} to use. Default to `srgb`. */
+    colorSpace?: ColorSpace;
+}
 /** Extra parameters used to define the {@link RendererCamera} and various lights options. */
 export interface GPUCameraLightsRendererParams {
     /** An object defining {@link PerspectiveCameraBaseOptions | camera perspective parameters} */
@@ -56,10 +72,10 @@ export interface GPUCameraLightsRendererParams {
     lights?: GPUCameraRendererLightParams | false;
 }
 /** Parameters used to create a {@link GPUCameraRenderer}. */
-export interface GPUCameraRendererParams extends GPURendererParams, GPUCameraLightsRendererParams {
+export interface GPUCameraRendererParams extends GPURendererParams, GPUCameraLightsRendererParams, GPUCameraRendererOutputParams {
 }
 /** Options used to create a {@link GPUCameraRenderer}. */
-export interface GPUCameraRendererOptions extends GPURendererOptions, GPUCameraLightsRendererParams {
+export interface GPUCameraRendererOptions extends GPURendererOptions, GPUCameraLightsRendererParams, GPUCameraRendererOutputParams {
 }
 /**
  * This renderer is meant to render meshes projected by a {@link RendererCamera}. It therefore creates a {@link RendererCamera} with its associated {@link bindings} as well as lights and shadows {@link bindings} used for lighting and their associated {@link cameraLightsBindGroup | bind group}.<br>
@@ -103,6 +119,8 @@ export declare class GPUCameraRenderer<TCamera extends RendererCamera = Perspect
     pointShadowsCubeFaceBindGroups: BindGroup[];
     /** Options used to create this {@link GPUCameraRenderer}. */
     options: GPUCameraRendererOptions;
+    /** Output pass, combining exposure, tone mapping and color space conversion. */
+    outputPass: ShaderPass;
     /** If our scene contains transmissive objects, we need to handle the rendering of transmissive meshes. To do so, we'll need a new screen pass {@link RenderPassEntry} and a {@link Texture} onto which we'll write the content of the non transmissive objects main buffer rendered objects. */
     transmissionTarget: {
         /** The new screen pass {@link RenderPassEntry} where we'll draw our transmissive objects. */
@@ -116,7 +134,7 @@ export declare class GPUCameraRenderer<TCamera extends RendererCamera = Perspect
      * GPUCameraRenderer constructor
      * @param parameters - {@link GPUCameraRendererParams | parameters} used to create this {@link GPUCameraRenderer}
      */
-    constructor({ deviceManager, label, container, pixelRatio, autoResize, context, renderPass, camera, lights, }: GPUCameraRendererParams);
+    constructor({ deviceManager, label, container, pixelRatio, autoResize, context, renderPass, camera, lights, exposure, toneMapping, colorSpace, }: GPUCameraRendererParams);
     /**
      * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} is lost.
      * Reset all our samplers, force all our scene objects and camera bind group to lose context.
@@ -200,6 +218,43 @@ export declare class GPUCameraRenderer<TCamera extends RendererCamera = Perspect
      * @param lightIndex - The {@link Light#index | light index} that caused overflow. Will be used to reset the new max light count.
      */
     onMaxLightOverflow(lightsType: LightsType, lightIndex?: number): void;
+    /**
+     * Get the current exposure value.
+     * @readonly
+     * @returns - Current exposure.
+     */
+    get exposure(): number;
+    /**
+     * Set the new exposure value.
+     * @param exposure - New exposure value.
+     */
+    set exposure(exposure: number);
+    /**
+     * Get the current {@link ToneMappings | tone mapping} value.
+     * @readonly
+     * @returns - Current {@link ToneMappings | tone mapping}.
+     */
+    get toneMapping(): ToneMappings;
+    /**
+     * Set the new {@link ToneMappings | tone mapping} value.
+     * @param toneMapping - New {@link ToneMappings | tone mapping} value.
+     */
+    set toneMapping(toneMapping: ToneMappings);
+    /**
+     * Get the current {@link ColorSpace | color space} value.
+     * @readonly
+     * @returns - Current {@link ColorSpace | color space}.
+     */
+    get colorSpace(): ColorSpace;
+    /**
+     * Set the new {@link ColorSpace | color space} value.
+     * @param toneMapping - New {@link ColorSpace | color space} value.
+     */
+    set colorSpace(colorSpace: ColorSpace);
+    /**
+     * Set the output pass that will handle exposure, tone mapping and color space conversion.
+     */
+    setOutputPass(): void;
     /**
      * Get all the current {@link ShadowCastingLights | lights that can cast shadows}.
      * @returns - All {@link ShadowCastingLights | lights that can cast shadows}.

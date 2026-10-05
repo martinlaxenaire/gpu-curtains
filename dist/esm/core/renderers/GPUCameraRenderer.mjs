@@ -9,6 +9,8 @@ import { directionalShadowStruct } from "../shadows/DirectionalShadow.mjs";
 import { pointShadowStruct } from "../shadows/PointShadow.mjs";
 import { spotShadowStruct } from "../shadows/SpotShadow.mjs";
 import { GPURenderer } from "./GPURenderer.mjs";
+import { ShaderPass } from "../renderPasses/ShaderPass.mjs";
+import { outputFragmentShaderCode } from "../shaders/full/fragment/output-fragment-shader-code.mjs";
 //#region src/core/renderers/GPUCameraRenderer.ts
 /**
 * This renderer is meant to render meshes projected by a {@link RendererCamera}. It therefore creates a {@link RendererCamera} with its associated {@link bindings} as well as lights and shadows {@link bindings} used for lighting and their associated {@link cameraLightsBindGroup | bind group}.<br>
@@ -39,7 +41,7 @@ var GPUCameraRenderer = class extends GPURenderer {
 	* GPUCameraRenderer constructor
 	* @param parameters - {@link GPUCameraRendererParams | parameters} used to create this {@link GPUCameraRenderer}
 	*/
-	constructor({ deviceManager, label, container, pixelRatio = 1, autoResize = true, context = {}, renderPass, camera = {}, lights = {} }) {
+	constructor({ deviceManager, label, container, pixelRatio = 1, autoResize = true, context = {}, renderPass, camera = {}, lights = {}, exposure = 1, toneMapping = "Khronos", colorSpace = "srgb" }) {
 		super({
 			deviceManager,
 			label,
@@ -67,7 +69,10 @@ var GPUCameraRenderer = class extends GPURenderer {
 		this.options = {
 			...this.options,
 			camera,
-			lights
+			lights,
+			exposure,
+			colorSpace,
+			toneMapping
 		};
 		this.bindings = {};
 		this.#shouldUpdateCameraLightsBindGroup = true;
@@ -77,6 +82,7 @@ var GPUCameraRenderer = class extends GPURenderer {
 		this.setCameraBinding();
 		if (this.options.lights) this.#initLights();
 		this.setCameraLightsBindGroup();
+		this.setOutputPass();
 	}
 	/**
 	* Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} is lost.
@@ -491,6 +497,103 @@ var GPUCameraRenderer = class extends GPURenderer {
 		}
 	}
 	/**
+	* Get the current exposure value.
+	* @readonly
+	* @returns - Current exposure.
+	*/
+	get exposure() {
+		return this.options.exposure;
+	}
+	/**
+	* Set the new exposure value.
+	* @param exposure - New exposure value.
+	*/
+	set exposure(exposure) {
+		this.options.exposure = exposure;
+		this.outputPass.uniforms.output.exposure.value = exposure;
+		this.outputPass.visible = this.#needsOutputPass;
+	}
+	/**
+	* Get the current {@link ToneMappings | tone mapping} value.
+	* @readonly
+	* @returns - Current {@link ToneMappings | tone mapping}.
+	*/
+	get toneMapping() {
+		return this.options.toneMapping;
+	}
+	/**
+	* Set the new {@link ToneMappings | tone mapping} value.
+	* @param toneMapping - New {@link ToneMappings | tone mapping} value.
+	*/
+	set toneMapping(toneMapping) {
+		this.options.toneMapping = toneMapping;
+		this.outputPass.uniforms.output.toneMapping.value = this.#toneMappingBindingValue;
+		this.outputPass.visible = this.#needsOutputPass;
+	}
+	get #toneMappingBindingValue() {
+		return (() => {
+			switch (this.toneMapping) {
+				case "Khronos": return 1;
+				case "Reinhard": return 2;
+				case "Cineon": return 3;
+				default: return 0;
+			}
+		})();
+	}
+	/**
+	* Get the current {@link ColorSpace | color space} value.
+	* @readonly
+	* @returns - Current {@link ColorSpace | color space}.
+	*/
+	get colorSpace() {
+		return this.options.colorSpace;
+	}
+	/**
+	* Set the new {@link ColorSpace | color space} value.
+	* @param toneMapping - New {@link ColorSpace | color space} value.
+	*/
+	set colorSpace(colorSpace) {
+		this.options.colorSpace = colorSpace;
+		this.outputPass.uniforms.output.colorSpace.value = this.#colorSpaceBindingValue;
+		this.outputPass.visible = this.#needsOutputPass;
+	}
+	get #colorSpaceBindingValue() {
+		return (() => {
+			switch (this.colorSpace) {
+				case "srgb": return 1;
+				default: return 0;
+			}
+		})();
+	}
+	get #needsOutputPass() {
+		return this.exposure !== 1 || !!this.toneMapping || this.colorSpace !== "linear";
+	}
+	/**
+	* Set the output pass that will handle exposure, tone mapping and color space conversion.
+	*/
+	setOutputPass() {
+		this.outputPass = new ShaderPass(this, {
+			label: `${this.options.label} output pass`,
+			renderOrder: 9999,
+			visible: this.#needsOutputPass,
+			shaders: { fragment: { code: outputFragmentShaderCode } },
+			uniforms: { output: { struct: {
+				exposure: {
+					type: "f32",
+					value: this.exposure
+				},
+				toneMapping: {
+					type: "u32",
+					value: this.#toneMappingBindingValue
+				},
+				colorSpace: {
+					type: "u32",
+					value: this.#colorSpaceBindingValue
+				}
+			} } }
+		});
+	}
+	/**
 	* Get all the current {@link ShadowCastingLights | lights that can cast shadows}.
 	* @returns - All {@link ShadowCastingLights | lights that can cast shadows}.
 	*/
@@ -684,6 +787,7 @@ var GPUCameraRenderer = class extends GPURenderer {
 		this.lights.forEach((light) => light.destroy());
 		super.destroy();
 		this.lights.forEach((light) => this.removeLight(light));
+		this.outputPass.remove();
 	}
 };
 //#endregion

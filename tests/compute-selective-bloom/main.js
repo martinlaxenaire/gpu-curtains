@@ -51,6 +51,9 @@ window.addEventListener('load', async () => {
     deviceManager: gpuDeviceManager,
     container: document.querySelector('#canvas'),
     pixelRatio: Math.min(1.5, window.devicePixelRatio),
+    // tone mapping and color conversion handled in composite pass
+    toneMapping: false,
+    colorSpace: 'linear',
   })
 
   const systemSize = 10
@@ -131,12 +134,6 @@ window.addEventListener('load', async () => {
     useMips: true,
   })
 
-  // render in linear space without tone mapping
-  const outputOptions = {
-    toneMapping: false,
-    outputColorSpace: 'linear',
-  }
-
   console.log(selectiveInputTarget)
 
   // const selectiveEntryPass = gpuCameraRenderer.scene.getRenderTargetPassEntry(selectiveInputTarget)
@@ -172,7 +169,6 @@ window.addEventListener('load', async () => {
           material: {
             shading: 'Lambert',
             color: cubeColor,
-            ...outputOptions,
           },
         })
 
@@ -191,7 +187,6 @@ window.addEventListener('load', async () => {
           material: {
             shading: 'Lambert',
             color: sphereColor,
-            ...outputOptions,
           },
         })
 
@@ -209,7 +204,6 @@ window.addEventListener('load', async () => {
           material: {
             shading: 'Lambert',
             color: sphereColor,
-            ...outputOptions,
           },
           depthCompare: 'less-equal',
           depthWriteEnabled: false,
@@ -227,8 +221,8 @@ window.addEventListener('load', async () => {
       @location(2) worldPosition: vec3f,
       @location(3) viewDirection: vec3f,
     };
-    
-    ${getLambert(outputOptions)}
+
+    ${getLambert()}
 
     struct SelectiveMRTOutput {
       @location(0) mask : vec4<f32>,
@@ -299,8 +293,6 @@ window.addEventListener('load', async () => {
         material: {
           shading: 'Lambert',
           color: isCube ? cubeColor : Math.random() > 0.5 ? sphereColor1 : sphereColor2,
-          toneMapping: false,
-          outputColorSpace: 'linear',
           fragmentOutput: {
             // matches the MRT attachments
             struct: [
@@ -1039,9 +1031,9 @@ window.addEventListener('load', async () => {
       ${constants}
       ${common}
       ${toneMappingUtils}
-      
+
       @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-        let originalScene: vec4f = textureSample(sceneTexture, defaultSampler, fsInput.uv);   
+        let originalScene: vec4f = textureSample(sceneTexture, defaultSampler, fsInput.uv);
         //let bloomScene: vec4f = textureSample(selectiveRenderTexture, defaultSampler, fsInput.uv);
 
         var bloomScene: vec4f;
@@ -1065,7 +1057,7 @@ window.addEventListener('load', async () => {
         // tone mapping
         result = vec4(KhronosToneMapping(result.rgb), result.a);
         result = linearTosRGB_4(result);
-        
+
         return result;
       }
     `

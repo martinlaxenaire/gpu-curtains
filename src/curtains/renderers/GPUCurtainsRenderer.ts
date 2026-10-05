@@ -7,6 +7,8 @@ import { DOMTexture } from '../textures/DOMTexture'
 /**
  * This renderer just extends the {@link GPUCameraRenderer} by keeping track of all the created {@link curtains/meshes/DOMMesh.DOMMesh | DOM Meshes}
  *
+ * Since this renderer is mostly used to display meshes textured with images and videos, its default `toneMapping` is set to `false`, and its default `colorSpace` is set to `linear`.
+ *
  * @example
  * ```javascript
  * // first, we need a WebGPU device, that's what GPUDeviceManager is for
@@ -51,8 +53,8 @@ export class GPUCurtainsRenderer<
     camera,
     lights,
     exposure = 1,
-    colorSpace = 'linear',
     toneMapping = false,
+    colorSpace = 'linear',
   }: GPUCameraRendererParams) {
     super({
       deviceManager,
@@ -65,8 +67,8 @@ export class GPUCurtainsRenderer<
       camera,
       lights,
       exposure,
-      colorSpace,
       toneMapping,
+      colorSpace,
     } as GPUCameraRendererParams)
 
     this.type = 'GPUCurtainsRenderer'

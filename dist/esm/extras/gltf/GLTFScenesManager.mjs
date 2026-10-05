@@ -918,7 +918,7 @@ var GLTFScenesManager = class GLTFScenesManager {
 			const name = GLTFScenesManager.getCleanAttributeName(attribName);
 			const accessor = this.gltf.accessors[accessorIndex];
 			const constructor = accessor.componentType ? GLTFScenesManager.getTypedArrayConstructorFromComponentType(accessor.componentType) : Float32Array;
-			let bufferViewIndex = accessor.bufferView;
+			const bufferViewIndex = accessor.bufferView;
 			if (bufferViewIndex === void 0) continue;
 			const bufferView = this.gltf.bufferViews[bufferViewIndex];
 			const byteStride = bufferView.byteStride;
@@ -958,7 +958,7 @@ var GLTFScenesManager = class GLTFScenesManager {
 				array[i + 2] *= len;
 				array[i + 3] *= len;
 			}
-			let normalized = !!accessor.normalized;
+			const normalized = !!accessor.normalized;
 			const patchedAttributeParams = vertexBufferAttributeLayouts.find((vb) => size <= vb.size && vb.typedArrayConstructor === array.constructor && vb.normalized === normalized);
 			if (this.gltf.extensionsRequired?.includes("KHR_mesh_quantization") && array.constructor !== Float32Array && (name === "position" || name === "normal" || name === "tangent" || name.indexOf("uv") !== -1)) {
 				const stride = patchedAttributeParams.size;
@@ -1484,7 +1484,7 @@ var GLTFScenesManager = class GLTFScenesManager {
 				}
 				meshDescriptor.alternateDescriptors.forEach((descriptor) => {
 					const { material: originalMaterial } = meshDescriptor.parameters;
-					const { environmentMap, shading, vertexChunks, additionalVaryings, fragmentChunks, toneMapping } = originalMaterial;
+					const { environmentMap, shading, vertexChunks, additionalVaryings, fragmentChunks } = originalMaterial;
 					const { label, targets, transparent, material } = descriptor.parameters;
 					material.shading = shading;
 					if (descriptor.extensionsUsed.includes("KHR_materials_unlit")) material.shading = "Unlit";
@@ -1546,7 +1546,6 @@ var GLTFScenesManager = class GLTFScenesManager {
 						chunks: fragmentChunks,
 						extensionsUsed: descriptor.extensionsUsed,
 						receiveShadows: meshDescriptor.parameters.receiveShadows,
-						toneMapping,
 						geometry,
 						additionalVaryings,
 						materialUniform: variantMaterialUniform,

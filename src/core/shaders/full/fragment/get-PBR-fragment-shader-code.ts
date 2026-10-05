@@ -48,8 +48,6 @@ import { getVolumeMultiScatter } from '../../chunks/fragment/body/get-volume-mul
  */
 export const getPBRFragmentShaderCode = ({
   chunks = null,
-  transmissiveInputColorSpace = 'srgb',
-  transmissiveInputToneMapping = 'Khronos',
   fragmentOutput = {
     struct: [
       {
@@ -166,8 +164,6 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
     receiveShadows,
     environmentMap,
     transmissionBackgroundTexture,
-    transmissiveInputColorSpace,
-    transmissiveInputToneMapping,
     extensionsUsed,
   })}
 

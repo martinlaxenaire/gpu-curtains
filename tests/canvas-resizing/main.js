@@ -52,7 +52,7 @@ window.addEventListener('load', async () => {
       })
     }
 
-    if (!!fixedSize) {
+    if (fixedSize) {
       renderer.resize({
         width: parseInt(fixedSize),
         height: parseInt(fixedSize),

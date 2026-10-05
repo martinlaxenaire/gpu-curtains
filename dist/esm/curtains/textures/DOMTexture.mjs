@@ -52,27 +52,27 @@ var DOMTexture = class extends MediaTexture {
 	* {@link Vec2} used for {@link modelMatrix} calculations, based on {@link mesh} {@link core/DOM/DOMElement.RectSize | size}.
 	* @private
 	*/
-	#parentRatio = new Vec2(1);
+	#parentRatio;
 	/**
 	* {@link Vec2} used for {@link modelMatrix} calculations, based on {@link size | source size}.
 	* @private
 	*/
-	#sourceRatio = new Vec2(1);
+	#sourceRatio;
 	/**
 	* {@link Vec2} used for {@link modelMatrix} calculations, based on #parentRatio and #sourceRatio.
 	* @private
 	*/
-	#coverScale = new Vec2(1);
+	#coverScale;
 	/**
 	* {@link Vec2} used for {@link modelMatrix} calculations, based on {@link transformOrigin}.
 	* @private
 	*/
-	#negatedOrigin = new Vec2();
+	#negatedOrigin;
 	/**
 	* Rotation {@link Mat3} based on texture {@link rotation}.
 	* @private
 	*/
-	#rotationMatrix = new Mat3();
+	#rotationMatrix;
 	/**
 	* DOMTexture constructor
 	* @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link DOMTexture}
@@ -86,6 +86,11 @@ var DOMTexture = class extends MediaTexture {
 			viewDimension: "2d"
 		});
 		this._mesh = null;
+		this.#parentRatio = new Vec2(1);
+		this.#sourceRatio = new Vec2(1);
+		this.#coverScale = new Vec2(1);
+		this.#negatedOrigin = new Vec2();
+		this.#rotationMatrix = new Mat3();
 		this.transformOrigin.set(.5, .5);
 		this.type = "DOMTexture";
 		this.renderer.addDOMTexture(this);

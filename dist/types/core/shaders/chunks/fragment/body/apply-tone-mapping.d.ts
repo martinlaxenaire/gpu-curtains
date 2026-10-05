@@ -1,5 +1,4 @@
-import { ColorSpace } from '../../../../../types/shading';
-import { ToneMappings } from '../../../../../types/shading';
+import { ColorSpace, ToneMappings } from '../../../../renderers/GPUCameraRenderer';
 /**
  * Apply the corresponding tone mapping to our `outputColor` (`vec4f`).
  * @param parameters - Parameters to use for applying tone mapping.

@@ -1461,7 +1461,7 @@ export class GLTFScenesManager {
         ? GLTFScenesManager.getTypedArrayConstructorFromComponentType(accessor.componentType)
         : Float32Array
 
-      let bufferViewIndex = accessor.bufferView
+      const bufferViewIndex = accessor.bufferView
 
       if (bufferViewIndex === undefined) {
         continue
@@ -1568,7 +1568,7 @@ export class GLTFScenesManager {
         }
       }
 
-      let normalized = !!accessor.normalized
+      const normalized = !!accessor.normalized
 
       // patch attribute params
       const patchedAttributeParams = vertexBufferAttributeLayouts.find(
@@ -2523,7 +2523,7 @@ export class GLTFScenesManager {
         // variants
         meshDescriptor.alternateDescriptors.forEach((descriptor) => {
           const { material: originalMaterial } = meshDescriptor.parameters
-          const { environmentMap, shading, vertexChunks, additionalVaryings, fragmentChunks, toneMapping } =
+          const { environmentMap, shading, vertexChunks, additionalVaryings, fragmentChunks } =
             originalMaterial
 
           const { label, targets, transparent, material }: MeshDescriptorMaterialParams = descriptor.parameters
@@ -2644,7 +2644,6 @@ export class GLTFScenesManager {
             chunks: fragmentChunks,
             extensionsUsed: descriptor.extensionsUsed,
             receiveShadows: meshDescriptor.parameters.receiveShadows,
-            toneMapping,
             geometry,
             additionalVaryings: additionalVaryings,
             materialUniform: variantMaterialUniform,

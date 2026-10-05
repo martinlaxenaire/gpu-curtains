@@ -89,7 +89,7 @@ function ProjectedMeshBaseMixin(Base) {
 			if (this.options.transmissive) {
 				renderer = isCameraRenderer(renderer, this.options.label + " " + renderer.type);
 				renderer.createTransmissionTarget();
-				let transmissiveTexture = this.material.textures.find((texture) => texture.options.name === "transmissionBackgroundTexture");
+				const transmissiveTexture = this.material.textures.find((texture) => texture.options.name === "transmissionBackgroundTexture");
 				if (transmissiveTexture) transmissiveTexture.copy(renderer.transmissionTarget.texture);
 			}
 			super.setRenderer(renderer);

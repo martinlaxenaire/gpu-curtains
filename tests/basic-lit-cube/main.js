@@ -85,7 +85,7 @@ window.addEventListener('load', async () => {
   })
 
   gui.add(gpuCameraRenderer, 'exposure', 0, 3, 0.05).name('Exposure')
-  gui.add(gpuCameraRenderer, 'toneMapping', {'None': false, 'Khronos': 'Khronos', 'Reinhard': 'Reinhard', 'Cineon': 'Cineon'}).name('Tone mapping')
+  gui.add(gpuCameraRenderer, 'toneMapping', { 'None': false, 'Khronos': 'Khronos', 'Reinhard': 'Reinhard', 'Cineon': 'Cineon' }).name('Tone mapping')
   gui.add(gpuCameraRenderer, 'colorSpace', { 'Linear': 'linear', 'sRGB': 'srgb' }).name('Color space')
 
   const materialShadingFolder = gui.addFolder('Shading')

@@ -47,11 +47,17 @@ var Scene = class extends Object3D {
 		this.#shouldLoadDepth = false;
 		this.computePassEntries = [];
 		this.renderPassEntries = {
+			/** Array of {@link RenderPassEntry} that will handle {@link PingPongPlane}. Each {@link PingPongPlane} will be added as a distinct {@link RenderPassEntry} here. */
 			pingPong: [],
+			/** Array of {@link RenderPassEntry} that will render to a specific {@link RenderTarget} before rendering to the screen. Each {@link RenderTarget} not using `isPostTarget` option will be added as a distinct {@link RenderPassEntry} here. */
 			renderTarget: [],
+			/** Array of {@link RenderPassEntry} containing {@link ShaderPass} that will render directly to the screen before rendering any other pass to the screen. Useful to perform "blit" pass before actually rendering the usual scene content. */
 			prePass: [],
+			/** Array of {@link RenderPassEntry} that will render directly to the screen. Our first and default entry will contain all the Meshes that do not have any {@link RenderTarget} assigned. You can create following entries for custom scene rendering management process. */
 			screen: [],
+			/** Array of {@link RenderPassEntry} that will render to a specific {@link RenderTarget} after the screen passes have been rendered. Each {@link RenderTarget} using the `isPostTarget` option will be added as a distinct {@link RenderPassEntry} here. */
 			postRenderTarget: [],
+			/**Array of {@link RenderPassEntry} containing post processing {@link ShaderPass} that will render directly to the screen after everything has been drawn. */
 			postProPass: []
 		};
 	}
@@ -244,7 +250,7 @@ var Scene = class extends Object3D {
 	* @param projectionStack - {@link ProjectionStack} onto which to add the {@link RenderBundle}.
 	*/
 	addRenderBundle(renderBundle, projectionStack) {
-		const similarObjects = !!renderBundle.transparent ? projectionStack.transparent : projectionStack.opaque;
+		const similarObjects = renderBundle.transparent ? projectionStack.transparent : projectionStack.opaque;
 		similarObjects.push(renderBundle);
 		this.orderStack(similarObjects);
 	}

@@ -70,13 +70,16 @@ export type ToneMappings = 'Khronos' | 'Reinhard' | 'Cineon' | false
 /** Defines the available color spaces. */
 export type ColorSpace = 'linear' | 'srgb'
 
+/**
+ * Base parameters used to create the output pass, handling exposure, tone mapping and color space conversion.
+ */
 export interface GPUCameraRendererOutputParams {
   /** Exposure to use. Default to `1`. */
   exposure?: number
-  /** Output {@link ColorSpace | color space} to use. Default to `srgb`. */
-  colorSpace?: ColorSpace
   /** Tone mapping to use if any. Default to `Khronos`. */
   toneMapping?: ToneMappings
+  /** Output {@link ColorSpace | color space} to use. Default to `srgb`. */
+  colorSpace?: ColorSpace
 }
 
 /** Extra parameters used to define the {@link RendererCamera} and various lights options. */
@@ -169,8 +172,8 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
     camera = {},
     lights = {},
     exposure = 1,
-    colorSpace = 'srgb',
     toneMapping = 'Khronos',
+    colorSpace = 'srgb',
   }: GPUCameraRendererParams) {
     super({
       deviceManager,
@@ -777,10 +780,19 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
 
   /* OUTPUT */
 
+  /**
+   * Get the current exposure value.
+   * @readonly
+   * @returns - Current exposure.
+   */
   get exposure(): number {
     return this.options.exposure
   }
 
+  /**
+   * Set the new exposure value.
+   * @param exposure - New exposure value.
+   */
   set exposure(exposure: number) {
     this.options.exposure = exposure
 
@@ -788,10 +800,19 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
     this.outputPass.visible = this.#needsOutputPass
   }
 
+  /**
+   * Get the current {@link ToneMappings | tone mapping} value.
+   * @readonly
+   * @returns - Current {@link ToneMappings | tone mapping}.
+   */
   get toneMapping(): ToneMappings {
     return this.options.toneMapping
   }
 
+  /**
+   * Set the new {@link ToneMappings | tone mapping} value.
+   * @param toneMapping - New {@link ToneMappings | tone mapping} value.
+   */
   set toneMapping(toneMapping: ToneMappings) {
     this.options.toneMapping = toneMapping
 
@@ -799,6 +820,7 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
     this.outputPass.visible = this.#needsOutputPass
   }
 
+  /* @ignore */
   get #toneMappingBindingValue(): number {
     return (() => {
       switch (this.toneMapping) {
@@ -815,10 +837,19 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
     })()
   }
 
+  /**
+   * Get the current {@link ColorSpace | color space} value.
+   * @readonly
+   * @returns - Current {@link ColorSpace | color space}.
+   */
   get colorSpace(): ColorSpace {
     return this.options.colorSpace
   }
 
+  /**
+   * Set the new {@link ColorSpace | color space} value.
+   * @param toneMapping - New {@link ColorSpace | color space} value.
+   */
   set colorSpace(colorSpace: ColorSpace) {
     this.options.colorSpace = colorSpace
 
@@ -826,6 +857,7 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
     this.outputPass.visible = this.#needsOutputPass
   }
 
+  /* @ignore */
   get #colorSpaceBindingValue(): number {
     return (() => {
       switch (this.colorSpace) {
@@ -838,10 +870,14 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
     })()
   }
 
+  /* @ignore */
   get #needsOutputPass(): boolean {
     return this.exposure !== 1 || !!this.toneMapping || this.colorSpace !== 'linear'
   }
 
+  /**
+   * Set the output pass that will handle exposure, tone mapping and color space conversion.
+   */
   setOutputPass() {
     this.outputPass = new ShaderPass(this, {
       label: `${this.options.label} output pass`,

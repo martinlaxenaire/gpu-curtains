@@ -18,7 +18,8 @@ import { Texture } from '../../core/textures/Texture'
 import { MediaTexture } from '../../core/textures/MediaTexture'
 import { Sampler } from '../../core/samplers/Sampler'
 import { EnvironmentMap } from '../environmentMap/EnvironmentMap'
-import { ColorSpace, FragmentOutput, ToneMappings } from '../../types/shading'
+import { ColorSpace } from '../../core/renderers/GPUCameraRenderer'
+import { FragmentOutput } from '../../types/shading'
 import { MaterialExtensionKeys } from '../../types/gltf/GLTFExtensions'
 
 /** Defines all kinds of shading models available. */
@@ -326,27 +327,12 @@ export class LitMesh extends Mesh {
     // color spaces
     let {
       colorSpace,
-      transmissiveInputColorSpace,
-      transmissiveInputToneMapping,
-      outputColorSpace,
       flatShading,
       fragmentOutput,
     } = material
 
     if (!colorSpace) {
       colorSpace = 'srgb'
-    }
-
-    if (!outputColorSpace) {
-      outputColorSpace = 'srgb'
-    }
-
-    if (!transmissiveInputColorSpace) {
-      transmissiveInputColorSpace = 'srgb'
-    }
-
-    if (transmissiveInputToneMapping === undefined) {
-      transmissiveInputToneMapping = 'Khronos'
     }
 
     if (!fragmentOutput) {
@@ -369,7 +355,6 @@ export class LitMesh extends Mesh {
       additionalVaryings,
       vertexChunks,
       fragmentChunks,
-      toneMapping,
       // material uniform values
       color,
       opacity,
@@ -636,8 +621,6 @@ export class LitMesh extends Mesh {
       receiveShadows: defaultParams.receiveShadows,
       cullMode,
       flatShading,
-      transmissiveInputColorSpace,
-      transmissiveInputToneMapping,
       geometry: defaultParams.geometry,
       additionalVaryings,
       materialUniform,

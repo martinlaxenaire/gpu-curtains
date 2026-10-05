@@ -143,7 +143,9 @@ var SpotShadow = class extends Shadow {
 	* @returns - Depth pass vertex shader.
 	*/
 	getDefaultShadowDepthVs({ bindings = [], geometry }) {
-		return { code: getDefaultSpotShadowDepthVs(this.index, {
+		return { 
+		/** Returned code. */
+code: getDefaultSpotShadowDepthVs(this.index, {
 			bindings,
 			geometry
 		}) };

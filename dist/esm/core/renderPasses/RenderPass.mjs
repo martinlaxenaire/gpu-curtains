@@ -163,7 +163,7 @@ var RenderPass = class {
 	* @readonly
 	*/
 	get outputTextures() {
-		return this.options.sampleCount > 1 ? this.resolveTargets : this.viewTextures;
+		return this.resolveTargets.length ? this.resolveTargets : this.viewTextures;
 	}
 	/**
 	* Set our render pass {@link descriptor}.
@@ -384,7 +384,7 @@ var RenderPass = class {
 			renderTexture = this.renderer.context.getCurrentTexture();
 			renderTexture.label = `${this.renderer.type} context current texture`;
 		}
-		if (this.options.sampleCount > 1) {
+		if (this.resolveTargets.length) {
 			this.descriptor.colorAttachments[0].view = this.viewTextures[0].texture.createView({ label: this.viewTextures[0].options.label + " view" });
 			this.descriptor.colorAttachments[0].resolveTarget = renderTexture.createView({ label: renderTexture.label + " resolve target view" });
 		} else this.descriptor.colorAttachments[0].view = renderTexture.createView({ label: renderTexture.label + " view" });

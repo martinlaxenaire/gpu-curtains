@@ -647,15 +647,15 @@ export class Mat4 {
   getScale(scale = new Vec3()): Vec3 {
     const te = this.elements
 
-    let m11 = te[0]
-    let m12 = te[1]
-    let m13 = te[2]
-    let m21 = te[4]
-    let m22 = te[5]
-    let m23 = te[6]
-    let m31 = te[8]
-    let m32 = te[9]
-    let m33 = te[10]
+    const m11 = te[0]
+    const m12 = te[1]
+    const m13 = te[2]
+    const m21 = te[4]
+    const m22 = te[5]
+    const m23 = te[6]
+    const m31 = te[8]
+    const m32 = te[9]
+    const m33 = te[10]
     scale.set(
       Math.sqrt(m11 * m11 + m12 * m12 + m13 * m13),
       Math.sqrt(m21 * m21 + m22 * m22 + m23 * m23),
@@ -674,23 +674,23 @@ export class Mat4 {
     const scale = this.getScale()
     // this.getScale(xAxis)
 
-    let is1 = 1 / scale.x
-    let is2 = 1 / scale.y
-    let is3 = 1 / scale.z
+    const is1 = 1 / scale.x
+    const is2 = 1 / scale.y
+    const is3 = 1 / scale.z
 
     const te = this.elements
     const qe = quat.elements
 
-    let sm11 = te[0] * is1
-    let sm12 = te[1] * is2
-    let sm13 = te[2] * is3
-    let sm21 = te[4] * is1
-    let sm22 = te[5] * is2
-    let sm23 = te[6] * is3
-    let sm31 = te[8] * is1
-    let sm32 = te[9] * is2
-    let sm33 = te[10] * is3
-    let trace = sm11 + sm22 + sm33
+    const sm11 = te[0] * is1
+    const sm12 = te[1] * is2
+    const sm13 = te[2] * is3
+    const sm21 = te[4] * is1
+    const sm22 = te[5] * is2
+    const sm23 = te[6] * is3
+    const sm31 = te[8] * is1
+    const sm32 = te[9] * is2
+    const sm33 = te[10] * is3
+    const trace = sm11 + sm22 + sm33
     let S = 0
     if (trace > 0) {
       S = Math.sqrt(trace + 1.0) * 2

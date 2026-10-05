@@ -36,7 +36,16 @@ window.addEventListener('load', async () => {
     deviceManager: gpuDeviceManager,
     container: document.querySelector('#canvas'),
     pixelRatio: Math.min(1.5, window.devicePixelRatio),
+    // context: {
+    //   format: 'rgba16float',
+    //   toneMapping: { mode: 'extended' },
+    // },
+    // renderPass: {
+    //   sampleCount: 1
+    // }
   })
+
+  console.log(renderer)
 
   const { camera, scene, cameraLightsBindGroup } = renderer
 
@@ -74,6 +83,7 @@ window.addEventListener('load', async () => {
     depthStoreOp: 'discard', // important so we don't interfer with the main buffer
     renderTextureName: 'reflectionTexture',
     qualityRatio: reflectionQuality,
+    // sampleCount: 1
   })
 
   // create a camera based on our renderer camera
@@ -140,7 +150,6 @@ window.addEventListener('load', async () => {
 
   const baseMaterialOptions = {
     shading: 'PBR',
-    toneMapping: 'Khronos',
     environmentMap,
   }
 

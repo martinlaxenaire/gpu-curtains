@@ -16,7 +16,6 @@ import {
   UnlitTexturesDescriptors,
 } from '../../../../extras/meshes/LitMesh'
 import { FragmentOutput } from '../../../../types/shading'
-import { ToneMappings, ColorSpace } from '../../../../types/shading'
 
 /** Base parameters used to build a fragment shader. */
 export interface FragmentShaderInputBaseParams {
@@ -57,11 +56,6 @@ export interface PBRFragmentShaderInputParams extends PhongFragmentShaderInputPa
   extensionsUsed?: GLTFExtensionsUsed
   /** {@link EnvironmentMap} to use for IBL shading. */
   environmentMap?: EnvironmentMap
-
-  /** Whether the opaque objects sampled by the transmission texture have been drawn in `linear` or `srgb` color space. Default to `srgb`. */
-  transmissiveInputColorSpace?: ColorSpace
-  /** The tone mapping applied to the opaque objects sampled by the transmission texture, if any. Default to `Khronos`. */
-  transmissiveInputToneMapping?: ToneMappings
 }
 
 /** Parameters used to build a lit fragment shader. */
@@ -90,8 +84,6 @@ export const getFragmentShaderCode = ({
   return output;`,
   },
   chunks = null,
-  transmissiveInputColorSpace = 'srgb',
-  transmissiveInputToneMapping = 'Khronos',
   geometry,
   cullMode = 'back',
   flatShading = false,
@@ -181,8 +173,6 @@ export const getFragmentShaderCode = ({
     default:
       return getPBRFragmentShaderCode({
         chunks,
-        transmissiveInputColorSpace,
-        transmissiveInputToneMapping,
         fragmentOutput,
         geometry,
         cullMode,

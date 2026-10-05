@@ -225,7 +225,7 @@ var GPURenderer = class {
 	*/
 	get boundingRect() {
 		if (!!this.domElement && !!this.domElement.boundingRect) return this.domElement.boundingRect;
-		else if (!!this.domElement) {
+		else if (this.domElement) {
 			const boundingRect = this.domElement.element?.getBoundingClientRect();
 			return {
 				top: boundingRect.top,

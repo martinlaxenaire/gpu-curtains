@@ -292,16 +292,19 @@ var Shadow = class {
 	* Set the {@link depthComparisonSampler}, {@link depthTexture}, {@link depthPassTarget} and start rendering to the shadow map.
 	*/
 	init() {
-		if (!this.depthComparisonSampler) this.depthComparisonSampler = this.renderer.samplers.find((sampler) => sampler.name === "depthComparisonSampler") || new Sampler(this.renderer, {
-			label: "Depth comparison sampler",
-			name: "depthComparisonSampler",
-			addressModeU: "clamp-to-edge",
-			addressModeV: "clamp-to-edge",
-			compare: "less",
-			minFilter: "linear",
-			magFilter: "linear",
-			type: "comparison"
-		});
+		if (!this.depthComparisonSampler) {
+			const samplerExists = this.renderer.samplers.find((sampler) => sampler.name === "depthComparisonSampler");
+			this.depthComparisonSampler = samplerExists || new Sampler(this.renderer, {
+				label: "Depth comparison sampler",
+				name: "depthComparisonSampler",
+				addressModeU: "clamp-to-edge",
+				addressModeV: "clamp-to-edge",
+				compare: "less",
+				minFilter: "linear",
+				magFilter: "linear",
+				type: "comparison"
+			});
+		}
 		this.setDepthTexture();
 		this.depthTextureSize.onChange(() => this.onDepthTextureSizeChanged());
 		if (!this.depthPassTarget) this.createDepthPassTarget();
@@ -453,7 +456,9 @@ var Shadow = class {
 	* @returns - Depth pass vertex shader.
 	*/
 	getDefaultShadowDepthVs({ bindings = [], geometry }) {
-		return { code: `@vertex fn main(@location(0) position: vec4f) -> @builtin(position) vec4f { return position; }` };
+		return { 
+		/** Returned code. */
+code: `@vertex fn main(@location(0) position: vec4f) -> @builtin(position) vec4f { return position; }` };
 	}
 	/**
 	* Get the default depth pass fragment shader for this {@link Shadow}.

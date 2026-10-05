@@ -317,7 +317,7 @@ export class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
    * @param element - new {@link HTMLElement} or string representing an {@link HTMLElement} selector to use.
    */
   resetDOMElement(element: string | HTMLElement) {
-    if (!!element) {
+    if (element) {
       super.resetDOMElement(element)
       this.domTextures.forEach((texture) => texture.resize())
     } else if (!element && !this.renderer.production) {

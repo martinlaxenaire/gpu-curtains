@@ -509,7 +509,6 @@ export class GPUDeviceManager {
   uploadTexture(texture: MediaTexture, sourceIndex = 0) {
     if ('sources' in texture && texture.sources.length) {
       try {
-        console.log(texture.sources[sourceIndex].source)
         this.device?.queue.copyExternalImageToTexture(
           {
             source: texture.sources[sourceIndex].source as GPUCopyExternalImageSource,
@@ -621,7 +620,7 @@ export class GPUDeviceManager {
                 fsInput.texcoord,
                 fsInput.baseArrayLayer);
             }
-            
+
             @group(0) @binding(1) var ourTextureCube: texture_cube<f32>;
             @fragment fn fscube(fsInput: VSOutput) -> @location(0) vec4f {
               return textureSample(

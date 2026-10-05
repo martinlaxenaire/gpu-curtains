@@ -219,7 +219,6 @@ window.addEventListener('load', async () => {
   // RENDERING
   //--------------------
 
-  const toneMapping = 'Khronos'
 
   //--------------------
   // PARTICLES
@@ -278,7 +277,6 @@ window.addEventListener('load', async () => {
     material: {
       shading: 'Lambert',
       color: blue,
-      toneMapping,
       // we need an additional 'velocity' varying
       // to pass from the vertex to the fragment shader
       additionalVaryings: [
@@ -340,7 +338,6 @@ window.addEventListener('load', async () => {
     receiveShadows: true,
     material: {
       shading: 'Lambert',
-      toneMapping,
       color: new Vec3(0.5), // automatically converted to linear space
     },
   })

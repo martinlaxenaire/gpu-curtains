@@ -294,7 +294,9 @@ var PointShadow = class extends Shadow {
 	* @returns - Depth pass vertex shader.
 	*/
 	getDefaultShadowDepthVs({ bindings = [], geometry }) {
-		return { code: getDefaultPointShadowDepthVs(this.index, {
+		return { 
+		/** Returned code. */
+code: getDefaultPointShadowDepthVs(this.index, {
 			bindings,
 			geometry
 		}) };
@@ -304,7 +306,9 @@ var PointShadow = class extends Shadow {
 	* @returns - A {@link types/Materials.ShaderOptions | ShaderOptions} with the depth pass fragment shader.
 	*/
 	getDefaultShadowDepthFs() {
-		return { code: getDefaultPointShadowDepthFs(this.index) };
+		return { 
+		/** Returned code. */
+code: getDefaultPointShadowDepthFs(this.index) };
 	}
 	/**
 	* Patch the given {@link Mesh} material parameters to create the depth mesh. Here we'll be adding the first {@link CameraRenderer.pointShadowsCubeFaceBindGroups | renderer pointShadowsCubeFaceBindGroups} bind group containing the face index onto which we'll be drawing. This bind group will be swapped when rendering using {@link renderDepthPass}.

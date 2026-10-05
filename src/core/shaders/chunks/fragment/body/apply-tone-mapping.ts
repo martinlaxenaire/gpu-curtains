@@ -1,5 +1,4 @@
-import { ColorSpace } from '../../../../../types/shading'
-import { ToneMappings } from '../../../../../types/shading'
+import { ColorSpace, ToneMappings } from '../../../../renderers/GPUCameraRenderer';
 
 // Add more tone mappings? Handle exposure?
 
