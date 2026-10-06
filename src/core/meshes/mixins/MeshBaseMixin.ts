@@ -543,7 +543,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       this.additionalOutputTargets = additionalOutputTargets || []
 
       // set default sample count
-      meshParameters.sampleCount = !!meshParameters.sampleCount
+      meshParameters.sampleCount = meshParameters.sampleCount
         ? meshParameters.sampleCount
         : this.outputTarget
         ? this.outputTarget.renderPass.options.sampleCount

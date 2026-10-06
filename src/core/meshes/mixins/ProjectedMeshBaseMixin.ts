@@ -331,7 +331,7 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
       if (this.options.transmissive) {
         renderer = isCameraRenderer(renderer, this.options.label + ' ' + renderer.type)
         renderer.createTransmissionTarget()
-        let transmissiveTexture = this.material.textures.find(
+        const transmissiveTexture = this.material.textures.find(
           (texture) => texture.options.name === 'transmissionBackgroundTexture'
         )
 

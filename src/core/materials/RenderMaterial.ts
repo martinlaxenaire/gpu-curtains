@@ -310,7 +310,7 @@ export class RenderMaterial extends Material {
    * @readonly
    */
   get cacheKey(): string {
-    let cacheKey = this.attributes?.layoutCacheKey || ''
+    const cacheKey = this.attributes?.layoutCacheKey || ''
     return cacheKey + super.cacheKey
   }
 
