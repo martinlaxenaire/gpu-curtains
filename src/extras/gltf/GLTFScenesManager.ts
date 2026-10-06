@@ -1461,7 +1461,7 @@ export class GLTFScenesManager {
         ? GLTFScenesManager.getTypedArrayConstructorFromComponentType(accessor.componentType)
         : Float32Array
 
-      let bufferViewIndex = accessor.bufferView
+      const bufferViewIndex = accessor.bufferView
 
       if (bufferViewIndex === undefined) {
         continue
@@ -1568,7 +1568,7 @@ export class GLTFScenesManager {
         }
       }
 
-      let normalized = !!accessor.normalized
+      const normalized = !!accessor.normalized
 
       // patch attribute params
       const patchedAttributeParams = vertexBufferAttributeLayouts.find(

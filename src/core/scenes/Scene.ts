@@ -443,7 +443,7 @@ export class Scene extends Object3D {
    */
   addRenderBundle(renderBundle: RenderBundle, projectionStack: ProjectionStack) {
     // rebuild stack
-    const similarObjects = !!renderBundle.transparent ? projectionStack.transparent : projectionStack.opaque
+    const similarObjects = renderBundle.transparent ? projectionStack.transparent : projectionStack.opaque
 
     similarObjects.push(renderBundle)
 

@@ -281,7 +281,7 @@ export class BufferBinding extends Binding {
    * @param value - New {@link BufferBinding} parent to set if any.
    */
   set parent(value: BufferBinding | null) {
-    if (!!value) {
+    if (value) {
       this.parentView = new DataView(value.arrayBuffer, this.offset, this.getMinOffsetSize(this.arrayBufferSize))
 
       // get all buffer elements recursively

@@ -56,12 +56,12 @@
     "@webgpu/types": "^0.1.54"
   },
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^8.24.0",
-    "@typescript-eslint/parser": "^8.24.0",
+    "@eslint/js": "^10.0.1",
     "@vitejs/plugin-basic-ssl": "^2.2.0",
     "esbuild": "^0.28.1",
     "eslint": "^9.39.1",
     "eslint-config-prettier": "^8.8.0",
+    "globals": "^17.13.0",
     "prettier": "2.8.8",
     "rimraf": "^6.1.2",
     "rollup": "^4.60.0",
@@ -69,11 +69,13 @@
     "typedoc": "^0.28.15",
     "typedoc-plugin-mdn-links": "^5.0.10",
     "typescript": "^5.1.3",
+    "typescript-eslint": "^8.71.0",
     "vite": "^8.0.1"
   },
   "scripts": {
     "dev": "vite --host",
     "dev:https": "vite --host --mode https",
+    "lint": "eslint .",
     "build:docs": "rimraf docs && typedoc --options typedoc.json",
     "build:types": "rimraf dist/types && tsc",
     "build:lib": "rimraf dist/esm && rolldown -c",
