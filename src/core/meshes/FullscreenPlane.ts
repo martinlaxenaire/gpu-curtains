@@ -8,7 +8,7 @@ import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { BufferBindingParams } from '../bindings/BufferBinding'
 
 /** Parameters used to create a {@link FullscreenPlane}. */
-export interface FullscreenPlaneParams extends Omit<MeshBaseRenderParams, 'useProjection'> {}
+export type FullscreenPlaneParams = Omit<MeshBaseRenderParams, 'useProjection'>
 
 /**
  * Create a 1x1 quad (or plane) covering the full viewport, useful for postprocessing or background effects.
@@ -110,7 +110,7 @@ export class FullscreenPlane extends MeshBaseMixin(class {}) {
       parameters.label = 'FullscreenQuadMesh'
     }
 
-    // @ts-ignore
+    // @ts-expect-error use mes mixin super constructor
     super(renderer, null, { geometry, ...parameters })
 
     this.size = {

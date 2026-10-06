@@ -124,7 +124,7 @@ var EnvironmentMap = class {
 		if (value !== this.options.rotation) {
 			this.options.rotation = value;
 			this.rotationMatrix.rotateByAngleY(-value);
-			this._onRotationAxisChangedCallback && this._onRotationAxisChangedCallback();
+			if (this._onRotationAxisChangedCallback) this._onRotationAxisChangedCallback();
 		}
 	}
 	/**
@@ -139,7 +139,7 @@ var EnvironmentMap = class {
 	* Create our {@link lutTexture} eagerly.
 	*/
 	createLUTTextures() {
-		const { size, computeSampleCount, ...lutTextureParams } = this.options.lutTextureParams;
+		const { size, computeSampleCount: _computeSampleCount, ...lutTextureParams } = this.options.lutTextureParams;
 		this.#lutStorageTexture = new Texture(this.renderer, {
 			label: "LUT storage texture",
 			name: "lutStorageTexture",
@@ -199,7 +199,7 @@ var EnvironmentMap = class {
 			},
 			...textureDefaultOptions
 		});
-		const { size, computeSampleCount, ...diffuseTextureParams } = this.options.diffuseTextureParams;
+		const { size, computeSampleCount: _computeSampleCount, ...diffuseTextureParams } = this.options.diffuseTextureParams;
 		this.diffuseTexture = new Texture(this.renderer, {
 			...diffuseTextureParams,
 			visibility: ["fragment"],
@@ -218,12 +218,12 @@ var EnvironmentMap = class {
 	* @param parameters.onAfterCompute - Optional callback to run just after the pass has been executed. Useful for eventual texture copies.
 	* @private
 	*/
-	#runComputePass({ computePass, label = "", onAfterCompute = (commandEncoder) => {} }) {
+	#runComputePass({ computePass, label = "", onAfterCompute = (_commandEncoder) => {} }) {
 		const commandEncoder = this.renderer.device?.createCommandEncoder({ label });
-		!this.renderer.production && commandEncoder.pushDebugGroup(label);
+		if (!this.renderer.production) commandEncoder.pushDebugGroup(label);
 		this.renderer.renderSingleComputePass(commandEncoder, computePass, false);
 		onAfterCompute(commandEncoder);
-		!this.renderer.production && commandEncoder.popDebugGroup();
+		if (!this.renderer.production) commandEncoder.popDebugGroup();
 		const commandBuffer = commandEncoder.finish();
 		this.renderer.device?.queue.submit([commandBuffer]);
 		this.renderer.pipelineManager.resetCurrentPipeline();
@@ -245,7 +245,7 @@ var EnvironmentMap = class {
 			return;
 		}
 		const { computeSampleCount } = this.options.lutTextureParams;
-		let computeLUTPass = new ComputePass(this.renderer, {
+		const computeLUTPass = new ComputePass(this.renderer, {
 			label: "Compute LUT texture",
 			autoRender: false,
 			dispatchSize: [
@@ -267,14 +267,13 @@ var EnvironmentMap = class {
 		});
 		this.lutTexture.textureBinding.resource = this.lutTexture.texture;
 		computeLUTPass.remove();
-		computeLUTPass = null;
 	}
 	/**
 	* Create the {@link cubemapTexture | cube map texture} from a loaded {@link HDRImageData} using a {@link ComputePass} that runs once.
 	* @param parsedHdr - parsed {@link HDRImageData} loaded by the {@link hdrLoader}.
 	*/
 	async computeSpecularCubemapFromHDRData(parsedHdr) {
-		let cubeStorageTexture = new Texture(this.renderer, {
+		const cubeStorageTexture = new Texture(this.renderer, {
 			label: "Cubemap storage",
 			name: "storageCubemap",
 			format: this.cubemapTexture.options.format,
@@ -292,7 +291,7 @@ var EnvironmentMap = class {
 			},
 			viewDimension: "2d-array"
 		});
-		let computeCubeMapPass = new ComputePass(this.renderer, {
+		const computeCubeMapPass = new ComputePass(this.renderer, {
 			label: "Compute cubemap from equirectangular",
 			autoRender: false,
 			dispatchSize: [
@@ -333,8 +332,6 @@ var EnvironmentMap = class {
 		computeCubeMapPass.remove();
 		cubeStorageTexture.destroy();
 		mipBuffers.forEach((buffer) => buffer.destroy());
-		cubeStorageTexture = null;
-		computeCubeMapPass = null;
 		mipBuffers = [];
 	}
 	/**
@@ -445,7 +442,7 @@ var EnvironmentMap = class {
 			if (!this.renderer.production) throwWarning("EnvironmentMap: Could not generate the diffuse texture because the cube map texture is not set:" + this.cubemapTexture);
 			return;
 		}
-		let diffuseStorageTexture = new Texture(this.renderer, {
+		const diffuseStorageTexture = new Texture(this.renderer, {
 			label: "Diffuse storage cubemap",
 			name: "diffuseEnvMap",
 			format: this.diffuseTexture.options.format,
@@ -459,7 +456,7 @@ var EnvironmentMap = class {
 			},
 			viewDimension: "2d-array"
 		});
-		let computeDiffusePass = new ComputePass(this.renderer, {
+		const computeDiffusePass = new ComputePass(this.renderer, {
 			label: "Compute diffuse map from specular map",
 			autoRender: false,
 			dispatchSize: [
@@ -496,8 +493,6 @@ var EnvironmentMap = class {
 		});
 		computeDiffusePass.remove();
 		diffuseStorageTexture.destroy();
-		diffuseStorageTexture = null;
-		computeDiffusePass = null;
 	}
 	/**
 	* Load an HDR environment map and then generate the {@link specularTexture} and {@link diffuseTexture} using two separate {@link ComputePass}.

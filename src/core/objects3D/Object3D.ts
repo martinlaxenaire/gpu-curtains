@@ -1,7 +1,6 @@
 import { Vec3 } from '../../math/Vec3'
 import { Quat } from '../../math/Quat'
 import { Mat4 } from '../../math/Mat4'
-import { KeyframesAnimation } from '../../extras/animations/KeyframesAnimation'
 
 let objectIndex = 0
 const tempMatrix = new Mat4()

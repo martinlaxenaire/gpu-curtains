@@ -20,7 +20,7 @@ var ComputePipelineEntry = class extends PipelineEntry {
 	* @param parameters - {@link PipelineEntryParams | parameters} used to create this {@link ComputePipelineEntry}
 	*/
 	constructor(parameters) {
-		const { label, renderer, bindGroups } = parameters;
+		const { label, renderer, bindGroups: _bindGroups } = parameters;
 		const type = "ComputePipelineEntry";
 		isRenderer(renderer, label ? label + " ComputePipelineEntry" : type);
 		super(parameters);

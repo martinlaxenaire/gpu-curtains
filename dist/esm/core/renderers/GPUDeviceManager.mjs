@@ -15,7 +15,7 @@ var GPUDeviceManager = class {
 	* GPUDeviceManager constructor
 	* @param parameters - {@link GPUDeviceManagerParams | parameters} used to create this {@link GPUDeviceManager}.
 	*/
-	constructor({ label, production = false, adapterOptions = {}, requiredFeatures = [], requestAdapterLimits = [], autoRender = true, onError = (message) => {}, onDeviceLost = (info) => {}, onDeviceDestroyed = (info) => {} } = {}) {
+	constructor({ label, production = false, adapterOptions = {}, requiredFeatures = [], requestAdapterLimits = [], autoRender = true, onError = () => {}, onDeviceLost = () => {}, onDeviceDestroyed = () => {} } = {}) {
 		this._onBeforeRenderCallback = () => {};
 		this._onAfterRenderCallback = () => {};
 		this.index = 0;
@@ -377,7 +377,7 @@ var GPUDeviceManager = class {
                 fsInput.texcoord,
                 fsInput.baseArrayLayer);
             }
-            
+
             @group(0) @binding(1) var ourTextureCube: texture_cube<f32>;
             @fragment fn fscube(fsInput: VSOutput) -> @location(0) vec4f {
               return textureSample(
@@ -487,18 +487,18 @@ var GPUDeviceManager = class {
 	*/
 	render() {
 		if (!this.ready) return;
-		this._onBeforeRenderCallback && this._onBeforeRenderCallback();
+		if (this._onBeforeRenderCallback) this._onBeforeRenderCallback();
 		for (const renderer of this.renderers) if (renderer.shouldRender) renderer.onBeforeCommandEncoder();
 		const commandEncoder = this.device?.createCommandEncoder({ label: this.options.label + " command encoder" });
-		!this.options.production && commandEncoder.pushDebugGroup(this.options.label + " command encoder: main render loop");
+		if (!this.options.production) commandEncoder.pushDebugGroup(this.options.label + " command encoder: main render loop");
 		this.renderers.forEach((renderer) => renderer.render(commandEncoder));
-		!this.options.production && commandEncoder.popDebugGroup();
+		if (!this.options.production) commandEncoder.popDebugGroup();
 		const commandBuffer = commandEncoder.finish();
 		this.device?.queue.submit([commandBuffer]);
 		for (const texture of this.texturesQueue) texture.texture.setSourceUploaded(texture.sourceIndex);
 		this.texturesQueue = [];
 		for (const renderer of this.renderers) if (renderer.shouldRender) renderer.onAfterCommandEncoder();
-		this._onAfterRenderCallback && this._onAfterRenderCallback();
+		if (this._onAfterRenderCallback) this._onAfterRenderCallback();
 	}
 	/**
 	* Destroy the {@link GPUDeviceManager} and its {@link renderers}.

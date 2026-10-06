@@ -134,7 +134,7 @@ var ComputeShaderPass = class extends ComputePass {
 		if (scenePassEntry) {
 			const _onBeforeRenderPass = scenePassEntry.onBeforeRenderPass;
 			scenePassEntry.onBeforeRenderPass = (commandEncoder, swapChainTexture) => {
-				_onBeforeRenderPass && _onBeforeRenderPass(commandEncoder, swapChainTexture);
+				if (_onBeforeRenderPass) _onBeforeRenderPass(commandEncoder, swapChainTexture);
 				this.renderer.renderSingleComputePass(commandEncoder, this, false);
 			};
 		}

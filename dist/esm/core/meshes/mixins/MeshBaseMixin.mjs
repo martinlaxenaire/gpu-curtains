@@ -36,7 +36,7 @@ function MeshBaseMixin(Base) {
 		/** Flag indicating whether to draw this {@link MeshBase} or not */
 		#visible;
 		/** Whether we should add this {@link MeshBase} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
-		#autoRender = true;
+		#autoRender;
 		/**
 		* MeshBase constructor
 		*
@@ -53,6 +53,7 @@ function MeshBaseMixin(Base) {
 				...defaultMeshBaseParams,
 				...params[2]
 			});
+			this.#autoRender = true;
 			this._onReadyCallback = () => {};
 			this._onBeforeRenderCallback = () => {};
 			this._onRenderCallback = () => {};
@@ -72,7 +73,7 @@ function MeshBaseMixin(Base) {
 			this.outputTarget = outputTarget ?? null;
 			this.renderBundle = renderBundle ?? null;
 			this.additionalOutputTargets = additionalOutputTargets || [];
-			meshParameters.sampleCount = !!meshParameters.sampleCount ? meshParameters.sampleCount : this.outputTarget ? this.outputTarget.renderPass.options.sampleCount : this.renderer && this.renderer.renderPass ? this.renderer.renderPass.options.sampleCount : 1;
+			meshParameters.sampleCount = meshParameters.sampleCount ? meshParameters.sampleCount : this.outputTarget ? this.outputTarget.renderPass.options.sampleCount : this.renderer && this.renderer.renderPass ? this.renderer.renderPass.options.sampleCount : 1;
 			this.options = {
 				...this.options ?? {},
 				label: label ?? "Mesh " + this.renderer.meshes.length,
@@ -114,7 +115,7 @@ function MeshBaseMixin(Base) {
 			return this._ready;
 		}
 		set ready(value) {
-			if (value && !this._ready) this._onReadyCallback && this._onReadyCallback();
+			if (value && !this._ready && this._onReadyCallback) this._onReadyCallback();
 			this._ready = value;
 		}
 		/**
@@ -435,7 +436,7 @@ function MeshBaseMixin(Base) {
 		resize(boundingRect) {
 			if (super.resize) super.resize(boundingRect);
 			this.resizeTextures();
-			this._onAfterResizeCallback && this._onAfterResizeCallback();
+			if (this._onAfterResizeCallback) this._onAfterResizeCallback();
 		}
 		/**
 		* Resize the {@link textures}.
@@ -495,7 +496,7 @@ function MeshBaseMixin(Base) {
 		*/
 		onBeforeRenderScene() {
 			if (!this.renderer.ready || !this.ready || !this.visible) return;
-			this._onBeforeRenderCallback && this._onBeforeRenderCallback();
+			if (this._onBeforeRenderCallback) this._onBeforeRenderCallback();
 		}
 		/**
 		* Called before rendering the Mesh.
@@ -505,7 +506,7 @@ function MeshBaseMixin(Base) {
 		onBeforeRenderPass() {
 			if (!this.renderer.ready) return;
 			this.setGeometry();
-			if (this.visible && this.ready) this._onRenderCallback && this._onRenderCallback();
+			if (this.visible && this.ready && this._onRenderCallback) this._onRenderCallback();
 			this.material.onBeforeRender();
 			this.ready = this.material && this.material.ready && this.geometry && this.geometry.ready;
 		}
@@ -529,7 +530,7 @@ function MeshBaseMixin(Base) {
 		* Called after having rendered the Mesh.
 		*/
 		onAfterRenderPass() {
-			this._onAfterRenderCallback && this._onAfterRenderCallback();
+			if (this._onAfterRenderCallback) this._onAfterRenderCallback();
 		}
 		/**
 		* Render our Mesh:
@@ -543,9 +544,9 @@ function MeshBaseMixin(Base) {
 		render(pass) {
 			this.onBeforeRenderPass();
 			if (!this.renderer.ready || !this.visible) return;
-			!this.renderer.production && pass.pushDebugGroup(this.options.label);
+			if (!this.renderer.production) pass.pushDebugGroup(this.options.label);
 			this.onRenderPass(pass);
-			!this.renderer.production && pass.popDebugGroup();
+			if (!this.renderer.production) pass.popDebugGroup();
 			this.onAfterRenderPass();
 		}
 		/**

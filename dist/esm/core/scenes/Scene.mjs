@@ -47,11 +47,17 @@ var Scene = class extends Object3D {
 		this.#shouldLoadDepth = false;
 		this.computePassEntries = [];
 		this.renderPassEntries = {
+			/** Array of {@link RenderPassEntry} that will handle {@link PingPongPlane}. Each {@link PingPongPlane} will be added as a distinct {@link RenderPassEntry} here. */
 			pingPong: [],
+			/** Array of {@link RenderPassEntry} that will render to a specific {@link RenderTarget} before rendering to the screen. Each {@link RenderTarget} not using `isPostTarget` option will be added as a distinct {@link RenderPassEntry} here. */
 			renderTarget: [],
+			/** Array of {@link RenderPassEntry} containing {@link ShaderPass} that will render directly to the screen before rendering any other pass to the screen. Useful to perform "blit" pass before actually rendering the usual scene content. */
 			prePass: [],
+			/** Array of {@link RenderPassEntry} that will render directly to the screen. Our first and default entry will contain all the Meshes that do not have any {@link RenderTarget} assigned. You can create following entries for custom scene rendering management process. */
 			screen: [],
+			/** Array of {@link RenderPassEntry} that will render to a specific {@link RenderTarget} after the screen passes have been rendered. Each {@link RenderTarget} using the `isPostTarget` option will be added as a distinct {@link RenderPassEntry} here. */
 			postRenderTarget: [],
+			/**Array of {@link RenderPassEntry} containing post processing {@link ShaderPass} that will render directly to the screen after everything has been drawn. */
 			postProPass: []
 		};
 	}
@@ -146,11 +152,12 @@ var Scene = class extends Object3D {
 	}
 	/**
 	* Remove a {@link RenderTarget} from our scene {@link renderPassEntries} outputTarget array.
-	* @param renderTarget - {@link RenderTarget} to add.
+	* @param renderTarget - {@link RenderTarget} to remove.
 	*/
 	removeRenderTarget(renderTarget) {
-		let targetPassEntries = renderTarget.options.isPostTarget ? this.renderPassEntries.postRenderTarget : this.renderPassEntries.renderTarget;
-		targetPassEntries = targetPassEntries.filter((entry) => entry.renderPass.uuid !== renderTarget.renderPass.uuid);
+		const filteredEntries = (renderTarget.options.isPostTarget ? this.renderPassEntries.postRenderTarget : this.renderPassEntries.renderTarget).filter((entry) => entry.renderPass.uuid !== renderTarget.renderPass.uuid);
+		if (renderTarget.options.isPostTarget) this.renderPassEntries.postRenderTarget = filteredEntries;
+		else this.renderPassEntries.renderTarget = filteredEntries;
 	}
 	/**
 	* Get the {@link RenderPassEntry} in the {@link renderPassEntries} `renderTarget` array (or `screen` array if no {@link RenderTarget} is passed) corresponding to the given {@link RenderTarget}.
@@ -244,7 +251,7 @@ var Scene = class extends Object3D {
 	* @param projectionStack - {@link ProjectionStack} onto which to add the {@link RenderBundle}.
 	*/
 	addRenderBundle(renderBundle, projectionStack) {
-		const similarObjects = !!renderBundle.transparent ? projectionStack.transparent : projectionStack.opaque;
+		const similarObjects = renderBundle.transparent ? projectionStack.transparent : projectionStack.opaque;
 		similarObjects.push(renderBundle);
 		this.orderStack(similarObjects);
 	}
@@ -401,8 +408,10 @@ var Scene = class extends Object3D {
 		meshes.sort((meshA, meshB) => {
 			if (meshA.renderOrder !== meshB.renderOrder) return meshA.renderOrder - meshB.renderOrder;
 			if (this.isStackObjectRenderBundle(meshA) || this.isStackObjectRenderBundle(meshB)) return meshA.renderOrder - meshB.renderOrder;
-			meshA.geometry ? posA.copy(meshA.geometry.boundingBox.center).applyMat4(meshA.worldMatrix) : meshA.worldMatrix.getTranslation(posA);
-			meshB.geometry ? posB.copy(meshB.geometry.boundingBox.center).applyMat4(meshB.worldMatrix) : meshB.worldMatrix.getTranslation(posB);
+			if (meshA.geometry) posA.copy(meshA.geometry.boundingBox.center).applyMat4(meshA.worldMatrix);
+			else meshA.worldMatrix.getTranslation(posA);
+			if (meshB.geometry) posB.copy(meshB.geometry.boundingBox.center).applyMat4(meshB.worldMatrix);
+			else meshB.worldMatrix.getTranslation(posB);
 			const radiusA = meshA.geometry ? meshA.geometry.boundingBox.radius * meshA.worldMatrix.getMaxScaleOnAxis() : 0;
 			const radiusB = meshB.geometry ? meshB.geometry.boundingBox.radius * meshB.worldMatrix.getMaxScaleOnAxis() : 0;
 			return meshB.camera.worldMatrix.getTranslation(camPosB).distance(posB) - radiusB - (meshA.camera.worldMatrix.getTranslation(camPosA).distance(posA) - radiusA);
@@ -425,7 +434,7 @@ var Scene = class extends Object3D {
 	*/
 	renderSinglePassEntry(commandEncoder, renderPassEntry) {
 		const swapChainTexture = renderPassEntry.renderPass.updateView(renderPassEntry.renderTexture?.texture);
-		renderPassEntry.onBeforeRenderPass && renderPassEntry.onBeforeRenderPass(commandEncoder, swapChainTexture);
+		if (renderPassEntry.onBeforeRenderPass) renderPassEntry.onBeforeRenderPass(commandEncoder, swapChainTexture);
 		if (renderPassEntry.useCustomRenderPass) renderPassEntry.useCustomRenderPass(commandEncoder);
 		else {
 			const pass = renderPassEntry.renderPass.beginRenderPass(commandEncoder);
@@ -444,7 +453,7 @@ var Scene = class extends Object3D {
 			if (!this.renderer.production) pass.popDebugGroup();
 			pass.end();
 		}
-		renderPassEntry.onAfterRenderPass && renderPassEntry.onAfterRenderPass(commandEncoder, swapChainTexture);
+		if (renderPassEntry.onAfterRenderPass) renderPassEntry.onAfterRenderPass(commandEncoder, swapChainTexture);
 		this.renderer.pipelineManager.resetCurrentPipeline();
 		if (renderPassEntry.renderPass.options.useDepth && renderPassEntry.renderPass.options.renderToSwapChain && !renderPassEntry.renderPass.options.depthReadOnly && renderPassEntry.renderPass.options.depthStoreOp === "store" && renderPassEntry.renderPass.depthTexture.uuid === this.renderer.renderPass.depthTexture?.uuid) this.#shouldLoadDepth = true;
 	}

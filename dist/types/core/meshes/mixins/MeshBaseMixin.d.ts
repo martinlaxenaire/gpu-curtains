@@ -328,7 +328,7 @@ export declare class MeshBaseClass {
  * @returns - An instance of the mixin.
  * @ignore
  */
-export type MixinConstructor<T = {}> = new (...args: any[]) => T;
+export type MixinConstructor<T = object> = new (...args: any[]) => T;
 /**
  * Used to mix the basic Mesh properties and methods defined in {@link MeshBaseClass} (basically, set a {@link Geometry} and a {@link RenderMaterial} and render them, add helpers to create {@link MediaTexture} and {@link Texture}) with a given Base of type {@link core/objects3D/Object3D.Object3D | Object3D}, {@link core/objects3D/ProjectedObject3D.ProjectedObject3D | ProjectedObject3D}, {@link curtains/objects3D/DOMObject3D.DOMObject3D | DOMObject3D} or an empty class.
  * @param Base - the class to mix onto

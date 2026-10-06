@@ -142,7 +142,7 @@ export class BindGroup {
     this.uniforms = {}
     this.storages = {}
 
-    bindings.length && this.addBindings(bindings)
+    if (bindings.length) this.addBindings(bindings)
     if (this.options.uniforms || this.options.storages) this.setInputBindings()
 
     this.layoutCacheKey = ''

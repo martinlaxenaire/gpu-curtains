@@ -118,7 +118,7 @@ var BufferBinding = class BufferBinding extends Binding {
 	* @param value - New {@link BufferBinding} parent to set if any.
 	*/
 	set parent(value) {
-		if (!!value) {
+		if (value) {
 			this.parentView = new DataView(value.arrayBuffer, this.offset, this.getMinOffsetSize(this.arrayBufferSize));
 			const getAllBufferElements = (binding) => {
 				const getBufferElements = (binding) => {
@@ -126,7 +126,8 @@ var BufferBinding = class BufferBinding extends Binding {
 				};
 				return [...getBufferElements(binding), binding.childrenBindings.map((child) => getAllBufferElements(child)).flat()].flat();
 			};
-			this.parentViewSetBufferEls = getAllBufferElements(this).map((bufferElement) => {
+			const bufferElements = getAllBufferElements(this);
+			this.parentViewSetBufferEls = bufferElements.map((bufferElement) => {
 				switch (bufferElement.bufferLayout.View) {
 					case Int32Array: return {
 						bufferElement,
@@ -207,7 +208,8 @@ var BufferBinding = class BufferBinding extends Binding {
 	* @param params - params to use for cloning
 	*/
 	clone(params = {}) {
-		let { struct, childrenBindings, parent, ...defaultParams } = params;
+		const { childrenBindings: _childrenBindings, parent, ...otherParams } = params;
+		let { struct, ...defaultParams } = otherParams;
 		const { label, name, bindingType, visibility, useStruct, access, usage } = this.options;
 		defaultParams = {
 			label,
@@ -246,7 +248,7 @@ var BufferBinding = class BufferBinding extends Binding {
 				bufferBindingCopy.cacheKey += `child(count:${count}):${child.binding.cacheKey}`;
 			});
 			bufferBindingCopy.options.childrenBindings.forEach((child) => {
-				bufferBindingCopy.childrenBindings = [...bufferBindingCopy.childrenBindings, Array.from(Array(Math.max(1, child.count || 1)).keys()).map((i) => {
+				bufferBindingCopy.childrenBindings = [...bufferBindingCopy.childrenBindings, Array.from(Array(Math.max(1, child.count || 1)).keys()).map(() => {
 					return child.binding.clone({
 						...child.binding.options,
 						struct: BufferBinding.cloneStruct(child.binding.options.struct)
@@ -323,7 +325,7 @@ var BufferBinding = class BufferBinding extends Binding {
 			childrenBindings.forEach((child) => {
 				const count = child.count ? Math.max(1, child.count) : 1;
 				this.cacheKey += `child(count:${count}):${child.binding.cacheKey}`;
-				this.childrenBindings = [...this.childrenBindings, Array.from(Array(count).keys()).map((i) => {
+				this.childrenBindings = [...this.childrenBindings, Array.from(Array(count).keys()).map(() => {
 					return child.binding.clone({
 						...child.binding.options,
 						struct: BufferBinding.cloneStruct(child.binding.options.struct)
@@ -453,12 +455,14 @@ var BufferBinding = class BufferBinding extends Binding {
 					});
 					const interleavedBufferName = this.bufferElements.find((bufferElement) => bufferElement.name === "elements") ? `${this.name}Elements` : "elements";
 					structs[kebabCaseLabel][interleavedBufferName] = `array<${kebabCaseLabel}Element${arrayLength}>`;
-					this.wgslGroupFragment = [`${getBindingWGSLVarType(this)} ${this.name}: ${kebabCaseLabel};`];
+					const varType = getBindingWGSLVarType(this);
+					this.wgslGroupFragment = [`${varType} ${this.name}: ${kebabCaseLabel};`];
 				} else {
 					this.bufferElements.forEach((binding) => {
 						structs[kebabCaseLabel][binding.name] = BufferElement.getType(binding.type);
 					});
-					this.wgslGroupFragment = [`${getBindingWGSLVarType(this)} ${this.name}: array<${kebabCaseLabel}${arrayLength}>;`];
+					const varType = getBindingWGSLVarType(this);
+					this.wgslGroupFragment = [`${varType} ${this.name}: array<${kebabCaseLabel}${arrayLength}>;`];
 				}
 			} else {
 				bufferElements.forEach((binding) => {
@@ -470,12 +474,14 @@ var BufferBinding = class BufferBinding extends Binding {
 					} else structs[kebabCaseLabel][binding.name] = `array<${BufferElement.getType(binding.type)}, ${binding.numElements}>`;
 					else structs[kebabCaseLabel][binding.name] = binding.type;
 				});
-				this.wgslGroupFragment = [`${getBindingWGSLVarType(this)} ${this.name}: ${kebabCaseLabel};`];
+				const varType = getBindingWGSLVarType(this);
+				this.wgslGroupFragment = [`${varType} ${this.name}: ${kebabCaseLabel};`];
 			}
 			if (this.childrenBindings.length) this.options.childrenBindings.forEach((child) => {
 				structs[kebabCaseLabel][child.binding.name] = child.count && child.count > 1 || child.forceArray ? this.bindingType === "uniform" && child.binding.bindingType === "uniform" ? `array<${toKebabCase(child.binding.label)}, ${child.count}>` : `array<${toKebabCase(child.binding.label)}>` : toKebabCase(child.binding.label);
 			});
-			this.wgslStructFragment = (this.childrenBindings.length ? this.options.childrenBindings.map((child) => child.binding.wgslStructFragment).join("\n\n") + "\n\n" : "") + Object.keys(structs).reverse().map((struct) => {
+			const additionalBindings = this.childrenBindings.length ? this.options.childrenBindings.map((child) => child.binding.wgslStructFragment).join("\n\n") + "\n\n" : "";
+			this.wgslStructFragment = additionalBindings + Object.keys(structs).reverse().map((struct) => {
 				return `struct ${struct} {\n  ${Object.keys(structs[struct]).map((binding) => `${binding}: ${structs[struct][binding]}`).join(",\n  ")}\n};`;
 			}).join("\n\n");
 		} else {
@@ -506,7 +512,7 @@ var BufferBinding = class BufferBinding extends Binding {
 		for (const binding of inputs) {
 			const bufferElement = this.bufferElements.find((bufferEl) => bufferEl.key === binding.name);
 			if (binding.shouldUpdate && bufferElement) {
-				binding.onBeforeUpdate && binding.onBeforeUpdate();
+				if (binding.onBeforeUpdate) binding.onBeforeUpdate();
 				bufferElement.update(binding.value);
 				this.shouldUpdate = true;
 				binding.shouldUpdate = false;
@@ -519,7 +525,7 @@ var BufferBinding = class BufferBinding extends Binding {
 		});
 		if (this.shouldUpdate && this.parent && this.parentViewSetBufferEls) {
 			let index = 0;
-			this.parentViewSetBufferEls.forEach((viewSetBuffer, i) => {
+			this.parentViewSetBufferEls.forEach((viewSetBuffer) => {
 				const { bufferElement, viewSetFunction } = viewSetBuffer;
 				bufferElement.view.forEach((value) => {
 					viewSetFunction(index * bufferElement.view.BYTES_PER_ELEMENT, value, true);

@@ -10,7 +10,7 @@ var DOMElement = class {
 	* DOMElement constructor
 	* @param parameters - {@link DOMElementParams | parameters} used to create our DOMElement
 	*/
-	constructor({ element = document.body, priority = 1, onSizeChanged = (boundingRect = null) => {}, onPositionChanged = (boundingRect = null) => {} } = {}) {
+	constructor({ element = document.body, priority = 1, onSizeChanged = () => {}, onPositionChanged = () => {} } = {}) {
 		if (typeof element === "string") {
 			this.element = document.querySelector(element);
 			if (!this.element) throwError(`DOMElement: corresponding ${typeof element === "string" ? `'${element}' selector` : `${element} HTMLElement`} not found.`);

@@ -1,5 +1,5 @@
 import { isRenderer, Renderer } from '../renderers/utils'
-import { RenderPass, RenderPassOptions, RenderPassParams } from './RenderPass'
+import { RenderPass, RenderPassParams } from './RenderPass'
 import { Texture } from '../textures/Texture'
 import { generateUUID } from '../../utils/utils'
 import { GPUCurtains } from '../../curtains/GPUCurtains'

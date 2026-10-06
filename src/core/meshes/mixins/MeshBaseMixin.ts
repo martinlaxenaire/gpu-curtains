@@ -417,7 +417,8 @@ export declare class MeshBaseClass {
  * @returns - An instance of the mixin.
  * @ignore
  */
-export type MixinConstructor<T = {}> = new (...args: any[]) => T
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type MixinConstructor<T = object> = new (...args: any[]) => T
 
 /**
  * Used to mix the basic Mesh properties and methods defined in {@link MeshBaseClass} (basically, set a {@link Geometry} and a {@link RenderMaterial} and render them, add helpers to create {@link MediaTexture} and {@link Texture}) with a given Base of type {@link core/objects3D/Object3D.Object3D | Object3D}, {@link core/objects3D/ProjectedObject3D.ProjectedObject3D | ProjectedObject3D}, {@link curtains/objects3D/DOMObject3D.DOMObject3D | DOMObject3D} or an empty class.
@@ -504,6 +505,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      *
      * @param {MeshBaseArrayParams} params - our MeshBaseMixin parameters
      */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     constructor(...params: any[]) {
       super(
         params[0] as Renderer | GPUCurtains,
@@ -602,8 +604,8 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     }
 
     set ready(value: boolean) {
-      if (value && !this._ready) {
-        this._onReadyCallback && this._onReadyCallback()
+      if (value && !this._ready && this._onReadyCallback) {
+        this._onReadyCallback()
       }
       this._ready = value
     }
@@ -679,7 +681,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       // clear it
       if (!oldRenderer.meshes.length) {
         oldRenderer.onBeforeRenderScene.add(
-          (commandEncoder) => {
+          (commandEncoder: GPUCommandEncoder) => {
             oldRenderer.forceClear(commandEncoder)
           },
           { once: true }
@@ -991,9 +993,9 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      * Get the visible property value.
      */
     get visible(): boolean {
-      // @ts-ignore
+      // @ts-expect-error use super visible property when possible
       if (super.visible !== undefined) {
-        // @ts-ignore
+        // @ts-expect-error use super visible property when possible
         return super.visible
       } else {
         return this.#visible
@@ -1005,9 +1007,9 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      * @param value - New visibility value.
      */
     set visible(value: boolean) {
-      // @ts-ignore
+      // @ts-expect-error use super visible property when possible
       if (super.visible !== undefined) {
-        // @ts-ignore
+        // @ts-expect-error use super visible property when possible
         super.visible = value
       } else {
         this.#visible = value
@@ -1111,15 +1113,15 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      * @param boundingRect - optional new {@link DOMElementBoundingRect} to use.
      */
     resize(boundingRect?: DOMElementBoundingRect | null) {
-      // @ts-ignore
+      // @ts-expect-error use super resize when possible
       if (super.resize) {
-        // @ts-ignore
+        // @ts-expect-error use super resize when possible
         super.resize(boundingRect)
       }
 
       this.resizeTextures()
 
-      this._onAfterResizeCallback && this._onAfterResizeCallback()
+      if (this._onAfterResizeCallback) this._onAfterResizeCallback()
     }
 
     /**
@@ -1209,7 +1211,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     onBeforeRenderScene() {
       if (!this.renderer.ready || !this.ready || !this.visible) return
 
-      this._onBeforeRenderCallback && this._onBeforeRenderCallback()
+      if (this._onBeforeRenderCallback) this._onBeforeRenderCallback()
     }
 
     /**
@@ -1222,8 +1224,8 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
 
       this.setGeometry()
 
-      if (this.visible && this.ready) {
-        this._onRenderCallback && this._onRenderCallback()
+      if (this.visible && this.ready && this._onRenderCallback) {
+        this._onRenderCallback()
       }
 
       this.material.onBeforeRender()
@@ -1256,7 +1258,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      * Called after having rendered the Mesh.
      */
     onAfterRenderPass() {
-      this._onAfterRenderCallback && this._onAfterRenderCallback()
+      if (this._onAfterRenderCallback) this._onAfterRenderCallback()
     }
 
     /**
@@ -1274,11 +1276,11 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       // no point to render if the WebGPU device is not ready
       if (!this.renderer.ready || !this.visible) return
 
-      !this.renderer.production && pass.pushDebugGroup(this.options.label)
+      if (!this.renderer.production) pass.pushDebugGroup(this.options.label)
 
       this.onRenderPass(pass)
 
-      !this.renderer.production && pass.popDebugGroup()
+      if (!this.renderer.production) pass.popDebugGroup()
 
       this.onAfterRenderPass()
     }
@@ -1296,7 +1298,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       // clear it
       if (!this.renderer.meshes.length) {
         this.renderer.onBeforeRenderScene.add(
-          (commandEncoder) => {
+          (commandEncoder: GPUCommandEncoder) => {
             this.renderer.forceClear(commandEncoder)
           },
           { once: true }
@@ -1308,9 +1310,9 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      * Destroy the Mesh.
      */
     destroy() {
-      // @ts-ignore
+      // @ts-expect-error use super destroy when possible
       if (super.destroy) {
-        // @ts-ignore
+        // @ts-expect-error use super destroy when possible
         super.destroy()
       }
 

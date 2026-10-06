@@ -39,7 +39,7 @@ var SphereGeometry = class extends IndexedGeometry {
 			else if (iy === heightSegments && thetaEnd === Math.PI) uOffset = -.5 / widthSegments;
 			for (let ix = 0; ix <= widthSegments; ix++) {
 				const u = ix / widthSegments;
-				vertex.x = -radius * Math.cos(phiStart + u * phiLength) * Math.sin(thetaStart + v * thetaLength);
+				vertex.x = -1 * Math.cos(phiStart + u * phiLength) * Math.sin(thetaStart + v * thetaLength);
 				vertex.y = radius * Math.cos(thetaStart + v * thetaLength);
 				vertex.z = radius * Math.sin(phiStart + u * phiLength) * Math.sin(thetaStart + v * thetaLength);
 				vertices.push(vertex.x, vertex.y, vertex.z);

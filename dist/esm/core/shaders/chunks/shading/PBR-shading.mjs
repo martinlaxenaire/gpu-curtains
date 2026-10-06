@@ -70,24 +70,24 @@ fn getPBR(
   ${useOcclusion ? "occlusion: f32," : ""}
 ) -> vec4f {
   ${!useOcclusion ? "let occlusion: f32 = 1.0;" : ""}
-  
+
   var outputColor: vec4f = color;
-  
+
   ${getPBRShading({
 	receiveShadows,
 	environmentMap,
 	transmissionBackgroundTexture,
 	extensionsUsed
 })}
-  
+
   outputColor = vec4(outgoingLight, outputColor.a);
   outputColor = vec4(outputColor.rgb + emissive, outputColor.a);
-  
+
   ${applyToneMapping({
 	toneMapping,
 	outputColorSpace
 })}
-    
+
   return outputColor;
 }
 `;

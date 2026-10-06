@@ -166,15 +166,14 @@ export declare class BufferElement {
     /**
      * Set the {@link BufferElementAlignment | alignment} from an offset (byte count).
      * @param startOffset - Offset at which to start inserting the values in the parent {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer}.
-     * @param minStride - Minimum stride to use for the values in the parent {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer}.
      */
-    setAlignment(startOffset?: number, minStride?: number): void;
+    setAlignment(startOffset?: number): void;
     /**
      * Set this {@link BufferElement} {@link view} into a parent {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer}.
      * @param arrayBuffer - The parent {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer}.
-     * @param arrayView - The parent {@link core/bindings/BufferBinding.BufferBinding#arrayView | BufferBinding arrayView}.
+     * @param _arrayView - The parent {@link core/bindings/BufferBinding.BufferBinding#arrayView | BufferBinding arrayView}.
      */
-    setView(arrayBuffer: ArrayBuffer, arrayView: DataView): void;
+    setView(arrayBuffer: ArrayBuffer, _arrayView: DataView): void;
     /**
      * Set the {@link view} value from a float or an int.
      * @param value - Float or int to use.

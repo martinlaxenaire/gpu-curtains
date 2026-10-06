@@ -29,7 +29,7 @@ var Vec2 = class Vec2 {
 	set x(value) {
 		const changed = value !== this._x;
 		this._x = value;
-		changed && this._onChangeCallback && this._onChangeCallback();
+		if (changed && this._onChangeCallback) this._onChangeCallback();
 	}
 	/**
 	* Get the Y component of the {@link Vec2}
@@ -45,7 +45,7 @@ var Vec2 = class Vec2 {
 	set y(value) {
 		const changed = value !== this._y;
 		this._y = value;
-		changed && this._onChangeCallback && this._onChangeCallback();
+		if (changed && this._onChangeCallback) this._onChangeCallback();
 	}
 	/**
 	* Called when at least one component of the {@link Vec2} has changed

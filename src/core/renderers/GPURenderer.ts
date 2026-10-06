@@ -170,11 +170,11 @@ export class GPURenderer {
 
   // callbacks / events
   /** function assigned to the {@link onBeforeRender} callback. */
-  _onBeforeRenderCallback = (commandEncoder: GPUCommandEncoder) => {
+  _onBeforeRenderCallback = (_commandEncoder: GPUCommandEncoder) => {
     /* allow empty callback */
   }
   /** function assigned to the {@link onAfterRender} callback. */
-  _onAfterRenderCallback = (commandEncoder: GPUCommandEncoder) => {
+  _onAfterRenderCallback = (_commandEncoder: GPUCommandEncoder) => {
     /* allow empty callback */
   }
   /** function assigned to the {@link onResize} callback. */
@@ -357,7 +357,8 @@ export class GPURenderer {
         ...viewport,
       }
 
-      let { width, height, top, left, minDepth, maxDepth } = viewport
+      const { minDepth, maxDepth, ...viewportRect } = viewport
+      let { width, height, top, left } = viewportRect
 
       width = Math.min(width, this.canvas.width)
       height = Math.min(height, this.canvas.height)
@@ -433,11 +434,11 @@ export class GPURenderer {
   resize(rectBBox: RectBBox | null = null) {
     this.setSize(rectBBox)
 
-    this._onResizeCallback && this._onResizeCallback()
+    if (this._onResizeCallback) this._onResizeCallback()
 
     this.resizeObjects()
 
-    this._onAfterResizeCallback && this._onAfterResizeCallback()
+    if (this._onAfterResizeCallback) this._onAfterResizeCallback()
   }
 
   /**
@@ -792,14 +793,15 @@ export class GPURenderer {
       commandEncoder = this.deviceManager.device?.createCommandEncoder({
         label: `${this.type} (${this.options.label}): Copy buffer command encoder`,
       })
-      !this.production &&
+
+      if (!this.production)
         commandEncoder.pushDebugGroup(`${this.type} (${this.options.label}): Copy buffer command encoder`)
     }
 
     commandEncoder.copyBufferToBuffer(srcBuffer.GPUBuffer, 0, dstBuffer.GPUBuffer, 0, dstBuffer.GPUBuffer.size)
 
     if (!hasCommandEncoder) {
-      !this.production && commandEncoder.popDebugGroup()
+      if (!this.production) commandEncoder.popDebugGroup()
       const commandBuffer = commandEncoder.finish()
       this.deviceManager.device?.queue.submit([commandBuffer])
     }
@@ -1223,7 +1225,8 @@ export class GPURenderer {
     const commandEncoder = this.device?.createCommandEncoder({
       label: 'Render once command encoder',
     })
-    !this.production && commandEncoder.pushDebugGroup('Render once command encoder')
+
+    if (!this.production) commandEncoder.pushDebugGroup('Render once command encoder')
 
     this.pipelineManager.resetCurrentPipeline()
 
@@ -1235,7 +1238,7 @@ export class GPURenderer {
       }
     })
 
-    !this.production && commandEncoder.popDebugGroup()
+    if (!this.production) commandEncoder.popDebugGroup()
     const commandBuffer = commandEncoder.finish()
     this.device?.queue.submit([commandBuffer])
 
@@ -1255,7 +1258,8 @@ export class GPURenderer {
       commandEncoder = this.device?.createCommandEncoder({
         label: `${this.type} (${this.options.label}): Force clear command encoder`,
       })
-      !this.production &&
+
+      if (!this.production)
         commandEncoder.pushDebugGroup(`${this.type} (${this.options.label}): Force clear command encoder`)
     }
 
@@ -1267,7 +1271,7 @@ export class GPURenderer {
     pass.end()
 
     if (!hasCommandEncoder) {
-      !this.production && commandEncoder.popDebugGroup()
+      if (!this.production) commandEncoder.popDebugGroup()
       const commandBuffer = commandEncoder.finish()
       this.device?.queue.submit([commandBuffer])
     }
@@ -1304,7 +1308,7 @@ export class GPURenderer {
   render(commandEncoder: GPUCommandEncoder) {
     if (!this.ready || !this.shouldRender) return
 
-    this._onBeforeRenderCallback && this._onBeforeRenderCallback(commandEncoder)
+    if (this._onBeforeRenderCallback) this._onBeforeRenderCallback(commandEncoder)
     this.onBeforeRenderScene.execute(commandEncoder)
 
     if (this.shouldRenderScene) {
@@ -1319,7 +1323,7 @@ export class GPURenderer {
       this.scene?.render(commandEncoder)
     }
 
-    this._onAfterRenderCallback && this._onAfterRenderCallback(commandEncoder)
+    if (this._onAfterRenderCallback) this._onAfterRenderCallback(commandEncoder)
     this.onAfterRenderScene.execute(commandEncoder)
   }
 

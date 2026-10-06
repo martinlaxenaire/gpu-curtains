@@ -135,7 +135,7 @@ export class MediaTexture extends Texture {
 
   // callbacks / events
   /** function assigned to the {@link onSourceLoaded} callback */
-  _onSourceLoadedCallback = (source: TextureSource) => {
+  _onSourceLoadedCallback = (_source: TextureSource) => {
     /* allow empty callback */
   }
 
@@ -145,7 +145,7 @@ export class MediaTexture extends Texture {
   }
 
   /** function assigned to the {@link onSourceUploaded} callback */
-  _onSourceUploadedCallback = (source: TextureSource) => {
+  _onSourceUploadedCallback = (_source: TextureSource) => {
     /* allow empty callback */
   }
 
@@ -250,8 +250,8 @@ export class MediaTexture extends Texture {
    * @param value - boolean flag indicating if all the {@link sources} have been loaded.
    */
   set sourcesLoaded(value: boolean) {
-    if (value && !this.sourcesLoaded) {
-      this._onAllSourcesLoadedCallback && this._onAllSourcesLoadedCallback()
+    if (value && !this.sourcesLoaded && this._onAllSourcesLoadedCallback) {
+      this._onAllSourcesLoadedCallback()
     }
 
     this.#sourcesLoaded = value
@@ -269,8 +269,8 @@ export class MediaTexture extends Texture {
    * @param value - boolean flag indicating if all the {@link sources} have been uploaded
    */
   set sourcesUploaded(value: boolean) {
-    if (value && !this.sourcesUploaded) {
-      this._onAllSourcesUploadedCallback && this._onAllSourcesUploadedCallback()
+    if (value && !this.sourcesUploaded && this._onAllSourcesUploadedCallback) {
+      this._onAllSourcesUploadedCallback()
     }
     this.#sourcesUploaded = value
   }
@@ -586,7 +586,7 @@ export class MediaTexture extends Texture {
       // if it fails for any reason, just upload an empty offscreen canvas
       try {
         source.externalSource = new VideoFrame(video)
-      } catch (e) {
+      } catch {
         const offscreen = new OffscreenCanvas(this.size.width, this.size.height)
         offscreen.getContext('2d')
         source.externalSource = new VideoFrame(offscreen, { timestamp: 0 })
@@ -840,7 +840,7 @@ export class MediaTexture extends Texture {
    * @private
    */
   #setSourceLoaded(source: TextureSource) {
-    this._onSourceLoadedCallback && this._onSourceLoadedCallback(source)
+    if (this._onSourceLoadedCallback) this._onSourceLoadedCallback(source)
 
     const nbSourcesLoaded = this.sources.filter((source) => source.sourceLoaded)?.length || 0
 
@@ -855,7 +855,7 @@ export class MediaTexture extends Texture {
    */
   setSourceUploaded(sourceIndex = 0) {
     this.sources[sourceIndex].sourceUploaded = true
-    this._onSourceUploadedCallback && this._onSourceUploadedCallback(this.sources[sourceIndex].source)
+    if (this._onSourceUploadedCallback) this._onSourceUploadedCallback(this.sources[sourceIndex].source)
 
     const nbSourcesUploaded = this.sources.filter((source) => source.sourceUploaded)?.length || 0
 

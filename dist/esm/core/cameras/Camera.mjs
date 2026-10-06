@@ -23,6 +23,9 @@ var Camera = class extends Object3D {
 		super();
 		this.label = label;
 		this.uuid = generateUUID();
+		this.#near = near;
+		this.#far = far;
+		this.#pixelRatio = pixelRatio;
 		this.onMatricesChanged = onMatricesChanged;
 	}
 	/**
@@ -170,10 +173,9 @@ var Camera = class extends Object3D {
 	}
 	/**
 	* Get visible width / height at a given z-depth from our {@link Camera} parameters. Useless for this base class, but will be overriden by children classes.
-	* @param depth - Depth to use for calculations.
 	* @returns - Visible width and height at given depth.
 	*/
-	getVisibleSizeAtDepth(depth = 0) {
+	getVisibleSizeAtDepth() {
 		return {
 			width: 0,
 			height: 0

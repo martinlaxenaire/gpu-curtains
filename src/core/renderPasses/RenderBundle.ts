@@ -537,14 +537,11 @@ export class RenderBundle {
     }
 
     // render commands
-    let offset = 0
     this.meshes.forEach((mesh) => {
       if (mesh.visible) {
         mesh.material.render(this.encoder)
         mesh.geometry.render(this.encoder)
       }
-
-      offset++
     })
 
     if (!this.renderer.production) {
@@ -629,7 +626,6 @@ export class RenderBundle {
 
     // bundle not ready?
     // render meshes as usual
-    let index = 0
     if (!this.ready) {
       let isReady = true
 
@@ -647,8 +643,6 @@ export class RenderBundle {
             isReady = false
           }
         }
-
-        index++
       }
 
       // update transformations binding if needed

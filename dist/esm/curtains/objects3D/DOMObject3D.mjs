@@ -12,11 +12,11 @@ import { DOMElement } from "../../core/DOM/DOMElement.mjs";
 */
 var DOMObject3D = class extends ProjectedObject3D {
 	/** Private {@link Vec3 | vector} used to keep track of the actual {@link DOMObject3DTransforms#position.world | world position} accounting the {@link DOMObject3DTransforms#position.document | additional document translation} converted into world space. */
-	#DOMObjectWorldPosition = new Vec3();
+	#DOMObjectWorldPosition;
 	/** Private {@link Vec3 | vector} used to keep track of the actual {@link DOMObject3D} world scale accounting the {@link DOMObject3D#size.world | DOMObject3D world size}. */
-	#DOMObjectWorldScale = new Vec3(1);
+	#DOMObjectWorldScale;
 	/** Private number representing the scale ratio of the {@link DOMObject3D} along Z axis to apply. Since it can be difficult to guess the most accurate scale along the Z axis of an object mapped to 2D coordinates, this helps with adjusting the scale along the Z axis. */
-	#DOMObjectDepthScaleRatio = 1;
+	#DOMObjectDepthScaleRatio;
 	/**
 	* DOMObject3D constructor
 	* @param renderer - {@link GPUCurtainsRenderer} object or {@link GPUCurtains} class object used to create this {@link DOMObject3D}.
@@ -25,6 +25,9 @@ var DOMObject3D = class extends ProjectedObject3D {
 	*/
 	constructor(renderer, element, parameters = {}) {
 		super(renderer);
+		this.#DOMObjectWorldPosition = new Vec3();
+		this.#DOMObjectWorldScale = new Vec3(1);
+		this.#DOMObjectDepthScaleRatio = 1;
 		this.boundingBox = new Box3(new Vec3(-1), new Vec3(1));
 		this._onAfterDOMElementResizeCallback = () => {};
 		renderer = isCurtainsRenderer(renderer, "DOMObject3D");
@@ -91,7 +94,7 @@ var DOMObject3D = class extends ProjectedObject3D {
 	resize(boundingRect = null) {
 		if (!boundingRect && (!this.domElement || this.domElement?.isResizing)) return;
 		this.updateSizeAndPosition();
-		this._onAfterDOMElementResizeCallback && this._onAfterDOMElementResizeCallback();
+		if (this._onAfterDOMElementResizeCallback) this._onAfterDOMElementResizeCallback();
 	}
 	/**
 	* Get the {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}.

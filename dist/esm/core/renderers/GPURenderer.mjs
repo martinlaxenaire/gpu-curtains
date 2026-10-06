@@ -22,8 +22,8 @@ var GPURenderer = class {
 	* @param parameters - {@link GPURendererParams | parameters} used to create this {@link GPURenderer}.
 	*/
 	constructor({ deviceManager, label, container, pixelRatio = 1, autoResize = true, context = {}, renderPass }) {
-		this._onBeforeRenderCallback = (commandEncoder) => {};
-		this._onAfterRenderCallback = (commandEncoder) => {};
+		this._onBeforeRenderCallback = (_commandEncoder) => {};
+		this._onAfterRenderCallback = (_commandEncoder) => {};
 		this._onResizeCallback = () => {};
 		this._onAfterResizeCallback = () => {};
 		this.type = "GPURenderer";
@@ -129,7 +129,8 @@ var GPURenderer = class {
 				maxDepth: 1,
 				...viewport
 			};
-			let { width, height, top, left, minDepth, maxDepth } = viewport;
+			const { minDepth, maxDepth, ...viewportRect } = viewport;
+			let { width, height, top, left } = viewportRect;
 			width = Math.min(width, this.canvas.width);
 			height = Math.min(height, this.canvas.height);
 			top = Math.max(0, top);
@@ -192,9 +193,9 @@ var GPURenderer = class {
 	*/
 	resize(rectBBox = null) {
 		this.setSize(rectBBox);
-		this._onResizeCallback && this._onResizeCallback();
+		if (this._onResizeCallback) this._onResizeCallback();
 		this.resizeObjects();
-		this._onAfterResizeCallback && this._onAfterResizeCallback();
+		if (this._onAfterResizeCallback) this._onAfterResizeCallback();
 	}
 	/**
 	* Resize all tracked objects ({@link Texture | textures}, {@link RenderPass | render passes}, {@link RenderTarget | render targets}, {@link ComputePass | compute passes} and meshes).
@@ -225,7 +226,7 @@ var GPURenderer = class {
 	*/
 	get boundingRect() {
 		if (!!this.domElement && !!this.domElement.boundingRect) return this.domElement.boundingRect;
-		else if (!!this.domElement) {
+		else if (this.domElement) {
 			const boundingRect = this.domElement.element?.getBoundingClientRect();
 			return {
 				top: boundingRect.top,
@@ -452,11 +453,11 @@ var GPURenderer = class {
 		const hasCommandEncoder = !!commandEncoder;
 		if (!hasCommandEncoder) {
 			commandEncoder = this.deviceManager.device?.createCommandEncoder({ label: `${this.type} (${this.options.label}): Copy buffer command encoder` });
-			!this.production && commandEncoder.pushDebugGroup(`${this.type} (${this.options.label}): Copy buffer command encoder`);
+			if (!this.production) commandEncoder.pushDebugGroup(`${this.type} (${this.options.label}): Copy buffer command encoder`);
 		}
 		commandEncoder.copyBufferToBuffer(srcBuffer.GPUBuffer, 0, dstBuffer.GPUBuffer, 0, dstBuffer.GPUBuffer.size);
 		if (!hasCommandEncoder) {
-			!this.production && commandEncoder.popDebugGroup();
+			if (!this.production) commandEncoder.popDebugGroup();
 			const commandBuffer = commandEncoder.finish();
 			this.deviceManager.device?.queue.submit([commandBuffer]);
 		}
@@ -791,13 +792,13 @@ var GPURenderer = class {
 	*/
 	renderOnce(objects) {
 		const commandEncoder = this.device?.createCommandEncoder({ label: "Render once command encoder" });
-		!this.production && commandEncoder.pushDebugGroup("Render once command encoder");
+		if (!this.production) commandEncoder.pushDebugGroup("Render once command encoder");
 		this.pipelineManager.resetCurrentPipeline();
 		objects.forEach((object) => {
 			if (object.type === "ComputePass") this.renderSingleComputePass(commandEncoder, object);
 			else this.renderSingleMesh(commandEncoder, object);
 		});
-		!this.production && commandEncoder.popDebugGroup();
+		if (!this.production) commandEncoder.popDebugGroup();
 		const commandBuffer = commandEncoder.finish();
 		this.device?.queue.submit([commandBuffer]);
 		this.pipelineManager.resetCurrentPipeline();
@@ -811,7 +812,7 @@ var GPURenderer = class {
 		const hasCommandEncoder = !!commandEncoder;
 		if (!hasCommandEncoder) {
 			commandEncoder = this.device?.createCommandEncoder({ label: `${this.type} (${this.options.label}): Force clear command encoder` });
-			!this.production && commandEncoder.pushDebugGroup(`${this.type} (${this.options.label}): Force clear command encoder`);
+			if (!this.production) commandEncoder.pushDebugGroup(`${this.type} (${this.options.label}): Force clear command encoder`);
 		}
 		renderPass.updateView();
 		renderPass.setDepthReadOnly(false);
@@ -819,7 +820,7 @@ var GPURenderer = class {
 		renderPass.setDepthLoadOp("clear");
 		commandEncoder.beginRenderPass(renderPass.descriptor).end();
 		if (!hasCommandEncoder) {
-			!this.production && commandEncoder.popDebugGroup();
+			if (!this.production) commandEncoder.popDebugGroup();
 			const commandBuffer = commandEncoder.finish();
 			this.device?.queue.submit([commandBuffer]);
 		}
@@ -848,7 +849,7 @@ var GPURenderer = class {
 	*/
 	render(commandEncoder) {
 		if (!this.ready || !this.shouldRender) return;
-		this._onBeforeRenderCallback && this._onBeforeRenderCallback(commandEncoder);
+		if (this._onBeforeRenderCallback) this._onBeforeRenderCallback(commandEncoder);
 		this.onBeforeRenderScene.execute(commandEncoder);
 		if (this.shouldRenderScene) {
 			this.textures.forEach((texture) => {
@@ -856,7 +857,7 @@ var GPURenderer = class {
 			});
 			this.scene?.render(commandEncoder);
 		}
-		this._onAfterRenderCallback && this._onAfterRenderCallback(commandEncoder);
+		if (this._onAfterRenderCallback) this._onAfterRenderCallback(commandEncoder);
 		this.onAfterRenderScene.execute(commandEncoder);
 	}
 	/**

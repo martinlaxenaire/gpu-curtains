@@ -136,13 +136,13 @@ export class GPUDeviceManager {
     requiredFeatures = [],
     requestAdapterLimits = [],
     autoRender = true,
-    onError = (message?: string) => {
+    onError = () => {
       /* allow empty callbacks */
     },
-    onDeviceLost = (info?: GPUDeviceLostInfo) => {
+    onDeviceLost = () => {
       /* allow empty callbacks */
     },
-    onDeviceDestroyed = (info?: GPUDeviceLostInfo) => {
+    onDeviceDestroyed = () => {
       /* allow empty callbacks */
     },
   }: GPUDeviceManagerParams = {}) {
@@ -621,7 +621,7 @@ export class GPUDeviceManager {
                 fsInput.texcoord,
                 fsInput.baseArrayLayer);
             }
-            
+
             @group(0) @binding(1) var ourTextureCube: texture_cube<f32>;
             @fragment fn fscube(fsInput: VSOutput) -> @location(0) vec4f {
               return textureSample(
@@ -766,18 +766,19 @@ export class GPUDeviceManager {
   render() {
     if (!this.ready) return
 
-    this._onBeforeRenderCallback && this._onBeforeRenderCallback()
+    if (this._onBeforeRenderCallback) this._onBeforeRenderCallback()
 
     for (const renderer of this.renderers) {
       if (renderer.shouldRender) renderer.onBeforeCommandEncoder()
     }
 
     const commandEncoder = this.device?.createCommandEncoder({ label: this.options.label + ' command encoder' })
-    !this.options.production && commandEncoder.pushDebugGroup(this.options.label + ' command encoder: main render loop')
+    if (!this.options.production)
+      commandEncoder.pushDebugGroup(this.options.label + ' command encoder: main render loop')
 
     this.renderers.forEach((renderer) => renderer.render(commandEncoder))
 
-    !this.options.production && commandEncoder.popDebugGroup()
+    if (!this.options.production) commandEncoder.popDebugGroup()
     const commandBuffer = commandEncoder.finish()
     this.device?.queue.submit([commandBuffer])
 
@@ -795,7 +796,7 @@ export class GPUDeviceManager {
       if (renderer.shouldRender) renderer.onAfterCommandEncoder()
     }
 
-    this._onAfterRenderCallback && this._onAfterRenderCallback()
+    if (this._onAfterRenderCallback) this._onAfterRenderCallback()
   }
 
   /**

@@ -341,7 +341,7 @@
 		set x(value) {
 			const changed = value !== this._x;
 			this._x = value;
-			changed && this._onChangeCallback && this._onChangeCallback();
+			if (changed && this._onChangeCallback) this._onChangeCallback();
 		}
 		/**
 		* Get the Y component of the {@link Vec3}.
@@ -357,7 +357,7 @@
 		set y(value) {
 			const changed = value !== this._y;
 			this._y = value;
-			changed && this._onChangeCallback && this._onChangeCallback();
+			if (changed && this._onChangeCallback) this._onChangeCallback();
 		}
 		/**
 		* Get the Z component of the {@link Vec3}.
@@ -373,7 +373,7 @@
 		set z(value) {
 			const changed = value !== this._z;
 			this._z = value;
-			changed && this._onChangeCallback && this._onChangeCallback();
+			if (changed && this._onChangeCallback) this._onChangeCallback();
 		}
 		/**
 		* Called when at least one component of the {@link Vec3} has changed.
@@ -1131,15 +1131,15 @@
 		*/
 		getScale(scale = new Vec3()) {
 			const te = this.elements;
-			let m11 = te[0];
-			let m12 = te[1];
-			let m13 = te[2];
-			let m21 = te[4];
-			let m22 = te[5];
-			let m23 = te[6];
-			let m31 = te[8];
-			let m32 = te[9];
-			let m33 = te[10];
+			const m11 = te[0];
+			const m12 = te[1];
+			const m13 = te[2];
+			const m21 = te[4];
+			const m22 = te[5];
+			const m23 = te[6];
+			const m31 = te[8];
+			const m32 = te[9];
+			const m33 = te[10];
 			scale.set(Math.sqrt(m11 * m11 + m12 * m12 + m13 * m13), Math.sqrt(m21 * m21 + m22 * m22 + m23 * m23), Math.sqrt(m31 * m31 + m32 * m32 + m33 * m33));
 			return scale;
 		}
@@ -1150,22 +1150,22 @@
 		*/
 		getRotation(quat = new Quat()) {
 			const scale = this.getScale();
-			let is1 = 1 / scale.x;
-			let is2 = 1 / scale.y;
-			let is3 = 1 / scale.z;
+			const is1 = 1 / scale.x;
+			const is2 = 1 / scale.y;
+			const is3 = 1 / scale.z;
 			const te = this.elements;
 			const qe = quat.elements;
-			let sm11 = te[0] * is1;
-			let sm12 = te[1] * is2;
-			let sm13 = te[2] * is3;
-			let sm21 = te[4] * is1;
-			let sm22 = te[5] * is2;
-			let sm23 = te[6] * is3;
-			let sm31 = te[8] * is1;
-			let sm32 = te[9] * is2;
-			let sm33 = te[10] * is3;
-			let trace = sm11 + sm22 + sm33;
-			let S = 0;
+			const sm11 = te[0] * is1;
+			const sm12 = te[1] * is2;
+			const sm13 = te[2] * is3;
+			const sm21 = te[4] * is1;
+			const sm22 = te[5] * is2;
+			const sm23 = te[6] * is3;
+			const sm31 = te[8] * is1;
+			const sm32 = te[9] * is2;
+			const sm33 = te[10] * is3;
+			const trace = sm11 + sm22 + sm33;
+			let S;
 			if (trace > 0) {
 				S = Math.sqrt(trace + 1) * 2;
 				qe[3] = .25 * S;
@@ -2255,7 +2255,7 @@
 		set x(value) {
 			const changed = value !== this._x;
 			this._x = value;
-			changed && this._onChangeCallback && this._onChangeCallback();
+			if (changed && this._onChangeCallback) this._onChangeCallback();
 		}
 		/**
 		* Get the Y component of the {@link Vec2}
@@ -2271,7 +2271,7 @@
 		set y(value) {
 			const changed = value !== this._y;
 			this._y = value;
-			changed && this._onChangeCallback && this._onChangeCallback();
+			if (changed && this._onChangeCallback) this._onChangeCallback();
 		}
 		/**
 		* Called when at least one component of the {@link Vec2} has changed
@@ -2672,17 +2672,16 @@
 		/**
 		* Set the {@link BufferElementAlignment | alignment} from an offset (byte count).
 		* @param startOffset - Offset at which to start inserting the values in the parent {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer}.
-		* @param minStride - Minimum stride to use for the values in the parent {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer}.
 		*/
-		setAlignment(startOffset = 0, minStride = 0) {
+		setAlignment(startOffset = 0) {
 			this.setAlignmentFromPosition(this.getPositionAtOffset(startOffset));
 		}
 		/**
 		* Set this {@link BufferElement} {@link view} into a parent {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer}.
 		* @param arrayBuffer - The parent {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer}.
-		* @param arrayView - The parent {@link core/bindings/BufferBinding.BufferBinding#arrayView | BufferBinding arrayView}.
+		* @param _arrayView - The parent {@link core/bindings/BufferBinding.BufferBinding#arrayView | BufferBinding arrayView}.
 		*/
-		setView(arrayBuffer, arrayView) {
+		setView(arrayBuffer, _arrayView) {
 			this.view = new this.bufferLayout.View(arrayBuffer, this.startOffset, this.byteCount / this.bufferLayout.View.BYTES_PER_ELEMENT);
 		}
 		/**
@@ -2859,10 +2858,10 @@
 		}
 		/**
 		* Set the {@link viewSetFunction} and {@link view} into a parent {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer}.
-		* @param arrayBuffer - The {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer}.
+		* @param _arrayBuffer - The {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer}.
 		* @param arrayView - The {@link core/bindings/BufferBinding.BufferBinding#arrayView | BufferBinding arrayView}.
 		*/
-		setView(arrayBuffer, arrayView) {
+		setView(_arrayBuffer, arrayView) {
 			this.view = new this.bufferLayout.View(this.bufferLayout.numElements * this.numElements);
 			this.viewSetFunction = ((arrayView) => {
 				switch (this.bufferLayout.View) {
@@ -3124,7 +3123,7 @@
 		* @param value - New {@link BufferBinding} parent to set if any.
 		*/
 		set parent(value) {
-			if (!!value) {
+			if (value) {
 				this.parentView = new DataView(value.arrayBuffer, this.offset, this.getMinOffsetSize(this.arrayBufferSize));
 				const getAllBufferElements = (binding) => {
 					const getBufferElements = (binding) => {
@@ -3132,7 +3131,8 @@
 					};
 					return [...getBufferElements(binding), binding.childrenBindings.map((child) => getAllBufferElements(child)).flat()].flat();
 				};
-				this.parentViewSetBufferEls = getAllBufferElements(this).map((bufferElement) => {
+				const bufferElements = getAllBufferElements(this);
+				this.parentViewSetBufferEls = bufferElements.map((bufferElement) => {
 					switch (bufferElement.bufferLayout.View) {
 						case Int32Array: return {
 							bufferElement,
@@ -3213,7 +3213,8 @@
 		* @param params - params to use for cloning
 		*/
 		clone(params = {}) {
-			let { struct, childrenBindings, parent, ...defaultParams } = params;
+			const { childrenBindings: _childrenBindings, parent, ...otherParams } = params;
+			let { struct, ...defaultParams } = otherParams;
 			const { label, name, bindingType, visibility, useStruct, access, usage } = this.options;
 			defaultParams = {
 				label,
@@ -3252,7 +3253,7 @@
 					bufferBindingCopy.cacheKey += `child(count:${count}):${child.binding.cacheKey}`;
 				});
 				bufferBindingCopy.options.childrenBindings.forEach((child) => {
-					bufferBindingCopy.childrenBindings = [...bufferBindingCopy.childrenBindings, Array.from(Array(Math.max(1, child.count || 1)).keys()).map((i) => {
+					bufferBindingCopy.childrenBindings = [...bufferBindingCopy.childrenBindings, Array.from(Array(Math.max(1, child.count || 1)).keys()).map(() => {
 						return child.binding.clone({
 							...child.binding.options,
 							struct: BufferBinding.cloneStruct(child.binding.options.struct)
@@ -3329,7 +3330,7 @@
 				childrenBindings.forEach((child) => {
 					const count = child.count ? Math.max(1, child.count) : 1;
 					this.cacheKey += `child(count:${count}):${child.binding.cacheKey}`;
-					this.childrenBindings = [...this.childrenBindings, Array.from(Array(count).keys()).map((i) => {
+					this.childrenBindings = [...this.childrenBindings, Array.from(Array(count).keys()).map(() => {
 						return child.binding.clone({
 							...child.binding.options,
 							struct: BufferBinding.cloneStruct(child.binding.options.struct)
@@ -3459,12 +3460,14 @@
 						});
 						const interleavedBufferName = this.bufferElements.find((bufferElement) => bufferElement.name === "elements") ? `${this.name}Elements` : "elements";
 						structs[kebabCaseLabel][interleavedBufferName] = `array<${kebabCaseLabel}Element${arrayLength}>`;
-						this.wgslGroupFragment = [`${getBindingWGSLVarType(this)} ${this.name}: ${kebabCaseLabel};`];
+						const varType = getBindingWGSLVarType(this);
+						this.wgslGroupFragment = [`${varType} ${this.name}: ${kebabCaseLabel};`];
 					} else {
 						this.bufferElements.forEach((binding) => {
 							structs[kebabCaseLabel][binding.name] = BufferElement.getType(binding.type);
 						});
-						this.wgslGroupFragment = [`${getBindingWGSLVarType(this)} ${this.name}: array<${kebabCaseLabel}${arrayLength}>;`];
+						const varType = getBindingWGSLVarType(this);
+						this.wgslGroupFragment = [`${varType} ${this.name}: array<${kebabCaseLabel}${arrayLength}>;`];
 					}
 				} else {
 					bufferElements.forEach((binding) => {
@@ -3476,12 +3479,14 @@
 						} else structs[kebabCaseLabel][binding.name] = `array<${BufferElement.getType(binding.type)}, ${binding.numElements}>`;
 						else structs[kebabCaseLabel][binding.name] = binding.type;
 					});
-					this.wgslGroupFragment = [`${getBindingWGSLVarType(this)} ${this.name}: ${kebabCaseLabel};`];
+					const varType = getBindingWGSLVarType(this);
+					this.wgslGroupFragment = [`${varType} ${this.name}: ${kebabCaseLabel};`];
 				}
 				if (this.childrenBindings.length) this.options.childrenBindings.forEach((child) => {
 					structs[kebabCaseLabel][child.binding.name] = child.count && child.count > 1 || child.forceArray ? this.bindingType === "uniform" && child.binding.bindingType === "uniform" ? `array<${toKebabCase(child.binding.label)}, ${child.count}>` : `array<${toKebabCase(child.binding.label)}>` : toKebabCase(child.binding.label);
 				});
-				this.wgslStructFragment = (this.childrenBindings.length ? this.options.childrenBindings.map((child) => child.binding.wgslStructFragment).join("\n\n") + "\n\n" : "") + Object.keys(structs).reverse().map((struct) => {
+				const additionalBindings = this.childrenBindings.length ? this.options.childrenBindings.map((child) => child.binding.wgslStructFragment).join("\n\n") + "\n\n" : "";
+				this.wgslStructFragment = additionalBindings + Object.keys(structs).reverse().map((struct) => {
 					return `struct ${struct} {\n  ${Object.keys(structs[struct]).map((binding) => `${binding}: ${structs[struct][binding]}`).join(",\n  ")}\n};`;
 				}).join("\n\n");
 			} else {
@@ -3512,7 +3517,7 @@
 			for (const binding of inputs) {
 				const bufferElement = this.bufferElements.find((bufferEl) => bufferEl.key === binding.name);
 				if (binding.shouldUpdate && bufferElement) {
-					binding.onBeforeUpdate && binding.onBeforeUpdate();
+					if (binding.onBeforeUpdate) binding.onBeforeUpdate();
 					bufferElement.update(binding.value);
 					this.shouldUpdate = true;
 					binding.shouldUpdate = false;
@@ -3525,7 +3530,7 @@
 			});
 			if (this.shouldUpdate && this.parent && this.parentViewSetBufferEls) {
 				let index = 0;
-				this.parentViewSetBufferEls.forEach((viewSetBuffer, i) => {
+				this.parentViewSetBufferEls.forEach((viewSetBuffer) => {
 					const { bufferElement, viewSetFunction } = viewSetBuffer;
 					bufferElement.view.forEach((value) => {
 						viewSetFunction(index * bufferElement.view.BYTES_PER_ELEMENT, value, true);
@@ -3667,7 +3672,7 @@
 			this.bufferBindings = [];
 			this.uniforms = {};
 			this.storages = {};
-			bindings.length && this.addBindings(bindings);
+			if (bindings.length) this.addBindings(bindings);
 			if (this.options.uniforms || this.options.storages) this.setInputBindings();
 			this.layoutCacheKey = "";
 			this.pipelineCacheKey = "";
@@ -4872,9 +4877,9 @@
 					height: parameters.fixedSize?.height ?? 1
 				}
 			});
-			this._onSourceLoadedCallback = (source) => {};
+			this._onSourceLoadedCallback = (_source) => {};
 			this._onAllSourcesLoadedCallback = () => {};
-			this._onSourceUploadedCallback = (source) => {};
+			this._onSourceUploadedCallback = (_source) => {};
 			this._onAllSourcesUploadedCallback = () => {};
 			this.type = "MediaTexture";
 			const supportExternalTexture = this.renderer.device ? typeof this.renderer.device.importExternalTexture !== "undefined" : true;
@@ -4927,7 +4932,7 @@
 		* @param value - boolean flag indicating if all the {@link sources} have been loaded.
 		*/
 		set sourcesLoaded(value) {
-			if (value && !this.sourcesLoaded) this._onAllSourcesLoadedCallback && this._onAllSourcesLoadedCallback();
+			if (value && !this.sourcesLoaded && this._onAllSourcesLoadedCallback) this._onAllSourcesLoadedCallback();
 			this.#sourcesLoaded = value;
 		}
 		/**
@@ -4941,7 +4946,7 @@
 		* @param value - boolean flag indicating if all the {@link sources} have been uploaded
 		*/
 		set sourcesUploaded(value) {
-			if (value && !this.sourcesUploaded) this._onAllSourcesUploadedCallback && this._onAllSourcesUploadedCallback();
+			if (value && !this.sourcesUploaded && this._onAllSourcesUploadedCallback) this._onAllSourcesUploadedCallback();
 			this.#sourcesUploaded = value;
 		}
 		/**
@@ -5151,7 +5156,7 @@
 				this.texture = null;
 				try {
 					source.externalSource = new VideoFrame(video);
-				} catch (e) {
+				} catch {
 					const offscreen = new OffscreenCanvas(this.size.width, this.size.height);
 					offscreen.getContext("2d");
 					source.externalSource = new VideoFrame(offscreen, { timestamp: 0 });
@@ -5332,7 +5337,7 @@
 		* @private
 		*/
 		#setSourceLoaded(source) {
-			this._onSourceLoadedCallback && this._onSourceLoadedCallback(source);
+			if (this._onSourceLoadedCallback) this._onSourceLoadedCallback(source);
 			if ((this.sources.filter((source) => source.sourceLoaded)?.length || 0) === this.size.depth) this.sourcesLoaded = true;
 		}
 		/**
@@ -5341,7 +5346,7 @@
 		*/
 		setSourceUploaded(sourceIndex = 0) {
 			this.sources[sourceIndex].sourceUploaded = true;
-			this._onSourceUploadedCallback && this._onSourceUploadedCallback(this.sources[sourceIndex].source);
+			if (this._onSourceUploadedCallback) this._onSourceUploadedCallback(this.sources[sourceIndex].source);
 			if ((this.sources.filter((source) => source.sourceUploaded)?.length || 0) === this.size.depth) this.sourcesUploaded = true;
 		}
 		/**
@@ -5429,7 +5434,7 @@
 	/**
 	* Used to create {@link GPUTexture} or {@link GPUExternalTexture}, specially made to handle different kinds of DOM elements {@link TextureSource | sources}, like {@link HTMLImageElement}, {@link HTMLVideoElement} or {@link HTMLCanvasElement}.
 	*
-	* Handles the various sources loading and uploading, GPU textures creation,{@link BufferBinding | texture model matrix binding} and {@link TextureBinding | GPU texture binding}.
+	* Handles the various sources loading and uploading, GPU textures creation,{@link core/bindings/BufferBinding | texture model matrix binding} and {@link core/bindings/TextureBinding | GPU texture binding}.
 	*
 	* @example
 	* ```javascript
@@ -5457,30 +5462,30 @@
 		* {@link Vec2} used for {@link modelMatrix} calculations, based on {@link mesh} {@link core/DOM/DOMElement.RectSize | size}.
 		* @private
 		*/
-		#parentRatio = new Vec2(1);
+		#parentRatio;
 		/**
 		* {@link Vec2} used for {@link modelMatrix} calculations, based on {@link size | source size}.
 		* @private
 		*/
-		#sourceRatio = new Vec2(1);
+		#sourceRatio;
 		/**
 		* {@link Vec2} used for {@link modelMatrix} calculations, based on #parentRatio and #sourceRatio.
 		* @private
 		*/
-		#coverScale = new Vec2(1);
+		#coverScale;
 		/**
 		* {@link Vec2} used for {@link modelMatrix} calculations, based on {@link transformOrigin}.
 		* @private
 		*/
-		#negatedOrigin = new Vec2();
+		#negatedOrigin;
 		/**
 		* Rotation {@link Mat3} based on texture {@link rotation}.
 		* @private
 		*/
-		#rotationMatrix = new Mat3();
+		#rotationMatrix;
 		/**
 		* DOMTexture constructor
-		* @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link DOMTexture}
+		* @param renderer - {@link core/renderers/utils.Renderer | Renderer} object or {@link GPUCurtains} class object used to create this {@link DOMTexture}
 		* @param parameters - {@link DOMTextureParams | parameters} used to create this {@link DOMTexture}
 		*/
 		constructor(renderer, parameters = defaultDOMTextureParams) {
@@ -5491,6 +5496,11 @@
 				viewDimension: "2d"
 			});
 			this._mesh = null;
+			this.#parentRatio = new Vec2(1);
+			this.#sourceRatio = new Vec2(1);
+			this.#coverScale = new Vec2(1);
+			this.#negatedOrigin = new Vec2();
+			this.#rotationMatrix = new Mat3();
 			this.transformOrigin.set(.5, .5);
 			this.type = "DOMTexture";
 			this.renderer.addDOMTexture(this);
@@ -5865,6 +5875,9 @@
 			super();
 			this.label = label;
 			this.uuid = generateUUID();
+			this.#near = near;
+			this.#far = far;
+			this.#pixelRatio = pixelRatio;
 			this.onMatricesChanged = onMatricesChanged;
 		}
 		/**
@@ -6012,10 +6025,9 @@
 		}
 		/**
 		* Get visible width / height at a given z-depth from our {@link Camera} parameters. Useless for this base class, but will be overriden by children classes.
-		* @param depth - Depth to use for calculations.
 		* @returns - Visible width and height at given depth.
 		*/
-		getVisibleSizeAtDepth(depth = 0) {
+		getVisibleSizeAtDepth() {
 			return {
 				width: 0,
 				height: 0
@@ -6156,10 +6168,9 @@
 		}
 		/**
 		* Get visible width / height at a given z-depth from our {@link OrthographicCamera} parameters.
-		* @param depth - Depth to use for calculations - unused since width and height does not change according to depth in orthographic projection.
 		* @returns - Visible width and height.
 		*/
-		getVisibleSizeAtDepth(depth = 0) {
+		getVisibleSizeAtDepth() {
 			return {
 				width: this.right - this.left,
 				height: this.top - this.bottom
@@ -7191,15 +7202,17 @@
 		* Whether this {@link ComputePass} should be added to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically.
 		* @private
 		*/
-		#autoRender = true;
+		#autoRender;
 		/** Flag indicating whether this {@link ComputePass} should run or not, much like the {@link core/meshes/Mesh.Mesh#visible | Mesh visible} flag. */
-		#active = true;
+		#active;
 		/**
 		* ComputePass constructor
 		* @param renderer - {@link Renderer} class object or {@link GPUCurtains} class object used to create this {@link ComputePass}.
 		* @param parameters - {@link ComputePassParams | parameters} used to create our {@link ComputePass}.
 		*/
 		constructor(renderer, parameters = {}) {
+			this.#autoRender = true;
+			this.#active = true;
 			this._onReadyCallback = () => {};
 			this._onBeforeRenderCallback = () => {};
 			this._onRenderCallback = () => {};
@@ -7250,7 +7263,7 @@
 			return this._ready;
 		}
 		set ready(value) {
-			if (value) this._onReadyCallback && this._onReadyCallback();
+			if (value && this._onReadyCallback) this._onReadyCallback();
 			this._ready = value;
 		}
 		/**
@@ -7378,7 +7391,7 @@
 		* Called from the renderer, useful to trigger an after resize callback.
 		*/
 		resize() {
-			this._onAfterResizeCallback && this._onAfterResizeCallback();
+			if (this._onAfterResizeCallback) this._onAfterResizeCallback();
 		}
 		/** EVENTS **/
 		/**
@@ -7441,7 +7454,7 @@
 		*/
 		onBeforeRenderPass() {
 			if (!this.renderer.ready) return;
-			if (this.active) this._onBeforeRenderCallback && this._onBeforeRenderCallback();
+			if (this.active && this._onBeforeRenderCallback) this._onBeforeRenderCallback();
 			this.material.onBeforeRender();
 			if (this.material && this.material.ready && !this.ready) this.ready = true;
 		}
@@ -7451,14 +7464,14 @@
 		*/
 		onRenderPass(pass) {
 			if (!this.material.ready) return;
-			this._onRenderCallback && this._onRenderCallback();
+			if (this._onRenderCallback) this._onRenderCallback();
 			this.material.render(pass);
 		}
 		/**
 		* Called after having rendered the {@link ComputePass}.
 		*/
 		onAfterRenderPass() {
-			this._onAfterRenderCallback && this._onAfterRenderCallback();
+			if (this._onAfterRenderCallback) this._onAfterRenderCallback();
 		}
 		/**
 		* Render our compute pass.
@@ -7468,9 +7481,9 @@
 		render(pass) {
 			this.onBeforeRenderPass();
 			if (!this.renderer.ready || !this.active) return;
-			!this.renderer.production && pass.pushDebugGroup(this.options.label);
+			if (!this.renderer.production) pass.pushDebugGroup(this.options.label);
 			this.onRenderPass(pass);
-			!this.renderer.production && pass.popDebugGroup();
+			if (!this.renderer.production) pass.popDebugGroup();
 			this.onAfterRenderPass();
 		}
 		/**
@@ -8833,9 +8846,9 @@
 		}
 		/**
 		* Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link Light} has been overflowed or when updating the {@link Light} {@link renderer}.
-		* @param resetShadow - Whether to reset the {@link Light} shadow if any.
+		* @param _resetShadow - Whether to reset the {@link Light} shadow if any.
 		*/
-		reset(resetShadow = true) {
+		reset(_resetShadow = true) {
 			this.setRendererBinding();
 			this.onPropertyChanged("color", this.actualColor);
 		}
@@ -8921,7 +8934,7 @@
 		* Called by the {@link core/scenes/Scene.Scene | Scene} before updating the matrix stack.
 		*/
 		onBeforeRenderScene() {
-			this._onBeforeRenderCallback && this._onBeforeRenderCallback();
+			if (this._onBeforeRenderCallback) this._onBeforeRenderCallback();
 		}
 		/**
 		* Callback to execute before updating the {@link core/scenes/Scene.Scene | Scene} matrix stack. This means it is called early and allows to update transformations values before actually setting the {@link Light} matrices. The callback won't be called if the {@link renderer} is not ready.
@@ -9420,7 +9433,7 @@
 			this.renderer = renderer;
 			this.uuid = generateUUID();
 			const { label, colorAttachments, depthTexture, autoRender, renderTextureName, isPostTarget, ...renderPassParams } = parameters;
-			const depthTextureToUse = !!depthTexture ? depthTexture : this.renderer.renderPass.options.sampleCount === (parameters.sampleCount ?? 4) && (!renderPassParams.qualityRatio || renderPassParams.qualityRatio === 1) && !renderPassParams.fixedSize && (!parameters.depthFormat || parameters.depthFormat === this.renderer.renderPass.depthTexture.options.format) ? this.renderer.renderPass.depthTexture : null;
+			const depthTextureToUse = depthTexture ? depthTexture : this.renderer.renderPass.options.sampleCount === (parameters.sampleCount ?? 4) && (!renderPassParams.qualityRatio || renderPassParams.qualityRatio === 1) && !renderPassParams.fixedSize && (!parameters.depthFormat || parameters.depthFormat === this.renderer.renderPass.depthTexture.options.format) ? this.renderer.renderPass.depthTexture : null;
 			this.options = {
 				label,
 				...renderPassParams,
@@ -9853,9 +9866,15 @@ fn getUVCover(uv: vec2f, textureMatrix: mat3x3f) -> vec2f {
 	* Useful WGSL code chunks added to the vertex and/or fragment shaders
 	*/
 	const shaderChunks = {
-		vertex: { getUVCover },
+		/** WGSL code chunks added to the vertex shader */
+		vertex: { 
+		/** Applies given texture matrix (`mat4x4f`) to given uv coordinates (`vec2f`). */
+getUVCover },
+		/** WGSL code chunks added to the fragment shader */
 		fragment: {
+			/** Applies given texture matrix (`mat4x4f`) to given uv coordinates (`vec2f`). */
 			getUVCover,
+			/** Convert vertex position as `vec2f` or `vec3f` to uv coordinates `vec2f`. */
 			getVertexToUVCoords: `
 fn getVertex2DToUVCoords(vertex: vec2f) -> vec2f {
   return vec2(
@@ -9874,10 +9893,14 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
 	* Useful WGSL code chunks added to the projected Meshes vertex and/or fragment shaders
 	*/
 	const ProjectedShaderChunks = {
+		/** WGSL code chunks added to the vertex shader */
 		vertex: {
+			/** Get output `position` (`vec4f`) vector by applying model view projection matrix to the attribute `position` (`vec3f`) vector. */
 			getPositionHelpers,
+			/** Get `normal` (`vec3f`) in world or view space. */
 			getNormalHelpers
 		},
+		/** WGSL code chunks added to the fragment shader */
 		fragment: {}
 	};
 	//#endregion
@@ -10029,7 +10052,7 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
 		*/
 		constructor(parameters) {
 			let { renderer, ...pipelineParams } = parameters;
-			const { label, attributes, bindGroups, cacheKey, ...renderingOptions } = pipelineParams;
+			const { label, attributes, bindGroups: _bindGroups, cacheKey: _cacheKey, ...renderingOptions } = pipelineParams;
 			const type = "RenderPipelineEntry";
 			isRenderer(renderer, label ? label + " RenderPipelineEntry" : type);
 			super(parameters);
@@ -10614,7 +10637,7 @@ struct VSOutput {
 			/** Flag indicating whether to draw this {@link MeshBase} or not */
 			#visible;
 			/** Whether we should add this {@link MeshBase} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
-			#autoRender = true;
+			#autoRender;
 			/**
 			* MeshBase constructor
 			*
@@ -10631,6 +10654,7 @@ struct VSOutput {
 					...defaultMeshBaseParams,
 					...params[2]
 				});
+				this.#autoRender = true;
 				this._onReadyCallback = () => {};
 				this._onBeforeRenderCallback = () => {};
 				this._onRenderCallback = () => {};
@@ -10650,7 +10674,7 @@ struct VSOutput {
 				this.outputTarget = outputTarget ?? null;
 				this.renderBundle = renderBundle ?? null;
 				this.additionalOutputTargets = additionalOutputTargets || [];
-				meshParameters.sampleCount = !!meshParameters.sampleCount ? meshParameters.sampleCount : this.outputTarget ? this.outputTarget.renderPass.options.sampleCount : this.renderer && this.renderer.renderPass ? this.renderer.renderPass.options.sampleCount : 1;
+				meshParameters.sampleCount = meshParameters.sampleCount ? meshParameters.sampleCount : this.outputTarget ? this.outputTarget.renderPass.options.sampleCount : this.renderer && this.renderer.renderPass ? this.renderer.renderPass.options.sampleCount : 1;
 				this.options = {
 					...this.options ?? {},
 					label: label ?? "Mesh " + this.renderer.meshes.length,
@@ -10692,7 +10716,7 @@ struct VSOutput {
 				return this._ready;
 			}
 			set ready(value) {
-				if (value && !this._ready) this._onReadyCallback && this._onReadyCallback();
+				if (value && !this._ready && this._onReadyCallback) this._onReadyCallback();
 				this._ready = value;
 			}
 			/**
@@ -11013,7 +11037,7 @@ struct VSOutput {
 			resize(boundingRect) {
 				if (super.resize) super.resize(boundingRect);
 				this.resizeTextures();
-				this._onAfterResizeCallback && this._onAfterResizeCallback();
+				if (this._onAfterResizeCallback) this._onAfterResizeCallback();
 			}
 			/**
 			* Resize the {@link textures}.
@@ -11073,7 +11097,7 @@ struct VSOutput {
 			*/
 			onBeforeRenderScene() {
 				if (!this.renderer.ready || !this.ready || !this.visible) return;
-				this._onBeforeRenderCallback && this._onBeforeRenderCallback();
+				if (this._onBeforeRenderCallback) this._onBeforeRenderCallback();
 			}
 			/**
 			* Called before rendering the Mesh.
@@ -11083,7 +11107,7 @@ struct VSOutput {
 			onBeforeRenderPass() {
 				if (!this.renderer.ready) return;
 				this.setGeometry();
-				if (this.visible && this.ready) this._onRenderCallback && this._onRenderCallback();
+				if (this.visible && this.ready && this._onRenderCallback) this._onRenderCallback();
 				this.material.onBeforeRender();
 				this.ready = this.material && this.material.ready && this.geometry && this.geometry.ready;
 			}
@@ -11107,7 +11131,7 @@ struct VSOutput {
 			* Called after having rendered the Mesh.
 			*/
 			onAfterRenderPass() {
-				this._onAfterRenderCallback && this._onAfterRenderCallback();
+				if (this._onAfterRenderCallback) this._onAfterRenderCallback();
 			}
 			/**
 			* Render our Mesh:
@@ -11121,9 +11145,9 @@ struct VSOutput {
 			render(pass) {
 				this.onBeforeRenderPass();
 				if (!this.renderer.ready || !this.visible) return;
-				!this.renderer.production && pass.pushDebugGroup(this.options.label);
+				if (!this.renderer.production) pass.pushDebugGroup(this.options.label);
 				this.onRenderPass(pass);
-				!this.renderer.production && pass.popDebugGroup();
+				if (!this.renderer.production) pass.popDebugGroup();
 				this.onAfterRenderPass();
 			}
 			/**
@@ -11538,7 +11562,7 @@ fn getPCFBaseShadowContribution(
 				if (this.options.transmissive) {
 					renderer = isCameraRenderer(renderer, this.options.label + " " + renderer.type);
 					renderer.createTransmissionTarget();
-					let transmissiveTexture = this.material.textures.find((texture) => texture.options.name === "transmissionBackgroundTexture");
+					const transmissiveTexture = this.material.textures.find((texture) => texture.options.name === "transmissionBackgroundTexture");
 					if (transmissiveTexture) transmissiveTexture.copy(renderer.transmissionTarget.texture);
 				}
 				super.setRenderer(renderer);
@@ -11636,10 +11660,10 @@ fn getPCFBaseShadowContribution(
 					containerBoundingRect: this.renderer.boundingRect,
 					DOMFrustumMargins: this.options.DOMFrustumMargins,
 					onReEnterView: () => {
-						this._onReEnterViewCallback && this._onReEnterViewCallback();
+						if (this._onReEnterViewCallback) this._onReEnterViewCallback();
 					},
 					onLeaveView: () => {
-						this._onLeaveViewCallback && this._onLeaveViewCallback();
+						if (this._onLeaveViewCallback) this._onLeaveViewCallback();
 					}
 				});
 				this.DOMFrustumMargins = this.domFrustum.DOMFrustumMargins;
@@ -12611,13 +12635,11 @@ fn getPCFBaseShadowContribution(
 				label: this.options.label + " (encoder)"
 			});
 			if (!this.renderer.production) this.encoder.pushDebugGroup(`${this.options.label}: create encoder`);
-			let offset = 0;
 			this.meshes.forEach((mesh) => {
 				if (mesh.visible) {
 					mesh.material.render(this.encoder);
 					mesh.geometry.render(this.encoder);
 				}
-				offset++;
 			});
 			if (!this.renderer.production) this.encoder.popDebugGroup();
 			this.bundle = this.encoder.finish({ label: this.options.label + " (bundle)" });
@@ -12670,14 +12692,12 @@ fn getPCFBaseShadowContribution(
 					mesh.onAfterRenderPass();
 				});
 			}
-			let index = 0;
 			if (!this.ready) {
 				let isReady = true;
 				for (const [_key, mesh] of this.meshes) {
 					mesh.render(pass);
 					if (!mesh.ready) isReady = false;
 					for (const texture of mesh.textures) if (texture instanceof MediaTexture && !texture.sourcesUploaded) isReady = false;
-					index++;
 				}
 				this.updateBinding();
 				this.ready = isReady;
@@ -12766,7 +12786,7 @@ fn getPCFBaseShadowContribution(
 	*
 	* A {@link Shadow} creates a {@link depthTexture | depth Texture} (that can vary based on the light type) and a {@link depthComparisonSampler | depth comparison Sampler}.
 	*
-	* Each {@link Mesh} added to the {@link Shadow} will be rendered beforehand to the {@link depthTexture} using a {@link depthPassTarget | RenderTarget} and a custom {@link RenderMaterial}.
+	* Each {@link Mesh} added to the {@link Shadow} will be rendered beforehand to the {@link depthTexture} using a {@link depthPassTarget | RenderTarget} and a custom {@link core/materials/RenderMaterial | RenderMaterial}.
 	*/
 	var Shadow = class {
 		/** @ignore */
@@ -13019,16 +13039,19 @@ fn getPCFBaseShadowContribution(
 		* Set the {@link depthComparisonSampler}, {@link depthTexture}, {@link depthPassTarget} and start rendering to the shadow map.
 		*/
 		init() {
-			if (!this.depthComparisonSampler) this.depthComparisonSampler = this.renderer.samplers.find((sampler) => sampler.name === "depthComparisonSampler") || new Sampler(this.renderer, {
-				label: "Depth comparison sampler",
-				name: "depthComparisonSampler",
-				addressModeU: "clamp-to-edge",
-				addressModeV: "clamp-to-edge",
-				compare: "less",
-				minFilter: "linear",
-				magFilter: "linear",
-				type: "comparison"
-			});
+			if (!this.depthComparisonSampler) {
+				const samplerExists = this.renderer.samplers.find((sampler) => sampler.name === "depthComparisonSampler");
+				this.depthComparisonSampler = samplerExists || new Sampler(this.renderer, {
+					label: "Depth comparison sampler",
+					name: "depthComparisonSampler",
+					addressModeU: "clamp-to-edge",
+					addressModeV: "clamp-to-edge",
+					compare: "less",
+					minFilter: "linear",
+					magFilter: "linear",
+					type: "comparison"
+				});
+			}
 			this.setDepthTexture();
 			this.depthTextureSize.onChange(() => this.onDepthTextureSizeChanged());
 			if (!this.depthPassTarget) this.createDepthPassTarget();
@@ -13089,7 +13112,7 @@ fn getPCFBaseShadowContribution(
 		clearDepthTexture() {
 			if (!this.depthTexture || !this.depthTexture.texture) return;
 			const commandEncoder = this.renderer.device.createCommandEncoder();
-			!this.renderer.production && commandEncoder.pushDebugGroup(`Clear ${this.depthTexture.texture.label} command encoder`);
+			if (!this.renderer.production) commandEncoder.pushDebugGroup(`Clear ${this.depthTexture.texture.label} command encoder`);
 			const renderPassDescriptor = {
 				colorAttachments: [],
 				depthStencilAttachment: {
@@ -13100,7 +13123,7 @@ fn getPCFBaseShadowContribution(
 				}
 			};
 			commandEncoder.beginRenderPass(renderPassDescriptor).end();
-			!this.renderer.production && commandEncoder.popDebugGroup();
+			if (!this.renderer.production) commandEncoder.popDebugGroup();
 			this.renderer.device.queue.submit([commandEncoder.finish()]);
 		}
 		/**
@@ -13176,11 +13199,13 @@ fn getPCFBaseShadowContribution(
 		}
 		/**
 		* Get the default depth pass vertex shader for this {@link Shadow}.
-		* parameters - {@link VertexShaderInputBaseParams} used to compute the output `worldPosition` and `normal` vectors.
+		* @param _params - {@link VertexShaderInputBaseParams} used to compute the output `worldPosition` and `normal` vectors.
 		* @returns - Depth pass vertex shader.
 		*/
-		getDefaultShadowDepthVs({ bindings = [], geometry }) {
-			return { code: `@vertex fn main(@location(0) position: vec4f) -> @builtin(position) vec4f { return position; }` };
+		getDefaultShadowDepthVs(_params) {
+			return { 
+			/** Returned code. */
+code: `@vertex fn main(@location(0) position: vec4f) -> @builtin(position) vec4f { return position; }` };
 		}
 		/**
 		* Get the default depth pass fragment shader for this {@link Shadow}.
@@ -13311,7 +13336,8 @@ fn getPCFBaseShadowContribution(
 	*/
 	const declareAttributesVars$1 = ({ geometry }) => {
 		let attributeVars = geometry.vertexBuffers.map((vertexBuffer) => vertexBuffer.attributes.map((attribute) => {
-			let { name, type } = attribute;
+			const { name, ...attributeRest } = attribute;
+			let { type } = attributeRest;
 			let swizzle = "";
 			if (name === "position" || name === "normal") {
 				type = "vec3f";
@@ -13437,7 +13463,7 @@ fn getPCFBaseShadowContribution(
 	//#endregion
 	//#region src/core/shaders/chunks/vertex/body/get-vertex-transformed-position-normal.ts
 	/**
-	* Generate the part of the vertex shader dedicated to compute the output transformed `worldPosition` and `normal` vectors. Account for instancing (using a {@link BufferBinding} with `instances` name if any), morph targets and skinning using the provided {@link core/geometries/Geometry.Geometry | Geometry} and {@link BufferBinding} array parameters.
+	* Generate the part of the vertex shader dedicated to compute the output transformed `worldPosition` and `normal` vectors. Account for instancing (using a {@link core/bindings/BufferBinding | BufferBinding} with `instances` name if any), morph targets and skinning using the provided {@link core/geometries/Geometry.Geometry | Geometry} and {@link core/bindings/BufferBinding | BufferBinding} array parameters.
 	*
 	* Used internally by the various {@link core/shadows/Shadow.Shadow | Shadow} classes and the {@link extras/gltf/GLTFScenesManager | GLTFScenesManager} class.
 	*
@@ -13644,7 +13670,9 @@ fn getPCFBaseShadowContribution(
 		* @returns - Depth pass vertex shader.
 		*/
 		getDefaultShadowDepthVs({ bindings = [], geometry }) {
-			return { code: getDefaultDirectionalShadowDepthVs(this.index, {
+			return { 
+			/** Returned code. */
+code: getDefaultDirectionalShadowDepthVs(this.index, {
 				bindings,
 				geometry
 			}) };
@@ -14133,7 +14161,7 @@ struct PointShadowVSOutput {
 		clearDepthTexture() {
 			if (!this.depthTexture || !this.depthTexture.texture) return;
 			const commandEncoder = this.renderer.device.createCommandEncoder();
-			!this.renderer.production && commandEncoder.pushDebugGroup(`Clear ${this.depthTexture.texture.label} command encoder`);
+			if (!this.renderer.production) commandEncoder.pushDebugGroup(`Clear ${this.depthTexture.texture.label} command encoder`);
 			for (let i = 0; i < 6; i++) {
 				const renderPassDescriptor = {
 					colorAttachments: [],
@@ -14151,7 +14179,7 @@ struct PointShadowVSOutput {
 				};
 				this.depthPassTarget.renderPass.beginRenderPass(commandEncoder, renderPassDescriptor).end();
 			}
-			!this.renderer.production && commandEncoder.popDebugGroup();
+			if (!this.renderer.production) commandEncoder.popDebugGroup();
 			this.renderer.device.queue.submit([commandEncoder.finish()]);
 		}
 		/**
@@ -14212,7 +14240,9 @@ struct PointShadowVSOutput {
 		* @returns - Depth pass vertex shader.
 		*/
 		getDefaultShadowDepthVs({ bindings = [], geometry }) {
-			return { code: getDefaultPointShadowDepthVs(this.index, {
+			return { 
+			/** Returned code. */
+code: getDefaultPointShadowDepthVs(this.index, {
 				bindings,
 				geometry
 			}) };
@@ -14222,7 +14252,9 @@ struct PointShadowVSOutput {
 		* @returns - A {@link types/Materials.ShaderOptions | ShaderOptions} with the depth pass fragment shader.
 		*/
 		getDefaultShadowDepthFs() {
-			return { code: getDefaultPointShadowDepthFs(this.index) };
+			return { 
+			/** Returned code. */
+code: getDefaultPointShadowDepthFs(this.index) };
 		}
 		/**
 		* Patch the given {@link Mesh} material parameters to create the depth mesh. Here we'll be adding the first {@link CameraRenderer.pointShadowsCubeFaceBindGroups | renderer pointShadowsCubeFaceBindGroups} bind group containing the face index onto which we'll be drawing. This bind group will be swapped when rendering using {@link renderDepthPass}.
@@ -14581,7 +14613,9 @@ struct SpotShadowVSOutput {
 		* @returns - Depth pass vertex shader.
 		*/
 		getDefaultShadowDepthVs({ bindings = [], geometry }) {
-			return { code: getDefaultSpotShadowDepthVs(this.index, {
+			return { 
+			/** Returned code. */
+code: getDefaultSpotShadowDepthVs(this.index, {
 				bindings,
 				geometry
 			}) };
@@ -14867,7 +14901,7 @@ struct SpotShadowVSOutput {
 		* @param parameters - {@link PipelineEntryParams | parameters} used to create this {@link ComputePipelineEntry}
 		*/
 		constructor(parameters) {
-			const { label, renderer, bindGroups } = parameters;
+			const { label, renderer, bindGroups: _bindGroups } = parameters;
 			const type = "ComputePipelineEntry";
 			isRenderer(renderer, label ? label + " ComputePipelineEntry" : type);
 			super(parameters);
@@ -15212,7 +15246,7 @@ struct SpotShadowVSOutput {
 		* DOMElement constructor
 		* @param parameters - {@link DOMElementParams | parameters} used to create our DOMElement
 		*/
-		constructor({ element = document.body, priority = 1, onSizeChanged = (boundingRect = null) => {}, onPositionChanged = (boundingRect = null) => {} } = {}) {
+		constructor({ element = document.body, priority = 1, onSizeChanged = () => {}, onPositionChanged = () => {} } = {}) {
 			if (typeof element === "string") {
 				this.element = document.querySelector(element);
 				if (!this.element) throwError(`DOMElement: corresponding ${typeof element === "string" ? `'${element}' selector` : `${element} HTMLElement`} not found.`);
@@ -15350,11 +15384,17 @@ struct SpotShadowVSOutput {
 			this.#shouldLoadDepth = false;
 			this.computePassEntries = [];
 			this.renderPassEntries = {
+				/** Array of {@link RenderPassEntry} that will handle {@link PingPongPlane}. Each {@link PingPongPlane} will be added as a distinct {@link RenderPassEntry} here. */
 				pingPong: [],
+				/** Array of {@link RenderPassEntry} that will render to a specific {@link RenderTarget} before rendering to the screen. Each {@link RenderTarget} not using `isPostTarget` option will be added as a distinct {@link RenderPassEntry} here. */
 				renderTarget: [],
+				/** Array of {@link RenderPassEntry} containing {@link ShaderPass} that will render directly to the screen before rendering any other pass to the screen. Useful to perform "blit" pass before actually rendering the usual scene content. */
 				prePass: [],
+				/** Array of {@link RenderPassEntry} that will render directly to the screen. Our first and default entry will contain all the Meshes that do not have any {@link RenderTarget} assigned. You can create following entries for custom scene rendering management process. */
 				screen: [],
+				/** Array of {@link RenderPassEntry} that will render to a specific {@link RenderTarget} after the screen passes have been rendered. Each {@link RenderTarget} using the `isPostTarget` option will be added as a distinct {@link RenderPassEntry} here. */
 				postRenderTarget: [],
+				/**Array of {@link RenderPassEntry} containing post processing {@link ShaderPass} that will render directly to the screen after everything has been drawn. */
 				postProPass: []
 			};
 		}
@@ -15449,11 +15489,12 @@ struct SpotShadowVSOutput {
 		}
 		/**
 		* Remove a {@link RenderTarget} from our scene {@link renderPassEntries} outputTarget array.
-		* @param renderTarget - {@link RenderTarget} to add.
+		* @param renderTarget - {@link RenderTarget} to remove.
 		*/
 		removeRenderTarget(renderTarget) {
-			let targetPassEntries = renderTarget.options.isPostTarget ? this.renderPassEntries.postRenderTarget : this.renderPassEntries.renderTarget;
-			targetPassEntries = targetPassEntries.filter((entry) => entry.renderPass.uuid !== renderTarget.renderPass.uuid);
+			const filteredEntries = (renderTarget.options.isPostTarget ? this.renderPassEntries.postRenderTarget : this.renderPassEntries.renderTarget).filter((entry) => entry.renderPass.uuid !== renderTarget.renderPass.uuid);
+			if (renderTarget.options.isPostTarget) this.renderPassEntries.postRenderTarget = filteredEntries;
+			else this.renderPassEntries.renderTarget = filteredEntries;
 		}
 		/**
 		* Get the {@link RenderPassEntry} in the {@link renderPassEntries} `renderTarget` array (or `screen` array if no {@link RenderTarget} is passed) corresponding to the given {@link RenderTarget}.
@@ -15547,7 +15588,7 @@ struct SpotShadowVSOutput {
 		* @param projectionStack - {@link ProjectionStack} onto which to add the {@link RenderBundle}.
 		*/
 		addRenderBundle(renderBundle, projectionStack) {
-			const similarObjects = !!renderBundle.transparent ? projectionStack.transparent : projectionStack.opaque;
+			const similarObjects = renderBundle.transparent ? projectionStack.transparent : projectionStack.opaque;
 			similarObjects.push(renderBundle);
 			this.orderStack(similarObjects);
 		}
@@ -15704,8 +15745,10 @@ struct SpotShadowVSOutput {
 			meshes.sort((meshA, meshB) => {
 				if (meshA.renderOrder !== meshB.renderOrder) return meshA.renderOrder - meshB.renderOrder;
 				if (this.isStackObjectRenderBundle(meshA) || this.isStackObjectRenderBundle(meshB)) return meshA.renderOrder - meshB.renderOrder;
-				meshA.geometry ? posA.copy(meshA.geometry.boundingBox.center).applyMat4(meshA.worldMatrix) : meshA.worldMatrix.getTranslation(posA);
-				meshB.geometry ? posB.copy(meshB.geometry.boundingBox.center).applyMat4(meshB.worldMatrix) : meshB.worldMatrix.getTranslation(posB);
+				if (meshA.geometry) posA.copy(meshA.geometry.boundingBox.center).applyMat4(meshA.worldMatrix);
+				else meshA.worldMatrix.getTranslation(posA);
+				if (meshB.geometry) posB.copy(meshB.geometry.boundingBox.center).applyMat4(meshB.worldMatrix);
+				else meshB.worldMatrix.getTranslation(posB);
 				const radiusA = meshA.geometry ? meshA.geometry.boundingBox.radius * meshA.worldMatrix.getMaxScaleOnAxis() : 0;
 				const radiusB = meshB.geometry ? meshB.geometry.boundingBox.radius * meshB.worldMatrix.getMaxScaleOnAxis() : 0;
 				return meshB.camera.worldMatrix.getTranslation(camPosB).distance(posB) - radiusB - (meshA.camera.worldMatrix.getTranslation(camPosA).distance(posA) - radiusA);
@@ -15728,7 +15771,7 @@ struct SpotShadowVSOutput {
 		*/
 		renderSinglePassEntry(commandEncoder, renderPassEntry) {
 			const swapChainTexture = renderPassEntry.renderPass.updateView(renderPassEntry.renderTexture?.texture);
-			renderPassEntry.onBeforeRenderPass && renderPassEntry.onBeforeRenderPass(commandEncoder, swapChainTexture);
+			if (renderPassEntry.onBeforeRenderPass) renderPassEntry.onBeforeRenderPass(commandEncoder, swapChainTexture);
 			if (renderPassEntry.useCustomRenderPass) renderPassEntry.useCustomRenderPass(commandEncoder);
 			else {
 				const pass = renderPassEntry.renderPass.beginRenderPass(commandEncoder);
@@ -15747,7 +15790,7 @@ struct SpotShadowVSOutput {
 				if (!this.renderer.production) pass.popDebugGroup();
 				pass.end();
 			}
-			renderPassEntry.onAfterRenderPass && renderPassEntry.onAfterRenderPass(commandEncoder, swapChainTexture);
+			if (renderPassEntry.onAfterRenderPass) renderPassEntry.onAfterRenderPass(commandEncoder, swapChainTexture);
 			this.renderer.pipelineManager.resetCurrentPipeline();
 			if (renderPassEntry.renderPass.options.useDepth && renderPassEntry.renderPass.options.renderToSwapChain && !renderPassEntry.renderPass.options.depthReadOnly && renderPassEntry.renderPass.options.depthStoreOp === "store" && renderPassEntry.renderPass.depthTexture.uuid === this.renderer.renderPass.depthTexture?.uuid) this.#shouldLoadDepth = true;
 		}
@@ -15828,7 +15871,7 @@ struct SpotShadowVSOutput {
 		* @param parameters - {@link TaskQueueItemParams | parameters} of the {@link TaskQueueItem | task queue item} to add
 		* @returns - {@link TaskQueueItem#id | id} of the new {@link TaskQueueItem | task queue item}, useful to later remove the task if needed
 		*/
-		add(callback = (args) => {}, { order = this.queue.length, once = false } = {}) {
+		add(callback = (_args) => {}, { order = this.queue.length, once = false } = {}) {
 			const task = {
 				callback,
 				order,
@@ -15875,7 +15918,7 @@ struct SpotShadowVSOutput {
 		* GPUDeviceManager constructor
 		* @param parameters - {@link GPUDeviceManagerParams | parameters} used to create this {@link GPUDeviceManager}.
 		*/
-		constructor({ label, production = false, adapterOptions = {}, requiredFeatures = [], requestAdapterLimits = [], autoRender = true, onError = (message) => {}, onDeviceLost = (info) => {}, onDeviceDestroyed = (info) => {} } = {}) {
+		constructor({ label, production = false, adapterOptions = {}, requiredFeatures = [], requestAdapterLimits = [], autoRender = true, onError = () => {}, onDeviceLost = () => {}, onDeviceDestroyed = () => {} } = {}) {
 			this._onBeforeRenderCallback = () => {};
 			this._onAfterRenderCallback = () => {};
 			this.index = 0;
@@ -16237,7 +16280,7 @@ struct SpotShadowVSOutput {
                 fsInput.texcoord,
                 fsInput.baseArrayLayer);
             }
-            
+
             @group(0) @binding(1) var ourTextureCube: texture_cube<f32>;
             @fragment fn fscube(fsInput: VSOutput) -> @location(0) vec4f {
               return textureSample(
@@ -16347,18 +16390,18 @@ struct SpotShadowVSOutput {
 		*/
 		render() {
 			if (!this.ready) return;
-			this._onBeforeRenderCallback && this._onBeforeRenderCallback();
+			if (this._onBeforeRenderCallback) this._onBeforeRenderCallback();
 			for (const renderer of this.renderers) if (renderer.shouldRender) renderer.onBeforeCommandEncoder();
 			const commandEncoder = this.device?.createCommandEncoder({ label: this.options.label + " command encoder" });
-			!this.options.production && commandEncoder.pushDebugGroup(this.options.label + " command encoder: main render loop");
+			if (!this.options.production) commandEncoder.pushDebugGroup(this.options.label + " command encoder: main render loop");
 			this.renderers.forEach((renderer) => renderer.render(commandEncoder));
-			!this.options.production && commandEncoder.popDebugGroup();
+			if (!this.options.production) commandEncoder.popDebugGroup();
 			const commandBuffer = commandEncoder.finish();
 			this.device?.queue.submit([commandBuffer]);
 			for (const texture of this.texturesQueue) texture.texture.setSourceUploaded(texture.sourceIndex);
 			this.texturesQueue = [];
 			for (const renderer of this.renderers) if (renderer.shouldRender) renderer.onAfterCommandEncoder();
-			this._onAfterRenderCallback && this._onAfterRenderCallback();
+			if (this._onAfterRenderCallback) this._onAfterRenderCallback();
 		}
 		/**
 		* Destroy the {@link GPUDeviceManager} and its {@link renderers}.
@@ -16392,8 +16435,8 @@ struct SpotShadowVSOutput {
 		* @param parameters - {@link GPURendererParams | parameters} used to create this {@link GPURenderer}.
 		*/
 		constructor({ deviceManager, label, container, pixelRatio = 1, autoResize = true, context = {}, renderPass }) {
-			this._onBeforeRenderCallback = (commandEncoder) => {};
-			this._onAfterRenderCallback = (commandEncoder) => {};
+			this._onBeforeRenderCallback = (_commandEncoder) => {};
+			this._onAfterRenderCallback = (_commandEncoder) => {};
 			this._onResizeCallback = () => {};
 			this._onAfterResizeCallback = () => {};
 			this.type = "GPURenderer";
@@ -16499,7 +16542,8 @@ struct SpotShadowVSOutput {
 					maxDepth: 1,
 					...viewport
 				};
-				let { width, height, top, left, minDepth, maxDepth } = viewport;
+				const { minDepth, maxDepth, ...viewportRect } = viewport;
+				let { width, height, top, left } = viewportRect;
 				width = Math.min(width, this.canvas.width);
 				height = Math.min(height, this.canvas.height);
 				top = Math.max(0, top);
@@ -16562,9 +16606,9 @@ struct SpotShadowVSOutput {
 		*/
 		resize(rectBBox = null) {
 			this.setSize(rectBBox);
-			this._onResizeCallback && this._onResizeCallback();
+			if (this._onResizeCallback) this._onResizeCallback();
 			this.resizeObjects();
-			this._onAfterResizeCallback && this._onAfterResizeCallback();
+			if (this._onAfterResizeCallback) this._onAfterResizeCallback();
 		}
 		/**
 		* Resize all tracked objects ({@link Texture | textures}, {@link RenderPass | render passes}, {@link RenderTarget | render targets}, {@link ComputePass | compute passes} and meshes).
@@ -16595,7 +16639,7 @@ struct SpotShadowVSOutput {
 		*/
 		get boundingRect() {
 			if (!!this.domElement && !!this.domElement.boundingRect) return this.domElement.boundingRect;
-			else if (!!this.domElement) {
+			else if (this.domElement) {
 				const boundingRect = this.domElement.element?.getBoundingClientRect();
 				return {
 					top: boundingRect.top,
@@ -16822,11 +16866,11 @@ struct SpotShadowVSOutput {
 			const hasCommandEncoder = !!commandEncoder;
 			if (!hasCommandEncoder) {
 				commandEncoder = this.deviceManager.device?.createCommandEncoder({ label: `${this.type} (${this.options.label}): Copy buffer command encoder` });
-				!this.production && commandEncoder.pushDebugGroup(`${this.type} (${this.options.label}): Copy buffer command encoder`);
+				if (!this.production) commandEncoder.pushDebugGroup(`${this.type} (${this.options.label}): Copy buffer command encoder`);
 			}
 			commandEncoder.copyBufferToBuffer(srcBuffer.GPUBuffer, 0, dstBuffer.GPUBuffer, 0, dstBuffer.GPUBuffer.size);
 			if (!hasCommandEncoder) {
-				!this.production && commandEncoder.popDebugGroup();
+				if (!this.production) commandEncoder.popDebugGroup();
 				const commandBuffer = commandEncoder.finish();
 				this.deviceManager.device?.queue.submit([commandBuffer]);
 			}
@@ -17161,13 +17205,13 @@ struct SpotShadowVSOutput {
 		*/
 		renderOnce(objects) {
 			const commandEncoder = this.device?.createCommandEncoder({ label: "Render once command encoder" });
-			!this.production && commandEncoder.pushDebugGroup("Render once command encoder");
+			if (!this.production) commandEncoder.pushDebugGroup("Render once command encoder");
 			this.pipelineManager.resetCurrentPipeline();
 			objects.forEach((object) => {
 				if (object.type === "ComputePass") this.renderSingleComputePass(commandEncoder, object);
 				else this.renderSingleMesh(commandEncoder, object);
 			});
-			!this.production && commandEncoder.popDebugGroup();
+			if (!this.production) commandEncoder.popDebugGroup();
 			const commandBuffer = commandEncoder.finish();
 			this.device?.queue.submit([commandBuffer]);
 			this.pipelineManager.resetCurrentPipeline();
@@ -17181,7 +17225,7 @@ struct SpotShadowVSOutput {
 			const hasCommandEncoder = !!commandEncoder;
 			if (!hasCommandEncoder) {
 				commandEncoder = this.device?.createCommandEncoder({ label: `${this.type} (${this.options.label}): Force clear command encoder` });
-				!this.production && commandEncoder.pushDebugGroup(`${this.type} (${this.options.label}): Force clear command encoder`);
+				if (!this.production) commandEncoder.pushDebugGroup(`${this.type} (${this.options.label}): Force clear command encoder`);
 			}
 			renderPass.updateView();
 			renderPass.setDepthReadOnly(false);
@@ -17189,7 +17233,7 @@ struct SpotShadowVSOutput {
 			renderPass.setDepthLoadOp("clear");
 			commandEncoder.beginRenderPass(renderPass.descriptor).end();
 			if (!hasCommandEncoder) {
-				!this.production && commandEncoder.popDebugGroup();
+				if (!this.production) commandEncoder.popDebugGroup();
 				const commandBuffer = commandEncoder.finish();
 				this.device?.queue.submit([commandBuffer]);
 			}
@@ -17218,7 +17262,7 @@ struct SpotShadowVSOutput {
 		*/
 		render(commandEncoder) {
 			if (!this.ready || !this.shouldRender) return;
-			this._onBeforeRenderCallback && this._onBeforeRenderCallback(commandEncoder);
+			if (this._onBeforeRenderCallback) this._onBeforeRenderCallback(commandEncoder);
 			this.onBeforeRenderScene.execute(commandEncoder);
 			if (this.shouldRenderScene) {
 				this.textures.forEach((texture) => {
@@ -17226,7 +17270,7 @@ struct SpotShadowVSOutput {
 				});
 				this.scene?.render(commandEncoder);
 			}
-			this._onAfterRenderCallback && this._onAfterRenderCallback(commandEncoder);
+			if (this._onAfterRenderCallback) this._onAfterRenderCallback(commandEncoder);
 			this.onAfterRenderScene.execute(commandEncoder);
 		}
 		/**
@@ -17896,9 +17940,9 @@ struct SpotShadowVSOutput {
 		resize(rectBBox = null) {
 			this.setSize(rectBBox);
 			this.resizeCamera();
-			this._onResizeCallback && this._onResizeCallback();
+			if (this._onResizeCallback) this._onResizeCallback();
 			this.resizeObjects();
-			this._onAfterResizeCallback && this._onAfterResizeCallback();
+			if (this._onAfterResizeCallback) this._onAfterResizeCallback();
 		}
 		/**
 		* {@link createCameraLightsBindGroup | Set the camera bind group if needed} and then call our {@link GPURenderer#render | GPURenderer render method}.
@@ -17988,7 +18032,7 @@ struct VSOutput {
 				else if (parameters.targets && parameters.targets.length && !parameters.targets[0].blend) parameters.targets[0].blend = defaultBlend;
 			}
 			parameters.label = parameters.label ?? "ShaderPass " + renderer.shaderPasses?.length;
-			parameters.sampleCount = !!parameters.sampleCount ? parameters.sampleCount : renderer && renderer.renderPass && parameters.isPrePass ? renderer.renderPass.options.sampleCount : renderer && renderer.postProcessingPass ? renderer && renderer.postProcessingPass.options.sampleCount : 1;
+			parameters.sampleCount = parameters.sampleCount ? parameters.sampleCount : renderer && renderer.renderPass && parameters.isPrePass ? renderer.renderPass.options.sampleCount : renderer && renderer.postProcessingPass ? renderer && renderer.postProcessingPass.options.sampleCount : 1;
 			if (!parameters.shaders) parameters.shaders = {};
 			if (!parameters.shaders.fragment) parameters.shaders.fragment = {
 				code: getDefaultShaderPassFragmentCode,
@@ -19682,24 +19726,24 @@ fn getPBR(
   ${useOcclusion ? "occlusion: f32," : ""}
 ) -> vec4f {
   ${!useOcclusion ? "let occlusion: f32 = 1.0;" : ""}
-  
+
   var outputColor: vec4f = color;
-  
+
   ${getPBRShading({
 		receiveShadows,
 		environmentMap,
 		transmissionBackgroundTexture,
 		extensionsUsed
 	})}
-  
+
   outputColor = vec4(outgoingLight, outputColor.a);
   outputColor = vec4(outputColor.rgb + emissive, outputColor.a);
-  
+
   ${applyToneMapping({
 		toneMapping,
 		outputColorSpace
 	})}
-    
+
   return outputColor;
 }
 `;
@@ -21920,11 +21964,11 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 	*/
 	var DOMObject3D = class extends ProjectedObject3D {
 		/** Private {@link Vec3 | vector} used to keep track of the actual {@link DOMObject3DTransforms#position.world | world position} accounting the {@link DOMObject3DTransforms#position.document | additional document translation} converted into world space. */
-		#DOMObjectWorldPosition = new Vec3();
+		#DOMObjectWorldPosition;
 		/** Private {@link Vec3 | vector} used to keep track of the actual {@link DOMObject3D} world scale accounting the {@link DOMObject3D#size.world | DOMObject3D world size}. */
-		#DOMObjectWorldScale = new Vec3(1);
+		#DOMObjectWorldScale;
 		/** Private number representing the scale ratio of the {@link DOMObject3D} along Z axis to apply. Since it can be difficult to guess the most accurate scale along the Z axis of an object mapped to 2D coordinates, this helps with adjusting the scale along the Z axis. */
-		#DOMObjectDepthScaleRatio = 1;
+		#DOMObjectDepthScaleRatio;
 		/**
 		* DOMObject3D constructor
 		* @param renderer - {@link GPUCurtainsRenderer} object or {@link GPUCurtains} class object used to create this {@link DOMObject3D}.
@@ -21933,6 +21977,9 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 		*/
 		constructor(renderer, element, parameters = {}) {
 			super(renderer);
+			this.#DOMObjectWorldPosition = new Vec3();
+			this.#DOMObjectWorldScale = new Vec3(1);
+			this.#DOMObjectDepthScaleRatio = 1;
 			this.boundingBox = new Box3(new Vec3(-1), new Vec3(1));
 			this._onAfterDOMElementResizeCallback = () => {};
 			renderer = isCurtainsRenderer(renderer, "DOMObject3D");
@@ -21999,7 +22046,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 		resize(boundingRect = null) {
 			if (!boundingRect && (!this.domElement || this.domElement?.isResizing)) return;
 			this.updateSizeAndPosition();
-			this._onAfterDOMElementResizeCallback && this._onAfterDOMElementResizeCallback();
+			if (this._onAfterDOMElementResizeCallback) this._onAfterDOMElementResizeCallback();
 		}
 		/**
 		* Get the {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}.
@@ -22269,9 +22316,9 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 				...defaultDOMMeshParams,
 				...parameters
 			};
-			const { autoloadSources, watchScroll, domTextures, ...projectedMeshParams } = parameters;
+			const { autoloadSources, domTextures } = parameters;
 			super(renderer, element, parameters);
-			this._onLoadingCallback = (texture) => {};
+			this._onLoadingCallback = (_texture) => {};
 			isCurtainsRenderer(renderer, parameters.label ? parameters.label + " DOMMesh" : "DOMMesh");
 			this.type = "DOMMesh";
 			this.domTextures = [];
@@ -22302,7 +22349,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			return this._ready;
 		}
 		set ready(value) {
-			if (value && !this._ready && this.sourcesReady) this._onReadyCallback && this._onReadyCallback();
+			if (value && !this._ready && this.sourcesReady && this._onReadyCallback) this._onReadyCallback();
 			this._ready = value;
 		}
 		/**
@@ -22313,7 +22360,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			return this._sourcesReady;
 		}
 		set sourcesReady(value) {
-			if (value && !this._sourcesReady && this.ready) this._onReadyCallback && this._onReadyCallback();
+			if (value && !this._sourcesReady && this.ready && this._onReadyCallback) this._onReadyCallback();
 			this._sourcesReady = value;
 		}
 		/**
@@ -22359,7 +22406,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			const defaultName = "texture" + this.textures.length;
 			if (!options.label) options.label = this.options.label + " " + (options.name ?? defaultName);
 			if (!options.name) options.name = defaultName;
-			const { viewDimension, useTransform, ...domTextureParams } = this.options.texturesOptions;
+			const { viewDimension: _viewDimension, useTransform: _useTransform, ...domTextureParams } = this.options.texturesOptions;
 			const texturesOptions = {
 				...options,
 				...domTextureParams
@@ -22391,7 +22438,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 				loaderSize = images.length + videos.length + canvases.length;
 				const onSourceUploaded = (texture) => {
 					sourcesLoaded++;
-					this._onLoadingCallback && this._onLoadingCallback(texture);
+					if (this._onLoadingCallback) this._onLoadingCallback(texture);
 					if (sourcesLoaded === loaderSize) this.sourcesReady = true;
 				};
 				if (!loaderSize) this.sourcesReady = true;
@@ -22414,7 +22461,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 		* @param element - new {@link HTMLElement} or string representing an {@link HTMLElement} selector to use.
 		*/
 		resetDOMElement(element) {
-			if (!!element) {
+			if (element) {
 				super.resetDOMElement(element);
 				this.domTextures.forEach((texture) => texture.resize());
 			} else if (!element && !this.renderer.production) throwWarning(`${this.options.label}: You are trying to reset a ${this.type} with a HTML element that does not exist. The old HTML element will be kept instead.`);
@@ -22628,7 +22675,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 		}, delta = {
 			x: 0,
 			y: 0
-		}, shouldWatch = true, onScroll = (delta = {
+		}, shouldWatch = true, onScroll = (_delta = {
 			x: 0,
 			y: 0
 		}) => {} } = {}) {
@@ -22697,7 +22744,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 		*/
 		constructor({ container, label, pixelRatio = window.devicePixelRatio ?? 1, context = {}, production = false, adapterOptions = {}, requiredFeatures = [], requestAdapterLimits = [], renderPass, camera, lights, autoRender = true, autoResize = true, watchScroll = true } = {}) {
 			this._onScrollCallback = () => {};
-			this._onErrorCallback = (message) => {};
+			this._onErrorCallback = () => {};
 			this._onContextLostCallback = () => {};
 			this._onContextDestroyedCallback = () => {};
 			this.type = "CurtainsGPU";
@@ -22818,7 +22865,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 				requestAdapterLimits: this.options.requestAdapterLimits,
 				autoRender: this.options.autoRender,
 				onError: (message) => setTimeout(() => {
-					this._onErrorCallback && this._onErrorCallback(message);
+					if (this._onErrorCallback) this._onErrorCallback(message);
 				}, 0),
 				onDeviceLost: (info) => this._onContextLostCallback && this._onContextLostCallback(info),
 				onDeviceDestroyed: (info) => this._onContextDestroyedCallback && this._onContextDestroyedCallback(info)
@@ -22937,7 +22984,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			this.domObjects.forEach((domObject) => {
 				if (domObject.domElement && domObject.watchScroll) domObject.updateScrollPosition(delta);
 			});
-			this._onScrollCallback && this._onScrollCallback();
+			if (this._onScrollCallback) this._onScrollCallback();
 		}
 		/**
 		* Update our {@link ScrollManager#scroll | scrollManager scroll values}. Called each time the scroll has changed if {@link GPUCurtains#options.watchScroll | watchScroll option} is set to true. Could be called externally as well.
@@ -23164,7 +23211,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			if (scenePassEntry) {
 				const _onBeforeRenderPass = scenePassEntry.onBeforeRenderPass;
 				scenePassEntry.onBeforeRenderPass = (commandEncoder, swapChainTexture) => {
-					_onBeforeRenderPass && _onBeforeRenderPass(commandEncoder, swapChainTexture);
+					if (_onBeforeRenderPass) _onBeforeRenderPass(commandEncoder, swapChainTexture);
 					this.renderer.renderSingleComputePass(commandEncoder, this, false);
 				};
 			}
@@ -23461,19 +23508,19 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 		}
 		/**
 		* Callback executed on mouse up event.
-		* @param e - {@link MouseEvent}.
+		* @param _e - {@link MouseEvent}.
 		* @private
 		*/
-		#onMouseUp(e) {
+		#onMouseUp(_e) {
 			this.#isOrbiting = false;
 			this.#isPaning = false;
 		}
 		/**
 		* Callback executed on touch end event.
-		* @param e - {@link MouseEvent}.
+		* @param _e - {@link MouseEvent}.
 		* @private
 		*/
-		#onTouchEnd(e) {
+		#onTouchEnd(_e) {
 			this.#isOrbiting = false;
 			this.#isPaning = false;
 		}
@@ -23728,7 +23775,8 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			const { width, height, colorCorr } = header;
 			const tgt = new Float32Array(width * height * 4);
 			let i = 0;
-			let { offset, data } = stream;
+			const { data } = stream;
+			let { offset } = stream;
 			for (let y = 0; y < height; ++y) {
 				if (data.getUint16(offset) !== 514) throw new Error("Incorrect scanline start hash");
 				if (data.getUint16(offset + 2) !== width) throw new Error("Scanline doesn't match picture dimension!");
@@ -24487,7 +24535,7 @@ struct Params {
 			if (value !== this.options.rotation) {
 				this.options.rotation = value;
 				this.rotationMatrix.rotateByAngleY(-value);
-				this._onRotationAxisChangedCallback && this._onRotationAxisChangedCallback();
+				if (this._onRotationAxisChangedCallback) this._onRotationAxisChangedCallback();
 			}
 		}
 		/**
@@ -24502,7 +24550,7 @@ struct Params {
 		* Create our {@link lutTexture} eagerly.
 		*/
 		createLUTTextures() {
-			const { size, computeSampleCount, ...lutTextureParams } = this.options.lutTextureParams;
+			const { size, computeSampleCount: _computeSampleCount, ...lutTextureParams } = this.options.lutTextureParams;
 			this.#lutStorageTexture = new Texture(this.renderer, {
 				label: "LUT storage texture",
 				name: "lutStorageTexture",
@@ -24562,7 +24610,7 @@ struct Params {
 				},
 				...textureDefaultOptions
 			});
-			const { size, computeSampleCount, ...diffuseTextureParams } = this.options.diffuseTextureParams;
+			const { size, computeSampleCount: _computeSampleCount, ...diffuseTextureParams } = this.options.diffuseTextureParams;
 			this.diffuseTexture = new Texture(this.renderer, {
 				...diffuseTextureParams,
 				visibility: ["fragment"],
@@ -24581,12 +24629,12 @@ struct Params {
 		* @param parameters.onAfterCompute - Optional callback to run just after the pass has been executed. Useful for eventual texture copies.
 		* @private
 		*/
-		#runComputePass({ computePass, label = "", onAfterCompute = (commandEncoder) => {} }) {
+		#runComputePass({ computePass, label = "", onAfterCompute = (_commandEncoder) => {} }) {
 			const commandEncoder = this.renderer.device?.createCommandEncoder({ label });
-			!this.renderer.production && commandEncoder.pushDebugGroup(label);
+			if (!this.renderer.production) commandEncoder.pushDebugGroup(label);
 			this.renderer.renderSingleComputePass(commandEncoder, computePass, false);
 			onAfterCompute(commandEncoder);
-			!this.renderer.production && commandEncoder.popDebugGroup();
+			if (!this.renderer.production) commandEncoder.popDebugGroup();
 			const commandBuffer = commandEncoder.finish();
 			this.renderer.device?.queue.submit([commandBuffer]);
 			this.renderer.pipelineManager.resetCurrentPipeline();
@@ -24608,7 +24656,7 @@ struct Params {
 				return;
 			}
 			const { computeSampleCount } = this.options.lutTextureParams;
-			let computeLUTPass = new ComputePass(this.renderer, {
+			const computeLUTPass = new ComputePass(this.renderer, {
 				label: "Compute LUT texture",
 				autoRender: false,
 				dispatchSize: [
@@ -24630,14 +24678,13 @@ struct Params {
 			});
 			this.lutTexture.textureBinding.resource = this.lutTexture.texture;
 			computeLUTPass.remove();
-			computeLUTPass = null;
 		}
 		/**
 		* Create the {@link cubemapTexture | cube map texture} from a loaded {@link HDRImageData} using a {@link ComputePass} that runs once.
 		* @param parsedHdr - parsed {@link HDRImageData} loaded by the {@link hdrLoader}.
 		*/
 		async computeSpecularCubemapFromHDRData(parsedHdr) {
-			let cubeStorageTexture = new Texture(this.renderer, {
+			const cubeStorageTexture = new Texture(this.renderer, {
 				label: "Cubemap storage",
 				name: "storageCubemap",
 				format: this.cubemapTexture.options.format,
@@ -24655,7 +24702,7 @@ struct Params {
 				},
 				viewDimension: "2d-array"
 			});
-			let computeCubeMapPass = new ComputePass(this.renderer, {
+			const computeCubeMapPass = new ComputePass(this.renderer, {
 				label: "Compute cubemap from equirectangular",
 				autoRender: false,
 				dispatchSize: [
@@ -24696,8 +24743,6 @@ struct Params {
 			computeCubeMapPass.remove();
 			cubeStorageTexture.destroy();
 			mipBuffers.forEach((buffer) => buffer.destroy());
-			cubeStorageTexture = null;
-			computeCubeMapPass = null;
 			mipBuffers = [];
 		}
 		/**
@@ -24808,7 +24853,7 @@ struct Params {
 				if (!this.renderer.production) throwWarning("EnvironmentMap: Could not generate the diffuse texture because the cube map texture is not set:" + this.cubemapTexture);
 				return;
 			}
-			let diffuseStorageTexture = new Texture(this.renderer, {
+			const diffuseStorageTexture = new Texture(this.renderer, {
 				label: "Diffuse storage cubemap",
 				name: "diffuseEnvMap",
 				format: this.diffuseTexture.options.format,
@@ -24822,7 +24867,7 @@ struct Params {
 				},
 				viewDimension: "2d-array"
 			});
-			let computeDiffusePass = new ComputePass(this.renderer, {
+			const computeDiffusePass = new ComputePass(this.renderer, {
 				label: "Compute diffuse map from specular map",
 				autoRender: false,
 				dispatchSize: [
@@ -24859,8 +24904,6 @@ struct Params {
 			});
 			computeDiffusePass.remove();
 			diffuseStorageTexture.destroy();
-			diffuseStorageTexture = null;
-			computeDiffusePass = null;
 		}
 		/**
 		* Load an HDR environment map and then generate the {@link specularTexture} and {@link diffuseTexture} using two separate {@link ComputePass}.
@@ -25054,7 +25097,7 @@ struct Params {
 				else if (iy === heightSegments && thetaEnd === Math.PI) uOffset = -.5 / widthSegments;
 				for (let ix = 0; ix <= widthSegments; ix++) {
 					const u = ix / widthSegments;
-					vertex.x = -radius * Math.cos(phiStart + u * phiLength) * Math.sin(thetaStart + v * thetaLength);
+					vertex.x = -1 * Math.cos(phiStart + u * phiLength) * Math.sin(thetaStart + v * thetaLength);
 					vertex.y = radius * Math.cos(thetaStart + v * thetaLength);
 					vertex.z = radius * Math.sin(phiStart + u * phiLength) * Math.sin(thetaStart + v * thetaLength);
 					vertices.push(vertex.x, vertex.y, vertex.z);
@@ -26947,11 +26990,11 @@ struct Params {
 				attenuationColor: volume && volume.attenuationColor !== void 0 ? new Vec3(volume.attenuationColor[0], volume.attenuationColor[1], volume.attenuationColor[2]) : new Vec3(1),
 				...volumeScatter && {
 					...volumeScatter.multiscatterColor !== void 0 && { multiscatterColor: new Vec3(volumeScatter.multiscatterColor[0], volumeScatter.multiscatterColor[1], volumeScatter.multiscatterColor[2]) },
-					...volumeScatter.scatterAnisotropy !== void 0 !== void 0 && { scatterAnisotropy: volumeScatter.scatterAnisotropy }
+					...volumeScatter.scatterAnisotropy !== void 0 && { scatterAnisotropy: volumeScatter.scatterAnisotropy }
 				},
 				...sheen && {
 					...sheen.sheenColorFactor !== void 0 && { sheenColor: new Vec3(sheen.sheenColorFactor[0], sheen.sheenColorFactor[1], sheen.sheenColorFactor[2]) },
-					...sheen.sheenRoughnessFactor !== void 0 !== void 0 && { sheenRoughness: sheen.sheenRoughnessFactor }
+					...sheen.sheenRoughnessFactor !== void 0 && { sheenRoughness: sheen.sheenRoughnessFactor }
 				},
 				...anisotropy && {
 					...anisotropy.anisotropyStrength !== void 0 && { anisotropy: anisotropy.anisotropyStrength },
@@ -27109,7 +27152,8 @@ struct Params {
 				child.node.scale.set(1);
 				const gltfCamera = this.gltf.cameras[node.camera];
 				if (gltfCamera.type === "perspective") {
-					let width = 0, height = 0;
+					let width;
+					let height;
 					if (gltfCamera.perspective.aspectRatio !== void 0) {
 						const minSize = Math.min(this.renderer.boundingRect.width, this.renderer.boundingRect.height);
 						width = minSize / gltfCamera.perspective.aspectRatio;
@@ -27294,7 +27338,7 @@ struct Params {
 				const name = GLTFScenesManager.getCleanAttributeName(attribName);
 				const accessor = this.gltf.accessors[accessorIndex];
 				const constructor = accessor.componentType ? GLTFScenesManager.getTypedArrayConstructorFromComponentType(accessor.componentType) : Float32Array;
-				let bufferViewIndex = accessor.bufferView;
+				const bufferViewIndex = accessor.bufferView;
 				if (bufferViewIndex === void 0) continue;
 				const bufferView = this.gltf.bufferViews[bufferViewIndex];
 				const byteStride = bufferView.byteStride;
@@ -27334,7 +27378,7 @@ struct Params {
 					array[i + 2] *= len;
 					array[i + 3] *= len;
 				}
-				let normalized = !!accessor.normalized;
+				const normalized = !!accessor.normalized;
 				const patchedAttributeParams = vertexBufferAttributeLayouts.find((vb) => size <= vb.size && vb.typedArrayConstructor === array.constructor && vb.normalized === normalized);
 				if (this.gltf.extensionsRequired?.includes("KHR_mesh_quantization") && array.constructor !== Float32Array && (name === "position" || name === "normal" || name === "tangent" || name.indexOf("uv") !== -1)) {
 					const stride = patchedAttributeParams.size;
@@ -27609,7 +27653,7 @@ struct Params {
 					const targetAttributes = [];
 					this.#parsePrimitiveProperty(target, targetAttributes);
 					const struct = targetAttributes.reduce((acc, attribute) => {
-						return acc = {
+						return {
 							...acc,
 							[attribute.name]: {
 								type: `array<${attribute.type}>`,
@@ -27843,7 +27887,7 @@ struct Params {
 		* @param patchMeshesParameters - allow to optionally patch the {@link LitMesh} parameters before creating it (can be used to add custom shaders chunks, uniforms or storages, change rendering options, etc.)
 		* @returns - Array of created {@link LitMesh}.
 		*/
-		addMeshes(patchMeshesParameters = (meshDescriptor) => {}) {
+		addMeshes(patchMeshesParameters = (_meshDescriptor) => {}) {
 			this.scenesManager.node.updateMatrixStack();
 			return this.scenesManager.meshesDescriptors.map((meshDescriptor) => {
 				const { geometry } = meshDescriptor.parameters;
@@ -28316,9 +28360,10 @@ struct Params {
 					case "occlusionTexture":
 					case "emissiveTexture":
 					case "anisotropyTexture":
-					case "clearcoatNormalTexture":
+					case "clearcoatNormalTexture": {
 						const descriptor = texturesDescriptors.find((t) => t.texture.options.name === textureName);
 						return descriptor ? [descriptor.texture] : [];
+					}
 					case "specularTexture":
 					case "specularColorTexture":
 					case "transmissionTexture":

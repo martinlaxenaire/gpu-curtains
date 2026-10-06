@@ -60,9 +60,9 @@ var Light = class extends Object3D {
 	}
 	/**
 	* Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link Light} has been overflowed or when updating the {@link Light} {@link renderer}.
-	* @param resetShadow - Whether to reset the {@link Light} shadow if any.
+	* @param _resetShadow - Whether to reset the {@link Light} shadow if any.
 	*/
-	reset(resetShadow = true) {
+	reset(_resetShadow = true) {
 		this.setRendererBinding();
 		this.onPropertyChanged("color", this.actualColor);
 	}
@@ -148,7 +148,7 @@ var Light = class extends Object3D {
 	* Called by the {@link core/scenes/Scene.Scene | Scene} before updating the matrix stack.
 	*/
 	onBeforeRenderScene() {
-		this._onBeforeRenderCallback && this._onBeforeRenderCallback();
+		if (this._onBeforeRenderCallback) this._onBeforeRenderCallback();
 	}
 	/**
 	* Callback to execute before updating the {@link core/scenes/Scene.Scene | Scene} matrix stack. This means it is called early and allows to update transformations values before actually setting the {@link Light} matrices. The callback won't be called if the {@link renderer} is not ready.

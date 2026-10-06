@@ -326,9 +326,10 @@ var GLTFPointerAnimationsManager = class {
 				case "occlusionTexture":
 				case "emissiveTexture":
 				case "anisotropyTexture":
-				case "clearcoatNormalTexture":
+				case "clearcoatNormalTexture": {
 					const descriptor = texturesDescriptors.find((t) => t.texture.options.name === textureName);
 					return descriptor ? [descriptor.texture] : [];
+				}
 				case "specularTexture":
 				case "specularColorTexture":
 				case "transmissionTexture":

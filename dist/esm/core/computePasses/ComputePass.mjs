@@ -53,15 +53,17 @@ var ComputePass = class {
 	* Whether this {@link ComputePass} should be added to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically.
 	* @private
 	*/
-	#autoRender = true;
+	#autoRender;
 	/** Flag indicating whether this {@link ComputePass} should run or not, much like the {@link core/meshes/Mesh.Mesh#visible | Mesh visible} flag. */
-	#active = true;
+	#active;
 	/**
 	* ComputePass constructor
 	* @param renderer - {@link Renderer} class object or {@link GPUCurtains} class object used to create this {@link ComputePass}.
 	* @param parameters - {@link ComputePassParams | parameters} used to create our {@link ComputePass}.
 	*/
 	constructor(renderer, parameters = {}) {
+		this.#autoRender = true;
+		this.#active = true;
 		this._onReadyCallback = () => {};
 		this._onBeforeRenderCallback = () => {};
 		this._onRenderCallback = () => {};
@@ -112,7 +114,7 @@ var ComputePass = class {
 		return this._ready;
 	}
 	set ready(value) {
-		if (value) this._onReadyCallback && this._onReadyCallback();
+		if (value && this._onReadyCallback) this._onReadyCallback();
 		this._ready = value;
 	}
 	/**
@@ -240,7 +242,7 @@ var ComputePass = class {
 	* Called from the renderer, useful to trigger an after resize callback.
 	*/
 	resize() {
-		this._onAfterResizeCallback && this._onAfterResizeCallback();
+		if (this._onAfterResizeCallback) this._onAfterResizeCallback();
 	}
 	/** EVENTS **/
 	/**
@@ -303,7 +305,7 @@ var ComputePass = class {
 	*/
 	onBeforeRenderPass() {
 		if (!this.renderer.ready) return;
-		if (this.active) this._onBeforeRenderCallback && this._onBeforeRenderCallback();
+		if (this.active && this._onBeforeRenderCallback) this._onBeforeRenderCallback();
 		this.material.onBeforeRender();
 		if (this.material && this.material.ready && !this.ready) this.ready = true;
 	}
@@ -313,14 +315,14 @@ var ComputePass = class {
 	*/
 	onRenderPass(pass) {
 		if (!this.material.ready) return;
-		this._onRenderCallback && this._onRenderCallback();
+		if (this._onRenderCallback) this._onRenderCallback();
 		this.material.render(pass);
 	}
 	/**
 	* Called after having rendered the {@link ComputePass}.
 	*/
 	onAfterRenderPass() {
-		this._onAfterRenderCallback && this._onAfterRenderCallback();
+		if (this._onAfterRenderCallback) this._onAfterRenderCallback();
 	}
 	/**
 	* Render our compute pass.
@@ -330,9 +332,9 @@ var ComputePass = class {
 	render(pass) {
 		this.onBeforeRenderPass();
 		if (!this.renderer.ready || !this.active) return;
-		!this.renderer.production && pass.pushDebugGroup(this.options.label);
+		if (!this.renderer.production) pass.pushDebugGroup(this.options.label);
 		this.onRenderPass(pass);
-		!this.renderer.production && pass.popDebugGroup();
+		if (!this.renderer.production) pass.popDebugGroup();
 		this.onAfterRenderPass();
 	}
 	/**

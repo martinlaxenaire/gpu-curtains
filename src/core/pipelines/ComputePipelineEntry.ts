@@ -27,7 +27,7 @@ export class ComputePipelineEntry extends PipelineEntry {
    * @param parameters - {@link PipelineEntryParams | parameters} used to create this {@link ComputePipelineEntry}
    */
   constructor(parameters: PipelineEntryParams) {
-    const { label, renderer, bindGroups } = parameters
+    const { label, renderer, bindGroups: _bindGroups } = parameters
 
     const type = 'ComputePipelineEntry'
 

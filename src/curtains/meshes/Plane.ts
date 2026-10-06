@@ -1,8 +1,6 @@
 import { isCurtainsRenderer } from '../../core/renderers/utils'
 import { PlaneGeometry, PlaneGeometryParams } from '../../core/geometries/PlaneGeometry'
 import { DOMMesh, DOMMeshBaseParams, DOMMeshParams } from './DOMMesh'
-import { Vec3 } from '../../math/Vec3'
-import { Vec2 } from '../../math/Vec2'
 import { cacheManager } from '../../utils/CacheManager'
 import { GPUCurtainsRenderer } from '../renderers/GPUCurtainsRenderer'
 import { GPUCurtains } from '../GPUCurtains'
@@ -65,6 +63,7 @@ export class Plane extends DOMMesh {
     // assign default params if needed
     const params = { ...defaultPlaneParams, ...parameters }
 
+    // eslint-disable-next-line prefer-const
     let { geometry, widthSegments, heightSegments, ...DOMMeshParams } = params
     const { instancesCount, vertexBuffers, ...materialParams } = DOMMeshParams
 

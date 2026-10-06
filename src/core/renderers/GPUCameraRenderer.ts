@@ -3,7 +3,6 @@ import { Camera } from '../cameras/Camera'
 import { PerspectiveCamera, PerspectiveCameraBaseOptions } from '../cameras/PerspectiveCamera'
 import { BufferBinding } from '../bindings/BufferBinding'
 import { BindGroup } from '../bindGroups/BindGroup'
-import { Vec3 } from '../../math/Vec3'
 import { AllowedBindGroups, Input } from '../../types/BindGroups'
 import { RectBBox } from '../DOM/DOMElement'
 import type { Light, LightsType, ShadowCastingLights } from '../lights/Light'
@@ -283,6 +282,7 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
       this.camera.onMatricesChanged = () => {}
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.camera = camera as any
     // if camera has no parent, set scene as parent
     if (!this.camera.parent) {
@@ -967,11 +967,11 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
 
     this.resizeCamera()
 
-    this._onResizeCallback && this._onResizeCallback()
+    if (this._onResizeCallback) this._onResizeCallback()
 
     this.resizeObjects()
 
-    this._onAfterResizeCallback && this._onAfterResizeCallback()
+    if (this._onAfterResizeCallback) this._onAfterResizeCallback()
   }
 
   /* RENDER */

@@ -1,5 +1,5 @@
 import { Box3 } from '../../math/Box3'
-import { generateUUID, throwError, throwWarning } from '../../utils/utils'
+import { generateUUID, throwError } from '../../utils/utils'
 import {
   GeometryBuffer,
   GeometryOptions,
@@ -16,7 +16,6 @@ import { TypedArrayConstructor } from '../bindings/utils'
 import { GPURenderPassTypes } from '../pipelines/PipelineManager'
 import { Vec3 } from '../../math/Vec3'
 import { getVertexBufferAttributeLayout, vertexBufferViewSetFunction } from './utils'
-import { IndexBuffer } from './IndexedGeometry'
 
 /**
  * Used to create a {@link Geometry} from given parameters like instances count or geometry attributes (vertices, uvs, normals).<br>

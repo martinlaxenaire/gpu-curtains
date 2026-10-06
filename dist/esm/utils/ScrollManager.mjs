@@ -16,7 +16,7 @@ var ScrollManager = class {
 	}, delta = {
 		x: 0,
 		y: 0
-	}, shouldWatch = true, onScroll = (delta = {
+	}, shouldWatch = true, onScroll = (_delta = {
 		x: 0,
 		y: 0
 	}) => {} } = {}) {
