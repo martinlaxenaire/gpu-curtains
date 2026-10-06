@@ -71,7 +71,7 @@ export class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
 
   // callbacks / events
   /** function assigned to the {@link onLoading} callback */
-  _onLoadingCallback = (texture: DOMTexture): void => {
+  _onLoadingCallback = (_texture: DOMTexture): void => {
     /* allow empty callback */
   }
 
@@ -87,7 +87,7 @@ export class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
     parameters: DOMMeshParams
   ) {
     parameters = { ...defaultDOMMeshParams, ...parameters }
-    const { autoloadSources, watchScroll, domTextures, ...projectedMeshParams } = parameters
+    const { autoloadSources, domTextures } = parameters
 
     super(renderer, element, parameters)
 
@@ -133,8 +133,8 @@ export class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
   }
 
   set ready(value: boolean) {
-    if (value && !this._ready && this.sourcesReady) {
-      this._onReadyCallback && this._onReadyCallback()
+    if (value && !this._ready && this.sourcesReady && this._onReadyCallback) {
+      this._onReadyCallback()
     }
 
     this._ready = value
@@ -149,8 +149,8 @@ export class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
   }
 
   set sourcesReady(value: boolean) {
-    if (value && !this._sourcesReady && this.ready) {
-      this._onReadyCallback && this._onReadyCallback()
+    if (value && !this._sourcesReady && this.ready && this._onReadyCallback) {
+      this._onReadyCallback()
     }
 
     this._sourcesReady = value
@@ -220,7 +220,11 @@ export class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
       options.name = defaultName
     }
 
-    const { viewDimension, useTransform, ...domTextureParams } = this.options.texturesOptions
+    const {
+      viewDimension: _viewDimension,
+      useTransform: _useTransform,
+      ...domTextureParams
+    } = this.options.texturesOptions
 
     const texturesOptions: DOMTextureParams = { ...options, ...domTextureParams }
 
@@ -264,7 +268,7 @@ export class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
       const onSourceUploaded = (texture) => {
         sourcesLoaded++
 
-        this._onLoadingCallback && this._onLoadingCallback(texture)
+        if (this._onLoadingCallback) this._onLoadingCallback(texture)
 
         if (sourcesLoaded === loaderSize) {
           this.sourcesReady = true

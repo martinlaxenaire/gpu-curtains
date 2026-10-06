@@ -7,7 +7,8 @@
 */
 const declareAttributesVars = ({ geometry }) => {
 	let attributeVars = geometry.vertexBuffers.map((vertexBuffer) => vertexBuffer.attributes.map((attribute) => {
-		let { name, type } = attribute;
+		const { name, ...attributeRest } = attribute;
+		let { type } = attributeRest;
 		let swizzle = "";
 		if (name === "position" || name === "normal") {
 			type = "vec3f";

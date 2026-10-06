@@ -266,14 +266,20 @@ export class Scene extends Object3D {
 
   /**
    * Remove a {@link RenderTarget} from our scene {@link renderPassEntries} outputTarget array.
-   * @param renderTarget - {@link RenderTarget} to add.
+   * @param renderTarget - {@link RenderTarget} to remove.
    */
   removeRenderTarget(renderTarget: RenderTarget) {
-    let targetPassEntries = renderTarget.options.isPostTarget
+    const targetPassEntries = renderTarget.options.isPostTarget
       ? this.renderPassEntries.postRenderTarget
       : this.renderPassEntries.renderTarget
 
-    targetPassEntries = targetPassEntries.filter((entry) => entry.renderPass.uuid !== renderTarget.renderPass.uuid)
+    const filteredEntries = targetPassEntries.filter((entry) => entry.renderPass.uuid !== renderTarget.renderPass.uuid)
+
+    if (renderTarget.options.isPostTarget) {
+      this.renderPassEntries.postRenderTarget = filteredEntries
+    } else {
+      this.renderPassEntries.renderTarget = filteredEntries
+    }
   }
 
   /**
@@ -727,13 +733,17 @@ export class Scene extends Object3D {
       }
 
       // apply world matrices to objects
-      meshA.geometry
-        ? posA.copy(meshA.geometry.boundingBox.center).applyMat4(meshA.worldMatrix)
-        : meshA.worldMatrix.getTranslation(posA)
+      if (meshA.geometry) {
+        posA.copy(meshA.geometry.boundingBox.center).applyMat4(meshA.worldMatrix)
+      } else {
+        meshA.worldMatrix.getTranslation(posA)
+      }
 
-      meshB.geometry
-        ? posB.copy(meshB.geometry.boundingBox.center).applyMat4(meshB.worldMatrix)
-        : meshB.worldMatrix.getTranslation(posB)
+      if (meshB.geometry) {
+        posB.copy(meshB.geometry.boundingBox.center).applyMat4(meshB.worldMatrix)
+      } else {
+        meshB.worldMatrix.getTranslation(posB)
+      }
 
       // apply scale to bounding sphere radius
       const radiusA = meshA.geometry ? meshA.geometry.boundingBox.radius * meshA.worldMatrix.getMaxScaleOnAxis() : 0
@@ -823,7 +833,7 @@ export class Scene extends Object3D {
     // set the pass texture to render to
     const swapChainTexture = renderPassEntry.renderPass.updateView(renderPassEntry.renderTexture?.texture)
 
-    renderPassEntry.onBeforeRenderPass && renderPassEntry.onBeforeRenderPass(commandEncoder, swapChainTexture)
+    if (renderPassEntry.onBeforeRenderPass) renderPassEntry.onBeforeRenderPass(commandEncoder, swapChainTexture)
 
     if (renderPassEntry.useCustomRenderPass) {
       renderPassEntry.useCustomRenderPass(commandEncoder)
@@ -880,7 +890,7 @@ export class Scene extends Object3D {
       pass.end()
     }
 
-    renderPassEntry.onAfterRenderPass && renderPassEntry.onAfterRenderPass(commandEncoder, swapChainTexture)
+    if (renderPassEntry.onAfterRenderPass) renderPassEntry.onAfterRenderPass(commandEncoder, swapChainTexture)
 
     this.renderer.pipelineManager.resetCurrentPipeline()
 

@@ -404,7 +404,8 @@ export class BufferBinding extends Binding {
    * @param params - params to use for cloning
    */
   clone(params = {} as BufferBindingParams | WritableBufferBindingParams): BufferBinding | WritableBufferBinding {
-    let { struct, childrenBindings, parent, ...defaultParams } = params
+    const { childrenBindings: _childrenBindings, parent, ...otherParams } = params
+    let { struct, ...defaultParams } = otherParams
 
     // patch default params with this buffer bindings options
     const { label, name, bindingType, visibility, useStruct, access, usage } = this.options
@@ -466,7 +467,7 @@ export class BufferBinding extends Binding {
       bufferBindingCopy.options.childrenBindings.forEach((child) => {
         bufferBindingCopy.childrenBindings = [
           ...bufferBindingCopy.childrenBindings,
-          Array.from(Array(Math.max(1, child.count || 1)).keys()).map((i) => {
+          Array.from(Array(Math.max(1, child.count || 1)).keys()).map(() => {
             return child.binding.clone({
               ...child.binding.options,
               // clone struct with new arrays
@@ -609,7 +610,7 @@ export class BufferBinding extends Binding {
         // clone them with fresh arrays
         this.childrenBindings = [
           ...this.childrenBindings,
-          Array.from(Array(count).keys()).map((i) => {
+          Array.from(Array(count).keys()).map(() => {
             return child.binding.clone({
               ...child.binding.options,
               // clone struct with new arrays
@@ -972,7 +973,7 @@ export class BufferBinding extends Binding {
       const bufferElement = this.bufferElements.find((bufferEl) => bufferEl.key === binding.name)
 
       if (binding.shouldUpdate && bufferElement) {
-        binding.onBeforeUpdate && binding.onBeforeUpdate()
+        if (binding.onBeforeUpdate) binding.onBeforeUpdate()
         // we're going to directly update the arrayBuffer from the buffer element update method
         bufferElement.update(binding.value)
 
@@ -993,7 +994,7 @@ export class BufferBinding extends Binding {
     if (this.shouldUpdate && this.parent && this.parentViewSetBufferEls) {
       let index = 0
 
-      this.parentViewSetBufferEls.forEach((viewSetBuffer, i) => {
+      this.parentViewSetBufferEls.forEach((viewSetBuffer) => {
         const { bufferElement, viewSetFunction } = viewSetBuffer
         bufferElement.view.forEach((value) => {
           viewSetFunction(index * bufferElement.view.BYTES_PER_ELEMENT, value, true)

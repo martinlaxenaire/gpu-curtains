@@ -92,10 +92,10 @@ export class DOMElement {
     {
       element = document.body,
       priority = 1,
-      onSizeChanged = (boundingRect = null) => {
+      onSizeChanged = () => {
         /* allow empty callback */
       },
-      onPositionChanged = (boundingRect = null) => {
+      onPositionChanged = () => {
         /* allow empty callback */
       },
     } = {} as DOMElementParams

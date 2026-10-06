@@ -268,6 +268,7 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
      *
      * @param {MeshBaseArrayParams} params - our MeshBaseMixin parameters
      */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     constructor(...params: any[]) {
       super(
         params[0] as CameraRenderer | GPUCurtains,
@@ -501,10 +502,10 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
         containerBoundingRect: this.renderer.boundingRect,
         DOMFrustumMargins: this.options.DOMFrustumMargins,
         onReEnterView: () => {
-          this._onReEnterViewCallback && this._onReEnterViewCallback()
+          if (this._onReEnterViewCallback) this._onReEnterViewCallback()
         },
         onLeaveView: () => {
-          this._onLeaveViewCallback && this._onLeaveViewCallback()
+          if (this._onLeaveViewCallback) this._onLeaveViewCallback()
         },
       })
 

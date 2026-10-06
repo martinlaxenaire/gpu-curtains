@@ -5,7 +5,7 @@ export interface TaskQueueItem {
     /** Priority order in the {@link TasksQueueManager#queue | tasks queue array} */
     order: number;
     /** Callback to execute */
-    callback: (args?: any) => void;
+    callback: (args?: unknown) => void;
     /** Whether to execute the task only once and them automatically remove it from the {@link TasksQueueManager#queue | tasks queue array} */
     once: boolean;
 }
@@ -37,5 +37,5 @@ export declare class TasksQueueManager {
     /**
      * Execute the {@link TasksQueueManager#queue | tasks queue array}
      */
-    execute(args?: any): void;
+    execute(args?: unknown): void;
 }

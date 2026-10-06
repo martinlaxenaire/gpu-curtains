@@ -11,7 +11,8 @@ export const declareAttributesVars = ({ geometry }: { geometry: Geometry }): str
     .map((vertexBuffer) =>
       vertexBuffer.attributes
         .map((attribute) => {
-          let { name, type } = attribute
+          const { name, ...attributeRest } = attribute
+          let { type } = attributeRest
           let swizzle = ''
 
           // dequantize and force correct type

@@ -89,7 +89,7 @@ function ProjectedMeshBaseMixin(Base) {
 			if (this.options.transmissive) {
 				renderer = isCameraRenderer(renderer, this.options.label + " " + renderer.type);
 				renderer.createTransmissionTarget();
-				let transmissiveTexture = this.material.textures.find((texture) => texture.options.name === "transmissionBackgroundTexture");
+				const transmissiveTexture = this.material.textures.find((texture) => texture.options.name === "transmissionBackgroundTexture");
 				if (transmissiveTexture) transmissiveTexture.copy(renderer.transmissionTarget.texture);
 			}
 			super.setRenderer(renderer);
@@ -187,10 +187,10 @@ function ProjectedMeshBaseMixin(Base) {
 				containerBoundingRect: this.renderer.boundingRect,
 				DOMFrustumMargins: this.options.DOMFrustumMargins,
 				onReEnterView: () => {
-					this._onReEnterViewCallback && this._onReEnterViewCallback();
+					if (this._onReEnterViewCallback) this._onReEnterViewCallback();
 				},
 				onLeaveView: () => {
-					this._onLeaveViewCallback && this._onLeaveViewCallback();
+					if (this._onLeaveViewCallback) this._onLeaveViewCallback();
 				}
 			});
 			this.DOMFrustumMargins = this.domFrustum.DOMFrustumMargins;

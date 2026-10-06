@@ -287,12 +287,14 @@ export class GLTFScenesManager {
     switch (mode) {
       case GL.TRIANGLE_STRIP:
       // not supported by WebGPU, default to triangle-strip
+      // falls through
       case GL.TRIANGLE_FAN:
         return 'triangle-strip'
       case GL.LINES:
         return 'line-list'
       case GL.LINE_STRIP:
       // not supported by WebGPU, default to line-strip
+      // falls through
       case GL.LINE_LOOP:
         return 'line-strip'
       case GL.POINTS:
@@ -861,7 +863,7 @@ export class GLTFScenesManager {
     const iridescence = (extensions && extensions.KHR_materials_iridescence) || null
     const diffuseTransmission = (extensions && extensions.KHR_materials_diffuse_transmission) || null
 
-    // @ts-ignore
+    // @ts-expect-error deprecated extension
     const pbrSpecularGlossiness = (extensions && extensions.KHR_materials_pbrSpecularGlossiness) || null
     if (pbrSpecularGlossiness && !this.renderer.production) {
       throwWarning('GLTFScenesManager: KHR_materials_pbrSpecularGlossiness is deprecated and therefore not supported.')
@@ -924,7 +926,7 @@ export class GLTFScenesManager {
             volumeScatter.multiscatterColor[2]
           ),
         }),
-        ...((volumeScatter.scatterAnisotropy !== undefined) !== undefined && {
+        ...(volumeScatter.scatterAnisotropy !== undefined && {
           scatterAnisotropy: volumeScatter.scatterAnisotropy,
         }),
       }),
@@ -933,7 +935,7 @@ export class GLTFScenesManager {
         ...(sheen.sheenColorFactor !== undefined && {
           sheenColor: new Vec3(sheen.sheenColorFactor[0], sheen.sheenColorFactor[1], sheen.sheenColorFactor[2]),
         }),
-        ...((sheen.sheenRoughnessFactor !== undefined) !== undefined && {
+        ...(sheen.sheenRoughnessFactor !== undefined && {
           sheenRoughness: sheen.sheenRoughnessFactor,
         }),
       }),
@@ -1180,8 +1182,8 @@ export class GLTFScenesManager {
       const gltfCamera = this.gltf.cameras[node.camera]
 
       if (gltfCamera.type === 'perspective') {
-        let width = 0,
-          height = 0
+        let width: number
+        let height: number
 
         if (gltfCamera.perspective.aspectRatio !== undefined) {
           const minSize = Math.min(this.renderer.boundingRect.width, this.renderer.boundingRect.height)
@@ -2089,7 +2091,7 @@ export class GLTFScenesManager {
 
         const struct = targetAttributes.reduce(
           (acc, attribute) => {
-            return (acc = {
+            return {
               ...acc,
               ...{
                 [attribute.name]: {
@@ -2097,7 +2099,7 @@ export class GLTFScenesManager {
                   value: attribute.array,
                 },
               },
-            })
+            }
           },
           {
             weight: {
@@ -2480,7 +2482,7 @@ export class GLTFScenesManager {
    * @param patchMeshesParameters - allow to optionally patch the {@link LitMesh} parameters before creating it (can be used to add custom shaders chunks, uniforms or storages, change rendering options, etc.)
    * @returns - Array of created {@link LitMesh}.
    */
-  addMeshes(patchMeshesParameters = (meshDescriptor: MeshDescriptor) => {}): LitMesh[] {
+  addMeshes(patchMeshesParameters = (_meshDescriptor: MeshDescriptor) => {}): LitMesh[] {
     // once again, update all the matrix stack eagerly
     // because the main node or children transformations might have changed
     this.scenesManager.node.updateMatrixStack()

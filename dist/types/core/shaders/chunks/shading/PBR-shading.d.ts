@@ -4,7 +4,7 @@ import { PBRFragmentShaderInputParams } from '../../full/fragment/get-fragment-s
 export interface GetPBRShadingParams extends GetShadingParams {
     /** {@link extras/environmentMap/EnvironmentMap.EnvironmentMap | EnvironmentMap} to use for IBL shading. */
     environmentMap?: PBRFragmentShaderInputParams['environmentMap'];
-    /** {@link ShaderTextureDescriptor | Transmission scene background texture descriptor} to use if any. */
+    /** {@link extras/meshes/LitMesh.ShaderTextureDescriptor | Transmission scene background texture descriptor} to use if any. */
     transmissionBackgroundTexture?: PBRFragmentShaderInputParams['transmissionBackgroundTexture'];
     /** The {@link types/gltf/GLTFExtensions.GLTFExtensionsUsed | glTF extensions} used to generate this fragment shader. */
     extensionsUsed?: PBRFragmentShaderInputParams['extensionsUsed'];

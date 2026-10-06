@@ -144,9 +144,9 @@ export declare class GPURenderer {
     /** Allow to add callbacks to be executed at each render after the {@link Scene} has been rendered and the {@link GPUCommandEncoder} has been submitted. */
     onAfterCommandEncoderSubmission: TasksQueueManager;
     /** function assigned to the {@link onBeforeRender} callback. */
-    _onBeforeRenderCallback: (commandEncoder: GPUCommandEncoder) => void;
+    _onBeforeRenderCallback: (_commandEncoder: GPUCommandEncoder) => void;
     /** function assigned to the {@link onAfterRender} callback. */
-    _onAfterRenderCallback: (commandEncoder: GPUCommandEncoder) => void;
+    _onAfterRenderCallback: (_commandEncoder: GPUCommandEncoder) => void;
     /** function assigned to the {@link onResize} callback. */
     _onResizeCallback: () => void;
     /** function assigned to the {@link onAfterResize} callback. */

@@ -2,7 +2,6 @@ import { Geometry } from './Geometry'
 import { GeometryBuffer, GeometryParams } from '../../types/Geometries'
 import { Buffer } from '../buffers/Buffer'
 import { Renderer } from '../renderers/utils'
-import { TypedArrayConstructor } from '../bindings/utils'
 import { GPURenderPassTypes } from '../pipelines/PipelineManager'
 import { Vec3 } from '../../math/Vec3'
 

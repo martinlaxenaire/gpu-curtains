@@ -691,7 +691,7 @@ export class Mat4 {
     const sm32 = te[9] * is2
     const sm33 = te[10] * is3
     const trace = sm11 + sm22 + sm33
-    let S = 0
+    let S: number
     if (trace > 0) {
       S = Math.sqrt(trace + 1.0) * 2
       qe[3] = 0.25 * S

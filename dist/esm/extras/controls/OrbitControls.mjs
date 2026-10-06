@@ -264,19 +264,19 @@ var OrbitControls = class {
 	}
 	/**
 	* Callback executed on mouse up event.
-	* @param e - {@link MouseEvent}.
+	* @param _e - {@link MouseEvent}.
 	* @private
 	*/
-	#onMouseUp(e) {
+	#onMouseUp(_e) {
 		this.#isOrbiting = false;
 		this.#isPaning = false;
 	}
 	/**
 	* Callback executed on touch end event.
-	* @param e - {@link MouseEvent}.
+	* @param _e - {@link MouseEvent}.
 	* @private
 	*/
-	#onTouchEnd(e) {
+	#onTouchEnd(_e) {
 		this.#isOrbiting = false;
 		this.#isPaning = false;
 	}

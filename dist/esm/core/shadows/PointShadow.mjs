@@ -215,7 +215,7 @@ var PointShadow = class extends Shadow {
 	clearDepthTexture() {
 		if (!this.depthTexture || !this.depthTexture.texture) return;
 		const commandEncoder = this.renderer.device.createCommandEncoder();
-		!this.renderer.production && commandEncoder.pushDebugGroup(`Clear ${this.depthTexture.texture.label} command encoder`);
+		if (!this.renderer.production) commandEncoder.pushDebugGroup(`Clear ${this.depthTexture.texture.label} command encoder`);
 		for (let i = 0; i < 6; i++) {
 			const renderPassDescriptor = {
 				colorAttachments: [],
@@ -233,7 +233,7 @@ var PointShadow = class extends Shadow {
 			};
 			this.depthPassTarget.renderPass.beginRenderPass(commandEncoder, renderPassDescriptor).end();
 		}
-		!this.renderer.production && commandEncoder.popDebugGroup();
+		if (!this.renderer.production) commandEncoder.popDebugGroup();
 		this.renderer.device.queue.submit([commandEncoder.finish()]);
 	}
 	/**
@@ -294,7 +294,9 @@ var PointShadow = class extends Shadow {
 	* @returns - Depth pass vertex shader.
 	*/
 	getDefaultShadowDepthVs({ bindings = [], geometry }) {
-		return { code: getDefaultPointShadowDepthVs(this.index, {
+		return { 
+		/** Returned code. */
+code: getDefaultPointShadowDepthVs(this.index, {
 			bindings,
 			geometry
 		}) };
@@ -304,7 +306,9 @@ var PointShadow = class extends Shadow {
 	* @returns - A {@link types/Materials.ShaderOptions | ShaderOptions} with the depth pass fragment shader.
 	*/
 	getDefaultShadowDepthFs() {
-		return { code: getDefaultPointShadowDepthFs(this.index) };
+		return { 
+		/** Returned code. */
+code: getDefaultPointShadowDepthFs(this.index) };
 	}
 	/**
 	* Patch the given {@link Mesh} material parameters to create the depth mesh. Here we'll be adding the first {@link CameraRenderer.pointShadowsCubeFaceBindGroups | renderer pointShadowsCubeFaceBindGroups} bind group containing the face index onto which we'll be drawing. This bind group will be swapped when rendering using {@link renderDepthPass}.

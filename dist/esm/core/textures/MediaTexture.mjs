@@ -102,9 +102,9 @@ var MediaTexture = class MediaTexture extends Texture {
 				height: parameters.fixedSize?.height ?? 1
 			}
 		});
-		this._onSourceLoadedCallback = (source) => {};
+		this._onSourceLoadedCallback = (_source) => {};
 		this._onAllSourcesLoadedCallback = () => {};
-		this._onSourceUploadedCallback = (source) => {};
+		this._onSourceUploadedCallback = (_source) => {};
 		this._onAllSourcesUploadedCallback = () => {};
 		this.type = "MediaTexture";
 		const supportExternalTexture = this.renderer.device ? typeof this.renderer.device.importExternalTexture !== "undefined" : true;
@@ -157,7 +157,7 @@ var MediaTexture = class MediaTexture extends Texture {
 	* @param value - boolean flag indicating if all the {@link sources} have been loaded.
 	*/
 	set sourcesLoaded(value) {
-		if (value && !this.sourcesLoaded) this._onAllSourcesLoadedCallback && this._onAllSourcesLoadedCallback();
+		if (value && !this.sourcesLoaded && this._onAllSourcesLoadedCallback) this._onAllSourcesLoadedCallback();
 		this.#sourcesLoaded = value;
 	}
 	/**
@@ -171,7 +171,7 @@ var MediaTexture = class MediaTexture extends Texture {
 	* @param value - boolean flag indicating if all the {@link sources} have been uploaded
 	*/
 	set sourcesUploaded(value) {
-		if (value && !this.sourcesUploaded) this._onAllSourcesUploadedCallback && this._onAllSourcesUploadedCallback();
+		if (value && !this.sourcesUploaded && this._onAllSourcesUploadedCallback) this._onAllSourcesUploadedCallback();
 		this.#sourcesUploaded = value;
 	}
 	/**
@@ -381,7 +381,7 @@ var MediaTexture = class MediaTexture extends Texture {
 			this.texture = null;
 			try {
 				source.externalSource = new VideoFrame(video);
-			} catch (e) {
+			} catch {
 				const offscreen = new OffscreenCanvas(this.size.width, this.size.height);
 				offscreen.getContext("2d");
 				source.externalSource = new VideoFrame(offscreen, { timestamp: 0 });
@@ -562,7 +562,7 @@ var MediaTexture = class MediaTexture extends Texture {
 	* @private
 	*/
 	#setSourceLoaded(source) {
-		this._onSourceLoadedCallback && this._onSourceLoadedCallback(source);
+		if (this._onSourceLoadedCallback) this._onSourceLoadedCallback(source);
 		if ((this.sources.filter((source) => source.sourceLoaded)?.length || 0) === this.size.depth) this.sourcesLoaded = true;
 	}
 	/**
@@ -571,7 +571,7 @@ var MediaTexture = class MediaTexture extends Texture {
 	*/
 	setSourceUploaded(sourceIndex = 0) {
 		this.sources[sourceIndex].sourceUploaded = true;
-		this._onSourceUploadedCallback && this._onSourceUploadedCallback(this.sources[sourceIndex].source);
+		if (this._onSourceUploadedCallback) this._onSourceUploadedCallback(this.sources[sourceIndex].source);
 		if ((this.sources.filter((source) => source.sourceUploaded)?.length || 0) === this.size.depth) this.sourcesUploaded = true;
 	}
 	/**

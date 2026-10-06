@@ -4,7 +4,7 @@ import { ProjectedMeshBaseMixin, ProjectedMeshParameters } from './mixins/Projec
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 
 /** Parameters used to create a {@link Mesh}. */
-export interface MeshParams extends Omit<ProjectedMeshParameters, 'useProjection'> {}
+export type MeshParams = Omit<ProjectedMeshParameters, 'useProjection'>
 
 /**
  * Create a 3D Mesh.
@@ -92,7 +92,7 @@ export class Mesh extends ProjectedMeshBaseMixin(ProjectedObject3D) {
     // we could pass our curtains object OR our curtains renderer object
     renderer = isCameraRenderer(renderer, parameters.label ? parameters.label + ' Mesh' : 'Mesh')
 
-    // @ts-ignore
+    // @ts-expect-error use mes mixin super constructor
     super(renderer, null, parameters)
 
     this.type = 'Mesh'

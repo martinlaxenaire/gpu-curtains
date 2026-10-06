@@ -18,7 +18,7 @@ import { Texture } from '../../core/textures/Texture'
 import { MediaTexture } from '../../core/textures/MediaTexture'
 import { Sampler } from '../../core/samplers/Sampler'
 import { EnvironmentMap } from '../environmentMap/EnvironmentMap'
-import { ColorSpace, FragmentOutput, ToneMappings } from '../../types/shading'
+import { ColorSpace, FragmentOutput } from '../../types/shading'
 import { MaterialExtensionKeys } from '../../types/gltf/GLTFExtensions'
 
 /** Defines all kinds of shading models available. */
@@ -319,6 +319,7 @@ export class LitMesh extends Mesh {
   constructor(renderer: CameraRenderer | GPUCurtains, parameters: LitMeshParameters = {}) {
     renderer = isCameraRenderer(renderer, 'LitMesh')
 
+    // eslint-disable-next-line prefer-const
     let { material, ...defaultParams } = parameters
 
     if (!material) material = {}

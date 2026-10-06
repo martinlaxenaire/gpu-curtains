@@ -5,14 +5,13 @@ import { getPBRDirect } from '../fragment/head/get-PBR-direct'
 import { getPBRShading } from '../fragment/body/get-PBR-shading'
 import { PBRFragmentShaderInputParams } from '../../full/fragment/get-fragment-shader-code'
 import { applyToneMapping } from '../fragment/body/apply-tone-mapping'
-import { ShaderTextureDescriptor } from '../../../../extras/meshes/LitMesh'
 import { BRDF_GGX } from '../utils/BRDF_GGX'
 
 /** Defines the basic parameters available for the PBR shading getter function. */
 export interface GetPBRShadingParams extends GetShadingParams {
   /** {@link extras/environmentMap/EnvironmentMap.EnvironmentMap | EnvironmentMap} to use for IBL shading. */
   environmentMap?: PBRFragmentShaderInputParams['environmentMap']
-  /** {@link ShaderTextureDescriptor | Transmission scene background texture descriptor} to use if any. */
+  /** {@link extras/meshes/LitMesh.ShaderTextureDescriptor | Transmission scene background texture descriptor} to use if any. */
   transmissionBackgroundTexture?: PBRFragmentShaderInputParams['transmissionBackgroundTexture']
   /** The {@link types/gltf/GLTFExtensions.GLTFExtensionsUsed | glTF extensions} used to generate this fragment shader. */
   extensionsUsed?: PBRFragmentShaderInputParams['extensionsUsed']
@@ -93,16 +92,16 @@ fn getPBR(
   ${useOcclusion ? 'occlusion: f32,' : ''}
 ) -> vec4f {
   ${!useOcclusion ? 'let occlusion: f32 = 1.0;' : ''}
-  
+
   var outputColor: vec4f = color;
-  
+
   ${getPBRShading({ receiveShadows, environmentMap, transmissionBackgroundTexture, extensionsUsed })}
-  
+
   outputColor = vec4(outgoingLight, outputColor.a);
   outputColor = vec4(outputColor.rgb + emissive, outputColor.a);
-  
+
   ${applyToneMapping({ toneMapping, outputColorSpace })}
-    
+
   return outputColor;
 }
 `

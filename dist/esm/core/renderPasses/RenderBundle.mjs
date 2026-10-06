@@ -321,13 +321,11 @@ var RenderBundle = class {
 			label: this.options.label + " (encoder)"
 		});
 		if (!this.renderer.production) this.encoder.pushDebugGroup(`${this.options.label}: create encoder`);
-		let offset = 0;
 		this.meshes.forEach((mesh) => {
 			if (mesh.visible) {
 				mesh.material.render(this.encoder);
 				mesh.geometry.render(this.encoder);
 			}
-			offset++;
 		});
 		if (!this.renderer.production) this.encoder.popDebugGroup();
 		this.bundle = this.encoder.finish({ label: this.options.label + " (bundle)" });
@@ -380,14 +378,12 @@ var RenderBundle = class {
 				mesh.onAfterRenderPass();
 			});
 		}
-		let index = 0;
 		if (!this.ready) {
 			let isReady = true;
 			for (const [_key, mesh] of this.meshes) {
 				mesh.render(pass);
 				if (!mesh.ready) isReady = false;
 				for (const texture of mesh.textures) if (texture instanceof MediaTexture && !texture.sourcesUploaded) isReady = false;
-				index++;
 			}
 			this.updateBinding();
 			this.ready = isReady;

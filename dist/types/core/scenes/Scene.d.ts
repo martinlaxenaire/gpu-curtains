@@ -117,7 +117,7 @@ export declare class Scene extends Object3D {
     addRenderTarget(renderTarget: RenderTarget): void;
     /**
      * Remove a {@link RenderTarget} from our scene {@link renderPassEntries} outputTarget array.
-     * @param renderTarget - {@link RenderTarget} to add.
+     * @param renderTarget - {@link RenderTarget} to remove.
      */
     removeRenderTarget(renderTarget: RenderTarget): void;
     /**

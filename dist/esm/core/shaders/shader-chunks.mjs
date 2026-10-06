@@ -7,9 +7,15 @@ import { getVertexToUVCoords } from "./chunks/fragment/head/get-vertex-to-UV-coo
 * Useful WGSL code chunks added to the vertex and/or fragment shaders
 */
 const shaderChunks = {
-	vertex: { getUVCover },
+	/** WGSL code chunks added to the vertex shader */
+	vertex: { 
+	/** Applies given texture matrix (`mat4x4f`) to given uv coordinates (`vec2f`). */
+getUVCover },
+	/** WGSL code chunks added to the fragment shader */
 	fragment: {
+		/** Applies given texture matrix (`mat4x4f`) to given uv coordinates (`vec2f`). */
 		getUVCover,
+		/** Convert vertex position as `vec2f` or `vec3f` to uv coordinates `vec2f`. */
 		getVertexToUVCoords
 	}
 };
@@ -17,10 +23,14 @@ const shaderChunks = {
 * Useful WGSL code chunks added to the projected Meshes vertex and/or fragment shaders
 */
 const ProjectedShaderChunks = {
+	/** WGSL code chunks added to the vertex shader */
 	vertex: {
+		/** Get output `position` (`vec4f`) vector by applying model view projection matrix to the attribute `position` (`vec3f`) vector. */
 		getPositionHelpers,
+		/** Get `normal` (`vec3f`) in world or view space. */
 		getNormalHelpers
 	},
+	/** WGSL code chunks added to the fragment shader */
 	fragment: {}
 };
 //#endregion

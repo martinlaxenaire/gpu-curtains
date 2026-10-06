@@ -305,7 +305,8 @@ export class PointShadow extends Shadow {
 
     // Create a command encoder
     const commandEncoder = this.renderer.device.createCommandEncoder()
-    !this.renderer.production &&
+
+    if (!this.renderer.production)
       commandEncoder.pushDebugGroup(`Clear ${this.depthTexture.texture.label} command encoder`)
 
     for (let i = 0; i < 6; i++) {
@@ -334,7 +335,7 @@ export class PointShadow extends Shadow {
     }
 
     // Submit the command buffer
-    !this.renderer.production && commandEncoder.popDebugGroup()
+    if (!this.renderer.production) commandEncoder.popDebugGroup()
     this.renderer.device.queue.submit([commandEncoder.finish()])
   }
 

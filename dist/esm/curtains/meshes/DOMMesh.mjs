@@ -45,9 +45,9 @@ var DOMMesh = class extends ProjectedMeshBaseMixin(DOMObject3D) {
 			...defaultDOMMeshParams,
 			...parameters
 		};
-		const { autoloadSources, watchScroll, domTextures, ...projectedMeshParams } = parameters;
+		const { autoloadSources, domTextures } = parameters;
 		super(renderer, element, parameters);
-		this._onLoadingCallback = (texture) => {};
+		this._onLoadingCallback = (_texture) => {};
 		isCurtainsRenderer(renderer, parameters.label ? parameters.label + " DOMMesh" : "DOMMesh");
 		this.type = "DOMMesh";
 		this.domTextures = [];
@@ -78,7 +78,7 @@ var DOMMesh = class extends ProjectedMeshBaseMixin(DOMObject3D) {
 		return this._ready;
 	}
 	set ready(value) {
-		if (value && !this._ready && this.sourcesReady) this._onReadyCallback && this._onReadyCallback();
+		if (value && !this._ready && this.sourcesReady && this._onReadyCallback) this._onReadyCallback();
 		this._ready = value;
 	}
 	/**
@@ -89,7 +89,7 @@ var DOMMesh = class extends ProjectedMeshBaseMixin(DOMObject3D) {
 		return this._sourcesReady;
 	}
 	set sourcesReady(value) {
-		if (value && !this._sourcesReady && this.ready) this._onReadyCallback && this._onReadyCallback();
+		if (value && !this._sourcesReady && this.ready && this._onReadyCallback) this._onReadyCallback();
 		this._sourcesReady = value;
 	}
 	/**
@@ -135,7 +135,7 @@ var DOMMesh = class extends ProjectedMeshBaseMixin(DOMObject3D) {
 		const defaultName = "texture" + this.textures.length;
 		if (!options.label) options.label = this.options.label + " " + (options.name ?? defaultName);
 		if (!options.name) options.name = defaultName;
-		const { viewDimension, useTransform, ...domTextureParams } = this.options.texturesOptions;
+		const { viewDimension: _viewDimension, useTransform: _useTransform, ...domTextureParams } = this.options.texturesOptions;
 		const texturesOptions = {
 			...options,
 			...domTextureParams
@@ -167,7 +167,7 @@ var DOMMesh = class extends ProjectedMeshBaseMixin(DOMObject3D) {
 			loaderSize = images.length + videos.length + canvases.length;
 			const onSourceUploaded = (texture) => {
 				sourcesLoaded++;
-				this._onLoadingCallback && this._onLoadingCallback(texture);
+				if (this._onLoadingCallback) this._onLoadingCallback(texture);
 				if (sourcesLoaded === loaderSize) this.sourcesReady = true;
 			};
 			if (!loaderSize) this.sourcesReady = true;
@@ -190,7 +190,7 @@ var DOMMesh = class extends ProjectedMeshBaseMixin(DOMObject3D) {
 	* @param element - new {@link HTMLElement} or string representing an {@link HTMLElement} selector to use.
 	*/
 	resetDOMElement(element) {
-		if (!!element) {
+		if (element) {
 			super.resetDOMElement(element);
 			this.domTextures.forEach((texture) => texture.resize());
 		} else if (!element && !this.renderer.production) throwWarning(`${this.options.label}: You are trying to reset a ${this.type} with a HTML element that does not exist. The old HTML element will be kept instead.`);

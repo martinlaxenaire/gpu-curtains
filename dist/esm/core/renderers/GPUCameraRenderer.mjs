@@ -659,9 +659,9 @@ var GPUCameraRenderer = class extends GPURenderer {
 	resize(rectBBox = null) {
 		this.setSize(rectBBox);
 		this.resizeCamera();
-		this._onResizeCallback && this._onResizeCallback();
+		if (this._onResizeCallback) this._onResizeCallback();
 		this.resizeObjects();
-		this._onAfterResizeCallback && this._onAfterResizeCallback();
+		if (this._onAfterResizeCallback) this._onAfterResizeCallback();
 	}
 	/**
 	* {@link createCameraLightsBindGroup | Set the camera bind group if needed} and then call our {@link GPURenderer#render | GPURenderer render method}.

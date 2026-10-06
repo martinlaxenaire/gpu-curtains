@@ -54,7 +54,7 @@ var ShaderPass = class extends FullscreenPlane {
 			else if (parameters.targets && parameters.targets.length && !parameters.targets[0].blend) parameters.targets[0].blend = defaultBlend;
 		}
 		parameters.label = parameters.label ?? "ShaderPass " + renderer.shaderPasses?.length;
-		parameters.sampleCount = !!parameters.sampleCount ? parameters.sampleCount : renderer && renderer.renderPass && parameters.isPrePass ? renderer.renderPass.options.sampleCount : renderer && renderer.postProcessingPass ? renderer && renderer.postProcessingPass.options.sampleCount : 1;
+		parameters.sampleCount = parameters.sampleCount ? parameters.sampleCount : renderer && renderer.renderPass && parameters.isPrePass ? renderer.renderPass.options.sampleCount : renderer && renderer.postProcessingPass ? renderer && renderer.postProcessingPass.options.sampleCount : 1;
 		if (!parameters.shaders) parameters.shaders = {};
 		if (!parameters.shaders.fragment) parameters.shaders.fragment = {
 			code: getDefaultShaderPassFragmentCode,

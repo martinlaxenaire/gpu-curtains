@@ -571,11 +571,11 @@ var GLTFScenesManager = class GLTFScenesManager {
 			attenuationColor: volume && volume.attenuationColor !== void 0 ? new Vec3(volume.attenuationColor[0], volume.attenuationColor[1], volume.attenuationColor[2]) : new Vec3(1),
 			...volumeScatter && {
 				...volumeScatter.multiscatterColor !== void 0 && { multiscatterColor: new Vec3(volumeScatter.multiscatterColor[0], volumeScatter.multiscatterColor[1], volumeScatter.multiscatterColor[2]) },
-				...volumeScatter.scatterAnisotropy !== void 0 !== void 0 && { scatterAnisotropy: volumeScatter.scatterAnisotropy }
+				...volumeScatter.scatterAnisotropy !== void 0 && { scatterAnisotropy: volumeScatter.scatterAnisotropy }
 			},
 			...sheen && {
 				...sheen.sheenColorFactor !== void 0 && { sheenColor: new Vec3(sheen.sheenColorFactor[0], sheen.sheenColorFactor[1], sheen.sheenColorFactor[2]) },
-				...sheen.sheenRoughnessFactor !== void 0 !== void 0 && { sheenRoughness: sheen.sheenRoughnessFactor }
+				...sheen.sheenRoughnessFactor !== void 0 && { sheenRoughness: sheen.sheenRoughnessFactor }
 			},
 			...anisotropy && {
 				...anisotropy.anisotropyStrength !== void 0 && { anisotropy: anisotropy.anisotropyStrength },
@@ -733,7 +733,8 @@ var GLTFScenesManager = class GLTFScenesManager {
 			child.node.scale.set(1);
 			const gltfCamera = this.gltf.cameras[node.camera];
 			if (gltfCamera.type === "perspective") {
-				let width = 0, height = 0;
+				let width;
+				let height;
 				if (gltfCamera.perspective.aspectRatio !== void 0) {
 					const minSize = Math.min(this.renderer.boundingRect.width, this.renderer.boundingRect.height);
 					width = minSize / gltfCamera.perspective.aspectRatio;
@@ -918,7 +919,7 @@ var GLTFScenesManager = class GLTFScenesManager {
 			const name = GLTFScenesManager.getCleanAttributeName(attribName);
 			const accessor = this.gltf.accessors[accessorIndex];
 			const constructor = accessor.componentType ? GLTFScenesManager.getTypedArrayConstructorFromComponentType(accessor.componentType) : Float32Array;
-			let bufferViewIndex = accessor.bufferView;
+			const bufferViewIndex = accessor.bufferView;
 			if (bufferViewIndex === void 0) continue;
 			const bufferView = this.gltf.bufferViews[bufferViewIndex];
 			const byteStride = bufferView.byteStride;
@@ -958,7 +959,7 @@ var GLTFScenesManager = class GLTFScenesManager {
 				array[i + 2] *= len;
 				array[i + 3] *= len;
 			}
-			let normalized = !!accessor.normalized;
+			const normalized = !!accessor.normalized;
 			const patchedAttributeParams = vertexBufferAttributeLayouts.find((vb) => size <= vb.size && vb.typedArrayConstructor === array.constructor && vb.normalized === normalized);
 			if (this.gltf.extensionsRequired?.includes("KHR_mesh_quantization") && array.constructor !== Float32Array && (name === "position" || name === "normal" || name === "tangent" || name.indexOf("uv") !== -1)) {
 				const stride = patchedAttributeParams.size;
@@ -1233,7 +1234,7 @@ var GLTFScenesManager = class GLTFScenesManager {
 				const targetAttributes = [];
 				this.#parsePrimitiveProperty(target, targetAttributes);
 				const struct = targetAttributes.reduce((acc, attribute) => {
-					return acc = {
+					return {
 						...acc,
 						[attribute.name]: {
 							type: `array<${attribute.type}>`,
@@ -1467,7 +1468,7 @@ var GLTFScenesManager = class GLTFScenesManager {
 	* @param patchMeshesParameters - allow to optionally patch the {@link LitMesh} parameters before creating it (can be used to add custom shaders chunks, uniforms or storages, change rendering options, etc.)
 	* @returns - Array of created {@link LitMesh}.
 	*/
-	addMeshes(patchMeshesParameters = (meshDescriptor) => {}) {
+	addMeshes(patchMeshesParameters = (_meshDescriptor) => {}) {
 		this.scenesManager.node.updateMatrixStack();
 		return this.scenesManager.meshesDescriptors.map((meshDescriptor) => {
 			const { geometry } = meshDescriptor.parameters;

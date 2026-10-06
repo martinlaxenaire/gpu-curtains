@@ -39,10 +39,10 @@ var BufferInterleavedArrayElement = class extends BufferArrayElement {
 	}
 	/**
 	* Set the {@link viewSetFunction} and {@link view} into a parent {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer}.
-	* @param arrayBuffer - The {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer}.
+	* @param _arrayBuffer - The {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer}.
 	* @param arrayView - The {@link core/bindings/BufferBinding.BufferBinding#arrayView | BufferBinding arrayView}.
 	*/
-	setView(arrayBuffer, arrayView) {
+	setView(_arrayBuffer, arrayView) {
 		this.view = new this.bufferLayout.View(this.bufferLayout.numElements * this.numElements);
 		this.viewSetFunction = ((arrayView) => {
 			switch (this.bufferLayout.View) {

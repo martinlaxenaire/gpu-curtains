@@ -2,7 +2,7 @@ import { getMorphTargets } from "./get-morph-targets.mjs";
 import { getVertexSkinnedPositionNormal } from "./get-vertex-skinned-position-normal.mjs";
 //#region src/core/shaders/chunks/vertex/body/get-vertex-transformed-position-normal.ts
 /**
-* Generate the part of the vertex shader dedicated to compute the output transformed `worldPosition` and `normal` vectors. Account for instancing (using a {@link BufferBinding} with `instances` name if any), morph targets and skinning using the provided {@link core/geometries/Geometry.Geometry | Geometry} and {@link BufferBinding} array parameters.
+* Generate the part of the vertex shader dedicated to compute the output transformed `worldPosition` and `normal` vectors. Account for instancing (using a {@link core/bindings/BufferBinding | BufferBinding} with `instances` name if any), morph targets and skinning using the provided {@link core/geometries/Geometry.Geometry | Geometry} and {@link core/bindings/BufferBinding | BufferBinding} array parameters.
 *
 * Used internally by the various {@link core/shadows/Shadow.Shadow | Shadow} classes and the {@link extras/gltf/GLTFScenesManager | GLTFScenesManager} class.
 *

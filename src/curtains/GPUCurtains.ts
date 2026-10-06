@@ -71,7 +71,7 @@ export class GPUCurtains {
     /* allow empty callback */
   }
   /** function assigned to the {@link onError} callback. */
-  _onErrorCallback: (message?: string) => void = (message: string) => {
+  _onErrorCallback: (message?: string) => void = () => {
     /* allow empty callback */
   }
   /** function assigned to the {@link onContextLost} callback. */
@@ -243,7 +243,7 @@ export class GPUCurtains {
       autoRender: this.options.autoRender,
       onError: (message) =>
         setTimeout(() => {
-          this._onErrorCallback && this._onErrorCallback(message)
+          if (this._onErrorCallback) this._onErrorCallback(message)
         }, 0),
       onDeviceLost: (info) => this._onContextLostCallback && this._onContextLostCallback(info),
       onDeviceDestroyed: (info) => this._onContextDestroyedCallback && this._onContextDestroyedCallback(info),
@@ -384,7 +384,7 @@ export class GPUCurtains {
       }
     })
 
-    this._onScrollCallback && this._onScrollCallback()
+    if (this._onScrollCallback) this._onScrollCallback()
   }
 
   /**

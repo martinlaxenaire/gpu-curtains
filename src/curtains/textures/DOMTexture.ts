@@ -1,7 +1,5 @@
-import { isCurtainsRenderer, Renderer } from '../../core/renderers/utils'
+import { isCurtainsRenderer } from '../../core/renderers/utils'
 import { GPUCurtainsRenderer } from '../renderers/GPUCurtainsRenderer'
-import { TextureBinding } from '../../core/bindings/TextureBinding'
-import { BufferBinding } from '../../core/bindings/BufferBinding'
 import { TextureSource } from '../../types/Textures'
 import { GPUCurtains } from '../GPUCurtains'
 import { DOMProjectedMesh } from '../../core/renderers/GPURenderer'
@@ -30,7 +28,7 @@ const defaultDOMTextureParams: DOMTextureParams = {
 /**
  * Used to create {@link GPUTexture} or {@link GPUExternalTexture}, specially made to handle different kinds of DOM elements {@link TextureSource | sources}, like {@link HTMLImageElement}, {@link HTMLVideoElement} or {@link HTMLCanvasElement}.
  *
- * Handles the various sources loading and uploading, GPU textures creation,{@link BufferBinding | texture model matrix binding} and {@link TextureBinding | GPU texture binding}.
+ * Handles the various sources loading and uploading, GPU textures creation,{@link core/bindings/BufferBinding | texture model matrix binding} and {@link core/bindings/TextureBinding | GPU texture binding}.
  *
  * @example
  * ```javascript
@@ -88,7 +86,7 @@ export class DOMTexture extends MediaTexture {
 
   /**
    * DOMTexture constructor
-   * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link DOMTexture}
+   * @param renderer - {@link core/renderers/utils.Renderer | Renderer} object or {@link GPUCurtains} class object used to create this {@link DOMTexture}
    * @param parameters - {@link DOMTextureParams | parameters} used to create this {@link DOMTexture}
    */
   constructor(renderer: GPUCurtainsRenderer | GPUCurtains, parameters = defaultDOMTextureParams) {

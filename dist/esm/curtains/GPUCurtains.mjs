@@ -27,7 +27,7 @@ var GPUCurtains = class {
 	*/
 	constructor({ container, label, pixelRatio = window.devicePixelRatio ?? 1, context = {}, production = false, adapterOptions = {}, requiredFeatures = [], requestAdapterLimits = [], renderPass, camera, lights, autoRender = true, autoResize = true, watchScroll = true } = {}) {
 		this._onScrollCallback = () => {};
-		this._onErrorCallback = (message) => {};
+		this._onErrorCallback = () => {};
 		this._onContextLostCallback = () => {};
 		this._onContextDestroyedCallback = () => {};
 		this.type = "CurtainsGPU";
@@ -148,7 +148,7 @@ var GPUCurtains = class {
 			requestAdapterLimits: this.options.requestAdapterLimits,
 			autoRender: this.options.autoRender,
 			onError: (message) => setTimeout(() => {
-				this._onErrorCallback && this._onErrorCallback(message);
+				if (this._onErrorCallback) this._onErrorCallback(message);
 			}, 0),
 			onDeviceLost: (info) => this._onContextLostCallback && this._onContextLostCallback(info),
 			onDeviceDestroyed: (info) => this._onContextDestroyedCallback && this._onContextDestroyedCallback(info)
@@ -267,7 +267,7 @@ var GPUCurtains = class {
 		this.domObjects.forEach((domObject) => {
 			if (domObject.domElement && domObject.watchScroll) domObject.updateScrollPosition(delta);
 		});
-		this._onScrollCallback && this._onScrollCallback();
+		if (this._onScrollCallback) this._onScrollCallback();
 	}
 	/**
 	* Update our {@link ScrollManager#scroll | scrollManager scroll values}. Called each time the scroll has changed if {@link GPUCurtains#options.watchScroll | watchScroll option} is set to true. Could be called externally as well.

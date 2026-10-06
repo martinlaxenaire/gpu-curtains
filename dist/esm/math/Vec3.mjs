@@ -32,7 +32,7 @@ var Vec3 = class Vec3 {
 	set x(value) {
 		const changed = value !== this._x;
 		this._x = value;
-		changed && this._onChangeCallback && this._onChangeCallback();
+		if (changed && this._onChangeCallback) this._onChangeCallback();
 	}
 	/**
 	* Get the Y component of the {@link Vec3}.
@@ -48,7 +48,7 @@ var Vec3 = class Vec3 {
 	set y(value) {
 		const changed = value !== this._y;
 		this._y = value;
-		changed && this._onChangeCallback && this._onChangeCallback();
+		if (changed && this._onChangeCallback) this._onChangeCallback();
 	}
 	/**
 	* Get the Z component of the {@link Vec3}.
@@ -64,7 +64,7 @@ var Vec3 = class Vec3 {
 	set z(value) {
 		const changed = value !== this._z;
 		this._z = value;
-		changed && this._onChangeCallback && this._onChangeCallback();
+		if (changed && this._onChangeCallback) this._onChangeCallback();
 	}
 	/**
 	* Called when at least one component of the {@link Vec3} has changed.
