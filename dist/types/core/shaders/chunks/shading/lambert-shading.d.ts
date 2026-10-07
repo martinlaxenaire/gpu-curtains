@@ -1,4 +1,4 @@
-import { ToneMappings, ColorSpace } from '../../../../types/shading';
+import { ToneMappings, ColorSpace } from '../../../renderers/GPUCameraRenderer';
 /** Defines the basic parameters available for the various shading getter functions. */
 export interface GetShadingParams {
     /** Whether to add the utils functions such as constants or helper functions. Default to `true`. */

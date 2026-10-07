@@ -9155,7 +9155,7 @@
 		* @readonly
 		*/
 		get outputTextures() {
-			return this.options.sampleCount > 1 ? this.resolveTargets : this.viewTextures;
+			return this.resolveTargets.length ? this.resolveTargets : this.viewTextures;
 		}
 		/**
 		* Set our render pass {@link descriptor}.
@@ -9376,7 +9376,7 @@
 				renderTexture = this.renderer.context.getCurrentTexture();
 				renderTexture.label = `${this.renderer.type} context current texture`;
 			}
-			if (this.options.sampleCount > 1) {
+			if (this.resolveTargets.length) {
 				this.descriptor.colorAttachments[0].view = this.viewTextures[0].texture.createView({ label: this.viewTextures[0].options.label + " view" });
 				this.descriptor.colorAttachments[0].resolveTarget = renderTexture.createView({ label: renderTexture.label + " resolve target view" });
 			} else this.descriptor.colorAttachments[0].view = renderTexture.createView({ label: renderTexture.label + " view" });
@@ -16174,7 +16174,6 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 		*/
 		uploadTexture(texture, sourceIndex = 0) {
 			if ("sources" in texture && texture.sources.length) try {
-				console.log(texture.sources[sourceIndex].source);
 				this.device?.queue.copyExternalImageToTexture({
 					source: texture.sources[sourceIndex].source,
 					flipY: texture.options.flipY
@@ -17290,6 +17289,308 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 		}
 	};
 	//#endregion
+	//#region src/core/shaders/full/fragment/get-default-shader-pass-fragment-code.ts
+	/** Default fragment shader code to use with {@link core/renderPasses/ShaderPass.ShaderPass | ShaderPass} that outputs the content of the pass `renderTexture` as is. */
+	const getDefaultShaderPassFragmentCode = `
+struct VSOutput {
+  @builtin(position) position: vec4f,
+  @location(0) uv: vec2f,
+};
+
+@fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
+  return textureSample(renderTexture, defaultSampler, fsInput.uv);
+}`;
+	//#endregion
+	//#region src/core/renderPasses/ShaderPass.ts
+	/**
+	* Used to apply postprocessing, i.e. draw meshes to a {@link Texture} and then draw a {@link FullscreenPlane} using that texture as an input.
+	*
+	* A ShaderPass could either post process the whole scene or just a bunch of meshes using a specific {@link RenderTarget}.
+	*
+	* @example
+	* ```javascript
+	* // set our main GPUCurtains instance
+	* const gpuCurtains = new GPUCurtains({
+	*   container: '#canvas' // selector of our WebGPU canvas container
+	* })
+	*
+	* // set the GPU device
+	* // note this is asynchronous
+	* await gpuCurtains.setDevice()
+	*
+	* // create a ShaderPass
+	* const shaderPass = new ShaderPass(gpuCurtain, {
+	*   label: 'My shader pass',
+	*   shaders: {
+	*     fragment: {
+	*       code: shaderPassCode, // assume it is a valid WGSL fragment shader
+	*     },
+	*   },
+	* })
+	* ```
+	*/
+	var ShaderPass = class extends FullscreenPlane {
+		/**
+		* ShaderPass constructor
+		* @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link ShaderPass}
+		* @param parameters - {@link ShaderPassParams | parameters} use to create this {@link ShaderPass}
+		*/
+		constructor(renderer, parameters = {}) {
+			renderer = isRenderer(renderer, parameters.label ? parameters.label + " ShaderPass" : "ShaderPass");
+			parameters.isPrePass = !!parameters.isPrePass;
+			const defaultBlend = {
+				color: {
+					srcFactor: "one",
+					dstFactor: "one-minus-src-alpha"
+				},
+				alpha: {
+					srcFactor: "one",
+					dstFactor: "one-minus-src-alpha"
+				}
+			};
+			if (!parameters.isPrePass) {
+				if (!parameters.targets) parameters.targets = [{ blend: defaultBlend }];
+				else if (parameters.targets && parameters.targets.length && !parameters.targets[0].blend) parameters.targets[0].blend = defaultBlend;
+			}
+			parameters.label = parameters.label ?? "ShaderPass " + renderer.shaderPasses?.length;
+			parameters.sampleCount = parameters.sampleCount ? parameters.sampleCount : renderer && renderer.renderPass && parameters.isPrePass ? renderer.renderPass.options.sampleCount : renderer && renderer.postProcessingPass ? renderer && renderer.postProcessingPass.options.sampleCount : 1;
+			if (!parameters.shaders) parameters.shaders = {};
+			if (!parameters.shaders.fragment) parameters.shaders.fragment = {
+				code: getDefaultShaderPassFragmentCode,
+				entryPoint: "main"
+			};
+			parameters.depth = parameters.isPrePass;
+			super(renderer, parameters);
+			this.options = {
+				...this.options,
+				copyOutputToRenderTexture: parameters.copyOutputToRenderTexture,
+				isPrePass: parameters.isPrePass,
+				renderTextureName: parameters.renderTextureName ?? "renderTexture"
+			};
+			if (parameters.inputTarget) this.setInputTarget(parameters.inputTarget);
+			if (this.outputTarget) this.setRenderingOptionsForRenderPass(this.outputTarget.renderPass);
+			this.type = "ShaderPass";
+			this.renderTexture = this.createTexture({
+				label: parameters.label ? `${parameters.label} render texture` : "Shader pass render texture",
+				name: this.options.renderTextureName,
+				fromTexture: this.inputTarget ? this.inputTarget.renderTexture : null,
+				usage: [
+					"copySrc",
+					"copyDst",
+					"textureBinding"
+				],
+				...this.outputTarget && this.outputTarget.options.qualityRatio && { qualityRatio: this.outputTarget.options.qualityRatio }
+			});
+		}
+		/**
+		* Hook used to clean up parameters before sending them to the material.
+		* @param parameters - parameters to clean before sending them to the {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}
+		* @returns - cleaned parameters
+		*/
+		cleanupRenderMaterialParameters(parameters) {
+			delete parameters.copyOutputToRenderTexture;
+			delete parameters.inputTarget;
+			delete parameters.isPrePass;
+			super.cleanupRenderMaterialParameters(parameters);
+			return parameters;
+		}
+		/**
+		* Assign or remove an input {@link RenderTarget} to this {@link ShaderPass}, which can be different from what has just been drawn to the {@link core/renderers/GPURenderer.GPURenderer#context | context} current texture.
+		*
+		* Since this manipulates the {@link core/scenes/Scene.Scene | Scene} stacks, it can be used to remove a RenderTarget as well.
+		* Also copy or remove the {@link RenderTarget#renderTexture | render target render texture} into the {@link ShaderPass} {@link renderTexture}
+		* @param inputTarget - the {@link RenderTarget} to assign or null if we want to remove the current {@link RenderTarget}
+		*/
+		setInputTarget(inputTarget) {
+			if (inputTarget && inputTarget.type !== "RenderTarget") {
+				throwWarning(`${this.options.label ?? this.type}: inputTarget is not a RenderTarget: ${inputTarget}`);
+				return;
+			}
+			this.removeFromScene();
+			this.inputTarget = inputTarget;
+			this.addToScene();
+			if (this.renderTexture) if (inputTarget) this.renderTexture.copy(this.inputTarget.renderTexture);
+			else {
+				this.renderTexture.options.fromTexture = null;
+				this.renderTexture.createTexture();
+			}
+		}
+		/**
+		* Add the {@link ShaderPass} to the {@link core/scenes/Scene.Scene | Scene} and optionally to the renderer as well.
+		* @param addToRenderer - whether to add this {@link ShaderPass} to the {@link Renderer#shaderPasses | Renderer shaderPasses array}
+		*/
+		addToScene(addToRenderer = false) {
+			if (addToRenderer) this.renderer.shaderPasses.push(this);
+			this.setRenderingOptionsForRenderPass(this.outputTarget ? this.outputTarget.renderPass : this.options.isPrePass ? this.renderer.renderPass : this.renderer.postProcessingPass);
+			if (this.autoRender) this.renderer.scene.addShaderPass(this);
+		}
+		/**
+		* Remove the {@link ShaderPass} from the {@link core/scenes/Scene.Scene | Scene} and optionally from the renderer as well.
+		* @param removeFromRenderer - whether to remove this {@link ShaderPass} from the {@link Renderer#shaderPasses | Renderer shaderPasses array}
+		*/
+		removeFromScene(removeFromRenderer = false) {
+			if (this.outputTarget && removeFromRenderer) this.outputTarget.destroy();
+			if (this.autoRender) this.renderer.scene.removeShaderPass(this);
+			if (removeFromRenderer) this.renderer.shaderPasses = this.renderer.shaderPasses.filter((sP) => sP.uuid !== this.uuid);
+		}
+	};
+	//#endregion
+	//#region src/core/shaders/chunks/utils/constants.ts
+	/**
+	* Constants to use in shadings.
+	*/
+	const constants = `
+const PI = ${Math.PI};
+const PI2 = ${Math.PI * 2};
+const RECIPROCAL_PI = ${1 / Math.PI};
+const RECIPROCAL_PI2 = ${.5 / Math.PI};
+const EPSILON = 1e-6;`;
+	//#endregion
+	//#region src/core/shaders/chunks/utils/common.ts
+	/** Common WGSL functions and struct declarations to use for light shading. */
+	const common = `
+fn lessThan3(a: vec3f, b: vec3f) -> vec3f {
+  return vec3f(vec3<bool>(a.x < b.x, a.y < b.y, a.z < b.z));
+}
+
+fn pow2( x: f32 ) -> f32 {
+  return x * x;
+}
+
+fn pow3( x: f32 ) -> f32 {
+  return x * x * x;
+}
+
+fn pow4( x: f32 ) -> f32 {
+  return pow2(x) * pow2(x);
+}
+
+fn max3( v: vec3f ) -> f32 {
+  return max( max( v.x, v.y ), v.z );
+}
+
+fn isinf(value: f32) -> bool {
+  return value > 1.0e38 || value < -1.0e38;
+}
+
+fn BRDF_Lambert(diffuseColor: vec3f) -> vec3f {
+  return RECIPROCAL_PI * diffuseColor;
+}
+
+fn F_Schlick(f0: vec3f, f90: f32, VdotH: f32) -> vec3f {
+  let fresnel: f32 = exp2( ( - 5.55473 * VdotH - 6.98316 ) * VdotH );
+  return f0 * ( 1.0 - fresnel ) + ( f90 * fresnel );
+}
+
+fn F_Schlick_1(f0: f32, f90: f32, VdotH: f32) -> f32 {
+  let fresnel: f32 = exp2( ( - 5.55473 * VdotH - 6.98316 ) * VdotH );
+  return f0 * ( 1.0 - fresnel ) + ( f90 * fresnel );
+}
+`;
+	//#endregion
+	//#region src/core/shaders/chunks/utils/tone-mapping-utils.ts
+	/** Tone mapping utils chunks. */
+	const toneMappingUtils = `
+// linear <-> sRGB conversions
+fn linearTosRGB(linear: vec3f) -> vec3f {
+  return vec3( mix( pow( linear.rgb, vec3( 0.41666 ) ) * 1.055 - vec3( 0.055 ), linear.rgb * 12.92, vec3( lessThan3( linear.rgb, vec3( 0.0031308 ) ) ) ) );
+}
+
+fn linearTosRGB_4(linear: vec4f) -> vec4f {
+  return vec4( linearTosRGB(linear.rgb), linear.a );
+}
+
+fn sRGBToLinear(srgb: vec3f) -> vec3f {
+  if (all(srgb <= vec3(0.04045))) {
+    return srgb / vec3(12.92);
+  }
+  return pow((srgb + vec3(0.055)) / vec3(1.055), vec3(2.4));
+}
+
+fn sRGBToLinear_4(srgb: vec4f) -> vec4f {
+  return vec4( sRGBToLinear(srgb.rgb), srgb.a );
+}
+
+// source: https://www.cs.utah.edu/docs/techreports/2002/pdf/UUCS-02-001.pdf
+fn ReinhardToneMapping( color: vec3f ) -> vec3f {
+	return saturate( color / ( vec3( 1.0 ) + color ) );
+}
+
+// source: http://filmicworlds.com/blog/filmic-tonemapping-operators/
+fn CineonToneMapping( color: vec3f ) -> vec3f {
+	// filmic operator by Jim Hejl and Richard Burgess-Dawson
+	let maxColor = max( vec3( 0.0 ), color - 0.004 );
+	return pow( ( maxColor * ( 6.2 * maxColor + 0.5 ) ) / ( maxColor * ( 6.2 * maxColor + 1.7 ) + 0.06 ), vec3( 2.2 ) );
+}
+
+// https://modelviewer.dev/examples/tone-mapping
+fn KhronosToneMapping( color: vec3f ) -> vec3f {
+  var toneMapColor = color;
+  const startCompression: f32 = 0.8 - 0.04;
+  const desaturation: f32 = 0.15;
+  var x: f32 = min(toneMapColor.r, min(toneMapColor.g, toneMapColor.b));
+  var offset: f32 = select(0.04, x - 6.25 * x * x, x < 0.08);
+  toneMapColor = toneMapColor - offset;
+  var peak: f32 = max(toneMapColor.r, max(toneMapColor.g, toneMapColor.b));
+  if (peak < startCompression) {
+    return toneMapColor;
+  }
+  const d: f32 = 1. - startCompression;
+  let newPeak: f32 = 1. - d * d / (peak + d - startCompression);
+  toneMapColor *= newPeak / peak;
+  let g: f32 = 1. - 1. / (desaturation * (peak - newPeak) + 1.);
+  return mix(toneMapColor, newPeak * vec3(1, 1, 1), g);
+}
+`;
+	//#endregion
+	//#region src/core/shaders/full/fragment/output-fragment-shader-code.ts
+	/**
+	* Fragment shader used by the renderer output pass. Used for exposure, tone mapping and color space conversion.
+	*/
+	const outputFragmentShaderCode = `
+${constants}
+${common}
+${toneMappingUtils}
+
+fn applyToneMapping(color: vec4f, mode: u32) -> vec4f {
+  switch mode {
+      case 1: {
+        return vec4(KhronosToneMapping(color.rgb), color.a);
+      }
+      case 2: {
+        return vec4(ReinhardToneMapping(color.rgb), color.a);
+      }
+      case 3: {
+        return vec4(CineonToneMapping(color.rgb), color.a);
+      }
+      default: {
+        return saturate(color);
+      }
+  }
+}
+
+struct VSOutput {
+  @builtin(position) position: vec4f,
+  @location(0) uv: vec2f,
+};
+
+@fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
+  var outputColor = textureSample(renderTexture, defaultSampler, fsInput.uv);
+
+  // exposure
+  outputColor.rgb *= output.exposure;
+
+  // tone mapping
+  outputColor = applyToneMapping(outputColor, output.toneMapping);
+
+  // color space
+  if(output.colorSpace == 1) {
+    outputColor = linearTosRGB_4(outputColor);
+  }
+
+  return outputColor;
+}`;
+	//#endregion
 	//#region src/core/renderers/GPUCameraRenderer.ts
 	/**
 	* This renderer is meant to render meshes projected by a {@link RendererCamera}. It therefore creates a {@link RendererCamera} with its associated {@link bindings} as well as lights and shadows {@link bindings} used for lighting and their associated {@link cameraLightsBindGroup | bind group}.<br>
@@ -17320,7 +17621,7 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 		* GPUCameraRenderer constructor
 		* @param parameters - {@link GPUCameraRendererParams | parameters} used to create this {@link GPUCameraRenderer}
 		*/
-		constructor({ deviceManager, label, container, pixelRatio = 1, autoResize = true, context = {}, renderPass, camera = {}, lights = {} }) {
+		constructor({ deviceManager, label, container, pixelRatio = 1, autoResize = true, context = {}, renderPass, camera = {}, lights = {}, exposure = 1, toneMapping = "Khronos", colorSpace = "srgb" }) {
 			super({
 				deviceManager,
 				label,
@@ -17348,7 +17649,10 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 			this.options = {
 				...this.options,
 				camera,
-				lights
+				lights,
+				exposure,
+				toneMapping,
+				colorSpace
 			};
 			this.bindings = {};
 			this.#shouldUpdateCameraLightsBindGroup = true;
@@ -17358,6 +17662,7 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 			this.setCameraBinding();
 			if (this.options.lights) this.#initLights();
 			this.setCameraLightsBindGroup();
+			this.setOutputPass();
 		}
 		/**
 		* Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} is lost.
@@ -17823,6 +18128,103 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 			});
 		}
 		/**
+		* Get the current exposure value.
+		* @readonly
+		* @returns - Current exposure.
+		*/
+		get exposure() {
+			return this.options.exposure;
+		}
+		/**
+		* Set the new exposure value.
+		* @param exposure - New exposure value.
+		*/
+		set exposure(exposure) {
+			this.options.exposure = exposure;
+			this.outputPass.uniforms.output.exposure.value = exposure;
+			this.outputPass.visible = this.#needsOutputPass;
+		}
+		/**
+		* Get the current {@link ToneMappings | tone mapping} value.
+		* @readonly
+		* @returns - Current {@link ToneMappings | tone mapping}.
+		*/
+		get toneMapping() {
+			return this.options.toneMapping;
+		}
+		/**
+		* Set the new {@link ToneMappings | tone mapping} value.
+		* @param toneMapping - New {@link ToneMappings | tone mapping} value.
+		*/
+		set toneMapping(toneMapping) {
+			this.options.toneMapping = toneMapping;
+			this.outputPass.uniforms.output.toneMapping.value = this.#toneMappingBindingValue;
+			this.outputPass.visible = this.#needsOutputPass;
+		}
+		get #toneMappingBindingValue() {
+			return (() => {
+				switch (this.toneMapping) {
+					case "Khronos": return 1;
+					case "Reinhard": return 2;
+					case "Cineon": return 3;
+					default: return 0;
+				}
+			})();
+		}
+		/**
+		* Get the current {@link ColorSpace | color space} value.
+		* @readonly
+		* @returns - Current {@link ColorSpace | color space}.
+		*/
+		get colorSpace() {
+			return this.options.colorSpace;
+		}
+		/**
+		* Set the new {@link ColorSpace | color space} value.
+		* @param toneMapping - New {@link ColorSpace | color space} value.
+		*/
+		set colorSpace(colorSpace) {
+			this.options.colorSpace = colorSpace;
+			this.outputPass.uniforms.output.colorSpace.value = this.#colorSpaceBindingValue;
+			this.outputPass.visible = this.#needsOutputPass;
+		}
+		get #colorSpaceBindingValue() {
+			return (() => {
+				switch (this.colorSpace) {
+					case "srgb": return 1;
+					default: return 0;
+				}
+			})();
+		}
+		get #needsOutputPass() {
+			return this.exposure !== 1 || !!this.toneMapping || this.colorSpace !== "linear";
+		}
+		/**
+		* Set the output pass that will handle exposure, tone mapping and color space conversion.
+		*/
+		setOutputPass() {
+			this.outputPass = new ShaderPass(this, {
+				label: `${this.options.label} output pass`,
+				renderOrder: 9999,
+				visible: this.#needsOutputPass,
+				shaders: { fragment: { code: outputFragmentShaderCode } },
+				uniforms: { output: { struct: {
+					exposure: {
+						type: "f32",
+						value: this.exposure
+					},
+					toneMapping: {
+						type: "u32",
+						value: this.#toneMappingBindingValue
+					},
+					colorSpace: {
+						type: "u32",
+						value: this.#colorSpaceBindingValue
+					}
+				} } }
+			});
+		}
+		/**
 		* Set the {@link cameraLightsBindGroup | camera, lights and shadows bind group}.
 		*/
 		setCameraLightsBindGroup() {
@@ -17965,316 +18367,9 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 			this.lights.forEach((light) => light.destroy());
 			super.destroy();
 			this.lights.forEach((light) => this.removeLight(light));
+			this.outputPass.remove();
 		}
 	};
-	//#endregion
-	//#region src/core/shaders/full/fragment/get-default-shader-pass-fragment-code.ts
-	/** Default fragment shader code to use with {@link core/renderPasses/ShaderPass.ShaderPass | ShaderPass} that outputs the content of the pass `renderTexture` as is. */
-	const getDefaultShaderPassFragmentCode = `
-struct VSOutput {
-  @builtin(position) position: vec4f,
-  @location(0) uv: vec2f,
-};
-
-@fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-  return textureSample(renderTexture, defaultSampler, fsInput.uv);
-}`;
-	//#endregion
-	//#region src/core/renderPasses/ShaderPass.ts
-	/**
-	* Used to apply postprocessing, i.e. draw meshes to a {@link Texture} and then draw a {@link FullscreenPlane} using that texture as an input.
-	*
-	* A ShaderPass could either post process the whole scene or just a bunch of meshes using a specific {@link RenderTarget}.
-	*
-	* @example
-	* ```javascript
-	* // set our main GPUCurtains instance
-	* const gpuCurtains = new GPUCurtains({
-	*   container: '#canvas' // selector of our WebGPU canvas container
-	* })
-	*
-	* // set the GPU device
-	* // note this is asynchronous
-	* await gpuCurtains.setDevice()
-	*
-	* // create a ShaderPass
-	* const shaderPass = new ShaderPass(gpuCurtain, {
-	*   label: 'My shader pass',
-	*   shaders: {
-	*     fragment: {
-	*       code: shaderPassCode, // assume it is a valid WGSL fragment shader
-	*     },
-	*   },
-	* })
-	* ```
-	*/
-	var ShaderPass = class extends FullscreenPlane {
-		/**
-		* ShaderPass constructor
-		* @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link ShaderPass}
-		* @param parameters - {@link ShaderPassParams | parameters} use to create this {@link ShaderPass}
-		*/
-		constructor(renderer, parameters = {}) {
-			renderer = isRenderer(renderer, parameters.label ? parameters.label + " ShaderPass" : "ShaderPass");
-			parameters.isPrePass = !!parameters.isPrePass;
-			const defaultBlend = {
-				color: {
-					srcFactor: "one",
-					dstFactor: "one-minus-src-alpha"
-				},
-				alpha: {
-					srcFactor: "one",
-					dstFactor: "one-minus-src-alpha"
-				}
-			};
-			if (!parameters.isPrePass) {
-				if (!parameters.targets) parameters.targets = [{ blend: defaultBlend }];
-				else if (parameters.targets && parameters.targets.length && !parameters.targets[0].blend) parameters.targets[0].blend = defaultBlend;
-			}
-			parameters.label = parameters.label ?? "ShaderPass " + renderer.shaderPasses?.length;
-			parameters.sampleCount = parameters.sampleCount ? parameters.sampleCount : renderer && renderer.renderPass && parameters.isPrePass ? renderer.renderPass.options.sampleCount : renderer && renderer.postProcessingPass ? renderer && renderer.postProcessingPass.options.sampleCount : 1;
-			if (!parameters.shaders) parameters.shaders = {};
-			if (!parameters.shaders.fragment) parameters.shaders.fragment = {
-				code: getDefaultShaderPassFragmentCode,
-				entryPoint: "main"
-			};
-			parameters.depth = parameters.isPrePass;
-			super(renderer, parameters);
-			this.options = {
-				...this.options,
-				copyOutputToRenderTexture: parameters.copyOutputToRenderTexture,
-				isPrePass: parameters.isPrePass,
-				renderTextureName: parameters.renderTextureName ?? "renderTexture"
-			};
-			if (parameters.inputTarget) this.setInputTarget(parameters.inputTarget);
-			if (this.outputTarget) this.setRenderingOptionsForRenderPass(this.outputTarget.renderPass);
-			this.type = "ShaderPass";
-			this.renderTexture = this.createTexture({
-				label: parameters.label ? `${parameters.label} render texture` : "Shader pass render texture",
-				name: this.options.renderTextureName,
-				fromTexture: this.inputTarget ? this.inputTarget.renderTexture : null,
-				usage: [
-					"copySrc",
-					"copyDst",
-					"textureBinding"
-				],
-				...this.outputTarget && this.outputTarget.options.qualityRatio && { qualityRatio: this.outputTarget.options.qualityRatio }
-			});
-		}
-		/**
-		* Hook used to clean up parameters before sending them to the material.
-		* @param parameters - parameters to clean before sending them to the {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}
-		* @returns - cleaned parameters
-		*/
-		cleanupRenderMaterialParameters(parameters) {
-			delete parameters.copyOutputToRenderTexture;
-			delete parameters.inputTarget;
-			delete parameters.isPrePass;
-			super.cleanupRenderMaterialParameters(parameters);
-			return parameters;
-		}
-		/**
-		* Assign or remove an input {@link RenderTarget} to this {@link ShaderPass}, which can be different from what has just been drawn to the {@link core/renderers/GPURenderer.GPURenderer#context | context} current texture.
-		*
-		* Since this manipulates the {@link core/scenes/Scene.Scene | Scene} stacks, it can be used to remove a RenderTarget as well.
-		* Also copy or remove the {@link RenderTarget#renderTexture | render target render texture} into the {@link ShaderPass} {@link renderTexture}
-		* @param inputTarget - the {@link RenderTarget} to assign or null if we want to remove the current {@link RenderTarget}
-		*/
-		setInputTarget(inputTarget) {
-			if (inputTarget && inputTarget.type !== "RenderTarget") {
-				throwWarning(`${this.options.label ?? this.type}: inputTarget is not a RenderTarget: ${inputTarget}`);
-				return;
-			}
-			this.removeFromScene();
-			this.inputTarget = inputTarget;
-			this.addToScene();
-			if (this.renderTexture) if (inputTarget) this.renderTexture.copy(this.inputTarget.renderTexture);
-			else {
-				this.renderTexture.options.fromTexture = null;
-				this.renderTexture.createTexture();
-			}
-		}
-		/**
-		* Add the {@link ShaderPass} to the {@link core/scenes/Scene.Scene | Scene} and optionally to the renderer as well.
-		* @param addToRenderer - whether to add this {@link ShaderPass} to the {@link Renderer#shaderPasses | Renderer shaderPasses array}
-		*/
-		addToScene(addToRenderer = false) {
-			if (addToRenderer) this.renderer.shaderPasses.push(this);
-			this.setRenderingOptionsForRenderPass(this.outputTarget ? this.outputTarget.renderPass : this.options.isPrePass ? this.renderer.renderPass : this.renderer.postProcessingPass);
-			if (this.autoRender) this.renderer.scene.addShaderPass(this);
-		}
-		/**
-		* Remove the {@link ShaderPass} from the {@link core/scenes/Scene.Scene | Scene} and optionally from the renderer as well.
-		* @param removeFromRenderer - whether to remove this {@link ShaderPass} from the {@link Renderer#shaderPasses | Renderer shaderPasses array}
-		*/
-		removeFromScene(removeFromRenderer = false) {
-			if (this.outputTarget && removeFromRenderer) this.outputTarget.destroy();
-			if (this.autoRender) this.renderer.scene.removeShaderPass(this);
-			if (removeFromRenderer) this.renderer.shaderPasses = this.renderer.shaderPasses.filter((sP) => sP.uuid !== this.uuid);
-		}
-	};
-	//#endregion
-	//#region src/core/shaders/chunks/utils/constants.ts
-	/**
-	* Constants to use in shadings.
-	*/
-	const constants = `
-const PI = ${Math.PI};
-const PI2 = ${Math.PI * 2};
-const RECIPROCAL_PI = ${1 / Math.PI};
-const RECIPROCAL_PI2 = ${.5 / Math.PI};
-const EPSILON = 1e-6;`;
-	//#endregion
-	//#region src/core/shaders/chunks/utils/common.ts
-	/** Common WGSL functions and struct declarations to use for light shading. */
-	const common = `
-fn lessThan3(a: vec3f, b: vec3f) -> vec3f {
-  return vec3f(vec3<bool>(a.x < b.x, a.y < b.y, a.z < b.z));
-}
-
-fn pow2( x: f32 ) -> f32 {
-  return x * x;
-}
-
-fn pow3( x: f32 ) -> f32 {
-  return x * x * x;
-}
-
-fn pow4( x: f32 ) -> f32 {
-  return pow2(x) * pow2(x);
-}
-
-fn max3( v: vec3f ) -> f32 {
-  return max( max( v.x, v.y ), v.z );
-}
-
-fn isinf(value: f32) -> bool {
-  return value > 1.0e38 || value < -1.0e38;
-}
-
-fn BRDF_Lambert(diffuseColor: vec3f) -> vec3f {
-  return RECIPROCAL_PI * diffuseColor;
-}
-
-fn F_Schlick(f0: vec3f, f90: f32, VdotH: f32) -> vec3f {
-  let fresnel: f32 = exp2( ( - 5.55473 * VdotH - 6.98316 ) * VdotH );
-  return f0 * ( 1.0 - fresnel ) + ( f90 * fresnel );
-}
-
-fn F_Schlick_1(f0: f32, f90: f32, VdotH: f32) -> f32 {
-  let fresnel: f32 = exp2( ( - 5.55473 * VdotH - 6.98316 ) * VdotH );
-  return f0 * ( 1.0 - fresnel ) + ( f90 * fresnel );
-}
-`;
-	//#endregion
-	//#region src/core/shaders/chunks/utils/tone-mapping-utils.ts
-	/** Tone mapping utils chunks. */
-	const toneMappingUtils = `
-// linear <-> sRGB conversions
-fn linearTosRGB(linear: vec3f) -> vec3f {
-  return vec3( mix( pow( linear.rgb, vec3( 0.41666 ) ) * 1.055 - vec3( 0.055 ), linear.rgb * 12.92, vec3( lessThan3( linear.rgb, vec3( 0.0031308 ) ) ) ) );
-}
-
-fn linearTosRGB_4(linear: vec4f) -> vec4f {
-  return vec4( linearTosRGB(linear.rgb), linear.a );
-}
-
-fn sRGBToLinear(srgb: vec3f) -> vec3f {
-  if (all(srgb <= vec3(0.04045))) {
-    return srgb / vec3(12.92);
-  }
-  return pow((srgb + vec3(0.055)) / vec3(1.055), vec3(2.4));
-}
-
-fn sRGBToLinear_4(srgb: vec4f) -> vec4f {
-  return vec4( sRGBToLinear(srgb.rgb), srgb.a );
-}
-
-// forward: color / (1 + color)
-fn inverseReinhardToneMapping(color: vec3f) -> vec3f {
-    return color / max(vec3(1e-5), vec3(1.0) - color);
-}
-
-// source: https://www.cs.utah.edu/docs/techreports/2002/pdf/UUCS-02-001.pdf
-fn ReinhardToneMapping( color: vec3f ) -> vec3f {
-	return saturate( color / ( vec3( 1.0 ) + color ) );
-}
-
-fn inverseCineonToneMapping(color: vec3f) -> vec3f {
-  // Step 1: undo gamma
-  let T = pow(color, vec3f(1.0 / 2.2));
-
-  // Invert the rational polynomial per channel
-  var x = vec3f(0.0);
-  for (var i = 0; i < 3; i = i + 1) {
-    let t = T[i];
-
-    // If t >= 1 → clipped → cannot recover, return max guess
-    if (t >= 1.0) {
-        x[i] = 1e6; // just put a very large HDR value
-        continue;
-    }
-
-    let A = 6.2 * (t - 1.0);
-    let B = 1.7 * t - 0.5;
-    let C = 0.06 * t;
-
-    let disc = B * B - 4.0 * A * C;
-
-    // Solve quadratic (positive root)
-    let xval = (-B + sqrt(max(disc, 0.0))) / (2.0 * A);
-
-    x[i] = xval;
-  }
-
-  // Step 3: undo the initial offset clamp
-  return x + vec3f(0.004);
-}
-
-// source: http://filmicworlds.com/blog/filmic-tonemapping-operators/
-fn CineonToneMapping( color: vec3f ) -> vec3f {
-	// filmic operator by Jim Hejl and Richard Burgess-Dawson
-	let maxColor = max( vec3( 0.0 ), color - 0.004 );
-	return pow( ( maxColor * ( 6.2 * maxColor + 0.5 ) ) / ( maxColor * ( 6.2 * maxColor + 1.7 ) + 0.06 ), vec3( 2.2 ) );
-}
-
-fn inverseKhronosToneMapping(color: vec3f) -> vec3f {
-  // iterative solve: approximate original HDR color
-  var c = color; // initial guess: LDR
-
-  // Do 4–6 iterations (cheap and stable)
-  for (var i = 0; i < 5; i = i + 1) {
-    let f = KhronosToneMapping(c);
-    let error = color - f;
-
-    // Step factor (empirically tuned)
-    let step = 0.75;
-
-    c = c + error * step;
-  }
-
-  return max(c, vec3f(0.0));
-}
-
-// https://modelviewer.dev/examples/tone-mapping
-fn KhronosToneMapping( color: vec3f ) -> vec3f {
-  var toneMapColor = color; 
-  const startCompression: f32 = 0.8 - 0.04;
-  const desaturation: f32 = 0.15;
-  var x: f32 = min(toneMapColor.r, min(toneMapColor.g, toneMapColor.b));
-  var offset: f32 = select(0.04, x - 6.25 * x * x, x < 0.08);
-  toneMapColor = toneMapColor - offset;
-  var peak: f32 = max(toneMapColor.r, max(toneMapColor.g, toneMapColor.b));
-  if (peak < startCompression) {
-    return toneMapColor;
-  }
-  const d: f32 = 1. - startCompression;
-  let newPeak: f32 = 1. - d * d / (peak + d - startCompression);
-  toneMapColor *= newPeak / peak;
-  let g: f32 = 1. - 1. / (desaturation * (peak - newPeak) + 1.);
-  return mix(toneMapColor, newPeak * vec3(1, 1, 1), g);
-}
-`;
 	//#endregion
 	//#region src/core/shaders/chunks/fragment/head/get-lights-infos.ts
 	/** WGSL functions to get the {@link core/lights/DirectionalLight.DirectionalLight | DirectionalLight} or {@link core/lights/PointLight.PointLight | PointLight} informations. */
@@ -18536,18 +18631,18 @@ fn getLambert(
   ${useOcclusion ? "occlusion: f32," : ""}
 ) -> vec4f {
   ${!useOcclusion ? "let occlusion: f32 = 1.0;" : ""}
-  
+
   var outputColor: vec4f = color;
 
   ${getLambertShading({ receiveShadows })}
-  
+
   outputColor = vec4(outgoingLight, outputColor.a);
-  
+
   ${applyToneMapping({
 		toneMapping,
 		outputColorSpace
 	})}
-    
+
   return outputColor;
 }
 `;
@@ -18751,30 +18846,12 @@ fn RE_IndirectSpecular(
 	/** WGSL functions to calculate the transmission effect of transmissive meshes using the renderer scene background texture. */
 	const getIBLTransmission = `
 fn getVolumeTransmissionRay(normal: vec3f, viewDirection: vec3f, thickness: f32, ior: f32, modelScale: vec3f) -> vec3f {
-  let refractionVector = refract(-viewDirection, normal, 1.0 / ior);    
+  let refractionVector = refract(-viewDirection, normal, 1.0 / ior);
   return normalize(refractionVector) * thickness * modelScale;
 }
 
 fn applyIorToRoughness(roughness: f32, ior: f32) -> f32 {
   return roughness * saturate(ior * 2.0 - 2.0);
-}
-
-// since opaque objects are rendered only once before transmissive objects
-// the transmission sample might be tone mapped and in sRGB space
-// so we try to invert this here
-fn patchTransmissionSample(transmissionSample: vec4f, isTransmissiveLinear: bool, transmissiveToneMapping: u32) -> vec4f {
-  var color = transmissionSample;
-  color = select(sRGBToLinear_4(color), color, isTransmissiveLinear);
-
-  if(transmissiveToneMapping == 1u) {
-    color = vec4(inverseKhronosToneMapping(color.rgb), color.a);
-  } else if(transmissiveToneMapping == 2u) {
-    color = vec4(inverseReinhardToneMapping(color.rgb), color.a);
-  } else if(transmissiveToneMapping == 3u) {
-    color = vec4(inverseCineonToneMapping(color.rgb), color.a);
-  }
-  
-  return color;
 }
 
 fn getTransmissionSample( fragCoord: vec2f, roughness: f32, ior: f32, transmissionSceneTexture: texture_2d<f32>, transmissionSampler: sampler ) -> vec4f {
@@ -18811,15 +18888,13 @@ fn getIBLVolumeRefraction(
   thickness: f32,
   attenuationColor: vec3f,
   attenuationDistance: f32,
-  isTransmissiveLinear: bool,
-  transmissiveToneMapping: u32,
   transmissionBackgroundTexture: texture_2d<f32>,
   defaultSampler: sampler,
 ) -> vec4f {
   var transmittedLight: vec4f;
   var transmissionRayLength: f32;
   var transmittance: vec3f;
-  
+
   // Calculate the transmission ray
   let transmissionRay: vec3f = getVolumeTransmissionRay(normal, viewDirection, thickness, ior, modelScale);
   let refractedRayExit = position + transmissionRay;
@@ -18832,7 +18907,6 @@ fn getIBLVolumeRefraction(
 
   // Sample the transmission texture
   transmittedLight = getTransmissionSample(refractionCoords, roughness, ior, transmissionBackgroundTexture, defaultSampler);
-  transmittedLight = patchTransmissionSample(transmittedLight, isTransmissiveLinear, transmissiveToneMapping);
 
   // Compute transmittance
   transmittance = diffuseContribution * volumeAttenuation(length(transmissionRay), attenuationColor, attenuationDistance);
@@ -18870,18 +18944,16 @@ fn getIBLVolumeRefractionWithDispersion(
   thickness: f32,
   attenuationColor: vec3f,
   attenuationDistance: f32,
-  isTransmissiveLinear: bool,
-  transmissiveToneMapping: u32,
   transmissionBackgroundTexture: texture_2d<f32>,
   defaultSampler: sampler,
 ) -> vec4f {
   var transmittedLight: vec4f;
   var transmissionRayLength: f32;
   var transmittance: vec3f;
-  
+
   let halfSpread: f32 = (ior - 1.0) * 0.025 * dispersion;
   let iors: vec3f = vec3(ior - halfSpread, ior, ior + halfSpread);
-  
+
   for(var i: i32 = 0; i < 3; i++) {
     let transmissionRay: vec3f = getVolumeTransmissionRay(normal, viewDirection, thickness, iors[i], modelScale);
     transmissionRayLength = length(transmissionRay);
@@ -18892,18 +18964,17 @@ fn getIBLVolumeRefractionWithDispersion(
     var refractionCoords = ndcPos.xy / ndcPos.w;
     refractionCoords = (refractionCoords + 1.0) / 2.0;
     refractionCoords = vec2(refractionCoords.x, 1.0 - refractionCoords.y); // webgpu Y flip
-    
+
     var transmissionSample: vec4f = getTransmissionSample(refractionCoords, roughness, iors[i], transmissionBackgroundTexture, defaultSampler);
-    transmissionSample = patchTransmissionSample(transmissionSample, isTransmissiveLinear, transmissiveToneMapping);
-    
+
     transmittedLight[i] = transmissionSample[i];
     transmittedLight.a += transmissionSample.a;
-    
+
     // Compute transmittance
     let diffuse: vec3f = diffuseContribution;
     transmittance[i] = diffuse[i] * volumeAttenuation(length(transmissionRay), attenuationColor, attenuationDistance)[i];
   }
-  
+
   transmittedLight.a /= 3.0;
 
   // Apply attenuation to transmitted light
@@ -19138,29 +19209,18 @@ fn getPBRDirect(
 	* Apply transmission volume refraction to `totalDiffuse` light component if applicable.
 	* @param parameters - Parameters to use to apply transmission volume refraction.
 	* @param parameters.transmissionBackgroundTexture - {@link ShaderTextureDescriptor | Transmission background texture descriptor} to use for transmission if any.
-	* @param parameters.transmissiveInputColorSpace - Whether the opaque objects sampled by the transmission texture have been drawn in `linear` or `srgb` color space. Default to `srgb`.
-	* @param parameters.transmissiveInputToneMapping - The tone mapping applied to the opaque objects sampled by the transmission texture, if any. Default to `Khronos`.
 	* @param parameters.extensionsUsed - {@link types/gltf/GLTFExtensions.GLTFExtensionsUsed | glTF extensions used} by the material for specifing shading if any.
 	* @returns - A string with transmission volume refraction applied to `totalDiffuse` light component.
 	*/
-	const getIBLVolumeRefraction = ({ transmissionBackgroundTexture = null, transmissiveInputColorSpace = "srgb", transmissiveInputToneMapping = "Khronos", extensionsUsed = [] }) => {
+	const getIBLVolumeRefraction = ({ transmissionBackgroundTexture = null, extensionsUsed = [] }) => {
 		const iblVolumeRefractionFunction = extensionsUsed.includes("KHR_materials_dispersion") ? "getIBLVolumeRefractionWithDispersion" : "getIBLVolumeRefraction";
-		const transmissiveToneMapping = [
-			false,
-			"Khronos",
-			"Reinhard",
-			"Cineon"
-		].findIndex((t) => t === transmissiveInputToneMapping);
 		return transmissionBackgroundTexture ? `
   var transmissionAlpha: f32 = 1.0;
 
-  let isTransmissiveLinear: bool = ${transmissiveInputColorSpace === "linear" ? "true" : "false"};
-  let transmissiveToneMapping: u32 = ${transmissiveToneMapping};
-  
   var transmitted: vec4f = ${iblVolumeRefractionFunction}(
     normal,
     viewDirection,
-    roughness, 
+    roughness,
     diffuseContribution,
     fab,
     specularColorBlended,
@@ -19174,14 +19234,12 @@ fn getPBRDirect(
     thickness,
     attenuationColor,
     attenuationDistance,
-    isTransmissiveLinear,
-    transmissiveToneMapping,
     ${transmissionBackgroundTexture.texture.options.name},
     ${transmissionBackgroundTexture.sampler.name},
   );
-  
+
   transmissionAlpha = mix( transmissionAlpha, transmitted.a, transmission );
-  
+
   totalDiffuse = mix(totalDiffuse, transmitted.rgb, transmission);
   outputColor.a *= transmissionAlpha;` : "";
 	};
@@ -19497,52 +19555,50 @@ fn getPBRDirect(
 	* @param parameters.receiveShadows - Whether the shading function should account for current shadows. Default to `false`.
 	* @param parameters.environmentMap - {@link extras/environmentMap/EnvironmentMap.EnvironmentMap | EnvironmentMap} to use for IBL shading if any.
 	* @param parameters.transmissionBackgroundTexture - {@link ShaderTextureDescriptor | Transmission background texture descriptor} to use for transmission if any.
-	* @param parameters.transmissiveInputColorSpace - Whether the opaque objects sampled by the transmission texture have been drawn in `linear` or `srgb` color space. Default to `srgb`.
-	* @param parameters.transmissiveInputToneMapping - The tone mapping applied to the opaque objects sampled by the transmission texture, if any. Default to `Khronos`.
 	* @param parameters.extensionsUsed - {@link types/gltf/GLTFExtensions.GLTFExtensionsUsed | glTF extensions used} by the material for specifing shading if any.
 	* @returns - A string with PBR shading applied to `outgoingLight`.
 	*/
-	const getPBRShading = ({ receiveShadows = false, environmentMap = null, transmissionBackgroundTexture = null, transmissiveInputColorSpace = "srgb", transmissiveInputToneMapping = "Khronos", extensionsUsed = [] } = {}) => {
+	const getPBRShading = ({ receiveShadows = false, environmentMap = null, transmissionBackgroundTexture = null, extensionsUsed = [] } = {}) => {
 		return `
   var directLight: DirectLight;
   var reflectedLight: ReflectedLight;
-  
+
   ${receiveShadows ? getPCFShadows : ""}
-  
+
   // point lights
   for(var i = 0; i < pointLights.count; i++) {
     getPointLightInfo(pointLights.elements[i], worldPosition, &directLight);
-    
+
     if(!directLight.visible) {
       continue;
     }
-    
+
     ${receiveShadows ? applyPointShadows : ""}
     ${getPBRDirectContribution({
 			extensionsUsed,
 			environmentMap
 		})}
   }
-  
+
   // spot lights
   for(var i = 0; i < spotLights.count; i++) {
     getSpotLightInfo(spotLights.elements[i], worldPosition, &directLight);
-    
+
     if(!directLight.visible) {
       continue;
     }
-    
+
     ${receiveShadows ? applySpotShadows : ""}
     ${getPBRDirectContribution({
 			extensionsUsed,
 			environmentMap
 		})}
   }
-  
+
   // directional lights
   for(var i = 0; i < directionalLights.count; i++) {
     getDirectionalLightInfo(directionalLights.elements[i], &directLight);
-    
+
     if(!directLight.visible) {
       continue;
     }
@@ -19553,7 +19609,7 @@ fn getPBRDirect(
 			environmentMap
 		})}
   }
-  
+
   var irradiance: vec3f = getAmbientLightIrradiance();
   var radiance: vec3f = vec3(0.0);
   var iblIrradiance: vec3f = vec3(0.0);
@@ -19561,7 +19617,7 @@ fn getPBRDirect(
 
   var dielectricScattering: MultiScattering;
   var metallicScattering: MultiScattering;
-  
+
   // IBL indirect contributions
   ${computeMultiScattering$1({ environmentMap })}
   ${getIBLIndirectIrradiance$1({
@@ -19575,7 +19631,7 @@ fn getPBRDirect(
 
   diffuseColor = mix(diffuseColor, diffuseTransmissionColor, diffuseTransmission);
   diffuseContribution = mix(diffuseContribution, diffuseTransmissionContribution, diffuseTransmission);
-  
+
   // indirect diffuse
   ${getIBLSheenIndirectRadiance({
 			extensionsUsed,
@@ -19603,26 +19659,24 @@ fn getPBRDirect(
 			extensionsUsed,
 			environmentMap
 		})}
-  
-  // occlusion  
+
+  // occlusion
   clearcoatSpecularIndirect *= occlusion;
   sheenSpecularIndirect *= occlusion;
 
   reflectedLight.indirectDiffuse *= occlusion;
   reflectedLight.indirectSpecular *= computeSpecularOcclusion(geometryNormal, viewDirection, occlusion, roughness);
-  
+
   var totalDiffuse: vec3f = reflectedLight.indirectDiffuse + reflectedLight.directDiffuse;
   let totalSpecular: vec3f = reflectedLight.indirectSpecular + reflectedLight.directSpecular;
-  
+
   ${getIBLVolumeRefraction({
 			transmissionBackgroundTexture,
-			transmissiveInputColorSpace,
-			transmissiveInputToneMapping,
 			extensionsUsed
 		})}
-  
+
   var outgoingLight: vec3f = totalDiffuse + totalSpecular;
-  
+
   ${applySheenClearcoatContribution({ extensionsUsed })}
   `;
 	};
@@ -20297,7 +20351,7 @@ struct FSInput {
 	* @param parameters - {@link UnlitFragmentShaderInputParams} used to build the unlit fragment shader.
 	* @returns - The unlit fragment shader generated based on the provided parameters.
 	*/
-	const getUnlitFragmentShaderCode = ({ chunks = null, toneMapping = "Khronos", outputColorSpace = "srgb", fragmentOutput = {
+	const getUnlitFragmentShaderCode = ({ chunks = null, fragmentOutput = {
 		struct: [{
 			type: "vec4f",
 			name: "color"
@@ -20308,7 +20362,7 @@ struct FSInput {
   return output;`
 	}, geometry, additionalVaryings = [], materialUniform = null, materialUniformName = "material", baseColorTexture = null, emissiveTexture = null, occlusionTexture = null }) => {
 		chunks = patchAdditionalChunks(chunks);
-		return `  
+		return `
 ${chunks.additionalHead}
 
 ${constants}
@@ -20322,9 +20376,9 @@ ${getFragmentInputStruct({
 
 ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 
-@fragment fn main(fsInput: FSInput) -> FSOutput {       
+@fragment fn main(fsInput: FSInput) -> FSOutput {
   var outputColor: vec4f = vec4();
-  
+
   ${declareAttributesVars({
 			geometry,
 			additionalVaryings
@@ -20342,19 +20396,14 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			emissiveTexture,
 			occlusionTexture
 		})}
-  
+
   // user defined preliminary contribution
   ${chunks.preliminaryContribution}
 
   outputColor = vec4(outputColor.rgb * occlusion + emissive, outputColor.a);
-  
+
   // user defined additional contribution
   ${chunks.additionalContribution}
-  
-  ${applyToneMapping({
-			toneMapping,
-			outputColorSpace
-		})}
 
   ${fragmentOutput.output}
 }`;
@@ -20493,7 +20542,7 @@ fn generateTBN(normal: vec3f) -> mat3x3f {
 	* @param parameters - {@link LambertFragmentShaderInputParams} used to build the Lambert fragment shader.
 	* @returns - The Lambert fragment shader generated based on the provided parameters.
 	*/
-	const getLambertFragmentShaderCode = ({ chunks = null, toneMapping = "Khronos", outputColorSpace = "srgb", fragmentOutput = {
+	const getLambertFragmentShaderCode = ({ chunks = null, fragmentOutput = {
 		struct: [{
 			type: "vec4f",
 			name: "color"
@@ -20504,7 +20553,7 @@ fn generateTBN(normal: vec3f) -> mat3x3f {
   return output;`
 	}, geometry, cullMode = "back", flatShading = false, additionalVaryings = [], materialUniform = null, materialUniformName = "material", receiveShadows = false, baseColorTexture = null, normalTexture = null, emissiveTexture = null, occlusionTexture = null }) => {
 		chunks = patchAdditionalChunks(chunks);
-		return `  
+		return `
 ${chunks.additionalHead}
 
 ${constants}
@@ -20524,7 +20573,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 
 @fragment fn main(fsInput: FSInput) -> FSOutput {
   var outputColor: vec4f = vec4();
-  
+
   ${declareAttributesVars({
 			geometry,
 			additionalVaryings
@@ -20538,35 +20587,30 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			geometry,
 			baseColorTexture
 		})}
-  
+
   // user defined preliminary contribution
   ${chunks.preliminaryContribution}
-  
+
   ${getTangentBitangent({
 			geometry,
 			cullMode,
 			flatShading,
 			normalTexture
-		})}  
-  ${getNormal({ normalTexture })}  
+		})}
+  ${getNormal({ normalTexture })}
   ${getEmissiveOcclusion({
 			emissiveTexture,
 			occlusionTexture
 		})}
-  
+
   // lights
   ${getLambertShading({ receiveShadows })}
-  
+
   outputColor = vec4(outgoingLight, outputColor.a);
   outputColor = vec4(outputColor.rgb + emissive, outputColor.a);
-  
+
   // user defined additional contribution
   ${chunks.additionalContribution}
-  
-  ${applyToneMapping({
-			toneMapping,
-			outputColorSpace
-		})}
 
   ${fragmentOutput.output}
 }`;
@@ -20652,7 +20696,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 	* @param parameters - {@link PhongFragmentShaderInputParams} used to build the Phong fragment shader.
 	* @returns - The Phong fragment shader generated based on the provided parameters.
 	*/
-	const getPhongFragmentShaderCode = ({ chunks = null, toneMapping = "Khronos", outputColorSpace = "srgb", fragmentOutput = {
+	const getPhongFragmentShaderCode = ({ chunks = null, fragmentOutput = {
 		struct: [{
 			type: "vec4f",
 			name: "color"
@@ -20663,7 +20707,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   return output;`
 	}, geometry, cullMode = "back", flatShading = false, additionalVaryings = [], materialUniform = null, materialUniformName = "material", receiveShadows = false, baseColorTexture = null, normalTexture = null, emissiveTexture = null, occlusionTexture = null, metallicRoughnessTexture = null, specularTexture = null, specularFactorTexture = null, specularColorTexture = null }) => {
 		chunks = patchAdditionalChunks(chunks);
-		return `  
+		return `
 ${chunks.additionalHead}
 
 ${constants}
@@ -20681,9 +20725,9 @@ ${getFragmentInputStruct({
 
 ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 
-@fragment fn main(fsInput: FSInput) -> FSOutput {       
+@fragment fn main(fsInput: FSInput) -> FSOutput {
   var outputColor: vec4f = vec4();
-  
+
   ${declareAttributesVars({
 			geometry,
 			additionalVaryings
@@ -20697,16 +20741,16 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			geometry,
 			baseColorTexture
 		})}
-  
+
   // user defined preliminary contribution
   ${chunks.preliminaryContribution}
-  
+
   ${getTangentBitangent({
 			geometry,
 			cullMode,
 			flatShading,
 			normalTexture
-		})}  
+		})}
   ${getNormal({ normalTexture })}
   ${getMetallicRoughness({ metallicRoughnessTexture })}
   ${getDiffuse}
@@ -20719,20 +20763,15 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			emissiveTexture,
 			occlusionTexture
 		})}
-  
+
   // lights
   ${getPhongShading({ receiveShadows })}
-  
+
   outputColor = vec4(outgoingLight, outputColor.a);
   outputColor = vec4(outputColor.rgb + emissive, outputColor.a);
-  
+
   // user defined additional contribution
   ${chunks.additionalContribution}
-  
-  ${applyToneMapping({
-			toneMapping,
-			outputColorSpace
-		})}
 
   ${fragmentOutput.output}
 }`;
@@ -21692,7 +21731,7 @@ fn getVolumeMultiToSingleScatter(multiscatterColor: vec3f) -> vec3f {
 	* @param parameters - {@link PBRFragmentShaderInputParams} used to build the PBR fragment shader.
 	* @returns - The PBR fragment shader generated based on the provided parameters.
 	*/
-	const getPBRFragmentShaderCode = ({ chunks = null, toneMapping = "Khronos", outputColorSpace = "srgb", transmissiveInputColorSpace = "srgb", transmissiveInputToneMapping = "Khronos", fragmentOutput = {
+	const getPBRFragmentShaderCode = ({ chunks = null, fragmentOutput = {
 		struct: [{
 			type: "vec4f",
 			name: "color"
@@ -21703,7 +21742,7 @@ fn getVolumeMultiToSingleScatter(multiscatterColor: vec3f) -> vec3f {
   return output;`
 	}, geometry, cullMode = "back", flatShading = false, additionalVaryings = [], materialUniform = null, materialUniformName = "material", extensionsUsed = [], receiveShadows = false, baseColorTexture = null, normalTexture = null, emissiveTexture = null, occlusionTexture = null, metallicRoughnessTexture = null, specularTexture = null, specularFactorTexture = null, specularColorTexture = null, transmissionThicknessTexture = null, transmissionTexture = null, thicknessTexture = null, sheenTexture = null, sheenColorTexture = null, sheenRoughnessTexture = null, anisotropyTexture = null, clearcoatTexture = null, clearcoatFactorTexture = null, clearcoatRoughnessTexture = null, clearcoatNormalTexture = null, iridescenceTexture = null, iridescenceFactorTexture = null, iridescenceThicknessTexture = null, diffuseTransmissionTexture = null, diffuseTransmissionFactorTexture = null, diffuseTransmissionColorTexture = null, transmissionBackgroundTexture = null, environmentMap = null }) => {
 		chunks = patchAdditionalChunks(chunks);
-		return `  
+		return `
 ${chunks.additionalHead}
 
 ${constants}
@@ -21737,7 +21776,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 
 @fragment fn main(fsInput: FSInput) -> FSOutput {
   var outputColor: vec4f = vec4();
-  
+
   ${declareAttributesVars({
 			geometry,
 			additionalVaryings
@@ -21752,7 +21791,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			geometry,
 			baseColorTexture
 		})}
-  
+
   // user defined preliminary contribution
   ${chunks.preliminaryContribution}
 
@@ -21764,7 +21803,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			flatShading,
 			normalTexture,
 			clearcoatNormalTexture
-		})}  
+		})}
   ${getNormal({ normalTexture })}
   ${getMetallicRoughness({ metallicRoughnessTexture })}
   ${getDiffuse}
@@ -21816,27 +21855,20 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			diffuseTransmissionColorTexture
 		})}
   ${getVolumeMultiScatter({ extensionsUsed })}
-  
+
   // shading
   ${getPBRShading({
 			receiveShadows,
 			environmentMap,
 			transmissionBackgroundTexture,
-			transmissiveInputColorSpace,
-			transmissiveInputToneMapping,
 			extensionsUsed
 		})}
-  
+
   outputColor = vec4(outgoingLight, outputColor.a);
   outputColor = vec4(outputColor.rgb + emissive, outputColor.a);
-  
+
   // user defined additional contribution
   ${chunks.additionalContribution}
-  
-  ${applyToneMapping({
-			toneMapping,
-			outputColorSpace
-		})}
 
   ${fragmentOutput.output}
 }`;
@@ -21848,7 +21880,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 	* @param parameters - {@link FragmentShaderInputParams} used to build the fragment shader.
 	* @returns - The fragment shader generated based on the provided parameters.
 	*/
-	const getFragmentShaderCode = ({ shadingModel = "PBR", outputColorSpace = "srgb", fragmentOutput = {
+	const getFragmentShaderCode = ({ shadingModel = "PBR", fragmentOutput = {
 		struct: [{
 			type: "vec4f",
 			name: "color"
@@ -21857,12 +21889,10 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   var output: FSOutput;
   output.color = outputColor;
   return output;`
-	}, chunks = null, toneMapping = "Khronos", transmissiveInputColorSpace = "srgb", transmissiveInputToneMapping = "Khronos", geometry, cullMode = "back", flatShading = false, additionalVaryings = [], materialUniform = null, materialUniformName = "material", extensionsUsed = [], receiveShadows = false, baseColorTexture = null, normalTexture = null, emissiveTexture = null, occlusionTexture = null, metallicRoughnessTexture = null, specularTexture = null, specularFactorTexture = null, specularColorTexture = null, transmissionThicknessTexture = null, transmissionTexture = null, thicknessTexture = null, sheenTexture = null, sheenColorTexture = null, sheenRoughnessTexture = null, anisotropyTexture = null, clearcoatTexture = null, clearcoatFactorTexture = null, clearcoatRoughnessTexture = null, clearcoatNormalTexture = null, iridescenceTexture = null, iridescenceFactorTexture = null, iridescenceThicknessTexture = null, diffuseTransmissionTexture = null, diffuseTransmissionFactorTexture = null, diffuseTransmissionColorTexture = null, transmissionBackgroundTexture = null, environmentMap = null }) => {
+	}, chunks = null, geometry, cullMode = "back", flatShading = false, additionalVaryings = [], materialUniform = null, materialUniformName = "material", extensionsUsed = [], receiveShadows = false, baseColorTexture = null, normalTexture = null, emissiveTexture = null, occlusionTexture = null, metallicRoughnessTexture = null, specularTexture = null, specularFactorTexture = null, specularColorTexture = null, transmissionThicknessTexture = null, transmissionTexture = null, thicknessTexture = null, sheenTexture = null, sheenColorTexture = null, sheenRoughnessTexture = null, anisotropyTexture = null, clearcoatTexture = null, clearcoatFactorTexture = null, clearcoatRoughnessTexture = null, clearcoatNormalTexture = null, iridescenceTexture = null, iridescenceFactorTexture = null, iridescenceThicknessTexture = null, diffuseTransmissionTexture = null, diffuseTransmissionFactorTexture = null, diffuseTransmissionColorTexture = null, transmissionBackgroundTexture = null, environmentMap = null }) => {
 		switch (shadingModel) {
 			case "Unlit": return getUnlitFragmentShaderCode({
 				chunks,
-				toneMapping,
-				outputColorSpace,
 				fragmentOutput,
 				geometry,
 				additionalVaryings,
@@ -21874,8 +21904,6 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			});
 			case "Lambert": return getLambertFragmentShaderCode({
 				chunks,
-				toneMapping,
-				outputColorSpace,
 				fragmentOutput,
 				geometry,
 				cullMode,
@@ -21891,8 +21919,6 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			});
 			case "Phong": return getPhongFragmentShaderCode({
 				chunks,
-				toneMapping,
-				outputColorSpace,
 				fragmentOutput,
 				geometry,
 				cullMode,
@@ -21912,10 +21938,6 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			});
 			default: return getPBRFragmentShaderCode({
 				chunks,
-				toneMapping,
-				outputColorSpace,
-				transmissiveInputColorSpace,
-				transmissiveInputToneMapping,
 				fragmentOutput,
 				geometry,
 				cullMode,
@@ -22575,6 +22597,8 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 	/**
 	* This renderer just extends the {@link GPUCameraRenderer} by keeping track of all the created {@link curtains/meshes/DOMMesh.DOMMesh | DOM Meshes}
 	*
+	* Since this renderer is mostly used to display meshes textured with images and videos, its default `toneMapping` is set to `false`, and its default `colorSpace` is set to `linear`.
+	*
 	* @example
 	* ```javascript
 	* // first, we need a WebGPU device, that's what GPUDeviceManager is for
@@ -22598,7 +22622,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 		* GPUCurtainsRenderer constructor
 		* @param parameters - {@link GPUCameraRendererParams | parameters} used to create this {@link GPUCurtainsRenderer}.
 		*/
-		constructor({ deviceManager, label, container, pixelRatio = 1, autoResize = true, context = {}, renderPass, camera, lights }) {
+		constructor({ deviceManager, label, container, pixelRatio = 1, autoResize = true, context = {}, renderPass, camera, lights, exposure = 1, toneMapping = false, colorSpace = "linear" }) {
 			super({
 				deviceManager,
 				label,
@@ -22608,7 +22632,10 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 				context,
 				renderPass,
 				camera,
-				lights
+				lights,
+				exposure,
+				toneMapping,
+				colorSpace
 			});
 			this.type = "GPUCurtainsRenderer";
 		}
@@ -25231,11 +25258,8 @@ struct Params {
 			renderer = isCameraRenderer(renderer, "LitMesh");
 			let { material, ...defaultParams } = parameters;
 			if (!material) material = {};
-			let { colorSpace, transmissiveInputColorSpace, transmissiveInputToneMapping, outputColorSpace, flatShading, fragmentOutput } = material;
+			let { colorSpace, flatShading, fragmentOutput } = material;
 			if (!colorSpace) colorSpace = "srgb";
-			if (!outputColorSpace) outputColorSpace = "srgb";
-			if (!transmissiveInputColorSpace) transmissiveInputColorSpace = "srgb";
-			if (transmissiveInputToneMapping === void 0) transmissiveInputToneMapping = "Khronos";
 			if (!fragmentOutput) fragmentOutput = {
 				struct: [{
 					type: "vec4f",
@@ -25246,7 +25270,7 @@ struct Params {
   output.color = outputColor;
   return output;`
 			};
-			const { shading, additionalVaryings, vertexChunks, fragmentChunks, toneMapping, color, opacity, alphaCutoff, metallic, roughness, normalScale, occlusionIntensity, emissiveIntensity, emissiveColor, specularIntensity, specularColor, shininess, transmission, ior, dispersion, thickness, attenuationDistance, attenuationColor, multiscatterColor, scatterAnisotropy, sheenColor, sheenRoughness, anisotropy, anisotropyVector, clearcoat, clearcoatRoughness, clearcoatNormalScale, iridescence, iridescenceIOR, iridescenceThicknessRange, diffuseTransmission, diffuseTransmissionColor, baseColorTexture, normalTexture, emissiveTexture, occlusionTexture, metallicRoughnessTexture, specularTexture, specularFactorTexture, specularColorTexture, transmissionThicknessTexture, transmissionTexture, thicknessTexture, sheenTexture, sheenColorTexture, sheenRoughnessTexture, anisotropyTexture, clearcoatTexture, clearcoatFactorTexture, clearcoatRoughnessTexture, clearcoatNormalTexture, iridescenceTexture, iridescenceFactorTexture, iridescenceThicknessTexture, diffuseTransmissionTexture, diffuseTransmissionFactorTexture, diffuseTransmissionColorTexture, environmentMap } = material;
+			const { shading, additionalVaryings, vertexChunks, fragmentChunks, color, opacity, alphaCutoff, metallic, roughness, normalScale, occlusionIntensity, emissiveIntensity, emissiveColor, specularIntensity, specularColor, shininess, transmission, ior, dispersion, thickness, attenuationDistance, attenuationColor, multiscatterColor, scatterAnisotropy, sheenColor, sheenRoughness, anisotropy, anisotropyVector, clearcoat, clearcoatRoughness, clearcoatNormalScale, iridescence, iridescenceIOR, iridescenceThicknessRange, diffuseTransmission, diffuseTransmissionColor, baseColorTexture, normalTexture, emissiveTexture, occlusionTexture, metallicRoughnessTexture, specularTexture, specularFactorTexture, specularColorTexture, transmissionThicknessTexture, transmissionTexture, thicknessTexture, sheenTexture, sheenColorTexture, sheenRoughnessTexture, anisotropyTexture, clearcoatTexture, clearcoatFactorTexture, clearcoatRoughnessTexture, clearcoatNormalTexture, iridescenceTexture, iridescenceFactorTexture, iridescenceThicknessTexture, diffuseTransmissionTexture, diffuseTransmissionFactorTexture, diffuseTransmissionColorTexture, environmentMap } = material;
 			const materialUniform = LitMesh.getMaterialUniform({
 				shading,
 				colorSpace,
@@ -25368,16 +25392,12 @@ struct Params {
 			const cullMode = parameters.cullMode ?? "back";
 			const fs = LitMesh.getFragmentShaderCode({
 				shadingModel: shading,
-				outputColorSpace,
 				fragmentOutput,
 				chunks: fragmentChunks,
 				extensionsUsed,
 				receiveShadows: defaultParams.receiveShadows,
 				cullMode,
 				flatShading,
-				toneMapping,
-				transmissiveInputColorSpace,
-				transmissiveInputToneMapping,
 				geometry: defaultParams.geometry,
 				additionalVaryings,
 				materialUniform,
@@ -27904,7 +27924,7 @@ struct Params {
 					}
 					meshDescriptor.alternateDescriptors.forEach((descriptor) => {
 						const { material: originalMaterial } = meshDescriptor.parameters;
-						const { environmentMap, shading, vertexChunks, additionalVaryings, fragmentChunks, toneMapping } = originalMaterial;
+						const { environmentMap, shading, vertexChunks, additionalVaryings, fragmentChunks } = originalMaterial;
 						const { label, targets, transparent, material } = descriptor.parameters;
 						material.shading = shading;
 						if (descriptor.extensionsUsed.includes("KHR_materials_unlit")) material.shading = "Unlit";
@@ -27966,7 +27986,6 @@ struct Params {
 							chunks: fragmentChunks,
 							extensionsUsed: descriptor.extensionsUsed,
 							receiveShadows: meshDescriptor.parameters.receiveShadows,
-							toneMapping,
 							geometry,
 							additionalVaryings,
 							materialUniform: variantMaterialUniform,

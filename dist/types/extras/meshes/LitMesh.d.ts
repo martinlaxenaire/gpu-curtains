@@ -12,7 +12,8 @@ import { Texture } from '../../core/textures/Texture';
 import { MediaTexture } from '../../core/textures/MediaTexture';
 import { Sampler } from '../../core/samplers/Sampler';
 import { EnvironmentMap } from '../environmentMap/EnvironmentMap';
-import { ColorSpace, FragmentOutput } from '../../types/shading';
+import { FragmentOutput } from '../../types/shading';
+import { ColorSpace } from '../../core/renderers/GPUCameraRenderer';
 /** Defines all kinds of shading models available. */
 export type ShadingModels = 'Unlit' | 'Lambert' | 'Phong' | 'PBR';
 /**

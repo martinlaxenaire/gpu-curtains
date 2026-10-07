@@ -92,11 +92,8 @@ var LitMesh = class LitMesh extends Mesh {
 		renderer = isCameraRenderer(renderer, "LitMesh");
 		let { material, ...defaultParams } = parameters;
 		if (!material) material = {};
-		let { colorSpace, transmissiveInputColorSpace, transmissiveInputToneMapping, outputColorSpace, flatShading, fragmentOutput } = material;
+		let { colorSpace, flatShading, fragmentOutput } = material;
 		if (!colorSpace) colorSpace = "srgb";
-		if (!outputColorSpace) outputColorSpace = "srgb";
-		if (!transmissiveInputColorSpace) transmissiveInputColorSpace = "srgb";
-		if (transmissiveInputToneMapping === void 0) transmissiveInputToneMapping = "Khronos";
 		if (!fragmentOutput) fragmentOutput = {
 			struct: [{
 				type: "vec4f",
@@ -107,7 +104,7 @@ var LitMesh = class LitMesh extends Mesh {
   output.color = outputColor;
   return output;`
 		};
-		const { shading, additionalVaryings, vertexChunks, fragmentChunks, toneMapping, color, opacity, alphaCutoff, metallic, roughness, normalScale, occlusionIntensity, emissiveIntensity, emissiveColor, specularIntensity, specularColor, shininess, transmission, ior, dispersion, thickness, attenuationDistance, attenuationColor, multiscatterColor, scatterAnisotropy, sheenColor, sheenRoughness, anisotropy, anisotropyVector, clearcoat, clearcoatRoughness, clearcoatNormalScale, iridescence, iridescenceIOR, iridescenceThicknessRange, diffuseTransmission, diffuseTransmissionColor, baseColorTexture, normalTexture, emissiveTexture, occlusionTexture, metallicRoughnessTexture, specularTexture, specularFactorTexture, specularColorTexture, transmissionThicknessTexture, transmissionTexture, thicknessTexture, sheenTexture, sheenColorTexture, sheenRoughnessTexture, anisotropyTexture, clearcoatTexture, clearcoatFactorTexture, clearcoatRoughnessTexture, clearcoatNormalTexture, iridescenceTexture, iridescenceFactorTexture, iridescenceThicknessTexture, diffuseTransmissionTexture, diffuseTransmissionFactorTexture, diffuseTransmissionColorTexture, environmentMap } = material;
+		const { shading, additionalVaryings, vertexChunks, fragmentChunks, color, opacity, alphaCutoff, metallic, roughness, normalScale, occlusionIntensity, emissiveIntensity, emissiveColor, specularIntensity, specularColor, shininess, transmission, ior, dispersion, thickness, attenuationDistance, attenuationColor, multiscatterColor, scatterAnisotropy, sheenColor, sheenRoughness, anisotropy, anisotropyVector, clearcoat, clearcoatRoughness, clearcoatNormalScale, iridescence, iridescenceIOR, iridescenceThicknessRange, diffuseTransmission, diffuseTransmissionColor, baseColorTexture, normalTexture, emissiveTexture, occlusionTexture, metallicRoughnessTexture, specularTexture, specularFactorTexture, specularColorTexture, transmissionThicknessTexture, transmissionTexture, thicknessTexture, sheenTexture, sheenColorTexture, sheenRoughnessTexture, anisotropyTexture, clearcoatTexture, clearcoatFactorTexture, clearcoatRoughnessTexture, clearcoatNormalTexture, iridescenceTexture, iridescenceFactorTexture, iridescenceThicknessTexture, diffuseTransmissionTexture, diffuseTransmissionFactorTexture, diffuseTransmissionColorTexture, environmentMap } = material;
 		const materialUniform = LitMesh.getMaterialUniform({
 			shading,
 			colorSpace,
@@ -229,16 +226,12 @@ var LitMesh = class LitMesh extends Mesh {
 		const cullMode = parameters.cullMode ?? "back";
 		const fs = LitMesh.getFragmentShaderCode({
 			shadingModel: shading,
-			outputColorSpace,
 			fragmentOutput,
 			chunks: fragmentChunks,
 			extensionsUsed,
 			receiveShadows: defaultParams.receiveShadows,
 			cullMode,
 			flatShading,
-			toneMapping,
-			transmissiveInputColorSpace,
-			transmissiveInputToneMapping,
 			geometry: defaultParams.geometry,
 			additionalVaryings,
 			materialUniform,

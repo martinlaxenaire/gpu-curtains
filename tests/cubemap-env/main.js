@@ -2,19 +2,8 @@
 // see https://webgpufundamentals.org/webgpu/lessons/webgpu-skybox.html
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
-  const {
-    GPUDeviceManager,
-    GPUCameraRenderer,
-    BoxGeometry,
-    PlaneGeometry,
-    Mesh,
-    Vec2,
-    Vec3,
-    EnvironmentMap,
-    constants,
-    common,
-    toneMappingUtils,
-  } = await import(/* @vite-ignore */ path)
+  const { GPUDeviceManager, GPUCameraRenderer, BoxGeometry, PlaneGeometry, Mesh, Vec2, Vec3, EnvironmentMap } =
+    await import(/* @vite-ignore */ path)
 
   // create a device manager
   const gpuDeviceManager = new GPUDeviceManager({
@@ -82,7 +71,7 @@ window.addEventListener('load', async () => {
       attributes: Attributes,
     ) -> VSOutput {
       var vsOutput: VSOutput;
-     
+
       vsOutput.position = getOutputPosition(attributes.position);
       vsOutput.direction = normalize(attributes.position * params.envRotation);
 
@@ -95,10 +84,6 @@ window.addEventListener('load', async () => {
       @builtin(position) position: vec4f,
       @location(0) direction: vec3f,
     };
-    
-    ${constants}
-    ${common}
-    ${toneMappingUtils}
 
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var color: vec4f;
@@ -110,10 +95,7 @@ window.addEventListener('load', async () => {
       } else if(params.displayTexture == 2.0) {
         color = textureSampleLevel(${environmentMap.diffuseTexture.options.name}, clampSampler, fsInput.direction, 0.0);
       }
-      
-      color = vec4(KhronosToneMapping(color.rgb), color.a);
-      color = linearTosRGB_4(color);
-      
+
       return color;
     }
   `
@@ -166,16 +148,16 @@ window.addEventListener('load', async () => {
             @builtin(position) position: vec4f,
             @location(0) uv: vec2f,
           };
-          
+
           @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
             let lutSample: vec4f = textureSample(lutTexture, clampSampler, fsInput.uv);
             var color: vec4f;
 
-            if(params.displayTexture == 0.0) {        
+            if(params.displayTexture == 0.0) {
               color = lutSample;
-            } else if(params.displayTexture == 1.0) {        
+            } else if(params.displayTexture == 1.0) {
               color = vec4(lutSample.rg, 0.0, 1.0);
-            } else if(params.displayTexture == 2.0) {        
+            } else if(params.displayTexture == 2.0) {
               color = vec4(0.0, 0.0, lutSample.b, 1.0);
             }
 

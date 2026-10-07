@@ -5,7 +5,6 @@ import { getLightsInfos } from "../../chunks/fragment/head/get-lights-infos.mjs"
 import { REIndirectDiffuse } from "../../chunks/fragment/head/RE-indirect-diffuse.mjs";
 import { getLambertDirect } from "../../chunks/fragment/head/get-lambert-direct.mjs";
 import { getLambertShading } from "../../chunks/fragment/body/get-lambert-shading.mjs";
-import { applyToneMapping } from "../../chunks/fragment/body/apply-tone-mapping.mjs";
 import { patchAdditionalChunks } from "../../default-material-helpers.mjs";
 import { getFragmentInputStruct } from "../../chunks/fragment/head/get-fragment-input-struct.mjs";
 import { getFragmentOutputStruct } from "../../chunks/fragment/head/get-fragment-output-struct.mjs";
@@ -22,7 +21,7 @@ import { getTangentBitangent } from "../../chunks/fragment/body/get-tangent-bita
 * @param parameters - {@link LambertFragmentShaderInputParams} used to build the Lambert fragment shader.
 * @returns - The Lambert fragment shader generated based on the provided parameters.
 */
-const getLambertFragmentShaderCode = ({ chunks = null, toneMapping = "Khronos", outputColorSpace = "srgb", fragmentOutput = {
+const getLambertFragmentShaderCode = ({ chunks = null, fragmentOutput = {
 	struct: [{
 		type: "vec4f",
 		name: "color"
@@ -33,7 +32,7 @@ const getLambertFragmentShaderCode = ({ chunks = null, toneMapping = "Khronos", 
   return output;`
 }, geometry, cullMode = "back", flatShading = false, additionalVaryings = [], materialUniform = null, materialUniformName = "material", receiveShadows = false, baseColorTexture = null, normalTexture = null, emissiveTexture = null, occlusionTexture = null }) => {
 	chunks = patchAdditionalChunks(chunks);
-	return `  
+	return `
 ${chunks.additionalHead}
 
 ${constants}
@@ -53,7 +52,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 
 @fragment fn main(fsInput: FSInput) -> FSOutput {
   var outputColor: vec4f = vec4();
-  
+
   ${declareAttributesVars({
 		geometry,
 		additionalVaryings
@@ -67,35 +66,30 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 		geometry,
 		baseColorTexture
 	})}
-  
+
   // user defined preliminary contribution
   ${chunks.preliminaryContribution}
-  
+
   ${getTangentBitangent({
 		geometry,
 		cullMode,
 		flatShading,
 		normalTexture
-	})}  
-  ${getNormal({ normalTexture })}  
+	})}
+  ${getNormal({ normalTexture })}
   ${getEmissiveOcclusion({
 		emissiveTexture,
 		occlusionTexture
 	})}
-  
+
   // lights
   ${getLambertShading({ receiveShadows })}
-  
+
   outputColor = vec4(outgoingLight, outputColor.a);
   outputColor = vec4(outputColor.rgb + emissive, outputColor.a);
-  
+
   // user defined additional contribution
   ${chunks.additionalContribution}
-  
-  ${applyToneMapping({
-		toneMapping,
-		outputColorSpace
-	})}
 
   ${fragmentOutput.output}
 }`;

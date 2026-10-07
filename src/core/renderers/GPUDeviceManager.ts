@@ -509,7 +509,6 @@ export class GPUDeviceManager {
   uploadTexture(texture: MediaTexture, sourceIndex = 0) {
     if ('sources' in texture && texture.sources.length) {
       try {
-        console.log(texture.sources[sourceIndex].source)
         this.device?.queue.copyExternalImageToTexture(
           {
             source: texture.sources[sourceIndex].source as GPUCopyExternalImageSource,

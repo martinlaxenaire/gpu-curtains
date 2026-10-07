@@ -11,7 +11,6 @@ import {
   Mat4,
   constants,
   common,
-  toneMappingUtils,
   FullscreenPlane,
 } from '../../dist/esm/index.mjs'
 
@@ -178,35 +177,30 @@ window.addEventListener('load', async () => {
   }
 
   // SKYBOX
-  // sky box
   const skyBoxFs = /* wgsl */ `
     struct VSOutput {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
     };
-    
+
     ${constants}
     ${common}
-    ${toneMappingUtils}
-    
+
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var uv: vec2f = fsInput.uv;
       uv.y = 1.0 - uv.y;
-      
+
       uv = uv * 2.0 - 1.0;
-      
+
       var position: vec4f = params.inverseViewProjectionMatrix * vec4(uv, 1.0, 1.0);
       let samplePosition: vec3f = normalize(position.xyz / position.w);
-      
+
       var color: vec4f = select(
         textureSample(${environmentMap.specularTexture.options.name}, clampSampler, samplePosition * params.envRotation),
         textureSample(${environmentMap.diffuseTexture.options.name}, clampSampler, samplePosition * params.envRotation),
         params.useSpecular < 1
       );
-      
-      color = vec4(KhronosToneMapping(color.rgb), color.a);
-      color = linearTosRGB_4(color);
-      
+
       return color;
     }
   `

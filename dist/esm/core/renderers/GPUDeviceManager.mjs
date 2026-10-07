@@ -271,7 +271,6 @@ var GPUDeviceManager = class {
 	*/
 	uploadTexture(texture, sourceIndex = 0) {
 		if ("sources" in texture && texture.sources.length) try {
-			console.log(texture.sources[sourceIndex].source);
 			this.device?.queue.copyExternalImageToTexture({
 				source: texture.sources[sourceIndex].source,
 				flipY: texture.options.flipY
