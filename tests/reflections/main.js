@@ -140,7 +140,6 @@ window.addEventListener('load', async () => {
 
   const baseMaterialOptions = {
     shading: 'PBR',
-    toneMapping: 'Khronos',
     environmentMap,
   }
 

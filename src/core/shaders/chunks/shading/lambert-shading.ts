@@ -6,7 +6,7 @@ import { REIndirectDiffuse } from '../fragment/head/RE-indirect-diffuse'
 import { getLambertDirect } from '../fragment/head/get-lambert-direct'
 import { getLambertShading } from '../fragment/body/get-lambert-shading'
 import { applyToneMapping } from '../fragment/body/apply-tone-mapping'
-import { ToneMappings, ColorSpace } from '../../../../types/shading'
+import { ToneMappings, ColorSpace } from '../../../renderers/GPUCameraRenderer'
 
 /** Defines the basic parameters available for the various shading getter functions. */
 export interface GetShadingParams {
@@ -60,15 +60,15 @@ fn getLambert(
   ${useOcclusion ? 'occlusion: f32,' : ''}
 ) -> vec4f {
   ${!useOcclusion ? 'let occlusion: f32 = 1.0;' : ''}
-  
+
   var outputColor: vec4f = color;
 
   ${getLambertShading({ receiveShadows })}
-  
+
   outputColor = vec4(outgoingLight, outputColor.a);
-  
+
   ${applyToneMapping({ toneMapping, outputColorSpace })}
-    
+
   return outputColor;
 }
 `

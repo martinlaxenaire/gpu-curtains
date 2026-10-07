@@ -18,9 +18,6 @@ window.addEventListener('load', async () => {
     Vec3,
     RenderBundle,
     FullscreenPlane,
-    constants,
-    common,
-    toneMappingUtils,
     Mat4,
   } = await import(/* @vite-ignore */ path)
 
@@ -102,7 +99,6 @@ window.addEventListener('load', async () => {
   environmentMap.loadAndComputeFromHDR(currentEnvMap.url)
   let useEnvMap = true
 
-  let toneMapping = 'Khronos' // 'Khronos', 'Reinhard', 'Cineon' or false
   let shadingModel = 'PBR' // 'PBR', 'Phong' or 'Lambert'
   const lightType = 'DirectionalLight' // or 'PointLight'
 
@@ -173,6 +169,14 @@ window.addEventListener('load', async () => {
     title: 'GLTF loader',
   })
 
+  const outputFolder = gui.addFolder('Output')
+
+  outputFolder.add(gpuCameraRenderer, 'exposure', 0, 2, 0.01).name('Exposure')
+
+  outputFolder
+    .add(gpuCameraRenderer, 'toneMapping', { Khronos: 'Khronos', Reinhard: 'Reinhard', Cineon: 'Cineon', None: false })
+    .name('Tone mapping')
+
   // render bundles
   let useRenderBundles = true
   let useTransparentRenderBundles = true
@@ -221,9 +225,6 @@ window.addEventListener('load', async () => {
   const usePunctualLightingField = gui.add({ usePunctualLighting }, 'usePunctualLighting').name('Punctual lighting')
 
   const shadingField = gui.add({ shadingModel }, 'shadingModel', ['PBR', 'Phong', 'Lambert', 'Unlit']).name('Shading')
-  const toneMappingField = gui
-    .add({ toneMapping }, 'toneMapping', { Khronos: 'Khronos', Reinhard: 'Reinhard', Cineon: 'Cineon', None: false })
-    .name('Tone mapping')
 
   const debugChannels = [
     'None',
@@ -454,12 +455,7 @@ window.addEventListener('load', async () => {
         },
       }
 
-      parameters.material.toneMapping = toneMapping
       parameters.material.shading = shadingModel
-
-      if (parameters.material.transmissive) {
-        parameters.material.transmissiveInputToneMapping = toneMapping
-      }
 
       if (useEnvMap) {
         parameters.material.environmentMap = environmentMap
@@ -774,29 +770,22 @@ window.addEventListener('load', async () => {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
     };
-    
-    ${constants}
-    ${common}
-    ${toneMappingUtils}
-    
+
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var uv: vec2f = fsInput.uv;
       uv.y = 1.0 - uv.y;
-      
+
       uv = uv * 2.0 - 1.0;
-      
+
       var position: vec4f = params.inverseViewProjectionMatrix * vec4(uv, 1.0, 1.0);
       let samplePosition: vec3f = normalize(position.xyz / position.w);
-      
+
       var color: vec4f = select(
         textureSample(${environmentMap.specularTexture.options.name}, clampSampler, samplePosition * params.envRotation),
         textureSample(${environmentMap.diffuseTexture.options.name}, clampSampler, samplePosition * params.envRotation),
         params.useSpecular < 1
       );
-      
-      color = vec4(KhronosToneMapping(color.rgb), color.a);
-      color = linearTosRGB_4(color);
-      
+
       return color;
     }
   `
@@ -960,16 +949,6 @@ window.addEventListener('load', async () => {
   shadingField.onChange(async (value) => {
     if (value !== shadingModel) {
       shadingModel = value
-
-      cleanUpScene()
-
-      await loadGLTF(currentModel.url)
-    }
-  })
-
-  toneMappingField.onChange(async (value) => {
-    if (value !== toneMapping) {
-      toneMapping = value
 
       cleanUpScene()
 
