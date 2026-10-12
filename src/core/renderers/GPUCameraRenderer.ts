@@ -173,6 +173,7 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
     pixelRatio = 1,
     autoResize = true,
     context = {},
+    hdrRendering = true,
     renderPass,
     camera = {},
     lights = {},
@@ -187,6 +188,7 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
       pixelRatio,
       autoResize,
       context,
+      hdrRendering,
       renderPass,
     })
 
@@ -940,7 +942,12 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
 
   /* @ignore */
   get #needsOutputPass(): boolean {
-    return this.exposure !== 1 || !!this.toneMapping || this.colorSpace !== 'linear'
+    return (
+      this.outputFormat !== this.options.context.format ||
+      this.exposure !== 1 ||
+      !!this.toneMapping ||
+      this.colorSpace !== 'linear'
+    )
   }
 
   /**
@@ -1093,9 +1100,14 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
         label: 'Transmission background scene render target output',
         name: 'transmissionBackgroundTexture',
         generateMips: true, // needed for roughness LOD!
-        format: this.options.context.format,
+        format: this.outputFormat,
         autoDestroy: false,
       })
+
+      const mainPassEntry = this.scene.getRenderTargetPassEntry()
+
+      // use same render texture as original screen render pass
+      this.transmissionTarget.passEntry.renderTexture = mainPassEntry.renderTexture
 
       this.transmissionTarget.passEntry.onBeforeRenderPass = (commandEncoder, swapChainTexture) => {
         // Copy background scene texture to the output, because the output texture needs mips
@@ -1105,7 +1117,6 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
 
       // copy transparent objects to the transmission stack as well
       // to render them again on top of transmissive objects
-      const mainPassEntry = this.scene.getRenderTargetPassEntry()
       this.transmissionTarget.passEntry.stack.projected.transparent = mainPassEntry.stack.projected.transparent
       mainPassEntry.stack.projected.transparent = []
     }

@@ -236,6 +236,15 @@ export class GPUDeviceManager {
   }
 
   /**
+   * Get whether the device adapter has been created with the `compatibility` feature level.
+   * @readonly
+   * @returns - Whether the device adapter has been created with the `compatibility` feature level.
+   */
+  get isCompatibilityMode(): boolean {
+    return this.options.adapterOptions.featureLevel === 'compatibility'
+  }
+
+  /**
    * Set our {@link GPUDeviceManager.device | device}.
    * @param device - {@link GPUDevice} to use if set.
    */
@@ -250,11 +259,9 @@ export class GPUDeviceManager {
       try {
         const { limits, features } = this.adapter as GPUAdapter
 
-        const isCompatibilityMode = this.options.adapterOptions.featureLevel === 'compatibility'
-
         // On compatibility mode,
         // try to request max storage buffers/textures in shaders
-        if (isCompatibilityMode) {
+        if (this.isCompatibilityMode) {
           this.options.requestAdapterLimits.push(
             'maxStorageBuffersInVertexStage',
             'maxStorageTexturesInVertexStage',

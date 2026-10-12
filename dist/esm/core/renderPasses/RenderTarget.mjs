@@ -62,7 +62,7 @@ var RenderTarget = class {
 		if (renderPassParams.useColorAttachments !== false) this.renderTexture = new Texture(this.renderer, {
 			label: this.options.label ? `${this.options.label} Render Texture` : "Render Target render texture",
 			name: this.options.renderTextureName,
-			format: colorAttachments && colorAttachments.length && colorAttachments[0].targetFormat ? colorAttachments[0].targetFormat : this.renderer.options.context.format,
+			format: colorAttachments && colorAttachments.length && colorAttachments[0].targetFormat ? colorAttachments[0].targetFormat : this.renderer.outputFormat,
 			...this.options.qualityRatio !== void 0 && { qualityRatio: this.options.qualityRatio },
 			...this.options.fixedSize !== void 0 && { fixedSize: this.options.fixedSize },
 			usage: [

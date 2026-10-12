@@ -28,7 +28,7 @@ var GPUCurtainsRenderer = class extends GPUCameraRenderer {
 	* GPUCurtainsRenderer constructor
 	* @param parameters - {@link GPUCameraRendererParams | parameters} used to create this {@link GPUCurtainsRenderer}.
 	*/
-	constructor({ deviceManager, label, container, pixelRatio = 1, autoResize = true, context = {}, renderPass, camera, lights, exposure = 1, toneMapping = false, colorSpace = "linear" }) {
+	constructor({ deviceManager, label, container, pixelRatio = 1, autoResize = true, context = {}, hdrRendering = false, renderPass, camera, lights, exposure = 1, toneMapping = false, colorSpace = "linear" }) {
 		super({
 			deviceManager,
 			label,
@@ -36,6 +36,7 @@ var GPUCurtainsRenderer = class extends GPUCameraRenderer {
 			pixelRatio,
 			autoResize,
 			context,
+			hdrRendering,
 			renderPass,
 			camera,
 			lights,

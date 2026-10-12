@@ -183,7 +183,7 @@ export class RenderPass {
         loadOp: 'clear' as GPULoadOp,
         storeOp: 'store' as GPUStoreOp,
         clearValue: [0, 0, 0, 0] as GPUColor,
-        targetFormat: this.renderer.options.context.format,
+        targetFormat: this.renderer.outputFormat,
       }
 
       if (!colorAttachments.length) {
@@ -335,7 +335,9 @@ export class RenderPass {
     if (this.options.sampleCount > 1) {
       this.options.colorAttachments.forEach((colorAttachment, index) => {
         this.resolveTargets.push(
-          this.options.renderToSwapChain && index === 0
+          this.options.renderToSwapChain &&
+            index === 0 &&
+            this.renderer.outputFormat === this.renderer.options.context.format
             ? null
             : new Texture(this.renderer, {
                 label: `${this.options.label} resolve target[${index}] texture`,
@@ -355,7 +357,7 @@ export class RenderPass {
    * @readonly
    */
   get outputTextures(): Texture[] {
-    return this.resolveTargets.length ? this.resolveTargets : this.viewTextures
+    return this.resolveTargets?.length ? this.resolveTargets : this.viewTextures
   }
 
   /**
@@ -557,6 +559,25 @@ export class RenderPass {
   }
 
   /**
+   * Set the {@link descriptor} {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#storeop | store operation}.
+   * @param storeOp - New {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#storeop | store operation} to use.
+   * @param colorAttachmentIndex - Index of the color attachment for which to use this store operation.
+   */
+  setStoreOp(storeOp: GPUStoreOp = 'store', colorAttachmentIndex = 0) {
+    if (this.options.useColorAttachments) {
+      if (this.options.colorAttachments[colorAttachmentIndex]) {
+        this.options.colorAttachments[colorAttachmentIndex].storeOp = storeOp
+      }
+
+      if (this.descriptor) {
+        if (this.descriptor.colorAttachments && this.descriptor.colorAttachments[colorAttachmentIndex]) {
+          this.descriptor.colorAttachments[colorAttachmentIndex].storeOp = storeOp
+        }
+      }
+    }
+  }
+
+  /**
    * Set the {@link descriptor} {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#depthloadop | depth load operation} if {@link RenderPassOptions#forceDepthLoadOp | forceDepthLoadOp options} has not been defined.
    * @param depthLoadOp - New {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#depthloadop | depth load operation} to use.
    * @param force - Force the update of the `depthLoadOp` setting regardless of {@link RenderPassOptions#forceDepthLoadOp | forceDepthLoadOp option} value.
@@ -666,7 +687,7 @@ export class RenderPass {
     }
 
     if (!renderTexture) {
-      renderTexture = this.renderer.context.getCurrentTexture()
+      renderTexture = this.renderer.currentTexture
       renderTexture.label = `${this.renderer.type} context current texture`
     }
 

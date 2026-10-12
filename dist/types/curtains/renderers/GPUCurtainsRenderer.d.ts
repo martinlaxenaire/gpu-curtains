@@ -37,7 +37,7 @@ export declare class GPUCurtainsRenderer<TCamera extends RendererCamera = Perspe
      * GPUCurtainsRenderer constructor
      * @param parameters - {@link GPUCameraRendererParams | parameters} used to create this {@link GPUCurtainsRenderer}.
      */
-    constructor({ deviceManager, label, container, pixelRatio, autoResize, context, renderPass, camera, lights, exposure, toneMapping, colorSpace, }: GPUCameraRendererParams);
+    constructor({ deviceManager, label, container, pixelRatio, autoResize, context, hdrRendering, renderPass, camera, lights, exposure, toneMapping, colorSpace, }: GPUCameraRendererParams);
     /**
      * Add the {@link GPUCurtainsRenderer#domMeshes | domMeshes} to our tracked elements.
      */

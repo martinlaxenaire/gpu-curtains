@@ -185,6 +185,26 @@ export declare class Scene extends Object3D {
      */
     removeShaderPass(shaderPass: ShaderPass): void;
     /**
+     * Get all pre pocessing pass entries that are actually rendered to the screen.
+     * @readonly
+     * @returns - All pre pocessing pass entries actually rendered to the screen if any.
+     */
+    get activePreScreenShaderPassEntries(): RenderPassEntry[];
+    /**
+     * Get all post pocessing pass entries that are actually rendered to the screen.
+     * @readonly
+     * @returns - All post pocessing pass entries actually rendered to the screen if any.
+     */
+    get activePostProScreenShaderPassEntries(): RenderPassEntry[];
+    /**
+     * Patch all pre processing pass entries render textures to allow chaining.
+     */
+    patchPreScreenShaderPasses(): void;
+    /**
+     * Patch all post processing pass entries render textures to allow chaining.
+     */
+    patchPostProScreenShaderPasses(): void;
+    /**
      * Add a {@link PingPongPlane} to our scene {@link renderPassEntries} pingPong array.
      * After rendering the {@link PingPongPlane}, we will copy the context current texture into its {@link PingPongPlane#renderTexture | renderTexture} so we'll be able to use it as an input for the next pass.
      * @see {@link https://codesandbox.io/p/sandbox/webgpu-render-ping-pong-to-texture-use-in-quad-gwjx9p | minimal code example}.

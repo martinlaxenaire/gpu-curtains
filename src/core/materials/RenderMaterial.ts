@@ -103,12 +103,12 @@ export class RenderMaterial extends Material {
     if (targets === undefined) {
       targets = [
         {
-          format: this.renderer.options.context.format,
+          format: this.renderer.outputFormat,
         },
       ]
     }
     if (targets && targets.length && !targets[0].format) {
-      targets[0].format = this.renderer.options.context.format
+      targets[0].format = this.renderer.outputFormat
     }
 
     // patch stencil options for a better pipeline cache

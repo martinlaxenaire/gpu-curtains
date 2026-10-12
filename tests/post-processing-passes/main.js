@@ -47,6 +47,8 @@ window.addEventListener('load', async () => {
     renderPass: {
       //sampleCount: 1,
     },
+    toneMapping: false,
+    colorSpace: 'linear',
   })
 
   // get the camera
@@ -69,15 +71,15 @@ window.addEventListener('load', async () => {
 
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var bg: vec4f;
-      
+
       let uv: vec2f = fsInput.uv * 2.0 - 1.0;
-      
+
       if(abs(uv.x) < 0.5 && abs(uv.y) < 0.5) {
         bg = vec4(vec3(0.5), 1.0);
       } else {
         bg = vec4(0.0);
       }
-    
+
       return bg;
     }
   `
@@ -113,7 +115,7 @@ window.addEventListener('load', async () => {
     shaders: {
       fragment: {
         code: `
-          @fragment fn main(@builtin(position) position: vec4f) -> @location(0) vec4f {          
+          @fragment fn main(@builtin(position) position: vec4f) -> @location(0) vec4f {
             return vec4(1.0, 0.0, 0.0, 1.0);
           }
         `,
@@ -192,13 +194,13 @@ window.addEventListener('load', async () => {
 
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var texture: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv);
-            
+
       let rawDepth = textureLoad(
         depthTexture,
         vec2<i32>(floor(fsInput.position.xy)),
         0
       ).x;
-      
+
       // remap depth into something a bit more visible
       let depth = (1.0 - rawDepth) * 10.0 * params.systemSize;
 

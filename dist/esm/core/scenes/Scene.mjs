@@ -279,10 +279,7 @@ var Scene = class extends Object3D {
 	* @param shaderPass - {@link ShaderPass} to add.
 	*/
 	addShaderPass(shaderPass) {
-		const onBeforeRenderPass = shaderPass.inputTarget || shaderPass.outputTarget ? null : (commandEncoder, swapChainTexture) => {
-			if (shaderPass.renderTexture && swapChainTexture) this.renderer.copyGPUTextureToTexture(swapChainTexture, shaderPass.renderTexture, commandEncoder);
-			this.renderer.postProcessingPass.setLoadOp("clear");
-		};
+		if (!shaderPass.renderTexture) return;
 		const onAfterRenderPass = shaderPass.options.copyOutputToRenderTexture ? (commandEncoder, swapChainTexture) => {
 			if (shaderPass.renderTexture && swapChainTexture) this.renderer.copyGPUTextureToTexture(swapChainTexture, shaderPass.renderTexture, commandEncoder);
 		} : null;
@@ -291,7 +288,7 @@ var Scene = class extends Object3D {
 			label: shaderPass.options.isPrePass ? shaderPass.options.label + " scene pre pass" : shaderPass.options.label + " scene post processing pass",
 			renderPass: outputPass,
 			renderTexture: shaderPass.outputTarget ? shaderPass.outputTarget.renderTexture : null,
-			onBeforeRenderPass,
+			onBeforeRenderPass: null,
 			onAfterRenderPass,
 			useCustomRenderPass: null,
 			element: shaderPass,
@@ -322,6 +319,8 @@ var Scene = class extends Object3D {
 			this.renderPassEntries.prePass.push(shaderPassEntry);
 			this.renderPassEntries.prePass.sort((a, b) => a.element.renderOrder - b.element.renderOrder || a.element.index - b.element.index);
 		}
+		this.patchPostProScreenShaderPasses();
+		this.patchPreScreenShaderPasses();
 	}
 	/**
 	* Remove a {@link ShaderPass} from our scene {@link renderPassEntries} `prePass` or `postProPass` array.
@@ -331,6 +330,50 @@ var Scene = class extends Object3D {
 		if (shaderPass.renderBundle) shaderPass.renderBundle.empty();
 		if (!shaderPass.options.isPrePass) this.renderPassEntries.postProPass = this.renderPassEntries.postProPass.filter((entry) => !entry.element || entry.element.uuid !== shaderPass.uuid);
 		else this.renderPassEntries.prePass = this.renderPassEntries.prePass.filter((entry) => !entry.element || entry.element.uuid !== shaderPass.uuid);
+		this.patchPostProScreenShaderPasses();
+		this.patchPreScreenShaderPasses();
+	}
+	/**
+	* Get all pre pocessing pass entries that are actually rendered to the screen.
+	* @readonly
+	* @returns - All pre pocessing pass entries actually rendered to the screen if any.
+	*/
+	get activePreScreenShaderPassEntries() {
+		return this.renderPassEntries.prePass.filter((entry) => entry.element && !entry.element.outputTarget && entry.element.visible);
+	}
+	/**
+	* Get all post pocessing pass entries that are actually rendered to the screen.
+	* @readonly
+	* @returns - All post pocessing pass entries actually rendered to the screen if any.
+	*/
+	get activePostProScreenShaderPassEntries() {
+		return this.renderPassEntries.postProPass.filter((entry) => entry.element && !entry.element.outputTarget && entry.element.visible);
+	}
+	/**
+	* Patch all pre processing pass entries render textures to allow chaining.
+	*/
+	patchPreScreenShaderPasses() {
+		this.activePreScreenShaderPassEntries.forEach((prePass, index) => {
+			if (this.activePostProScreenShaderPassEntries.length && index > 0) prePass.renderTexture = this.activePostProScreenShaderPassEntries[0].element.renderTexture;
+			else prePass.renderTexture = null;
+		});
+	}
+	/**
+	* Patch all post processing pass entries render textures to allow chaining.
+	*/
+	patchPostProScreenShaderPasses() {
+		this.activePostProScreenShaderPassEntries.forEach((postProPass, index) => {
+			if (index < this.activePostProScreenShaderPassEntries.length - 1) postProPass.renderTexture = this.activePostProScreenShaderPassEntries[index + 1].element.renderTexture;
+			if (this.renderer.linearPass) if (index === this.activePostProScreenShaderPassEntries.length - 1) {
+				postProPass.renderPass = this.renderer.linearPass;
+				postProPass.element.setRenderingOptionsForRenderPass(this.renderer.linearPass);
+			} else {
+				postProPass.renderPass = this.renderer.postProcessingPass;
+				postProPass.element.setRenderingOptionsForRenderPass(this.renderer.postProcessingPass);
+			}
+		});
+		if (this.activePostProScreenShaderPassEntries.length) this.renderPassEntries.screen.forEach((passEntry) => passEntry.renderTexture = this.activePostProScreenShaderPassEntries[0]?.element?.renderTexture);
+		else this.renderPassEntries.screen.forEach((passEntry) => passEntry.renderTexture = null);
 	}
 	/**
 	* Add a {@link PingPongPlane} to our scene {@link renderPassEntries} pingPong array.
@@ -491,25 +534,33 @@ var Scene = class extends Object3D {
 		}
 		this.#shouldLoadColors = false;
 		this.#shouldLoadDepth = false;
+		const screenPrePassCount = this.activePreScreenShaderPassEntries?.length;
 		for (const renderPassEntryType in this.renderPassEntries) {
 			if (renderPassEntryType === "postProPass") {
 				this.renderer.renderPass.setDepthReadOnly(false);
 				this.renderer.renderPass.setDepthLoadOp("clear");
-				this.#shouldLoadColors = true;
 			}
-			this.renderPassEntries[renderPassEntryType].forEach((renderPassEntry) => {
-				if (!this.getRenderPassEntryLength(renderPassEntry)) return;
+			this.renderPassEntries[renderPassEntryType].forEach((renderPassEntry, index) => {
+				const passEntryLength = this.getRenderPassEntryLength(renderPassEntry);
+				renderPassEntry.renderPass.setDepthStoreOp(passEntryLength <= 1 ? "discard" : "store");
+				if (!passEntryLength) return;
+				const screenDiscard = renderPassEntryType === "screen" && (this.renderPassEntries.screen.length <= 1 || index === this.renderPassEntries.screen.length - 1);
+				if (renderPassEntryType === "renderTarget" || renderPassEntryType === "postRenderTarget" || screenDiscard) renderPassEntry.renderPass.setStoreOp("discard");
+				else renderPassEntry.renderPass.setStoreOp("store");
 				if (renderPassEntryType === "prePass" || renderPassEntryType === "postProPass") renderPassEntry.renderPass.setDepthReadOnly(true);
 				else renderPassEntry.renderPass.setDepthReadOnly(false);
 				if (renderPassEntryType === "postRenderTarget") {
 					this.#shouldLoadColors = false;
 					this.#shouldLoadDepth = false;
 				}
-				if (renderPassEntryType === "postProPass" && renderPassEntry.renderPass.uuid !== this.renderer.postProcessingPass.uuid) this.#shouldLoadColors = false;
+				if (renderPassEntryType === "postProPass") {
+					if (renderPassEntry.renderPass.uuid !== this.renderer.postProcessingPass.uuid) this.#shouldLoadColors = false;
+				}
+				if (renderPassEntryType === "prePass") this.#shouldLoadColors = index > 0;
+				else if (renderPassEntryType === "screen") this.#shouldLoadColors = index > 0 || !!screenPrePassCount;
 				renderPassEntry.renderPass.setLoadOp(this.#shouldLoadColors ? "load" : "clear");
 				renderPassEntry.renderPass.setDepthLoadOp(this.#shouldLoadDepth && !renderPassEntry.renderPass.options.depthReadOnly ? "load" : "clear");
 				this.renderSinglePassEntry(commandEncoder, renderPassEntry);
-				if (renderPassEntryType !== "renderTarget" && renderPassEntryType !== "postRenderTarget") this.#shouldLoadColors = true;
 			});
 		}
 	}

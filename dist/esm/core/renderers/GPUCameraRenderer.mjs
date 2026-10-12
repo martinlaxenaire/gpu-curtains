@@ -41,7 +41,7 @@ var GPUCameraRenderer = class extends GPURenderer {
 	* GPUCameraRenderer constructor
 	* @param parameters - {@link GPUCameraRendererParams | parameters} used to create this {@link GPUCameraRenderer}
 	*/
-	constructor({ deviceManager, label, container, pixelRatio = 1, autoResize = true, context = {}, renderPass, camera = {}, lights = {}, exposure = 1, toneMapping = "Khronos", colorSpace = "srgb" }) {
+	constructor({ deviceManager, label, container, pixelRatio = 1, autoResize = true, context = {}, hdrRendering = true, renderPass, camera = {}, lights = {}, exposure = 1, toneMapping = "Khronos", colorSpace = "srgb" }) {
 		super({
 			deviceManager,
 			label,
@@ -49,6 +49,7 @@ var GPUCameraRenderer = class extends GPURenderer {
 			pixelRatio,
 			autoResize,
 			context,
+			hdrRendering,
 			renderPass
 		});
 		this.type = "GPUCameraRenderer";
@@ -617,7 +618,7 @@ var GPUCameraRenderer = class extends GPURenderer {
 		})();
 	}
 	get #needsOutputPass() {
-		return this.exposure !== 1 || !!this.toneMapping || this.colorSpace !== "linear";
+		return this.outputFormat !== this.options.context.format || this.exposure !== 1 || !!this.toneMapping || this.colorSpace !== "linear";
 	}
 	/**
 	* Set the output pass that will handle exposure, tone mapping and color space conversion.
@@ -733,13 +734,14 @@ var GPUCameraRenderer = class extends GPURenderer {
 				label: "Transmission background scene render target output",
 				name: "transmissionBackgroundTexture",
 				generateMips: true,
-				format: this.options.context.format,
+				format: this.outputFormat,
 				autoDestroy: false
 			});
+			const mainPassEntry = this.scene.getRenderTargetPassEntry();
+			this.transmissionTarget.passEntry.renderTexture = mainPassEntry.renderTexture;
 			this.transmissionTarget.passEntry.onBeforeRenderPass = (commandEncoder, swapChainTexture) => {
 				this.copyGPUTextureToTexture(swapChainTexture, this.transmissionTarget.texture, commandEncoder);
 			};
-			const mainPassEntry = this.scene.getRenderTargetPassEntry();
 			this.transmissionTarget.passEntry.stack.projected.transparent = mainPassEntry.stack.projected.transparent;
 			mainPassEntry.stack.projected.transparent = [];
 		}
