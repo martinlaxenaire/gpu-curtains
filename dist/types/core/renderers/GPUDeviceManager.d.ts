@@ -121,6 +121,12 @@ export declare class GPUDeviceManager {
      */
     setAdapter(adapter?: GPUAdapter | null): Promise<void>;
     /**
+     * Get whether the device adapter has been created with the `compatibility` feature level.
+     * @readonly
+     * @returns - Whether the device adapter has been created with the `compatibility` feature level.
+     */
+    get isCompatibilityMode(): boolean;
+    /**
      * Set our {@link GPUDeviceManager.device | device}.
      * @param device - {@link GPUDevice} to use if set.
      */

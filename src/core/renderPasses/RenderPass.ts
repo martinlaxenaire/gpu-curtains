@@ -558,6 +558,11 @@ export class RenderPass {
     }
   }
 
+  /**
+   * Set the {@link descriptor} {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#storeop | store operation}.
+   * @param storeOp - New {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#storeop | store operation} to use.
+   * @param colorAttachmentIndex - Index of the color attachment for which to use this store operation.
+   */
   setStoreOp(storeOp: GPUStoreOp = 'store', colorAttachmentIndex = 0) {
     if (this.options.useColorAttachments) {
       if (this.options.colorAttachments[colorAttachmentIndex]) {

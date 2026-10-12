@@ -134,7 +134,7 @@ export declare class GPUCameraRenderer<TCamera extends RendererCamera = Perspect
      * GPUCameraRenderer constructor
      * @param parameters - {@link GPUCameraRendererParams | parameters} used to create this {@link GPUCameraRenderer}
      */
-    constructor({ deviceManager, label, container, pixelRatio, autoResize, context, renderPass, camera, lights, exposure, toneMapping, colorSpace, }: GPUCameraRendererParams);
+    constructor({ deviceManager, label, container, pixelRatio, autoResize, context, hdrRendering, renderPass, camera, lights, exposure, toneMapping, colorSpace, }: GPUCameraRendererParams);
     /**
      * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} is lost.
      * Reset all our samplers, force all our scene objects and camera bind group to lose context.

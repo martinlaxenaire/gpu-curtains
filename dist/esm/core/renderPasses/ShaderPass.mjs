@@ -78,10 +78,13 @@ var ShaderPass = class extends FullscreenPlane {
 			usage: [
 				"copySrc",
 				"copyDst",
-				"textureBinding"
+				"textureBinding",
+				"renderAttachment"
 			],
 			...this.outputTarget && this.outputTarget.options.qualityRatio && { qualityRatio: this.outputTarget.options.qualityRatio }
 		});
+		this.removeFromScene();
+		this.addToScene();
 	}
 	/**
 	* Hook used to clean up parameters before sending them to the material.

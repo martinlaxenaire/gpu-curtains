@@ -235,6 +235,11 @@ export class GPUDeviceManager {
     }
   }
 
+  /**
+   * Get whether the device adapter has been created with the `compatibility` feature level.
+   * @readonly
+   * @returns - Whether the device adapter has been created with the `compatibility` feature level.
+   */
   get isCompatibilityMode(): boolean {
     return this.options.adapterOptions.featureLevel === 'compatibility'
   }

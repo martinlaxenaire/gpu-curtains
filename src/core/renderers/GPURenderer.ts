@@ -52,6 +52,7 @@ export interface GPURendererParams {
   /** Options used to configure this {@link GPURenderer} context. If not specified, `format` will be set with `GPU.getPreferredCanvasFormat()` and `alphaMode` with `premultiplied`. */
   context?: GPURendererContextParams
 
+  /** Whether to render the full pipeline to HDR, i.e. using `rgba16float` texture format. When set to `true`, a mandatory {@link ShaderPass} will be used to render the last pass to the context current format. */
   hdrRendering?: boolean
 
   /** The {@link GPURenderer#renderPass | renderer RenderPass} parameters. */
@@ -116,7 +117,7 @@ export class GPURenderer {
   renderPass: RenderPass
   /** Additional {@link RenderPass | render pass} used by {@link ShaderPass} for compositing / post processing. Does not handle depth. */
   postProcessingPass: RenderPass
-  /* Optional final {@link RenderPass | render pass} used to render HDR textures to our context if {@link GPURendererParams.hdrRendering | hdrRendering} is set to `true`. */
+  /** Optional final {@link RenderPass | render pass} used to render HDR textures to our context if {@link GPURendererParams.hdrRendering | hdrRendering} is set to `true`. */
   linearPass?: RenderPass
 
   /** The {@link Scene} used. */
@@ -690,18 +691,28 @@ export class GPURenderer {
   }
 
   /**
-   * Get the current expected {@link GPUTextureFormat}.
+   * Get the current expected texture format.
    * @readonly
-   * @returns - Current expected {@link GPUTextureFormat}.
+   * @returns - Current expected texture format.
    */
   get outputFormat(): GPUTextureFormat {
     return this.renderPass?.outputTextures?.[0]?.texture?.format ?? this.options.context.format
   }
 
+  /**
+   * Get the {@link context} current texture.
+   * @readonly
+   * @returns - {@link context} current {@link GPUTexture}.
+   */
   get currentTexture(): GPUTexture {
     return this.context.getCurrentTexture()
   }
 
+  /**
+   * Get the default {@link RenderPass} to use to clear the canvas.
+   * @readonly
+   * @returns - {@link RenderPass} to use to clear the canvas.
+   */
   get clearPass(): RenderPass {
     return this.linearPass ?? this.renderPass
   }
@@ -743,8 +754,6 @@ export class GPURenderer {
       useDepth: false,
       sampleCount: 1,
       colorAttachments: [{ targetFormat }],
-      // HDR pipeline
-      // renderToSwapChain: !this.options.hdrRendering,
     })
 
     if (this.options.hdrRendering) {

@@ -501,22 +501,6 @@ export class Scene extends Object3D {
   addShaderPass(shaderPass: ShaderPass) {
     if (!shaderPass.renderTexture) return
 
-    //     const onBeforeRenderPass =
-    //       shaderPass.inputTarget || shaderPass.outputTarget
-    //         ? null
-    //         : (commandEncoder, swapChainTexture) => {
-    //             // draw the content into our render texture
-    //             // if it's a global postprocessing pass, copy the context current texture into its renderTexture
-    //             // we don't need to do that if it has an inputTarget
-    //             // because in this case its renderTexture is already a copy of the render target content
-    //             if (shaderPass.renderTexture && swapChainTexture) {
-    //               this.renderer.copyGPUTextureToTexture(swapChainTexture, shaderPass.renderTexture, commandEncoder)
-    //             }
-    //
-    //             // if we want to post process the whole scene, clear render pass content
-    //             this.renderer.postProcessingPass.setLoadOp('clear')
-    //           }
-
     const onAfterRenderPass = shaderPass.options.copyOutputToRenderTexture
       ? (commandEncoder, swapChainTexture) => {
           // if we rendered to the screen,
@@ -589,8 +573,6 @@ export class Scene extends Object3D {
           return indexA - indexB
         }
       })
-
-      this.patchPostProScreenShaderPasses()
     } else {
       this.renderPassEntries.prePass.push(shaderPassEntry)
       // sort by their render order
@@ -599,6 +581,7 @@ export class Scene extends Object3D {
       )
     }
 
+    this.patchPostProScreenShaderPasses()
     this.patchPreScreenShaderPasses()
   }
 
@@ -615,29 +598,41 @@ export class Scene extends Object3D {
       this.renderPassEntries.postProPass = this.renderPassEntries.postProPass.filter(
         (entry) => !entry.element || entry.element.uuid !== shaderPass.uuid
       )
-
-      this.patchPostProScreenShaderPasses()
     } else {
       this.renderPassEntries.prePass = this.renderPassEntries.prePass.filter(
         (entry) => !entry.element || entry.element.uuid !== shaderPass.uuid
       )
     }
 
+    this.patchPostProScreenShaderPasses()
     this.patchPreScreenShaderPasses()
   }
 
+  /**
+   * Get all pre pocessing pass entries that are actually rendered to the screen.
+   * @readonly
+   * @returns - All pre pocessing pass entries actually rendered to the screen if any.
+   */
   get activePreScreenShaderPassEntries() {
     return this.renderPassEntries.prePass.filter(
       (entry) => entry.element && !entry.element.outputTarget && entry.element.visible
     )
   }
 
+  /**
+   * Get all post pocessing pass entries that are actually rendered to the screen.
+   * @readonly
+   * @returns - All post pocessing pass entries actually rendered to the screen if any.
+   */
   get activePostProScreenShaderPassEntries() {
     return this.renderPassEntries.postProPass.filter(
       (entry) => entry.element && !entry.element.outputTarget && entry.element.visible
     )
   }
 
+  /**
+   * Patch all pre processing pass entries render textures to allow chaining.
+   */
   patchPreScreenShaderPasses() {
     this.activePreScreenShaderPassEntries.forEach((prePass, index) => {
       if (this.activePostProScreenShaderPassEntries.length && index > 0) {
@@ -649,6 +644,9 @@ export class Scene extends Object3D {
     })
   }
 
+  /**
+   * Patch all post processing pass entries render textures to allow chaining.
+   */
   patchPostProScreenShaderPasses() {
     this.activePostProScreenShaderPassEntries.forEach((postProPass, index) => {
       if (index < this.activePostProScreenShaderPassEntries.length - 1) {
@@ -669,14 +667,10 @@ export class Scene extends Object3D {
     // if any active post processing pass
     // render screen meshes into the first post processing pass texture
     if (this.activePostProScreenShaderPassEntries.length) {
-      // this.renderPassEntries.screen[0].renderTexture =
-      //   this.activePostProScreenShaderPassEntries[0]?.element?.renderTexture
-
       this.renderPassEntries.screen.forEach(
         (passEntry) => (passEntry.renderTexture = this.activePostProScreenShaderPassEntries[0]?.element?.renderTexture)
       )
     } else {
-      // this.renderPassEntries.screen[0].renderTexture = null
       this.renderPassEntries.screen.forEach((passEntry) => (passEntry.renderTexture = null))
     }
   }
@@ -1034,7 +1028,6 @@ export class Scene extends Object3D {
 
     // get the number of screen post processing passes
     const screenPrePassCount = this.activePreScreenShaderPassEntries?.length
-    const screenPostProPassCount = this.activePostProScreenShaderPassEntries?.length
 
     for (const renderPassEntryType in this.renderPassEntries) {
       // if (renderPassEntryType === 'screen') {

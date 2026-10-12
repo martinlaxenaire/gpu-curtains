@@ -19,7 +19,6 @@ import { OrthographicCamera } from '../cameras/OrthographicCamera'
 import { RenderPassViewport } from '../renderPasses/RenderPass'
 import { ShaderPass } from '../renderPasses/ShaderPass'
 import { outputFragmentShaderCode } from '../shaders/full/fragment/output-fragment-shader-code'
-import { RenderTarget } from '../renderPasses/RenderTarget'
 
 /** Defines the allowed {@link Camera} types for a {@link GPUCameraRenderer}. */
 export type RendererCamera = OrthographicCamera | PerspectiveCamera
