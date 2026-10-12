@@ -110,7 +110,7 @@ export class FullscreenPlane extends MeshBaseMixin(class {}) {
       parameters.label = 'FullscreenQuadMesh'
     }
 
-    // @ts-expect-error use mes mixin super constructor
+    // @ts-expect-error use mesh mixin super constructor
     super(renderer, null, { geometry, ...parameters })
 
     this.size = {

@@ -92,7 +92,7 @@ export class Mesh extends ProjectedMeshBaseMixin(ProjectedObject3D) {
     // we could pass our curtains object OR our curtains renderer object
     renderer = isCameraRenderer(renderer, parameters.label ? parameters.label + ' Mesh' : 'Mesh')
 
-    // @ts-expect-error use mes mixin super constructor
+    // @ts-expect-error use mesh mixin super constructor
     super(renderer, null, parameters)
 
     this.type = 'Mesh'

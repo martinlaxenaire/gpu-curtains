@@ -135,7 +135,7 @@ export class Texture {
     }
 
     if (!this.options.format) {
-      this.options.format = this.renderer.options.context.format
+      this.options.format = this.renderer.outputFormat
     }
 
     const { width, height } = this.renderer.canvas

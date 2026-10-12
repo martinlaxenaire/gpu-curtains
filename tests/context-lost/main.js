@@ -76,7 +76,7 @@ window.addEventListener('load', async () => {
     ) -> VSOutput {
       var vsOutput: VSOutput;
 
-     
+
       vsOutput.position = getOutputPosition(attributes.position);
 
       // 'getUVCover' is used to compute a texture UV based on UV attributes and texture matrix
@@ -145,7 +145,33 @@ window.addEventListener('load', async () => {
     ],
   })
 
-  console.log(gpuCurtains, plane, postProPass)
+  postProPass.onBeforeRender(() => {
+    console.log('before')
+  })
+
+  const postProShader2 = /* wgsl */ `
+    struct VSOutput {
+        @builtin(position) position: vec4f,
+        @location(0) uv: vec2f,
+      };
+
+      @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
+        var texture: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv);
+        var grayscale: vec3f = vec3(texture.r * 0.3 + texture.g * 0.59 + texture.b * 0.11);
+
+        return mix( vec4(texture.rgb, texture.a), vec4(grayscale, texture.a), step(fsInput.uv.y, 0.5) );
+      }
+  `
+
+  const postProPass2 = new ShaderPass(gpuCurtains, {
+    shaders: {
+      fragment: {
+        code: postProShader2,
+      },
+    },
+  })
+
+  console.log(gpuCurtains, gpuCurtains.renderer, gpuCurtains.renderer.scene, plane, postProPass, postProPass2)
 
   // lost context
 
