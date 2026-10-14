@@ -99,6 +99,9 @@ export class GPUCurtains {
     renderPass,
     camera,
     lights,
+    exposure = 1,
+    toneMapping = false,
+    colorSpace = 'linear',
     autoRender = true,
     autoResize = true,
     watchScroll = true,
@@ -111,6 +114,9 @@ export class GPUCurtains {
       pixelRatio,
       camera,
       lights,
+      exposure,
+      toneMapping,
+      colorSpace,
       production,
       adapterOptions,
       requiredFeatures,
@@ -186,6 +192,9 @@ export class GPUCurtains {
       renderPass: this.options.renderPass,
       camera: this.options.camera,
       lights: this.options.lights,
+      exposure: this.options.exposure,
+      toneMapping: this.options.toneMapping,
+      colorSpace: this.options.colorSpace,
     })
   }
 

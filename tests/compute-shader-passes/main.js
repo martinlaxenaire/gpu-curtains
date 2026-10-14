@@ -25,6 +25,8 @@ window.addEventListener('load', async () => {
     deviceManager: gpuDeviceManager,
     container: document.querySelector('#canvas'),
     //pixelRatio: window.devicePixelRatio,
+    toneMapping: false,
+    colorSpace: 'linear',
   })
 
   const mesh = new Mesh(gpuCameraRenderer, {

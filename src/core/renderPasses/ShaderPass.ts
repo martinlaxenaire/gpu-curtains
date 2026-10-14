@@ -117,6 +117,12 @@ export class ShaderPass extends FullscreenPlane {
       ? renderer && renderer.postProcessingPass.options.sampleCount
       : 1
 
+    // parameters.sampleCount = parameters.sampleCount
+    //   ? parameters.sampleCount
+    //   : renderer && renderer.postProcessingPass
+    //   ? renderer && renderer.postProcessingPass.options.sampleCount
+    //   : 1
+
     if (!parameters.shaders) {
       parameters.shaders = {}
     }
@@ -129,7 +135,8 @@ export class ShaderPass extends FullscreenPlane {
     }
 
     // force the postprocessing passes to not use depth
-    parameters.depth = parameters.isPrePass
+    // parameters.depth = parameters.isPrePass
+    parameters.depth = false
 
     super(renderer, parameters)
 
@@ -248,5 +255,15 @@ export class ShaderPass extends FullscreenPlane {
     if (removeFromRenderer) {
       this.renderer.shaderPasses = this.renderer.shaderPasses.filter((sP) => sP.uuid !== this.uuid)
     }
+  }
+
+  get visible() {
+    return super.visible
+  }
+
+  set visible(value: boolean) {
+    super.visible = value
+    this.renderer.scene.patchPostProScreenShaderPasses()
+    this.renderer.scene.patchPreScreenShaderPasses()
   }
 }

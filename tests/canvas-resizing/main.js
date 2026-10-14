@@ -32,6 +32,8 @@ window.addEventListener('load', async () => {
       container,
       pixelRatio,
       autoResize,
+      toneMapping: false,
+      colorSpace: 'linear',
     })
 
     const mesh = new Mesh(renderer, {

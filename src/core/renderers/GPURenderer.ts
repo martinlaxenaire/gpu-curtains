@@ -1052,6 +1052,8 @@ export class GPURenderer {
       return
     }
 
+    this.scene.endCurrentRenderPass()
+
     commandEncoder.copyTextureToTexture(
       {
         texture: gpuTexture,
@@ -1091,6 +1093,8 @@ export class GPURenderer {
     ) {
       return
     }
+
+    this.scene.endCurrentRenderPass()
 
     commandEncoder.copyTextureToTexture(
       {
@@ -1324,6 +1328,8 @@ export class GPURenderer {
    * @param renderPass - {@link RenderPass} to clear. Default to {@link GPURenderer#renderPass | renderPass}.
    */
   forceClear(commandEncoder?: GPUCommandEncoder, renderPass: RenderPass = this.clearPass) {
+    this.scene.endCurrentRenderPass()
+
     // if there's no command encoder provided, we'll have to create one and submit it after the copy process
     const hasCommandEncoder = !!commandEncoder
 
@@ -1336,11 +1342,15 @@ export class GPURenderer {
         commandEncoder.pushDebugGroup(`${this.type} (${this.options.label}): Force clear command encoder`)
     }
 
-    console.log('here')
     renderPass.updateView()
     renderPass.setDepthReadOnly(false)
-    renderPass.setLoadOp('clear')
+    for (let i = 0; i < renderPass.options.colorAttachments?.length || 0; i++) {
+      renderPass.setLoadOp('clear', i)
+      renderPass.setStoreOp('store', i)
+    }
+
     renderPass.setDepthLoadOp('clear')
+    renderPass.setDepthStoreOp('discard')
     const pass = commandEncoder.beginRenderPass(renderPass.descriptor)
     pass.end()
 

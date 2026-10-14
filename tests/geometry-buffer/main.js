@@ -35,6 +35,8 @@ window.addEventListener('load', async () => {
   const gpuCameraRenderer = new GPUCameraRenderer({
     deviceManager: gpuDeviceManager,
     container: document.querySelector('#canvas'),
+    toneMapping: false,
+    colorSpace: 'linear',
   })
 
   const { camera } = gpuCameraRenderer
@@ -104,18 +106,18 @@ window.addEventListener('load', async () => {
       @location(0) uv: vec2f,
       @location(1) normal: vec3f,
     };
-    
+
     @vertex fn main(
       attributes: Attributes,
     ) -> VertexOutput {
       var vsOutput: VertexOutput;
-    
+
       vsOutput.position = getOutputPosition(attributes.position);
       vsOutput.uv = attributes.uv;
-      
+
       // use view space normal when dealing using a geometry buffer
       vsOutput.normal = getViewNormal(attributes.normal);
-      
+
       return vsOutput;
     }
   `
@@ -126,20 +128,20 @@ window.addEventListener('load', async () => {
       @location(0) uv: vec2f,
       @location(1) normal: vec3f,
     };
-    
+
     struct GBufferOutput {
       // Textures: diffuse color, specular color, smoothness, emissive etc. could go here
       @location(0) albedo : vec4<f32>,
       @location(1) normal : vec4<f32>,
     };
-    
+
     @fragment fn main(fsInput: VSOutput) -> GBufferOutput {
       var output : GBufferOutput;
-      
+
       let n = normalize(fsInput.normal);
       output.normal = vec4(n * 0.5 + 0.5, 1.0);
       output.albedo = vec4(shading.color, 1.0);
-    
+
       return output;
     }
   `
@@ -210,9 +212,9 @@ window.addEventListener('load', async () => {
       @location(0) uv: vec2f,
     };
 
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {      
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var result : vec4<f32>;
-      
+
       if (fsInput.uv.x < 0.33333) {
         let rawDepth = textureLoad(
           gBufferDepthTexture,
@@ -235,7 +237,7 @@ window.addEventListener('load', async () => {
           0
         );
       }
-      
+
       return result;
     }
   `

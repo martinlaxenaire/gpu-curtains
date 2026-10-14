@@ -8,9 +8,9 @@ window.addEventListener('load', async () => {
   // create a device manager
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
-    adapterOptions: {
-      featureLevel: 'compatibility',
-    },
+    // adapterOptions: {
+    //   featureLevel: 'compatibility',
+    // },
     requiredFeatures: ['float32-filterable'], // test
   })
 
@@ -33,7 +33,11 @@ window.addEventListener('load', async () => {
       // Plus in compatibility mode, rendering to multisampled 'rgba16float' is not allowed
       sampleCount: 1,
     },
+    toneMapping: false,
+    // colorSpace: 'linear',
   })
+
+  console.log(gpuCameraRenderer.scene)
 
   const { camera } = gpuCameraRenderer
 
