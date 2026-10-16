@@ -52,7 +52,7 @@ export class GPUCurtainsRenderer<
     hdrRendering = false,
     renderPass,
     camera,
-    lights,
+    lights = {},
     exposure = 1,
     toneMapping = false,
     colorSpace = 'linear',

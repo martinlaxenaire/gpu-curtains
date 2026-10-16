@@ -6629,8 +6629,10 @@
 				...this.clonedBindGroups,
 				...this.inputsBindGroups
 			].forEach((bindGroup) => bindGroup.loseContext());
-			this.pipelineEntry.pipeline = null;
-			this.pipelineEntry.status.compiled = false;
+			if (this.pipelineEntry) {
+				this.pipelineEntry.pipeline = null;
+				this.pipelineEntry.status.compiled = false;
+			}
 		}
 		/**
 		* Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored to recreate our samplers, textures and bind groups.
@@ -10501,7 +10503,9 @@ struct VSOutput {
 			if (this.useCameraBindGroup && this.renderer) this.renderer.cameraLightsBindGroup.consumers.delete(this.uuid);
 			super.setRenderer(renderer);
 			if (this.useCameraBindGroup) {
+				const currentCameraBindGroupLayoutKey = this.bindGroups[0].layoutCacheKey;
 				this.bindGroups[0] = this.renderer.cameraLightsBindGroup;
+				this.bindGroups[0].needsPipelineFlush = currentCameraBindGroupLayoutKey !== this.bindGroups[0].layoutCacheKey;
 				this.renderer.cameraLightsBindGroup.consumers.add(this.uuid);
 			}
 		}
@@ -10610,7 +10614,7 @@ struct VSOutput {
 		updateBindGroups() {
 			const startBindGroupIndex = this.useCameraBindGroup ? 1 : 0;
 			if (this.useCameraBindGroup && this.bindGroups.length) {
-				if (this.bindGroups[0].needsPipelineFlush && this.pipelineEntry.ready) this.pipelineEntry.flushPipelineEntry(this.bindGroups);
+				if (this.bindGroups[0].needsPipelineFlush && this.pipelineEntry?.ready) this.pipelineEntry.flushPipelineEntry(this.bindGroups);
 			}
 			for (let i = startBindGroupIndex; i < this.bindGroups.length; i++) this.updateBindGroup(this.bindGroups[i]);
 		}
@@ -15967,7 +15971,20 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 				return acc;
 			}, []);
 			mergedPasses.forEach(({ renderPassEntries }) => {
-				renderPassEntries.filter((renderPassEntry) => !!this.getRenderPassEntryLength(renderPassEntry)).forEach((renderPassEntry) => {
+				renderPassEntries.forEach((renderPassEntry) => {
+					if (!this.getRenderPassEntryLength(renderPassEntry)) {
+						if (renderPassEntry.element && !renderPassEntry.element.renderBundle) renderPassEntry.element.onBeforeRenderPass();
+						else if (renderPassEntry.stack) {
+							const meshes = [
+								...renderPassEntry.stack.unProjected.opaque,
+								...renderPassEntry.stack.unProjected.transparent,
+								...renderPassEntry.stack.projected.opaque,
+								...renderPassEntry.stack.projected.transparent
+							].filter((o) => o instanceof Mesh);
+							for (const mesh of meshes) mesh.onBeforeRenderPass();
+						}
+						return;
+					}
 					const textureId = this.getTextureId(renderPassEntry);
 					this.#renderingState.frameTexturesIds.push(textureId);
 					const depthTextureId = renderPassEntry.renderPass.depthTexture?.uuid ?? null;
@@ -16158,8 +16175,6 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 			if (adapter) this.adapter = adapter;
 			else try {
 				this.adapter = await this.gpu?.requestAdapter(this.options.adapterOptions);
-				const hasCoreSupport = this.adapter.features.has("core-features-and-limits");
-				console.log(hasCoreSupport);
 				if (!this.adapter) throwError(`GPUDeviceManager (${this.options.label}): WebGPU is not supported on your browser/OS 'requestAdapter' failed.`);
 			} catch (e) {
 				this.onError(e.message);
@@ -16181,8 +16196,7 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 			if (!this.adapter) return;
 			if (device) {
 				this.device = device;
-				this.ready = true;
-				this.index++;
+				this.initializeDevice();
 			} else try {
 				const { limits, features } = this.adapter;
 				if (this.isCompatibilityMode) this.options.requestAdapterLimits.push("maxStorageBuffersInVertexStage", "maxStorageTexturesInVertexStage", "maxStorageBuffersInFragmentStage", "maxStorageTexturesInFragmentStage");
@@ -16197,25 +16211,31 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 					requiredFeatures,
 					requiredLimits
 				});
-				if (this.device) {
-					this.device.lost.then((info) => {
-						throwWarning(`GPUDeviceManager (${this.options.label}): WebGPU device was lost: ${info.message}`);
-						this.loseDevice();
-						if (info.reason !== "destroyed") this.onDeviceLost(info);
-						else this.onDeviceDestroyed(info);
-					});
-					this.device.addEventListener("uncapturederror", (event) => {
-						this.ready = false;
-						const errorMessage = `GPUDeviceManager (${this.options.label}): Uncaptured WebGPU device error: ${event.error.message}`;
-						this.onError(errorMessage);
-						throwError(errorMessage);
-					});
-					this.ready = true;
-					this.index++;
-				} else throwError(`GPUDeviceManager (${this.options.label}): WebGPU is not supported on your browser/OS 'requestDevice' failed.`);
+				if (this.device) this.initializeDevice();
+				else throwError(`GPUDeviceManager (${this.options.label}): WebGPU is not supported on your browser/OS 'requestDevice' failed.`);
 			} catch (e) {
 				this.onError(e.message);
 			}
+		}
+		/**
+		* Initialize the {@link device} event handlers and device lost promise.
+		*/
+		initializeDevice() {
+			if (!this.device) return;
+			this.device.lost.then((info) => {
+				throwWarning(`GPUDeviceManager (${this.options.label}): WebGPU device was lost: ${info.message}`);
+				this.loseDevice();
+				if (info.reason !== "destroyed") this.onDeviceLost(info);
+				else this.onDeviceDestroyed(info);
+			});
+			this.device.addEventListener("uncapturederror", (event) => {
+				this.ready = false;
+				const errorMessage = `GPUDeviceManager (${this.options.label}): Uncaptured WebGPU device error: ${event.error.message}`;
+				this.onError(errorMessage);
+				throwError(errorMessage);
+			});
+			this.ready = true;
+			this.index++;
 		}
 		/**
 		* Set our {@link pipelineManager | pipeline manager}.
@@ -17459,12 +17479,11 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 				commandEncoder = this.device?.createCommandEncoder({ label: `${this.type} (${this.options.label}): Force clear command encoder` });
 				if (!this.production) commandEncoder.pushDebugGroup(`${this.type} (${this.options.label}): Force clear command encoder`);
 			}
-			renderPass.updateView();
+			if (this.linearPass && this.clearPass.uuid === this.linearPass.uuid) renderPass = this.renderPass;
+			else renderPass.updateView();
 			renderPass.setDepthReadOnly(false);
-			for (let i = 0; i < renderPass.options.colorAttachments?.length || 0; i++) {
-				renderPass.setLoadOp("clear", i);
-				renderPass.setStoreOp("store", i);
-			}
+			renderPass.setLoadOp("clear");
+			renderPass.setStoreOp("store");
 			renderPass.setDepthLoadOp("clear");
 			renderPass.setDepthStoreOp("discard");
 			commandEncoder.beginRenderPass(renderPass.descriptor).end();
@@ -17899,7 +17918,7 @@ struct VSOutput {
 				maxDirectionalLights: 5,
 				maxPointLights: 5,
 				maxSpotLights: 5,
-				useUniformsForShadows: this.device?.limits.maxStorageBuffersInVertexStage === 0,
+				useUniformsForShadows: this.device ? this.device.limits.maxStorageBuffersInVertexStage === 0 : this.deviceManager.isCompatibilityMode,
 				...lights
 			};
 			this.options = {
@@ -18134,7 +18153,7 @@ struct VSOutput {
 				maxDirectionalLights: 5,
 				maxPointLights: 5,
 				maxSpotLights: 5,
-				useUniformsForShadows: this.device?.limits.maxStorageBuffersInVertexStage === 0 || false
+				useUniformsForShadows: this.device ? this.device.limits.maxStorageBuffersInVertexStage === 0 : this.deviceManager.isCompatibilityMode
 			};
 			this.setLightsBinding();
 			this.setShadowsBinding();
@@ -22879,7 +22898,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 		* GPUCurtainsRenderer constructor
 		* @param parameters - {@link GPUCameraRendererParams | parameters} used to create this {@link GPUCurtainsRenderer}.
 		*/
-		constructor({ deviceManager, label, container, pixelRatio = 1, autoResize = true, context = {}, hdrRendering = false, renderPass, camera, lights, exposure = 1, toneMapping = false, colorSpace = "linear" }) {
+		constructor({ deviceManager, label, container, pixelRatio = 1, autoResize = true, context = {}, hdrRendering = false, renderPass, camera, lights = {}, exposure = 1, toneMapping = false, colorSpace = "linear" }) {
 			super({
 				deviceManager,
 				label,
@@ -23027,7 +23046,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 		* GPUCurtains constructor
 		* @param parameters - {@link GPUCurtainsParams | parameters} used to create this {@link GPUCurtains}.
 		*/
-		constructor({ container, label, pixelRatio = window.devicePixelRatio ?? 1, context = {}, hdrRendering = false, production = false, adapterOptions = {}, requiredFeatures = [], requestAdapterLimits = [], renderPass, camera, lights, exposure = 1, toneMapping = false, colorSpace = "linear", autoRender = true, autoResize = true, watchScroll = true } = {}) {
+		constructor({ container, label, pixelRatio = window.devicePixelRatio ?? 1, context = {}, hdrRendering = false, production = false, adapterOptions = {}, requiredFeatures = [], requestAdapterLimits = [], renderPass, camera, lights = {}, exposure = 1, toneMapping = false, colorSpace = "linear", autoRender = true, autoResize = true, watchScroll = true } = {}) {
 			this._onScrollCallback = () => {};
 			this._onErrorCallback = () => {};
 			this._onContextLostCallback = () => {};
@@ -23083,7 +23102,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 		* Set the default {@link GPUCurtainsRenderer | renderer}.
 		*/
 		setMainRenderer() {
-			if (this.options.adapterOptions.featureLevel === "compatibility") {
+			if (this.deviceManager.isCompatibilityMode) {
 				if (this.options.lights === void 0 || this.options.lights && !this.options.lights.useUniformsForShadows) this.options.lights = {
 					...this.options.lights,
 					useUniformsForShadows: true

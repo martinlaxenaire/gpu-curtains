@@ -859,12 +859,11 @@ var GPURenderer = class {
 			commandEncoder = this.device?.createCommandEncoder({ label: `${this.type} (${this.options.label}): Force clear command encoder` });
 			if (!this.production) commandEncoder.pushDebugGroup(`${this.type} (${this.options.label}): Force clear command encoder`);
 		}
-		renderPass.updateView();
+		if (this.linearPass && this.clearPass.uuid === this.linearPass.uuid) renderPass = this.renderPass;
+		else renderPass.updateView();
 		renderPass.setDepthReadOnly(false);
-		for (let i = 0; i < renderPass.options.colorAttachments?.length || 0; i++) {
-			renderPass.setLoadOp("clear", i);
-			renderPass.setStoreOp("store", i);
-		}
+		renderPass.setLoadOp("clear");
+		renderPass.setStoreOp("store");
 		renderPass.setDepthLoadOp("clear");
 		renderPass.setDepthStoreOp("discard");
 		commandEncoder.beginRenderPass(renderPass.descriptor).end();

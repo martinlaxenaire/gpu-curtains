@@ -25,7 +25,7 @@ var GPUCurtains = class {
 	* GPUCurtains constructor
 	* @param parameters - {@link GPUCurtainsParams | parameters} used to create this {@link GPUCurtains}.
 	*/
-	constructor({ container, label, pixelRatio = window.devicePixelRatio ?? 1, context = {}, hdrRendering = false, production = false, adapterOptions = {}, requiredFeatures = [], requestAdapterLimits = [], renderPass, camera, lights, exposure = 1, toneMapping = false, colorSpace = "linear", autoRender = true, autoResize = true, watchScroll = true } = {}) {
+	constructor({ container, label, pixelRatio = window.devicePixelRatio ?? 1, context = {}, hdrRendering = false, production = false, adapterOptions = {}, requiredFeatures = [], requestAdapterLimits = [], renderPass, camera, lights = {}, exposure = 1, toneMapping = false, colorSpace = "linear", autoRender = true, autoResize = true, watchScroll = true } = {}) {
 		this._onScrollCallback = () => {};
 		this._onErrorCallback = () => {};
 		this._onContextLostCallback = () => {};
@@ -81,7 +81,7 @@ var GPUCurtains = class {
 	* Set the default {@link GPUCurtainsRenderer | renderer}.
 	*/
 	setMainRenderer() {
-		if (this.options.adapterOptions.featureLevel === "compatibility") {
+		if (this.deviceManager.isCompatibilityMode) {
 			if (this.options.lights === void 0 || this.options.lights && !this.options.lights.useUniformsForShadows) this.options.lights = {
 				...this.options.lights,
 				useUniformsForShadows: true

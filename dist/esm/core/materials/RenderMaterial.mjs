@@ -85,7 +85,9 @@ var RenderMaterial = class extends Material {
 		if (this.useCameraBindGroup && this.renderer) this.renderer.cameraLightsBindGroup.consumers.delete(this.uuid);
 		super.setRenderer(renderer);
 		if (this.useCameraBindGroup) {
+			const currentCameraBindGroupLayoutKey = this.bindGroups[0].layoutCacheKey;
 			this.bindGroups[0] = this.renderer.cameraLightsBindGroup;
+			this.bindGroups[0].needsPipelineFlush = currentCameraBindGroupLayoutKey !== this.bindGroups[0].layoutCacheKey;
 			this.renderer.cameraLightsBindGroup.consumers.add(this.uuid);
 		}
 	}
@@ -194,7 +196,7 @@ var RenderMaterial = class extends Material {
 	updateBindGroups() {
 		const startBindGroupIndex = this.useCameraBindGroup ? 1 : 0;
 		if (this.useCameraBindGroup && this.bindGroups.length) {
-			if (this.bindGroups[0].needsPipelineFlush && this.pipelineEntry.ready) this.pipelineEntry.flushPipelineEntry(this.bindGroups);
+			if (this.bindGroups[0].needsPipelineFlush && this.pipelineEntry?.ready) this.pipelineEntry.flushPipelineEntry(this.bindGroups);
 		}
 		for (let i = startBindGroupIndex; i < this.bindGroups.length; i++) this.updateBindGroup(this.bindGroups[i]);
 	}

@@ -117,12 +117,6 @@ export class ShaderPass extends FullscreenPlane {
       ? renderer && renderer.postProcessingPass.options.sampleCount
       : 1
 
-    // parameters.sampleCount = parameters.sampleCount
-    //   ? parameters.sampleCount
-    //   : renderer && renderer.postProcessingPass
-    //   ? renderer && renderer.postProcessingPass.options.sampleCount
-    //   : 1
-
     if (!parameters.shaders) {
       parameters.shaders = {}
     }

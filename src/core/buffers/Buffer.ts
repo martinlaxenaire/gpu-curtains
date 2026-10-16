@@ -1,4 +1,5 @@
 import { generateUUID } from '../../utils/utils'
+import { Renderer } from '../renderers/utils'
 import { BufferUsageKeys, getBufferUsages } from './utils'
 
 /**
@@ -75,7 +76,7 @@ export class Buffer {
    * @param renderer - {@link core/renderers/GPURenderer.GPURenderer | renderer} used to create the {@link GPUBuffer}.
    * @param options - optional way to update the {@link Buffer.options | Buffer options} previously set before creating the {@link GPUBuffer}.
    */
-  createBuffer(renderer, options: BufferParams = {}) {
+  createBuffer(renderer: Renderer, options: BufferParams = {}) {
     const { usage, ...staticOptions } = options
 
     this.options = {
