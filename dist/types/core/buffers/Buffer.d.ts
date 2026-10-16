@@ -1,3 +1,4 @@
+import { Renderer } from '../renderers/utils';
 import { BufferUsageKeys } from './utils';
 /**
  * Parameters used to create a {@link Buffer}.
@@ -40,7 +41,7 @@ export declare class Buffer {
      * @param renderer - {@link core/renderers/GPURenderer.GPURenderer | renderer} used to create the {@link GPUBuffer}.
      * @param options - optional way to update the {@link Buffer.options | Buffer options} previously set before creating the {@link GPUBuffer}.
      */
-    createBuffer(renderer: any, options?: BufferParams): void;
+    createBuffer(renderer: Renderer, options?: BufferParams): void;
     /**
      * Set the {@link Buffer.GPUBuffer | GPUBuffer}. This allows to use a {@link Buffer} with a {@link Buffer.GPUBuffer | GPUBuffer} created separately.
      * @param GPUBuffer - GPU buffer to use.

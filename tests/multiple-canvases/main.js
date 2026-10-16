@@ -14,15 +14,15 @@ window.addEventListener('load', async () => {
     },
   })
 
-  await gpuCurtains.setDevice()
-
-  console.log(gpuCurtains)
-
   gpuCurtains.createCameraRenderer({
     container: '#canvas-front',
     toneMapping: false,
     colorSpace: 'linear',
   })
+
+  await gpuCurtains.setDevice()
+
+  console.log(gpuCurtains)
 
   const fragmentShader = `
     struct VSOutput {

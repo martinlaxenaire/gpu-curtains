@@ -77,8 +77,6 @@ var GPUDeviceManager = class {
 		if (adapter) this.adapter = adapter;
 		else try {
 			this.adapter = await this.gpu?.requestAdapter(this.options.adapterOptions);
-			const hasCoreSupport = this.adapter.features.has("core-features-and-limits");
-			console.log(hasCoreSupport);
 			if (!this.adapter) throwError(`GPUDeviceManager (${this.options.label}): WebGPU is not supported on your browser/OS 'requestAdapter' failed.`);
 		} catch (e) {
 			this.onError(e.message);
@@ -100,8 +98,7 @@ var GPUDeviceManager = class {
 		if (!this.adapter) return;
 		if (device) {
 			this.device = device;
-			this.ready = true;
-			this.index++;
+			this.initializeDevice();
 		} else try {
 			const { limits, features } = this.adapter;
 			if (this.isCompatibilityMode) this.options.requestAdapterLimits.push("maxStorageBuffersInVertexStage", "maxStorageTexturesInVertexStage", "maxStorageBuffersInFragmentStage", "maxStorageTexturesInFragmentStage");
@@ -116,25 +113,31 @@ var GPUDeviceManager = class {
 				requiredFeatures,
 				requiredLimits
 			});
-			if (this.device) {
-				this.device.lost.then((info) => {
-					throwWarning(`GPUDeviceManager (${this.options.label}): WebGPU device was lost: ${info.message}`);
-					this.loseDevice();
-					if (info.reason !== "destroyed") this.onDeviceLost(info);
-					else this.onDeviceDestroyed(info);
-				});
-				this.device.addEventListener("uncapturederror", (event) => {
-					this.ready = false;
-					const errorMessage = `GPUDeviceManager (${this.options.label}): Uncaptured WebGPU device error: ${event.error.message}`;
-					this.onError(errorMessage);
-					throwError(errorMessage);
-				});
-				this.ready = true;
-				this.index++;
-			} else throwError(`GPUDeviceManager (${this.options.label}): WebGPU is not supported on your browser/OS 'requestDevice' failed.`);
+			if (this.device) this.initializeDevice();
+			else throwError(`GPUDeviceManager (${this.options.label}): WebGPU is not supported on your browser/OS 'requestDevice' failed.`);
 		} catch (e) {
 			this.onError(e.message);
 		}
+	}
+	/**
+	* Initialize the {@link device} event handlers and device lost promise.
+	*/
+	initializeDevice() {
+		if (!this.device) return;
+		this.device.lost.then((info) => {
+			throwWarning(`GPUDeviceManager (${this.options.label}): WebGPU device was lost: ${info.message}`);
+			this.loseDevice();
+			if (info.reason !== "destroyed") this.onDeviceLost(info);
+			else this.onDeviceDestroyed(info);
+		});
+		this.device.addEventListener("uncapturederror", (event) => {
+			this.ready = false;
+			const errorMessage = `GPUDeviceManager (${this.options.label}): Uncaptured WebGPU device error: ${event.error.message}`;
+			this.onError(errorMessage);
+			throwError(errorMessage);
+		});
+		this.ready = true;
+		this.index++;
 	}
 	/**
 	* Set our {@link pipelineManager | pipeline manager}.

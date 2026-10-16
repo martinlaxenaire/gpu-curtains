@@ -1350,15 +1350,18 @@ export class GPURenderer {
         commandEncoder.pushDebugGroup(`${this.type} (${this.options.label}): Force clear command encoder`)
     }
 
-    renderPass.updateView()
-    renderPass.setDepthReadOnly(false)
-    for (let i = 0; i < renderPass.options.colorAttachments?.length || 0; i++) {
-      renderPass.setLoadOp('clear', i)
-      renderPass.setStoreOp('store', i)
+    if (this.linearPass && this.clearPass.uuid === this.linearPass.uuid) {
+      renderPass = this.renderPass
+    } else {
+      renderPass.updateView()
     }
 
+    renderPass.setDepthReadOnly(false)
+    renderPass.setLoadOp('clear')
+    renderPass.setStoreOp('store')
     renderPass.setDepthLoadOp('clear')
     renderPass.setDepthStoreOp('discard')
+
     const pass = commandEncoder.beginRenderPass(renderPass.descriptor)
     pass.end()
 

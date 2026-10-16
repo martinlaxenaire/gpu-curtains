@@ -64,7 +64,7 @@ var GPUCameraRenderer = class extends GPURenderer {
 			maxDirectionalLights: 5,
 			maxPointLights: 5,
 			maxSpotLights: 5,
-			useUniformsForShadows: this.device?.limits.maxStorageBuffersInVertexStage === 0,
+			useUniformsForShadows: this.device ? this.device.limits.maxStorageBuffersInVertexStage === 0 : this.deviceManager.isCompatibilityMode,
 			...lights
 		};
 		this.options = {
@@ -299,7 +299,7 @@ var GPUCameraRenderer = class extends GPURenderer {
 			maxDirectionalLights: 5,
 			maxPointLights: 5,
 			maxSpotLights: 5,
-			useUniformsForShadows: this.device?.limits.maxStorageBuffersInVertexStage === 0 || false
+			useUniformsForShadows: this.device ? this.device.limits.maxStorageBuffersInVertexStage === 0 : this.deviceManager.isCompatibilityMode
 		};
 		this.setLightsBinding();
 		this.setShadowsBinding();

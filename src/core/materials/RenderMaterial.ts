@@ -182,7 +182,10 @@ export class RenderMaterial extends Material {
 
     // update new camera bind group
     if (this.useCameraBindGroup) {
+      const currentCameraBindGroupLayoutKey = this.bindGroups[0].layoutCacheKey
       this.bindGroups[0] = (this.renderer as CameraRenderer).cameraLightsBindGroup
+      // if both renderers camera lights bind group differ, flush pipeline
+      this.bindGroups[0].needsPipelineFlush = currentCameraBindGroupLayoutKey !== this.bindGroups[0].layoutCacheKey
       ;(this.renderer as CameraRenderer).cameraLightsBindGroup.consumers.add(this.uuid)
     }
   }
@@ -344,7 +347,7 @@ export class RenderMaterial extends Material {
     const startBindGroupIndex = this.useCameraBindGroup ? 1 : 0
 
     if (this.useCameraBindGroup && this.bindGroups.length) {
-      if (this.bindGroups[0].needsPipelineFlush && this.pipelineEntry.ready) {
+      if (this.bindGroups[0].needsPipelineFlush && this.pipelineEntry?.ready) {
         this.pipelineEntry.flushPipelineEntry(this.bindGroups)
       }
     }

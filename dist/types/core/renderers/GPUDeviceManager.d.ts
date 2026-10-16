@@ -132,6 +132,10 @@ export declare class GPUDeviceManager {
      */
     setDevice(device?: GPUDevice | null): Promise<void>;
     /**
+     * Initialize the {@link device} event handlers and device lost promise.
+     */
+    initializeDevice(): void;
+    /**
      * Set our {@link pipelineManager | pipeline manager}.
      */
     setPipelineManager(): void;

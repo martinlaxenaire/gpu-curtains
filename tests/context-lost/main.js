@@ -1,9 +1,8 @@
 // Goal of this test is checking if device lost/restoration works
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
-  const { BoxGeometry, GPUCurtains, IndirectBuffer, RenderBundle, Mesh, Plane, ShaderPass } = await import(
-    /* @vite-ignore */ path
-  )
+  const { BoxGeometry, SphereGeometry, GPUCurtains, IndirectBuffer, RenderBundle, Mesh, Plane, ShaderPass } =
+    await import(/* @vite-ignore */ path)
 
   // set our main GPUCurtains instance it will handle everything we need
   // a WebGPU device and a renderer with its scene, requestAnimationFrame, resize and scroll events...
