@@ -30,6 +30,8 @@ window.addEventListener('load', async () => {
     deviceManager: gpuDeviceManager,
     container: document.querySelector('#canvas'),
     //pixelRatio: window.devicePixelRatio,
+    toneMapping: false,
+    colorSpace: 'linear',
   })
 
   const { camera, scene } = gpuCameraRenderer
@@ -57,20 +59,20 @@ window.addEventListener('load', async () => {
     @location(1) normal: vec3f,
     @location(2) raycastingDistance: vec3f,
   };
-  
+
   @vertex fn main(
     attributes: Attributes,
   ) -> VSOutput {
     var vsOutput: VSOutput;
-  
+
     vsOutput.position = getOutputPosition(attributes.position);
-    
+
     var raycastPosition: vec3f = (camera.projection * camera.view * vec4(raycasting.position, 1.0)).xyz;
     vsOutput.raycastingDistance = vsOutput.position.xyz - raycastPosition;
-    
+
     vsOutput.uv = attributes.uv;
     vsOutput.normal = getWorldNormal(attributes.normal);
-    
+
     return vsOutput;
   }`
 
@@ -81,21 +83,21 @@ window.addEventListener('load', async () => {
     @location(1) normal: vec3f,
     @location(2) raycastingDistance: vec3f,
   };
-  
+
   @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
     // normals
     var normalColor: vec4f = vec4(normalize(fsInput.normal) * 0.5 + 0.5, 1.0);
-        
+
     var cursorUv: vec2f = fsInput.uv - raycasting.uv;
     var cursorPosition: vec3f = fsInput.raycastingDistance;
-    
+
     // whether to highlight hit position based on UV or vertex position
     var cursorSize: f32 = select(
       step(length(cursorUv), 0.2),
       1.0 - step(1.0, length(cursorPosition)),
       bool(raycasting.usePosition)
     );
-    
+
     return mix(normalColor, vec4(1.0), cursorSize);
   }`
 

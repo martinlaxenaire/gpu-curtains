@@ -257,13 +257,19 @@ export class ShaderPass extends FullscreenPlane {
     }
   }
 
+  /**
+   * Get the visible property value.
+   */
   get visible() {
     return super.visible
   }
 
+  /**
+   * Set the visible property value.
+   * @param value - New visibility value.
+   */
   set visible(value: boolean) {
     super.visible = value
-    this.renderer.scene.patchPostProScreenShaderPasses()
-    this.renderer.scene.patchPreScreenShaderPasses()
+    this.renderer.scene.setShaderPassesTextureChain()
   }
 }

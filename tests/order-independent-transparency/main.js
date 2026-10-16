@@ -77,7 +77,7 @@ window.addEventListener('load', async () => {
     label: 'Transparent MRT',
     sampleCount,
     renderToSwapChain: false, // we don't want to render to the swap chain
-    forceDepthStoreOp: 'discard',
+    forceDepthStoreOp: 'discard', // depth is not needed afterward
     colorAttachments: [
       {
         loadOp: 'clear',
@@ -86,7 +86,7 @@ window.addEventListener('load', async () => {
       },
       {
         loadOp: 'clear',
-        storeOp: 'discard',
+        storeOp: sampleCount > 1 ? 'discard' : 'store', // if MSAA, discard to free memory
         clearValue: [1, 0, 0, 1],
         targetFormat: 'r8unorm', // revealage
       },

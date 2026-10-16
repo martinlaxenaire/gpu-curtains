@@ -113,6 +113,20 @@ window.addEventListener('load', async () => {
         },
       },
     },
+    targets: [
+      {
+        blend: {
+          color: {
+            srcFactor: 'src-alpha',
+            dstFactor: 'one-minus-src-alpha',
+          },
+          alpha: {
+            srcFactor: 'one',
+            dstFactor: 'one-minus-src-alpha',
+          },
+        },
+      },
+    ],
   })
 
   computeShaderPass.onRender(() => {

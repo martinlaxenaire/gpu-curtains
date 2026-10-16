@@ -31,7 +31,7 @@ var RenderPass = class {
 					0,
 					0
 				],
-				targetFormat: this.renderer.outputFormat
+				targetFormat: this.renderer.renderingPipelineFormat
 			};
 			if (!colorAttachments.length) colorAttachments = [defaultColorAttachment];
 			else colorAttachments = colorAttachments.map((colorAttachment) => {
@@ -148,7 +148,7 @@ var RenderPass = class {
 	*/
 	createResolveTargets() {
 		if (this.options.sampleCount > 1) this.options.colorAttachments.forEach((colorAttachment, index) => {
-			this.resolveTargets.push(this.options.renderToSwapChain && index === 0 && this.renderer.outputFormat === this.renderer.options.context.format ? null : new Texture(this.renderer, {
+			this.resolveTargets.push(this.options.renderToSwapChain && index === 0 && this.renderer.renderingPipelineFormat === this.renderer.options.context.format ? null : new Texture(this.renderer, {
 				label: `${this.options.label} resolve target[${index}] texture`,
 				name: `resolveTarget${index}Texture`,
 				format: colorAttachment.targetFormat,
@@ -308,6 +308,7 @@ var RenderPass = class {
 	*/
 	setDepthLoadOp(depthLoadOp = "clear", force = false) {
 		if (this.options.forceDepthLoadOp && !force) return;
+		if (force) this.options.forceDepthLoadOp = depthLoadOp;
 		this.options.depthLoadOp = depthLoadOp;
 		this.#updateDepthAttachmentSettings();
 	}
@@ -318,6 +319,7 @@ var RenderPass = class {
 	*/
 	setDepthStoreOp(depthStoreOp = "store", force = false) {
 		if (this.options.forceDepthStoreOp && !force) return;
+		if (force) this.options.forceDepthStoreOp = depthStoreOp;
 		this.options.depthStoreOp = depthStoreOp;
 		this.#updateDepthAttachmentSettings();
 	}
@@ -328,6 +330,7 @@ var RenderPass = class {
 	*/
 	setDepthReadOnly(value, force = false) {
 		if (this.options.forceDepthReadOnly !== null && !force) return;
+		if (force) this.options.forceDepthReadOnly = value;
 		this.options.depthReadOnly = value;
 		this.#updateDepthAttachmentSettings();
 	}
@@ -338,6 +341,7 @@ var RenderPass = class {
 	*/
 	setStencilLoadOp(stencilLoadOp = "clear", force = false) {
 		if (this.options.forceStencilLoadOp && !force) return;
+		if (force) this.options.forceStencilLoadOp = stencilLoadOp;
 		this.options.stencilLoadOp = stencilLoadOp;
 		this.#updateDepthAttachmentSettings();
 	}
@@ -348,6 +352,7 @@ var RenderPass = class {
 	*/
 	setStencilStoreOp(stencilStoreOp = "store", force = false) {
 		if (this.options.forceStencilStoreOp && !force) return;
+		if (force) this.options.forceStencilStoreOp = stencilStoreOp;
 		this.options.stencilStoreOp = stencilStoreOp;
 		this.#updateDepthAttachmentSettings();
 	}
@@ -358,6 +363,7 @@ var RenderPass = class {
 	*/
 	setStencilReadOnly(value, force = false) {
 		if (this.options.forceStencilReadOnly !== null && !force) return;
+		if (force) this.options.forceStencilReadOnly = value;
 		this.options.stencilReadOnly = value;
 		this.#updateDepthAttachmentSettings();
 	}

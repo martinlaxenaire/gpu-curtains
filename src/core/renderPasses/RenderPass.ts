@@ -183,7 +183,7 @@ export class RenderPass {
         loadOp: 'clear' as GPULoadOp,
         storeOp: 'store' as GPUStoreOp,
         clearValue: [0, 0, 0, 0] as GPUColor,
-        targetFormat: this.renderer.outputFormat,
+        targetFormat: this.renderer.renderingPipelineFormat,
       }
 
       if (!colorAttachments.length) {
@@ -337,7 +337,7 @@ export class RenderPass {
         this.resolveTargets.push(
           this.options.renderToSwapChain &&
             index === 0 &&
-            this.renderer.outputFormat === this.renderer.options.context.format
+            this.renderer.renderingPipelineFormat === this.renderer.options.context.format
             ? null
             : new Texture(this.renderer, {
                 label: `${this.options.label} resolve target[${index}] texture`,
@@ -706,8 +706,6 @@ export class RenderPass {
         label: renderTexture.label + ' resolve target view',
       })
     } else {
-      if (renderTexture.sampleCount > 1) console.log('HERE crash!')
-
       this.descriptor.colorAttachments[0].view = renderTexture.createView({
         label: renderTexture.label + ' view',
       })

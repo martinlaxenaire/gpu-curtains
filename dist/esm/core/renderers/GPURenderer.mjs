@@ -379,12 +379,12 @@ var GPURenderer = class {
 		});
 	}
 	/**
-	* Get the current expected texture format.
+	* Get the internal rendering pipeline texture format.
 	* @readonly
-	* @returns - Current expected texture format.
+	* @returns - Current internal rendering pipeline texture format.
 	*/
-	get outputFormat() {
-		return this.renderPass?.outputTextures?.[0]?.texture?.format ?? this.options.context.format;
+	get renderingPipelineFormat() {
+		return this.options.renderPass?.colorAttachments?.[0]?.targetFormat ?? this.options.context.format;
 	}
 	/**
 	* Get the {@link context} current texture.
@@ -642,6 +642,7 @@ var GPURenderer = class {
 	*/
 	copyGPUTextureToTexture(gpuTexture, texture, commandEncoder) {
 		if (gpuTexture.width !== texture.texture.width || gpuTexture.height !== texture.texture.height || gpuTexture.depthOrArrayLayers !== texture.texture.depthOrArrayLayers) return;
+		this.scene.endCurrentRenderPass();
 		commandEncoder.copyTextureToTexture({ texture: gpuTexture }, { texture: texture.texture }, [
 			gpuTexture.width,
 			gpuTexture.height,
@@ -666,6 +667,7 @@ var GPURenderer = class {
 	*/
 	copyTextureToGPUTexture(texture, gpuTexture, commandEncoder) {
 		if (gpuTexture.width !== texture.texture.width || gpuTexture.height !== texture.texture.height || gpuTexture.depthOrArrayLayers !== texture.texture.depthOrArrayLayers) return;
+		this.scene.endCurrentRenderPass();
 		commandEncoder.copyTextureToTexture({ texture: texture.texture }, { texture: gpuTexture }, [
 			gpuTexture.width,
 			gpuTexture.height,
@@ -845,16 +847,20 @@ var GPURenderer = class {
 	* @param renderPass - {@link RenderPass} to clear. Default to {@link GPURenderer#renderPass | renderPass}.
 	*/
 	forceClear(commandEncoder, renderPass = this.clearPass) {
+		this.scene.endCurrentRenderPass();
 		const hasCommandEncoder = !!commandEncoder;
 		if (!hasCommandEncoder) {
 			commandEncoder = this.device?.createCommandEncoder({ label: `${this.type} (${this.options.label}): Force clear command encoder` });
 			if (!this.production) commandEncoder.pushDebugGroup(`${this.type} (${this.options.label}): Force clear command encoder`);
 		}
-		console.log("here");
 		renderPass.updateView();
 		renderPass.setDepthReadOnly(false);
-		renderPass.setLoadOp("clear");
+		for (let i = 0; i < renderPass.options.colorAttachments?.length || 0; i++) {
+			renderPass.setLoadOp("clear", i);
+			renderPass.setStoreOp("store", i);
+		}
 		renderPass.setDepthLoadOp("clear");
+		renderPass.setDepthStoreOp("discard");
 		commandEncoder.beginRenderPass(renderPass.descriptor).end();
 		if (!hasCommandEncoder) {
 			if (!this.production) commandEncoder.popDebugGroup();

@@ -81,12 +81,12 @@ window.addEventListener('load', async () => {
       {
         loadOp: 'clear',
         clearValue: [0, 0, 0, 0],
-        targetFormat: gpuCameraRenderer.outputFormat, // selective mask
+        targetFormat: gpuCameraRenderer.renderingPipelineFormat, // selective mask
       },
       {
         loadOp: 'clear',
         clearValue: [0, 0, 0, 0],
-        targetFormat: gpuCameraRenderer.outputFormat, // original scene
+        targetFormat: gpuCameraRenderer.renderingPipelineFormat, // original scene
       },
     ],
   })
@@ -232,7 +232,6 @@ window.addEventListener('load', async () => {
       let v: f32 = luminance(color.rgb);
       let alpha: f32 = smoothstep(params.threshold, params.threshold + params.smoothWidth, v);
 
-      //let result: vec4f = mix(vec4(0), color, step(params.threshold, v));
       let result: vec4f = mix(vec4(0), color, alpha);
 
       // bloom object with brightness extracted

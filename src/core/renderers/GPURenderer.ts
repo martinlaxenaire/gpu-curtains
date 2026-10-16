@@ -691,12 +691,12 @@ export class GPURenderer {
   }
 
   /**
-   * Get the current expected texture format.
+   * Get the internal rendering pipeline texture format.
    * @readonly
-   * @returns - Current expected texture format.
+   * @returns - Current internal rendering pipeline texture format.
    */
-  get outputFormat(): GPUTextureFormat {
-    return this.renderPass?.outputTextures?.[0]?.texture?.format ?? this.options.context.format
+  get renderingPipelineFormat(): GPUTextureFormat {
+    return this.options.renderPass?.colorAttachments?.[0]?.targetFormat ?? this.options.context.format
   }
 
   /**

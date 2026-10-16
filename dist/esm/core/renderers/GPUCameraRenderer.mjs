@@ -618,7 +618,7 @@ var GPUCameraRenderer = class extends GPURenderer {
 		})();
 	}
 	get #needsOutputPass() {
-		return this.outputFormat !== this.options.context.format || this.exposure !== 1 || !!this.toneMapping || this.colorSpace !== "linear";
+		return this.renderingPipelineFormat !== this.options.context.format || this.exposure !== 1 || !!this.toneMapping || this.colorSpace !== "linear";
 	}
 	/**
 	* Set the output pass that will handle exposure, tone mapping and color space conversion.
@@ -734,7 +734,7 @@ var GPUCameraRenderer = class extends GPURenderer {
 				label: "Transmission background scene render target output",
 				name: "transmissionBackgroundTexture",
 				generateMips: true,
-				format: this.outputFormat,
+				format: this.renderingPipelineFormat,
 				autoDestroy: false
 			});
 			const mainPassEntry = this.scene.getRenderTargetPassEntry();

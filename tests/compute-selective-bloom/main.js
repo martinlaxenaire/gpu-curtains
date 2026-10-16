@@ -87,12 +87,12 @@ window.addEventListener('load', async () => {
       {
         loadOp: 'clear',
         clearValue: [0, 0, 0, 0],
-        targetFormat: gpuCameraRenderer.outputFormat, // selective mask
+        targetFormat: gpuCameraRenderer.renderingPipelineFormat, // selective mask
       },
       {
         loadOp: 'clear',
         clearValue: [0, 0, 0, 0],
-        targetFormat: gpuCameraRenderer.outputFormat, // original scene
+        targetFormat: gpuCameraRenderer.renderingPipelineFormat, // original scene
       },
     ],
   })

@@ -25,7 +25,7 @@ var GPUCurtains = class {
 	* GPUCurtains constructor
 	* @param parameters - {@link GPUCurtainsParams | parameters} used to create this {@link GPUCurtains}.
 	*/
-	constructor({ container, label, pixelRatio = window.devicePixelRatio ?? 1, context = {}, production = false, adapterOptions = {}, requiredFeatures = [], requestAdapterLimits = [], renderPass, camera, lights, autoRender = true, autoResize = true, watchScroll = true } = {}) {
+	constructor({ container, label, pixelRatio = window.devicePixelRatio ?? 1, context = {}, hdrRendering = false, production = false, adapterOptions = {}, requiredFeatures = [], requestAdapterLimits = [], renderPass, camera, lights, exposure = 1, toneMapping = false, colorSpace = "linear", autoRender = true, autoResize = true, watchScroll = true } = {}) {
 		this._onScrollCallback = () => {};
 		this._onErrorCallback = () => {};
 		this._onContextLostCallback = () => {};
@@ -37,6 +37,10 @@ var GPUCurtains = class {
 			pixelRatio,
 			camera,
 			lights,
+			hdrRendering,
+			exposure,
+			toneMapping,
+			colorSpace,
 			production,
 			adapterOptions,
 			requiredFeatures,
@@ -89,9 +93,13 @@ var GPUCurtains = class {
 			pixelRatio: this.options.pixelRatio,
 			autoResize: this.options.autoResize,
 			context: this.options.context,
+			hdrRendering: this.options.hdrRendering,
 			renderPass: this.options.renderPass,
 			camera: this.options.camera,
-			lights: this.options.lights
+			lights: this.options.lights,
+			exposure: this.options.exposure,
+			toneMapping: this.options.toneMapping,
+			colorSpace: this.options.colorSpace
 		});
 	}
 	/**

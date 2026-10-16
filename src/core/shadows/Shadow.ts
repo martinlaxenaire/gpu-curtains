@@ -633,6 +633,7 @@ export class Shadow {
       depthTexture: this.depthTexture,
       sampleCount: this.sampleCount,
       autoRender: this.#autoRender,
+      forceDepthStoreOp: 'store', // force store depth
     })
   }
 

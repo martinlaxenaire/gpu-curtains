@@ -36,6 +36,11 @@ window.addEventListener('load', async () => {
     deviceManager: gpuDeviceManager, // the renderer is going to use our WebGPU device to create its context
     container: document.querySelector('#canvas'),
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
+    // since we're not using any lighting here
+    // disable HDR, tone mapping and color space conversion
+    hdrRendering: false,
+    toneMapping: false,
+    colorSpace: 'linear',
   })
 
   // number of particles instances
@@ -64,10 +69,10 @@ window.addEventListener('load', async () => {
       @builtin(global_invocation_id) GlobalInvocationID: vec3<u32>
     ) {
       var index = GlobalInvocationID.x;
-      
+
       var vPos = particlesA[index].position;
       var vVel = particlesA[index].velocity;
-      
+
       var mouseVel = vec2(0.0);
       var cMass = vec2(0.0);
       var cVel = vec2(0.0);
@@ -77,21 +82,21 @@ window.addEventListener('load', async () => {
       var pos : vec2<f32>;
       var vel : vec2<f32>;
       var minSystemSize: f32 = min(params.systemSize.x, params.systemSize.y);
-      
+
       var particlesArrayLength = arrayLength(&particlesA);
-      
+
       if(distance(vPos, params.mousePosition) < minSystemSize * params.mouseRadius) {
         mouseVel += (vPos - params.mousePosition) * params.mouseVelocity * minSystemSize;
-      } 
-    
+      }
+
       for (var i = 0u; i < particlesArrayLength; i++) {
         if (i == index) {
           continue;
         }
-        
+
         pos = particlesA[i].position.xy;
         vel = particlesA[i].velocity.xy;
-        
+
         if (distance(pos, vPos) < params.rule1Distance * minSystemSize) {
           cMass += pos;
           cMassCount++;
@@ -104,24 +109,24 @@ window.addEventListener('load', async () => {
           cVelCount++;
         }
       }
-      
+
       if (cMassCount > 0) {
         cMass = (cMass / vec2(f32(cMassCount))) - vPos;
       }
       if (cVelCount > 0) {
         cVel /= f32(cVelCount);
       }
-      
+
       vVel += (cMass * params.rule1Scale) + (colVel * params.rule2Scale) + (cVel * params.rule3Scale);
 
       // clamp velocity for a more pleasing simulation
       vVel = normalize(vVel) * clamp(length(vVel), 0.0, minSystemSize * 0.1);
-      
+
       vVel += mouseVel;
-      
+
       // kinematic update
       vPos = vec2(vPos + (vVel * params.deltaT));
-      
+
       // Wrap around boundary
       if (vPos.x < -params.systemSize.x) {
         vPos.x = params.systemSize.x;
@@ -135,8 +140,8 @@ window.addEventListener('load', async () => {
       if (vPos.y > params.systemSize.y) {
         vPos.y = -params.systemSize.y;
       }
-      
-      // Write back      
+
+      // Write back
       particlesB[index].position = vPos;
       particlesB[index].velocity = vVel;
     }
@@ -299,7 +304,7 @@ window.addEventListener('load', async () => {
       computeBoidsPass.uniforms.params.systemSize.value.set(cameraRatio * screenRatio, cameraRatio)
     })
 
-  const meshVs = /* wgsl */ `  
+  const meshVs = /* wgsl */ `
     struct VSOutput {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
@@ -308,15 +313,15 @@ window.addEventListener('load', async () => {
 
     @vertex fn main(
       attributes: Attributes,
-    ) -> VSOutput {    
+    ) -> VSOutput {
       var vsOutput : VSOutput;
-      
+
       var transformed: vec3f = attributes.position + vec3(attributes.instancePosition.xy, 0);
-              
+
       vsOutput.position = getOutputPosition(transformed);
       vsOutput.uv = attributes.uv;
       vsOutput.normal = attributes.normal;
-      
+
       return vsOutput;
     }
   `

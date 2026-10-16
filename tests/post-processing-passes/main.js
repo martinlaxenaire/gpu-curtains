@@ -266,33 +266,7 @@ window.addEventListener('load', async () => {
         })
       cubePrePass.visible = value
 
-      console.clear()
-
       gpuCameraRenderer.renderPass.setDepthLoadOp(value ? 'load' : 'clear', true)
-
-      // if (!value) {
-      //   gpuCameraRenderer.renderPass.setDepthLoadOp('clear', true)
-      // }
-      // NEW
-      // if (value) {
-      //   gpuCameraRenderer.renderPass.setDepthStoreOp('store', true)
-      // } else {
-      //   gpuCameraRenderer.renderPass.options.forceDepthStoreOp = null
-      // }
-      //
-      // gpuCameraRenderer.renderPass.setDepthStoreOp(value ? 'store' : 'discard', true)
-      // gpuCameraRenderer.renderPass.setDepthLoadOp(value ? 'load' : 'clear', true)
-      //
-
-      // OLD
-      // if (value) {
-      //   cubePrePassTarget.renderPass.setDepthStoreOp('store', true)
-      //   // gpuCameraRenderer.renderPass.setDepthStoreOp('store', true)
-      //   gpuCameraRenderer.renderPass.setDepthLoadOp('load', true)
-      // } else {
-      //   cubePrePassTarget.renderPass.setDepthStoreOp('discard', true)
-      //   gpuCameraRenderer.renderPass.setDepthLoadOp('clear', true)
-      // }
     })
 
   gui.add(postProPass, 'visible').name('Depth post processing pass visibility')
