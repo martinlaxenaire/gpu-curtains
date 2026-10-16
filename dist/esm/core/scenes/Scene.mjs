@@ -574,7 +574,7 @@ var Scene = class extends Object3D {
 		if ("lights" in this.renderer) this.renderer.lights.forEach((light) => {
 			light.onBeforeRenderScene();
 		});
-		this.renderer.meshes.forEach((mesh) => {
+		this.renderer.drawableObjects.forEach((mesh) => {
 			mesh.onBeforeRenderScene();
 		});
 		this.renderer.animations.forEach((targetsAnimation) => targetsAnimation.update());

@@ -731,16 +731,22 @@ var GPURenderer = class {
 		this.animations = /* @__PURE__ */ new Map();
 	}
 	/**
+	* Get all this {@link GPURenderer} drawable objects (i.e. meshes, ping pong planes and shader passes).
+	* @readonly
+	*/
+	get drawableObjects() {
+		return [
+			...this.pingPongPlanes,
+			...this.meshes,
+			...this.shaderPasses
+		];
+	}
+	/**
 	* Get all this {@link GPURenderer} rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes).
 	* @readonly
 	*/
 	get renderedObjects() {
-		return [
-			...this.computePasses,
-			...this.meshes,
-			...this.shaderPasses,
-			...this.pingPongPlanes
-		];
+		return [...this.computePasses, ...this.drawableObjects];
 	}
 	/**
 	* Get all objects ({@link RenderedMesh | rendered meshes} or {@link ComputePass | compute passes}) using a given {@link AllowedBindGroups | bind group}.

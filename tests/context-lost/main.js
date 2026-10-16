@@ -145,10 +145,6 @@ window.addEventListener('load', async () => {
     ],
   })
 
-  postProPass.onBeforeRender(() => {
-    console.log('before')
-  })
-
   const postProShader2 = /* wgsl */ `
     struct VSOutput {
         @builtin(position) position: vec4f,
